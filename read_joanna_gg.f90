@@ -128,6 +128,21 @@ contains
       !write(0,*) S%array(n,:)
     end do
 
+  end subroutine read_fields
+
+  subroutine write_gmsh(g)
+    type(Grid), intent(inout) :: g
+    class(FunctionSpace),  pointer    :: vertices
+    class(FunctionSpace),  pointer    :: faces
+    class(Field),  pointer            :: V
+    class(Field),  pointer            :: S
+    integer :: iface, inode
+
+    faces => g%function_space("faces")
+    S => faces%field("face_normal")
+
+    vertices => g%function_space("vertices")
+    V => vertices%field("dual_volume")
 
     ! Write Gmsh
     open(50,file='meshvol.msh',access='sequential',status='REPLACE')
@@ -144,11 +159,11 @@ contains
     write(50,*) g%nb_faces
     do iface=1, g%nb_faces
       ! element-number  type(1=lineP1)  nb_tags(=2)  tag1(=physical-group)  tag2(=elementary-group)  [nodes]
-      if (iface<before1 .or. iface>before2) then
-          write(50,*)  iface, 1, 2, 1, 2, g%faces(iface,1), g%faces(iface,2)
-      else
-          write(50,*)  iface, 1, 2, 1, 1, g%faces(iface,1), g%faces(iface,2)
-      endif
+      !if (iface<before1 .or. iface>before2) then
+      !   write(50,*)  iface, 1, 2, 1, 2, g%faces(iface,1), g%faces(iface,2)
+      !else
+      write(50,*)  iface, 1, 2, 1, 1, g%faces(iface,1), g%faces(iface,2)
+      !endif
     enddo
     write(50,'(A)')"$EndElements"
     write(50,'(A)')"$NodeData"
@@ -178,11 +193,6 @@ contains
     enddo
     write(50,'(A)')"$EndElementData"
     close(50)
-  end subroutine read_fields
-
-  subroutine write_gmsh(g)
-    type(Grid), intent(inout) :: g
-
     end subroutine write_gmsh
   
 end module read_joana_module
@@ -199,6 +209,10 @@ program main
   ! Declarations
   ! ------------
   type(Grid)                        :: g
+  class(FunctionSpace),  pointer    :: vertices
+  class(FunctionSpace),  pointer    :: faces
+  class(Field),  pointer            :: V
+  class(Field),  pointer            :: S
 
   ! Execution
   ! ---------
@@ -208,6 +222,14 @@ program main
   !call read_quads(g)
   call read_grid(g)
   call read_fields(g)
+
+  vertices => g%function_space("vertices")
+  faces    => g%function_space("faces")
+
+  V => vertices%field("dual_volume")
+  S => faces%field("face_normal")
+
+  call write_gmsh(g)
 
   ! Destruction
   ! -----------
