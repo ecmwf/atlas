@@ -84,6 +84,8 @@ contains
     integer :: inode
     integer :: n
     real :: Sx, Sy
+    real :: pi,r,y,sm,hx,hy
+
 
     open(5,file='meshvol.d',access='sequential',status='old')
     read(5,*) nnode, nedge, nface, ncoin, before2, before1  !nbefore1<nbefore2
@@ -117,16 +119,17 @@ contains
 
     close(5)
 
-    ! Print
-    ! -----
-    write(0,*) V%name," (",V%size,",",V%cols,") = "
-    do n=1,V%size
-      !write(0,*) V%array(n,:)
-    end do
-    write(0,*) S%name," (",S%size,",",S%cols,") = "
-    do n=1,S%size
-      !write(0,*) S%array(n,:)
-    end do
+
+    ! Coordinate transformation correction for dual_volume on sphere
+    r=6371.22e+03
+    pi=acos(-1.)
+    do inode=1,g%nb_nodes
+      y=g%nodes(inode,2)
+      hx=r*cos(y)
+      hy=r
+     sm=hx*hy
+     V%array(inode,1) = v%array(inode,1)*sm
+   enddo
 
   end subroutine read_fields
 
@@ -143,6 +146,8 @@ contains
 
     vertices => g%function_space("vertices")
     V => vertices%field("dual_volume")
+ 
+    write(0,*) "Writing Gmsh file meshvol.msh"
 
     ! Write Gmsh
     open(50,file='meshvol.msh',access='sequential',status='REPLACE')
@@ -214,12 +219,10 @@ program main
   class(Field),  pointer            :: V
   class(Field),  pointer            :: S
 
+
   ! Execution
   ! ---------
   
-  ! Read grid from example_grids module
- 
-  !call read_quads(g)
   call read_grid(g)
   call read_fields(g)
 
