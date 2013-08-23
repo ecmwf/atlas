@@ -1,0 +1,2 @@
+#! /usr/bin/env bash
+/usr/local/apps/intel/parallel_studio_xe_2013/bin/ifort -g -O0 elements_module.f90 lagrangep0_module.f90 lagrangep1_module.f90 grid_module.f90 read_joanna_gg.f90 -o main && ./main && rm *.mod && rm main

@@ -1,0 +1,2 @@
+#! /usr/bin/env bash
+gfortran -g -O0 elements_module.f90 lagrangep0_module.f90 lagrangep1_module.f90 grid_module.f90 main.f90 -o main && ./main && rm *.mod && rm main
