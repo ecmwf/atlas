@@ -133,23 +133,60 @@ contains
 
   end subroutine read_fields
 
+  subroutine write_gmsh_nodal_field(g,name)
+    type(Grid), intent(inout) :: g
+    character(len=*) , intent(in) :: name
+    class(FunctionSpace),  pointer    :: vertices
+    class(Field),  pointer            :: F
+    integer :: inode
+    vertices => g%function_space("vertices")
+    F => vertices%field(name)
+    write(50,'(A)')"$NodeData"
+    write(50,*) 1                     ! one string tag:
+    write(50,'(A)') '"'//F%name//'"'      ! the name of the view ("A scalar view")
+    write(50,*) 1                     ! one real tag:
+    write(50,*) 0.0                   ! the time value (0.0)
+    write(50,*) 3                     ! three integer tags:
+    write(50,*) 0                     ! the time step (0; time steps always start at 0)
+    if (F%cols == 1) write(50,*) 1    ! 1-component (scalar) field
+    if (F%cols == 2) write(50,*) 3    ! 3-component (vector) field
+    write(50,*) g%nb_nodes            ! number of associated nodal values
+    do inode=1,g%nb_nodes
+      if (F%cols == 1) write(50,*) inode, F%array(inode,1)
+      if (F%cols == 2) write(50,*) inode, F%array(inode,1), F%array(inode,2), 0     
+    enddo
+    write(50,'(A)')"$EndNodeData"
+  end subroutine write_gmsh_nodal_field
+
+  subroutine write_gmsh_face_field(g,name)
+    type(Grid), intent(inout) :: g
+    character(len=*) , intent(in) :: name
+    class(FunctionSpace),  pointer    :: faces
+    class(Field),  pointer            :: F
+    integer :: iface
+    faces => g%function_space("faces")
+    F => faces%field(name)
+    write(50,'(A)')"$ElementData"
+    write(50,*) 1                     ! one string tag:
+    write(50,'(A)') '"'//F%name//'"'      ! the name of the view ("A scalar view")
+    write(50,*) 1                     ! one real tag:
+    write(50,*) 0.0                   ! the time value (0.0)
+    write(50,*) 3                     ! three integer tags:
+    write(50,*) 0                     ! the time step (0; time steps always start at 0)
+    if (F%cols == 1) write(50,*) 1    ! 1-component (scalar) field
+    if (F%cols == 2) write(50,*) 3    ! 3-component (vector) field
+    write(50,*) g%nb_faces            ! number of associated nodal values
+    do iface=1,g%nb_faces
+      if (F%cols == 1) write(50,*) iface, F%array(iface,1)
+      if (F%cols == 2) write(50,*) iface, F%array(iface,1), F%array(iface,2), 0     
+    enddo
+    write(50,'(A)')"$EndElementData"
+  end subroutine write_gmsh_face_field
+
   subroutine write_gmsh(g)
     type(Grid), intent(inout) :: g
-    class(FunctionSpace),  pointer    :: vertices
-    class(FunctionSpace),  pointer    :: faces
-    class(Field),  pointer            :: V
-    class(Field),  pointer            :: S
     integer :: iface, inode
-
-    faces => g%function_space("faces")
-    S => faces%field("face_normal")
-
-    vertices => g%function_space("vertices")
-    V => vertices%field("dual_volume")
- 
     write(0,*) "Writing Gmsh file meshvol.msh"
-
-    ! Write Gmsh
     open(50,file='meshvol.msh',access='sequential',status='REPLACE')
     write(50,'(A)')"$MeshFormat"
     write(50,'(A)')"2.2 0 8"
@@ -164,43 +201,66 @@ contains
     write(50,*) g%nb_faces
     do iface=1, g%nb_faces
       ! element-number  type(1=lineP1)  nb_tags(=2)  tag1(=physical-group)  tag2(=elementary-group)  [nodes]
-      !if (iface<before1 .or. iface>before2) then
-      !   write(50,*)  iface, 1, 2, 1, 2, g%faces(iface,1), g%faces(iface,2)
-      !else
       write(50,*)  iface, 1, 2, 1, 1, g%faces(iface,1), g%faces(iface,2)
-      !endif
     enddo
     write(50,'(A)')"$EndElements"
-    write(50,'(A)')"$NodeData"
-    write(50,*) 1                     ! one string tag:
-    write(50,'(A)') '"Dual Volume"'   ! the name of the view ("A scalar view")
-    write(50,*) 1                     ! one real tag:
-    write(50,*) 0.0                   ! the time value (0.0)
-    write(50,*) 3                     ! three integer tags:
-    write(50,*) 0                     ! the time step (0; time steps always start at 0)
-    write(50,*) 1                     ! 1-component (scalar) field
-    write(50,*) g%nb_nodes            ! number of associated nodal values
-    do inode=1,g%nb_nodes
-      write(50,*) inode, V%array(inode,1)
-    enddo
-    write(50,'(A)')"$EndNodeData"
-    write(50,'(A)')"$ElementData"
-    write(50,*) 1                     ! one string tag:
-    write(50,'(A)') '"face_normal"'   ! the name of the view ("A scalar view")
-    write(50,*) 1                     ! one real tag:
-    write(50,*) 0.0                   ! the time value (0.0)
-    write(50,*) 3                     ! three integer tags:
-    write(50,*) 0                     ! the time step (0; time steps always start at 0)
-    write(50,*) 3                     ! 3-component (scalar) field
-    write(50,*) g%nb_faces            ! number of associated nodal values
-    do iface=1,g%nb_faces
-      write(50,*) iface, S%array(iface,1), S%array(iface,2), 0
-    enddo
-    write(50,'(A)')"$EndElementData"
+    call write_gmsh_nodal_field(g,"dual_volume")
+    call write_gmsh_face_field(g,"face_normal")
+    call write_gmsh_nodal_field(g,"velocity")
+    call write_gmsh_nodal_field(g,"height")
     close(50)
-    end subroutine write_gmsh
+  end subroutine write_gmsh
   
+  subroutine initial_solution_rossby_haurwitz(function_space)
+    class(FunctionSpace),  pointer, intent(in)    :: function_space
+    class(Field),  pointer            :: P, U
+    integer :: inode
+
+
+    real :: aaa0,zk
+    integer :: IR,ip
+    real :: om,ph0,g,ath,bth,cth,pi,f0,x,y,th,a,cor
+
+    data OM,ZK,IR,PH0/7.848E-6,7.848E-6,4,78.4E3/
+    data G/9.80616/
+
+    ATH(TH) = OM*0.5*(F0+OM)*(cos(TH))**2 &
+      & +0.25*ZK**2*(cos(TH))**(2*IR)*( (IR+1)*(cos(TH))**2 &
+      & +FLOAT(2*IR**2-IR-2)-2.*IR**2/(cos(TH))**2 )
+    BTH(TH) = (F0+2.*OM)*ZK/FLOAT((IR+1)*(IR+2))*(cos(TH))**IR &
+      & *( FLOAT(IR**2+2*IR+2)-((IR+1)*cos(TH))**2 )
+    CTH(TH) = 0.25*ZK**2*(cos(TH))**(2*IR)*( FLOAT(IR+1)*(cos(TH))**2 &
+      & -FLOAT(IR+2) )  
+
+    P => function_space%add_scalar_field("height")
+    U => function_space%add_vector_field("velocity")
+
+    aaa0=0.
+    a = 6371.22e+03 ! Earth radius
+
+    pi = acos(-1.)
+    f0 = 1.4584e-04 !coriolis parameter (=2xearth's omega)
+    do inode=1,function_space%g%nb_nodes
+      x=function_space%g%nodes(inode,1)
+      y=function_space%g%nodes(inode,2)
+      if(x == 2.*pi) x=0.
+        cor=F0*sin(y)
+        U%array(inode,1) =  A*OM*cos(y)+A*ZK*cos(IR*x) &
+          &       *(cos(y))**(IR-1)*(IR*(sin(y))**2-(cos(y))**2)
+        U%array(inode,2) = -A*ZK*IR*(cos(y))**(IR-1)*sin(Y)*sin(IR*x)
+        P%array(inode,1) = ( PH0+A**2*ATH(y)+A**2*BTH(y)*cos(IR*x) &
+          &       +A**2*CTH(y)*cos(2.*IR*x) ) / g
+        P%array(inode,1) = max(aaa0,P%array(inode,1))
+        U%array(inode,1) = U%array(inode,1) * P%array(inode,1)
+        U%array(inode,2) = U%array(inode,2) * P%array(inode,1)
+        if(y == 0.5*pi) U%array(inode,1)=0.
+        if(y ==-0.5*pi) U%array(inode,1)=0.
+    enddo
+
+  end subroutine initial_solution_rossby_haurwitz
+
 end module read_joana_module
+
 ! =============================================================================
 ! =============================================================================
 ! =============================================================================
@@ -218,6 +278,8 @@ program main
   class(FunctionSpace),  pointer    :: faces
   class(Field),  pointer            :: V
   class(Field),  pointer            :: S
+  class(Field),  pointer            :: U
+  class(Field),  pointer            :: P
 
 
   ! Execution
@@ -231,6 +293,10 @@ program main
 
   V => vertices%field("dual_volume")
   S => faces%field("face_normal")
+
+  call initial_solution_rossby_haurwitz(vertices)
+  U => vertices%field("velocity")
+  P => vertices%field("height")
 
   call write_gmsh(g)
 
