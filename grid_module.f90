@@ -53,6 +53,8 @@ module grid_module
     procedure, pass :: add_scalar_field => FunctionSpace__add_scalar_field
     procedure, pass :: add_vector_field => FunctionSpace__add_vector_field
     procedure, pass :: add_array_field => FunctionSpace__add_array_field
+    procedure, pass :: field => FunctionSpace__field
+
 
   end type FunctionSpace
   
@@ -99,6 +101,7 @@ module grid_module
     procedure, pass :: add_discontinuous_function_space => Grid__add_discontinuous_function_space
     procedure, pass :: add_continuous_function_space => Grid__add_continuous_function_space
     procedure, pass :: cell_coords => Grid__cell_coords
+    procedure, pass :: function_space => Grid__function_space
   end type Grid
   
 contains
@@ -227,6 +230,20 @@ contains
     self%fields(size(self%fields))%ptr => new_field
     deallocate(tmp)
   end function FunctionSpace__add_vector_field
+
+    function FunctionSpace__field(self, name) result(field_)
+    class(FunctionSpace), intent(in) :: self
+    character(len=*), intent(in) :: name
+    type(Field), pointer :: field_
+    integer :: f
+    do f=1,size(self%fields)
+      field_ => self%fields(f)%ptr
+      if( field_%name == name) then
+        return
+      end if
+    end do
+    !abort("No field named "//trim(name)//" in function_space")
+  end function FunctionSpace__field
 
   subroutine ContinuousFunctionSpace__init(self, name, shapefunction_type, grid_)
     class(ContinuousFunctionSpace), intent(inout) :: self
@@ -436,4 +453,17 @@ contains
     end do
   end subroutine Grid__cell_coords
 
+  function Grid__function_space(self, name) result(function_space)
+    class(Grid), intent(in) :: self
+    character(len=*), intent(in) :: name
+    class(FunctionSpace), pointer :: function_space
+    integer :: f
+    do f=1,size(self%function_spaces)
+      function_space => self%function_spaces(f)%ptr
+      if( function_space%name == name) then
+        return
+      end if
+    end do
+    !abort("No function space named "//trim(name)//" in grid")
+  end function Grid__function_space
 end module grid_module
