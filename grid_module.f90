@@ -29,6 +29,7 @@ module grid_module
     real, dimension(:,:), allocatable :: array
     integer :: size
     integer :: cols
+    class(FunctionSpace), pointer :: function_space
   contains
     procedure, pass :: init => Field__init
     procedure, pass :: destruct => Field__destruct
@@ -113,10 +114,11 @@ contains
   subroutine Field__init(self, name, function_space, cols)
     class(Field), intent(inout) :: self
     character(len=*), intent(in) :: name
-    class(FunctionSpace), intent(in) :: function_space
+    class(FunctionSpace), intent(in), target :: function_space
     integer, intent(in) :: cols
     write(0,*) "Field::init(",name,",",function_space%name,")"  
     self%name = name
+    self%function_space => function_space
     self%cols = cols
     allocate(self%array(function_space%nb_nodes,self%cols))
     self%size = function_space%nb_nodes
