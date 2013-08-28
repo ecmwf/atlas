@@ -3,6 +3,7 @@
 module shallow_water_module
   use grid_module
   use state_module
+  use mpdata_module
   implicit none
 
   type, public, extends(State) :: ShallowWaterState
@@ -11,6 +12,10 @@ module shallow_water_module
     procedure, pass :: init => ShallowWaterState__init
   end type ShallowWaterState
 
+  type, public, extends(Model) :: ShallowWaterModel
+  contains
+    procedure, pass :: init => ShallowWaterModel__init
+  end type ShallowWaterModel
 contains
 
  function new_ShallowWaterState(name, function_space) result(state_)
@@ -32,9 +37,16 @@ contains
     self%Q => self%function_space%add_vector_field("momentum")
     call self%add_field(self%D)
     call self%add_field(self%Q)
-
   end subroutine ShallowWaterState__init
 
+  subroutine ShallowWaterModel__init(self,function_space)
+    class(ShallowWaterModel), intent(inout) :: self
+    class(FunctionSpace), pointer, intent(in) :: function_space
+    write(0,*) "ShallowWaterModel::init()"  
+    self%state => new_ShallowWaterState("state",function_space)
+    allocate( MPDATA_Solver :: self%solver )
+    self%solver%state => self%state
+  end subroutine ShallowWaterModel__init
 
   subroutine init_state_rossby_haurwitz(S)
     class(State), intent(in) :: S

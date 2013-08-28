@@ -5,6 +5,7 @@
   lagrangep1_module.f90\
   grid_module.f90\
   state_module.f90\
+  mpdata_module.f90\
   shallow_water_module.f90\
   read_joanna_gg.f90\
   -o main\

@@ -214,15 +214,6 @@ contains
 
 end module read_joana_module
 
-module mpdata_module
-  implicit none
-contains
-  subroutine solve_time_step(sol,rhs)
-    integer , intent(inout) :: sol
-    integer , intent(inout) :: rhs
-  end subroutine solve_time_step
-end module mpdata_module
-
 ! =============================================================================
 ! =============================================================================
 ! =============================================================================
@@ -241,7 +232,10 @@ program main
   class(FunctionSpace),  pointer    :: faces
   class(Field),  pointer            :: V
   class(Field),  pointer            :: S
-  class(State),  pointer            :: shallow_water
+  real                              :: dt
+  integer                           :: f
+  integer                           :: i
+  type(ShallowWaterModel) :: shallow_water
 
   ! Execution
   ! ---------
@@ -258,16 +252,22 @@ program main
   V => vertices%field("dual_volume")
   S => faces%field("dual_face_normal")
 
-  shallow_water => new_ShallowWaterState("shallow_water",vertices)
-  call init_state_rossby_haurwitz(shallow_water)
+  call shallow_water%init(vertices)
+  call init_state_rossby_haurwitz(shallow_water%state)
 
-  write(*,*) "Shallow Water State Time = ",shallow_water%time
-  write(*,*) "Shallow Water State Fields:"
-  select type (shallow_water)
-  type is (ShallowWaterState)
-    write(*,*) " - ",shallow_water%D%name
-    write(*,*) " - ",shallow_water%Q%name
-  end select
+  ! Do 10 time steps of 6 hours in seconds
+  shallow_water%solver%dt_stability = 3752
+  dt = 6*60*60
+  do i=1,10
+    call shallow_water%solve_time_step( dt )
+    write(0,*) "Completed time step. Time: ",shallow_water%state%time
+  end do
+
+  write(0,*) "Shallow Water State Time = ",shallow_water%state%time
+  write(0,*) "Shallow Water State Fields:"
+  do f=1,size(shallow_water%state%fields)
+    write(0,*) " - ",shallow_water%state%fields(f)%ptr%name
+  end do
   
   call write_gmsh(g)
 
