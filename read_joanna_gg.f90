@@ -104,7 +104,7 @@ contains
 
     ! Setup a function space in the face centres for the face_normal
     faces => new_FaceFunctionSpace("faces", "LagrangeP0", g)
-    S     => faces%add_vector_field("face_normal")
+    S     => faces%add_vector_field("dual_face_normal")
 
     edge_cnt = 0
     do iface = 1,nedge
@@ -205,7 +205,7 @@ contains
     enddo
     write(50,'(A)')"$EndElements"
     call write_gmsh_nodal_field(g,"dual_volume")
-    call write_gmsh_face_field(g,"face_normal")
+    call write_gmsh_face_field(g,"dual_face_normal")
     call write_gmsh_nodal_field(g,"depth")
     call write_gmsh_nodal_field(g,"momentum")
     close(50)
@@ -247,17 +247,28 @@ program main
   ! ---------
   
   call read_grid(g)
-  call read_fields(g)
+
+  ! this will be replaced by algorithm to compute 
+  ! dual volume and dual face normals
+  call read_fields(g) 
 
   vertices => g%function_space("vertices")
   faces    => g%function_space("faces")
 
   V => vertices%field("dual_volume")
-  S => faces%field("face_normal")
+  S => faces%field("dual_face_normal")
 
   shallow_water => new_ShallowWaterState("shallow_water",vertices)
   call init_state_rossby_haurwitz(shallow_water)
 
+  write(*,*) "Shallow Water State Time = ",shallow_water%time
+  write(*,*) "Shallow Water State Fields:"
+  select type (shallow_water)
+  type is (ShallowWaterState)
+    write(*,*) " - ",shallow_water%D%name
+    write(*,*) " - ",shallow_water%Q%name
+  end select
+  
   call write_gmsh(g)
 
   ! Destruction
