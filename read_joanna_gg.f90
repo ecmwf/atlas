@@ -211,54 +211,17 @@ contains
     close(50)
   end subroutine write_gmsh
   
-  subroutine initial_solution_rossby_haurwitz(function_space)
-    class(FunctionSpace),  pointer, intent(in)    :: function_space
-    class(Field),  pointer            :: D, Q
-    integer :: inode
-
-    integer :: ir,ip
-    real    :: aaa0,zk,om,ph0,g,ath,bth,cth,pi,f0,x,y,th,a,cor
-
-    ! statement-functions, before first statement
-    ATH(TH) = om*0.5*(f0+om)*(cos(TH))**2 &
-      & +0.25*zk**2*(cos(TH))**(2*ir)*( (ir+1)*(cos(TH))**2 &
-      & +real(2*ir**2-ir-2)-2.*ir**2/(cos(TH))**2 )
-    BTH(TH) = (f0+2.*om)*zk/real((ir+1)*(ir+2))*(cos(TH))**ir &
-      & *( real(ir**2+2*ir+2)-((ir+1)*cos(TH))**2 )
-    CTH(TH) = 0.25*zk**2*(cos(TH))**(2*ir)*( real(ir+1)*(cos(TH))**2 &
-      & -real(ir+2) )  
-
-    om   = 7.848E-6
-    zk   = 7.848E-6
-    ir   = 4
-    ph0  = 78.4E3
-    g    = 9.80616
-    aaa0 = 0.
-    a    = 6371.22e+03 ! Earth radius
-    pi   = acos(-1.)
-    f0   = 1.4584e-04 !coriolis parameter (=2xearth's omega)
-
-    D => function_space%add_scalar_field("depth")
-    Q => function_space%add_vector_field("momentum")
-
-    do inode=1,function_space%g%nb_nodes
-      x=function_space%g%nodes(inode,1)
-      y=function_space%g%nodes(inode,2)
-      if(x == 2.*pi) x=0.
-        cor=f0*sin(y)
-        Q%array(inode,1) =  a*OM*cos(y)+a*ZK*cos(IR*x) *(cos(y))**(IR-1)*(IR*(sin(y))**2-(cos(y))**2)
-        Q%array(inode,2) = -a*ZK*IR*(cos(y))**(IR-1)*sin(Y)*sin(IR*x)
-        D%array(inode,1) = ( PH0+a**2*ATH(y)+a**2*BTH(y)*cos(IR*x)+a**2*CTH(y)*cos(2.*IR*x) ) / g
-        D%array(inode,1) = max(aaa0,D%array(inode,1))
-        Q%array(inode,1) = Q%array(inode,1) * D%array(inode,1)
-        Q%array(inode,2) = Q%array(inode,2) * D%array(inode,1)
-        if(y == 0.5*pi) Q%array(inode,1)=0.
-        if(y ==-0.5*pi) Q%array(inode,1)=0.
-    enddo
-
-  end subroutine initial_solution_rossby_haurwitz
 
 end module read_joana_module
+
+module mpdata_module
+  implicit none
+contains
+  subroutine solve_time_step(sol,rhs)
+    integer , intent(inout) :: sol
+    integer , intent(inout) :: rhs
+  end subroutine solve_time_step
+end module mpdata_module
 
 ! =============================================================================
 ! =============================================================================
@@ -268,6 +231,7 @@ end module read_joana_module
 program main
   use grid_module
   use read_joana_module
+  use shallow_water_module
   implicit none
   
   ! Declarations
@@ -277,9 +241,7 @@ program main
   class(FunctionSpace),  pointer    :: faces
   class(Field),  pointer            :: V
   class(Field),  pointer            :: S
-  class(Field),  pointer            :: D
-  class(Field),  pointer            :: Q
-
+  class(State),  pointer            :: shallow_water
 
   ! Execution
   ! ---------
@@ -293,9 +255,8 @@ program main
   V => vertices%field("dual_volume")
   S => faces%field("face_normal")
 
-  call initial_solution_rossby_haurwitz(vertices)
-  D => vertices%field("depth")
-  Q => vertices%field("momentum")
+  shallow_water => new_ShallowWaterState("shallow_water",vertices)
+  call init_state_rossby_haurwitz(shallow_water)
 
   call write_gmsh(g)
 
