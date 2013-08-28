@@ -5,8 +5,10 @@
   lagrangep1_module.f90\
   grid_module.f90\
   state_module.f90\
+  read_joanna_module.f90\
+  gmsh_module.f90\
   mpdata_module.f90\
   shallow_water_module.f90\
-  read_joanna_gg.f90\
-  -o main\
-  && ./main && rm *.mod && rm main
+  shallow_water.f90\
+  -o shallow_water\
+  && ./shallow_water && rm *.mod && rm shallow_water
