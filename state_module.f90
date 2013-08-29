@@ -6,7 +6,7 @@ module state_module
   use grid_module
   implicit none
   public
-  
+ 
   type, public :: State
     character(len=30) :: name
     real              :: time
@@ -17,6 +17,7 @@ module state_module
     procedure, pass :: init => State__init
     procedure, pass :: destruct => State__destruct
     procedure, pass :: add_field => State__add_field
+    procedure, pass :: field => State__field
   end type State
   
   type, public :: StatePtr
@@ -55,5 +56,20 @@ module state_module
     self%fields(size(self%fields))%ptr => field_
     deallocate(tmp)
   end subroutine State__add_field
+
+  function State__field(self, name) result(field_)
+    class(State), intent(in) :: self
+    character(len=*), intent(in) :: name
+    type(Field), pointer :: field_
+    integer :: f
+    do f=1,size(self%fields)
+      field_ => self%fields(f)%ptr
+      if( field_%name == name) then
+        return
+      end if
+    end do
+    !abort("No field named "//trim(name)//" in function_space")
+  end function State__field
+
 
 end module state_module

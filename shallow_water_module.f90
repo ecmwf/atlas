@@ -7,7 +7,7 @@ module shallow_water_module
   implicit none
 
   type, public, extends(State) :: ShallowWaterState
-    type(Field),  pointer :: D, Q
+    type(Field),  pointer :: D, Q, H0
   contains
     procedure, pass :: init => ShallowWaterState__init
   end type ShallowWaterState
@@ -33,18 +33,26 @@ contains
     call self%State%init(name,function_space)
 
     write(0,*) "ShallowWaterState::init(",name,",",function_space%name,")"  
-    self%D => self%function_space%add_scalar_field("depth")
-    self%Q => self%function_space%add_vector_field("momentum")
+    self%D  => self%function_space%add_scalar_field("depth")
+    self%Q  => self%function_space%add_vector_field("momentum")
+    self%H0 => self%function_space%add_scalar_field("orography")
     call self%add_field(self%D)
     call self%add_field(self%Q)
+    call self%add_field(self%H0)
   end subroutine ShallowWaterState__init
 
-  subroutine ShallowWaterModel__init(self,function_space)
+  subroutine ShallowWaterModel__init(self,g)
     class(ShallowWaterModel), intent(inout) :: self
-    class(FunctionSpace), pointer, intent(in) :: function_space
+    class(Grid), intent(in) :: g
+    class(FunctionSpace), pointer :: vertices
+    class(FunctionSpace), pointer :: faces
+
     write(0,*) "ShallowWaterModel::init()"  
-    self%state => new_ShallowWaterState("state",function_space)
+    vertices => g%function_space("vertices")
+    faces => g%function_space("faces")
+    self%state => new_ShallowWaterState("state", vertices )
     allocate( MPDATA_Solver :: self%solver )
+    call self%solver%init(g)
     self%solver%state => self%state
   end subroutine ShallowWaterModel__init
 

@@ -233,7 +233,7 @@ contains
     deallocate(tmp)
   end function FunctionSpace__add_vector_field
 
-    function FunctionSpace__field(self, name) result(field_)
+  function FunctionSpace__field(self, name) result(field_)
     class(FunctionSpace), intent(in) :: self
     character(len=*), intent(in) :: name
     type(Field), pointer :: field_

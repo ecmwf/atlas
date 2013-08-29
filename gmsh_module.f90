@@ -81,6 +81,9 @@ contains
     call write_gmsh_face_field(g,"dual_face_normal")
     call write_gmsh_nodal_field(g,"depth")
     call write_gmsh_nodal_field(g,"momentum")
+    call write_gmsh_nodal_field(g,"rhs_forcing")
+    call write_gmsh_nodal_field(g,"advective_velocity")
+
     close(50)
   end subroutine write_gmsh
 
