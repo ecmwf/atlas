@@ -2,7 +2,7 @@
 ! module for testing creation of a Grid
 module gmsh_module
   use grid_module
-  use state_module
+  use model_module
   implicit none
 contains
     
@@ -92,7 +92,7 @@ contains
     type(State), intent(in) :: state_
     character(len=*), intent(in) :: filename
     integer :: iface, inode, ifield
-    type(Grid), pointer :: g
+    class(Grid), pointer :: g
     g => state_%function_space%g
     write(0,*) "Writing Gmsh file ",filename
     open(50,file=filename,access='sequential',status='REPLACE')

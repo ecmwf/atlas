@@ -121,18 +121,6 @@ contains
 
     close(5)
 
-
-    ! Coordinate transformation correction for dual_volume on sphere
-    r=6371.22e+03
-    pi=acos(-1.)
-    do inode=1,g%nb_nodes
-      y=g%nodes(inode,2)
-      hx=r*cos(y)
-      hy=r
-     sm=hx*hy
-     V%array(inode,1) = v%array(inode,1)*sm
-   enddo
-
   end subroutine read_joanna_fields
 
 end module read_joana_module

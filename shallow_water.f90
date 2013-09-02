@@ -18,11 +18,11 @@ program main
   ! Execution
   ! ---------
   
-  call read_joanna_mesh(g,"meshvol.d")
-  call read_joanna_fields(g,"meshvol.d") 
+  call read_joanna_mesh(g,"data/meshvol.d")
+  call read_joanna_fields(g,"data/meshvol.d") 
 
   call shallow_water%init(g)
-  call init_state_rossby_haurwitz(shallow_water%state)
+  call shallow_water%set_state_rossby_haurwitz()
 
   shallow_water%solver%dt_stability = 2
   dt = 3
@@ -32,7 +32,7 @@ program main
   end do
   
   !call write_gmsh(g)
-  call write_gmsh_state(shallow_water%state,"results.msh")
+  call write_gmsh_state(shallow_water%state,"data/results.msh")
 
   ! Destruction
   ! -----------
