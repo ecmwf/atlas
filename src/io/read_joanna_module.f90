@@ -9,7 +9,7 @@ contains
   ! -----------------
  
   subroutine read_joanna_mesh(g,filename)
-    type(Grid), intent(inout)    :: g
+    class(Grid_class), pointer, intent(inout)    :: g
     character(len=*), intent(in) :: filename
     integer                      :: nnode
     integer                      :: nedge
@@ -61,7 +61,7 @@ contains
 
 
   subroutine read_joanna_fields(g,filename)
-    type(Grid), intent(inout) :: g
+    class(Grid_class), pointer, intent(inout) :: g
     character(len=*), intent(in) :: filename
 
     class(FunctionSpace),  pointer    :: vertices

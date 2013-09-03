@@ -40,7 +40,7 @@ module grid_module
   end type FieldPtr
   
   type, public :: FunctionSpace
-    class(Grid), pointer :: g
+    class(Grid_class), pointer :: g
     class(ShapeFunction), allocatable :: sf
     character(len=30) :: name
     integer :: nb_elems
@@ -81,7 +81,7 @@ module grid_module
   end type FaceFunctionSpace
 
 
-  type, public :: Grid
+  type, public :: Grid_class
     class(Element), allocatable :: cell
     class(Element), allocatable :: face
 
@@ -103,7 +103,7 @@ module grid_module
     procedure, pass :: add_continuous_function_space => Grid__add_continuous_function_space
     procedure, pass :: cell_coords => Grid__cell_coords
     procedure, pass :: function_space => Grid__function_space
-  end type Grid
+  end type Grid_class
   
 contains
   
@@ -138,7 +138,7 @@ contains
 
   subroutine FunctionSpace__init(self, name, shapefunction_type, grid_)
     class(FunctionSpace), intent(inout) :: self
-    class(Grid), intent(in), target :: grid_
+    class(Grid_class), intent(in), target :: grid_
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: shapefunction_type
     write(0,*) "FunctionSpace::init(",shapefunction_type,")"
@@ -249,7 +249,7 @@ contains
 
   subroutine ContinuousFunctionSpace__init(self, name, shapefunction_type, grid_)
     class(ContinuousFunctionSpace), intent(inout) :: self
-    class(Grid), intent(in), target :: grid_
+    class(Grid_class), intent(in), target :: grid_
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: shapefunction_type
     write(0,*) "ContinuousFunctionSpace::init(",shapefunction_type,")"
@@ -260,7 +260,7 @@ contains
   
   subroutine DiscontinuousFunctionSpace__init(self, name, shapefunction_type, grid_)
     class(DiscontinuousFunctionSpace), intent(inout) :: self
-    class(Grid), intent(in), target :: grid_
+    class(Grid_class), intent(in), target :: grid_
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: shapefunction_type
     write(0,*) "DiscontinuousFunctionSpace::init(",shapefunction_type,")"
@@ -272,7 +272,7 @@ contains
 
   subroutine FaceFunctionSpace__init(self, name, shapefunction_type, grid_)
     class(FaceFunctionSpace), intent(inout) :: self
-    class(Grid), intent(in), target :: grid_
+    class(Grid_class), intent(in), target :: grid_
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: shapefunction_type
     write(0,*) "FaceFunctionSpace::init(",shapefunction_type,")"
@@ -312,7 +312,7 @@ contains
   end subroutine FaceFunctionSpace__init
 
   function new_FaceFunctionSpace(name, shapefunction_type, grid_) result(function_space)
-    class(Grid), intent(inout), target :: grid_
+    class(Grid_class), intent(inout), target :: grid_
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: shapefunction_type
     class(FunctionSpace), pointer :: function_space
@@ -323,7 +323,7 @@ contains
   end function new_FaceFunctionSpace
 
   function new_ContinuousFunctionSpace(name, shapefunction_type, grid_) result(function_space)
-    class(Grid), intent(inout), target :: grid_
+    class(Grid_class), intent(inout), target :: grid_
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: shapefunction_type
     class(FunctionSpace), pointer :: function_space
@@ -334,7 +334,7 @@ contains
   end function new_ContinuousFunctionSpace
 
   function new_DiscontinuousFunctionSpace(name, shapefunction_type, grid_) result(function_space)
-    class(Grid), intent(inout), target :: grid_
+    class(Grid_class), intent(inout), target :: grid_
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: shapefunction_type
     class(FunctionSpace), pointer :: function_space
@@ -348,7 +348,7 @@ contains
 !                                   Grid subroutines
 !-------------------------------------------------------------------------------------
   subroutine Grid__init(self, element_type)
-    class(Grid), intent(inout) :: self
+    class(Grid_class), intent(inout) :: self
     character(len=*) :: element_type
     write(0,*) "Grid::init(",element_type,")"
     
@@ -372,7 +372,7 @@ contains
   end subroutine Grid__init
   
   subroutine Grid__destruct(self)
-    class(Grid), intent(inout) :: self
+    class(Grid_class), intent(inout) :: self
     integer :: f
     write(0,*) "Grid::destruct"
     if( allocated(self%cell) ) then
@@ -396,7 +396,7 @@ contains
   end subroutine Grid__destruct
   
   subroutine Grid__print(self)
-    class(Grid), intent(inout) :: self
+    class(Grid_class), intent(inout) :: self
     integer :: n
     integer :: e
     write(0,*) "nodes = "
@@ -411,7 +411,7 @@ contains
   
 
   subroutine Grid__add_function_space(self,function_space)
-    class(Grid), intent(inout) :: self
+    class(Grid_class), intent(inout) :: self
     class(FunctionSpace), pointer, intent(in) :: function_space
     type(FunctionSpacePtr), allocatable :: tmp(:)
     integer :: f
@@ -425,7 +425,7 @@ contains
   end subroutine Grid__add_function_space
 
   function Grid__add_continuous_function_space(self,name,shapefunction_type) result(new_function_space)
-    class(Grid), intent(inout)   :: self
+    class(Grid_class), intent(inout)   :: self
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: shapefunction_type
     class(FunctionSpace), pointer :: new_function_space
@@ -435,7 +435,7 @@ contains
   end function Grid__add_continuous_function_space
 
   function Grid__add_discontinuous_function_space(self,name,shapefunction_type) result(new_function_space)
-    class(Grid), intent(inout)   :: self
+    class(Grid_class), intent(inout)   :: self
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: shapefunction_type
     class(FunctionSpace), pointer :: new_function_space
@@ -445,7 +445,7 @@ contains
   end function Grid__add_discontinuous_function_space
 
   subroutine Grid__cell_coords(self, elem_idx, cell_coords)
-    class(Grid), intent(in) :: self
+    class(Grid_class), intent(in) :: self
     integer, intent(in) :: elem_idx
     real, dimension(:,:), intent(inout) :: cell_coords
 
@@ -456,7 +456,7 @@ contains
   end subroutine Grid__cell_coords
 
   function Grid__function_space(self, name) result(function_space)
-    class(Grid), intent(in) :: self
+    class(Grid_class), intent(in) :: self
     character(len=*), intent(in) :: name
     class(FunctionSpace), pointer :: function_space
     integer :: f

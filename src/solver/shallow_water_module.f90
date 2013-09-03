@@ -74,7 +74,7 @@ contains
 
   subroutine ShallowWaterModel__init(self,g)
     class(ShallowWaterModel), intent(inout), target :: self
-    class(Grid), intent(in), target :: g
+    class(Grid_class), intent(in), target :: g
     class(FunctionSpace), pointer :: vertices
     type(Field), pointer :: dual_volume
     type(Field), pointer :: dual_face_normal

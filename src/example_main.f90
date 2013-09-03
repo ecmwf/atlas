@@ -15,7 +15,7 @@ contains
   !  |      |      |      |
   !  1------2------5------7
   subroutine read_quads(g)
-    type(Grid), intent(inout) :: g
+    class(Grid_class), intent(inout) :: g
       
     ! Specify element type
     call g%init("LagrangeP1_Quad2D")
@@ -65,7 +65,7 @@ contains
   !  |E1   \|E3   \|
   !  1------2------5
   subroutine read_triags(g)
-    type(Grid), intent(inout) :: g
+    class(Grid_class), intent(inout) :: g
       
     ! Specify element type
     call g%init("LagrangeP1_Triag2D")
@@ -117,7 +117,7 @@ program main
   
   ! Declarations
   ! ------------
-  type(Grid)                        :: g
+  class(Grid_class)                        :: g
   class(FunctionSpace),  pointer    :: cellcentred  
   class(FunctionSpace),  pointer    :: vertices
   class(FunctionSpace),  pointer    :: faces

@@ -39,7 +39,7 @@ module model_module
   type, public :: Model
     class(Solver), pointer :: solver
     class(State),  pointer :: state
-    class(Grid),   pointer :: grid
+    class(Grid_class),   pointer :: grid
     class(Model),  pointer :: ptr 
 
   contains
@@ -101,7 +101,7 @@ contains
 
   subroutine Model__init(self, g)
     class(Model), intent(inout), target :: self
-    class(Grid), intent(in), target :: g
+    class(Grid_class), intent(in), target :: g
     self%ptr => self
     self%grid => g
   end subroutine Model__init

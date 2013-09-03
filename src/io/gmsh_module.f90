@@ -7,7 +7,7 @@ module gmsh_module
 contains
     
   subroutine write_gmsh_nodal_field(g,name)
-    type(Grid), intent(inout) :: g
+    class(Grid_class), intent(inout) :: g
     character(len=*) , intent(in) :: name
     class(FunctionSpace),  pointer    :: vertices
     class(Field),  pointer            :: F
@@ -32,7 +32,7 @@ contains
   end subroutine write_gmsh_nodal_field
 
   subroutine write_gmsh_face_field(g,name)
-    type(Grid), intent(inout) :: g
+    class(Grid_class), intent(inout) :: g
     character(len=*) , intent(in) :: name
     class(FunctionSpace),  pointer    :: faces
     class(Field),  pointer            :: F
@@ -57,7 +57,7 @@ contains
   end subroutine write_gmsh_face_field
 
   subroutine write_gmsh(g)
-    type(Grid), intent(inout) :: g
+    class(Grid_class), intent(inout) :: g
     integer :: iface, inode
     write(0,*) "Writing Gmsh file meshvol.msh"
     open(50,file='meshvol.msh',access='sequential',status='REPLACE')
@@ -92,7 +92,7 @@ contains
     type(State), intent(in) :: state_
     character(len=*), intent(in) :: filename
     integer :: iface, inode, ifield
-    class(Grid), pointer :: g
+    class(Grid_class), pointer :: g
     g => state_%function_space%g
     write(0,*) "Writing Gmsh file ",filename
     open(50,file=filename,access='sequential',status='REPLACE')

@@ -10,18 +10,20 @@ program main
   
   ! Declarations
   ! ------------
-  type(Grid)                        :: g
-  real                              :: dt
-  integer                           :: i
-  type(ShallowWaterModel) :: shallow_water
+  class(Grid_class), pointer :: grid
+  real                       :: dt
+  integer                    :: i
+  type(ShallowWaterModel)    :: shallow_water
 
   ! Execution
   ! ---------
   
-  call read_joanna_mesh(g,"data/meshvol.d")
-  call read_joanna_fields(g,"data/meshvol.d") 
+  allocate( Grid_class :: grid )
 
-  call shallow_water%init(g)
+  call read_joanna_mesh(grid,"data/meshvol.d")
+  call read_joanna_fields(grid,"data/meshvol.d") 
+
+  call shallow_water%init(grid)
   call shallow_water%set_state_rossby_haurwitz()
 
   shallow_water%solver%dt_stability = 2
@@ -37,6 +39,6 @@ program main
   ! Destruction
   ! -----------
   ! Recursively deallocate the grid, functionspaces, fields, ...
-  call g%destruct()
+  call grid%destruct()
 
 end program main
