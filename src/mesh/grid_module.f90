@@ -40,7 +40,7 @@ module grid_module
   end type FieldPtr
   
   type, public :: FunctionSpace_class
-    class(Grid_class), pointer :: g
+    class(Grid_class), pointer :: grid
     class(ShapeFunction_class), allocatable :: sf
     character(len=30) :: name
     integer :: nb_elems
@@ -136,26 +136,26 @@ contains
 !                                 FunctionSpace subroutines
 !-------------------------------------------------------------------------------------
 
-  subroutine FunctionSpace__init(self, name, shapefunction_type, grid_)
+  subroutine FunctionSpace__init(self, name, shapefunction_type, grid)
     class(FunctionSpace_class), intent(inout) :: self
-    class(Grid_class), intent(in), target :: grid_
+    class(Grid_class), intent(in), target :: grid
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: shapefunction_type
     write(0,*) "FunctionSpace::init(",shapefunction_type,")"
     self%name = name
-    self%g => grid_
+    self%grid => grid
     ! Depending on the string element_type, the element will be allocated
     ! to be of a different type
     select case (shapefunction_type)
       case ("LagrangeP0")
-        select case (self%g%cell%sf%shape)
+        select case (self%grid%cell%sf%shape)
           case (1) ! Quad
             allocate(LagrangeP0_Quad :: self%sf)    
           case (2) ! Triag
             allocate(LagrangeP0_Triag :: self%sf)
         end select
       case ("LagrangeP1")
-        select case (self%g%cell%sf%shape)
+        select case (self%grid%cell%sf%shape)
           case (1) ! Quad
             allocate(LagrangeP1_Quad :: self%sf)    
           case (2) ! Triag
@@ -166,7 +166,7 @@ contains
         stop 1        
     end select
     call self%sf%init()
-    self%nb_elems = self%g%nb_elems
+    self%nb_elems = self%grid%nb_elems
     allocate(self%fields(0))
   end subroutine FunctionSpace__init
   
@@ -225,7 +225,7 @@ contains
     type(FieldPtr), allocatable :: tmp(:)
     write(0,*) name
     allocate(new_field)
-    call new_field%init(name,self,self%g%dimension)
+    call new_field%init(name,self,self%grid%dimension)
     call move_alloc(self%fields,tmp)
     allocate(self%fields(size(tmp)+1))
     self%fields(:size(tmp)) = tmp
@@ -247,44 +247,44 @@ contains
     !abort("No field named "//trim(name)//" in function_space")
   end function FunctionSpace__field
 
-  subroutine ContinuousFunctionSpace__init(self, name, shapefunction_type, grid_)
+  subroutine ContinuousFunctionSpace__init(self, name, shapefunction_type, grid)
     class(ContinuousFunctionSpace), intent(inout) :: self
-    class(Grid_class), intent(in), target :: grid_
+    class(Grid_class), intent(in), target :: grid
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: shapefunction_type
     write(0,*) "ContinuousFunctionSpace::init(",shapefunction_type,")"
-    call self%FunctionSpace_class%init(name,shapefunction_type,grid_)
-    self%nb_nodes = grid_%nb_nodes
+    call self%FunctionSpace_class%init(name,shapefunction_type,grid)
+    self%nb_nodes = grid%nb_nodes
     allocate(self%elements(self%nb_elems,self%sf%nb_nodes))
   end subroutine ContinuousFunctionSpace__init
   
-  subroutine DiscontinuousFunctionSpace__init(self, name, shapefunction_type, grid_)
+  subroutine DiscontinuousFunctionSpace__init(self, name, shapefunction_type, grid)
     class(DiscontinuousFunctionSpace), intent(inout) :: self
-    class(Grid_class), intent(in), target :: grid_
+    class(Grid_class), intent(in), target :: grid
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: shapefunction_type
     write(0,*) "DiscontinuousFunctionSpace::init(",shapefunction_type,")"
-    call self%FunctionSpace_class%init(name,shapefunction_type,grid_)    
+    call self%FunctionSpace_class%init(name,shapefunction_type,grid)    
     self%nb_nodes = self%nb_elems * self%sf%nb_nodes
     allocate(self%elements(self%nb_elems,self%sf%nb_nodes))
   end subroutine DiscontinuousFunctionSpace__init
 
 
-  subroutine FaceFunctionSpace__init(self, name, shapefunction_type, grid_)
+  subroutine FaceFunctionSpace__init(self, name, shapefunction_type, grid)
     class(FaceFunctionSpace), intent(inout) :: self
-    class(Grid_class), intent(in), target :: grid_
+    class(Grid_class), intent(in), target :: grid
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: shapefunction_type
     write(0,*) "FaceFunctionSpace::init(",shapefunction_type,")"
     self%name = name
-    self%g => grid_
-    self%nb_elems = grid_%nb_faces
+    self%grid => grid
+    self%nb_elems = grid%nb_faces
     ! Depending on the string element_type, the element will be allocated
     ! to be of a different type
     select case (shapefunction_type)
       case ("LagrangeP0")
         self%nb_nodes = self%nb_elems
-        select case (grid_%face%sf%shape)
+        select case (grid%face%sf%shape)
           case (0) ! Line
             allocate(LagrangeP0_Line :: self%sf)
           case (1) ! Quad
@@ -293,8 +293,8 @@ contains
             allocate(LagrangeP0_Triag :: self%sf)
         end select
       case ("LagrangeP1")
-        self%nb_nodes = grid_%nb_nodes
-        select case (grid_%face%sf%shape)
+        self%nb_nodes = grid%nb_nodes
+        select case (grid%face%sf%shape)
           case (0) ! Line
             allocate(LagrangeP1_Line :: self%sf)
           case (1) ! Quad
@@ -311,36 +311,36 @@ contains
     allocate(self%elements(self%nb_elems,self%sf%nb_nodes))
   end subroutine FaceFunctionSpace__init
 
-  function new_FaceFunctionSpace(name, shapefunction_type, grid_) result(function_space)
-    class(Grid_class), intent(inout), target :: grid_
+  function new_FaceFunctionSpace(name, shapefunction_type, grid) result(function_space)
+    class(Grid_class), intent(inout), target :: grid
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: shapefunction_type
     class(FunctionSpace_class), pointer :: function_space
     allocate( FaceFunctionSpace :: function_space )
-    call function_space%init(name, shapefunction_type, grid_)
-    call grid_%add_function_space(function_space)
+    call function_space%init(name, shapefunction_type, grid)
+    call grid%add_function_space(function_space)
     write(0,*) function_space%name
   end function new_FaceFunctionSpace
 
-  function new_ContinuousFunctionSpace(name, shapefunction_type, grid_) result(function_space)
-    class(Grid_class), intent(inout), target :: grid_
+  function new_ContinuousFunctionSpace(name, shapefunction_type, grid) result(function_space)
+    class(Grid_class), intent(inout), target :: grid
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: shapefunction_type
     class(FunctionSpace_class), pointer :: function_space
     allocate( ContinuousFunctionSpace :: function_space )
-    call function_space%init(name, shapefunction_type, grid_)
-    call grid_%add_function_space(function_space)
+    call function_space%init(name, shapefunction_type, grid)
+    call grid%add_function_space(function_space)
     write(0,*) function_space%name
   end function new_ContinuousFunctionSpace
 
-  function new_DiscontinuousFunctionSpace(name, shapefunction_type, grid_) result(function_space)
-    class(Grid_class), intent(inout), target :: grid_
+  function new_DiscontinuousFunctionSpace(name, shapefunction_type, grid) result(function_space)
+    class(Grid_class), intent(inout), target :: grid
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: shapefunction_type
     class(FunctionSpace_class), pointer :: function_space
     allocate( DiscontinuousFunctionSpace :: function_space )
-    call function_space%init(name, shapefunction_type, grid_)
-    call grid_%add_function_space(function_space)
+    call function_space%init(name, shapefunction_type, grid)
+    call grid%add_function_space(function_space)
     write(0,*) function_space%name
   end function new_DiscontinuousFunctionSpace
 

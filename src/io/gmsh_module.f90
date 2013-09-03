@@ -92,28 +92,28 @@ contains
     type(State), intent(in) :: state_
     character(len=*), intent(in) :: filename
     integer :: iface, inode, ifield
-    class(Grid_class), pointer :: g
-    g => state_%function_space%g
+    class(Grid_class), pointer :: grid
+    grid => state_%function_space%grid
     write(0,*) "Writing Gmsh file ",filename
     open(50,file=filename,access='sequential',status='REPLACE')
     write(50,'(A)')"$MeshFormat"
     write(50,'(A)')"2.2 0 8"
     write(50,'(A)')"$EndMeshFormat"
     write(50,'(A)')"$Nodes"
-    write(50,*)g%nb_nodes
-    do inode=1,g%nb_nodes
-      write(50,*) inode, g%nodes(inode,1), g%nodes(inode,2), 0
+    write(50,*)grid%nb_nodes
+    do inode=1,grid%nb_nodes
+      write(50,*) inode, grid%nodes(inode,1), grid%nodes(inode,2), 0
     enddo
     write(50,'(A)')"$EndNodes"
     write(50,'(A)')"$Elements"
-    write(50,*) g%nb_faces
-    do iface=1, g%nb_faces
+    write(50,*) grid%nb_faces
+    do iface=1, grid%nb_faces
       ! element-number  type(1=lineP1)  nb_tags(=2)  tag1(=physical-group)  tag2(=elementary-group)  [nodes]
-      write(50,*)  iface, 1, 2, 1, 1, g%faces(iface,1), g%faces(iface,2)
+      write(50,*)  iface, 1, 2, 1, 1, grid%faces(iface,1), grid%faces(iface,2)
     enddo
     write(50,'(A)')"$EndElements"
     do ifield=1,size(state_%fields)
-      call write_gmsh_nodal_field(g,state_%fields(ifield)%ptr%name)
+      call write_gmsh_nodal_field(grid,state_%fields(ifield)%ptr%name)
     end do    
     close(50)
   end subroutine write_gmsh_state

@@ -149,8 +149,8 @@ contains
       D => state_%D
       Q => state_%Q
 
-      nodes    => state_%function_space%g%nodes
-      nb_nodes = state_%function_space%g%nb_nodes
+      nodes    => state_%function_space%grid%nodes
+      nb_nodes = state_%function_space%grid%nb_nodes
 
       do inode=1,nb_nodes
         x=nodes(inode,1)
