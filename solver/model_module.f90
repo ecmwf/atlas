@@ -28,6 +28,7 @@ module model_module
  type, public :: Solver
     real :: dt_stability
     class(State), pointer :: state
+    class(Model), pointer :: model
     integer :: iter = 0
   contains
     procedure, pass :: init => Solver__init
@@ -124,9 +125,10 @@ contains
 !                                  Solver subroutines
 !-------------------------------------------------------------------------------------
 
-  subroutine Solver__init(self,g)
+  subroutine Solver__init(self,model_)
     class(Solver), intent(inout) :: self
-    class(Grid), intent(in), target :: g
+    class(Model), intent(in), target :: model_
+    self%model => model_
     write(0,*) "Solver::init(g)"  
   end subroutine Solver__init
 

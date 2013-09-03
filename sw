@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 
-if [ $(uname -n)=="coolcat.local" ]; then
-  FC=gfortran
+if [[ $(uname -n) == "coolcat.local" ]]; then
+  FC=ifort
   echo mac
 else
   FC=/usr/local/apps/intel/parallel_studio_xe_2013/bin/ifort
@@ -20,4 +20,4 @@ $FC -g -O0 \
   shallow_water.f90\
   -o shallow_water &&\
   ./shallow_water &&\
-  rm *.mod shallow_water
+  rm *.mod *.o shallow_water
