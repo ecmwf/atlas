@@ -118,9 +118,9 @@ program main
   ! Declarations
   ! ------------
   class(Grid_class)                        :: g
-  class(FunctionSpace),  pointer    :: cellcentred  
-  class(FunctionSpace),  pointer    :: vertices
-  class(FunctionSpace),  pointer    :: faces
+  class(FunctionSpace_class),  pointer    :: cellcentred  
+  class(FunctionSpace_class),  pointer    :: vertices
+  class(FunctionSpace_class),  pointer    :: faces
 
   class(Field_class),           pointer    :: X, DxDx
   class(Field_class),           pointer    :: T

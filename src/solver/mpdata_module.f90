@@ -40,8 +40,8 @@ contains
   subroutine MPDATA_Solver__init(self,model_)
     class(MPDATA_Solver), intent(inout) :: self
     class(Model), intent(in), target :: model_
-    class(FunctionSpace), pointer :: vertices
-    class(FunctionSpace), pointer :: faces
+    class(FunctionSpace_class), pointer :: vertices
+    class(FunctionSpace_class), pointer :: faces
 
     call self%Solver%init(model_)
     write(0,*) "MPDATA_Solver::init(g)"  

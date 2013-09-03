@@ -64,8 +64,8 @@ contains
     class(Grid_class), pointer, intent(inout) :: g
     character(len=*), intent(in) :: filename
 
-    class(FunctionSpace),  pointer    :: vertices
-    class(FunctionSpace),  pointer    :: faces
+    class(FunctionSpace_class),  pointer    :: vertices
+    class(FunctionSpace_class),  pointer    :: faces
 
     class(Field_class),           pointer    :: V
     class(Field_class),           pointer    :: S

@@ -9,7 +9,7 @@ contains
   subroutine write_gmsh_nodal_field(g,name)
     class(Grid_class), intent(inout) :: g
     character(len=*) , intent(in) :: name
-    class(FunctionSpace),  pointer    :: vertices
+    class(FunctionSpace_class),  pointer    :: vertices
     class(Field_class),  pointer            :: F
     integer :: inode
     vertices => g%function_space("vertices")
@@ -34,7 +34,7 @@ contains
   subroutine write_gmsh_face_field(g,name)
     class(Grid_class), intent(inout) :: g
     character(len=*) , intent(in) :: name
-    class(FunctionSpace),  pointer    :: faces
+    class(FunctionSpace_class),  pointer    :: faces
     class(Field_class),  pointer            :: F
     integer :: iface
     faces => g%function_space("faces")

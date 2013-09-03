@@ -10,7 +10,7 @@ module model_module
   type, public :: State
     character(len=30) :: name
     real              :: time
-    class(FunctionSpace), pointer :: function_space
+    class(FunctionSpace_class), pointer :: function_space
     type(FieldPtr), dimension(:), allocatable :: fields
 
   contains
@@ -56,7 +56,7 @@ contains
 
   subroutine State__init(self, name, function_space)
     class(State), intent(inout) :: self
-    class(FunctionSpace), intent(in), target ::function_space
+    class(FunctionSpace_class), intent(in), target ::function_space
     character(len=*), intent(in) :: name
     write(0,*) "State::init(",name,")"  
     self%name = name  

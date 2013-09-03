@@ -46,7 +46,7 @@ contains
 
  function new_ShallowWaterState(name, function_space) result(state_)
     character(len=*), intent(in)              :: name
-    class(FunctionSpace), pointer, intent(in) :: function_space
+    class(FunctionSpace_class), pointer, intent(in) :: function_space
     class(State), pointer :: state_
     allocate( ShallowWaterState :: state_ )
     call state_%init(name,function_space)
@@ -55,7 +55,7 @@ contains
   subroutine ShallowWaterState__init(self,name,function_space)
     class(ShallowWaterState), intent(inout) :: self
     character(len=*), intent(in) :: name
-    class(FunctionSpace), intent(in), target :: function_space
+    class(FunctionSpace_class), intent(in), target :: function_space
     call self%State%init(name,function_space)
 
     write(0,*) "ShallowWaterState::init(",name,",",function_space%name,")"  
@@ -75,7 +75,7 @@ contains
   subroutine ShallowWaterModel__init(self,g)
     class(ShallowWaterModel), intent(inout), target :: self
     class(Grid_class), intent(in), target :: g
-    class(FunctionSpace), pointer :: vertices
+    class(FunctionSpace_class), pointer :: vertices
     class(Field_class), pointer :: dual_volume
     class(Field_class), pointer :: dual_face_normal
 
@@ -101,7 +101,7 @@ contains
 
   subroutine ShallowWaterModel__compute_metrics(self)
     class(ShallowWaterModel), intent(inout) :: self
-    class(FunctionSpace), pointer :: vertices
+    class(FunctionSpace_class), pointer :: vertices
     class(Field_class), pointer :: dual_volume
     real :: y, hx, hy, jac
     integer :: inode
@@ -187,8 +187,8 @@ contains
   subroutine ShallowWaterSolver__init(self,model_)
     class(ShallowWaterSolver), intent(inout) :: self
     class(Model), intent(in), target :: model_
-    class(FunctionSpace), pointer :: vertices
-    class(FunctionSpace), pointer :: faces
+    class(FunctionSpace_class), pointer :: vertices
+    class(FunctionSpace_class), pointer :: faces
 
     call self%MPDATA_Solver%init(model_)
     
