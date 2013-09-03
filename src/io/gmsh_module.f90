@@ -89,7 +89,7 @@ contains
 
   
   subroutine write_gmsh_state(state_,filename)
-    type(State), intent(in) :: state_
+    class(State_class), intent(in) :: state_
     character(len=*), intent(in) :: filename
     integer :: iface, inode, ifield
     class(Grid_class), pointer :: grid

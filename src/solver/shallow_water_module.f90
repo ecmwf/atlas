@@ -6,14 +6,14 @@ module shallow_water_module
   use mpdata_module
   implicit none
 
-  type, public, extends(State) :: ShallowWaterState
+  type, public, extends(State_class) :: ShallowWaterState
     class(Field_class),  pointer :: D, Q, H0
   contains
     procedure, pass :: init => ShallowWaterState__init
   end type ShallowWaterState
 
 
-  type, public, extends(Model) :: ShallowWaterModel
+  type, public, extends(Model_class) :: ShallowWaterModel
     real :: radius
     real :: grav
     real :: f0
@@ -44,19 +44,19 @@ contains
 !                              ShallowWaterState subroutines
 !-------------------------------------------------------------------------------------
 
- function new_ShallowWaterState(name, function_space) result(state_)
+ function new_ShallowWaterState(name, function_space) result(state)
     character(len=*), intent(in)              :: name
     class(FunctionSpace_class), pointer, intent(in) :: function_space
-    class(State), pointer :: state_
-    allocate( ShallowWaterState :: state_ )
-    call state_%init(name,function_space)
+    class(State_class), pointer :: state
+    allocate( ShallowWaterState :: state )
+    call state%init(name,function_space)
   end function new_ShallowWaterState
 
   subroutine ShallowWaterState__init(self,name,function_space)
     class(ShallowWaterState), intent(inout) :: self
     character(len=*), intent(in) :: name
     class(FunctionSpace_class), intent(in), target :: function_space
-    call self%State%init(name,function_space)
+    call self%State_class%init(name,function_space)
 
     write(0,*) "ShallowWaterState::init(",name,",",function_space%name,")"  
     self%D  => self%function_space%add_scalar_field("depth")
@@ -72,15 +72,15 @@ contains
 !                              ShallowWaterModel subroutines
 !-------------------------------------------------------------------------------------
 
-  subroutine ShallowWaterModel__init(self,g)
+  subroutine ShallowWaterModel__init(self,grid)
     class(ShallowWaterModel), intent(inout), target :: self
-    class(Grid_class), intent(in), target :: g
+    class(Grid_class), intent(in), target :: grid
     class(FunctionSpace_class), pointer :: vertices
     class(Field_class), pointer :: dual_volume
     class(Field_class), pointer :: dual_face_normal
 
-    call self%Model%init(g)
-    write(0,*) "ShallowWaterModel::init()"
+    call self%Model_class%init(grid)
+    write(0,*) "ShallowWaterModel::init(grid)"
  
     vertices => self%grid%function_space("vertices")
 
@@ -176,21 +176,21 @@ contains
 ! MPDATA Solver subroutines
 ! ==========================================================================
 
-  function new_ShallowWaterSolver(model_) result(solver_)
-    class(Model), pointer :: model_
-    class(Solver), pointer :: solver_
-    allocate( ShallowWaterSolver :: solver_ )
+  function new_ShallowWaterSolver(model) result(solver)
+    class(Model_class), pointer :: model
+    class(Solver_class), pointer :: solver
+    allocate( ShallowWaterSolver :: solver )
     write(0,*) "new_ShallowWaterSolver"
-    call solver_%init(model_)
+    call solver%init(model)
   end function new_ShallowWaterSolver
 
-  subroutine ShallowWaterSolver__init(self,model_)
+  subroutine ShallowWaterSolver__init(self,model)
     class(ShallowWaterSolver), intent(inout) :: self
-    class(Model), intent(in), target :: model_
+    class(Model_class), intent(in), target :: model
     class(FunctionSpace_class), pointer :: vertices
     class(FunctionSpace_class), pointer :: faces
 
-    call self%MPDATA_Solver%init(model_)
+    call self%MPDATA_Solver%init(model)
     
     
     write(0,*) "ShallowWaterSolver::init(model)"  

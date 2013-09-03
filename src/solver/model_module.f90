@@ -7,7 +7,7 @@ module model_module
   implicit none
   public
  
-  type, public :: State
+  type, public :: State_class
     character(len=30) :: name
     real              :: time
     class(FunctionSpace_class), pointer :: function_space
@@ -18,34 +18,34 @@ module model_module
     procedure, pass :: destruct => State__destruct
     procedure, pass :: add_field => State__add_field
     procedure, pass :: field => State__field
-  end type State
+  end type State_class
   
   type, public :: StatePtr
-    type(State), pointer :: ptr
+    type(State_class), pointer :: ptr
   end type StatePtr
   
 
- type, public :: Solver
+ type, public :: Solver_class
     real :: dt_stability
-    class(State), pointer :: state
-    class(Model), pointer :: model
+    class(State_class), pointer :: state
+    class(Model_class), pointer :: model
     integer :: iter = 0
   contains
     procedure, pass :: init => Solver__init
     procedure, pass :: step => Solver__step
-  end type Solver
+  end type Solver_class
 
 
-  type, public :: Model
-    class(Solver), pointer :: solver
-    class(State),  pointer :: state
+  type, public :: Model_class
+    class(Solver_class), pointer :: solver
+    class(State_class),  pointer :: state
     class(Grid_class),   pointer :: grid
-    class(Model),  pointer :: ptr 
+    class(Model_class),  pointer :: ptr 
 
   contains
     procedure, pass :: init => Model__init
     procedure, pass :: solve_time_step => Model__solve_time_step
-  end type Model
+  end type Model_class
 
 contains
 
@@ -55,7 +55,7 @@ contains
 !-------------------------------------------------------------------------------------
 
   subroutine State__init(self, name, function_space)
-    class(State), intent(inout) :: self
+    class(State_class), intent(inout) :: self
     class(FunctionSpace_class), intent(in), target ::function_space
     character(len=*), intent(in) :: name
     write(0,*) "State::init(",name,")"  
@@ -65,30 +65,30 @@ contains
   end subroutine State__init
   
   subroutine State__destruct(self)
-    class(State), intent(inout) :: self
+    class(State_class), intent(inout) :: self
     write(0,*) "State::destruct"
     deallocate(self%fields)
   end subroutine State__destruct
   
-  subroutine State__add_field(self,field_)
-    class(State), intent(inout)   :: self
-    class(Field_class), pointer :: field_
+  subroutine State__add_field(self,field)
+    class(State_class), intent(inout)   :: self
+    class(Field_class), pointer :: field
     type(FieldPtr), allocatable :: tmp(:)
     call move_alloc(self%fields,tmp)
     allocate(self%fields(size(tmp)+1))
     self%fields(:size(tmp)) = tmp
-    self%fields(size(self%fields))%ptr => field_
+    self%fields(size(self%fields))%ptr => field
     deallocate(tmp)
   end subroutine State__add_field
 
-  function State__field(self, name) result(field_)
-    class(State), intent(in) :: self
+  function State__field(self, name) result(field)
+    class(State_class), intent(in) :: self
     character(len=*), intent(in) :: name
-    class(Field_class), pointer :: field_
+    class(Field_class), pointer :: field
     integer :: f
     do f=1,size(self%fields)
-      field_ => self%fields(f)%ptr
-      if( field_%name == name) then
+      field => self%fields(f)%ptr
+      if( field%name == name) then
         return
       end if
     end do
@@ -99,15 +99,15 @@ contains
 !                                  Model subroutines
 !-------------------------------------------------------------------------------------
 
-  subroutine Model__init(self, g)
-    class(Model), intent(inout), target :: self
-    class(Grid_class), intent(in), target :: g
+  subroutine Model__init(self, grid)
+    class(Model_class), intent(inout), target :: self
+    class(Grid_class), intent(in), target :: grid
     self%ptr => self
-    self%grid => g
+    self%grid => grid
   end subroutine Model__init
 
   subroutine Model__solve_time_step(self,dt)
-    class(Model), intent(inout) :: self
+    class(Model_class), intent(inout) :: self
     real, intent(in) :: dt
     real :: tmax, t0
 
@@ -125,16 +125,16 @@ contains
 !                                  Solver subroutines
 !-------------------------------------------------------------------------------------
 
-  subroutine Solver__init(self,model_)
-    class(Solver), intent(inout) :: self
-    class(Model), intent(in), target :: model_
-    self%model => model_
+  subroutine Solver__init(self,model)
+    class(Solver_class), intent(inout) :: self
+    class(Model_class), intent(in), target :: model
+    self%model => model
     write(0,*) "Solver::init(g)"  
   end subroutine Solver__init
 
 
   subroutine Solver__step(self,tmax)
-    class(Solver), intent(inout) :: self
+    class(Solver_class), intent(inout) :: self
     real, intent(in) :: tmax
     real :: dt
     dt = min( self%dt_stability, tmax-self%state%time )

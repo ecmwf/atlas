@@ -3,7 +3,7 @@ module mpdata_module
   use model_module
   implicit none
 
-  type, public, extends(Solver) :: MPDATA_Solver
+  type, public, extends(Solver_class) :: MPDATA_Solver
     class(Field_class), pointer :: vol ! dual mesh volumes
     class(Field_class), pointer :: S ! dual mesh edge-normals
     real :: dt
@@ -30,20 +30,20 @@ contains
 ! MPDATA Solver subroutines
 ! ==========================================================================
 
-  function new_MPDATA_Solver(model_) result(solver_)
-    class(Model), pointer :: model_
-    class(Solver), pointer :: solver_
-    allocate( MPDATA_Solver :: solver_ )
-    call solver_%init(model_)
+  function new_MPDATA_Solver(model) result(solver)
+    class(Model_class), pointer :: model
+    class(Solver_class), pointer :: solver
+    allocate( MPDATA_Solver :: solver )
+    call solver%init(model)
   end function new_MPDATA_Solver
 
-  subroutine MPDATA_Solver__init(self,model_)
+  subroutine MPDATA_Solver__init(self,model)
     class(MPDATA_Solver), intent(inout) :: self
-    class(Model), intent(in), target :: model_
+    class(Model_class), intent(in), target :: model
     class(FunctionSpace_class), pointer :: vertices
     class(FunctionSpace_class), pointer :: faces
 
-    call self%Solver%init(model_)
+    call self%Solver_class%init(model)
     write(0,*) "MPDATA_Solver::init(g)"  
     vertices => self%model%grid%function_space("vertices")
     faces => self%model%grid%function_space("faces")
