@@ -7,7 +7,7 @@ module lagrangep1_module
   implicit none
   public
   
-  type, public, extends(ShapeFunction) :: LagrangeP1_Line
+  type, public, extends(ShapeFunction_class) :: LagrangeP1_Line
   contains
     procedure, public :: init        => LagrangeP1_Line__init
     procedure, public :: values      => LagrangeP1_Line__values
@@ -21,7 +21,7 @@ module lagrangep1_module
     procedure, public :: jacobian_determinant => LagrangeP1_Line2D__jacobian_determinant
   end type LagrangeP1_Line2D
 
-  type, public, extends(ShapeFunction) :: LagrangeP1_Quad
+  type, public, extends(ShapeFunction_class) :: LagrangeP1_Quad
   contains
     procedure, public :: init        => LagrangeP1_Quad__init
     procedure, public :: values      => LagrangeP1_Quad__values
@@ -36,7 +36,7 @@ module lagrangep1_module
   end type LagrangeP1_Quad2D
   
   
-  type, public, extends(ShapeFunction) :: LagrangeP1_Triag
+  type, public, extends(ShapeFunction_class) :: LagrangeP1_Triag
   contains
     procedure, public :: init        => LagrangeP1_Triag__init
     procedure, public :: values      => LagrangeP1_Triag__values
@@ -56,7 +56,7 @@ contains
   subroutine LagrangeP1_Line__init(self)
     class(LagrangeP1_Line), intent(inout) :: self
     ! Call parent class init
-    call self%ShapeFunction%init()
+    call self%ShapeFunction_class%init()
     self%shape = 0 ! Line
     self%dimensionality = 1
     self%nb_nodes = 2
@@ -128,7 +128,7 @@ contains
   subroutine LagrangeP1_Quad__init(self)
     class(LagrangeP1_Quad), intent(inout) :: self
     ! Call parent class init
-    call self%ShapeFunction%init()
+    call self%ShapeFunction_class%init()
     self%shape = 1 ! Quad
     self%dimensionality = 2
     self%nb_nodes = 4
@@ -231,7 +231,7 @@ contains
   subroutine LagrangeP1_Triag__init(self)
     class(LagrangeP1_Triag), intent(inout) :: self
     ! Call parent class init
-    call self%ShapeFunction%init()
+    call self%ShapeFunction_class%init()
 
     self%shape = 2 ! Triag
     self%dimensionality = 2

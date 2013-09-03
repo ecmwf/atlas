@@ -4,7 +4,7 @@
 ! the nodes, elements, and element type
 module grid_module
   ! Base classes, specifying the interface
-  use elements_module,   only : Element, ShapeFunction
+  use elements_module,   only : Element, ShapeFunction_class
   
   ! All possible implementations for Element and Shapefunction respectively
   use lagrangep0_module, only : &
@@ -41,7 +41,7 @@ module grid_module
   
   type, public :: FunctionSpace_class
     class(Grid_class), pointer :: g
-    class(ShapeFunction), allocatable :: sf
+    class(ShapeFunction_class), allocatable :: sf
     character(len=30) :: name
     integer :: nb_elems
     integer :: nb_nodes

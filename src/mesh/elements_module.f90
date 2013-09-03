@@ -8,7 +8,7 @@ module elements_module
   ! - interpolation  Q(XI,ETA,ZETA) = sum( L_i(XI,ETA,ZETA) * Q_i )
   ! - gradient       [dQ/dXI, dQ/dETA, dQ/dZETA]
   ! - divergence     dQ/dXI + dQ/dETA + dQ/dZETA
-  type, public :: ShapeFunction
+  type, public :: ShapeFunction_class
     integer :: shape ! 1=Quad, 2=Triag
     integer :: dimensionality
     integer :: nb_nodes
@@ -21,7 +21,7 @@ module elements_module
     procedure, public :: values        => ShapeFunction__values
     procedure, public :: grad_values   => ShapeFunction__grad_values
 
-  end type ShapeFunction
+  end type ShapeFunction_class
 
   ! Element class
   ! -------------------
@@ -30,7 +30,7 @@ module elements_module
   ! While the shapefunction Quad will be the same in its local coordinate system
   ! - jacobian transformation matrix
   type, public :: Element
-    class(ShapeFunction), allocatable :: sf
+    class(ShapeFunction_class), allocatable :: sf
     integer :: dimension
     integer :: dimensionality
     integer :: nb_nodes
@@ -50,7 +50,7 @@ contains
   ! -------------------
   ! Constructor for ShapeFunction base class
   subroutine ShapeFunction__init(self)
-    class(ShapeFunction), intent(inout) :: self
+    class(ShapeFunction_class), intent(inout) :: self
     write(0,*) "ShapeFunction::init"
   end subroutine ShapeFunction__init
   
@@ -58,7 +58,7 @@ contains
   ! -------------------
   ! Destructor for ShapeFunction base class
   subroutine ShapeFunction__destruct(self)
-    class(ShapeFunction) :: self
+    class(ShapeFunction_class) :: self
     write(0,*) "ShapeFunction::destruct"
     if (allocated(self%local_coords)) deallocate(self%local_coords)
   end subroutine ShapeFunction__destruct
@@ -67,7 +67,7 @@ contains
   ! ---------------------
   ! Compute the interpolation values for a given local coordinate
   subroutine ShapeFunction__values( self, local_coord, values )
-    class(ShapeFunction), intent(in) :: self
+    class(ShapeFunction_class), intent(in) :: self
     real, dimension(:), intent(in) :: local_coord
     real, dimension(:), intent(inout) :: values
 
@@ -78,7 +78,7 @@ contains
   ! --------------------------
   ! Compute the interpolation values for a given local coordinate
   subroutine ShapeFunction__grad_values( self, local_coord, grad_values )
-    class(ShapeFunction), intent(in) :: self
+    class(ShapeFunction_class), intent(in) :: self
     real, dimension(:), intent(in) :: local_coord
     real, dimension(:,:), intent(inout) :: grad_values
 
