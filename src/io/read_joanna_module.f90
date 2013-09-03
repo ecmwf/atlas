@@ -67,8 +67,8 @@ contains
     class(FunctionSpace),  pointer    :: vertices
     class(FunctionSpace),  pointer    :: faces
 
-    type(Field),           pointer    :: V
-    type(Field),           pointer    :: S
+    class(Field_class),           pointer    :: V
+    class(Field_class),           pointer    :: S
 
     integer                   :: nnode
     integer                   :: nedge

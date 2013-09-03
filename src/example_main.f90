@@ -122,10 +122,10 @@ program main
   class(FunctionSpace),  pointer    :: vertices
   class(FunctionSpace),  pointer    :: faces
 
-  type(Field),           pointer    :: X, DxDx
-  type(Field),           pointer    :: T
-  type(Field),           pointer    :: State
-  type(Field),           pointer    :: S
+  class(Field_class),           pointer    :: X, DxDx
+  class(Field_class),           pointer    :: T
+  class(Field_class),           pointer    :: State
+  class(Field_class),           pointer    :: S
 
   integer                           :: n,e
   real, dimension(:),   allocatable :: local_coord

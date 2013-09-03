@@ -7,7 +7,7 @@ module shallow_water_module
   implicit none
 
   type, public, extends(State) :: ShallowWaterState
-    type(Field),  pointer :: D, Q, H0
+    class(Field_class),  pointer :: D, Q, H0
   contains
     procedure, pass :: init => ShallowWaterState__init
   end type ShallowWaterState
@@ -25,8 +25,8 @@ module shallow_water_module
   end type ShallowWaterModel
 
   type, public, extends(MPDATA_Solver) :: ShallowWaterSolver
-    type(Field), private, pointer :: grad_D ! gradient of depth
-    type(Field), private, pointer :: R, Rex, Qadv, Q0, D0, Q, D, V
+    class(Field_class), private, pointer :: grad_D ! gradient of depth
+    class(Field_class), private, pointer :: R, Rex, Qadv, Q0, D0, Q, D, V
 
   contains
     procedure, public,  pass :: init => ShallowWaterSolver__init
@@ -76,8 +76,8 @@ contains
     class(ShallowWaterModel), intent(inout), target :: self
     class(Grid_class), intent(in), target :: g
     class(FunctionSpace), pointer :: vertices
-    type(Field), pointer :: dual_volume
-    type(Field), pointer :: dual_face_normal
+    class(Field_class), pointer :: dual_volume
+    class(Field_class), pointer :: dual_face_normal
 
     call self%Model%init(g)
     write(0,*) "ShallowWaterModel::init()"
@@ -102,7 +102,7 @@ contains
   subroutine ShallowWaterModel__compute_metrics(self)
     class(ShallowWaterModel), intent(inout) :: self
     class(FunctionSpace), pointer :: vertices
-    type(Field), pointer :: dual_volume
+    class(Field_class), pointer :: dual_volume
     real :: y, hx, hy, jac
     integer :: inode
 
@@ -121,7 +121,7 @@ contains
 
   subroutine ShallowWaterModel__set_state_rossby_haurwitz(self)
     class(ShallowWaterModel), intent(inout) :: self
-    type(Field),  pointer                   :: D, Q
+    class(Field_class),  pointer                   :: D, Q
     real, dimension(:,:), pointer :: nodes
     integer :: inode
     integer :: nb_nodes

@@ -72,7 +72,7 @@ contains
   
   subroutine State__add_field(self,field_)
     class(State), intent(inout)   :: self
-    type(Field), pointer :: field_
+    class(Field_class), pointer :: field_
     type(FieldPtr), allocatable :: tmp(:)
     call move_alloc(self%fields,tmp)
     allocate(self%fields(size(tmp)+1))
@@ -84,7 +84,7 @@ contains
   function State__field(self, name) result(field_)
     class(State), intent(in) :: self
     character(len=*), intent(in) :: name
-    type(Field), pointer :: field_
+    class(Field_class), pointer :: field_
     integer :: f
     do f=1,size(self%fields)
       field_ => self%fields(f)%ptr

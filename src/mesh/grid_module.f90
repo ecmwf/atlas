@@ -24,7 +24,7 @@ module grid_module
   public new_DiscontinuousFunctionSpace
 
 
-  type, public :: Field
+  type, public :: Field_class
     character(len=30) :: name
     real, dimension(:,:), allocatable :: array
     integer :: size
@@ -33,10 +33,10 @@ module grid_module
   contains
     procedure, pass :: init => Field__init
     procedure, pass :: destruct => Field__destruct
-  end type Field
+  end type Field_class
   
   type, public :: FieldPtr
-    type(Field), pointer :: ptr
+    class(Field_class), pointer :: ptr
   end type FieldPtr
   
   type, public :: FunctionSpace
@@ -112,7 +112,7 @@ contains
 !-------------------------------------------------------------------------------------
 
   subroutine Field__init(self, name, function_space, cols)
-    class(Field), intent(inout) :: self
+    class(Field_class), intent(inout) :: self
     character(len=*), intent(in) :: name
     class(FunctionSpace), intent(in), target :: function_space
     integer, intent(in) :: cols
@@ -126,7 +126,7 @@ contains
   end subroutine Field__init
   
   subroutine Field__destruct(self)
-    class(Field), intent(inout) :: self
+    class(Field_class), intent(inout) :: self
     write(0,*) "Field::destruct"
     if( allocated(self%array) ) deallocate(self%array)
   end subroutine Field__destruct
@@ -192,7 +192,7 @@ contains
     class(FunctionSpace), intent(inout)   :: self
     character(len=*), intent(in) :: name
     integer, intent(in) :: cols
-    type(Field), pointer :: new_field
+    class(Field_class), pointer :: new_field
     type(FieldPtr), allocatable :: tmp(:)
     allocate(new_field)
     call new_field%init(name,self,cols)
@@ -207,7 +207,7 @@ contains
   function FunctionSpace__add_scalar_field(self,name) result(new_field)
     class(FunctionSpace), intent(inout)   :: self
     character(len=*), intent(in) :: name
-    type(Field), pointer :: new_field
+    class(Field_class), pointer :: new_field
     type(FieldPtr), allocatable :: tmp(:)
     allocate(new_field)
     call new_field%init(name,self,1)
@@ -221,7 +221,7 @@ contains
   function FunctionSpace__add_vector_field(self,name) result(new_field)
     class(FunctionSpace), intent(inout)   :: self
     character(len=*), intent(in) :: name
-    type(Field), pointer :: new_field
+    class(Field_class), pointer :: new_field
     type(FieldPtr), allocatable :: tmp(:)
     write(0,*) name
     allocate(new_field)
@@ -236,7 +236,7 @@ contains
   function FunctionSpace__field(self, name) result(field_)
     class(FunctionSpace), intent(in) :: self
     character(len=*), intent(in) :: name
-    type(Field), pointer :: field_
+    class(Field_class), pointer :: field_
     integer :: f
     do f=1,size(self%fields)
       field_ => self%fields(f)%ptr

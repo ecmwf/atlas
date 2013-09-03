@@ -10,7 +10,7 @@ contains
     class(Grid_class), intent(inout) :: g
     character(len=*) , intent(in) :: name
     class(FunctionSpace),  pointer    :: vertices
-    class(Field),  pointer            :: F
+    class(Field_class),  pointer            :: F
     integer :: inode
     vertices => g%function_space("vertices")
     F => vertices%field(name)
@@ -35,7 +35,7 @@ contains
     class(Grid_class), intent(inout) :: g
     character(len=*) , intent(in) :: name
     class(FunctionSpace),  pointer    :: faces
-    class(Field),  pointer            :: F
+    class(Field_class),  pointer            :: F
     integer :: iface
     faces => g%function_space("faces")
     F => faces%field(name)

@@ -4,8 +4,8 @@ module mpdata_module
   implicit none
 
   type, public, extends(Solver) :: MPDATA_Solver
-    type(Field), pointer :: vol ! dual mesh volumes
-    type(Field), pointer :: S ! dual mesh edge-normals
+    class(Field_class), pointer :: vol ! dual mesh volumes
+    class(Field_class), pointer :: S ! dual mesh edge-normals
     real :: dt
 
   contains
