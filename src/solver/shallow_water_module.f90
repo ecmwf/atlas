@@ -59,9 +59,12 @@ contains
     call self%State_class%init(name,function_space)
 
     write(0,*) "ShallowWaterState::init(",name,",",function_space%name,")"  
-    self%D  => self%function_space%add_scalar_field("depth")
-    self%Q  => self%function_space%add_vector_field("momentum")
-    self%H0 => self%function_space%add_scalar_field("orography")
+    !self%D  => self%function_space%add_scalar_field("depth")
+    !self%Q  => self%function_space%add_vector_field("momentum")
+    !self%H0 => self%function_space%add_scalar_field("orography")
+    self%D  => new_ScalarField("depth",function_space)
+    self%Q  => new_VectorField("momentum",function_space)
+    self%H0 => new_ScalarField("orography",function_space)
     call self%add_field(self%D)
     call self%add_field(self%Q)
     call self%add_field(self%H0)
@@ -121,19 +124,19 @@ contains
 
   subroutine ShallowWaterModel__set_state_rossby_haurwitz(self)
     class(ShallowWaterModel), intent(inout) :: self
-    class(Field_class),  pointer                   :: D, Q
+    class(Field_class) , pointer :: D, Q
     real, dimension(:,:), pointer :: nodes
     integer :: inode
     integer :: nb_nodes
 
     integer :: ir,ip
-    real    :: aaa0,zk,om,ph0,g,ath,bth,cth,pi,f0,x,y,th,a,cor
+    real    :: aaa0,zk,om,ph0,g,ath,bth,cth,pi,x,y,th,cor
 
     ! statement-functions, before first statement
-    ATH(TH) = om*0.5*(f0+om)*(cos(TH))**2 &
+    ATH(TH) = om*0.5*(self%f0+om)*(cos(TH))**2 &
       & +0.25*zk**2*(cos(TH))**(2*ir)*( (ir+1)*(cos(TH))**2 &
       & +real(2*ir**2-ir-2)-2.*ir**2/(cos(TH))**2 )
-    BTH(TH) = (f0+2.*om)*zk/real((ir+1)*(ir+2))*(cos(TH))**ir &
+    BTH(TH) = (self%f0+2.*om)*zk/real((ir+1)*(ir+2))*(cos(TH))**ir &
       & *( real(ir**2+2*ir+2)-((ir+1)*cos(TH))**2 )
     CTH(TH) = 0.25*zk**2*(cos(TH))**(2*ir)*( real(ir+1)*(cos(TH))**2 &
       & -real(ir+2) )  
@@ -144,13 +147,11 @@ contains
     ph0  = 78.4E3
     aaa0 = 0.
 
-    select type ( state_ =>self%state )
-    type is (ShallowWaterState)
-      D => state_%D
-      Q => state_%Q
+    D => self%state%field("depth")
+    Q => self%state%field("momentum")
 
-      nodes    => state_%function_space%grid%nodes
-      nb_nodes = state_%function_space%grid%nb_nodes
+    nodes    => self%state%function_space%grid%nodes
+    nb_nodes = self%state%function_space%grid%nb_nodes
 
       do inode=1,nb_nodes
         x=nodes(inode,1)
@@ -159,7 +160,7 @@ contains
           cor=self%f0*sin(y)
           Q%array(inode,1) =  self%radius*OM*cos(y)+self%radius*ZK*cos(IR*x) *(cos(y))**(IR-1)*(IR*(sin(y))**2-(cos(y))**2)
           Q%array(inode,2) = -self%radius*ZK*IR*(cos(y))**(IR-1)*sin(Y)*sin(IR*x)
-          D%array(inode,1) = (PH0+self%radius**2*ATH(y)+self%radius**2*BTH(y)*cos(IR*x)+self%radius**2*CTH(y)*cos(2.*IR*x)) &
+          D%array(inode,1) = (ph0+self%radius**2*ATH(y)+self%radius**2*BTH(y)*cos(IR*x)+self%radius**2*CTH(y)*cos(2.*IR*x)) &
               & /(self%grav)
           D%array(inode,1) = max(aaa0,D%array(inode,1))
           Q%array(inode,1) = Q%array(inode,1) * D%array(inode,1)
@@ -167,7 +168,6 @@ contains
           if(y == 0.5*self%pi) Q%array(inode,1)=0.
           if(y ==-0.5*self%pi) Q%array(inode,1)=0.
       end do
-    end select
 
   end subroutine ShallowWaterModel__set_state_rossby_haurwitz
   
@@ -191,20 +191,21 @@ contains
     class(FunctionSpace_class), pointer :: faces
 
     call self%MPDATA_Solver%init(model)
-    
-    
+    self%state => self%model%state
     write(0,*) "ShallowWaterSolver::init(model)"  
-    vertices => self%model%grid%function_space("vertices")
-    self%D => vertices%field("depth")
-    self%Q => vertices%field("momentum")
-    self%grad_D => vertices%add_vector_field("depth_gradient")
-    self%R => vertices%add_vector_field("rhs_forcing")
-    self%Rex => vertices%add_vector_field("rhs_forcing_exact_part")
-    self%Qadv => vertices%add_vector_field("momentum_advected")
-    self%D0 => vertices%add_vector_field("depth_prev_iter")
-    self%Q0 => vertices%add_vector_field("momentum_prev_iter")
-    self%V => vertices%add_vector_field("advective_velocity")
+    vertices    => self%model%grid%function_space("vertices")
+    self%D      => self%state%field("depth")
+    self%Q      => self%state%field("momentum")
 
+    self%grad_D => new_VectorField("depth_gradient",vertices)
+    self%R      => new_VectorField("rhs_forcing",vertices)
+    self%Rex    => new_VectorField("rhs_forcing_exact_part",vertices)
+    self%Qadv   => new_VectorField("momentum_advected",vertices)
+    self%D0     => new_VectorField("depth_prev_iter",vertices)
+    self%Q0     => new_VectorField("momentum_prev_iter",vertices)
+    self%V      => new_VectorField("advective_velocity",vertices)
+
+    call self%state%add_field(self%V)
   end subroutine ShallowWaterSolver__init
 
   subroutine ShallowWaterSolver__backup_solution(self)
@@ -253,9 +254,9 @@ contains
 
   subroutine ShallowWaterSolver__advect_solution(self)
     class(ShallowWaterSolver), intent(in)    :: self
-    call self%mpdata_gage( self%D%array(:,1), self%V%array, self%D%array(:,1)    )
-    call self%mpdata_gage( self%Q%array(:,1), self%V%array, self%Qadv%array(:,1) )
-    call self%mpdata_gage( self%Q%array(:,2), self%V%array, self%Qadv%array(:,2) )
+    call self%mpdata_gauge( self%D%array(:,1), self%V%array, self%D%array(:,1) )
+    call self%mpdata_gauge( self%Q%array(:,1), self%V%array, self%Qadv%array(:,1) )
+    call self%mpdata_gauge( self%Q%array(:,2), self%V%array, self%Qadv%array(:,2) )
   end subroutine ShallowWaterSolver__advect_solution
 
   subroutine ShallowWaterSolver__compute_Rn(self)

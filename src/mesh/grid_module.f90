@@ -244,7 +244,7 @@ contains
         return
       end if
     end do
-    !abort("No field named "//trim(name)//" in function_space")
+    call abort
   end function FunctionSpace__field
 
   subroutine ContinuousFunctionSpace__init(self, name, shapefunction_type, grid)
@@ -343,6 +343,22 @@ contains
     call grid%add_function_space(function_space)
     write(0,*) function_space%name
   end function new_DiscontinuousFunctionSpace
+
+  function new_ScalarField(name, function_space) result(field)
+    class(FunctionSpace_class), intent(in), target :: function_space
+    character(len=*), intent(in) :: name
+    class(Field_class), pointer :: field
+    allocate(field)
+    call field%init(name,function_space,1)
+  end function new_ScalarField
+
+  function new_VectorField(name, function_space) result(field)
+    class(FunctionSpace_class), intent(in), target :: function_space
+    character(len=*), intent(in) :: name
+    class(Field_class), pointer :: field
+    allocate(field)
+    call field%init(name,function_space, function_space%grid%dimension)
+  end function new_VectorField
 
 ! ------------------------------------------------------------------------------------
 !                                   Grid subroutines
@@ -466,6 +482,8 @@ contains
         return
       end if
     end do
-    !abort("No function space named "//trim(name)//" in grid")
+    call abort
   end function Grid__function_space
+
+
 end module grid_module

@@ -31,6 +31,27 @@ contains
     write(50,'(A)')"$EndNodeData"
   end subroutine write_gmsh_nodal_field
 
+  subroutine write_gmsh_nodal_field_ptr(g,field)
+    class(Grid_class), intent(inout) :: g
+    class(Field_class),  pointer, intent(in) :: field
+    integer :: inode
+    write(50,'(A)')"$NodeData"
+    write(50,*) 1                     ! one string tag:
+    write(50,'(A)') '"'//field%name//'"'      ! the name of the view ("A scalar view")
+    write(50,*) 1                     ! one real tag:
+    write(50,*) 0.0                   ! the time value (0.0)
+    write(50,*) 3                     ! three integer tags:
+    write(50,*) 0                     ! the time step (0; time steps always start at 0)
+    if (field%cols == 1) write(50,*) 1    ! 1-component (scalar) field
+    if (field%cols == 2) write(50,*) 3    ! 3-component (vector) field
+    write(50,*) g%nb_nodes            ! number of associated nodal values
+    do inode=1,g%nb_nodes
+      if (field%cols == 1) write(50,*) inode, field%array(inode,1)
+      if (field%cols == 2) write(50,*) inode, field%array(inode,1), field%array(inode,2), 0     
+    enddo
+    write(50,'(A)')"$EndNodeData"
+  end subroutine write_gmsh_nodal_field_ptr
+
   subroutine write_gmsh_face_field(g,name)
     class(Grid_class), intent(inout) :: g
     character(len=*) , intent(in) :: name
@@ -113,7 +134,7 @@ contains
     enddo
     write(50,'(A)')"$EndElements"
     do ifield=1,size(state_%fields)
-      call write_gmsh_nodal_field(grid,state_%fields(ifield)%ptr%name)
+      call write_gmsh_nodal_field_ptr(grid,state_%fields(ifield)%ptr)
     end do    
     close(50)
   end subroutine write_gmsh_state

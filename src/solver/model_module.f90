@@ -18,6 +18,7 @@ module model_module
     procedure, pass :: destruct => State__destruct
     procedure, pass :: add_field => State__add_field
     procedure, pass :: field => State__field
+    procedure, pass :: has_field => State__has_field
   end type State_class
   
   type, public :: StatePtr
@@ -48,7 +49,6 @@ module model_module
   end type Model_class
 
 contains
-
 
 ! ------------------------------------------------------------------------------------
 !                                  State subroutines
@@ -92,8 +92,25 @@ contains
         return
       end if
     end do
-    !abort("No field named "//trim(name)//" in function_space")
+    write(0,*) 'Could not find field ',name, ' in ',self%name
+    call abort
   end function State__field
+
+  logical function State__has_field(self, name)
+    class(State_class), intent(in) :: self
+    character(len=*), intent(in) :: name
+    class(Field_class), pointer :: field
+    logical :: has_field
+    integer :: f
+    do f=1,size(self%fields)
+      field => self%fields(f)%ptr
+      if( field%name == name) then
+        State__has_field = .True.
+        return
+      end if
+    end do
+    State__has_field = .False.
+  end function State__has_field
 
 ! ------------------------------------------------------------------------------------
 !                                  Model subroutines

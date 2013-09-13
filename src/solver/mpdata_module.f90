@@ -15,7 +15,7 @@ module mpdata_module
     procedure, pass :: compute_Rn   => MPDATA_Solver__compute_Rn
     procedure, pass :: implicit_solve => MPDATA_Solver__implicit_solve
     procedure, pass :: compute_advective_velocities => MPDATA_Solver__compute_advective_velocities
-    procedure, pass :: mpdata_gage => MPDATA_Solver__mpdata_gage
+    procedure, pass :: mpdata_gauge => MPDATA_Solver__mpdata_gauge
     procedure, pass :: backup_solution => MPDATA_Solver__backup_solution
     procedure, pass :: add_forcing_to_solution => MPDATA_Solver__add_forcing_to_solution
     procedure, pass :: advect_solution => MPDATA_Solver__advect_solution
@@ -177,7 +177,7 @@ contains
 
   end subroutine MPDATA_Solver__compute_gradient
 
-  subroutine MPDATA_Solver__mpdata_gage(self,Q,V, Qadv)
+  subroutine MPDATA_Solver__mpdata_gauge(self,Q,V, Qadv)
     class(MPDATA_Solver), intent(in)  :: self
     real, dimension(:),   intent(inout)  :: Q
     real, dimension(:,:), intent(in)  :: V
@@ -216,7 +216,7 @@ contains
     
     Qadv = Q
     
-  end subroutine MPDATA_Solver__mpdata_gage
+  end subroutine MPDATA_Solver__mpdata_gauge
 
 end module mpdata_module
 
