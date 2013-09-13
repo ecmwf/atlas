@@ -6,6 +6,7 @@ module mpdata_module
   type, public, extends(Solver_class) :: MPDATA_Solver
     class(Field_class), pointer :: vol ! dual mesh volumes
     class(Field_class), pointer :: S ! dual mesh edge-normals
+    real, dimension(:,:), allocatable :: gradQ
     real :: dt
 
   contains
@@ -49,6 +50,7 @@ contains
     faces => self%model%grid%function_space("faces")
     self%S => faces%field("dual_face_normal")
     self%vol => vertices%field("dual_volume")
+    allocate( self%gradQ(vertices%nb_nodes,self%model%grid%dimension) )
   end subroutine MPDATA_Solver__init
 
 
@@ -108,27 +110,27 @@ contains
   !================================================================
 
   subroutine MPDATA_Solver__backup_solution(self)
-    class(MPDATA_Solver), intent(in) :: self
+    class(MPDATA_Solver), intent(inout) :: self
   end subroutine MPDATA_Solver__backup_solution
 
   subroutine MPDATA_Solver__add_forcing_to_solution(self)
-    class(MPDATA_Solver), intent(in) :: self
+    class(MPDATA_Solver), intent(inout) :: self
   end subroutine MPDATA_Solver__add_forcing_to_solution
 
   subroutine MPDATA_Solver__compute_advective_velocities(self)
-    class(MPDATA_Solver), intent(in)    :: self
+    class(MPDATA_Solver), intent(inout)    :: self
   end subroutine MPDATA_Solver__compute_advective_velocities
 
   subroutine MPDATA_Solver__advect_solution(self)
-    class(MPDATA_Solver), intent(in)    :: self
+    class(MPDATA_Solver), intent(inout)    :: self
   end subroutine MPDATA_Solver__advect_solution
 
   subroutine MPDATA_Solver__compute_Rn(self)
-    class(MPDATA_Solver), intent(in)    :: self
+    class(MPDATA_Solver), intent(inout)    :: self
   end subroutine MPDATA_Solver__compute_Rn
 
   subroutine MPDATA_Solver__implicit_solve(self)
-    class(MPDATA_Solver), intent(in)    :: self
+    class(MPDATA_Solver), intent(inout)    :: self
   end subroutine MPDATA_Solver__implicit_solve
 
 !================================================================
@@ -136,7 +138,7 @@ contains
 !================================================================
 
   subroutine MPDATA_Solver__compute_gradient(self,Q,gradQ)
-    class(MPDATA_Solver), intent(in)    :: self
+    class(MPDATA_Solver), intent(inout)    :: self
     real, dimension(:),   intent(in)    :: Q
     real, dimension(:,:), intent(inout) :: gradQ
     
@@ -178,7 +180,7 @@ contains
   end subroutine MPDATA_Solver__compute_gradient
 
   subroutine MPDATA_Solver__mpdata_gauge(self,Q,V, Qadv)
-    class(MPDATA_Solver), intent(in)  :: self
+    class(MPDATA_Solver), intent(inout)  :: self
     real, dimension(:),   intent(inout)  :: Q
     real, dimension(:,:), intent(in)  :: V
     real, dimension(:),   intent(out) :: Qadv
@@ -186,34 +188,72 @@ contains
     integer :: inode, nb_internal_edges, ied, pass, p1,p2, apos, aneg, nb_nodes
     real :: rhs(self%model%grid%nb_nodes)
     real :: aun(self%model%grid%nb_faces)
-    real :: sx, sy, flux
+    real :: sx, sy, flux, volume_of_two_cells, dQdx, dQdy, Vx, Vy
 
     write(0,*) "mpdata"
 
     nb_internal_edges = self%model%grid%nb_faces
     nb_nodes = self%model%grid%nb_nodes
 
-    do pass=1,1 ! 2 or more passes here!!!
+    ! 1. First pass
+    ! -------------
       
-      do ied=1,nb_internal_edges
-        p1 = self%model%grid%faces(ied,1)
-        p2 = self%model%grid%faces(ied,2)
-        sx = self%S%array(ied,1)
-        sy = self%S%array(ied,2)
+    ! Compute the rhs in vertices, and normal velocity in faces
+    do inode = 1,size(rhs)
+      rhs(inode) = 0.
+    enddo
+    do ied=1,nb_internal_edges
+      p1 = self%model%grid%faces(ied,1)
+      p2 = self%model%grid%faces(ied,2)
+      sx = self%S%array(ied,1)
+      sy = self%S%array(ied,2)
 
-        aun(ied) = 0.5*(V(p1,1)+V(p2,1))*sx + 0.5*(V(p1,2)+V(p2,2))*sy
-        apos = max(0.,aun(ied))
-        aneg = min(0.,aun(ied))
-        flux = Q(p1)*apos + Q(p2)*aneg
-        rhs(p1) = rhs(p1) + flux
-        rhs(p2) = rhs(p2) - flux
-      end do
-
-      do inode=1,nb_nodes
-        Q(inode) = Q(inode) - rhs(inode) * self%dt / self%vol%array(inode,1)
-      end do
+      aun(ied) = 0.5*(V(p1,1)+V(p2,1))*sx + 0.5*(V(p1,2)+V(p2,2))*sy
+      apos = max(0.,aun(ied))
+      aneg = min(0.,aun(ied))
+      flux = Q(p1)*apos + Q(p2)*aneg
+      rhs(p1) = rhs(p1) + flux
+      rhs(p2) = rhs(p2) - flux
     end do
+
+    ! Update the unknowns in vertices
+    do inode=1,nb_nodes
+      Q(inode) = Q(inode) - rhs(inode) * self%dt / self%vol%array(inode,1)
+    end do
+  
+    ! 2. Second pass
+    ! -------------
     
+    ! Compute derivatives for mpdata
+    call self%compute_gradient(Q,self%gradQ)
+    
+    ! Compute antidiffusive normal velocity in faces
+    do inode = 1,size(rhs)
+      rhs(inode) = 0.
+    enddo
+    do ied=1,nb_internal_edges
+      p1 = self%model%grid%faces(ied,1)
+      p2 = self%model%grid%faces(ied,2)
+      sx = self%S%array(ied,1)
+      sy = self%S%array(ied,2)
+      volume_of_two_cells = self%vol%array(p1,1) + self%vol%array(p2,1)
+      dQdx = (self%gradQ(p1,1)+self%gradQ(p2,1)) / volume_of_two_cells
+      dQdy = (self%gradQ(p1,2)+self%gradQ(p2,2)) / volume_of_two_cells
+      Vx = 0.5*(V(p1,1)+V(p2,1))
+      Vy = 0.5*(V(p1,2)+V(p2,2))
+      aun(ied) = abs(aun(ied))*(Q(p2)-Q(p1))*0.5 - 0.5*self%dt*aun(ied)*(Vx*dQdx+Vy*dQdy)
+      apos = max(0.,aun(ied))
+      aneg = min(0.,aun(ied))
+      flux = Q(p1)*apos + Q(p2)*aneg
+      rhs(p1) = rhs(p1) + flux
+      rhs(p2) = rhs(p2) - flux
+    end do
+
+    ! Update the unknowns in vertices
+    do inode=1,nb_nodes
+      Q(inode) = Q(inode) - rhs(inode) * self%dt / self%vol%array(inode,1)
+    end do
+
     Qadv = Q
     
   end subroutine MPDATA_Solver__mpdata_gauge

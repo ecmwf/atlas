@@ -209,13 +209,13 @@ contains
   end subroutine ShallowWaterSolver__init
 
   subroutine ShallowWaterSolver__backup_solution(self)
-    class(ShallowWaterSolver), intent(in) :: self
+    class(ShallowWaterSolver), intent(inout) :: self
     self%Q0%array = self%Q%array
     self%D0%array = self%D%array
   end subroutine ShallowWaterSolver__backup_solution
 
   subroutine ShallowWaterSolver__add_forcing_to_solution(self)
-    class(ShallowWaterSolver), intent(in) :: self
+    class(ShallowWaterSolver), intent(inout) :: self
     integer :: inode
     do inode=1,self%model%grid%nb_nodes
       self%Q%array(inode,1) = self%Q%array(inode,1) + 0.5*self%dt*self%R%array(inode,1)
@@ -224,7 +224,7 @@ contains
   end subroutine ShallowWaterSolver__add_forcing_to_solution
 
   subroutine ShallowWaterSolver__compute_advective_velocities(self)
-    class(ShallowWaterSolver), intent(in)    :: self
+    class(ShallowWaterSolver), intent(inout)    :: self
     real :: y, r, Qx, Qy, Q0x, Q0y, D, D0, eps
     integer :: inode
     
@@ -253,14 +253,14 @@ contains
   end subroutine ShallowWaterSolver__compute_advective_velocities
 
   subroutine ShallowWaterSolver__advect_solution(self)
-    class(ShallowWaterSolver), intent(in)    :: self
+    class(ShallowWaterSolver), intent(inout)    :: self
     call self%mpdata_gauge( self%D%array(:,1), self%V%array, self%D%array(:,1) )
     call self%mpdata_gauge( self%Q%array(:,1), self%V%array, self%Qadv%array(:,1) )
     call self%mpdata_gauge( self%Q%array(:,2), self%V%array, self%Qadv%array(:,2) )
   end subroutine ShallowWaterSolver__advect_solution
 
   subroutine ShallowWaterSolver__compute_Rn(self)
-    class(ShallowWaterSolver), intent(in)    :: self
+    class(ShallowWaterSolver), intent(inout)    :: self
     real :: f0, f, x, y, r, g, Qx, Qy, D, dDdx, sin_y, cos_y, eps
     integer :: inode
     
@@ -291,7 +291,7 @@ contains
 
 
   subroutine ShallowWaterSolver__implicit_solve(self)
-    class(ShallowWaterSolver), intent(in)    :: self
+    class(ShallowWaterSolver), intent(inout)    :: self
     real :: f0, f, y, r, g, Qx, Qy, D, dDdx, sin_y, cos_y, eps
     integer :: inode, m
 
