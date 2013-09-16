@@ -165,6 +165,8 @@ contains
           D%array(inode,1) = max(aaa0,D%array(inode,1))
           Q%array(inode,1) = Q%array(inode,1) * D%array(inode,1)
           Q%array(inode,2) = Q%array(inode,2) * D%array(inode,1)
+          !Q%array(inode,1) = 50 * D%array(inode,1)
+          !Q%array(inode,2) = 0  * D%array(inode,1)
           if(y == 0.5*self%pi) Q%array(inode,1)=0.
           if(y ==-0.5*self%pi) Q%array(inode,1)=0.
       end do
@@ -201,11 +203,14 @@ contains
     self%R      => new_VectorField("rhs_forcing",vertices)
     self%Rex    => new_VectorField("rhs_forcing_exact_part",vertices)
     self%Qadv   => new_VectorField("momentum_advected",vertices)
-    self%D0     => new_VectorField("depth_prev_iter",vertices)
+    self%D0     => new_ScalarField("depth_prev_iter",vertices)
     self%Q0     => new_VectorField("momentum_prev_iter",vertices)
     self%V      => new_VectorField("advective_velocity",vertices)
 
+    call self%state%add_field(self%D0)
     call self%state%add_field(self%V)
+    call self%state%add_field(self%R)
+
   end subroutine ShallowWaterSolver__init
 
   subroutine ShallowWaterSolver__backup_solution(self)
@@ -247,21 +252,20 @@ contains
       ! and hx = r*cos(y)  ,  hy = r
       ! and Q = [ D*u , D*v ]
       self%V%array(inode,1) = ( 1.5*Qx/D - 0.5*Q0x/D0 )*r
-      self%V%array(inode,2) = ( 1.5*Qy/D - 0.5*Q0y/D0 )*r*cos(y)
-      
+      self%V%array(inode,2) = ( 1.5*Qy/D - 0.5*Q0y/D0 )*r*cos(y)      
     end do
   end subroutine ShallowWaterSolver__compute_advective_velocities
 
   subroutine ShallowWaterSolver__advect_solution(self)
     class(ShallowWaterSolver), intent(inout)    :: self
-    call self%mpdata_gauge( self%D%array(:,1), self%V%array, self%D%array(:,1) )
-    call self%mpdata_gauge( self%Q%array(:,1), self%V%array, self%Qadv%array(:,1) )
-    call self%mpdata_gauge( self%Q%array(:,2), self%V%array, self%Qadv%array(:,2) )
+    call self%mpdata_abs( self%D%array(:,1), self%V%array )
+    call self%mpdata_abs( self%Q%array(:,1), self%V%array )
+    call self%mpdata_abs( self%Q%array(:,2), self%V%array )
   end subroutine ShallowWaterSolver__advect_solution
 
   subroutine ShallowWaterSolver__compute_Rn(self)
     class(ShallowWaterSolver), intent(inout)    :: self
-    real :: f0, f, x, y, r, g, Qx, Qy, D, dDdx, sin_y, cos_y, eps
+    real :: f0, f, x, y, r, g, Qx, Qy, D, dDdx, dDdy, sin_y, cos_y, eps, vol
     integer :: inode
     
     eps = 1e-10
@@ -280,19 +284,20 @@ contains
       Qy    = self%Q%array(inode,2)
       D     = max( eps, self%D%array(inode,1) )
       dDdx  = self%grad_D%array(inode,1)
+      dDdy  = self%grad_D%array(inode,2)
+      vol   = self%vol%array(inode,1)
+
       f     = f0 * sin_y
       
-      self%Rex%array(inode,1) = -g/(r*cos_y)*D*dDdx
-      self%Rex%array(inode,2) = -g/r*D*dDdx
-      self%R%array(inode,1)   = self%Rex%array(inode,1) + f*Qy + sin_y/(r*cos_y)*Qx*Qy/D
-      self%R%array(inode,2)   = self%Rex%array(inode,2) - f*Qx - sin_y/(r*cos_y)*Qx*Qx/D
+      self%R%array(inode,1)   = -g*r        *D*dDdx/vol + f*Qy + sin_y/(r*cos_y)*Qx*Qy/D
+      self%R%array(inode,2)   = -g*(r*cos_y)*D*dDdy/vol - f*Qx - sin_y/(r*cos_y)*Qx*Qx/D
     end do
   end subroutine ShallowWaterSolver__compute_Rn
 
 
   subroutine ShallowWaterSolver__implicit_solve(self)
     class(ShallowWaterSolver), intent(inout)    :: self
-    real :: f0, f, y, r, g, Qx, Qy, D, dDdx, sin_y, cos_y, eps
+    real :: f0, f, y, r, g, Rx, Ry, Qx, Qy, D, dDdx, dDdy, sin_y, cos_y, eps, Qx_adv, Qy_adv, Rx_exp, Ry_exp, vol
     integer :: inode, m
 
     eps = 1e-10
@@ -305,32 +310,34 @@ contains
     
     do inode=1,self%model%grid%nb_nodes
       y     = self%model%grid%nodes(inode,2)
-      Qx    = self%Q%array(inode,1)
-      Qy    = self%Q%array(inode,2)
-      cos_y = max( eps, cos(y) )
-      D     = self%D%array(inode,1)
-      dDdx  = self%grad_D%array(inode,1)
-      self%Rex%array(inode,1) = -g/(r*cos_y)*D*dDdx
-      self%Rex%array(inode,2) = -g/r*D*dDdx
-    end do
-
-    do inode=1,self%model%grid%nb_nodes
-      y     = self%model%grid%nodes(inode,2)
       sin_y = sin(y)
       cos_y = max( eps, cos(y) )
       D     = max( eps, self%D%array(inode,1) )
       f     = f0 * sin_y
+      dDdx  = self%grad_D%array(inode,1)
+      dDdy  = self%grad_D%array(inode,2)
+      vol   = self%vol%array(inode,1)
+
+      Rx_exp = -g*r        *D*dDdx/vol
+      Ry_exp = -g*(r*cos_y)*D*dDdy/vol
+
+      Qx = self%Q%array(inode,1)
+      Qy = self%Q%array(inode,2)
+      Qx_adv = Qx
+      Qy_adv = Qy
 
       do m=1,3 ! Three iterations at most is enough to converge
-        Qx = self%Q%array(inode,1)
-        Qy = self%Q%array(inode,2)
-
-        self%R%array(inode,1) = self%Rex%array(inode,1) + f*Qy + sin_y/(r*cos_y)*Qx*Qy/D
-        self%R%array(inode,2) = self%Rex%array(inode,2) - f*Qx - sin_y/(r*cos_y)*Qx*Qx/D
+        Rx = Rx_exp + f*Qy + sin_y/(r*cos_y)*Qx*Qy/D
+        Ry = Ry_exp - f*Qx - sin_y/(r*cos_y)*Qx*Qx/D
       
-        self%Q%array(inode,1) = self%Qadv%array(inode,1) + 0.5*self%dt*self%R%array(inode,1)
-        self%Q%array(inode,2) = self%Qadv%array(inode,2) + 0.5*self%dt*self%R%array(inode,2)
+        Qx = Qx_adv + 0.5*self%dt*Rx
+        Qy = Qy_adv + 0.5*self%dt*Ry
       end do
+
+      self%Q%array(inode,1) = Qx
+      self%Q%array(inode,2) = Qy
+      self%R%array(inode,1) = Rx
+      self%R%array(inode,2) = Ry
     
     end do
   end subroutine ShallowWaterSolver__implicit_solve
