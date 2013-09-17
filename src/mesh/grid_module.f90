@@ -89,9 +89,16 @@ module grid_module
     integer :: nb_elems
     integer :: nb_nodes
     integer :: nb_faces
+    integer :: nb_pole_faces
+    integer :: nb_internal_faces
+    integer :: nb_periodic_nodes
     real,    dimension(:,:), allocatable :: nodes
     integer, dimension(:,:), allocatable :: cells
     integer, dimension(:,:), allocatable :: faces
+    integer, dimension(:), allocatable :: internal_faces
+    integer, dimension(:), allocatable :: pole_faces
+    integer, dimension(:,:), allocatable :: periodic_nodes
+
     type(FunctionSpacePtr), dimension(:), allocatable :: function_spaces
 
   contains

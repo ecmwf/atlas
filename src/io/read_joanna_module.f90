@@ -17,10 +17,15 @@ contains
     integer                      :: ncoin
     integer                      :: before1
     integer                      :: before2
-    integer                      :: edge_cnt
+    integer                      :: face_cnt
+    integer                      :: pole_face_cnt
+    integer                      :: internal_face_cnt
+
     integer                      :: idx
     real                         :: vol
     integer                      :: p1,p2
+    integer :: dummy_int
+    real :: dummy_real
 
     integer :: iface
     integer :: inode
@@ -34,27 +39,51 @@ contains
     
     g%nb_nodes = nnode
     g%nb_elems = 0 ! This mesh only contains edges *sad*
-    g%nb_faces = nedge ! -(before2-before1+1)
-    
+    g%nb_faces = nedge
+    g%nb_internal_faces = nedge - (before2-before1+1)
+    g%nb_pole_faces = before2-before1+1
+    g%nb_periodic_nodes = ncoin
+
     ! Fill in nodes and cells
     allocate(g%nodes(g%nb_nodes,g%dimension))
     do inode = 1, g%nb_nodes
       read(5,*) g%nodes(inode,1), g%nodes(inode,2), vol
-    enddo
+    end do
 
-    edge_cnt = 0
+    face_cnt = 0
+    pole_face_cnt = 0
+    internal_face_cnt = 0
     allocate(g%faces(g%nb_faces,2)) ! this 2 should be nb_nodes_per_face
+    allocate(g%pole_faces(g%nb_pole_faces))
+    allocate(g%internal_faces(g%nb_internal_faces))
+
     do iface = 1, g%nb_faces
       read(5,*) idx, p1, p2
-      if (.true.) then
-      !if (iface<before1 .or. iface>before2) then
-        edge_cnt = edge_cnt + 1
-        g%faces(edge_cnt,1) = p1
-        g%faces(edge_cnt,2) = p2
-      endif
-    enddo
-    g%nb_faces = edge_cnt
-    
+      g%faces(iface,1) = p1
+      g%faces(iface,2) = p2
+      if (iface<before1 .or. iface>before2) then
+        internal_face_cnt = internal_face_cnt + 1
+        g%internal_faces(internal_face_cnt) = iface
+      else
+        pole_face_cnt = pole_face_cnt + 1
+        g%pole_faces(pole_face_cnt) = iface
+      end if
+    end do
+    g%nb_pole_faces = pole_face_cnt
+    g%nb_internal_faces = internal_face_cnt
+
+    do iface = 1,nedge
+      read(5,*) dummy_int, dummy_real, dummy_real
+    end do
+
+    allocate(g%periodic_nodes(g%nb_periodic_nodes,2))
+
+    do inode = 1,g%nb_periodic_nodes
+      read(5,*) idx, p1, p2
+      g%periodic_nodes(inode,1) = p1
+      g%periodic_nodes(inode,2) = p2
+    end do
+
     close(5)
     
   end subroutine read_joanna_mesh
@@ -76,7 +105,7 @@ contains
     integer                   :: ncoin
     integer                   :: before1
     integer                   :: before2
-    integer                   :: edge_cnt
+    integer                   :: face_cnt
     integer                   :: idx
     real                      :: vol
     integer                   :: p1,p2
@@ -108,15 +137,10 @@ contains
     faces => new_FaceFunctionSpace("faces", "LagrangeP0", g)
     S     => faces%add_vector_field("dual_face_normal")
 
-    edge_cnt = 0
     do iface = 1,nedge
       read(5,*) dummy_int, Sx, Sy
-      if (.true.) then
-      !if (iface<before1 .or. iface>before2) then
-        edge_cnt = edge_cnt + 1
-        S%array(edge_cnt,1) = Sx
-        S%array(edge_cnt,2) = Sy
-      endif
+      S%array(iface,1) = Sx
+      S%array(iface,2) = Sy
     enddo
 
     close(5)

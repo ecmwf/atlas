@@ -140,28 +140,23 @@ contains
 ! Subroutines independent of equations used
 !================================================================
 
-  subroutine MPDATA_Solver__compute_gradient(self,Q,gradQ)
+  subroutine MPDATA_Solver__compute_gradient(self,Q,gradQ,Q_is_vector)
     class(MPDATA_Solver), intent(inout) :: self
     real, dimension(:),   intent(in)    :: Q
     real, dimension(:,:), intent(inout) :: gradQ
+    logical, intent(in) :: Q_is_vector
     
     real    :: sx,sy,avgQ
-    integer :: ip,ied,p1,p2, nb_internal_edges, nb_edges
-
-    nb_internal_edges = self%model%grid%nb_faces
-    nb_edges = self%model%grid%nb_faces
+    integer :: ip,iface,p1,p2, f
 
     ! derivatives 
-    do ip = 1,size(Q)
-      gradQ(ip,1) = 0.
-      gradQ(ip,2) = 0.
-    end do
-
-    do ied = 1,nb_internal_edges
-      p1  = self%model%grid%faces(ied,1)
-      p2  = self%model%grid%faces(ied,2)
-      sx  = self%S%array(ied,1)
-      sy  = self%S%array(ied,2)
+    gradQ = 0
+    do iface = 1,self%model%grid%nb_internal_faces
+      f = self%model%grid%internal_faces(iface)
+      p1  = self%model%grid%faces(f,1)
+      p2  = self%model%grid%faces(f,2)
+      sx  = self%S%array(f,1)
+      sy  = self%S%array(f,2)
       avgQ = 0.5*( Q(p1) + Q(p2) )
       gradQ(p1,1) = gradQ(p1,1) + sx*avgQ
       gradQ(p1,2) = gradQ(p1,2) + sy*avgQ
@@ -169,16 +164,19 @@ contains
       gradQ(p2,2) = gradQ(p2,2) - sy*avgQ
     end do
 
-    ! special treatment for the north & south pole cell faces 
-    do ied = nb_internal_edges+1,nb_edges
-      p1  = self%model%grid%faces(ied,1)
-      p2  = self%model%grid%faces(ied,2)
-      sx  = self%S%array(ied,1)
-      sy  = self%S%array(ied,2)
-      avgQ = 0.5*( Q(p1) + Q(p2) )
-      gradQ(p1,2) = gradQ(p1,2) + sy*avgQ
-      gradQ(p2,2) = gradQ(p2,2) + sy*avgQ
-    end do
+    ! special treatment for the north & south pole cell faces
+    ! Sx == 0 at pole, and Sy has same sign at both sides of pole
+    if (.not. Q_is_vector) then
+      do iface = 1,self%model%grid%nb_pole_faces
+        f = self%model%grid%pole_faces(iface)
+        p1  = self%model%grid%faces(f,1)
+        p2  = self%model%grid%faces(f,2)
+        sy  = self%S%array(f,2)
+        avgQ = 0.5*( Q(p1) + Q(p2) )
+        gradQ(p1,2) = gradQ(p1,2) + sy*avgQ
+        gradQ(p2,2) = gradQ(p2,2) + sy*avgQ ! not minus because point at other side of pole
+      end do
+    end if
 
   end subroutine MPDATA_Solver__compute_gradient
 
@@ -189,7 +187,7 @@ contains
     real, dimension(:),   intent(inout) :: absS
 
     real    :: sx,sy,Qf, normS
-    integer :: ip,ied,p1,p2, nb_internal_edges, nb_edges
+    integer :: ip,iface, f,p1,p2, nb_internal_edges, nb_edges
 
     nb_internal_edges = self%model%grid%nb_faces
     nb_edges = self%model%grid%nb_faces
@@ -198,11 +196,12 @@ contains
     avgQ = 0
     absS = 0
 
-    do ied = 1,nb_internal_edges
-      p1  = self%model%grid%faces(ied,1)
-      p2  = self%model%grid%faces(ied,2)
-      sx  = self%S%array(ied,1)
-      sy  = self%S%array(ied,2)
+    do iface = 1,self%model%grid%nb_internal_faces
+      f = self%model%grid%internal_faces(iface)
+      p1 = self%model%grid%faces(f,1)
+      p2 = self%model%grid%faces(f,2)
+      sx  = self%S%array(f,1)
+      sy  = self%S%array(f,2)
       Qf = 0.5*( Q(p1) + Q(p2) )
       normS = sqrt(sx*sx+sy*sy)
       avgQ(p1) = avgQ(p1) + normS*Qf
@@ -213,24 +212,28 @@ contains
   end subroutine MPDATA_Solver__compute_weighted_average
 
 
-  subroutine MPDATA_Solver__mpdata_gauge(self,Q,V)
+  subroutine MPDATA_Solver__mpdata_gauge(self,Q,V,Q_is_vector)
     class(MPDATA_Solver), intent(inout)  :: self
     real, dimension(:),   intent(inout)  :: Q
     real, dimension(:,:), intent(in)  :: V
+    logical, intent(in) :: Q_is_vector
     
-    integer :: inode, nb_internal_edges, ied, pass, p1,p2, apos, aneg, nb_nodes
+    integer :: inode, iface, pass, p1,p2, nb_nodes, f
     real :: advection(self%model%grid%nb_nodes)
     real :: aun(self%model%grid%nb_faces)
-    real :: Qabs(self%model%grid%nb_nodes)
-    real :: Sabs(self%model%grid%nb_nodes)
-    real :: Qavg(self%model%grid%nb_nodes)
 
-    real :: sx, sy, flux, volume_of_two_cells, dQdx, dQdy, Vx, Vy, eps
-    real :: denom
-    class(Field_class), pointer :: Dgrad
+    real :: Qmax(self%model%grid%nb_nodes)
+    real :: Qmin(self%model%grid%nb_nodes)
+    real :: rhin(self%model%grid%nb_nodes)
+    real :: rhout(self%model%grid%nb_nodes)
+    real :: cp(self%model%grid%nb_nodes)
+    real :: cn(self%model%grid%nb_nodes)
+
+    real :: sx, sy, flux, volume_of_two_cells, dQdx, dQdy, Vx, Vy, eps, apos, aneg
+
+    logical :: limiter = .True.
 
     eps = 1e-10
-    nb_internal_edges = self%model%grid%nb_faces
     nb_nodes = self%model%grid%nb_nodes
 
     ! 1. First pass
@@ -238,15 +241,17 @@ contains
       
     ! Compute the rhs in vertices, and normal velocity in faces
     advection = 0.
-    do ied=1,nb_internal_edges
-      p1 = self%model%grid%faces(ied,1)
-      p2 = self%model%grid%faces(ied,2)
-      sx = self%S%array(ied,1)
-      sy = self%S%array(ied,2)
-
-      aun(ied) = 0.5*(V(p1,1)+V(p2,1))*sx + 0.5*(V(p1,2)+V(p2,2))*sy
-      apos = max(0.,aun(ied))
-      aneg = min(0.,aun(ied))
+    do iface = 1,self%model%grid%nb_internal_faces
+      f  = self%model%grid%internal_faces(iface)
+      p1 = self%model%grid%faces(f,1)
+      p2 = self%model%grid%faces(f,2)
+      sx = self%S%array(f,1)
+      sy = self%S%array(f,2)
+      Vx = 0.5*(V(p1,1)+V(p2,1))
+      Vy = 0.5*(V(p1,2)+V(p2,2))
+      aun(f) = Vx*sx +Vy*sy
+      apos = max(0.,aun(f))
+      aneg = min(0.,aun(f))
       flux = Q(p1)*apos + Q(p2)*aneg
       advection(p1) = advection(p1) + flux
       advection(p2) = advection(p2) - flux
@@ -254,24 +259,20 @@ contains
 
     ! Update the unknowns in vertices
     do inode=1,nb_nodes
-      Q(inode) = Q(inode) - advection(inode) * self%dt / self%vol%array(inode,1)
-      Qabs(inode) = abs(Q(inode))
+      Q(inode) = Q(inode) - advection(inode)/self%vol%array(inode,1) * self%dt
     end do
 
-  
     ! 2. Second pass
     ! -------------
     
     ! Compute derivatives for mpdata
-    call self%compute_gradient(Qabs,self%gradQ)
+    call self%compute_gradient(Q,self%gradQ, Q_is_vector )
 
     ! Compute antidiffusive normal velocity in faces
-    advection = 0.
-    do ied=1,nb_internal_edges
-      p1 = self%model%grid%faces(ied,1)
-      p2 = self%model%grid%faces(ied,2)
-      sx = self%S%array(ied,1)
-      sy = self%S%array(ied,2)
+    do iface = 1,self%model%grid%nb_internal_faces
+      f = self%model%grid%internal_faces(iface)
+      p1 = self%model%grid%faces(f,1)
+      p2 = self%model%grid%faces(f,2)
 
       ! evaluate gradient and velocity at edge by combining 2 neighbouring dual cells
       volume_of_two_cells = self%vol%array(p1,1) + self%vol%array(p2,1)
@@ -281,27 +282,104 @@ contains
       Vy = 0.5*(V(p1,2)+V(p2,2))
 
       ! variable sign option with asymptotic analysis, (mpdata gauge)
-      aun(ied) = abs(aun(ied))*(Q(p2)-Q(p1))*0.5 - 0.5*self%dt*aun(ied)*(Vx*dQdx+Vy*dQdy)
-      flux = aun(ied)
+      aun(f) = abs(aun(f))*(Q(p2)-Q(p1))*0.5 - 0.5*self%dt*aun(f)*(Vx*dQdx+Vy*dQdy)
+    end do
 
+    ! non-isscilatory option (fct)
+    if (limiter) then
+
+      Qmax(:)=-1.e10
+      Qmin(:)= 1.e10
+
+      do iface = 1,self%model%grid%nb_internal_faces
+        f = self%model%grid%internal_faces(iface)
+        p1 = self%model%grid%faces(f,1)
+        p2 = self%model%grid%faces(f,2)
+        Qmax(p1)=max(Qmax(p1),Q(p1),Q(p2))
+        Qmin(p1)=min(Qmin(p1),Q(p1),Q(p2))
+        Qmax(p2)=max(Qmax(p2),Q(p1),Q(p2))
+        Qmin(p2)=min(Qmin(p2),Q(p1),Q(p2))
+      enddo
+      !write(0,*) "min = ", Qminmin
+      !write(0,*) "max = ", Qmaxmax
+
+      do iface = 1,self%model%grid%nb_pole_faces
+        f = self%model%grid%pole_faces(iface)
+        p1 = self%model%grid%faces(f,1)
+        p2 = self%model%grid%faces(f,2)
+        if (Q_is_vector) then
+          Qmax(p1)=max(Qmax(p1),Q(p1),-Q(p2))
+          Qmin(p1)=min(Qmin(p1),Q(p1),-Q(p2))
+          Qmax(p2)=max(Qmax(p2),-Q(p1),Q(p2))
+          Qmin(p2)=min(Qmin(p2),-Q(p1),Q(p2))
+        else
+          Qmax(p1)=max(Qmax(p1),Q(p1),Q(p2))
+          Qmin(p1)=min(Qmin(p1),Q(p1),Q(p2))
+          Qmax(p2)=max(Qmax(p2),Q(p1),Q(p2))
+          Qmin(p2)=min(Qmin(p2),Q(p1),Q(p2))
+        end if
+      enddo
+
+      rhin(:)=0.
+      rhout(:)=0.
+      cp(:)=0.
+      cn(:)=0.
+
+      do iface = 1,self%model%grid%nb_internal_faces
+        f = self%model%grid%internal_faces(iface)
+        p1 = self%model%grid%faces(f,1)
+        p2 = self%model%grid%faces(f,2)
+        apos = max(0.,aun(f))
+        aneg = min(0.,aun(f))
+        rhin(p1)  = rhin(p1) -aneg !+-min(0.,aun(f))
+        rhout(p1) = rhout(p1)+ apos !max(0.,aun(f))
+        rhin(p2)  = rhin(p2)+ apos !max(0.,aun(f))
+        rhout(p2) = rhout(p2)-aneg
+      end do
+
+      do inode=1,self%model%grid%nb_nodes
+        cp(inode) = ( Qmax(inode)-Q(inode) )*self%vol%array(inode,1)/( rhin(inode) * self%dt + eps )
+        cn(inode) = ( Q(inode)-Qmin(inode) )*self%vol%array(inode,1)/( rhout(inode)* self%dt + eps )
+      enddo
+
+     ! limited antidiffusive  velocities:
+      do iface = 1,self%model%grid%nb_internal_faces
+        f = self%model%grid%internal_faces(iface)
+        p1 = self%model%grid%faces(f,1)
+        p2 = self%model%grid%faces(f,2)
+        if(aun(f) > 0.) then
+          aun(f)=aun(f)*min(1.,cp(p2),cn(p1))
+        else
+          aun(f)=aun(f)*min(1.,cn(p2),cp(p1))
+        endif
+      enddo
+    endif
+
+    advection(:) = 0.
+    do iface = 1,self%model%grid%nb_internal_faces
+      f = self%model%grid%internal_faces(iface)
+      p1 = self%model%grid%faces(f,1)
+      p2 = self%model%grid%faces(f,2)
+      flux = aun(f)
       advection(p1) = advection(p1) + flux
       advection(p2) = advection(p2) - flux
     end do
 
     ! Update the unknowns in vertices
     do inode=1,nb_nodes
-      Q(inode) = Q(inode) - advection(inode) * self%dt / self%vol%array(inode,1)
+      Q(inode) = Q(inode) - advection(inode)/self%vol%array(inode,1) * self%dt
     end do
 
   end subroutine MPDATA_Solver__mpdata_gauge
 
 
-  subroutine MPDATA_Solver__mpdata_abs(self,Q,V)
+  subroutine MPDATA_Solver__mpdata_abs(self,Q,V, Q_is_vector)
     class(MPDATA_Solver), intent(inout)  :: self
     real, dimension(:),   intent(inout)  :: Q
     real, dimension(:,:), intent(in)  :: V
+    logical, intent(in) :: Q_is_vector
     
-    integer :: inode, nb_internal_edges, ied, pass, p1,p2, apos, aneg, nb_nodes
+    integer :: inode, f, iface, pass, p1,p2, apos, aneg, nb_nodes
     real :: advection(self%model%grid%nb_nodes)
     real :: aun(self%model%grid%nb_faces)
     real :: Qabs(self%model%grid%nb_nodes)
@@ -310,10 +388,8 @@ contains
 
     real :: sx, sy, flux, volume_of_two_cells, dQdx, dQdy, Vx, Vy, eps
     real :: denom
-    class(Field_class), pointer :: Dgrad
 
     eps = 1e-10
-    nb_internal_edges = self%model%grid%nb_faces
     nb_nodes = self%model%grid%nb_nodes
 
     ! 1. First pass
@@ -321,15 +397,17 @@ contains
       
     ! Compute the rhs in vertices, and normal velocity in faces
     advection = 0.
-    do ied=1,nb_internal_edges
-      p1 = self%model%grid%faces(ied,1)
-      p2 = self%model%grid%faces(ied,2)
-      sx = self%S%array(ied,1)
-      sy = self%S%array(ied,2)
-
-      aun(ied) = 0.5*(V(p1,1)+V(p2,1))*sx + 0.5*(V(p1,2)+V(p2,2))*sy
-      apos = max(0.,aun(ied))
-      aneg = min(0.,aun(ied))
+    do iface = 1,self%model%grid%nb_internal_faces
+      f = self%model%grid%internal_faces(iface)
+      p1 = self%model%grid%faces(f,1)
+      p2 = self%model%grid%faces(f,2)
+      sx = self%S%array(f,1)
+      sy = self%S%array(f,2)
+      Vx = 0.5*(V(p1,1)+V(p2,1))
+      Vy = 0.5*(V(p1,2)+V(p2,2))
+      aun(f) = Vx*sx + Vy*sy
+      apos = max(0.,aun(f))
+      aneg = min(0.,aun(f))
       flux = Q(p1)*apos + Q(p2)*aneg
       advection(p1) = advection(p1) + flux
       advection(p2) = advection(p2) - flux
@@ -346,17 +424,16 @@ contains
     ! -------------
     
     ! Compute derivatives for mpdata
-    call self%compute_gradient(Qabs,self%gradQ)
+    call self%compute_gradient(Qabs,self%gradQ, Q_is_vector )
     call self%compute_weighted_average(Q,Qavg,Sabs)
 
 
     ! Compute antidiffusive normal velocity in faces
     advection = 0.
-    do ied=1,nb_internal_edges
-      p1 = self%model%grid%faces(ied,1)
-      p2 = self%model%grid%faces(ied,2)
-      sx = self%S%array(ied,1)
-      sy = self%S%array(ied,2)
+    do iface = 1,self%model%grid%nb_internal_faces
+      f = self%model%grid%internal_faces(iface)
+      p1 = self%model%grid%faces(f,1)
+      p2 = self%model%grid%faces(f,2)
       volume_of_two_cells = self%vol%array(p1,1) + self%vol%array(p2,1)
       dQdx = (self%gradQ(p1,1)+self%gradQ(p2,1)) / volume_of_two_cells
       dQdy = (self%gradQ(p1,2)+self%gradQ(p2,2)) / volume_of_two_cells
@@ -365,9 +442,9 @@ contains
 
       ! variable sign option with absolute values
       denom = ( Qavg(p1)+Qavg(p2) ) / ( Sabs(p1) + Sabs(p2) )
-      aun(ied) = abs(aun(ied))*( Qabs(p2)-Qabs(p1) )/( Qabs(p2)+Qabs(p1)+eps ) - 0.5*self%dt*aun(ied)*(Vx*dQdx+Vy*dQdy)/(denom)
-      apos = max(0.,aun(ied))
-      aneg = min(0.,aun(ied))
+      aun(f) = abs(aun(f))*( Qabs(p2)-Qabs(p1) )/( Qabs(p2)+Qabs(p1)+eps ) - 0.5*self%dt*aun(f)*(Vx*dQdx+Vy*dQdy)/(denom)
+      apos = max(0.,aun(f))
+      aneg = min(0.,aun(f))
       flux = Q(p1)*apos + Q(p2)*aneg
 
       advection(p1) = advection(p1) + flux

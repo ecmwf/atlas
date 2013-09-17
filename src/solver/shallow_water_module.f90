@@ -26,7 +26,7 @@ module shallow_water_module
 
   type, public, extends(MPDATA_Solver) :: ShallowWaterSolver
     class(Field_class), private, pointer :: grad_D ! gradient of depth
-    class(Field_class), private, pointer :: R, Rex, Qadv, Q0, D0, Q, D, V
+    class(Field_class), private, pointer :: R, Q0, D0, Q, D, V
 
   contains
     procedure, public,  pass :: init => ShallowWaterSolver__init
@@ -159,14 +159,12 @@ contains
         if(x == 2.*self%pi) x=0.
           cor=self%f0*sin(y)
           Q%array(inode,1) =  self%radius*OM*cos(y)+self%radius*ZK*cos(IR*x) *(cos(y))**(IR-1)*(IR*(sin(y))**2-(cos(y))**2)
-          Q%array(inode,2) = -self%radius*ZK*IR*(cos(y))**(IR-1)*sin(Y)*sin(IR*x)
+          Q%array(inode,2) = -self%radius*ZK*IR*(cos(y))**(IR-1)*sin(y)*sin(IR*x)
           D%array(inode,1) = (ph0+self%radius**2*ATH(y)+self%radius**2*BTH(y)*cos(IR*x)+self%radius**2*CTH(y)*cos(2.*IR*x)) &
               & /(self%grav)
           D%array(inode,1) = max(aaa0,D%array(inode,1))
           Q%array(inode,1) = Q%array(inode,1) * D%array(inode,1)
           Q%array(inode,2) = Q%array(inode,2) * D%array(inode,1)
-          !Q%array(inode,1) = 50 * D%array(inode,1)
-          !Q%array(inode,2) = 0  * D%array(inode,1)
           if(y == 0.5*self%pi) Q%array(inode,1)=0.
           if(y ==-0.5*self%pi) Q%array(inode,1)=0.
       end do
@@ -201,15 +199,9 @@ contains
 
     self%grad_D => new_VectorField("depth_gradient",vertices)
     self%R      => new_VectorField("rhs_forcing",vertices)
-    self%Rex    => new_VectorField("rhs_forcing_exact_part",vertices)
-    self%Qadv   => new_VectorField("momentum_advected",vertices)
     self%D0     => new_ScalarField("depth_prev_iter",vertices)
     self%Q0     => new_VectorField("momentum_prev_iter",vertices)
     self%V      => new_VectorField("advective_velocity",vertices)
-
-    call self%state%add_field(self%D0)
-    call self%state%add_field(self%V)
-    call self%state%add_field(self%R)
 
   end subroutine ShallowWaterSolver__init
 
@@ -252,20 +244,34 @@ contains
       ! and hx = r*cos(y)  ,  hy = r
       ! and Q = [ D*u , D*v ]
       self%V%array(inode,1) = ( 1.5*Qx/D - 0.5*Q0x/D0 )*r
-      self%V%array(inode,2) = ( 1.5*Qy/D - 0.5*Q0y/D0 )*r*cos(y)      
+      self%V%array(inode,2) = ( 1.5*Qy/D - 0.5*Q0y/D0 )*r*cos(y)
+      !self%V%array(inode,1) = Qx/D * r
+      !self%V%array(inode,2) = Qy/D * r*cos(y)
+      !self%V%array(inode,1) = 50.*r*cos(y)
+      !self%V%array(inode,2) = 0.     
     end do
   end subroutine ShallowWaterSolver__compute_advective_velocities
 
   subroutine ShallowWaterSolver__advect_solution(self)
     class(ShallowWaterSolver), intent(inout)    :: self
-    call self%mpdata_abs( self%D%array(:,1), self%V%array )
-    call self%mpdata_abs( self%Q%array(:,1), self%V%array )
-    call self%mpdata_abs( self%Q%array(:,2), self%V%array )
+    integer :: inode, p1, p2
+    call self%mpdata_gauge( self%D%array(:,1), self%V%array, .False. )
+    call self%mpdata_gauge( self%Q%array(:,1), self%V%array, .True. )
+    call self%mpdata_gauge( self%Q%array(:,2), self%V%array, .True. )
+
+    ! remove noise from periodic boundary.. why is it even there in the mesh?
+    do inode=1,self%model%grid%nb_periodic_nodes
+      p1 = self%model%grid%periodic_nodes(inode,1)
+      p2 = self%model%grid%periodic_nodes(inode,2)
+      self%D%array(p2,1) = self%D%array(p1,1)
+      self%Q%array(p2,1) = self%Q%array(p1,1)
+      self%Q%array(p2,2) = self%Q%array(p1,2)
+    end do
   end subroutine ShallowWaterSolver__advect_solution
 
   subroutine ShallowWaterSolver__compute_Rn(self)
     class(ShallowWaterSolver), intent(inout)    :: self
-    real :: f0, f, x, y, r, g, Qx, Qy, D, dDdx, dDdy, sin_y, cos_y, eps, vol
+    real :: f0, f, x, y, r, g, Qx, Qy, D, dDdx, dDdy, sin_y, cos_y, eps, vol, hx, hy
     integer :: inode
     
     eps = 1e-10
@@ -274,7 +280,7 @@ contains
     g   = 9.80616
 
 
-    call self%compute_gradient( self%D%array(:,1), self%grad_D%array )
+    call self%compute_gradient( self%D%array(:,1), self%grad_D%array, .False. )
     
     do inode=1,self%model%grid%nb_nodes
       y     = self%model%grid%nodes(inode,2)
@@ -286,18 +292,18 @@ contains
       dDdx  = self%grad_D%array(inode,1)
       dDdy  = self%grad_D%array(inode,2)
       vol   = self%vol%array(inode,1)
-
+      hx    = r*cos_y
+      hy    = r
       f     = f0 * sin_y
-      
-      self%R%array(inode,1)   = -g*r        *D*dDdx/vol + f*Qy + sin_y/(r*cos_y)*Qx*Qy/D
-      self%R%array(inode,2)   = -g*(r*cos_y)*D*dDdy/vol - f*Qx - sin_y/(r*cos_y)*Qx*Qx/D
+      self%R%array(inode,1)   = -g*D*dDdx*hy/vol + f*Qy + sin_y/(r*cos_y)*Qx*Qy/D
+      self%R%array(inode,2)   = -g*D*dDdy*hx/vol - f*Qx - sin_y/(r*cos_y)*Qx*Qx/D
     end do
   end subroutine ShallowWaterSolver__compute_Rn
 
 
   subroutine ShallowWaterSolver__implicit_solve(self)
     class(ShallowWaterSolver), intent(inout)    :: self
-    real :: f0, f, y, r, g, Rx, Ry, Qx, Qy, D, dDdx, dDdy, sin_y, cos_y, eps, Qx_adv, Qy_adv, Rx_exp, Ry_exp, vol
+    real :: f0, f, y, r, g, Rx, Ry, Qx, Qy, D, dDdx, dDdy, hx, hy, sin_y, cos_y, eps, Qx_adv, Qy_adv, Rx_exp, Ry_exp, vol
     integer :: inode, m
 
     eps = 1e-10
@@ -306,20 +312,22 @@ contains
     g   = 9.80616
 
     ! D is already up to date at time level (n+1), just by MPDATA advection
-    call self%compute_gradient( self%D%array(:,1), self%grad_D%array )
+    call self%compute_gradient( self%D%array(:,1), self%grad_D%array, .False. )
     
     do inode=1,self%model%grid%nb_nodes
       y     = self%model%grid%nodes(inode,2)
       sin_y = sin(y)
       cos_y = max( eps, cos(y) )
       D     = max( eps, self%D%array(inode,1) )
-      f     = f0 * sin_y
       dDdx  = self%grad_D%array(inode,1)
       dDdy  = self%grad_D%array(inode,2)
       vol   = self%vol%array(inode,1)
+      hx    = r*cos_y
+      hy    = r
+      f     = f0 * sin_y
 
-      Rx_exp = -g*r        *D*dDdx/vol
-      Ry_exp = -g*(r*cos_y)*D*dDdy/vol
+      Rx_exp = -g*D*dDdx*hy/vol
+      Ry_exp = -g*D*dDdy*hx/vol
 
       Qx = self%Q%array(inode,1)
       Qy = self%Q%array(inode,2)
@@ -336,11 +344,13 @@ contains
 
       self%Q%array(inode,1) = Qx
       self%Q%array(inode,2) = Qy
+
+      Rx = Rx_exp + f*Qy + sin_y/(r*cos_y)*Qx*Qy/D
+      Ry = Ry_exp - f*Qx - sin_y/(r*cos_y)*Qx*Qx/D      
       self%R%array(inode,1) = Rx
       self%R%array(inode,2) = Ry
-    
     end do
+
   end subroutine ShallowWaterSolver__implicit_solve
-  
 
 end module shallow_water_module
