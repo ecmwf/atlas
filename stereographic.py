@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 from math import pi
-outside_lattitude = 10. * pi/180.
+outside_lattitude = 5. * pi/180.
 
 meshfile = open('data/mesh.msh')
 lines = meshfile.readlines()
@@ -57,7 +57,7 @@ def latlon_to_stereo(coords):
     Y = R*sin(Theta)
     return [X,Y]
 
-meshfile = open('data/mesh_stereo.msh','w')
+meshfile = open('data/mesh_stereo_5.msh','w')
 
 meshfile.write("""$MeshFormat
 2.2 0 8

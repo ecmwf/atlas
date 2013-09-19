@@ -11,15 +11,10 @@ program main
   ! Declarations
   ! ------------
   class(Grid_class), pointer :: grid
-  real(kind=jprb)                       :: dt
+  real(kind=jprb)            :: dt
   integer                    :: i
   type(ShallowWaterModel)    :: shallow_water
   character(len=1024)        :: filename
-  class(FunctionSpace_class), pointer :: faces
-  class(Field_class), pointer :: face_normal
-
-  class(State_class), pointer :: mesh_state
-
 
   ! Execution
   ! ---------
@@ -29,20 +24,16 @@ program main
   call read_joanna_mesh(grid,"data/meshvol.d")
   call read_joanna_fields(grid,"data/meshvol.d") 
 
-  faces => grid%function_space("faces")
-  face_normal => faces%field("dual_face_normal")
-  allocate( mesh_state )
-  call mesh_state%init("mesh_state",faces)
-  call mesh_state%add_field( face_normal )
-
   call write_gmsh_mesh(grid,"data/mesh.msh")
-  call write_gmsh_state(mesh_state,"data/faces.msh")
+
   call shallow_water%init(grid)
   call shallow_water%set_state_rossby_haurwitz()
 
-  shallow_water%solver%dt_stability = 20.
-  dt = 4320.
-  do i=1,20
+  shallow_water%solver%dt_stability = 50.
+ 
+  dt = 60*60*24 / 24 ! = one hour
+
+  do i=1,24 ! every cycle is one dt
     call shallow_water%solve_time_step( dt )
     write(0,*) "Completed time step. Time: ",shallow_water%state%time
     write (filename, "(A12,I5.5,A4)") "data/results",i,".msh"

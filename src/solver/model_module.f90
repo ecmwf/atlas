@@ -132,9 +132,9 @@ contains
     do while (self%state%time < tmax)
       t0 = self%state%time
       call self%solver%step(tmax)
-      write(0,*) "iter =",self%solver%iter, &
+      write(0,'(A6,I8,A12,F9.1,A12,F8.1)') "iter = ",self%solver%iter, &
          & "  time = ",self%state%time, &
-         & "   dt = ",min( self%solver%dt_stability, tmax-t0 )
+         & "  dt = ",min( self%solver%dt_stability, tmax-t0 )
     end do
   end subroutine Model__solve_time_step
 

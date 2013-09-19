@@ -30,7 +30,7 @@ module shallow_water_module
 
   contains
     procedure, public,  pass :: init => ShallowWaterSolver__init
-    procedure, pass :: compute_Rn   => ShallowWaterSolver__compute_Rn
+    procedure, pass :: compute_forcing   => ShallowWaterSolver__compute_forcing
     procedure, pass :: implicit_solve => ShallowWaterSolver__implicit_solve
     procedure, pass :: compute_advective_velocities => ShallowWaterSolver__compute_advective_velocities
     procedure, pass :: backup_solution => ShallowWaterSolver__backup_solution
@@ -40,9 +40,9 @@ module shallow_water_module
   end type ShallowWaterSolver
 contains
 
-! ------------------------------------------------------------------------------------
-!                              ShallowWaterState subroutines
-!-------------------------------------------------------------------------------------
+! ==========================================================================
+! Module subroutines
+! ==========================================================================
 
  function new_ShallowWaterState(name, function_space) result(state)
     character(len=*), intent(in)              :: name
@@ -52,6 +52,23 @@ contains
     call state%init(name,function_space)
   end function new_ShallowWaterState
 
+
+  function new_ShallowWaterSolver(model) result(solver)
+    class(Model_class), pointer :: model
+    class(Solver_class), pointer :: solver
+    allocate( ShallowWaterSolver :: solver )
+    write(0,*) "new_ShallowWaterSolver"
+    call solver%init(model)
+  end function new_ShallowWaterSolver
+  
+
+
+! ==========================================================================
+! ShallowWaterState subroutines
+! ==========================================================================
+
+
+
   subroutine ShallowWaterState__init(self,name,function_space)
     class(ShallowWaterState), intent(inout) :: self
     character(len=*), intent(in) :: name
@@ -59,9 +76,6 @@ contains
     call self%State_class%init(name,function_space)
 
     write(0,*) "ShallowWaterState::init(",name,",",function_space%name,")"  
-    !self%D  => self%function_space%add_scalar_field("depth")
-    !self%Q  => self%function_space%add_vector_field("momentum")
-    !self%H0 => self%function_space%add_scalar_field("orography")
     self%D  => new_ScalarField("depth",function_space)
     self%Q  => new_VectorField("momentum",function_space)
     self%H0 => new_ScalarField("orography",function_space)
@@ -71,9 +85,10 @@ contains
   end subroutine ShallowWaterState__init
 
 
-! ------------------------------------------------------------------------------------
-!                              ShallowWaterModel subroutines
-!-------------------------------------------------------------------------------------
+! ==========================================================================
+! ShallowWaterModel subroutines
+! ==========================================================================
+
 
   subroutine ShallowWaterModel__init(self,grid)
     class(ShallowWaterModel), intent(inout), target :: self
@@ -156,33 +171,26 @@ contains
       do inode=1,nb_nodes
         x=nodes(inode,1)
         y=nodes(inode,2)
-        if(x == 2.*self%pi) x=0.
+        if(x == 2._jprb*self%pi) x=0.
           cor=self%f0*sin(y)
           Q%array(inode,1) =  self%radius*OM*cos(y)+self%radius*ZK*cos(IR*x) *(cos(y))**(IR-1)*(IR*(sin(y))**2-(cos(y))**2)
           Q%array(inode,2) = -self%radius*ZK*IR*(cos(y))**(IR-1)*sin(y)*sin(IR*x)
-          D%array(inode,1) = (ph0+self%radius**2*ATH(y)+self%radius**2*BTH(y)*cos(IR*x)+self%radius**2*CTH(y)*cos(2.*IR*x)) &
+          D%array(inode,1) = (ph0+self%radius**2*ATH(y)+self%radius**2*BTH(y)*cos(IR*x)+self%radius**2*CTH(y)*cos(2._jprb*IR*x)) &
               & /(self%grav)
           D%array(inode,1) = max(aaa0,D%array(inode,1))
           Q%array(inode,1) = Q%array(inode,1) * D%array(inode,1)
           Q%array(inode,2) = Q%array(inode,2) * D%array(inode,1)
-          if(y == 0.5*self%pi) Q%array(inode,1)=0.
-          if(y ==-0.5*self%pi) Q%array(inode,1)=0.
+          if(y == 0.5_jprb*self%pi) Q%array(inode,1)=0.
+          if(y ==-0.5_jprb*self%pi) Q%array(inode,1)=0.
       end do
 
   end subroutine ShallowWaterModel__set_state_rossby_haurwitz
-  
+
 
 ! ==========================================================================
 ! MPDATA Solver subroutines
 ! ==========================================================================
 
-  function new_ShallowWaterSolver(model) result(solver)
-    class(Model_class), pointer :: model
-    class(Solver_class), pointer :: solver
-    allocate( ShallowWaterSolver :: solver )
-    write(0,*) "new_ShallowWaterSolver"
-    call solver%init(model)
-  end function new_ShallowWaterSolver
 
   subroutine ShallowWaterSolver__init(self,model)
     class(ShallowWaterSolver), intent(inout) :: self
@@ -203,11 +211,11 @@ contains
     self%Q0     => new_VectorField("momentum_prev_iter",vertices)
     self%V      => new_VectorField("advective_velocity",vertices)
 
-    call self%state%add_field(self%R)
-    call self%state%add_field(self%grad_D)
-    call self%state%add_field(self%V)
-
   end subroutine ShallowWaterSolver__init
+
+
+
+
 
   subroutine ShallowWaterSolver__backup_solution(self)
     class(ShallowWaterSolver), intent(inout) :: self
@@ -215,25 +223,38 @@ contains
     self%D0%array = self%D%array
   end subroutine ShallowWaterSolver__backup_solution
 
+
+
+
+
   subroutine ShallowWaterSolver__add_forcing_to_solution(self)
     class(ShallowWaterSolver), intent(inout) :: self
-    integer :: inode
-    do inode=1,self%model%grid%nb_nodes
-      self%Q%array(inode,1) = self%Q%array(inode,1) + 0.5*self%dt*self%R%array(inode,1)
-      self%Q%array(inode,2) = self%Q%array(inode,2) + 0.5*self%dt*self%R%array(inode,2)
+    integer :: inode, nb_nodes
+    nb_nodes = self%model%grid%nb_nodes
+    do inode=1,nb_nodes
+      self%Q%array(inode,1) = self%Q%array(inode,1) + 0.5_jprb*self%dt*self%R%array(inode,1)
+      self%Q%array(inode,2) = self%Q%array(inode,2) + 0.5_jprb*self%dt*self%R%array(inode,2)
     end do
   end subroutine ShallowWaterSolver__add_forcing_to_solution
+
+
+
+
 
   subroutine ShallowWaterSolver__compute_advective_velocities(self)
     class(ShallowWaterSolver), intent(inout)    :: self
     real(kind=jprb) :: y, r, Qx, Qy, Q0x, Q0y, D, D0, eps
-    integer :: inode
+    integer :: inode, nb_nodes
+    real(kind=jprb), dimension(:,:) , pointer :: coords
+
+    nb_nodes = self%model%grid%nb_nodes
+    coords => self%model%grid%nodes
     
-    eps = 1e-10
+    eps = 1e-6
     r = 6371.22e+03
    
-    do inode=1,self%model%grid%nb_nodes
-      y     = self%model%grid%nodes(inode,2)
+    do inode=1,nb_nodes
+      y     = coords(inode,2)
       Qx    = self%Q%array(inode,1)
       Qy    = self%Q%array(inode,2)
       D     = max( eps, self%D%array(inode,1) )
@@ -247,21 +268,21 @@ contains
       ! V = (hx*hy) * [u/hx, v/hy] = [u/hy, v/hx]
       ! and hx = r*cos(y)  ,  hy = r
       ! and Q = [ D*u , D*v ]
-      self%V%array(inode,1) = ( 1.5*Qx/D - 0.5*Q0x/D0 )*r
-      self%V%array(inode,2) = ( 1.5*Qy/D - 0.5*Q0y/D0 )*r*cos(y)
-      !self%V%array(inode,1) = Qx/D * r
-      !self%V%array(inode,2) = Qy/D * r*cos(y)
-      !self%V%array(inode,1) = 50.*r*cos(y)
-      !self%V%array(inode,2) = 0.     
+      self%V%array(inode,1) = ( 1.5_jprb*Qx/D - 0.5_jprb*Q0x/D0 )*r
+      self%V%array(inode,2) = ( 1.5_jprb*Qy/D - 0.5_jprb*Q0y/D0 )*r*cos(y)
     end do
   end subroutine ShallowWaterSolver__compute_advective_velocities
+
+
+
 
   subroutine ShallowWaterSolver__advect_solution(self)
     class(ShallowWaterSolver), intent(inout)    :: self
     integer :: inode, p1, p2
-    call self%mpdata_gauge( self%D%array(:,1), self%V%array, .False. )
-    call self%mpdata_gauge( self%Q%array(:,1), self%V%array, .True. )
-    call self%mpdata_gauge( self%Q%array(:,2), self%V%array, .True. )
+    !         mpdata_gauge( variable,          velocity,     order, limit,  is_vector )
+    call self%mpdata_gauge( self%D%array(:,1), self%V%array, 2,     .True., .False. )
+    call self%mpdata_gauge( self%Q%array(:,1), self%V%array, 2,     .True., .True.  )
+    call self%mpdata_gauge( self%Q%array(:,2), self%V%array, 2,     .True., .True.  )
 
     ! remove noise from periodic boundary.. why is it even there in the mesh?
     do inode=1,self%model%grid%nb_periodic_nodes
@@ -273,12 +294,15 @@ contains
     end do
   end subroutine ShallowWaterSolver__advect_solution
 
-  subroutine ShallowWaterSolver__compute_Rn(self)
+
+
+
+  subroutine ShallowWaterSolver__compute_forcing(self)
     class(ShallowWaterSolver), intent(inout)    :: self
     real(kind=jprb) :: f0, f, x, y, r, g, Qx, Qy, D, dDdx, dDdy, sin_y, cos_y, eps, vol, hx, hy
     integer :: inode
 
-    eps = 1.e-6
+    eps = 1.e-10
     r   = 6371.22e+03
     f0  = 1.4584e-04 !coriolis parameter (=2xearth's omega)
     g   = 9.80616
@@ -300,19 +324,26 @@ contains
       hy    = r
       f     = f0 * sin_y
 
-      self%R%array(inode,1)   = -g* self%D%array(inode,1)*dDdx*hy/vol + f*Qy + sin_y/(r*cos_y)*Qx*Qy/D
-      self%R%array(inode,2)   = -g* self%D%array(inode,1)*dDdy*hx/vol - f*Qx - sin_y/(r*cos_y)*Qx*Qx/D
+      self%R%array(inode,1)   = -g*D*dDdx*hy/vol + f*Qy + sin_y/(r*cos_y)*Qx*Qy/D
+      self%R%array(inode,2)   = -g*D*dDdy*hx/vol - f*Qx - sin_y/(r*cos_y)*Qx*Qx/D
     end do
-  end subroutine ShallowWaterSolver__compute_Rn
+  end subroutine ShallowWaterSolver__compute_forcing
+
+
+
 
 
   subroutine ShallowWaterSolver__implicit_solve(self)
     class(ShallowWaterSolver), intent(inout)    :: self
     real(kind=jprb) :: f0, f, y, r, g, Rx, Ry, Qx, Qy, D, dDdx, dDdy, hx, hy, sin_y, cos_y
-    real(kind=jprb) ::  eps, Qx_adv, Qy_adv, Rx_exp, Ry_exp, vol, help1, help2, Q0x, Q0y
-    integer :: inode, m
+    real(kind=jprb) ::  eps, Qx_adv, Qy_adv, Rx_exp, Ry_exp, vol
+    integer :: inode, m, nb_nodes
+    real(kind=jprb), dimension(:,:) , pointer :: coords
 
-    eps = 1e-6
+    nb_nodes = self%model%grid%nb_nodes
+    coords => self%model%grid%nodes
+
+    eps = 1e-10
     r   = 6371.22e+03
     f0  = 1.4584e-04 !coriolis parameter (=2xearth's omega)
     g   = 9.80616
@@ -320,8 +351,8 @@ contains
     ! D is already up to date at time level (n+1), just by MPDATA advection
     call self%compute_gradient( self%D%array(:,1), self%grad_D%array, .False. )
     
-    do inode=1,self%model%grid%nb_nodes
-      y     = self%model%grid%nodes(inode,2)
+    do inode=1,nb_nodes
+      y     = coords(inode,2)
       sin_y = sin(y)
       cos_y = max( eps, cos(y) )
       D     = max( eps, self%D%array(inode,1) )
@@ -332,22 +363,19 @@ contains
       hy    = r
       f     = f0 * sin_y
 
-      Rx_exp = -g*self%D%array(inode,1)*dDdx*hy/vol
-      Ry_exp = -g*self%D%array(inode,1)*dDdy*hx/vol
+      Rx_exp = -g*D*dDdx*hy/vol
+      Ry_exp = -g*D*dDdy*hx/vol
 
       Qx = self%Q%array(inode,1)
       Qy = self%Q%array(inode,2)
       Qx_adv = Qx
       Qy_adv = Qy
 
-      help1 = Qx+0.5*self%dt*Rx_exp
-      help2 = Qy+0.5*self%dt*Ry_exp
-
-      do m=1,4 ! Three iterations at most is enough to converge
+      do m=1,3 ! Three iterations at most is enough to converge
         Rx = Rx_exp + f*Qy + sin_y/(r*cos_y)*Qx*Qy/D
         Ry = Ry_exp - f*Qx - sin_y/(r*cos_y)*Qx*Qx/D
-        Qx = Qx_adv + 0.5*self%dt*Rx
-        Qy = Qy_adv + 0.5*self%dt*Ry
+        Qx = Qx_adv + 0.5_jprb*self%dt*Rx
+        Qy = Qy_adv + 0.5_jprb*self%dt*Ry
       end do
 
       self%Q%array(inode,1) = Qx
@@ -360,5 +388,8 @@ contains
     end do
 
   end subroutine ShallowWaterSolver__implicit_solve
+
+
+
 
 end module shallow_water_module
