@@ -9,7 +9,7 @@ module model_module
  
   type, public :: State_class
     character(len=30) :: name
-    real              :: time
+    real(kind=jprb)              :: time
     class(FunctionSpace_class), pointer :: function_space
     type(FieldPtr), dimension(:), allocatable :: fields
 
@@ -27,7 +27,7 @@ module model_module
   
 
  type, public :: Solver_class
-    real :: dt_stability
+    real(kind=jprb) :: dt_stability
     class(State_class), pointer :: state
     class(Model_class), pointer :: model
     integer :: iter = 0
@@ -125,8 +125,8 @@ contains
 
   subroutine Model__solve_time_step(self,dt)
     class(Model_class), intent(inout) :: self
-    real, intent(in) :: dt
-    real :: tmax, t0
+    real(kind=jprb), intent(in) :: dt
+    real(kind=jprb) :: tmax, t0
 
     tmax = self%state%time+dt
     do while (self%state%time < tmax)
@@ -152,8 +152,8 @@ contains
 
   subroutine Solver__step(self,tmax)
     class(Solver_class), intent(inout) :: self
-    real, intent(in) :: tmax
-    real :: dt
+    real(kind=jprb), intent(in) :: tmax
+    real(kind=jprb) :: dt
     dt = min( self%dt_stability, tmax-self%state%time )
     self%state%time = self%state%time + dt
     self%iter = self%iter + 1

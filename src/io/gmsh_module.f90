@@ -17,7 +17,7 @@ contains
     write(50,'(A)')"$NodeData"
     write(50,*) 1                     ! one string tag:
     write(50,'(A)') '"'//F%name//'"'      ! the name of the view ("A scalar view")
-    write(50,*) 1                     ! one real tag:
+    write(50,*) 1                     ! one real(kind=jprb) tag:
     write(50,*) 0.0                   ! the time value (0.0)
     write(50,*) 3                     ! three integer tags:
     write(50,*) 0                     ! the time step (0; time steps always start at 0)
@@ -38,7 +38,7 @@ contains
     write(51,'(A)')"$NodeData"
     write(51,*) 1                     ! one string tag:
     write(51,'(A)') '"'//field%name//'"'      ! the name of the view ("A scalar view")
-    write(51,*) 1                     ! one real tag:
+    write(51,*) 1                     ! one real(kind=jprb) tag:
     write(51,*) 0.0                   ! the time value (0.0)
     write(51,*) 3                     ! three integer tags:
     write(51,*) 0                     ! the time step (0; time steps always start at 0)
@@ -63,7 +63,7 @@ contains
     write(50,'(A)')"$ElementData"
     write(50,*) 1                     ! one string tag:
     write(50,'(A)') '"'//F%name//'"'      ! the name of the view ("A scalar view")
-    write(50,*) 1                     ! one real tag:
+    write(50,*) 1                     ! one real(kind=jprb) tag:
     write(50,*) 0.0                   ! the time value (0.0)
     write(50,*) 3                     ! three integer tags:
     write(50,*) 0                     ! the time step (0; time steps always start at 0)

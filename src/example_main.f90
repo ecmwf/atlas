@@ -128,15 +128,15 @@ program main
   class(Field_class),           pointer    :: S
 
   integer                           :: n,e
-  real, dimension(:),   allocatable :: local_coord
-  real, dimension(:),   allocatable :: physical_coord
+  real(kind=jprb), dimension(:),   allocatable :: local_coord
+  real(kind=jprb), dimension(:),   allocatable :: physical_coord
 
-  real, dimension(:,:), allocatable :: cell_coords
-  real, dimension(:),   allocatable :: interpolate
-  real, dimension(:,:), allocatable :: local_gradient
-  real, dimension(:,:), allocatable :: physical_gradient
-  real, dimension(:,:), allocatable :: Jinv
-  real, dimension(:,:), allocatable :: grad
+  real(kind=jprb), dimension(:,:), allocatable :: cell_coords
+  real(kind=jprb), dimension(:),   allocatable :: interpolate
+  real(kind=jprb), dimension(:,:), allocatable :: local_gradient
+  real(kind=jprb), dimension(:,:), allocatable :: physical_gradient
+  real(kind=jprb), dimension(:,:), allocatable :: Jinv
+  real(kind=jprb), dimension(:,:), allocatable :: grad
 
  
   ! Execution

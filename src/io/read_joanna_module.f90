@@ -22,10 +22,10 @@ contains
     integer                      :: internal_face_cnt
 
     integer                      :: idx
-    real                         :: vol
+    real(kind=jprb)                         :: vol
     integer                      :: p1,p2
     integer :: dummy_int
-    real :: dummy_real
+    real(kind=jprb) :: dummy_real
 
     integer :: iface
     integer :: inode
@@ -107,15 +107,15 @@ contains
     integer                   :: before2
     integer                   :: face_cnt
     integer                   :: idx
-    real                      :: vol
+    real(kind=jprb)                      :: vol
     integer                   :: p1,p2
     integer :: dummy_int
-    real    :: dummy_real
+    real(kind=jprb)    :: dummy_real
     integer :: iface
     integer :: inode
     integer :: n
-    real :: Sx, Sy
-    real :: pi,r,y,sm,hx,hy
+    real(kind=jprb) :: Sx, Sy
+    real(kind=jprb) :: pi,r,y,sm,hx,hy
 
 
     open(5,file=filename,access='sequential',status='old')

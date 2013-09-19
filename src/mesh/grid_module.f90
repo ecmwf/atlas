@@ -4,8 +4,9 @@
 ! the nodes, elements, and element type
 module grid_module
   ! Base classes, specifying the interface
+  use common_module
   use elements_module,   only : Element, ShapeFunction_class
-  
+
   ! All possible implementations for Element and Shapefunction respectively
   use lagrangep0_module, only : &
     & LagrangeP0_Line2D,  LagrangeP0_Line, &
@@ -25,7 +26,7 @@ module grid_module
 
   type, public :: Field_class
     character(len=30) :: name
-    real, dimension(:,:), allocatable :: array
+    real(kind=jprb), dimension(:,:), allocatable :: array
     integer :: size
     integer :: cols
     class(FunctionSpace_class), pointer :: function_space
@@ -91,7 +92,7 @@ module grid_module
     integer :: nb_pole_faces
     integer :: nb_internal_faces
     integer :: nb_periodic_nodes
-    real,    dimension(:,:), allocatable :: nodes
+    real(kind=jprb),    dimension(:,:), allocatable :: nodes
     integer, dimension(:,:), allocatable :: cells
     integer, dimension(:,:), allocatable :: faces
     integer, dimension(:), allocatable :: internal_faces
@@ -469,7 +470,7 @@ contains
   subroutine Grid__cell_coords(self, elem_idx, cell_coords)
     class(Grid_class), intent(in) :: self
     integer, intent(in) :: elem_idx
-    real, dimension(:,:), intent(inout) :: cell_coords
+    real(kind=jprb), dimension(:,:), intent(inout) :: cell_coords
 
     integer n
     do n=1,self%cell%nb_nodes

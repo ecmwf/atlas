@@ -14,10 +14,10 @@ module shallow_water_module
 
 
   type, public, extends(Model_class) :: ShallowWaterModel
-    real :: radius
-    real :: grav
-    real :: f0
-    real :: pi
+    real(kind=jprb) :: radius
+    real(kind=jprb) :: grav
+    real(kind=jprb) :: f0
+    real(kind=jprb) :: pi
   contains
     procedure, pass :: init => ShallowWaterModel__init
     procedure, pass :: compute_metrics => ShallowWaterModel__compute_metrics
@@ -106,7 +106,7 @@ contains
     class(ShallowWaterModel), intent(inout) :: self
     class(FunctionSpace_class), pointer :: vertices
     class(Field_class), pointer :: dual_volume
-    real :: y, hx, hy, jac
+    real(kind=jprb) :: y, hx, hy, jac
     integer :: inode
 
     vertices => self%grid%function_space("vertices")
@@ -125,21 +125,21 @@ contains
   subroutine ShallowWaterModel__set_state_rossby_haurwitz(self)
     class(ShallowWaterModel), intent(inout) :: self
     class(Field_class) , pointer :: D, Q
-    real, dimension(:,:), pointer :: nodes
+    real(kind=jprb), dimension(:,:), pointer :: nodes
     integer :: inode
     integer :: nb_nodes
 
     integer :: ir,ip
-    real    :: aaa0,zk,om,ph0,g,ath,bth,cth,pi,x,y,th,cor
+    real(kind=jprb)    :: aaa0,zk,om,ph0,g,ath,bth,cth,pi,x,y,th,cor
 
     ! statement-functions, before first statement
     ATH(TH) = om*0.5*(self%f0+om)*(cos(TH))**2 &
       & +0.25*zk**2*(cos(TH))**(2*ir)*( (ir+1)*(cos(TH))**2 &
-      & +real(2*ir**2-ir-2)-2.*ir**2/(cos(TH))**2 )
-    BTH(TH) = (self%f0+2.*om)*zk/real((ir+1)*(ir+2))*(cos(TH))**ir &
-      & *( real(ir**2+2*ir+2)-((ir+1)*cos(TH))**2 )
-    CTH(TH) = 0.25*zk**2*(cos(TH))**(2*ir)*( real(ir+1)*(cos(TH))**2 &
-      & -real(ir+2) )  
+      & +float(2*ir**2-ir-2)-2.*ir**2/(cos(TH))**2 )
+    BTH(TH) = (self%f0+2.*om)*zk/float((ir+1)*(ir+2))*(cos(TH))**ir &
+      & *( float(ir**2+2*ir+2)-((ir+1)*cos(TH))**2 )
+    CTH(TH) = 0.25*zk**2*(cos(TH))**(2*ir)*( float(ir+1)*(cos(TH))**2 &
+      & -float(ir+2) )  
 
     om   = 7.848E-6
     zk   = 7.848E-6
@@ -205,6 +205,7 @@ contains
 
     call self%state%add_field(self%R)
     call self%state%add_field(self%grad_D)
+    call self%state%add_field(self%V)
 
   end subroutine ShallowWaterSolver__init
 
@@ -225,7 +226,7 @@ contains
 
   subroutine ShallowWaterSolver__compute_advective_velocities(self)
     class(ShallowWaterSolver), intent(inout)    :: self
-    real :: y, r, Qx, Qy, Q0x, Q0y, D, D0, eps
+    real(kind=jprb) :: y, r, Qx, Qy, Q0x, Q0y, D, D0, eps
     integer :: inode
     
     eps = 1e-10
@@ -240,7 +241,7 @@ contains
       Q0y   = self%Q0%array(inode,2)
       D0    = max( eps, self%D0%array(inode,1) )
       
-      ! this really computes V = G*contravariant_velocity, 
+      ! this real(kind=jprb)ly computes V = G*contravariant_velocity, 
       ! with    G=hx*hy,
       !         physical_velocity = dotproduct( [hx,hy] , contravariant_velocity )
       ! V = (hx*hy) * [u/hx, v/hy] = [u/hy, v/hx]
@@ -274,10 +275,10 @@ contains
 
   subroutine ShallowWaterSolver__compute_Rn(self)
     class(ShallowWaterSolver), intent(inout)    :: self
-    real :: f0, f, x, y, r, g, Qx, Qy, D, dDdx, dDdy, sin_y, cos_y, eps, vol, hx, hy
+    real(kind=jprb) :: f0, f, x, y, r, g, Qx, Qy, D, dDdx, dDdy, sin_y, cos_y, eps, vol, hx, hy
     integer :: inode
-    
-    eps = 1e-6
+
+    eps = 1.e-6
     r   = 6371.22e+03
     f0  = 1.4584e-04 !coriolis parameter (=2xearth's omega)
     g   = 9.80616
@@ -298,18 +299,20 @@ contains
       hx    = r*cos_y
       hy    = r
       f     = f0 * sin_y
-      self%R%array(inode,1)   = -g*D*dDdx*hy/vol !+ f*Qy + sin_y/(r*cos_y)*Qx*Qy/D
-      self%R%array(inode,2)   = -g*D*dDdy*hx/vol !- f*Qx - sin_y/(r*cos_y)*Qx*Qx/D
+
+      self%R%array(inode,1)   = -g* self%D%array(inode,1)*dDdx*hy/vol + f*Qy + sin_y/(r*cos_y)*Qx*Qy/D
+      self%R%array(inode,2)   = -g* self%D%array(inode,1)*dDdy*hx/vol - f*Qx - sin_y/(r*cos_y)*Qx*Qx/D
     end do
   end subroutine ShallowWaterSolver__compute_Rn
 
 
   subroutine ShallowWaterSolver__implicit_solve(self)
     class(ShallowWaterSolver), intent(inout)    :: self
-    real :: f0, f, y, r, g, Rx, Ry, Qx, Qy, D, dDdx, dDdy, hx, hy, sin_y, cos_y, eps, Qx_adv, Qy_adv, Rx_exp, Ry_exp, vol
+    real(kind=jprb) :: f0, f, y, r, g, Rx, Ry, Qx, Qy, D, dDdx, dDdy, hx, hy, sin_y, cos_y
+    real(kind=jprb) ::  eps, Qx_adv, Qy_adv, Rx_exp, Ry_exp, vol, help1, help2, Q0x, Q0y
     integer :: inode, m
 
-    eps = 1e-10
+    eps = 1e-6
     r   = 6371.22e+03
     f0  = 1.4584e-04 !coriolis parameter (=2xearth's omega)
     g   = 9.80616
@@ -329,18 +332,20 @@ contains
       hy    = r
       f     = f0 * sin_y
 
-      Rx_exp = -g*D*dDdx*hy/vol
-      Ry_exp = -g*D*dDdy*hx/vol
+      Rx_exp = -g*self%D%array(inode,1)*dDdx*hy/vol
+      Ry_exp = -g*self%D%array(inode,1)*dDdy*hx/vol
 
       Qx = self%Q%array(inode,1)
       Qy = self%Q%array(inode,2)
       Qx_adv = Qx
       Qy_adv = Qy
 
-      do m=1,3 ! Three iterations at most is enough to converge
+      help1 = Qx+0.5*self%dt*Rx_exp
+      help2 = Qy+0.5*self%dt*Ry_exp
+
+      do m=1,4 ! Three iterations at most is enough to converge
         Rx = Rx_exp + f*Qy + sin_y/(r*cos_y)*Qx*Qy/D
         Ry = Ry_exp - f*Qx - sin_y/(r*cos_y)*Qx*Qx/D
-      
         Qx = Qx_adv + 0.5*self%dt*Rx
         Qy = Qy_adv + 0.5*self%dt*Ry
       end do
@@ -349,7 +354,7 @@ contains
       self%Q%array(inode,2) = Qy
 
       Rx = Rx_exp + f*Qy + sin_y/(r*cos_y)*Qx*Qy/D
-      Ry = Ry_exp - f*Qx - sin_y/(r*cos_y)*Qx*Qx/D      
+      Ry = Ry_exp - f*Qx - sin_y/(r*cos_y)*Qx*Qx/D
       self%R%array(inode,1) = Rx
       self%R%array(inode,2) = Ry
     end do

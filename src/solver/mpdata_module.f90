@@ -6,8 +6,8 @@ module mpdata_module
   type, public, extends(Solver_class) :: MPDATA_Solver
     class(Field_class), pointer :: vol ! dual mesh volumes
     class(Field_class), pointer :: S ! dual mesh edge-normals
-    real, dimension(:,:), allocatable :: gradQ
-    real :: dt
+    real(kind=jprb), dimension(:,:), allocatable :: gradQ
+    real(kind=jprb) :: dt
 
   contains
     procedure, public,  pass :: init => MPDATA_Solver__init
@@ -88,45 +88,52 @@ contains
   ! These low-level functions might need edge loops
   subroutine MPDATA_Solver__step(self,tmax)
     class(MPDATA_Solver), intent(inout) :: self
-    real, intent(in) :: tmax
+    real(kind=jprb), intent(in) :: tmax
     integer :: inode
     character(len=1024)        :: filename
-    class(Field_class), pointer :: D,Q,R,grad_D,vol
+    class(Field_class), pointer :: D,Q,R,grad_D,vol,V
 
-
-    write (filename, "(A4,I3.3,A2)") "data",self%iter+1,".d"
-    open(73,file=filename,access='sequential',status='unknown')
-
-
-    self%dt = min( self%dt_stability, tmax-self%state%time )
-    self%state%time = self%state%time + self%dt
-
-
-    
-    call self%backup_solution()
-    
-    ! Initialise previous time step
-    if (self%iter == 0) then
-      write(0,*) "First iteration, computing forcing"
-      call self%compute_Rn()
-    end if
-    
     D => self%state%field("depth")
     Q => self%state%field("momentum")
     R => self%state%field("rhs_forcing")
     grad_D => self%state%field("depth_gradient")
     vol => D%function_space%field("dual_volume")
-    do inode=1,D%size
-      write(73,*) inode, grad_D%array(inode,1), grad_D%array(inode,2)
-    end do
-    close(73)
+    V => self%state%field("advective_velocity")
 
-    call self%compute_advective_velocities()
+
+    !write (filename, "(A4,I3.3,A2)") "data",self%iter+1,".d"
+    !open(73,file=filename,access='sequential',status='unknown')
+
+
+    self%dt = min( self%dt_stability, tmax-self%state%time )
+    self%state%time = self%state%time + self%dt
+        
+    ! Initialise previous time step
+    if (self%iter == 0) then
+      write(0,*) "First iteration, computing forcing"
+      call self%backup_solution()
+      call self%compute_advective_velocities()
+      call self%compute_Rn()
+    end if
+    
     call self%add_forcing_to_solution()
 
     call self%advect_solution()
+
+    !do inode=1,D%size
+      !write(73,'(I6, E20.8, E20.8)') inode, V%array(inode,1), V%array(inode,2)
+      !write(73,'(I6, E20.8, E20.8)') inode, R%array(inode,1), R%array(inode,2)
+    !  write(73,'(I6, E20.8, E20.8, E20.8)') inode, D%array(inode,1), Q%array(inode,1), Q%array(inode,2)
+    !end do
+    !close(73)
     
+
     call self%implicit_solve()
+
+    call self%compute_advective_velocities()
+    call self%backup_solution()
+
+    
     self%iter = self%iter + 1
   end subroutine MPDATA_Solver__step
 
@@ -164,11 +171,11 @@ contains
 
   subroutine MPDATA_Solver__compute_gradient(self,Q,gradQ,Q_is_vector)
     class(MPDATA_Solver), intent(inout) :: self
-    real, dimension(:),   intent(in)    :: Q
-    real, dimension(:,:), intent(inout) :: gradQ
+    real(kind=jprb), dimension(:),   intent(in)    :: Q
+    real(kind=jprb), dimension(:,:), intent(inout) :: gradQ
     logical, intent(in) :: Q_is_vector
     
-    real    :: sx,sy,avgQ
+    real(kind=jprb)    :: sx,sy,avgQ
     integer :: ip,iface,p1,p2, f
 
     ! derivatives 
@@ -179,13 +186,7 @@ contains
       p2  = self%model%grid%faces(f,2)
       sx  = self%S%array(f,1)
       sy  = self%S%array(f,2)
-      avgQ = 0.5*( Q(p1) + Q(p2) )
-      if( p1 == 1 ) then
-        write(0,*) sx*avgQ
-      end if
-      if (p2 == 1 ) then
-        write(0,*) -sx*avgQ
-      end if
+      avgQ = ( Q(p1) + Q(p2) )*0.5_jprb
       gradQ(p1,1) = gradQ(p1,1) + sx*avgQ
       gradQ(p2,1) = gradQ(p2,1) - sx*avgQ
       gradQ(p1,2) = gradQ(p1,2) + sy*avgQ
@@ -194,27 +195,27 @@ contains
 
     ! special treatment for the north & south pole cell faces
     ! Sx == 0 at pole, and Sy has same sign at both sides of pole
-    !if (.not. Q_is_vector) then
+    if (.not. Q_is_vector) then
       do iface = 1,self%model%grid%nb_pole_faces
         f = self%model%grid%pole_faces(iface)
         p1  = self%model%grid%faces(f,1)
         p2  = self%model%grid%faces(f,2)
         sy  = self%S%array(f,2)
-        avgQ = 0.5*( Q(p1) + Q(p2) )
+        avgQ = ( Q(p1) + Q(p2) )*0.5_jprb
         gradQ(p1,2) = gradQ(p1,2) + sy*avgQ
         gradQ(p2,2) = gradQ(p2,2) + sy*avgQ ! not minus because point at other side of pole
       end do
-    !end if
+    end if
 
   end subroutine MPDATA_Solver__compute_gradient
 
   subroutine MPDATA_Solver__compute_weighted_average(self,Q,avgQ,absS)
     class(MPDATA_Solver), intent(inout) :: self
-    real, dimension(:),   intent(in)    :: Q
-    real, dimension(:),   intent(inout) :: avgQ
-    real, dimension(:),   intent(inout) :: absS
+    real(kind=jprb), dimension(:),   intent(in)    :: Q
+    real(kind=jprb), dimension(:),   intent(inout) :: avgQ
+    real(kind=jprb), dimension(:),   intent(inout) :: absS
 
-    real    :: sx,sy,Qf, normS
+    real(kind=jprb)    :: sx,sy,Qf, normS
     integer :: ip,iface, f,p1,p2, nb_internal_edges, nb_edges
 
     nb_internal_edges = self%model%grid%nb_faces
@@ -242,22 +243,22 @@ contains
 
   subroutine MPDATA_Solver__mpdata_gauge(self,Q,V,Q_is_vector)
     class(MPDATA_Solver), intent(inout)  :: self
-    real, dimension(:),   intent(inout)  :: Q
-    real, dimension(:,:), intent(in)  :: V
+    real(kind=jprb), dimension(:),   intent(inout)  :: Q
+    real(kind=jprb), dimension(:,:), intent(in)  :: V
     logical, intent(in) :: Q_is_vector
     
     integer :: inode, iface, pass, p1,p2, nb_nodes, f
-    real :: advection(self%model%grid%nb_nodes)
-    real :: aun(self%model%grid%nb_faces)
+    real(kind=jprb) :: advection(self%model%grid%nb_nodes)
+    real(kind=jprb) :: aun(self%model%grid%nb_faces)
 
-    real :: Qmax(self%model%grid%nb_nodes)
-    real :: Qmin(self%model%grid%nb_nodes)
-    real :: rhin(self%model%grid%nb_nodes)
-    real :: rhout(self%model%grid%nb_nodes)
-    real :: cp(self%model%grid%nb_nodes)
-    real :: cn(self%model%grid%nb_nodes)
+    real(kind=jprb) :: Qmax(self%model%grid%nb_nodes)
+    real(kind=jprb) :: Qmin(self%model%grid%nb_nodes)
+    real(kind=jprb) :: rhin(self%model%grid%nb_nodes)
+    real(kind=jprb) :: rhout(self%model%grid%nb_nodes)
+    real(kind=jprb) :: cp(self%model%grid%nb_nodes)
+    real(kind=jprb) :: cn(self%model%grid%nb_nodes)
 
-    real :: sx, sy, flux, volume_of_two_cells, dQdx, dQdy, Vx, Vy, eps, apos, aneg
+    real(kind=jprb) :: sx, sy, flux, volume_of_two_cells, dQdx, dQdy, Vx, Vy, eps, apos, aneg
 
     logical :: limiter = .True.
 
@@ -290,7 +291,6 @@ contains
       Q(inode) = Q(inode) - advection(inode)/self%vol%array(inode,1) * self%dt
     end do
 
-    return
 
     ! 2. Second pass
     ! -------------
@@ -405,19 +405,19 @@ contains
 
   subroutine MPDATA_Solver__mpdata_abs(self,Q,V, Q_is_vector)
     class(MPDATA_Solver), intent(inout)  :: self
-    real, dimension(:),   intent(inout)  :: Q
-    real, dimension(:,:), intent(in)  :: V
+    real(kind=jprb), dimension(:),   intent(inout)  :: Q
+    real(kind=jprb), dimension(:,:), intent(in)  :: V
     logical, intent(in) :: Q_is_vector
     
     integer :: inode, f, iface, pass, p1,p2, apos, aneg, nb_nodes
-    real :: advection(self%model%grid%nb_nodes)
-    real :: aun(self%model%grid%nb_faces)
-    real :: Qabs(self%model%grid%nb_nodes)
-    real :: Sabs(self%model%grid%nb_nodes)
-    real :: Qavg(self%model%grid%nb_nodes)
+    real(kind=jprb) :: advection(self%model%grid%nb_nodes)
+    real(kind=jprb) :: aun(self%model%grid%nb_faces)
+    real(kind=jprb) :: Qabs(self%model%grid%nb_nodes)
+    real(kind=jprb) :: Sabs(self%model%grid%nb_nodes)
+    real(kind=jprb) :: Qavg(self%model%grid%nb_nodes)
 
-    real :: sx, sy, flux, volume_of_two_cells, dQdx, dQdy, Vx, Vy, eps
-    real :: denom
+    real(kind=jprb) :: sx, sy, flux, volume_of_two_cells, dQdx, dQdy, Vx, Vy, eps
+    real(kind=jprb) :: denom
 
     eps = 1e-10
     nb_nodes = self%model%grid%nb_nodes
