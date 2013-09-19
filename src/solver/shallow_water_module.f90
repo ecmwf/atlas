@@ -203,6 +203,9 @@ contains
     self%Q0     => new_VectorField("momentum_prev_iter",vertices)
     self%V      => new_VectorField("advective_velocity",vertices)
 
+    call self%state%add_field(self%R)
+    call self%state%add_field(self%grad_D)
+
   end subroutine ShallowWaterSolver__init
 
   subroutine ShallowWaterSolver__backup_solution(self)
@@ -274,7 +277,7 @@ contains
     real :: f0, f, x, y, r, g, Qx, Qy, D, dDdx, dDdy, sin_y, cos_y, eps, vol, hx, hy
     integer :: inode
     
-    eps = 1e-10
+    eps = 1e-6
     r   = 6371.22e+03
     f0  = 1.4584e-04 !coriolis parameter (=2xearth's omega)
     g   = 9.80616
@@ -295,8 +298,8 @@ contains
       hx    = r*cos_y
       hy    = r
       f     = f0 * sin_y
-      self%R%array(inode,1)   = -g*D*dDdx*hy/vol + f*Qy + sin_y/(r*cos_y)*Qx*Qy/D
-      self%R%array(inode,2)   = -g*D*dDdy*hx/vol - f*Qx - sin_y/(r*cos_y)*Qx*Qx/D
+      self%R%array(inode,1)   = -g*D*dDdx*hy/vol !+ f*Qy + sin_y/(r*cos_y)*Qx*Qy/D
+      self%R%array(inode,2)   = -g*D*dDdy*hx/vol !- f*Qx - sin_y/(r*cos_y)*Qx*Qx/D
     end do
   end subroutine ShallowWaterSolver__compute_Rn
 

@@ -90,20 +90,42 @@ contains
     class(MPDATA_Solver), intent(inout) :: self
     real, intent(in) :: tmax
     integer :: inode
+    character(len=1024)        :: filename
+    class(Field_class), pointer :: D,Q,R,grad_D,vol
+
+
+    write (filename, "(A4,I3.3,A2)") "data",self%iter+1,".d"
+    open(73,file=filename,access='sequential',status='unknown')
+
 
     self%dt = min( self%dt_stability, tmax-self%state%time )
     self%state%time = self%state%time + self%dt
+
+
     
     call self%backup_solution()
     
     ! Initialise previous time step
     if (self%iter == 0) then
+      write(0,*) "First iteration, computing forcing"
       call self%compute_Rn()
     end if
     
+    D => self%state%field("depth")
+    Q => self%state%field("momentum")
+    R => self%state%field("rhs_forcing")
+    grad_D => self%state%field("depth_gradient")
+    vol => D%function_space%field("dual_volume")
+    do inode=1,D%size
+      write(73,*) inode, grad_D%array(inode,1), grad_D%array(inode,2)
+    end do
+    close(73)
+
     call self%compute_advective_velocities()
     call self%add_forcing_to_solution()
+
     call self%advect_solution()
+    
     call self%implicit_solve()
     self%iter = self%iter + 1
   end subroutine MPDATA_Solver__step
@@ -150,7 +172,7 @@ contains
     integer :: ip,iface,p1,p2, f
 
     ! derivatives 
-    gradQ = 0
+    gradQ(:,:) = 0
     do iface = 1,self%model%grid%nb_internal_faces
       f = self%model%grid%internal_faces(iface)
       p1  = self%model%grid%faces(f,1)
@@ -158,15 +180,21 @@ contains
       sx  = self%S%array(f,1)
       sy  = self%S%array(f,2)
       avgQ = 0.5*( Q(p1) + Q(p2) )
+      if( p1 == 1 ) then
+        write(0,*) sx*avgQ
+      end if
+      if (p2 == 1 ) then
+        write(0,*) -sx*avgQ
+      end if
       gradQ(p1,1) = gradQ(p1,1) + sx*avgQ
-      gradQ(p1,2) = gradQ(p1,2) + sy*avgQ
       gradQ(p2,1) = gradQ(p2,1) - sx*avgQ
+      gradQ(p1,2) = gradQ(p1,2) + sy*avgQ
       gradQ(p2,2) = gradQ(p2,2) - sy*avgQ
     end do
 
     ! special treatment for the north & south pole cell faces
     ! Sx == 0 at pole, and Sy has same sign at both sides of pole
-    if (.not. Q_is_vector) then
+    !if (.not. Q_is_vector) then
       do iface = 1,self%model%grid%nb_pole_faces
         f = self%model%grid%pole_faces(iface)
         p1  = self%model%grid%faces(f,1)
@@ -176,7 +204,7 @@ contains
         gradQ(p1,2) = gradQ(p1,2) + sy*avgQ
         gradQ(p2,2) = gradQ(p2,2) + sy*avgQ ! not minus because point at other side of pole
       end do
-    end if
+    !end if
 
   end subroutine MPDATA_Solver__compute_gradient
 
@@ -261,6 +289,8 @@ contains
     do inode=1,nb_nodes
       Q(inode) = Q(inode) - advection(inode)/self%vol%array(inode,1) * self%dt
     end do
+
+    return
 
     ! 2. Second pass
     ! -------------

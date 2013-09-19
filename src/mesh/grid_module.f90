@@ -20,7 +20,6 @@ module grid_module
   public
   
   public new_FaceFunctionSpace
-  public new_ContinuousFunctionSpace
   public new_DiscontinuousFunctionSpace
 
 

@@ -41,8 +41,8 @@ program main
   call shallow_water%set_state_rossby_haurwitz()
 
   shallow_water%solver%dt_stability = 20.
-  dt = 4320.
-  do i=1,20
+  dt = 20.
+  do i=1,1
     call shallow_water%solve_time_step( dt )
     write(0,*) "Completed time step. Time: ",shallow_water%state%time
     write (filename, "(A12,I5.5,A4)") "data/results",i,".msh"

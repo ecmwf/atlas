@@ -5,7 +5,8 @@ if [[ $(uname -n) == "coolcat.local" ]]; then
 else
   FC=/usr/local/apps/intel/parallel_studio_xe_2013/bin/ifort
 fi
-$FC -O2 \
+FC=/usr/local/apps/gcc/4.8.1/LP64/bin/gfortran
+$FC -g -O0 \
   src/mesh/elements_module.f90\
   src/mesh/lagrangep0_module.f90\
   src/mesh/lagrangep1_module.f90\
