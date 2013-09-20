@@ -244,11 +244,10 @@ contains
   subroutine ShallowWaterSolver__compute_advective_velocities(self)
     class(ShallowWaterSolver), intent(inout)    :: self
     real(kind=jprb) :: y, r, Qx, Qy, Q0x, Q0y, D, D0, eps
-    integer :: inode, nb_nodes
-    real(kind=jprb), dimension(:,:) , pointer :: coords
+    integer :: inode
 
-    nb_nodes = self%model%grid%nb_nodes
-    coords => self%model%grid%nodes
+    associate( nb_nodes => self%model%grid%nb_nodes, &
+      &        coords   => self%model%grid%nodes )
     
     eps = 1e-6
     r = 6371.22e+03
@@ -271,6 +270,8 @@ contains
       self%V%array(inode,1) = ( 1.5_jprb*Qx/D - 0.5_jprb*Q0x/D0 )*r
       self%V%array(inode,2) = ( 1.5_jprb*Qy/D - 0.5_jprb*Q0y/D0 )*r*cos(y)
     end do
+
+    end associate
   end subroutine ShallowWaterSolver__compute_advective_velocities
 
 
@@ -299,19 +300,20 @@ contains
 
   subroutine ShallowWaterSolver__compute_forcing(self)
     class(ShallowWaterSolver), intent(inout)    :: self
-    real(kind=jprb) :: f0, f, x, y, r, g, Qx, Qy, D, dDdx, dDdy, sin_y, cos_y, eps, vol, hx, hy
     integer :: inode
+    real(kind=jprb) :: f, x, y, Qx, Qy, D, dDdx, dDdy, sin_y, cos_y, vol, hx, hy
+    real(kind=jprb), parameter :: eps = 1.e-10
+    real(kind=jprb), parameter :: r   = 6371.22e+03
+    real(kind=jprb), parameter :: f0  = 1.4584e-04 !coriolis parameter (=2xearth's omega)
+    real(kind=jprb), parameter :: g   = 9.80616
 
-    eps = 1.e-10
-    r   = 6371.22e+03
-    f0  = 1.4584e-04 !coriolis parameter (=2xearth's omega)
-    g   = 9.80616
-
+    associate( nb_nodes => self%model%grid%nb_nodes, &
+      &        coords   => self%model%grid%nodes )
 
     call self%compute_gradient( self%D%array(:,1), self%grad_D%array, .False. )
     
-    do inode=1,self%model%grid%nb_nodes
-      y     = self%model%grid%nodes(inode,2)
+    do inode=1,nb_nodes
+      y     = coords(inode,2)
       sin_y = sin(y)
       cos_y = max( eps, cos(y) )
       Qx    = self%Q%array(inode,1)
@@ -324,9 +326,11 @@ contains
       hy    = r
       f     = f0 * sin_y
 
-      self%R%array(inode,1)   = -g*D*dDdx*hy/vol + f*Qy + sin_y/(r*cos_y)*Qx*Qy/D
-      self%R%array(inode,2)   = -g*D*dDdy*hx/vol - f*Qx - sin_y/(r*cos_y)*Qx*Qx/D
+      self%R%array(inode,1) = -g*D*dDdx*hy/vol + f*Qy + sin_y/(r*cos_y)*Qx*Qy/D
+      self%R%array(inode,2) = -g*D*dDdy*hx/vol - f*Qx - sin_y/(r*cos_y)*Qx*Qx/D
     end do
+
+    end associate
   end subroutine ShallowWaterSolver__compute_forcing
 
 
@@ -335,18 +339,18 @@ contains
 
   subroutine ShallowWaterSolver__implicit_solve(self)
     class(ShallowWaterSolver), intent(inout)    :: self
-    real(kind=jprb) :: f0, f, y, r, g, Rx, Ry, Qx, Qy, D, dDdx, dDdy, hx, hy, sin_y, cos_y
-    real(kind=jprb) ::  eps, Qx_adv, Qy_adv, Rx_exp, Ry_exp, vol
-    integer :: inode, m, nb_nodes
-    real(kind=jprb), dimension(:,:) , pointer :: coords
+    real(kind=jprb) :: f, y, Rx, Ry, Qx, Qy, D, dDdx, dDdy, hx, hy, sin_y, cos_y
+    real(kind=jprb) :: Qx_adv, Qy_adv, Rx_exp, Ry_exp, vol
+    integer :: inode, m
 
-    nb_nodes = self%model%grid%nb_nodes
-    coords => self%model%grid%nodes
+    real(kind=jprb), parameter :: eps = 1.e-10
+    real(kind=jprb), parameter :: r   = 6371.22e+03
+    real(kind=jprb), parameter :: f0  = 1.4584e-04 !coriolis parameter (=2xearth's omega)
+    real(kind=jprb), parameter :: g   = 9.80616
 
-    eps = 1e-10
-    r   = 6371.22e+03
-    f0  = 1.4584e-04 !coriolis parameter (=2xearth's omega)
-    g   = 9.80616
+    associate( nb_nodes => self%model%grid%nb_nodes, &
+      &        coords   => self%model%grid%nodes )
+
 
     ! D is already up to date at time level (n+1), just by MPDATA advection
     call self%compute_gradient( self%D%array(:,1), self%grad_D%array, .False. )
@@ -356,6 +360,8 @@ contains
       sin_y = sin(y)
       cos_y = max( eps, cos(y) )
       D     = max( eps, self%D%array(inode,1) )
+      Qx    = self%Q%array(inode,1)
+      Qy    = self%Q%array(inode,2)
       dDdx  = self%grad_D%array(inode,1)
       dDdy  = self%grad_D%array(inode,2)
       vol   = self%vol%array(inode,1)
@@ -366,8 +372,6 @@ contains
       Rx_exp = -g*D*dDdx*hy/vol
       Ry_exp = -g*D*dDdy*hx/vol
 
-      Qx = self%Q%array(inode,1)
-      Qy = self%Q%array(inode,2)
       Qx_adv = Qx
       Qy_adv = Qy
 
@@ -377,16 +381,13 @@ contains
         Qx = Qx_adv + 0.5_jprb*self%dt*Rx
         Qy = Qy_adv + 0.5_jprb*self%dt*Ry
       end do
-
       self%Q%array(inode,1) = Qx
       self%Q%array(inode,2) = Qy
-
-      Rx = Rx_exp + f*Qy + sin_y/(r*cos_y)*Qx*Qy/D
-      Ry = Ry_exp - f*Qx - sin_y/(r*cos_y)*Qx*Qx/D
-      self%R%array(inode,1) = Rx
-      self%R%array(inode,2) = Ry
+      self%R%array(inode,1) = Rx_exp + f*Qy + sin_y/(r*cos_y)*Qx*Qy/D
+      self%R%array(inode,2) = Ry_exp - f*Qx - sin_y/(r*cos_y)*Qx*Qx/D
     end do
 
+    end associate
   end subroutine ShallowWaterSolver__implicit_solve
 
 

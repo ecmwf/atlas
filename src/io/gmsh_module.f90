@@ -79,19 +79,19 @@ contains
     close(50)
   end subroutine write_gmsh_mesh
 
-  subroutine write_gmsh_state(state_,filename)
-    class(State_class), intent(in) :: state_
+  subroutine write_gmsh_state(state,filename)
+    class(State_class), intent(in) :: state
     character(len=*), intent(in) :: filename
     integer :: iface, inode, ifield
     class(Grid_class), pointer :: grid
-    grid => state_%function_space%grid
+    grid => state%function_space%grid
     write(0,*) "Writing Gmsh file ",filename
     open(51,file=filename,access='sequential',status='REPLACE')
     write(51,'(A)')"$MeshFormat"
     write(51,'(A)')"2.2 0 8"
     write(51,'(A)')"$EndMeshFormat"
-    do ifield=1,size(state_%fields)
-      call write_gmsh_nodal_field(grid,state_%fields(ifield)%ptr)
+    do ifield=1,size(state%fields)
+      call write_gmsh_nodal_field(grid,state%fields(ifield)%ptr)
     end do    
     close(51)
 
