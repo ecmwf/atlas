@@ -25,17 +25,18 @@ module shallow_water_module
   end type ShallowWaterModel
 
   type, public, extends(MPDATA_Solver) :: ShallowWaterSolver
-    class(Field_class), private, pointer :: grad_D ! gradient of depth
-    class(Field_class), private, pointer :: R, Q0, D0, Q, D, V
+  private
+    class(Field_class), pointer :: grad_D ! gradient of depth
+    class(Field_class), pointer :: R, Q0, D0, Q, D, V
 
   contains
-    procedure, public,  pass :: init => ShallowWaterSolver__init
+    procedure, public,  pass :: init     => ShallowWaterSolver__init
     procedure, pass :: compute_forcing   => ShallowWaterSolver__compute_forcing
-    procedure, pass :: implicit_solve => ShallowWaterSolver__implicit_solve
+    procedure, pass :: implicit_solve    => ShallowWaterSolver__implicit_solve
     procedure, pass :: compute_advective_velocities => ShallowWaterSolver__compute_advective_velocities
-    procedure, pass :: backup_solution => ShallowWaterSolver__backup_solution
+    procedure, pass :: backup_solution   => ShallowWaterSolver__backup_solution
     procedure, pass :: add_forcing_to_solution => ShallowWaterSolver__add_forcing_to_solution
-    procedure, pass :: advect_solution => ShallowWaterSolver__advect_solution
+    procedure, pass :: advect_solution   => ShallowWaterSolver__advect_solution
     
   end type ShallowWaterSolver
 contains
@@ -60,7 +61,6 @@ contains
     write(0,*) "new_ShallowWaterSolver"
     call solver%init(model)
   end function new_ShallowWaterSolver
-  
 
 
 ! ==========================================================================
@@ -261,7 +261,7 @@ contains
       Q0y   = self%Q0%array(inode,2)
       D0    = max( eps, self%D0%array(inode,1) )
       
-      ! this real(kind=jprb)ly computes V = G*contravariant_velocity, 
+      ! this really computes V = G*contravariant_velocity, 
       ! with    G=hx*hy,
       !         physical_velocity = dotproduct( [hx,hy] , contravariant_velocity )
       ! V = (hx*hy) * [u/hx, v/hy] = [u/hy, v/hx]

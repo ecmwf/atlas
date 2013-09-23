@@ -26,26 +26,28 @@ module model_module
   end type StatePtr
   
 
- type, public :: Solver_class
-    real(kind=jprb) :: dt_stability
-    class(State_class), pointer :: state
-    class(Model_class), pointer :: model
-    integer :: iter = 0
+  type, public :: Solver_class
+  private
+    real(kind=jprb), public :: dt_stability
+    class(State_class), pointer, public :: state
+    class(Model_class), pointer, public :: model
+    integer,                     public :: iter = 0
   contains
     procedure, pass :: init => Solver__init
-    procedure, pass :: step => Solver__step
+    procedure, pass :: step_forward => Solver__step_forward
   end type Solver_class
 
 
   type, public :: Model_class
-    class(Solver_class), pointer :: solver
-    class(State_class),  pointer :: state
-    class(Grid_class),   pointer :: grid
-    class(Model_class),  pointer :: ptr 
+  private
+    class(Solver_class), pointer, public :: solver
+    class(State_class),  pointer, public :: state
+    class(Grid_class),   pointer, public :: grid
+    class(Model_class),  pointer, public :: ptr 
 
   contains
     procedure, pass :: init => Model__init
-    procedure, pass :: solve_time_step => Model__solve_time_step
+    procedure, pass :: propagate_state => Model__propagate_state
   end type Model_class
 
 contains
@@ -123,7 +125,7 @@ contains
     self%grid => grid
   end subroutine Model__init
 
-  subroutine Model__solve_time_step(self,dt)
+  subroutine Model__propagate_state(self,dt)
     class(Model_class), intent(inout) :: self
     real(kind=jprb), intent(in) :: dt
     real(kind=jprb) :: tmax, t0
@@ -131,12 +133,12 @@ contains
     tmax = self%state%time+dt
     do while (self%state%time < tmax)
       t0 = self%state%time
-      call self%solver%step(tmax)
-      !write(0,'(A6,I8,A12,F9.1,A12,F8.1)') "iter = ",self%solver%iter, &
-      !   & "  time = ",self%state%time, &
-      !   & "  dt = ",min( self%solver%dt_stability, tmax-t0 )
+      call self%solver%step_forward(tmax)
+      write(0,'(A6,I8,A12,F9.1,A12,F8.1)') "iter = ",self%solver%iter, &
+         & "  time = ",self%state%time, &
+         & "  dt = ",min( self%solver%dt_stability, tmax-t0 )
     end do
-  end subroutine Model__solve_time_step
+  end subroutine Model__propagate_state
 
 ! ------------------------------------------------------------------------------------
 !                                  Solver subroutines
@@ -150,14 +152,14 @@ contains
   end subroutine Solver__init
 
 
-  subroutine Solver__step(self,tmax)
+  subroutine Solver__step_forward(self,tmax)
     class(Solver_class), intent(inout) :: self
     real(kind=jprb), intent(in) :: tmax
     real(kind=jprb) :: dt
     dt = min( self%dt_stability, tmax-self%state%time )
     self%state%time = self%state%time + dt
-    self%iter = self%iter + 1
-  end subroutine Solver__step
+    self%iter       = self%iter + 1
+  end subroutine Solver__step_forward
 
 
 end module model_module

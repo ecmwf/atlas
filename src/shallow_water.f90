@@ -11,12 +11,12 @@ program main
   
   ! Declarations
   ! ------------
-  class(Grid_class), pointer :: grid
-  real(kind=jprb)            :: step
-  integer :: nb_steps
-  integer                    :: istep
   class(ShallowWaterModel), pointer :: shallow_water
-  character(len=1024)        :: filename
+  class(Grid_class), pointer        :: grid
+  real(kind=jprb)                   :: step
+  integer                           :: nb_steps
+  integer                           :: istep
+  character(len=1024)               :: filename
 
   ! Execution
   ! ---------
@@ -42,11 +42,11 @@ program main
 
   shallow_water%solver%dt_stability = 20.
  
-  step = 60*60*24 ! = one day
-  nb_steps = 15
+  step = 60*60*24 / 24 ! = one hour
+  nb_steps = 24
   do istep=1,nb_steps ! every cycle is one dt
 
-    call shallow_water%solve_time_step( step )
+    call shallow_water%propagate_state( step )
 
     write(0,*) "Completed time step. Time: ",shallow_water%state%time
     

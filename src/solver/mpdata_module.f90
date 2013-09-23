@@ -4,14 +4,15 @@ module mpdata_module
   implicit none
 
   type, public, extends(Solver_class) :: MPDATA_Solver
-    class(Field_class), pointer :: vol ! dual mesh volumes
-    class(Field_class), pointer :: S ! dual mesh edge-normals
-    real(kind=jprb), dimension(:,:), allocatable :: gradQ
-    real(kind=jprb) :: dt
+  private
+    class(Field_class), pointer, public :: vol ! dual mesh volumes
+    class(Field_class), pointer, public :: S   ! dual mesh edge-normals
+    real(kind=jprb), public :: dt
 
     ! needed for advection
-    real(kind=jprb), dimension(:), allocatable, private :: advection
-    real(kind=jprb), dimension(:), allocatable, private :: aun
+    real(kind=jprb), dimension(:),   allocatable, private :: advection
+    real(kind=jprb), dimension(:),   allocatable, private :: aun
+    real(kind=jprb), dimension(:,:), allocatable, private :: gradQ
     
     ! needed for limiter
     real(kind=jprb), dimension(:), allocatable, private :: Qmax
@@ -23,7 +24,8 @@ module mpdata_module
 
   contains
     procedure, public,  pass :: init => MPDATA_Solver__init
-    procedure, public,  pass :: step => MPDATA_Solver__step
+    procedure, public,  pass :: step_forward => MPDATA_Solver__step_forward
+
     procedure, pass :: compute_gradient => MPDATA_Solver__compute_gradient
     procedure, pass :: compute_forcing   => MPDATA_Solver__compute_forcing
     procedure, pass :: implicit_solve => MPDATA_Solver__implicit_solve
@@ -33,7 +35,6 @@ module mpdata_module
     procedure, pass :: add_forcing_to_solution => MPDATA_Solver__add_forcing_to_solution
     procedure, pass :: advect_solution => MPDATA_Solver__advect_solution
 
-    
   end type MPDATA_Solver
 
 
@@ -106,7 +107,7 @@ contains
   ! - V(Q,Q0)
   ! - MPDATA(Q,V,G)
   ! These low-level functions might need edge loops
-  subroutine MPDATA_Solver__step(self,tmax)
+  subroutine MPDATA_Solver__step_forward(self,tmax)
     class(MPDATA_Solver), intent(inout) :: self
     real(kind=jprb), intent(in) :: tmax
 
@@ -133,7 +134,7 @@ contains
     
     self%iter = self%iter + 1
 
-  end subroutine MPDATA_Solver__step
+  end subroutine MPDATA_Solver__step_forward
 
   !================================================================
   ! Subroutines that need to be implemented
@@ -232,6 +233,7 @@ contains
     integer :: inode, iface, pass, p1,p2, f
     real(kind=jprb) :: sx, sy, flux, volume_of_two_cells, dQdx, dQdy, Vx, Vy, apos, aneg
     real(kind=jprb), parameter :: eps = 1e-10
+    integer, parameter :: XX=1, YY=2
 
     associate( face_nodes        => self%model%grid%faces , &
       &        internal_faces    => self%model%grid%internal_faces , &
@@ -261,8 +263,8 @@ contains
       f  = internal_faces(iface)
       p1 = face_nodes(f,1)
       p2 = face_nodes(f,2)
-      sx = S(f,1)
-      sy = S(f,2)
+      sx = S(f,XX)
+      sy = S(f,YY)
       Vx = 0.5_jprb*(V(p1,1)+V(p2,1))
       Vy = 0.5_jprb*(V(p1,2)+V(p2,2))
       aun(f) = Vx*sx +Vy*sy

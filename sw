@@ -1,9 +1,14 @@
 #! /usr/bin/env bash
 
-FC=/usr/local/apps/gcc/4.8.1/LP64/bin/gfortran
-#FC=/usr/local/apps/intel/parallel_studio_xe_2013/bin/ifort
+# This script compiles the sources, runs the shallow_water executable
+# and removes the *.mod files
 
-GRIB_API_DIR=/home/rd/nawd/local
+# Environment variables that must be defined: 
+# - FC
+# - GRIB_API_DIR
+
+# NOTE: make sure that grib_api is compiled with same compiler as $FC
+
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GRIB_API_DIR/lib
 
 SRC="\
@@ -25,6 +30,7 @@ GRIB="\
   -I$GRIB_API_DIR/include\
   -L$GRIB_API_DIR/lib -lgrib_api_f90 -lgrib_api -ljasper\
 "
+
 $FC -O3 $SRC $GRIB -o shallow_water &&\
   ./shallow_water &&\
-  rm *.mod shallow_water
+  rm *.mod
