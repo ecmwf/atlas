@@ -110,11 +110,16 @@ contains
 
     ! When changing above constants,
     ! this function should be called AFTER INSTEAD of HERE 
+    write(0,*) "ShallowWaterModel::init(grid) 1"
     call self%compute_metrics()
+    write(0,*) "ShallowWaterModel::init(grid) 2"
 
     self%state => new_ShallowWaterState("state", vertices )
+    write(0,*) "ShallowWaterModel::init(grid) 3"
     self%solver => new_ShallowWaterSolver(self%ptr)
+    write(0,*) "ShallowWaterModel::init(grid) 4"
     self%solver%state => self%state
+    write(0,*) "ShallowWaterModel::init(grid) exit"
   end subroutine ShallowWaterModel__init
 
   subroutine ShallowWaterModel__compute_metrics(self)
@@ -124,9 +129,12 @@ contains
     real(kind=jprb) :: y, hx, hy, jac
     integer :: inode
 
+    write(0,*) "ShallowWaterModel__compute_metrics 1"
     vertices => self%grid%function_space("vertices")
+    write(0,*) "ShallowWaterModel__compute_metrics 1.5"
     dual_volume => vertices%field("dual_volume")
 
+    write(0,*) "ShallowWaterModel__compute_metrics 2"
     do inode=1,self%grid%nb_nodes
       y=self%grid%nodes(inode,2)
       hx=self%radius*cos(y)
@@ -134,6 +142,7 @@ contains
      jac=hx*hy
      dual_volume%array(inode,1) = dual_volume%array(inode,1)*jac
     enddo
+    write(0,*) "ShallowWaterModel__compute_metrics 3"
   end subroutine ShallowWaterModel__compute_metrics
 
 

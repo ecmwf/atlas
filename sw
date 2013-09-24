@@ -25,12 +25,12 @@ SRC="\
   src/io/grib_module.f90\
   src/shallow_water.f90\
 "
+GRIB_API_DIR=/lus/scratch/ecmwf/esm/grib_api/1.11.0/cray/82/
 
 GRIB="\
   -I$GRIB_API_DIR/include\
-  -L$GRIB_API_DIR/lib -lgrib_api_f90 -lgrib_api -ljasper\
+  -L$GRIB_API_DIR/lib -lgrib_api_f90 -lgrib_api \
 "
 
-$FC -O3 $SRC $GRIB -o shallow_water &&\
-  ./shallow_water &&\
+ftn -O0 -emf $SRC $GRIB -o shallow_water 
   rm *.mod

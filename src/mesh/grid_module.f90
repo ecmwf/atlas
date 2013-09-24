@@ -216,13 +216,20 @@ contains
     character(len=*), intent(in) :: name
     class(Field_class), pointer :: new_field
     type(FieldPtr), allocatable :: tmp(:)
+    write(0,*) 'AAAA ',trim(name)
     allocate(new_field)
     call new_field%init(name,self,1)
-    call move_alloc(self%fields,tmp)
-    allocate(self%fields(size(tmp)+1))
-    self%fields(:size(tmp)) = tmp
-    self%fields(size(self%fields))%ptr => new_field
-    deallocate(tmp)
+    if(size(self%fields) >0) then 
+      call move_alloc(self%fields,tmp)
+      allocate(self%fields(size(tmp)+1))
+      self%fields(:size(tmp)) = tmp
+      self%fields(size(self%fields))%ptr => new_field
+      deallocate(tmp)
+    else
+      deallocate(self%fields)
+      allocate( self%fields(1))
+      self%fields(1)%ptr => new_field
+    endif
   end function FunctionSpace__add_scalar_field
   
   function FunctionSpace__add_vector_field(self,name) result(new_field)
@@ -244,13 +251,18 @@ contains
     class(FunctionSpace_class), intent(in) :: self
     character(len=*), intent(in) :: name
     class(Field_class), pointer :: field_
+    type(FieldPtr) :: aa
     integer :: f
+    write(0,*) 'FunctionSpace__field',size(self%fields)
     do f=1,size(self%fields)
-      field_ => self%fields(f)%ptr
+      aa=self%fields(f)
+      field_ => aa%ptr
+      write(0,*) 'field_%name ', field_%name
       if( field_%name == name) then
         return
       end if
     end do
+    write(0,*) 'call abort '
     call abort
   end function FunctionSpace__field
 

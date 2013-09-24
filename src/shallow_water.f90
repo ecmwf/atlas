@@ -42,8 +42,8 @@ program main
 
   shallow_water%solver%dt_stability = 20.
  
-  step = 60*60*24 / 24 ! = one hour
-  nb_steps = 24
+  step = 60*60 ! = one hour
+  nb_steps = 24 ! total time = 1 day
   do istep=1,nb_steps ! every cycle is one dt
 
     call shallow_water%propagate_state( step )
