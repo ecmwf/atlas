@@ -611,15 +611,16 @@ program shallow_water
   implicit none
 
   ! Configuration parameters
-  real(kind=jprb) :: dt = 20.            ! solver time-step
-  integer         :: nb_steps = 1        ! Number of propagations
-  integer         :: hours_per_step = 1  ! Propagation time
+  real(kind=jprb) :: dt = 20.             ! solver time-step
+  integer         :: nb_steps = 15        ! Number of propagations
+  integer         :: hours_per_step = 24  ! Propagation time
 
   ! Declarations
   type(Geometry_class) :: g
   real(kind=jprb), parameter :: hours = 3600.     ! in seconds
   real(kind=jprb), parameter :: days  = 24.*hours ! in seconds
-  integer :: step
+  integer :: step = 0
+  character(len=1024) :: filename
   integer :: clck_counts_start, clck_counts_beg, clck_counts_end, clck_rate
  
   ! Execution
@@ -629,6 +630,12 @@ program shallow_water
   call set_state_rossby_haurwitz(g)
   call set_time_step( dt )
   call write_gmsh_mesh(g%internal_mesh,"data/mesh.msh")
+
+  write (filename, "(A,I2.2,A)") "data/fields",step,".msh"
+  call write_gmsh_state(g%fields,filename)
+
+  write (filename, "(A,I2.2,A)") "data/depth",step,".grib"
+  call write_grib(g,filename)
 
   call system_clock ( clck_counts_start, clck_rate )
   do step=1,nb_steps 
@@ -640,10 +647,12 @@ program shallow_water
     call system_clock ( clck_counts_end, clck_rate )
     write (0, *) "propagated to ",step*hours_per_step," hours.   time = ",(clck_counts_end - clck_counts_beg) / real(clck_rate),&
      &  "walltime = ",(clck_counts_end - clck_counts_start) / real(clck_rate), new_line('A')
-  
+    
+    write (filename, "(A,I2.2,A)") "data/fields",step,".msh"
+    call write_gmsh_state(g%fields,filename)
+
+    write (filename, "(A,I2.2,A)") "data/depth",step,".grib"
+    call write_grib(g,filename)
   end do
   
-  call write_gmsh_state(g%fields,"data/fields.msh")
-  call write_grib(g,"data/depth.grib")
-
 end program shallow_water
