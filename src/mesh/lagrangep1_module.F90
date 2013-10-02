@@ -64,9 +64,9 @@ contains
     self%nb_sides = 2
     self%order = 1
     ! Deallocation will happen in base class ShapeFunction__destruct
-    allocate( self%local_coords(self%nb_nodes,self%dimensionality) )
-    self%local_coords(1,1) = -1.
-    self%local_coords(2,1) = +1.
+    !allocate( self%local_coords(self%nb_nodes,self%dimensionality) )
+    !self%local_coords(1,1) = -1.
+    !self%local_coords(2,1) = +1.
 
     ! print something
     write(0,*) "LagrangeP1_Line::init"
@@ -92,8 +92,9 @@ contains
     write(0,*) "LagrangeP1_Line::grad_values"
   end subroutine LagrangeP1_Line__grad_values
 
-    subroutine LagrangeP1_Line2D__init(self)
+  subroutine LagrangeP1_Line2D__init(self)
     class(LagrangeP1_Line2D), intent(inout) :: self
+    write(0,*) "LagrangeP1_Line2D::init"
 
     ! Specify self%sf
     allocate(LagrangeP1_Line :: self%sf)
@@ -240,10 +241,10 @@ contains
     self%nb_sides = 3
     self%order = 1
     ! Deallocation will happen in base class ShapeFunction__destruct
-    allocate( self%local_coords(self%nb_nodes,self%dimensionality) )
-    self%local_coords(1,:) = [0,0]
-    self%local_coords(2,:) = [1,0]
-    self%local_coords(3,:) = [0,1]
+    !allocate( self%local_coords(3,2) )
+    !self%local_coords(1,:) = [0,0]
+    !self%local_coords(2,:) = [1,0]
+    !self%local_coords(3,:) = [0,1]
 
     ! print something
     write(0,*) "LagrangeP1_Triag::init"

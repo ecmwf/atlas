@@ -1,53 +1,57 @@
 ! module for testing creation of a Grid
 module grib_module
-  use grid_module
-  use model_module
+#ifdef ENABLE_GRIB
   use grib_api
+#endif
+  use common_module
+  use datastruct_module
   implicit none
 contains
 
-subroutine write_grib_state(state,filename)
+subroutine write_grib(geom,filename)
     implicit none
-    class(State_class), pointer, intent(in) :: state
+    type(Geometry_class), intent(inout), target :: geom
     character(len=*), intent(in) :: filename
+
+#ifdef ENABLE_GRIB
     integer :: ifile_handle,igrib_handle,iret
     integer :: ihour
-    class(Field_class), pointer :: field
 
     real(kind=jprb), dimension(:), allocatable :: field_without_periodic
+    real(kind=jprb), dimension(:), pointer :: field
 
-    integer :: ic, ii, inode, nb_unique_nodes, nb_periodic_nodes, nb_nodes
+    integer :: ic, ii, inode, nb_unique_nodes, nb_ghost_nodes, nb_nodes
     integer, dimension(:), allocatable :: unique_nodes
 
     ! This mess is here because the mesh contains some duplicated points
 
-    nb_nodes = state%function_space%grid%nb_nodes
-    nb_periodic_nodes = state%function_space%grid%nb_periodic_nodes
-    nb_unique_nodes = nb_nodes - nb_periodic_nodes
+    nb_nodes = geom%nb_nodes
+    nb_ghost_nodes = geom%nb_ghost_nodes
+    nb_unique_nodes = nb_nodes - nb_ghost_nodes
     allocate(unique_nodes(nb_unique_nodes))
     ic=0
     ii=1
     do inode=1,nb_nodes
-        if(state%function_space%grid%periodic_nodes(ii,2) == inode) then
-            if(ii < nb_periodic_nodes) ii=ii+1
+        if(geom%ghost_nodes(ii,2) == inode) then
+            if(ii < nb_ghost_nodes) ii=ii+1
         else
             ic=ic+1
             unique_nodes(ic)=inode
         endif
     enddo
 
-    ihour = state%time / 3600.
+    ihour = geom%fields%time / 3600.
 
     call grib_open_file(IFILE_HANDLE,'data/gribfield','R')
     call grib_new_from_file(IFILE_HANDLE,IGRIB_HANDLE, IRET)
     call grib_close_file(IFILE_HANDLE)
 
-    field => state%field("depth")
+    field => scalar_field("depth",geom)
 
     allocate( field_without_periodic(nb_unique_nodes) )
 
     do inode=1, nb_unique_nodes
-      field_without_periodic(inode) = field%array( unique_nodes(inode) ,1 )
+      field_without_periodic(inode) = field( unique_nodes(inode) )
     end do
 
     call grib_open_file(IFILE_HANDLE,trim(filename),'W')
@@ -60,6 +64,10 @@ subroutine write_grib_state(state,filename)
 
     call grib_release(IGRIB_HANDLE)
     call grib_close_file(IFILE_HANDLE)
-end subroutine write_grib_state
+
+#else
+    write(0,*) "Grib format is not enabled, compile with '-DENABLE_GRIB'"
+#endif
+end subroutine write_grib
 
 end module grib_module

@@ -62,8 +62,8 @@ contains
     self%nb_sides = 2
     self%order = 0
     ! Deallocation will happen in base class ShapeFunction__destruct
-    allocate( self%local_coords(self%nb_nodes,self%dimensionality) )
-    self%local_coords(1,1) = 0.
+    !allocate( self%local_coords(self%nb_nodes,self%dimensionality) )
+    !self%local_coords(1,1) = 0.
     
     ! print something
     write(0,*) "LagrangeP0_Line::init"

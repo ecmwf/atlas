@@ -27,7 +27,7 @@ module grid_module
   type, public :: Field_class
     character(len=30) :: name
     real(kind=jprb), dimension(:,:), allocatable :: array
-    integer :: size
+    integer :: rows
     integer :: cols
     class(FunctionSpace_class), pointer :: function_space
   contains
@@ -36,17 +36,18 @@ module grid_module
   end type Field_class
   
   type, public :: FieldPtr
-    class(Field_class), pointer :: ptr
+    type(Field_class), pointer :: ptr
   end type FieldPtr
   
   type, public :: FunctionSpace_class
     class(Grid_class), pointer :: grid
     class(ShapeFunction_class), allocatable :: sf
     character(len=30) :: name
-    integer :: nb_elems
-    integer :: nb_nodes
+    integer :: nb_elems = 0
+    integer :: nb_nodes = 0
+    integer :: nb_fields = 0
     integer, dimension(:,:), allocatable :: elements
-    type(FieldPtr), dimension(:), allocatable :: fields
+    type(Field_class), dimension(:), pointer :: fields
     
   contains
     procedure, pass :: init => FunctionSpace__init
@@ -84,7 +85,7 @@ module grid_module
   type, public :: Grid_class
     class(Element), allocatable :: cell
     class(Element), allocatable :: face
-
+    !type(ContinuousFunctionSpace) :: nodes
     integer :: dimension
     integer :: nb_elems
     integer :: nb_nodes
@@ -92,7 +93,7 @@ module grid_module
     integer :: nb_pole_faces
     integer :: nb_internal_faces
     integer :: nb_periodic_nodes
-    real(kind=jprb),    dimension(:,:), allocatable :: nodes
+    real(kind=jprb),  dimension(:,:), allocatable :: nodes_coordinates
     integer, dimension(:,:), allocatable :: cells
     integer, dimension(:,:), allocatable :: faces
     integer, dimension(:), allocatable :: internal_faces
@@ -105,12 +106,24 @@ module grid_module
     procedure, pass :: init => Grid__init
     procedure, pass :: destruct => Grid__destruct
     procedure, pass :: print => Grid__print
-    procedure, pass :: add_function_space => Grid__add_function_space
-    procedure, pass :: add_discontinuous_function_space => Grid__add_discontinuous_function_space
-    procedure, pass :: add_continuous_function_space => Grid__add_continuous_function_space
     procedure, pass :: cell_coords => Grid__cell_coords
     procedure, pass :: function_space => Grid__function_space
+    procedure, pass :: add_function_space  => Grid__add_function_space
+
   end type Grid_class
+  
+  type, public :: State_class
+    character(len=30) :: name
+    real(kind=jprb)              :: time
+    integer :: nb_fields = 0
+    type(FieldPtr), dimension(:), allocatable :: fields
+  contains
+    procedure, pass :: init => State__init
+    procedure, pass :: destruct => State__destruct
+    procedure, pass :: add_field => State__add_field
+    procedure, pass :: field => State__field
+    procedure, pass :: has_field => State__has_field
+  end type State_class
   
 contains
   
@@ -123,13 +136,12 @@ contains
     character(len=*), intent(in) :: name
     class(FunctionSpace_class), intent(in), target :: function_space
     integer, intent(in) :: cols
-    write(0,*) "Field::init(",name,",",function_space%name,")"  
+    write(0,*) "Field::init(",name,",",function_space%name,"),"
     self%name = name
     self%function_space => function_space
     self%cols = cols
-    allocate(self%array(function_space%nb_nodes,self%cols))
-    self%size = function_space%nb_nodes
-    write(0,*) "Field::inited(",name,",",function_space%name,")"  
+    allocate(self%array(self%function_space%nb_nodes,self%cols))
+    self%rows = self%function_space%nb_nodes
   end subroutine Field__init
   
   subroutine Field__destruct(self)
@@ -174,7 +186,7 @@ contains
     end select
     call self%sf%init()
     self%nb_elems = self%grid%nb_elems
-    allocate(self%fields(0))
+    allocate(self%fields(100))
   end subroutine FunctionSpace__init
   
   subroutine FunctionSpace__destruct(self)
@@ -186,13 +198,6 @@ contains
       deallocate(self%sf)
     endif
     if( allocated(self%elements) ) deallocate(self%elements)
-    do f = 1,size(self%fields)
-      if( associated(self%fields(f)%ptr) ) then
-        call self%fields(f)%ptr%destruct()
-        deallocate(self%fields(f)%ptr)
-      endif
-    end do
-    deallocate(self%fields)
   end subroutine FunctionSpace__destruct
   
   function FunctionSpace__add_array_field(self,name,cols) result(new_field)
@@ -200,14 +205,9 @@ contains
     character(len=*), intent(in) :: name
     integer, intent(in) :: cols
     class(Field_class), pointer :: new_field
-    type(FieldPtr), allocatable :: tmp(:)
-    allocate(new_field)
+    self%nb_fields = self%nb_fields+1
+    new_field => self%fields(self%nb_fields)
     call new_field%init(name,self,cols)
-    call move_alloc(self%fields,tmp)
-    allocate(self%fields(size(tmp)+1))
-    self%fields(:size(tmp)) = tmp
-    self%fields(size(self%fields))%ptr => new_field
-    deallocate(tmp)
   end function FunctionSpace__add_array_field
 
 
@@ -215,49 +215,23 @@ contains
     class(FunctionSpace_class), intent(inout)   :: self
     character(len=*), intent(in) :: name
     class(Field_class), pointer :: new_field
-    type(FieldPtr), allocatable :: tmp(:)
-    write(0,*) 'AAAA ',trim(name)
-    allocate(new_field)
-    call new_field%init(name,self,1)
-    if(size(self%fields) >0) then 
-      call move_alloc(self%fields,tmp)
-      allocate(self%fields(size(tmp)+1))
-      self%fields(:size(tmp)) = tmp
-      self%fields(size(self%fields))%ptr => new_field
-      deallocate(tmp)
-    else
-      deallocate(self%fields)
-      allocate( self%fields(1))
-      self%fields(1)%ptr => new_field
-    endif
+    new_field => self%add_array_field(name,1)
   end function FunctionSpace__add_scalar_field
   
   function FunctionSpace__add_vector_field(self,name) result(new_field)
     class(FunctionSpace_class), intent(inout)   :: self
     character(len=*), intent(in) :: name
     class(Field_class), pointer :: new_field
-    type(FieldPtr), allocatable :: tmp(:)
-    write(0,*) name
-    allocate(new_field)
-    call new_field%init(name,self,self%grid%dimension)
-    call move_alloc(self%fields,tmp)
-    allocate(self%fields(size(tmp)+1))
-    self%fields(:size(tmp)) = tmp
-    self%fields(size(self%fields))%ptr => new_field
-    deallocate(tmp)
+    new_field => self%add_array_field(name,self%grid%dimension)
   end function FunctionSpace__add_vector_field
 
   function FunctionSpace__field(self, name) result(field_)
     class(FunctionSpace_class), intent(in) :: self
     character(len=*), intent(in) :: name
     class(Field_class), pointer :: field_
-    type(FieldPtr) :: aa
     integer :: f
-    write(0,*) 'FunctionSpace__field',size(self%fields)
-    do f=1,size(self%fields)
-      aa=self%fields(f)
-      field_ => aa%ptr
-      write(0,*) 'field_%name ', field_%name
+    do f=1,self%nb_fields
+      field_ => self%fields(f)
       if( field_%name == name) then
         return
       end if
@@ -326,7 +300,7 @@ contains
         stop 1        
     end select
     call self%sf%init()
-    allocate(self%fields(0))
+    allocate(self%fields(100))
     allocate(self%elements(self%nb_elems,self%sf%nb_nodes))
   end subroutine FaceFunctionSpace__init
 
@@ -337,7 +311,6 @@ contains
     class(FunctionSpace_class), pointer :: function_space
     allocate( FaceFunctionSpace :: function_space )
     call function_space%init(name, shapefunction_type, grid)
-    call grid%add_function_space(function_space)
     write(0,*) function_space%name
   end function new_FaceFunctionSpace
 
@@ -348,7 +321,6 @@ contains
     class(FunctionSpace_class), pointer :: function_space
     allocate( ContinuousFunctionSpace :: function_space )
     call function_space%init(name, shapefunction_type, grid)
-    call grid%add_function_space(function_space)
     write(0,*) function_space%name
   end function new_ContinuousFunctionSpace
 
@@ -359,7 +331,6 @@ contains
     class(FunctionSpace_class), pointer :: function_space
     allocate( DiscontinuousFunctionSpace :: function_space )
     call function_space%init(name, shapefunction_type, grid)
-    call grid%add_function_space(function_space)
     write(0,*) function_space%name
   end function new_DiscontinuousFunctionSpace
 
@@ -403,7 +374,7 @@ contains
     call self%cell%init()
     call self%face%init()
     self%dimension = self%cell%dimension
-    allocate( FunctionSpacePtr :: self%function_spaces(0))
+    allocate(self%function_spaces(0))
   end subroutine Grid__init
   
   subroutine Grid__destruct(self)
@@ -418,16 +389,10 @@ contains
       call self%face%destruct()
       deallocate(self%face)
     endif
-    if( allocated(self%nodes) ) deallocate(self%nodes)
+    if( allocated(self%nodes_coordinates) ) deallocate(self%nodes_coordinates)
     if( allocated(self%cells) ) deallocate(self%cells)
     if( allocated(self%faces) ) deallocate(self%faces)
-    do f = 1,size(self%function_spaces)
-      if( associated(self%function_spaces(f)%ptr) ) then
-        call self%function_spaces(f)%ptr%destruct()
-        deallocate(self%function_spaces(f)%ptr)
-      endif
-    end do
-    deallocate(self%function_spaces)
+
   end subroutine Grid__destruct
   
   subroutine Grid__print(self)
@@ -436,7 +401,7 @@ contains
     integer :: e
     write(0,*) "nodes = "
     do n = 1,self%nb_nodes
-      write(0,*) "  ",self%nodes(n,:)
+      write(0,*) "  ",self%nodes_coordinates(n,:)
     end do
     write(0,*) "elems = "
     do e = 1,self%nb_elems
@@ -444,10 +409,20 @@ contains
     end do
   end subroutine Grid__print
   
+  subroutine Grid__cell_coords(self, elem_idx, cell_coords)
+    class(Grid_class), intent(in) :: self
+    integer, intent(in) :: elem_idx
+    real(kind=jprb), dimension(:,:), intent(inout) :: cell_coords
+
+    integer n
+    do n=1,self%cell%nb_nodes
+      cell_coords(n,:) = self%nodes_coordinates( self%cells(elem_idx,n), : )
+    end do
+  end subroutine Grid__cell_coords
 
   subroutine Grid__add_function_space(self,function_space)
     class(Grid_class), intent(inout) :: self
-    class(FunctionSpace_class), pointer, intent(in) :: function_space
+    class(FunctionSpace_class), target, intent(inout) :: function_space
     type(FunctionSpacePtr), allocatable :: tmp(:)
     integer :: f
     write(0,*) "adding ",function_space%name
@@ -459,50 +434,80 @@ contains
     self%function_spaces(size(tmp)+1)%ptr => function_space
   end subroutine Grid__add_function_space
 
-  function Grid__add_continuous_function_space(self,name,shapefunction_type) result(new_function_space)
-    class(Grid_class), intent(inout)   :: self
-    character(len=*), intent(in) :: name
-    character(len=*), intent(in) :: shapefunction_type
-    class(FunctionSpace_class), pointer :: new_function_space
-    allocate( ContinuousFunctionSpace :: new_function_space )
-    call new_function_space%init(name,shapefunction_type,self)
-    call self%add_function_space(new_function_space)
-  end function Grid__add_continuous_function_space
-
-  function Grid__add_discontinuous_function_space(self,name,shapefunction_type) result(new_function_space)
-    class(Grid_class), intent(inout)   :: self
-    character(len=*), intent(in) :: name
-    character(len=*), intent(in) :: shapefunction_type
-    class(FunctionSpace_class), pointer :: new_function_space
-    allocate( DiscontinuousFunctionSpace :: new_function_space )
-    call new_function_space%init(name,shapefunction_type,self)
-    call self%add_function_space(new_function_space)
-  end function Grid__add_discontinuous_function_space
-
-  subroutine Grid__cell_coords(self, elem_idx, cell_coords)
-    class(Grid_class), intent(in) :: self
-    integer, intent(in) :: elem_idx
-    real(kind=jprb), dimension(:,:), intent(inout) :: cell_coords
-
-    integer n
-    do n=1,self%cell%nb_nodes
-      cell_coords(n,:) = self%nodes( self%cells(elem_idx,n), : )
-    end do
-  end subroutine Grid__cell_coords
 
   function Grid__function_space(self, name) result(function_space)
     class(Grid_class), intent(in) :: self
     character(len=*), intent(in) :: name
     class(FunctionSpace_class), pointer :: function_space
     integer :: f
+    write(0,*) "shape function_spaces = " , size(self%function_spaces)
     do f=1,size(self%function_spaces)
       function_space => self%function_spaces(f)%ptr
       if( function_space%name == name) then
         return
       end if
     end do
+    write(0,*) "FunctionSpace ", trim(name), " not found"
     call abort
   end function Grid__function_space
 
+! ------------------------------------------------------------------------------------
+!                                  State subroutines
+!-------------------------------------------------------------------------------------
+
+  subroutine State__init(self, name)
+    class(State_class), intent(inout) :: self
+    character(len=*), intent(in) :: name
+    write(0,*) "State::init(",name,")"  
+    self%name = name  
+    allocate(self%fields(100))
+  end subroutine State__init
+  
+  subroutine State__destruct(self)
+    class(State_class), intent(inout) :: self
+    write(0,*) "State::destruct"
+    deallocate(self%fields)
+  end subroutine State__destruct
+  
+  subroutine State__add_field(self,name,function_space,cols)
+    class(State_class), intent(inout) :: self
+    character(len=*), intent(in) :: name
+    class(FunctionSpace_class), intent(in), target ::function_space
+    integer, intent(in) :: cols
+    self%nb_fields = self%nb_fields + 1
+    allocate( self%fields( self%nb_fields )%ptr )
+    call self%fields( self%nb_fields )%ptr%init(name,function_space,cols)
+  end subroutine State__add_field
+
+  function State__field(self, name) result(field)
+    class(State_class), intent(in) :: self
+    character(len=*), intent(in) :: name
+    type(Field_class), pointer :: field
+    integer :: f
+    do f=1,self%nb_fields
+      field => self%fields(f)%ptr
+      if( field%name == name) then
+        return
+      end if
+    end do
+    write(0,*) 'Could not find field ',name, ' in ',self%name
+    call abort
+  end function State__field
+
+  logical function State__has_field(self, name)
+    class(State_class), intent(in) :: self
+    character(len=*), intent(in) :: name
+    type(Field_class), pointer :: field
+    logical :: has_field
+    integer :: f
+    do f=1,self%nb_fields
+      field => self%fields(f)%ptr
+      if( field%name == name) then
+        State__has_field = .True.
+        return
+      end if
+    end do
+    State__has_field = .False.
+  end function State__has_field
 
 end module grid_module
