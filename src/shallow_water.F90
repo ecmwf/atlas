@@ -16,11 +16,13 @@ module mpdata_module
   public :: mpdata_gauge
   public :: compute_gradient
 
-  real(kind=jprb), parameter :: eps    = 1.e-10
+  real(kind=jprb), parameter :: eps  = 1.e-10
 
 contains
   subroutine mpdata_allocations(geom)
     type(Geometry_class), intent(inout) :: geom
+!#define DYNAMIC
+#ifdef DYNAMIC
     call create_scalar_field_in_edges("aun",geom)
     call create_scalar_field_in_nodes("advection",geom)
     call create_vector_field_in_nodes("gradQ",geom)
@@ -30,19 +32,21 @@ contains
     call create_scalar_field_in_nodes("rhout",geom)
     call create_scalar_field_in_nodes("cp",geom)
     call create_scalar_field_in_nodes("cn",geom)
+#endif
   end subroutine mpdata_allocations
 
   subroutine mpdata_gauge(dt,Q,V,order,limited,Q_is_vector,geom)
     real(kind=jprb), intent(in)  :: dt
-    real(kind=jprb), dimension(:),   intent(inout) :: Q
-    real(kind=jprb), dimension(:,:), intent(in)    :: V
+    type(Geometry_class), intent(inout) :: geom
+    real(kind=jprb), intent(inout) :: Q(geom%nb_nodes)
+    real(kind=jprb), intent(in) :: V(geom%nb_nodes,2)
     logical, intent(in) :: Q_is_vector, limited
     integer, intent(in) :: order
-    type(Geometry_class), intent(inout) :: geom
-
     integer :: inode, iedge, pass, p1,p2, e
     real(kind=jprb) :: sx, sy, flux, volume_of_two_cells, dQdx, dQdy, Vx, Vy, apos, aneg
-    real(kind=jprb), dimension(:), pointer   :: vol, Qmin, Qmax, aun, rhin, rhout, cp, cn, adv
+
+#ifdef DYNAMIC
+    real(kind=jprb), dimension(:),   pointer :: vol, Qmin, Qmax, aun, rhin, rhout, cp, cn, adv
     real(kind=jprb), dimension(:,:), pointer :: S, gradQ
 
     vol   => geom%dual_volumes
@@ -56,16 +60,47 @@ contains
     cn    => scalar_field("cn",geom)
     adv   => scalar_field("advection",geom)
     gradQ => vector_field("gradQ",geom)
+#else
+    real(kind=jprb) :: Qmin(geom%nb_nodes)
+    real(kind=jprb) :: Qmax(geom%nb_nodes)
+    real(kind=jprb) :: rhin(geom%nb_nodes)
+    real(kind=jprb) :: rhout(geom%nb_nodes)
+    real(kind=jprb) :: cp(geom%nb_nodes)
+    real(kind=jprb) :: cn(geom%nb_nodes)
+    real(kind=jprb) :: adv(geom%nb_nodes)
+    real(kind=jprb) :: aun(geom%nb_edges)
+    real(kind=jprb) :: gradQ(geom%nb_nodes,2)
+!#define COPY_INSTEAD_POINT
+#ifdef COPY_INSTEAD_POINT
+    real(kind=jprb) :: vol(geom%nb_nodes)
+    real(kind=jprb) :: S(geom%nb_edges,2)
+    vol   = geom%dual_volumes
+    S     = geom%dual_normals
+#else
+    real(kind=jprb), dimension(:), pointer :: vol
+    real(kind=jprb), dimension(:,:), pointer :: S
+    vol   => geom%dual_volumes
+    S     => geom%dual_normals
+#endif
+#endif
+
+
+    associate( nb_nodes          => geom%nb_nodes, &
+      &        nb_internal_edges => geom%nb_internal_edges, &
+      &        nb_pole_edges     => geom%nb_pole_edges, &
+      &        internal_edges    => geom%internal_edges, &
+      &        pole_edges        => geom%pole_edges, &
+      &        edges             => geom%edges )
 
     ! 1. First pass
     ! -------------
       
     ! Compute the normal velocity in faces, and advection in vertices
     adv(:) = 0.
-    do iedge = 1,geom%nb_internal_edges
-      e  = geom%internal_edges(iedge)
-      p1 = geom%edges(e,1)
-      p2 = geom%edges(e,2)
+    do iedge = 1,nb_internal_edges
+      e  = internal_edges(iedge)
+      p1 = edges(e,1)
+      p2 = edges(e,2)
       sx = S(e,XX)
       sy = S(e,YY)
       Vx = 0.5_jprb*(V(p1,XX)+V(p2,XX))
@@ -79,7 +114,7 @@ contains
     end do
 
     ! Update the unknowns in vertices
-    do inode=1,geom%nb_nodes
+    do inode=1,nb_nodes
       Q(inode) = Q(inode) - adv(inode)/vol(inode) * dt
     end do
 
@@ -92,10 +127,10 @@ contains
       call compute_gradient(Q, gradQ, Q_is_vector, geom)
 
       ! Compute antidiffusive normal velocity in faces
-      do iedge = 1,geom%nb_internal_edges
-        e  = geom%internal_edges(iedge)
-        p1 = geom%edges(e,1)
-        p2 = geom%edges(e,2)
+      do iedge = 1,nb_internal_edges
+        e  = internal_edges(iedge)
+        p1 = edges(e,1)
+        p2 = edges(e,2)
 
         ! evaluate gradient and velocity at edge by combining 2 neighbouring dual cells
         volume_of_two_cells = vol(p1) + vol(p2)
@@ -119,37 +154,42 @@ contains
         cn(:)    =  0.
         adv(:)   =  0.
 
-        do iedge = 1,geom%nb_internal_edges
-          e  = geom%internal_edges(iedge)
-          p1 = geom%edges(e,1)
-          p2 = geom%edges(e,2)
+        do iedge = 1,nb_internal_edges
+          e  = internal_edges(iedge)
+          p1 = edges(e,1)
+          p2 = edges(e,2)
           Qmax(p1)=max(Qmax(p1),Q(p1),Q(p2))
           Qmin(p1)=min(Qmin(p1),Q(p1),Q(p2))
           Qmax(p2)=max(Qmax(p2),Q(p1),Q(p2))
           Qmin(p2)=min(Qmin(p2),Q(p1),Q(p2))
         enddo
 
-        do iedge = 1,geom%nb_pole_edges
-          e  = geom%pole_edges(iedge)
-          p1 = geom%edges(e,1)
-          p2 = geom%edges(e,2)
-          if (Q_is_vector) then
+        if (Q_is_vector) then
+          do iedge = 1,nb_pole_edges
+            e  = pole_edges(iedge)
+            p1 = edges(e,1)
+            p2 = edges(e,2)
             Qmax(p1)=max(Qmax(p1),Q(p1),-Q(p2))
             Qmin(p1)=min(Qmin(p1),Q(p1),-Q(p2))
             Qmax(p2)=max(Qmax(p2),-Q(p1),Q(p2))
             Qmin(p2)=min(Qmin(p2),-Q(p1),Q(p2))
-          else
+          enddo
+        else
+          do iedge = 1,nb_pole_edges
+            e  = pole_edges(iedge)
+            p1 = edges(e,1)
+            p2 = edges(e,2)
             Qmax(p1)=max(Qmax(p1),Q(p1),Q(p2))
             Qmin(p1)=min(Qmin(p1),Q(p1),Q(p2))
             Qmax(p2)=max(Qmax(p2),Q(p1),Q(p2))
             Qmin(p2)=min(Qmin(p2),Q(p1),Q(p2))
-          end if
-        enddo
+          enddo
+        end if
 
-        do iedge = 1,geom%nb_internal_edges
-          e  = geom%internal_edges(iedge)
-          p1 = geom%edges(e,1)
-          p2 = geom%edges(e,2)
+        do iedge = 1,nb_internal_edges
+          e  = internal_edges(iedge)
+          p1 = edges(e,1)
+          p2 = edges(e,2)
           apos = max(0._jprb,aun(e))
           aneg = min(0._jprb,aun(e))
           rhin(p1)  = rhin(p1)  - aneg
@@ -158,16 +198,16 @@ contains
           rhout(p2) = rhout(p2) - aneg
         end do
 
-        do inode=1,geom%nb_nodes
+        do inode=1,nb_nodes
           cp(inode) = ( Qmax(inode)-Q(inode) )*vol(inode)/( rhin(inode) * dt + eps )
           cn(inode) = ( Q(inode)-Qmin(inode) )*vol(inode)/( rhout(inode)* dt + eps )
         enddo
 
        ! limited antidiffusive  velocities:
-        do iedge = 1,geom%nb_internal_edges
-          e  = geom%internal_edges(iedge)
-          p1 = geom%edges(e,1)
-          p2 = geom%edges(e,2)
+        do iedge = 1,nb_internal_edges
+          e  = internal_edges(iedge)
+          p1 = edges(e,1)
+          p2 = edges(e,2)
           if(aun(e) > 0.) then
             aun(e)=aun(e)*min(1._jprb,cp(p2),cn(p1))
           else
@@ -177,27 +217,33 @@ contains
       endif
 
       ! Compute fluxes from (limited) antidiffusive velocity
-      do iedge = 1,geom%nb_internal_edges
-        e  = geom%internal_edges(iedge)
-        p1 = geom%edges(e,1)
-        p2 = geom%edges(e,2)
+      do iedge = 1,nb_internal_edges
+        e  = internal_edges(iedge)
+        p1 = edges(e,1)
+        p2 = edges(e,2)
         flux = aun(e)
         adv(p1) = adv(p1) + flux
         adv(p2) = adv(p2) - flux
       end do
 
       ! Update the unknowns in vertices
-      do inode=1,geom%nb_nodes
+      do inode=1,nb_nodes
         Q(inode) = Q(inode) - adv(inode)/vol(inode) * dt
       end do
 
     end do ! other passes
+    end associate
   end subroutine mpdata_gauge
 
   subroutine compute_gradient(Q,gradQ,Q_is_vector,geom)
     type(Geometry_class), intent(inout) :: geom
+#ifdef DYNAMIC
     real(kind=jprb), dimension(:),   intent(in)    :: Q
     real(kind=jprb), dimension(:,:), intent(inout) :: gradQ
+#else
+    real(kind=jprb), intent(in)    :: Q(geom%nb_nodes)
+    real(kind=jprb), intent(inout) :: gradQ(geom%nb_nodes,2)
+#endif
     logical, intent(in) :: Q_is_vector
     
     real(kind=jprb)    :: sx,sy,avgQ
@@ -268,6 +314,8 @@ module shallow_water_module
   real(kind=jprb), parameter :: radius = 6371.22e+03
   real(kind=jprb), parameter :: f0     = 1.4584e-04 !coriolis parameter (=2xearth's omega)
   real(kind=jprb), parameter :: grav   = 9.80616
+  real(kind=jprb), parameter :: pi     = acos(-1.)
+
 
   real(kind=jprb) :: dt_forward = 20.
   integer :: iter = 0
@@ -362,12 +410,12 @@ contains
 
 
   subroutine set_state_rossby_haurwitz(geom)
-    type(Geometry_class), intent(inout) :: geom
-    real(kind=jprb), dimension(:), pointer :: D
+    type(Geometry_class), intent(inout)      :: geom
+    real(kind=jprb), dimension(:), pointer   :: D
     real(kind=jprb), dimension(:,:), pointer :: Q
     integer :: inode
     integer :: ir,ip
-    real(kind=jprb)    :: aaa0,zk,om,ph0,g,ath,bth,cth,pi,x,y,th,cor
+    real(kind=jprb)    :: aaa0,zk,om,ph0,g,ath,bth,cth,x,y,th,cor
 
     ! statement-functions, before first statement
     ATH(TH) = om*0.5*(f0+om)*(cos(TH))**2 &
@@ -383,7 +431,6 @@ contains
     ir   = 4
     ph0  = 78.4E3
     aaa0 = 0.
-    pi   = acos(-1._jprb)
 
     D => scalar_field("depth",geom)
     Q => vector_field("momentum",geom)
@@ -460,12 +507,12 @@ contains
     integer :: inode
     real(kind=jprb) :: f, x, y, Qx, Qy, Dmod, dDdx, dDdy, sin_y, cos_y, vol, hx, hy
     real(kind=jprb), dimension(:),   pointer :: D
-    real(kind=jprb), dimension(:,:), pointer :: Q, grad_D, R
+    real(kind=jprb), dimension(:,:), pointer :: Q, R
+    real(kind=jprb) :: grad_D(geom%nb_nodes, 2)
 
     D => scalar_field("depth",geom)
     Q => vector_field("momentum",geom)
     R => vector_field("momentum_forcing",geom)
-    grad_D => vector_field("depth_gradient",geom)
 
     call compute_gradient( D, grad_D, .False., geom )
     
@@ -514,12 +561,12 @@ contains
     real(kind=jprb) :: Qx_adv, Qy_adv, Rx_exp, Ry_exp, vol
 
     real(kind=jprb), dimension(:),   pointer :: D
-    real(kind=jprb), dimension(:,:), pointer :: Q, grad_D, R
+    real(kind=jprb), dimension(:,:), pointer :: Q, R
+    real(kind=jprb) :: grad_D(geom%nb_nodes, 2)
 
     D => scalar_field("depth",geom)
     Q => vector_field("momentum",geom)
     R => vector_field("momentum_forcing",geom)
-    grad_D => vector_field("depth_gradient",geom)
 
     ! D is already up to date at time level (n+1), just by MPDATA advection
     call compute_gradient( D, grad_D, .False., geom )
@@ -612,8 +659,8 @@ program shallow_water
 
   ! Configuration parameters
   real(kind=jprb) :: dt = 20.             ! solver time-step
-  integer         :: nb_steps = 15        ! Number of propagations
-  integer         :: hours_per_step = 24  ! Propagation time
+  integer         :: nb_steps = 1        ! Number of propagations
+  integer         :: hours_per_step = 1  ! Propagation time
 
   ! Declarations
   type(Geometry_class) :: g
@@ -629,13 +676,14 @@ program shallow_water
   call allocations(g)
   call set_state_rossby_haurwitz(g)
   call set_time_step( dt )
-  call write_gmsh_mesh(g%internal_mesh,"data/mesh.msh")
 
-  write (filename, "(A,I2.2,A)") "data/fields",step,".msh"
-  call write_gmsh_state(g%fields,filename)
+  !call write_gmsh_mesh(g%internal_mesh,"data/mesh.msh")
 
-  write (filename, "(A,I2.2,A)") "data/depth",step,".grib"
-  call write_grib(g,filename)
+  !write (filename, "(A,I2.2,A)") "data/fields",step,".msh"
+  !call write_gmsh_state(g%fields,filename)
+
+  !write (filename, "(A,I2.2,A)") "data/depth",step,".grib"
+  !call write_grib(g,filename)
 
   call system_clock ( clck_counts_start, clck_rate )
   do step=1,nb_steps 
@@ -648,11 +696,11 @@ program shallow_water
     write (0, *) "propagated to ",step*hours_per_step," hours.   time = ",(clck_counts_end - clck_counts_beg) / real(clck_rate),&
      &  "walltime = ",(clck_counts_end - clck_counts_start) / real(clck_rate), new_line('A')
     
-    write (filename, "(A,I2.2,A)") "data/fields",step,".msh"
-    call write_gmsh_state(g%fields,filename)
+    !write (filename, "(A,I2.2,A)") "data/fields",step,".msh"
+    !call write_gmsh_state(g%fields,filename)
 
-    write (filename, "(A,I2.2,A)") "data/depth",step,".grib"
-    call write_grib(g,filename)
+    !write (filename, "(A,I2.2,A)") "data/depth",step,".grib"
+    !call write_grib(g,filename)
   end do
   
 end program shallow_water

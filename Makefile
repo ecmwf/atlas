@@ -20,7 +20,7 @@ endif
 KERNEL_INC= -I./src/common -I./src/mesh -I./src/io  -I./ 
 %.o : %.F90
 	echo $@
-	$(FC) $(GRIB) $(KERNEL_INC) -O3  -c -o $@ $<
+	$(FC) $(GRIB) $(KERNEL_INC) -fstack-arrays -O3  -c -o $@ $<
 
 # Possible extra flags to optimize crayftn 8.2
 # -hfp3  (float operations)
