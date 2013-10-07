@@ -63,6 +63,7 @@ contains
         g%pole_edges(pole_edge_cnt) = iedge
       end if
     end do
+    g%internal_mesh%faces = g%edges
 
     do iedge = 1,g%nb_edges
       read(5,*) idx, Sx, Sy

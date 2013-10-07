@@ -17,17 +17,24 @@ ifdef GRIB_API_DIR
   GRIB= -DENABLE_GRIB -L$(GRIB_API_DIR)/lib -lgrib_api_f90 -lgrib_api -ljasper -I$(GRIB_API_DIR)/include
 endif
 
+FC=ftn
+FCFLAGS= -O3 -hfp3 -rad -Ktrap=fp
+
+# Possible usefule flags for crayftn 8.2
+# -hfp3  (float operations)
+# -R b   (bounds checking)
+# -rad   (optimisation listing, plus decompiled)
+# -Ktrap=fp (for aborting at NaN)
+#
+# Possible extra flags to optimize gfortran 4.8
+# -fstack-arrays (allocate automatic arrays on stack)
+
 KERNEL_INC= -I./src/common -I./src/mesh -I./src/io  -I./ 
 %.o : %.F90
 	echo $@
-	$(FC) $(GRIB) $(KERNEL_INC) -fstack-arrays -O3  -c -o $@ $<
+	$(FC) $(GRIB) $(KERNEL_INC) $(FCFLAGS) -c -o $@ $<
 
-# Possible extra flags to optimize crayftn 8.2
-# -hfp3  (float operations)
-# -R b   (bounds checking)
 
-# Possible extra flags to optimize gfortran 4.8
-# -fstack-arrays
 
 KERNEL_SRC= \
 	src/common/common_module.F90 \
@@ -43,7 +50,7 @@ KERNEL_SRC= \
 KERNEL_OBJ=$(KERNEL_SRC:.F90=.o)
 
 SHALLOW_WATER_SRC= \
-	src/shallow_water.o
+	src/shallow_water.F90
 
 SHALLOW_WATER_OBJ=$(SHALLOW_WATER_SRC:.F90=.o)
 
@@ -52,7 +59,7 @@ all: shallow_water
 kernel: $(KERNEL_OBJ)
 
 shallow_water: kernel $(SHALLOW_WATER_OBJ)
-	$(FC) $(GRIB) $(KERNEL_INC) -o shallow_water $(KERNEL_OBJ) $(SHALLOW_WATER_OBJ)
+	$(FC) $(GRIB) $(KERNEL_INC) $(FCFLAGS) -o shallow_water $(KERNEL_OBJ) $(SHALLOW_WATER_OBJ)
 
 clean:
 	rm -f *.o             *.mod

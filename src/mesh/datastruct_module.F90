@@ -32,16 +32,22 @@ module datastruct_module
   ! -----------
     integer, public                                  :: nb_nodes=0
     integer, public                                  :: nb_edges=0
-    integer, dimension(:,:), pointer, public         :: edges
     integer, public                                  :: nb_internal_edges=0
-    integer, dimension(:), allocatable, public       :: internal_edges
     integer, public                                  :: nb_pole_edges=0
-    integer, dimension(:), allocatable, public       :: pole_edges
     integer, public                                  :: nb_ghost_nodes=0
-    integer, dimension(:,:), allocatable, public     :: ghost_nodes
-    real(kind=jprb), dimension(:,:), pointer, public :: coordinates  ! Defined in nodes
-    real(kind=jprb), dimension(:),   pointer, public :: dual_volumes ! Defined in nodes
-    real(kind=jprb), dimension(:,:), pointer, public :: dual_normals ! Defined in edges
+
+    integer,         dimension(:,:), allocatable, public :: edges
+    integer,         dimension(:),   allocatable, public :: internal_edges
+    integer,         dimension(:),   allocatable, public :: pole_edges
+    integer,         dimension(:,:), allocatable, public :: ghost_nodes
+    real(kind=jprb), dimension(:,:), allocatable, public :: coordinates  ! Defined in nodes
+    real(kind=jprb), dimension(:),   allocatable, public :: dual_volumes ! Defined in nodes
+    real(kind=jprb), dimension(:,:), allocatable, public :: dual_normals ! Defined in edges
+    real(kind=jprb), dimension(:), allocatable, public :: hx ! Defined in nodes
+    real(kind=jprb), dimension(:), allocatable, public :: hy ! Defined in nodes
+    real(kind=jprb), dimension(:), allocatable, public :: dhxdy_over_G ! Defined in nodes
+    real(kind=jprb), dimension(:), allocatable, public :: coriolis ! Defined in nodes
+
   end type Geometry_class
 
   type(Geometry_class) :: geom
@@ -63,21 +69,30 @@ contains
     allocate( ContinuousFunctionSpace :: geom_%functionspace_nodes )
     call geom_%functionspace_nodes%init("nodes", "LagrangeP1", geom_%internal_mesh)
     
-    call geom_%field_coordinates%init("coordinates",geom_%functionspace_nodes,2)
-    geom_%coordinates => geom_%field_coordinates%array
-    call geom_%field_dual_volumes%init("dual_volumes",geom_%functionspace_nodes,1)
-    geom_%dual_volumes => geom_%field_dual_volumes%array(:,1)
+    !call geom_%field_coordinates%init("coordinates",geom_%functionspace_nodes,2)
+    !geom_%coordinates => geom_%field_coordinates%array
+    allocate( geom_%coordinates(nb_nodes,2) )
+    !call geom_%field_dual_volumes%init("dual_volumes",geom_%functionspace_nodes,1)
+    !geom_%dual_volumes => geom_%field_dual_volumes%array(:,1)
+    allocate( geom_%dual_volumes(nb_nodes) )
+    
     call geom_%internal_mesh%add_function_space(geom_%functionspace_nodes)
+    allocate( geom_%hx(nb_nodes) )
+    allocate( geom_%hy(nb_nodes) )
+    allocate( geom_%dhxdy_over_G(nb_nodes) )
+    allocate( geom_%coriolis(nb_nodes) )
 
     geom_%nb_edges = nb_edges
     geom_%internal_mesh%nb_faces = nb_edges
     allocate( FaceFunctionSpace :: geom_%functionspace_edges )
     call geom_%functionspace_edges%init("edges", "LagrangeP0", geom_%internal_mesh)
-    call geom_%field_dual_normals%init("dual_normals", geom_%functionspace_edges,2)
-    geom_%dual_normals => geom_%field_dual_normals%array
+    !call geom_%field_dual_normals%init("dual_normals", geom_%functionspace_edges,2)
+    !geom_%dual_normals => geom_%field_dual_normals%array
+    allocate( geom_%dual_normals(nb_edges,2) )
     call geom_%internal_mesh%add_function_space(geom_%functionspace_edges)
     allocate( geom_%internal_mesh%faces(geom_%nb_edges,2) )
-    geom_%edges => geom_%internal_mesh%faces
+    allocate( geom_%edges(geom_%nb_edges,2) )
+    !geom_%edges => geom_%internal_mesh%faces
   end subroutine create_mesh
 
   subroutine create_scalar_field_in_nodes(name, geom_)
