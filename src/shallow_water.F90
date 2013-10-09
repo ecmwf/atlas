@@ -1,6 +1,6 @@
 !#define OLD_WAY
 
-#define NDEBUG
+!#define NDEBUG
 #ifndef OLD_WAY
 #define NEW_WAY
 #endif
@@ -13,6 +13,16 @@ call abort; \
 endif;
 #else
 #define assert(ASSERTION)
+#endif
+
+#ifndef NDEBUG
+#define assert_msg(ASSERTION,msg) \
+if( .not. (ASSERTION) ) then; \
+write(0,*) "Assertion failed: "//trim(msg); \
+call abort; \
+endif;
+#else
+#define assert_msg(ASSERTION,msg)
 #endif
 
 #ifdef OLD_WAY
@@ -67,6 +77,7 @@ contains
     real(kind=jprb) :: adv(geom%nb_nodes)
     real(kind=jprb) :: aun(geom%nb_edges)
     real(kind=jprb) :: gradQ(geom%nb_nodes,2)
+    real(kind=jprb) :: tmp_min, tmp_max
 
     associate( nb_nodes          => geom%nb_nodes, &
       &        nb_edges          => geom%nb_edges, &
@@ -140,17 +151,16 @@ contains
         rhout(:) =  0.
         adv(:)   =  0.
 
-        do jedge = 1,nb_internal_edges
-          iedge  = internal_edges(jedge)
+        do LOOP_EDGES
           ip1 = edges(iedge,1)
           ip2 = edges(iedge,2)
           Q1 = Q(ip1)
           Q2 = Q(ip2)
-          Qmax(ip1)=max(Qmax(ip1),Q1,Q2)
-          Qmin(ip1)=min(Qmin(ip1),Q1,Q2)
-          Qmax(ip2)=max(Qmax(ip2),Q1,Q2)
-          Qmin(ip2)=min(Qmin(ip2),Q1,Q2)
-        enddo
+          Qmax(ip1) = max( Qmax(ip1), Q1, Q2 )
+          Qmin(ip1) = min( Qmin(ip1), Q1, Q2 )
+          Qmax(ip2) = max( Qmax(ip2), Q1, Q2 )
+          Qmin(ip2) = min( Qmin(ip2), Q1, Q2 )
+        end do
 
         if (Q_is_vector) then
           do jedge = 1,nb_pole_edges
@@ -159,22 +169,14 @@ contains
             ip2 = edges(iedge,2)
             Q1 = Q(ip1)
             Q2 = Q(ip2)
-            if (Q_is_vector) then
-              Qmax(ip1)=max(Qmax(ip1),Q1,-Q2)
-              Qmin(ip1)=min(Qmin(ip1),Q1,-Q2)
-              Qmax(ip2)=max(Qmax(ip2),-Q1,Q2)
-              Qmin(ip2)=min(Qmin(ip2),-Q1,Q2)
-            else
-              Qmax(ip1)=max(Qmax(ip1),Q1,Q2)
-              Qmin(ip1)=min(Qmin(ip1),Q1,Q2)
-              Qmax(ip2)=max(Qmax(ip2),Q1,Q2)
-              Qmin(ip2)=min(Qmin(ip2),Q1,Q2)
-            endif
-          enddo
+            Qmax(ip1) = max( Qmax(ip1), Q1, abs(Q2) )
+            Qmin(ip1) = min( Qmin(ip1), Q1,-abs(Q2) )
+            Qmax(ip2) = max( Qmax(ip2), Q2, abs(Q1) )
+            Qmin(ip2) = min( Qmin(ip2), Q2,-abs(Q1) )
+          end do
         end if
-     
 
-      do LOOP_EDGES
+        do LOOP_EDGES
           ip1 = edges(iedge,1)
           ip2 = edges(iedge,2)
           apos = max(0._jprb,aun(iedge))
