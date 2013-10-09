@@ -1,9 +1,5 @@
-!#define OLD_WAY
 
 !#define NDEBUG
-#ifndef OLD_WAY
-#define NEW_WAY
-#endif
 
 #ifndef NDEBUG
 #define assert(ASSERTION) \
@@ -25,23 +21,10 @@ endif;
 #define assert_msg(ASSERTION,msg)
 #endif
 
-#ifdef OLD_WAY
-#define LOOP_EDGES \
-jedge = 1,geom%nb_internal_edges; \
-iedge = geom%internal_edges(jedge);
-#define VELOCITY_X  (V(ip1,XX)+V(ip2,XX))*0.5_jprb
-#define VELOCITY_Y  (V(ip1,YY)+V(ip2,YY))*0.5_jprb
-#else
-#define LOOP_EDGES \
-iedge = 1,geom%nb_edges;
-#define VELOCITY_X  V(iedge,XX)
-#define VELOCITY_Y  V(iedge,YY)
-#endif
 
 
 ! ===================================================================
 ! mpdata_module
-! -------------
 ! This module contains strictly algorithmic subroutines
 ! - mpdata_gauge       : Non-oscillatory variable sign MPDATA advection
 ! - compute_gradient   : Compute gradient of a scalar array
@@ -95,16 +78,16 @@ contains
     ! Compute the normal velocity in faces, and advection in vertices
     adv(:) = 0.
 
-    do LOOP_EDGES
-      ip1 = edges(iedge,1)
-      ip2 = edges(iedge,2)
-      Sx = S(iedge,XX)
-      Sy = S(iedge,YY)
-      Vx = VELOCITY_X
-      Vy = VELOCITY_Y
-      aun(iedge) = Vx*Sx + Vy*Sy
-      apos = max(0._jprb,aun(iedge))
-      aneg = min(0._jprb,aun(iedge))
+    do jedge = 1,geom%nb_edges
+      ip1 = edges(jedge,1)
+      ip2 = edges(jedge,2)
+      Sx = S(jedge,XX)
+      Sy = S(jedge,YY)
+      Vx = V(jedge,XX)
+      Vy = V(jedge,YY)
+      aun(jedge) = Vx*Sx + Vy*Sy
+      apos = max(0._jprb,aun(jedge))
+      aneg = min(0._jprb,aun(jedge))
       flux = Q(ip1)*apos + Q(ip2)*aneg
       adv(ip1) = adv(ip1) + flux
       adv(ip2) = adv(ip2) - flux
@@ -114,8 +97,6 @@ contains
     do jnode=1,nb_nodes
       Q(jnode) = Q(jnode) - adv(jnode)/vol(jnode) * dt
     end do
-
-    !write(0,*) "advected = ", L2norm(Q)
 
 
     ! 2. Other passes (making the spatial discretisation higher-order)
@@ -127,19 +108,19 @@ contains
 
       ! Compute antidiffusive normal velocity in faces
 
-      do LOOP_EDGES
-        ip1 = edges(iedge,1)
-        ip2 = edges(iedge,2)
+      do jedge = 1,geom%nb_edges
+        ip1 = edges(jedge,1)
+        ip2 = edges(jedge,2)
 
         ! evaluate gradient and velocity at edge by combining 2 neighbouring dual cells
         volume_of_two_cells = vol(ip1) + vol(ip2)
         dQdx = (gradQ(ip1,XX)+gradQ(ip2,XX)) / volume_of_two_cells
         dQdy = (gradQ(ip1,YY)+gradQ(ip2,YY)) / volume_of_two_cells
-        Vx = VELOCITY_X
-        Vy = VELOCITY_Y
+        Vx = V(jedge,XX)
+        Vy = V(jedge,YY)
         ! variable sign option with asymptotic analysis, (mpdata gauge)
-        aun(iedge) = abs(aun(iedge))*(Q(ip2)-Q(ip1))*0.5_jprb &
-          &      -0.5_jprb*dt*aun(iedge)*(Vx*dQdx+Vy*dQdy)
+        aun(jedge) = abs(aun(jedge))*(Q(ip2)-Q(ip1))*0.5_jprb &
+          &      -0.5_jprb*dt*aun(jedge)*(Vx*dQdx+Vy*dQdy)
       end do
 
       ! non-oscillatory option
@@ -151,9 +132,9 @@ contains
         rhout(:) =  0.
         adv(:)   =  0.
 
-        do LOOP_EDGES
-          ip1 = edges(iedge,1)
-          ip2 = edges(iedge,2)
+        do jedge = 1,geom%nb_edges
+          ip1 = edges(jedge,1)
+          ip2 = edges(jedge,2)
           Q1 = Q(ip1)
           Q2 = Q(ip2)
           Qmax(ip1) = max( Qmax(ip1), Q1, Q2 )
@@ -176,11 +157,11 @@ contains
           end do
         end if
 
-        do LOOP_EDGES
-          ip1 = edges(iedge,1)
-          ip2 = edges(iedge,2)
-          apos = max(0._jprb,aun(iedge))
-          aneg = min(0._jprb,aun(iedge))
+        do jedge = 1,geom%nb_edges
+          ip1 = edges(jedge,1)
+          ip2 = edges(jedge,2)
+          apos = max(0._jprb,aun(jedge))
+          aneg = min(0._jprb,aun(jedge))
           rhin(ip1)  = rhin(ip1)  - aneg
           rhout(ip1) = rhout(ip1) + apos
           rhin(ip2)  = rhin(ip2)  + apos
@@ -195,22 +176,22 @@ contains
 
        ! limited antidiffusive  velocities:
 
-        do LOOP_EDGES
-          ip1 = edges(iedge,1)
-          ip2 = edges(iedge,2)
-          if(aun(iedge) > 0.) then
-            aun(iedge)=aun(iedge)*min(1._jprb,cp(ip2),cn(ip1))
+        do jedge = 1,geom%nb_edges
+          ip1 = edges(jedge,1)
+          ip2 = edges(jedge,2)
+          if(aun(jedge) > 0._jprb) then
+            aun(jedge)=aun(jedge)*min(1._jprb,cp(ip2),cn(ip1))
           else
-            aun(iedge)=aun(iedge)*min(1._jprb,cn(ip2),cp(ip1))
+            aun(jedge)=aun(jedge)*min(1._jprb,cn(ip2),cp(ip1))
           endif
         enddo
       endif
 
       ! Compute fluxes from (limited) antidiffusive velocity
-      do LOOP_EDGES
-        ip1 = edges(iedge,1)
-        ip2 = edges(iedge,2)
-        flux = aun(iedge)
+      do jedge = 1,geom%nb_edges
+        ip1 = edges(jedge,1)
+        ip2 = edges(jedge,2)
+        flux = aun(jedge)
         adv(ip1) = adv(ip1) + flux
         adv(ip2) = adv(ip2) - flux
       end do
@@ -236,11 +217,11 @@ contains
     ! derivatives 
     gradQ(:,:) = 0
 
-    do LOOP_EDGES
-      ip1  = geom%edges(iedge,1)
-      ip2  = geom%edges(iedge,2)
-      Sx  = geom%dual_normals(iedge,XX)
-      Sy  = geom%dual_normals(iedge,YY)
+    do jedge = 1,geom%nb_edges
+      ip1 = geom%edges(jedge,1)
+      ip2 = geom%edges(jedge,2)
+      Sx  = geom%dual_normals(jedge,XX)
+      Sy  = geom%dual_normals(jedge,YY)
       avgQ = ( Q(ip1) + Q(ip2) )*0.5_jprb
       gradQ(ip1,XX) = gradQ(ip1,XX) + Sx*avgQ
       gradQ(ip2,XX) = gradQ(ip2,XX) - Sx*avgQ
@@ -252,19 +233,14 @@ contains
     ! Sx == 0 at pole, and Sy has same sign at both sides of pole
     if (.not. Q_is_vector) then
       do jedge = 1,geom%nb_pole_edges
-        iedge    = geom%pole_edges(jedge)
+        iedge = geom%pole_edges(jedge)
         ip1   = geom%edges(iedge,1)
         ip2   = geom%edges(iedge,2)
         Sy   = geom%dual_normals(iedge,YY)
         avgQ = ( Q(ip1) + Q(ip2) )*0.5_jprb
         ! correct for wrongly subtracting sy*avgQ in previous loop,
         ! instead of adding, because point at other side of pole
-#ifdef  OLD_WAY
-        gradQ(ip1,YY) = gradQ(ip1,YY) + Sy*avgQ
-        gradQ(ip2,YY) = gradQ(ip2,YY) + Sy*avgQ
-#else
         gradQ(ip2,YY) = gradQ(ip2,YY) + 2*Sy*avgQ 
-#endif
       end do
     end if
   end subroutine compute_gradient
@@ -393,11 +369,7 @@ contains
     call create_vector_field_in_nodes("momentum_forcing",geom)
     call create_scalar_field_in_nodes("depth_backup",geom)
     call create_vector_field_in_nodes("momentum_backup",geom)
-#ifdef OLD_WAY
-    call create_vector_field_in_nodes("advective_velocity",geom)
-#else
     call create_vector_field_in_edges("advective_velocity",geom)
-#endif
   end subroutine create_state_fields
 
 
@@ -406,18 +378,8 @@ contains
     type(DataStructure_type), intent(inout)      :: geom
     real(kind=jprb), dimension(:), pointer   :: D
     real(kind=jprb), dimension(:,:), pointer :: Q
-    integer :: jnode
-    integer :: ir,ip
-    real(kind=jprb)    :: aaa0,zk,om,ph0,g,ath,bth,cth,x,y,th,cor
-
-    ! statement-functions, before first statement
-    ATH(TH) = om*0.5*(f0+om)*(cos(TH))**2 &
-      & +0.25*zk**2*(cos(TH))**(2*ir)*( (ir+1)*(cos(TH))**2 &
-      & +float(2*ir**2-ir-2)-2.*ir**2/(cos(TH))**2 )
-    BTH(TH) = (f0+2.*om)*zk/float((ir+1)*(ir+2))*(cos(TH))**ir &
-      & *( float(ir**2+2*ir+2)-((ir+1)*cos(TH))**2 )
-    CTH(TH) = 0.25*zk**2*(cos(TH))**(2*ir)*( float(ir+1)*(cos(TH))**2 &
-      & -float(ir+2) )  
+    integer :: jnode, ir, ip
+    real(kind=jprb) :: aaa0,zk,om,ph0,g,x,y,cor
 
     om   = 7.848E-6
     zk   = 7.848E-6
@@ -433,9 +395,9 @@ contains
       y=geom%coordinates(jnode,YY)
       if(x == 2._jprb*pi) x=0.
       cor=f0*sin(y)
-      Q(jnode,XX) =  radius*OM*cos(y)+radius*ZK*cos(IR*x) *(cos(y))**(IR-1)*(IR*(sin(y))**2-(cos(y))**2)
-      Q(jnode,YY) = -radius*ZK*IR*(cos(y))**(IR-1)*sin(y)*sin(IR*x)
-      D(jnode) = (ph0+radius**2*ATH(y)+radius**2*BTH(y)*cos(IR*x)+radius**2*CTH(y)*cos(2._jprb*IR*x)) &
+      Q(jnode,XX) =  radius*om*cos(y)+radius*zk*cos(ir*x) *(cos(y))**(ir-1._jprb)*(ir*(sin(y))**2-(cos(y))**2)
+      Q(jnode,YY) = -radius*zk*ir*(cos(y))**(ir-1._jprb)*sin(y)*sin(ir*x)
+      D(jnode) = (ph0+radius**2*fa(y)+radius**2*fb(y)*cos(ir*x)+radius**2*fc(y)*cos(2._jprb*ir*x)) &
           & /(grav)
       D(jnode) = max(aaa0,D(jnode))
       Q(jnode,XX) = Q(jnode,XX) * D(jnode)
@@ -443,6 +405,28 @@ contains
       if(y == 0.5_jprb*pi) Q(jnode,XX)=0.
       if(y ==-0.5_jprb*pi) Q(jnode,XX)=0.
     end do
+
+    contains 
+    ! Helper functions
+
+      real(kind=jprb) function fa(th)
+        real(kind=jprb), intent(in) :: th
+        fa = om*0.5*(f0+om)*(cos(th))**2 &
+          & +0.25*zk**2*(cos(th))**(2*ir)*( (ir+1)*(cos(th))**2 &
+          & +(2._jprb*ir**2-ir-2._jprb)-2._jprb*ir**2/(cos(th))**2 )
+      end function fa
+
+      real(kind=jprb) function fb(th)
+        real(kind=jprb), intent(in) :: th
+        fb = (f0+2._jprb*om)*zk/((ir+1._jprb)*(ir+2._jprb))*(cos(th))**ir &
+          & *( (ir**2+2._jprb*ir+2._jprb)-((ir+1._jprb)*cos(th))**2 )
+      end function fb
+
+      real(kind=jprb) function fc(th)
+        real(kind=jprb), intent(in) :: th
+        fc = 0.25*zk**2*(cos(th))**(2*ir)*( (ir+1._jprb)*(cos(th))**2 -(ir+2._jprb) )  
+      end function fc
+
   end subroutine set_state_rossby_haurwitz
 
 
@@ -468,18 +452,13 @@ contains
     integer :: jnode, jedge, iedge, ip1, ip2
     real(kind=jprb), dimension(:),   pointer :: D, D0
     real(kind=jprb), dimension(:,:), pointer :: Q, Q0
-#ifdef OLD_WAY
-    real(kind=jprb), dimension(:,:), pointer :: Vnodes
-    Vnodes  => vector_field("advective_velocity",geom)
-#else
     real(kind=jprb), dimension(:,:), pointer :: Vedges
-    real(kind=jprb)                          :: Vnodes(geom%nb_nodes,2)
-    Vedges  => vector_field("advective_velocity",geom)
-#endif
-    D  => scalar_field("depth",geom)
-    D0 => scalar_field("depth_backup",geom)
-    Q  => vector_field("momentum",geom)
-    Q0 => vector_field("momentum_backup",geom)
+    real(kind=jprb) :: Vnodes(geom%nb_nodes,2)
+    Vedges => vector_field("advective_velocity",geom)
+    D      => scalar_field("depth",geom)
+    D0     => scalar_field("depth_backup",geom)
+    Q      => vector_field("momentum",geom)
+    Q0     => vector_field("momentum_backup",geom)
     do jnode=1,geom%nb_nodes
       Qx    = Q(jnode,XX)
       Qy    = Q(jnode,YY)
@@ -501,7 +480,6 @@ contains
       Vnodes(jnode,YY) = ( 1.5_jprb*Qy/Dmod - 0.5_jprb*Q0y/D0mod ) * hx
     end do
 
-#ifdef NEW_WAY
     do jedge=1,geom%nb_edges
       ip1 = geom%edges(jedge,1)
       ip2 = geom%edges(jedge,2)
@@ -520,7 +498,6 @@ contains
       iedge = geom%pole_edges(jedge)
       Vedges(iedge,YY) = 0.
     enddo
-#endif
   end subroutine compute_advective_velocities
 
   subroutine compute_forcing(geom)
@@ -636,7 +613,7 @@ contains
     call mpdata_gauge( dt,   Q(:,XX),  V,        2,     .True., .True. ,   geom )
     call mpdata_gauge( dt,   Q(:,YY),  V,        2,     .True., .True. ,   geom )
 
-    ! remove noise from periodic boundary.. why is it even there in the mesh?
+    ! remove noise from periodic boundary...
     do jnode=1,geom%nb_ghost_nodes
       ip1 = geom%ghost_nodes(jnode,1)
       ip2 = geom%ghost_nodes(jnode,2)
