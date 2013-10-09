@@ -1,6 +1,5 @@
 !#define OLD_WAY
 
-
 #define NDEBUG
 #ifndef OLD_WAY
 #define NEW_WAY
@@ -20,8 +19,8 @@ endif;
 #define LOOP_EDGES \
 jedge = 1,geom%nb_internal_edges; \
 iedge = geom%internal_edges(jedge);
-#define VELOCITY_X  (V(p1,XX)+V(p2,XX))*0.5_jprb
-#define VELOCITY_Y  (V(p1,YY)+V(p2,YY))*0.5_jprb
+#define VELOCITY_X  (V(ip1,XX)+V(ip2,XX))*0.5_jprb
+#define VELOCITY_Y  (V(ip1,YY)+V(ip2,YY))*0.5_jprb
 #else
 #define LOOP_EDGES \
 iedge = 1,geom%nb_edges;
@@ -52,12 +51,12 @@ contains
 
   subroutine mpdata_gauge(dt,Q,V,order,limited,Q_is_vector,geom)
     real(kind=jprb), intent(in)  :: dt
-    type(Geometry_class), intent(inout) :: geom
+    type(DataStructure_type), intent(inout) :: geom
     real(kind=jprb), intent(inout) :: Q(:)
     real(kind=jprb), intent(in) :: V(:,:)
     logical, intent(in) :: Q_is_vector, limited
     integer, intent(in) :: order
-    integer :: jnode, jedge, iedge, jpass, p1,p2
+    integer :: jnode, jedge, iedge, jpass, ip1,ip2
     real(kind=jprb) :: sx, sy, flux, volume_of_two_cells, dQdx, dQdy, Vx, Vy, apos, aneg, Q1, Q2
     real(kind=jprb) :: Qmin(geom%nb_nodes)
     real(kind=jprb) :: Qmax(geom%nb_nodes)
@@ -86,8 +85,8 @@ contains
     adv(:) = 0.
 
     do LOOP_EDGES
-      p1 = edges(iedge,1)
-      p2 = edges(iedge,2)
+      ip1 = edges(iedge,1)
+      ip2 = edges(iedge,2)
       Sx = S(iedge,XX)
       Sy = S(iedge,YY)
       Vx = VELOCITY_X
@@ -95,9 +94,9 @@ contains
       aun(iedge) = Vx*Sx + Vy*Sy
       apos = max(0._jprb,aun(iedge))
       aneg = min(0._jprb,aun(iedge))
-      flux = Q(p1)*apos + Q(p2)*aneg
-      adv(p1) = adv(p1) + flux
-      adv(p2) = adv(p2) - flux
+      flux = Q(ip1)*apos + Q(ip2)*aneg
+      adv(ip1) = adv(ip1) + flux
+      adv(ip2) = adv(ip2) - flux
     end do
 
     ! Update the unknowns in vertices
@@ -118,17 +117,17 @@ contains
       ! Compute antidiffusive normal velocity in faces
 
       do LOOP_EDGES
-        p1 = edges(iedge,1)
-        p2 = edges(iedge,2)
+        ip1 = edges(iedge,1)
+        ip2 = edges(iedge,2)
 
         ! evaluate gradient and velocity at edge by combining 2 neighbouring dual cells
-        volume_of_two_cells = vol(p1) + vol(p2)
-        dQdx = (gradQ(p1,XX)+gradQ(p2,XX)) / volume_of_two_cells
-        dQdy = (gradQ(p1,YY)+gradQ(p2,YY)) / volume_of_two_cells
+        volume_of_two_cells = vol(ip1) + vol(ip2)
+        dQdx = (gradQ(ip1,XX)+gradQ(ip2,XX)) / volume_of_two_cells
+        dQdy = (gradQ(ip1,YY)+gradQ(ip2,YY)) / volume_of_two_cells
         Vx = VELOCITY_X
         Vy = VELOCITY_Y
         ! variable sign option with asymptotic analysis, (mpdata gauge)
-        aun(iedge) = abs(aun(iedge))*(Q(p2)-Q(p1))*0.5_jprb &
+        aun(iedge) = abs(aun(iedge))*(Q(ip2)-Q(ip1))*0.5_jprb &
           &      -0.5_jprb*dt*aun(iedge)*(Vx*dQdx+Vy*dQdy)
       end do
 
@@ -143,47 +142,47 @@ contains
 
         do jedge = 1,nb_internal_edges
           iedge  = internal_edges(jedge)
-          p1 = edges(iedge,1)
-          p2 = edges(iedge,2)
-          Q1 = Q(p1)
-          Q2 = Q(p2)
-          Qmax(p1)=max(Qmax(p1),Q1,Q2)
-          Qmin(p1)=min(Qmin(p1),Q1,Q2)
-          Qmax(p2)=max(Qmax(p2),Q1,Q2)
-          Qmin(p2)=min(Qmin(p2),Q1,Q2)
+          ip1 = edges(iedge,1)
+          ip2 = edges(iedge,2)
+          Q1 = Q(ip1)
+          Q2 = Q(ip2)
+          Qmax(ip1)=max(Qmax(ip1),Q1,Q2)
+          Qmin(ip1)=min(Qmin(ip1),Q1,Q2)
+          Qmax(ip2)=max(Qmax(ip2),Q1,Q2)
+          Qmin(ip2)=min(Qmin(ip2),Q1,Q2)
         enddo
 
         if (Q_is_vector) then
           do jedge = 1,nb_pole_edges
             iedge  = pole_edges(jedge)
-            p1 = edges(iedge,1)
-            p2 = edges(iedge,2)
-            Q1 = Q(p1)
-            Q2 = Q(p2)
+            ip1 = edges(iedge,1)
+            ip2 = edges(iedge,2)
+            Q1 = Q(ip1)
+            Q2 = Q(ip2)
             if (Q_is_vector) then
-              Qmax(p1)=max(Qmax(p1),Q1,-Q2)
-              Qmin(p1)=min(Qmin(p1),Q1,-Q2)
-              Qmax(p2)=max(Qmax(p2),-Q1,Q2)
-              Qmin(p2)=min(Qmin(p2),-Q1,Q2)
+              Qmax(ip1)=max(Qmax(ip1),Q1,-Q2)
+              Qmin(ip1)=min(Qmin(ip1),Q1,-Q2)
+              Qmax(ip2)=max(Qmax(ip2),-Q1,Q2)
+              Qmin(ip2)=min(Qmin(ip2),-Q1,Q2)
             else
-              Qmax(p1)=max(Qmax(p1),Q1,Q2)
-              Qmin(p1)=min(Qmin(p1),Q1,Q2)
-              Qmax(p2)=max(Qmax(p2),Q1,Q2)
-              Qmin(p2)=min(Qmin(p2),Q1,Q2)
+              Qmax(ip1)=max(Qmax(ip1),Q1,Q2)
+              Qmin(ip1)=min(Qmin(ip1),Q1,Q2)
+              Qmax(ip2)=max(Qmax(ip2),Q1,Q2)
+              Qmin(ip2)=min(Qmin(ip2),Q1,Q2)
             endif
           enddo
         end if
      
 
       do LOOP_EDGES
-          p1 = edges(iedge,1)
-          p2 = edges(iedge,2)
+          ip1 = edges(iedge,1)
+          ip2 = edges(iedge,2)
           apos = max(0._jprb,aun(iedge))
           aneg = min(0._jprb,aun(iedge))
-          rhin(p1)  = rhin(p1)  - aneg
-          rhout(p1) = rhout(p1) + apos
-          rhin(p2)  = rhin(p2)  + apos
-          rhout(p2) = rhout(p2) - aneg
+          rhin(ip1)  = rhin(ip1)  - aneg
+          rhout(ip1) = rhout(ip1) + apos
+          rhin(ip2)  = rhin(ip2)  + apos
+          rhout(ip2) = rhout(ip2) - aneg
         end do
 
         do jnode=1,nb_nodes
@@ -195,23 +194,23 @@ contains
        ! limited antidiffusive  velocities:
 
         do LOOP_EDGES
-          p1 = edges(iedge,1)
-          p2 = edges(iedge,2)
+          ip1 = edges(iedge,1)
+          ip2 = edges(iedge,2)
           if(aun(iedge) > 0.) then
-            aun(iedge)=aun(iedge)*min(1._jprb,cp(p2),cn(p1))
+            aun(iedge)=aun(iedge)*min(1._jprb,cp(ip2),cn(ip1))
           else
-            aun(iedge)=aun(iedge)*min(1._jprb,cn(p2),cp(p1))
+            aun(iedge)=aun(iedge)*min(1._jprb,cn(ip2),cp(ip1))
           endif
         enddo
       endif
 
       ! Compute fluxes from (limited) antidiffusive velocity
       do LOOP_EDGES
-        p1 = edges(iedge,1)
-        p2 = edges(iedge,2)
+        ip1 = edges(iedge,1)
+        ip2 = edges(iedge,2)
         flux = aun(iedge)
-        adv(p1) = adv(p1) + flux
-        adv(p2) = adv(p2) - flux
+        adv(ip1) = adv(ip1) + flux
+        adv(ip2) = adv(ip2) - flux
       end do
 
       ! Update the unknowns in vertices
@@ -224,27 +223,27 @@ contains
   end subroutine mpdata_gauge
 
   subroutine compute_gradient(Q,gradQ,Q_is_vector,geom)
-    type(Geometry_class), intent(inout) :: geom
+    type(DataStructure_type), intent(inout) :: geom
     real(kind=jprb), intent(in)    :: Q(:)
     real(kind=jprb), intent(inout) :: gradQ(:,:)
     logical, intent(in) :: Q_is_vector
     
     real(kind=jprb) :: Sx,Sy,avgQ
-    integer :: jedge,iedge,p1,p2
+    integer :: jedge,iedge,ip1,ip2
 
     ! derivatives 
     gradQ(:,:) = 0
 
     do LOOP_EDGES
-      p1  = geom%edges(iedge,1)
-      p2  = geom%edges(iedge,2)
+      ip1  = geom%edges(iedge,1)
+      ip2  = geom%edges(iedge,2)
       Sx  = geom%dual_normals(iedge,XX)
       Sy  = geom%dual_normals(iedge,YY)
-      avgQ = ( Q(p1) + Q(p2) )*0.5_jprb
-      gradQ(p1,XX) = gradQ(p1,XX) + Sx*avgQ
-      gradQ(p2,XX) = gradQ(p2,XX) - Sx*avgQ
-      gradQ(p1,YY) = gradQ(p1,YY) + Sy*avgQ
-      gradQ(p2,YY) = gradQ(p2,YY) - Sy*avgQ
+      avgQ = ( Q(ip1) + Q(ip2) )*0.5_jprb
+      gradQ(ip1,XX) = gradQ(ip1,XX) + Sx*avgQ
+      gradQ(ip2,XX) = gradQ(ip2,XX) - Sx*avgQ
+      gradQ(ip1,YY) = gradQ(ip1,YY) + Sy*avgQ
+      gradQ(ip2,YY) = gradQ(ip2,YY) - Sy*avgQ
     end do
 
     ! special treatment for the north & south pole cell faces
@@ -252,17 +251,17 @@ contains
     if (.not. Q_is_vector) then
       do jedge = 1,geom%nb_pole_edges
         iedge    = geom%pole_edges(jedge)
-        p1   = geom%edges(iedge,1)
-        p2   = geom%edges(iedge,2)
+        ip1   = geom%edges(iedge,1)
+        ip2   = geom%edges(iedge,2)
         Sy   = geom%dual_normals(iedge,YY)
-        avgQ = ( Q(p1) + Q(p2) )*0.5_jprb
+        avgQ = ( Q(ip1) + Q(ip2) )*0.5_jprb
         ! correct for wrongly subtracting sy*avgQ in previous loop,
         ! instead of adding, because point at other side of pole
 #ifdef  OLD_WAY
-        gradQ(p1,YY) = gradQ(p1,YY) + Sy*avgQ
-        gradQ(p2,YY) = gradQ(p2,YY) + Sy*avgQ
+        gradQ(ip1,YY) = gradQ(ip1,YY) + Sy*avgQ
+        gradQ(ip2,YY) = gradQ(ip2,YY) + Sy*avgQ
 #else
-        gradQ(p2,YY) = gradQ(p2,YY) + 2*Sy*avgQ 
+        gradQ(ip2,YY) = gradQ(ip2,YY) + 2*Sy*avgQ 
 #endif
       end do
     end if
@@ -316,7 +315,7 @@ contains
   end subroutine set_time_step
 
   subroutine compute_metrics(geom)
-    type(Geometry_class), intent(inout) :: geom
+    type(DataStructure_type), intent(inout) :: geom
     real(kind=jprb) :: y, G, cos_y, sin_y, hx, hy
     integer :: jnode
     do jnode=1,geom%nb_nodes
@@ -333,7 +332,7 @@ contains
 
 
   subroutine allocations(geom)
-    type(Geometry_class), intent(inout) :: geom
+    type(DataStructure_type), intent(inout) :: geom
     call create_state_fields(geom)
   end subroutine allocations
 
@@ -341,7 +340,7 @@ contains
 
   subroutine propagate_state(dt,geom)
     real(kind=jprb), intent(in) :: dt
-    type(Geometry_class), intent(inout), target :: geom
+    type(DataStructure_type), intent(inout), target :: geom
     real(kind=jprb) :: tmax, t0, dt_fwd
     character(len=200) :: step_info
     tmax = geom%fields%time+dt
@@ -363,7 +362,7 @@ contains
   subroutine step_forward(step,dt,geom)
     integer, intent(inout) :: step
     real(kind=jprb), intent(in) :: dt
-    type(Geometry_class), intent(inout) :: geom
+    type(DataStructure_type), intent(inout) :: geom
 
     if (step == 0) then ! Pre-compute forcing
       call backup_solution(geom)
@@ -386,7 +385,7 @@ contains
 
 
   subroutine create_state_fields(geom)
-    type(Geometry_class), intent(inout) :: geom
+    type(DataStructure_type), intent(inout) :: geom
     call create_scalar_field_in_nodes("depth",geom)
     call create_vector_field_in_nodes("momentum",geom)
     call create_vector_field_in_nodes("momentum_forcing",geom)
@@ -402,7 +401,7 @@ contains
 
 
   subroutine set_state_rossby_haurwitz(geom)
-    type(Geometry_class), intent(inout)      :: geom
+    type(DataStructure_type), intent(inout)      :: geom
     real(kind=jprb), dimension(:), pointer   :: D
     real(kind=jprb), dimension(:,:), pointer :: Q
     integer :: jnode
@@ -447,7 +446,7 @@ contains
 
 
   subroutine backup_solution(geom)
-    type(Geometry_class), intent(inout) :: geom
+    type(DataStructure_type), intent(inout) :: geom
     real(kind=jprb), dimension(:),   pointer :: D, D0
     real(kind=jprb), dimension(:,:), pointer :: Q, Q0
     D  => scalar_field("depth",geom)
@@ -462,9 +461,9 @@ contains
 
 
   subroutine compute_advective_velocities(geom)
-    type(Geometry_class), intent(inout) :: geom
+    type(DataStructure_type), intent(inout) :: geom
     real(kind=jprb) :: y, y1,y2, hx, hy, Qx, Qy, Q0x, Q0y, Dmod, D0mod
-    integer :: jnode, jedge, iedge, p1, p2
+    integer :: jnode, jedge, iedge, ip1, ip2
     real(kind=jprb), dimension(:),   pointer :: D, D0
     real(kind=jprb), dimension(:,:), pointer :: Q, Q0
 #ifdef OLD_WAY
@@ -502,16 +501,16 @@ contains
 
 #ifdef NEW_WAY
     do jedge=1,geom%nb_edges
-      p1 = geom%edges(jedge,1)
-      p2 = geom%edges(jedge,2)
+      ip1 = geom%edges(jedge,1)
+      ip2 = geom%edges(jedge,2)
       ! Evaluate hx and hy at the edge midpoint
-      y1 = geom%coordinates(p1,YY)
-      y2 = geom%coordinates(p2,YY)
+      y1 = geom%coordinates(ip1,YY)
+      y2 = geom%coordinates(ip2,YY)
       y = (y1+y2)*0.5_jprb
       hx    = radius*cos(y)
       hy    = radius
-      Vedges(jedge,XX) = (Vnodes(p1,XX)+Vnodes(p2,XX))*0.5_jprb
-      Vedges(jedge,YY) = (Vnodes(p1,YY)+Vnodes(p2,YY))*0.5_jprb
+      Vedges(jedge,XX) = (Vnodes(ip1,XX)+Vnodes(ip2,XX))*0.5_jprb
+      Vedges(jedge,YY) = (Vnodes(ip1,YY)+Vnodes(ip2,YY))*0.5_jprb
     enddo
     ! Since the pole point lies outside the lon-lat domain, Vedges is wrongly calculated
     ! y_pole .ne. 0.5(y1+y2)
@@ -523,9 +522,9 @@ contains
   end subroutine compute_advective_velocities
 
   subroutine compute_forcing(geom)
-    type(Geometry_class), intent(inout) :: geom
+    type(DataStructure_type), intent(inout) :: geom
     integer :: jnode
-    real(kind=jprb) :: f, y, sin_y, cos_y, Qx, Qy, Dmod, dDdx, dDdy, vol, hx, hy
+    real(kind=jprb) :: cor, y, sin_y, cos_y, Qx, Qy, Dmod, dDdx, dDdy, vol, hx, hy
     real(kind=jprb), dimension(:),   pointer :: D
     real(kind=jprb), dimension(:,:), pointer :: Q, R
     real(kind=jprb) :: grad_D(geom%nb_nodes, 2)
@@ -545,9 +544,9 @@ contains
       vol   = geom%dual_volumes(jnode)
       hx    = radius*cos_y
       hy    = radius
-      f     = f0 * sin_y
-      R(jnode,XX) = -grav*D(jnode)*grad_D(jnode,XX)*hy/vol + f*Qy + sin_y/(radius*cos_y)*Qx*Qy/Dmod
-      R(jnode,YY) = -grav*D(jnode)*grad_D(jnode,YY)*hx/vol - f*Qx - sin_y/(radius*cos_y)*Qx*Qx/Dmod
+      cor   = f0 * sin_y
+      R(jnode,XX) = -grav*D(jnode)*grad_D(jnode,XX)*hy/vol + cor*Qy + sin_y/(radius*cos_y)*Qx*Qy/Dmod
+      R(jnode,YY) = -grav*D(jnode)*grad_D(jnode,YY)*hx/vol - cor*Qx - sin_y/(radius*cos_y)*Qx*Qx/Dmod
     end do
 
   end subroutine compute_forcing
@@ -556,7 +555,7 @@ contains
 
   subroutine add_forcing_to_solution(dt,geom)
     real(kind=jprb), intent(in) :: dt
-    type(Geometry_class), intent(inout) :: geom
+    type(DataStructure_type), intent(inout) :: geom
     real(kind=jprb), dimension(:,:), pointer :: Q, R
     integer :: jnode, nb_nodes
     Q => vector_field("momentum",geom)
@@ -571,9 +570,9 @@ contains
 
   subroutine implicit_solve(dt,geom)
     real(kind=jprb), intent(in) :: dt
-    type(Geometry_class), intent(inout) :: geom
+    type(DataStructure_type), intent(inout) :: geom
     integer :: jnode, m
-    real(kind=jprb) :: f, y, sin_y, cos_y, Qx, Qy, Rx, Ry, Dmod, dDdx, dDdy, hx, hy
+    real(kind=jprb) :: cor, y, sin_y, cos_y, Qx, Qy, Rx, Ry, Dmod, dDdx, dDdy, hx, hy
     real(kind=jprb) :: Qx_adv, Qy_adv, Rx_exp, Ry_exp, vol
 
     real(kind=jprb), dimension(:),   pointer :: D
@@ -588,7 +587,7 @@ contains
     call compute_gradient( D, grad_D, .False., geom )
     
     do jnode=1,geom%nb_nodes
-      y= geom%coordinates(jnode,YY)
+      y     = geom%coordinates(jnode,YY)
       sin_y = sin(y)
       cos_y = max( eps, cos(y) )
       Qx    = Q(jnode,XX)
@@ -597,7 +596,7 @@ contains
       vol   = geom%dual_volumes(jnode)
       hx    = radius*cos_y
       hy    = radius
-      f     = f0 * sin_y
+      cor   = f0 * sin_y
 
       Rx_exp = -grav*D(jnode)*grad_D(jnode,XX)*hy/vol
       Ry_exp = -grav*D(jnode)*grad_D(jnode,YY)*hx/vol
@@ -606,15 +605,15 @@ contains
       Qy_adv = Qy
 
       do m=1,3 ! Three iterations at most is enough to converge
-        Rx = Rx_exp + f*Qy + sin_y/(radius*cos_y)*Qx*Qy/Dmod
-        Ry = Ry_exp - f*Qx - sin_y/(radius*cos_y)*Qx*Qx/Dmod
+        Rx = Rx_exp + cor*Qy + sin_y/(radius*cos_y)*Qx*Qy/Dmod
+        Ry = Ry_exp - cor*Qx - sin_y/(radius*cos_y)*Qx*Qx/Dmod
         Qx = Qx_adv + 0.5_jprb*dt*Rx
         Qy = Qy_adv + 0.5_jprb*dt*Ry
       end do
       Q(jnode,XX) = Qx
       Q(jnode,YY) = Qy
-      R(jnode,XX) = Rx_exp + f*Qy + sin_y/(radius*cos_y)*Qx*Qy/Dmod
-      R(jnode,YY) = Ry_exp - f*Qx - sin_y/(radius*cos_y)*Qx*Qx/Dmod
+      R(jnode,XX) = Rx_exp + cor*Qy + sin_y/(radius*cos_y)*Qx*Qy/Dmod
+      R(jnode,YY) = Ry_exp - cor*Qx - sin_y/(radius*cos_y)*Qx*Qx/Dmod
     end do
   end subroutine implicit_solve
 
@@ -622,10 +621,10 @@ contains
 
   subroutine advect_solution(dt,geom)
     real(kind=jprb), intent(in) :: dt
-    type(Geometry_class), intent(inout) :: geom
+    type(DataStructure_type), intent(inout) :: geom
     real(kind=jprb), dimension(:),   pointer :: D
     real(kind=jprb), dimension(:,:), pointer :: Q, V
-    integer :: jnode, p1, p2
+    integer :: jnode, ip1, ip2
     D => scalar_field("depth",geom)
     Q => vector_field("momentum",geom)
     V => vector_field("advective_velocity",geom)
@@ -637,11 +636,11 @@ contains
 
     ! remove noise from periodic boundary.. why is it even there in the mesh?
     do jnode=1,geom%nb_ghost_nodes
-      p1 = geom%ghost_nodes(jnode,1)
-      p2 = geom%ghost_nodes(jnode,2)
-      D(p2)    = D(p1)
-      Q(p2,XX) = Q(p1,XX)
-      Q(p2,YY) = Q(p1,YY)
+      ip1 = geom%ghost_nodes(jnode,1)
+      ip2 = geom%ghost_nodes(jnode,2)
+      D(ip2)    = D(ip1)
+      Q(ip2,XX) = Q(ip1,XX)
+      Q(ip2,YY) = Q(ip1,YY)
     end do
   end subroutine advect_solution
 
@@ -662,7 +661,7 @@ program shallow_water
   use grib_module, only: write_grib
 
   use read_joanna_module, only: read_joanna
-  use datastruct_module,  only: Geometry_class
+  use datastruct_module,  only: DataStructure_type
   use shallow_water_module, only: &
     & compute_metrics, &
     & allocations, &
@@ -678,7 +677,7 @@ program shallow_water
   logical         :: write_itermediate_output = .True.
 
   ! Declarations
-  type(Geometry_class) :: g
+  type(DataStructure_type) :: g
   real(kind=jprb), parameter :: hours = 3600.     ! in seconds
   real(kind=jprb), parameter :: days  = 24.*hours ! in seconds
   integer :: jstep = 0

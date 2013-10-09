@@ -10,7 +10,7 @@ contains
 
 subroutine write_grib(geom,filename)
     implicit none
-    type(Geometry_class), intent(inout), target :: geom
+    type(DataStructure_type), intent(inout), target :: geom
     character(len=*), intent(in) :: filename
 
 #ifdef ENABLE_GRIB

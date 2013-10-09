@@ -16,7 +16,7 @@ module datastruct_module
   type, public, extends(Grid_class) :: Mesh_class
   end type Mesh_class
 
-  type, public :: Geometry_class
+  type, public :: DataStructure_type
   private
   ! PRIVATE part
   ! ------------
@@ -44,9 +44,9 @@ module datastruct_module
     real(kind=jprb), dimension(:),   allocatable, public :: dual_volumes ! Defined in nodes
     real(kind=jprb), dimension(:,:), allocatable, public :: dual_normals ! Defined in edges
 
-  end type Geometry_class
+  end type DataStructure_type
 
-  type(Geometry_class) :: geom
+  type(DataStructure_type) :: geom
 
 contains
   
@@ -54,7 +54,7 @@ contains
     implicit none
     integer, intent(in) :: nb_nodes
     integer, intent(in) :: nb_edges
-    type(Geometry_class), intent(inout), target :: geom_
+    type(DataStructure_type), intent(inout), target :: geom_
 
     call geom_%internal_mesh%init("LagrangeP1_Triag2D")
     allocate(geom_%internal_mesh%nodes_coordinates(nb_nodes,2))
@@ -90,35 +90,35 @@ contains
   subroutine create_scalar_field_in_nodes(name, geom_)
     implicit none
     character(len=*), intent(in) :: name
-    type(Geometry_class), intent(inout) :: geom_
+    type(DataStructure_type), intent(inout) :: geom_
     call geom_%fields%add_field(name, geom_%functionspace_nodes,1)
   end subroutine create_scalar_field_in_nodes
 
   subroutine create_vector_field_in_nodes(name, geom_)
     implicit none
     character(len=*), intent(in) :: name
-    type(Geometry_class), intent(inout) :: geom_
+    type(DataStructure_type), intent(inout) :: geom_
     call geom_%fields%add_field(name, geom_%functionspace_nodes,2)
   end subroutine create_vector_field_in_nodes
 
   subroutine create_scalar_field_in_edges(name, geom_)
     implicit none
     character(len=*), intent(in) :: name
-    type(Geometry_class), intent(inout) :: geom_
+    type(DataStructure_type), intent(inout) :: geom_
     call geom_%fields%add_field(name, geom_%functionspace_edges,1)
   end subroutine create_scalar_field_in_edges
 
   subroutine create_vector_field_in_edges(name, geom_)
     implicit none
     character(len=*), intent(in) :: name
-    type(Geometry_class), intent(inout) :: geom_
+    type(DataStructure_type), intent(inout) :: geom_
     call geom_%fields%add_field(name, geom_%functionspace_edges,2)
   end subroutine create_vector_field_in_edges
 
   function scalar_field(name, geom_) result(array)
     implicit none
     character(len=*), intent(in) :: name
-    type(Geometry_class), intent(inout) :: geom_
+    type(DataStructure_type), intent(inout) :: geom_
     type(Field_class), pointer :: field
     real(kind=jprb), dimension(:), pointer :: array
     field => geom_%fields%field(name)
@@ -128,7 +128,7 @@ contains
   function vector_field(name, geom_) result(array)
     implicit none
     character(len=*), intent(in) :: name
-    type(Geometry_class), intent(inout) :: geom_
+    type(DataStructure_type), intent(inout) :: geom_
     type(Field_class), pointer :: field
     real(kind=jprb), dimension(:,:), pointer :: array
     field => geom_%fields%field(name)

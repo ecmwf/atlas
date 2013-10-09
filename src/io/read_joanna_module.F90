@@ -2,14 +2,14 @@
 ! module for testing creation of a Grid
 module read_joanna_module
   use common_module
-  use datastruct_module, only: create_mesh, Geometry_class
+  use datastruct_module, only: create_mesh, DataStructure_type
   implicit none
 contains
   
   subroutine read_joanna(filename,g)
     implicit none
     character(len=*), intent(in) :: filename
-    type(Geometry_class), intent(inout)    :: g
+    type(DataStructure_type), intent(inout)    :: g
 
     integer                      :: nnode
     integer                      :: nedge
@@ -23,10 +23,10 @@ contains
 
     integer                      :: idx
     real(kind=jprb)              :: vol, Sx, Sy
-    integer                      :: p1,p2
+    integer                      :: ip1,ip2
 
-    integer :: iedge
-    integer :: inode
+    integer :: jedge
+    integer :: jnode
 
     call log_info( "Reading mesh "//filename )
 
@@ -36,9 +36,9 @@ contains
 
     call create_mesh(nnode,nedge,g)
 
-    do inode = 1, g%nb_nodes
-      read(5,*) g%coordinates(inode,1), g%coordinates(inode,2), &
-        & g%dual_volumes(inode)
+    do jnode = 1, g%nb_nodes
+      read(5,*) g%coordinates(jnode,1), g%coordinates(jnode,2), &
+        & g%dual_volumes(jnode)
     end do
     g%internal_mesh%nodes_coordinates = g%coordinates
 
@@ -52,31 +52,31 @@ contains
     allocate(g%pole_edges(g%nb_pole_edges))
     allocate(g%internal_edges(g%nb_internal_edges))
 
-    do iedge = 1, g%nb_edges
-      read(5,*) idx, p1, p2
-      g%edges(iedge,1) = p1
-      g%edges(iedge,2) = p2
+    do jedge = 1, g%nb_edges
+      read(5,*) idx, ip1, ip2
+      g%edges(jedge,1) = ip1
+      g%edges(jedge,2) = ip2
 
-      if (iedge<before1 .or. iedge>before2) then
+      if (jedge<before1 .or. jedge>before2) then
         internal_edge_cnt = internal_edge_cnt + 1
-        g%internal_edges(internal_edge_cnt) = iedge
+        g%internal_edges(internal_edge_cnt) = jedge
       else
         pole_edge_cnt = pole_edge_cnt + 1
-        g%pole_edges(pole_edge_cnt) = iedge
+        g%pole_edges(pole_edge_cnt) = jedge
       end if
     end do
     g%internal_mesh%faces = g%edges
 
-    do iedge = 1,g%nb_edges
+    do jedge = 1,g%nb_edges
       read(5,*) idx, Sx, Sy
-      g%dual_normals(iedge,:) = [Sx,Sy]
+      g%dual_normals(jedge,:) = [Sx,Sy]
     enddo
 
     allocate(g%ghost_nodes(g%nb_ghost_nodes,2))
-    do inode = 1,g%nb_ghost_nodes
-      read(5,*) idx, p1, p2
-      g%ghost_nodes(inode,1) = p1
-      g%ghost_nodes(inode,2) = p2
+    do jnode = 1,g%nb_ghost_nodes
+      read(5,*) idx, ip1, ip2
+      g%ghost_nodes(jnode,1) = ip1
+      g%ghost_nodes(jnode,2) = ip2
     end do
 
     close(5)
