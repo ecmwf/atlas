@@ -28,6 +28,8 @@ contains
     integer :: iedge
     integer :: inode
 
+    call log_info( "Reading mesh "//filename )
+
     open(5,file=filename,access='sequential',status='old')
 
     read(5,*) nnode, nedge, nface, ncoin, before2, before1  !nbefore1<nbefore2
@@ -78,7 +80,7 @@ contains
     end do
 
     close(5)
-    write(0,*) "Finished reading mesh"
+    call log_info( "Done reading mesh "//filename )
   end subroutine read_joanna
 
 

@@ -69,7 +69,7 @@ contains
     !self%local_coords(2,1) = +1.
 
     ! print something
-    write(0,*) "LagrangeP1_Line::init"
+    call log_debug( "LagrangeP1_Line::init" )
   end subroutine LagrangeP1_Line__init  
 
   subroutine LagrangeP1_Line__values( self, local_coord, values )
@@ -78,7 +78,7 @@ contains
     real(kind=jprb), dimension(:), intent(inout) :: values
     values(1) = 0.5 * (1.-local_coord(1))
     values(2) = 0.5 * (1.+local_coord(1))
-    write(0,*) "LagrangeP1_Line::values"
+    call log_debug( "LagrangeP1_Line::values" )
   end subroutine LagrangeP1_Line__values
 
   subroutine LagrangeP1_Line__grad_values( self, local_coord, grad_values )
@@ -89,12 +89,12 @@ contains
     grad_values(1,1) = -0.5
     grad_values(1,2) = +0.5
 
-    write(0,*) "LagrangeP1_Line::grad_values"
+    call log_debug( "LagrangeP1_Line::grad_values" )
   end subroutine LagrangeP1_Line__grad_values
 
   subroutine LagrangeP1_Line2D__init(self)
     class(LagrangeP1_Line2D), intent(inout) :: self
-    write(0,*) "LagrangeP1_Line2D::init"
+    call log_debug( "LagrangeP1_Line2D::init" )
 
     ! Specify self%sf
     allocate(LagrangeP1_Line :: self%sf)
@@ -106,7 +106,7 @@ contains
     self%dimension = 2
     
     ! print something
-    write(0,*) "LagrangeP1_Line2D::init"
+    call log_debug( "LagrangeP1_Line2D::init" )
   end subroutine LagrangeP1_Line2D__init
     
     subroutine LagrangeP1_Line2D__jacobian( self, local_coord, elem_coords, jacobian )
@@ -114,7 +114,7 @@ contains
     real(kind=jprb), dimension(:),        intent(in)    :: local_coord
     real(kind=jprb), dimension(:,:),      intent(in)    :: elem_coords
     real(kind=jprb), dimension(:,:),      intent(inout) :: jacobian
-    write(0,*) "LagrangeP1_Line2D::jacobian()"
+    call log_debug( "LagrangeP1_Line2D::jacobian()" )
   end subroutine LagrangeP1_Line2D__jacobian
 
   subroutine LagrangeP1_Line2D__jacobian_determinant( self, local_coord, elem_coords, jacobian_determinant )
@@ -123,7 +123,7 @@ contains
     real(kind=jprb), dimension(:,:),     intent(in)   :: elem_coords
     real(kind=jprb), intent(out) :: jacobian_determinant
     jacobian_determinant = 0.
-    write(0,*) "LagrangeP1_Line2D::jacobian_determinant()"
+    call log_debug( "LagrangeP1_Line2D::jacobian_determinant()" )
   end subroutine LagrangeP1_Line2D__jacobian_determinant
 
 
@@ -144,7 +144,7 @@ contains
     self%local_coords(4,:) = [-1,+1]
 
     ! print something
-    write(0,*) "LagrangeP1_Quad::init"
+    call log_debug( "LagrangeP1_Quad::init" )
   end subroutine LagrangeP1_Quad__init  
 
   subroutine LagrangeP1_Quad__values( self, local_coord, values )
@@ -155,7 +155,7 @@ contains
     values(2) = 0.25 * (1.+local_coord(1)) * (1.-local_coord(2))
     values(3) = 0.25 * (1.+local_coord(1)) * (1.+local_coord(2))
     values(4) = 0.25 * (1.-local_coord(1)) * (1.+local_coord(2))
-    write(0,*) "LagrangeP1_Quad::values"
+    call log_debug( "LagrangeP1_Quad::values" )
   end subroutine LagrangeP1_Quad__values
 
   subroutine LagrangeP1_Quad__grad_values( self, local_coord, grad_values )
@@ -173,7 +173,7 @@ contains
     grad_values(2,3) = 0.25 * ( 1.+local_coord(1))
     grad_values(2,4) = 0.25 * ( 1.-local_coord(1))
 
-    write(0,*) "LagrangeP1_Quad::grad_values"
+    call log_debug( "LagrangeP1_Quad::grad_values" )
   end subroutine LagrangeP1_Quad__grad_values
 
 
@@ -190,7 +190,7 @@ contains
     self%dimension = 2
     
     ! print something
-    write(0,*) "LagrangeP1_Quad2D::init"
+    call log_debug( "LagrangeP1_Quad2D::init" )
   end subroutine LagrangeP1_Quad2D__init
     
     subroutine LagrangeP1_Quad2D__jacobian( self, local_coord, elem_coords, jacobian )
@@ -211,7 +211,7 @@ contains
     jacobian(1,2) = by + dy*local_coord(2)
     jacobian(2,1) = cx + dx*local_coord(1)
     jacobian(2,2) = cy + dy*local_coord(1)
-    write(0,*) "LagrangeP1_Quad2D::jacobian()"
+    call log_debug( "LagrangeP1_Quad2D::jacobian()" )
   end subroutine LagrangeP1_Quad2D__jacobian
 
   subroutine LagrangeP1_Quad2D__jacobian_inverse( self, local_coord, elem_coords, jacobian_inverse )
@@ -227,7 +227,7 @@ contains
     jacobian_inverse(1,2) = -one_over_Jdet*J(1,2)
     jacobian_inverse(2,1) = -one_over_Jdet*J(2,1)
     jacobian_inverse(2,2) =  one_over_Jdet*J(1,1)
-    write(0,*) "LagrangeP1_Quad2D::jacobian_inverse()"
+    call log_debug( "LagrangeP1_Quad2D::jacobian_inverse()" )
   end subroutine LagrangeP1_Quad2D__jacobian_inverse
     
   subroutine LagrangeP1_Triag__init(self)
@@ -247,7 +247,7 @@ contains
     !self%local_coords(3,:) = [0,1]
 
     ! print something
-    write(0,*) "LagrangeP1_Triag::init"
+    call log_debug( "LagrangeP1_Triag::init" )
   end subroutine LagrangeP1_Triag__init  
 
   subroutine LagrangeP1_Triag__values( self, local_coord, values )
@@ -257,7 +257,7 @@ contains
     values(1) = 1. - local_coord(1) - local_coord(2)
     values(2) = local_coord(1)
     values(3) = local_coord(2)
-    write(0,*) "LagrangeP1_Triag::values"
+    call log_debug( "LagrangeP1_Triag::values" )
   end subroutine LagrangeP1_Triag__values
 
   subroutine LagrangeP1_Triag__grad_values( self, local_coord, grad_values )
@@ -273,7 +273,7 @@ contains
     grad_values(2,2) =  0.
     grad_values(2,3) =  1.
 
-    write(0,*) "LagrangeP1_Triag::grad_values"
+    call log_debug( "LagrangeP1_Triag::grad_values" )
   end subroutine LagrangeP1_Triag__grad_values
 
 
@@ -290,7 +290,7 @@ contains
     self%dimension = 2
     
     ! print something
-    write(0,*) "LagrangeP1_Triag2D::init"
+    call log_debug( "LagrangeP1_Triag2D::init" )
   end subroutine LagrangeP1_Triag2D__init
 
   subroutine LagrangeP1_Triag2D__jacobian( self, local_coord, elem_coords, jacobian )
@@ -303,7 +303,7 @@ contains
     jacobian(1,2) = elem_coords(2,2) - elem_coords(1,2)
     jacobian(2,1) = elem_coords(3,1) - elem_coords(1,1)
     jacobian(2,2) = elem_coords(3,2) - elem_coords(1,2)
-    write(0,*) "LagrangeP1_Triag2D::jacobian()"
+    call log_debug( "LagrangeP1_Triag2D::jacobian()" )
   end subroutine LagrangeP1_Triag2D__jacobian
 
   subroutine LagrangeP1_Triag2D__jacobian_inverse( self, local_coord, elem_coords, jacobian_inverse )
@@ -319,7 +319,7 @@ contains
     jacobian_inverse(1,2) = -one_over_Jdet*J(1,2)
     jacobian_inverse(2,1) = -one_over_Jdet*J(2,1)
     jacobian_inverse(2,2) =  one_over_Jdet*J(1,1)
-    write(0,*) "LagrangeP1_Triag2D::jacobian_inverse()"
+    call log_debug( "LagrangeP1_Triag2D::jacobian_inverse()" )
   end subroutine LagrangeP1_Triag2D__jacobian_inverse
  
 end module lagrangep1_module

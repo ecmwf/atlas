@@ -136,7 +136,7 @@ contains
     character(len=*), intent(in) :: name
     class(FunctionSpace_class), intent(in), target :: function_space
     integer, intent(in) :: cols
-    write(0,*) "Field::init(",name,",",function_space%name,"),"
+    call log_debug( "Field::init("//name//","//function_space%name//")," )
     self%name = name
     self%function_space => function_space
     self%cols = cols
@@ -146,7 +146,7 @@ contains
   
   subroutine Field__destruct(self)
     class(Field_class), intent(inout) :: self
-    write(0,*) "Field::destruct"
+    call log_debug( "Field::destruct" )
     if( allocated(self%array) ) deallocate(self%array)
   end subroutine Field__destruct
   
@@ -160,7 +160,7 @@ contains
     class(Grid_class), intent(in), target :: grid
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: shapefunction_type
-    write(0,*) "FunctionSpace::init(",shapefunction_type,")"
+    call log_debug( "FunctionSpace::init("//shapefunction_type//")" )
     self%name = name
     self%grid => grid
     ! Depending on the string element_type, the element will be allocated
@@ -181,7 +181,7 @@ contains
             allocate(LagrangeP1_Triag :: self%sf)
         end select
       case default
-        write(0,*) "ShapeFunction type ",shapefunction_type," not supported"
+        call log_error( "ShapeFunction type "//shapefunction_type//" not supported" )
         stop 1        
     end select
     call self%sf%init()
@@ -192,7 +192,7 @@ contains
   subroutine FunctionSpace__destruct(self)
     class(FunctionSpace_class), intent(inout) :: self
     integer :: f
-    write(0,*) "FunctionSpace::destruct ",self%name
+    call log_debug( "FunctionSpace::destruct "//self%name )
     if( allocated(self%sf) ) then
       call self%sf%destruct()
       deallocate(self%sf)
@@ -236,7 +236,7 @@ contains
         return
       end if
     end do
-    write(0,*) 'call abort '
+    call log_error( 'call abort')
     call abort
   end function FunctionSpace__field
 
@@ -245,7 +245,7 @@ contains
     class(Grid_class), intent(in), target :: grid
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: shapefunction_type
-    write(0,*) "ContinuousFunctionSpace::init(",shapefunction_type,")"
+    call log_debug( "ContinuousFunctionSpace::init("//shapefunction_type//")" )
     call self%FunctionSpace_class%init(name,shapefunction_type,grid)
     self%nb_nodes = grid%nb_nodes
     allocate(self%elements(self%nb_elems,self%sf%nb_nodes))
@@ -256,7 +256,7 @@ contains
     class(Grid_class), intent(in), target :: grid
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: shapefunction_type
-    write(0,*) "DiscontinuousFunctionSpace::init(",shapefunction_type,")"
+    call log_debug( "DiscontinuousFunctionSpace::init("//shapefunction_type//")" )
     call self%FunctionSpace_class%init(name,shapefunction_type,grid)    
     self%nb_nodes = self%nb_elems * self%sf%nb_nodes
     allocate(self%elements(self%nb_elems,self%sf%nb_nodes))
@@ -268,7 +268,7 @@ contains
     class(Grid_class), intent(in), target :: grid
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: shapefunction_type
-    write(0,*) "FaceFunctionSpace::init(",shapefunction_type,")"
+    call log_debug( "FaceFunctionSpace::init("//shapefunction_type//")" )
     self%name = name
     self%grid => grid
     self%nb_elems = grid%nb_faces
@@ -296,7 +296,7 @@ contains
             allocate(LagrangeP1_Triag :: self%sf)
         end select
       case default
-        write(0,*) "ShapeFunction type ",shapefunction_type," not supported"
+        call log_error( "ShapeFunction type "//trim(shapefunction_type)//" not supported" )
         stop 1        
     end select
     call self%sf%init()
@@ -311,7 +311,6 @@ contains
     class(FunctionSpace_class), pointer :: function_space
     allocate( FaceFunctionSpace :: function_space )
     call function_space%init(name, shapefunction_type, grid)
-    write(0,*) function_space%name
   end function new_FaceFunctionSpace
 
   function new_ContinuousFunctionSpace(name, shapefunction_type, grid) result(function_space)
@@ -356,7 +355,7 @@ contains
   subroutine Grid__init(self, element_type)
     class(Grid_class), intent(inout) :: self
     character(len=*) :: element_type
-    write(0,*) "Grid::init(",element_type,")"
+    call log_debug( "Grid::init("//element_type//")" )
     
     ! Depending on the string element_type, the element will be allocated
     ! to be of a different type
@@ -368,7 +367,7 @@ contains
         allocate(LagrangeP1_Triag2D :: self%cell)
         allocate(LagrangeP1_Line2D  :: self%face)
       case default
-        write(0,*) "Element type ",element_type," not supported"
+        call log_error( "Element type "//trim(element_type)//" not supported" )
         stop 1        
     end select
     call self%cell%init()
@@ -380,7 +379,7 @@ contains
   subroutine Grid__destruct(self)
     class(Grid_class), intent(inout) :: self
     integer :: f
-    write(0,*) "Grid::destruct"
+    call log_debug( "Grid::destruct" )
     if( allocated(self%cell) ) then
       call self%cell%destruct()
       deallocate(self%cell)
@@ -425,7 +424,7 @@ contains
     class(FunctionSpace_class), target, intent(inout) :: function_space
     type(FunctionSpacePtr), allocatable :: tmp(:)
     integer :: f
-    write(0,*) "adding ",function_space%name
+    call log_debug( "adding "//function_space%name )
     call move_alloc(from=self%function_spaces,to=tmp)
     allocate(self%function_spaces(size(tmp)+1))
     do f=1,size(tmp)
@@ -440,14 +439,13 @@ contains
     character(len=*), intent(in) :: name
     class(FunctionSpace_class), pointer :: function_space
     integer :: f
-    write(0,*) "shape function_spaces = " , size(self%function_spaces)
     do f=1,size(self%function_spaces)
       function_space => self%function_spaces(f)%ptr
       if( function_space%name == name) then
         return
       end if
     end do
-    write(0,*) "FunctionSpace ", trim(name), " not found"
+    call log_error( "FunctionSpace "//trim(name)//" not found" )
     call abort
   end function Grid__function_space
 
@@ -458,14 +456,14 @@ contains
   subroutine State__init(self, name)
     class(State_class), intent(inout) :: self
     character(len=*), intent(in) :: name
-    write(0,*) "State::init(",name,")"  
+    call log_debug( "State::init("//trim(name)//")" ) 
     self%name = name  
     allocate(self%fields(100))
   end subroutine State__init
   
   subroutine State__destruct(self)
     class(State_class), intent(inout) :: self
-    write(0,*) "State::destruct"
+    call log_debug( "State::destruct" )
     deallocate(self%fields)
   end subroutine State__destruct
   
@@ -490,7 +488,7 @@ contains
         return
       end if
     end do
-    write(0,*) 'Could not find field ',name, ' in ',self%name
+    call log_error( 'Could not find field '//trim(name)//' in '//trim(self%name) )
     call abort
   end function State__field
 

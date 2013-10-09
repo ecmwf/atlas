@@ -52,7 +52,7 @@ contains
   ! Constructor for ShapeFunction base class
   subroutine ShapeFunction__init(self)
     class(ShapeFunction_class), intent(inout) :: self
-    write(0,*) "ShapeFunction::init"
+    call log_debug( "ShapeFunction::init" )
   end subroutine ShapeFunction__init
   
   ! ShapeFunction::destruct
@@ -60,7 +60,7 @@ contains
   ! Destructor for ShapeFunction base class
   subroutine ShapeFunction__destruct(self)
     class(ShapeFunction_class) :: self
-    write(0,*) "ShapeFunction::destruct"
+    call log_debug( "ShapeFunction::destruct" )
     if (allocated(self%local_coords)) deallocate(self%local_coords)
   end subroutine ShapeFunction__destruct
 
@@ -72,7 +72,7 @@ contains
     real(kind=jprb), dimension(:), intent(in) :: local_coord
     real(kind=jprb), dimension(:), intent(inout) :: values
 
-    write(0,*) "ShapeFunction::values"
+    call log_debug( "ShapeFunction::values" )
   end subroutine ShapeFunction__values
 
   ! ShapeFunction::grad_values
@@ -83,7 +83,7 @@ contains
     real(kind=jprb), dimension(:), intent(in) :: local_coord
     real(kind=jprb), dimension(:,:), intent(inout) :: grad_values
 
-    write(0,*) "ShapeFunction::grad_values"
+    call log_debug( "ShapeFunction::grad_values" )
   end subroutine ShapeFunction__grad_values
 
   ! Element::init
@@ -94,7 +94,7 @@ contains
     self%dimensionality = self%sf%dimensionality
     self%nb_nodes = self%sf%nb_nodes
     self%nb_sides = self%sf%nb_sides  
-    write(0,*) "Element::init"
+    call log_debug( "Element::init" )
   end subroutine Element__init
   
   ! Element::destruct
@@ -102,7 +102,7 @@ contains
   ! Destructor for Element base class
   subroutine Element__destruct(self)
     class(Element), intent(inout) :: self
-    write(0,*) "Element::destruct"
+    call log_debug( "Element::destruct" )
     call self%sf%destruct()
     if( allocated(self%sf) ) deallocate(self%sf)
   end subroutine Element__destruct
@@ -141,7 +141,7 @@ contains
     real(kind=jprb), dimension(:), intent(in)      :: local_coord
     real(kind=jprb), dimension(:,:), intent(in)    :: elem_coords
     real(kind=jprb), dimension(:,:), intent(inout) :: jacobian
-    write(0,*) "Element::jacobian()"
+    call log_debug( "Element::jacobian()" )
   end subroutine Element__jacobian
 
    subroutine Element__jacobian_inverse( self, local_coord, elem_coords, jacobian_inverse )
@@ -149,7 +149,7 @@ contains
     real(kind=jprb), dimension(:),        intent(in)    :: local_coord
     real(kind=jprb), dimension(:,:),      intent(in)    :: elem_coords
     real(kind=jprb), dimension(:,:),      intent(inout) :: jacobian_inverse
-    write(0,*) "Element::jacobian_inverse()"
+    call log_debug( "Element::jacobian_inverse()" )
   end subroutine Element__jacobian_inverse
  
 end module elements_module

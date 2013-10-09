@@ -43,10 +43,6 @@ module datastruct_module
     real(kind=jprb), dimension(:,:), allocatable, public :: coordinates  ! Defined in nodes
     real(kind=jprb), dimension(:),   allocatable, public :: dual_volumes ! Defined in nodes
     real(kind=jprb), dimension(:,:), allocatable, public :: dual_normals ! Defined in edges
-    real(kind=jprb), dimension(:), allocatable, public :: hx ! Defined in nodes
-    real(kind=jprb), dimension(:), allocatable, public :: hy ! Defined in nodes
-    real(kind=jprb), dimension(:), allocatable, public :: dhxdy_over_G ! Defined in nodes
-    real(kind=jprb), dimension(:), allocatable, public :: coriolis ! Defined in nodes
 
   end type Geometry_class
 
@@ -77,10 +73,6 @@ contains
     allocate( geom_%dual_volumes(nb_nodes) )
     
     call geom_%internal_mesh%add_function_space(geom_%functionspace_nodes)
-    allocate( geom_%hx(nb_nodes) )
-    allocate( geom_%hy(nb_nodes) )
-    allocate( geom_%dhxdy_over_G(nb_nodes) )
-    allocate( geom_%coriolis(nb_nodes) )
 
     geom_%nb_edges = nb_edges
     geom_%internal_mesh%nb_faces = nb_edges
@@ -122,7 +114,6 @@ contains
     type(Geometry_class), intent(inout) :: geom_
     call geom_%fields%add_field(name, geom_%functionspace_edges,2)
   end subroutine create_vector_field_in_edges
-
 
   function scalar_field(name, geom_) result(array)
     implicit none

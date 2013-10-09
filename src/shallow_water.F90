@@ -1,5 +1,11 @@
-#define OLD_WAY
+!#define OLD_WAY
+
+
 #define NDEBUG
+#ifndef OLD_WAY
+#define NEW_WAY
+#endif
+
 #ifndef NDEBUG
 #define assert(ASSERTION) \
 if( .not. (ASSERTION) ) then; \
@@ -11,17 +17,19 @@ endif;
 #endif
 
 #ifdef OLD_WAY
-#define LOOP_EDGES(EDGE) \
-iedge = 1,geom%nb_internal_edges; \
-EDGE = geom%internal_edges(iedge);
+#define LOOP_EDGES \
+jedge = 1,geom%nb_internal_edges; \
+iedge = geom%internal_edges(jedge);
 #define VELOCITY_X  (V(p1,XX)+V(p2,XX))*0.5_jprb
 #define VELOCITY_Y  (V(p1,YY)+V(p2,YY))*0.5_jprb
 #else
-#define LOOP_EDGES(EDGE) \
-EDGE = 1,geom%nb_edges;
-#define VELOCITY_X  V(e,XX)
-#define VELOCITY_Y  V(e,YY)
+#define LOOP_EDGES \
+iedge = 1,geom%nb_edges;
+#define VELOCITY_X  V(iedge,XX)
+#define VELOCITY_Y  V(iedge,YY)
 #endif
+
+
 ! ===================================================================
 ! mpdata_module
 ! -------------
@@ -49,7 +57,7 @@ contains
     real(kind=jprb), intent(in) :: V(:,:)
     logical, intent(in) :: Q_is_vector, limited
     integer, intent(in) :: order
-    integer :: inode, iedge, pass, p1,p2, e
+    integer :: jnode, jedge, iedge, jpass, p1,p2
     real(kind=jprb) :: sx, sy, flux, volume_of_two_cells, dQdx, dQdy, Vx, Vy, apos, aneg, Q1, Q2
     real(kind=jprb) :: Qmin(geom%nb_nodes)
     real(kind=jprb) :: Qmax(geom%nb_nodes)
@@ -77,39 +85,41 @@ contains
     ! Compute the normal velocity in faces, and advection in vertices
     adv(:) = 0.
 
-    do LOOP_EDGES(e)
-      p1 = edges(e,1)
-      p2 = edges(e,2)
-      Sx = S(e,XX)
-      Sy = S(e,YY)
+    do LOOP_EDGES
+      p1 = edges(iedge,1)
+      p2 = edges(iedge,2)
+      Sx = S(iedge,XX)
+      Sy = S(iedge,YY)
       Vx = VELOCITY_X
       Vy = VELOCITY_Y
-      aun(e) = Vx*Sx + Vy*Sy
-      apos = max(0._jprb,aun(e))
-      aneg = min(0._jprb,aun(e))
+      aun(iedge) = Vx*Sx + Vy*Sy
+      apos = max(0._jprb,aun(iedge))
+      aneg = min(0._jprb,aun(iedge))
       flux = Q(p1)*apos + Q(p2)*aneg
       adv(p1) = adv(p1) + flux
       adv(p2) = adv(p2) - flux
     end do
 
     ! Update the unknowns in vertices
-    do inode=1,nb_nodes
-      Q(inode) = Q(inode) - adv(inode)/vol(inode) * dt
+    do jnode=1,nb_nodes
+      Q(jnode) = Q(jnode) - adv(jnode)/vol(jnode) * dt
     end do
+
+    !write(0,*) "advected = ", L2norm(Q)
 
 
     ! 2. Other passes (making the spatial discretisation higher-order)
     ! ----------------------------------------------------------------
     
-    do pass=2,1!order
+    do jpass=2,order
       ! Compute derivatives for mpdata
       call compute_gradient(Q, gradQ, Q_is_vector, geom)
 
       ! Compute antidiffusive normal velocity in faces
 
-      do LOOP_EDGES(e)
-        p1 = edges(e,1)
-        p2 = edges(e,2)
+      do LOOP_EDGES
+        p1 = edges(iedge,1)
+        p2 = edges(iedge,2)
 
         ! evaluate gradient and velocity at edge by combining 2 neighbouring dual cells
         volume_of_two_cells = vol(p1) + vol(p2)
@@ -118,8 +128,8 @@ contains
         Vx = VELOCITY_X
         Vy = VELOCITY_Y
         ! variable sign option with asymptotic analysis, (mpdata gauge)
-        aun(e) = abs(aun(e))*(Q(p2)-Q(p1))*0.5_jprb &
-          &      -0.5_jprb*dt*aun(e)*(Vx*dQdx+Vy*dQdy)
+        aun(iedge) = abs(aun(iedge))*(Q(p2)-Q(p1))*0.5_jprb &
+          &      -0.5_jprb*dt*aun(iedge)*(Vx*dQdx+Vy*dQdy)
       end do
 
       ! non-oscillatory option
@@ -131,10 +141,10 @@ contains
         rhout(:) =  0.
         adv(:)   =  0.
 
-        do iedge = 1,nb_internal_edges
-          e  = internal_edges(iedge)
-          p1 = edges(e,1)
-          p2 = edges(e,2)
+        do jedge = 1,nb_internal_edges
+          iedge  = internal_edges(jedge)
+          p1 = edges(iedge,1)
+          p2 = edges(iedge,2)
           Q1 = Q(p1)
           Q2 = Q(p2)
           Qmax(p1)=max(Qmax(p1),Q1,Q2)
@@ -144,10 +154,10 @@ contains
         enddo
 
         if (Q_is_vector) then
-          do iedge = 1,nb_pole_edges
-            e  = pole_edges(iedge)
-            p1 = edges(e,1)
-            p2 = edges(e,2)
+          do jedge = 1,nb_pole_edges
+            iedge  = pole_edges(jedge)
+            p1 = edges(iedge,1)
+            p2 = edges(iedge,2)
             Q1 = Q(p1)
             Q2 = Q(p2)
             if (Q_is_vector) then
@@ -165,48 +175,48 @@ contains
         end if
      
 
-      do LOOP_EDGES(e)
-          p1 = edges(e,1)
-          p2 = edges(e,2)
-          apos = max(0._jprb,aun(e))
-          aneg = min(0._jprb,aun(e))
+      do LOOP_EDGES
+          p1 = edges(iedge,1)
+          p2 = edges(iedge,2)
+          apos = max(0._jprb,aun(iedge))
+          aneg = min(0._jprb,aun(iedge))
           rhin(p1)  = rhin(p1)  - aneg
           rhout(p1) = rhout(p1) + apos
           rhin(p2)  = rhin(p2)  + apos
           rhout(p2) = rhout(p2) - aneg
         end do
 
-        do inode=1,nb_nodes
-          assert(vol(inode) .ne. 0._jprb )
-          cp(inode) = ( Qmax(inode)-Q(inode) )*vol(inode)/( rhin(inode) * dt + eps )
-          cn(inode) = ( Q(inode)-Qmin(inode) )*vol(inode)/( rhout(inode)* dt + eps )
+        do jnode=1,nb_nodes
+          assert(vol(jnode) .ne. 0._jprb )
+          cp(jnode) = ( Qmax(jnode)-Q(jnode) )*vol(jnode)/( rhin(jnode) * dt + eps )
+          cn(jnode) = ( Q(jnode)-Qmin(jnode) )*vol(jnode)/( rhout(jnode)* dt + eps )
         enddo
 
        ! limited antidiffusive  velocities:
 
-        do LOOP_EDGES(e)
-          p1 = edges(e,1)
-          p2 = edges(e,2)
-          if(aun(e) > 0.) then
-            aun(e)=aun(e)*min(1._jprb,cp(p2),cn(p1))
+        do LOOP_EDGES
+          p1 = edges(iedge,1)
+          p2 = edges(iedge,2)
+          if(aun(iedge) > 0.) then
+            aun(iedge)=aun(iedge)*min(1._jprb,cp(p2),cn(p1))
           else
-            aun(e)=aun(e)*min(1._jprb,cn(p2),cp(p1))
+            aun(iedge)=aun(iedge)*min(1._jprb,cn(p2),cp(p1))
           endif
         enddo
       endif
 
       ! Compute fluxes from (limited) antidiffusive velocity
-      do LOOP_EDGES(e)
-        p1 = edges(e,1)
-        p2 = edges(e,2)
-        flux = aun(e)
+      do LOOP_EDGES
+        p1 = edges(iedge,1)
+        p2 = edges(iedge,2)
+        flux = aun(iedge)
         adv(p1) = adv(p1) + flux
         adv(p2) = adv(p2) - flux
       end do
 
       ! Update the unknowns in vertices
-      do inode=1,nb_nodes
-        Q(inode) = Q(inode) - adv(inode)/vol(inode) * dt
+      do jnode=1,nb_nodes
+        Q(jnode) = Q(jnode) - adv(jnode)/vol(jnode) * dt
       end do
 
     end do ! other passes
@@ -220,16 +230,16 @@ contains
     logical, intent(in) :: Q_is_vector
     
     real(kind=jprb) :: Sx,Sy,avgQ
-    integer :: iedge,p1,p2, e
+    integer :: jedge,iedge,p1,p2
 
     ! derivatives 
     gradQ(:,:) = 0
 
-    do LOOP_EDGES(e)
-      p1  = geom%edges(e,1)
-      p2  = geom%edges(e,2)
-      Sx  = geom%dual_normals(e,XX)
-      Sy  = geom%dual_normals(e,YY)
+    do LOOP_EDGES
+      p1  = geom%edges(iedge,1)
+      p2  = geom%edges(iedge,2)
+      Sx  = geom%dual_normals(iedge,XX)
+      Sy  = geom%dual_normals(iedge,YY)
       avgQ = ( Q(p1) + Q(p2) )*0.5_jprb
       gradQ(p1,XX) = gradQ(p1,XX) + Sx*avgQ
       gradQ(p2,XX) = gradQ(p2,XX) - Sx*avgQ
@@ -240,11 +250,11 @@ contains
     ! special treatment for the north & south pole cell faces
     ! Sx == 0 at pole, and Sy has same sign at both sides of pole
     if (.not. Q_is_vector) then
-      do iedge = 1,geom%nb_pole_edges
-        e    = geom%pole_edges(iedge)
-        p1   = geom%edges(e,1)
-        p2   = geom%edges(e,2)
-        Sy   = geom%dual_normals(e,YY)
+      do jedge = 1,geom%nb_pole_edges
+        iedge    = geom%pole_edges(jedge)
+        p1   = geom%edges(iedge,1)
+        p2   = geom%edges(iedge,2)
+        Sy   = geom%dual_normals(iedge,YY)
         avgQ = ( Q(p1) + Q(p2) )*0.5_jprb
         ! correct for wrongly subtracting sy*avgQ in previous loop,
         ! instead of adding, because point at other side of pole
@@ -292,7 +302,7 @@ module shallow_water_module
   real(kind=jprb), parameter :: radius = 6371.22e+03
   real(kind=jprb), parameter :: f0     = 1.4584e-04 !coriolis parameter (=2xearth's omega)
   real(kind=jprb), parameter :: grav   = 9.80616
-  real(kind=jprb), parameter :: pi     = acos(-1.)
+  real(kind=jprb), parameter :: pi     = acos(-1._jprb)
 
 
   real(kind=jprb) :: dt_forward = 20.
@@ -307,22 +317,17 @@ contains
 
   subroutine compute_metrics(geom)
     type(Geometry_class), intent(inout) :: geom
-    real(kind=jprb) :: y, G, cos_y, sin_y
-    integer :: inode
-    
-    write(0,*) "compute metrics"
-    do inode=1,geom%nb_nodes
-      y = geom%coordinates(inode,YY)
+    real(kind=jprb) :: y, G, cos_y, sin_y, hx, hy
+    integer :: jnode
+    do jnode=1,geom%nb_nodes
+      y = geom%coordinates(jnode,YY)
       cos_y = cos(y)
       sin_y = sin(y)
-      geom%hx(inode) = radius*cos_y
-      geom%hy(inode) = radius
-      geom%dhxdy_over_G = -sin_y/(radius*max(eps,cos_y))
-      G = geom%hx(inode) * geom%hy(inode)
-      geom%dual_volumes(inode) = geom%dual_volumes(inode)*G
-      geom%coriolis(inode) = f0 * sin_y
+      hx = radius*cos_y
+      hy = radius
+      G = hx*hy
+      geom%dual_volumes(jnode) = geom%dual_volumes(jnode)*G
     enddo
-    write(0,*) "compute metrics exit"
   end subroutine compute_metrics
 
 
@@ -338,15 +343,17 @@ contains
     real(kind=jprb), intent(in) :: dt
     type(Geometry_class), intent(inout), target :: geom
     real(kind=jprb) :: tmax, t0, dt_fwd
+    character(len=200) :: step_info
     tmax = geom%fields%time+dt
     do while (geom%fields%time < tmax)
       t0 = geom%fields%time
       dt_fwd = min( dt_forward, tmax-t0 )
       call step_forward(iter,dt_fwd,geom)
 
-      write(0,'(A6,I8,A12,F9.1,A12,F8.1)') "step = ",iter, &
+      write(step_info,'(A6,I8,A12,F9.1,A12,F8.1)') "step = ",iter, &
          & "  time = ",geom%fields%time, &
          & "  dt = ",dt_fwd
+      call log_info( step_info )
     end do
   end subroutine propagate_state
 
@@ -398,7 +405,7 @@ contains
     type(Geometry_class), intent(inout)      :: geom
     real(kind=jprb), dimension(:), pointer   :: D
     real(kind=jprb), dimension(:,:), pointer :: Q
-    integer :: inode
+    integer :: jnode
     integer :: ir,ip
     real(kind=jprb)    :: aaa0,zk,om,ph0,g,ath,bth,cth,x,y,th,cor
 
@@ -420,20 +427,20 @@ contains
     D => scalar_field("depth",geom)
     Q => vector_field("momentum",geom)
 
-    do inode=1,geom%nb_nodes
-      x=geom%coordinates(inode,XX)
-      y=geom%coordinates(inode,YY)
+    do jnode=1,geom%nb_nodes
+      x=geom%coordinates(jnode,XX)
+      y=geom%coordinates(jnode,YY)
       if(x == 2._jprb*pi) x=0.
       cor=f0*sin(y)
-      Q(inode,XX) =  radius*OM*cos(y)+radius*ZK*cos(IR*x) *(cos(y))**(IR-1)*(IR*(sin(y))**2-(cos(y))**2)
-      Q(inode,YY) = -radius*ZK*IR*(cos(y))**(IR-1)*sin(y)*sin(IR*x)
-      D(inode) = (ph0+radius**2*ATH(y)+radius**2*BTH(y)*cos(IR*x)+radius**2*CTH(y)*cos(2._jprb*IR*x)) &
+      Q(jnode,XX) =  radius*OM*cos(y)+radius*ZK*cos(IR*x) *(cos(y))**(IR-1)*(IR*(sin(y))**2-(cos(y))**2)
+      Q(jnode,YY) = -radius*ZK*IR*(cos(y))**(IR-1)*sin(y)*sin(IR*x)
+      D(jnode) = (ph0+radius**2*ATH(y)+radius**2*BTH(y)*cos(IR*x)+radius**2*CTH(y)*cos(2._jprb*IR*x)) &
           & /(grav)
-      D(inode) = max(aaa0,D(inode))
-      Q(inode,XX) = Q(inode,XX) * D(inode)
-      Q(inode,YY) = Q(inode,YY) * D(inode)
-      if(y == 0.5_jprb*pi) Q(inode,XX)=0.
-      if(y ==-0.5_jprb*pi) Q(inode,XX)=0.
+      D(jnode) = max(aaa0,D(jnode))
+      Q(jnode,XX) = Q(jnode,XX) * D(jnode)
+      Q(jnode,YY) = Q(jnode,YY) * D(jnode)
+      if(y == 0.5_jprb*pi) Q(jnode,XX)=0.
+      if(y ==-0.5_jprb*pi) Q(jnode,XX)=0.
     end do
   end subroutine set_state_rossby_haurwitz
 
@@ -456,8 +463,8 @@ contains
 
   subroutine compute_advective_velocities(geom)
     type(Geometry_class), intent(inout) :: geom
-    real(kind=jprb) :: Qx, Qy, Q0x, Q0y, Dmod, D0mod
-    integer :: inode, iedge, e, p1, p2
+    real(kind=jprb) :: y, y1,y2, hx, hy, Qx, Qy, Q0x, Q0y, Dmod, D0mod
+    integer :: jnode, jedge, iedge, p1, p2
     real(kind=jprb), dimension(:),   pointer :: D, D0
     real(kind=jprb), dimension(:,:), pointer :: Q, Q0
 #ifdef OLD_WAY
@@ -472,44 +479,53 @@ contains
     D0 => scalar_field("depth_backup",geom)
     Q  => vector_field("momentum",geom)
     Q0 => vector_field("momentum_backup",geom)
-    do inode=1,geom%nb_nodes
-      Qx    = Q(inode,XX)
-      Qy    = Q(inode,YY)
-      Dmod  = max( eps, D(inode) )
-      Q0x   = Q0(inode,XX)
-      Q0y   = Q0(inode,YY)
-      D0mod = max( eps, D0(inode) )
+    do jnode=1,geom%nb_nodes
+      Qx    = Q(jnode,XX)
+      Qy    = Q(jnode,YY)
+      Dmod  = max( eps, D(jnode) )
+      Q0x   = Q0(jnode,XX)
+      Q0y   = Q0(jnode,YY)
+      D0mod = max( eps, D0(jnode) )
       
+      y  = geom%coordinates(jnode,YY)
+      hx = radius*cos(y)
+      hy = radius
       ! this really computes V = G*contravariant_velocity, 
       ! with    G=hx*hy,
       !         physical_velocity = dotproduct( [hx,hy] , contravariant_velocity )
       ! V = (hx*hy) * [u/hx, v/hy] = [u*hy, v*hx]
       ! and hx = r*cos(y)  ,  hy = r
       ! and Q = [ D*u , D*v ]
-      Vnodes(inode,XX) = ( 1.5_jprb*Qx/Dmod - 0.5_jprb*Q0x/D0mod )*geom%hy(inode)
-      Vnodes(inode,YY) = ( 1.5_jprb*Qy/Dmod - 0.5_jprb*Q0y/D0mod )*geom%hx(inode)
+      Vnodes(jnode,XX) = ( 1.5_jprb*Qx/Dmod - 0.5_jprb*Q0x/D0mod ) * hy
+      Vnodes(jnode,YY) = ( 1.5_jprb*Qy/Dmod - 0.5_jprb*Q0y/D0mod ) * hx
     end do
 
-    write(0,*) L2norm(Vnodes(:,XX)), L2norm(Vnodes(:,YY))
-
-#ifndef OLD_WAY
-    do e=1,geom%nb_edges
-      p1 = geom%edges(e,1)
-      p2 = geom%edges(e,2)
-      Vedges(e,XX) = 0.5*(Vnodes(p1,XX)+Vnodes(p2,XX))
-      Vedges(e,YY) = 0.5*(Vnodes(p1,YY)+Vnodes(p2,YY))
+#ifdef NEW_WAY
+    do jedge=1,geom%nb_edges
+      p1 = geom%edges(jedge,1)
+      p2 = geom%edges(jedge,2)
+      ! Evaluate hx and hy at the edge midpoint
+      y1 = geom%coordinates(p1,YY)
+      y2 = geom%coordinates(p2,YY)
+      y = (y1+y2)*0.5_jprb
+      hx    = radius*cos(y)
+      hy    = radius
+      Vedges(jedge,XX) = (Vnodes(p1,XX)+Vnodes(p2,XX))*0.5_jprb
+      Vedges(jedge,YY) = (Vnodes(p1,YY)+Vnodes(p2,YY))*0.5_jprb
     enddo
-    do iedge=1,geom%nb_pole_edges
-      e = geom%pole_edges(iedge)
-      Vedges(e,YY) = 0.
+    ! Since the pole point lies outside the lon-lat domain, Vedges is wrongly calculated
+    ! y_pole .ne. 0.5(y1+y2)
+    do jedge=1,geom%nb_pole_edges
+      iedge = geom%pole_edges(jedge)
+      Vedges(iedge,YY) = 0.
     enddo
 #endif
   end subroutine compute_advective_velocities
 
   subroutine compute_forcing(geom)
     type(Geometry_class), intent(inout) :: geom
-    integer :: inode
-    real(kind=jprb) :: f, x, Qx, Qy, Dmod, dDdx, dDdy, vol, hx, hy
+    integer :: jnode
+    real(kind=jprb) :: f, y, sin_y, cos_y, Qx, Qy, Dmod, dDdx, dDdy, vol, hx, hy
     real(kind=jprb), dimension(:),   pointer :: D
     real(kind=jprb), dimension(:,:), pointer :: Q, R
     real(kind=jprb) :: grad_D(geom%nb_nodes, 2)
@@ -519,16 +535,19 @@ contains
 
     call compute_gradient( D, grad_D, .False., geom )
     
-    do inode=1,geom%nb_nodes
-      Qx    = Q(inode,XX)
-      Qy    = Q(inode,YY)
-      Dmod  = max( eps, D(inode) )
-      vol   = geom%dual_volumes(inode)
-      hx    = geom%hx(inode)
-      hy    = geom%hy(inode)
-      f     = geom%coriolis(inode)
-      R(inode,XX) = -grav*D(inode)*grad_D(inode,XX)*hy/vol + f*Qy - geom%dhxdy_over_G(inode)*Qx*Qy/Dmod
-      R(inode,YY) = -grav*D(inode)*grad_D(inode,YY)*hx/vol - f*Qx + geom%dhxdy_over_G(inode)*Qx*Qx/Dmod
+    do jnode=1,geom%nb_nodes
+      y     = geom%coordinates(jnode,YY)
+      sin_y = sin(y)
+      cos_y = max( eps, cos(y) )
+      Qx    = Q(jnode,XX)
+      Qy    = Q(jnode,YY)
+      Dmod  = max( eps, D(jnode) )
+      vol   = geom%dual_volumes(jnode)
+      hx    = radius*cos_y
+      hy    = radius
+      f     = f0 * sin_y
+      R(jnode,XX) = -grav*D(jnode)*grad_D(jnode,XX)*hy/vol + f*Qy + sin_y/(radius*cos_y)*Qx*Qy/Dmod
+      R(jnode,YY) = -grav*D(jnode)*grad_D(jnode,YY)*hx/vol - f*Qx - sin_y/(radius*cos_y)*Qx*Qx/Dmod
     end do
 
   end subroutine compute_forcing
@@ -539,12 +558,12 @@ contains
     real(kind=jprb), intent(in) :: dt
     type(Geometry_class), intent(inout) :: geom
     real(kind=jprb), dimension(:,:), pointer :: Q, R
-    integer :: inode, nb_nodes
+    integer :: jnode, nb_nodes
     Q => vector_field("momentum",geom)
     R => vector_field("momentum_forcing",geom)
-    do inode=1,geom%nb_nodes
-      Q(inode,XX) = Q(inode,XX) + 0.5_jprb*dt*R(inode,XX)
-      Q(inode,YY) = Q(inode,YY) + 0.5_jprb*dt*R(inode,YY)
+    do jnode=1,geom%nb_nodes
+      Q(jnode,XX) = Q(jnode,XX) + 0.5_jprb*dt*R(jnode,XX)
+      Q(jnode,YY) = Q(jnode,YY) + 0.5_jprb*dt*R(jnode,YY)
     end do
   end subroutine add_forcing_to_solution
 
@@ -553,8 +572,8 @@ contains
   subroutine implicit_solve(dt,geom)
     real(kind=jprb), intent(in) :: dt
     type(Geometry_class), intent(inout) :: geom
-    integer :: inode, m
-    real(kind=jprb) :: f, Qx, Qy, Rx, Ry, Dmod, dDdx, dDdy, hx, hy
+    integer :: jnode, m
+    real(kind=jprb) :: f, y, sin_y, cos_y, Qx, Qy, Rx, Ry, Dmod, dDdx, dDdy, hx, hy
     real(kind=jprb) :: Qx_adv, Qy_adv, Rx_exp, Ry_exp, vol
 
     real(kind=jprb), dimension(:),   pointer :: D
@@ -568,31 +587,34 @@ contains
     ! D is already up to date at time level (n+1), just by MPDATA advection
     call compute_gradient( D, grad_D, .False., geom )
     
-    do inode=1,geom%nb_nodes
-      Qx    = Q(inode,XX)
-      Qy    = Q(inode,YY)
-      Dmod  = max( eps, D(inode) )
-      vol   = geom%dual_volumes(inode)
-      hx    = geom%hx(inode)
-      hy    = geom%hy(inode)
-      f     = geom%coriolis(inode)
+    do jnode=1,geom%nb_nodes
+      y= geom%coordinates(jnode,YY)
+      sin_y = sin(y)
+      cos_y = max( eps, cos(y) )
+      Qx    = Q(jnode,XX)
+      Qy    = Q(jnode,YY)
+      Dmod  = max( eps, D(jnode) )
+      vol   = geom%dual_volumes(jnode)
+      hx    = radius*cos_y
+      hy    = radius
+      f     = f0 * sin_y
 
-      Rx_exp = -grav*D(inode)*grad_D(inode,XX)*hy/vol
-      Ry_exp = -grav*D(inode)*grad_D(inode,YY)*hx/vol
+      Rx_exp = -grav*D(jnode)*grad_D(jnode,XX)*hy/vol
+      Ry_exp = -grav*D(jnode)*grad_D(jnode,YY)*hx/vol
 
       Qx_adv = Qx
       Qy_adv = Qy
 
       do m=1,3 ! Three iterations at most is enough to converge
-        Rx = Rx_exp + f*Qy - geom%dhxdy_over_G(inode)*Qx*Qy/Dmod
-        Ry = Ry_exp - f*Qx + geom%dhxdy_over_G(inode)*Qx*Qx/Dmod
+        Rx = Rx_exp + f*Qy + sin_y/(radius*cos_y)*Qx*Qy/Dmod
+        Ry = Ry_exp - f*Qx - sin_y/(radius*cos_y)*Qx*Qx/Dmod
         Qx = Qx_adv + 0.5_jprb*dt*Rx
         Qy = Qy_adv + 0.5_jprb*dt*Ry
       end do
-      Q(inode,XX) = Qx
-      Q(inode,YY) = Qy
-      R(inode,XX) = Rx_exp + f*Qy - geom%dhxdy_over_G(inode)*Qx*Qy/Dmod
-      R(inode,YY) = Ry_exp - f*Qx + geom%dhxdy_over_G(inode)*Qx*Qx/Dmod
+      Q(jnode,XX) = Qx
+      Q(jnode,YY) = Qy
+      R(jnode,XX) = Rx_exp + f*Qy + sin_y/(radius*cos_y)*Qx*Qy/Dmod
+      R(jnode,YY) = Ry_exp - f*Qx - sin_y/(radius*cos_y)*Qx*Qx/Dmod
     end do
   end subroutine implicit_solve
 
@@ -603,7 +625,7 @@ contains
     type(Geometry_class), intent(inout) :: geom
     real(kind=jprb), dimension(:),   pointer :: D
     real(kind=jprb), dimension(:,:), pointer :: Q, V
-    integer :: inode, p1, p2
+    integer :: jnode, p1, p2
     D => scalar_field("depth",geom)
     Q => vector_field("momentum",geom)
     V => vector_field("advective_velocity",geom)
@@ -614,9 +636,9 @@ contains
     call mpdata_gauge( dt,   Q(:,YY),  V,        2,     .True., .True. ,   geom )
 
     ! remove noise from periodic boundary.. why is it even there in the mesh?
-    do inode=1,geom%nb_ghost_nodes
-      p1 = geom%ghost_nodes(inode,1)
-      p2 = geom%ghost_nodes(inode,2)
+    do jnode=1,geom%nb_ghost_nodes
+      p1 = geom%ghost_nodes(jnode,1)
+      p2 = geom%ghost_nodes(jnode,2)
       D(p2)    = D(p1)
       Q(p2,XX) = Q(p1,XX)
       Q(p2,YY) = Q(p1,YY)
@@ -650,18 +672,23 @@ program shallow_water
   implicit none
 
   ! Configuration parameters
-  real(kind=jprb) :: dt = 20.             ! solver time-step
-  integer         :: nb_steps = 6        ! Number of propagations
-  integer         :: hours_per_step = 1   !Propagation time
+  real(kind=jprb) :: dt = 20.              ! solver time-step
+  integer         :: nb_steps = 15         ! Number of propagations
+  integer         :: hours_per_step = 24   !Propagation time
+  logical         :: write_itermediate_output = .True.
 
   ! Declarations
   type(Geometry_class) :: g
   real(kind=jprb), parameter :: hours = 3600.     ! in seconds
   real(kind=jprb), parameter :: days  = 24.*hours ! in seconds
-  integer :: step = 0
+  integer :: jstep = 0
   character(len=1024) :: filename
+  character(len=1024) :: string
   integer :: clck_counts_start, clck_counts_beg, clck_counts_end, clck_rate
  
+  call set_log_level(LOG_LEVEL_INFO)
+  call log_info("Going to solve shallow_water equations for "//trim(str(nb_steps))//" days")
+
   ! Execution
   call read_joanna("data/meshvol.d", g)
   call compute_metrics(g)
@@ -671,29 +698,39 @@ program shallow_water
 
   call write_gmsh_mesh(g%internal_mesh,"data/mesh.msh")
 
-  write (filename, "(A,I2.2,A)") "data/fields",step,".msh"
+  write (filename, "(A,I2.2,A)") "data/fields",jstep,".msh"
   call write_gmsh_state(g%fields,filename)
 
-  write (filename, "(A,I2.2,A)") "data/depth",step,".grib"
+  write (filename, "(A,I2.2,A)") "data/depth",jstep,".grib"
   call write_grib(g,filename)
 
   call system_clock ( clck_counts_start, clck_rate )
-  do step=1,nb_steps 
+  do jstep=1,nb_steps 
 
     call system_clock ( clck_counts_beg, clck_rate )
   
     call propagate_state( hours_per_step*hours, g)
-    !call propagate_state( 20._jprb, g)
   
     call system_clock ( clck_counts_end, clck_rate )
-    write (0, *) "propagated to ",step*hours_per_step," hours.   time = ",(clck_counts_end - clck_counts_beg) / real(clck_rate),&
+    write (string, *) "propagated to ",jstep*hours_per_step," hours.   time = ",(clck_counts_end - clck_counts_beg) / real(clck_rate),&
      &  "walltime = ",(clck_counts_end - clck_counts_start) / real(clck_rate), new_line('A')
+    call log_info(string)
     
-    write (filename, "(A,I2.2,A)") "data/fields",step,".msh"
+    if (write_itermediate_output) then
+      write (filename, "(A,I2.2,A)") "data/fields",jstep,".msh"
+      call write_gmsh_state(g%fields,filename)
+
+      write (filename, "(A,I2.2,A)") "data/depth",jstep,".grib"
+      call write_grib(g,filename)
+    end if
+  end do ! steps
+
+  if (.not. write_itermediate_output) then
+    write (filename, "(A,I2.2,A)") "data/fields",jstep,".msh"
     call write_gmsh_state(g%fields,filename)
 
-    write (filename, "(A,I2.2,A)") "data/depth",step,".grib"
+    write (filename, "(A,I2.2,A)") "data/depth",jstep,".grib"
     call write_grib(g,filename)
-  end do
-  
+  end if
+
 end program shallow_water

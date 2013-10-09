@@ -62,7 +62,7 @@ contains
     class(Grid_class), intent(inout) :: grid
     character(len=*), intent(in) :: filename
     integer :: iface, inode
-    write(0,*) "Writing Gmsh file ",filename
+    call log_info( "Writing Gmsh file "//trim(filename) )
     open(50,file=filename,access='sequential',status='REPLACE')
 
     write(50,'(A)')"$MeshFormat"
@@ -90,14 +90,13 @@ contains
     integer :: iface, inode, ifield
     type(Field_class), pointer :: field
     field => state%fields(1)%ptr
-    write(0,*) "Writing Gmsh file ",filename
+    call log_info( "Writing Gmsh file "//trim(filename) )
     open(51,file=filename,access='sequential',status='REPLACE')
     write(51,'(A)')"$MeshFormat"
     write(51,'(A)')"2.2 0 8"
     write(51,'(A)')"$EndMeshFormat"
     do ifield=1,state%nb_fields
       field => state%fields(ifield)%ptr
-      write(0,*) field%name
       if (field%function_space%name == "nodes") then
         call write_gmsh_nodal_field(field)
       endif

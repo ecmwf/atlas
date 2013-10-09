@@ -5,3 +5,8 @@ results.msh
 .nfs*
 *.pdf
 *.dSYM/*
+*.opt
+*.lst
+*.ap2
+*.cg
+*.rpt

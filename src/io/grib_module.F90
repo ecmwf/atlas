@@ -66,7 +66,7 @@ subroutine write_grib(geom,filename)
     call grib_close_file(IFILE_HANDLE)
 
 #else
-    write(0,*) "Grib format is not enabled, compile with '-DENABLE_GRIB'"
+    call log_warning( "Grib format is not enabled, compile with '-DENABLE_GRIB'" )
 #endif
 end subroutine write_grib
 

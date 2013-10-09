@@ -66,7 +66,7 @@ contains
     !self%local_coords(1,1) = 0.
     
     ! print something
-    write(0,*) "LagrangeP0_Line::init"
+    call log_debug("LagrangeP0_Line::init")
   end subroutine LagrangeP0_Line__init  
 
   subroutine LagrangeP0_Line__values( self, local_coord, values )
@@ -74,7 +74,7 @@ contains
     real(kind=jprb), dimension(:), intent(in) :: local_coord
     real(kind=jprb), dimension(:), intent(inout) :: values
     values(1) = 1.
-    write(0,*) "LagrangeP0_Line::values"
+    call log_debug("LagrangeP0_Line::values")
   end subroutine LagrangeP0_Line__values
 
   subroutine LagrangeP0_Line__grad_values( self, local_coord, grad_values )
@@ -85,7 +85,7 @@ contains
     grad_values(1,1) = 0.
     grad_values(1,2) = 0.
 
-    write(0,*) "LagrangeP0_Line::grad_values"
+    call log_debug( "LagrangeP0_Line::grad_values" )
   end subroutine LagrangeP0_Line__grad_values
 
   subroutine LagrangeP0_Line2D__init(self)
@@ -101,7 +101,7 @@ contains
     self%dimension = 2
     
     ! print something
-    write(0,*) "LagrangeP0_Line2D::init"
+    call log_debug( "LagrangeP0_Line2D::init" )
   end subroutine LagrangeP0_Line2D__init
     
     subroutine LagrangeP0_Line2D__jacobian( self, local_coord, elem_coords, jacobian )
@@ -109,7 +109,7 @@ contains
     real(kind=jprb), dimension(:),        intent(in)    :: local_coord
     real(kind=jprb), dimension(:,:),      intent(in)    :: elem_coords
     real(kind=jprb), dimension(:,:),      intent(inout) :: jacobian
-    write(0,*) "LagrangeP0_Line2D::jacobian()"
+    call log_debug( "LagrangeP0_Line2D::jacobian()" )
   end subroutine LagrangeP0_Line2D__jacobian
 
   subroutine LagrangeP0_Line2D__jacobian_determinant( self, local_coord, elem_coords, jacobian_determinant )
@@ -136,7 +136,7 @@ contains
     self%local_coords(1,:) = [0,0]
 
     ! print something
-    write(0,*) "LagrangeP0_Quad::init"
+    call log_debug( "LagrangeP0_Quad::init" )
   end subroutine LagrangeP0_Quad__init
 
   subroutine LagrangeP0_Quad__values( self, local_coord, values )
@@ -155,7 +155,7 @@ contains
     grad_values(1,1) = 0.
     grad_values(2,1) = 0.
 
-    write(0,*) "LagrangeP0_Quad::grad_values"
+    call log_debug( "LagrangeP0_Quad::grad_values" )
   end subroutine LagrangeP0_Quad__grad_values
 
   subroutine LagrangeP0_Quad2D__init(self)
@@ -171,7 +171,7 @@ contains
     self%dimension = 2
     
     ! print something
-    write(0,*) "LagrangeP0_Quad2D::init"
+    call log_debug( "LagrangeP0_Quad2D::init" )
   end subroutine LagrangeP0_Quad2D__init
     
     
@@ -190,7 +190,7 @@ contains
     self%local_coords(1,:) = [1./3., 1./3.]
 
     ! print something
-    write(0,*) "LagrangeP0_Triag::init"
+    call log_debug( "LagrangeP0_Triag::init" )
   end subroutine LagrangeP0_Triag__init  
 
   subroutine LagrangeP0_Triag__values( self, local_coord, values )
@@ -198,7 +198,7 @@ contains
     real(kind=jprb), dimension(:), intent(in) :: local_coord
     real(kind=jprb), dimension(:), intent(inout) :: values
     values(1)=1.
-    write(0,*) "LagrangeP0_Triag::values"
+    call log_debug( "LagrangeP0_Triag::values" )
   end subroutine LagrangeP0_Triag__values
 
   subroutine LagrangeP0_Triag__grad_values( self, local_coord, grad_values )
@@ -209,7 +209,7 @@ contains
     grad_values(1,1) = 0.
     grad_values(2,1) = 0.
 
-    write(0,*) "LagrangeP0_Triag::grad_values"
+    call log_debug( "LagrangeP0_Triag::grad_values" )
   end subroutine LagrangeP0_Triag__grad_values
 
   subroutine LagrangeP0_Triag2D__init(self)
@@ -225,7 +225,7 @@ contains
     self%dimension = 2
     
     ! print something
-    write(0,*) "LagrangeP0_Triag2D::init"
+    call log_debug( "LagrangeP0_Triag2D::init" )
   end subroutine LagrangeP0_Triag2D__init
   
 end module lagrangep0_module

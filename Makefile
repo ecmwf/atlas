@@ -18,7 +18,8 @@ ifdef GRIB_API_DIR
 endif
 
 FC=ftn
-FCFLAGS= -O3 -hfp3 -rad -Ktrap=fp
+FCFLAGS= -O3 
+-hfp3 -rad -Ktrap=fp
 
 # Possible usefule flags for crayftn 8.2
 # -hfp3  (float operations)
