@@ -1,34 +1,10 @@
-
-!#define NDEBUG
-
-#ifndef NDEBUG
-#define assert(ASSERTION) \
-if( .not. (ASSERTION) ) then; \
-write(0,*) "Assertion failed: ASSERTION"; \
-call abort; \
-endif;
-#else
-#define assert(ASSERTION)
-#endif
-
-#ifndef NDEBUG
-#define assert_msg(ASSERTION,msg) \
-if( .not. (ASSERTION) ) then; \
-write(0,*) "Assertion failed: "//trim(msg); \
-call abort; \
-endif;
-#else
-#define assert_msg(ASSERTION,msg)
-#endif
-
-
-
-! ===================================================================
+#include "common/assertions.h"
+! =====================================================================
 ! mpdata_module
 ! This module contains strictly algorithmic subroutines
 ! - mpdata_gauge       : Non-oscillatory variable sign MPDATA advection
 ! - compute_gradient   : Compute gradient of a scalar array
-! ===================================================================
+! =====================================================================
 module mpdata_module
   use common_module
   use datastruct_module
@@ -60,17 +36,16 @@ contains
     real(kind=jprb) :: adv(geom%nb_nodes)
     real(kind=jprb) :: aun(geom%nb_edges)
     real(kind=jprb) :: gradQ(geom%nb_nodes,2)
-    real(kind=jprb) :: tmp_min, tmp_max
+    real(kind=jprb), pointer :: vol(:), S(:,:)
 
     associate( nb_nodes          => geom%nb_nodes, &
       &        nb_edges          => geom%nb_edges, &
-      &        nb_internal_edges => geom%nb_internal_edges, &
       &        nb_pole_edges     => geom%nb_pole_edges, &
-      &        internal_edges    => geom%internal_edges, &
       &        pole_edges        => geom%pole_edges, &
-      &        vol               => geom%dual_volumes, &
-      &        S                 => geom%dual_normals, &
       &        edges             => geom%edges )
+  
+    vol => scalar_field("dual_volumes",geom)
+    S   => vector_field("dual_normals",geom)
 
     ! 1. First pass
     ! -------------
@@ -210,9 +185,11 @@ contains
     real(kind=jprb), intent(in)    :: Q(:)
     real(kind=jprb), intent(inout) :: gradQ(:,:)
     logical, intent(in) :: Q_is_vector
-    
+    real(kind=jprb), pointer :: S(:,:)
     real(kind=jprb) :: Sx,Sy,avgQ
     integer :: jedge,iedge,ip1,ip2
+
+    S   => vector_field("dual_normals",geom)
 
     ! derivatives 
     gradQ(:,:) = 0
@@ -220,8 +197,8 @@ contains
     do jedge = 1,geom%nb_edges
       ip1 = geom%edges(jedge,1)
       ip2 = geom%edges(jedge,2)
-      Sx  = geom%dual_normals(jedge,XX)
-      Sy  = geom%dual_normals(jedge,YY)
+      Sx  = S(jedge,XX)
+      Sy  = S(jedge,YY)
       avgQ = ( Q(ip1) + Q(ip2) )*0.5_jprb
       gradQ(ip1,XX) = gradQ(ip1,XX) + Sx*avgQ
       gradQ(ip2,XX) = gradQ(ip2,XX) - Sx*avgQ
@@ -236,7 +213,7 @@ contains
         iedge = geom%pole_edges(jedge)
         ip1   = geom%edges(iedge,1)
         ip2   = geom%edges(iedge,2)
-        Sy   = geom%dual_normals(iedge,YY)
+        Sy   = S(iedge,YY)
         avgQ = ( Q(ip1) + Q(ip2) )*0.5_jprb
         ! correct for wrongly subtracting sy*avgQ in previous loop,
         ! instead of adding, because point at other side of pole
@@ -254,7 +231,8 @@ end module mpdata_module
 ! This module contains subroutines to solve the shallow water eqs
 ! on a sphere
 ! - set_time_step : To set the solver's time step
-! - compute_metrics : To modify dual-volumes to map to the sphere
+! - setup_shallow_water : To modify dual-volumes to map to the sphere
+!                         and create necessary fields
 ! - allocations   : To pre-allocate necessary structures and states
 ! - set_state_rossby_haurwits : To initialise the state with
 !                               Rossby Haurwitz waves
@@ -269,9 +247,8 @@ module shallow_water_module
 
   implicit none
   private
-  public :: compute_metrics 
+  public :: setup_shallow_water 
   public :: propagate_state
-  public :: allocations
   public :: set_state_rossby_haurwitz
   public :: set_time_step
 
@@ -292,28 +269,42 @@ contains
     dt_forward = dt
   end subroutine set_time_step
 
-  subroutine compute_metrics(geom)
+  subroutine setup_shallow_water(geom)
     type(DataStructure_type), intent(inout) :: geom
-    real(kind=jprb) :: y, G, cos_y, sin_y, hx, hy
+    real(kind=jprb) :: y, G, cos_y, sin_y
+    real(kind=jprb), pointer :: coords(:,:), vol(:), hx(:), hy(:), dhxdy_over_G(:), cor(:)
     integer :: jnode
+    call create_scalar_field_in_nodes("hx",geom)
+    call create_scalar_field_in_nodes("hy",geom)
+    call create_scalar_field_in_nodes("dhxdy_over_G",geom)
+    call create_scalar_field_in_nodes("coriolis",geom)
+
+    coords => vector_field("coordinates",geom)
+    vol    => scalar_field("dual_volumes",geom)
+    hx    => scalar_field("hx",geom)
+    hy    => scalar_field("hy",geom)
+    dhxdy_over_G => scalar_field("dhxdy_over_G",geom)
+    cor => scalar_field("coriolis",geom)
+    !dir$ ivdep
     do jnode=1,geom%nb_nodes
-      y = geom%coordinates(jnode,YY)
+      y = coords(jnode,YY)
       cos_y = cos(y)
       sin_y = sin(y)
-      hx = radius*cos_y
-      hy = radius
-      G = hx*hy
-      geom%dual_volumes(jnode) = geom%dual_volumes(jnode)*G
+      hx(jnode) = radius*cos_y
+      hy(jnode) = radius
+      G = hx(jnode)*hy(jnode)
+      vol(jnode) = vol(jnode)*G
+      dhxdy_over_G(jnode) = - sin_y/(radius*max(eps,cos_y))
+      cor(jnode) = f0*sin_y
     enddo
-  end subroutine compute_metrics
 
-
-
-  subroutine allocations(geom)
-    type(DataStructure_type), intent(inout) :: geom
-    call create_state_fields(geom)
-  end subroutine allocations
-
+    call create_scalar_field_in_nodes("depth",geom)
+    call create_vector_field_in_nodes("momentum",geom)
+    call create_vector_field_in_nodes("momentum_forcing",geom)
+    call create_scalar_field_in_nodes("depth_backup",geom)
+    call create_vector_field_in_nodes("momentum_backup",geom)
+    call create_vector_field_in_edges("advective_velocity",geom)
+  end subroutine setup_shallow_water
 
 
   subroutine propagate_state(dt,geom)
@@ -321,6 +312,7 @@ contains
     type(DataStructure_type), intent(inout), target :: geom
     real(kind=jprb) :: tmax, t0, dt_fwd
     character(len=200) :: step_info
+    call log_debug( "Propagating state" )
     tmax = geom%fields%time+dt
     do while (geom%fields%time < tmax)
       t0 = geom%fields%time
@@ -364,12 +356,7 @@ contains
 
   subroutine create_state_fields(geom)
     type(DataStructure_type), intent(inout) :: geom
-    call create_scalar_field_in_nodes("depth",geom)
-    call create_vector_field_in_nodes("momentum",geom)
-    call create_vector_field_in_nodes("momentum_forcing",geom)
-    call create_scalar_field_in_nodes("depth_backup",geom)
-    call create_vector_field_in_nodes("momentum_backup",geom)
-    call create_vector_field_in_edges("advective_velocity",geom)
+
   end subroutine create_state_fields
 
 
@@ -377,9 +364,9 @@ contains
   subroutine set_state_rossby_haurwitz(geom)
     type(DataStructure_type), intent(inout)      :: geom
     real(kind=jprb), dimension(:), pointer   :: D
-    real(kind=jprb), dimension(:,:), pointer :: Q
-    integer :: jnode, ir, ip
-    real(kind=jprb) :: aaa0,zk,om,ph0,g,x,y,cor
+    real(kind=jprb), dimension(:,:), pointer :: Q, coords
+    integer :: jnode, ir
+    real(kind=jprb) :: aaa0,zk,om,ph0,g,x,y
 
     om   = 7.848E-6
     zk   = 7.848E-6
@@ -389,16 +376,17 @@ contains
 
     D => scalar_field("depth",geom)
     Q => vector_field("momentum",geom)
+    coords => vector_field("coordinates",geom)
 
     do jnode=1,geom%nb_nodes
-      x=geom%coordinates(jnode,XX)
-      y=geom%coordinates(jnode,YY)
+      x=coords(jnode,XX)
+      y=coords(jnode,YY)
       if(x == 2._jprb*pi) x=0.
-      cor=f0*sin(y)
-      Q(jnode,XX) =  radius*om*cos(y)+radius*zk*cos(ir*x) *(cos(y))**(ir-1._jprb)*(ir*(sin(y))**2-(cos(y))**2)
+      Q(jnode,XX) =  radius*om*cos(y)+radius*zk*cos(ir*x) *(cos(y))**(ir-1._jprb) &
+        &            * (ir*(sin(y))**2-(cos(y))**2)
       Q(jnode,YY) = -radius*zk*ir*(cos(y))**(ir-1._jprb)*sin(y)*sin(ir*x)
-      D(jnode) = (ph0+radius**2*fa(y)+radius**2*fb(y)*cos(ir*x)+radius**2*fc(y)*cos(2._jprb*ir*x)) &
-          & /(grav)
+      D(jnode) = (ph0+radius**2*fa(y)+radius**2*fb(y)*cos(ir*x) &
+        &        +radius**2*fc(y)*cos(2._jprb*ir*x)) / grav
       D(jnode) = max(aaa0,D(jnode))
       Q(jnode,XX) = Q(jnode,XX) * D(jnode)
       Q(jnode,YY) = Q(jnode,YY) * D(jnode)
@@ -424,7 +412,7 @@ contains
 
       real(kind=jprb) function fc(th)
         real(kind=jprb), intent(in) :: th
-        fc = 0.25*zk**2*(cos(th))**(2*ir)*( (ir+1._jprb)*(cos(th))**2 -(ir+2._jprb) )  
+        fc = 0.25*zk**2*(cos(th))**(2*ir)*((ir+1._jprb)*(cos(th))**2 -(ir+2._jprb))  
       end function fc
 
   end subroutine set_state_rossby_haurwitz
@@ -448,47 +436,40 @@ contains
 
   subroutine compute_advective_velocities(geom)
     type(DataStructure_type), intent(inout) :: geom
-    real(kind=jprb) :: y, y1,y2, hx, hy, Qx, Qy, Q0x, Q0y, Dmod, D0mod
+    real(kind=jprb) :: Qx, Qy, Q0x, Q0y, Dmod, D0mod
     integer :: jnode, jedge, iedge, ip1, ip2
-    real(kind=jprb), dimension(:),   pointer :: D, D0
-    real(kind=jprb), dimension(:,:), pointer :: Q, Q0
-    real(kind=jprb), dimension(:,:), pointer :: Vedges
+    real(kind=jprb), dimension(:),   pointer :: D, D0, hx, hy
+    real(kind=jprb), dimension(:,:), pointer :: Q, Q0, Vedges, coords
     real(kind=jprb) :: Vnodes(geom%nb_nodes,2)
+    coords => vector_field("coordinates",geom)
     Vedges => vector_field("advective_velocity",geom)
     D      => scalar_field("depth",geom)
     D0     => scalar_field("depth_backup",geom)
     Q      => vector_field("momentum",geom)
     Q0     => vector_field("momentum_backup",geom)
-    do jnode=1,geom%nb_nodes
+    hx     => scalar_field("hx",geom)
+    hy     => scalar_field("hy",geom)
+    associate ( nb_nodes => geom%nb_nodes, nb_edges => geom%nb_edges, edges => geom%edges )
+    do jnode=1,nb_nodes
       Qx    = Q(jnode,XX)
       Qy    = Q(jnode,YY)
       Dmod  = max( eps, D(jnode) )
       Q0x   = Q0(jnode,XX)
       Q0y   = Q0(jnode,YY)
       D0mod = max( eps, D0(jnode) )
-      
-      y  = geom%coordinates(jnode,YY)
-      hx = radius*cos(y)
-      hy = radius
       ! this really computes V = G*contravariant_velocity, 
       ! with    G=hx*hy,
       !         physical_velocity = dotproduct( [hx,hy] , contravariant_velocity )
       ! V = (hx*hy) * [u/hx, v/hy] = [u*hy, v*hx]
       ! and hx = r*cos(y)  ,  hy = r
       ! and Q = [ D*u , D*v ]
-      Vnodes(jnode,XX) = ( 1.5_jprb*Qx/Dmod - 0.5_jprb*Q0x/D0mod ) * hy
-      Vnodes(jnode,YY) = ( 1.5_jprb*Qy/Dmod - 0.5_jprb*Q0y/D0mod ) * hx
+      Vnodes(jnode,XX) = ( 1.5_jprb*Qx/Dmod - 0.5_jprb*Q0x/D0mod ) * hy(jnode)
+      Vnodes(jnode,YY) = ( 1.5_jprb*Qy/Dmod - 0.5_jprb*Q0y/D0mod ) * hx(jnode)
     end do
 
-    do jedge=1,geom%nb_edges
-      ip1 = geom%edges(jedge,1)
-      ip2 = geom%edges(jedge,2)
-      ! Evaluate hx and hy at the edge midpoint
-      y1 = geom%coordinates(ip1,YY)
-      y2 = geom%coordinates(ip2,YY)
-      y = (y1+y2)*0.5_jprb
-      hx    = radius*cos(y)
-      hy    = radius
+    do jedge=1,nb_edges
+      ip1 = edges(jedge,1)
+      ip2 = edges(jedge,2)
       Vedges(jedge,XX) = (Vnodes(ip1,XX)+Vnodes(ip2,XX))*0.5_jprb
       Vedges(jedge,YY) = (Vnodes(ip1,YY)+Vnodes(ip2,YY))*0.5_jprb
     enddo
@@ -498,34 +479,37 @@ contains
       iedge = geom%pole_edges(jedge)
       Vedges(iedge,YY) = 0.
     enddo
+    end associate
   end subroutine compute_advective_velocities
 
   subroutine compute_forcing(geom)
     type(DataStructure_type), intent(inout) :: geom
     integer :: jnode
-    real(kind=jprb) :: cor, y, sin_y, cos_y, Qx, Qy, Dmod, dDdx, dDdy, vol, hx, hy
-    real(kind=jprb), dimension(:),   pointer :: D
-    real(kind=jprb), dimension(:,:), pointer :: Q, R
+    real(kind=jprb) :: Qx, Qy, Dmod
+    real(kind=jprb), dimension(:),   pointer :: D, vol, hx, hy, dhxdy_over_G, cor
+    real(kind=jprb), dimension(:,:), pointer :: Q, R, coords
     real(kind=jprb) :: grad_D(geom%nb_nodes, 2)
+    coords => vector_field("coordinates",geom)
+    vol => scalar_field("dual_volumes",geom)
+    hx => scalar_field("hx",geom)
+    hy => scalar_field("hy",geom)
+    dhxdy_over_G => scalar_field("dhxdy_over_G",geom)
+    cor => scalar_field("coriolis",geom)
+
     D => scalar_field("depth",geom)
     Q => vector_field("momentum",geom)
     R => vector_field("momentum_forcing",geom)
-
     call compute_gradient( D, grad_D, .False., geom )
     
+    !dir$ ivdep
     do jnode=1,geom%nb_nodes
-      y     = geom%coordinates(jnode,YY)
-      sin_y = sin(y)
-      cos_y = max( eps, cos(y) )
       Qx    = Q(jnode,XX)
       Qy    = Q(jnode,YY)
       Dmod  = max( eps, D(jnode) )
-      vol   = geom%dual_volumes(jnode)
-      hx    = radius*cos_y
-      hy    = radius
-      cor   = f0 * sin_y
-      R(jnode,XX) = -grav*D(jnode)*grad_D(jnode,XX)*hy/vol + cor*Qy + sin_y/(radius*cos_y)*Qx*Qy/Dmod
-      R(jnode,YY) = -grav*D(jnode)*grad_D(jnode,YY)*hx/vol - cor*Qx - sin_y/(radius*cos_y)*Qx*Qx/Dmod
+      R(jnode,XX) = -grav*D(jnode)*grad_D(jnode,XX)*hy(jnode)/vol(jnode) &
+        &           + cor(jnode)*Qy - dhxdy_over_G(jnode)*Qx*Qy/Dmod
+      R(jnode,YY) = -grav*D(jnode)*grad_D(jnode,YY)*hx(jnode)/vol(jnode) &
+        &           - cor(jnode)*Qx + dhxdy_over_G(jnode)*Qx*Qx/Dmod
     end do
 
   end subroutine compute_forcing
@@ -539,6 +523,7 @@ contains
     integer :: jnode, nb_nodes
     Q => vector_field("momentum",geom)
     R => vector_field("momentum_forcing",geom)
+    !dir$ ivdep
     do jnode=1,geom%nb_nodes
       Q(jnode,XX) = Q(jnode,XX) + 0.5_jprb*dt*R(jnode,XX)
       Q(jnode,YY) = Q(jnode,YY) + 0.5_jprb*dt*R(jnode,YY)
@@ -551,48 +536,48 @@ contains
     real(kind=jprb), intent(in) :: dt
     type(DataStructure_type), intent(inout) :: geom
     integer :: jnode, m
-    real(kind=jprb) :: cor, y, sin_y, cos_y, Qx, Qy, Rx, Ry, Dmod, dDdx, dDdy, hx, hy
-    real(kind=jprb) :: Qx_adv, Qy_adv, Rx_exp, Ry_exp, vol
+    real(kind=jprb) :: Qx, Qy, Rx, Ry, Dmod
+    real(kind=jprb) :: Qx_adv, Qy_adv, Rx_exp, Ry_exp
 
-    real(kind=jprb), dimension(:),   pointer :: D
-    real(kind=jprb), dimension(:,:), pointer :: Q, R
+    real(kind=jprb), dimension(:),   pointer :: D, vol, hx, hy, dhxdy_over_G, cor
+    real(kind=jprb), dimension(:,:), pointer :: Q, R, coords
     real(kind=jprb) :: grad_D(geom%nb_nodes, 2)
 
+    coords => vector_field("coordinates",geom)
+    vol => scalar_field("dual_volumes",geom)
     D => scalar_field("depth",geom)
     Q => vector_field("momentum",geom)
     R => vector_field("momentum_forcing",geom)
+    hx => scalar_field("hx",geom)
+    hy => scalar_field("hy",geom)
+    dhxdy_over_G => scalar_field("dhxdy_over_G",geom)
+    cor => scalar_field("coriolis",geom)
 
     ! D is already up to date at time level (n+1), just by MPDATA advection
     call compute_gradient( D, grad_D, .False., geom )
     
+    !dir$ ivdep
     do jnode=1,geom%nb_nodes
-      y     = geom%coordinates(jnode,YY)
-      sin_y = sin(y)
-      cos_y = max( eps, cos(y) )
       Qx    = Q(jnode,XX)
       Qy    = Q(jnode,YY)
       Dmod  = max( eps, D(jnode) )
-      vol   = geom%dual_volumes(jnode)
-      hx    = radius*cos_y
-      hy    = radius
-      cor   = f0 * sin_y
 
-      Rx_exp = -grav*D(jnode)*grad_D(jnode,XX)*hy/vol
-      Ry_exp = -grav*D(jnode)*grad_D(jnode,YY)*hx/vol
+      Rx_exp = -grav*D(jnode)*grad_D(jnode,XX)*hy(jnode)/vol(jnode)
+      Ry_exp = -grav*D(jnode)*grad_D(jnode,YY)*hx(jnode)/vol(jnode)
 
       Qx_adv = Qx
       Qy_adv = Qy
 
       do m=1,3 ! Three iterations at most is enough to converge
-        Rx = Rx_exp + cor*Qy + sin_y/(radius*cos_y)*Qx*Qy/Dmod
-        Ry = Ry_exp - cor*Qx - sin_y/(radius*cos_y)*Qx*Qx/Dmod
+        Rx = Rx_exp + cor(jnode)*Qy - dhxdy_over_G(jnode)*Qx*Qy/Dmod
+        Ry = Ry_exp - cor(jnode)*Qx + dhxdy_over_G(jnode)*Qx*Qx/Dmod
         Qx = Qx_adv + 0.5_jprb*dt*Rx
         Qy = Qy_adv + 0.5_jprb*dt*Ry
       end do
       Q(jnode,XX) = Qx
       Q(jnode,YY) = Qy
-      R(jnode,XX) = Rx_exp + cor*Qy + sin_y/(radius*cos_y)*Qx*Qy/Dmod
-      R(jnode,YY) = Ry_exp - cor*Qx - sin_y/(radius*cos_y)*Qx*Qx/Dmod
+      R(jnode,XX) = Rx_exp + cor(jnode)*Qy - dhxdy_over_G(jnode)*Qx*Qy/Dmod
+      R(jnode,YY) = Ry_exp - cor(jnode)*Qx + dhxdy_over_G(jnode)*Qx*Qx/Dmod
     end do
   end subroutine implicit_solve
 
@@ -613,7 +598,7 @@ contains
     call mpdata_gauge( dt,   Q(:,XX),  V,        2,     .True., .True. ,   geom )
     call mpdata_gauge( dt,   Q(:,YY),  V,        2,     .True., .True. ,   geom )
 
-    ! remove noise from periodic boundary...
+    ! remove noise from periodic boundary... This will dissapear in MPI implementation
     do jnode=1,geom%nb_ghost_nodes
       ip1 = geom%ghost_nodes(jnode,1)
       ip2 = geom%ghost_nodes(jnode,2)
@@ -624,7 +609,6 @@ contains
   end subroutine advect_solution
 
 end module shallow_water_module
-
 
 
 ! ===================================================================
@@ -642,8 +626,7 @@ program shallow_water
   use read_joanna_module, only: read_joanna
   use datastruct_module,  only: DataStructure_type
   use shallow_water_module, only: &
-    & compute_metrics, &
-    & allocations, &
+    & setup_shallow_water, &
     & set_state_rossby_haurwitz, &
     & set_time_step, &
     & propagate_state
@@ -652,7 +635,7 @@ program shallow_water
   ! Configuration parameters
   real(kind=jprb) :: dt = 20.              ! solver time-step
   integer         :: nb_steps = 15         ! Number of propagations
-  integer         :: hours_per_step = 24   !Propagation time
+  integer         :: hours_per_step = 24   ! Propagation time
   logical         :: write_itermediate_output = .True.
 
   ! Declarations
@@ -660,55 +643,67 @@ program shallow_water
   real(kind=jprb), parameter :: hours = 3600.     ! in seconds
   real(kind=jprb), parameter :: days  = 24.*hours ! in seconds
   integer :: jstep = 0
-  character(len=1024) :: filename
-  character(len=1024) :: string
-  integer :: clck_counts_start, clck_counts_beg, clck_counts_end, clck_rate
+  type(Timer_type) :: wallclock_timer, loop_timer
+
  
   call set_log_level(LOG_LEVEL_INFO)
   call log_info("Going to solve shallow_water equations for "//trim(str(nb_steps))//" days")
 
   ! Execution
   call read_joanna("data/meshvol.d", g)
-  call compute_metrics(g)
-  call allocations(g)
+  call setup_shallow_water(g)
   call set_state_rossby_haurwitz(g)
   call set_time_step( dt )
 
-  call write_gmsh_mesh(g%internal_mesh,"data/mesh.msh")
+  call log_info( "+------------------------------+" )
+  call log_info( "| Simulation summary           |" )
+  call log_info( "+-------------------+----------+" )
+  call log_info( "| nb_nodes          | "//trim(str(g%nb_nodes,'(I8)'))//" |" )
+  call log_info( "| nb_edges          | "//trim(str(g%nb_edges,'(I8)'))//" |" )
+  call log_info( "| time step         | "//trim(str(dt,'(F8.1)'))//" |" )
+  call log_info( "| total time  (hrs) | "//trim(str(nb_steps*hours_per_step,'(I8)'))//" |" )
+  call log_info( "| output rate (hrs) | "//trim(str(hours_per_step,'(I8)'))//" |" )
+  call log_info( "+-------------------+----------+ ")
 
-  write (filename, "(A,I2.2,A)") "data/fields",jstep,".msh"
-  call write_gmsh_state(g%fields,filename)
+  call write_mesh
+  call write_fields
 
-  write (filename, "(A,I2.2,A)") "data/depth",jstep,".grib"
-  call write_grib(g,filename)
+  call wallclock_timer%start()
 
-  call system_clock ( clck_counts_start, clck_rate )
   do jstep=1,nb_steps 
 
-    call system_clock ( clck_counts_beg, clck_rate )
-  
+    call loop_timer%start()  
     call propagate_state( hours_per_step*hours, g)
   
-    call system_clock ( clck_counts_end, clck_rate )
-    write (string, *) "propagated to ",jstep*hours_per_step," hours.   time = ",(clck_counts_end - clck_counts_beg) / real(clck_rate),&
-     &  "walltime = ",(clck_counts_end - clck_counts_start) / real(clck_rate), new_line('A')
-    call log_info(string)
+    write (log_str, '(A,I3,A,A,F8.2,A,F8.2,A)') &
+     &  "Propagated to ",jstep*hours_per_step," hours.", &
+     &  "     time = ",loop_timer%elapsed(),&
+     &  "     walltime = ",wallclock_timer%elapsed(), new_line('A')
+    call log_info()
     
-    if (write_itermediate_output) then
-      write (filename, "(A,I2.2,A)") "data/fields",jstep,".msh"
-      call write_gmsh_state(g%fields,filename)
+    if (write_itermediate_output) call write_fields
 
-      write (filename, "(A,I2.2,A)") "data/depth",jstep,".grib"
-      call write_grib(g,filename)
-    end if
   end do ! steps
 
-  if (.not. write_itermediate_output) then
+  ! Write last step anyway if intermediate output is disabled
+  if (.not. write_itermediate_output) call write_fields
+
+contains
+
+  subroutine write_mesh ! Don't worry about this, it will change in the future
+    call wallclock_timer%pause()
+    call write_gmsh_mesh(g%internal_mesh,"data/mesh.msh")
+    call wallclock_timer%resume()
+  end subroutine write_mesh
+
+  subroutine write_fields ! Don't worry about this, it will change in the future
+    character(len=1024) :: filename
+    call wallclock_timer%pause()
     write (filename, "(A,I2.2,A)") "data/fields",jstep,".msh"
     call write_gmsh_state(g%fields,filename)
-
     write (filename, "(A,I2.2,A)") "data/depth",jstep,".grib"
     call write_grib(g,filename)
-  end if
+    call wallclock_timer%resume()
+  end subroutine write_fields
 
 end program shallow_water

@@ -3,7 +3,7 @@
 # This makefile compiles the sources, for the shallow_water executable
 
 # Environment variables that must be defined: 
-# - FC
+# - FC (default=ftn)
 # - GRIB_API_DIR can be commented out
 
 # NOTE: make sure that grib_api is compiled with same compiler as $FC
@@ -18,8 +18,10 @@ ifdef GRIB_API_DIR
 endif
 
 FC=ftn
-FCFLAGS= -O3 
--hfp3 -rad -Ktrap=fp
+FCFLAGS= -O3
+# -hfp3 -rad
+#-fstack-arrays
+# -rad -Ktrap=fp -hfp3 
 
 # Possible usefule flags for crayftn 8.2
 # -hfp3  (float operations)
@@ -34,7 +36,6 @@ KERNEL_INC= -I./src/common -I./src/mesh -I./src/io  -I./
 %.o : %.F90
 	echo $@
 	$(FC) $(GRIB) $(KERNEL_INC) $(FCFLAGS) -c -o $@ $<
-
 
 
 KERNEL_SRC= \

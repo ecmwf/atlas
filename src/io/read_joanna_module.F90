@@ -2,7 +2,7 @@
 ! module for testing creation of a Grid
 module read_joanna_module
   use common_module
-  use datastruct_module, only: create_mesh, DataStructure_type
+  use datastruct_module, only: create_mesh, DataStructure_type, vector_field, scalar_field
   implicit none
 contains
   
@@ -22,7 +22,7 @@ contains
     integer                      :: internal_edge_cnt
 
     integer                      :: idx
-    real(kind=jprb)              :: vol, Sx, Sy
+    real(kind=jprb), pointer     :: coords(:,:), vol(:), S(:,:)
     integer                      :: ip1,ip2
 
     integer :: jedge
@@ -34,15 +34,18 @@ contains
 
     read(5,*) nnode, nedge, nface, ncoin, before2, before1  !nbefore1<nbefore2
 
+    ! Create edge-based unstructured mesh
     call create_mesh(nnode,nedge,g)
 
-    do jnode = 1, g%nb_nodes
-      read(5,*) g%coordinates(jnode,1), g%coordinates(jnode,2), &
-        & g%dual_volumes(jnode)
-    end do
-    g%internal_mesh%nodes_coordinates = g%coordinates
+    coords => vector_field("coordinates",g)
+    vol    => scalar_field("dual_volumes",g)
+    S      => vector_field("dual_normals",g)
 
-    g%nb_internal_edges = nedge - (before2-before1+1)
+    do jnode = 1, g%nb_nodes
+      read(5,*) coords(jnode,1), coords(jnode,2), vol(jnode)
+    end do
+    g%internal_mesh%nodes_coordinates = coords
+
     g%nb_pole_edges = before2-before1+1
     g%nb_ghost_nodes = ncoin
 
@@ -50,7 +53,6 @@ contains
     pole_edge_cnt = 0
     internal_edge_cnt = 0
     allocate(g%pole_edges(g%nb_pole_edges))
-    allocate(g%internal_edges(g%nb_internal_edges))
 
     do jedge = 1, g%nb_edges
       read(5,*) idx, ip1, ip2
@@ -59,7 +61,6 @@ contains
 
       if (jedge<before1 .or. jedge>before2) then
         internal_edge_cnt = internal_edge_cnt + 1
-        g%internal_edges(internal_edge_cnt) = jedge
       else
         pole_edge_cnt = pole_edge_cnt + 1
         g%pole_edges(pole_edge_cnt) = jedge
@@ -68,8 +69,7 @@ contains
     g%internal_mesh%faces = g%edges
 
     do jedge = 1,g%nb_edges
-      read(5,*) idx, Sx, Sy
-      g%dual_normals(jedge,:) = [Sx,Sy]
+      read(5,*) idx, S(jedge,XX), S(jedge,YY)
     enddo
 
     allocate(g%ghost_nodes(g%nb_ghost_nodes,2))
@@ -80,7 +80,7 @@ contains
     end do
 
     close(5)
-    call log_info( "Done reading mesh "//filename )
+
   end subroutine read_joanna
 
 
