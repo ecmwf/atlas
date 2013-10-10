@@ -40,12 +40,15 @@ contains
 
     associate( nb_nodes          => geom%nb_nodes, &
       &        nb_edges          => geom%nb_edges, &
-      &        nb_pole_edges     => geom%nb_pole_edges, &
-      &        pole_edges        => geom%pole_edges, &
       &        edges             => geom%edges )
   
     vol => scalar_field("dual_volumes",geom)
     S   => vector_field("dual_normals",geom)
+
+    ! non-oscillatory option
+    if( limited .and. (order .ge. 2) ) then
+      call compute_Qmax_and_Qmin()
+    end if
 
     ! 1. First pass
     ! -------------
@@ -53,7 +56,7 @@ contains
     ! Compute the normal velocity in faces, and advection in vertices
     adv(:) = 0.
 
-    do jedge = 1,geom%nb_edges
+    do jedge = 1,nb_edges
       ip1 = edges(jedge,1)
       ip2 = edges(jedge,2)
       Sx = S(jedge,XX)
@@ -83,7 +86,7 @@ contains
 
       ! Compute antidiffusive normal velocity in faces
 
-      do jedge = 1,geom%nb_edges
+      do jedge = 1,nb_edges
         ip1 = edges(jedge,1)
         ip2 = edges(jedge,2)
 
@@ -95,75 +98,17 @@ contains
         Vy = V(jedge,YY)
         ! variable sign option with asymptotic analysis, (mpdata gauge)
         aun(jedge) = abs(aun(jedge))*(Q(ip2)-Q(ip1))*0.5_jprb &
-          &      -0.5_jprb*dt*aun(jedge)*(Vx*dQdx+Vy*dQdy)
+          &          -0.5_jprb*dt*aun(jedge)*(Vx*dQdx+Vy*dQdy)
       end do
 
       ! non-oscillatory option
       if (limited) then
-
-        Qmax(:)  = -1.e10
-        Qmin(:)  =  1.e10
-        rhin(:)  =  0.
-        rhout(:) =  0.
-        adv(:)   =  0.
-
-        do jedge = 1,geom%nb_edges
-          ip1 = edges(jedge,1)
-          ip2 = edges(jedge,2)
-          Q1 = Q(ip1)
-          Q2 = Q(ip2)
-          Qmax(ip1) = max( Qmax(ip1), Q1, Q2 )
-          Qmin(ip1) = min( Qmin(ip1), Q1, Q2 )
-          Qmax(ip2) = max( Qmax(ip2), Q1, Q2 )
-          Qmin(ip2) = min( Qmin(ip2), Q1, Q2 )
-        end do
-
-        if (Q_is_vector) then
-          do jedge = 1,nb_pole_edges
-            iedge  = pole_edges(jedge)
-            ip1 = edges(iedge,1)
-            ip2 = edges(iedge,2)
-            Q1 = Q(ip1)
-            Q2 = Q(ip2)
-            Qmax(ip1) = max( Qmax(ip1), Q1, abs(Q2) )
-            Qmin(ip1) = min( Qmin(ip1), Q1,-abs(Q2) )
-            Qmax(ip2) = max( Qmax(ip2), Q2, abs(Q1) )
-            Qmin(ip2) = min( Qmin(ip2), Q2,-abs(Q1) )
-          end do
-        end if
-
-        do jedge = 1,geom%nb_edges
-          ip1 = edges(jedge,1)
-          ip2 = edges(jedge,2)
-          apos = max(0._jprb,aun(jedge))
-          aneg = min(0._jprb,aun(jedge))
-          rhin(ip1)  = rhin(ip1)  - aneg
-          rhout(ip1) = rhout(ip1) + apos
-          rhin(ip2)  = rhin(ip2)  + apos
-          rhout(ip2) = rhout(ip2) - aneg
-        end do
-
-        do jnode=1,nb_nodes
-          assert(vol(jnode) .ne. 0._jprb )
-          cp(jnode) = ( Qmax(jnode)-Q(jnode) )*vol(jnode)/( rhin(jnode) * dt + eps )
-          cn(jnode) = ( Q(jnode)-Qmin(jnode) )*vol(jnode)/( rhout(jnode)* dt + eps )
-        enddo
-
-       ! limited antidiffusive  velocities:
-
-        do jedge = 1,geom%nb_edges
-          ip1 = edges(jedge,1)
-          ip2 = edges(jedge,2)
-          if(aun(jedge) > 0._jprb) then
-            aun(jedge)=aun(jedge)*min(1._jprb,cp(ip2),cn(ip1))
-          else
-            aun(jedge)=aun(jedge)*min(1._jprb,cn(ip2),cp(ip1))
-          endif
-        enddo
+        call limit_antidiffusive_velocity()
       endif
 
       ! Compute fluxes from (limited) antidiffusive velocity
-      do jedge = 1,geom%nb_edges
+      adv(:)   =  0.
+      do jedge = 1,nb_edges
         ip1 = edges(jedge,1)
         ip2 = edges(jedge,2)
         flux = aun(jedge)
@@ -178,6 +123,68 @@ contains
 
     end do ! other passes
     end associate
+
+  contains
+    
+    subroutine compute_Qmax_and_Qmin()
+      Qmax(:)  = -1.e10
+      Qmin(:)  =  1.e10
+      do jedge = 1,geom%nb_edges
+        ip1 = geom%edges(jedge,1)
+        ip2 = geom%edges(jedge,2)
+        Q1 = Q(ip1)
+        Q2 = Q(ip2)
+        Qmax(ip1) = max( Qmax(ip1), Q1, Q2 )
+        Qmin(ip1) = min( Qmin(ip1), Q1, Q2 )
+        Qmax(ip2) = max( Qmax(ip2), Q1, Q2 )
+        Qmin(ip2) = min( Qmin(ip2), Q1, Q2 )
+      end do
+
+      if (Q_is_vector) then
+        do jedge = 1,geom%nb_pole_edges
+          iedge  = geom%pole_edges(jedge)
+          ip1 = geom%edges(iedge,1)
+          ip2 = geom%edges(iedge,2)
+          Q1 = Q(ip1)
+          Q2 = Q(ip2)
+          Qmax(ip1) = max( Qmax(ip1), Q1, abs(Q2) )
+          Qmin(ip1) = min( Qmin(ip1), Q1,-abs(Q2) )
+          Qmax(ip2) = max( Qmax(ip2), Q2, abs(Q1) )
+          Qmin(ip2) = min( Qmin(ip2), Q2,-abs(Q1) )
+        end do
+      end if
+    end subroutine compute_Qmax_and_Qmin
+
+    subroutine limit_antidiffusive_velocity
+      rhin(:)  =  0.
+      rhout(:) =  0.
+      do jedge = 1,geom%nb_edges
+        ip1 = geom%edges(jedge,1)
+        ip2 = geom%edges(jedge,2)
+        apos = max(0._jprb,aun(jedge))
+        aneg = min(0._jprb,aun(jedge))
+        rhin(ip1)  = rhin(ip1)  - aneg
+        rhout(ip1) = rhout(ip1) + apos
+        rhin(ip2)  = rhin(ip2)  + apos
+        rhout(ip2) = rhout(ip2) - aneg
+      end do
+
+      do jnode=1,geom%nb_nodes
+        cp(jnode) = ( Qmax(jnode)-Q(jnode) )*vol(jnode)/( rhin(jnode) * dt + eps )
+        cn(jnode) = ( Q(jnode)-Qmin(jnode) )*vol(jnode)/( rhout(jnode)* dt + eps )
+      enddo
+
+      do jedge = 1,geom%nb_edges
+        ip1 = geom%edges(jedge,1)
+        ip2 = geom%edges(jedge,2)
+        if(aun(jedge) > 0._jprb) then
+          aun(jedge)=aun(jedge)*min(1._jprb,cp(ip2),cn(ip1))
+        else
+          aun(jedge)=aun(jedge)*min(1._jprb,cn(ip2),cp(ip1))
+        endif
+      enddo
+    end subroutine limit_antidiffusive_velocity
+
   end subroutine mpdata_gauge
 
   subroutine compute_gradient(Q,gradQ,Q_is_vector,geom)
