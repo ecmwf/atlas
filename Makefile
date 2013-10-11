@@ -17,7 +17,7 @@ ifdef GRIB_API_DIR
   GRIB= -DENABLE_GRIB -L$(GRIB_API_DIR)/lib -lgrib_api_f90 -lgrib_api -ljasper -I$(GRIB_API_DIR)/include
 endif
 
-FC=ftn
+#FC=ftn
 FCFLAGS= -O3
 # -hfp3 -rad
 #-fstack-arrays

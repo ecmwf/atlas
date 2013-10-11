@@ -1,4 +1,3 @@
-#include "common/assertions.h"
 ! =====================================================================
 ! mpdata_module
 ! This module contains strictly algorithmic subroutines
@@ -240,7 +239,6 @@ end module mpdata_module
 ! - set_time_step : To set the solver's time step
 ! - setup_shallow_water : To modify dual-volumes to map to the sphere
 !                         and create necessary fields
-! - allocations   : To pre-allocate necessary structures and states
 ! - set_state_rossby_haurwits : To initialise the state with
 !                               Rossby Haurwitz waves
 ! - propagate_state : To propagate the state with a given time step
@@ -343,14 +341,15 @@ contains
 
     if (step == 0) then ! Pre-compute forcing
       call backup_solution(geom)
-      call compute_advective_velocities(geom)
+      call compute_advective_velocities(dt,geom,"extrapolate")
       call compute_forcing(geom)
     end if
     
     call add_forcing_to_solution(dt,geom)
     call advect_solution(dt,geom)
     call implicit_solve(dt,geom)
-    call compute_advective_velocities(geom)
+
+    call compute_advective_velocities(dt,geom,"advect")
     call backup_solution(geom)
 
     geom%fields%time = geom%fields%time+dt
@@ -358,13 +357,6 @@ contains
 
   end subroutine step_forward
 
-
-
-
-  subroutine create_state_fields(geom)
-    type(DataStructure_type), intent(inout) :: geom
-
-  end subroutine create_state_fields
 
 
 
@@ -441,13 +433,21 @@ contains
 
 
 
-  subroutine compute_advective_velocities(geom)
+  subroutine compute_advective_velocities(dt,geom,option)
+    ! this really computes V = G*contravariant_velocity, 
+    ! with    G=hx*hy,
+    !         physical_velocity = dotproduct( [hx,hy] , contravariant_velocity )
+    ! V = (hx*hy) * [u/hx, v/hy] = [u*hy, v*hx]
+    ! and hx = r*cos(y)  ,  hy = r
+    ! and Q = [ D*u , D*v ]
+    real(kind=jprb), intent(in) :: dt
     type(DataStructure_type), intent(inout) :: geom
-    real(kind=jprb) :: Qx, Qy, Q0x, Q0y, Dmod, D0mod
+    character(len=*), intent(in), optional :: option
+    real(kind=jprb) :: Qx, Qy, Q0x, Q0y, Dmod, D0mod, Vx, Vy, Rx, Ry, dVxdx, dVxdy, dVydx, dVydy
     integer :: jnode, jedge, iedge, ip1, ip2
-    real(kind=jprb), dimension(:),   pointer :: D, D0, hx, hy
-    real(kind=jprb), dimension(:,:), pointer :: Q, Q0, Vedges, coords
-    real(kind=jprb) :: Vnodes(geom%nb_nodes,2)
+    real(kind=jprb), dimension(:),   pointer :: D, D0, hx, hy, vol
+    real(kind=jprb), dimension(:,:), pointer :: Q, Q0, R, Vedges, coords
+    real(kind=jprb) :: Vnodes(geom%nb_nodes,2), grad_Vx(geom%nb_nodes,2), grad_Vy(geom%nb_nodes,2)
     coords => vector_field("coordinates",geom)
     Vedges => vector_field("advective_velocity",geom)
     D      => scalar_field("depth",geom)
@@ -456,23 +456,47 @@ contains
     Q0     => vector_field("momentum_backup",geom)
     hx     => scalar_field("hx",geom)
     hy     => scalar_field("hy",geom)
+    R      => vector_field("momentum_forcing",geom)
+    vol    => scalar_field("dual_volumes",geom)
     associate ( nb_nodes => geom%nb_nodes, nb_edges => geom%nb_edges, edges => geom%edges )
-    do jnode=1,nb_nodes
-      Qx    = Q(jnode,XX)
-      Qy    = Q(jnode,YY)
-      Dmod  = max( eps, D(jnode) )
-      Q0x   = Q0(jnode,XX)
-      Q0y   = Q0(jnode,YY)
-      D0mod = max( eps, D0(jnode) )
-      ! this really computes V = G*contravariant_velocity, 
-      ! with    G=hx*hy,
-      !         physical_velocity = dotproduct( [hx,hy] , contravariant_velocity )
-      ! V = (hx*hy) * [u/hx, v/hy] = [u*hy, v*hx]
-      ! and hx = r*cos(y)  ,  hy = r
-      ! and Q = [ D*u , D*v ]
-      Vnodes(jnode,XX) = ( 1.5_jprb*Qx/Dmod - 0.5_jprb*Q0x/D0mod ) * hy(jnode)
-      Vnodes(jnode,YY) = ( 1.5_jprb*Qy/Dmod - 0.5_jprb*Q0y/D0mod ) * hx(jnode)
-    end do
+
+    if( option .eq. "advect") then
+      do jnode=1,nb_nodes
+        Dmod = max(D(jnode), eps)
+        Vnodes(jnode,XX)=Q(jnode,XX)/Dmod
+        Vnodes(jnode,YY)=Q(jnode,YY)/Dmod
+      end do
+      call compute_gradient( Vnodes(:,XX), grad_Vx, .True., geom )
+      call compute_gradient( Vnodes(:,YY), grad_Vy, .True., geom )
+
+      !dir$ ivdep
+      do jnode=1,nb_nodes
+        Dmod = max(D(jnode), eps)
+        Vx = Vnodes(jnode,XX)
+        Vy = Vnodes(jnode,YY)
+        Rx = R(jnode,XX)
+        Ry = R(jnode,YY)
+        dVxdx = grad_Vx(jnode,XX)*hy(jnode)/vol(jnode)
+        dVxdy = grad_Vx(jnode,YY)*hx(jnode)/vol(jnode)
+        dVydx = grad_Vy(jnode,YY)*hy(jnode)/vol(jnode)    
+        dVydy = grad_Vy(jnode,YY)*hx(jnode)/vol(jnode)
+
+        Vnodes(jnode,XX) = ( Vx - 0.5*dt*(Vx*dVxdx+Vy*dVxdy) + 0.5*dt*Rx/Dmod ) * hy(jnode)
+        Vnodes(jnode,YY) = ( Vy - 0.5*dt*(Vx*dVydx+Vy*dVydy) + 0.5*dt*Ry/Dmod ) * hx(jnode)
+      enddo
+    else if( option .eq. "extrapolate") then
+      !dir$ ivdep
+      do jnode=1,nb_nodes
+        Qx    = Q(jnode,XX)
+        Qy    = Q(jnode,YY)
+        Dmod  = max( eps, D(jnode) )
+        Q0x   = Q0(jnode,XX)
+        Q0y   = Q0(jnode,YY)
+        D0mod = max( eps, D0(jnode) )
+        Vnodes(jnode,XX) = ( 1.5_jprb*Qx/Dmod - 0.5_jprb*Q0x/D0mod ) * hy(jnode)
+        Vnodes(jnode,YY) = ( 1.5_jprb*Qy/Dmod - 0.5_jprb*Q0y/D0mod ) * hx(jnode)
+      end do
+    end if
 
     do jedge=1,nb_edges
       ip1 = edges(jedge,1)
@@ -641,7 +665,7 @@ program shallow_water
 
   ! Configuration parameters
   real(kind=jprb) :: dt = 20.              ! solver time-step
-  integer         :: nb_steps = 15         ! Number of propagations
+  integer         :: nb_steps = 30         ! Number of propagations
   integer         :: hours_per_step = 24   ! Propagation time
   logical         :: write_itermediate_output = .True.
 
