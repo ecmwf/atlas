@@ -95,12 +95,19 @@ contains
     write(51,'(A)')"$MeshFormat"
     write(51,'(A)')"2.2 0 8"
     write(51,'(A)')"$EndMeshFormat"
-    do ifield=1,state%nb_fields
-      field => state%fields(ifield)%ptr
-      if (field%function_space%name == "nodes") then
-        call write_gmsh_nodal_field(field)
-      endif
-    end do    
+
+    field => state%field("depth")
+    call write_gmsh_nodal_field(field)
+
+    field => state%field("momentum")
+    call write_gmsh_nodal_field(field)
+
+    !do ifield=1,state%nb_fields
+    !  field => state%fields(ifield)%ptr
+    !  if (field%function_space%name == "nodes") then
+    !    call write_gmsh_nodal_field(field)
+    !  endif
+    !end do    
     close(51)
 
   end subroutine write_gmsh_state

@@ -655,7 +655,7 @@ program shallow_water
   use grib_module, only: write_grib
 
   use read_joanna_module, only: read_joanna
-  use datastruct_module,  only: DataStructure_type
+  use datastruct_module,  only: DataStructure_type, scalar_field, vector_field
   use shallow_water_module, only: &
     & setup_shallow_water, &
     & set_state_rossby_haurwitz, &
@@ -696,7 +696,8 @@ program shallow_water
   call log_info( "| output rate (hrs) | "//trim(str(hours_per_step,'(I8)'))//" |" )
   call log_info( "+-------------------+----------+ ")
 
-  call write_mesh
+  open(11,file='results.d',access='sequential',status='unknown')
+
   call write_fields
 
   call wallclock_timer%start()
@@ -721,19 +722,43 @@ program shallow_water
 
 contains
 
-  subroutine write_mesh ! Don't worry about this, it will change in the future
-    call wallclock_timer%pause()
-    call write_gmsh_mesh(g%internal_mesh,"data/mesh.msh")
-    call wallclock_timer%resume()
-  end subroutine write_mesh
-
   subroutine write_fields ! Don't worry about this, it will change in the future
     character(len=1024) :: filename
+    integer :: jnode, inode, ip1, ip2, iaaa
+    real(kind=jprb), pointer :: D(:), Q(:,:), coords(:,:)
     call wallclock_timer%pause()
     write (filename, "(A,I2.2,A)") "data/fields",jstep,".msh"
     call write_gmsh_state(g%fields,filename)
     write (filename, "(A,I2.2,A)") "data/depth",jstep,".grib"
     call write_grib(g,filename)
+
+    D => scalar_field("depth",g)
+    Q => vector_field("momentum",g)
+    coords => vector_field("coordinates",g)
+    write(11,*)g%fields%time
+    write(11,*)0
+    write(11,'(A)')'point X Y p'
+    do jnode=1,g%nb_nodes
+
+      iaaa=0
+
+      ! special treatment for periodic points specific for Lboro plotting 
+      do inode=1,g%nb_ghost_nodes
+        ip1=g%ghost_nodes(inode,1)
+        ip2=g%ghost_nodes(inode,2)
+        if(jnode==ip2)then
+          write(11,*) jnode, coords(jnode,XX), coords(jnode,YY), &
+            & D(ip1), Q(ip1,XX)/D(ip1), Q(ip1,YY)/D(ip1), D(ip1)
+          iaaa=1
+        endif
+      enddo
+
+      if(iaaa==0)then
+        write(11,*) jnode, coords(jnode,XX), coords(jnode,YY), &
+          & D(jnode), Q(jnode,XX)/D(jnode), Q(jnode,YY)/D(jnode), D(jnode)
+      endif
+    enddo
+
     call wallclock_timer%resume()
   end subroutine write_fields
 
