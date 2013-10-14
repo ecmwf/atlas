@@ -665,7 +665,7 @@ program shallow_water
 
   ! Configuration parameters
   real(kind=jprb) :: dt = 20.              ! solver time-step
-  integer         :: nb_steps = 30         ! Number of propagations
+  integer         :: nb_steps = 15         ! Number of propagations
   integer         :: hours_per_step = 24   ! Propagation time
   logical         :: write_itermediate_output = .True.
 
@@ -676,11 +676,9 @@ program shallow_water
   integer :: jstep = 0
   type(Timer_type) :: wallclock_timer, loop_timer
 
- 
-  call set_log_level(LOG_LEVEL_INFO)
-  call log_info("Going to solve shallow_water equations for "//trim(str(nb_steps))//" days")
-
   ! Execution
+  call set_log_level(LOG_LEVEL_INFO)
+  call log_info("Program shallow_water start")
   call read_joanna("data/meshvol.d", g)
   call setup_shallow_water(g)
   call set_state_rossby_haurwitz(g)
@@ -696,7 +694,6 @@ program shallow_water
   call log_info( "| output rate (hrs) | "//trim(str(hours_per_step,'(I8)'))//" |" )
   call log_info( "+-------------------+----------+ ")
 
-  open(11,file='results.d',access='sequential',status='unknown')
 
   call write_fields
 
@@ -704,7 +701,7 @@ program shallow_water
 
   do jstep=1,nb_steps 
 
-    call loop_timer%start()  
+    call loop_timer%start()
     call propagate_state( hours_per_step*hours, g)
   
     write (log_str, '(A,I3,A,A,F8.2,A,F8.2,A)') &
@@ -720,18 +717,39 @@ program shallow_water
   ! Write last step anyway if intermediate output is disabled
   if (.not. write_itermediate_output) call write_fields
 
+  call write_results_joanna("data/results.d")
+
+  call log_info("Program shallow_water exit")
+
 contains
 
-  subroutine write_fields ! Don't worry about this, it will change in the future
+  
+  ! Subroutine write_fields
+  ! -----------------------
+  ! This routine creates a gmsh and a grib file for every step
+  ! Don't worry about its implementation, it is likely to change in the future
+  subroutine write_fields
     character(len=1024) :: filename
-    integer :: jnode, inode, ip1, ip2, iaaa
-    real(kind=jprb), pointer :: D(:), Q(:,:), coords(:,:)
     call wallclock_timer%pause()
     write (filename, "(A,I2.2,A)") "data/fields",jstep,".msh"
     call write_gmsh_state(g%fields,filename)
     write (filename, "(A,I2.2,A)") "data/depth",jstep,".grib"
     call write_grib(g,filename)
+    call wallclock_timer%resume()
+  end subroutine write_fields
 
+
+  ! Subroutine write_results_joanna
+  ! -------------------------------
+  ! This routine generates the results.d file as in 
+  ! Joanna Szmelter's original code
+  subroutine write_results_joanna(filename)
+    character(len=*) :: filename
+    integer :: jnode, inode, ip1, ip2, iaaa
+    real(kind=jprb), pointer :: D(:), Q(:,:), coords(:,:)
+    call wallclock_timer%pause()
+    call log_info("Writing output "//filename)
+    open(11,file=filename,access='sequential',status='unknown')
     D => scalar_field("depth",g)
     Q => vector_field("momentum",g)
     coords => vector_field("coordinates",g)
@@ -758,8 +776,6 @@ contains
           & D(jnode), Q(jnode,XX)/D(jnode), Q(jnode,YY)/D(jnode), D(jnode)
       endif
     enddo
-
-    call wallclock_timer%resume()
-  end subroutine write_fields
+  end subroutine write_results_joanna
 
 end program shallow_water

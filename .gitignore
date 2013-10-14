@@ -1,7 +1,5 @@
 *.mod
 *.o
-meshvol*
-results.msh
 .nfs*
 *.pdf
 *.dSYM/*
@@ -10,3 +8,4 @@ results.msh
 *.ap2
 *.cg
 *.rpt
+shallow_water
