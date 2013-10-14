@@ -3,13 +3,13 @@
 # This makefile compiles the sources, for the shallow_water executable
 
 # Environment variables that must be defined: 
-# - FC (default=ftn)
-# - GRIB_API_DIR can be commented out
+# - FC 
+# - GRIB_API_DIR (optional)
 
 # NOTE: make sure that grib_api is compiled with same compiler as $FC
 
 
-# On Cray, you can find GRIB_API_DIR here
+# On our Cray cluster, you can find GRIB_API_DIR here
 #GRIB_API_DIR=/lus/scratch/ecmwf/esm/grib_api/1.11.0/cray/82
 
 ifdef GRIB_API_DIR
@@ -19,9 +19,6 @@ endif
 
 #FC=ftn
 FCFLAGS= -O3
-# -hfp3 -rad
-#-fstack-arrays
-# -rad -Ktrap=fp -hfp3 
 
 # Possible usefule flags for crayftn 8.2
 # -hfp3  (float operations)
@@ -52,11 +49,12 @@ KERNEL_SRC= \
 KERNEL_OBJ=$(KERNEL_SRC:.F90=.o)
 
 SHALLOW_WATER_SRC= \
+	src/shallow_water_module.F90 \
 	src/shallow_water.F90
 
 SHALLOW_WATER_OBJ=$(SHALLOW_WATER_SRC:.F90=.o)
 
-all: shallow_water
+all: clean shallow_water
 
 kernel: $(KERNEL_OBJ)
 
