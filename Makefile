@@ -13,7 +13,6 @@
 #GRIB_API_DIR=/lus/scratch/ecmwf/esm/grib_api/1.11.0/cray/82
 
 ifdef GRIB_API_DIR
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GRIB_API_DIR/lib
   GRIB= -DENABLE_GRIB -L$(GRIB_API_DIR)/lib -lgrib_api_f90 -lgrib_api -ljasper -I$(GRIB_API_DIR)/include
 endif
 
@@ -37,6 +36,7 @@ KERNEL_INC= -I./src/common -I./src/mesh -I./src/io  -I./
 
 KERNEL_SRC= \
 	src/common/common_module.F90 \
+	src/common/parallel_module.F90 \
 	src/mesh/elements_module.F90 \
 	src/mesh/lagrangep0_module.F90 \
 	src/mesh/lagrangep1_module.F90 \
@@ -54,6 +54,10 @@ SHALLOW_WATER_SRC= \
 
 SHALLOW_WATER_OBJ=$(SHALLOW_WATER_SRC:.F90=.o)
 
+TEST_SRC = \
+	src/test_sync.F90
+TEST_OBJ=$(TEST_SRC:.F90=.o)
+
 all: clean shallow_water
 
 kernel: $(KERNEL_OBJ)
@@ -61,10 +65,14 @@ kernel: $(KERNEL_OBJ)
 shallow_water: kernel $(SHALLOW_WATER_OBJ)
 	$(FC) $(GRIB) $(KERNEL_INC) $(FCFLAGS) -o shallow_water $(KERNEL_OBJ) $(SHALLOW_WATER_OBJ)
 
+test_sync: kernel $(TEST_OBJ)
+	$(FC) $(GRIB) $(KERNEL_INC) $(FCFLAGS) -o test_sync $(KERNEL_OBJ) $(TEST_OBJ)
+
 clean:
 	rm -f *.o             *.mod
 	rm -f src/*.o         src/*.mod
 	rm -f src/common/*.o  src/common/*.mod
 	rm -f src/mesh/*.o    src/mesh/*.mod
 	rm -f src/io/*.o      src/io/*.mod
+	echo $(LD_LIBRARY_PATH)
 
