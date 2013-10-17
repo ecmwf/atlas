@@ -2,13 +2,16 @@
 ! module for testing creation of a Grid
 module read_joanna_module
   use common_module
+  use parallel_module
   use datastruct_module, only: create_mesh, DataStructure_type, vector_field, scalar_field
+  use split_globe_module, only : split_globe
   implicit none
 contains
   
-  subroutine read_joanna(filename,g)
+  subroutine read_joanna(filename,rtable,g)
     implicit none
     character(len=*), intent(in) :: filename
+    character(len=*), intent(in) :: rtable
     type(DataStructure_type), intent(inout)    :: g
 
     integer                      :: nnode
@@ -25,51 +28,147 @@ contains
     real(kind=jprb), pointer     :: coords(:,:), vol(:), S(:,:)
     integer                      :: ip1,ip2
 
-    integer :: jedge
-    integer :: jnode
+    real(kind=jprb) :: dummy_real, x, y, v, sx, sy
+    integer :: dummy_int
+    
+    integer, allocatable :: node_proc_full(:)
+    integer, allocatable :: proc(:)
+    integer, allocatable :: node_glb_idx_full(:)
+    integer, allocatable :: glb_idx(:)
+    integer, allocatable :: keep_edge(:)
+    integer, allocatable :: keep_node(:)
+    integer, allocatable :: node_loc_idx(:)
+    integer, allocatable :: edge_loc_idx(:)
+
+    integer :: jedge, iedge
+    integer :: jnode, inode
+
+    integer :: nb_pole_edges
 
     call log_info( "Reading mesh "//filename )
 
+
+    ! First pass of the file to see which parts to store in second pass
     open(5,file=filename,access='sequential',status='old')
 
     read(5,*) nnode, nedge, nface, ncoin, before2, before1  !nbefore1<nbefore2
 
+    allocate( node_proc_full(nnode) )
+    allocate( node_glb_idx_full(nnode) )
+    allocate( node_loc_idx(nnode) )
+    allocate( edge_loc_idx(nedge) )
+    allocate( keep_node(nnode) )
+    allocate( keep_edge(nedge) )
+
+    write(log_str,*) "Domain decomposition in ",nproc," parts, using ",rtable; call log_info()
+    call split_globe(rtable,nproc,node_proc_full,node_glb_idx_full)
+
+    keep_node(:) = 0
+    keep_edge(:) = 0
+    node_loc_idx(:) = -1 ! invalidate any loc_idx
+    edge_loc_idx(:) = -1 ! invalidate any loc_idx
+    do jnode = 1, nnode
+      read(5,*) dummy_real, dummy_real, dummy_real
+    end do
+
+    nb_pole_edges = 0
+    idx=0
+    do jedge = 1, nedge
+      read(5,*) idx, ip1, ip2
+      if ( (node_proc_full(ip1) .eq. myproc) .or. (node_proc_full(ip2) .eq. myproc) ) then
+        keep_edge(jedge) = 1
+        keep_node(ip1) = 1
+        keep_node(ip2) = 1
+        if (.not.(jedge<before1 .or. jedge>before2)) then
+          nb_pole_edges = nb_pole_edges + 1
+        end if
+      end if
+    end do
+
+    close(5)
+
+    call log_info(str(myproc)//" should keep nodes:"//str(sum(keep_node)))
+    call log_info(str(myproc)//" should keep edges:"//str(sum(keep_edge)))
+
+    allocate( proc( sum(keep_node) ) ) 
+    allocate( glb_idx( sum(keep_node) ) ) 
+    idx = 0
+    do jnode=1,nnode
+      if (keep_node(jnode)) then
+        idx = idx+1
+        node_loc_idx(jnode) = idx
+        proc(idx) = node_proc_full(jnode)
+        glb_idx(idx) = node_glb_idx_full(jnode)
+      end if
+    end do
+
+    idx = 0
+    do jedge=1,nedge
+      if (keep_edge(jedge)) then
+        idx = idx+1
+        edge_loc_idx(jedge) = idx
+      end if
+    end do
+
+
     ! Create edge-based unstructured mesh
-    call create_mesh(nnode,nedge,g)
+    call create_mesh( sum(keep_node), sum(keep_edge), proc, glb_idx, g )
+    
+    allocate( g%internal_mesh%faces_proc( g%nb_edges ) )
+    allocate( g%internal_mesh%faces_glb_idx( g%nb_edges ) )
 
     coords => vector_field("coordinates",g)
     vol    => scalar_field("dual_volumes",g)
     S      => vector_field("dual_normals",g)
 
-    do jnode = 1, g%nb_nodes
-      read(5,*) coords(jnode,1), coords(jnode,2), vol(jnode)
+    open(5,file=filename,access='sequential',status='old')
+
+    read(5,*) nnode, nedge, nface, ncoin, before2, before1  !nbefore1<nbefore2
+
+    do jnode = 1, nnode
+      read(5,*) x, y, v
+      if ( keep_node(jnode) ) then
+        inode = node_loc_idx(jnode)
+        coords(inode,:) = [x, y]
+        vol(inode) = v
+      end if
     end do
     g%internal_mesh%nodes_coordinates = coords
 
-    g%nb_pole_edges = before2-before1+1
-    g%nb_ghost_nodes = ncoin
+    g%nb_pole_edges = nb_pole_edges
+
+    g%nb_ghost_nodes = 0!ncoin
 
     edge_cnt = 0
     pole_edge_cnt = 0
     internal_edge_cnt = 0
     allocate(g%pole_edges(g%nb_pole_edges))
 
-    do jedge = 1, g%nb_edges
+    do jedge = 1, nedge
       read(5,*) idx, ip1, ip2
-      g%edges(jedge,1) = ip1
-      g%edges(jedge,2) = ip2
+      if ( keep_edge(jedge) ) then
+        iedge = edge_loc_idx(jedge)
+        g%internal_mesh%faces_glb_idx(iedge) = jedge
+        g%internal_mesh%faces_proc(iedge) = proc( node_loc_idx(ip1) )
+        g%edges(iedge,1) = node_loc_idx(ip1)
+        g%edges(iedge,2) = node_loc_idx(ip2)
 
-      if (jedge<before1 .or. jedge>before2) then
-        internal_edge_cnt = internal_edge_cnt + 1
-      else
-        pole_edge_cnt = pole_edge_cnt + 1
-        g%pole_edges(pole_edge_cnt) = jedge
+        if (jedge<before1 .or. jedge>before2) then
+          internal_edge_cnt = internal_edge_cnt + 1
+        else
+          pole_edge_cnt = pole_edge_cnt + 1
+          g%pole_edges(pole_edge_cnt) = iedge
+        end if
       end if
     end do
     g%internal_mesh%faces = g%edges
 
-    do jedge = 1,g%nb_edges
-      read(5,*) idx, S(jedge,XX), S(jedge,YY)
+    do jedge = 1,nedge
+      read(5,*) idx, sx, sy
+      if ( keep_edge(jedge) ) then
+        iedge = edge_loc_idx(jedge)
+        S(iedge,:) = [sx, sy]
+      end if
     enddo
 
     allocate(g%ghost_nodes(g%nb_ghost_nodes,2))

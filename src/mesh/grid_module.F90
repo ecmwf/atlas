@@ -6,7 +6,7 @@ module grid_module
   ! Base classes, specifying the interface
   use common_module
   use elements_module,   only : Element, ShapeFunction_class
-
+  use parallel_module
   ! All possible implementations for Element and Shapefunction respectively
   use lagrangep0_module, only : &
     & LagrangeP0_Line2D,  LagrangeP0_Line, &
@@ -46,6 +46,9 @@ module grid_module
     integer :: nb_elems = 0
     integer :: nb_nodes = 0
     integer :: nb_fields = 0
+    type(Comm_type) :: comm
+    integer, dimension(:), allocatable :: proc
+    integer, dimension(:), allocatable :: glb_idx
     integer, dimension(:,:), allocatable :: elements
     type(Field_class), dimension(:), pointer :: fields
     
@@ -85,7 +88,7 @@ module grid_module
   type, public :: Grid_class
     class(Element), allocatable :: cell
     class(Element), allocatable :: face
-    !type(ContinuousFunctionSpace) :: nodes
+    type(FunctionSpace_class), pointer :: nodes
     integer :: dimension
     integer :: nb_elems
     integer :: nb_nodes
@@ -99,6 +102,10 @@ module grid_module
     integer, dimension(:), allocatable :: internal_faces
     integer, dimension(:), allocatable :: pole_faces
     integer, dimension(:,:), allocatable :: periodic_nodes
+    integer, dimension(:), allocatable :: cells_glb_idx
+    integer, dimension(:), allocatable :: cells_proc
+    integer, dimension(:), allocatable :: faces_glb_idx
+    integer, dimension(:), allocatable :: faces_proc
 
     type(FunctionSpacePtr), dimension(:), allocatable :: function_spaces
 

@@ -75,13 +75,17 @@ contains
       Q(jnode) = Q(jnode) - adv(jnode)/vol(jnode) * dt
     end do
 
+    call synchronise(Q,geom)
 
     ! 2. Other passes (making the spatial discretisation higher-order)
     ! ----------------------------------------------------------------
     
     do jpass=2,order
+
       ! Compute derivatives for mpdata
       call compute_gradient(Q, gradQ, Q_is_vector, geom)
+
+      call synchronise(gradQ,geom)
 
       ! Compute antidiffusive normal velocity in faces
 
@@ -119,6 +123,8 @@ contains
       do jnode=1,nb_nodes
         Q(jnode) = Q(jnode) - adv(jnode)/vol(jnode) * dt
       end do
+
+      call synchronise(Q,geom)
 
     end do ! other passes
     end associate
@@ -332,6 +338,17 @@ contains
   end subroutine propagate_state
 
 
+  subroutine write_point(geom)
+    type(DataStructure_type), intent(inout), target :: geom
+    real(kind=jprb), pointer :: D(:)
+    integer :: jnode
+    D => scalar_field("depth",geom)
+    do jnode=1,geom%nb_nodes
+      if (geom%internal_mesh%nodes%glb_idx(jnode) .eq. 37006) then
+        write(101,*) D(jnode)
+      end if
+    end do
+  end subroutine
 
 
   subroutine step_forward(step,dt,geom)
@@ -347,10 +364,14 @@ contains
     
     call add_forcing_to_solution(dt,geom)
     call advect_solution(dt,geom)
+
     call implicit_solve(dt,geom)
 
-    call compute_advective_velocities(dt,geom,"advect")
+    call compute_advective_velocities(dt,geom,"extrapolate")
+
     call backup_solution(geom)
+
+    call write_point(geom)
 
     geom%fields%time = geom%fields%time+dt
     step = step+1
@@ -559,6 +580,7 @@ contains
       Q(jnode,XX) = Q(jnode,XX) + 0.5_jprb*dt*R(jnode,XX)
       Q(jnode,YY) = Q(jnode,YY) + 0.5_jprb*dt*R(jnode,YY)
     end do
+    call synchronise(Q,geom)
   end subroutine add_forcing_to_solution
 
 
@@ -586,7 +608,6 @@ contains
 
     ! D is already up to date at time level (n+1), just by MPDATA advection
     call compute_gradient( D, grad_D, .False., geom )
-    
     !dir$ ivdep
     do jnode=1,geom%nb_nodes
       Qx    = Q(jnode,XX)
@@ -610,6 +631,8 @@ contains
       R(jnode,XX) = Rx_exp + cor(jnode)*Qy - dhxdy_over_G(jnode)*Qx*Qy/Dmod
       R(jnode,YY) = Ry_exp - cor(jnode)*Qx + dhxdy_over_G(jnode)*Qx*Qx/Dmod
     end do
+    call synchronise(Q,geom)
+
   end subroutine implicit_solve
 
 
@@ -625,9 +648,9 @@ contains
     V => vector_field("advective_velocity",geom)
 
     !    mpdata_gauge( time, variable, velocity, order, limit,  is_vector, geom )
-    call mpdata_gauge( dt,   D,        V,        2,     .True., .False.,   geom )
-    call mpdata_gauge( dt,   Q(:,XX),  V,        2,     .True., .True. ,   geom )
-    call mpdata_gauge( dt,   Q(:,YY),  V,        2,     .True., .True. ,   geom )
+    call mpdata_gauge( dt,   D,        V,        1,     .True., .False.,   geom )
+    call mpdata_gauge( dt,   Q(:,XX),  V,        1,     .True., .True. ,   geom )
+    call mpdata_gauge( dt,   Q(:,YY),  V,        1,     .True., .True. ,   geom )
 
     ! remove noise from periodic boundary... This will dissapear in MPI implementation
     do jnode=1,geom%nb_ghost_nodes

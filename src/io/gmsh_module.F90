@@ -1,7 +1,9 @@
 
 ! module for testing creation of a Grid
 module gmsh_module
+  use parallel_module
   use grid_module
+  use mpi
   implicit none
 contains
     
@@ -21,12 +23,12 @@ contains
 
     if (field%cols == 1) then
       do inode=1,field%rows
-        write(51,'(1I8,E18.10)') inode, field%array(inode,1)
+        write(51,'(1I8,E18.10)') field%function_space%glb_idx(inode), field%array(inode,1)
       enddo
     endif
     if (field%cols == 2) then
       do inode=1,field%rows
-        write(51,'(1I8,E18.10,E18.10,F3.0)') inode, field%array(inode,1), field%array(inode,2), 0.0
+        write(51,'(1I8,E18.10,E18.10,F3.0)') field%function_space%glb_idx(inode), field%array(inode,1), field%array(inode,2), 0.0
       enddo
     endif
     write(51,'(A)')"$EndNodeData"
@@ -61,9 +63,21 @@ contains
   subroutine write_gmsh_mesh(grid,filename)
     class(Grid_class), intent(inout) :: grid
     character(len=*), intent(in) :: filename
-    integer :: iface, inode
+    character(len=1024) :: procfile
+    integer :: iface, inode, jproc, ierr
+    real(kind=jprb) :: r, phi, theta, x, y, z, pi
+    pi = acos(-1._jprb)
     call log_info( "Writing Gmsh file "//trim(filename) )
-    open(50,file=filename,access='sequential',status='REPLACE')
+    !open(40,file=filename,access='sequential',status='REPLACE')
+    !do jproc=0,nproc-1
+    !  write(40,'(A,A,A,I2.2,A)') 'Merge "',trim(filename),'.P',jproc,'";'
+    !end do
+    !close(40)
+     
+    call MPI_BARRIER(MPI_COMM_WORLD, ierr)
+
+    write(procfile,'(A,A,I2.2)') trim(filename),'.P',myproc
+    open(50,file=trim(procfile),access='sequential',status='REPLACE')
 
     write(50,'(A)')"$MeshFormat"
     write(50,'(A)')"2.2 0 8"
@@ -71,14 +85,23 @@ contains
     write(50,'(A)')"$Nodes"
     write(50,*)grid%nb_nodes
     do inode=1,grid%nb_nodes
-      write(50,'(1I8,F12.6,F12.6,F12.6)')  inode, grid%nodes_coordinates(inode,1), grid%nodes_coordinates(inode,2), 0.
+      r     = 6371.
+      phi   = grid%nodes_coordinates(inode,1)
+      theta = -(grid%nodes_coordinates(inode,2)+pi/2.)
+      x = r*sin(theta)*cos(phi)
+      y = r*sin(theta)*sin(phi)
+      z = r*cos(theta)
+
+      !write(50,'(1I8,F18.10,F18.10,F18.10)')  grid%nodes%glb_idx(inode), x,y,z
+      write(50,'(1I8,F18.10,F18.10,F18.10)')  grid%nodes%glb_idx(inode), grid%nodes_coordinates(inode,1),grid%nodes_coordinates(inode,2), 0.
     enddo
     write(50,'(A)')"$EndNodes"
     write(50,'(A)')"$Elements"
     write(50,*) grid%nb_faces
     do iface=1, grid%nb_faces
-      ! element-number  type(1=lineP1)  nb_tags(=2)  tag1(=physical-group)  tag2(=elementary-group)  [nodes]
-      write(50,'(1I8,4I2,2I8)')  iface, 1, 2, 1, 1, grid%faces(iface,1), grid%faces(iface,2)
+      ! element-number  type(1=lineP1)  nb_tags(=3)  tag1(=physical-group)  tag2(=elementary-group) tag4(=nb_partitions) tag3(=partition) [nodes]
+      write(50,'(1I8,5I2,I3, 2I8)')  grid%faces_glb_idx(iface), 1, 4, 1, 1, 1, grid%faces_proc(iface), &
+        & grid%nodes%glb_idx( grid%faces(iface,1) ), grid%nodes%glb_idx( grid%faces(iface,2) )
     enddo
     write(50,'(A)')"$EndElements"
     close(50)

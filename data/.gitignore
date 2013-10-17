@@ -1,4 +1,4 @@
-*.msh
+*.msh*
 *.grib
 *.d
 *.opt

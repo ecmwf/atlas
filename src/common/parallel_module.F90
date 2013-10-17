@@ -5,7 +5,6 @@
 
 module parallel_module
   use mpi
-  use common_module
   implicit none
   private
 
@@ -28,12 +27,12 @@ public myproc, nproc, Comm_type, parallel_init, parallel_finalise
   contains
     procedure, public :: setup => setup_comm
     generic, public :: synchronise => &
-      & synchronise_jprb_rank1, &
-      & synchronise_jprb_rank2, &
+      & synchronise_real8_rank1, &
+      & synchronise_real8_rank2, &
       & synchronise_integer_rank1, &
       & synchronise_integer_rank2
-    procedure :: synchronise_jprb_rank1
-    procedure :: synchronise_jprb_rank2
+    procedure :: synchronise_real8_rank1
+    procedure :: synchronise_real8_rank2
     procedure :: synchronise_integer_rank1
     procedure :: synchronise_integer_rank2
   end type Comm_type
@@ -125,11 +124,11 @@ contains
 
 
 
-  subroutine synchronise_jprb_rank1(comm,field)
+  subroutine synchronise_real8_rank1(comm,field)
     class(Comm_type), intent(inout) :: comm
-    real(kind=jprb), dimension(:), intent(inout) :: field
-    real(kind=jprb) :: sendbuffer(comm%sendcnt)
-    real(kind=jprb) :: recvbuffer(comm%recvcnt)
+    real*8, dimension(:), intent(inout) :: field
+    real*8 :: sendbuffer(comm%sendcnt)
+    real*8 :: recvbuffer(comm%recvcnt)
     integer :: jnode
 
     ! Pack
@@ -147,14 +146,14 @@ contains
       field( comm%recvmap(jnode) ) = recvbuffer(jnode)
     end do
 
-  end subroutine synchronise_jprb_rank1
+  end subroutine synchronise_real8_rank1
 
 
-  subroutine synchronise_jprb_rank2(comm,field)
+  subroutine synchronise_real8_rank2(comm,field)
     class(Comm_type), intent(inout) :: comm
-    real(kind=jprb), dimension(:,:), intent(inout) :: field
-    real(kind=jprb) :: sendbuffer(comm%sendcnt)
-    real(kind=jprb) :: recvbuffer(comm%recvcnt)
+    real*8, dimension(:,:), intent(inout) :: field
+    real*8 :: sendbuffer(comm%sendcnt)
+    real*8 :: recvbuffer(comm%recvcnt)
     integer :: jnode
     integer :: jcol, ncols
 
@@ -176,7 +175,7 @@ contains
         field( comm%recvmap(jnode), jcol ) = recvbuffer(jnode)
       end do
     end do
-  end subroutine synchronise_jprb_rank2
+  end subroutine synchronise_real8_rank2
 
 
   subroutine synchronise_integer_rank1(comm,field)

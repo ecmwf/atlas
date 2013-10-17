@@ -2,6 +2,7 @@
 module datastruct_module
 
   use grid_module
+  use parallel_module
 
   implicit none
   private
@@ -11,6 +12,7 @@ module datastruct_module
   public :: create_scalar_field_in_edges
   public :: create_vector_field_in_edges
   public :: scalar_field, vector_field
+  public :: synchronise
 
   type, public, extends(Grid_class) :: Mesh_class
   end type Mesh_class
@@ -37,12 +39,20 @@ module datastruct_module
 
   end type DataStructure_type
 
+  interface synchronise
+    module procedure synchronise_field
+    module procedure synchronise_array_rank1
+    module procedure synchronise_array_rank2
+  end interface synchronise
+
 contains
   
-  subroutine create_mesh(nb_nodes, nb_edges, geom)
+  subroutine create_mesh(nb_nodes, nb_edges, proc, glb_idx, geom)
     implicit none
     integer, intent(in) :: nb_nodes
     integer, intent(in) :: nb_edges
+    integer, intent(in) :: proc(:)
+    integer, intent(in) :: glb_idx(:)
     type(DataStructure_type), intent(inout), target :: geom
 
     call geom%internal_mesh%init("LagrangeP1_Triag2D")
@@ -58,6 +68,7 @@ contains
 
     ! Create 1 function space for nodes, (DONT WORRY ABOUT DETAILS)
     allocate( ContinuousFunctionSpace :: geom%functionspace_nodes )
+    geom%internal_mesh%nodes =>  geom%functionspace_nodes 
     call geom%functionspace_nodes%init("nodes", "LagrangeP1", geom%internal_mesh)
     call geom%internal_mesh%add_function_space(geom%functionspace_nodes)
 
@@ -69,6 +80,12 @@ contains
     call create_vector_field_in_nodes("coordinates",geom)
     call create_scalar_field_in_nodes("dual_volumes",geom)
     call create_vector_field_in_edges("dual_normals", geom)
+
+    allocate( geom%functionspace_nodes%proc( size(proc) ) )
+    allocate( geom%functionspace_nodes%glb_idx( size(glb_idx ) ) )
+    geom%functionspace_nodes%proc(:) = proc(:)
+    geom%functionspace_nodes%glb_idx(:) = glb_idx(:)
+    call geom%functionspace_nodes%comm%setup( geom%functionspace_nodes%proc, geom%functionspace_nodes%glb_idx )
   end subroutine create_mesh
 
   subroutine create_scalar_field_in_nodes(name, geom)
@@ -118,5 +135,28 @@ contains
     field => geom%fields%field(name)
     array => field%array
   end function vector_field
+
+  subroutine synchronise_field(name, geom)
+    implicit none
+    character(len=*), intent(in) :: name
+    type(DataStructure_type), intent(inout) :: geom
+    type(Field_class), pointer :: field
+    field => geom%fields%field(name)
+    call field%function_space%comm%synchronise( field%array )
+  end subroutine synchronise_field
+
+  subroutine synchronise_array_rank1(array, geom)
+    implicit none
+    real(kind=jprb), dimension(:), intent(inout) :: array
+    type(DataStructure_type), intent(inout) :: geom
+    call geom%functionspace_nodes%comm%synchronise( array )
+  end subroutine synchronise_array_rank1
+
+  subroutine synchronise_array_rank2(array, geom)
+    implicit none
+    real(kind=jprb), dimension(:,:), intent(inout) :: array
+    type(DataStructure_type), intent(inout) :: geom
+    call geom%functionspace_nodes%comm%synchronise( array )
+  end subroutine synchronise_array_rank2
 
 end module datastruct_module

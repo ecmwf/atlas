@@ -1,10 +1,15 @@
 module common_module
+
+use parallel_module
+
 implicit none
 save
 
 private
 
 integer, parameter, public :: jprb = selected_real_kind(13,300)
+integer, parameter, public :: jpim = selected_int_kind(9)
+
 integer, parameter, public :: XX = 1
 integer, parameter, public :: YY = 2
 
@@ -16,6 +21,7 @@ integer, parameter, public :: LOG_UNIT = 0
 
 public :: L2norm
 public :: set_log_level
+public :: set_log_proc
 public :: log_error
 public :: log_warning
 public :: log_info
@@ -23,6 +29,7 @@ public :: log_debug
 public :: Timer_type
 
 integer :: log_level = 3
+integer :: log_proc = -1 ! means everyone
 character(len=1024), public :: log_str
 public :: str
 
@@ -96,13 +103,20 @@ subroutine set_log_level(int)
   log_level = int
 end subroutine set_log_level
 
+subroutine set_log_proc(int)
+  integer, intent(in) :: int
+  log_proc = int
+end subroutine set_log_proc
+
 subroutine log_error(msg)
   character(len=*), optional :: msg
   if (log_level .ge. LOG_LEVEL_ERROR) then
-    if (present(msg)) then
-      write(0,'(A)') trim(msg)
-    else 
-      write(0,'(A)') trim(log_str)
+    if( log_proc < 0 .or. log_proc .eq. myproc ) then
+      if (present(msg)) then
+        write(0,'(A)') trim(msg)
+      else 
+        write(0,'(A)') trim(log_str)
+      end if
     end if
   end if
 end subroutine log_error
@@ -110,21 +124,25 @@ end subroutine log_error
 subroutine log_warning(msg)
   character(len=*), optional :: msg
   if (log_level .ge. LOG_LEVEL_WARNING) then
-    if (present(msg)) then
-      write(0,'(A)') trim(msg)
-    else 
-      write(0,'(A)') trim(log_str)
-    end if 
+    if( log_proc < 0 .or. log_proc .eq. myproc ) then
+      if (present(msg)) then
+        write(0,'(A)') trim(msg)
+      else 
+        write(0,'(A)') trim(log_str)
+      end if 
+    end if
   end if
 end subroutine log_warning
 
 subroutine log_info(msg)
   character(len=*), optional :: msg
   if (log_level .ge. LOG_LEVEL_INFO) then
-    if (present(msg)) then
-      write(0,'(A)') trim(msg)
-    else 
-      write(0,'(A)') trim(log_str)
+    if( log_proc < 0 .or. log_proc .eq. myproc ) then
+      if (present(msg)) then
+        write(0,'(A)') trim(msg)
+      else 
+        write(0,'(A)') trim(log_str)
+      end if
     end if
   end if
 end subroutine log_info
@@ -132,11 +150,13 @@ end subroutine log_info
 subroutine log_debug(msg)
   character(len=*), optional :: msg
   if (log_level .ge. LOG_LEVEL_DEBUG) then
-    if (present(msg)) then
-      write(0,'(A)') trim(msg)
-    else 
-      write(0,'(A)') trim(log_str)
-    end if 
+    if( log_proc < 0 .or. log_proc .eq. myproc ) then
+      if (present(msg)) then
+        write(0,'(A)') trim(msg)
+      else 
+        write(0,'(A)') trim(log_str)
+      end if 
+    end if
   end if
 end subroutine log_debug
 

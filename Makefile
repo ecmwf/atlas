@@ -35,12 +35,13 @@ KERNEL_INC= -I./src/common -I./src/mesh -I./src/io  -I./
 
 
 KERNEL_SRC= \
-	src/common/common_module.F90 \
 	src/common/parallel_module.F90 \
+	src/common/common_module.F90 \
 	src/mesh/elements_module.F90 \
 	src/mesh/lagrangep0_module.F90 \
 	src/mesh/lagrangep1_module.F90 \
 	src/mesh/grid_module.F90 \
+	src/mesh/split_globe_module.F90 \
 	src/mesh/datastruct_module.F90 \
     src/io/read_joanna_module.F90 \
   	src/io/gmsh_module.F90 \
