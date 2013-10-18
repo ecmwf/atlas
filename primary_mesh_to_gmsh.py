@@ -34,15 +34,32 @@ parser.add_argument('--sphere',  help='spherical view',     action="store_true")
 parser.add_argument('--stereo',  help='stereographic view', action="store_true")
 parser.add_argument('--latlon',  help='latlon view',        action="store_true")
 parser.add_argument("primary_mesh", type=str, help="modules")
+parser.add_argument("rtable", type=str, help="modules")
 args = parser.parse_args()
 
+print( 'Reading '+args.rtable+' for generating global index' )
+glb_idx=[]
+gid=1
+with open(args.rtable,'r') as rtable :
+    dummy = rtable.readline()
+    nb_lattitudes = int(rtable.readline())
+    for lat in range(nb_lattitudes):
+        [lat_id, nb_longitudes] = [int(value) for value in rtable.readline().split() ]
+        gid_gmt = gid
+        for lon in range(nb_longitudes):
+            glb_idx.append(gid)
+            gid += 1
+        glb_idx.append(gid_gmt) # periodic point
+
+print len(glb_idx)
+
 print( 'Reading primary mesh file "'+args.primary_mesh+'"' )
-with open(args.primary_mesh,'r') as inputfile :
-    header = [ int(n) for n in inputfile.readline().split() ]
+with open(args.primary_mesh,'r') as primary_mesh :
+    header = [ int(n) for n in primary_mesh.readline().split() ]
     [nb_nodes,nb_edges,nb_bdry_edges,nb_coin,nb_edge,nb_before_plus_1] = header
     nodes=[]
     for n in range(nb_nodes):
-        coords = [float(x) for x in inputfile.readline().split()]
+        coords = [float(x) for x in primary_mesh.readline().split()]
         coords.append(0.)
         if args.sphere or args.stereo:
             r     = 6371.
@@ -59,11 +76,11 @@ with open(args.primary_mesh,'r') as inputfile :
             coords[0] *= 180./pi
             coords[1] *= 180./pi
         nodes.append(coords)
-    
+    print nb_nodes
     etype = []
     elems = []
     for n in range(nb_edges):
-        node_ids = [int(nid) for nid in inputfile.readline().split()]
+        node_ids = [int(nid) for nid in primary_mesh.readline().split()]
         if node_ids[6] == 0:   # triangle
             etype.append(2)
             elems.append( [node_ids[1], node_ids[2], node_ids[4]] )
@@ -75,7 +92,7 @@ with open(args.primary_mesh,'r') as inputfile :
             elems.append( [node_ids[1], node_ids[2], node_ids[6], node_ids[5]] )
 
     for n in range(nb_bdry_edges):
-        node_ids = [int(nid) for nid in inputfile.readline().split()]
+        node_ids = [int(nid) for nid in primary_mesh.readline().split()]
         if node_ids[4] == 0:   # triangle
             etype.append(2)
             elems.append( [node_ids[1], node_ids[2], node_ids[3]] )
@@ -96,12 +113,12 @@ with open(outputfilename,'w') as outputfile:
     outputfile.write("$Nodes\n")
     outputfile.write(str(len(nodes))+'\n')
     for n, coord in enumerate(nodes):
-        outputfile.write(str(n+1)+' '+' '.join([str(x) for x in coord])+'\n')
+        outputfile.write( str(glb_idx[n])+' '+' '.join([str(x) for x in coord])+'\n')
     outputfile.write("$EndNodes\n")
     outputfile.write("$Elements\n")
     outputfile.write(str(len(elems))+'\n')
     for e, conn in enumerate(elems):
-      outputfile.write(str(e+1)+' '+str(etype[e])+' 2 1 1 '+' '.join([str(n) for n in conn])+'\n')
+      outputfile.write(str(e+1)+' '+str(etype[e])+' 2 1 1 '+' '.join([str(glb_idx[n-1]) for n in conn])+'\n')
     outputfile.write("$EndElements\n")
 
 
