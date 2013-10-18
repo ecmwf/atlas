@@ -94,7 +94,7 @@ contains
     allocate( glb_idx( sum(keep_node) ) ) 
     idx = 0
     do jnode=1,nnode
-      if (keep_node(jnode)) then
+      if (keep_node(jnode).eq.1) then
         idx = idx+1
         node_loc_idx(jnode) = idx
         proc(idx) = node_proc_full(jnode)
@@ -104,7 +104,7 @@ contains
 
     idx = 0
     do jedge=1,nedge
-      if (keep_edge(jedge)) then
+      if (keep_edge(jedge).eq.1) then
         idx = idx+1
         edge_loc_idx(jedge) = idx
       end if
@@ -127,7 +127,7 @@ contains
 
     do jnode = 1, nnode
       read(5,*) x, y, v
-      if ( keep_node(jnode) ) then
+      if ( keep_node(jnode).eq.1 ) then
         inode = node_loc_idx(jnode)
         coords(inode,:) = [x, y]
         vol(inode) = v
@@ -146,7 +146,7 @@ contains
 
     do jedge = 1, nedge
       read(5,*) idx, ip1, ip2
-      if ( keep_edge(jedge) ) then
+      if ( keep_edge(jedge).eq.1 ) then
         iedge = edge_loc_idx(jedge)
         g%internal_mesh%faces_glb_idx(iedge) = jedge
         g%internal_mesh%faces_proc(iedge) = proc( node_loc_idx(ip1) )
@@ -165,7 +165,7 @@ contains
 
     do jedge = 1,nedge
       read(5,*) idx, sx, sy
-      if ( keep_edge(jedge) ) then
+      if ( keep_edge(jedge).eq.1 ) then
         iedge = edge_loc_idx(jedge)
         S(iedge,:) = [sx, sy]
       end if

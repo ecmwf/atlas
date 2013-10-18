@@ -979,7 +979,7 @@ END MODULE SUMPLATBEQ_MOD
 !===========================================================================
 
 module split_globe_module
-  use common_module
+  use common_module, only: jprb, jpim, log_str, log_info
   implicit none
   private
 

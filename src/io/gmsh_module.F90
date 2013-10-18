@@ -1,9 +1,10 @@
 
 ! module for testing creation of a Grid
 module gmsh_module
-  use parallel_module
+  use parallel_module, only: myproc, nproc
   use grid_module
   use mpi
+  use common_module, only : jprb,log_info
   implicit none
 contains
     
@@ -93,7 +94,8 @@ contains
       z = r*cos(theta)
 
       !write(50,'(1I8,F18.10,F18.10,F18.10)')  grid%nodes%glb_idx(inode), x,y,z
-      write(50,'(1I8,F18.10,F18.10,F18.10)')  grid%nodes%glb_idx(inode), grid%nodes_coordinates(inode,1),grid%nodes_coordinates(inode,2), 0.
+      write(50,'(1I8,F18.10,F18.10,F18.10)')  grid%nodes%glb_idx(inode), &
+        & grid%nodes_coordinates(inode,1),grid%nodes_coordinates(inode,2), 0.
     enddo
     write(50,'(A)')"$EndNodes"
     write(50,'(A)')"$Elements"

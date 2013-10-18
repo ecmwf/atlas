@@ -345,7 +345,7 @@ contains
     D => scalar_field("depth",geom)
     do jnode=1,geom%nb_nodes
       if (geom%internal_mesh%nodes%glb_idx(jnode) .eq. 37006) then
-        write(101,*) D(jnode)
+        write(103,*) D(jnode)
       end if
     end do
   end subroutine

@@ -26,15 +26,16 @@ public myproc, nproc, Comm_type, parallel_init, parallel_finalise
     integer :: sendcnt, recvcnt
   contains
     procedure, public :: setup => setup_comm
+    procedure, pass :: synchronise_real8_rank1
+    procedure, pass :: synchronise_real8_rank2
+    procedure, pass :: synchronise_integer_rank1
+    procedure, pass :: synchronise_integer_rank2
     generic, public :: synchronise => &
       & synchronise_real8_rank1, &
       & synchronise_real8_rank2, &
       & synchronise_integer_rank1, &
       & synchronise_integer_rank2
-    procedure :: synchronise_real8_rank1
-    procedure :: synchronise_real8_rank2
-    procedure :: synchronise_integer_rank1
-    procedure :: synchronise_integer_rank2
+
   end type Comm_type
 
 
@@ -69,7 +70,7 @@ contains
     do jnode=1,nb_nodes
       max_glb_idx = max( max_glb_idx, glb_idx(jnode) )
     end do
-    call MPI_ALLREDUCE(max_glb_idx, max_glb_idx, 1, MPI_INTEGER, MPI_MAX, MPI_COMM_WORLD, ierr)
+    call MPI_ALLREDUCE( MPI_IN_PLACE, max_glb_idx, 1, MPI_INTEGER, MPI_MAX, MPI_COMM_WORLD, ierr)
 
     allocate( map_glb_to_loc(max_glb_idx) )
 

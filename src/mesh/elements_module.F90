@@ -1,5 +1,5 @@
 module elements_module
-  use common_module
+  use common_module, only: jprb, log_debug
   implicit none
   private
   

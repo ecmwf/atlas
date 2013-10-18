@@ -1,6 +1,6 @@
 module common_module
 
-use parallel_module
+use parallel_module, only: myproc
 
 implicit none
 save

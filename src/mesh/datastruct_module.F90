@@ -1,7 +1,7 @@
-
 module datastruct_module
 
-  use grid_module
+  use common_module, only: jprb
+  use grid_module, only : Grid_class, State_class, Field_class, FaceFunctionSpace, ContinuousFunctionSpace, FunctionSpace_class
   use parallel_module
 
   implicit none
@@ -14,14 +14,19 @@ module datastruct_module
   public :: scalar_field, vector_field
   public :: synchronise
 
-  type, public, extends(Grid_class) :: Mesh_class
-  end type Mesh_class
+  interface  synchronise
+    module procedure synchronise_field
+    module procedure synchronise_array_rank1
+    module procedure synchronise_array_rank2
+  end interface synchronise
+!  type, public, extends(Grid_class) :: Mesh_class
+!  end type Mesh_class
 
   type, public :: DataStructure_type
   private
   ! PRIVATE part
   ! ------------
-    type(Mesh_class), public     :: internal_mesh
+    type(Grid_class), public     :: internal_mesh
     type(State_class), public    :: fields
     class(FunctionSpace_class), pointer     :: functionspace_nodes
     class(FunctionSpace_class), pointer     :: functionspace_edges
@@ -39,11 +44,6 @@ module datastruct_module
 
   end type DataStructure_type
 
-  interface synchronise
-    module procedure synchronise_field
-    module procedure synchronise_array_rank1
-    module procedure synchronise_array_rank2
-  end interface synchronise
 
 contains
   

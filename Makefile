@@ -28,7 +28,7 @@ FCFLAGS= -O3
 # Possible extra flags to optimize gfortran 4.8
 # -fstack-arrays (allocate automatic arrays on stack)
 
-KERNEL_INC= -I./src/common -I./src/mesh -I./src/io  -I./ 
+KERNEL_INC= -I./src/common -I./src/mesh -I./src/io  -I./ -I./src
 %.o : %.F90
 	echo $@
 	$(FC) $(GRIB) $(KERNEL_INC) $(FCFLAGS) -c -o $@ $<
@@ -41,8 +41,8 @@ KERNEL_SRC= \
 	src/mesh/lagrangep0_module.F90 \
 	src/mesh/lagrangep1_module.F90 \
 	src/mesh/grid_module.F90 \
-	src/mesh/split_globe_module.F90 \
 	src/mesh/datastruct_module.F90 \
+	src/mesh/split_globe_module.F90 \
     src/io/read_joanna_module.F90 \
   	src/io/gmsh_module.F90 \
 	src/io/grib_module.F90
@@ -70,10 +70,10 @@ test_sync: kernel $(TEST_OBJ)
 	$(FC) $(GRIB) $(KERNEL_INC) $(FCFLAGS) -o test_sync $(KERNEL_OBJ) $(TEST_OBJ)
 
 clean:
-	rm -f *.o             *.mod
-	rm -f src/*.o         src/*.mod
-	rm -f src/common/*.o  src/common/*.mod
-	rm -f src/mesh/*.o    src/mesh/*.mod
-	rm -f src/io/*.o      src/io/*.mod
+	rm -f *.o             *.mod               *.ap2 *.rpt 
+	rm -f src/*.o         src/*.mod           src/*.lst          src/*.opt         src/*.cg
+	rm -f src/common/*.o  src/common/*.mod    src/common/*.lst   src/common/*.opt  src/common/*.cg
+	rm -f src/mesh/*.o    src/mesh/*.mod      src/mesh/*.lst     src/mesh/*.opt    src/mesh/*.cg
+	rm -f src/io/*.o      src/io/*.mod        src/io/*.lst       src/io/*.opt      src/io/*.cg
 	echo $(LD_LIBRARY_PATH)
 

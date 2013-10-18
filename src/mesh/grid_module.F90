@@ -2,11 +2,12 @@
 ! -----------------
 ! This module contains the Grid class which contains
 ! the nodes, elements, and element type
+
 module grid_module
   ! Base classes, specifying the interface
   use common_module
   use elements_module,   only : Element, ShapeFunction_class
-  use parallel_module
+  use parallel_module, only : Comm_type
   ! All possible implementations for Element and Shapefunction respectively
   use lagrangep0_module, only : &
     & LagrangeP0_Line2D,  LagrangeP0_Line, &
@@ -18,13 +19,18 @@ module grid_module
     & LagrangeP1_Triag2D, LagrangeP1_Triag
 
   implicit none
-  public
+  private
   
   public new_FaceFunctionSpace
   public new_DiscontinuousFunctionSpace
+  public Grid_class
+  public FunctionSpace_class
+  public Field_class
+  public State_class
+  public ContinuousFunctionSpace
+  public FaceFunctionSpace
 
-
-  type, public :: Field_class
+  type :: Field_class
     character(len=30) :: name
     real(kind=jprb), dimension(:,:), allocatable :: array
     integer :: rows
@@ -35,11 +41,11 @@ module grid_module
     procedure, pass :: destruct => Field__destruct
   end type Field_class
   
-  type, public :: FieldPtr
+  type :: FieldPtr
     type(Field_class), pointer :: ptr
   end type FieldPtr
   
-  type, public :: FunctionSpace_class
+  type :: FunctionSpace_class
     class(Grid_class), pointer :: grid
     class(ShapeFunction_class), allocatable :: sf
     character(len=30) :: name
@@ -63,32 +69,32 @@ module grid_module
 
   end type FunctionSpace_class
   
-  type, public :: FunctionSpacePtr
+  type :: FunctionSpacePtr
     class(FunctionSpace_class), pointer :: ptr
   end type FunctionSpacePtr
   
   
-  type, public, extends(FunctionSpace_class) :: ContinuousFunctionSpace
+  type, extends(FunctionSpace_class) :: ContinuousFunctionSpace
     
   contains
     procedure, pass :: init => ContinuousFunctionSpace__init
   end type ContinuousFunctionSpace
   
-  type, public, extends(FunctionSpace_class) :: DiscontinuousFunctionSpace
+  type, extends(FunctionSpace_class) :: DiscontinuousFunctionSpace
   contains
     procedure, pass :: init => DiscontinuousFunctionSpace__init
   end type DiscontinuousFunctionSpace
   
-  type, public, extends(FunctionSpace_class) :: FaceFunctionSpace
+  type, extends(FunctionSpace_class) :: FaceFunctionSpace
   contains
     procedure, pass :: init => FaceFunctionSpace__init
   end type FaceFunctionSpace
 
 
-  type, public :: Grid_class
+  type :: Grid_class
     class(Element), allocatable :: cell
     class(Element), allocatable :: face
-    type(FunctionSpace_class), pointer :: nodes
+    class(FunctionSpace_class), pointer :: nodes
     integer :: dimension
     integer :: nb_elems
     integer :: nb_nodes
@@ -119,7 +125,7 @@ module grid_module
 
   end type Grid_class
   
-  type, public :: State_class
+  type :: State_class
     character(len=30) :: name
     real(kind=jprb)              :: time
     integer :: nb_fields = 0

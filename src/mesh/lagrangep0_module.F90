@@ -3,8 +3,8 @@
 ! This module extends the elements_module module with concrete implementations
 ! for Lagrange P0 shape functions and element types
 module lagrangep0_module
-  use common_module
-  use elements_module
+  use common_module, only: jprb, log_debug
+  use elements_module, only: Element, Shapefunction_class
   implicit none
   public
   
