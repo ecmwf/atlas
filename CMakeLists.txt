@@ -3,6 +3,7 @@ cmake_minimum_required( VERSION 2.8.4 FATAL_ERROR )
 
 project( mpdata_shallow_water Fortran )
 
+message( STATUS "--------------------------------------------------------------------" )
 message( STATUS "MPDATA Shallow Water configuration" )
 
 # make sure that the default build type is a RELEASE
@@ -12,25 +13,24 @@ if( NOT CMAKE_BUILD_TYPE )
 endif( NOT CMAKE_BUILD_TYPE )
 string( TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE )
 
-find_package( mpi )
-include_directories( ${MPI_Fortran_INCLUDE_PATH} )
-
 # FFLAGS depend on the compiler
 get_filename_component (Fortran_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
 
-if( Fortran_COMPILER_NAME MATCHES "gfortran.*" )
-  # gfortran
+if( CMAKE_Fortran_COMPILER_ID MATCHES "GNU" )
   set( CMAKE_Fortran_FLAGS_RELEASE "-fstack-arrays -funroll-all-loops -fno-f2c -O3" )
   set( CMAKE_Fortran_FLAGS_DEBUG   "-fno-f2c -O0 -g" )
-elseif( Fortran_COMPILER_NAME MATCHES "ifort.*" )
-  # ifort (untested)
+elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Intel" )
   set( CMAKE_Fortran_FLAGS_RELEASE "-O3" )
   set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g" )
-elseif( Fortran_COMPILER_NAME MATCHES "ftn" )
-  # ftn
+elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )
   set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -hfp3" )
   set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -Ktrap=fp -R b" )
-endif( Fortran_COMPILER_NAME MATCHES "gfortran.*" )
+endif( )
+
+if( NOT Fortran_COMPILER_NAME MATCHES "ftn" )
+  find_package( mpi )
+  include_directories( ${MPI_Fortran_INCLUDE_PATH} )
+endif( )
 
 # Datastructure library
 add_library( datastructure
@@ -58,7 +58,7 @@ target_link_libraries( test_sync datastructure )
 
 message( STATUS "--------------------------------------------------------------------" )
 message( STATUS "Build   : ${CMAKE_BUILD_TYPE}" )
-message( STATUS "Fortran : ${Fortran_COMPILER_NAME}" )
+message( STATUS "Fortran : ${Fortran_COMPILER_NAME} (${CMAKE_Fortran_COMPILER_ID})" )
 message( STATUS "Flags   : ${CMAKE_Fortran_FLAGS_${CMAKE_BUILD_TYPE}}" )
 message( STATUS "--------------------------------------------------------------------" )
 
