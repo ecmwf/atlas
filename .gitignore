@@ -1,3 +1,4 @@
+*.a
 *.mod
 *.o
 .nfs*
@@ -8,4 +9,9 @@
 *.ap2
 *.cg
 *.rpt
+*.d
+*.cmake
+CMakeCache.txt
+CMakeFiles/*
 shallow_water
+test_sync
