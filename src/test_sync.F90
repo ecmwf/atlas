@@ -17,7 +17,7 @@ program test_sync
   integer :: length 
   type(Comm_type) :: comm
 
-  call set_log_level(LOG_LEVEL_DEBUG)
+  call set_log_level(LOG_LEVEL_INFO)
 
   call parallel_init() ! MPI_INIT etc
 
@@ -27,33 +27,40 @@ program test_sync
   allocate( glb_idx(length) )
   allocate( field(length) )
   allocate( vectorfield(length,2) )
-  
-  select case (myproc)
-    case (0)
-      proc = [2,0,0,0,1]
-      glb_idx = [9,1,2,3,4]
-      field = [-1,10,20,30,-1]
-    case (1)
-      proc = [0,1,1,1,2]
-      glb_idx = [3,4,5,6,7]
-      field = [-1,40,50,60,-1]
-    case (2)
-      proc = [1,2,2,2,0]
-      glb_idx = [6,7,8,9,1]
-      field = [-1,70,80,90,-1]
-  end select
-  vectorfield(:,1) = field
-  vectorfield(:,2) = field
 
-  ! Setup a communicator for synchronisation
-  call comm%setup(proc,glb_idx)
-
-  ! Update the field values whose proc is not myproc
-  call comm%synchronise(field)
-  call comm%synchronise(vectorfield)
+  if (nproc .eq. 3) then
   
-  ! Verify that update happened correctly
-  write(log_str,*) myproc, ": field = ", field; call log_info()
+    select case (myproc)
+      case (0)
+        proc = [2,0,0,0,1]
+        glb_idx = [9,1,2,3,4]
+        field = [-1,10,20,30,-1]
+      case (1)
+        proc = [0,1,1,1,2]
+        glb_idx = [3,4,5,6,7]
+        field = [-1,40,50,60,-1]
+      case (2)
+        proc = [1,2,2,2,0]
+        glb_idx = [6,7,8,9,1]
+        field = [-1,70,80,90,-1]
+    end select
+    vectorfield(:,1) = field
+    vectorfield(:,2) = field
+
+    ! Setup a communicator for synchronisation
+    call comm%setup(proc,glb_idx)
+
+    ! Update the field values whose proc is not myproc
+    call comm%synchronise(field)
+    call comm%synchronise(vectorfield)
+  
+    ! Verify that update happened correctly
+    write(log_str,*) myproc, ": field = ", field; call log_info()
+
+  else
+    call set_log_proc(0)
+    call log_error("ERROR: Run this program with 3 tasks")
+  end if
 
   call parallel_finalise() ! MPI_FINALIZE
 

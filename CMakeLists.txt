@@ -6,6 +6,14 @@ project( mpdata_shallow_water Fortran )
 message( STATUS "--------------------------------------------------------------------" )
 message( STATUS "MPDATA Shallow Water configuration" )
 
+
+get_filename_component (Fortran_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
+if( NOT Fortran_COMPILER_NAME MATCHES "mpi.*" AND NOT Fortran_COMPILER_NAME MATCHES "ftn" )
+  message( FATAL_ERROR "MPI Compiler needed.\n"
+    "Please export FC to a MPI compiler such as mpif90 or ftn on Cray, or rerun "
+    "cmake . -DCMAKE_Fortran_COMPILER=mpif90" )
+endif( )
+
 # make sure that the default build type is a RELEASE
 if( NOT CMAKE_BUILD_TYPE )
   set( CMAKE_BUILD_TYPE RELEASE CACHE STRING
@@ -14,22 +22,23 @@ endif( NOT CMAKE_BUILD_TYPE )
 string( TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE )
 
 # FFLAGS depend on the compiler
-get_filename_component (Fortran_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
-
 if( CMAKE_Fortran_COMPILER_ID MATCHES "GNU" )
-  set( CMAKE_Fortran_FLAGS_RELEASE "-fstack-arrays -funroll-all-loops -fno-f2c -O3" )
-  set( CMAKE_Fortran_FLAGS_DEBUG   "-fno-f2c -O0 -g" )
+  set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -fstack-arrays -funroll-all-loops" )
+  set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -fbounds-check" )
+  # -fstack-arrays     : Allocate automatic arrays on the stack
+  # -funroll-all-loops : Unroll all loops
+  # -fbounds-check     : Bounds checking
+  
 elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Intel" )
   set( CMAKE_Fortran_FLAGS_RELEASE "-O3" )
   set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g" )
+
 elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )
   set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -hfp3" )
   set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -Ktrap=fp -R b" )
-endif( )
-
-if( NOT Fortran_COMPILER_NAME MATCHES "ftn" )
-  find_package( mpi )
-  include_directories( ${MPI_Fortran_INCLUDE_PATH} )
+  # -hfp3     : Special optimisation for floating points
+  # -Ktrap=fp : Abort on NaN
+  # -R b      : Bounds checking
 endif( )
 
 # Datastructure library
@@ -46,9 +55,9 @@ add_library( datastructure
   src/io/gmsh_module.F90
   src/io/grib_module.F90
 )
-target_link_libraries( datastructure ${MPI_Fortran_LIBRARIES} )
 
 # Shallow water executable
+file( COPY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
 add_executable( shallow_water src/shallow_water_module.F90 src/shallow_water.F90 )
 target_link_libraries( shallow_water datastructure )
 
@@ -58,7 +67,7 @@ target_link_libraries( test_sync datastructure )
 
 message( STATUS "--------------------------------------------------------------------" )
 message( STATUS "Build   : ${CMAKE_BUILD_TYPE}" )
-message( STATUS "Fortran : ${Fortran_COMPILER_NAME} (${CMAKE_Fortran_COMPILER_ID})" )
+message( STATUS "Fortran : ${Fortran_COMPILER_NAME} -- ${CMAKE_Fortran_COMPILER_ID} ${CMAKE_Fortran_COMPILER_VERSION}" )
 message( STATUS "Flags   : ${CMAKE_Fortran_FLAGS_${CMAKE_BUILD_TYPE}}" )
 message( STATUS "--------------------------------------------------------------------" )
 
