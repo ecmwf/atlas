@@ -60,6 +60,8 @@ program shallow_water
   call log_info( "+------------------------------+" )
   call log_info( "| Simulation summary           |" )
   call log_info( "+-------------------+----------+" )
+  call log_info( "| glb_nb_nodes      | "//trim(str(g%glb_nb_nodes,'(I8)'))//" |" )
+  call log_info( "| glb_nb_edges      | "//trim(str(g%glb_nb_edges,'(I8)'))//" |" )
   call log_info( "| nb_nodes          | "//trim(str(g%nb_nodes,'(I8)'))//" |" )
   call log_info( "| nb_edges          | "//trim(str(g%nb_edges,'(I8)'))//" |" )
   call log_info( "| time step         | "//trim(str(dt,'(F8.1)'))//" |" )
@@ -136,10 +138,10 @@ contains
   subroutine write_fields
     character(len=1024) :: filename
     call wallclock_timer%pause()
-    write (filename, "(A,I2.2,A,I2.2)") "data/fields",jstep,".msh.P",myproc
+    write (filename, "(A,I2.2,A,I2.2)") "data/fields",jstep,".msh"
     call write_gmsh_state(g%fields,filename)
-    write (filename, "(A,I2.2,A)") "data/depth",jstep,".grib"
-    call write_grib(g,filename)
+    !write (filename, "(A,I2.2,A)") "data/depth",jstep,".grib"
+    !call write_grib(g,filename)
     call wallclock_timer%resume()
   end subroutine write_fields
 

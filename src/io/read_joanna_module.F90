@@ -5,6 +5,7 @@ module read_joanna_module
   use parallel_module
   use datastruct_module, only: create_mesh, DataStructure_type, vector_field, scalar_field
   use split_globe_module, only : split_globe
+  use mpi
   implicit none
 contains
   
@@ -23,6 +24,10 @@ contains
     integer                      :: edge_cnt
     integer                      :: pole_edge_cnt
     integer                      :: internal_edge_cnt
+    integer                      :: owned_node_cnt = 0
+    integer                      :: owned_edge_cnt = 0
+    integer                      :: glb_nb_nodes = 0
+    integer                      :: glb_nb_edges = 0
 
     integer                      :: idx
     real(kind=jprb), pointer     :: coords(:,:), vol(:), S(:,:)
@@ -40,9 +45,9 @@ contains
     integer, allocatable :: node_loc_idx(:)
     integer, allocatable :: edge_loc_idx(:)
 
+    integer :: ierr
     integer :: jedge, iedge
     integer :: jnode, inode
-
     integer :: nb_pole_edges
 
     call log_info( "Reading mesh "//filename )
@@ -125,14 +130,23 @@ contains
 
     read(5,*) nnode, nedge, nface, ncoin, before2, before1  !nbefore1<nbefore2
 
+    owned_node_cnt = 0
     do jnode = 1, nnode
       read(5,*) x, y, v
       if ( keep_node(jnode).eq.1 ) then
         inode = node_loc_idx(jnode)
         coords(inode,:) = [x, y]
         vol(inode) = v
+        if( proc(inode) .eq. myproc ) then
+          owned_node_cnt = owned_node_cnt + 1
+        end if
       end if
     end do
+
+    call MPI_ALLREDUCE( owned_node_cnt, glb_nb_nodes, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD, ierr)
+    g%glb_nb_nodes = glb_nb_nodes
+    g%internal_mesh%glb_nb_nodes = glb_nb_nodes
+    g%internal_mesh%nodes%glb_nb_nodes = glb_nb_nodes
     g%internal_mesh%nodes_coordinates = coords
 
     g%nb_pole_edges = nb_pole_edges
@@ -144,6 +158,7 @@ contains
     internal_edge_cnt = 0
     allocate(g%pole_edges(g%nb_pole_edges))
 
+    owned_edge_cnt = 0
     do jedge = 1, nedge
       read(5,*) idx, ip1, ip2
       if ( keep_edge(jedge).eq.1 ) then
@@ -159,9 +174,18 @@ contains
           pole_edge_cnt = pole_edge_cnt + 1
           g%pole_edges(pole_edge_cnt) = iedge
         end if
+
+        if( g%internal_mesh%faces_proc(iedge) .eq. myproc ) then
+          owned_edge_cnt = owned_edge_cnt + 1
+        end if
+
       end if
     end do
     g%internal_mesh%faces = g%edges
+
+    call MPI_ALLREDUCE( owned_edge_cnt, glb_nb_edges, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD, ierr)
+    g%glb_nb_edges = glb_nb_edges
+
 
     do jedge = 1,nedge
       read(5,*) idx, sx, sy

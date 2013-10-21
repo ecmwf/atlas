@@ -51,6 +51,7 @@ module grid_module
     character(len=30) :: name
     integer :: nb_elems = 0
     integer :: nb_nodes = 0
+    integer :: glb_nb_nodes = 0
     integer :: nb_fields = 0
     type(Comm_type) :: comm
     integer, dimension(:), allocatable :: proc
@@ -102,6 +103,8 @@ module grid_module
     integer :: nb_pole_faces
     integer :: nb_internal_faces
     integer :: nb_periodic_nodes
+    integer :: glb_nb_nodes
+    integer :: glb_nb_elems
     real(kind=jprb),  dimension(:,:), allocatable :: nodes_coordinates
     integer, dimension(:,:), allocatable :: cells
     integer, dimension(:,:), allocatable :: faces

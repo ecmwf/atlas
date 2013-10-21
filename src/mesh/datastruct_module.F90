@@ -33,6 +33,8 @@ module datastruct_module
 
   ! PUBLIC part
   ! -----------
+    integer, public                                  :: glb_nb_nodes=0
+    integer, public                                  :: glb_nb_edges=0
     integer, public                                  :: nb_nodes=0
     integer, public                                  :: nb_edges=0
     integer, public                                  :: nb_pole_edges=0
