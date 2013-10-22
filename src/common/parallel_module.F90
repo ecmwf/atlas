@@ -8,7 +8,9 @@ module parallel_module
   implicit none
   private
 
-public myproc, nproc, Comm_type, parallel_init, parallel_finalise
+public myproc, nproc
+public parallel_init, parallel_finalise, parallel_barrier
+public Comm_type
 
   integer :: ierr
   integer :: myproc = -1
@@ -49,7 +51,7 @@ public myproc, nproc, Comm_type, parallel_init, parallel_finalise
       & synchronise_integer_rank1, &
       & synchronise_integer_rank2
 
-    procedure, pass :: glb_size
+    procedure, pass :: glb_field_size
     procedure, pass :: gather_real8_rank1
     procedure, pass :: gather_real8_rank2
     generic, public :: gather => &
@@ -62,14 +64,18 @@ public myproc, nproc, Comm_type, parallel_init, parallel_finalise
 contains
 
   subroutine parallel_init()
-    call MPI_INIT (ierr)
-    call MPI_COMM_RANK (MPI_COMM_WORLD,myproc,ierr)
-    call MPI_COMM_SIZE (MPI_COMM_WORLD,nproc,ierr)
+    call MPI_INIT( ierr )
+    call MPI_COMM_RANK( MPI_COMM_WORLD, myproc, ierr )
+    call MPI_COMM_SIZE( MPI_COMM_WORLD, nproc,  ierr )
   end subroutine parallel_init
 
   subroutine parallel_finalise()
     call MPI_FINALIZE (ierr)
   end subroutine parallel_finalise
+
+  subroutine parallel_barrier()
+    call MPI_BARRIER( MPI_COMM_WORLD, ierr )
+  end subroutine
 
   subroutine setup_sync(comm,proc,glb_idx)
     class(Comm_type), intent(inout) :: comm
@@ -318,7 +324,7 @@ contains
     integer :: jnode
 
     if( .not. allocated( glb_field) ) then
-      allocate( glb_field( comm%glb_size() ) )
+      allocate( glb_field( comm%glb_field_size() ) )
     end if
 
     ! Pack
@@ -350,7 +356,7 @@ contains
     ncols = size(loc_field,2)
 
     if( .not. allocated( glb_field) ) then
-      allocate( glb_field( comm%glb_size(), ncols ) )
+      allocate( glb_field( comm%glb_field_size(), ncols ) )
     end if
 
     do jcol=1,ncols
@@ -373,10 +379,10 @@ contains
 
   end subroutine gather_real8_rank2
 
-  function glb_size(comm) result(rows)
+  function glb_field_size(comm) result(rows)
     class(Comm_type), intent(inout) :: comm
     integer :: rows
     rows = comm%gather_recvcnt
-  end function glb_size
+  end function glb_field_size
 
 end module parallel_module

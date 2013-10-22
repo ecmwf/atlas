@@ -37,10 +37,6 @@ contains
     real(kind=jprb) :: gradQ(geom%nb_nodes,2)
     real(kind=jprb), pointer :: vol(:), S(:,:)
 
-    associate( nb_nodes          => geom%nb_nodes, &
-      &        nb_edges          => geom%nb_edges, &
-      &        edges             => geom%edges )
-  
     vol => scalar_field("dual_volumes",geom)
     S   => vector_field("dual_normals",geom)
 
@@ -55,9 +51,9 @@ contains
     ! Compute the normal velocity in faces, and advection in vertices
     adv(:) = 0.
 
-    do jedge = 1,nb_edges
-      ip1 = edges(jedge,1)
-      ip2 = edges(jedge,2)
+    do jedge = 1,geom%nb_edges
+      ip1 = geom%edges(jedge,1)
+      ip2 = geom%edges(jedge,2)
       Sx = S(jedge,XX)
       Sy = S(jedge,YY)
       Vx = V(jedge,XX)
@@ -71,7 +67,7 @@ contains
     end do
 
     ! Update the unknowns in vertices
-    do jnode=1,nb_nodes
+    do jnode=1,geom%nb_nodes
       Q(jnode) = Q(jnode) - adv(jnode)/vol(jnode) * dt
     end do
 
@@ -89,9 +85,9 @@ contains
 
       ! Compute antidiffusive normal velocity in faces
 
-      do jedge = 1,nb_edges
-        ip1 = edges(jedge,1)
-        ip2 = edges(jedge,2)
+      do jedge = 1,geom%nb_edges
+        ip1 = geom%edges(jedge,1)
+        ip2 = geom%edges(jedge,2)
 
         ! evaluate gradient and velocity at edge by combining 2 neighbouring dual cells
         volume_of_two_cells = vol(ip1) + vol(ip2)
@@ -111,23 +107,22 @@ contains
 
       ! Compute fluxes from (limited) antidiffusive velocity
       adv(:)   =  0.
-      do jedge = 1,nb_edges
-        ip1 = edges(jedge,1)
-        ip2 = edges(jedge,2)
+      do jedge = 1,geom%nb_edges
+        ip1 = geom%edges(jedge,1)
+        ip2 = geom%edges(jedge,2)
         flux = aun(jedge)
         adv(ip1) = adv(ip1) + flux
         adv(ip2) = adv(ip2) - flux
       end do
 
       ! Update the unknowns in vertices
-      do jnode=1,nb_nodes
+      do jnode=1,geom%nb_nodes
         Q(jnode) = Q(jnode) - adv(jnode)/vol(jnode) * dt
       end do
 
       call synchronise(Q,geom)
 
     end do ! other passes
-    end associate
 
   contains
     
@@ -325,22 +320,52 @@ contains
     call create_vector_field_in_edges("advective_velocity",geom)
   end subroutine setup_shallow_water
 
+  subroutine progress_bar(x,xmin,xmax,divisions)
+    implicit none
+    real(kind=jprb), intent(in) :: x,xmin,xmax
+    integer, intent(in) :: divisions
+    real(kind=jprb) :: progress_ratio
+    integer :: j,k
+    character(len=divisions) :: spaces
+    character(len=divisions+7)::bar
+    character(len=32) :: fmt_str
+    spaces = " "
+    bar="???% |"//spaces//"|"
+
+    progress_ratio = (x-xmin)/(xmax-xmin)
+    j = int(progress_ratio*divisions)
+    write(unit=bar(1:3),fmt="(i3)") int(100*progress_ratio) !divisions*j
+    do k=1, j
+      bar(6+k:6+k)="*"
+    enddo
+    ! print the progress bar.
+    write(fmt_str,*) '(a1,a1,a',divisions+7,')'
+    write(unit=6,fmt=fmt_str, advance='no') ' ', char(13), bar
+    flush(6)
+    return
+  end subroutine progress_bar
 
   subroutine propagate_state(dt,geom)
     real(kind=jprb), intent(in) :: dt
     type(DataStructure_type), intent(inout), target :: geom
-    real(kind=jprb) :: tmax, t0, dt_fwd
+    real(kind=jprb) :: tmax, t0, dt_fwd, tstart
     character(len=200) :: step_info
+
     call log_debug( "Propagating state" )
-    tmax = geom%fields%time+dt
+    tstart   = geom%fields%time
+    tmax     = geom%fields%time+dt
+
     do while (geom%fields%time < tmax)
       t0 = geom%fields%time
       dt_fwd = min( dt_forward, tmax-t0 )
       call step_forward(iter,dt_fwd,geom)
 
-      write(step_info,'(A6,I8,A12,F9.1,A12,F8.1)') "step = ",iter, &
-         & "  time = ",geom%fields%time, &
-         & "  dt = ",dt_fwd
+      if( myproc .eq. 0 ) then
+        call progress_bar(geom%fields%time,tstart,tmax,100)
+      end if
+      !write(step_info,'(A6,I8,A12,F9.1,A12,F8.1)') "step = ",iter, &
+      !   & "  time = ",geom%fields%time, &
+      !   & "  dt = ",dt_fwd
       call log_info( step_info )
     end do
   end subroutine propagate_state
@@ -375,7 +400,7 @@ contains
 
     call implicit_solve(dt,geom)
 
-    call compute_advective_velocities(dt,geom,"extrapolate")
+    call compute_advective_velocities(dt,geom,"advect")
 
     call backup_solution(geom)
 
@@ -513,6 +538,7 @@ contains
         Vnodes(jnode,XX) = ( Vx - 0.5*dt*(Vx*dVxdx+Vy*dVxdy) + 0.5*dt*Rx/Dmod ) * hy(jnode)
         Vnodes(jnode,YY) = ( Vy - 0.5*dt*(Vx*dVydx+Vy*dVydy) + 0.5*dt*Ry/Dmod ) * hx(jnode)
       enddo
+      call synchronise( Vnodes, geom )
     else if( option .eq. "extrapolate") then
       !dir$ ivdep
       do jnode=1,nb_nodes
@@ -572,6 +598,7 @@ contains
         &           - cor(jnode)*Qx + dhxdy_over_G(jnode)*Qx*Qx/Dmod
     end do
 
+    call synchronise(R,geom)
   end subroutine compute_forcing
 
 
@@ -588,7 +615,7 @@ contains
       Q(jnode,XX) = Q(jnode,XX) + 0.5_jprb*dt*R(jnode,XX)
       Q(jnode,YY) = Q(jnode,YY) + 0.5_jprb*dt*R(jnode,YY)
     end do
-    call synchronise(Q,geom)
+    !call synchronise(Q,geom)
   end subroutine add_forcing_to_solution
 
 
@@ -640,6 +667,7 @@ contains
       R(jnode,YY) = Ry_exp - cor(jnode)*Qx + dhxdy_over_G(jnode)*Qx*Qx/Dmod
     end do
     call synchronise(Q,geom)
+    call synchronise(R,geom)
 
   end subroutine implicit_solve
 
@@ -659,15 +687,6 @@ contains
     call mpdata_gauge( dt,   D,        V,        2,     .True., .False.,   geom )
     call mpdata_gauge( dt,   Q(:,XX),  V,        2,     .True., .True. ,   geom )
     call mpdata_gauge( dt,   Q(:,YY),  V,        2,     .True., .True. ,   geom )
-
-    ! remove noise from periodic boundary... This will dissapear in MPI implementation
-    do jnode=1,geom%nb_ghost_nodes
-      ip1 = geom%ghost_nodes(jnode,1)
-      ip2 = geom%ghost_nodes(jnode,2)
-      D(ip2)    = D(ip1)
-      Q(ip2,XX) = Q(ip1,XX)
-      Q(ip2,YY) = Q(ip1,YY)
-    end do
   end subroutine advect_solution
 
 end module shallow_water_module

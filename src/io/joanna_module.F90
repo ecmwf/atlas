@@ -1,6 +1,6 @@
 
 ! module for testing creation of a Grid
-module read_joanna_module
+module joanna_module
   use common_module
   use parallel_module
   use datastruct_module, only: create_mesh, DataStructure_type, vector_field, scalar_field
@@ -65,7 +65,7 @@ contains
     allocate( keep_node(nnode) )
     allocate( keep_edge(nedge) )
 
-    write(log_str,*) "Domain decomposition in ",nproc," parts, using ",rtable; call log_info()
+    !write(log_str,*) "Domain decomposition in ",nproc," parts, using ",rtable; call log_info()
     call split_globe(rtable,nproc,node_proc_full,node_glb_idx_full)
 
     keep_node(:) = 0
@@ -92,8 +92,8 @@ contains
 
     close(5)
 
-    call log_info(str(myproc)//" should keep nodes:"//str(sum(keep_node)))
-    call log_info(str(myproc)//" should keep edges:"//str(sum(keep_edge)))
+    !call log_info(str(myproc)//" should keep nodes:"//str(sum(keep_node)))
+    !call log_info(str(myproc)//" should keep edges:"//str(sum(keep_edge)))
 
     allocate( proc( sum(keep_node) ) ) 
     allocate( glb_idx( sum(keep_node) ) ) 
@@ -207,4 +207,70 @@ contains
   end subroutine read_joanna
 
 
-end module read_joanna_module
+  ! Subroutine write_results_joanna
+  ! -------------------------------
+  ! This routine generates the results.d file as in 
+  ! Joanna Szmelter's original code
+
+  subroutine write_results_joanna(filename,rtable,g)
+    character(len=*), intent(in) :: filename
+    character(len=*), intent(in) :: rtable
+    type(DataStructure_type), intent(inout)    :: g
+
+    integer :: jnode, inode, ip1, ip2, iaaa
+    integer, allocatable :: plot_idx(:)
+    real(kind=jprb), pointer :: loc_D(:), loc_Q(:,:), loc_coords(:,:)
+    real(kind=jprb), allocatable :: D(:), Q(:,:), coords(:,:)
+    integer(kind=jpim)              :: ndgl     ! Number of lattitudes
+    integer(kind=jpim), allocatable :: nloen(:) ! Number of longitude points for each latitude
+    integer(kind=jpim) :: jlat,idum, nb_nodes, inode_grwch, jglb
+
+    call log_info("Writing output "//filename)
+
+    loc_D => scalar_field("depth",g)
+    loc_Q => vector_field("momentum",g)
+    loc_coords => vector_field("coordinates",g)
+
+    call g%internal_mesh%nodes%comm%gather(loc_D,D)
+    call g%internal_mesh%nodes%comm%gather(loc_Q,Q)
+    call g%internal_mesh%nodes%comm%gather(loc_coords,coords)
+
+    if( myproc .eq. 0) then
+      open(11,file=filename,access='sequential',status='unknown')
+      open(21,file=rtable,access='sequential',status='unknown')
+
+      read(21,*)
+      read(21,*)ndgl
+      allocate(nloen(ndgl))
+      do jlat=1,ndgl
+        read(21,*) idum,nloen(jlat)
+      enddo
+      nb_nodes = sum(nloen)+ndgl ! plus periodic points
+      allocate( plot_idx(nb_nodes) )
+      inode = 1
+      jglb = 1
+      do jlat=1,ndgl
+        inode_grwch = inode
+        do jnode=1,nloen(jlat)
+          plot_idx(inode) = jglb
+          inode = inode+1
+          jglb = jglb+1
+        end do
+        plot_idx(inode) = plot_idx(inode_grwch)
+        inode = inode+1
+      enddo
+      write(11,*)g%fields%time
+      write(11,*)0
+      write(11,'(A)')'point X Y p'
+
+
+      do jnode=1,nb_nodes
+        inode = plot_idx(jnode)
+        write(11,*) jnode, coords(inode,XX), coords(inode,YY), &
+          & D(inode), Q(inode,XX)/D(inode), Q(inode,YY)/D(inode), D(inode)
+      enddo
+      close(21)
+    end if
+  end subroutine write_results_joanna
+
+end module joanna_module

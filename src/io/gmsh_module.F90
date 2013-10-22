@@ -1,9 +1,8 @@
 
 ! module for testing creation of a Grid
 module gmsh_module
-  use parallel_module, only: myproc, nproc
+  use parallel_module, only: myproc, nproc, parallel_barrier
   use grid_module
-  use mpi
   use common_module, only : jprb,log_info
   implicit none
 contains
@@ -14,7 +13,7 @@ contains
     real(kind=jprb), allocatable :: glb_field(:,:)
     integer :: jnode, glb_rows
 
-    glb_rows = field%function_space%comm%glb_size()
+    glb_rows = field%function_space%comm%glb_field_size()
 
     call field%function_space%comm%gather( field%array, glb_field )
 
@@ -74,12 +73,12 @@ contains
     class(Grid_class), intent(inout) :: grid
     character(len=*), intent(in) :: filename
     character(len=1024) :: procfile
-    integer :: jface, jnode, jproc, ierr
+    integer :: jface, jnode, jproc
     real(kind=jprb) :: r, phi, theta, x, y, z, pi
     pi = acos(-1._jprb)
     call log_info( "Writing Gmsh file "//trim(filename) )
     
-    call MPI_BARRIER(MPI_COMM_WORLD, ierr)
+    call parallel_barrier()
 
     write(procfile,'(A,A,I2.2)') trim(filename),'.P',myproc
     open(50,file=trim(procfile),access='sequential',status='REPLACE')
@@ -116,10 +115,10 @@ contains
   subroutine write_gmsh_state(state,filename)
     class(State_class), intent(in), target :: state
     character(len=*), intent(in) :: filename
-    integer :: jface, jnode, ifield, ierr
+    integer :: jface, jnode, ifield
     type(Field_class), pointer :: field
 
-    call MPI_BARRIER(MPI_COMM_WORLD, ierr)
+    call parallel_barrier()
 
     field => state%fields(1)%ptr
     call log_info( "Writing Gmsh file "//trim(filename) )

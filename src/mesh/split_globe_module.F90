@@ -671,7 +671,7 @@ IF(KMYSETA == N_REGIONS_NS) THEN
     ENDDO
   ENDDO
   IF( LLABORT )THEN
-    WRITE(0,'(" SUSTAONL : inconsistent partitioning")')
+    !WRITE(0,'(" SUSTAONL : inconsistent partitioning")')
     STOP 1
   ENDIF
 
@@ -684,7 +684,7 @@ IF(KMYSETA == N_REGIONS_NS) THEN
     !WRITE(UNIT=6,FMT='(17X," SETB=",32(1X,I3))') (JB,JB=1,IPROCB)
     DO JA=1,N_REGIONS_NS
       IPROCB = MIN(32,N_REGIONS(JA))
-      WRITE(UNIT=6,FMT='('' '')')
+      !WRITE(UNIT=6,FMT='('' '')')
       IGLOFF = KPTRFRSTLAT(JA)
       IGL1 = KFRSTLAT(JA)
       IGL2 = KLSTLAT(JA)
@@ -908,15 +908,15 @@ IF (LDSPLIT) THEN
     ENDIF
   ENDIF
   IF( SUM(KPROCAGP(:)) /= SUM(KLOENG(1:KDGL)) )THEN
-    WRITE(0,'("SUM(KPROCAGP(:))=",I12)')SUM(KPROCAGP(:))
-    WRITE(0,'("SUM(KLOENG(:))=",I12)')SUM(KLOENG(1:KDGL))
+    !WRITE(0,'("SUM(KPROCAGP(:))=",I12)')SUM(KPROCAGP(:))
+    !WRITE(0,'("SUM(KLOENG(:))=",I12)')SUM(KLOENG(1:KDGL))
     STOP 1
   ENDIF
 
 ELSE
 
   IF( LDWEIGHTED_DISTR )THEN
-    WRITE(0,*)'SUMPLATBEQ: LSPLIT=F NOT SUPPORTED FOR WEIGHTED DISTRIBUTION '
+    !WRITE(0,*)'SUMPLATBEQ: LSPLIT=F NOT SUPPORTED FOR WEIGHTED DISTRIBUTION '
     STOP 1
   ENDIF
 
@@ -961,7 +961,7 @@ ELSE
       IMEDIAP=IMEDIAP-1
         !WRITE(0,'("SUMPLATBEQ: REDUCING IMEDIAP=",I6)')IMEDIAP
       IF( IMEDIAP <= 0 )THEN
-        WRITE(0,*) 'SUMPLATBEQ: PROBLEM PARTITIONING WITH LSPLIT=F, IMEDIAP <= 0'
+        !WRITE(0,*) 'SUMPLATBEQ: PROBLEM PARTITIONING WITH LSPLIT=F, IMEDIAP <= 0'
         STOP 1
       ENDIF
     ELSE
@@ -1002,7 +1002,7 @@ contains
     do jlat=1,ndgl
       read(21,*) idum,nloen(jlat)
     enddo
-    write(log_str,*) 'number of latitudes,total number of grid-points ',ndgl,sum(nloen); call log_info()
+    !write(log_str,*) 'number of latitudes,total number of grid-points ',ndgl,sum(nloen); call log_info()
     call split_points(nproc,ndgl,nloen,proc,glb_idx)
   end subroutine split_globe
 
@@ -1133,7 +1133,6 @@ contains
         ENDDO
       ENDDO
     ENDDO
-    OPEN(22,FILE='distribution.d',ACCESS='SEQUENTIAL',STATUS='UNKNOWN')
     I=0
     DO JLAT=1,NDGL
 
@@ -1142,7 +1141,6 @@ contains
         IND=IGLOBAL(JL,JLAT)
         proc(I) = NGLOBALPROC(IND)-1
         glb_idx(I) = IND
-        WRITE(22,*) I,JLAT,JL,IND,NGLOBALPROC(IND)
       ENDDO
 
       ! Periodic point duplicated for every lattitude
@@ -1151,8 +1149,6 @@ contains
       IND=IGLOBAL(JL,JLAT)
       glb_idx(I) = IND
       proc(I) = -1 ! invalid, marked for removal NGLOBALPROC(IND)-1
-      WRITE(22,*) I,JLAT,JL,IND,NGLOBALPROC(IND)
-
     ENDDO
     CLOSE(22)
 

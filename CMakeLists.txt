@@ -16,8 +16,8 @@ endif( )
 
 # make sure that the default build type is a RELEASE
 if( NOT CMAKE_BUILD_TYPE )
-  set( CMAKE_BUILD_TYPE RELEASE CACHE STRING
-      "Choose the type of build, options are: None Debug Release." FORCE )
+  set( CMAKE_BUILD_TYPE Release CACHE STRING
+      "Choose the type of build, options are: None Debug BitReproducible Release." FORCE )
 endif( NOT CMAKE_BUILD_TYPE )
 string( TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE )
 
@@ -25,6 +25,7 @@ string( TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE )
 if( CMAKE_Fortran_COMPILER_ID MATCHES "GNU" )
   set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -fstack-arrays -funroll-all-loops" )
   set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -fbounds-check" )
+  set( CMAKE_Fortran_FLAGS_BIT "-O2 -fstack-arrays -funroll-all-loops" )
   # -fstack-arrays     : Allocate automatic arrays on the stack
   # -funroll-all-loops : Unroll all loops
   # -fbounds-check     : Bounds checking
@@ -32,13 +33,31 @@ if( CMAKE_Fortran_COMPILER_ID MATCHES "GNU" )
 elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Intel" )
   set( CMAKE_Fortran_FLAGS_RELEASE "-O3" )
   set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g" )
+  set( CMAKE_Fortran_FLAGS_BIT "-O2" )
 
 elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )
-  set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -hfp3" )
-  set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -Ktrap=fp -R b" )
+  set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -hfp3 -hmpi1 -hscalar3 -hvector3" )
+  set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -Gfast -Ktrap=fp -R b" )
+  set( CMAKE_Fortran_FLAGS_BIT "-O2 -hflex_mp=conservative -hadd_paren -hfp1 -hmpi1" )
+  add_definitions( -emf ) 
   # -hfp3     : Special optimisation for floating points
   # -Ktrap=fp : Abort on NaN
   # -R b      : Bounds checking
+  # -hflex_mp=conservative -hfp1 : Obtain bit-reproducible results
+  # -hflex_mp=intolerant -hfp2   : Obtain bit-reproducible results (also)
+  # -hadd_paren : encourage left to right fp evaluation
+  # -hscalarN , -hvectorN : optimisation for scalar and vectorisation
+
+endif( )
+
+if( GRIB_API_DIR )
+  message( STATUS "Grib enabled : ${GRIB_API_DIR}" )
+  add_definitions( -DHAVE_GRIB )
+  include_directories(${GRIB_API_DIR}/include)
+  link_directories(${GRIB_API_DIR}/lib)
+  list( APPEND TPL grib_api_f90 grib_api )
+else( )
+  message( STATUS "Grib disabled : To enable, run \"cmake . -DGRIB_API_DIR=path/to/grib\"" )
 endif( )
 
 # Datastructure library
@@ -51,15 +70,17 @@ add_library( datastructure
   src/mesh/grid_module.F90
   src/mesh/split_globe_module.F90
   src/mesh/datastruct_module.F90
-  src/io/read_joanna_module.F90
+  src/io/joanna_module.F90
   src/io/gmsh_module.F90
   src/io/grib_module.F90
 )
+target_link_libraries( datastructure ${TPL} )
+
 
 # Shallow water executable
 file( COPY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
 add_executable( shallow_water src/shallow_water_module.F90 src/shallow_water.F90 )
-target_link_libraries( shallow_water datastructure )
+target_link_libraries( shallow_water datastructure ${TPL} )
 
 # Test for parallelisation
 add_executable( test_sync src/test_sync.F90 )

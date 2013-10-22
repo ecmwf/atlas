@@ -59,7 +59,6 @@ program test_sync
     ! Verify that update happened correctly
     write(log_str,*) myproc, ": field = ", field; call log_info()
 
-    !allocate( glb_field(comm%glb_size()) )
     call comm%gather(field, glb_field)
 
     write(log_str,*) myproc, ": glb_field = ", glb_field; call log_info()
