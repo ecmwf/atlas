@@ -19,6 +19,7 @@ module datastruct_module
     module procedure synchronise_array_rank1
     module procedure synchronise_array_rank2
   end interface synchronise
+
 !  type, public, extends(Grid_class) :: Mesh_class
 !  end type Mesh_class
 

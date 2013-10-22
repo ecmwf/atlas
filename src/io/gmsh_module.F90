@@ -9,67 +9,14 @@ module gmsh_module
 contains
     
   subroutine write_gmsh_nodal_field(field)
-    type(Field_class), pointer, intent(in) :: field
+    type(Field_class), pointer, intent(inout) :: field
     
-    real(kind=jprb), allocatable :: send_field(:)
-    integer, allocatable :: send_glb_idx(:)
-
     real(kind=jprb), allocatable :: glb_field(:,:)
-    integer, allocatable :: glb_idx(:)
+    integer :: jnode, glb_rows
 
-    integer :: jnode, ierr, owned_nodes_count, jproc, jdim, idx, recv_total_count
-    integer :: recv_counts(0:nproc-1)
-    integer :: recv_displs(0:nproc-1)
-    integer :: root = 0
+    glb_rows = field%function_space%comm%glb_size()
 
-
-    owned_nodes_count = 0
-    do jnode=1,field%function_space%nb_nodes
-      if (field%function_space%proc(jnode) .eq. myproc) then
-        owned_nodes_count = owned_nodes_count+1
-      end if
-    end do
-
-    allocate( send_glb_idx( owned_nodes_count) )
-    allocate( send_field( owned_nodes_count) )
-
-    recv_displs(:) = 0
-    recv_counts(:) = 0
-    call MPI_GATHER( owned_nodes_count, 1, MPI_INTEGER, recv_counts, 1, MPI_INT, root, MPI_COMM_WORLD, ierr ); 
-    if (myproc .eq. root) then
-      do jproc=1,nproc-1
-        recv_displs(jproc) = recv_displs(jproc-1) + recv_counts(jproc-1)
-      end do
-    end if
-    recv_total_count = sum(recv_counts)
-    allocate( glb_idx(recv_total_count) )
-    allocate( glb_field(recv_total_count,field%cols) )
-
-    idx = 0
-    do jnode=1,field%function_space%nb_nodes
-      if (field%function_space%proc(jnode) .eq. myproc) then
-        idx = idx + 1
-        send_glb_idx(idx) = field%function_space%glb_idx(jnode)
-      end if
-    end do
-
-    call MPI_GATHERV( send_glb_idx, owned_nodes_count, MPI_INTEGER, &
-                    & glb_idx, recv_counts, recv_displs, MPI_INTEGER, &
-                    & root, MPI_COMM_WORLD, ierr )
-
-    do jdim=1,field%cols
-      idx = 0
-      do jnode=1,field%function_space%nb_nodes
-        if (field%function_space%proc(jnode) .eq. myproc) then
-          idx = idx + 1
-          send_field(idx) = field%array(jnode,jdim)
-        end if
-      end do
-
-      call MPI_GATHERV( send_field, owned_nodes_count, MPI_DOUBLE_PRECISION, &
-                      & glb_field(:,jdim), recv_counts, recv_displs, MPI_DOUBLE_PRECISION, &
-                      & root, MPI_COMM_WORLD, ierr )
-    end do
+    call field%function_space%comm%gather( field%array, glb_field )
 
     if (myproc .eq. 0) then
       write(51,'(A)')"$NodeData"
@@ -81,16 +28,16 @@ contains
       write(51,*) 0                     ! the time step (0; time steps always start at 0)
       if (field%cols == 1) write(51,*) 1    ! 1-component (scalar) field
       if (field%cols == 2) write(51,*) 3    ! 3-component (vector) field
-      write(51,*) recv_total_count          ! number of associated nodal values
+      write(51,*) size(glb_field,1)          ! number of associated nodal values
 
       if (field%cols == 1) then
-        do jnode=1,recv_total_count
-          write(51,'(1I8,E18.10)') glb_idx(jnode), glb_field(jnode,1)
+        do jnode=1,glb_rows
+          write(51,'(1I8,E18.10)') jnode, glb_field(jnode,1)
         enddo
       endif
       if (field%cols == 2) then
-        do jnode=1,recv_total_count
-          write(51,'(1I8,E18.10,E18.10,F3.0)') glb_idx(jnode), glb_field(jnode,1), glb_field(jnode,2), 0.0
+        do jnode=1,glb_rows
+          write(51,'(1I8,E18.10,E18.10,F3.0)') jnode, glb_field(jnode,1), glb_field(jnode,2), 0.0
         enddo
       endif
       write(51,'(A)')"$EndNodeData"
@@ -131,12 +78,7 @@ contains
     real(kind=jprb) :: r, phi, theta, x, y, z, pi
     pi = acos(-1._jprb)
     call log_info( "Writing Gmsh file "//trim(filename) )
-    !open(40,file=filename,access='sequential',status='REPLACE')
-    !do jproc=0,nproc-1
-    !  write(40,'(A,A,A,I2.2,A)') 'Merge "',trim(filename),'.P',jproc,'";'
-    !end do
-    !close(40)
-     
+    
     call MPI_BARRIER(MPI_COMM_WORLD, ierr)
 
     write(procfile,'(A,A,I2.2)') trim(filename),'.P',myproc

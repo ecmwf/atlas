@@ -13,11 +13,13 @@ program test_sync
 
   integer, allocatable  :: proc(:)
   integer, allocatable  :: glb_idx(:)
-  integer, allocatable  :: field(:), vectorfield(:,:)
+  real(kind=jprb), allocatable  :: field(:), vectorfield(:,:)
+  real(kind=jprb), allocatable  :: glb_field(:)
   integer :: length 
   type(Comm_type) :: comm
 
   call set_log_level(LOG_LEVEL_INFO)
+  call set_log_proc(0)
 
   call parallel_init() ! MPI_INIT etc
 
@@ -56,6 +58,11 @@ program test_sync
   
     ! Verify that update happened correctly
     write(log_str,*) myproc, ": field = ", field; call log_info()
+
+    !allocate( glb_field(comm%glb_size()) )
+    call comm%gather(field, glb_field)
+
+    write(log_str,*) myproc, ": glb_field = ", glb_field; call log_info()
 
   else
     call set_log_proc(0)

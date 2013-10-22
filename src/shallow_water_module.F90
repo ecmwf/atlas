@@ -75,7 +75,7 @@ contains
       Q(jnode) = Q(jnode) - adv(jnode)/vol(jnode) * dt
     end do
 
-    call synchronise(Q,geom)
+    call synchronise(Q,geom) ! Qmax and Qmin could be synced here
 
     ! 2. Other passes (making the spatial discretisation higher-order)
     ! ----------------------------------------------------------------
@@ -158,6 +158,10 @@ contains
           Qmin(ip2) = min( Qmin(ip2), Q2,-abs(Q1) )
         end do
       end if
+
+      call synchronise(Qmin,geom)
+      call synchronise(Qmax,geom)
+
     end subroutine compute_Qmax_and_Qmin
 
     subroutine limit_antidiffusive_velocity
@@ -173,6 +177,9 @@ contains
         rhin(ip2)  = rhin(ip2)  + apos
         rhout(ip2) = rhout(ip2) - aneg
       end do
+
+      call synchronise(rhin,geom)
+      call synchronise(rhout,geom)
 
       do jnode=1,geom%nb_nodes
         cp(jnode) = ( Qmax(jnode)-Q(jnode) )*vol(jnode)/( rhin(jnode) * dt + eps )
@@ -250,6 +257,7 @@ end module mpdata_module
 ! - propagate_state : To propagate the state with a given time step
 ! ===================================================================
 module shallow_water_module
+  use parallel_module
   use common_module
   use datastruct_module
   use mpdata_module, &
@@ -344,7 +352,7 @@ contains
     integer :: jnode
     D => scalar_field("depth",geom)
     do jnode=1,geom%nb_nodes
-      if (geom%internal_mesh%nodes%glb_idx(jnode) .eq. 37006) then
+      if (geom%internal_mesh%nodes%glb_idx(jnode) .eq. 37006 .and. geom%internal_mesh%nodes%proc(jnode) .eq. myproc) then
         write(103,*) D(jnode)
       end if
     end do
@@ -648,9 +656,9 @@ contains
     V => vector_field("advective_velocity",geom)
 
     !    mpdata_gauge( time, variable, velocity, order, limit,  is_vector, geom )
-    call mpdata_gauge( dt,   D,        V,        1,     .True., .False.,   geom )
-    call mpdata_gauge( dt,   Q(:,XX),  V,        1,     .True., .True. ,   geom )
-    call mpdata_gauge( dt,   Q(:,YY),  V,        1,     .True., .True. ,   geom )
+    call mpdata_gauge( dt,   D,        V,        2,     .True., .False.,   geom )
+    call mpdata_gauge( dt,   Q(:,XX),  V,        2,     .True., .True. ,   geom )
+    call mpdata_gauge( dt,   Q(:,YY),  V,        2,     .True., .True. ,   geom )
 
     ! remove noise from periodic boundary... This will dissapear in MPI implementation
     do jnode=1,geom%nb_ghost_nodes

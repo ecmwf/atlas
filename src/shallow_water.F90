@@ -51,8 +51,6 @@ program shallow_water
   call log_info("Program shallow_water start")
   call read_joanna("data/meshvol.d","data/rtable_lin_T255.d", g)
 
-  call write_gmsh_mesh(g%internal_mesh,"data/mesh.msh")
-
   call setup_shallow_water(g)
   call set_state_rossby_haurwitz(g)
   call set_time_step( dt )
@@ -76,34 +74,6 @@ program shallow_water
 
   open(103,file='point.d',access='sequential',status='unknown')
 
-#if 0
-  call create_vector_field_in_nodes( "test_field", g)
-  test_field => vector_field("test_field",g)
-
-  test_field(:,1) = myproc
-  test_field(:,2) = 0.
-
-  do jnode=1,g%nb_nodes
- 
-    test_field(jnode,2) = g%internal_mesh%nodes%glb_idx(jnode)
-
-    if (g%internal_mesh%nodes%proc(jnode) .ne. myproc) then
-      test_field(jnode,:) = -1
-    end if
-
-  end do
-
-  call synchronise("test_field",g)
-
-  do jnode=1,g%nb_nodes
-    if (test_field(jnode,1) .ne. g%internal_mesh%nodes%proc(jnode) ) then
-      write(0,*) "ERROR: proc of node",g%internal_mesh%nodes%glb_idx(jnode)," is wrong"
-    end if
-    if (test_field(jnode,2) .ne. g%internal_mesh%nodes%glb_idx(jnode) ) then
-      write(0,*) "ERROR: idx of node",g%internal_mesh%nodes%glb_idx(jnode)," is wrong"
-    end if
-  end do
-#endif
   do jstep=1,nb_steps 
 
     call step_timer%start()
