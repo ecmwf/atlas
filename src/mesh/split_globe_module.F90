@@ -1002,6 +1002,7 @@ contains
     do jlat=1,ndgl
       read(21,*) idum,nloen(jlat)
     enddo
+    close(21)
     !write(log_str,*) 'number of latitudes,total number of grid-points ',ndgl,sum(nloen); call log_info()
     call split_points(nproc,ndgl,nloen,proc,glb_idx)
   end subroutine split_globe
