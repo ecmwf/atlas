@@ -320,54 +320,62 @@ contains
     call create_vector_field_in_edges("advective_velocity",geom)
   end subroutine setup_shallow_water
 
-  subroutine progress_bar(x,xmin,xmax,divisions)
+  subroutine progress_bar(x,xmin,xmax)
     implicit none
     real(kind=jprb), intent(in) :: x,xmin,xmax
-    integer, intent(in) :: divisions
+    integer, parameter :: divisions = 51
     real(kind=jprb) :: progress_ratio
-    integer :: j,k
-    character(len=divisions) :: spaces
-    character(len=divisions+7)::bar
-    character(len=32) :: fmt_str
-    spaces = " "
-    bar="???% |"//spaces//"|"
-
+    integer, save :: prev_progress = 0
+    integer :: j
+    
     progress_ratio = (x-xmin)/(xmax-xmin)
     j = int(progress_ratio*divisions)
-    write(unit=bar(1:3),fmt="(i3)") int(100*progress_ratio) !divisions*j
-    do k=1, j
-      bar(6+k:6+k)="*"
-    enddo
-    ! print the progress bar.
-    write(fmt_str,*) '(a1,a1,a',divisions+7,')'
-    write(unit=6,fmt=fmt_str, advance='no') ' ', char(13), bar
-    flush(6)
+    if (j .lt. prev_progress) then
+      prev_progress = 0
+    end if
+    if (j .gt. prev_progress) then
+      if (j .eq. 1) then
+        write(0,'(A)') '0%   10   20   30   40   50   60   70   80   90   100'
+        write(0,'(A)') '|----|----|----|----|----|----|----|----|----|----|'
+      end if
+      if (j .ne. divisions) then
+        write(0,'(A,$)') '*'
+        flush(0)
+      else 
+         write(0,'(A)') '*'
+      end if
+      prev_progress = j
+    end if
     return
   end subroutine progress_bar
 
   subroutine propagate_state(dt,geom)
     real(kind=jprb), intent(in) :: dt
     type(DataStructure_type), intent(inout), target :: geom
-    real(kind=jprb) :: tmax, t0, dt_fwd, tstart
+    real(kind=jprb) :: tend, t0, dt_fwd, tstart
     character(len=200) :: step_info
 
-    call log_debug( "Propagating state" )
     tstart   = geom%fields%time
-    tmax     = geom%fields%time+dt
-
-    do while (geom%fields%time < tmax)
+    tend     = geom%fields%time+dt
+    
+    write(log_str,'(A,I10,A,I10)') "Propagating from time ",int(tstart)," to time ",int(tend); call log_info()
+    do while (geom%fields%time < tend)
       t0 = geom%fields%time
-      dt_fwd = min( dt_forward, tmax-t0 )
+      dt_fwd = min( dt_forward, tend-t0 )
       call step_forward(iter,dt_fwd,geom)
 
-      if( myproc .eq. 0 ) then
-        call progress_bar(geom%fields%time,tstart,tmax,100)
+      if( log_level <= LOG_LEVEL_INFO ) then
+        if( myproc .eq. 0 ) then
+          call progress_bar(geom%fields%time,tstart,tend)
+        end if
+      else
+        write(step_info,'(A6,I8,A12,F9.1,A12,F8.1)') "step = ",iter, &
+          & "  time = ",geom%fields%time, &
+          & "  dt = ",dt_fwd
+        call log_info( step_info )
       end if
-      !write(step_info,'(A6,I8,A12,F9.1,A12,F8.1)') "step = ",iter, &
-      !   & "  time = ",geom%fields%time, &
-      !   & "  dt = ",dt_fwd
-      call log_info( step_info )
     end do
+
   end subroutine propagate_state
 
 

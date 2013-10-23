@@ -28,8 +28,8 @@ public :: log_info
 public :: log_debug
 public :: Timer_type
 
-integer :: log_level = 3
-integer :: log_proc = -1 ! means everyone
+integer, public :: log_level = 3
+integer, public :: log_proc = -1 ! means everyone
 character(len=1024), public :: log_str
 public :: str
 

@@ -36,6 +36,7 @@ program shallow_water
   real(kind=jprb), pointer :: test_field(:,:)
   integer :: jnode
 
+
   ! Execution
   call parallel_init()
 
