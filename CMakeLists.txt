@@ -64,12 +64,12 @@ endif( )
 add_library( datastructure
   src/common/parallel_module.F90
   src/common/common_module.F90
-  src/mesh/elements_module.F90
-  src/mesh/lagrangep0_module.F90
-  src/mesh/lagrangep1_module.F90
-  src/mesh/grid_module.F90
-  src/mesh/split_globe_module.F90
-  src/mesh/datastruct_module.F90
+  src/datastructure/elements_module.F90
+  src/datastructure/lagrangep0_module.F90
+  src/datastructure/lagrangep1_module.F90
+  src/datastructure/grid_module.F90
+  src/datastructure/split_globe_module.F90
+  src/datastructure/datastruct_module.F90
   src/io/joanna_module.F90
   src/io/gmsh_module.F90
   src/io/grib_module.F90
@@ -79,11 +79,11 @@ target_link_libraries( datastructure ${TPL} )
 
 # Shallow water executable
 file( COPY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
-add_executable( shallow_water src/shallow_water_module.F90 src/shallow_water.F90 )
+add_executable( shallow_water src/shallow_water/shallow_water_module.F90 src/shallow_water/shallow_water.F90 )
 target_link_libraries( shallow_water datastructure ${TPL} )
 
 # Test for parallelisation
-add_executable( test_sync src/test_sync.F90 )
+add_executable( test_sync src/tests/test_sync.F90 )
 target_link_libraries( test_sync datastructure )
 
 message( STATUS "--------------------------------------------------------------------" )
