@@ -320,35 +320,6 @@ contains
     call create_vector_field_in_edges("advective_velocity",geom)
   end subroutine setup_shallow_water
 
-  subroutine progress_bar(x,xmin,xmax)
-    implicit none
-    real(kind=jprb), intent(in) :: x,xmin,xmax
-    integer, parameter :: divisions = 51
-    real(kind=jprb) :: progress_ratio
-    integer, save :: prev_progress = 0
-    integer :: j
-    
-    progress_ratio = (x-xmin)/(xmax-xmin)
-    j = int(progress_ratio*divisions)
-    if (j .lt. prev_progress) then
-      prev_progress = 0
-    end if
-    if (j .gt. prev_progress) then
-      if (j .eq. 1) then
-        write(0,'(A)') '0%   10   20   30   40   50   60   70   80   90   100'
-        write(0,'(A)') '|----|----|----|----|----|----|----|----|----|----|'
-      end if
-      if (j .ne. divisions) then
-        write(0,'(A,$)') '*'
-        flush(0)
-      else 
-         write(0,'(A)') '*'
-      end if
-      prev_progress = j
-    end if
-    return
-  end subroutine progress_bar
-
   subroutine propagate_state(dt,geom)
     real(kind=jprb), intent(in) :: dt
     type(DataStructure_type), intent(inout), target :: geom

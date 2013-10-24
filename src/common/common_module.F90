@@ -27,6 +27,7 @@ public :: log_warning
 public :: log_info
 public :: log_debug
 public :: Timer_type
+public :: progress_bar
 
 integer, public :: log_level = 3
 integer, public :: log_proc = -1 ! means everyone
@@ -181,5 +182,34 @@ function str_real(re,optional_format) result(str)
     write(str,*) re
   end if
 end function str_real
+
+subroutine progress_bar(x,xmin,xmax)
+  implicit none
+  real(kind=jprb), intent(in) :: x,xmin,xmax
+  integer, parameter :: divisions = 51
+  real(kind=jprb) :: progress_ratio
+  integer, save :: prev_progress = 0
+  integer :: j
+    
+  progress_ratio = (x-xmin)/(xmax-xmin)
+  j = int(progress_ratio*divisions)
+  if (j .lt. prev_progress) then
+    prev_progress = 0
+  end if
+  if (j .gt. prev_progress) then
+    if (j .eq. 1) then
+      write(0,'(A)') '0%   10   20   30   40   50   60   70   80   90   100'
+      write(0,'(A)') '|----|----|----|----|----|----|----|----|----|----|'
+    end if
+    if (j .ne. divisions) then
+      write(0,'(A,$)') '*'
+      flush(0)
+    else 
+       write(0,'(A)') '*'
+    end if
+    prev_progress = j
+  end if
+  return
+end subroutine progress_bar
 
 end module common_module
