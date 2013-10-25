@@ -10,8 +10,7 @@ message( STATUS "MPDATA Shallow Water configuration" )
 get_filename_component (Fortran_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
 if( NOT Fortran_COMPILER_NAME MATCHES "mpi.*" AND NOT Fortran_COMPILER_NAME MATCHES "ftn" )
   message( FATAL_ERROR "MPI Compiler needed.\n"
-    "Please export FC to a MPI compiler such as mpif90 or ftn on Cray, or rerun "
-    "cmake . -DCMAKE_Fortran_COMPILER=mpif90" )
+    "Please remove this build, export FC to a MPI compiler such as mpif90 or ftn on Cray and rerun." )
 endif( )
 
 # make sure that the default build type is a RELEASE
@@ -33,12 +32,12 @@ if( CMAKE_Fortran_COMPILER_ID MATCHES "GNU" )
 elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Intel" )
   set( CMAKE_Fortran_FLAGS_RELEASE "-O3" )
   set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g" )
-  set( CMAKE_Fortran_FLAGS_BIT "-O2" )
+  set( CMAKE_Fortran_FLAGS_BIT     "-O2" )
 
 elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )
   set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -hfp3 -hmpi1 -hscalar3 -hvector3" )
   set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -Gfast -Ktrap=fp -R b" )
-  set( CMAKE_Fortran_FLAGS_BIT "-O2 -hflex_mp=conservative -hadd_paren -hfp1 -hmpi1" )
+  set( CMAKE_Fortran_FLAGS_BIT     "-O2 -hflex_mp=conservative -hadd_paren -hfp1 -hmpi1" )
   add_definitions( -emf ) 
   # -hfp3     : Special optimisation for floating points
   # -Ktrap=fp : Abort on NaN

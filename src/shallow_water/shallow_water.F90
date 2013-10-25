@@ -22,7 +22,7 @@ program shallow_water
 
   ! Configuration parameters
   real(kind=jprb) :: dt = 20.              ! solver time-step
-  integer         :: nb_steps = 3          ! Number of propagations
+  integer         :: nb_steps = 15         ! Number of propagations
   integer         :: hours_per_step = 24   ! Propagation time
   logical         :: write_itermediate_output = .True.
 
@@ -32,10 +32,6 @@ program shallow_water
   real(kind=jprb), parameter :: days  = 24.*hours ! in seconds
   integer :: jstep = 0
   type(Timer_type) :: wallclock_timer, step_timer
-
-  real(kind=jprb), pointer :: test_field(:,:)
-  integer :: jnode
-
 
   ! Execution
   call parallel_init()

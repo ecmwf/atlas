@@ -15,7 +15,7 @@ condition, and simulated for 15 days
 The main program can be found in src/shallow_water.F90. 
 The actual solver routines can be found in the src/shallow_water_module.F90
 
-All other files, especially in the src/mesh, and src/io directory are
+All other files, especially in the src/datastructure, and src/io directory are
 really the underlying data-structure, which is under development and 
 can change at any moment.
 It is not necessary to understand the underlying data-structure to follow
