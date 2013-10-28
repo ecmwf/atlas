@@ -35,13 +35,16 @@ contains
     real(kind=jprb) :: adv(geom%nb_nodes)
     real(kind=jprb) :: aun(geom%nb_edges)
     real(kind=jprb) :: gradQ(geom%nb_nodes,2)
-    real(kind=jprb), pointer :: vol(:), S(:,:)
+    real(kind=jprb), pointer :: vol(:), S(:,:), pole_bc(:)
 
     vol => scalar_field("dual_volumes",geom)
     S   => vector_field("dual_normals",geom)
+    pole_bc => scalar_field("dual_normals",geom)
 
     ! non-oscillatory option
     if( limited .and. (order .ge. 2) ) then
+      Qmax(:)  = -1.e10
+      Qmin(:)  =  1.e10
       call compute_Qmax_and_Qmin()
     end if
 
@@ -102,6 +105,7 @@ contains
 
       ! non-oscillatory option
       if (limited) then
+        !call compute_Qmax_and_Qmin()
         call limit_antidiffusive_velocity()
       endif
 
@@ -127,32 +131,23 @@ contains
   contains
     
     subroutine compute_Qmax_and_Qmin()
-      Qmax(:)  = -1.e10
-      Qmin(:)  =  1.e10
       do jedge = 1,geom%nb_edges
         ip1 = geom%edges(jedge,1)
         ip2 = geom%edges(jedge,2)
         Q1 = Q(ip1)
         Q2 = Q(ip2)
-        Qmax(ip1) = max( Qmax(ip1), Q1, Q2 )
-        Qmin(ip1) = min( Qmin(ip1), Q1, Q2 )
-        Qmax(ip2) = max( Qmax(ip2), Q1, Q2 )
-        Qmin(ip2) = min( Qmin(ip2), Q1, Q2 )
+        if (.not. Q_is_vector) then
+          Qmax(ip1) = max( Qmax(ip1), Q1, Q2 )
+          Qmin(ip1) = min( Qmin(ip1), Q1, Q2 )
+          Qmax(ip2) = max( Qmax(ip2), Q2, Q1 )
+          Qmin(ip2) = min( Qmin(ip2), Q2, Q1 )
+        else
+          Qmax(ip1) = max( Qmax(ip1), Q1, pole_bc(jedge)*Q2 )
+          Qmin(ip1) = min( Qmin(ip1), Q1, pole_bc(jedge)*Q2 )
+          Qmax(ip2) = max( Qmax(ip2), Q2, pole_bc(jedge)*Q1 )
+          Qmin(ip2) = min( Qmin(ip2), Q2, pole_bc(jedge)*Q1 )
+        end if
       end do
-
-      if (Q_is_vector) then
-        do jedge = 1,geom%nb_pole_edges
-          iedge  = geom%pole_edges(jedge)
-          ip1 = geom%edges(iedge,1)
-          ip2 = geom%edges(iedge,2)
-          Q1 = Q(ip1)
-          Q2 = Q(ip2)
-          Qmax(ip1) = max( Qmax(ip1), Q1, abs(Q2) )
-          Qmin(ip1) = min( Qmin(ip1), Q1,-abs(Q2) )
-          Qmax(ip2) = max( Qmax(ip2), Q2, abs(Q1) )
-          Qmin(ip2) = min( Qmin(ip2), Q2,-abs(Q1) )
-        end do
-      end if
 
       call synchronise(Qmin,geom)
       call synchronise(Qmax,geom)
@@ -286,12 +281,14 @@ contains
   subroutine setup_shallow_water(geom)
     type(DataStructure_type), intent(inout) :: geom
     real(kind=jprb) :: y, G, cos_y, sin_y
-    real(kind=jprb), pointer :: coords(:,:), vol(:), hx(:), hy(:), dhxdy_over_G(:), cor(:)
-    integer :: jnode
+    real(kind=jprb), pointer :: coords(:,:), vol(:), hx(:), hy(:), dhxdy_over_G(:), cor(:), pole_bc(:)
+    integer :: jnode, jedge, iedge
     call create_scalar_field_in_nodes("hx",geom)
     call create_scalar_field_in_nodes("hy",geom)
     call create_scalar_field_in_nodes("dhxdy_over_G",geom)
     call create_scalar_field_in_nodes("coriolis",geom)
+    call create_scalar_field_in_edges("pole_bc",geom)
+
 
     coords => vector_field("coordinates",geom)
     vol    => scalar_field("dual_volumes",geom)
@@ -299,6 +296,7 @@ contains
     hy    => scalar_field("hy",geom)
     dhxdy_over_G => scalar_field("dhxdy_over_G",geom)
     cor => scalar_field("coriolis",geom)
+    pole_bc => scalar_field("pole_bc",geom)
     !dir$ ivdep
     do jnode=1,geom%nb_nodes
       y = coords(jnode,YY)
@@ -311,6 +309,12 @@ contains
       dhxdy_over_G(jnode) = - sin_y/(radius*max(eps,cos_y))
       cor(jnode) = f0*sin_y
     enddo
+
+    pole_bc(:) = 1.
+    do jedge=1,geom%nb_pole_edges
+      iedge = geom%pole_edges(jedge)
+      pole_bc(iedge) = -1.
+    end do
 
     call create_scalar_field_in_nodes("depth",geom)
     call create_vector_field_in_nodes("momentum",geom)
