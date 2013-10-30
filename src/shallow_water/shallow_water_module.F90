@@ -298,12 +298,11 @@ contains
   subroutine setup_shallow_water(geom)
     type(DataStructure_type), intent(inout) :: geom
     real(kind=jprb) :: y, G, cos_y, sin_y
-    real(kind=jprb), pointer :: coords(:,:), vol(:), hx(:), hy(:), dhxdy_over_G(:), cor(:), pole_bc(:)
+    real(kind=jprb), pointer :: coords(:,:), vol(:), hx(:), hy(:), dhxdy_over_G(:), pole_bc(:)
     integer :: jnode, jedge, iedge
     call create_scalar_field_in_nodes("hx",geom)
     call create_scalar_field_in_nodes("hy",geom)
     call create_scalar_field_in_nodes("dhxdy_over_G",geom)
-    call create_scalar_field_in_nodes("coriolis",geom)
     call create_scalar_field_in_edges("pole_bc",geom)
 
 
@@ -312,7 +311,6 @@ contains
     hx    => scalar_field("hx",geom)
     hy    => scalar_field("hy",geom)
     dhxdy_over_G => scalar_field("dhxdy_over_G",geom)
-    cor => scalar_field("coriolis",geom)
     pole_bc => scalar_field("pole_bc",geom)
     !dir$ ivdep
     do jnode=1,geom%nb_nodes
@@ -324,7 +322,6 @@ contains
       G = hx(jnode)*hy(jnode)
       vol(jnode) = vol(jnode)*G
       dhxdy_over_G(jnode) = - sin_y/(radius*max(eps,cos_y))
-      cor(jnode) = f0*sin_y
     enddo
 
     pole_bc(:) = 1.
@@ -333,6 +330,7 @@ contains
       pole_bc(iedge) = -1.
     end do
 
+    call create_scalar_field_in_nodes("coriolis",geom)
     call create_scalar_field_in_nodes("depth",geom)
     call create_vector_field_in_nodes("momentum",geom)
     call create_vector_field_in_nodes("momentum_forcing",geom)
@@ -405,10 +403,10 @@ contains
 
   subroutine set_state_rossby_haurwitz(geom)
     type(DataStructure_type), intent(inout)      :: geom
-    real(kind=jprb), dimension(:), pointer   :: D
+    real(kind=jprb), dimension(:), pointer   :: D, cor
     real(kind=jprb), dimension(:,:), pointer :: Q, coords
     integer :: jnode, ir
-    real(kind=jprb) :: aaa0,zk,om,ph0,g,x,y
+    real(kind=jprb) :: aaa0,zk,om,ph0,g,x,y, sin_y, cos_y
 
     om   = 7.848E-6
     zk   = 7.848E-6
@@ -416,17 +414,21 @@ contains
     ph0  = 78.4E3
     aaa0 = 0.
 
+    coords => vector_field("coordinates",geom)
+    cor => scalar_field("coriolis",geom)
     D => scalar_field("depth",geom)
     Q => vector_field("momentum",geom)
-    coords => vector_field("coordinates",geom)
 
     do jnode=1,geom%nb_nodes
       x=coords(jnode,XX)
       y=coords(jnode,YY)
+      sin_y = sin(y)
+      cos_y = cos(y)
+      cor(jnode) = f0*sin_y
       if(x == 2._jprb*pi) x=0.
-      Q(jnode,XX) =  radius*om*cos(y)+radius*zk*cos(ir*x) *(cos(y))**(ir-1._jprb) &
-        &            * (ir*(sin(y))**2-(cos(y))**2)
-      Q(jnode,YY) = -radius*zk*ir*(cos(y))**(ir-1._jprb)*sin(y)*sin(ir*x)
+      Q(jnode,XX) =  radius*om*cos_y+radius*zk*cos(ir*x) * cos_y**(ir-1._jprb) &
+        &            * (ir*(sin_y)**2-cos_y**2)
+      Q(jnode,YY) = -radius*zk*ir*cos_y**(ir-1._jprb)*sin_y*sin(ir*x)
       D(jnode) = (ph0+radius**2*fa(y)+radius**2*fb(y)*cos(ir*x) &
         &        +radius**2*fc(y)*cos(2._jprb*ir*x)) / grav
       D(jnode) = max(aaa0,D(jnode))
@@ -469,7 +471,7 @@ contains
     real(kind=jprb), parameter :: USCAL = 20.
     real(kind=jprb), parameter :: H00 = grav * 8e3
     real(kind=jprb), parameter :: pvel = USCAL/radius
-    real(kind=jprb), parameter :: beta = 0.5_jprb*pi
+    real(kind=jprb), parameter :: beta = 0.
 
 
     coords => vector_field("coordinates",geom)
