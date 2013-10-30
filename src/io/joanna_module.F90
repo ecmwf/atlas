@@ -202,6 +202,38 @@ contains
       g%ghost_nodes(jnode,2) = ip2
     end do
 
+    allocate(g%nb_neighbours(g%nb_nodes))
+    g%nb_neighbours(:) = 0
+    do jedge = 1,g%nb_edges
+      ip1 = g%edges(jedge,1)
+      ip2 = g%edges(jedge,2)
+      g%nb_neighbours(ip1) = g%nb_neighbours(ip1)+1
+      g%nb_neighbours(ip2) = g%nb_neighbours(ip2)+1
+    enddo
+    g%max_nb_neighbours = maxval(g%nb_neighbours(:))
+    write(0,*) 'g%max_nb_neighbours  1',g%max_nb_neighbours, minval(g%nb_neighbours(:))
+    allocate(g%neighbours(g%max_nb_neighbours,g%nb_nodes))
+    allocate(g%my_edges(g%max_nb_neighbours,g%nb_nodes))
+    allocate(g%sign(g%max_nb_neighbours,g%nb_nodes))
+    g%nb_neighbours(:) = 0
+    do jedge = 1,g%nb_edges
+      ip1 = g%edges(jedge,1)
+      ip2 = g%edges(jedge,2)
+      g%nb_neighbours(ip1) = g%nb_neighbours(ip1)+1
+      g%neighbours(g%nb_neighbours(ip1),ip1) = ip2
+      g%my_edges(g%nb_neighbours(ip1),ip1) = jedge
+      g%sign(g%nb_neighbours(ip1),ip1) = 1
+      g%nb_neighbours(ip2) = g%nb_neighbours(ip2)+1
+      g%neighbours(g%nb_neighbours(ip2),ip2) = ip1
+      g%my_edges(g%nb_neighbours(ip2),ip2) = jedge
+      g%sign(g%nb_neighbours(ip2),ip2) = -1
+    enddo
+    if(myproc == 5) then
+      write(0,*) 'g%nb_nodes ',g%nb_nodes
+      do jnode = 1,g%nb_nodes
+        write(0,*) 'neighbours ',jnode,g%nb_neighbours(jnode),g%neighbours(1:g%nb_neighbours(jnode),jnode)
+      enddo
+    endif
     close(5)
 
   end subroutine read_joanna
