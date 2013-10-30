@@ -20,6 +20,10 @@ if( NOT CMAKE_BUILD_TYPE )
 endif( NOT CMAKE_BUILD_TYPE )
 string( TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE )
 
+if( NOT CMAKE_BUILD_TYPE MATCHES "DEBUG" )
+  add_definitions( -DNDEBUG )
+endif( )
+
 # FFLAGS depend on the compiler
 if( CMAKE_Fortran_COMPILER_ID MATCHES "GNU" )
   set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -fstack-arrays -funroll-all-loops" )
@@ -35,10 +39,9 @@ elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Intel" )
   set( CMAKE_Fortran_FLAGS_BIT     "-O2" )
 
 elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )
-  set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -hfp3 -hmpi1 -hscalar3 -hvector3" )
-  set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -Gfast -Ktrap=fp -R b" )
-  set( CMAKE_Fortran_FLAGS_BIT     "-O2 -hflex_mp=conservative -hadd_paren -hfp1 -hmpi1" )
-  add_definitions( -emf ) 
+  set( CMAKE_Fortran_FLAGS_RELEASE "-emf -O3 -hfp3 -hmpi1 -hscalar3 -hvector3" )
+  set( CMAKE_Fortran_FLAGS_DEBUG   "-emf -O0 -Gfast -Ktrap=fp -R b" )
+  set( CMAKE_Fortran_FLAGS_BIT     "-emf -O2 -hflex_mp=conservative -hadd_paren -hfp1 -hmpi1" )
   # -hfp3     : Special optimisation for floating points
   # -Ktrap=fp : Abort on NaN
   # -R b      : Bounds checking
@@ -58,6 +61,8 @@ if( GRIB_API_DIR )
 else( )
   message( STATUS "Grib disabled : To enable, run \"cmake . -DGRIB_API_DIR=path/to/grib\"" )
 endif( )
+
+include_directories( src )
 
 # Datastructure library
 add_library( datastructure
@@ -85,9 +90,12 @@ target_link_libraries( shallow_water datastructure ${TPL} )
 add_executable( test_sync src/tests/test_sync.F90 )
 target_link_libraries( test_sync datastructure )
 
+get_directory_property( defs COMPILE_DEFINITIONS )
+
 message( STATUS "--------------------------------------------------------------------" )
 message( STATUS "Build   : ${CMAKE_BUILD_TYPE}" )
 message( STATUS "Fortran : ${Fortran_COMPILER_NAME} -- ${CMAKE_Fortran_COMPILER_ID} ${CMAKE_Fortran_COMPILER_VERSION}" )
 message( STATUS "Flags   : ${CMAKE_Fortran_FLAGS_${CMAKE_BUILD_TYPE}}" )
+message( STATUS "Defines : ${defs}")
 message( STATUS "--------------------------------------------------------------------" )
 

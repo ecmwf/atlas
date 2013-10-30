@@ -4,6 +4,7 @@
 ! - mpdata_gauge       : Non-oscillatory variable sign MPDATA advection
 ! - compute_gradient   : Compute gradient of a scalar array
 ! =====================================================================
+#include "common/assertions.h"
 module mpdata_module
   use common_module
   use datastruct_module
@@ -13,7 +14,7 @@ module mpdata_module
   public :: mpdata_gauge
   public :: compute_gradient
 
-  real(kind=jprb), parameter :: eps  = 1.e-10
+  real(kind=jprb), parameter :: eps  = 1.e-6
 
 contains
 
@@ -39,12 +40,12 @@ contains
 
     vol => scalar_field("dual_volumes",geom)
     S   => vector_field("dual_normals",geom)
-    pole_bc => scalar_field("dual_normals",geom)
+    pole_bc => scalar_field("pole_bc",geom)
 
     ! non-oscillatory option
     if( limited .and. (order .ge. 2) ) then
-      Qmax(:)  = -1.e10
-      Qmin(:)  =  1.e10
+      Qmax(:) = -1e10
+      Qmin(:) =  1e10
       call compute_Qmax_and_Qmin()
     end if
 
@@ -131,22 +132,30 @@ contains
   contains
     
     subroutine compute_Qmax_and_Qmin()
+      real(kind=jprb) :: mn(geom%nb_nodes)
+      real(kind=jprb) :: mx(geom%nb_nodes)
+      mn(:) =  1e10
+      mx(:) = -1e10
       do jedge = 1,geom%nb_edges
         ip1 = geom%edges(jedge,1)
         ip2 = geom%edges(jedge,2)
         Q1 = Q(ip1)
         Q2 = Q(ip2)
         if (.not. Q_is_vector) then
-          Qmax(ip1) = max( Qmax(ip1), Q1, Q2 )
-          Qmin(ip1) = min( Qmin(ip1), Q1, Q2 )
-          Qmax(ip2) = max( Qmax(ip2), Q2, Q1 )
-          Qmin(ip2) = min( Qmin(ip2), Q2, Q1 )
+          mx(ip1) = max( mx(ip1), Q1, Q2 )
+          mn(ip1) = min( mn(ip1), Q1, Q2 )
+          mx(ip2) = max( mx(ip2), Q2, Q1 )
+          mn(ip2) = min( mn(ip2), Q2, Q1 )
         else
-          Qmax(ip1) = max( Qmax(ip1), Q1, pole_bc(jedge)*Q2 )
-          Qmin(ip1) = min( Qmin(ip1), Q1, pole_bc(jedge)*Q2 )
-          Qmax(ip2) = max( Qmax(ip2), Q2, pole_bc(jedge)*Q1 )
-          Qmin(ip2) = min( Qmin(ip2), Q2, pole_bc(jedge)*Q1 )
+          mx(ip1) = max( mx(ip1), Q1, pole_bc(jedge)*Q2 )
+          mn(ip1) = min( mn(ip1), Q1, pole_bc(jedge)*Q2 )
+          mx(ip2) = max( mx(ip2), Q2, pole_bc(jedge)*Q1 )
+          mn(ip2) = min( mn(ip2), Q2, pole_bc(jedge)*Q1 )
         end if
+      end do
+      do jnode=1,geom%nb_nodes
+        Qmin(jnode) = min(mn(jnode), Qmin(jnode))
+        Qmax(jnode) = max(mx(jnode), Qmax(jnode))
       end do
 
       call synchronise(Qmin,geom)
@@ -155,16 +164,21 @@ contains
     end subroutine compute_Qmax_and_Qmin
 
     subroutine limit_antidiffusive_velocity
+      real(kind=jprb), parameter :: limit = 0.9925  ! 1: second order, 0: first order
+
       rhin(:)  =  0.
       rhout(:) =  0.
       do jedge = 1,geom%nb_edges
         ip1 = geom%edges(jedge,1)
         ip2 = geom%edges(jedge,2)
+
         apos = max(0._jprb,aun(jedge))
         aneg = min(0._jprb,aun(jedge))
+
         rhin(ip1)  = rhin(ip1)  - aneg
-        rhout(ip1) = rhout(ip1) + apos
         rhin(ip2)  = rhin(ip2)  + apos
+
+        rhout(ip1) = rhout(ip1) + apos
         rhout(ip2) = rhout(ip2) - aneg
       end do
 
@@ -180,11 +194,12 @@ contains
         ip1 = geom%edges(jedge,1)
         ip2 = geom%edges(jedge,2)
         if(aun(jedge) > 0._jprb) then
-          aun(jedge)=aun(jedge)*min(1._jprb,cp(ip2),cn(ip1))
+          aun(jedge)=aun(jedge)*min(limit,cp(ip2),cn(ip1))
         else
-          aun(jedge)=aun(jedge)*min(1._jprb,cn(ip2),cp(ip1))
+          aun(jedge)=aun(jedge)*min(limit,cn(ip2),cp(ip1))
         endif
       enddo
+
     end subroutine limit_antidiffusive_velocity
 
   end subroutine mpdata_gauge
@@ -195,7 +210,7 @@ contains
     real(kind=jprb), intent(inout) :: gradQ(:,:)
     logical, intent(in) :: Q_is_vector
     real(kind=jprb), pointer :: S(:,:)
-    real(kind=jprb) :: Sx,Sy,avgQ
+    real(kind=jprb) :: Sx,Sy,avgQ,avgQ_pole
     integer :: jedge,iedge,ip1,ip2
 
     S   => vector_field("dual_normals",geom)
@@ -222,11 +237,12 @@ contains
         iedge = geom%pole_edges(jedge)
         ip1   = geom%edges(iedge,1)
         ip2   = geom%edges(iedge,2)
-        Sy   = S(iedge,YY)
-        avgQ = ( Q(ip1) + Q(ip2) )*0.5_jprb
-        ! correct for wrongly subtracting sy*avgQ in previous loop,
-        ! instead of adding, because point at other side of pole
-        gradQ(ip2,YY) = gradQ(ip2,YY) + 2*Sy*avgQ 
+        Sy    = S(iedge,YY)
+        avgQ  = ( Q(ip1) + Q(ip2) )*0.5_jprb
+
+        ! correct for wrong Y-derivatives in previous loop,
+        gradQ(ip2,YY) = gradQ(ip2,YY) + 2._jprb*Sy*avgQ 
+
       end do
     end if
   end subroutine compute_gradient
@@ -259,9 +275,10 @@ module shallow_water_module
   public :: setup_shallow_water 
   public :: propagate_state
   public :: set_state_rossby_haurwitz
+  public :: set_state_zonal_flow
   public :: set_time_step
 
-  real(kind=jprb), parameter :: eps    = 1.e-10
+  real(kind=jprb), parameter :: eps    = 1.e-6
   real(kind=jprb), parameter :: radius = 6371.22e+03
   real(kind=jprb), parameter :: f0     = 1.4584e-04 !coriolis parameter (=2xearth's omega)
   real(kind=jprb), parameter :: grav   = 9.80616
@@ -333,6 +350,7 @@ contains
     tstart   = geom%fields%time
     tend     = geom%fields%time+dt
     
+    call log_info(" ")
     write(log_str,'(A,I10,A,I10)') "Propagating from time ",int(tstart)," to time ",int(tend); call log_info()
     do while (geom%fields%time < tend)
       t0 = geom%fields%time
@@ -354,17 +372,6 @@ contains
   end subroutine propagate_state
 
 
-  subroutine write_point(geom)
-    type(DataStructure_type), intent(inout), target :: geom
-    real(kind=jprb), pointer :: D(:)
-    integer :: jnode
-    D => scalar_field("depth",geom)
-    do jnode=1,geom%nb_nodes
-      if (geom%internal_mesh%nodes%glb_idx(jnode) .eq. 37006 .and. geom%internal_mesh%nodes%proc(jnode) .eq. myproc) then
-        write(103,*) D(jnode)
-      end if
-    end do
-  end subroutine
 
 
   subroutine step_forward(step,dt,geom)
@@ -373,9 +380,10 @@ contains
     type(DataStructure_type), intent(inout) :: geom
 
     if (step == 0) then ! Pre-compute forcing
+      call compute_forcing(geom)
+
       call backup_solution(geom)
       call compute_advective_velocities(dt,geom,"extrapolate")
-      call compute_forcing(geom)
     end if
     
     call add_forcing_to_solution(dt,geom)
@@ -383,11 +391,9 @@ contains
 
     call implicit_solve(dt,geom)
 
-    call compute_advective_velocities(dt,geom,"advect")
+    call compute_advective_velocities(dt,geom,"extrapolate")
 
     call backup_solution(geom)
-
-    call write_point(geom)
 
     geom%fields%time = geom%fields%time+dt
     step = step+1
@@ -454,6 +460,33 @@ contains
   end subroutine set_state_rossby_haurwitz
 
 
+  subroutine set_state_zonal_flow(geom)
+    type(DataStructure_type), intent(inout)      :: geom
+    real(kind=jprb), dimension(:), pointer   :: D, cor
+    real(kind=jprb), dimension(:,:), pointer :: Q, coords
+    integer :: jnode, ir
+    real(kind=jprb) :: x,y
+    real(kind=jprb), parameter :: USCAL = 20.
+    real(kind=jprb), parameter :: H00 = grav * 8e3
+    real(kind=jprb), parameter :: pvel = USCAL/radius
+    real(kind=jprb), parameter :: beta = 0.5_jprb*pi
+
+
+    coords => vector_field("coordinates",geom)
+    D => scalar_field("depth",geom)
+    Q => vector_field("momentum",geom)
+    cor => scalar_field("coriolis",geom)
+
+    do jnode=1,geom%nb_nodes
+      x=coords(jnode,XX)
+      y=coords(jnode,YY)
+      cor(jnode)   = f0 *( -cos(x)*cos(y)*sin(beta)+sin(y)*cos(beta) )
+      D(jnode)     = (H00-radius**2*(f0+pvel)*0.5*pvel*(-cos(x)*cos(y)*sin(beta)+sin(y)*cos(beta))**2)
+      D(jnode)     = max(0., D(jnode)/grav)
+      Q(jnode,XX)  =  pvel*(cos(beta)+tan(y)*cos(x)*sin(beta))*radius*cos(y) * D(jnode)
+      Q(jnode,YY)  = -pvel*sin(x)*sin(beta)*radius * D(jnode)
+    end do
+  end subroutine set_state_zonal_flow
 
   subroutine backup_solution(geom)
     type(DataStructure_type), intent(inout) :: geom
@@ -485,6 +518,7 @@ contains
     real(kind=jprb), dimension(:),   pointer :: D, D0, hx, hy, vol
     real(kind=jprb), dimension(:,:), pointer :: Q, Q0, R, Vedges, coords
     real(kind=jprb) :: Vnodes(geom%nb_nodes,2), grad_Vx(geom%nb_nodes,2), grad_Vy(geom%nb_nodes,2)
+
     coords => vector_field("coordinates",geom)
     Vedges => vector_field("advective_velocity",geom)
     D      => scalar_field("depth",geom)
@@ -500,8 +534,10 @@ contains
     if( option .eq. "advect") then
       do jnode=1,nb_nodes
         Dmod = max(D(jnode), eps)
-        Vnodes(jnode,XX)=Q(jnode,XX)/Dmod
-        Vnodes(jnode,YY)=Q(jnode,YY)/Dmod
+        Rx = R(jnode,XX)
+        Ry = R(jnode,YY)
+        Vnodes(jnode,XX)=(Q(jnode,XX)+0.5*dt*Rx)/Dmod 
+        Vnodes(jnode,YY)=(Q(jnode,YY)+0.5*dt*Ry)/Dmod
       end do
       call compute_gradient( Vnodes(:,XX), grad_Vx, .True., geom )
       call compute_gradient( Vnodes(:,YY), grad_Vy, .True., geom )
@@ -518,8 +554,8 @@ contains
         dVydx = grad_Vy(jnode,YY)*hy(jnode)/vol(jnode)    
         dVydy = grad_Vy(jnode,YY)*hx(jnode)/vol(jnode)
 
-        Vnodes(jnode,XX) = ( Vx - 0.5*dt*(Vx*dVxdx+Vy*dVxdy) + 0.5*dt*Rx/Dmod ) * hy(jnode)
-        Vnodes(jnode,YY) = ( Vy - 0.5*dt*(Vx*dVydx+Vy*dVydy) + 0.5*dt*Ry/Dmod ) * hx(jnode)
+        Vnodes(jnode,XX) = ( Vx - 0.5*dt*(Vx*dVxdx+Vy*dVxdy)) * hy(jnode)
+        Vnodes(jnode,YY) = ( Vy - 0.5*dt*(Vx*dVydx+Vy*dVydy)) * hx(jnode)
       enddo
       call synchronise( Vnodes, geom )
     else if( option .eq. "extrapolate") then

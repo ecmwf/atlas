@@ -16,12 +16,13 @@ program shallow_water
   use shallow_water_module, only: &
     & setup_shallow_water, &
     & set_state_rossby_haurwitz, &
+    & set_state_zonal_flow, &
     & set_time_step, &
     & propagate_state
   implicit none
 
   ! Configuration parameters
-  real(kind=jprb) :: dt = 10.              ! solver time-step
+  real(kind=jprb) :: dt = 20.              ! solver time-step
   integer         :: nb_steps = 15         ! Number of propagations
   integer         :: hours_per_step = 24   ! Propagation time
   logical         :: write_itermediate_output = .True.
@@ -44,6 +45,7 @@ program shallow_water
 
   call setup_shallow_water(g)
   call set_state_rossby_haurwitz(g)
+  !call set_state_zonal_flow(g)
   call set_time_step( dt )
 
   call log_info( "+------------------------------+" )
@@ -63,8 +65,6 @@ program shallow_water
 
   call wallclock_timer%start()
 
-  open(103,file='point.d',access='sequential',status='unknown')
-
   do jstep=1,nb_steps 
 
     call step_timer%start()
@@ -79,8 +79,6 @@ program shallow_water
     if (write_itermediate_output) call write_fields
 
   end do ! steps
-
-  close(103)
 
   ! Write last step anyway if intermediate output is disabled
   if (.not. write_itermediate_output) call write_fields()

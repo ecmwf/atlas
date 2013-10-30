@@ -1,8 +1,6 @@
 #ifndef common_assertions_h
 #define common_assertions_h
 
-#define NDEBUG
-
 #ifndef NDEBUG
 #define assert(ASSERTION) \
 if( .not. (ASSERTION) ) then; \
@@ -24,3 +22,10 @@ endif;
 #endif
 
 #endif 
+
+
+#define assert_always(ASSERTION) \
+if( .not. (ASSERTION) ) then; \
+write(0,*) "Assertion failed: ASSERTION"; \
+call abort; \
+endif;

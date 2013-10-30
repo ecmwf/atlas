@@ -7,6 +7,7 @@ save
 
 private
 
+!integer, parameter, public :: jprb = selected_real_kind(13,300)
 integer, parameter, public :: jprb = selected_real_kind(13,300)
 integer, parameter, public :: jpim = selected_int_kind(9)
 
