@@ -3,7 +3,7 @@
 ! This module extends the elements_module module with concrete implementations
 ! for Lagrange P1 shape functions and element types
 module lagrangep1_module
-  use common_module, only: jprb, log_debug
+  use common_module, only: jprw, log_debug
   use elements_module, only: Element, Shapefunction_class
   implicit none
   public
@@ -74,8 +74,8 @@ contains
 
   subroutine LagrangeP1_Line__values( self, local_coord, values )
     class(LagrangeP1_Line), intent(in) :: self
-    real(kind=jprb), dimension(:), intent(in) :: local_coord
-    real(kind=jprb), dimension(:), intent(inout) :: values
+    real(kind=jprw), dimension(:), intent(in) :: local_coord
+    real(kind=jprw), dimension(:), intent(inout) :: values
     values(1) = 0.5 * (1.-local_coord(1))
     values(2) = 0.5 * (1.+local_coord(1))
     call log_debug( "LagrangeP1_Line::values" )
@@ -83,8 +83,8 @@ contains
 
   subroutine LagrangeP1_Line__grad_values( self, local_coord, grad_values )
     class(LagrangeP1_Line), intent(in) :: self
-    real(kind=jprb), dimension(:), intent(in) :: local_coord
-    real(kind=jprb), dimension(:,:), intent(inout) :: grad_values
+    real(kind=jprw), dimension(:), intent(in) :: local_coord
+    real(kind=jprw), dimension(:,:), intent(inout) :: grad_values
 
     grad_values(1,1) = -0.5
     grad_values(1,2) = +0.5
@@ -111,17 +111,17 @@ contains
     
     subroutine LagrangeP1_Line2D__jacobian( self, local_coord, elem_coords, jacobian )
     class(LagrangeP1_Line2D), intent(in)    :: self
-    real(kind=jprb), dimension(:),        intent(in)    :: local_coord
-    real(kind=jprb), dimension(:,:),      intent(in)    :: elem_coords
-    real(kind=jprb), dimension(:,:),      intent(inout) :: jacobian
+    real(kind=jprw), dimension(:),        intent(in)    :: local_coord
+    real(kind=jprw), dimension(:,:),      intent(in)    :: elem_coords
+    real(kind=jprw), dimension(:,:),      intent(inout) :: jacobian
     call log_debug( "LagrangeP1_Line2D::jacobian()" )
   end subroutine LagrangeP1_Line2D__jacobian
 
   subroutine LagrangeP1_Line2D__jacobian_determinant( self, local_coord, elem_coords, jacobian_determinant )
     class(LagrangeP1_Line2D), intent(in)   :: self
-    real(kind=jprb), dimension(:),       intent(in)   :: local_coord
-    real(kind=jprb), dimension(:,:),     intent(in)   :: elem_coords
-    real(kind=jprb), intent(out) :: jacobian_determinant
+    real(kind=jprw), dimension(:),       intent(in)   :: local_coord
+    real(kind=jprw), dimension(:,:),     intent(in)   :: elem_coords
+    real(kind=jprw), intent(out) :: jacobian_determinant
     jacobian_determinant = 0.
     call log_debug( "LagrangeP1_Line2D::jacobian_determinant()" )
   end subroutine LagrangeP1_Line2D__jacobian_determinant
@@ -149,8 +149,8 @@ contains
 
   subroutine LagrangeP1_Quad__values( self, local_coord, values )
     class(LagrangeP1_Quad), intent(in) :: self
-    real(kind=jprb), dimension(:), intent(in) :: local_coord
-    real(kind=jprb), dimension(:), intent(inout) :: values
+    real(kind=jprw), dimension(:), intent(in) :: local_coord
+    real(kind=jprw), dimension(:), intent(inout) :: values
     values(1) = 0.25 * (1.-local_coord(1)) * (1.-local_coord(2))
     values(2) = 0.25 * (1.+local_coord(1)) * (1.-local_coord(2))
     values(3) = 0.25 * (1.+local_coord(1)) * (1.+local_coord(2))
@@ -160,8 +160,8 @@ contains
 
   subroutine LagrangeP1_Quad__grad_values( self, local_coord, grad_values )
     class(LagrangeP1_Quad), intent(in) :: self
-    real(kind=jprb), dimension(:), intent(in) :: local_coord
-    real(kind=jprb), dimension(:,:), intent(inout) :: grad_values
+    real(kind=jprw), dimension(:), intent(in) :: local_coord
+    real(kind=jprw), dimension(:,:), intent(inout) :: grad_values
 
     grad_values(1,1) = 0.25 * (-1.+local_coord(2))
     grad_values(1,2) = 0.25 * ( 1.-local_coord(2))
@@ -195,10 +195,10 @@ contains
     
     subroutine LagrangeP1_Quad2D__jacobian( self, local_coord, elem_coords, jacobian )
     class(LagrangeP1_Quad2D), intent(in)    :: self
-    real(kind=jprb), dimension(:),        intent(in)    :: local_coord
-    real(kind=jprb), dimension(:,:),      intent(in)    :: elem_coords
-    real(kind=jprb), dimension(:,:),      intent(inout) :: jacobian
-    real(kind=jprb) :: ax,bx,cx,dx,ay,by,cy,dy
+    real(kind=jprw), dimension(:),        intent(in)    :: local_coord
+    real(kind=jprw), dimension(:,:),      intent(in)    :: elem_coords
+    real(kind=jprw), dimension(:,:),      intent(inout) :: jacobian
+    real(kind=jprw) :: ax,bx,cx,dx,ay,by,cy,dy
     !ax = 0.25*( elem_coords(1,1) + elem_coords(2,1) + elem_coords(3,1) + elem_coords(4,1) )
     bx = 0.25*(-elem_coords(1,1) + elem_coords(2,1) + elem_coords(3,1) - elem_coords(4,1) )
     cx = 0.25*(-elem_coords(1,1) - elem_coords(2,1) + elem_coords(3,1) + elem_coords(4,1) )
@@ -216,11 +216,11 @@ contains
 
   subroutine LagrangeP1_Quad2D__jacobian_inverse( self, local_coord, elem_coords, jacobian_inverse )
     class(LagrangeP1_Quad2D), intent(in)    :: self
-    real(kind=jprb), dimension(:),        intent(in)    :: local_coord
-    real(kind=jprb), dimension(:,:),      intent(in)    :: elem_coords
-    real(kind=jprb), dimension(:,:),      intent(inout) :: jacobian_inverse
-    real(kind=jprb), dimension(2,2) :: J
-    real(kind=jprb) :: one_over_Jdet
+    real(kind=jprw), dimension(:),        intent(in)    :: local_coord
+    real(kind=jprw), dimension(:,:),      intent(in)    :: elem_coords
+    real(kind=jprw), dimension(:,:),      intent(inout) :: jacobian_inverse
+    real(kind=jprw), dimension(2,2) :: J
+    real(kind=jprw) :: one_over_Jdet
     call self%jacobian( local_coord, elem_coords, J )
     one_over_Jdet = 1./(J(1,1)*J(2,2)-J(1,2)*J(2,1)) 
     jacobian_inverse(1,1) =  one_over_Jdet*J(2,2)
@@ -252,8 +252,8 @@ contains
 
   subroutine LagrangeP1_Triag__values( self, local_coord, values )
     class(LagrangeP1_Triag), intent(in) :: self
-    real(kind=jprb), dimension(:), intent(in) :: local_coord
-    real(kind=jprb), dimension(:), intent(inout) :: values
+    real(kind=jprw), dimension(:), intent(in) :: local_coord
+    real(kind=jprw), dimension(:), intent(inout) :: values
     values(1) = 1. - local_coord(1) - local_coord(2)
     values(2) = local_coord(1)
     values(3) = local_coord(2)
@@ -262,8 +262,8 @@ contains
 
   subroutine LagrangeP1_Triag__grad_values( self, local_coord, grad_values )
     class(LagrangeP1_Triag), intent(in) :: self
-    real(kind=jprb), dimension(:), intent(in) :: local_coord
-    real(kind=jprb), dimension(:,:), intent(inout) :: grad_values
+    real(kind=jprw), dimension(:), intent(in) :: local_coord
+    real(kind=jprw), dimension(:,:), intent(inout) :: grad_values
     ! Notice that this is in fact independent of the local_coord
     grad_values(1,1) = -1.
     grad_values(1,2) =  1.
@@ -295,9 +295,9 @@ contains
 
   subroutine LagrangeP1_Triag2D__jacobian( self, local_coord, elem_coords, jacobian )
     class(LagrangeP1_Triag2D), intent(in)    :: self
-    real(kind=jprb), dimension(:),        intent(in)    :: local_coord
-    real(kind=jprb), dimension(:,:),      intent(in)    :: elem_coords
-    real(kind=jprb), dimension(:,:),      intent(inout) :: jacobian
+    real(kind=jprw), dimension(:),        intent(in)    :: local_coord
+    real(kind=jprw), dimension(:,:),      intent(in)    :: elem_coords
+    real(kind=jprw), dimension(:,:),      intent(inout) :: jacobian
     ! Notice that this is in fact independent of the local_coord
     jacobian(1,1) = elem_coords(2,1) - elem_coords(1,1)
     jacobian(1,2) = elem_coords(2,2) - elem_coords(1,2)
@@ -308,11 +308,11 @@ contains
 
   subroutine LagrangeP1_Triag2D__jacobian_inverse( self, local_coord, elem_coords, jacobian_inverse )
     class(LagrangeP1_Triag2D), intent(in)    :: self
-    real(kind=jprb), dimension(:),        intent(in)    :: local_coord
-    real(kind=jprb), dimension(:,:),      intent(in)    :: elem_coords
-    real(kind=jprb), dimension(:,:),      intent(inout) :: jacobian_inverse
-    real(kind=jprb), dimension(2,2) :: J
-    real(kind=jprb) :: one_over_Jdet
+    real(kind=jprw), dimension(:),        intent(in)    :: local_coord
+    real(kind=jprw), dimension(:,:),      intent(in)    :: elem_coords
+    real(kind=jprw), dimension(:,:),      intent(inout) :: jacobian_inverse
+    real(kind=jprw), dimension(2,2) :: J
+    real(kind=jprw) :: one_over_Jdet
     call self%jacobian( local_coord, elem_coords, J )
     one_over_Jdet = 1./(J(1,1)*J(2,2)-J(1,2)*J(2,1)) 
     jacobian_inverse(1,1) =  one_over_Jdet*J(2,2)

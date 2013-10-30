@@ -14,29 +14,29 @@ module mpdata_module
   public :: mpdata_gauge
   public :: compute_gradient
 
-  real(kind=jprb), parameter :: eps  = 1.e-6
+  real(kind=jprw), parameter :: eps  = 1.e-6
 
 contains
 
   subroutine mpdata_gauge(dt,Q,V,order,limited,Q_is_vector,geom)
-    real(kind=jprb), intent(in)  :: dt
+    real(kind=jprw), intent(in)  :: dt
     type(DataStructure_type), intent(inout) :: geom
-    real(kind=jprb), intent(inout) :: Q(:)
-    real(kind=jprb), intent(in) :: V(:,:)
+    real(kind=jprw), intent(inout) :: Q(:)
+    real(kind=jprw), intent(in) :: V(:,:)
     logical, intent(in) :: Q_is_vector, limited
     integer, intent(in) :: order
     integer :: jnode, jedge, iedge, jpass, ip1,ip2
-    real(kind=jprb) :: sx, sy, flux, volume_of_two_cells, dQdx, dQdy, Vx, Vy, apos, aneg, Q1, Q2
-    real(kind=jprb) :: Qmin(geom%nb_nodes)
-    real(kind=jprb) :: Qmax(geom%nb_nodes)
-    real(kind=jprb) :: rhin(geom%nb_nodes)
-    real(kind=jprb) :: rhout(geom%nb_nodes)
-    real(kind=jprb) :: cp(geom%nb_nodes)
-    real(kind=jprb) :: cn(geom%nb_nodes)
-    real(kind=jprb) :: adv(geom%nb_nodes)
-    real(kind=jprb) :: aun(geom%nb_edges)
-    real(kind=jprb) :: gradQ(geom%nb_nodes,2)
-    real(kind=jprb), pointer :: vol(:), S(:,:), pole_bc(:)
+    real(kind=jprw) :: sx, sy, flux, volume_of_two_cells, dQdx, dQdy, Vx, Vy, apos, aneg, Q1, Q2
+    real(kind=jprw) :: Qmin(geom%nb_nodes)
+    real(kind=jprw) :: Qmax(geom%nb_nodes)
+    real(kind=jprw) :: rhin(geom%nb_nodes)
+    real(kind=jprw) :: rhout(geom%nb_nodes)
+    real(kind=jprw) :: cp(geom%nb_nodes)
+    real(kind=jprw) :: cn(geom%nb_nodes)
+    real(kind=jprw) :: adv(geom%nb_nodes)
+    real(kind=jprw) :: aun(geom%nb_edges)
+    real(kind=jprw) :: gradQ(geom%nb_nodes,2)
+    real(kind=jprw), pointer :: vol(:), S(:,:), pole_bc(:)
 
     vol => scalar_field("dual_volumes",geom)
     S   => vector_field("dual_normals",geom)
@@ -63,8 +63,8 @@ contains
       Vx = V(jedge,XX)
       Vy = V(jedge,YY)
       aun(jedge) = Vx*Sx + Vy*Sy
-      apos = max(0._jprb,aun(jedge))
-      aneg = min(0._jprb,aun(jedge))
+      apos = max(0._jprw,aun(jedge))
+      aneg = min(0._jprw,aun(jedge))
       flux = Q(ip1)*apos + Q(ip2)*aneg
       adv(ip1) = adv(ip1) + flux
       adv(ip2) = adv(ip2) - flux
@@ -100,8 +100,8 @@ contains
         Vx = V(jedge,XX)
         Vy = V(jedge,YY)
         ! variable sign option with asymptotic analysis, (mpdata gauge)
-        aun(jedge) = abs(aun(jedge))*(Q(ip2)-Q(ip1))*0.5_jprb &
-          &          -0.5_jprb*dt*aun(jedge)*(Vx*dQdx+Vy*dQdy)
+        aun(jedge) = abs(aun(jedge))*(Q(ip2)-Q(ip1))*0.5_jprw &
+          &          -0.5_jprw*dt*aun(jedge)*(Vx*dQdx+Vy*dQdy)
       end do
 
       ! non-oscillatory option
@@ -132,8 +132,8 @@ contains
   contains
     
     subroutine compute_Qmax_and_Qmin()
-      real(kind=jprb) :: mn(geom%nb_nodes)
-      real(kind=jprb) :: mx(geom%nb_nodes)
+      real(kind=jprw) :: mn(geom%nb_nodes)
+      real(kind=jprw) :: mx(geom%nb_nodes)
       mn(:) =  1e10
       mx(:) = -1e10
       do jedge = 1,geom%nb_edges
@@ -164,7 +164,7 @@ contains
     end subroutine compute_Qmax_and_Qmin
 
     subroutine limit_antidiffusive_velocity
-      real(kind=jprb), parameter :: limit = 0.9925  ! 1: second order, 0: first order
+      real(kind=jprw), parameter :: limit = 0.9925  ! 1: second order, 0: first order
 
       rhin(:)  =  0.
       rhout(:) =  0.
@@ -172,8 +172,8 @@ contains
         ip1 = geom%edges(jedge,1)
         ip2 = geom%edges(jedge,2)
 
-        apos = max(0._jprb,aun(jedge))
-        aneg = min(0._jprb,aun(jedge))
+        apos = max(0._jprw,aun(jedge))
+        aneg = min(0._jprw,aun(jedge))
 
         rhin(ip1)  = rhin(ip1)  - aneg
         rhin(ip2)  = rhin(ip2)  + apos
@@ -193,7 +193,7 @@ contains
       do jedge = 1,geom%nb_edges
         ip1 = geom%edges(jedge,1)
         ip2 = geom%edges(jedge,2)
-        if(aun(jedge) > 0._jprb) then
+        if(aun(jedge) > 0._jprw) then
           aun(jedge)=aun(jedge)*min(limit,cp(ip2),cn(ip1))
         else
           aun(jedge)=aun(jedge)*min(limit,cn(ip2),cp(ip1))
@@ -206,11 +206,11 @@ contains
 
   subroutine compute_gradient(Q,gradQ,Q_is_vector,geom)
     type(DataStructure_type), intent(inout) :: geom
-    real(kind=jprb), intent(in)    :: Q(:)
-    real(kind=jprb), intent(inout) :: gradQ(:,:)
+    real(kind=jprw), intent(in)    :: Q(:)
+    real(kind=jprw), intent(inout) :: gradQ(:,:)
     logical, intent(in) :: Q_is_vector
-    real(kind=jprb), pointer :: S(:,:)
-    real(kind=jprb) :: Sx,Sy,avgQ,avgQ_pole
+    real(kind=jprw), pointer :: S(:,:)
+    real(kind=jprw) :: Sx,Sy,avgQ,avgQ_pole
     integer :: jedge,iedge,ip1,ip2
 
     S   => vector_field("dual_normals",geom)
@@ -223,7 +223,7 @@ contains
       ip2 = geom%edges(jedge,2)
       Sx  = S(jedge,XX)
       Sy  = S(jedge,YY)
-      avgQ = ( Q(ip1) + Q(ip2) )*0.5_jprb
+      avgQ = ( Q(ip1) + Q(ip2) )*0.5_jprw
       gradQ(ip1,XX) = gradQ(ip1,XX) + Sx*avgQ
       gradQ(ip2,XX) = gradQ(ip2,XX) - Sx*avgQ
       gradQ(ip1,YY) = gradQ(ip1,YY) + Sy*avgQ
@@ -238,10 +238,10 @@ contains
         ip1   = geom%edges(iedge,1)
         ip2   = geom%edges(iedge,2)
         Sy    = S(iedge,YY)
-        avgQ  = ( Q(ip1) + Q(ip2) )*0.5_jprb
+        avgQ  = ( Q(ip1) + Q(ip2) )*0.5_jprw
 
         ! correct for wrong Y-derivatives in previous loop,
-        gradQ(ip2,YY) = gradQ(ip2,YY) + 2._jprb*Sy*avgQ 
+        gradQ(ip2,YY) = gradQ(ip2,YY) + 2._jprw*Sy*avgQ 
 
       end do
     end if
@@ -278,27 +278,27 @@ module shallow_water_module
   public :: set_state_zonal_flow
   public :: set_time_step
 
-  real(kind=jprb), parameter :: eps    = 1.e-6
-  real(kind=jprb), parameter :: radius = 6371.22e+03
-  real(kind=jprb), parameter :: f0     = 1.4584e-04 !coriolis parameter (=2xearth's omega)
-  real(kind=jprb), parameter :: grav   = 9.80616
-  real(kind=jprb), parameter :: pi     = acos(-1._jprb)
+  real(kind=jprw), parameter :: eps    = 1.e-6
+  real(kind=jprw), parameter :: radius = 6371.22e+03
+  real(kind=jprw), parameter :: f0     = 1.4584e-04 !coriolis parameter (=2xearth's omega)
+  real(kind=jprw), parameter :: grav   = 9.80616
+  real(kind=jprw), parameter :: pi     = acos(-1._jprw)
 
 
-  real(kind=jprb) :: dt_forward = 20.
+  real(kind=jprw) :: dt_forward = 20.
   integer :: iter = 0
 
 contains
  
   subroutine set_time_step(dt)
-    real(kind=jprb), intent(in) :: dt
+    real(kind=jprw), intent(in) :: dt
     dt_forward = dt
   end subroutine set_time_step
 
   subroutine setup_shallow_water(geom)
     type(DataStructure_type), intent(inout) :: geom
-    real(kind=jprb) :: y, G, cos_y, sin_y
-    real(kind=jprb), pointer :: coords(:,:), vol(:), hx(:), hy(:), dhxdy_over_G(:), pole_bc(:)
+    real(kind=jprw) :: y, G, cos_y, sin_y
+    real(kind=jprw), pointer :: coords(:,:), vol(:), hx(:), hy(:), dhxdy_over_G(:), pole_bc(:)
     integer :: jnode, jedge, iedge
     call create_scalar_field_in_nodes("hx",geom)
     call create_scalar_field_in_nodes("hy",geom)
@@ -340,9 +340,9 @@ contains
   end subroutine setup_shallow_water
 
   subroutine propagate_state(dt,geom)
-    real(kind=jprb), intent(in) :: dt
+    real(kind=jprw), intent(in) :: dt
     type(DataStructure_type), intent(inout), target :: geom
-    real(kind=jprb) :: tend, t0, dt_fwd, tstart
+    real(kind=jprw) :: tend, t0, dt_fwd, tstart
     character(len=200) :: step_info
 
     tstart   = geom%fields%time
@@ -374,7 +374,7 @@ contains
 
   subroutine step_forward(step,dt,geom)
     integer, intent(inout) :: step
-    real(kind=jprb), intent(in) :: dt
+    real(kind=jprw), intent(in) :: dt
     type(DataStructure_type), intent(inout) :: geom
 
     if (step == 0) then ! Pre-compute forcing
@@ -403,10 +403,10 @@ contains
 
   subroutine set_state_rossby_haurwitz(geom)
     type(DataStructure_type), intent(inout)      :: geom
-    real(kind=jprb), dimension(:), pointer   :: D, cor
-    real(kind=jprb), dimension(:,:), pointer :: Q, coords
+    real(kind=jprw), dimension(:), pointer   :: D, cor
+    real(kind=jprw), dimension(:,:), pointer :: Q, coords
     integer :: jnode, ir
-    real(kind=jprb) :: aaa0,zk,om,ph0,g,x,y, sin_y, cos_y
+    real(kind=jprw) :: aaa0,zk,om,ph0,g,x,y, sin_y, cos_y
 
     om   = 7.848E-6
     zk   = 7.848E-6
@@ -425,38 +425,38 @@ contains
       sin_y = sin(y)
       cos_y = cos(y)
       cor(jnode) = f0*sin_y
-      if(x == 2._jprb*pi) x=0.
-      Q(jnode,XX) =  radius*om*cos_y+radius*zk*cos(ir*x) * cos_y**(ir-1._jprb) &
+      if(x == 2._jprw*pi) x=0.
+      Q(jnode,XX) =  radius*om*cos_y+radius*zk*cos(ir*x) * cos_y**(ir-1._jprw) &
         &            * (ir*(sin_y)**2-cos_y**2)
-      Q(jnode,YY) = -radius*zk*ir*cos_y**(ir-1._jprb)*sin_y*sin(ir*x)
+      Q(jnode,YY) = -radius*zk*ir*cos_y**(ir-1._jprw)*sin_y*sin(ir*x)
       D(jnode) = (ph0+radius**2*fa(y)+radius**2*fb(y)*cos(ir*x) &
-        &        +radius**2*fc(y)*cos(2._jprb*ir*x)) / grav
+        &        +radius**2*fc(y)*cos(2._jprw*ir*x)) / grav
       D(jnode) = max(aaa0,D(jnode))
       Q(jnode,XX) = Q(jnode,XX) * D(jnode)
       Q(jnode,YY) = Q(jnode,YY) * D(jnode)
-      if(y == 0.5_jprb*pi) Q(jnode,XX)=0.
-      if(y ==-0.5_jprb*pi) Q(jnode,XX)=0.
+      if(y == 0.5_jprw*pi) Q(jnode,XX)=0.
+      if(y ==-0.5_jprw*pi) Q(jnode,XX)=0.
     end do
 
     contains 
     ! Helper functions
 
-      real(kind=jprb) function fa(th)
-        real(kind=jprb), intent(in) :: th
+      real(kind=jprw) function fa(th)
+        real(kind=jprw), intent(in) :: th
         fa = om*0.5*(f0+om)*(cos(th))**2 &
           & +0.25*zk**2*(cos(th))**(2*ir)*( (ir+1)*(cos(th))**2 &
-          & +(2._jprb*ir**2-ir-2._jprb)-2._jprb*ir**2/(cos(th))**2 )
+          & +(2._jprw*ir**2-ir-2._jprw)-2._jprw*ir**2/(cos(th))**2 )
       end function fa
 
-      real(kind=jprb) function fb(th)
-        real(kind=jprb), intent(in) :: th
-        fb = (f0+2._jprb*om)*zk/((ir+1._jprb)*(ir+2._jprb))*(cos(th))**ir &
-          & *( (ir**2+2._jprb*ir+2._jprb)-((ir+1._jprb)*cos(th))**2 )
+      real(kind=jprw) function fb(th)
+        real(kind=jprw), intent(in) :: th
+        fb = (f0+2._jprw*om)*zk/((ir+1._jprw)*(ir+2._jprw))*(cos(th))**ir &
+          & *( (ir**2+2._jprw*ir+2._jprw)-((ir+1._jprw)*cos(th))**2 )
       end function fb
 
-      real(kind=jprb) function fc(th)
-        real(kind=jprb), intent(in) :: th
-        fc = 0.25*zk**2*(cos(th))**(2*ir)*((ir+1._jprb)*(cos(th))**2 -(ir+2._jprb))  
+      real(kind=jprw) function fc(th)
+        real(kind=jprw), intent(in) :: th
+        fc = 0.25*zk**2*(cos(th))**(2*ir)*((ir+1._jprw)*(cos(th))**2 -(ir+2._jprw))  
       end function fc
 
   end subroutine set_state_rossby_haurwitz
@@ -464,14 +464,14 @@ contains
 
   subroutine set_state_zonal_flow(geom)
     type(DataStructure_type), intent(inout)      :: geom
-    real(kind=jprb), dimension(:), pointer   :: D, cor
-    real(kind=jprb), dimension(:,:), pointer :: Q, coords
+    real(kind=jprw), dimension(:), pointer   :: D, cor
+    real(kind=jprw), dimension(:,:), pointer :: Q, coords
     integer :: jnode, ir
-    real(kind=jprb) :: x,y
-    real(kind=jprb), parameter :: USCAL = 20.
-    real(kind=jprb), parameter :: H00 = grav * 8e3
-    real(kind=jprb), parameter :: pvel = USCAL/radius
-    real(kind=jprb), parameter :: beta = 0.
+    real(kind=jprw) :: x,y
+    real(kind=jprw), parameter :: USCAL = 20.
+    real(kind=jprw), parameter :: H00 = grav * 8e3
+    real(kind=jprw), parameter :: pvel = USCAL/radius
+    real(kind=jprw), parameter :: beta = 0.
 
 
     coords => vector_field("coordinates",geom)
@@ -492,8 +492,8 @@ contains
 
   subroutine backup_solution(geom)
     type(DataStructure_type), intent(inout) :: geom
-    real(kind=jprb), dimension(:),   pointer :: D, D0
-    real(kind=jprb), dimension(:,:), pointer :: Q, Q0
+    real(kind=jprw), dimension(:),   pointer :: D, D0
+    real(kind=jprw), dimension(:,:), pointer :: Q, Q0
     D  => scalar_field("depth",geom)
     D0 => scalar_field("depth_backup",geom)
     Q  => vector_field("momentum",geom)
@@ -512,14 +512,14 @@ contains
     ! V = (hx*hy) * [u/hx, v/hy] = [u*hy, v*hx]
     ! and hx = r*cos(y)  ,  hy = r
     ! and Q = [ D*u , D*v ]
-    real(kind=jprb), intent(in) :: dt
+    real(kind=jprw), intent(in) :: dt
     type(DataStructure_type), intent(inout) :: geom
     character(len=*), intent(in), optional :: option
-    real(kind=jprb) :: Qx, Qy, Q0x, Q0y, Dmod, D0mod, Vx, Vy, Rx, Ry, dVxdx, dVxdy, dVydx, dVydy
+    real(kind=jprw) :: Qx, Qy, Q0x, Q0y, Dmod, D0mod, Vx, Vy, Rx, Ry, dVxdx, dVxdy, dVydx, dVydy
     integer :: jnode, jedge, iedge, ip1, ip2
-    real(kind=jprb), dimension(:),   pointer :: D, D0, hx, hy, vol
-    real(kind=jprb), dimension(:,:), pointer :: Q, Q0, R, Vedges, coords
-    real(kind=jprb) :: Vnodes(geom%nb_nodes,2), grad_Vx(geom%nb_nodes,2), grad_Vy(geom%nb_nodes,2)
+    real(kind=jprw), dimension(:),   pointer :: D, D0, hx, hy, vol
+    real(kind=jprw), dimension(:,:), pointer :: Q, Q0, R, Vedges, coords
+    real(kind=jprw) :: Vnodes(geom%nb_nodes,2), grad_Vx(geom%nb_nodes,2), grad_Vy(geom%nb_nodes,2)
 
     coords => vector_field("coordinates",geom)
     Vedges => vector_field("advective_velocity",geom)
@@ -569,16 +569,16 @@ contains
         Q0x   = Q0(jnode,XX)
         Q0y   = Q0(jnode,YY)
         D0mod = max( eps, D0(jnode) )
-        Vnodes(jnode,XX) = ( 1.5_jprb*Qx/Dmod - 0.5_jprb*Q0x/D0mod ) * hy(jnode)
-        Vnodes(jnode,YY) = ( 1.5_jprb*Qy/Dmod - 0.5_jprb*Q0y/D0mod ) * hx(jnode)
+        Vnodes(jnode,XX) = ( 1.5_jprw*Qx/Dmod - 0.5_jprw*Q0x/D0mod ) * hy(jnode)
+        Vnodes(jnode,YY) = ( 1.5_jprw*Qy/Dmod - 0.5_jprw*Q0y/D0mod ) * hx(jnode)
       end do
     end if
 
     do jedge=1,nb_edges
       ip1 = edges(jedge,1)
       ip2 = edges(jedge,2)
-      Vedges(jedge,XX) = (Vnodes(ip1,XX)+Vnodes(ip2,XX))*0.5_jprb
-      Vedges(jedge,YY) = (Vnodes(ip1,YY)+Vnodes(ip2,YY))*0.5_jprb
+      Vedges(jedge,XX) = (Vnodes(ip1,XX)+Vnodes(ip2,XX))*0.5_jprw
+      Vedges(jedge,YY) = (Vnodes(ip1,YY)+Vnodes(ip2,YY))*0.5_jprw
     enddo
     ! Since the pole point lies outside the lon-lat domain, Vedges is wrongly calculated
     ! y_pole .ne. 0.5(y1+y2)
@@ -592,10 +592,10 @@ contains
   subroutine compute_forcing(geom)
     type(DataStructure_type), intent(inout) :: geom
     integer :: jnode
-    real(kind=jprb) :: Qx, Qy, Dmod
-    real(kind=jprb), dimension(:),   pointer :: D, vol, hx, hy, dhxdy_over_G, cor
-    real(kind=jprb), dimension(:,:), pointer :: Q, R, coords
-    real(kind=jprb) :: grad_D(geom%nb_nodes, 2)
+    real(kind=jprw) :: Qx, Qy, Dmod
+    real(kind=jprw), dimension(:),   pointer :: D, vol, hx, hy, dhxdy_over_G, cor
+    real(kind=jprw), dimension(:,:), pointer :: Q, R, coords
+    real(kind=jprw) :: grad_D(geom%nb_nodes, 2)
     coords => vector_field("coordinates",geom)
     vol => scalar_field("dual_volumes",geom)
     hx => scalar_field("hx",geom)
@@ -625,16 +625,16 @@ contains
 
 
   subroutine add_forcing_to_solution(dt,geom)
-    real(kind=jprb), intent(in) :: dt
+    real(kind=jprw), intent(in) :: dt
     type(DataStructure_type), intent(inout) :: geom
-    real(kind=jprb), dimension(:,:), pointer :: Q, R
+    real(kind=jprw), dimension(:,:), pointer :: Q, R
     integer :: jnode, nb_nodes
     Q => vector_field("momentum",geom)
     R => vector_field("momentum_forcing",geom)
     !dir$ ivdep
     do jnode=1,geom%nb_nodes
-      Q(jnode,XX) = Q(jnode,XX) + 0.5_jprb*dt*R(jnode,XX)
-      Q(jnode,YY) = Q(jnode,YY) + 0.5_jprb*dt*R(jnode,YY)
+      Q(jnode,XX) = Q(jnode,XX) + 0.5_jprw*dt*R(jnode,XX)
+      Q(jnode,YY) = Q(jnode,YY) + 0.5_jprw*dt*R(jnode,YY)
     end do
     !call synchronise(Q,geom)
   end subroutine add_forcing_to_solution
@@ -642,15 +642,15 @@ contains
 
 
   subroutine implicit_solve(dt,geom)
-    real(kind=jprb), intent(in) :: dt
+    real(kind=jprw), intent(in) :: dt
     type(DataStructure_type), intent(inout) :: geom
     integer :: jnode, m
-    real(kind=jprb) :: Qx, Qy, Rx, Ry, Dmod
-    real(kind=jprb) :: Qx_adv, Qy_adv, Rx_exp, Ry_exp
+    real(kind=jprw) :: Qx, Qy, Rx, Ry, Dmod
+    real(kind=jprw) :: Qx_adv, Qy_adv, Rx_exp, Ry_exp
 
-    real(kind=jprb), dimension(:),   pointer :: D, vol, hx, hy, dhxdy_over_G, cor
-    real(kind=jprb), dimension(:,:), pointer :: Q, R, coords
-    real(kind=jprb) :: grad_D(geom%nb_nodes, 2)
+    real(kind=jprw), dimension(:),   pointer :: D, vol, hx, hy, dhxdy_over_G, cor
+    real(kind=jprw), dimension(:,:), pointer :: Q, R, coords
+    real(kind=jprw) :: grad_D(geom%nb_nodes, 2)
 
     coords => vector_field("coordinates",geom)
     vol => scalar_field("dual_volumes",geom)
@@ -679,8 +679,8 @@ contains
       do m=1,3 ! Three iterations at most is enough to converge
         Rx = Rx_exp + cor(jnode)*Qy - dhxdy_over_G(jnode)*Qx*Qy/Dmod
         Ry = Ry_exp - cor(jnode)*Qx + dhxdy_over_G(jnode)*Qx*Qx/Dmod
-        Qx = Qx_adv + 0.5_jprb*dt*Rx
-        Qy = Qy_adv + 0.5_jprb*dt*Ry
+        Qx = Qx_adv + 0.5_jprw*dt*Rx
+        Qy = Qy_adv + 0.5_jprw*dt*Ry
       end do
       Q(jnode,XX) = Qx
       Q(jnode,YY) = Qy
@@ -695,10 +695,10 @@ contains
 
 
   subroutine advect_solution(dt,geom)
-    real(kind=jprb), intent(in) :: dt
+    real(kind=jprw), intent(in) :: dt
     type(DataStructure_type), intent(inout) :: geom
-    real(kind=jprb), dimension(:),   pointer :: D
-    real(kind=jprb), dimension(:,:), pointer :: Q, V
+    real(kind=jprw), dimension(:),   pointer :: D
+    real(kind=jprw), dimension(:,:), pointer :: Q, V
     integer :: jnode, ip1, ip2
     D => scalar_field("depth",geom)
     Q => vector_field("momentum",geom)

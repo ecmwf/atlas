@@ -1,5 +1,5 @@
 module elements_module
-  use common_module, only: jprb, log_debug
+  use common_module, only: jprw, log_debug
   implicit none
   private
   
@@ -15,7 +15,7 @@ module elements_module
     integer :: nb_nodes
     integer :: nb_sides
     integer :: order
-    real(kind=jprb), dimension(:,:), allocatable :: local_coords
+    real(kind=jprw), dimension(:,:), allocatable :: local_coords
   contains
     procedure, public :: init          => ShapeFunction__init
     procedure, public :: destruct      => ShapeFunction__destruct
@@ -26,7 +26,7 @@ module elements_module
 
   ! Element class
   ! -------------------
-  ! Provides link between shapefunction and real(kind=jprb) coordinate system
+  ! Provides link between shapefunction and real(kind=jprw) coordinate system
   ! A Quad element could exist in the 2D world or in a 3D world as on a sphere,
   ! While the shapefunction Quad will be the same in its local coordinate system
   ! - jacobian transformation matrix
@@ -69,8 +69,8 @@ contains
   ! Compute the interpolation values for a given local coordinate
   subroutine ShapeFunction__values( self, local_coord, values )
     class(ShapeFunction_class), intent(in) :: self
-    real(kind=jprb), dimension(:), intent(in) :: local_coord
-    real(kind=jprb), dimension(:), intent(inout) :: values
+    real(kind=jprw), dimension(:), intent(in) :: local_coord
+    real(kind=jprw), dimension(:), intent(inout) :: values
 
     call log_debug( "ShapeFunction::values" )
   end subroutine ShapeFunction__values
@@ -80,8 +80,8 @@ contains
   ! Compute the interpolation values for a given local coordinate
   subroutine ShapeFunction__grad_values( self, local_coord, grad_values )
     class(ShapeFunction_class), intent(in) :: self
-    real(kind=jprb), dimension(:), intent(in) :: local_coord
-    real(kind=jprb), dimension(:,:), intent(inout) :: grad_values
+    real(kind=jprw), dimension(:), intent(in) :: local_coord
+    real(kind=jprw), dimension(:,:), intent(inout) :: grad_values
 
     call log_debug( "ShapeFunction::grad_values" )
   end subroutine ShapeFunction__grad_values
@@ -138,17 +138,17 @@ contains
   ! [ dx/dzeta dy/dzeta dz/dzeta ]
   subroutine Element__jacobian( self, local_coord, elem_coords, jacobian )
     class(Element), intent(in)          :: self
-    real(kind=jprb), dimension(:), intent(in)      :: local_coord
-    real(kind=jprb), dimension(:,:), intent(in)    :: elem_coords
-    real(kind=jprb), dimension(:,:), intent(inout) :: jacobian
+    real(kind=jprw), dimension(:), intent(in)      :: local_coord
+    real(kind=jprw), dimension(:,:), intent(in)    :: elem_coords
+    real(kind=jprw), dimension(:,:), intent(inout) :: jacobian
     call log_debug( "Element::jacobian()" )
   end subroutine Element__jacobian
 
    subroutine Element__jacobian_inverse( self, local_coord, elem_coords, jacobian_inverse )
     class(Element), intent(in)    :: self
-    real(kind=jprb), dimension(:),        intent(in)    :: local_coord
-    real(kind=jprb), dimension(:,:),      intent(in)    :: elem_coords
-    real(kind=jprb), dimension(:,:),      intent(inout) :: jacobian_inverse
+    real(kind=jprw), dimension(:),        intent(in)    :: local_coord
+    real(kind=jprw), dimension(:,:),      intent(in)    :: elem_coords
+    real(kind=jprw), dimension(:,:),      intent(inout) :: jacobian_inverse
     call log_debug( "Element::jacobian_inverse()" )
   end subroutine Element__jacobian_inverse
  

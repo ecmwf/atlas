@@ -30,10 +30,10 @@ contains
     integer                      :: glb_nb_edges = 0
 
     integer                      :: idx
-    real(kind=jprb), pointer     :: coords(:,:), vol(:), S(:,:)
+    real(kind=jprw), pointer     :: coords(:,:), vol(:), S(:,:)
     integer                      :: ip1,ip2
 
-    real(kind=jprb) :: dummy_real, x, y, v, sx, sy
+    real(kind=jprw) :: dummy_real, x, y, v, sx, sy
     integer :: dummy_int
     
     integer, allocatable :: node_proc_full(:)
@@ -219,8 +219,8 @@ contains
 
     integer :: jnode, inode, ip1, ip2, iaaa
     integer, allocatable :: plot_idx(:)
-    real(kind=jprb), pointer :: loc_D(:), loc_Q(:,:), loc_coords(:,:)
-    real(kind=jprb), allocatable :: D(:), Q(:,:), coords(:,:)
+    real(kind=jprw), pointer :: loc_D(:), loc_Q(:,:), loc_coords(:,:)
+    real(kind=jprw), allocatable :: D(:), Q(:,:), coords(:,:)
     integer(kind=jpim)              :: ndgl     ! Number of lattitudes
     integer(kind=jpim), allocatable :: nloen(:) ! Number of longitude points for each latitude
     integer(kind=jpim) :: jlat,idum, nb_nodes, inode_grwch, jglb

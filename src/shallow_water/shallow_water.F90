@@ -22,15 +22,15 @@ program shallow_water
   implicit none
 
   ! Configuration parameters
-  real(kind=jprb) :: dt = 20.              ! solver time-step
+  real(kind=jprw) :: dt = 20.              ! solver time-step
   integer         :: nb_steps = 15         ! Number of propagations
   integer         :: hours_per_step = 24   ! Propagation time
   logical         :: write_itermediate_output = .True.
 
   ! Declarations
   type(DataStructure_type) :: g
-  real(kind=jprb), parameter :: hours = 3600.     ! in seconds
-  real(kind=jprb), parameter :: days  = 24.*hours ! in seconds
+  real(kind=jprw), parameter :: hours = 3600.     ! in seconds
+  real(kind=jprw), parameter :: days  = 24.*hours ! in seconds
   integer :: jstep = 0
   type(Timer_type) :: wallclock_timer, step_timer
 

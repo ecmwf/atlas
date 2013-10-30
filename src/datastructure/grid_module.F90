@@ -32,7 +32,7 @@ module grid_module
 
   type :: Field_class
     character(len=30) :: name
-    real(kind=jprb), dimension(:,:), allocatable :: array
+    real(kind=jprw), dimension(:,:), allocatable :: array
     integer :: rows
     integer :: cols
     class(FunctionSpace_class), pointer :: function_space
@@ -105,7 +105,7 @@ module grid_module
     integer :: nb_periodic_nodes
     integer :: glb_nb_nodes
     integer :: glb_nb_elems
-    real(kind=jprb),  dimension(:,:), allocatable :: nodes_coordinates
+    real(kind=jprw),  dimension(:,:), allocatable :: nodes_coordinates
     integer, dimension(:,:), allocatable :: cells
     integer, dimension(:,:), allocatable :: faces
     integer, dimension(:), allocatable :: internal_faces
@@ -130,7 +130,7 @@ module grid_module
   
   type :: State_class
     character(len=30) :: name
-    real(kind=jprb)              :: time
+    real(kind=jprw)              :: time
     integer :: nb_fields = 0
     type(FieldPtr), dimension(:), allocatable :: fields
   contains
@@ -427,7 +427,7 @@ contains
   subroutine Grid__cell_coords(self, elem_idx, cell_coords)
     class(Grid_class), intent(in) :: self
     integer, intent(in) :: elem_idx
-    real(kind=jprb), dimension(:,:), intent(inout) :: cell_coords
+    real(kind=jprw), dimension(:,:), intent(inout) :: cell_coords
 
     integer n
     do n=1,self%cell%nb_nodes

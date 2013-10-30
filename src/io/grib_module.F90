@@ -18,13 +18,13 @@ subroutine write_grib(geom,filename)
     integer :: ifile_handle,igrib_handle,iret
     integer :: ihour
 
-    real(kind=jprb), pointer :: loc_depth(:)
-    real(kind=jprb), pointer :: loc_momentum(:,:)
+    real(kind=jprw), pointer :: loc_depth(:)
+    real(kind=jprw), pointer :: loc_momentum(:,:)
 
-    real(kind=jprb), allocatable :: depth(:)
-    real(kind=jprb), allocatable :: momentum(:,:)
-    real(kind=jprb), allocatable :: Vx(:)
-    real(kind=jprb), allocatable :: Vy(:)
+    real(kind=jprw), allocatable :: depth(:)
+    real(kind=jprw), allocatable :: momentum(:,:)
+    real(kind=jprw), allocatable :: Vx(:)
+    real(kind=jprw), allocatable :: Vy(:)
 
     ! This mess is here because the mesh contains some duplicated points
 

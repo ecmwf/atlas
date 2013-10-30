@@ -1,6 +1,6 @@
 module datastruct_module
 
-  use common_module, only: jprb
+  use common_module, only: jprw
   use grid_module, only : Grid_class, State_class, Field_class, FaceFunctionSpace, ContinuousFunctionSpace, FunctionSpace_class
   use parallel_module
 
@@ -124,7 +124,7 @@ contains
     character(len=*), intent(in) :: name
     type(DataStructure_type), intent(inout) :: geom
     type(Field_class), pointer :: field
-    real(kind=jprb), dimension(:), pointer :: array
+    real(kind=jprw), dimension(:), pointer :: array
     field => geom%fields%field(name)
     array => field%array(:,1)
   end function scalar_field
@@ -134,7 +134,7 @@ contains
     character(len=*), intent(in) :: name
     type(DataStructure_type), intent(inout) :: geom
     type(Field_class), pointer :: field
-    real(kind=jprb), dimension(:,:), pointer :: array
+    real(kind=jprw), dimension(:,:), pointer :: array
     field => geom%fields%field(name)
     array => field%array
   end function vector_field
@@ -150,14 +150,14 @@ contains
 
   subroutine synchronise_array_rank1(array, geom)
     implicit none
-    real(kind=jprb), dimension(:), intent(inout) :: array
+    real(kind=jprw), dimension(:), intent(inout) :: array
     type(DataStructure_type), intent(inout) :: geom
     call geom%functionspace_nodes%comm%synchronise( array )
   end subroutine synchronise_array_rank1
 
   subroutine synchronise_array_rank2(array, geom)
     implicit none
-    real(kind=jprb), dimension(:,:), intent(inout) :: array
+    real(kind=jprw), dimension(:,:), intent(inout) :: array
     type(DataStructure_type), intent(inout) :: geom
     call geom%functionspace_nodes%comm%synchronise( array )
   end subroutine synchronise_array_rank2

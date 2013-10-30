@@ -3,14 +3,14 @@
 module gmsh_module
   use parallel_module, only: myproc, nproc, parallel_barrier
   use grid_module
-  use common_module, only : jprb,log_info
+  use common_module, only : jprw,log_info
   implicit none
 contains
     
   subroutine write_gmsh_nodal_field(field)
     type(Field_class), pointer, intent(inout) :: field
     
-    real(kind=jprb), allocatable :: glb_field(:,:)
+    real(kind=jprw), allocatable :: glb_field(:,:)
     integer :: jnode, glb_rows
 
     glb_rows = field%function_space%comm%glb_field_size()
@@ -21,7 +21,7 @@ contains
       write(51,'(A)')"$NodeData"
       write(51,*) 1                     ! one string tag:
       write(51,'(A)') '"'//field%name//'"'      ! the name of the view ("A scalar view")
-      write(51,*) 1                     ! one real(kind=jprb) tag:
+      write(51,*) 1                     ! one real(kind=jprw) tag:
       write(51,*) 0.0                   ! the time value (0.0)
       write(51,*) 3                     ! three integer tags:
       write(51,*) 0                     ! the time step (0; time steps always start at 0)
@@ -54,7 +54,7 @@ contains
     write(50,'(A)')"$ElementData"
     write(50,*) 1                     ! one string tag:
     write(50,'(A)') '"'//F%name//'"'      ! the name of the view ("A scalar view")
-    write(50,*) 1                     ! one real(kind=jprb) tag:
+    write(50,*) 1                     ! one real(kind=jprw) tag:
     write(50,*) 0.0                   ! the time value (0.0)
     write(50,*) 3                     ! three integer tags:
     write(50,*) 0                     ! the time step (0; time steps always start at 0)
@@ -74,8 +74,8 @@ contains
     character(len=*), intent(in) :: filename
     character(len=1024) :: procfile
     integer :: jface, jnode, jproc
-    real(kind=jprb) :: r, phi, theta, x, y, z, pi
-    pi = acos(-1._jprb)
+    real(kind=jprw) :: r, phi, theta, x, y, z, pi
+    pi = acos(-1._jprw)
     call log_info( "Writing Gmsh file "//trim(filename) )
     
     call parallel_barrier()

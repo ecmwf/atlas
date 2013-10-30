@@ -3,7 +3,7 @@
 ! This module extends the elements_module module with concrete implementations
 ! for Lagrange P0 shape functions and element types
 module lagrangep0_module
-  use common_module, only: jprb, log_debug
+  use common_module, only: jprw, log_debug
   use elements_module, only: Element, Shapefunction_class
   implicit none
   public
@@ -71,16 +71,16 @@ contains
 
   subroutine LagrangeP0_Line__values( self, local_coord, values )
     class(LagrangeP0_Line), intent(in) :: self
-    real(kind=jprb), dimension(:), intent(in) :: local_coord
-    real(kind=jprb), dimension(:), intent(inout) :: values
+    real(kind=jprw), dimension(:), intent(in) :: local_coord
+    real(kind=jprw), dimension(:), intent(inout) :: values
     values(1) = 1.
     call log_debug("LagrangeP0_Line::values")
   end subroutine LagrangeP0_Line__values
 
   subroutine LagrangeP0_Line__grad_values( self, local_coord, grad_values )
     class(LagrangeP0_Line), intent(in) :: self
-    real(kind=jprb), dimension(:), intent(in) :: local_coord
-    real(kind=jprb), dimension(:,:), intent(inout) :: grad_values
+    real(kind=jprw), dimension(:), intent(in) :: local_coord
+    real(kind=jprw), dimension(:,:), intent(inout) :: grad_values
 
     grad_values(1,1) = 0.
     grad_values(1,2) = 0.
@@ -106,17 +106,17 @@ contains
     
     subroutine LagrangeP0_Line2D__jacobian( self, local_coord, elem_coords, jacobian )
     class(LagrangeP0_Line2D), intent(in)     :: self
-    real(kind=jprb), dimension(:),        intent(in)    :: local_coord
-    real(kind=jprb), dimension(:,:),      intent(in)    :: elem_coords
-    real(kind=jprb), dimension(:,:),      intent(inout) :: jacobian
+    real(kind=jprw), dimension(:),        intent(in)    :: local_coord
+    real(kind=jprw), dimension(:,:),      intent(in)    :: elem_coords
+    real(kind=jprw), dimension(:,:),      intent(inout) :: jacobian
     call log_debug( "LagrangeP0_Line2D::jacobian()" )
   end subroutine LagrangeP0_Line2D__jacobian
 
   subroutine LagrangeP0_Line2D__jacobian_determinant( self, local_coord, elem_coords, jacobian_determinant )
     class(LagrangeP0_Line2D), intent(in)   :: self
-    real(kind=jprb), dimension(:),       intent(in)   :: local_coord
-    real(kind=jprb), dimension(:,:),     intent(in)   :: elem_coords
-    real(kind=jprb), intent(out) :: jacobian_determinant
+    real(kind=jprw), dimension(:),       intent(in)   :: local_coord
+    real(kind=jprw), dimension(:,:),     intent(in)   :: elem_coords
+    real(kind=jprw), intent(out) :: jacobian_determinant
     jacobian_determinant = 0.
     write(0,*) "LagrangeP0_Line2D::jacobian_determinant()"
   end subroutine LagrangeP0_Line2D__jacobian_determinant
@@ -141,16 +141,16 @@ contains
 
   subroutine LagrangeP0_Quad__values( self, local_coord, values )
     class(LagrangeP0_Quad), intent(in) :: self
-    real(kind=jprb), dimension(:), intent(in) :: local_coord
-    real(kind=jprb), dimension(:), intent(inout) :: values
+    real(kind=jprw), dimension(:), intent(in) :: local_coord
+    real(kind=jprw), dimension(:), intent(inout) :: values
     values(1)=1.
     write(0,*) "LagrangeP0_Quad::values"
   end subroutine LagrangeP0_Quad__values
 
   subroutine LagrangeP0_Quad__grad_values( self, local_coord, grad_values )
     class(LagrangeP0_Quad), intent(in) :: self
-    real(kind=jprb), dimension(:), intent(in) :: local_coord
-    real(kind=jprb), dimension(:,:), intent(inout) :: grad_values
+    real(kind=jprw), dimension(:), intent(in) :: local_coord
+    real(kind=jprw), dimension(:,:), intent(inout) :: grad_values
 
     grad_values(1,1) = 0.
     grad_values(2,1) = 0.
@@ -195,16 +195,16 @@ contains
 
   subroutine LagrangeP0_Triag__values( self, local_coord, values )
     class(LagrangeP0_Triag), intent(in) :: self
-    real(kind=jprb), dimension(:), intent(in) :: local_coord
-    real(kind=jprb), dimension(:), intent(inout) :: values
+    real(kind=jprw), dimension(:), intent(in) :: local_coord
+    real(kind=jprw), dimension(:), intent(inout) :: values
     values(1)=1.
     call log_debug( "LagrangeP0_Triag::values" )
   end subroutine LagrangeP0_Triag__values
 
   subroutine LagrangeP0_Triag__grad_values( self, local_coord, grad_values )
     class(LagrangeP0_Triag), intent(in) :: self
-    real(kind=jprb), dimension(:), intent(in) :: local_coord
-    real(kind=jprb), dimension(:,:), intent(inout) :: grad_values
+    real(kind=jprw), dimension(:), intent(in) :: local_coord
+    real(kind=jprw), dimension(:,:), intent(inout) :: grad_values
 
     grad_values(1,1) = 0.
     grad_values(2,1) = 0.

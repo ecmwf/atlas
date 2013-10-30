@@ -76,7 +76,7 @@ module eq_regions_mod
 !
 !--------------------------------------------------------------------------------
 
-use common_module  ,only : jpim     ,jprb
+use common_module  ,only : jpim     ,jprw
 
 implicit none
 
@@ -86,7 +86,7 @@ private
 
 public eq_regions,l_regions_debug,n_regions_ns,n_regions_ew,n_regions,my_region_ns,my_region_ew
 
-real(kind=jprb) pi
+real(kind=jprw) pi
 logical :: l_regions_debug=.false.
 integer(kind=jpim) :: n_regions_ns
 integer(kind=jpim) :: n_regions_ew
@@ -103,10 +103,10 @@ subroutine eq_regions(N)
 !
 integer(kind=jpim),intent(in) :: N
 integer(kind=jpim) :: n_collars,j
-real(kind=jprb),allocatable :: r_regions(:)
-real(kind=jprb) :: c_polar
+real(kind=jprw),allocatable :: r_regions(:)
+real(kind=jprw) :: c_polar
 
-pi=2.0_jprb*asin(1.0_jprb)
+pi=2.0_jprw*asin(1.0_jprw)
 
 n_regions(:)=0
 
@@ -179,7 +179,7 @@ function num_collars(N,c_polar,a_ideal) result(num_c)
 ! determine n_collars, the number of collars between the polar caps.
 !
 integer(kind=jpim),intent(in) :: N
-real(kind=jprb),intent(in) :: a_ideal,c_polar
+real(kind=jprw),intent(in) :: a_ideal,c_polar
 integer(kind=jpim) :: num_c
 logical enough
 enough = (N > 2) .and. (a_ideal > 0)
@@ -205,19 +205,19 @@ subroutine ideal_region_list(N,c_polar,n_collars,r_regions)
 ! The sum of r_regions is N.
 !
 integer(kind=jpim),intent(in) :: N,n_collars
-real(kind=jprb),intent(in) :: c_polar
-real(kind=jprb),intent(out) :: r_regions(n_collars+2)
+real(kind=jprw),intent(in) :: c_polar
+real(kind=jprw),intent(out) :: r_regions(n_collars+2)
 integer(kind=jpim) :: collar_n
-real(kind=jprb) :: ideal_region_area,ideal_collar_area
-real(kind=jprb) :: a_fitting
-r_regions(:)=0.0_jprb
-r_regions(1) = 1.0_jprb
+real(kind=jprw) :: ideal_region_area,ideal_collar_area
+real(kind=jprw) :: a_fitting
+r_regions(:)=0.0_jprw
+r_regions(1) = 1.0_jprw
 if( n_collars > 0 )then
   !
   ! Based on n_collars and c_polar, determine a_fitting,
   ! the collar angle such that n_collars collars fit between the polar caps.
   !
-  a_fitting = (pi-2.0_jprb*c_polar)/float(n_collars)
+  a_fitting = (pi-2.0_jprw*c_polar)/float(n_collars)
   ideal_region_area = area_of_ideal_region(N)
   do collar_n=1,n_collars
     ideal_collar_area = area_of_collar(c_polar+(collar_n-1)*a_fitting, &
@@ -237,8 +237,8 @@ function ideal_collar_angle(N) result(ideal)
 ! spherical collars of an EQ partition of the unit sphere S^2 into N regions.
 !
 integer(kind=jpim),intent(in) :: N
-real(kind=jprb) :: ideal
-ideal = area_of_ideal_region(N)**(0.5_jprb)
+real(kind=jprw) :: ideal
+ideal = area_of_ideal_region(N)**(0.5_jprw)
 return
 end function ideal_collar_angle
 
@@ -255,11 +255,11 @@ subroutine round_to_naturals(N,n_collars,r_regions)
 ! The sum of n_regions is N.
 !
 integer(kind=jpim),intent(in) :: N,n_collars
-real(kind=jprb),intent(in) :: r_regions(n_collars+2)
+real(kind=jprw),intent(in) :: r_regions(n_collars+2)
 integer(kind=jpim) :: zone_n
-real(kind=jprb) :: discrepancy
+real(kind=jprw) :: discrepancy
 n_regions(1:n_collars+2) = r_regions(:)
-discrepancy = 0.0_jprb
+discrepancy = 0.0_jprw
 do zone_n = 1,n_collars+2
     n_regions(zone_n) = nint(r_regions(zone_n)+discrepancy);
     discrepancy = discrepancy+r_regions(zone_n)-float(n_regions(zone_n));
@@ -272,10 +272,10 @@ function polar_colat(N) result(polar_c)
 ! Given N, determine the colatitude of the North polar spherical cap.
 !
 integer(kind=jpim),intent(in) :: N
-real(kind=jprb) :: area
-real(kind=jprb) :: polar_c
+real(kind=jprw) :: area
+real(kind=jprw) :: polar_c
 if( N == 1 ) polar_c=pi
-if( N == 2 ) polar_c=pi/2.0_jprb
+if( N == 2 ) polar_c=pi/2.0_jprw
 if( N > 2 )then
   area=area_of_ideal_region(N)
   polar_c=sradius_of_cap(area)
@@ -289,9 +289,9 @@ function area_of_ideal_region(N) result(area)
 ! area regions on S^2, that is 1/N times AREA_OF_SPHERE.
 !
 integer(kind=jpim),intent(in) :: N
-real(kind=jprb) :: area_of_sphere
-real(kind=jprb) :: area
-area_of_sphere = (2.0_jprb*pi**1.5_jprb/gamma(1.5_jprb))
+real(kind=jprw) :: area_of_sphere
+real(kind=jprw) :: area
+area_of_sphere = (2.0_jprw*pi**1.5_jprw/gamma(1.5_jprw))
 area = area_of_sphere/float(N)
 return
 end function area_of_ideal_region
@@ -301,9 +301,9 @@ function sradius_of_cap(area) result(sradius)
 ! SRADIUS_OF_CAP(AREA) returns the spherical radius of
 ! an S^2 spherical cap of area AREA.
 !
-real(kind=jprb),intent(in) :: area
-real(kind=jprb) :: sradius
-sradius = 2.0_jprb*asin(sqrt(area/pi)/2.0_jprb)
+real(kind=jprw),intent(in) :: area
+real(kind=jprw) :: sradius
+sradius = 2.0_jprw*asin(sqrt(area/pi)/2.0_jprw)
 return
 end function sradius_of_cap
 
@@ -315,8 +315,8 @@ function area_of_collar(a_top, a_bot) result(area)
 ! collar specified by A_TOP, A_BOT, where A_TOP is top (smaller) spherical radius,
 ! A_BOT is bottom (larger) spherical radius.
 !
-real(kind=jprb),intent(in) :: a_top,a_bot
-real(kind=jprb) area
+real(kind=jprw),intent(in) :: a_top,a_bot
+real(kind=jprw) area
 area = area_of_cap(a_bot) - area_of_cap(a_top)
 return
 end function area_of_collar
@@ -328,34 +328,34 @@ function area_of_cap(s_cap) result(area)
 ! AREA_OF_CAP(S_CAP) sets AREA to be the area of an S^2 spherical
 ! cap of spherical radius S_CAP.
 !
-real(kind=jprb),intent(in) :: s_cap
-real(kind=jprb) area
-area = 4.0_jprb*pi * sin(s_cap/2.0_jprb)**2
+real(kind=jprw),intent(in) :: s_cap
+real(kind=jprw) area
+area = 4.0_jprw*pi * sin(s_cap/2.0_jprw)**2
 return
 end function area_of_cap
 
 function gamma(x) result(gamma_res)
-real(kind=jprb),intent(in) :: x
-real(kind=jprb) :: gamma_res
-real(kind=jprb) :: p0,p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13
-real(kind=jprb) :: w,y
+real(kind=jprw),intent(in) :: x
+real(kind=jprw) :: gamma_res
+real(kind=jprw) :: p0,p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13
+real(kind=jprw) :: w,y
 integer(kind=jpim) :: k,n
 parameter (&
-& p0 =   0.999999999999999990e+00_jprb,&
-& p1 =  -0.422784335098466784e+00_jprb,&
-& p2 =  -0.233093736421782878e+00_jprb,&
-& p3 =   0.191091101387638410e+00_jprb,&
-& p4 =  -0.024552490005641278e+00_jprb,&
-& p5 =  -0.017645244547851414e+00_jprb,&
-& p6 =   0.008023273027855346e+00_jprb)
+& p0 =   0.999999999999999990e+00_jprw,&
+& p1 =  -0.422784335098466784e+00_jprw,&
+& p2 =  -0.233093736421782878e+00_jprw,&
+& p3 =   0.191091101387638410e+00_jprw,&
+& p4 =  -0.024552490005641278e+00_jprw,&
+& p5 =  -0.017645244547851414e+00_jprw,&
+& p6 =   0.008023273027855346e+00_jprw)
 parameter (&
-& p7 =  -0.000804329819255744e+00_jprb,&
-& p8 =  -0.000360837876648255e+00_jprb,&
-& p9 =   0.000145596568617526e+00_jprb,&
-& p10 = -0.000017545539395205e+00_jprb,&
-& p11 = -0.000002591225267689e+00_jprb,&
-& p12 =  0.000001337767384067e+00_jprb,&
-& p13 = -0.000000199542863674e+00_jprb)
+& p7 =  -0.000804329819255744e+00_jprw,&
+& p8 =  -0.000360837876648255e+00_jprw,&
+& p9 =   0.000145596568617526e+00_jprw,&
+& p10 = -0.000017545539395205e+00_jprw,&
+& p11 = -0.000002591225267689e+00_jprw,&
+& p12 =  0.000001337767384067e+00_jprw,&
+& p13 = -0.000000199542863674e+00_jprw)
 n = nint(x - 2)
 w = x - (n + 2)
 y = ((((((((((((p13 * w + p12) * w + p11) * w + p10) *&
@@ -435,7 +435,7 @@ SUBROUTINE SUSTAONL(KMEDIAP,KRESTM,LDWEIGHTED_DISTR,PWEIGHT,PMEDIAP,KPROCAGP, &
 !        R. El Khatib 05-Apr-2007 Enable back vectorization on NEC
 !     ------------------------------------------------------------------
 
-USE common_module  ,ONLY : JPIM     ,JPRB
+USE common_module  ,ONLY : JPIM     ,jprw
 USE EQ_REGIONS_MOD
 
 IMPLICIT NONE
@@ -444,9 +444,9 @@ IMPLICIT NONE
 !     DUMMY 
 INTEGER(KIND=JPIM),INTENT(IN) :: KMEDIAP
 INTEGER(KIND=JPIM),INTENT(IN) :: KRESTM
-REAL(KIND=JPRB),INTENT(IN)    :: PWEIGHT(:)
+REAL(KIND=jprw),INTENT(IN)    :: PWEIGHT(:)
 LOGICAL,INTENT(IN)            :: LDWEIGHTED_DISTR
-REAL(KIND=JPRB),INTENT(IN)    :: PMEDIAP
+REAL(KIND=jprw),INTENT(IN)    :: PMEDIAP
 INTEGER(KIND=JPIM),INTENT(IN) :: KPROCAGP(:)
 INTEGER(KIND=JPIM),INTENT(IN) :: NPROC
 INTEGER(KIND=JPIM),INTENT(IN) :: KDGL
@@ -471,14 +471,14 @@ INTEGER(KIND=JPIM) :: I1, I2, IBUFLEN, IDGLG, IDWIDE,&
              &IREST, ISEND, ITAG, JA, JB, JGL, JL, JNPTSRE, &
              &ILAT, ILON, ILOEN
 INTEGER(KIND=JPIM),ALLOCATABLE :: ICOMBUFG(:)
-REAL(KIND=JPRB),ALLOCATABLE :: ZWEIGHT(:,:)
+REAL(KIND=jprw),ALLOCATABLE :: ZWEIGHT(:,:)
 INTEGER(KIND=JPIM) :: JJ, ILENG(NPROC), IOFF(NPROC)
 
 LOGICAL :: LLABORT
 LOGICAL :: LLP1,LLP2
 
-REAL(KIND=JPRB) ::  ZLAT, ZLAT1, ZCOMP
-REAL(KIND=JPRB) :: ZDIVID(KDGL),ZXPTLAT(KDGL)
+REAL(KIND=jprw) ::  ZLAT, ZLAT1, ZCOMP
+REAL(KIND=jprw) :: ZDIVID(KDGL),ZXPTLAT(KDGL)
 
 !      -----------------------------------------------------------------
 
@@ -518,7 +518,7 @@ ILSTPTLAT(1) = KLOEN(KFRSTLAT(KMYSETA))
 INPLAT = KLOEN(KFRSTLAT(KMYSETA))-IXPTLAT(1)+1
 DO JGL=2,ILEN
   IXPTLAT(JGL) = 1
-  ZXPTLAT(JGL) = 1.0_JPRB
+  ZXPTLAT(JGL) = 1.0_jprw
   ILSTPTLAT(JGL) =  KLOEN(KFRSTLAT(KMYSETA)+JGL-1)
   INPLAT = INPLAT+KLOEN(KFRSTLAT(KMYSETA)+JGL-1)
 ENDDO
@@ -528,7 +528,7 @@ ILSTPTLAT(ILEN) = KLOEN(KLSTLAT(KMYSETA))-INPLAT+IGPTS
 !  grid point decomposition
 !  ---------------------------------------
 DO JGL=1,ILEN
-  ZDIVID(JGL)=REAL(KLOEN(KFRSTLAT(KMYSETA)+JGL-1),JPRB)
+  ZDIVID(JGL)=REAL(KLOEN(KFRSTLAT(KMYSETA)+JGL-1),jprw)
 ENDDO
 IF( LDWEIGHTED_DISTR )THEN
   ALLOCATE(ZWEIGHT(KLOEN(KDGL/2),KDGL))
@@ -555,12 +555,12 @@ DO JB=1,N_REGIONS(KMYSETA)
 
     DO JNPTSRE=1,IPTSRE
 
-      ZLAT  = 1._JPRB
-      ZLAT1 = 1._JPRB
+      ZLAT  = 1._jprw
+      ZLAT1 = 1._jprw
 
       DO JGL=1,ILEN
         IF (IXPTLAT(JGL)  <=  ILSTPTLAT(JGL)) THEN
-          ZLAT1 = (ZXPTLAT(JGL)-1.0_JPRB)/ZDIVID(JGL)
+          ZLAT1 = (ZXPTLAT(JGL)-1.0_jprw)/ZDIVID(JGL)
           IF (ZLAT1 < ZLAT) THEN
             ZLAT   = ZLAT1
             INXLAT = JGL
@@ -576,7 +576,7 @@ DO JB=1,N_REGIONS(KMYSETA)
         KONL(IGL,JB) = KONL(IGL,JB)+1
       ENDIF
       IXPTLAT(INXLAT) = IXPTLAT(INXLAT)+1
-      ZXPTLAT(INXLAT) = REAL(IXPTLAT(INXLAT),JPRB)
+      ZXPTLAT(INXLAT) = REAL(IXPTLAT(INXLAT),jprw)
     ENDDO
 
   ELSE
@@ -585,12 +585,12 @@ DO JB=1,N_REGIONS(KMYSETA)
         & .OR. (JB == N_REGIONS(KMYSETA) .AND. IGPTS < KPROCAGP(KMYSETA)) )
 
       IGPTS = IGPTS + 1
-      ZLAT  = 1._JPRB
-      ZLAT1 = 1._JPRB
+      ZLAT  = 1._jprw
+      ZLAT1 = 1._jprw
 
       DO JGL=1,ILEN
         IF (IXPTLAT(JGL)  <=  ILSTPTLAT(JGL)) THEN
-          ZLAT1 = (ZXPTLAT(JGL)-1.0_JPRB)/ZDIVID(JGL)
+          ZLAT1 = (ZXPTLAT(JGL)-1.0_jprw)/ZDIVID(JGL)
           IF (ZLAT1 < ZLAT) THEN
             ZLAT   = ZLAT1
             INXLAT = JGL
@@ -618,7 +618,7 @@ DO JB=1,N_REGIONS(KMYSETA)
         ZCOMP = ZCOMP + ZWEIGHT(ILON,ILAT)
       ENDIF
       IXPTLAT(INXLAT) = IXPTLAT(INXLAT)+1
-      ZXPTLAT(INXLAT) = REAL(IXPTLAT(INXLAT),JPRB)
+      ZXPTLAT(INXLAT) = REAL(IXPTLAT(INXLAT),jprw)
     ENDDO
 
     ZCOMP = ZCOMP - PMEDIAP
@@ -772,7 +772,7 @@ SUBROUTINE SUMPLATBEQ(KDGL,KPROC,KPROCA,KLOENG,LDSPLIT,&
 !     ------------------------------------------------------------------
 
 
-USE common_module  ,ONLY : JPIM     ,JPRB
+USE common_module  ,ONLY : JPIM     ,jprw
 
 USE EQ_REGIONS_MOD
 
@@ -784,10 +784,10 @@ INTEGER(KIND=JPIM),INTENT(IN)  :: KDGL
 INTEGER(KIND=JPIM),INTENT(IN)  :: KPROC
 INTEGER(KIND=JPIM),INTENT(IN)  :: KPROCA
 INTEGER(KIND=JPIM),INTENT(IN)  :: KLOENG(KDGL)
-REAL(KIND=JPRB),INTENT(IN)     :: PWEIGHT(:)
+REAL(KIND=jprw),INTENT(IN)     :: PWEIGHT(:)
 LOGICAL,INTENT(IN)  :: LDSPLIT
 LOGICAL,INTENT(INOUT)  :: LDWEIGHTED_DISTR
-REAL(KIND=JPRB),INTENT(OUT)     :: PMEDIAP
+REAL(KIND=jprw),INTENT(OUT)     :: PMEDIAP
 INTEGER(KIND=JPIM),INTENT(OUT)  :: KMEDIAP
 INTEGER(KIND=JPIM),INTENT(OUT)  :: KRESTM
 INTEGER(KIND=JPIM),INTENT(OUT)  :: KINDIC(KPROCA)
@@ -799,7 +799,7 @@ INTEGER(KIND=JPIM),INTENT(OUT)  :: KPROCAGP(KPROCA)
 !     LOCAL INTEGER SCALARS
 INTEGER(KIND=JPIM) :: ICOMP, IGL, IMAXI, IMEDIA, IMEDIAP, ITOT, JA, JB, IA, JGL,&
             &ILAST,IREST,IPE,I2REGIONS,IGP
-REAL(KIND=JPRB) :: ZMEDIA, ZCOMP
+REAL(KIND=jprw) :: ZMEDIA, ZCOMP
 LOGICAL   :: LLDONE
 
 !      -----------------------------------------------------------------
@@ -979,7 +979,7 @@ END MODULE SUMPLATBEQ_MOD
 !===========================================================================
 
 module split_globe_module
-  use common_module, only: jprb, jpim, log_str, log_info
+  use common_module, only: jprw, jpim, log_str, log_info
   implicit none
   private
 
@@ -1028,7 +1028,7 @@ contains
     INTEGER(KIND=JPIM),ALLOCATABLE :: NGLOBALPROC(:)
     INTEGER(KIND=JPIM) :: IPTRLATITUDE,IDLON,IND,IPROC,IGL,I,JL
     INTEGER(KIND=JPIM) :: IMEDIAP,IRESTM
-    REAL(KIND=JPRB) :: ZMEDIAP,ZWEIGHT(1)
+    REAL(KIND=jprw) :: ZMEDIAP,ZWEIGHT(1)
     LOGICAL :: LLSPLIT,LLWEIGHTED_DISTR
     LOGICAL,ALLOCATABLE :: LLSPLITLAT(:)
 

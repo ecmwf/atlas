@@ -7,9 +7,19 @@ save
 
 private
 
-!integer, parameter, public :: jprb = selected_real_kind(13,300)
-integer, parameter, public :: jprb = selected_real_kind(13,300)
+! Integer kind
 integer, parameter, public :: jpim = selected_int_kind(9)
+
+! Single precision
+integer, parameter :: jprs = selected_real_kind(4,2)
+integer, parameter :: jprm = selected_real_kind(6,37)
+
+! Double precision
+integer, parameter, public :: jprb = selected_real_kind(13,300)
+
+! Working precision = double precision
+integer, parameter, public :: jprw = jprb
+
 
 integer, parameter, public :: XX = 1
 integer, parameter, public :: YY = 2
@@ -57,8 +67,8 @@ contains
 
 
 function L2norm(array) result(norm)
-  real(kind=jprb), intent(in) :: array(:)
-  real(kind=jprb) :: norm
+  real(kind=jprw), intent(in) :: array(:)
+  real(kind=jprw) :: norm
   integer :: i
   norm = 0
   do i=1,size(array)
@@ -69,7 +79,7 @@ end function L2norm
 
 function Timer_elapsed(self) result(time)
   class(Timer_type), intent(inout) :: self
-  real(kind=jprb) :: time
+  real(kind=jprw) :: time
   if (.not. self%paused) then
     call system_clock ( self%clck_counts_stop, self%clck_rate )
     time = (self%counted + self%clck_counts_stop - self%clck_counts_start)/real(self%clck_rate)
@@ -174,7 +184,7 @@ function str_integer(int,optional_format) result(str)
 end function str_integer
 
 function str_real(re,optional_format) result(str)
-  real(kind=jprb), intent(in) :: re
+  real(kind=jprw), intent(in) :: re
   character(len=*), optional :: optional_format
   character(len=20) :: str
   if (present(optional_format)) then
@@ -186,9 +196,9 @@ end function str_real
 
 subroutine progress_bar(x,xmin,xmax)
   implicit none
-  real(kind=jprb), intent(in) :: x,xmin,xmax
+  real(kind=jprw), intent(in) :: x,xmin,xmax
   integer, parameter :: divisions = 51
-  real(kind=jprb) :: progress_ratio
+  real(kind=jprw) :: progress_ratio
   integer, save :: prev_progress = 0
   integer :: j
     
