@@ -93,7 +93,7 @@ contains
     integer, dimension(:), intent(in) :: glb_idx
     integer, dimension(:), intent(in) :: proc
     integer :: max_glb_idx = -1
-    integer :: jnode, jproc, ierr, cnt(0:nproc-1), nb_nodes
+    integer :: jj, jproc, ierr, cnt(0:nproc-1), nb_nodes
     integer, dimension(:), allocatable :: send_requests, recv_requests
     integer, dimension(:), allocatable :: map_glb_to_loc
 
@@ -104,8 +104,8 @@ contains
 
     nb_nodes = size(glb_idx)
 
-    do jnode=1,nb_nodes
-      max_glb_idx = max( max_glb_idx, glb_idx(jnode) )
+    do jj=1,nb_nodes
+      max_glb_idx = max( max_glb_idx, glb_idx(jj) )
     end do
     call MPI_ALLREDUCE( MPI_IN_PLACE, max_glb_idx, 1, MPI_INTEGER, MPI_MAX, MPI_COMM_WORLD, ierr)
 
@@ -113,11 +113,11 @@ contains
 
     comm%sync_recvcounts(:) = 0
     map_glb_to_loc(:) = -1
-    do jnode=1,nb_nodes
-      if (proc(jnode) .ne. myproc) then
-        comm%sync_recvcounts(proc(jnode)) = comm%sync_recvcounts(proc(jnode))+1
+    do jj=1,nb_nodes
+      if (proc(jj) .ne. myproc) then
+        comm%sync_recvcounts(proc(jj)) = comm%sync_recvcounts(proc(jj))+1
       end if
-      map_glb_to_loc(glb_idx(jnode)) = jnode
+      map_glb_to_loc(glb_idx(jj)) = jj
     end do
 
     call MPI_ALLTOALL( comm%sync_recvcounts, 1, MPI_INTEGER, &
@@ -142,11 +142,11 @@ contains
     end do
 
     cnt(:)=0
-    do jnode=1,nb_nodes
-      if (proc(jnode) .ne. myproc ) then
-        send_requests( comm%sync_recvdispls(proc(jnode))+1+cnt(proc(jnode)) ) = glb_idx(jnode)
-        comm%sync_recvmap( comm%sync_recvdispls(proc(jnode))+1+cnt(proc(jnode)) ) = jnode 
-        cnt(proc(jnode)) = cnt(proc(jnode))+1
+    do jj=1,nb_nodes
+      if (proc(jj) .ne. myproc ) then
+        send_requests( comm%sync_recvdispls(proc(jj))+1+cnt(proc(jj)) ) = glb_idx(jj)
+        comm%sync_recvmap( comm%sync_recvdispls(proc(jj))+1+cnt(proc(jj)) ) = jj 
+        cnt(proc(jj)) = cnt(proc(jj))+1
       end if
     end do
 
@@ -154,8 +154,8 @@ contains
                       & recv_requests,comm%sync_sendcounts,comm%sync_senddispls,MPI_INTEGER, &
                       & MPI_COMM_WORLD,ierr )
   
-    do jnode=1,comm%sync_sendcnt
-      comm%sync_sendmap(jnode) = map_glb_to_loc( recv_requests(jnode) )
+    do jj=1,comm%sync_sendcnt
+      comm%sync_sendmap(jj) = map_glb_to_loc( recv_requests(jj) )
     end do
 
   end subroutine setup_sync
@@ -164,7 +164,7 @@ contains
     class(Comm_type), intent(inout)   :: comm
     integer, dimension(:), intent(in) :: glb_idx
     integer, dimension(:), intent(in) :: proc
-    integer :: jnode, jproc, ierr, nb_nodes, idx_send
+    integer :: jj, jproc, ierr, nb_nodes, idx_send
     integer, dimension(:), allocatable :: gather_send_glb_idx
 
     allocate( comm%gather_recvcounts(0:nproc-1) )
@@ -173,8 +173,8 @@ contains
     nb_nodes = size(glb_idx)
 
     comm%gather_sendcnt = 0
-    do jnode=1,nb_nodes
-      if (proc(jnode) .eq. myproc) then
+    do jj=1,nb_nodes
+      if (proc(jj) .eq. myproc) then
         comm%gather_sendcnt = comm%gather_sendcnt + 1
       end if
     end do
@@ -196,11 +196,11 @@ contains
     allocate( gather_send_glb_idx(comm%gather_sendcnt) )
 
     idx_send = 0
-    do jnode=1,nb_nodes
-      if (proc(jnode) .eq. myproc ) then
+    do jj=1,nb_nodes
+      if (proc(jj) .eq. myproc ) then
         idx_send = idx_send + 1
-        comm%gather_sendmap(idx_send) = jnode
-        gather_send_glb_idx(idx_send) = glb_idx(jnode)
+        comm%gather_sendmap(idx_send) = jj
+        gather_send_glb_idx(idx_send) = glb_idx(jj)
       end if
     end do
 
@@ -521,15 +521,15 @@ contains
     real*8, dimension(:), allocatable, intent(inout) :: glb_field
     real*8 :: sendbuffer(comm%gather_sendcnt)
     real*8 :: recvbuffer(comm%gather_recvcnt)
-    integer :: jnode
+    integer :: jj
 
     if( .not. allocated( glb_field) ) then
       allocate( glb_field( comm%glb_field_size() ) )
     end if
 
     ! Pack
-    do jnode=1,comm%gather_sendcnt
-      sendbuffer(jnode) = loc_field(comm%gather_sendmap(jnode))
+    do jj=1,comm%gather_sendcnt
+      sendbuffer(jj) = loc_field(comm%gather_sendmap(jj))
     end do
 
     ! Communicate
@@ -538,8 +538,8 @@ contains
                     & comm%gather_root,MPI_COMM_WORLD,ierr )
   
     ! Unpack
-    do jnode=1,comm%gather_recvcnt
-      glb_field( comm%gather_recvmap(jnode) ) = recvbuffer(jnode)
+    do jj=1,comm%gather_recvcnt
+      glb_field( comm%gather_recvmap(jj) ) = recvbuffer(jj)
     end do
 
 
@@ -552,7 +552,7 @@ contains
     real*8, dimension(:,:), allocatable, intent(inout) :: glb_field
     real*8 :: sendbuffer(comm%gather_sendcnt)
     real*8 :: recvbuffer(comm%gather_recvcnt)
-    integer :: jnode, ncols, jcol
+    integer :: jj, ncols, jcol
 
     ncols = size(loc_field,2)
 
@@ -563,8 +563,8 @@ contains
     do jcol=1,ncols
 
       ! Pack
-      do jnode=1,comm%gather_sendcnt
-        sendbuffer(jnode) = loc_field(comm%gather_sendmap(jnode),jcol)
+      do jj=1,comm%gather_sendcnt
+        sendbuffer(jj) = loc_field(comm%gather_sendmap(jj),jcol)
       end do
 
       ! Communicate
@@ -573,8 +573,8 @@ contains
                       & comm%gather_root,MPI_COMM_WORLD,ierr )
     
       ! Unpack
-      do jnode=1,comm%gather_recvcnt
-         glb_field( comm%gather_recvmap(jnode), jcol ) = recvbuffer(jnode)
+      do jj=1,comm%gather_recvcnt
+         glb_field( comm%gather_recvmap(jj), jcol ) = recvbuffer(jj)
       end do
     end do
 
@@ -586,15 +586,15 @@ contains
     real*4, dimension(:), allocatable, intent(inout) :: glb_field
     real*4 :: sendbuffer(comm%gather_sendcnt)
     real*4 :: recvbuffer(comm%gather_recvcnt)
-    integer :: jnode
+    integer :: jj
 
     if( .not. allocated( glb_field) ) then
       allocate( glb_field( comm%glb_field_size() ) )
     end if
 
     ! Pack
-    do jnode=1,comm%gather_sendcnt
-      sendbuffer(jnode) = loc_field(comm%gather_sendmap(jnode))
+    do jj=1,comm%gather_sendcnt
+      sendbuffer(jj) = loc_field(comm%gather_sendmap(jj))
     end do
 
     ! Communicate
@@ -603,8 +603,8 @@ contains
                     & comm%gather_root,MPI_COMM_WORLD,ierr )
   
     ! Unpack
-    do jnode=1,comm%gather_recvcnt
-      glb_field( comm%gather_recvmap(jnode) ) = recvbuffer(jnode)
+    do jj=1,comm%gather_recvcnt
+      glb_field( comm%gather_recvmap(jj) ) = recvbuffer(jj)
     end do
 
 
@@ -617,7 +617,7 @@ contains
     real*4, dimension(:,:), allocatable, intent(inout) :: glb_field
     real*4 :: sendbuffer(comm%gather_sendcnt)
     real*4 :: recvbuffer(comm%gather_recvcnt)
-    integer :: jnode, ncols, jcol
+    integer :: jj, ncols, jcol
 
     ncols = size(loc_field,2)
 
@@ -628,8 +628,8 @@ contains
     do jcol=1,ncols
 
       ! Pack
-      do jnode=1,comm%gather_sendcnt
-        sendbuffer(jnode) = loc_field(comm%gather_sendmap(jnode),jcol)
+      do jj=1,comm%gather_sendcnt
+        sendbuffer(jj) = loc_field(comm%gather_sendmap(jj),jcol)
       end do
 
       ! Communicate
@@ -638,8 +638,8 @@ contains
                       & comm%gather_root,MPI_COMM_WORLD,ierr )
     
       ! Unpack
-      do jnode=1,comm%gather_recvcnt
-         glb_field( comm%gather_recvmap(jnode), jcol ) = recvbuffer(jnode)
+      do jj=1,comm%gather_recvcnt
+         glb_field( comm%gather_recvmap(jj), jcol ) = recvbuffer(jj)
       end do
     end do
 
