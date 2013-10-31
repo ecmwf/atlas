@@ -49,9 +49,9 @@ with open(args.rtable,'r') as rtable :
         for lon in range(nb_longitudes):
             glb_idx.append(gid)
             gid += 1
-        glb_idx.append(gid_gmt) # periodic point
 
-print len(glb_idx)
+        glb_idx.append(100000+gid_gmt) # periodic point
+
 
 print( 'Reading primary mesh file "'+args.primary_mesh+'"' )
 with open(args.primary_mesh,'r') as primary_mesh :
@@ -76,30 +76,55 @@ with open(args.primary_mesh,'r') as primary_mesh :
             coords[0] *= 180./pi
             coords[1] *= 180./pi
         nodes.append(coords)
-    print nb_nodes
-    etype = []
+
+    etypes = []
     elems = []
+    dmax = 0
     for n in range(nb_edges):
         node_ids = [int(nid) for nid in primary_mesh.readline().split()]
         if node_ids[6] == 0:   # triangle
-            etype.append(2)
-            elems.append( [node_ids[1], node_ids[2], node_ids[4]] )
+            etype = 2
+            elem = [node_ids[1], node_ids[2], node_ids[4]]
         elif node_ids[5] == 0: # hybrid_triangle
-            etype.append( 2 )
-            elems.append( [node_ids[1], node_ids[2], node_ids[6]] )
+            etype = 2 
+            elem = [node_ids[1], node_ids[2], node_ids[6]]
         else:                  # quad
-            etype.append( 3 )
-            elems.append( [node_ids[1], node_ids[2], node_ids[6], node_ids[5]] )
+            etype = 3 
+            elem = [node_ids[1], node_ids[2], node_ids[6], node_ids[5]]
 
+        if args.sphere or args.stereo:
+            etypes.append(etype)
+            elems.append(elem)
+        else:
+            #for nid in elem:
+                #print nid, type(nid)
+                #print "    ",nodes[nid]
+            xcoords = [ nodes[nid-1][0] for nid in elem ]
+            dmax = max( dmax, max(xcoords) - min(xcoords) )
+            if (max(xcoords) - min(xcoords) < 270.):
+                etypes.append(etype)
+                elems.append(elem)
     for n in range(nb_bdry_edges):
         node_ids = [int(nid) for nid in primary_mesh.readline().split()]
         if node_ids[4] == 0:   # triangle
-            etype.append(2)
-            elems.append( [node_ids[1], node_ids[2], node_ids[3]] )
+            etype = 2
+            elem = [node_ids[1], node_ids[2], node_ids[3]]
         else:                  # quad
-            etype.append( 3 )
-            elems.append( [node_ids[1], node_ids[2], node_ids[4], node_ids[3]] )
+            etype = 3 
+            elem = [node_ids[1], node_ids[2], node_ids[4], node_ids[3]]
 
+        if args.sphere or args.stereo:
+            etypes.append(etype)
+            elems.append(elem)
+        else:
+            xcoords = [ nodes[nid-1][0] for nid in elem ]
+            if (max(xcoords) - min(xcoords) < 180.):
+                etypes.append(etype)
+                elems.append(elem)
+
+
+print "nb_nodes = ", len(glb_idx)
+print "nb_edges = ", len(elems)
 
 if args.sphere:   outputfilename = 'mesh_sphere.msh'
 elif args.stereo: outputfilename = 'mesh_stereo.msh'
@@ -118,7 +143,7 @@ with open(outputfilename,'w') as outputfile:
     outputfile.write("$Elements\n")
     outputfile.write(str(len(elems))+'\n')
     for e, conn in enumerate(elems):
-      outputfile.write(str(e+1)+' '+str(etype[e])+' 2 1 1 '+' '.join([str(glb_idx[n-1]) for n in conn])+'\n')
+      outputfile.write(str(e+1)+' '+str(etypes[e])+' 2 1 1 '+' '.join([str(glb_idx[n-1]) for n in conn])+'\n')
     outputfile.write("$EndElements\n")
 
 
