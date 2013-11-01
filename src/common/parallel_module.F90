@@ -226,8 +226,17 @@ contains
     integer, dimension(:), intent(inout) :: field
     integer :: sendbuffer(comm%sync_sendcnt)
     integer :: recvbuffer(comm%sync_recvcnt)
-    integer :: jj,itag,jproc,ireq(0:nproc-1),irecv_status(MPI_STATUS_SIZE)
+    integer :: jj,itag,jproc,ireqs(0:nproc-1),ireqr(0:nproc-1)
     integer :: iwait_status(MPI_STATUS_SIZE,0:nproc-1)
+
+    ! Let MPI know what we like to receive
+    do jproc=nproc-1,0,-1
+      if(comm%sync_recvcounts(jproc) > 0) then
+        itag=9000
+        call MPI_IRECV( recvbuffer(comm%sync_recvdispls(jproc)+1:),comm%sync_recvcounts(jproc), &
+                      & MPI_INTEGER,jproc,itag,MPI_COMM_WORLD,ireqr(jproc),ierr)
+      endif
+    enddo
 
     ! Pack
     do jj=1,comm%sync_sendcnt
@@ -239,18 +248,16 @@ contains
       itag=9000
       if(comm%sync_sendcounts(jproc) > 0) then
         call MPI_ISEND( sendbuffer(comm%sync_senddispls(jproc)+1:),comm%sync_sendcounts(jproc), &
-                      & MPI_INTEGER,jproc,itag,MPI_COMM_WORLD,ireq(jproc),ierr)
-      endif
-    enddo
-  
-    ! Receive
-    do jproc=nproc-1,0,-1
-      if(comm%sync_recvcounts(jproc) > 0) then
-        itag=9000
-         call MPI_RECV( recvbuffer(comm%sync_recvdispls(jproc)+1:),comm%sync_recvcounts(jproc), &
-                      & MPI_INTEGER,jproc,itag,MPI_COMM_WORLD,irecv_status,ierr )
+                      & MPI_INTEGER,jproc,itag,MPI_COMM_WORLD,ireqs(jproc),ierr )
       end if
-    enddo
+    end do
+  
+    ! Wait for receiving to finish
+    do jproc=0,nproc-1
+      if(comm%sync_recvcounts(jproc) > 0) then
+        call MPI_WAIT( ireqr(jproc),iwait_status(1,jproc),ierr )
+      end if
+    end do
 
     ! Unpack
     do jj=1,comm%sync_recvcnt
@@ -259,10 +266,10 @@ contains
 
     ! Wait for sending to finish
     do jproc=0,nproc-1
-        if(comm%sync_sendcounts(jproc) > 0) then
-          call MPI_WAIT(ireq(jproc),iwait_status(1,jproc),ierr)
-        end if
-    enddo
+      if(comm%sync_sendcounts(jproc) > 0) then
+        call MPI_WAIT(ireqs(jproc),iwait_status(1,jproc),ierr)
+      end if
+    end do
 
   end subroutine synchronise_integer_rank1
 
@@ -270,50 +277,68 @@ contains
   subroutine synchronise_integer_rank2(comm,field)
     class(Comm_type), intent(inout) :: comm
     integer, dimension(:,:), intent(inout) :: field
-    integer :: sendbuffer(comm%sync_sendcnt)
-    integer :: recvbuffer(comm%sync_recvcnt)
-    integer :: jj,jproc,itag,ireq(0:nproc-1),irecv_status(MPI_STATUS_SIZE)
+    integer :: sendbuffer(comm%sync_sendcnt*size(field,2))
+    integer :: recvbuffer(comm%sync_recvcnt*size(field,2))
+    integer :: jj,ii,jproc,itag,ireqs(0:nproc-1),ireqr(0:nproc-1)
+    integer :: sync_recvdispls(0:nproc-1),sync_recvcounts(0:nproc-1)
+    integer :: sync_senddispls(0:nproc-1),sync_sendcounts(0:nproc-1)
     integer :: jcol, ncols
     integer :: iwait_status(MPI_STATUS_SIZE,0:nproc-1)
 
     ncols = size(field,2)
-    do jcol=1,ncols
+    sync_recvdispls(:) = ncols*comm%sync_recvdispls(:)
+    sync_recvcounts(:) = ncols*comm%sync_recvcounts(:)
+    sync_senddispls(:) = ncols*comm%sync_senddispls(:)
+    sync_sendcounts(:) = ncols*comm%sync_sendcounts(:)
 
-      ! Pack
-      do jj=1,comm%sync_sendcnt
-        sendbuffer(jj) = field(comm%sync_sendmap(jj),jcol)
-      end do
-
-      ! Send
-      do jproc=0,nproc-1
+    ! Let MPI know what we like to receive
+    do jproc=nproc-1,0,-1
+      if(sync_recvcounts(jproc) > 0) then
         itag=9000
-        if(comm%sync_sendcounts(jproc) > 0) then
-          call MPI_ISEND( sendbuffer(comm%sync_senddispls(jproc)+1:),comm%sync_sendcounts(jproc), &
-                        & MPI_INTEGER,jproc,itag,MPI_COMM_WORLD,ireq(jproc),ierr)
-        end if
-      end do
+        call MPI_IRECV( recvbuffer(sync_recvdispls(jproc)+1:),sync_recvcounts(jproc), &
+                      & MPI_INTEGER,jproc,itag,MPI_COMM_WORLD,ireqr(jproc),ierr)
+      endif
+    enddo
 
-      ! Receive
-      do jproc=nproc-1,0,-1
-        if(comm%sync_recvcounts(jproc) > 0) then
-          itag=9000
-          call MPI_RECV( recvbuffer(comm%sync_recvdispls(jproc)+1:),comm%sync_recvcounts(jproc), &
-                       & MPI_INTEGER,jproc,itag,MPI_COMM_WORLD,irecv_status,ierr)
-        end if
+    ! Pack
+    ii = 0
+    do jj=1,comm%sync_sendcnt
+      do jcol=1,ncols
+        ii = ii+1
+        sendbuffer(ii) = field(comm%sync_sendmap(jj),jcol)
       end do
+    end do
 
-      ! Unpack
-      do jj=1,comm%sync_recvcnt
-        field( comm%sync_recvmap(jj), jcol ) = recvbuffer(jj)
-      end do
- 
-      ! Wait for sending to finish
-      do jproc=0,nproc-1
-        if(comm%sync_sendcounts(jproc) > 0) then
-          call MPI_WAIT(ireq(jproc),iwait_status(1,jproc),ierr)
-        end if
-      end do
+    ! Send
+    do jproc=0,nproc-1
+      itag=9000
+      if(sync_sendcounts(jproc) > 0) then
+        call MPI_ISEND( sendbuffer(sync_senddispls(jproc)+1:),sync_sendcounts(jproc), &
+                      & MPI_INTEGER,jproc,itag,MPI_COMM_WORLD,ireqs(jproc),ierr )
+      end if
+    end do
+  
+    ! Wait for receiving to finish
+    do jproc=0,nproc-1
+      if(comm%sync_recvcounts(jproc) > 0) then
+        call MPI_WAIT( ireqr(jproc),iwait_status(1,jproc),ierr )
+      end if
+    end do
 
+    ! Unpack
+    ii = 0
+    do jj=1,comm%sync_recvcnt
+       do jcol=1,ncols
+        ii = ii+1
+        field( comm%sync_recvmap(jj), jcol ) = recvbuffer(ii)
+      end do
+    end do
+
+    ! Wait for sending to finish
+    do jproc=0,nproc-1
+      if(sync_sendcounts(jproc) > 0) then
+        call MPI_WAIT(ireqs(jproc),iwait_status(1,jproc),ierr)
+      end if
     end do
 
   end subroutine synchronise_integer_rank2
@@ -325,8 +350,17 @@ contains
     real*8, dimension(:), intent(inout) :: field
     real*8 :: sendbuffer(comm%sync_sendcnt)
     real*8 :: recvbuffer(comm%sync_recvcnt)
-    integer :: jj,itag,jproc,ireq(0:nproc-1),irecv_status(MPI_STATUS_SIZE)
+    integer :: jj,itag,jproc,ireqs(0:nproc-1),ireqr(0:nproc-1)
     integer :: iwait_status(MPI_STATUS_SIZE,0:nproc-1)
+
+    ! Let MPI know what we like to receive
+    do jproc=nproc-1,0,-1
+      if(comm%sync_recvcounts(jproc) > 0) then
+        itag=9000
+        call MPI_IRECV( recvbuffer(comm%sync_recvdispls(jproc)+1:),comm%sync_recvcounts(jproc), &
+                      & MPI_REAL8,jproc,itag,MPI_COMM_WORLD,ireqr(jproc),ierr)
+      endif
+    enddo
 
     ! Pack
     do jj=1,comm%sync_sendcnt
@@ -338,16 +372,14 @@ contains
       itag=9000
       if(comm%sync_sendcounts(jproc) > 0) then
         call MPI_ISEND( sendbuffer(comm%sync_senddispls(jproc)+1:),comm%sync_sendcounts(jproc), &
-                      & MPI_REAL8,jproc,itag,MPI_COMM_WORLD,ireq(jproc),ierr )
+                      & MPI_REAL8,jproc,itag,MPI_COMM_WORLD,ireqs(jproc),ierr )
       end if
     end do
   
-    ! Receive
-    do jproc=nproc-1,0,-1
+    ! Wait for receiving to finish
+    do jproc=0,nproc-1
       if(comm%sync_recvcounts(jproc) > 0) then
-        itag=9000
-        call MPI_RECV( recvbuffer(comm%sync_recvdispls(jproc)+1:),comm%sync_recvcounts(jproc),&
-                     & MPI_REAL8,jproc,itag,MPI_COMM_WORLD,irecv_status,ierr )
+        call MPI_WAIT( ireqr(jproc),iwait_status(1,jproc),ierr )
       end if
     end do
 
@@ -359,7 +391,7 @@ contains
     ! Wait for sending to finish
     do jproc=0,nproc-1
       if(comm%sync_sendcounts(jproc) > 0) then
-        call MPI_WAIT(ireq(jproc),iwait_status(1,jproc),ierr)
+        call MPI_WAIT(ireqs(jproc),iwait_status(1,jproc),ierr)
       end if
     end do
 
@@ -369,50 +401,70 @@ contains
   subroutine synchronise_real8_rank2(comm,field)
     class(Comm_type), intent(inout) :: comm
     real*8, dimension(:,:), intent(inout) :: field
-    real*8 :: sendbuffer(comm%sync_sendcnt)
-    real*8 :: recvbuffer(comm%sync_recvcnt)
-    integer :: jj,jproc,itag,ireq(0:nproc-1),irecv_status(MPI_STATUS_SIZE)
+    real*8 :: sendbuffer(comm%sync_sendcnt*size(field,2))
+    real*8 :: recvbuffer(comm%sync_recvcnt*size(field,2))
+    integer :: jj,ii,jproc,itag,ireqs(0:nproc-1),ireqr(0:nproc-1)
+    integer :: sync_recvdispls(0:nproc-1),sync_recvcounts(0:nproc-1)
+    integer :: sync_senddispls(0:nproc-1),sync_sendcounts(0:nproc-1)
     integer :: jcol, ncols
     integer :: iwait_status(MPI_STATUS_SIZE,0:nproc-1)
 
     ncols = size(field,2)
-    do jcol=1,ncols
+    sync_recvdispls(:) = ncols*comm%sync_recvdispls(:)
+    sync_recvcounts(:) = ncols*comm%sync_recvcounts(:)
+    sync_senddispls(:) = ncols*comm%sync_senddispls(:)
+    sync_sendcounts(:) = ncols*comm%sync_sendcounts(:)
 
-      ! Pack
-      do jj=1,comm%sync_sendcnt
-        sendbuffer(jj) = field(comm%sync_sendmap(jj),jcol)
-      end do
-
-      ! Send
-      do jproc=0,nproc-1
+    ! Let MPI know what we like to receive
+    do jproc=nproc-1,0,-1
+      if(sync_recvcounts(jproc) > 0) then
         itag=9000
-        if(comm%sync_sendcounts(jproc) > 0) then
-          call MPI_ISEND( sendbuffer(comm%sync_senddispls(jproc)+1:),comm%sync_sendcounts(jproc), &
-                        & MPI_REAL8,jproc,itag,MPI_COMM_WORLD,ireq(jproc),ierr)
-        endif
-      enddo
+        call MPI_IRECV( recvbuffer(sync_recvdispls(jproc)+1:),sync_recvcounts(jproc), &
+                      & MPI_REAL8,jproc,itag,MPI_COMM_WORLD,ireqr(jproc),ierr)
+      endif
+    enddo
 
-      ! Receive
-      do jproc=nproc-1,0,-1
-        if(comm%sync_recvcounts(jproc) > 0) then
-          itag=9000
-          call MPI_RECV( recvbuffer(comm%sync_recvdispls(jproc)+1:),comm%sync_recvcounts(jproc),&
-                       & MPI_REAL8,jproc,itag,MPI_COMM_WORLD,irecv_status,ierr )
-        end if
-      end do
-
-      ! Unpack
-      do jj=1,comm%sync_recvcnt
-        field( comm%sync_recvmap(jj), jcol ) = recvbuffer(jj)
-      end do
- 
-      ! Wait for sending to finish
-      do jproc=0,nproc-1
-        if(comm%sync_sendcounts(jproc) > 0) then
-          call MPI_WAIT(ireq(jproc),iwait_status(1,jproc),ierr)
-        end if
+    ! Pack
+    ii = 0
+    do jj=1,comm%sync_sendcnt
+      do jcol=1,ncols
+        ii = ii+1
+        sendbuffer(ii) = field(comm%sync_sendmap(jj),jcol)
       end do
     end do
+
+    ! Send
+    do jproc=0,nproc-1
+      itag=9000
+      if(sync_sendcounts(jproc) > 0) then
+        call MPI_ISEND( sendbuffer(sync_senddispls(jproc)+1:),sync_sendcounts(jproc), &
+                      & MPI_REAL8,jproc,itag,MPI_COMM_WORLD,ireqs(jproc),ierr )
+      end if
+    end do
+  
+    ! Wait for receiving to finish
+    do jproc=0,nproc-1
+      if(comm%sync_recvcounts(jproc) > 0) then
+        call MPI_WAIT( ireqr(jproc),iwait_status(1,jproc),ierr )
+      end if
+    end do
+
+    ! Unpack
+    ii = 0
+    do jj=1,comm%sync_recvcnt
+       do jcol=1,ncols
+        ii = ii+1
+        field( comm%sync_recvmap(jj), jcol ) = recvbuffer(ii)
+      end do
+    end do
+
+    ! Wait for sending to finish
+    do jproc=0,nproc-1
+      if(sync_sendcounts(jproc) > 0) then
+        call MPI_WAIT(ireqs(jproc),iwait_status(1,jproc),ierr)
+      end if
+    end do
+
   end subroutine synchronise_real8_rank2
 
   subroutine synchronise_real4_rank1(comm,field)
@@ -420,8 +472,17 @@ contains
     real*4, dimension(:), intent(inout) :: field
     real*4 :: sendbuffer(comm%sync_sendcnt)
     real*4 :: recvbuffer(comm%sync_recvcnt)
-    integer :: jj,itag,jproc,ireq(0:nproc-1),irecv_status(MPI_STATUS_SIZE)
+    integer :: jj,itag,jproc,ireqs(0:nproc-1),ireqr(0:nproc-1)
     integer :: iwait_status(MPI_STATUS_SIZE,0:nproc-1)
+
+    ! Let MPI know what we like to receive
+    do jproc=nproc-1,0,-1
+      if(comm%sync_recvcounts(jproc) > 0) then
+        itag=9000
+        call MPI_IRECV( recvbuffer(comm%sync_recvdispls(jproc)+1:),comm%sync_recvcounts(jproc), &
+                      & MPI_REAL4,jproc,itag,MPI_COMM_WORLD,ireqr(jproc),ierr)
+      endif
+    enddo
 
     ! Pack
     do jj=1,comm%sync_sendcnt
@@ -433,18 +494,16 @@ contains
       itag=9000
       if(comm%sync_sendcounts(jproc) > 0) then
         call MPI_ISEND( sendbuffer(comm%sync_senddispls(jproc)+1:),comm%sync_sendcounts(jproc), &
-                      & MPI_REAL4,jproc,itag,MPI_COMM_WORLD,ireq(jproc),ierr)
-      endif
-    enddo
-  
-    ! Receive
-    do jproc=nproc-1,0,-1
-      if(comm%sync_recvcounts(jproc) > 0) then
-        itag=9000
-         call MPI_RECV( recvbuffer(comm%sync_recvdispls(jproc)+1:),comm%sync_recvcounts(jproc), &
-                      & MPI_REAL4,jproc,itag,MPI_COMM_WORLD,irecv_status,ierr )
+                      & MPI_REAL4,jproc,itag,MPI_COMM_WORLD,ireqs(jproc),ierr )
       end if
-    enddo
+    end do
+  
+    ! Wait for receiving to finish
+    do jproc=0,nproc-1
+      if(comm%sync_recvcounts(jproc) > 0) then
+        call MPI_WAIT( ireqr(jproc),iwait_status(1,jproc),ierr )
+      end if
+    end do
 
     ! Unpack
     do jj=1,comm%sync_recvcnt
@@ -453,10 +512,10 @@ contains
 
     ! Wait for sending to finish
     do jproc=0,nproc-1
-        if(comm%sync_sendcounts(jproc) > 0) then
-          call MPI_WAIT(ireq(jproc),iwait_status(1,jproc),ierr)
-        end if
-    enddo
+      if(comm%sync_sendcounts(jproc) > 0) then
+        call MPI_WAIT(ireqs(jproc),iwait_status(1,jproc),ierr)
+      end if
+    end do
 
   end subroutine synchronise_real4_rank1
 
@@ -464,50 +523,68 @@ contains
   subroutine synchronise_real4_rank2(comm,field)
     class(Comm_type), intent(inout) :: comm
     real*4, dimension(:,:), intent(inout) :: field
-    real*4 :: sendbuffer(comm%sync_sendcnt)
-    real*4 :: recvbuffer(comm%sync_recvcnt)
-    integer :: jj,jproc,itag,ireq(0:nproc-1),irecv_status(MPI_STATUS_SIZE)
+    real*4 :: sendbuffer(comm%sync_sendcnt*size(field,2))
+    real*4 :: recvbuffer(comm%sync_recvcnt*size(field,2))
+    integer :: jj,ii,jproc,itag,ireqs(0:nproc-1),ireqr(0:nproc-1)
+    integer :: sync_recvdispls(0:nproc-1),sync_recvcounts(0:nproc-1)
+    integer :: sync_senddispls(0:nproc-1),sync_sendcounts(0:nproc-1)
     integer :: jcol, ncols
     integer :: iwait_status(MPI_STATUS_SIZE,0:nproc-1)
 
     ncols = size(field,2)
-    do jcol=1,ncols
+    sync_recvdispls(:) = ncols*comm%sync_recvdispls(:)
+    sync_recvcounts(:) = ncols*comm%sync_recvcounts(:)
+    sync_senddispls(:) = ncols*comm%sync_senddispls(:)
+    sync_sendcounts(:) = ncols*comm%sync_sendcounts(:)
 
-      ! Pack
-      do jj=1,comm%sync_sendcnt
-        sendbuffer(jj) = field(comm%sync_sendmap(jj),jcol)
-      end do
-
-      ! Send
-      do jproc=0,nproc-1
+    ! Let MPI know what we like to receive
+    do jproc=nproc-1,0,-1
+      if(sync_recvcounts(jproc) > 0) then
         itag=9000
-        if(comm%sync_sendcounts(jproc) > 0) then
-          call MPI_ISEND( sendbuffer(comm%sync_senddispls(jproc)+1:),comm%sync_sendcounts(jproc), &
-                        & MPI_REAL4,jproc,itag,MPI_COMM_WORLD,ireq(jproc),ierr)
-        end if
-      end do
+        call MPI_IRECV( recvbuffer(sync_recvdispls(jproc)+1:),sync_recvcounts(jproc), &
+                      & MPI_REAL4,jproc,itag,MPI_COMM_WORLD,ireqr(jproc),ierr)
+      endif
+    enddo
 
-      ! Receive
-      do jproc=nproc-1,0,-1
-        if(comm%sync_recvcounts(jproc) > 0) then
-          itag=9000
-          call MPI_RECV( recvbuffer(comm%sync_recvdispls(jproc)+1:),comm%sync_recvcounts(jproc), &
-                       & MPI_REAL4,jproc,itag,MPI_COMM_WORLD,irecv_status,ierr)
-        end if
+    ! Pack
+    ii = 0
+    do jj=1,comm%sync_sendcnt
+      do jcol=1,ncols
+        ii = ii+1
+        sendbuffer(ii) = field(comm%sync_sendmap(jj),jcol)
       end do
+    end do
 
-      ! Unpack
-      do jj=1,comm%sync_recvcnt
-        field( comm%sync_recvmap(jj), jcol ) = recvbuffer(jj)
-      end do
- 
-      ! Wait for sending to finish
-      do jproc=0,nproc-1
-        if(comm%sync_sendcounts(jproc) > 0) then
-          call MPI_WAIT(ireq(jproc),iwait_status(1,jproc),ierr)
-        end if
-      end do
+    ! Send
+    do jproc=0,nproc-1
+      itag=9000
+      if(sync_sendcounts(jproc) > 0) then
+        call MPI_ISEND( sendbuffer(sync_senddispls(jproc)+1:),sync_sendcounts(jproc), &
+                      & MPI_REAL4,jproc,itag,MPI_COMM_WORLD,ireqs(jproc),ierr )
+      end if
+    end do
+  
+    ! Wait for receiving to finish
+    do jproc=0,nproc-1
+      if(comm%sync_recvcounts(jproc) > 0) then
+        call MPI_WAIT( ireqr(jproc),iwait_status(1,jproc),ierr )
+      end if
+    end do
 
+    ! Unpack
+    ii = 0
+    do jj=1,comm%sync_recvcnt
+       do jcol=1,ncols
+        ii = ii+1
+        field( comm%sync_recvmap(jj), jcol ) = recvbuffer(ii)
+      end do
+    end do
+
+    ! Wait for sending to finish
+    do jproc=0,nproc-1
+      if(sync_sendcounts(jproc) > 0) then
+        call MPI_WAIT(ireqs(jproc),iwait_status(1,jproc),ierr)
+      end if
     end do
 
   end subroutine synchronise_real4_rank2
