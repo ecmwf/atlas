@@ -39,6 +39,7 @@ public :: log_info
 public :: log_debug
 public :: Timer_type
 public :: progress_bar
+public :: plot1d
 
 integer, public :: log_level = 3
 integer, public :: log_proc = -1 ! means everyone
@@ -222,5 +223,67 @@ subroutine progress_bar(x,xmin,xmax)
   end if
   return
 end subroutine progress_bar
+
+subroutine plot1d(width,height,val,minval,maxval)
+    integer, intent(in) :: width, height
+    !real(kind=jprw), intent(in)          :: val(:)
+    !real(kind=jprw), intent(in), optional :: minval, maxval
+    integer, intent(in)          :: val(:)
+    integer, intent(in), optional :: minval, maxval
+    integer :: nx, rows, cols, j, i, irow, n
+    real(kind=jprw) :: vmin, vmax, scale
+    rows = height
+    cols = width
+    nx = size(val)
+
+    ! set or determine scaling factor for data points
+    vmin= 1.0e30
+    vmax=-1.0e30
+    if (present(maxval)) then
+      vmax = real(maxval)
+    else
+      do j=1,nx
+        vmax = max( vmax, real(val(j)) )
+      end do
+    end if
+
+    if (present(minval)) then
+      vmin = real(minval)
+    else
+      ! find absolute maximum value for scaling
+      do j=1,nx
+        vmin = min( vmin, real(val(j)) )
+      end do
+    end if
+    scale = real(rows-1)/(vmax-vmin)
+
+    ! now plot
+
+    write(0,'(A11)',advance='no') ' '
+    do j=1,cols
+      write(0,'(A1)',advance='no') '-'
+    end do
+    write(0,'(A)') '--'
+
+    do j=1,rows
+      write(0,'(I10,A2)',advance='no') nint(vmax-(j-1)*(vmax-vmin)/real(rows-1)),'|'
+      do i=1,cols
+        n = 1+nint(real(i-1)*real(nx-1)/real(cols-1))
+        irow = 1+nint((vmax-real(val(n)))*scale)
+        if (irow.eq.j) then
+          write(0,'(A1)',advance='no') '+'
+        else
+          write(0,'(A1)',advance='no') ' '
+        end if
+      end do
+      write(0,'(A1)')'|'
+    end do
+    write(0,'(A11)',advance='no') ' '
+    do i=1,cols
+        write(0,'(A1)',advance='no') '-'
+    end do
+    write(0,'(A)') '--'
+
+  end subroutine plot1d
 
 end module common_module

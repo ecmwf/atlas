@@ -6,7 +6,7 @@ project( mpdata_shallow_water Fortran )
 message( STATUS "--------------------------------------------------------------------" )
 message( STATUS "MPDATA Shallow Water configuration" )
 
-set(OMP ON CACHE BOOL "Enable/Disable OpenMP" FORCE)
+set(OMP ON CACHE BOOL "Enable/Disable OpenMP" )
 
 get_filename_component (Fortran_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
 if( NOT Fortran_COMPILER_NAME MATCHES "mpi.*" AND NOT Fortran_COMPILER_NAME MATCHES "ftn" )

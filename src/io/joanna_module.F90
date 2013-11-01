@@ -44,6 +44,7 @@ contains
     integer, allocatable :: keep_node(:)
     integer, allocatable :: node_loc_idx(:)
     integer, allocatable :: edge_loc_idx(:)
+    integer, allocatable :: edges_distr(:)
 
     integer :: ierr
     integer :: jedge, iedge
@@ -215,12 +216,12 @@ contains
     do jnode = 1,g%nb_nodes
       if( g%nb_neighbours(jnode) == 1) ibound=ibound+1
     enddo
-    do jnode=0,nproc
-      call mpi_barrier( MPI_COMM_WORLD, ierr)
-      if(jnode == myproc) &
-       write(0,*) 'g%max_nb_neighbours  1',myproc,g%max_nb_neighbours, minval(g%nb_neighbours(:)),&
-       & g%nb_nodes-ibound,ibound,g%nb_edges
-    enddo
+    !do jnode=0,nproc
+    !  call mpi_barrier( MPI_COMM_WORLD, ierr)
+    !  if(jnode == myproc) &
+    !   write(0,*) 'g%max_nb_neighbours  1',myproc,g%max_nb_neighbours, minval(g%nb_neighbours(:)),&
+    !   & g%nb_nodes-ibound,ibound,g%nb_edges
+    !enddo
     allocate(g%neighbours(g%max_nb_neighbours,g%nb_nodes))
     allocate(g%my_edges(g%max_nb_neighbours,g%nb_nodes))
     allocate(g%sign(g%max_nb_neighbours,g%nb_nodes))
@@ -244,6 +245,16 @@ contains
     !  enddo
     !endif
     close(5)
+
+    allocate( edges_distr(nproc) )
+    call MPI_GATHER( g%nb_edges, 1, MPI_INTEGER, &
+                   & edges_distr, 1, MPI_INTEGER, &
+                   & 0, MPI_COMM_WORLD, ierr );
+
+    if( myproc .eq. 0 ) then
+      call log_info('           Edges Load balance per MPI task')
+      call plot1d(nproc,10,edges_distr)
+    end if
 
   end subroutine read_joanna
 
