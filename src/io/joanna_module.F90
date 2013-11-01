@@ -237,12 +237,12 @@ contains
       g%my_edges(g%nb_neighbours(ip2),ip2) = jedge
       g%sign(g%nb_neighbours(ip2),ip2) = -1
     enddo
-    if(myproc == 5) then
-      write(0,*) 'g%nb_nodes ',g%nb_nodes
-      do jnode = 1,g%nb_nodes
-        write(0,*) 'neighbours ',jnode,g%nb_neighbours(jnode),g%neighbours(1:g%nb_neighbours(jnode),jnode)
-      enddo
-    endif
+    !if(myproc == 5) then
+    !  write(0,*) 'g%nb_nodes ',g%nb_nodes
+    !  do jnode = 1,g%nb_nodes
+    !    write(0,*) 'neighbours ',jnode,g%nb_neighbours(jnode),g%neighbours(1:g%nb_neighbours(jnode),jnode)
+    !  enddo
+    !endif
     close(5)
 
   end subroutine read_joanna
