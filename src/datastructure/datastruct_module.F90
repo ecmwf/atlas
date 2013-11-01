@@ -44,6 +44,11 @@ module datastruct_module
     integer, dimension(:,:), pointer, public     :: edges
     integer, dimension(:),   allocatable, public :: pole_edges
     integer, dimension(:,:), allocatable, public :: ghost_nodes
+    integer, dimension(:),   allocatable, public :: nb_neighbours
+    integer, dimension(:,:), allocatable, public :: neighbours
+    integer, dimension(:,:), allocatable, public :: my_edges
+    real(kind=jprw) , dimension(:,:), allocatable, public :: sign
+    integer                             , public :: max_nb_neighbours        
 
   end type DataStructure_type
 
@@ -57,6 +62,8 @@ contains
     integer, intent(in) :: proc(:)
     integer, intent(in) :: glb_idx(:)
     type(DataStructure_type), intent(inout), target :: geom
+    
+    integer :: jedge,ip1,ip2
 
     call geom%internal_mesh%init("LagrangeP1_Triag2D")
     allocate(geom%internal_mesh%nodes_coordinates(nb_nodes,2))
@@ -68,8 +75,7 @@ contains
     geom%internal_mesh%nb_faces = nb_edges
     allocate( geom%internal_mesh%faces(geom%nb_edges,2) )
     geom%edges => geom%internal_mesh%faces
-
-    ! Create 1 function space for nodes, (DONT WORRY ABOUT DETAILS)
+   ! Create 1 function space for nodes, (DONT WORRY ABOUT DETAILS)
     allocate( ContinuousFunctionSpace :: geom%functionspace_nodes )
     geom%internal_mesh%nodes =>  geom%functionspace_nodes 
     call geom%functionspace_nodes%init("nodes", "LagrangeP1", geom%internal_mesh)
@@ -89,6 +95,7 @@ contains
     geom%functionspace_nodes%proc(:) = proc(:)
     geom%functionspace_nodes%glb_idx(:) = glb_idx(:)
     call geom%functionspace_nodes%comm%setup( geom%functionspace_nodes%proc, geom%functionspace_nodes%glb_idx )
+
   end subroutine create_mesh
 
   subroutine create_scalar_field_in_nodes(name, geom)
