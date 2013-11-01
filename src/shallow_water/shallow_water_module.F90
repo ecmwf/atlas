@@ -24,7 +24,7 @@ contains
     real(kind=jprb), intent(in) :: V(:,:)
     logical, intent(in) :: Q_is_vector, limited
     integer, intent(in) :: order
-    integer :: jnode, jedge, iedge, jpass, ip1,ip2,iedge
+    integer :: jnode, jedge, iedge, jpass, ip1,ip2
     real(kind=jprb) :: sx, sy, flux, volume_of_two_cells, dQdx, dQdy, Vx, Vy, apos, aneg, Q1, Q2
     real(kind=jprb) :: Qmin(geom%nb_nodes)
     real(kind=jprb) :: Qmax(geom%nb_nodes)
@@ -73,6 +73,7 @@ contains
     do jnode=1,geom%nb_nodes
       adv = 0.0
       if(geom%nb_neighbours(jnode) > 1) then
+!dir$ unroll 2
         do jedge = 1,geom%nb_neighbours(jnode)
           iedge = geom%my_edges(jedge,jnode)
           adv = adv + geom%sign(jedge,jnode)*fluxv(iedge)
@@ -146,6 +147,8 @@ contains
     do jnode=1,geom%nb_nodes
       adv = 0.0
       if(geom%nb_neighbours(jnode) > 1) then
+!!dir$ loop_info min_trips(2) max_trips(8)
+!dir$ unroll 2
         do jedge = 1,geom%nb_neighbours(jnode)
           iedge = geom%my_edges(jedge,jnode)
           adv = adv + geom%sign(jedge,jnode)*aun(iedge)
@@ -225,6 +228,7 @@ contains
       do jnode=1,geom%nb_nodes
         rhin=0.0
         rhout=0.0
+!dir$ unroll 2
         do jedge = 1,geom%nb_neighbours(jnode)
           iedge = geom%my_edges(jedge,jnode)
           apos = max(0._jprb,aun(iedge))
@@ -303,7 +307,8 @@ contains
 
 !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,jedge,iedge)
     do jnode=1,geom%nb_nodes
-      gradQ(jnode,:) = 0.0
+      gradQ(jnode,XX) = 0.0
+      gradQ(jnode,YY) = 0.0
       do jedge = 1,geom%nb_neighbours(jnode)
         iedge = geom%my_edges(jedge,jnode)
         gradQ(jnode,XX) = gradQ(jnode,XX)+geom%sign(jedge,jnode)*avgQSx(iedge)

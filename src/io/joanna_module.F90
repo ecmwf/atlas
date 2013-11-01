@@ -29,7 +29,7 @@ contains
     integer                      :: glb_nb_nodes = 0
     integer                      :: glb_nb_edges = 0
 
-    integer                      :: idx
+    integer                      :: idx,ibound
     real(kind=jprb), pointer     :: coords(:,:), vol(:), S(:,:)
     integer                      :: ip1,ip2
 
@@ -211,7 +211,16 @@ contains
       g%nb_neighbours(ip2) = g%nb_neighbours(ip2)+1
     enddo
     g%max_nb_neighbours = maxval(g%nb_neighbours(:))
-    write(0,*) 'g%max_nb_neighbours  1',g%max_nb_neighbours, minval(g%nb_neighbours(:))
+    ibound = 0
+    do jnode = 1,g%nb_nodes
+      if( g%nb_neighbours(jnode) == 1) ibound=ibound+1
+    enddo
+    do jnode=0,nproc
+      call mpi_barrier( MPI_COMM_WORLD, ierr)
+      if(jnode == myproc) &
+       write(0,*) 'g%max_nb_neighbours  1',myproc,g%max_nb_neighbours, minval(g%nb_neighbours(:)),&
+       & g%nb_nodes-ibound,ibound,g%nb_edges
+    enddo
     allocate(g%neighbours(g%max_nb_neighbours,g%nb_nodes))
     allocate(g%my_edges(g%max_nb_neighbours,g%nb_nodes))
     allocate(g%sign(g%max_nb_neighbours,g%nb_nodes))

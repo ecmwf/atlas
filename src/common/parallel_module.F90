@@ -215,8 +215,17 @@ contains
     real*8, dimension(:), intent(inout) :: field
     real*8 :: sendbuffer(comm%sync_sendcnt)
     real*8 :: recvbuffer(comm%sync_recvcnt)
-    integer :: jj,jnode,itag,ireq(0:nproc-1),irecv_status(MPI_STATUS_SIZE)
+    integer :: jj,jnode,itag,ireqs(0:nproc-1),ireqr(0:nproc-1),irecv_status(MPI_STATUS_SIZE)
     integer :: iwait_status(MPI_STATUS_SIZE,0:nproc-1)
+
+    call MPI_BARRIER( MPI_COMM_WORLD, ierr )
+    do jnode=nproc-1,0,-1
+      if(comm%sync_recvcounts(jnode) > 0) then
+       itag=9000
+       call MPI_IRECV(recvbuffer(comm%sync_recvdispls(jnode)+1:),comm%sync_recvcounts(jnode),&
+         & MPI_DOUBLE_PRECISION,jnode,itag,MPI_COMM_WORLD,ireqr(jnode),ierr)
+      endif
+    enddo
 
     ! Pack
     do jj=1,comm%sync_sendcnt
@@ -227,7 +236,7 @@ contains
       itag=9000
       if(comm%sync_sendcounts(jnode) > 0) then
         call MPI_ISEND(sendbuffer(comm%sync_senddispls(jnode)+1:),comm%sync_sendcounts(jnode), &
-         & MPI_DOUBLE_PRECISION,jnode,itag,MPI_COMM_WORLD,ireq(jnode),ierr)
+         & MPI_DOUBLE_PRECISION,jnode,itag,MPI_COMM_WORLD,ireqs(jnode),ierr)
       endif
     enddo
 !!$
@@ -236,11 +245,9 @@ contains
 !!$                      & recvbuffer,comm%sync_recvcounts,comm%sync_recvdispls,MPI_DOUBLE_PRECISION, &
 !!$                      & MPI_COMM_WORLD,ierr)
   
-    do jnode=nproc-1,0,-1
-      if(comm%sync_recvcounts(jnode) > 0) then
-       itag=9000
-       call MPI_RECV(recvbuffer(comm%sync_recvdispls(jnode)+1:),comm%sync_recvcounts(jnode),&
-         & MPI_DOUBLE_PRECISION,jnode,itag,MPI_COMM_WORLD,irecv_status,ierr)
+    do jnode=0,nproc-1
+       if(comm%sync_recvcounts(jnode) > 0) then
+        call MPI_WAIT(ireqr(jnode),iwait_status(1,jnode),ierr)
       endif
     enddo
     ! Unpack
@@ -250,7 +257,7 @@ contains
 
     do jnode=0,nproc-1
        if(comm%sync_sendcounts(jnode) > 0) then
-        call MPI_WAIT(ireq(jnode),iwait_status(1,jnode),ierr)
+        call MPI_WAIT(ireqs(jnode),iwait_status(1,jnode),ierr)
       endif
     enddo
 
@@ -260,52 +267,73 @@ contains
   subroutine synchronise_real8_rank2(comm,field)
     class(Comm_type), intent(inout) :: comm
     real*8, dimension(:,:), intent(inout) :: field
-    real*8 :: sendbuffer(comm%sync_sendcnt)
-    real*8 :: recvbuffer(comm%sync_recvcnt)
-    integer :: jj,jnode,itag,ireq(0:nproc-1),irecv_status(MPI_STATUS_SIZE)
+    real*8 :: sendbuffer(comm%sync_sendcnt*size(field,2))
+    real*8 :: recvbuffer(comm%sync_recvcnt*size(field,2))
+    integer :: jj,ii,jnode,itag,ireqs(0:nproc-1),ireqr(0:nproc-1),irecv_status(MPI_STATUS_SIZE)
+    integer :: sync_recvdispls(0:nproc-1),sync_recvcounts(0:nproc-1)
+    integer :: sync_senddispls(0:nproc-1),sync_sendcounts(0:nproc-1)
     integer :: jcol, ncols
     integer :: iwait_status(MPI_STATUS_SIZE,0:nproc-1)
 
+    call MPI_BARRIER( MPI_COMM_WORLD, ierr )
     ncols = size(field,2)
-    do jcol=1,ncols
+    sync_recvdispls(:) = ncols*comm%sync_recvdispls(:)
+    sync_recvcounts(:) = ncols*comm%sync_recvcounts(:)
+    sync_senddispls(:) = ncols*comm%sync_senddispls(:)
+    sync_sendcounts(:) = ncols*comm%sync_sendcounts(:)
 
-      ! Pack
-      do jj=1,comm%sync_sendcnt
-        sendbuffer(jj) = field(comm%sync_sendmap(jj),jcol)
-      end do
-      do jnode=0,nproc-1
+    do jnode=nproc-1,0,-1
+      if(sync_recvcounts(jnode) > 0) then
         itag=9000
-        if(comm%sync_sendcounts(jnode) > 0) then
-          call MPI_ISEND(sendbuffer(comm%sync_senddispls(jnode)+1:),comm%sync_sendcounts(jnode), &
-           & MPI_DOUBLE_PRECISION,jnode,itag,MPI_COMM_WORLD,ireq(jnode),ierr)
-        endif
-      enddo
-
-      ! Communicate
-!!$      call MPI_ALLTOALLV( sendbuffer,comm%sync_sendcounts,comm%sync_senddispls,MPI_DOUBLE_PRECISION, &
-!!$                        & recvbuffer,comm%sync_recvcounts,comm%sync_recvdispls,MPI_DOUBLE_PRECISION, &
-!!$                        & MPI_COMM_WORLD,ierr)
-!!$    
-      do jnode=nproc-1,0,-1
-        if(comm%sync_recvcounts(jnode) > 0) then
-          itag=9000
-          call MPI_RECV(recvbuffer(comm%sync_recvdispls(jnode)+1:),comm%sync_recvcounts(jnode),&
-           & MPI_DOUBLE_PRECISION,jnode,itag,MPI_COMM_WORLD,irecv_status,ierr)
-        endif
-      enddo
-      ! Unpack
-      do jj=1,comm%sync_recvcnt
-        field( comm%sync_recvmap(jj), jcol ) = recvbuffer(jj)
-      end do
-
-      do jnode=0,nproc-1
-       if(comm%sync_sendcounts(jnode) > 0) then
-        call MPI_WAIT(ireq(jnode),iwait_status(1,jnode),ierr)
+        call MPI_IRECV(recvbuffer(sync_recvdispls(jnode)+1:),sync_recvcounts(jnode),&
+         & MPI_DOUBLE_PRECISION,jnode,itag,MPI_COMM_WORLD,ireqr(jnode),ierr)
       endif
     enddo
 
-  end do
-  end subroutine synchronise_real8_rank2
+    ! Pack
+    ii = 0
+    do jj=1,comm%sync_sendcnt
+      do jcol=1,ncols
+        ii = ii+1
+        sendbuffer(ii) = field(comm%sync_sendmap(jj),jcol)
+      end do
+    end do
+
+    do jnode=0,nproc-1
+      itag=9000
+      if(sync_sendcounts(jnode) > 0) then
+        call MPI_ISEND(sendbuffer(sync_senddispls(jnode)+1:),sync_sendcounts(jnode), &
+         & MPI_DOUBLE_PRECISION,jnode,itag,MPI_COMM_WORLD,ireqs(jnode),ierr)
+      endif
+    enddo
+
+      ! Communicate
+!!$      call MPI_ALLTOALLV( sendbuffer,sync_sendcounts,sync_senddispls,MPI_DOUBLE_PRECISION, &
+!!$                        & recvbuffer,sync_recvcounts,sync_recvdispls,MPI_DOUBLE_PRECISION, &
+!!$                        & MPI_COMM_WORLD,ierr)
+!!$    
+
+    do jnode=0,nproc-1
+      if(sync_recvcounts(jnode) > 0) then
+        call MPI_WAIT(ireqr(jnode),iwait_status(1,jnode),ierr)
+      endif
+    enddo
+      ! Unpack
+    ii = 0
+    do jj=1,comm%sync_recvcnt
+       do jcol=1,ncols
+        ii = ii+1
+        field( comm%sync_recvmap(jj), jcol ) = recvbuffer(ii)
+      end do
+    end do
+
+    do jnode=0,nproc-1
+      if(sync_sendcounts(jnode) > 0) then
+        call MPI_WAIT(ireqs(jnode),iwait_status(1,jnode),ierr)
+      endif
+    enddo
+
+   end subroutine synchronise_real8_rank2
 
 
   subroutine synchronise_integer_rank1(comm,field)
