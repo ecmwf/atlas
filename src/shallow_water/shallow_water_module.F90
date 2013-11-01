@@ -18,12 +18,12 @@ module mpdata_module
 
 contains
 
-  subroutine mpdata_gauge(dt,Q,V,order,limited,Q_is_vector,geom)
+  subroutine mpdata_gauge(dt,Q,V,order,limited,Q_is_vector_component,geom)
     real(kind=jprw), intent(in)  :: dt
     type(DataStructure_type), intent(inout) :: geom
     real(kind=jprw), intent(inout) :: Q(:)
     real(kind=jprw), intent(in) :: V(:,:)
-    logical, intent(in) :: Q_is_vector, limited
+    logical, intent(in) :: Q_is_vector_component, limited
     integer, intent(in) :: order
     integer :: jnode, jedge, iedge, jpass, ip1,ip2
     real(kind=jprw) :: sx, sy, flux, volume_of_two_cells, dQdx, dQdy, Vx, Vy, apos, aneg, Q1, Q2
@@ -38,23 +38,23 @@ contains
     real(kind=jprw) :: gradQ(geom%nb_nodes,2)
     real(kind=jprw), pointer :: vol(:), S(:,:), pole_bc(:)
 
-    vol => scalar_field("dual_volumes",geom)
-    S   => vector_field("dual_normals",geom)
+    vol     => scalar_field("dual_volumes",geom)
+    S       => vector_field("dual_normals",geom)
     pole_bc => scalar_field("pole_bc",geom)
+
+    ! 1. First pass
+    ! -------------
+    jpass = 1
 
     ! non-oscillatory option
     if( limited .and. (order .ge. 2) ) then
       Qmax(:) = -1e10
       Qmin(:) =  1e10
-      call compute_Qmax_and_Qmin()
+      if (.not. Q_is_vector_component) call compute_Qmax_and_Qmin()
     end if
 
-    ! 1. First pass
-    ! -------------
-    
     ! Compute the normal velocity in faces, and advection in vertices
     adv(:) = 0.
-
     do jedge = 1,geom%nb_edges
       ip1 = geom%edges(jedge,1)
       ip2 = geom%edges(jedge,2)
@@ -83,7 +83,7 @@ contains
     do jpass=2,order
 
       ! Compute derivatives for mpdata
-      call compute_gradient(Q, gradQ, Q_is_vector, geom)
+      call compute_gradient(Q, gradQ, Q_is_vector_component, geom)
 
       call synchronise(gradQ,geom)
 
@@ -106,7 +106,7 @@ contains
 
       ! non-oscillatory option
       if (limited) then
-        !call compute_Qmax_and_Qmin()
+        if (Q_is_vector_component) call compute_Qmax_and_Qmin()
         call limit_antidiffusive_velocity()
       endif
 
@@ -131,41 +131,36 @@ contains
 
   contains
     
-    subroutine compute_Qmax_and_Qmin()
-      real(kind=jprw) :: mn(geom%nb_nodes)
-      real(kind=jprw) :: mx(geom%nb_nodes)
-      mn(:) =  1e10
-      mx(:) = -1e10
+    subroutine compute_Qmax_and_Qmin( )
+      real(kind=jprw), pointer :: Qmax_1(:), Qmin_1(:), Qmax_2(:), Qmin_2(:), Qmax_tot(:), Qmin_tot(:)
+      real(kind=jprw) :: mx(geom%nb_nodes), mn(geom%nb_nodes)
+     
       do jedge = 1,geom%nb_edges
         ip1 = geom%edges(jedge,1)
         ip2 = geom%edges(jedge,2)
         Q1 = Q(ip1)
         Q2 = Q(ip2)
-        if (.not. Q_is_vector) then
-          mx(ip1) = max( mx(ip1), Q1, Q2 )
-          mn(ip1) = min( mn(ip1), Q1, Q2 )
-          mx(ip2) = max( mx(ip2), Q2, Q1 )
-          mn(ip2) = min( mn(ip2), Q2, Q1 )
+        if (.not. Q_is_vector_component) then
+          Qmax(ip1) = max( Qmax(ip1), Q1, Q2 )
+          Qmin(ip1) = min( Qmin(ip1), Q1, Q2 )
+          Qmax(ip2) = max( Qmax(ip2), Q2, Q1 )
+          Qmin(ip2) = min( Qmin(ip2), Q2, Q1 )
         else
-          mx(ip1) = max( mx(ip1), Q1, pole_bc(jedge)*Q2 )
-          mn(ip1) = min( mn(ip1), Q1, pole_bc(jedge)*Q2 )
-          mx(ip2) = max( mx(ip2), Q2, pole_bc(jedge)*Q1 )
-          mn(ip2) = min( mn(ip2), Q2, pole_bc(jedge)*Q1 )
+          Qmax(ip1) = max( Qmax(ip1), Q1, pole_bc(jedge)*Q2 )
+          Qmin(ip1) = min( Qmin(ip1), Q1, pole_bc(jedge)*Q2 )
+          Qmax(ip2) = max( Qmax(ip2), Q2, pole_bc(jedge)*Q1 )
+          Qmin(ip2) = min( Qmin(ip2), Q2, pole_bc(jedge)*Q1 )
         end if
       end do
-      do jnode=1,geom%nb_nodes
-        Qmin(jnode) = min(mn(jnode), Qmin(jnode))
-        Qmax(jnode) = max(mx(jnode), Qmax(jnode))
-      end do
-
       call synchronise(Qmin,geom)
       call synchronise(Qmax,geom)
+
 
     end subroutine compute_Qmax_and_Qmin
 
     subroutine limit_antidiffusive_velocity
-      real(kind=jprw), parameter :: limit = 0.9925  ! 1: second order, 0: first order
-
+      real(kind=jprw) :: limit = 1.  ! 1: second order, 0: first order
+      if (.not. Q_is_vector_component) limit = 0.995
       rhin(:)  =  0.
       rhout(:) =  0.
       do jedge = 1,geom%nb_edges
@@ -204,11 +199,11 @@ contains
 
   end subroutine mpdata_gauge
 
-  subroutine compute_gradient(Q,gradQ,Q_is_vector,geom)
+  subroutine compute_gradient(Q,gradQ,Q_is_vector_component,geom)
     type(DataStructure_type), intent(inout) :: geom
     real(kind=jprw), intent(in)    :: Q(:)
     real(kind=jprw), intent(inout) :: gradQ(:,:)
-    logical, intent(in) :: Q_is_vector
+    logical, intent(in) :: Q_is_vector_component
     real(kind=jprw), pointer :: S(:,:)
     real(kind=jprw) :: Sx,Sy,avgQ,avgQ_pole
     integer :: jedge,iedge,ip1,ip2
@@ -232,7 +227,7 @@ contains
 
     ! special treatment for the north & south pole cell faces
     ! Sx == 0 at pole, and Sy has same sign at both sides of pole
-    if (.not. Q_is_vector) then
+    if (.not. Q_is_vector_component) then
       do jedge = 1,geom%nb_pole_edges
         iedge = geom%pole_edges(jedge)
         ip1   = geom%edges(iedge,1)
@@ -337,6 +332,14 @@ contains
     call create_scalar_field_in_nodes("depth_backup",geom)
     call create_vector_field_in_nodes("momentum_backup",geom)
     call create_vector_field_in_edges("advective_velocity",geom)
+
+    call create_scalar_field_in_nodes("Dmax_1",geom)
+    call create_scalar_field_in_nodes("Dmin_1",geom)
+    call create_scalar_field_in_nodes("Dmax_2",geom)
+    call create_scalar_field_in_nodes("Dmin_2",geom)
+    call create_scalar_field_in_nodes("Dmax_tot",geom)
+    call create_scalar_field_in_nodes("Dmin_tot",geom)
+
   end subroutine setup_shallow_water
 
   subroutine propagate_state(dt,geom)

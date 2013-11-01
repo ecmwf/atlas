@@ -96,9 +96,9 @@ contains
       y = r*sin(theta)*sin(phi)
       z = r*cos(theta)
 
-      !write(50,'(1I8,F18.10,F18.10,F18.10)')  grid%nodes%glb_idx(jnode), x,y,z
-      write(50,'(1I8,F18.10,F18.10,F18.10)')  grid%nodes%glb_idx(jnode), &
-        & grid%nodes_coordinates(jnode,1),grid%nodes_coordinates(jnode,2), 0.
+      write(50,'(1I8,F18.10,F18.10,F18.10)')  grid%nodes%glb_idx(jnode), x,y,z
+      !write(50,'(1I8,F18.10,F18.10,F18.10)')  grid%nodes%glb_idx(jnode), &
+      !  & grid%nodes_coordinates(jnode,1),grid%nodes_coordinates(jnode,2), 0.
     enddo
     write(50,'(A)')"$EndNodes"
     write(50,'(A)')"$Elements"
@@ -131,8 +131,26 @@ contains
     field => state%field("depth")
     call write_gmsh_nodal_field(field)
 
-    field => state%field("momentum")
-    call write_gmsh_nodal_field(field)
+    !field => state%field("Dmax_1")
+    !call write_gmsh_nodal_field(field)
+!
+    !field => state%field("Dmin_1")
+    !call write_gmsh_nodal_field(field)
+!
+    !field => state%field("Dmax_2")
+    !call write_gmsh_nodal_field(field)
+!
+    !field => state%field("Dmin_2")
+    !call write_gmsh_nodal_field(field)
+!
+    !field => state%field("Dmax_tot")
+    !call write_gmsh_nodal_field(field)
+!
+    !field => state%field("Dmin_tot")
+    !call write_gmsh_nodal_field(field)
+
+    !field => state%field("momentum")
+    !call write_gmsh_nodal_field(field)
 
     !do ifield=1,state%nb_fields
     !  field => state%fields(ifield)%ptr

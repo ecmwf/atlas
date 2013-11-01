@@ -60,6 +60,7 @@ program shallow_water
   call log_info( "| output rate (hrs) | "//trim(str(hours_per_step,'(I8)'))//" |" )
   call log_info( "+-------------------+----------+ ")
 
+  call write_gmsh_mesh(g%internal_mesh,"data/mesh.msh")
 
   call write_fields()
 
@@ -68,8 +69,9 @@ program shallow_water
   do jstep=1,nb_steps 
 
     call step_timer%start()
-    call propagate_state( hours_per_step*hours, g)
-  
+      call propagate_state( hours_per_step*hours, g)
+      !call propagate_state( dt, g)
+
     write (log_str, '(A,I3,A,A,F8.2,A,F8.2,A)') &
       & "Propagated to ",jstep*hours_per_step," hours.", &
       & "     step-time = ",step_timer%elapsed(),&
