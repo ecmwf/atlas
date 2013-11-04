@@ -40,41 +40,23 @@ elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Intel" )
   set( CMAKE_Fortran_FLAGS_BIT     "-O2" )
 
 elseif( CMAKE_Fortran_COMPILER_ID MATCHES "XL" )
-  set( CMAKE_Fortran_FLAGS_RELEASE "-c -O3 -qfree=F90 -qsuffix=cpp=F90 -qextname -qsmp=omp -q64=largetype -qarch=pwr5 -g -qstrict -qsource,list -qsaveopt -NS32648" )
-  set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g" )
-  set( CMAKE_Fortran_FLAGS_BIT     "-c -O3 -qfree=F90 -qsuffix=cpp=F90 -qextname -qsmp=omp -q64=largetype -qarch=pwr5 -g -qstrict -qsource,list -qsaveopt -NS32648" )
-  set( CMAKE_EXE_LINKER_FLAGS      "-b64 -bbigtoc -bmaxstack:0x800000000 -qsmp=omp")
+  set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -qfree=F90 -qsuffix=cpp=F90 -qextname -qsmp=omp -q64=largetype -qarch=pwr5 -g -qsource,list -qsaveopt -NS32648" )
+  set( CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS} -O3 -qstrict" )
+  set( CMAKE_Fortran_FLAGS_DEBUG   "${CMAKE_Fortran_FLAGS} -O0" )
+  set( CMAKE_Fortran_FLAGS_BIT     "${CMAKE_Fortran_FLAGS} -O3 -qstrict" )
+  set( CMAKE_Fortran_LINK_FLAGS    "-b64 -bbigtoc -bmaxstack:0x800000000 -qsmp=omp")
+  set( CMAKE_Fortran_LINK_EXECUTABLE "<CMAKE_Fortran_COMPILER> <CMAKE_Fortran_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
 
 elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )
-  set( SHARED_FLAGS "-emf -rmoi" )
+  set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -emf -rmoi")
   if( ${OMP} )
-    set( SHARED_FLAGS "${SHARED_FLAGS} -homp")
+    set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -homp")
   else( )
-    set( SHARED_FLAGS "${SHARED_FLAGS} -hnoomp")
+    set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -hnoomp")
   endif( )
-  set( CMAKE_Fortran_FLAGS_RELEASE "${SHARED_FLAGS} -O3 -hfp3 -hmpi1 -hscalar3 -hvector3" )
-  set( CMAKE_Fortran_FLAGS_DEBUG   "${SHARED_FLAGS} -O0 -Gfast -Ktrap=fp -R b" )
-  set( CMAKE_Fortran_FLAGS_BIT     "${SHARED_FLAGS} -O2 -hflex_mp=conservative -hadd_paren -hfp1 -hmpi1" )
-  # -hfp3     : Special optimisation for floating points
-  # -Ktrap=fp : Abort on NaN
-  # -R b      : Bounds checking
-  # -hflex_mp=conservative -hfp1 : Obtain bit-reproducible results
-  # -hflex_mp=intolerant -hfp2   : Obtain bit-reproducible results (also)
-  # -hadd_paren : encourage left to right fp evaluation
-  # -hscalarN , -hvectorN : optimisation for scalar and vectorisation
-  # -homp/-hnoomp : Enable/Disable OpenMP
-  # -rmoi : create compiler listing
-
-elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )
-  set( SHARED_FLAGS "-emf -rmoi" )
-  if( ${OMP} )
-    set( SHARED_FLAGS "${SHARED_FLAGS} -homp")
-  else( )
-    set( SHARED_FLAGS "${SHARED_FLAGS} -hnoomp")
-  endif( )
-  set( CMAKE_Fortran_FLAGS_RELEASE "${SHARED_FLAGS} -O3 -hfp3 -hmpi1 -hscalar3 -hvector3" )
-  set( CMAKE_Fortran_FLAGS_DEBUG   "${SHARED_FLAGS} -O0 -Gfast -Ktrap=fp -R b" )
-  set( CMAKE_Fortran_FLAGS_BIT     "${SHARED_FLAGS} -O2 -hflex_mp=conservative -hadd_paren -hfp1 -hmpi1" )
+  set( CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS} -O3 -hfp3 -hmpi1 -hscalar3 -hvector3" )
+  set( CMAKE_Fortran_FLAGS_DEBUG   "${CMAKE_Fortran_FLAGS} -O0 -Gfast -Ktrap=fp -R b" )
+  set( CMAKE_Fortran_FLAGS_BIT     "${CMAKE_Fortran_FLAGS} -O2 -hflex_mp=conservative -hadd_paren -hfp1 -hmpi1" )
   # -hfp3     : Special optimisation for floating points
   # -Ktrap=fp : Abort on NaN
   # -R b      : Bounds checking
@@ -132,7 +114,8 @@ get_directory_property( defs COMPILE_DEFINITIONS )
 message( STATUS "--------------------------------------------------------------------" )
 message( STATUS "Build   : ${CMAKE_BUILD_TYPE}" )
 message( STATUS "Fortran : ${Fortran_COMPILER_NAME} -- ${CMAKE_Fortran_COMPILER_ID} ${CMAKE_Fortran_COMPILER_VERSION}" )
-message( STATUS "Flags   : ${CMAKE_Fortran_FLAGS_${CMAKE_BUILD_TYPE}}" )
+message( STATUS "FCFLAGS : ${CMAKE_Fortran_FLAGS_${CMAKE_BUILD_TYPE}}" )
+message( STATUS "LDFLAGS : ${CMAKE_Fortran_LINK_FLAGS}" )
 message( STATUS "Defines : ${defs}")
 message( STATUS "OpenMP  : ${OMP}")
 message( STATUS "Grib    : ${GRIB}")
