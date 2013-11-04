@@ -9,7 +9,7 @@ message( STATUS "MPDATA Shallow Water configuration" )
 set(OMP ON CACHE BOOL "Enable/Disable OpenMP" )
 
 get_filename_component (Fortran_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
-if( NOT Fortran_COMPILER_NAME MATCHES "mpi.*" AND NOT Fortran_COMPILER_NAME MATCHES "ftn" )
+if( NOT Fortran_COMPILER_NAME MATCHES "mp.*" AND NOT Fortran_COMPILER_NAME MATCHES "ftn" )
   message( FATAL_ERROR "MPI Compiler needed.\n"
     "Please remove this build, export FC to a MPI compiler such as mpif90 or ftn on Cray and rerun." )
 endif( )
@@ -38,6 +38,32 @@ elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Intel" )
   set( CMAKE_Fortran_FLAGS_RELEASE "-O3" )
   set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g" )
   set( CMAKE_Fortran_FLAGS_BIT     "-O2" )
+
+elseif( CMAKE_Fortran_COMPILER_ID MATCHES "XL" )
+  set( CMAKE_Fortran_FLAGS_RELEASE "-c -O3 -qfree=F90 -qsuffix=cpp=F90 -qextname -qsmp=omp -q64=largetype -qarch=pwr5 -g -qstrict -qsource,list -qsaveopt -NS32648" )
+  set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g" )
+  set( CMAKE_Fortran_FLAGS_BIT     "-c -O3 -qfree=F90 -qsuffix=cpp=F90 -qextname -qsmp=omp -q64=largetype -qarch=pwr5 -g -qstrict -qsource,list -qsaveopt -NS32648" )
+  set( CMAKE_EXE_LINKER_FLAGS      "-b64 -bbigtoc -bmaxstack:0x800000000 -qsmp=omp")
+
+elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )
+  set( SHARED_FLAGS "-emf -rmoi" )
+  if( ${OMP} )
+    set( SHARED_FLAGS "${SHARED_FLAGS} -homp")
+  else( )
+    set( SHARED_FLAGS "${SHARED_FLAGS} -hnoomp")
+  endif( )
+  set( CMAKE_Fortran_FLAGS_RELEASE "${SHARED_FLAGS} -O3 -hfp3 -hmpi1 -hscalar3 -hvector3" )
+  set( CMAKE_Fortran_FLAGS_DEBUG   "${SHARED_FLAGS} -O0 -Gfast -Ktrap=fp -R b" )
+  set( CMAKE_Fortran_FLAGS_BIT     "${SHARED_FLAGS} -O2 -hflex_mp=conservative -hadd_paren -hfp1 -hmpi1" )
+  # -hfp3     : Special optimisation for floating points
+  # -Ktrap=fp : Abort on NaN
+  # -R b      : Bounds checking
+  # -hflex_mp=conservative -hfp1 : Obtain bit-reproducible results
+  # -hflex_mp=intolerant -hfp2   : Obtain bit-reproducible results (also)
+  # -hadd_paren : encourage left to right fp evaluation
+  # -hscalarN , -hvectorN : optimisation for scalar and vectorisation
+  # -homp/-hnoomp : Enable/Disable OpenMP
+  # -rmoi : create compiler listing
 
 elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )
   set( SHARED_FLAGS "-emf -rmoi" )

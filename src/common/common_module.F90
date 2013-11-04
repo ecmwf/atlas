@@ -240,19 +240,19 @@ subroutine plot1d(width,height,val,minval,maxval)
     vmin= 1.0e30
     vmax=-1.0e30
     if (present(maxval)) then
-      vmax = real(maxval)
+      vmax = real(maxval,jprw)
     else
       do j=1,nx
-        vmax = max( vmax, real(val(j)) )
+        vmax = max( vmax, real(val(j),jprw) )
       end do
     end if
 
     if (present(minval)) then
-      vmin = real(minval)
+      vmin = real(minval,jprw)
     else
       ! find absolute maximum value for scaling
       do j=1,nx
-        vmin = min( vmin, real(val(j)) )
+        vmin = min( vmin, real(val(j),jprw) )
       end do
     end if
     scale = real(rows-1)/(vmax-vmin)

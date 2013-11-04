@@ -69,8 +69,7 @@ program shallow_water
   do jstep=1,nb_steps 
 
     call step_timer%start()
-      call propagate_state( hours_per_step*hours, g)
-      !call propagate_state( dt, g)
+    call propagate_state( hours_per_step*hours, g)
 
     write (log_str, '(A,I3,A,A,F8.2,A,F8.2,A)') &
       & "Propagated to ",jstep*hours_per_step," hours.", &

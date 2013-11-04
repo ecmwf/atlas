@@ -519,7 +519,7 @@ contains
       y=coords(jnode,YY)
       cor(jnode)   = f0 *( -cos(x)*cos(y)*sin(beta)+sin(y)*cos(beta) )
       D(jnode)     = (H00-radius**2*(f0+pvel)*0.5*pvel*(-cos(x)*cos(y)*sin(beta)+sin(y)*cos(beta))**2)
-      D(jnode)     = max(0., D(jnode)/grav)
+      D(jnode)     = max(0._jprw, D(jnode)/grav)
       Q(jnode,XX)  =  pvel*(cos(beta)+tan(y)*cos(x)*sin(beta))*radius*cos(y) * D(jnode)
       Q(jnode,YY)  = -pvel*sin(x)*sin(beta)*radius * D(jnode)
     end do
