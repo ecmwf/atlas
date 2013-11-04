@@ -20,14 +20,16 @@ project( pantarhei Fortran )
 set( OMP      ON  CACHE BOOL "Enable/Disable OpenMP"       )
 set( WARNINGS OFF CACHE BOOL "Enable/Disable all warnings" )
 set( GRIB     ON  CACHE BOOL "Enable/Disable Grib"         )
+set( MPI      ON  CACHE BOOL "Enable/Disable MPI"          )
 
 message( STATUS "--------------------------------------------------------------------" )
 message( STATUS "PantaRhei configuration" )
 
 get_filename_component (Fortran_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
 if( NOT Fortran_COMPILER_NAME MATCHES "mp.*" AND NOT Fortran_COMPILER_NAME MATCHES "ftn" )
-  message( FATAL_ERROR "MPI Compiler needed.\n"
-    "Please remove this build, export FC to a MPI compiler such as mpif90 or ftn on Cray and rerun." )
+  #message( FATAL_ERROR "MPI Compiler needed.\n"
+  #  "Please remove this build, export FC to a MPI compiler such as mpif90 or ftn on Cray and rerun." )
+  set( MPI OFF )
 endif( )
 
 # make sure that the default build type is a RELEASE
@@ -39,6 +41,11 @@ string( TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE )
 
 if( NOT CMAKE_BUILD_TYPE MATCHES "DEBUG" )
   add_definitions( -DNDEBUG )
+endif( )
+
+if( NOT ${MPI} )
+  message( STATUS "MPI not found, use stubs instead" )
+  set( MPI_STUBS src/common/mpi_stubs.F90 )
 endif( )
 
 if( ${OMP} )
@@ -137,11 +144,10 @@ elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )
 endif( )
 
 
-
 #######################################################################################
 # Datastructure library
 #######################################################################################
-add_library( datastructure
+add_library( datastructure ${MPI_STUBS}
   src/common/parallel_module.F90
   src/common/common_module.F90
   src/datastructure/elements_module.F90
@@ -183,6 +189,7 @@ message( STATUS "Fortran : ${Fortran_COMPILER_NAME} -- ${CMAKE_Fortran_COMPILER_
 message( STATUS "FCFLAGS : ${CMAKE_Fortran_FLAGS} ${CMAKE_Fortran_FLAGS_${CMAKE_BUILD_TYPE}}" )
 message( STATUS "LDFLAGS : ${CMAKE_Fortran_LINK_FLAGS}" )
 message( STATUS "Defines : ${defs}")
+message( STATUS "MPI     : ${MPI}")
 message( STATUS "OpenMP  : ${OMP}")
 message( STATUS "Grib    : ${GRIB}")
 message( STATUS "--------------------------------------------------------------------" )

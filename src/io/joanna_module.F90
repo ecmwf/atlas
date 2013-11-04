@@ -5,7 +5,7 @@ module joanna_module
   use parallel_module
   use datastruct_module, only: create_mesh, DataStructure_type, vector_field, scalar_field
   use split_globe_module, only : split_globe
-  use mpi
+  use mpi_stubs
   implicit none
 contains
   
