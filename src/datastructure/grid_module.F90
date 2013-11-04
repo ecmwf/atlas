@@ -130,7 +130,7 @@ module grid_module
   
   type :: State_class
     character(len=30) :: name
-    real(kind=jprw)              :: time
+    real(kind=jprw)              :: time=0.0
     integer :: nb_fields = 0
     type(FieldPtr), dimension(:), allocatable :: fields
   contains
@@ -264,7 +264,7 @@ contains
     call log_debug( "ContinuousFunctionSpace::init("//shapefunction_type//")" )
     call self%FunctionSpace_class%init(name,shapefunction_type,grid)
     self%nb_nodes = grid%nb_nodes
-    allocate(self%elements(self%nb_elems,self%sf%nb_nodes))
+    !allocate(self%elements(self%nb_elems,self%sf%nb_nodes))
   end subroutine ContinuousFunctionSpace__init
   
   subroutine DiscontinuousFunctionSpace__init(self, name, shapefunction_type, grid)

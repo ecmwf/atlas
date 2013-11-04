@@ -252,7 +252,7 @@ contains
 
     if( myproc .eq. 0 ) then
       call log_info('           Edges Load balance per MPI task')
-      call plot1d(nproc,10,edges_distr)
+  !    call plot1d(nproc,10,edges_distr)
     end if
 
   end subroutine read_joanna

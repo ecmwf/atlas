@@ -57,11 +57,11 @@ elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Intel" )
   set( CMAKE_Fortran_FLAGS_BIT     "${CMAKE_Fortran_FLAGS} -O2 -ip -ipo -unroll -inline -vec-report0" )
 
 elseif( CMAKE_Fortran_COMPILER_ID MATCHES "XL" )
-  set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -qfree=F90 -qsuffix=cpp=F90 -qextname -qsmp=omp -q64=largetype -qarch=pwr5 -g -qsource,list -qsaveopt -NS32648" )
+  set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -qsmp=omp -qfree=F90 -qsuffix=cpp=F90 -qextname -q64=largetype -qarch=pwr5 -g -qsource,list -qsaveopt -NS32648" )
   set( CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS} -O3 -qstrict" )
   set( CMAKE_Fortran_FLAGS_DEBUG   "${CMAKE_Fortran_FLAGS} -O0" )
   set( CMAKE_Fortran_FLAGS_BIT     "${CMAKE_Fortran_FLAGS} -O3 -qstrict" )
-  set( CMAKE_Fortran_LINK_FLAGS    "-b64 -bbigtoc -bmaxstack:0x800000000 -qsmp=omp")
+  set( CMAKE_Fortran_LINK_FLAGS    "-b64 -bbigtoc -bmaxstack:0x800000000 -qsmp=omp -bloadmap:map -bmap:map -L/usr/local/lib -lmpi ")
   set( CMAKE_Fortran_LINK_EXECUTABLE "<CMAKE_Fortran_COMPILER> <CMAKE_Fortran_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
 
 elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )
