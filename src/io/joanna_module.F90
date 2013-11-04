@@ -34,7 +34,6 @@ contains
     integer                      :: ip1,ip2
 
     real(kind=jprw) :: dummy_real, x, y, v, sx, sy
-    integer :: dummy_int
     
     integer, allocatable :: node_proc_full(:)
     integer, allocatable :: proc(:)
@@ -269,7 +268,7 @@ contains
     character(len=*), intent(in) :: rtable
     type(DataStructure_type), intent(inout)    :: g
 
-    integer :: jnode, inode, ip1, ip2, iaaa
+    integer :: jnode, inode
     integer, allocatable :: plot_idx(:)
     real(kind=jprw), pointer :: loc_D(:), loc_Q(:,:), loc_coords(:,:)
     real(kind=jprw), allocatable :: D(:), Q(:,:), coords(:,:)

@@ -62,8 +62,6 @@ contains
     integer, intent(in) :: proc(:)
     integer, intent(in) :: glb_idx(:)
     type(DataStructure_type), intent(inout), target :: geom
-    
-    integer :: jedge,ip1,ip2
 
     call geom%internal_mesh%init("LagrangeP1_Triag2D")
     allocate(geom%internal_mesh%nodes_coordinates(nb_nodes,2))

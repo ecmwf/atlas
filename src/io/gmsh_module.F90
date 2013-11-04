@@ -73,7 +73,7 @@ contains
     class(Grid_class), intent(inout) :: grid
     character(len=*), intent(in) :: filename
     character(len=1024) :: procfile
-    integer :: jface, jnode, jproc
+    integer :: jface, jnode
     real(kind=jprw) :: r, phi, theta, x, y, z, pi
     pi = acos(-1._jprw)
     call log_info( "Writing Gmsh file "//trim(filename) )
@@ -115,7 +115,6 @@ contains
   subroutine write_gmsh_state(state,filename)
     class(State_class), intent(in), target :: state
     character(len=*), intent(in) :: filename
-    integer :: jface, jnode, ifield
     type(Field_class), pointer :: field
 
     call parallel_barrier()

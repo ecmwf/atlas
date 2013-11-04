@@ -7,6 +7,9 @@ message( STATUS "---------------------------------------------------------------
 message( STATUS "MPDATA Shallow Water configuration" )
 
 set(OMP ON CACHE BOOL "Enable/Disable OpenMP" )
+set(WARNINGS OFF CACHE BOOL "Enable/Disable all warnings" )
+set(GRIB ON CACHE BOOL "Enable/Disable Grib" )
+
 
 get_filename_component (Fortran_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
 if( NOT Fortran_COMPILER_NAME MATCHES "mp.*" AND NOT Fortran_COMPILER_NAME MATCHES "ftn" )
@@ -27,17 +30,31 @@ endif( )
 
 # FFLAGS depend on the compiler
 if( CMAKE_Fortran_COMPILER_ID MATCHES "GNU" )
-  set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -fstack-arrays -funroll-all-loops" )
-  set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -fbounds-check" )
-  set( CMAKE_Fortran_FLAGS_BIT     "-O2 -fstack-arrays -funroll-all-loops" )
+  if( ${OMP} )
+    set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fopenmp")
+  else( )
+    set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-openmp")
+  endif( )
+  if( ${WARNINGS} )
+    set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Wall")
+  endif( )
+  set( CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS} -O3 -fstack-arrays -funroll-all-loops -finline-functions" )
+  set( CMAKE_Fortran_FLAGS_DEBUG   "${CMAKE_Fortran_FLAGS} -O0 -g -fcheck=bounds -ffpe-trap=invalid,zero,overflow,underflow -fbacktrace" )
+  set( CMAKE_Fortran_FLAGS_BIT     "${CMAKE_Fortran_FLAGS} -O2 -fstack-arrays -funroll-all-loops -finline-functions" )
+
   # -fstack-arrays     : Allocate automatic arrays on the stack
   # -funroll-all-loops : Unroll all loops
   # -fbounds-check     : Bounds checking
   
 elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Intel" )
-  set( CMAKE_Fortran_FLAGS_RELEASE "-O3" )
-  set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g" )
-  set( CMAKE_Fortran_FLAGS_BIT     "-O2" )
+  if( ${OMP} )
+    set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -openmp")
+  else( )
+    set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -openmp-stubs")
+  endif( )
+  set( CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS} -O3 -ip -unroll -inline -vec-report0" )
+  set( CMAKE_Fortran_FLAGS_DEBUG   "${CMAKE_Fortran_FLAGS} -O0 -g -check bounds -traceback -warn all" )
+  set( CMAKE_Fortran_FLAGS_BIT     "${CMAKE_Fortran_FLAGS} -O2 -ip -ipo -unroll -inline -vec-report0" )
 
 elseif( CMAKE_Fortran_COMPILER_ID MATCHES "XL" )
   set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -qfree=F90 -qsuffix=cpp=F90 -qextname -qsmp=omp -q64=largetype -qarch=pwr5 -g -qsource,list -qsaveopt -NS32648" )
@@ -66,21 +83,21 @@ elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )
   # -hscalarN , -hvectorN : optimisation for scalar and vectorisation
   # -homp/-hnoomp : Enable/Disable OpenMP
   # -rmoi : create compiler listing
-
+  set( GRIB_API_DIR "/lus/scratch/ecmwf/esm/grib_api/1.11.0/cray/82" )
 endif( )
 
-if( GRIB_API_DIR )
-  message( STATUS "Grib enabled : ${GRIB_API_DIR}" )
-  add_definitions( -DHAVE_GRIB )
-  include_directories(${GRIB_API_DIR}/include)
-  link_directories(${GRIB_API_DIR}/lib)
-  list( APPEND TPL grib_api_f90 grib_api )
-  set( GRIB ON )
-else( )
-  message( STATUS "Grib disabled : To enable, run \"cmake . -DGRIB_API_DIR=path/to/grib\"" )
-  set( GRIB OFF )
+if( ${GRIB} )
+  if( GRIB_API_DIR )
+    message( STATUS "Grib enabled : ${GRIB_API_DIR}" )
+    add_definitions( -DHAVE_GRIB )
+    include_directories(${GRIB_API_DIR}/include)
+    link_directories(${GRIB_API_DIR}/lib)
+   list( APPEND TPL grib_api_f90 grib_api )
+  else( )
+    message( STATUS "Grib not found : To enable, run \"cmake . -DGRIB_API_DIR=path/to/grib\"" )
+    set( GRIB OFF )
+  endif( )
 endif( )
-
 include_directories( src )
 
 # Datastructure library

@@ -26,7 +26,7 @@ contains
     logical, intent(in) :: Q_is_vector_component, limited
     integer, intent(in) :: order
     integer :: jnode, jedge, iedge, jpass, ip1,ip2
-    real(kind=jprw) :: sx, sy, flux, volume_of_two_cells, dQdx, dQdy, Vx, Vy, apos, aneg, Q1, Q2
+    real(kind=jprw) :: sx, sy, volume_of_two_cells, dQdx, dQdy, Vx, Vy, apos, aneg
     real(kind=jprw) :: Qmin(geom%nb_nodes)
     real(kind=jprw) :: Qmax(geom%nb_nodes)
     real(kind=jprw) :: rhin
@@ -438,7 +438,7 @@ contains
     real(kind=jprw), dimension(:), pointer   :: D, cor
     real(kind=jprw), dimension(:,:), pointer :: Q, coords
     integer :: jnode, ir
-    real(kind=jprw) :: aaa0,zk,om,ph0,g,x,y, sin_y, cos_y
+    real(kind=jprw) :: aaa0,zk,om,ph0,x,y, sin_y, cos_y
 
     om   = 7.848E-6
     zk   = 7.848E-6
@@ -500,7 +500,7 @@ contains
     type(DataStructure_type), intent(inout)      :: geom
     real(kind=jprw), dimension(:), pointer   :: D, cor
     real(kind=jprw), dimension(:,:), pointer :: Q, coords
-    integer :: jnode, ir
+    integer :: jnode
     real(kind=jprw) :: x,y
     real(kind=jprw), parameter :: USCAL = 20.
     real(kind=jprw), parameter :: H00 = grav * 8e3
@@ -681,7 +681,7 @@ contains
     real(kind=jprw), intent(in) :: dt
     type(DataStructure_type), intent(inout) :: geom
     real(kind=jprw), dimension(:,:), pointer :: Q, R
-    integer :: jnode, nb_nodes
+    integer :: jnode
     Q => vector_field("momentum",geom)
     R => vector_field("momentum_forcing",geom)
     !dir$ ivdep
@@ -755,7 +755,6 @@ contains
     type(DataStructure_type), intent(inout) :: geom
     real(kind=jprw), dimension(:),   pointer :: D
     real(kind=jprw), dimension(:,:), pointer :: Q, V
-    integer :: jnode, ip1, ip2
     D => scalar_field("depth",geom)
     Q => vector_field("momentum",geom)
     V => vector_field("advective_velocity",geom)
