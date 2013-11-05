@@ -255,7 +255,7 @@ subroutine plot1d(width,height,val,minval,maxval)
         vmin = min( vmin, real(val(j),jprw) )
       end do
     end if
-    scale = real(rows-1)/(vmax-vmin)
+    scale = real(rows-1,jprw)/(vmax-vmin+1e-6)
 
     ! now plot
 
@@ -268,8 +268,8 @@ subroutine plot1d(width,height,val,minval,maxval)
     do j=1,rows
       write(0,'(I10,A2)',advance='no') nint(vmax-(j-1)*(vmax-vmin)/real(rows-1)),'|'
       do i=1,cols
-        n = 1+nint(real(i-1)*real(nx-1)/real(cols-1))
-        irow = 1+nint((vmax-real(val(n)))*scale)
+        n = 1+nint(real(i-1,jprw)*real(nx-1,jprw)/real(cols-1+1e-6,jprw))
+        irow = 1+nint((vmax-real(val(n),jprw))*scale)
         if (irow.eq.j) then
           write(0,'(A1)',advance='no') '+'
         else
