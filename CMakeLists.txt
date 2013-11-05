@@ -43,9 +43,8 @@ if( NOT CMAKE_BUILD_TYPE MATCHES "DEBUG" )
   add_definitions( -DNDEBUG )
 endif( )
 
-if( NOT ${MPI} )
-  message( STATUS "MPI not found, use stubs instead" )
-  set( MPI_STUBS src/common/mpi_stubs.F90 )
+if( ${MPI} )
+  add_definitions( -DHAVE_MPI )
 endif( )
 
 if( ${OMP} )
@@ -80,9 +79,9 @@ if( CMAKE_Fortran_COMPILER_ID MATCHES "GNU" )
   if( ${WARNINGS} )
     set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Wall")
   endif( )
-  set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -fstack-arrays -funroll-all-loops -finline-functions" )
+  set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -funroll-all-loops -finline-functions" )
   set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -fcheck=bounds -ffpe-trap=invalid,zero,overflow,underflow -fbacktrace" )
-  set( CMAKE_Fortran_FLAGS_BIT     "-O2 -fstack-arrays -funroll-all-loops -finline-functions" )
+  set( CMAKE_Fortran_FLAGS_BIT     "-O2 -funroll-all-loops -finline-functions" )
 
   # -fstack-arrays     : Allocate automatic arrays on the stack
   # -funroll-all-loops : Unroll all loops
@@ -147,6 +146,10 @@ endif( )
 #######################################################################################
 # Datastructure library
 #######################################################################################
+if( NOT ${MPI} )
+  message( STATUS "MPI not found, use stubs instead" )
+  set( MPI_STUBS src/common/mpi_stubs.F90 )
+endif( )
 add_library( datastructure ${MPI_STUBS}
   src/common/parallel_module.F90
   src/common/common_module.F90

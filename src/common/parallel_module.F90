@@ -4,7 +4,11 @@
 ! =====================================================================
 
 module parallel_module
+#ifdef HAVE_MPI
   use mpi
+#else 
+  use mpi_stubs
+#endif
 #ifdef HAVE_OMP
   use omp_lib
 #endif
@@ -117,10 +121,9 @@ contains
     do jj=1,nb_nodes
       max_glb_idx = max( max_glb_idx, glb_idx(jj) )
     end do
+    
     call MPI_ALLREDUCE( MPI_IN_PLACE, max_glb_idx, 1, MPI_INTEGER, MPI_MAX, MPI_COMM_WORLD, ierr)
-
     allocate( map_glb_to_loc(max_glb_idx) )
-
     comm%sync_recvcounts(:) = 0
     map_glb_to_loc(:) = -1
     do jj=1,nb_nodes
@@ -133,7 +136,6 @@ contains
     call MPI_ALLTOALL( comm%sync_recvcounts, 1, MPI_INTEGER, &
                      & comm%sync_sendcounts, 1, MPI_INTEGER, &
                      & MPI_COMM_WORLD,ierr )
-
     comm%sync_recvcnt = sum(comm%sync_recvcounts)
     comm%sync_sendcnt = sum(comm%sync_sendcounts)
     allocate( send_requests(comm%sync_recvcnt) )
@@ -265,7 +267,7 @@ contains
     ! Wait for receiving to finish
     do jproc=0,nproc-1
       if(comm%sync_recvcounts(jproc) > 0) then
-        call MPI_WAIT( ireqr(jproc),iwait_status(1,jproc),ierr )
+        call MPI_WAIT( ireqr(jproc),iwait_status(:,jproc),ierr )
       end if
     end do
 
@@ -277,7 +279,7 @@ contains
     ! Wait for sending to finish
     do jproc=0,nproc-1
       if(comm%sync_sendcounts(jproc) > 0) then
-        call MPI_WAIT(ireqs(jproc),iwait_status(1,jproc),ierr)
+        call MPI_WAIT(ireqs(jproc),iwait_status(:,jproc),ierr)
       end if
     end do
 
@@ -331,7 +333,7 @@ contains
     ! Wait for receiving to finish
     do jproc=0,nproc-1
       if(comm%sync_recvcounts(jproc) > 0) then
-        call MPI_WAIT( ireqr(jproc),iwait_status(1,jproc),ierr )
+        call MPI_WAIT( ireqr(jproc),iwait_status(:,jproc),ierr )
       end if
     end do
 
@@ -347,7 +349,7 @@ contains
     ! Wait for sending to finish
     do jproc=0,nproc-1
       if(sync_sendcounts(jproc) > 0) then
-        call MPI_WAIT(ireqs(jproc),iwait_status(1,jproc),ierr)
+        call MPI_WAIT(ireqs(jproc),iwait_status(:,jproc),ierr)
       end if
     end do
 
@@ -389,7 +391,7 @@ contains
     ! Wait for receiving to finish
     do jproc=0,nproc-1
       if(comm%sync_recvcounts(jproc) > 0) then
-        call MPI_WAIT( ireqr(jproc),iwait_status(1,jproc),ierr )
+        call MPI_WAIT( ireqr(jproc),iwait_status(:,jproc),ierr )
       end if
     end do
 
@@ -401,7 +403,7 @@ contains
     ! Wait for sending to finish
     do jproc=0,nproc-1
       if(comm%sync_sendcounts(jproc) > 0) then
-        call MPI_WAIT(ireqs(jproc),iwait_status(1,jproc),ierr)
+        call MPI_WAIT(ireqs(jproc),iwait_status(:,jproc),ierr)
       end if
     end do
 
@@ -455,7 +457,7 @@ contains
     ! Wait for receiving to finish
     do jproc=0,nproc-1
       if(comm%sync_recvcounts(jproc) > 0) then
-        call MPI_WAIT( ireqr(jproc),iwait_status(1,jproc),ierr )
+        call MPI_WAIT( ireqr(jproc),iwait_status(:,jproc),ierr )
       end if
     end do
 
@@ -471,7 +473,7 @@ contains
     ! Wait for sending to finish
     do jproc=0,nproc-1
       if(sync_sendcounts(jproc) > 0) then
-        call MPI_WAIT(ireqs(jproc),iwait_status(1,jproc),ierr)
+        call MPI_WAIT(ireqs(jproc),iwait_status(:,jproc),ierr)
       end if
     end do
 
@@ -511,7 +513,7 @@ contains
     ! Wait for receiving to finish
     do jproc=0,nproc-1
       if(comm%sync_recvcounts(jproc) > 0) then
-        call MPI_WAIT( ireqr(jproc),iwait_status(1,jproc),ierr )
+        call MPI_WAIT( ireqr(jproc),iwait_status(:,jproc),ierr )
       end if
     end do
 
@@ -523,7 +525,7 @@ contains
     ! Wait for sending to finish
     do jproc=0,nproc-1
       if(comm%sync_sendcounts(jproc) > 0) then
-        call MPI_WAIT(ireqs(jproc),iwait_status(1,jproc),ierr)
+        call MPI_WAIT(ireqs(jproc),iwait_status(:,jproc),ierr)
       end if
     end do
 
@@ -577,7 +579,7 @@ contains
     ! Wait for receiving to finish
     do jproc=0,nproc-1
       if(comm%sync_recvcounts(jproc) > 0) then
-        call MPI_WAIT( ireqr(jproc),iwait_status(1,jproc),ierr )
+        call MPI_WAIT( ireqr(jproc),iwait_status(:,jproc),ierr )
       end if
     end do
 
@@ -593,7 +595,7 @@ contains
     ! Wait for sending to finish
     do jproc=0,nproc-1
       if(sync_sendcounts(jproc) > 0) then
-        call MPI_WAIT(ireqs(jproc),iwait_status(1,jproc),ierr)
+        call MPI_WAIT(ireqs(jproc),iwait_status(:,jproc),ierr)
       end if
     end do
 
