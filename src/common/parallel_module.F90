@@ -5,10 +5,13 @@
 
 module parallel_module
   use mpi
+#ifdef HAVE_OMP
+  use omp_lib
+#endif
   implicit none
   private
 
-public myproc, nproc
+public myproc, nproc, nthread
 public parallel_init, parallel_finalise, parallel_barrier
 public Comm_type
 
@@ -16,6 +19,7 @@ public Comm_type
   integer :: ierr
   integer :: myproc = -1
   integer :: nproc = -1
+  integer :: nthread = 0
 
 
   type :: Comm_type
@@ -78,6 +82,12 @@ contains
     call MPI_INIT( ierr )
     call MPI_COMM_RANK( MPI_COMM_WORLD, myproc, ierr )
     call MPI_COMM_SIZE( MPI_COMM_WORLD, nproc,  ierr )
+
+#ifdef HAVE_OMP
+    nthread = omp_get_max_threads()
+#else
+    nthread = 0
+#endif
   end subroutine parallel_init
 
   subroutine parallel_finalise()

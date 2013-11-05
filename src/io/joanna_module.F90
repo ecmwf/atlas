@@ -251,7 +251,7 @@ contains
                    & 0, MPI_COMM_WORLD, ierr );
 
     if( myproc .eq. 0 ) then
-      call log_info('           Edges Load balance per MPI task')
+      call log_info('           Edges Load balance for '//trim(str(nproc,'(I3)'))//' MPI task')
       call plot1d(nproc,10,edges_distr)
     end if
 

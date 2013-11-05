@@ -7,7 +7,7 @@
 program shallow_water
 
   use common_module
-  use parallel_module, only: parallel_init, parallel_finalise
+  use parallel_module, only: parallel_init, parallel_finalise, nproc, nthread
   use gmsh_module, only: write_gmsh_mesh, write_gmsh_state
   use grib_module, only: write_grib
 
@@ -51,10 +51,12 @@ program shallow_water
   call log_info( "+------------------------------+" )
   call log_info( "| Simulation summary           |" )
   call log_info( "+-------------------+----------+" )
+  call log_info( "| MPI Tasks         | "//trim(str(nproc,'(I8)'))//" |" )
+  call log_info( "| OMP Threads       | "//trim(str(nthread,'(I8)'))//" |" )
   call log_info( "| glb_nb_nodes      | "//trim(str(g%glb_nb_nodes,'(I8)'))//" |" )
   call log_info( "| glb_nb_edges      | "//trim(str(g%glb_nb_edges,'(I8)'))//" |" )
-  call log_info( "| nb_nodes          | "//trim(str(g%nb_nodes,'(I8)'))//" |" )
-  call log_info( "| nb_edges          | "//trim(str(g%nb_edges,'(I8)'))//" |" )
+  call log_info( "| nb_nodes[0]       | "//trim(str(g%nb_nodes,'(I8)'))//" |" )
+  call log_info( "| nb_edges[0]       | "//trim(str(g%nb_edges,'(I8)'))//" |" )
   call log_info( "| time step         | "//trim(str(dt,'(F8.1)'))//" |" )
   call log_info( "| total time  (hrs) | "//trim(str(nb_steps*hours_per_step,'(I8)'))//" |" )
   call log_info( "| output rate (hrs) | "//trim(str(hours_per_step,'(I8)'))//" |" )

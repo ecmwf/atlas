@@ -130,7 +130,7 @@ module grid_module
   
   type :: State_class
     character(len=30) :: name
-    real(kind=jprw)              :: time=0.0
+    real(kind=jprw)   :: time=0.
     integer :: nb_fields = 0
     type(FieldPtr), dimension(:), allocatable :: fields
   contains
@@ -474,6 +474,7 @@ contains
     character(len=*), intent(in) :: name
     call log_debug( "State::init("//trim(name)//")" ) 
     self%name = name  
+    self%time = 0.
     allocate(self%fields(100))
   end subroutine State__init
   
