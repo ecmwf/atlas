@@ -2,8 +2,6 @@
 cmake_minimum_required( VERSION 2.8.4 FATAL_ERROR )
 
 # Disable in source builds (must be called before project)
-
-# make sure the user doesn't play dirty with symlinks
 get_filename_component(srcdir "${CMAKE_SOURCE_DIR}" REALPATH)
 get_filename_component(bindir "${CMAKE_BINARY_DIR}" REALPATH)
 if(${srcdir} STREQUAL ${bindir})
@@ -13,16 +11,18 @@ if(${srcdir} STREQUAL ${bindir})
   message("######################################################")
   message(FATAL_ERROR "In-source builds are forbidden!")
 endif()
-
 project( pantarhei Fortran )
+
+#######################################################################################
+# Configurations
+#######################################################################################
+
+set( OMP      ON  CACHE BOOL "Enable/Disable OpenMP"       )
+set( WARNINGS OFF CACHE BOOL "Enable/Disable all warnings" )
+set( GRIB     ON  CACHE BOOL "Enable/Disable Grib"         )
 
 message( STATUS "--------------------------------------------------------------------" )
 message( STATUS "PantaRhei configuration" )
-
-set(OMP ON CACHE BOOL "Enable/Disable OpenMP" )
-set(WARNINGS OFF CACHE BOOL "Enable/Disable all warnings" )
-set(GRIB ON CACHE BOOL "Enable/Disable Grib" )
-
 
 get_filename_component (Fortran_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
 if( NOT Fortran_COMPILER_NAME MATCHES "mp.*" AND NOT Fortran_COMPILER_NAME MATCHES "ftn" )
@@ -32,76 +32,13 @@ endif( )
 
 # make sure that the default build type is a RELEASE
 if( NOT CMAKE_BUILD_TYPE )
-  set( CMAKE_BUILD_TYPE Release CACHE STRING
-      "Choose the type of build, options are: None Debug BitReproducible Release." FORCE )
-endif( NOT CMAKE_BUILD_TYPE )
+  set( CMAKE_BUILD_TYPE Release CACHE STRING 
+       "Choose the type of build, options are: Debug Bit Release." FORCE )
+endif( )
 string( TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE )
 
 if( NOT CMAKE_BUILD_TYPE MATCHES "DEBUG" )
   add_definitions( -DNDEBUG )
-endif( )
-
-# FFLAGS depend on the compiler
-if( CMAKE_Fortran_COMPILER_ID MATCHES "GNU" )
-  if( ${OMP} )
-    set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fopenmp")
-  else( )
-    set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-openmp")
-  endif( )
-  if( ${WARNINGS} )
-    set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Wall")
-  endif( )
-  set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -fstack-arrays -funroll-all-loops -finline-functions" )
-  set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -fcheck=bounds -ffpe-trap=invalid,zero,overflow,underflow -fbacktrace" )
-  set( CMAKE_Fortran_FLAGS_BIT     "-O2 -fstack-arrays -funroll-all-loops -finline-functions" )
-
-  # -fstack-arrays     : Allocate automatic arrays on the stack
-  # -funroll-all-loops : Unroll all loops
-  # -fbounds-check     : Bounds checking
-  
-elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Intel" )
-  if( ${OMP} )
-    set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -openmp")
-  else( )
-    set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -openmp-stubs")
-  endif( )
-  set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -ip -unroll -inline -vec-report0" )
-  set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -check bounds -traceback -warn all" )
-  set( CMAKE_Fortran_FLAGS_BIT     "-O2 -ip -ipo -unroll -inline -vec-report0" )
-
-elseif( CMAKE_Fortran_COMPILER_ID MATCHES "XL" )
-  if( ${OMP} )
-    set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -qsmp=omp" )
-    set( CMAKE_Fortran_LINK_FLAGS "${CMAKE_Fortran_LINK_FLAGS} -qsmp=omp" )
-  else( )
-    set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -qsmp=noomp" )
-  endif( )
-  set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -qfree=F90 -qsuffix=cpp=F90 -qextname -q64=largetype -qarch=pwr5 -g -qsource,list -qsaveopt -NS32648" )
-  set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -qstrict" )
-  set( CMAKE_Fortran_FLAGS_DEBUG   "-O0" )
-  set( CMAKE_Fortran_FLAGS_BIT     "-O3 -qstrict" )
-  set( CMAKE_Fortran_LINK_FLAGS    "${CMAKE_Fortran_LINK_FLAGS} -b64 -bbigtoc -bmaxstack:0x800000000 -bloadmap:map -bmap:map")
-  set( CMAKE_Fortran_LINK_EXECUTABLE "<CMAKE_Fortran_COMPILER> <CMAKE_Fortran_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
-
-elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )
-  set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -emf -rmoi")
-  if( ${OMP} )
-    set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -homp")
-  else( )
-    set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -hnoomp")
-  endif( )
-  set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -hfp3 -hmpi1 -hscalar3 -hvector3" )
-  set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -Gfast -Ktrap=fp -R b" )
-  set( CMAKE_Fortran_FLAGS_BIT     "-O2 -hflex_mp=conservative -hadd_paren -hfp1 -hmpi1" )
-  # -hfp3     : Special optimisation for floating points
-  # -Ktrap=fp : Abort on NaN
-  # -R b      : Bounds checking
-  # -hflex_mp=conservative -hfp1 : Obtain bit-reproducible results
-  # -hflex_mp=intolerant -hfp2   : Obtain bit-reproducible results (also)
-  # -hadd_paren : encourage left to right fp evaluation
-  # -hscalarN , -hvectorN : optimisation for scalar and vectorisation
-  # -homp/-hnoomp : Enable/Disable OpenMP
-  # -rmoi : create compiler listing
 endif( )
 
 if( ${OMP} )
@@ -124,7 +61,86 @@ if( ${GRIB} )
 endif( )
 include_directories( src )
 
+#######################################################################################
+# GNU
+#######################################################################################
+if( CMAKE_Fortran_COMPILER_ID MATCHES "GNU" )
+  if( ${OMP} )
+    set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fopenmp")
+  else( )
+    set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-openmp")
+  endif( )
+  if( ${WARNINGS} )
+    set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Wall")
+  endif( )
+  set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -fstack-arrays -funroll-all-loops -finline-functions" )
+  set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -fcheck=bounds -ffpe-trap=invalid,zero,overflow,underflow -fbacktrace" )
+  set( CMAKE_Fortran_FLAGS_BIT     "-O2 -fstack-arrays -funroll-all-loops -finline-functions" )
+
+  # -fstack-arrays     : Allocate automatic arrays on the stack
+  # -funroll-all-loops : Unroll all loops
+  # -fbounds-check     : Bounds checking
+  
+#######################################################################################
+# Intel
+#######################################################################################
+elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Intel" )
+  if( ${OMP} )
+    set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -openmp")
+  else( )
+    set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -openmp-stubs")
+  endif( )
+  set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -ip -unroll -inline -vec-report0" )
+  set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -check bounds -traceback -warn all" )
+  set( CMAKE_Fortran_FLAGS_BIT     "-O2 -ip -ipo -unroll -inline -vec-report0" )
+
+#######################################################################################
+# XL (IBM)
+#######################################################################################
+elseif( CMAKE_Fortran_COMPILER_ID MATCHES "XL" )
+  # Without following line, compile flags are appended to link flags
+  set( CMAKE_Fortran_LINK_EXECUTABLE "<CMAKE_Fortran_COMPILER> <CMAKE_Fortran_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
+  if( ${OMP} )
+    set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -qsmp=omp" )
+    set( CMAKE_Fortran_LINK_FLAGS "${CMAKE_Fortran_LINK_FLAGS} -qsmp=omp" )
+  else( )
+    set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -qsmp=noomp" )
+  endif( )
+  set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -qfree=F90 -qsuffix=cpp=F90 -qextname -q64=largetype -qarch=pwr5 -g -qsource,list -qsaveopt -NS32648" )
+  set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -qstrict" )
+  set( CMAKE_Fortran_FLAGS_DEBUG   "-O0" )
+  set( CMAKE_Fortran_FLAGS_BIT     "-O3 -qstrict" )
+  set( CMAKE_Fortran_LINK_FLAGS    "${CMAKE_Fortran_LINK_FLAGS} -b64 -bbigtoc -bmaxstack:0x800000000 -bloadmap:map -bmap:map")
+
+#######################################################################################
+# Cray
+#######################################################################################
+elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )
+  set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -emf -rmoi")
+  if( ${OMP} )
+    set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -homp")
+  else( )
+    set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -hnoomp")
+  endif( )
+  set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -hfp3 -hmpi1 -hscalar3 -hvector3" )
+  set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -Gfast -Ktrap=fp -R b" )
+  set( CMAKE_Fortran_FLAGS_BIT     "-O2 -hflex_mp=conservative -hadd_paren -hfp1 -hmpi1" )
+  # -hfp3     : Special optimisation for floating points
+  # -Ktrap=fp : Abort on NaN
+  # -R b      : Bounds checking
+  # -hflex_mp=conservative -hfp1 : Obtain bit-reproducible results
+  # -hflex_mp=intolerant -hfp2   : Obtain bit-reproducible results (also)
+  # -hadd_paren : encourage left to right fp evaluation
+  # -hscalarN , -hvectorN : optimisation for scalar and vectorisation
+  # -homp/-hnoomp : Enable/Disable OpenMP
+  # -rmoi : create compiler listing
+endif( )
+
+
+
+#######################################################################################
 # Datastructure library
+#######################################################################################
 add_library( datastructure
   src/common/parallel_module.F90
   src/common/common_module.F90
@@ -140,15 +156,23 @@ add_library( datastructure
 )
 target_link_libraries( datastructure ${TPL} )
 
-
+#######################################################################################
 # Shallow water executable
+#######################################################################################
 file( COPY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
 add_executable( shallow_water src/shallow_water/shallow_water_module.F90 src/shallow_water/shallow_water.F90 )
 target_link_libraries( shallow_water datastructure ${TPL} )
 
+#######################################################################################
 # Test for parallelisation
+#######################################################################################
 add_executable( test_sync src/tests/test_sync.F90 )
 target_link_libraries( test_sync datastructure )
+
+
+#######################################################################################
+# Print Summary
+#######################################################################################
 
 get_directory_property( defs COMPILE_DEFINITIONS )
 
