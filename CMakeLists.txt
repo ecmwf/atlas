@@ -142,6 +142,12 @@ elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )
   # -rmoi : create compiler listing
 endif( )
 
+#######################################################################################
+# Symlink scripts
+#######################################################################################
+
+message (STATUS "PROJECT_NAME = ${PROJECT_NAME}")
+add_custom_target( sym_link_scripts ALL COMMAND ln -sf ${CMAKE_CURRENT_SOURCE_DIR}/submit_cray ${CMAKE_CURRENT_BINARY_DIR}/submit_cray )
 
 #######################################################################################
 # Datastructure library
@@ -177,7 +183,6 @@ target_link_libraries( shallow_water datastructure ${TPL} )
 #######################################################################################
 add_executable( test_sync src/tests/test_sync.F90 )
 target_link_libraries( test_sync datastructure )
-
 
 #######################################################################################
 # Print Summary
