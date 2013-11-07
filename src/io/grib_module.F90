@@ -55,9 +55,11 @@ subroutine write_grib(geom,filename)
 
         call grib_set(IGRIB_HANDLE,'paramId',130)
         call grib_set(IGRIB_HANDLE,'values',depth)
+        call grib_write(IGRIB_HANDLE,IFILE_HANDLE)
 
         call grib_set(IGRIB_HANDLE,'paramId',131)
         call grib_set(IGRIB_HANDLE,'values',Vx)
+        call grib_write(IGRIB_HANDLE,IFILE_HANDLE)
 
         call grib_set(IGRIB_HANDLE,'paramId',132)
         call grib_set(IGRIB_HANDLE,'values',Vy)

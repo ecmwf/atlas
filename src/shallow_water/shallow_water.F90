@@ -23,7 +23,7 @@ program shallow_water
 
   ! Configuration parameters
   real(kind=jprw) :: dt = 20.              ! solver time-step
-  integer         :: nb_steps = 2          ! Number of propagations
+  integer         :: nb_steps = 15          ! Number of propagations
   integer         :: hours_per_step = 24   ! Propagation time
   logical         :: write_itermediate_output = .True.
 
