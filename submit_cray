@@ -18,9 +18,9 @@ parser = ArgumentParser()
 parser.add_argument('-s', '--name', type=str, default='pantarhei')
 parser.add_argument('-n', '--tasks',   type=int, default=1)
 parser.add_argument('-d', '--threads', type=int, default=1)
-parser.add_argument('command', type=str, nargs='*', help="command", default='shallow_water')
-
+parser.add_argument('command', type=str, nargs='*', help="command", default=['shallow_water'])
 args = parser.parse_args()
+
 replace_text = {
     'cwd':os.getcwd(),
     'nodes':int(ceil(args.tasks*args.threads/24.)),
@@ -28,7 +28,6 @@ replace_text = {
     'threads':args.threads,
     'command':' '.join(args.command),
     'name':args.name,
-    'executable':args.command[0]
 }
 
 ####################################################################
@@ -61,5 +60,5 @@ aprun -n {tasks} -d {threads} {command} 2>&1 | tee {name}.log
 
 print('Submitting job "{name}.job" on {nodes} nodes... '.format(**replace_text))
 print('Full output available after job is finished in "{name}.out"'.format(**replace_text))
-print('During runtime: "tail -F {name}.log"'.format(**replace_text))
+print('During runtime:    tail -F {name}.log'.format(**replace_text))
 subprocess.Popen("qsub {name}.job".format(**replace_text), env=os.environ, shell=True).wait()
