@@ -25,6 +25,7 @@ set( MPI      ON  CACHE BOOL "Enable/Disable MPI"          )
 message( STATUS "--------------------------------------------------------------------" )
 message( STATUS "PantaRhei configuration" )
 
+site_name( BUILD_SITE )
 get_filename_component (Fortran_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
 if( NOT Fortran_COMPILER_NAME MATCHES "mp.*" AND NOT Fortran_COMPILER_NAME MATCHES "ftn" )
   #message( FATAL_ERROR "MPI Compiler needed.\n"
@@ -146,8 +147,10 @@ endif( )
 # Symlink scripts
 #######################################################################################
 
-message (STATUS "PROJECT_NAME = ${PROJECT_NAME}")
-add_custom_target( sym_link_scripts ALL COMMAND ln -sf ${CMAKE_CURRENT_SOURCE_DIR}/submit_cray ${CMAKE_CURRENT_BINARY_DIR}/submit_cray )
+if( BUILD_SITE MATCHES "cc[abt].*" )
+  message( STATUS "Creating symbolic link for submit_cray --> submit")
+  execute_process( COMMAND ln -sf ${CMAKE_CURRENT_SOURCE_DIR}/submit_cray ${CMAKE_CURRENT_BINARY_DIR}/submit )
+endif( )
 
 #######################################################################################
 # Datastructure library
@@ -191,7 +194,7 @@ target_link_libraries( test_sync datastructure )
 get_directory_property( defs COMPILE_DEFINITIONS )
 
 message( STATUS "--------------------------------------------------------------------" )
-message( STATUS "System  : ${CMAKE_SYSTEM} -- ${CMAKE_SYSTEM_PROCESSOR}" )
+message( STATUS "System  : ${BUILD_SITE} -- ${CMAKE_SYSTEM} -- ${CMAKE_SYSTEM_PROCESSOR}" )
 message( STATUS "Build   : ${CMAKE_BUILD_TYPE}" )
 message( STATUS "Fortran : ${Fortran_COMPILER_NAME} -- ${CMAKE_Fortran_COMPILER_ID} ${CMAKE_Fortran_COMPILER_VERSION}" )
 message( STATUS "FCFLAGS : ${CMAKE_Fortran_FLAGS} ${CMAKE_Fortran_FLAGS_${CMAKE_BUILD_TYPE}}" )
