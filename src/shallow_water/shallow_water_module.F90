@@ -70,8 +70,7 @@ contains
     enddo
     !$OMP END PARALLEL DO
 
-    !dir$ ivdep
-    !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,adv,jedge,iedge)
+     !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,adv,jedge,iedge)
     do jnode=1,geom%nb_nodes
       adv = 0.0
       if(geom%nb_neighbours(jnode) > 1) then
@@ -124,7 +123,7 @@ contains
       endif
 
       ! Compute fluxes from (limited) antidiffusive velocity
-      !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,adv,jedge,iedge)
+      !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,adv,jedge,iedge)
       do jnode=1,geom%nb_nodes
         adv = 0.0
         if(geom%nb_neighbours(jnode) > 1) then
@@ -147,19 +146,20 @@ contains
     
     subroutine compute_Qmax_and_Qmin( )
       real(kind=jprw) :: Q1, Q2    
-      !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,jedge,Q1,Q2)
+      !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,jedge,iedge,Q1,Q2)
       do jnode=1,geom%nb_nodes
         Q1 = Q(jnode)
         Qmax(jnode) = Q1
         Qmin(jnode) = Q1
         do jedge = 1,geom%nb_neighbours(jnode)
           Q2 = Q(geom%neighbours(jedge,jnode))
+          iedge = geom%my_edges(jedge,jnode)
           if (.not. Q_is_vector_component) then
             Qmax(jnode) = max( Qmax(jnode), Q2 )
             Qmin(jnode) = min( Qmin(jnode), Q2 )
           else
-            Qmax(jnode) = max( Qmax(jnode), pole_bc(jedge)*Q2 )
-            Qmin(jnode) = min( Qmin(jnode), pole_bc(jedge)*Q2 )
+            Qmax(jnode) = max( Qmax(jnode), pole_bc(iedge)*Q2 )
+            Qmin(jnode) = min( Qmin(jnode), pole_bc(iedge)*Q2 )
           end if
         end do
       end do
@@ -176,7 +176,7 @@ contains
       real(kind=jprw) :: limit = 1.  ! 1: second order, 0: first order
       if (.not. Q_is_vector_component) limit = 0.995
 
-      !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,rhin,rhout,jedge,iedge,apos,aneg,asignp,asignn)
+      !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,rhin,rhout,jedge,iedge,apos,aneg,asignp,asignn)
       do jnode=1,geom%nb_nodes
         rhin  = 0.
         rhout = 0.
@@ -240,7 +240,7 @@ contains
     end do
     !$OMP END PARALLEL DO
 
-    !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,jedge,iedge)
+    !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,jedge,iedge)
     do jnode=1,geom%nb_nodes
       gradQ(jnode,XX) = 0.
       gradQ(jnode,YY) = 0.

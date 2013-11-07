@@ -122,7 +122,7 @@ elseif( CMAKE_Fortran_COMPILER_ID MATCHES "XL" )
 # Cray
 #######################################################################################
 elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )
-  set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -emf -rmoi")
+  set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -emf -rmoid")
   if( ${OMP} )
     set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -homp")
   else( )
