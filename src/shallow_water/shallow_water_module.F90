@@ -302,7 +302,7 @@ contains
      ! Update the unknowns in vertices
      Q(jnode) = Q(jnode) - adv/volD(jnode) * dt
      Qtmp(jnode) = Q(jnode)
-     !Q(jnode) = Q(jnode)*GDR(jnode)
+     Q(jnode) = Q(jnode)*GDR(jnode)
     enddo
     !$OMP END PARALLEL DO
 
