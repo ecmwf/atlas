@@ -60,5 +60,5 @@ aprun -n {tasks} -d {threads} {command} 2>&1 | tee {name}.log
 
 print('Submitting job "{name}.job" on {nodes} nodes... '.format(**replace_text))
 print('Full output available after job is finished in "{name}.out"'.format(**replace_text))
-print('During runtime:    tail -F {name}.log'.format(**replace_text))
+print('During runtime:    tail -c+1 -F {name}.log'.format(**replace_text))
 subprocess.Popen("qsub {name}.job".format(**replace_text), env=os.environ, shell=True).wait()
