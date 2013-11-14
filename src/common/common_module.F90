@@ -75,7 +75,7 @@ function L2norm(array) result(norm)
   do i=1,size(array)
     norm = norm + array(i)**2
   end do
-  norm = sqrt(norm)/real(size(array))
+  norm = sqrt(norm/real(size(array)))
 end function L2norm
 
 function Timer_elapsed(self) result(time)
