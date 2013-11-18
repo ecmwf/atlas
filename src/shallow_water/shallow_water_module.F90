@@ -184,7 +184,7 @@ contains
     subroutine limit_antidiffusive_velocity
 
       real(kind=jprw) :: asignp,asignn
-      real(kind=jprw) :: limit = 0.995  ! 1: second order, 0: first order
+      real(kind=jprw) :: limit = 1.  ! 1: second order, 0: first order
 
       !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,rhin,rhout,jedge,iedge,apos,aneg,asignp,asignn)
       do jnode=1,geom%nb_nodes
@@ -443,7 +443,7 @@ contains
     subroutine limit_antidiffusive_velocity
 
       real(kind=jprw) :: asignp,asignn
-      real(kind=jprw) :: limit = 0.995  ! 1: second order, 0: first order
+      real(kind=jprw) :: limit = 1.  ! 1: second order, 0: first order
 
       !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,rhin,rhout,jedge,iedge,apos,aneg,asignp,asignn)
       do jnode=1,geom%nb_nodes
@@ -788,7 +788,7 @@ contains
   subroutine set_state_zonal_flow(geom)
     type(DataStructure_type), intent(inout)      :: geom
     real(kind=jprw), dimension(:), pointer   :: D, cor, H0, H
-    real(kind=jprw), dimension(:,:), pointer :: Q, coords
+    real(kind=jprw), dimension(:,:), pointer :: U, coords
     integer :: jnode
     real(kind=jprw) :: x,y
     real(kind=jprw), parameter :: USCAL = 20.
@@ -799,7 +799,7 @@ contains
 
     coords => vector_field("coordinates",geom)
     D => scalar_field("depth",geom)
-    Q => vector_field("momentum",geom)
+    U => vector_field("momentum",geom)
     cor => scalar_field("coriolis",geom)
     H0 => scalar_field("topography",geom)
     H => scalar_field("height",geom)
@@ -811,8 +811,8 @@ contains
       cor(jnode)   = f0 *( -cos(x)*cos(y)*sin(beta)+sin(y)*cos(beta) )
       D(jnode)     = (H00-radius**2*(f0+pvel)*0.5*pvel*(-cos(x)*cos(y)*sin(beta)+sin(y)*cos(beta))**2)
       D(jnode)     = max(0._jprw, D(jnode)/grav - H0(jnode))
-      Q(jnode,XX)  =  pvel*(cos(beta)+tan(y)*cos(x)*sin(beta))*radius*cos(y) * D(jnode)
-      Q(jnode,YY)  = -pvel*sin(x)*sin(beta)*radius * D(jnode)
+      U(jnode,XX)  =  pvel*(cos(beta)+tan(y)*cos(x)*sin(beta))*radius*cos(y)
+      U(jnode,YY)  = -pvel*sin(x)*sin(beta)*radius
       H(jnode) = H0(jnode) + D(jnode)
     end do
     !$OMP END PARALLEL DO
@@ -882,31 +882,30 @@ contains
     real(kind=jprw), intent(in) :: dt
     type(DataStructure_type), intent(inout) :: geom
     character(len=*), intent(in), optional :: option
-    real(kind=jprw) :: Qx, Qy, Q0x, Q0y, Dmod, D0mod, Vx, Vy, Rx, Ry, dVxdx, dVxdy, dVydx, dVydy
+    real(kind=jprw) :: Ux, Uy, U0x, U0y, Vx, Vy, Rx, Ry, dVxdx, dVxdy, dVydx, dVydy
     integer :: jnode, jedge, iedge, ip1, ip2
     real(kind=jprw), dimension(:),   pointer :: D, D0, hx, hy, vol
-    real(kind=jprw), dimension(:,:), pointer :: Q, Q0, R, Vedges, coords
+    real(kind=jprw), dimension(:,:), pointer :: U, U0, R, Vedges, coords
     real(kind=jprw) :: Vnodes(geom%nb_nodes,2), grad_Vx(geom%nb_nodes,2), grad_Vy(geom%nb_nodes,2)
 
     coords => vector_field("coordinates",geom)
     Vedges => vector_field("advective_velocity",geom)
     D      => scalar_field("depth",geom)
     D0     => scalar_field("depth_backup",geom)
-    Q      => vector_field("momentum",geom)
-    Q0     => vector_field("momentum_backup",geom)
+    U      => vector_field("momentum",geom)
+    U0     => vector_field("momentum_backup",geom)
     hx     => scalar_field("hx",geom)
     hy     => scalar_field("hy",geom)
     R      => vector_field("momentum_forcing",geom)
     vol    => scalar_field("dual_volumes",geom)
 
     if( option .eq. "advect") then
-      !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Dmod)
+      !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode)
       do jnode=1,geom%nb_nodes
-        Dmod = max(D(jnode), eps)
         Rx = R(jnode,XX)
         Ry = R(jnode,YY)
-        Vnodes(jnode,XX)=(Q(jnode,XX)+0.5*dt*Rx)/Dmod 
-        Vnodes(jnode,YY)=(Q(jnode,YY)+0.5*dt*Ry)/Dmod
+        Vnodes(jnode,XX)=(U(jnode,XX)+0.5*dt*Rx) 
+        Vnodes(jnode,YY)=(U(jnode,YY)+0.5*dt*Ry)
       end do
       !$OMP END PARALLEL DO
       call compute_gradient( Vnodes(:,XX), grad_Vx, .True., geom )
@@ -915,7 +914,6 @@ contains
       !dir$ ivdep
       !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Dmod,Vx,Vy,Rx,Ry,dVxdx,dVxdy,dVydx,dVydy)
       do jnode=1,geom%nb_nodes
-        Dmod = max(D(jnode), eps)
         Vx = Vnodes(jnode,XX)
         Vy = Vnodes(jnode,YY)
         Rx = R(jnode,XX)
@@ -934,14 +932,12 @@ contains
       !dir$ ivdep
       !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Qx,Qy,Dmod,Q0x,Q0y,D0mod)
       do jnode=1,geom%nb_nodes
-        Qx    = Q(jnode,XX)
-        Qy    = Q(jnode,YY)
-        Dmod  = max( eps, D(jnode) )
-        Q0x   = Q0(jnode,XX)
-        Q0y   = Q0(jnode,YY)
-        D0mod = max( eps, D0(jnode) )
-        Vnodes(jnode,XX) = ( 1.5_jprw*Qx/Dmod - 0.5_jprw*Q0x/D0mod ) * hy(jnode)
-        Vnodes(jnode,YY) = ( 1.5_jprw*Qy/Dmod - 0.5_jprw*Q0y/D0mod ) * hx(jnode)
+        Ux    = U(jnode,XX)
+        Uy    = U(jnode,YY)
+        U0x   = U0(jnode,XX)
+        U0y   = U0(jnode,YY)
+        Vnodes(jnode,XX) = ( 1.5_jprw*Ux - 0.5_jprw*U0x ) * hy(jnode)
+        Vnodes(jnode,YY) = ( 1.5_jprw*Uy - 0.5_jprw*U0y ) * hx(jnode)
       end do
       !$OMP END PARALLEL DO
     end if
@@ -967,9 +963,9 @@ contains
   subroutine compute_forcing(geom)
     type(DataStructure_type), intent(inout) :: geom
     integer :: jnode
-    real(kind=jprw) :: Qx, Qy, Dmod
+    real(kind=jprw) :: Ux, Uy
     real(kind=jprw), dimension(:),   pointer :: H, H0, D, vol, hx, hy, dhxdy_over_G, cor
-    real(kind=jprw), dimension(:,:), pointer :: Q, R, coords
+    real(kind=jprw), dimension(:,:), pointer :: U, R, coords
     real(kind=jprw) :: grad_H(geom%nb_nodes, 2)
     coords => vector_field("coordinates",geom)
     vol => scalar_field("dual_volumes",geom)
@@ -981,7 +977,7 @@ contains
     H => scalar_field("height",geom)
     H0 => scalar_field("topography",geom)
     D => scalar_field("depth",geom)
-    Q => vector_field("momentum",geom)
+    U => vector_field("momentum",geom)
     R => vector_field("momentum_forcing",geom)
 
     H(:) = H0(:) + D(:)
@@ -990,13 +986,12 @@ contains
     !dir$ ivdep
     !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Qx,Qy,Dmod)
     do jnode=1,geom%nb_nodes
-      Qx    = Q(jnode,XX)
-      Qy    = Q(jnode,YY)
-      Dmod  = max( eps, D(jnode) )
-      R(jnode,XX) = -grav*D(jnode)*grad_H(jnode,XX)*hy(jnode)/vol(jnode) &
-        &           + cor(jnode)*Qy - dhxdy_over_G(jnode)*Qx*Qy/Dmod
-      R(jnode,YY) = -grav*D(jnode)*grad_H(jnode,YY)*hx(jnode)/vol(jnode) &
-        &           - cor(jnode)*Qx + dhxdy_over_G(jnode)*Qx*Qx/Dmod
+      Ux    = U(jnode,XX)
+      Uy    = U(jnode,YY)
+      R(jnode,XX) = -grav*grad_H(jnode,XX)*hy(jnode)/vol(jnode) &
+        &           + cor(jnode)*Uy - dhxdy_over_G(jnode)*Ux*Uy
+      R(jnode,YY) = -grav*grad_H(jnode,YY)*hx(jnode)/vol(jnode) &
+        &           - cor(jnode)*Ux + dhxdy_over_G(jnode)*Ux*Ux
     end do
     !$OMP END PARALLEL DO
 
@@ -1008,16 +1003,16 @@ contains
   subroutine add_forcing_to_solution(dt,geom)
     real(kind=jprw), intent(in) :: dt
     type(DataStructure_type), intent(inout) :: geom
-    real(kind=jprw), pointer :: Q(:,:) , R(:,:), D(:)
+    real(kind=jprw), pointer :: U(:,:) , R(:,:), D(:)
     integer :: jnode
     D => scalar_field("depth",geom)
-    Q => vector_field("momentum",geom)
+    U => vector_field("momentum",geom)
     R => vector_field("momentum_forcing",geom)
     !dir$ ivdep
     !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode)
     do jnode=1,geom%nb_nodes
-      Q(jnode,XX) = ( Q(jnode,XX) + 0.5_jprw*dt*R(jnode,XX) ) / max( D(jnode), eps )
-      Q(jnode,YY) = ( Q(jnode,YY) + 0.5_jprw*dt*R(jnode,YY) ) / max( D(jnode), eps )      
+      U(jnode,XX) = ( U(jnode,XX) + 0.5_jprw*dt*R(jnode,XX) )
+      U(jnode,YY) = ( U(jnode,YY) + 0.5_jprw*dt*R(jnode,YY) )  
     end do
     !$OMP END PARALLEL DO
   end subroutine add_forcing_to_solution
@@ -1028,11 +1023,11 @@ contains
     real(kind=jprw), intent(in) :: dt
     type(DataStructure_type), intent(inout) :: geom
     integer :: jnode, m
-    real(kind=jprw) :: Qx, Qy, Rx, Ry, Dmod
-    real(kind=jprw) :: Qx_adv, Qy_adv, Rx_exp, Ry_exp
+    real(kind=jprw) :: Ux, Uy, Rx, Ry, Dmod
+    real(kind=jprw) :: Ux_adv, Uy_adv, Rx_exp, Ry_exp
 
     real(kind=jprw), dimension(:),   pointer :: H, H0, D, vol, hx, hy, dhxdy_over_G, cor
-    real(kind=jprw), dimension(:,:), pointer :: Q, R, coords
+    real(kind=jprw), dimension(:,:), pointer :: U, R, coords
     real(kind=jprw) :: grad_H(geom%nb_nodes, 2)
 
     coords => vector_field("coordinates",geom)
@@ -1040,7 +1035,7 @@ contains
     H0 => scalar_field("topography",geom)
     H => scalar_field("height",geom)
     D => scalar_field("depth",geom)
-    Q => vector_field("momentum",geom)
+    U => vector_field("momentum",geom)
     R => vector_field("momentum_forcing",geom)
     hx => scalar_field("hx",geom)
     hy => scalar_field("hy",geom)
@@ -1054,29 +1049,28 @@ contains
     !dir$ ivdep
     !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Qx,Qy,Dmod,Rx_exp,Ry_exp,Qx_adv,Qy_adv,m,Rx,Ry)
     do jnode=1,geom%nb_nodes
-      Qx    = Q(jnode,XX) * D(jnode)
-      Qy    = Q(jnode,YY) * D(jnode)
-      Dmod  = max( eps, D(jnode) )
+      Ux    = U(jnode,XX)
+      Uy    = U(jnode,YY)
 
-      Rx_exp = -grav*D(jnode)*grad_H(jnode,XX)*hy(jnode)/vol(jnode)
-      Ry_exp = -grav*D(jnode)*grad_H(jnode,YY)*hx(jnode)/vol(jnode)
+      Rx_exp = -grav*grad_H(jnode,XX)*hy(jnode)/vol(jnode)
+      Ry_exp = -grav*grad_H(jnode,YY)*hx(jnode)/vol(jnode)
 
-      Qx_adv = Qx
-      Qy_adv = Qy
+      Ux_adv = Ux
+      Uy_adv = Uy
 
       do m=1,3 ! Three iterations at most is enough to converge
-        Rx = Rx_exp + cor(jnode)*Qy - dhxdy_over_G(jnode)*Qx*Qy/Dmod
-        Ry = Ry_exp - cor(jnode)*Qx + dhxdy_over_G(jnode)*Qx*Qx/Dmod
-        Qx = Qx_adv + 0.5_jprw*dt*Rx
-        Qy = Qy_adv + 0.5_jprw*dt*Ry
+        Rx = Rx_exp + cor(jnode)*Uy - dhxdy_over_G(jnode)*Ux*Uy
+        Ry = Ry_exp - cor(jnode)*Ux + dhxdy_over_G(jnode)*Ux*Ux
+        Ux = Ux_adv + 0.5_jprw*dt*Rx
+        Uy = Uy_adv + 0.5_jprw*dt*Ry
       end do
-      Q(jnode,XX) = Qx
-      Q(jnode,YY) = Qy
-      R(jnode,XX) = Rx_exp + cor(jnode)*Qy - dhxdy_over_G(jnode)*Qx*Qy/Dmod
-      R(jnode,YY) = Ry_exp - cor(jnode)*Qx + dhxdy_over_G(jnode)*Qx*Qx/Dmod
+      U(jnode,XX) = Ux
+      U(jnode,YY) = Uy
+      R(jnode,XX) = Rx_exp + cor(jnode)*Uy - dhxdy_over_G(jnode)*Ux*Uy
+      R(jnode,YY) = Ry_exp - cor(jnode)*Ux + dhxdy_over_G(jnode)*Ux*Ux
     end do
     !$OMP END PARALLEL DO
-    call synchronise(Q,geom)
+    call synchronise(U,geom)
     call synchronise(R,geom)
 
   end subroutine implicit_solve
@@ -1087,13 +1081,13 @@ contains
     real(kind=jprw), intent(in) :: dt
     type(DataStructure_type), intent(inout) :: geom
     real(kind=jprw), dimension(:),   pointer :: D, D0, GD, DR
-    real(kind=jprw), dimension(:,:), pointer :: Q, V
+    real(kind=jprw), dimension(:,:), pointer :: U, V
     real(kind=jprw) :: VDS(geom%nb_edges)
     integer :: jnode
     
     D => scalar_field("depth",geom)
     D0 => scalar_field("depth_backup",geom)
-    Q => vector_field("momentum",geom)
+    U => vector_field("momentum",geom)
     V => vector_field("advective_velocity",geom)
     DR => scalar_field("depth_ratio",geom)
    
@@ -1107,8 +1101,8 @@ contains
     end do
     !$OMP END PARALLEL DO
     !    mpdata_gauge_Q( time, variable, VDS, DR, D0,  order, limit,  is_vector, geom )
-    call mpdata_gauge_Q( dt,   Q(:,XX),  VDS, DR, D0,  2,     .True., .True. ,   geom )
-    call mpdata_gauge_Q( dt,   Q(:,YY),  VDS, DR, D0,  2,     .True., .True. ,   geom )
+    call mpdata_gauge_Q( dt,   U(:,XX),  VDS, DR, D0,  2,     .True., .True. ,   geom )
+    call mpdata_gauge_Q( dt,   U(:,YY),  VDS, DR, D0,  2,     .True., .True. ,   geom )
   end subroutine advect_solution
 
 end module shallow_water_module
