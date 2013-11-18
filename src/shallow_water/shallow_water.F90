@@ -17,6 +17,7 @@ program shallow_water
     & setup_shallow_water, &
     & set_state_rossby_haurwitz, &
     & set_state_zonal_flow, &
+    & set_topography, &
     & set_time_step, &
     & propagate_state
   implicit none
@@ -44,8 +45,12 @@ program shallow_water
   call read_joanna("data/meshvol.d","data/rtable_lin_T255.d", g)
 
   call setup_shallow_water(g)
-  call set_state_rossby_haurwitz(g)
-  !call set_state_zonal_flow(g)
+
+  call set_topography(g)
+
+  !call set_state_rossby_haurwitz(g)
+  call set_state_zonal_flow(g)
+
   call set_time_step( dt )
 
   call log_info( "+------------------------------+" )

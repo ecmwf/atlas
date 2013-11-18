@@ -15,7 +15,7 @@ module mpdata_module
   public :: mpdata_gauge_Q
   public :: compute_gradient
 
-  real(kind=jprw), parameter :: eps  = 1.e-6
+  real(kind=jprw), parameter :: eps = 1.e-6
 
 contains
 
@@ -146,10 +146,9 @@ contains
           enddo
         endif
         ! Update the unknowns in vertices
-        Q(jnode) = Q(jnode) - adv/vol(jnode) * dt
+        Q(jnode) = max( Q(jnode) - adv/vol(jnode) * dt, 0. )
       enddo
       !$OMP END PARALLEL DO
-
       call synchronise(Q,geom)
 
     end do ! other passes
@@ -344,7 +343,7 @@ contains
         enddo
       endif
      ! Update the unknowns in vertices
-     Q(jnode) = Q(jnode) - adv/volD(jnode) * dt
+     Q(jnode) = Q(jnode) - adv/max(eps,volD(jnode)) * dt
      Qtmp(jnode) = Q(jnode)
      Q(jnode) = Q(jnode)*DR(jnode)
     enddo
@@ -375,7 +374,7 @@ contains
         ip2 = geom%edges(jedge,2)
 
         ! evaluate gradient and velocity at edge by combining 2 neighbouring dual cells
-        volume_of_two_cells = volD(ip1) + volD(ip2)
+        volume_of_two_cells = max(eps, volD(ip1) + volD(ip2) )
         dQdx = (gradQ(ip1,XX)+gradQ(ip2,XX)) / volume_of_two_cells
         dQdy = (gradQ(ip1,YY)+gradQ(ip2,YY)) / volume_of_two_cells
         Vx = V(jedge,XX)
@@ -404,7 +403,7 @@ contains
           enddo
         endif
         ! Update the unknowns in vertices
-        Q(jnode) = Qtmp(jnode) - adv/volD(jnode) * dt
+        Q(jnode) = Qtmp(jnode) - adv/max(eps,volD(jnode)) * dt
         Q(jnode) = Q(jnode) * DR(jnode)
       enddo
       !$OMP END PARALLEL DO
@@ -573,6 +572,7 @@ module shallow_water_module
   public :: propagate_state
   public :: set_state_rossby_haurwitz
   public :: set_state_zonal_flow
+  public :: set_topography
   public :: set_time_step
 
   real(kind=jprw), parameter :: eps    = 1.e-6
@@ -639,6 +639,9 @@ contains
     call create_vector_field_in_edges("advective_velocity",geom)
     call create_scalar_field_in_nodes("effective_density",geom)
     call create_scalar_field_in_nodes("depth_ratio",geom) ! old/new
+    
+    call create_scalar_field_in_nodes("topography",geom)
+    call create_scalar_field_in_nodes("height",geom)
     
     
     
@@ -717,7 +720,7 @@ contains
 
   subroutine set_state_rossby_haurwitz(geom)
     type(DataStructure_type), intent(inout)      :: geom
-    real(kind=jprw), dimension(:), pointer   :: D, cor
+    real(kind=jprw), dimension(:), pointer   :: D, cor, H0, H
     real(kind=jprw), dimension(:,:), pointer :: Q, coords
     integer :: jnode, ir
     real(kind=jprw) :: aaa0,zk,om,ph0,x,y, sin_y, cos_y
@@ -732,6 +735,9 @@ contains
     cor => scalar_field("coriolis",geom)
     D => scalar_field("depth",geom)
     Q => vector_field("momentum",geom)
+    H0 => scalar_field("topography",geom)
+    H => scalar_field("height",geom)
+
 
     !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,x,y,sin_y,cos_y)
     do jnode=1,geom%nb_nodes
@@ -746,11 +752,12 @@ contains
       Q(jnode,YY) = -radius*zk*ir*cos_y**(ir-1._jprw)*sin_y*sin(ir*x)
       D(jnode) = (ph0+radius**2*fa(y)+radius**2*fb(y)*cos(ir*x) &
         &        +radius**2*fc(y)*cos(2._jprw*ir*x)) / grav
-      D(jnode) = max(aaa0,D(jnode))
+      D(jnode) = max(aaa0,D(jnode) - H0(jnode))
       Q(jnode,XX) = Q(jnode,XX) * D(jnode)
       Q(jnode,YY) = Q(jnode,YY) * D(jnode)
       if(y == 0.5_jprw*pi) Q(jnode,XX)=0.
       if(y ==-0.5_jprw*pi) Q(jnode,XX)=0.
+      H(jnode) = H0(jnode) + D(jnode)
     end do
     !$OMP END PARALLEL DO
 
@@ -780,20 +787,22 @@ contains
 
   subroutine set_state_zonal_flow(geom)
     type(DataStructure_type), intent(inout)      :: geom
-    real(kind=jprw), dimension(:), pointer   :: D, cor
+    real(kind=jprw), dimension(:), pointer   :: D, cor, H0, H
     real(kind=jprw), dimension(:,:), pointer :: Q, coords
     integer :: jnode
     real(kind=jprw) :: x,y
     real(kind=jprw), parameter :: USCAL = 20.
     real(kind=jprw), parameter :: H00 = grav * 8e3
     real(kind=jprw), parameter :: pvel = USCAL/radius
-    real(kind=jprw), parameter :: beta = pi/4._jprw
+    real(kind=jprw), parameter :: beta = 0.! pi/4._jprw
 
 
     coords => vector_field("coordinates",geom)
     D => scalar_field("depth",geom)
     Q => vector_field("momentum",geom)
     cor => scalar_field("coriolis",geom)
+    H0 => scalar_field("topography",geom)
+    H => scalar_field("height",geom)
 
     !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,x,y)
     do jnode=1,geom%nb_nodes
@@ -801,13 +810,45 @@ contains
       y=coords(jnode,YY)
       cor(jnode)   = f0 *( -cos(x)*cos(y)*sin(beta)+sin(y)*cos(beta) )
       D(jnode)     = (H00-radius**2*(f0+pvel)*0.5*pvel*(-cos(x)*cos(y)*sin(beta)+sin(y)*cos(beta))**2)
-      D(jnode)     = max(0._jprw, D(jnode)/grav)
+      D(jnode)     = max(0._jprw, D(jnode)/grav - H0(jnode))
       Q(jnode,XX)  =  pvel*(cos(beta)+tan(y)*cos(x)*sin(beta))*radius*cos(y) * D(jnode)
       Q(jnode,YY)  = -pvel*sin(x)*sin(beta)*radius * D(jnode)
+      H(jnode) = H0(jnode) + D(jnode)
     end do
     !$OMP END PARALLEL DO
 
   end subroutine set_state_zonal_flow
+
+
+  subroutine set_topography(geom)
+    type(DataStructure_type), intent(inout) :: geom
+    real(kind=jprw), dimension(:), pointer :: H0
+    real(kind=jprw), dimension(:,:), pointer :: coords
+    real(kind=jprw) :: amp = 2000. ! amplitude of hill
+    real(kind=jprw) :: rad = 2.*pi/18. ! radius of hill
+    real(kind=jprw) :: xcent = 3.*pi/2.  ! centre of hill
+    real(kind=jprw) :: ycent = pi/6.*1.
+    real(kind=jprw) :: gamm = 1. ! slope of hill
+    real(kind=jprw) :: dist, xlon, ylat
+    integer :: jnode
+
+    H0 => scalar_field("topography",geom)
+    coords => vector_field("coordinates",geom)
+    
+    do jnode=1,geom%nb_nodes
+      xlon = coords(jnode,XX)
+      ylat = coords(jnode,YY)
+
+      dist = 2.*sqrt( (cos(ylat)*sin( (xlon-xcent)/2 ) )**2 &
+        &     + sin((ylat-ycent)/2)**2 )
+      if (dist.le.rad) then
+        H0(jnode) = amp * (1.-gamm*dist/rad)
+      else
+        H0(jnode) = 0.
+      end if
+    end do
+  end subroutine set_topography
+
 
   subroutine backup_solution(geom)
     type(DataStructure_type), intent(inout) :: geom
@@ -927,9 +968,9 @@ contains
     type(DataStructure_type), intent(inout) :: geom
     integer :: jnode
     real(kind=jprw) :: Qx, Qy, Dmod
-    real(kind=jprw), dimension(:),   pointer :: D, vol, hx, hy, dhxdy_over_G, cor
+    real(kind=jprw), dimension(:),   pointer :: H, H0, D, vol, hx, hy, dhxdy_over_G, cor
     real(kind=jprw), dimension(:,:), pointer :: Q, R, coords
-    real(kind=jprw) :: grad_D(geom%nb_nodes, 2)
+    real(kind=jprw) :: grad_H(geom%nb_nodes, 2)
     coords => vector_field("coordinates",geom)
     vol => scalar_field("dual_volumes",geom)
     hx => scalar_field("hx",geom)
@@ -937,20 +978,24 @@ contains
     dhxdy_over_G => scalar_field("dhxdy_over_G",geom)
     cor => scalar_field("coriolis",geom)
 
+    H => scalar_field("height",geom)
+    H0 => scalar_field("topography",geom)
     D => scalar_field("depth",geom)
     Q => vector_field("momentum",geom)
     R => vector_field("momentum_forcing",geom)
-    call compute_gradient( D, grad_D, .False., geom )
-    
+
+    H(:) = H0(:) + D(:)
+    call compute_gradient( H, grad_H, .False., geom )
+
     !dir$ ivdep
     !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Qx,Qy,Dmod)
     do jnode=1,geom%nb_nodes
       Qx    = Q(jnode,XX)
       Qy    = Q(jnode,YY)
       Dmod  = max( eps, D(jnode) )
-      R(jnode,XX) = -grav*D(jnode)*grad_D(jnode,XX)*hy(jnode)/vol(jnode) &
+      R(jnode,XX) = -grav*D(jnode)*grad_H(jnode,XX)*hy(jnode)/vol(jnode) &
         &           + cor(jnode)*Qy - dhxdy_over_G(jnode)*Qx*Qy/Dmod
-      R(jnode,YY) = -grav*D(jnode)*grad_D(jnode,YY)*hx(jnode)/vol(jnode) &
+      R(jnode,YY) = -grav*D(jnode)*grad_H(jnode,YY)*hx(jnode)/vol(jnode) &
         &           - cor(jnode)*Qx + dhxdy_over_G(jnode)*Qx*Qx/Dmod
     end do
     !$OMP END PARALLEL DO
@@ -971,8 +1016,8 @@ contains
     !dir$ ivdep
     !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode)
     do jnode=1,geom%nb_nodes
-      Q(jnode,XX) = ( Q(jnode,XX) + 0.5_jprw*dt*R(jnode,XX) ) / D(jnode)
-      Q(jnode,YY) = ( Q(jnode,YY) + 0.5_jprw*dt*R(jnode,YY) ) / D(jnode)      
+      Q(jnode,XX) = ( Q(jnode,XX) + 0.5_jprw*dt*R(jnode,XX) ) / max( D(jnode), eps )
+      Q(jnode,YY) = ( Q(jnode,YY) + 0.5_jprw*dt*R(jnode,YY) ) / max( D(jnode), eps )      
     end do
     !$OMP END PARALLEL DO
   end subroutine add_forcing_to_solution
@@ -986,12 +1031,14 @@ contains
     real(kind=jprw) :: Qx, Qy, Rx, Ry, Dmod
     real(kind=jprw) :: Qx_adv, Qy_adv, Rx_exp, Ry_exp
 
-    real(kind=jprw), dimension(:),   pointer :: D, vol, hx, hy, dhxdy_over_G, cor
+    real(kind=jprw), dimension(:),   pointer :: H, H0, D, vol, hx, hy, dhxdy_over_G, cor
     real(kind=jprw), dimension(:,:), pointer :: Q, R, coords
-    real(kind=jprw) :: grad_D(geom%nb_nodes, 2)
+    real(kind=jprw) :: grad_H(geom%nb_nodes, 2)
 
     coords => vector_field("coordinates",geom)
     vol => scalar_field("dual_volumes",geom)
+    H0 => scalar_field("topography",geom)
+    H => scalar_field("height",geom)
     D => scalar_field("depth",geom)
     Q => vector_field("momentum",geom)
     R => vector_field("momentum_forcing",geom)
@@ -1001,7 +1048,9 @@ contains
     cor => scalar_field("coriolis",geom)
 
     ! D is already up to date at time level (n+1), just by MPDATA advection
-    call compute_gradient( D, grad_D, .False., geom )
+    H(:) = H0(:) + D(:)
+    call compute_gradient( H, grad_H, .False., geom )
+
     !dir$ ivdep
     !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Qx,Qy,Dmod,Rx_exp,Ry_exp,Qx_adv,Qy_adv,m,Rx,Ry)
     do jnode=1,geom%nb_nodes
@@ -1009,8 +1058,8 @@ contains
       Qy    = Q(jnode,YY) * D(jnode)
       Dmod  = max( eps, D(jnode) )
 
-      Rx_exp = -grav*D(jnode)*grad_D(jnode,XX)*hy(jnode)/vol(jnode)
-      Ry_exp = -grav*D(jnode)*grad_D(jnode,YY)*hx(jnode)/vol(jnode)
+      Rx_exp = -grav*D(jnode)*grad_H(jnode,XX)*hy(jnode)/vol(jnode)
+      Ry_exp = -grav*D(jnode)*grad_H(jnode,YY)*hx(jnode)/vol(jnode)
 
       Qx_adv = Qx
       Qy_adv = Qy
@@ -1054,7 +1103,7 @@ contains
     ! compute ratio
     !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode)
     do jnode=1,geom%nb_nodes
-      DR(jnode) = D0(jnode) / D(jnode)
+      DR(jnode) = D0(jnode) / max( D(jnode), eps )
     end do
     !$OMP END PARALLEL DO
     !    mpdata_gauge_Q( time, variable, VDS, DR, D0,  order, limit,  is_vector, geom )

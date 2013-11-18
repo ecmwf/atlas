@@ -130,6 +130,9 @@ contains
     field => state%field("depth")
     call write_gmsh_nodal_field(field)
 
+    field => state%field("height")
+    call write_gmsh_nodal_field(field)
+
     !field => state%field("Dmax_1")
     !call write_gmsh_nodal_field(field)
 !
@@ -148,8 +151,8 @@ contains
     !field => state%field("Dmin_tot")
     !call write_gmsh_nodal_field(field)
 
-    !field => state%field("momentum")
-    !call write_gmsh_nodal_field(field)
+    field => state%field("momentum")
+    call write_gmsh_nodal_field(field)
 
     !do ifield=1,state%nb_fields
     !  field => state%fields(ifield)%ptr
