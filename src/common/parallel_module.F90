@@ -56,6 +56,7 @@ public Comm_type
     procedure, pass :: synchronise_real4_rank2
     procedure, pass :: synchronise_real8_rank1
     procedure, pass :: synchronise_real8_rank2
+    procedure, pass :: synchronise_real8_rank3
 
     generic, public :: synchronise => &
       & synchronise_integer_rank1, &
@@ -63,7 +64,9 @@ public Comm_type
       & synchronise_real4_rank1, &
       & synchronise_real4_rank2, &
       & synchronise_real8_rank1, &
-      & synchronise_real8_rank2
+      & synchronise_real8_rank2, &
+      & synchronise_real8_rank3
+
 
 
     procedure, pass :: glb_field_size
@@ -478,6 +481,80 @@ contains
     end do
 
   end subroutine synchronise_real8_rank2
+
+  subroutine synchronise_real8_rank3(comm,field)
+    class(Comm_type), intent(inout) :: comm
+    real*8, dimension(:,:,:), intent(inout) :: field
+    real*8 :: sendbuffer(comm%sync_sendcnt*size(field,2))
+    real*8 :: recvbuffer(comm%sync_recvcnt*size(field,2))
+    integer :: jj,ii,jproc,itag,ireqs(0:nproc-1),ireqr(0:nproc-1)
+    integer :: sync_recvdispls(0:nproc-1),sync_recvcounts(0:nproc-1)
+    integer :: sync_senddispls(0:nproc-1),sync_sendcounts(0:nproc-1)
+    integer :: jcol, ncols, jlev, nlevs
+    integer :: iwait_status(MPI_STATUS_SIZE,0:nproc-1)
+
+    nlevs = size(field,2)
+    ncols = size(field,3)
+    sync_recvdispls(:) = nlevs*ncols*comm%sync_recvdispls(:)
+    sync_recvcounts(:) = nlevs*ncols*comm%sync_recvcounts(:)
+    sync_senddispls(:) = nlevs*ncols*comm%sync_senddispls(:)
+    sync_sendcounts(:) = nlevs*ncols*comm%sync_sendcounts(:)
+
+    ! Let MPI know what we like to receive
+    do jproc=nproc-1,0,-1
+      if(sync_recvcounts(jproc) > 0) then
+        itag=9000
+        call MPI_IRECV( recvbuffer(sync_recvdispls(jproc)+1:),sync_recvcounts(jproc), &
+                      & MPI_REAL8,jproc,itag,MPI_COMM_WORLD,ireqr(jproc),ierr)
+      endif
+    enddo
+
+    ! Pack
+    ii = 0
+    do jj=1,comm%sync_sendcnt
+      do jlev=1,nlevs
+        do jcol=1,ncols
+          ii = ii+1
+          sendbuffer(ii) = field( comm%sync_sendmap(jj), jlev, jcol )
+        end do
+      end do
+    end do
+
+    ! Send
+    do jproc=0,nproc-1
+      itag=9000
+      if(sync_sendcounts(jproc) > 0) then
+        call MPI_ISEND( sendbuffer(sync_senddispls(jproc)+1:),sync_sendcounts(jproc), &
+                      & MPI_REAL8,jproc,itag,MPI_COMM_WORLD,ireqs(jproc),ierr )
+      end if
+    end do
+  
+    ! Wait for receiving to finish
+    do jproc=0,nproc-1
+      if(comm%sync_recvcounts(jproc) > 0) then
+        call MPI_WAIT( ireqr(jproc),iwait_status(:,jproc),ierr )
+      end if
+    end do
+
+    ! Unpack
+    ii = 0
+    do jj=1,comm%sync_recvcnt
+      do jlev=1,nlevs
+        do jcol=1,ncols
+          ii = ii+1
+          field( comm%sync_recvmap(jj), jlev, jcol ) = recvbuffer(ii)
+        end do
+      end do
+    end do
+
+    ! Wait for sending to finish
+    do jproc=0,nproc-1
+      if(sync_sendcounts(jproc) > 0) then
+        call MPI_WAIT(ireqs(jproc),iwait_status(:,jproc),ierr)
+      end if
+    end do
+
+  end subroutine synchronise_real8_rank3
 
   subroutine synchronise_real4_rank1(comm,field)
     class(Comm_type), intent(inout) :: comm
