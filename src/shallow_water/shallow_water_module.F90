@@ -914,7 +914,7 @@ contains
       call compute_gradient( Vnodes(:,YY), grad_Vy, .True., geom )
 
       !dir$ ivdep
-      !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Dmod,Vx,Vy,Rx,Ry,dVxdx,dVxdy,dVydx,dVydy)
+      !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Vx,Vy,Rx,Ry,dVxdx,dVxdy,dVydx,dVydy)
       do jnode=1,geom%nb_nodes
         Vx = Vnodes(jnode,XX)
         Vy = Vnodes(jnode,YY)
@@ -932,7 +932,7 @@ contains
       call synchronise( Vnodes, geom )
     else if( option .eq. "extrapolate") then
       !dir$ ivdep
-      !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Qx,Qy,Dmod,Q0x,Q0y,D0mod)
+      !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Ux,Uy,U0x,U0y)
       do jnode=1,geom%nb_nodes
         Ux    = U(jnode,XX)
         Uy    = U(jnode,YY)
@@ -986,7 +986,7 @@ contains
     call compute_gradient( H, grad_H, .False., geom )
 
     !dir$ ivdep
-    !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Qx,Qy,Dmod)
+    !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Ux,Uy)
     do jnode=1,geom%nb_nodes
       Ux    = U(jnode,XX)
       Uy    = U(jnode,YY)
@@ -1049,7 +1049,7 @@ contains
     call compute_gradient( H, grad_H, .False., geom )
 
     !dir$ ivdep
-    !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Qx,Qy,Dmod,Rx_exp,Ry_exp,Qx_adv,Qy_adv,m,Rx,Ry)
+    !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Ux,Uy,Rx_exp,Ry_exp,Ux_adv,Uy_adv,m,Rx,Ry)
     do jnode=1,geom%nb_nodes
       Ux    = U(jnode,XX)
       Uy    = U(jnode,YY)
