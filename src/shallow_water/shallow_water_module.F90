@@ -65,15 +65,17 @@ contains
     do jedge = 1,geom%nb_edges
       Sx = S(jedge,XX)
       Sy = S(jedge,YY)
-      Vx = V(jedge,XX)
-      Vy = V(jedge,YY)
-      aun(jedge) = Vx*Sx + Vy*Sy
       ip1 = geom%edges(jedge,1)
       ip2 = geom%edges(jedge,2)
+
+      Vx = V(jedge,XX)
+      Vy = V(jedge,YY)
+
+      aun(jedge) = Vx*Sx + Vy*Sy 
+
       apos = max(0._jprw,aun(jedge))
       aneg = min(0._jprw,aun(jedge))
       fluxv(jedge) = Q(ip1)*apos + Q(ip2)*aneg
-      
       VDS(jedge) = fluxv(jedge)
     enddo
     !$OMP END PARALLEL DO
@@ -631,10 +633,10 @@ contains
 
     call create_scalar_field_in_nodes("coriolis",geom)
     call create_scalar_field_in_nodes("depth",geom)
-    call create_vector_field_in_nodes("momentum",geom)
-    call create_vector_field_in_nodes("momentum_forcing",geom)
+    call create_vector_field_in_nodes("velocity",geom)
+    call create_vector_field_in_nodes("velocity_forcing",geom)
     call create_scalar_field_in_nodes("depth_backup",geom)
-    call create_vector_field_in_nodes("momentum_backup",geom)
+    call create_vector_field_in_nodes("velocity_backup",geom)
 
     call create_vector_field_in_edges("advective_velocity",geom)
     call create_scalar_field_in_nodes("effective_density",geom)
@@ -734,7 +736,7 @@ contains
     coords => vector_field("coordinates",geom)
     cor => scalar_field("coriolis",geom)
     D => scalar_field("depth",geom)
-    Q => vector_field("momentum",geom)
+    Q => vector_field("velocity",geom)
     H0 => scalar_field("topography",geom)
     H => scalar_field("height",geom)
 
@@ -799,7 +801,7 @@ contains
 
     coords => vector_field("coordinates",geom)
     D => scalar_field("depth",geom)
-    U => vector_field("momentum",geom)
+    U => vector_field("velocity",geom)
     cor => scalar_field("coriolis",geom)
     H0 => scalar_field("topography",geom)
     H => scalar_field("height",geom)
@@ -858,8 +860,8 @@ contains
     
     D  => scalar_field("depth",geom)
     D0 => scalar_field("depth_backup",geom)
-    Q  => vector_field("momentum",geom)
-    Q0 => vector_field("momentum_backup",geom)
+    Q  => vector_field("velocity",geom)
+    Q0 => vector_field("velocity_backup",geom)
 
     !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode)
     do jnode=1,geom%nb_nodes
@@ -892,11 +894,11 @@ contains
     Vedges => vector_field("advective_velocity",geom)
     D      => scalar_field("depth",geom)
     D0     => scalar_field("depth_backup",geom)
-    U      => vector_field("momentum",geom)
-    U0     => vector_field("momentum_backup",geom)
+    U      => vector_field("velocity",geom)
+    U0     => vector_field("velocity_backup",geom)
     hx     => scalar_field("hx",geom)
     hy     => scalar_field("hy",geom)
-    R      => vector_field("momentum_forcing",geom)
+    R      => vector_field("velocity_forcing",geom)
     vol    => scalar_field("dual_volumes",geom)
 
     if( option .eq. "advect") then
@@ -977,8 +979,8 @@ contains
     H => scalar_field("height",geom)
     H0 => scalar_field("topography",geom)
     D => scalar_field("depth",geom)
-    U => vector_field("momentum",geom)
-    R => vector_field("momentum_forcing",geom)
+    U => vector_field("velocity",geom)
+    R => vector_field("velocity_forcing",geom)
 
     H(:) = H0(:) + D(:)
     call compute_gradient( H, grad_H, .False., geom )
@@ -1006,8 +1008,8 @@ contains
     real(kind=jprw), pointer :: U(:,:) , R(:,:), D(:)
     integer :: jnode
     D => scalar_field("depth",geom)
-    U => vector_field("momentum",geom)
-    R => vector_field("momentum_forcing",geom)
+    U => vector_field("velocity",geom)
+    R => vector_field("velocity_forcing",geom)
     !dir$ ivdep
     !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode)
     do jnode=1,geom%nb_nodes
@@ -1035,8 +1037,8 @@ contains
     H0 => scalar_field("topography",geom)
     H => scalar_field("height",geom)
     D => scalar_field("depth",geom)
-    U => vector_field("momentum",geom)
-    R => vector_field("momentum_forcing",geom)
+    U => vector_field("velocity",geom)
+    R => vector_field("velocity_forcing",geom)
     hx => scalar_field("hx",geom)
     hy => scalar_field("hy",geom)
     dhxdy_over_G => scalar_field("dhxdy_over_G",geom)
@@ -1087,7 +1089,7 @@ contains
     
     D => scalar_field("depth",geom)
     D0 => scalar_field("depth_backup",geom)
-    U => vector_field("momentum",geom)
+    U => vector_field("velocity",geom)
     V => vector_field("advective_velocity",geom)
     DR => scalar_field("depth_ratio",geom)
    

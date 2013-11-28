@@ -151,7 +151,7 @@ contains
     !field => state%field("Dmin_tot")
     !call write_gmsh_nodal_field(field)
 
-    field => state%field("momentum")
+    field => state%field("velocity")
     call write_gmsh_nodal_field(field)
 
     !do ifield=1,state%nb_fields
