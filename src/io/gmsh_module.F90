@@ -8,7 +8,7 @@ module gmsh_module
 contains
     
   subroutine write_gmsh_nodal_field(field)
-    type(Field_class), pointer, intent(inout) :: field
+    type(Field_type), pointer, intent(inout) :: field
     
     real(kind=jprw), allocatable :: glb_field(:,:)
     integer :: jnode, glb_rows
@@ -44,10 +44,10 @@ contains
   end subroutine write_gmsh_nodal_field
 
   subroutine write_gmsh_face_field(g,name)
-    class(Grid_class), intent(inout) :: g
+    class(Mesh_type), intent(inout) :: g
     character(len=*) , intent(in) :: name
-    class(FunctionSpace_class),  pointer    :: faces
-    class(Field_class),  pointer            :: F
+    class(FunctionSpace_type),  pointer    :: faces
+    class(Field_type),  pointer            :: F
     integer :: jface
     faces => g%function_space("faces")
     F => faces%field(name)
@@ -70,7 +70,7 @@ contains
 
   
   subroutine write_gmsh_mesh(grid,filename)
-    class(Grid_class), intent(inout) :: grid
+    class(Mesh_type), intent(inout) :: grid
     character(len=*), intent(in) :: filename
     character(len=1024) :: procfile
     integer :: jface, jnode
@@ -113,9 +113,9 @@ contains
   end subroutine write_gmsh_mesh
 
   subroutine write_gmsh_state(state,filename)
-    class(State_class), intent(in), target :: state
+    class(FieldSet_type), intent(in), target :: state
     character(len=*), intent(in) :: filename
-    type(Field_class), pointer :: field
+    type(Field_type), pointer :: field
 
     call parallel_barrier()
 

@@ -1,7 +1,7 @@
 module datastruct_module
 
   use common_module, only: jprw
-  use grid_module, only : Grid_class, State_class, Field_class, FaceFunctionSpace, ContinuousFunctionSpace, FunctionSpace_class
+  use grid_module, only : Mesh_type, FieldSet_type, Field_type, FaceFunctionSpace, ContinuousFunctionSpace, FunctionSpace_type
   use parallel_module
 
   implicit none
@@ -20,17 +20,17 @@ module datastruct_module
     module procedure synchronise_array_rank2
   end interface synchronise
 
-!  type, public, extends(Grid_class) :: Mesh_class
+!  type, public, extends(Mesh_type) :: Mesh_class
 !  end type Mesh_class
 
   type, public :: DataStructure_type
   private
   ! PRIVATE part
   ! ------------
-    type(Grid_class), public     :: internal_mesh
-    type(State_class), public    :: fields
-    class(FunctionSpace_class), pointer     :: functionspace_nodes
-    class(FunctionSpace_class), pointer     :: functionspace_edges
+    type(Mesh_type), public     :: internal_mesh
+    type(FieldSet_type), public    :: fields
+    class(FunctionSpace_type), pointer     :: functionspace_nodes
+    class(FunctionSpace_type), pointer     :: functionspace_edges
 
   ! PUBLIC part
   ! -----------
@@ -128,7 +128,7 @@ contains
     implicit none
     character(len=*), intent(in) :: name
     type(DataStructure_type), intent(inout) :: geom
-    type(Field_class), pointer :: field
+    type(Field_type), pointer :: field
     real(kind=jprw), dimension(:), pointer :: array
     field => geom%fields%field(name)
     array => field%array(:,1)
@@ -138,7 +138,7 @@ contains
     implicit none
     character(len=*), intent(in) :: name
     type(DataStructure_type), intent(inout) :: geom
-    type(Field_class), pointer :: field
+    type(Field_type), pointer :: field
     real(kind=jprw), dimension(:,:), pointer :: array
     field => geom%fields%field(name)
     array => field%array
@@ -148,7 +148,7 @@ contains
     implicit none
     character(len=*), intent(in) :: name
     type(DataStructure_type), intent(inout) :: geom
-    type(Field_class), pointer :: field
+    type(Field_type), pointer :: field
     field => geom%fields%field(name)
     call field%function_space%comm%synchronise( field%array )
   end subroutine synchronise_field
