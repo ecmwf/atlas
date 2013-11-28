@@ -176,16 +176,21 @@ add_library( common ${MPI_STUBS}
   src/common/parallel_module.F90
   src/common/common_module.F90
 )
-add_library( datastructure ${MPI_STUBS}
+target_link_libraries( common ${TPL} )
+
+add_library( datastructure
   src/retired_datastructure/elements_module.F90
   src/retired_datastructure/lagrangep0_module.F90
   src/retired_datastructure/lagrangep1_module.F90
   src/retired_datastructure/grid_module.F90
-  src/retired_datastructure/split_globe_module.F90
+)
+target_link_libraries( datastructure common )
+add_library( io
+  src/io/split_globe_module.F90
   src/io/gmsh_module.F90
   #src/io/grib_module.F90
 )
-target_link_libraries( datastructure common ${TPL} )
+target_link_libraries( io datastructure )
 
 add_subdirectory(src/ftnunit)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/src/ftnunit)
@@ -198,11 +203,11 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}/src/datastruct)
 file( COPY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
 
 add_executable( shallow_water
-  src/shallow_water/datastruct_module.F90
-  src/shallow_water/joanna_module.F90
+  src/shallow_water/retired_datastruct_module.F90
+  src/shallow_water/retired_joanna_module.F90
   src/shallow_water/shallow_water_module.F90 
   src/shallow_water/shallow_water.F90 )
-target_link_libraries( shallow_water datastructure ${TPL} )
+target_link_libraries( shallow_water io )
 
 ecbuild_add_test( TARGET test_datastruct
   SOURCES  src/tests/test_datastruct.F90
@@ -213,7 +218,7 @@ ecbuild_add_test( TARGET test_datastruct
 
 ecbuild_add_test( TARGET test_sync 
   SOURCES src/tests/test_sync.F90
-  LIBS    datastructure
+  LIBS    common
   ENABLED OFF # Compile but don't call with ctest
 )
 
