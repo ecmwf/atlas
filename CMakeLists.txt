@@ -11,7 +11,10 @@ if(${srcdir} STREQUAL ${bindir})
   message("######################################################")
   message(FATAL_ERROR "In-source builds are forbidden!")
 endif()
-project( pantarhei Fortran )
+project( pantarhei Fortran CXX )
+
+enable_testing()
+include(ecbuild_add_test.cmake)
 
 #######################################################################################
 # Configurations
@@ -21,6 +24,7 @@ set( OMP      ON  CACHE BOOL "Enable/Disable OpenMP"       )
 set( WARNINGS OFF CACHE BOOL "Enable/Disable all warnings" )
 set( GRIB     ON  CACHE BOOL "Enable/Disable Grib"         )
 set( MPI      ON  CACHE BOOL "Enable/Disable MPI"          )
+set( ENABLE_TESTS ON CACHE BOOL "Enable/Disable unit tests")
 
 message( STATUS "--------------------------------------------------------------------" )
 message( STATUS "PantaRhei configuration" )
@@ -32,6 +36,13 @@ if( NOT Fortran_COMPILER_NAME MATCHES "mp.*" AND NOT Fortran_COMPILER_NAME MATCH
   #  "Please remove this build, export FC to a MPI compiler such as mpif90 or ftn on Cray and rerun." )
   set( MPI OFF )
 endif( )
+get_filename_component (CXX_COMPILER_NAME ${CMAKE_CXX_COMPILER} NAME)
+if( NOT CXX_COMPILER_NAME MATCHES "mp.*" AND NOT CXX_COMPILER_NAME MATCHES "CC" )
+  #message( FATAL_ERROR "MPI Compiler needed.\n"
+  #  "Please remove this build, export CXX to a MPI compiler such as mpic++ or CC on Cray and rerun." )
+  set( MPI OFF )
+endif( )
+
 
 # make sure that the default build type is a RELEASE
 if( NOT CMAKE_BUILD_TYPE )
@@ -160,18 +171,26 @@ if( NOT ${MPI} )
   message( STATUS "MPI not found, use stubs instead" )
   set( MPI_STUBS src/common/mpi_stubs.F90 )
 endif( )
-add_library( datastructure ${MPI_STUBS}
+
+add_library( common ${MPI_STUBS}
   src/common/parallel_module.F90
   src/common/common_module.F90
-  src/datastructure/elements_module.F90
-  src/datastructure/lagrangep0_module.F90
-  src/datastructure/lagrangep1_module.F90
-  src/datastructure/grid_module.F90
-  src/datastructure/split_globe_module.F90
+)
+add_library( datastructure ${MPI_STUBS}
+  src/retired_datastructure/elements_module.F90
+  src/retired_datastructure/lagrangep0_module.F90
+  src/retired_datastructure/lagrangep1_module.F90
+  src/retired_datastructure/grid_module.F90
+  src/retired_datastructure/split_globe_module.F90
   src/io/gmsh_module.F90
   #src/io/grib_module.F90
 )
-target_link_libraries( datastructure ${TPL} )
+target_link_libraries( datastructure common ${TPL} )
+
+add_subdirectory(src/ftnunit)
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/src/ftnunit)
+add_subdirectory(src/datastruct)
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/src/datastruct)
 
 #######################################################################################
 # Shallow water executable
@@ -185,11 +204,18 @@ add_executable( shallow_water
   src/shallow_water/shallow_water.F90 )
 target_link_libraries( shallow_water datastructure ${TPL} )
 
-#######################################################################################
-# Test for parallelisation
-#######################################################################################
-add_executable( test_sync src/tests/test_sync.F90 )
-target_link_libraries( test_sync datastructure )
+ecbuild_add_test( TARGET test_datastruct
+  SOURCES  src/tests/test_datastruct.F90
+  LIBS     ftnunit datastruct
+  COMMAND  ${CMAKE_SOURCE_DIR}/src/ftnunit/runtests.sh
+  ARGS     ${CMAKE_CURRENT_BINARY_DIR}/test_datastruct
+)
+
+ecbuild_add_test( TARGET test_sync 
+  SOURCES src/tests/test_sync.F90
+  LIBS    datastructure
+  ENABLED OFF # Compile but don't call with ctest
+)
 
 #######################################################################################
 # Print Summary
@@ -201,11 +227,13 @@ message( STATUS "---------------------------------------------------------------
 message( STATUS "System  : ${BUILD_SITE} -- ${CMAKE_SYSTEM} -- ${CMAKE_SYSTEM_PROCESSOR}" )
 message( STATUS "Build   : ${CMAKE_BUILD_TYPE}" )
 message( STATUS "Fortran : ${Fortran_COMPILER_NAME} -- ${CMAKE_Fortran_COMPILER_ID} ${CMAKE_Fortran_COMPILER_VERSION}" )
+message( STATUS "C++     : ${CXX_COMPILER_NAME} -- ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}" )
 message( STATUS "FCFLAGS : ${CMAKE_Fortran_FLAGS} ${CMAKE_Fortran_FLAGS_${CMAKE_BUILD_TYPE}}" )
 message( STATUS "LDFLAGS : ${CMAKE_Fortran_LINK_FLAGS}" )
 message( STATUS "Defines : ${defs}")
 message( STATUS "MPI     : ${MPI}")
 message( STATUS "OpenMP  : ${OMP}")
 message( STATUS "Grib    : ${GRIB}")
+message( STATUS "Tests   : ${ENABLE_TESTS}")
 message( STATUS "--------------------------------------------------------------------" )
 
