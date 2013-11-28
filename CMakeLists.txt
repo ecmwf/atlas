@@ -168,10 +168,8 @@ add_library( datastructure ${MPI_STUBS}
   src/datastructure/lagrangep1_module.F90
   src/datastructure/grid_module.F90
   src/datastructure/split_globe_module.F90
-  src/datastructure/datastruct_module.F90
-  src/io/joanna_module.F90
   src/io/gmsh_module.F90
-  src/io/grib_module.F90
+  #src/io/grib_module.F90
 )
 target_link_libraries( datastructure ${TPL} )
 
@@ -179,7 +177,12 @@ target_link_libraries( datastructure ${TPL} )
 # Shallow water executable
 #######################################################################################
 file( COPY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
-add_executable( shallow_water src/shallow_water/shallow_water_module.F90 src/shallow_water/shallow_water.F90 )
+
+add_executable( shallow_water
+  src/shallow_water/datastruct_module.F90
+  src/shallow_water/joanna_module.F90
+  src/shallow_water/shallow_water_module.F90 
+  src/shallow_water/shallow_water.F90 )
 target_link_libraries( shallow_water datastructure ${TPL} )
 
 #######################################################################################

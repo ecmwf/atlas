@@ -9,7 +9,7 @@ program shallow_water
   use common_module
   use parallel_module, only: parallel_init, parallel_finalise, nproc, nthread
   use gmsh_module, only: write_gmsh_mesh, write_gmsh_state
-  use grib_module, only: write_grib
+  !use grib_module, only: write_grib
 
   use joanna_module, only: read_joanna, write_results_joanna
   use datastruct_module,  only: DataStructure_type
@@ -106,7 +106,7 @@ contains
     write (filename, "(A,I2.2,A,I2.2)") "data/fields",jstep,".msh"
     call write_gmsh_state(g%fields,filename)
     write (filename, "(A,I2.2,A)") "data/fields",jstep,".grib"
-    call write_grib(g,filename)
+    !call write_grib(g,filename)
     call wallclock_timer%resume()
   end subroutine write_fields
 
