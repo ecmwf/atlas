@@ -15,11 +15,13 @@ import os, subprocess
 ####################################################################
 
 parser = ArgumentParser()
-parser.add_argument('-s', '--name', type=str, default='pantarhei')
-parser.add_argument('-n', '--tasks',   type=int, default=1)
-parser.add_argument('-d', '--threads', type=int, default=1)
+parser.add_argument('-s', '--name', type=str, default='pantarhei', help="Name of the job")
+parser.add_argument('-n', '--tasks',   type=int, default=1, help="MPI tasks")
+parser.add_argument('-d', '--threads', type=int, default=1, help="OpenMP threads")
+parser.add_argument('-e', '--env', type=str, default='cray', help="One of [ cray, gnu, intel ]")
 parser.add_argument('command', type=str, nargs='*', help="command", default=['shallow_water'])
 args = parser.parse_args()
+
 
 replace_text = {
     'cwd':os.getcwd(),
@@ -28,6 +30,7 @@ replace_text = {
     'threads':args.threads,
     'command':' '.join(args.command),
     'name':args.name,
+    'env':args.env
 }
 
 ####################################################################
@@ -46,7 +49,7 @@ with open(args.name+'.job','w') as file:
 #PBS -v DISPLAY
 
 . /etc/bash.bashrc
-
+module swap PrgEnv-cray PrgEnv-{env}
 export PSC_OMP_AFFINITY=FALSE
 export OMP_NUM_THREADS={threads}
 
