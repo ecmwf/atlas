@@ -74,7 +74,7 @@ contains
     do jnode=1,geom%nb_nodes
       adv = 0.0
       if(geom%nb_neighbours(jnode) > 1) then
-        !dir$ unroll 2
+        !dir$ unroll = 2
         do jedge = 1,geom%nb_neighbours(jnode)
           iedge = geom%my_edges(jedge,jnode)
           adv = adv + geom%sign(jedge,jnode)*fluxv(iedge)
@@ -127,7 +127,7 @@ contains
       do jnode=1,geom%nb_nodes
         adv = 0.0
         if(geom%nb_neighbours(jnode) > 1) then
-          !dir$ unroll 2
+          !dir$ unroll = 2
           do jedge = 1,geom%nb_neighbours(jnode)
             iedge = geom%my_edges(jedge,jnode)
             adv = adv + geom%sign(jedge,jnode)*aun(iedge)
@@ -180,7 +180,7 @@ contains
       do jnode=1,geom%nb_nodes
         rhin  = 0.
         rhout = 0.
-        !dir$ unroll 2
+        !dir$ unroll = 2
         do jedge = 1,geom%nb_neighbours(jnode)
           iedge = geom%my_edges(jedge,jnode)
           apos = max(0._jprw,aun(iedge))
@@ -392,7 +392,7 @@ contains
           call progress_bar(geom%fields%time,tstart,tend)
         end if
       else
-        write(step_info,'(A6,I8,A12,F9.1,A12,F8.1,A12,E20.15)') "step = ",iter, &
+        write(step_info,'(A6,I8,A12,F9.1,A12,F8.1,A12,E20.13)') "step = ",iter, &
           & "  time = ",geom%fields%time, &
           & "  dt = ",dt_fwd, "Norm ",L2norm(D)
         CALL LOG_INFO( STEP_INFO )

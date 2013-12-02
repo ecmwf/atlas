@@ -14,8 +14,8 @@ class FieldSet
 public:
   FieldSet(const std::string& name="untitled");
   void add_field(Field& field);
-  Field& field(const std::string& name);
-  Field& field(size_t idx);
+  Field& field(const std::string& name) { return *fields_[ index_.at(name) ]; }
+  Field& field(size_t idx) { return *fields_[ idx ]; }
   std::vector<Field*>& fields() { return fields_; };
   size_t size() const { return fields_.size(); };
 private:
@@ -37,6 +37,14 @@ extern "C"
   void ecmwf__FieldSet__fields (FieldSet* This, Field** &fields, int &nb_fields);
 }
 // ------------------------------------------------------------------
+
+Field* ecmwf__FieldSet__field_by_name (FieldSet* This, char* name) {
+  return &This->field( std::string(name) );
+}
+
+Field* ecmwf__FieldSet__field_by_idx (FieldSet* This, int idx) {
+  return &This->field( idx );
+}
 
 } // namespace ecmwf
 

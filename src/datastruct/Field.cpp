@@ -59,16 +59,16 @@ const char* ecmwf__Field__name (Field* This)
   return This->name().c_str();
 }
 
+Metadata* ecmwf__Field__metadata (Field* This)
+{
+  return &This->metadata();
+}
+
 void ecmwf__Field__data (Field* This, double* &field_data, int* &field_bounds, int &rank)
 {
   field_data = &This->data()[0];
   field_bounds = const_cast<int*>(&(This->bounds()[0]));
   rank = This->bounds().size();
-}
-
-Metadata* ecmwf__Field__metadata (Field* This)
-{
-  return &This->metadata();
 }
 
 // ------------------------------------------------------------------

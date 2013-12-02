@@ -13,16 +13,6 @@ void FieldSet::add_field(Field& field)
   fields_.push_back( &field );
 }
 
-Field& FieldSet::field(const std::string& name)
-{
-  return *fields_[ index_.at(name) ];
-}
-
-Field& FieldSet::field(size_t idx)
-{
-  return *fields_[ idx ];
-}
-
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
@@ -36,14 +26,6 @@ void ecmwf__FieldSet__delete (FieldSet* This) {
 
 void ecmwf__FieldSet__add_field (FieldSet* This, Field* field) {
   This->add_field(*field);
-}
-
-Field* ecmwf__FieldSet__field_by_name (FieldSet* This, char* name) {
-  return &This->field( std::string(name) );
-}
-
-Field* ecmwf__FieldSet__field_by_idx (FieldSet* This, int idx) {
-  return &This->field( idx );
 }
 
 int ecmwf__FieldSet__size(FieldSet* This) {

@@ -158,6 +158,7 @@ contains
     self%cols = cols
     allocate(self%array(self%function_space%nb_nodes,self%cols))
     self%rows = self%function_space%nb_nodes
+    write(0,*) "init field ",name, "  address ", loc(self%array),       "size ",8*size(self%array)
   end subroutine Field__init
   
   subroutine Field__destruct(self)

@@ -167,6 +167,7 @@ TYPE :: FieldSet_type
 !------------------------------------------------------------------------------
 private
   type(c_ptr) :: object = C_NULL_ptr
+  real(kind=8), public :: time = 0.
 contains
   procedure, public :: size => FieldSet__size
   procedure, public :: add_field => FieldSet__add_field
@@ -331,11 +332,17 @@ subroutine FunctionSpace__delete(this)
   this%object = C_NULL_ptr
 end subroutine FunctionSpace__delete
 
-subroutine FunctionSpace__create_field(this,name,size)
+subroutine FunctionSpace__create_field(this,name,fsize)
   class(FunctionSpace_type), intent(inout) :: this
   character(len=*), intent(in) :: name
-  integer, intent(in) :: size
-  call ecmwf__FunctionSpace__create_field(this%object,c_str(name),size)
+  integer, intent(in) :: fsize 
+  type(Field_type) :: field
+  real(kind=8), pointer :: fdata(:)
+  call ecmwf__FunctionSpace__create_field(this%object,c_str(name),fsize)
+  field = this%field(name)
+  fdata => field%data1()
+  write(0,*) "name ",name, "   address ", loc(fdata(1)), &
+  & "    size " , size(fdata)
 end subroutine FunctionSpace__create_field
 
 subroutine FunctionSpace__remove_field(this,name)

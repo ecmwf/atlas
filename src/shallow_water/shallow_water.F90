@@ -8,7 +8,7 @@ program shallow_water
 
   use common_module
   use parallel_module, only: parallel_init, parallel_finalise, nproc, nthread
-  use gmsh_module, only: write_gmsh_mesh, write_gmsh_state
+  !use gmsh_module, only: write_gmsh_mesh, write_gmsh_state
   !use grib_module, only: write_grib
 
   use joanna_module, only: read_joanna, write_results_joanna
@@ -62,7 +62,7 @@ program shallow_water
   call log_info( "| output rate (hrs) | "//trim(str(hours_per_step,'(I8)'))//" |" )
   call log_info( "+-------------------+----------+ ")
 
-  call write_gmsh_mesh(g%internal_mesh,"data/mesh.msh")
+  !call write_gmsh_mesh(g%internal_mesh,"data/mesh.msh")
 
   call write_fields()
 
@@ -104,7 +104,7 @@ contains
     character(len=1024) :: filename
     call wallclock_timer%pause()
     write (filename, "(A,I2.2,A,I2.2)") "data/fields",jstep,".msh"
-    call write_gmsh_state(g%fields,filename)
+    !call write_gmsh_state(g%fields,filename)
     write (filename, "(A,I2.2,A)") "data/fields",jstep,".grib"
     !call write_grib(g,filename)
     call wallclock_timer%resume()

@@ -51,7 +51,6 @@ extern "C"
   void ecmwf__Field__data (Field* This, double* &field_data, int* &field_bounds, int &rank);
   Metadata* ecmwf__Field__metadata (Field* This);
 }
-
 // ------------------------------------------------------------------
 
 } // namespace ecmwf

@@ -205,7 +205,7 @@ def parse_file(c_file):
     with open(c_file,'r') as open_file:
         text = open_file.read()
         repl = r""
-        text = re.sub('(?ms).*extern "C".*{', '', text)
+        text = re.sub('(?ms).*?extern "C"\s*{', '', text)
         text = re.sub('(?ms)}.*$', '', text)
         text = re.sub('(?ms)^\s+', '', text)
         lines = [ line.strip() for line in text.strip().splitlines() ]
@@ -224,8 +224,8 @@ def parse_file(c_file):
             f_file.write( C_F_binding(line) + '\n\n')
           except ParsingError, e:
             print("\n----------------------------------------\n"+
-                  "Parsing failed: \n"+str(e)+
-                  "\n----------------------------------------\n")
+                  "Parsing failed for file\n    "+c_file+" : \n"+str(e)+
+                  "\n----------------------------------------\n"+text)
         f_file.write("end interface\nend module {module_name}\n".format(module_name=module_name))
 
 
