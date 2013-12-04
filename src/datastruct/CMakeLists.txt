@@ -35,5 +35,5 @@ add_library( datastruct
     ${FORTRAN_BINDINGS}
     datastruct.F90
 ) 
-target_link_libraries( datastruct ${TPL} )
+target_link_libraries( datastruct common ${TPL} )
 

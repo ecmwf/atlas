@@ -34,9 +34,15 @@ use fieldset_c_binding
 use functionspace_c_binding
 use mesh_c_binding
 use metadata_c_binding
+use common_module, only : jprw
 implicit none
 
 integer, private, parameter :: MAX_STR_LEN = 255
+integer, private, parameter :: FIELD_NB_VARS = -1
+integer, private, parameter :: KIND_INT32  = -4
+integer, private, parameter :: KIND_REAL32 = 4
+integer, private, parameter :: KIND_REAL64 = 8
+integer, private, parameter :: wp = jprw ! working precision
 
 !------------------------------------------------------------------------------
 TYPE :: Mesh_type
@@ -85,7 +91,7 @@ TYPE :: FunctionSpace_type
 ! Methods :
 ! -------
 !   name : The name or tag this function space was created with
-!   create_field : Create a new field in this function space with given name
+!   create_field : Create a new real field in this function space with given name
 !   remove_field : Remove a field with given name
 !   field : Access to a field with given name
 
@@ -134,10 +140,23 @@ private
   type(c_ptr) :: object = C_NULL_ptr
 contains
   procedure :: name => Field__name
+  procedure :: data_type => Field__data_type
   procedure :: Metadata => Field__Metadata
-  procedure :: data1 => Field__data1
-  procedure :: data2 => Field__data2
-  procedure :: data3 => Field__data3
+  procedure, private :: access_data1_integer => Field__access_data1_integer
+  procedure, private :: access_data2_integer => Field__access_data2_integer
+  procedure, private :: access_data3_integer => Field__access_data3_integer
+  procedure, private :: access_data1_real32 => Field__access_data1_real32
+  procedure, private :: access_data2_real32 => Field__access_data2_real32
+  procedure, private :: access_data3_real32 => Field__access_data3_real32
+  procedure, private :: access_data1_real64 => Field__access_data1_real64
+  procedure, private :: access_data2_real64 => Field__access_data2_real64
+  procedure, private :: access_data3_real64 => Field__access_data3_real64
+  generic :: access_data => access_data1_real32, access_data2_real32, access_data3_real32, &
+    & access_data1_real64, access_data2_real64, access_data3_real64, &
+    & access_data1_integer, access_data2_integer, access_data3_integer
+  procedure :: data1 => Field__data1_wp
+  procedure :: data2 => Field__data2_wp
+  procedure :: data3 => Field__data3_wp
 END TYPE Field_type
 !------------------------------------------------------------------------------
 
@@ -167,7 +186,7 @@ TYPE :: FieldSet_type
 !------------------------------------------------------------------------------
 private
   type(c_ptr) :: object = C_NULL_ptr
-  real(kind=8), public :: time = 0.
+  real(c_double), public :: time = 0.
 contains
   procedure, public :: size => FieldSet__size
   procedure, public :: add_field => FieldSet__add_field
@@ -203,17 +222,17 @@ private
 contains
   procedure, private :: add_logical => Metadata__add_logical
   procedure, private :: add_integer => Metadata__add_integer
-  procedure, private :: add_real4 => Metadata__add_real4
-  procedure, private :: add_real8 => Metadata__add_real8
+  procedure, private :: add_real32 => Metadata__add_real32
+  procedure, private :: add_real64 => Metadata__add_real64
   procedure, private :: add_string => Metadata__add_string
-  generic :: add => add_logical, add_integer, add_real4, add_real8, add_string
-  generic :: set => add_logical, add_integer, add_real4, add_real8, add_string
+  generic :: add => add_logical, add_integer, add_real32, add_real64, add_string
+  generic :: set => add_logical, add_integer, add_real32, add_real64, add_string
   procedure :: get_integer => Metadata__get_integer
   procedure :: get_logical => Metadata__get_logical
-  procedure :: get_real4 => Metadata__get_real4
-  procedure :: get_real8 => Metadata__get_real8
+  procedure :: get_real32 => Metadata__get_real32
+  procedure :: get_real64 => Metadata__get_real64
   procedure :: get_string => Metadata__get_string
-  generic :: get => get_integer, get_logical, get_real4, get_real8, get_string
+  generic :: get => get_integer, get_logical, get_real32, get_real64, get_string
 END TYPE Metadata_type
 !------------------------------------------------------------------------------
 
@@ -234,9 +253,38 @@ INTERFACE delete
   module procedure FieldSet__delete
 end interface delete
 
+!------------------------------------------------------------------------------
+
+
 ! =============================================================================
 CONTAINS
 ! =============================================================================
+
+integer function real_kind(kind)
+  integer :: kind
+  if (kind == c_double) then
+    real_kind = KIND_REAL64
+  else if (kind == c_float) then
+    real_kind = KIND_REAL32
+  else
+    write(0,*) "Unsupported kind"
+    call abort()
+  end if
+end function
+
+integer function integer_kind(kind)
+  integer, optional :: kind
+  integer_kind = KIND_INT32
+  if ( present(kind) ) then
+    if (kind == c_int) then
+      integer_kind = KIND_INT32
+    else 
+      write(0,*) "Unsupported kind"
+      call abort()
+    end if
+  end if
+end function
+
 
 ! -----------------------------------------------------------------------------
 ! Helper functions
@@ -312,7 +360,8 @@ function new_FunctionSpace(name,shape_func,nb_nodes) result(function_space)
   character(len=*), intent(in) :: shape_func
   integer, intent(in) :: nb_nodes
   type(FunctionSpace_type) :: function_space
-  function_space%object = ecmwf__FunctionSpace__new(c_str(name),c_str(shape_func),nb_nodes)
+  function_space%object = ecmwf__FunctionSpace__new(c_str(name),c_str(shape_func), &
+    & (/nb_nodes,FIELD_NB_VARS/), 2 )
 end function new_FunctionSpace
 
 function new_PrismaticFunctionSpace(name,shape_func,nb_levels,nb_nodes) result(function_space)
@@ -321,7 +370,8 @@ function new_PrismaticFunctionSpace(name,shape_func,nb_levels,nb_nodes) result(f
   integer, intent(in) :: nb_levels
   integer, intent(in) :: nb_nodes
   type(FunctionSpace_type) :: function_space
-  function_space%object = ecmwf__PrismaticFunctionSpace__new(c_str(name),c_str(shape_func),nb_levels,nb_nodes)
+  function_space%object = ecmwf__FunctionSpace__new(c_str(name),c_str(shape_func), &
+    & (/nb_levels,nb_nodes,FIELD_NB_VARS/), 3 )
 end function new_PrismaticFunctionSpace
 
 subroutine FunctionSpace__delete(this)
@@ -332,18 +382,29 @@ subroutine FunctionSpace__delete(this)
   this%object = C_NULL_ptr
 end subroutine FunctionSpace__delete
 
-subroutine FunctionSpace__create_field(this,name,fsize)
+subroutine FunctionSpace__create_field(this,name,nvars,kind)
   class(FunctionSpace_type), intent(inout) :: this
   character(len=*), intent(in) :: name
-  integer, intent(in) :: fsize 
-  type(Field_type) :: field
-  real(kind=8), pointer :: fdata(:)
-  call ecmwf__FunctionSpace__create_field(this%object,c_str(name),fsize)
-  field = this%field(name)
-  fdata => field%data1()
-  write(0,*) "name ",name, "   address ", loc(fdata(1)), &
-  & "    size " , size(fdata)
+  integer, intent(in) :: nvars
+  integer, intent(in), optional :: kind
+  if (present(kind)) then
+    if (kind == KIND_REAL64) then
+      call ecmwf__FunctionSpace__create_field_double(this%object,c_str(name),nvars)
+    else if (kind == KIND_REAL32) then
+      call ecmwf__FunctionSpace__create_field_float(this%object,c_str(name),nvars)
+    else if (kind == KIND_INT32) then
+      call ecmwf__FunctionSpace__create_field_int(this%object,c_str(name),nvars)
+    else
+      write(0,*) "Unsupported kind"
+      call abort()
+    endif
+  else if (wp == c_double) then
+    call ecmwf__FunctionSpace__create_field_double(this%object,c_str(name),nvars)
+  else if (wp == c_float) then
+    call ecmwf__FunctionSpace__create_field_float(this%object,c_str(name),nvars)
+  end if
 end subroutine FunctionSpace__create_field
+
 
 subroutine FunctionSpace__remove_field(this,name)
   class(FunctionSpace_type), intent(in) :: this
@@ -379,52 +440,198 @@ function Field__name(this) result(field_name)
   field_name = c_to_f_string_cptr(field_name_c_str)
 end function Field__name
 
+function Field__data_type(this) result(field_data_type)
+  class(Field_type), intent(in) :: this
+  character(len=:), allocatable :: field_data_type
+  type(c_ptr) :: field_data_type_c_str
+  field_data_type_c_str = ecmwf__Field__data_type(this%object)
+  field_data_type = c_to_f_string_cptr(field_data_type_c_str)
+end function Field__data_type
+
 function Field__Metadata(this) result(Metadata)
   class(Field_type), intent(in) :: this
   type(Metadata_type) :: Metadata
   Metadata%object = ecmwf__Field__Metadata(this%object)
 end function Field__Metadata
 
-function Field__data1(this) result(field)
+
+subroutine Field__access_data1_integer(this, field) 
   class(Field_type), intent(in) :: this
-  real(kind=8), pointer :: field(:)
+  integer, pointer, intent(out) :: field(:)
   integer, pointer :: field_bounds(:)
   type(c_ptr) :: field_c_ptr
   type(c_ptr) :: field_bounds_c_ptr
   integer(c_int) :: field_rank
   integer :: field_size, jbound
-  call ecmwf__Field__data(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  call ecmwf__Field__data_int(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
   field_size = 1
   do jbound=1,field_rank
     field_size = field_size * field_bounds(jbound)
   end do
   call C_F_POINTER ( field_c_ptr , field , (/field_size/) )
-end function Field__data1
+end subroutine Field__access_data1_integer
 
-function Field__data2(this) result(field)
+subroutine Field__access_data2_integer(this, field) 
   class(Field_type), intent(in) :: this
-  real(kind=8), pointer :: field(:,:)
+  integer, pointer, intent(out) :: field(:,:)
   integer, pointer :: field_bounds(:)
   type(c_ptr) :: field_c_ptr
   type(c_ptr) :: field_bounds_c_ptr
   integer(c_int) :: field_rank
-  call ecmwf__Field__data(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  call ecmwf__Field__data_int(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
   call C_F_POINTER ( field_c_ptr , field , field_bounds(1:2) )
-end function Field__data2
+end subroutine Field__access_data2_integer
 
-function Field__data3(this) result(field)
+subroutine Field__access_data3_integer(this, field) 
   class(Field_type), intent(in) :: this
-  real(kind=8), pointer :: field(:,:,:)
+  integer, pointer, intent(out) :: field(:,:,:)
   integer, pointer :: field_bounds(:)
   type(c_ptr) :: field_c_ptr
   type(c_ptr) :: field_bounds_c_ptr
   integer(c_int) :: field_rank
-  call ecmwf__Field__data(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  call ecmwf__Field__data_int(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
-  call C_F_POINTER ( field_c_ptr , field , field_bounds )
-end function Field__data3
+  call C_F_POINTER ( field_c_ptr , field , field_bounds(1:3) )
+end subroutine Field__access_data3_integer
+
+subroutine Field__access_data1_real32(this, field) 
+  class(Field_type), intent(in) :: this
+  real(c_float), pointer, intent(out) :: field(:)
+  integer, pointer :: field_bounds(:)
+  type(c_ptr) :: field_c_ptr
+  type(c_ptr) :: field_bounds_c_ptr
+  integer(c_int) :: field_rank
+  integer :: field_size, jbound
+  call ecmwf__Field__data_float(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
+  field_size = 1
+  do jbound=1,field_rank
+    field_size = field_size * field_bounds(jbound)
+  end do
+  call C_F_POINTER ( field_c_ptr , field , (/field_size/) )
+end subroutine Field__access_data1_real32
+
+subroutine Field__access_data2_real32(this, field) 
+  class(Field_type), intent(in) :: this
+  real(c_float), pointer, intent(out) :: field(:,:)
+  integer, pointer :: field_bounds(:)
+  type(c_ptr) :: field_c_ptr
+  type(c_ptr) :: field_bounds_c_ptr
+  integer(c_int) :: field_rank
+  call ecmwf__Field__data_float(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
+  call C_F_POINTER ( field_c_ptr , field , field_bounds(1:2) )
+end subroutine Field__access_data2_real32
+
+subroutine Field__access_data3_real32(this, field) 
+  class(Field_type), intent(in) :: this
+  real(c_float), pointer, intent(out) :: field(:,:,:)
+  integer, pointer :: field_bounds(:)
+  type(c_ptr) :: field_c_ptr
+  type(c_ptr) :: field_bounds_c_ptr
+  integer(c_int) :: field_rank
+  call ecmwf__Field__data_float(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
+  call C_F_POINTER ( field_c_ptr , field , field_bounds(1:3) )
+end subroutine Field__access_data3_real32
+
+subroutine Field__access_data1_real64(this, field) 
+  class(Field_type), intent(in) :: this
+  real(c_double), pointer, intent(out) :: field(:)
+  integer, pointer :: field_bounds(:)
+  type(c_ptr) :: field_c_ptr
+  type(c_ptr) :: field_bounds_c_ptr
+  integer(c_int) :: field_rank
+  integer :: field_size, jbound
+  call ecmwf__Field__data_double(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
+  field_size = 1
+  do jbound=1,field_rank
+    field_size = field_size * field_bounds(jbound)
+  end do
+  call C_F_POINTER ( field_c_ptr , field , (/field_size/) )
+end subroutine Field__access_data1_real64
+
+subroutine Field__access_data2_real64(this, field) 
+  class(Field_type), intent(in) :: this
+  real(c_double), pointer, intent(out) :: field(:,:)
+  integer, pointer :: field_bounds(:)
+  type(c_ptr) :: field_c_ptr
+  type(c_ptr) :: field_bounds_c_ptr
+  integer(c_int) :: field_rank
+  call ecmwf__Field__data_double(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
+  call C_F_POINTER ( field_c_ptr , field , field_bounds(1:2) )
+end subroutine Field__access_data2_real64
+
+subroutine Field__access_data3_real64(this, field) 
+  class(Field_type), intent(in) :: this
+  real(c_double), pointer, intent(out) :: field(:,:,:)
+  integer, pointer :: field_bounds(:)
+  type(c_ptr) :: field_c_ptr
+  type(c_ptr) :: field_bounds_c_ptr
+  integer(c_int) :: field_rank
+  call ecmwf__Field__data_double(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
+  call C_F_POINTER ( field_c_ptr , field , field_bounds(1:3) )
+end subroutine Field__access_data3_real64
+
+
+
+function Field__data1_wp(this) result(field)
+  class(Field_type), intent(in) :: this
+  real(wp), pointer :: field(:)
+  integer, pointer :: field_bounds(:)
+  type(c_ptr) :: field_c_ptr
+  type(c_ptr) :: field_bounds_c_ptr
+  integer(c_int) :: field_rank
+  integer :: field_size, jbound
+  if( wp == c_double ) then
+    call ecmwf__Field__data_double(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  else if (wp == c_float ) then
+    call ecmwf__Field__data_float(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  end if
+  call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
+  field_size = 1
+  do jbound=1,field_rank
+    field_size = field_size * field_bounds(jbound)
+  end do
+  call C_F_POINTER ( field_c_ptr , field , (/field_size/) )
+end function Field__data1_wp
+
+function Field__data2_wp(this) result(field)
+  class(Field_type), intent(in) :: this
+  real(wp), pointer :: field(:,:)
+  integer, pointer :: field_bounds(:)
+  type(c_ptr) :: field_c_ptr
+  type(c_ptr) :: field_bounds_c_ptr
+  integer(c_int) :: field_rank
+  if( wp == c_double ) then
+    call ecmwf__Field__data_double(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  else if (wp == c_float ) then
+    call ecmwf__Field__data_float(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  end if
+  call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
+  call C_F_POINTER ( field_c_ptr , field , field_bounds(1:2) )
+end function Field__data2_wp
+
+function Field__data3_wp(this) result(field)
+  class(Field_type), intent(in) :: this
+  real(wp), pointer :: field(:,:,:)
+  integer, pointer :: field_bounds(:)
+  type(c_ptr) :: field_c_ptr
+  type(c_ptr) :: field_bounds_c_ptr
+  integer(c_int) :: field_rank
+  if( wp == c_double ) then
+    call ecmwf__Field__data_double(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  else if (wp == c_float ) then
+    call ecmwf__Field__data_float(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  end if
+  call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
+  call C_F_POINTER ( field_c_ptr , field , field_bounds(1:3) )
+end function Field__data3_wp
 
 ! -----------------------------------------------------------------------------
 ! FieldSet routines
@@ -507,19 +714,19 @@ subroutine Metadata__add_integer(this, name, value)
   call ecmwf__Metadata__add_int(this%object, c_str(name), value)
 end subroutine Metadata__add_integer
 
-subroutine Metadata__add_real4(this, name, value)
+subroutine Metadata__add_real32(this, name, value)
   class(Metadata_type), intent(inout) :: this
   character(len=*), intent(in) :: name
-  real(kind=4), intent(in) :: value
+  real(c_float), intent(in) :: value
   call ecmwf__Metadata__add_float(this%object, c_str(name) ,value)
-end subroutine Metadata__add_real4
+end subroutine Metadata__add_real32
 
-subroutine Metadata__add_real8(this, name, value)
+subroutine Metadata__add_real64(this, name, value)
   class(Metadata_type), intent(inout) :: this
   character(len=*), intent(in) :: name
-  real(kind=8), intent(in) :: value
+  real(c_double), intent(in) :: value
   call ecmwf__Metadata__add_double(this%object, c_str(name) ,value)
-end subroutine Metadata__add_real8
+end subroutine Metadata__add_real64
 
 subroutine Metadata__add_string(this, name, value)
   class(Metadata_type), intent(inout) :: this
@@ -548,19 +755,19 @@ subroutine Metadata__get_integer(this, name, value)
   value = ecmwf__Metadata__get_int(this%object, c_str(name) )
 end subroutine Metadata__get_integer
 
-subroutine Metadata__get_real4(this, name, value)
+subroutine Metadata__get_real32(this, name, value)
   class(Metadata_type), intent(in) :: this
   character(len=*), intent(in) :: name
-  real(kind=4), intent(out) :: value
+  real(c_float), intent(out) :: value
   value = ecmwf__Metadata__get_float(this%object, c_str(name) )
-end subroutine Metadata__get_real4
+end subroutine Metadata__get_real32
 
-subroutine Metadata__get_real8(this, name, value)
+subroutine Metadata__get_real64(this, name, value)
   class(Metadata_type), intent(in) :: this
   character(len=*), intent(in) :: name
-  real(kind=8), intent(out) :: value
+  real(c_double), intent(out) :: value
   value = ecmwf__Metadata__get_double(this%object, c_str(name) )
-end subroutine Metadata__get_real8
+end subroutine Metadata__get_real64
 
 subroutine Metadata__get_string(this, name, value)
   class(Metadata_type), intent(in) :: this

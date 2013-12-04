@@ -15,6 +15,9 @@ project( pantarhei Fortran CXX )
 
 enable_testing()
 include(ecbuild_add_test.cmake)
+set( CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/modules )
+file( MAKE_DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY} )
+include_directories( ${CMAKE_Fortran_MODULE_DIRECTORY} )
 
 #######################################################################################
 # Configurations
@@ -136,7 +139,8 @@ elseif( CMAKE_Fortran_COMPILER_ID MATCHES "XL" )
 # Cray
 #######################################################################################
 elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )
-  set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -emf -rmoid")
+  set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -emf -rmoid -lhugetlbfs")
+  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lhugetlbfs")
   if( ${OMP} )
     set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -homp")
     set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -homp")
@@ -147,7 +151,7 @@ elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )
   set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -hfp3 -hmpi1 -hscalar3 -hvector3" )
   set( CMAKE_CXX_FLAGS_RELEASE     "-O3 -hfp3 -hmpi1 -hscalar3 -hvector3" )
   set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -Gfast -Ktrap=fp -R b" )
-  set( CMAKE_CXX_FLAGS_DEBUG       "-O0 -Gfast -Ktrap=fp -R b" )
+  set( CMAKE_CXX_FLAGS_DEBUG       "-O0 -Gfast -Ktrap=fp" )
   set( CMAKE_Fortran_FLAGS_BIT     "-O2 -hflex_mp=conservative -hadd_paren -hfp1 -hmpi1" )
   set( CMAKE_CXX_FLAGS_BIT         "-O2 -hflex_mp=conservative -hadd_paren -hfp1 -hmpi1" )
 

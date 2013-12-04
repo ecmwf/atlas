@@ -1,16 +1,9 @@
 #include "FunctionSpace.hpp"
-#include <iostream>
 #include "Field.hpp"
-
+#include <iostream>
 namespace ecmwf {
 
-FunctionSpace::FunctionSpace(const std::string& name, const std::string& shape_func, size_t nb_nodes) :
-  name_(name), bounds_(1,nb_nodes)
-{ 
-  //std::cout << "C++ : FunctionSpace Constructor" << std::endl;
-}
-
-FunctionSpace::FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<size_t>& bounds) :
+FunctionSpace::FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<int>& bounds) :
   name_(name), bounds_(bounds)
 { 
   //std::cout << "C++ : FunctionSpace Constructor" << std::endl;
@@ -18,19 +11,80 @@ FunctionSpace::FunctionSpace(const std::string& name, const std::string& shape_f
 
 FunctionSpace::~FunctionSpace() 
 { 
-  std::cout << "C++ : FunctionSpace Destructor ("<<name_<<")" << std::endl;
+  //std::cout << "C++ : FunctionSpace Destructor ("<<name_<<")" << std::endl;
   index_.clear();
   for( size_t f=0; f<fields_.size(); ++f )
     if( fields_[f] ) delete(fields_[f]);
   fields_.clear();
 }
 
-void FunctionSpace::create_field(const std::string& name, size_t nb_cols)
+template <>
+void FunctionSpace::create_field<double>(const std::string& name, size_t nb_vars)
 {
   //std::cout << "C++ : Create field " << name << " with size " << size*nb_nodes_ << std::endl;
   index_[name] = fields_.size();
-  fields_.push_back( new Field(name,nb_cols,*this) );
-  fields_.back()->allocate();
+  fields_.push_back( new FieldT<double>(name,*this) );
+
+  size_t bsize = bounds_.size();
+  std::vector< int > bounds(bsize);
+  std::cout << "allocating field<real64> " << name << " with bounds : ";
+
+  for (size_t i=0; i<bsize; ++i)
+  {
+    if( bounds_[i] == Field::NB_VARS )
+      bounds[i] = nb_vars;
+    else
+      bounds[i] = bounds_[i];
+    std::cout << bounds[i] << "  ";
+  }
+  std::cout << std::endl;
+  fields_.back()->allocate(bounds);
+}
+
+template <>
+void FunctionSpace::create_field<float>(const std::string& name, size_t nb_vars)
+{
+  //std::cout << "C++ : Create field " << name << " with size " << size*nb_nodes_ << std::endl;
+  index_[name] = fields_.size();
+  fields_.push_back( new FieldT<float>(name,*this) );
+
+  size_t bsize = bounds_.size();
+  std::vector< int > bounds(bsize);
+  std::cout << "allocating field<real32> " << name << " with bounds : ";
+
+  for (size_t i=0; i<bsize; ++i)
+  {
+    if( bounds_[i] == Field::NB_VARS )
+      bounds[i] = nb_vars;
+    else
+      bounds[i] = bounds_[i];
+    std::cout << bounds[i] << "  ";
+  }
+  std::cout << std::endl;
+  fields_.back()->allocate(bounds);
+}
+
+template <>
+void FunctionSpace::create_field<int>(const std::string& name, size_t nb_vars)
+{
+  //std::cout << "C++ : Create field " << name << " with size " << size*nb_nodes_ << std::endl;
+  index_[name] = fields_.size();
+  fields_.push_back( new FieldT<int>(name,*this) );
+
+  size_t bsize = bounds_.size();
+  std::vector< int > bounds(bsize);
+  std::cout << "allocating field<int32> " << name << " with bounds : ";
+
+  for (size_t i=0; i<bsize; ++i)
+  {
+    if( bounds_[i] == Field::NB_VARS )
+      bounds[i] = nb_vars;
+    else
+      bounds[i] = bounds_[i];
+    std::cout << bounds[i] << "  ";
+  }
+  std::cout << std::endl;
+  fields_.back()->allocate(bounds);
 }
 
 void FunctionSpace::remove_field(const std::string& name)
@@ -47,56 +101,24 @@ Field& FunctionSpace::field(const std::string& name)
   return *fields_[ index_.at(name) ];
 }
 
-void FunctionSpace::print_field(const std::string& name)
-{
-  Field& field_obj = field( name );
-  //std::cout << "C++ : " << name << " : ";
-  for( size_t i=0; i<field_obj.size(); ++i)
-    std::cout << field_obj.data()[i] << "  ";
-  std::cout << std::endl;
-}
-
-PrismaticFunctionSpace::PrismaticFunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<size_t>& bounds) :
-  FunctionSpace(name, shape_func, bounds),
-  nb_levels_(bounds[0]),
-  nb_nodes_(bounds[1])
-{
-}
-
-PrismaticFunctionSpace::~PrismaticFunctionSpace()
-{ 
-}
-
-void PrismaticFunctionSpace::create_field(const std::string& name, size_t nb_cols)
-{
-  index_[name] = fields_.size();
-  fields_.push_back( new PrismaticField(name,nb_cols,*this) );
-  fields_.back()->allocate();
-  std::cout << "C++ : Created prismatic field " << name << " with size " << fields_.back()->size() << std::endl;
-}
-
-PrismaticField& PrismaticFunctionSpace::field(const std::string& name)
-{
-  //std::cout << "C++ : Access field " << name << std::endl;
-  return *dynamic_cast<PrismaticField*>(fields_[ index_.at(name) ]);
-}
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
-FunctionSpace* ecmwf__FunctionSpace__new (char* name, char* shape_func, int nb_nodes) { 
-  return new FunctionSpace( std::string(name), std::string(shape_func), nb_nodes ); 
+FunctionSpace* ecmwf__FunctionSpace__new (char* name, char* shape_func, int bounds[], int bounds_size) { 
+  std::vector<int> bounds_vec(bounds,bounds+bounds_size);
+  return new FunctionSpace( std::string(name), std::string(shape_func), bounds_vec ); 
 }
 
-PrismaticFunctionSpace* ecmwf__PrismaticFunctionSpace__new (char* name, char* shape_func, int nb_levels, int nb_nodes) { 
-  std::cout << "creating new prismatic function space" << std::endl;
-  std::vector<size_t> bounds(2);
-  bounds[0] = nb_levels;
-  bounds[1] = nb_nodes;
-  return new PrismaticFunctionSpace( std::string(name), std::string(shape_func), bounds ); 
+void ecmwf__FunctionSpace__create_field_double (FunctionSpace* This, char* name, int nb_vars) {
+  This->create_field<double>( std::string(name), nb_vars );
 }
 
-void ecmwf__FunctionSpace__create_field (FunctionSpace* This, char* name, int size) {
-  This->create_field( std::string(name), size );
+void ecmwf__FunctionSpace__create_field_float (FunctionSpace* This, char* name, int nb_vars) {
+  This->create_field<float>( std::string(name), nb_vars );
+}
+
+void ecmwf__FunctionSpace__create_field_int (FunctionSpace* This, char* name, int nb_vars) {
+  This->create_field<int>( std::string(name), nb_vars );
 }
 
 void ecmwf__FunctionSpace__remove_field (FunctionSpace* This, char* name ) {
@@ -110,16 +132,6 @@ const char* ecmwf__FunctionSpace__name (FunctionSpace* This) {
 Field* ecmwf__FunctionSpace__field (FunctionSpace* This, char* name) {
   return &This->field( std::string(name) );
 } 
-
-void ecmwf__FunctionSpace__field_data (FunctionSpace* This, char* name, double* &field_data, int &field_size) { 
-  Field& field = This->field( std::string(name) );
-  field_data = &field.data()[0];
-  field_size = field.size();
-}
-
-void ecmwf__FunctionSpace__print_field (FunctionSpace* This, char* name) {
-  This->print_field( std::string(name) );
-}
 
 void ecmwf__FunctionSpace__delete (FunctionSpace* This)  {
   delete This;

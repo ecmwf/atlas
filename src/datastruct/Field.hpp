@@ -7,48 +7,75 @@
 namespace ecmwf {
 
 class FunctionSpace;
-class PrismaticFunctionSpace;
 
-class Field
-{
+class Field {
 public:
-  Field(const std::string& name, const size_t nb_cols, FunctionSpace& function_space);
-  virtual ~Field();
-  size_t size() const { return data_.size(); }
-  std::vector<double>& data() { return data_; }
-  double& operator[] (const size_t idx) { return data_[idx]; }
+  enum { NB_VARS = -1 };
+
+  Field(const std::string& name, FunctionSpace& function_space);
+  virtual ~Field() {}
+  template <typename DATA_TYPE>
+    std::vector< DATA_TYPE >& data();
+  virtual std::string data_type() const = 0;
+  virtual void allocate(const std::vector<int>& bounds)=0;
   const std::string& name() { return name_; }
   Metadata& metadata() { return metadata_; }
-  virtual void allocate();
   FunctionSpace& function_space() { return function_space_; }
   const std::vector<int>& bounds() const { return bounds_; }
+  virtual size_t size() const = 0;
 protected:
   std::string name_;
   std::vector<int> bounds_;
-  std::vector<double> data_;
-  int nb_cols_;
   FunctionSpace& function_space_;
   Metadata metadata_;
 };
 
-class PrismaticField : public Field
+template< typename DATA_TYPE >
+class FieldT : public Field
 {
 public:
-  PrismaticField(const std::string& name, const size_t nb_cols, FunctionSpace& function_space);
-  ~PrismaticField();
-  double& operator() (size_t lev, size_t node, size_t col) { return data_[lev + nb_levels_*(node + nb_nodes_*col)]; }
-  PrismaticFunctionSpace& function_space();
-private:
-  int nb_nodes_;
-  int nb_levels_;
+  FieldT(const std::string& name, FunctionSpace& function_space);
+  virtual ~FieldT();
+  virtual std::string data_type() const;
+  virtual void allocate(const std::vector<int>& bounds);
+  std::vector< DATA_TYPE >& data() { return data_; }
+  DATA_TYPE& operator[] (const size_t idx) { return data_[idx]; }
+  virtual size_t size() const { return data_.size(); }
+protected:
+  std::vector< DATA_TYPE > data_;
 };
+
+template< typename DATA_TYPE >
+inline FieldT<DATA_TYPE>::FieldT(const std::string& name, FunctionSpace& function_space) :
+  Field(name,function_space),
+  data_(0)
+{
+}
+
+template< typename DATA_TYPE >
+inline FieldT<DATA_TYPE>::~FieldT()
+{
+  name_ = "";
+  data_.clear();
+}
+
+template< typename DATA_TYPE >
+inline void FieldT<DATA_TYPE>::allocate(const std::vector<int>& bounds)
+{
+  bounds_ = bounds;
+  size_t tot_size(1); for (int i = 0; i < bounds.size(); ++i) tot_size *= bounds[i];
+  data_.resize(tot_size);
+}
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 extern "C" 
 {
   const char* ecmwf__Field__name (Field* This);
-  void ecmwf__Field__data (Field* This, double* &field_data, int* &field_bounds, int &rank);
+  const char* ecmwf__Field__data_type (Field* This);
+  void ecmwf__Field__data_double (Field* This, double* &field_data, int* &field_bounds, int &rank);
+  void ecmwf__Field__data_float (Field* This, float* &field_data, int* &field_bounds, int &rank);
+  void ecmwf__Field__data_int (Field* This, int* &field_data, int* &field_bounds, int &rank);
   Metadata* ecmwf__Field__metadata (Field* This);
 }
 // ------------------------------------------------------------------

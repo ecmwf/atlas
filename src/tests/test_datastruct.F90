@@ -1,12 +1,16 @@
 program main
 use datastruct
 use ftnunit
+use iso_c_binding
 implicit none
 type(Mesh_type) :: mesh
 type(FunctionSpace_type) :: func_space
 type(Field_type) :: field
 
 call runtests_init
+
+write(0,*) c_int, c_float, c_double, c_char
+
 mesh = new_Mesh()
 call runtests( test_all )
 call delete(mesh)
@@ -31,7 +35,7 @@ subroutine test_function_space
 end subroutine
 
 subroutine test_field_name
-  call func_space%create_field("field",1)
+  call func_space%create_field("field",1,real_kind(8))
   field = func_space%field("field")
   call assert_equal( field%name() , "field", "check_name" )
 end subroutine
@@ -39,11 +43,11 @@ end subroutine
 subroutine test_field_metadata
   integer :: int
   logical :: true, false
-  real(kind=4) :: real4
-  real(kind=8) :: real8
+  real(kind=4) :: real32
+  real(kind=8) :: real64
   character(len=:), allocatable :: string
   type(MetaData_type) metadata
-  call func_space%create_field("field_prop",1)
+  call func_space%create_field("field_prop",1,real_kind(4))
   field = func_space%field("field_prop")
 
   metadata = field%metadata()
@@ -51,43 +55,48 @@ subroutine test_field_metadata
   call metadata%add("true",.True.)
   call metadata%add("false",.False.)
   call metadata%add("int",20)
-  call metadata%add("real4", real(0.1,kind=4)   )
-  call metadata%add("real8", real(0.2,kind=8) )
+  call metadata%add("real32", real(0.1,kind=4)   )
+  call metadata%add("real64", real(0.2,kind=8) )
   call metadata%add("string", "hello world")
 
   call metadata%get("true",true)
   call metadata%get("false",false)
   call metadata%get("int",int)
-  call metadata%get("real4",real4)
-  call metadata%get("real8",real8)
+  call metadata%get("real32",real32)
+  call metadata%get("real64",real64)
   call metadata%get("string",string)
   
   call assert_equal( true, .True., "check bool property")
   call assert_equal( false, .False., "check bool property")
   call assert_equal( int, 20, "check int property")
-  call assert_comparable( real4, real(0.1,kind=4), real(0.,kind=4), "check real4 property")
-  call assert_comparable( real8, real(0.2,kind=8), real(0.,kind=8), "check real8 property")
+  call assert_comparable( real32, real(0.1,kind=4), real(0.,kind=4), "check real32 property")
+  call assert_comparable( real64, real(0.2,kind=8), real(0.,kind=8), "check real64 property")
   call assert_equal( string, "hello world", "check string property")
 end subroutine
 
 
 
 subroutine test_field_size
-  call func_space%create_field("field_0",0)
+  integer, pointer :: fdata(:)
+  call func_space%create_field("field_0",0,integer_kind())
   field = func_space%field("field_0")
-  call assert_equal( size(field%data1()) , 0 , "check_size_0" )
+  call field%access_data(fdata)
+  call assert_equal( field%data_type() , "int32" , "check_data_type_0" )
+  call assert_equal( size(fdata) , 0 , "check_size_0" )
 
-  call func_space%create_field("field_1",1)
+  call func_space%create_field("field_1",1,integer_kind())
   field = func_space%field("field_1")
-  call assert_equal( size(field%data1()) , 10 , "check_size_1" )
+  call field%access_data(fdata)
+  call assert_equal( size(fdata) , 10 , "check_size_1" )
 
-  call func_space%create_field("field_2",2)
+  call func_space%create_field("field_2",2,integer_kind())
   field = func_space%field("field_2")
-  call assert_equal( size(field%data1()) , 20 , "check_size_2" )
+  call field%access_data(fdata)
+  call assert_equal( size(fdata) , 20 , "check_size_2" )
 end subroutine
 
 subroutine test_create_remove
-  call func_space%create_field("bla",1)
+  call func_space%create_field("bla",1,integer_kind())
   field = func_space%field("bla")
   call assert_equal( field%name(), "bla", "check_name" )
 
@@ -95,19 +104,20 @@ subroutine test_create_remove
 end subroutine
 
 subroutine test_prismatic_function_space
-  real(kind=8), pointer :: scalar(:,:), vector(:,:,:)
+  real(kind=8), pointer :: scalar(:,:)
+  real(kind=4), pointer :: vector(:,:,:)
   call mesh%add_function_space( new_PrismaticFunctionSpace("prismatic", "P1-C", 5, 10 ) ) 
 
   func_space = mesh%function_space("prismatic")
-  call func_space%create_field("vector_field",3)
+  call func_space%create_field("vector_field",3,real_kind(4))
   field = func_space%field("vector_field")
-  vector => field%data3()
+  call field%access_data(vector)
   call assert_equal( size(vector),   150, "check_size" )
   call assert_equal( size(vector,1), 5,   "check_shape1" )
   call assert_equal( size(vector,2), 10,  "check_shape2" )
   call assert_equal( size(vector,3), 3,   "check_shape3" )
 
-  call func_space%create_field("scalar_field",1)
+  call func_space%create_field("scalar_field",1,real_kind(8))
   field = func_space%field("scalar_field")
   scalar => field%data2()
   call assert_equal( size(scalar),   50, "check_size" )
