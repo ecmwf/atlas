@@ -13,5 +13,4 @@
 *.cmake
 CMakeCache.txt
 CMakeFiles/*
-shallow_water
 test_sync

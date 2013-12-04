@@ -23,30 +23,30 @@ module grid_module
   
   public new_FaceFunctionSpace
   public new_DiscontinuousFunctionSpace
-  public Grid_class
-  public FunctionSpace_class
-  public Field_class
-  public State_class
+  public Mesh_type
+  public FunctionSpace_type
+  public Field_type
+  public FieldSet_type
   public ContinuousFunctionSpace
   public FaceFunctionSpace
 
-  type :: Field_class
+  type :: Field_type
     character(len=30) :: name
     real(kind=jprw), dimension(:,:), allocatable :: array
     integer :: rows
     integer :: cols
-    class(FunctionSpace_class), pointer :: function_space
+    class(FunctionSpace_type), pointer :: function_space
   contains
     procedure, pass :: init => Field__init
     procedure, pass :: destruct => Field__destruct
-  end type Field_class
+  end type Field_type
   
   type :: FieldPtr
-    type(Field_class), pointer :: ptr
+    type(Field_type), pointer :: ptr
   end type FieldPtr
   
-  type :: FunctionSpace_class
-    class(Grid_class), pointer :: grid
+  type :: FunctionSpace_type
+    class(Mesh_type), pointer :: grid
     class(ShapeFunction_class), allocatable :: sf
     character(len=30) :: name
     integer :: nb_elems = 0
@@ -57,7 +57,7 @@ module grid_module
     integer, dimension(:), allocatable :: proc
     integer, dimension(:), allocatable :: glb_idx
     integer, dimension(:,:), allocatable :: elements
-    type(Field_class), dimension(:), pointer :: fields
+    type(Field_type), dimension(:), pointer :: fields
     
   contains
     procedure, pass :: init => FunctionSpace__init
@@ -68,34 +68,34 @@ module grid_module
     procedure, pass :: field => FunctionSpace__field
 
 
-  end type FunctionSpace_class
+  end type FunctionSpace_type
   
   type :: FunctionSpacePtr
-    class(FunctionSpace_class), pointer :: ptr
+    class(FunctionSpace_type), pointer :: ptr
   end type FunctionSpacePtr
   
   
-  type, extends(FunctionSpace_class) :: ContinuousFunctionSpace
+  type, extends(FunctionSpace_type) :: ContinuousFunctionSpace
     
   contains
     procedure, pass :: init => ContinuousFunctionSpace__init
   end type ContinuousFunctionSpace
   
-  type, extends(FunctionSpace_class) :: DiscontinuousFunctionSpace
+  type, extends(FunctionSpace_type) :: DiscontinuousFunctionSpace
   contains
     procedure, pass :: init => DiscontinuousFunctionSpace__init
   end type DiscontinuousFunctionSpace
   
-  type, extends(FunctionSpace_class) :: FaceFunctionSpace
+  type, extends(FunctionSpace_type) :: FaceFunctionSpace
   contains
     procedure, pass :: init => FaceFunctionSpace__init
   end type FaceFunctionSpace
 
 
-  type :: Grid_class
+  type :: Mesh_type
     class(Element), allocatable :: cell
     class(Element), allocatable :: face
-    class(FunctionSpace_class), pointer :: nodes
+    class(FunctionSpace_type), pointer :: nodes
     integer :: dimension
     integer :: nb_elems
     integer :: nb_nodes
@@ -126,9 +126,9 @@ module grid_module
     procedure, pass :: function_space => Grid__function_space
     procedure, pass :: add_function_space  => Grid__add_function_space
 
-  end type Grid_class
+  end type Mesh_type
   
-  type :: State_class
+  type :: FieldSet_type
     character(len=30) :: name
     real(kind=jprw)   :: time=0.
     integer :: nb_fields = 0
@@ -139,7 +139,7 @@ module grid_module
     procedure, pass :: add_field => State__add_field
     procedure, pass :: field => State__field
     procedure, pass :: has_field => State__has_field
-  end type State_class
+  end type FieldSet_type
   
 contains
   
@@ -148,9 +148,9 @@ contains
 !-------------------------------------------------------------------------------------
 
   subroutine Field__init(self, name, function_space, cols)
-    class(Field_class), intent(inout) :: self
+    class(Field_type), intent(inout) :: self
     character(len=*), intent(in) :: name
-    class(FunctionSpace_class), intent(in), target :: function_space
+    class(FunctionSpace_type), intent(in), target :: function_space
     integer, intent(in) :: cols
     call log_debug( "Field::init("//name//","//function_space%name//")," )
     self%name = name
@@ -158,10 +158,11 @@ contains
     self%cols = cols
     allocate(self%array(self%function_space%nb_nodes,self%cols))
     self%rows = self%function_space%nb_nodes
+    write(0,*) "init field ",name, "  address ", loc(self%array),       "size ",8*size(self%array)
   end subroutine Field__init
   
   subroutine Field__destruct(self)
-    class(Field_class), intent(inout) :: self
+    class(Field_type), intent(inout) :: self
     call log_debug( "Field::destruct" )
     if( allocated(self%array) ) deallocate(self%array)
   end subroutine Field__destruct
@@ -172,8 +173,8 @@ contains
 !-------------------------------------------------------------------------------------
 
   subroutine FunctionSpace__init(self, name, shapefunction_type, grid)
-    class(FunctionSpace_class), intent(inout) :: self
-    class(Grid_class), intent(in), target :: grid
+    class(FunctionSpace_type), intent(inout) :: self
+    class(Mesh_type), intent(in), target :: grid
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: shapefunction_type
     call log_debug( "FunctionSpace::init("//shapefunction_type//")" )
@@ -206,7 +207,7 @@ contains
   end subroutine FunctionSpace__init
   
   subroutine FunctionSpace__destruct(self)
-    class(FunctionSpace_class), intent(inout) :: self
+    class(FunctionSpace_type), intent(inout) :: self
     integer :: f
     call log_debug( "FunctionSpace::destruct "//self%name )
     if( allocated(self%sf) ) then
@@ -217,10 +218,10 @@ contains
   end subroutine FunctionSpace__destruct
   
   function FunctionSpace__add_array_field(self,name,cols) result(new_field)
-    class(FunctionSpace_class), intent(inout)   :: self
+    class(FunctionSpace_type), intent(inout)   :: self
     character(len=*), intent(in) :: name
     integer, intent(in) :: cols
-    class(Field_class), pointer :: new_field
+    class(Field_type), pointer :: new_field
     self%nb_fields = self%nb_fields+1
     new_field => self%fields(self%nb_fields)
     call new_field%init(name,self,cols)
@@ -228,23 +229,23 @@ contains
 
 
   function FunctionSpace__add_scalar_field(self,name) result(new_field)
-    class(FunctionSpace_class), intent(inout)   :: self
+    class(FunctionSpace_type), intent(inout)   :: self
     character(len=*), intent(in) :: name
-    class(Field_class), pointer :: new_field
+    class(Field_type), pointer :: new_field
     new_field => self%add_array_field(name,1)
   end function FunctionSpace__add_scalar_field
   
   function FunctionSpace__add_vector_field(self,name) result(new_field)
-    class(FunctionSpace_class), intent(inout)   :: self
+    class(FunctionSpace_type), intent(inout)   :: self
     character(len=*), intent(in) :: name
-    class(Field_class), pointer :: new_field
+    class(Field_type), pointer :: new_field
     new_field => self%add_array_field(name,self%grid%dimension)
   end function FunctionSpace__add_vector_field
 
   function FunctionSpace__field(self, name) result(field_)
-    class(FunctionSpace_class), intent(in) :: self
+    class(FunctionSpace_type), intent(in) :: self
     character(len=*), intent(in) :: name
-    class(Field_class), pointer :: field_
+    class(Field_type), pointer :: field_
     integer :: f
     do f=1,self%nb_fields
       field_ => self%fields(f)
@@ -258,22 +259,22 @@ contains
 
   subroutine ContinuousFunctionSpace__init(self, name, shapefunction_type, grid)
     class(ContinuousFunctionSpace), intent(inout) :: self
-    class(Grid_class), intent(in), target :: grid
+    class(Mesh_type), intent(in), target :: grid
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: shapefunction_type
     call log_debug( "ContinuousFunctionSpace::init("//shapefunction_type//")" )
-    call self%FunctionSpace_class%init(name,shapefunction_type,grid)
+    call self%FunctionSpace_type%init(name,shapefunction_type,grid)
     self%nb_nodes = grid%nb_nodes
     !allocate(self%elements(self%nb_elems,self%sf%nb_nodes))
   end subroutine ContinuousFunctionSpace__init
   
   subroutine DiscontinuousFunctionSpace__init(self, name, shapefunction_type, grid)
     class(DiscontinuousFunctionSpace), intent(inout) :: self
-    class(Grid_class), intent(in), target :: grid
+    class(Mesh_type), intent(in), target :: grid
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: shapefunction_type
     call log_debug( "DiscontinuousFunctionSpace::init("//shapefunction_type//")" )
-    call self%FunctionSpace_class%init(name,shapefunction_type,grid)    
+    call self%FunctionSpace_type%init(name,shapefunction_type,grid)    
     self%nb_nodes = self%nb_elems * self%sf%nb_nodes
     allocate(self%elements(self%nb_elems,self%sf%nb_nodes))
   end subroutine DiscontinuousFunctionSpace__init
@@ -281,7 +282,7 @@ contains
 
   subroutine FaceFunctionSpace__init(self, name, shapefunction_type, grid)
     class(FaceFunctionSpace), intent(inout) :: self
-    class(Grid_class), intent(in), target :: grid
+    class(Mesh_type), intent(in), target :: grid
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: shapefunction_type
     call log_debug( "FaceFunctionSpace::init("//shapefunction_type//")" )
@@ -321,46 +322,46 @@ contains
   end subroutine FaceFunctionSpace__init
 
   function new_FaceFunctionSpace(name, shapefunction_type, grid) result(function_space)
-    class(Grid_class), intent(inout), target :: grid
+    class(Mesh_type), intent(inout), target :: grid
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: shapefunction_type
-    class(FunctionSpace_class), pointer :: function_space
+    class(FunctionSpace_type), pointer :: function_space
     allocate( FaceFunctionSpace :: function_space )
     call function_space%init(name, shapefunction_type, grid)
   end function new_FaceFunctionSpace
 
   function new_ContinuousFunctionSpace(name, shapefunction_type, grid) result(function_space)
-    class(Grid_class), intent(inout), target :: grid
+    class(Mesh_type), intent(inout), target :: grid
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: shapefunction_type
-    class(FunctionSpace_class), pointer :: function_space
+    class(FunctionSpace_type), pointer :: function_space
     allocate( ContinuousFunctionSpace :: function_space )
     call function_space%init(name, shapefunction_type, grid)
     write(0,*) function_space%name
   end function new_ContinuousFunctionSpace
 
   function new_DiscontinuousFunctionSpace(name, shapefunction_type, grid) result(function_space)
-    class(Grid_class), intent(inout), target :: grid
+    class(Mesh_type), intent(inout), target :: grid
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: shapefunction_type
-    class(FunctionSpace_class), pointer :: function_space
+    class(FunctionSpace_type), pointer :: function_space
     allocate( DiscontinuousFunctionSpace :: function_space )
     call function_space%init(name, shapefunction_type, grid)
     write(0,*) function_space%name
   end function new_DiscontinuousFunctionSpace
 
   function new_ScalarField(name, function_space) result(field)
-    class(FunctionSpace_class), intent(in), target :: function_space
+    class(FunctionSpace_type), intent(in), target :: function_space
     character(len=*), intent(in) :: name
-    class(Field_class), pointer :: field
+    class(Field_type), pointer :: field
     allocate(field)
     call field%init(name,function_space,1)
   end function new_ScalarField
 
   function new_VectorField(name, function_space) result(field)
-    class(FunctionSpace_class), intent(in), target :: function_space
+    class(FunctionSpace_type), intent(in), target :: function_space
     character(len=*), intent(in) :: name
-    class(Field_class), pointer :: field
+    class(Field_type), pointer :: field
     allocate(field)
     call field%init(name,function_space, function_space%grid%dimension)
   end function new_VectorField
@@ -369,7 +370,7 @@ contains
 !                                   Grid subroutines
 !-------------------------------------------------------------------------------------
   subroutine Grid__init(self, element_type)
-    class(Grid_class), intent(inout) :: self
+    class(Mesh_type), intent(inout) :: self
     character(len=*) :: element_type
     call log_debug( "Grid::init("//element_type//")" )
     
@@ -393,7 +394,7 @@ contains
   end subroutine Grid__init
   
   subroutine Grid__destruct(self)
-    class(Grid_class), intent(inout) :: self
+    class(Mesh_type), intent(inout) :: self
     integer :: f
     call log_debug( "Grid::destruct" )
     if( allocated(self%cell) ) then
@@ -411,7 +412,7 @@ contains
   end subroutine Grid__destruct
   
   subroutine Grid__print(self)
-    class(Grid_class), intent(inout) :: self
+    class(Mesh_type), intent(inout) :: self
     integer :: n
     integer :: e
     write(0,*) "nodes = "
@@ -425,7 +426,7 @@ contains
   end subroutine Grid__print
   
   subroutine Grid__cell_coords(self, elem_idx, cell_coords)
-    class(Grid_class), intent(in) :: self
+    class(Mesh_type), intent(in) :: self
     integer, intent(in) :: elem_idx
     real(kind=jprw), dimension(:,:), intent(inout) :: cell_coords
 
@@ -436,8 +437,8 @@ contains
   end subroutine Grid__cell_coords
 
   subroutine Grid__add_function_space(self,function_space)
-    class(Grid_class), intent(inout) :: self
-    class(FunctionSpace_class), target, intent(inout) :: function_space
+    class(Mesh_type), intent(inout) :: self
+    class(FunctionSpace_type), target, intent(inout) :: function_space
     type(FunctionSpacePtr), allocatable :: tmp(:)
     integer :: f
     call log_debug( "adding "//function_space%name )
@@ -451,9 +452,9 @@ contains
 
 
   function Grid__function_space(self, name) result(function_space)
-    class(Grid_class), intent(in) :: self
+    class(Mesh_type), intent(in) :: self
     character(len=*), intent(in) :: name
-    class(FunctionSpace_class), pointer :: function_space
+    class(FunctionSpace_type), pointer :: function_space
     integer :: f
     do f=1,size(self%function_spaces)
       function_space => self%function_spaces(f)%ptr
@@ -470,7 +471,7 @@ contains
 !-------------------------------------------------------------------------------------
 
   subroutine State__init(self, name)
-    class(State_class), intent(inout) :: self
+    class(FieldSet_type), intent(inout) :: self
     character(len=*), intent(in) :: name
     call log_debug( "State::init("//trim(name)//")" ) 
     self%name = name  
@@ -479,15 +480,15 @@ contains
   end subroutine State__init
   
   subroutine State__destruct(self)
-    class(State_class), intent(inout) :: self
+    class(FieldSet_type), intent(inout) :: self
     call log_debug( "State::destruct" )
     deallocate(self%fields)
   end subroutine State__destruct
   
   subroutine State__add_field(self,name,function_space,cols)
-    class(State_class), intent(inout) :: self
+    class(FieldSet_type), intent(inout) :: self
     character(len=*), intent(in) :: name
-    class(FunctionSpace_class), intent(in), target ::function_space
+    class(FunctionSpace_type), intent(in), target ::function_space
     integer, intent(in) :: cols
     self%nb_fields = self%nb_fields + 1
     allocate( self%fields( self%nb_fields )%ptr )
@@ -495,9 +496,9 @@ contains
   end subroutine State__add_field
 
   function State__field(self, name) result(field)
-    class(State_class), intent(in) :: self
+    class(FieldSet_type), intent(in) :: self
     character(len=*), intent(in) :: name
-    type(Field_class), pointer :: field
+    type(Field_type), pointer :: field
     integer :: f
     do f=1,self%nb_fields
       field => self%fields(f)%ptr
@@ -510,9 +511,9 @@ contains
   end function State__field
 
   logical function State__has_field(self, name)
-    class(State_class), intent(in) :: self
+    class(FieldSet_type), intent(in) :: self
     character(len=*), intent(in) :: name
-    type(Field_class), pointer :: field
+    type(Field_type), pointer :: field
     logical :: has_field
     integer :: f
     do f=1,self%nb_fields
