@@ -95,13 +95,13 @@ if( CMAKE_Fortran_COMPILER_ID MATCHES "GNU" )
   if( ${WARNINGS} )
     set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Wall")
   endif( )
-  set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -funroll-all-loops -finline-functions" )
+  set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -funroll-all-loops -finline-functions -fstack-arrays" )
   set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -fcheck=bounds -ffpe-trap=invalid,zero,overflow,underflow -fbacktrace" )
-  set( CMAKE_Fortran_FLAGS_BIT     "-O2 -funroll-all-loops -finline-functions" )
+  set( CMAKE_Fortran_FLAGS_BIT     "-O2 -funroll-all-loops -finline-functions -fstack-arrays" )
 
   # -fstack-arrays     : Allocate automatic arrays on the stack
   # -funroll-all-loops : Unroll all loops
-  # -fbounds-check     : Bounds checking
+  # -fcheck=bounds     : Bounds checking
   
 #######################################################################################
 # Intel
@@ -112,9 +112,9 @@ elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Intel" )
   else( )
     set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -openmp-stubs")
   endif( )
-  set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -ip -unroll -inline -vec-report0" )
-  set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -check bounds -traceback -warn all" )
-  set( CMAKE_Fortran_FLAGS_BIT     "-O2 -ip -ipo -unroll -inline -vec-report0" )
+  set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -ip -unroll -inline -vec-report0 -no-heap-arrays" )
+  set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -check bounds -traceback -warn all -heap-arrays" )
+  set( CMAKE_Fortran_FLAGS_BIT     "-O2 -ip -ipo -unroll -inline -vec-report0 -no-heap-arrays" )
 
 #######################################################################################
 # XL (IBM)
@@ -206,7 +206,6 @@ endif()
 
 add_library( io
   src/io/split_globe_module.F90
-  #src/io/gmsh_module.F90
   #src/io/grib_module.F90
 )
 target_link_libraries( io datastruct )
@@ -232,6 +231,7 @@ endif()
 file( COPY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
 add_executable( shallow_water
   ${DATASTRUCT_SRC}
+  src/io/gmsh_module.F90
   src/shallow_water/shallow_water_module.F90 
   src/shallow_water/shallow_water.F90 )
 target_link_libraries( shallow_water io common datastruct )
@@ -278,5 +278,10 @@ message( STATUS "MPI     : ${MPI}")
 message( STATUS "OpenMP  : ${OMP}")
 message( STATUS "Grib    : ${GRIB}")
 message( STATUS "Tests   : ${ENABLE_TESTS}")
+message( STATUS "--------------------------------------------------------------------" )
+message( STATUS "Warnings:")
+if ( NOT CMAKE_BUILD_TYPE MATCHES "DEBUG" )
+  message( STATUS " + Make sure the stack-size is big enough (ulimit -s unlimited)")
+endif()
 message( STATUS "--------------------------------------------------------------------" )
 

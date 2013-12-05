@@ -42,9 +42,11 @@ contains
     real(kind=jprw) :: gradQ(geom%nb_nodes,2)
     real(kind=jprw), pointer :: vol(:), S(:,:), pole_bc(:)
     
+
     vol     => scalar_field("dual_volumes",geom)
     S       => vector_field("dual_normals",geom)
     pole_bc => scalar_field("pole_bc",geom)
+
 
     VDS(:) = 0.
 
@@ -335,7 +337,6 @@ contains
     do jnode=1,geom%nb_nodes
       adv = 0.0
       if(geom%nb_neighbours(jnode) > 1) then
-        !dir$ unroll 2
         do jedge = 1,geom%nb_neighbours(jnode)
           iedge = geom%my_edges(jedge,jnode)
           adv = adv + geom%sign(jedge,jnode)*fluxv(iedge)
@@ -395,7 +396,6 @@ contains
       do jnode=1,geom%nb_nodes
         adv = 0.0
         if(geom%nb_neighbours(jnode) > 1) then
-          !dir$ unroll 2
           do jedge = 1,geom%nb_neighbours(jnode)
             iedge = geom%my_edges(jedge,jnode)
             adv = adv + geom%sign(jedge,jnode)*aun(iedge)
@@ -448,7 +448,6 @@ contains
       do jnode=1,geom%nb_nodes
         rhin  = 0.
         rhout = 0.
-        !dir$ unroll 2
         do jedge = 1,geom%nb_neighbours(jnode)
           iedge = geom%my_edges(jedge,jnode)
           apos = max(0._jprw,aun(iedge))
@@ -641,15 +640,6 @@ contains
     
     call create_scalar_field_in_nodes("topography",geom)
     call create_scalar_field_in_nodes("height",geom)
-    
-    
-    
-    call create_scalar_field_in_nodes("Dmax_1",geom)
-    call create_scalar_field_in_nodes("Dmin_1",geom)
-    call create_scalar_field_in_nodes("Dmax_2",geom)
-    call create_scalar_field_in_nodes("Dmin_2",geom)
-    call create_scalar_field_in_nodes("Dmax_tot",geom)
-    call create_scalar_field_in_nodes("Dmin_tot",geom)
 
   end subroutine setup_shallow_water
 
@@ -661,23 +651,23 @@ contains
     real(kind=jprw), pointer :: D(:)
 
     D => scalar_field("depth",geom)
-    tstart   = geom%fields%time
-    tend     = geom%fields%time+dt
+    tstart   = geom%time
+    tend     = geom%time+dt
     
     call log_info(" ")
     write(log_str,'(A,I10,A,I10)') "Propagating from time ",int(tstart)," to time ",int(tend); call log_info()
-    do while (geom%fields%time < tend)
-      t0 = geom%fields%time
+    do while (geom%time < tend)
+      t0 = geom%time
       dt_fwd = min( dt_forward, tend-t0 )
       call step_forward(iter,dt_fwd,geom)
 
       if( log_level <= LOG_LEVEL_INFO ) then
         if( myproc .eq. 0 ) then
-          call progress_bar(geom%fields%time,tstart,tend)
+          call progress_bar(geom%time,tstart,tend)
         end if
       else
         write(step_info,'(A6,I8,A12,F9.1,A12,F8.1,A12,E20.13)') "step = ",iter, &
-          & "  time = ",geom%fields%time, &
+          & "  time = ",geom%time, &
           & "  dt = ",dt_fwd, "Norm ",L2norm(D)
         CALL LOG_INFO( STEP_INFO )
       end if
@@ -709,7 +699,7 @@ contains
 
     call compute_advective_velocities(dt,geom,"extrapolate")
 
-    geom%fields%time = geom%fields%time+dt
+    geom%time = geom%time+dt
     step = step+1
 
   end subroutine step_forward
@@ -1022,7 +1012,7 @@ contains
     real(kind=jprw), intent(in) :: dt
     type(DataStructure_type), intent(inout) :: geom
     integer :: jnode, m
-    real(kind=jprw) :: Ux, Uy, Rx, Ry, Dmod
+    real(kind=jprw) :: Ux, Uy, Rx, Ry
     real(kind=jprw) :: Ux_adv, Uy_adv, Rx_exp, Ry_exp
 
     real(kind=jprw), dimension(:),   pointer :: H, H0, D, vol, hx, hy, dhxdy_over_G, cor
@@ -1079,7 +1069,7 @@ contains
   subroutine advect_solution(dt,geom)
     real(kind=jprw), intent(in) :: dt
     type(DataStructure_type), intent(inout) :: geom
-    real(kind=jprw), dimension(:),   pointer :: D, D0, GD, DR
+    real(kind=jprw), dimension(:),   pointer :: D, D0, DR
     real(kind=jprw), dimension(:,:), pointer :: U, V
     real(kind=jprw) :: VDS(geom%nb_edges)
     integer :: jnode
@@ -1091,8 +1081,8 @@ contains
     DR => scalar_field("depth_ratio",geom)
    
     !    mpdata_gauge_D( time, variable, velocity, VDS,  order, limit,  is_vector, geom )
-    call mpdata_gauge_D( dt,   D,        V,        VDS,  2,     .True., .False.,   geom )
-   
+    call mpdata_gauge_D( dt,   D,        V,        VDS,  1,     .True., .False.,   geom )
+    
     ! compute ratio
     !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode)
     do jnode=1,geom%nb_nodes
@@ -1100,8 +1090,8 @@ contains
     end do
     !$OMP END PARALLEL DO
     !    mpdata_gauge_Q( time, variable, VDS, DR, D0,  order, limit,  is_vector, geom )
-    call mpdata_gauge_Q( dt,   U(:,XX),  VDS, DR, D0,  2,     .True., .True. ,   geom )
-    call mpdata_gauge_Q( dt,   U(:,YY),  VDS, DR, D0,  2,     .True., .True. ,   geom )
+    call mpdata_gauge_Q( dt,   U(:,XX),  VDS, DR, D0,  1,     .True., .True. ,   geom )
+    call mpdata_gauge_Q( dt,   U(:,YY),  VDS, DR, D0,  1,     .True., .True. ,   geom )
   end subroutine advect_solution
 
 end module shallow_water_module

@@ -1,11 +1,12 @@
 #include "Field.hpp"
 #include "FunctionSpace.hpp"
 #include <typeinfo>       // std::bad_cast
-#include <iostream>
+#include <sstream>
+#include <stdexcept>
 namespace ecmwf {
 
-Field::Field(const std::string& name, FunctionSpace& function_space) :
-    name_(name), function_space_(function_space)
+Field::Field(const std::string& name, const int nb_vars, FunctionSpace& function_space) :
+    name_(name), nb_vars_(nb_vars), function_space_(function_space)
 {
 }
 
@@ -15,11 +16,11 @@ std::vector< int >& Field::data<int>()
   try {
     return dynamic_cast< FieldT<int>& >(*this).data();
   } 
-  catch (std::bad_cast& bc) {
-    std::cerr << "bad_cast caught: " << bc.what() << '\n';
-    std::cerr << "Could not cast Field " << name() 
-              << " with data_type " << data_type() << " to int32" << std::endl;
-    throw bc;
+  catch (std::bad_cast& e) {
+    std::stringstream msg;
+    msg << "Could not cast Field " << name() 
+        << " with data_type " << data_type() << " to int32";
+    throw std::runtime_error(msg.str());
   }
 }
 
@@ -29,11 +30,11 @@ std::vector< float >& Field::data<float>()
   try {
     return dynamic_cast< FieldT<float>& >(*this).data();
   } 
-  catch (std::bad_cast& bc) {
-    std::cerr << "bad_cast caught: " << bc.what() << '\n';
-    std::cerr << "Could not cast Field " << name() 
-              << " with data_type " << data_type() << " to real32" << std::endl;
-    throw bc;
+  catch (std::bad_cast& e) {
+    std::stringstream msg;
+    msg << "Could not cast Field " << name() 
+        << " with data_type " << data_type() << " to real32";
+    throw std::runtime_error(msg.str());
   }
 }
 
@@ -43,11 +44,11 @@ std::vector< double >& Field::data<double>()
   try {
     return dynamic_cast< FieldT<double>& >(*this).data();
   } 
-  catch (std::bad_cast& bc) {
-    std::cerr << "bad_cast caught: " << bc.what() << '\n';
-    std::cerr << "Could not cast Field " << name() 
-              << " with data_type " << data_type() << " to real64" << std::endl;
-    throw bc;
+  catch (std::bad_cast& e) {
+    std::stringstream msg;
+    msg << "Could not cast Field " << name() 
+        << " with data_type " << data_type() << " to real64";
+    throw std::runtime_error(msg.str());
   }
 }
 
@@ -72,10 +73,21 @@ const char* ecmwf__Field__data_type (Field* This)
   return This->data_type().c_str();
 }
 
+int ecmwf__Field__nb_vars (Field* This)
+{
+  return This->nb_vars();
+}
+
 Metadata* ecmwf__Field__metadata (Field* This)
 {
   return &This->metadata();
 }
+
+FunctionSpace* ecmwf__Field__function_space (Field* This)
+{
+  return &This->function_space();
+}
+
 
 void ecmwf__Field__data_double (Field* This, double* &field_data, int* &field_bounds, int &rank)
 {

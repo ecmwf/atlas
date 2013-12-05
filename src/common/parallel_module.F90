@@ -237,7 +237,7 @@ contains
 
 
   subroutine synchronise_integer_rank1(comm,field)
-    class(Comm_type), intent(inout) :: comm
+    class(Comm_type), intent(in) :: comm
     integer, dimension(:), intent(inout) :: field
     integer :: sendbuffer(comm%sync_sendcnt)
     integer :: recvbuffer(comm%sync_recvcnt)
@@ -290,21 +290,21 @@ contains
 
 
   subroutine synchronise_integer_rank2(comm,field)
-    class(Comm_type), intent(inout) :: comm
+    class(Comm_type), intent(in) :: comm
     integer, dimension(:,:), intent(inout) :: field
     integer :: sendbuffer(comm%sync_sendcnt*size(field,2))
     integer :: recvbuffer(comm%sync_recvcnt*size(field,2))
     integer :: jj,ii,jproc,itag,ireqs(0:nproc-1),ireqr(0:nproc-1)
     integer :: sync_recvdispls(0:nproc-1),sync_recvcounts(0:nproc-1)
     integer :: sync_senddispls(0:nproc-1),sync_sendcounts(0:nproc-1)
-    integer :: jcol, ncols
+    integer :: jvar, nb_vars
     integer :: iwait_status(MPI_STATUS_SIZE,0:nproc-1)
 
-    ncols = size(field,2)
-    sync_recvdispls(:) = ncols*comm%sync_recvdispls(:)
-    sync_recvcounts(:) = ncols*comm%sync_recvcounts(:)
-    sync_senddispls(:) = ncols*comm%sync_senddispls(:)
-    sync_sendcounts(:) = ncols*comm%sync_sendcounts(:)
+    nb_vars = size(field,2)
+    sync_recvdispls(:) = nb_vars*comm%sync_recvdispls(:)
+    sync_recvcounts(:) = nb_vars*comm%sync_recvcounts(:)
+    sync_senddispls(:) = nb_vars*comm%sync_senddispls(:)
+    sync_sendcounts(:) = nb_vars*comm%sync_sendcounts(:)
 
     ! Let MPI know what we like to receive
     do jproc=nproc-1,0,-1
@@ -318,9 +318,9 @@ contains
     ! Pack
     ii = 0
     do jj=1,comm%sync_sendcnt
-      do jcol=1,ncols
+      do jvar=1,nb_vars
         ii = ii+1
-        sendbuffer(ii) = field(comm%sync_sendmap(jj),jcol)
+        sendbuffer(ii) = field(comm%sync_sendmap(jj),jvar)
       end do
     end do
 
@@ -343,9 +343,9 @@ contains
     ! Unpack
     ii = 0
     do jj=1,comm%sync_recvcnt
-       do jcol=1,ncols
+       do jvar=1,nb_vars
         ii = ii+1
-        field( comm%sync_recvmap(jj), jcol ) = recvbuffer(ii)
+        field( comm%sync_recvmap(jj), jvar ) = recvbuffer(ii)
       end do
     end do
 
@@ -361,7 +361,7 @@ contains
 
   
   subroutine synchronise_real8_rank1(comm,field)
-    class(Comm_type), intent(inout) :: comm
+    class(Comm_type), intent(in) :: comm
     real*8, dimension(:), intent(inout) :: field
     real*8 :: sendbuffer(comm%sync_sendcnt)
     real*8 :: recvbuffer(comm%sync_recvcnt)
@@ -414,21 +414,21 @@ contains
 
 
   subroutine synchronise_real8_rank2(comm,field)
-    class(Comm_type), intent(inout) :: comm
+    class(Comm_type), intent(in) :: comm
     real*8, dimension(:,:), intent(inout) :: field
     real*8 :: sendbuffer(comm%sync_sendcnt*size(field,2))
     real*8 :: recvbuffer(comm%sync_recvcnt*size(field,2))
     integer :: jj,ii,jproc,itag,ireqs(0:nproc-1),ireqr(0:nproc-1)
     integer :: sync_recvdispls(0:nproc-1),sync_recvcounts(0:nproc-1)
     integer :: sync_senddispls(0:nproc-1),sync_sendcounts(0:nproc-1)
-    integer :: jcol, ncols
+    integer :: jvar, nb_vars
     integer :: iwait_status(MPI_STATUS_SIZE,0:nproc-1)
 
-    ncols = size(field,2)
-    sync_recvdispls(:) = ncols*comm%sync_recvdispls(:)
-    sync_recvcounts(:) = ncols*comm%sync_recvcounts(:)
-    sync_senddispls(:) = ncols*comm%sync_senddispls(:)
-    sync_sendcounts(:) = ncols*comm%sync_sendcounts(:)
+    nb_vars = size(field,2)
+    sync_recvdispls(:) = nb_vars*comm%sync_recvdispls(:)
+    sync_recvcounts(:) = nb_vars*comm%sync_recvcounts(:)
+    sync_senddispls(:) = nb_vars*comm%sync_senddispls(:)
+    sync_sendcounts(:) = nb_vars*comm%sync_sendcounts(:)
 
     ! Let MPI know what we like to receive
     do jproc=nproc-1,0,-1
@@ -442,9 +442,9 @@ contains
     ! Pack
     ii = 0
     do jj=1,comm%sync_sendcnt
-      do jcol=1,ncols
+      do jvar=1,nb_vars
         ii = ii+1
-        sendbuffer(ii) = field(comm%sync_sendmap(jj),jcol)
+        sendbuffer(ii) = field(comm%sync_sendmap(jj),jvar)
       end do
     end do
 
@@ -467,9 +467,9 @@ contains
     ! Unpack
     ii = 0
     do jj=1,comm%sync_recvcnt
-       do jcol=1,ncols
+       do jvar=1,nb_vars
         ii = ii+1
-        field( comm%sync_recvmap(jj), jcol ) = recvbuffer(ii)
+        field( comm%sync_recvmap(jj), jvar ) = recvbuffer(ii)
       end do
     end do
 
@@ -483,22 +483,22 @@ contains
   end subroutine synchronise_real8_rank2
 
   subroutine synchronise_real8_rank3(comm,field)
-    class(Comm_type), intent(inout) :: comm
+    class(Comm_type), intent(in) :: comm
     real*8, dimension(:,:,:), intent(inout) :: field
     real*8 :: sendbuffer(comm%sync_sendcnt*size(field,2))
     real*8 :: recvbuffer(comm%sync_recvcnt*size(field,2))
     integer :: jj,ii,jproc,itag,ireqs(0:nproc-1),ireqr(0:nproc-1)
     integer :: sync_recvdispls(0:nproc-1),sync_recvcounts(0:nproc-1)
     integer :: sync_senddispls(0:nproc-1),sync_sendcounts(0:nproc-1)
-    integer :: jcol, ncols, jlev, nlevs
+    integer :: jvar, nb_vars, jlev, nb_levels
     integer :: iwait_status(MPI_STATUS_SIZE,0:nproc-1)
 
-    nlevs = size(field,2)
-    ncols = size(field,3)
-    sync_recvdispls(:) = nlevs*ncols*comm%sync_recvdispls(:)
-    sync_recvcounts(:) = nlevs*ncols*comm%sync_recvcounts(:)
-    sync_senddispls(:) = nlevs*ncols*comm%sync_senddispls(:)
-    sync_sendcounts(:) = nlevs*ncols*comm%sync_sendcounts(:)
+    nb_levels = size(field,2)
+    nb_vars = size(field,3)
+    sync_recvdispls(:) = nb_levels*nb_vars*comm%sync_recvdispls(:)
+    sync_recvcounts(:) = nb_levels*nb_vars*comm%sync_recvcounts(:)
+    sync_senddispls(:) = nb_levels*nb_vars*comm%sync_senddispls(:)
+    sync_sendcounts(:) = nb_levels*nb_vars*comm%sync_sendcounts(:)
 
     ! Let MPI know what we like to receive
     do jproc=nproc-1,0,-1
@@ -511,11 +511,11 @@ contains
 
     ! Pack
     ii = 0
-    do jj=1,comm%sync_sendcnt
-      do jlev=1,nlevs
-        do jcol=1,ncols
-          ii = ii+1
-          sendbuffer(ii) = field( comm%sync_sendmap(jj), jlev, jcol )
+    do jvar=1,nb_vars
+      do jj=1,comm%sync_sendcnt
+        do jlev=1,nb_levels
+            ii = ii+1
+            sendbuffer(ii) = field( jlev, comm%sync_sendmap(jj), jvar )
         end do
       end do
     end do
@@ -538,11 +538,11 @@ contains
 
     ! Unpack
     ii = 0
-    do jj=1,comm%sync_recvcnt
-      do jlev=1,nlevs
-        do jcol=1,ncols
+    do jvar=1,nb_vars
+      do jj=1,comm%sync_recvcnt
+        do jlev=1,nb_levels
           ii = ii+1
-          field( comm%sync_recvmap(jj), jlev, jcol ) = recvbuffer(ii)
+          field( jlev, comm%sync_recvmap(jj), jvar ) = recvbuffer(ii)
         end do
       end do
     end do
@@ -557,7 +557,7 @@ contains
   end subroutine synchronise_real8_rank3
 
   subroutine synchronise_real4_rank1(comm,field)
-    class(Comm_type), intent(inout) :: comm
+    class(Comm_type), intent(in) :: comm
     real*4, dimension(:), intent(inout) :: field
     real*4 :: sendbuffer(comm%sync_sendcnt)
     real*4 :: recvbuffer(comm%sync_recvcnt)
@@ -610,21 +610,21 @@ contains
 
 
   subroutine synchronise_real4_rank2(comm,field)
-    class(Comm_type), intent(inout) :: comm
+    class(Comm_type), intent(in) :: comm
     real*4, dimension(:,:), intent(inout) :: field
     real*4 :: sendbuffer(comm%sync_sendcnt*size(field,2))
     real*4 :: recvbuffer(comm%sync_recvcnt*size(field,2))
     integer :: jj,ii,jproc,itag,ireqs(0:nproc-1),ireqr(0:nproc-1)
     integer :: sync_recvdispls(0:nproc-1),sync_recvcounts(0:nproc-1)
     integer :: sync_senddispls(0:nproc-1),sync_sendcounts(0:nproc-1)
-    integer :: jcol, ncols
+    integer :: jvar, nb_vars
     integer :: iwait_status(MPI_STATUS_SIZE,0:nproc-1)
 
-    ncols = size(field,2)
-    sync_recvdispls(:) = ncols*comm%sync_recvdispls(:)
-    sync_recvcounts(:) = ncols*comm%sync_recvcounts(:)
-    sync_senddispls(:) = ncols*comm%sync_senddispls(:)
-    sync_sendcounts(:) = ncols*comm%sync_sendcounts(:)
+    nb_vars = size(field,2)
+    sync_recvdispls(:) = nb_vars*comm%sync_recvdispls(:)
+    sync_recvcounts(:) = nb_vars*comm%sync_recvcounts(:)
+    sync_senddispls(:) = nb_vars*comm%sync_senddispls(:)
+    sync_sendcounts(:) = nb_vars*comm%sync_sendcounts(:)
 
     ! Let MPI know what we like to receive
     do jproc=nproc-1,0,-1
@@ -638,9 +638,9 @@ contains
     ! Pack
     ii = 0
     do jj=1,comm%sync_sendcnt
-      do jcol=1,ncols
+      do jvar=1,nb_vars
         ii = ii+1
-        sendbuffer(ii) = field(comm%sync_sendmap(jj),jcol)
+        sendbuffer(ii) = field(comm%sync_sendmap(jj),jvar)
       end do
     end do
 
@@ -663,9 +663,9 @@ contains
     ! Unpack
     ii = 0
     do jj=1,comm%sync_recvcnt
-       do jcol=1,ncols
+       do jvar=1,nb_vars
         ii = ii+1
-        field( comm%sync_recvmap(jj), jcol ) = recvbuffer(ii)
+        field( comm%sync_recvmap(jj), jvar ) = recvbuffer(ii)
       end do
     end do
 
@@ -682,7 +682,7 @@ contains
 
 
   subroutine gather_real8_rank1(comm,loc_field,glb_field)
-    class(Comm_type), intent(inout) :: comm
+    class(Comm_type), intent(in) :: comm
     real*8, dimension(:), intent(in) :: loc_field
     real*8, dimension(:), allocatable, intent(inout) :: glb_field
     real*8 :: sendbuffer(comm%gather_sendcnt)
@@ -713,24 +713,24 @@ contains
 
 
   subroutine gather_real8_rank2(comm,loc_field,glb_field)
-    class(Comm_type), intent(inout) :: comm
+    class(Comm_type), intent(in) :: comm
     real*8, dimension(:,:), intent(in) :: loc_field
     real*8, dimension(:,:), allocatable, intent(inout) :: glb_field
     real*8 :: sendbuffer(comm%gather_sendcnt)
     real*8 :: recvbuffer(comm%gather_recvcnt)
-    integer :: jj, ncols, jcol
+    integer :: jj, nb_vars, jvar
 
-    ncols = size(loc_field,2)
+    nb_vars = size(loc_field,2)
 
     if( .not. allocated( glb_field) ) then
-      allocate( glb_field( comm%glb_field_size(), ncols ) )
+      allocate( glb_field( comm%glb_field_size(), nb_vars ) )
     end if
 
-    do jcol=1,ncols
+    do jvar=1,nb_vars
 
       ! Pack
       do jj=1,comm%gather_sendcnt
-        sendbuffer(jj) = loc_field(comm%gather_sendmap(jj),jcol)
+        sendbuffer(jj) = loc_field(comm%gather_sendmap(jj),jvar)
       end do
 
       ! Communicate
@@ -740,14 +740,14 @@ contains
     
       ! Unpack
       do jj=1,comm%gather_recvcnt
-         glb_field( comm%gather_recvmap(jj), jcol ) = recvbuffer(jj)
+         glb_field( comm%gather_recvmap(jj), jvar ) = recvbuffer(jj)
       end do
     end do
 
   end subroutine gather_real8_rank2
 
   subroutine gather_real4_rank1(comm,loc_field,glb_field)
-    class(Comm_type), intent(inout) :: comm
+    class(Comm_type), intent(in) :: comm
     real*4, dimension(:), intent(in) :: loc_field
     real*4, dimension(:), allocatable, intent(inout) :: glb_field
     real*4 :: sendbuffer(comm%gather_sendcnt)
@@ -778,24 +778,24 @@ contains
 
 
   subroutine gather_real4_rank2(comm,loc_field,glb_field)
-    class(Comm_type), intent(inout) :: comm
+    class(Comm_type), intent(in) :: comm
     real*4, dimension(:,:), intent(in) :: loc_field
     real*4, dimension(:,:), allocatable, intent(inout) :: glb_field
     real*4 :: sendbuffer(comm%gather_sendcnt)
     real*4 :: recvbuffer(comm%gather_recvcnt)
-    integer :: jj, ncols, jcol
+    integer :: jj, nb_vars, jvar
 
-    ncols = size(loc_field,2)
+    nb_vars = size(loc_field,2)
 
     if( .not. allocated( glb_field) ) then
-      allocate( glb_field( comm%glb_field_size(), ncols ) )
+      allocate( glb_field( comm%glb_field_size(), nb_vars ) )
     end if
 
-    do jcol=1,ncols
+    do jvar=1,nb_vars
 
       ! Pack
       do jj=1,comm%gather_sendcnt
-        sendbuffer(jj) = loc_field(comm%gather_sendmap(jj),jcol)
+        sendbuffer(jj) = loc_field(comm%gather_sendmap(jj),jvar)
       end do
 
       ! Communicate
@@ -805,14 +805,14 @@ contains
     
       ! Unpack
       do jj=1,comm%gather_recvcnt
-         glb_field( comm%gather_recvmap(jj), jcol ) = recvbuffer(jj)
+         glb_field( comm%gather_recvmap(jj), jvar ) = recvbuffer(jj)
       end do
     end do
 
   end subroutine gather_real4_rank2
 
   function glb_field_size(comm) result(rows)
-    class(Comm_type), intent(inout) :: comm
+    class(Comm_type), intent(in) :: comm
     integer :: rows
     rows = comm%gather_recvcnt
   end function glb_field_size

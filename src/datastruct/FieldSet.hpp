@@ -14,8 +14,8 @@ class FieldSet
 public:
   FieldSet(const std::string& name="untitled");
   void add_field(Field& field);
-  Field& field(const std::string& name) { return *fields_[ index_.at(name) ]; }
-  Field& field(size_t idx) { return *fields_[ idx ]; }
+  Field& field(const std::string& name);
+  Field& field(size_t idx);
   std::vector<Field*>& fields() { return fields_; };
   size_t size() const { return fields_.size(); };
 private:

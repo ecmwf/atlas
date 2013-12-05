@@ -13,6 +13,7 @@ module datastruct_module
   public :: create_scalar_field_in_edges
   public :: create_vector_field_in_edges
   public :: scalar_field, vector_field
+  public :: mark_output
   public :: synchronise, gather
 
   interface  synchronise
@@ -32,10 +33,14 @@ module datastruct_module
   ! PRIVATE part
   ! ------------
     type(Mesh_type)     :: mesh
-    type(FieldSet_type), public :: fields
+    type(FieldSet_type) :: fields
     type(FunctionSpace_type) :: functionspace_nodes
     type(FunctionSpace_type) :: functionspace_edges
-    type(Comm_type) :: nodes_comm
+    type(Comm_type), public :: nodes_comm
+
+    type(FieldSet_type), public :: output_fields
+
+    real(kind=jprw), public :: time
 
   ! PUBLIC part
   ! -----------
@@ -75,6 +80,7 @@ contains
 
     geom%mesh = new_Mesh()
     geom%fields = new_FieldSet("fields")
+    geom%output_fields = new_FieldSet("output_fields")
 
     call geom%mesh%add_function_space( new_FunctionSpace("nodes", "P1-C", nb_nodes) )
     geom%functionspace_nodes = geom%mesh%function_space("nodes")
@@ -100,6 +106,7 @@ contains
     allocate( geom%edges_glb_idx( nb_edges ) ) 
 
   end subroutine create_mesh
+
 
   subroutine create_scalar_field_in_nodes(name, geom)
     implicit none
@@ -133,10 +140,20 @@ contains
     call geom%fields%add_field( geom%functionspace_edges%field(name) )
   end subroutine create_vector_field_in_edges
 
+  subroutine mark_output(name, geom)
+    implicit none
+    character(len=*), intent(in) :: name
+    type(DataStructure_type), intent(in) :: geom
+    type(Field_type) :: field
+    integer :: jname
+    field = geom%fields%field(name)
+    call geom%output_fields%add_field(field)
+  end subroutine mark_output
+
   function scalar_field(name, geom) result(array)
     implicit none
     character(len=*), intent(in) :: name
-    type(DataStructure_type), intent(inout) :: geom
+    type(DataStructure_type), intent(in) :: geom
     type(Field_type) :: field
     real(kind=jprw), pointer :: array(:)
     field = geom%fields%field(name)
@@ -146,7 +163,7 @@ contains
   function vector_field(name, geom) result(array)
     implicit none
     character(len=*), intent(in) :: name
-    type(DataStructure_type), intent(inout) :: geom
+    type(DataStructure_type), intent(in) :: geom
     type(Field_type) :: field
     real(kind=jprw), pointer :: array(:,:)
     field = geom%fields%field(name)

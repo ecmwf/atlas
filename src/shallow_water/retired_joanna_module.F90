@@ -283,7 +283,7 @@ contains
     call log_info("Writing output "//filename)
 
     loc_D => scalar_field("depth",g)
-    loc_Q => vector_field("momentum",g)
+    loc_Q => vector_field("velocity",g)
     loc_coords => vector_field("coordinates",g)
 
     call g%internal_mesh%nodes%comm%gather(loc_D,D)

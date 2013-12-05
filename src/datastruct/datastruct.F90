@@ -141,7 +141,9 @@ private
 contains
   procedure :: name => Field__name
   procedure :: data_type => Field__data_type
-  procedure :: Metadata => Field__Metadata
+  procedure :: nb_vars => Field__nb_vars
+  procedure :: metadata => Field__metadata
+  procedure :: function_space => Field__function_space
   procedure, private :: access_data1_integer => Field__access_data1_integer
   procedure, private :: access_data2_integer => Field__access_data2_integer
   procedure, private :: access_data3_integer => Field__access_data3_integer
@@ -186,7 +188,6 @@ TYPE :: FieldSet_type
 !------------------------------------------------------------------------------
 private
   type(c_ptr) :: object = C_NULL_ptr
-  real(c_double), public :: time = 0.
 contains
   procedure, public :: size => FieldSet__size
   procedure, public :: add_field => FieldSet__add_field
@@ -448,12 +449,23 @@ function Field__data_type(this) result(field_data_type)
   field_data_type = c_to_f_string_cptr(field_data_type_c_str)
 end function Field__data_type
 
-function Field__Metadata(this) result(Metadata)
+function Field__nb_vars(this) result(nb_vars)
   class(Field_type), intent(in) :: this
-  type(Metadata_type) :: Metadata
-  Metadata%object = ecmwf__Field__Metadata(this%object)
-end function Field__Metadata
+  integer :: nb_vars
+  nb_vars = ecmwf__Field__nb_vars(this%object)
+end function Field__nb_vars
 
+function Field__metadata(this) result(metadata)
+  class(Field_type), intent(in) :: this
+  type(metadata_type) :: Metadata
+  metadata%object = ecmwf__Field__metadata(this%object)
+end function Field__metadata
+
+function Field__function_space(this) result(function_space)
+  class(Field_type), intent(in) :: this
+  type(FunctionSpace_type) :: function_space
+  function_space%object = ecmwf__Field__function_space(this%object)
+end function Field__function_space
 
 subroutine Field__access_data1_integer(this, field) 
   class(Field_type), intent(in) :: this
@@ -690,6 +702,7 @@ subroutine FieldSet__fields(this,fields)
     fields(jfield)%object = fields_ptr(jfield)
   end do
 end subroutine FieldSet__fields
+
 
 ! -----------------------------------------------------------------------------
 ! Metadata routines

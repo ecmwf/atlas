@@ -9,8 +9,6 @@ type(Field_type) :: field
 
 call runtests_init
 
-write(0,*) c_int, c_float, c_double, c_char
-
 mesh = new_Mesh()
 call runtests( test_all )
 call delete(mesh)
@@ -93,6 +91,7 @@ subroutine test_field_size
   field = func_space%field("field_2")
   call field%access_data(fdata)
   call assert_equal( size(fdata) , 20 , "check_size_2" )
+
 end subroutine
 
 subroutine test_create_remove

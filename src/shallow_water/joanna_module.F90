@@ -277,7 +277,7 @@ contains
     call log_info("Writing output "//filename)
 
     loc_D => scalar_field("depth",g)
-    loc_Q => vector_field("momentum",g)
+    loc_Q => vector_field("velocity",g)
     loc_coords => vector_field("coordinates",g)
 
     call gather(loc_D,D, g)
@@ -308,7 +308,7 @@ contains
         plot_idx(inode) = plot_idx(inode_grwch)
         inode = inode+1
       enddo
-      write(11,*)g%fields%time
+      write(11,*)g%time
       write(11,*)0
       write(11,'(A)')'point X Y p'
 

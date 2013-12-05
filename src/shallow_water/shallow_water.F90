@@ -8,11 +8,11 @@ program shallow_water
 
   use common_module
   use parallel_module, only: parallel_init, parallel_finalise, nproc, nthread
-  !use gmsh_module, only: write_gmsh_mesh, write_gmsh_state
+  use gmsh_module, only: write_gmsh_mesh, write_gmsh_fields
   !use grib_module, only: write_grib
 
   use joanna_module, only: read_joanna, write_results_joanna
-  use datastruct_module,  only: DataStructure_type
+  use datastruct_module,  only: DataStructure_type, mark_output
   use shallow_water_module, only: &
     & setup_shallow_water, &
     & set_state_rossby_haurwitz, &
@@ -24,12 +24,12 @@ program shallow_water
 
   ! Configuration parameters
   real(kind=jprw) :: dt = 20.              ! solver time-step
-  integer         :: nb_steps = 15         ! Number of propagations
-  integer         :: hours_per_step = 24   ! Propagation time
+  integer         :: nb_steps = 1         ! Number of propagations
+  integer         :: hours_per_step = 1   ! Propagation time
   logical         :: write_itermediate_output = .True.
 
   ! Declarations
-  type(DataStructure_type) :: g
+  type(DataStructure_type) :: dstruct
   real(kind=jprw), parameter :: hours = 3600.     ! in seconds
   real(kind=jprw), parameter :: days  = 24.*hours ! in seconds
   integer :: jstep = 0
@@ -42,14 +42,14 @@ program shallow_water
   call set_log_proc(0)
   
   call log_info("Program shallow_water start")
-  call read_joanna("data/meshvol.d","data/rtable_lin_T255.d", g)
+  call read_joanna("data/meshvol.d","data/rtable_lin_T255.d", dstruct)
 
-  call setup_shallow_water(g)
+  call setup_shallow_water(dstruct)
 
-  call set_topography(g)
+  call set_topography(dstruct)
 
-  !call set_state_rossby_haurwitz(g)
-  call set_state_zonal_flow(g)
+  !call set_state_rossby_haurwitz(dstruct)
+  call set_state_zonal_flow(dstruct)
 
   call set_time_step( dt )
 
@@ -58,16 +58,21 @@ program shallow_water
   call log_info( "+-------------------+----------+" )
   call log_info( "| MPI Tasks         | "//trim(str(nproc,'(I8)'))//" |" )
   call log_info( "| OMP Threads       | "//trim(str(nthread,'(I8)'))//" |" )
-  call log_info( "| glb_nb_nodes      | "//trim(str(g%glb_nb_nodes,'(I8)'))//" |" )
-  call log_info( "| glb_nb_edges      | "//trim(str(g%glb_nb_edges,'(I8)'))//" |" )
-  call log_info( "| nb_nodes[0]       | "//trim(str(g%nb_nodes,'(I8)'))//" |" )
-  call log_info( "| nb_edges[0]       | "//trim(str(g%nb_edges,'(I8)'))//" |" )
+  call log_info( "| glb_nb_nodes      | "//trim(str(dstruct%glb_nb_nodes,'(I8)'))//" |" )
+  call log_info( "| glb_nb_edges      | "//trim(str(dstruct%glb_nb_edges,'(I8)'))//" |" )
+  call log_info( "| nb_nodes[0]       | "//trim(str(dstruct%nb_nodes,'(I8)'))//" |" )
+  call log_info( "| nb_edges[0]       | "//trim(str(dstruct%nb_edges,'(I8)'))//" |" )
   call log_info( "| time step         | "//trim(str(dt,'(F8.1)'))//" |" )
   call log_info( "| total time  (hrs) | "//trim(str(nb_steps*hours_per_step,'(I8)'))//" |" )
   call log_info( "| output rate (hrs) | "//trim(str(hours_per_step,'(I8)'))//" |" )
   call log_info( "+-------------------+----------+ ")
 
-  !call write_gmsh_mesh(g%internal_mesh,"data/mesh.msh")
+  call write_gmsh_mesh(dstruct,"data/mesh.msh")
+
+  call mark_output("topography",dstruct)
+  call mark_output("height",dstruct)
+  call mark_output("depth",dstruct)
+  call mark_output("velocity",dstruct)
 
   call write_fields()
 
@@ -76,7 +81,7 @@ program shallow_water
   do jstep=1,nb_steps 
 
     call step_timer%start()
-    call propagate_state( hours_per_step*hours, g)
+    call propagate_state( hours_per_step*hours, dstruct)
 
     write (log_str, '(A,I3,A,A,F8.2,A,F8.2,A)') &
       & "Propagated to ",jstep*hours_per_step," hours.", &
@@ -91,7 +96,7 @@ program shallow_water
   ! Write last step anyway if intermediate output is disabled
   if (.not. write_itermediate_output) call write_fields()
 
-  call write_results_joanna("data/results.d","data/rtable_lin_T255.d",g)
+  call write_results_joanna("data/results.d","data/rtable_lin_T255.d",dstruct)
 
   call log_info("Program shallow_water exit")
   call parallel_finalise()
@@ -109,7 +114,7 @@ contains
     character(len=1024) :: filename
     call wallclock_timer%pause()
     write (filename, "(A,I2.2,A,I2.2)") "data/fields",jstep,".msh"
-    !call write_gmsh_state(g%fields,filename)
+    call write_gmsh_fields(dstruct,filename)
     write (filename, "(A,I2.2,A)") "data/fields",jstep,".grib"
     !call write_grib(g,filename)
     call wallclock_timer%resume()
