@@ -229,6 +229,7 @@ else()
   )
 endif()
 file( COPY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
+
 add_executable( shallow_water
   ${DATASTRUCT_SRC}
   src/io/gmsh_module.F90
@@ -237,6 +238,18 @@ add_executable( shallow_water
 target_link_libraries( shallow_water io common datastruct )
 set_property(TARGET shallow_water PROPERTY LINKER_LANGUAGE Fortran)
 
+
+add_executable( isentropic
+  ${DATASTRUCT_SRC}
+  src/io/gmsh_module.F90
+  src/shallow_water/isentropic_module.F90 
+  src/shallow_water/isentropic.F90 )
+target_link_libraries( isentropic io common datastruct )
+set_property(TARGET isentropic PROPERTY LINKER_LANGUAGE Fortran)
+
+###############################################################################
+# Tests
+###############################################################################
 ecbuild_add_test( TARGET test_datastruct
   LINKER_LANGUAGE Fortran
   SOURCES  src/tests/test_datastruct.F90
