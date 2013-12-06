@@ -8,7 +8,7 @@ program shallow_water
 
   use common_module
   use parallel_module, only: parallel_init, parallel_finalise, nproc, nthread
-  use gmsh_module, only: write_gmsh_mesh, write_gmsh_fields
+  use gmsh_module, only: write_gmsh_mesh_2d, write_gmsh_fields
   !use grib_module, only: write_grib
 
   use joanna_module, only: read_joanna, write_results_joanna
@@ -67,7 +67,7 @@ program shallow_water
   call log_info( "| output rate (hrs) | "//trim(str(hours_per_step,'(I8)'))//" |" )
   call log_info( "+-------------------+----------+ ")
 
-  call write_gmsh_mesh(dstruct,"data/mesh.msh")
+  call write_gmsh_mesh_2d(dstruct,"data/mesh.msh")
 
   call mark_output("topography",dstruct)
   call mark_output("height",dstruct)
