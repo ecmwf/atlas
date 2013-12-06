@@ -11,8 +11,8 @@ private
 integer, parameter, public :: jpim = selected_int_kind(9)
 
 ! Single precision
-integer, parameter :: jprs = selected_real_kind(4,2)
-integer, parameter :: jprm = selected_real_kind(6,37)
+integer, parameter, public :: jprs = selected_real_kind(4,2)
+integer, parameter, public :: jprm = selected_real_kind(6,37)
 
 ! Double precision
 integer, parameter, public :: jprb = selected_real_kind(13,300)
@@ -23,6 +23,7 @@ integer, parameter, public :: jprw = jprb
 
 integer, parameter, public :: XX = 1
 integer, parameter, public :: YY = 2
+integer, parameter, public :: ZZ = 3
 
 integer, parameter, public :: LOG_LEVEL_DEBUG   = 4
 integer, parameter, public :: LOG_LEVEL_INFO    = 3
