@@ -620,13 +620,26 @@ function Field__data2_wp(this) result(field)
   type(c_ptr) :: field_c_ptr
   type(c_ptr) :: field_bounds_c_ptr
   integer(c_int) :: field_rank
+  integer :: field_size, jbound
   if( wp == c_double ) then
     call ecmwf__Field__data_double(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   else if (wp == c_float ) then
     call ecmwf__Field__data_float(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   end if
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
+  if (size(field_bounds) < 2) then
+    write(0,*) "Cannot access field """,this%name(),""" with rank",field_rank," as rank 2"
+    call abort()
+  end if
+  field_size = 1
+  do jbound=1,field_rank
+    field_size = field_size * field_bounds(jbound)
+  end do
   call C_F_POINTER ( field_c_ptr , field , field_bounds(1:2) )
+  if( size(field) /= field_size ) then
+    write(0,*) "Requested bounds of field ", field_bounds(1:2), " do not cover the entire field of size ", field_size
+    call abort()
+  end if
 end function Field__data2_wp
 
 function Field__data3_wp(this) result(field)
@@ -636,13 +649,26 @@ function Field__data3_wp(this) result(field)
   type(c_ptr) :: field_c_ptr
   type(c_ptr) :: field_bounds_c_ptr
   integer(c_int) :: field_rank
+  integer :: field_size, jbound
   if( wp == c_double ) then
     call ecmwf__Field__data_double(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   else if (wp == c_float ) then
     call ecmwf__Field__data_float(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   end if
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
+  if (size(field_bounds) < 3) then
+    write(0,*) "Cannot access field """,this%name(),""" with rank",field_rank," as rank 3"
+    call abort()
+  end if
+  field_size = 1
+  do jbound=1,field_rank
+    field_size = field_size * field_bounds(jbound)
+  end do
   call C_F_POINTER ( field_c_ptr , field , field_bounds(1:3) )
+  if( size(field) /= field_size ) then
+    write(0,*) "Requested bounds of field ", field_bounds(1:3), " do not cover the entire field of size ", field_size
+    call abort()
+  end if
 end function Field__data3_wp
 
 ! -----------------------------------------------------------------------------
