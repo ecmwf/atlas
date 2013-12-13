@@ -1,6 +1,7 @@
 module common_module
 
 use parallel_module, only: myproc
+use, intrinsic :: iso_c_binding, only: C_FLOAT, C_DOUBLE
 
 implicit none
 save
@@ -11,11 +12,11 @@ private
 integer, parameter, public :: jpim = selected_int_kind(9)
 
 ! Single precision
-integer, parameter, public :: jprs = selected_real_kind(4,2)
-integer, parameter, public :: jprm = selected_real_kind(6,37)
+integer, parameter, public :: jprs = C_FLOAT ! selected_real_kind(4,2)
+integer, parameter, public :: jprm = C_FLOAT ! selected_real_kind(6,37)
 
 ! Double precision
-integer, parameter, public :: jprb = selected_real_kind(13,300)
+integer, parameter, public :: jprb = C_DOUBLE !selected_real_kind(13,300)
 
 ! Working precision = double precision
 integer, parameter, public :: jprw = jprb
