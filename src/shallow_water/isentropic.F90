@@ -26,7 +26,7 @@ program isentropic
   integer         :: nb_steps = 1         ! Number of propagations
   integer         :: hours_per_step = 1   ! Propagation time
   logical         :: write_itermediate_output = .True.
-  integer         :: nb_levels = 1
+  integer         :: nb_levels = 2
 
   ! Declarations
   type(DataStructure_type) :: dstruct

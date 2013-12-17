@@ -24,6 +24,7 @@ public:
   const std::vector<int>& bounds() const { return bounds_; }
   int nb_vars() const { return nb_vars_; }
   virtual size_t size() const = 0;
+
 protected:
   std::string name_;
   std::vector<int> bounds_;

@@ -30,6 +30,8 @@ add_library( datastruct
     Mesh.cpp
     Metadata.hpp
     Metadata.cpp
+    Comm.hpp
+    Comm.cpp
 
   # Fortran part
     ${FORTRAN_BINDINGS}

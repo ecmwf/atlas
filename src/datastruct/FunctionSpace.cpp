@@ -7,6 +7,13 @@ FunctionSpace::FunctionSpace(const std::string& name, const std::string& shape_f
   name_(name), bounds_(bounds)
 { 
   //std::cout << "C++ : FunctionSpace Constructor" << std::endl;
+  dof_ = 1;
+  size_t bsize = bounds_.size();
+  for (size_t i=0; i<bsize; ++i)
+  {
+    if( bounds_[i] != Field::NB_VARS )
+      dof_ *= bounds[i];
+  }
 }
 
 FunctionSpace::~FunctionSpace() 
@@ -104,6 +111,14 @@ Field& FunctionSpace::field(const std::string& name)
   return *fields_[ index_.at(name) ];
 }
 
+void FunctionSpace::parallelise(const int proc[], const int glb_idx[])
+{
+  if (bounds_.size() == 2)
+    halo_exchange_.setup(proc,glb_idx,bounds_,0);
+  if (bounds_.size() == 3)
+    halo_exchange_.setup(proc,glb_idx,bounds_,1);
+}
+
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
@@ -134,7 +149,23 @@ const char* ecmwf__FunctionSpace__name (FunctionSpace* This) {
 
 Field* ecmwf__FunctionSpace__field (FunctionSpace* This, char* name) {
   return &This->field( std::string(name) );
-} 
+}
+
+void ecmwf__FunctionSpace__parallelise (FunctionSpace* This, int proc[], int glb_idx[]) {
+  This->parallelise(proc,glb_idx);
+}
+
+void ecmwf__FunctionSpace__halo_exchange_int (FunctionSpace* This, int field_data[], int field_size) {
+  This->halo_exchange(field_data,field_size);
+}
+
+void ecmwf__FunctionSpace__halo_exchange_float (FunctionSpace* This, float field_data[], int field_size) {
+  This->halo_exchange(field_data,field_size);
+}
+
+void ecmwf__FunctionSpace__halo_exchange_double (FunctionSpace* This, double field_data[], int field_size) {
+  This->halo_exchange(field_data,field_size);
+}
 
 void ecmwf__FunctionSpace__delete (FunctionSpace* This)  {
   delete This;

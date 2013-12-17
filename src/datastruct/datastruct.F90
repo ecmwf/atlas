@@ -94,6 +94,8 @@ TYPE :: FunctionSpace_type
 !   create_field : Create a new real field in this function space with given name
 !   remove_field : Remove a field with given name
 !   field : Access to a field with given name
+!   parallelise : Setup halo-exchange information
+!   halo_exchange : Perform halo exchange on field_data
 
 ! Author :
 ! ------
@@ -107,6 +109,26 @@ contains
   procedure :: create_field => FunctionSpace__create_field
   procedure :: remove_field => FunctionSpace__remove_field
   procedure :: field => FunctionSpace__field
+  procedure :: parallelise => FunctionSpace__parallelise
+  procedure, private :: FunctionSpace__halo_exchange_int32_r1
+  procedure, private :: FunctionSpace__halo_exchange_int32_r2
+  procedure, private :: FunctionSpace__halo_exchange_int32_r3
+  procedure, private :: FunctionSpace__halo_exchange_real32_r1
+  procedure, private :: FunctionSpace__halo_exchange_real32_r2
+  procedure, private :: FunctionSpace__halo_exchange_real32_r3
+  procedure, private :: FunctionSpace__halo_exchange_real64_r1
+  procedure, private :: FunctionSpace__halo_exchange_real64_r2
+  procedure, private :: FunctionSpace__halo_exchange_real64_r3
+  generic :: halo_exchange => &
+      & FunctionSpace__halo_exchange_int32_r1, &
+      & FunctionSpace__halo_exchange_int32_r2, &
+      & FunctionSpace__halo_exchange_int32_r3, &
+      & FunctionSpace__halo_exchange_real32_r1, &
+      & FunctionSpace__halo_exchange_real32_r2, &
+      & FunctionSpace__halo_exchange_real32_r3, &
+      & FunctionSpace__halo_exchange_real64_r1, &
+      & FunctionSpace__halo_exchange_real64_r2, &
+      & FunctionSpace__halo_exchange_real64_r3
 END TYPE FunctionSpace_type
 
 interface new_FunctionSpace
@@ -430,6 +452,59 @@ function FunctionSpace__field(this,name) result(field)
   if( .not. C_associated(field%object) ) call abort()
 end function FunctionSpace__field
 
+subroutine FunctionSpace__parallelise(this, proc, glb_idx)
+  class(FunctionSpace_type), intent(in) :: this
+  integer, intent(in) :: proc(:), glb_idx(:)
+  call ecmwf__FunctionSpace__parallelise(this%object, proc, glb_idx)
+end subroutine FunctionSpace__parallelise
+
+subroutine FunctionSpace__halo_exchange_int32_r1(this, field_data)
+  class(FunctionSpace_type), intent(in) :: this
+  integer, intent(in) :: field_data(:)
+  call ecmwf__FunctionSpace__halo_exchange_int( this%object, field_data, size(field_data) )
+end subroutine FunctionSpace__halo_exchange_int32_r1
+subroutine FunctionSpace__halo_exchange_int32_r2(this, field_data)
+  class(FunctionSpace_type), intent(in) :: this
+  integer, intent(in) :: field_data(:,:)
+  call ecmwf__FunctionSpace__halo_exchange_int( this%object, reshape( field_data,(/size(field_data)/) ), size(field_data) )
+end subroutine FunctionSpace__halo_exchange_int32_r2
+subroutine FunctionSpace__halo_exchange_int32_r3(this, field_data)
+  class(FunctionSpace_type), intent(in) :: this
+  integer, intent(in) :: field_data(:,:,:)
+  call ecmwf__FunctionSpace__halo_exchange_int( this%object, reshape( field_data,(/size(field_data)/) ), size(field_data) )
+end subroutine FunctionSpace__halo_exchange_int32_r3
+
+subroutine FunctionSpace__halo_exchange_real32_r1(this, field_data)
+  class(FunctionSpace_type), intent(in) :: this
+  real(c_float), intent(in) :: field_data(:)
+  call ecmwf__FunctionSpace__halo_exchange_float( this%object, field_data, size(field_data) )
+end subroutine FunctionSpace__halo_exchange_real32_r1
+subroutine FunctionSpace__halo_exchange_real32_r2(this, field_data)
+  class(FunctionSpace_type), intent(in) :: this
+  real(c_float), intent(in) :: field_data(:,:)
+  call ecmwf__FunctionSpace__halo_exchange_float( this%object, reshape( field_data,(/size(field_data)/) ), size(field_data) )
+end subroutine FunctionSpace__halo_exchange_real32_r2
+subroutine FunctionSpace__halo_exchange_real32_r3(this, field_data)
+  class(FunctionSpace_type), intent(in) :: this
+  real(c_float), intent(in) :: field_data(:,:,:)
+  call ecmwf__FunctionSpace__halo_exchange_float( this%object, reshape( field_data,(/size(field_data)/) ), size(field_data) )
+end subroutine FunctionSpace__halo_exchange_real32_r3
+
+subroutine FunctionSpace__halo_exchange_real64_r1(this, field_data)
+  class(FunctionSpace_type), intent(in) :: this
+  real(c_double), intent(in) :: field_data(:)
+  call ecmwf__FunctionSpace__halo_exchange_double( this%object, field_data, size(field_data) )
+end subroutine FunctionSpace__halo_exchange_real64_r1
+subroutine FunctionSpace__halo_exchange_real64_r2(this, field_data)
+  class(FunctionSpace_type), intent(in) :: this
+  real(c_double), intent(in) :: field_data(:,:)
+  call ecmwf__FunctionSpace__halo_exchange_double( this%object, reshape( field_data,(/size(field_data)/) ), size(field_data) )
+end subroutine FunctionSpace__halo_exchange_real64_r2
+subroutine FunctionSpace__halo_exchange_real64_r3(this, field_data)
+  class(FunctionSpace_type), intent(in) :: this
+  real(c_double), intent(in) :: field_data(:,:,:)
+  call ecmwf__FunctionSpace__halo_exchange_double( this%object, reshape( field_data,(/size(field_data)/) ), size(field_data) )
+end subroutine FunctionSpace__halo_exchange_real64_r3
 ! -----------------------------------------------------------------------------
 ! Field routines
 

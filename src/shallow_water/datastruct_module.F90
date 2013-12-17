@@ -87,12 +87,12 @@ contains
     dstruct%fields = new_FieldSet("fields")
     dstruct%output_fields = new_FieldSet("output_fields")
 
-    call dstruct%mesh%add_function_space( new_FunctionSpace("nodes", "P1-C", nb_nodes) )
-    dstruct%functionspace_nodes_2d = dstruct%mesh%function_space("nodes")
+    call dstruct%mesh%add_function_space( new_FunctionSpace("nodes_2d", "P1-C", nb_nodes) )
+    dstruct%functionspace_nodes_2d = dstruct%mesh%function_space("nodes_2d")
     dstruct%nb_nodes = nb_nodes
 
-    call dstruct%mesh%add_function_space( new_FunctionSpace("edges", "P0-D", nb_edges) )
-    dstruct%functionspace_edges_2d = dstruct%mesh%function_space("edges")
+    call dstruct%mesh%add_function_space( new_FunctionSpace("edges_2d", "P0-D", nb_edges) )
+    dstruct%functionspace_edges_2d = dstruct%mesh%function_space("edges_2d")
     dstruct%nb_edges = nb_edges
 
     allocate( dstruct%edges(dstruct%nb_edges,2) )
@@ -106,6 +106,8 @@ contains
     dstruct%nodes_proc(:) = proc(:)
     dstruct%nodes_glb_idx(:) = glb_idx(:)
     call dstruct%nodes_comm%setup( proc, glb_idx )
+
+    call dstruct%functionspace_nodes_2d%parallelise(proc,glb_idx)
 
     allocate( dstruct%edges_proc( nb_edges ) ) 
     allocate( dstruct%edges_glb_idx( nb_edges ) ) 
