@@ -16,6 +16,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS FieldSet.hpp)
 generate_fortran_bindings(FORTRAN_BINDINGS FunctionSpace.hpp)
 generate_fortran_bindings(FORTRAN_BINDINGS Mesh.hpp)
 generate_fortran_bindings(FORTRAN_BINDINGS Metadata.hpp)
+generate_fortran_bindings(FORTRAN_BINDINGS Comm.hpp)
 
 
 add_library( datastruct

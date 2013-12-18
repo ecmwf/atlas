@@ -5,6 +5,7 @@
 #include <map>
 #include <string>
 #include "Comm.hpp"
+#include <iostream>
 
 namespace ecmwf {
 class Field;
@@ -33,8 +34,11 @@ public:
   void halo_exchange( DATA_TYPE field_data[], int field_size )
   {
     int nb_vars = field_size/dof_;
+    if( dof_*nb_vars != field_size ) std::cout << "ERROR in FunctionSpace::halo_exchange" << std::endl;
     halo_exchange_.execute( field_data, nb_vars );
   }
+
+  const HaloExchange& halo_exchange() { return halo_exchange_; }
 
 protected:
   std::string name_;
@@ -63,6 +67,7 @@ extern "C"
   void ecmwf__FunctionSpace__halo_exchange_int (FunctionSpace* This, int field_data[], int field_size); 
   void ecmwf__FunctionSpace__halo_exchange_float (FunctionSpace* This, float field_data[], int field_size); 
   void ecmwf__FunctionSpace__halo_exchange_double (FunctionSpace* This, double field_data[], int field_size); 
+  HaloExchange const* ecmwf__FunctionSpace__halo_exchange (FunctionSpace* This); 
 
 }
 // ------------------------------------------------------------------

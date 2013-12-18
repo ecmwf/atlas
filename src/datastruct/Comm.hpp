@@ -37,7 +37,19 @@ private: // methods
   template<int N, int P>
   void create_mappings_impl( std::vector<int>& send_map, std::vector<int>& recv_map, int nb_vars ) const;
 
+  int index(int i, int j, int k, int ni, int nj, int nk) const
+  {
+    return( i + ni*( j + nj*k) );
+  }
+
+  int index(int i, int j, int ni, int nj) const
+  {
+    return( i + ni*j );
+  }
+
+
 private: // data
+  int               packet_size_;
   int               sync_sendcnt_;
   int               sync_recvcnt_;
   std::vector<int>  sync_sendcounts_;
@@ -66,6 +78,10 @@ void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
   std::vector<int> recv_counts(nproc);
   int tag=1;
   int ierr;
+  //int send_size = sync_sendcnt_ * packet_size_ * nb_vars;
+  //int recv_size = sync_recvcnt_ * packet_size_ * nb_vars;
+  //int point_size = packet_size_ * nb_vars;
+
   int nb_bounds = bounds_.size();
   int send_size(1);
   int recv_size(1);
@@ -91,6 +107,11 @@ void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
     }
   }
 
+  // std::cout << myproc << "  :  field before = ";
+  // for( int i=0; i< nb_vars*bounds_[par_bound_]; ++i)
+  //   std::cout << field[i] << " ";
+  // std::cout << std::endl;
+
   for (int jproc=0; jproc<nproc; ++jproc)
   {
     send_counts[jproc] = sync_sendcounts_[jproc]*point_size;
@@ -104,7 +125,6 @@ void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
 
   /// -----------------------------------------------------------
   /// With mappings and everything in place, we can now call MPI
-  typedef int DATA_TYPE;
   std::vector<DATA_TYPE> send_buffer(send_size);
   std::vector<DATA_TYPE> recv_buffer(recv_size);
 
@@ -133,15 +153,48 @@ void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
   }
 
   /// Wait for receiving to finish
-  ierr = MPI_Waitall( nproc, &recv_req[0], MPI_STATUS_IGNORE );
+  for (int jproc=0; jproc<nproc; ++jproc)
+  {
+    if( sync_recvcounts_[jproc] > 0)
+    {
+      ierr = MPI_Wait(&recv_req[jproc], MPI_STATUS_IGNORE );
+    }
+  }
 
   /// Unpack
-  for( int ii=0; ii<send_size; ++ii)
+  for( int ii=0; ii<recv_size; ++ii)
+  {
     field[ recv_map[ii] ] = recv_buffer[ii];
+  }
 
   /// Wait for sending to finish
-  ierr = MPI_Waitall( nproc, &send_req[0], MPI_STATUS_IGNORE );
+  for (int jproc=0; jproc<nproc; ++jproc)
+  {
+    if( sync_sendcounts_[jproc] > 0)
+    {
+      ierr = MPI_Wait(&send_req[jproc], MPI_STATUS_IGNORE );
+    }
+  }
+
+  // std::cout << myproc << "  :  field after  = ";
+  // for( int i=0; i< nb_vars*bounds_[par_bound_]; ++i)
+  //   std::cout << field[i] << " ";
+  // std::cout << std::endl;
 }
+
+// ------------------------------------------------------------------
+// C wrapper interfaces to C++ routines
+extern "C" 
+{
+  HaloExchange* ecmwf__HaloExchange__new ();
+  void ecmwf__HaloExchange__delete (HaloExchange* This);
+  void ecmwf__HaloExchange__setup (HaloExchange* This, int proc[], int glb_idx[], int bounds[], int nb_bounds, int par_bound);
+  void ecmwf__HaloExchange__execute_int (HaloExchange* This, int field[], int nb_vars);
+  void ecmwf__HaloExchange__execute_float (HaloExchange* This, float field[], int nb_vars);
+  void ecmwf__HaloExchange__execute_double (HaloExchange* This, double field[], int nb_vars);
+
+}
+// ------------------------------------------------------------------
 
 
 } // namespace ecmwf

@@ -167,6 +167,11 @@ void ecmwf__FunctionSpace__halo_exchange_double (FunctionSpace* This, double fie
   This->halo_exchange(field_data,field_size);
 }
 
+HaloExchange const* ecmwf__FunctionSpace__halo_exchange (FunctionSpace* This) {
+  return &This->halo_exchange();
+}
+
+
 void ecmwf__FunctionSpace__delete (FunctionSpace* This)  {
   delete This;
 }

@@ -8,65 +8,104 @@ program test_sync
 
   use common_module
   use parallel_module
+  use datastruct
 
   implicit none
 
+  integer, allocatable  :: nb_nodes(:)
   integer, allocatable  :: proc(:)
   integer, allocatable  :: glb_idx(:)
-  real(kind=jprw), allocatable  :: field(:), vectorfield(:,:)
-  real(kind=jprw), allocatable  :: glb_field(:)
+  real(kind=jprs), allocatable, target  :: field(:), vectorfield(:,:)
+  real(kind=jprs), pointer :: vectorfield_ptr(:,:)
+  real(kind=jprs), allocatable  :: glb_field(:)
+  integer :: bounds(2)
   integer :: length 
+  integer :: parallel_bound = 1
   type(Comm_type) :: comm
 
+  type(HaloExchange_type) :: halo_exchange
+  type(FunctionSpace_type) :: function_space
+
   call set_log_level(LOG_LEVEL_INFO)
-  call set_log_proc(0)
 
   call parallel_init() ! MPI_INIT etc
 
+  halo_exchange = new_HaloExchange()
+
   ! Create distribution with overlap regions
-  length = 5
-  allocate( proc(length) )
-  allocate( glb_idx(length) )
-  allocate( field(length) )
-  allocate( vectorfield(length,2) )
 
   if (nproc .eq. 3) then
-  
+    allocate( nb_nodes(3) )
+
+    nb_nodes = [ 5, 6, 7 ]
+    length = nb_nodes(myproc+1)
+    bounds = [ length , -1 ]
+    allocate( proc(length) )
+    allocate( glb_idx(length) )
+    allocate( field(length) )
+    allocate( vectorfield(length,2) )  
+
     select case (myproc)
       case (0)
         proc = [2,0,0,0,1]
         glb_idx = [9,1,2,3,4]
-        field = [-1,10,20,30,-1]
+        field = [-1,1,2,3,-1]
       case (1)
-        proc = [0,1,1,1,2]
-        glb_idx = [3,4,5,6,7]
-        field = [-1,40,50,60,-1]
+        proc = [0,1,1,1,2,2]
+        glb_idx = [3,4,5,6,7,8]
+        field = [-1,4,5,6,-1,-1]
       case (2)
-        proc = [1,2,2,2,0]
-        glb_idx = [6,7,8,9,1]
-        field = [-1,70,80,90,-1]
+        proc = [1,1,2,2,2,0,0]
+        glb_idx = [5,6,7,8,9,1,2]
+        field = [-1,-1,7,8,9,-1,-1]
     end select
-    vectorfield(:,1) = field
-    vectorfield(:,2) = field
+    vectorfield(:,1) = field*10
+    vectorfield(:,2) = field*100
 
+    vectorfield_ptr => vectorfield
     ! Setup a communicator for synchronisation
     call comm%setup(proc,glb_idx)
-
+    
+    ! We can setup function_space for halo_exchange
+    function_space = new_FunctionSpace("nodes","shape_func",length)
+    call function_space%parallelise( proc, glb_idx )
+    
+    ! Or we can setup a custom halo_exchange object
+    call halo_exchange%setup(proc, glb_idx, bounds, parallel_bound)
+    
     ! Update the field values whose proc is not myproc
-    call comm%synchronise(field)
-    call comm%synchronise(vectorfield)
-  
+    ! This is the older fortran implementation
+    !call comm%synchronise(field)
+    !call comm%synchronise(vectorfield)
+   
+    ! Halo exchange through the function_space (We don't need to know nbvars)
+    call function_space%halo_exchange(field)
+    call function_space%halo_exchange(vectorfield)
+    !call function_space%halo_exchange(vectorfield(:,1))
+    !call function_space%halo_exchange(vectorfield(:,2))
+ 
+    ! Halo exchange through the custom halo_exchange object
+    !call halo_exchange%execute(field,1)
+    !call halo_exchange%execute(vectorfield,2)
+    !call halo_exchange%execute(vectorfield(:,1),1)
+    !call halo_exchange%execute(vectorfield(:,2),1)
+
     ! Verify that update happened correctly
-    write(log_str,*) myproc, ": field = ", field; call log_info()
+    write(log_str,*) myproc, ": field            = ", field; call log_info()
+    write(log_str,*) myproc, ": vectorfield(:,1) = ", vectorfield(:,1); call log_info()
+    write(log_str,*) myproc, ": vectorfield(:,2) = ", vectorfield(:,2); call log_info()
 
     call comm%gather(field, glb_field)
 
-    write(log_str,*) myproc, ": glb_field = ", glb_field; call log_info()
+    call set_log_proc(0)
+    write(log_str,*) myproc, ": glb_field        = ", glb_field; call log_info()
 
   else
     call set_log_proc(0)
     call log_error("ERROR: Run this program with 3 tasks")
   end if
+
+  call delete(halo_exchange)
 
   call parallel_finalise() ! MPI_FINALIZE
 

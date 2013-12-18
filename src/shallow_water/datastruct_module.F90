@@ -1,7 +1,7 @@
 module datastruct_module
 
   use common_module, only: jprw
-  use datastruct, only : Mesh_type, FieldSet_type, Field_type, &
+  use datastruct, only : Mesh_type, FieldSet_type, Field_type, HaloExchange_type, &
       & new_FunctionSpace, new_PrismaticFunctionSpace, FunctionSpace_type, new_Mesh, new_FieldSet
   use parallel_module
 
@@ -17,11 +17,19 @@ module datastruct_module
   public :: mark_output
   public :: synchronise, gather
 
+  public :: halo_exchange
+
   interface  synchronise
     module procedure synchronise_array_rank1
     module procedure synchronise_array_rank2
     module procedure synchronise_array_rank3
   end interface synchronise
+
+  interface halo_exchange
+    module procedure halo_exchange_real_rank1
+    module procedure halo_exchange_real_rank2
+    module procedure halo_exchange_real_rank3
+  end interface halo_exchange
 
   interface  gather
     module procedure gather_array_rank1
@@ -273,6 +281,28 @@ contains
     type(DataStructure_type), intent(inout) :: dstruct
     call dstruct%nodes_comm%synchronise( array )
   end subroutine synchronise_array_rank3
+
+  subroutine halo_exchange_real_rank1(array, dstruct)
+    implicit none
+    real(kind=jprw), dimension(:), intent(inout) :: array
+    type(DataStructure_type), intent(inout) :: dstruct
+    call dstruct%functionspace_nodes_2d%halo_exchange( array )
+  end subroutine halo_exchange_real_rank1
+
+   subroutine halo_exchange_real_rank2(array, dstruct)
+    implicit none
+    real(kind=jprw), dimension(:,:), intent(inout) :: array
+    type(DataStructure_type), intent(inout) :: dstruct
+    call dstruct%functionspace_nodes_2d%halo_exchange( array )
+  end subroutine halo_exchange_real_rank2
+
+  subroutine halo_exchange_real_rank3(array, dstruct)
+    implicit none
+    real(kind=jprw), dimension(:,:,:), intent(inout) :: array
+    type(DataStructure_type), intent(inout) :: dstruct
+    call abort()
+    call dstruct%functionspace_nodes_2d%halo_exchange( array )
+  end subroutine halo_exchange_real_rank3
 
   subroutine gather_array_rank1(array_loc, array_full, dstruct)
     implicit none
