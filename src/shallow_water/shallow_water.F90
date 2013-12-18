@@ -25,7 +25,7 @@ program shallow_water
   ! Configuration parameters
   real(kind=jprw) :: dt = 20.              ! solver time-step
   integer         :: nb_steps = 1         ! Number of propagations
-  integer         :: hours_per_step = 1   ! Propagation time
+  integer         :: hours_per_step = 24   ! Propagation time
   logical         :: write_itermediate_output = .True.
 
   ! Declarations
@@ -43,6 +43,7 @@ program shallow_water
   
   call log_info("Program shallow_water start")
   call read_joanna("data/meshvol.d","data/rtable_lin_T255.d", dstruct)
+  call write_gmsh_mesh_2d(dstruct,"data/mesh.msh")
 
   call setup_shallow_water(dstruct)
 
@@ -66,8 +67,6 @@ program shallow_water
   call log_info( "| total time  (hrs) | "//trim(str(nb_steps*hours_per_step,'(I8)'))//" |" )
   call log_info( "| output rate (hrs) | "//trim(str(hours_per_step,'(I8)'))//" |" )
   call log_info( "+-------------------+----------+ ")
-
-  call write_gmsh_mesh_2d(dstruct,"data/mesh.msh")
 
   call mark_output("topography",dstruct)
   call mark_output("height",dstruct)

@@ -78,34 +78,9 @@ void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
   std::vector<int> recv_counts(nproc);
   int tag=1;
   int ierr;
-  //int send_size = sync_sendcnt_ * packet_size_ * nb_vars;
-  //int recv_size = sync_recvcnt_ * packet_size_ * nb_vars;
-  //int point_size = packet_size_ * nb_vars;
-
-  int nb_bounds = bounds_.size();
-  int send_size(1);
-  int recv_size(1);
-  int point_size(1);
-  for (int b=0; b<nb_bounds; ++b)
-  {
-    if ( b == par_bound_ )
-    {
-      send_size *= sync_sendcnt_;
-      recv_size *= sync_recvcnt_;
-    }
-    else if (bounds_[b] < 0)
-    {
-      send_size  *= nb_vars;
-      recv_size  *= nb_vars;
-      point_size *= nb_vars;
-    }
-    else
-    {
-      send_size *= bounds_[b];
-      recv_size *= bounds_[b];
-      point_size *= bounds_[b];
-    }
-  }
+  int send_size = sync_sendcnt_ * packet_size_ * nb_vars;
+  int recv_size = sync_recvcnt_ * packet_size_ * nb_vars;
+  int point_size = packet_size_ * nb_vars;
 
   // std::cout << myproc << "  :  field before = ";
   // for( int i=0; i< nb_vars*bounds_[par_bound_]; ++i)
@@ -122,6 +97,16 @@ void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
   std::vector<int> send_map(send_size);
   std::vector<int> recv_map(recv_size);
   create_mappings(send_map,recv_map,nb_vars);
+
+  // std::cout << myproc << "  :  send_map  = ";
+  // for( int i=0; i< send_map.size(); ++i)
+  //   std::cout << send_map[i] << " ";
+  // std::cout << std::endl;
+
+  // std::cout << myproc << "  :  recv_map  = ";
+  // for( int i=0; i< recv_map.size(); ++i)
+  //   std::cout << recv_map[i] << " ";
+  // std::cout << std::endl;
 
   /// -----------------------------------------------------------
   /// With mappings and everything in place, we can now call MPI

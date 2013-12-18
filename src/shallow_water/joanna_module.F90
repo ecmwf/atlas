@@ -142,7 +142,7 @@ contains
       read(5,*) x, y, v
       if ( keep_node(jnode).eq.1 ) then
         inode = node_loc_idx(jnode)
-        coords(inode,:) = [x, y]
+        coords(:,inode) = [x, y]
         vol(inode) = v
         if( proc(inode) .eq. myproc ) then
           owned_node_cnt = owned_node_cnt + 1
@@ -194,7 +194,7 @@ contains
       read(5,*) idx, sx, sy
       if ( keep_edge(jedge).eq.1 ) then
         iedge = edge_loc_idx(jedge)
-        S(iedge,:) = [sx, sy]
+        S(:,iedge) = [sx, sy]
       end if
     enddo
 
@@ -320,8 +320,8 @@ contains
 
       do jnode=1,nb_nodes
         inode = plot_idx(jnode)
-        write(11,*) jnode, coords(inode,XX), coords(inode,YY), &
-          & D(inode), Q(inode,XX)/D(inode), Q(inode,YY)/D(inode), D(inode)
+        write(11,*) jnode, coords(XX,inode), coords(YY,inode), &
+          & D(inode), Q(XX,inode)/D(inode), Q(YY,inode)/D(inode), D(inode)
       enddo
       close(21)
     end if
@@ -466,7 +466,7 @@ contains
           owned_node_cnt = owned_node_cnt + 1
         end if
         do jlev = 1, nb_levels
-          coords(inode,:) = [x, y]
+          coords(:,inode) = [x, y]
           vol(jlev,inode) = v
         end do
       end if
@@ -517,7 +517,7 @@ contains
       read(5,*) idx, sx, sy
       if ( keep_edge(jedge).eq.1 ) then
         iedge = edge_loc_idx(jedge)
-        S(iedge,:) = [sx, sy]
+        S(:,iedge) = [sx, sy]
       end if
     enddo
 

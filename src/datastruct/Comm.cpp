@@ -131,6 +131,16 @@ void HaloExchange::setup( const int proc[],
     if ( b != par_bound_ && bounds_[b] >= 0)
       packet_size_ *= bounds_[b];
   }
+
+  // std::cout << myproc << "  :  sync_sendmap_  = ";
+  // for( int i=0; i< sync_sendmap_.size(); ++i)
+  //   std::cout << sync_sendmap_[i] << " ";
+  // std::cout << std::endl;
+
+  // std::cout << myproc << "  :  sync_recvmap_  = ";
+  // for( int i=0; i< sync_recvmap_.size(); ++i)
+  //   std::cout << sync_recvmap_[i] << " ";
+  // std::cout << std::endl;
 }
 
 
@@ -145,19 +155,46 @@ inline void HaloExchange::create_mappings_impl<2,0>(
   int send_idx(0);
   for (int jnode=0; jnode<sync_sendcnt_; ++jnode)
   {
+    const int inode = sync_sendmap_[jnode];
     for (int jvar=0; jvar<nb_vars; ++jvar)
     {
-      const int inode = sync_sendmap_[jnode];
       send_map[send_idx++] = index( inode,jvar,   nb_nodes,nb_vars);
     }
   }
   int recv_idx(0);
   for (int jnode=0; jnode<sync_recvcnt_; ++jnode)
   {
+    const int inode = sync_recvmap_[jnode];
     for (int jvar=0; jvar<nb_vars; ++jvar)
     {
-      const int inode = sync_recvmap_[jnode];
       recv_map[recv_idx++] = index( inode,jvar,   nb_nodes,nb_vars);;
+    }
+  }
+}
+
+template<>
+inline void HaloExchange::create_mappings_impl<2,1>( 
+    std::vector<int>& send_map, 
+    std::vector<int>& recv_map,
+    int nb_vars) const
+{
+  const int nb_nodes = bounds_[1];
+  int send_idx(0);
+  for (int jnode=0; jnode<sync_sendcnt_; ++jnode)
+  {
+    const int inode = sync_sendmap_[jnode];
+    for (int jvar=0; jvar<nb_vars; ++jvar)
+    {
+      send_map[send_idx++] = index( jvar, inode,  nb_vars, nb_nodes);
+    }
+  }
+  int recv_idx(0);
+  for (int jnode=0; jnode<sync_recvcnt_; ++jnode)
+  {
+    const int inode = sync_recvmap_[jnode];
+    for (int jvar=0; jvar<nb_vars; ++jvar)
+    {
+      recv_map[recv_idx++] = index( jvar, inode,  nb_vars, nb_nodes);
     }
   }
 }
@@ -218,6 +255,9 @@ void HaloExchange::create_mappings(
       {
         case 0:
           create_mappings_impl<2,0>(send_map,recv_map,nb_vars);
+          break;
+        case 1:
+          create_mappings_impl<2,1>(send_map,recv_map,nb_vars);
           break;
         default:
           std::stringstream errmsg;

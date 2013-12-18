@@ -798,17 +798,17 @@ contains
     real(kind=c_double) :: recvbuffer(comm%gather_recvcnt)
     integer :: jj, nb_vars, jvar
 
-    nb_vars = size(loc_field,2)
+    nb_vars = size(loc_field,1)
 
     if( .not. allocated( glb_field) ) then
-      allocate( glb_field( comm%glb_field_size(), nb_vars ) )
+      allocate( glb_field( nb_vars, comm%glb_field_size() ) )
     end if
 
     do jvar=1,nb_vars
 
       ! Pack
       do jj=1,comm%gather_sendcnt
-        sendbuffer(jj) = loc_field(comm%gather_sendmap(jj),jvar)
+        sendbuffer(jj) = loc_field(jvar, comm%gather_sendmap(jj))
       end do
 
       ! Communicate
@@ -818,7 +818,7 @@ contains
     
       ! Unpack
       do jj=1,comm%gather_recvcnt
-         glb_field( comm%gather_recvmap(jj), jvar ) = recvbuffer(jj)
+         glb_field( jvar, comm%gather_recvmap(jj) ) = recvbuffer(jj)
       end do
     end do
 
@@ -832,11 +832,11 @@ contains
     real(kind=c_double) :: recvbuffer(comm%gather_recvcnt*size(loc_field,1))
     integer :: jj, nb_vars, jvar, jlev, nb_levels
 
-    nb_levels = size(loc_field,1)
-    nb_vars = size(loc_field,3)
+    nb_levels = size(loc_field,2)
+    nb_vars = size(loc_field,1)
 
     if( .not. allocated( glb_field) ) then
-      allocate( glb_field( nb_levels, comm%glb_field_size(), nb_vars ) )
+      allocate( glb_field( nb_vars, nb_levels, comm%glb_field_size() ) )
     end if
 
     do jvar=1,nb_vars
@@ -844,7 +844,7 @@ contains
       ! Pack
       do jj=1,comm%gather_sendcnt
         do jlev=1,nb_levels
-          sendbuffer((jj-1)*nb_levels+jlev) = loc_field(jlev,comm%gather_sendmap(jj),jvar)
+          sendbuffer((jj-1)*nb_levels+jlev) = loc_field(jvar,jlev,comm%gather_sendmap(jj))
         end do
       end do
 
@@ -856,7 +856,7 @@ contains
       ! Unpack
       do jj=1,comm%gather_recvcnt
         do jlev=1,nb_levels
-          glb_field( jlev, comm%gather_recvmap(jj), jvar ) = recvbuffer((jj-1)*nb_levels+jlev)
+          glb_field(jvar, jlev, comm%gather_recvmap(jj) ) = recvbuffer((jj-1)*nb_levels+jlev)
         end do
       end do
     end do
@@ -905,14 +905,14 @@ contains
     nb_vars = size(loc_field,2)
 
     if( .not. allocated( glb_field) ) then
-      allocate( glb_field( comm%glb_field_size(), nb_vars ) )
+      allocate( glb_field( nb_vars, comm%glb_field_size() ) )
     end if
 
     do jvar=1,nb_vars
 
       ! Pack
       do jj=1,comm%gather_sendcnt
-        sendbuffer(jj) = loc_field(comm%gather_sendmap(jj),jvar)
+        sendbuffer(jj) = loc_field(jvar,comm%gather_sendmap(jj))
       end do
 
       ! Communicate
@@ -922,16 +922,16 @@ contains
     
       ! Unpack
       do jj=1,comm%gather_recvcnt
-         glb_field( comm%gather_recvmap(jj), jvar ) = recvbuffer(jj)
+         glb_field( jvar, comm%gather_recvmap(jj) ) = recvbuffer(jj)
       end do
     end do
 
   end subroutine gather_real32_rank2
 
-  function glb_field_size(comm) result(rows)
+  function glb_field_size(comm) result(nb_nodes)
     class(Comm_type), intent(in) :: comm
-    integer :: rows
-    rows = comm%gather_recvcnt
+    integer :: nb_nodes
+    nb_nodes = comm%gather_recvcnt
   end function glb_field_size
 
 end module parallel_module

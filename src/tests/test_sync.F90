@@ -39,11 +39,11 @@ program test_sync
 
     nb_nodes = [ 5, 6, 7 ]
     length = nb_nodes(myproc+1)
-    bounds = [ length , -1 ]
+    bounds = [ -1, length ]
     allocate( proc(length) )
     allocate( glb_idx(length) )
     allocate( field(length) )
-    allocate( vectorfield(length,2) )  
+    allocate( vectorfield(2,length) )  
 
     select case (myproc)
       case (0)
@@ -59,8 +59,8 @@ program test_sync
         glb_idx = [5,6,7,8,9,1,2]
         field = [-1,-1,7,8,9,-1,-1]
     end select
-    vectorfield(:,1) = field*10
-    vectorfield(:,2) = field*100
+    vectorfield(1,:) = field*10
+    vectorfield(2,:) = field*100
 
     vectorfield_ptr => vectorfield
     ! Setup a communicator for synchronisation
@@ -71,7 +71,7 @@ program test_sync
     call function_space%parallelise( proc, glb_idx )
     
     ! Or we can setup a custom halo_exchange object
-    call halo_exchange%setup(proc, glb_idx, bounds, parallel_bound)
+    !call halo_exchange%setup(proc, glb_idx, bounds, parallel_bound)
     
     ! Update the field values whose proc is not myproc
     ! This is the older fortran implementation
@@ -81,7 +81,8 @@ program test_sync
     ! Halo exchange through the function_space (We don't need to know nbvars)
     call function_space%halo_exchange(field)
     call function_space%halo_exchange(vectorfield)
-    !call function_space%halo_exchange(vectorfield(:,1))
+    !call function_space%halo_exchange(vectorfield(:))
+
     !call function_space%halo_exchange(vectorfield(:,2))
  
     ! Halo exchange through the custom halo_exchange object
@@ -92,13 +93,13 @@ program test_sync
 
     ! Verify that update happened correctly
     write(log_str,*) myproc, ": field            = ", field; call log_info()
-    write(log_str,*) myproc, ": vectorfield(:,1) = ", vectorfield(:,1); call log_info()
-    write(log_str,*) myproc, ": vectorfield(:,2) = ", vectorfield(:,2); call log_info()
+    write(log_str,*) myproc, ": vectorfield(1,:) = ", vectorfield(1,:); call log_info()
+    write(log_str,*) myproc, ": vectorfield(2,:) = ", vectorfield(2,:); call log_info()
 
-    call comm%gather(field, glb_field)
+    !call comm%gather(field, glb_field)
 
-    call set_log_proc(0)
-    write(log_str,*) myproc, ": glb_field        = ", glb_field; call log_info()
+    !call set_log_proc(0)
+    !write(log_str,*) myproc, ": glb_field        = ", glb_field; call log_info()
 
   else
     call set_log_proc(0)

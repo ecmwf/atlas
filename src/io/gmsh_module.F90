@@ -29,16 +29,16 @@ contains
       write(51,*) 0                     ! the time step (0; time steps always start at 0)
       if (field%nb_vars() == 1) write(51,*) 1    ! 1-component (scalar) field
       if (field%nb_vars() == 2) write(51,*) 3    ! 3-component (vector) field
-      write(51,*) size(glb_field,1)          ! number of associated nodal values
+      write(51,*) size(glb_field,2)          ! number of associated nodal values
 
       if (field%nb_vars() == 1) then
-        do jnode=1,glb_rows
-          write(51,'(1I8,E18.10)') jnode, glb_field(jnode,1)
+        do jnode=1,size(glb_field,2)
+          write(51,'(1I8,E18.10)') jnode, glb_field(1,jnode)
         enddo
       endif
       if (field%nb_vars() == 2) then
         do jnode=1,glb_rows
-          write(51,'(1I8,E18.10,E18.10,F3.0)') jnode, glb_field(jnode,1), glb_field(jnode,2), 0.0
+          write(51,'(1I8,E18.10,E18.10,F3.0)') jnode, glb_field(1,jnode), glb_field(2,jnode), 0.0
         enddo
       endif
       write(51,'(A)')"$EndNodeData"
@@ -70,8 +70,8 @@ contains
     write(50,*) dstruct%nb_nodes
     do jnode=1, dstruct%nb_nodes
       r     = 6371.
-      phi   = coords(jnode,XX)
-      theta = -(coords(jnode,YY)+pi/2.)
+      phi   = coords(XX,jnode)
+      theta = -(coords(YY,jnode)+pi/2.)
       x = r*sin(theta)*cos(phi)
       y = r*sin(theta)*sin(phi)
       z = r*cos(theta)
@@ -157,17 +157,17 @@ contains
         gidn = (jnode-1)*nb_levels
         if (field%nb_vars() == 1) then
           do jlev=1,nb_levels
-            write(51,'(1I8,E18.10)') gidn+jlev, glb_field(jlev,jnode,1)
+            write(51,'(1I8,E18.10)') gidn+jlev, glb_field(1,jlev,jnode)
           enddo
         endif
         if (field%nb_vars() == 2) then
           do jlev=1,nb_levels
-            write(51,'(1I8,E18.10,E18.10,F3.0)') gidn+jlev, glb_field(jlev,jnode,1), glb_field(jlev,jnode,2), 0.0
+            write(51,'(1I8,E18.10,E18.10,F3.0)') gidn+jlev, glb_field(1,jlev,jnode), glb_field(2,jlev,jnode), 0.0
           enddo
         endif
         if (field%nb_vars() == 3) then
           do jlev=1,nb_levels
-            write(51,'(1I8,E18.10,E18.10,F3.0)') gidn+jlev, glb_field(jlev,jnode,1), glb_field(jlev,jnode,2), glb_field(jlev,jnode,3)
+            write(51,'(1I8,E18.10,E18.10,F3.0)') gidn+jlev, glb_field(1,jlev,jnode), glb_field(2,jlev,jnode), glb_field(3,jlev,jnode)
           enddo
         endif
       end do
@@ -202,8 +202,8 @@ contains
     write(50,*) dstruct%nb_nodes * dstruct%nb_levels
     do jnode=1, dstruct%nb_nodes
       gidn = (dstruct%nodes_glb_idx(jnode)-1)*dstruct%nb_levels
-      phi   = coords(jnode,XX)
-      theta = -(coords(jnode,YY)+pi/2.)
+      phi   = coords(XX,jnode)
+      theta = -(coords(YY,jnode)+pi/2.)
 
       do jlev=1, dstruct%nb_levels
         r     = 6371. + 6371.*.1*(jlev-1._jprw)
