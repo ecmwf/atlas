@@ -70,17 +70,33 @@ template<typename DATA_TYPE>
 void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
 {
   using namespace detail;
+  int tag=1;
+  int ierr;
+  int ibuf;
+  int point_size = packet_size_ * nb_vars;
+  int send_size = sync_sendcnt_ * point_size;
+  int recv_size = sync_recvcnt_ * point_size;
+
+#ifndef STACK_ARRAYS
+  std::vector<DATA_TYPE> send_buffer(send_size);
+  std::vector<DATA_TYPE> recv_buffer(recv_size);
   std::vector<MPI_Request> send_req(nproc);
   std::vector<MPI_Request> recv_req(nproc);
   std::vector<int> send_displs(nproc);
   std::vector<int> recv_displs(nproc);
   std::vector<int> send_counts(nproc);
   std::vector<int> recv_counts(nproc);
-  int tag=1;
-  int ierr;
-  int send_size = sync_sendcnt_ * packet_size_ * nb_vars;
-  int recv_size = sync_recvcnt_ * packet_size_ * nb_vars;
-  int point_size = packet_size_ * nb_vars;
+#else // This seems to be slower on Intel ICC 13.0.1
+  DATA_TYPE send_buffer[send_size];
+  DATA_TYPE recv_buffer[recv_size];
+  MPI_Request send_req[nproc];
+  MPI_Request recv_req[nproc];
+  int send_displs[nproc];
+  int recv_displs[nproc];
+  int send_counts[nproc];
+  int recv_counts[nproc];
+#endif
+
 
   // std::cout << myproc << "  :  field before = ";
   // for( int i=0; i< nb_vars*bounds_[par_bound_]; ++i)
@@ -94,9 +110,9 @@ void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
     send_displs[jproc] = sync_senddispls_[jproc]*point_size;
     recv_displs[jproc] = sync_recvdispls_[jproc]*point_size;
   }
-  std::vector<int> send_map(send_size);
-  std::vector<int> recv_map(recv_size);
-  create_mappings(send_map,recv_map,nb_vars);
+  //std::vector<int> send_map(send_size);
+  //std::vector<int> recv_map(recv_size);
+  //create_mappings(send_map,recv_map,nb_vars);
 
   // std::cout << myproc << "  :  send_map  = ";
   // for( int i=0; i< send_map.size(); ++i)
@@ -110,8 +126,7 @@ void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
 
   /// -----------------------------------------------------------
   /// With mappings and everything in place, we can now call MPI
-  std::vector<DATA_TYPE> send_buffer(send_size);
-  std::vector<DATA_TYPE> recv_buffer(recv_size);
+
 
   /// Let MPI know what we like to receive
   for( int jproc=0; jproc<nproc; ++jproc )
@@ -124,8 +139,13 @@ void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
   }
 
   /// Pack
-  for( int ii=0; ii<send_size; ++ii)
-    send_buffer[ii] = field[ send_map[ii] ];
+  ibuf=0;
+  for( int jj=0; jj<sync_sendcnt_; ++jj)
+  {
+    const int ii = point_size*sync_sendmap_[jj];
+    for( int ip=0; ip<point_size; ++ip )
+      send_buffer[ibuf++] = field[ ii + ip ];
+  }
 
   /// Send
   for( int jproc=0; jproc<nproc; ++jproc )
@@ -147,9 +167,12 @@ void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
   }
 
   /// Unpack
-  for( int ii=0; ii<recv_size; ++ii)
+  ibuf = 0;
+  for( int jj=0; jj<sync_recvcnt_; ++jj)
   {
-    field[ recv_map[ii] ] = recv_buffer[ii];
+    const int ii = point_size*sync_recvmap_[jj];
+    for( int ip=0; ip<point_size; ++ip)
+      field[ ii + ip ] = recv_buffer[ibuf++];
   }
 
   /// Wait for sending to finish
