@@ -37,15 +37,9 @@ private: // methods
   template<int N, int P>
   void create_mappings_impl( std::vector<int>& send_map, std::vector<int>& recv_map, int nb_vars ) const;
 
-  int index(int i, int j, int k, int ni, int nj, int nk) const
-  {
-    return( i + ni*( j + nj*k) );
-  }
+  int index(int i, int j, int k, int ni, int nj, int nk) const { return( i + ni*( j + nj*k) ); }
 
-  int index(int i, int j, int ni, int nj) const
-  {
-    return( i + ni*j );
-  }
+  int index(int i, int j, int ni, int nj) const { return( i + ni*j ); }
 
 
 private: // data
@@ -69,6 +63,8 @@ private: // data
 template<typename DATA_TYPE>
 void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
 {
+#define FIELD_CONTIGUOUS true
+
   using namespace detail;
   int tag=1;
   int ierr;
@@ -110,10 +106,13 @@ void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
     send_displs[jproc] = sync_senddispls_[jproc]*point_size;
     recv_displs[jproc] = sync_recvdispls_[jproc]*point_size;
   }
-  //std::vector<int> send_map(send_size);
-  //std::vector<int> recv_map(recv_size);
-  //create_mappings(send_map,recv_map,nb_vars);
 
+#ifndef FIELD_CONTIGUOUS
+  // Create additional mapping
+  std::vector<int> send_map(send_size);
+  std::vector<int> recv_map(recv_size);
+  create_mappings(send_map,recv_map,nb_vars);
+#endif
   // std::cout << myproc << "  :  send_map  = ";
   // for( int i=0; i< send_map.size(); ++i)
   //   std::cout << send_map[i] << " ";
@@ -127,7 +126,6 @@ void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
   /// -----------------------------------------------------------
   /// With mappings and everything in place, we can now call MPI
 
-
   /// Let MPI know what we like to receive
   for( int jproc=0; jproc<nproc; ++jproc )
   {
@@ -139,13 +137,20 @@ void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
   }
 
   /// Pack
-  ibuf=0;
+#ifndef FIELD_CONTIGUOUS
+  // Use additional mapping
+  for( int jj=0; jj<send_size; ++jj)
+    send_buffer[jj] = field[ send_map[jj] ];
+#else
+  // Use original mapping + contiguous bits
+  ibuf = 0;
   for( int jj=0; jj<sync_sendcnt_; ++jj)
   {
     const int ii = point_size*sync_sendmap_[jj];
     for( int ip=0; ip<point_size; ++ip )
       send_buffer[ibuf++] = field[ ii + ip ];
   }
+#endif
 
   /// Send
   for( int jproc=0; jproc<nproc; ++jproc )
@@ -167,6 +172,14 @@ void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
   }
 
   /// Unpack
+#ifndef FIELD_CONTIGUOUS
+  // Use additional mapping
+  for( int jj=0; jj<recv_size; ++jj)
+  {
+    field[ recv_map[jj] ] = recv_buffer[jj];
+  }
+#else
+  // Use original mapping + contiguous bits
   ibuf = 0;
   for( int jj=0; jj<sync_recvcnt_; ++jj)
   {
@@ -174,6 +187,7 @@ void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
     for( int ip=0; ip<point_size; ++ip)
       field[ ii + ip ] = recv_buffer[ibuf++];
   }
+#endif
 
   /// Wait for sending to finish
   for (int jproc=0; jproc<nproc; ++jproc)
