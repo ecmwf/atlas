@@ -23,6 +23,17 @@ integer, parameter, public :: jprw = jprb
 
 integer, parameter, public :: XX = 1
 integer, parameter, public :: YY = 2
+integer, parameter, public :: ZZ = 3
+
+integer, parameter, public :: XXDXX = 1
+integer, parameter, public :: XXDYY = 2
+integer, parameter, public :: YYDXX = 3
+integer, parameter, public :: YYDYY = 4
+integer, parameter, public :: XXDZZ = 5
+integer, parameter, public :: YYDZZ = 6
+integer, parameter, public :: ZZDXX = 7
+integer, parameter, public :: ZZDYY = 8
+integer, parameter, public :: ZZDZZ = 9
 
 integer, parameter, public :: LOG_LEVEL_DEBUG   = 4
 integer, parameter, public :: LOG_LEVEL_INFO    = 3
