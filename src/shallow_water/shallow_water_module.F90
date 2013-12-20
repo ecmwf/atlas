@@ -14,12 +14,13 @@ module mpdata_module
   public :: mpdata_gauge_D
   public :: mpdata_gauge_U
   public :: compute_gradient
+  public :: compute_gradient_tensor
 
   real(kind=jprw), parameter :: eps = 1.e-6
 
 contains
 
-  subroutine mpdata_gauge_D(dt,D,V,VDS,order,limited,dstruct )
+  subroutine mpdata_gauge_D(dt,D,V,VDS,order,limited,dstruct)
     real(kind=jprw), intent(in)  :: dt
     type(DataStructure_type), intent(inout) :: dstruct
     real(kind=jprw), intent(inout) :: D(:)
@@ -28,8 +29,6 @@ contains
     integer, intent(in) :: order
     real(kind=jprw), intent(out) :: VDS(dstruct%nb_edges)
 
-    logical, parameter :: D_is_vector_component = .False.
-    
     integer :: jnode, jedge, iedge, jpass, ip1,ip2
     real(kind=jprw) :: sx, sy, volume_of_two_cells, dDdx, dDdy, Vx, Vy, apos, aneg
     real(kind=jprw) :: Dmin(dstruct%nb_nodes)
@@ -42,7 +41,6 @@ contains
     real(kind=jprw) :: aun(dstruct%nb_edges)
     real(kind=jprw) :: gradD(2,dstruct%nb_nodes)
     real(kind=jprw), pointer :: vol(:), S(:,:), pole_bc(:)
-    
 
     vol     => scalar_field_2d("dual_volumes",dstruct)
     S       => vector_field_2d("dual_normals",dstruct)
@@ -104,7 +102,7 @@ contains
     do jpass=2,order
 
       ! Compute derivatives for mpdata
-      call compute_gradient(D, gradD, D_is_vector_component, dstruct)
+      call compute_gradient(D, gradD, dstruct)
 
       call halo_exchange(gradD,dstruct)
 
@@ -234,7 +232,7 @@ contains
     integer, intent(in) :: order
     integer :: jnode, jedge, iedge, jpass, ip1,ip2
     real(kind=jprw) :: Sx, Sy, Ssqr, volume_of_two_cells, dUdx(2), dUdy(2), Vx, Vy
-    real(kind=jprw) :: apos(2), aneg(2), x1, x2, y1, y2, length
+    real(kind=jprw) :: apos(2), aneg(2), x1, x2, y1, y2
     real(kind=jprw) :: Umin(2,dstruct%nb_nodes)
     real(kind=jprw) :: Umax(2,dstruct%nb_nodes)
     real(kind=jprw) :: rhin(2)
@@ -245,14 +243,12 @@ contains
     real(kind=jprw) :: aun(2,dstruct%nb_edges)
     real(kind=jprw) :: fluxv(2,dstruct%nb_edges)
     real(kind=jprw) :: gradU(4,dstruct%nb_nodes)
-    real(kind=jprw) :: V(2,dstruct%nb_edges)
+    real(kind=jprw) :: VD(2,dstruct%nb_edges)
     real(kind=jprw) :: VDnodes(2,dstruct%nb_nodes)
-    real(kind=jprw) :: Lengths(dstruct%nb_nodes)
+    real(kind=jprw) :: sum_inv_distance
+    real(kind=jprw) :: inv_distance(dstruct%nb_nodes)
     real(kind=jprw) :: Utmp(2,dstruct%nb_nodes)
-
     real(kind=jprw) :: volD(dstruct%nb_nodes)
-
-
     real(kind=jprw), pointer :: vol(:), S(:,:), pole_bc(:), coords(:,:)
 
     vol     => scalar_field_2d("dual_volumes",dstruct)
@@ -260,47 +256,49 @@ contains
     pole_bc => scalar_field_2d("pole_bc",dstruct)
     coords  => vector_field_2d("coordinates",dstruct)
 
-    volD(:) = vol(:)*D(:)
-    Lengths(:) = 0.
-    VDnodes(:,:) = 0.
+    !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2,Sx,Sy,Ssqr,x1,x2,y1,y2)
     do jedge=1,dstruct%nb_edges
+      ip1 = dstruct%edges(jedge,1)
+      ip2 = dstruct%edges(jedge,2)
       Sx = S(XX,jedge)
       Sy = S(YY,jedge)
       Ssqr =  Sx*Sx + Sy*Sy 
-      V(XX,jedge) = Sx/Ssqr * VDS(jedge)
-      V(YY,jedge) = Sy/Ssqr * VDS(jedge)
-
-      ip1 = dstruct%edges(jedge,1)
-      ip2 = dstruct%edges(jedge,2)
+      VD(XX,jedge) = Sx/Ssqr * VDS(jedge)
+      VD(YY,jedge) = Sy/Ssqr * VDS(jedge)
       x1 = coords(XX,ip1)
       x2 = coords(XX,ip2)
       y1 = coords(YY,ip1)
       y2 = coords(YY,ip2)
-      length = 1._jprw/sqrt( (x2-x1)**2 + (y2-y1)**2 )
-      Lengths(ip1) = Lengths(ip1) + length
-      Lengths(ip2) = Lengths(ip2) + length
-      VDnodes(XX,ip1) = VDnodes(XX,ip1) + V(XX,jedge) * length
-      VDnodes(XX,ip2) = VDnodes(XX,ip2) + V(XX,jedge) * length
-      VDnodes(YY,ip1) = VDnodes(YY,ip1) + V(YY,jedge) * length
-      VDnodes(YY,ip2) = VDnodes(YY,ip2) + V(YY,jedge) * length
+      inv_distance(jedge) = 1._jprw/sqrt( (x2-x1)**2 + (y2-y1)**2 )
     end do
+    !$OMP END PARALLEL DO
 
-    call halo_exchange(VDnodes,dstruct) ! Umax and Umin could be synced here
-    call halo_exchange(Lengths,dstruct) ! Umax and Umin could be synced here
-
+    !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,sum_inv_distance,jedge,iedge)
     do jnode=1,dstruct%nb_nodes
-      VDnodes(:,jnode) = VDnodes(:,jnode) / Lengths(jnode)
+      volD(jnode) = vol(jnode)*D(jnode)
+      sum_inv_distance = 0._jprw
+      VDnodes(:,jnode) = 0._jprw
+      do jedge = 1,dstruct%nb_neighbours(jnode)
+        iedge = dstruct%my_edges(jedge,jnode)
+        sum_inv_distance = sum_inv_distance + inv_distance(iedge)
+        VDnodes(:,jnode) = VDnodes(:,jnode) + VD(:,iedge) * inv_distance(iedge)
+      enddo
+      VDnodes(:,jnode) = VDnodes(:,jnode) / sum_inv_distance
     end do
+    !$OMP END PARALLEL DO
 
+    !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2)
     do jedge=1,dstruct%nb_edges
       ip1 = dstruct%edges(jedge,1)
       ip2 = dstruct%edges(jedge,2)
-      V(:,jedge) = 0.5_jprw * (VDnodes(:,ip1) + VDnodes(:,ip2) )
+      VD(:,jedge) = 0.5_jprw * (VDnodes(:,ip1) + VDnodes(:,ip2) )
     end do
+    !$OMP END PARALLEL DO
+
 
     do jedge=1,dstruct%nb_pole_edges
       iedge = dstruct%pole_edges(jedge)
-      V(YY,iedge) = 0.
+      VD(YY,iedge) = 0.
     enddo
 
 
@@ -317,11 +315,9 @@ contains
 
     ! Compute the normal velocity in faces, and advection in vertices
 
-    !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,Sx,Sy,Vx,Vy,ip1,ip2,apos,aneg)
+    !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2,apos,aneg)
     do jedge = 1,dstruct%nb_edges
-      !aun(jedge) = V(jedge,XX)*S(jedge,XX) + V(jedge,YY)*S(jedge,YY)
       aun(:,jedge) = VDS(jedge)
-
       ip1 = dstruct%edges(jedge,1)
       ip2 = dstruct%edges(jedge,2)
       apos(:) = max(0._jprw,aun(:,jedge))
@@ -341,17 +337,18 @@ contains
       endif
      ! Update the unknowns in vertices
      U(:,jnode) = U(:,jnode) - adv(:)/max(eps,volD(jnode)) * dt
-     Utmp(:,jnode) = U(:,jnode)
-     U(:,jnode) = U(:,jnode)*DR(jnode)
+
     enddo
     !$OMP END PARALLEL DO
 
-    call halo_exchange(Utmp,dstruct) ! Umax and Umin could be synced here
-    call halo_exchange(U,dstruct) ! Umax and Umin could be synced here
+    call halo_exchange(U,dstruct) 
 
-
-
-
+    !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode)
+    do jnode = 1,dstruct%nb_nodes
+      Utmp(:,jnode) = U(:,jnode)
+      U(:,jnode) = U(:,jnode)*DR(jnode)
+    enddo
+    !$OMP END PARALLEL DO
 
     ! 2. Other passes (making the spatial discretisation higher-order)
     ! ----------------------------------------------------------------
@@ -376,8 +373,8 @@ contains
         dUdx(YY) = (gradU(YYDXX,ip1)+gradU(YYDXX,ip2)) / volume_of_two_cells
         dUdy(XX) = (gradU(XXDYY,ip1)+gradU(XXDYY,ip2)) / volume_of_two_cells
         dUdy(YY) = (gradU(YYDYY,ip1)+gradU(YYDYY,ip2)) / volume_of_two_cells
-        Vx = V(XX,jedge)
-        Vy = V(YY,jedge)
+        Vx = VD(XX,jedge)
+        Vy = VD(YY,jedge)
         ! variable sign option with asymptotic analysis, (mpdata gauge)
         aun(:,jedge) = abs(aun(:,jedge))*(U(:,ip2)-U(:,ip1))*0.5_jprw &
           &          -0.5_jprw*dt*aun(:,jedge)*(Vx*dUdx(:)+Vy*dUdy(:))  ! = VDS*dUds
@@ -484,11 +481,10 @@ contains
   
   
 
-  subroutine compute_gradient(Q,gradQ,Q_is_vector_component,dstruct)
+  subroutine compute_gradient(Q,gradQ,dstruct)
     type(DataStructure_type), intent(inout) :: dstruct
     real(kind=jprw), intent(in)    :: Q(:)
     real(kind=jprw), intent(inout) :: gradQ(:,:)
-    logical, intent(in) :: Q_is_vector_component
     real(kind=jprw), pointer :: S(:,:)
     real(kind=jprw) :: Sx,Sy,avgQ
     integer :: jedge,iedge,ip1,ip2,jnode
@@ -524,19 +520,16 @@ contains
 
     ! special treatment for the north & south pole cell faces
     ! Sx == 0 at pole, and Sy has same sign at both sides of pole
-    if (.not. Q_is_vector_component) then
-      do jedge = 1,dstruct%nb_pole_edges
-        iedge = dstruct%pole_edges(jedge)
-        ip1   = dstruct%edges(iedge,1)
-        ip2   = dstruct%edges(iedge,2)
-        Sy    = S(YY,iedge)
-        avgQ  = ( Q(ip1) + Q(ip2) )*0.5_jprw
+    do jedge = 1,dstruct%nb_pole_edges
+      iedge = dstruct%pole_edges(jedge)
+      ip1   = dstruct%edges(iedge,1)
+      ip2   = dstruct%edges(iedge,2)
+      Sy    = S(YY,iedge)
+      avgQ  = ( Q(ip1) + Q(ip2) )*0.5_jprw
 
-        ! correct for wrong Y-derivatives in previous loop,
-        gradQ(YY,ip2) = gradQ(YY,ip2) + 2._jprw*Sy*avgQ 
-
-      end do
-    end if
+      ! correct for wrong Y-derivatives in previous loop,
+      gradQ(YY,ip2) = gradQ(YY,ip2) + 2._jprw*Sy*avgQ 
+    end do
   end subroutine compute_gradient
 
 
@@ -601,7 +594,7 @@ module shallow_water_module
   use datastruct_module
   use mpdata_module, &
     & only: mpdata_gauge_D, mpdata_gauge_U, &
-    &       compute_gradient
+    &       compute_gradient, compute_gradient_tensor
 
   implicit none
   private
@@ -912,7 +905,7 @@ contains
     integer :: jnode, jedge, iedge, ip1, ip2
     real(kind=jprw), dimension(:),   pointer :: D, D0, hx, hy, vol
     real(kind=jprw), dimension(:,:), pointer :: U, U0, R, Vedges, coords
-    real(kind=jprw) :: Vnodes(2,dstruct%nb_nodes), grad_Vx(2,dstruct%nb_nodes), grad_Vy(2,dstruct%nb_nodes)
+    real(kind=jprw) :: Vnodes(2,dstruct%nb_nodes), grad_Vnodes(4,dstruct%nb_nodes)
 
     coords => vector_field_2d("coordinates",dstruct)
     Vedges => vector_field_2d("advective_velocity",dstruct)
@@ -931,8 +924,7 @@ contains
         Vnodes(:,jnode)=(U(:,jnode)+0.5*dt*R(:,jnode)) 
       end do
       !$OMP END PARALLEL DO
-      call compute_gradient( Vnodes(XX,:), grad_Vx, .True., dstruct )
-      call compute_gradient( Vnodes(YY,:), grad_Vy, .True., dstruct )
+      call compute_gradient_tensor( Vnodes, grad_Vnodes, dstruct )
 
       !dir$ ivdep
       !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Vx,Vy,Rx,Ry,dVxdx,dVxdy,dVydx,dVydy)
@@ -941,10 +933,10 @@ contains
         Vy = Vnodes(YY,jnode)
         Rx = R(XX,jnode)
         Ry = R(YY,jnode)
-        dVxdx = grad_Vx(XX,jnode)*hy(jnode)/vol(jnode)
-        dVxdy = grad_Vx(YY,jnode)*hx(jnode)/vol(jnode)
-        dVydx = grad_Vy(XX,jnode)*hy(jnode)/vol(jnode)    
-        dVydy = grad_Vy(YY,jnode)*hx(jnode)/vol(jnode)
+        dVxdx = grad_Vnodes(XXDXX,jnode)*hy(jnode)/vol(jnode)
+        dVxdy = grad_Vnodes(XXDYY,jnode)*hx(jnode)/vol(jnode)
+        dVydx = grad_Vnodes(YYDXX,jnode)*hy(jnode)/vol(jnode)    
+        dVydy = grad_Vnodes(YYDYY,jnode)*hx(jnode)/vol(jnode)
 
         Vnodes(XX,jnode) = ( Vx - 0.5*dt*(Vx*dVxdx+Vy*dVxdy)) * hy(jnode)
         Vnodes(YY,jnode) = ( Vy - 0.5*dt*(Vx*dVydx+Vy*dVydy)) * hx(jnode)
@@ -1002,7 +994,7 @@ contains
     R => vector_field_2d("velocity_forcing",dstruct)
 
     H(:) = H0(:) + D(:)
-    call compute_gradient( H, grad_H, .False., dstruct )
+    call compute_gradient( H, grad_H, dstruct )
 
     !dir$ ivdep
     !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Ux,Uy)
@@ -1063,7 +1055,7 @@ contains
 
     ! D is already up to date at time level (n+1), just by MPDATA advection
     H(:) = H0(:) + D(:)
-    call compute_gradient( H, grad_H, .False., dstruct )
+    call compute_gradient( H, grad_H, dstruct )
 
     !dir$ ivdep
     !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Ux,Uy,Rx_exp,Ry_exp,Ux_adv,Uy_adv,m,Rx,Ry)
