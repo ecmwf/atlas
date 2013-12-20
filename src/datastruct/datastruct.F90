@@ -400,17 +400,17 @@ function c_str(f_str)
 end function c_str
 
 function view1d_int32_rank2(array) result( view )
-  integer, intent(inout), contiguous :: array(:,:)
+  integer, intent(inout) :: array(:,:)
   type(c_ptr) :: array_c_ptr
-  integer, pointer, contiguous :: view(:)
+  integer, pointer :: view(:)
   array_c_ptr = C_LOC(array(1,1))
   call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
 end function view1d_int32_rank2
 
 function view1d_int32_rank3(array) result( view )
-  integer, intent(inout), contiguous :: array(:,:,:)
+  integer, intent(inout) :: array(:,:,:)
   type(c_ptr) :: array_c_ptr
-  integer, pointer, contiguous :: view(:)
+  integer, pointer :: view(:)
   array_c_ptr = C_LOC(array(1,1,1))
   call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
 end function view1d_int32_rank3
@@ -418,7 +418,7 @@ end function view1d_int32_rank3
 function view1d_real32_rank2(array) result( view )
   real(c_float), intent(inout) :: array(:,:)
   type(c_ptr) :: array_c_ptr
-  real(c_float), pointer, contiguous :: view(:)
+  real(c_float), pointer :: view(:)
   if( .not. is_contiguous(array) ) then
     write(0,*) "ERROR: array is not contiguous in view1d"
     call abort()
@@ -428,25 +428,25 @@ function view1d_real32_rank2(array) result( view )
 end function view1d_real32_rank2
 
 function view1d_real32_rank3(array) result( view )
-  real(c_float), intent(inout), contiguous :: array(:,:,:)
+  real(c_float), intent(inout) :: array(:,:,:)
   type(c_ptr) :: array_c_ptr
-  real(c_float), pointer, contiguous :: view(:)
+  real(c_float), pointer :: view(:)
   array_c_ptr = C_LOC(array(1,1,1))
   call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
 end function view1d_real32_rank3
 
 function view1d_real64_rank2(array) result( view )
-  real(c_double), intent(inout), contiguous :: array(:,:)
+  real(c_double), intent(inout) :: array(:,:)
   type(c_ptr) :: array_c_ptr
-  real(c_double), pointer, contiguous :: view(:)
+  real(c_double), pointer :: view(:)
   array_c_ptr = C_LOC(array(1,1))
   call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
 end function view1d_real64_rank2
 
 function view1d_real64_rank3(array) result( view )
-  real(c_double), intent(inout), contiguous :: array(:,:,:)
+  real(c_double), intent(inout) :: array(:,:,:)
   type(c_ptr) :: array_c_ptr
-  real(c_double), pointer, contiguous :: view(:)
+  real(c_double), pointer :: view(:)
   array_c_ptr = C_LOC(array(1,1,1))
   call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
 end function view1d_real64_rank3
@@ -572,7 +572,7 @@ end function FunctionSpace__get_halo_exchange
 
 subroutine FunctionSpace__halo_exchange_int32_r1(this, field_data)
   class(FunctionSpace_type), intent(in) :: this
-  integer, intent(inout), contiguous :: field_data(:)
+  integer, intent(inout) :: field_data(:)
   if (.not. is_contiguous(field_data) ) then
     write(0,*) "ERROR: field_data is not contiguous"
     call abort()
@@ -581,22 +581,22 @@ subroutine FunctionSpace__halo_exchange_int32_r1(this, field_data)
 end subroutine FunctionSpace__halo_exchange_int32_r1
 subroutine FunctionSpace__halo_exchange_int32_r2(this, field_data)
   class(FunctionSpace_type), intent(in) :: this
-  integer, intent(inout), contiguous :: field_data(:,:)
-  integer, pointer, contiguous :: view(:)
+  integer, intent(inout) :: field_data(:,:)
+  integer, pointer :: view(:)
   view => view1d(field_data)
   call ecmwf__FunctionSpace__halo_exchange_int( this%object, view, size(field_data) )
 end subroutine FunctionSpace__halo_exchange_int32_r2
 subroutine FunctionSpace__halo_exchange_int32_r3(this, field_data)
   class(FunctionSpace_type), intent(in) :: this
-  integer, intent(inout), contiguous :: field_data(:,:,:)
-  integer, pointer, contiguous :: view(:)
+  integer, intent(inout) :: field_data(:,:,:)
+  integer, pointer :: view(:)
   view => view1d(field_data)
   call ecmwf__FunctionSpace__halo_exchange_int( this%object, view, size(field_data) )
 end subroutine FunctionSpace__halo_exchange_int32_r3
 
 subroutine FunctionSpace__halo_exchange_real32_r1(this, field_data)
   class(FunctionSpace_type), intent(in) :: this
-  real(c_float), intent(inout), contiguous :: field_data(:)
+  real(c_float), intent(inout) :: field_data(:)
   if (.not. is_contiguous(field_data) ) then
     write(0,*) "ERROR: field_data is not contiguous"
     call abort()
@@ -606,21 +606,21 @@ end subroutine FunctionSpace__halo_exchange_real32_r1
 subroutine FunctionSpace__halo_exchange_real32_r2(this, field_data)
   class(FunctionSpace_type), intent(in) :: this
   real(c_float), intent(inout) :: field_data(:,:)
-  real(c_float), pointer, contiguous :: view(:)
+  real(c_float), pointer :: view(:)
   view => view1d(field_data)
   call ecmwf__FunctionSpace__halo_exchange_float( this%object, view, size(field_data) )
 end subroutine FunctionSpace__halo_exchange_real32_r2
 subroutine FunctionSpace__halo_exchange_real32_r3(this, field_data)
   class(FunctionSpace_type), intent(in) :: this
-  real(c_float), intent(inout), contiguous :: field_data(:,:,:)
-  real(c_float), pointer, contiguous :: view(:)
+  real(c_float), intent(inout) :: field_data(:,:,:)
+  real(c_float), pointer :: view(:)
   view => view1d(field_data)
   call ecmwf__FunctionSpace__halo_exchange_float( this%object, view, size(field_data) )
 end subroutine FunctionSpace__halo_exchange_real32_r3
 
 subroutine FunctionSpace__halo_exchange_real64_r1(this, field_data)
   class(FunctionSpace_type), intent(in) :: this
-  real(c_double), intent(inout), contiguous :: field_data(:)
+  real(c_double), intent(inout) :: field_data(:)
   if (.not. is_contiguous(field_data) ) then
     write(0,*) "ERROR: field_data is not contiguous"
     call abort()
@@ -629,15 +629,15 @@ subroutine FunctionSpace__halo_exchange_real64_r1(this, field_data)
 end subroutine FunctionSpace__halo_exchange_real64_r1
 subroutine FunctionSpace__halo_exchange_real64_r2(this, field_data)
   class(FunctionSpace_type), intent(in) :: this
-  real(c_double), intent(inout), contiguous :: field_data(:,:)
-  real(c_double), pointer, contiguous :: view(:)
+  real(c_double), intent(inout) :: field_data(:,:)
+  real(c_double), pointer :: view(:)
   view => view1d(field_data)
   call ecmwf__FunctionSpace__halo_exchange_double( this%object, view, size(field_data) )
 end subroutine FunctionSpace__halo_exchange_real64_r2
 subroutine FunctionSpace__halo_exchange_real64_r3(this, field_data)
   class(FunctionSpace_type), intent(in) :: this
-  real(c_double), intent(inout), contiguous :: field_data(:,:,:)
-  real(c_double), pointer, contiguous :: view(:)
+  real(c_double), intent(inout) :: field_data(:,:,:)
+  real(c_double), pointer :: view(:)
   view => view1d(field_data)
   call ecmwf__FunctionSpace__halo_exchange_double( this%object, view, size(field_data) )
 end subroutine FunctionSpace__halo_exchange_real64_r3
@@ -684,7 +684,7 @@ subroutine HaloExchange__execute_int32_r2(this, field_data, nb_vars)
   class(HaloExchange_type), intent(in) :: this
   integer, intent(inout) :: field_data(:,:)
   integer, intent(in) :: nb_vars
-  integer, pointer, contiguous :: view(:)
+  integer, pointer :: view(:)
   view => view1d(field_data)
   call ecmwf__HaloExchange__execute_int( this%object, view, nb_vars )
 end subroutine HaloExchange__execute_int32_r2
@@ -694,7 +694,7 @@ subroutine HaloExchange__execute_int32_r3(this, field_data, nb_vars)
   class(HaloExchange_type), intent(in) :: this
   integer, intent(inout) :: field_data(:,:,:)
   integer, intent(in) :: nb_vars
-  integer, pointer, contiguous :: view(:)
+  integer, pointer :: view(:)
   view => view1d(field_data)
   call ecmwf__HaloExchange__execute_int( this%object, view, nb_vars )
 end subroutine HaloExchange__execute_int32_r3
@@ -713,7 +713,7 @@ subroutine HaloExchange__execute_real32_r2(this, field_data, nb_vars)
   class(HaloExchange_type), intent(in) :: this
   real(c_float), intent(inout) :: field_data(:,:)
   integer, intent(in) :: nb_vars
-  real(c_float), pointer, contiguous :: view(:)
+  real(c_float), pointer :: view(:)
   view => view1d(field_data)
   call ecmwf__HaloExchange__execute_float( this%object, view, nb_vars )
 end subroutine HaloExchange__execute_real32_r2
@@ -721,7 +721,7 @@ subroutine HaloExchange__execute_real32_r3(this, field_data, nb_vars)
   class(HaloExchange_type), intent(in) :: this
   real(c_float), intent(inout) :: field_data(:,:,:)
   integer, intent(in) :: nb_vars
-  real(c_float), pointer, contiguous :: view(:)
+  real(c_float), pointer :: view(:)
   view => view1d(field_data)
   call ecmwf__HaloExchange__execute_float( this%object, view, nb_vars )
 end subroutine HaloExchange__execute_real32_r3
@@ -740,7 +740,7 @@ subroutine HaloExchange__execute_real64_r2(this, field_data, nb_vars)
   class(HaloExchange_type), intent(in) :: this
   real(c_double), intent(inout) :: field_data(:,:)
   integer, intent(in) :: nb_vars
-  real(c_double), pointer, contiguous :: view(:)
+  real(c_double), pointer :: view(:)
   view => view1d(field_data)
   call ecmwf__HaloExchange__execute_double( this%object, view, nb_vars )
 end subroutine HaloExchange__execute_real64_r2
@@ -748,7 +748,7 @@ subroutine HaloExchange__execute_real64_r3(this, field_data, nb_vars)
   class(HaloExchange_type), intent(in) :: this
   real(c_double), intent(inout) :: field_data(:,:,:)
   integer, intent(in) :: nb_vars
-  real(c_double), pointer, contiguous :: view(:)
+  real(c_double), pointer :: view(:)
   view => view1d(field_data)
   call ecmwf__HaloExchange__execute_double( this%object, view, nb_vars )
 end subroutine HaloExchange__execute_real64_r3
