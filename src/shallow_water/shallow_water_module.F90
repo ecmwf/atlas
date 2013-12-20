@@ -1081,7 +1081,7 @@ contains
     DR => scalar_field("depth_ratio",geom)
    
     !    mpdata_gauge_D( time, variable, velocity, VDS,  order, limit,  is_vector, geom )
-    call mpdata_gauge_D( dt,   D,        V,        VDS,  1,     .True., .False.,   geom )
+    call mpdata_gauge_D( dt,   D,        V,        VDS,  2,     .True., .False.,   geom )
     
     ! compute ratio
     !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode)
@@ -1090,8 +1090,8 @@ contains
     end do
     !$OMP END PARALLEL DO
     !    mpdata_gauge_Q( time, variable, VDS, DR, D0,  order, limit,  is_vector, geom )
-    call mpdata_gauge_Q( dt,   U(:,XX),  VDS, DR, D0,  1,     .True., .True. ,   geom )
-    call mpdata_gauge_Q( dt,   U(:,YY),  VDS, DR, D0,  1,     .True., .True. ,   geom )
+    call mpdata_gauge_Q( dt,   U(:,XX),  VDS, DR, D0,  2,     .True., .True. ,   geom )
+    call mpdata_gauge_Q( dt,   U(:,YY),  VDS, DR, D0,  2,     .True., .True. ,   geom )
   end subroutine advect_solution
 
 end module shallow_water_module
