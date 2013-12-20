@@ -4,18 +4,17 @@
 ! This program solves the shallow water equations on a sphere,
 ! initialised with the Rossby-Haurwitz waves.
 ! ===================================================================
-program shallow_water
+program isentropic
 
   use common_module
   use parallel_module, only: parallel_init, parallel_finalise, nproc, nthread
-  use gmsh_module, only: write_gmsh_mesh_2d, write_gmsh_fields
+  use gmsh_module, only: write_gmsh_mesh_3d, write_gmsh_fields
   !use grib_module, only: write_grib
 
-  use joanna_module, only: read_joanna, write_results_joanna
+  use joanna_module, only: read_joanna_3d, write_results_joanna
   use datastruct_module,  only: DataStructure_type, mark_output
-  use shallow_water_module, only: &
-    & setup_shallow_water, &
-    & set_state_rossby_haurwitz, &
+  use isentropic_module, only: &
+    & setup_isentropic, &
     & set_state_zonal_flow, &
     & set_topography, &
     & set_time_step, &
@@ -27,6 +26,7 @@ program shallow_water
   integer         :: nb_steps = 1         ! Number of propagations
   integer         :: hours_per_step = 1   ! Propagation time
   logical         :: write_itermediate_output = .True.
+  integer         :: nb_levels = 2
 
   ! Declarations
   type(DataStructure_type) :: dstruct
@@ -41,17 +41,8 @@ program shallow_water
   call set_log_level(LOG_LEVEL_INFO)
   call set_log_proc(0)
   
-  call log_info("Program shallow_water start")
-  call read_joanna("data/meshvol.d","data/rtable_lin_T255.d", dstruct)
-
-  call setup_shallow_water(dstruct)
-
-  call set_topography(dstruct)
-
-  !call set_state_rossby_haurwitz(dstruct)
-  call set_state_zonal_flow(dstruct)
-
-  call set_time_step( dt )
+  call log_info("Program isentropic start")
+  call read_joanna_3d("data/meshvol.d","data/rtable_lin_T255.d", nb_levels, dstruct)
 
   call log_info( "+------------------------------+" )
   call log_info( "| Simulation summary           |" )
@@ -62,12 +53,22 @@ program shallow_water
   call log_info( "| glb_nb_edges      | "//trim(str(dstruct%glb_nb_edges,'(I8)'))//" |" )
   call log_info( "| nb_nodes[0]       | "//trim(str(dstruct%nb_nodes,'(I8)'))//" |" )
   call log_info( "| nb_edges[0]       | "//trim(str(dstruct%nb_edges,'(I8)'))//" |" )
+  call log_info( "| nb_levels         | "//trim(str(dstruct%nb_levels,'(I8)'))//" |" )
   call log_info( "| time step         | "//trim(str(dt,'(F8.1)'))//" |" )
   call log_info( "| total time  (hrs) | "//trim(str(nb_steps*hours_per_step,'(I8)'))//" |" )
   call log_info( "| output rate (hrs) | "//trim(str(hours_per_step,'(I8)'))//" |" )
   call log_info( "+-------------------+----------+ ")
 
-  call write_gmsh_mesh_2d(dstruct,"data/mesh.msh")
+  call write_gmsh_mesh_3d(dstruct,"data/mesh3d.msh")
+
+  call setup_isentropic(dstruct)
+
+  call set_topography(dstruct)
+
+  !call set_state_rossby_haurwitz(dstruct)
+  call set_state_zonal_flow(dstruct)
+
+  call set_time_step( dt )
 
   call mark_output("topography",dstruct)
   call mark_output("height",dstruct)
@@ -96,9 +97,7 @@ program shallow_water
   ! Write last step anyway if intermediate output is disabled
   if (.not. write_itermediate_output) call write_fields()
 
-  call write_results_joanna("data/results.d","data/rtable_lin_T255.d",dstruct)
-
-  call log_info("Program shallow_water exit")
+  call log_info("Program isentropic exit")
   call parallel_finalise()
 
 
@@ -120,4 +119,4 @@ contains
     call wallclock_timer%resume()
   end subroutine write_fields
 
-end program shallow_water
+end program isentropic

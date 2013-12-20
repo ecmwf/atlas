@@ -113,8 +113,10 @@ elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Intel" )
     set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -openmp-stubs")
   endif( )
   set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -ip -unroll -inline -vec-report0 -no-heap-arrays" )
-  set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -check bounds -traceback -warn all -heap-arrays" )
+  set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -check bounds -traceback -warn all -heap-arrays -fpe-all=0" )
   set( CMAKE_Fortran_FLAGS_BIT     "-O2 -ip -ipo -unroll -inline -vec-report0 -no-heap-arrays" )
+  set( CMAKE_CXX_FLAGS_DEBUG   "-O0 -g -traceback -fp-trap=common" )
+
 
 #######################################################################################
 # XL (IBM)
@@ -229,6 +231,7 @@ else()
   )
 endif()
 file( COPY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
+
 add_executable( shallow_water
   ${DATASTRUCT_SRC}
   src/io/gmsh_module.F90
@@ -237,6 +240,18 @@ add_executable( shallow_water
 target_link_libraries( shallow_water io common datastruct )
 set_property(TARGET shallow_water PROPERTY LINKER_LANGUAGE Fortran)
 
+
+add_executable( isentropic
+  ${DATASTRUCT_SRC}
+  src/io/gmsh_module.F90
+  src/shallow_water/isentropic_module.F90 
+  src/shallow_water/isentropic.F90 )
+target_link_libraries( isentropic io common datastruct )
+set_property(TARGET isentropic PROPERTY LINKER_LANGUAGE Fortran)
+
+###############################################################################
+# Tests
+###############################################################################
 ecbuild_add_test( TARGET test_datastruct
   LINKER_LANGUAGE Fortran
   SOURCES  src/tests/test_datastruct.F90
@@ -246,9 +261,10 @@ ecbuild_add_test( TARGET test_datastruct
   CONDITION ${CPP}
 )
 
-ecbuild_add_test( TARGET test_sync 
+ecbuild_add_test( TARGET test_sync
+  LINKER_LANGUAGE Fortran
   SOURCES src/tests/test_sync.F90
-  LIBS    common
+  LIBS    common datastruct 
   ENABLED OFF # Compile but don't call with ctest
 )
 

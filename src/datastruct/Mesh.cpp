@@ -1,5 +1,7 @@
 #include "Mesh.hpp"
 #include "FunctionSpace.hpp"
+#include <sstream>
+#include <stdexcept>
 namespace ecmwf {
 
 Mesh::~Mesh() 
@@ -18,7 +20,14 @@ void Mesh::add_function_space( FunctionSpace* function_space )
 
 FunctionSpace& Mesh::function_space(const std::string& name)
 {
-  return *function_spaces_[ index_.at(name) ];
+  try {
+    return *function_spaces_[ index_.at(name) ];
+  }
+  catch( std::out_of_range& e ) {
+    std::stringstream msg;
+    msg << "Could not find function_space \"" << name << "\" in mesh";
+    throw std::out_of_range(msg.str());
+  }
 }
 
 // ------------------------------------------------------------------

@@ -34,6 +34,7 @@ use fieldset_c_binding
 use functionspace_c_binding
 use mesh_c_binding
 use metadata_c_binding
+use comm_c_binding
 use common_module, only : jprw
 implicit none
 
@@ -94,6 +95,8 @@ TYPE :: FunctionSpace_type
 !   create_field : Create a new real field in this function space with given name
 !   remove_field : Remove a field with given name
 !   field : Access to a field with given name
+!   parallelise : Setup halo-exchange information
+!   halo_exchange : Perform halo exchange on field_data
 
 ! Author :
 ! ------
@@ -107,6 +110,27 @@ contains
   procedure :: create_field => FunctionSpace__create_field
   procedure :: remove_field => FunctionSpace__remove_field
   procedure :: field => FunctionSpace__field
+  procedure :: parallelise => FunctionSpace__parallelise
+  procedure, private :: FunctionSpace__halo_exchange_int32_r1
+  procedure, private :: FunctionSpace__halo_exchange_int32_r2
+  procedure, private :: FunctionSpace__halo_exchange_int32_r3
+  procedure, private :: FunctionSpace__halo_exchange_real32_r1
+  procedure, private :: FunctionSpace__halo_exchange_real32_r2
+  procedure, private :: FunctionSpace__halo_exchange_real32_r3
+  procedure, private :: FunctionSpace__halo_exchange_real64_r1
+  procedure, private :: FunctionSpace__halo_exchange_real64_r2
+  procedure, private :: FunctionSpace__halo_exchange_real64_r3
+  procedure :: get_halo_exchange => FunctionSpace__get_halo_exchange
+  generic :: halo_exchange => &
+      & FunctionSpace__halo_exchange_int32_r1, &
+      & FunctionSpace__halo_exchange_int32_r2, &
+      & FunctionSpace__halo_exchange_int32_r3, &
+      & FunctionSpace__halo_exchange_real32_r1, &
+      & FunctionSpace__halo_exchange_real32_r2, &
+      & FunctionSpace__halo_exchange_real32_r3, &
+      & FunctionSpace__halo_exchange_real64_r1, &
+      & FunctionSpace__halo_exchange_real64_r2, &
+      & FunctionSpace__halo_exchange_real64_r3
 END TYPE FunctionSpace_type
 
 interface new_FunctionSpace
@@ -237,6 +261,49 @@ contains
 END TYPE Metadata_type
 !------------------------------------------------------------------------------
 
+!------------------------------------------------------------------------------
+TYPE :: HaloExchange_type
+
+! Purpose :
+! -------
+!   *HaloExchange* : 
+
+! Methods :
+! -------
+!   setup : Setup using arrays detailing proc and glb_idx, bounds and parbound
+!   execute : Do the halo exchange
+
+! Author :
+! ------
+!   17-Dec-2013 Willem Deconinck     *ECMWF*
+
+!------------------------------------------------------------------------------
+private
+  type(c_ptr) :: object = C_NULL_ptr
+contains
+  procedure :: setup => HaloExchange__setup
+  procedure, private :: HaloExchange__execute_int32_r1
+  procedure, private :: HaloExchange__execute_int32_r2
+  procedure, private :: HaloExchange__execute_int32_r3
+  procedure, private :: HaloExchange__execute_real32_r1
+  procedure, private :: HaloExchange__execute_real32_r2
+  procedure, private :: HaloExchange__execute_real32_r3
+  procedure, private :: HaloExchange__execute_real64_r1
+  procedure, private :: HaloExchange__execute_real64_r2
+  procedure, private :: HaloExchange__execute_real64_r3
+  generic :: execute => &
+      & HaloExchange__execute_int32_r1, &
+      & HaloExchange__execute_int32_r2, &
+      & HaloExchange__execute_int32_r3, &
+      & HaloExchange__execute_real32_r1, &
+      & HaloExchange__execute_real32_r2, &
+      & HaloExchange__execute_real32_r3, &
+      & HaloExchange__execute_real64_r1, &
+      & HaloExchange__execute_real64_r2, &
+      & HaloExchange__execute_real64_r3
+END TYPE HaloExchange_type
+!------------------------------------------------------------------------------
+
 INTERFACE delete
 
 ! Purpose :
@@ -252,10 +319,19 @@ INTERFACE delete
   module procedure Mesh__delete
   module procedure FunctionSpace__delete
   module procedure FieldSet__delete
+  module procedure HaloExchange__delete
 end interface delete
 
 !------------------------------------------------------------------------------
 
+INTERFACE view1d
+  module procedure view1d_int32_rank2
+  module procedure view1d_int32_rank3
+  module procedure view1d_real32_rank2
+  module procedure view1d_real32_rank3
+  module procedure view1d_real64_rank2
+  module procedure view1d_real64_rank3
+end interface view1d
 
 ! =============================================================================
 CONTAINS
@@ -322,6 +398,54 @@ function c_str(f_str)
   character(len=len_trim(f_str)+1) :: c_str
   c_str = trim(f_str) // c_null_char
 end function c_str
+
+function view1d_int32_rank2(array) result( view )
+  integer, intent(inout) :: array(:,:)
+  type(c_ptr) :: array_c_ptr
+  integer, pointer :: view(:)
+  array_c_ptr = C_LOC(array(1,1))
+  call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
+end function view1d_int32_rank2
+
+function view1d_int32_rank3(array) result( view )
+  integer, intent(inout) :: array(:,:,:)
+  type(c_ptr) :: array_c_ptr
+  integer, pointer :: view(:)
+  array_c_ptr = C_LOC(array(1,1,1))
+  call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
+end function view1d_int32_rank3
+
+function view1d_real32_rank2(array) result( view )
+  real(c_float), intent(inout) :: array(:,:)
+  type(c_ptr) :: array_c_ptr
+  real(c_float), pointer :: view(:)
+  array_c_ptr = C_LOC(array(1,1))
+  call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
+end function view1d_real32_rank2
+
+function view1d_real32_rank3(array) result( view )
+  real(c_float), intent(inout) :: array(:,:,:)
+  type(c_ptr) :: array_c_ptr
+  real(c_float), pointer :: view(:)
+  array_c_ptr = C_LOC(array(1,1,1))
+  call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
+end function view1d_real32_rank3
+
+function view1d_real64_rank2(array) result( view )
+  real(c_double), intent(inout) :: array(:,:)
+  type(c_ptr) :: array_c_ptr
+  real(c_double), pointer :: view(:)
+  array_c_ptr = C_LOC(array(1,1))
+  call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
+end function view1d_real64_rank2
+
+function view1d_real64_rank3(array) result( view )
+  real(c_double), intent(inout) :: array(:,:,:)
+  type(c_ptr) :: array_c_ptr
+  real(c_double), pointer :: view(:)
+  array_c_ptr = C_LOC(array(1,1,1))
+  call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
+end function view1d_real64_rank3
 
 ! -----------------------------------------------------------------------------
 ! Mesh routines
@@ -429,6 +553,191 @@ function FunctionSpace__field(this,name) result(field)
   field%object = ecmwf__FunctionSpace__field(this%object, c_str(name) )
   if( .not. C_associated(field%object) ) call abort()
 end function FunctionSpace__field
+
+subroutine FunctionSpace__parallelise(this, proc, glb_idx)
+  class(FunctionSpace_type), intent(in) :: this
+  integer, intent(in) :: proc(:), glb_idx(:)
+  call ecmwf__FunctionSpace__parallelise(this%object, proc, glb_idx)
+end subroutine FunctionSpace__parallelise
+
+function FunctionSpace__get_halo_exchange(this) result(halo_exchange)
+  class(FunctionSpace_type), intent(in) :: this
+  type(HaloExchange_type) :: halo_exchange
+  halo_exchange%object = ecmwf__FunctionSpace__halo_exchange( this%object )
+end function FunctionSpace__get_halo_exchange
+
+subroutine FunctionSpace__halo_exchange_int32_r1(this, field_data)
+  class(FunctionSpace_type), intent(in) :: this
+  integer, intent(inout) :: field_data(:)
+  call ecmwf__FunctionSpace__halo_exchange_int( this%object, field_data, size(field_data) )
+end subroutine FunctionSpace__halo_exchange_int32_r1
+subroutine FunctionSpace__halo_exchange_int32_r2(this, field_data)
+  class(FunctionSpace_type), intent(in) :: this
+  integer, intent(inout) :: field_data(:,:)
+  integer, pointer :: view(:)
+  view => view1d(field_data)
+  call ecmwf__FunctionSpace__halo_exchange_int( this%object, view, size(field_data) )
+end subroutine FunctionSpace__halo_exchange_int32_r2
+subroutine FunctionSpace__halo_exchange_int32_r3(this, field_data)
+  class(FunctionSpace_type), intent(in) :: this
+  integer, intent(inout) :: field_data(:,:,:)
+  integer, pointer :: view(:)
+  view => view1d(field_data)
+  call ecmwf__FunctionSpace__halo_exchange_int( this%object, view, size(field_data) )
+end subroutine FunctionSpace__halo_exchange_int32_r3
+
+subroutine FunctionSpace__halo_exchange_real32_r1(this, field_data)
+  class(FunctionSpace_type), intent(in) :: this
+  real(c_float), intent(inout) :: field_data(:)
+  call ecmwf__FunctionSpace__halo_exchange_float( this%object, field_data, size(field_data) )
+end subroutine FunctionSpace__halo_exchange_real32_r1
+subroutine FunctionSpace__halo_exchange_real32_r2(this, field_data)
+  class(FunctionSpace_type), intent(in) :: this
+  real(c_float), intent(inout) :: field_data(:,:)
+  real(c_float), pointer :: view(:)
+  view => view1d(field_data)
+  call ecmwf__FunctionSpace__halo_exchange_float( this%object, view, size(field_data) )
+end subroutine FunctionSpace__halo_exchange_real32_r2
+subroutine FunctionSpace__halo_exchange_real32_r3(this, field_data)
+  class(FunctionSpace_type), intent(in) :: this
+  real(c_float), intent(inout) :: field_data(:,:,:)
+  real(c_float), pointer :: view(:)
+  view => view1d(field_data)
+  call ecmwf__FunctionSpace__halo_exchange_float( this%object, view, size(field_data) )
+end subroutine FunctionSpace__halo_exchange_real32_r3
+
+subroutine FunctionSpace__halo_exchange_real64_r1(this, field_data)
+  class(FunctionSpace_type), intent(in) :: this
+  real(c_double), intent(inout) :: field_data(:)
+  call ecmwf__FunctionSpace__halo_exchange_double( this%object, field_data, size(field_data) )
+end subroutine FunctionSpace__halo_exchange_real64_r1
+subroutine FunctionSpace__halo_exchange_real64_r2(this, field_data)
+  class(FunctionSpace_type), intent(in) :: this
+  real(c_double), intent(inout) :: field_data(:,:)
+  real(c_double), pointer :: view(:)
+  view => view1d(field_data)
+  call ecmwf__FunctionSpace__halo_exchange_double( this%object, view, size(field_data) )
+end subroutine FunctionSpace__halo_exchange_real64_r2
+subroutine FunctionSpace__halo_exchange_real64_r3(this, field_data)
+  class(FunctionSpace_type), intent(in) :: this
+  real(c_double), intent(inout) :: field_data(:,:,:)
+  real(c_double), pointer :: view(:)
+  view => view1d(field_data)
+  call ecmwf__FunctionSpace__halo_exchange_double( this%object, view, size(field_data) )
+end subroutine FunctionSpace__halo_exchange_real64_r3
+
+! ------------------------------------------------------------------------------
+! HaloExchange routines
+
+function new_HaloExchange() result(halo_exchange)
+  type(HaloExchange_type) :: halo_exchange
+  halo_exchange%object = ecmwf__HaloExchange__new()
+end function new_HaloExchange
+
+subroutine HaloExchange__delete(this)
+  type(HaloExchange_type), intent(inout) :: this
+  if ( c_associated(this%object) ) then
+    call ecmwf__HaloExchange__delete(this%object)
+  end if
+  this%object = C_NULL_ptr
+end subroutine HaloExchange__delete
+
+subroutine HaloExchange__setup(this, proc, glb_idx, bounds, par_bound)
+  class(HaloExchange_type), intent(in) :: this
+  integer, intent(in) :: proc(:)
+  integer, intent(in) :: glb_idx(:)
+  integer, intent(in) :: bounds(:)
+  integer, intent(in) :: par_bound
+  call ecmwf__HaloExchange__setup( this%object, proc, glb_idx, bounds, size(bounds), par_bound-1 )
+end subroutine HaloExchange__setup
+
+
+subroutine HaloExchange__execute_int32_r1(this, field_data, nb_vars)
+  class(HaloExchange_type), intent(in) :: this
+  integer, intent(inout) :: field_data(:)
+  integer, optional, intent(in) :: nb_vars
+  if (.not. present(nb_vars) ) then
+    call ecmwf__HaloExchange__execute_int( this%object, field_data, 1 )
+  else
+    call ecmwf__HaloExchange__execute_int( this%object, field_data, nb_vars )
+  end if
+end subroutine HaloExchange__execute_int32_r1
+
+
+subroutine HaloExchange__execute_int32_r2(this, field_data, nb_vars)
+  class(HaloExchange_type), intent(in) :: this
+  integer, intent(inout) :: field_data(:,:)
+  integer, intent(in) :: nb_vars
+  integer, pointer :: view(:)
+  view => view1d(field_data)
+  call ecmwf__HaloExchange__execute_int( this%object, view, nb_vars )
+end subroutine HaloExchange__execute_int32_r2
+
+
+subroutine HaloExchange__execute_int32_r3(this, field_data, nb_vars)
+  class(HaloExchange_type), intent(in) :: this
+  integer, intent(inout) :: field_data(:,:,:)
+  integer, intent(in) :: nb_vars
+  integer, pointer :: view(:)
+  view => view1d(field_data)
+  call ecmwf__HaloExchange__execute_int( this%object, view, nb_vars )
+end subroutine HaloExchange__execute_int32_r3
+
+subroutine HaloExchange__execute_real32_r1(this, field_data, nb_vars)
+  class(HaloExchange_type), intent(in) :: this
+  real(c_float), intent(inout) :: field_data(:)
+  integer, optional, intent(in) :: nb_vars
+  if (.not. present(nb_vars) ) then
+    call ecmwf__HaloExchange__execute_float( this%object, field_data, 1 )
+  else
+    call ecmwf__HaloExchange__execute_float( this%object, field_data, nb_vars )
+  end if
+end subroutine HaloExchange__execute_real32_r1
+subroutine HaloExchange__execute_real32_r2(this, field_data, nb_vars)
+  class(HaloExchange_type), intent(in) :: this
+  real(c_float), intent(inout) :: field_data(:,:)
+  integer, intent(in) :: nb_vars
+  real(c_float), pointer :: view(:)
+  view => view1d(field_data)
+  call ecmwf__HaloExchange__execute_float( this%object, view, nb_vars )
+end subroutine HaloExchange__execute_real32_r2
+subroutine HaloExchange__execute_real32_r3(this, field_data, nb_vars)
+  class(HaloExchange_type), intent(in) :: this
+  real(c_float), intent(inout) :: field_data(:,:,:)
+  integer, intent(in) :: nb_vars
+  real(c_float), pointer :: view(:)
+  view => view1d(field_data)
+  call ecmwf__HaloExchange__execute_float( this%object, view, nb_vars )
+end subroutine HaloExchange__execute_real32_r3
+
+subroutine HaloExchange__execute_real64_r1(this, field_data, nb_vars)
+  class(HaloExchange_type), intent(in) :: this
+  real(c_double), intent(inout) :: field_data(:)
+  integer, optional, intent(in) :: nb_vars
+  if (.not. present(nb_vars) ) then
+    call ecmwf__HaloExchange__execute_double( this%object, field_data, 1 )
+  else
+    call ecmwf__HaloExchange__execute_double( this%object, field_data, nb_vars )
+  end if
+end subroutine HaloExchange__execute_real64_r1
+subroutine HaloExchange__execute_real64_r2(this, field_data, nb_vars)
+  class(HaloExchange_type), intent(in) :: this
+  real(c_double), intent(inout) :: field_data(:,:)
+  integer, intent(in) :: nb_vars
+  real(c_double), pointer :: view(:)
+  view => view1d(field_data)
+  call ecmwf__HaloExchange__execute_double( this%object, view, nb_vars )
+end subroutine HaloExchange__execute_real64_r2
+subroutine HaloExchange__execute_real64_r3(this, field_data, nb_vars)
+  class(HaloExchange_type), intent(in) :: this
+  real(c_double), intent(inout) :: field_data(:,:,:)
+  integer, intent(in) :: nb_vars
+  real(c_double), pointer :: view(:)
+  view => view1d(field_data)
+  call ecmwf__HaloExchange__execute_double( this%object, view, nb_vars )
+end subroutine HaloExchange__execute_real64_r3
+
+
 
 ! -----------------------------------------------------------------------------
 ! Field routines
@@ -620,13 +929,26 @@ function Field__data2_wp(this) result(field)
   type(c_ptr) :: field_c_ptr
   type(c_ptr) :: field_bounds_c_ptr
   integer(c_int) :: field_rank
+  integer :: field_size, jbound
   if( wp == c_double ) then
     call ecmwf__Field__data_double(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   else if (wp == c_float ) then
     call ecmwf__Field__data_float(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   end if
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
+  if (size(field_bounds) < 2) then
+    write(0,*) "Cannot access field """,this%name(),""" with rank",field_rank," as rank 2"
+    call abort()
+  end if
+  field_size = 1
+  do jbound=1,field_rank
+    field_size = field_size * field_bounds(jbound)
+  end do
   call C_F_POINTER ( field_c_ptr , field , field_bounds(1:2) )
+  if( size(field) /= field_size ) then
+    write(0,*) "Requested bounds of field ", field_bounds(1:2), " do not cover the entire field of size ", field_size
+    call abort()
+  end if
 end function Field__data2_wp
 
 function Field__data3_wp(this) result(field)
@@ -636,13 +958,26 @@ function Field__data3_wp(this) result(field)
   type(c_ptr) :: field_c_ptr
   type(c_ptr) :: field_bounds_c_ptr
   integer(c_int) :: field_rank
+  integer :: field_size, jbound
   if( wp == c_double ) then
     call ecmwf__Field__data_double(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   else if (wp == c_float ) then
     call ecmwf__Field__data_float(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   end if
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
+  if (size(field_bounds) < 3) then
+    write(0,*) "Cannot access field """,this%name(),""" with rank",field_rank," as rank 3"
+    call abort()
+  end if
+  field_size = 1
+  do jbound=1,field_rank
+    field_size = field_size * field_bounds(jbound)
+  end do
   call C_F_POINTER ( field_c_ptr , field , field_bounds(1:3) )
+  if( size(field) /= field_size ) then
+    write(0,*) "Requested bounds of field ", field_bounds(1:3), " do not cover the entire field of size ", field_size
+    call abort()
+  end if
 end function Field__data3_wp
 
 ! -----------------------------------------------------------------------------

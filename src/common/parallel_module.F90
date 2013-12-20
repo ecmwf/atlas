@@ -12,6 +12,8 @@ module parallel_module
 #ifdef HAVE_OMP
   use omp_lib
 #endif
+use, intrinsic :: iso_c_binding, only: c_float, c_double
+
   implicit none
   private
 
@@ -52,33 +54,37 @@ public Comm_type
 
     procedure, pass :: synchronise_integer_rank1
     procedure, pass :: synchronise_integer_rank2
-    procedure, pass :: synchronise_real4_rank1
-    procedure, pass :: synchronise_real4_rank2
-    procedure, pass :: synchronise_real8_rank1
-    procedure, pass :: synchronise_real8_rank2
-    procedure, pass :: synchronise_real8_rank3
+    procedure, pass :: synchronise_real32_rank1
+    procedure, pass :: synchronise_real32_rank2
+    procedure, pass :: synchronise_real32_rank3
+    procedure, pass :: synchronise_real64_rank1
+    procedure, pass :: synchronise_real64_rank2
+    procedure, pass :: synchronise_real64_rank3
 
     generic, public :: synchronise => &
       & synchronise_integer_rank1, &
       & synchronise_integer_rank2, &
-      & synchronise_real4_rank1, &
-      & synchronise_real4_rank2, &
-      & synchronise_real8_rank1, &
-      & synchronise_real8_rank2, &
-      & synchronise_real8_rank3
+      & synchronise_real32_rank1, &
+      & synchronise_real32_rank2, &
+      & synchronise_real32_rank3, &
+      & synchronise_real64_rank1, &
+      & synchronise_real64_rank2, &
+      & synchronise_real64_rank3
 
 
 
     procedure, pass :: glb_field_size
-    procedure, pass :: gather_real4_rank1
-    procedure, pass :: gather_real4_rank2
-    procedure, pass :: gather_real8_rank1
-    procedure, pass :: gather_real8_rank2
+    procedure, pass :: gather_real32_rank1
+    procedure, pass :: gather_real32_rank2
+    procedure, pass :: gather_real64_rank1
+    procedure, pass :: gather_real64_rank2
+    procedure, pass :: gather_real64_rank3
     generic, public :: gather => &
-      & gather_real4_rank1, &
-      & gather_real4_rank2, &
-      & gather_real8_rank1, &
-      & gather_real8_rank2
+      & gather_real32_rank1, &
+      & gather_real32_rank2, &
+      & gather_real64_rank1, &
+      & gather_real64_rank2, &
+      & gather_real64_rank3
 
   end type Comm_type
 
@@ -360,11 +366,11 @@ contains
 
 
   
-  subroutine synchronise_real8_rank1(comm,field)
+  subroutine synchronise_real64_rank1(comm,field)
     class(Comm_type), intent(in) :: comm
-    real*8, dimension(:), intent(inout) :: field
-    real*8 :: sendbuffer(comm%sync_sendcnt)
-    real*8 :: recvbuffer(comm%sync_recvcnt)
+    real(kind=c_double), dimension(:), intent(inout) :: field
+    real(kind=c_double) :: sendbuffer(comm%sync_sendcnt)
+    real(kind=c_double) :: recvbuffer(comm%sync_recvcnt)
     integer :: jj,itag,jproc,ireqs(0:nproc-1),ireqr(0:nproc-1)
     integer :: iwait_status(MPI_STATUS_SIZE,0:nproc-1)
 
@@ -410,14 +416,14 @@ contains
       end if
     end do
 
-  end subroutine synchronise_real8_rank1
+  end subroutine synchronise_real64_rank1
 
 
-  subroutine synchronise_real8_rank2(comm,field)
+  subroutine synchronise_real64_rank2(comm,field)
     class(Comm_type), intent(in) :: comm
-    real*8, dimension(:,:), intent(inout) :: field
-    real*8 :: sendbuffer(comm%sync_sendcnt*size(field,2))
-    real*8 :: recvbuffer(comm%sync_recvcnt*size(field,2))
+    real(kind=c_double), dimension(:,:), intent(inout) :: field
+    real(kind=c_double) :: sendbuffer(comm%sync_sendcnt*size(field,2))
+    real(kind=c_double) :: recvbuffer(comm%sync_recvcnt*size(field,2))
     integer :: jj,ii,jproc,itag,ireqs(0:nproc-1),ireqr(0:nproc-1)
     integer :: sync_recvdispls(0:nproc-1),sync_recvcounts(0:nproc-1)
     integer :: sync_senddispls(0:nproc-1),sync_sendcounts(0:nproc-1)
@@ -480,13 +486,13 @@ contains
       end if
     end do
 
-  end subroutine synchronise_real8_rank2
+  end subroutine synchronise_real64_rank2
 
-  subroutine synchronise_real8_rank3(comm,field)
+  subroutine synchronise_real64_rank3(comm,field)
     class(Comm_type), intent(in) :: comm
-    real*8, dimension(:,:,:), intent(inout) :: field
-    real*8 :: sendbuffer(comm%sync_sendcnt*size(field,2))
-    real*8 :: recvbuffer(comm%sync_recvcnt*size(field,2))
+    real(kind=c_double), dimension(:,:,:), intent(inout) :: field
+    real(kind=c_double) :: sendbuffer(comm%sync_sendcnt*size(field,2))
+    real(kind=c_double) :: recvbuffer(comm%sync_recvcnt*size(field,2))
     integer :: jj,ii,jproc,itag,ireqs(0:nproc-1),ireqr(0:nproc-1)
     integer :: sync_recvdispls(0:nproc-1),sync_recvcounts(0:nproc-1)
     integer :: sync_senddispls(0:nproc-1),sync_sendcounts(0:nproc-1)
@@ -554,13 +560,13 @@ contains
       end if
     end do
 
-  end subroutine synchronise_real8_rank3
+  end subroutine synchronise_real64_rank3
 
-  subroutine synchronise_real4_rank1(comm,field)
+  subroutine synchronise_real32_rank1(comm,field)
     class(Comm_type), intent(in) :: comm
-    real*4, dimension(:), intent(inout) :: field
-    real*4 :: sendbuffer(comm%sync_sendcnt)
-    real*4 :: recvbuffer(comm%sync_recvcnt)
+    real(kind=c_float), dimension(:), intent(inout) :: field
+    real(kind=c_float) :: sendbuffer(comm%sync_sendcnt)
+    real(kind=c_float) :: recvbuffer(comm%sync_recvcnt)
     integer :: jj,itag,jproc,ireqs(0:nproc-1),ireqr(0:nproc-1)
     integer :: iwait_status(MPI_STATUS_SIZE,0:nproc-1)
 
@@ -606,14 +612,14 @@ contains
       end if
     end do
 
-  end subroutine synchronise_real4_rank1
+  end subroutine synchronise_real32_rank1
 
 
-  subroutine synchronise_real4_rank2(comm,field)
+  subroutine synchronise_real32_rank2(comm,field)
     class(Comm_type), intent(in) :: comm
-    real*4, dimension(:,:), intent(inout) :: field
-    real*4 :: sendbuffer(comm%sync_sendcnt*size(field,2))
-    real*4 :: recvbuffer(comm%sync_recvcnt*size(field,2))
+    real(kind=c_float), dimension(:,:), intent(inout) :: field
+    real(kind=c_float) :: sendbuffer(comm%sync_sendcnt*size(field,2))
+    real(kind=c_float) :: recvbuffer(comm%sync_recvcnt*size(field,2))
     integer :: jj,ii,jproc,itag,ireqs(0:nproc-1),ireqr(0:nproc-1)
     integer :: sync_recvdispls(0:nproc-1),sync_recvcounts(0:nproc-1)
     integer :: sync_senddispls(0:nproc-1),sync_sendcounts(0:nproc-1)
@@ -676,17 +682,89 @@ contains
       end if
     end do
 
-  end subroutine synchronise_real4_rank2
+  end subroutine synchronise_real32_rank2
 
 
-
-
-  subroutine gather_real8_rank1(comm,loc_field,glb_field)
+  subroutine synchronise_real32_rank3(comm,field)
     class(Comm_type), intent(in) :: comm
-    real*8, dimension(:), intent(in) :: loc_field
-    real*8, dimension(:), allocatable, intent(inout) :: glb_field
-    real*8 :: sendbuffer(comm%gather_sendcnt)
-    real*8 :: recvbuffer(comm%gather_recvcnt)
+    real(kind=c_float), dimension(:,:,:), intent(inout) :: field
+    real(kind=c_float) :: sendbuffer(comm%sync_sendcnt*size(field,2))
+    real(kind=c_float) :: recvbuffer(comm%sync_recvcnt*size(field,2))
+    integer :: jj,ii,jproc,itag,ireqs(0:nproc-1),ireqr(0:nproc-1)
+    integer :: sync_recvdispls(0:nproc-1),sync_recvcounts(0:nproc-1)
+    integer :: sync_senddispls(0:nproc-1),sync_sendcounts(0:nproc-1)
+    integer :: jvar, nb_vars, jlev, nb_levels
+    integer :: iwait_status(MPI_STATUS_SIZE,0:nproc-1)
+
+    nb_levels = size(field,2)
+    nb_vars = size(field,3)
+    sync_recvdispls(:) = nb_levels*nb_vars*comm%sync_recvdispls(:)
+    sync_recvcounts(:) = nb_levels*nb_vars*comm%sync_recvcounts(:)
+    sync_senddispls(:) = nb_levels*nb_vars*comm%sync_senddispls(:)
+    sync_sendcounts(:) = nb_levels*nb_vars*comm%sync_sendcounts(:)
+
+    ! Let MPI know what we like to receive
+    do jproc=nproc-1,0,-1
+      if(sync_recvcounts(jproc) > 0) then
+        itag=9000
+        call MPI_IRECV( recvbuffer(sync_recvdispls(jproc)+1:),sync_recvcounts(jproc), &
+                      & MPI_REAL4,jproc,itag,MPI_COMM_WORLD,ireqr(jproc),ierr)
+      endif
+    enddo
+
+    ! Pack
+    ii = 0
+    do jvar=1,nb_vars
+      do jj=1,comm%sync_sendcnt
+        do jlev=1,nb_levels
+            ii = ii+1
+            sendbuffer(ii) = field( jlev, comm%sync_sendmap(jj), jvar )
+        end do
+      end do
+    end do
+
+    ! Send
+    do jproc=0,nproc-1
+      itag=9000
+      if(sync_sendcounts(jproc) > 0) then
+        call MPI_ISEND( sendbuffer(sync_senddispls(jproc)+1:),sync_sendcounts(jproc), &
+                      & MPI_REAL4,jproc,itag,MPI_COMM_WORLD,ireqs(jproc),ierr )
+      end if
+    end do
+  
+    ! Wait for receiving to finish
+    do jproc=0,nproc-1
+      if(comm%sync_recvcounts(jproc) > 0) then
+        call MPI_WAIT( ireqr(jproc),iwait_status(:,jproc),ierr )
+      end if
+    end do
+
+    ! Unpack
+    ii = 0
+    do jvar=1,nb_vars
+      do jj=1,comm%sync_recvcnt
+        do jlev=1,nb_levels
+          ii = ii+1
+          field( jlev, comm%sync_recvmap(jj), jvar ) = recvbuffer(ii)
+        end do
+      end do
+    end do
+
+    ! Wait for sending to finish
+    do jproc=0,nproc-1
+      if(sync_sendcounts(jproc) > 0) then
+        call MPI_WAIT(ireqs(jproc),iwait_status(:,jproc),ierr)
+      end if
+    end do
+
+  end subroutine synchronise_real32_rank3
+
+  subroutine gather_real64_rank1(comm,loc_field,glb_field)
+    class(Comm_type), intent(in) :: comm
+    real(kind=c_double), dimension(:), intent(in) :: loc_field
+    real(kind=c_double), dimension(:), allocatable, intent(inout) :: glb_field
+    real(kind=c_double) :: sendbuffer(comm%gather_sendcnt)
+    real(kind=c_double) :: recvbuffer(comm%gather_recvcnt)
     integer :: jj
 
     if( .not. allocated( glb_field) ) then
@@ -709,15 +787,15 @@ contains
     end do
 
 
-  end subroutine gather_real8_rank1
+  end subroutine gather_real64_rank1
 
 
-  subroutine gather_real8_rank2(comm,loc_field,glb_field)
+  subroutine gather_real64_rank2(comm,loc_field,glb_field)
     class(Comm_type), intent(in) :: comm
-    real*8, dimension(:,:), intent(in) :: loc_field
-    real*8, dimension(:,:), allocatable, intent(inout) :: glb_field
-    real*8 :: sendbuffer(comm%gather_sendcnt)
-    real*8 :: recvbuffer(comm%gather_recvcnt)
+    real(kind=c_double), dimension(:,:), intent(in) :: loc_field
+    real(kind=c_double), dimension(:,:), allocatable, intent(inout) :: glb_field
+    real(kind=c_double) :: sendbuffer(comm%gather_sendcnt)
+    real(kind=c_double) :: recvbuffer(comm%gather_recvcnt)
     integer :: jj, nb_vars, jvar
 
     nb_vars = size(loc_field,2)
@@ -744,14 +822,53 @@ contains
       end do
     end do
 
-  end subroutine gather_real8_rank2
+  end subroutine gather_real64_rank2
 
-  subroutine gather_real4_rank1(comm,loc_field,glb_field)
+  subroutine gather_real64_rank3(comm,loc_field,glb_field)
     class(Comm_type), intent(in) :: comm
-    real*4, dimension(:), intent(in) :: loc_field
-    real*4, dimension(:), allocatable, intent(inout) :: glb_field
-    real*4 :: sendbuffer(comm%gather_sendcnt)
-    real*4 :: recvbuffer(comm%gather_recvcnt)
+    real(kind=c_double), dimension(:,:,:), intent(in) :: loc_field
+    real(kind=c_double), dimension(:,:,:), allocatable, intent(inout) :: glb_field
+    real(kind=c_double) :: sendbuffer(comm%gather_sendcnt*size(loc_field,1))
+    real(kind=c_double) :: recvbuffer(comm%gather_recvcnt*size(loc_field,1))
+    integer :: jj, nb_vars, jvar, jlev, nb_levels
+
+    nb_levels = size(loc_field,1)
+    nb_vars = size(loc_field,3)
+
+    if( .not. allocated( glb_field) ) then
+      allocate( glb_field( nb_levels, comm%glb_field_size(), nb_vars ) )
+    end if
+
+    do jvar=1,nb_vars
+
+      ! Pack
+      do jj=1,comm%gather_sendcnt
+        do jlev=1,nb_levels
+          sendbuffer((jj-1)*nb_levels+jlev) = loc_field(jlev,comm%gather_sendmap(jj),jvar)
+        end do
+      end do
+
+      ! Communicate
+      call MPI_GATHERV( sendbuffer,comm%gather_sendcnt,MPI_REAL8, &
+                      & recvbuffer,comm%gather_recvcounts,comm%gather_recvdispls,MPI_REAL8, &
+                      & comm%gather_root,MPI_COMM_WORLD,ierr )
+    
+      ! Unpack
+      do jj=1,comm%gather_recvcnt
+        do jlev=1,nb_levels
+          glb_field( jlev, comm%gather_recvmap(jj), jvar ) = recvbuffer((jj-1)*nb_levels+jlev)
+        end do
+      end do
+    end do
+
+  end subroutine gather_real64_rank3
+
+  subroutine gather_real32_rank1(comm,loc_field,glb_field)
+    class(Comm_type), intent(in) :: comm
+    real(kind=c_float), dimension(:), intent(in) :: loc_field
+    real(kind=c_float), dimension(:), allocatable, intent(inout) :: glb_field
+    real(kind=c_float) :: sendbuffer(comm%gather_sendcnt)
+    real(kind=c_float) :: recvbuffer(comm%gather_recvcnt)
     integer :: jj
 
     if( .not. allocated( glb_field) ) then
@@ -774,15 +891,15 @@ contains
     end do
 
 
-  end subroutine gather_real4_rank1
+  end subroutine gather_real32_rank1
 
 
-  subroutine gather_real4_rank2(comm,loc_field,glb_field)
+  subroutine gather_real32_rank2(comm,loc_field,glb_field)
     class(Comm_type), intent(in) :: comm
-    real*4, dimension(:,:), intent(in) :: loc_field
-    real*4, dimension(:,:), allocatable, intent(inout) :: glb_field
-    real*4 :: sendbuffer(comm%gather_sendcnt)
-    real*4 :: recvbuffer(comm%gather_recvcnt)
+    real(kind=c_float), dimension(:,:), intent(in) :: loc_field
+    real(kind=c_float), dimension(:,:), allocatable, intent(inout) :: glb_field
+    real(kind=c_float) :: sendbuffer(comm%gather_sendcnt)
+    real(kind=c_float) :: recvbuffer(comm%gather_recvcnt)
     integer :: jj, nb_vars, jvar
 
     nb_vars = size(loc_field,2)
@@ -809,7 +926,7 @@ contains
       end do
     end do
 
-  end subroutine gather_real4_rank2
+  end subroutine gather_real32_rank2
 
   function glb_field_size(comm) result(rows)
     class(Comm_type), intent(in) :: comm
