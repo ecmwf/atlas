@@ -308,51 +308,48 @@ contains
     enddo
 
 
-      ! 1. First pass
-      ! -------------
-      jpass = 1
+    ! 1. First pass
+    ! -------------
+    jpass = 1
 
-      ! non-oscillatory option
-      if( limited .and. (order .ge. 2) ) then
-        Qmax(:,:) = -1e10
-        Qmin(:,:) =  1e10
-        call compute_Qmax_and_Qmin()
-      end if
+    ! non-oscillatory option
+    if( limited .and. (order .ge. 2) ) then
+      Qmax(:,:) = -1e10
+      Qmin(:,:) =  1e10
+      call compute_Qmax_and_Qmin()
+    end if
 
-    do var=1,2
+    ! Compute the normal velocity in faces, and advection in vertices
 
-      ! Compute the normal velocity in faces, and advection in vertices
+    !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,Sx,Sy,Vx,Vy,ip1,ip2,apos,aneg)
+    do jedge = 1,geom%nb_edges
+      !aun(jedge) = V(jedge,XX)*S(jedge,XX) + V(jedge,YY)*S(jedge,YY)
+      aun(jedge,:) = VDS(jedge)
 
-      !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,Sx,Sy,Vx,Vy,ip1,ip2,apos,aneg)
-      do jedge = 1,geom%nb_edges
-        !aun(jedge) = V(jedge,XX)*S(jedge,XX) + V(jedge,YY)*S(jedge,YY)
-        aun(jedge,var) = VDS(jedge)
+      ip1 = geom%edges(jedge,1)
+      ip2 = geom%edges(jedge,2)
+      apos(:) = max(0._jprw,aun(jedge,:))
+      aneg(:) = min(0._jprw,aun(jedge,:))
+      fluxv(jedge,:) = Q(ip1,:)*apos(:) + Q(ip2,:)*aneg(:)
+    enddo
+    !$OMP END PARALLEL DO
 
-        ip1 = geom%edges(jedge,1)
-        ip2 = geom%edges(jedge,2)
-        apos(var) = max(0._jprw,aun(jedge,var))
-        aneg(var) = min(0._jprw,aun(jedge,var))
-        fluxv(jedge,var) = Q(ip1,var)*apos(var) + Q(ip2,var)*aneg(var)
-      enddo
-      !$OMP END PARALLEL DO
+     !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,adv,jedge,iedge)
+    do jnode=1,geom%nb_nodes
+      adv(:) = 0.0
+      if(geom%nb_neighbours(jnode) > 1) then
+        do jedge = 1,geom%nb_neighbours(jnode)
+          iedge = geom%my_edges(jedge,jnode)
+          adv(:) = adv(:) + geom%sign(jedge,jnode)*fluxv(iedge,:)
+        enddo
+      endif
+     ! Update the unknowns in vertices
+     Q(jnode,:) = Q(jnode,:) - adv(:)/max(eps,volD(jnode)) * dt
+     Qtmp(jnode,:) = Q(jnode,:)
+     Q(jnode,:) = Q(jnode,:)*DR(jnode)
+    enddo
+    !$OMP END PARALLEL DO
 
-       !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,adv,jedge,iedge)
-      do jnode=1,geom%nb_nodes
-        adv(var) = 0.0
-        if(geom%nb_neighbours(jnode) > 1) then
-          do jedge = 1,geom%nb_neighbours(jnode)
-            iedge = geom%my_edges(jedge,jnode)
-            adv(var) = adv(var) + geom%sign(jedge,jnode)*fluxv(iedge,var)
-          enddo
-        endif
-       ! Update the unknowns in vertices
-       Q(jnode,var) = Q(jnode,var) - adv(var)/max(eps,volD(jnode)) * dt
-       Qtmp(jnode,var) = Q(jnode,var)
-       Q(jnode,var) = Q(jnode,var)*DR(jnode)
-      enddo
-      !$OMP END PARALLEL DO
-
-    end do
     call synchronise(Qtmp,geom) ! Qmax and Qmin could be synced here
     call synchronise(Q,geom) ! Qmax and Qmin could be synced here
 
