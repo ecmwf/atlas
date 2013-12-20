@@ -234,11 +234,11 @@ contains
   subroutine mpdata_gauge_Q(dt,Q,VDS,DR,D,order,limited,Q_is_vector_component,geom)
     real(kind=jprw), intent(in)  :: dt
     type(DataStructure_type), intent(inout) :: geom
-    real(kind=jprw), intent(inout) :: Q(:), D(:)
+    real(kind=jprw), intent(inout) :: Q(:,:), D(:)
     real(kind=jprw), intent(in) :: VDS(:), DR(:)
     logical, intent(in) :: Q_is_vector_component, limited
     integer, intent(in) :: order
-    integer :: jnode, jedge, iedge, jpass, ip1,ip2
+    integer :: jnode, jedge, iedge, jpass, ip1,ip2, var
     real(kind=jprw) :: Sx, Sy, Ssqr, volume_of_two_cells, dQdx, dQdy, Vx, Vy
     real(kind=jprw) :: apos, aneg, x1, x2, y1, y2, length
     real(kind=jprw) :: Qmin(geom%nb_nodes)
@@ -307,109 +307,112 @@ contains
       V(iedge,YY) = 0.
     enddo
 
-    ! 1. First pass
-    ! -------------
-    jpass = 1
+    do var=1,2
 
-    ! non-oscillatory option
-    if( limited .and. (order .ge. 2) ) then
-      Qmax(:) = -1e10
-      Qmin(:) =  1e10
-      call compute_Qmax_and_Qmin()
-    end if
-
-    ! Compute the normal velocity in faces, and advection in vertices
-
-    !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,Sx,Sy,Vx,Vy,ip1,ip2,apos,aneg)
-    do jedge = 1,geom%nb_edges
-      !aun(jedge) = V(jedge,XX)*S(jedge,XX) + V(jedge,YY)*S(jedge,YY)
-      aun(jedge) = VDS(jedge)
-
-      ip1 = geom%edges(jedge,1)
-      ip2 = geom%edges(jedge,2)
-      apos = max(0._jprw,aun(jedge))
-      aneg = min(0._jprw,aun(jedge))
-      fluxv(jedge) = Q(ip1)*apos + Q(ip2)*aneg
-    enddo
-    !$OMP END PARALLEL DO
-
-     !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,adv,jedge,iedge)
-    do jnode=1,geom%nb_nodes
-      adv = 0.0
-      if(geom%nb_neighbours(jnode) > 1) then
-        do jedge = 1,geom%nb_neighbours(jnode)
-          iedge = geom%my_edges(jedge,jnode)
-          adv = adv + geom%sign(jedge,jnode)*fluxv(iedge)
-        enddo
-      endif
-     ! Update the unknowns in vertices
-     Q(jnode) = Q(jnode) - adv/max(eps,volD(jnode)) * dt
-     Qtmp(jnode) = Q(jnode)
-     Q(jnode) = Q(jnode)*DR(jnode)
-    enddo
-    !$OMP END PARALLEL DO
-
-    call synchronise(Qtmp,geom) ! Qmax and Qmin could be synced here
-    call synchronise(Q,geom) ! Qmax and Qmin could be synced here
-
-
-
-
-
-    ! 2. Other passes (making the spatial discretisation higher-order)
-    ! ----------------------------------------------------------------
-    
-    do jpass=2,order
-
-      ! Compute derivatives for mpdata
-      call compute_gradient(Q, gradQ, Q_is_vector_component, geom)
-
-      call synchronise(gradQ,geom)
-
-      ! Compute antidiffusive normal velocity in faces
-
-      !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2,volume_of_two_cells,dQdx,dQdy,Vx,Vy)
-      do jedge = 1,geom%nb_edges
-        ip1 = geom%edges(jedge,1)
-        ip2 = geom%edges(jedge,2)
-
-        ! evaluate gradient and velocity at edge by combining 2 neighbouring dual cells
-        volume_of_two_cells = max(eps, volD(ip1) + volD(ip2) )
-        dQdx = (gradQ(ip1,XX)+gradQ(ip2,XX)) / volume_of_two_cells
-        dQdy = (gradQ(ip1,YY)+gradQ(ip2,YY)) / volume_of_two_cells
-        Vx = V(jedge,XX)
-        Vy = V(jedge,YY)
-        ! variable sign option with asymptotic analysis, (mpdata gauge)
-        aun(jedge) = abs(aun(jedge))*(Q(ip2)-Q(ip1))*0.5_jprw &
-          &          -0.5_jprw*dt*aun(jedge)*(Vx*dQdx+Vy*dQdy)  ! = VDS*dQds
-      end do
-      !$OMP END PARALLEL DO
+      ! 1. First pass
+      ! -------------
+      jpass = 1
 
       ! non-oscillatory option
-      if (limited) then
-        !call compute_Qmax_and_Qmin()
-        call limit_antidiffusive_velocity()
-      endif
+      if( limited .and. (order .ge. 2) ) then
+        Qmax(:) = -1e10
+        Qmin(:) =  1e10
+        call compute_Qmax_and_Qmin()
+      end if
 
-      ! Compute fluxes from (limited) antidiffusive velocity
-      !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,adv,jedge,iedge)
+      ! Compute the normal velocity in faces, and advection in vertices
+
+      !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,Sx,Sy,Vx,Vy,ip1,ip2,apos,aneg)
+      do jedge = 1,geom%nb_edges
+        !aun(jedge) = V(jedge,XX)*S(jedge,XX) + V(jedge,YY)*S(jedge,YY)
+        aun(jedge) = VDS(jedge)
+
+        ip1 = geom%edges(jedge,1)
+        ip2 = geom%edges(jedge,2)
+        apos = max(0._jprw,aun(jedge))
+        aneg = min(0._jprw,aun(jedge))
+        fluxv(jedge) = Q(ip1,var)*apos + Q(ip2,var)*aneg
+      enddo
+      !$OMP END PARALLEL DO
+
+       !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,adv,jedge,iedge)
       do jnode=1,geom%nb_nodes
         adv = 0.0
         if(geom%nb_neighbours(jnode) > 1) then
           do jedge = 1,geom%nb_neighbours(jnode)
             iedge = geom%my_edges(jedge,jnode)
-            adv = adv + geom%sign(jedge,jnode)*aun(iedge)
+            adv = adv + geom%sign(jedge,jnode)*fluxv(iedge)
           enddo
         endif
-        ! Update the unknowns in vertices
-        Q(jnode) = Qtmp(jnode) - adv/max(eps,volD(jnode)) * dt
-        Q(jnode) = Q(jnode) * DR(jnode)
+       ! Update the unknowns in vertices
+       Q(jnode,var) = Q(jnode,var) - adv/max(eps,volD(jnode)) * dt
+       Qtmp(jnode) = Q(jnode,var)
+       Q(jnode,var) = Q(jnode,var)*DR(jnode)
       enddo
       !$OMP END PARALLEL DO
 
-      call synchronise(Q,geom)
+      call synchronise(Qtmp,geom) ! Qmax and Qmin could be synced here
+      call synchronise(Q(:,var),geom) ! Qmax and Qmin could be synced here
 
-    end do ! other passes
+
+
+
+
+      ! 2. Other passes (making the spatial discretisation higher-order)
+      ! ----------------------------------------------------------------
+      
+      do jpass=2,order
+
+        ! Compute derivatives for mpdata
+        call compute_gradient(Q(:,var), gradQ, Q_is_vector_component, geom)
+
+        call synchronise(gradQ,geom)
+
+        ! Compute antidiffusive normal velocity in faces
+
+        !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2,volume_of_two_cells,dQdx,dQdy,Vx,Vy)
+        do jedge = 1,geom%nb_edges
+          ip1 = geom%edges(jedge,1)
+          ip2 = geom%edges(jedge,2)
+
+          ! evaluate gradient and velocity at edge by combining 2 neighbouring dual cells
+          volume_of_two_cells = max(eps, volD(ip1) + volD(ip2) )
+          dQdx = (gradQ(ip1,XX)+gradQ(ip2,XX)) / volume_of_two_cells
+          dQdy = (gradQ(ip1,YY)+gradQ(ip2,YY)) / volume_of_two_cells
+          Vx = V(jedge,XX)
+          Vy = V(jedge,YY)
+          ! variable sign option with asymptotic analysis, (mpdata gauge)
+          aun(jedge) = abs(aun(jedge))*(Q(ip2,var)-Q(ip1,var))*0.5_jprw &
+            &          -0.5_jprw*dt*aun(jedge)*(Vx*dQdx+Vy*dQdy)  ! = VDS*dQds
+        end do
+        !$OMP END PARALLEL DO
+
+        ! non-oscillatory option
+        if (limited) then
+          !call compute_Qmax_and_Qmin()
+          call limit_antidiffusive_velocity()
+        endif
+
+        ! Compute fluxes from (limited) antidiffusive velocity
+        !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,adv,jedge,iedge)
+        do jnode=1,geom%nb_nodes
+          adv = 0.0
+          if(geom%nb_neighbours(jnode) > 1) then
+            do jedge = 1,geom%nb_neighbours(jnode)
+              iedge = geom%my_edges(jedge,jnode)
+              adv = adv + geom%sign(jedge,jnode)*aun(iedge)
+            enddo
+          endif
+          ! Update the unknowns in vertices
+          Q(jnode,var) = Qtmp(jnode) - adv/max(eps,volD(jnode)) * dt
+          Q(jnode,var) = Q(jnode,var) * DR(jnode)
+        enddo
+        !$OMP END PARALLEL DO
+
+        call synchronise(Q(:,var),geom)
+
+      end do ! other passes
+    end do
 
   contains
     
@@ -417,11 +420,11 @@ contains
       real(kind=jprw) :: Q1, Q2    
       !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,jedge,iedge,Q1,Q2)
       do jnode=1,geom%nb_nodes
-        Q1 = Q(jnode)
+        Q1 = Q(jnode,var)
         Qmax(jnode) = max( Qmax(jnode), Q1 )
         Qmin(jnode) = min( Qmin(jnode), Q1 )
         do jedge = 1,geom%nb_neighbours(jnode)
-          Q2 = Q(geom%neighbours(jedge,jnode))
+          Q2 = Q(geom%neighbours(jedge,jnode),var)
           iedge = geom%my_edges(jedge,jnode)
           if (.not. Q_is_vector_component) then
             Qmax(jnode) = max( Qmax(jnode), Q2 )
@@ -457,8 +460,8 @@ contains
           rhin  = rhin  - asignp*aneg - asignn*apos
           rhout = rhout + asignp*apos + asignn*aneg
         end do
-        cp(jnode) = ( Qmax(jnode)-Q(jnode) )*volD(jnode)/( rhin * dt + eps )
-        cn(jnode) = ( Q(jnode)-Qmin(jnode) )*volD(jnode)/( rhout* dt + eps )
+        cp(jnode) = ( Qmax(jnode)-Q(jnode,var) )*volD(jnode)/( rhin * dt + eps )
+        cn(jnode) = ( Q(jnode,var)-Qmin(jnode) )*volD(jnode)/( rhout* dt + eps )
       end do
       !$OMP END PARALLEL DO
 
@@ -1090,8 +1093,7 @@ contains
     end do
     !$OMP END PARALLEL DO
     !    mpdata_gauge_Q( time, variable, VDS, DR, D0,  order, limit,  is_vector, geom )
-    call mpdata_gauge_Q( dt,   U(:,XX),  VDS, DR, D0,  2,     .True., .True. ,   geom )
-    call mpdata_gauge_Q( dt,   U(:,YY),  VDS, DR, D0,  2,     .True., .True. ,   geom )
+    call mpdata_gauge_Q( dt,   U,  VDS, DR, D0,  2,     .True., .True. ,   geom )
   end subroutine advect_solution
 
 end module shallow_water_module
