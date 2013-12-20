@@ -9,7 +9,7 @@ program shallow_water
   use common_module
   use parallel_module, only: parallel_init, parallel_finalise, nproc, nthread
   use gmsh_module, only: write_gmsh_mesh_2d, write_gmsh_fields
-  !use grib_module, only: write_grib
+  use grib_module, only: write_grib
 
   use joanna_module, only: read_joanna, write_results_joanna
   use datastruct_module,  only: DataStructure_type, mark_output
@@ -24,8 +24,9 @@ program shallow_water
 
   ! Configuration parameters
   real(kind=jprw) :: dt = 20.              ! solver time-step
-  integer         :: nb_steps = 1         ! Number of propagations
+  integer         :: nb_steps = 15         ! Number of propagations
   integer         :: hours_per_step = 24   ! Propagation time
+  integer         :: order = 2             ! Order of accuracy
   logical         :: write_itermediate_output = .True.
 
   ! Declarations
@@ -49,8 +50,8 @@ program shallow_water
 
   call set_topography(dstruct)
 
-  !call set_state_rossby_haurwitz(dstruct)
-  call set_state_zonal_flow(dstruct)
+  call set_state_rossby_haurwitz(dstruct)
+  !call set_state_zonal_flow(dstruct)
 
   call set_time_step( dt )
 
@@ -63,6 +64,7 @@ program shallow_water
   call log_info( "| glb_nb_edges      | "//trim(str(dstruct%glb_nb_edges,'(I8)'))//" |" )
   call log_info( "| nb_nodes[0]       | "//trim(str(dstruct%nb_nodes,'(I8)'))//" |" )
   call log_info( "| nb_edges[0]       | "//trim(str(dstruct%nb_edges,'(I8)'))//" |" )
+  call log_info( "| order             | "//trim(str(order,'(I8)'))//" |" )
   call log_info( "| time step         | "//trim(str(dt,'(F8.1)'))//" |" )
   call log_info( "| total time  (hrs) | "//trim(str(nb_steps*hours_per_step,'(I8)'))//" |" )
   call log_info( "| output rate (hrs) | "//trim(str(hours_per_step,'(I8)'))//" |" )
@@ -80,7 +82,7 @@ program shallow_water
   do jstep=1,nb_steps 
 
     call step_timer%start()
-    call propagate_state( hours_per_step*hours, dstruct)
+    call propagate_state( hours_per_step*hours, order, dstruct)
 
     write (log_str, '(A,I3,A,A,F8.2,A,F8.2,A)') &
       & "Propagated to ",jstep*hours_per_step," hours.", &
@@ -115,7 +117,7 @@ contains
     write (filename, "(A,I2.2,A,I2.2)") "data/fields",jstep,".msh"
     call write_gmsh_fields(dstruct,filename)
     write (filename, "(A,I2.2,A)") "data/fields",jstep,".grib"
-    !call write_grib(g,filename)
+    call write_grib(dstruct,filename)
     call wallclock_timer%resume()
   end subroutine write_fields
 

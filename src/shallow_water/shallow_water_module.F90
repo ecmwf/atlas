@@ -62,6 +62,7 @@ contains
 
     ! Compute the normal velocity in faces, and advection in vertices
 
+    !dir$ ivdep
     !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,Sx,Sy,Vx,Vy,ip1,ip2,apos,aneg)
     do jedge = 1,dstruct%nb_edges
       Sx = S(XX,jedge)
@@ -674,8 +675,9 @@ contains
 
   end subroutine setup_shallow_water
 
-  subroutine propagate_state(dt,dstruct)
+  subroutine propagate_state(dt,order,dstruct)
     real(kind=jprw), intent(in) :: dt
+    integer, intent(in) :: order
     type(DataStructure_type), intent(inout), target :: dstruct
     real(kind=jprw) :: tend, t0, dt_fwd, tstart
     character(len=200) :: step_info
@@ -690,7 +692,7 @@ contains
     do while (dstruct%time < tend)
       t0 = dstruct%time
       dt_fwd = min( dt_forward, tend-t0 )
-      call step_forward(iter,dt_fwd,dstruct)
+      call step_forward(iter,dt_fwd,order,dstruct)
 
       if( log_level <= LOG_LEVEL_INFO ) then
         if( myproc .eq. 0 ) then
@@ -709,9 +711,10 @@ contains
 
 
 
-  subroutine step_forward(step,dt,dstruct)
+  subroutine step_forward(step,dt,order,dstruct)
     integer, intent(inout) :: step
     real(kind=jprw), intent(in) :: dt
+    integer, intent(in) :: order
     type(DataStructure_type), intent(inout) :: dstruct
 
     call backup_solution(dstruct)
@@ -724,7 +727,7 @@ contains
     
     call add_forcing_to_solution(dt,dstruct)
     
-    call advect_solution(dt,dstruct)
+    call advect_solution(dt,order,dstruct)
 
     call implicit_solve(dt,dstruct)
 
@@ -741,7 +744,7 @@ contains
   subroutine set_state_rossby_haurwitz(dstruct)
     type(DataStructure_type), intent(inout)      :: dstruct
     real(kind=jprw), dimension(:), pointer   :: D, cor, H0, H
-    real(kind=jprw), dimension(:,:), pointer :: Q, coords
+    real(kind=jprw), dimension(:,:), pointer :: U, coords
     integer :: jnode, ir
     real(kind=jprw) :: aaa0,zk,om,ph0,x,y, sin_y, cos_y
 
@@ -754,7 +757,7 @@ contains
     coords => vector_field_2d("coordinates",dstruct)
     cor => scalar_field_2d("coriolis",dstruct)
     D => scalar_field_2d("depth",dstruct)
-    Q => vector_field_2d("velocity",dstruct)
+    U => vector_field_2d("velocity",dstruct)
     H0 => scalar_field_2d("topography",dstruct)
     H => scalar_field_2d("height",dstruct)
 
@@ -767,15 +770,14 @@ contains
       cos_y = cos(y)
       cor(jnode) = f0*sin_y
       if(x == 2._jprw*pi) x=0.
-      Q(XX,jnode) =  radius*om*cos_y+radius*zk*cos(ir*x) * cos_y**(ir-1._jprw) &
+      U(XX,jnode) =  radius*om*cos_y+radius*zk*cos(ir*x) * cos_y**(ir-1._jprw) &
         &            * (ir*(sin_y)**2-cos_y**2)
-      Q(YY,jnode) = -radius*zk*ir*cos_y**(ir-1._jprw)*sin_y*sin(ir*x)
+      U(YY,jnode) = -radius*zk*ir*cos_y**(ir-1._jprw)*sin_y*sin(ir*x)
       D(jnode) = (ph0+radius**2*fa(y)+radius**2*fb(y)*cos(ir*x) &
         &        +radius**2*fc(y)*cos(2._jprw*ir*x)) / grav
       D(jnode) = max(aaa0,D(jnode) - H0(jnode))
-      Q(:,jnode) = Q(:,jnode) * D(jnode)
-      if(y == 0.5_jprw*pi) Q(XX,jnode)=0.
-      if(y ==-0.5_jprw*pi) Q(XX,jnode)=0.
+      if(y == 0.5_jprw*pi) U(XX,jnode)=0.
+      if(y ==-0.5_jprw*pi) U(XX,jnode)=0.
       H(jnode) = H0(jnode) + D(jnode)
     end do
     !$OMP END PARALLEL DO
@@ -823,6 +825,7 @@ contains
     H0 => scalar_field_2d("topography",dstruct)
     H => scalar_field_2d("height",dstruct)
 
+    !dir$ ivdep
     !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,x,y)
     do jnode=1,dstruct%nb_nodes
       x=coords(XX,jnode)
@@ -843,7 +846,7 @@ contains
     type(DataStructure_type), intent(inout) :: dstruct
     real(kind=jprw), dimension(:), pointer :: H0
     real(kind=jprw), dimension(:,:), pointer :: coords
-    real(kind=jprw) :: amp = 2000. ! amplitude of hill
+    real(kind=jprw) :: amp = 0. ! 2000. ! amplitude of hill
     real(kind=jprw) :: rad = 2.*pi/18. ! radius of hill
     real(kind=jprw) :: xcent = 3.*pi/2.  ! centre of hill
     real(kind=jprw) :: ycent = pi/6.*1.
@@ -957,6 +960,7 @@ contains
       !$OMP END PARALLEL DO
     end if
 
+    !dir$ ivdep
     !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2)
     do jedge=1,dstruct%nb_edges
       ip1 = dstruct%edges(jedge,1)
@@ -1088,8 +1092,9 @@ contains
 
 
 
-  subroutine advect_solution(dt,dstruct)
+  subroutine advect_solution(dt,order,dstruct)
     real(kind=jprw), intent(in) :: dt
+    integer, intent(in) :: order
     type(DataStructure_type), intent(inout) :: dstruct
     real(kind=jprw), dimension(:),   pointer :: D, D0, DR
     real(kind=jprw), dimension(:,:), pointer :: U, V
@@ -1103,7 +1108,7 @@ contains
     DR => scalar_field_2d("depth_ratio",dstruct)
    
     !    mpdata_gauge_D( time, variable, velocity, VDS,  order, limit,   dstruct )
-    call mpdata_gauge_D( dt,   D,        V,        VDS,  2,     .True.,  dstruct )
+    call mpdata_gauge_D( dt,   D,        V,        VDS,  order, .True.,  dstruct )
 
     ! compute ratio
     !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode)
@@ -1112,7 +1117,7 @@ contains
     end do
     !$OMP END PARALLEL DO
     !    mpdata_gauge_U( time, variable, VDS, DR, D0,  order, limit,  dstruct )
-    call mpdata_gauge_U( dt,   U,        VDS, DR, D0,  2,     .True., dstruct )
+    call mpdata_gauge_U( dt,   U,        VDS, DR, D0,  order, .True., dstruct )
   end subroutine advect_solution
 
 end module shallow_water_module

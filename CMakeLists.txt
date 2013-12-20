@@ -208,7 +208,6 @@ endif()
 
 add_library( io
   src/io/split_globe_module.F90
-  #src/io/grib_module.F90
 )
 target_link_libraries( io datastruct )
 
@@ -235,6 +234,7 @@ file( COPY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
 add_executable( shallow_water
   ${DATASTRUCT_SRC}
   src/io/gmsh_module.F90
+  src/io/grib_module.F90
   src/shallow_water/shallow_water_module.F90 
   src/shallow_water/shallow_water.F90 )
 target_link_libraries( shallow_water io common datastruct )

@@ -9,9 +9,9 @@ module grib_module
   implicit none
 contains
 
-subroutine write_grib(geom,filename)
+subroutine write_grib(dstruct,filename)
     implicit none
-    type(DataStructure_type), intent(inout), target :: geom
+    type(DataStructure_type), intent(inout), target :: dstruct
     character(len=*), intent(in) :: filename
 
 #ifdef HAVE_GRIB
@@ -19,29 +19,30 @@ subroutine write_grib(geom,filename)
     integer :: ihour
 
     real(kind=jprw), pointer :: loc_depth(:)
-    real(kind=jprw), pointer :: loc_momentum(:,:)
+    real(kind=jprw), pointer :: loc_velocity(:,:)
 
     real(kind=jprw), allocatable :: depth(:)
-    real(kind=jprw), allocatable :: momentum(:,:)
+    real(kind=jprw), allocatable :: velocity(:,:)
     real(kind=jprw), allocatable :: Vx(:)
     real(kind=jprw), allocatable :: Vy(:)
 
-    ! This mess is here because the mesh contains some duplicated points
 
-    loc_depth => scalar_field("depth",geom)
-    loc_momentum => vector_field("momentum",geom)
+    call log_info( "Writing Grib file "//trim(filename) )
 
-    call geom%internal_mesh%nodes%comm%gather(loc_depth,depth)
-    call geom%internal_mesh%nodes%comm%gather(loc_momentum,momentum)
+    loc_depth => scalar_field_2d("depth",dstruct)
+    loc_velocity => vector_field_2d("velocity",dstruct)
+
+    call gather(loc_depth,depth, dstruct)
+    call gather(loc_velocity,velocity, dstruct)
 
     if (myproc .eq. 0) then 
 
         allocate( Vx( size(depth) ) )
         allocate( Vy( size(depth) ) )
 
-        Vx(:) = momentum(:,1) / depth(:)
-        Vy(:) = momentum(:,2) / depth(:)
-        ihour = geom%fields%time / 3600.
+        Vx(:) = velocity(1,:) / depth(:)
+        Vy(:) = velocity(2,:) / depth(:)
+        ihour = dstruct%time / 3600.
 
         call grib_open_file(IFILE_HANDLE,'data/gribfield','R')
         call grib_new_from_file(IFILE_HANDLE,IGRIB_HANDLE, IRET)
