@@ -13,4 +13,5 @@
 *.cmake
 CMakeCache.txt
 CMakeFiles/*
+CMakeLists.txt.user
 test_sync

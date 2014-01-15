@@ -19,7 +19,8 @@ program shallow_water
     & set_state_zonal_flow, &
     & set_topography, &
     & set_time_step, &
-    & propagate_state
+    & propagate_state, &
+    & EQS_MOMENTUM, EQS_VELOCITY
   implicit none
 
   ! Configuration parameters
@@ -46,7 +47,7 @@ program shallow_water
   call read_joanna("data/meshvol.d","data/rtable_lin_T255.d", dstruct)
   call write_gmsh_mesh_2d(dstruct,"data/mesh.msh")
 
-  call setup_shallow_water(dstruct)
+  call setup_shallow_water(EQS_MOMENTUM,dstruct)
 
   call set_topography(dstruct)
 

@@ -235,7 +235,8 @@ add_executable( shallow_water
   ${DATASTRUCT_SRC}
   src/io/gmsh_module.F90
   src/io/grib_module.F90
-  src/shallow_water/shallow_water_module.F90 
+  src/shallow_water/mpdata_module.F90
+  src/shallow_water/shallow_water_module.F90
   src/shallow_water/shallow_water.F90 )
 target_link_libraries( shallow_water io common datastruct )
 set_property(TARGET shallow_water PROPERTY LINKER_LANGUAGE Fortran)

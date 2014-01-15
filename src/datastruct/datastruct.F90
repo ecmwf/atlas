@@ -19,6 +19,7 @@ module datastruct
 !   Field_type
 !   FieldSet_type
 !   Metadata_type
+!   HaloExchange_type
 
 ! Interfaces :
 ! ----------
