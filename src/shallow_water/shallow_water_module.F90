@@ -14,7 +14,9 @@ module shallow_water_module
   use parallel_module
   use common_module
   use datastruct_module
-  use mpdata_module
+  use mpdata_module, only: &
+    mpdata_D, mpdata_Q, mpdata_gauge_U, compute_gradient, &
+    compute_gradient_tensor, probe
 
   implicit none
   private
@@ -157,7 +159,7 @@ contains
     
     call add_forcing_to_solution(dt,dstruct)
     
-    call compute_advective_velocities(dt,dstruct,"advect")
+    call compute_advective_velocities(dt,dstruct,"extrapolate")
 
     call advect_solution(dt,order,scheme,dstruct)
 
@@ -675,14 +677,14 @@ contains
     V => vector_field_2d("advective_velocity",dstruct)
     DR => scalar_field_2d("depth_ratio",dstruct)
    
-    !    mpdata_D( scheme,          time, variable, velocity, VDS,  order, limit,   dstruct )
-    call mpdata_D( scheme, dt,   D,        V,        VDS,  order, .True.,  dstruct )
+    !    mpdata_D( scheme, time, variable, velocity, VDS,  order, limit,   dstruct )
+    call mpdata_D( scheme, dt,   D,        V,        VDS,  order, 1._jprw, dstruct )
 
     select case (eqs_type)
 
       case (EQS_MOMENTUM)
-        !    mpdata_gauge_Q( time, variable, V,  order, limit,  dstruct )
-        call mpdata_Q( scheme, dt,   Q,        V,  order, .True., dstruct )
+        !    mpdata_Q( scheme, time, variable, V,  order, limit,     dstruct )
+        call mpdata_Q( scheme, dt,   Q,        V,  order, .995_jprw, dstruct )
 
       case (EQS_VELOCITY)
         ! compute ratio

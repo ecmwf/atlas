@@ -28,7 +28,7 @@ module mpdata_module
 
 contains
 
-  subroutine mpdata_D(mpdata_scheme,dt,D,V,VDS,order,limited,dstruct)
+  subroutine mpdata_D(mpdata_scheme,dt,D,V,VDS,order,limit,dstruct)
     ! For mpdata standard scheme, in the case for positive D,
     !  grad( abs(D) ) == grad( D )
     integer, intent(in) :: mpdata_scheme
@@ -36,7 +36,7 @@ contains
     type(DataStructure_type), intent(inout) :: dstruct
     real(kind=jprw), intent(inout) :: D(:)
     real(kind=jprw), intent(in) :: V(:,:)
-    logical, intent(in) :: limited
+    real(kind=jprw), intent(in) :: limit
     integer, intent(in) :: order
     real(kind=jprw), intent(out) :: VDS(dstruct%nb_edges)
 
@@ -68,7 +68,7 @@ contains
     jpass = 1
 
     ! non-oscillatory option
-    if( limited .and. (order .ge. 2) ) then
+    if( limit > 0._jprw .and. (order >= 2) ) then
       Dmax(:) = -1e10
       Dmin(:) =  1e10
       call compute_Dmax_and_Dmin()
@@ -194,7 +194,7 @@ contains
       !$OMP END PARALLEL DO
 
       ! non-oscillatory option
-      if (limited) then
+      if (limit > 0._jprw) then
         if (mpdata_scheme == MPDATA_STANDARD) call compute_Dmax_and_Dmin()
         call limit_antidiffusive_velocity()
       endif
@@ -264,7 +264,6 @@ contains
     subroutine limit_antidiffusive_velocity
 
       real(kind=jprw) :: asignp,asignn
-      real(kind=jprw) :: limit = .995  ! 1: second order, 0: first order
 
       !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,rhin,rhout,jedge,iedge,apos,aneg,asignp,asignn)
       do jnode=1,dstruct%nb_nodes
@@ -279,16 +278,8 @@ contains
           rhin  = rhin  - asignp*aneg - asignn*apos
           rhout = rhout + asignp*apos + asignn*aneg
         end do
-        if( Dmax(jnode)-D(jnode) <= eps ) then
-          cp(jnode) = 0.
-        else
-          cp(jnode) = ( Dmax(jnode)-D(jnode) )*vol(jnode)/( rhin * dt + eps )
-        endif
-        if( D(jnode)-Dmin(jnode) <= eps ) then
-          cn(jnode) = 0.
-        else
-          cn(jnode) = ( D(jnode)-Dmin(jnode) )*vol(jnode)/( rhout* dt + eps )
-        endif
+        cp(jnode) = ( Dmax(jnode)-D(jnode) )*vol(jnode)/( rhin * dt + eps )
+        cn(jnode) = ( D(jnode)-Dmin(jnode) )*vol(jnode)/( rhout* dt + eps )
       end do
       !$OMP END PARALLEL DO
 
@@ -568,13 +559,13 @@ contains
   end subroutine mpdata_gauge_U
   
   
-  subroutine mpdata_Q(mpdata_scheme,dt,Q,V,order,limited,dstruct)
+  subroutine mpdata_Q(mpdata_scheme,dt,Q,V,order,limit,dstruct)
     integer, intent(in) :: mpdata_scheme
     real(kind=jprw), intent(in)  :: dt
     type(DataStructure_type), intent(inout) :: dstruct
     real(kind=jprw), intent(inout) :: Q(:,:)
     real(kind=jprw), intent(in) :: V(:,:)
-    logical, intent(in) :: limited
+    real(kind=jprw), intent(in) :: limit
     integer, intent(in) :: order
     integer :: jnode, jedge, iedge, jpass, ip1,ip2
     real(kind=jprw) :: Sx, Sy, volume_of_two_cells, dQdx(2), dQdy(2), Vx, Vy, Qtmp(2), Q_abs(2), Qbar(2,2)
@@ -603,7 +594,7 @@ contains
     jpass = 1
 
     ! non-oscillatory option
-    if( limited .and. (order .ge. 2) ) then
+    if( limit > 0. .and. (order >= 2) ) then
       Qmax(:,:) = -1e10
       Qmin(:,:) =  1e10
       call compute_Qmax_and_Qmin()
@@ -723,7 +714,7 @@ contains
       !$OMP END PARALLEL DO
 
       ! non-oscillatory option
-      if (limited) then
+      if (limit > 0._jprw) then
         if (mpdata_scheme == MPDATA_STANDARD) call compute_Qmax_and_Qmin()
         call limit_antidiffusive_velocity()
       endif
@@ -786,7 +777,6 @@ contains
     subroutine limit_antidiffusive_velocity
 
       real(kind=jprw) :: asignp,asignn
-      real(kind=jprw), parameter :: limit = .995  ! 1: second order, 0: first order
       integer :: var
       !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,rhin,rhout,jedge,iedge,apos,aneg,asignp,asignn)
       do jnode=1,dstruct%nb_nodes

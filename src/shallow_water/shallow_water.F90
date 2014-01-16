@@ -30,7 +30,7 @@ program shallow_water
   integer, parameter         :: nb_steps = 30         ! Number of propagations
   integer, parameter         :: hours_per_step = 12   ! Propagation time
   integer, parameter         :: order = 2             ! Order of accuracy
-  integer, parameter         :: scheme = MPDATA_STANDARD
+  integer, parameter         :: scheme = MPDATA_GAUGE
   integer, parameter         :: eqs_type = EQS_MOMENTUM
   logical, parameter         :: write_itermediate_output = .True.
 
