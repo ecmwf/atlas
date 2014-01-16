@@ -43,7 +43,7 @@ with open(args.name+'.job','w') as file:
 #!/bin/bash
 #PBS -N {name}
 #PBS -l select={nodes}:ncpus=24
-#PBS -q workq
+#PBS -q np
 #PBS -o {name}.out
 #PBS -j oe
 #PBS -v DISPLAY
