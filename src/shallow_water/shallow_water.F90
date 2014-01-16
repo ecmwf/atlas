@@ -24,9 +24,9 @@ program shallow_water
   implicit none
 
   ! Configuration parameters
-  real(kind=jprw) :: dt = 20.              ! solver time-step
-  integer         :: nb_steps = 15         ! Number of propagations
-  integer         :: hours_per_step = 24   ! Propagation time
+  real(kind=jprw) :: dt = 1.              ! solver time-step
+  integer         :: nb_steps = 30         ! Number of propagations
+  integer         :: hours_per_step = 12   ! Propagation time
   integer         :: order = 2             ! Order of accuracy
   logical         :: write_itermediate_output = .True.
 
@@ -40,7 +40,7 @@ program shallow_water
   ! Execution
   call parallel_init()
 
-  call set_log_level(LOG_LEVEL_INFO)
+  call set_log_level(LOG_LEVEL_DEBUG)
   call set_log_proc(0)
   
   call log_info("Program shallow_water start")
@@ -51,8 +51,8 @@ program shallow_water
 
   call set_topography(dstruct)
 
-  call set_state_rossby_haurwitz(dstruct)
-  !call set_state_zonal_flow(dstruct)
+  !call set_state_rossby_haurwitz(dstruct)
+  call set_state_zonal_flow(dstruct)
 
   call set_time_step( dt )
 
@@ -75,6 +75,8 @@ program shallow_water
   call mark_output("height",dstruct)
   call mark_output("depth",dstruct)
   call mark_output("velocity",dstruct)
+  call mark_output("momentum",dstruct)
+  call mark_output("forcing",dstruct)
 
   call write_fields()
 
@@ -84,6 +86,8 @@ program shallow_water
 
     call step_timer%start()
     call propagate_state( hours_per_step*hours, order, dstruct)
+    !call propagate_state( 7740._jprw, order, dstruct)
+    !call propagate_state( dt, order, dstruct)
 
     write (log_str, '(A,I3,A,A,F8.2,A,F8.2,A)') &
       & "Propagated to ",jstep*hours_per_step," hours.", &

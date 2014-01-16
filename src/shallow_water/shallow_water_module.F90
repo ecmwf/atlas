@@ -14,12 +14,7 @@ module shallow_water_module
   use parallel_module
   use common_module
   use datastruct_module
-  use mpdata_module, only: &
-    & mpdata_gauge_D, &
-    & mpdata_gauge_U, &
-    & mpdata_gauge_Q, &
-    & compute_gradient, &
-    & compute_gradient_tensor
+  use mpdata_module
 
   implicit none
   private
@@ -160,7 +155,7 @@ contains
     
     call add_forcing_to_solution(dt,dstruct)
     
-    call compute_advective_velocities(dt,dstruct,"extrapolate")
+    call compute_advective_velocities(dt,dstruct,"advect")
 
     call advect_solution(dt,order,dstruct)
 
@@ -249,7 +244,7 @@ contains
     real(kind=jprw), parameter :: USCAL = 20.
     real(kind=jprw), parameter :: H00 = grav * 8e3
     real(kind=jprw), parameter :: pvel = USCAL/radius
-    real(kind=jprw), parameter :: beta = pi/2._jprw ! 0.! pi/4._jprw
+    real(kind=jprw), parameter :: beta = 0.! pi/4._jprw
 
 
     coords => vector_field_2d("coordinates",dstruct)
@@ -267,9 +262,13 @@ contains
       y=coords(YY,jnode)
       cor(jnode)   = f0 *( -cos(x)*cos(y)*sin(beta)+sin(y)*cos(beta) )
       D(jnode)     = (H00-radius**2*(f0+pvel)*0.5*pvel*(-cos(x)*cos(y)*sin(beta)+sin(y)*cos(beta))**2)
-      D(jnode)     = max(0._jprw, D(jnode)/grav - H0(jnode))
+      D(jnode)     = D(jnode)/grav - H0(jnode)
       U(XX,jnode)  =  pvel*(cos(beta)+tan(y)*cos(x)*sin(beta))*radius*cos(y)
       U(YY,jnode)  = -pvel*sin(x)*sin(beta)*radius
+      if ( D(jnode) < eps ) then
+        D(jnode) = eps
+        U(:,jnode) = 0.
+      end if
       H(jnode) = H0(jnode) + D(jnode)
       Q(:,jnode) = D(jnode) * U(:,jnode)
     end do
@@ -282,7 +281,7 @@ contains
     type(DataStructure_type), intent(inout) :: dstruct
     real(kind=jprw), dimension(:), pointer :: H0
     real(kind=jprw), dimension(:,:), pointer :: coords
-    real(kind=jprw) :: amp = 0. ! 2000. ! amplitude of hill
+    real(kind=jprw) :: amp = 8800. ! amplitude of hill
     real(kind=jprw) :: rad = 2.*pi/18. ! radius of hill
     real(kind=jprw) :: xcent = 3.*pi/2.  ! centre of hill
     real(kind=jprw) :: ycent = pi/6.*1.
@@ -357,7 +356,7 @@ contains
     real(kind=jprw), intent(in) :: dt
     type(DataStructure_type), intent(inout) :: dstruct
     character(len=*), intent(in), optional :: option
-    real(kind=jprw) :: Ux, Uy, U0x, U0y, Vx, Vy, Rx, Ry, dVxdx, dVxdy, dVydx, dVydy, Dpos, D0pos
+    real(kind=jprw) :: Ux, Uy, U0x, U0y, Vx, Vy, dVxdx, dVxdy, dVydx, dVydy, Dpos, D0pos
     integer :: jnode, jedge, iedge, ip1, ip2
     real(kind=jprw), dimension(:),   pointer :: D, D0, hx, hy, vol
     real(kind=jprw), dimension(:,:), pointer :: U, U0, R, Vedges, coords, Q, Q0
@@ -377,22 +376,29 @@ contains
     vol    => scalar_field_2d("dual_volumes",dstruct)
 
     if( option .eq. "advect") then
-      write(0,*) "compute_advective_velocities with option advect not supported"
-      call abort
-      !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode)
-      do jnode=1,dstruct%nb_nodes
-        Vnodes(:,jnode)=(U(:,jnode)+0.5*dt*R(:,jnode)) 
-      end do
-      !$OMP END PARALLEL DO
+      select case (eqs_type)
+
+        case (EQS_MOMENTUM)
+          !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode)
+          do jnode=1,dstruct%nb_nodes
+            Dpos = max(eps, D(jnode))
+            Vnodes(:,jnode)=(Q(:,jnode)+0.5*dt*R(:,jnode))/Dpos
+          end do
+          !$OMP END PARALLEL DO
+        case (EQS_VELOCITY)
+          !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode)
+          do jnode=1,dstruct%nb_nodes
+            Vnodes(:,jnode)=(U(:,jnode)+0.5*dt*R(:,jnode)) 
+          end do
+          !$OMP END PARALLEL DO
+      end select
       call compute_gradient_tensor( Vnodes, grad_Vnodes, dstruct )
 
       !dir$ ivdep
-      !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Vx,Vy,Rx,Ry,dVxdx,dVxdy,dVydx,dVydy)
+      !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Vx,Vy,dVxdx,dVxdy,dVydx,dVydy)
       do jnode=1,dstruct%nb_nodes
         Vx = Vnodes(XX,jnode)
         Vy = Vnodes(YY,jnode)
-        Rx = R(XX,jnode)
-        Ry = R(YY,jnode)
         dVxdx = grad_Vnodes(XXDXX,jnode)*hy(jnode)/vol(jnode)
         dVxdy = grad_Vnodes(XXDYY,jnode)*hx(jnode)/vol(jnode)
         dVydx = grad_Vnodes(YYDXX,jnode)*hy(jnode)/vol(jnode)    
@@ -572,33 +578,49 @@ contains
         !dir$ ivdep
         !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Qx,Qy,Dpos,Rx_exp,Ry_exp,Qx_adv,Qy_adv,m,Rx,Ry)
         do jnode=1,dstruct%nb_nodes
-          Qx    = Q(XX,jnode)
-          Qy    = Q(YY,jnode)
           Dpos  = max(eps, D(jnode))
 
-          Rx_exp = -grav*D(jnode)*grad_H(XX,jnode)*hy(jnode)/vol(jnode)
-          Ry_exp = -grav*D(jnode)*grad_H(YY,jnode)*hx(jnode)/vol(jnode)
+          Qx    = Q(XX,jnode)
+          Qy    = Q(YY,jnode)
 
           Qx_adv = Qx
           Qy_adv = Qy
 
-          do m=1,3 ! Three iterations at most is enough to converge
-            Rx = Rx_exp + cor(jnode)*Qy - dhxdy_over_G(jnode)*Qx*Qy/Dpos
-            Ry = Ry_exp - cor(jnode)*Qx + dhxdy_over_G(jnode)*Qx*Qx/Dpos
-            Qx = Qx_adv + 0.5_jprw*dt*Rx
-            Qy = Qy_adv + 0.5_jprw*dt*Ry
-          end do
-          Q(XX,jnode) = Qx
-          Q(YY,jnode) = Qy
-          R(XX,jnode) = Rx_exp + cor(jnode)*Qy - dhxdy_over_G(jnode)*Qx*Qy/Dpos
-          R(YY,jnode) = Ry_exp - cor(jnode)*Qx + dhxdy_over_G(jnode)*Qx*Qx/Dpos
+          Rx_exp = -grav*D(jnode)*grad_H(XX,jnode)*hy(jnode)/vol(jnode)
+          Ry_exp = -grav*D(jnode)*grad_H(YY,jnode)*hx(jnode)/vol(jnode)
+
+          !write(0,*) Qx, Qy, D(jnode), Dpos, Rx_exp, Ry_exp
+
+!          if (Dpos > eps) then
+            do m=1,3 ! Three iterations at most is enough to converge
+              Rx = Rx_exp + cor(jnode)*Qy - dhxdy_over_G(jnode)*Qx*Qy/Dpos
+              Ry = Ry_exp - cor(jnode)*Qx + dhxdy_over_G(jnode)*Qx*Qx/Dpos
+              Qx = Qx_adv + 0.5_jprw*dt*Rx
+              Qy = Qy_adv + 0.5_jprw*dt*Ry
+            end do
+            Q(XX,jnode) = Qx
+            Q(YY,jnode) = Qy
+            R(XX,jnode) = Rx_exp + cor(jnode)*Qy - dhxdy_over_G(jnode)*Qx*Qy/Dpos
+            R(YY,jnode) = Ry_exp - cor(jnode)*Qx + dhxdy_over_G(jnode)*Qx*Qx/Dpos
+            U(:,jnode) = Q(:,jnode) / Dpos
+!          else
+!            write(0,*) jnode
+!            Q(:,jnode) = 0.
+!            U(:,jnode) = 0.
+!            R(:,jnode) = 0.
+!          end if
+
+          if ( jnode == probe ) then
+            write(log_str,*) "Q_next ", jnode, Q(:,jnode); call log_debug()
+            write(log_str,*) "U_next ", jnode, U(:,jnode); call log_debug()
+            write(log_str,*) "R_exp  ", jnode, Rx_exp, Ry_exp; call log_debug()
+            write(log_str,*) "R      ", jnode, R(:,jnode); call log_debug()
+            write(log_str,*) "gradH  ", jnode, grad_H(:,jnode); call log_debug()
+          end if
+
         end do
         !$OMP END PARALLEL DO
 
-        do jnode=1,dstruct%nb_nodes
-          Dpos  = max(eps, D(jnode))
-          U(:,jnode) = Q(:,jnode) / Dpos
-        end do
 
 
       case (EQS_VELOCITY)
@@ -641,7 +663,6 @@ contains
     real(kind=jprw), dimension(:),   pointer :: D, D0, DR
     real(kind=jprw), dimension(:,:), pointer :: U, Q, V
     real(kind=jprw) :: VDS(dstruct%nb_edges)
-    real(kind=jprw) :: Qd(dstruct%nb_nodes)
     integer :: jnode
     
     D => scalar_field_2d("depth",dstruct)
@@ -652,7 +673,7 @@ contains
     DR => scalar_field_2d("depth_ratio",dstruct)
    
     !    mpdata_gauge_D( time, variable, velocity, VDS,  order, limit,   dstruct )
-    call mpdata_gauge_D( dt,   D,        V,        VDS,  order, .True.,  dstruct )
+    call mpdata_D( MPDATA_STANDARD, dt,   D,        V,        VDS,  order, .True.,  dstruct )
 
     select case (eqs_type)
 
