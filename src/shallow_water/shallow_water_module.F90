@@ -22,7 +22,7 @@ module shallow_water_module
   public :: propagate_state
   public :: set_state_rossby_haurwitz
   public :: set_state_zonal_flow
-  public :: set_topography
+  public :: set_topography_mountain
   public :: set_time_step
 
   integer, parameter, public :: EQS_MOMENTUM = 1
@@ -103,9 +103,10 @@ contains
 
   end subroutine setup_shallow_water
 
-  subroutine propagate_state(dt,order,dstruct)
+  subroutine propagate_state(dt,order,scheme,dstruct)
     real(kind=jprw), intent(in) :: dt
     integer, intent(in) :: order
+    integer, intent(in) :: scheme
     type(DataStructure_type), intent(inout), target :: dstruct
     real(kind=jprw) :: tend, t0, dt_fwd, tstart
     character(len=200) :: step_info
@@ -120,7 +121,7 @@ contains
     do while (dstruct%time < tend)
       t0 = dstruct%time
       dt_fwd = min( dt_forward, tend-t0 )
-      call step_forward(iter,dt_fwd,order,dstruct)
+      call step_forward(iter,dt_fwd,order,scheme,dstruct)
 
       if( log_level <= LOG_LEVEL_INFO ) then
         if( myproc .eq. 0 ) then
@@ -139,10 +140,11 @@ contains
 
 
 
-  subroutine step_forward(step,dt,order,dstruct)
+  subroutine step_forward(step,dt,order,scheme,dstruct)
     integer, intent(inout) :: step
     real(kind=jprw), intent(in) :: dt
     integer, intent(in) :: order
+    integer, intent(in) :: scheme
     type(DataStructure_type), intent(inout) :: dstruct
 
     call backup_solution(dstruct)
@@ -157,7 +159,7 @@ contains
     
     call compute_advective_velocities(dt,dstruct,"advect")
 
-    call advect_solution(dt,order,dstruct)
+    call advect_solution(dt,order,scheme,dstruct)
 
     call implicit_solve(dt,dstruct)
 
@@ -277,11 +279,11 @@ contains
   end subroutine set_state_zonal_flow
 
 
-  subroutine set_topography(dstruct)
+  subroutine set_topography_mountain(amplitude,dstruct)
+    real(kind=jprw), intent(in) :: amplitude ! amplitude of hill
     type(DataStructure_type), intent(inout) :: dstruct
     real(kind=jprw), dimension(:), pointer :: H0
     real(kind=jprw), dimension(:,:), pointer :: coords
-    real(kind=jprw) :: amp = 8800. ! amplitude of hill
     real(kind=jprw) :: rad = 2.*pi/18. ! radius of hill
     real(kind=jprw) :: xcent = 3.*pi/2.  ! centre of hill
     real(kind=jprw) :: ycent = pi/6.*1.
@@ -299,12 +301,12 @@ contains
       dist = 2.*sqrt( (cos(ylat)*sin( (xlon-xcent)/2 ) )**2 &
         &     + sin((ylat-ycent)/2)**2 )
       if (dist.le.rad) then
-        H0(jnode) = amp * (1.-gamm*dist/rad)
+        H0(jnode) = amplitude * (1.-gamm*dist/rad)
       else
         H0(jnode) = 0.
       end if
     end do
-  end subroutine set_topography
+  end subroutine set_topography_mountain
 
 
   subroutine backup_solution(dstruct)
@@ -656,9 +658,10 @@ contains
 
 
 
-  subroutine advect_solution(dt,order,dstruct)
+  subroutine advect_solution(dt,order,scheme,dstruct)
     real(kind=jprw), intent(in) :: dt
     integer, intent(in) :: order
+    integer, intent(in) :: scheme
     type(DataStructure_type), intent(inout) :: dstruct
     real(kind=jprw), dimension(:),   pointer :: D, D0, DR
     real(kind=jprw), dimension(:,:), pointer :: U, Q, V
@@ -672,14 +675,14 @@ contains
     V => vector_field_2d("advective_velocity",dstruct)
     DR => scalar_field_2d("depth_ratio",dstruct)
    
-    !    mpdata_gauge_D( time, variable, velocity, VDS,  order, limit,   dstruct )
-    call mpdata_D( MPDATA_STANDARD, dt,   D,        V,        VDS,  order, .True.,  dstruct )
+    !    mpdata_D( scheme,          time, variable, velocity, VDS,  order, limit,   dstruct )
+    call mpdata_D( scheme, dt,   D,        V,        VDS,  order, .True.,  dstruct )
 
     select case (eqs_type)
 
       case (EQS_MOMENTUM)
         !    mpdata_gauge_Q( time, variable, V,  order, limit,  dstruct )
-        call mpdata_gauge_Q( dt,   Q,        V,  order, .True., dstruct )
+        call mpdata_Q( scheme, dt,   Q,        V,  order, .True., dstruct )
 
       case (EQS_VELOCITY)
         ! compute ratio

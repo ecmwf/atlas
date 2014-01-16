@@ -17,18 +17,22 @@ program shallow_water
     & setup_shallow_water, &
     & set_state_rossby_haurwitz, &
     & set_state_zonal_flow, &
-    & set_topography, &
+    & set_topography_mountain, &
     & set_time_step, &
     & propagate_state, &
     & EQS_MOMENTUM, EQS_VELOCITY
+  use mpdata_module, only: &
+    MPDATA_GAUGE, MPDATA_STANDARD
   implicit none
 
   ! Configuration parameters
-  real(kind=jprw) :: dt = 1.              ! solver time-step
-  integer         :: nb_steps = 30         ! Number of propagations
-  integer         :: hours_per_step = 12   ! Propagation time
-  integer         :: order = 2             ! Order of accuracy
-  logical         :: write_itermediate_output = .True.
+  real(kind=jprw), parameter :: dt = 20.              ! solver time-step
+  integer, parameter         :: nb_steps = 30         ! Number of propagations
+  integer, parameter         :: hours_per_step = 12   ! Propagation time
+  integer, parameter         :: order = 2             ! Order of accuracy
+  integer, parameter         :: scheme = MPDATA_STANDARD
+  integer, parameter         :: eqs_type = EQS_MOMENTUM
+  logical, parameter         :: write_itermediate_output = .True.
 
   ! Declarations
   type(DataStructure_type) :: dstruct
@@ -40,19 +44,19 @@ program shallow_water
   ! Execution
   call parallel_init()
 
-  call set_log_level(LOG_LEVEL_DEBUG)
+  call set_log_level(LOG_LEVEL_INFO)
   call set_log_proc(0)
   
   call log_info("Program shallow_water start")
   call read_joanna("data/meshvol.d","data/rtable_lin_T255.d", dstruct)
   call write_gmsh_mesh_2d(dstruct,"data/mesh.msh")
 
-  call setup_shallow_water(EQS_MOMENTUM,dstruct)
+  call setup_shallow_water(eqs_type,dstruct)
 
-  call set_topography(dstruct)
+  call set_topography_mountain(0._jprw,dstruct)
 
-  !call set_state_rossby_haurwitz(dstruct)
-  call set_state_zonal_flow(dstruct)
+  call set_state_rossby_haurwitz(dstruct)
+  !call set_state_zonal_flow(dstruct)
 
   call set_time_step( dt )
 
@@ -85,7 +89,7 @@ program shallow_water
   do jstep=1,nb_steps 
 
     call step_timer%start()
-    call propagate_state( hours_per_step*hours, order, dstruct)
+    call propagate_state( hours_per_step*hours, order, scheme, dstruct)
     !call propagate_state( 7740._jprw, order, dstruct)
     !call propagate_state( dt, order, dstruct)
 
