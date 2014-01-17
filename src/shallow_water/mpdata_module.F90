@@ -195,7 +195,7 @@ contains
 
       ! non-oscillatory option
       if (limit > 0._jprw) then
-        if (mpdata_scheme == MPDATA_STANDARD) call compute_Dmax_and_Dmin()
+        !if (mpdata_scheme == MPDATA_STANDARD) call compute_Dmax_and_Dmin()
         call limit_antidiffusive_velocity()
       endif
 
@@ -715,7 +715,7 @@ contains
 
       ! non-oscillatory option
       if (limit > 0._jprw) then
-        if (mpdata_scheme == MPDATA_STANDARD) call compute_Qmax_and_Qmin()
+        !if (mpdata_scheme == MPDATA_STANDARD) call compute_Qmax_and_Qmin()
         call limit_antidiffusive_velocity()
       endif
 

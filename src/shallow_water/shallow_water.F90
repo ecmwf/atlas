@@ -29,8 +29,8 @@ program shallow_water
   real(kind=jprw), parameter :: dt = 20.              ! solver time-step
   integer, parameter         :: nb_steps = 30         ! Number of propagations
   integer, parameter         :: hours_per_step = 12   ! Propagation time
-  integer, parameter         :: order = 2             ! Order of accuracy
-  integer, parameter         :: scheme = MPDATA_GAUGE
+  integer, parameter         :: order = 1             ! Order of accuracy
+  integer, parameter         :: scheme = MPDATA_STANDARD
   integer, parameter         :: eqs_type = EQS_MOMENTUM
   logical, parameter         :: write_itermediate_output = .True.
 
@@ -53,10 +53,10 @@ program shallow_water
 
   call setup_shallow_water(eqs_type,dstruct)
 
-  call set_topography_mountain(0._jprw,dstruct)
+  call set_topography_mountain(8800._jprw,dstruct)
 
-  call set_state_rossby_haurwitz(dstruct)
-  !call set_state_zonal_flow(dstruct)
+  !call set_state_rossby_haurwitz(dstruct)
+  call set_state_zonal_flow(dstruct)
 
   call set_time_step( dt )
 

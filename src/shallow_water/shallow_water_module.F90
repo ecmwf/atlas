@@ -684,7 +684,7 @@ contains
 
       case (EQS_MOMENTUM)
         !    mpdata_Q( scheme, time, variable, V,  order, limit,     dstruct )
-        call mpdata_Q( scheme, dt,   Q,        V,  order, .995_jprw, dstruct )
+        call mpdata_Q( scheme, dt,   Q,        V,  order, 1._jprw, dstruct )
 
       case (EQS_VELOCITY)
         ! compute ratio
