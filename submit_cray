@@ -18,6 +18,8 @@ parser = ArgumentParser()
 parser.add_argument('-s', '--name', type=str, default='pantarhei', help="Name of the job")
 parser.add_argument('-n', '--tasks',   type=int, default=1, help="MPI tasks")
 parser.add_argument('-d', '--threads', type=int, default=1, help="OpenMP threads")
+parser.add_argument('-w', '--walltime', type=str, default='00:10:00', help="Walltime (default 10 min)")
+parser.add_argument('-q', '--queue', type=str, default='np', help="Queue (default np)")
 parser.add_argument('-e', '--env', type=str, default='cray', help="One of [ cray, gnu, intel ]")
 parser.add_argument('command', type=str, nargs='*', help="command", default=['shallow_water'])
 args = parser.parse_args()
@@ -30,7 +32,9 @@ replace_text = {
     'threads':args.threads,
     'command':' '.join(args.command),
     'name':args.name,
-    'env':args.env
+    'env':args.env,
+    'walltime':args.walltime,
+    'queue':args.queue
 }
 
 ####################################################################
@@ -43,10 +47,12 @@ with open(args.name+'.job','w') as file:
 #!/bin/bash
 #PBS -N {name}
 #PBS -l select={nodes}:ncpus=24
-#PBS -q np
+#PBS -q {queue}
 #PBS -o {name}.out
 #PBS -j oe
 #PBS -v DISPLAY
+#PBS -l walltime={walltime}
+
 
 . /etc/bash.bashrc
 module swap PrgEnv-cray PrgEnv-{env}
