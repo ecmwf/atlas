@@ -53,7 +53,7 @@ program shallow_water
 
   call setup_shallow_water(eqs_type,dstruct)
 
-  call set_topography_mountain(8800._jprw,dstruct)
+  call set_topography_mountain(16000._jprw,dstruct)
 
   !call set_state_rossby_haurwitz(dstruct)
   call set_state_zonal_flow(dstruct)

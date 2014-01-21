@@ -35,7 +35,7 @@ module shallow_water_module
   real(kind=jprw), parameter :: f0     = 1.4584e-04 !coriolis parameter (=2xearth's omega)
   real(kind=jprw), parameter :: grav   = 9.80616
   real(kind=jprw), parameter :: pi     = acos(-1._jprw)
-  real(kind=jprw), parameter :: D_tres = 1._jprw
+  real(kind=jprw), parameter :: D_tres = 10._jprw
 
   real(kind=jprw) :: dt_forward = 20.
   integer :: iter = 0
@@ -289,7 +289,7 @@ contains
     real(kind=jprw) :: rad = 2.*pi/18. ! radius of hill
     real(kind=jprw) :: xcent = 3.*pi/2.  ! centre of hill
     real(kind=jprw) :: ycent = pi/6.*1.
-    real(kind=jprw) :: gamm = 1. ! slope of hill
+    real(kind=jprw) :: gamm = 0.5 ! slope of hill
     real(kind=jprw) :: dist, xlon, ylat
     integer :: jnode
 
@@ -302,11 +302,14 @@ contains
 
       dist = 2.*sqrt( (cos(ylat)*sin( (xlon-xcent)/2 ) )**2 &
         &     + sin((ylat-ycent)/2)**2 )
-      if (dist.le.rad) then
-        H0(jnode) = amplitude * (1.-gamm*dist/rad)
-      else
-        H0(jnode) = 0.
-      end if
+
+      H0(jnode) = max(0.,amplitude * (1.-gamm*dist/rad))
+
+      !if (dist.le.rad) then
+      !  H0(jnode) = amplitude * (1.-gamm*dist/rad)
+      !else
+      !  H0(jnode) = 0.
+      !end if
     end do
   end subroutine set_topography_mountain
 
@@ -471,6 +474,7 @@ contains
       else
         if( D(ip2) < D_tres ) Vedges(:,jedge) = 0.
       end if
+      !if ( (D(ip1) + D(ip2))*0.5_jprw < D_tres ) Vedges(:,jedge) = 0.
     enddo
     !$OMP END PARALLEL DO
     
@@ -612,19 +616,19 @@ contains
 
           if (D(jnode) > D_tres) then
             do m=1,3 ! Three iterations at most is enough to converge
-              Rx = Rx_exp + cor(jnode)*Qy - dhxdy_over_G(jnode)*Qx*Qy/Dpos
-              Ry = Ry_exp - cor(jnode)*Qx + dhxdy_over_G(jnode)*Qx*Qx/Dpos
+              Rx = Rx_exp + cor(jnode)*Qy - dhxdy_over_G(jnode)*Qx*Qy/D(jnode)
+              Ry = Ry_exp - cor(jnode)*Qx + dhxdy_over_G(jnode)*Qx*Qx/D(jnode)
               Qx = Qx_adv + 0.5_jprw*dt*Rx
               Qy = Qy_adv + 0.5_jprw*dt*Ry
             end do
             Q(XX,jnode) = Qx
             Q(YY,jnode) = Qy
-            R(XX,jnode) = Rx_exp + cor(jnode)*Qy - dhxdy_over_G(jnode)*Qx*Qy/Dpos
-            R(YY,jnode) = Ry_exp - cor(jnode)*Qx + dhxdy_over_G(jnode)*Qx*Qx/Dpos
-            U(:,jnode) = Q(:,jnode) / Dpos
+            R(XX,jnode) = Rx_exp + cor(jnode)*Qy - dhxdy_over_G(jnode)*Qx*Qy/D(jnode)
+            R(YY,jnode) = Ry_exp - cor(jnode)*Qx + dhxdy_over_G(jnode)*Qx*Qx/D(jnode)
+            U(:,jnode) = Q(:,jnode) / D(jnode)
           else
             R(:,jnode) = 0.
-            D(jnode) = 0.
+            !D(jnode) = 0.
             Q(:,jnode) = 0.
             U(:,jnode) = 0.
           end if
@@ -666,6 +670,12 @@ contains
           R(XX,jnode) = Rx_exp + cor(jnode)*Uy - dhxdy_over_G(jnode)*Ux*Uy
           R(YY,jnode) = Ry_exp - cor(jnode)*Ux + dhxdy_over_G(jnode)*Ux*Ux
           Q(:,jnode) = U(:,jnode) * D(jnode)
+
+          if (D(jnode) < D_tres) then
+            U(:,jnode) = 0.
+            R(:,jnode) = 0.
+            Q(:,jnode) = 0.
+          end if
         end do
         !$OMP END PARALLEL DO
     end select
@@ -693,13 +703,13 @@ contains
     DR => scalar_field_2d("depth_ratio",dstruct)
    
     !    mpdata_D( scheme, time, variable, velocity, VDS,  order, limit,   dstruct )
-    call mpdata_D( scheme, dt,   D,        V,        VDS,  order, 1._jprw, dstruct )
+    call mpdata_D( scheme, dt,   D,        V,        VDS,  order, 0.99_jprw, dstruct )
 
     select case (eqs_type)
 
       case (EQS_MOMENTUM)
         !    mpdata_Q( scheme, time, variable, V,  order, limit,     dstruct )
-        call mpdata_Q( scheme, dt,   Q,        V,  order, 1._jprw, dstruct )
+        call mpdata_Q( scheme, dt,   Q,        V,  order, 0.99_jprw, dstruct )
 
       case (EQS_VELOCITY)
         ! compute ratio
