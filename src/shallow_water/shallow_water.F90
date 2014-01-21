@@ -27,9 +27,9 @@ program shallow_water
 
   ! Configuration parameters
   real(kind=jprw), parameter :: dt = 20.              ! solver time-step
-  integer, parameter         :: nb_steps = 30         ! Number of propagations
-  integer, parameter         :: hours_per_step = 12   ! Propagation time
-  integer, parameter         :: order = 1             ! Order of accuracy
+  integer, parameter         :: nb_steps = 15         ! Number of propagations
+  integer, parameter         :: hours_per_step = 24   ! Propagation time
+  integer, parameter         :: order = 2             ! Order of accuracy
   integer, parameter         :: scheme = MPDATA_STANDARD
   integer, parameter         :: eqs_type = EQS_MOMENTUM
   logical, parameter         :: write_itermediate_output = .True.
@@ -90,8 +90,8 @@ program shallow_water
 
     call step_timer%start()
     call propagate_state( hours_per_step*hours, order, scheme, dstruct)
-    !call propagate_state( 7740._jprw, order, dstruct)
-    !call propagate_state( dt, order, dstruct)
+    !call propagate_state( 7740._jprw, order, scheme, dstruct)
+    !call propagate_state( dt, order, scheme, dstruct)
 
     write (log_str, '(A,I3,A,A,F8.2,A,F8.2,A)') &
       & "Propagated to ",jstep*hours_per_step," hours.", &
@@ -106,7 +106,7 @@ program shallow_water
   ! Write last step anyway if intermediate output is disabled
   if (.not. write_itermediate_output) call write_fields()
 
-  call write_results_joanna("data/results.d","data/rtable_lin_T255.d",dstruct)
+  !call write_results_joanna("data/results.d","data/rtable_lin_T255.d",dstruct)
 
   call log_info("Program shallow_water exit")
   call parallel_finalise()

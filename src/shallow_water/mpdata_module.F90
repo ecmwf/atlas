@@ -17,11 +17,11 @@ module mpdata_module
   public :: compute_gradient
   public :: compute_gradient_tensor
 
- integer, parameter, public :: MPDATA_STANDARD=1, MPDATA_GAUGE=2
+  integer, parameter, public :: MPDATA_STANDARD=1, MPDATA_GAUGE=2
 
   real(kind=jprw), parameter :: eps = 1.e-6
 
-  integer, parameter, public :: probe = 22186
+  integer, parameter, public :: probe = 22674
   real(kind=jprw), parameter :: Dphys_min = -10.
   real(kind=jprw), parameter :: Dphys_max = 20000
 
@@ -53,13 +53,14 @@ contains
     real(kind=jprw) :: gradD(2,dstruct%nb_nodes)
     real(kind=jprw) :: sum_Sabs(2,dstruct%nb_nodes)
     real(kind=jprw) :: sum_Dbar(2,dstruct%nb_nodes)
-    real(kind=jprw), pointer :: vol(:), S(:,:), Wind(:,:)
+    real(kind=jprw), pointer :: vol(:), S(:,:), Wind(:,:), D0(:)
     real(kind=jprw) :: Dbar(2) ! Dabs_bar == Dbar since D > 0 always
 
     Wind    => vector_field_2d("velocity",dstruct)
 
     vol     => scalar_field_2d("dual_volumes",dstruct)
     S       => vector_field_2d("dual_normals",dstruct)
+    D0      => scalar_field_2d("depth_backup",dstruct)
 
     VDS(:) = 0.
 
@@ -108,10 +109,30 @@ contains
       Dtmp = D(jnode) - adv/vol(jnode) * dt
 
       if (Dtmp < Dphys_min .or. Dtmp > Dphys_max ) then
-        write(log_str,*) "D_pass0 ", jnode, D(jnode); call log_error()
+        write(log_str,*) "D_pass0 ", jnode, D0(jnode); call log_error()
         write(log_str,*) "D_pass1 ", jnode, Dtmp; call log_error()
-        write(log_str,*) "adv     ", jnode, adv; call log_error()
+        write(log_str,*) "adv     ", jnode, adv/vol(jnode); call log_error()
         write(log_str,*) "velocity", jnode, Wind(:,jnode); call log_error()
+        do jedge = 1,dstruct%nb_neighbours(jnode)
+          iedge = dstruct%my_edges(jedge,jnode)
+          ip2 = dstruct%edges(iedge,1)
+          if (ip2 == jnode) ip2 = dstruct%edges(iedge,2)
+          write(log_str,*) "D_pass0 ", ip2, D0(ip2); call log_error()
+          write(log_str,*) "velocity", ip2, Wind(:,ip2); call log_error()
+
+          Sx = S(XX,iedge)
+          Sy = S(YY,iedge)
+          Vx = V(XX,iedge)
+          Vy = V(YY,iedge)
+
+          write(log_str,*) "V       ", ip2, Vx, Vy; call log_error()
+          write(log_str,*) "aun     ", ip2, aun(iedge); call log_error()
+          apos = max(0._jprw,Vx*Sx + Vy*Sy)
+          aneg = min(0._jprw,Vx*Sx + Vy*Sy)
+          write(log_str,*) "apos    ", ip2, apos; call log_error()
+          write(log_str,*) "aneg    ", ip2, aneg; call log_error()
+          write(log_str,*) "flux    ", ip2, VDS(iedge)/vol(jnode); call log_error()
+        end do
         call abort
       end if
       if ( jnode .eq. probe ) then
@@ -121,7 +142,8 @@ contains
         write(log_str,*) "velocity", jnode, Wind(:,jnode); call log_debug()
       end if
 
-      D(jnode) = max(eps, Dtmp)
+      if( abs(Dtmp) < 1.e-30_jprw ) Dtmp = 0.
+      D(jnode) = max(0.,Dtmp)
 
     enddo
 
@@ -229,7 +251,8 @@ contains
           write(log_str,*) "gradD = ", gradD(:,jnode); call log_debug()
         end if
 
-        D(jnode) = Dtmp
+        if( abs(Dtmp) < 1.e-30_jprw ) Dtmp = 0.
+        D(jnode) = max(0.,Dtmp)
 
       enddo
       !$OMP END PARALLEL DO
@@ -825,13 +848,14 @@ contains
     type(DataStructure_type), intent(inout) :: dstruct
     real(kind=jprw), intent(in)    :: Q(:)
     real(kind=jprw), intent(inout) :: gradQ(:,:)
-    real(kind=jprw), pointer :: S(:,:)
+    real(kind=jprw), pointer :: S(:,:), D(:)
     real(kind=jprw) :: Sx,Sy,avgQ
     integer :: jedge,iedge,ip1,ip2,jnode
     real(kind=jprw) :: avgQSx(dstruct%nb_edges)
     real(kind=jprw) :: avgQSy(dstruct%nb_edges)
 
     S   => vector_field_2d("dual_normals",dstruct)
+    D   => scalar_field_2d("depth",dstruct)
 
     ! derivatives 
 
@@ -841,8 +865,12 @@ contains
       ip2 = dstruct%edges(jedge,2)
       Sx  = S(XX,jedge)
       Sy  = S(YY,jedge)
-      avgQSx(jedge) = Sx*( Q(ip1) + Q(ip2) )*0.5_jprw
-      avgQSy(jedge) = Sy*( Q(ip1) + Q(ip2) )*0.5_jprw
+
+      !avgQSx(jedge) = Sx*( Q(ip1) + Q(ip2) )*0.5_jprw
+      !avgQSy(jedge) = Sy*( Q(ip1) + Q(ip2) )*0.5_jprw
+
+      avgQSx(jedge) = Sx*( D(ip1)*Q(ip1) + D(ip2)*Q(ip2) )/(D(ip1)+D(ip2)+2*eps)
+      avgQSy(jedge) = Sy*( D(ip1)*Q(ip1) + D(ip2)*Q(ip2) )/(D(ip1)+D(ip2)+2*eps)
     end do
     !$OMP END PARALLEL DO
 
@@ -876,13 +904,14 @@ contains
     type(DataStructure_type), intent(inout) :: dstruct
     real(kind=jprw), intent(in)    :: Q(:)
     real(kind=jprw), intent(inout) :: gradQ(:,:)
-    real(kind=jprw), pointer :: S(:,:)
+    real(kind=jprw), pointer :: S(:,:), D(:)
     real(kind=jprw) :: Sx,Sy,avgQ
     integer :: jedge,iedge,ip1,ip2,jnode
     real(kind=jprw) :: avgQSx(dstruct%nb_edges)
     real(kind=jprw) :: avgQSy(dstruct%nb_edges)
 
     S   => vector_field_2d("dual_normals",dstruct)
+    D   => scalar_field_2d("depth",dstruct)
 
     ! derivatives
 
@@ -892,8 +921,12 @@ contains
       ip2 = dstruct%edges(jedge,2)
       Sx  = S(XX,jedge)
       Sy  = S(YY,jedge)
-      avgQSx(jedge) = Sx*( abs(Q(ip1)) + abs(Q(ip2)) )*0.5_jprw
-      avgQSy(jedge) = Sy*( abs(Q(ip1)) + abs(Q(ip2)) )*0.5_jprw
+      !avgQSx(jedge) = Sx*( abs(Q(ip1)) + abs(Q(ip2)) )*0.5_jprw
+      !avgQSy(jedge) = Sy*( abs(Q(ip1)) + abs(Q(ip2)) )*0.5_jprw
+
+      avgQSx(jedge) = Sx*( D(ip1)*abs(Q(ip1)) + D(ip2)*abs(Q(ip2)) )/(D(ip1)+D(ip2)+2*eps)
+      avgQSy(jedge) = Sy*( D(ip1)*abs(Q(ip1)) + D(ip2)*abs(Q(ip2)) )/(D(ip1)+D(ip2)+2*eps)
+
     end do
     !$OMP END PARALLEL DO
 
@@ -945,8 +978,12 @@ contains
       ip2 = dstruct%edges(jedge,2)
       Sx  = S(XX,jedge)
       Sy  = S(YY,jedge)
-      avgQSx(:,jedge) = Sx*( Q(:,ip1) + Q(:,ip2) )*0.5_jprw
-      avgQSy(:,jedge) = Sy*( Q(:,ip1) + Q(:,ip2) )*0.5_jprw
+      !avgQSx(:,jedge) = Sx*( Q(:,ip1) + Q(:,ip2) )*0.5_jprw
+      !avgQSy(:,jedge) = Sy*( Q(:,ip1) + Q(:,ip2) )*0.5_jprw
+
+      avgQSx(:,jedge) = Sx*( D(ip1)*Q(:,ip1) + D(ip2)*Q(:,ip2) )/(D(ip1)+D(ip2)+2*eps)
+      avgQSy(:,jedge) = Sy*( D(ip1)*Q(:,ip1) + D(ip2)*Q(:,ip2) )/(D(ip1)+D(ip2)+2*eps)
+
     end do
     !$OMP END PARALLEL DO
 
@@ -986,8 +1023,12 @@ contains
       ip2 = dstruct%edges(jedge,2)
       Sx  = S(XX,jedge)
       Sy  = S(YY,jedge)
-      avgQSx(:,jedge) = Sx*( abs(Q(:,ip1)) + abs(Q(:,ip2)) )*0.5_jprw
-      avgQSy(:,jedge) = Sy*( abs(Q(:,ip1)) + abs(Q(:,ip2)) )*0.5_jprw
+      !avgQSx(:,jedge) = Sx*( abs(Q(:,ip1)) + abs(Q(:,ip2)) )*0.5_jprw
+      !avgQSy(:,jedge) = Sy*( abs(Q(:,ip1)) + abs(Q(:,ip2)) )*0.5_jprw
+
+      avgQSx(:,jedge) = Sx*( D(ip1)*abs(Q(:,ip1)) + D(ip2)*abs(Q(:,ip2)) )/(D(ip1)+D(ip2)+2*eps)
+      avgQSy(:,jedge) = Sy*( D(ip1)*abs(Q(:,ip1)) + D(ip2)*abs(Q(:,ip2)) )/(D(ip1)+D(ip2)+2*eps)
+
     end do
     !$OMP END PARALLEL DO
 
