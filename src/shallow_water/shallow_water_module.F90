@@ -177,13 +177,12 @@ contains
     real(kind=jprw), dimension(:), pointer   :: D, cor, H0, H
     real(kind=jprw), dimension(:,:), pointer :: U, Q, coords
     integer :: jnode, ir
-    real(kind=jprw) :: aaa0,zk,om,ph0,x,y, sin_y, cos_y
+    real(kind=jprw) :: zk,om,ph0,x,y, sin_y, cos_y
 
     om   = 7.848E-6
     zk   = 7.848E-6
     ir   = 4
     ph0  = 78.4E3
-    aaa0 = 0.
 
     coords => vector_field_2d("coordinates",dstruct)
     cor => scalar_field_2d("coriolis",dstruct)
@@ -205,9 +204,9 @@ contains
       U(XX,jnode) =  radius*om*cos_y+radius*zk*cos(ir*x) * cos_y**(ir-1._jprw) &
         &            * (ir*(sin_y)**2-cos_y**2)
       U(YY,jnode) = -radius*zk*ir*cos_y**(ir-1._jprw)*sin_y*sin(ir*x)
-      D(jnode) = (ph0+radius**2*fa(y)+radius**2*fb(y)*cos(ir*x) &
+      H(jnode) = (ph0+radius**2*fa(y)+radius**2*fb(y)*cos(ir*x) &
         &        +radius**2*fc(y)*cos(2._jprw*ir*x)) / grav
-      D(jnode) = max(aaa0,D(jnode) - H0(jnode))
+      D(jnode) = max(0._jprw,D(jnode) - H0(jnode))
       if(y == 0.5_jprw*pi) U(XX,jnode)=0.
       if(y ==-0.5_jprw*pi) U(XX,jnode)=0.
       H(jnode) = H0(jnode) + D(jnode)
@@ -240,7 +239,7 @@ contains
 
 
   subroutine set_state_zonal_flow(dstruct)
-    type(DataStructure_type), intent(inout)      :: dstruct
+    type(DataStructure_type), intent(inout)  :: dstruct
     real(kind=jprw), dimension(:), pointer   :: D, cor, H0, H
     real(kind=jprw), dimension(:,:), pointer :: U, Q, coords
     integer :: jnode
@@ -385,7 +384,7 @@ contains
       select case (eqs_type)
 
         case (EQS_MOMENTUM)
-          !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode)
+          !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Dpos)
           do jnode=1,dstruct%nb_nodes
             Dpos = max(eps, D(jnode))
             if (abs(R(XX,jnode)) < 3.*eps) R(XX,jnode)=0.
@@ -413,23 +412,19 @@ contains
         dVxdy = grad_Vnodes(XXDYY,jnode)*hx(jnode)/vol(jnode)
         dVydx = grad_Vnodes(YYDXX,jnode)*hy(jnode)/vol(jnode)    
         dVydy = grad_Vnodes(YYDYY,jnode)*hx(jnode)/vol(jnode)
-
         Vnodes(XX,jnode) = ( Vx - 0.5*dt*(Vx*dVxdx+Vy*dVxdy)) * hy(jnode)
         Vnodes(YY,jnode) = ( Vy - 0.5*dt*(Vx*dVydx+Vy*dVydy)) * hx(jnode)
       enddo
-      if( D(jnode) < D_tres ) Vnodes(:,jnode) = 0.
-
       !$OMP END PARALLEL DO
+
       call halo_exchange( Vnodes, dstruct )
-
-
 
     else if( option .eq. "extrapolate") then
       select case (eqs_type)
 
         case (EQS_MOMENTUM)
           !dir$ ivdep
-          !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Ux,Uy,U0x,U0y,Dpos)
+          !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Dpos,D0pos,Ux,Uy,U0x,U0y)
           do jnode=1,dstruct%nb_nodes
             Dpos  = max(eps, D(jnode))
             D0pos  = max(eps, D0(jnode))
