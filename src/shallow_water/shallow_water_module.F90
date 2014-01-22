@@ -159,7 +159,7 @@ contains
     
     call add_forcing_to_solution(dt,dstruct)
     
-    call compute_advective_velocities(dt,dstruct,"advect")
+    call compute_advective_velocities(dt,dstruct,"extrapolate")
 
     call advect_solution(dt,order,scheme,dstruct)
 
@@ -269,7 +269,7 @@ contains
       D(jnode)     = H(jnode) - H0(jnode)
       U(XX,jnode)  =  pvel*(cos(beta)+tan(y)*cos(x)*sin(beta))*radius*cos(y)
       U(YY,jnode)  = -pvel*sin(x)*sin(beta)*radius
-      if ( D(jnode) < eps ) then
+      if ( D(jnode) < D_tres ) then
         D(jnode) = 0.
         U(:,jnode) = 0.
       end if
@@ -470,9 +470,9 @@ contains
       Vx = Vedges(XX,jedge)
       Vy = Vedges(YY,jedge)
       if (Vx*Sx + Vy*Sy > 0) then
-        if( D(ip1) < D_tres ) Vedges(:,jedge) = 0.
+        if( D(ip1) < D_tres ) Vedges(:,jedge) = Vnodes(:,ip2)*0.5_jprw
       else
-        if( D(ip2) < D_tres ) Vedges(:,jedge) = 0.
+        if( D(ip2) < D_tres ) Vedges(:,jedge) = Vnodes(:,ip1)*0.5_jprw
       end if
       !if ( (D(ip1) + D(ip2))*0.5_jprw < D_tres ) Vedges(:,jedge) = 0.
     enddo

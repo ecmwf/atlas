@@ -242,13 +242,13 @@ target_link_libraries( shallow_water io common datastruct )
 set_property(TARGET shallow_water PROPERTY LINKER_LANGUAGE Fortran)
 
 
-add_executable( isentropic
-  ${DATASTRUCT_SRC}
-  src/io/gmsh_module.F90
-  src/shallow_water/isentropic_module.F90 
-  src/shallow_water/isentropic.F90 )
-target_link_libraries( isentropic io common datastruct )
-set_property(TARGET isentropic PROPERTY LINKER_LANGUAGE Fortran)
+#add_executable( isentropic
+#  ${DATASTRUCT_SRC}
+#  src/io/gmsh_module.F90
+#  src/shallow_water/isentropic_module.F90 
+#  src/shallow_water/isentropic.F90 )
+#target_link_libraries( isentropic io common datastruct )
+#set_property(TARGET isentropic PROPERTY LINKER_LANGUAGE Fortran)
 
 ###############################################################################
 # Tests
