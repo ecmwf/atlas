@@ -270,7 +270,7 @@ contains
       U(XX,jnode)  =  pvel*(cos(beta)+tan(y)*cos(x)*sin(beta))*radius*cos(y)
       U(YY,jnode)  = -pvel*sin(x)*sin(beta)*radius
       if ( D(jnode) < eps ) then
-        D(jnode) = eps
+        D(jnode) = 0.
         U(:,jnode) = 0.
       end if
       H(jnode) = H0(jnode) + D(jnode)
@@ -288,7 +288,8 @@ contains
     real(kind=jprw), dimension(:,:), pointer :: coords
     real(kind=jprw) :: rad = 2.*pi/18. ! radius of hill
     real(kind=jprw) :: xcent = 3.*pi/2.  ! centre of hill
-    real(kind=jprw) :: ycent = pi/6.*1.
+!    real(kind=jprw) :: ycent = pi/6.*1.
+    real(kind=jprw) :: ycent = 0.0
     real(kind=jprw) :: gamm = 1. ! slope of hill
     real(kind=jprw) :: dist, xlon, ylat
     integer :: jnode
@@ -454,6 +455,7 @@ contains
       ip1 = dstruct%edges(jedge,1)
       ip2 = dstruct%edges(jedge,2)
       Vedges(:,jedge) = (Vnodes(:,ip1)+Vnodes(:,ip2))*0.5_jprw
+!      IF(D(ip1) < 2*eps .or. D(ip2) < 2*eps) Vedges(:,jedge)=0.0
     enddo
     !$OMP END PARALLEL DO
     
@@ -678,13 +680,13 @@ contains
     DR => scalar_field_2d("depth_ratio",dstruct)
    
     !    mpdata_D( scheme, time, variable, velocity, VDS,  order, limit,   dstruct )
-    call mpdata_D( scheme, dt,   D,        V,        VDS,  order, 1._jprw, dstruct )
+    call mpdata_D( scheme, dt,   D,        V,        VDS,  order, 0._jprw, dstruct )
 
     select case (eqs_type)
 
       case (EQS_MOMENTUM)
         !    mpdata_Q( scheme, time, variable, V,  order, limit,     dstruct )
-        call mpdata_Q( scheme, dt,   Q,        V,  order, 1._jprw, dstruct )
+        call mpdata_Q( scheme, dt,   Q,        V,  order, 0._jprw, dstruct )
 
       case (EQS_VELOCITY)
         ! compute ratio

@@ -229,7 +229,7 @@ contains
           write(log_str,*) "gradD = ", gradD(:,jnode); call log_debug()
         end if
 
-        D(jnode) = Dtmp
+        D(jnode) = max(Dtmp,0.)
 
       enddo
       !$OMP END PARALLEL DO

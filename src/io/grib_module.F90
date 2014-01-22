@@ -19,9 +19,11 @@ subroutine write_grib(dstruct,filename)
     integer :: ihour
 
     real(kind=jprw), pointer :: loc_depth(:)
+    real(kind=jprw), pointer :: loc_height(:)
     real(kind=jprw), pointer :: loc_velocity(:,:)
 
     real(kind=jprw), allocatable :: depth(:)
+    real(kind=jprw), allocatable :: height(:)
     real(kind=jprw), allocatable :: velocity(:,:)
     real(kind=jprw), allocatable :: Vx(:)
     real(kind=jprw), allocatable :: Vy(:)
@@ -30,8 +32,10 @@ subroutine write_grib(dstruct,filename)
     call log_info( "Writing Grib file "//trim(filename) )
 
     loc_depth => scalar_field_2d("depth",dstruct)
+    loc_height => scalar_field_2d("height",dstruct)
     loc_velocity => vector_field_2d("velocity",dstruct)
 
+    call gather(loc_height,height, dstruct)
     call gather(loc_depth,depth, dstruct)
     call gather(loc_velocity,velocity, dstruct)
 
@@ -40,8 +44,8 @@ subroutine write_grib(dstruct,filename)
         allocate( Vx( size(depth) ) )
         allocate( Vy( size(depth) ) )
 
-        Vx(:) = velocity(1,:) / depth(:)
-        Vy(:) = velocity(2,:) / depth(:)
+        Vx(:) = velocity(1,:) 
+        Vy(:) = velocity(2,:)
         ihour = dstruct%time / 3600.
 
         call grib_open_file(IFILE_HANDLE,'data/gribfield','R')
@@ -54,15 +58,19 @@ subroutine write_grib(dstruct,filename)
         call grib_set(IGRIB_HANDLE,'stepUnits','h')
         call grib_set(IGRIB_HANDLE,'endStep',ihour)
 
-        call grib_set(IGRIB_HANDLE,'paramId',130)
+        call grib_set(IGRIB_HANDLE,'shortName','t')
         call grib_set(IGRIB_HANDLE,'values',depth)
         call grib_write(IGRIB_HANDLE,IFILE_HANDLE)
 
-        call grib_set(IGRIB_HANDLE,'paramId',131)
+        call grib_set(IGRIB_HANDLE,'shortName','gh')
+        call grib_set(IGRIB_HANDLE,'values',height)
+        call grib_write(IGRIB_HANDLE,IFILE_HANDLE)
+
+        call grib_set(IGRIB_HANDLE,'shortName','u')
         call grib_set(IGRIB_HANDLE,'values',Vx)
         call grib_write(IGRIB_HANDLE,IFILE_HANDLE)
 
-        call grib_set(IGRIB_HANDLE,'paramId',132)
+        call grib_set(IGRIB_HANDLE,'shortName','v')
         call grib_set(IGRIB_HANDLE,'values',Vy)
 
         call grib_write(IGRIB_HANDLE,IFILE_HANDLE)
