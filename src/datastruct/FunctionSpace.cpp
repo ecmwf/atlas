@@ -34,7 +34,7 @@ void FunctionSpace::create_field<double>(const std::string& name, size_t nb_vars
 
   size_t bsize = bounds_.size();
   std::vector< int > bounds(bsize);
-  std::cout << "Allocating field<real64> " << name << " ( ";
+  //std::cout << "Allocating field<real64> " << name << " ( ";
 
   for (size_t i=0; i<bsize; ++i)
   {
@@ -42,10 +42,10 @@ void FunctionSpace::create_field<double>(const std::string& name, size_t nb_vars
       bounds[i] = nb_vars;
     else
       bounds[i] = bounds_[i];
-    std::cout << bounds[i];
-    if (i<bsize-1) std::cout << " , ";
+    //std::cout << bounds[i];
+    //if (i<bsize-1) std::cout << " , ";
   }
-  std::cout << " )" << std::endl;
+  //std::cout << " )" << std::endl;
   fields_.back()->allocate(bounds);
 }
 
@@ -58,7 +58,7 @@ void FunctionSpace::create_field<float>(const std::string& name, size_t nb_vars)
 
   size_t bsize = bounds_.size();
   std::vector< int > bounds(bsize);
-  std::cout << "Allocating field<real32> " << name << " ( ";
+  //std::cout << "Allocating field<real32> " << name << " ( ";
 
   for (size_t i=0; i<bsize; ++i)
   {
@@ -66,10 +66,10 @@ void FunctionSpace::create_field<float>(const std::string& name, size_t nb_vars)
       bounds[i] = nb_vars;
     else
       bounds[i] = bounds_[i];
-    std::cout << bounds[i];
-    if (i<bsize-1) std::cout << " , ";
+    //std::cout << bounds[i];
+    //if (i<bsize-1) std::cout << " , ";
   }
-  std::cout << " )" << std::endl;
+  //std::cout << " )" << std::endl;
   fields_.back()->allocate(bounds);
 }
 
@@ -82,7 +82,7 @@ void FunctionSpace::create_field<int>(const std::string& name, size_t nb_vars)
 
   size_t bsize = bounds_.size();
   std::vector< int > bounds(bsize);
-  std::cout << "Allocating field<int32> " << name << " ( ";
+  //std::cout << "Allocating field<int32> " << name << " ( ";
 
   for (size_t i=0; i<bsize; ++i)
   {
@@ -90,10 +90,10 @@ void FunctionSpace::create_field<int>(const std::string& name, size_t nb_vars)
       bounds[i] = nb_vars;
     else
       bounds[i] = bounds_[i];
-    std::cout << bounds[i];
-    if (i<bsize-1) std::cout << " , ";
+    //std::cout << bounds[i];
+    //if (i<bsize-1) std::cout << " , ";
   }
-  std::cout << " )" << std::endl;
+  //std::cout << " )" << std::endl;
   fields_.back()->allocate(bounds);
 }
 
