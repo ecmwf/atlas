@@ -35,7 +35,7 @@ module shallow_water_module
   real(kind=jprw), parameter :: f0     = 1.4584e-04 !coriolis parameter (=2xearth's omega)
   real(kind=jprw), parameter :: grav   = 9.80616
   real(kind=jprw), parameter :: pi     = acos(-1._jprw)
-  real(kind=jprw), parameter :: D_tres = 10._jprw
+  real(kind=jprw), parameter :: D_tres = 1._jprw
 
   real(kind=jprw) :: dt_forward = 20.
   integer :: iter = 0
@@ -159,7 +159,7 @@ contains
     
     call add_forcing_to_solution(dt,dstruct)
     
-    call compute_advective_velocities(dt,dstruct,"extrapolate")
+    call compute_advective_velocities(dt,dstruct,"advect")
 
     call advect_solution(dt,order,scheme,dstruct)
 
@@ -363,11 +363,13 @@ contains
     real(kind=jprw), intent(in) :: dt
     type(DataStructure_type), intent(inout) :: dstruct
     character(len=*), intent(in), optional :: option
-    real(kind=jprw) :: Ux, Uy, U0x, U0y, Vx, Vy, dVxdx, dVxdy, dVydx, dVydy, Dpos, D0pos, Sx, Sy
+    real(kind=jprw) :: Ux, Uy, Un, U0x, U0y, Vx, Vy, dVxdx, dVxdy, dVydx, dVydy, dVxdn, dVydn
+    real(kind=jprw) :: Dpos, D0pos, Sx, Sy, volume_of_two_cells
     integer :: jnode, jedge, iedge, ip1, ip2
     real(kind=jprw), dimension(:),   pointer :: D, D0, hx, hy, vol
     real(kind=jprw), dimension(:,:), pointer :: U, U0, R, Vedges, coords, Q, Q0, S
-    real(kind=jprw) :: Vnodes(2,dstruct%nb_nodes), grad_Vnodes(4,dstruct%nb_nodes)
+    real(kind=jprw) :: Vnodes(2,dstruct%nb_nodes), grad_Vnodes(4,dstruct%nb_nodes), normal(2)
+    real(kind=jprw) :: div_flux_plus(2), div_flux_neg(2), apos, aneg
 
     coords => vector_field_2d("coordinates",dstruct)
     Vedges => vector_field_2d("advective_velocity",dstruct)
@@ -390,37 +392,57 @@ contains
           !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Dpos)
           do jnode=1,dstruct%nb_nodes
             Dpos = max(eps, D(jnode))
-            if (abs(R(XX,jnode)) < 3.*eps) R(XX,jnode)=0.
-            if (abs(R(YY,jnode)) < 3.*eps) R(YY,jnode)=0.
-            Vnodes(:,jnode)=(Q(:,jnode)+0.5*dt*R(:,jnode))/Dpos
+            Vnodes(:,jnode)=(Q(:,jnode) + 0.5*dt*R(:,jnode))/Dpos
+            U(:,jnode) = Q(:,jnode)/Dpos
           end do
           !$OMP END PARALLEL DO
         case (EQS_VELOCITY)
           !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode)
           do jnode=1,dstruct%nb_nodes
-            if (abs(R(XX,jnode)) < 3.*eps) R(XX,jnode)=0.
-            if (abs(R(YY,jnode)) < 3.*eps) R(YY,jnode)=0.
             Vnodes(:,jnode)=(U(:,jnode)+0.5*dt*R(:,jnode)) 
           end do
           !$OMP END PARALLEL DO
       end select
+
       call compute_gradient_tensor( Vnodes, grad_Vnodes, dstruct )
 
       !dir$ ivdep
       !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Vx,Vy,dVxdx,dVxdy,dVydx,dVydy)
       do jnode=1,dstruct%nb_nodes
-        Vx = Vnodes(XX,jnode)
-        Vy = Vnodes(YY,jnode)
+        Ux = U(XX,jnode)
+        Uy = U(YY,jnode)
+        Vx = Ux/hx(jnode)
+        Vy = Uy/hy(jnode)
         dVxdx = grad_Vnodes(XXDXX,jnode)*hy(jnode)/vol(jnode)
         dVxdy = grad_Vnodes(XXDYY,jnode)*hx(jnode)/vol(jnode)
         dVydx = grad_Vnodes(YYDXX,jnode)*hy(jnode)/vol(jnode)    
         dVydy = grad_Vnodes(YYDYY,jnode)*hx(jnode)/vol(jnode)
-        Vnodes(XX,jnode) = ( Vx - 0.5*dt*(Vx*dVxdx+Vy*dVxdy)) * hy(jnode)
-        Vnodes(YY,jnode) = ( Vy - 0.5*dt*(Vx*dVydx+Vy*dVydy)) * hx(jnode)
+        Dpos = max(D_tres,D(jnode))
+        Vnodes(XX,jnode) = ( Ux - 0.5*dt*(Vx*dVxdx+Vy*dVxdy) ) * hy(jnode)
+        Vnodes(YY,jnode) = ( Uy - 0.5*dt*(Vx*dVydx+Vy*dVydy) ) * hx(jnode)
       enddo
       !$OMP END PARALLEL DO
 
       call halo_exchange( Vnodes, dstruct )
+
+
+
+      !dir$ ivdep
+      !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2)
+      do jedge=1,dstruct%nb_edges
+        ip1 = dstruct%edges(jedge,1)
+        ip2 = dstruct%edges(jedge,2)
+        Vedges(:,jedge) = (Vnodes(:,ip1)+Vnodes(:,ip2))*0.5_jprw
+
+        if (D(ip1) < D_tres) then
+          Vedges(:,jedge) = 0.5_jprw*Vnodes(:,ip2)
+        else if (D(ip2) < D_tres) then
+          Vedges(:,jedge) = 0.5_jprw*Vnodes(:,ip1)
+        end if
+        if (D(ip1) < D_tres .and. D(ip2) < D_tres) Vedges(:,jedge) = 0._jprw
+
+      end do
+      !$OMP END PARALLEL DO
 
     else if( option .eq. "extrapolate") then
       select case (eqs_type)
@@ -457,27 +479,30 @@ contains
           end do
           !$OMP END PARALLEL DO
       end select
+
+      !dir$ ivdep
+      !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2)
+      do jedge=1,dstruct%nb_edges
+        ip1 = dstruct%edges(jedge,1)
+        ip2 = dstruct%edges(jedge,2)
+        !Vedges(:,jedge) = (Vnodes(:,ip1)+Vnodes(:,ip2))*0.5_jprw
+        Vedges(:,jedge) = (D(ip1)*Vnodes(:,ip1)+D(ip2)*Vnodes(:,ip2))/(D(ip1)+D(ip2)+eps)
+         
+        !Sx = S(XX,jedge)
+        !Sy = S(YY,jedge)
+        !Vx = Vedges(XX,jedge)
+        !Vy = Vedges(YY,jedge)
+        !if (Vx*Sx + Vy*Sy > 0) then
+        !  if( D(ip1) < D_tres ) Vedges(:,jedge) = Vnodes(:,ip2)*0.5_jprw
+        !else
+        !  if( D(ip2) < D_tres ) Vedges(:,jedge) = Vnodes(:,ip1)*0.5_jprw
+        !end if
+        !if ( (D(ip1) + D(ip2))*0.5_jprw < D_tres ) Vedges(:,jedge) = 0.
+      enddo
+      !$OMP END PARALLEL DO
     end if
 
-    !dir$ ivdep
-    !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2)
-    do jedge=1,dstruct%nb_edges
-      ip1 = dstruct%edges(jedge,1)
-      ip2 = dstruct%edges(jedge,2)
-      Vedges(:,jedge) = (Vnodes(:,ip1)+Vnodes(:,ip2))*0.5_jprw
-      Sx = S(XX,jedge)
-      Sy = S(YY,jedge)
-      Vx = Vedges(XX,jedge)
-      Vy = Vedges(YY,jedge)
-      if (Vx*Sx + Vy*Sy > 0) then
-        if( D(ip1) < D_tres ) Vedges(:,jedge) = Vnodes(:,ip2)*0.5_jprw
-      else
-        if( D(ip2) < D_tres ) Vedges(:,jedge) = Vnodes(:,ip1)*0.5_jprw
-      end if
-      !if ( (D(ip1) + D(ip2))*0.5_jprw < D_tres ) Vedges(:,jedge) = 0.
-    enddo
-    !$OMP END PARALLEL DO
-    
+   
     ! Since the pole point lies outside the lon-lat domain, Vedges is wrongly calculated
     ! y_pole .ne. 0.5(y1+y2)
     do jedge=1,dstruct%nb_pole_edges
@@ -615,7 +640,7 @@ contains
           Ry_exp = -grav*D(jnode)*grad_H(YY,jnode)*hx(jnode)/vol(jnode)
 
           if (D(jnode) > D_tres) then
-            do m=1,3 ! Three iterations at most is enough to converge
+            do m=1,6 ! Three iterations at most is enough to converge
               Rx = Rx_exp + cor(jnode)*Qy - dhxdy_over_G(jnode)*Qx*Qy/D(jnode)
               Ry = Ry_exp - cor(jnode)*Qx + dhxdy_over_G(jnode)*Qx*Qx/D(jnode)
               Qx = Qx_adv + 0.5_jprw*dt*Rx
@@ -628,9 +653,8 @@ contains
             U(:,jnode) = Q(:,jnode) / D(jnode)
           else
             R(:,jnode) = 0.
-            !D(jnode) = 0.
-            Q(:,jnode) = 0.
             U(:,jnode) = 0.
+            Q(:,jnode) = 0.
           end if
 
           if ( jnode == probe ) then
@@ -703,13 +727,13 @@ contains
     DR => scalar_field_2d("depth_ratio",dstruct)
    
     !    mpdata_D( scheme, time, variable, velocity, VDS,  order, limit,   dstruct )
-    call mpdata_D( scheme, dt,   D,        V,        VDS,  order, 0.99_jprw, dstruct )
+    call mpdata_D( scheme, dt,   D,        V,        VDS,  order, 1._jprw, dstruct )
 
     select case (eqs_type)
 
       case (EQS_MOMENTUM)
         !    mpdata_Q( scheme, time, variable, V,  order, limit,     dstruct )
-        call mpdata_Q( scheme, dt,   Q,        V,  order, 0.99_jprw, dstruct )
+        call mpdata_Q( scheme, dt,   Q,        V,  order, 1._jprw, dstruct )
 
       case (EQS_VELOCITY)
         ! compute ratio
