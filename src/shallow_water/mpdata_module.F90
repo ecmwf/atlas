@@ -25,7 +25,6 @@ module mpdata_module
   real(kind=jprw), parameter :: Dphys_min = -10.
   real(kind=jprw), parameter :: Dphys_max = 20000
 
-
 contains
 
   subroutine mpdata_D(mpdata_scheme,dt,D,V,VDS,order,limit,dstruct)
@@ -218,7 +217,6 @@ contains
 
       ! non-oscillatory option
       if (limit > 0._jprw) then
-        if (mpdata_scheme == MPDATA_STANDARD) call compute_Dmax_and_Dmin()
         call limit_antidiffusive_velocity()
       endif
 
@@ -867,7 +865,6 @@ contains
       ip2 = dstruct%edges(jedge,2)
       Sx  = S(XX,jedge)
       Sy  = S(YY,jedge)
-
       !avgQSx(jedge) = Sx*( Q(ip1) + Q(ip2) )*0.5_jprw
       !avgQSy(jedge) = Sy*( Q(ip1) + Q(ip2) )*0.5_jprw
 
@@ -977,7 +974,7 @@ contains
       Sy  = S(YY,jedge)
       !avgQSx(:,jedge) = Sx*( Q(:,ip1) + Q(:,ip2) )*0.5_jprw
       !avgQSy(:,jedge) = Sy*( Q(:,ip1) + Q(:,ip2) )*0.5_jprw
-
+      
       avgQSx(:,jedge) = Sx*( D(ip1)*Q(:,ip1) + D(ip2)*Q(:,ip2) )/(D(ip1)+D(ip2)+2*eps)
       avgQSy(:,jedge) = Sy*( D(ip1)*Q(:,ip1) + D(ip2)*Q(:,ip2) )/(D(ip1)+D(ip2)+2*eps)
 
