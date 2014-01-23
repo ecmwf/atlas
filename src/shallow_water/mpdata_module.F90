@@ -143,7 +143,8 @@ contains
       end if
 
       if( abs(Dtmp) < 1.e-30_jprw ) Dtmp = 0.
-      D(jnode) = max(0.,Dtmp)
+      !D(jnode) = max(0.,Dtmp)
+      D(jnode) = Dtmp
 
     enddo
 
@@ -217,7 +218,7 @@ contains
 
       ! non-oscillatory option
       if (limit > 0._jprw) then
-        !if (mpdata_scheme == MPDATA_STANDARD) call compute_Dmax_and_Dmin()
+        if (mpdata_scheme == MPDATA_STANDARD) call compute_Dmax_and_Dmin()
         call limit_antidiffusive_velocity()
       endif
 
@@ -252,7 +253,8 @@ contains
         end if
 
         if( abs(Dtmp) < 1.e-30_jprw ) Dtmp = 0.
-        D(jnode) = max(0.,Dtmp)
+        D(jnode) = Dtmp
+        !D(jnode) = max(0.,Dtmp)
 
       enddo
       !$OMP END PARALLEL DO
@@ -738,7 +740,7 @@ contains
 
       ! non-oscillatory option
       if (limit > 0._jprw) then
-        !if (mpdata_scheme == MPDATA_STANDARD) call compute_Qmax_and_Qmin()
+        if (mpdata_scheme == MPDATA_STANDARD) call compute_Qmax_and_Qmin()
         call limit_antidiffusive_velocity()
       endif
 
@@ -892,11 +894,8 @@ contains
       iedge = dstruct%pole_edges(jedge)
       ip1   = dstruct%edges(iedge,1)
       ip2   = dstruct%edges(iedge,2)
-      Sy    = S(YY,iedge)
-      avgQ  = ( Q(ip1) + Q(ip2) )*0.5_jprw
-
       ! correct for wrong Y-derivatives in previous loop,
-      gradQ(YY,ip2) = gradQ(YY,ip2) + 2._jprw*Sy*avgQ 
+      gradQ(YY,ip2) = gradQ(YY,ip2) + 2._jprw*avgQSy(iedge)
     end do
   end subroutine compute_gradient
 
@@ -948,11 +947,9 @@ contains
       iedge = dstruct%pole_edges(jedge)
       ip1   = dstruct%edges(iedge,1)
       ip2   = dstruct%edges(iedge,2)
-      Sy    = S(YY,iedge)
-      avgQ  = ( Q(ip1) + Q(ip2) )*0.5_jprw
 
       ! correct for wrong Y-derivatives in previous loop,
-      gradQ(YY,ip2) = gradQ(YY,ip2) + 2._jprw*Sy*avgQ
+      gradQ(YY,ip2) = gradQ(YY,ip2) + 2._jprw*avgQSy(iedge)
     end do
   end subroutine compute_gradient_abs
 
