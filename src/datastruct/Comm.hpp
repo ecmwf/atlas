@@ -3,6 +3,7 @@
 
 #include <mpi.h>
 #include <vector>
+#include <stdexcept>
 
 namespace ecmwf {
 
@@ -58,11 +59,16 @@ private: // data
 
   std::vector<int> bounds_;
   int par_bound_;
+  bool is_setup_;
 };
 
 template<typename DATA_TYPE>
 void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
 {
+  if( ! is_setup_ )
+  {
+    throw std::runtime_error("HaloExchange was not setup");
+  }
 #define FIELD_CONTIGUOUS true
 
   using namespace detail;
@@ -157,7 +163,7 @@ void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
   {
     if(send_counts[jproc] > 0)
     {
-      ierr = MPI_Isend( &send_buffer[send_displs[jproc]], send_counts[jproc], 
+      ierr = MPI_Isend( &send_buffer[send_displs[jproc]], send_counts[jproc],
                         MPI_TYPE<DATA_TYPE>(), jproc, tag, MPI_COMM_WORLD, &send_req[jproc] );
     }
   }

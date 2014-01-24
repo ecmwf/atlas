@@ -115,10 +115,10 @@ contains
       field = fieldset%field(jfield)
       function_space = field%function_space()
       if (function_space%name() == "nodes_2d") then
-        call log_info("nodes_2d writing field "//trim(field%name()))
+        call log_info("writing 2d field "//trim(field%name()))
         call write_gmsh_nodal_field_2d(field,dstruct%nodes_comm)
       else if (function_space%name() == "nodes_3d") then
-        call log_info("nodes_3d writing field "//trim(field%name()))
+        call log_info("writing 3d field "//trim(field%name()))
         call write_gmsh_nodal_field_3d(field,dstruct%nodes_comm,dstruct)
       end if
     end do

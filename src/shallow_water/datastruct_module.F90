@@ -160,6 +160,9 @@ contains
     allocate( dstruct%edges_proc( nb_edges ) ) 
     allocate( dstruct%edges_glb_idx( nb_edges ) ) 
 
+    call dstruct%functionspace_nodes_2d%parallelise(proc,glb_idx)
+    call dstruct%functionspace_nodes_3d%parallelise(proc,glb_idx)
+
   end subroutine create_mesh_3d
 
   subroutine create_field_in_nodes_3d(name, nb_vars, dstruct)

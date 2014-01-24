@@ -113,10 +113,7 @@ Field& FunctionSpace::field(const std::string& name)
 
 void FunctionSpace::parallelise(const int proc[], const int glb_idx[])
 {
-  if (bounds_.size() == 2)
-    halo_exchange_.setup(proc,glb_idx,bounds_,1);
-  if (bounds_.size() == 3)
-    halo_exchange_.setup(proc,glb_idx,bounds_,1);
+  halo_exchange_.setup(proc,glb_idx,bounds_,bounds_.size()-1);
 }
 
 // ------------------------------------------------------------------

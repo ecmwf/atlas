@@ -675,7 +675,7 @@ contains
     real(kind=jprw) :: y, cos_y, sin_y
     real(kind=jprw), pointer :: coords(:,:), vol(:,:), hx(:), hy(:), dhxdy_over_G(:,:), pole_bc(:), G(:,:)
     integer :: jnode, jedge, iedge, jlev
-    write(0,*) "setup"
+
     call create_field_in_nodes_3d("jacobian",1,dstruct)
     call create_field_in_nodes_2d("hx",1,dstruct)
     call create_field_in_nodes_2d("hy",1,dstruct)
@@ -1074,7 +1074,6 @@ contains
       end do
     end do
 
-    call log_info("are here")
     call compute_gradient( M, grad_M, .False., dstruct )
 
     !dir$ ivdep
@@ -1090,11 +1089,9 @@ contains
       end do
     end do
     !$OMP END PARALLEL DO
-    call log_info("now here")
 
-    !call halo_exchange(R,dstruct)
+    call halo_exchange(R,dstruct)
 
-    call log_info('finish')
   end subroutine compute_forcing
 
 

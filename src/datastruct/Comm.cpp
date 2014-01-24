@@ -6,7 +6,8 @@
 
 namespace ecmwf {
 
-HaloExchange::HaloExchange()
+HaloExchange::HaloExchange() :
+  is_setup_(false)
 {
   int ierr;
   ierr = MPI_Comm_rank( MPI_COMM_WORLD, &myproc );
@@ -20,7 +21,6 @@ void HaloExchange::setup( const int proc[],
 {
 
   int ierr;
-
 
 //  bounds_.resize(bounds.size());
 //  for(int i=0; i<bounds.size(); ++i)
@@ -141,6 +141,8 @@ void HaloExchange::setup( const int proc[],
   // for( int i=0; i< sync_recvmap_.size(); ++i)
   //   std::cout << sync_recvmap_[i] << " ";
   // std::cout << std::endl;
+
+  is_setup_ = true;
 }
 
 
