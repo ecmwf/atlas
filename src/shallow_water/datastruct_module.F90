@@ -15,15 +15,9 @@ module datastruct_module
   public :: scalar_field_2d, vector_field_2d
   public :: scalar_field_3d, vector_field_3d
   public :: mark_output
-  public :: synchronise, gather
+  public :: gather
 
   public :: halo_exchange
-
-  interface  synchronise
-    module procedure synchronise_array_rank1
-    module procedure synchronise_array_rank2
-    module procedure synchronise_array_rank3
-  end interface synchronise
 
   interface halo_exchange
     module procedure halo_exchange_real_rank1
@@ -260,27 +254,6 @@ contains
     field = dstruct%fields%field(name)
     array => field%data3()
   end function vector_field_3d
-
-  subroutine synchronise_array_rank1(array, dstruct)
-    implicit none
-    real(kind=jprw), dimension(:), intent(inout) :: array
-    type(DataStructure_type), intent(inout) :: dstruct
-    call dstruct%nodes_comm%synchronise( array )
-  end subroutine synchronise_array_rank1
-
-  subroutine synchronise_array_rank2(array, dstruct)
-    implicit none
-    real(kind=jprw), dimension(:,:), intent(inout) :: array
-    type(DataStructure_type), intent(inout) :: dstruct
-    call dstruct%nodes_comm%synchronise( array )
-  end subroutine synchronise_array_rank2
-
-  subroutine synchronise_array_rank3(array, dstruct)
-    implicit none
-    real(kind=jprw), dimension(:,:,:), intent(inout) :: array
-    type(DataStructure_type), intent(inout) :: dstruct
-    call dstruct%nodes_comm%synchronise( array )
-  end subroutine synchronise_array_rank3
 
   subroutine halo_exchange_real_rank1(array, dstruct)
     implicit none

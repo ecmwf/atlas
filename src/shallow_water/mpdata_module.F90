@@ -849,7 +849,7 @@ contains
     real(kind=jprw), intent(in)    :: Q(:)
     real(kind=jprw), intent(inout) :: gradQ(:,:)
     real(kind=jprw), pointer :: S(:,:), D(:)
-    real(kind=jprw) :: Sx,Sy,avgQ
+    real(kind=jprw) :: Sx,Sy
     integer :: jedge,iedge,ip1,ip2,jnode
     real(kind=jprw) :: avgQSx(dstruct%nb_edges)
     real(kind=jprw) :: avgQSy(dstruct%nb_edges)
@@ -901,7 +901,7 @@ contains
     real(kind=jprw), intent(in)    :: Q(:)
     real(kind=jprw), intent(inout) :: gradQ(:,:)
     real(kind=jprw), pointer :: S(:,:), D(:)
-    real(kind=jprw) :: Sx,Sy,avgQ
+    real(kind=jprw) :: Sx,Sy
     integer :: jedge,iedge,ip1,ip2,jnode
     real(kind=jprw) :: avgQSx(dstruct%nb_edges)
     real(kind=jprw) :: avgQSy(dstruct%nb_edges)

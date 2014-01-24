@@ -363,13 +363,12 @@ contains
     real(kind=jprw), intent(in) :: dt
     type(DataStructure_type), intent(inout) :: dstruct
     character(len=*), intent(in), optional :: option
-    real(kind=jprw) :: Ux, Uy, Un, U0x, U0y, Vx, Vy, dVxdx, dVxdy, dVydx, dVydy, dVxdn, dVydn
-    real(kind=jprw) :: Dpos, D0pos, Sx, Sy, volume_of_two_cells
+    real(kind=jprw) :: Ux, Uy, U0x, U0y, Vx, Vy, dVxdx, dVxdy, dVydx, dVydy
+    real(kind=jprw) :: Dpos, D0pos
     integer :: jnode, jedge, iedge, ip1, ip2
     real(kind=jprw), dimension(:),   pointer :: D, D0, hx, hy, vol
     real(kind=jprw), dimension(:,:), pointer :: U, U0, R, Vedges, coords, Q, Q0, S
-    real(kind=jprw) :: Vnodes(2,dstruct%nb_nodes), grad_Vnodes(4,dstruct%nb_nodes), normal(2)
-    real(kind=jprw) :: div_flux_plus(2), div_flux_neg(2), apos, aneg
+    real(kind=jprw) :: Vnodes(2,dstruct%nb_nodes), grad_Vnodes(4,dstruct%nb_nodes)
 
     coords => vector_field_2d("coordinates",dstruct)
     Vedges => vector_field_2d("advective_velocity",dstruct)
