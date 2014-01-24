@@ -102,7 +102,7 @@ contains
     enddo
     !$OMP END PARALLEL DO
 
-    call halo_exchange(Q,dstruct) ! Qmax and Qmin could be synced here
+    call halo_exchange_3d(Q,dstruct) ! Qmax and Qmin could be synced here
 
     ! 2. Other passes (making the spatial discretisation higher-order)
     ! ----------------------------------------------------------------
@@ -112,7 +112,7 @@ contains
       ! Compute derivatives for mpdata
       call compute_gradient(Q, gradQ, Q_is_vector_component, dstruct)
 
-      call halo_exchange(gradQ,dstruct)
+      call halo_exchange_3d(gradQ,dstruct)
 
       ! Compute antidiffusive normal velocity in faces
 
@@ -165,7 +165,7 @@ contains
         end do
       enddo
       !$OMP END PARALLEL DO
-      call halo_exchange(Q,dstruct)
+      call halo_exchange_3d(Q,dstruct)
 
     end do ! other passes
 
@@ -196,8 +196,8 @@ contains
       end do
       !$OMP END PARALLEL DO
 
-      call halo_exchange(Qmin,dstruct)
-      call halo_exchange(Qmax,dstruct)
+      call halo_exchange_3d(Qmin,dstruct)
+      call halo_exchange_3d(Qmax,dstruct)
 
     end subroutine compute_Qmax_and_Qmin
 
@@ -228,8 +228,8 @@ contains
       end do
       !$OMP END PARALLEL DO
 
-      call halo_exchange(cp,dstruct)
-      call halo_exchange(cn,dstruct)
+      call halo_exchange_3d(cp,dstruct)
+      call halo_exchange_3d(cn,dstruct)
 
       !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2)
       do jedge = 1,dstruct%nb_edges
@@ -316,8 +316,8 @@ contains
       end do
     end do
 
-    call halo_exchange(VDnodes,dstruct) ! Qmax and Qmin could be synced here
-    call halo_exchange(Lengths,dstruct) ! Qmax and Qmin could be synced here
+    call halo_exchange_3d(VDnodes,dstruct) ! Qmax and Qmin could be synced here
+    call halo_exchange_2d(Lengths,dstruct) ! Qmax and Qmin could be synced here
 
     do jnode=1,dstruct%nb_nodes
       VDnodes(:,jnode,:) = VDnodes(:,jnode,:) / Lengths(jnode)
@@ -380,8 +380,8 @@ contains
     enddo
     !$OMP END PARALLEL DO
 
-    call halo_exchange(Qtmp,dstruct) ! Qmax and Qmin could be synced here
-    call halo_exchange(Q,dstruct) ! Qmax and Qmin could be synced here
+    call halo_exchange_3d(Qtmp,dstruct) ! Qmax and Qmin could be synced here
+    call halo_exchange_3d(Q,dstruct) ! Qmax and Qmin could be synced here
 
 
 
@@ -395,7 +395,7 @@ contains
       ! Compute derivatives for mpdata
       call compute_gradient(Q, gradQ, Q_is_vector_component, dstruct)
 
-      call halo_exchange(gradQ,dstruct)
+      call halo_exchange_3d(gradQ,dstruct)
 
       ! Compute antidiffusive normal velocity in faces
 
@@ -444,7 +444,7 @@ contains
       enddo
       !$OMP END PARALLEL DO
 
-      call halo_exchange(Q,dstruct)
+      call halo_exchange_3d(Q,dstruct)
 
     end do ! other passes
 
@@ -475,8 +475,8 @@ contains
       end do
       !$OMP END PARALLEL DO
 
-      call halo_exchange(Qmin,dstruct)
-      call halo_exchange(Qmax,dstruct)
+      call halo_exchange_3d(Qmin,dstruct)
+      call halo_exchange_3d(Qmax,dstruct)
 
     end subroutine compute_Qmax_and_Qmin
 
@@ -507,8 +507,8 @@ contains
       end do
       !$OMP END PARALLEL DO
 
-      call halo_exchange(cp,dstruct)
-      call halo_exchange(cn,dstruct)
+      call halo_exchange_3d(cp,dstruct)
+      call halo_exchange_3d(cn,dstruct)
 
       !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2)
       do jedge = 1,dstruct%nb_edges
@@ -1003,7 +1003,7 @@ contains
         end do
       end do
       !$OMP END PARALLEL DO
-      call halo_exchange( Vnodes, dstruct )
+      call halo_exchange_3d( Vnodes, dstruct )
     else if( option .eq. "extrapolate") then
       !dir$ ivdep
       !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Ux,Uy,U0x,U0y)
@@ -1090,7 +1090,7 @@ contains
     end do
     !$OMP END PARALLEL DO
 
-    call halo_exchange(R,dstruct)
+    call halo_exchange_3d(R,dstruct)
 
   end subroutine compute_forcing
 
@@ -1174,8 +1174,8 @@ contains
       end do
     end do
     !$OMP END PARALLEL DO
-    call halo_exchange(U,dstruct)
-    call halo_exchange(R,dstruct)
+    call halo_exchange_3d(U,dstruct)
+    call halo_exchange_3d(R,dstruct)
 
   end subroutine implicit_solve
 

@@ -17,13 +17,24 @@ module datastruct_module
   public :: mark_output
   public :: gather
 
-  public :: halo_exchange
+  public :: halo_exchange, halo_exchange_2d, halo_exchange_3d
 
   interface halo_exchange
-    module procedure halo_exchange_real_rank1
-    module procedure halo_exchange_real_rank2
-    module procedure halo_exchange_real_rank3
+    module procedure halo_exchange_2d_real_rank1
+    module procedure halo_exchange_2d_real_rank2
   end interface halo_exchange
+
+  interface halo_exchange_2d
+    module procedure halo_exchange_2d_real_rank1
+    module procedure halo_exchange_2d_real_rank2
+  end interface halo_exchange_2d
+
+  interface halo_exchange_3d
+    module procedure halo_exchange_3d_real_rank2
+    module procedure halo_exchange_3d_real_rank3
+  end interface halo_exchange_3d
+
+
 
   interface  gather
     module procedure gather_array_rank1
@@ -258,28 +269,33 @@ contains
     array => field%data3()
   end function vector_field_3d
 
-  subroutine halo_exchange_real_rank1(array, dstruct)
+  subroutine halo_exchange_2d_real_rank1(array, dstruct)
     implicit none
     real(kind=jprw), dimension(:), intent(inout) :: array
     type(DataStructure_type), intent(inout) :: dstruct
     call dstruct%functionspace_nodes_2d%halo_exchange( array )
-  end subroutine halo_exchange_real_rank1
+  end subroutine halo_exchange_2d_real_rank1
 
-   subroutine halo_exchange_real_rank2(array, dstruct)
+   subroutine halo_exchange_2d_real_rank2(array, dstruct)
     implicit none
     real(kind=jprw), dimension(:,:), intent(inout) :: array
     type(DataStructure_type), intent(inout) :: dstruct
     call dstruct%functionspace_nodes_2d%halo_exchange( array )
-  end subroutine halo_exchange_real_rank2
+  end subroutine halo_exchange_2d_real_rank2
 
-  subroutine halo_exchange_real_rank3(array, dstruct)
+   subroutine halo_exchange_3d_real_rank2(array, dstruct)
+    implicit none
+    real(kind=jprw), dimension(:,:), intent(inout) :: array
+    type(DataStructure_type), intent(inout) :: dstruct
+    call dstruct%functionspace_nodes_3d%halo_exchange( array )
+  end subroutine halo_exchange_3d_real_rank2
+
+  subroutine halo_exchange_3d_real_rank3(array, dstruct)
     implicit none
     real(kind=jprw), dimension(:,:,:), intent(inout) :: array
     type(DataStructure_type), intent(inout) :: dstruct
-    !write(0,*) "cannot halo exchange rank3"
-    !call abort()
     call dstruct%functionspace_nodes_3d%halo_exchange( array )
-  end subroutine halo_exchange_real_rank3
+  end subroutine halo_exchange_3d_real_rank3
 
   subroutine gather_array_rank1(array_loc, array_full, dstruct)
     implicit none
