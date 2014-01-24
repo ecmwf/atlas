@@ -151,15 +151,15 @@ contains
 
     call backup_solution(dstruct)
 
+    call compute_advective_velocities(dt,dstruct,"advect")
+
     if (step == 0) then ! Pre-compute forcing
 
       call compute_forcing(dstruct)
 
     end if
-    
+
     call add_forcing_to_solution(dt,dstruct)
-    
-    call compute_advective_velocities(dt,dstruct,"advect")
 
     call advect_solution(dt,order,scheme,dstruct)
 
