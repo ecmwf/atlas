@@ -28,7 +28,6 @@ set( WARNINGS OFF CACHE BOOL "Enable/Disable all warnings" )
 set( GRIB     ON  CACHE BOOL "Enable/Disable Grib"         )
 set( MPI      ON  CACHE BOOL "Enable/Disable MPI"          )
 set( ENABLE_TESTS ON CACHE BOOL "Enable/Disable unit tests")
-set( CPP      ON CACHE BOOL "Enable/Disable unit C++ datastructure")
 
 message( STATUS "--------------------------------------------------------------------" )
 message( STATUS "PantaRhei configuration" )
@@ -193,18 +192,8 @@ add_library( common ${MPI_STUBS}
 )
 target_link_libraries( common ${TPL} )
 
-if( NOT ${CPP} )
-  add_library( datastruct
-    src/retired_datastructure/elements_module.F90
-    src/retired_datastructure/lagrangep0_module.F90
-    src/retired_datastructure/lagrangep1_module.F90
-    src/retired_datastructure/grid_module.F90
-  )
-  target_link_libraries( datastruct common )
-else()
-  add_subdirectory(src/datastruct)
-  include_directories(${CMAKE_CURRENT_BINARY_DIR}/src/datastruct)
-endif()
+add_subdirectory(src/datastruct)
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/src/datastruct)
 
 add_library( io
   src/io/split_globe_module.F90
@@ -218,17 +207,11 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}/src/ftnunit)
 #######################################################################################
 # Shallow water executable
 #######################################################################################
-if( NOT ${CPP} )
-  list( APPEND DATASTRUCT_SRC
-    src/shallow_water/retired_datastruct_module.F90
-    src/shallow_water/retired_joanna_module.F90
-  )
-else()
-  list( APPEND DATASTRUCT_SRC
-    src/shallow_water/datastruct_module.F90
-    src/shallow_water/joanna_module.F90
-  )
-endif()
+list( APPEND DATASTRUCT_SRC
+  src/shallow_water/datastruct_module.F90
+  src/shallow_water/joanna_module.F90
+)
+
 file( COPY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
 
 add_executable( shallow_water
@@ -259,7 +242,6 @@ ecbuild_add_test( TARGET test_datastruct
   LIBS     ftnunit datastruct
   COMMAND  ${CMAKE_SOURCE_DIR}/src/ftnunit/runtests.sh
   ARGS     ${CMAKE_CURRENT_BINARY_DIR}/test_datastruct
-  CONDITION ${CPP}
 )
 
 ecbuild_add_test( TARGET test_sync
