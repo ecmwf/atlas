@@ -155,7 +155,7 @@ contains
 
     call create_field_in_nodes_2d("coordinates",2,dstruct)
     call create_field_in_nodes_3d("dual_volumes",1,dstruct)
-    call create_field_in_edges_2d("dual_normals",3,dstruct)
+    call create_field_in_edges_2d("dual_normals",2,dstruct)
 
     allocate( dstruct%nodes_proc( nb_nodes ) ) 
     allocate( dstruct%nodes_glb_idx( nb_nodes ) ) 
@@ -300,8 +300,9 @@ contains
     implicit none
     real(kind=jprw), dimension(:,:,:), intent(inout) :: array
     type(DataStructure_type), intent(inout) :: dstruct
-    call abort()
-    call dstruct%functionspace_nodes_2d%halo_exchange( array )
+    !write(0,*) "cannot halo exchange rank3"
+    !call abort()
+    call dstruct%functionspace_nodes_3d%halo_exchange( array )
   end subroutine halo_exchange_real_rank3
 
   subroutine gather_array_rank1(array_loc, array_full, dstruct)

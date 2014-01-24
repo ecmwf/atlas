@@ -1,5 +1,5 @@
 ! ===================================================================
-! shallow_water program
+! isentropic program
 ! ---------------------
 ! This program solves the shallow water equations on a sphere,
 ! initialised with the Rossby-Haurwitz waves.
@@ -26,7 +26,7 @@ program isentropic
   integer         :: nb_steps = 1         ! Number of propagations
   integer         :: hours_per_step = 1   ! Propagation time
   logical         :: write_itermediate_output = .True.
-  integer         :: nb_levels = 2
+  integer         :: nb_levels = 5
 
   ! Declarations
   type(DataStructure_type) :: dstruct
@@ -59,7 +59,7 @@ program isentropic
   call log_info( "| output rate (hrs) | "//trim(str(hours_per_step,'(I8)'))//" |" )
   call log_info( "+-------------------+----------+ ")
 
-  call write_gmsh_mesh_3d(dstruct,"data/mesh3d.msh")
+  !call write_gmsh_mesh_3d(dstruct,"data/mesh3d.msh")
 
   call setup_isentropic(dstruct)
 
@@ -74,15 +74,17 @@ program isentropic
   call mark_output("height",dstruct)
   call mark_output("depth",dstruct)
   call mark_output("velocity",dstruct)
+  call mark_output("pressure",dstruct)
+  call mark_output("forcing",dstruct)
+  call mark_output("montgomery_potential",dstruct)
 
   call write_fields()
-
   call wallclock_timer%start()
 
   do jstep=1,nb_steps 
 
     call step_timer%start()
-    call propagate_state( hours_per_step*hours, dstruct)
+    !call propagate_state( hours_per_step*hours, dstruct)
 
     write (log_str, '(A,I3,A,A,F8.2,A,F8.2,A)') &
       & "Propagated to ",jstep*hours_per_step," hours.", &
@@ -90,7 +92,7 @@ program isentropic
       & "     wall-time = ",wallclock_timer%elapsed(), new_line('A')
     call log_info()
     
-    if (write_itermediate_output) call write_fields
+    !if (write_itermediate_output) call write_fields
 
   end do ! steps
 

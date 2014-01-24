@@ -828,12 +828,18 @@ contains
     class(Comm_type), intent(in) :: comm
     real(kind=c_double), dimension(:,:,:), intent(in) :: loc_field
     real(kind=c_double), dimension(:,:,:), allocatable, intent(inout) :: glb_field
-    real(kind=c_double) :: sendbuffer(comm%gather_sendcnt*size(loc_field,1))
-    real(kind=c_double) :: recvbuffer(comm%gather_recvcnt*size(loc_field,1))
-    integer :: jj, nb_vars, jvar, jlev, nb_levels
+    real(kind=c_double) :: sendbuffer(comm%gather_sendcnt*size(loc_field,2))
+    real(kind=c_double) :: recvbuffer(comm%gather_recvcnt*size(loc_field,2))
+    integer :: gather_recvdispls(0:nproc-1),gather_recvcounts(0:nproc-1)
 
+    integer :: jj, nb_vars, jvar, jlev, nb_levels, gather_sendcnt
+
+    nb_vars   = size(loc_field,1)
     nb_levels = size(loc_field,2)
-    nb_vars = size(loc_field,1)
+
+    gather_sendcnt       = comm%gather_sendcnt*nb_levels
+    gather_recvdispls(:) = nb_levels*comm%gather_recvdispls(:)
+    gather_recvcounts(:) = nb_levels*comm%gather_recvcounts(:)
 
     if( .not. allocated( glb_field) ) then
       allocate( glb_field( nb_vars, nb_levels, comm%glb_field_size() ) )
@@ -849,8 +855,8 @@ contains
       end do
 
       ! Communicate
-      call MPI_GATHERV( sendbuffer,comm%gather_sendcnt,MPI_REAL8, &
-                      & recvbuffer,comm%gather_recvcounts,comm%gather_recvdispls,MPI_REAL8, &
+      call MPI_GATHERV( sendbuffer,gather_sendcnt,MPI_REAL8, &
+                      & recvbuffer,gather_recvcounts,gather_recvdispls,MPI_REAL8, &
                       & comm%gather_root,MPI_COMM_WORLD,ierr )
     
       ! Unpack

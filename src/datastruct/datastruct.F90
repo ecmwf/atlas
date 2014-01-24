@@ -961,9 +961,9 @@ function Field__data2_wp(this) result(field)
   do jbound=1,field_rank
     field_size = field_size * field_bounds(jbound)
   end do
-  call C_F_POINTER ( field_c_ptr , field , field_bounds(1:2) )
+  call C_F_POINTER ( field_c_ptr , field , field_bounds(field_rank-1:field_rank) )
   if( size(field) /= field_size ) then
-    write(0,*) "Requested bounds of field ", field_bounds(1:2), " do not cover the entire field of size ", field_size
+    write(0,*) "Requested bounds of field ", this%name(), "[", field_bounds(1:2), "] do not cover the entire field of size ", field_size
     call abort()
   end if
 end function Field__data2_wp

@@ -448,10 +448,16 @@ contains
     ! Create edge-based unstructured mesh
     call create_mesh_3d(nb_levels, sum(keep_node), sum(keep_edge), proc, glb_idx, dstruct )
     
+    call log_info("mesh read")
     
     coords => vector_field_2d("coordinates",dstruct)
+    call log_info("coords")
+
     vol    => scalar_field_3d("dual_volumes",dstruct)
+    call log_info("dual_volumes")
+
     S      => vector_field_2d("dual_normals",dstruct)
+    call log_info("dual_normals")
 
     open(5,file=filename,access='sequential',status='old')
 
