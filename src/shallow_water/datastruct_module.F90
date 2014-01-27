@@ -159,7 +159,7 @@ contains
     allocate( dstruct%edges(dstruct%nb_edges,2) )
 
     call create_field_in_nodes_2d("coordinates",2,dstruct)
-    call create_field_in_nodes_3d("dual_volumes",1,dstruct)
+    call create_field_in_nodes_2d("dual_volumes",1,dstruct)
     call create_field_in_edges_2d("dual_normals",2,dstruct)
 
     allocate( dstruct%nodes_proc( nb_nodes ) ) 

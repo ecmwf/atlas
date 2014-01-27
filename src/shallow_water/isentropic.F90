@@ -22,7 +22,7 @@ program isentropic
   implicit none
 
   ! Configuration parameters
-  real(kind=jprw) :: dt = 1.              ! solver time-step
+  real(kind=jprw) :: dt = 0.1              ! solver time-step
   integer         :: nb_steps = 1         ! Number of propagations
   integer         :: hours_per_step = 1   ! Propagation time
   logical         :: write_itermediate_output = .True.
@@ -77,6 +77,8 @@ program isentropic
   call mark_output("pressure",dstruct)
   call mark_output("forcing",dstruct)
   call mark_output("montgomery_potential",dstruct)
+  call mark_output("dual_volumes",dstruct)
+  call mark_output("p0",dstruct)
 
   call write_fields()
   call wallclock_timer%start()
@@ -85,7 +87,7 @@ program isentropic
 
     call step_timer%start()
     !call propagate_state( hours_per_step*hours, dstruct)
-    call propagate_state( dt, dstruct)
+    call propagate_state(1.* dt, dstruct)
 
     write (log_str, '(A,I3,A,A,F8.2,A,F8.2,A)') &
       & "Propagated to ",jstep*hours_per_step," hours.", &

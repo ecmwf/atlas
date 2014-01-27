@@ -358,7 +358,7 @@ contains
     integer                      :: glb_nb_edges = 0
 
     integer                      :: idx,ibound
-    real(kind=jprw), pointer     :: coords(:,:), vol(:,:), S(:,:)
+    real(kind=jprw), pointer     :: coords(:,:), vol(:), S(:,:)
     integer                      :: ip1,ip2
 
     real(kind=jprw) :: dummy_real, x, y, v, sx, sy, sz
@@ -376,7 +376,6 @@ contains
     integer :: ierr
     integer :: jedge, iedge
     integer :: jnode, inode
-    integer :: jlev
     integer :: nb_pole_edges
 
     call log_info( "Reading mesh "//filename )
@@ -451,7 +450,7 @@ contains
 
     coords => vector_field_2d("coordinates",dstruct)
 
-    vol    => scalar_field_3d("dual_volumes",dstruct)
+    vol    => scalar_field_2d("dual_volumes",dstruct)
 
     S      => vector_field_2d("dual_normals",dstruct)
 
@@ -467,10 +466,8 @@ contains
         if( proc(inode) .eq. myproc ) then
           owned_node_cnt = owned_node_cnt + 1
         end if
-        do jlev = 1, nb_levels
-          coords(:,inode) = [x, y]
-          vol(jlev,inode) = v
-        end do
+        coords(:,inode) = [x, y]
+        vol(inode) = v
       end if
     end do
 
