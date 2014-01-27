@@ -142,8 +142,8 @@ contains
       end if
 
       if( abs(Dtmp) < 1.e-30_jprw ) Dtmp = 0.
-      !D(jnode) = max(0.,Dtmp)
-      D(jnode) = Dtmp
+      D(jnode) = max(0.,Dtmp)
+      !D(jnode) = Dtmp
 
     enddo
 
@@ -251,8 +251,8 @@ contains
         end if
 
         if( abs(Dtmp) < 1.e-30_jprw ) Dtmp = 0.
-        D(jnode) = Dtmp
-        !D(jnode) = max(0.,Dtmp)
+        !D(jnode) = Dtmp
+        D(jnode) = max(0.,Dtmp)
 
       enddo
       !$OMP END PARALLEL DO

@@ -151,11 +151,10 @@ contains
 
     call backup_solution(dstruct)
 
-    call compute_advective_velocities(dt,dstruct,"advect")
-
     if (step == 0) then ! Pre-compute forcing
 
       call compute_forcing(dstruct)
+      call compute_advective_velocities(dt,dstruct,"advect")
 
     end if
 
@@ -164,6 +163,8 @@ contains
     call advect_solution(dt,order,scheme,dstruct)
 
     call implicit_solve(dt,dstruct)
+
+    call compute_advective_velocities(dt,dstruct,"advect")
 
     dstruct%time = dstruct%time+dt
     step = step+1
@@ -206,7 +207,7 @@ contains
       U(YY,jnode) = -radius*zk*ir*cos_y**(ir-1._jprw)*sin_y*sin(ir*x)
       H(jnode) = (ph0+radius**2*fa(y)+radius**2*fb(y)*cos(ir*x) &
         &        +radius**2*fc(y)*cos(2._jprw*ir*x)) / grav
-      D(jnode) = max(0._jprw,D(jnode) - H0(jnode))
+      D(jnode) = max(0._jprw,H(jnode) - H0(jnode))
       if(y == 0.5_jprw*pi) U(XX,jnode)=0.
       if(y ==-0.5_jprw*pi) U(XX,jnode)=0.
       H(jnode) = H0(jnode) + D(jnode)
@@ -266,7 +267,7 @@ contains
       cor(jnode)   = f0 *( -cos(x)*cos(y)*sin(beta)+sin(y)*cos(beta) )
       H(jnode)     = (H00-radius**2*(f0+pvel)*0.5*pvel &
                    & *(-cos(x)*cos(y)*sin(beta)+sin(y)*cos(beta))**2)/grav
-      D(jnode)     = H(jnode) - H0(jnode)
+      D(jnode)     = max(0., H(jnode) - H0(jnode) )
       U(XX,jnode)  =  pvel*(cos(beta)+tan(y)*cos(x)*sin(beta))*radius*cos(y)
       U(YY,jnode)  = -pvel*sin(x)*sin(beta)*radius
       if ( D(jnode) < D_tres ) then
@@ -391,7 +392,7 @@ contains
           !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Dpos)
           do jnode=1,dstruct%nb_nodes
             Dpos = max(eps, D(jnode))
-            Vnodes(:,jnode)=(Q(:,jnode) + 0.5*dt*R(:,jnode))/Dpos
+            Vnodes(:,jnode)=(Q(:,jnode))/Dpos
             U(:,jnode) = Q(:,jnode)/Dpos
           end do
           !$OMP END PARALLEL DO
@@ -410,36 +411,26 @@ contains
       do jnode=1,dstruct%nb_nodes
         Ux = U(XX,jnode)
         Uy = U(YY,jnode)
-        Vx = Ux/hx(jnode)
-        Vy = Uy/hy(jnode)
+        Vx = Ux!/hx(jnode)  !bad results when uncommented
+        Vy = Uy!/hy(jnode)
         dVxdx = grad_Vnodes(XXDXX,jnode)*hy(jnode)/vol(jnode)
         dVxdy = grad_Vnodes(XXDYY,jnode)*hx(jnode)/vol(jnode)
         dVydx = grad_Vnodes(YYDXX,jnode)*hy(jnode)/vol(jnode)    
         dVydy = grad_Vnodes(YYDYY,jnode)*hx(jnode)/vol(jnode)
-        Dpos = max(D_tres,D(jnode))
-        Vnodes(XX,jnode) = ( Ux - 0.5*dt*(Vx*dVxdx+Vy*dVxdy) ) * hy(jnode)
-        Vnodes(YY,jnode) = ( Uy - 0.5*dt*(Vx*dVydx+Vy*dVydy) ) * hx(jnode)
+        Dpos = max(eps,D(jnode))
+        Vnodes(XX,jnode) = ( Ux - 0.5*dt*(Vx*dVxdx+Vy*dVxdy - R(XX,jnode)/Dpos ) ) * hy(jnode)
+        Vnodes(YY,jnode) = ( Uy - 0.5*dt*(Vx*dVydx+Vy*dVydy - R(YY,jnode)/Dpos ) ) * hx(jnode)
       enddo
       !$OMP END PARALLEL DO
 
       call halo_exchange( Vnodes, dstruct )
-
-
 
       !dir$ ivdep
       !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2)
       do jedge=1,dstruct%nb_edges
         ip1 = dstruct%edges(jedge,1)
         ip2 = dstruct%edges(jedge,2)
-        Vedges(:,jedge) = (Vnodes(:,ip1)+Vnodes(:,ip2))*0.5_jprw
-
-        if (D(ip1) < D_tres) then
-          Vedges(:,jedge) = 0.5_jprw*Vnodes(:,ip2)
-        else if (D(ip2) < D_tres) then
-          Vedges(:,jedge) = 0.5_jprw*Vnodes(:,ip1)
-        end if
-        if (D(ip1) < D_tres .and. D(ip2) < D_tres) Vedges(:,jedge) = 0._jprw
-
+        Vedges(:,jedge) = (D(ip1)*Vnodes(:,ip1)+D(ip2)*Vnodes(:,ip2))/(D(ip1)+D(ip2)+eps)
       end do
       !$OMP END PARALLEL DO
 
@@ -456,10 +447,6 @@ contains
             Uy    = Q(YY,jnode)/Dpos
             U0x   = Q0(XX,jnode)/D0pos
             U0y   = Q0(YY,jnode)/D0pos
-            if( D0(jnode) < eps ) then
-              U0x = Ux
-              U0y = Uy
-            end if
             Vnodes(XX,jnode) = ( 1.5_jprw*Ux - 0.5_jprw*U0x ) * hy(jnode)
             Vnodes(YY,jnode) = ( 1.5_jprw*Uy - 0.5_jprw*U0y ) * hx(jnode)
           end do
@@ -486,17 +473,6 @@ contains
         ip2 = dstruct%edges(jedge,2)
         !Vedges(:,jedge) = (Vnodes(:,ip1)+Vnodes(:,ip2))*0.5_jprw
         Vedges(:,jedge) = (D(ip1)*Vnodes(:,ip1)+D(ip2)*Vnodes(:,ip2))/(D(ip1)+D(ip2)+eps)
-         
-        !Sx = S(XX,jedge)
-        !Sy = S(YY,jedge)
-        !Vx = Vedges(XX,jedge)
-        !Vy = Vedges(YY,jedge)
-        !if (Vx*Sx + Vy*Sy > 0) then
-        !  if( D(ip1) < D_tres ) Vedges(:,jedge) = Vnodes(:,ip2)*0.5_jprw
-        !else
-        !  if( D(ip2) < D_tres ) Vedges(:,jedge) = Vnodes(:,ip1)*0.5_jprw
-        !end if
-        !if ( (D(ip1) + D(ip2))*0.5_jprw < D_tres ) Vedges(:,jedge) = 0.
       enddo
       !$OMP END PARALLEL DO
     end if
@@ -649,7 +625,7 @@ contains
             Q(YY,jnode) = Qy
             R(XX,jnode) = Rx_exp + cor(jnode)*Qy - dhxdy_over_G(jnode)*Qx*Qy/D(jnode)
             R(YY,jnode) = Ry_exp - cor(jnode)*Qx + dhxdy_over_G(jnode)*Qx*Qx/D(jnode)
-            U(:,jnode) = Q(:,jnode) / D(jnode)
+            U(:,jnode)  = Q(:,jnode) / D(jnode)
           else
             R(:,jnode) = 0.
             U(:,jnode) = 0.
