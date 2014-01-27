@@ -22,7 +22,7 @@ program isentropic
   implicit none
 
   ! Configuration parameters
-  real(kind=jprw) :: dt = 20.              ! solver time-step
+  real(kind=jprw) :: dt = 1.              ! solver time-step
   integer         :: nb_steps = 1         ! Number of propagations
   integer         :: hours_per_step = 1   ! Propagation time
   logical         :: write_itermediate_output = .True.
@@ -38,7 +38,7 @@ program isentropic
   ! Execution
   call parallel_init()
 
-  call set_log_level(LOG_LEVEL_INFO)
+  call set_log_level(LOG_LEVEL_DEBUG)
   call set_log_proc(0)
   
   call log_info("Program isentropic start")
@@ -85,6 +85,7 @@ program isentropic
 
     call step_timer%start()
     !call propagate_state( hours_per_step*hours, dstruct)
+    call propagate_state( dt, dstruct)
 
     write (log_str, '(A,I3,A,A,F8.2,A,F8.2,A)') &
       & "Propagated to ",jstep*hours_per_step," hours.", &
@@ -92,7 +93,7 @@ program isentropic
       & "     wall-time = ",wallclock_timer%elapsed(), new_line('A')
     call log_info()
     
-    !if (write_itermediate_output) call write_fields
+    if (write_itermediate_output) call write_fields
 
   end do ! steps
 
