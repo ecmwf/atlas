@@ -30,22 +30,22 @@ contains
     real(kind=jprw), intent(in) :: V(:,:,:)
     real(kind=jprw), intent(in) :: limit
     integer, intent(in) :: order
-    real(kind=jprw), intent(out) :: VDS(dstruct%nb_levels-1,dstruct%nb_edges)
+    real(kind=jprw), intent(out) :: VDS(dstruct%nb_levels,dstruct%nb_edges)
 
     integer :: jnode, jedge, iedge, jpass, ip1,ip2, jlev
     real(kind=jprw) :: sx, sy, volume_of_two_cells, dDdx, dDdy, Vx, Vy, apos, aneg, Dtmp, D_abs
-    real(kind=jprw) :: Dmin(dstruct%nb_levels-1,dstruct%nb_nodes)
-    real(kind=jprw) :: Dmax(dstruct%nb_levels-1,dstruct%nb_nodes)
-    real(kind=jprw) :: rhin
-    real(kind=jprw) :: rhout
-    real(kind=jprw) :: cp(dstruct%nb_levels-1,dstruct%nb_nodes)
-    real(kind=jprw) :: cn(dstruct%nb_levels-1,dstruct%nb_nodes)
-    real(kind=jprw) :: adv(dstruct%nb_levels-1)
-    real(kind=jprw) :: sign
-    real(kind=jprw) :: aun(dstruct%nb_levels-1,dstruct%nb_edges)
-    real(kind=jprw) :: gradD(2,dstruct%nb_levels-1,dstruct%nb_nodes)
-    real(kind=jprw) :: sum_Sabs(2,dstruct%nb_levels-1,dstruct%nb_nodes)
-    real(kind=jprw) :: sum_Dbar(2,dstruct%nb_levels-1,dstruct%nb_nodes)
+    real(kind=jprw) :: Dmin(dstruct%nb_levels,dstruct%nb_nodes)
+    real(kind=jprw) :: Dmax(dstruct%nb_levels,dstruct%nb_nodes)
+    real(kind=jprw) :: rhin(dstruct%nb_levels)
+    real(kind=jprw) :: rhout(dstruct%nb_levels)
+    real(kind=jprw) :: cp(dstruct%nb_levels,dstruct%nb_nodes)
+    real(kind=jprw) :: cn(dstruct%nb_levels,dstruct%nb_nodes)
+    real(kind=jprw) :: adv(dstruct%nb_levels)
+    real(kind=jprw) :: add
+    real(kind=jprw) :: aun(dstruct%nb_levels,dstruct%nb_edges)
+    real(kind=jprw) :: gradD(2,dstruct%nb_levels,dstruct%nb_nodes)
+    real(kind=jprw) :: sum_Sabs(2,dstruct%nb_levels,dstruct%nb_nodes)
+    real(kind=jprw) :: sum_Dbar(2,dstruct%nb_levels,dstruct%nb_nodes)
     real(kind=jprw), pointer :: vol(:), S(:,:), D0(:,:)
     real(kind=jprw) :: Dbar(2) ! Dabs_bar == Dbar since D > 0 always
 
@@ -90,15 +90,17 @@ contains
     end do
     !$OMP END PARALLEL DO
 
-     !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,adv,jedge,iedge)
+    !call limit_flux(VDS)
+
+    !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,adv,jedge,iedge)
     do jnode=1,dstruct%nb_nodes
       adv(:) = 0.0
       if(dstruct%nb_neighbours(jnode) > 1) then
         do jedge = 1,dstruct%nb_neighbours(jnode)
           iedge = dstruct%my_edges(jedge,jnode)
-          sign = dstruct%sign(jedge,jnode)
+          add = dstruct%sign(jedge,jnode)
           do jlev=1,dstruct%nb_levels-1
-            adv(jlev) = adv(jlev) + sign*VDS(jlev,iedge)
+            adv(jlev) = adv(jlev) + add*VDS(jlev,iedge)
           end do
         end do
       end if
@@ -178,7 +180,7 @@ contains
 
       ! non-oscillatory option
       if (limit > 0._jprw) then
-        call limit_antidiffusive_velocity()
+        call limit_flux(aun)
       endif
 
       !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge)
@@ -249,26 +251,31 @@ contains
       call halo_exchange_3d(Dmax,dstruct)
 
     end subroutine compute_Dmax_and_Dmin
-#if 0
-    subroutine limit_antidiffusive_velocity
 
+    subroutine limit_flux(flux)
+      real(kind=jprw), intent(inout) :: flux(:,:)
       real(kind=jprw) :: asignp,asignn
 
       !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,rhin,rhout,jedge,iedge,apos,aneg,asignp,asignn)
       do jnode=1,dstruct%nb_nodes
-        rhin  = 0.
-        rhout = 0.
+        rhin(:)  = 0.
+        rhout(:) = 0.
         do jedge = 1,dstruct%nb_neighbours(jnode)
           iedge = dstruct%my_edges(jedge,jnode)
-          apos = max(0._jprw,aun(iedge))
-          aneg = min(0._jprw,aun(iedge))
-          asignp = max(0._jprw,dstruct%sign(jedge,jnode))
-          asignn = min(0._jprw,dstruct%sign(jedge,jnode))
-          rhin  = rhin  - asignp*aneg - asignn*apos
-          rhout = rhout + asignp*apos + asignn*aneg
+          add = dstruct%sign(jedge,jnode)
+          do jlev=1,dstruct%nb_levels-1
+            apos = max(0._jprw,flux(jlev,iedge))
+            aneg = min(0._jprw,flux(jlev,iedge))
+            asignp = max(0._jprw,add)
+            asignn = min(0._jprw,add)
+            rhin(jlev)  = rhin(jlev)  - asignp*aneg - asignn*apos
+            rhout(jlev) = rhout(jlev) + asignp*apos + asignn*aneg
+          end do
         end do
-        cp(jnode) = ( Dmax(jnode)-D(jnode) )*vol(jnode)/( rhin * dt + eps )
-        cn(jnode) = ( D(jnode)-Dmin(jnode) )*vol(jnode)/( rhout* dt + eps )
+        do jlev=1,dstruct%nb_levels-1
+          cp(jlev,jnode) = ( Dmax(jlev,jnode)-D(jlev,jnode) )*vol(jnode)/( rhin(jlev) * dt + eps )
+          cn(jlev,jnode) = ( D(jlev,jnode)-Dmin(jlev,jnode) )*vol(jnode)/( rhout(jlev)* dt + eps )
+        end do
       end do
       !$OMP END PARALLEL DO
 
@@ -279,16 +286,17 @@ contains
       do jedge = 1,dstruct%nb_edges
         ip1 = dstruct%edges(jedge,1)
         ip2 = dstruct%edges(jedge,2)
-        if(aun(jedge) > 0._jprw) then
-          aun(jedge)=aun(jedge)*min(limit,cp(ip2),cn(ip1))
-        else
-          aun(jedge)=aun(jedge)*min(limit,cn(ip2),cp(ip1))
-        end if
+        do jlev=1,dstruct%nb_levels-1
+          if(flux(jlev,jedge) > 0._jprw) then
+            flux(jlev,jedge)=flux(jlev,jedge)*min(limit,cp(jlev,ip2),cn(jlev,ip1))
+          else
+            flux(jlev,jedge)=flux(jlev,jedge)*min(limit,cn(jlev,ip2),cp(jlev,ip1))
+          end if
+        end do
       end do
       !$OMP END PARALLEL DO
+    end subroutine limit_flux
 
-    end subroutine limit_antidiffusive_velocity
-#endif
   end subroutine mpdata_D
   
   
@@ -301,18 +309,18 @@ contains
     real(kind=jprw), intent(in) :: limit
     integer, intent(in) :: order
     integer :: jnode, jedge, iedge, jpass, ip1,ip2, jlev
-    real(kind=jprw) :: Sx, Sy, volume_of_two_cells, dQdx(2), dQdy(2), Vx, Vy, Qtmp(2), Q_abs(2), Qbar(2,2), sign
-    real(kind=jprw) :: apos(2), aneg(2)
-    real(kind=jprw) :: Qmin(2,dstruct%nb_levels-1,dstruct%nb_nodes)
-    real(kind=jprw) :: Qmax(2,dstruct%nb_levels-1,dstruct%nb_nodes)
+    real(kind=jprw) :: Sx, Sy, volume_of_two_cells, dQdx(2), dQdy(2), Vx, Vy, Qtmp(2), Q_abs(2), Qbar(2,2)
+    real(kind=jprw) :: apos(2), aneg(2), add
+    real(kind=jprw) :: Qmin(2,dstruct%nb_levels,dstruct%nb_nodes)
+    real(kind=jprw) :: Qmax(2,dstruct%nb_levels,dstruct%nb_nodes)
     real(kind=jprw) :: rhin(2)
     real(kind=jprw) :: rhout(2)
-    real(kind=jprw) :: cp(2,dstruct%nb_levels-1,dstruct%nb_nodes)
-    real(kind=jprw) :: cn(2,dstruct%nb_levels-1,dstruct%nb_nodes)
-    real(kind=jprw) :: adv(2,dstruct%nb_levels-1)
-    real(kind=jprw) :: aun(2,dstruct%nb_levels-1,dstruct%nb_edges)
-    real(kind=jprw) :: fluxv(2,dstruct%nb_levels-1,dstruct%nb_edges)
-    real(kind=jprw) :: gradQ(4,dstruct%nb_levels-1,dstruct%nb_nodes)
+    real(kind=jprw) :: cp(2,dstruct%nb_levels,dstruct%nb_nodes)
+    real(kind=jprw) :: cn(2,dstruct%nb_levels,dstruct%nb_nodes)
+    real(kind=jprw) :: adv(2,dstruct%nb_levels)
+    real(kind=jprw) :: aun(2,dstruct%nb_levels,dstruct%nb_edges)
+    real(kind=jprw) :: fluxv(2,dstruct%nb_levels,dstruct%nb_edges)
+    real(kind=jprw) :: gradQ(4,dstruct%nb_levels,dstruct%nb_nodes)
     real(kind=jprw) :: sum_Sabs(2,dstruct%nb_nodes)
     real(kind=jprw) :: sum_Qbar(2,2,dstruct%nb_nodes)
     real(kind=jprw), pointer :: vol(:), S(:,:), pole_bc(:)
@@ -360,9 +368,9 @@ contains
       if(dstruct%nb_neighbours(jnode) > 1) then
         do jedge = 1,dstruct%nb_neighbours(jnode)
           iedge = dstruct%my_edges(jedge,jnode)
-          sign=dstruct%sign(jedge,jnode)
+          add=dstruct%sign(jedge,jnode)
           do jlev=1,dstruct%nb_levels-1
-            adv(:,jlev) = adv(:,jlev) + sign*fluxv(:,jlev,iedge)
+            adv(:,jlev) = adv(:,jlev) + add*fluxv(:,jlev,iedge)
           end do
         end do
       end if
@@ -554,18 +562,17 @@ contains
 
   
 
-  subroutine compute_gradient(Q,gradQ,Q_is_vector_component,dstruct)
+  subroutine compute_gradient(Q,gradQ,dstruct)
     type(DataStructure_type), intent(inout) :: dstruct
     real(kind=jprw), intent(in)    :: Q(:,:)
     real(kind=jprw), intent(inout) :: gradQ(:,:,:)
-    logical, intent(in) :: Q_is_vector_component
-    real(kind=jprw), pointer :: S(:,:)
-    real(kind=jprw) :: Sx,Sy,avgQ,sign
+    real(kind=jprw), pointer :: S(:,:), D(:,:)
+    real(kind=jprw) :: add
     integer :: jedge,iedge,ip1,ip2,jnode,jlev
-    real(kind=jprw) :: avgQSx(dstruct%nb_levels-1,dstruct%nb_edges)
-    real(kind=jprw) :: avgQSy(dstruct%nb_levels-1,dstruct%nb_edges)
+    real(kind=jprw) :: avgQS(2,dstruct%nb_levels,dstruct%nb_edges)
 
     S   => vector_field_2d("dual_normals",dstruct)
+    D   => scalar_field_3d("depth",dstruct)
 
     ! derivatives 
 
@@ -573,11 +580,13 @@ contains
     do jedge = 1,dstruct%nb_edges
       ip1 = dstruct%edges(jedge,1)
       ip2 = dstruct%edges(jedge,2)
-      Sx  = S(XX,jedge)
-      Sy  = S(YY,jedge)
-      do jlev=1,dstruct%nb_levels-1
-        avgQSx(jlev,jedge) = Sx*( Q(jlev,ip1) + Q(jlev,ip2) )*0.5_jprw
-        avgQSy(jlev,jedge) = Sy*( Q(jlev,ip1) + Q(jlev,ip2) )*0.5_jprw
+      do jlev=1,dstruct%nb_levels
+        !avgQS(:,jlev,jedge) = S(:,jedge) * ( Q(jlev,ip1) + Q(jlev,ip2) )*0.5_jprw
+        avgQS(XX,jlev,jedge) = S(XX,jedge) * ( D(jlev,ip1)*Q(jlev,ip1) + D(jlev,ip2)*Q(jlev,ip2) ) &
+                            & / (  D(jlev,ip1) +  D(jlev,ip2) + eps )
+        avgQS(YY,jlev,jedge) = S(YY,jedge) * ( D(jlev,ip1)*Q(jlev,ip1) + D(jlev,ip2)*Q(jlev,ip2) ) &
+                            & / (  D(jlev,ip1) +  D(jlev,ip2) + eps )
+
       end do
     end do
     !$OMP END PARALLEL DO
@@ -587,10 +596,10 @@ contains
       gradQ(:,:,jnode) = 0.
       do jedge = 1,dstruct%nb_neighbours(jnode)
         iedge = dstruct%my_edges(jedge,jnode)
-        sign = dstruct%sign(jedge,jnode)
-        do jlev=1,dstruct%nb_levels-1
-          gradQ(XX,jlev,jnode) = gradQ(XX,jlev,jnode)+sign*avgQSx(jlev,iedge)
-          gradQ(YY,jlev,jnode) = gradQ(YY,jlev,jnode)+sign*avgQSy(jlev,iedge)
+        add = dstruct%sign(jedge,jnode)
+        do jlev=1,dstruct%nb_levels
+          gradQ(XX,jlev,jnode) = gradQ(XX,jlev,jnode)+add*avgQS(XX,jlev,iedge)
+          gradQ(YY,jlev,jnode) = gradQ(YY,jlev,jnode)+add*avgQS(YY,jlev,iedge)
         end do
       end do
     end do
@@ -598,18 +607,16 @@ contains
 
     ! special treatment for the north & south pole cell faces
     ! Sx == 0 at pole, and Sy has same sign at both sides of pole
-    if (.not. Q_is_vector_component) then
-      do jedge = 1,dstruct%nb_pole_edges
-        iedge = dstruct%pole_edges(jedge)
-        ip1   = dstruct%edges(iedge,1)
-        ip2   = dstruct%edges(iedge,2)
-
-        ! correct for wrong Y-derivatives in previous loop,
-        do jlev=1,dstruct%nb_levels-1
-          gradQ(YY,jlev,ip2) = gradQ(YY,jlev,ip2) + 2._jprw*avgQSy(jlev,iedge)
-        end do
+    do jedge = 1,dstruct%nb_pole_edges
+      iedge = dstruct%pole_edges(jedge)
+      ip1   = dstruct%edges(iedge,1)
+      ip2   = dstruct%edges(iedge,2)
+      ! correct for wrong Y-derivatives in previous loop
+      do jlev=1,dstruct%nb_levels
+        gradQ(YY,jlev,ip2) = gradQ(YY,jlev,ip2) + 2._jprw*avgQS(YY,jlev,iedge)
       end do
-    end if
+    end do
+
   end subroutine compute_gradient
 
   subroutine compute_gradient_tensor(Q,gradQ,dstruct)
@@ -617,10 +624,10 @@ contains
     real(kind=jprw), intent(out) :: gradQ(:,:,:)
     type(DataStructure_type), intent(inout) :: dstruct
     real(kind=jprw), pointer :: S(:,:), D(:,:)
-    real(kind=jprw) :: Sx,Sy
+    real(kind=jprw) :: Sx,Sy, add
     integer :: jedge,iedge,ip1,ip2,jnode,jlev
-    real(kind=jprw) :: avgQSx(2,dstruct%nb_levels-1,dstruct%nb_edges)
-    real(kind=jprw) :: avgQSy(2,dstruct%nb_levels-1,dstruct%nb_edges)
+    real(kind=jprw) :: avgQSx(2,dstruct%nb_levels,dstruct%nb_edges)
+    real(kind=jprw) :: avgQSy(2,dstruct%nb_levels,dstruct%nb_edges)
 
     S   => vector_field_2d("dual_normals",dstruct)
     D   => scalar_field_3d("depth",dstruct)
@@ -633,14 +640,14 @@ contains
       ip2 = dstruct%edges(jedge,2)
       Sx  = S(XX,jedge)
       Sy  = S(YY,jedge)
-      do jlev=1,dstruct%nb_levels-1
-        avgQSx(:,jlev,jedge) = Sx*( Q(:,jlev,ip1) + Q(:,jlev,ip2) )*0.5_jprw
-        avgQSy(:,jlev,jedge) = Sy*( Q(:,jlev,ip1) + Q(:,jlev,ip2) )*0.5_jprw
+      do jlev=1,dstruct%nb_levels
+        !avgQSx(:,jlev,jedge) = Sx*( Q(:,jlev,ip1) + Q(:,jlev,ip2) )*0.5_jprw
+        !avgQSy(:,jlev,jedge) = Sy*( Q(:,jlev,ip1) + Q(:,jlev,ip2) )*0.5_jprw
 
-        !avgQSx(:,jlev,jedge) = Sx*( D(jlev,ip1)*Q(:,jlev,ip1) + D(jlev,ip2)*Q(:,jlev,ip2) )&
-        !                     & /(D(jlev,ip1)+D(jlev,ip2)+2*eps)
-        !avgQSy(:,jlev,jedge) = Sy*( D(jlev,ip1)*Q(:,jlev,ip1) + D(jlev,ip2)*Q(:,jlev,ip2) )&
-        !                     & /(D(jlev,ip1)+D(jlev,ip2)+2*eps)
+        avgQSx(:,jlev,jedge) = Sx*( D(jlev,ip1)*Q(:,jlev,ip1) + D(jlev,ip2)*Q(:,jlev,ip2) )&
+                             & /(D(jlev,ip1)+D(jlev,ip2)+eps)
+        avgQSy(:,jlev,jedge) = Sy*( D(jlev,ip1)*Q(:,jlev,ip1) + D(jlev,ip2)*Q(:,jlev,ip2) )&
+                             & /(D(jlev,ip1)+D(jlev,ip2)+eps)
       end do
 
     end do
@@ -651,11 +658,12 @@ contains
       gradQ(:,:,jnode) = 0._jprw
       do jedge = 1,dstruct%nb_neighbours(jnode)
         iedge = dstruct%my_edges(jedge,jnode)
-        do jlev=1,dstruct%nb_levels-1
-          gradQ(XXDXX,jlev,jnode) = gradQ(XXDXX,jlev,jnode)+dstruct%sign(jedge,jnode)*avgQSx(XX,jlev,iedge)
-          gradQ(XXDYY,jlev,jnode) = gradQ(XXDYY,jlev,jnode)+dstruct%sign(jedge,jnode)*avgQSy(XX,jlev,iedge)
-          gradQ(YYDXX,jlev,jnode) = gradQ(YYDXX,jlev,jnode)+dstruct%sign(jedge,jnode)*avgQSx(YY,jlev,iedge)
-          gradQ(YYDYY,jlev,jnode) = gradQ(YYDYY,jlev,jnode)+dstruct%sign(jedge,jnode)*avgQSy(YY,jlev,iedge)
+        add = dstruct%sign(jedge,jnode)
+        do jlev=1,dstruct%nb_levels
+          gradQ(XXDXX,jlev,jnode) = gradQ(XXDXX,jlev,jnode)+add*avgQSx(XX,jlev,iedge)
+          gradQ(XXDYY,jlev,jnode) = gradQ(XXDYY,jlev,jnode)+add*avgQSy(XX,jlev,iedge)
+          gradQ(YYDXX,jlev,jnode) = gradQ(YYDXX,jlev,jnode)+add*avgQSx(YY,jlev,iedge)
+          gradQ(YYDYY,jlev,jnode) = gradQ(YYDYY,jlev,jnode)+add*avgQSy(YY,jlev,iedge)
         end do
       end do
     end do
@@ -693,7 +701,8 @@ module isentropic_module
   public :: set_time_step
 
   real(kind=jprw), parameter :: eps    = 1.e-12
-  real(kind=jprw), parameter :: radius = 63.6620e+03 !6371.22e+03
+  real(kind=jprw), parameter :: radius = 63.6620e+03
+  !real(kind=jprw), parameter :: radius = 6371.22e+03
   real(kind=jprw), parameter :: f0     = 1.4584e-04 !coriolis parameter (=2xearth's omega)
   real(kind=jprw), parameter :: grav   = 9.80616
   real(kind=jprw), parameter :: pi     = acos(-1._jprw)
@@ -708,12 +717,10 @@ module isentropic_module
   real(kind=jprw), parameter :: pr00   = 1.e5
   real(kind=jprw), parameter :: th00   = 293.15
 
-  real(kind=jprw), parameter :: ibs=0.     ! 0: isentropic/ isosteric --- 1: isopicnic
+  real(kind=jprw), parameter :: ibs=1.     ! 0: isentropic/ isosteric --- 1: isopycnic
   real(kind=jprw), parameter :: icp=1.-ibs
 
   real(kind=jprw), allocatable :: alfs(:), alf0(:), z0(:)
-
-  real(kind=jprw), parameter :: D_tres = 1._jprw
 
   real(kind=jprw) :: dt_forward = 20.
   integer :: iter = 0
@@ -721,7 +728,9 @@ module isentropic_module
   integer, parameter, public :: EQS_MOMENTUM = 1
   integer, parameter, public :: EQS_VELOCITY = 2
 
-  integer :: eqs_type
+  integer, parameter :: eqs_type = EQS_MOMENTUM
+
+  logical, parameter, public :: STACKED_SHALLOW_WATER = .False.
 
 contains
 
@@ -857,7 +866,7 @@ contains
       call compute_forcing(dstruct)
 
       call log_debug("Compute advective velocities")
-      call compute_advective_velocities(dt,dstruct,"advect")
+      call compute_advective_velocities(dt,dstruct,"extrapolate")
 
     end if
 
@@ -868,7 +877,11 @@ contains
     call advect_solution(dt,dstruct)
 
     call log_debug("Implicit solve")
-    call implicit_solve(dt,dstruct)
+    if (STACKED_SHALLOW_WATER) then
+      call implicit_solve_shallow(dt,dstruct)
+    else
+      call implicit_solve(dt,dstruct)
+    endif
 
     call log_debug("Compute advective velocities")
     call compute_advective_velocities(dt,dstruct,"advect")
@@ -891,6 +904,7 @@ contains
     real(kind=jprw), parameter :: H00 = grav * 8e3
     real(kind=jprw), parameter :: omega = v0/radius
     real(kind=jprw), parameter :: beta = 0.! pi/4._jprw
+    real(kind=jprw), parameter :: pvel = omega*2.
 
     coords => vector_field_2d("coordinates",dstruct)
     D => scalar_field_3d("depth",dstruct)
@@ -906,64 +920,85 @@ contains
     p0 => scalar_field_2d("p0",dstruct)
     Q => vector_field_3d("momentum",dstruct)
 
-    !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,x,y)
-    do jnode=1,dstruct%nb_nodes
-      x=coords(XX,jnode)
-      y=coords(YY,jnode)
-      cor(jnode)   = f0 *( -cos(x)*cos(y)*sin(beta)+sin(y)*cos(beta) )
-      U0(XX,jnode) =  omega*(cos(beta)+tan(y)*cos(x)*sin(beta))*radius*max(0._jprw,cos(y))
-      U0(YY,jnode) = -omega*sin(x)*sin(beta)*radius
-
-      dlh(jnode)   = -radius**2*(f0+omega)*0.5_jprw*omega/grav &
-                   & *(-cos(x)*cos(y)*sin(beta)+sin(y)*cos(beta))**2
-
-      ! Initial Z at levels          This is where pressure and height are defined
-      do jlev=1,dstruct%nb_levels
-        Z0(jlev) = (jlev-1)*dz
-        alf0(jlev) = alfb(Z0(jlev),0._jprw,stf)
+    if (STACKED_SHALLOW_WATER) then
+      !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,x,y)
+      do jnode=1,dstruct%nb_nodes
+        x=coords(XX,jnode)
+        y=coords(YY,jnode)
+        cor(jnode)   = f0 *( -cos(x)*cos(y)*sin(beta)+sin(y)*cos(beta) )
+        H(:,jnode)     = (H00-radius**2*(f0+pvel)*0.5*pvel &
+                     & *(-cos(x)*cos(y)*sin(beta)+sin(y)*cos(beta))**2)/grav
+        D(:,jnode)     = max(0., H(:,jnode) - H0(jnode) )
+        U(XX,:,jnode)  =  pvel*(cos(beta)+tan(y)*cos(x)*sin(beta))*radius*cos(y)
+        U(YY,:,jnode)  = -pvel*sin(x)*sin(beta)*radius
+        H(:,jnode) = H0(jnode) + D(:,jnode)
+        do jlev=1,dstruct%nb_levels
+          Q(:,jlev,jnode) = D(jlev,jnode) * U(:,jlev,jnode)
+        end do
       end do
-      ! Z at half levels (staggered)  This is where unknowns D,Q are defined
-      do jlev=1,dstruct%nb_levels-1
-        alfs(jlev) = alfb(Z0(jlev)+dz*0.5_jprw,0._jprw,stf)
+      !$OMP END PARALLEL DO
+      call compute_forcing_shallow(dstruct)
+
+    else
+      !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,x,y)
+      do jnode=1,dstruct%nb_nodes
+        x=coords(XX,jnode)
+        y=coords(YY,jnode)
+        cor(jnode)   = f0 *( -cos(x)*cos(y)*sin(beta)+sin(y)*cos(beta) )
+        U0(XX,jnode) =  omega*(cos(beta)+tan(y)*cos(x)*sin(beta))*radius*max(0._jprw,cos(y))
+        U0(YY,jnode) = -omega*sin(x)*sin(beta)*radius
+
+        dlh(jnode)   = -radius**2*(f0+omega)*0.5_jprw*omega/grav &
+                     & *(-cos(x)*cos(y)*sin(beta)+sin(y)*cos(beta))**2
+
+        ! Initial Z at levels          This is where pressure and height are defined
+        do jlev=1,dstruct%nb_levels
+          Z0(jlev) = (jlev-1)*dz
+          alf0(jlev) = alfb(Z0(jlev),0._jprw,stf)
+        end do
+        ! Z at half levels (staggered)  This is where unknowns D,Q are defined
+        do jlev=1,dstruct%nb_levels-1
+          alfs(jlev) = alfb(Z0(jlev)+dz*0.5_jprw,0._jprw,stf)
+        end do
+        ! TODO call absorbers(taui,z0,nlm)
+
+        ! Set height
+        do jlev=1,dstruct%nb_levels
+          H(jlev,jnode) = max(H0(jnode), Z0(jlev)+dlh(jnode))
+        end do
+
+        ! At top boundary
+        zz = max( Z0(dstruct%nb_levels), H0(jnode) )
+        press(dstruct%nb_levels,jnode) = pb(zz,0._jprw,stf)
+        p0(jnode) = press(dstruct%nb_levels,jnode)
+
+        ! Convert pressure to exner in case ibs==0 (isentropic)
+        press(dstruct%nb_levels,jnode) = ibs*p0(jnode)+icp*cp*(p0(jnode)/pr00)**cap
+
+        ! Integrate hydrostatic relation
+        do jlev=dstruct%nb_levels-1,1,-1
+           press(jlev,jnode) = press(jlev+1,jnode)+grav*(H(jlev+1,jnode)-H(jlev,jnode))/alfs(jlev)
+        enddo
+
+        ! Convert exner to pressure in case ibs==0
+        do jlev=1,dstruct%nb_levels
+          press(jlev,jnode) = ibs*press(jlev,jnode)+icp*pr00*(press(jlev,jnode)/cp)**(1/cap)
+        enddo
+
+        ! Set ambient and initial state
+        do jlev=1,dstruct%nb_levels-1
+          D_amb(jlev,jnode)    = (press(jlev,jnode)-press(jlev+1,jnode))*pscali
+          Q_amb(XX,jlev,jnode) = (U0(XX,jnode)-0.01*cos(y)*H(jlev,jnode))*D_amb(jlev,jnode)
+          Q_amb(YY,jlev,jnode) = U0(YY,jnode)*D_amb(jlev,jnode)
+          D(jlev,jnode)   = D_amb(jlev,jnode)
+          Q(:,jlev,jnode) = Q_amb(:,jlev,jnode)
+          U(:,jlev,jnode) = Q(:,jlev,jnode)/max(eps,D(jlev,jnode))
+        enddo
       end do
-      ! TODO call absorbers(taui,z0,nlm)
+      !$OMP END PARALLEL DO
+      call compute_forcing(dstruct)
 
-      ! Set height
-      do jlev=1,dstruct%nb_levels
-        H(jlev,jnode) = max(H0(jnode), Z0(jlev)+dlh(jnode))
-      end do
-
-      ! At top boundary
-      zz = max( Z0(dstruct%nb_levels), H0(jnode) )
-      press(dstruct%nb_levels,jnode) = pb(zz,0._jprw,stf)
-      p0(jnode) = press(dstruct%nb_levels,jnode)
-
-      ! Convert pressure to exner in case ibs==0 (isentropic)
-      press(dstruct%nb_levels,jnode) = ibs*p0(jnode)+icp*cp*(p0(jnode)/pr00)**cap
-
-      ! Integrate hydrostatic relation
-      do jlev=dstruct%nb_levels-1,1,-1
-         press(jlev,jnode) = press(jlev+1,jnode)+grav*(H(jlev+1,jnode)-H(jlev,jnode))/alfs(jlev)
-      enddo
-
-      ! Convert exner to pressure in case ibs==0
-      do jlev=1,dstruct%nb_levels
-        press(jlev,jnode) = ibs*press(jlev,jnode)+icp*pr00*(press(jlev,jnode)/cp)**(1/cap)
-      enddo
-
-      ! Set ambient and initial state
-      do jlev=1,dstruct%nb_levels-1
-        D_amb(jlev,jnode)    = (press(jlev,jnode)-press(jlev+1,jnode))*pscali
-        Q_amb(XX,jlev,jnode) = (U0(XX,jnode)-0.01*cos(y)*H(jlev,jnode))*D_amb(jlev,jnode)
-        Q_amb(YY,jlev,jnode) = U0(YY,jnode)*D_amb(jlev,jnode)
-        D(jlev,jnode)   = D_amb(jlev,jnode)
-        Q(:,jlev,jnode) = Q_amb(:,jlev,jnode)
-        U(:,jlev,jnode) = Q(:,jlev,jnode)/max(eps,D(jlev,jnode))
-      enddo
-    end do
-    !$OMP END PARALLEL DO
-
-    call compute_forcing(dstruct)
+    end if
 
   end subroutine set_state_zonal_flow
 
@@ -975,22 +1010,53 @@ contains
     real(kind=jprw) :: zlatc, zlonc, zr, zz, rad, x, y, amp
     integer :: jnode
 
-    zlatc=0.
-    zlonc=1.5*pi
-    zr = 5000.
-    amp = 50.
+    if (STACKED_SHALLOW_WATER) then
+      call set_topography_mountain(800._jprw,dstruct)
+    else
+      zlatc=0.
+      zlonc=1.5*pi
+      zr = 5000.
+      amp = 50.
+
+      H0 => scalar_field_2d("topography",dstruct)
+      coords => vector_field_2d("coordinates",dstruct)
+
+      do jnode=1,dstruct%nb_nodes
+        x = coords(XX,jnode)
+        y = coords(YY,jnode)
+        zz = sin(zlatc)*sin(y)+cos(zlatc)*cos(y)*cos(x-zlonc)
+        rad = radius*acos(zz) / zr
+        H0(jnode) = amp/(sqrt(1.+rad**2))**3
+      end do
+    end if
+  end subroutine set_topography
+
+
+  subroutine set_topography_mountain(amplitude,dstruct)
+    real(kind=jprw), intent(in) :: amplitude ! amplitude of hill
+    type(DataStructure_type), intent(inout) :: dstruct
+    real(kind=jprw), dimension(:), pointer :: H0
+    real(kind=jprw), dimension(:,:), pointer :: coords
+    real(kind=jprw) :: rad = 2.*pi/18. ! radius of hill
+    real(kind=jprw) :: xcent = 3.*pi/2.  ! centre of hill
+    real(kind=jprw) :: ycent = pi/6.*1.
+    real(kind=jprw) :: gamm = 0.5 ! slope of hill
+    real(kind=jprw) :: dist, xlon, ylat
+    integer :: jnode
 
     H0 => scalar_field_2d("topography",dstruct)
     coords => vector_field_2d("coordinates",dstruct)
-    
+
     do jnode=1,dstruct%nb_nodes
-      x = coords(XX,jnode)
-      y = coords(YY,jnode)
-      zz = sin(zlatc)*sin(y)+cos(zlatc)*cos(y)*cos(x-zlonc)
-      rad = radius*acos(zz) / zr
-      H0(jnode) = amp/(sqrt(1.+rad**2))**3
+      xlon = coords(XX,jnode)
+      ylat = coords(YY,jnode)
+
+      dist = 2.*sqrt( (cos(ylat)*sin( (xlon-xcent)/2 ) )**2 &
+        &     + sin((ylat-ycent)/2)**2 )
+
+      H0(jnode) = max(0.,amplitude * (1.-gamm*dist/rad))
     end do
-  end subroutine set_topography
+  end subroutine set_topography_mountain
 
 
   subroutine backup_solution(dstruct)
@@ -1031,8 +1097,8 @@ contains
     real(kind=jprw), dimension(:),     pointer :: hx, hy, vol
     real(kind=jprw), dimension(:,:),   pointer :: D, D0, coords
     real(kind=jprw), dimension(:,:,:), pointer :: U, U0, R, Vedges, Q, Q0
-    real(kind=jprw) :: Vnodes(2,dstruct%nb_levels-1,dstruct%nb_nodes)
-    real(kind=jprw) :: grad_Vnodes(4,dstruct%nb_levels-1,dstruct%nb_nodes)
+    real(kind=jprw) :: Vnodes(2,dstruct%nb_levels,dstruct%nb_nodes)
+    real(kind=jprw) :: grad_Vnodes(4,dstruct%nb_levels,dstruct%nb_nodes)
 
     coords => vector_field_2d("coordinates",dstruct)
     Vedges => vector_field_3d("advective_velocity",dstruct)
@@ -1048,34 +1114,22 @@ contains
     vol    => scalar_field_2d("dual_volumes",dstruct)
 
     if( option .eq. "advect") then
-      select case (eqs_type)
-
-        case (EQS_MOMENTUM)
-          !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Dpos)
-          do jnode=1,dstruct%nb_nodes
-            do jlev=1,dstruct%nb_levels-1
-              Dpos = max(eps, D(jlev,jnode))
-              Vnodes(:,jlev,jnode)=Q(:,jlev,jnode)/Dpos
-              U(:,jlev,jnode) = Q(:,jlev,jnode)/Dpos
-            end do
-          end do
-          !$OMP END PARALLEL DO
-        case (EQS_VELOCITY)
-          !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode)
-          do jnode=1,dstruct%nb_nodes
-            do jlev=1,dstruct%nb_levels-1
-              Vnodes(:,jlev,jnode)=(U(:,jlev,jnode)+0.5*dt*R(:,jlev,jnode))
-            end do
-          end do
-          !$OMP END PARALLEL DO
-      end select
+      !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Dpos)
+      do jnode=1,dstruct%nb_nodes
+        do jlev=1,dstruct%nb_levels
+          Dpos = max(eps, D(jlev,jnode))
+          Vnodes(:,jlev,jnode) = Q(:,jlev,jnode)/Dpos
+          U(:,jlev,jnode)      = Q(:,jlev,jnode)/Dpos
+        end do
+      end do
+      !$OMP END PARALLEL DO
 
       call compute_gradient_tensor( Vnodes, grad_Vnodes, dstruct )
 
       !dir$ ivdep
       !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Vx,Vy,dVxdx,dVxdy,dVydx,dVydy)
       do jnode=1,dstruct%nb_nodes
-        do jlev=1,dstruct%nb_levels-1
+        do jlev=1,dstruct%nb_levels
           Ux = U(XX,jlev,jnode)
           Uy = U(YY,jlev,jnode)
           Vx = Ux
@@ -1085,8 +1139,10 @@ contains
           dVydx = grad_Vnodes(YYDXX,jlev,jnode)*hy(jnode)/vol(jnode)
           dVydy = grad_Vnodes(YYDYY,jlev,jnode)*hx(jnode)/vol(jnode)
           Dpos = max(eps,D(jlev,jnode))
-          Vnodes(XX,jlev,jnode) = ( Ux - 0.5*dt*(Vx*dVxdx+Vy*dVxdy) - R(XX,jlev,jnode)/Dpos ) * hy(jnode)
-          Vnodes(YY,jlev,jnode) = ( Uy - 0.5*dt*(Vx*dVydx+Vy*dVydy) - R(YY,jlev,jnode)/Dpos ) * hx(jnode)
+          Vnodes(XX,jlev,jnode) = ( Ux - 0.5*dt*(Vx*dVxdx+Vy*dVxdy) + 0.5*dt*R(XX,jlev,jnode)/Dpos ) * hy(jnode)
+          Vnodes(YY,jlev,jnode) = ( Uy - 0.5*dt*(Vx*dVydx+Vy*dVydy) + 0.5*dt*R(YY,jlev,jnode)/Dpos ) * hx(jnode)
+          !Vnodes(XX,jlev,jnode) = 10.*cos(coords(YY,jnode)) * hy(jnode)
+          !Vnodes(YY,jlev,jnode) = 0.  * hx(jnode)
         end do
       end do
       !$OMP END PARALLEL DO
@@ -1098,8 +1154,8 @@ contains
       do jedge=1,dstruct%nb_edges
         ip1 = dstruct%edges(jedge,1)
         ip2 = dstruct%edges(jedge,2)
-        do jlev=1,dstruct%nb_levels-1
-          !Vedges(:,jedge) = (Vnodes(:,ip1)+Vnodes(:,ip2))*0.5_jprw
+        do jlev=1,dstruct%nb_levels
+          !Vedges(:,jlev,jedge) = (Vnodes(:,jlev,ip1)+Vnodes(:,jlev,ip2))*0.5_jprw
           Vedges(:,jlev,jedge) = (D(jlev,ip1)*Vnodes(:,jlev,ip1)+D(jlev,ip2)*Vnodes(:,jlev,ip2)) &
                                & /(D(jlev,ip1)+D(jlev,ip2)+eps)
         end do
@@ -1107,40 +1163,21 @@ contains
       !$OMP END PARALLEL DO
 
     else if( option .eq. "extrapolate") then
-      select case (eqs_type)
-
-        case (EQS_MOMENTUM)
-          !dir$ ivdep
-          !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Dpos,D0pos,Ux,Uy,U0x,U0y)
-          do jnode=1,dstruct%nb_nodes
-            do jlev=1,dstruct%nb_levels-1
-              Dpos  = max(eps, D(jlev,jnode))
-              D0pos  = max(eps, D0(jlev,jnode))
-              Ux    = Q(XX,jlev,jnode)/Dpos
-              Uy    = Q(YY,jlev,jnode)/Dpos
-              U0x   = Q0(XX,jlev,jnode)/D0pos
-              U0y   = Q0(YY,jlev,jnode)/D0pos
-              Vnodes(XX,jlev,jnode) = ( 1.5_jprw*Ux - 0.5_jprw*U0x ) * hy(jnode)
-              Vnodes(YY,jlev,jnode) = ( 1.5_jprw*Uy - 0.5_jprw*U0y ) * hx(jnode)
-            end do
-          end do
-          !$OMP END PARALLEL DO
-
-        case (EQS_VELOCITY)
-          !dir$ ivdep
-          !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Ux,Uy,U0x,U0y)
-          do jnode=1,dstruct%nb_nodes
-            do jlev=1,dstruct%nb_levels-1
-              Ux    = U(XX,jlev,jnode)
-              Uy    = U(YY,jlev,jnode)
-              U0x   = U0(XX,jlev,jnode)
-              U0y   = U0(YY,jlev,jnode)
-              Vnodes(XX,jlev,jnode) = ( 1.5_jprw*Ux - 0.5_jprw*U0x ) * hy(jnode)
-              Vnodes(YY,jlev,jnode) = ( 1.5_jprw*Uy - 0.5_jprw*U0y ) * hx(jnode)
-            end do
-          end do
-          !$OMP END PARALLEL DO
-      end select
+      !dir$ ivdep
+      !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Dpos,D0pos,Ux,Uy,U0x,U0y)
+      do jnode=1,dstruct%nb_nodes
+        do jlev=1,dstruct%nb_levels-1
+          Dpos  = max(eps, D(jlev,jnode))
+          D0pos  = max(eps, D0(jlev,jnode))
+          Ux    = Q(XX,jlev,jnode)/Dpos
+          Uy    = Q(YY,jlev,jnode)/Dpos
+          U0x   = Q0(XX,jlev,jnode)/D0pos
+          U0y   = Q0(YY,jlev,jnode)/D0pos
+          Vnodes(XX,jlev,jnode) = ( 1.5_jprw*Ux - 0.5_jprw*U0x ) * hy(jnode)
+          Vnodes(YY,jlev,jnode) = ( 1.5_jprw*Uy - 0.5_jprw*U0y ) * hx(jnode)
+        end do
+      end do
+      !$OMP END PARALLEL DO
 
       !dir$ ivdep
       !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2)
@@ -1148,14 +1185,13 @@ contains
         ip1 = dstruct%edges(jedge,1)
         ip2 = dstruct%edges(jedge,2)
         do jlev=1,dstruct%nb_levels-1
-          Vedges(:,jlev,jedge) = (Vnodes(:,jlev,ip1)+Vnodes(:,jlev,ip2))*0.5_jprw
-          !Vedges(:,jlev,jedge) = (D(jlev,ip1)*Vnodes(:,jlev,ip1)+D(jlev,ip2)*Vnodes(:,jlev,ip2)) &
-          !                     & /(D(jlev,ip1)+D(jlev,ip2)+eps)
+          !Vedges(:,jlev,jedge) = (Vnodes(:,jlev,ip1)+Vnodes(:,jlev,ip2))*0.5_jprw
+          Vedges(:,jlev,jedge) = (D(jlev,ip1)*Vnodes(:,jlev,ip1)+D(jlev,ip2)*Vnodes(:,jlev,ip2)) &
+                               & /(D(jlev,ip1)+D(jlev,ip2)+eps)
         end do
       end do
       !$OMP END PARALLEL DO
     end if
-
 
     ! Since the pole point lies outside the lon-lat domain, Vedges is wrongly calculated
     ! y_pole .ne. 0.5(y1+y2)
@@ -1168,13 +1204,56 @@ contains
 
   end subroutine compute_advective_velocities
 
+  subroutine compute_forcing_shallow(dstruct)
+    type(DataStructure_type), intent(inout) :: dstruct
+    integer :: jnode,jlev
+    real(kind=jprw) :: Ux, Uy, Qx, Qy, Dpos
+    real(kind=jprw), dimension(:),   pointer :: H0, vol, hx, hy, dhxdy_over_G, cor
+    real(kind=jprw), dimension(:,:),   pointer :: H, D
+    real(kind=jprw), dimension(:,:,:), pointer :: U, Q, R
+    real(kind=jprw) :: grad_H(2,dstruct%nb_levels,dstruct%nb_nodes)
+    vol => scalar_field_2d("dual_volumes",dstruct)
+    hx => scalar_field_2d("hx",dstruct)
+    hy => scalar_field_2d("hy",dstruct)
+    dhxdy_over_G => scalar_field_2d("dhxdy_over_G",dstruct)
+    cor => scalar_field_2d("coriolis",dstruct)
+
+    H => scalar_field_3d("height",dstruct)
+    H0 => scalar_field_2d("topography",dstruct)
+    D => scalar_field_3d("depth",dstruct)
+    U => vector_field_3d("velocity",dstruct)
+    Q => vector_field_3d("momentum",dstruct)
+    R => vector_field_3d("forcing",dstruct)
+
+    do jnode=1,dstruct%nb_nodes
+      H(:,jnode) = H0(jnode) + D(:,jnode)
+    end do
+    call compute_gradient( H, grad_H, dstruct )
+    call halo_exchange_3d(grad_H,dstruct)
+
+    !dir$ ivdep
+    !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Ux,Uy)
+    do jnode=1,dstruct%nb_nodes
+      do jlev=1,dstruct%nb_levels
+        Qx    = Q(XX,jlev,jnode)
+        Qy    = Q(YY,jlev,jnode)
+        Dpos  = max(eps, D(jlev,jnode))
+        R(XX,jlev,jnode) = -grav*D(jlev,jnode)*grad_H(XX,jlev,jnode)*hy(jnode)/vol(jnode) &
+          &           + cor(jnode)*Qy - dhxdy_over_G(jnode)*Qx*Qy/Dpos
+        R(YY,jlev,jnode) = -grav*D(jlev,jnode)*grad_H(YY,jlev,jnode)*hx(jnode)/vol(jnode) &
+          &           - cor(jnode)*Qx + dhxdy_over_G(jnode)*Qx*Qx/Dpos
+      end do
+    end do
+    !$OMP END PARALLEL DO
+
+  end subroutine compute_forcing_shallow
 
   subroutine compute_forcing(dstruct)
     type(DataStructure_type), intent(inout) :: dstruct
     integer :: jnode, jlev
     real(kind=jprw) :: Qx, Qy
     real(kind=jprw), dimension(:),   pointer :: H0, hx, hy, cor, p0, vol, dhxdy_over_G
-    real(kind=jprw), dimension(:,:), pointer :: D, coords, M, press
+    real(kind=jprw), dimension(:,:), pointer :: D, coords, M, press, H
     real(kind=jprw), dimension(:,:,:), pointer :: Q, R
     real(kind=jprw) :: grad_M(2,dstruct%nb_levels,dstruct%nb_nodes)
 
@@ -1187,6 +1266,7 @@ contains
 
     H0 => scalar_field_2d("topography",dstruct)
     D  => scalar_field_3d("depth",dstruct)
+    H  => scalar_field_3d("height",dstruct)
     Q  => vector_field_3d("momentum",dstruct)
     R  => vector_field_3d("forcing",dstruct)
     M  => scalar_field_3d("montgomery_potential",dstruct)
@@ -1195,48 +1275,56 @@ contains
 
     do jnode=1,dstruct%nb_nodes
 
-      ! Get pressure from pressure thickness
-      press(dstruct%nb_levels,jnode) = p0(jnode)
-      do jlev=dstruct%nb_levels-1,1,-1
-        press(jlev,jnode)= press(jlev+1,jnode)+D(jlev,jnode)*pscal
-      enddo
+      if( STACKED_SHALLOW_WATER ) then
+        do jlev=1,dstruct%nb_levels
+          H(jlev,jnode) = H0(jnode) + D(jlev,jnode)
+          M(jlev,jnode) = H(jlev,jnode)*grav
+        end do
+      else
+        ! Get pressure from pressure thickness
+        press(dstruct%nb_levels,jnode) = p0(jnode)
+        do jlev=dstruct%nb_levels-1,1,-1
+          press(jlev,jnode)= press(jlev+1,jnode)+D(jlev,jnode)*pscal
+        enddo
 
-      ! Convert pressure to exner in case ibs==0 (isentropic)
-      do jlev=1,dstruct%nb_levels
-        press(jlev,jnode) = ibs*press(jlev,jnode)+icp*cp*(press(jlev,jnode)/pr00)**cap
-      end do
+        ! Convert pressure to exner in case ibs==0 (isentropic)
+        do jlev=1,dstruct%nb_levels
+          press(jlev,jnode) = ibs*press(jlev,jnode)+icp*cp*(press(jlev,jnode)/pr00)**cap
+        end do
 
-      ! Define Montegomery potential (alias Bernoulli head)
-      M(1,jnode) = alf0(1)*press(1,jnode)+grav*H0(jnode) + (alfs(1)-alf0(1))*press(1,jnode)
+        ! Define Montegomery potential (alias Bernoulli head)
+        M(1,jnode) = alf0(1)*press(1,jnode)+grav*H0(jnode) + (alfs(1)-alf0(1))*press(1,jnode)
 
-      do jlev=2,dstruct%nb_levels-1
-         M(jlev,jnode) = M(jlev-1,jnode) + (alfs(jlev)-alf0(jlev-1))*press(jlev,jnode)
-      end do
+        do jlev=2,dstruct%nb_levels-1
+           M(jlev,jnode) = M(jlev-1,jnode) + (alfs(jlev)-alf0(jlev-1))*press(jlev,jnode)
+        end do
 
-      ! Convert exner to pressure in case ibs==0
-      do jlev=1,dstruct%nb_levels
-        press(jlev,jnode) = ibs*press(jlev,jnode)+icp*pr00*(press(jlev,jnode)/cp)**(1/cap)
-      enddo
-
+        ! Convert exner to pressure in case ibs==0
+        do jlev=1,dstruct%nb_levels
+          press(jlev,jnode) = ibs*press(jlev,jnode)+icp*pr00*(press(jlev,jnode)/cp)**(1/cap)
+        end do
+      end if
     end do
 
-    call compute_gradient( M, grad_M, .False., dstruct )
+
+    call compute_gradient( M, grad_M, dstruct )
+    call halo_exchange_3d( grad_M, dstruct)
 
     !dir$ ivdep
     !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Ux,Uy)
     do jnode=1,dstruct%nb_nodes
-      do jlev=1,dstruct%nb_levels-1
+      do jlev=1,dstruct%nb_levels
         Qx    = Q(XX,jlev,jnode)
         Qy    = Q(YY,jlev,jnode)
-        R(XX,jlev,jnode) = -grav*D(jlev,jnode)*grad_M(XX,jlev,jnode)*hy(jnode)/vol(jnode) &
+        R(XX,jlev,jnode) = -D(jlev,jnode)*grad_M(XX,jlev,jnode)*hy(jnode)/vol(jnode) &
           &              + cor(jnode)*Qy - dhxdy_over_G(jnode)*Qx*Qy/max(eps,D(jlev,jnode))
-        R(YY,jlev,jnode) = -grav*D(jlev,jnode)*grad_M(YY,jlev,jnode)*hx(jnode)/vol(jnode) &
+        R(YY,jlev,jnode) = -D(jlev,jnode)*grad_M(YY,jlev,jnode)*hx(jnode)/vol(jnode) &
           &              - cor(jnode)*Qx + dhxdy_over_G(jnode)*Qx*Qx/max(eps,D(jlev,jnode))
       end do
     end do
     !$OMP END PARALLEL DO
 
-    call halo_exchange_3d(R,dstruct)
+    !call halo_exchange_3d(R,dstruct)
 
   end subroutine compute_forcing
 
@@ -1261,13 +1349,76 @@ contains
   end subroutine add_forcing_to_solution
 
 
+  subroutine implicit_solve_shallow(dt,dstruct)
+    real(kind=jprw), intent(in) :: dt
+    type(DataStructure_type), intent(inout) :: dstruct
+    integer :: jnode, m, jlev
+    real(kind=jprw) :: Ux, Uy, Qx, Qy, Rx, Ry, Dpos
+    real(kind=jprw) :: Ux_adv, Uy_adv, Qx_adv, Qy_adv, Rx_exp, Ry_exp
+
+    real(kind=jprw), dimension(:),   pointer   :: H0, vol, hx, hy, dhxdy_over_G, cor
+    real(kind=jprw), dimension(:,:),   pointer :: H, D
+    real(kind=jprw), dimension(:,:,:), pointer :: U, Q, R
+    real(kind=jprw) :: grad_H(2,dstruct%nb_levels,dstruct%nb_nodes)
+
+    vol => scalar_field_2d("dual_volumes",dstruct)
+    H0 => scalar_field_2d("topography",dstruct)
+    H => scalar_field_3d("height",dstruct)
+    D => scalar_field_3d("depth",dstruct)
+    U => vector_field_3d("velocity",dstruct)
+    Q => vector_field_3d("momentum",dstruct)
+    R => vector_field_3d("forcing",dstruct)
+    hx => scalar_field_2d("hx",dstruct)
+    hy => scalar_field_2d("hy",dstruct)
+    dhxdy_over_G => scalar_field_2d("dhxdy_over_G",dstruct)
+    cor => scalar_field_2d("coriolis",dstruct)
+
+    ! D is already up to date at time level (n+1), just by MPDATA advection
+    do jnode=1,dstruct%nb_nodes
+      H(:,jnode) = H0(jnode) + D(:,jnode)
+    end do
+    call compute_gradient( H, grad_H, dstruct )
+    call halo_exchange_3d( grad_H, dstruct )
+
+    !dir$ ivdep
+    !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Qx,Qy,Dpos,Rx_exp,Ry_exp,Qx_adv,Qy_adv,m,Rx,Ry)
+    do jnode=1,dstruct%nb_nodes
+      do jlev=1,dstruct%nb_levels
+        Dpos  = D(jlev,jnode)
+
+        Qx    = Q(XX,jlev,jnode)
+        Qy    = Q(YY,jlev,jnode)
+
+        Qx_adv = Qx
+        Qy_adv = Qy
+
+        Rx_exp = -grav*D(jlev,jnode)*grad_H(XX,jlev,jnode)*hy(jnode)/vol(jnode)
+        Ry_exp = -grav*D(jlev,jnode)*grad_H(YY,jlev,jnode)*hx(jnode)/vol(jnode)
+
+        do m=1,3 ! Three iterations at most is enough to converge
+          Rx = Rx_exp + cor(jnode)*Qy - dhxdy_over_G(jnode)*Qx*Qy/D(jlev,jnode)
+          Ry = Ry_exp - cor(jnode)*Qx + dhxdy_over_G(jnode)*Qx*Qx/D(jlev,jnode)
+          Qx = Qx_adv + 0.5_jprw*dt*Rx
+          Qy = Qy_adv + 0.5_jprw*dt*Ry
+        end do
+        Q(XX,jlev,jnode) = Qx
+        Q(YY,jlev,jnode) = Qy
+        R(XX,jlev,jnode) = Rx_exp + cor(jnode)*Qy - dhxdy_over_G(jnode)*Qx*Qy/D(jlev,jnode)
+        R(YY,jlev,jnode) = Ry_exp - cor(jnode)*Qx + dhxdy_over_G(jnode)*Qx*Qx/D(jlev,jnode)
+        U(:,jlev,jnode)  = Q(:,jlev,jnode) / D(jlev,jnode)
+      end do
+    end do
+    !$OMP END PARALLEL DO
+
+  end subroutine implicit_solve_shallow
+
 
   subroutine implicit_solve(dt,dstruct)
     real(kind=jprw), intent(in) :: dt
     type(DataStructure_type), intent(inout) :: dstruct
     integer :: jnode, jlev, m
     real(kind=jprw), dimension(:),   pointer :: H0, hx, hy, cor, p0, vol, dhxdy_over_G
-    real(kind=jprw), dimension(:,:), pointer :: D, coords, Mont, press
+    real(kind=jprw), dimension(:,:), pointer :: D, coords, Mont, press, H
     real(kind=jprw), dimension(:,:,:), pointer :: Q, R
     real(kind=jprw) :: grad_M(2,dstruct%nb_levels,dstruct%nb_nodes)
 
@@ -1283,6 +1434,7 @@ contains
 
     H0 => scalar_field_2d("topography",dstruct)
     D  => scalar_field_3d("depth",dstruct)
+    H  => scalar_field_3d("height",dstruct)
     Q  => vector_field_3d("momentum",dstruct)
     R  => vector_field_3d("forcing",dstruct)
     Mont  => scalar_field_3d("montgomery_potential",dstruct)
@@ -1290,11 +1442,17 @@ contains
     p0 => scalar_field_2d("p0",dstruct)
 
     do jnode=1,dstruct%nb_nodes
+    if( STACKED_SHALLOW_WATER ) then
+      do jlev=1,dstruct%nb_levels-1
+        H(jlev,jnode) = H0(jnode) + D(jlev,jnode)
+        Mont(jlev,jnode) = H(jlev,jnode)*grav
+      end do
+    else
 
       ! Get pressure from pressure thickness
       press(dstruct%nb_levels,jnode) = p0(jnode)
       do jlev=dstruct%nb_levels-1,1,-1
-        press(jlev,jnode)= press(jlev+1,jnode)+D(jlev,jnode)*pscal
+        press(jlev,jnode) = press(jlev+1,jnode)+D(jlev,jnode)*pscal
       enddo
 
       ! Convert pressure to exner in case ibs==0 (isentropic)
@@ -1312,11 +1470,18 @@ contains
       ! Convert exner to pressure in case ibs==0
       do jlev=1,dstruct%nb_levels
         press(jlev,jnode) = ibs*press(jlev,jnode)+icp*pr00*(press(jlev,jnode)/cp)**(1/cap)
+      end do
+
+      H(1,jnode) = H0(jnode)
+      do jlev=2,dstruct%nb_levels
+        H(jlev,jnode)=H(jlev-1,jnode) -alfs(jlev-1)*(press(jlev,jnode)-press(jlev-1,jnode))/grav
       enddo
 
+      end if
     end do
 
-    call compute_gradient( Mont, grad_M, .False., dstruct )
+    call compute_gradient( Mont, grad_M, dstruct )
+    call halo_exchange_3d(grad_M,dstruct)
 
     !dir$ ivdep
     !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Ux,Uy)
@@ -1324,11 +1489,11 @@ contains
       do jlev=1,dstruct%nb_levels-1
         Qx    = Q(XX,jlev,jnode)
         Qy    = Q(YY,jlev,jnode)
-        Rx_exp = -grav*D(jlev,jnode)*grad_M(XX,jlev,jnode)*hy(jnode)/vol(jnode)
-        Ry_exp = -grav*D(jlev,jnode)*grad_M(YY,jlev,jnode)*hx(jnode)/vol(jnode)
+        Rx_exp = -D(jlev,jnode)*grad_M(XX,jlev,jnode)*hy(jnode)/vol(jnode)
+        Ry_exp = -D(jlev,jnode)*grad_M(YY,jlev,jnode)*hx(jnode)/vol(jnode)
         Qx_adv = Qx
         Qy_adv = Qy
-        do m=1,6 ! Three iterations at most is enough to converge
+        do m=1,3 ! Three iterations at most is enough to converge
           Rx = Rx_exp + cor(jnode)*Qy - dhxdy_over_G(jnode)*Qx*Qy/max(eps,D(jlev,jnode))
           Ry = Ry_exp - cor(jnode)*Qx + dhxdy_over_G(jnode)*Qx*Qx/max(eps,D(jlev,jnode))
           Qx = Qx_adv + 0.5_jprw*dt*Rx
@@ -1342,8 +1507,8 @@ contains
     end do
     !$OMP END PARALLEL DO
 
-    call halo_exchange_3d(Q,dstruct)
-    call halo_exchange_3d(R,dstruct)
+!    call halo_exchange_3d(Q,dstruct)
+!    call halo_exchange_3d(R,dstruct)
 
   end subroutine implicit_solve
 
