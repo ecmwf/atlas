@@ -24,7 +24,6 @@ public:
   const std::vector<int>& bounds() const { return bounds_; }
   int nb_vars() const { return nb_vars_; }
   virtual size_t size() const = 0;
-
 protected:
   std::string name_;
   std::vector<int> bounds_;
@@ -44,6 +43,11 @@ public:
   std::vector< DATA_TYPE >& data() { return data_; }
   DATA_TYPE& operator[] (const size_t idx) { return data_[idx]; }
   virtual size_t size() const { return data_.size(); }
+  DATA_TYPE& operator() (int i, int j)
+  {
+    return *(data_.data()+i+j*nb_vars_);
+  }
+
 protected:
   std::vector< DATA_TYPE > data_;
 };

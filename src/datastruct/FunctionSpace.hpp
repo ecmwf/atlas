@@ -9,6 +9,7 @@
 
 namespace ecmwf {
 class Field;
+template <typename T> class FieldT;
 
 // TODO:
 // Horizontal nodes are always the slowest moving index
@@ -23,9 +24,14 @@ public:
   const std::string& name() const { return name_; }
   Field& field(const std::string& name);
 
+  template< typename DATA_TYPE>
+    FieldT<DATA_TYPE>& field(const std::string& name);
+
   template< typename DATA_TYPE >
-  void create_field(const std::string& name, size_t nb_vars);
+  FieldT<DATA_TYPE>& create_field(const std::string& name, size_t nb_vars);
+
   void remove_field(const std::string& name);
+
   const std::vector<int>& bounds() const { return bounds_; }
 
   void parallelise(const int proc[], const int glb_idx[]);

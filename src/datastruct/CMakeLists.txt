@@ -27,6 +27,8 @@ add_library( datastruct
     FieldSet.cpp 
     FunctionSpace.hpp 
     FunctionSpace.cpp
+    Gmsh.hpp
+    Gmsh.cpp
     Mesh.hpp
     Mesh.cpp
     Metadata.hpp

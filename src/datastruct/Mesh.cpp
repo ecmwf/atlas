@@ -12,10 +12,11 @@ Mesh::~Mesh()
   function_spaces_.clear();
 }
 
-void Mesh::add_function_space( FunctionSpace* function_space )
+FunctionSpace& Mesh::add_function_space( FunctionSpace* function_space )
 {
   index_[function_space->name()] = function_spaces_.size();
   function_spaces_.push_back( function_space );
+  return *function_space;
 }
 
 FunctionSpace& Mesh::function_space(const std::string& name)

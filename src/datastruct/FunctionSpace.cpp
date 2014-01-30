@@ -26,11 +26,12 @@ FunctionSpace::~FunctionSpace()
 }
 
 template <>
-void FunctionSpace::create_field<double>(const std::string& name, size_t nb_vars)
+FieldT<double>& FunctionSpace::create_field(const std::string& name, size_t nb_vars)
 {
   //std::cout << "C++ : Create field " << name << " with size " << size*nb_nodes_ << std::endl;
   index_[name] = fields_.size();
-  fields_.push_back( new FieldT<double>(name,nb_vars,*this) );
+  FieldT<double>* field = new FieldT<double>(name,nb_vars,*this);
+  fields_.push_back( field );
 
   size_t bsize = bounds_.size();
   std::vector< int > bounds(bsize);
@@ -46,15 +47,17 @@ void FunctionSpace::create_field<double>(const std::string& name, size_t nb_vars
     //if (i<bsize-1) std::cout << " , ";
   }
   //std::cout << " )" << std::endl;
-  fields_.back()->allocate(bounds);
+  field->allocate(bounds);
+  return *field;
 }
 
 template <>
-void FunctionSpace::create_field<float>(const std::string& name, size_t nb_vars)
+FieldT<float>& FunctionSpace::create_field(const std::string& name, size_t nb_vars)
 {
   //std::cout << "C++ : Create field " << name << " with size " << size*nb_nodes_ << std::endl;
   index_[name] = fields_.size();
-  fields_.push_back( new FieldT<float>(name,nb_vars,*this) );
+  FieldT<float>* field = new FieldT<float>(name,nb_vars,*this);
+  fields_.push_back( field );
 
   size_t bsize = bounds_.size();
   std::vector< int > bounds(bsize);
@@ -70,15 +73,17 @@ void FunctionSpace::create_field<float>(const std::string& name, size_t nb_vars)
     //if (i<bsize-1) std::cout << " , ";
   }
   //std::cout << " )" << std::endl;
-  fields_.back()->allocate(bounds);
+  field->allocate(bounds);
+  return *field;
 }
 
 template <>
-void FunctionSpace::create_field<int>(const std::string& name, size_t nb_vars)
+FieldT<int>& FunctionSpace::create_field(const std::string& name, size_t nb_vars)
 {
   //std::cout << "C++ : Create field " << name << " with size " << size*nb_nodes_ << std::endl;
   index_[name] = fields_.size();
-  fields_.push_back( new FieldT<int>(name,nb_vars,*this) );
+  FieldT<int>* field = new FieldT<int>(name,nb_vars,*this);
+  fields_.push_back( field );
 
   size_t bsize = bounds_.size();
   std::vector< int > bounds(bsize);
@@ -94,7 +99,8 @@ void FunctionSpace::create_field<int>(const std::string& name, size_t nb_vars)
     //if (i<bsize-1) std::cout << " , ";
   }
   //std::cout << " )" << std::endl;
-  fields_.back()->allocate(bounds);
+  field->allocate(bounds);
+  return *field;
 }
 
 void FunctionSpace::remove_field(const std::string& name)
@@ -109,6 +115,24 @@ Field& FunctionSpace::field(const std::string& name)
 {
   //std::cout << "C++ : Access field " << name << std::endl;
   return *fields_[ index_.at(name) ];
+}
+
+template<>
+  FieldT<double> &FunctionSpace::field(const std::string& name)
+{
+  return *dynamic_cast< FieldT<double>* >(fields_[ index_.at(name) ]);
+}
+
+template<>
+  FieldT<float> &FunctionSpace::field(const std::string& name)
+{
+  return *dynamic_cast< FieldT<float>* >(fields_[ index_.at(name) ]);
+}
+
+template<>
+  FieldT<int> &FunctionSpace::field(const std::string& name)
+{
+  return *dynamic_cast< FieldT<int>* >(fields_[ index_.at(name) ]);
 }
 
 void FunctionSpace::parallelise(const int proc[], const int glb_idx[])
