@@ -21,6 +21,8 @@ generate_fortran_bindings(FORTRAN_BINDINGS Comm.hpp)
 
 add_library( datastruct
   # C++ part
+    BuildEdges.hpp
+    BuildEdges.cpp
     Field.hpp 
     Field.cpp
     FieldSet.hpp 
