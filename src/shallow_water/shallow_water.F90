@@ -26,7 +26,7 @@ program shallow_water
   implicit none
 
   ! Configuration parameters
-  real(kind=jprw), parameter :: dt = 10.              ! solver time-step
+  real(kind=jprw), parameter :: dt = 0.1              ! solver time-step
   integer, parameter         :: nb_steps = 15         ! Number of propagations
   integer, parameter         :: hours_per_step = 24   ! Propagation time
   integer, parameter         :: order = 2             ! Order of accuracy
@@ -55,10 +55,10 @@ program shallow_water
 
   call setup_shallow_water(eqs_type,dstruct)
 
-  call set_topography_mountain(0._jprw,dstruct)
+  call set_topography_mountain(2000._jprw,dstruct)
 
-  call set_state_rossby_haurwitz(dstruct)
-!  !call set_state_zonal_flow(dstruct)
+  !call set_state_rossby_haurwitz(dstruct)
+  call set_state_zonal_flow(dstruct)
 
   call set_time_step( dt )
 
@@ -94,7 +94,7 @@ program shallow_water
   do jstep=1,nb_steps 
 
     call step_timer%start()
-    !call propagate_state( hours_per_step*hours, order, scheme, dstruct)
+    call propagate_state( hours_per_step*hours, order, scheme, dstruct)
     !call propagate_state( 7740._jprw, order, scheme, dstruct)
     call propagate_state( 2000.*dt, order, scheme, dstruct)
 

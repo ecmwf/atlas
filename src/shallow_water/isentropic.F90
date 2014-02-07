@@ -23,10 +23,10 @@ program isentropic
 
   ! Configuration parameters
   real(kind=jprw) :: dt = 1.             ! solver time-step
-  integer         :: nb_steps = 1         ! Number of propagations
+  integer         :: nb_steps = 15         ! Number of propagations
   integer         :: hours_per_step = 1   ! Propagation time
   logical         :: write_itermediate_output = .True.
-  integer         :: nb_levels = 5
+  integer         :: nb_levels = 27
 
   ! Declarations
   type(DataStructure_type) :: dstruct
@@ -89,7 +89,7 @@ program isentropic
 
     call step_timer%start()
     !call propagate_state( hours_per_step*hours, dstruct)
-    call propagate_state(1000.* dt, dstruct)
+    call propagate_state(100.* dt, dstruct)
 
     write (log_str, '(A,I3,A,A,F8.2,A,F8.2,A)') &
       & "Propagated to ",jstep*hours_per_step," hours.", &

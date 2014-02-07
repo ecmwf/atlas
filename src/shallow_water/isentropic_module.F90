@@ -713,7 +713,7 @@ module isentropic_module
   real(kind=jprw), parameter :: cap    = Rgas/cp
   real(kind=jprw), parameter :: pscal  = 1.e5
   real(kind=jprw), parameter :: pscali = 1.e-5
-  real(kind=jprw), parameter :: dz     = 100.
+  real(kind=jprw), parameter :: dz     = 300.
   real(kind=jprw), parameter :: pr00   = 1.e5
   real(kind=jprw), parameter :: th00   = 293.15
 
@@ -1015,8 +1015,8 @@ contains
     else
       zlatc=0.
       zlonc=1.5*pi
-      zr = 5000.
-      amp = 50.
+      zr = 5000. *320./129.  !width of mountain
+      amp = 100.
 
       H0 => scalar_field_2d("topography",dstruct)
       coords => vector_field_2d("coordinates",dstruct)

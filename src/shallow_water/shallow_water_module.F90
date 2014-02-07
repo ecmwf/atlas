@@ -31,7 +31,9 @@ module shallow_water_module
   integer, parameter, public :: EQS_VELOCITY = 2
 
   real(kind=jprw), parameter :: eps    = 1.e-6
-  real(kind=jprw), parameter :: radius = 6371.22e+03
+!  real(kind=jprw), parameter :: radius = 6371.22e+03
+  real(kind=jprw), parameter :: radius = 63.7122e+03
+
   real(kind=jprw), parameter :: f0     = 1.4584e-04 !coriolis parameter (=2xearth's omega)
   real(kind=jprw), parameter :: grav   = 9.80616
   real(kind=jprw), parameter :: pi     = acos(-1._jprw)
