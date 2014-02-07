@@ -3,16 +3,19 @@ use common_module
 use datastruct
 use ftnunit
 use iso_c_binding
+use parallel_module
 implicit none
 type(Mesh_type) :: mesh
 type(FunctionSpace_type) :: func_space
 type(Field_type) :: field
 
 call runtests_init
+call parallel_init()
 
 mesh = new_Mesh()
 call runtests( test_all )
 call delete(mesh)
+call parallel_finalise()
 call runtests_final
 
 contains
@@ -113,9 +116,9 @@ subroutine test_prismatic_function_space
   field = func_space%field("vector_field")
   call field%access_data(vector)
   call assert_equal( size(vector),   150, "check_size" )
-  call assert_equal( size(vector,1), 5,   "check_shape1" )
-  call assert_equal( size(vector,2), 10,  "check_shape2" )
-  call assert_equal( size(vector,3), 3,   "check_shape3" )
+  call assert_equal( size(vector,1), 3,   "check_shape1" )
+  call assert_equal( size(vector,2), 5,  "check_shape2" )
+  call assert_equal( size(vector,3), 10,   "check_shape3" )
 
   call func_space%create_field("scalar_field",1,real_kind(jprb))
   field = func_space%field("scalar_field")

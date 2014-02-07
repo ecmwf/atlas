@@ -13,10 +13,11 @@ class Metadata
 {
 public:
   template<typename ValueT>
-  Metadata& add(const std::string& name, const ValueT& value);
+  Metadata& set(const std::string& name, const ValueT& value);
 
   template<typename ValueT>
   ValueT& get(const std::string& name);
+
 private:
   std::map< std::string, bool > map_bool_;
   std::map< std::string, int > map_int_;

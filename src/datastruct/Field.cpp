@@ -59,6 +59,13 @@ std::string FieldT<float>::data_type() const { return "real32"; }
 template<>
 std::string FieldT<double>::data_type() const { return "real64"; }
 
+template<>
+void FieldT<int>::halo_exchange() { function_space().halo_exchange(data_.data(),data_.size()); }
+template<>
+void FieldT<float>::halo_exchange() { function_space().halo_exchange(data_.data(),data_.size()); }
+template<>
+void FieldT<double>::halo_exchange() { function_space().halo_exchange(data_.data(),data_.size()); }
+
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines

@@ -251,6 +251,11 @@ ecbuild_add_test( TARGET test_sync
   ENABLED OFF # Compile but don't call with ctest
 )
 
+ecbuild_add_test( TARGET test_gmsh
+  SOURCES  src/tests/test_gmsh.cpp
+  LIBS     datastruct
+)
+
 #######################################################################################
 # Print Summary
 #######################################################################################

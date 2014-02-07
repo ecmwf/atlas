@@ -48,6 +48,7 @@ contains
     integer, allocatable :: proc(:)
     integer, allocatable :: node_glb_idx_full(:)
     integer, allocatable :: glb_idx(:)
+    integer, allocatable :: master_glb_idx(:)
     integer, allocatable :: keep_edge(:)
     integer, allocatable :: keep_node(:)
     integer, allocatable :: node_loc_idx(:)
@@ -75,8 +76,15 @@ contains
     allocate( keep_edge(nedge) )
 
     !write(log_str,*) "Domain decomposition in ",nproc," parts, using ",rtable; call log_info()
-    call split_globe(rtable,nproc,node_proc_full,node_glb_idx_full)
-
+!    if (nproc == 1) then
+!      write(0,*) "no need to split_globe with 1 process"
+!      node_proc_full(:) = 0.
+!      do jnode=1,nnode
+!        node_glb_idx_full(jnode)=jnode
+!      end do
+!    else
+      call split_globe(rtable,nproc,node_proc_full,node_glb_idx_full)
+!    end if
     keep_node(:) = 0
     keep_edge(:) = 0
     node_loc_idx(:) = -1 ! invalidate any loc_idx
@@ -106,6 +114,7 @@ contains
 
     allocate( proc( sum(keep_node) ) ) 
     allocate( glb_idx( sum(keep_node) ) ) 
+    allocate( master_glb_idx( sum(keep_node) ) )
     idx = 0
     do jnode=1,nnode
       if (keep_node(jnode).eq.1) then
@@ -113,6 +122,7 @@ contains
         node_loc_idx(jnode) = idx
         proc(idx) = node_proc_full(jnode)
         glb_idx(idx) = node_glb_idx_full(jnode)
+        master_glb_idx(idx) = glb_idx(idx)
       end if
     end do
 
@@ -126,7 +136,7 @@ contains
 
 
     ! Create edge-based unstructured mesh
-    call create_mesh( sum(keep_node), sum(keep_edge), proc, glb_idx, dstruct )
+    call create_mesh( sum(keep_node), sum(keep_edge), proc, glb_idx, master_glb_idx, dstruct )
     
 
     coords => vector_field_2d("coordinates",dstruct)
@@ -169,8 +179,8 @@ contains
         iedge = edge_loc_idx(jedge)
         dstruct%edges_glb_idx(iedge) = jedge
         dstruct%edges_proc(iedge) = proc( node_loc_idx(ip1) )
-        dstruct%edges(iedge,1) = node_loc_idx(ip1)
-        dstruct%edges(iedge,2) = node_loc_idx(ip2)
+        dstruct%edges(1,iedge) = node_loc_idx(ip1)
+        dstruct%edges(2,iedge) = node_loc_idx(ip2)
 
         if (jedge<before1 .or. jedge>before2) then
           internal_edge_cnt = internal_edge_cnt + 1
@@ -208,8 +218,8 @@ contains
     allocate(dstruct%nb_neighbours(dstruct%nb_nodes))
     dstruct%nb_neighbours(:) = 0
     do jedge = 1,dstruct%nb_edges
-      ip1 = dstruct%edges(jedge,1)
-      ip2 = dstruct%edges(jedge,2)
+      ip1 = dstruct%edges(1,jedge)
+      ip2 = dstruct%edges(2,jedge)
       dstruct%nb_neighbours(ip1) = dstruct%nb_neighbours(ip1)+1
       dstruct%nb_neighbours(ip2) = dstruct%nb_neighbours(ip2)+1
     enddo
@@ -229,8 +239,8 @@ contains
     allocate(dstruct%sign(dstruct%max_nb_neighbours,dstruct%nb_nodes))
     dstruct%nb_neighbours(:) = 0
     do jedge = 1,dstruct%nb_edges
-      ip1 = dstruct%edges(jedge,1)
-      ip2 = dstruct%edges(jedge,2)
+      ip1 = dstruct%edges(1,jedge)
+      ip2 = dstruct%edges(2,jedge)
       dstruct%nb_neighbours(ip1) = dstruct%nb_neighbours(ip1)+1
       dstruct%neighbours(dstruct%nb_neighbours(ip1),ip1) = ip2
       dstruct%my_edges(dstruct%nb_neighbours(ip1),ip1) = jedge
@@ -367,6 +377,7 @@ contains
     integer, allocatable :: proc(:)
     integer, allocatable :: node_glb_idx_full(:)
     integer, allocatable :: glb_idx(:)
+    integer, allocatable :: master_glb_idx(:)
     integer, allocatable :: keep_edge(:)
     integer, allocatable :: keep_node(:)
     integer, allocatable :: node_loc_idx(:)
@@ -425,6 +436,7 @@ contains
 
     allocate( proc( sum(keep_node) ) ) 
     allocate( glb_idx( sum(keep_node) ) ) 
+    allocate( master_glb_idx( sum(keep_node) ) )
     idx = 0
     do jnode=1,nnode
       if (keep_node(jnode).eq.1) then
@@ -432,6 +444,7 @@ contains
         node_loc_idx(jnode) = idx
         proc(idx) = node_proc_full(jnode)
         glb_idx(idx) = node_glb_idx_full(jnode)
+        master_glb_idx(idx) = glb_idx(idx)
       end if
     end do
 
@@ -445,7 +458,7 @@ contains
 
 
     ! Create edge-based unstructured mesh
-    call create_mesh_3d(nb_levels, sum(keep_node), sum(keep_edge), proc, glb_idx, dstruct )
+    call create_mesh_3d(nb_levels, sum(keep_node), sum(keep_edge), proc, glb_idx, master_glb_idx, dstruct )
     
 
     coords => vector_field_2d("coordinates",dstruct)
@@ -490,8 +503,8 @@ contains
         iedge = edge_loc_idx(jedge)
         dstruct%edges_glb_idx(iedge) = jedge
         dstruct%edges_proc(iedge) = proc( node_loc_idx(ip1) )
-        dstruct%edges(iedge,1) = node_loc_idx(ip1)
-        dstruct%edges(iedge,2) = node_loc_idx(ip2)
+        dstruct%edges(1,iedge) = node_loc_idx(ip1)
+        dstruct%edges(2,iedge) = node_loc_idx(ip2)
 
         if (jedge<before1 .or. jedge>before2) then
           internal_edge_cnt = internal_edge_cnt + 1
@@ -530,8 +543,8 @@ contains
     allocate(dstruct%nb_neighbours(dstruct%nb_nodes))
     dstruct%nb_neighbours(:) = 0
     do jedge = 1,dstruct%nb_edges
-      ip1 = dstruct%edges(jedge,1)
-      ip2 = dstruct%edges(jedge,2)
+      ip1 = dstruct%edges(1,jedge)
+      ip2 = dstruct%edges(2,jedge)
       dstruct%nb_neighbours(ip1) = dstruct%nb_neighbours(ip1)+1
       dstruct%nb_neighbours(ip2) = dstruct%nb_neighbours(ip2)+1
     enddo
@@ -551,8 +564,8 @@ contains
     allocate(dstruct%sign(dstruct%max_nb_neighbours,dstruct%nb_nodes))
     dstruct%nb_neighbours(:) = 0
     do jedge = 1,dstruct%nb_edges
-      ip1 = dstruct%edges(jedge,1)
-      ip2 = dstruct%edges(jedge,2)
+      ip1 = dstruct%edges(1,jedge)
+      ip2 = dstruct%edges(2,jedge)
       dstruct%nb_neighbours(ip1) = dstruct%nb_neighbours(ip1)+1
       dstruct%neighbours(dstruct%nb_neighbours(ip1),ip1) = ip2
       dstruct%my_edges(dstruct%nb_neighbours(ip1),ip1) = jedge

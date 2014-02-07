@@ -25,6 +25,7 @@ public: // methods
 
   void setup( const int proc[], 
               const int glb_idx[], 
+              const int periodicicity[],
               const std::vector<int>& bounds, 
               int par_bound );
 
@@ -216,7 +217,7 @@ extern "C"
 {
   HaloExchange* ecmwf__HaloExchange__new ();
   void ecmwf__HaloExchange__delete (HaloExchange* This);
-  void ecmwf__HaloExchange__setup (HaloExchange* This, int proc[], int glb_idx[], int bounds[], int nb_bounds, int par_bound);
+  void ecmwf__HaloExchange__setup (HaloExchange* This, int proc[], int glb_idx[], int master_glb_idx[], int bounds[], int nb_bounds, int par_bound);
   void ecmwf__HaloExchange__execute_int (HaloExchange* This, int field[], int nb_vars);
   void ecmwf__HaloExchange__execute_float (HaloExchange* This, float field[], int nb_vars);
   void ecmwf__HaloExchange__execute_double (HaloExchange* This, double field[], int nb_vars);

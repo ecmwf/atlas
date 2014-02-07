@@ -1,16 +1,16 @@
-#ifndef BuildEdges_hpp
-#define BuildEdges_hpp
-#include <string>
-namespace ecmwf {
-class Mesh;
+#ifndef BuildDualMesh_hpp
+#define BuildDualMesh_hpp
 
-void build_edges( Mesh& mesh );
+namespace ecmwf {
+  class Mesh;
+
+void build_dual_mesh( Mesh& mesh );
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 extern "C" 
 {
-  void ecmwf__build_edges (Mesh* mesh);
+  void ecmwf__build_dual_mesh (Mesh* mesh);
 }
 // ------------------------------------------------------------------
 

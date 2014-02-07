@@ -48,17 +48,18 @@ module datastruct_module
   private
   ! PRIVATE part
   ! ------------
-    type(Mesh_type)     :: mesh
-    type(FieldSet_type) :: fields
-    type(FunctionSpace_type) :: functionspace_nodes_2d
-    type(FunctionSpace_type) :: functionspace_edges_2d
-    type(FunctionSpace_type) :: functionspace_nodes_3d
-    type(FunctionSpace_type) :: functionspace_edges_3d
-    type(Comm_type), public :: nodes_comm
+    type(Mesh_type), public     :: mesh
+    type(FieldSet_type), public :: fields
+    type(FunctionSpace_type), public :: functionspace_nodes_2d
+    type(FunctionSpace_type), public :: functionspace_edges_2d
+    type(FunctionSpace_type), public :: functionspace_nodes_3d
+    type(FunctionSpace_type), public :: functionspace_edges_3d
+    type(Comm_type), public  :: nodes_comm
 
     type(FieldSet_type), public :: output_fields
 
     real(kind=jprw), public :: time
+    integer, public :: time_step
 
   ! PUBLIC part
   ! -----------
@@ -70,32 +71,36 @@ module datastruct_module
     integer,                       public :: nb_pole_edges=0
     integer,                       public :: nb_ghost_nodes=0
 
-    integer,          pointer,     public :: edges(:,:)
-    integer,          allocatable, public :: pole_edges(:)
-    integer,          allocatable, public :: ghost_nodes(:,:)
-    integer,          allocatable, public :: nb_neighbours(:)
-    integer,          allocatable, public :: neighbours(:,:)
-    integer,          allocatable, public :: my_edges(:,:)
-    real(kind=jprw),  allocatable, public :: sign(:,:)
-    integer,                       public :: max_nb_neighbours        
+    integer,          pointer, public :: edges(:,:)
+    integer,          pointer, public :: pole_edges(:)
+    integer,          pointer, public :: nb_neighbours(:)
+    integer,          pointer, public :: neighbours(:,:)
+    integer,          pointer, public :: my_edges(:,:)
+    real(kind=jprw),  pointer, public :: sign(:,:)
+    integer,                   public :: max_nb_neighbours
+    integer,          pointer, public :: ghost_nodes(:,:) ! not needed
 
-    integer,          allocatable, public :: nodes_proc(:)
-    integer,          allocatable, public :: nodes_glb_idx(:)
-    integer,          allocatable, public :: edges_proc(:)
-    integer,          allocatable, public :: edges_glb_idx(:)
+
+    integer,          pointer, public :: nodes_proc(:)
+    integer,          pointer, public :: nodes_glb_idx(:)
+    integer,          pointer, public :: edges_proc(:)
+    integer,          pointer, public :: edges_glb_idx(:)
 
   end type DataStructure_type
 
 contains
   
-  subroutine create_mesh(nb_nodes, nb_edges, proc, glb_idx, dstruct)
+  subroutine create_mesh(nb_nodes, nb_edges, proc, glb_idx, master_glb_idx, dstruct)
     implicit none
     integer, intent(in) :: nb_nodes
     integer, intent(in) :: nb_edges
     integer, intent(in) :: proc(:)
     integer, intent(in) :: glb_idx(:)
+    integer, intent(in) :: master_glb_idx(:)
     type(DataStructure_type), intent(inout), target :: dstruct
 
+    dstruct%time = 0.
+    dstruct%time_step = 0
     dstruct%mesh = new_Mesh()
     dstruct%fields = new_FieldSet("fields")
     dstruct%output_fields = new_FieldSet("output_fields")
@@ -108,7 +113,7 @@ contains
     dstruct%functionspace_edges_2d = dstruct%mesh%function_space("edges_2d")
     dstruct%nb_edges = nb_edges
 
-    allocate( dstruct%edges(dstruct%nb_edges,2) )
+    allocate( dstruct%edges(2,dstruct%nb_edges) )
 
     call create_field_in_nodes_2d("coordinates",2,dstruct)
     call create_field_in_nodes_2d("dual_volumes",1,dstruct)
@@ -120,22 +125,25 @@ contains
     dstruct%nodes_glb_idx(:) = glb_idx(:)
     call dstruct%nodes_comm%setup( proc, glb_idx )
 
-    call dstruct%functionspace_nodes_2d%parallelise(proc,glb_idx)
+    call dstruct%functionspace_nodes_2d%parallelise(proc,glb_idx,master_glb_idx)
 
     allocate( dstruct%edges_proc( nb_edges ) ) 
     allocate( dstruct%edges_glb_idx( nb_edges ) ) 
 
   end subroutine create_mesh
 
-  subroutine create_mesh_3d(nb_levels, nb_nodes, nb_edges, proc, glb_idx, dstruct)
+  subroutine create_mesh_3d(nb_levels, nb_nodes, nb_edges, proc, glb_idx, master_glb_idx, dstruct)
     implicit none
     integer, intent(in) :: nb_levels
     integer, intent(in) :: nb_nodes
     integer, intent(in) :: nb_edges
     integer, intent(in) :: proc(:)
     integer, intent(in) :: glb_idx(:)
+    integer, intent(in) :: master_glb_idx(:)
     type(DataStructure_type), intent(inout), target :: dstruct
 
+    dstruct%time = 0.
+    dstruct%time_step = 0
     dstruct%mesh = new_Mesh()
     dstruct%fields = new_FieldSet("fields")
     dstruct%output_fields = new_FieldSet("output_fields")
@@ -156,7 +164,7 @@ contains
     dstruct%functionspace_edges_3d = dstruct%mesh%function_space("edges_3d")
     dstruct%nb_edges = nb_edges
 
-    allocate( dstruct%edges(dstruct%nb_edges,2) )
+    allocate( dstruct%edges(2,dstruct%nb_edges) )
 
     call create_field_in_nodes_2d("coordinates",2,dstruct)
     call create_field_in_nodes_2d("dual_volumes",1,dstruct)
@@ -171,8 +179,8 @@ contains
     allocate( dstruct%edges_proc( nb_edges ) ) 
     allocate( dstruct%edges_glb_idx( nb_edges ) ) 
 
-    call dstruct%functionspace_nodes_2d%parallelise(proc,glb_idx)
-    call dstruct%functionspace_nodes_3d%parallelise(proc,glb_idx)
+    call dstruct%functionspace_nodes_2d%parallelise(proc,glb_idx,master_glb_idx)
+    call dstruct%functionspace_nodes_3d%parallelise(proc,glb_idx,master_glb_idx)
 
   end subroutine create_mesh_3d
 

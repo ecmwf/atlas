@@ -80,6 +80,10 @@ with open(args.primary_mesh,'r') as primary_mesh :
     etypes = []
     elems = []
     dmax = 0
+    #nb_nodes = len(glb_idx)
+    nodes2elem = [ set() for _ in range(nb_nodes)]
+
+    print len(nodes2elem)
     for n in range(nb_edges):
         node_ids = [int(nid) for nid in primary_mesh.readline().split()]
         if node_ids[6] == 0:   # triangle
@@ -92,18 +96,28 @@ with open(args.primary_mesh,'r') as primary_mesh :
             etype = 3 
             elem = [node_ids[1], node_ids[2], node_ids[6], node_ids[5]]
 
-        if args.sphere or args.stereo:
-            etypes.append(etype)
-            elems.append(elem)
-        else:
-            #for nid in elem:
-                #print nid, type(nid)
-                #print "    ",nodes[nid]
-            xcoords = [ nodes[nid-1][0] for nid in elem ]
-            dmax = max( dmax, max(xcoords) - min(xcoords) )
-            if (max(xcoords) - min(xcoords) < 270.):
+        centroid = [0.,0.,0.]
+        for nid in elem:
+            for d in range(3):
+                centroid[d] += nodes[nid-1][d] / float(len(elem))
+        elem_id = 1000*(centroid[0]*centroid[0] + centroid[1]*centroid[1] + centroid[2]*centroid[2])
+        elem_id += centroid[0] + 2*centroid[1] + 4*centroid[2]
+        added = True
+        for node_id in elem:
+            if ( not int(elem_id) in nodes2elem[node_id-1] ):
+                added = added and False
+                nodes2elem[node_id-1].add( int(elem_id) )
+
+        if not added:
+            if args.sphere or args.stereo:
                 etypes.append(etype)
                 elems.append(elem)
+            else:
+                xcoords = [ nodes[nid-1][0] for nid in elem ]
+                dmax = max( dmax, max(xcoords) - min(xcoords) )
+                if (max(xcoords) - min(xcoords) < 270.):
+                    etypes.append(etype)
+                    elems.append(elem)
     for n in range(nb_bdry_edges):
         node_ids = [int(nid) for nid in primary_mesh.readline().split()]
         if node_ids[4] == 0:   # triangle
@@ -113,14 +127,28 @@ with open(args.primary_mesh,'r') as primary_mesh :
             etype = 3 
             elem = [node_ids[1], node_ids[2], node_ids[4], node_ids[3]]
 
-        if args.sphere or args.stereo:
-            etypes.append(etype)
-            elems.append(elem)
-        else:
-            xcoords = [ nodes[nid-1][0] for nid in elem ]
-            if (max(xcoords) - min(xcoords) < 180.):
+        centroid = [0.,0.,0.]
+        for nid in elem:
+            for d in range(3):
+                centroid[d] += nodes[nid-1][d] / float(len(elem))
+        elem_id = 1000*(centroid[0]*centroid[0] + centroid[1]*centroid[1] + centroid[2]*centroid[2])
+        elem_id += centroid[0] + 2*centroid[1] + 4*centroid[2]
+        print n, elem, int(elem_id)
+        added = True
+        for node_id in elem:
+            if ( not int(elem_id) in nodes2elem[node_id-1] ):
+                added = added and False
+                nodes2elem[node_id-1].add( int(elem_id) )
+
+        if not added:        
+            if args.sphere or args.stereo:
                 etypes.append(etype)
                 elems.append(elem)
+            else:
+                xcoords = [ nodes[nid-1][0] for nid in elem ]
+                if (max(xcoords) - min(xcoords) < 180.):
+                    etypes.append(etype)
+                    elems.append(elem)
 
 
 print "nb_nodes = ", len(glb_idx)

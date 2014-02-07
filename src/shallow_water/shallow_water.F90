@@ -8,7 +8,7 @@ program shallow_water
 
   use common_module
   use parallel_module, only: parallel_init, parallel_finalise, nproc, nthread
-  use gmsh_module, only: write_gmsh_mesh_2d, write_gmsh_fields
+  use gmsh_module, only: read_gmsh, write_gmsh_mesh_2d, write_gmsh_fields
   use grib_module, only: write_grib
 
   use joanna_module, only: read_joanna, write_results_joanna
@@ -26,7 +26,7 @@ program shallow_water
   implicit none
 
   ! Configuration parameters
-  real(kind=jprw), parameter :: dt = 20.              ! solver time-step
+  real(kind=jprw), parameter :: dt = 10.              ! solver time-step
   integer, parameter         :: nb_steps = 15         ! Number of propagations
   integer, parameter         :: hours_per_step = 24   ! Propagation time
   integer, parameter         :: order = 2             ! Order of accuracy
@@ -48,15 +48,17 @@ program shallow_water
   call set_log_proc(0)
   
   call log_info("Program shallow_water start")
+  !call read_gmsh("mesh_latlon.msh", dstruct)
   call read_joanna("data/meshvol.d","data/rtable_lin_T255.d", dstruct)
+  !call read_joanna("meshes/meshvolunstr.d","data/rtable_lin_T255.d", dstruct)
   call write_gmsh_mesh_2d(dstruct,"data/mesh.msh")
 
   call setup_shallow_water(eqs_type,dstruct)
 
-  call set_topography_mountain(16000._jprw,dstruct)
+  call set_topography_mountain(0._jprw,dstruct)
 
-  !call set_state_rossby_haurwitz(dstruct)
-  call set_state_zonal_flow(dstruct)
+  call set_state_rossby_haurwitz(dstruct)
+!  !call set_state_zonal_flow(dstruct)
 
   call set_time_step( dt )
 
@@ -75,12 +77,15 @@ program shallow_water
   call log_info( "| output rate (hrs) | "//trim(str(hours_per_step,'(I8)'))//" |" )
   call log_info( "+-------------------+----------+ ")
 
+
   call mark_output("topography",dstruct)
   call mark_output("height",dstruct)
   call mark_output("depth",dstruct)
   call mark_output("velocity",dstruct)
   call mark_output("momentum",dstruct)
   call mark_output("forcing",dstruct)
+  call mark_output("dhxdy_over_G",dstruct)
+  call mark_output("dual_volumes",dstruct)
 
   call write_fields()
 
@@ -89,9 +94,9 @@ program shallow_water
   do jstep=1,nb_steps 
 
     call step_timer%start()
-    call propagate_state( hours_per_step*hours, order, scheme, dstruct)
+    !call propagate_state( hours_per_step*hours, order, scheme, dstruct)
     !call propagate_state( 7740._jprw, order, scheme, dstruct)
-    !call propagate_state( dt, order, scheme, dstruct)
+    call propagate_state( 2000.*dt, order, scheme, dstruct)
 
     write (log_str, '(A,I3,A,A,F8.2,A,F8.2,A)') &
       & "Propagated to ",jstep*hours_per_step," hours.", &

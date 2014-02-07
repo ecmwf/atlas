@@ -995,6 +995,7 @@ contains
     integer(kind=jpim)              :: ndgl     ! Number of lattitudes
     integer(kind=jpim), allocatable :: nloen(:) ! Number of longitude points for each latitude
     integer(kind=jpim) :: jlat,idum
+
     open(21,file=rtable,access='sequential',status='unknown')
     read(21,*)
     read(21,*)ndgl
@@ -1017,7 +1018,7 @@ contains
     INTEGER(KIND=JPIM),INTENT(IN) :: NDGL         ! Number of latitude rows
     INTEGER(KIND=JPIM),INTENT(IN) :: NLOEN(NDGL)  ! Number of longitude points for each latitude
     INTEGER(KIND=JPIM),INTENT(OUT):: proc(:)      ! Return processor ranks for each point
-    INTEGER(KIND=JPIM),INTENT(OUT):: glb_idx(:)      ! Return processor ranks for each point
+    INTEGER(KIND=JPIM),INTENT(OUT):: glb_idx(:)   ! Return processor ranks for each point
 
 
     INTEGER(KIND=JPIM) JNS,JEW,JLAT,IDUM

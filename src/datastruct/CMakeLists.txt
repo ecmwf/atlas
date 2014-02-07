@@ -17,12 +17,22 @@ generate_fortran_bindings(FORTRAN_BINDINGS FunctionSpace.hpp)
 generate_fortran_bindings(FORTRAN_BINDINGS Mesh.hpp)
 generate_fortran_bindings(FORTRAN_BINDINGS Metadata.hpp)
 generate_fortran_bindings(FORTRAN_BINDINGS Comm.hpp)
+generate_fortran_bindings(FORTRAN_BINDINGS Gmsh.hpp)
+generate_fortran_bindings(FORTRAN_BINDINGS BuildPeriodicBoundaries.hpp)
+generate_fortran_bindings(FORTRAN_BINDINGS BuildEdges.hpp)
+generate_fortran_bindings(FORTRAN_BINDINGS BuildDualMesh.hpp)
 
 
 add_library( datastruct
   # C++ part
+    BuildDualMesh.hpp
+    BuildDualMesh.cpp
     BuildEdges.hpp
     BuildEdges.cpp
+    BuildHalo.hpp
+    BuildHalo.cpp
+    BuildPeriodicBoundaries.hpp
+    BuildPeriodicBoundaries.cpp
     Field.hpp 
     Field.cpp
     FieldSet.hpp 
@@ -35,6 +45,9 @@ add_library( datastruct
     Mesh.cpp
     Metadata.hpp
     Metadata.cpp
+    Parameters.hpp
+    Partitioner.hpp
+    Partitioner.cpp
     Comm.hpp
     Comm.cpp
 

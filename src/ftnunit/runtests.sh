@@ -17,7 +17,7 @@ RETVAL=0
 chk=1
 until test ! -f ftnunit.lst -a $chk -eq 0 ; do
     chk=0
-    $(readlink -e $1) $2 $3 $4 $5 $6 $7 $8 $9
+    mpirun -np 1 $(readlink -e $1) $2 $3 $4 $5 $6 $7 $8 $9
     RETVAL=$?
 done
 

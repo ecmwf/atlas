@@ -12,7 +12,7 @@ FunctionSpace::FunctionSpace(const std::string& name, const std::string& shape_f
   for (size_t i=0; i<bsize; ++i)
   {
     if( bounds_[i] != Field::NB_VARS )
-      dof_ *= bounds[i];
+      dof_ *= bounds_[i];
   }
 }
 
@@ -23,6 +23,42 @@ FunctionSpace::~FunctionSpace()
   for( size_t f=0; f<fields_.size(); ++f )
     if( fields_[f] ) delete(fields_[f]);
   fields_.clear();
+}
+
+void FunctionSpace::resize(const std::vector<int>& bounds)
+{
+  if (bounds.size() != bounds_.size() )
+    throw std::runtime_error("Cannot resize functionspace: Bounds sizes don't match.");
+
+  size_t bsize = bounds_.size();
+  for (size_t i=0; i<bsize-1; ++i)
+  {
+    if (bounds[i] != bounds_[i])
+      throw std::runtime_error("Only the last bound can be resized for now!");
+  }
+
+  bounds_ = bounds;
+
+  dof_ = 1;
+  for (size_t i=0; i<bsize; ++i)
+  {
+    if( bounds_[i] != Field::NB_VARS )
+      dof_ *= bounds_[i];
+  }
+
+  for( int f=0; f<fields_.size(); ++f)
+  {
+    size_t bsize = bounds_.size();
+    std::vector< int > field_bounds(bsize);
+    for (size_t i=0; i<bsize; ++i)
+    {
+      if( bounds_[i] == Field::NB_VARS )
+        field_bounds[i] = fields_[f]->nb_vars();
+      else
+        field_bounds[i] = bounds_[i];
+    }
+    fields_[f]->allocate(field_bounds);
+  }
 }
 
 template <>
@@ -135,9 +171,17 @@ template<>
   return *dynamic_cast< FieldT<int>* >(fields_[ index_.at(name) ]);
 }
 
-void FunctionSpace::parallelise(const int proc[], const int glb_idx[])
+void FunctionSpace::parallelise(const int proc[], const int glb_idx[], const int master_glb_idx[] )
 {
-  halo_exchange_.setup(proc,glb_idx,bounds_,bounds_.size()-1);
+  halo_exchange_.setup(proc,glb_idx,master_glb_idx,bounds_,bounds_.size()-1);
+}
+
+void FunctionSpace::parallelise()
+{
+  FieldT<int>& proc = field<int>("proc");
+  FieldT<int>& glb_idx = field<int>("glb_idx");
+  FieldT<int>& master_glb_idx = field<int>("master_glb_idx");
+  parallelise(proc.data().data(),glb_idx.data().data(),master_glb_idx.data().data());
 }
 
 // ------------------------------------------------------------------
@@ -168,12 +212,17 @@ const char* ecmwf__FunctionSpace__name (FunctionSpace* This) {
   return This->name().c_str();
 }
 
+void ecmwf__FunctionSpace__bounds (FunctionSpace* This, int* &bounds, int &rank) {
+  bounds = const_cast<int*>(&(This->bounds()[0]));
+  rank = This->bounds().size();
+}
+
 Field* ecmwf__FunctionSpace__field (FunctionSpace* This, char* name) {
   return &This->field( std::string(name) );
 }
 
-void ecmwf__FunctionSpace__parallelise (FunctionSpace* This, int proc[], int glb_idx[]) {
-  This->parallelise(proc,glb_idx);
+void ecmwf__FunctionSpace__parallelise (FunctionSpace* This, int proc[], int glb_idx[], int master_glb_idx[]) {
+  This->parallelise(proc,glb_idx,master_glb_idx);
 }
 
 void ecmwf__FunctionSpace__halo_exchange_int (FunctionSpace* This, int field_data[], int field_size) {

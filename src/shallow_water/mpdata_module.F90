@@ -79,8 +79,8 @@ contains
     !dir$ ivdep
     !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,Sx,Sy,Vx,Vy,ip1,ip2,apos,aneg)
     do jedge = 1,dstruct%nb_edges
-      ip1 = dstruct%edges(jedge,1)
-      ip2 = dstruct%edges(jedge,2)
+      ip1 = dstruct%edges(1,jedge)
+      ip2 = dstruct%edges(2,jedge)
 
       Sx = S(XX,jedge)
       Sy = S(YY,jedge)
@@ -114,8 +114,8 @@ contains
         write(log_str,*) "velocity", jnode, Wind(:,jnode); call log_error()
         do jedge = 1,dstruct%nb_neighbours(jnode)
           iedge = dstruct%my_edges(jedge,jnode)
-          ip2 = dstruct%edges(iedge,1)
-          if (ip2 == jnode) ip2 = dstruct%edges(iedge,2)
+          ip2 = dstruct%edges(1,iedge)
+          if (ip2 == jnode) ip2 = dstruct%edges(2,iedge)
           write(log_str,*) "D_pass0 ", ip2, D0(ip2); call log_error()
           write(log_str,*) "velocity", ip2, Wind(:,ip2); call log_error()
 
@@ -172,8 +172,8 @@ contains
         sum_Dbar(:,:) = 0._jprw
         sum_Sabs(:,:) = 0._jprw
         do jedge=1, dstruct%nb_edges
-          ip1 = dstruct%edges(jedge,1)
-          ip2 = dstruct%edges(jedge,2)
+          ip1 = dstruct%edges(1,jedge)
+          ip2 = dstruct%edges(2,jedge)
           Sx = abs(S(XX,jedge))
           Sy = abs(S(YY,jedge))
           D_abs = ( abs(D(ip1)) + abs(D(ip2)) ) * 0.5_jprw
@@ -190,8 +190,8 @@ contains
 
       !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2,volume_of_two_cells,dDdx,dDdy,Vx,Vy)
       do jedge = 1,dstruct%nb_edges
-        ip1 = dstruct%edges(jedge,1)
-        ip2 = dstruct%edges(jedge,2)
+        ip1 = dstruct%edges(1,jedge)
+        ip2 = dstruct%edges(2,jedge)
 
         ! evaluate gradient and velocity at edge by combining 2 neighbouring dual cells
         volume_of_two_cells = vol(ip1) + vol(ip2)
@@ -311,8 +311,8 @@ contains
 
       !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2)
       do jedge = 1,dstruct%nb_edges
-        ip1 = dstruct%edges(jedge,1)
-        ip2 = dstruct%edges(jedge,2)
+        ip1 = dstruct%edges(1,jedge)
+        ip2 = dstruct%edges(2,jedge)
         if(aun(jedge) > 0._jprw) then
           aun(jedge)=aun(jedge)*min(limit,cp(ip2),cn(ip1))
         else
@@ -363,8 +363,8 @@ contains
 
     !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2,Sx,Sy,Ssqr,x1,x2,y1,y2)
     do jedge=1,dstruct%nb_edges
-      ip1 = dstruct%edges(jedge,1)
-      ip2 = dstruct%edges(jedge,2)
+      ip1 = dstruct%edges(1,jedge)
+      ip2 = dstruct%edges(2,jedge)
       Sx = S(XX,jedge)
       Sy = S(YY,jedge)
       Ssqr =  Sx*Sx + Sy*Sy 
@@ -394,8 +394,8 @@ contains
 
     !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2)
     do jedge=1,dstruct%nb_edges
-      ip1 = dstruct%edges(jedge,1)
-      ip2 = dstruct%edges(jedge,2)
+      ip1 = dstruct%edges(1,jedge)
+      ip2 = dstruct%edges(2,jedge)
       VD(:,jedge) = 0.5_jprw * (VDnodes(:,ip1) + VDnodes(:,ip2) )
     end do
     !$OMP END PARALLEL DO
@@ -423,8 +423,8 @@ contains
     !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2,apos,aneg)
     do jedge = 1,dstruct%nb_edges
       aun(:,jedge) = VDS(jedge)
-      ip1 = dstruct%edges(jedge,1)
-      ip2 = dstruct%edges(jedge,2)
+      ip1 = dstruct%edges(1,jedge)
+      ip2 = dstruct%edges(2,jedge)
       apos(:) = max(0._jprw,aun(:,jedge))
       aneg(:) = min(0._jprw,aun(:,jedge))
       fluxv(:,jedge) = U(:,ip1)*apos(:) + U(:,ip2)*aneg(:)
@@ -469,8 +469,8 @@ contains
 
       !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2,volume_of_two_cells,dUdx,dUdy,Vx,Vy)
       do jedge = 1,dstruct%nb_edges
-        ip1 = dstruct%edges(jedge,1)
-        ip2 = dstruct%edges(jedge,2)
+        ip1 = dstruct%edges(1,jedge)
+        ip2 = dstruct%edges(2,jedge)
 
         ! evaluate gradient and velocity at edge by combining 2 neighbouring dual cells
         volume_of_two_cells = max(eps, volD(ip1) + volD(ip2) )
@@ -565,8 +565,8 @@ contains
 
       !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2,var)
       do jedge = 1,dstruct%nb_edges
-        ip1 = dstruct%edges(jedge,1)
-        ip2 = dstruct%edges(jedge,2)
+        ip1 = dstruct%edges(1,jedge)
+        ip2 = dstruct%edges(2,jedge)
         do var=1,2
           if(aun(var,jedge) > 0._jprw) then
             aun(var,jedge)=aun(var,jedge)*min(limit,cp(var,ip2),cn(var,ip1))
@@ -627,8 +627,8 @@ contains
 
     !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2,Sx,Sy,Vx,Vy,apos,aneg)
     do jedge = 1,dstruct%nb_edges
-      ip1 = dstruct%edges(jedge,1)
-      ip2 = dstruct%edges(jedge,2)
+      ip1 = dstruct%edges(1,jedge)
+      ip2 = dstruct%edges(2,jedge)
 
       Sx = S(XX,jedge)
       Sy = S(YY,jedge)
@@ -691,8 +691,8 @@ contains
         sum_Qbar(:,:,:) = 0._jprw
         sum_Sabs(:,:) = 0._jprw
         do jedge=1, dstruct%nb_edges
-          ip1 = dstruct%edges(jedge,1)
-          ip2 = dstruct%edges(jedge,2)
+          ip1 = dstruct%edges(1,jedge)
+          ip2 = dstruct%edges(2,jedge)
           Sx = abs(S(XX,jedge))
           Sy = abs(S(YY,jedge))
           Q_abs(:) = ( abs(Q(:,ip1)) + abs(Q(:,ip2)) ) * 0.5_jprw
@@ -709,8 +709,8 @@ contains
 
       !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2,volume_of_two_cells,dQdx,dQdy,Vx,Vy)
       do jedge = 1,dstruct%nb_edges
-        ip1 = dstruct%edges(jedge,1)
-        ip2 = dstruct%edges(jedge,2)
+        ip1 = dstruct%edges(1,jedge)
+        ip2 = dstruct%edges(2,jedge)
 
         ! evaluate gradient and velocity at edge by combining 2 neighbouring dual cells
         volume_of_two_cells = max(eps, vol(ip1) + vol(ip2) )
@@ -824,8 +824,8 @@ contains
 
       !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2,var)
       do jedge = 1,dstruct%nb_edges
-        ip1 = dstruct%edges(jedge,1)
-        ip2 = dstruct%edges(jedge,2)
+        ip1 = dstruct%edges(1,jedge)
+        ip2 = dstruct%edges(2,jedge)
         do var=1,2
           if(aun(var,jedge) > 0._jprw) then
             aun(var,jedge)=aun(var,jedge)*min(limit,cp(var,ip2),cn(var,ip1))
@@ -861,8 +861,8 @@ contains
 
     !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2,Sx,Sy)
     do jedge = 1,dstruct%nb_edges
-      ip1 = dstruct%edges(jedge,1)
-      ip2 = dstruct%edges(jedge,2)
+      ip1 = dstruct%edges(1,jedge)
+      ip2 = dstruct%edges(2,jedge)
       Sx  = S(XX,jedge)
       Sy  = S(YY,jedge)
       !avgQSx(jedge) = Sx*( Q(ip1) + Q(ip2) )*0.5_jprw
@@ -889,8 +889,8 @@ contains
     ! Sx == 0 at pole, and Sy has same sign at both sides of pole
     do jedge = 1,dstruct%nb_pole_edges
       iedge = dstruct%pole_edges(jedge)
-      ip1   = dstruct%edges(iedge,1)
-      ip2   = dstruct%edges(iedge,2)
+      ip1   = dstruct%edges(1,iedge)
+      ip2   = dstruct%edges(2,iedge)
       ! correct for wrong Y-derivatives in previous loop,
       gradQ(YY,ip2) = gradQ(YY,ip2) + 2._jprw*avgQSy(iedge)
     end do
@@ -913,8 +913,8 @@ contains
 
     !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2,Sx,Sy)
     do jedge = 1,dstruct%nb_edges
-      ip1 = dstruct%edges(jedge,1)
-      ip2 = dstruct%edges(jedge,2)
+      ip1 = dstruct%edges(1,jedge)
+      ip2 = dstruct%edges(2,jedge)
       Sx  = S(XX,jedge)
       Sy  = S(YY,jedge)
       !avgQSx(jedge) = Sx*( abs(Q(ip1)) + abs(Q(ip2)) )*0.5_jprw
@@ -942,8 +942,8 @@ contains
     ! Sx == 0 at pole, and Sy has same sign at both sides of pole
     do jedge = 1,dstruct%nb_pole_edges
       iedge = dstruct%pole_edges(jedge)
-      ip1   = dstruct%edges(iedge,1)
-      ip2   = dstruct%edges(iedge,2)
+      ip1   = dstruct%edges(1,iedge)
+      ip2   = dstruct%edges(2,iedge)
 
       ! correct for wrong Y-derivatives in previous loop,
       gradQ(YY,ip2) = gradQ(YY,ip2) + 2._jprw*avgQSy(iedge)
@@ -968,8 +968,8 @@ contains
 
     !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2,Sx,Sy)
     do jedge = 1,dstruct%nb_edges
-      ip1 = dstruct%edges(jedge,1)
-      ip2 = dstruct%edges(jedge,2)
+      ip1 = dstruct%edges(1,jedge)
+      ip2 = dstruct%edges(2,jedge)
       Sx  = S(XX,jedge)
       Sy  = S(YY,jedge)
       !avgQSx(:,jedge) = Sx*( Q(:,ip1) + Q(:,ip2) )*0.5_jprw
@@ -1013,8 +1013,8 @@ contains
 
     !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2,Sx,Sy)
     do jedge = 1,dstruct%nb_edges
-      ip1 = dstruct%edges(jedge,1)
-      ip2 = dstruct%edges(jedge,2)
+      ip1 = dstruct%edges(1,jedge)
+      ip2 = dstruct%edges(2,jedge)
       Sx  = S(XX,jedge)
       Sy  = S(YY,jedge)
       !avgQSx(:,jedge) = Sx*( abs(Q(:,ip1)) + abs(Q(:,ip2)) )*0.5_jprw

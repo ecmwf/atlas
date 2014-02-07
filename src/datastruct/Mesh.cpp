@@ -14,7 +14,12 @@ Mesh::~Mesh()
 
 FunctionSpace& Mesh::add_function_space( FunctionSpace* function_space )
 {
+  if (index_.count(function_space->name()) )
+  {
+    throw std::runtime_error("Functionspace "+function_space->name()+" already added");
+  }
   index_[function_space->name()] = function_spaces_.size();
+  function_space->set_index( index_[function_space->name()] );
   function_spaces_.push_back( function_space );
   return *function_space;
 }
@@ -30,6 +35,12 @@ FunctionSpace& Mesh::function_space(const std::string& name)
     throw std::out_of_range(msg.str());
   }
 }
+
+FunctionSpace& Mesh::function_space(int idx)
+{
+  return *function_spaces_[ idx ];
+}
+
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines

@@ -24,12 +24,17 @@ public:
   const std::vector<int>& bounds() const { return bounds_; }
   int nb_vars() const { return nb_vars_; }
   virtual size_t size() const = 0;
+  virtual void halo_exchange() = 0;
 protected:
   std::string name_;
   std::vector<int> bounds_;
   FunctionSpace& function_space_;
   Metadata metadata_;
   int nb_vars_;
+
+private:
+    // forbid copy constructor by making it private
+    Field(const Field& other);
 };
 
 template< typename DATA_TYPE >
@@ -47,6 +52,11 @@ public:
   {
     return *(data_.data()+i+j*nb_vars_);
   }
+  DATA_TYPE& operator() (int i)
+  {
+    return data_[i];
+  }
+  virtual void halo_exchange();
 
 protected:
   std::vector< DATA_TYPE > data_;
@@ -70,7 +80,7 @@ template< typename DATA_TYPE >
 inline void FieldT<DATA_TYPE>::allocate(const std::vector<int>& bounds)
 {
   bounds_ = bounds;
-  size_t tot_size(1); for (int i = 0; i < bounds.size(); ++i) tot_size *= bounds[i];
+  size_t tot_size(1); for (int i = 0; i < bounds_.size(); ++i) tot_size *= bounds_[i];
   data_.resize(tot_size);
 }
 

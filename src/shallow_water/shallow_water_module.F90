@@ -136,6 +136,7 @@ contains
         CALL LOG_INFO( STEP_INFO )
       end if
     end do
+    dstruct%time_step = dstruct%time_step + 1
 
   end subroutine propagate_state
 
@@ -278,6 +279,9 @@ contains
       Q(:,jnode) = D(jnode) * U(:,jnode)
     end do
     !$OMP END PARALLEL DO
+
+    call compute_forcing(dstruct)
+
 
   end subroutine set_state_zonal_flow
 
@@ -428,9 +432,10 @@ contains
       !dir$ ivdep
       !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2)
       do jedge=1,dstruct%nb_edges
-        ip1 = dstruct%edges(jedge,1)
-        ip2 = dstruct%edges(jedge,2)
+        ip1 = dstruct%edges(1,jedge)
+        ip2 = dstruct%edges(2,jedge)
         Vedges(:,jedge) = (D(ip1)*Vnodes(:,ip1)+D(ip2)*Vnodes(:,ip2))/(D(ip1)+D(ip2)+eps)
+          !& * [ radius, radius*cos( 0.5_jprw*( coords(YY,ip1) + coords(YY,ip2) ) ) ]
       end do
       !$OMP END PARALLEL DO
 
@@ -469,8 +474,8 @@ contains
       !dir$ ivdep
       !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2)
       do jedge=1,dstruct%nb_edges
-        ip1 = dstruct%edges(jedge,1)
-        ip2 = dstruct%edges(jedge,2)
+        ip1 = dstruct%edges(1,jedge)
+        ip2 = dstruct%edges(2,jedge)
         !Vedges(:,jedge) = (Vnodes(:,ip1)+Vnodes(:,ip2))*0.5_jprw
         Vedges(:,jedge) = (D(ip1)*Vnodes(:,ip1)+D(ip2)*Vnodes(:,ip2))/(D(ip1)+D(ip2)+eps)
       enddo

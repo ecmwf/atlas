@@ -15,6 +15,7 @@ program test_sync
   integer, allocatable  :: nb_nodes(:)
   integer, allocatable  :: proc(:)
   integer, allocatable  :: glb_idx(:)
+  integer, allocatable  :: master_glb_idx(:)
   real(kind=jprs), allocatable, target  :: field(:), vectorfield(:,:)
   real(kind=jprs), pointer :: vectorfield_ptr(:,:)
   real(kind=jprs), allocatable  :: glb_field(:)
@@ -42,6 +43,7 @@ program test_sync
     bounds = [ -1, length ]
     allocate( proc(length) )
     allocate( glb_idx(length) )
+    allocate( master_glb_idx(length) )
     allocate( field(length) )
     allocate( vectorfield(2,length) )  
 
@@ -59,6 +61,7 @@ program test_sync
         glb_idx = [5,6,7,8,9,1,2]
         field = [-1,-1,7,8,9,-1,-1]
     end select
+    master_glb_idx(:) = glb_idx(:)
     vectorfield(1,:) = field*10
     vectorfield(2,:) = field*100
 
@@ -68,7 +71,7 @@ program test_sync
     
     ! We can setup function_space for halo_exchange
     function_space = new_FunctionSpace("nodes","shape_func",length)
-    call function_space%parallelise( proc, glb_idx )
+    call function_space%parallelise( proc, glb_idx, master_glb_idx )
     
     ! Or we can setup a custom halo_exchange object
     !call halo_exchange%setup(proc, glb_idx, bounds, parallel_bound)

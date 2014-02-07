@@ -1,19 +1,19 @@
-#ifndef BuildEdges_hpp
-#define BuildEdges_hpp
+#ifndef BuildHalo_hpp
+#define BuildHalo_hpp
 #include <string>
 namespace ecmwf {
 class Mesh;
 
-void build_edges( Mesh& mesh );
+void build_halo( Mesh& mesh );
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 extern "C" 
 {
-  void ecmwf__build_edges (Mesh* mesh);
+  void ecmwf__build_halo ( Mesh* mesh, int nb_elems );
 }
 // ------------------------------------------------------------------
 
 } // namespace ecmwf
 
-#endif // BuildEdges_hpp
+#endif // BuildHalo_hpp

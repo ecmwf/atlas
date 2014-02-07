@@ -36,6 +36,10 @@ use functionspace_c_binding
 use mesh_c_binding
 use metadata_c_binding
 use comm_c_binding
+use gmsh_c_binding
+use BuildPeriodicBoundaries_c_binding
+use BuildEdges_c_binding
+use BuildDualMesh_c_binding
 use common_module, only : jprw
 implicit none
 
@@ -110,6 +114,7 @@ contains
   procedure :: name => FunctionSpace__name
   procedure :: create_field => FunctionSpace__create_field
   procedure :: remove_field => FunctionSpace__remove_field
+  procedure :: bounds => FunctionSpace__bounds
   procedure :: field => FunctionSpace__field
   procedure :: parallelise => FunctionSpace__parallelise
   procedure, private :: FunctionSpace__halo_exchange_int32_r1
@@ -550,6 +555,14 @@ function FunctionSpace__name(this) result(name)
   name = c_to_f_string_cptr(name_c_str)
 end function FunctionSpace__name
 
+function FunctionSpace__bounds(this) result(bounds)
+  class(FunctionSpace_type), intent(in) :: this
+  integer, pointer :: bounds(:)
+  type(c_ptr) :: bounds_c_ptr
+  integer(c_int) :: field_rank
+  call ecmwf__FunctionSpace__bounds(this%object, bounds_c_ptr, field_rank)
+  call C_F_POINTER ( bounds_c_ptr , bounds , (/field_rank/) )
+end function FunctionSpace__bounds
 
 function FunctionSpace__field(this,name) result(field)
   class(FunctionSpace_type), intent(in) :: this
@@ -559,10 +572,10 @@ function FunctionSpace__field(this,name) result(field)
   if( .not. C_associated(field%object) ) call abort()
 end function FunctionSpace__field
 
-subroutine FunctionSpace__parallelise(this, proc, glb_idx)
+subroutine FunctionSpace__parallelise(this, proc, glb_idx, master_glb_idx)
   class(FunctionSpace_type), intent(in) :: this
-  integer, intent(in) :: proc(:), glb_idx(:)
-  call ecmwf__FunctionSpace__parallelise(this%object, proc, glb_idx)
+  integer, intent(in) :: proc(:), glb_idx(:), master_glb_idx(:)
+  call ecmwf__FunctionSpace__parallelise(this%object, proc, glb_idx, master_glb_idx)
 end subroutine FunctionSpace__parallelise
 
 function FunctionSpace__get_halo_exchange(this) result(halo_exchange)
@@ -659,13 +672,14 @@ subroutine HaloExchange__delete(this)
   this%object = C_NULL_ptr
 end subroutine HaloExchange__delete
 
-subroutine HaloExchange__setup(this, proc, glb_idx, bounds, par_bound)
+subroutine HaloExchange__setup(this, proc, glb_idx, master_glb_idx, bounds, par_bound)
   class(HaloExchange_type), intent(in) :: this
   integer, intent(in) :: proc(:)
   integer, intent(in) :: glb_idx(:)
+  integer, intent(in) :: master_glb_idx(:)
   integer, intent(in) :: bounds(:)
   integer, intent(in) :: par_bound
-  call ecmwf__HaloExchange__setup( this%object, proc, glb_idx, bounds, size(bounds), par_bound-1 )
+  call ecmwf__HaloExchange__setup( this%object, proc, glb_idx, master_glb_idx, bounds, size(bounds), par_bound-1 )
 end subroutine HaloExchange__setup
 
 
@@ -1142,6 +1156,29 @@ subroutine Metadata__get_string(this, name, value)
   value_c_str = ecmwf__Metadata__get_string(this%object, c_str(name) )
   value = c_to_f_string_cptr(value_c_str)
 end subroutine Metadata__get_string
+
+! -----------------------------------------------------------------------------
+
+function datastruct_read_gmsh(filename) result(mesh)
+  character(len=*), intent(in) :: filename
+  type(Mesh_type) :: mesh
+  mesh%object = ecmwf__read_gmsh(filename)
+end function datastruct_read_gmsh
+
+subroutine datastruct_build_periodic_boundaries(mesh)
+  type(Mesh_type), intent(inout) :: mesh
+  call ecmwf__build_periodic_boundaries(mesh%object)
+end subroutine datastruct_build_periodic_boundaries
+
+subroutine datastruct_build_edges(mesh)
+  type(Mesh_type), intent(inout) :: mesh
+  call ecmwf__build_edges(mesh%object)
+end subroutine datastruct_build_edges
+
+subroutine datastruct_build_dual_mesh(mesh)
+  type(Mesh_type), intent(inout) :: mesh
+  call ecmwf__build_dual_mesh(mesh%object)
+end subroutine datastruct_build_dual_mesh
 
 ! -----------------------------------------------------------------------------
 

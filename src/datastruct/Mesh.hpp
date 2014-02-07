@@ -25,6 +25,8 @@ public:
   // Takes ownership, and will be deleted automatically
   FunctionSpace& add_function_space( FunctionSpace* function_space );
   FunctionSpace& function_space(const std::string& name);
+  FunctionSpace& function_space(int idx);
+  int nb_function_spaces() { return function_spaces_.size(); }
 private:
   std::map< std::string, size_t > index_;
   std::vector< FunctionSpace* > function_spaces_;

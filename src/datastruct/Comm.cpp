@@ -14,10 +14,11 @@ HaloExchange::HaloExchange() :
   ierr = MPI_Comm_size( MPI_COMM_WORLD, &nproc );
 }
 
-void HaloExchange::setup( const int proc[], 
-                          const int glb_idx[], 
-                          const std::vector<int>& bounds, 
-                          int par_bound )
+void HaloExchange::setup(const int proc[],
+                         const int glb_idx[],
+                         const int master_glb_idx[],
+                         const std::vector<int>& bounds,
+                         int par_bound )
 {
 
   int ierr;
@@ -54,10 +55,10 @@ void HaloExchange::setup( const int proc[],
   for (int jj=0; jj<nb_nodes; ++jj)
     map_glb_to_loc[glb_idx[jj]] = jj;
 
-  // std::cout << myproc << ":  map_glb_to_loc = ";
-  // for (int i=0; i<max_glb_idx+1; ++i)
-  //   std::cout << map_glb_to_loc[i] << " ";
-  // std::cout << std::endl;
+//   std::cout << myproc << ":  map_glb_to_loc = ";
+//   for (int i=0; i<max_glb_idx+1; ++i)
+//     std::cout << map_glb_to_loc[i] << " ";
+//   std::cout << std::endl;
 
   /*
     Find the amount of nodes this proc has to receive from each other proc
@@ -65,11 +66,11 @@ void HaloExchange::setup( const int proc[],
 
   for (int jj=0; jj<nb_nodes; ++jj)
   {
-    if (proc[jj] != myproc)
+    if (proc[jj] != myproc || master_glb_idx[jj] != glb_idx[jj])
       ++sync_recvcounts_[proc[jj]];
   }
   sync_recvcnt_ = std::accumulate(sync_recvcounts_.begin(),sync_recvcounts_.end(),0);
-  // std::cout << myproc << ":  recvcnt = " << sync_recvcnt_ << std::endl;
+//  std::cout << myproc << ":  recvcnt = " << sync_recvcnt_ << std::endl;
 
 
   /*
@@ -78,6 +79,7 @@ void HaloExchange::setup( const int proc[],
 
   ierr = MPI_Alltoall( &sync_recvcounts_[0], 1, MPI_INT, &sync_sendcounts_[0], 1, MPI_INT, MPI_COMM_WORLD );
   sync_sendcnt_ = std::accumulate(sync_sendcounts_.begin(),sync_sendcounts_.end(),0);
+  std::cout << myproc << ":  sendcnt = " << sync_sendcnt_ << std::endl;
 
   sync_recvdispls_[0]=0;
   sync_senddispls_[0]=0;
@@ -97,13 +99,21 @@ void HaloExchange::setup( const int proc[],
   std::vector<int> cnt(nproc,0);
   for (int jj=0; jj<nb_nodes; ++jj)
   {
-    if (proc[jj] != myproc)
+    if (proc[jj] != myproc || master_glb_idx[jj] != glb_idx[jj])
     {
       const int req_idx = sync_recvdispls_[proc[jj]] + cnt[proc[jj]];
-      send_requests[req_idx] = glb_idx[jj];
+      send_requests[req_idx] = master_glb_idx[jj];
       sync_recvmap_[req_idx] = jj;
       ++cnt[proc[jj]];
     }
+//    if (master_glb_idx[jj] != glb_idx[jj])
+//    {
+//      const int req_idx = sync_recvdispls_[proc[jj]] + cnt[proc[jj]];
+//      send_requests[req_idx] = master_glb_idx[jj];
+//      sync_recvmap_[req_idx] = jj;
+//      ++cnt[proc[jj]];
+//    }
+
   }
 
   /*
@@ -132,15 +142,15 @@ void HaloExchange::setup( const int proc[],
       packet_size_ *= bounds_[b];
   }
 
-  // std::cout << myproc << "  :  sync_sendmap_  = ";
-  // for( int i=0; i< sync_sendmap_.size(); ++i)
-  //   std::cout << sync_sendmap_[i] << " ";
-  // std::cout << std::endl;
+//   std::cout << myproc << "  :  sync_sendmap_  = ";
+//   for( int i=0; i< sync_sendmap_.size(); ++i)
+//     std::cout << sync_sendmap_[i] << " ";
+//   std::cout << std::endl;
 
-  // std::cout << myproc << "  :  sync_recvmap_  = ";
-  // for( int i=0; i< sync_recvmap_.size(); ++i)
-  //   std::cout << sync_recvmap_[i] << " ";
-  // std::cout << std::endl;
+//   std::cout << myproc << "  :  sync_recvmap_  = ";
+//   for( int i=0; i< sync_recvmap_.size(); ++i)
+//     std::cout << sync_recvmap_[i] << " ";
+//   std::cout << std::endl;
 
   is_setup_ = true;
 }
@@ -300,10 +310,10 @@ void ecmwf__HaloExchange__delete (HaloExchange* This) {
   delete This;
 }
 
-void ecmwf__HaloExchange__setup (HaloExchange* This, int proc[], int glb_idx[], int bounds[], int nb_bounds, int par_bound)
+void ecmwf__HaloExchange__setup (HaloExchange* This, int proc[], int glb_idx[], int master_glb_idx[], int bounds[], int nb_bounds, int par_bound)
 {
   std::vector<int> bounds_vec(bounds,bounds+nb_bounds);
-  This->setup(proc,glb_idx,bounds_vec,par_bound);
+  This->setup(proc,glb_idx,master_glb_idx,bounds_vec,par_bound);
 }
 
 void ecmwf__HaloExchange__execute_int (HaloExchange* This, int field[], int nb_vars ) { 
