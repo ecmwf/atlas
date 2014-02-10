@@ -795,6 +795,7 @@ contains
     call create_field_in_nodes_3d("velocity_backup",2,dstruct)
     call create_field_in_nodes_3d("momentum_backup",2,dstruct)
     call create_field_in_nodes_2d("surface_velocity",2,dstruct)
+    call create_field_in_nodes_3d("absorber",1,dstruct)
 
     call create_field_in_edges_3d("advective_velocity",2,dstruct)
     call create_field_in_nodes_3d("depth_ratio",1,dstruct) ! old/new
@@ -805,7 +806,7 @@ contains
     call create_field_in_nodes_2d("dlh",1,dstruct)
     call create_field_in_nodes_3d("momentum",2,dstruct)
     call create_field_in_nodes_3d("ambient_depth",1,dstruct)
-    call create_field_in_nodes_3d("ambient_momentum",2,dstruct)
+    call create_field_in_nodes_3d("ambient_velocity",2,dstruct)
     call create_field_in_nodes_3d("pressure",1,dstruct)
     call create_field_in_nodes_3d("montgomery_potential",1,dstruct)
     call create_field_in_nodes_2d("p0",1,dstruct)
@@ -896,7 +897,7 @@ contains
   subroutine set_state_zonal_flow(dstruct)
     type(DataStructure_type), intent(inout)      :: dstruct
     real(kind=jprw), pointer :: D(:,:), cor(:), H0(:), H(:,:), dlh(:), press(:,:), p0(:)
-    real(kind=jprw), pointer :: U(:,:,:), coords(:,:), Q(:,:,:), D_amb(:,:), Q_amb(:,:,:)
+    real(kind=jprw), pointer :: U(:,:,:), coords(:,:), Q(:,:,:), D_amb(:,:), U_amb(:,:,:)
     real(kind=jprw), pointer :: U0(:,:)
     integer :: jnode, jlev
     real(kind=jprw) :: x,y, zz
@@ -905,6 +906,7 @@ contains
     real(kind=jprw), parameter :: omega = v0/radius
     real(kind=jprw), parameter :: beta = 0.! pi/4._jprw
     real(kind=jprw), parameter :: pvel = omega*2.
+    real(kind=jprw), parameter :: shear = 0. !0.01
 
     coords => vector_field_2d("coordinates",dstruct)
     D => scalar_field_3d("depth",dstruct)
@@ -915,7 +917,7 @@ contains
     H => scalar_field_3d("height",dstruct)
     dlh => scalar_field_2d("dlh",dstruct)
     D_amb => scalar_field_3d("ambient_depth",dstruct)
-    Q_amb => vector_field_3d("ambient_momentum",dstruct)
+    U_amb => vector_field_3d("ambient_velocity",dstruct)
     press => scalar_field_3d("pressure",dstruct)
     p0 => scalar_field_2d("p0",dstruct)
     Q => vector_field_3d("momentum",dstruct)
@@ -960,7 +962,6 @@ contains
         do jlev=1,dstruct%nb_levels-1
           alfs(jlev) = alfb(Z0(jlev)+dz*0.5_jprw,0._jprw,stf)
         end do
-        ! TODO call absorbers(taui,z0,nlm)
 
         ! Set height
         do jlev=1,dstruct%nb_levels
@@ -988,16 +989,16 @@ contains
         ! Set ambient and initial state
         do jlev=1,dstruct%nb_levels-1
           D_amb(jlev,jnode)    = (press(jlev,jnode)-press(jlev+1,jnode))*pscali
-          Q_amb(XX,jlev,jnode) = (U0(XX,jnode)-0.01*cos(y)*H(jlev,jnode))*D_amb(jlev,jnode)
-          Q_amb(YY,jlev,jnode) = U0(YY,jnode)*D_amb(jlev,jnode)
+          U_amb(XX,jlev,jnode) = (U0(XX,jnode)-shear*cos(y)*H(jlev,jnode))
+          U_amb(YY,jlev,jnode) = U0(YY,jnode)
           D(jlev,jnode)   = D_amb(jlev,jnode)
-          Q(:,jlev,jnode) = Q_amb(:,jlev,jnode)
+          Q(:,jlev,jnode) = U_amb(:,jlev,jnode) * D_amb(jlev,jnode)
           U(:,jlev,jnode) = Q(:,jlev,jnode)/max(eps,D(jlev,jnode))
         enddo
       end do
       !$OMP END PARALLEL DO
       call compute_forcing(dstruct)
-
+      call setup_absorbers(dstruct)
     end if
 
   end subroutine set_state_zonal_flow
@@ -1057,6 +1058,110 @@ contains
       H0(jnode) = max(0.,amplitude * (1.-gamm*dist/rad))
     end do
   end subroutine set_topography_mountain
+
+
+
+  subroutine setup_absorbers(dstruct)
+    type(DataStructure_type), intent(inout) :: dstruct
+
+    real(kind=jprw), pointer :: taui(:,:), coords(:,:)
+    real(kind=jprw), parameter :: dabxmin = 0.
+    real(kind=jprw), parameter :: dabxmax = 0.
+    real(kind=jprw), parameter :: dabymin = 750.e3
+    real(kind=jprw), parameter :: dabymax = 750.e3
+    real(kind=jprw), parameter :: dabzmin = 0.
+    real(kind=jprw), parameter :: dabzmax = 750.
+    real(kind=jprw), parameter :: abtauxmin = 1.e+10
+    real(kind=jprw), parameter :: abtauxmax = 1.e+10
+    real(kind=jprw), parameter :: abtauymin = 1.e+10
+    real(kind=jprw), parameter :: abtauymax = 1.e+10
+    real(kind=jprw), parameter :: abtauzmin = 1.e+10
+    real(kind=jprw), parameter :: abtauzmax = 200
+    real(kind=jprw), parameter :: abtauixmin = 1./abtauxmin
+    real(kind=jprw), parameter :: abtauixmax = 1./abtauxmax
+    real(kind=jprw), parameter :: abtauiymin = 1./abtauymin
+    real(kind=jprw), parameter :: abtauiymax = 1./abtauymax
+    real(kind=jprw), parameter :: abtauizmin = 1./abtauzmin
+    real(kind=jprw), parameter :: abtauizmax = 1./abtauzmax
+
+    real(kind=jprw) :: xmax, xmin, ymax, ymin, zmax, zmin
+    real(kind=jprw) :: absor_max(3), absor_min(3)
+    real(kind=jprw) :: rel(2), relz(dstruct%nb_levels), alphh1, r0, r1, r2
+    integer :: jnode, jlev
+    taui => scalar_field_3d("absorber",dstruct)
+    coords => vector_field_2d("coordinates",dstruct)
+
+    xmax = -1.e10
+    xmin =  1.e10
+    ymax = -1.e10
+    ymin =  1.e10
+    do jnode=1,dstruct%nb_nodes
+      xmax = max( xmax, coords(XX,jnode) )
+      xmin = min( xmin, coords(XX,jnode) )
+      ymax = max( ymax, coords(YY,jnode) )
+      ymin = min( ymin, coords(YY,jnode) )
+    enddo
+    zmax = -1.e10
+    zmin =  1.e10
+    do jlev=1,dstruct%nb_levels-1
+      zmax = max( zmax, z0(jlev) )
+      zmin = min( zmin, z0(jlev) )
+    enddo
+
+    absor_max(XX) = xmax*radius - dabxmax
+    absor_max(YY) = ymax*radius - dabymax
+    absor_max(ZZ) = zmax - dabzmax
+    absor_min(XX) = xmin*radius + dabxmin
+    absor_min(YY) = ymin*radius + dabymin
+    absor_min(ZZ) = zmin + dabzmin
+
+    do jlev=1,dstruct%nb_levels
+      
+      relz(jlev) = 0
+
+      r0=(z0(jlev)+z0(jlev+1))*0.5
+      r1=0.
+      r2=0.
+      if(dabzmin.ne.0.) r1=max(0.,-r0+absor_min(ZZ))/dabzmin
+      if(dabzmax.ne.0.) r2=max(0., r0-absor_max(ZZ))/dabzmax
+      if( (abtauizmin+abtauizmax) .ne. 0. ) then
+        relz(jlev) = ((abtauizmin*r1)**2+(abtauizmax*r2)**2) &
+                & / (abtauizmin*r1+abtauizmax*r2+eps)
+      endif
+    enddo
+
+    do jnode=1,dstruct%nb_nodes
+
+      rel(:) = 0
+
+      r0=coords(XX,jnode)
+      r1=0.
+      r2=0.
+      if(dabxmin.ne.0.) r1=max(0., absor_min(XX)-r0*radius)/dabxmin
+      if(dabxmax.ne.0.) r2=max(0., r0*radius-absor_max(XX))/dabxmax
+      if( (abtauixmin+abtauixmax) .ne. 0. ) then
+        rel(XX) = ((abtauixmin*r1)**2+(abtauixmax*r2)**2) &
+                & / (abtauixmin*r1+abtauixmax*r2+eps)
+      endif
+
+      r0=coords(YY,jnode)
+      r1=0.
+      r2=0.
+      if(dabymin.ne.0.) r1=max(0.,-r0*radius+absor_min(YY))/dabymin
+      if(dabymax.ne.0.) r2=max(0., r0*radius-absor_max(YY))/dabymax
+      if( (abtauiymin+abtauiymax) .ne. 0. ) then
+        rel(YY) = ((abtauiymin*r1)**2+(abtauiymax*r2)**2) &
+                & / (abtauiymin*r1+abtauiymax*r2+eps)
+      endif
+
+      do jlev=1,dstruct%nb_levels
+        ! Now add to taui
+        alphh1 = (rel(YY)**2+rel(XX)**2)/(rel(YY)+rel(XX)+eps)
+        taui(jlev,jnode)=(alphh1**2+relz(jlev)**2)/(alphh1+relz(jlev)+eps)
+      enddo
+    enddo
+  end subroutine setup_absorbers
+
 
 
   subroutine backup_solution(dstruct)
@@ -1418,11 +1523,11 @@ contains
     type(DataStructure_type), intent(inout) :: dstruct
     integer :: jnode, jlev, m
     real(kind=jprw), dimension(:),   pointer :: H0, hx, hy, cor, p0, vol, dhxdy_over_G
-    real(kind=jprw), dimension(:,:), pointer :: D, coords, Mont, press, H
-    real(kind=jprw), dimension(:,:,:), pointer :: Q, R
+    real(kind=jprw), dimension(:,:), pointer :: D, coords, Mont, press, H, taui
+    real(kind=jprw), dimension(:,:,:), pointer :: Q, R, U_amb
     real(kind=jprw) :: grad_M(2,dstruct%nb_levels,dstruct%nb_nodes)
 
-    real(kind=jprw) :: Qx, Qy, Rx, Ry
+    real(kind=jprw) :: Qx, Qy, Rx, Ry, Qx_amb, Qy_amb
     real(kind=jprw) :: Qx_adv, Qy_adv, Rx_exp, Ry_exp
 
     coords => vector_field_2d("coordinates",dstruct)
@@ -1431,11 +1536,13 @@ contains
     hy => scalar_field_2d("hy",dstruct)
     dhxdy_over_G => scalar_field_2d("dhxdy_over_G",dstruct)
     cor => scalar_field_2d("coriolis",dstruct)
+    taui => scalar_field_3d("absorber",dstruct)
 
     H0 => scalar_field_2d("topography",dstruct)
     D  => scalar_field_3d("depth",dstruct)
     H  => scalar_field_3d("height",dstruct)
     Q  => vector_field_3d("momentum",dstruct)
+    U_amb  => vector_field_3d("ambient_velocity",dstruct)
     R  => vector_field_3d("forcing",dstruct)
     Mont  => scalar_field_3d("montgomery_potential",dstruct)
     press  => scalar_field_3d("pressure",dstruct)
@@ -1489,20 +1596,34 @@ contains
       do jlev=1,dstruct%nb_levels-1
         Qx    = Q(XX,jlev,jnode)
         Qy    = Q(YY,jlev,jnode)
+        Qx_amb = U_amb(XX,jlev,jnode) * D(jlev,jnode)
+        Qy_amb = U_amb(YY,jlev,jnode) * D(jlev,jnode)
         Rx_exp = -D(jlev,jnode)*grad_M(XX,jlev,jnode)*hy(jnode)/vol(jnode)
         Ry_exp = -D(jlev,jnode)*grad_M(YY,jlev,jnode)*hx(jnode)/vol(jnode)
         Qx_adv = Qx
         Qy_adv = Qy
         do m=1,3 ! Three iterations at most is enough to converge
-          Rx = Rx_exp + cor(jnode)*Qy - dhxdy_over_G(jnode)*Qx*Qy/max(eps,D(jlev,jnode))
-          Ry = Ry_exp - cor(jnode)*Qx + dhxdy_over_G(jnode)*Qx*Qx/max(eps,D(jlev,jnode))
-          Qx = Qx_adv + 0.5_jprw*dt*Rx
-          Qy = Qy_adv + 0.5_jprw*dt*Ry
+          Rx = Rx_exp &
+             & + cor(jnode)*Qy &
+             & - dhxdy_over_G(jnode)*Qx*Qy/max(eps,D(jlev,jnode)) &
+             & - taui(jlev,jnode)*(Qx-Qx_amb)
+          Ry = Ry_exp &
+             & - cor(jnode)*Qx &
+             & + dhxdy_over_G(jnode)*Qx*Qx/max(eps,D(jlev,jnode)) &
+             & - taui(jlev,jnode)*(Qy-Qy_amb)
+          Qx = Qx_adv + 0.5_jprw*dt*Rx 
+          Qy = Qy_adv + 0.5_jprw*dt*Ry 
         end do
         Q(XX,jlev,jnode) = Qx
         Q(YY,jlev,jnode) = Qy
-        R(XX,jlev,jnode) = Rx_exp + cor(jnode)*Qy - dhxdy_over_G(jnode)*Qx*Qy/max(eps,D(jlev,jnode))
-        R(YY,jlev,jnode) = Ry_exp - cor(jnode)*Qx + dhxdy_over_G(jnode)*Qx*Qx/max(eps,D(jlev,jnode))
+        R(XX,jlev,jnode) = Rx_exp &
+                         & + cor(jnode)*Qy &
+                         & - dhxdy_over_G(jnode)*Qx*Qy/max(eps,D(jlev,jnode)) &
+                         & - taui(jlev,jnode)*(Qx-Qx_amb)
+        R(YY,jlev,jnode) = Ry_exp &
+                         & - cor(jnode)*Qx &
+                         & + dhxdy_over_G(jnode)*Qx*Qx/max(eps,D(jlev,jnode)) &
+                         & - taui(jlev,jnode)*(Qy-Qy_amb)
       end do
     end do
     !$OMP END PARALLEL DO
