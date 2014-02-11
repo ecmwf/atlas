@@ -27,7 +27,7 @@ void scan_bdry_elements( FunctionSpace& elements, FunctionSpace& nodes,
   {
     for (int n=0; n<nb_nodes_per_elem; ++n)
     {
-      int node = elem_nodes(n,elem);
+      int node = C_IDX( elem_nodes(n,elem) );
       if ( coords(XX,node) == max[XX] )
       {
         east_bdry_elements.push_back( ElementRef(elements.index(),elem) );
@@ -171,7 +171,7 @@ void build_periodic_boundaries( Mesh& mesh )
           elem_master_glb_idx(new_elem) = elem_glb_idx(east_elem);
           for (int n1=0; n1<nb_nodes_per_elem[f]; ++n1)
           {
-            int east_node = (*elem_nodes[f])(n1,east_elem);
+            int east_node = C_IDX( (*elem_nodes[f])(n1,east_elem) );
             if ( coords(XX,east_node) != max[XX] )
             {
               (*elem_nodes[f])(n1,new_elem) = -glb_idx(east_node); // new ghost node
@@ -185,13 +185,13 @@ void build_periodic_boundaries( Mesh& mesh )
                 int west_elem      = west_bdry_elements[ielem].e;
                 for (int n2=0; n2<nb_nodes_per_elem[func_space_idx]; ++n2)
                 {
-                  int west_node = (*elem_nodes[func_space_idx])(n2,west_elem);
+                  int west_node = C_IDX( (*elem_nodes[func_space_idx])(n2,west_elem) );
                   if ( coords(YY,west_node) == coords(YY,east_node) && coords(XX,west_node) == min[XX] )
                   {
                     // Found matching node --> this east node has to become a ghost node
                     transform_to_ghost.insert(east_node);
                     master_glb_idx(east_node) = glb_idx(west_node);
-                    (*elem_nodes[f])(n1,new_elem) = west_node;
+                    (*elem_nodes[f])(n1,new_elem) = F_IDX( west_node );
                   }
                 }
               }
@@ -217,27 +217,14 @@ void build_periodic_boundaries( Mesh& mesh )
       {
         for (int n=0; n<nb_nodes_per_elem; ++n)
         {
-          int node = elem_nodes(n,elem);
+          int node = C_IDX( elem_nodes(n,elem) );
           if (elem_nodes(n,elem) > 0 )
             elem_nodes(n,elem) = glb_idx(node);
         }
       }
     }
   }
-//  int nb_nodes_to_swap = transform_to_ghost.size();
-//  int moved=0;
-//  for( std::set<int>::iterator node = transform_to_ghost.begin(); node!=transform_to_ghost.end(); ++node)
-//  {
-//    int node_to_move = (*node)-moved;
-//    for( int remaining_node = node_to_move+1; remaining_node<nb_nodes; ++remaining_node )
-//    {
-//      copy_row(coords,remaining_node,node_to_move);
-//      copy_row(glb_idx,remaining_node,node_to_move);
-//      copy_row(master_glb_idx,remaining_node,node_to_move);
-//      copy_row(proc,remaining_node,node_to_move);
-//    }
-//    ++moved;
-//  }
+
 
   std::vector< int > orig_glb_idx( glb_idx.data() );
   std::vector< int > orig_master_glb_idx( master_glb_idx.data() );
@@ -288,7 +275,7 @@ void build_periodic_boundaries( Mesh& mesh )
         {
           int gid = elem_nodes(n,elem);
           if (elem_nodes(n,elem) > 0 )
-            elem_nodes(n,elem) = node_orig_glb_to_loc[ gid ];
+            elem_nodes(n,elem) = F_IDX( node_orig_glb_to_loc[ gid ] );
         }
       }
     }
@@ -334,10 +321,10 @@ void build_periodic_boundaries( Mesh& mesh )
       {
         for (int n=0; n<nb_nodes_per_elem[f]; ++n)
         {
-          int node = (*elem_nodes[f])(n,elem);
-          if ( node < 0 )
+          int gid = (*elem_nodes[f])(n,elem);
+          if ( gid < 0 )
           {
-            (*elem_nodes[f])(n,elem) = node_mapping[ node ];
+            (*elem_nodes[f])(n,elem) = F_IDX( node_mapping[ gid ] );
           }
         }
       }

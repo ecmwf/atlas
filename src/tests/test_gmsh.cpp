@@ -10,9 +10,9 @@ int main(int argc, char *argv[])
 {
   MPI_Init(&argc,&argv);
 
-  //Mesh& mesh = Gmsh::read("mesh_latlon.msh");
+  Mesh& mesh = Gmsh::read("T47.msh");
   //Mesh& mesh = Gmsh::read("untitled.msh");
-  Mesh& mesh = Gmsh::read("test_no_edges.msh");
+  //Mesh& mesh = Gmsh::read("test_no_edges.msh");
 
   //Partitioner::partition(mesh,1);
 

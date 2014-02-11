@@ -118,10 +118,10 @@ Mesh& Gmsh::read(const std::string& file_path)
         quad_glb_idx(quad) = g;
         quad_master_glb_idx(quad) = g;
         quad_proc(quad) = 0;
-        quad_nodes(0,quad) = glb_to_loc[gn0];
-        quad_nodes(1,quad) = glb_to_loc[gn1];
-        quad_nodes(2,quad) = glb_to_loc[gn2];
-        quad_nodes(3,quad) = glb_to_loc[gn3];
+        quad_nodes(0,quad) = F_IDX( glb_to_loc[gn0] );
+        quad_nodes(1,quad) = F_IDX( glb_to_loc[gn1] );
+        quad_nodes(2,quad) = F_IDX( glb_to_loc[gn2] );
+        quad_nodes(3,quad) = F_IDX( glb_to_loc[gn3] );
         ++quad;
         break;
       case(TRIAG):
@@ -129,17 +129,17 @@ Mesh& Gmsh::read(const std::string& file_path)
         triag_glb_idx(triag) = g;
         triag_master_glb_idx(triag) = g;
         triag_proc(triag) = 0;
-        triag_nodes(0,triag) = glb_to_loc[gn0];
-        triag_nodes(1,triag) = glb_to_loc[gn1];
-        triag_nodes(2,triag) = glb_to_loc[gn2];
+        triag_nodes(0,triag) = F_IDX( glb_to_loc[gn0] );
+        triag_nodes(1,triag) = F_IDX( glb_to_loc[gn1] );
+        triag_nodes(2,triag) = F_IDX( glb_to_loc[gn2] );
         ++triag;
         break;
       case(LINE):
         file >> gn0 >> gn1;
         //edge_glb_idx(edge) = g;
         //edge_master_glb_idx(edge) = g;
-        //edge_nodes(0,edge) = glb_to_loc[gn0];
-        //edge_nodes(1,edge) = glb_to_loc[gn1];
+        //edge_nodes(0,edge) = F_IDX( glb_to_loc[gn0] );
+        //edge_nodes(1,edge) = F_IDX( glb_to_loc[gn1] );
         //edge_proc(proc) = 0;
         //++edge;
         break;
@@ -204,21 +204,21 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path)
   {
     file << quad_glb_idx(e) << " 3 2 1 1";
     for( int n=0; n<4; ++n )
-      file << " " << glb_idx(quad_nodes(n,e));
+      file << " " << glb_idx( C_IDX( quad_nodes(n,e) ) );
     file << "\n";
   }
   for( int e=0; e<nb_triags; ++e)
   {
     file << triag_glb_idx(e) << " 2 2 1 1";
     for( int n=0; n<3; ++n )
-      file << " " << glb_idx(triag_nodes(n,e));
+      file << " " << glb_idx( C_IDX( triag_nodes(n,e) ) );
     file << "\n";
   }
   for( int e=0; e<nb_edges; ++e)
   {
    file << edge_glb_idx(e) << " 1 2 2 1";
     for( int n=0; n<2; ++n )
-      file << " " << glb_idx(edge_nodes(n,e));
+      file << " " << glb_idx( C_IDX( edge_nodes(n,e) ) );
     file << "\n";
   }
   file << "$EndElements\n";

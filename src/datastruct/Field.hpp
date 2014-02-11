@@ -48,11 +48,11 @@ public:
   std::vector< DATA_TYPE >& data() { return data_; }
   DATA_TYPE& operator[] (const size_t idx) { return data_[idx]; }
   virtual size_t size() const { return data_.size(); }
-  DATA_TYPE& operator() (int i, int j)
+  DATA_TYPE& operator() (int i, int j) // Fortran indexing
   {
-    return *(data_.data()+i+j*nb_vars_);
+    return *(data_.data()+ i + j*nb_vars_);
   }
-  DATA_TYPE& operator() (int i)
+  DATA_TYPE& operator() (int i) // Fortran indexing
   {
     return data_[i];
   }

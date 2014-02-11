@@ -62,7 +62,7 @@ void scan_function_space(
 
       std::vector<int> face_nodes(nb_nodes_in_face);
       for (int jnode=0; jnode<nb_nodes_in_face; ++jnode)
-        face_nodes[jnode] = elem_nodes(face_node_numbering[f][jnode],e);
+        face_nodes[jnode] = C_IDX( elem_nodes(face_node_numbering[f][jnode],e) );
 
       int node = face_nodes[0];
       for( int jface=0; jface< node_to_face[node].size(); ++jface )
@@ -134,11 +134,11 @@ void build_element_to_edge_connectivity( Mesh& mesh, FieldT<int>& edge_to_elem )
   {
     for( int j=0; j<2; ++j)
     {
-      int func_space_idx = edge_to_elem(0+2*j,edge);
-      int elem           = edge_to_elem(1+2*j,edge);
+      int func_space_idx = C_IDX( edge_to_elem(0+2*j,edge) );
+      int elem           = C_IDX( edge_to_elem(1+2*j,edge) );
       if ( elem >= 0 )
       {
-        (*elem_to_edge[func_space_idx])(edge_cnt[func_space_idx][elem]++, elem) = edge;
+        (*elem_to_edge[func_space_idx])(edge_cnt[func_space_idx][elem]++, elem) = F_IDX(edge);
       }
     }
   }
@@ -253,14 +253,14 @@ void build_edges( Mesh& mesh )
     edge_glb_idx(0,edge) = ++gid;
     edge_master_glb_idx(0,edge) = gid;
     edge_proc(0,edge) = 0;
-    edge_nodes(0,edge)   = tmp_edges[cnt++];
-    edge_nodes(1,edge)   = tmp_edges[cnt++];
-    edge_to_elem(0,edge) = to_elem[edge][0];
-    edge_to_elem(1,edge) = to_elem[edge][1];
-    edge_to_elem(2,edge) = to_elem[edge][2];
-    edge_to_elem(3,edge) = to_elem[edge][3];
-    node_glb_to_edge[ glb_idx( edge_nodes(0,edge) ) ].push_back(edge);
-    node_glb_to_edge[ glb_idx( edge_nodes(1,edge) ) ].push_back(edge);
+    edge_nodes(0,edge)   = F_IDX( tmp_edges[cnt++] );
+    edge_nodes(1,edge)   = F_IDX( tmp_edges[cnt++] );
+    edge_to_elem(0,edge) = F_IDX( to_elem[edge][0] );
+    edge_to_elem(1,edge) = F_IDX( to_elem[edge][1] );
+    edge_to_elem(2,edge) = F_IDX( to_elem[edge][2] );
+    edge_to_elem(3,edge) = F_IDX( to_elem[edge][3] );
+    node_glb_to_edge[ glb_idx( C_IDX( edge_nodes(0,edge) ) ) ].push_back(edge);
+    node_glb_to_edge[ glb_idx( C_IDX( edge_nodes(1,edge) ) ) ].push_back(edge);
   }
 
   // Element to edge connectivity
@@ -285,8 +285,8 @@ void build_edges( Mesh& mesh )
   // Mark certain edges as ghost and fix node ordering
   for (int edge=0; edge<nb_edges; ++edge)
   {
-    int node0 = edge_nodes(0,edge);
-    int node1 = edge_nodes(1,edge);
+    int node0 = C_IDX( edge_nodes(0,edge) );
+    int node1 = C_IDX( edge_nodes(1,edge) );
     int node0_master_gid = master_glb_idx(node0);
     int node1_master_gid = master_glb_idx(node1);
     bool node0_ghost = ( glb_idx(node0) != master_glb_idx(node0) );
@@ -297,14 +297,14 @@ void build_edges( Mesh& mesh )
       for (int jedge=0; jedge<node_glb_to_edge[node0_master_gid].size(); ++jedge)
       {
         int master_edge = node_glb_to_edge[node0_master_gid][jedge];
-        int master_node0_master_gid = master_glb_idx(edge_nodes(0,master_edge));
-        int master_node1_master_gid = master_glb_idx(edge_nodes(1,master_edge));
+        int master_node0_master_gid = master_glb_idx( C_IDX( edge_nodes(0,master_edge) ) );
+        int master_node1_master_gid = master_glb_idx( C_IDX( edge_nodes(1,master_edge) ) );
         if (node0_master_gid == master_node1_master_gid && node1_master_gid == master_node0_master_gid)
         {
           // wrong order
           std::cout << "fixed wrong order for edge " << edge_glb_idx(edge) << std::endl;
-          edge_nodes(0,edge) = node1;
-          edge_nodes(1,edge) = node0;
+          edge_nodes(0,edge) = F_IDX(node1);
+          edge_nodes(1,edge) = F_IDX(node0);
           edge_master_glb_idx(edge) = edge_glb_idx(master_edge);
           break;
         }
@@ -318,7 +318,7 @@ void build_edges( Mesh& mesh )
     }
     else if ( node0_ghost || node1_ghost )
     {
-      ElementRef left_element(edge_to_elem(0,edge),edge_to_elem(1,edge));
+      ElementRef left_element( C_IDX(edge_to_elem(0,edge)), C_IDX(edge_to_elem(1,edge)));
       FunctionSpace& left_func_space = mesh.function_space(left_element.f);
       FieldT<int>& left_glb_idx = left_func_space.field<int>("glb_idx");
       FieldT<int>& left_master_glb_idx = left_func_space.field<int>("master_glb_idx");
@@ -335,17 +335,17 @@ void build_edges( Mesh& mesh )
         for (int jedge=0; jedge<nb_edges_per_elem; ++jedge)
         {
           int master_edge = left_to_edges(jedge,master_elem);
-          if (master_glb_idx(node0) == master_glb_idx( edge_nodes(0,master_edge) ) )
+          if (master_glb_idx(node0) == master_glb_idx( C_IDX(edge_nodes(0,master_edge) ) ) )
           {
-            if (master_glb_idx(node1) == master_glb_idx( edge_nodes(1,master_edge) ) )
+            if (master_glb_idx(node1) == master_glb_idx( C_IDX(edge_nodes(1,master_edge) ) ) )
             {
               edge_master_glb_idx(edge) = edge_glb_idx(master_edge);
               break;
             }
           }
-          else if (master_glb_idx(node0) == master_glb_idx( edge_nodes(1,master_edge) ) )
+          else if (master_glb_idx(node0) == master_glb_idx( C_IDX( edge_nodes(1,master_edge) ) ) )
           {
-            if (master_glb_idx(node1) == master_glb_idx( edge_nodes(0,master_edge) ) )
+            if (master_glb_idx(node1) == master_glb_idx( C_IDX( edge_nodes(0,master_edge) ) ) )
             {
               edge_master_glb_idx(edge) = edge_glb_idx(master_edge);
               break;
@@ -368,14 +368,14 @@ void build_edges( Mesh& mesh )
     edge_glb_idx(0,edge) = ++gid;
     edge_master_glb_idx(0,edge) = gid;
     edge_proc(0,edge) = 0;
-    edge_nodes(0,edge)   = pole_edge_nodes[cnt++];
-    edge_nodes(1,edge)   = pole_edge_nodes[cnt++];
+    edge_nodes(0,edge)   = F_IDX(pole_edge_nodes[cnt++]);
+    edge_nodes(1,edge)   = F_IDX(pole_edge_nodes[cnt++]);
     edge_to_elem(0,edge) = -1;
     edge_to_elem(1,edge) = -1;
     edge_to_elem(2,edge) = -1;
     edge_to_elem(3,edge) = -1;
-    node_glb_to_edge[ glb_idx( edge_nodes(0,edge) ) ].push_back(edge);
-    node_glb_to_edge[ glb_idx( edge_nodes(1,edge) ) ].push_back(edge);
+    node_glb_to_edge[ glb_idx( C_IDX(edge_nodes(0,edge)) ) ].push_back(edge);
+    node_glb_to_edge[ glb_idx( C_IDX(edge_nodes(1,edge)) ) ].push_back(edge);
   }
 
 

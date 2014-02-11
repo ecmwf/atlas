@@ -23,8 +23,8 @@ void build_centroids( FunctionSpace& func_space, FieldT<double>& coords)
     elem_centroids(YY,e) = 0.;
     for (int n=0; n<nb_nodes_per_elem; ++n)
     {
-      elem_centroids(XX,e) += coords(XX, elem_nodes(n,e) );
-      elem_centroids(YY,e) += coords(YY, elem_nodes(n,e) );
+      elem_centroids(XX,e) += coords(XX, C_IDX(elem_nodes(n,e)) );
+      elem_centroids(YY,e) += coords(YY, C_IDX(elem_nodes(n,e)) );
     }
     elem_centroids(XX,e) /= static_cast<double>(nb_nodes_per_elem);
     elem_centroids(YY,e) /= static_cast<double>(nb_nodes_per_elem);
@@ -37,7 +37,6 @@ void add_dual_volume_contribution(
     FieldT<double>& dual_volumes )
 {
   int nb_elems = elements.bounds()[1];
-  FieldT<int>& elem_nodes = elements.field<int>("nodes");
   FieldT<double>& elem_centroids = elements.field<double>("centroids");
   FieldT<int>& elem_to_edges = elements.field<int>("to_edge");
   FieldT<double>& edge_centroids = edges.field<double>("centroids");
@@ -51,12 +50,12 @@ void add_dual_volume_contribution(
     double y0 = elem_centroids(YY,elem);
     for (int jedge=0; jedge<nb_edges_per_elem; ++jedge)
     {
-      int edge = elem_to_edges(jedge,elem);
+      int edge = C_IDX(elem_to_edges(jedge,elem));
       double x1 = edge_centroids(XX,edge);
       double y1 = edge_centroids(YY,edge);
       for( int j=0; j<2; ++j )
       {
-        int node = edge_nodes(j,edge);
+        int node = C_IDX(edge_nodes(j,edge));
         double x2 = node_coords(XX,node);
         double y2 = node_coords(YY,node);
         double triag_area = std::abs( x0*(y1-y2)+x1*(y2-y0)+x2*(y0-y1) )*0.5;
@@ -80,10 +79,10 @@ void add_dual_volume_contribution(
   std::map<int,std::vector<int> > node_to_bdry_edge;
   for(int edge=0; edge<nb_edges; ++edge)
   {
-    if (edge_to_elem(0,edge) >= 0 && edge_to_elem(3,edge) < 0)
+    if (C_IDX(edge_to_elem(0,edge)) >= 0 && C_IDX(edge_to_elem(3,edge)) < 0)
     {
-      node_to_bdry_edge[ edge_nodes(0,edge) ].push_back(edge);
-      node_to_bdry_edge[ edge_nodes(1,edge) ].push_back(edge);
+      node_to_bdry_edge[ C_IDX(edge_nodes(0,edge)) ].push_back(edge);
+      node_to_bdry_edge[ C_IDX(edge_nodes(1,edge)) ].push_back(edge);
     }
   }
 
@@ -154,10 +153,10 @@ void build_dual_normals( Mesh& mesh )
   std::map<int,std::vector<int> > node_to_bdry_edge;
   for(int edge=0; edge<nb_edges; ++edge)
   {
-    if (edge_to_elem(0,edge) >= 0 && edge_to_elem(3,edge) < 0)
+    if (C_IDX(edge_to_elem(0,edge)) >= 0 && C_IDX(edge_to_elem(3,edge)) < 0)
     {
-      node_to_bdry_edge[ edge_nodes(0,edge) ].push_back(edge);
-      node_to_bdry_edge[ edge_nodes(1,edge) ].push_back(edge);
+      node_to_bdry_edge[ C_IDX(edge_nodes(0,edge)) ].push_back(edge);
+      node_to_bdry_edge[ C_IDX(edge_nodes(1,edge)) ].push_back(edge);
     }
   }
 
@@ -200,10 +199,10 @@ void build_dual_normals( Mesh& mesh )
     }
     else
     {
-      int left_func_space_idx  = edge_to_elem(0,edge);
-      int left_elem            = edge_to_elem(1,edge);
-      int right_func_space_idx = edge_to_elem(2,edge);
-      int right_elem           = edge_to_elem(3,edge);
+      int left_func_space_idx  = C_IDX(edge_to_elem(0,edge));
+      int left_elem            = C_IDX(edge_to_elem(1,edge));
+      int right_func_space_idx = C_IDX(edge_to_elem(2,edge));
+      int right_elem           = C_IDX(edge_to_elem(3,edge));
       xl = (*elem_centroids[left_func_space_idx])(XX,left_elem);
       yl = (*elem_centroids[left_func_space_idx])(YY,left_elem);
       if( right_elem < 0 )
