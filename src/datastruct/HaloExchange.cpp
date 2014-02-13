@@ -2,7 +2,7 @@
 #include <numeric>      // std::accumulate
 #include <iostream>
 #include <sstream>
-#include "Comm.hpp"
+#include "HaloExchange.hpp"
 
 namespace ecmwf {
 

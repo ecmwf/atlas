@@ -5,7 +5,7 @@
 #include <map>
 #include <string>
 #include <iostream>
-#include "Comm.hpp"
+#include "HaloExchange.hpp"
 #include "Metadata.hpp"
 
 namespace ecmwf {

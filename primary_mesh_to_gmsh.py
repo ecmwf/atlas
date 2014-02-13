@@ -50,7 +50,15 @@ with open(args.rtable,'r') as rtable :
             glb_idx.append(gid)
             gid += 1
 
-        glb_idx.append(100000+gid_gmt) # periodic point
+        glb_idx.append(-lat) # periodic point
+
+max_glb_idx = max(glb_idx)
+print max_glb_idx
+
+for n in range(len(glb_idx)):
+    if (glb_idx[n]<=0):
+        glb_idx[n] = max_glb_idx+1 + abs(glb_idx[n])
+        print glb_idx[n]
 
 
 print( 'Reading primary mesh file "'+args.primary_mesh+'"' )
