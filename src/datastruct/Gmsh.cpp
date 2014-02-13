@@ -196,7 +196,18 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path)
   file << "$Nodes\n";
   file << nb_nodes << "\n";
   for( int n=0; n<nb_nodes; ++n)
-    file << glb_idx(n) << " " << coords(XX,n)/scaling << " " << coords(YY,n)/scaling << " " << 0. << "\n";
+  {
+    double r     = 6371.;
+    double lon   = coords(XX,n);
+    double lat   = coords(YY,n);
+
+    double y = r*std::sin(lat);
+    double x = r*std::cos(lat)*std::sin(lon);
+    double z = r*std::cos(lat)*std::cos(lon);
+    file << glb_idx(n) << " " << x << " " << y << " " << z << "\n";
+//    file << glb_idx(n) << " " << lon/scaling << " " << lat/scaling << " " << 0. << "\n";
+
+  }
   file << "$EndNodes\n";
   file << "$Elements\n";
   file << nb_quads+nb_triags+nb_edges << "\n";
@@ -301,6 +312,11 @@ Mesh* ecmwf__read_gmsh (char* file_path)
 {
   return &Gmsh::read(std::string(file_path));
 }
+
+void ecmwf__write_gmsh (Mesh* mesh, char* file_path) {
+  Gmsh::write( *mesh, std::string(file_path) );
+}
+
 
 // ------------------------------------------------------------------
 

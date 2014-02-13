@@ -139,6 +139,7 @@ void build_dual_normals( Mesh& mesh )
   FieldT<double>& node_coords = nodes_2d.field<double>("coordinates");
   double ymax = nodes_2d.metadata<double>("ymax");
   double ymin = nodes_2d.metadata<double>("ymin");
+  double xmin = nodes_2d.metadata<double>("xmin");
   double pi = acos(-1.);
   double tol = 1.e-6;
 
@@ -162,13 +163,13 @@ void build_dual_normals( Mesh& mesh )
 
   for (int edge=0; edge<nb_edges; ++edge)
   {
-    if( edge_to_elem(0,edge) < 0 )
+    if( C_IDX(edge_to_elem(0,edge)) < 0 )
     {
       // this is a pole edge
       // only compute for one node
       for (int n=0; n<2; ++n)
       {
-        int node = edge_nodes(0,edge);
+        int node = C_IDX(edge_nodes(n,edge));
         std::vector<int>& bdry_edges = node_to_bdry_edge[node];
         double x[2];
         int cnt=0;
@@ -191,7 +192,11 @@ void build_dual_normals( Mesh& mesh )
         if (cnt == 2 )
         {
           dual_normals(XX,edge) = 0;
-          dual_normals(YY,edge) = -x[1]+x[0];
+          if (node_coords(YY,node) < 0.)
+            dual_normals(YY,edge) = -std::abs(x[1]-x[0]);
+          else if (node_coords(YY,node) > 0.)
+            dual_normals(YY,edge) = std::abs(x[1]-x[0]);
+
           //std::cout << "pole dual_normal = " << dual_normals(YY,edge) << std::endl;
           break;
         }

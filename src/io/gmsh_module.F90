@@ -61,11 +61,7 @@ contains
     call dstruct%nodes_comm%setup( dstruct%nodes_proc, dstruct%nodes_glb_idx )
 
 
-    ! Connectivity setup in C++ needs to be changed to fortran indexing starting from 1
-    do jedge=1,dstruct%nb_edges
-      dstruct%edges(:,jedge) = dstruct%edges(:,jedge) + 1
-    enddo
-
+    dstruct%glb_nb_nodes = dstruct%nb_nodes
     dstruct%glb_nb_edges = dstruct%nb_edges
 
     allocate(dstruct%nb_neighbours(dstruct%nb_nodes))
@@ -111,16 +107,42 @@ contains
     allocate(dstruct%pole_edges(dstruct%nb_pole_edges))
     dstruct%pole_edges(:) = tmp(1:dstruct%nb_pole_edges)
     write(0,*) "nb_pole_edges = " , dstruct%nb_pole_edges
-
-
-    ! Pole edges still missing
-    !In C++ compute centroids of pole edges as y=pi/2 (or something)
-    !Identify pole edges here, and allocate it
-
-
-
-
   end subroutine read_gmsh
+
+  subroutine read_gmsh_3d(filename,nb_levels,dstruct)
+    character(len=*), intent(in) :: filename
+    integer, intent(in) :: nb_levels
+    type(DataStructure_type), intent(inout) :: dstruct
+
+    type(Field_type) :: field
+    integer, pointer :: proc(:), glb_idx(:), master_glb_idx(:)
+    call read_gmsh(filename,dstruct)
+
+    dstruct%functionspace_nodes_3d = new_PrismaticFunctionSpace("nodes_3d", "P1-C", nb_levels, dstruct%nb_nodes)
+    call dstruct%mesh%add_function_space( dstruct%functionspace_nodes_3d )
+
+    call dstruct%mesh%add_function_space( new_PrismaticFunctionSpace("edges_3d", "P0-D", nb_levels, dstruct%nb_edges) )
+    dstruct%functionspace_edges_3d = dstruct%mesh%function_space("edges_3d")
+
+    field = dstruct%functionspace_nodes_2d%field("proc")
+    call field%access_data(proc)
+    field = dstruct%functionspace_nodes_2d%field("glb_idx")
+    call field%access_data(glb_idx)
+    field = dstruct%functionspace_nodes_2d%field("master_glb_idx")
+    call field%access_data(master_glb_idx)
+    call dstruct%functionspace_nodes_3d%parallelise(proc,glb_idx,master_glb_idx)
+
+    dstruct%nb_levels = nb_levels
+  end subroutine read_gmsh_3d
+
+
+
+  subroutine write_gmsh(filename,dstruct)
+    character(len=*), intent(in) :: filename
+    type(DataStructure_type), intent(in) :: dstruct
+    call datastruct_write_gmsh(dstruct%mesh,filename)
+  end subroutine write_gmsh
+
 
   subroutine write_gmsh_nodal_field_2d(field, comm, dstruct)
     type(Field_type), intent(in) :: field
@@ -191,11 +213,11 @@ contains
     do jnode=1, dstruct%nb_nodes
       r     = 6371.
       phi   = coords(XX,jnode)
-      theta = -(coords(YY,jnode)+pi/2.)
-      x = r*sin(theta)*cos(phi)
-      y = r*sin(theta)*sin(phi)
-      z = r*cos(theta)
+      theta = coords(YY,jnode)
 
+      y = r*sin(theta)
+      x = r*cos(theta)*sin(phi)
+      z = r*cos(theta)*cos(phi)
       write(50,'(1I8,F18.10,F18.10,F18.10)')  dstruct%nodes_glb_idx(jnode), x,y,z
       !write(50,'(1I8,F18.10,F18.10,F18.10)') dstruct%nodes_glb_idx(jnode), &
       !  & coords(XX,jnode), coords(YY,jnode), 0.
@@ -278,19 +300,17 @@ contains
       if (field%nb_vars() == 3) write(51,*) 3    ! 3-component (vector) field
       write(51,*) size(glb_field,3)          ! number of associated nodal values
 
-      !do jlev=1,nb_levels
-        do jnode=1, dstruct%glb_nb_nodes
-          if (field%nb_vars() == 1) then
-            write(51,'(1I8,E18.10)') jnode, glb_field(1,jlev,jnode)
-          endif
-          if (field%nb_vars() == 2) then
-            write(51,'(1I8,E18.10,E18.10,F3.0)') jnode, glb_field(1,jlev,jnode), glb_field(2,jlev,jnode), 0.0
-          endif
-          if (field%nb_vars() == 3) then
-            write(51,'(1I8,E18.10,E18.10,F3.0)') jnode, glb_field(1,jlev,jnode), glb_field(2,jlev,jnode), glb_field(3,jlev,jnode)
-          endif
-        end do
-      !end do
+      do jnode=1, dstruct%glb_nb_nodes
+        if (field%nb_vars() == 1) then
+          write(51,'(1I8,E18.10)') jnode, glb_field(1,jlev,jnode)
+        endif
+        if (field%nb_vars() == 2) then
+          write(51,'(1I8,E18.10,E18.10,F3.0)') jnode, glb_field(1,jlev,jnode), glb_field(2,jlev,jnode), 0.0
+        endif
+        if (field%nb_vars() == 3) then
+          write(51,'(1I8,E18.10,E18.10,F3.0)') jnode, glb_field(1,jlev,jnode), glb_field(2,jlev,jnode), glb_field(3,jlev,jnode)
+        endif
+      end do
       write(51,'(A)')"$EndNodeData"
     end if
   end do

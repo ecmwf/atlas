@@ -88,7 +88,10 @@ void build_periodic_boundaries( Mesh& mesh )
 
   double min[2];
   double max[2];
-
+  max[XX] = -1e10;
+  max[YY] = -1e10;
+  min[XX] =  1e10;
+  min[YY] =  1e10;
   for (int node=0; node<nb_nodes; ++node)
   {
     min[XX] = std::min( min[XX], coords(XX,node) );
@@ -144,7 +147,7 @@ void build_periodic_boundaries( Mesh& mesh )
   }
 
 
-
+  double tol = 1.e-6;
   std::set<int> new_nodes;
   std::set<int> transform_to_ghost;
   for (int f=0; f<mesh.nb_function_spaces(); ++f)
@@ -172,7 +175,8 @@ void build_periodic_boundaries( Mesh& mesh )
           for (int n1=0; n1<nb_nodes_per_elem[f]; ++n1)
           {
             int east_node = C_IDX( (*elem_nodes[f])(n1,east_elem) );
-            if ( coords(XX,east_node) != max[XX] )
+
+            if ( std::abs( coords(XX,east_node)-max[XX] ) > tol )
             {
               (*elem_nodes[f])(n1,new_elem) = -glb_idx(east_node); // new ghost node
               new_nodes.insert(-glb_idx(east_node));
@@ -186,7 +190,7 @@ void build_periodic_boundaries( Mesh& mesh )
                 for (int n2=0; n2<nb_nodes_per_elem[func_space_idx]; ++n2)
                 {
                   int west_node = C_IDX( (*elem_nodes[func_space_idx])(n2,west_elem) );
-                  if ( coords(YY,west_node) == coords(YY,east_node) && coords(XX,west_node) == min[XX] )
+                  if ( std::abs(coords(YY,west_node)-coords(YY,east_node))<tol && std::abs(coords(XX,west_node)-min[XX])<tol )
                   {
                     // Found matching node --> this east node has to become a ghost node
                     transform_to_ghost.insert(east_node);

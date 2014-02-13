@@ -1165,6 +1165,12 @@ function datastruct_read_gmsh(filename) result(mesh)
   mesh%object = ecmwf__read_gmsh(filename)
 end function datastruct_read_gmsh
 
+subroutine datastruct_write_gmsh(mesh,filename)
+  type(Mesh_type), intent(in) :: mesh
+  character(len=*), intent(in) :: filename
+  call ecmwf__write_gmsh(mesh%object,filename)
+end subroutine datastruct_write_gmsh
+
 subroutine datastruct_build_periodic_boundaries(mesh)
   type(Mesh_type), intent(inout) :: mesh
   call ecmwf__build_periodic_boundaries(mesh%object)

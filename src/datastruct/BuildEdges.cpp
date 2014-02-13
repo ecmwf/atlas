@@ -158,55 +158,88 @@ void build_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& nb_po
 
   double ymin = nodes_2d.metadata<double>("ymin");
   double ymax = nodes_2d.metadata<double>("ymax");
-  double dx   = nodes_2d.metadata<double>("xmax") - nodes_2d.metadata<double>("xmin");
+  double xmin = nodes_2d.metadata<double>("xmin");
+  double xmax = nodes_2d.metadata<double>("xmax");
+  double dx   = xmax-xmin;
   double tol = 1e-6;
   std::vector<int> north_pole_edges;
   std::vector<int> south_pole_edges;
 
-  std::map<float,int> north_nodes;
-  std::map<float,int> south_nodes;
+  std::cout << "ymax = " << ymax << std::endl;
+  std::cout << "ymin = " << ymin << std::endl;
+  std::set<int> north_nodes;
+  std::set<int> south_nodes;
+
   for (int node=0; node<nb_nodes; ++node)
   {
-    float hash = static_cast<float>( static_cast<int>(coords(XX,node)*100) ) / 100;
+    //std::cout << "node " << node << "   " << std::abs(coords(YY,node)-ymax) << std::endl;
     if ( std::abs(coords(YY,node)-ymax)<tol )
     {
-      north_nodes[hash] = node;
+      std::cout << "add north node " << node << "  coord " << coords(XX,node) << std::endl;
+      north_nodes.insert(node);
     }
     else if ( std::abs(coords(YY,node)-ymin)<tol )
     {
-      south_nodes[hash] = node;
+      std::cout << "add south node " << node << "  coord " << coords(XX,node) << std::endl;
+      south_nodes.insert(node);
     }
   }
-
-  for( std::map<float,int>::iterator it=north_nodes.begin(); it!=north_nodes.end(); ++it)
+  double pi = std::acos(-1.);
+  std::cout << "\nnorth: " << north_nodes.size() << std::endl;
+  for( std::set<int>::iterator it=north_nodes.begin(); it!=north_nodes.end(); ++it)
   {
-    float hash = (*it).first;
-    int node = (*it).second;
-    float other_hash = static_cast<float>( static_cast<int>( (coords(XX,node)+0.5*dx)*100) ) / 100;
-    if ( north_nodes.count(other_hash) )
+    int node = *it;
+    double x1 = coords(XX,node);
+    double x2 = coords(XX,node) + 0.5*dx;
+    double dist = 2.*pi;
+    if( x1>=xmin-tol && x1<=(xmax-xmin)*0.5-tol )
     {
+      int recip_node;
+      for( std::set<int>::iterator itr=north_nodes.begin(); itr!=north_nodes.end(); ++itr)
+      {
+        int other_node = *itr;
+        if( std::abs(coords(XX,other_node)-x2)<dist )
+        {
+          dist = std::abs(coords(XX,other_node)-x2);
+          recip_node = other_node;
+        }
+      }
       pole_edge_nodes.push_back(node);
-      pole_edge_nodes.push_back(north_nodes[other_hash]);
+      pole_edge_nodes.push_back(recip_node);
       ++nb_pole_edges;
-      std::cout << "connect " << glb_idx(node) << " and " << glb_idx(north_nodes[other_hash]) << std::endl;
+      std::cout << "connect " << glb_idx(node) << " and " << glb_idx(recip_node) << std::endl;
     }
   }
 
-  for( std::map<float,int>::iterator it=south_nodes.begin(); it!=south_nodes.end(); ++it)
+  std::cout << "\nsouth: " << south_nodes.size() << std::endl;
+  for( std::set<int>::iterator it=south_nodes.begin(); it!=south_nodes.end(); ++it)
   {
-    float hash = (*it).first;
-    int node = (*it).second;
-    float other_hash = static_cast<float>( static_cast<int>( (coords(XX,node)+0.5*dx)*100) ) / 100;
-    if ( south_nodes.count(other_hash) )
+    int node = *it;
+    double x1 = coords(XX,node);
+    double x2 = coords(XX,node) + 0.5*dx;
+    double dist = 2.*pi;
+    if( x1>=xmin-tol && x1<=(xmax-xmin)*0.5-tol )
+
     {
-      pole_edge_nodes.push_back(node);
-      pole_edge_nodes.push_back(south_nodes[other_hash]);
-      ++nb_pole_edges;
-      std::cout << "connect " << glb_idx(node) << " and " << glb_idx(south_nodes[other_hash]) << std::endl;
+      int recip_node;
+      for( std::set<int>::iterator itr=south_nodes.begin(); itr!=south_nodes.end(); ++itr)
+      {
+        int other_node = *itr;
+        if( std::abs(coords(XX,other_node)-x2)<dist )
+        {
+          dist = std::abs(coords(XX,other_node)-x2);
+          recip_node = other_node;
+        }
+      }
+      if (coords(XX,node) >= xmin)
+      {
+        pole_edge_nodes.push_back(node);
+        pole_edge_nodes.push_back(recip_node);
+        ++nb_pole_edges;
+        std::cout << "connect " << glb_idx(node) << " and " << glb_idx(recip_node) << std::endl;
+      }
     }
   }
-
-
 }
 
 
@@ -302,7 +335,7 @@ void build_edges( Mesh& mesh )
         if (node0_master_gid == master_node1_master_gid && node1_master_gid == master_node0_master_gid)
         {
           // wrong order
-          std::cout << "fixed wrong order for edge " << edge_glb_idx(edge) << std::endl;
+          //std::cout << "fixed wrong order for edge " << edge_glb_idx(edge) << std::endl;
           edge_nodes(0,edge) = F_IDX(node1);
           edge_nodes(1,edge) = F_IDX(node0);
           edge_master_glb_idx(edge) = edge_glb_idx(master_edge);

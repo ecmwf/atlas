@@ -27,6 +27,7 @@ extern "C"
   Mesh* ecmwf__Gmsh__read (Gmsh* This, char* file_path);
   void ecmwf__Gmsh__write (Gmsh* This, Mesh* mesh, char* file_path);
   Mesh* ecmwf__read_gmsh (char* file_path);
+  void ecmwf__write_gmsh (Mesh* mesh, char* file_path);
 }
 // ------------------------------------------------------------------
 
