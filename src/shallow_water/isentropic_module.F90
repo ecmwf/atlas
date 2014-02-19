@@ -825,8 +825,8 @@ contains
       ip2   = dstruct%edges(2,iedge)
       ! correct for wrong Y-derivatives in previous loop
       do jlev=1,dstruct%nb_levels
-        gradQ(XXDYY,jlev,ip2) = gradQ(XXDYY,jlev,jnode)+ 2._jprw*avgQSy(XX,jlev,iedge)
-        gradQ(YYDYY,jlev,ip2) = gradQ(YYDYY,jlev,jnode)+ 2._jprw*avgQSy(YY,jlev,iedge)
+        gradQ(XXDYY,jlev,ip2) = gradQ(XXDYY,jlev,ip2)+ 2._jprw*avgQSy(XX,jlev,iedge)
+        gradQ(YYDYY,jlev,ip2) = gradQ(YYDYY,jlev,ip2)+ 2._jprw*avgQSy(YY,jlev,iedge)
       end do
     end do
 
