@@ -14,6 +14,7 @@ FunctionSpace::FunctionSpace(const std::string& name, const std::string& shape_f
     if( bounds_[i] != Field::NB_VARS )
       dof_ *= bounds_[i];
   }
+  glb_dof_ = dof_;
 }
 
 FunctionSpace::~FunctionSpace() 
@@ -174,6 +175,13 @@ template<>
 void FunctionSpace::parallelise(const int proc[], const int glb_idx[], const int master_glb_idx[] )
 {
   halo_exchange_.setup(proc,glb_idx,master_glb_idx,bounds_,bounds_.size()-1);
+  gather_.setup(proc,glb_idx,bounds_,bounds_.size()-1);
+  glb_dof_ = gather_.glb_dof();
+  for( int b=bounds_.size()-2; b>=0; --b)
+  {
+    if( bounds_[b] != Field::NB_VARS )
+      glb_dof_ *= bounds_[b];
+  }
 }
 
 void FunctionSpace::parallelise()
@@ -190,6 +198,14 @@ void FunctionSpace::parallelise()
 FunctionSpace* ecmwf__FunctionSpace__new (char* name, char* shape_func, int bounds[], int bounds_size) { 
   std::vector<int> bounds_vec(bounds,bounds+bounds_size);
   return new FunctionSpace( std::string(name), std::string(shape_func), bounds_vec ); 
+}
+
+int ecmwf__FunctionSpace__dof (FunctionSpace* This) {
+  return This->dof();
+}
+
+int ecmwf__FunctionSpace__glb_dof (FunctionSpace* This) {
+  return This->glb_dof();
 }
 
 void ecmwf__FunctionSpace__create_field_double (FunctionSpace* This, char* name, int nb_vars) {
@@ -235,6 +251,18 @@ void ecmwf__FunctionSpace__halo_exchange_float (FunctionSpace* This, float field
 
 void ecmwf__FunctionSpace__halo_exchange_double (FunctionSpace* This, double field_data[], int field_size) {
   This->halo_exchange(field_data,field_size);
+}
+
+void ecmwf__FunctionSpace__gather_int (FunctionSpace* This, int field_data[], int field_size, int glbfield_data[], int glbfield_size) {
+  This->gather(field_data,field_size, glbfield_data,glbfield_size);
+}
+
+void ecmwf__FunctionSpace__gather_float (FunctionSpace* This, float field_data[], int field_size, float glbfield_data[], int glbfield_size) {
+  This->gather(field_data,field_size, glbfield_data,glbfield_size);
+}
+
+void ecmwf__FunctionSpace__gather_double (FunctionSpace* This, double field_data[], int field_size, double glbfield_data[], int glbfield_size) {
+  This->gather(field_data,field_size, glbfield_data,glbfield_size);
 }
 
 HaloExchange const* ecmwf__FunctionSpace__halo_exchange (FunctionSpace* This) {

@@ -1,5 +1,5 @@
-#ifndef field_hpp
-#define field_hpp
+#ifndef Field_hpp
+#define Field_hpp
 
 #include <vector>
 #include <string>

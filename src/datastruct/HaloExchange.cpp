@@ -9,9 +9,8 @@ namespace ecmwf {
 HaloExchange::HaloExchange() :
   is_setup_(false)
 {
-  int ierr;
-  ierr = MPI_Comm_rank( MPI_COMM_WORLD, &myproc );
-  ierr = MPI_Comm_size( MPI_COMM_WORLD, &nproc );
+  myproc = MPL::rank();
+  nproc  = MPL::size();
 }
 
 void HaloExchange::setup(const int proc[],
@@ -31,10 +30,10 @@ void HaloExchange::setup(const int proc[],
   par_bound_ = par_bound;
 
 
-  sync_sendcounts_.resize(nproc,0);
-  sync_recvcounts_.resize(nproc,0);
-  sync_senddispls_.resize(nproc,0);
-  sync_recvdispls_.resize(nproc,0);
+  sendcounts_.resize(nproc,0);
+  recvcounts_.resize(nproc,0);
+  senddispls_.resize(nproc,0);
+  recvdispls_.resize(nproc,0);
 
   int nb_nodes = bounds_[par_bound_];
 
@@ -67,50 +66,50 @@ void HaloExchange::setup(const int proc[],
   for (int jj=0; jj<nb_nodes; ++jj)
   {
     if (proc[jj] != myproc || master_glb_idx[jj] != glb_idx[jj])
-      ++sync_recvcounts_[proc[jj]];
+      ++recvcounts_[proc[jj]];
   }
-  sync_recvcnt_ = std::accumulate(sync_recvcounts_.begin(),sync_recvcounts_.end(),0);
-//  std::cout << myproc << ":  recvcnt = " << sync_recvcnt_ << std::endl;
+  recvcnt_ = std::accumulate(recvcounts_.begin(),recvcounts_.end(),0);
+//  std::cout << myproc << ":  recvcnt = " << recvcnt_ << std::endl;
 
 
   /*
     Find the amount of nodes this proc has to send to each other proc
   */
 
-  ierr = MPI_Alltoall( &sync_recvcounts_[0], 1, MPI_INT, &sync_sendcounts_[0], 1, MPI_INT, MPI_COMM_WORLD );
-  sync_sendcnt_ = std::accumulate(sync_sendcounts_.begin(),sync_sendcounts_.end(),0);
-  std::cout << myproc << ":  sendcnt = " << sync_sendcnt_ << std::endl;
+  ierr = MPI_Alltoall( &recvcounts_[0], 1, MPI_INT, &sendcounts_[0], 1, MPI_INT, MPI_COMM_WORLD );
+  sendcnt_ = std::accumulate(sendcounts_.begin(),sendcounts_.end(),0);
+  std::cout << myproc << ":  sendcnt = " << sendcnt_ << std::endl;
 
-  sync_recvdispls_[0]=0;
-  sync_senddispls_[0]=0;
+  recvdispls_[0]=0;
+  senddispls_[0]=0;
   for (int jproc=1; jproc<nproc; ++jproc) // start at 1
   {
-    sync_recvdispls_[jproc]=sync_recvcounts_[jproc-1]+sync_recvdispls_[jproc-1];
-    sync_senddispls_[jproc]=sync_sendcounts_[jproc-1]+sync_senddispls_[jproc-1];
+    recvdispls_[jproc]=recvcounts_[jproc-1]+recvdispls_[jproc-1];
+    senddispls_[jproc]=sendcounts_[jproc-1]+senddispls_[jproc-1];
   }
   /*
     Fill vector "send_requests" with global indices of nodes needed, but are on other procs
-    We can also fill in the vector "sync_recvmap_" which holds local indices of requested nodes
+    We can also fill in the vector "recvmap_" which holds local indices of requested nodes
   */
 
-  std::vector<int> send_requests(sync_recvcnt_);
+  std::vector<int> send_requests(recvcnt_);
 
-  sync_recvmap_.resize(sync_recvcnt_);
+  recvmap_.resize(recvcnt_);
   std::vector<int> cnt(nproc,0);
   for (int jj=0; jj<nb_nodes; ++jj)
   {
     if (proc[jj] != myproc || master_glb_idx[jj] != glb_idx[jj])
     {
-      const int req_idx = sync_recvdispls_[proc[jj]] + cnt[proc[jj]];
+      const int req_idx = recvdispls_[proc[jj]] + cnt[proc[jj]];
       send_requests[req_idx] = master_glb_idx[jj];
-      sync_recvmap_[req_idx] = jj;
+      recvmap_[req_idx] = jj;
       ++cnt[proc[jj]];
     }
 //    if (master_glb_idx[jj] != glb_idx[jj])
 //    {
-//      const int req_idx = sync_recvdispls_[proc[jj]] + cnt[proc[jj]];
+//      const int req_idx = recvdispls_[proc[jj]] + cnt[proc[jj]];
 //      send_requests[req_idx] = master_glb_idx[jj];
-//      sync_recvmap_[req_idx] = jj;
+//      recvmap_[req_idx] = jj;
 //      ++cnt[proc[jj]];
 //    }
 
@@ -120,18 +119,18 @@ void HaloExchange::setup(const int proc[],
     Fill vector "recv_requests" with global indices that are needed by other procs
   */
 
-  std::vector<int> recv_requests(sync_sendcnt_);
+  std::vector<int> recv_requests(sendcnt_);
 
-  ierr = MPI_Alltoallv( &send_requests[0], &sync_recvcounts_[0], &sync_recvdispls_[0], MPI_INT,
-                        &recv_requests[0], &sync_sendcounts_[0], &sync_senddispls_[0], MPI_INT,
+  ierr = MPI_Alltoallv( &send_requests[0], &recvcounts_[0], &recvdispls_[0], MPI_INT,
+                        &recv_requests[0], &sendcounts_[0], &senddispls_[0], MPI_INT,
                         MPI_COMM_WORLD );
 
   /*
     What needs to be sent to other procs can be found by a map from global to local indices
   */
-  sync_sendmap_.resize(sync_sendcnt_);
-  for( int jj=0; jj<sync_sendcnt_; ++jj )
-    sync_sendmap_[jj] = map_glb_to_loc[ recv_requests[jj] ];
+  sendmap_.resize(sendcnt_);
+  for( int jj=0; jj<sendcnt_; ++jj )
+    sendmap_[jj] = map_glb_to_loc[ recv_requests[jj] ];
 
   // Packet size
   packet_size_ = 1;
@@ -142,14 +141,14 @@ void HaloExchange::setup(const int proc[],
       packet_size_ *= bounds_[b];
   }
 
-//   std::cout << myproc << "  :  sync_sendmap_  = ";
-//   for( int i=0; i< sync_sendmap_.size(); ++i)
-//     std::cout << sync_sendmap_[i] << " ";
+//   std::cout << myproc << "  :  sendmap_  = ";
+//   for( int i=0; i< sendmap_.size(); ++i)
+//     std::cout << sendmap_[i] << " ";
 //   std::cout << std::endl;
 
-//   std::cout << myproc << "  :  sync_recvmap_  = ";
-//   for( int i=0; i< sync_recvmap_.size(); ++i)
-//     std::cout << sync_recvmap_[i] << " ";
+//   std::cout << myproc << "  :  recvmap_  = ";
+//   for( int i=0; i< recvmap_.size(); ++i)
+//     std::cout << recvmap_[i] << " ";
 //   std::cout << std::endl;
 
   is_setup_ = true;
@@ -165,18 +164,18 @@ inline void HaloExchange::create_mappings_impl<2,0>(
 {
   const int nb_nodes = bounds_[0];
   int send_idx(0);
-  for (int jnode=0; jnode<sync_sendcnt_; ++jnode)
+  for (int jnode=0; jnode<sendcnt_; ++jnode)
   {
-    const int inode = sync_sendmap_[jnode];
+    const int inode = sendmap_[jnode];
     for (int jvar=0; jvar<nb_vars; ++jvar)
     {
       send_map[send_idx++] = index( inode,jvar,   nb_nodes,nb_vars);
     }
   }
   int recv_idx(0);
-  for (int jnode=0; jnode<sync_recvcnt_; ++jnode)
+  for (int jnode=0; jnode<recvcnt_; ++jnode)
   {
-    const int inode = sync_recvmap_[jnode];
+    const int inode = recvmap_[jnode];
     for (int jvar=0; jvar<nb_vars; ++jvar)
     {
       recv_map[recv_idx++] = index( inode,jvar,   nb_nodes,nb_vars);;
@@ -192,18 +191,18 @@ inline void HaloExchange::create_mappings_impl<2,1>(
 {
   const int nb_nodes = bounds_[1];
   int send_idx(0);
-  for (int jnode=0; jnode<sync_sendcnt_; ++jnode)
+  for (int jnode=0; jnode<sendcnt_; ++jnode)
   {
-    const int inode = sync_sendmap_[jnode];
+    const int inode = sendmap_[jnode];
     for (int jvar=0; jvar<nb_vars; ++jvar)
     {
       send_map[send_idx++] = index( jvar, inode,  nb_vars, nb_nodes);
     }
   }
   int recv_idx(0);
-  for (int jnode=0; jnode<sync_recvcnt_; ++jnode)
+  for (int jnode=0; jnode<recvcnt_; ++jnode)
   {
-    const int inode = sync_recvmap_[jnode];
+    const int inode = recvmap_[jnode];
     for (int jvar=0; jvar<nb_vars; ++jvar)
     {
       recv_map[recv_idx++] = index( jvar, inode,  nb_vars, nb_nodes);
@@ -222,9 +221,9 @@ inline void HaloExchange::create_mappings_impl<3,1>(
   const int nb_nodes = bounds_[1];
   int send_idx(0);
   int recv_idx(0);
-  for (int n=0; n<sync_sendcnt_; ++n)
+  for (int n=0; n<sendcnt_; ++n)
   {
-    const int jnode = sync_sendmap_[n];
+    const int jnode = sendmap_[n];
     for (int var=0; var<nb_vars; ++var)
     {
       const int varidx = var*nb_nodes;
@@ -237,9 +236,9 @@ inline void HaloExchange::create_mappings_impl<3,1>(
     }
   }
 
-  for (int n=0; n<sync_recvcnt_; ++n)
+  for (int n=0; n<recvcnt_; ++n)
   {
-    const int jnode = sync_recvmap_[n];
+    const int jnode = recvmap_[n];
     for (int var=0; var<nb_vars; ++var)
     {
       const int varidx = var*nb_nodes;

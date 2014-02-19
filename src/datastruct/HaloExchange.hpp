@@ -1,19 +1,11 @@
-#ifndef Comm_hpp
-#define Comm_hpp
+#ifndef HaloExchange_hpp
+#define HaloExchange_hpp
 
-#include <mpi.h>
 #include <vector>
 #include <stdexcept>
+#include "MPL.hpp"
 
 namespace ecmwf {
-
-namespace detail {
-  template<typename DATA_TYPE>
-  MPI_Datatype MPI_TYPE();
-  template<> inline MPI_Datatype MPI_TYPE<int>()    { return MPI_INT; }
-  template<> inline MPI_Datatype MPI_TYPE<float>()  { return MPI_FLOAT; }
-  template<> inline MPI_Datatype MPI_TYPE<double>() { return MPI_DOUBLE; }
-}
 
 class HaloExchange
 {
@@ -46,14 +38,14 @@ private: // methods
 
 private: // data
   int               packet_size_;
-  int               sync_sendcnt_;
-  int               sync_recvcnt_;
-  std::vector<int>  sync_sendcounts_;
-  std::vector<int>  sync_senddispls_;
-  std::vector<int>  sync_recvcounts_;
-  std::vector<int>  sync_recvdispls_;
-  std::vector<int>  sync_sendmap_;
-  std::vector<int>  sync_recvmap_;
+  int               sendcnt_;
+  int               recvcnt_;
+  std::vector<int>  sendcounts_;
+  std::vector<int>  senddispls_;
+  std::vector<int>  recvcounts_;
+  std::vector<int>  recvdispls_;
+  std::vector<int>  sendmap_;
+  std::vector<int>  recvmap_;
 
   int nproc;
   int myproc;
@@ -72,13 +64,12 @@ void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
   }
 #define FIELD_CONTIGUOUS true
 
-  using namespace detail;
   int tag=1;
   int ierr;
   int ibuf;
   int point_size = packet_size_ * nb_vars;
-  int send_size = sync_sendcnt_ * point_size;
-  int recv_size = sync_recvcnt_ * point_size;
+  int send_size = sendcnt_ * point_size;
+  int recv_size = recvcnt_ * point_size;
 
 #ifndef STACK_ARRAYS
   std::vector<DATA_TYPE> send_buffer(send_size);
@@ -108,10 +99,10 @@ void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
 
   for (int jproc=0; jproc<nproc; ++jproc)
   {
-    send_counts[jproc] = sync_sendcounts_[jproc]*point_size;
-    recv_counts[jproc] = sync_recvcounts_[jproc]*point_size;
-    send_displs[jproc] = sync_senddispls_[jproc]*point_size;
-    recv_displs[jproc] = sync_recvdispls_[jproc]*point_size;
+    send_counts[jproc] = sendcounts_[jproc]*point_size;
+    recv_counts[jproc] = recvcounts_[jproc]*point_size;
+    send_displs[jproc] = senddispls_[jproc]*point_size;
+    recv_displs[jproc] = recvdispls_[jproc]*point_size;
   }
 
 #ifndef FIELD_CONTIGUOUS
@@ -139,7 +130,7 @@ void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
     if(recv_counts[jproc] > 0)
     {
       ierr = MPI_Irecv( &recv_buffer[recv_displs[jproc]] , recv_counts[jproc],
-                        MPI_TYPE<DATA_TYPE>(), jproc, tag, MPI_COMM_WORLD, &recv_req[jproc] );
+                        MPL::TYPE<DATA_TYPE>(), jproc, tag, MPI_COMM_WORLD, &recv_req[jproc] );
     }
   }
 
@@ -151,9 +142,9 @@ void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
 #else
   // Use original mapping + contiguous bits
   ibuf = 0;
-  for( int jj=0; jj<sync_sendcnt_; ++jj)
+  for( int jj=0; jj<sendcnt_; ++jj)
   {
-    const int ii = point_size*sync_sendmap_[jj];
+    const int ii = point_size*sendmap_[jj];
     for( int ip=0; ip<point_size; ++ip )
       send_buffer[ibuf++] = field[ ii + ip ];
   }
@@ -165,14 +156,14 @@ void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
     if(send_counts[jproc] > 0)
     {
       ierr = MPI_Isend( &send_buffer[send_displs[jproc]], send_counts[jproc],
-                        MPI_TYPE<DATA_TYPE>(), jproc, tag, MPI_COMM_WORLD, &send_req[jproc] );
+                        MPL::TYPE<DATA_TYPE>(), jproc, tag, MPI_COMM_WORLD, &send_req[jproc] );
     }
   }
 
   /// Wait for receiving to finish
   for (int jproc=0; jproc<nproc; ++jproc)
   {
-    if( sync_recvcounts_[jproc] > 0)
+    if( recvcounts_[jproc] > 0)
     {
       ierr = MPI_Wait(&recv_req[jproc], MPI_STATUS_IGNORE );
     }
@@ -188,9 +179,9 @@ void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
 #else
   // Use original mapping + contiguous bits
   ibuf = 0;
-  for( int jj=0; jj<sync_recvcnt_; ++jj)
+  for( int jj=0; jj<recvcnt_; ++jj)
   {
-    const int ii = point_size*sync_recvmap_[jj];
+    const int ii = point_size*recvmap_[jj];
     for( int ip=0; ip<point_size; ++ip)
       field[ ii + ip ] = recv_buffer[ibuf++];
   }
@@ -199,7 +190,7 @@ void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
   /// Wait for sending to finish
   for (int jproc=0; jproc<nproc; ++jproc)
   {
-    if( sync_sendcounts_[jproc] > 0)
+    if( sendcounts_[jproc] > 0)
     {
       ierr = MPI_Wait(&send_req[jproc], MPI_STATUS_IGNORE );
     }
@@ -228,4 +219,4 @@ extern "C"
 
 } // namespace ecmwf
 
-#endif // Comm_hpp
+#endif // HaloExchange_hpp

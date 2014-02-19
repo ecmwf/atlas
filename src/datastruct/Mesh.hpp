@@ -1,5 +1,5 @@
-#ifndef mesh_hpp
-#define mesh_hpp
+#ifndef Mesh_hpp
+#define Mesh_hpp
 
 #include <vector>
 #include <map>

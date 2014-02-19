@@ -17,6 +17,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS FunctionSpace.hpp)
 generate_fortran_bindings(FORTRAN_BINDINGS Mesh.hpp)
 generate_fortran_bindings(FORTRAN_BINDINGS Metadata.hpp)
 generate_fortran_bindings(FORTRAN_BINDINGS HaloExchange.hpp)
+generate_fortran_bindings(FORTRAN_BINDINGS Gather.hpp)
 generate_fortran_bindings(FORTRAN_BINDINGS Gmsh.hpp)
 generate_fortran_bindings(FORTRAN_BINDINGS BuildPeriodicBoundaries.hpp)
 generate_fortran_bindings(FORTRAN_BINDINGS BuildEdges.hpp)
@@ -50,6 +51,9 @@ add_library( datastruct
     Partitioner.cpp
     HaloExchange.hpp
     HaloExchange.cpp
+    Gather.hpp
+    Gather.cpp
+    MPL.hpp
 
   # Fortran part
     ${FORTRAN_BINDINGS}

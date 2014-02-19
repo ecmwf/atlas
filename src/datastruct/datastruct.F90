@@ -35,7 +35,7 @@ use fieldset_c_binding
 use functionspace_c_binding
 use mesh_c_binding
 use metadata_c_binding
-use comm_c_binding
+use haloexchange_c_binding
 use gmsh_c_binding
 use BuildPeriodicBoundaries_c_binding
 use BuildEdges_c_binding
@@ -112,6 +112,8 @@ private
   type(c_ptr) :: object = C_NULL_ptr
 contains
   procedure :: name => FunctionSpace__name
+  procedure :: dof => FunctionSpace__dof
+  procedure :: glb_dof => FunctionSpace__glb_dof
   procedure :: create_field => FunctionSpace__create_field
   procedure :: remove_field => FunctionSpace__remove_field
   procedure :: bounds => FunctionSpace__bounds
@@ -137,6 +139,13 @@ contains
       & FunctionSpace__halo_exchange_real64_r1, &
       & FunctionSpace__halo_exchange_real64_r2, &
       & FunctionSpace__halo_exchange_real64_r3
+  procedure, private :: FunctionSpace__gather_real64_r1
+  procedure, private :: FunctionSpace__gather_real64_r2
+  procedure, private :: FunctionSpace__gather_real64_r3
+  generic :: gather => &
+      & FunctionSpace__gather_real64_r1, &
+      & FunctionSpace__gather_real64_r2, &
+      & FunctionSpace__gather_real64_r3
 END TYPE FunctionSpace_type
 
 interface new_FunctionSpace
@@ -399,61 +408,84 @@ function c_to_f_string_cptr(cptr) result(str)
 end function c_to_f_string_cptr
 
 function c_str(f_str)
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
   character(len=*), intent(in) :: f_str
   character(len=len_trim(f_str)+1) :: c_str
   c_str = trim(f_str) // c_null_char
 end function c_str
 
+function c_loc_int32(x)
+  use iso_c_binding
+  integer, target :: x
+  type(c_ptr) :: c_loc_int32
+  c_loc_int32 = C_LOC(x)
+end function
+
+function c_loc_real32(x)
+  use iso_c_binding
+  real(c_float), target :: x
+  type(c_ptr) :: c_loc_real32
+  c_loc_real32 = C_LOC(x)
+end function
+
+function c_loc_real64(x)
+  use iso_c_binding
+  real(c_double), target :: x
+  type(c_ptr) :: c_loc_real64
+  c_loc_real64 = C_LOC(x)
+end function
+
 function view1d_int32_rank2(array) result( view )
-  integer, intent(inout) :: array(:,:)
+  integer, intent(in), target :: array(:,:)
   type(c_ptr) :: array_c_ptr
   integer, pointer :: view(:)
-  array_c_ptr = C_LOC(array(1,1))
+  array_c_ptr = c_loc_int32(array(1,1))
   call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
 end function view1d_int32_rank2
 
 function view1d_int32_rank3(array) result( view )
-  integer, intent(inout) :: array(:,:,:)
+  integer, intent(in), target :: array(:,:,:)
   type(c_ptr) :: array_c_ptr
   integer, pointer :: view(:)
-  array_c_ptr = C_LOC(array(1,1,1))
+  array_c_ptr = c_loc_int32(array(1,1,1))
   call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
 end function view1d_int32_rank3
 
 function view1d_real32_rank2(array) result( view )
-  real(c_float), intent(inout) :: array(:,:)
+  real(c_float), intent(in), target :: array(:,:)
   type(c_ptr) :: array_c_ptr
   real(c_float), pointer :: view(:)
+#ifndef  __GFORTRAN__
   if( .not. is_contiguous(array) ) then
     write(0,*) "ERROR: array is not contiguous in view1d"
     call abort()
   end if
-  array_c_ptr = C_LOC(array(1,1))
+#endif
+  array_c_ptr = c_loc_real32(array(1,1))
   call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
 end function view1d_real32_rank2
 
 function view1d_real32_rank3(array) result( view )
-  real(c_float), intent(inout) :: array(:,:,:)
+  real(c_float), intent(in), target :: array(:,:,:)
   type(c_ptr) :: array_c_ptr
   real(c_float), pointer :: view(:)
-  array_c_ptr = C_LOC(array(1,1,1))
+  array_c_ptr = c_loc_real32(array(1,1,1))
   call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
 end function view1d_real32_rank3
 
 function view1d_real64_rank2(array) result( view )
-  real(c_double), intent(inout) :: array(:,:)
+  real(c_double), intent(in), target :: array(:,:)
   type(c_ptr) :: array_c_ptr
   real(c_double), pointer :: view(:)
-  array_c_ptr = C_LOC(array(1,1))
+  array_c_ptr = c_loc_real64(array(1,1))
   call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
 end function view1d_real64_rank2
 
 function view1d_real64_rank3(array) result( view )
-  real(c_double), intent(inout) :: array(:,:,:)
+  real(c_double), intent(in), target :: array(:,:,:)
   type(c_ptr) :: array_c_ptr
   real(c_double), pointer :: view(:)
-  array_c_ptr = C_LOC(array(1,1,1))
+  array_c_ptr = c_loc_real64(array(1,1,1))
   call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
 end function view1d_real64_rank3
 
@@ -555,6 +587,18 @@ function FunctionSpace__name(this) result(name)
   name = c_to_f_string_cptr(name_c_str)
 end function FunctionSpace__name
 
+function FunctionSpace__dof(this) result(dof)
+  class(FunctionSpace_type), intent(in) :: this
+  integer :: dof
+  dof = ecmwf__FunctionSpace__dof(this%object)
+end function FunctionSpace__dof
+
+function FunctionSpace__glb_dof(this) result(glb_dof)
+  class(FunctionSpace_type), intent(in) :: this
+  integer :: glb_dof
+  glb_dof = ecmwf__FunctionSpace__glb_dof(this%object)
+end function FunctionSpace__glb_dof
+
 function FunctionSpace__bounds(this) result(bounds)
   class(FunctionSpace_type), intent(in) :: this
   integer, pointer :: bounds(:)
@@ -587,10 +631,12 @@ end function FunctionSpace__get_halo_exchange
 subroutine FunctionSpace__halo_exchange_int32_r1(this, field_data)
   class(FunctionSpace_type), intent(in) :: this
   integer, intent(inout) :: field_data(:)
+#ifndef  __GFORTRAN__
   if (.not. is_contiguous(field_data) ) then
     write(0,*) "ERROR: field_data is not contiguous"
     call abort()
   end if
+#endif
   call ecmwf__FunctionSpace__halo_exchange_int( this%object, field_data, size(field_data) )
 end subroutine FunctionSpace__halo_exchange_int32_r1
 subroutine FunctionSpace__halo_exchange_int32_r2(this, field_data)
@@ -611,10 +657,12 @@ end subroutine FunctionSpace__halo_exchange_int32_r3
 subroutine FunctionSpace__halo_exchange_real32_r1(this, field_data)
   class(FunctionSpace_type), intent(in) :: this
   real(c_float), intent(inout) :: field_data(:)
+#ifndef  __GFORTRAN__
   if (.not. is_contiguous(field_data) ) then
     write(0,*) "ERROR: field_data is not contiguous"
     call abort()
   end if
+#endif
   call ecmwf__FunctionSpace__halo_exchange_float( this%object, field_data, size(field_data) )
 end subroutine FunctionSpace__halo_exchange_real32_r1
 subroutine FunctionSpace__halo_exchange_real32_r2(this, field_data)
@@ -635,10 +683,12 @@ end subroutine FunctionSpace__halo_exchange_real32_r3
 subroutine FunctionSpace__halo_exchange_real64_r1(this, field_data)
   class(FunctionSpace_type), intent(in) :: this
   real(c_double), intent(inout) :: field_data(:)
+#ifndef  __GFORTRAN__
   if (.not. is_contiguous(field_data) ) then
     write(0,*) "ERROR: field_data is not contiguous"
     call abort()
   end if
+#endif
   call ecmwf__FunctionSpace__halo_exchange_double( this%object, field_data, size(field_data) )
 end subroutine FunctionSpace__halo_exchange_real64_r1
 subroutine FunctionSpace__halo_exchange_real64_r2(this, field_data)
@@ -655,6 +705,48 @@ subroutine FunctionSpace__halo_exchange_real64_r3(this, field_data)
   view => view1d(field_data)
   call ecmwf__FunctionSpace__halo_exchange_double( this%object, view, size(field_data) )
 end subroutine FunctionSpace__halo_exchange_real64_r3
+
+
+
+subroutine FunctionSpace__gather_real64_r1(this, field_data, glbfield_data)
+  class(FunctionSpace_type), intent(in) :: this
+  real(c_double), intent(in) :: field_data(:)
+  real(c_double), intent(inout) :: glbfield_data(:)
+#ifndef  __GFORTRAN__
+  if (.not. is_contiguous(field_data) ) then
+    write(0,*) "ERROR: field_data is not contiguous"
+    call abort()
+  end if
+#endif
+  call ecmwf__FunctionSpace__gather_double( this%object, field_data, size(field_data), &
+                                          & glbfield_data, size(glbfield_data) )
+end subroutine FunctionSpace__gather_real64_r1
+subroutine FunctionSpace__gather_real64_r2(this, field_data, glbfield_data)
+  class(FunctionSpace_type), intent(in) :: this
+  real(c_double), intent(in) :: field_data(:,:)
+  real(c_double), intent(inout) :: glbfield_data(:,:)
+  real(c_double), pointer :: view(:), glbview(:)
+  view => view1d(field_data)
+  if( size(glbfield_data) /= 0 ) then
+    glbview => view1d(glbfield_data)
+  end if
+  call ecmwf__FunctionSpace__gather_double( this%object, view, size(field_data), &
+                                          & glbview, size(glbfield_data) )
+end subroutine FunctionSpace__gather_real64_r2
+subroutine FunctionSpace__gather_real64_r3(this, field_data, glbfield_data)
+  class(FunctionSpace_type), intent(in) :: this
+  real(c_double), intent(in) :: field_data(:,:,:)
+  real(c_double), intent(inout) :: glbfield_data(:,:,:)
+  real(c_double), pointer :: view(:), glbview(:)
+  view => view1d(field_data)
+  glbview => view1d(glbfield_data)
+  call ecmwf__FunctionSpace__gather_double( this%object, view, size(field_data), &
+                                          & glbview, size(glbfield_data) )
+end subroutine FunctionSpace__gather_real64_r3
+
+
+
+
 
 ! ------------------------------------------------------------------------------
 ! HaloExchange routines
@@ -977,7 +1069,8 @@ function Field__data2_wp(this) result(field)
   end do
   call C_F_POINTER ( field_c_ptr , field , field_bounds(field_rank-1:field_rank) )
   if( size(field) /= field_size ) then
-    write(0,*) "Requested bounds of field ", this%name(), "[", field_bounds(1:2), "] do not cover the entire field of size ", field_size
+    write(0,*) "Requested bounds of field ", this%name(), "[", field_bounds(1:2), &
+     & "] do not cover the entire field of size ", field_size
     call abort()
   end if
 end function Field__data2_wp

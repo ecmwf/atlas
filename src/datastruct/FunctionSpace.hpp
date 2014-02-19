@@ -1,11 +1,12 @@
-#ifndef functionspace_hpp
-#define functionspace_hpp
+#ifndef FunctionSpace_hpp
+#define FunctionSpace_hpp
 
 #include <vector>
 #include <map>
 #include <string>
 #include <iostream>
 #include "HaloExchange.hpp"
+#include "Gather.hpp"
 #include "Metadata.hpp"
 
 namespace ecmwf {
@@ -56,6 +57,18 @@ public:
 
   const HaloExchange& halo_exchange() { return halo_exchange_; }
 
+  template< typename DATA_TYPE >
+  void gather( DATA_TYPE field_data[], int field_size, DATA_TYPE glbfield_data[], int glbfield_size )
+  {
+    int nb_vars = field_size/dof_;
+    if( dof_*nb_vars != field_size ) std::cout << "ERROR in FunctionSpace::gather" << std::endl;
+    if( glb_dof_*nb_vars != glbfield_size ) std::cout << "ERROR in FunctionSpace::gather" << std::endl;
+
+    gather_.execute( field_data, glbfield_data, nb_vars );
+  }
+
+  const Gather& gather() { return gather_; }
+
   void set_index(int idx) { idx_ = idx; }
 
   Metadata& metadata() { return metadata_; }
@@ -68,6 +81,10 @@ public:
 
   int nb_fields() const { return fields_.size(); }
 
+  int dof() const { return dof_; }
+
+  int glb_dof() const { return glb_dof_; }
+
 protected:
   std::string name_;
   int idx_;
@@ -75,7 +92,9 @@ protected:
   std::map< std::string, size_t > index_;
   std::vector< Field* > fields_;
   HaloExchange halo_exchange_;
+  Gather gather_;
   int dof_;
+  int glb_dof_;
   Metadata metadata_;
 
 private:
@@ -90,6 +109,8 @@ extern "C"
 {
   FunctionSpace* ecmwf__FunctionSpace__new (char* name, char* shape_func, int bounds[], int bounds_size);
   void ecmwf__FunctionSpace__delete (FunctionSpace* This);
+  int ecmwf__FunctionSpace__dof (FunctionSpace* This);
+  int ecmwf__FunctionSpace__glb_dof (FunctionSpace* This);
   void ecmwf__FunctionSpace__create_field_int (FunctionSpace* This, char* name, int nb_vars);
   void ecmwf__FunctionSpace__create_field_float (FunctionSpace* This, char* name, int nb_vars);
   void ecmwf__FunctionSpace__create_field_double (FunctionSpace* This, char* name, int nb_vars);
@@ -101,7 +122,10 @@ extern "C"
   void ecmwf__FunctionSpace__halo_exchange_int (FunctionSpace* This, int field_data[], int field_size); 
   void ecmwf__FunctionSpace__halo_exchange_float (FunctionSpace* This, float field_data[], int field_size); 
   void ecmwf__FunctionSpace__halo_exchange_double (FunctionSpace* This, double field_data[], int field_size); 
-  HaloExchange const* ecmwf__FunctionSpace__halo_exchange (FunctionSpace* This); 
+  void ecmwf__FunctionSpace__gather_int (FunctionSpace* This, int field_data[], int field_size, int glbfield_data[], int glbfield_size);
+  void ecmwf__FunctionSpace__gather_float (FunctionSpace* This, float field_data[], int field_size, float glbfield_data[], int glbfield_size);
+  void ecmwf__FunctionSpace__gather_double (FunctionSpace* This, double field_data[], int field_size, double glbfield_data[], int glbfield_size);
+  HaloExchange const* ecmwf__FunctionSpace__halo_exchange (FunctionSpace* This);
 
 }
 // ------------------------------------------------------------------

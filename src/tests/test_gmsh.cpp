@@ -3,14 +3,15 @@
 #include "datastruct/BuildDualMesh.hpp"
 #include "datastruct/BuildPeriodicBoundaries.hpp"
 #include "datastruct/Partitioner.hpp"
-#include <mpi.h>
+#include "datastruct/MPL.hpp"
 
 using namespace ecmwf;
 int main(int argc, char *argv[])
 {
-  MPI_Init(&argc,&argv);
+  MPL::init();
 
-  Mesh& mesh = Gmsh::read("unstr.msh");
+//  Mesh& mesh = Gmsh::read("unstr.msh");
+  Mesh& mesh = Gmsh::read("mesh_latlon.msh");
   //Mesh& mesh = Gmsh::read("untitled.msh");
   //Mesh& mesh = Gmsh::read("test_no_edges.msh");
 
@@ -21,6 +22,6 @@ int main(int argc, char *argv[])
   build_dual_mesh(mesh);
   Gmsh::write(mesh,"bla.msh");
   
-  MPI_Finalize();
+  MPL::finalize();
   return 0;
 }

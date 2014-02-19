@@ -1,5 +1,5 @@
-#ifndef fieldset_hpp
-#define fieldset_hpp
+#ifndef FieldSet_hpp
+#define FieldSet_hpp
 
 #include <vector>
 #include <map>
