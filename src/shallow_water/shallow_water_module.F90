@@ -31,8 +31,8 @@ module shallow_water_module
   integer, parameter, public :: EQS_VELOCITY = 2
 
   real(kind=jprw), parameter :: eps    = 1.e-6
-!  real(kind=jprw), parameter :: radius = 6371.22e+03
-  real(kind=jprw), parameter :: radius = 63.7122e+03
+  real(kind=jprw), parameter :: radius = 6371.22e+03
+!  real(kind=jprw), parameter :: radius = 63.7122e+03
 
   real(kind=jprw), parameter :: f0     = 1.4584e-04 !coriolis parameter (=2xearth's omega)
   real(kind=jprw), parameter :: grav   = 9.80616
@@ -622,7 +622,7 @@ contains
           Ry_exp = -grav*D(jnode)*grad_H(YY,jnode)*hx(jnode)/vol(jnode)
 
           if (D(jnode) > D_tres) then
-            do m=1,6 ! Three iterations at most is enough to converge
+            do m=1,3 ! Three iterations at most is enough to converge
               Rx = Rx_exp + cor(jnode)*Qy - dhxdy_over_G(jnode)*Qx*Qy/D(jnode)
               Ry = Ry_exp - cor(jnode)*Qx + dhxdy_over_G(jnode)*Qx*Qx/D(jnode)
               Qx = Qx_adv + 0.5_jprw*dt*Rx
