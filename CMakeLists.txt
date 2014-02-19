@@ -28,7 +28,19 @@ set( WARNINGS OFF CACHE BOOL "Enable/Disable all warnings" )
 set( GRIB     ON  CACHE BOOL "Enable/Disable Grib"         )
 set( MPI      ON  CACHE BOOL "Enable/Disable MPI"          )
 set( ENABLE_TESTS ON CACHE BOOL "Enable/Disable unit tests")
-set( DATA     ${CMAKE_BINARY_DIR} CACHE STRING "Location where large project files can be found")
+set( DATA_REPO     "ssh://git@software.ecmwf.int:7999/pan/data.git"
+       CACHE STRING "Location of the repository where large project files can be found")
+
+# Download external data from a git repository
+message( STATUS "--------------------------------------------------------------------" )
+message( STATUS "Retrieving meshes" )
+
+include(GitExternal.cmake)
+set( DATA ${CMAKE_BINARY_DIR}/data )
+git_external( DIR ${DATA}
+              REPO ${DATA_REPO}
+              TAG master
+             )
 
 message( STATUS "--------------------------------------------------------------------" )
 message( STATUS "PantaRhei configuration" )
