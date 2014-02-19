@@ -15,7 +15,6 @@ module datastruct_module
   public :: scalar_field_2d, vector_field_2d
   public :: scalar_field_3d, vector_field_3d
   public :: mark_output
-  public :: gather
 
   public :: halo_exchange, halo_exchange_2d, halo_exchange_3d
 
@@ -35,15 +34,6 @@ module datastruct_module
   end interface halo_exchange_3d
 
 
-
-  interface  gather
-    module procedure gather_array_rank1
-    module procedure gather_array_rank2
-    module procedure gather_array_rank3
-  end interface gather
-!  type, public, extends(Mesh_type) :: Mesh_class
-!  end type Mesh_class
-
   type, public :: DataStructure_type
   private
   ! PRIVATE part
@@ -54,7 +44,6 @@ module datastruct_module
     type(FunctionSpace_type), public :: functionspace_edges_2d
     type(FunctionSpace_type), public :: functionspace_nodes_3d
     type(FunctionSpace_type), public :: functionspace_edges_3d
-    type(Comm_type), public  :: nodes_comm
 
     type(FieldSet_type), public :: output_fields
 
@@ -123,7 +112,6 @@ contains
     allocate( dstruct%nodes_glb_idx( nb_nodes ) ) 
     dstruct%nodes_proc(:) = proc(:)
     dstruct%nodes_glb_idx(:) = glb_idx(:)
-    call dstruct%nodes_comm%setup( proc, glb_idx )
 
     call dstruct%functionspace_nodes_2d%parallelise(proc,glb_idx,master_glb_idx)
 
@@ -174,7 +162,6 @@ contains
     allocate( dstruct%nodes_glb_idx( nb_nodes ) ) 
     dstruct%nodes_proc(:) = proc(:)
     dstruct%nodes_glb_idx(:) = glb_idx(:)
-    call dstruct%nodes_comm%setup( proc, glb_idx )
 
     allocate( dstruct%edges_proc( nb_edges ) ) 
     allocate( dstruct%edges_glb_idx( nb_edges ) ) 
@@ -304,29 +291,5 @@ contains
     type(DataStructure_type), intent(inout) :: dstruct
     call dstruct%functionspace_nodes_3d%halo_exchange( array )
   end subroutine halo_exchange_3d_real_rank3
-
-  subroutine gather_array_rank1(array_loc, array_full, dstruct)
-    implicit none
-    real(kind=jprw), dimension(:), intent(in) :: array_loc
-    real(kind=jprw), dimension(:), allocatable, intent(out) :: array_full    
-    type(DataStructure_type), intent(inout) :: dstruct
-    call dstruct%nodes_comm%gather( array_loc, array_full )
-  end subroutine gather_array_rank1
-
-  subroutine gather_array_rank2(array_loc, array_full, dstruct)
-    implicit none
-    real(kind=jprw), dimension(:,:), intent(in) :: array_loc
-    real(kind=jprw), dimension(:,:), allocatable, intent(out) :: array_full
-    type(DataStructure_type), intent(inout) :: dstruct
-    call dstruct%nodes_comm%gather( array_loc, array_full )
-  end subroutine gather_array_rank2
-
-  subroutine gather_array_rank3(array_loc, array_full, dstruct)
-    implicit none
-    real(kind=jprw), dimension(:,:,:), intent(in) :: array_loc
-    real(kind=jprw), dimension(:,:,:), allocatable, intent(out) :: array_full
-    type(DataStructure_type), intent(inout) :: dstruct
-    call dstruct%nodes_comm%gather( array_loc, array_full )
-  end subroutine gather_array_rank3
 
 end module datastruct_module

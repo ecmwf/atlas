@@ -58,9 +58,6 @@ contains
     call dstruct%fields%add_field( dstruct%functionspace_edges_2d%field("dual_normals") )
 
 
-    call dstruct%nodes_comm%setup( dstruct%nodes_proc, dstruct%nodes_glb_idx )
-
-
     dstruct%glb_nb_nodes = dstruct%nb_nodes
     dstruct%glb_nb_edges = dstruct%nb_edges
 
@@ -144,22 +141,16 @@ contains
   end subroutine write_gmsh
 
 
-  subroutine write_gmsh_nodal_field_2d(field, comm, dstruct)
+  subroutine write_gmsh_nodal_field_2d(field, dstruct)
     type(Field_type), intent(in) :: field
-    type(Comm_type), intent(in) :: comm
     class(DataStructure_type), intent(in) :: dstruct
-    
+    type(FunctionSpace_type) :: funcspace
     real(kind=jprw), allocatable :: glb_field(:,:)
-    integer :: jnode, glb_rows
+    integer :: jnode
 
-    glb_rows = comm%glb_field_size()
-
-    if ( nproc > 1 ) then
-      call comm%gather( field%data2(), glb_field )
-    else
-      allocate(glb_field(field%nb_vars(),dstruct%nb_nodes))
-      glb_field = field%data2()
-    endif
+    funcspace = field%function_space()
+    allocate( glb_field( field%nb_vars(), funcspace%glb_dof() ) )
+    call funcspace%gather(field%data2(), glb_field)
 
     if (myproc .eq. 0) then
       write(51,'(A)')"$NodeData"
@@ -174,12 +165,12 @@ contains
       write(51,*) size(glb_field,2)          ! number of associated nodal values
 
       if (field%nb_vars() == 1) then
-        do jnode=1,size(glb_field,2)
+        do jnode=1, funcspace%glb_dof()
           write(51,'(1I8,E18.10)') jnode, glb_field(1,jnode)
         enddo
       endif
       if (field%nb_vars() == 2) then
-        do jnode=1,glb_rows
+        do jnode=1,funcspace%glb_dof()
           write(51,'(1I8,E18.10,E18.10,F3.0)') jnode, glb_field(1,jnode), glb_field(2,jnode), 0.0
         enddo
       endif
@@ -258,10 +249,10 @@ contains
       function_space = field%function_space()
       if (function_space%name() == "nodes_2d") then
         call log_info("writing 2d field "//trim(field%name()))
-        call write_gmsh_nodal_field_2d(field,dstruct%nodes_comm,dstruct)
+        call write_gmsh_nodal_field_2d(field,dstruct)
       else if (function_space%name() == "nodes_3d") then
         call log_info("writing 3d field "//trim(field%name()))
-        call write_gmsh_nodal_field_3d(field,dstruct%nodes_comm,dstruct)
+        call write_gmsh_nodal_field_3d(field,dstruct)
       end if
     end do
       
@@ -271,49 +262,47 @@ contains
   end subroutine write_gmsh_fields
 
 
-  subroutine write_gmsh_nodal_field_3d(field, comm, dstruct)
+  subroutine write_gmsh_nodal_field_3d(field, dstruct)
     type(Field_type), intent(in) :: field
-    type(Comm_type), intent(in) :: comm
     type(DataStructure_type), intent(in) :: dstruct
     
-    real(kind=jprw), pointer :: loc_field(:,:,:)
+    type(FunctionSpace_type) :: funcspace
     real(kind=jprw), allocatable :: glb_field(:,:,:)
     integer :: jnode, jlev, nb_levels
 
-    loc_field => field%data3()
-
-    call comm%gather( field%data3(), glb_field )
     nb_levels = dstruct%nb_levels
+    funcspace = field%function_space()
+    allocate( glb_field( field%nb_vars(), nb_levels, funcspace%glb_dof()/nb_levels ) )
+    call funcspace%gather(field%data3(), glb_field)
 
-  do jlev=1,nb_levels
+    do jlev=1,nb_levels
 
-    if (myproc .eq. 0) then
-      write(51,'(A)')"$NodeData"
-      write(51,*) 1                     ! one string tag:
-      write(51,'(A)') '"'//field%name()//trim(str(jlev,'(I3)'))//'"'      ! the name of the view ("A scalar view")
-      write(51,*) 1                     ! one real(kind=jprw) tag:
-      write(51,*) dstruct%time          ! the time value (0.0)
-      write(51,*) 3                     ! three integer tags:
-      write(51,*) dstruct%time_step     ! the time step (0; time steps always start at 0)
-      if (field%nb_vars() == 1) write(51,*) 1    ! 1-component (scalar) field
-      if (field%nb_vars() == 2) write(51,*) 3    ! 3-component (vector) field
-      if (field%nb_vars() == 3) write(51,*) 3    ! 3-component (vector) field
-      write(51,*) size(glb_field,3)          ! number of associated nodal values
-
-      do jnode=1, dstruct%glb_nb_nodes
-        if (field%nb_vars() == 1) then
-          write(51,'(1I8,E18.10)') jnode, glb_field(1,jlev,jnode)
-        endif
-        if (field%nb_vars() == 2) then
-          write(51,'(1I8,E18.10,E18.10,F3.0)') jnode, glb_field(1,jlev,jnode), glb_field(2,jlev,jnode), 0.0
-        endif
-        if (field%nb_vars() == 3) then
-          write(51,'(1I8,E18.10,E18.10,F3.0)') jnode, glb_field(1,jlev,jnode), glb_field(2,jlev,jnode), glb_field(3,jlev,jnode)
-        endif
-      end do
-      write(51,'(A)')"$EndNodeData"
-    end if
-  end do
+      if (myproc .eq. 0) then
+        write(51,'(A)')"$NodeData"
+        write(51,*) 1                     ! one string tag:
+        write(51,'(A)') '"'//field%name()//trim(str(jlev,'(I3)'))//'"'      ! the name of the view ("A scalar view")
+        write(51,*) 1                     ! one real(kind=jprw) tag:
+        write(51,*) dstruct%time          ! the time value (0.0)
+        write(51,*) 3                     ! three integer tags:
+        write(51,*) dstruct%time_step     ! the time step (0; time steps always start at 0)
+        if (field%nb_vars() == 1) write(51,*) 1    ! 1-component (scalar) field
+        if (field%nb_vars() == 2) write(51,*) 3    ! 3-component (vector) field
+        if (field%nb_vars() == 3) write(51,*) 3    ! 3-component (vector) field
+        write(51,*) size(glb_field,3)          ! number of associated nodal values
+        do jnode=1, dstruct%glb_nb_nodes
+          if (field%nb_vars() == 1) then
+            write(51,'(1I8,E18.10)') jnode, glb_field(1,jlev,jnode)
+          endif
+          if (field%nb_vars() == 2) then
+            write(51,'(1I8,E18.10,E18.10,F3.0)') jnode, glb_field(1,jlev,jnode), glb_field(2,jlev,jnode), 0.0
+          endif
+          if (field%nb_vars() == 3) then
+            write(51,'(1I8,E18.10,E18.10,F3.0)') jnode, glb_field(1,jlev,jnode), glb_field(2,jlev,jnode), glb_field(3,jlev,jnode)
+          endif
+        end do
+        write(51,'(A)')"$EndNodeData"
+      end if
+    end do
   end subroutine write_gmsh_nodal_field_3d
 
 

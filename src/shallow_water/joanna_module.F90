@@ -7,8 +7,7 @@ module joanna_module
     & DataStructure_type, &
     & create_mesh, create_mesh_3d, &
     & vector_field_2d, scalar_field_2d, &
-    & vector_field_3d, scalar_field_3d, &
-    & gather
+    & vector_field_3d, scalar_field_3d
   use split_globe_module, only : split_globe
 #ifdef HAVE_MPI
   use mpi
@@ -289,6 +288,7 @@ contains
     integer(kind=jpim), allocatable :: nloen(:) ! Number of longitude points for each latitude
     integer(kind=jpim) :: jlat,idum, nb_nodes, inode_grwch, jglb
 
+#if 0
     call log_info("Writing output "//filename)
 
     loc_D => scalar_field_2d("depth",dstruct)
@@ -335,6 +335,7 @@ contains
       enddo
       close(21)
     end if
+#endif
   end subroutine write_results_joanna
 
 
@@ -456,11 +457,9 @@ contains
       end if
     end do
 
-
     ! Create edge-based unstructured mesh
     call create_mesh_3d(nb_levels, sum(keep_node), sum(keep_edge), proc, glb_idx, master_glb_idx, dstruct )
     
-
     coords => vector_field_2d("coordinates",dstruct)
 
     vol    => scalar_field_2d("dual_volumes",dstruct)
