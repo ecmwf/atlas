@@ -8,7 +8,7 @@ program isentropic
 
   use common_module
   use parallel_module, only: parallel_init, parallel_finalise, nproc, nthread
-  use gmsh_module, only: write_gmsh_mesh_3d, write_gmsh_fields
+  use gmsh_module, only: write_gmsh_mesh_3d, write_gmsh_fields, read_gmsh_3d, write_gmsh
   !use grib_module, only: write_grib
 
   use joanna_module, only: read_joanna_3d, write_results_joanna
@@ -19,14 +19,19 @@ program isentropic
     & set_topography, &
     & set_time_step, &
     & propagate_state
+  use mpdata3d_module, only: &
+    MPDATA_GAUGE, MPDATA_STANDARD
+
   implicit none
 
   ! Configuration parameters
-  real(kind=jprw) :: dt = 1.             ! solver time-step
-  integer         :: nb_steps = 15         ! Number of propagations
+  real(kind=jprw) :: dt = 1.              ! solver time-step
+  integer         :: nb_steps = 48        ! Number of propagations
   integer         :: hours_per_step = 1   ! Propagation time
   logical         :: write_itermediate_output = .True.
-  integer         :: nb_levels = 27
+  integer         :: nb_levels = 2
+  integer         :: order = 2
+  integer         :: scheme = MPDATA_GAUGE
 
   ! Declarations
   type(DataStructure_type) :: dstruct
@@ -40,9 +45,17 @@ program isentropic
 
   call set_log_level(LOG_LEVEL_INFO)
   call set_log_proc(0)
+
+  write(0,*) "DATA_DIR ", PANTARHEI_DATADIR
   
   call log_info("Program isentropic start")
-  call read_joanna_3d("data/meshvol.d","data/rtable_lin_T255.d", nb_levels, dstruct)
+!  call read_joanna_3d("meshes/meshvolT255.d","meshes/rtable_lin_T255.d", nb_levels, dstruct)
+!  call read_gmsh_3d("unstr_uniform160.msh", nb_levels, dstruct)
+  call read_joanna_3d( PANTARHEI_DATADIR//"/meshes/T159.dual", &
+                     & PANTARHEI_DATADIR//"/meshes/T159.rtable", nb_levels, dstruct)
+!  call read_gmsh_3d("meshes/T159.msh", nb_levels, dstruct)
+
+!  call write_gmsh("out.msh",dstruct)
 
   call log_info( "+------------------------------+" )
   call log_info( "| Simulation summary           |" )
@@ -74,25 +87,25 @@ program isentropic
   call mark_output("height",dstruct)
   call mark_output("depth",dstruct)
   call mark_output("velocity",dstruct)
-  call mark_output("momentum",dstruct)
-  call mark_output("pressure",dstruct)
-  call mark_output("forcing",dstruct)
-  call mark_output("montgomery_potential",dstruct)
+  !call mark_output("momentum",dstruct)
+  !call mark_output("pressure",dstruct)
+  !call mark_output("forcing",dstruct)
+  !call mark_output("montgomery_potential",dstruct)
   !call mark_output("dual_volumes",dstruct)
   !call mark_output("p0",dstruct)
   !call mark_output("dhxdy_over_G",dstruct)
 
-  !call write_fields()
+  call write_fields()
   call wallclock_timer%start()
 
   do jstep=1,nb_steps 
 
     call step_timer%start()
-    !call propagate_state( hours_per_step*hours, dstruct)
-    call propagate_state(100.* dt, dstruct)
+    call propagate_state( hours_per_step*hours, order, scheme, dstruct)
+    !call propagate_state(100.* dt, order, scheme, dstruct)
 
-    write (log_str, '(A,I3,A,A,F8.2,A,F8.2,A)') &
-      & "Propagated to ",jstep*hours_per_step," hours.", &
+    write (log_str, '(A,F5.2,A,A,F8.2,A,F8.2,A)') &
+      & "Propagated to ",dstruct%time/3600.," hours.", &
       & "     step-time = ",step_timer%elapsed(),&
       & "     wall-time = ",wallclock_timer%elapsed(), new_line('A')
     call log_info()
