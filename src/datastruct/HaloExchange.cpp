@@ -78,7 +78,7 @@ void HaloExchange::setup(const int proc[],
 
   ierr = MPI_Alltoall( &recvcounts_[0], 1, MPI_INT, &sendcounts_[0], 1, MPI_INT, MPI_COMM_WORLD );
   sendcnt_ = std::accumulate(sendcounts_.begin(),sendcounts_.end(),0);
-  std::cout << myproc << ":  sendcnt = " << sendcnt_ << std::endl;
+  //std::cout << myproc << ":  sendcnt = " << sendcnt_ << std::endl;
 
   recvdispls_[0]=0;
   senddispls_[0]=0;

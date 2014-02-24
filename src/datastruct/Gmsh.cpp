@@ -201,9 +201,9 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path)
     double lon   = coords(XX,n);
     double lat   = coords(YY,n);
 
-    double y = r*std::sin(lat);
-    double x = r*std::cos(lat)*std::sin(lon);
-    double z = r*std::cos(lat)*std::cos(lon);
+    double x = r*std::cos(lat)*std::cos(lon);
+    double y = r*std::cos(lat)*std::sin(lon);
+    double z = r*std::sin(lat);
     file << glb_idx(n) << " " << x << " " << y << " " << z << "\n";
 //    file << glb_idx(n) << " " << lon/scaling << " " << lat/scaling << " " << 0. << "\n";
 
