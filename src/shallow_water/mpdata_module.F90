@@ -25,7 +25,171 @@ module mpdata_module
   real(kind=jprw), parameter :: Dphys_min = -10.
   real(kind=jprw), parameter :: Dphys_max = 20000
 
+  logical, parameter, public :: DENSITY_WEIGHTING = .True.
+  real(kind=jprw), parameter :: IDIV = 0.
+
 contains
+
+
+  subroutine compute_scalar_max_and_min( D, Dmax, Dmin, dstruct )
+    real(kind=jprw), intent(in) :: D(:)
+    real(kind=jprw), intent(inout) :: Dmax(:), Dmin(:)
+    type(DataStructure_type), intent(inout) :: dstruct
+    real(kind=jprw) :: D1, D2
+    integer :: jnode, jedge, ip2, iedge
+
+    !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,D1,jedge,iedge,ip2,D2)
+    do jnode=1,dstruct%nb_nodes
+      D1 = D(jnode)
+      Dmax(jnode) = max( Dmax(jnode), D1 )
+      Dmin(jnode) = min( Dmin(jnode), D1 )
+      do jedge = 1,dstruct%nb_neighbours(jnode)
+        iedge = dstruct%my_edges(jedge,jnode)
+        ip2 = dstruct%neighbours(jedge,jnode)
+        D2 = D(ip2)
+        Dmax(jnode) = max( Dmax(jnode), D2 )
+        Dmin(jnode) = min( Dmin(jnode), D2 )
+      end do
+    end do
+    !$OMP END PARALLEL DO
+
+    call halo_exchange(Dmin,dstruct)
+    call halo_exchange(Dmax,dstruct)
+
+  end subroutine compute_scalar_max_and_min
+
+  subroutine compute_vector_max_and_min( Q, Qmax, Qmin, dstruct )
+    real(kind=jprw), intent(in) :: Q(:,:)
+    real(kind=jprw), intent(inout) :: Qmax(:,:), Qmin(:,:)
+    type(DataStructure_type), intent(inout) :: dstruct
+    real(kind=jprw) :: Q1(2), Q2(2)
+    integer :: jnode, jedge, ip2, iedge
+    real(kind=jprw), pointer :: pole_bc(:)
+
+    pole_bc => scalar_field_2d("pole_bc",dstruct)
+
+    !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,Q1,jedge,ip2,iedge,Q2)
+    do jnode=1,dstruct%nb_nodes
+      Q1(:) = Q(:,jnode)
+      Qmax(:,jnode) = max( Qmax(:,jnode), Q1(:) )
+      Qmin(:,jnode) = min( Qmin(:,jnode), Q1(:) )
+      do jedge = 1,dstruct%nb_neighbours(jnode)
+        ip2 = dstruct%neighbours(jedge,jnode)
+        iedge = dstruct%my_edges(jedge,jnode)
+        Q2(:) = Q(:,ip2)
+        Qmax(:,jnode) = max( Qmax(:,jnode), pole_bc(iedge)*Q2(:) )
+        Qmin(:,jnode) = min( Qmin(:,jnode), pole_bc(iedge)*Q2(:) )
+      end do
+    end do
+    !$OMP END PARALLEL DO
+
+    call halo_exchange(Qmin,dstruct)
+    call halo_exchange(Qmax,dstruct)
+
+  end subroutine compute_vector_max_and_min
+
+  subroutine limit_scalar_flux(flux,D,Dmax,Dmin,limit,dt,vol,dstruct)
+    real(kind=jprw), intent(inout) :: flux(:)
+    real(kind=jprw), intent(in) :: D(:), Dmax(:), Dmin(:), vol(:)
+    real(kind=jprw), intent(in) :: limit, dt
+    type(DataStructure_type), intent(inout) :: dstruct
+
+    real(kind=jprw) :: asignp,asignn, add, apos, aneg
+    integer :: jnode, jedge, iedge, ip1, ip2
+    real(kind=jprw) :: rhin
+    real(kind=jprw) :: rhout
+    real(kind=jprw) :: cp(dstruct%nb_nodes)
+    real(kind=jprw) :: cn(dstruct%nb_nodes)
+
+    !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,rhin,rhout,jedge,iedge,add,asignp,asignn,apos,aneg)
+    do jnode=1,dstruct%nb_nodes
+      rhin  = 0.
+      rhout = 0.
+      do jedge = 1,dstruct%nb_neighbours(jnode)
+        iedge = dstruct%my_edges(jedge,jnode)
+        add = dstruct%sign(jedge,jnode)
+        asignp = max(0._jprw,add)
+        asignn = min(0._jprw,add)
+        apos = max(0._jprw,flux(iedge))
+        aneg = min(0._jprw,flux(iedge))
+        rhin  = rhin  - asignp*aneg - asignn*apos
+        rhout = rhout + asignp*apos + asignn*aneg
+      end do
+      cp(jnode) = ( Dmax(jnode)-D(jnode) ) &
+                & * vol(jnode)/( rhin * dt + eps )
+      cn(jnode) = ( D(jnode)-Dmin(jnode) ) &
+                & * vol(jnode)/( rhout * dt + eps )
+    end do
+    !$OMP END PARALLEL DO
+
+    call halo_exchange_2d(cp,dstruct)
+    call halo_exchange_2d(cn,dstruct)
+
+    !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2)
+    do jedge = 1,dstruct%nb_edges
+      ip1 = dstruct%edges(1,jedge)
+      ip2 = dstruct%edges(2,jedge)
+      if(flux(jedge) > 0._jprw) then
+        flux(jedge)=flux(jedge)*min(limit,cp(ip2),cn(ip1))
+      else
+        flux(jedge)=flux(jedge)*min(limit,cn(ip2),cp(ip1))
+      end if
+    end do
+    !$OMP END PARALLEL DO
+  end subroutine limit_scalar_flux
+
+  subroutine limit_vector_flux(flux,Q,Qmax,Qmin,limit,dt,vol,dstruct)
+    real(kind=jprw), intent(inout) :: flux(:,:)
+    real(kind=jprw), intent(in) :: Q(:,:), Qmax(:,:), Qmin(:,:), vol(:)
+    real(kind=jprw), intent(in) :: limit, dt
+    type(DataStructure_type), intent(inout) :: dstruct
+
+    real(kind=jprw) :: asignp,asignn, add, apos(2), aneg(2)
+    integer :: jnode, jedge, iedge, jlev, ip1, ip2, var
+    real(kind=jprw) :: rhin(2)
+    real(kind=jprw) :: rhout(2)
+    real(kind=jprw) :: cp(2,dstruct%nb_nodes)
+    real(kind=jprw) :: cn(2,dstruct%nb_nodes)
+
+    !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,rhin,rhout,jedge,iedge,add,asignp,asignn,apos,aneg)
+    do jnode=1,dstruct%nb_nodes
+      rhin(:)  = 0.
+      rhout(:) = 0.
+      do jedge = 1,dstruct%nb_neighbours(jnode)
+        iedge = dstruct%my_edges(jedge,jnode)
+        add = dstruct%sign(jedge,jnode)
+        asignp = max(0._jprw,add)
+        asignn = min(0._jprw,add)
+        apos(:) = max(0._jprw,flux(:,iedge))
+        aneg(:) = min(0._jprw,flux(:,iedge))
+        rhin(:)  = rhin(:)  - asignp*aneg(:) - asignn*apos(:)
+        rhout(:) = rhout(:) + asignp*apos(:) + asignn*aneg(:)
+      end do
+      cp(:,jnode) = ( Qmax(:,jnode)-Q(:,jnode) ) &
+                  & * vol(jnode)/( rhin(:) * dt + eps )
+      cn(:,jnode) = ( Q(:,jnode)-Qmin(:,jnode) ) &
+                  & * vol(jnode)/( rhout(:) * dt + eps )
+    end do
+    !$OMP END PARALLEL DO
+
+    call halo_exchange_2d(cp,dstruct)
+    call halo_exchange_2d(cn,dstruct)
+
+    !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2,var)
+    do jedge = 1,dstruct%nb_edges
+      ip1 = dstruct%edges(1,jedge)
+      ip2 = dstruct%edges(2,jedge)
+      do var=1,2
+        if(flux(var,jedge) > 0._jprw) then
+          flux(var,jedge)=flux(var,jedge)*min(limit,cp(var,ip2),cn(var,ip1))
+        else
+          flux(var,jedge)=flux(var,jedge)*min(limit,cn(var,ip2),cp(var,ip1))
+        end if
+      end do
+    end do
+    !$OMP END PARALLEL DO
+  end subroutine limit_vector_flux
+
 
   subroutine mpdata_D(mpdata_scheme,dt,D,V,VDS,order,limit,dstruct)
     ! For mpdata standard scheme, in the case for positive D,
@@ -43,23 +207,24 @@ contains
     real(kind=jprw) :: sx, sy, volume_of_two_cells, dDdx, dDdy, Vx, Vy, apos, aneg, Dtmp, D_abs
     real(kind=jprw) :: Dmin(dstruct%nb_nodes)
     real(kind=jprw) :: Dmax(dstruct%nb_nodes)
-    real(kind=jprw) :: rhin
-    real(kind=jprw) :: rhout
-    real(kind=jprw) :: cp(dstruct%nb_nodes)
-    real(kind=jprw) :: cn(dstruct%nb_nodes)
-    real(kind=jprw) :: adv
+    real(kind=jprw) :: adv, add, absSx, absSy
     real(kind=jprw) :: aun(dstruct%nb_edges)
+    real(kind=jprw) :: flux(dstruct%nb_edges)
     real(kind=jprw) :: gradD(2,dstruct%nb_nodes)
     real(kind=jprw) :: sum_Sabs(2,dstruct%nb_nodes)
     real(kind=jprw) :: sum_Dbar(2,dstruct%nb_nodes)
     real(kind=jprw), pointer :: vol(:), S(:,:), Wind(:,:), D0(:)
     real(kind=jprw) :: Dbar(2) ! Dabs_bar == Dbar since D > 0 always
+    real(kind=jprw),pointer :: divV(:)
+    real(kind=jprw) :: divterm
+
 
     Wind    => vector_field_2d("velocity",dstruct)
 
     vol     => scalar_field_2d("dual_volumes",dstruct)
     S       => vector_field_2d("dual_normals",dstruct)
     D0      => scalar_field_2d("depth_backup",dstruct)
+    divV    => scalar_field_2d("divV",dstruct)
 
     VDS(:) = 0.
 
@@ -68,10 +233,10 @@ contains
     jpass = 1
 
     ! non-oscillatory option
-    if( limit > 0._jprw .and. (order >= 2) ) then
+    if( limit >= 0._jprw .and. (order >= 2) ) then
       Dmax(:) = -1e10
       Dmin(:) =  1e10
-      call compute_Dmax_and_Dmin()
+      call compute_scalar_max_and_min(D,Dmax,Dmin,dstruct)
     end if
 
     ! Compute the normal velocity in faces, and advection in vertices
@@ -98,12 +263,16 @@ contains
      !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,adv,jedge,iedge)
     do jnode=1,dstruct%nb_nodes
       adv = 0.0
+      divV(jnode) = 0.
       if(dstruct%nb_neighbours(jnode) > 1) then
         do jedge = 1,dstruct%nb_neighbours(jnode)
           iedge = dstruct%my_edges(jedge,jnode)
-          adv = adv + dstruct%sign(jedge,jnode)*VDS(iedge)
+          add = dstruct%sign(jedge,jnode)
+          adv = adv + add*VDS(iedge)
+          divV(jnode) = divV(jnode) + add*aun(jedge)
         enddo
       endif
+      divV(jnode) = IDIV * divV(jnode) / vol(jnode)
       ! Update the unknowns in vertices
       Dtmp = D(jnode) - adv/vol(jnode) * dt
 
@@ -141,9 +310,9 @@ contains
         write(log_str,*) "velocity", jnode, Wind(:,jnode); call log_debug()
       end if
 
-      if( abs(Dtmp) < 1.e-30_jprw ) Dtmp = 0.
-      D(jnode) = max(0.,Dtmp)
-      !D(jnode) = Dtmp
+      !if( abs(Dtmp) < 1.e-30_jprw ) Dtmp = 0.
+      !D(jnode) = max(0.,Dtmp)
+      D(jnode) = Dtmp
 
     enddo
 
@@ -174,17 +343,17 @@ contains
         do jedge=1, dstruct%nb_edges
           ip1 = dstruct%edges(1,jedge)
           ip2 = dstruct%edges(2,jedge)
-          Sx = abs(S(XX,jedge))
-          Sy = abs(S(YY,jedge))
+          absSx = abs(S(XX,jedge))
+          absSy = abs(S(YY,jedge))
           D_abs = ( abs(D(ip1)) + abs(D(ip2)) ) * 0.5_jprw
-          sum_Dbar(XX,ip1) = sum_Dbar(XX,ip1) + Sx * D_abs
-          sum_Dbar(XX,ip2) = sum_Dbar(XX,ip2) + Sx * D_abs
-          sum_Dbar(YY,ip1) = sum_Dbar(YY,ip1) + Sy * D_abs
-          sum_Dbar(YY,ip2) = sum_Dbar(YY,ip2) + Sy * D_abs
-          sum_Sabs(XX,ip1) = sum_Sabs(XX,ip1) + Sx
-          sum_Sabs(XX,ip2) = sum_Sabs(XX,ip2) + Sx
-          sum_Sabs(YY,ip1) = sum_Sabs(YY,ip1) + Sy
-          sum_Sabs(YY,ip2) = sum_Sabs(YY,ip2) + Sy
+          sum_Dbar(XX,ip1) = sum_Dbar(XX,ip1) + absSx * D_abs
+          sum_Dbar(XX,ip2) = sum_Dbar(XX,ip2) + absSx * D_abs
+          sum_Dbar(YY,ip1) = sum_Dbar(YY,ip1) + absSy * D_abs
+          sum_Dbar(YY,ip2) = sum_Dbar(YY,ip2) + absSy * D_abs
+          sum_Sabs(XX,ip1) = sum_Sabs(XX,ip1) + absSx
+          sum_Sabs(XX,ip2) = sum_Sabs(XX,ip2) + absSx
+          sum_Sabs(YY,ip1) = sum_Sabs(YY,ip1) + absSy
+          sum_Sabs(YY,ip2) = sum_Sabs(YY,ip2) + absSy
         end do
       end if
 
@@ -205,24 +374,28 @@ contains
             Dbar(XX) = (sum_Dbar(XX,ip1) + sum_Dbar(XX,ip2) + eps) / ( sum_Sabs(XX,ip1) + sum_Sabs(XX,ip2) )
             Dbar(YY) = (sum_Dbar(YY,ip1) + sum_Dbar(YY,ip2) + eps) / ( sum_Sabs(YY,ip1) + sum_Sabs(YY,ip2) )
             aun(jedge) = abs(aun(jedge))*( abs(D(ip2))-abs(D(ip1)) )/(abs(D(ip2))+abs(D(ip1))+eps) &
-              &          -0.5_jprw*dt*aun(jedge)*(Vx*dDdx/Dbar(XX)+Vy*dDdy/Dbar(YY))
+              &          - 0.5_jprw*dt*aun(jedge)*(Vx*dDdx/Dbar(XX)+Vy*dDdy/Dbar(YY)) &
+              &          - 0.5_jprw*dt*aun(jedge)*0.5*(divV(ip1)+divV(ip2))
+            apos = max(0._jprw,aun(jedge))
+            aneg = min(0._jprw,aun(jedge))
+            flux(jedge) = D(ip1)*apos + D(ip2)*aneg
           case (MPDATA_GAUGE)
-            ! variable sign option with asymptotic analysis, (mpdata gauge)
             aun(jedge) = abs(aun(jedge))*(D(ip2)-D(ip1))*0.5_jprw &
-              &          -0.5_jprw*dt*aun(jedge)*(Vx*dDdx+Vy*dDdy)
+              &          - 0.5_jprw*dt*aun(jedge) * ( Vx*dDdx+Vy*dDdy ) 
+            flux(jedge) = aun(jedge)
         end select
 
       end do
       !$OMP END PARALLEL DO
 
       ! non-oscillatory option
-      if (limit > 0._jprw) then
-        call limit_antidiffusive_velocity()
+      if (limit >= 0._jprw) then
+        call limit_scalar_flux(flux,D,Dmax,Dmin,limit,dt,vol,dstruct)
       endif
 
       !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge)
       do jedge = 1,dstruct%nb_edges
-        VDS(jedge) = VDS(jedge) + aun(jedge)
+        VDS(jedge) = VDS(jedge) + flux(jedge)
       end do
       !$OMP END PARALLEL DO
 
@@ -233,7 +406,7 @@ contains
         if(dstruct%nb_neighbours(jnode) > 1) then
           do jedge = 1,dstruct%nb_neighbours(jnode)
             iedge = dstruct%my_edges(jedge,jnode)
-            adv = adv + dstruct%sign(jedge,jnode)*aun(iedge)
+            adv = adv + dstruct%sign(jedge,jnode)*flux(iedge)
           enddo
         endif
         ! Update the unknowns in vertices
@@ -241,8 +414,11 @@ contains
         Dtmp = D(jnode) - adv/vol(jnode) * dt
         if ( Dtmp < Dphys_min .or. Dtmp > Dphys_max ) then
           write(0,*) "ERROR in node",jnode
+          write(0,*) "D_pass1 = ", D(jnode)
           write(0,*) "D_pass2 = ", Dtmp
           write(0,*) "gradD = ", gradD(:,jnode)
+          write(0,*) "divV = ", divV(jnode)
+          write(0,*) "adv = ", adv/vol(jnode)
           call abort
         end if
         if ( jnode == probe ) then
@@ -251,100 +427,208 @@ contains
         end if
 
         if( abs(Dtmp) < 1.e-30_jprw ) Dtmp = 0.
-        !D(jnode) = Dtmp
-        D(jnode) = max(0.,Dtmp)
+        D(jnode) = Dtmp
+        !D(jnode) = max(0.,Dtmp)
 
       enddo
       !$OMP END PARALLEL DO
       call halo_exchange(D,dstruct)
 
-
     end do ! other passes
-
-  contains
-
-    subroutine compute_Dmax_and_Dmin( )
-      real(kind=jprw) :: D1, D2
-      !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,jedge,iedge,D1,D2)
-      do jnode=1,dstruct%nb_nodes
-        D1 = D(jnode)
-        Dmax(jnode) = max( Dmax(jnode), D1 )
-        Dmin(jnode) = min( Dmin(jnode), D1 )
-        do jedge = 1,dstruct%nb_neighbours(jnode)
-          D2 = D(dstruct%neighbours(jedge,jnode))
-          iedge = dstruct%my_edges(jedge,jnode)
-          Dmax(jnode) = max( Dmax(jnode), D2 )
-          Dmin(jnode) = min( Dmin(jnode), D2 )
-        end do
-      end do
-      !$OMP END PARALLEL DO
-
-      call halo_exchange(Dmin,dstruct)
-      call halo_exchange(Dmax,dstruct)
-
-    end subroutine compute_Dmax_and_Dmin
-
-    subroutine limit_antidiffusive_velocity
-
-      real(kind=jprw) :: asignp,asignn
-
-      !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,rhin,rhout,jedge,iedge,apos,aneg,asignp,asignn)
-      do jnode=1,dstruct%nb_nodes
-        rhin  = 0.
-        rhout = 0.
-        do jedge = 1,dstruct%nb_neighbours(jnode)
-          iedge = dstruct%my_edges(jedge,jnode)
-          apos = max(0._jprw,aun(iedge))
-          aneg = min(0._jprw,aun(iedge))
-          asignp = max(0._jprw,dstruct%sign(jedge,jnode))
-          asignn = min(0._jprw,dstruct%sign(jedge,jnode))
-          rhin  = rhin  - asignp*aneg - asignn*apos
-          rhout = rhout + asignp*apos + asignn*aneg
-        end do
-        cp(jnode) = ( Dmax(jnode)-D(jnode) )*vol(jnode)/( rhin * dt + eps )
-        cn(jnode) = ( D(jnode)-Dmin(jnode) )*vol(jnode)/( rhout* dt + eps )
-      end do
-      !$OMP END PARALLEL DO
-
-      call halo_exchange(cp,dstruct)
-      call halo_exchange(cn,dstruct)
-
-      !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2)
-      do jedge = 1,dstruct%nb_edges
-        ip1 = dstruct%edges(1,jedge)
-        ip2 = dstruct%edges(2,jedge)
-        if(aun(jedge) > 0._jprw) then
-          aun(jedge)=aun(jedge)*min(limit,cp(ip2),cn(ip1))
-        else
-          aun(jedge)=aun(jedge)*min(limit,cn(ip2),cp(ip1))
-        end if
-      end do
-      !$OMP END PARALLEL DO
-
-    end subroutine limit_antidiffusive_velocity
 
   end subroutine mpdata_D
   
   
+  subroutine mpdata_Q(mpdata_scheme,dt,Q,V,order,limit,dstruct)
+    integer, intent(in) :: mpdata_scheme
+    real(kind=jprw), intent(in)  :: dt
+    type(DataStructure_type), intent(inout) :: dstruct
+    real(kind=jprw), intent(inout) :: Q(:,:)
+    real(kind=jprw), intent(in) :: V(:,:)
+    real(kind=jprw), intent(in) :: limit
+    integer, intent(in) :: order
+    integer :: jnode, jedge, iedge, jpass, ip1,ip2
+    real(kind=jprw) :: Sx, Sy, volume_of_two_cells, dQdx(2), dQdy(2), Vx, Vy, Qtmp(2), Q_abs(2), Qbar(2,2)
+    real(kind=jprw) :: apos(2), aneg(2)
+    real(kind=jprw) :: Qmin(2,dstruct%nb_nodes)
+    real(kind=jprw) :: Qmax(2,dstruct%nb_nodes)
+    real(kind=jprw) :: divV(dstruct%nb_nodes), divterm(2)
+    real(kind=jprw) :: adv(2), add
+    real(kind=jprw) :: aun(2,dstruct%nb_edges)
+    real(kind=jprw) :: fluxv(2,dstruct%nb_edges)
+    real(kind=jprw) :: gradQ(4,dstruct%nb_nodes)
+    real(kind=jprw) :: sum_Sabs(2,dstruct%nb_nodes)
+    real(kind=jprw) :: sum_Qbar(2,2,dstruct%nb_nodes)
+    real(kind=jprw), pointer :: vol(:), S(:,:), pole_bc(:)
+
+    vol     => scalar_field_2d("dual_volumes",dstruct)
+    S       => vector_field_2d("dual_normals",dstruct)
+
+
+    ! 1. First pass
+    ! -------------
+    jpass = 1
+
+    ! non-oscillatory option
+    if( limit >= 0. .and. (order >= 2) ) then
+      Qmax(:,:) = -1e10
+      Qmin(:,:) =  1e10
+      call compute_vector_max_and_min(Q,Qmax,Qmin,dstruct)
+    end if
+
+    ! Compute the normal velocity in faces, and advection in vertices
+
+    !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2,Sx,Sy,Vx,Vy,apos,aneg)
+    do jedge = 1,dstruct%nb_edges
+      ip1 = dstruct%edges(1,jedge)
+      ip2 = dstruct%edges(2,jedge)
+      Sx = S(XX,jedge)
+      Sy = S(YY,jedge)
+      Vx = V(XX,jedge)
+      Vy = V(YY,jedge)
+      aun(:,jedge) = Vx*Sx + Vy*Sy
+      apos(:) = max(0._jprw,aun(:,jedge))
+      aneg(:) = min(0._jprw,aun(:,jedge))
+      fluxv(:,jedge) = Q(:,ip1)*apos(:) + Q(:,ip2)*aneg(:)
+    end do
+    !$OMP END PARALLEL DO
+
+    !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,adv,jedge,iedge,add)
+    do jnode=1,dstruct%nb_nodes
+      adv(:) = 0.0
+      divV(jnode) = 0.
+      if(dstruct%nb_neighbours(jnode) > 1) then
+        do jedge = 1,dstruct%nb_neighbours(jnode)
+          iedge = dstruct%my_edges(jedge,jnode)
+          add = dstruct%sign(jedge,jnode)
+          adv(:) = adv(:) + add*fluxv(:,iedge)
+          divV(jnode) = divV(jnode) + add*aun(1,iedge)
+        end do
+      end if
+      divV(jnode) = IDIV * divV(jnode) / vol(jnode)
+      ! Update the unknowns in vertices
+      Q(:,jnode) = Q(:,jnode) - adv(:)/vol(jnode) * dt
+    end do
+    !$OMP END PARALLEL DO
+
+    call halo_exchange(Q,dstruct)
+
+
+    ! 2. Other passes (making the spatial discretisation higher-order)
+    ! ----------------------------------------------------------------
+
+    do jpass=2,order
+
+      ! Compute derivatives for mpdata
+      select case (mpdata_scheme)
+        case (MPDATA_STANDARD)
+          call compute_gradient_tensor_abs(Q, gradQ, dstruct)
+        case (MPDATA_GAUGE)
+          call compute_gradient_tensor(Q, gradQ, dstruct)
+      end select
+
+      call halo_exchange(gradQ,dstruct)
+
+      ! Compute antidiffusive normal velocity in faces
+
+      if (mpdata_scheme == MPDATA_STANDARD) then
+        sum_Qbar(:,:,:) = 0._jprw
+        sum_Sabs(:,:) = 0._jprw
+        do jedge=1, dstruct%nb_edges
+          ip1 = dstruct%edges(1,jedge)
+          ip2 = dstruct%edges(2,jedge)
+          Sx = abs(S(XX,jedge))
+          Sy = abs(S(YY,jedge))
+          Q_abs(:) = ( abs(Q(:,ip1)) + abs(Q(:,ip2)) ) * 0.5_jprw
+          sum_Qbar(:,XX,ip1) = sum_Qbar(:,XX,ip1) + Sx*Q_abs(:)
+          sum_Qbar(:,YY,ip1) = sum_Qbar(:,YY,ip1) + Sy*Q_abs(:)
+          sum_Qbar(:,XX,ip2) = sum_Qbar(:,XX,ip2) + Sx*Q_abs(:)
+          sum_Qbar(:,YY,ip2) = sum_Qbar(:,YY,ip2) + Sy*Q_abs(:)
+          sum_Sabs(XX,ip1) = sum_Sabs(XX,ip1) + Sx
+          sum_Sabs(XX,ip2) = sum_Sabs(XX,ip2) + Sx
+          sum_Sabs(YY,ip1) = sum_Sabs(YY,ip1) + Sy
+          sum_Sabs(YY,ip2) = sum_Sabs(YY,ip2) + Sy
+        end do
+      end if
+
+      !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2,volume_of_two_cells,dQdx,dQdy,Vx,Vy)
+      do jedge = 1,dstruct%nb_edges
+        ip1 = dstruct%edges(1,jedge)
+        ip2 = dstruct%edges(2,jedge)
+
+        ! evaluate gradient and velocity at edge by combining 2 neighbouring dual cells
+        volume_of_two_cells = max(eps, vol(ip1) + vol(ip2) )
+        dQdx(XX) = (gradQ(XXDXX,ip1)+gradQ(XXDXX,ip2)) / volume_of_two_cells
+        dQdx(YY) = (gradQ(YYDXX,ip1)+gradQ(YYDXX,ip2)) / volume_of_two_cells
+        dQdy(XX) = (gradQ(XXDYY,ip1)+gradQ(XXDYY,ip2)) / volume_of_two_cells
+        dQdy(YY) = (gradQ(YYDYY,ip1)+gradQ(YYDYY,ip2)) / volume_of_two_cells
+        Vx = V(XX,jedge)
+        Vy = V(YY,jedge)
+
+        select case (mpdata_scheme)
+          case (MPDATA_STANDARD)
+            Qbar(:,XX) = (sum_Qbar(:,XX,ip1) + sum_Qbar(:,XX,ip2) + eps) / ( sum_Sabs(XX,ip1) + sum_Sabs(XX,ip2) )
+            Qbar(:,YY) = (sum_Qbar(:,YY,ip1) + sum_Qbar(:,YY,ip2) + eps) / ( sum_Sabs(YY,ip1) + sum_Sabs(YY,ip2) )
+            aun(:,jedge) = abs(aun(:,jedge))*( abs(Q(:,ip2))-abs(Q(:,ip1)) )/(abs(Q(:,ip2))+abs(Q(:,ip1))+eps) &
+              &            - 0.5_jprw*dt*aun(:,jedge)*(Vx*dQdx(:)/Qbar(:,XX)+Vy*dQdy(:)/Qbar(:,YY)) &
+              &            - 0.5_jprw*dt*aun(:,jedge)*0.5*(divV(ip1)+divV(ip2))
+            apos(:) = max(0._jprw,aun(:,jedge))
+            aneg(:) = min(0._jprw,aun(:,jedge))
+            fluxv(:,jedge) = Q(:,ip1)*apos(:) + Q(:,ip2)*aneg(:)
+          case (MPDATA_GAUGE)
+            aun(:,jedge) = abs(aun(:,jedge))*(Q(:,ip2)-Q(:,ip1))*0.5_jprw &
+              &            - 0.5_jprw*dt*aun(:,jedge)*( Vx*dQdx(:)+Vy*dQdy(:) )
+            fluxv(:,jedge) = aun(:,jedge)
+        end select
+
+      end do
+      !$OMP END PARALLEL DO
+
+      ! non-oscillatory option
+      if (limit >= 0._jprw) then
+        call limit_vector_flux(fluxv,Q,Qmax,Qmin,limit,dt,vol,dstruct)
+      endif
+
+
+      ! Compute fluxes from (limited) antidiffusive velocity
+      !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,adv,jedge,iedge)
+      do jnode=1,dstruct%nb_nodes
+        adv(:) = 0.0
+        if(dstruct%nb_neighbours(jnode) > 1) then
+          do jedge = 1,dstruct%nb_neighbours(jnode)
+            iedge = dstruct%my_edges(jedge,jnode)
+            add = dstruct%sign(jedge,jnode)
+            adv(:) = adv(:) + add*fluxv(:,iedge)
+          enddo
+        endif
+        ! Update the unknowns in vertices
+        Q(:,jnode) = Q(:,jnode) - adv(:)/vol(jnode) * dt
+      enddo
+      !$OMP END PARALLEL DO
+
+      call halo_exchange(Q,dstruct)
+
+    end do ! other passes
+
+  end subroutine mpdata_Q
+
+
   
   
-  subroutine mpdata_gauge_U(dt,U,VDS,DR,D,order,limited,dstruct)
+  
+  subroutine mpdata_gauge_U(dt,U,VDS,DR,D,order,limit,dstruct)
     real(kind=jprw), intent(in)  :: dt
     type(DataStructure_type), intent(inout) :: dstruct
     real(kind=jprw), intent(inout) :: U(:,:), D(:)
     real(kind=jprw), intent(in) :: VDS(:), DR(:)
-    logical, intent(in) :: limited
+    real(kind=jprw), intent(in) :: limit
     integer, intent(in) :: order
     integer :: jnode, jedge, iedge, jpass, ip1,ip2
     real(kind=jprw) :: Sx, Sy, Ssqr, volume_of_two_cells, dUdx(2), dUdy(2), Vx, Vy
     real(kind=jprw) :: apos(2), aneg(2), x1, x2, y1, y2
     real(kind=jprw) :: Umin(2,dstruct%nb_nodes)
     real(kind=jprw) :: Umax(2,dstruct%nb_nodes)
-    real(kind=jprw) :: rhin(2)
-    real(kind=jprw) :: rhout(2)
-    real(kind=jprw) :: cp(2,dstruct%nb_nodes)
-    real(kind=jprw) :: cn(2,dstruct%nb_nodes)
-    real(kind=jprw) :: adv(2)
+    real(kind=jprw) :: adv(2), add
     real(kind=jprw) :: aun(2,dstruct%nb_edges)
     real(kind=jprw) :: fluxv(2,dstruct%nb_edges)
     real(kind=jprw) :: gradU(4,dstruct%nb_nodes)
@@ -354,11 +638,11 @@ contains
     real(kind=jprw) :: inv_distance(dstruct%nb_nodes)
     real(kind=jprw) :: Utmp(2,dstruct%nb_nodes)
     real(kind=jprw) :: volD(dstruct%nb_nodes)
+    real(kind=jprw) :: divV(dstruct%nb_nodes)
     real(kind=jprw), pointer :: vol(:), S(:,:), pole_bc(:), coords(:,:)
 
     vol     => scalar_field_2d("dual_volumes",dstruct)
     S       => vector_field_2d("dual_normals",dstruct)
-    pole_bc => scalar_field_2d("pole_bc",dstruct)
     coords  => vector_field_2d("coordinates",dstruct)
 
     !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2,Sx,Sy,Ssqr,x1,x2,y1,y2)
@@ -412,10 +696,10 @@ contains
     jpass = 1
 
     ! non-oscillatory option
-    if( limited .and. (order .ge. 2) ) then
+    if( limit >= 0. .and. (order >= 2) ) then
       Umax(:,:) = -1e10
       Umin(:,:) =  1e10
-      call compute_Umax_and_Umin()
+      call compute_vector_max_and_min(U,Umax,Umin,dstruct)
     end if
 
     ! Compute the normal velocity in faces, and advection in vertices
@@ -434,14 +718,18 @@ contains
      !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,adv,jedge,iedge)
     do jnode=1,dstruct%nb_nodes
       adv(:) = 0.0
+      divV(jnode) = 0.
       if(dstruct%nb_neighbours(jnode) > 1) then
         do jedge = 1,dstruct%nb_neighbours(jnode)
           iedge = dstruct%my_edges(jedge,jnode)
-          adv(:) = adv(:) + dstruct%sign(jedge,jnode)*fluxv(:,iedge)
+          add = dstruct%sign(jedge,jnode)
+          adv(:) = adv(:) + add*fluxv(:,iedge)
+          divV(jnode) = divV(jnode) + add*aun(1,iedge)
         enddo
       endif
-     ! Update the unknowns in vertices
-     U(:,jnode) = U(:,jnode) - adv(:)/max(eps,volD(jnode)) * dt
+      divV(jnode) = IDIV * divV(jnode) / vol(jnode)
+      ! Update the unknowns in vertices
+      U(:,jnode) = U(:,jnode) - adv(:)/max(eps,volD(jnode)) * dt
 
     enddo
     !$OMP END PARALLEL DO
@@ -482,14 +770,16 @@ contains
         Vy = VD(YY,jedge)
         ! variable sign option with asymptotic analysis, (mpdata gauge)
         aun(:,jedge) = abs(aun(:,jedge))*(U(:,ip2)-U(:,ip1))*0.5_jprw &
-          &          -0.5_jprw*dt*aun(:,jedge)*(Vx*dUdx(:)+Vy*dUdy(:))  ! = VDS*dUds
+          &            -0.5_jprw*dt*aun(:,jedge) * ( Vx*dUdx(:)+Vy*dUdy(:) ) ! = VDS*dUds
+        fluxv(:,jedge) = aun(:,jedge)
       end do
       !$OMP END PARALLEL DO
 
       ! non-oscillatory option
-      if (limited) then
+      if (limit >= 0.) then
         !call compute_Umax_and_Umin()
-        call limit_antidiffusive_velocity()
+        call limit_vector_flux(fluxv,U,Umax,Umin,limit,dt,volD,dstruct)
+        !call limit_antidiffusive_velocity()
       endif
 
 
@@ -500,7 +790,7 @@ contains
         if(dstruct%nb_neighbours(jnode) > 1) then
           do jedge = 1,dstruct%nb_neighbours(jnode)
             iedge = dstruct%my_edges(jedge,jnode)
-            adv(:) = adv(:) + dstruct%sign(jedge,jnode)*aun(:,iedge)
+            adv(:) = adv(:) + dstruct%sign(jedge,jnode)*fluxv(:,iedge)
           enddo
         endif
         ! Update the unknowns in vertices
@@ -513,334 +803,8 @@ contains
 
     end do ! other passes
 
-  contains
-    
-    subroutine compute_Umax_and_Umin( )
-      real(kind=jprw) :: U1(2), U2(2)    
-      !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,jedge,iedge,U1,U2)
-      do jnode=1,dstruct%nb_nodes
-        U1(:) = U(:,jnode)
-        Umax(:,jnode) = max( Umax(:,jnode), U1(:) )
-        Umin(:,jnode) = min( Umin(:,jnode), U1(:) )
-        do jedge = 1,dstruct%nb_neighbours(jnode)
-          U2(:) = U(:,dstruct%neighbours(jedge,jnode))
-          iedge = dstruct%my_edges(jedge,jnode)
-          Umax(:,jnode) = max( Umax(:,jnode), pole_bc(iedge)*U2(:) )
-          Umin(:,jnode) = min( Umin(:,jnode), pole_bc(iedge)*U2(:) )
-        end do
-      end do
-      !$OMP END PARALLEL DO
-
-      call halo_exchange(Umin,dstruct)
-      call halo_exchange(Umax,dstruct)
-
-    end subroutine compute_Umax_and_Umin
-
-    subroutine limit_antidiffusive_velocity
-
-      real(kind=jprw) :: asignp,asignn
-      real(kind=jprw) :: limit = 1.  ! 1: second order, 0: first order
-      integer :: var
-
-      !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,rhin,rhout,jedge,iedge,apos,aneg,asignp,asignn)
-      do jnode=1,dstruct%nb_nodes
-        rhin(:)  = 0.
-        rhout(:) = 0.
-        do jedge = 1,dstruct%nb_neighbours(jnode)
-          iedge = dstruct%my_edges(jedge,jnode)
-          apos(:) = max(0._jprw,aun(:,iedge))
-          aneg(:) = min(0._jprw,aun(:,iedge))
-          asignp = max(0._jprw,dstruct%sign(jedge,jnode))
-          asignn = min(0._jprw,dstruct%sign(jedge,jnode))
-          rhin(:)  = rhin(:)  - asignp*aneg(:) - asignn*apos(:)
-          rhout(:) = rhout(:) + asignp*apos(:) + asignn*aneg(:)
-        end do
-        cp(:,jnode) = ( Umax(:,jnode)-U(:,jnode) )*volD(jnode)/( rhin(:) * dt + eps )
-        cn(:,jnode) = ( U(:,jnode)-Umin(:,jnode) )*volD(jnode)/( rhout(:)* dt + eps )
-      end do
-      !$OMP END PARALLEL DO
-
-      call halo_exchange(cp,dstruct)
-      call halo_exchange(cn,dstruct)
-
-      !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2,var)
-      do jedge = 1,dstruct%nb_edges
-        ip1 = dstruct%edges(1,jedge)
-        ip2 = dstruct%edges(2,jedge)
-        do var=1,2
-          if(aun(var,jedge) > 0._jprw) then
-            aun(var,jedge)=aun(var,jedge)*min(limit,cp(var,ip2),cn(var,ip1))
-          else
-            aun(var,jedge)=aun(var,jedge)*min(limit,cn(var,ip2),cp(var,ip1))
-          end if
-        end do
-      end do
-      !$OMP END PARALLEL DO
-
-    end subroutine limit_antidiffusive_velocity
-
   end subroutine mpdata_gauge_U
   
-  
-  subroutine mpdata_Q(mpdata_scheme,dt,Q,V,order,limit,dstruct)
-    integer, intent(in) :: mpdata_scheme
-    real(kind=jprw), intent(in)  :: dt
-    type(DataStructure_type), intent(inout) :: dstruct
-    real(kind=jprw), intent(inout) :: Q(:,:)
-    real(kind=jprw), intent(in) :: V(:,:)
-    real(kind=jprw), intent(in) :: limit
-    integer, intent(in) :: order
-    integer :: jnode, jedge, iedge, jpass, ip1,ip2
-    real(kind=jprw) :: Sx, Sy, volume_of_two_cells, dQdx(2), dQdy(2), Vx, Vy, Qtmp(2), Q_abs(2), Qbar(2,2)
-    real(kind=jprw) :: apos(2), aneg(2)
-    real(kind=jprw) :: Qmin(2,dstruct%nb_nodes)
-    real(kind=jprw) :: Qmax(2,dstruct%nb_nodes)
-    real(kind=jprw) :: rhin(2)
-    real(kind=jprw) :: rhout(2)
-    real(kind=jprw) :: cp(2,dstruct%nb_nodes)
-    real(kind=jprw) :: cn(2,dstruct%nb_nodes)
-    real(kind=jprw) :: adv(2)
-    real(kind=jprw) :: aun(2,dstruct%nb_edges)
-    real(kind=jprw) :: fluxv(2,dstruct%nb_edges)
-    real(kind=jprw) :: gradQ(4,dstruct%nb_nodes)
-    real(kind=jprw) :: sum_Sabs(2,dstruct%nb_nodes)
-    real(kind=jprw) :: sum_Qbar(2,2,dstruct%nb_nodes)
-    real(kind=jprw), pointer :: vol(:), S(:,:), pole_bc(:)
-
-    vol     => scalar_field_2d("dual_volumes",dstruct)
-    S       => vector_field_2d("dual_normals",dstruct)
-    pole_bc => scalar_field_2d("pole_bc",dstruct)
-
-
-    ! 1. First pass
-    ! -------------
-    jpass = 1
-
-    ! non-oscillatory option
-    if( limit > 0. .and. (order >= 2) ) then
-      Qmax(:,:) = -1e10
-      Qmin(:,:) =  1e10
-      call compute_Qmax_and_Qmin()
-    end if
-
-    ! Compute the normal velocity in faces, and advection in vertices
-
-    !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2,Sx,Sy,Vx,Vy,apos,aneg)
-    do jedge = 1,dstruct%nb_edges
-      ip1 = dstruct%edges(1,jedge)
-      ip2 = dstruct%edges(2,jedge)
-
-      Sx = S(XX,jedge)
-      Sy = S(YY,jedge)
-
-      Vx = V(XX,jedge)
-      Vy = V(YY,jedge)
-
-      aun(:,jedge) = Vx*Sx + Vy*Sy
-      apos(:) = max(0._jprw,aun(:,jedge))
-      aneg(:) = min(0._jprw,aun(:,jedge))
-      fluxv(:,jedge) = Q(:,ip1)*apos(:) + Q(:,ip2)*aneg(:)
-    end do
-    !$OMP END PARALLEL DO
-
-    !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,adv,jedge,iedge)
-    do jnode=1,dstruct%nb_nodes
-      adv(:) = 0.0
-      if(dstruct%nb_neighbours(jnode) > 1) then
-        do jedge = 1,dstruct%nb_neighbours(jnode)
-          iedge = dstruct%my_edges(jedge,jnode)
-          adv(:) = adv(:) + dstruct%sign(jedge,jnode)*fluxv(:,iedge)
-        end do
-      end if
-     ! Update the unknowns in vertices
-     Q(:,jnode) = Q(:,jnode) - adv(:)/vol(jnode) * dt
-    end do
-    !$OMP END PARALLEL DO
-
-    do jnode=1,dstruct%nb_nodes
-      if ( abs(Q(XX,jnode)) > 1e30 .or. abs(Q(YY,jnode)) > 1e30 ) then
-        write(0,*) "Q_pass1", jnode, Q(:,jnode)
-        call abort
-      end if
-      if ( jnode .eq. probe ) then
-        write(log_str,*) "Q_pass1", jnode, Q(:,jnode); call log_debug()
-      end if
-    end do
-
-    call halo_exchange(Q,dstruct)
-
-
-    ! 2. Other passes (making the spatial discretisation higher-order)
-    ! ----------------------------------------------------------------
-
-    do jpass=2,order
-
-      ! Compute derivatives for mpdata
-      select case (mpdata_scheme)
-        case (MPDATA_STANDARD)
-          call compute_gradient_tensor_abs(Q, gradQ, dstruct)
-        case (MPDATA_GAUGE)
-          call compute_gradient_tensor(Q, gradQ, dstruct)
-      end select
-
-      call halo_exchange(gradQ,dstruct)
-
-      ! Compute antidiffusive normal velocity in faces
-
-      if (mpdata_scheme == MPDATA_STANDARD) then
-        sum_Qbar(:,:,:) = 0._jprw
-        sum_Sabs(:,:) = 0._jprw
-        do jedge=1, dstruct%nb_edges
-          ip1 = dstruct%edges(1,jedge)
-          ip2 = dstruct%edges(2,jedge)
-          Sx = abs(S(XX,jedge))
-          Sy = abs(S(YY,jedge))
-          Q_abs(:) = ( abs(Q(:,ip1)) + abs(Q(:,ip2)) ) * 0.5_jprw
-          sum_Qbar(:,XX,ip1) = sum_Qbar(:,XX,ip1) + Sx * Q_abs(:)
-          sum_Qbar(:,YY,ip1) = sum_Qbar(:,YY,ip1) + Sy * Q_abs(:)
-          sum_Qbar(:,XX,ip2) = sum_Qbar(:,XX,ip2) + Sx * Q_abs(:)
-          sum_Qbar(:,YY,ip2) = sum_Qbar(:,YY,ip2) + Sy * Q_abs(:)
-          sum_Sabs(XX,ip1) = sum_Sabs(XX,ip1) + Sx
-          sum_Sabs(XX,ip2) = sum_Sabs(XX,ip2) + Sx
-          sum_Sabs(YY,ip1) = sum_Sabs(YY,ip1) + Sy
-          sum_Sabs(YY,ip2) = sum_Sabs(YY,ip2) + Sy
-        end do
-      end if
-
-      !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2,volume_of_two_cells,dQdx,dQdy,Vx,Vy)
-      do jedge = 1,dstruct%nb_edges
-        ip1 = dstruct%edges(1,jedge)
-        ip2 = dstruct%edges(2,jedge)
-
-        ! evaluate gradient and velocity at edge by combining 2 neighbouring dual cells
-        volume_of_two_cells = max(eps, vol(ip1) + vol(ip2) )
-        dQdx(XX) = (gradQ(XXDXX,ip1)+gradQ(XXDXX,ip2)) / volume_of_two_cells
-        dQdx(YY) = (gradQ(YYDXX,ip1)+gradQ(YYDXX,ip2)) / volume_of_two_cells
-        dQdy(XX) = (gradQ(XXDYY,ip1)+gradQ(XXDYY,ip2)) / volume_of_two_cells
-        dQdy(YY) = (gradQ(YYDYY,ip1)+gradQ(YYDYY,ip2)) / volume_of_two_cells
-        Vx = V(XX,jedge)
-        Vy = V(YY,jedge)
-
-        select case (mpdata_scheme)
-          case (MPDATA_STANDARD)
-            Qbar(:,XX) = (sum_Qbar(:,XX,ip1) + sum_Qbar(:,XX,ip2) + eps) / ( sum_Sabs(XX,ip1) + sum_Sabs(XX,ip2) )
-            Qbar(:,YY) = (sum_Qbar(:,YY,ip1) + sum_Qbar(:,YY,ip2) + eps) / ( sum_Sabs(YY,ip1) + sum_Sabs(YY,ip2) )
-            aun(:,jedge) = abs(aun(:,jedge))*( abs(Q(:,ip2))-abs(Q(:,ip1)) )/(abs(Q(:,ip2))+abs(Q(:,ip1))+eps) &
-              &          -0.5_jprw*dt*aun(:,jedge)*(Vx*dQdx(:)/Qbar(:,XX)+Vy*dQdy(:)/Qbar(:,YY))
-          case (MPDATA_GAUGE)
-            ! variable sign option with asymptotic analysis, (mpdata gauge)
-            aun(:,jedge) = abs(aun(:,jedge))*(Q(:,ip2)-Q(:,ip1))*0.5_jprw &
-              &          -0.5_jprw*dt*aun(:,jedge)*(Vx*dQdx(:)+Vy*dQdy(:))
-        end select
-
-      end do
-      !$OMP END PARALLEL DO
-
-      ! non-oscillatory option
-      if (limit > 0._jprw) then
-        if (mpdata_scheme == MPDATA_STANDARD) call compute_Qmax_and_Qmin()
-        call limit_antidiffusive_velocity()
-      endif
-
-
-      ! Compute fluxes from (limited) antidiffusive velocity
-      !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,adv,jedge,iedge)
-      do jnode=1,dstruct%nb_nodes
-        adv(:) = 0.0
-        if(dstruct%nb_neighbours(jnode) > 1) then
-          do jedge = 1,dstruct%nb_neighbours(jnode)
-            iedge = dstruct%my_edges(jedge,jnode)
-            adv(:) = adv(:) + dstruct%sign(jedge,jnode)*aun(:,iedge)
-          enddo
-        endif
-        ! Update the unknowns in vertices
-        !Q(:,jnode) = Q(:,jnode) - adv(:)/vol(jnode) * dt
-        Qtmp(:) = Q(:,jnode) - adv(:)/vol(jnode) * dt
-        if ( abs(Qtmp(XX) ) > 1e10 .or. abs(Qtmp(YY) ) > 1e10 ) then
-          write(0,*) "Q_pass2 = ", Qtmp(:)
-          write(0,*) "gradQ = ", gradQ(:,jnode)
-          call abort
-        end if
-        if ( jnode .eq. probe ) then
-          write(log_str,*) "Q_pass2", jnode, Qtmp; call log_debug()
-          write(log_str,*) "gradQ  ", jnode, gradQ(:,jnode); call log_debug()
-        end if
-
-        Q(:,jnode) = Qtmp(:)
-      enddo
-      !$OMP END PARALLEL DO
-
-      call halo_exchange(Q,dstruct)
-
-    end do ! other passes
-
-  contains
-
-    subroutine compute_Qmax_and_Qmin( )
-      real(kind=jprw) :: Q1(2), Q2(2)
-      !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,jedge,iedge,Q1,Q2)
-      do jnode=1,dstruct%nb_nodes
-        Q1(:) = Q(:,jnode)
-        Qmax(:,jnode) = max( Qmax(:,jnode), Q1(:) )
-        Qmin(:,jnode) = min( Qmin(:,jnode), Q1(:) )
-        do jedge = 1,dstruct%nb_neighbours(jnode)
-          Q2(:) = Q(:,dstruct%neighbours(jedge,jnode))
-          iedge = dstruct%my_edges(jedge,jnode)
-          Qmax(:,jnode) = max( Qmax(:,jnode), pole_bc(iedge)*Q2(:) )
-          Qmin(:,jnode) = min( Qmin(:,jnode), pole_bc(iedge)*Q2(:) )
-        end do
-      end do
-      !$OMP END PARALLEL DO
-
-      call halo_exchange(Qmin,dstruct)
-      call halo_exchange(Qmax,dstruct)
-
-    end subroutine compute_Qmax_and_Qmin
-
-    subroutine limit_antidiffusive_velocity
-
-      real(kind=jprw) :: asignp,asignn
-      integer :: var
-      !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,rhin,rhout,jedge,iedge,apos,aneg,asignp,asignn)
-      do jnode=1,dstruct%nb_nodes
-        rhin(:)  = 0.
-        rhout(:) = 0.
-        do jedge = 1,dstruct%nb_neighbours(jnode)
-          iedge = dstruct%my_edges(jedge,jnode)
-          apos(:) = max(0._jprw,aun(:,iedge))
-          aneg(:) = min(0._jprw,aun(:,iedge))
-          asignp = max(0._jprw,dstruct%sign(jedge,jnode))
-          asignn = min(0._jprw,dstruct%sign(jedge,jnode))
-          rhin(:)  = rhin(:)  - asignp*aneg(:) - asignn*apos(:)
-          rhout(:) = rhout(:) + asignp*apos(:) + asignn*aneg(:)
-        end do
-        cp(:,jnode) = ( Qmax(:,jnode)-Q(:,jnode) )*vol(jnode)/( rhin(:) * dt + eps )
-        cn(:,jnode) = ( Q(:,jnode)-Qmin(:,jnode) )*vol(jnode)/( rhout(:)* dt + eps )
-      end do
-      !$OMP END PARALLEL DO
-
-      call halo_exchange(cp,dstruct)
-      call halo_exchange(cn,dstruct)
-
-      !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2,var)
-      do jedge = 1,dstruct%nb_edges
-        ip1 = dstruct%edges(1,jedge)
-        ip2 = dstruct%edges(2,jedge)
-        do var=1,2
-          if(aun(var,jedge) > 0._jprw) then
-            aun(var,jedge)=aun(var,jedge)*min(limit,cp(var,ip2),cn(var,ip1))
-          else
-            aun(var,jedge)=aun(var,jedge)*min(limit,cn(var,ip2),cp(var,ip1))
-          end if
-        end do
-      end do
-      !$OMP END PARALLEL DO
-
-    end subroutine limit_antidiffusive_velocity
-
-  end subroutine mpdata_Q
-
-
   
   
 
@@ -865,11 +829,15 @@ contains
       ip2 = dstruct%edges(2,jedge)
       Sx  = S(XX,jedge)
       Sy  = S(YY,jedge)
-      !avgQSx(jedge) = Sx*( Q(ip1) + Q(ip2) )*0.5_jprw
-      !avgQSy(jedge) = Sy*( Q(ip1) + Q(ip2) )*0.5_jprw
 
-      avgQSx(jedge) = Sx*( D(ip1)*Q(ip1) + D(ip2)*Q(ip2) )/(D(ip1)+D(ip2)+2*eps)
-      avgQSy(jedge) = Sy*( D(ip1)*Q(ip1) + D(ip2)*Q(ip2) )/(D(ip1)+D(ip2)+2*eps)
+      if ( .not. DENSITY_WEIGHTING ) then
+        avgQSx(jedge) = Sx*( Q(ip1) + Q(ip2) )*0.5_jprw
+        avgQSy(jedge) = Sy*( Q(ip1) + Q(ip2) )*0.5_jprw
+      else
+        avgQSx(jedge) = Sx*( D(ip1)*Q(ip1) + D(ip2)*Q(ip2) )/(D(ip1)+D(ip2)+2*eps)
+        avgQSy(jedge) = Sy*( D(ip1)*Q(ip1) + D(ip2)*Q(ip2) )/(D(ip1)+D(ip2)+2*eps)
+      endif
+
     end do
     !$OMP END PARALLEL DO
 
@@ -901,7 +869,7 @@ contains
     real(kind=jprw), intent(in)    :: Q(:)
     real(kind=jprw), intent(inout) :: gradQ(:,:)
     real(kind=jprw), pointer :: S(:,:), D(:)
-    real(kind=jprw) :: Sx,Sy
+    real(kind=jprw) :: Sx,Sy,add
     integer :: jedge,iedge,ip1,ip2,jnode
     real(kind=jprw) :: avgQSx(dstruct%nb_edges)
     real(kind=jprw) :: avgQSy(dstruct%nb_edges)
@@ -917,23 +885,26 @@ contains
       ip2 = dstruct%edges(2,jedge)
       Sx  = S(XX,jedge)
       Sy  = S(YY,jedge)
-      !avgQSx(jedge) = Sx*( abs(Q(ip1)) + abs(Q(ip2)) )*0.5_jprw
-      !avgQSy(jedge) = Sy*( abs(Q(ip1)) + abs(Q(ip2)) )*0.5_jprw
-
-      avgQSx(jedge) = Sx*( D(ip1)*abs(Q(ip1)) + D(ip2)*abs(Q(ip2)) )/(D(ip1)+D(ip2)+2*eps)
-      avgQSy(jedge) = Sy*( D(ip1)*abs(Q(ip1)) + D(ip2)*abs(Q(ip2)) )/(D(ip1)+D(ip2)+2*eps)
-
+      
+      if ( .not. DENSITY_WEIGHTING ) then
+        avgQSx(jedge) = Sx*( abs(Q(ip1)) + abs(Q(ip2)) )*0.5_jprw
+        avgQSy(jedge) = Sy*( abs(Q(ip1)) + abs(Q(ip2)) )*0.5_jprw
+      else
+        avgQSx(jedge) = Sx*( D(ip1)*abs(Q(ip1)) + D(ip2)*abs(Q(ip2)) )/(D(ip1)+D(ip2)+2*eps)
+        avgQSy(jedge) = Sy*( D(ip1)*abs(Q(ip1)) + D(ip2)*abs(Q(ip2)) )/(D(ip1)+D(ip2)+2*eps)
+      end if
     end do
     !$OMP END PARALLEL DO
 
-    !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,jedge,iedge)
+    !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,jedge,iedge,add)
     do jnode=1,dstruct%nb_nodes
       gradQ(XX,jnode) = 0.
       gradQ(YY,jnode) = 0.
       do jedge = 1,dstruct%nb_neighbours(jnode)
         iedge = dstruct%my_edges(jedge,jnode)
-        gradQ(XX,jnode) = gradQ(XX,jnode)+dstruct%sign(jedge,jnode)*avgQSx(iedge)
-        gradQ(YY,jnode) = gradQ(YY,jnode)+dstruct%sign(jedge,jnode)*avgQSy(iedge)
+        add = dstruct%sign(jedge,jnode)
+        gradQ(XX,jnode) = gradQ(XX,jnode)+add*avgQSx(iedge)
+        gradQ(YY,jnode) = gradQ(YY,jnode)+add*avgQSy(iedge)
       end do
     end do
     !$OMP END PARALLEL DO
@@ -956,7 +927,7 @@ contains
     real(kind=jprw), intent(out) :: gradQ(:,:)
     type(DataStructure_type), intent(inout) :: dstruct
     real(kind=jprw), pointer :: S(:,:), D(:)
-    real(kind=jprw) :: Sx,Sy
+    real(kind=jprw) :: Sx,Sy, add
     integer :: jedge,iedge,ip1,ip2,jnode
     real(kind=jprw) :: avgQSx(2,dstruct%nb_edges)
     real(kind=jprw) :: avgQSy(2,dstruct%nb_edges)
@@ -972,24 +943,27 @@ contains
       ip2 = dstruct%edges(2,jedge)
       Sx  = S(XX,jedge)
       Sy  = S(YY,jedge)
-      !avgQSx(:,jedge) = Sx*( Q(:,ip1) + Q(:,ip2) )*0.5_jprw
-      !avgQSy(:,jedge) = Sy*( Q(:,ip1) + Q(:,ip2) )*0.5_jprw
-      
-      avgQSx(:,jedge) = Sx*( D(ip1)*Q(:,ip1) + D(ip2)*Q(:,ip2) )/(D(ip1)+D(ip2)+2*eps)
-      avgQSy(:,jedge) = Sy*( D(ip1)*Q(:,ip1) + D(ip2)*Q(:,ip2) )/(D(ip1)+D(ip2)+2*eps)
 
+      if ( .not. DENSITY_WEIGHTING ) then
+        avgQSx(:,jedge) = Sx*( Q(:,ip1) + Q(:,ip2) )*0.5_jprw
+        avgQSy(:,jedge) = Sy*( Q(:,ip1) + Q(:,ip2) )*0.5_jprw
+      else
+        avgQSx(:,jedge) = Sx*( D(ip1)*Q(:,ip1) + D(ip2)*Q(:,ip2) )/(D(ip1)+D(ip2)+eps)
+        avgQSy(:,jedge) = Sy*( D(ip1)*Q(:,ip1) + D(ip2)*Q(:,ip2) )/(D(ip1)+D(ip2)+eps)
+      end if
     end do
     !$OMP END PARALLEL DO
 
-    !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,jedge,iedge)
+    !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,jedge,iedge,add)
     do jnode=1,dstruct%nb_nodes
       gradQ(:,jnode) = 0._jprw
       do jedge = 1,dstruct%nb_neighbours(jnode)
         iedge = dstruct%my_edges(jedge,jnode)
-        gradQ(XXDXX,jnode) = gradQ(XXDXX,jnode)+dstruct%sign(jedge,jnode)*avgQSx(XX,iedge)
-        gradQ(XXDYY,jnode) = gradQ(XXDYY,jnode)+dstruct%sign(jedge,jnode)*avgQSy(XX,iedge)
-        gradQ(YYDXX,jnode) = gradQ(YYDXX,jnode)+dstruct%sign(jedge,jnode)*avgQSx(YY,iedge)
-        gradQ(YYDYY,jnode) = gradQ(YYDYY,jnode)+dstruct%sign(jedge,jnode)*avgQSy(YY,iedge)
+        add = dstruct%sign(jedge,jnode)
+        gradQ(XXDXX,jnode) = gradQ(XXDXX,jnode) + add*avgQSx(XX,iedge)
+        gradQ(XXDYY,jnode) = gradQ(XXDYY,jnode) + add*avgQSy(XX,iedge)
+        gradQ(YYDXX,jnode) = gradQ(YYDXX,jnode) + add*avgQSx(YY,iedge)
+        gradQ(YYDYY,jnode) = gradQ(YYDYY,jnode) + add*avgQSy(YY,iedge)
       end do
     end do
     !$OMP END PARALLEL DO
@@ -1001,7 +975,7 @@ contains
     real(kind=jprw), intent(out) :: gradQ(:,:)
     type(DataStructure_type), intent(inout) :: dstruct
     real(kind=jprw), pointer :: S(:,:), D(:)
-    real(kind=jprw) :: Sx,Sy
+    real(kind=jprw) :: Sx,Sy,add
     integer :: jedge,iedge,ip1,ip2,jnode
     real(kind=jprw) :: avgQSx(2,dstruct%nb_edges)
     real(kind=jprw) :: avgQSy(2,dstruct%nb_edges)
@@ -1017,28 +991,43 @@ contains
       ip2 = dstruct%edges(2,jedge)
       Sx  = S(XX,jedge)
       Sy  = S(YY,jedge)
-      !avgQSx(:,jedge) = Sx*( abs(Q(:,ip1)) + abs(Q(:,ip2)) )*0.5_jprw
-      !avgQSy(:,jedge) = Sy*( abs(Q(:,ip1)) + abs(Q(:,ip2)) )*0.5_jprw
 
-      avgQSx(:,jedge) = Sx*( D(ip1)*abs(Q(:,ip1)) + D(ip2)*abs(Q(:,ip2)) )/(D(ip1)+D(ip2)+2*eps)
-      avgQSy(:,jedge) = Sy*( D(ip1)*abs(Q(:,ip1)) + D(ip2)*abs(Q(:,ip2)) )/(D(ip1)+D(ip2)+2*eps)
-
+      if ( .not. DENSITY_WEIGHTING ) then
+        avgQSx(:,jedge) = Sx*( abs(Q(:,ip1)) + abs(Q(:,ip2)) )*0.5_jprw
+        avgQSy(:,jedge) = Sy*( abs(Q(:,ip1)) + abs(Q(:,ip2)) )*0.5_jprw
+      else
+        avgQSx(:,jedge) = Sx*( D(ip1)*abs(Q(:,ip1)) + D(ip2)*abs(Q(:,ip2)) )/(D(ip1)+D(ip2)+2*eps)
+        avgQSy(:,jedge) = Sy*( D(ip1)*abs(Q(:,ip1)) + D(ip2)*abs(Q(:,ip2)) )/(D(ip1)+D(ip2)+2*eps)
+      end if
     end do
     !$OMP END PARALLEL DO
 
-    !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,jedge,iedge)
+    !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,jedge,iedge,add)
     do jnode=1,dstruct%nb_nodes
       gradQ(:,jnode) = 0._jprw
       do jedge = 1,dstruct%nb_neighbours(jnode)
         iedge = dstruct%my_edges(jedge,jnode)
-        gradQ(XXDXX,jnode) = gradQ(XXDXX,jnode)+dstruct%sign(jedge,jnode)*avgQSx(XX,iedge)
-        gradQ(XXDYY,jnode) = gradQ(XXDYY,jnode)+dstruct%sign(jedge,jnode)*avgQSy(XX,iedge)
-        gradQ(YYDXX,jnode) = gradQ(YYDXX,jnode)+dstruct%sign(jedge,jnode)*avgQSx(YY,iedge)
-        gradQ(YYDYY,jnode) = gradQ(YYDYY,jnode)+dstruct%sign(jedge,jnode)*avgQSy(YY,iedge)
+        add = dstruct%sign(jedge,jnode)
+        gradQ(XXDXX,jnode) = gradQ(XXDXX,jnode) + add*avgQSx(XX,iedge)
+        gradQ(XXDYY,jnode) = gradQ(XXDYY,jnode) + add*avgQSy(XX,iedge)
+        gradQ(YYDXX,jnode) = gradQ(YYDXX,jnode) + add*avgQSx(YY,iedge)
+        gradQ(YYDYY,jnode) = gradQ(YYDYY,jnode) + add*avgQSy(YY,iedge)
       end do
     end do
     !$OMP END PARALLEL DO
 
+
+    ! special treatment for the north & south pole cell faces
+    ! Sx == 0 at pole, and Sy has same sign at both sides of pole
+    do jedge = 1,dstruct%nb_pole_edges
+      iedge = dstruct%pole_edges(jedge)
+      ip1   = dstruct%edges(1,iedge)
+      ip2   = dstruct%edges(2,iedge)
+
+      ! correct for wrong Y-derivatives in previous loop,
+      gradQ(XXDYY,ip2) = gradQ(XXDYY,ip2) + 2._jprw*avgQSy(XX,iedge)
+      gradQ(YYDYY,ip2) = gradQ(YYDYY,ip2) + 2._jprw*avgQSy(YY,iedge)
+    end do
   end subroutine compute_gradient_tensor_abs
 
 end module mpdata_module
