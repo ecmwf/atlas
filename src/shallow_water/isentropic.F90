@@ -16,6 +16,7 @@ program isentropic
   use isentropic_module, only: &
     & setup_isentropic, &
     & set_state_zonal_flow, &
+    & set_state_rossby_haurwitz, &
     & set_topography, &
     & set_time_step, &
     & propagate_state
@@ -25,8 +26,8 @@ program isentropic
   implicit none
 
   ! Configuration parameters
-  real(kind=jprw) :: dt = 1.              ! solver time-step
-  integer         :: nb_steps = 48        ! Number of propagations
+  real(kind=jprw) :: dt = 1              ! solver time-step
+  integer         :: nb_steps = 15        ! Number of propagations
   integer         :: hours_per_step = 1   ! Propagation time
   logical         :: write_itermediate_output = .True.
   integer         :: nb_levels = 2
@@ -46,8 +47,6 @@ program isentropic
   call set_log_level(LOG_LEVEL_INFO)
   call set_log_proc(0)
 
-  write(0,*) "DATA_DIR ", PANTARHEI_DATADIR
-  
   call log_info("Program isentropic start")
 !  call read_joanna_3d("meshes/meshvolT255.d","meshes/rtable_lin_T255.d", nb_levels, dstruct)
 !  call read_gmsh_3d("unstr_uniform160.msh", nb_levels, dstruct)
@@ -77,9 +76,9 @@ program isentropic
   call setup_isentropic(dstruct)
 
   call set_topography(dstruct)
+  call set_state_zonal_flow(dstruct)
 
   !call set_state_rossby_haurwitz(dstruct)
-  call set_state_zonal_flow(dstruct)
 
   call set_time_step( dt )
 
@@ -104,7 +103,7 @@ program isentropic
     call propagate_state( hours_per_step*hours, order, scheme, dstruct)
     !call propagate_state(100.* dt, order, scheme, dstruct)
 
-    write (log_str, '(A,F5.2,A,A,F8.2,A,F8.2,A)') &
+    write (log_str, '(A,F7.2,A,A,F8.2,A,F8.2,A)') &
       & "Propagated to ",dstruct%time/3600.," hours.", &
       & "     step-time = ",step_timer%elapsed(),&
       & "     wall-time = ",wallclock_timer%elapsed(), new_line('A')

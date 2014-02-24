@@ -859,12 +859,13 @@ module isentropic_module
   public :: setup_isentropic
   public :: propagate_state
   public :: set_state_zonal_flow
+  public :: set_state_rossby_haurwitz
   public :: set_topography
   public :: set_time_step
 
   real(kind=jprw), parameter :: eps    = 1.e-12
-  real(kind=jprw), parameter :: radius = 63.6620e+03
-!  real(kind=jprw), parameter :: radius = 6371.22e+03
+!  real(kind=jprw), parameter :: radius = 63.6620e+03
+  real(kind=jprw), parameter :: radius = 6371.22e+03
   real(kind=jprw), parameter :: f0     = 1.4584e-04 !coriolis parameter (=2xearth's omega)
   real(kind=jprw), parameter :: grav   = 9.80616
   real(kind=jprw), parameter :: pi     = acos(-1._jprw)
@@ -1017,7 +1018,7 @@ contains
         CALL LOG_INFO( STEP_INFO )
       end if
     end do
-
+    dstruct%time_step = dstruct%time_step + 1
   end subroutine propagate_state
 
 
@@ -1037,8 +1038,11 @@ contains
     if (step == 0) then ! Pre-compute forcing
 
       call log_debug("Compute forcing")
-      call compute_forcing(dstruct)
-
+      if (STACKED_SHALLOW_WATER) then
+        call compute_forcing_shallow(dstruct)
+      else
+        call compute_forcing(dstruct)
+      end if
       call log_debug("Compute advective velocities")
       call compute_advective_velocities(dt,dstruct,"advect")
 
@@ -1183,6 +1187,76 @@ contains
   end subroutine set_state_zonal_flow
 
 
+  subroutine set_state_rossby_haurwitz(dstruct)
+    type(DataStructure_type), intent(inout)      :: dstruct
+    real(kind=jprw), dimension(:), pointer   :: cor, H0
+    real(kind=jprw), dimension(:,:), pointer   :: D, H, coords
+    real(kind=jprw), dimension(:,:,:), pointer :: U, Q
+    integer :: jnode, ir, jlev
+    real(kind=jprw) :: zk,om,ph0,x,y, sin_y, cos_y
+
+    call set_topography_mountain(0._jprw,dstruct)
+
+    om   = 7.848E-6
+    zk   = 7.848E-6
+    ir   = 4
+    ph0  = 78.4E3
+
+    coords => vector_field_2d("coordinates",dstruct)
+    cor => scalar_field_2d("coriolis",dstruct)
+    D => scalar_field_3d("depth",dstruct)
+    U => vector_field_3d("velocity",dstruct)
+    Q => vector_field_3d("momentum",dstruct)
+    H0 => scalar_field_2d("topography",dstruct)
+    H => scalar_field_3d("height",dstruct)
+
+
+    !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,x,y,sin_y,cos_y,jlev)
+    do jnode=1,dstruct%nb_nodes
+      x=coords(XX,jnode)
+      y=coords(YY,jnode)
+      sin_y = sin(y)
+      cos_y = cos(y)
+      cor(jnode) = f0*sin_y
+      if(x == 2._jprw*pi) x=0.
+      do jlev=1,dstruct%nb_levels
+        U(XX,jlev,jnode) =  radius*om*cos_y+radius*zk*cos(ir*x) * cos_y**(ir-1._jprw) &
+          &            * (ir*(sin_y)**2-cos_y**2)
+        U(YY,jlev,jnode) = -radius*zk*ir*cos_y**(ir-1._jprw)*sin_y*sin(ir*x)
+        H(jlev,jnode) = (ph0+radius**2*fa(y)+radius**2*fb(y)*cos(ir*x) &
+          &        +radius**2*fc(y)*cos(2._jprw*ir*x)) / grav
+        D(jlev,jnode) = max(0._jprw,H(jlev,jnode) - H0(jnode))
+        if(y == 0.5_jprw*pi) U(XX,jlev,jnode)=0.
+        if(y ==-0.5_jprw*pi) U(XX,jlev,jnode)=0.
+        H(jlev,jnode) = H0(jnode) + D(jlev,jnode)
+        Q(:,jlev,jnode) = D(jlev,jnode) * U(:,jlev,jnode)
+      end do
+    end do
+    !$OMP END PARALLEL DO
+
+    contains 
+    ! Helper functions
+
+      real(kind=jprw) function fa(th)
+        real(kind=jprw), intent(in) :: th
+        fa = om*0.5*(f0+om)*(cos(th))**2 &
+          & +0.25*zk**2*(cos(th))**(2*ir)*( (ir+1)*(cos(th))**2 &
+          & +(2._jprw*ir**2-ir-2._jprw)-2._jprw*ir**2/(cos(th))**2 )
+      end function fa
+
+      real(kind=jprw) function fb(th)
+        real(kind=jprw), intent(in) :: th
+        fb = (f0+2._jprw*om)*zk/((ir+1._jprw)*(ir+2._jprw))*(cos(th))**ir &
+          & *( (ir**2+2._jprw*ir+2._jprw)-((ir+1._jprw)*cos(th))**2 )
+      end function fb
+
+      real(kind=jprw) function fc(th)
+        real(kind=jprw), intent(in) :: th
+        fc = 0.25*zk**2*(cos(th))**(2*ir)*((ir+1._jprw)*(cos(th))**2 -(ir+2._jprw))  
+      end function fc
+
+  end subroutine set_state_rossby_haurwitz
+
   subroutine set_topography(dstruct)
     type(DataStructure_type), intent(inout) :: dstruct
     real(kind=jprw), dimension(:), pointer :: H0
@@ -1191,7 +1265,7 @@ contains
     integer :: jnode
 
     if (STACKED_SHALLOW_WATER) then
-      call set_topography_mountain(6000._jprw,dstruct)
+      call set_topography_mountain(6500._jprw,dstruct)
     else
       zlatc=0.
       zlonc=1.5*pi
@@ -1388,7 +1462,7 @@ contains
     real(kind=jprw), dimension(:,:,:), pointer :: U, U0, R, Vedges, Q, Q0
     real(kind=jprw) :: Vnodes(2,dstruct%nb_levels,dstruct%nb_nodes)
     real(kind=jprw) :: grad_Vnodes(4,dstruct%nb_levels,dstruct%nb_nodes)
-    real(kind=jprw) :: LAGR=0.
+    real(kind=jprw), parameter :: LAGR=0.
 
     coords => vector_field_2d("coordinates",dstruct)
     Vedges => vector_field_3d("advective_velocity",dstruct)
@@ -1735,6 +1809,8 @@ contains
     real(kind=jprw) :: Qx, Qy, Rx, Ry, Qx_amb, Qy_amb, Dpos
     real(kind=jprw) :: Qx_adv, Qy_adv, Rx_exp, Ry_exp
 
+    call abort()
+
     coords => vector_field_2d("coordinates",dstruct)
     vol => scalar_field_2d("dual_volumes",dstruct)
     hx => scalar_field_2d("hx",dstruct)
@@ -1863,7 +1939,7 @@ contains
     real(kind=jprw) :: VDS(dstruct%nb_levels,dstruct%nb_edges)
 
     ! Limiter value (1=2nd order, 0=1st order)
-    real(kind=jprw) , parameter :: limit = 1.
+    real(kind=jprw) , parameter :: limit = 0.98
 
     
     D => scalar_field_3d("depth",dstruct)

@@ -12,7 +12,7 @@ program shallow_water
   use grib_module, only: write_grib
 
   use joanna_module, only: read_joanna, write_results_joanna
-  use datastruct_module,  only: DataStructure_type, mark_output
+  use datastruct_module
   use shallow_water_module, only: &
     & setup_shallow_water, &
     & set_state_rossby_haurwitz, &
@@ -27,10 +27,10 @@ program shallow_water
 
   ! Configuration parameters
   real(kind=jprw), parameter :: dt = 20               ! solver time-step
-  integer, parameter         :: nb_steps = 15         ! Number of propagations
-  integer, parameter         :: hours_per_step = 24   ! Propagation time
+  integer, parameter         :: nb_steps = 60         ! Number of propagations
+  integer, parameter         :: hours_per_step = 6   ! Propagation time
   integer, parameter         :: order = 2             ! Order of accuracy
-  integer, parameter         :: scheme = MPDATA_GAUGE
+  integer, parameter         :: scheme = MPDATA_STANDARD
   integer, parameter         :: eqs_type = EQS_MOMENTUM
   logical, parameter         :: write_itermediate_output = .True.
 
@@ -40,6 +40,8 @@ program shallow_water
   real(kind=jprw), parameter :: days  = 24.*hours ! in seconds
   integer :: jstep = 0
   type(Timer_type) :: wallclock_timer, step_timer
+
+  real(kind=jprw), pointer :: D(:), H0(:)
 
   ! Execution
   call parallel_init()
@@ -54,11 +56,16 @@ program shallow_water
 
   call setup_shallow_water(eqs_type,dstruct)
 
-!  call set_topography_mountain(0._jprw,dstruct)
-!  call set_state_zonal_flow(dstruct)
+  call set_topography_mountain(2000._jprw,dstruct)
+  call set_state_zonal_flow(dstruct)
 
-  call set_topography_mountain(0._jprw,dstruct)
-  call set_state_rossby_haurwitz(dstruct)
+  D => scalar_field_2d("depth",dstruct)
+  H0 => scalar_field_2d("topography",dstruct)
+
+  !D(:) = 1.+H0(:)
+
+  !call set_topography_mountain(0._jprw,dstruct)
+  !call set_state_rossby_haurwitz(dstruct)
 
 
   call set_time_step( dt )
@@ -83,19 +90,23 @@ program shallow_water
   call mark_output("height",dstruct)
   call mark_output("depth",dstruct)
   call mark_output("velocity",dstruct)
-  call mark_output("momentum",dstruct)
-  call mark_output("forcing",dstruct)
-  call mark_output("dhxdy_over_G",dstruct)
-  call mark_output("dual_volumes",dstruct)
+  !call mark_output("divV",dstruct)
+  !call mark_output("momentum",dstruct)
+  !call mark_output("forcing",dstruct)
+  !call mark_output("dhxdy_over_G",dstruct)
+  !call mark_output("dual_volumes",dstruct)
 
   call write_fields()
 
   call wallclock_timer%start()
 
+  !call propagate_state( 166680._jprw, order, scheme, dstruct)
+
   do jstep=1,nb_steps 
 
     call step_timer%start()
     call propagate_state( hours_per_step*hours, order, scheme, dstruct)
+    !call propagate_state( dt, order, scheme, dstruct)
 
     write (log_str, '(A,I3,A,A,F8.2,A,F8.2,A)') &
       & "Propagated to ",jstep*hours_per_step," hours.", &

@@ -14,9 +14,7 @@ module shallow_water_module
   use parallel_module
   use common_module
   use datastruct_module
-  use mpdata_module, only: &
-    mpdata_D, mpdata_Q, mpdata_gauge_U, compute_gradient, &
-    compute_gradient_tensor, probe
+  use mpdata_module
 
   implicit none
   private
@@ -72,6 +70,7 @@ contains
     G     => scalar_field_2d("jacobian",dstruct)
     dhxdy_over_G => scalar_field_2d("dhxdy_over_G",dstruct)
     pole_bc => scalar_field_2d("pole_bc",dstruct)
+
     !dir$ ivdep
     do jnode=1,dstruct%nb_nodes
       y = coords(YY,jnode)
@@ -98,9 +97,10 @@ contains
     call create_field_in_nodes_2d("depth_backup",1,dstruct)
     call create_field_in_nodes_2d("velocity_backup",2,dstruct)
     call create_field_in_nodes_2d("momentum_backup",2,dstruct)
-
+    call create_field_in_nodes_2d("initial_velocity",2,dstruct)
     call create_field_in_edges_2d("advective_velocity",2,dstruct)
     call create_field_in_nodes_2d("depth_ratio",1,dstruct) ! old/new
+    call create_field_in_nodes_2d("divV",1,dstruct)
     
     call create_field_in_nodes_2d("topography",1,dstruct)
     call create_field_in_nodes_2d("height",1,dstruct)
@@ -156,7 +156,7 @@ contains
 
     if (step == 0) then ! Pre-compute forcing
 
-      call compute_forcing(dstruct)
+      !call compute_forcing(dstruct)
       call compute_advective_velocities(dt,dstruct,"advect")
 
     end if
@@ -245,13 +245,13 @@ contains
   subroutine set_state_zonal_flow(dstruct)
     type(DataStructure_type), intent(inout)  :: dstruct
     real(kind=jprw), dimension(:), pointer   :: D, cor, H0, H
-    real(kind=jprw), dimension(:,:), pointer :: U, Q, coords
+    real(kind=jprw), dimension(:,:), pointer :: U, Uinit, Q, coords
     integer :: jnode
     real(kind=jprw) :: x,y
-    real(kind=jprw), parameter :: USCAL = 20.
+    real(kind=jprw), parameter :: USCAL = 10.
     real(kind=jprw), parameter :: H00 = grav * 8e3
     real(kind=jprw), parameter :: pvel = USCAL/radius
-    real(kind=jprw), parameter :: beta = 0.! pi/4._jprw
+    real(kind=jprw), parameter :: beta = 0 !pi/4._jprw
 
 
     coords => vector_field_2d("coordinates",dstruct)
@@ -261,6 +261,7 @@ contains
     cor => scalar_field_2d("coriolis",dstruct)
     H0 => scalar_field_2d("topography",dstruct)
     H => scalar_field_2d("height",dstruct)
+    Uinit => vector_field_2d("initial_velocity",dstruct)
 
     !dir$ ivdep
     !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,x,y)
@@ -279,6 +280,7 @@ contains
       end if
       H(jnode) = H0(jnode) + D(jnode)
       Q(:,jnode) = D(jnode) * U(:,jnode)
+      Uinit(:,jnode) = U(:,jnode)
     end do
     !$OMP END PARALLEL DO
 
@@ -296,7 +298,7 @@ contains
     real(kind=jprw) :: rad = 2.*pi/18. ! radius of hill
     real(kind=jprw) :: xcent = 3.*pi/2.  ! centre of hill
     real(kind=jprw) :: ycent = pi/6.*1.
-    real(kind=jprw) :: gamm = 0.5 ! slope of hill
+    real(kind=jprw) :: gamm = 1. ! slope of hill
     real(kind=jprw) :: dist, xlon, ylat
     integer :: jnode
 
@@ -310,13 +312,16 @@ contains
       dist = 2.*sqrt( (cos(ylat)*sin( (xlon-xcent)/2 ) )**2 &
         &     + sin((ylat-ycent)/2)**2 )
 
-      H0(jnode) = max(0.,amplitude * (1.-gamm*dist/rad))
+      H0(jnode) = 0.
+      if (dist < rad) H0(jnode) = 0.5*(1.+cos(pi*dist/rad))*amplitude
 
-      !if (dist.le.rad) then
-      !  H0(jnode) = amplitude * (1.-gamm*dist/rad)
-      !else
-      !  H0(jnode) = 0.
-      !end if
+      ! This is a cone
+      !H0(jnode) = max(0.,amplitude * (1.-gamm*dist/rad))
+
+      ! This is a cylinder
+      !H0(jnode) = 0.
+      !if (dist < rad) H0(jnode) = amplitude
+
     end do
   end subroutine set_topography_mountain
 
@@ -374,16 +379,18 @@ contains
     real(kind=jprw) :: Dpos, D0pos
     integer :: jnode, jedge, iedge, ip1, ip2
     real(kind=jprw), dimension(:),   pointer :: D, D0, hx, hy, vol
-    real(kind=jprw), dimension(:,:), pointer :: U, U0, R, Vedges, coords, Q, Q0, S
+    real(kind=jprw), dimension(:,:), pointer :: U, U0, R, Vedges, coords, Q, Q0, S, Uinit
     real(kind=jprw) :: Vnodes(2,dstruct%nb_nodes), grad_Vnodes(4,dstruct%nb_nodes)
+    real(kind=jprw), parameter :: LAGR = 0.
 
     coords => vector_field_2d("coordinates",dstruct)
     Vedges => vector_field_2d("advective_velocity",dstruct)
     D      => scalar_field_2d("depth",dstruct)
     D0     => scalar_field_2d("depth_backup",dstruct)
     Q      => vector_field_2d("momentum",dstruct)
-    Q0      => vector_field_2d("momentum_backup",dstruct)
+    Q0     => vector_field_2d("momentum_backup",dstruct)
     U      => vector_field_2d("velocity",dstruct)
+    Uinit  => vector_field_2d("initial_velocity",dstruct)
     U0     => vector_field_2d("velocity_backup",dstruct)
     hx     => scalar_field_2d("hx",dstruct)
     hy     => scalar_field_2d("hy",dstruct)
@@ -398,7 +405,7 @@ contains
           !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jnode,Dpos)
           do jnode=1,dstruct%nb_nodes
             Dpos = max(eps, D(jnode))
-            Vnodes(:,jnode)=(Q(:,jnode))/Dpos
+            Vnodes(:,jnode)=Q(:,jnode)/Dpos + LAGR*R(:,jnode)/Dpos
             U(:,jnode) = Q(:,jnode)/Dpos
           end do
           !$OMP END PARALLEL DO
@@ -424,9 +431,9 @@ contains
         dVydx = grad_Vnodes(YYDXX,jnode)*hy(jnode)/vol(jnode)    
         dVydy = grad_Vnodes(YYDYY,jnode)*hx(jnode)/vol(jnode)
         Dpos = max(eps,D(jnode))
-        Vnodes(XX,jnode) = ( Ux - 0.5*dt*(Vx*dVxdx+Vy*dVxdy - R(XX,jnode)/Dpos ) ) * hy(jnode)
-        Vnodes(YY,jnode) = ( Uy - 0.5*dt*(Vx*dVydx+Vy*dVydy - R(YY,jnode)/Dpos ) ) * hx(jnode)
-      enddo
+        Vnodes(XX,jnode) = ( Ux - 0.5*dt*(Vx*dVxdx+Vy*dVxdy - (1.-LAGR)*R(XX,jnode)/Dpos ) ) * hy(jnode)
+        Vnodes(YY,jnode) = ( Uy - 0.5*dt*(Vx*dVydx+Vy*dVydy - (1.-LAGR)*R(YY,jnode)/Dpos ) ) * hx(jnode)
+      end do
       !$OMP END PARALLEL DO
 
       call halo_exchange( Vnodes, dstruct )
@@ -436,8 +443,11 @@ contains
       do jedge=1,dstruct%nb_edges
         ip1 = dstruct%edges(1,jedge)
         ip2 = dstruct%edges(2,jedge)
-        Vedges(:,jedge) = (D(ip1)*Vnodes(:,ip1)+D(ip2)*Vnodes(:,ip2))/(D(ip1)+D(ip2)+eps)
-          !& * [ radius, radius*cos( 0.5_jprw*( coords(YY,ip1) + coords(YY,ip2) ) ) ]
+        if (DENSITY_WEIGHTING) then
+          Vedges(:,jedge) = (D(ip1)*Vnodes(:,ip1)+D(ip2)*Vnodes(:,ip2))/(D(ip1)+D(ip2)+eps)
+        else
+          Vedges(:,jedge) = (Vnodes(:,ip1)+Vnodes(:,ip2))*0.5
+        end if
       end do
       !$OMP END PARALLEL DO
 
@@ -478,10 +488,29 @@ contains
       do jedge=1,dstruct%nb_edges
         ip1 = dstruct%edges(1,jedge)
         ip2 = dstruct%edges(2,jedge)
-        !Vedges(:,jedge) = (Vnodes(:,ip1)+Vnodes(:,ip2))*0.5_jprw
-        Vedges(:,jedge) = (D(ip1)*Vnodes(:,ip1)+D(ip2)*Vnodes(:,ip2))/(D(ip1)+D(ip2)+eps)
+        if (DENSITY_WEIGHTING) then
+          Vedges(:,jedge) = (D(ip1)*Vnodes(:,ip1)+D(ip2)*Vnodes(:,ip2))/(D(ip1)+D(ip2)+eps)
+        else
+          Vedges(:,jedge) = (Vnodes(:,ip1)+Vnodes(:,ip2))*0.5
+        end if
       enddo
       !$OMP END PARALLEL DO
+
+    else if( option .eq. "linear_advection") then
+      do jnode=1,dstruct%nb_nodes
+        Vnodes(XX,jnode) = Uinit(XX,jnode) * hy(jnode)
+        Vnodes(YY,jnode) = Uinit(YY,jnode) * hx(jnode)
+      end do
+      do jedge=1,dstruct%nb_edges
+        ip1 = dstruct%edges(1,jedge)
+        ip2 = dstruct%edges(2,jedge)
+        if (DENSITY_WEIGHTING) then
+          Vedges(:,jedge) = (D(ip1)*Vnodes(:,ip1)+D(ip2)*Vnodes(:,ip2))/(D(ip1)+D(ip2)+eps)
+        else
+          Vedges(:,jedge) = (Vnodes(:,ip1)+Vnodes(:,ip2))*0.5
+        end if
+      enddo
+
     end if
 
    
@@ -700,6 +729,8 @@ contains
     real(kind=jprw), dimension(:,:), pointer :: U, Q, V
     real(kind=jprw) :: VDS(dstruct%nb_edges)
     integer :: jnode
+
+    real(kind=jprw), parameter :: limit = 1.
     
     D => scalar_field_2d("depth",dstruct)
     D0 => scalar_field_2d("depth_backup",dstruct)
@@ -709,13 +740,13 @@ contains
     DR => scalar_field_2d("depth_ratio",dstruct)
    
     !    mpdata_D( scheme, time, variable, velocity, VDS,  order, limit,   dstruct )
-    call mpdata_D( scheme, dt,   D,        V,        VDS,  order, 1._jprw, dstruct )
+    call mpdata_D( scheme, dt,   D,        V,        VDS,  order, limit, dstruct )
 
     select case (eqs_type)
 
       case (EQS_MOMENTUM)
-        !    mpdata_Q( scheme, time, variable, V,  order, limit,     dstruct )
-        call mpdata_Q( scheme, dt,   Q,        V,  order, 1._jprw, dstruct )
+        !    mpdata_Q( scheme, time, variable, V,  order, limit, dstruct )
+        call mpdata_Q( scheme, dt,   Q,        V,  order, limit, dstruct )
 
       case (EQS_VELOCITY)
         ! compute ratio
@@ -725,9 +756,10 @@ contains
         end do
         !$OMP END PARALLEL DO
         !    mpdata_gauge_U( time, variable, VDS, DR, D0,  order, limit,  dstruct )
-        call mpdata_gauge_U( dt,   U,        VDS, DR, D0,  order, .True., dstruct )
+        call mpdata_gauge_U( dt,   U,        VDS, DR, D0,  order, limit, dstruct )
 
     end select
+
   end subroutine advect_solution
 
 end module shallow_water_module
