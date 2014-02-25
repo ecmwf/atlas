@@ -146,7 +146,8 @@ contains
 
     read(5,*) nnode, nedge, nface, ncoin, before2, before1  !nbefore1<nbefore2
 
-    owned_node_cnt = 0
+    dstruct%nb_owned_nodes = 0
+    dstruct%nb_ghost_nodes = 0
     do jnode = 1, nnode
       read(5,*) x, y, v
       if ( keep_node(jnode).eq.1 ) then
@@ -154,13 +155,15 @@ contains
         coords(:,inode) = [x, y]
         vol(inode) = v
         if( proc(inode) .eq. myproc ) then
-          owned_node_cnt = owned_node_cnt + 1
+          dstruct%nb_owned_nodes = dstruct%nb_owned_nodes + 1
+        else
+          dstruct%nb_ghost_nodes = dstruct%nb_ghost_nodes + 1
         end if
+
       end if
     end do
 
-    call MPI_ALLREDUCE( owned_node_cnt, glb_nb_nodes, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD, ierr)
-    dstruct%glb_nb_nodes = glb_nb_nodes
+    call MPI_ALLREDUCE( dstruct%nb_owned_nodes, dstruct%glb_nb_nodes, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD, ierr)
 
     dstruct%nb_pole_edges = nb_pole_edges
 
@@ -532,12 +535,12 @@ contains
       end if
     enddo
 
-    allocate(dstruct%ghost_nodes(dstruct%nb_ghost_nodes,2))
-    do jnode = 1,dstruct%nb_ghost_nodes
-      read(5,*) idx, ip1, ip2
-      dstruct%ghost_nodes(jnode,1) = ip1
-      dstruct%ghost_nodes(jnode,2) = ip2
-    end do
+!    allocate(dstruct%ghost_nodes(dstruct%nb_ghost_nodes,2))
+!    do jnode = 1,dstruct%nb_ghost_nodes
+!     read(5,*) idx, ip1, ip2
+!     dstruct%ghost_nodes(jnode,1) = ip1
+!      dstruct%ghost_nodes(jnode,2) = ip2
+!    end do
 
     allocate(dstruct%nb_neighbours(dstruct%nb_nodes))
     dstruct%nb_neighbours(:) = 0

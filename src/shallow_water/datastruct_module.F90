@@ -5,8 +5,15 @@ module datastruct_module
       & new_FunctionSpace, new_PrismaticFunctionSpace, FunctionSpace_type, new_Mesh, new_FieldSet
   use parallel_module
 
+#ifdef HAVE_IFS_TRANS
+  use trans_interface
+#endif
+
   implicit none
   private
+
+  integer, parameter :: trans_handle = 1
+
   public :: create_mesh, create_mesh_3d
   public :: create_field_in_nodes_2d
   public :: create_field_in_edges_2d
@@ -18,14 +25,19 @@ module datastruct_module
 
   public :: halo_exchange, halo_exchange_2d, halo_exchange_3d
 
+  public :: spectral_filter
+  public :: zero_divergence_2d
+
   interface halo_exchange
     module procedure halo_exchange_2d_real_rank1
     module procedure halo_exchange_2d_real_rank2
+    module procedure halo_exchange_2d_real_rank3
   end interface halo_exchange
 
   interface halo_exchange_2d
     module procedure halo_exchange_2d_real_rank1
     module procedure halo_exchange_2d_real_rank2
+    module procedure halo_exchange_2d_real_rank3
   end interface halo_exchange_2d
 
   interface halo_exchange_3d
@@ -33,6 +45,10 @@ module datastruct_module
     module procedure halo_exchange_3d_real_rank3
   end interface halo_exchange_3d
 
+  interface spectral_filter
+    module procedure spectral_filter_2d_real_rank1
+    module procedure spectral_filter_2d_real_rank2
+  end interface spectral_filter
 
   type, public :: DataStructure_type
   private
@@ -59,6 +75,7 @@ module datastruct_module
     integer,                       public :: nb_levels=0
     integer,                       public :: nb_pole_edges=0
     integer,                       public :: nb_ghost_nodes=0
+    integer,                       public :: nb_owned_nodes=0
 
     integer,          pointer, public :: edges(:,:)
     integer,          pointer, public :: pole_edges(:)
@@ -271,14 +288,21 @@ contains
     call dstruct%functionspace_nodes_2d%halo_exchange( array )
   end subroutine halo_exchange_2d_real_rank1
 
-   subroutine halo_exchange_2d_real_rank2(array, dstruct)
+  subroutine halo_exchange_2d_real_rank2(array, dstruct)
     implicit none
     real(kind=jprw), dimension(:,:), intent(inout) :: array
     type(DataStructure_type), intent(inout) :: dstruct
     call dstruct%functionspace_nodes_2d%halo_exchange( array )
   end subroutine halo_exchange_2d_real_rank2
 
-   subroutine halo_exchange_3d_real_rank2(array, dstruct)
+  subroutine halo_exchange_2d_real_rank3(array, dstruct)
+    implicit none
+    real(kind=jprw), dimension(:,:,:), intent(inout) :: array
+    type(DataStructure_type), intent(inout) :: dstruct
+    call dstruct%functionspace_nodes_2d%halo_exchange( array )
+  end subroutine halo_exchange_2d_real_rank3
+
+  subroutine halo_exchange_3d_real_rank2(array, dstruct)
     implicit none
     real(kind=jprw), dimension(:,:), intent(inout) :: array
     type(DataStructure_type), intent(inout) :: dstruct
@@ -292,4 +316,108 @@ contains
     call dstruct%functionspace_nodes_3d%halo_exchange( array )
   end subroutine halo_exchange_3d_real_rank3
 
+  subroutine spectral_filter_2d_real_rank1(array, cutoff, dstruct)
+    implicit none
+    real(kind=jprw), dimension(:), intent(inout) :: array
+    real(kind=jprw), intent(in) :: cutoff 
+    type(DataStructure_type), intent(inout) :: dstruct
+    real(kind=jprw), allocatable :: trans_field(:,:,:)
+    integer :: jnode, cnt
+
+    allocate( trans_field(dstruct%nb_owned_nodes, 1, 1) )
+
+    cnt = 0
+    do jnode=1,dstruct%nb_nodes
+      if( dstruct%nodes_proc(jnode) == myproc ) then
+        cnt = cnt+1
+        trans_field(cnt,1,1) = array(jnode)
+      end if
+    end do
+
+#ifdef HAVE_IFS_TRANS
+    call trans_filter(trans_handle,trans_field,cutoff)
+#endif
+
+    cnt = 0
+    do jnode=1,dstruct%nb_nodes
+      if( dstruct%nodes_proc(jnode) == myproc ) then
+        cnt = cnt+1
+        array(jnode) = trans_field(cnt,1,1)
+      end if
+    end do
+    call halo_exchange_2d(array,dstruct)
+  end subroutine spectral_filter_2d_real_rank1
+
+  subroutine spectral_filter_2d_real_rank2(array, cutoff, dstruct)
+    implicit none
+    real(kind=jprw), intent(inout) :: array(:,:)
+    real(kind=jprw), intent(in) :: cutoff 
+    type(DataStructure_type), intent(inout) :: dstruct
+    real(kind=jprw), allocatable :: trans_field(:,:,:)
+    integer :: jnode, cnt, jvar, nvar
+
+    nvar = size(array,1)
+    allocate( trans_field(dstruct%nb_owned_nodes, nvar , 1) )
+
+    cnt = 0
+    do jnode=1,dstruct%nb_nodes
+      if( dstruct%nodes_proc(jnode) == myproc ) then
+        cnt = cnt+1
+        do jvar=1,nvar
+          trans_field(cnt,jvar,1) = array(jvar,jnode)
+        end do
+      end if
+    end do
+
+#ifdef HAVE_IFS_TRANS
+    call trans_filter(trans_handle,trans_field,cutoff)
+#endif
+
+    cnt = 0
+    do jnode=1,dstruct%nb_nodes
+      if( dstruct%nodes_proc(jnode) == myproc ) then
+        cnt = cnt+1
+        do jvar=1,nvar
+          array(jvar,jnode) = trans_field(cnt,jvar,1)
+        end do
+      end if
+    end do
+    call halo_exchange_2d(array,dstruct)
+  end subroutine spectral_filter_2d_real_rank2
+
+  subroutine zero_divergence_2d(array, dstruct)
+    implicit none
+    real(kind=jprw), intent(inout) :: array(:,:)
+    type(DataStructure_type), intent(inout) :: dstruct
+    real(kind=jprw), allocatable :: trans_field(:,:,:)
+    integer :: jnode, cnt, jvar, nvar
+
+    nvar = size(array,1)
+    allocate( trans_field(dstruct%nb_owned_nodes, nvar , 1) )
+
+    cnt = 0
+    do jnode=1,dstruct%nb_nodes
+      if( dstruct%nodes_proc(jnode) == myproc ) then
+        cnt = cnt+1
+        do jvar=1,nvar
+          trans_field(cnt,jvar,1) = array(jvar,jnode)
+        end do
+      end if
+    end do
+
+#ifdef HAVE_IFS_TRANS
+    call trans_zero_divergence(trans_handle,trans_field)
+#endif
+
+    cnt = 0
+    do jnode=1,dstruct%nb_nodes
+      if( dstruct%nodes_proc(jnode) == myproc ) then
+        cnt = cnt+1
+        do jvar=1,nvar
+          array(jvar,jnode) = trans_field(cnt,jvar,1)
+        end do
+      end if
+    end do
+    call halo_exchange_2d(array,dstruct)
+  end subroutine zero_divergence_2d
 end module datastruct_module

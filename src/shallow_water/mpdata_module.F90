@@ -30,7 +30,6 @@ module mpdata_module
 
 contains
 
-
   subroutine compute_scalar_max_and_min( D, Dmax, Dmin, dstruct )
     real(kind=jprw), intent(in) :: D(:)
     real(kind=jprw), intent(inout) :: Dmax(:), Dmin(:)
@@ -355,6 +354,8 @@ contains
           sum_Sabs(YY,ip1) = sum_Sabs(YY,ip1) + absSy
           sum_Sabs(YY,ip2) = sum_Sabs(YY,ip2) + absSy
         end do
+        call halo_exchange(sum_Dbar,dstruct)
+        call halo_exchange(sum_Sabs,dstruct)
       end if
 
       !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2,volume_of_two_cells,dDdx,dDdy,Vx,Vy)
@@ -549,6 +550,8 @@ contains
           sum_Sabs(YY,ip1) = sum_Sabs(YY,ip1) + Sy
           sum_Sabs(YY,ip2) = sum_Sabs(YY,ip2) + Sy
         end do
+        call halo_exchange(sum_Qbar,dstruct)
+        call halo_exchange(sum_Sabs,dstruct)
       end if
 
       !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2,volume_of_two_cells,dQdx,dQdy,Vx,Vy)
