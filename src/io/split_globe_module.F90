@@ -14,7 +14,7 @@
 
 !=======================================================================
 
-module eq_regions_mod
+module eq_regions_modx
 !
 !     Purpose.
 !     --------
@@ -376,11 +376,11 @@ gamma_res = w / y
 return
 end function gamma
 
-end module eq_regions_mod
+end module eq_regions_modx
 
 !=======================================================================
 
-module SUSTAONL_MOD
+module SUSTAONL_MODX
 contains
 SUBROUTINE SUSTAONL(KMEDIAP,KRESTM,LDWEIGHTED_DISTR,PWEIGHT,PMEDIAP,KPROCAGP, &
  & NPROC,KDGL,KDLON,KLOEN,LDSPLIT,KFRSTLAT,KLSTLAT,KPTRFRSTLAT,KMYSETA,KSTA,KONL)
@@ -436,7 +436,7 @@ SUBROUTINE SUSTAONL(KMEDIAP,KRESTM,LDWEIGHTED_DISTR,PWEIGHT,PMEDIAP,KPROCAGP, &
 !     ------------------------------------------------------------------
 
 USE common_module  ,ONLY : JPIM     ,jprw
-USE EQ_REGIONS_MOD
+USE EQ_REGIONS_MODX
 
 IMPLICIT NONE
 
@@ -707,11 +707,11 @@ ENDIF
 
 END SUBROUTINE SUSTAONL
 
-END MODULE SUSTAONL_MOD
+END MODULE SUSTAONL_MODX
 
 !=======================================================================
 
-module SUMPLATBEQ_MOD
+module SUMPLATBEQ_MODX
 contains
 SUBROUTINE SUMPLATBEQ(KDGL,KPROC,KPROCA,KLOENG,LDSPLIT,&
                     &PWEIGHT,LDWEIGHTED_DISTR,PMEDIAP,KPROCAGP,&
@@ -774,7 +774,7 @@ SUBROUTINE SUMPLATBEQ(KDGL,KPROC,KPROCA,KLOENG,LDSPLIT,&
 
 USE common_module  ,ONLY : JPIM     ,jprw
 
-USE EQ_REGIONS_MOD
+USE EQ_REGIONS_MODX
 
 IMPLICIT NONE
 
@@ -897,7 +897,7 @@ IF (LDSPLIT) THEN
     IF( KLAST(KPROCA) /= KDGL )THEN
       DO JA=1,KPROCA
 !        IF( MYPROC == 1 )THEN
-          !WRITE(0,'("SUMPLATBEQ_MOD: JA=",I3," KLAST=",I3," KINDIC=",I3)')&
+          !WRITE(0,'("SUMPLATBEQ_MODX: JA=",I3," KLAST=",I3," KINDIC=",I3)')&
           !&JA,KLAST(JA),KINDIC(JA)
 !        ENDIF
       ENDDO
@@ -973,7 +973,7 @@ ENDIF
 
 END SUBROUTINE SUMPLATBEQ
 
-END MODULE SUMPLATBEQ_MOD
+END MODULE SUMPLATBEQ_MODX
 
 
 !===========================================================================
@@ -1010,9 +1010,9 @@ contains
 
 
   SUBROUTINE SPLIT_POINTS(NPROC,NDGL,NLOEN,proc,glb_idx)
-    USE EQ_REGIONS_MOD
-    USE SUMPLATBEQ_MOD
-    USE SUSTAONL_MOD
+    USE EQ_REGIONS_MODX
+    USE SUMPLATBEQ_MODX
+    USE SUSTAONL_MODX
     IMPLICIT NONE
     INTEGER(KIND=JPIM),INTENT(IN) :: NPROC        ! Number of tasks (regions)
     INTEGER(KIND=JPIM),INTENT(IN) :: NDGL         ! Number of latitude rows

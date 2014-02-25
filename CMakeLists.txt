@@ -185,7 +185,7 @@ elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )
 
   set( IFS_INSTALL_DIR /home/rd/rdx )
   set( IFS_CYCLE 40r1 )
-  list( APPEND IFS_LIBS  algor ifsaux trans )
+  list( APPEND IFS_LIBS  trans algor ifsaux ) # order is important
   add_definitions( -DHAVE_IFS_TRANS )
   link_directories(${IFS_INSTALL_DIR}/lib/${IFS_CYCLE})
   foreach( IFS_LIB ${IFS_LIBS} )
@@ -215,6 +215,7 @@ endif( )
 add_library( common ${MPI_STUBS}
   src/common/parallel_module.F90
   src/common/common_module.F90
+  src/common/trans_interface.F90
 )
 target_link_libraries( common ${TPL} )
 
