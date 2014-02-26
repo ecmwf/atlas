@@ -7,7 +7,7 @@
 program shallow_water
 
   use common_module
-  use parallel_module, only: parallel_init, parallel_finalise, nproc, nthread
+  use parallel_module, only: parallel_init, parallel_finalise, nproc, nthread, myproc
   use gmsh_module, only: read_gmsh, write_gmsh, write_gmsh_mesh_2d, write_gmsh_fields
   use grib_module, only: write_grib
 
@@ -23,12 +23,15 @@ program shallow_water
     & EQS_MOMENTUM, EQS_VELOCITY
   use mpdata_module, only: &
     MPDATA_GAUGE, MPDATA_STANDARD
+#ifdef HAVE_IFS_TRANS
+  use trans_interface
+#endif
   implicit none
 
   ! Configuration parameters
   real(kind=jprw), parameter :: dt = 20               ! solver time-step
-  integer, parameter         :: nb_steps = 60         ! Number of propagations
-  integer, parameter         :: hours_per_step = 6   ! Propagation time
+  integer, parameter         :: nb_steps = 0          ! Number of propagations
+  integer, parameter         :: hours_per_step = 12   ! Propagation time
   integer, parameter         :: order = 2             ! Order of accuracy
   integer, parameter         :: scheme = MPDATA_STANDARD
   integer, parameter         :: eqs_type = EQS_MOMENTUM
@@ -42,28 +45,46 @@ program shallow_water
   type(Timer_type) :: wallclock_timer, step_timer
 
   real(kind=jprw), pointer :: D(:), H0(:)
-
+  integer :: IGPTOT, trans_handle, jnode
   ! Execution
+
   call parallel_init()
 
   call set_log_level(LOG_LEVEL_INFO)
   call set_log_proc(0)
   
   call log_info("Program shallow_water start")
-!  call read_gmsh(PANTARHEI_DATADIR//"/meshes/T159.msh", dstruct)
+  !call read_gmsh(PANTARHEI_DATADIR//"/meshes/T159.msh", dstruct)
   call read_joanna(PANTARHEI_DATADIR//"/meshes/T159.dual",PANTARHEI_DATADIR//"/meshes/T159.rtable", dstruct)
+
+#ifdef HAVE_IFS_TRANS
+  call trans_setup(PANTARHEI_DATADIR//"/meshes/T159.rtable",IGPTOT,trans_handle)
+  if( dstruct%nb_owned_nodes /= IGPTOT ) then
+    call log_error("Mismatch of number of nodes")
+    write(0,*) myproc, dstruct%nb_nodes , IGPTOT
+    call abort()
+  end if
+#endif
+
   call write_gmsh_mesh_2d(dstruct,"data/mesh.msh")
 
   call setup_shallow_water(eqs_type,dstruct)
 
-  call set_topography_mountain(2000._jprw,dstruct)
+  call set_topography_mountain(0._jprw,dstruct)
   call set_state_zonal_flow(dstruct)
 
   D => scalar_field_2d("depth",dstruct)
   H0 => scalar_field_2d("topography",dstruct)
 
-  !D(:) = 1.+H0(:)
+  ! This sets the depth field to be the glb idx
+  do jnode=1,dstruct%nb_nodes
+    D(jnode) = dstruct%nodes_glb_idx(jnode)
+  end do
+  ! Spectral transform
+  call spectral_filter(D,1._jprb,dstruct)
+  ! Output fields00.msh should be bitreproducible for different tasks
 
+  !D(:) = 0. !1.+H0(:)
   !call set_topography_mountain(0._jprw,dstruct)
   !call set_state_rossby_haurwitz(dstruct)
 
@@ -86,10 +107,10 @@ program shallow_water
   call log_info( "+-------------------+----------+ ")
 
 
-  call mark_output("topography",dstruct)
-  call mark_output("height",dstruct)
+  !call mark_output("topography",dstruct)
+  !call mark_output("height",dstruct)
   call mark_output("depth",dstruct)
-  call mark_output("velocity",dstruct)
+  !call mark_output("velocity",dstruct)
   !call mark_output("divV",dstruct)
   !call mark_output("momentum",dstruct)
   !call mark_output("forcing",dstruct)

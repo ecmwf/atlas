@@ -156,8 +156,8 @@ contains
 
     if (step == 0) then ! Pre-compute forcing
 
-      !call compute_forcing(dstruct)
-      call compute_advective_velocities(dt,dstruct,"advect")
+      call compute_forcing(dstruct)
+      call compute_advective_velocities(dt,dstruct,"linear_advection")
 
     end if
 
@@ -167,7 +167,9 @@ contains
 
     call implicit_solve(dt,dstruct)
 
-    call compute_advective_velocities(dt,dstruct,"advect")
+    !call filter_solution(dstruct)
+
+    call compute_advective_velocities(dt,dstruct,"linear_advection")
 
     dstruct%time = dstruct%time+dt
     step = step+1
@@ -251,7 +253,7 @@ contains
     real(kind=jprw), parameter :: USCAL = 10.
     real(kind=jprw), parameter :: H00 = grav * 8e3
     real(kind=jprw), parameter :: pvel = USCAL/radius
-    real(kind=jprw), parameter :: beta = 0 !pi/4._jprw
+    real(kind=jprw), parameter :: beta = pi/4._jprw
 
 
     coords => vector_field_2d("coordinates",dstruct)
@@ -283,7 +285,7 @@ contains
       Uinit(:,jnode) = U(:,jnode)
     end do
     !$OMP END PARALLEL DO
-
+    call spectral_filter(Uinit,1._jprb,dstruct)
     call compute_forcing(dstruct)
 
 
@@ -312,6 +314,7 @@ contains
       dist = 2.*sqrt( (cos(ylat)*sin( (xlon-xcent)/2 ) )**2 &
         &     + sin((ylat-ycent)/2)**2 )
 
+      ! This is a cosine hill
       H0(jnode) = 0.
       if (dist < rad) H0(jnode) = 0.5*(1.+cos(pi*dist/rad))*amplitude
 
@@ -718,6 +721,18 @@ contains
 
   end subroutine implicit_solve
 
+  subroutine filter_solution(dstruct)
+    type(DataStructure_type), intent(inout) :: dstruct
+    real(kind=jprw), pointer :: D(:), U(:,:), Q(:,:)
+    integer :: jnode
+    D => scalar_field_2d("depth",dstruct)
+    U => vector_field_2d("velocity",dstruct)
+    Q => vector_field_2d("momentum",dstruct)
+
+    !call spectral_filter(D,0.67_jprw,dstruct)
+    !call spectral_filter(Q,0.67_jprw,dstruct)
+
+  end subroutine filter_solution
 
 
   subroutine advect_solution(dt,order,scheme,dstruct)

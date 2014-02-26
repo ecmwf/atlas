@@ -92,7 +92,10 @@ public Comm_type
 contains
 
   subroutine parallel_init()
-    call MPI_INIT( ierr )
+    integer :: ierr
+    logical :: initialized
+    call MPI_INITIALIZED(initialized, ierr)
+    if (.not. initialized) call MPI_INIT( ierr )
     call MPI_COMM_RANK( MPI_COMM_WORLD, myproc, ierr )
     call MPI_COMM_SIZE( MPI_COMM_WORLD, nproc,  ierr )
 
@@ -104,7 +107,10 @@ contains
   end subroutine parallel_init
 
   subroutine parallel_finalise()
-    call MPI_FINALIZE (ierr)
+    integer :: ierr
+    logical :: finalized
+    call MPI_FINALIZED(finalized, ierr)
+    if (.not. finalized) call MPI_FINALIZE (ierr)
   end subroutine parallel_finalise
 
   subroutine parallel_barrier()
