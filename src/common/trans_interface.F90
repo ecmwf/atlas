@@ -1,6 +1,9 @@
 module trans_interface
 use common_module, only : jprb
+
+#ifdef HAVE_IFS_TRANS
 use MPL_module, only: MPL_INIT, MPL_NUMPROC
+#endif
 implicit none
 save
 private
@@ -12,6 +15,7 @@ public trans_zero_divergence
 integer, parameter :: output_unit = 0
 logical :: lfirst_call = .True.
 
+#ifdef HAVE_IFS_TRANS
 #include "setup_trans0.h"
 #include "setup_trans.h"
 #include "dir_trans.h"
@@ -20,13 +24,14 @@ logical :: lfirst_call = .True.
 #include "gath_spec.h"
 #include "trans_inq.h"
 #include "specnorm.h"
+#endif
 
 contains
 
 subroutine trans_setup(rtable,IGPTOT,handle)
   character(len=*), intent(in) :: rtable
   integer, intent(out) :: IGPTOT, handle
-
+#ifdef HAVE_IFS_TRANS
   integer              :: ndgl     ! Number of lattitudes
   integer, allocatable :: nloen(:) ! Number of longitude points for each latitude
   integer :: jlat,idum,NSMAX,nproc
@@ -53,13 +58,14 @@ subroutine trans_setup(rtable,IGPTOT,handle)
     &              KRESOL=handle)
 
   CALL TRANS_INQ(KRESOL=handle,KGPTOT=IGPTOT)
-
+#endif
 end subroutine trans_setup
 
 subroutine trans_norm(handle,field2d,norm)
   integer, intent(in) :: handle
   real(kind=jprb), intent(in) :: field2d(:,:,:)
   real(kind=jprb), allocatable, intent(out) :: norm(:)
+#ifdef HAVE_IFS_TRANS
   real(kind=jprb), allocatable :: ZSPEC(:,:)
   integer :: IMAXFLD, NSPEC2, IGPTOT
   CALL TRANS_INQ(KRESOL=handle,KSPEC2=NSPEC2)
@@ -71,12 +77,14 @@ subroutine trans_norm(handle,field2d,norm)
   CALL DIR_TRANS(KRESOL=handle,PSPSCALAR=ZSPEC,PGP=field2d,KPROMA=IGPTOT)
 
   CALL SPECNORM(KRESOL=handle,PSPEC=ZSPEC,PNORM=norm)
+#endif
 end subroutine trans_norm
 
 subroutine trans_filter(handle,field2d,cutoff)
   integer, intent(in) :: handle
   real(kind=jprb), intent(inout) :: field2d(:,:,:)
   real(kind=jprb), intent(in) :: cutoff
+#ifdef HAVE_IFS_TRANS
   real(kind=jprb), allocatable :: ZSPEC(:,:)
   integer :: NPROMA, IGPTOT, NSPEC2,NSPEC2G,IMAXFLD,NUMP,NSMAX,IFILT
   integer :: IFILT, JMLOC,IM,JN,IJSE,JFLD
@@ -86,8 +94,6 @@ subroutine trans_filter(handle,field2d,cutoff)
   IMAXFLD = size(field2d,2)
   ALLOCATE(ZSPEC(IMAXFLD,NSPEC2))
   NPROMA=IGPTOT
-
-  !field2d (:,:,:) = 1.
 
   CALL DIR_TRANS(KRESOL=handle,PSPSCALAR=ZSPEC,PGP=field2d,KPROMA=NPROMA)
 
@@ -113,19 +119,20 @@ subroutine trans_filter(handle,field2d,cutoff)
     ENDDO
   end if
   CALL INV_TRANS(KRESOL=handle,PSPSCALAR=ZSPEC,PGP=field2d,KPROMA=NPROMA)
+#endif
 end subroutine trans_filter
 
 subroutine trans_zero_divergence(handle,field2d)
   integer, intent(in) :: handle
   real(kind=jprb), intent(inout) :: field2d(:,:,:)
-  real(kind=jprb), allocatable :: ZVOR(:,:), ZDIV(:,:), ZSPEC(:,:)
+#ifdef HAVE_IFS_TRANS
+  real(kind=jprb), allocatable :: ZVOR(:,:), ZDIV(:,:)
   integer :: NPROMA, IGPTOT, NSPEC2,NSPEC2G,IMAXFLD
   CALL TRANS_INQ(KRESOL=handle,KGPTOT=IGPTOT)
   CALL TRANS_INQ(KRESOL=handle,KSPEC2=NSPEC2,KSPEC2G=NSPEC2G)
   IMAXFLD = size(field2d,2)
   ALLOCATE(ZVOR(IMAXFLD/2,NSPEC2))
   ALLOCATE(ZDIV(IMAXFLD/2,NSPEC2))
-  ALLOCATE(ZSPEC(IMAXFLD,NSPEC2))
 
   NPROMA=IGPTOT
 
@@ -133,14 +140,10 @@ subroutine trans_zero_divergence(handle,field2d)
     write(0,*) "nb_nodes is different: ", shape(field2d), IGPTOT
   end if
 
-  !CALL DIR_TRANS(KRESOL=handle,PSPVOR=ZVOR,PSPDIV=ZDIV,PGP=field2d,KPROMA=NPROMA)
-  CALL DIR_TRANS(KRESOL=handle,PSPSCALAR=ZSPEC,PGP=field2d,KPROMA=NPROMA)
-
-  !ZDIV(:,:) = 0.
-
-  !CALL INV_TRANS(KRESOL=handle,PSPVOR=ZVOR,PSPDIV=ZDIV,PGP=field2d,KPROMA=NPROMA)
-  CALL INV_TRANS(KRESOL=handle,PSPSCALAR=ZSPEC,PGP=field2d,KPROMA=NPROMA)
-
+  CALL DIR_TRANS(KRESOL=handle,PSPVOR=ZVOR,PSPDIV=ZDIV,PGP=field2d,KPROMA=NPROMA)
+  ZDIV(:,:) = 0.
+  CALL INV_TRANS(KRESOL=handle,PSPVOR=ZVOR,PSPDIV=ZDIV,PGP=field2d,KPROMA=NPROMA)
+#endif
 end subroutine trans_zero_divergence
 
 end module trans_interface
