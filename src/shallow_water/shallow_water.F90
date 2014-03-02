@@ -30,7 +30,7 @@ program shallow_water
 
   ! Configuration parameters
   real(kind=jprw), parameter :: dt = 20               ! solver time-step
-  integer, parameter         :: nb_steps = 0          ! Number of propagations
+  integer, parameter         :: nb_steps = 1          ! Number of propagations
   integer, parameter         :: hours_per_step = 12   ! Propagation time
   integer, parameter         :: order = 2             ! Order of accuracy
   integer, parameter         :: scheme = MPDATA_STANDARD
@@ -55,7 +55,8 @@ program shallow_water
   
   call log_info("Program shallow_water start")
   !call read_gmsh(PANTARHEI_DATADIR//"/meshes/T159.msh", dstruct)
-  call read_joanna(PANTARHEI_DATADIR//"/meshes/T159.dual",PANTARHEI_DATADIR//"/meshes/T159.rtable", dstruct)
+  call read_joanna(PANTARHEI_DATADIR//"/meshes/T159.dual", &
+      & PANTARHEI_DATADIR//"/meshes/T159.rtable", dstruct)
 
 #ifdef HAVE_IFS_TRANS
   call trans_setup(PANTARHEI_DATADIR//"/meshes/T159.rtable",IGPTOT,trans_handle)
@@ -70,23 +71,15 @@ program shallow_water
 
   call setup_shallow_water(eqs_type,dstruct)
 
-  call set_topography_mountain(0._jprw,dstruct)
-  call set_state_zonal_flow(dstruct)
+!   call set_topography_mountain(0._jprw,dstruct)
+!   call set_state_zonal_flow(dstruct)
 
   D => scalar_field_2d("depth",dstruct)
   H0 => scalar_field_2d("topography",dstruct)
 
   ! This sets the depth field to be the glb idx
-  do jnode=1,dstruct%nb_nodes
-    D(jnode) = dstruct%nodes_glb_idx(jnode)
-  end do
-  ! Spectral transform
-  call spectral_filter(D,1._jprb,dstruct)
-  ! Output fields00.msh should be bitreproducible for different tasks
-
-  !D(:) = 0. !1.+H0(:)
-  !call set_topography_mountain(0._jprw,dstruct)
-  !call set_state_rossby_haurwitz(dstruct)
+  call set_topography_mountain(0._jprw,dstruct)
+  call set_state_rossby_haurwitz(dstruct)
 
 
   call set_time_step( dt )

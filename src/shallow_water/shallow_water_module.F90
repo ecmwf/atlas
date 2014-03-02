@@ -157,7 +157,7 @@ contains
     if (step == 0) then ! Pre-compute forcing
 
       call compute_forcing(dstruct)
-      call compute_advective_velocities(dt,dstruct,"linear_advection")
+      call compute_advective_velocities(dt,dstruct,"advect")
 
     end if
 
@@ -169,7 +169,7 @@ contains
 
     !call filter_solution(dstruct)
 
-    call compute_advective_velocities(dt,dstruct,"linear_advection")
+    call compute_advective_velocities(dt,dstruct,"advect")
 
     dstruct%time = dstruct%time+dt
     step = step+1
