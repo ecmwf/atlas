@@ -163,6 +163,7 @@ void build_periodic_boundaries( Mesh& mesh )
       bounds[1] = nb_elems[f];
       mesh.function_space(f).resize(bounds);
 
+      // Add elements at west boundary for each element at east boundary
       int cnt=0;
       for (int jelem=0; jelem<nb_east_bdry_elements; ++jelem)
       {
@@ -176,13 +177,16 @@ void build_periodic_boundaries( Mesh& mesh )
           {
             int east_node = C_IDX( (*elem_nodes[f])(n1,east_elem) );
 
+            // if east-node is on boundary element but not ON east boundary
             if ( std::abs( coords(XX,east_node)-max[XX] ) > tol )
             {
-              (*elem_nodes[f])(n1,new_elem) = -glb_idx(east_node); // new ghost node
+              // Create new ghost nodes at west side with east-node as master
+              (*elem_nodes[f])(n1,new_elem) = -glb_idx(east_node);
               new_nodes.insert(-glb_idx(east_node));
             }
-            else
+            else // if east-node is ON the east boundary
             {
+              // Find matching node on west bdry element, and make west the master of east
               for (int ielem=0; ielem<nb_west_bdry_elements; ++ielem)
               {
                 int func_space_idx = west_bdry_elements[ielem].f;
@@ -209,6 +213,8 @@ void build_periodic_boundaries( Mesh& mesh )
 
   //std::cout << "going to move ghost nodes to the back" << std::endl;
   // Move the transformed ghost nodes to the back
+
+  if(0){
   for (int f=0; f<mesh.nb_function_spaces(); ++f)
   {
     if (mesh.function_space(f).metadata<int>("type") == ELEMS)
@@ -228,36 +234,34 @@ void build_periodic_boundaries( Mesh& mesh )
       }
     }
   }
+  }
 
 
   std::vector< int > orig_glb_idx( glb_idx.data() );
   std::vector< int > orig_master_glb_idx( master_glb_idx.data() );
+  int nodes_max_glb_idx = nodes_2d.metadata<int>("max_glb_idx");
 
-  for (int node=0; node<nb_nodes-1; ++node)
+  int decrease=0;
+  int ghost_glb_idx=nodes_max_glb_idx-transform_to_ghost.size();
+  for (int node=0; node<nb_nodes; ++node)
   {
+    glb_idx( node ) = orig_glb_idx[ node ] + decrease;
     if( transform_to_ghost.count(node) )
     {
-      int swap_with_node = node+1;
-      while( transform_to_ghost.count(swap_with_node) && swap_with_node<nb_nodes )
+      ++ghost_glb_idx;
+      if( glb_idx(node) != ghost_glb_idx)
       {
-        ++swap_with_node;
-      }
-      if( swap_with_node < nb_nodes )
-      {
-        transform_to_ghost.erase(node);
-        transform_to_ghost.insert(swap_with_node);
-        //std::cout << "swap " << glb_idx(node) << "  " << glb_idx(swap_with_node) << std::endl;
-        swap_row( coords, node, swap_with_node );
-        swap_row( proc, node, swap_with_node );
-        swap_row( orig_glb_idx, node, swap_with_node );
-        swap_row( orig_master_glb_idx, node, swap_with_node );
+        glb_idx( node ) = ghost_glb_idx;
+        --decrease;
       }
     }
   }
+
   std::map<int,int> node_orig_glb_to_loc;
   for (int node=0; node<nb_nodes; ++node)
     node_orig_glb_to_loc[ orig_glb_idx[node] ] = node;
-
+  if (0)
+  {
   for (int node=0; node<nb_nodes; ++node)
   {
     //std::cout << node+1 << ": orig_master " << orig_master_glb_idx[node] << std::endl;
@@ -284,6 +288,7 @@ void build_periodic_boundaries( Mesh& mesh )
       }
     }
   }
+  }
 
   //std::cout << "made it here" << std::endl;
 
@@ -295,7 +300,6 @@ void build_periodic_boundaries( Mesh& mesh )
   nodes_2d.resize( nodes_2d_bounds );
   std::map<int,int> node_mapping;
   int new_node = nb_nodes;
-  int nodes_max_glb_idx = nodes_2d.metadata<int>("max_glb_idx");
   for( std::set<int>::iterator it = new_nodes.begin(); it!=new_nodes.end(); ++it)
   {
     int orig_gid = -(*it);
@@ -342,16 +346,6 @@ void build_periodic_boundaries( Mesh& mesh )
     if (mesh.function_space(f).metadata<int>("type") == FACES)
       mesh.function_space(f).metadata().set("max_glb_idx",elements_max_glb_idx);
   }
-
-
-  //std::cout << "slave_master" << std::endl;
-  //for (int node=0; node< nb_nodes+nb_ghost_nodes; ++node)
- // {
-    //if (master_glb_idx(0,node) != glb_idx(0,node) )
-    //{
-      //std::cout << glb_idx(0,node) << " : " << master_glb_idx(0,node) << std::endl;
-    //}
-  //}
 
 
 #if 0

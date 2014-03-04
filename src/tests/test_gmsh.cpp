@@ -11,7 +11,8 @@ int main(int argc, char *argv[])
   MPL::init();
 
 //  Mesh& mesh = Gmsh::read("unstr.msh");
-  Mesh& mesh = Gmsh::read("data/meshes/colignon.msh");
+  Mesh& mesh = Gmsh::read("data/meshes/T47.msh");
+//  Mesh& mesh = Gmsh::read("collignon.msh");
   //Mesh& mesh = Gmsh::read("untitled.msh");
   //Mesh& mesh = Gmsh::read("test_no_edges.msh");
 

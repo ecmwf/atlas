@@ -177,19 +177,24 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path)
   FieldT<int>& quad_nodes    = quads.field<int>( "nodes" );
   FieldT<int>& quad_glb_idx  = quads.field<int>( "glb_idx" );
   int nb_quads = quads.metadata<int>("nb_owned");
-  //nb_quads = quads.bounds()[1];
 
   FunctionSpace& triags      = mesh.function_space( "triags" );
   FieldT<int>& triag_nodes   = triags.field<int>( "nodes" );
   FieldT<int>& triag_glb_idx = triags.field<int>( "glb_idx" );
   int nb_triags = triags.metadata<int>("nb_owned");
-  //nb_triags = triags.bounds()[1];
 
   FunctionSpace& edges       = mesh.function_space( "edges" );
   FieldT<int>& edge_nodes    = edges.field<int>( "nodes" );
   FieldT<int>& edge_glb_idx  = edges.field<int>( "glb_idx" );
   int nb_edges = edges.metadata<int>("nb_owned");
-  //nb_edges = edges.bounds()[1];
+
+  bool include_ghost_elements = false;
+  if( include_ghost_elements == true )
+  {
+    nb_quads = quads.bounds()[1];
+    nb_triags = triags.bounds()[1];
+    nb_edges = edges.bounds()[1];
+  }
 
   std::ofstream file;
   file.open( file_path.c_str(), std::ios::out );
