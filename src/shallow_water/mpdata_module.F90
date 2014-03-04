@@ -241,7 +241,7 @@ contains
     ! Compute the normal velocity in faces, and advection in vertices
 
     !dir$ ivdep
-    !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,Sx,Sy,Vx,Vy,ip1,ip2,apos,aneg)
+    !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2,Sx,Sy,Vx,Vy,apos,aneg)
     do jedge = 1,dstruct%nb_edges
       ip1 = dstruct%edges(1,jedge)
       ip2 = dstruct%edges(2,jedge)
@@ -259,7 +259,7 @@ contains
     enddo
     !$OMP END PARALLEL DO
 
-     !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,adv,jedge,iedge)
+    !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,adv,jedge,iedge,add,Dtmp   ,ip2,Sx,Sy,Vx,Vy,apos,aneg)
     do jnode=1,dstruct%nb_nodes
       adv = 0.0
       divV(jnode) = 0.
@@ -358,7 +358,7 @@ contains
         call halo_exchange(sum_Sabs,dstruct)
       end if
 
-      !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2,volume_of_two_cells,dDdx,dDdy,Vx,Vy)
+      !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2,volume_of_two_cells,dDdx,dDdy,Vx,Vy,apos,aneg)
       do jedge = 1,dstruct%nb_edges
         ip1 = dstruct%edges(1,jedge)
         ip2 = dstruct%edges(2,jedge)
@@ -401,7 +401,7 @@ contains
       !$OMP END PARALLEL DO
 
       ! Compute fluxes from (limited) antidiffusive velocity
-      !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,adv,jedge,iedge)
+      !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,adv,jedge,iedge,Dtmp)
       do jnode=1,dstruct%nb_nodes
         adv = 0.0
         if(dstruct%nb_neighbours(jnode) > 1) then
@@ -427,7 +427,7 @@ contains
           write(log_str,*) "gradD = ", gradD(:,jnode); call log_debug()
         end if
 
-        if( abs(Dtmp) < 1.e-30_jprw ) Dtmp = 0.
+        !if( abs(Dtmp) < 1.e-30_jprw ) Dtmp = 0.
         D(jnode) = Dtmp
         !D(jnode) = max(0.,Dtmp)
 
@@ -554,7 +554,7 @@ contains
         call halo_exchange(sum_Sabs,dstruct)
       end if
 
-      !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2,volume_of_two_cells,dQdx,dQdy,Vx,Vy)
+      !$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(jedge,ip1,ip2,volume_of_two_cells,dQdx,dQdy,Vx,Vy,Qbar,apos,aneg)
       do jedge = 1,dstruct%nb_edges
         ip1 = dstruct%edges(1,jedge)
         ip2 = dstruct%edges(2,jedge)
@@ -594,7 +594,7 @@ contains
 
 
       ! Compute fluxes from (limited) antidiffusive velocity
-      !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,adv,jedge,iedge)
+      !$OMP PARALLEL DO SCHEDULE(GUIDED,256) PRIVATE(jnode,adv,jedge,iedge,add)
       do jnode=1,dstruct%nb_nodes
         adv(:) = 0.0
         if(dstruct%nb_neighbours(jnode) > 1) then
