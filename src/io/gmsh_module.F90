@@ -19,6 +19,9 @@ contains
     integer :: jnode, jedge, ip1, ip2, ibound
     integer , allocatable :: tmp(:)
     real(kind=jprw), pointer :: edge_centroids(:,:)
+
+    call log_info( "Reading mesh "//filename )
+
     dstruct%mesh = datastruct_read_gmsh(filename)
     call datastruct_build_periodic_boundaries(dstruct%mesh);
     call datastruct_build_edges(dstruct%mesh);
@@ -150,6 +153,7 @@ contains
 
     funcspace = field%function_space()
     allocate( glb_field( field%nb_vars(), funcspace%glb_dof() ) )
+
     call funcspace%gather(field%data2(), glb_field)
 
     if (myproc .eq. 0) then
@@ -206,12 +210,14 @@ contains
       phi   = coords(XX,jnode)
       theta = coords(YY,jnode)
 
-      y = r*sin(theta)
-      x = r*cos(theta)*sin(phi)
-      z = r*cos(theta)*cos(phi)
+      x = phi*180./pi
+      y = theta*180/pi
+      z = 0
+
+      x = r*cos(theta)*cos(phi)
+      y = r*cos(theta)*sin(phi)
+      z = r*sin(theta)
       write(50,'(1I8,F18.10,F18.10,F18.10)')  dstruct%nodes_glb_idx(jnode), x,y,z
-      !write(50,'(1I8,F18.10,F18.10,F18.10)') dstruct%nodes_glb_idx(jnode), &
-      !  & coords(XX,jnode), coords(YY,jnode), 0.
     enddo
     write(50,'(A)')"$EndNodes"
     write(50,'(A)')"$Elements"

@@ -167,7 +167,7 @@ contains
 
     call implicit_solve(dt,dstruct)
 
-    !call filter_solution(dstruct)
+    call filter_solution(dstruct)
 
     call compute_advective_velocities(dt,dstruct,"advect")
 

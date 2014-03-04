@@ -16,15 +16,12 @@ Gather::Gather() :
 
 void Gather::setup(const int proc[],
                    const int glb_idx[],
+                   const int master_glb_idx[],
                    const std::vector<int>& bounds,
                    int par_bound )
 {
 
   int ierr;
-
-//  bounds_.resize(bounds.size());
-//  for(int i=0; i<bounds.size(); ++i)
-//    bounds_[i] = bounds[i];
 
   bounds_ = bounds;
   par_bound_ = par_bound;
@@ -42,13 +39,13 @@ void Gather::setup(const int proc[],
     Currently this is quickly implemented using a LONG list...
   */
 
-  int max_glb_idx = -1;
-  for (int jj=0; jj<nb_nodes; ++jj)
-  {
-    max_glb_idx = std::max( max_glb_idx, glb_idx[jj] );
-  }
+//  int max_glb_idx = -1;
+//  for (int jj=0; jj<nb_nodes; ++jj)
+//  {
+//    max_glb_idx = std::max( max_glb_idx, glb_idx[jj] );
+//  }
 
-  ierr = MPI_Allreduce( MPI_IN_PLACE, &max_glb_idx, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
+//  ierr = MPI_Allreduce( MPI_IN_PLACE, &max_glb_idx, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
 
   /*
     Find the amount of nodes this proc has to send
@@ -131,10 +128,10 @@ void ecmwf__Gather__delete (Gather* This) {
   delete This;
 }
 
-void ecmwf__Gather__setup (Gather* This, int proc[], int glb_idx[], int bounds[], int nb_bounds, int par_bound)
+void ecmwf__Gather__setup (Gather* This, int proc[], int glb_idx[], int master_glb_idx[], int bounds[], int nb_bounds, int par_bound)
 {
   std::vector<int> bounds_vec(bounds,bounds+nb_bounds);
-  This->setup(proc,glb_idx,bounds_vec,par_bound);
+  This->setup(proc,glb_idx,master_glb_idx,bounds_vec,par_bound);
 }
 
 void ecmwf__Gather__execute_int (Gather* This, int locfield[], int glbfield[], int nb_vars ) {

@@ -175,7 +175,7 @@ template<>
 void FunctionSpace::parallelise(const int proc[], const int glb_idx[], const int master_glb_idx[] )
 {
   halo_exchange_.setup(proc,glb_idx,master_glb_idx,bounds_,bounds_.size()-1);
-  gather_.setup(proc,glb_idx,bounds_,bounds_.size()-1);
+  gather_.setup(proc,glb_idx,master_glb_idx,bounds_,bounds_.size()-1);
   glb_dof_ = gather_.glb_dof();
   for( int b=bounds_.size()-2; b>=0; --b)
   {

@@ -30,10 +30,10 @@ program shallow_water
 
   ! Configuration parameters
   real(kind=jprw), parameter :: dt = 20               ! solver time-step
-  integer, parameter         :: nb_steps = 1          ! Number of propagations
+  integer, parameter         :: nb_steps = 30         ! Number of propagations
   integer, parameter         :: hours_per_step = 12   ! Propagation time
   integer, parameter         :: order = 2             ! Order of accuracy
-  integer, parameter         :: scheme = MPDATA_STANDARD
+  integer, parameter         :: scheme = MPDATA_GAUGE
   integer, parameter         :: eqs_type = EQS_MOMENTUM
   logical, parameter         :: write_itermediate_output = .True.
 
@@ -54,9 +54,12 @@ program shallow_water
   call set_log_proc(0)
   
   call log_info("Program shallow_water start")
-  !call read_gmsh(PANTARHEI_DATADIR//"/meshes/T159.msh", dstruct)
-  call read_joanna(PANTARHEI_DATADIR//"/meshes/T159.dual", &
-      & PANTARHEI_DATADIR//"/meshes/T159.rtable", dstruct)
+
+  call read_gmsh(PANTARHEI_DATADIR//"/meshes/T47.msh", dstruct)
+  call write_gmsh("out.msh", dstruct)
+
+  !call read_joanna(PANTARHEI_DATADIR//"/meshes/T159.dual", &
+  !    & PANTARHEI_DATADIR//"/meshes/T159.rtable", dstruct)
 
 #ifdef HAVE_IFS_TRANS
   call trans_setup(PANTARHEI_DATADIR//"/meshes/T159.rtable",IGPTOT,trans_handle)
@@ -110,6 +113,8 @@ program shallow_water
   !call mark_output("dhxdy_over_G",dstruct)
   !call mark_output("dual_volumes",dstruct)
 
+  !call halo_exchange(D,dstruct)
+
   call write_fields()
 
   call wallclock_timer%start()
@@ -120,7 +125,7 @@ program shallow_water
 
     call step_timer%start()
     call propagate_state( hours_per_step*hours, order, scheme, dstruct)
-    !call propagate_state( dt, order, scheme, dstruct)
+!    call propagate_state( dt, order, scheme, dstruct)
 
     write (log_str, '(A,I3,A,A,F8.2,A,F8.2,A)') &
       & "Propagated to ",jstep*hours_per_step," hours.", &

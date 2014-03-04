@@ -15,10 +15,11 @@ public:
 
 public: // methods
 
-  void setup( const int proc[], 
-              const int glb_idx[], 
-              const std::vector<int>& bounds, 
-              int par_bound );
+  void setup(const int proc[],
+             const int glb_idx[],
+             const int master_glb_idx[],
+             const std::vector<int>& bounds,
+             int par_bound );
 
   template <typename DATA_TYPE>
   void execute( DATA_TYPE locfield[], DATA_TYPE glbfield[], int nb_vars ) const;
@@ -118,7 +119,7 @@ extern "C"
 {
   Gather* ecmwf__Gather__new ();
   void ecmwf__Gather__delete (Gather* This);
-  void ecmwf__Gather__setup (Gather* This, int proc[], int glb_idx[], int bounds[], int nb_bounds, int par_bound);
+  void ecmwf__Gather__setup (Gather* This, int proc[], int glb_idx[], int master_glb_idx[], int bounds[], int nb_bounds, int par_bound);
   void ecmwf__Gather__execute_int (Gather* This, int locfield[], int glbfield[], int nb_vars);
   void ecmwf__Gather__execute_float (Gather* This, float locfield[], float glbfield[], int nb_vars);
   void ecmwf__Gather__execute_double (Gather* This, double locfield[], double glbfield[], int nb_vars);

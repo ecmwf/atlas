@@ -987,11 +987,12 @@ module split_globe_module
 
 contains
 
-  subroutine split_globe(rtable,nproc,proc,glb_idx)
+  subroutine split_globe(rtable,nproc,proc,glb_idx,master_glb_idx)
     character(len=*), intent(in)    :: rtable   ! rtable.d file
     integer(kind=jpim), intent(in)  :: nproc    ! Number of partitions
     integer(kind=jpim), intent(out) :: proc(:)
     integer(kind=jpim), intent(out) :: glb_idx(:)
+    integer(kind=jpim), intent(out) :: master_glb_idx(:)
     integer(kind=jpim)              :: ndgl     ! Number of lattitudes
     integer(kind=jpim), allocatable :: nloen(:) ! Number of longitude points for each latitude
     integer(kind=jpim) :: jlat,idum
@@ -1005,11 +1006,11 @@ contains
     enddo
     close(21)
     !write(log_str,*) 'number of latitudes,total number of grid-points ',ndgl,sum(nloen); call log_info()
-    call split_points(nproc,ndgl,nloen,proc,glb_idx)
+    call split_points(nproc,ndgl,nloen,proc,glb_idx,master_glb_idx)
   end subroutine split_globe
 
 
-  SUBROUTINE SPLIT_POINTS(NPROC,NDGL,NLOEN,proc,glb_idx)
+  SUBROUTINE SPLIT_POINTS(NPROC,NDGL,NLOEN,proc,glb_idx,master_glb_idx)
     USE EQ_REGIONS_MODX
     USE SUMPLATBEQ_MODX
     USE SUSTAONL_MODX
@@ -1019,6 +1020,7 @@ contains
     INTEGER(KIND=JPIM),INTENT(IN) :: NLOEN(NDGL)  ! Number of longitude points for each latitude
     INTEGER(KIND=JPIM),INTENT(OUT):: proc(:)      ! Return processor ranks for each point
     INTEGER(KIND=JPIM),INTENT(OUT):: glb_idx(:)   ! Return processor ranks for each point
+    INTEGER(KIND=JPIM),INTENT(OUT):: master_glb_idx(:)   ! Return processor ranks for each point
 
 
     INTEGER(KIND=JPIM) JNS,JEW,JLAT,IDUM
@@ -1142,15 +1144,15 @@ contains
         I=I+1
         IND=IGLOBAL(JL,JLAT)
         proc(I) = NGLOBALPROC(IND)-1
-        glb_idx(I) = IND
+        master_glb_idx(I) = IND
+        glb_idx(I) = master_glb_idx(I)
       ENDDO
 
       ! Periodic point duplicated for every lattitude
-      JL = 1
       I=I+1
-      IND=IGLOBAL(JL,JLAT)
-      glb_idx(I) = IND
-      proc(I) = -1 ! invalid, marked for removal NGLOBALPROC(IND)-1
+      master_glb_idx(I) = IGLOBAL(1,JLAT)
+      glb_idx(I) = SUM(NLOEN(:))+JLAT
+      proc(I) = proc(I-NLOEN(JLAT))
     ENDDO
     CLOSE(22)
 

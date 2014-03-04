@@ -21,6 +21,9 @@ Mesh& Gmsh::read(const std::string& file_path)
   Mesh* mesh = new Mesh();
   std::ifstream file;
   file.open( file_path.c_str() , std::ios::in );
+  if( !file.is_open() )
+    throw std::runtime_error("Could not open file "+file_path);
+
   std::string line;
   for (int i=0; i<4; ++i)
     std::getline(file,line);
@@ -28,6 +31,7 @@ Mesh& Gmsh::read(const std::string& file_path)
   // Create nodes
   int nb_nodes;
   file >> nb_nodes;
+  std::cout << "nb_nodes = " << nb_nodes << std::endl;
   std::vector<int> bounds(2);
   bounds[0] = Field::NB_VARS;
   bounds[1] = nb_nodes;
@@ -173,19 +177,19 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path)
   FieldT<int>& quad_nodes    = quads.field<int>( "nodes" );
   FieldT<int>& quad_glb_idx  = quads.field<int>( "glb_idx" );
   int nb_quads = quads.metadata<int>("nb_owned");
-  nb_quads = quads.bounds()[1];
+  //nb_quads = quads.bounds()[1];
 
   FunctionSpace& triags      = mesh.function_space( "triags" );
   FieldT<int>& triag_nodes   = triags.field<int>( "nodes" );
   FieldT<int>& triag_glb_idx = triags.field<int>( "glb_idx" );
   int nb_triags = triags.metadata<int>("nb_owned");
-  nb_triags = triags.bounds()[1];
+  //nb_triags = triags.bounds()[1];
 
   FunctionSpace& edges       = mesh.function_space( "edges" );
   FieldT<int>& edge_nodes    = edges.field<int>( "nodes" );
   FieldT<int>& edge_glb_idx  = edges.field<int>( "glb_idx" );
   int nb_edges = edges.metadata<int>("nb_owned");
-  nb_edges = edges.bounds()[1];
+  //nb_edges = edges.bounds()[1];
 
   std::ofstream file;
   file.open( file_path.c_str(), std::ios::out );
@@ -204,8 +208,8 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path)
     double x = r*std::cos(lat)*std::cos(lon);
     double y = r*std::cos(lat)*std::sin(lon);
     double z = r*std::sin(lat);
-    file << glb_idx(n) << " " << x << " " << y << " " << z << "\n";
-//    file << glb_idx(n) << " " << lon/scaling << " " << lat/scaling << " " << 0. << "\n";
+//    file << glb_idx(n) << " " << x << " " << y << " " << z << "\n";
+    file << glb_idx(n) << " " << lon/scaling << " " << lat/scaling << " " << 0. << "\n";
 
   }
   file << "$EndNodes\n";

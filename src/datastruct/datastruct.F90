@@ -721,25 +721,33 @@ subroutine FunctionSpace__gather_real64_r1(this, field_data, glbfield_data)
   call ecmwf__FunctionSpace__gather_double( this%object, field_data, size(field_data), &
                                           & glbfield_data, size(glbfield_data) )
 end subroutine FunctionSpace__gather_real64_r1
+
+
 subroutine FunctionSpace__gather_real64_r2(this, field_data, glbfield_data)
   class(FunctionSpace_type), intent(in) :: this
   real(c_double), intent(in) :: field_data(:,:)
   real(c_double), intent(inout) :: glbfield_data(:,:)
   real(c_double), pointer :: view(:), glbview(:)
   view => view1d(field_data)
+  glbview => view
   if( size(glbfield_data) /= 0 ) then
     glbview => view1d(glbfield_data)
   end if
   call ecmwf__FunctionSpace__gather_double( this%object, view, size(field_data), &
                                           & glbview, size(glbfield_data) )
 end subroutine FunctionSpace__gather_real64_r2
+
+
 subroutine FunctionSpace__gather_real64_r3(this, field_data, glbfield_data)
   class(FunctionSpace_type), intent(in) :: this
   real(c_double), intent(in) :: field_data(:,:,:)
   real(c_double), intent(inout) :: glbfield_data(:,:,:)
   real(c_double), pointer :: view(:), glbview(:)
   view => view1d(field_data)
-  glbview => view1d(glbfield_data)
+  glbview => view
+  if( size(glbfield_data) /= 0 ) then
+    glbview => view1d(glbfield_data)
+  end if
   call ecmwf__FunctionSpace__gather_double( this%object, view, size(field_data), &
                                           & glbview, size(glbfield_data) )
 end subroutine FunctionSpace__gather_real64_r3
@@ -1255,13 +1263,13 @@ end subroutine Metadata__get_string
 function datastruct_read_gmsh(filename) result(mesh)
   character(len=*), intent(in) :: filename
   type(Mesh_type) :: mesh
-  mesh%object = ecmwf__read_gmsh(filename)
+  mesh%object = ecmwf__read_gmsh(c_str(filename))
 end function datastruct_read_gmsh
 
 subroutine datastruct_write_gmsh(mesh,filename)
   type(Mesh_type), intent(in) :: mesh
   character(len=*), intent(in) :: filename
-  call ecmwf__write_gmsh(mesh%object,filename)
+  call ecmwf__write_gmsh(mesh%object,c_str(filename))
 end subroutine datastruct_write_gmsh
 
 subroutine datastruct_build_periodic_boundaries(mesh)

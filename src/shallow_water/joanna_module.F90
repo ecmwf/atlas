@@ -46,6 +46,7 @@ contains
     integer, allocatable :: node_proc_full(:)
     integer, allocatable :: proc(:)
     integer, allocatable :: node_glb_idx_full(:)
+    integer, allocatable :: node_master_glb_idx_full(:)
     integer, allocatable :: glb_idx(:)
     integer, allocatable :: master_glb_idx(:)
     integer, allocatable :: keep_edge(:)
@@ -69,6 +70,7 @@ contains
 
     allocate( node_proc_full(nnode) )
     allocate( node_glb_idx_full(nnode) )
+    allocate( node_master_glb_idx_full(nnode) )
     allocate( node_loc_idx(nnode) )
     allocate( edge_loc_idx(nedge) )
     allocate( keep_node(nnode) )
@@ -82,7 +84,7 @@ contains
 !        node_glb_idx_full(jnode)=jnode
 !      end do
 !    else
-      call split_globe(rtable,nproc,node_proc_full,node_glb_idx_full)
+      call split_globe(rtable,nproc,node_proc_full,node_glb_idx_full,node_master_glb_idx_full)
 !    end if
     keep_node(:) = 0
     keep_edge(:) = 0
@@ -97,9 +99,15 @@ contains
     do jedge = 1, nedge
       read(5,*) idx, ip1, ip2
       if ( (node_proc_full(ip1) .eq. myproc) .or. (node_proc_full(ip2) .eq. myproc) ) then
-        keep_edge(jedge) = 1
-        keep_node(ip1) = 1
-        keep_node(ip2) = 1
+
+          keep_node(ip1) = 1
+          keep_node(ip2) = 1
+
+         if (  node_master_glb_idx_full(ip1) == node_glb_idx_full(ip1) .or. &
+            &  node_master_glb_idx_full(ip2) == node_glb_idx_full(ip2) ) then
+          keep_edge(jedge) = 1
+         end if
+
         if (.not.(jedge<before1 .or. jedge>before2)) then
           nb_pole_edges = nb_pole_edges + 1
         end if
@@ -121,7 +129,7 @@ contains
         node_loc_idx(jnode) = idx
         proc(idx) = node_proc_full(jnode)
         glb_idx(idx) = node_glb_idx_full(jnode)
-        master_glb_idx(idx) = glb_idx(idx)
+        master_glb_idx(idx) = node_master_glb_idx_full(jnode)
       end if
     end do
 
@@ -240,6 +248,7 @@ contains
     allocate(dstruct%my_edges(dstruct%max_nb_neighbours,dstruct%nb_nodes))
     allocate(dstruct%sign(dstruct%max_nb_neighbours,dstruct%nb_nodes))
     dstruct%nb_neighbours(:) = 0
+    dstruct%sign(:,:) = 0
     do jedge = 1,dstruct%nb_edges
       ip1 = dstruct%edges(1,jedge)
       ip2 = dstruct%edges(2,jedge)
@@ -380,6 +389,7 @@ contains
     integer, allocatable :: node_proc_full(:)
     integer, allocatable :: proc(:)
     integer, allocatable :: node_glb_idx_full(:)
+    integer, allocatable :: node_master_glb_idx_full(:)
     integer, allocatable :: glb_idx(:)
     integer, allocatable :: master_glb_idx(:)
     integer, allocatable :: keep_edge(:)
@@ -403,13 +413,14 @@ contains
 
     allocate( node_proc_full(nnode) )
     allocate( node_glb_idx_full(nnode) )
+    allocate( node_master_glb_idx_full(nnode) )
     allocate( node_loc_idx(nnode) )
     allocate( edge_loc_idx(nedge) )
     allocate( keep_node(nnode) )
     allocate( keep_edge(nedge) )
 
     !write(log_str,*) "Domain decomposition in ",nproc," parts, using ",rtable; call log_info()
-    call split_globe(rtable,nproc,node_proc_full,node_glb_idx_full)
+    call split_globe(rtable,nproc,node_proc_full,node_glb_idx_full,node_master_glb_idx_full)
 
     keep_node(:) = 0
     keep_edge(:) = 0
@@ -424,15 +435,20 @@ contains
     do jedge = 1, nedge
       read(5,*) idx, ip1, ip2
       if ( (node_proc_full(ip1) .eq. myproc) .or. (node_proc_full(ip2) .eq. myproc) ) then
-        keep_edge(jedge) = 1
-        keep_node(ip1) = 1
-        keep_node(ip2) = 1
+
+          keep_node(ip1) = 1
+          keep_node(ip2) = 1
+
+         if (  node_master_glb_idx_full(ip1) == node_glb_idx_full(ip1) .or. &
+            &  node_master_glb_idx_full(ip2) == node_glb_idx_full(ip2) ) then
+          keep_edge(jedge) = 1
+         end if
+
         if (.not.(jedge<before1 .or. jedge>before2)) then
           nb_pole_edges = nb_pole_edges + 1
         end if
       end if
     end do
-
     close(5)
 
     !call log_info(str(myproc)//" should keep nodes:"//str(sum(keep_node)))
