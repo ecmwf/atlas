@@ -45,8 +45,8 @@ end subroutine
 subroutine test_field_metadata
   integer :: int
   logical :: true, false
-  real(kind=4) :: real32
-  real(kind=8) :: real64
+  real(c_float) :: real32
+  real(c_double) :: real64
   character(len=:), allocatable :: string
   type(MetaData_type) metadata
   call func_space%create_field("field_prop",1,real_kind(jprs))

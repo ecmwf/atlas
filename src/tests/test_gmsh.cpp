@@ -1,22 +1,16 @@
-#include "datastruct/Gmsh.hpp"
-#include "datastruct/BuildEdges.hpp"
-#include "datastruct/BuildDualMesh.hpp"
-#include "datastruct/BuildPeriodicBoundaries.hpp"
-#include "datastruct/Partitioner.hpp"
-#include "datastruct/MPL.hpp"
+#include "atlas/Gmsh.hpp"
+#include "atlas/BuildEdges.hpp"
+#include "atlas/BuildDualMesh.hpp"
+#include "atlas/BuildPeriodicBoundaries.hpp"
+#include "atlas/Partitioner.hpp"
+#include "atlas/MPL.hpp"
 
-using namespace ecmwf;
+using namespace atlas;
 int main(int argc, char *argv[])
 {
   MPL::init();
 
-//  Mesh& mesh = Gmsh::read("unstr.msh");
   Mesh& mesh = Gmsh::read("data/meshes/T47.msh");
-//  Mesh& mesh = Gmsh::read("collignon.msh");
-  //Mesh& mesh = Gmsh::read("untitled.msh");
-  //Mesh& mesh = Gmsh::read("test_no_edges.msh");
-
-  //Partitioner::partition(mesh,1);
 
   build_periodic_boundaries(mesh);
   build_edges(mesh);

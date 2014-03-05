@@ -48,14 +48,14 @@ message( STATUS "PantaRhei configuration" )
 site_name( BUILD_SITE )
 get_filename_component (Fortran_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
 if( NOT Fortran_COMPILER_NAME MATCHES "mp.*" AND NOT Fortran_COMPILER_NAME MATCHES "ftn" )
-  #message( FATAL_ERROR "MPI Compiler needed.\n"
-  #  "Please remove this build, export FC to a MPI compiler such as mpif90 or ftn on Cray and rerun." )
+  message( FATAL_ERROR "MPI Compiler needed.\n"
+    "Please remove this build, export FC and CXX to a MPI compiler such as mpif90 or ftn on Cray and rerun." )
   set( MPI OFF )
 endif( )
 get_filename_component (CXX_COMPILER_NAME ${CMAKE_CXX_COMPILER} NAME)
 if( NOT CXX_COMPILER_NAME MATCHES "mp.*" AND NOT CXX_COMPILER_NAME MATCHES "CC" )
-  #message( FATAL_ERROR "MPI Compiler needed.\n"
-  #  "Please remove this build, export CXX to a MPI compiler such as mpic++ or CC on Cray and rerun." )
+  message( FATAL_ERROR "MPI Compiler needed.\n"
+    "Please remove this build, export FC and CXX to a MPI compiler such as mpic++ or CC on Cray and rerun." )
   set( MPI OFF )
 endif( )
 
@@ -205,60 +205,12 @@ if( BUILD_SITE MATCHES "cc[abt].*" )
 endif( )
 
 #######################################################################################
-# Datastructure library
+# Atlas library
 #######################################################################################
-if( NOT ${MPI} )
-  message( STATUS "MPI not found, use stubs instead" )
-  set( MPI_STUBS src/common/mpi_stubs.F90 )
-endif( )
 
-add_library( common ${MPI_STUBS}
-  src/common/parallel_module.F90
-  src/common/common_module.F90
-  src/common/trans_interface.F90
-)
-target_link_libraries( common ${TPL} )
+add_subdirectory(src/atlas)
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/src/atlas)
 
-add_subdirectory(src/datastruct)
-include_directories(${CMAKE_CURRENT_BINARY_DIR}/src/datastruct)
-
-add_library( io
-  src/io/split_globe_module.F90
-)
-target_link_libraries( io datastruct )
-
-add_subdirectory(src/ftnunit)
-include_directories(${CMAKE_CURRENT_BINARY_DIR}/src/ftnunit)
-
-
-#######################################################################################
-# Shallow water executable
-#######################################################################################
-list( APPEND DATASTRUCT_SRC
-  src/shallow_water/datastruct_module.F90
-  src/shallow_water/joanna_module.F90
-)
-
-file( COPY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
-
-add_executable( shallow_water
-  ${DATASTRUCT_SRC}
-  src/io/gmsh_module.F90
-  src/io/grib_module.F90
-  src/shallow_water/mpdata_module.F90
-  src/shallow_water/shallow_water_module.F90
-  src/shallow_water/shallow_water.F90 )
-target_link_libraries( shallow_water io common datastruct )
-set_property(TARGET shallow_water PROPERTY LINKER_LANGUAGE Fortran)
-
-
-add_executable( isentropic
-  ${DATASTRUCT_SRC}
-  src/io/gmsh_module.F90
-  src/shallow_water/isentropic_module.F90
-  src/shallow_water/isentropic.F90 )
-target_link_libraries( isentropic io common datastruct )
-set_property(TARGET isentropic PROPERTY LINKER_LANGUAGE Fortran)
 
 ###############################################################################
 # Tests
@@ -269,18 +221,12 @@ ecbuild_add_test( TARGET test_datastruct
   LIBS     ftnunit datastruct
   COMMAND  ${CMAKE_SOURCE_DIR}/src/ftnunit/runtests.sh
   ARGS     ${CMAKE_CURRENT_BINARY_DIR}/test_datastruct
-)
-
-ecbuild_add_test( TARGET test_sync
-  LINKER_LANGUAGE Fortran
-  SOURCES src/tests/test_sync.F90
-  LIBS    common datastruct 
-  ENABLED OFF # Compile but don't call with ctest
+  CONDITION  OFF
 )
 
 ecbuild_add_test( TARGET test_gmsh
   SOURCES  src/tests/test_gmsh.cpp
-  LIBS     datastruct
+  LIBS     atlas
 )
 
 #######################################################################################
