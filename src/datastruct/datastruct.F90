@@ -142,10 +142,12 @@ contains
   procedure, private :: FunctionSpace__gather_real64_r1
   procedure, private :: FunctionSpace__gather_real64_r2
   procedure, private :: FunctionSpace__gather_real64_r3
+  procedure, private :: FunctionSpace__gather_int32_r2
   generic :: gather => &
       & FunctionSpace__gather_real64_r1, &
       & FunctionSpace__gather_real64_r2, &
-      & FunctionSpace__gather_real64_r3
+      & FunctionSpace__gather_real64_r3, &
+      & FunctionSpace__gather_int32_r2
 END TYPE FunctionSpace_type
 
 interface new_FunctionSpace
@@ -752,6 +754,20 @@ subroutine FunctionSpace__gather_real64_r3(this, field_data, glbfield_data)
                                           & glbview, size(glbfield_data) )
 end subroutine FunctionSpace__gather_real64_r3
 
+
+subroutine FunctionSpace__gather_int32_r2(this, field_data, glbfield_data)
+  class(FunctionSpace_type), intent(in) :: this
+  integer, intent(in) :: field_data(:,:)
+  integer, intent(inout) :: glbfield_data(:,:)
+  integer, pointer :: view(:), glbview(:)
+  view => view1d(field_data)
+  glbview => view
+  if( size(glbfield_data) /= 0 ) then
+    glbview => view1d(glbfield_data)
+  end if
+  call ecmwf__FunctionSpace__gather_int( this%object, view, size(field_data), &
+                                          & glbview, size(glbfield_data) )
+end subroutine FunctionSpace__gather_int32_r2
 
 
 

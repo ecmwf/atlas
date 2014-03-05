@@ -239,6 +239,11 @@ void build_periodic_boundaries( Mesh& mesh )
 
   std::vector< int > orig_glb_idx( glb_idx.data() );
   std::vector< int > orig_master_glb_idx( master_glb_idx.data() );
+
+  std::map<int,int> node_orig_glb_to_loc;
+  for (int node=0; node<nb_nodes; ++node)
+    node_orig_glb_to_loc[ orig_glb_idx[node] ] = node;
+
   int nodes_max_glb_idx = nodes_2d.metadata<int>("max_glb_idx");
 
   int decrease=0;
@@ -257,9 +262,12 @@ void build_periodic_boundaries( Mesh& mesh )
     }
   }
 
-  std::map<int,int> node_orig_glb_to_loc;
   for (int node=0; node<nb_nodes; ++node)
-    node_orig_glb_to_loc[ orig_glb_idx[node] ] = node;
+  {
+    master_glb_idx( node ) = glb_idx( node_orig_glb_to_loc[ orig_master_glb_idx[ node ] ] );
+  }
+
+
   if (0)
   {
   for (int node=0; node<nb_nodes; ++node)

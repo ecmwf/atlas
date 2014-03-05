@@ -8,16 +8,6 @@
 namespace ecmwf {
 class FunctionSpace;
 
-struct Element
-{
-  int nodes[4];
-};
-
-struct Edge
-{
-  int nodes[2];
-};
-
 class Mesh
 {
 public:
@@ -30,9 +20,6 @@ public:
 private:
   std::map< std::string, size_t > index_;
   std::vector< FunctionSpace* > function_spaces_;
-public:
-  std::vector<Element> elements;
-  std::vector<Edge>    edges;
 };
 
 

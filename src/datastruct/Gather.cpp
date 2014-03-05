@@ -39,13 +39,16 @@ void Gather::setup(const int proc[],
     Currently this is quickly implemented using a LONG list...
   */
 
-//  int max_glb_idx = -1;
-//  for (int jj=0; jj<nb_nodes; ++jj)
-//  {
-//    max_glb_idx = std::max( max_glb_idx, glb_idx[jj] );
-//  }
+  int max_glb_idx = -1;
+  int min_glb_idx = glb_idx[0];
+  for (int jj=0; jj<nb_nodes; ++jj)
+  {
+    max_glb_idx = std::max( max_glb_idx, glb_idx[jj] );
+    min_glb_idx = std::min( min_glb_idx, glb_idx[jj] );
+  }
 
-//  ierr = MPI_Allreduce( MPI_IN_PLACE, &max_glb_idx, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
+  ierr = MPI_Allreduce( MPI_IN_PLACE, &max_glb_idx, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
+  ierr = MPI_Allreduce( MPI_IN_PLACE, &min_glb_idx, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD );
 
   /*
     Find the amount of nodes this proc has to send
@@ -84,7 +87,7 @@ void Gather::setup(const int proc[],
     if (proc[jnode] == myproc)
     {
       sendmap_[idx_send] = jnode;
-      send_recv_position[idx_send] = glb_idx[jnode]-1;
+      send_recv_position[idx_send] = glb_idx[jnode]-min_glb_idx;
       ++idx_send;
     }
   }

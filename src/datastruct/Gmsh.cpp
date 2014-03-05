@@ -35,7 +35,7 @@ Mesh& Gmsh::read(const std::string& file_path)
   std::vector<int> bounds(2);
   bounds[0] = Field::NB_VARS;
   bounds[1] = nb_nodes;
-  FunctionSpace& nodes_2d    = mesh->add_function_space( new FunctionSpace( "nodes_2d", "Lagrange_P1", bounds ) );
+  FunctionSpace& nodes_2d    = mesh->add_function_space( new FunctionSpace( "nodes_2d", "Lagrange_P0", bounds ) );
   nodes_2d.metadata().set("type",static_cast<int>(NODES));
   FieldT<double>& coords = nodes_2d.create_field<double>("coordinates",2);
   FieldT<int>& glb_idx = nodes_2d.create_field<int>("glb_idx",1);
@@ -167,6 +167,9 @@ Mesh& Gmsh::read(const std::string& file_path)
 
 void Gmsh::write(Mesh& mesh, const std::string& file_path)
 {
+  bool spherical=true;
+  bool include_ghost_elements = false;
+
   FunctionSpace& nodes_2d   = mesh.function_space( "nodes_2d" );
   FieldT<double>& coords    = nodes_2d.field<double>( "coordinates" );
   FieldT<int>& glb_idx      = nodes_2d.field<int>( "glb_idx" );
@@ -187,17 +190,19 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path)
   FieldT<int>& edge_nodes    = edges.field<int>( "nodes" );
   FieldT<int>& edge_glb_idx  = edges.field<int>( "glb_idx" );
   int nb_edges = edges.metadata<int>("nb_owned");
+  nb_edges = edges.bounds()[1];
 
-  bool include_ghost_elements = false;
   if( include_ghost_elements == true )
   {
     nb_quads = quads.bounds()[1];
     nb_triags = triags.bounds()[1];
-    nb_edges = edges.bounds()[1];
   }
 
+  std::string ext = "";
+  if( spherical ) ext = ".sphere";
+  std::cout << "writing file " << file_path+ext << std::endl;
   std::ofstream file;
-  file.open( file_path.c_str(), std::ios::out );
+  file.open( (file_path+ext).c_str(), std::ios::out );
 
   file << "$MeshFormat\n";
   file << "2.2 0 8\n";
@@ -206,16 +211,21 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path)
   file << nb_nodes << "\n";
   for( int n=0; n<nb_nodes; ++n)
   {
-    double r     = 6371.;
+    double r     = 1.;
     double lon   = coords(XX,n);
     double lat   = coords(YY,n);
 
-    double x = r*std::cos(lat)*std::cos(lon);
-    double y = r*std::cos(lat)*std::sin(lon);
-    double z = r*std::sin(lat);
-//    file << glb_idx(n) << " " << x << " " << y << " " << z << "\n";
-    file << glb_idx(n) << " " << lon/scaling << " " << lat/scaling << " " << 0. << "\n";
-
+    if(spherical)
+    {
+      double x = r*std::cos(lat)*std::cos(lon);
+      double y = r*std::cos(lat)*std::sin(lon);
+      double z = r*std::sin(lat);
+      file << glb_idx(n) << " " << x << " " << y << " " << z << "\n";
+    }
+    else
+    {
+      file << glb_idx(n) << " " << lon/scaling << " " << lat/scaling << " " << 0. << "\n";
+    }
   }
   file << "$EndNodes\n";
   file << "$Elements\n";
