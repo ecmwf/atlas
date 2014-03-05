@@ -11,7 +11,7 @@ if(${srcdir} STREQUAL ${bindir})
   message("######################################################")
   message(FATAL_ERROR "In-source builds are forbidden!")
 endif()
-project( pantarhei Fortran CXX )
+project( Atlas Fortran CXX )
 
 enable_testing()
 include(ecbuild_add_test.cmake)
@@ -43,7 +43,7 @@ git_external( DIR ${DATA}
              )
 
 message( STATUS "--------------------------------------------------------------------" )
-message( STATUS "PantaRhei configuration" )
+message( STATUS "Atlas configuration" )
 
 site_name( BUILD_SITE )
 get_filename_component (Fortran_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
@@ -79,7 +79,7 @@ if( ${OMP} )
   add_definitions( -DHAVE_OMP )
 endif( )
 
-add_definitions( -DPANTARHEI_DATADIR="${DATA}")
+add_definitions( -DATLAS_DATADIR="${DATA}")
 
 if( ${GRIB} )
   if( NOT GRIB_API_DIR )
