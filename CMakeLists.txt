@@ -1,20 +1,18 @@
-
 cmake_minimum_required( VERSION 2.8.4 FATAL_ERROR )
 
-# Disable in source builds (must be called before project)
-get_filename_component(srcdir "${CMAKE_SOURCE_DIR}" REALPATH)
-get_filename_component(bindir "${CMAKE_BINARY_DIR}" REALPATH)
-if(${srcdir} STREQUAL ${bindir})
-  message("######################################################")
-  message("You are attempting to build in your Source Directory.")
-  message("You must run cmake from a build directory.")
-  message("######################################################")
-  message(FATAL_ERROR "In-source builds are forbidden!")
-endif()
-project( Atlas Fortran CXX )
+project( atlas Fortran CXX )
 
-enable_testing()
-include(ecbuild_add_test.cmake)
+set( CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../ecbuild/cmake")
+set( ECBUILD_DEFAULT_BUILD_TYPE Release )
+
+include( ecbuild_system )
+
+ecbuild_requires_macro_version( 1.3 )
+
+ecbuild_declare_project()
+
+# fortran module support
+
 set( CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/modules )
 file( MAKE_DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY} )
 include_directories( ${CMAKE_Fortran_MODULE_DIRECTORY} )
@@ -23,11 +21,44 @@ include_directories( ${CMAKE_Fortran_MODULE_DIRECTORY} )
 # Configurations
 #######################################################################################
 
-set( OMP      ON  CACHE BOOL "Enable/Disable OpenMP"       )
-set( WARNINGS OFF CACHE BOOL "Enable/Disable all warnings" )
-set( GRIB     ON  CACHE BOOL "Enable/Disable Grib"         )
-set( MPI      ON  CACHE BOOL "Enable/Disable MPI"          )
-set( ENABLE_TESTS ON CACHE BOOL "Enable/Disable unit tests")
+# OMP
+
+ecbuild_add_option( FEATURE OMP
+					DESCRIPTION "Enable/Disable OpenMP" )
+
+if( HAVE_OMP )
+  add_definitions( -DHAVE_OMP )
+endif( )
+
+# MPI
+
+ecbuild_add_option( FEATURE MPI
+					DESCRIPTION "Enable/Disable MPI" )
+
+# GRIB
+
+ecbuild_add_option( FEATURE GRIB
+					DESCRIPTION "support for GRIB format" )
+
+if( ENABLE_GRIB )
+	ecbuild_use_package( PROJECT grib_api VERSION 1.9.9 )
+	if( NOT GRIB_API_FOUND )
+		set( HAVE_GRIB 0 )
+	endif()
+endif()
+
+if( HAVE_GRIB )
+	add_definitions( -DHAVE_GRIB )
+	include_directories( ${GRIB_API_INCLUDE_DIRS} )
+	link_directories( ${GRIB_API_DIR}/lib )
+	list( APPEND TPL grib_api_f90 grib_api )
+else( )
+	message( STATUS "Grib not found : To enable, run \"cmake . -DGRIB_API_DIR=path/to/grib\"" )
+	set( GRIB OFF )
+endif( )
+
+### DATA
+
 set( DATA_REPO     "ssh://git@software.ecmwf.int:7999/pan/data.git"
        CACHE STRING "Location of the repository where large project files can be found")
 
@@ -46,55 +77,29 @@ message( STATUS "---------------------------------------------------------------
 message( STATUS "Atlas configuration" )
 
 site_name( BUILD_SITE )
-get_filename_component (Fortran_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
+get_filename_component(Fortran_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
 if( NOT Fortran_COMPILER_NAME MATCHES "mp.*" AND NOT Fortran_COMPILER_NAME MATCHES "ftn" )
-  message( FATAL_ERROR "MPI Compiler needed.\n"
-    "Please remove this build, export FC and CXX to a MPI compiler such as mpif90 or ftn on Cray and rerun." )
-  set( MPI OFF )
+  # message( FATAL_ERROR "MPI Compiler needed.\n"
+  #   "Please remove this build, export FC and CXX to a MPI compiler such as mpif90 or ftn on Cray and rerun." )
+  set( HAVE_MPI OFF )
 endif( )
-get_filename_component (CXX_COMPILER_NAME ${CMAKE_CXX_COMPILER} NAME)
+get_filename_component(CXX_COMPILER_NAME ${CMAKE_CXX_COMPILER} NAME)
 if( NOT CXX_COMPILER_NAME MATCHES "mp.*" AND NOT CXX_COMPILER_NAME MATCHES "CC" )
-  message( FATAL_ERROR "MPI Compiler needed.\n"
-    "Please remove this build, export FC and CXX to a MPI compiler such as mpic++ or CC on Cray and rerun." )
-  set( MPI OFF )
-endif( )
+  # message( FATAL_ERROR "MPI Compiler needed.\n"
+  #   "Please remove this build, export FC and CXX to a MPI compiler such as mpic++ or CC on Cray and rerun." )
+  set( HAVE_MPI OFF )
+endif()
 
-
-# make sure that the default build type is a RELEASE
-if( NOT CMAKE_BUILD_TYPE )
-  set( CMAKE_BUILD_TYPE Release CACHE STRING 
-       "Choose the type of build, options are: Debug Bit Release." FORCE )
-endif( )
-string( TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE )
-
-if( NOT CMAKE_BUILD_TYPE MATCHES "DEBUG" )
+if( NOT CMAKE_BUILD_TYPE MATCHES "Debug" )
   add_definitions( -DNDEBUG )
 endif( )
 
-if( ${MPI} )
+if( HAVE_MPI )
   add_definitions( -DHAVE_MPI )
-endif( )
-
-if( ${OMP} )
-  add_definitions( -DHAVE_OMP )
 endif( )
 
 add_definitions( -DATLAS_DATADIR="${DATA}")
 
-if( ${GRIB} )
-  if( NOT GRIB_API_DIR )
-    set( GRIB_API_DIR $ENV{GRIB_API_DIR} )
-  endif( )
-  if( GRIB_API_DIR )
-    add_definitions( -DHAVE_GRIB )
-    include_directories(${GRIB_API_DIR}/include)
-    link_directories(${GRIB_API_DIR}/lib)
-    list( APPEND TPL grib_api_f90 grib_api )
-  else( )
-    message( STATUS "Grib not found : To enable, run \"cmake . -DGRIB_API_DIR=path/to/grib\"" )
-    set( GRIB OFF )
-  endif( )
-endif( )
 include_directories( src )
 
 #######################################################################################
@@ -106,7 +111,7 @@ if( CMAKE_Fortran_COMPILER_ID MATCHES "GNU" )
   else( )
     set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-openmp")
   endif( )
-  if( ${WARNINGS} )
+  if( ENABLE_WARNINGS )
     set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Wall")
   endif( )
   set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -funroll-all-loops -finline-functions -fstack-arrays" )
@@ -211,7 +216,6 @@ endif( )
 add_subdirectory(src/atlas)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/src/atlas)
 
-
 ###############################################################################
 # Tests
 ###############################################################################
@@ -251,9 +255,9 @@ message( STATUS "AR      : ${CMAKE_AR} ")
 message( STATUS "Defines : ${defs}")
 message( STATUS "TPL     : ${TPL}")
 message( STATUS "--------------------------------------------------------------------" )
-message( STATUS "MPI     : ${MPI}")
-message( STATUS "OpenMP  : ${OMP}")
-message( STATUS "Grib    : ${GRIB}")
+message( STATUS "MPI     : ${HAVE_MPI}")
+message( STATUS "OpenMP  : ${HAVE_OMP}")
+message( STATUS "Grib    : ${HAVE_GRIB}")
 message( STATUS "Tests   : ${ENABLE_TESTS}")
 message( STATUS "Data    : ${DATA}")
 message( STATUS "--------------------------------------------------------------------" )
@@ -263,3 +267,9 @@ if ( NOT CMAKE_BUILD_TYPE MATCHES "DEBUG" )
 endif()
 message( STATUS "--------------------------------------------------------------------" )
 
+############################################################################################
+# finalize
+
+ecbuild_install_project( NAME Atlas )
+
+ecbuild_print_summary()
