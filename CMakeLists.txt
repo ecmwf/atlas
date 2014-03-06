@@ -213,6 +213,12 @@ endif( )
 # Atlas library
 #######################################################################################
 
+if( NOT HAVE_MPI)
+	add_subdirectory(src/mpi)
+	include_directories( src/mpi )
+	list( APPEND TPL mpi )
+endif()
+
 add_subdirectory(src/atlas)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/src/atlas)
 
