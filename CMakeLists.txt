@@ -21,6 +21,8 @@ include_directories( ${CMAKE_Fortran_MODULE_DIRECTORY} )
 # Configurations
 #######################################################################################
 
+ecbuild_find_python()
+
 # OMP
 
 ecbuild_add_option( FEATURE OMP
@@ -117,39 +119,10 @@ if( BUILD_SITE MATCHES "cc[abt].*" )
 endif( )
 
 #######################################################################################
-# MPI STUBS
+# Sources
 #######################################################################################
 
-if( NOT HAVE_MPI)
-	add_subdirectory(src/mpi)
-	include_directories( src/mpi )
-	list( APPEND TPL mpi )
-endif()
-
-#######################################################################################
-# Atlas library
-#######################################################################################
-
-add_subdirectory(src/atlas)
-include_directories(${CMAKE_CURRENT_BINARY_DIR}/src/atlas)
-
-###############################################################################
-# Tests
-###############################################################################
-
-ecbuild_add_test( TARGET test_datastruct
-  LINKER_LANGUAGE Fortran
-  SOURCES  src/tests/test_datastruct.F90
-  LIBS     ftnunit datastruct
-  COMMAND  ${CMAKE_SOURCE_DIR}/src/ftnunit/runtests.sh
-  ARGS     ${CMAKE_CURRENT_BINARY_DIR}/test_datastruct
-  CONDITION  OFF
-)
-
-ecbuild_add_test( TARGET test_gmsh
-  SOURCES  src/tests/test_gmsh.cpp
-  LIBS     atlas
-)
+add_subdirectory( src)
 
 #######################################################################################
 # Print Summary
