@@ -6,6 +6,12 @@
 #include <CGAL/Implicit_surface_3.h>
 
 #include <CGAL/IO/Complex_2_in_triangulation_3_file_writer.h>
+#include <CGAL/IO/output_surface_facets_to_polyhedron.h>
+
+#include <CGAL/Polyhedron_3.h>
+#include <CGAL/IO/Polyhedron_iostream.h>
+#include <CGAL/IO/Polyhedron_VRML_1_ostream.h>
+#include <CGAL/IO/Polyhedron_VRML_2_ostream.h>
 
 #include "atlas/Parameters.hpp"
 #include "atlas/Mesh.hpp"
@@ -29,6 +35,7 @@ typedef Tr::Geom_traits GT;
 typedef GT::Sphere_3 Sphere_3;
 typedef GT::Point_3 Point_3;
 typedef GT::Vector_3 Vector_3;
+typedef CGAL::Polyhedron_3<GT> Polyhedron;
 typedef GT::FT FT;
 typedef FT (*Function)(Point_3);
 typedef CGAL::Implicit_surface_3<GT, Function> Surface_3;
@@ -72,10 +79,6 @@ int main()
 //  std::ofstream out("out.off");
 //  CGAL::output_surface_facets_to_off (out, c2t3);
 
-  // list the vertices
-
-  CGAL::set_ascii_mode( std::cout);
-
   // fill-in Atlas mesh structure
 
   Mesh* mesh = new Mesh();
@@ -102,7 +105,7 @@ int main()
   {
       vidx[v] = inode;
 
-      const typename Tr::Point& p = v->point();
+      const Tr::Point& p = v->point();
 
       coords(XX,inode) = p.x();
       coords(YY,inode) = p.y();
@@ -132,7 +135,7 @@ int main()
   size_t tidx = 0;
   for( Tr::Finite_facets_iterator f = tr.finite_facets_begin(); f != tr.finite_facets_end(); ++f )
   {
-    const typename Tr::Cell_handle cell = f->first;
+    const Tr::Cell_handle cell = f->first;
     const int& index = f->second;
     if( cell->is_facet_on_surface(index) == true )
     {
@@ -169,4 +172,23 @@ int main()
   assert( tidx == nb_triags );
 
   atlas::Gmsh::write3dsurf(*mesh, std::string("earth.msh") );
+
+  // save in off format
+#if 0
+   std::ofstream fout("earth.off");
+   CGAL::output_surface_facets_to_off( fout, c2t3 );
+#endif
+
+   // transform to polyhedron & save to vrml
+#if 0
+   Polyhedron P;
+   CGAL::output_surface_facets_to_polyhedron(c2t3, P);
+   std::cin >> P;
+   std::ofstream wout("earth.wrl");
+//   CGAL::VRML_2_ostream vrml_out( wout );
+   CGAL::VRML_1_ostream vrml_out( wout );
+   vrml_out << P;
+#endif
+
+
 }
