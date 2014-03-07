@@ -56,7 +56,6 @@ void Gather::execute( DATA_TYPE locfield[], DATA_TYPE glbfield[], int nb_vars ) 
 #define FIELD_CONTIGUOUS true
 
   int tag=1;
-  int ierr;
   int ibuf;
   int point_size = packet_size_ * nb_vars;
   int send_size = sendcnt_ * point_size;
@@ -98,9 +97,9 @@ void Gather::execute( DATA_TYPE locfield[], DATA_TYPE glbfield[], int nb_vars ) 
   }
 
   /// Gather
-  ierr = MPI_Gatherv( send_buffer.data(), send_size, MPL::TYPE<DATA_TYPE>(),
+  MPL_CHECK_RESULT( MPI_Gatherv( send_buffer.data(), send_size, MPL::TYPE<DATA_TYPE>(),
                       recv_buffer.data(), const_cast<int*>(recv_counts.data()), const_cast<int*>(recv_displs.data()),  MPL::TYPE<DATA_TYPE>(),
-                      root, MPI_COMM_WORLD );
+                      root, MPI_COMM_WORLD ) );
 
   /// Unpack
   // Use original mapping + contiguous bits

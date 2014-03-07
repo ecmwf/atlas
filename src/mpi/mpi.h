@@ -1,7 +1,8 @@
 #ifndef ATLAS_MPI_H
 #define ATLAS_MPI_H
 
-#ifdef __cplusplus /* If this is a C++ compiler, use C linkage */
+/* If this is a C++ compiler, use C linkage */
+#if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
  
@@ -10,11 +11,11 @@ extern "C" {
 #define MPI_FAILURE 1
 #define MPI_SUCCESS 0
 
-#define MPI_STATUS_IGNORE 0
+#define MPI_Status int
+#define MPI_STATUS_IGNORE ((MPI_Status *) 0)
 #define MPI_IN_PLACE ((void *) 1)
 #define MPI_Comm int
-#define MPI_Request int
-#define MPI_Status int
+
 #define MPI_Datatype int
 #define MPI_Op int
 
@@ -29,7 +30,8 @@ extern "C" {
 #define MPI_MIN 3
 #define MPI_PRODUCT 4
 
-void MPI_Abort ( MPI_Comm comm, int ierror );
+#define MPI_Request int
+
 int MPI_Allgather ( void *sendbuf, int sendcount, MPI_Datatype sendtype,
   void *recvbuf, int recvcount, MPI_Datatype recvtype,
   MPI_Comm comm );
@@ -44,8 +46,6 @@ int MPI_Alltoallv(void *sendbuf, int *sendcounts, int *sdispls,
   MPI_Datatype sendtype, void *recvbuf, int *recvcounts,
   int *rdispls, MPI_Datatype recvtype, MPI_Comm comm);
 int MPI_Barrier ( MPI_Comm comm );
-int MPI_Bcast ( void *data, int n, MPI_Datatype datatype, int node, 
-  MPI_Comm comm );
 int MPI_Comm_rank ( MPI_Comm comm, int *me );
 int MPI_Comm_size ( MPI_Comm comm, int *nprocs );
 int MPI_Finalize ( void );
@@ -61,20 +61,7 @@ int MPI_Irecv ( void *buf, int count, MPI_Datatype datatype,
   int source, int tag, MPI_Comm comm, MPI_Request *request );
 int MPI_Isend ( void *buf, int count, MPI_Datatype datatype,
   int dest, int tag, MPI_Comm comm, MPI_Request *request );
-int MPI_Recv ( void *buf, int count, MPI_Datatype datatype,
-  int source, int tag, MPI_Comm comm, MPI_Status *status );
-int MPI_Reduce ( void *data1, void *data2, int n, MPI_Datatype datatype, 
-  MPI_Op operation, int receiver, MPI_Comm comm );
-int MPI_Reduce_scatter ( void *sendbuf, void *recvbuf, int recvcounts,
-  MPI_Datatype datatype, MPI_Op op, MPI_Comm comm );
-int MPI_Rsend ( void *data, int n, MPI_Datatype datatype, int iproc, 
-  int itag, MPI_Comm comm );
-int MPI_Send ( void *buf, int count, MPI_Datatype datatype,
-  int dest, int tag, MPI_Comm comm );
 int MPI_Wait ( MPI_Request *request, MPI_Status *status );
-int MPI_Waitall ( int icount, int irequest, MPI_Status status );
-int MPI_Waitany ( int count, MPI_Request *request, int *index, 
-  MPI_Status *status );
 
 #ifdef __cplusplus /* If this is a C++ compiler, end C linkage */
 }

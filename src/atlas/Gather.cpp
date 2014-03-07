@@ -20,9 +20,6 @@ void Gather::setup(const int proc[],
                    const std::vector<int>& bounds,
                    int par_bound )
 {
-
-  int ierr;
-
   bounds_ = bounds;
   par_bound_ = par_bound;
 
@@ -47,8 +44,8 @@ void Gather::setup(const int proc[],
     min_glb_idx = std::min( min_glb_idx, glb_idx[jj] );
   }
 
-  ierr = MPI_Allreduce( MPI_IN_PLACE, &max_glb_idx, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
-  ierr = MPI_Allreduce( MPI_IN_PLACE, &min_glb_idx, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD );
+  MPL_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max_glb_idx, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD ) );
+  MPL_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &min_glb_idx, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD ) );
 
   /*
     Find the amount of nodes this proc has to send
@@ -62,9 +59,9 @@ void Gather::setup(const int proc[],
       ++sendcnt_;
   }
 
-  ierr = MPI_Gather( &sendcnt_, 1, MPI_INT,
+  MPL_CHECK_RESULT( MPI_Gather( &sendcnt_, 1, MPI_INT,
                      recvcounts_.data(), 1, MPI_INT,
-                     root, MPI_COMM_WORLD );
+                     root, MPI_COMM_WORLD ) );
 
   recvcnt_ = std::accumulate(recvcounts_.begin(),recvcounts_.end(),0);
 
@@ -92,9 +89,9 @@ void Gather::setup(const int proc[],
     }
   }
 
-  ierr = MPI_Gatherv( send_recv_position.data(), sendcnt_, MPI_INT,
+  MPL_CHECK_RESULT( MPI_Gatherv( send_recv_position.data(), sendcnt_, MPI_INT,
                       recvmap_.data(), recvcounts_.data(), recvdispls_.data(), MPI_INT,
-                      root, MPI_COMM_WORLD);
+                      root, MPI_COMM_WORLD) );
 
 
   // Packet size

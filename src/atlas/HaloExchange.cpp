@@ -19,9 +19,6 @@ void HaloExchange::setup(const int proc[],
                          const std::vector<int>& bounds,
                          int par_bound )
 {
-
-  int ierr;
-
 //  bounds_.resize(bounds.size());
 //  for(int i=0; i<bounds.size(); ++i)
 //    bounds_[i] = bounds[i];
@@ -48,7 +45,7 @@ void HaloExchange::setup(const int proc[],
     max_glb_idx = std::max( max_glb_idx, glb_idx[jj] );
   }
 
-  ierr = MPI_Allreduce( MPI_IN_PLACE, &max_glb_idx, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
+  MPL_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max_glb_idx, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD ) );
 
   std::vector<int> map_glb_to_loc(max_glb_idx+1,-1);
   for (int jj=0; jj<nb_nodes; ++jj)
@@ -76,7 +73,7 @@ void HaloExchange::setup(const int proc[],
     Find the amount of nodes this proc has to send to each other proc
   */
 
-  ierr = MPI_Alltoall( &recvcounts_[0], 1, MPI_INT, &sendcounts_[0], 1, MPI_INT, MPI_COMM_WORLD );
+  MPL_CHECK_RESULT( MPI_Alltoall( &recvcounts_[0], 1, MPI_INT, &sendcounts_[0], 1, MPI_INT, MPI_COMM_WORLD ) );
   sendcnt_ = std::accumulate(sendcounts_.begin(),sendcounts_.end(),0);
   //std::cout << myproc << ":  sendcnt = " << sendcnt_ << std::endl;
 
@@ -121,9 +118,9 @@ void HaloExchange::setup(const int proc[],
 
   std::vector<int> recv_requests(sendcnt_);
 
-  ierr = MPI_Alltoallv( &send_requests[0], &recvcounts_[0], &recvdispls_[0], MPI_INT,
+  MPL_CHECK_RESULT( MPI_Alltoallv( &send_requests[0], &recvcounts_[0], &recvdispls_[0], MPI_INT,
                         &recv_requests[0], &sendcounts_[0], &senddispls_[0], MPI_INT,
-                        MPI_COMM_WORLD );
+                        MPI_COMM_WORLD ) );
 
   /*
     What needs to be sent to other procs can be found by a map from global to local indices

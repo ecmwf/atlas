@@ -14,9 +14,9 @@ int main(int argc, char *argv[])
 
   Mesh& mesh = Gmsh::read( std::string(DATADIR) + "/meshes/T47.msh");
 
-//  build_periodic_boundaries(mesh);
-//  build_edges(mesh);
-//  build_dual_mesh(mesh);
+  build_periodic_boundaries(mesh);
+  build_edges(mesh);
+  build_dual_mesh(mesh);
 
   Gmsh::write(mesh,"bla.msh");
   

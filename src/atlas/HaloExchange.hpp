@@ -65,7 +65,6 @@ void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
 #define FIELD_CONTIGUOUS true
 
   int tag=1;
-  int ierr;
   int ibuf;
   int point_size = packet_size_ * nb_vars;
   int send_size = sendcnt_ * point_size;
@@ -129,8 +128,8 @@ void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
   {
     if(recv_counts[jproc] > 0)
     {
-      ierr = MPI_Irecv( &recv_buffer[recv_displs[jproc]] , recv_counts[jproc],
-                        MPL::TYPE<DATA_TYPE>(), jproc, tag, MPI_COMM_WORLD, &recv_req[jproc] );
+      MPL_CHECK_RESULT( MPI_Irecv( &recv_buffer[recv_displs[jproc]] , recv_counts[jproc],
+        MPL::TYPE<DATA_TYPE>(), jproc, tag, MPI_COMM_WORLD, &recv_req[jproc] ) );
     }
   }
 
@@ -155,8 +154,8 @@ void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
   {
     if(send_counts[jproc] > 0)
     {
-      ierr = MPI_Isend( &send_buffer[send_displs[jproc]], send_counts[jproc],
-                        MPL::TYPE<DATA_TYPE>(), jproc, tag, MPI_COMM_WORLD, &send_req[jproc] );
+      MPL_CHECK_RESULT( MPI_Isend( &send_buffer[send_displs[jproc]], send_counts[jproc],
+        MPL::TYPE<DATA_TYPE>(), jproc, tag, MPI_COMM_WORLD, &send_req[jproc] ) );
     }
   }
 
@@ -165,7 +164,7 @@ void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
   {
     if( recvcounts_[jproc] > 0)
     {
-      ierr = MPI_Wait(&recv_req[jproc], MPI_STATUS_IGNORE );
+      MPL_CHECK_RESULT( MPI_Wait(&recv_req[jproc], MPI_STATUS_IGNORE ) );
     }
   }
 
@@ -192,7 +191,7 @@ void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
   {
     if( sendcounts_[jproc] > 0)
     {
-      ierr = MPI_Wait(&send_req[jproc], MPI_STATUS_IGNORE );
+      MPL_CHECK_RESULT( MPI_Wait(&send_req[jproc], MPI_STATUS_IGNORE ) );
     }
   }
 
