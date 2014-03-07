@@ -37,10 +37,10 @@ Mesh& Gmsh::read(const std::string& file_path)
   file >> nb_nodes;
   std::cout << "nb_nodes = " << nb_nodes << std::endl;
   std::vector<int> bounds(2);
-  bounds[0] = Field::NB_VARS;
+  bounds[0] = Field::UNDEF_VARS;
   bounds[1] = nb_nodes;
   FunctionSpace& nodes_2d    = mesh->add_function_space( new FunctionSpace( "nodes_2d", "Lagrange_P0", bounds ) );
-  nodes_2d.metadata().set("type",static_cast<int>(NODES));
+  nodes_2d.metadata().set("type",static_cast<int>(Entity::NODES));
   FieldT<double>& coords = nodes_2d.create_field<double>("coordinates",2);
   FieldT<int>& glb_idx = nodes_2d.create_field<int>("glb_idx",1);
   FieldT<int>& master_glb_idx = nodes_2d.create_field<int>("master_glb_idx",1);
@@ -85,7 +85,7 @@ Mesh& Gmsh::read(const std::string& file_path)
   int nb_quads = nb_etype[QUAD];
   bounds[1] = nb_quads;
   FunctionSpace& quads      = mesh->add_function_space( new FunctionSpace( "quads", "Lagrange_P1", bounds ) );
-  quads.metadata().set("type",static_cast<int>(ELEMS));
+  quads.metadata().set("type",static_cast<int>(Entity::ELEMS));
   FieldT<int>& quad_nodes   = quads.create_field<int>("nodes",4);
   FieldT<int>& quad_glb_idx = quads.create_field<int>("glb_idx",1);
   FieldT<int>& quad_master_glb_idx = quads.create_field<int>("master_glb_idx",1);
@@ -94,7 +94,7 @@ Mesh& Gmsh::read(const std::string& file_path)
   int nb_triags = nb_etype[TRIAG];
   bounds[1] = nb_triags;
   FunctionSpace& triags      = mesh->add_function_space( new FunctionSpace( "triags", "Lagrange_P1", bounds ) );
-  triags.metadata().set("type",static_cast<int>(ELEMS));
+  triags.metadata().set("type",static_cast<int>(Entity::ELEMS));
   FieldT<int>& triag_nodes   = triags.create_field<int>("nodes",3);
   FieldT<int>& triag_glb_idx = triags.create_field<int>("glb_idx",1);
   FieldT<int>& triag_master_glb_idx = triags.create_field<int>("master_glb_idx",1);
@@ -104,7 +104,7 @@ Mesh& Gmsh::read(const std::string& file_path)
   nb_edges = 0;
   bounds[1] = nb_edges;
   FunctionSpace& edges      = mesh->add_function_space( new FunctionSpace( "edges", "Lagrange_P1", bounds ) );
-  edges.metadata().set("type",static_cast<int>(FACES));
+  edges.metadata().set("type",static_cast<int>(Entity::FACES));
   FieldT<int>& edge_nodes   = edges.create_field<int>("nodes",2);
   FieldT<int>& edge_glb_idx = edges.create_field<int>("glb_idx",1);
   FieldT<int>& edge_master_glb_idx = edges.create_field<int>("master_glb_idx",1);

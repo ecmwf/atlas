@@ -113,7 +113,7 @@ void build_periodic_boundaries( Mesh& mesh )
   std::vector< ElementRef > west_bdry_elements;
   for (int f=0; f<mesh.nb_function_spaces(); ++f)
   {
-    if (mesh.function_space(f).metadata<int>("type") == ELEMS)
+    if (mesh.function_space(f).metadata<int>("type") == Entity::ELEMS)
       scan_bdry_elements( mesh.function_space(f),  nodes_2d, min, max,
                           east_bdry_elements,
                           west_bdry_elements);
@@ -133,7 +133,7 @@ void build_periodic_boundaries( Mesh& mesh )
   int elements_max_glb_idx=0;
   for (int f=0; f<mesh.nb_function_spaces(); ++f)
   {
-    if (mesh.function_space(f).metadata<int>("type") == ELEMS)
+    if (mesh.function_space(f).metadata<int>("type") == Entity::ELEMS)
     {
       elem_nodes[f] = &mesh.function_space(f).field<int>("nodes");
       nb_elems[f]   = elem_nodes[f]->bounds()[1];
@@ -154,7 +154,7 @@ void build_periodic_boundaries( Mesh& mesh )
   std::set<int> transform_to_ghost;
   for (int f=0; f<mesh.nb_function_spaces(); ++f)
   {
-    if (mesh.function_space(f).metadata<int>("type") == ELEMS)
+    if (mesh.function_space(f).metadata<int>("type") == Entity::ELEMS)
     {
       FunctionSpace& elements = mesh.function_space(f);
       FieldT<int>& elem_glb_idx = elements.field<int>("glb_idx");
@@ -219,7 +219,7 @@ void build_periodic_boundaries( Mesh& mesh )
   if(0){
   for (int f=0; f<mesh.nb_function_spaces(); ++f)
   {
-    if (mesh.function_space(f).metadata<int>("type") == ELEMS)
+    if (mesh.function_space(f).metadata<int>("type") == Entity::ELEMS)
     {
       FunctionSpace& elements = mesh.function_space(f);
       FieldT<int>& elem_nodes = elements.field<int>("nodes");
@@ -281,7 +281,7 @@ void build_periodic_boundaries( Mesh& mesh )
 
   for (int f=0; f<mesh.nb_function_spaces(); ++f)
   {
-    if (mesh.function_space(f).metadata<int>("type") == ELEMS)
+    if (mesh.function_space(f).metadata<int>("type") == Entity::ELEMS)
     {
       FunctionSpace& elements = mesh.function_space(f);
       FieldT<int>& elem_nodes = elements.field<int>("nodes");
@@ -330,7 +330,7 @@ void build_periodic_boundaries( Mesh& mesh )
   // Now fix element connectivity
   for (int f=0; f<mesh.nb_function_spaces(); ++f)
   {
-    if (mesh.function_space(f).metadata<int>("type") == ELEMS)
+    if (mesh.function_space(f).metadata<int>("type") == Entity::ELEMS)
     {
       FunctionSpace& elements = mesh.function_space(f);
       FieldT<int>& elem_glb_idx = elements.field<int>("glb_idx");
@@ -351,9 +351,9 @@ void build_periodic_boundaries( Mesh& mesh )
 
   for (int f=0; f<mesh.nb_function_spaces(); ++f)
   {
-    if (mesh.function_space(f).metadata<int>("type") == ELEMS)
+    if (mesh.function_space(f).metadata<int>("type") == Entity::ELEMS)
       mesh.function_space(f).metadata().set("max_glb_idx",elements_max_glb_idx);
-    if (mesh.function_space(f).metadata<int>("type") == FACES)
+    if (mesh.function_space(f).metadata<int>("type") == Entity::FACES)
       mesh.function_space(f).metadata().set("max_glb_idx",elements_max_glb_idx);
   }
 

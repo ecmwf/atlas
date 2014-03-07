@@ -49,7 +49,7 @@ void build_halo( Mesh& mesh )
   for (int f=0; f<mesh.nb_function_spaces(); ++f)
   {
     FunctionSpace& func_space = mesh.function_space(f);
-    if (func_space.metadata<int>("type") == ELEMS)
+    if (func_space.metadata<int>("type") == Entity::ELEMS)
     {
       elem_nodes[f] = &func_space.field<int>("nodes");
       nb_nodes_per_elem[f] = elem_nodes[f]->bounds()[0];

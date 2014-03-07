@@ -15,7 +15,7 @@ FunctionSpace::FunctionSpace(const std::string& name, const std::string& shape_f
   size_t bsize = bounds_.size();
   for (size_t i=0; i<bsize; ++i)
   {
-    if( bounds_[i] != Field::NB_VARS )
+    if( bounds_[i] != Field::UNDEF_VARS )
       dof_ *= bounds_[i];
   }
   glb_dof_ = dof_;
@@ -47,7 +47,7 @@ void FunctionSpace::resize(const std::vector<int>& bounds)
   dof_ = 1;
   for (size_t i=0; i<bsize; ++i)
   {
-    if( bounds_[i] != Field::NB_VARS )
+    if( bounds_[i] != Field::UNDEF_VARS )
       dof_ *= bounds_[i];
   }
 
@@ -57,7 +57,7 @@ void FunctionSpace::resize(const std::vector<int>& bounds)
     std::vector< int > field_bounds(bsize);
     for (size_t i=0; i<bsize; ++i)
     {
-      if( bounds_[i] == Field::NB_VARS )
+      if( bounds_[i] == Field::UNDEF_VARS )
         field_bounds[i] = fields_[f]->nb_vars();
       else
         field_bounds[i] = bounds_[i];
@@ -80,7 +80,7 @@ FieldT<double>& FunctionSpace::create_field(const std::string& name, size_t nb_v
 
   for (size_t i=0; i<bsize; ++i)
   {
-    if( bounds_[i] == Field::NB_VARS )
+    if( bounds_[i] == Field::UNDEF_VARS )
       bounds[i] = nb_vars;
     else
       bounds[i] = bounds_[i];
@@ -106,7 +106,7 @@ FieldT<float>& FunctionSpace::create_field(const std::string& name, size_t nb_va
 
   for (size_t i=0; i<bsize; ++i)
   {
-    if( bounds_[i] == Field::NB_VARS )
+    if( bounds_[i] == Field::UNDEF_VARS )
       bounds[i] = nb_vars;
     else
       bounds[i] = bounds_[i];
@@ -132,7 +132,7 @@ FieldT<int>& FunctionSpace::create_field(const std::string& name, size_t nb_vars
 
   for (size_t i=0; i<bsize; ++i)
   {
-    if( bounds_[i] == Field::NB_VARS )
+    if( bounds_[i] == Field::UNDEF_VARS )
       bounds[i] = nb_vars;
     else
       bounds[i] = bounds_[i];
@@ -183,7 +183,7 @@ void FunctionSpace::parallelise(const int proc[], const int glb_idx[], const int
   glb_dof_ = gather_.glb_dof();
   for( int b=bounds_.size()-2; b>=0; --b)
   {
-    if( bounds_[b] != Field::NB_VARS )
+    if( bounds_[b] != Field::UNDEF_VARS )
       glb_dof_ *= bounds_[b];
   }
 }

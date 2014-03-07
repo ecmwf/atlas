@@ -41,7 +41,7 @@ void Partitioner::partition(Mesh& mesh, int nb_partitions)
   for (int f=0; f<mesh.nb_function_spaces(); ++f)
   {
     FunctionSpace& elements = mesh.function_space(f);
-    if (elements.metadata<int>("type") == ELEMS)
+    if (elements.metadata<int>("type") == Entity::ELEMS)
     {
       FieldT<int>& elem_nodes = elements.field<int>("nodes");
       FieldT<int>& elem_proc = elements.field<int>("proc");

@@ -8,20 +8,32 @@
 #include <string>
 
 namespace atlas {
+
 class FunctionSpace;
 
-class Mesh
-{
+class Mesh {
+
 public:
-  virtual ~Mesh();
-  // Takes ownership, and will be deleted automatically
-  FunctionSpace& add_function_space( FunctionSpace* function_space );
-  FunctionSpace& function_space(const std::string& name);
-  FunctionSpace& function_space(int idx);
-  int nb_function_spaces() { return function_spaces_.size(); }
+
+    virtual ~Mesh();
+
+    /// Takes ownership, and will be deleted automatically
+    FunctionSpace& add_function_space( FunctionSpace* function_space );
+
+    /// accessor by name
+    FunctionSpace& function_space(const std::string& name);
+
+    /// accessor by index
+    FunctionSpace& function_space(int idx);
+
+    int nb_function_spaces() { return function_spaces_.size(); }
+
 private:
-  std::map< std::string, size_t > index_;
-  std::vector< FunctionSpace* > function_spaces_;
+
+    std::map< std::string, size_t > index_; ///< index of function spaces
+
+    std::vector< FunctionSpace* > function_spaces_; ///< function spaces
+
 };
 
 

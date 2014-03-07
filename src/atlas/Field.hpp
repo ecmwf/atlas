@@ -13,7 +13,7 @@ class FunctionSpace;
 
 class Field {
 public:
-  enum { NB_VARS = -1 };
+  enum { UNDEF_VARS = -1 };
 
   Field(const std::string& name, const int nb_vars, FunctionSpace& function_space);
   virtual ~Field() {}

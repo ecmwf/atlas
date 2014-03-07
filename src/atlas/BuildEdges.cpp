@@ -121,7 +121,7 @@ void build_element_to_edge_connectivity( Mesh& mesh, FieldT<int>& edge_to_elem )
   for( int func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
   {
     FunctionSpace& func_space = mesh.function_space(func_space_idx);
-    if( func_space.metadata<int>("type") == ELEMS )
+    if( func_space.metadata<int>("type") == Entity::ELEMS )
     {
       int nb_edges_per_elem;
       if (func_space.name() == "quads") nb_edges_per_elem = 4;
@@ -270,7 +270,7 @@ void build_edges( Mesh& mesh )
 
   int nb_edges = nb_faces;
   std::vector<int> bounds(2);
-  bounds[0] = Field::NB_VARS;
+  bounds[0] = Field::UNDEF_VARS;
   bounds[1] = nb_edges;
   FunctionSpace& edges       = mesh.function_space("edges");
   edges.resize(bounds);
@@ -306,7 +306,7 @@ void build_edges( Mesh& mesh )
   std::vector< std::map<int,int> > elem_glb_to_loc(mesh.nb_function_spaces());
   for (int f=0; f<mesh.nb_function_spaces(); ++f)
   {
-    if (mesh.function_space(f).metadata<int>("type") == ELEMS)
+    if (mesh.function_space(f).metadata<int>("type") == Entity::ELEMS)
     {
       FieldT<int>& elem_glb_idx = mesh.function_space(f).field<int>("glb_idx");
       int nb_elems = elem_glb_idx.bounds()[1];
