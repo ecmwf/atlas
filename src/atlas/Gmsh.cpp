@@ -1,12 +1,23 @@
+// (C) Copyright 1996-2014 ECMWF.
+//
+// This software is licensed under the terms of the Apache Licence Version 2.0
+// which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+// In applying this licence, ECMWF does not waive the privileges and immunities
+// granted to it by virtue of its status as an intergovernmental organisation nor
+// does it submit to any jurisdiction.
+
+
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
 #include <cmath>
-#include "Gmsh.hpp"
-#include "Mesh.hpp"
-#include "FunctionSpace.hpp"
-#include "Field.hpp"
-#include "Parameters.hpp"
+
+#include "atlas/Gmsh.hpp"
+#include "atlas/Mesh.hpp"
+#include "atlas/FunctionSpace.hpp"
+#include "atlas/Field.hpp"
+#include "atlas/Parameters.hpp"
+
 namespace atlas {
 
 double pi = std::acos(-1.);

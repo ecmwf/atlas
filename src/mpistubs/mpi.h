@@ -63,7 +63,8 @@ int MPI_Isend ( void *buf, int count, MPI_Datatype datatype,
   int dest, int tag, MPI_Comm comm, MPI_Request *request );
 int MPI_Wait ( MPI_Request *request, MPI_Status *status );
 
-#ifdef __cplusplus /* If this is a C++ compiler, end C linkage */
+/* If this is a C++ compiler, end C linkage */
+#if defined(c_plusplus) || defined(__cplusplus) 
 }
 #endif
 

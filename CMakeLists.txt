@@ -10,7 +10,6 @@
 # ATLAS
 #
 #		TODO:
-#         * insert ECMWF license headers
 #         * add support for triangulating spheres with CGAL
 #
 
@@ -138,7 +137,7 @@ add_subdirectory( src )
 if( BUILD_SITE MATCHES "cc[abt].*" )
   message( STATUS "Creating symbolic link for submit_cray --> submit")
   execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-		${CMAKE_CURRENT_SOURCE_DIR}/submit_cray ${CMAKE_CURRENT_BINARY_DIR}/submit )
+		${CMAKE_CURRENT_SOURCE_DIR}/tools/submit_cray ${CMAKE_CURRENT_BINARY_DIR}/submit )
 endif( )
 
 #######################################################################################
@@ -151,6 +150,9 @@ ecbuild_print_summary()
 
 ### final notes to user ...
 
+message( STATUS "---------------------------------------------------------")
+message( STATUS "NOTES:")
 if( NOT CMAKE_BUILD_TYPE MATCHES "DEBUG" )
   message( STATUS " + Make sure the stack-size is big enough (ulimit -s unlimited)")
 endif()
+message( STATUS "---------------------------------------------------------")
