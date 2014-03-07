@@ -1,5 +1,3 @@
 # Atlas #
 
-Datastructure library
-
-To be filled in ...
+ECMWF library of data structures supporting unstructured grids and functional spaces 
