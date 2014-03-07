@@ -62,10 +62,10 @@ int main()
 
   // meshing sphere surface
 
-  CGAL::make_surface_mesh(c2t3, surface, criteria, CGAL::Non_manifold_tag());
+//  CGAL::make_surface_mesh(c2t3, surface, criteria, CGAL::Non_manifold_tag());
 
   /// @todo try out CGAL::Manifold_tag()
-  //  CGAL::make_surface_mesh(c2t3, surface, criteria, CGAL::Manifold_tag());
+  CGAL::make_surface_mesh(c2t3, surface, criteria, CGAL::Manifold_tag());
 
   // Output the 2D complex to an OFF file.
 
