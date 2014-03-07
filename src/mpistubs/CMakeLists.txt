@@ -7,4 +7,4 @@
 # does it submit to any jurisdiction.
 
 
-ecbuild_add_library( TARGET mpistubs TYPE BOTH SOURCES mpi.h mpi.c )
+ecbuild_add_library( TARGET mpistubs TYPE STATIC SOURCES mpi.h mpi.c )

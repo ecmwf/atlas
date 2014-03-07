@@ -39,17 +39,6 @@ include( atlas_compiler_flags )
 
 ecbuild_find_python()
 
-### CGAL ...
-
-ecbuild_add_option( FEATURE CGAL
-					DEFAULT ON
-					DESCRIPTION "support for unstructured mesh generation"
-					REQUIRED_PACKAGES CGAL )
-
-#   debug_var( CGAL_FOUND )
-#	debug_var( CGAL_INCLUDE_DIRS )
-#	debug_var( CGAL_LIBRARY )
-
 ### OMP ...
 
 ecbuild_add_option( FEATURE OMP
@@ -91,6 +80,17 @@ endif()
 #  #   "Please remove this build, export FC and CXX to a MPI compiler such as mpic++ or CC on Cray and rerun." )
 #  set( HAVE_MPI OFF )
 #endif()
+
+### TRIANGULATION ...
+
+ecbuild_add_option( FEATURE TRIANGULATION
+                    DEFAULT OFF
+                    DESCRIPTION "support for unstructured mesh generation"
+                    REQUIRED_PACKAGES CGAL )
+
+#   debug_var( CGAL_FOUND )
+#   debug_var( CGAL_INCLUDE_DIRS )
+#   debug_var( CGAL_LIBRARY )
 
 ### GRIB ...
 

@@ -34,7 +34,6 @@ generate_fortran_bindings(FORTRAN_BINDINGS BuildDualMesh.hpp)
 
 ecbuild_add_library( TARGET atlas
 	AUTO_VERSION
-	TYPE BOTH
 	SOURCES
 	  # C++ part
 		BuildDualMesh.hpp
