@@ -88,10 +88,6 @@ ecbuild_add_option( FEATURE TRIANGULATION
                     DESCRIPTION "support for unstructured mesh generation"
                     REQUIRED_PACKAGES CGAL )
 
-#   debug_var( CGAL_FOUND )
-#   debug_var( CGAL_INCLUDE_DIRS )
-#   debug_var( CGAL_LIBRARY )
-
 ### GRIB ...
 
 #ecbuild_add_option( FEATURE GRIB

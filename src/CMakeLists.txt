@@ -6,7 +6,12 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
+include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
+include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 
+### mpistubs
+
+debug_var( HAVE_MPI )
 
 if( NOT HAVE_MPI )
 
@@ -17,8 +22,12 @@ if( NOT HAVE_MPI )
 
 endif()
 
-include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
-include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
+### sources
 
 add_subdirectory( atlas )
+
+add_subdirectory( apps )
+
 add_subdirectory( tests )
+
+add_subdirectory( sandbox )
