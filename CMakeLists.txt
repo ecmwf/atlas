@@ -1,10 +1,4 @@
 # (C) Copyright 1996-2014 ECMWF.
-#
-# This software is licensed under the terms of the Apache Licence Version 2.0
-# which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
-# In applying this licence, ECMWF does not waive the privileges and immunities
-# granted to it by virtue of its status as an intergovernmental organisation nor
-# does it submit to any jurisdiction.
 
 ############################################################################################
 # ATLAS
@@ -28,11 +22,20 @@ ecbuild_declare_project()
 
 # fortran module support
 
-set( CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/modules )
+set( CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/module )
 file( MAKE_DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY} )
 include_directories( ${CMAKE_Fortran_MODULE_DIRECTORY} )
 
 include( atlas_compiler_flags )
+
+################################################################################################ Exports
+set( ATLAS_INCLUDE_DIRS
+  ${CMAKE_CURRENT_SOURCE_DIR}/src
+  ${CMAKE_CURRENT_BINARY_DIR}/src
+  ${CMAKE_Fortran_MODULE_DIRECTORY}
+)
+set( ATLAS_LIBRARIES      atlas atlasf )
+set( ATLAS_TPLS           grib_api )
 
 ################################################################################################
 # options & dependencies
@@ -63,6 +66,9 @@ if( ENABLE_MPI )
    ecbuild_find_mpi()
    if( MPI_CXX_FOUND )
 	  add_definitions( -DHAVE_MPI )
+    add_definitions(${MPI_C_COMPILE_FLAGS})
+    include_directories(${MPI_C_INCLUDE_PATH})
+    list( APPEND TPL ${MPI_C_LIBRARIES} )
    else()
 	  set( HAVE_MPI 0 )
    endif()
