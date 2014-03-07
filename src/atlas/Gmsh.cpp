@@ -36,15 +36,20 @@ Mesh& Gmsh::read(const std::string& file_path)
   int nb_nodes;
   file >> nb_nodes;
   std::cout << "nb_nodes = " << nb_nodes << std::endl;
+
   std::vector<int> bounds(2);
   bounds[0] = Field::UNDEF_VARS;
   bounds[1] = nb_nodes;
-  FunctionSpace& nodes_2d    = mesh->add_function_space( new FunctionSpace( "nodes_2d", "Lagrange_P0", bounds ) );
+
+  FunctionSpace& nodes_2d
+          = mesh->add_function_space( new FunctionSpace( "nodes_2d", "Lagrange_P0", bounds ) );
+
   nodes_2d.metadata().set("type",static_cast<int>(Entity::NODES));
-  FieldT<double>& coords = nodes_2d.create_field<double>("coordinates",2);
-  FieldT<int>& glb_idx = nodes_2d.create_field<int>("glb_idx",1);
-  FieldT<int>& master_glb_idx = nodes_2d.create_field<int>("master_glb_idx",1);
-  FieldT<int>& proc = nodes_2d.create_field<int>("proc",1);
+
+  FieldT<double>& coords         = nodes_2d.create_field<double>("coordinates",2);
+  FieldT<int>&    glb_idx        = nodes_2d.create_field<int>("glb_idx",1);
+  FieldT<int>&    master_glb_idx = nodes_2d.create_field<int>("master_glb_idx",1);
+  FieldT<int>&    proc           = nodes_2d.create_field<int>("proc",1);
 
   std::map<int,int> glb_to_loc;
   int g;
@@ -310,6 +315,74 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path)
     file << std::flush;
     file.close();
   }
+}
+
+void Gmsh::write3dsurf(Mesh &mesh, const std::string& file_path)
+{
+    FunctionSpace& nodes   = mesh.function_space( "nodes" );
+    FieldT<double>& coords = nodes.field<double>( "coordinates" );
+
+    const size_t nb_nodes = nodes.bounds()[1];
+
+    FunctionSpace& triags      = mesh.function_space( "triags" );
+    FieldT<int>& triag_nodes   = triags.field<int>( "nodes" );
+
+    const size_t nb_triags = triags.bounds()[1];
+    const size_t nb_quads  = 0;
+    const size_t nb_edges  = 0;
+
+    std::cout << "writing file " << file_path << std::endl;
+
+    std::ofstream file;
+    file.open( (file_path).c_str(), std::ios::out );
+
+    file << "$MeshFormat\n";
+    file << "2.2 0 8\n";
+    file << "$EndMeshFormat\n";
+    file << "$Nodes\n";
+
+    file << nb_nodes << "\n";
+    for( size_t n = 0; n < nb_nodes; ++n )
+    {
+        const double x = coords(XX,n);
+        const double y = coords(YY,n);
+        const double z = coords(ZZ,n);
+
+        file << n << " " << x << " " << y << " " << z << "\n";
+
+    }
+
+    file << "$EndNodes\n";
+    file << "$Elements\n";
+    file << nb_quads+nb_triags+nb_edges << "\n";
+
+//    for( int e=0; e<nb_quads; ++e)
+//    {
+//      file << quad_glb_idx(e) << " 3 2 1 1";
+//      for( int n=0; n<4; ++n )
+//        file << " " << glb_idx( C_IDX( quad_nodes(n,e) ) );
+//      file << "\n";
+//    }
+
+    for( size_t e = 0; e < nb_triags; ++e )
+    {
+      file << e << " 2 2 1 1";
+      for( int n=0; n<3; ++n )
+        file << " " << C_IDX( triag_nodes(n,e) );
+      file << "\n";
+    }
+
+//    for( int e=0; e<nb_edges; ++e)
+//    {
+//     file << edge_glb_idx(e) << " 1 2 2 1";
+//      for( int n=0; n<2; ++n )
+//        file << " " << glb_idx( C_IDX( edge_nodes(n,e) ) );
+//      file << "\n";
+//    }
+
+    file << "$EndElements\n";
+    file << std::flush;
+    file.close();
 }
 
 // ------------------------------------------------------------------

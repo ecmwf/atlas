@@ -12,6 +12,8 @@
 #include "atlas/Field.hpp"
 #include "atlas/FunctionSpace.hpp"
 
+#include "atlas/Gmsh.hpp"
+
 // #define ER   6371     // earth readius
 #define ER   1     // earth readius
 #define ER2  ER*ER    // earth readius squared
@@ -26,6 +28,7 @@ typedef CGAL::Complex_2_in_triangulation_3<Tr> C2t3;
 typedef Tr::Geom_traits GT;
 typedef GT::Sphere_3 Sphere_3;
 typedef GT::Point_3 Point_3;
+typedef GT::Vector_3 Vector_3;
 typedef GT::FT FT;
 typedef FT (*Function)(Point_3);
 typedef CGAL::Implicit_surface_3<GT, Function> Surface_3;
@@ -52,8 +55,8 @@ int main()
   // defining meshing criteria
 
   const double angular_bound  = 30.;
-  const double radius_bound   = 0.25;
-  const double distance_bound = 0.25;
+  const double radius_bound   = 0.05;
+  const double distance_bound = 0.05;
 
   CGAL::Surface_mesh_default_criteria_3<Tr> criteria( angular_bound, radius_bound, distance_bound );
 
@@ -73,34 +76,6 @@ int main()
 
   CGAL::set_ascii_mode( std::cout);
 
-  std::map< Tr::Vertex_handle, int> vidx;
-  int inum = 0;
-
-  for( Tr::Finite_vertices_iterator v = tr.finite_vertices_begin(); v != tr.finite_vertices_end(); ++v)
-  {
-      vidx[v] = inum++;
-
-      const typename Tr::Point& p = v->point();
-
-//      const double r = std::sqrt( p.x()*p.x() + p.y()*p.y() + p.z()*p.z() );
-
-      std::cout << vidx[v] << " " <<  p  << std::endl;
-  }
-
-  for( Tr::Finite_facets_iterator f = tr.finite_facets_begin(); f != tr.finite_facets_end(); ++f )
-  {
-    const typename Tr::Cell_handle cell = f->first;
-    const int& index = f->second;
-    if( cell->is_facet_on_surface(index) == true )
-    {
-        const int idx0 = vidx[ cell->vertex(tr.vertex_triple_index(index, 0)) ];
-        const int idx1 = vidx[ cell->vertex(tr.vertex_triple_index(index, 1)) ];
-        const int idx2 = vidx[ cell->vertex(tr.vertex_triple_index(index, 2)) ];
-
-//        std::cout << idx0 << " " << idx1 << " " << idx2  << std::endl;
-    }
-  }
-
   // fill-in Atlas mesh structure
 
   Mesh* mesh = new Mesh();
@@ -108,14 +83,90 @@ int main()
   /* nodes */
 
   const size_t nb_nodes = tr.number_of_vertices();
+  std::cout << "nb_nodes = " << nb_nodes << std::endl;
 
   std::vector<int> bounds(2);
   bounds[0] = Field::UNDEF_VARS;
   bounds[1] = nb_nodes;
 
-  std::cout << "nb_nodes = " << nb_nodes << std::endl;
+  FunctionSpace& nodes    = mesh->add_function_space( new FunctionSpace( "nodes", "Lagrange_P0", bounds ) );
 
-  FunctionSpace& nodes_3d    = mesh->add_function_space( new FunctionSpace( "nodes_3d", "Lagrange_P0", bounds ) );
+  nodes.metadata().set("type",static_cast<int>(Entity::NODES));
 
-  nodes_3d.metadata().set("type",static_cast<int>(Entity::NODES));
+  FieldT<double>& coords = nodes.create_field<double>("coordinates",3);
+
+  std::map< Tr::Vertex_handle, int> vidx;
+  int inode = 0;
+
+  for( Tr::Finite_vertices_iterator v = tr.finite_vertices_begin(); v != tr.finite_vertices_end(); ++v)
+  {
+      vidx[v] = inode;
+
+      const typename Tr::Point& p = v->point();
+
+      coords(XX,inode) = p.x();
+      coords(YY,inode) = p.y();
+      coords(ZZ,inode) = p.z();
+
+      ++inode;
+//      const double r = std::sqrt( p.x()*p.x() + p.y()*p.y() + p.z()*p.z() );
+//      std::cout << vidx[v] << " " <<  p  << std::endl;
+  }
+
+  assert( inode == nb_nodes );
+
+  /* triangles */
+
+  const size_t nb_triags = CGAL::Surface_mesher::number_of_facets_on_surface(tr);
+  std::cout << "nb_triags = " << nb_triags << std::endl;
+
+  bounds[1] = nb_triags;
+
+  FunctionSpace& triags  = mesh->add_function_space( new FunctionSpace( "triags", "Lagrange_P1", bounds ) );
+  triags.metadata().set("type",static_cast<int>(Entity::ELEMS));
+
+  FieldT<int>& triag_nodes   = triags.create_field<int>("nodes",3);
+
+  Point_3 origin (CGAL::ORIGIN);
+
+  size_t tidx = 0;
+  for( Tr::Finite_facets_iterator f = tr.finite_facets_begin(); f != tr.finite_facets_end(); ++f )
+  {
+    const typename Tr::Cell_handle cell = f->first;
+    const int& index = f->second;
+    if( cell->is_facet_on_surface(index) == true )
+    {
+        Tr::Vertex_handle v0 = cell->vertex(tr.vertex_triple_index(index, 0));
+        Tr::Vertex_handle v1 = cell->vertex(tr.vertex_triple_index(index, 1));
+        Tr::Vertex_handle v2 = cell->vertex(tr.vertex_triple_index(index, 2));
+
+        int idx0 = vidx[ v0 ];
+        int idx1 = vidx[ v1 ];
+        int idx2 = vidx[ v2 ];
+
+        /* ensure outward pointing normal */
+
+        Vector_3 p0 ( origin, v0->point() );
+        Vector_3 n  = CGAL::normal( v0->point(), v1->point(), v2->point() );
+
+        FT innerp = n * p0;
+
+        if( innerp < 0 ) // need to swap an edge of the triag
+            std::swap( idx1, idx2 );
+
+        /* define the triag */
+
+        triag_nodes(0,tidx) = F_IDX(idx0);
+        triag_nodes(1,tidx) = F_IDX(idx1);
+        triag_nodes(2,tidx) = F_IDX(idx2);
+
+        ++tidx;
+
+        //        std::cout << idx0 << " " << idx1 << " " << idx2  << std::endl;
+    }
+  }
+
+  assert( tidx == nb_triags );
+
+  atlas::Gmsh::write3dsurf(*mesh, std::string("earth.msh") );
 }
