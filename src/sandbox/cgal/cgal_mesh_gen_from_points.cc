@@ -1,17 +1,8 @@
+#include <iostream>
 #include <fstream>
-
-#include <CGAL/Surface_mesh_default_triangulation_3.h>
-#include <CGAL/Complex_2_in_triangulation_3.h>
-#include <CGAL/make_surface_mesh.h>
-#include <CGAL/Implicit_surface_3.h>
-
-#include <CGAL/IO/Complex_2_in_triangulation_3_file_writer.h>
-#include <CGAL/IO/output_surface_facets_to_polyhedron.h>
-
-#include <CGAL/Polyhedron_3.h>
-#include <CGAL/IO/Polyhedron_iostream.h>
-#include <CGAL/IO/Polyhedron_VRML_1_ostream.h>
-#include <CGAL/IO/Polyhedron_VRML_2_ostream.h>
+#include <cmath>
+#include <vector>
+#include <memory>
 
 #include "atlas/Parameters.hpp"
 #include "atlas/Mesh.hpp"
@@ -20,175 +11,157 @@
 
 #include "atlas/Gmsh.hpp"
 
-// #define ER   6371     // earth readius
-#define ER   1     // earth readius
-#define ER2  ER*ER    // earth readius squared
-#define DER2 2*ER2    // bouding sphere squared radius
+//------------------------------------------------------------------------------------------------------
 
-// default triangulation for Surface_mesher
+#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+#include <CGAL/point_generators_3.h>
+#include <CGAL/algorithm.h>
+#include <CGAL/Polyhedron_3.h>
+#include <CGAL/convex_hull_3.h>
+typedef CGAL::Exact_predicates_inexact_constructions_kernel  K;
+typedef CGAL::Polyhedron_3<K>                     Polyhedron_3;
+typedef K::Segment_3                              Segment_3;
 
-typedef CGAL::Surface_mesh_default_triangulation_3 Tr;
+// define point creator
 
-// c2t3
-typedef CGAL::Complex_2_in_triangulation_3<Tr> C2t3;
-typedef Tr::Geom_traits GT;
-typedef GT::Sphere_3 Sphere_3;
-typedef GT::Point_3 Point_3;
-typedef GT::Vector_3 Vector_3;
-typedef CGAL::Polyhedron_3<GT> Polyhedron;
-typedef GT::FT FT;
-typedef FT (*Function)(Point_3);
-typedef CGAL::Implicit_surface_3<GT, Function> Surface_3;
+typedef K::Point_3                                Point_3;
+typedef CGAL::Creator_uniform_3<double, Point_3>  PointCreator;
 
-FT sphere_function (Point_3 p)
-{
-  const FT x2=p.x()*p.x(), y2=p.y()*p.y(), z2=p.z()*p.z();
-  return x2 + y2 + z2 - ER2 ;
-}
+//------------------------------------------------------------------------------------------------------
 
 using namespace atlas;
 
+//------------------------------------------------------------------------------------------------------
+
+const double earthRadius = 6367.47; // from ECMWF model ...
+
+class LL3D {
+public:
+
+    double x_[3];
+
+public:
+
+    LL3D(){}
+
+    LL3D( double lat, double lon )
+    {
+        assign(lat,lon);
+    }
+
+    void assign(double lat, double lon)
+    {
+        // See http://en.wikipedia.org/wiki/Geodetic_system#From_geodetic_to_ECEF
+        double& X = x_[0];
+        double& Y = x_[1];
+        double& Z = x_[2];
+
+        double h = 0; // Altitude
+
+        double a = earthRadius; // 6378137.0 ;       //  WGS84 semi-major axis
+        double e2 = 0;          // 6.69437999014E-3; // WGS84 first numerical eccentricity sqared
+
+        double phi = lat / 180.0 * M_PI;
+        double lambda = lon / 180.0 * M_PI;
+
+        double cos_phi = cos(phi);
+        double sin_phi = sin(phi);
+        double cos_lambda = cos(lambda);
+        double sin_lambda = sin(lambda);
+
+        double N_phi = a/sqrt(1-e2*sin_phi*sin_phi);
+
+        X = (N_phi + h) * cos_phi * cos_lambda;
+        Y = (N_phi + h) * cos_phi * sin_lambda;
+        Z = (N_phi * (1-e2) + h) * sin_phi;
+    }
+
+//    friend std::ostream& operator<<(std::ostream& s,const LLPoint2& p)
+//    {
+//        s << '(' << p.lat_ << "," << p.lon_ << ')';
+//        return s;
+//    }
+
+};
+
+#define NLATS 25
+#define NLONG 25
+
+//------------------------------------------------------------------------------------------------------
+
+std::vector< LL3D >* generate_ll_points( size_t nlats, size_t nlong )
+{
+    // generate lat/long points
+
+    std::vector< LL3D >* pts = new std::vector< LL3D >( NLATS * NLONG );
+
+    const double lat_inc = 180. / NLATS;
+    const double lat_start = -90 + 0.5*lat_inc;
+//    const double lat_end   = 90. - 0.5*lat_inc;
+
+    const double lon_inc = 360. / NLONG;
+    const double lon_start = 0.5*lon_inc;
+//    const double lon_end   = 360. - 0.5*lon_inc;
+
+    double lat = lat_start;
+    double lon = lon_start;
+    for( size_t ilat = 0; ilat < NLATS; ++ilat )
+    {
+        lon = lon_start;
+        for( size_t jlon = 0; jlon < NLATS; ++jlon )
+        {
+//            std::cout << lat << " " << lon << std::endl;
+
+            (*pts)[ ilat*NLATS + jlon ].assign( lat, lon );
+            lon += lon_inc;
+        }
+        lat += lat_inc;
+    }
+
+    return pts;
+}
+
+//------------------------------------------------------------------------------------------------------
+
+Polyhedron_3* create_convex_hull_from_points( const std::vector< LL3D >& pts )
+{
+    Polyhedron_3* poly = new Polyhedron_3();
+
+    // insertion from a vector :
+
+    std::vector<Point_3> vertices( pts.size() );
+    for( size_t i = 0; i < vertices.size(); ++i )
+    {
+        vertices[i] = Point_3( pts[i].x_[0], pts[i].x_[1], pts[i].x_[2] );
+    }
+
+    // compute convex hull of non-collinear points
+
+    CGAL::convex_hull_3( vertices.begin(), vertices.end(), *poly );
+
+    return poly;
+}
+
+//------------------------------------------------------------------------------------------------------
+
 int main()
 {
-  Tr tr;            // 3D-Delaunay triangulation
-  C2t3 c2t3 (tr);   // 2D-complex in 3D-Delaunay triangulation
+    std::vector< LL3D >* pts;
 
-  // defining the surface
+    pts = ( generate_ll_points(NLATS, NLONG) );
 
-  Sphere_3 bound_sphere(CGAL::ORIGIN, DER2 );
+    std::cout << "generated " << pts->size() << " points" << std::endl;
 
-  Surface_3 surface( sphere_function, bound_sphere);
+    // define polyhedron to hold convex hull
 
-  // defining meshing criteria
+    Polyhedron_3* poly = create_convex_hull_from_points( *pts );
 
-  const double angular_bound  = 30.;
-  const double radius_bound   = 0.05;
-  const double distance_bound = 0.05;
+    std::cout << "convex hull " << poly->size_of_vertices() << " vertices" << std::endl;
 
-  CGAL::Surface_mesh_default_criteria_3<Tr> criteria( angular_bound, radius_bound, distance_bound );
+    assert( poly->size_of_vertices() == pts->size() );
 
-  // meshing sphere surface
+    delete pts;
+    delete poly;
 
-//  CGAL::make_surface_mesh(c2t3, surface, criteria, CGAL::Non_manifold_tag());
-
-  /// @todo try out CGAL::Manifold_tag()
-  CGAL::make_surface_mesh(c2t3, surface, criteria, CGAL::Manifold_tag());
-
-  // Output the 2D complex to an OFF file.
-
-//  std::ofstream out("out.off");
-//  CGAL::output_surface_facets_to_off (out, c2t3);
-
-  // fill-in Atlas mesh structure
-
-  Mesh* mesh = new Mesh();
-
-  /* nodes */
-
-  const size_t nb_nodes = tr.number_of_vertices();
-  std::cout << "nb_nodes = " << nb_nodes << std::endl;
-
-  std::vector<int> bounds(2);
-  bounds[0] = Field::UNDEF_VARS;
-  bounds[1] = nb_nodes;
-
-  FunctionSpace& nodes    = mesh->add_function_space( new FunctionSpace( "nodes", "Lagrange_P0", bounds ) );
-
-  nodes.metadata().set("type",static_cast<int>(Entity::NODES));
-
-  FieldT<double>& coords = nodes.create_field<double>("coordinates",3);
-
-  std::map< Tr::Vertex_handle, int> vidx;
-  int inode = 0;
-
-  for( Tr::Finite_vertices_iterator v = tr.finite_vertices_begin(); v != tr.finite_vertices_end(); ++v)
-  {
-      vidx[v] = inode;
-
-      const Tr::Point& p = v->point();
-
-      coords(XX,inode) = p.x();
-      coords(YY,inode) = p.y();
-      coords(ZZ,inode) = p.z();
-
-      ++inode;
-//      const double r = std::sqrt( p.x()*p.x() + p.y()*p.y() + p.z()*p.z() );
-//      std::cout << vidx[v] << " " <<  p  << std::endl;
-  }
-
-  assert( inode == nb_nodes );
-
-  /* triangles */
-
-  const size_t nb_triags = CGAL::Surface_mesher::number_of_facets_on_surface(tr);
-  std::cout << "nb_triags = " << nb_triags << std::endl;
-
-  bounds[1] = nb_triags;
-
-  FunctionSpace& triags  = mesh->add_function_space( new FunctionSpace( "triags", "Lagrange_P1", bounds ) );
-  triags.metadata().set("type",static_cast<int>(Entity::ELEMS));
-
-  FieldT<int>& triag_nodes   = triags.create_field<int>("nodes",3);
-
-  Point_3 origin (CGAL::ORIGIN);
-
-  size_t tidx = 0;
-  for( Tr::Finite_facets_iterator f = tr.finite_facets_begin(); f != tr.finite_facets_end(); ++f )
-  {
-    const Tr::Cell_handle cell = f->first;
-    const int& index = f->second;
-    if( cell->is_facet_on_surface(index) == true )
-    {
-        Tr::Vertex_handle v0 = cell->vertex(tr.vertex_triple_index(index, 0));
-        Tr::Vertex_handle v1 = cell->vertex(tr.vertex_triple_index(index, 1));
-        Tr::Vertex_handle v2 = cell->vertex(tr.vertex_triple_index(index, 2));
-
-        int idx0 = vidx[ v0 ];
-        int idx1 = vidx[ v1 ];
-        int idx2 = vidx[ v2 ];
-
-        /* ensure outward pointing normal */
-
-        Vector_3 p0 ( origin, v0->point() );
-        Vector_3 n  = CGAL::normal( v0->point(), v1->point(), v2->point() );
-
-        FT innerp = n * p0;
-
-        if( innerp < 0 ) // need to swap an edge of the triag
-            std::swap( idx1, idx2 );
-
-        /* define the triag */
-
-        triag_nodes(0,tidx) = F_IDX(idx0);
-        triag_nodes(1,tidx) = F_IDX(idx1);
-        triag_nodes(2,tidx) = F_IDX(idx2);
-
-        ++tidx;
-
-        //        std::cout << idx0 << " " << idx1 << " " << idx2  << std::endl;
-    }
-  }
-
-  assert( tidx == nb_triags );
-
-  atlas::Gmsh::write3dsurf(*mesh, std::string("earth.msh") );
-
-  // save in off format
-#if 0
-   std::ofstream fout("earth.off");
-   CGAL::output_surface_facets_to_off( fout, c2t3 );
-#endif
-
-   // transform to polyhedron & save to vrml
-#if 0
-   Polyhedron P;
-   CGAL::output_surface_facets_to_polyhedron(c2t3, P);
-   std::cin >> P;
-   std::ofstream wout("earth.wrl");
-//   CGAL::VRML_2_ostream vrml_out( wout );
-   CGAL::VRML_1_ostream vrml_out( wout );
-   vrml_out << P;
-#endif
-
-
+    return 0;
 }

@@ -13,3 +13,5 @@ ecbuild_add_test(
         INCLUDES    ${CGAL_INCLUDE_DIRS}
         LIBS        atlas ${CGAL_LIBRARY} ${CGAL_3RD_PARTY_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES}
         )
+
+# CGAL needs -DCGAL_NDEBUG to reach peak performance ...
