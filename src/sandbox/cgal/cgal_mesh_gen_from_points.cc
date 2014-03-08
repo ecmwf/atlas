@@ -18,14 +18,16 @@
 #include <CGAL/algorithm.h>
 #include <CGAL/Polyhedron_3.h>
 #include <CGAL/convex_hull_3.h>
+
 typedef CGAL::Exact_predicates_inexact_constructions_kernel  K;
 typedef CGAL::Polyhedron_3<K>                     Polyhedron_3;
+
+typedef K::Vector_3                               Vector_3;
+typedef K::FT                                     FT;
 typedef K::Segment_3                              Segment_3;
-
-// define point creator
-
 typedef K::Point_3                                Point_3;
-typedef CGAL::Creator_uniform_3<double, Point_3>  PointCreator;
+
+const Point_3 origin = Point_3(CGAL::ORIGIN);
 
 //------------------------------------------------------------------------------------------------------
 
@@ -84,8 +86,8 @@ public:
 
 };
 
-#define NLATS 25
-#define NLONG 25
+#define NLATS 100
+#define NLONG 100
 
 //------------------------------------------------------------------------------------------------------
 
@@ -144,6 +146,114 @@ Polyhedron_3* create_convex_hull_from_points( const std::vector< LL3D >& pts )
 
 //------------------------------------------------------------------------------------------------------
 
+atlas::Mesh* cgal_polyhedron_to_atlas_mesh( Polyhedron_3& poly )
+{
+    bool ensure_outward_normals = true;
+
+    Mesh* mesh = new Mesh();
+
+    /* nodes */
+
+    const size_t nb_nodes = poly.size_of_vertices();
+
+    std::cout << "nb_nodes = " << nb_nodes << std::endl;
+
+    std::vector<int> bounds(2);
+    bounds[0] = Field::UNDEF_VARS;
+    bounds[1] = nb_nodes;
+
+    FunctionSpace& nodes = mesh->add_function_space( new FunctionSpace( "nodes", "Lagrange_P0", bounds ) );
+
+    nodes.metadata().set("type",static_cast<int>(Entity::NODES));
+
+    FieldT<double>& coords = nodes.create_field<double>("coordinates",3);
+
+    std::map< Polyhedron_3::Vertex_const_handle, size_t > vidx;
+
+    size_t inode = 0;
+    for( Polyhedron_3::Vertex_const_iterator v = poly.vertices_begin(); v != poly.vertices_end(); ++v)
+    {
+        vidx[v] = inode;
+
+        const Polyhedron_3::Point_3& p = v->point();
+
+        coords(XX,inode) = p.x();
+        coords(YY,inode) = p.y();
+        coords(ZZ,inode) = p.z();
+
+        ++inode;
+    }
+
+    assert( inode == nb_nodes );
+
+    /* triangles */
+
+    const size_t nb_triags = poly.size_of_facets();
+
+    std::cout << "nb_triags = " << nb_triags << std::endl;
+
+    bounds[1] = nb_triags;
+
+    FunctionSpace& triags  = mesh->add_function_space( new FunctionSpace( "triags", "Lagrange_P1", bounds ) );
+    triags.metadata().set("type",static_cast<int>(Entity::ELEMS));
+
+    FieldT<int>& triag_nodes = triags.create_field<int>("nodes",3);
+
+    int idx[3];
+    Polyhedron_3::Vertex_const_handle vts[3];
+
+    size_t tidx = 0;
+    for( Polyhedron_3::Facet_const_iterator f = poly.facets_begin(); f != poly.facets_end(); ++f )
+    {
+
+        // loop  over half-edges and take each vertex()
+
+        size_t iedge = 0;
+        Polyhedron_3::Halfedge_around_facet_const_circulator edge = f->facet_begin();
+
+        do
+        {
+            Polyhedron_3::Vertex_const_handle vh = edge->vertex();
+            const Polyhedron_3::Point_3& p = vh->point();
+
+            idx[iedge] = vidx[vh];
+            vts[iedge] = vh;
+
+            ++iedge;
+            ++edge;
+        }
+        while ( edge != f->facet_begin() && iedge < 3 );
+
+        assert( iedge == 3 );
+
+        if( ensure_outward_normals ) /* ensure outward pointing normal */
+        {
+            Vector_3 p0 ( origin, vts[0]->point() );
+            Vector_3 n  = CGAL::normal( vts[0]->point(), vts[1]->point(), vts[2]->point() );
+
+            FT innerp = n * p0;
+
+            if( innerp < 0 ) // need to swap an edge of the triag
+                std::swap( vts[1], vts[2] );
+        }
+
+        /* define the triag */
+
+        triag_nodes(0,tidx) = F_IDX(idx[0]);
+        triag_nodes(1,tidx) = F_IDX(idx[1]);
+        triag_nodes(2,tidx) = F_IDX(idx[2]);
+
+        ++tidx;
+
+    }
+
+    assert( tidx == nb_triags );
+
+    return mesh;
+}
+
+//------------------------------------------------------------------------------------------------------
+
 int main()
 {
     std::vector< LL3D >* pts;
@@ -160,8 +270,13 @@ int main()
 
     assert( poly->size_of_vertices() == pts->size() );
 
+    Mesh* mesh = cgal_polyhedron_to_atlas_mesh( *poly );
+
+    atlas::Gmsh::write3dsurf(*mesh, std::string("earth.msh") );
+
     delete pts;
     delete poly;
+    delete mesh;
 
     return 0;
 }

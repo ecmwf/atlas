@@ -50,6 +50,8 @@ using namespace atlas;
 
 int main()
 {
+    bool ensure_outward_normals = true;
+
   Tr tr;            // 3D-Delaunay triangulation
   C2t3 c2t3 (tr);   // 2D-complex in 3D-Delaunay triangulation
 
@@ -112,8 +114,6 @@ int main()
       coords(ZZ,inode) = p.z();
 
       ++inode;
-//      const double r = std::sqrt( p.x()*p.x() + p.y()*p.y() + p.z()*p.z() );
-//      std::cout << vidx[v] << " " <<  p  << std::endl;
   }
 
   assert( inode == nb_nodes );
@@ -147,15 +147,16 @@ int main()
         int idx1 = vidx[ v1 ];
         int idx2 = vidx[ v2 ];
 
-        /* ensure outward pointing normal */
+        if( ensure_outward_normals ) /* ensure outward pointing normal */
+        {
+            Vector_3 p0 ( origin, v0->point() );
+            Vector_3 n  = CGAL::normal( v0->point(), v1->point(), v2->point() );
 
-        Vector_3 p0 ( origin, v0->point() );
-        Vector_3 n  = CGAL::normal( v0->point(), v1->point(), v2->point() );
+            FT innerp = n * p0;
 
-        FT innerp = n * p0;
-
-        if( innerp < 0 ) // need to swap an edge of the triag
-            std::swap( idx1, idx2 );
+            if( innerp < 0 ) // need to swap an edge of the triag
+                std::swap( idx1, idx2 );
+        }
 
         /* define the triag */
 
@@ -180,7 +181,7 @@ int main()
 #endif
 
    // transform to polyhedron & save to vrml
-#if 0
+#if 1
    Polyhedron P;
    CGAL::output_surface_facets_to_polyhedron(c2t3, P);
    std::cin >> P;
