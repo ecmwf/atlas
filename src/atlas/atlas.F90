@@ -1,5 +1,7 @@
 ! (C) Copyright 1996-2014 ECMWF.
 
+#include "atlas/atlas_defines.h"
+
 module atlas
 
 ! Purpose :

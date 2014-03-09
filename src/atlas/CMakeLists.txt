@@ -4,6 +4,7 @@
 
 ecbuild_generate_config_headers( DESTINATION ${INSTALL_INCLUDE_DIR}/atlas )
 
+configure_file( atlas_defines.h.in  atlas_defines.h  )
 configure_file( atlas_config.h.in   atlas_config.h  )
 configure_file( atlas_version.h.in  atlas_version.h )
 

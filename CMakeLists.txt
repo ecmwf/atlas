@@ -48,13 +48,7 @@ ecbuild_add_option( FEATURE OMP
 					DEFAULT ON
 					DESCRIPTION "support for OpenMP threaded parallelism" )
 
-if( HAVE_OMP )
-
-  # !! TODO !! add test for OpenMP
-
-  add_definitions( -DHAVE_OMP )
-
-endif( )
+# !! TODO !! add test for OpenMP
 
 ### MPI ...
 
@@ -65,12 +59,13 @@ ecbuild_add_option( FEATURE MPI
 if( ENABLE_MPI )
    ecbuild_find_mpi()
    if( MPI_CXX_FOUND )
-	  add_definitions( -DHAVE_MPI )
-    add_definitions(${MPI_C_COMPILE_FLAGS})
-    include_directories(${MPI_C_INCLUDE_PATH})
-    list( APPEND TPL ${MPI_C_LIBRARIES} )
-   else()
-	  set( HAVE_MPI 0 )
+
+		add_definitions(${MPI_C_COMPILE_FLAGS})    # what is this ???
+		include_directories(${MPI_C_INCLUDE_PATH})
+		list( APPEND TPL ${MPI_C_LIBRARIES} )
+
+	else()
+		set( HAVE_MPI 0 )
    endif()
 endif()
 
@@ -119,19 +114,34 @@ set( DATA_REPO  "ssh://git@software.ecmwf.int:7999/pan/data.git"
 message( STATUS "Retrieving meshes ..." )
 
 include(GitExternal.cmake)
-set( DATA ${CMAKE_BINARY_DIR}/data )
-git_external( DIR ${DATA}
+set( ATLAS_DATADIR ${CMAKE_BINARY_DIR}/data )
+git_external( DIR ${ATLAS_DATADIR}
               REPO ${DATA_REPO}
 			  TAG master )
 
-add_definitions( -DATLAS_DATADIR="${DATA}")
+############################################################################################
+# export package info
 
-### sources ...
+set( ATLAS_TPLS           ${TPL} )
+set( ATLAS_INCLUDE_DIRS   ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src )
+set( ATLAS_LIBRARIES      atlasf atlas )
+
+if( HAVE_CGAL )
+	list( APPEND ATLAS_INCLUDE_DIRS ${CGAL_INCLUDE_DIRS} )
+	list( APPEND ATLAS_LIBRARIES ${CGAL_LIBRARY} ${CGAL_3RD_PARTY_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES} )
+endif()
+
+get_directory_property( ATLAS_DEFINITIONS COMPILE_DEFINITIONS )
+
+############################################################################################
+# sources
+
+include_directories( ${ATLAS_INCLUDE_DIRS} )
 
 add_subdirectory( src )
 
-################################################################################################
-# Symlink scripts
+############################################################################################
+# symlink scripts
 
 if( BUILD_SITE MATCHES "cc[abt].*" )
   message( STATUS "Creating symbolic link for submit_cray --> submit")
@@ -139,9 +149,8 @@ if( BUILD_SITE MATCHES "cc[abt].*" )
 		${CMAKE_CURRENT_SOURCE_DIR}/tools/submit_cray ${CMAKE_CURRENT_BINARY_DIR}/submit )
 endif( )
 
-#######################################################################################
-# Print Summary
-#######################################################################################
+############################################################################################
+# finalize
 
 ecbuild_install_project( NAME Atlas )
 

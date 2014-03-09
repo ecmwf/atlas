@@ -16,4 +16,4 @@ const char * atlas_version_str();
 
 const char * atlas_git_sha1();
 
-#endif // atlas_version_h
+#endif

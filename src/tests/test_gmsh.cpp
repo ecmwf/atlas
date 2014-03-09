@@ -1,5 +1,7 @@
 // (C) Copyright 1996-2014 ECMWF.
 
+#include "atlas/atlas_config.h"
+
 #include "atlas/Gmsh.hpp"
 #include "atlas/BuildEdges.hpp"
 #include "atlas/BuildDualMesh.hpp"
