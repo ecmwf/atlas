@@ -1,5 +1,20 @@
 # (C) Copyright 1996-2014 ECMWF.
 
+### config headers
+
+ecbuild_generate_config_headers( DESTINATION ${INSTALL_INCLUDE_DIR}/atlas )
+
+configure_file( atlas_config.h.in   atlas_config.h  )
+configure_file( atlas_version.h.in  atlas_version.h )
+
+install(FILES
+			${CMAKE_CURRENT_BINARY_DIR}/atlas_config.h
+			${CMAKE_CURRENT_BINARY_DIR}/atlas_version.h
+		DESTINATION
+			${INSTALL_INCLUDE_DIR}/atlas )
+
+configure_file( atlas_version.cc.in  atlas_version.cc )
+
 ### atlas c++ library
 
 ecbuild_add_library( TARGET atlas
@@ -33,7 +48,10 @@ ecbuild_add_library( TARGET atlas
 		Gather.hpp
 		Gather.cpp
 		MPL.hpp
-	LIBS ${TPL}
+		MeshGen.hpp
+		MeshGen.cpp
+	INCLUDES    "${CGAL_INCLUDE_DIRS}"
+	LIBS ${TPL} "${CGAL_LIBRARY}" "${CGAL_3RD_PARTY_LIBRARIES}" "${GMP_LIBRARIES}" "${MPFR_LIBRARIES}"
 ) 
 
 ### fortran bindings

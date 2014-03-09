@@ -13,8 +13,7 @@
 
 namespace atlas {
 
-double pi = std::acos(-1.);
-double scaling = pi/180.;
+double scaling = M_PI / 180.;
 
 Gmsh::~Gmsh()
 { 

@@ -96,23 +96,20 @@ ecbuild_add_option( FEATURE TRIANGULATION
 
 ### GRIB ...
 
-#ecbuild_add_option( FEATURE GRIB
-#					DEFAULT ON
-#					DESCRIPTION "support for GRIB format encoding / decoding" )
-#if( ENABLE_GRIB )
-#	ecbuild_use_package( PROJECT grib_api VERSION 1.9.9 )
-#	if( NOT GRIB_API_FOUND )
-#		set( HAVE_GRIB 0 )
-#	endif()
-#endif()
-#if( HAVE_GRIB )
-#	add_definitions( -DHAVE_GRIB )
-#	include_directories( ${GRIB_API_INCLUDE_DIRS} )
-#	link_directories( ${GRIB_API_DIR}/lib )
-#	list( APPEND TPL grib_api_f90 grib_api )
-#else( )
-#	message( STATUS "Grib not found : To enable, run \"cmake . -DGRIB_API_DIR=path/to/grib\"" )
-#endif( )
+ecbuild_add_option( FEATURE GRIB
+					DEFAULT ON
+					DESCRIPTION "support for GRIB format encoding / decoding" )
+if( ENABLE_GRIB )
+	ecbuild_use_package( PROJECT grib_api VERSION 1.9.9 )
+	if( NOT GRIB_API_FOUND )
+		set( HAVE_GRIB 0 )
+	endif()
+endif()
+if( HAVE_GRIB )
+	list( APPEND TPL grib_api_f90 grib_api )
+else( )
+	message( STATUS "Grib not found : To enable, run \"cmake . -DGRIB_API_DIR=path/to/grib\"" )
+endif( )
 
 ### data dir ...
 
