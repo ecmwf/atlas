@@ -9,12 +9,13 @@ configure_file( atlas_config.h.in   atlas_config.h  )
 configure_file( atlas_version.h.in  atlas_version.h )
 
 install(FILES
+			${CMAKE_CURRENT_BINARY_DIR}/atlas_defines.h
 			${CMAKE_CURRENT_BINARY_DIR}/atlas_config.h
 			${CMAKE_CURRENT_BINARY_DIR}/atlas_version.h
 		DESTINATION
 			${INSTALL_INCLUDE_DIR}/atlas )
 
-configure_file( atlas_version.cc.in  atlas_version.cc )
+configure_file( atlas_version.cc.in atlas_version.cc )
 
 ### atlas c++ library
 
