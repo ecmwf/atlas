@@ -14,6 +14,7 @@ endif( )
 #######################################################################################
 # GNU
 #######################################################################################
+
 if( CMAKE_Fortran_COMPILER_ID MATCHES "GNU" )
   if( ${OMP} )
     set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fopenmp")
@@ -34,6 +35,7 @@ if( CMAKE_Fortran_COMPILER_ID MATCHES "GNU" )
 #######################################################################################
 # Intel
 #######################################################################################
+
 elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Intel" )
   if( ${OMP} )
     set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -openmp")
@@ -49,6 +51,7 @@ elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Intel" )
 #######################################################################################
 # XL (IBM)
 #######################################################################################
+
 elseif( CMAKE_Fortran_COMPILER_ID MATCHES "XL" )
   # Without following line, compile flags are appended to link flags
   set( CMAKE_Fortran_LINK_EXECUTABLE "<CMAKE_Fortran_COMPILER> <CMAKE_Fortran_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")

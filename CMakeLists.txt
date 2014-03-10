@@ -9,7 +9,7 @@
 
 cmake_minimum_required( VERSION 2.8.4 FATAL_ERROR )
 
-project( atlas Fortran CXX )
+project( atlas CXX )
 
 set( CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../ecbuild/cmake")
 set( ECBUILD_DEFAULT_BUILD_TYPE Release )
@@ -20,27 +20,20 @@ ecbuild_requires_macro_version( 1.3 )
 
 ecbuild_declare_project()
 
-# fortran module support
-
-set( CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/module )
-file( MAKE_DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY} )
-include_directories( ${CMAKE_Fortran_MODULE_DIRECTORY} )
-
-include( atlas_compiler_flags )
-
-################################################################################################ Exports
-set( ATLAS_INCLUDE_DIRS
-  ${CMAKE_CURRENT_SOURCE_DIR}/src
-  ${CMAKE_CURRENT_BINARY_DIR}/src
-  ${CMAKE_Fortran_MODULE_DIRECTORY}
-)
-set( ATLAS_LIBRARIES      atlas atlasf )
-set( ATLAS_TPLS           grib_api )
-
 ################################################################################################
 # options & dependencies
 
 ecbuild_find_python()
+
+### Fortran ...
+
+ecbuild_add_option( FEATURE FORTRAN
+					DEFAULT ON
+					DESCRIPTION "provide Fortran bindings" )
+
+if( ENABLE_FORTRAN )
+	ecbuild_enable_fortran( REQUIRED MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/module )
+endif()
 
 ### OMP ...
 
@@ -122,9 +115,14 @@ git_external( DIR ${ATLAS_DATADIR}
 ############################################################################################
 # export package info
 
+
 set( ATLAS_TPLS           ${TPL} )
 set( ATLAS_INCLUDE_DIRS   ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src )
 set( ATLAS_LIBRARIES      atlasf atlas )
+
+if( ENABLE_FORTRAN )
+	list( APPEND ATLAS_INCLUDE_DIRS ${CMAKE_Fortran_MODULE_DIRECTORY} )
+endif()
 
 if( HAVE_CGAL )
 	list( APPEND ATLAS_INCLUDE_DIRS ${CGAL_INCLUDE_DIRS} )
@@ -135,6 +133,8 @@ get_directory_property( ATLAS_DEFINITIONS COMPILE_DEFINITIONS )
 
 ############################################################################################
 # sources
+
+include( atlas_compiler_flags )
 
 include_directories( ${ATLAS_INCLUDE_DIRS} )
 

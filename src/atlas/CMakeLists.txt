@@ -86,6 +86,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS BuildDualMesh.hpp)
 
 ecbuild_add_library( TARGET atlasf
 	AUTO_VERSION
+	CONDITION CMAKE_Fortran_COMPILER_LOADED
 	SOURCES
 		${FORTRAN_BINDINGS}
 		atlas.F90
