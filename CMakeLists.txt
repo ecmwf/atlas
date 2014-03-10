@@ -118,9 +118,10 @@ git_external( DIR ${ATLAS_DATADIR}
 
 set( ATLAS_TPLS           ${TPL} )
 set( ATLAS_INCLUDE_DIRS   ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src )
-set( ATLAS_LIBRARIES      atlasf atlas )
+set( ATLAS_LIBRARIES      atlas )
 
 if( ENABLE_FORTRAN )
+	set( ATLAS_LIBRARIES  atlasf ${ATLAS_LIBRARIES} )
 	list( APPEND ATLAS_INCLUDE_DIRS ${CMAKE_Fortran_MODULE_DIRECTORY} )
 endif()
 
