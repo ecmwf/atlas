@@ -4,12 +4,27 @@
 
 ecbuild_generate_config_headers( DESTINATION ${INSTALL_INCLUDE_DIR}/atlas )
 
-configure_file( atlas_defines.h.in  atlas_defines.h  )
+function( fortranize file )
+    unset( result )
+    file( STRINGS "${file}" lines )
+    foreach(i IN LISTS lines)
+        STRING(REGEX REPLACE "^/\\* (#undef .*) \\*/$" "! \\1" i "${i}")
+        SET(result "${result}${i}\n")
+    endforeach()
+    file(WRITE "${file}" "${result}")
+endfunction()
+
+configure_file( atlas_defines.h.in  atlas_defines.h   )
+configure_file( atlas_defines.h.in  atlas_defines.F90 )
+fortranize( ${CMAKE_CURRENT_BINARY_DIR}/atlas_defines.F90 )
+
 configure_file( atlas_config.h.in   atlas_config.h  )
+
 configure_file( atlas_version.h.in  atlas_version.h )
 
 install(FILES
 			${CMAKE_CURRENT_BINARY_DIR}/atlas_defines.h
+			${CMAKE_CURRENT_BINARY_DIR}/atlas_defines.F90
 			${CMAKE_CURRENT_BINARY_DIR}/atlas_config.h
 			${CMAKE_CURRENT_BINARY_DIR}/atlas_version.h
 		DESTINATION
@@ -65,7 +80,7 @@ function(generate_fortran_bindings output filename)
 	set(${output} ${${output}} ${outfile} PARENT_SCOPE)
 	add_custom_command(
 		OUTPUT ${outfile}
-		COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/c2f.py ${CMAKE_CURRENT_SOURCE_DIR}/${filename} -o ${outfile}
+		COMMAND ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/c2f.py ${CMAKE_CURRENT_SOURCE_DIR}/${filename} -o ${outfile}
 		DEPENDS ${filename} )
 	set_source_files_properties(${outfile} PROPERTIES GENERATED TRUE)
 endfunction()

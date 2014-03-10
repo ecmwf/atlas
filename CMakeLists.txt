@@ -147,13 +147,16 @@ add_subdirectory( src )
 if( BUILD_SITE MATCHES "cc[abt].*" )
   message( STATUS "Creating symbolic link for submit_cray --> submit")
   execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-		${CMAKE_CURRENT_SOURCE_DIR}/tools/submit_cray ${CMAKE_CURRENT_BINARY_DIR}/submit )
+		${CMAKE_CURRENT_SOURCE_DIR}/tools/submit_cray ${CMAKE_BINARY_DIR}/bin/submit )
 endif( )
 
 ############################################################################################
 # finalize
 
+set( ATLAS_INCLUDE_DIRS ${ATLAS_INCLUDE_DIRS} ${CMAKE_Fortran_MODULE_DIRECTORY} )
+
 ecbuild_install_project( NAME Atlas )
+
 
 ecbuild_print_summary()
 

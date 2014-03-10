@@ -100,15 +100,5 @@ elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )
   # -homp/-hnoomp : Enable/Disable OpenMP
   # -rmoi : create compiler listing
 
-  set( IFS_INSTALL_DIR /home/rd/rdx )
-  set( IFS_CYCLE 40r1 )
-  list( APPEND IFS_LIBS  trans algor ifsaux ) # order is important
-  add_definitions( -DHAVE_IFS_TRANS )
-  link_directories(${IFS_INSTALL_DIR}/lib/${IFS_CYCLE})
-  foreach( IFS_LIB ${IFS_LIBS} )
-    include_directories(${IFS_INSTALL_DIR}/include/${IFS_CYCLE}/${IFS_LIB})
-    include_directories(${IFS_INSTALL_DIR}/module/cce/${IFS_CYCLE}/${IFS_LIB})
-    list( APPEND TPL ${IFS_LIB} )
-  endforeach( )
 endif( )
 
