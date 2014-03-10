@@ -95,8 +95,6 @@ if( ENABLE_GRIB )
 endif()
 if( HAVE_GRIB )
 	list( APPEND TPL grib_api_f90 grib_api )
-else( )
-	message( STATUS "Grib not found : To enable, run \"cmake . -DGRIB_API_DIR=path/to/grib\"" )
 endif( )
 
 ### data dir ...
@@ -157,14 +155,4 @@ set( ATLAS_INCLUDE_DIRS ${ATLAS_INCLUDE_DIRS} ${CMAKE_Fortran_MODULE_DIRECTORY} 
 
 ecbuild_install_project( NAME Atlas )
 
-
 ecbuild_print_summary()
-
-### final notes to user ...
-
-message( STATUS "---------------------------------------------------------")
-message( STATUS "NOTES:")
-if( NOT CMAKE_BUILD_TYPE MATCHES "DEBUG" )
-  message( STATUS " + Make sure the stack-size is big enough (ulimit -s unlimited)")
-endif()
-message( STATUS "---------------------------------------------------------")
