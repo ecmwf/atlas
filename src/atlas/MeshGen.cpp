@@ -209,7 +209,7 @@ atlas::Mesh* cgal_polyhedron_to_atlas_mesh( Polyhedron_3& poly )
 
 //------------------------------------------------------------------------------------------------------
 
-atlas::Mesh *atlas::MeshGen::generate_from_ll_points(const std::vector<Point3>& pts)
+atlas::Mesh *atlas::MeshGen::generate_from_points(const std::vector<Point3>& pts)
 {
     Mesh* mesh = 0;
 

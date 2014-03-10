@@ -62,7 +62,7 @@ int main()
 
     std::cout << "generated " << pts->size() << " points" << std::endl;
 
-    Mesh* mesh = atlas::MeshGen::generate_from_ll_points( *pts );
+    Mesh* mesh = atlas::MeshGen::generate_from_points( *pts );
 
     atlas::Gmsh::write3dsurf(*mesh, std::string("earth.msh") );
 

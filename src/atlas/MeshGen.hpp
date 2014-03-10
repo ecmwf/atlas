@@ -31,7 +31,7 @@ class MeshGen {
 public:
 
     /// generate a mesh by triangulating the convex hull of the 3D points
-    static Mesh* generate_from_ll_points( const std::vector<Point3>& pts );
+    static Mesh* generate_from_points( const std::vector<Point3>& pts );
 
 };
 
