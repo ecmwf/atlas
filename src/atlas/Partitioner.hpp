@@ -3,9 +3,10 @@
 #ifndef Partitioner_hpp
 #define Partitioner_hpp
 
-#include <mpi.h>
 #include <vector>
 #include <stdexcept>
+
+#include "atlas/atlas_mpi.h"
 
 namespace atlas {
 

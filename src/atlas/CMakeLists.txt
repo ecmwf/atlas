@@ -32,11 +32,21 @@ install(FILES
 
 configure_file( atlas_version.cc.in atlas_version.cc )
 
+### mpistubs
+
+if( NOT HAVE_MPI )
+	set( mpistubs_srcs mpistubs/mpi.h mpistubs/mpi.c )
+else()
+	set( mpistubs_srcs "" )
+endif()
+
 ### atlas c++ library
 
 ecbuild_add_library( TARGET atlas
 	AUTO_VERSION
 	SOURCES
+		${mpistubs_srcs}
+		atlas_mpi.h
 		BuildDualMesh.hpp
 		BuildDualMesh.cpp
 		BuildEdges.hpp

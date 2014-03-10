@@ -4,8 +4,7 @@
 # ATLAS
 #
 #		TODO:
-#         * add support for triangulating spheres with CGAL
-#
+#         * add renumbering to improve cache performance
 
 cmake_minimum_required( VERSION 2.8.4 FATAL_ERROR )
 

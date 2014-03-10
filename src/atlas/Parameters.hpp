@@ -21,10 +21,18 @@ struct ElementRef
   int e;
 };
 
+#if 1
+
 // So that we have the same local id in fortran by natural indexing
 #define C_IDX(index) index-1
 #define F_IDX(index) index+1
 
+#else
+
+#define C_IDX(index) index
+#define F_IDX(index) index
+
+#endif
 
 } // namespace atlas
 

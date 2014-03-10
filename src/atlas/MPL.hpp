@@ -3,9 +3,10 @@
 #ifndef MPL_hpp
 #define MPL_hpp
 
-#include <mpi.h>
 #include <stdexcept>
 #include <iostream>
+
+#include "atlas/atlas_mpi.h"
 
 #define MPL_CHECK_RESULT( MPI_CALL )\
 { \
