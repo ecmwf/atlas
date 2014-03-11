@@ -26,6 +26,10 @@ ecbuild_find_python()
 
 ### Fortran ...
 
+ecbuild_add_option( FEATURE FORTRAN_NUMBERING
+					DEFAULT ON
+					DESCRIPTION "data-structures are index with Fortran numbering" )
+
 ecbuild_add_option( FEATURE FORTRAN
 					DEFAULT ON
 					DESCRIPTION "provide Fortran bindings" )

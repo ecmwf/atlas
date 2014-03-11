@@ -3,6 +3,7 @@
 #ifndef MeshGen_hpp
 #define MeshGen_hpp
 
+#include <cassert>
 #include <string>
 
 namespace atlas {
@@ -17,6 +18,8 @@ class Mesh;
 struct Point3
 {
     double x[3];
+
+    double operator()( const size_t& i ) const { assert( i < 3 ); return x[i]; }
 };
 
 //------------------------------------------------------------------------------------------------------

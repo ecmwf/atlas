@@ -44,25 +44,42 @@ template< typename DATA_TYPE >
 class FieldT : public Field
 {
 public:
-  FieldT(const std::string& name, const int nb_vars, FunctionSpace& function_space);
-  virtual ~FieldT();
-  virtual std::string data_type() const;
-  virtual void allocate(const std::vector<int>& bounds);
-  std::vector< DATA_TYPE >& data() { return data_; }
-  DATA_TYPE& operator[] (const size_t idx) { return data_[idx]; }
-  virtual size_t size() const { return data_.size(); }
-  DATA_TYPE& operator() (int i, int j)
-  {
-    return *(data_.data()+ i + j*nb_vars_);
-  }
-  DATA_TYPE& operator() (int i)
-  {
-    return data_[i];
-  }
-  virtual void halo_exchange();
+
+    FieldT(const std::string& name, const int nb_vars, FunctionSpace& function_space);
+
+    virtual ~FieldT();
+
+    virtual size_t size() const { return data_.size(); }
+
+    virtual std::string data_type() const;
+
+    virtual void allocate(const std::vector<int>& bounds);
+
+    std::vector< DATA_TYPE >& data() { return data_; }
+
+    DATA_TYPE& operator[] (const size_t idx) { return data_[idx]; }
+
+    DATA_TYPE& operator() (int i, int j)
+    {
+        return *(data_.data()+ i + j*nb_vars_);
+    }
+
+    DATA_TYPE& operator() (int i)
+    {
+        return data_[i];
+    }
+
+    DATA_TYPE* slice( int j )
+    {
+        return data_.data() + j*nb_vars_;
+    }
+
+    virtual void halo_exchange();
 
 protected:
-  std::vector< DATA_TYPE > data_;
+
+    std::vector< DATA_TYPE > data_;
+
 };
 
 template< typename DATA_TYPE >

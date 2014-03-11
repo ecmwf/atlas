@@ -109,7 +109,7 @@ atlas::Mesh* cgal_polyhedron_to_atlas_mesh( Polyhedron_3& poly )
 
     const size_t nb_nodes = poly.size_of_vertices();
 
-    std::cout << "nb_nodes = " << nb_nodes << std::endl;
+//    std::cout << "nb_nodes = " << nb_nodes << std::endl;
 
     std::vector<int> bounds(2);
     bounds[0] = Field::UNDEF_VARS;
@@ -143,7 +143,7 @@ atlas::Mesh* cgal_polyhedron_to_atlas_mesh( Polyhedron_3& poly )
 
     const size_t nb_triags = poly.size_of_facets();
 
-    std::cout << "nb_triags = " << nb_triags << std::endl;
+//    std::cout << "nb_triags = " << nb_triags << std::endl;
 
     bounds[1] = nb_triags;
 
@@ -219,7 +219,7 @@ atlas::Mesh *atlas::MeshGen::generate_from_points(const std::vector<Point3>& pts
 
     Polyhedron_3* poly = create_convex_hull_from_points( pts );
 
-    std::cout << "convex hull " << poly->size_of_vertices() << " vertices" << std::endl;
+//    std::cout << "convex hull " << poly->size_of_vertices() << " vertices" << std::endl;
 
     assert( poly->size_of_vertices() == pts.size() );
 
