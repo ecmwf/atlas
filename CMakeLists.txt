@@ -97,7 +97,10 @@ if( ENABLE_GRIB )
 	endif()
 endif()
 if( HAVE_GRIB )
-	list( APPEND TPL grib_api_f90 grib_api )
+	list( APPEND TPL grib_api )
+	if( HAVE_FORTRAN )
+		list( APPEND TPL grib_api_f90 )
+	endif()
 endif( )
 
 ### data dir ...

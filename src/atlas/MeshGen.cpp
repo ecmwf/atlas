@@ -1,6 +1,7 @@
 // (C) Copyright 1996-2014 ECMWF.
 
 #include <cmath>
+#include <vector>
 
 #include "atlas/atlas_config.h"
 
@@ -119,7 +120,9 @@ atlas::Mesh* cgal_polyhedron_to_atlas_mesh( Polyhedron_3& poly )
 
     nodes.metadata().set("type",static_cast<int>(Entity::NODES));
 
-    FieldT<double>& coords = nodes.create_field<double>("coordinates",3);
+    FieldT<double>& coords  = nodes.create_field<double>("coordinates",3);
+
+    FieldT<int>& glb_idx  = nodes.create_field<int>("glb_idx",1);
 
     std::map< Polyhedron_3::Vertex_const_handle, size_t > vidx;
 
@@ -127,6 +130,8 @@ atlas::Mesh* cgal_polyhedron_to_atlas_mesh( Polyhedron_3& poly )
     for( Polyhedron_3::Vertex_const_iterator v = poly.vertices_begin(); v != poly.vertices_end(); ++v)
     {
         vidx[v] = inode;
+
+        glb_idx(inode) = inode;
 
         const Polyhedron_3::Point_3& p = v->point();
 
@@ -209,7 +214,7 @@ atlas::Mesh* cgal_polyhedron_to_atlas_mesh( Polyhedron_3& poly )
 
 //------------------------------------------------------------------------------------------------------
 
-atlas::Mesh *atlas::MeshGen::generate_from_points(const std::vector<Point3>& pts)
+atlas::Mesh* atlas::MeshGen::generate_from_points(const std::vector<Point3>& pts)
 {
     Mesh* mesh = 0;
 
@@ -233,6 +238,41 @@ atlas::Mesh *atlas::MeshGen::generate_from_points(const std::vector<Point3>& pts
 #endif
 
     return mesh;
+}
+
+//------------------------------------------------------------------------------------------------------
+
+std::vector<Point3>* atlas::MeshGen::generate_latlon_points( size_t nlats, size_t nlong )
+{
+    // generate lat/long points
+
+    std::vector< Point3 >* pts = new std::vector< Point3 >( nlats * nlong );
+
+    const double lat_inc = 180. / nlats;
+    const double lat_start = -90 + 0.5*lat_inc;
+//    const double lat_end   = 90. - 0.5*lat_inc;
+
+    const double lon_inc = 360. / nlong;
+    const double lon_start = 0.5*lon_inc;
+//    const double lon_end   = 360. - 0.5*lon_inc;
+
+    double lat = lat_start;
+    double lon = lon_start;
+    for( size_t ilat = 0; ilat < nlats; ++ilat )
+    {
+        lon = lon_start;
+        for( size_t jlon = 0; jlon < nlats; ++jlon )
+        {
+//            std::cout << lat << " " << lon << std::endl;
+
+            atlas::latlon_to_3d( lat, lon, (*pts)[ ilat*nlats + jlon ].x );
+
+            lon += lon_inc;
+        }
+        lat += lat_inc;
+    }
+
+    return pts;
 }
 
 //------------------------------------------------------------------------------------------------------

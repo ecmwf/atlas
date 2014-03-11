@@ -19,6 +19,8 @@ struct Point3
 {
     double x[3];
 
+    double* data() { return x; }
+
     double operator()( const size_t& i ) const { assert( i < 3 ); return x[i]; }
 };
 
@@ -35,6 +37,9 @@ public:
 
     /// generate a mesh by triangulating the convex hull of the 3D points
     static Mesh* generate_from_points( const std::vector<Point3>& pts );
+
+    /// generate regular spaced lat-long points
+    static std::vector< Point3 >* generate_latlon_points( size_t nlats, size_t nlong );
 
 };
 

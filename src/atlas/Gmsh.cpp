@@ -320,6 +320,7 @@ void Gmsh::write3dsurf(Mesh &mesh, const std::string& file_path)
 {
     FunctionSpace& nodes   = mesh.function_space( "nodes" );
     FieldT<double>& coords = nodes.field<double>( "coordinates" );
+    FieldT<int>& glb_idx   = nodes.field<int>( "glb_idx" );
 
     const size_t nb_nodes = nodes.bounds()[1];
 
@@ -347,7 +348,7 @@ void Gmsh::write3dsurf(Mesh &mesh, const std::string& file_path)
         const double y = coords(YY,n);
         const double z = coords(ZZ,n);
 
-        file << n << " " << x << " " << y << " " << z << "\n";
+        file << glb_idx(n) << " " << x << " " << y << " " << z << "\n";
 
     }
 
@@ -382,6 +383,29 @@ void Gmsh::write3dsurf(Mesh &mesh, const std::string& file_path)
     file << "$EndElements\n";
     file << std::flush;
     file.close();
+
+    if( nodes.has_field("field") )
+    {
+      FieldT<double>& field = nodes.field<double>("field");
+      file.open( ( field.name() + file_path ).c_str() , std::ios::out );
+      file << "$MeshFormat\n";
+      file << "2.2 0 8\n";
+      file << "$EndMeshFormat\n";
+      file << "$NodeData\n";
+      file << "1\n";
+      file << "\""+field.name()+"\"\n";
+      file << "1\n";
+      file << "0.\n";
+      file << "3\n";
+      file << "0\n";
+      file << "1\n";
+      file << nb_nodes << "\n";
+      for (int n=0; n<nb_nodes; ++n)
+        file << glb_idx(n) << " " << field(n)<<"\n";
+      file << "$EndNodeData\n";
+      file << std::flush;
+      file.close();
+    }
 }
 
 // ------------------------------------------------------------------
