@@ -14,6 +14,8 @@
 
 namespace atlas {
 
+inline double sqr(double a) { return a*a; }
+
 void build_centroids( FunctionSpace& func_space, FieldT<double>& coords)
 {
   int nb_elems = func_space.bounds()[1];
@@ -277,7 +279,6 @@ void build_skewness( Mesh& mesh )
       // this is a pole edge
       // only compute for one node
       skewness(edge) = 0.;
-
     }
     else
     {
@@ -309,14 +310,14 @@ void build_skewness( Mesh& mesh )
 
       xi = ( x1*(xc2*(-y2 + yc1) + xc1*(y2 - yc2))
              + x2*(xc2*(y1 - yc1) + xc1*(-y1 + yc2)) ) /
-           (-((xc1 - xc2)*(y1 - y2)) + (x1 - x2)*(yc1 - yc2) + tol);
+           (-((xc1 - xc2)*(y1 - y2)) + (x1 - x2)*(yc1 - yc2));
       yi = ( xc2*(y1 - y2)*yc1 + x1*y2*yc1
              - xc1*y1*yc2 - x1*y2*yc2 + xc1*y2*yc2
              + x2*y1*(-yc1 + yc2))/
-             (-((xc1 - xc2)*(y1 - y2)) + (x1 - x2)*(yc1 - yc2) + tol);
+             (-((xc1 - xc2)*(y1 - y2)) + (x1 - x2)*(yc1 - yc2));
       double r1 = 0;
-      double r2 = sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
-      double rs = sqrt((xi-x1)*(xi-x1)+(yi-y1)*(yi-y1));
+      double r2 = sqrt( sqr(x2-x1) + sqr(y2-y1) );
+      double rs = sqrt( sqr(xi-x1) + sqr(yi-y1) );
       skewness(edge) = (r1-2.*rs+r2)/(r2-r1);
     }
   }
