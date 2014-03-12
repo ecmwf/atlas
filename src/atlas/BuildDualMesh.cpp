@@ -4,6 +4,8 @@
 #include <cmath>
 #include <set>
 
+#include<iostream>
+
 #include "atlas/Mesh.hpp"
 #include "atlas/FunctionSpace.hpp"
 #include "atlas/Field.hpp"
@@ -232,6 +234,94 @@ void build_dual_normals( Mesh& mesh )
   }
 }
 
+void build_skewness( Mesh& mesh )
+{
+  std::vector< FieldT<double>* > elem_centroids( mesh.nb_function_spaces() );
+  for (int func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
+  {
+    FunctionSpace& func_space = mesh.function_space(func_space_idx);
+    if( func_space.has_field("centroids") )
+      elem_centroids[func_space_idx] = &func_space.field<double>("centroids");
+  }
+
+  FunctionSpace&  nodes_2d = mesh.function_space("nodes_2d");
+  FieldT<double>& node_coords = nodes_2d.field<double>("coordinates");
+  double ymax = nodes_2d.metadata<double>("ymax");
+  double ymin = nodes_2d.metadata<double>("ymin");
+  double xmin = nodes_2d.metadata<double>("xmin");
+  double pi = acos(-1.);
+  double tol = 1.e-6;
+
+  double x1, y1, x2, y2, xc1, yc1, xc2, yc2, xi, yi;
+  FunctionSpace&  edges = mesh.function_space("edges");
+  FieldT<int>&    edge_to_elem = edges.field<int>("to_elem");
+  FieldT<int>&    edge_nodes = edges.field<int>("nodes");
+  FieldT<double>& edge_centroids = edges.field<double>("centroids");
+  FieldT<double>& skewness = edges.create_field<double>("skewness",1);
+  int nb_edges = edges.bounds()[1];
+
+  std::map<int,std::vector<int> > node_to_bdry_edge;
+  for(int edge=0; edge<nb_edges; ++edge)
+  {
+    if (C_IDX(edge_to_elem(0,edge)) >= 0 && C_IDX(edge_to_elem(3,edge)) < 0)
+    {
+      node_to_bdry_edge[ C_IDX(edge_nodes(0,edge)) ].push_back(edge);
+      node_to_bdry_edge[ C_IDX(edge_nodes(1,edge)) ].push_back(edge);
+    }
+  }
+
+  for (int edge=0; edge<nb_edges; ++edge)
+  {
+    if( C_IDX(edge_to_elem(0,edge)) < 0 )
+    {
+      // this is a pole edge
+      // only compute for one node
+      skewness(edge) = 0.;
+
+    }
+    else
+    {
+      int left_func_space_idx  = C_IDX(edge_to_elem(0,edge));
+      int left_elem            = C_IDX(edge_to_elem(1,edge));
+      int right_func_space_idx = C_IDX(edge_to_elem(2,edge));
+      int right_elem           = C_IDX(edge_to_elem(3,edge));
+      xc1 = (*elem_centroids[left_func_space_idx])(XX,left_elem);
+      yc1 = (*elem_centroids[left_func_space_idx])(YY,left_elem);
+      if( right_elem < 0 )
+      {
+        xc2 = edge_centroids(XX,edge);
+        yc2 = edge_centroids(YY,edge);
+        if ( std::abs(yc2-ymax)<tol )
+          yc2 = 0.5*pi;
+        else if( std::abs(yc2-ymin)<tol )
+          yc2 = -0.5*pi;
+      }
+      else
+      {
+        xc2 = (*elem_centroids[right_func_space_idx])(XX,right_elem);
+        yc2 = (*elem_centroids[right_func_space_idx])(YY,right_elem);
+      }
+
+      x1 = node_coords(XX,C_IDX(edge_nodes(0,edge)));
+      y1 = node_coords(YY,C_IDX(edge_nodes(0,edge)));
+      x2 = node_coords(XX,C_IDX(edge_nodes(1,edge)));
+      y2 = node_coords(YY,C_IDX(edge_nodes(1,edge)));
+
+      xi = ( x1*(xc2*(-y2 + yc1) + xc1*(y2 - yc2))
+             + x2*(xc2*(y1 - yc1) + xc1*(-y1 + yc2)) ) /
+           (-((xc1 - xc2)*(y1 - y2)) + (x1 - x2)*(yc1 - yc2) + tol);
+      yi = ( xc2*(y1 - y2)*yc1 + x1*y2*yc1
+             - xc1*y1*yc2 - x1*y2*yc2 + xc1*y2*yc2
+             + x2*y1*(-yc1 + yc2))/
+             (-((xc1 - xc2)*(y1 - y2)) + (x1 - x2)*(yc1 - yc2) + tol);
+      double r1 = 0;
+      double r2 = sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
+      double rs = sqrt((xi-x1)*(xi-x1)+(yi-y1)*(yi-y1));
+      skewness(edge) = (r1-2.*rs+r2)/(r2-r1);
+    }
+  }
+}
+
 void build_dual_mesh( Mesh& mesh )
 {
   FunctionSpace& nodes_2d   = mesh.function_space( "nodes_2d" );
@@ -263,7 +353,7 @@ void build_dual_mesh( Mesh& mesh )
 
   build_dual_normals( mesh );
 
-
+  build_skewness( mesh );
 
 //  std::cout << "proc" << std::endl;
 //  for (int node=0; node<nb_nodes; ++node)

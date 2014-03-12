@@ -314,6 +314,35 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path)
     file << std::flush;
     file.close();
   }
+
+  if (edges.has_field("skewness"))
+  {
+    FieldT<double>& field = edges.field<double>("skewness");
+    file.open( (field.name()+".msh").c_str() , std::ios::out );
+    file << "$MeshFormat\n";
+    file << "2.2 0 8\n";
+    file << "$EndMeshFormat\n";
+    file << "$ElementNodeData\n";
+    file << "1\n";
+    file << "\""+field.name()+"\"\n";
+    file << "1\n";
+    file << "0.\n";
+    file << "3\n";
+    file << "0\n";
+    file << "1\n";
+    file << nb_edges << "\n";
+    for (int edge=0; edge<nb_edges; ++edge)
+    {
+      file << edge_glb_idx(edge) << " 2";
+      for (int n=0; n<2; ++n)
+        file << " " << field(edge);
+      file <<"\n";
+    }
+    file << "$EndElementNodeData\n";
+    file << std::flush;
+    file.close();
+  }
+
 }
 
 void Gmsh::write3dsurf(Mesh &mesh, const std::string& file_path)
