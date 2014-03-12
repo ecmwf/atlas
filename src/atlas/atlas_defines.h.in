@@ -1,7 +1,7 @@
 #ifndef atlas_defines_h
 #define atlas_defines_h
 
-#cmakedefine ENABLE_FORTRAN_NUMBERING
+#cmakedefine HAVE_FORTRAN_NUMBERING
 
 #cmakedefine HAVE_TRIANGULATION
 #cmakedefine CGAL_FOUND

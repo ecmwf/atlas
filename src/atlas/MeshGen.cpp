@@ -49,9 +49,9 @@ void latlon_to_3d(const double lat, const double lon, double* x, const double r,
 {
     // See http://en.wikipedia.org/wiki/Geodetic_system#From_geodetic_to_ECEF
 
-    double& X = x[0];
-    double& Y = x[1];
-    double& Z = x[2];
+    double& X = x[XX];
+    double& Y = x[YY];
+    double& Z = x[ZZ];
 
     const double a = r;   // 6378137.0 ;       // WGS84 semi-major axis
     const double e2 = 0;  // ignored -- 6.69437999014E-3; // WGS84 first numerical eccentricity squared
@@ -91,6 +91,8 @@ Polyhedron_3* create_convex_hull_from_points( const std::vector< Point3 >& pts )
     for( size_t i = 0; i < vertices.size(); ++i )
     {
         vertices[i] = Point_3( pts[i].x[XX], pts[i].x[YY], pts[i].x[ZZ] );
+
+//        std::cout << vertices[i] << std::endl;
     }
 
     // compute convex hull of non-collinear points
@@ -138,6 +140,8 @@ atlas::Mesh* cgal_polyhedron_to_atlas_mesh( Polyhedron_3& poly )
         coords(XX,inode) = p.x();
         coords(YY,inode) = p.y();
         coords(ZZ,inode) = p.z();
+
+//        std::cout << p << std::endl;
 
         ++inode;
     }
@@ -246,7 +250,9 @@ std::vector<Point3>* atlas::MeshGen::generate_latlon_points( size_t nlats, size_
 {
     // generate lat/long points
 
-    std::vector< Point3 >* pts = new std::vector< Point3 >( nlats * nlong );
+    const size_t npts = nlats * nlong;
+
+    std::vector< Point3 >* pts = new std::vector< Point3 >( npts );
 
     const double lat_inc = 180. / nlats;
     const double lat_start = -90 + 0.5*lat_inc;
@@ -261,11 +267,22 @@ std::vector<Point3>* atlas::MeshGen::generate_latlon_points( size_t nlats, size_
     for( size_t ilat = 0; ilat < nlats; ++ilat )
     {
         lon = lon_start;
-        for( size_t jlon = 0; jlon < nlats; ++jlon )
+        for( size_t jlon = 0; jlon < nlong; ++jlon )
         {
-//            std::cout << lat << " " << lon << std::endl;
+            const size_t idx = ilat*nlats + jlon;
 
-            atlas::latlon_to_3d( lat, lon, (*pts)[ ilat*nlats + jlon ].x );
+            assert( idx < npts );
+
+            atlas::latlon_to_3d( lat, lon, (*pts)[ idx ].data() );
+
+//            std::cout << idx << " "
+//                      << lat << " "
+//                      << lon << " "
+//                      << (*pts)[ ilat*nlats + jlon ].x[XX] << " "
+//                      << (*pts)[ ilat*nlats + jlon ].x[YY] << " "
+//                      << (*pts)[ ilat*nlats + jlon ].x[ZZ] << " "
+//                      << std::endl;
+//            std::cout << (*pts)[idx] << std::endl;
 
             lon += lon_inc;
         }
@@ -273,6 +290,70 @@ std::vector<Point3>* atlas::MeshGen::generate_latlon_points( size_t nlats, size_
     }
 
     return pts;
+}
+
+//------------------------------------------------------------------------------------------------------
+
+void MeshGen::create_cell_centres(Mesh &mesh)
+{
+    FunctionSpace& nodes     = mesh.function_space( "nodes" );
+    FieldT<double>& coords   = nodes.field<double>( "coordinates" );
+
+    const size_t nb_nodes = nodes.bounds()[1];
+
+    FunctionSpace& triags      = mesh.function_space( "triags" );
+    FieldT<int>& triag_nodes   = triags.field<int>( "nodes" );
+
+    const size_t nb_triags = triags.bounds()[1];
+
+    FieldT<double>& triags_centres   = triags.create_field<double>("centre",3);
+
+    const double third = 1. / 3.;
+    for( int e = 0; e < nb_triags; ++e )
+    {
+        const int i0 =  C_IDX( triag_nodes(0,e) );
+        const int i1 =  C_IDX( triag_nodes(1,e) );
+        const int i2 =  C_IDX( triag_nodes(2,e) );
+
+        assert( i0 < nb_nodes && i1 < nb_nodes && i2 < nb_nodes );
+
+#if 0 /* print triangle connectivity */
+        std::cout << i0 << " " << i1 << " " << i2 << std::endl;
+#endif
+#if 0 /* print triangle idx and coordinates */
+           std::cout << e << " "
+                     << i0 << " " << i1 << " " << i2 << " ";
+           for( int i = 0; i < 3; ++i )
+               std::cout << "("
+                     <<  coords(XX,C_IDX( triag_nodes(i,e) )) << "; "
+                     <<  coords(YY,C_IDX( triag_nodes(i,e) )) << "; "
+                     <<  coords(ZZ,C_IDX( triag_nodes(i,e) )) << ")";
+          std::cout << std::endl;
+#endif
+        triags_centres(XX,e) = third * ( coords(XX,i0) + coords(XX,i1) + coords(XX,i2) );
+        triags_centres(YY,e) = third * ( coords(YY,i0) + coords(YY,i1) + coords(YY,i2) );
+        triags_centres(ZZ,e) = third * ( coords(ZZ,i0) + coords(ZZ,i1) + coords(ZZ,i2) );
+
+#if 0 /* print sorted triangle connectivity */
+        std::vector<int> s;
+        s.push_back(i0);
+        s.push_back(i1);
+        s.push_back(i2);
+        std::sort(s.begin(),s.end());
+        std::cout << s[0] << " " << s[1] << " " << s[2] << std::endl;
+#endif
+    }
+
+#if 0 /* print triangle baricentres */
+    for( int e = 0; e < nb_triags; ++e )
+    {
+        std::cout << triags_centres(XX,e) << " "
+                  << triags_centres(YY,e) << " "
+                  << triags_centres(ZZ,e) << " "
+                  << e << " "
+                  << std::endl;
+    }
+#endif
 }
 
 //------------------------------------------------------------------------------------------------------

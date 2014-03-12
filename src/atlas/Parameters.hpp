@@ -7,7 +7,7 @@
 
 namespace atlas {
 
-enum { XX=0, YY=1, ZZ=2 };
+enum { XX = 0, YY = 1, ZZ = 2 };
 
 struct Entity
 {
