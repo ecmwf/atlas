@@ -28,7 +28,7 @@ Mesh& Gmsh::read(const std::string& file_path)
     throw std::runtime_error("Could not open file "+file_path);
 
   std::string line;
-  for (int i=0; i<4; ++i)
+  while(line != "$Nodes")
     std::getline(file,line);
 
   // Create nodes
