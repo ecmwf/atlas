@@ -228,6 +228,10 @@ void atlas__FunctionSpace__remove_field (FunctionSpace* This, char* name ) {
   This->remove_field( std::string(name) );
 }
 
+int atlas__FunctionSpace__has_field (FunctionSpace* This, char* name) {
+  return This->has_field( std::string(name) );
+}
+
 const char* atlas__FunctionSpace__name (FunctionSpace* This) {
   return This->name().c_str();
 }

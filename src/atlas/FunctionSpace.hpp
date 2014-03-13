@@ -118,6 +118,7 @@ extern "C"
   void atlas__FunctionSpace__create_field_float (FunctionSpace* This, char* name, int nb_vars);
   void atlas__FunctionSpace__create_field_double (FunctionSpace* This, char* name, int nb_vars);
   void atlas__FunctionSpace__remove_field (FunctionSpace* This, char* name);
+  int atlas__FunctionSpace__has_field (FunctionSpace* This, char* name);
   const char* atlas__FunctionSpace__name (FunctionSpace* This);
   void atlas__FunctionSpace__bounds (FunctionSpace* This, int* &bounds, int &rank);
   Field* atlas__FunctionSpace__field (FunctionSpace* This, char* name);

@@ -16,6 +16,7 @@ class FieldSet
 public:
   FieldSet(const std::string& name="untitled");
   void add_field(Field& field);
+  bool has_field(const std::string& name) { return index_.count(name); }
   Field& field(const std::string& name);
   Field& field(size_t idx);
   std::vector<Field*>& fields() { return fields_; };
@@ -32,7 +33,8 @@ extern "C"
 {
   FieldSet* atlas__FieldSet__new (char* name);
   void atlas__FieldSet__delete (FieldSet* This);
-  void atlas__FieldSet__add_field (FieldSet* This, Field* field); 
+  void atlas__FieldSet__add_field (FieldSet* This, Field* field);
+  int atlas__FieldSet__has_field (FieldSet* This, char* name);
   Field* atlas__FieldSet__field_by_name (FieldSet* This, char* name);
   int atlas__FieldSet__size (FieldSet* This);
   Field* atlas__FieldSet__field_by_idx (FieldSet* This, int idx);

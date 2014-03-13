@@ -120,6 +120,7 @@ contains
   procedure :: remove_field => FunctionSpace__remove_field
   procedure :: bounds => FunctionSpace__bounds
   procedure :: field => FunctionSpace__field
+  procedure, public :: has_field => FunctionSpace__has_field
   procedure :: parallelise => FunctionSpace__parallelise
   procedure, private :: FunctionSpace__halo_exchange_int32_r1
   procedure, private :: FunctionSpace__halo_exchange_int32_r2
@@ -234,6 +235,7 @@ private
 contains
   procedure, public :: size => FieldSet__size
   procedure, public :: add_field => FieldSet__add_field
+  procedure, public :: has_field => FieldSet__has_field
   procedure, private :: field_by_name => FieldSet__field_by_name
   procedure, private :: field_by_idx => FieldSet__field_by_idx
   generic :: field => field_by_name, field_by_idx
@@ -619,6 +621,13 @@ function FunctionSpace__field(this,name) result(field)
   field%object = atlas__FunctionSpace__field(this%object, c_str(name) )
   if( .not. C_associated(field%object) ) call abort()
 end function FunctionSpace__field
+
+function FunctionSpace__has_field(this,name) result(flag)
+  class(FunctionSpace_type), intent(in) :: this
+  character(len=*), intent(in) :: name
+  logical :: flag
+  flag = atlas__FunctionSpace__has_field(this%object, c_str(name) )
+end function FunctionSpace__has_field
 
 subroutine FunctionSpace__parallelise(this, proc, glb_idx, master_glb_idx)
   class(FunctionSpace_type), intent(in) :: this
@@ -1152,6 +1161,13 @@ subroutine FieldSet__add_field(this,field)
   type(Field_type), intent(in) :: field
   call atlas__FieldSet__add_field(this%object, field%object)
 end subroutine FieldSet__add_field
+
+function FieldSet__has_field(this,name) result(flag)
+  class(FieldSet_type), intent(in) :: this
+  character(len=*), intent(in) :: name
+  logical :: flag
+  flag = atlas__FieldSet__has_field(this%object, c_str(name) )
+end function FieldSet__has_field
 
 function FieldSet__size(this) result(nb_fields)
   class(FieldSet_type), intent(in) :: this

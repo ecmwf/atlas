@@ -52,6 +52,10 @@ void atlas__FieldSet__add_field (FieldSet* This, Field* field) {
   This->add_field(*field);
 }
 
+int atlas__FieldSet__has_field (FieldSet* This, char* name) {
+  return This->has_field( std::string(name) );
+}
+
 int atlas__FieldSet__size(FieldSet* This) {
   return This->size();
 }
