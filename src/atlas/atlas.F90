@@ -637,7 +637,13 @@ function FunctionSpace__has_field(this,name) result(flag)
   class(FunctionSpace_type), intent(in) :: this
   character(len=*), intent(in) :: name
   logical :: flag
-  flag = atlas__FunctionSpace__has_field(this%object, c_str(name) )
+  integer :: rc
+  rc = atlas__FunctionSpace__has_field(this%object, c_str(name))
+  if( rc == 0 ) then
+    flag = .False.
+  else
+    flag = .True.
+  end if
 end function FunctionSpace__has_field
 
 subroutine FunctionSpace__parallelise(this, proc, glb_idx, master_glb_idx)
@@ -1184,7 +1190,13 @@ function FieldSet__has_field(this,name) result(flag)
   class(FieldSet_type), intent(in) :: this
   character(len=*), intent(in) :: name
   logical :: flag
-  flag = atlas__FieldSet__has_field(this%object, c_str(name) )
+  integer :: rc
+  rc = atlas__FieldSet__has_field(this%object, c_str(name))
+  if( rc == 0 ) then
+    flag = .False.
+  else
+    flag = .True.
+  end if
 end function FieldSet__has_field
 
 function FieldSet__size(this) result(nb_fields)
