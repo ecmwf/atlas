@@ -131,6 +131,7 @@ contains
   procedure, private :: FunctionSpace__halo_exchange_real64_r1
   procedure, private :: FunctionSpace__halo_exchange_real64_r2
   procedure, private :: FunctionSpace__halo_exchange_real64_r3
+  procedure, private :: FunctionSpace__halo_exchange_real64_r4
   procedure :: get_halo_exchange => FunctionSpace__get_halo_exchange
   generic :: halo_exchange => &
       & FunctionSpace__halo_exchange_int32_r1, &
@@ -141,7 +142,8 @@ contains
       & FunctionSpace__halo_exchange_real32_r3, &
       & FunctionSpace__halo_exchange_real64_r1, &
       & FunctionSpace__halo_exchange_real64_r2, &
-      & FunctionSpace__halo_exchange_real64_r3
+      & FunctionSpace__halo_exchange_real64_r3, &
+      & FunctionSpace__halo_exchange_real64_r4
   procedure, private :: FunctionSpace__gather_real64_r1
   procedure, private :: FunctionSpace__gather_real64_r2
   procedure, private :: FunctionSpace__gather_real64_r3
@@ -352,6 +354,7 @@ INTERFACE view1d
   module procedure view1d_real32_rank3
   module procedure view1d_real64_rank2
   module procedure view1d_real64_rank3
+  module procedure view1d_real64_rank4
 end interface view1d
 
 ! =============================================================================
@@ -494,6 +497,14 @@ function view1d_real64_rank3(array) result( view )
   array_c_ptr = c_loc_real64(array(1,1,1))
   call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
 end function view1d_real64_rank3
+
+function view1d_real64_rank4(array) result( view )
+  real(c_double), intent(in), target :: array(:,:,:,:)
+  type(c_ptr) :: array_c_ptr
+  real(c_double), pointer :: view(:)
+  array_c_ptr = c_loc_real64(array(1,1,1,1))
+  call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
+end function view1d_real64_rank4
 
 ! -----------------------------------------------------------------------------
 ! Mesh routines
@@ -718,6 +729,13 @@ subroutine FunctionSpace__halo_exchange_real64_r3(this, field_data)
   view => view1d(field_data)
   call atlas__FunctionSpace__halo_exchange_double( this%object, view, size(field_data) )
 end subroutine FunctionSpace__halo_exchange_real64_r3
+subroutine FunctionSpace__halo_exchange_real64_r4(this, field_data)
+  class(FunctionSpace_type), intent(in) :: this
+  real(c_double), intent(inout) :: field_data(:,:,:,:)
+  real(c_double), pointer :: view(:)
+  view => view1d(field_data)
+  call atlas__FunctionSpace__halo_exchange_double( this%object, view, size(field_data) )
+end subroutine FunctionSpace__halo_exchange_real64_r4
 
 
 
