@@ -16,11 +16,10 @@ class Mesh;
 
 /// Represents a 3D point
 /// @note Do not assume memory to be initialised
+/// @todo remove this class, algorithm should work with existing coordinates on mesh
 
 struct Point3
 {
-    double x[3];
-
     double* data() { return x; }
 
     double operator()( const size_t& i ) const { assert( i < 3 ); return x[i]; }
@@ -30,6 +29,9 @@ struct Point3
         s << '(' << p.x[XX] << "," << p.x[YY] << ","  << p.x[ZZ] << ')';
         return s;
     }
+
+private:
+    double x[3];
 };
 
 //------------------------------------------------------------------------------------------------------

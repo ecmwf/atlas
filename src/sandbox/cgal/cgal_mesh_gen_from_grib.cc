@@ -53,7 +53,7 @@ std::vector< Point3 >* read_ll_points_from_grib( const std::string& filename )
 
         pts->push_back( Point3() );
 
-        atlas::latlon_to_3d( lat, lon, pts->back().x );
+        atlas::latlon_to_3d( lat, lon, pts->back().data() );
     }
     grib_iterator_delete(i);
 

@@ -90,7 +90,7 @@ Polyhedron_3* create_convex_hull_from_points( const std::vector< Point3 >& pts )
     std::vector<Point_3> vertices( pts.size() );
     for( size_t i = 0; i < vertices.size(); ++i )
     {
-        vertices[i] = Point_3( pts[i].x[XX], pts[i].x[YY], pts[i].x[ZZ] );
+        vertices[i] = Point_3( pts[i](XX), pts[i](YY), pts[i](ZZ) );
 
 //        std::cout << vertices[i] << std::endl;
     }
