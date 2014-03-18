@@ -54,7 +54,12 @@ public:
   void halo_exchange( DATA_TYPE field_data[], int field_size )
   {
     int nb_vars = field_size/dof_;
-    if( dof_*nb_vars != field_size ) std::cout << "ERROR in FunctionSpace::halo_exchange" << std::endl;
+    if( dof_*nb_vars != field_size )
+    {
+      std::cout << "ERROR in FunctionSpace::halo_exchange" << std::endl;
+      std::cout << "field_size = " << field_size << std::endl;
+      std::cout << "dof_ = " << dof_ << std::endl;
+    }
     halo_exchange_.execute( field_data, nb_vars );
   }
 

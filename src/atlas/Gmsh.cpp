@@ -34,7 +34,6 @@ Mesh& Gmsh::read(const std::string& file_path)
   // Create nodes
   int nb_nodes;
   file >> nb_nodes;
-  std::cout << "nb_nodes = " << nb_nodes << std::endl;
 
   std::vector<int> bounds(2);
   bounds[0] = Field::UNDEF_VARS;

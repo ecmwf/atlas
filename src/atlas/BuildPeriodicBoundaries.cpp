@@ -121,8 +121,6 @@ void build_periodic_boundaries( Mesh& mesh )
   }
   int nb_east_bdry_elements = east_bdry_elements.size();
   int nb_west_bdry_elements = west_bdry_elements.size();
-  std::cout << "nb_east_bdry_elements = " << nb_east_bdry_elements << std::endl;
-  std::cout << "nb_west_bdry_elements = " << nb_west_bdry_elements << std::endl;
 
   FunctionSpace& quads = mesh.function_space("quads");
   FunctionSpace& triags = mesh.function_space("triags");

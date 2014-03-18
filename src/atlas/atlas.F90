@@ -984,7 +984,7 @@ subroutine Field__access_data2_integer(this, field)
   integer(c_int) :: field_rank
   call atlas__Field__data_int(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
-  call C_F_POINTER ( field_c_ptr , field , field_bounds(1:2) )
+  call C_F_POINTER ( field_c_ptr , field , field_bounds(field_rank-1:field_rank) )
 end subroutine Field__access_data2_integer
 
 subroutine Field__access_data3_integer(this, field) 
@@ -996,7 +996,7 @@ subroutine Field__access_data3_integer(this, field)
   integer(c_int) :: field_rank
   call atlas__Field__data_int(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
-  call C_F_POINTER ( field_c_ptr , field , field_bounds(1:3) )
+  call C_F_POINTER ( field_c_ptr , field , field_bounds(field_rank-2:field_rank) )
 end subroutine Field__access_data3_integer
 
 subroutine Field__access_data1_real32(this, field) 
@@ -1025,7 +1025,7 @@ subroutine Field__access_data2_real32(this, field)
   integer(c_int) :: field_rank
   call atlas__Field__data_float(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
-  call C_F_POINTER ( field_c_ptr , field , field_bounds(1:2) )
+  call C_F_POINTER ( field_c_ptr , field , field_bounds(field_rank-1:field_rank) )
 end subroutine Field__access_data2_real32
 
 subroutine Field__access_data3_real32(this, field) 
@@ -1037,7 +1037,7 @@ subroutine Field__access_data3_real32(this, field)
   integer(c_int) :: field_rank
   call atlas__Field__data_float(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
-  call C_F_POINTER ( field_c_ptr , field , field_bounds(1:3) )
+  call C_F_POINTER ( field_c_ptr , field , field_bounds(field_rank-2:field_rank) )
 end subroutine Field__access_data3_real32
 
 subroutine Field__access_data1_real64(this, field) 
@@ -1066,7 +1066,7 @@ subroutine Field__access_data2_real64(this, field)
   integer(c_int) :: field_rank
   call atlas__Field__data_double(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
-  call C_F_POINTER ( field_c_ptr , field , field_bounds(1:2) )
+  call C_F_POINTER ( field_c_ptr , field , field_bounds(field_rank-1:field_rank) )
 end subroutine Field__access_data2_real64
 
 subroutine Field__access_data3_real64(this, field) 
@@ -1078,7 +1078,7 @@ subroutine Field__access_data3_real64(this, field)
   integer(c_int) :: field_rank
   call atlas__Field__data_double(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
-  call C_F_POINTER ( field_c_ptr , field , field_bounds(1:3) )
+  call C_F_POINTER ( field_c_ptr , field , field_bounds(field_rank-2:field_rank) )
 end subroutine Field__access_data3_real64
 
 

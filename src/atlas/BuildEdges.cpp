@@ -167,8 +167,6 @@ void build_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& nb_po
   std::vector<int> north_pole_edges;
   std::vector<int> south_pole_edges;
 
-  std::cout << "ymax = " << ymax << std::endl;
-  std::cout << "ymin = " << ymin << std::endl;
   std::set<int> north_nodes;
   std::set<int> south_nodes;
 
@@ -177,17 +175,15 @@ void build_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& nb_po
     //std::cout << "node " << node << "   " << std::abs(coords(YY,node)-ymax) << std::endl;
     if ( std::abs(coords(YY,node)-ymax)<tol )
     {
-      std::cout << "add north node " << node << "  coord " << coords(XX,node) << std::endl;
       north_nodes.insert(node);
     }
     else if ( std::abs(coords(YY,node)-ymin)<tol )
     {
-      std::cout << "add south node " << node << "  coord " << coords(XX,node) << std::endl;
       south_nodes.insert(node);
     }
   }
   double pi = std::acos(-1.);
-  std::cout << "\nnorth: " << north_nodes.size() << std::endl;
+
   for( std::set<int>::iterator it=north_nodes.begin(); it!=north_nodes.end(); ++it)
   {
     int node = *it;
@@ -209,11 +205,9 @@ void build_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& nb_po
       pole_edge_nodes.push_back(node);
       pole_edge_nodes.push_back(recip_node);
       ++nb_pole_edges;
-      std::cout << "connect " << glb_idx(node) << " and " << glb_idx(recip_node) << std::endl;
     }
   }
 
-  std::cout << "\nsouth: " << south_nodes.size() << std::endl;
   for( std::set<int>::iterator it=south_nodes.begin(); it!=south_nodes.end(); ++it)
   {
     int node = *it;
@@ -238,7 +232,6 @@ void build_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& nb_po
         pole_edge_nodes.push_back(node);
         pole_edge_nodes.push_back(recip_node);
         ++nb_pole_edges;
-        std::cout << "connect " << glb_idx(node) << " and " << glb_idx(recip_node) << std::endl;
       }
     }
   }
