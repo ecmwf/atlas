@@ -294,6 +294,56 @@ std::vector<Point3>* atlas::MeshGen::generate_latlon_points( size_t nlats, size_
 
 //------------------------------------------------------------------------------------------------------
 
+std::vector<Point3>* MeshGen::generate_latlon_grid(size_t nlats, size_t nlong)
+{
+    // generate lat/long points
+
+    const size_t npts = (nlats+1) * (nlong+1);
+
+    std::vector< Point3 >* pts = new std::vector< Point3 >( npts );
+
+    const double lat_inc = 180. / nlats;
+    const double lat_start = -90.;
+    const double lat_end   =  90.;
+
+    const double lon_inc = 360. / nlong;
+    const double lon_start = 0.0;
+    const double lon_end   = 360.;
+
+    double lat = lat_start;
+    double lon = lon_start;
+    for( size_t ilat = 0; ilat < nlats+1; ++ilat )
+    {
+        lon = lon_start;
+        for( size_t jlon = 0; jlon < nlong+1; ++jlon )
+        {
+            const size_t idx = ilat*(nlats+1) + jlon;
+
+            assert( idx < npts );
+
+            atlas::latlon_to_3d( lat, lon, (*pts)[ idx ].data() );
+
+//            std::cout << idx << " "
+//                      << lat << " "
+//                      << lon << " "
+//                      << (*pts)[ ilat*(nlats+1) + jlon ](XX) << " "
+//                      << (*pts)[ ilat*(nlats+1) + jlon ](YY) << " "
+//                      << (*pts)[ ilat*(nlats+1) + jlon ](ZZ) << " "
+//                      << std::endl;
+//            std::cout << (*pts)[idx] << std::endl;
+
+            lon += lon_inc;
+            if( jlon == nlong ) lon = lon_end;
+        }
+        lat += lat_inc;
+        if( ilat == nlats ) lat = lat_end;
+    }
+
+    return pts;
+}
+
+//------------------------------------------------------------------------------------------------------
+
 void MeshGen::create_cell_centres(Mesh &mesh)
 {
     FunctionSpace& nodes     = mesh.function_space( "nodes" );

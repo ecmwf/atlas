@@ -48,8 +48,11 @@ public:
     /// generate a mesh by triangulating the convex hull of the 3D points
     static Mesh* generate_from_points( const std::vector<Point3>& pts );
 
-    /// generate regular spaced lat-long points
+    /// generate regular spaced lat-long points (does not include extremes)
     static std::vector< Point3 >* generate_latlon_points( size_t nlats, size_t nlong );
+
+    /// generate regular lat-long grid points (includes extremes -90,90 and 0,360)
+    static std::vector< Point3 >* generate_latlon_grid( size_t nlats, size_t nlong );
 
     /// generates the cell centres en each cell
     /// @warning only for triangles ATM
