@@ -114,7 +114,7 @@ ecbuild_add_library( TARGET atlasf
 	CONDITION CMAKE_Fortran_COMPILER_LOADED
 	SOURCES
 		${FORTRAN_BINDINGS}
-		atlas.F90
+		atlas_module.F90
 	LIBS atlas ${TPL}
 )
 
