@@ -359,7 +359,7 @@ void Gmsh::write3dsurf(Mesh &mesh, const std::string& file_path)
     const size_t nb_quads  = 0;
     const size_t nb_edges  = 0;
 
-    std::cout << "writing file " << file_path << std::endl;
+//    std::cout << "writing file " << file_path << std::endl;
 
     std::ofstream file;
     file.open( (file_path).c_str(), std::ios::out );

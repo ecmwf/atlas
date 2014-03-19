@@ -20,18 +20,27 @@ class Mesh;
 
 struct Point3
 {
-    double* data() { return x; }
+    Point3() {}
 
-    double operator()( const size_t& i ) const { assert( i < 3 ); return x[i]; }
+    Point3( double* p )
+    {
+        x_[XX] = p[XX];
+        x_[YY] = p[YY];
+        x_[ZZ] = p[ZZ];
+    }
+
+    double* data() { return x_; }
+
+    double operator()( const size_t& i ) const { assert( i < 3 ); return x_[i]; }
 
     friend std::ostream& operator<<(std::ostream& s, const Point3& p )
     {
-        s << '(' << p.x[XX] << "," << p.x[YY] << ","  << p.x[ZZ] << ')';
+        s << '(' << p.x_[XX] << "," << p.x_[YY] << ","  << p.x_[ZZ] << ')';
         return s;
     }
 
 private:
-    double x[3];
+    double x_[3];
 };
 
 //------------------------------------------------------------------------------------------------------
