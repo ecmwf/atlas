@@ -361,9 +361,9 @@ void MeshGen::create_cell_centres(Mesh &mesh)
     const double third = 1. / 3.;
     for( int e = 0; e < nb_triags; ++e )
     {
-        const int i0 =  C_IDX( triag_nodes(0,e) );
-        const int i1 =  C_IDX( triag_nodes(1,e) );
-        const int i2 =  C_IDX( triag_nodes(2,e) );
+        const int i0 =  triag_nodes(0,e);
+        const int i1 =  triag_nodes(1,e);
+        const int i2 =  triag_nodes(2,e);
 
         assert( i0 < nb_nodes && i1 < nb_nodes && i2 < nb_nodes );
 
@@ -375,9 +375,9 @@ void MeshGen::create_cell_centres(Mesh &mesh)
                      << i0 << " " << i1 << " " << i2 << " ";
            for( int i = 0; i < 3; ++i )
                std::cout << "("
-                     <<  coords(XX,C_IDX( triag_nodes(i,e) )) << "; "
-                     <<  coords(YY,C_IDX( triag_nodes(i,e) )) << "; "
-                     <<  coords(ZZ,C_IDX( triag_nodes(i,e) )) << ")";
+                     <<  coords(XX,triag_nodes(i,e) ) << "; "
+                     <<  coords(YY,triag_nodes(i,e) ) << "; "
+                     <<  coords(ZZ,triag_nodes(i,e) ) << ")";
           std::cout << std::endl;
 #endif
         triags_centres(XX,e) = third * ( coords(XX,i0) + coords(XX,i1) + coords(XX,i2) );
