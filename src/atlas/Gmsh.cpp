@@ -346,30 +346,31 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path)
 
 void Gmsh::write3dsurf(Mesh &mesh, const std::string& file_path)
 {
-    FunctionSpace& nodes   = mesh.function_space( "nodes" );
-    FieldT<double>& coords = nodes.field<double>( "coordinates" );
-    FieldT<int>& glb_idx   = nodes.field<int>( "glb_idx" );
-
-    const size_t nb_nodes = nodes.bounds()[1];
-
-    FunctionSpace& triags      = mesh.function_space( "triags" );
-    FieldT<int>& triag_nodes   = triags.field<int>( "nodes" );
-
-    const size_t nb_triags = triags.bounds()[1];
-    const size_t nb_quads  = 0;
-    const size_t nb_edges  = 0;
-
-//    std::cout << "writing file " << file_path << std::endl;
+    size_t nb_nodes  = 0;
+    size_t nb_triags = 0;
+    size_t nb_quads  = 0;
+    size_t nb_edges  = 0;
 
     std::ofstream file;
     file.open( (file_path).c_str(), std::ios::out );
 
+    // header
+
     file << "$MeshFormat\n";
     file << "2.2 0 8\n";
     file << "$EndMeshFormat\n";
-    file << "$Nodes\n";
 
+    // nodes
+
+    FunctionSpace& nodes   = mesh.function_space( "nodes" );
+    FieldT<double>& coords = nodes.field<double>( "coordinates" );
+    FieldT<int>& glb_idx   = nodes.field<int>( "glb_idx" );
+
+    nb_nodes = nodes.bounds()[1];
+
+    file << "$Nodes\n";
     file << nb_nodes << "\n";
+
     for( size_t n = 0; n < nb_nodes; ++n )
     {
         const double x = coords(XX,n);
@@ -381,44 +382,68 @@ void Gmsh::write3dsurf(Mesh &mesh, const std::string& file_path)
     }
 
     file << "$EndNodes\n";
+    file << std::flush;
+
     file << "$Elements\n";
-    file << nb_quads+nb_triags+nb_edges << "\n";
 
-//    for( int e=0; e<nb_quads; ++e)
-//    {
-//      file << quad_glb_idx(e) << " 3 2 1 1";
-//      for( int n=0; n<4; ++n )
-//        file << " " << glb_idx( C_IDX( quad_nodes(n,e) ) );
-//      file << "\n";
-//    }
+    if( mesh.has_function_space("triags") ) nb_triags = mesh.function_space( "triags" ).bounds()[1];
+    if( mesh.has_function_space("quads") )  nb_quads = mesh.function_space( "quads" ).bounds()[1];
+    if( mesh.has_function_space("edges") )  nb_edges = mesh.function_space( "edges" ).bounds()[1];
 
-    for( size_t e = 0; e < nb_triags; ++e )
+    file << nb_triags + nb_quads + nb_edges << "\n";
+
+    // triags
+
+    if( mesh.has_function_space("triags") )
     {
-      file << e << " 2 2 1 1";
-      for( int n=0; n<3; ++n )
-        file << " " << C_IDX( triag_nodes(n,e) );
-      file << "\n";
+        FunctionSpace& triags      = mesh.function_space( "triags" );
+        FieldT<int>& triag_nodes   = triags.field<int>( "nodes" );
+
+        for( size_t e = 0; e < nb_triags; ++e )
+        {
+            file << e << " 2 2 1 1";
+            for( int n=0; n<3; ++n )
+                file << " " << C_IDX( triag_nodes(n,e) );
+            file << "\n";
+        }
     }
 
-//    for( int e=0; e<nb_edges; ++e)
-//    {
-//     file << edge_glb_idx(e) << " 1 2 2 1";
-//      for( int n=0; n<2; ++n )
-//        file << " " << glb_idx( C_IDX( edge_nodes(n,e) ) );
-//      file << "\n";
-//    }
+    if( mesh.has_function_space("quads") )
+    {
+        FunctionSpace& quads      = mesh.function_space( "quads" );
+        FieldT<int>& quad_nodes   = quads.field<int>( "nodes" );
+
+        for( int e=0; e<nb_quads; ++e)
+        {
+          file << e << " 3 2 1 1";
+          for( int n=0; n<4; ++n )
+            file << " " << C_IDX( quad_nodes(n,e) );
+          file << "\n";
+        }
+    }
+
+    if( mesh.has_function_space("edges") )
+    {
+        FunctionSpace& edges      = mesh.function_space( "edges" );
+        FieldT<int>& edge_nodes   = edges.field<int>( "nodes" );
+
+        for( int e=0; e<nb_edges; ++e)
+        {
+            file << e << " 1 2 2 1";
+            for( int n=0; n<2; ++n )
+                file << " " << C_IDX( edge_nodes(n,e) );
+            file << "\n";
+        }
+    }
 
     file << "$EndElements\n";
     file << std::flush;
-    file.close();
+
+    // nodal data
 
     if( nodes.has_field("field") )
     {
       FieldT<double>& field = nodes.field<double>("field");
-      file.open( ( field.name() + file_path ).c_str() , std::ios::out );
-      file << "$MeshFormat\n";
-      file << "2.2 0 8\n";
-      file << "$EndMeshFormat\n";
       file << "$NodeData\n";
       file << "1\n";
       file << "\""+field.name()+"\"\n";
@@ -432,8 +457,9 @@ void Gmsh::write3dsurf(Mesh &mesh, const std::string& file_path)
         file << glb_idx(n) << " " << field(n)<<"\n";
       file << "$EndNodeData\n";
       file << std::flush;
-      file.close();
     }
+
+    file.close();
 }
 
 // ------------------------------------------------------------------
