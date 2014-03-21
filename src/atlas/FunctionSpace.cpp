@@ -1,6 +1,7 @@
 // (C) Copyright 1996-2014 ECMWF.
 
 #include <iostream>
+#include <sstream>
 
 #include "atlas/FunctionSpace.hpp"
 #include "atlas/Field.hpp"
@@ -69,6 +70,12 @@ void FunctionSpace::resize(const std::vector<int>& bounds)
 template <>
 FieldT<double>& FunctionSpace::create_field(const std::string& name, size_t nb_vars)
 {
+    if( has_field(name) )
+    {
+        std::ostringstream msg; msg << "field with name " << name << "already exists" << std::endl;
+        throw msg.str();
+    }
+
   //std::cout << "C++ : Create field " << name << " with size " << size*nb_nodes_ << std::endl;
   index_[name] = fields_.size();
   FieldT<double>* field = new FieldT<double>(name,nb_vars,*this);

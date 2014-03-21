@@ -16,6 +16,11 @@ Mesh::~Mesh()
   function_spaces_.clear();
 }
 
+bool Mesh::has_function_space(const std::string &name)
+{
+    return (index_.find(name) != index_.end());
+}
+
 FunctionSpace& Mesh::add_function_space( FunctionSpace* function_space )
 {
   if (index_.count(function_space->name()) )

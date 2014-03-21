@@ -23,6 +23,7 @@ template <typename T> class FieldT;
 class FunctionSpace
 {
 public:
+
   FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<int>& bounds);
 
   virtual ~FunctionSpace();

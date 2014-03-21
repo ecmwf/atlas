@@ -5,6 +5,7 @@
 
 #include <cassert>
 #include <string>
+#include <ostream>
 
 #include "atlas/Parameters.hpp"
 

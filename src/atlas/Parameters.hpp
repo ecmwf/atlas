@@ -9,6 +9,8 @@ namespace atlas {
 
 enum { XX = 0, YY = 1, ZZ = 2 };
 
+enum { LAT = 0, LON = 1 };
+
 struct Entity
 {
     enum { NODES=0, FACES=1, ELEMS=2 };

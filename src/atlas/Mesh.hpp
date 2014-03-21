@@ -17,6 +17,9 @@ public:
 
     virtual ~Mesh();
 
+    /// checks if function space exists
+    bool has_function_space(const std::string& name);
+
     /// Takes ownership, and will be deleted automatically
     FunctionSpace& add_function_space( FunctionSpace* function_space );
 
@@ -35,7 +38,6 @@ private:
     std::vector< FunctionSpace* > function_spaces_; ///< function spaces
 
 };
-
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
