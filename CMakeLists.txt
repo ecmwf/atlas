@@ -55,11 +55,9 @@ ecbuild_add_option( FEATURE MPI
 if( ENABLE_MPI )
    ecbuild_find_mpi()
    if( MPI_CXX_FOUND )
-
-		add_definitions(${MPI_C_COMPILE_FLAGS})    # what is this ???
+		cmake_add_c_flags( ${MPI_C_COMPILE_FLAGS} )
+		cmake_add_cxx_flags( ${MPI_CXX_COMPILE_FLAGS} )
 		include_directories(${MPI_C_INCLUDE_PATH})
-		list( APPEND TPL ${MPI_C_LIBRARIES} )
-
 	else()
 		set( HAVE_MPI 0 )
    endif()
@@ -85,37 +83,15 @@ ecbuild_add_option( FEATURE TRIANGULATION
                     DESCRIPTION "support for unstructured mesh generation"
                     REQUIRED_PACKAGES CGAL )
 
-### GRIB ...
-
-ecbuild_add_option( FEATURE GRIB
-					DEFAULT ON
-					DESCRIPTION "support for GRIB format encoding / decoding" )
-if( ENABLE_GRIB )
-	ecbuild_use_package( PROJECT grib_api VERSION 1.9.9 )
-	if( NOT GRIB_API_FOUND )
-		set( HAVE_GRIB 0 )
-	endif()
-endif()
-if( HAVE_GRIB )
-	list( APPEND TPL grib_api )
-	if( HAVE_FORTRAN )
-		list( APPEND TPL grib_api_f90 )
-	endif()
-endif( )
-
-### data dir ...
-
-set( DATA_REPO  "ssh://git@software.ecmwf.int:7999/pan/data.git"
-	 CACHE STRING "Location of the repository where large project files can be found")
-
-message( STATUS "Retrieving meshes ..." )
-
-include(GitExternal.cmake)
-set( ATLAS_DATADIR ${CMAKE_BINARY_DIR}/data )
-git_external( DIR ${ATLAS_DATADIR}
-              REPO ${DATA_REPO}
-			  TAG master )
-
+# ### data dir ...
+# set( DATA_REPO  "ssh://git@software.ecmwf.int:7999/pan/data.git"
+# 	 CACHE STRING "Location of the repository where large project files can be found")
+# message( STATUS "Retrieving meshes ..." )
+# include(GitExternal.cmake)
+# set( ATLAS_DATADIR ${CMAKE_BINARY_DIR}/data )
+# git_external( DIR ${ATLAS_DATADIR}
+#               REPO ${DATA_REPO}
+# 			  TAG master )
 ############################################################################################
 # export package info
 

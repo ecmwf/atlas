@@ -78,7 +78,7 @@ ecbuild_add_library( TARGET atlas
 		MeshGen.hpp
 		MeshGen.cpp
 	INCLUDES    "${CGAL_INCLUDE_DIRS}"
-	LIBS ${TPL} "${CGAL_LIBRARY}" "${CGAL_3RD_PARTY_LIBRARIES}" "${GMP_LIBRARIES}" "${MPFR_LIBRARIES}"
+	LIBS        "${CGAL_LIBRARY}" "${CGAL_3RD_PARTY_LIBRARIES}" "${GMP_LIBRARIES}" "${MPFR_LIBRARIES}"
 ) 
 
 ### fortran bindings
@@ -115,6 +115,6 @@ ecbuild_add_library( TARGET atlasf
 	SOURCES
 		${FORTRAN_BINDINGS}
 		atlas_module.F90
-	LIBS atlas ${TPL}
+	LIBS atlas
 )
 
