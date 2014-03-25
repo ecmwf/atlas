@@ -1,10 +1,17 @@
 # (C) Copyright 1996-2014 ECMWF.
+#
+# This software is licensed under the terms of the Apache Licence Version 2.0
+# which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+# In applying this licence, ECMWF does not waive the privileges and immunities
+# granted to it by virtue of its status as an intergovernmental organisation nor
+# does it submit to any jurisdiction.
 
 ############################################################################################
 # ATLAS
 #
-#		TODO:
-#         * add renumbering to improve cache performance
+# TODO:
+#	* add renumbering to improve cache performance
+#	* add detection of OpenMP flags (mayeb move to ecbuild)
 
 cmake_minimum_required( VERSION 2.8.4 FATAL_ERROR )
 
@@ -16,6 +23,15 @@ set( ECBUILD_DEFAULT_BUILD_TYPE Release )
 include( ecbuild_system )
 
 ecbuild_requires_macro_version( 1.3 )
+
+###############################################################################
+# local project
+
+set( PERSISTENT_NAMESPACE "eckit" CACHE INTERNAL "" )
+
+ecbuild_use_package( PROJECT eckit    VERSION 0.6 REQUIRED )
+
+# init project
 
 ecbuild_declare_project()
 
@@ -63,19 +79,6 @@ if( ENABLE_MPI )
    endif()
 endif()
 
-#get_filename_component(Fortran_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
-#if( NOT Fortran_COMPILER_NAME MATCHES "mp.*" AND NOT Fortran_COMPILER_NAME MATCHES "ftn" )
-#  # message( FATAL_ERROR "MPI Compiler needed.\n"
-#  #   "Please remove this build, export FC and CXX to a MPI compiler such as mpif90 or ftn on Cray and rerun." )
-#  set( HAVE_MPI OFF )
-#endif( )
-#get_filename_component(CXX_COMPILER_NAME ${CMAKE_CXX_COMPILER} NAME)
-#if( NOT CXX_COMPILER_NAME MATCHES "mp.*" AND NOT CXX_COMPILER_NAME MATCHES "CC" )
-#  # message( FATAL_ERROR "MPI Compiler needed.\n"
-#  #   "Please remove this build, export FC and CXX to a MPI compiler such as mpic++ or CC on Cray and rerun." )
-#  set( HAVE_MPI OFF )
-#endif()
-
 ### TRIANGULATION ...
 
 ecbuild_add_option( FEATURE TRIANGULATION
@@ -83,18 +86,8 @@ ecbuild_add_option( FEATURE TRIANGULATION
                     DESCRIPTION "support for unstructured mesh generation"
                     REQUIRED_PACKAGES CGAL )
 
-# ### data dir ...
-# set( DATA_REPO  "ssh://git@software.ecmwf.int:7999/pan/data.git"
-# 	 CACHE STRING "Location of the repository where large project files can be found")
-# message( STATUS "Retrieving meshes ..." )
-# include(GitExternal.cmake)
-# set( ATLAS_DATADIR ${CMAKE_BINARY_DIR}/data )
-# git_external( DIR ${ATLAS_DATADIR}
-#               REPO ${DATA_REPO}
-# 			  TAG master )
 ############################################################################################
 # export package info
-
 
 set( ATLAS_TPLS           ${TPL} )
 set( ATLAS_INCLUDE_DIRS   ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src )
@@ -120,15 +113,6 @@ include( atlas_compiler_flags )
 include_directories( ${ATLAS_INCLUDE_DIRS} )
 
 add_subdirectory( src )
-
-############################################################################################
-# symlink scripts
-
-if( BUILD_SITE MATCHES "cc[abt].*" )
-  message( STATUS "Creating symbolic link for submit_cray --> submit")
-  execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-		${CMAKE_CURRENT_SOURCE_DIR}/tools/submit_cray ${CMAKE_BINARY_DIR}/bin/submit )
-endif( )
 
 ############################################################################################
 # finalize

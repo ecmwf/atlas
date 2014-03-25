@@ -6,7 +6,6 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-
 if( NOT CMAKE_BUILD_TYPE MATCHES "Debug" )
   add_definitions( -DNDEBUG )
 endif( )
