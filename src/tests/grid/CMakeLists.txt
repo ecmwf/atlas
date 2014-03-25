@@ -13,7 +13,8 @@ ecbuild_add_test(   TARGET      test_field
 					CONDITION	HAVE_GRID
 					LIBS        atlas_grid )
 
-				#ecbuild_add_test(   TARGET      test_action
-				#		SOURCES     test_action.cc
-				#		CONDITION	HAVE_GRID
-				#		LIBS        eckit eckit_grid )
+# this should test the eckit::maths expressions
+#ecbuild_add_test(   TARGET      test_action
+#		SOURCES     test_action.cc
+#		CONDITION	HAVE_GRID
+#		LIBS        eckit atlas_grid )
