@@ -11,8 +11,8 @@
 #include "eckit/log/Log.h"
 #include "eckit/runtime/Tool.h"
 
-#include "eckit/grid/Grid.h"
-#include "eckit/grid/LatLon.h"
+#include "atlas/grid/Grid.h"
+#include "atlas/grid/LatLon.h"
 
 using namespace std;
 using namespace eckit;
@@ -39,7 +39,7 @@ public:
 
 void TestLatLon::test_constructor()
 {
-    using namespace eckit::grid;
+    using namespace atlas::grid;
 
     BoundBox2D earth ( Point2D(-90.,0.), Point2D(90.,360.) );
     Grid* g = NULL;

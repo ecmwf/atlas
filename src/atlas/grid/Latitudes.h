@@ -12,14 +12,14 @@
 /// @author Tiago Quintino
 /// @date 2013
 
-#ifndef eckit_grid_Coordinates_H
-#define eckit_grid_Coordinates_H
+#ifndef atlas_grid_Coordinates_H
+#define atlas_grid_Coordinates_H
 
 #include <vector>
 
 //-----------------------------------------------------------------------------
 
-namespace eckit {
+namespace atlas {
 namespace grid {
 
 //-----------------------------------------------------------------------------

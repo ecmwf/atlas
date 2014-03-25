@@ -10,11 +10,11 @@
 
 #include "eckit/log/Log.h"
 
-#include "eckit/grid/LatLon.h"
+#include "atlas/grid/LatLon.h"
 
-//-----------------------------------------------------------------------------
+using namespace eckit;
 
-namespace eckit {
+namespace atlas {
 namespace grid {
 
 //-----------------------------------------------------------------------------

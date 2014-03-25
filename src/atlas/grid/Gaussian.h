@@ -12,18 +12,18 @@
 /// @author Tiago Quintino
 /// @date Oct 2013
 
-#ifndef eckit_grid_Gaussian_H
-#define eckit_grid_Gaussian_H
+#ifndef atlas_grid_Gaussian_H
+#define atlas_grid_Gaussian_H
 
 #include <cstddef>
 #include <vector>
 
 #include "eckit/types/Coord.h"
-#include "eckit/grid/Grid.h"
+#include "atlas/grid/Grid.h"
 
 //-----------------------------------------------------------------------------
 
-namespace eckit {
+namespace atlas {
 namespace grid {
 
 //-----------------------------------------------------------------------------

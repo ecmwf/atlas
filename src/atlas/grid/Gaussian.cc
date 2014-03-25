@@ -8,15 +8,16 @@
  * does it submit to any jurisdiction.
  */
 
+#include <cmath>
+
 #include "eckit/log/Log.h"
 
-#include "eckit/grid/Gaussian.h"
-#include "eckit/grid/Latitudes.h"
-#include <math.h>
+#include "atlas/grid/Gaussian.h"
+#include "atlas/grid/Latitudes.h"
 
-//-----------------------------------------------------------------------------
+using namespace eckit;
 
-namespace eckit {
+namespace atlas {
 namespace grid {
 
 //-----------------------------------------------------------------------------

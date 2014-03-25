@@ -29,7 +29,7 @@ ecbuild_requires_macro_version( 1.3 )
 
 set( PERSISTENT_NAMESPACE "eckit" CACHE INTERNAL "" )
 
-ecbuild_use_package( PROJECT eckit    VERSION 0.6 REQUIRED )
+ecbuild_use_package( PROJECT eckit VERSION 0.6 )
 
 # init project
 
@@ -85,6 +85,11 @@ ecbuild_add_option( FEATURE GRID
 					DEFAULT ON
 					DESCRIPTION "support for C++ grid interface" )
 
+if( ENABLE_GRID AND NOT ECKIT_FOUND )
+	set( HAVE_GRID 0 )
+	message( WARNING "atlas::grid requires eckit (not found)" )
+endif()
+
 ### tesselation
 
 ecbuild_add_option( FEATURE TESSELATION
@@ -101,35 +106,44 @@ ecbuild_add_option( FEATURE SANDBOX
 ############################################################################################
 # export package info
 
-set( ATLAS_TPLS           ${TPL} )
 set( ATLAS_INCLUDE_DIRS   ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src )
 set( ATLAS_LIBRARIES      atlas )
+set( ATLAS_TPLS           "" )
 
 if( ENABLE_FORTRAN )
-	set( ATLAS_LIBRARIES  atlasf ${ATLAS_LIBRARIES} )
 	list( APPEND ATLAS_INCLUDE_DIRS ${CMAKE_Fortran_MODULE_DIRECTORY} )
+	set( ATLAS_LIBRARIES atlasf ${ATLAS_LIBRARIES} )
 endif()
 
-if( HAVE_CGAL )
-	list( APPEND ATLAS_INCLUDE_DIRS ${CGAL_INCLUDE_DIRS} )
-	list( APPEND ATLAS_LIBRARIES ${CGAL_LIBRARY} ${CGAL_3RD_PARTY_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES} )
+if( HAVE_TESSELATION AND CGAL_FOUND )
+	list( APPEND CGAL_LIBRARIES ${CGAL_LIBRARY} ${CGAL_3RD_PARTY_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES} )
+	list( APPEND ATLAS_TPLS CGAL )
+endif()
+
+if( HAVE_GRID )
+	list( APPEND ATLAS_TPLS eckit )
 endif()
 
 get_directory_property( ATLAS_DEFINITIONS COMPILE_DEFINITIONS )
+
+foreach( _tpl ${ATLAS_TPLS} )
+	string( TOUPPER ${_tpl} TPL )
+	list( APPEND ATLAS_EXTRA_DEFINITIONS   ${${TPL}_DEFINITIONS} )
+	list( APPEND ATLAS_EXTRA_INCLUDE_DIRS  ${${TPL}_INCLUDE_DIRS} )
+	list( APPEND ATLAS_EXTRA_LIBRARIES     ${${TPL}_LIBRARIES} )
+endforeach()
 
 ############################################################################################
 # sources
 
 include( atlas_compiler_flags )
 
-include_directories( ${ATLAS_INCLUDE_DIRS} )
+include_directories( ${ATLAS_INCLUDE_DIRS} ${ATLAS_EXTRA_INCLUDE_DIRS} )
 
 add_subdirectory( src )
 
 ############################################################################################
 # finalize
-
-set( ATLAS_INCLUDE_DIRS ${ATLAS_INCLUDE_DIRS} ${CMAKE_Fortran_MODULE_DIRECTORY} )
 
 ecbuild_install_project( NAME Atlas )
 

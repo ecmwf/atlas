@@ -11,7 +11,7 @@
 #include "eckit/exception/Exceptions.h"
 #include "eckit/log/Log.h"
 
-#include "eckit/grid/Latitudes.h"
+#include "atlas/grid/Latitudes.h"
 #include <math.h>
 #include <cassert>
 
@@ -19,7 +19,7 @@
 
 //-----------------------------------------------------------------------------
 
-namespace eckit {
+namespace atlas {
 
 namespace grid {
 

@@ -12,8 +12,8 @@
 /// @author Tiago Quintino
 /// @date Oct 2013
 
-#ifndef eckit_grid_Field_H
-#define eckit_grid_Field_H
+#ifndef atlas_grid_Field_H
+#define atlas_grid_Field_H
 
 #include <vector>
 
@@ -23,7 +23,7 @@
 
 //-----------------------------------------------------------------------------
 
-namespace eckit {
+namespace atlas {
 namespace grid {
 
 

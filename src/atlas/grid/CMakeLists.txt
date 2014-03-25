@@ -20,5 +20,5 @@ ecbuild_add_library(TARGET atlas_grid
 					HEADER_DESTINATION
 						${INSTALL_INCLUDE_DIR}/atlas/grid
 					LIBS
-						atlas )
+						atlas ${ECKIT_LIBRARIES} )
 

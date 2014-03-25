@@ -8,13 +8,14 @@
  * does it submit to any jurisdiction.
  */
 
+#include <cmath>
+
 #include "eckit/log/Log.h"
 #include "eckit/runtime/Tool.h"
 
-#include "eckit/grid/Grid.h"
-#include "eckit/grid/Gaussian.h"
+#include "atlas/grid/Grid.h"
+#include "atlas/grid/Gaussian.h"
 
-#include <math.h>
 #define NINT(a) ((a) >= 0.0 ? (int)((a)+0.5) : (int)((a)-0.5))
 
 using namespace std;
@@ -43,7 +44,7 @@ public:
 
 void TestGaussian::test_constructor()
 {
-    using namespace eckit::grid;
+    using namespace atlas::grid;
 
     BoundBox2D earth ( Point2D(-90.,0.), Point2D(90.,360.) );
     Grid* g = NULL;
@@ -67,7 +68,7 @@ void TestGaussian::test_constructor()
 
 void TestGaussian::test_latitudes(const std::vector<double>& ref_data, int gaussian_number)
 {
-    using namespace eckit::grid;
+    using namespace atlas::grid;
 
     BoundBox2D earth ( Point2D(-90.,0.), Point2D(90.,360.) );
     Grid* g = NULL;
