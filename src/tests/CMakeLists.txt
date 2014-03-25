@@ -20,3 +20,5 @@ ecbuild_add_test( TARGET test_gmsh
   SOURCES  test_gmsh.cpp
   LIBS     atlas
 )
+
+add_subdirectory( grid )

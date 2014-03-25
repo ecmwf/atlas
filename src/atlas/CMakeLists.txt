@@ -118,3 +118,4 @@ ecbuild_add_library( TARGET atlasf
 	LIBS atlas
 )
 
+add_subdirectory( grid )

@@ -3,7 +3,7 @@
 
 #cmakedefine HAVE_FORTRAN_NUMBERING
 
-#cmakedefine HAVE_TRIANGULATION
+#cmakedefine HAVE_TESSELATION
 #cmakedefine CGAL_FOUND
 
 #cmakedefine HAVE_OMP
@@ -11,7 +11,5 @@
 
 #cmakedefine HAVE_GRIB
 #cmakedefine HAVE_IFS_TRANS
-
-#define ATLAS_DATADIR "@ATLAS_DATADIR@"
 
 #endif

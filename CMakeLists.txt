@@ -79,12 +79,24 @@ if( ENABLE_MPI )
    endif()
 endif()
 
-### TRIANGULATION ...
+### grid
 
-ecbuild_add_option( FEATURE TRIANGULATION
-                    DEFAULT OFF
-                    DESCRIPTION "support for unstructured mesh generation"
-                    REQUIRED_PACKAGES CGAL )
+ecbuild_add_option( FEATURE GRID
+					DEFAULT ON
+					DESCRIPTION "support for C++ grid interface" )
+
+### tesselation
+
+ecbuild_add_option( FEATURE TESSELATION
+					DEFAULT ON
+					DESCRIPTION "support for unstructured mesh generation"
+					REQUIRED_PACKAGES CGAL )
+
+### sandbox
+
+ecbuild_add_option( FEATURE SANDBOX
+					DEFAULT ON
+					DESCRIPTION "build the sandbox stuff" )
 
 ############################################################################################
 # export package info
