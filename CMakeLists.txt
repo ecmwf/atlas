@@ -122,6 +122,7 @@ endif()
 
 if( HAVE_GRID )
 	list( APPEND ATLAS_TPLS eckit )
+	list( APPEND ATLAS_LIBRARIES atlas_grid )
 endif()
 
 get_directory_property( ATLAS_DEFINITIONS COMPILE_DEFINITIONS )
