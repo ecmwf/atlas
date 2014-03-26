@@ -88,6 +88,9 @@ ecbuild_add_option( FEATURE GRID
 if( ENABLE_GRID AND NOT ECKIT_FOUND )
 	set( HAVE_GRID 0 )
 	message( WARNING "atlas::grid requires eckit (not found)" )
+else()
+	ecbuild_add_cxx11_flags()
+	ecbuild_check_cxx11( PRINT )
 endif()
 
 ### tesselation

@@ -97,9 +97,48 @@ void GribWrite::write( atlas::Mesh& mesh, grib_handle* input_h )
     GRIB_CHECK( grib_set_double(h,"jDirectionIncrementInDegrees", jDirectionIncrementInDegrees ),0 );
     GRIB_CHECK( grib_set_double(h,"iDirectionIncrementInDegrees", iDirectionIncrementInDegrees ),0 );
 
-    free(values);
     grib_handle_delete(h);
 #endif
+}
+
+void GribWrite::clone( Mesh& mesh, const std::string& source, const std::string& fname )
+{
+    FILE* fh = ::fopen( source.c_str(), "r" );
+    if( fh == 0 )
+        throw ReadError( std::string("error opening file ") + source );
+
+    int err = 0;
+    grib_handle* clone_h = grib_handle_new_from_file(0,fh,&err);
+    if( clone_h == 0 || err != 0 )
+        throw ReadError( std::string("error reading grib file ") + source );
+
+    grib_handle* h = GribWrite::clone( mesh, clone_h );
+
+    grib_write_message(h,fname.c_str(),"w");
+
+    grib_handle_delete(h);
+}
+
+grib_handle* GribWrite::clone( Mesh &mesh, grib_handle* source )
+{
+    FunctionSpace& nodes  = mesh.function_space( "nodes" );
+    const size_t npts     = nodes.bounds()[1];
+    FieldT<double>& field = nodes.field<double>("field");
+
+    long nb_nodes = 0;
+    grib_get_long(source,"numberOfDataPoints",&nb_nodes);
+
+    ASSERT( npts == nb_nodes );
+
+    grib_handle* h = grib_handle_clone(source);
+    if(!h)
+        throw eckit::WriteError( std::string("failed to clone output grib") );
+
+    GRIB_CHECK( grib_set_long(h,"bitsPerValue",16),0 );
+
+    GRIB_CHECK(grib_set_double_array(h,"values",&(field.data()[0]),npts),0);
+
+    return h;
 }
 
 //------------------------------------------------------------------------------------------------------
