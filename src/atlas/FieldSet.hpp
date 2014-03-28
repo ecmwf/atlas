@@ -19,8 +19,8 @@ public:
   bool has_field(const std::string& name) { return index_.count(name); }
   Field& field(const std::string& name);
   Field& field(size_t idx);
-  std::vector<Field*>& fields() { return fields_; };
-  size_t size() const { return fields_.size(); };
+  std::vector<Field*>& fields() { return fields_; }
+  size_t size() const { return fields_.size(); }
 private:
   std::string name_;
   std::map< std::string, size_t > index_;
