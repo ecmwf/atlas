@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <limits>
 
-#include "FloatCompare.h"
+#include "atlas/grid/FloatCompare.h"
 
 using namespace std;
 
@@ -119,6 +119,14 @@ bool AlmostEqualRelativeAndAbs(T A, T B, T maxDiff, T maxRelDiff)
     if (diff <= largest * maxRelDiff)
         return true;
     return false;
+}
+
+//-----------------------------------------------------------------------------
+
+bool FloatCompare::is_equal(float a, float b)
+{
+//    return AlmostEqualUlps(a,b,10);
+    return AlmostEqualUlpsAndAbs(a,b,std::numeric_limits<float>::epsilon(),10);
 }
 
 //-----------------------------------------------------------------------------

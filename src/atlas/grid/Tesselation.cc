@@ -55,7 +55,7 @@ namespace atlas {
 
 #ifdef CGAL_FOUND
 
-Polyhedron_3* create_convex_hull_from_points( const std::vector< KPoint3 >& pts )
+Polyhedron_3* create_convex_hull_from_points( const std::vector< Point3 >& pts )
 {
     Timer t("convex hull");
 
@@ -103,7 +103,7 @@ void cgal_polyhedron_to_atlas_mesh(  atlas::Mesh& mesh, Polyhedron_3& poly, Poin
 
     FieldT<int>& triag_nodes = triags.create_field<int>("nodes",3);
 
-    KPoint3 pt;
+    Point3 pt;
     size_t idx[3];
     Polyhedron_3::Vertex_const_handle vts[3];
 
@@ -188,7 +188,7 @@ void Tesselation::tesselate( atlas::Mesh& mesh )
 
     PointSet points( mesh ); /* will remember each point index in readpts */
 
-    std::vector< KPoint3 > ipts;
+    std::vector< Point3 > ipts;
     std::vector< size_t > idxs;
 
     points.list_unique_points( ipts, idxs );

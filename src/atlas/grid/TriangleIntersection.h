@@ -1,22 +1,13 @@
-#ifndef eckit_TriangleIntersection_h
-#define eckit_TriangleIntersection_h
+#ifndef atlas_grid_TriangleIntersection_h
+#define atlas_grid_TriangleIntersection_h
 
-#define EIGEN_NO_AUTOMATIC_RESIZING
-#define EIGEN_DONT_ALIGN
-#define EIGEN_DONT_VECTORIZE
+#include "eckit/maths/Eigen.h"
 
-#include <Eigen/Core>
-#include <Eigen/Dense>
-#include <Eigen/Geometry>
-#include <Eigen/Sparse>
+#include "atlas/grid/FloatCompare.h"
 
-#include "atlas/MeshGen.hpp"
+//------------------------------------------------------------------------------------------------------
 
-#include "FloatCompare.h"
-
-//-----------------------------------------------------------------------------
-
-namespace eckit {
+namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -79,29 +70,13 @@ struct Triag
 
 //------------------------------------------------------------------------------------------------------
 
-/// http://www.scratchapixel.com/lessons/3d-basic-lessons/lesson-9-ray-triangle-intersection/m-ller-trumbore-algorithm/
+/// http://www.scratchapixel.com/lessons/3d-basic-lessons/lesson-9-ray-triangle-intersection/m-ller-trumbore-algorithm
 
-bool triag_intersection( const Triag& tg, const Ray& r, Isect& isect, const double slack = 2*std::numeric_limits<double>::epsilon() )
-{
-    Eigen::Vector3d edge1 = tg.v1 - tg.v0;
-    Eigen::Vector3d edge2 = tg.v2 - tg.v0;
-    Eigen::Vector3d pvec  = r.dir.cross(edge2);
-    const double det = edge1.dot(pvec);
-    if( std::abs(det) < slack ) return false;
-    const double invDet = 1. / det;
-    Eigen::Vector3d tvec = r.orig - tg.v0;
-    isect.u = tvec.dot(pvec) * invDet;
-    if( isect.u + slack < 0 || isect.u - slack > 1) return false;
-    Eigen::Vector3d qvec = tvec.cross(edge1);
-    isect.v = r.dir.dot(qvec) * invDet;
-    if (isect.v + slack < 0 || isect.u + isect.v - slack > 1) return false;
-    isect.t = edge2.dot(qvec) * invDet;
-    return true;
-}
+bool triag_intersection( const Triag& tg, const Ray& r, Isect& isect, const double slack = 2*std::numeric_limits<double>::epsilon() );
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------
 
-} // namespace eckit
+} // namespace atlas
 
 #endif
 

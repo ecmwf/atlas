@@ -3,10 +3,7 @@
 #ifndef atlas_grid_Tesselation_hpp
 #define atlas_grid_Tesselation_hpp
 
-#include <vector>
-
-#include "PointIndex3.h"
-#include "Tesselation.h"
+#include "atlas/Mesh.hpp"
 
 namespace atlas {
 

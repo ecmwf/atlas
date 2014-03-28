@@ -1,5 +1,5 @@
-#ifndef eckit_PointSet_h
-#define eckit_PointSet_h
+#ifndef atlas_grid_PointSet_h
+#define atlas_grid_PointSet_h
 
 #include <cassert>
 #include <fstream>
@@ -10,16 +10,15 @@
 
 #include <boost/progress.hpp>
 
-#include "atlas/Mesh.hpp"
-
 #include "eckit/log/Timer.h"
 
-#include "PointIndex3.h"
-#include "FloatCompare.h"
+#include "atlas/Mesh.hpp"
+#include "atlas/grid/PointIndex3.h"
+#include "atlas/grid/FloatCompare.h"
 
 //-----------------------------------------------------------------------------
 
-namespace eckit {
+namespace atlas {
 
 class PointSet {
 
@@ -30,7 +29,7 @@ public: // types
 
 public: // methods
 
-    PointSet( const std::vector< KPoint3 >& ipts );
+    PointSet( const std::vector< Point3 >& ipts );
 
     PointSet( atlas::Mesh& mesh );
 
@@ -41,7 +40,7 @@ public: // methods
     template < typename POINT_T >
     void list_unique_points( std::vector< POINT_T >& opts, std::vector< size_t >& idxs )
     {
-        Timer t("finding unique points");
+        eckit::Timer t("finding unique points");
 
         ASSERT( opts.empty() );
         ASSERT( idxs.empty() );
@@ -53,7 +52,7 @@ public: // methods
 
         for( PointIndex3::iterator i = tree_->begin(); i != tree_->end(); ++i )
         {
-            KPoint3 p (  i->point() );
+            Point3 p (  i->point() );
             size_t  ip = i->payload();
 //            std::cout << "point " << ip << " " << p << std::endl;
             size_t uidx = unique(p,ip);
@@ -71,7 +70,7 @@ public: // methods
         }
     }
 
-    size_t unique( const eckit::KPoint3& p, size_t idx = std::numeric_limits<size_t>::max() )
+    size_t unique( const Point3& p, size_t idx = std::numeric_limits<size_t>::max() )
     {
         DupStore_t::iterator dit = duplicates_.find(idx);
         if( dit != duplicates_.end() )
@@ -104,7 +103,7 @@ protected: // methods
         tree_->build(pidx.begin(), pidx.end());
     }
 
-    size_t search_unique( const eckit::KPoint3& p, size_t idx, u_int32_t n  );
+    size_t search_unique( const Point3& p, size_t idx, u_int32_t n  );
 
 protected:
 

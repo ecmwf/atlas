@@ -75,10 +75,6 @@ ecbuild_add_library( TARGET atlas
 		Gather.hpp
 		Gather.cpp
 		MPL.hpp
-		MeshGen.hpp
-		MeshGen.cpp
-	INCLUDES    "${CGAL_INCLUDE_DIRS}"
-	LIBS        "${CGAL_LIBRARY}" "${CGAL_3RD_PARTY_LIBRARIES}" "${GMP_LIBRARIES}" "${MPFR_LIBRARIES}"
 ) 
 
 ### fortran bindings

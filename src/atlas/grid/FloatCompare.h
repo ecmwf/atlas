@@ -7,9 +7,12 @@ namespace eckit {
 
 //-----------------------------------------------------------------------------
 
+/// @todo move this class into eckit
+
 class FloatCompare {
 public:
 
+    static bool is_equal( float  a, float  b );
     static bool is_equal( double a, double b );
 
 };

@@ -6,7 +6,7 @@
 
 #include "atlas/Gmsh.hpp"
 #include "atlas/Mesh.hpp"
-#include "atlas/MeshGen.hpp"
+#include "atlas/grid/Tesselation.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -21,16 +21,13 @@ using namespace atlas;
 
 int main()
 {
-    std::vector< Point3 >* pts = atlas::MeshGen::generate_latlon_points(NLATS, NLONG);
+    std::unique_ptr<Mesh> mesh( new Mesh() );
 
-    std::cout << "generated " << pts->size() << " points" << std::endl;
+    atlas::Tesselation::generate_latlon_points( *mesh, NLATS, NLONG );
 
-    Mesh* mesh = atlas::MeshGen::generate_from_points( *pts );
+    atlas::Tesselation::tesselate(*mesh);
 
     atlas::Gmsh::write3dsurf(*mesh, std::string("earth.msh") );
-
-    delete pts;
-    delete mesh;
 
     return 0;
 }

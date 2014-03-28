@@ -3,12 +3,12 @@
 #include "GribRead.h"
 
 #include "atlas/Mesh.hpp"
-#include "atlas/MeshGen.hpp"
 #include "atlas/FunctionSpace.hpp"
 #include "atlas/Parameters.hpp"
 #include "atlas/Field.hpp"
 
-#include "Tesselation.h"
+#include "atlas/grid/Point3.h"
+#include "atlas/grid/Tesselation.h"
 
 //-----------------------------------------------------------------------------
 
