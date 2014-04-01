@@ -55,8 +55,7 @@ public: // methods
 
     virtual size_t nbPoints() const = 0;
 
-//    void coordinates2d( atlas::Field& f ) const = 0;
-//    void coordinates3d( atlas::Field& f ) const = 0;
+    virtual const std::vector<Point>& coordinates() const = 0;
 
 protected:
 

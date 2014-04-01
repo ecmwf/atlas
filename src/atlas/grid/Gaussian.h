@@ -41,9 +41,9 @@ public: // methods
 
     virtual size_t nbPoints() const { return coordinates_.size(); }
 
-protected:
+    virtual const std::vector<Point>& coordinates() const { return coordinates_; }
 
-    const std::vector<Point>& coordinates() const { return coordinates_; }
+protected:
 
     size_t resolution_;                 ///< number of longitude increments - can be any size as no requirement for 
 

@@ -19,13 +19,13 @@ namespace grid {
 
 //-----------------------------------------------------------------------------
 
-Field::MetaData::MetaData()
+FieldH::MetaData::MetaData()
 {
 }
 
 //-----------------------------------------------------------------------------
 
-Field::Field( Grid* grid, MetaData* metadata, std::vector<double>* data ) :
+FieldH::FieldH( Grid* grid, MetaData* metadata, std::vector<double>* data ) :
     grid_(grid),
     metadata_(metadata),
     data_(data)
@@ -37,7 +37,7 @@ Field::Field( Grid* grid, MetaData* metadata, std::vector<double>* data ) :
 
 }
 
-Field::~Field()
+FieldH::~FieldH()
 {
     Log::info() << "Destroy a Field" << std::endl;
     if(grid_) delete grid_; 
@@ -47,7 +47,7 @@ Field::~Field()
 
 //-----------------------------------------------------------------------------
 
-FieldSet::FieldSet(const Field::Vector& fields) :
+FieldSet::FieldSet(const FieldH::Vector& fields) :
     fields_(fields)
 {
 }

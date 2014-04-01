@@ -58,10 +58,10 @@ void TestGaussian::test_constructor()
     ASSERT( g->nbPoints() == (48 * 2 * ( 48 * 4 + 1) ) );
 
     /// @todo substitute these comparisons with proper floating point comparisons
-    ASSERT( g->boundingBox().bottom_left_.lat_ == -90. );
-    ASSERT( g->boundingBox().bottom_left_.lon_ ==   0. );
-    ASSERT( g->boundingBox().top_right_.lat_ ==  90. );
-    ASSERT( g->boundingBox().top_right_.lon_ == 360. );
+    ASSERT( g->boundingBox().bottom_left_.lat() == -90. );
+    ASSERT( g->boundingBox().bottom_left_.lon() ==   0. );
+    ASSERT( g->boundingBox().top_right_.lat() ==  90. );
+    ASSERT( g->boundingBox().top_right_.lon() == 360. );
 
 }
 
@@ -87,7 +87,7 @@ void TestGaussian::test_latitudes(const std::vector<double>& ref_data, int gauss
 
     for (unsigned int i = 0; i < g->nbPoints(); i++)
     {
-        double generated_latitude = g->coordinates()[i].lat_;
+        double generated_latitude = g->coordinates()[i].lat();
         int gen = NINT(pow(10.0, NDP) * generated_latitude) ;
 
         // we can't be sure of the data order and don't want to enforce

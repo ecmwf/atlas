@@ -47,14 +47,14 @@ void TestField::test_constructor()
     Grid* g = new LatLon( 4, 4, earth );
     ASSERT( g );
 
-    Field::MetaData* meta = new Field::MetaData();
+    FieldH::MetaData* meta = new FieldH::MetaData();
     ASSERT( meta );
 
-    Field::Data*     data = new Field::Data();
+    FieldH::Data*     data = new FieldH::Data();
     ASSERT( data );
 
     // create some reference data for testing
-    Field::Data ref_data;
+    FieldH::Data ref_data;
     for (unsigned int i = 0; i < 1000; i++)
         ref_data.push_back((double)i);
 
@@ -63,20 +63,20 @@ void TestField::test_constructor()
     for (unsigned int i = 0; i < ref_data.size(); i++)
         data->push_back(ref_data[i]);
 
-    Field* f = new Field(g,meta,data);
+    FieldH* f = new FieldH(g,meta,data);
     ASSERT( f );
 
-    Field::Vector fields;
+    FieldH::Vector fields;
     fields.push_back(f);
 
     FieldSet fs(fields);
     //ASSERT(fs.grid().get() == g); 
     
     // iterate over the fields
-    for (Field::Vector::iterator it = fs.fields().begin(); it != fs.fields().end(); ++it)
+    for (FieldH::Vector::iterator it = fs.fields().begin(); it != fs.fields().end(); ++it)
     {
         // extract and test the data
-        Field::Data& d = (*it)->data();
+        FieldH::Data& d = (*it)->data();
         for (unsigned int i = 0; i < ref_data.size(); i++)
         {
             ASSERT(ref_data[i] == d[i]);

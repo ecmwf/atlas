@@ -41,9 +41,9 @@ public: // methods
 
     virtual size_t nbPoints() const { return points_.size(); }
 
-protected:
+    virtual const std::vector<Point>& coordinates() const { return points_; }
 
-    const std::vector< Point >& coordinates() const { return points_; }
+protected:
 
     size_t nlat_;                       ///< number of latitude  increments - ODD number for coindidence with 0,0 on Earth 
     size_t nlon_;                       ///< number of longitude increments - can be any size as no requirement for 

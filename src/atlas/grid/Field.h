@@ -26,11 +26,10 @@
 namespace atlas {
 namespace grid {
 
-
 //-----------------------------------------------------------------------------
 
 /// Represents a Field which store one type of data parameter
-class Field : private eckit::NonCopyable {
+class FieldH : private eckit::NonCopyable {
 public: // types
 
     class MetaData : public eckit::StringDict {
@@ -40,15 +39,15 @@ public: // types
 
     };
 
-    typedef std::vector< Field* >  Vector;
-    typedef std::vector< Field* >::const_iterator Iterator;
+    typedef std::vector< FieldH* >  Vector;
+    typedef std::vector< FieldH* >::const_iterator Iterator;
     typedef std::vector< double >  Data;
 
 public: // methods
 
-    Field( Grid* grid, MetaData* metadata, std::vector<double>* data );
+    FieldH( Grid* grid, MetaData* metadata, std::vector<double>* data );
 
-    ~Field();
+    ~FieldH();
 
     const MetaData& metadata() const { return *metadata_; }
 
@@ -80,17 +79,17 @@ class FieldSet : private eckit::NonCopyable {
 public: // methods
 
     /// Takes ownership of the fields
-    FieldSet( const Field::Vector& fields = Field::Vector() );
+    FieldSet( const FieldH::Vector& fields = FieldH::Vector() );
 
     ~FieldSet();
     
-    const Field::Vector& fields() const { return fields_; }
+    const FieldH::Vector& fields() const { return fields_; }
 
-    Field::Vector& fields() { return fields_; }
+    FieldH::Vector& fields() { return fields_; }
 
 protected:
 
-    Field::Vector fields_;
+    FieldH::Vector fields_;
 };
 
 //-----------------------------------------------------------------------------
