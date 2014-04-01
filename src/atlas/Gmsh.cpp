@@ -440,31 +440,32 @@ void Gmsh::write3dsurf(Mesh &mesh, const std::string& file_path)
     file << std::flush;
 
     // nodal data
-#if 0
     for( size_t fidx = 0; fidx < nodes.nb_fields(); ++fidx )
     {
-
         Field& field = nodes.field(fidx);
 
         if( field.data_type() == "real64" )
         {
-            FieldT<double>& f = field;
-            file << "$NodeData\n";
-            file << "1\n";
-            file << "\""+f.name()+"\"\n";
-            file << "1\n";
-            file << "0.\n";
-            file << "3\n";
-            file << "0\n";
-            file << "1\n";
-            file << nb_nodes << "\n";
-            for( size_t n = 0; n < nb_nodes; ++n )
-              file << glb_idx(n) << " " << f(n)<<"\n";
-            file << "$EndNodeData\n";
-            file << std::flush;
+            FieldT<double>& f = dynamic_cast< FieldT<double>&> ( field );
+
+            for( size_t idx = 0; idx < field.bounds()[0]; ++idx )
+            {
+                file << "$NodeData\n";
+                file << "1\n";
+                file << "\""+f.name() << "[" << idx << "]" << "\"\n";
+                file << "1\n";
+                file << "0.\n";
+                file << "3\n";
+                file << "0\n";
+                file << "1\n";
+                file << nb_nodes << "\n";
+                for( size_t n = 0; n < nb_nodes; ++n )
+                  file << glb_idx(n) << " " << f(n) <<"\n";
+                file << "$EndNodeData\n";
+                file << std::flush;
+            }
         }
     }
-#endif
     file.close();
 }
 
