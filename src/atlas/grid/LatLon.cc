@@ -19,7 +19,7 @@ namespace grid {
 
 //-----------------------------------------------------------------------------
 
-LatLon::LatLon( size_t nlat, size_t nlon, const BoundBox2D& bb) :
+LatLon::LatLon( size_t nlat, size_t nlon, const BoundBox& bb) :
     nlat_(nlat),
     nlon_(nlon),
     bound_box_(bb)
@@ -31,16 +31,16 @@ LatLon::LatLon( size_t nlat, size_t nlon, const BoundBox2D& bb) :
 
     points_.reserve( (nlat_ + 1) * (nlon_ + 1) );
 
-    double dlat = ( bb.top_right_.lat_ - bb.bottom_left_.lat_ ) / nlat ;
-    double dlon = ( bb.top_right_.lon_ - bb.bottom_left_.lon_ ) / nlon ;
+    double dlat = ( bb.top_right_.lat() - bb.bottom_left_.lat() ) / nlat ;
+    double dlon = ( bb.top_right_.lon() - bb.bottom_left_.lon() ) / nlon ;
 
-    double plat = bb.bottom_left_.lat_;
+    double plat = bb.bottom_left_.lat();
     for( size_t i = 0; i <= nlat_; ++i )
     {
-        double plon = bb.bottom_left_.lon_;
+        double plon = bb.bottom_left_.lon();
         for( size_t j = 0; j <= nlon_; ++j )
         {
-            points_.push_back( Point2D(  plat,plon ) );
+            points_.push_back( Point( plat, plon ) );
             plon += dlon;
         }
         plat += dlat;
@@ -52,7 +52,12 @@ LatLon::~LatLon()
     Log::info() << "Destroy a LatLon" << std::endl;
 }
 
-BoundBox2D LatLon::boundingBox() const
+std::string LatLon::hash() const
+{
+    NOTIMP;
+}
+
+Grid::BoundBox LatLon::boundingBox() const
 {
     return bound_box_;
 }

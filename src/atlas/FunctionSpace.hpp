@@ -16,13 +16,13 @@ namespace atlas {
 class Field;
 template <typename T> class FieldT;
 
-// TODO:
+/// @todo
 // Horizontal nodes are always the slowest moving index
 // Then variables
 // Then levels are fastest moving index
-class FunctionSpace
-{
-public:
+class FunctionSpace {
+
+public: // methods
 
   FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<int>& bounds);
 
@@ -32,12 +32,13 @@ public:
 
   int index() const { return idx_; }
 
+  Field& field( size_t );
   Field& field(const std::string& name);
 
   bool has_field(const std::string& name) { return index_.count(name); }
 
   template< typename DATA_TYPE>
-    FieldT<DATA_TYPE>& field(const std::string& name);
+  FieldT<DATA_TYPE>& field(const std::string& name);
 
   template< typename DATA_TYPE >
   FieldT<DATA_TYPE>& create_field(const std::string& name, size_t nb_vars);
@@ -94,21 +95,26 @@ public:
 
   int glb_dof() const { return glb_dof_; }
 
-protected:
-  std::string name_;
+protected: // members
+
   int idx_;
+  int dof_;
+  int glb_dof_;
+
+  std::string name_;
   std::vector<int> bounds_;
   std::map< std::string, size_t > index_;
   std::vector< Field* > fields_;
+
   HaloExchange halo_exchange_;
   Gather gather_;
-  int dof_;
-  int glb_dof_;
   Metadata metadata_;
 
-private:
-    // forbid copy constructor by making it private
-    FunctionSpace(const FunctionSpace& other);
+private: // copy not allowed
+
+    FunctionSpace(const FunctionSpace&);
+    FunctionSpace& operator=(const FunctionSpace&);
+
 };
 
 

@@ -18,7 +18,6 @@
 #include <cstddef>
 #include <vector>
 
-#include "eckit/types/Coord.h"
 #include "atlas/grid/Grid.h"
 
 //-----------------------------------------------------------------------------
@@ -32,20 +31,25 @@ class Gaussian : public Grid {
 
 public: // methods
 
-    Gaussian( size_t resolution, const BoundBox2D& bb );
+    Gaussian( size_t resolution, const BoundBox& bb );
 
     virtual ~Gaussian();
 
-    virtual const std::vector<Point2D>& coordinates() const { return coordinates_; }
-    virtual BoundBox2D boundingBox() const;
+    virtual std::string hash() const;
+
+    virtual BoundBox boundingBox() const;
+
+    virtual size_t nbPoints() const { return coordinates_.size(); }
 
 protected:
 
+    const std::vector<Point>& coordinates() const { return coordinates_; }
+
     size_t resolution_;                 ///< number of longitude increments - can be any size as no requirement for 
 
-    std::vector< Point2D > coordinates_;     ///< storage of coordinate points
+    std::vector< Point > coordinates_;     ///< storage of coordinate points
 
-    BoundBox2D bound_box_;              ///< bounding box for the domain
+    BoundBox bound_box_;              ///< bounding box for the domain
 
 private:
 

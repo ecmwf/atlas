@@ -46,7 +46,7 @@ void TestGaussian::test_constructor()
 {
     using namespace atlas::grid;
 
-    BoundBox2D earth ( Point2D(-90.,0.), Point2D(90.,360.) );
+    Grid::BoundBox earth ( Grid::Point(-90.,0.), Grid::Point(90.,360.) );
     Grid* g = NULL;
 
     // standard case
@@ -55,7 +55,7 @@ void TestGaussian::test_constructor()
 
     ASSERT( g );
     /// @todo review this: we wrap from 0 to 360 inclusive as we do for latlon
-    ASSERT( g->coordinates().size() == (48 * 2 * ( 48 * 4 + 1) ) );
+    ASSERT( g->nbPoints() == (48 * 2 * ( 48 * 4 + 1) ) );
 
     /// @todo substitute these comparisons with proper floating point comparisons
     ASSERT( g->boundingBox().bottom_left_.lat_ == -90. );
@@ -70,7 +70,7 @@ void TestGaussian::test_latitudes(const std::vector<double>& ref_data, int gauss
 {
     using namespace atlas::grid;
 
-    BoundBox2D earth ( Point2D(-90.,0.), Point2D(90.,360.) );
+    Grid::BoundBox earth ( Grid::Point(-90.,0.), Grid::Point(90.,360.) );
     Grid* g = NULL;
 
     // standard case
@@ -83,9 +83,9 @@ void TestGaussian::test_latitudes(const std::vector<double>& ref_data, int gauss
     // number of decimal places to compare numbers (see reference data above)
     int NDP = 6;
 
-    ASSERT( g->coordinates().size() == (gaussian_number * 2 * ( gaussian_number * 4 + 1) ) );
+    ASSERT( g->nbPoints() == (gaussian_number * 2 * ( gaussian_number * 4 + 1) ) );
 
-    for (unsigned int i = 0; i < g->coordinates().size(); i++)
+    for (unsigned int i = 0; i < g->nbPoints(); i++)
     {
         double generated_latitude = g->coordinates()[i].lat_;
         int gen = NINT(pow(10.0, NDP) * generated_latitude) ;

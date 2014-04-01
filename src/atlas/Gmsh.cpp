@@ -53,7 +53,7 @@ Mesh& Gmsh::read(const std::string& file_path)
   int g;
   double x,y,z;
   int max_glb_idx=0;
-  for (int n=0; n<nb_nodes; ++n)
+  for( size_t n = 0; n < nb_nodes; ++n )
   {
     file >> g >> x >> y >> z;
     glb_idx(n) = g;
@@ -216,7 +216,7 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path)
   file << "$EndMeshFormat\n";
   file << "$Nodes\n";
   file << nb_nodes << "\n";
-  for( int n=0; n<nb_nodes; ++n)
+  for( size_t n = 0; n < nb_nodes; ++n )
   {
     double r     = 1.;
     double lon   = coords(XX,n);
@@ -279,7 +279,7 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path)
     file << "0\n";
     file << "1\n";
     file << nb_nodes << "\n";
-    for (int n=0; n<nb_nodes; ++n)
+    for( size_t n = 0; n < nb_nodes; ++n )
       file << glb_idx(n) << " " << field(n)<<"\n";
     file << "$EndNodeData\n";
     file << std::flush;
@@ -440,25 +440,31 @@ void Gmsh::write3dsurf(Mesh &mesh, const std::string& file_path)
     file << std::flush;
 
     // nodal data
-
-    if( nodes.has_field("field") )
+#if 0
+    for( size_t fidx = 0; fidx < nodes.nb_fields(); ++fidx )
     {
-      FieldT<double>& field = nodes.field<double>("field");
-      file << "$NodeData\n";
-      file << "1\n";
-      file << "\""+field.name()+"\"\n";
-      file << "1\n";
-      file << "0.\n";
-      file << "3\n";
-      file << "0\n";
-      file << "1\n";
-      file << nb_nodes << "\n";
-      for (int n=0; n<nb_nodes; ++n)
-        file << glb_idx(n) << " " << field(n)<<"\n";
-      file << "$EndNodeData\n";
-      file << std::flush;
-    }
 
+        Field& field = nodes.field(fidx);
+
+        if( field.data_type() == "real64" )
+        {
+            FieldT<double>& f = field;
+            file << "$NodeData\n";
+            file << "1\n";
+            file << "\""+f.name()+"\"\n";
+            file << "1\n";
+            file << "0.\n";
+            file << "3\n";
+            file << "0\n";
+            file << "1\n";
+            file << nb_nodes << "\n";
+            for( size_t n = 0; n < nb_nodes; ++n )
+              file << glb_idx(n) << " " << f(n)<<"\n";
+            file << "$EndNodeData\n";
+            file << std::flush;
+        }
+    }
+#endif
     file.close();
 }
 

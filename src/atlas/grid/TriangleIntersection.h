@@ -3,7 +3,7 @@
 
 #include "eckit/maths/Eigen.h"
 
-#include "atlas/grid/FloatCompare.h"
+#include "eckit/types/FloatCompare.h"
 
 //------------------------------------------------------------------------------------------------------
 

@@ -1,49 +1,68 @@
 // (C) Copyright 1996-2014 ECMWF.
 
-#ifndef Field_hpp
-#define Field_hpp
+#ifndef atlas_Field_hpp
+#define atlas_Field_hpp
 
 #include <vector>
 #include <string>
 
 #include "atlas/Metadata.hpp"
+
+//------------------------------------------------------------------------------------------------------
+
 namespace atlas {
 
 class FunctionSpace;
 
+//------------------------------------------------------------------------------------------------------
+
 class Field {
-public:
+
+public: // methods
+
   enum { UNDEF_VARS = -1 };
 
   Field(const std::string& name, const int nb_vars, FunctionSpace& function_space);
+
   virtual ~Field() {}
-  template <typename DATA_TYPE>
-    std::vector< DATA_TYPE >& data();
+
+  template <typename DATA_TYPE> std::vector< DATA_TYPE >& data();
+
   virtual std::string data_type() const = 0;
+
   virtual void allocate(const std::vector<int>& bounds)=0;
   const std::string& name() { return name_; }
+
   Metadata& metadata() { return metadata_; }
+
   FunctionSpace& function_space() { return function_space_; }
+
   const std::vector<int>& bounds() const { return bounds_; }
   int nb_vars() const { return nb_vars_; }
+
   virtual size_t size() const = 0;
   virtual void halo_exchange() = 0;
-protected:
+
+protected: // members
+
   std::string name_;
   std::vector<int> bounds_;
   FunctionSpace& function_space_;
   Metadata metadata_;
   int nb_vars_;
 
-private:
-    // forbid copy constructor by making it private
-    Field(const Field& other);
+private: // copy not allowed
+
+    Field(const Field&);
+    Field& operator=(const Field&);
 };
 
+//------------------------------------------------------------------------------------------------------
+
 template< typename DATA_TYPE >
-class FieldT : public Field
-{
-public:
+class FieldT : public Field {
+
+public: // methods
 
     FieldT(const std::string& name, const int nb_vars, FunctionSpace& function_space);
 
@@ -104,7 +123,8 @@ inline void FieldT<DATA_TYPE>::allocate(const std::vector<int>& bounds)
   data_.resize(tot_size);
 }
 
-// ------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------
+
 // C wrapper interfaces to C++ routines
 extern "C" 
 {
@@ -117,8 +137,9 @@ extern "C"
   Metadata* atlas__Field__metadata (Field* This);
   FunctionSpace* atlas__Field__function_space (Field* This);
 }
-// ------------------------------------------------------------------
+
+//------------------------------------------------------------------------------------------------------
 
 } // namespace atlas
 
-#endif // field_hpp
+#endif

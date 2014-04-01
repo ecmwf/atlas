@@ -22,67 +22,26 @@
 #include "eckit/memory/NonCopyable.h"
 #include "eckit/exception/Exceptions.h"
 
-//-----------------------------------------------------------------------------
+#include "eckit/geometry/Point2.h"
+
+#include "atlas/Field.hpp"
+
+//------------------------------------------------------------------------------------------------------
 
 namespace atlas {
 namespace grid {
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------
 
-class Point2D {
-public:
-
-    Point2D( double lat, double lon ) : lat_(lat),lon_(lon) {}
-    Point2D( ) : lat_(0.0), lon_(0.0) {}
-
-    double lat_;
-    double lon_;
-
-    /// Calculates distance between two points
-    static double distance(const Point2D& a, const Point2D& b)
-    {
-        return std::sqrt(distance2(a, b));
-    }
-    
-    /// Calculates distance squared between two points
-    static double distance2(const Point2D& a, const Point2D& b)
-    {
-        const double dlat = a.lat_ - b.lat_;
-        const double dlon = a.lon_ - b.lon_;
-        return dlat*dlat + dlon*dlon;
-    }
-
-    /// Tests whether two points can be considered equal
-    /// @todo the epsilon could be imported from config file
-    static bool equal(const Point2D& a, const Point2D& b, const double epsilon = 1.0e-8 )
-    {
-		/// @todo take epsilon from some general config
-		
-        return ((std::fabs(a.lat_ - b.lat_) < epsilon ) &&
-                (std::fabs(a.lon_ - b.lon_) < epsilon ) );
-                
-    }
-};
-
-//-----------------------------------------------------------------------------
-
-struct BoundBox2D
-{
-    BoundBox2D( const Point2D& bottom_left, const Point2D& top_right ) :
-        bottom_left_(bottom_left),
-        top_right_(top_right)
-    {
-        ASSERT( bottom_left_.lat_ < top_right_.lat_ );
-        ASSERT( bottom_left_.lon_ < top_right_.lon_ );
-    }
-
-    Point2D bottom_left_;
-    Point2D top_right_;
-};
-
-//-----------------------------------------------------------------------------
+/// Interface to a grid of points in a 2d cartesian space
+/// For example a LatLon grid or a Reduced Graussian grid
 
 class Grid : private eckit::NonCopyable {
+
+public: // types
+
+    typedef eckit::geometry::LLPoint            Point;     ///< point type
+    typedef eckit::geometry::BoundBox2<Point>   BoundBox;  ///< boundbox type
 
 public: // methods
 
@@ -90,19 +49,22 @@ public: // methods
 
     virtual ~Grid();
 
-    virtual const std::vector<Point2D>& coordinates() const = 0;
+    virtual std::string hash() const = 0;
 
-    virtual BoundBox2D boundingBox() const = 0;
+    virtual BoundBox boundingBox() const = 0;
 
-    virtual std::string hash() const;
+    virtual size_t nbPoints() const = 0;
+
+//    void coordinates2d( atlas::Field& f ) const = 0;
+//    void coordinates3d( atlas::Field& f ) const = 0;
 
 protected:
 
 };
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------
 
 } // namespace grid
-} // namespace eckit
+} // namespace atlas
 
 #endif

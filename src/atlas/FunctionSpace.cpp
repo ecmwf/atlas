@@ -1,5 +1,6 @@
 // (C) Copyright 1996-2014 ECMWF.
 
+#include <cassert>
 #include <iostream>
 #include <sstream>
 
@@ -159,10 +160,16 @@ void FunctionSpace::remove_field(const std::string& name)
   index_.erase(name);
 }
 
+Field& FunctionSpace::field( size_t idx )
+{
+    assert( idx < fields_.size() );
+    return *fields_[ idx ];
+}
+
 Field& FunctionSpace::field(const std::string& name)
 {
-  //std::cout << "C++ : Access field " << name << std::endl;
-  return *fields_[ index_.at(name) ];
+    //std::cout << "C++ : Access field " << name << std::endl;
+    return *fields_[ index_.at(name) ];
 }
 
 template<>

@@ -21,17 +21,10 @@ namespace grid {
 
 Grid::Grid()
 {
-    Log::info() << "Build a Grid" << std::endl;
 }
 
 Grid::~Grid()
 {
-    Log::info() << "Destroy a Grid" << std::endl;
-}
-
-std::string Grid::hash() const
-{
-    NOTIMP;
 }
 
 //-----------------------------------------------------------------------------

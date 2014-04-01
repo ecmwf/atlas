@@ -11,7 +11,7 @@
 #include "atlas/Field.hpp"
 #include "atlas/Parameters.hpp"
 
-#include "atlas/grid/Point3.h"
+#include "eckit/geometry/Point3.h"
 #include "atlas/grid/TriangleIntersection.h"
 
 //------------------------------------------------------------------------------------------------------
@@ -71,8 +71,8 @@ public:
 
 struct PointIndex3TreeTrait
 {
-    typedef Point3   Point;
-    typedef size_t    Payload;
+    typedef eckit::geometry::Point3 Point;
+    typedef size_t                  Payload;
 };
 
 //------------------------------------------------------------------------------------------------------

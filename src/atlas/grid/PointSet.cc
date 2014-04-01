@@ -13,7 +13,7 @@ namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
 
-PointSet::PointSet( const std::vector< Point3 >& ipts ) : npts_(ipts.size())
+PointSet::PointSet( const std::vector< Point >& ipts ) : npts_(ipts.size())
 {
     build(ipts);
 }
@@ -43,7 +43,7 @@ PointSet::PointSet( atlas::Mesh& mesh )
     tree_->build(pidx.begin(), pidx.end());
 }
 
-size_t PointSet::search_unique( const Point3& p, size_t idx, u_int32_t n  )
+size_t PointSet::search_unique( const Point& p, size_t idx, u_int32_t n  )
 {
     PointIndex3::NodeList nearest = tree_->kNearestNeighbours( p, Kn(n) );
 
@@ -52,12 +52,12 @@ size_t PointSet::search_unique( const Point3& p, size_t idx, u_int32_t n  )
 
     for( size_t i = 0; i < nearest.size(); ++i )
     {
-        Point3 np  = nearest[i].value().point();
+        Point np  = nearest[i].value().point();
         size_t nidx = nearest[i].value().payload();
 
 //            std::cout << "      - " << nidx << " " << np << std::endl;
 
-        if( points_equal(p,np) )
+        if( eckit::geometry::points_equal(p,np) )
         {
 //                std::cout << "      EQUAL !!" << std::endl;
             equals.push_back(nidx);

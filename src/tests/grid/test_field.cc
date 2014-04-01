@@ -43,7 +43,7 @@ void TestField::test_constructor()
 {
     using namespace atlas::grid;
 
-    BoundBox2D earth ( Point2D(-90.,0.), Point2D(90.,360.) );
+    Grid::BoundBox earth ( Grid::Point(-90.,0.), Grid::Point(90.,360.) );
     Grid* g = new LatLon( 4, 4, earth );
     ASSERT( g );
 

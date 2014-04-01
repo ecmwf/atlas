@@ -22,7 +22,7 @@ namespace grid {
 
 //-----------------------------------------------------------------------------
 
-Gaussian::Gaussian( size_t resolution, const BoundBox2D& bb) :
+Gaussian::Gaussian( size_t resolution, const BoundBox& bb) :
     resolution_(resolution),
     bound_box_(bb)
 {
@@ -52,11 +52,11 @@ Gaussian::Gaussian( size_t resolution, const BoundBox2D& bb) :
     // generate longitudes common to all latitudes for regular gaussian grids
     // 
     // work out the delta between longitudes
-    double dlon = ( bb.top_right_.lon_ - bb.bottom_left_.lon_ ) / nlon ;
+    double dlon = ( bb.top_right_.lon() - bb.bottom_left_.lon() ) / nlon ;
 
     // fill out a std::vector
     std::vector<double> lons;
-    double plon = bb.bottom_left_.lon_;
+    double plon = bb.bottom_left_.lon();
     for (size_t j = 0; j <= nlon; ++j)
     {
         lons.push_back(plon);
@@ -71,8 +71,8 @@ Gaussian::Gaussian( size_t resolution, const BoundBox2D& bb) :
        for (size_t j = 0; j < lons.size(); j++)
        {
            // write to both hemispheres
-           coordinates_.push_back( Point2D(  lats[i], lons[j] ));
-           coordinates_.push_back( Point2D( -lats[i], lons[j] ));
+           coordinates_.push_back( Point(  lats[i], lons[j] ));
+           coordinates_.push_back( Point( -lats[i], lons[j] ));
        }
     }
 
@@ -82,7 +82,12 @@ Gaussian::~Gaussian()
 {
 }
 
-BoundBox2D Gaussian::boundingBox() const
+std::string Gaussian::hash() const
+{
+    NOTIMP;
+}
+
+Grid::BoundBox Gaussian::boundingBox() const
 {
     return bound_box_;
 }

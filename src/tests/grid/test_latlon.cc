@@ -41,7 +41,7 @@ void TestLatLon::test_constructor()
 {
     using namespace atlas::grid;
 
-    BoundBox2D earth ( Point2D(-90.,0.), Point2D(90.,360.) );
+    Grid::BoundBox earth ( Grid::Point(-90.,0.), Grid::Point(90.,360.) );
     Grid* g = NULL;
 
     // standard case
@@ -49,13 +49,13 @@ void TestLatLon::test_constructor()
     g = new LatLon( 4, 4, earth );
 
     ASSERT( g );
-    ASSERT( g->coordinates().size() == 25 );
+    ASSERT( g->nbPoints() == 25 );
 
     /// @todo substitute these comparisons with proper floating point comparisons
-    ASSERT( g->boundingBox().bottom_left_.lat_ == -90. );
-    ASSERT( g->boundingBox().bottom_left_.lon_ ==   0. );
-    ASSERT( g->boundingBox().top_right_.lat_ ==  90. );
-    ASSERT( g->boundingBox().top_right_.lon_ == 360. );
+    ASSERT( g->boundingBox().bottom_left_.lat() == -90. );
+    ASSERT( g->boundingBox().bottom_left_.lon() ==   0. );
+    ASSERT( g->boundingBox().top_right_.lat() ==  90. );
+    ASSERT( g->boundingBox().top_right_.lon() == 360. );
 
     delete g; g = NULL;
 
@@ -64,13 +64,13 @@ void TestLatLon::test_constructor()
     g = new LatLon( 1, 1, earth );
 
     ASSERT( g );
-    ASSERT( g->coordinates().size() == 4 );
+    ASSERT( g->nbPoints() == 4 );
 
     /// @todo substitute these comparisons with proper floating point comparisons
-    ASSERT( g->boundingBox().bottom_left_.lat_ == -90. );
-    ASSERT( g->boundingBox().bottom_left_.lon_ ==   0. );
-    ASSERT( g->boundingBox().top_right_.lat_ ==  90. );
-    ASSERT( g->boundingBox().top_right_.lon_ == 360. );
+    ASSERT( g->boundingBox().bottom_left_.lat() == -90. );
+    ASSERT( g->boundingBox().bottom_left_.lon() ==   0. );
+    ASSERT( g->boundingBox().top_right_.lat() ==  90. );
+    ASSERT( g->boundingBox().top_right_.lon() == 360. );
 
     delete g; g = NULL;
 

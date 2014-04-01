@@ -1,22 +1,31 @@
 // (C) Copyright 1996-2014 ECMWF.
 
-#ifndef Parameters_hpp
-#define Parameters_hpp
+#ifndef atlas_Parameters_hpp
+#define atlas_Parameters_hpp
 
 #include "atlas/atlas_defines.h"
 
+//------------------------------------------------------------------------------------------------------
+
 namespace atlas {
+
+//------------------------------------------------------------------------------------------------------
 
 enum { XX = 0, YY = 1, ZZ = 2 };
 
 enum { LAT = 0, LON = 1 };
+
+//------------------------------------------------------------------------------------------------------
 
 struct Entity
 {
     enum { NODES=0, FACES=1, ELEMS=2 };
 };
 
-struct ElementRef {
+//------------------------------------------------------------------------------------------------------
+
+struct ElementRef
+{
 
     ElementRef() {}
 
@@ -28,6 +37,8 @@ struct ElementRef {
     int e;
 };
 
+//------------------------------------------------------------------------------------------------------
+
 #ifdef HAVE_FORTRAN_NUMBERING
 // So that we have the same local id in fortran by natural indexing
 #define C_IDX(index) index-1
@@ -37,6 +48,8 @@ struct ElementRef {
 #define F_IDX(index) index
 #endif
 
+//------------------------------------------------------------------------------------------------------
+
 } // namespace atlas
 
-#endif // Parameters_hpp
+#endif // atlas_Parameters_hpp

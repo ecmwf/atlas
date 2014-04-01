@@ -1,4 +1,6 @@
 #include "eckit/exception/Exceptions.h"
+#include "eckit/log/Timer.h"
+#include "eckit/log/Seconds.h"
 
 #include "GribRead.h"
 
@@ -7,7 +9,7 @@
 #include "atlas/Parameters.hpp"
 #include "atlas/Field.hpp"
 
-#include "atlas/grid/Point3.h"
+#include "eckit/geometry/Point3.h"
 #include "atlas/grid/Tesselation.h"
 
 //-----------------------------------------------------------------------------
@@ -49,6 +51,8 @@ void GribRead::read_nodes_from_grib( grib_handle* h, atlas::Mesh& mesh )
     double lon   = 0.;
     double value = 0.;
 
+//    Timer t("inside read_nodes_from_grib");
+
     /// we assume a row first scanning order on the grib
     size_t idx = 0;
     while( grib_iterator_next(i,&lat,&lon,&value) )
@@ -61,7 +65,7 @@ void GribRead::read_nodes_from_grib( grib_handle* h, atlas::Mesh& mesh )
         latlon(LAT,idx) = lat;
         latlon(LON,idx) = lon;
 
-        atlas::latlon_to_3d( lat, lon, coords.slice(idx) );
+        eckit::geometry::latlon_to_3d( lat, lon, coords.slice(idx) );
 
         ++idx;
     }

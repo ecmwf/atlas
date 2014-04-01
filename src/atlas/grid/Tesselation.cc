@@ -44,10 +44,11 @@ const Point_3 origin = Point_3(CGAL::ORIGIN);
 #include "atlas/Mesh.hpp"
 #include "atlas/Parameters.hpp"
 
-#include "PointSet.h"
-#include "Tesselation.h"
+#include "atlas/grid/PointSet.h"
+#include "atlas/grid/Tesselation.h"
 
 using namespace eckit;
+using namespace eckit::geometry;
 
 namespace atlas {
 
@@ -300,7 +301,7 @@ void Tesselation::generate_latlon_points( atlas::Mesh& mesh,
             latlon(LAT,idx) = lat;
             latlon(LON,idx) = lon;
 
-            atlas::latlon_to_3d( lat, lon, coords.slice(idx) );
+            eckit::geometry::latlon_to_3d( lat, lon, coords.slice(idx) );
 
             //            std::cout << idx << " [ " << lat << " ; " << lon << " ] " << p << std::endl;
 
@@ -356,7 +357,7 @@ void Tesselation::generate_latlon_grid( atlas::Mesh& mesh, const size_t& nlats, 
             latlon(LAT,idx) = lat;
             latlon(LON,idx) = lon;
 
-            atlas::latlon_to_3d( lat, lon, coords.slice(idx) );
+            eckit::geometry::latlon_to_3d( lat, lon, coords.slice(idx) );
 
             ++visits;
 

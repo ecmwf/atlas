@@ -1,30 +1,26 @@
 list( APPEND atlas_grid_srcs
-Point3.h
-Point3.cc
-PointIndex3.h
-PointIndex3.cc
-GribRead.h
-GribRead.cc
-GribWrite.h
-GribWrite.cc
-TriangleIntersection.h
-TriangleIntersection.cc
-PointSet.h
-PointSet.cc
-FloatCompare.h
-FloatCompare.cc
-Tesselation.h
-Tesselation.cc
 Field.cc
 Field.h
+Gaussian.cc
+Gaussian.h
+GribRead.cc
+GribRead.h
+GribWrite.cc
+GribWrite.h
 Grid.cc
 Grid.h
 LatLon.cc
 LatLon.h
-Gaussian.cc
-Gaussian.h
 Latitudes.cc
 Latitudes.h
+PointIndex3.cc
+PointIndex3.h
+PointSet.cc
+PointSet.h
+Tesselation.cc
+Tesselation.h
+TriangleIntersection.cc
+TriangleIntersection.h
 )
 
 ecbuild_add_library(TARGET atlas_grid

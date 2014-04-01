@@ -14,22 +14,25 @@
 
 #include "atlas/Mesh.hpp"
 #include "atlas/grid/PointIndex3.h"
-#include "atlas/grid/FloatCompare.h"
+#include "eckit/types/FloatCompare.h"
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------
 
 namespace atlas {
+
+//------------------------------------------------------------------------------------------------------
 
 class PointSet {
 
 public: // types
 
+    typedef PointIndex3::Point Point;
     typedef PointIndex3::iterator iterator;
     typedef std::map< size_t, size_t > DupStore_t;
 
 public: // methods
 
-    PointSet( const std::vector< Point3 >& ipts );
+    PointSet( const std::vector< Point >& ipts );
 
     PointSet( atlas::Mesh& mesh );
 
@@ -52,7 +55,7 @@ public: // methods
 
         for( PointIndex3::iterator i = tree_->begin(); i != tree_->end(); ++i )
         {
-            Point3 p (  i->point() );
+            Point p ( i->point() );
             size_t  ip = i->payload();
 //            std::cout << "point " << ip << " " << p << std::endl;
             size_t uidx = unique(p,ip);
@@ -70,7 +73,7 @@ public: // methods
         }
     }
 
-    size_t unique( const Point3& p, size_t idx = std::numeric_limits<size_t>::max() )
+    size_t unique( const Point& p, size_t idx = std::numeric_limits<size_t>::max() )
     {
         DupStore_t::iterator dit = duplicates_.find(idx);
         if( dit != duplicates_.end() )
@@ -103,7 +106,7 @@ protected: // methods
         tree_->build(pidx.begin(), pidx.end());
     }
 
-    size_t search_unique( const Point3& p, size_t idx, u_int32_t n  );
+    size_t search_unique( const Point& p, size_t idx, u_int32_t n  );
 
 protected:
 
@@ -127,7 +130,7 @@ private:
 
 //---------------------------------------------------------------------------------------------------------
 
-} // namespace eckit
+} // namespace atlas
 
 #endif
 
