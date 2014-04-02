@@ -39,7 +39,7 @@ namespace grid {
 class Grid : private eckit::NonCopyable {
 public: // types
 
-    typedef eckit::geometry::LLPoint            Point;     ///< point type
+    typedef eckit::geometry::LLPoint2            Point;     ///< point type
     typedef eckit::geometry::BoundBox2<Point>   BoundBox;  ///< boundbox type
 
 //    class Iterator {
