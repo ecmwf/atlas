@@ -28,7 +28,7 @@ Gaussian::Gaussian( size_t resolution, const BoundBox& bb) :
 {
     ASSERT( resolution_ > 0 );
 
-    Log::info() << "Build a Gaussian with resolution " << resolution_ << std::endl;
+//    Log::info() << "Build a Gaussian with resolution " << resolution_ << std::endl;
 
     // Regular Gaussian grids have four times resolution_ along each
     // latitude. The number of latitudes in each hemisphere == resolution_

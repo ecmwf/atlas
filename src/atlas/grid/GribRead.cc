@@ -1,15 +1,16 @@
 #include "eckit/exception/Exceptions.h"
 #include "eckit/log/Timer.h"
 #include "eckit/log/Seconds.h"
-
-#include "GribRead.h"
+#include "eckit/geometry/Point3.h"
+#include "eckit/grib/GribAccessor.h"
 
 #include "atlas/Mesh.hpp"
 #include "atlas/FunctionSpace.hpp"
 #include "atlas/Parameters.hpp"
 #include "atlas/Field.hpp"
 
-#include "eckit/geometry/Point3.h"
+#include "atlas/grid/GribRead.h"
+#include "atlas/grid/Unstructured.h"
 #include "atlas/grid/Tesselation.h"
 
 //-----------------------------------------------------------------------------
@@ -19,6 +20,46 @@ using namespace atlas;
 namespace eckit {
 
 //------------------------------------------------------------------------------------------------------
+
+typedef std::vector< grid::Grid::Point > PointList;
+
+grid::Grid* GribRead::create_grid_from_grib(grib_handle *h)
+{
+    ASSERT( h );
+    int err = 0;
+
+    // points to read
+
+    long nb_nodes = 0;
+    grib_get_long(h,"numberOfDataPoints",&nb_nodes);
+
+    grib_iterator *i = grib_iterator_new(h, 0, &err);
+
+    if( h == 0 || err != 0 )
+        throw std::string("error reading grib");
+
+    PointList* pts = new PointList(nb_nodes);
+
+    double lat   = 0.;
+    double lon   = 0.;
+    double value = 0.;
+
+    size_t idx = 0;
+    while( grib_iterator_next(i,&lat,&lon,&value) )
+    {
+        while(lon < 0)    lon += 360;
+        while(lon >= 360) lon -= 360;
+
+        eckit::geometry::latlon_to_3d( lat, lon, (*pts)[idx].data() );
+
+        ++idx;
+    }
+    grib_iterator_delete(i);
+
+    ASSERT( idx == nb_nodes );
+
+    return new grid::Unstructured( pts, grib_hash(h) );
+}
 
 void GribRead::read_nodes_from_grib( grib_handle* h, atlas::Mesh& mesh )
 {
@@ -41,11 +82,10 @@ void GribRead::read_nodes_from_grib( grib_handle* h, atlas::Mesh& mesh )
     FieldT<double>& latlon  = nodes.field<double>("latlon");
     FieldT<int>&    glb_idx = nodes.field<int>("glb_idx");
 
+    grib_iterator *i = grib_iterator_new(h, 0, &err);
 
     if( h == 0 || err != 0 )
         throw std::string("error reading grib");
-
-    grib_iterator *i = grib_iterator_new(h, 0, &err);
 
     double lat   = 0.;
     double lon   = 0.;

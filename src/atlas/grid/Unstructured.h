@@ -8,12 +8,11 @@
  * does it submit to any jurisdiction.
  */
 
-/// @author Peter Bispham
 /// @author Tiago Quintino
-/// @date Oct 2013
+/// @date April 2013
 
-#ifndef atlas_grid_LatLon_H
-#define atlas_grid_LatLon_H
+#ifndef atlas_grid_Unstructured_H
+#define atlas_grid_Unstructured_H
 
 #include <cstddef>
 #include <vector>
@@ -27,33 +26,33 @@ namespace grid {
 
 //-----------------------------------------------------------------------------
 
-class LatLon : public Grid {
+class Unstructured : public Grid {
 
 public: // methods
 
-    LatLon( size_t nlat, size_t nlon, const BoundBox& bb );
+    /// @warning temporary constructor taking a list of points
+    Unstructured( std::vector< Point >* pts, const std::string& hash );
 
-    virtual ~LatLon();
+    virtual ~Unstructured();
 
     virtual std::string hash() const;
 
     virtual BoundBox boundingBox() const;
 
-    virtual size_t nPoints() const { return points_.size(); }
+    virtual size_t nPoints() const;
 
     virtual void coordinates( Grid::Coords & ) const;
 
     /// @deprecated will be removed soon as it exposes the inner storage of the coordinates
-    virtual const std::vector<Point>& coordinates() const { return points_; }
+    virtual const std::vector<Point>& coordinates() const { return *points_; }
 
 protected:
 
-    size_t nlat_;                     ///< number of latitude  increments - ODD number for coindidence with 0,0 on Earth
-    size_t nlon_;                     ///< number of longitude increments - can be any size as no requirement for
-
-    std::vector< Point > points_;     ///< storage of coordinate points
+    std::unique_ptr< std::vector< Point > > points_; ///< storage of coordinate points
 
     BoundBox bound_box_;              ///< bounding box for the domain
+
+    std::string hash_;
 
 };
 

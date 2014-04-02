@@ -27,7 +27,7 @@ LatLon::LatLon( size_t nlat, size_t nlon, const BoundBox& bb) :
     ASSERT( nlat > 0 );
     ASSERT( nlon > 0 );
 
-    Log::info() << "Build a LatLon with " << nlat << " x " <<  nlon << std::endl;
+//    Log::info() << "Build a LatLon with " << nlat << " x " <<  nlon << std::endl;
 
     points_.reserve( (nlat_ + 1) * (nlon_ + 1) );
 
