@@ -49,7 +49,7 @@ void TestLatLon::test_constructor()
     g = new LatLon( 4, 4, earth );
 
     ASSERT( g );
-    ASSERT( g->nbPoints() == 25 );
+    ASSERT( g->nPoints() == 25 );
 
     /// @todo substitute these comparisons with proper floating point comparisons
     ASSERT( g->boundingBox().bottom_left_.lat() == -90. );
@@ -64,7 +64,7 @@ void TestLatLon::test_constructor()
     g = new LatLon( 1, 1, earth );
 
     ASSERT( g );
-    ASSERT( g->nbPoints() == 4 );
+    ASSERT( g->nPoints() == 4 );
 
     /// @todo substitute these comparisons with proper floating point comparisons
     ASSERT( g->boundingBox().bottom_left_.lat() == -90. );

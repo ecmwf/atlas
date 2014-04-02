@@ -37,11 +37,31 @@ namespace grid {
 /// For example a LatLon grid or a Reduced Graussian grid
 
 class Grid : private eckit::NonCopyable {
-
 public: // types
 
     typedef eckit::geometry::LLPoint            Point;     ///< point type
     typedef eckit::geometry::BoundBox2<Point>   BoundBox;  ///< boundbox type
+
+//    class Iterator {
+//    public:
+//        virtual ~GridIterator() {}
+//        virtual bool next( double& lat, double& lon ) = 0;
+//    };
+
+    class Coords {
+    public:
+
+        Coords( std::vector<double>& v ) : coords_(v) { ASSERT( v.size() && v.size()%2 == 0 ); }
+
+        size_t size() const { return coords_.size() / 2; }
+
+        double& lat( size_t i ) { return coords_[i];   }
+        double& lon( size_t i ) { return coords_[i+1]; }
+
+    private:
+        std::vector<double>& coords_;
+    };
+
 
 public: // methods
 
@@ -53,9 +73,14 @@ public: // methods
 
     virtual BoundBox boundingBox() const = 0;
 
-    virtual size_t nbPoints() const = 0;
+    virtual size_t nPoints() const = 0;
 
+    virtual void coordinates( Grid::Coords& ) const = 0;
+
+    /// @deprecated will be removed soon as it exposes the inner storage of the coordinates
     virtual const std::vector<Point>& coordinates() const = 0;
+
+//    virtual Iterator* makeIterator() const = 0;
 
 protected:
 

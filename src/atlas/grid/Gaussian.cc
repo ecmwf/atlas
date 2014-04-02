@@ -92,6 +92,17 @@ Grid::BoundBox Gaussian::boundingBox() const
     return bound_box_;
 }
 
+void Gaussian::coordinates( Grid::Coords& r ) const
+{
+    ASSERT( r.size() == coordinates_.size() );
+
+    for( size_t i = 0; i < coordinates_.size(); ++i )
+    {
+        r.lat(i) = coordinates_[i].lat();
+        r.lon(i) = coordinates_[i].lon();
+    }
+}
+
 //-----------------------------------------------------------------------------
 
 } // namespace grid

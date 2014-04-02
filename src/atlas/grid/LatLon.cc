@@ -62,6 +62,17 @@ Grid::BoundBox LatLon::boundingBox() const
     return bound_box_;
 }
 
+void LatLon::coordinates( Grid::Coords& r ) const
+{
+    ASSERT( r.size() == points_.size() );
+
+    for( size_t i = 0; i < points_.size(); ++i )
+    {
+        r.lat(i) = points_[i].lat();
+        r.lon(i) = points_[i].lon();
+    }
+}
+
 //-----------------------------------------------------------------------------
 
 } // namespace grid

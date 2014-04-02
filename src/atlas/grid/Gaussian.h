@@ -39,17 +39,20 @@ public: // methods
 
     virtual BoundBox boundingBox() const;
 
-    virtual size_t nbPoints() const { return coordinates_.size(); }
+    virtual size_t nPoints() const { return coordinates_.size(); }
 
+    virtual void coordinates( Grid::Coords & ) const;
+
+    /// @deprecated will be removed soon as it exposes the inner storage of the coordinates
     virtual const std::vector<Point>& coordinates() const { return coordinates_; }
 
 protected:
 
     size_t resolution_;                 ///< number of longitude increments - can be any size as no requirement for 
 
-    std::vector< Point > coordinates_;     ///< storage of coordinate points
+    std::vector< Point > coordinates_;  ///< storage of coordinate points
 
-    BoundBox bound_box_;              ///< bounding box for the domain
+    BoundBox bound_box_;                ///< bounding box for the domain
 
 private:
 

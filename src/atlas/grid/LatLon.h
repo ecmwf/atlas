@@ -39,14 +39,17 @@ public: // methods
 
     virtual BoundBox boundingBox() const;
 
-    virtual size_t nbPoints() const { return points_.size(); }
+    virtual size_t nPoints() const { return points_.size(); }
 
+    virtual void coordinates( Grid::Coords & ) const;
+
+    /// @deprecated will be removed soon as it exposes the inner storage of the coordinates
     virtual const std::vector<Point>& coordinates() const { return points_; }
 
 protected:
 
-    size_t nlat_;                       ///< number of latitude  increments - ODD number for coindidence with 0,0 on Earth 
-    size_t nlon_;                       ///< number of longitude increments - can be any size as no requirement for 
+    size_t nlat_;                     ///< number of latitude  increments - ODD number for coindidence with 0,0 on Earth
+    size_t nlon_;                     ///< number of longitude increments - can be any size as no requirement for
 
     std::vector< Point > points_;     ///< storage of coordinate points
 
