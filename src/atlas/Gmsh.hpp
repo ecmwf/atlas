@@ -13,13 +13,14 @@ class Gmsh
 public:
   virtual ~Gmsh();
 
-  static Mesh& read(const std::string& file_path);
+    /// @warning should return pointer, not reference so it can be deleted
+    static Mesh* read(const std::string& file_path);
 
-  static void write(Mesh& mesh, const std::string& file_path);
+    static void write(Mesh& mesh, const std::string& file_path);
 
-  /// @todo to be merged with write()
+    /// @todo to be merged with write()
 
-  static void write3dsurf(Mesh& mesh, const std::string& file_path);
+    static void write3dsurf( Mesh& mesh, const std::string& file_path );
 
 private:
   enum { LINE=1, TRIAG=2, QUAD=3, POINT=15 };

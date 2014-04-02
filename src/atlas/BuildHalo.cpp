@@ -13,12 +13,12 @@ namespace atlas {
 
 void build_halo( Mesh& mesh )
 {
-  FunctionSpace& nodes_2d   = mesh.function_space( "nodes_2d" );
-  FieldT<double>& coords    = nodes_2d.field<double>( "coordinates" );
-  FieldT<int>& glb_idx      = nodes_2d.field<int>( "glb_idx" );
-  FieldT<int>& master_glb_idx  = nodes_2d.field<int>( "master_glb_idx" );
-  FieldT<int>& node_proc         = nodes_2d.field<int>( "proc" );
-  int nb_nodes = nodes_2d.bounds()[1];
+  FunctionSpace& nodes   = mesh.function_space( "nodes" );
+  FieldT<double>& coords    = nodes.field<double>( "coordinates" );
+  FieldT<int>& glb_idx      = nodes.field<int>( "glb_idx" );
+  FieldT<int>& master_glb_idx  = nodes.field<int>( "master_glb_idx" );
+  FieldT<int>& node_proc         = nodes.field<int>( "proc" );
+  int nb_nodes = nodes.bounds()[1];
 
   FunctionSpace& edges   = mesh.function_space( "edges" );
   FieldT<int>& edge_to_elem   = edges.field<int>( "to_elem" );

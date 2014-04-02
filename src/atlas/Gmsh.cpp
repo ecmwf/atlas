@@ -19,7 +19,7 @@ Gmsh::~Gmsh()
 { 
 }
 
-Mesh& Gmsh::read(const std::string& file_path)
+Mesh* Gmsh::read(const std::string& file_path)
 {
   Mesh* mesh = new Mesh();
   std::ifstream file;
@@ -39,15 +39,15 @@ Mesh& Gmsh::read(const std::string& file_path)
   bounds[0] = Field::UNDEF_VARS;
   bounds[1] = nb_nodes;
 
-  FunctionSpace& nodes_2d
-          = mesh->add_function_space( new FunctionSpace( "nodes_2d", "Lagrange_P0", bounds ) );
+  FunctionSpace& nodes
+          = mesh->add_function_space( new FunctionSpace( "nodes", "Lagrange_P0", bounds ) );
 
-  nodes_2d.metadata().set("type",static_cast<int>(Entity::NODES));
+  nodes.metadata().set("type",static_cast<int>(Entity::NODES));
 
-  FieldT<double>& coords         = nodes_2d.create_field<double>("coordinates",2);
-  FieldT<int>&    glb_idx        = nodes_2d.create_field<int>("glb_idx",1);
-  FieldT<int>&    master_glb_idx = nodes_2d.create_field<int>("master_glb_idx",1);
-  FieldT<int>&    proc           = nodes_2d.create_field<int>("proc",1);
+  FieldT<double>& coords         = nodes.create_field<double>("coordinates",2);
+  FieldT<int>&    glb_idx        = nodes.create_field<int>("glb_idx",1);
+  FieldT<int>&    master_glb_idx = nodes.create_field<int>("master_glb_idx",1);
+  FieldT<int>&    proc           = nodes.create_field<int>("proc",1);
 
   std::map<int,int> glb_to_loc;
   int g;
@@ -66,8 +66,8 @@ Mesh& Gmsh::read(const std::string& file_path)
   }
   for (int i=0; i<3; ++i)
     std::getline(file,line);
-  nodes_2d.metadata().set("nb_owned",nb_nodes);
-  nodes_2d.metadata().set("max_glb_idx",max_glb_idx);
+  nodes.metadata().set("nb_owned",nb_nodes);
+  nodes.metadata().set("max_glb_idx",max_glb_idx);
 
   // Find out which element types are inside
   int nb_elements;
@@ -169,7 +169,8 @@ Mesh& Gmsh::read(const std::string& file_path)
   triags.metadata().set("max_glb_idx",elements_max_glb_idx);
   edges.metadata().set("max_glb_idx",elements_max_glb_idx);
   file.close();
-  return *mesh;
+
+  return mesh;
 }
 
 void Gmsh::write(Mesh& mesh, const std::string& file_path)
@@ -177,11 +178,11 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path)
   bool spherical=true;
   bool include_ghost_elements = false;
 
-  FunctionSpace& nodes_2d   = mesh.function_space( "nodes_2d" );
-  FieldT<double>& coords    = nodes_2d.field<double>( "coordinates" );
-  FieldT<int>& glb_idx      = nodes_2d.field<int>( "glb_idx" );
-  int nb_nodes = nodes_2d.metadata<int>("nb_owned");
-  nb_nodes = nodes_2d.bounds()[1];
+  FunctionSpace& nodes   = mesh.function_space( "nodes" );
+  FieldT<double>& coords    = nodes.field<double>( "coordinates" );
+  FieldT<int>& glb_idx      = nodes.field<int>( "glb_idx" );
+  int nb_nodes = nodes.metadata<int>("nb_owned");
+  nb_nodes = nodes.bounds()[1];
 
   FunctionSpace& quads       = mesh.function_space( "quads" );
   FieldT<int>& quad_nodes    = quads.field<int>( "nodes" );
@@ -263,9 +264,9 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path)
   file.close();
 
 
-  if (nodes_2d.has_field("dual_volumes"))
+  if (nodes.has_field("dual_volumes"))
   {
-    FieldT<double>& field = nodes_2d.field<double>("dual_volumes");
+    FieldT<double>& field = nodes.field<double>("dual_volumes");
     file.open( (field.name()+".msh").c_str() , std::ios::out );
     file << "$MeshFormat\n";
     file << "2.2 0 8\n";
@@ -481,7 +482,7 @@ void atlas__Gmsh__delete (Gmsh* This) {
 }
 
 Mesh* atlas__Gmsh__read (Gmsh* This, char* file_path) {
-  return &This->read( std::string(file_path) );
+  return This->read( std::string(file_path) );
 }
 
 void atlas__Gmsh__write (Gmsh* This, Mesh* mesh, char* file_path) {
@@ -490,7 +491,7 @@ void atlas__Gmsh__write (Gmsh* This, Mesh* mesh, char* file_path) {
 
 Mesh* atlas__read_gmsh (char* file_path)
 {
-  return &Gmsh::read(std::string(file_path));
+  return Gmsh::read(std::string(file_path));
 }
 
 void atlas__write_gmsh (Mesh* mesh, char* file_path) {

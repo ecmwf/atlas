@@ -141,11 +141,11 @@ void build_dual_normals( Mesh& mesh )
       elem_centroids[func_space_idx] = &func_space.field<double>("centroids");
   }
 
-  FunctionSpace&  nodes_2d = mesh.function_space("nodes_2d");
-  FieldT<double>& node_coords = nodes_2d.field<double>("coordinates");
-  double ymax = nodes_2d.metadata<double>("ymax");
-  double ymin = nodes_2d.metadata<double>("ymin");
-  double xmin = nodes_2d.metadata<double>("xmin");
+  FunctionSpace&  nodes = mesh.function_space("nodes");
+  FieldT<double>& node_coords = nodes.field<double>("coordinates");
+  double ymax = nodes.metadata<double>("ymax");
+  double ymin = nodes.metadata<double>("ymin");
+  double xmin = nodes.metadata<double>("xmin");
   double pi = acos(-1.);
   double tol = 1.e-6;
 
@@ -246,11 +246,11 @@ void build_skewness( Mesh& mesh )
       elem_centroids[func_space_idx] = &func_space.field<double>("centroids");
   }
 
-  FunctionSpace&  nodes_2d = mesh.function_space("nodes_2d");
-  FieldT<double>& node_coords = nodes_2d.field<double>("coordinates");
-  double ymax = nodes_2d.metadata<double>("ymax");
-  double ymin = nodes_2d.metadata<double>("ymin");
-  double xmin = nodes_2d.metadata<double>("xmin");
+  FunctionSpace&  nodes = mesh.function_space("nodes");
+  FieldT<double>& node_coords = nodes.field<double>("coordinates");
+  double ymax = nodes.metadata<double>("ymax");
+  double ymin = nodes.metadata<double>("ymin");
+  double xmin = nodes.metadata<double>("xmin");
   double pi = acos(-1.);
   double tol = 1.e-6;
 
@@ -325,13 +325,13 @@ void build_skewness( Mesh& mesh )
 
 void build_dual_mesh( Mesh& mesh )
 {
-  FunctionSpace& nodes_2d   = mesh.function_space( "nodes_2d" );
-  FieldT<double>& coords    = nodes_2d.field<double>( "coordinates" );
-  FieldT<int>& glb_idx      = nodes_2d.field<int>( "glb_idx" );
-  FieldT<int>& master_glb_idx      = nodes_2d.field<int>( "master_glb_idx" );
-  FieldT<int>& proc      = nodes_2d.field<int>( "proc" );
-  FieldT<double>& dual_volumes = nodes_2d.create_field<double>( "dual_volumes", 1 );
-  int nb_nodes = nodes_2d.bounds()[1];
+  FunctionSpace& nodes   = mesh.function_space( "nodes" );
+  FieldT<double>& coords    = nodes.field<double>( "coordinates" );
+  FieldT<int>& glb_idx      = nodes.field<int>( "glb_idx" );
+  FieldT<int>& master_glb_idx      = nodes.field<int>( "master_glb_idx" );
+  FieldT<int>& proc      = nodes.field<int>( "proc" );
+  FieldT<double>& dual_volumes = nodes.create_field<double>( "dual_volumes", 1 );
+  int nb_nodes = nodes.bounds()[1];
 
   FunctionSpace& quads       = mesh.function_space( "quads" );
   FunctionSpace& triags      = mesh.function_space( "triags" );
@@ -365,7 +365,7 @@ void build_dual_mesh( Mesh& mesh )
 //    std::cout << glb_idx(node) << "  :  " << master_glb_idx(0,node) << std::endl;
 
 
-  nodes_2d.parallelise();
+  nodes.parallelise();
   edges.parallelise();
 
 

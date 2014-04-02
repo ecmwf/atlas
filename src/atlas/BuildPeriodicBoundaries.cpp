@@ -80,12 +80,12 @@ void copy_row( FieldT<DATA_TYPE>& field, int from, int to )
 
 void build_periodic_boundaries( Mesh& mesh )
 {
-  FunctionSpace& nodes_2d   = mesh.function_space( "nodes_2d" );
-  FieldT<double>& coords    = nodes_2d.field<double>( "coordinates" );
-  FieldT<int>& glb_idx      = nodes_2d.field<int>( "glb_idx" );
-  FieldT<int>& master_glb_idx  = nodes_2d.field<int>( "master_glb_idx" );
-  FieldT<int>& proc         = nodes_2d.field<int>( "proc" );
-  int nb_nodes = nodes_2d.bounds()[1];
+  FunctionSpace& nodes   = mesh.function_space( "nodes" );
+  FieldT<double>& coords    = nodes.field<double>( "coordinates" );
+  FieldT<int>& glb_idx      = nodes.field<int>( "glb_idx" );
+  FieldT<int>& master_glb_idx  = nodes.field<int>( "master_glb_idx" );
+  FieldT<int>& proc         = nodes.field<int>( "proc" );
+  int nb_nodes = nodes.bounds()[1];
 
 
   double min[2];
@@ -101,10 +101,10 @@ void build_periodic_boundaries( Mesh& mesh )
     max[XX] = std::max( max[XX], coords(XX,node) );
     max[YY] = std::max( max[YY], coords(YY,node) );
   }
-  nodes_2d.metadata().set("xmin",min[XX]);
-  nodes_2d.metadata().set("xmax",max[XX]);
-  nodes_2d.metadata().set("ymin",min[YY]);
-  nodes_2d.metadata().set("ymax",max[YY]);
+  nodes.metadata().set("xmin",min[XX]);
+  nodes.metadata().set("xmax",max[XX]);
+  nodes.metadata().set("ymin",min[YY]);
+  nodes.metadata().set("ymax",max[YY]);
 
   double dx = max[XX]-min[XX];
 
@@ -114,7 +114,7 @@ void build_periodic_boundaries( Mesh& mesh )
   for (int f=0; f<mesh.nb_function_spaces(); ++f)
   {
     if (mesh.function_space(f).metadata<int>("type") == Entity::ELEMS)
-      scan_bdry_elements( mesh.function_space(f),  nodes_2d, min, max,
+      scan_bdry_elements( mesh.function_space(f),  nodes, min, max,
                           east_bdry_elements,
                           west_bdry_elements);
 
@@ -244,7 +244,7 @@ void build_periodic_boundaries( Mesh& mesh )
   for (int node=0; node<nb_nodes; ++node)
     node_orig_glb_to_loc[ orig_glb_idx[node] ] = node;
 
-  int nodes_max_glb_idx = nodes_2d.metadata<int>("max_glb_idx");
+  int nodes_max_glb_idx = nodes.metadata<int>("max_glb_idx");
 
   int decrease=0;
   int ghost_glb_idx=nodes_max_glb_idx-transform_to_ghost.size();
@@ -302,10 +302,10 @@ void build_periodic_boundaries( Mesh& mesh )
 
   // Now add new nodes
   int nb_ghost_nodes = new_nodes.size();
-  nodes_2d.metadata().set("nb_ghost_nodes",nb_ghost_nodes);
-  std::vector<int> nodes_2d_bounds = nodes_2d.bounds();
-  nodes_2d_bounds[1] = nb_nodes+nb_ghost_nodes;
-  nodes_2d.resize( nodes_2d_bounds );
+  nodes.metadata().set("nb_ghost_nodes",nb_ghost_nodes);
+  std::vector<int> nodes_bounds = nodes.bounds();
+  nodes_bounds[1] = nb_nodes+nb_ghost_nodes;
+  nodes.resize( nodes_bounds );
   std::map<int,int> node_mapping;
   int new_node = nb_nodes;
   for( std::set<int>::iterator it = new_nodes.begin(); it!=new_nodes.end(); ++it)
@@ -323,7 +323,7 @@ void build_periodic_boundaries( Mesh& mesh )
     node_mapping[ -orig_gid ] = new_node;
     ++new_node;
   }
-  nodes_2d.metadata().set("max_glb_idx",nodes_max_glb_idx);
+  nodes.metadata().set("max_glb_idx",nodes_max_glb_idx);
 
   // Now fix element connectivity
   for (int f=0; f<mesh.nb_function_spaces(); ++f)

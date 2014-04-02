@@ -149,19 +149,19 @@ void build_element_to_edge_connectivity( Mesh& mesh, FieldT<int>& edge_to_elem )
 
 void build_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& nb_pole_edges )
 {
-  FunctionSpace& nodes_2d   = mesh.function_space( "nodes_2d" );
-  FieldT<double>& coords    = nodes_2d.field<double>( "coordinates" );
-  FieldT<int>& glb_idx    = nodes_2d.field<int>( "glb_idx" );
-  int nb_nodes = nodes_2d.bounds()[1];
+  FunctionSpace& nodes   = mesh.function_space( "nodes" );
+  FieldT<double>& coords    = nodes.field<double>( "coordinates" );
+  FieldT<int>& glb_idx    = nodes.field<int>( "glb_idx" );
+  int nb_nodes = nodes.bounds()[1];
   FunctionSpace& edges   = mesh.function_space( "edges" );
   FieldT<int>& edge_nodes    = edges.field<int>( "nodes" );
   FieldT<int>& edge_glb_idx    = edges.field<int>( "glb_idx" );
   int nb_edges = edges.bounds()[1];
 
-  double ymin = nodes_2d.metadata<double>("ymin");
-  double ymax = nodes_2d.metadata<double>("ymax");
-  double xmin = nodes_2d.metadata<double>("xmin");
-  double xmax = nodes_2d.metadata<double>("xmax");
+  double ymin = nodes.metadata<double>("ymin");
+  double ymax = nodes.metadata<double>("ymax");
+  double xmin = nodes.metadata<double>("xmin");
+  double xmax = nodes.metadata<double>("xmax");
   double dx   = xmax-xmin;
   double tol = 1e-6;
   std::vector<int> north_pole_edges;
@@ -240,11 +240,11 @@ void build_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& nb_po
 
 void build_edges( Mesh& mesh )
 {
-  FunctionSpace& nodes_2d   = mesh.function_space( "nodes_2d" );
-  FieldT<double>& coords    = nodes_2d.field<double>( "coordinates" );
-  FieldT<int>& glb_idx      = nodes_2d.field<int>( "glb_idx" );
-  FieldT<int>& master_glb_idx      = nodes_2d.field<int>( "master_glb_idx" );
-  int nb_nodes = nodes_2d.bounds()[1];
+  FunctionSpace& nodes   = mesh.function_space( "nodes" );
+  FieldT<double>& coords    = nodes.field<double>( "coordinates" );
+  FieldT<int>& glb_idx      = nodes.field<int>( "glb_idx" );
+  FieldT<int>& master_glb_idx      = nodes.field<int>( "master_glb_idx" );
+  int nb_nodes = nodes.bounds()[1];
 
   FunctionSpace& quads       = mesh.function_space( "quads" );
   FunctionSpace& triags      = mesh.function_space( "triags" );

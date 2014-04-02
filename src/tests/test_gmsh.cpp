@@ -14,13 +14,13 @@ int main(int argc, char *argv[])
 {
   MPL::init();
 
-  Mesh& mesh = Gmsh::read( "T47.msh" );
+  Mesh* mesh = Gmsh::read( "T47.msh" );
 
-  build_periodic_boundaries(mesh);
-  build_edges(mesh);
-  build_dual_mesh(mesh);
+  build_periodic_boundaries(*mesh);
+  build_edges(*mesh);
+  build_dual_mesh(*mesh);
 
-  Gmsh::write(mesh,"bla.msh");
+  Gmsh::write(*mesh,"bla.msh");
   
   MPL::finalize();
   return 0;

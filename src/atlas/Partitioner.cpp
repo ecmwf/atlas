@@ -19,8 +19,8 @@ Partitioner::Partitioner()
 
 void Partitioner::partition(Mesh& mesh, int nb_partitions)
 {
-  FunctionSpace& nodes_2d = mesh.function_space("nodes_2d");
-  FieldT<int>& nodes_proc = nodes_2d.field<int>("proc");
+  FunctionSpace& nodes = mesh.function_space("nodes");
+  FieldT<int>& nodes_proc = nodes.field<int>("proc");
 
   int nb_nodes = nodes_proc.bounds()[1];
   int nodes_per_partition = std::ceil( static_cast<double>(nb_nodes)/static_cast<double>(nb_partitions));

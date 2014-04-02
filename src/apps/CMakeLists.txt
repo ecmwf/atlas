@@ -3,3 +3,8 @@ ecbuild_add_executable(
 		SOURCES     grib_to_gmsh.cc
 		LIBS        ${ATLAS_LIBRARIES} ${ECKIT_LIBRARIES} )
 
+ecbuild_add_executable(
+		TARGET      gmsh_ls
+		SOURCES     gmsh_ls.cc
+		LIBS        ${ATLAS_LIBRARIES} ${ECKIT_LIBRARIES} )
+

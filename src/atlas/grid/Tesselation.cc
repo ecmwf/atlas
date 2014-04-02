@@ -183,6 +183,10 @@ cgal_polyhedron_to_atlas_mesh(  atlas::Mesh& mesh, Polyhedron_3& poly, PointSet&
 
 void Tesselation::tesselate( atlas::Mesh& mesh )
 {
+    // don't tesselate meshes already with triags or quads
+    if( mesh.has_function_space("triags") || mesh.has_function_space("quads") )
+        return;
+
     Timer t ("grid tesselation");
 
     // remove duplicate points
