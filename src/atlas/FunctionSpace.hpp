@@ -35,10 +35,10 @@ public: // methods
   Field& field( size_t );
   Field& field(const std::string& name);
 
-  bool has_field(const std::string& name) { return index_.count(name); }
-
   template< typename DATA_TYPE>
   FieldT<DATA_TYPE>& field(const std::string& name);
+
+  bool has_field(const std::string& name) { return index_.count(name); }
 
   template< typename DATA_TYPE >
   FieldT<DATA_TYPE>& create_field(const std::string& name, size_t nb_vars);

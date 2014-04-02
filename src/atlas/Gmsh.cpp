@@ -460,7 +460,7 @@ void Gmsh::write3dsurf(Mesh &mesh, const std::string& file_path)
                 file << "1\n";
                 file << nb_nodes << "\n";
                 for( size_t n = 0; n < nb_nodes; ++n )
-                  file << glb_idx(n) << " " << f(n) <<"\n";
+                  file << glb_idx(n) << " " << f(idx,n) <<"\n";
                 file << "$EndNodeData\n";
                 file << std::flush;
             }
