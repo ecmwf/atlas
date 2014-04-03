@@ -16,8 +16,9 @@
 //-----------------------------------------------------------------------------
 
 using namespace atlas;
+using namespace atlas::grid;
 
-namespace eckit {
+namespace eckit { /// @todo this is still in eckit namespace because we plan to move it back to eckit::grib
 
 //------------------------------------------------------------------------------------------------------
 
@@ -47,11 +48,7 @@ grid::Grid* GribRead::create_grid_from_grib(grib_handle *h)
     size_t idx = 0;
     while( grib_iterator_next(i,&lat,&lon,&value) )
     {
-        while(lon < 0)    lon += 360;
-        while(lon >= 360) lon -= 360;
-
-        eckit::geometry::latlon_to_3d( lat, lon, (*pts)[idx].data() );
-
+        (*pts)[idx].assign(lat,lon);
         ++idx;
     }
     grib_iterator_delete(i);

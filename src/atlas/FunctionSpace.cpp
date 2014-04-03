@@ -74,7 +74,7 @@ FieldT<double>& FunctionSpace::create_field(const std::string& name, size_t nb_v
     if( has_field(name) )
     {
         std::ostringstream msg; msg << "field with name " << name << "already exists" << std::endl;
-        throw msg.str();
+        throw std::runtime_error( msg.str() );
     }
 
   //std::cout << "C++ : Create field " << name << " with size " << size*nb_nodes_ << std::endl;
@@ -86,7 +86,7 @@ FieldT<double>& FunctionSpace::create_field(const std::string& name, size_t nb_v
   std::vector< int > bounds(bsize);
   //std::cout << "Allocating field<real64> " << name << " ( ";
 
-  for (size_t i=0; i<bsize; ++i)
+  for( size_t i = 0; i < bsize; ++i )
   {
     if( bounds_[i] == Field::UNDEF_VARS )
       bounds[i] = nb_vars;

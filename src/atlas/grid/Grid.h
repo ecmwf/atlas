@@ -24,6 +24,7 @@
 
 #include "eckit/geometry/Point2.h"
 
+#include "atlas/Mesh.hpp"
 #include "atlas/Field.hpp"
 
 //------------------------------------------------------------------------------------------------------
@@ -39,26 +40,29 @@ namespace grid {
 class Grid : private eckit::NonCopyable {
 public: // types
 
-    typedef eckit::geometry::LLPoint2            Point;     ///< point type
+    typedef atlas::Mesh                         Mesh;      ///< mesh type
+    typedef eckit::geometry::LLPoint2           Point;     ///< point type
     typedef eckit::geometry::BoundBox2<Point>   BoundBox;  ///< boundbox type
+
+    typedef std::shared_ptr<Grid> Ptr;
 
 //    class Iterator {
 //    public:
 //        virtual ~GridIterator() {}
 //        virtual bool next( double& lat, double& lon ) = 0;
 //    };
+//    virtual Iterator* makeIterator() const = 0;
 
     class Coords {
     public:
 
         Coords( std::vector<double>& v ) : coords_(v) { ASSERT( v.size() && v.size()%2 == 0 ); }
-
         size_t size() const { return coords_.size() / 2; }
-
         double& lat( size_t i ) { return coords_[i];   }
         double& lon( size_t i ) { return coords_[i+1]; }
 
     private:
+
         std::vector<double>& coords_;
     };
 
@@ -80,9 +84,14 @@ public: // methods
     /// @deprecated will be removed soon as it exposes the inner storage of the coordinates
     virtual const std::vector<Point>& coordinates() const = 0;
 
-//    virtual Iterator* makeIterator() const = 0;
+//    const Mesh& mesh() const;
+    Mesh& mesh();
 
 protected:
+
+    virtual void make_mesh();
+
+    std::unique_ptr< Mesh > mesh_;
 
 };
 

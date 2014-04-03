@@ -31,6 +31,7 @@
 
 using namespace eckit;
 using namespace atlas;
+using namespace atlas::grid;
 
 //------------------------------------------------------------------------------------------------------
 
@@ -101,7 +102,7 @@ void Grib2Gmsh::run()
 
     grib_load( in_filename, *in_mesh );
 
-    atlas::Tesselation::tesselate( *in_mesh );
+    Tesselation::tesselate( *in_mesh );
 
     atlas::Gmsh::write3dsurf( *in_mesh,out_filename );
 }

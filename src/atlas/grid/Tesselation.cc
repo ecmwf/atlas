@@ -46,11 +46,14 @@ const Point_3 origin = Point_3(CGAL::ORIGIN);
 
 #include "atlas/grid/PointSet.h"
 #include "atlas/grid/Tesselation.h"
+#include "atlas/grid/MeshCache.h"
+#include "atlas/grid/Grid.h"
 
 using namespace eckit;
 using namespace eckit::geometry;
 
 namespace atlas {
+namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -180,6 +183,20 @@ cgal_polyhedron_to_atlas_mesh(  atlas::Mesh& mesh, Polyhedron_3& poly, PointSet&
 #endif
 
 //------------------------------------------------------------------------------------------------------
+
+void Tesselation::tesselate( Grid& g )
+{
+    std::string hash = g.hash();
+
+    Mesh& mesh = g.mesh();
+
+    if( MeshCache::get( hash, mesh ) )
+        return;
+
+    Tesselation::tesselate( mesh );
+
+    MeshCache::add( hash, mesh );
+}
 
 void Tesselation::tesselate( atlas::Mesh& mesh )
 {
@@ -452,5 +469,6 @@ void Tesselation::create_cell_centres( Mesh& mesh )
 
 //------------------------------------------------------------------------------------------------------
 
+} // namespace grid
 } // namespace atlas
 

@@ -13,8 +13,9 @@ class Gmsh
 public:
   virtual ~Gmsh();
 
-    /// @warning should return pointer, not reference so it can be deleted
     static Mesh* read(const std::string& file_path);
+
+    static void read(const std::string& file_path, Mesh& mesh );
 
     static void write(Mesh& mesh, const std::string& file_path);
 

@@ -6,6 +6,9 @@
 #include "atlas/Mesh.hpp"
 
 namespace atlas {
+namespace grid {
+
+class Grid;
 
 //------------------------------------------------------------------------------------------------------
 
@@ -15,6 +18,8 @@ public:
 
     /// generate a mesh by triangulating the convex hull of the 3D points
     static void tesselate( atlas::Mesh& mesh );
+
+    static void tesselate( Grid& g );
 
     /// generate regular spaced lat-long points (does not include extremes)
     static void generate_latlon_points( atlas::Mesh& mesh, const size_t& nlats, const size_t& nlong );
@@ -34,6 +39,7 @@ public:
 
 //------------------------------------------------------------------------------------------------------
 
+} // namespace grid
 } // namespace atlas
 
 #endif

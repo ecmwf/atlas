@@ -11,9 +11,11 @@
 #include "eckit/log/Log.h"
 #include "eckit/runtime/Tool.h"
 
+#include "atlas/FunctionSpace.hpp"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/LatLon.h"
 #include "atlas/grid/Field.h"
+#include "atlas/grid/Tesselation.h"
 
 using namespace std;
 using namespace eckit;
@@ -43,47 +45,62 @@ void TestField::test_constructor()
 {
     using namespace atlas::grid;
 
+    // create a grid
+
     Grid::BoundBox earth ( Grid::Point(-90.,0.), Grid::Point(90.,360.) );
-    Grid* g = new LatLon( 4, 4, earth );
-    ASSERT( g );
 
-    FieldH::MetaData* meta = new FieldH::MetaData();
-    ASSERT( meta );
-
-    FieldH::Data*     data = new FieldH::Data();
-    ASSERT( data );
+    Grid::Ptr g (new LatLon( 4, 4, earth ) );
 
     // create some reference data for testing
-    FieldH::Data ref_data;
-    for (unsigned int i = 0; i < 1000; i++)
+
+    std::vector<double> ref_data;
+    ref_data.resize( g->nPoints() );
+    for(size_t i = 0; i < ref_data.size(); ++i)
         ref_data.push_back((double)i);
 
-    // copy the ref_data to the data that will be put into the
-    // Field object
-    for (unsigned int i = 0; i < ref_data.size(); i++)
-        data->push_back(ref_data[i]);
+    // now build a test field handle
 
-    FieldH* f = new FieldH(g,meta,data);
+    std::string sname("field_name");
+    ASSERT( g );
+
+    Tesselation::create_mesh_structure( g->mesh(), g->nPoints() );
+
+    Mesh& mesh = g->mesh();
+
+    ASSERT( mesh.has_function_space("nodes") );
+
+    MetaData::Ptr md( new MetaData() );
+
+    ASSERT( md );
+
+    atlas::FunctionSpace& nodes  = mesh.function_space( "nodes" );
+
+    FieldT<double>& data = nodes.create_field<double>( sname,1);
+
+    for(size_t i = 0; i < ref_data.size(); i++)
+        data[i] = ref_data[i];
+
+    // create field handle
+
+    FieldH::Ptr f( new FieldH( g, std::move(md), nodes.field<double>( sname ) ) );
+
     ASSERT( f );
 
     FieldH::Vector fields;
     fields.push_back(f);
 
     FieldSet fs(fields);
-    //ASSERT(fs.grid().get() == g); 
     
     // iterate over the fields
     for (FieldH::Vector::iterator it = fs.fields().begin(); it != fs.fields().end(); ++it)
     {
         // extract and test the data
         FieldH::Data& d = (*it)->data();
-        for (unsigned int i = 0; i < ref_data.size(); i++)
+        for (size_t i = 0; i < ref_data.size(); i++)
         {
             ASSERT(ref_data[i] == d[i]);
         }   
     }
-
-
 }
 
 //-----------------------------------------------------------------------------

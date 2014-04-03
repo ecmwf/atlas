@@ -15,12 +15,11 @@ class MeshCache : private eckit::NonCopyable {
 
 public: // methods
 
-    MeshCache();
+    static bool add( const std::string& key, atlas::Mesh& );
 
-    bool add( const std::string& key, atlas::Mesh& ) const;
-    atlas::Mesh* get( const std::string& key ) const;
+    static bool get( const std::string& key, atlas::Mesh& );
 
-    std::string filename(const std::string& key) const;
+    static std::string filename(const std::string& key);
 
 };
 

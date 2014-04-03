@@ -11,18 +11,14 @@ namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
 
-MeshCache::MeshCache()
-{
-}
-
-std::string MeshCache::filename(const std::string &key) const
+std::string MeshCache::filename(const std::string &key)
 {
     std::stringstream ss;
     ss << "cache/mesh/" << key << ".gmsh";
     return ss.str();
 }
 
-bool MeshCache::add(const std::string &key, Mesh& mesh) const
+bool MeshCache::add(const std::string &key, Mesh& mesh)
 {
     const std::string fn = filename(key);
 
@@ -46,17 +42,20 @@ bool MeshCache::add(const std::string &key, Mesh& mesh) const
     return true;
 }
 
-Mesh* MeshCache::get( const std::string &key ) const
+bool MeshCache::get(const std::string &key, Mesh& mesh)
 {
     std::string fn = filename(key);
 
     eckit::LocalPathName fpath(fn);
-    if(!fpath.exists())
-        return NULL;
+
+    if( !fpath.exists() )
+        return false;
 
     Log::info() << "found mesh in cache (" << fn << ")" << std::endl;
 
-    return atlas::Gmsh::read(fn);
+    atlas::Gmsh::read(fn,mesh);
+
+    return true;
 }
 
 //------------------------------------------------------------------------------------------------------

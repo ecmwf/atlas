@@ -13,7 +13,7 @@
 
 namespace atlas {
 
-double scaling = M_PI / 180.;
+// double scaling = M_PI / 180.;
 
 Gmsh::~Gmsh()
 { 
@@ -21,7 +21,13 @@ Gmsh::~Gmsh()
 
 Mesh* Gmsh::read(const std::string& file_path)
 {
-  Mesh* mesh = new Mesh();
+    Mesh* mesh = new Mesh();
+    Gmsh::read(file_path,*mesh);
+    return mesh;
+}
+
+void Gmsh::read(const std::string& file_path, Mesh& mesh )
+{
   std::ifstream file;
   file.open( file_path.c_str() , std::ios::in );
   if( !file.is_open() )
@@ -39,13 +45,27 @@ Mesh* Gmsh::read(const std::string& file_path)
   bounds[0] = Field::UNDEF_VARS;
   bounds[1] = nb_nodes;
 
-  FunctionSpace& nodes
-          = mesh->add_function_space( new FunctionSpace( "nodes", "Lagrange_P0", bounds ) );
+  if( mesh.has_function_space("nodes") )
+  {
+      if( mesh.function_space("nodes").bounds()[1] != nb_nodes )
+          throw std::runtime_error("existing nodes function space has incompatible number of nodes");
+  }
+  else
+  {
+    mesh.add_function_space( new FunctionSpace( "nodes", "Lagrange_P0", bounds ) )
+            .metadata().set("type",static_cast<int>(Entity::NODES));
+  }
 
-  nodes.metadata().set("type",static_cast<int>(Entity::NODES));
+  FunctionSpace& nodes = mesh.function_space("nodes");
 
-  FieldT<double>& coords         = nodes.create_field<double>("coordinates",2);
-  FieldT<int>&    glb_idx        = nodes.create_field<int>("glb_idx",1);
+  if( ! nodes.has_field("coordinates") )
+      nodes.create_field<double>("coordinates",3);
+  if( ! nodes.has_field("glb_idx") )
+      nodes.create_field<int>("glb_idx",1);
+
+  FieldT<double>& coords         = nodes.field<double>("coordinates");
+  FieldT<int>&    glb_idx        = nodes.field<int>("glb_idx");
+
   FieldT<int>&    master_glb_idx = nodes.create_field<int>("master_glb_idx",1);
   FieldT<int>&    proc           = nodes.create_field<int>("proc",1);
 
@@ -57,8 +77,9 @@ Mesh* Gmsh::read(const std::string& file_path)
   {
     file >> g >> x >> y >> z;
     glb_idx(n) = g;
-    coords(XX,n) = x*scaling;
-    coords(YY,n) = y*scaling;
+    coords(XX,n) = x;
+    coords(YY,n) = y;
+    coords(ZZ,n) = z;
     glb_to_loc[ g ] = n;
     master_glb_idx(n) = g;
     proc(n) = 0;
@@ -87,7 +108,7 @@ Mesh* Gmsh::read(const std::string& file_path)
 
   int nb_quads = nb_etype[QUAD];
   bounds[1] = nb_quads;
-  FunctionSpace& quads      = mesh->add_function_space( new FunctionSpace( "quads", "Lagrange_P1", bounds ) );
+  FunctionSpace& quads      = mesh.add_function_space( new FunctionSpace( "quads", "Lagrange_P1", bounds ) );
   quads.metadata().set("type",static_cast<int>(Entity::ELEMS));
   FieldT<int>& quad_nodes   = quads.create_field<int>("nodes",4);
   FieldT<int>& quad_glb_idx = quads.create_field<int>("glb_idx",1);
@@ -96,7 +117,7 @@ Mesh* Gmsh::read(const std::string& file_path)
 
   int nb_triags = nb_etype[TRIAG];
   bounds[1] = nb_triags;
-  FunctionSpace& triags      = mesh->add_function_space( new FunctionSpace( "triags", "Lagrange_P1", bounds ) );
+  FunctionSpace& triags      = mesh.add_function_space( new FunctionSpace( "triags", "Lagrange_P1", bounds ) );
   triags.metadata().set("type",static_cast<int>(Entity::ELEMS));
   FieldT<int>& triag_nodes   = triags.create_field<int>("nodes",3);
   FieldT<int>& triag_glb_idx = triags.create_field<int>("glb_idx",1);
@@ -106,7 +127,7 @@ Mesh* Gmsh::read(const std::string& file_path)
   int nb_edges = nb_etype[LINE];
   nb_edges = 0;
   bounds[1] = nb_edges;
-  FunctionSpace& edges      = mesh->add_function_space( new FunctionSpace( "edges", "Lagrange_P1", bounds ) );
+  FunctionSpace& edges      = mesh.add_function_space( new FunctionSpace( "edges", "Lagrange_P1", bounds ) );
   edges.metadata().set("type",static_cast<int>(Entity::FACES));
   FieldT<int>& edge_nodes   = edges.create_field<int>("nodes",2);
   FieldT<int>& edge_glb_idx = edges.create_field<int>("glb_idx",1);
@@ -168,9 +189,8 @@ Mesh* Gmsh::read(const std::string& file_path)
   quads.metadata().set("max_glb_idx",elements_max_glb_idx);
   triags.metadata().set("max_glb_idx",elements_max_glb_idx);
   edges.metadata().set("max_glb_idx",elements_max_glb_idx);
-  file.close();
 
-  return mesh;
+  file.close();
 }
 
 void Gmsh::write(Mesh& mesh, const std::string& file_path)
@@ -232,7 +252,7 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path)
     }
     else
     {
-      file << glb_idx(n) << " " << lon/scaling << " " << lat/scaling << " " << 0. << "\n";
+      file << glb_idx(n) << " " << lon << " " << lat << " " << 0. << "\n";
     }
   }
   file << "$EndNodes\n";
