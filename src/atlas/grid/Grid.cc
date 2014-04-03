@@ -63,14 +63,21 @@ void Grid::make_mesh()
     FieldT<double>& latlon  = nodes.field<double>("latlon");
     FieldT<int>&    glb_idx = nodes.field<int>("glb_idx");
 
-    Grid::Coords llcoords_wrapper( latlon.data() );
+    ASSERT( npts == nodes.bounds()[1] );
 
-    coordinates( llcoords_wrapper );
+    const std::vector<Point>& ll = coordinates();
 
     for( size_t i = 0; i < npts; ++i )
     {
         glb_idx(i) = i;
-        eckit::geometry::latlon_to_3d( latlon(LAT,i), latlon(LON,i), coords.slice(i) );
+
+        double lat = ll[i].lat();
+        double lon = ll[i].lon();
+
+        latlon(LAT,i) = lat;
+        latlon(LON,i) = lon;
+
+        eckit::geometry::latlon_to_3d( lat, lon, coords.slice(i) );
     }
 
     ASSERT( mesh_ );

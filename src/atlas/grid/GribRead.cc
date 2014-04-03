@@ -122,7 +122,7 @@ void GribRead::read_field_from_grib(  grib_handle* h, atlas::Mesh& mesh, const s
 
     atlas::FieldT<double>& field = nodes.create_field<double>(name,1);
 
-    read_field( h, &(field.data()[0]), field.size() );
+    read_field( h, &field.data()[0], field.size() );
 }
 
 //------------------------------------------------------------------------------------------------------
