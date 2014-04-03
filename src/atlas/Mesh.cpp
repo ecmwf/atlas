@@ -10,6 +10,8 @@ namespace atlas {
 
 Mesh::~Mesh() 
 { 
+//  std::cout << "Mesh Destructor " << std::endl;
+
   index_.clear();
   for( size_t f=0; f<function_spaces_.size(); ++f )
     if( function_spaces_[f] ) delete(function_spaces_[f]);

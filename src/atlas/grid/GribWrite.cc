@@ -4,6 +4,7 @@
 //------------------------------------------------------------------------------------------------------
 
 #include "atlas/Field.hpp"
+#include "atlas/grid/Field.h"
 #include "atlas/FunctionSpace.hpp"
 #include "atlas/Mesh.hpp"
 #include "atlas/Parameters.hpp"
@@ -11,19 +12,19 @@
 #include "GribWrite.h"
 
 using namespace atlas;
+using namespace atlas::grid;
+
+#define DBG     std::cout << Here() << std::endl;
+#define DBGX(x) std::cout << #x << " -> " << x << std::endl;
 
 namespace eckit {
 
 //------------------------------------------------------------------------------------------------------
 
-void GribWrite::write( atlas::Mesh& mesh, grib_handle* input_h )
+void GribWrite::write( atlas::grid::FieldH& field, grib_handle* input_h )
 {
-    FunctionSpace& nodes     = mesh.function_space( "nodes" );
-    FieldT<double>& coords   = nodes.field<double>( "coordinates" );
-
-    const size_t npts = nodes.bounds()[1];
-
-    FieldT<double>& field = nodes.field<double>("field");
+    FieldT<double>& f = field.data();
+    const size_t npts = f.size();
 
     std::vector<double> values (npts);
 
@@ -61,7 +62,7 @@ void GribWrite::write( atlas::Mesh& mesh, grib_handle* input_h )
         {
             size_t idx = (grid_spec.Nj-j-1) + (grid_spec.Ni-i-1)*grid_spec.Nj;
             ASSERT( idx < npts );
-            values[idx] = field.data()[j+i*grid_spec.Nj];
+            values[idx] = f.data()[j+i*grid_spec.Nj];
         }
     }
 
@@ -101,7 +102,7 @@ void GribWrite::write( atlas::Mesh& mesh, grib_handle* input_h )
 #endif
 }
 
-void GribWrite::clone( Mesh& mesh, const std::string& source, const std::string& fname )
+void GribWrite::clone( FieldH& field, const std::string& source, const std::string& fname )
 {
     FILE* fh = ::fopen( source.c_str(), "r" );
     if( fh == 0 )
@@ -112,23 +113,23 @@ void GribWrite::clone( Mesh& mesh, const std::string& source, const std::string&
     if( clone_h == 0 || err != 0 )
         throw ReadError( std::string("error reading grib file ") + source );
 
-    grib_handle* h = GribWrite::clone( mesh, clone_h );
+    grib_handle* h = GribWrite::clone( field, clone_h );
 
     grib_write_message(h,fname.c_str(),"w");
 
     grib_handle_delete(h);
+    grib_handle_delete(clone_h);
 }
 
-grib_handle* GribWrite::clone( Mesh &mesh, grib_handle* source )
+grib_handle* GribWrite::clone( FieldH& field, grib_handle* source )
 {
-    FunctionSpace& nodes  = mesh.function_space( "nodes" );
-    const size_t npts     = nodes.bounds()[1];
-    FieldT<double>& field = nodes.field<double>("field");
+    FieldT<double>& f = field.data();
+    const size_t npts = f.size();
 
     long nb_nodes = 0;
     grib_get_long(source,"numberOfDataPoints",&nb_nodes);
 
-    ASSERT( npts == nb_nodes );
+    ASSERT( npts == f.size() );
 
     grib_handle* h = grib_handle_clone(source);
     if(!h)
@@ -136,7 +137,7 @@ grib_handle* GribWrite::clone( Mesh &mesh, grib_handle* source )
 
     GRIB_CHECK( grib_set_long(h,"bitsPerValue",16),0 );
 
-    GRIB_CHECK(grib_set_double_array(h,"values",&(field.data()[0]),npts),0);
+    GRIB_CHECK(grib_set_double_array(h,"values",&(f.data()[0]),npts),0);
 
     return h;
 }

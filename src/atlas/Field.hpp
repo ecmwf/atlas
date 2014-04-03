@@ -5,6 +5,7 @@
 
 #include <vector>
 #include <string>
+#include <iostream> // tmp
 
 #include "atlas/Metadata.hpp"
 
@@ -24,7 +25,7 @@ public: // methods
 
   Field(const std::string& name, const int nb_vars, FunctionSpace& function_space);
 
-  virtual ~Field() {}
+  virtual ~Field();
 
   template <typename DATA_TYPE> std::vector< DATA_TYPE >& data();
 
@@ -111,8 +112,7 @@ inline FieldT<DATA_TYPE>::FieldT(const std::string& name, const int nb_vars, Fun
 template< typename DATA_TYPE >
 inline FieldT<DATA_TYPE>::~FieldT()
 {
-  name_ = "";
-  data_.clear();
+    data_.clear();
 }
 
 template< typename DATA_TYPE >

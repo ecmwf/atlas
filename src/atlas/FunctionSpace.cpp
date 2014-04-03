@@ -25,7 +25,7 @@ FunctionSpace::FunctionSpace(const std::string& name, const std::string& shape_f
 
 FunctionSpace::~FunctionSpace() 
 { 
-  //std::cout << "C++ : FunctionSpace Destructor ("<<name_<<")" << std::endl;
+//  std::cout << "FunctionSpace Destructor ("<<name_<<")" << std::endl;
   index_.clear();
   for( size_t f=0; f<fields_.size(); ++f )
     if( fields_[f] ) delete(fields_[f]);

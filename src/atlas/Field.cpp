@@ -14,6 +14,10 @@ Field::Field(const std::string& name, const int nb_vars, FunctionSpace& function
 {
 }
 
+Field::~Field()
+{
+}
+
 template <>
 std::vector< int >& Field::data<int>()
 {
