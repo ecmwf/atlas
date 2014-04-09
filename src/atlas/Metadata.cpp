@@ -2,6 +2,9 @@
 
 #include "atlas/Metadata.hpp"
 #include "atlas/Field.hpp"
+#include <iostream>
+#include <stdexcept>
+#include <sstream>
 
 using namespace std;
 
@@ -15,7 +18,14 @@ Metadata& Metadata::set(const std::string& name, const VALUE_TYPE& value)\
 template<>\
 VALUE_TYPE& Metadata::get(const std::string& name)\
 {\
-  return map_##VALUE_TYPE##_.at(name);\
+  try {\
+    return map_##VALUE_TYPE##_.at(name);\
+  }\
+  catch( std::out_of_range& e ) {\
+    std::stringstream msg;\
+    msg << "Could not find metadata \"" << name << "\"";\
+    throw std::out_of_range(msg.str());\
+  }\
 }
 
 #define METADATA_C_BINDING( VALUE_TYPE ) \

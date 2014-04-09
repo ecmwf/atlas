@@ -169,25 +169,53 @@ Field& FunctionSpace::field( size_t idx )
 Field& FunctionSpace::field(const std::string& name)
 {
     //std::cout << "C++ : Access field " << name << std::endl;
-    return *fields_[ index_.at(name) ];
+    try {
+      return *fields_[ index_.at(name) ];
+    }
+    catch( std::out_of_range& e ) {
+      std::stringstream msg;
+      msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
+      throw std::out_of_range(msg.str());
+    }
 }
 
 template<>
   FieldT<double> &FunctionSpace::field(const std::string& name)
 {
-  return *dynamic_cast< FieldT<double>* >(fields_[ index_.at(name) ]);
+  try {
+    return *dynamic_cast< FieldT<double>* >(fields_[ index_.at(name) ]);
+  }
+  catch( std::out_of_range& e ) {
+    std::stringstream msg;
+    msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
+    throw std::out_of_range(msg.str());
+  }
 }
 
 template<>
   FieldT<float> &FunctionSpace::field(const std::string& name)
 {
-  return *dynamic_cast< FieldT<float>* >(fields_[ index_.at(name) ]);
+  try {
+    return *dynamic_cast< FieldT<float>* >(fields_[ index_.at(name) ]);
+  }
+  catch( std::out_of_range& e ) {
+    std::stringstream msg;
+    msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
+    throw std::out_of_range(msg.str());
+  }
 }
 
 template<>
   FieldT<int> &FunctionSpace::field(const std::string& name)
 {
-  return *dynamic_cast< FieldT<int>* >(fields_[ index_.at(name) ]);
+  try {
+    return *dynamic_cast< FieldT<int>* >(fields_[ index_.at(name) ]);
+  }
+  catch( std::out_of_range& e ) {
+    std::stringstream msg;
+    msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
+    throw std::out_of_range(msg.str());
+  }
 }
 
 void FunctionSpace::parallelise(const int proc[], const int glb_idx[], const int master_glb_idx[] )
