@@ -75,6 +75,7 @@ ecbuild_add_library( TARGET atlas
 		Gather.hpp
 		Gather.cpp
 		MPL.hpp
+  LIBS ${MPI_CXX_LIBRARIES}
 ) 
 
 ### fortran bindings
