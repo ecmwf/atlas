@@ -21,4 +21,9 @@ ecbuild_add_test( TARGET test_gmsh
   LIBS     atlas
 )
 
+ecbuild_add_test( TARGET test_rgg
+  SOURCES  test_rgg.cpp
+  LIBS     atlas_meshgen
+)
+
 add_subdirectory( grid )
