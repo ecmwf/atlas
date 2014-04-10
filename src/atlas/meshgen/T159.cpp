@@ -1,8 +1,6 @@
 // (C) Copyright 1996-2014 ECMWF.
 
 #include "atlas/meshgen/RGG.hpp"
-// #include <numeric>
-// #include <cmath>
 
 namespace atlas {
 namespace meshgen {
