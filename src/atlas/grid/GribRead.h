@@ -23,6 +23,10 @@ public:
 
     static void read_field(  grib_handle* h, double* field, size_t size );
 
+    /// Returns the list of all known grib grid types.
+    /// Allow better error handling during Grid construction.
+    /// This really belongs in grib_api,
+    static void known_grid_types(std::set<std::string>&);
 };
 
 //------------------------------------------------------------------------------------------------------

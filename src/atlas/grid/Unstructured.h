@@ -1,3 +1,5 @@
+#ifndef atlas_grid_Unstructured_H
+#define atlas_grid_Unstructured_H
 /*
  * (C) Copyright 1996-2013 ECMWF.
  *
@@ -11,8 +13,6 @@
 /// @author Tiago Quintino
 /// @date April 2013
 
-#ifndef atlas_grid_Unstructured_H
-#define atlas_grid_Unstructured_H
 
 #include <cstddef>
 #include <vector>
@@ -36,6 +36,8 @@ public: // methods
     virtual ~Unstructured();
 
     virtual std::string hash() const;
+
+    virtual const char* gridType() const { return "unstructured"; }
 
     virtual BoundBox boundingBox() const;
 

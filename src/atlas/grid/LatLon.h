@@ -37,6 +37,8 @@ public: // methods
 
     virtual std::string hash() const;
 
+    virtual const char* gridType() const { return "latlon"; }
+
     virtual BoundBox boundingBox() const;
 
     virtual size_t nPoints() const { return points_.size(); }

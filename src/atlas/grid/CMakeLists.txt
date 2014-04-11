@@ -19,6 +19,8 @@ PointIndex3.cc
 PointIndex3.h
 PointSet.cc
 PointSet.h
+RegularLatLonGrid.h
+RegularLatLonGrid.cc
 Tesselation.cc
 Tesselation.h
 TriangleIntersection.cc

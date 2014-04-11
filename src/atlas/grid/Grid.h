@@ -75,6 +75,8 @@ public: // methods
 
     virtual std::string hash() const = 0;
 
+    virtual const char* gridType() const = 0;
+
     virtual BoundBox boundingBox() const = 0;
 
     virtual size_t nPoints() const = 0;
@@ -90,6 +92,9 @@ public: // methods
 protected:
 
     virtual void make_mesh();
+
+    static int scanningMode(long iScansNegatively, long jScansPositively);
+
 
     std::unique_ptr< Mesh > mesh_;
 

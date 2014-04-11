@@ -12,6 +12,7 @@
 #include "atlas/grid/GribRead.h"
 #include "atlas/grid/Unstructured.h"
 #include "atlas/grid/Tesselation.h"
+#include "atlas/grid/RegularLatLonGrid.h"
 
 //-----------------------------------------------------------------------------
 
@@ -24,38 +25,65 @@ namespace eckit { /// @todo this is still in eckit namespace because we plan to 
 
 typedef std::vector< grid::Grid::Point > PointList;
 
+static PointList* read_number_of_data_points(grib_handle *h)
+{
+   // points to read
+   long nb_nodes = 0;
+   grib_get_long(h,"numberOfDataPoints",&nb_nodes);
+
+   int err = 0;
+   grib_iterator *i = grib_iterator_new(h, 0, &err);
+   if(err != 0 )
+      throw std::string("error reading grib");
+
+   PointList* pts = new PointList(nb_nodes);
+
+   double lat   = 0.;
+   double lon   = 0.;
+   double value = 0.;
+
+   size_t idx = 0;
+   while( grib_iterator_next(i,&lat,&lon,&value) )
+   {
+      (*pts)[idx].assign(lat,lon);
+      ++idx;
+   }
+   grib_iterator_delete(i);
+
+   ASSERT( idx == nb_nodes );
+   return pts;
+}
+
 grid::Grid* GribRead::create_grid_from_grib(grib_handle *h)
 {
-    ASSERT( h );
-    int err = 0;
+   ASSERT( h );
+   if ( 0 == h) throw std::string("GribRead::create_grid_from_grib NULL grib_handle");
 
-    // points to read
+   char string_value[64];
+   size_t len = sizeof(string_value)/sizeof(char);
+   if (grib_get_string(h,"gridType",string_value,&len)  != 0) {
+      throw std::runtime_error("grib_get_string failed for gridType") ;
+   }
 
-    long nb_nodes = 0;
-    grib_get_long(h,"numberOfDataPoints",&nb_nodes);
+   if (strncasecmp(string_value,"regular_ll",10) == 0) {
+      // Custom arguments for Lat long grid
+      return new grid::RegularLatLonGrid( h );
+   }
+//   else if (strncasecmp(string_value,"sh",2) == 0) {
+//      return new grid::SphericalHarmonicGrid( pts, grib_hash(h) );
+//   }
+//   else if (strncasecmp(string_value,"reduced_ll",10) == 0) {
+//      return new grid::ReducedLatLonGrid( pts, grib_hash(h) );
+//   }
+//   else if (strncasecmp(string_value,"reduced_gg",10) == 0) {
+//      return new grid::ReducedGuassianGrid( pts, grib_hash(h) );
+//   }
+//   else if (strncasecmp(string_value,"regular_gg",10) == 0) {
+//      return new grid::RegularGuassianGrid( pts, grib_hash(h) );
+//   }
 
-    grib_iterator *i = grib_iterator_new(h, 0, &err);
-
-    if( h == 0 || err != 0 )
-        throw std::string("error reading grib");
-
-    PointList* pts = new PointList(nb_nodes);
-
-    double lat   = 0.;
-    double lon   = 0.;
-    double value = 0.;
-
-    size_t idx = 0;
-    while( grib_iterator_next(i,&lat,&lon,&value) )
-    {
-        (*pts)[idx].assign(lat,lon);
-        ++idx;
-    }
-    grib_iterator_delete(i);
-
-    ASSERT( idx == nb_nodes );
-
-    return new grid::Unstructured( pts, grib_hash(h) );
+   // Unknown grid type, get extract data points form the grib handle
+   return new grid::Unstructured( read_number_of_data_points(h), grib_hash(h) );
 }
 
 void GribRead::read_nodes_from_grib( grib_handle* h, atlas::Mesh& mesh )
@@ -163,6 +191,35 @@ void GribRead::read_field(  grib_handle* h, double* field, size_t size )
     if( in != size )
         throw SeriousBug( "field is of incorrect size -- too little points" );
 
+}
+
+
+void GribRead::known_grid_types(std::set<std::string>& grids)
+{
+   grids.insert("regular_ll");
+   grids.insert("reduced_ll");
+   grids.insert("mercator");
+   grids.insert("lambert");
+   grids.insert("polar_stereographic");
+   grids.insert("UTM");
+   grids.insert("simple_polyconic");
+   grids.insert("albers");
+   grids.insert("miller");
+   grids.insert("rotated_ll");
+   grids.insert("stretched_ll");
+   grids.insert("stretched_rotated_ll");
+   grids.insert("regular_gg");
+   grids.insert("rotated_gg");
+   grids.insert("stretched_gg");
+   grids.insert("stretched_rotated_gg");
+   grids.insert("reduced_gg");
+   grids.insert("sh");
+   grids.insert("rotated_sh");
+   grids.insert("stretched_sh");
+   grids.insert("stretched_rotated_sh");
+   grids.insert("space_view");
+   grids.insert("unknown");
+   grids.insert("unknown_PLPresent");
 }
 
 //---------------------------------------------------------------------------------------------------------

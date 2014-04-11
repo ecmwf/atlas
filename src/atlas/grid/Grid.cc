@@ -84,6 +84,23 @@ void Grid::make_mesh()
 }
 
 
+int Grid::scanningMode(long iScansNegatively, long jScansPositively)
+{
+   if(iScansNegatively == 0 && jScansPositively == 0)
+      return 1;
+   if(iScansNegatively == 0 && jScansPositively == 1)
+      return 2;
+   if(iScansNegatively == 1 && jScansPositively == 0)
+      return 3;
+   if(iScansNegatively == 1 && jScansPositively == 1)
+      return 4;
+
+   ASSERT(iScansNegatively == 0 || iScansNegatively == 1);
+   ASSERT(jScansPositively == 0 || jScansPositively == 1);
+
+   return 1;
+}
+
 //-----------------------------------------------------------------------------
 
 } // namespace grid
