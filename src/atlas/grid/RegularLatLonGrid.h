@@ -46,8 +46,8 @@ public:
 
 private:
    // for verification/checks
-   double computeIncLat() const { return 180.0/(rows() + 1); }
-   double computeIncLon() const { return 360.0/cols(); }
+   long computeIncLat() const ;
+   long computeIncLon() const ;
    long computeRows(double north, double south, double west, double east) const;
    long computeCols(double west, double east) const;
 

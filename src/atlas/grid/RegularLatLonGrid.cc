@@ -69,15 +69,33 @@ RegularLatLonGrid::RegularLatLonGrid(grib_handle* handle)
    double plon = west_;
    double plat = north_;
    points_.reserve( (nptsNS_ + 1) * (nptsWE_ + 1) );
-   for( size_t j = 0; j <= nptsNS_; ++j) {
-      for( size_t i = 0; i <= nptsWE_; ++i) {
+   for( size_t j = 0; j < nptsNS_; ++j) {
+      for( size_t i = 0; i < nptsWE_; ++i) {
          points_.push_back( Point( plat, plon ) );
          plon += weIncrement_;
       }
       plat += nsIncrement_;
    }
 
-   // ??
+   Log::info() << " iScansNegatively                               " << iScansNegatively << std::endl;
+   Log::info() << " jScansPositively                               " << jScansPositively << std::endl;
+   Log::info() << " scanning_mode                                  " << scanning_mode << std::endl;
+   Log::info() << " latitudeOfFirstGridPointInDegrees              " << north_ << std::endl;
+   Log::info() << " longitudeOfFirstGridPointInDegrees             " << west_ << std::endl;
+   Log::info() << " latitudeOfLastGridPointInDegrees               " << south_ << std::endl;
+   Log::info() << " longitudeOfLastGridPointInDegrees              " << east_ << std::endl;
+   Log::info() << " jDirectionIncrementInDegrees(north-south incr) " << nsIncrement_ << std::endl;
+   Log::info() << " iDirectionIncrementInDegrees(west-east   incr) " << weIncrement_ << std::endl;
+   Log::info() << " Nj(num of points North South)                  " << nptsNS_ << std::endl;
+   Log::info() << " Ni(num of points West East)                    " << nptsWE_ << std::endl;
+   Log::info() << " numberOfDataPoints                             " << nb_nodes << std::endl;
+   Log::info() << " -----------------------------------------------" << std::endl;
+   Log::info() << " computeIncLat() " << computeIncLat() << "      nsIncrement_ " << nsIncrement_ << std::endl;
+   Log::info() << " computeIncLon() " << computeIncLon() << "      weIncrement_ " << nsIncrement_ << std::endl;
+   Log::info() << " computeRows()   " << computeRows(north_,south_,west_,east_) << " nptsNS_ " << nptsNS_ << std::endl;
+   Log::info() << " computeCols()   " << computeCols(west_,east_) <<  " nptsWE_ " << nptsWE_ << std::endl;
+   Log::info() << " points_.size()  " << points_.size() << "       nb_nodes " << nb_nodes << std::endl << std::endl;
+
    ASSERT(nsIncrement_ == computeIncLat());
    ASSERT(weIncrement_ == computeIncLon());
    ASSERT(nptsNS_ == computeRows(north_,south_,west_,east_));
@@ -128,17 +146,32 @@ void RegularLatLonGrid::coordinates( Grid::Coords& r ) const
     }
 }
 
+long RegularLatLonGrid::computeIncLat() const
+{
+   double north_diff_south = 0.0;
+   if (north_ > 0.0 && south_ > 0.0 ) north_diff_south = north_ - south_;
+   else if ( north_ < 0.0 && south_ < 0.0) north_diff_south = fabs(north_) - fabs(south_);
+   else north_diff_south  = fabs(north_) + fabs(south_);
+
+   return ( north_diff_south/(rows() + 1) + 0.5);
+}
+
+long RegularLatLonGrid::computeIncLon() const
+{
+   return ((east_ - west_)/cols() + 0.5 );
+}
+
 long RegularLatLonGrid::computeRows(double north, double south, double west, double east) const
 {
-   if (north > 0.0 && south > 0.0 ) return (north - south)/nsIncrement_;
-   else if ( north < 0.0 && south < 0.0) return (fabs(north) - fabs(south))/nsIncrement_;
+   if (north > 0.0 && south > 0.0 ) return (north - south)/nsIncrement_ + 1;
+   else if ( north < 0.0 && south < 0.0) return (fabs(north) - fabs(south))/nsIncrement_ + 1;
 
-   return (fabs(north) + fabs(south))/nsIncrement_;
+   return (fabs(north) + fabs(south))/nsIncrement_ + 1;
 }
 
 long RegularLatLonGrid::computeCols(double west, double east) const
 {
-   return fabs((east - west)/weIncrement_);
+   return fabs((east - west)/weIncrement_) + 1;
 }
 
 //-----------------------------------------------------------------------------
