@@ -23,20 +23,26 @@
 
 #include "eckit/log/Log.h"
 #include "eckit/grib/GribAccessor.h"
-#include "atlas/grid/RegularGaussianGrid.h"
+#include "atlas/grid/ReducedGaussianGrid.h"
 
 using namespace eckit;
+
+const double epsilon = 1.25e-10;
+bool zero(const double v) { return abs(v) < epsilon; }
+bool same(const double a, const double b) { return zero(a-b); }
+bool zero(const double v, double epsilon) { return abs(v) < epsilon; }
+bool same(const double a, const double b, double epsilon) { return zero(a-b, epsilon); }
 
 namespace atlas {
 namespace grid {
 
 //-----------------------------------------------------------------------------
 
-RegularGaussianGrid::RegularGaussianGrid(grib_handle* handle)
+ReducedGaussianGrid::ReducedGaussianGrid(grib_handle* handle)
 : gaussianNumber_(0),
   north_(0.0),south_(0.0),west_(0.0),east_(0.0)
 {
-   Log::info() << "Build a RegularGaussianGrid  " << std::endl;
+   Log::info() << "Build a ReducedGaussianGrid  " << std::endl;
 
    // Extract the guassian grid attributes from the grib handle
    if (handle == NULL) throw std::runtime_error("NULL grib_handle");
@@ -55,6 +61,14 @@ RegularGaussianGrid::RegularGaussianGrid(grib_handle* handle)
    GRIB_CHECK(grib_get_long(handle,"numberOfParallelsBetweenAPoleAndTheEquator",&gaussianNumber_),0);
 
 
+   // get reduced grid specification
+   size_t rgSpecLength = 0;
+   GRIB_CHECK(grib_get_size(handle,"pl",&rgSpecLength),0);
+
+   rgSpec_.resize(rgSpecLength);
+   GRIB_CHECK(grib_get_long_array(handle,"pl",&rgSpec_[0],&rgSpecLength),0);
+
+
 //   GRIB_CHECK(grib_get_double(handle,"jDirectionIncrementInDegrees",&nsIncrement_),0);
 //   GRIB_CHECK(grib_get_double(handle,"iDirectionIncrementInDegrees",&weIncrement_),0);
 //
@@ -71,19 +85,19 @@ RegularGaussianGrid::RegularGaussianGrid(grib_handle* handle)
    grib_get_gaussian_latitudes(gaussianNumber_, array);
 
 
-//   for ( int i = 0; i < 2*gaussianNumber_; i++ )
-//   {
-//      if ( same(array[i],north_, 10e-2) ) {
-//         latitudes_.push_back(array[i]);
-//         continue;
-//      }
-//      if ( same(array[i],south_, 10e-2) ) {
-//         latitudes_.push_back(array[i]);
-//         continue;
-//      }
-//      if ( array[i] < north_ && array[i] > south_)
-//         latitudes_.push_back(array[i]);
-//   }
+   for ( int i = 0; i < 2*gaussianNumber_; i++ )
+   {
+      if ( same(array[i],north_, 10e-2) ) {
+         latitudes_.push_back(array[i]);
+         continue;
+      }
+      if ( same(array[i],south_, 10e-2) ) {
+         latitudes_.push_back(array[i]);
+         continue;
+      }
+      if ( array[i] < north_ && array[i] > south_)
+         latitudes_.push_back(array[i]);
+   }
 
 //   if (jScansPositively == 1 )
 //      std::reverse(latitudes_.begin(), latitudes_.end());
@@ -104,6 +118,7 @@ RegularGaussianGrid::RegularGaussianGrid(grib_handle* handle)
    long nptsNS = 2 * gaussianNumber_ ;
 
    Log::info() << " gaussianNumber_                                " << gaussianNumber_ << std::endl;
+   Log::info() << " pl                                             " << rgSpecLength << std::endl;
    Log::info() << " iScansNegatively                               " << iScansNegatively << std::endl;
    Log::info() << " jScansPositively                               " << jScansPositively << std::endl;
    Log::info() << " scanning_mode                                  " << scanning_mode << std::endl;
@@ -121,12 +136,12 @@ RegularGaussianGrid::RegularGaussianGrid(grib_handle* handle)
    ASSERT(points_.size() == nb_nodes);
 }
 
-RegularGaussianGrid::~RegularGaussianGrid()
+ReducedGaussianGrid::~ReducedGaussianGrid()
 {
-    Log::info() << "Destroy a RegularGaussianGrid" << std::endl;
+    Log::info() << "Destroy a ReducedGaussianGrid" << std::endl;
 }
 
-Grid::Point RegularGaussianGrid::latLon(size_t the_i, size_t the_j) const
+Grid::Point ReducedGaussianGrid::latLon(size_t the_i, size_t the_j) const
 {
     long nptsWE = 4 * gaussianNumber_ ;
     long weIncrement = 90./gaussianNumber_ ; // ??
@@ -144,18 +159,18 @@ Grid::Point RegularGaussianGrid::latLon(size_t the_i, size_t the_j) const
    return Grid::Point();
 }
 
-std::string RegularGaussianGrid::hash() const
+std::string ReducedGaussianGrid::hash() const
 {
     return hash_;
 }
 
-Grid::BoundBox RegularGaussianGrid::boundingBox() const
+Grid::BoundBox ReducedGaussianGrid::boundingBox() const
 {
    // Grid::BoundBox expects bottom left, top right
    return Grid::BoundBox(Point(south_,west_),Point(north_,east_));
 }
 
-void RegularGaussianGrid::coordinates( Grid::Coords& r ) const
+void ReducedGaussianGrid::coordinates( Grid::Coords& r ) const
 {
     ASSERT( r.size() == points_.size() );
 

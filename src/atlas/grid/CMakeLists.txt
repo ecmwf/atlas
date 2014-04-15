@@ -19,6 +19,8 @@ PointIndex3.cc
 PointIndex3.h
 PointSet.cc
 PointSet.h
+ReducedGaussianGrid.h
+ReducedGaussianGrid.cc
 RegularLatLonGrid.h
 RegularLatLonGrid.cc
 RegularGaussianGrid.h

@@ -14,6 +14,7 @@
 #include "atlas/grid/Tesselation.h"
 #include "atlas/grid/RegularLatLonGrid.h"
 #include "atlas/grid/RegularGaussianGrid.h"
+#include "atlas/grid/ReducedGaussianGrid.h"
 
 //-----------------------------------------------------------------------------
 
@@ -76,9 +77,9 @@ grid::Grid* GribRead::create_grid_from_grib(grib_handle *h)
 //   else if (strncasecmp(string_value,"reduced_ll",10) == 0) {
 //      return new grid::ReducedLatLonGrid( pts, grib_hash(h) );
 //   }
-//   else if (strncasecmp(string_value,"reduced_gg",10) == 0) {
-//      return new grid::ReducedGuassianGrid( pts, grib_hash(h) );
-//   }
+   else if (strncasecmp(string_value,"reduced_gg",10) == 0) {
+      return new grid::ReducedGaussianGrid( h );
+   }
    else if (strncasecmp(string_value,"regular_gg",10) == 0) {
       return new grid::RegularGaussianGrid( h );
    }
