@@ -21,6 +21,8 @@ PointSet.cc
 PointSet.h
 RegularLatLonGrid.h
 RegularLatLonGrid.cc
+RegularGaussianGrid.h
+RegularGaussianGrid.cc
 Tesselation.cc
 Tesselation.h
 TriangleIntersection.cc
