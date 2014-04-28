@@ -84,7 +84,7 @@ public: // methods
   Metadata& metadata() { return metadata_; }
 
   template< typename ValueT >
-  ValueT& metadata(const std::string name)
+  const ValueT& metadata(const std::string name) const
   {
     return metadata_.get<ValueT>(name);
   }

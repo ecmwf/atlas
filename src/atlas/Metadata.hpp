@@ -18,7 +18,7 @@ public:
   Metadata& set(const std::string& name, const ValueT& value);
 
   template<typename ValueT>
-  ValueT& get(const std::string& name);
+  const ValueT& get(const std::string& name) const;
 
 private:
   std::map< std::string, bool > map_bool_;

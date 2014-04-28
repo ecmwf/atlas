@@ -16,7 +16,7 @@ Metadata& Metadata::set(const std::string& name, const VALUE_TYPE& value)\
   return *this;\
 }\
 template<>\
-VALUE_TYPE& Metadata::get(const std::string& name)\
+const VALUE_TYPE& Metadata::get(const std::string& name) const\
 {\
   try {\
     return map_##VALUE_TYPE##_.at(name);\
