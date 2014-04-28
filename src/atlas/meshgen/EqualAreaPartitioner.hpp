@@ -45,6 +45,7 @@
 //     + SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                  +
 //     +                                                                         +
 //     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//   
 
 #ifndef EqualAreaPartitioner_hpp
 #define EqualAreaPartitioner_hpp
@@ -55,17 +56,32 @@ namespace meshgen {
 void eq_caps(int N, std::vector<int>& n_regions, std::vector<double>& s_cap);
 void eq_regions(int N, double xmin[], double xmax[], double ymin[], double ymax[]);
 
+
+// Node struct that holds the longitude and latitude in millidegrees (integers)
+// This structure is used in sorting algorithms, and uses less memory than
+// if x and y were in double precision.
+struct NodeInt
+{
+  int x, y;
+  int n;
+};
+
 class EqualAreaPartitioner
 {
 public:
   EqualAreaPartitioner(int N);
-  int partition(double x, double y);
+  int partition(const double& x, const double& y) const;
+  int band(const double& y) const;
+  int sector(int band, const double& x) const;
+  void area(int partition, int& band, int& sector) const;
+  int nb_bands() const { return bands_.size(); }
+  int nb_sectors(int band) const { return sectors_[band]; };
+  void partition(int nb_nodes, NodeInt nodes[], int part[]) const;
+  
 private:
   int N_;
-  std::vector<double> xmin_;
-  std::vector<double> xmax_;
-  std::vector<double> ymin_;
-  std::vector<double> ymax_;
+  std::vector<double> bands_;
+  std::vector<int> sectors_;
 };
 
 } // namespace meshgen

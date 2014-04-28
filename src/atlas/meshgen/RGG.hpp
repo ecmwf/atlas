@@ -11,15 +11,20 @@ namespace atlas {
   class Mesh;
 namespace meshgen {
 
+  struct Region;
+  
 // For Hemisphere!, jlat=0 at equator
 class RGG
 {
 public:
   int nlat() const { return lat_.size(); }
   int nlon(int jlat) const { return lon_[jlat]; }
+  int nlonmax() const { return lon_[nlat()/2]; }
   double lon(const int jlon, const int jlat) const { return 2.*M_PI/static_cast<double>(nlon(jlat))*static_cast<double>(jlon); }
   double lat(const int jlat) const { return lat_[jlat]; }
   int ngptot() const;
+private:
+  void make_complete();
 protected:
   std::vector<double> lat_;
   std::vector<int>    lon_;
@@ -30,7 +35,11 @@ class RGGMeshGenerator
 {
 public:
   RGGMeshGenerator();
+  void generate_region(const RGG& rgg, const std::vector<int>& parts, int mypart, Region& region);
+  Mesh* generate_mesh(const RGG& rgg,const std::vector<int>& parts, const Region& region);
+  std::vector<int> partition(const RGG& rgg) const;
   Mesh* generate(const RGG& rgg);
+  Mesh* operator()(const RGG& rgg){ return generate(rgg); }
 public:
   Metadata options;
 };
@@ -42,6 +51,8 @@ class T255:  public RGG { public: T255();  };
 class T511:  public RGG { public: T511();  };
 class T1279: public RGG { public: T1279(); };
 class T2047: public RGG { public: T2047(); };
+class T3999: public RGG { public: T3999(); };
+class T7999: public RGG { public: T7999(); };
 
 } // namespace meshgen
 } // namespace atlas

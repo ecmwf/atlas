@@ -524,12 +524,16 @@ T511::T511()
     1.5616014258433499,
     1.5677313598110112    
   }; 
-  lat_.resize(nlat);
-  lon_.resize(nlat);
-  std::reverse_copy( lon, lon+nlat, lon_.begin() );
-  std::reverse_copy( colat, colat+nlat, lat_.begin() );
+  lat_.resize(2*nlat);
+  lon_.resize(2*nlat);
+  std::copy( lon, lon+nlat, lon_.begin() );
+  std::reverse_copy( lon, lon+nlat, lon_.begin()+nlat );
+  std::copy( colat, colat+nlat, lat_.begin() );
+  std::reverse_copy( colat, colat+nlat, lat_.begin()+nlat );
   for (int i=0; i<nlat; ++i)
     lat_[i]=M_PI/2.-lat_[i];
+  for (int i=nlat; i<2*nlat; ++i)
+    lat_[i]=-M_PI/2.+lat_[i];
 }
 
 } // namespace meshgen

@@ -10,6 +10,8 @@ list( APPEND atlas_meshgen_src
   T511.cpp
   T1279.cpp
   T2047.cpp
+  T3999.cpp
+  T7999.cpp
 )
 
 ecbuild_add_library(TARGET atlas_meshgen

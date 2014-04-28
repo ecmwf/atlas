@@ -3,6 +3,10 @@
 #include <cmath>
 #include <vector>
 #include <iostream>
+#include <functional>
+#include <algorithm>    // std::sort
+#include <ctime>
+
 #include "atlas/meshgen/EqualAreaPartitioner.hpp"
 
 namespace atlas {
@@ -331,26 +335,134 @@ void eq_regions(int N, double xmin[], double xmax[], double ymin[], double ymax[
 
 
 EqualAreaPartitioner::EqualAreaPartitioner(int N) :
-  N_(N), xmin_(N), xmax_(N), ymin_(N), ymax_(N)
+  N_(N)
 {
-  eq_regions(N,xmin_.data(),xmax_.data(),ymin_.data(),ymax_.data());
-}
-
-int EqualAreaPartitioner::partition(double x, double y)
-{
-  for(int n=0; n<N_; ++n)
-  {
-    if( x>=xmin_[n] && x<xmax_[n] && y>=ymin_[n] && y<ymax_[n] )
-    {
-      // std::cout << "x: " <<  xmin_[n] << " < " << x << " < " << xmax_[n] << std::endl;
-      // std::cout << "y: " <<  ymin_[n] << " < " << y << " < " << ymax_[n] << std::endl;
-      return n;      
-    }
-
+  std::vector<double> s_cap;
+  eq_caps(N, sectors_, s_cap);
+  bands_.resize(s_cap.size());
+  for (int n=0; n<s_cap.size(); ++n){
+    bands_[n] = 0.5*M_PI-s_cap[n];
   }
-  return -1;
 }
 
+int EqualAreaPartitioner::partition(const double& x, const double& y) const
+{
+  int b = band(y);
+  int p = 0;
+  for(int n=0; n<b; ++n)
+    p += sectors_[n];
+  return p + sector(b,x);
+}
+
+int EqualAreaPartitioner::band(const double& y) const
+{
+  return std::distance( bands_.begin(), std::lower_bound(bands_.begin(),bands_.end(),y, std::greater<double>() ) );
+}
+
+int EqualAreaPartitioner::sector(int band, const double& x) const
+{
+  double xreg = x;
+  if(x<0.) xreg += 2.*M_PI;
+  else if(x>2.*M_PI) xreg -= 2.*M_PI;
+  return std::floor(xreg*sectors_[band]/(2.*M_PI+1e-8));
+}
+
+void EqualAreaPartitioner::area(int partition, int& band, int& sector) const
+{
+  int p=0;
+  for( int b=0; b<bands_.size(); ++b)
+  {
+    for( int s=0; s<sectors_[b]; ++s )
+    {
+      if (partition == p)
+      {
+        band = b;
+        sector = s;
+        return;
+      }
+      ++p;
+    }
+  }
+}
+
+bool compare_NS_WE(const NodeInt& node1, const NodeInt& node2)
+{
+  if( node1.y >  node2.y ) return true;
+  if( node1.y == node2.y ) return (node1.x < node2.x);
+  return false;
+}
+
+bool compare_WE_NS(const NodeInt& node1, const NodeInt& node2)
+{
+  if( node1.x <  node2.x ) return true;
+  if( node1.x == node2.x ) return (node1.y > node2.y);
+  return false;
+}
+
+void EqualAreaPartitioner::partition(int nb_nodes, NodeInt nodes[], int part[]) const
+{
+  std::clock_t init, final;
+  init=std::clock();
+  std::cout << "partition start (" << nb_nodes << " points)" << std::endl;
+  int nb_parts = N_;
+  int n;
+  int p;
+  int i;
+  int begin;
+  int end;
+  int band;
+
+  /* 
+  Sort nodes from north to south, and west to east. Now we can easily split
+  the points in bands. Note, for RGG, this should not be necessary, as it is
+  already by construction in this order, but then sorting is really fast
+  */
+  
+  std::sort( nodes, nodes+nb_nodes, compare_NS_WE);
+  
+  /*
+  For every band, now sort from west to east, and north to south. Inside every band
+  we can now easily split nodes in sectors.
+  */
+  double chunk_size = static_cast<double>(nb_nodes)/static_cast<double>(nb_parts);
+  begin = 0;
+  p=0;
+  for( band=0; band<nb_bands(); ++band )
+  {
+    p += nb_sectors(band);
+    end = std::floor(p*chunk_size);
+    std::sort( nodes+begin, nodes+end, compare_WE_NS );
+    begin = end;
+  }
+  
+  /*
+  Create list that tells in original node numbering which part the node belongs to
+  */
+  begin = 0;
+  for( p=0; p<nb_parts; ++p)
+  {
+    end = std::floor((p+1)*chunk_size);
+    for( i=begin; i<end; ++i )
+    {
+      part[nodes[i].n] = p;
+    }
+    begin = end;
+  }
+  
+  /*
+  This piece of code is to reorder back along latitudes
+  */
+  
+  // begin = 0;
+  // for( p=0; p<nb_parts; ++p )
+  // {
+  //   int end = std::floor((p+1)*chunk_size);
+  //   std::sort( nodes+begin, nodes+end, compare_NS_WE );
+  //   begin = end;
+  // }
+  final=std::clock()-init;
+  std::cout << "partition stop (took " << (double)final / ((double)CLOCKS_PER_SEC) << "s)" << std::endl;  
+}
       
 } // namespace meshgen
 } // namespace atlas
