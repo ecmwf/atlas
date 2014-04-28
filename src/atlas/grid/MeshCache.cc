@@ -14,7 +14,7 @@ namespace atlas {
 std::string MeshCache::filename(const std::string &key)
 {
     std::stringstream ss;
-    ss << "cache/mesh/" << key << ".gmsh";
+    ss << "cache/atlas/mesh/" << key << ".gmsh";
     return ss.str();
 }
 
