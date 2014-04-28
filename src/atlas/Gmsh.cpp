@@ -195,7 +195,7 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh )
 
 void Gmsh::write(Mesh& mesh, const std::string& file_path)
 {
-  bool spherical=true;
+  bool spherical=false;
   bool include_ghost_elements = false;
 
   FunctionSpace& nodes   = mesh.function_space( "nodes" );
@@ -207,11 +207,13 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path)
   FunctionSpace& quads       = mesh.function_space( "quads" );
   FieldT<int>& quad_nodes    = quads.field<int>( "nodes" );
   FieldT<int>& quad_glb_idx  = quads.field<int>( "glb_idx" );
+  FieldT<int>& quad_proc     = quads.field<int>( "proc" );
   int nb_quads = quads.metadata<int>("nb_owned");
 
   FunctionSpace& triags      = mesh.function_space( "triags" );
   FieldT<int>& triag_nodes   = triags.field<int>( "nodes" );
   FieldT<int>& triag_glb_idx = triags.field<int>( "glb_idx" );
+  FieldT<int>& triag_proc    = triags.field<int>( "proc" );
   int nb_triags = triags.metadata<int>("nb_owned");
 
   FunctionSpace& edges       = mesh.function_space( "edges" );
@@ -260,14 +262,14 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path)
   file << nb_quads+nb_triags+nb_edges << "\n";
   for( int e=0; e<nb_quads; ++e)
   {
-    file << quad_glb_idx(e) << " 3 2 1 1";
+    file << quad_glb_idx(e) << " 3 4 1 1 1 " << quad_proc(e);
     for( int n=0; n<4; ++n )
       file << " " << glb_idx( C_IDX( quad_nodes(n,e) ) );
     file << "\n";
   }
   for( int e=0; e<nb_triags; ++e)
   {
-    file << triag_glb_idx(e) << " 2 2 1 1";
+    file << triag_glb_idx(e) << " 2 4 1 1 1 " << triag_proc(e);
     for( int n=0; n<3; ++n )
       file << " " << glb_idx( C_IDX( triag_nodes(n,e) ) );
     file << "\n";
