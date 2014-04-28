@@ -5,7 +5,6 @@
 
 #include <vector>
 #include <string>
-#include <iostream> // tmp
 
 #include "atlas/Metadata.hpp"
 
@@ -28,17 +27,22 @@ public: // methods
   virtual ~Field();
 
   template <typename DATA_TYPE> std::vector< DATA_TYPE >& data();
+  template <typename DATA_TYPE> const std::vector< DATA_TYPE >& data() const;
 
   virtual std::string data_type() const = 0;
 
   virtual void allocate(const std::vector<int>& bounds)=0;
-  const std::string& name() { return name_; }
+  const std::string& name() const { return name_; }
 
   Metadata& metadata() { return metadata_; }
 
   FunctionSpace& function_space() { return function_space_; }
 
-  const std::vector<int>& bounds() const { return bounds_; }
+  const std::vector<int>& bounds() const  { return bounds_; }
+  const std::vector<int>& extents() const { return extents_; }
+  const std::vector<int>& strides() const { return strides_; }
+  int stride(int i) const { return strides_[i];}
+  int extent(int i) const { return extents_[i];}
   int nb_vars() const { return nb_vars_; }
 
   virtual size_t size() const = 0;
@@ -48,6 +52,8 @@ protected: // members
 
   std::string name_;
   std::vector<int> bounds_;
+  std::vector<int> extents_;
+  std::vector<int> strides_;
   FunctionSpace& function_space_;
   Metadata metadata_;
   int nb_vars_;
@@ -76,6 +82,7 @@ public: // methods
     virtual void allocate(const std::vector<int>& bounds);
 
     std::vector< DATA_TYPE >& data() { return data_; }
+    const std::vector< DATA_TYPE >& data() const { return data_; }
 
     DATA_TYPE& operator[] (const size_t idx) { return data_[idx]; }
 
@@ -121,6 +128,15 @@ inline void FieldT<DATA_TYPE>::allocate(const std::vector<int>& bounds)
   bounds_ = bounds;
   size_t tot_size(1); for (int i = 0; i < bounds_.size(); ++i) tot_size *= bounds_[i];
   data_.resize(tot_size);
+  
+  extents_.resize(bounds_.size());
+  std::reverse_copy( bounds_.begin(), bounds_.end(), extents_.begin() );
+  strides_.resize(extents_.size());
+  strides_[extents_.size()-1] = 1;
+  for( int n=extents_.size()-2; n>=0; --n )
+  {
+    strides_[n] = strides_[n+1]*extents_[n+1];
+  }
 }
 
 //------------------------------------------------------------------------------------------------------

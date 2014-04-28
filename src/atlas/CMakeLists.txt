@@ -47,6 +47,9 @@ ecbuild_add_library( TARGET atlas
 	SOURCES
 		${mpistubs_srcs}
 		atlas_mpi.h
+    Array.hpp
+    ArrayView.hpp
+    ArrayView.cpp
 		BuildDualMesh.hpp
 		BuildDualMesh.cpp
 		BuildEdges.hpp

@@ -33,6 +33,20 @@ std::vector< int >& Field::data<int>()
 }
 
 template <>
+const std::vector< int >& Field::data<int>() const
+{
+  try {
+    return dynamic_cast< const FieldT<int>& >(*this).data();
+  } 
+  catch (std::bad_cast& e) {
+    std::stringstream msg;
+    msg << "Could not cast Field " << name() 
+        << " with data_type " << data_type() << " to int32";
+    throw std::runtime_error(msg.str());
+  }
+}
+
+template <>
 std::vector< float >& Field::data<float>()
 {
   try {
@@ -47,10 +61,38 @@ std::vector< float >& Field::data<float>()
 }
 
 template <>
+const std::vector< float >& Field::data<float>() const
+{
+  try {
+    return dynamic_cast< const FieldT<float>& >(*this).data();
+  } 
+  catch (std::bad_cast& e) {
+    std::stringstream msg;
+    msg << "Could not cast Field " << name() 
+        << " with data_type " << data_type() << " to real32";
+    throw std::runtime_error(msg.str());
+  }
+}
+
+template <>
 std::vector< double >& Field::data<double>()
 {
   try {
     return dynamic_cast< FieldT<double>& >(*this).data();
+  } 
+  catch (std::bad_cast& e) {
+    std::stringstream msg;
+    msg << "Could not cast Field " << name() 
+        << " with data_type " << data_type() << " to real64";
+    throw std::runtime_error(msg.str());
+  }
+}
+
+template <>
+const std::vector< double >& Field::data<double>() const
+{
+  try {
+    return dynamic_cast< const FieldT<double>& >(*this).data();
   } 
   catch (std::bad_cast& e) {
     std::stringstream msg;
