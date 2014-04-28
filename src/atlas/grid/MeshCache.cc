@@ -14,46 +14,56 @@ namespace atlas {
 std::string MeshCache::filename(const std::string &key)
 {
     std::stringstream ss;
-    ss << "cache/mesh/" << key << ".gmsh";
+    ss << "cache/atlas/mesh/" << key << ".gmsh";
     return ss.str();
 }
 
-bool MeshCache::add(const std::string &key, Mesh& mesh)
+bool MeshCache::add(const std::string& key, Mesh& mesh)
 {
-    const std::string fn = filename(key);
+    LocalPathName file( filename(key) );
 
-    const std::string fn_tmp = fn + ".tmp"; /// @todo this should be more 'random'
+    if( file.exists() )
+    {
+        Log::debug() << "MeshCache entry " << file << " already exists ..." << std::endl;
+        return false;
+    }
 
-    eckit::LocalPathName fpath(fn);
+    file.dirName().mkdir();  // ensure directory exists
 
-    if( fpath.exists() ) return false;
+    // unique file name avoids race conditions on the file from multiple processes
 
-    fpath.dirName().mkdir();
+    LocalPathName tmpfile ( LocalPathName::unique(file) );
 
-    eckit::LocalPathName fpath_tmp(fn_tmp);
-    fpath_tmp.unlink();
+    Log::info() << "inserting mesh in cache (" << file << ")" << std::endl;
 
-    Log::info() << "inserting mesh in cache (" << fn << ")" << std::endl;
+    atlas::Gmsh::write3dsurf(mesh,tmpfile);
 
-    atlas::Gmsh::write3dsurf(mesh,fn_tmp);
+    // now try to rename the file to its file pathname
 
-    LocalPathName::rename(fpath_tmp,fpath);
+    try
+    {
+        LocalPathName::rename( tmpfile, file );
+    }
+    catch( FailedSystemCall& e ) // ignore failed system call -- another process nay have created the file meanwhile
+    {
+        Log::debug() << "Failed rename of cache file -- " << e.what() << std::endl;
+    }
 
     return true;
 }
 
 bool MeshCache::get(const std::string &key, Mesh& mesh)
 {
-    std::string fn = filename(key);
+    LocalPathName file( filename(key) );
 
-    eckit::LocalPathName fpath(fn);
-
-    if( !fpath.exists() )
+    if( ! file.exists() )
+    {
         return false;
+    }
 
-    Log::info() << "found mesh in cache (" << fn << ")" << std::endl;
+    Log::info() << "found mesh in cache (" << file << ")" << std::endl;
 
-    atlas::Gmsh::read(fn,mesh);
+    atlas::Gmsh::read(file,mesh);
 
     return true;
 }
