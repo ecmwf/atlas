@@ -50,6 +50,8 @@
 #ifndef EqualAreaPartitioner_hpp
 #define EqualAreaPartitioner_hpp
 
+#include <vector>
+
 namespace atlas {
 namespace meshgen {
 
@@ -75,7 +77,7 @@ public:
   int sector(int band, const double& x) const;
   void area(int partition, int& band, int& sector) const;
   int nb_bands() const { return bands_.size(); }
-  int nb_sectors(int band) const { return sectors_[band]; };
+  int nb_sectors(int band) const { return sectors_[band]; }
   void partition(int nb_nodes, NodeInt nodes[], int part[]) const;
   
 private:
