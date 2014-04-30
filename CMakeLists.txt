@@ -110,7 +110,7 @@ ecbuild_add_option( FEATURE SANDBOX
 set( ATLAS_INCLUDE_DIRS   ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src )
 set( ATLAS_LIBRARIES      atlas )
 
-debug_var( ATLAS_TPLS ) # should already contain some entries -- eckit, cgal
+# debug_var( ATLAS_TPLS ) # should already contain some entries -- eckit, cgal
 
 if( ENABLE_FORTRAN )
 	list( APPEND ATLAS_INCLUDE_DIRS ${CMAKE_Fortran_MODULE_DIRECTORY} )
@@ -136,8 +136,6 @@ endforeach()
 include( atlas_compiler_flags )
 
 include_directories( ${ATLAS_INCLUDE_DIRS} ${ATLAS_EXTRA_INCLUDE_DIRS} )
-
-debug_var( ATLAS_EXTRA_INCLUDE_DIRS )
 
 add_subdirectory( src )
 
