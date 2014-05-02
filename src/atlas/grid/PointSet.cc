@@ -86,5 +86,5 @@ size_t PointSet::search_unique( const Point& p, size_t idx, u_int32_t n  )
 
 //------------------------------------------------------------------------------------------------------
 
-} // namespace eckit
+} // namespace atlas
 
