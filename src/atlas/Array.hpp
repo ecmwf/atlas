@@ -9,10 +9,10 @@
 
 namespace atlas {
 
-inline std::vector<int> Extents(size_t size1) { return std::vector<int>(1,size1); }
-inline std::vector<int> Extents(size_t size1, size_t size2) { std::vector<int> extents(2); extents[0]=size1; extents[1]=size2; return extents; }
-inline std::vector<int> Extents(size_t size1, size_t size2, size_t size3) { std::vector<int> extents(3); extents[0]=size1; extents[1]=size2; extents[2]=size3; return extents; }
-inline std::vector<int> Extents(size_t size1, size_t size2, size_t size3, size_t size4) { std::vector<int> extents(4); extents[0]=size1; extents[1]=size2; extents[2]=size3; extents[3]=size4; return extents; }
+inline std::vector<int> Extents(int size1) { return std::vector<int>(1,size1); }
+inline std::vector<int> Extents(int size1, int size2) { std::vector<int> extents(2); extents[0]=size1; extents[1]=size2; return extents; }
+inline std::vector<int> Extents(int size1, int size2, int size3) { std::vector<int> extents(3); extents[0]=size1; extents[1]=size2; extents[2]=size3; return extents; }
+inline std::vector<int> Extents(int size1, int size2, int size3, int size4) { std::vector<int> extents(4); extents[0]=size1; extents[1]=size2; extents[2]=size3; extents[3]=size4; return extents; }
 
 //------------------------------------------------------------------------------------------------------
 
@@ -20,10 +20,10 @@ template< typename DATA_TYPE >
 class Array {
 public:
   Array() {}
-  Array(size_t size) { resize( Extents(size) ); }
-  Array(size_t size1, size_t size2) { resize( Extents(size1,size2) ); }
-  Array(size_t size1, size_t size2, size_t size3) { resize( Extents(size1,size2,size3) ); }
-  Array(size_t size1, size_t size2, size_t size3, size_t size4) { resize( Extents(size1,size2,size3,size4) ); }
+  Array(int size) { resize( Extents(size) ); }
+  Array(int size1, int size2) { resize( Extents(size1,size2) ); }
+  Array(int size1, int size2, int size3) { resize( Extents(size1,size2,size3) ); }
+  Array(int size1, int size2, int size3, int size4) { resize( Extents(size1,size2,size3,size4) ); }
   Array(const std::vector<int>& extents) { resize(extents); };
   
   void resize(const std::vector<int>& extents)

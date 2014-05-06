@@ -18,19 +18,58 @@ int main(int argc, char *argv[])
   MPL::init();
 
   RGGMeshGenerator generate;
-  generate.options.set("nb_parts",20);
+  generate.options.set("nb_parts",4);
+
+  generate.options.set("part",0);
+  Mesh* m0 = generate( DebugMesh() );
+  Gmsh::write(*m0,"d0.msh");
     
   generate.options.set("part",1);
-  Mesh* m1 = generate( T63() );
-  Gmsh::write(*m1,"w63_1.msh");
-
+  Mesh* m1 = generate( DebugMesh() );
+  Gmsh::write(*m1,"d1.msh");
+  
   generate.options.set("part",2);
-  Mesh* m2 = generate( T63() );
-  Gmsh::write(*m2,"w63_2.msh");
+  Mesh* m2 = generate( DebugMesh() );
+  Gmsh::write(*m2,"d2.msh");
+  
+  generate.options.set("part",3);
+  Mesh* m3 = generate( DebugMesh() );
+  Gmsh::write(*m3,"d3.msh");
+  // 
+  // generate.options.set("part",4);
+  // Mesh* m4 = generate( DebugMesh() );
+  // Gmsh::write(*m4,"w63_4.msh");
 
-  generate.options.set("part",11);
-  Mesh* m11 = generate( T63() );
-  Gmsh::write(*m11,"w63_11.msh");
+  // generate.options.set("part",5);
+ //  Mesh* m5 = generate( T63() );
+ //  Gmsh::write(*m5,"w63_5.msh");
+ // 
+ //  generate.options.set("part",6);
+ //  Mesh* m6 = generate( T63() );
+ //  Gmsh::write(*m6,"w63_6.msh");
+ // 
+ //  generate.options.set("part",7);
+ //  Mesh* m7 = generate( T63() );
+ //  Gmsh::write(*m7,"w63_7.msh");
+ // 
+ //  generate.options.set("part",8);
+ //  Mesh* m8 = generate( T63() );
+ //  Gmsh::write(*m8,"w63_8.msh");
+
+  // generate.options.set("part",9);
+  // Mesh* m9 = generate( T63() );
+  // Gmsh::write(*m9,"w63_9.msh");
+
+  // 
+  // generate.options.set("part",11);
+  // Mesh* m11 = generate( T63() );
+  // Gmsh::write(*m11,"w63_11.msh");
+  // 
+  // generate.options.set("nb_parts",1);
+  // generate.options.set("part",0);
+  // Mesh* m = generate( T63() );
+  // Gmsh::write(*m,"w63.msh");
+  
   
   // build_periodic_boundaries(*mesh);
   // build_edges(*mesh);

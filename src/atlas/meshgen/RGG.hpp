@@ -11,9 +11,8 @@ namespace atlas {
   class Mesh;
 namespace meshgen {
 
-  struct Region;
+struct Region;
   
-// For Hemisphere!, jlat=0 at equator
 class RGG
 {
 public:
@@ -23,8 +22,6 @@ public:
   double lon(const int jlon, const int jlat) const { return 2.*M_PI/static_cast<double>(nlon(jlat))*static_cast<double>(jlon); }
   double lat(const int jlat) const { return lat_[jlat]; }
   int ngptot() const;
-private:
-  void make_complete();
 protected:
   std::vector<double> lat_;
   std::vector<int>    lon_;
@@ -35,15 +32,17 @@ class RGGMeshGenerator
 {
 public:
   RGGMeshGenerator();
+  Mesh* generate(const RGG& rgg);
+  Mesh* operator()(const RGG& rgg){ return generate(rgg); }
+private:
   void generate_region(const RGG& rgg, const std::vector<int>& parts, int mypart, Region& region);
   Mesh* generate_mesh(const RGG& rgg,const std::vector<int>& parts, const Region& region);
   std::vector<int> partition(const RGG& rgg) const;
-  Mesh* generate(const RGG& rgg);
-  Mesh* operator()(const RGG& rgg){ return generate(rgg); }
 public:
   Metadata options;
 };
 
+class DebugMesh:   public RGG { public: DebugMesh();   };
 class T63:   public RGG { public: T63();   };
 class T95:   public RGG { public: T95();   };
 class T159:  public RGG { public: T159();  };
