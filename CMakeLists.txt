@@ -25,13 +25,9 @@ include( ecbuild_system )
 ecbuild_requires_macro_version( 1.3 )
 
 ###############################################################################
-# local project
+# project
 
 set( PERSISTENT_NAMESPACE "eckit" CACHE INTERNAL "" )
-
-ecbuild_use_package( PROJECT eckit VERSION 0.6 )
-
-# init project
 
 ecbuild_declare_project()
 
@@ -83,12 +79,10 @@ endif()
 
 ecbuild_add_option( FEATURE GRID
 					DEFAULT ON
-					DESCRIPTION "support for C++ grid interface" )
+					DESCRIPTION "support for C++ grid interface"
+					REQUIRED_PACKAGES "PROJECT eckit VERSION 0.6" )
 
-if( ENABLE_GRID AND NOT ECKIT_FOUND )
-	set( HAVE_GRID 0 )
-	message( WARNING "atlas::grid requires eckit (not found)" )
-else()
+if( HAVE_GRID )
 	ecbuild_add_cxx11_flags()
 	ecbuild_check_cxx11( PRINT )
 endif()
@@ -99,6 +93,10 @@ ecbuild_add_option( FEATURE TESSELATION
 					DEFAULT ON
 					DESCRIPTION "support for unstructured mesh generation"
 					REQUIRED_PACKAGES CGAL )
+
+if( CGAL_FOUND )
+	list( APPEND CGAL_LIBRARIES ${CGAL_LIBRARY} ${CGAL_3RD_PARTY_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES} )
+endif()
 
 ### sandbox
 
@@ -111,20 +109,15 @@ ecbuild_add_option( FEATURE SANDBOX
 
 set( ATLAS_INCLUDE_DIRS   ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src )
 set( ATLAS_LIBRARIES      atlas )
-set( ATLAS_TPLS           "" )
+
+# debug_var( ATLAS_TPLS ) # should already contain some entries -- eckit, cgal
 
 if( ENABLE_FORTRAN )
 	list( APPEND ATLAS_INCLUDE_DIRS ${CMAKE_Fortran_MODULE_DIRECTORY} )
 	set( ATLAS_LIBRARIES atlasf ${ATLAS_LIBRARIES} )
 endif()
 
-if( HAVE_TESSELATION AND CGAL_FOUND )
-	list( APPEND CGAL_LIBRARIES ${CGAL_LIBRARY} ${CGAL_3RD_PARTY_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES} )
-	list( APPEND ATLAS_TPLS CGAL )
-endif()
-
 if( HAVE_GRID )
-	list( APPEND ATLAS_TPLS eckit )
 	list( APPEND ATLAS_LIBRARIES atlas_grid )
 endif()
 

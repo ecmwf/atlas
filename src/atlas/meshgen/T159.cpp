@@ -1,5 +1,7 @@
 // (C) Copyright 1996-2014 ECMWF.
 
+#include <algorithm>
+
 #include "atlas/meshgen/RGG.hpp"
 
 namespace atlas {

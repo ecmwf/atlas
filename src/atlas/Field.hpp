@@ -3,6 +3,7 @@
 #ifndef atlas_Field_hpp
 #define atlas_Field_hpp
 
+#include <algorithm>
 #include <vector>
 #include <string>
 
