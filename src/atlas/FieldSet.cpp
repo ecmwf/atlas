@@ -22,10 +22,12 @@ void FieldSet::add_field(Field& field)
 
 Field& FieldSet::field(const std::string& name)
 {
-  try {
+  if( has_field(name) )
+  {
     return *fields_[ index_.at(name) ]; 
   }
-  catch( std::out_of_range& e ) {
+  else 
+  {
     std::stringstream msg;
     msg << "Could not find field \"" << name << "\" in fieldset \"" << name_ << "\"";
     throw std::out_of_range(msg.str());
@@ -65,6 +67,15 @@ void atlas__FieldSet__fields (FieldSet* This, Field** &fields, int& nb_fields)
   nb_fields = This->fields().size();
   fields = &This->fields()[0];
 }
+
+Field* atlas__FieldSet__field_by_name (FieldSet* This, char* name) {
+  return &This->field( std::string(name) );
+}
+
+Field* atlas__FieldSet__field_by_idx (FieldSet* This, int idx) {
+  return &This->field( idx );
+}
+
 
 // ------------------------------------------------------------------
 

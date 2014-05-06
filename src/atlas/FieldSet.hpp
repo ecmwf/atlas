@@ -42,14 +42,6 @@ extern "C"
 }
 // ------------------------------------------------------------------
 
-Field* atlas__FieldSet__field_by_name (FieldSet* This, char* name) {
-  return &This->field( std::string(name) );
-}
-
-Field* atlas__FieldSet__field_by_idx (FieldSet* This, int idx) {
-  return &This->field( idx );
-}
-
 } // namespace atlas
 
 #endif // fieldset_hpp

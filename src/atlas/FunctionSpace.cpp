@@ -155,37 +155,50 @@ FieldT<int>& FunctionSpace::create_field(const std::string& name, size_t nb_vars
 void FunctionSpace::remove_field(const std::string& name)
 {
   //std::cout << "C++ : Create field " << name << " with size " << size*nb_nodes_ << std::endl;
-  delete( fields_[ index_.at(name) ] );
-  fields_[ index_.at(name) ] = 0;
-  index_.erase(name);
+  if( has_field(name) )
+  {
+    delete( fields_[ index_.at(name) ] );
+    fields_[ index_.at(name) ] = 0;
+    index_.erase(name);
+  }
+  else
+  {    
+    std::stringstream msg;
+    msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
+    throw std::out_of_range(msg.str());
+  }
 }
 
 Field& FunctionSpace::field( size_t idx )
 {
-    assert( idx < fields_.size() );
-    return *fields_[ idx ];
+  assert( idx < fields_.size() );
+  return *fields_[ idx ];
 }
 
 Field& FunctionSpace::field(const std::string& name)
 {
     //std::cout << "C++ : Access field " << name << std::endl;
-    try {
-      return *fields_[ index_.at(name) ];
-    }
-    catch( std::out_of_range& e ) {
-      std::stringstream msg;
-      msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
-      throw std::out_of_range(msg.str());
-    }
+  if( has_field(name) )
+  {
+    return *fields_[ index_.at(name) ];
+  }
+  else
+  {
+    std::stringstream msg;
+    msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
+    throw std::out_of_range(msg.str());
+  }
 }
 
 template<>
   FieldT<double> &FunctionSpace::field(const std::string& name)
 {
-  try {
+  if( has_field(name) )
+  {
     return *dynamic_cast< FieldT<double>* >(fields_[ index_.at(name) ]);
   }
-  catch( std::out_of_range& e ) {
+  else
+  {
     std::stringstream msg;
     msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
     throw std::out_of_range(msg.str());
@@ -195,10 +208,12 @@ template<>
 template<>
   FieldT<float> &FunctionSpace::field(const std::string& name)
 {
-  try {
+  if( has_field(name) )
+  {
     return *dynamic_cast< FieldT<float>* >(fields_[ index_.at(name) ]);
   }
-  catch( std::out_of_range& e ) {
+  else
+  {
     std::stringstream msg;
     msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
     throw std::out_of_range(msg.str());
@@ -208,10 +223,12 @@ template<>
 template<>
   FieldT<int> &FunctionSpace::field(const std::string& name)
 {
-  try {
+  if( has_field(name) )
+  {
     return *dynamic_cast< FieldT<int>* >(fields_[ index_.at(name) ]);
   }
-  catch( std::out_of_range& e ) {
+  else
+  {
     std::stringstream msg;
     msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
     throw std::out_of_range(msg.str());
