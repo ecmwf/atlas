@@ -12,6 +12,46 @@
 namespace atlas {
 namespace meshgen {
 
+double gamma(const double& x)
+{
+  double p[14];
+  double w, y;
+  int k, n;
+  p[0 ] =   0.999999999999999990e+00;
+  p[1 ] =  -0.422784335098466784e+00;
+  p[2 ] =  -0.233093736421782878e+00;
+  p[3 ] =   0.191091101387638410e+00;
+  p[4 ] =  -0.024552490005641278e+00;
+  p[5 ] =  -0.017645244547851414e+00;
+  p[6 ] =   0.008023273027855346e+00;
+  p[7 ] =  -0.000804329819255744e+00;
+  p[8 ] =  -0.000360837876648255e+00;
+  p[9 ] =   0.000145596568617526e+00;
+  p[10] = -0.000017545539395205e+00;
+  p[11] = -0.000002591225267689e+00;
+  p[12] =  0.000001337767384067e+00;
+  p[13] = -0.000000199542863674e+00;
+  n = std::round(x - 2);
+  w = x - (n + 2);
+  y = ((((((((((((p[13] * w + p[12]) * w + p[11]) * w + p[10]) *
+      w + p[9]) * w + p[8]) * w + p[7]) * w + p[6]) * w + p[5]) *
+      w + p[4]) * w + p[3]) * w + p[2]) * w + p[1]) * w + p[0];
+  if (n > 0)
+  {
+    w = x - 1;
+    for( k = 2; k<= n; ++k )
+      w = w * (x - k);
+  }
+  else
+  {
+    w = 1;
+    for( k = 0; k<= -n - 1; ++k)
+      y = y * (x + k);
+  }
+  return w/y;
+}
+
+
 double area_of_cap(const double& s_cap)
 {
   //
@@ -48,7 +88,7 @@ double area_of_ideal_region(int N)
   // AREA_OF_IDEAL_REGION(N) sets AREA to be the area of one of N equal
   // area regions on S^2, that is 1/N times AREA_OF_SPHERE.
   // 
-  double area_of_sphere = 2.*std::pow(M_PI,1.5)/std::tgamma(1.5);
+  double area_of_sphere = 2.*std::pow(M_PI,1.5)/gamma(1.5);
   return area_of_sphere/static_cast<double>(N);
 }
 
