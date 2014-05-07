@@ -24,7 +24,7 @@ public:
   Array(int size1, int size2) { resize( Extents(size1,size2) ); }
   Array(int size1, int size2, int size3) { resize( Extents(size1,size2,size3) ); }
   Array(int size1, int size2, int size3, int size4) { resize( Extents(size1,size2,size3,size4) ); }
-  Array(const std::vector<int>& extents) { resize(extents); };
+  Array(const std::vector<int>& extents) { resize(extents); }
   
   void resize(const std::vector<int>& extents)
   {
