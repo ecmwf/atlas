@@ -39,11 +39,9 @@ ecbuild_find_python()
 ### Fortran ...
 
 ecbuild_add_option( FEATURE FORTRAN_NUMBERING
-					DEFAULT ON
 					DESCRIPTION "data-structures are index with Fortran numbering" )
 
 ecbuild_add_option( FEATURE FORTRAN
-					DEFAULT ON
 					DESCRIPTION "provide Fortran bindings" )
 
 if( ENABLE_FORTRAN )
@@ -53,7 +51,6 @@ endif()
 ### OMP ...
 
 ecbuild_add_option( FEATURE OMP
-					DEFAULT ON
 					DESCRIPTION "support for OpenMP threaded parallelism" )
 
 # !! TODO !! add test for OpenMP
@@ -61,7 +58,6 @@ ecbuild_add_option( FEATURE OMP
 ### MPI ...
 
 ecbuild_add_option( FEATURE MPI
-					DEFAULT ON
 					DESCRIPTION "support for MPI distributed parallelism" )
 
 if( ENABLE_MPI )
@@ -78,7 +74,6 @@ endif()
 ### grid
 
 ecbuild_add_option( FEATURE GRID
-					DEFAULT ON
 					DESCRIPTION "support for C++ grid interface"
 					REQUIRED_PACKAGES "PROJECT eckit VERSION 0.6" )
 
@@ -90,7 +85,6 @@ endif()
 ### tesselation
 
 ecbuild_add_option( FEATURE TESSELATION
-					DEFAULT ON
 					DESCRIPTION "support for unstructured mesh generation"
 					REQUIRED_PACKAGES CGAL )
 
@@ -101,7 +95,6 @@ endif()
 ### sandbox
 
 ecbuild_add_option( FEATURE SANDBOX
-					DEFAULT ON
 					DESCRIPTION "build the sandbox stuff" )
 
 ############################################################################################

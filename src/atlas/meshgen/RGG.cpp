@@ -1,15 +1,16 @@
 // (C) Copyright 1996-2014 ECMWF.
 
-#include "atlas/meshgen/RGG.hpp"
-#include "atlas/Mesh.hpp"
-#include "atlas/FunctionSpace.hpp"
-#include "atlas/Parameters.hpp"
-#include "atlas/Field.hpp"
-#include "atlas/Array.hpp"
-#include "atlas/ArrayView.hpp"
-#include "atlas/meshgen/EqualAreaPartitioner.hpp"
 #include <numeric>
 #include <cmath>
+
+#include "atlas/Array.hpp"
+#include "atlas/ArrayView.hpp"
+#include "atlas/Field.hpp"
+#include "atlas/FunctionSpace.hpp"
+#include "atlas/Mesh.hpp"
+#include "atlas/Parameters.hpp"
+#include "atlas/meshgen/EqualAreaPartitioner.hpp"
+#include "atlas/meshgen/RGG.hpp"
 
 namespace atlas {
 namespace meshgen {
