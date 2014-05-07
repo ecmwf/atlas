@@ -1,4 +1,4 @@
-// (C) Copyright 1996-2014 ECMWF.
+
 
 #ifndef MPL_hpp
 #define MPL_hpp

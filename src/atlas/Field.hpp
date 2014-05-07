@@ -1,4 +1,4 @@
-// (C) Copyright 1996-2014 ECMWF.
+
 
 #ifndef atlas_Field_hpp
 #define atlas_Field_hpp

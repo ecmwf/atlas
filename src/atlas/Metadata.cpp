@@ -1,4 +1,4 @@
-// (C) Copyright 1996-2014 ECMWF.
+
 
 #include "atlas/Metadata.hpp"
 #include "atlas/Field.hpp"

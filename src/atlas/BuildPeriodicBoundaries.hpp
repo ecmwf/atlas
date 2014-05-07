@@ -1,4 +1,4 @@
-// (C) Copyright 1996-2014 ECMWF.
+
 
 #ifndef BuildPeriodicBoundaries_hpp
 #define BuildPeriodicBoundaries_hpp

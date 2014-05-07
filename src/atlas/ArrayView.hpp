@@ -1,4 +1,4 @@
-// (C) Copyright 1996-2014 ECMWF.
+
 
 /// @file ArrayView.hpp
 /// This file contains the ArrayView class, a class that allows to wrap any contiguous raw data into

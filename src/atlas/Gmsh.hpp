@@ -1,4 +1,4 @@
-// (C) Copyright 1996-2014 ECMWF.
+
 
 #ifndef Gmsh_hpp
 #define Gmsh_hpp

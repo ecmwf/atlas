@@ -1,4 +1,4 @@
-// (C) Copyright 1996-2014 ECMWF.
+
 
 #include <stdexcept>
 #include <numeric>      // std::accumulate

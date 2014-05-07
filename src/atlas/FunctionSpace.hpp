@@ -1,4 +1,4 @@
-// (C) Copyright 1996-2014 ECMWF.
+
 
 #ifndef FunctionSpace_hpp
 #define FunctionSpace_hpp

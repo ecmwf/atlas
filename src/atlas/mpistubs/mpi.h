@@ -1,4 +1,4 @@
-// (C) Copyright 1996-2014 ECMWF.
+
 
 #ifndef ATLAS_MPI_H
 #define ATLAS_MPI_H

@@ -1,4 +1,4 @@
-// (C) Copyright 1996-2014 ECMWF.
+
 
 #ifndef atlas_Parameters_hpp
 #define atlas_Parameters_hpp
