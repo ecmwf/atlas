@@ -1,4 +1,14 @@
-// (C) Copyright 1996-2014 ECMWF.
+/*
+ * (C) Copyright 1996-2014 ECMWF.
+ * 
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
+ * In applying this licence, ECMWF does not waive the privileges and immunities 
+ * granted to it by virtue of its status as an intergovernmental organisation nor
+ * does it submit to any jurisdiction.
+ */
+
+
 
 #ifndef atlas_Array_hpp
 #define atlas_Array_hpp
@@ -24,7 +34,7 @@ public:
   Array(int size1, int size2) { resize( Extents(size1,size2) ); }
   Array(int size1, int size2, int size3) { resize( Extents(size1,size2,size3) ); }
   Array(int size1, int size2, int size3, int size4) { resize( Extents(size1,size2,size3,size4) ); }
-  Array(const std::vector<int>& extents) { resize(extents); };
+  Array(const std::vector<int>& extents) { resize(extents); }
   
   void resize(const std::vector<int>& extents)
   {

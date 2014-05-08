@@ -1,15 +1,26 @@
-// (C) Copyright 1996-2014 ECMWF.
+/*
+ * (C) Copyright 1996-2014 ECMWF.
+ * 
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
+ * In applying this licence, ECMWF does not waive the privileges and immunities 
+ * granted to it by virtue of its status as an intergovernmental organisation nor
+ * does it submit to any jurisdiction.
+ */
 
-#include "atlas/meshgen/RGG.hpp"
-#include "atlas/Mesh.hpp"
-#include "atlas/FunctionSpace.hpp"
-#include "atlas/Parameters.hpp"
-#include "atlas/Field.hpp"
-#include "atlas/Array.hpp"
-#include "atlas/ArrayView.hpp"
-#include "atlas/meshgen/EqualAreaPartitioner.hpp"
+
+
 #include <numeric>
 #include <cmath>
+
+#include "atlas/Array.hpp"
+#include "atlas/ArrayView.hpp"
+#include "atlas/Field.hpp"
+#include "atlas/FunctionSpace.hpp"
+#include "atlas/Mesh.hpp"
+#include "atlas/Parameters.hpp"
+#include "atlas/meshgen/EqualAreaPartitioner.hpp"
+#include "atlas/meshgen/RGG.hpp"
 
 #define DEBUG_OUTPUT 0
 namespace atlas {
