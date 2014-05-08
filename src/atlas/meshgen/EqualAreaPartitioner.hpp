@@ -87,7 +87,8 @@ public:
   int sector(int band, const double& x) const;
   void area(int partition, int& band, int& sector) const;
   int nb_bands() const { return bands_.size(); }
-  int nb_sectors(int band) const { return sectors_[band]; }
+  int nb_sectors(int band) const { return nb_regions(band); }
+  int nb_regions(int band) const { return sectors_[band]; }
   void partition(int nb_nodes, NodeInt nodes[], int part[]) const;
   
 private:

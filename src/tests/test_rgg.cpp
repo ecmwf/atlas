@@ -9,129 +9,163 @@
  */
 
 
+#include <sstream>
 
 #include "atlas/atlas_config.h"
-
-#include "atlas/MPL.hpp"
 #include "atlas/meshgen/RGG.hpp"
 #include "atlas/meshgen/EqualAreaPartitioner.hpp"
 #include "atlas/Gmsh.hpp"
 #include "atlas/BuildEdges.hpp"
 #include "atlas/BuildDualMesh.hpp"
 #include "atlas/BuildPeriodicBoundaries.hpp"
-#include <sstream>
+#include "atlas/testing/UnitTest.hpp"
+
 using namespace atlas;
 using namespace atlas::meshgen;
 
+class TestMeshGen: public UnitTest
+{
+public:
+  TestMeshGen(int argc, char *argv[]) : UnitTest(argc,argv) {}
+  
+  virtual void run_tests()
+  {
+    test_eq_caps();
+    test_partitioner();
+    test_rgg_meshgen();
+  }
+  
+  void test_eq_caps()
+  {
+    std::vector<int>    n_regions;
+    std::vector<double> s_cap;
+
+    eq_caps(6, n_regions, s_cap);
+    ATLAS_CHECK_EQUAL( n_regions.size(), 3 );
+    ATLAS_CHECK_EQUAL( n_regions[0], 1 );
+    ATLAS_CHECK_EQUAL( n_regions[1], 4 );
+    ATLAS_CHECK_EQUAL( n_regions[2], 1 );
+
+    eq_caps(10, n_regions, s_cap);
+    ATLAS_CHECK_EQUAL( n_regions.size(), 4 );
+    ATLAS_CHECK_EQUAL( n_regions[0], 1 );
+    ATLAS_CHECK_EQUAL( n_regions[1], 4 );
+    ATLAS_CHECK_EQUAL( n_regions[2], 4 );
+    ATLAS_CHECK_EQUAL( n_regions[3], 1 );
+  }
+  
+  void test_partitioner()
+  {    
+    // 12 partitions
+    {
+      EqualAreaPartitioner partitioner(12);
+      ATLAS_CHECK_EQUAL( partitioner.nb_bands(),    4 );
+      ATLAS_CHECK_EQUAL( partitioner.nb_regions(0), 1 );
+      ATLAS_CHECK_EQUAL( partitioner.nb_regions(1), 5 );
+      ATLAS_CHECK_EQUAL( partitioner.nb_regions(2), 5 );
+      ATLAS_CHECK_EQUAL( partitioner.nb_regions(3), 1 );
+    }
+    
+    // 24 partitions
+    {
+      EqualAreaPartitioner partitioner(24);
+      ATLAS_CHECK_EQUAL( partitioner.nb_bands(),     5 );
+      ATLAS_CHECK_EQUAL( partitioner.nb_regions(0),  1 );
+      ATLAS_CHECK_EQUAL( partitioner.nb_regions(1),  6 );
+      ATLAS_CHECK_EQUAL( partitioner.nb_regions(2), 10 );
+      ATLAS_CHECK_EQUAL( partitioner.nb_regions(3),  6 );
+      ATLAS_CHECK_EQUAL( partitioner.nb_regions(4),  1 );
+    }
+    
+    // 48 partitions
+    {
+      EqualAreaPartitioner partitioner(48);
+      ATLAS_CHECK_EQUAL( partitioner.nb_bands(),     7 );
+      ATLAS_CHECK_EQUAL( partitioner.nb_regions(0),  1 );
+      ATLAS_CHECK_EQUAL( partitioner.nb_regions(1),  6 );
+      ATLAS_CHECK_EQUAL( partitioner.nb_regions(2), 11 );
+      ATLAS_CHECK_EQUAL( partitioner.nb_regions(3), 12 );
+      ATLAS_CHECK_EQUAL( partitioner.nb_regions(4), 11 );
+      ATLAS_CHECK_EQUAL( partitioner.nb_regions(5),  6 );
+      ATLAS_CHECK_EQUAL( partitioner.nb_regions(6),  1 );
+    }
+    
+    // 96 partitions
+    {
+      EqualAreaPartitioner partitioner(96);
+      ATLAS_CHECK_EQUAL( partitioner.nb_bands(),    10 );
+      ATLAS_CHECK_EQUAL( partitioner.nb_regions(0),  1 );
+      ATLAS_CHECK_EQUAL( partitioner.nb_regions(1),  6 );
+      ATLAS_CHECK_EQUAL( partitioner.nb_regions(2), 11 );
+      ATLAS_CHECK_EQUAL( partitioner.nb_regions(3), 14 );
+      ATLAS_CHECK_EQUAL( partitioner.nb_regions(4), 16 );
+      ATLAS_CHECK_EQUAL( partitioner.nb_regions(5), 16 );
+      ATLAS_CHECK_EQUAL( partitioner.nb_regions(6), 14 );
+      ATLAS_CHECK_EQUAL( partitioner.nb_regions(7), 11 );
+      ATLAS_CHECK_EQUAL( partitioner.nb_regions(8),  6 );
+      ATLAS_CHECK_EQUAL( partitioner.nb_regions(9),  1 );
+    }
+  }
+  
+  void test_rgg_meshgen()
+  {
+    RGGMeshGenerator generate;
+    generate.options.set("nb_parts",20);
+
+    for( int p=0; p<generate.options.get<int>("nb_parts"); ++p)
+    {
+      generate.options.set("part",p);
+      Mesh* m = generate( T63() );
+      std::stringstream filename; filename << "d" << p << ".msh";
+      Gmsh::write(*m,filename.str());
+    }
+  
+    // build_periodic_boundaries(*mesh);
+    // build_edges(*mesh);
+    // build_dual_mesh(*mesh);
+  
+  
+    // Gmsh::write(*mesh,"w63.msh");
+  #if 0
+    int N=6;
+    std::vector<int> n_regions;
+    std::vector<double> s_cap;
+    eq_caps(N, n_regions, s_cap);
+    std::cout << "regions" << std::endl;
+    for (int n=0; n<n_regions.size(); ++n){
+      std::cout << n_regions[n] << std::endl;
+    }
+    std::cout << "caps" << std::endl;
+    for (int n=0; n<s_cap.size(); ++n){
+      std::cout << s_cap[n] << std::endl;
+    }
+  
+    std::vector<double> xmin(N);
+    std::vector<double> xmax(N);
+    std::vector<double> ymin(N);
+    std::vector<double> ymax(N);
+    eq_regions(N,xmin.data(),xmax.data(),ymin.data(),ymax.data());
+    for (int n=0; n<N; ++n)
+    {
+      std::cout << n<<" : [ ["<<xmin[n]<<","<<ymin[n]<<"] , ["<<xmax[n]<<","<<ymax[n] <<"] ]" << std::endl;
+    }
+  
+    EqualAreaPartitioner partitioner(6);
+  
+    double x =  M_PI/4.;
+    double y = 0.;
+    std::cout << "part = " << partitioner.partition(x,y) << std::endl;
+    std::cout << "band = " << partitioner.band(y) << std::endl;
+    std::cout << "sector = " << partitioner.sector( partitioner.band(y),x ) <<std::endl;
+  
+  #endif
+  }
+};
+
+
 int main(int argc, char *argv[])
 {
-  MPL::init();
-
-  RGGMeshGenerator generate;
-  generate.options.set("nb_parts",20);
-
-  for( int p=0; p<generate.options.get<int>("nb_parts"); ++p)
-  {
-    generate.options.set("part",p);
-    Mesh* m = generate( T63() );
-    std::stringstream filename;
-    filename << "d" << p << ".msh";
-    Gmsh::write(*m,filename.str());
-  }
-  // 
-  // generate.options.set("part",0);
-  // Mesh* m0 = generate( T63() );
-  // Gmsh::write(*m0,"d0.msh");
-  //   
-  // generate.options.set("part",1);
-  // Mesh* m1 = generate( T63() );
-  // Gmsh::write(*m1,"d1.msh");
-  // 
-  // generate.options.set("part",2);
-  // Mesh* m2 = generate( T63() );
-  // Gmsh::write(*m2,"d2.msh");
-  // 
-  // generate.options.set("part",3);
-  // Mesh* m3 = generate( T63() );
-  // Gmsh::write(*m3,"d3.msh");
-  // 
-  // generate.options.set("part",4);
-  // Mesh* m4 = generate( T63() );
-  // Gmsh::write(*m4,"d4.msh");
-  // 
-  // generate.options.set("part",5);
-  // Mesh* m5 = generate( T63() );
-  // Gmsh::write(*m5,"d5.msh");
-  //  
-  // generate.options.set("part",6);
-  // Mesh* m6 = generate( T63() );
-  // Gmsh::write(*m6,"d6.msh");
-  //  
-  // generate.options.set("part",7);
-  // Mesh* m7 = generate( T63() );
-  // Gmsh::write(*m7,"d7.msh");
-  //  
-  // generate.options.set("part",8);
-  // Mesh* m8 = generate( T63() );
-  // Gmsh::write(*m8,"d8.msh");
-  // 
-  // generate.options.set("part",9);
-  // Mesh* m9 = generate( T63() );
-  // Gmsh::write(*m9,"d9.msh");
-  // 
-  // generate.options.set("part",10);
-  // Mesh* m10 = generate( T63() );
-  // Gmsh::write(*m10,"d10.msh");
-  // 
-  // generate.options.set("part",11);
-  // Mesh* m11 = generate( T63() );
-  // Gmsh::write(*m11,"d11.msh");
-  // 
-  // generate.options.set("nb_parts",1);
-  // generate.options.set("part",0);
-  // Mesh* m = generate( T63() );
-  // Gmsh::write(*m,"w63.msh");
-  
-  
-  // build_periodic_boundaries(*mesh);
-  // build_edges(*mesh);
-  // build_dual_mesh(*mesh);
-  
-  
-  // Gmsh::write(*mesh,"w63.msh");
-#if 0
-  int N=6;
-  std::vector<int> n_regions;
-  std::vector<double> s_cap;
-  eq_caps(N, n_regions, s_cap);
-  std::cout << "regions" << std::endl;
-  for (int n=0; n<n_regions.size(); ++n){
-    std::cout << n_regions[n] << std::endl;
-  }
-  std::cout << "caps" << std::endl;
-  for (int n=0; n<s_cap.size(); ++n){
-    std::cout << s_cap[n] << std::endl;
-  }
-  
-  std::vector<double> xmin(N);
-  std::vector<double> xmax(N);
-  std::vector<double> ymin(N);
-  std::vector<double> ymax(N);
-  eq_regions(N,xmin.data(),xmax.data(),ymin.data(),ymax.data());
-  for (int n=0; n<N; ++n)
-  {
-    std::cout << n<<" : [ ["<<xmin[n]<<","<<ymin[n]<<"] , ["<<xmax[n]<<","<<ymax[n] <<"] ]" << std::endl;
-  }
-  
-  EqualAreaPartitioner partitioner(6);
-  
-  double x =  M_PI/4.;
-  double y = 0.;
-  std::cout << "part = " << partitioner.partition(x,y) << std::endl;
-  std::cout << "band = " << partitioner.band(y) << std::endl;
-  std::cout << "sector = " << partitioner.sector( partitioner.band(y),x ) <<std::endl;
-  
-#endif
-  MPL::finalize();
-  return 0;
+  TestMeshGen tests(argc,argv);
+  tests.start();
+  return tests.exit_status();
 }

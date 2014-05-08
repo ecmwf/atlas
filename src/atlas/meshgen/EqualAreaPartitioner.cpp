@@ -244,14 +244,14 @@ void eq_caps(int N, std::vector<int>& n_regions, std::vector<double>& s_cap)
     // the colatitude of the North polar spherical cap.
     //
     double c_polar = polar_colat(N);
-    std::cout << "c_polar = " << c_polar << std::endl;
+
     //
     // Given N, determine the ideal angle for spherical collars.
     // Based on N, this ideal angle, and c_polar,
     // determine n_collars, the number of collars between the polar caps.
     //
     int n_collars = num_collars(N,c_polar,ideal_collar_angle(N));
-    std::cout << "n_collars = " << n_collars << std::endl;
+
     // int n_regions_ns=n_collars+2;
     //
     // Given N, c_polar and n_collars, determine r_regions,

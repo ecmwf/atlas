@@ -18,41 +18,62 @@
 #include "atlas/Field.hpp"
 #include "atlas/BuildHalo.hpp"
 #include "atlas/Parameters.hpp"
+#include "atlas/ArrayView.hpp"
 
 namespace atlas {
 
 void build_halo( Mesh& mesh )
 {
-  FunctionSpace& nodes   = mesh.function_space( "nodes" );
-  FieldT<double>& coords    = nodes.field<double>( "coordinates" );
-  FieldT<int>& glb_idx      = nodes.field<int>( "glb_idx" );
-  FieldT<int>& master_glb_idx  = nodes.field<int>( "master_glb_idx" );
-  FieldT<int>& node_proc         = nodes.field<int>( "proc" );
-  int nb_nodes = nodes.bounds()[1];
-
-  FunctionSpace& edges   = mesh.function_space( "edges" );
-  FieldT<int>& edge_to_elem   = edges.field<int>( "to_elem" );
-  FieldT<int>& edge_nodes   = edges.field<int>( "nodes" );
-  int nb_edges = edges.bounds()[1];
+  FunctionSpace& nodes         = mesh.function_space( "nodes" );
+  ArrayView<double,2> coords(         nodes.field( "coordinates"    ) );
+  ArrayView<int   ,1> glb_idx(        nodes.field( "glb_idx"        ) );
+  ArrayView<int   ,1> master_glb_idx( nodes.field( "master_glb_idx" ) );
+  ArrayView<int   ,1> node_proc(      nodes.field( "proc"           ) );
+  int nb_nodes = coords.extents()[0];
 
   std::vector< std::vector< ElementRef > > node_to_elem(nb_nodes);
-
+  
+  for( int func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
   {
-    FunctionSpace& elements = mesh.function_space("quads");
-    FieldT<int>& elem_nodes = elements.field<int>("nodes");
-    FieldT<int>& elem_proc = elements.field<int>("proc");
-    int nb_elems = elements.bounds()[1];
-    int nb_nodes_per_elem = elem_nodes.bounds()[0];
-    for (int elem=0; elem<nb_elems; ++elem)
+    FunctionSpace& elements = mesh.function_space(func_space_idx);
+    if( elements.metadata<int>("type") == Entity::ELEMS )
     {
-      for (int n=0; n<nb_nodes_per_elem; ++n)
+      ArrayView<int,2> elem_nodes( elements.field("nodes") );
+      ArrayView<int,1> elem_proc(  elements.field("proc" ) );
+      int nb_elems = elem_nodes.extents()[0];
+      int nb_nodes_per_elem = elem_nodes.extents()[1];
+      for (int elem=0; elem<nb_elems; ++elem)
       {
-        int node = elem_nodes(n,elem);
-        node_to_elem[node].push_back( ElementRef(elements.index(),elem) );
+        for (int n=0; n<nb_nodes_per_elem; ++n)
+        {
+          int node = elem_nodes(elem,n);
+          node_to_elem[node].push_back( ElementRef(elements.index(),elem) );
+        }
       }
     }
   }
+  
+  /*
+  1) Find nodes at boundary of partition
+  2) Communicate glb_index of this node to other partitions
+  3) Find received glb_index in glb_node_to_local_node list
+  4) Find elements in node_to_elem list that belong to me
+  5) Make list of all nodes that complete the elements
+  6) Communicate elements and nodes back
+  7) Adapt mesh
+  */
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
 
+#if 0
   std::vector< FieldT<int>* > elem_nodes(mesh.nb_function_spaces());
   std::vector< int > nb_nodes_per_elem(mesh.nb_function_spaces(),0);
   std::vector< int > nb_elems(mesh.nb_function_spaces(),0);
@@ -109,6 +130,7 @@ void build_halo( Mesh& mesh )
       }
     }
   }
+  #endif
 }
 
 // ------------------------------------------------------------------

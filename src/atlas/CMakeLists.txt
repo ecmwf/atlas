@@ -127,3 +127,5 @@ ecbuild_add_library( TARGET atlasf
 add_subdirectory( grid )
 
 add_subdirectory( meshgen )
+
+add_subdirectory( testing )
