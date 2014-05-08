@@ -41,7 +41,7 @@ double gamma(const double& x)
   p[11] = -0.000002591225267689e+00;
   p[12] =  0.000001337767384067e+00;
   p[13] = -0.000000199542863674e+00;
-  n = std::round(x - 2);
+  n = round(x - 2);
   w = x - (n + 2);
   y = ((((((((((((p[13] * w + p[12]) * w + p[11]) * w + p[10]) *
       w + p[9]) * w + p[8]) * w + p[7]) * w + p[6]) * w + p[5]) *
@@ -169,7 +169,7 @@ int num_collars(int N, const double& c_polar, const double& a_ideal)
   // 
   bool enough = (N > 2) && (a_ideal > 0);
   if( enough )
-    return std::max(1, static_cast<int>(std::round((M_PI-2.*c_polar)/a_ideal)));
+    return std::max(1, static_cast<int>(round((M_PI-2.*c_polar)/a_ideal)));
   else
     return 0;
 }
@@ -189,7 +189,7 @@ void round_to_naturals(int N, int ncollars, double r_regions[], int n_regions[])
   double discrepancy = 0.;
   for( int zone_n=0; zone_n<ncollars+2; ++zone_n )
   {
-    n_regions[zone_n] = std::round(r_regions[zone_n]+discrepancy);
+    n_regions[zone_n] = round(r_regions[zone_n]+discrepancy);
     discrepancy += r_regions[zone_n]-n_regions[zone_n];
   }
 }
