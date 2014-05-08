@@ -11,6 +11,7 @@
 #include <numeric>
 #include <cmath>
 
+#define DEBUG_OUTPUT 0
 namespace atlas {
 namespace meshgen {
 
@@ -19,10 +20,10 @@ namespace meshgen {
     int nlat=5;
     int lon[] = {
       6,
-      12,
-      16,
+      10,
       18,
-      18,
+      22,
+      22,
     };
     /*
     First prediction of colatitudes
@@ -77,11 +78,18 @@ int RGG::ngptot() const
 
 RGGMeshGenerator::RGGMeshGenerator()
 {
+  // This option creates a point at the pole when true
   options.set("include_pole",false);
-  options.set("distributed",true);
+  
+  // This option creates elements that connect east to west at greenwich meridian
+  // when true, instead of creating periodic ghost-points at east boundary when false
+  options.set("3d",false);
+  
+  // This option sets number of parts the mesh will be split in
   options.set("nb_parts",1);
+  
+  // This option sets the part that will be generated
   options.set("part",0);
-  options.set("halo",1);
 }
 
 std::vector<int> RGGMeshGenerator::partition(const RGG& rgg) const
@@ -157,6 +165,7 @@ Mesh* RGGMeshGenerator::generate(const RGG& rgg)
   return mesh;
 }
 
+
 void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& parts, int mypart, Region& region)
 {
   int n;
@@ -197,99 +206,19 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
     offset[jlat]=n;
     n+=rgg.nlon(jlat);
   };
-
-  /*
-  Find begin and end points on latitudes
-  Also count number of nodes belonging to this part
-  */
-  std::vector<int> lat_nodes_begin(rgg.nlat(),-1);
-  std::vector<int> lat_nodes_end(rgg.nlat(),-1);
-  for( int jlat=lat_north; jlat<=lat_south; ++jlat ) {
-    for( int jlon=0; jlon<rgg.nlon(jlat); ++jlon) {
-      if( lat_nodes_begin[jlat]<0 && parts[offset[jlat]+jlon] == mypart)
-      {
-        lat_nodes_begin[jlat]=jlon;
-        break;
-      }
-    }
-    for( int jlon=rgg.nlon(jlat)-1; jlon>=0; --jlon) {
-      if( lat_nodes_end[jlat]<0 && parts[offset[jlat]+jlon] == mypart)
-      {
-        lat_nodes_end[jlat]=jlon;
-        break;
-      }
-    }
-    std::cout << "lat["<<jlat<<"] :  [" << lat_nodes_begin[jlat] << "("<< rgg.lon(lat_nodes_begin[jlat],jlat) << ") -- " << lat_nodes_end[jlat] << "("<< rgg.lon(lat_nodes_end[jlat],jlat) << ")]" << std::endl;
-  }
   
   /*
   We need to connect to next region
-  */
-  for( int jlat=lat_north; jlat<=lat_south; ++jlat ) {
-    lat_nodes_end[jlat] = std::min(rgg.nlon(jlat)-1, lat_nodes_end[jlat]+1);
-  }
-  if( (lat_north+lat_south)/2 <= rgg.nlat()/2 ) // This region is mostly on north hemisphere
-  {
-    if( lat_north > 0 ) 
-    {
-      int connect_lat = lat_north-1;
-      double yN = rgg.lat(connect_lat);
-      double yS = rgg.lat(lat_north);
-      double xS;
-      double xN;
-      double dist;
-      xS = rgg.lon(lat_nodes_begin[lat_north],lat_north);
-      dist=2.*M_PI;
-      for (int jlon=0; jlon<rgg.nlon(connect_lat); ++jlon )
-      {
-        xN = rgg.lon(jlon,connect_lat);
-        double dist_new = std::abs(xN-xS);
-        if (dist_new <= dist)
-        {
-          lat_nodes_begin[connect_lat] = jlon;
-          dist = dist_new;
-        }
-        else
-        {
-          break;
-        }
-      }
-      xS = rgg.lon(lat_nodes_end[lat_north],lat_north);
-      dist=2.*M_PI;
-      for (int jlon=rgg.nlon(connect_lat)-1; jlon>=0; --jlon )
-      {
-        xN = rgg.lon(jlon,connect_lat);
-        double dist_new = std::abs(xN-xS);
-        if (dist_new <= dist)
-        {
-          lat_nodes_end[connect_lat] = jlon;
-          dist = dist_new;
-        }
-        else
-        {
-          break;
-        }
-      }
-      lat_north = connect_lat;
-      std::cout << "now add lat["<<lat_north<<"] : " << lat_nodes_begin[lat_north] << "  to " << lat_nodes_end[lat_north] << std::endl;
-    }
-  }
-  
-  for( int jlat=lat_north; jlat<=lat_south; ++jlat )
-  {
-    // std::cout << "lat["<<jlat<<"] :  [" << lat_nodes_begin[jlat] << "("<< rgg.lon(lat_nodes_begin[jlat],jlat) << ") -- " << lat_nodes_end[jlat] << "("<< rgg.lon(lat_nodes_end[jlat],jlat) << ")]" << std::endl;
-  }
-  
+  */  
+  if( rgg.lat(std::max(0,lat_north-1)) > 0. ) 
+    lat_north = std::max(0,lat_north-1);
+  if( rgg.lat(std::min(rgg.nlat()-1,lat_south+1)) < 0. ) 
+    lat_south = std::min(rgg.nlat()-1,lat_south+1);
   region.lat_begin.resize(rgg.nlat(),-1);
   region.lat_end.resize(rgg.nlat(),-1);
   region.nb_lat_elems.resize(rgg.nlat(),-1);
   region.north = lat_north;
   region.south = lat_south;
-  for( int jlat=region.north; jlat<=region.south; ++jlat )
-  {
-    region.lat_begin[jlat] = lat_nodes_begin[jlat];
-    region.lat_end[jlat]   = lat_nodes_end[jlat];
-  }
   
   std::vector<int> extents = Extents(region.south-region.north, 2*rgg.nlonmax(), 4);
   // std::cout << "allocating elems" <<  "(" << extents[0] << "," << extents[1] << "," << extents[2] << ")" << std::endl;
@@ -309,9 +238,9 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
     int ilat, latN, latS;
     int ipN1, ipN2, ipS1, ipS2;
     double xN1, xN2, yN, xS1, xS2, yS;
-    double dist, dist_new;
     double dN1S2, dS1N2, dN2S2;
-    bool make_triangle_up, make_triangle_down, make_quad;
+    bool try_make_triangle_up, try_make_triangle_down, try_make_quad;
+    bool add_triag, add_quad;
     
     ilat = jlat-region.north;
     
@@ -324,98 +253,10 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
 
     int beginN, beginS, endN, endS;
 
-    // Initial points
-    {
-      beginN = region.lat_begin[latN];
-      xN1 = rgg.lon(beginN,latN);
-      dist=2.*M_PI;
-      for (int jlon=std::max(0,region.lat_begin[latS]-1); jlon<=region.lat_end[latS]; ++jlon )
-      {
-        xS1 = rgg.lon(jlon,latS);
-        dist_new = std::abs(xN1-xS1);
-        if (dist_new - 1e-6 < dist)
-        {
-          dist = dist_new;
-          beginS = jlon;
-        }
-        else
-        {
-          // beginN connects beginS
-          // But does it belong to this partition?
-          // 1) if both beginN and beginS belong to mypart, then YES
-          //    By construction beginN is already belonging to mypart.
-          // 2) if beginS is not mypart, then increase it.
-          //    Now we have to check if beginN needs to be increased, by
-          //    checking spherical distances
-          int partS = parts[offset[latS]+beginS];
-          if( partS != mypart )
-          {
-            ++beginS;
-            xS1 = rgg.lon(beginS,latS);
-            double xN1_next = rgg.lon(beginN+1,latN);
-            if( std::abs(xS1-xN1_next) < std::abs(xS1-xN1) ) ++beginN;
-          } 
-          break;
-        }
-      }
-    }
-
-    // End points
-    {
-      endS = region.lat_end[latS];
-      std::cout << "endS = " << endS << std::endl;
-      xS2 = rgg.lon(endS,latS);
-      dist=2.*M_PI;
-      for (int jlon=std::max(0,region.lat_begin[latN]-1); jlon<=region.lat_end[latN]+2; ++jlon )
-      {
-        xN2 = rgg.lon(jlon,latN);
-        dist_new = std::abs(xS2-xN2);
-        if (dist_new < dist)
-        {
-          std::cout << "dist = " << dist << std::endl;
-          dist = dist_new;
-          endN = jlon;
-        }
-        else // minimum distance found
-        {
-          std::cout << "larger dist = " << dist_new << std::endl;
-          // ipN2 connects ipS2
-          // But does it connect to next partition?
-          // 1) if both ipN2 and ipS2 belong to other parts than mypart, then YES
-          //    By construction ipS2 is already belonging to other part.
-          // 2) if ipN2 is still mypart, then there are 2 options...
-          //    a) if this is a latitude connecting to top, don't increase ipN2
-          //    b) else, if it has to connect to side, increase it.
-          //       Now we have to check if ipS2 needs to be increased, by
-          //       checking spherical distances
-          
-          if( ilat == 0 ) break;
-          
-          int partN = parts[offset[latN]+endN];
-          std::cout << "partN = " << partN << std::endl;
-          if( partN == mypart )
-          {
-            // if( partN_next != mypart && ilat!=0)
-            {
-              std::cout << "dist = " << dist << "    endN : " << endN;
-              endN = std::min(endN+1, rgg.nlon(latN)-1);
-              std::cout << " --> " << endN << std::endl;
-              xN2 = rgg.lon(endN,latN);
-              double xS2_next = rgg.lon(endS+1,latS);
-              if( std::abs(xN2-xS2_next) < std::abs(xN2-xS2) ){
-                std::cout << "endS:  " << endS;
-                endS = std::min(endS+1, rgg.nlon(latS)-1);    
-                std::cout << " --> " << endS << std::endl;                        
-              }
-            }
-          } 
-          break;
-        }
-      }
-    }
-
-    std::cout << "begin strip["<<jlat<<"] : connect N"<< beginN << " with S" << beginS << std::endl;
-    std::cout << "end strip  ["<<jlat<<"] : connect N"<< endN << " with S" << endS << std::endl;
+    beginN = 0;
+    endN   = rgg.nlon(latN); // include periodic point
+    beginS = 0;
+    endS   = rgg.nlon(latS); // include periodic point
 
     ipN1 = beginN;
     ipS1 = beginS;
@@ -423,19 +264,26 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
     ipS2 = ipS1+1;
 
     int jelem=0;
+    
+#if DEBUG_OUTPUT
     std::cout << "=================" << std::endl;
-    //continue until ipN1 and ipS1 are no longer of my part, or the east domain boundary
+#endif
+    
     while (true)
     {
-      region.lat_begin[latN] = std::min(ipN1,region.lat_begin[latN]);
-      region.lat_begin[latS] = std::min(ipS1,region.lat_begin[latS]);
-      
-      region.lat_end[latN] = std::max(ipN1,region.lat_end[latN]);
-      region.lat_end[latS] = std::max(ipS1,region.lat_end[latS]);
-      // int pN1 = parts[offset[latN]+ipN1];
-      // int pS1 = parts[offset[latS]+ipS1];
-      // if ( (ipN1>mypart && pS1>mypart) || (ipN1==rgg.nlon(latN)-1&&ipS1==rgg.nlon(latS)-1) )
-        // break;
+      int pN1 = parts[offset[latN]+ipN1];
+      int pS1 = parts[offset[latS]+ipS1];
+      int pN2;
+      int pS2;
+      if( ipN2 == rgg.nlon(latN) )
+        pN2 = pN1;
+      else
+        pN2 = parts[offset[latN]+ipN2];
+      if( ipS2 == rgg.nlon(latS) )
+        pS2 = pS1;
+      else
+        pS2 = parts[offset[latS]+ipS2];
+
       if( ipN1 == endN && ipS1 == endS ) break;
       
       xN1 = rgg.lon(ipN1,latN);
@@ -443,22 +291,24 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
       xS1 = rgg.lon(ipS1,latS);
       xS2 = rgg.lon(ipS2,latS);
   
+#if DEBUG_OUTPUT
       std::cout << "-------" << std::endl;
+#endif
       // std::cout << "  access  " << region.elems.stride(0)*(jlat-region.north) + region.elems.stride(1)*jelem + 5 << std::endl;
       // std::cout << ipN1 << "("<< xN1 << ")  " << ipN2 <<  "("<< xN2 << ")  " << std::endl;
       // std::cout << ipS1 << "("<< xS1 << ")  " << ipS2 <<  "("<< xS2 << ")  " << std::endl;
-      make_triangle_up   = false;
-      make_triangle_down = false;
-      make_quad = false;
+      try_make_triangle_up   = false;
+      try_make_triangle_down = false;
+      try_make_quad = false;
     
       
       dN1S2 = std::abs(spherical_distance(xN1,yN,xS2,yS,1.));
       dS1N2 = std::abs(spherical_distance(xS1,yS,xN2,yN,1.));
       dN2S2 = std::abs(spherical_distance(xN2,yN,xS2,yS,1.));
       // std::cout << "  d31 " << d31 << "   d42 " << d42 << "   d43 " << d43 << std::endl;
-      if ( (dN1S2 < dN2S2 && dN1S2 < dS1N2) && (ipS1 != ipS2) ) make_triangle_up = true;
-      else if ( (dS1N2 < dN2S2 && dS1N2 < dN1S2) && (ipN1 != ipN2) ) make_triangle_down = true;
-      else make_quad = true;
+      if ( (dN1S2 < dN2S2 && dN1S2 < dS1N2) && (ipS1 != ipS2) ) try_make_triangle_up = true;
+      else if ( (dS1N2 < dN2S2 && dS1N2 < dN1S2) && (ipN1 != ipN2) ) try_make_triangle_down = true;
+      else try_make_quad = true;
             
       // BlockT<int,2> lat_elems(region.elems, Idx(ilat));
       
@@ -466,69 +316,147 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
       // int* elem = lat_elems[jelem];
       // int* elem = view(region.elems,ilat,jelem);
       
-      if( make_quad )
+      if( try_make_quad )
       {
         // add quadrilateral
+#if DEBUG_OUTPUT
         std::cout << "          " << ipN1 << "  " << ipN2 << std::endl;
         std::cout << "          " << ipS1 << "  " << ipS2 << std::endl;
+#endif
         elem[0] = ipN1;
         elem[1] = ipS1;
         elem[2] = ipS2;
         elem[3] = ipN2;
-        ipN1=std::min(rgg.nlon(latN)-1,ipN2);
-        ipS1=std::min(rgg.nlon(latS)-1,ipS2);
         // std::cout << "  .  " << std::endl;
-        // if( (pN1>=mypart && pS1>=mypart) )
+        add_quad = false;
+        if( 0.5*(yN+yS) > 1e-6 )
+        {
+          if( (pN1==mypart || pS1==mypart || pN2==mypart || pS2==mypart) && (pN1<=mypart && pS1<=mypart && pN2<=mypart && pS2<=mypart))
+          {
+            add_quad = true;
+          }
+        } else {
+          if( (pN1==mypart || pS1==mypart || pN2==mypart || pS2==mypart) && (pN1>=mypart && pS1>=mypart && pN2>=mypart && pS2>=mypart))
+          {
+            add_quad = true;
+          }
+        }
+        if (add_quad)
+        {
           ++region.nquads;
+          ++jelem;
+          ++nelems;        
+          
+          if( region.lat_begin[latN] == -1 ) region.lat_begin[latN] = ipN1;
+          if( region.lat_begin[latS] == -1 ) region.lat_begin[latS] = ipS1;
+          region.lat_begin[latN] = std::min(region.lat_begin[latN], ipN1);
+          region.lat_begin[latS] = std::min(region.lat_begin[latS], ipS1);
+          region.lat_end[latN] = std::max(region.lat_end[latN], ipN2);
+          region.lat_end[latS] = std::max(region.lat_end[latS], ipS2);  
+        }
+        ipN1=ipN2;
+        ipS1=ipS2;
       }
-      else if( make_triangle_down  ) // make triangle down
+      else if( try_make_triangle_down  ) // make triangle down
       {
         // triangle without ip3
+#if DEBUG_OUTPUT
         std::cout << "          " << ipN1 << "  " << ipN2 << std::endl;
         std::cout << "          " << ipS1 << std::endl;
+#endif
         elem[0] = ipN1;
         elem[1] = ipS1;
         elem[2] = -1;
         elem[3] = ipN2;
-        ipN1=std::min(rgg.nlon(latN)-1,ipN2);
-        ipS1=std::min(rgg.nlon(latS)-1,ipS1);
         // std::cout << "  ." << std::endl;
-        // if( (pN1>=mypart && pS1>=mypart) )
+        add_triag = false;
+        
+        if( 0.5*(yN+yS) > 1e-6 )
+        {
+          if( (pN1==mypart || pS1==mypart || pN2==mypart) && (pN1<=mypart && pS1<=mypart && pN2<=mypart))
+          {
+            add_triag=true;
+          }
+        } else {
+          if( (pN1==mypart || pS1==mypart || pN2==mypart) && (pN1>=mypart && pS1>=mypart && pN2>=mypart))
+          {
+            add_triag=true;
+          }          
+        }
+        if (add_triag)
+        {
           ++region.ntriags;
+          ++jelem;
+          ++nelems;        
+        
+          if( region.lat_begin[latN] == -1 ) region.lat_begin[latN] = ipN1;
+          if( region.lat_begin[latS] == -1 ) region.lat_begin[latS] = ipS1;
+          region.lat_begin[latN] = std::min(region.lat_begin[latN], ipN1);
+          region.lat_begin[latS] = std::min(region.lat_begin[latS], ipS1);
+          region.lat_end[latN] = std::max(region.lat_end[latN], ipN2);
+          region.lat_end[latS] = std::max(region.lat_end[latS], ipS1);
+        }
+        ipN1=ipN2;
+        ipS1=ipS1;
       }
       else // make triangle up
       {
         // triangle without ip4
+#if DEBUG_OUTPUT
         std::cout << "          " << ipN1 << std::endl;
         std::cout << "          " << ipS1 << "  " << ipS2 << std::endl;
+#endif
         elem[0] = ipN1;
         elem[1] = ipS1;
         elem[2] = ipS2;
         elem[3] = -1;
-        ipN1=std::min(rgg.nlon(latN)-1,ipN1);
-        ipS1=std::min(rgg.nlon(latS)-1,ipS2);
         // std::cout << "  . "  << std::endl;
-        // if( (pN1>=mypart && pS1>=mypart) )
+        add_triag = false;
+        if( 0.5*(yN+yS) > 1e-6 )
+        {
+          if( (pN1==mypart || pS1==mypart || pS2==mypart) && (pN1<=mypart && pS1<=mypart && pS2<=mypart))
+          {
+            add_triag=true;
+          }
+        } else {
+          if( (pN1==mypart || pS1==mypart || pS2==mypart) && (pN1>=mypart && pS1>=mypart && pS2>=mypart))
+          {
+            add_triag=true;
+          }          
+        }
+        if (add_triag)
+        {
           ++region.ntriags;
+          ++jelem;
+          ++nelems;        
+          
+          if( region.lat_begin[latN] == -1 ) region.lat_begin[latN] = ipN1;
+          if( region.lat_begin[latS] == -1 ) region.lat_begin[latS] = ipS1;
+          region.lat_begin[latN] = std::min(region.lat_begin[latN], ipN1);
+          region.lat_begin[latS] = std::min(region.lat_begin[latS], ipS1);
+          region.lat_end[latN] = std::max(region.lat_end[latN], ipN1);
+          region.lat_end[latS] = std::max(region.lat_end[latS], ipS2);
+        }
+        ipN1=ipN1;
+        ipS1=ipS2;
       }
       ipN2 = ipN1+1;
       ipS2 = ipS1+1;
-      // if( (pN1>=mypart && pS1>=mypart) )
-      {
-        ++jelem;
-        ++nelems;        
-      }
     }
     region.nb_lat_elems[jlat] = jelem;
+    region.lat_end[latN] = std::min(region.lat_end[latN], rgg.nlon(latN)-1);
+    region.lat_end[latS] = std::min(region.lat_end[latS], rgg.nlon(latS)-1);
   }
   
   int nb_region_nodes = 0;
   for( int jlat=lat_north; jlat<=lat_south; ++jlat ) {
     nb_region_nodes += region.lat_end[jlat]-region.lat_begin[jlat]+1;
+    
+    // Count extra periodic node to be added in this case
+    if( region.lat_end[jlat] == rgg.nlon(jlat)-1 ) ++nb_region_nodes;
   }
   std::cout << "nb_region_nodes = " << nb_region_nodes << std::endl;
   region.nnodes = nb_region_nodes;
-  
 }
 
 Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& parts, const Region& region)
@@ -542,7 +470,7 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& par
   std::cout << "nquads = "  << region.nquads  << std::endl;
   std::cout << "ntriags = " << region.ntriags << std::endl;
 
-  std::vector<int> offset_glb(rgg.nlat(),0);
+  std::vector<int> offset_glb(rgg.nlat());
   std::vector<int> offset_loc(region.south-region.north+1,0);
 
   n=0;
@@ -551,6 +479,16 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& par
     offset_glb[jlat]=n;
     n+=rgg.nlon(jlat);
   };
+  
+  std::vector<int> periodic_glb(rgg.nlat());
+  std::vector<int> periodic_loc(region.south-region.north+1,0);
+  
+  for( int jlat=0; jlat<rgg.nlat(); ++jlat )
+  {
+    periodic_glb[jlat] = n;
+    ++n;
+  }
+  
   
   
   std::vector<int> extents = Extents(Field::UNDEF_VARS, region.nnodes);
@@ -561,11 +499,11 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& par
   ArrayView<int,1>    master_glb_idx( nodes.create_field<int>("master_glb_idx",1) );
   ArrayView<int,1>    proc( nodes.create_field<int>("proc",1) );
   
-  std::cout << "s1 = " << coords.strides()[0] << std::endl;
-  std::cout << "s2 = " << coords.strides()[1] << std::endl;
+  // std::cout << "s1 = " << coords.strides()[0] << std::endl;
+  // std::cout << "s2 = " << coords.strides()[1] << std::endl;
 
-  std::cout << "e1 = " << coords.extents()[0] << std::endl;
-  std::cout << "e2 = " << coords.extents()[1] << std::endl;
+  // std::cout << "e1 = " << coords.extents()[0] << std::endl;
+  // std::cout << "e2 = " << coords.extents()[1] << std::endl;
 
 
   int jnode=0;
@@ -585,6 +523,17 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& par
       glb_idx(jnode)   = n+1;
       master_glb_idx(jnode) = glb_idx(jnode);
       proc(jnode) = parts[n];
+      ++jnode;
+    }
+    if( region.lat_end[jlat]==rgg.nlon(jlat)-1 ) // add periodic point
+    {
+      ++l;
+      double x = rgg.lon(rgg.nlon(jlat),jlat);
+      coords(jnode,XX) = x;
+      coords(jnode,YY) = y;
+      glb_idx(jnode)   = periodic_glb[jlat]+1;
+      master_glb_idx(jnode) = offset_glb[jlat];
+      proc(jnode) = parts[ offset_glb[jlat] ];
       ++jnode;
     }
   };
