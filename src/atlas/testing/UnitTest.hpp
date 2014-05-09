@@ -8,6 +8,9 @@
  * does it submit to any jurisdiction.
  */
 
+#ifndef atlas_testing_UnitTest_hpp
+#define atlas_testing_UnitTest_hpp
+
 /// @file UnitTest.hpp
 /// @author Willem Deconinck
 /// This file implements a simple UnitTest class
@@ -96,3 +99,5 @@ protected:
 };
 
 }
+
+#endif

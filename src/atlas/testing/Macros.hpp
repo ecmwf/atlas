@@ -12,6 +12,9 @@
 /// @author Willem Deconinck
 /// This file implements Macros to be used inside the UnitTest framework
 
+#ifndef atlas_testing_Macros_hpp
+#define atlas_testing_Macros_hpp
+
 #include <stdexcept>
 #include <sstream>
 
@@ -51,11 +54,14 @@ Following macro's are only to be used inside a UnitTest member function
 #define ATLAS_CHECK_NOTHROW( CODE ) \
   try { CODE; } \
   catch(...) { \
-    ss << "CHECK_NOTHROW FAILED in function '"<<func<<"' ("<<file<<":"<<line<<") : " << std::string(#CODE); \
+    std::cout << "CHECK_NOTHROW FAILED in function '"<<func<<"' ("<<file<<":"<<line<<") : " << std::string(#CODE) << std::endl; \
   } 
 #define ATLAS_CHECK_NOTHROW_FATAL( CODE ) \
   try { CODE; } \
   catch(...) { \
-    ss << "CHECK_NOTHROW FAILED in function '"<<func<<"' ("<<file<<":"<<line<<") : " << std::string(#CODE); \
+    std::cout << "CHECK_NOTHROW FAILED in function '"<<func<<"' ("<<file<<":"<<line<<") : " << std::string(#CODE) << std::endl; \
     throw; \
   }
+
+
+#endif
