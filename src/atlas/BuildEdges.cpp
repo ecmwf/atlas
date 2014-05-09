@@ -23,7 +23,6 @@
 
 namespace atlas {
 
-
 void scan_function_space(
     FunctionSpace& func_space,
     std::vector< std::vector<int> >& node_to_face,
@@ -126,7 +125,7 @@ void scan_function_space(
 
 void build_element_to_edge_connectivity( Mesh& mesh, ArrayView<int,2>& edge_to_elem )
 {
-  std::vector< FieldT<int>* > elem_to_edge( mesh.nb_function_spaces() );
+  std::vector< ArrayView<int,2> > elem_to_edge( mesh.nb_function_spaces() );
   std::vector< std::vector<int> > edge_cnt( mesh.nb_function_spaces() );
 
   for( int func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
@@ -137,7 +136,7 @@ void build_element_to_edge_connectivity( Mesh& mesh, ArrayView<int,2>& edge_to_e
       int nb_edges_per_elem;
       if (func_space.name() == "quads") nb_edges_per_elem = 4;
       if (func_space.name() == "triags") nb_edges_per_elem = 3;
-      elem_to_edge[func_space_idx] = &func_space.create_field<int>("to_edge",nb_edges_per_elem);
+      elem_to_edge[func_space_idx] = ArrayView<int,2>(func_space.create_field<int>("to_edge",nb_edges_per_elem));
       edge_cnt[func_space_idx].resize( func_space.bounds()[1], 0);
     }
   }
@@ -151,7 +150,7 @@ void build_element_to_edge_connectivity( Mesh& mesh, ArrayView<int,2>& edge_to_e
       int elem           = C_IDX( edge_to_elem(edge,1+2*j) );
       if ( elem >= 0 )
       {
-        (*elem_to_edge[func_space_idx])(edge_cnt[func_space_idx][elem]++, elem) = F_IDX(edge);
+        elem_to_edge[func_space_idx](elem,edge_cnt[func_space_idx][elem]++) = F_IDX(edge);
       }
     }
   }
@@ -161,13 +160,9 @@ void build_element_to_edge_connectivity( Mesh& mesh, ArrayView<int,2>& edge_to_e
 void build_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& nb_pole_edges )
 {
   FunctionSpace& nodes   = mesh.function_space( "nodes" );
-  FieldT<double>& coords    = nodes.field<double>( "coordinates" );
-  FieldT<int>& glb_idx    = nodes.field<int>( "glb_idx" );
+  ArrayView<double,2> coords  ( nodes.field( "coordinates" ) );
+  ArrayView<int,   1> glb_idx ( nodes.field( "glb_idx"     ) );
   int nb_nodes = nodes.bounds()[1];
-  FunctionSpace& edges   = mesh.function_space( "edges" );
-  FieldT<int>& edge_nodes    = edges.field<int>( "nodes" );
-  FieldT<int>& edge_glb_idx    = edges.field<int>( "glb_idx" );
-  int nb_edges = edges.bounds()[1];
 
   double ymin = nodes.metadata<double>("ymin");
   double ymax = nodes.metadata<double>("ymax");
@@ -184,32 +179,31 @@ void build_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& nb_po
   for (int node=0; node<nb_nodes; ++node)
   {
     //std::cout << "node " << node << "   " << std::abs(coords(YY,node)-ymax) << std::endl;
-    if ( std::abs(coords(YY,node)-ymax)<tol )
+    if ( std::abs(coords(node,YY)-ymax)<tol )
     {
       north_nodes.insert(node);
     }
-    else if ( std::abs(coords(YY,node)-ymin)<tol )
+    else if ( std::abs(coords(node,YY)-ymin)<tol )
     {
       south_nodes.insert(node);
     }
   }
-  double pi = std::acos(-1.);
 
   for( std::set<int>::iterator it=north_nodes.begin(); it!=north_nodes.end(); ++it)
   {
     int node = *it;
-    double x1 = coords(XX,node);
-    double x2 = coords(XX,node) + 0.5*dx;
-    double dist = 2.*pi;
+    double x1 = coords(node,XX);
+    double x2 = coords(node,XX) + 0.5*dx;
+    double dist = 2.*M_PI;
     if( x1>=xmin-tol && x1<=(xmax-xmin)*0.5-tol )
     {
       int recip_node;
       for( std::set<int>::iterator itr=north_nodes.begin(); itr!=north_nodes.end(); ++itr)
       {
         int other_node = *itr;
-        if( std::abs(coords(XX,other_node)-x2)<dist )
+        if( std::abs(coords(other_node,XX)-x2)<dist )
         {
-          dist = std::abs(coords(XX,other_node)-x2);
+          dist = std::abs(coords(other_node,XX)-x2);
           recip_node = other_node;
         }
       }
@@ -222,9 +216,9 @@ void build_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& nb_po
   for( std::set<int>::iterator it=south_nodes.begin(); it!=south_nodes.end(); ++it)
   {
     int node = *it;
-    double x1 = coords(XX,node);
-    double x2 = coords(XX,node) + 0.5*dx;
-    double dist = 2.*pi;
+    double x1 = coords(node,XX);
+    double x2 = coords(node,XX) + 0.5*dx;
+    double dist = 2.*M_PI;
     if( x1>=xmin-tol && x1<=(xmax-xmin)*0.5-tol )
 
     {
@@ -232,13 +226,13 @@ void build_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& nb_po
       for( std::set<int>::iterator itr=south_nodes.begin(); itr!=south_nodes.end(); ++itr)
       {
         int other_node = *itr;
-        if( std::abs(coords(XX,other_node)-x2)<dist )
+        if( std::abs(coords(other_node,XX)-x2)<dist )
         {
-          dist = std::abs(coords(XX,other_node)-x2);
+          dist = std::abs(coords(other_node,XX)-x2);
           recip_node = other_node;
         }
       }
-      if (coords(XX,node) >= xmin)
+      if (coords(node,XX) >= xmin)
       {
         pole_edge_nodes.push_back(node);
         pole_edge_nodes.push_back(recip_node);
@@ -394,18 +388,23 @@ void build_edges( Mesh& mesh )
       }
     }
   }
-
+  
   int nb_pole_edges(0);
   std::vector<int> pole_edge_nodes;
   build_pole_edges( mesh, pole_edge_nodes, nb_pole_edges );
   bounds[1] += nb_pole_edges;
-  edges.resize(bounds);
+  edges.resize(bounds); // WARNING, ArrayViews no longer valid!!! Need to redefine
+  edge_nodes          = ArrayView<int,2>( edges.field( "nodes"          ) );
+  edge_glb_idx        = ArrayView<int,1>( edges.field( "glb_idx"        ) );
+  edge_master_glb_idx = ArrayView<int,1>( edges.field( "master_glb_idx" ) );
+  edge_proc           = ArrayView<int,1>( edges.field( "proc"           ) );
+  edge_to_elem        = ArrayView<int,2>( edges.field( "to_elem"        ) );
   cnt=0;
   for(int edge=nb_edges; edge<nb_edges+nb_pole_edges; ++edge)
   {
     edge_glb_idx(edge) = ++gid;
     edge_master_glb_idx(edge) = gid;
-    edge_proc(edge) = 0;
+    edge_proc(edge)      = 0;
     edge_nodes(edge,0)   = F_IDX(pole_edge_nodes[cnt++]);
     edge_nodes(edge,1)   = F_IDX(pole_edge_nodes[cnt++]);
     edge_to_elem(edge,0) = -1;

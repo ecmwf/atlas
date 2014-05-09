@@ -82,6 +82,7 @@ template< typename DATA_TYPE >
 class ArrayView < DATA_TYPE, 1 >
 {
 public:
+  ArrayView() {}
   ArrayView( DATA_TYPE* data, const int strides[1], const int extents[1] ) : data_( const_cast<DATA_TYPE*>(data) )
   {
     strides_[0]=strides[0];       extents_[0]=extents[0];
@@ -111,6 +112,8 @@ template< typename DATA_TYPE >
 class ArrayView < DATA_TYPE, 2 >
 {
 public:
+  
+  ArrayView() {}
   ArrayView( const DATA_TYPE* data, const int strides[2], const int extents[2] ) : data_( const_cast<DATA_TYPE*>(data) )
   {
     strides_[0]=strides[0];            extents_[0]=extents[0];
@@ -141,6 +144,7 @@ template< typename DATA_TYPE >
 class ArrayView < DATA_TYPE, 3 >
 {
 public:
+  ArrayView() {}
   ArrayView( const DATA_TYPE* data, const int strides[3], const int extents[3] ) : data_( const_cast<DATA_TYPE*>(data) )
   {
     strides_[0]=strides[0];            extents_[0]=extents[0];
@@ -172,6 +176,7 @@ template< typename DATA_TYPE >
 class ArrayView < DATA_TYPE, 4 >
 {
 public:
+  ArrayView() {}
   ArrayView( DATA_TYPE* data, const int strides[4], const int extents[4] ) : data_( const_cast<DATA_TYPE*>(data) )
   {
     strides_[0]=strides[0];            extents_[0]=extents[0];
