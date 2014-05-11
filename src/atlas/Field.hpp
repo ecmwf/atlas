@@ -49,7 +49,7 @@ public: // methods
 
   FunctionSpace& function_space() { return function_space_; }
 
-  const std::vector<int>& bounds() const  { return bounds_; }
+  const std::vector<int>& fbounds() const  { return bounds_; }
   const std::vector<int>& extents() const { return extents_; }
   const std::vector<int>& strides() const { return strides_; }
   int stride(int i) const { return strides_[i];}
@@ -134,14 +134,15 @@ inline FieldT<DATA_TYPE>::~FieldT()
 }
 
 template< typename DATA_TYPE >
-inline void FieldT<DATA_TYPE>::allocate(const std::vector<int>& bounds)
+inline void FieldT<DATA_TYPE>::allocate(const std::vector<int>& extents)
 {
-  bounds_ = bounds;
-  size_t tot_size(1); for (int i = 0; i < bounds_.size(); ++i) tot_size *= bounds_[i];
+  extents_ = extents;
+  size_t tot_size(1); for (int i = 0; i < extents_.size(); ++i) tot_size *= extents_[i];
   data_.resize(tot_size);
-  
-  extents_.resize(bounds_.size());
-  std::reverse_copy( bounds_.begin(), bounds_.end(), extents_.begin() );
+
+  bounds_.resize(extents_.size());
+  std::reverse_copy( extents_.begin(), extents_.end(), bounds_.begin() );
+
   strides_.resize(extents_.size());
   strides_[extents_.size()-1] = 1;
   for( int n=extents_.size()-2; n>=0; --n )
@@ -158,9 +159,9 @@ extern "C"
   const char* atlas__Field__name (Field* This);
   const char* atlas__Field__data_type (Field* This);
   int atlas__Field__nb_vars (Field* This);
-  void atlas__Field__data_double (Field* This, double* &field_data, int* &field_bounds, int &rank);
-  void atlas__Field__data_float (Field* This, float* &field_data, int* &field_bounds, int &rank);
-  void atlas__Field__data_int (Field* This, int* &field_data, int* &field_bounds, int &rank);
+  void atlas__Field__fdata_double (Field* This, double* &field_data, int* &field_bounds, int &rank);
+  void atlas__Field__fdata_float (Field* This, float* &field_data, int* &field_bounds, int &rank);
+  void atlas__Field__fdata_int (Field* This, int* &field_data, int* &field_bounds, int &rank);
   Metadata* atlas__Field__metadata (Field* This);
   FunctionSpace* atlas__Field__function_space (Field* This);
 }

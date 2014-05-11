@@ -545,7 +545,7 @@ function new_FunctionSpace(name,shape_func,nb_nodes) result(function_space)
   integer, intent(in) :: nb_nodes
   type(FunctionSpace_type) :: function_space
   function_space%object = atlas__FunctionSpace__new(c_str(name),c_str(shape_func), &
-    & (/FIELD_NB_VARS,nb_nodes/), 2 )
+    & (/nb_nodes,FIELD_NB_VARS/), 2 )
 end function new_FunctionSpace
 
 function new_PrismaticFunctionSpace(name,shape_func,nb_levels,nb_nodes) result(function_space)
@@ -555,7 +555,7 @@ function new_PrismaticFunctionSpace(name,shape_func,nb_levels,nb_nodes) result(f
   integer, intent(in) :: nb_nodes
   type(FunctionSpace_type) :: function_space
   function_space%object = atlas__FunctionSpace__new(c_str(name),c_str(shape_func), &
-    & (/FIELD_NB_VARS,nb_levels,nb_nodes/), 3 )
+    & (/nb_nodes,nb_levels,FIELD_NB_VARS/), 3 )
 end function new_PrismaticFunctionSpace
 
 subroutine FunctionSpace__delete(this)
@@ -966,7 +966,7 @@ subroutine Field__access_data1_integer(this, field)
   type(c_ptr) :: field_bounds_c_ptr
   integer(c_int) :: field_rank
   integer :: field_size, jbound
-  call atlas__Field__data_int(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  call atlas__Field__fdata_int(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
   field_size = 1
   do jbound=1,field_rank
@@ -982,7 +982,7 @@ subroutine Field__access_data2_integer(this, field)
   type(c_ptr) :: field_c_ptr
   type(c_ptr) :: field_bounds_c_ptr
   integer(c_int) :: field_rank
-  call atlas__Field__data_int(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  call atlas__Field__fdata_int(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
   call C_F_POINTER ( field_c_ptr , field , field_bounds(field_rank-1:field_rank) )
 end subroutine Field__access_data2_integer
@@ -994,7 +994,7 @@ subroutine Field__access_data3_integer(this, field)
   type(c_ptr) :: field_c_ptr
   type(c_ptr) :: field_bounds_c_ptr
   integer(c_int) :: field_rank
-  call atlas__Field__data_int(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  call atlas__Field__fdata_int(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
   call C_F_POINTER ( field_c_ptr , field , field_bounds(field_rank-2:field_rank) )
 end subroutine Field__access_data3_integer
@@ -1007,7 +1007,7 @@ subroutine Field__access_data1_real32(this, field)
   type(c_ptr) :: field_bounds_c_ptr
   integer(c_int) :: field_rank
   integer :: field_size, jbound
-  call atlas__Field__data_float(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  call atlas__Field__fdata_float(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
   field_size = 1
   do jbound=1,field_rank
@@ -1023,7 +1023,7 @@ subroutine Field__access_data2_real32(this, field)
   type(c_ptr) :: field_c_ptr
   type(c_ptr) :: field_bounds_c_ptr
   integer(c_int) :: field_rank
-  call atlas__Field__data_float(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  call atlas__Field__fdata_float(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
   call C_F_POINTER ( field_c_ptr , field , field_bounds(field_rank-1:field_rank) )
 end subroutine Field__access_data2_real32
@@ -1035,7 +1035,7 @@ subroutine Field__access_data3_real32(this, field)
   type(c_ptr) :: field_c_ptr
   type(c_ptr) :: field_bounds_c_ptr
   integer(c_int) :: field_rank
-  call atlas__Field__data_float(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  call atlas__Field__fdata_float(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
   call C_F_POINTER ( field_c_ptr , field , field_bounds(field_rank-2:field_rank) )
 end subroutine Field__access_data3_real32
@@ -1048,7 +1048,7 @@ subroutine Field__access_data1_real64(this, field)
   type(c_ptr) :: field_bounds_c_ptr
   integer(c_int) :: field_rank
   integer :: field_size, jbound
-  call atlas__Field__data_double(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  call atlas__Field__fdata_double(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
   field_size = 1
   do jbound=1,field_rank
@@ -1064,7 +1064,7 @@ subroutine Field__access_data2_real64(this, field)
   type(c_ptr) :: field_c_ptr
   type(c_ptr) :: field_bounds_c_ptr
   integer(c_int) :: field_rank
-  call atlas__Field__data_double(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  call atlas__Field__fdata_double(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
   call C_F_POINTER ( field_c_ptr , field , field_bounds(field_rank-1:field_rank) )
 end subroutine Field__access_data2_real64
@@ -1076,7 +1076,7 @@ subroutine Field__access_data3_real64(this, field)
   type(c_ptr) :: field_c_ptr
   type(c_ptr) :: field_bounds_c_ptr
   integer(c_int) :: field_rank
-  call atlas__Field__data_double(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  call atlas__Field__fdata_double(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
   call C_F_POINTER ( field_c_ptr , field , field_bounds(field_rank-2:field_rank) )
 end subroutine Field__access_data3_real64
@@ -1092,9 +1092,9 @@ function Field__data1_wp(this) result(field)
   integer(c_int) :: field_rank
   integer :: field_size, jbound
   if( wp == c_double ) then
-    call atlas__Field__data_double(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+    call atlas__Field__fdata_double(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   else if (wp == c_float ) then
-    call atlas__Field__data_float(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+    call atlas__Field__fdata_float(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   end if
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
   field_size = 1
@@ -1113,9 +1113,9 @@ function Field__data2_wp(this) result(field)
   integer(c_int) :: field_rank
   integer :: field_size, jbound
   if( wp == c_double ) then
-    call atlas__Field__data_double(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+    call atlas__Field__fdata_double(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   else if (wp == c_float ) then
-    call atlas__Field__data_float(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+    call atlas__Field__fdata_float(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   end if
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
   if (size(field_bounds) < 2) then
@@ -1143,9 +1143,9 @@ function Field__data3_wp(this) result(field)
   integer(c_int) :: field_rank
   integer :: field_size, jbound
   if( wp == c_double ) then
-    call atlas__Field__data_double(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+    call atlas__Field__fdata_double(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   else if (wp == c_float ) then
-    call atlas__Field__data_float(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+    call atlas__Field__fdata_float(this%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   end if
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
   if (size(field_bounds) < 3) then

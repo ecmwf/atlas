@@ -73,15 +73,15 @@ void FunctionSpace::resize(const std::vector<int>& extents)
 
   for( int f=0; f<fields_.size(); ++f)
   {
-    std::vector< int > field_bounds(extsize);
+    std::vector< int > field_extents(extsize);
     for (size_t i=0; i<extsize; ++i)
     {
       if( extents_[i] == Field::UNDEF_VARS )
-        field_bounds[extsize-1-i] = fields_[f]->nb_vars();
+        field_extents[i] = fields_[f]->nb_vars();
       else
-        field_bounds[extsize-1-i] = extents_[i];
+        field_extents[i] = extents_[i];
     }
-    fields_[f]->allocate(field_bounds);
+    fields_[f]->allocate(field_extents);
   }
 }
 
@@ -94,24 +94,22 @@ FieldT<double>& FunctionSpace::create_field(const std::string& name, size_t nb_v
         throw std::runtime_error( msg.str() );
     }
 
-  std::cout << "C++ : Create field " << name << " with vars" << nb_vars << std::endl;
+  // std::cout << "C++ : Create field " << name << " with vars" << nb_vars << std::endl;
   index_[name] = fields_.size();
   FieldT<double>* field = new FieldT<double>(name,nb_vars,*this);
   fields_.push_back( field );
 
   size_t extsize = extents_.size();
-  std::vector< int > field_bounds(extsize);
+  std::vector< int > field_extents(extsize);
   for (size_t i=0; i<extsize; ++i)
   {
     if( extents_[i] == Field::UNDEF_VARS )
-      field_bounds[extsize-1-i] = field->nb_vars();
+      field_extents[i] = field->nb_vars();
     else
-      field_bounds[extsize-1-i] = extents_[i];
+      field_extents[i] = extents_[i];
   }
-  
-  std::cout << "allocating "  << field_bounds[0] << "  " << field_bounds[1] << std::endl;
-  
-  field->allocate(field_bounds);
+
+  field->allocate(field_extents);
   return *field;
 }
 
@@ -128,22 +126,23 @@ FieldT<float>& FunctionSpace::create_field(const std::string& name, size_t nb_va
   //std::cout << "Allocating field<real32> " << name << " ( ";
 
   size_t extsize = extents_.size();
-  std::vector< int > field_bounds(extsize);
+  std::vector< int > field_extents(extsize);
   for (size_t i=0; i<extsize; ++i)
   {
     if( extents_[i] == Field::UNDEF_VARS )
-      field_bounds[extsize-1-i] = field->nb_vars();
+      field_extents[i] = field->nb_vars();
     else
-      field_bounds[extsize-1-i] = extents_[i];
+      field_extents[i] = extents_[i];
   }
-  field->allocate(field_bounds);
+
+  field->allocate(field_extents);
   return *field;
 }
 
 template <>
 FieldT<int>& FunctionSpace::create_field(const std::string& name, size_t nb_vars)
 {
-  std::cout << "C++ : Create field " << name << " with vars " << nb_vars << std::endl;
+  // std::cout << "C++ : Create field " << name << " with vars " << nb_vars << std::endl;
   index_[name] = fields_.size();
   FieldT<int>* field = new FieldT<int>(name,nb_vars,*this);
   fields_.push_back( field );
@@ -153,15 +152,16 @@ FieldT<int>& FunctionSpace::create_field(const std::string& name, size_t nb_vars
   //std::cout << "Allocating field<int32> " << name << " ( ";
 
   size_t extsize = extents_.size();
-  std::vector< int > field_bounds(extsize);
+  std::vector< int > field_extents(extsize);
   for (size_t i=0; i<extsize; ++i)
   {
     if( extents_[i] == Field::UNDEF_VARS )
-      field_bounds[extsize-1-i] = field->nb_vars();
+      field_extents[i] = field->nb_vars();
     else
-      field_bounds[extsize-1-i] = extents_[i];
+      field_extents[i] = extents_[i];
   }
-  field->allocate(field_bounds);
+
+  field->allocate(field_extents);
   return *field;
 }
 

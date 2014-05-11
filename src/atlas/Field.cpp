@@ -156,25 +156,25 @@ FunctionSpace* atlas__Field__function_space (Field* This)
 }
 
 
-void atlas__Field__data_double (Field* This, double* &field_data, int* &field_bounds, int &rank)
+void atlas__Field__fdata_double (Field* This, double* &field_data, int* &field_bounds, int &rank)
 {
   field_data = &This->data<double>()[0];
-  field_bounds = const_cast<int*>(&(This->bounds()[0]));
-  rank = This->bounds().size();
+  field_bounds = const_cast<int*>(&(This->fbounds()[0]));
+  rank = This->fbounds().size();
 }
 
-void atlas__Field__data_float (Field* This, float* &field_data, int* &field_bounds, int &rank)
+void atlas__Field__fdata_float (Field* This, float* &field_data, int* &field_bounds, int &rank)
 {
   field_data = &This->data<float>()[0];
-  field_bounds = const_cast<int*>(&(This->bounds()[0]));
-  rank = This->bounds().size();
+  field_bounds = const_cast<int*>(&(This->fbounds()[0]));
+  rank = This->fbounds().size();
 }
 
-void atlas__Field__data_int (Field* This, int* &field_data, int* &field_bounds, int &rank)
+void atlas__Field__fdata_int (Field* This, int* &field_data, int* &field_bounds, int &rank)
 {
   field_data = &This->data<int>()[0];
-  field_bounds = const_cast<int*>(&(This->bounds()[0]));
-  rank = This->bounds().size();
+  field_bounds = const_cast<int*>(&(This->fbounds()[0]));
+  rank = This->fbounds().size();
 }
 
 // ------------------------------------------------------------------
