@@ -16,7 +16,6 @@
 #include "atlas/BuildEdges.hpp"
 #include "atlas/BuildDualMesh.hpp"
 #include "atlas/BuildPeriodicBoundaries.hpp"
-#include "atlas/Partitioner.hpp"
 #include "atlas/MPL.hpp"
 
 using namespace atlas;

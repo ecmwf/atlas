@@ -77,8 +77,6 @@ ecbuild_add_library( TARGET atlas
 		Metadata.hpp
 		Metadata.cpp
 		Parameters.hpp
-		Partitioner.hpp
-		Partitioner.cpp
 		HaloExchange.hpp
 		HaloExchange.cpp
 		Gather.hpp
