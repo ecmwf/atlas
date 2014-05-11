@@ -208,11 +208,9 @@ private:
 
 } // namespace atlas
 
-#ifdef ATLAS_ARRAYVIEW_BOUNDS_CHECKING
 #undef CHECK_BOUNDS_1
 #undef CHECK_BOUNDS_2
 #undef CHECK_BOUNDS_3
 #undef CHECK_BOUNDS_4
-#endif
 
 #endif
