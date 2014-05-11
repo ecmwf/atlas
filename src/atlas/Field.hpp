@@ -49,7 +49,7 @@ public: // methods
 
   FunctionSpace& function_space() { return function_space_; }
 
-  const std::vector<int>& fbounds() const  { return bounds_; }
+  const std::vector<int>& boundsf() const  { return bounds_; }
   const std::vector<int>& extents() const { return extents_; }
   const std::vector<int>& strides() const { return strides_; }
   int stride(int i) const { return strides_[i];}
@@ -159,9 +159,9 @@ extern "C"
   const char* atlas__Field__name (Field* This);
   const char* atlas__Field__data_type (Field* This);
   int atlas__Field__nb_vars (Field* This);
-  void atlas__Field__fdata_double (Field* This, double* &field_data, int* &field_bounds, int &rank);
-  void atlas__Field__fdata_float (Field* This, float* &field_data, int* &field_bounds, int &rank);
-  void atlas__Field__fdata_int (Field* This, int* &field_data, int* &field_bounds, int &rank);
+  void atlas__Field__data_boundsf_double (Field* This, double* &field_data, int* &field_bounds, int &rank);
+  void atlas__Field__data_boundsf_float (Field* This, float* &field_data, int* &field_bounds, int &rank);
+  void atlas__Field__data_boundsf_int (Field* This, int* &field_data, int* &field_bounds, int &rank);
   Metadata* atlas__Field__metadata (Field* This);
   FunctionSpace* atlas__Field__function_space (Field* This);
 }
