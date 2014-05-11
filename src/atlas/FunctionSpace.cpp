@@ -19,16 +19,18 @@
 
 namespace atlas {
 
-FunctionSpace::FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<int>& bounds) :
-  name_(name), bounds_(bounds)
+FunctionSpace::FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<int>& extents) :
+  name_(name), extents_(extents)
 { 
   //std::cout << "C++ : FunctionSpace Constructor" << std::endl;
   dof_ = 1;
-  size_t bsize = bounds_.size();
-  for (size_t i=0; i<bsize; ++i)
+  size_t extsize = extents_.size();
+  bounds_.resize(extsize);
+  for (size_t i=0; i<extsize; ++i)
   {
-    if( bounds_[i] != Field::UNDEF_VARS )
-      dof_ *= bounds_[i];
+    bounds_[extsize-1-i] = extents_[i];
+    if( extents_[i] != Field::UNDEF_VARS )
+      dof_ *= extents_[i];
   }
   glb_dof_ = dof_;
 }
@@ -42,37 +44,42 @@ FunctionSpace::~FunctionSpace()
   fields_.clear();
 }
 
-void FunctionSpace::resize(const std::vector<int>& bounds)
+void FunctionSpace::resize(const std::vector<int>& extents)
 {
-  if (bounds.size() != bounds_.size() )
-    throw std::runtime_error("Cannot resize functionspace: Bounds sizes don't match.");
+  if (extents.size() != extents_.size() )
+    throw std::runtime_error("Cannot resize functionspace: extents sizes don't match.");
 
-  size_t bsize = bounds_.size();
-  for (size_t i=0; i<bsize-1; ++i)
+  size_t extsize = extents_.size();
+  
+  for (size_t i=1; i<extsize; ++i)
   {
-    if (bounds[i] != bounds_[i])
-      throw std::runtime_error("Only the last bound can be resized for now!");
+    if (extents[i] != extents_[i])
+      throw std::runtime_error("Only the first extent can be resized for now!");
   }
 
-  bounds_ = bounds;
+  extents_ = extents;
+  bounds_.resize(extsize);
+  for (size_t i=0; i<extsize; ++i)
+  {
+    bounds_[extsize-1-i] = extents_[i];
+  }
 
   dof_ = 1;
-  for (size_t i=0; i<bsize; ++i)
+  for (size_t i=0; i<extsize; ++i)
   {
-    if( bounds_[i] != Field::UNDEF_VARS )
-      dof_ *= bounds_[i];
+    if( extents_[i] != Field::UNDEF_VARS )
+      dof_ *= extents_[i];
   }
 
   for( int f=0; f<fields_.size(); ++f)
   {
-    size_t bsize = bounds_.size();
-    std::vector< int > field_bounds(bsize);
-    for (size_t i=0; i<bsize; ++i)
+    std::vector< int > field_bounds(extsize);
+    for (size_t i=0; i<extsize; ++i)
     {
-      if( bounds_[i] == Field::UNDEF_VARS )
-        field_bounds[i] = fields_[f]->nb_vars();
+      if( extents_[i] == Field::UNDEF_VARS )
+        field_bounds[extsize-1-i] = fields_[f]->nb_vars();
       else
-        field_bounds[i] = bounds_[i];
+        field_bounds[extsize-1-i] = extents_[i];
     }
     fields_[f]->allocate(field_bounds);
   }
@@ -87,33 +94,31 @@ FieldT<double>& FunctionSpace::create_field(const std::string& name, size_t nb_v
         throw std::runtime_error( msg.str() );
     }
 
-  //std::cout << "C++ : Create field " << name << " with size " << size*nb_nodes_ << std::endl;
+  std::cout << "C++ : Create field " << name << " with vars" << nb_vars << std::endl;
   index_[name] = fields_.size();
   FieldT<double>* field = new FieldT<double>(name,nb_vars,*this);
   fields_.push_back( field );
 
-  size_t bsize = bounds_.size();
-  std::vector< int > bounds(bsize);
-  //std::cout << "Allocating field<real64> " << name << " ( ";
-
-  for( size_t i = 0; i < bsize; ++i )
+  size_t extsize = extents_.size();
+  std::vector< int > field_bounds(extsize);
+  for (size_t i=0; i<extsize; ++i)
   {
-    if( bounds_[i] == Field::UNDEF_VARS )
-      bounds[i] = nb_vars;
+    if( extents_[i] == Field::UNDEF_VARS )
+      field_bounds[extsize-1-i] = field->nb_vars();
     else
-      bounds[i] = bounds_[i];
-    //std::cout << bounds[i];
-    //if (i<bsize-1) std::cout << " , ";
+      field_bounds[extsize-1-i] = extents_[i];
   }
-  //std::cout << " )" << std::endl;
-  field->allocate(bounds);
+  
+  std::cout << "allocating "  << field_bounds[0] << "  " << field_bounds[1] << std::endl;
+  
+  field->allocate(field_bounds);
   return *field;
 }
 
 template <>
 FieldT<float>& FunctionSpace::create_field(const std::string& name, size_t nb_vars)
 {
-  //std::cout << "C++ : Create field " << name << " with size " << size*nb_nodes_ << std::endl;
+  // std::cout << "C++ : Create field " << name << " with size " << size*nb_nodes_ << std::endl;
   index_[name] = fields_.size();
   FieldT<float>* field = new FieldT<float>(name,nb_vars,*this);
   fields_.push_back( field );
@@ -122,24 +127,23 @@ FieldT<float>& FunctionSpace::create_field(const std::string& name, size_t nb_va
   std::vector< int > bounds(bsize);
   //std::cout << "Allocating field<real32> " << name << " ( ";
 
-  for (size_t i=0; i<bsize; ++i)
+  size_t extsize = extents_.size();
+  std::vector< int > field_bounds(extsize);
+  for (size_t i=0; i<extsize; ++i)
   {
-    if( bounds_[i] == Field::UNDEF_VARS )
-      bounds[i] = nb_vars;
+    if( extents_[i] == Field::UNDEF_VARS )
+      field_bounds[extsize-1-i] = field->nb_vars();
     else
-      bounds[i] = bounds_[i];
-    //std::cout << bounds[i];
-    //if (i<bsize-1) std::cout << " , ";
+      field_bounds[extsize-1-i] = extents_[i];
   }
-  //std::cout << " )" << std::endl;
-  field->allocate(bounds);
+  field->allocate(field_bounds);
   return *field;
 }
 
 template <>
 FieldT<int>& FunctionSpace::create_field(const std::string& name, size_t nb_vars)
 {
-  //std::cout << "C++ : Create field " << name << " with size " << size*nb_nodes_ << std::endl;
+  std::cout << "C++ : Create field " << name << " with vars " << nb_vars << std::endl;
   index_[name] = fields_.size();
   FieldT<int>* field = new FieldT<int>(name,nb_vars,*this);
   fields_.push_back( field );
@@ -148,17 +152,16 @@ FieldT<int>& FunctionSpace::create_field(const std::string& name, size_t nb_vars
   std::vector< int > bounds(bsize);
   //std::cout << "Allocating field<int32> " << name << " ( ";
 
-  for (size_t i=0; i<bsize; ++i)
+  size_t extsize = extents_.size();
+  std::vector< int > field_bounds(extsize);
+  for (size_t i=0; i<extsize; ++i)
   {
-    if( bounds_[i] == Field::UNDEF_VARS )
-      bounds[i] = nb_vars;
+    if( extents_[i] == Field::UNDEF_VARS )
+      field_bounds[extsize-1-i] = field->nb_vars();
     else
-      bounds[i] = bounds_[i];
-    //std::cout << bounds[i];
-    //if (i<bsize-1) std::cout << " , ";
+      field_bounds[extsize-1-i] = extents_[i];
   }
-  //std::cout << " )" << std::endl;
-  field->allocate(bounds);
+  field->allocate(field_bounds);
   return *field;
 }
 
@@ -268,9 +271,9 @@ void FunctionSpace::parallelise()
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
-FunctionSpace* atlas__FunctionSpace__new (char* name, char* shape_func, int bounds[], int bounds_size) { 
-  std::vector<int> bounds_vec(bounds,bounds+bounds_size);
-  return new FunctionSpace( std::string(name), std::string(shape_func), bounds_vec ); 
+FunctionSpace* atlas__FunctionSpace__new (char* name, char* shape_func, int extents[], int extents_size) { 
+  std::vector<int> extents_vec(extents,extents+extents_size);
+  return new FunctionSpace( std::string(name), std::string(shape_func), extents_vec ); 
 }
 
 int atlas__FunctionSpace__dof (FunctionSpace* This) {
@@ -305,9 +308,9 @@ const char* atlas__FunctionSpace__name (FunctionSpace* This) {
   return This->name().c_str();
 }
 
-void atlas__FunctionSpace__bounds (FunctionSpace* This, int* &bounds, int &rank) {
-  bounds = const_cast<int*>(&(This->bounds()[0]));
-  rank = This->bounds().size();
+void atlas__FunctionSpace__boundsf (FunctionSpace* This, int* &bounds, int &rank) {
+  bounds = const_cast<int*>(&(This->boundsf()[0]));
+  rank = This->boundsf().size();
 }
 
 Field* atlas__FunctionSpace__field (FunctionSpace* This, char* name) {

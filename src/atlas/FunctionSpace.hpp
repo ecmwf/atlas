@@ -34,7 +34,7 @@ class FunctionSpace {
 
 public: // methods
 
-  FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<int>& bounds);
+  FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<int>& extents);
 
   virtual ~FunctionSpace();
 
@@ -55,9 +55,11 @@ public: // methods
 
   void remove_field(const std::string& name);
 
-  const std::vector<int>& bounds() const { return bounds_; }
+  // This is a Fortran view of the extents (i.e. reverse order)
+  const std::vector<int>& boundsf() const { return bounds_; }
+  const std::vector<int>& extents() const { return extents_; }
 
-  void resize( const std::vector<int>& bounds );
+  void resize( const std::vector<int>& extents );
 
   void parallelise(const int proc[], const int glb_idx[], const int master_glb_idx[]);
   void parallelise();
@@ -112,7 +114,8 @@ protected: // members
   int glb_dof_;
 
   std::string name_;
-  std::vector<int> bounds_;
+  std::vector<int> bounds_; // deprecated, use extents which is reverse order
+  std::vector<int> extents_;
   std::map< std::string, size_t > index_;
   std::vector< Field* > fields_;
 
@@ -142,7 +145,7 @@ extern "C"
   void atlas__FunctionSpace__remove_field (FunctionSpace* This, char* name);
   int atlas__FunctionSpace__has_field (FunctionSpace* This, char* name);
   const char* atlas__FunctionSpace__name (FunctionSpace* This);
-  void atlas__FunctionSpace__bounds (FunctionSpace* This, int* &bounds, int &rank);
+  void atlas__FunctionSpace__boundsf (FunctionSpace* This, int* &bounds, int &rank);
   Field* atlas__FunctionSpace__field (FunctionSpace* This, char* name);
   void atlas__FunctionSpace__parallelise (FunctionSpace* This, int proc[], int glb_idx[], int master_glb_idx[]);
   void atlas__FunctionSpace__halo_exchange_int (FunctionSpace* This, int field_data[], int field_size); 

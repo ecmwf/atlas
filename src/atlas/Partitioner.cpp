@@ -29,6 +29,7 @@ Partitioner::Partitioner()
 
 void Partitioner::partition(Mesh& mesh, int nb_partitions)
 {
+#if 0
   FunctionSpace& nodes = mesh.function_space("nodes");
   FieldT<int>& nodes_proc = nodes.field<int>("proc");
 
@@ -70,6 +71,7 @@ void Partitioner::partition(Mesh& mesh, int nb_partitions)
       }
     }
   }
+  #endif
 }
 
 /////////////////////

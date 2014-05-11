@@ -621,7 +621,7 @@ function FunctionSpace__bounds(this) result(bounds)
   integer, pointer :: bounds(:)
   type(c_ptr) :: bounds_c_ptr
   integer(c_int) :: field_rank
-  call atlas__FunctionSpace__bounds(this%object, bounds_c_ptr, field_rank)
+  call atlas__FunctionSpace__boundsf(this%object, bounds_c_ptr, field_rank)
   call C_F_POINTER ( bounds_c_ptr , bounds , (/field_rank/) )
 end function FunctionSpace__bounds
 

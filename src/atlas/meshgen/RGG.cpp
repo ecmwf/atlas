@@ -502,13 +502,13 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& par
   
   
   
-  std::vector<int> extents = Extents(Field::UNDEF_VARS, region.nnodes);
+  std::vector<int> extents = Extents(region.nnodes,Field::UNDEF_VARS);
   FunctionSpace& nodes = mesh->add_function_space( new FunctionSpace("nodes","LagrangeP1",extents) );
   nodes.metadata().set("type",static_cast<int>(Entity::NODES));
-  ArrayView<double,2> coords( nodes.create_field<double>("coordinates",2) );
-  ArrayView<int,1>    glb_idx( nodes.create_field<int>("glb_idx",1) );
-  ArrayView<int,1>    master_glb_idx( nodes.create_field<int>("master_glb_idx",1) );
-  ArrayView<int,1>    proc( nodes.create_field<int>("proc",1) );
+  ArrayView<double,2> coords        ( nodes.create_field<double>("coordinates",   2) );
+  ArrayView<int,   1> glb_idx       ( nodes.create_field<int   >("glb_idx",       1) );
+  ArrayView<int,   1> master_glb_idx( nodes.create_field<int   >("master_glb_idx",1) );
+  ArrayView<int,   1> proc          ( nodes.create_field<int   >("proc",          1) );
   
   // std::cout << "s1 = " << coords.strides()[0] << std::endl;
   // std::cout << "s2 = " << coords.strides()[1] << std::endl;
@@ -549,7 +549,7 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& par
     }
   };
   
-  extents = Extents(Field::UNDEF_VARS, region.nquads);
+  extents = Extents(region.nquads,Field::UNDEF_VARS);
   FunctionSpace& quads = mesh->add_function_space( new FunctionSpace("quads","LagrangeP1",extents) );
   quads.metadata().set("type",static_cast<int>(Entity::ELEMS));
   ArrayView<int,2> quad_nodes( quads.create_field<int>("nodes",4) );
@@ -557,7 +557,7 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& par
   ArrayView<int,1> quad_master_glb_idx( quads.create_field<int>("master_glb_idx",1) );
   ArrayView<int,1> quad_proc( quads.create_field<int>("proc",1) );
   
-  extents = Extents(Field::UNDEF_VARS, region.ntriags);
+  extents = Extents(region.ntriags,Field::UNDEF_VARS);
   FunctionSpace& triags = mesh->add_function_space( new FunctionSpace("triags","LagrangeP1",extents) );
   triags.metadata().set("type",static_cast<int>(Entity::ELEMS));
   ArrayView<int,2> triag_nodes( triags.create_field<int>("nodes",3) );
@@ -622,7 +622,7 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& par
     }
   }
 
-  extents[1]=0;
+  extents[0]=0;
   FunctionSpace& edges = mesh->add_function_space( new FunctionSpace("edges","LagrangeP1",extents) );
   edges.metadata().set("type",static_cast<int>(Entity::FACES));
   edges.create_field<int>("nodes",2);

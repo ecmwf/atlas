@@ -32,7 +32,7 @@ void scan_function_space(
     int& nb_inner_faces )
 {
   ArrayView<int,2> elem_nodes( func_space.field( "nodes" ) );
-  int nb_elems = func_space.bounds()[1];
+  int nb_elems = func_space.extents()[0];
   int nb_nodes_in_face = 2;
 
   std::vector< std::vector<int> > face_node_numbering;
@@ -137,7 +137,7 @@ void build_element_to_edge_connectivity( Mesh& mesh, ArrayView<int,2>& edge_to_e
       if (func_space.name() == "quads") nb_edges_per_elem = 4;
       if (func_space.name() == "triags") nb_edges_per_elem = 3;
       elem_to_edge[func_space_idx] = ArrayView<int,2>(func_space.create_field<int>("to_edge",nb_edges_per_elem));
-      edge_cnt[func_space_idx].resize( func_space.bounds()[1], 0);
+      edge_cnt[func_space_idx].resize( func_space.extents()[0], 0);
     }
   }
 
@@ -162,7 +162,7 @@ void build_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& nb_po
   FunctionSpace& nodes   = mesh.function_space( "nodes" );
   ArrayView<double,2> coords  ( nodes.field( "coordinates" ) );
   ArrayView<int,   1> glb_idx ( nodes.field( "glb_idx"     ) );
-  int nb_nodes = nodes.bounds()[1];
+  int nb_nodes = nodes.extents()[0];
 
   double ymin = nodes.metadata<double>("ymin");
   double ymax = nodes.metadata<double>("ymax");
@@ -248,7 +248,7 @@ void build_edges( Mesh& mesh )
   FunctionSpace& nodes   = mesh.function_space( "nodes" );
   ArrayView<int,1> glb_idx(        nodes.field( "glb_idx"        ) );
   ArrayView<int,1> master_glb_idx( nodes.field( "master_glb_idx" ) );
-  int nb_nodes = nodes.bounds()[1];
+  int nb_nodes = nodes.extents()[0];
 
   FunctionSpace& quads       = mesh.function_space( "quads" );
   FunctionSpace& triags      = mesh.function_space( "triags" );
@@ -266,11 +266,11 @@ void build_edges( Mesh& mesh )
 
 
   int nb_edges = nb_faces;
-  std::vector<int> bounds(2);
-  bounds[0] = Field::UNDEF_VARS;
-  bounds[1] = nb_edges;
+  std::vector<int> extents(2);
+  extents[0] = nb_edges;
+  extents[1] = Field::UNDEF_VARS;
   FunctionSpace& edges       = mesh.function_space("edges");
-  edges.resize(bounds);
+  edges.resize(extents);
   ArrayView<int,2> edge_nodes(          edges.field( "nodes" ) );
   ArrayView<int,1> edge_glb_idx(        edges.field( "glb_idx" ) );
   ArrayView<int,1> edge_master_glb_idx( edges.field( "master_glb_idx" ) );
@@ -392,8 +392,8 @@ void build_edges( Mesh& mesh )
   int nb_pole_edges(0);
   std::vector<int> pole_edge_nodes;
   build_pole_edges( mesh, pole_edge_nodes, nb_pole_edges );
-  bounds[1] += nb_pole_edges;
-  edges.resize(bounds); // WARNING, ArrayViews no longer valid!!! Need to redefine
+  extents[0] += nb_pole_edges;
+  edges.resize(extents); // WARNING, ArrayViews no longer valid!!! Need to redefine
   edge_nodes          = ArrayView<int,2>( edges.field( "nodes"          ) );
   edge_glb_idx        = ArrayView<int,1>( edges.field( "glb_idx"        ) );
   edge_master_glb_idx = ArrayView<int,1>( edges.field( "master_glb_idx" ) );

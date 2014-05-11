@@ -29,7 +29,7 @@ inline double sqr(double a) { return a*a; }
 
 void build_centroids( FunctionSpace& func_space, ArrayView<double,2>& coords)
 {
-  int nb_elems = func_space.bounds()[1];
+  int nb_elems = func_space.extents()[0];
   ArrayView<int,2> elem_nodes( func_space.field( "nodes" ) );
   int nb_nodes_per_elem = elem_nodes.extents()[1];
   ArrayView<int,1> elem_glb_idx( func_space.field( "glb_idx" ) );
@@ -54,7 +54,7 @@ void add_dual_volume_contribution(
     FunctionSpace& nodes,
     ArrayView<double,1>& dual_volumes )
 {
-  int nb_elems = elements.bounds()[1];
+  int nb_elems = elements.extents()[0];
   ArrayView<double,2> elem_centroids ( elements.field("centroids") );
   ArrayView<int,   2> elem_to_edges  ( elements.field("to_edge") );
   ArrayView<double,2> edge_centroids ( edges.field("centroids") );
@@ -94,7 +94,7 @@ void add_dual_volume_contribution(
   ArrayView<int,   1> edge_glb_idx  ( edges.field("glb_idx"    ) );
   ArrayView<int,   2> edge_to_elem  ( edges.field("to_elem"    ) );
   ArrayView<double,2> node_coords   ( nodes.field("coordinates") );
-  int nb_edges = edges.bounds()[1];
+  int nb_edges = edges.extents()[0];
   std::map<int,std::vector<int> > node_to_bdry_edge;
   for(int edge=0; edge<nb_edges; ++edge)
   {
@@ -165,7 +165,7 @@ void build_dual_normals( Mesh& mesh )
   ArrayView<int,   2> edge_nodes    ( edges.field("nodes"    ) );
   ArrayView<double,2> edge_centroids( edges.field("centroids") );
   ArrayView<double,2> dual_normals  ( edges.create_field<double>("dual_normals",2) );
-  int nb_edges = edges.bounds()[1];
+  int nb_edges = edges.extents()[0];
 
   std::map<int,std::vector<int> > node_to_bdry_edge;
   for(int edge=0; edge<nb_edges; ++edge)
@@ -270,7 +270,7 @@ void build_skewness( Mesh& mesh )
   ArrayView<int   ,2> edge_nodes    ( edges.field("nodes"    ) );
   ArrayView<double,2> edge_centroids( edges.field("centroids") );
   ArrayView<double,1> skewness      ( edges.create_field<double>("skewness",1) );
-  int nb_edges = edges.bounds()[1];
+  int nb_edges = edges.extents()[0];
 
   std::map<int,std::vector<int> > node_to_bdry_edge;
   for(int edge=0; edge<nb_edges; ++edge)
@@ -341,7 +341,7 @@ void build_dual_mesh( Mesh& mesh )
   ArrayView<int,   1> master_glb_idx( nodes.field( "master_glb_idx" ) );
   ArrayView<int,   1> proc          ( nodes.field( "proc"           ) );
   ArrayView<double,1> dual_volumes  ( nodes.create_field<double>( "dual_volumes", 1 ) );
-  int nb_nodes = nodes.bounds()[1];
+  int nb_nodes = nodes.extents()[0];
 
   FunctionSpace& quads       = mesh.function_space( "quads" );
   FunctionSpace& triags      = mesh.function_space( "triags" );

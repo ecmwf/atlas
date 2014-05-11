@@ -34,7 +34,7 @@ void scan_bdry_elements( FunctionSpace& elements, FunctionSpace& nodes,
   ArrayView<int,   1> master_glb_idx ( nodes.field("master_glb_idx") );
   ArrayView<int,   2> elem_nodes     ( elements.field("nodes"      ) );
 
-  int nb_elems = elements.bounds()[1];
+  int nb_elems = elements.extents()[0];
   int nb_nodes_per_elem = elem_nodes.extents()[1];
   for (int elem=0; elem<nb_elems; ++elem)
   {
@@ -64,7 +64,7 @@ void build_periodic_boundaries( Mesh& mesh )
   ArrayView<int,   1> master_glb_idx ( nodes.field("master_glb_idx") );
   ArrayView<int,   1> proc           ( nodes.field("proc"          ) );
   
-  int nb_nodes = nodes.bounds()[1];
+  int nb_nodes = nodes.extents()[0];
 
 
   double min[2];
@@ -134,10 +134,10 @@ void build_periodic_boundaries( Mesh& mesh )
     if (mesh.function_space(f).metadata<int>("type") == Entity::ELEMS)
     {
       FunctionSpace& elements = mesh.function_space(f);
-      std::vector<int> bounds = mesh.function_space(f).bounds();
-      int new_elem = elements.bounds()[1];
-      bounds[1] = nb_elems[f];
-      elements.resize(bounds);
+      std::vector<int> extents = mesh.function_space(f).extents();
+      int new_elem = elements.extents()[0];
+      extents[0] = nb_elems[f];
+      elements.resize(extents);
       ArrayView<int,1> elem_glb_idx       ( elements.field("glb_idx"       ) );
       ArrayView<int,1> elem_proc          ( elements.field("proc"          ) );
       ArrayView<int,1> elem_master_glb_idx( elements.field("master_glb_idx") );
@@ -286,9 +286,9 @@ void build_periodic_boundaries( Mesh& mesh )
   // Now add new nodes
   int nb_ghost_nodes = new_nodes.size();
   nodes.metadata().set("nb_ghost_nodes",nb_ghost_nodes);
-  std::vector<int> nodes_bounds = nodes.bounds();
-  nodes_bounds[1] = nb_nodes+nb_ghost_nodes;
-  nodes.resize( nodes_bounds ); // WARNING! ArrayViews no longer valid
+  std::vector<int> nodes_extents = nodes.extents();
+  nodes_extents[0] = nb_nodes+nb_ghost_nodes;
+  nodes.resize( nodes_extents ); // WARNING! ArrayViews no longer valid
   coords         = ArrayView<double,2>( nodes.field("coordinates"   ) );
   glb_idx        = ArrayView<int,   1>( nodes.field("glb_idx"       ) );
   master_glb_idx = ArrayView<int,   1>( nodes.field("master_glb_idx") );
@@ -319,7 +319,7 @@ void build_periodic_boundaries( Mesh& mesh )
     if (mesh.function_space(f).metadata<int>("type") == Entity::ELEMS)
     {
       FunctionSpace& elements = mesh.function_space(f);
-      for (int elem=0; elem<elements.bounds()[1]; ++elem)
+      for (int elem=0; elem<elements.extents()[0]; ++elem)
       {
         for (int n=0; n<nb_nodes_per_elem[f]; ++n)
         {

@@ -51,18 +51,19 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh )
   int nb_nodes;
   file >> nb_nodes;
 
-  std::vector<int> bounds(2);
-  bounds[0] = Field::UNDEF_VARS;
-  bounds[1] = nb_nodes;
+  std::vector<int> extents(2);
 
+  extents[0] = nb_nodes;
+  extents[1] = Field::UNDEF_VARS;
+  
   if( mesh.has_function_space("nodes") )
   {
-      if( mesh.function_space("nodes").bounds()[1] != nb_nodes )
+      if( mesh.function_space("nodes").extents()[0] != nb_nodes )
           throw std::runtime_error("existing nodes function space has incompatible number of nodes");
   }
   else
   {
-    mesh.add_function_space( new FunctionSpace( "nodes", "Lagrange_P0", bounds ) )
+    mesh.add_function_space( new FunctionSpace( "nodes", "Lagrange_P0", extents ) )
             .metadata().set("type",static_cast<int>(Entity::NODES));
   }
 
@@ -117,8 +118,8 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh )
   // Allocate data structures for quads, triags, edges
 
   int nb_quads = nb_etype[QUAD];
-  bounds[1] = nb_quads;
-  FunctionSpace& quads      = mesh.add_function_space( new FunctionSpace( "quads", "Lagrange_P1", bounds ) );
+  extents[0] = nb_quads;
+  FunctionSpace& quads      = mesh.add_function_space( new FunctionSpace( "quads", "Lagrange_P1", extents ) );
   quads.metadata().set("type",static_cast<int>(Entity::ELEMS));
   FieldT<int>& quad_nodes   = quads.create_field<int>("nodes",4);
   FieldT<int>& quad_glb_idx = quads.create_field<int>("glb_idx",1);
@@ -126,8 +127,8 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh )
   FieldT<int>& quad_proc = quads.create_field<int>("proc",1);
 
   int nb_triags = nb_etype[TRIAG];
-  bounds[1] = nb_triags;
-  FunctionSpace& triags      = mesh.add_function_space( new FunctionSpace( "triags", "Lagrange_P1", bounds ) );
+  extents[0] = nb_triags;
+  FunctionSpace& triags      = mesh.add_function_space( new FunctionSpace( "triags", "Lagrange_P1", extents ) );
   triags.metadata().set("type",static_cast<int>(Entity::ELEMS));
   FieldT<int>& triag_nodes   = triags.create_field<int>("nodes",3);
   FieldT<int>& triag_glb_idx = triags.create_field<int>("glb_idx",1);
@@ -136,8 +137,8 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh )
 
   int nb_edges = nb_etype[LINE];
   nb_edges = 0;
-  bounds[1] = nb_edges;
-  FunctionSpace& edges      = mesh.add_function_space( new FunctionSpace( "edges", "Lagrange_P1", bounds ) );
+  extents[0] = nb_edges;
+  FunctionSpace& edges      = mesh.add_function_space( new FunctionSpace( "edges", "Lagrange_P1", extents ) );
   edges.metadata().set("type",static_cast<int>(Entity::FACES));
   FieldT<int>& edge_nodes   = edges.create_field<int>("nodes",2);
   FieldT<int>& edge_glb_idx = edges.create_field<int>("glb_idx",1);
@@ -212,7 +213,7 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path)
   FieldT<double>& coords    = nodes.field<double>( "coordinates" );
   FieldT<int>& glb_idx      = nodes.field<int>( "glb_idx" );
   int nb_nodes = nodes.metadata<int>("nb_owned");
-  nb_nodes = nodes.bounds()[1];
+  nb_nodes = nodes.extents()[0];
 
   FunctionSpace& quads       = mesh.function_space( "quads" );
   FieldT<int>& quad_nodes    = quads.field<int>( "nodes" );
@@ -230,12 +231,12 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path)
   FieldT<int>& edge_nodes    = edges.field<int>( "nodes" );
   FieldT<int>& edge_glb_idx  = edges.field<int>( "glb_idx" );
   int nb_edges = edges.metadata<int>("nb_owned");
-  nb_edges = edges.bounds()[1];
+  nb_edges = edges.extents()[0];
 
   if( include_ghost_elements == true )
   {
-    nb_quads = quads.bounds()[1];
-    nb_triags = triags.bounds()[1];
+    nb_quads = quads.extents()[0];
+    nb_triags = triags.extents()[0];
   }
 
   std::string ext = "";
@@ -399,7 +400,7 @@ void Gmsh::write3dsurf(Mesh &mesh, const std::string& file_path)
     FieldT<double>& coords = nodes.field<double>( "coordinates" );
     FieldT<int>& glb_idx   = nodes.field<int>( "glb_idx" );
 
-    nb_nodes = nodes.bounds()[1];
+    nb_nodes = nodes.extents()[0];
 
     file << "$Nodes\n";
     file << nb_nodes << "\n";
@@ -419,9 +420,9 @@ void Gmsh::write3dsurf(Mesh &mesh, const std::string& file_path)
 
     file << "$Elements\n";
 
-    if( mesh.has_function_space("triags") ) nb_triags = mesh.function_space( "triags" ).bounds()[1];
-    if( mesh.has_function_space("quads") )  nb_quads = mesh.function_space( "quads" ).bounds()[1];
-    if( mesh.has_function_space("edges") )  nb_edges = mesh.function_space( "edges" ).bounds()[1];
+    if( mesh.has_function_space("triags") ) nb_triags = mesh.function_space( "triags" ).extents()[0];
+    if( mesh.has_function_space("quads") )  nb_quads = mesh.function_space( "quads" ).extents()[0];
+    if( mesh.has_function_space("edges") )  nb_edges = mesh.function_space( "edges" ).extents()[0];
 
     file << nb_triags + nb_quads + nb_edges << "\n";
 
@@ -481,7 +482,7 @@ void Gmsh::write3dsurf(Mesh &mesh, const std::string& file_path)
         {
             FieldT<double>& f = dynamic_cast< FieldT<double>&> ( field );
 
-            for( size_t idx = 0; idx < field.bounds()[0]; ++idx )
+            for( size_t idx = 0; idx < field.extents()[1]; ++idx )
             {
                 file << "$NodeData\n";
                 file << "1\n";
