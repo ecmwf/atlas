@@ -257,7 +257,7 @@ void build_skewness( Mesh& mesh )
   }
 
   FunctionSpace&  nodes = mesh.function_space("nodes");
-  FieldT<double>& node_coords = nodes.field<double>("coordinates");
+  ArrayView<double,2> node_coords( nodes.field<double>("coordinates") );
   double ymax = nodes.metadata<double>("ymax");
   double ymin = nodes.metadata<double>("ymin");
   double xmin = nodes.metadata<double>("xmin");
