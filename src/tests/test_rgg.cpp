@@ -15,6 +15,9 @@
 #include "atlas/meshgen/RGG.hpp"
 #include "atlas/meshgen/EqualAreaPartitioner.hpp"
 #include "atlas/Gmsh.hpp"
+#include "atlas/Mesh.hpp"
+#include "atlas/FunctionSpace.hpp"
+#include "atlas/MetaData.hpp"
 #include "atlas/BuildEdges.hpp"
 #include "atlas/BuildDualMesh.hpp"
 #include "atlas/BuildPeriodicBoundaries.hpp"
@@ -32,7 +35,8 @@ public:
   {
     test_eq_caps();
     test_partitioner();
-    test_rgg_meshgen();
+    test_rgg_meshgen_one_part();
+    test_rgg_meshgen_many_parts();
   }
   
   void test_eq_caps()
@@ -107,58 +111,89 @@ public:
     }
   }
   
-  void test_rgg_meshgen()
+  void test_rgg_meshgen_one_part()
+  {
+    Mesh* m;
+    RGGMeshGenerator generate;
+    generate.options.set("nb_parts",1);
+    generate.options.set("part",    0);
+
+    generate.options.set("three_dimensional",true);
+    generate.options.set("include_pole",false);
+    m = generate( DebugMesh() );
+    ATLAS_CHECK_EQUAL( m->function_space("nodes" ).extents()[0], 156 );
+    ATLAS_CHECK_EQUAL( m->function_space("quads" ).extents()[0], 130 );
+    ATLAS_CHECK_EQUAL( m->function_space("triags").extents()[0],  40 );
+    ATLAS_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<int>("max_glb_idx"), 156 );
+    ATLAS_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<int>("nb_owned"),    156 );
+    ATLAS_CHECK_EQUAL( m->function_space("quads" ).metadata().get<int>("max_glb_idx"), 170 );
+    ATLAS_CHECK_EQUAL( m->function_space("quads" ).metadata().get<int>("nb_owned"),    130 );
+    ATLAS_CHECK_EQUAL( m->function_space("triags").metadata().get<int>("max_glb_idx"), 170 );
+    ATLAS_CHECK_EQUAL( m->function_space("triags").metadata().get<int>("nb_owned"),     40 );
+    delete m;
+    
+    generate.options.set("three_dimensional",false);
+    generate.options.set("include_pole",false);
+    m = generate( DebugMesh() );
+    ATLAS_CHECK_EQUAL( m->function_space("nodes" ).extents()[0], 166 );
+    ATLAS_CHECK_EQUAL( m->function_space("quads" ).extents()[0], 130 );
+    ATLAS_CHECK_EQUAL( m->function_space("triags").extents()[0],  40 );
+    ATLAS_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<int>("max_glb_idx"), 166 );
+    ATLAS_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<int>("nb_owned"),    166 );
+    ATLAS_CHECK_EQUAL( m->function_space("quads" ).metadata().get<int>("max_glb_idx"), 170 );
+    ATLAS_CHECK_EQUAL( m->function_space("quads" ).metadata().get<int>("nb_owned"),    130 );
+    ATLAS_CHECK_EQUAL( m->function_space("triags").metadata().get<int>("max_glb_idx"), 170 );
+    ATLAS_CHECK_EQUAL( m->function_space("triags").metadata().get<int>("nb_owned"),     40 );
+    delete m;
+
+    generate.options.set("three_dimensional",true);
+    generate.options.set("include_pole",true);
+    m = generate( DebugMesh() );
+    ATLAS_CHECK_EQUAL( m->function_space("nodes" ).extents()[0], 158 );
+    ATLAS_CHECK_EQUAL( m->function_space("quads" ).extents()[0], 130 );
+    ATLAS_CHECK_EQUAL( m->function_space("triags").extents()[0],  52 );
+    ATLAS_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<int>("max_glb_idx"), 158 );
+    ATLAS_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<int>("nb_owned"),    158 );
+    ATLAS_CHECK_EQUAL( m->function_space("quads" ).metadata().get<int>("max_glb_idx"), 182 );
+    ATLAS_CHECK_EQUAL( m->function_space("quads" ).metadata().get<int>("nb_owned"),    130 );
+    ATLAS_CHECK_EQUAL( m->function_space("triags").metadata().get<int>("max_glb_idx"), 182 );
+    ATLAS_CHECK_EQUAL( m->function_space("triags").metadata().get<int>("nb_owned"),     52 );
+    delete m;
+    
+    
+    // generate.options.set("three_dimensional",false);
+    // generate.options.set("include_pole",false);
+    // Mesh* mesh;
+    // mesh = generate( T63() );
+    // 
+    // build_periodic_boundaries(*mesh);
+    // // build_edges(*mesh);
+    // // build_dual_mesh(*mesh);
+    // Gmsh::write(*mesh,"debug.msh");
+    // delete mesh;    
+  }
+  
+  void test_rgg_meshgen_many_parts()
   {
     RGGMeshGenerator generate;
     generate.options.set("nb_parts",20);
+    generate.options.set("include_pole",false);
+    generate.options.set("three_dimensional",false);
 
+    int nodes[]  = {312,317,333,338,335,352,350,359,360,361,358,360,359,370,337,334,338,335,332,314};
+    int quads[]  = {242,277,291,294,292,307,312,320,321,322,319,321,320,331,293,291,294,293,290,244};
+    int triags[] = {42, 12, 13, 12, 12, 15, 0,  1,  0,  0,  2,  0,  1,  0,  14, 12, 13, 11, 14, 42 };
     for( int p=0; p<generate.options.get<int>("nb_parts"); ++p)
     {
       generate.options.set("part",p);
       Mesh* m = generate( T63() );
+      ATLAS_CHECK_EQUAL( m->function_space("nodes" ).extents()[0], nodes[p]  );
+      ATLAS_CHECK_EQUAL( m->function_space("quads" ).extents()[0], quads[p]  );
+      ATLAS_CHECK_EQUAL( m->function_space("triags").extents()[0], triags[p] );
       std::stringstream filename; filename << "d" << p << ".msh";
       Gmsh::write(*m,filename.str());
+      delete m;
     }
-  
-    // build_periodic_boundaries(*mesh);
-    // build_edges(*mesh);
-    // build_dual_mesh(*mesh);
-  
-  
-    // Gmsh::write(*mesh,"w63.msh");
-  #if 0
-    int N=6;
-    std::vector<int> n_regions;
-    std::vector<double> s_cap;
-    eq_caps(N, n_regions, s_cap);
-    std::cout << "regions" << std::endl;
-    for (int n=0; n<n_regions.size(); ++n){
-      std::cout << n_regions[n] << std::endl;
-    }
-    std::cout << "caps" << std::endl;
-    for (int n=0; n<s_cap.size(); ++n){
-      std::cout << s_cap[n] << std::endl;
-    }
-  
-    std::vector<double> xmin(N);
-    std::vector<double> xmax(N);
-    std::vector<double> ymin(N);
-    std::vector<double> ymax(N);
-    eq_regions(N,xmin.data(),xmax.data(),ymin.data(),ymax.data());
-    for (int n=0; n<N; ++n)
-    {
-      std::cout << n<<" : [ ["<<xmin[n]<<","<<ymin[n]<<"] , ["<<xmax[n]<<","<<ymax[n] <<"] ]" << std::endl;
-    }
-  
-    EqualAreaPartitioner partitioner(6);
-  
-    double x =  M_PI/4.;
-    double y = 0.;
-    std::cout << "part = " << partitioner.partition(x,y) << std::endl;
-    std::cout << "band = " << partitioner.band(y) << std::endl;
-    std::cout << "sector = " << partitioner.sector( partitioner.band(y),x ) <<std::endl;
-  
-  #endif
   }
 };
 

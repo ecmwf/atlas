@@ -94,13 +94,14 @@ RGGMeshGenerator::RGGMeshGenerator()
   
   // This option creates elements that connect east to west at greenwich meridian
   // when true, instead of creating periodic ghost-points at east boundary when false
-  options.set("3d",false);
+  options.set("three_dimensional",false);
   
   // This option sets number of parts the mesh will be split in
   options.set("nb_parts",1);
   
   // This option sets the part that will be generated
   options.set("part",0);
+  
 }
 
 std::vector<int> RGGMeshGenerator::partition(const RGG& rgg) const
@@ -206,9 +207,7 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
       --n;
     }
   } end_south:
-  
-  std::cout << "latitudes = " << lat_north << " , " << lat_south << std::endl;
-  
+    
   std::vector<int> offset(rgg.nlat(),0);
 
   n=0;
@@ -242,7 +241,6 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
 
   ArrayView<int,3> elemview(region.elems);
   
-  std::cout << "generating..." << std::endl;
   for (int jlat=region.north; jlat<region.south; ++jlat)
   {
     
@@ -466,7 +464,6 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
     // Count extra periodic node to be added in this case
     if( region.lat_end[jlat] == rgg.nlon(jlat)-1 ) ++nb_region_nodes;
   }
-  std::cout << "nb_region_nodes = " << nb_region_nodes << std::endl;
   region.nnodes = nb_region_nodes;
 }
 
@@ -475,12 +472,27 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& par
   double tol = 1e-3;
   Mesh* mesh = new Mesh();
   int mypart = options.get<int>("part");
+  int nparts = options.get<int>("nb_parts");
   int n, l;
   
-  std::cout << "nnodes = "  << region.nnodes  << std::endl;
-  std::cout << "nquads = "  << region.nquads  << std::endl;
-  std::cout << "ntriags = " << region.ntriags << std::endl;
-
+  bool include_north_pole = (mypart == 0       ) && options.get<bool>("include_pole");
+  bool include_south_pole = (mypart == nparts-1) && options.get<bool>("include_pole");
+  bool three_dimensional  = (nparts == 1       ) && options.get<bool>("three_dimensional");
+  int nnodes  = region.nnodes;
+  int ntriags = region.ntriags;
+  int nquads  = region.nquads;
+  if (include_north_pole) {
+    ++nnodes;
+    ntriags += rgg.nlon(0);
+  }
+  if (include_south_pole) {
+    ++nnodes;
+    ntriags += rgg.nlon(rgg.nlat()-1);
+  }
+  if (three_dimensional) {
+    nnodes -= rgg.nlat();
+  }
+  
   std::vector<int> offset_glb(rgg.nlat());
   std::vector<int> offset_loc(region.south-region.north+1,0);
 
@@ -492,17 +504,25 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& par
   };
   
   std::vector<int> periodic_glb(rgg.nlat());
-  std::vector<int> periodic_loc(region.south-region.north+1,0);
   
-  for( int jlat=0; jlat<rgg.nlat(); ++jlat )
+  if( !three_dimensional )
   {
-    periodic_glb[jlat] = n;
-    ++n;
+    for( int jlat=0; jlat<rgg.nlat(); ++jlat )
+    {
+      periodic_glb[jlat] = n;
+      ++n;
+    }    
   }
+  else
+  {
+    for( int jlat=0; jlat<rgg.nlat(); ++jlat )
+    {
+      periodic_glb[jlat] = offset_glb[jlat] + rgg.nlon(jlat)-1;
+    }    
+  }
+
   
-  
-  
-  std::vector<int> extents = Extents(region.nnodes,Field::UNDEF_VARS);
+  std::vector<int> extents = Extents(nnodes,Field::UNDEF_VARS);
   FunctionSpace& nodes = mesh->add_function_space( new FunctionSpace("nodes","LagrangeP1",extents) );
   nodes.metadata().set("type",static_cast<int>(Entity::NODES));
   ArrayView<double,2> coords        ( nodes.create_field<double>("coordinates",   2) );
@@ -536,7 +556,7 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& par
       proc(jnode) = parts[n];
       ++jnode;
     }
-    if( region.lat_end[jlat]==rgg.nlon(jlat)-1 ) // add periodic point
+    if( !three_dimensional &&  region.lat_end[jlat]==rgg.nlon(jlat)-1 ) // add periodic point
     {
       ++l;
       double x = rgg.lon(rgg.nlon(jlat),jlat);
@@ -549,7 +569,34 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& par
     }
   };
   
-  extents = Extents(region.nquads,Field::UNDEF_VARS);
+  int jnorth=-1;
+  if (include_north_pole)
+  {
+    jnorth = jnode;
+    double y = M_PI_2;
+    double x = M_PI;
+    coords(jnode,XX) = x;
+    coords(jnode,YY) = y;
+    glb_idx(jnode)   = periodic_glb[rgg.nlat()-1]+2;
+    master_glb_idx(jnode) = glb_idx(jnode);
+    proc(jnode) = mypart;
+    ++jnode;
+  }
+  int jsouth=-1;
+  if (include_south_pole)
+  {
+    jsouth = jnode;
+    double y = - M_PI_2;
+    double x = M_PI;
+    coords(jnode,XX) = x;
+    coords(jnode,YY) = y;
+    glb_idx(jnode)   = periodic_glb[rgg.nlat()-1]+3;
+    master_glb_idx(jnode) = glb_idx(jnode);
+    proc(jnode) = mypart;
+    ++jnode;
+  }
+    
+  extents = Extents(nquads,Field::UNDEF_VARS);
   FunctionSpace& quads = mesh->add_function_space( new FunctionSpace("quads","LagrangeP1",extents) );
   quads.metadata().set("type",static_cast<int>(Entity::ELEMS));
   ArrayView<int,2> quad_nodes( quads.create_field<int>("nodes",4) );
@@ -557,7 +604,7 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& par
   ArrayView<int,1> quad_master_glb_idx( quads.create_field<int>("master_glb_idx",1) );
   ArrayView<int,1> quad_proc( quads.create_field<int>("proc",1) );
   
-  extents = Extents(region.ntriags,Field::UNDEF_VARS);
+  extents = Extents(ntriags,Field::UNDEF_VARS);
   FunctionSpace& triags = mesh->add_function_space( new FunctionSpace("triags","LagrangeP1",extents) );
   triags.metadata().set("type",static_cast<int>(Entity::ELEMS));
   ArrayView<int,2> triag_nodes( triags.create_field<int>("nodes",3) );
@@ -587,14 +634,17 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& par
         quad_nodes(jquad,1) = F_IDX(offset_loc[ilatS] + elem[1] - region.lat_begin[jlatS]);
         quad_nodes(jquad,2) = F_IDX(offset_loc[ilatS] + elem[2] - region.lat_begin[jlatS]);
         quad_nodes(jquad,3) = F_IDX(offset_loc[ilatN] + elem[3] - region.lat_begin[jlatN]);
+        
+        if( three_dimensional )
+        {
+          if (elem[2] == rgg.nlon(jlatS)) quad_nodes(jquad,2) = F_IDX(offset_loc[ilatS]);
+          if (elem[3] == rgg.nlon(jlatN)) quad_nodes(jquad,3) = F_IDX(offset_loc[ilatN]);
+        }
+        
         // std::cout << quad_nodes(0,jquad) << " " << quad_nodes(1,jquad) << " " << quad_nodes(2,jquad) << " " << quad_nodes(3,jquad) << std::endl;
         quad_glb_idx(jquad) = jquad+jtriag+1;
         quad_master_glb_idx(jquad) = quad_glb_idx(jquad);
-        int p0 = proc(C_IDX(quad_nodes(jquad,0)));
-        int p1 = proc(C_IDX(quad_nodes(jquad,1)));
-        int p2 = proc(C_IDX(quad_nodes(jquad,2)));
-        int p3 = proc(C_IDX(quad_nodes(jquad,3)));
-        quad_proc(jquad) = mypart; //std::min(p0,std::min(p1,std::max(p2,p3)));
+        quad_proc(jquad) = mypart;
         ++jquad;
       }
       else // This is a triag
@@ -604,23 +654,70 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& par
           triag_nodes(jtriag,0) = F_IDX(offset_loc[ilatN] + elem[0] - region.lat_begin[jlatN]);
           triag_nodes(jtriag,1) = F_IDX(offset_loc[ilatS] + elem[1] - region.lat_begin[jlatS]);
           triag_nodes(jtriag,2) = F_IDX(offset_loc[ilatS] + elem[2] - region.lat_begin[jlatS]);
+          if( three_dimensional )
+          {
+            if (elem[0] == rgg.nlon(jlatN)) triag_nodes(jtriag,0) = F_IDX(offset_loc[ilatN]);
+            if (elem[2] == rgg.nlon(jlatS)) triag_nodes(jtriag,2) = F_IDX(offset_loc[ilatS]);
+          }
         }
         else // This is a triangle pointing down
         {
           triag_nodes(jtriag,0) = F_IDX(offset_loc[ilatN] + elem[0] - region.lat_begin[jlatN]);
           triag_nodes(jtriag,1) = F_IDX(offset_loc[ilatS] + elem[1] - region.lat_begin[jlatS]);
           triag_nodes(jtriag,2) = F_IDX(offset_loc[ilatN] + elem[3] - region.lat_begin[jlatN]);
+          if( three_dimensional )
+          {
+            if (elem[1] == rgg.nlon(jlatS)) triag_nodes(jtriag,1) = F_IDX(offset_loc[ilatS]);
+            if (elem[3] == rgg.nlon(jlatN)) triag_nodes(jtriag,2) = F_IDX(offset_loc[ilatN]);
+          }
         }
         triag_glb_idx(jtriag) = jquad+jtriag+1;
         triag_master_glb_idx(jtriag) = triag_glb_idx(jtriag);
-        int p0 = proc(C_IDX(triag_nodes(jtriag,0)));
-        int p1 = proc(C_IDX(triag_nodes(jtriag,1)));
-        int p2 = proc(C_IDX(triag_nodes(jtriag,2)));
-        triag_proc(jtriag) = mypart; //std::max(p0,std::max(p1,p2));
+        triag_proc(jtriag) = mypart;
         ++jtriag;
       }
     }
   }
+  
+  if (include_north_pole)
+  {
+    int jlat = 0;
+    int ilat = 0;
+    int ip1  = 0;
+    for (int ip2=0; ip2<rgg.nlon(0); ++ip2)
+    {      
+      int ip3 = ip2+1;
+      if( three_dimensional && ip3 == rgg.nlon(0) ) ip3 = 0;
+      triag_nodes(jtriag,0) = F_IDX(jnorth           + ip1);
+      triag_nodes(jtriag,1) = F_IDX(offset_loc[ilat] + ip2);
+      triag_nodes(jtriag,2) = F_IDX(offset_loc[ilat] + ip3);
+      triag_glb_idx(jtriag) = jquad+jtriag+1;
+      triag_master_glb_idx(jtriag) = triag_glb_idx(jtriag);
+      triag_proc(jtriag) = mypart;
+      ++jtriag;
+    }
+  }
+  
+  if (include_south_pole)
+  {
+    int jlat = rgg.nlat()-1;
+    int ilat = region.south-region.north;
+    int ip1 = 0;
+    for (int ip2=1; ip2<rgg.nlon(jlat)+1; ++ip2)
+    {
+      int ip3 = ip2-1;
+      triag_nodes(jtriag,0) = F_IDX(jsouth           + ip1);
+      triag_nodes(jtriag,1) = F_IDX(offset_loc[ilat] + ip2);
+      triag_nodes(jtriag,2) = F_IDX(offset_loc[ilat] + ip3);
+      if( three_dimensional && ip2 == rgg.nlon(jlat) ) triag_nodes(jtriag,1) = F_IDX(offset_loc[ilat] + 0);
+      
+      triag_glb_idx(jtriag) = jquad+jtriag+1;
+      triag_master_glb_idx(jtriag) = triag_glb_idx(jtriag);
+      triag_proc(jtriag) = mypart;
+      ++jtriag;
+    }
+  }
+  
 
   extents[0]=0;
   FunctionSpace& edges = mesh->add_function_space( new FunctionSpace("edges","LagrangeP1",extents) );
@@ -630,15 +727,19 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& par
   edges.create_field<int>("master_glb_idx",1);
   edges.create_field<int>("proc",1);
   
-  nodes.metadata().set("nb_owned",rgg.ngptot());
-  quads.metadata().set("nb_owned",region.nquads);
-  triags.metadata().set("nb_owned",region.ntriags);
+  nodes.metadata().set("nb_owned",nnodes);
+  quads.metadata().set("nb_owned",nquads);
+  triags.metadata().set("nb_owned",ntriags);
   edges.metadata().set("nb_owned",0);
   
-  nodes.metadata().set("max_glb_idx",rgg.ngptot()+2*rgg.nlat()+1);
-  quads.metadata().set("max_glb_idx",region.nquads+region.ntriags+1);
-  triags.metadata().set("max_glb_idx",region.nquads+region.ntriags+1);
-  edges.metadata().set("max_glb_idx",region.nquads+region.ntriags+1);
+  int max_glb_idx = rgg.ngptot()+rgg.nlat();
+  if( three_dimensional ) max_glb_idx -= rgg.nlat();
+  if( include_north_pole ) max_glb_idx += 1;
+  if( include_south_pole ) max_glb_idx += 1;
+  nodes.metadata().set("max_glb_idx",max_glb_idx);
+  quads.metadata().set("max_glb_idx", nquads+ntriags);
+  triags.metadata().set("max_glb_idx",nquads+ntriags);
+  edges.metadata().set("max_glb_idx", nquads+ntriags);
   
   return mesh;
 }

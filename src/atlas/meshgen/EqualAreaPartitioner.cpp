@@ -453,7 +453,7 @@ void EqualAreaPartitioner::partition(int nb_nodes, NodeInt nodes[], int part[]) 
 {
   std::clock_t init, final;
   init=std::clock();
-  std::cout << "partition start (" << nb_nodes << " points)" << std::endl;
+  // std::cout << "partition start (" << nb_nodes << " points)" << std::endl;
   int nb_parts = N_;
   int n;
   int p;
@@ -511,7 +511,7 @@ void EqualAreaPartitioner::partition(int nb_nodes, NodeInt nodes[], int part[]) 
   //   begin = end;
   // }
   final=std::clock()-init;
-  std::cout << "partition stop (took " << (double)final / ((double)CLOCKS_PER_SEC) << "s)" << std::endl;  
+  // std::cout << "partition stop (took " << (double)final / ((double)CLOCKS_PER_SEC) << "s)" << std::endl;  
 }
       
 } // namespace meshgen
