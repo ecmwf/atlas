@@ -17,8 +17,9 @@ ecbuild_add_test( TARGET test_datastruct
 )
 
 ecbuild_add_test( TARGET test_gmsh
-	BOOST
 	SOURCES  test_gmsh.cpp
+  INCLUDES  ${Boost_INCLUDE_DIRS}
+  CONDITION HAVE_BOOST
 	LIBS     atlas
 )
 
