@@ -13,12 +13,12 @@
 #include <numeric>
 #include <cmath>
 
-#include "atlas/Array.hpp"
-#include "atlas/ArrayView.hpp"
-#include "atlas/Field.hpp"
-#include "atlas/FunctionSpace.hpp"
-#include "atlas/Mesh.hpp"
-#include "atlas/Parameters.hpp"
+#include "atlas/mesh/Array.hpp"
+#include "atlas/mesh/ArrayView.hpp"
+#include "atlas/mesh/Field.hpp"
+#include "atlas/mesh/FunctionSpace.hpp"
+#include "atlas/mesh/Mesh.hpp"
+#include "atlas/mesh/Parameters.hpp"
 #include "atlas/meshgen/EqualAreaPartitioner.hpp"
 #include "atlas/meshgen/RGG.hpp"
 

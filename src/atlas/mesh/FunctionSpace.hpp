@@ -18,9 +18,9 @@
 #include <string>
 #include <iostream>
 
-#include "atlas/HaloExchange.hpp"
-#include "atlas/Gather.hpp"
-#include "atlas/Metadata.hpp"
+#include "atlas/mpl/HaloExchange.hpp"
+#include "atlas/mpl/Gather.hpp"
+#include "atlas/mesh/Metadata.hpp"
 
 namespace atlas {
 class Field;

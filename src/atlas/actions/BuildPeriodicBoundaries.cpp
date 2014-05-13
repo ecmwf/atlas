@@ -15,12 +15,12 @@
 #include <cmath>
 #include <set>
 
-#include "atlas/Mesh.hpp"
-#include "atlas/FunctionSpace.hpp"
-#include "atlas/Field.hpp"
-#include "atlas/BuildPeriodicBoundaries.hpp"
-#include "atlas/Parameters.hpp"
-#include "atlas/ArrayView.hpp"
+#include "atlas/mesh/Mesh.hpp"
+#include "atlas/mesh/FunctionSpace.hpp"
+#include "atlas/mesh/Field.hpp"
+#include "atlas/actions/BuildPeriodicBoundaries.hpp"
+#include "atlas/mesh/Parameters.hpp"
+#include "atlas/mesh/ArrayView.hpp"
 
 namespace atlas {
 
@@ -346,7 +346,7 @@ void build_periodic_boundaries( Mesh& mesh )
   FunctionSpace& edges   = mesh.function_space( "edges" );
   FieldT<int>& edge_to_elem   = edges.field<int>( "to_elem" );
   FieldT<int>& edge_nodes   = edges.field<int>( "nodes" );
-  int nb_edges = edges.bounds()[1];
+  int nb_edges = edges.extents()[0];
 
   double min[2];
   double max[2];

@@ -12,7 +12,7 @@
 
 #include "eckit/filesystem/LocalPathName.h"
 
-#include "atlas/Gmsh.hpp"
+#include "atlas/io/Gmsh.hpp"
 #include "atlas/grid/MeshCache.h"
 
 using namespace eckit;

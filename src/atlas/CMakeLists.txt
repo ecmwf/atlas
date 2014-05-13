@@ -41,86 +41,69 @@ configure_file( atlas_version.cc.in atlas_version.cc )
 ### mpistubs
 
 if( NOT HAVE_MPI )
-	set( mpistubs_srcs mpistubs/mpi.h mpistubs/mpi.c )
+	set( atlas_mpistubs_srcs mpistubs/mpi.h mpistubs/mpi.c )
 else()
 	set( mpistubs_srcs "" )
 endif()
+
+###
+
+list( APPEND atlas_mpl_srcs
+		mpl/HaloExchange.hpp
+		mpl/HaloExchange.cpp
+		mpl/Gather.hpp
+		mpl/Gather.cpp
+		mpl/MPL.hpp
+)
+
+list( APPEND atlas_io_srcs
+		io/Gmsh.hpp
+		io/Gmsh.cpp
+)
+
+list( APPEND atlas_mesh_srcs
+		mesh/Array.hpp
+		mesh/ArrayView.hpp
+		mesh/ArrayView.cpp
+		mesh/Field.hpp
+		mesh/Field.cpp
+		mesh/FieldSet.hpp
+		mesh/FieldSet.cpp
+		mesh/FunctionSpace.hpp
+		mesh/FunctionSpace.cpp
+		mesh/Mesh.hpp
+		mesh/Mesh.cpp
+		mesh/Metadata.hpp
+		mesh/Metadata.cpp
+		mesh/Parameters.hpp
+)
+
+list( APPEND atlas_actions_srcs
+		actions/BuildDualMesh.hpp
+		actions/BuildDualMesh.cpp
+		actions/BuildEdges.hpp
+		actions/BuildEdges.cpp
+		actions/BuildHalo.hpp
+		actions/BuildHalo.cpp
+		actions/BuildPeriodicBoundaries.hpp
+		actions/BuildPeriodicBoundaries.cpp
+)
 
 ### atlas c++ library
 
 ecbuild_add_library( TARGET atlas
 	AUTO_VERSION
 	SOURCES
-		${mpistubs_srcs}
+		${atlas_mpistubs_srcs}
+		${atlas_io_srcs}
+		${atlas_mesh_srcs}
+		${atlas_mpl_srcs}
+		${atlas_actions_srcs}
 		atlas_mpi.h
-    Array.hpp
-    ArrayView.hpp
-    ArrayView.cpp
-		BuildDualMesh.hpp
-		BuildDualMesh.cpp
-		BuildEdges.hpp
-		BuildEdges.cpp
-		BuildHalo.hpp
-		BuildHalo.cpp
-		BuildPeriodicBoundaries.hpp
-		BuildPeriodicBoundaries.cpp
-		Field.hpp
-		Field.cpp
-		FieldSet.hpp
-		FieldSet.cpp
-		FunctionSpace.hpp
-		FunctionSpace.cpp
-		Gmsh.hpp
-		Gmsh.cpp
-		Mesh.hpp
-		Mesh.cpp
-		Metadata.hpp
-		Metadata.cpp
-		Parameters.hpp
-		HaloExchange.hpp
-		HaloExchange.cpp
-		Gather.hpp
-		Gather.cpp
-		MPL.hpp
   LIBS ${MPI_CXX_LIBRARIES}
 ) 
 
-### fortran bindings
-
-function(generate_fortran_bindings output filename)
-	get_filename_component(base ${filename} NAME_WE)
-	set(base_abs ${CMAKE_CURRENT_SOURCE_DIR}/${base})
-	set(outfile ${CMAKE_CURRENT_BINARY_DIR}/${base}.f90)
-	set(${output} ${${output}} ${outfile} PARENT_SCOPE)
-	add_custom_command(
-		OUTPUT ${outfile}
-		COMMAND ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/c2f.py ${CMAKE_CURRENT_SOURCE_DIR}/${filename} -o ${outfile}
-		DEPENDS ${filename} )
-	set_source_files_properties(${outfile} PROPERTIES GENERATED TRUE)
-endfunction()
-
-generate_fortran_bindings(FORTRAN_BINDINGS Field.hpp)
-generate_fortran_bindings(FORTRAN_BINDINGS FieldSet.hpp)
-generate_fortran_bindings(FORTRAN_BINDINGS FunctionSpace.hpp)
-generate_fortran_bindings(FORTRAN_BINDINGS Mesh.hpp)
-generate_fortran_bindings(FORTRAN_BINDINGS Metadata.hpp)
-generate_fortran_bindings(FORTRAN_BINDINGS HaloExchange.hpp)
-generate_fortran_bindings(FORTRAN_BINDINGS Gather.hpp)
-generate_fortran_bindings(FORTRAN_BINDINGS Gmsh.hpp)
-generate_fortran_bindings(FORTRAN_BINDINGS BuildPeriodicBoundaries.hpp)
-generate_fortran_bindings(FORTRAN_BINDINGS BuildEdges.hpp)
-generate_fortran_bindings(FORTRAN_BINDINGS BuildDualMesh.hpp)
-
-### atlas fortran lib
-
-ecbuild_add_library( TARGET atlasf
-	AUTO_VERSION
-	CONDITION CMAKE_Fortran_COMPILER_LOADED
-	SOURCES
-		${FORTRAN_BINDINGS}
-		atlas_module.F90
-	LIBS atlas
-)
+add_subdirectory( fortran )
 
 add_subdirectory( grid )
 

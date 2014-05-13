@@ -15,7 +15,7 @@
 #include <iostream>
 #include <sstream>
 
-#include "atlas/HaloExchange.hpp"
+#include "atlas/mpl/HaloExchange.hpp"
 
 namespace atlas {
 

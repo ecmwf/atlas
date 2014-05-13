@@ -16,7 +16,7 @@
 #include <vector>
 #include <stdexcept>
 
-#include "atlas/MPL.hpp"
+#include "atlas/mpl/MPL.hpp"
 
 namespace atlas {
 

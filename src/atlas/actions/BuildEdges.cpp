@@ -14,12 +14,12 @@
 #include <stdexcept>
 #include <cmath>
 #include <set>
-#include "atlas/Mesh.hpp"
-#include "atlas/FunctionSpace.hpp"
-#include "atlas/Field.hpp"
-#include "atlas/BuildEdges.hpp"
-#include "atlas/Parameters.hpp"
-#include "atlas/ArrayView.hpp"
+#include "atlas/mesh/Mesh.hpp"
+#include "atlas/mesh/FunctionSpace.hpp"
+#include "atlas/mesh/Field.hpp"
+#include "atlas/actions/BuildEdges.hpp"
+#include "atlas/mesh/Parameters.hpp"
+#include "atlas/mesh/ArrayView.hpp"
 
 namespace atlas {
 

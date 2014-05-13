@@ -14,8 +14,8 @@
 #include <vector>
 #include <memory>
 
-#include "atlas/Gmsh.hpp"
-#include "atlas/Mesh.hpp"
+#include "atlas/io/Gmsh.hpp"
+#include "atlas/mesh/Mesh.hpp"
 #include "atlas/grid/Tesselation.h"
 
 //------------------------------------------------------------------------------------------------------

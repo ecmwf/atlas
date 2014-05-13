@@ -15,11 +15,11 @@
 #include "eckit/container/KDMapped.h"
 #include "eckit/container/KDMemory.h"
 
-#include "atlas/Gmsh.hpp"
-#include "atlas/Mesh.hpp"
-#include "atlas/FunctionSpace.hpp"
-#include "atlas/Field.hpp"
-#include "atlas/Parameters.hpp"
+#include "atlas/io/Gmsh.hpp"
+#include "atlas/mesh/Mesh.hpp"
+#include "atlas/mesh/FunctionSpace.hpp"
+#include "atlas/mesh/Field.hpp"
+#include "atlas/mesh/Parameters.hpp"
 
 #include "eckit/geometry/Point3.h"
 #include "atlas/grid/TriangleIntersection.h"

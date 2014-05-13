@@ -24,8 +24,8 @@
 
 #include "eckit/geometry/Point2.h"
 
-#include "atlas/Mesh.hpp"
-#include "atlas/Field.hpp"
+#include "atlas/mesh/Mesh.hpp"
+#include "atlas/mesh/Field.hpp"
 
 //------------------------------------------------------------------------------------------------------
 

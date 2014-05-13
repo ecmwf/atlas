@@ -15,7 +15,7 @@
 #include <iostream>
 #include <sstream>
 
-#include "atlas/Gather.hpp"
+#include "atlas/mpl/Gather.hpp"
 
 namespace atlas {
 

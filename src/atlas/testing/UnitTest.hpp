@@ -36,7 +36,7 @@
 */
 
 #include "atlas/testing/Macros.hpp"
-#include "atlas/MPL.hpp"
+#include "atlas/mpl/MPL.hpp"
 
 namespace atlas {
 class UnitTest

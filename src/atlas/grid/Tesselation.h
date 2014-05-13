@@ -13,7 +13,7 @@
 #ifndef atlas_grid_Tesselation_hpp
 #define atlas_grid_Tesselation_hpp
 
-#include "atlas/Mesh.hpp"
+#include "atlas/mesh/Mesh.hpp"
 
 namespace atlas {
 namespace grid {

@@ -49,10 +49,10 @@ const Point_3 origin = Point_3(CGAL::ORIGIN);
 
 //------------------------------------------------------------------------------------------------------
 
-#include "atlas/Field.hpp"
-#include "atlas/FunctionSpace.hpp"
-#include "atlas/Mesh.hpp"
-#include "atlas/Parameters.hpp"
+#include "atlas/mesh/Field.hpp"
+#include "atlas/mesh/FunctionSpace.hpp"
+#include "atlas/mesh/Mesh.hpp"
+#include "atlas/mesh/Parameters.hpp"
 
 #include "atlas/grid/PointSet.h"
 #include "atlas/grid/Tesselation.h"
@@ -98,7 +98,7 @@ void cgal_polyhedron_to_atlas_mesh(  atlas::Mesh& mesh, Polyhedron_3& poly, Poin
 
     FunctionSpace& nodes = mesh.function_space( "nodes" );
 
-    ASSERT( points.size() == nodes.bounds()[1] );
+    ASSERT( points.size() == nodes.extents()[0] );
 
     const size_t nb_nodes = points.size();
 
@@ -108,11 +108,11 @@ void cgal_polyhedron_to_atlas_mesh(  atlas::Mesh& mesh, Polyhedron_3& poly, Poin
 
     const size_t nb_triags = poly.size_of_facets();
 
-    std::vector<int> bounds(2);
-    bounds[0] = Field::UNDEF_VARS;
-    bounds[1] = nb_triags;
+    std::vector<int> extents(2);
+    extents[0] = nb_triags;
+    extents[1] = Field::UNDEF_VARS;
 
-    FunctionSpace& triags  = mesh.add_function_space( new FunctionSpace( "triags", "Lagrange_P1", bounds ) );
+    FunctionSpace& triags  = mesh.add_function_space( new FunctionSpace( "triags", "Lagrange_P1", extents ) );
     triags.metadata().set("type",static_cast<int>(Entity::ELEMS));
 
     FieldT<int>& triag_nodes = triags.create_field<int>("nodes",3);
@@ -253,18 +253,18 @@ void Tesselation::create_mesh_structure( atlas::Mesh& mesh, const size_t nb_node
 {
     // create / ensure mesh has coordinates
 
-    std::vector<int> bounds (2);
+    std::vector<int> extents (2);
     if( ! mesh.has_function_space("nodes") )
     {
-        bounds[0] = Field::UNDEF_VARS;
-        bounds[1] = nb_nodes;
-        FunctionSpace& nodes = mesh.add_function_space( new FunctionSpace( "nodes", "Lagrange_P0", bounds ) );
+        extents[0] = nb_nodes;
+        extents[1] = Field::UNDEF_VARS;
+        FunctionSpace& nodes = mesh.add_function_space( new FunctionSpace( "nodes", "Lagrange_P0", extents ) );
         nodes.metadata().set("type",static_cast<int>(Entity::NODES));
     }
 
     FunctionSpace& nodes = mesh.function_space( "nodes" );
 
-    ASSERT(  nodes.bounds()[1] == nb_nodes );
+    ASSERT(  nodes.extents()[0] == nb_nodes );
 
     // create / ensure mesh has coordinates
 
@@ -294,7 +294,7 @@ void Tesselation::generate_latlon_points( atlas::Mesh& mesh,
 
     FunctionSpace& nodes = mesh.function_space( "nodes" );
 
-    ASSERT(  nodes.bounds()[1] == nb_nodes );
+    ASSERT(  nodes.extents()[0] == nb_nodes );
 
     FieldT<double>& coords  = nodes.field<double>("coordinates");
     FieldT<double>& latlon  = nodes.field<double>("latlon");
@@ -353,7 +353,7 @@ void Tesselation::generate_latlon_grid( atlas::Mesh& mesh, const size_t& nlats, 
 
     FunctionSpace& nodes = mesh.function_space( "nodes" );
 
-    ASSERT( nodes.bounds()[1] == nb_nodes );
+    ASSERT( nodes.extents()[0] == nb_nodes );
 
     FieldT<double>& coords  = nodes.field<double>("coordinates");
     FieldT<double>& latlon  = nodes.field<double>("latlon");
@@ -420,12 +420,12 @@ void Tesselation::create_cell_centres( Mesh& mesh )
     FunctionSpace& nodes     = mesh.function_space( "nodes" );
     FieldT<double>& coords   = nodes.field<double>( "coordinates" );
 
-    const size_t nb_nodes = nodes.bounds()[1];
+    const size_t nb_nodes = nodes.extents()[0];
 
     FunctionSpace& triags      = mesh.function_space( "triags" );
     FieldT<int>& triag_nodes   = triags.field<int>( "nodes" );
 
-    const size_t nb_triags = triags.bounds()[1];
+    const size_t nb_triags = triags.extents()[0];
 
     FieldT<double>& triags_centres   = triags.create_field<double>("centre",3);
 

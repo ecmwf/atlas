@@ -31,6 +31,8 @@ set( PERSISTENT_NAMESPACE "eckit" CACHE INTERNAL "" )
 
 ecbuild_declare_project()
 
+ecbuild_use_package( PROJECT eckit VERSION 0.6 )
+
 ################################################################################################
 # options & dependencies
 
@@ -39,14 +41,10 @@ ecbuild_find_python()
 # boost support
 
 set(Boost_USE_MULTITHREADED      ON )
-# set(Boost_DEBUG                  ON )
-# set(Boost_USE_STATIC_LIBS        ON )
-# set(Boost_NO_SYSTEM_PATHS        ON )
-
 ecbuild_add_option( FEATURE BOOST
 					DEFAULT ${ENABLE_TESTS}
 					DESCRIPTION "Boost"
-					REQUIRED_PACKAGES "Boost 1.45.0 COMPONENTS python serialization system thread unit_test_framework test_exec_monitor filesystem program_options date_time" )
+					REQUIRED_PACKAGES "Boost 1.45.0 COMPONENTS unit_test_framework test_exec_monitor" )
 
 set_package_properties( Boost PROPERTIES TYPE RECOMMENDED PURPOSE "" )
 
@@ -88,8 +86,7 @@ endif()
 ### grid
 
 ecbuild_add_option( FEATURE GRID
-					DESCRIPTION "support for C++ grid interface"
-					REQUIRED_PACKAGES "PROJECT eckit VERSION 0.6" )
+					DESCRIPTION "support for C++ grid interface" )
 
 if( HAVE_GRID )
 	ecbuild_add_cxx11_flags()
@@ -114,10 +111,12 @@ ecbuild_add_option( FEATURE SANDBOX
 ############################################################################################
 # export package info
 
+list( APPEND ATLAS_TPLS eckit )
+
 set( ATLAS_INCLUDE_DIRS   ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src )
 set( ATLAS_LIBRARIES      atlas )
 
-# debug_var( ATLAS_TPLS ) # should already contain some entries -- eckit, cgal
+debug_var( ATLAS_TPLS ) # should already contain some entries -- eckit, cgal
 
 if( ENABLE_FORTRAN )
 	list( APPEND ATLAS_INCLUDE_DIRS ${CMAKE_Fortran_MODULE_DIRECTORY} )
@@ -129,6 +128,8 @@ if( HAVE_GRID )
 endif()
 
 get_directory_property( ATLAS_DEFINITIONS COMPILE_DEFINITIONS )
+
+debug_var( ATLAS_TPLS )
 
 foreach( _tpl ${ATLAS_TPLS} )
 	string( TOUPPER ${_tpl} TPL )

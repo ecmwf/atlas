@@ -8,8 +8,6 @@
  * does it submit to any jurisdiction.
  */
 
-
-
 #ifndef MPL_hpp
 #define MPL_hpp
 

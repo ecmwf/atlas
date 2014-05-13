@@ -15,7 +15,7 @@
 
 #include <math.h>
 #include <vector>
-#include "atlas/Metadata.hpp"
+#include "atlas/mesh/Metadata.hpp"
 
 namespace atlas {
   class Mesh;

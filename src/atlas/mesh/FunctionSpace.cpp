@@ -14,8 +14,8 @@
 #include <iostream>
 #include <sstream>
 
-#include "atlas/FunctionSpace.hpp"
-#include "atlas/Field.hpp"
+#include "atlas/mesh/FunctionSpace.hpp"
+#include "atlas/mesh/Field.hpp"
 
 namespace atlas {
 

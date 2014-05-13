@@ -14,8 +14,8 @@
 #include <stdexcept>
 #include <sstream>
 
-#include "atlas/FieldSet.hpp"
-#include "atlas/Field.hpp"
+#include "atlas/mesh/FieldSet.hpp"
+#include "atlas/mesh/Field.hpp"
 
 namespace atlas {
 

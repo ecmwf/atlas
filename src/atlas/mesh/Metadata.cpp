@@ -8,13 +8,12 @@
  * does it submit to any jurisdiction.
  */
 
-
-
-#include "atlas/Metadata.hpp"
-#include "atlas/Field.hpp"
 #include <iostream>
 #include <stdexcept>
 #include <sstream>
+
+#include "atlas/mesh/Metadata.hpp"
+#include "atlas/mesh/Field.hpp"
 
 using namespace std;
 

@@ -12,10 +12,10 @@
 
 //------------------------------------------------------------------------------------------------------
 
-#include "atlas/Field.hpp"
-#include "atlas/FunctionSpace.hpp"
-#include "atlas/Mesh.hpp"
-#include "atlas/Parameters.hpp"
+#include "atlas/mesh/Field.hpp"
+#include "atlas/mesh/FunctionSpace.hpp"
+#include "atlas/mesh/Mesh.hpp"
+#include "atlas/mesh/Parameters.hpp"
 
 using namespace eckit;
 
@@ -34,7 +34,7 @@ PointSet::PointSet( atlas::Mesh& mesh )
 
     FunctionSpace& nodes = mesh.function_space( "nodes" );
 
-    npts_ = nodes.bounds()[1];
+    npts_ = nodes.extents()[0];
 
     ASSERT( npts_ > 0 );
 

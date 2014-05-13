@@ -13,7 +13,7 @@
 
 #include "grib_api.h"
 
-#include "atlas/Mesh.hpp"
+#include "atlas/mesh/Mesh.hpp"
 #include "atlas/grid/Grid.h"
 
 //-----------------------------------------------------------------------------

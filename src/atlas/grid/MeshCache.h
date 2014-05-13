@@ -16,7 +16,7 @@
 
 #include "eckit/memory/NonCopyable.h"
 
-#include "atlas/Mesh.hpp"
+#include "atlas/mesh/Mesh.hpp"
 
 namespace atlas {
 

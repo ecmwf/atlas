@@ -13,8 +13,8 @@
 #include <sstream>
 #include <stdexcept>
 
-#include "atlas/Mesh.hpp"
-#include "atlas/FunctionSpace.hpp"
+#include "atlas/mesh/Mesh.hpp"
+#include "atlas/mesh/FunctionSpace.hpp"
 
 namespace atlas {
 

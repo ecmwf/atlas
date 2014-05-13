@@ -17,7 +17,7 @@
 #include <vector>
 #include <string>
 
-#include "atlas/Metadata.hpp"
+#include "atlas/mesh/Metadata.hpp"
 
 //------------------------------------------------------------------------------------------------------
 

@@ -22,7 +22,7 @@
 
 #include "eckit/log/Timer.h"
 
-#include "atlas/Mesh.hpp"
+#include "atlas/mesh/Mesh.hpp"
 #include "atlas/grid/PointIndex3.h"
 #include "eckit/types/FloatCompare.h"
 

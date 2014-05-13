@@ -21,8 +21,8 @@
 #include "eckit/config/Resource.h"
 #include "eckit/runtime/Tool.h"
 
-#include "atlas/Gmsh.hpp"
-#include "atlas/Mesh.hpp"
+#include "atlas/io/Gmsh.hpp"
+#include "atlas/mesh/Mesh.hpp"
 #include "atlas/grid/Tesselation.h"
 #include "atlas/grid/GribRead.h"
 

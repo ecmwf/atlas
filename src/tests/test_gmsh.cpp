@@ -14,11 +14,11 @@
 
 #include "atlas/atlas_config.h"
 
-#include "atlas/Gmsh.hpp"
-#include "atlas/BuildEdges.hpp"
-#include "atlas/BuildDualMesh.hpp"
-#include "atlas/BuildPeriodicBoundaries.hpp"
-#include "atlas/MPL.hpp"
+#include "atlas/io/Gmsh.hpp"
+#include "atlas/actions/BuildEdges.hpp"
+#include "atlas/actions/BuildDualMesh.hpp"
+#include "atlas/actions/BuildPeriodicBoundaries.hpp"
+#include "atlas/mpl/MPL.hpp"
 
 BOOST_AUTO_TEST_SUITE( TestGmsh )
 
