@@ -8,7 +8,6 @@
  * does it submit to any jurisdiction.
  */
 
-
 #include <sstream>
 
 #include "atlas/atlas_config.h"
@@ -17,7 +16,7 @@
 #include "atlas/Gmsh.hpp"
 #include "atlas/Mesh.hpp"
 #include "atlas/FunctionSpace.hpp"
-#include "atlas/MetaData.hpp"
+#include "atlas/Metadata.hpp"
 #include "atlas/BuildEdges.hpp"
 #include "atlas/BuildDualMesh.hpp"
 #include "atlas/BuildPeriodicBoundaries.hpp"
