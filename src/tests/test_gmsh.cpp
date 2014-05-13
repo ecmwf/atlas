@@ -8,7 +8,9 @@
  * does it submit to any jurisdiction.
  */
 
+#define BOOST_TEST_MAIN
 
+#include <boost/test/included/unit_test.hpp>
 
 #include "atlas/atlas_config.h"
 
@@ -18,19 +20,23 @@
 #include "atlas/BuildPeriodicBoundaries.hpp"
 #include "atlas/MPL.hpp"
 
-using namespace atlas;
-int main(int argc, char *argv[])
+BOOST_AUTO_TEST_SUITE( TestGmsh )
+
+BOOST_AUTO_TEST_CASE( test_read_write )
 {
-  MPL::init();
+    using namespace atlas;
 
-  Mesh* mesh = Gmsh::read( "T47.msh" );
+    MPL::init();
 
-  build_periodic_boundaries(*mesh);
-  build_edges(*mesh);
-  build_dual_mesh(*mesh);
+    Mesh* mesh = Gmsh::read( "T47.msh" );
 
-  Gmsh::write(*mesh,"bla.msh");
-  
-  MPL::finalize();
-  return 0;
+    build_periodic_boundaries(*mesh);
+    build_edges(*mesh);
+    build_dual_mesh(*mesh);
+
+    Gmsh::write(*mesh,"bla.msh");
+
+    MPL::finalize();
 }
+
+BOOST_AUTO_TEST_SUITE_END()

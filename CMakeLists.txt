@@ -36,6 +36,20 @@ ecbuild_declare_project()
 
 ecbuild_find_python()
 
+# boost support
+
+set(Boost_USE_MULTITHREADED      ON )
+# set(Boost_DEBUG                  ON )
+# set(Boost_USE_STATIC_LIBS        ON )
+# set(Boost_NO_SYSTEM_PATHS        ON )
+
+ecbuild_add_option( FEATURE BOOST
+					DEFAULT ${ENABLE_TESTS}
+					DESCRIPTION "Boost"
+					REQUIRED_PACKAGES "Boost 1.45.0 COMPONENTS python serialization system thread unit_test_framework test_exec_monitor filesystem program_options date_time" )
+
+set_package_properties( Boost PROPERTIES TYPE RECOMMENDED PURPOSE "" )
+
 ### Fortran ...
 
 ecbuild_add_option( FEATURE FORTRAN_NUMBERING
