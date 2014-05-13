@@ -26,6 +26,80 @@
 using namespace atlas;
 using namespace atlas::meshgen;
 
+#define DISABLE if(0)
+#define ENABLE if(1)
+
+namespace atlas {
+namespace test {
+  
+class DebugMesh:   public RGG { public: DebugMesh(); };
+DebugMesh::DebugMesh()
+{
+  int nlat=5;
+  int lon[] = {
+    6,
+    10,
+    18,
+    22,
+    22,
+  };
+  /*
+  First prediction of colatitudes
+  */
+  std::vector<double> colat(nlat);
+  double z;
+  for( int i=0; i<nlat; ++i )
+  {
+    z = (4.*(i+1.)-1.)*M_PI/(4.*2.*nlat+2.);
+    colat[i] = z+1./(tan(z)*(8.*(2.*nlat)*(2.*nlat)));
+  }
+  /*
+  Fill in final structures
+  */
+  lat_.resize(2*nlat);
+  lon_.resize(2*nlat);
+  std::copy( lon, lon+nlat, lon_.begin() );
+  std::reverse_copy( lon, lon+nlat, lon_.begin()+nlat );
+  std::copy( colat.begin(), colat.begin()+nlat, lat_.begin() );
+  std::reverse_copy( colat.begin(), colat.begin()+nlat, lat_.begin()+nlat );
+  for (int i=0; i<nlat; ++i)
+    lat_[i]=M_PI/2.-lat_[i];
+  for (int i=nlat; i<2*nlat; ++i)
+    lat_[i]=-M_PI/2.+lat_[i];
+} 
+
+  
+class MinimalMesh:   public RGG { public: MinimalMesh(int nlat, int lon[]); };
+MinimalMesh::MinimalMesh(int nlat, int lon[])
+{
+  /*
+  First prediction of colatitudes
+  */
+  std::vector<double> colat(nlat);
+  double z;
+  for( int i=0; i<nlat; ++i )
+  {
+    z = (4.*(i+1.)-1.)*M_PI/(4.*2.*nlat+2.);
+    colat[i] = z+1./(tan(z)*(8.*(2.*nlat)*(2.*nlat)));
+  }
+  /*
+  Fill in final structures
+  */
+  lat_.resize(2*nlat);
+  lon_.resize(2*nlat);
+  std::copy( lon, lon+nlat, lon_.begin() );
+  std::reverse_copy( lon, lon+nlat, lon_.begin()+nlat );
+  std::copy( colat.begin(), colat.begin()+nlat, lat_.begin() );
+  std::reverse_copy( colat.begin(), colat.begin()+nlat, lat_.begin()+nlat );
+  for (int i=0; i<nlat; ++i)
+    lat_[i]=M_PI/2.-lat_[i];
+  for (int i=nlat; i<2*nlat; ++i)
+    lat_[i]=-M_PI/2.+lat_[i];
+} 
+
+} // end namespace test
+} // end namespace atlas
+
 class TestMeshGen: public UnitTest
 {
 public:
@@ -33,10 +107,10 @@ public:
   
   virtual void run_tests()
   {
-    test_eq_caps();
-    test_partitioner();
+    // test_eq_caps();
+    // test_partitioner();
     test_rgg_meshgen_one_part();
-    test_rgg_meshgen_many_parts();
+    // test_rgg_meshgen_many_parts();
   }
   
   void test_eq_caps()
@@ -118,59 +192,155 @@ public:
     generate.options.set("nb_parts",1);
     generate.options.set("part",    0);
 
-    generate.options.set("three_dimensional",true);
-    generate.options.set("include_pole",false);
-    m = generate( DebugMesh() );
-    ATLAS_CHECK_EQUAL( m->function_space("nodes" ).extents()[0], 156 );
-    ATLAS_CHECK_EQUAL( m->function_space("quads" ).extents()[0], 130 );
-    ATLAS_CHECK_EQUAL( m->function_space("triags").extents()[0],  40 );
-    ATLAS_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<int>("max_glb_idx"), 156 );
-    ATLAS_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<int>("nb_owned"),    156 );
-    ATLAS_CHECK_EQUAL( m->function_space("quads" ).metadata().get<int>("max_glb_idx"), 170 );
-    ATLAS_CHECK_EQUAL( m->function_space("quads" ).metadata().get<int>("nb_owned"),    130 );
-    ATLAS_CHECK_EQUAL( m->function_space("triags").metadata().get<int>("max_glb_idx"), 170 );
-    ATLAS_CHECK_EQUAL( m->function_space("triags").metadata().get<int>("nb_owned"),     40 );
-    delete m;
+    ENABLE {
+      generate.options.set("three_dimensional",true);
+      generate.options.set("include_pole",false);
+      m = generate( atlas::test::DebugMesh() );
+      ATLAS_CHECK_EQUAL( m->function_space("nodes" ).extents()[0], 156 );
+      ATLAS_CHECK_EQUAL( m->function_space("quads" ).extents()[0], 134 );
+      ATLAS_CHECK_EQUAL( m->function_space("triags").extents()[0],  32 );
+      ATLAS_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<int>("max_glb_idx"), 156 );
+      ATLAS_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<int>("nb_owned"),    156 );
+      ATLAS_CHECK_EQUAL( m->function_space("quads" ).metadata().get<int>("max_glb_idx"), 166 );
+      ATLAS_CHECK_EQUAL( m->function_space("quads" ).metadata().get<int>("nb_owned"),    134 );
+      ATLAS_CHECK_EQUAL( m->function_space("triags").metadata().get<int>("max_glb_idx"), 166 );
+      ATLAS_CHECK_EQUAL( m->function_space("triags").metadata().get<int>("nb_owned"),     32 );
+      delete m;
+    }
     
-    generate.options.set("three_dimensional",false);
-    generate.options.set("include_pole",false);
-    m = generate( DebugMesh() );
-    ATLAS_CHECK_EQUAL( m->function_space("nodes" ).extents()[0], 166 );
-    ATLAS_CHECK_EQUAL( m->function_space("quads" ).extents()[0], 130 );
-    ATLAS_CHECK_EQUAL( m->function_space("triags").extents()[0],  40 );
-    ATLAS_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<int>("max_glb_idx"), 166 );
-    ATLAS_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<int>("nb_owned"),    166 );
-    ATLAS_CHECK_EQUAL( m->function_space("quads" ).metadata().get<int>("max_glb_idx"), 170 );
-    ATLAS_CHECK_EQUAL( m->function_space("quads" ).metadata().get<int>("nb_owned"),    130 );
-    ATLAS_CHECK_EQUAL( m->function_space("triags").metadata().get<int>("max_glb_idx"), 170 );
-    ATLAS_CHECK_EQUAL( m->function_space("triags").metadata().get<int>("nb_owned"),     40 );
-    delete m;
+    ENABLE {
+      generate.options.set("three_dimensional",false);
+      generate.options.set("include_pole",false);
+      m = generate( atlas::test::DebugMesh() );
+      ATLAS_CHECK_EQUAL( m->function_space("nodes" ).extents()[0], 166 );
+      ATLAS_CHECK_EQUAL( m->function_space("quads" ).extents()[0], 134 );
+      ATLAS_CHECK_EQUAL( m->function_space("triags").extents()[0],  32 );
+      ATLAS_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<int>("max_glb_idx"), 166 );
+      ATLAS_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<int>("nb_owned"),    166 );
+      ATLAS_CHECK_EQUAL( m->function_space("quads" ).metadata().get<int>("max_glb_idx"), 166 );
+      ATLAS_CHECK_EQUAL( m->function_space("quads" ).metadata().get<int>("nb_owned"),    134 );
+      ATLAS_CHECK_EQUAL( m->function_space("triags").metadata().get<int>("max_glb_idx"), 166 );
+      ATLAS_CHECK_EQUAL( m->function_space("triags").metadata().get<int>("nb_owned"),     32 );
+      delete m;
+    }
 
-    generate.options.set("three_dimensional",true);
-    generate.options.set("include_pole",true);
-    m = generate( DebugMesh() );
-    ATLAS_CHECK_EQUAL( m->function_space("nodes" ).extents()[0], 158 );
-    ATLAS_CHECK_EQUAL( m->function_space("quads" ).extents()[0], 130 );
-    ATLAS_CHECK_EQUAL( m->function_space("triags").extents()[0],  52 );
-    ATLAS_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<int>("max_glb_idx"), 158 );
-    ATLAS_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<int>("nb_owned"),    158 );
-    ATLAS_CHECK_EQUAL( m->function_space("quads" ).metadata().get<int>("max_glb_idx"), 182 );
-    ATLAS_CHECK_EQUAL( m->function_space("quads" ).metadata().get<int>("nb_owned"),    130 );
-    ATLAS_CHECK_EQUAL( m->function_space("triags").metadata().get<int>("max_glb_idx"), 182 );
-    ATLAS_CHECK_EQUAL( m->function_space("triags").metadata().get<int>("nb_owned"),     52 );
-    delete m;
+    ENABLE {
+      generate.options.set("three_dimensional",true);
+      generate.options.set("include_pole",true);
+      m = generate( atlas::test::DebugMesh() );
+      ATLAS_CHECK_EQUAL( m->function_space("nodes" ).extents()[0], 158 );
+      ATLAS_CHECK_EQUAL( m->function_space("quads" ).extents()[0], 134 );
+      ATLAS_CHECK_EQUAL( m->function_space("triags").extents()[0],  44 );
+      ATLAS_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<int>("max_glb_idx"), 158 );
+      ATLAS_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<int>("nb_owned"),    158 );
+      ATLAS_CHECK_EQUAL( m->function_space("quads" ).metadata().get<int>("max_glb_idx"), 178 );
+      ATLAS_CHECK_EQUAL( m->function_space("quads" ).metadata().get<int>("nb_owned"),    134 );
+      ATLAS_CHECK_EQUAL( m->function_space("triags").metadata().get<int>("max_glb_idx"), 178 );
+      ATLAS_CHECK_EQUAL( m->function_space("triags").metadata().get<int>("nb_owned"),     44 );
+      delete m;
+    }
+
+    Mesh* mesh;    
+
+    ENABLE {
+      generate.options.set("three_dimensional",false);
+      generate.options.set("include_pole",false);
+      int nlat=2;
+      int lon[] = { 4, 6 };
+      mesh = generate( test::MinimalMesh(nlat,lon) );
+      ATLAS_CHECK_EQUAL( mesh->function_space("nodes" ).extents()[0], 24 );
+      ATLAS_CHECK_EQUAL( mesh->function_space("quads" ).extents()[0], 14 );
+      ATLAS_CHECK_EQUAL( mesh->function_space("triags").extents()[0],  4 );
     
+      build_periodic_boundaries(*mesh);
+      build_edges(*mesh);
+      build_dual_mesh(*mesh);
+      Gmsh::write(*mesh,"minimal2.msh");
+      delete mesh;
+    }
+    // 3 latitudes
+    ENABLE {
+      int nlat=3;
+      int lon[] = { 4, 6, 8 };
+      mesh = generate( test::MinimalMesh(nlat,lon) );
+      ATLAS_CHECK_EQUAL( mesh->function_space("nodes" ).extents()[0], 42 );
+      ATLAS_CHECK_EQUAL( mesh->function_space("quads" ).extents()[0], 28 );
+      ATLAS_CHECK_EQUAL( mesh->function_space("triags").extents()[0],  8 );
     
-    // generate.options.set("three_dimensional",false);
-    // generate.options.set("include_pole",false);
-    // Mesh* mesh;
-    // mesh = generate( T63() );
-    // 
-    // build_periodic_boundaries(*mesh);
-    // // build_edges(*mesh);
-    // // build_dual_mesh(*mesh);
-    // Gmsh::write(*mesh,"debug.msh");
-    // delete mesh;    
+      build_periodic_boundaries(*mesh);
+      build_edges(*mesh);
+      build_dual_mesh(*mesh);
+      Gmsh::write(*mesh,"minimal3.msh");
+      delete mesh;
+    }
+    // 4 latitudes
+    ENABLE {
+      int nlat=4;
+      int lon[] = { 4, 6, 8, 10 };
+      mesh = generate( test::MinimalMesh(nlat,lon) );
+      ATLAS_CHECK_EQUAL( mesh->function_space("nodes" ).extents()[0], 64 );
+      ATLAS_CHECK_EQUAL( mesh->function_space("quads" ).extents()[0], 46 );
+      ATLAS_CHECK_EQUAL( mesh->function_space("triags").extents()[0], 12 );
+    
+      build_periodic_boundaries(*mesh);
+      build_edges(*mesh);
+      build_dual_mesh(*mesh);
+      Gmsh::write(*mesh,"minimal4.msh");
+      delete mesh;
+    }
+    // 5 latitudes WIP
+    ENABLE {
+      int nlat=5;
+      int lon[] = { 6, 10, 18, 22, 22 };
+      mesh = generate( test::MinimalMesh(nlat,lon) );
+      // ATLAS_CHECK_EQUAL( mesh->function_space("nodes" ).extents()[0], 42 );
+      // ATLAS_CHECK_EQUAL( mesh->function_space("quads" ).extents()[0], 28 );
+      // ATLAS_CHECK_EQUAL( mesh->function_space("triags").extents()[0],  8 );
+    
+      build_periodic_boundaries(*mesh);
+      build_edges(*mesh);
+      build_dual_mesh(*mesh);
+      Gmsh::write(*mesh,"minimal5.msh");
+      delete mesh;
+    }
+    // 10 latitudes WIP
+    ENABLE {
+      int nlat=6;
+      int lon[] = {
+        36-25,
+        40-25,
+        45-25,
+        50-25,
+        60-25,
+        64-25,
+        72-25,
+        75-25 };
+      // int lon[] = { 4, 6, 8, 10, 12, 14, 16, 18, 20, 22 };
+      mesh = generate( test::MinimalMesh(nlat,lon) );
+      // ATLAS_CHECK_EQUAL( mesh->function_space("nodes" ).extents()[0], 42 );
+      // ATLAS_CHECK_EQUAL( mesh->function_space("quads" ).extents()[0], 28 );
+      // ATLAS_CHECK_EQUAL( mesh->function_space("triags").extents()[0],  8 );
+      Gmsh::write(*mesh,"before.msh");
+    
+      build_periodic_boundaries(*mesh);
+      build_edges(*mesh);
+      // build_dual_mesh(*mesh);
+      Gmsh::write(*mesh,"after.msh");
+      delete mesh;
+    }
+    // T63 WIP
+    ENABLE {
+      mesh = generate( T63() );
+      // ATLAS_CHECK_EQUAL( mesh->function_space("nodes" ).extents()[0], 42 );
+      // ATLAS_CHECK_EQUAL( mesh->function_space("quads" ).extents()[0], 28 );
+      // ATLAS_CHECK_EQUAL( mesh->function_space("triags").extents()[0],  8 );
+    
+      build_periodic_boundaries(*mesh);
+      build_edges(*mesh);
+      build_dual_mesh(*mesh);
+      Gmsh::write(*mesh,"t63.msh");
+      delete mesh;
+    }
   }
   
   void test_rgg_meshgen_many_parts()

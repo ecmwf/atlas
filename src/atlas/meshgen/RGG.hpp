@@ -52,7 +52,6 @@ public:
   Metadata options;
 };
 
-class DebugMesh:   public RGG { public: DebugMesh();   };
 class T63:   public RGG { public: T63();   };
 class T95:   public RGG { public: T95();   };
 class T159:  public RGG { public: T159();  };
