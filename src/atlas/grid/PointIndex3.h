@@ -1,3 +1,13 @@
+/*
+ * (C) Copyright 1996-2014 ECMWF.
+ * 
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
+ * In applying this licence, ECMWF does not waive the privileges and immunities 
+ * granted to it by virtue of its status as an intergovernmental organisation nor
+ * does it submit to any jurisdiction.
+ */
+
 #ifndef atlas_grid_PointIndex3_h
 #define atlas_grid_PointIndex3_h
 
@@ -5,11 +15,11 @@
 #include "eckit/container/KDMapped.h"
 #include "eckit/container/KDMemory.h"
 
-#include "atlas/Gmsh.hpp"
-#include "atlas/Mesh.hpp"
-#include "atlas/FunctionSpace.hpp"
-#include "atlas/Field.hpp"
-#include "atlas/Parameters.hpp"
+#include "atlas/io/Gmsh.hpp"
+#include "atlas/mesh/Mesh.hpp"
+#include "atlas/mesh/FunctionSpace.hpp"
+#include "atlas/mesh/Field.hpp"
+#include "atlas/mesh/Parameters.hpp"
 
 #include "eckit/geometry/Point3.h"
 #include "atlas/grid/TriangleIntersection.h"

@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2013 ECMWF.
+ * (C) Copyright 1996-2014 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -11,7 +11,7 @@
 #include "eckit/log/Log.h"
 #include "eckit/geometry/Point3.h"
 
-#include "atlas/FunctionSpace.hpp"
+#include "atlas/mesh/FunctionSpace.hpp"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Tesselation.h"
 
@@ -57,13 +57,13 @@ void Grid::make_mesh()
 
     FunctionSpace& nodes = mesh.function_space( "nodes" );
 
-    ASSERT(  nodes.bounds()[1] == npts );
+    ASSERT(  nodes.extents()[0] == npts );
 
     FieldT<double>& coords  = nodes.field<double>("coordinates");
     FieldT<double>& latlon  = nodes.field<double>("latlon");
     FieldT<int>&    glb_idx = nodes.field<int>("glb_idx");
 
-    ASSERT( npts == nodes.bounds()[1] );
+    ASSERT( npts == nodes.extents()[0] );
 
     const std::vector<Point>& ll = coordinates();
 

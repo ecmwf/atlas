@@ -25,29 +25,34 @@ include( ecbuild_system )
 ecbuild_requires_macro_version( 1.3 )
 
 ###############################################################################
-# local project
+# project
 
 set( PERSISTENT_NAMESPACE "eckit" CACHE INTERNAL "" )
 
-ecbuild_use_package( PROJECT eckit VERSION 0.6 )
-
-# init project
-
 ecbuild_declare_project()
+
+ecbuild_use_package( PROJECT eckit VERSION 0.6 )
 
 ################################################################################################
 # options & dependencies
 
 ecbuild_find_python()
 
+# boost support
+
+set(Boost_USE_MULTITHREADED      ON )
+ecbuild_add_option( FEATURE BOOST
+					DEFAULT ${ENABLE_TESTS}
+					DESCRIPTION "Boost Unit Test Framework"
+					REQUIRED_PACKAGES "Boost 1.45.0 COMPONENTS unit_test_framework" )
+set_package_properties( Boost PROPERTIES TYPE OPTIONAL PURPOSE "Testing Only" )
+
 ### Fortran ...
 
 ecbuild_add_option( FEATURE FORTRAN_NUMBERING
-					DEFAULT ON
 					DESCRIPTION "data-structures are index with Fortran numbering" )
 
 ecbuild_add_option( FEATURE FORTRAN
-					DEFAULT ON
 					DESCRIPTION "provide Fortran bindings" )
 
 if( ENABLE_FORTRAN )
@@ -57,7 +62,6 @@ endif()
 ### OMP ...
 
 ecbuild_add_option( FEATURE OMP
-					DEFAULT ON
 					DESCRIPTION "support for OpenMP threaded parallelism" )
 
 # !! TODO !! add test for OpenMP
@@ -65,14 +69,13 @@ ecbuild_add_option( FEATURE OMP
 ### MPI ...
 
 ecbuild_add_option( FEATURE MPI
-					DEFAULT ON
 					DESCRIPTION "support for MPI distributed parallelism" )
 
 if( ENABLE_MPI )
    ecbuild_find_mpi()
    if( MPI_CXX_FOUND )
-		cmake_add_c_flags( ${MPI_C_COMPILE_FLAGS} )
-		cmake_add_cxx_flags( ${MPI_CXX_COMPILE_FLAGS} )
+		cmake_add_c_flags( " ${MPI_C_COMPILE_FLAGS}" )
+		cmake_add_cxx_flags( " ${MPI_CXX_COMPILE_FLAGS}" )
 		include_directories(${MPI_C_INCLUDE_PATH})
 	else()
 		set( HAVE_MPI 0 )
@@ -81,54 +84,53 @@ endif()
 
 ### grid
 
+ecbuild_check_cxx11( unique_ptr shared_ptr )
+if( (NOT HAS_CXX11_UNIQUE_PTR) OR (NOT HAS_CXX11_SHARED_PTR) )
+    set( ENABLE_GRID OFF )
+  	message( STATUS "Feature GRID disabled because of lacking C++11 support" )
+endif()
 ecbuild_add_option( FEATURE GRID
-					DEFAULT ON
 					DESCRIPTION "support for C++ grid interface" )
 
-if( ENABLE_GRID AND NOT ECKIT_FOUND )
-	set( HAVE_GRID 0 )
-	message( WARNING "atlas::grid requires eckit (not found)" )
-else()
+if( HAVE_GRID )
 	ecbuild_add_cxx11_flags()
-	ecbuild_check_cxx11( PRINT )
 endif()
 
 ### tesselation
 
 ecbuild_add_option( FEATURE TESSELATION
-					DEFAULT ON
 					DESCRIPTION "support for unstructured mesh generation"
 					REQUIRED_PACKAGES CGAL )
+
+if( CGAL_FOUND )
+	list( APPEND CGAL_LIBRARIES ${CGAL_LIBRARY} ${CGAL_3RD_PARTY_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES} )
+endif()
 
 ### sandbox
 
 ecbuild_add_option( FEATURE SANDBOX
-					DEFAULT ON
 					DESCRIPTION "build the sandbox stuff" )
 
 ############################################################################################
 # export package info
 
+list( APPEND ATLAS_TPLS eckit )
+
 set( ATLAS_INCLUDE_DIRS   ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src )
 set( ATLAS_LIBRARIES      atlas )
-set( ATLAS_TPLS           "" )
 
 if( ENABLE_FORTRAN )
 	list( APPEND ATLAS_INCLUDE_DIRS ${CMAKE_Fortran_MODULE_DIRECTORY} )
 	set( ATLAS_LIBRARIES atlasf ${ATLAS_LIBRARIES} )
 endif()
 
-if( HAVE_TESSELATION AND CGAL_FOUND )
-	list( APPEND CGAL_LIBRARIES ${CGAL_LIBRARY} ${CGAL_3RD_PARTY_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES} )
-	list( APPEND ATLAS_TPLS CGAL )
-endif()
-
 if( HAVE_GRID )
-	list( APPEND ATLAS_TPLS eckit )
 	list( APPEND ATLAS_LIBRARIES atlas_grid )
 endif()
 
 get_directory_property( ATLAS_DEFINITIONS COMPILE_DEFINITIONS )
+
+debug_var( ATLAS_TPLS )
 
 foreach( _tpl ${ATLAS_TPLS} )
 	string( TOUPPER ${_tpl} TPL )

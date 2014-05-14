@@ -19,6 +19,20 @@ ecbuild_add_test( TARGET test_datastruct
 ecbuild_add_test( TARGET test_gmsh
   SOURCES  test_gmsh.cpp
   LIBS     atlas
+  INCLUDES  ${Boost_INCLUDE_DIRS}
+  CONDITION HAVE_BOOST
+)
+
+ecbuild_add_test( TARGET test_meshgen3d
+  SOURCES   test_meshgen3d.cpp
+  LIBS      atlas_meshgen atlas
+  INCLUDES  ${Boost_INCLUDE_DIRS}
+  CONDITION HAVE_BOOST
+)
+
+ecbuild_add_test( TARGET test_rgg
+	SOURCES  test_rgg.cpp
+	LIBS     atlas_meshgen atlas_testing
 )
 
 add_subdirectory( grid )

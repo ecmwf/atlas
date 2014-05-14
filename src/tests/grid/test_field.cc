@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2012 ECMWF.
+ * (C) Copyright 1996-2014 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -11,7 +11,7 @@
 #include "eckit/log/Log.h"
 #include "eckit/runtime/Tool.h"
 
-#include "atlas/FunctionSpace.hpp"
+#include "atlas/mesh/FunctionSpace.hpp"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/LatLon.h"
 #include "atlas/grid/Field.h"

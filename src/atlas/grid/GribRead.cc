@@ -1,13 +1,23 @@
+/*
+ * (C) Copyright 1996-2014 ECMWF.
+ * 
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
+ * In applying this licence, ECMWF does not waive the privileges and immunities 
+ * granted to it by virtue of its status as an intergovernmental organisation nor
+ * does it submit to any jurisdiction.
+ */
+
 #include "eckit/exception/Exceptions.h"
 #include "eckit/log/Timer.h"
 #include "eckit/log/Seconds.h"
 #include "eckit/geometry/Point3.h"
 #include "eckit/grib/GribAccessor.h"
 
-#include "atlas/Mesh.hpp"
-#include "atlas/FunctionSpace.hpp"
-#include "atlas/Parameters.hpp"
-#include "atlas/Field.hpp"
+#include "atlas/mesh/Mesh.hpp"
+#include "atlas/mesh/FunctionSpace.hpp"
+#include "atlas/mesh/Parameters.hpp"
+#include "atlas/mesh/Field.hpp"
 
 #include "atlas/grid/GribRead.h"
 #include "atlas/grid/Unstructured.h"
@@ -103,7 +113,7 @@ void GribRead::read_nodes_from_grib( grib_handle* h, atlas::Mesh& mesh )
 
     FunctionSpace& nodes = mesh.function_space( "nodes" );
 
-    ASSERT(  nodes.bounds()[1] == nb_nodes );
+    ASSERT(  nodes.extents()[0] == nb_nodes );
 
     FieldT<double>& coords  = nodes.field<double>("coordinates");
     FieldT<double>& latlon  = nodes.field<double>("latlon");

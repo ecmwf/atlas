@@ -1,3 +1,13 @@
+/*
+ * (C) Copyright 1996-2014 ECMWF.
+ * 
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
+ * In applying this licence, ECMWF does not waive the privileges and immunities 
+ * granted to it by virtue of its status as an intergovernmental organisation nor
+ * does it submit to any jurisdiction.
+ */
+
 #include <limits>
 #include <cassert>
 #include <sstream>
@@ -11,10 +21,10 @@
 #include "eckit/config/Resource.h"
 #include "eckit/runtime/Tool.h"
 
-#include "atlas/Gmsh.hpp"
-#include "atlas/Mesh.hpp"
-#include "atlas/Field.hpp"
-#include "atlas/FunctionSpace.hpp"
+#include "atlas/io/Gmsh.hpp"
+#include "atlas/mesh/Mesh.hpp"
+#include "atlas/mesh/Field.hpp"
+#include "atlas/mesh/FunctionSpace.hpp"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -68,13 +78,13 @@ void GmshLs::run()
     FieldT<double>& coords = nodes.field<double>( "coordinates" );
     FieldT<int>& glb_idx   = nodes.field<int>( "glb_idx" );
 
-    size_t nb_nodes = nodes.bounds()[1];
+    size_t nb_nodes = nodes.extents()[0];
 
     Log::info() << "nb_nodes = " << nb_nodes << std::endl;
 
-    if( mesh.has_function_space("triags") ) Log::info() << "nb_triags = " << mesh.function_space( "triags" ).bounds()[1] << std::endl;
-    if( mesh.has_function_space("quads") )  Log::info() << "nb_quads = "  << mesh.function_space( "quads" ).bounds()[1] << std::endl;
-    if( mesh.has_function_space("edges") )  Log::info() << "nb_edges = "  << mesh.function_space( "edges" ).bounds()[1] << std::endl;
+    if( mesh.has_function_space("triags") ) Log::info() << "nb_triags = " << mesh.function_space( "triags" ).extents()[0] << std::endl;
+    if( mesh.has_function_space("quads") )  Log::info() << "nb_quads = "  << mesh.function_space( "quads" ).extents()[0] << std::endl;
+    if( mesh.has_function_space("edges") )  Log::info() << "nb_edges = "  << mesh.function_space( "edges" ).extents()[0] << std::endl;
 
 }
 

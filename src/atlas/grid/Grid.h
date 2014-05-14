@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2013 ECMWF.
+ * (C) Copyright 1996-2014 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -24,8 +24,8 @@
 
 #include "eckit/geometry/Point2.h"
 
-#include "atlas/Mesh.hpp"
-#include "atlas/Field.hpp"
+#include "atlas/mesh/Mesh.hpp"
+#include "atlas/mesh/Field.hpp"
 
 //------------------------------------------------------------------------------------------------------
 
