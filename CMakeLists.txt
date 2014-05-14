@@ -43,10 +43,9 @@ ecbuild_find_python()
 set(Boost_USE_MULTITHREADED      ON )
 ecbuild_add_option( FEATURE BOOST
 					DEFAULT ${ENABLE_TESTS}
-					DESCRIPTION "Boost"
+					DESCRIPTION "Boost Unit Test Framework"
 					REQUIRED_PACKAGES "Boost 1.45.0 COMPONENTS unit_test_framework" )
-
-set_package_properties( Boost PROPERTIES TYPE RECOMMENDED PURPOSE "" )
+set_package_properties( Boost PROPERTIES TYPE OPTIONAL PURPOSE "Testing Only" )
 
 ### Fortran ...
 
@@ -85,12 +84,16 @@ endif()
 
 ### grid
 
+ecbuild_check_cxx11( unique_ptr shared_ptr )
+if( (NOT HAS_CXX11_UNIQUE_PTR) OR (NOT HAS_CXX11_SHARED_PTR) )
+    set( ENABLE_GRID OFF )
+  	message( STATUS "Feature GRID disabled because of lacking C++11 support" )
+endif()
 ecbuild_add_option( FEATURE GRID
 					DESCRIPTION "support for C++ grid interface" )
 
 if( HAVE_GRID )
 	ecbuild_add_cxx11_flags()
-	ecbuild_check_cxx11( PRINT )
 endif()
 
 ### tesselation
@@ -115,8 +118,6 @@ list( APPEND ATLAS_TPLS eckit )
 
 set( ATLAS_INCLUDE_DIRS   ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src )
 set( ATLAS_LIBRARIES      atlas )
-
-debug_var( ATLAS_TPLS ) # should already contain some entries -- eckit, cgal
 
 if( ENABLE_FORTRAN )
 	list( APPEND ATLAS_INCLUDE_DIRS ${CMAKE_Fortran_MODULE_DIRECTORY} )
