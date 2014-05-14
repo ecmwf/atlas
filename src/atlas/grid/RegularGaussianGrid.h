@@ -54,11 +54,16 @@ public:
    long gaussianNumber() const { return gaussianNumber_;}
 
 private:
+   double epsilon() const;
+
+private:
    double north_;                   /// In degrees
    double south_;                   /// In degrees
    double west_;                    /// In degrees
    double east_;                    /// In degrees
    long   gaussianNumber_;          /// No of points between pole and equator
+   long   editionNumber_;           /// Grib 1 or Grib 2
+
    std::vector< Point > points_;     ///< storage of coordinate points
    std::vector<double> latitudes_;
    std::string hash_;

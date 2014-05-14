@@ -37,13 +37,16 @@ namespace grid {
 
 RegularGaussianGrid::RegularGaussianGrid(grib_handle* handle)
 : gaussianNumber_(0),
-  north_(0.0),south_(0.0),west_(0.0),east_(0.0)
+  north_(0.0),south_(0.0),west_(0.0),east_(0.0),
+  editionNumber_(0)
 {
    Log::info() << "Build a RegularGaussianGrid  " << std::endl;
 
    // Extract the guassian grid attributes from the grib handle
    if (handle == NULL) throw std::runtime_error("NULL grib_handle");
    hash_ = grib_hash(handle);
+
+   GRIB_CHECK(grib_get_long(handle,"editionNumber",&editionNumber_),0);
 
    long iScansNegatively = 0, jScansPositively = 0;
    GRIB_CHECK(grib_get_long(handle,"iScansNegatively",&iScansNegatively),0);
@@ -89,7 +92,7 @@ RegularGaussianGrid::RegularGaussianGrid(grib_handle* handle)
 
    // These needs to be reviewed. TODO
    long nptsWE = 4 * gaussianNumber_ ;
-   long weIncrement = 90./gaussianNumber_ ; // ??
+   long weIncrement = 360.0/nptsWE;
    double plon = west_;
    double plat = north_;
    for(size_t i = 0 ; i < latitudes_.size(); i++) {
@@ -100,6 +103,8 @@ RegularGaussianGrid::RegularGaussianGrid(grib_handle* handle)
       }
    }
 
+   Log::info() << " editionNumber                                  " << editionNumber_ << std::endl;
+   Log::info() << " epsilon()                                      " << epsilon() << std::endl;
    Log::info() << " gaussianNumber_                                " << gaussianNumber_ << std::endl;
    Log::info() << " iScansNegatively                               " << iScansNegatively << std::endl;
    Log::info() << " jScansPositively                               " << jScansPositively << std::endl;
@@ -126,7 +131,7 @@ RegularGaussianGrid::~RegularGaussianGrid()
 Grid::Point RegularGaussianGrid::latLon(size_t the_i, size_t the_j) const
 {
     long nptsWE = 4 * gaussianNumber_ ;
-    long weIncrement = 90./gaussianNumber_ ; // ??
+    long weIncrement = 360.0 / nptsWE;
     double plon = west_;
     for(size_t i = 0 ; i < latitudes_.size(); i++) {
 
@@ -163,7 +168,13 @@ void RegularGaussianGrid::coordinates( Grid::Coords& r ) const
     }
 }
 
-
+double RegularGaussianGrid::epsilon() const
+{
+   // grib edition 1 - milli-degrees
+   // grib edition 2 - micro-degrees or could be defined by the keys: "subdivisionsOfBasicAngle" and "basicAngleOfTheInitialProductionDomain"
+   // Therefore the client needs access to this when dealing with double based comparisons (for tolerances)
+   return (editionNumber_ == 1) ? 1e-3 : 1e-6;
+}
 //-----------------------------------------------------------------------------
 
 } // namespace grid

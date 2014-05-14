@@ -65,7 +65,7 @@ private:
    void add_point(int lat_index);
    bool isGlobalNorthSouth() const;
    bool isGlobalWestEast() const;
-
+   double epsilon() const;
 
 private:
    double north_;                   /// In degrees
@@ -74,6 +74,7 @@ private:
    double east_;                    /// In degrees
    long   gaussianNumber_;          /// No of points between pole and equator
    long   nj_;                      /// No of points along Y axes
+   long   editionNumber_;           /// Grib 1 or Grib 2
    std::vector<long> rgSpec_;
    std::vector< Point > points_;     ///< storage of coordinate points
    std::vector<double> latitudes_;

@@ -27,6 +27,7 @@
 #include "atlas/grid/ReducedGaussianGrid.h"
 
 using namespace eckit;
+using namespace std;
 
 
 namespace atlas {
@@ -40,13 +41,16 @@ namespace grid {
 
 ReducedGaussianGrid::ReducedGaussianGrid(grib_handle* handle)
 : gaussianNumber_(0),
-  north_(0.0),south_(0.0),west_(0.0),east_(0.0)
+  north_(0.0),south_(0.0),west_(0.0),east_(0.0),
+  editionNumber_(0)
 {
    Log::info() << "Build a ReducedGaussianGrid  " << std::endl;
 
    // Extract the guassian grid attributes from the grib handle
    if (handle == NULL) throw std::runtime_error("NULL grib_handle");
    hash_ = grib_hash(handle);
+
+   GRIB_CHECK(grib_get_long(handle,"editionNumber",&editionNumber_),0);
 
    long iScansNegatively = 0, jScansPositively = 0;
    GRIB_CHECK(grib_get_long(handle,"iScansNegatively",&iScansNegatively),0);
@@ -87,6 +91,7 @@ ReducedGaussianGrid::ReducedGaussianGrid(grib_handle* handle)
    // Create point list based on area. To avoid rounding errors determine if we have
    // Global area, then use simple algorithm.
    if (isGlobalNorthSouth() && isGlobalWestEast()) {
+      Log::info() << " GLOBAL " << std::endl;
       for ( int i = 0; i < 2*gaussianNumber_ && i < rgSpec_.size(); i++ ) {
          long no_of_points_along_latitude = rgSpec_[i];
          double east_west_grid_length = no_of_points_along_latitude/360.0;
@@ -98,6 +103,7 @@ ReducedGaussianGrid::ReducedGaussianGrid(grib_handle* handle)
       }
    }
    else {
+      Log::info() << " LOCAL " << std::endl;
 
       for ( int i = 0; i < 2*gaussianNumber_ && i < rgSpec_.size(); i++ ) {
          if ( FloatCompare::is_equal(latitudes_[i],north_) ) {
@@ -117,6 +123,8 @@ ReducedGaussianGrid::ReducedGaussianGrid(grib_handle* handle)
    if (jScansPositively == 1 )
       std::reverse(latitudes_.begin(), latitudes_.end());
 
+   Log::info() << " editionNumber                                  " << editionNumber_ << std::endl;
+   Log::info() << " epsilon()                                      " << epsilon() << std::endl;
    Log::info() << " gaussianNumber_                                " << gaussianNumber_ << std::endl;
    Log::info() << " nj                                             " << nj_ << std::endl;
    Log::info() << " isGlobalNorthSouth()                           " << isGlobalNorthSouth() << std::endl;
@@ -174,6 +182,9 @@ bool ReducedGaussianGrid::isGlobalWestEast() const
 {
    /// AREA_FACTOR is added because grib has precision for 3 dec places.
    double res = east_ - west_ + 90.0 / gaussianNumber_ + AREA_FACTOR;
+//   cout << " ReducedGaussianGrid::isGlobalWestEast() 90.0 / gaussianNumber_ = " << double(90.0 /(double)gaussianNumber_) << endl;
+//   cout << " ReducedGaussianGrid::isGlobalWestEast() double(360.0 /((double)4*gaussianNumber_)  = " << (360.0/((double)4*gaussianNumber_)) << endl;
+//   cout << " ReducedGaussianGrid::isGlobalWestEast() RES = " << res << endl;
    return res > 360.0 || FloatCompare::is_equal(res,360.0);
 }
 
@@ -197,6 +208,14 @@ void ReducedGaussianGrid::coordinates( Grid::Coords& r ) const
         r.lat(i) = points_[i].lat();
         r.lon(i) = points_[i].lon();
     }
+}
+
+double ReducedGaussianGrid::epsilon() const
+{
+   // grib edition 1 - milli-degrees
+   // grib edition 2 - micro-degrees or could be defined by the keys: "subdivisionsOfBasicAngle" and "basicAngleOfTheInitialProductionDomain"
+   // Therefore the client needs access to this when dealing with double based comparisons (for tolerances)
+   return (editionNumber_ == 1) ? 1e-3 : 1e-6;
 }
 
 
