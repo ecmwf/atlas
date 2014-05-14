@@ -36,7 +36,7 @@ static PointList* read_number_of_data_points(grib_handle *h)
    int err = 0;
    grib_iterator *i = grib_iterator_new(h, 0, &err);
    if(err != 0 )
-      throw std::string("error reading grib");
+      throw std::runtime_error("error reading grib, could not create grib_iterator_new");
 
    PointList* pts = new PointList(nb_nodes);
 
@@ -59,7 +59,7 @@ static PointList* read_number_of_data_points(grib_handle *h)
 grid::Grid* GribRead::create_grid_from_grib(grib_handle *h)
 {
    ASSERT( h );
-   if ( 0 == h) throw std::string("GribRead::create_grid_from_grib NULL grib_handle");
+   if ( 0 == h) throw std::runtime_error("GribRead::create_grid_from_grib NULL grib_handle");
 
    char string_value[64];
    size_t len = sizeof(string_value)/sizeof(char);

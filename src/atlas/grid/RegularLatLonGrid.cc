@@ -32,6 +32,8 @@ namespace atlas {
 namespace grid {
 
 //-----------------------------------------------------------------------------
+// Area: Do we check the area.
+// Area: Can we assume area is multiple of the grids ?
 
 RegularLatLonGrid::RegularLatLonGrid(grib_handle* handle)
 : nsIncrement_(0),weIncrement_(0),nptsNS_(0),nptsWE_(0),
@@ -46,7 +48,6 @@ RegularLatLonGrid::RegularLatLonGrid(grib_handle* handle)
    long iScansNegatively = 0, jScansPositively = 0;
    GRIB_CHECK(grib_get_long(handle,"iScansNegatively",&iScansNegatively),0);
    GRIB_CHECK(grib_get_long(handle,"jScansPositively",&jScansPositively),0);
-   int scanning_mode = Grid::scanningMode(iScansNegatively,jScansPositively);
 
    GRIB_CHECK(grib_get_double(handle,"latitudeOfFirstGridPointInDegrees",&north_),0);
    GRIB_CHECK(grib_get_double(handle,"longitudeOfFirstGridPointInDegrees",&west_),0);
@@ -62,9 +63,11 @@ RegularLatLonGrid::RegularLatLonGrid(grib_handle* handle)
    long nb_nodes = 0;
    grib_get_long(handle,"numberOfDataPoints",&nb_nodes);
 
+   int scanning_mode = Grid::scanningMode(iScansNegatively,jScansPositively);
+
+
    // Need to check AREA geometry, which uses scanning mode ???
    // .......
-
 
    double plon = west_;
    double plat = north_;

@@ -108,35 +108,54 @@ static void test_grids_from_grib_sample_directory(const std::string& directory)
             continue;
          }
 
-         std::cout << "Opening GRIB file " << relPath.string() << " -------------------------------------------------------\n";
-         // Open the grib file
+         std::cout << "\n==========================================================================" << std::endl;
+         std::cout << "Opening GRIB file " << relPath.string() << std::endl;
          FILE* fp = fopen(relPath.string().c_str(),"r");
          BOOST_REQUIRE_MESSAGE(fp,"Could not open file " << relPath.string());
 
-         // Create a grib handle
+         std::cout << " Create a grib handle"<< std::endl;
          int err;
          grib_handle* handle = grib_handle_new_from_file(0,fp,&err);
          BOOST_REQUIRE_MESSAGE(err == 0,"grib_handle_new_from_file error " << err << " for file " << relPath.string());
 
 
-         // Check "gridType" matches
+         std::cout << " Get the grid type" << std::endl;
          char string_value[64];
          size_t len = sizeof(string_value)/sizeof(char);
          err = grib_get_string(handle,"gridType",string_value,&len);
-         BOOST_CHECK_MESSAGE( err == 0,"grib_get_string(gridType) failed for file " << relPath.string());
-         if (err != 0) continue;
+         if ( err !=0 ) {
+            std::cout << " grib_get_string(gridType) failed for file " << relPath.string() << " IGNORING !!!!\n";
+            BOOST_REQUIRE_MESSAGE(fclose(fp) != -1,"error closing file " << relPath.string());
+            continue;
+         }
          std::string gridType = string_value;
+         std::cout << " Create Grid derivatives " << gridType << std::endl;
+
+         if ( gridType == "polar_stereographic" || gridType == "rotated_ll" || gridType == "reduced_ll" || gridType == "sh" ) {
+
+            std::cout << " Ignoring grid types [ polar_stereographic | rotated_ll | reduced_ll || sh ] " << std::endl;
+            std::cout << " close the grib file" << std::endl;
+            err = grib_handle_delete(handle);
+            BOOST_CHECK_MESSAGE(err == 0,"grib_handle_delete failed for " << relPath.string());
+
+            // Close the file
+            BOOST_REQUIRE_MESSAGE(fclose(fp) != -1,"error closing file " << relPath.string());
+            continue;
+         }
 
 
-         // Create Grid derivatives
+         // Unstructured grid can not handle Spherical harmonics
          atlas::grid::Grid* the_grid = GribRead::create_grid_from_grib( handle );
          BOOST_CHECK_MESSAGE(the_grid,"GribRead::create_grid_from_grib failed for file " << relPath.string());
-         if (!the_grid) continue;
+         if (!the_grid) {
+            BOOST_REQUIRE_MESSAGE(fclose(fp) != -1,"error closing file " << relPath.string());
+            continue;
+         }
 
-         // Check grid type are correct.
-         BOOST_CHECK_MESSAGE(the_grid->gridType() == gridType,"grib file gridType(" << gridType << ") dir not match Grid constructor(" << the_grid->gridType() << ") for file " << relPath.string());
+         std::cout << " Check grid type are correct, found(" << gridType << ")" << std::endl;
+         BOOST_CHECK_MESSAGE(the_grid->gridType() == gridType,"gridType(" << gridType << ") dir not match Grid constructor(" << the_grid->gridType() << ") for file " << relPath.string());
 
-         // close the grib file
+         std::cout << " close the grib file" << std::endl;
          err = grib_handle_delete(handle);
          BOOST_CHECK_MESSAGE(err == 0,"grib_handle_delete failed for " << relPath.string());
 

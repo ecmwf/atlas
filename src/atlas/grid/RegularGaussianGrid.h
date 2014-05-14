@@ -54,8 +54,6 @@ public:
    long gaussianNumber() const { return gaussianNumber_;}
 
 private:
-
-private:
    double north_;                   /// In degrees
    double south_;                   /// In degrees
    double west_;                    /// In degrees

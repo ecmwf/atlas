@@ -22,6 +22,7 @@
 #include <stdexcept>
 
 #include "eckit/log/Log.h"
+#include "eckit/types/FloatCompare.h"
 #include "eckit/grib/GribAccessor.h"
 #include "atlas/grid/RegularGaussianGrid.h"
 
@@ -31,6 +32,8 @@ namespace atlas {
 namespace grid {
 
 //-----------------------------------------------------------------------------
+// Area: Do we check the area.
+// Area: Can we assume area is multiple of the grids ?
 
 RegularGaussianGrid::RegularGaussianGrid(grib_handle* handle)
 : gaussianNumber_(0),
@@ -55,12 +58,6 @@ RegularGaussianGrid::RegularGaussianGrid(grib_handle* handle)
    GRIB_CHECK(grib_get_long(handle,"numberOfParallelsBetweenAPoleAndTheEquator",&gaussianNumber_),0);
 
 
-//   GRIB_CHECK(grib_get_double(handle,"jDirectionIncrementInDegrees",&nsIncrement_),0);
-//   GRIB_CHECK(grib_get_double(handle,"iDirectionIncrementInDegrees",&weIncrement_),0);
-//
-//   GRIB_CHECK(grib_get_long(handle,"Nj",&nptsNS_),0);
-//   GRIB_CHECK(grib_get_long(handle,"Ni",&nptsWE_),0);
-
    long nb_nodes = 0;
    grib_get_long(handle,"numberOfDataPoints",&nb_nodes);
 
@@ -71,22 +68,24 @@ RegularGaussianGrid::RegularGaussianGrid(grib_handle* handle)
    grib_get_gaussian_latitudes(gaussianNumber_, array);
 
 
-//   for ( int i = 0; i < 2*gaussianNumber_; i++ )
-//   {
-//      if ( same(array[i],north_, 10e-2) ) {
-//         latitudes_.push_back(array[i]);
-//         continue;
-//      }
-//      if ( same(array[i],south_, 10e-2) ) {
-//         latitudes_.push_back(array[i]);
-//         continue;
-//      }
-//      if ( array[i] < north_ && array[i] > south_)
-//         latitudes_.push_back(array[i]);
-//   }
+   for ( int i = 0; i < 2*gaussianNumber_; i++ )
+   {
+      // epsilon 10e-2
+      if ( FloatCompare::is_equal(array[i],north_) ) {
+         latitudes_.push_back(array[i]);
+         continue;
+      }
+      if ( FloatCompare::is_equal(array[i],south_) ) {
+         latitudes_.push_back(array[i]);
+         continue;
+      }
+      if ( array[i] < north_ && array[i] > south_)
+         latitudes_.push_back(array[i]);
+   }
 
-//   if (jScansPositively == 1 )
-//      std::reverse(latitudes_.begin(), latitudes_.end());
+   if (jScansPositively == 1 )
+      std::reverse(latitudes_.begin(), latitudes_.end());
+
 
    // These needs to be reviewed. TODO
    long nptsWE = 4 * gaussianNumber_ ;
@@ -101,8 +100,6 @@ RegularGaussianGrid::RegularGaussianGrid(grib_handle* handle)
       }
    }
 
-   long nptsNS = 2 * gaussianNumber_ ;
-
    Log::info() << " gaussianNumber_                                " << gaussianNumber_ << std::endl;
    Log::info() << " iScansNegatively                               " << iScansNegatively << std::endl;
    Log::info() << " jScansPositively                               " << jScansPositively << std::endl;
@@ -112,7 +109,7 @@ RegularGaussianGrid::RegularGaussianGrid(grib_handle* handle)
    Log::info() << " latitudeOfLastGridPointInDegrees               " << south_ << std::endl;
    Log::info() << " longitudeOfLastGridPointInDegrees              " << east_ << std::endl;
    Log::info() << " iDirectionIncrementInDegrees(west-east   incr) " << weIncrement << std::endl;
-   Log::info() << " nptsNS                                         " << nptsNS << std::endl;
+   Log::info() << " nptsNS                                         " << 2 * gaussianNumber_ << std::endl;
    Log::info() << " nptsWE                                         " << nptsWE << std::endl;
    Log::info() << " numberOfDataPoints                             " << nb_nodes << std::endl;
    Log::info() << " -----------------------------------------------" << std::endl;
