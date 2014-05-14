@@ -9,7 +9,8 @@
  */
 
 #include <sstream>
-
+#include <algorithm>
+ 
 #include "atlas/atlas_config.h"
 #include "atlas/meshgen/RGG.hpp"
 #include "atlas/meshgen/EqualAreaPartitioner.hpp"
