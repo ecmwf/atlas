@@ -26,41 +26,6 @@
 namespace atlas {
 namespace meshgen {
 
-  DebugMesh::DebugMesh()
-  {
-    int nlat=5;
-    int lon[] = {
-      6,
-      10,
-      18,
-      22,
-      22,
-    };
-    /*
-    First prediction of colatitudes
-    */
-    std::vector<double> colat(nlat);
-    double z;
-    for( int i=0; i<nlat; ++i )
-    {
-      z = (4.*(i+1.)-1.)*M_PI/(4.*2.*nlat+2.);
-      colat[i] = z+1./(tan(z)*(8.*(2.*nlat)*(2.*nlat)));
-    }
-    /*
-    Fill in final structures
-    */
-    lat_.resize(2*nlat);
-    lon_.resize(2*nlat);
-    std::copy( lon, lon+nlat, lon_.begin() );
-    std::reverse_copy( lon, lon+nlat, lon_.begin()+nlat );
-    std::copy( colat.begin(), colat.begin()+nlat, lat_.begin() );
-    std::reverse_copy( colat.begin(), colat.begin()+nlat, lat_.begin()+nlat );
-    for (int i=0; i<nlat; ++i)
-      lat_[i]=M_PI/2.-lat_[i];
-    for (int i=nlat; i<2*nlat; ++i)
-      lat_[i]=-M_PI/2.+lat_[i];
-  }
-
 struct Region
 {
   int north;
@@ -311,10 +276,10 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
       try_make_quad = false;
     
       
-      dN1S2 = std::abs(spherical_distance(xN1,yN,xS2,yS,1.));
-      dS1N2 = std::abs(spherical_distance(xS1,yS,xN2,yN,1.));
-      dN2S2 = std::abs(spherical_distance(xN2,yN,xS2,yS,1.));
-      // std::cout << "  d31 " << d31 << "   d42 " << d42 << "   d43 " << d43 << std::endl;
+      dN1S2 = std::abs(xN1-xS2);//std::abs(spherical_distance(xN1,yN,xS2,yS,1.));
+      dS1N2 = std::abs(xS1-xN2);//std::abs(spherical_distance(xS1,yS,xN2,yN,1.));
+      dN2S2 = std::abs(xN2-xS2);//std::abs(spherical_distance(xN2,yN,xS2,yS,1.));
+      // std::cout << "  dN1S2 " << dN1S2 << "   dS1N2 " << dS1N2 << "   dN2S2 " << dN2S2 << std::endl;
       if ( (dN1S2 < dN2S2 && dN1S2 < dS1N2) && (ipS1 != ipS2) ) try_make_triangle_up = true;
       else if ( (dS1N2 < dN2S2 && dS1N2 < dN1S2) && (ipN1 != ipN2) ) try_make_triangle_down = true;
       else try_make_quad = true;
@@ -377,7 +342,7 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
         elem[1] = ipS1;
         elem[2] = -1;
         elem[3] = ipN2;
-        // std::cout << "  ." << std::endl;
+
         add_triag = false;
         
         if( 0.5*(yN+yS) > 1e-6 )
@@ -419,7 +384,7 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
         elem[1] = ipS1;
         elem[2] = ipS2;
         elem[3] = -1;
-        // std::cout << "  . "  << std::endl;
+
         add_triag = false;
         if( 0.5*(yN+yS) > 1e-6 )
         {

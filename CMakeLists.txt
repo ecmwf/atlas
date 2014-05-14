@@ -44,7 +44,7 @@ set(Boost_USE_MULTITHREADED      ON )
 ecbuild_add_option( FEATURE BOOST
 					DEFAULT ${ENABLE_TESTS}
 					DESCRIPTION "Boost"
-					REQUIRED_PACKAGES "Boost 1.45.0 COMPONENTS unit_test_framework test_exec_monitor" )
+					REQUIRED_PACKAGES "Boost 1.45.0 COMPONENTS unit_test_framework" )
 
 set_package_properties( Boost PROPERTIES TYPE RECOMMENDED PURPOSE "" )
 

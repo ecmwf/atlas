@@ -17,15 +17,17 @@ ecbuild_add_test( TARGET test_datastruct
 )
 
 ecbuild_add_test( TARGET test_gmsh
-  BOOST
   SOURCES  test_gmsh.cpp
   LIBS     atlas
+  INCLUDES  ${Boost_INCLUDE_DIRS}
+  CONDITION HAVE_BOOST
 )
 
 ecbuild_add_test( TARGET test_meshgen3d
-  BOOST
-  SOURCES  test_meshgen3d.cpp
-  LIBS     atlas_meshgen atlas
+  SOURCES   test_meshgen3d.cpp
+  LIBS      atlas_meshgen atlas
+  INCLUDES  ${Boost_INCLUDE_DIRS}
+  CONDITION HAVE_BOOST
 )
 
 ecbuild_add_test( TARGET test_rgg

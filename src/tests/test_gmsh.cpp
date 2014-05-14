@@ -8,19 +8,14 @@
  * does it submit to any jurisdiction.
  */
 
-#define BOOST_TEST_MAIN
-
+#define BOOST_TEST_MODULE TestGmsh
 #include <boost/test/included/unit_test.hpp>
 
-#include "atlas/atlas_config.h"
-
+#include "atlas/mpl/MPL.hpp"
 #include "atlas/io/Gmsh.hpp"
 #include "atlas/actions/BuildEdges.hpp"
 #include "atlas/actions/BuildDualMesh.hpp"
 #include "atlas/actions/BuildPeriodicBoundaries.hpp"
-#include "atlas/mpl/MPL.hpp"
-
-BOOST_AUTO_TEST_SUITE( TestGmsh )
 
 BOOST_AUTO_TEST_CASE( test_read_write )
 {
@@ -35,8 +30,5 @@ BOOST_AUTO_TEST_CASE( test_read_write )
     build_dual_mesh(*mesh);
 
     Gmsh::write(*mesh,"bla.msh");
-
     MPL::finalize();
 }
-
-BOOST_AUTO_TEST_SUITE_END()
