@@ -86,7 +86,7 @@ endif()
 
 ecbuild_check_cxx11( unique_ptr shared_ptr )
 if( (NOT HAS_CXX11_UNIQUE_PTR) OR (NOT HAS_CXX11_SHARED_PTR) )
-    set( ENABLE_GRID OFF )
+    set( ENABLE_GRID OFF CACHE BOOL "" )
   	message( STATUS "Feature GRID disabled because of lacking C++11 support" )
 endif()
 ecbuild_add_option( FEATURE GRID
