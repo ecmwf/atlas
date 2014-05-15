@@ -121,7 +121,7 @@ set( ATLAS_LIBRARIES      atlas )
 
 if( ENABLE_FORTRAN )
 	list( APPEND ATLAS_INCLUDE_DIRS ${CMAKE_Fortran_MODULE_DIRECTORY} )
-	set( ATLAS_LIBRARIES atlasf ${ATLAS_LIBRARIES} )
+	set( ATLAS_LIBRARIES atlas_fortran ${ATLAS_LIBRARIES} )
 endif()
 
 if( HAVE_GRID )
