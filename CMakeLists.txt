@@ -86,7 +86,7 @@ endif()
 
 ecbuild_check_cxx11( unique_ptr shared_ptr )
 if( (NOT HAS_CXX11_UNIQUE_PTR) OR (NOT HAS_CXX11_SHARED_PTR) )
-    set( ENABLE_GRID OFF )
+    set( ENABLE_GRID OFF CACHE BOOL "" )
   	message( STATUS "Feature GRID disabled because of lacking C++11 support" )
 endif()
 ecbuild_add_option( FEATURE GRID
@@ -121,7 +121,7 @@ set( ATLAS_LIBRARIES      atlas )
 
 if( ENABLE_FORTRAN )
 	list( APPEND ATLAS_INCLUDE_DIRS ${CMAKE_Fortran_MODULE_DIRECTORY} )
-	set( ATLAS_LIBRARIES atlasf ${ATLAS_LIBRARIES} )
+	set( ATLAS_LIBRARIES atlas_fortran ${ATLAS_LIBRARIES} )
 endif()
 
 if( HAVE_GRID )
