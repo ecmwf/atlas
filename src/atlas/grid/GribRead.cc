@@ -43,6 +43,8 @@ static PointList* read_number_of_data_points(grib_handle *h)
    long nb_nodes = 0;
    grib_get_long(h,"numberOfDataPoints",&nb_nodes);
 
+   /// It should be noted that grib iterator is *only* available for certain grids
+   /// i.e for Spherical Harmonics it is not implemented.
    int err = 0;
    grib_iterator *i = grib_iterator_new(h, 0, &err);
    if(err != 0 )

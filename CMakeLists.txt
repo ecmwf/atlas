@@ -99,11 +99,16 @@ endif()
 ### tesselation
 
 ecbuild_add_option( FEATURE TESSELATION
-					DESCRIPTION "support for unstructured mesh generation"
-					REQUIRED_PACKAGES CGAL )
+					DESCRIPTION "support for unstructured mesh generation" )
 
-if( CGAL_FOUND )
-	list( APPEND CGAL_LIBRARIES ${CGAL_LIBRARY} ${CGAL_3RD_PARTY_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES} )
+if( ENABLE_TESSELATION )
+   find_package( CGAL )
+
+   if( CGAL_FOUND )
+   	list( APPEND CGAL_LIBRARIES ${CGAL_LIBRARY} ${CGAL_3RD_PARTY_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES} )
+   endif()
+   
+   list( APPEND ATLAS_TPLS CGAL )
 endif()
 
 ### sandbox
