@@ -63,9 +63,11 @@ public:
 
 private:
    void add_point(int lat_index);
+
+   // TODO common code
+   double epsilon() const;
    bool isGlobalNorthSouth() const;
    bool isGlobalWestEast() const;
-   double epsilon() const;
 
 private:
    double north_;                   /// In degrees

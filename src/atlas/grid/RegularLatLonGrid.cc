@@ -23,10 +23,11 @@
 
 #include "eckit/log/Log.h"
 #include "eckit/grib/GribAccessor.h"
-
+#include "atlas/grid/GribRead.h"
 #include "atlas/grid/RegularLatLonGrid.h"
 
 using namespace eckit;
+using namespace std;
 
 namespace atlas {
 namespace grid {
@@ -37,12 +38,15 @@ namespace grid {
 
 RegularLatLonGrid::RegularLatLonGrid(grib_handle* handle)
 : nsIncrement_(0),weIncrement_(0),nptsNS_(0),nptsWE_(0),
-  north_(0.0),south_(0.0),west_(0.0),east_(0.0)
+  north_(0.0),south_(0.0),west_(0.0),east_(0.0),editionNumber_(0)
 {
    Log::info() << "Build a RegularLatLonGrid  " << std::endl;
 
    // Extract the regluar lat long grid attributes from the grib handle
    if (handle == NULL) throw std::runtime_error("NULL grib_handle");
+
+   GRIB_CHECK(grib_get_long(handle,"editionNumber",&editionNumber_),0);
+
    hash_ = grib_hash(handle);
 
    long iScansNegatively = 0, jScansPositively = 0;
@@ -69,17 +73,18 @@ RegularLatLonGrid::RegularLatLonGrid(grib_handle* handle)
    // Need to check AREA geometry, which uses scanning mode ???
    // .......
 
-   double plon = west_;
    double plat = north_;
    points_.reserve( (nptsNS_ + 1) * (nptsWE_ + 1) );
    for( size_t j = 0; j < nptsNS_; ++j) {
+      double plon = west_;
       for( size_t i = 0; i < nptsWE_; ++i) {
          points_.push_back( Point( plat, plon ) );
          plon += weIncrement_;
       }
-      plat += nsIncrement_;
+      plat -= nsIncrement_;
    }
 
+   Log::info() << " editionNumber                                  " << editionNumber_ << std::endl;
    Log::info() << " iScansNegatively                               " << iScansNegatively << std::endl;
    Log::info() << " jScansPositively                               " << jScansPositively << std::endl;
    Log::info() << " scanning_mode                                  " << scanning_mode << std::endl;
@@ -95,8 +100,8 @@ RegularLatLonGrid::RegularLatLonGrid(grib_handle* handle)
    Log::info() << " -----------------------------------------------" << std::endl;
    Log::info() << " computeIncLat() " << computeIncLat() << "      nsIncrement_ " << nsIncrement_ << std::endl;
    Log::info() << " computeIncLon() " << computeIncLon() << "      weIncrement_ " << nsIncrement_ << std::endl;
-   Log::info() << " computeRows()   " << computeRows(north_,south_,west_,east_) << " nptsNS_ " << nptsNS_ << std::endl;
-   Log::info() << " computeCols()   " << computeCols(west_,east_) <<  " nptsWE_ " << nptsWE_ << std::endl;
+   Log::info() << " computeRows()   " << computeRows(north_,south_,west_,east_) << "     nptsNS_ " << nptsNS_ << std::endl;
+   Log::info() << " computeCols()   " << computeCols(west_,east_) <<  "     nptsWE_ " << nptsWE_ << std::endl;
    Log::info() << " points_.size()  " << points_.size() << "       nb_nodes " << nb_nodes << std::endl << std::endl;
 
    ASSERT(nsIncrement_ == computeIncLat());
@@ -104,6 +109,9 @@ RegularLatLonGrid::RegularLatLonGrid(grib_handle* handle)
    ASSERT(nptsNS_ == computeRows(north_,south_,west_,east_));
    ASSERT(nptsWE_ == computeCols(west_,east_));
    ASSERT(points_.size() == nb_nodes);
+
+   // Check point list compared with grib
+   GribRead::comparePointList(points_,epsilon(),handle);
 }
 
 RegularLatLonGrid::~RegularLatLonGrid()
@@ -175,6 +183,14 @@ long RegularLatLonGrid::computeRows(double north, double south, double west, dou
 long RegularLatLonGrid::computeCols(double west, double east) const
 {
    return fabs((east - west)/weIncrement_) + 1;
+}
+
+double RegularLatLonGrid::epsilon() const
+{
+   // grib edition 1 - milli-degrees
+   // grib edition 2 - micro-degrees or could be defined by the keys: "subdivisionsOfBasicAngle" and "basicAngleOfTheInitialProductionDomain"
+   // Therefore the client needs access to this when dealing with double based comparisons (for tolerances)
+   return (editionNumber_ == 1) ? 1e-3 : 1e-6;
 }
 
 //-----------------------------------------------------------------------------

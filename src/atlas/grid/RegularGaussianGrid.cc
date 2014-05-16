@@ -25,8 +25,10 @@
 #include "eckit/types/FloatCompare.h"
 #include "eckit/grib/GribAccessor.h"
 #include "atlas/grid/RegularGaussianGrid.h"
+#include "atlas/grid/GribRead.h"
 
 using namespace eckit;
+using namespace std;
 
 namespace atlas {
 namespace grid {
@@ -36,7 +38,7 @@ namespace grid {
 // Area: Can we assume area is multiple of the grids ?
 
 RegularGaussianGrid::RegularGaussianGrid(grib_handle* handle)
-: gaussianNumber_(0),
+: gaussianNumber_(0),nj_(0),
   north_(0.0),south_(0.0),west_(0.0),east_(0.0),
   editionNumber_(0)
 {
@@ -59,6 +61,7 @@ RegularGaussianGrid::RegularGaussianGrid(grib_handle* handle)
    GRIB_CHECK(grib_get_double(handle,"longitudeOfLastGridPointInDegrees",&east_),0);
 
    GRIB_CHECK(grib_get_long(handle,"numberOfParallelsBetweenAPoleAndTheEquator",&gaussianNumber_),0);
+   GRIB_CHECK(grib_get_long(handle,"Nj",&nj_),0);
 
 
    long nb_nodes = 0;
@@ -71,35 +74,50 @@ RegularGaussianGrid::RegularGaussianGrid(grib_handle* handle)
    grib_get_gaussian_latitudes(gaussianNumber_, array);
 
 
-   for ( int i = 0; i < 2*gaussianNumber_; i++ )
-   {
-      // epsilon 10e-2
-      if ( FloatCompare::is_equal(array[i],north_) ) {
+   double nptsWE = 4 * gaussianNumber_ ;
+   double weIncrement = 360.0/nptsWE;
+   if (isGlobalNorthSouth() && isGlobalWestEast()) {
+      Log::info() << " GLOBAL                      weIncrement = " << weIncrement << std::endl;
+      for ( int i = 0; i < 2*gaussianNumber_; i++ ) {
+         double lat = array[i];
+         ASSERT(lat < 90.0 && lat > -90.0);
          latitudes_.push_back(array[i]);
-         continue;
       }
-      if ( FloatCompare::is_equal(array[i],south_) ) {
-         latitudes_.push_back(array[i]);
-         continue;
+      if (jScansPositively == 1 )
+         std::reverse(latitudes_.begin(), latitudes_.end());
+      for(size_t i = 0 ; i < latitudes_.size(); i++) {
+         double plon = 0;
+         for( size_t j = 0; j < nptsWE; ++j) {
+            ASSERT(latitudes_[i] < 90.0);
+            points_.push_back( Point( latitudes_[i], plon ) );
+            plon += weIncrement;
+         }
       }
-      if ( array[i] < north_ && array[i] > south_)
-         latitudes_.push_back(array[i]);
    }
-
-   if (jScansPositively == 1 )
-      std::reverse(latitudes_.begin(), latitudes_.end());
-
-
-   // These needs to be reviewed. TODO
-   long nptsWE = 4 * gaussianNumber_ ;
-   long weIncrement = 360.0/nptsWE;
-   double plon = west_;
-   double plat = north_;
-   for(size_t i = 0 ; i < latitudes_.size(); i++) {
-
-      for( size_t j = 0; j < nptsWE; ++j) {
-         points_.push_back( Point( latitudes_[i], plon ) );
-         plon += weIncrement;
+   else {
+      Log::info() << " LOCAL " << std::endl;
+      for ( int i = 0; i < 2*gaussianNumber_; i++ ) {
+         if ( FloatCompare::is_equal(array[i],north_,epsilon()) ) {
+            latitudes_.push_back(array[i]);
+            continue;
+         }
+         if ( FloatCompare::is_equal(array[i],south_,epsilon()) ) {
+            latitudes_.push_back(array[i]);
+            continue;
+         }
+         if ( array[i] < north_ && array[i] > south_)
+            latitudes_.push_back(array[i]);
+      }
+      if (jScansPositively == 1 )
+          std::reverse(latitudes_.begin(), latitudes_.end());
+      for(size_t i = 0 ; i < latitudes_.size(); i++) {
+         double plon = west_;
+         for( size_t j = 0; j < nptsWE; ++j) {
+            if (plon < east_ || FloatCompare::is_equal(plon,east_)) {
+               points_.push_back( Point( latitudes_[i], plon ) );
+               plon += weIncrement;
+            }
+         }
       }
    }
 
@@ -118,9 +136,14 @@ RegularGaussianGrid::RegularGaussianGrid(grib_handle* handle)
    Log::info() << " nptsWE                                         " << nptsWE << std::endl;
    Log::info() << " numberOfDataPoints                             " << nb_nodes << std::endl;
    Log::info() << " -----------------------------------------------" << std::endl;
-   Log::info() << " points_.size()  " << points_.size() << "       nb_nodes " << nb_nodes << std::endl << std::endl;
+   Log::info() << " points_.size()  " << points_.size() << "       nb_nodes " << nb_nodes << std::endl;
+   Log::info() << " point[0]                               " << points_[0].lat() << ", " << points_[0].lon() <<  std::endl;
+   Log::info() << " point[1]                               " << points_[1].lat() << ", " << points_[1].lon() <<  std::endl;
 
    ASSERT(points_.size() == nb_nodes);
+
+   // Check point list compared with grib
+   GribRead::comparePointList(points_,epsilon(),handle);
 }
 
 RegularGaussianGrid::~RegularGaussianGrid()
@@ -132,9 +155,9 @@ Grid::Point RegularGaussianGrid::latLon(size_t the_i, size_t the_j) const
 {
     long nptsWE = 4 * gaussianNumber_ ;
     long weIncrement = 360.0 / nptsWE;
-    double plon = west_;
     for(size_t i = 0 ; i < latitudes_.size(); i++) {
 
+       double plon = west_;
        for( size_t j = 0; j < nptsWE; ++j) {
           if ( i== the_i && j== the_j) {
              return  Point( latitudes_[i], plon );
@@ -168,6 +191,7 @@ void RegularGaussianGrid::coordinates( Grid::Coords& r ) const
     }
 }
 
+
 double RegularGaussianGrid::epsilon() const
 {
    // grib edition 1 - milli-degrees
@@ -175,6 +199,28 @@ double RegularGaussianGrid::epsilon() const
    // Therefore the client needs access to this when dealing with double based comparisons (for tolerances)
    return (editionNumber_ == 1) ? 1e-3 : 1e-6;
 }
+
+/// AREA_FACTOR is added because GRIB has precision for 3 dec places.
+/// For instance east for N640 is 359.8593750 intstead of 359.859
+static const double AREA_FACTOR = 1.e-3;
+
+bool RegularGaussianGrid::isGlobalNorthSouth() const
+{
+   return (gaussianNumber_*2 == nj_);
+   //std::cout << "isGlobalNorthSouth " << (fabs(south_ - latitudes_[gaussianNumber_*2-1])) << "     " << fabs( north_ - latitudes_[0]) << "\n";
+   //return (fabs(south_ - latitudes_[gaussianNumber_*2-1])) <= AREA_FACTOR && fabs( north_ - latitudes_[0]) <= AREA_FACTOR;
+}
+
+bool RegularGaussianGrid::isGlobalWestEast() const
+{
+   /// AREA_FACTOR is added because grib has precision for 3 dec places.
+   double res = east_ - west_ + 90.0 / gaussianNumber_ + AREA_FACTOR;
+//   cout << " RegularGaussianGrid::isGlobalWestEast() 90.0 / gaussianNumber_ = " << double(90.0 /(double)gaussianNumber_) << endl;
+//   cout << " RegularGaussianGrid::isGlobalWestEast() double(360.0 /((double)4*gaussianNumber_)  = " << (360.0/((double)4*gaussianNumber_)) << endl;
+//   cout << " RegularGaussianGrid::isGlobalWestEast() RES = " << res << endl;
+   return res > 360.0 || FloatCompare::is_equal(res,360.0,epsilon());
+}
+
 //-----------------------------------------------------------------------------
 
 } // namespace grid

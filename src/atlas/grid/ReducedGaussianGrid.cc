@@ -25,6 +25,7 @@
 #include "eckit/types/FloatCompare.h"
 #include "eckit/grib/GribAccessor.h"
 #include "atlas/grid/ReducedGaussianGrid.h"
+#include "atlas/grid/GribRead.h"
 
 using namespace eckit;
 using namespace std;
@@ -40,7 +41,7 @@ namespace grid {
 //          assumes it is grid points inclusive of the area.
 
 ReducedGaussianGrid::ReducedGaussianGrid(grib_handle* handle)
-: gaussianNumber_(0),
+: gaussianNumber_(0),nj_(0),
   north_(0.0),south_(0.0),west_(0.0),east_(0.0),
   editionNumber_(0)
 {
@@ -66,8 +67,7 @@ ReducedGaussianGrid::ReducedGaussianGrid(grib_handle* handle)
    GRIB_CHECK(grib_get_long(handle,"Nj",&nj_),0);
 
 
-   // get reduced grid specification.
-   // These are number of point's along the lines of latitude
+   // get reduced grid specification. These are number of point's along the lines of latitude
    size_t rgSpecLength = 0;
    GRIB_CHECK(grib_get_size(handle,"pl",&rgSpecLength),0);
    rgSpec_.resize(rgSpecLength);
@@ -94,7 +94,7 @@ ReducedGaussianGrid::ReducedGaussianGrid(grib_handle* handle)
       Log::info() << " GLOBAL " << std::endl;
       for ( int i = 0; i < 2*gaussianNumber_ && i < rgSpec_.size(); i++ ) {
          long no_of_points_along_latitude = rgSpec_[i];
-         double east_west_grid_length = no_of_points_along_latitude/360.0;
+         double east_west_grid_length = 360.0/no_of_points_along_latitude;
          double plon = 0;
          for(int k = 0; k < no_of_points_along_latitude; k++) {
             points_.push_back( Point( latitudes_[i], plon ) );
@@ -104,14 +104,13 @@ ReducedGaussianGrid::ReducedGaussianGrid(grib_handle* handle)
    }
    else {
       Log::info() << " LOCAL " << std::endl;
-
       for ( int i = 0; i < 2*gaussianNumber_ && i < rgSpec_.size(); i++ ) {
-         if ( FloatCompare::is_equal(latitudes_[i],north_) ) {
+         if ( FloatCompare::is_equal(latitudes_[i],north_,epsilon()) ) {
             // Log::info() << " same north latitudes_[i] " <<  latitudes_[i] << " north_ " << north_ << std::endl;
             add_point(i);
             continue;
          }
-         if ( FloatCompare::is_equal(latitudes_[i],south_) ) {
+         if ( FloatCompare::is_equal(latitudes_[i],south_,epsilon()) ) {
             add_point(i);
             continue;
          }
@@ -129,7 +128,7 @@ ReducedGaussianGrid::ReducedGaussianGrid(grib_handle* handle)
    Log::info() << " nj                                             " << nj_ << std::endl;
    Log::info() << " isGlobalNorthSouth()                           " << isGlobalNorthSouth() << std::endl;
    Log::info() << " isGlobalWestEast()                             " << isGlobalWestEast() << std::endl;
-   Log::info() << " pl-size                                        " << rgSpecLength << std::endl;
+   Log::info() << " pl-size                                        " << rgSpecLength <<  " pl[0]="<< rgSpec_[0] << " pl[1]=" << rgSpec_[1] << std::endl;
    Log::info() << " latitudes_.size ()                             " << latitudes_.size() << std::endl;
    Log::info() << " iScansNegatively                               " << iScansNegatively << std::endl;
    Log::info() << " jScansPositively                               " << jScansPositively << std::endl;
@@ -146,6 +145,9 @@ ReducedGaussianGrid::ReducedGaussianGrid(grib_handle* handle)
    Log::info() << " points_.size()                                 " << points_.size() << std::endl;
 
    ASSERT(points_.size() == nb_nodes);
+
+   // Check point list compared with grib
+   GribRead::comparePointList(points_,epsilon(),handle);
 }
 
 ReducedGaussianGrid::~ReducedGaussianGrid()
@@ -156,36 +158,17 @@ ReducedGaussianGrid::~ReducedGaussianGrid()
 void ReducedGaussianGrid::add_point(int lat_index)
 {
    long no_of_points_along_latitude = rgSpec_[lat_index];
-   double east_west_grid_length = no_of_points_along_latitude/360.0;
+   double east_west_grid_length = 360.0/no_of_points_along_latitude;
    double plon = 0;
    for(int k = 0; k < no_of_points_along_latitude; k++) {
-      if ( (plon > west_ && plon < east_) || (FloatCompare::is_equal(plon,west_) || FloatCompare::is_equal(plon,east_) ) ) {
+      if ( (plon > west_ && plon < east_) ||
+           (FloatCompare::is_equal(plon,west_,epsilon())  ||
+            FloatCompare::is_equal(plon,east_,epsilon()) )
+          ) {
          points_.push_back( Point( latitudes_[lat_index], plon ) );
          plon += east_west_grid_length;
       }
    }
-}
-
-/// AREA_FACTOR is added because GRIB has precision for 3 dec places.
-/// For instance east for N640 is 359.8593750 intstead of 359.859
-static const double AREA_FACTOR = 1.e-3;
-
-bool ReducedGaussianGrid::isGlobalNorthSouth() const
-{
-   return (gaussianNumber_*2 == nj_);
-
-   //std::cout << "isGlobalNorthSouth " << (fabs(south_ - latitudes_[gaussianNumber_*2-1])) << "     " << fabs( north_ - latitudes_[0]) << "\n";
-   //return (fabs(south_ - latitudes_[gaussianNumber_*2-1])) <= AREA_FACTOR && fabs( north_ - latitudes_[0]) <= AREA_FACTOR;
-}
-
-bool ReducedGaussianGrid::isGlobalWestEast() const
-{
-   /// AREA_FACTOR is added because grib has precision for 3 dec places.
-   double res = east_ - west_ + 90.0 / gaussianNumber_ + AREA_FACTOR;
-//   cout << " ReducedGaussianGrid::isGlobalWestEast() 90.0 / gaussianNumber_ = " << double(90.0 /(double)gaussianNumber_) << endl;
-//   cout << " ReducedGaussianGrid::isGlobalWestEast() double(360.0 /((double)4*gaussianNumber_)  = " << (360.0/((double)4*gaussianNumber_)) << endl;
-//   cout << " ReducedGaussianGrid::isGlobalWestEast() RES = " << res << endl;
-   return res > 360.0 || FloatCompare::is_equal(res,360.0);
 }
 
 std::string ReducedGaussianGrid::hash() const
@@ -210,6 +193,7 @@ void ReducedGaussianGrid::coordinates( Grid::Coords& r ) const
     }
 }
 
+
 double ReducedGaussianGrid::epsilon() const
 {
    // grib edition 1 - milli-degrees
@@ -218,7 +202,26 @@ double ReducedGaussianGrid::epsilon() const
    return (editionNumber_ == 1) ? 1e-3 : 1e-6;
 }
 
+/// AREA_FACTOR is added because GRIB has precision for 3 dec places.
+/// For instance east for N640 is 359.8593750 intstead of 359.859
+static const double AREA_FACTOR = 1.e-3;
 
+bool ReducedGaussianGrid::isGlobalNorthSouth() const
+{
+   return (gaussianNumber_*2 == nj_);
+   //std::cout << "isGlobalNorthSouth " << (fabs(south_ - latitudes_[gaussianNumber_*2-1])) << "     " << fabs( north_ - latitudes_[0]) << "\n";
+   //return (fabs(south_ - latitudes_[gaussianNumber_*2-1])) <= AREA_FACTOR && fabs( north_ - latitudes_[0]) <= AREA_FACTOR;
+}
+
+bool ReducedGaussianGrid::isGlobalWestEast() const
+{
+   /// AREA_FACTOR is added because grib has precision for 3 dec places.
+   double res = east_ - west_ + 90.0 / gaussianNumber_ + AREA_FACTOR;
+//   cout << " ReducedGaussianGrid::isGlobalWestEast() 90.0 / gaussianNumber_ = " << double(90.0 /(double)gaussianNumber_) << endl;
+//   cout << " ReducedGaussianGrid::isGlobalWestEast() double(360.0 /((double)4*gaussianNumber_)  = " << (360.0/((double)4*gaussianNumber_)) << endl;
+//   cout << " ReducedGaussianGrid::isGlobalWestEast() RES = " << res << endl;
+   return res > 360.0 || FloatCompare::is_equal(res,360.0,epsilon());
+}
 //-----------------------------------------------------------------------------
 
 } // namespace grid

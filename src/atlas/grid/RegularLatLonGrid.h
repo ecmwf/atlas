@@ -50,6 +50,7 @@ private:
    long computeIncLon() const ;
    long computeRows(double north, double south, double west, double east) const;
    long computeCols(double west, double east) const;
+   double epsilon() const;
 
 private:
    double nsIncrement_;             /// In degrees
@@ -60,6 +61,7 @@ private:
    double east_;                    /// In degrees
    long nptsNS_;
    long nptsWE_;
+   long   editionNumber_;           /// Grib 1 or Grib 2
    std::vector< Point > points_;     ///< storage of coordinate points
    std::string hash_;
 };

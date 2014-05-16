@@ -54,13 +54,17 @@ public:
    long gaussianNumber() const { return gaussianNumber_;}
 
 private:
+   // TODO these are common, common base class ?
    double epsilon() const;
+   bool isGlobalNorthSouth() const;
+   bool isGlobalWestEast() const;
 
 private:
    double north_;                   /// In degrees
    double south_;                   /// In degrees
    double west_;                    /// In degrees
    double east_;                    /// In degrees
+   long   nj_;                      /// No of points along Y axes
    long   gaussianNumber_;          /// No of points between pole and equator
    long   editionNumber_;           /// Grib 1 or Grib 2
 

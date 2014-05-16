@@ -1,3 +1,5 @@
+#ifndef eckit_GribRead_h
+#define eckit_GribRead_h
 /*
  * (C) Copyright 1996-2014 ECMWF.
  * 
@@ -8,13 +10,13 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef eckit_GribRead_h
-#define eckit_GribRead_h
 
 #include "grib_api.h"
+#include <vector>
 
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/grid/Grid.h"
+#include "eckit/geometry/Point3.h"
 
 //-----------------------------------------------------------------------------
 
@@ -37,6 +39,13 @@ public:
     /// Allow better error handling during Grid construction.
     /// This really belongs in grib_api,
     static void known_grid_types(std::set<std::string>&);
+
+    // The return list is new allocated,
+    typedef std::vector< atlas::grid::Grid::Point > PointList;
+    static PointList* read_number_of_data_points(grib_handle *h);
+
+    static void comparePointList(const std::vector<atlas::grid::Grid::Point>&, double epsilon,grib_handle*);
+
 };
 
 //------------------------------------------------------------------------------------------------------

@@ -13,6 +13,7 @@
 #include "eckit/log/Seconds.h"
 #include "eckit/geometry/Point3.h"
 #include "eckit/grib/GribAccessor.h"
+#include "eckit/types/FloatCompare.h"
 
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/mesh/FunctionSpace.hpp"
@@ -28,6 +29,7 @@
 
 //-----------------------------------------------------------------------------
 
+using namespace std;
 using namespace atlas;
 using namespace atlas::grid;
 
@@ -35,38 +37,7 @@ namespace eckit { /// @todo this is still in eckit namespace because we plan to 
 
 //------------------------------------------------------------------------------------------------------
 
-typedef std::vector< grid::Grid::Point > PointList;
 
-static PointList* read_number_of_data_points(grib_handle *h)
-{
-   // points to read
-   long nb_nodes = 0;
-   grib_get_long(h,"numberOfDataPoints",&nb_nodes);
-
-   /// It should be noted that grib iterator is *only* available for certain grids
-   /// i.e for Spherical Harmonics it is not implemented.
-   int err = 0;
-   grib_iterator *i = grib_iterator_new(h, 0, &err);
-   if(err != 0 )
-      throw std::runtime_error("error reading grib, could not create grib_iterator_new");
-
-   PointList* pts = new PointList(nb_nodes);
-
-   double lat   = 0.;
-   double lon   = 0.;
-   double value = 0.;
-
-   size_t idx = 0;
-   while( grib_iterator_next(i,&lat,&lon,&value) )
-   {
-      (*pts)[idx].assign(lat,lon);
-      ++idx;
-   }
-   grib_iterator_delete(i);
-
-   ASSERT( idx == nb_nodes );
-   return pts;
-}
 
 grid::Grid* GribRead::create_grid_from_grib(grib_handle *h)
 {
@@ -236,6 +207,68 @@ void GribRead::known_grid_types(std::set<std::string>& grids)
    grids.insert("unknown_PLPresent");
 }
 
+
+GribRead::PointList* GribRead::read_number_of_data_points(grib_handle *h)
+{
+   // points to read
+   long nb_nodes = 0;
+   grib_get_long(h,"numberOfDataPoints",&nb_nodes);
+
+   /// It should be noted that grib iterator is *only* available for certain grids
+   /// i.e for Spherical Harmonics it is not implemented.
+   int err = 0;
+   grib_iterator *i = grib_iterator_new(h, 0, &err);
+   if(err != 0 )
+      throw std::runtime_error("error reading grib, could not create grib_iterator_new");
+
+   PointList* pts = new PointList(nb_nodes);
+
+   double lat   = 0.;
+   double lon   = 0.;
+   double value = 0.;
+
+   size_t idx = 0;
+   while( grib_iterator_next(i,&lat,&lon,&value) )
+   {
+      (*pts)[idx].assign(lat,lon);
+      ++idx;
+   }
+   grib_iterator_delete(i);
+
+   ASSERT( idx == nb_nodes );
+   return pts;
+}
+
+
+void GribRead::comparePointList(const std::vector<atlas::grid::Grid::Point>& points,  double epsilon, grib_handle* handle)
+{
+   // Check point list compared with grib
+   GribRead::PointList* pointlist1 = GribRead::read_number_of_data_points(handle);
+   const std::vector<atlas::grid::Grid::Point>& pntlist = *pointlist1;
+   ASSERT( points.size() == pntlist.size());
+   int print_point_list = 0;
+   std::streamsize old_precision = cout.precision();
+   for(size_t i =0;  i < points.size() && i < pntlist.size(); i++) {
+      if (!FloatCompare::is_equal(points[i].lat(),pntlist[i].lat(),epsilon) ||
+          !FloatCompare::is_equal(points[i].lon(),pntlist[i].lon(),epsilon))
+      {
+         if (print_point_list == 0) Log::info() << " Point list DIFFER, show first 10, epsilon(" << epsilon << ")" << std::endl;
+         Log::info() << setw(3) << i << " :"
+                     << setw(20) << std::setprecision(std::numeric_limits<double>::digits10 + 1) << points[i].lat() << ", "
+                     << setw(20) << std::setprecision(std::numeric_limits<double>::digits10 + 1) << points[i].lon() << "  "
+                     << setw(20) << std::setprecision(std::numeric_limits<double>::digits10 + 1) << pntlist[i].lat() << ", "
+                     << setw(20) << std::setprecision(std::numeric_limits<double>::digits10 + 1) << pntlist[i].lon()
+                     << std::endl;
+         print_point_list++;
+         if (print_point_list > 10) break;
+      }
+   }
+
+   // reset precision
+   Log::info() << std::setprecision(old_precision);
+
+   delete pointlist1;
+}
 //---------------------------------------------------------------------------------------------------------
 
 } // namespace eckit

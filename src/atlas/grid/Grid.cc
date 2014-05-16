@@ -101,6 +101,8 @@ int Grid::scanningMode(long iScansNegatively, long jScansPositively)
    return 1;
 }
 
+
+
 //-----------------------------------------------------------------------------
 
 } // namespace grid
