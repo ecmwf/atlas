@@ -12,9 +12,8 @@
 
 #include <cstddef>
 #include <vector>
-#include "grib_api.h"
 
-#include "atlas/grid/Grid.h"
+#include "atlas/grid/GribGrid.h"
 
 //-----------------------------------------------------------------------------
 
@@ -35,13 +34,12 @@ namespace grid {
 // Latitudes may have differing numbers of points but the grid is symmetrical about the Equator.
 // A reduced gaussian grid may also be called a quasi-regular Gaussian grid.
 
-class RegularGaussianGrid : public Grid {
+class RegularGaussianGrid : public GribGrid {
 public:
    RegularGaussianGrid( grib_handle* h );
    virtual ~RegularGaussianGrid();
 
    /// Overridden functions
-   virtual std::string hash() const;
    virtual const char* gridType() const { return "regular_gg"; }
    virtual BoundBox boundingBox() const;
    virtual size_t nPoints() const { return points_.size(); }
@@ -55,22 +53,15 @@ public:
 
 private:
    // TODO these are common, common base class ?
-   double epsilon() const;
    bool isGlobalNorthSouth() const;
    bool isGlobalWestEast() const;
 
 private:
-   double north_;                   /// In degrees
-   double south_;                   /// In degrees
-   double west_;                    /// In degrees
-   double east_;                    /// In degrees
    long   nj_;                      /// No of points along Y axes
    long   gaussianNumber_;          /// No of points between pole and equator
-   long   editionNumber_;           /// Grib 1 or Grib 2
 
    std::vector< Point > points_;     ///< storage of coordinate points
    std::vector<double> latitudes_;
-   std::string hash_;
 };
 
 //-----------------------------------------------------------------------------

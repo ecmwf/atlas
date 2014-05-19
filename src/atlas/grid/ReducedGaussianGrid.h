@@ -12,9 +12,8 @@
 
 #include <cstddef>
 #include <vector>
-#include "grib_api.h"
 
-#include "atlas/grid/Grid.h"
+#include "atlas/grid/GribGrid.h"
 
 //-----------------------------------------------------------------------------
 
@@ -44,13 +43,12 @@ namespace grid {
 // o When BitMap is present,(we have and array), it is for the global, 0 - Missing,  1- data value present
 // o The bitsmap shows where we have Data values.
 
-class ReducedGaussianGrid : public Grid {
+class ReducedGaussianGrid : public GribGrid {
 public:
    ReducedGaussianGrid( grib_handle* h );
    virtual ~ReducedGaussianGrid();
 
    /// Overridden functions
-   virtual std::string hash() const;
    virtual const char* gridType() const { return "reduced_gg"; }
    virtual BoundBox boundingBox() const;
    virtual size_t nPoints() const { return points_.size(); }
@@ -65,22 +63,15 @@ private:
    void add_point(int lat_index);
 
    // TODO common code
-   double epsilon() const;
    bool isGlobalNorthSouth() const;
    bool isGlobalWestEast() const;
 
 private:
-   double north_;                   /// In degrees
-   double south_;                   /// In degrees
-   double west_;                    /// In degrees
-   double east_;                    /// In degrees
    long   gaussianNumber_;          /// No of points between pole and equator
    long   nj_;                      /// No of points along Y axes
-   long   editionNumber_;           /// Grib 1 or Grib 2
    std::vector<long> rgSpec_;
    std::vector< Point > points_;     ///< storage of coordinate points
    std::vector<double> latitudes_;
-   std::string hash_;
 };
 
 //-----------------------------------------------------------------------------

@@ -12,9 +12,8 @@
 
 #include <cstddef>
 #include <vector>
-#include "grib_api.h"
 
-#include "atlas/grid/Grid.h"
+#include "atlas/grid/GribGrid.h"
 
 //-----------------------------------------------------------------------------
 
@@ -23,13 +22,12 @@ namespace grid {
 
 //-----------------------------------------------------------------------------
 
-class RegularLatLonGrid : public Grid {
+class RegularLatLonGrid : public GribGrid {
 public:
    RegularLatLonGrid( grib_handle* h );
    virtual ~RegularLatLonGrid();
 
    /// Overridden functions
-   virtual std::string hash() const;
    virtual const char* gridType() const { return "regular_ll"; }
    virtual BoundBox boundingBox() const;
    virtual size_t nPoints() const { return points_.size(); }
@@ -50,20 +48,13 @@ private:
    long computeIncLon() const ;
    long computeRows(double north, double south, double west, double east) const;
    long computeCols(double west, double east) const;
-   double epsilon() const;
 
 private:
    double nsIncrement_;             /// In degrees
    double weIncrement_;             /// In degrees
-   double north_;                   /// In degrees
-   double south_;                   /// In degrees
-   double west_;                    /// In degrees
-   double east_;                    /// In degrees
    long nptsNS_;
    long nptsWE_;
-   long   editionNumber_;           /// Grib 1 or Grib 2
    std::vector< Point > points_;     ///< storage of coordinate points
-   std::string hash_;
 };
 
 //-----------------------------------------------------------------------------

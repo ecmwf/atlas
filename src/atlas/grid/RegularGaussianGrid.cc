@@ -38,34 +38,17 @@ namespace grid {
 // Area: Can we assume area is multiple of the grids ?
 
 RegularGaussianGrid::RegularGaussianGrid(grib_handle* handle)
-: gaussianNumber_(0),nj_(0),
-  north_(0.0),south_(0.0),west_(0.0),east_(0.0),
-  editionNumber_(0)
+: GribGrid(handle),
+  gaussianNumber_(0),
+  nj_(0)
 {
    Log::info() << "Build a RegularGaussianGrid  " << std::endl;
 
    // Extract the guassian grid attributes from the grib handle
-   if (handle == NULL) throw std::runtime_error("NULL grib_handle");
-   hash_ = grib_hash(handle);
-
-   GRIB_CHECK(grib_get_long(handle,"editionNumber",&editionNumber_),0);
-
-   long iScansNegatively = 0, jScansPositively = 0;
-   GRIB_CHECK(grib_get_long(handle,"iScansNegatively",&iScansNegatively),0);
-   GRIB_CHECK(grib_get_long(handle,"jScansPositively",&jScansPositively),0);
-   int scanning_mode = Grid::scanningMode(iScansNegatively,jScansPositively);
-
-   GRIB_CHECK(grib_get_double(handle,"latitudeOfFirstGridPointInDegrees",&north_),0);
-   GRIB_CHECK(grib_get_double(handle,"longitudeOfFirstGridPointInDegrees",&west_),0);
-   GRIB_CHECK(grib_get_double(handle,"latitudeOfLastGridPointInDegrees",&south_),0);
-   GRIB_CHECK(grib_get_double(handle,"longitudeOfLastGridPointInDegrees",&east_),0);
 
    GRIB_CHECK(grib_get_long(handle,"numberOfParallelsBetweenAPoleAndTheEquator",&gaussianNumber_),0);
    GRIB_CHECK(grib_get_long(handle,"Nj",&nj_),0);
 
-
-   long nb_nodes = 0;
-   grib_get_long(handle,"numberOfDataPoints",&nb_nodes);
 
    // Need to check AREA geometry, which uses scanning mode ???
    // .......
@@ -83,7 +66,7 @@ RegularGaussianGrid::RegularGaussianGrid(grib_handle* handle)
          ASSERT(lat < 90.0 && lat > -90.0);
          latitudes_.push_back(array[i]);
       }
-      if (jScansPositively == 1 )
+      if (jScansPositively_ == 1 )
          std::reverse(latitudes_.begin(), latitudes_.end());
       for(size_t i = 0 ; i < latitudes_.size(); i++) {
          double plon = 0;
@@ -108,7 +91,7 @@ RegularGaussianGrid::RegularGaussianGrid(grib_handle* handle)
          if ( array[i] < north_ && array[i] > south_)
             latitudes_.push_back(array[i]);
       }
-      if (jScansPositively == 1 )
+      if (jScansPositively_ == 1 )
           std::reverse(latitudes_.begin(), latitudes_.end());
       for(size_t i = 0 ; i < latitudes_.size(); i++) {
          double plon = west_;
@@ -124,9 +107,9 @@ RegularGaussianGrid::RegularGaussianGrid(grib_handle* handle)
    Log::info() << " editionNumber                                  " << editionNumber_ << std::endl;
    Log::info() << " epsilon()                                      " << epsilon() << std::endl;
    Log::info() << " gaussianNumber_                                " << gaussianNumber_ << std::endl;
-   Log::info() << " iScansNegatively                               " << iScansNegatively << std::endl;
-   Log::info() << " jScansPositively                               " << jScansPositively << std::endl;
-   Log::info() << " scanning_mode                                  " << scanning_mode << std::endl;
+   Log::info() << " iScansNegatively                               " << iScansNegatively_ << std::endl;
+   Log::info() << " jScansPositively                               " << jScansPositively_ << std::endl;
+   Log::info() << " scanning_mode                                  " << Grid::scanningMode(iScansNegatively_,jScansPositively_) << std::endl;
    Log::info() << " latitudeOfFirstGridPointInDegrees              " << north_ << std::endl;
    Log::info() << " longitudeOfFirstGridPointInDegrees             " << west_ << std::endl;
    Log::info() << " latitudeOfLastGridPointInDegrees               " << south_ << std::endl;
@@ -134,13 +117,13 @@ RegularGaussianGrid::RegularGaussianGrid(grib_handle* handle)
    Log::info() << " iDirectionIncrementInDegrees(west-east   incr) " << weIncrement << std::endl;
    Log::info() << " nptsNS                                         " << 2 * gaussianNumber_ << std::endl;
    Log::info() << " nptsWE                                         " << nptsWE << std::endl;
-   Log::info() << " numberOfDataPoints                             " << nb_nodes << std::endl;
+   Log::info() << " numberOfDataPoints                             " << numberOfDataPoints_ << std::endl;
    Log::info() << " -----------------------------------------------" << std::endl;
-   Log::info() << " points_.size()  " << points_.size() << "       nb_nodes " << nb_nodes << std::endl;
+   Log::info() << " points_.size()  " << points_.size() << "       numberOfDataPoints " << numberOfDataPoints_ << std::endl;
    Log::info() << " point[0]                               " << points_[0].lat() << ", " << points_[0].lon() <<  std::endl;
    Log::info() << " point[1]                               " << points_[1].lat() << ", " << points_[1].lon() <<  std::endl;
 
-   ASSERT(points_.size() == nb_nodes);
+   ASSERT(points_.size() == numberOfDataPoints_);
 
    // Check point list compared with grib
    GribRead::comparePointList(points_,epsilon(),handle);
@@ -169,11 +152,6 @@ Grid::Point RegularGaussianGrid::latLon(size_t the_i, size_t the_j) const
    return Grid::Point();
 }
 
-std::string RegularGaussianGrid::hash() const
-{
-    return hash_;
-}
-
 Grid::BoundBox RegularGaussianGrid::boundingBox() const
 {
    // Grid::BoundBox expects bottom left, top right
@@ -189,15 +167,6 @@ void RegularGaussianGrid::coordinates( Grid::Coords& r ) const
         r.lat(i) = points_[i].lat();
         r.lon(i) = points_[i].lon();
     }
-}
-
-
-double RegularGaussianGrid::epsilon() const
-{
-   // grib edition 1 - milli-degrees
-   // grib edition 2 - micro-degrees or could be defined by the keys: "subdivisionsOfBasicAngle" and "basicAngleOfTheInitialProductionDomain"
-   // Therefore the client needs access to this when dealing with double based comparisons (for tolerances)
-   return (editionNumber_ == 1) ? 1e-3 : 1e-6;
 }
 
 /// AREA_FACTOR is added because GRIB has precision for 3 dec places.
