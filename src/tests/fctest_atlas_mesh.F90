@@ -15,10 +15,9 @@
 
 module fctest_atlas_mesh_fixture
 use atlas_module
-use mpi
+use atlas_mpl_module
 use iso_c_binding
 implicit none
-integer :: ierr
 type(Mesh_type) :: mesh
 type(FunctionSpace_type) :: func_space
 type(Field_type) :: field
@@ -32,7 +31,7 @@ TESTSUITE_WITH_FIXTURE(fctest_atlas_mesh,fctest_atlas_mesh_fixture)
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_INIT
-  call MPI_Init( ierr )
+  call MPL_Init()
   mesh = new_Mesh()
 END_TESTSUITE_INIT
 
@@ -40,7 +39,7 @@ END_TESTSUITE_INIT
 
 TESTSUITE_FINALIZE
   call delete( mesh )
-  call MPI_Finalize( ierr )
+  call MPL_Finalize()
 END_TESTSUITE_FINALIZE
 
 ! -----------------------------------------------------------------------------

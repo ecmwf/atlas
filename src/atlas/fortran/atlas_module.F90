@@ -1,6 +1,6 @@
 ! (C) Copyright 2013-2014 ECMWF.
 
-#include "atlas/atlas_defines.F90"
+#include "atlas/atlas_defines_fortran.h"
 
 module atlas_module
 
