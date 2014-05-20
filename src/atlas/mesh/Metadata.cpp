@@ -19,6 +19,11 @@ using namespace std;
 
 #define METADATA( VALUE_TYPE ) \
 template<>\
+bool Metadata::has<VALUE_TYPE>(const std::string& name) const\
+{\
+  return map_##VALUE_TYPE##_.count(name);\
+}\
+template<>\
 Metadata& Metadata::set(const std::string& name, const VALUE_TYPE& value)\
 {\
   map_##VALUE_TYPE##_[name] = value;\
@@ -27,15 +32,19 @@ Metadata& Metadata::set(const std::string& name, const VALUE_TYPE& value)\
 template<>\
 const VALUE_TYPE& Metadata::get(const std::string& name) const\
 {\
-  try {\
+  if( has<VALUE_TYPE>(name) ) {\
     return map_##VALUE_TYPE##_.at(name);\
   }\
-  catch( std::out_of_range& e ) {\
+  else {\
     std::stringstream msg;\
     msg << "Could not find metadata \"" << name << "\"";\
+    std::cout << msg.str() << std::endl; \
     throw std::out_of_range(msg.str());\
   }\
 }
+
+
+
 
 #define METADATA_C_BINDING( VALUE_TYPE ) \
 void atlas__Metadata__add_##VALUE_TYPE (Metadata* This, const char* name, VALUE_TYPE value)\

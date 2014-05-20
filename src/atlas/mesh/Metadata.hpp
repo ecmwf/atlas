@@ -30,6 +30,9 @@ public:
   template<typename ValueT>
   const ValueT& get(const std::string& name) const;
 
+  template<typename ValueT>
+  bool has(const std::string& name) const; 
+
 private:
   std::map< std::string, bool > map_bool_;
   std::map< std::string, int > map_int_;
