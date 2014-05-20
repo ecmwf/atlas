@@ -13,7 +13,6 @@
 #include "eckit/log/Seconds.h"
 #include "eckit/geometry/Point3.h"
 #include "eckit/grib/GribAccessor.h"
-#include "eckit/types/FloatCompare.h"
 
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/mesh/FunctionSpace.hpp"
@@ -21,11 +20,8 @@
 #include "atlas/mesh/Field.hpp"
 
 #include "atlas/grid/GribRead.h"
-#include "atlas/grid/Unstructured.h"
 #include "atlas/grid/Tesselation.h"
-#include "atlas/grid/RegularLatLonGrid.h"
-#include "atlas/grid/RegularGaussianGrid.h"
-#include "atlas/grid/ReducedGaussianGrid.h"
+#include "atlas/grid/GridBuilder.h"
 
 //-----------------------------------------------------------------------------
 
@@ -37,38 +33,12 @@ namespace eckit { /// @todo this is still in eckit namespace because we plan to 
 
 //------------------------------------------------------------------------------------------------------
 
-
-
-grid::Grid* GribRead::create_grid_from_grib(grib_handle *h)
+grid::Grid::Ptr GribRead::create_grid_from_grib(grib_handle *h)
 {
    ASSERT( h );
    if ( 0 == h) throw std::runtime_error("GribRead::create_grid_from_grib NULL grib_handle");
 
-   char string_value[64];
-   size_t len = sizeof(string_value)/sizeof(char);
-   if (grib_get_string(h,"gridType",string_value,&len)  != 0) {
-      throw std::runtime_error("grib_get_string failed for gridType") ;
-   }
-
-   if (strncasecmp(string_value,"regular_ll",10) == 0) {
-      // Custom arguments for Lat long grid
-      return new grid::RegularLatLonGrid( h );
-   }
-//   else if (strncasecmp(string_value,"sh",2) == 0) {
-//      return new grid::SphericalHarmonicGrid( pts, grib_hash(h) );
-//   }
-//   else if (strncasecmp(string_value,"reduced_ll",10) == 0) {
-//      return new grid::ReducedLatLonGrid( pts, grib_hash(h) );
-//   }
-   else if (strncasecmp(string_value,"reduced_gg",10) == 0) {
-      return new grid::ReducedGaussianGrid( h );
-   }
-   else if (strncasecmp(string_value,"regular_gg",10) == 0) {
-      return new grid::RegularGaussianGrid( h );
-   }
-
-   // Unknown grid type, get extract data points form the grib handle
-   return new grid::Unstructured( read_number_of_data_points(h), grib_hash(h) );
+   return GribGridBuilder::instance().build_grid_from_grib_handle(h);
 }
 
 void GribRead::read_nodes_from_grib( grib_handle* h, atlas::Mesh& mesh )
@@ -179,96 +149,6 @@ void GribRead::read_field(  grib_handle* h, double* field, size_t size )
 }
 
 
-void GribRead::known_grid_types(std::set<std::string>& grids)
-{
-   grids.insert("regular_ll");
-   grids.insert("reduced_ll");
-   grids.insert("mercator");
-   grids.insert("lambert");
-   grids.insert("polar_stereographic");
-   grids.insert("UTM");
-   grids.insert("simple_polyconic");
-   grids.insert("albers");
-   grids.insert("miller");
-   grids.insert("rotated_ll");
-   grids.insert("stretched_ll");
-   grids.insert("stretched_rotated_ll");
-   grids.insert("regular_gg");
-   grids.insert("rotated_gg");
-   grids.insert("stretched_gg");
-   grids.insert("stretched_rotated_gg");
-   grids.insert("reduced_gg");
-   grids.insert("sh");
-   grids.insert("rotated_sh");
-   grids.insert("stretched_sh");
-   grids.insert("stretched_rotated_sh");
-   grids.insert("space_view");
-   grids.insert("unknown");
-   grids.insert("unknown_PLPresent");
-}
-
-
-GribRead::PointList* GribRead::read_number_of_data_points(grib_handle *h)
-{
-   // points to read
-   long nb_nodes = 0;
-   grib_get_long(h,"numberOfDataPoints",&nb_nodes);
-
-   /// It should be noted that grib iterator is *only* available for certain grids
-   /// i.e for Spherical Harmonics it is not implemented.
-   int err = 0;
-   grib_iterator *i = grib_iterator_new(h, 0, &err);
-   if(err != 0 )
-      throw std::runtime_error("error reading grib, could not create grib_iterator_new");
-
-   PointList* pts = new PointList(nb_nodes);
-
-   double lat   = 0.;
-   double lon   = 0.;
-   double value = 0.;
-
-   size_t idx = 0;
-   while( grib_iterator_next(i,&lat,&lon,&value) )
-   {
-      (*pts)[idx].assign(lat,lon);
-      ++idx;
-   }
-   grib_iterator_delete(i);
-
-   ASSERT( idx == nb_nodes );
-   return pts;
-}
-
-
-void GribRead::comparePointList(const std::vector<atlas::grid::Grid::Point>& points,  double epsilon, grib_handle* handle)
-{
-   // Check point list compared with grib
-   GribRead::PointList* pointlist1 = GribRead::read_number_of_data_points(handle);
-   const std::vector<atlas::grid::Grid::Point>& pntlist = *pointlist1;
-   ASSERT( points.size() == pntlist.size());
-   int print_point_list = 0;
-   std::streamsize old_precision = cout.precision();
-   for(size_t i =0;  i < points.size() && i < pntlist.size(); i++) {
-      if (!FloatCompare::is_equal(points[i].lat(),pntlist[i].lat(),epsilon) ||
-          !FloatCompare::is_equal(points[i].lon(),pntlist[i].lon(),epsilon))
-      {
-         if (print_point_list == 0) Log::info() << " Point list DIFFER, show first 10, epsilon(" << epsilon << ")" << std::endl;
-         Log::info() << setw(3) << i << " :"
-                     << setw(20) << std::setprecision(std::numeric_limits<double>::digits10 + 1) << points[i].lat() << ", "
-                     << setw(20) << std::setprecision(std::numeric_limits<double>::digits10 + 1) << points[i].lon() << "  "
-                     << setw(20) << std::setprecision(std::numeric_limits<double>::digits10 + 1) << pntlist[i].lat() << ", "
-                     << setw(20) << std::setprecision(std::numeric_limits<double>::digits10 + 1) << pntlist[i].lon()
-                     << std::endl;
-         print_point_list++;
-         if (print_point_list > 10) break;
-      }
-   }
-
-   // reset precision
-   Log::info() << std::setprecision(old_precision);
-
-   delete pointlist1;
-}
 //---------------------------------------------------------------------------------------------------------
 
 } // namespace eckit

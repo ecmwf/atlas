@@ -13,7 +13,7 @@
 #include <cstddef>
 #include <vector>
 
-#include "atlas/grid/GribGrid.h"
+#include "atlas/grid/Grid.h"
 
 //-----------------------------------------------------------------------------
 
@@ -22,34 +22,36 @@ namespace grid {
 
 //-----------------------------------------------------------------------------
 
-class RegularLatLonGrid : public GribGrid {
+class RegularLatLonGrid : public Grid {
 public:
-   RegularLatLonGrid( grib_handle* h );
+   RegularLatLonGrid(  const std::string& hash,
+                         const BoundBox& bbox,
+                         const std::vector< Point >& pts,
+                         double nsIncrement,
+                         double weIncrement,
+                         long nptsNS,
+                         long nptsWE);
    virtual ~RegularLatLonGrid();
 
    /// Overridden functions
+   virtual std::string hash() const { return hash_;}
    virtual const char* gridType() const { return "regular_ll"; }
-   virtual BoundBox boundingBox() const;
+   virtual BoundBox boundingBox() const { return bbox_;}
    virtual size_t nPoints() const { return points_.size(); }
    virtual void coordinates( Grid::Coords & ) const;
    /// @deprecated will be removed soon as it exposes the inner storage of the coordinates
    virtual const std::vector<Point>& coordinates() const { return points_; }
 
    /// Functions specific to Regular Lat long grids
+   Point latLon(size_t lat, size_t lon) const;
    long rows() const { return nptsNS_;}
    long cols() const { return nptsWE_;}
-   Point latLon(size_t lat, size_t lon) const;
    double incLat() const { return nsIncrement_; }
    double incLon() const { return weIncrement_; }
 
 private:
-   // for verification/checks
-   long computeIncLat() const ;
-   long computeIncLon() const ;
-   long computeRows(double north, double south, double west, double east) const;
-   long computeCols(double west, double east) const;
-
-private:
+   std::string hash_;
+   BoundBox bbox_;
    double nsIncrement_;             /// In degrees
    double weIncrement_;             /// In degrees
    long nptsNS_;
