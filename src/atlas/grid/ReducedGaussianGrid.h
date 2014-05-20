@@ -13,7 +13,7 @@
 #include <cstddef>
 #include <vector>
 
-#include "atlas/grid/GribGrid.h"
+#include "atlas/grid/Grid.h"
 
 //-----------------------------------------------------------------------------
 
@@ -43,14 +43,19 @@ namespace grid {
 // o When BitMap is present,(we have and array), it is for the global, 0 - Missing,  1- data value present
 // o The bitsmap shows where we have Data values.
 
-class ReducedGaussianGrid : public GribGrid {
+class ReducedGaussianGrid : public Grid {
 public:
-   ReducedGaussianGrid( grib_handle* h );
+   ReducedGaussianGrid( const std::string& hash,
+                        const BoundBox& bbox,
+                        const std::vector< Point >& pts,
+                        const std::vector<double>& latitudes,
+                        long gaussianNumber);
    virtual ~ReducedGaussianGrid();
 
    /// Overridden functions
+   virtual std::string hash() const { return hash_;}
    virtual const char* gridType() const { return "reduced_gg"; }
-   virtual BoundBox boundingBox() const;
+   virtual BoundBox boundingBox() const { return bbox_;}
    virtual size_t nPoints() const { return points_.size(); }
    virtual void coordinates( Grid::Coords & ) const;
    /// @deprecated will be removed soon as it exposes the inner storage of the coordinates
@@ -60,18 +65,11 @@ public:
    long gaussianNumber() const { return gaussianNumber_;}
 
 private:
-   void add_point(int lat_index);
-
-   // TODO common code
-   bool isGlobalNorthSouth() const;
-   bool isGlobalWestEast() const;
-
-private:
-   long   gaussianNumber_;          /// No of points between pole and equator
-   long   nj_;                      /// No of points along Y axes
-   std::vector<long> rgSpec_;
-   std::vector< Point > points_;     ///< storage of coordinate points
+   std::string          hash_;
+   BoundBox             bbox_;
+   std::vector< Point > points_;                 ///< storage of coordinate points
    std::vector<double> latitudes_;
+   long                gaussianNumber_;          /// No of points between pole and equator
 };
 
 //-----------------------------------------------------------------------------

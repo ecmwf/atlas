@@ -22,8 +22,6 @@
 #include <stdexcept>
 
 #include "eckit/log/Log.h"
-#include "eckit/grib/GribAccessor.h"
-#include "atlas/grid/GribRead.h"
 #include "atlas/grid/RegularLatLonGrid.h"
 
 using namespace eckit;
@@ -36,63 +34,22 @@ namespace grid {
 // Area: Do we check the area.
 // Area: Can we assume area is multiple of the grids ?
 
-RegularLatLonGrid::RegularLatLonGrid(grib_handle* handle)
-: GribGrid(handle),
-  nsIncrement_(0),weIncrement_(0),nptsNS_(0),nptsWE_(0)
+RegularLatLonGrid::RegularLatLonGrid(
+         const std::string& hash,
+         const BoundBox& bbox,
+         const std::vector< Point >& pts,
+         double nsIncrement,
+         double weIncrement,
+         long nptsNS,
+         long nptsWE)
+: hash_(hash),
+  bbox_(bbox),
+  nsIncrement_(nsIncrement),
+  weIncrement_(weIncrement),
+  nptsNS_(nptsNS),
+  nptsWE_(nptsWE),
+  points_(pts)
 {
-   Log::info() << "Build a RegularLatLonGrid  " << std::endl;
-
-   // Extract the regluar lat long grid attributes from the grib handle
-
-   GRIB_CHECK(grib_get_double(handle,"jDirectionIncrementInDegrees",&nsIncrement_),0);
-   GRIB_CHECK(grib_get_double(handle,"iDirectionIncrementInDegrees",&weIncrement_),0);
-
-   GRIB_CHECK(grib_get_long(handle,"Nj",&nptsNS_),0);
-   GRIB_CHECK(grib_get_long(handle,"Ni",&nptsWE_),0);
-
-
-   // Need to check AREA geometry, which uses scanning mode ???
-   // .......
-
-   double plat = north_;
-   points_.reserve( (nptsNS_ + 1) * (nptsWE_ + 1) );
-   for( size_t j = 0; j < nptsNS_; ++j) {
-      double plon = west_;
-      for( size_t i = 0; i < nptsWE_; ++i) {
-         points_.push_back( Point( plat, plon ) );
-         plon += weIncrement_;
-      }
-      plat -= nsIncrement_;
-   }
-
-   Log::info() << " editionNumber                                  " << editionNumber_ << std::endl;
-   Log::info() << " iScansNegatively                               " << iScansNegatively_ << std::endl;
-   Log::info() << " jScansPositively                               " << jScansPositively_ << std::endl;
-   Log::info() << " scanning_mode                                  " << Grid::scanningMode(iScansNegatively_,jScansPositively_) << std::endl;
-   Log::info() << " latitudeOfFirstGridPointInDegrees              " << north_ << std::endl;
-   Log::info() << " longitudeOfFirstGridPointInDegrees             " << west_ << std::endl;
-   Log::info() << " latitudeOfLastGridPointInDegrees               " << south_ << std::endl;
-   Log::info() << " longitudeOfLastGridPointInDegrees              " << east_ << std::endl;
-   Log::info() << " jDirectionIncrementInDegrees(north-south incr) " << nsIncrement_ << std::endl;
-   Log::info() << " iDirectionIncrementInDegrees(west-east   incr) " << weIncrement_ << std::endl;
-   Log::info() << " Nj(num of points North South)                  " << nptsNS_ << std::endl;
-   Log::info() << " Ni(num of points West East)                    " << nptsWE_ << std::endl;
-   Log::info() << " numberOfDataPoints                             " << numberOfDataPoints_ << std::endl;
-   Log::info() << " -----------------------------------------------" << std::endl;
-   Log::info() << " computeIncLat() " << computeIncLat() << "      nsIncrement_ " << nsIncrement_ << std::endl;
-   Log::info() << " computeIncLon() " << computeIncLon() << "      weIncrement_ " << nsIncrement_ << std::endl;
-   Log::info() << " computeRows()   " << computeRows(north_,south_,west_,east_) << "     nptsNS_ " << nptsNS_ << std::endl;
-   Log::info() << " computeCols()   " << computeCols(west_,east_) <<  "     nptsWE_ " << nptsWE_ << std::endl;
-   Log::info() << " points_.size()  " << points_.size() << "       numberOfDataPoints_ " << numberOfDataPoints_ << std::endl << std::endl;
-
-   ASSERT(nsIncrement_ == computeIncLat());
-   ASSERT(weIncrement_ == computeIncLon());
-   ASSERT(nptsNS_ == computeRows(north_,south_,west_,east_));
-   ASSERT(nptsWE_ == computeCols(west_,east_));
-   ASSERT(points_.size() == numberOfDataPoints_);
-
-   // Check point list compared with grib
-   GribRead::comparePointList(points_,epsilon(),handle);
 }
 
 RegularLatLonGrid::~RegularLatLonGrid()
@@ -102,8 +59,8 @@ RegularLatLonGrid::~RegularLatLonGrid()
 
 Grid::Point RegularLatLonGrid::latLon(size_t the_i, size_t the_j) const
 {
-   double plon = west_;
-   double plat = north_;
+   double plon = bbox_.bottom_left_.lon(); // west
+   double plat = bbox_.top_right_.lat();   // north;
    for( size_t j = 0; j <= nptsNS_; ++j) {
       for( size_t i = 0; i <= nptsWE_; ++i) {
          if (the_i == i && the_j == j) {
@@ -117,12 +74,6 @@ Grid::Point RegularLatLonGrid::latLon(size_t the_i, size_t the_j) const
 }
 
 
-Grid::BoundBox RegularLatLonGrid::boundingBox() const
-{
-   // Grid::BoundBox expects bottom left, top right
-   return Grid::BoundBox(Point(south_,west_),Point(north_,east_));
-}
-
 void RegularLatLonGrid::coordinates( Grid::Coords& r ) const
 {
     ASSERT( r.size() == points_.size() );
@@ -132,34 +83,6 @@ void RegularLatLonGrid::coordinates( Grid::Coords& r ) const
         r.lat(i) = points_[i].lat();
         r.lon(i) = points_[i].lon();
     }
-}
-
-long RegularLatLonGrid::computeIncLat() const
-{
-   double north_diff_south = 0.0;
-   if (north_ > 0.0 && south_ > 0.0 ) north_diff_south = north_ - south_;
-   else if ( north_ < 0.0 && south_ < 0.0) north_diff_south = fabs(north_) - fabs(south_);
-   else north_diff_south  = fabs(north_) + fabs(south_);
-
-   return ( north_diff_south/(rows() + 1) + 0.5);
-}
-
-long RegularLatLonGrid::computeIncLon() const
-{
-   return ((east_ - west_)/cols() + 0.5 );
-}
-
-long RegularLatLonGrid::computeRows(double north, double south, double west, double east) const
-{
-   if (north > 0.0 && south > 0.0 ) return (north - south)/nsIncrement_ + 1;
-   else if ( north < 0.0 && south < 0.0) return (fabs(north) - fabs(south))/nsIncrement_ + 1;
-
-   return (fabs(north) + fabs(south))/nsIncrement_ + 1;
-}
-
-long RegularLatLonGrid::computeCols(double west, double east) const
-{
-   return fabs((east - west)/weIncrement_) + 1;
 }
 
 //-----------------------------------------------------------------------------
