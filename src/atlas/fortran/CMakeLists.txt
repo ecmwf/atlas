@@ -31,7 +31,15 @@ ecbuild_add_library( TARGET atlas_fortran
 	CONDITION CMAKE_Fortran_COMPILER_LOADED
 	SOURCES
 		${FORTRAN_BINDINGS}
+		${atlas_mpistubs_fortran_srcs}
 		atlas_module.F90
-	LIBS atlas
+	LIBS atlas ${ATLAS_MPISTUBS_FORTRAN}
 )
 
+ecbuild_add_library( TARGET atlas_mpl_fortran
+	AUTO_VERSION
+	CONDITION CMAKE_Fortran_COMPILER_LOADED
+	SOURCES
+		atlas_mpl_module.F90
+	LIBS ${ATLAS_MPISTUBS_FORTRAN}
+)

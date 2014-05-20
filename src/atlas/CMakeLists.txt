@@ -21,8 +21,8 @@ function( fortranize file )
 endfunction()
 
 configure_file( atlas_defines.h.in  atlas_defines.h   )
-configure_file( atlas_defines.h.in  atlas_defines.F90 )
-fortranize( ${CMAKE_CURRENT_BINARY_DIR}/atlas_defines.F90 )
+configure_file( atlas_defines.h.in  atlas_defines_fortran.h )
+fortranize( ${CMAKE_CURRENT_BINARY_DIR}/atlas_defines_fortran.h )
 
 configure_file( atlas_config.h.in   atlas_config.h  )
 
@@ -42,8 +42,12 @@ configure_file( atlas_version.cc.in atlas_version.cc )
 
 if( NOT HAVE_MPI )
 	set( atlas_mpistubs_srcs mpistubs/mpi.h mpistubs/mpi.c )
-else()
-	set( mpistubs_srcs "" )
+
+    ecbuild_add_library( TARGET atlas_mpistubs_fortran
+						 AUTO_VERSION
+						 CONDITION CMAKE_Fortran_COMPILER_LOADED
+						 SOURCES   mpistubs/atlas_mpistubs_module.F90 )
+	set( ATLAS_MPISTUBS_FORTRAN atlas_mpistubs_fortran )
 endif()
 
 ###
