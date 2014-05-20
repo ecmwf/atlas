@@ -57,6 +57,11 @@ ecbuild_add_option( FEATURE FORTRAN
 
 if( ENABLE_FORTRAN )
 	ecbuild_enable_fortran( REQUIRED MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/module )
+  
+  ecbuild_add_option( FEATURE FCTEST
+                      DEFAULT ${ENABLE_TESTS}
+                      DESCRIPTION "Fortran Unit Test Framework"
+                      REQUIRED_PACKAGES "PROJECT fctest VERSION 0.1.0" )
 endif()
 
 ### OMP ...

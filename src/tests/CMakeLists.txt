@@ -6,15 +6,15 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
+if( HAVE_FCTEST )
 
-ecbuild_add_test( TARGET test_datastruct
+add_fctest( TARGET fctest_atlas_mesh
+  LIBS            atlas_fortran ${MPI_Fortran_LIBRARIES}
   LINKER_LANGUAGE Fortran
-  SOURCES  test_datastruct.F90
-  LIBS     ftnunit datastruct
-  COMMAND  ${CMAKE_SOURCE_DIR}/src/ftnunit/runtests.sh
-  ARGS     ${CMAKE_CURRENT_BINARY_DIR}/test_datastruct
-  CONDITION  OFF
+  SOURCES         fctest_atlas_mesh.F90
 )
+
+endif()
 
 ecbuild_add_test( TARGET test_gmsh
   SOURCES  test_gmsh.cpp

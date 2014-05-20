@@ -112,12 +112,6 @@ const std::vector< double >& Field::data<double>() const
   }
 }
 
-template<>
-std::string FieldT<int>::data_type() const { return "int32"; }
-template<>
-std::string FieldT<float>::data_type() const { return "real32"; }
-template<>
-std::string FieldT<double>::data_type() const { return "real64"; }
 
 template<>
 void FieldT<int>::halo_exchange() { function_space().halo_exchange(data_.data(),data_.size()); }

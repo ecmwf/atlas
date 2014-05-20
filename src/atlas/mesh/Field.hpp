@@ -40,7 +40,7 @@ public: // methods
   template <typename DATA_TYPE> std::vector< DATA_TYPE >& data();
   template <typename DATA_TYPE> const std::vector< DATA_TYPE >& data() const;
 
-  virtual std::string data_type() const = 0;
+  const std::string& data_type() const { return data_type_; }
 
   virtual void allocate(const std::vector<int>& bounds)=0;
   const std::string& name() const { return name_; }
@@ -62,6 +62,7 @@ public: // methods
 protected: // members
 
   std::string name_;
+  std::string data_type_;
   std::vector<int> bounds_;
   std::vector<int> extents_;
   std::vector<int> strides_;
@@ -77,6 +78,12 @@ private: // copy not allowed
 
 //------------------------------------------------------------------------------------------------------
 
+
+template< typename DATA_TYPE > inline std::string data_type_to_str();
+template<> inline std::string data_type_to_str<int>()    { return "int32";  }
+template<> inline std::string data_type_to_str<float>()  { return "real32"; }
+template<> inline std::string data_type_to_str<double>() { return "real64"; }
+
 template< typename DATA_TYPE >
 class FieldT : public Field {
 
@@ -87,8 +94,6 @@ public: // methods
     virtual ~FieldT();
 
     virtual size_t size() const { return data_.size(); }
-
-    virtual std::string data_type() const;
 
     virtual void allocate(const std::vector<int>& bounds);
 
@@ -125,6 +130,7 @@ inline FieldT<DATA_TYPE>::FieldT(const std::string& name, const int nb_vars, Fun
   Field(name,nb_vars,function_space),
   data_(0)
 {
+  data_type_ = data_type_to_str<DATA_TYPE>() ;
 }
 
 template< typename DATA_TYPE >
