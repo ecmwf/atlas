@@ -147,8 +147,8 @@ static void test_grids_from_grib_sample_directory(const std::string& directory)
 
 
          // Unstructured grid can not handle Spherical harmonics
-         atlas::grid::Grid::Ptr the_grid = GribGridBuilder::instance().build_grid_from_grib_handle(handle);
-         BOOST_CHECK_MESSAGE(the_grid,"GribGridBuilder::instance().build_grid_from_grib_handle failed for file " << relPath.string());
+         atlas::grid::Grid::Ptr the_grid = GRIBGridBuilder::instance().build_grid_from_grib_handle(handle);
+         BOOST_CHECK_MESSAGE(the_grid,"GRIBGridBuilder::instance().build_grid_from_grib_handle failed for file " << relPath.string());
          if (!the_grid) {
             BOOST_REQUIRE_MESSAGE(fclose(fp) != -1,"error closing file " << relPath.string());
             continue;

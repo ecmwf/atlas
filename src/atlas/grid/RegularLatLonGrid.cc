@@ -34,6 +34,15 @@ namespace grid {
 // Area: Do we check the area.
 // Area: Can we assume area is multiple of the grids ?
 
+RegularLatLonGrid::RegularLatLonGrid()
+:  nsIncrement_(0),
+   weIncrement_(0),
+   nptsNS_(0),
+   nptsWE_(0)
+{
+   Log::info() << "RegularLatLonGrid" << std::endl;
+}
+
 RegularLatLonGrid::RegularLatLonGrid(
          const std::string& hash,
          const BoundBox& bbox,
@@ -50,6 +59,7 @@ RegularLatLonGrid::RegularLatLonGrid(
   nptsWE_(nptsWE),
   points_(pts)
 {
+   Log::info() << "RegularLatLonGrid " << std::endl;
 }
 
 RegularLatLonGrid::~RegularLatLonGrid()

@@ -34,6 +34,11 @@ namespace grid {
 // NPoints: is this just the grids points, or includes area points, of area does not fit grid
 //          assumes it is grid points inclusive of the area.
 
+ReducedGaussianGrid::ReducedGaussianGrid()
+: gaussianNumber_(0)
+{
+}
+
 ReducedGaussianGrid::ReducedGaussianGrid( const std::string& hash,
                      const BoundBox& bbox,
                      const std::vector< Point >& pts,

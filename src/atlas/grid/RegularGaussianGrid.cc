@@ -34,6 +34,11 @@ namespace grid {
 // Area: Do we check the area.
 // Area: Can we assume area is multiple of the grids ?
 
+RegularGaussianGrid::RegularGaussianGrid()
+: gaussianNumber_(0)
+{
+}
+
 RegularGaussianGrid::RegularGaussianGrid( const std::string& hash,
                      const BoundBox& bbox,
                      const std::vector< Point >& pts,
