@@ -59,7 +59,7 @@ private:
    std::vector<double> latitudes_;
    long   gaussianNumber_;          /// No of points between pole and equator
 
-   /// Added friend mechanism to minimize data copying, during construction
+   /// Added friend mechanism to minimise data copying, during construction
    friend class GribRegularGaussianGrid;
 };
 

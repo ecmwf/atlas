@@ -154,7 +154,7 @@ public:
    virtual Grid::Ptr build();
 
 private:
-   virtual Grid::BoundBox boundingBox() const;
+   Grid::BoundBox boundingBox() const;
    bool isGlobalNorthSouth() const;
    bool isGlobalWestEast() const;
 

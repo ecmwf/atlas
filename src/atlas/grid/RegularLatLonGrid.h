@@ -46,13 +46,13 @@ public:
 private:
    std::string hash_;
    BoundBox bbox_;
-   double nsIncrement_;             /// In degrees
-   double weIncrement_;             /// In degrees
+   double nsIncrement_;             ///< In degrees
+   double weIncrement_;             ///< In degrees
    long nptsNS_;
    long nptsWE_;
    std::vector< Point > points_;     ///< storage of coordinate points
 
-   /// Added friend mechanism to minimize data copying, during construction
+   /// Added friend mechanism to minimise data copying, during construction
    friend class GribRegularLatLonGrid;
 };
 
