@@ -25,13 +25,6 @@ namespace grid {
 class RegularLatLonGrid : public Grid {
 public:
    RegularLatLonGrid();
-   RegularLatLonGrid(  const std::string& hash,
-                         const BoundBox& bbox,
-                         const std::vector< Point >& pts,
-                         double nsIncrement,
-                         double weIncrement,
-                         long nptsNS,
-                         long nptsWE);
    virtual ~RegularLatLonGrid();
 
    /// Overridden functions
@@ -59,7 +52,7 @@ private:
    long nptsWE_;
    std::vector< Point > points_;     ///< storage of coordinate points
 
-   /// Added friend mechanism to minimize data copying
+   /// Added friend mechanism to minimize data copying, during construction
    friend class GribRegularLatLonGrid;
 };
 

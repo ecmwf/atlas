@@ -39,20 +39,6 @@ ReducedGaussianGrid::ReducedGaussianGrid()
 {
 }
 
-ReducedGaussianGrid::ReducedGaussianGrid( const std::string& hash,
-                     const BoundBox& bbox,
-                     const std::vector< Point >& pts,
-                     const std::vector<double>& latitudes,
-                     long gaussianNumber)
-: hash_(hash),
-  bbox_(bbox),
-  points_(pts),
-  latitudes_(latitudes),
-  gaussianNumber_(gaussianNumber)
-{
-   Log::info() << "ReducedGaussianGrid" << std::endl;
-}
-
 ReducedGaussianGrid::~ReducedGaussianGrid()
 {
     Log::info() << "Destroy a ReducedGaussianGrid" << std::endl;

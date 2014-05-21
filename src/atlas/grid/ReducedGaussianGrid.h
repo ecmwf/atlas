@@ -46,11 +46,6 @@ namespace grid {
 class ReducedGaussianGrid : public Grid {
 public:
    ReducedGaussianGrid();
-   ReducedGaussianGrid( const std::string& hash,
-                        const BoundBox& bbox,
-                        const std::vector< Point >& pts,
-                        const std::vector<double>& latitudes,
-                        long gaussianNumber);
    virtual ~ReducedGaussianGrid();
 
    /// Overridden functions
@@ -71,9 +66,9 @@ private:
    std::vector< Point > points_;                 ///< storage of coordinate points
    std::vector<long>    rgSpec_;                ///< No of points per latitude
    std::vector<double> latitudes_;              ///< the latitudes
-   long                gaussianNumber_;          /// No of points between pole and equator
+   long                gaussianNumber_;         ///< No of points between pole and equator
 
-   /// Added friend mechanism to minimize data copying
+   /// Added friend mechanism to minimize data copying, during construction
    friend class GribReducedGaussianGrid;
 };
 

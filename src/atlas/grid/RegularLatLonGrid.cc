@@ -43,25 +43,6 @@ RegularLatLonGrid::RegularLatLonGrid()
    Log::info() << "RegularLatLonGrid" << std::endl;
 }
 
-RegularLatLonGrid::RegularLatLonGrid(
-         const std::string& hash,
-         const BoundBox& bbox,
-         const std::vector< Point >& pts,
-         double nsIncrement,
-         double weIncrement,
-         long nptsNS,
-         long nptsWE)
-: hash_(hash),
-  bbox_(bbox),
-  nsIncrement_(nsIncrement),
-  weIncrement_(weIncrement),
-  nptsNS_(nptsNS),
-  nptsWE_(nptsWE),
-  points_(pts)
-{
-   Log::info() << "RegularLatLonGrid " << std::endl;
-}
-
 RegularLatLonGrid::~RegularLatLonGrid()
 {
     Log::info() << "Destroy a RegularLatLonGrid" << std::endl;
