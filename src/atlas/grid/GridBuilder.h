@@ -18,45 +18,63 @@
 
 #include "eckit/memory/NonCopyable.h"
 #include "eckit/exception/Exceptions.h"
-#include "eckit/filesystem/LocalPathName.h"
+#include "eckit/filesystem/PathName.h"
 
 #include "eckit/geometry/Point2.h"
-#include "atlas/grid/Grid.h"
+#include "atlas/grid/RegularLatLonGrid.h"
+#include "atlas/grid/ReducedGaussianGrid.h"
+#include "atlas/grid/RegularGaussianGrid.h"
 
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
 namespace grid {
 
+class RegularLatLonGrid;
+class RegularGaussianGrid;
+class ReducedGaussianGrid;
+
 //------------------------------------------------------------------------------------------------------
 
-// Abstract base class for building Grid* objects
+/// Abstract base class for building Grid* objects
+/// The Grid objects themselves should be independent of building mechanism
+/// Currently we are building the Grid's from GRIB, however in the future
+/// this could from NetCDF or from reading a file
 class GridBuilder : private eckit::NonCopyable {
 public: // methods
 
    GridBuilder();
    virtual ~GridBuilder();
 
-   virtual Grid::Ptr build(eckit::LocalPathName pathname) const = 0;
+   /// @returns a shared ptr to a Grid. This will open and interrogate the file
+   /// Currently we are assuming the file is a GRIB file
+   virtual Grid::Ptr build(const eckit::PathName& pathname) const = 0;
+
+   //
    // virtual Grid* build(eckit::DataHandle) = 0;
 };
 
 // =============================================================================
 
-class GribGridBuilder : public GridBuilder {
+/// Singleton derivative of GridBuilder.
+/// This will create Grid* by reading from a Grib file
+/// If we come across Grids that we can not handle, we will create the Unstructured* Grid
+class GRIBGridBuilder : public GridBuilder {
 private:
-   GribGridBuilder();
-public: // methods
+   GRIBGridBuilder();
+public:
 
-   virtual ~GribGridBuilder();
+   virtual ~GRIBGridBuilder();
 
-   virtual Grid::Ptr build(eckit::LocalPathName pathname) const;
+   /// This method will open the file, get the grib handle and then call
+   /// build_grid_from_grib_handle
+   virtual Grid::Ptr build(const eckit::PathName& pathname) const;
 
-
+   /// This function has been separated out to aid testing
    Grid::Ptr build_grid_from_grib_handle(grib_handle* h ) const;
 
    /// @returns the singleton instance of this class
-   static GribGridBuilder& instance();
+   static GRIBGridBuilder& instance();
 
    /// Returns the list of all known grib grid types.
    /// Allow better error handling during Grid construction.
@@ -66,34 +84,37 @@ public: // methods
 
 // =============================================================================
 
-class GribGridMaker : private eckit::NonCopyable {
+/// Base helper class for creating Grid derivatives form GRIB files.
+class GribGridBuilderHelper : private eckit::NonCopyable {
 public:
-   virtual ~GribGridMaker();
+   virtual ~GribGridBuilderHelper();
 
+   /// @returns unique hash for this grid
    std::string hash() const { return hash_;}
-   virtual Grid::BoundBox boundingBox() const = 0;
-   virtual void coordinates( Grid::Coords& ) const = 0;
-   virtual const std::vector<Grid::Point>& coordinates() const = 0;
+
+   /// The derivatives will create the Grid, based on GRIB contents
+   virtual Grid::Ptr build() = 0;
 
 protected:
-   GribGridMaker( grib_handle* h );
+   GribGridBuilderHelper( grib_handle* h );
 
-   // grib edition 1 - milli-degrees
-   // grib edition 2 - micro-degrees or could be defined by the keys: "subdivisionsOfBasicAngle" and "basicAngleOfTheInitialProductionDomain"
-   // Therefore the client needs access to this when dealing with double based comparisons (for tolerances)
+   /// grib edition 1 - milli-degrees
+   /// grib edition 2 - micro-degrees or could be defined by the keys: "subdivisionsOfBasicAngle" and "basicAngleOfTheInitialProductionDomain"
+   /// Therefore the client needs access to this when dealing with double based comparisons (for tolerances)
    double epsilon() const { return epsilon_; }
 
    static int scanningMode(long iScansNegatively, long jScansPositively);
    static void comparePointList(const std::vector<Grid::Point>& points,  double epsilon, grib_handle* handle);
 
 protected:
-   long   editionNumber_;           /// Grib 1 or Grib 2
-   double north_;                   /// In degrees
-   double south_;                   /// In degrees
-   double west_;                    /// In degrees
-   double east_;                    /// In degrees
-   double epsilon_;                 /// Grib 1 or Grib 2
-   long   numberOfDataPoints_;      ///
+   grib_handle* handle_;             ///< No not delete
+   long   editionNumber_;           ///< Grib 1 or Grib 2
+   double north_;                   ///< In degrees
+   double south_;                   ///< In degrees
+   double west_;                    ///< In degrees
+   double east_;                    ///< In degrees
+   double epsilon_;                 ///< Grib 1 or Grib 2
+   long   numberOfDataPoints_;
    long   iScansNegatively_;
    long   jScansPositively_;
    std::string hash_;
@@ -101,87 +122,67 @@ protected:
 
 // =============================================================================
 
-class GribReducedGaussianGrid : public GribGridMaker {
+/// To avoid copying data, we placed the data directly into GRIB
+/// via use of friendship
+class GribReducedGaussianGrid : public GribGridBuilderHelper {
 public:
    GribReducedGaussianGrid( grib_handle* h );
    virtual ~GribReducedGaussianGrid();
 
-   /// Overridden functions
-   virtual Grid::BoundBox boundingBox() const;
-   virtual void coordinates( Grid::Coords & ) const;
-   virtual const std::vector<Grid::Point>& coordinates() const { return points_; }
-
-   /// Functions specific to Reduced Guassian grids
-   long gaussianNumber() const { return gaussianNumber_;}
-   const std::vector<double>& latitudes() { return latitudes_;}
+   virtual Grid::Ptr build();
 
 private:
+   Grid::BoundBox boundingBox() const;
    void add_point(int lat_index);
-
-   // TODO common code
    bool isGlobalNorthSouth() const;
    bool isGlobalWestEast() const;
 
 private:
-   long   gaussianNumber_;          /// No of points between pole and equator
-   long   nj_;                      /// No of points along Y axes
-   std::vector<long> rgSpec_;
-   std::vector< Grid::Point > points_;     ///< storage of coordinate points
-   std::vector<double> latitudes_;
+   long   nj_;                      ///< No of points along Y axes
+   std::unique_ptr<ReducedGaussianGrid> the_grid_;
 };
 
 // =============================================================================
 
-class GribRegularGaussianGrid : public GribGridMaker {
+/// To avoid copying data, we placed the data directly into GRIB
+/// via use of friendshi
+class GribRegularGaussianGrid : public GribGridBuilderHelper {
 public:
    GribRegularGaussianGrid( grib_handle* h );
    virtual ~GribRegularGaussianGrid();
 
-   /// Overridden functions
-   virtual Grid::BoundBox boundingBox() const;
-   virtual void coordinates( Grid::Coords & ) const;
-   virtual const std::vector<Grid::Point>& coordinates() const { return points_; }
-
-   /// Functions specific to Regular Guassian grids
-   Grid::Point latLon(size_t the_i, size_t the_j) const;
-   long gaussianNumber() const { return gaussianNumber_;}
-   const std::vector<double>& latitudes() { return latitudes_;}
+   virtual Grid::Ptr build();
 
 private:
-   // TODO these are common, common base class ?
+   Grid::BoundBox boundingBox() const;
    bool isGlobalNorthSouth() const;
    bool isGlobalWestEast() const;
 
 private:
    long   nj_;                      /// No of points along Y axes
-   long   gaussianNumber_;          /// No of points between pole and equator
-
-   std::vector< Grid::Point > points_;     ///< storage of coordinate points
-   std::vector<double> latitudes_;
+   std::unique_ptr<RegularGaussianGrid> the_grid_;
 };
 
 // =============================================================================
 
-class GribRegularLatLonGrid : public GribGridMaker {
+/// To avoid copying data, we placed the data directly into GRIB
+/// via use of friendship
+class GribRegularLatLonGrid : public GribGridBuilderHelper {
 public:
    GribRegularLatLonGrid( grib_handle* h );
    virtual ~GribRegularLatLonGrid();
 
-   /// Overridden functions
-   virtual Grid::BoundBox boundingBox() const;
-   virtual size_t nPoints() const { return points_.size(); }
-   virtual void coordinates( Grid::Coords & ) const;
-   /// @deprecated will be removed soon as it exposes the inner storage of the coordinates
-   virtual const std::vector<Grid::Point>& coordinates() const { return points_; }
-
-   /// Functions specific to Regular Lat long grids
-   long rows() const { return nptsNS_;}
-   long cols() const { return nptsWE_;}
-   Grid::Point latLon(size_t lat, size_t lon) const;
-   double incLat() const { return nsIncrement_; }
-   double incLon() const { return weIncrement_; }
+   virtual Grid::Ptr build();
 
 private:
+   Grid::BoundBox boundingBox() const;
+
+   // Functions specific to Regular Lat long grids
+   long rows() const;
+   long cols() const;
+   double incLat() const;
+   double incLon() const;
+
    // for verification/checks
    long computeIncLat() const ;
    long computeIncLon() const ;
@@ -189,11 +190,7 @@ private:
    long computeCols(double west, double east) const;
 
 private:
-   double nsIncrement_;             /// In degrees
-   double weIncrement_;             /// In degrees
-   long nptsNS_;
-   long nptsWE_;
-   std::vector< Grid::Point > points_;     ///< storage of coordinate points
+   std::unique_ptr<RegularLatLonGrid> the_grid_;
 };
 
 //------------------------------------------------------------------------------------------------------

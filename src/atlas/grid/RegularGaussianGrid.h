@@ -36,11 +36,7 @@ namespace grid {
 
 class RegularGaussianGrid : public Grid {
 public:
-   RegularGaussianGrid( const std::string& hash,
-                        const BoundBox& bbox,
-                        const std::vector< Point >& pts,
-                        const std::vector<double>& latitudes,
-                        long gaussianNumber);
+   RegularGaussianGrid();
    virtual ~RegularGaussianGrid();
 
    /// Overridden functions
@@ -62,6 +58,9 @@ private:
    std::vector< Point > points_;     ///< storage of coordinate points
    std::vector<double> latitudes_;
    long   gaussianNumber_;          /// No of points between pole and equator
+
+   /// Added friend mechanism to minimise data copying, during construction
+   friend class GribRegularGaussianGrid;
 };
 
 //-----------------------------------------------------------------------------
