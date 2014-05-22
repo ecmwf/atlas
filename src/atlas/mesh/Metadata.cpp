@@ -64,6 +64,7 @@ METADATA(int)
 METADATA(float)
 METADATA(double)
 METADATA(string)
+//METADATA(void*)
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines

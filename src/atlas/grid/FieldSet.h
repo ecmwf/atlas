@@ -12,14 +12,19 @@
 /// @author Tiago Quintino
 /// @date Oct 2013
 
-#ifndef atlas_grid_Field_H
-#define atlas_grid_Field_H
+#ifndef atlas_grid_FieldSet_H
+#define atlas_grid_FieldSet_H
 
 #include <vector>
+#include <memory>
 
 #include "eckit/types/Types.h"
 #include "eckit/memory/NonCopyable.h"
-#include "Grid.h"
+
+#include "atlas/mesh/Mesh.hpp"
+#include "atlas/mesh/Field.hpp"
+#include "atlas/mesh/Metadata.hpp"
+#include "atlas/grid/Grid.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -28,45 +33,36 @@ namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
-/// @todo this class will become polymorphic
-/// @todo move it out of this header
-class MetaData : public eckit::StringDict {
-public: // methods
-
-    typedef std::unique_ptr<MetaData> Ptr;
-
-    MetaData();
-
-};
-
-//------------------------------------------------------------------------------------------------------
-
-class FieldH : private eckit::NonCopyable {
+class FieldHandle : private eckit::NonCopyable {
 public: // types
 
-    typedef std::shared_ptr<FieldH> Ptr;
-    typedef std::vector< FieldH::Ptr >  Vector;
-    typedef std::vector< FieldH::Ptr >::const_iterator Iterator;
+    typedef std::shared_ptr<FieldHandle> Ptr;
+    typedef std::vector< FieldHandle::Ptr > Vector;
+
     typedef atlas::FieldT< double > Data;
+    typedef atlas::Mesh Mesh;
 
 public: // methods
 
-    FieldH( Grid::Ptr, MetaData::Ptr, Data& );
+    FieldHandle( Grid::Ptr, Data& );
 
     const Grid& grid() const { return *grid_; }
     Grid& grid() { return *grid_; }
 
-    const MetaData& metadata() const { return *metadata_; }
-    MetaData& metadata() { return *metadata_; }
+    const Mesh& mesh() const { return *mesh_; }
+    Mesh& mesh() { return *mesh_; }
+
+    const Metadata& metadata() const { return data_.metadata(); }
+    Metadata& metadata() { return data_.metadata(); }
 
     Data& data() { return data_; }
     const Data& data() const { return data_; }
 
-protected:
+protected: // members
 
     Grid::Ptr       grid_;      ///< describes the grid (shared)
-    MetaData::Ptr   metadata_;  ///< describes the field (singly owned)
-    Data&           data_;      ///< stores the field data (not owned)
+    Mesh::Ptr       mesh_;      ///< mesh data structure (shared)
+    Data&           data_;      ///< reference to the field data, not owned since it actually exists in the mesh_
 
 };
 
@@ -79,21 +75,21 @@ class FieldSet : private eckit::NonCopyable {
 public: // methods
 
     /// Takes ownership of the fields
-    FieldSet( const FieldH::Vector& fields = FieldH::Vector() );
+    FieldSet( const FieldHandle::Vector& fields = FieldHandle::Vector() );
 
-    const FieldH::Vector& fields() const { return fields_; }
+    const FieldHandle::Vector& fields() const { return fields_; }
 
-    FieldH::Vector& fields() { return fields_; }
+    FieldHandle::Vector& fields() { return fields_; }
 
 protected:
 
-    FieldH::Vector fields_;
+    FieldHandle::Vector fields_;
 
 };
 
 //------------------------------------------------------------------------------------------------------
 
 } // namespace grid
-} // namespace eckit
+} // namespace atlas
 
 #endif

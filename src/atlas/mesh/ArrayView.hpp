@@ -97,8 +97,8 @@ public:
   DATA_TYPE* data()            { return data_; }
   const int* strides() const   { return strides_; }
   const int* extents() const   { return extents_; }
-  size_t size() const { return extents_[0]; }
-  size_t total_size() const { return extents_[0]; }
+  std::size_t size() const { return extents_[0]; }
+  std::size_t total_size() const { return extents_[0]; }
   void operator=(const DATA_TYPE& scalar) { for(int n=0; n<total_size(); ++n) *(data_+n)=scalar; }
 private:
   DATA_TYPE* data_;
@@ -129,8 +129,8 @@ public:
   DATA_TYPE* data()            { return data_; }
   const int* strides() const   { return strides_; }
   const int* extents() const   { return extents_; }
-  size_t size() const { return extents_[0]; }
-  size_t total_size() const { return extents_[0]*extents_[1]; }
+  std::size_t size() const { return extents_[0]; }
+  std::size_t total_size() const { return extents_[0]*extents_[1]; }
   void operator=(const DATA_TYPE& scalar) { for(int n=0; n<total_size(); ++n) *(data_+n)=scalar; }
 private:
   DATA_TYPE* data_;
@@ -161,8 +161,8 @@ public:
   DATA_TYPE* data()            { return data_; }
   const int* strides() const   { return strides_; }
   const int* extents() const   { return extents_; }
-  size_t size() const { return extents_[0]; }
-  size_t total_size() const { return extents_[0]*extents_[1]*extents_[2]; }
+  std::size_t size() const { return extents_[0]; }
+  std::size_t total_size() const { return extents_[0]*extents_[1]*extents_[2]; }
   void operator=(const DATA_TYPE& scalar) { for(int n=0; n<total_size(); ++n) *(data_+n)=scalar; }
 private:
   DATA_TYPE* data_;
@@ -194,8 +194,8 @@ public:
   DATA_TYPE* data()            { return data_; }
   const int* strides() const   { return strides_; }
   const int* extents() const   { return extents_; }
-  size_t size() const { return extents_[0]; }
-  size_t total_size() const { return extents_[0]*extents_[1]*extents_[2]*extents_[3]; }
+  std::size_t size() const { return extents_[0]; }
+  std::size_t total_size() const { return extents_[0]*extents_[1]*extents_[2]*extents_[3]; }
   void operator=(const DATA_TYPE& scalar) { for(int n=0; n<total_size(); ++n) *(data_+n)=scalar; }
   
 private:

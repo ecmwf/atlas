@@ -477,6 +477,40 @@ void Tesselation::create_cell_centres( Mesh& mesh )
 #endif
 }
 
+void Tesselation::build_mesh( const Grid& grid, Mesh& mesh )
+{
+    if( mesh.has_function_space("nodes") ) return;
+
+    const size_t npts = grid.nPoints();
+
+    Tesselation::create_mesh_structure( mesh, npts );
+
+    FunctionSpace& nodes = mesh.function_space( "nodes" );
+
+    ASSERT(  nodes.extents()[0] == npts );
+
+    FieldT<double>& coords  = nodes.field<double>("coordinates");
+    FieldT<double>& latlon  = nodes.field<double>("latlon");
+    FieldT<int>&    glb_idx = nodes.field<int>("glb_idx");
+
+    ASSERT( npts == nodes.extents()[0] );
+
+    const std::vector<Grid::Point>& ll = grid.coordinates();
+
+    for( size_t i = 0; i < npts; ++i )
+    {
+        glb_idx(i) = i;
+
+        double lat = ll[i].lat();
+        double lon = ll[i].lon();
+
+        latlon(LAT,i) = lat;
+        latlon(LON,i) = lon;
+
+        eckit::geometry::latlon_to_3d( lat, lon, coords.slice(i) );
+    }
+}
+
 //------------------------------------------------------------------------------------------------------
 
 } // namespace grid

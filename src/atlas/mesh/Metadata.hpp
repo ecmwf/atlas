@@ -34,11 +34,12 @@ public:
   bool has(const std::string& name) const; 
 
 private:
-  std::map< std::string, bool > map_bool_;
-  std::map< std::string, int > map_int_;
-  std::map< std::string, float > map_float_;
-  std::map< std::string, double > map_double_;
-  std::map< std::string, std::string > map_string_;
+//  std::map< std::string, void* >        dict_;
+  std::map< std::string, bool >         map_bool_;
+  std::map< std::string, int >          map_int_;
+  std::map< std::string, float >        map_float_;
+  std::map< std::string, double >       map_double_;
+  std::map< std::string, std::string >  map_string_;
 };
 
 // ------------------------------------------------------------------
@@ -46,6 +47,7 @@ private:
 extern "C" 
 {
   Metadata* atlas__Metadata__new ();
+
   void atlas__Metadata__delete (Metadata* This);
   void atlas__Metadata__add_int    (Metadata* This, const char* name, int value);
   void atlas__Metadata__add_float  (Metadata* This, const char* name, float value);

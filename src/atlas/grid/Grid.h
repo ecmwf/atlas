@@ -24,12 +24,12 @@
 
 #include "eckit/geometry/Point2.h"
 
-#include "atlas/mesh/Mesh.hpp"
-#include "atlas/mesh/Field.hpp"
-
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
+
+class Mesh;
+
 namespace grid {
 
 //------------------------------------------------------------------------------------------------------
@@ -40,7 +40,6 @@ namespace grid {
 class Grid : private eckit::NonCopyable {
 public: // types
 
-    typedef atlas::Mesh                         Mesh;      ///< mesh type
     typedef eckit::geometry::LLPoint2           Point;     ///< point type
     typedef eckit::geometry::BoundBox2<Point>   BoundBox;  ///< boundbox type
 
@@ -66,6 +65,8 @@ public: // types
         std::vector<double>& coords_;
     };
 
+    Mesh& mesh();
+    const Mesh& mesh() const;
 
 public: // methods
 
@@ -86,17 +87,9 @@ public: // methods
     /// @deprecated will be removed soon as it exposes the inner storage of the coordinates
     virtual const std::vector<Point>& coordinates() const = 0;
 
-//    const Mesh& mesh() const;
-    Mesh& mesh();
+private: // members
 
-protected:
-
-    virtual void make_mesh();
-
-    static int scanningMode(long iScansNegatively, long jScansPositively);
-
-
-    std::unique_ptr< Mesh > mesh_;
+    mutable std::shared_ptr< Mesh > mesh_;
 
 };
 
