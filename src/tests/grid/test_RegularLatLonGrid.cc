@@ -8,29 +8,31 @@
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
-
 #include <string>
 #include <iostream>
-
 #include <boost/test/unit_test.hpp>
-#include "boost/filesystem/operations.hpp"
-#include "boost/filesystem/path.hpp"
+
+#include "eckit/io/StdFile.h"
+#include "eckit/filesystem/PathName.h"
 
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/GridBuilder.h"
 
-#include "eckit/io/StdFile.h"
-#include "eckit/filesystem/PathName.h"
-#include "eckit/log/Log.h"
 
 using namespace std;
 using namespace eckit;
 using namespace atlas::grid;
-namespace fs = boost::filesystem;
 
+/// Test for Grid* derivatives
+/// This test uses the grib samples director.
+/// We open each file and attempt to create the Grid* class.
+/// However this has exposed errors in the grib samples files,
+/// especially for reduced gaussian grids. Hence we will need to wait till Shahram has
+/// has a chance to fix the issues, before all the tests pass.
 
-static void test_grids_from_grib_sample_directory( const std::string& directory);
 static std::string determine_grib_samples_dir();
+static void test_grids_from_grib_sample_directory( const std::string& directory);
+static void test_grib_file(const std::string& file);
 
 BOOST_AUTO_TEST_SUITE( TestGrid )
 
@@ -90,71 +92,72 @@ static std::string determine_grib_samples_dir()
 
 static void test_grids_from_grib_sample_directory(const std::string& directory)
 {
-   fs::path full_path( fs::initial_path<fs::path>() );
-   full_path = fs::system_complete( fs::path( directory ) );
+   cout << "*********************************************************************************\n";
+   cout << "traversing directory " << directory << "\n";
+   PathName dir_path(directory);
+   BOOST_CHECK(dir_path.exists());
+   BOOST_CHECK(dir_path.isDir());
 
-   BOOST_CHECK(fs::exists( full_path ));
-   BOOST_CHECK(fs::is_directory( full_path ));
-
-   //std::cout << "\nIn directory: " << full_path.directory_string() << "\n\n";
-   fs::directory_iterator end_iter;
-   for ( fs::directory_iterator dir_itr( full_path ); dir_itr != end_iter; ++dir_itr )
-   {
-      try
-      {
-         fs::path relPath(directory + "/" + dir_itr->path().filename().string());
-
-         // recurse down directories
-         if ( fs::is_directory(dir_itr->status()) )  {
-            test_grids_from_grib_sample_directory(relPath.string());
-            continue;
-         }
-
-         std::cout << "\n==========================================================================" << std::endl;
-         std::cout << "Opening GRIB file " << relPath.string() << std::endl;
-         StdFile theGribFile(PathName(relPath.string()));
-
-         std::cout << " Create a grib handle"<< std::endl;
-         int err;
-         grib_handle* handle = grib_handle_new_from_file(0,theGribFile,&err);
-         BOOST_REQUIRE_MESSAGE(err == 0,"grib_handle_new_from_file error " << err << " for file " << relPath.string());
-
-
-         std::cout << " Get the grid type" << std::endl;
-         char string_value[64];
-         size_t len = sizeof(string_value)/sizeof(char);
-         err = grib_get_string(handle,"gridType",string_value,&len);
-         BOOST_CHECK_MESSAGE(err == 0,"grib_get_string(gridType) failed for file " << relPath.string() << " IGNORING !!!!\n");
-         if ( err != 0 ) continue;
-
-
-         std::string gridType = string_value;
-         std::cout << " Create Grid derivatives " << gridType << std::endl;
-
-         if ( gridType == "polar_stereographic" || gridType == "rotated_ll" || gridType == "reduced_ll" || gridType == "sh" ) {
-
-            std::cout << " Ignoring grid types [ polar_stereographic | rotated_ll | reduced_ll || sh ] " << std::endl;
-            std::cout << " close the grib file" << std::endl;
-            err = grib_handle_delete(handle);
-            BOOST_CHECK_MESSAGE(err == 0,"grib_handle_delete failed for " << relPath.string());
-            continue;
-         }
-
-
-         // Unstructured grid can not handle Spherical harmonics
-         atlas::grid::Grid::Ptr the_grid = GRIBGridBuilder::instance().build_grid_from_grib_handle(handle);
-         BOOST_CHECK_MESSAGE(the_grid,"GRIBGridBuilder::instance().build_grid_from_grib_handle failed for file " << relPath.string());
-         if (!the_grid) continue;
-
-         BOOST_CHECK_MESSAGE(the_grid->gridType() == gridType,"gridType(" << gridType << ") did not match Grid constructor(" << the_grid->gridType() << ") for file " << relPath.string());
-
-         std::cout << " close the grib file" << std::endl;
-         err = grib_handle_delete(handle);
-         BOOST_CHECK_MESSAGE(err == 0,"grib_handle_delete failed for " << relPath.string());
+   std::vector<PathName> files;
+   std::vector<PathName> directories;
+   dir_path.children(files,directories);
+   for(size_t i = 0; i < files.size(); i++) {
+      try {
+         test_grib_file(files[i].localPath());
       }
       catch ( const std::exception & ex )
       {
-         std::cout << dir_itr->path().filename() << " " << ex.what() << std::endl;
+         std::cout << files[i].localPath() << " " << ex.what() << std::endl;
       }
    }
+
+   // recursively call this function for each directory found
+   for(size_t i = 0; i < directories.size(); i++) {
+      test_grids_from_grib_sample_directory(directories[i].localPath());
+   }
+}
+
+static void test_grib_file(const std::string& the_file_path)
+{
+   std::cout << "\n===================================================================================================" << std::endl;
+   std::cout << "Opening GRIB file " << the_file_path << std::endl;
+   PathName thePath(the_file_path);
+   eckit::StdFile theGribFile(thePath);
+
+   std::cout << " Create a grib handle"<< std::endl;
+   int err;
+   grib_handle* handle = grib_handle_new_from_file(0,theGribFile,&err);
+   BOOST_REQUIRE_MESSAGE(err == 0,"grib_handle_new_from_file error " << err << " for file " << the_file_path);
+
+
+   std::cout << " Get the grid type" << std::endl;
+   char string_value[64];
+   size_t len = sizeof(string_value)/sizeof(char);
+   err = grib_get_string(handle,"gridType",string_value,&len);
+   BOOST_CHECK_MESSAGE(err == 0,"grib_get_string(gridType) failed for file " << the_file_path << " IGNORING !!!!\n");
+   if ( err != 0 ) return;
+
+
+   std::string gridType = string_value;
+   std::cout << " Create Grid derivatives " << gridType << std::endl;
+
+   if ( gridType == "polar_stereographic" || gridType == "rotated_ll" || gridType == "reduced_ll" || gridType == "sh" ) {
+
+      std::cout << " Ignoring grid types [ polar_stereographic | rotated_ll | reduced_ll || sh ] " << std::endl;
+      std::cout << " close the grib file" << std::endl;
+      err = grib_handle_delete(handle);
+      BOOST_CHECK_MESSAGE(err == 0,"grib_handle_delete failed for " << the_file_path);
+      return;
+   }
+
+   // Unstructured grid can not handle Spherical harmonics
+   atlas::grid::Grid::Ptr the_grid = GRIBGridBuilder::instance().build_grid_from_grib_handle(handle);
+   BOOST_CHECK_MESSAGE(the_grid,"GRIBGridBuilder::instance().build_grid_from_grib_handle failed for file " << the_file_path);
+   if (!the_grid) return;
+
+   BOOST_CHECK_MESSAGE(the_grid->gridType() == gridType,"gridType(" << gridType << ") did not match Grid constructor(" << the_grid->gridType() << ") for file " << the_file_path);
+
+   std::cout << " close the grib file" << std::endl;
+   err = grib_handle_delete(handle);
+   BOOST_CHECK_MESSAGE(err == 0,"grib_handle_delete failed for " << the_file_path);
 }
