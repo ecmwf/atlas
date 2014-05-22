@@ -85,6 +85,13 @@ if( ENABLE_MPI )
 	else()
 		set( HAVE_MPI 0 )
    endif()
+
+   if( MPI_Fortran_FOUND )
+     message( STATUS " MPI_Fortran_INCLUDE_PATH ${MPI_Fortran_INCLUDE_PATH}" )
+     message( STATUS " MPI_Fortran_LIBRARIES ${MPI_Fortran_LIBRARIES}" )
+     add_definitions(${MPI_Fortran_COMPILE_FLAGS})
+     include_directories(${MPI_Fortran_INCLUDE_PATH})
+   endif()
 endif()
 
 ### grid
