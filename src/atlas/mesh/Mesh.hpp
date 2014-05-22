@@ -28,7 +28,9 @@ class Mesh {
 
 public: // types
 
-    typedef std::shared_ptr<Mesh> Ptr;
+
+// nawd: Cannot use this on Cray
+//    typedef std::shared_ptr<Mesh> Ptr;
 
 public: // methods
 
