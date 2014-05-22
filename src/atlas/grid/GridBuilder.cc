@@ -314,6 +314,7 @@ Grid::Ptr GribReducedGaussianGrid::build()
    if (jScansPositively_ == 1 )
       std::reverse(the_grid_->latitudes_.begin(), the_grid_->latitudes_.end());
 
+   double EXPECTED_longitudeOfLastGridPointInDegrees = 360.0 - (360.0/(the_grid_->gaussianNumber_*4.0));
    Log::info() << " editionNumber                                  " << editionNumber_ << std::endl;
    Log::info() << " epsilon()                                      " << epsilon() << std::endl;
    Log::info() << " gaussianNumber_                                " << the_grid_->gaussianNumber_ << std::endl;
@@ -329,14 +330,16 @@ Grid::Ptr GribReducedGaussianGrid::build()
    Log::info() << " longitudeOfFirstGridPointInDegrees             " << west_ << std::endl;
    Log::info() << " latitudeOfLastGridPointInDegrees               " << south_ << std::endl;
    Log::info() << " longitudeOfLastGridPointInDegrees              " << east_ << std::endl;
-   Log::info() << " EXPECTED longitudeOfLastGridPointInDegrees     " << 360.0 - (360.0/(the_grid_->gaussianNumber_*4.0)) << std::endl;
+   Log::info() << " EXPECTED longitudeOfLastGridPointInDegrees     " << EXPECTED_longitudeOfLastGridPointInDegrees << std::endl;
    Log::info() << " numberOfDataPoints                             " << numberOfDataPoints_ << std::endl;
    int no_of_points_in_pl = 0;
    for(int i = 0; i < the_grid_->rgSpec_.size(); i++) no_of_points_in_pl += the_grid_->rgSpec_[i];
    Log::info() << " no_of_points_in_pl                             " << no_of_points_in_pl << std::endl;
    Log::info() << " points_.size()                                 " << the_grid_->points_.size() << std::endl;
 
+   ASSERT(nj_ == 2*the_grid_->gaussianNumber_);
    ASSERT(the_grid_->points_.size() == numberOfDataPoints_);
+   ASSERT(FloatCompare::is_equal(east_,EXPECTED_longitudeOfLastGridPointInDegrees,epsilon()));
 
    // Check point list compared with grib
    comparePointList(the_grid_->points_,epsilon(),handle_);
