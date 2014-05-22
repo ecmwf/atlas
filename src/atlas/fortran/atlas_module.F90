@@ -282,6 +282,10 @@ contains
   procedure :: get_string => Metadata__get_string
   generic :: get => get_integer, get_logical, get_real32, get_real64, get_string
 END TYPE Metadata_type
+
+interface new_Metadata
+  module procedure new_Metadata
+end interface
 !------------------------------------------------------------------------------
 
 !------------------------------------------------------------------------------
@@ -343,6 +347,7 @@ INTERFACE delete
   module procedure FunctionSpace__delete
   module procedure FieldSet__delete
   module procedure HaloExchange__delete
+  module procedure Metadata__delete
 end interface delete
 
 !------------------------------------------------------------------------------
@@ -1237,6 +1242,19 @@ end subroutine FieldSet__fields
 
 ! -----------------------------------------------------------------------------
 ! Metadata routines
+
+function new_Metadata() result(metadata)
+  type(Metadata_type) :: metadata
+  metadata%object = atlas__Metadata__new()
+end function new_Metadata
+
+subroutine Metadata__delete(this)
+  type(Metadata_type), intent(inout) :: this
+  if ( c_associated(this%object) ) then
+    call atlas__Metadata__delete(this%object)
+  end if
+  this%object = C_NULL_ptr
+end subroutine Metadata__delete
 
 subroutine Metadata__add_logical(this, name, value)
   class(Metadata_type), intent(inout) :: this
