@@ -9,22 +9,19 @@
  * does it submit to any jurisdiction.
  */
 
-#include "eckit/log/Log.h"
 #include <string>
 #include <iostream>
 
 #include <boost/test/unit_test.hpp>
-#include <boost/timer.hpp>
 #include "boost/filesystem/operations.hpp"
 #include "boost/filesystem/path.hpp"
 
 #include "atlas/grid/Grid.h"
-#include "atlas/grid/GribRead.h"
-#include "atlas/grid/RegularLatLonGrid.h"
 #include "atlas/grid/GridBuilder.h"
 
 #include "eckit/io/StdFile.h"
 #include "eckit/filesystem/PathName.h"
+#include "eckit/log/Log.h"
 
 using namespace std;
 using namespace eckit;
