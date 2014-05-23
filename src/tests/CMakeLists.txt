@@ -35,4 +35,7 @@ ecbuild_add_test( TARGET test_rgg
 	LIBS     atlas_meshgen atlas_testing
 )
 
-add_subdirectory( grid )
+if( HAVE_GRID )
+  add_subdirectory( grid )
+endif()
+
