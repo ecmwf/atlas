@@ -1,5 +1,6 @@
 
 module atlas_mpistubs_module
+  use, intrinsic :: iso_c_binding, only : c_float, c_double
   implicit none
   public
 !
@@ -39,12 +40,12 @@ module atlas_mpistubs_module
   parameter ( MPI_INTEGER = 28 )
   integer MPI_REAL
   parameter ( MPI_REAL = 11 )
-  integer MPI_REAL4
-  parameter ( MPI_REAL4 = MPI_REAL )
+  integer MPI_real32
+  parameter ( MPI_real32 = MPI_REAL )
   integer mpi_double_precision
   parameter ( mpi_double_precision = 3 )
-  integer MPI_REAL8
-  parameter ( MPI_REAL8 = mpi_double_precision )
+  integer MPI_real64
+  parameter ( MPI_real64 = mpi_double_precision )
   integer mpi_logical
   parameter ( mpi_logical = 4 )
   integer mpi_character
@@ -61,92 +62,97 @@ module atlas_mpistubs_module
   interface mpi_gather
      module procedure mpi_gather_int_r0
      module procedure mpi_gather_int_r1
-     module procedure mpi_gather_real4_r0
-     module procedure mpi_gather_real4_r1
-     module procedure mpi_gather_real8_r0
-     module procedure mpi_gather_real8_r1
+     module procedure mpi_gather_real32_r0
+     module procedure mpi_gather_real32_r1
+     module procedure mpi_gather_real64_r0
+     module procedure mpi_gather_real64_r1
   end interface mpi_gather
 
   interface mpi_gatherv
      module procedure mpi_gatherv_int_r1
-     module procedure mpi_gatherv_real4_r1
-     module procedure mpi_gatherv_real8_r1
+     module procedure mpi_gatherv_real32_r1
+     module procedure mpi_gatherv_real64_r1
   end interface mpi_gatherv
 
   interface mpi_allgather
      module procedure mpi_allgather_int_r1
-     module procedure mpi_allgather_real_r1
+     module procedure mpi_allgather_real32_r1
+     module procedure mpi_allgather_real64_r1
   end interface mpi_allgather
   
   interface mpi_allgatherv
      module procedure mpi_allgatherv_int_r1
-     module procedure mpi_allgatherv_real4_r1
-     module procedure mpi_allgatherv_real8_r1
+     module procedure mpi_allgatherv_real32_r1
+     module procedure mpi_allgatherv_real64_r1
   end interface mpi_allgatherv
   
   interface mpi_alltoall
     module procedure mpi_alltoall_int_r1
-    module procedure mpi_alltoall_real4_r1
-    module procedure mpi_alltoall_real8_r1
+    module procedure mpi_alltoall_real32_r1
+    module procedure mpi_alltoall_real64_r1
   end interface mpi_alltoall
   
   interface mpi_alltoallv
     module procedure mpi_alltoallv_int_r1
-    module procedure mpi_alltoallv_real4_r1
-    module procedure mpi_alltoallv_real8_r1
+    module procedure mpi_alltoallv_real32_r1
+    module procedure mpi_alltoallv_real64_r1
   end interface mpi_alltoallv
     
   interface mpi_allreduce
      module procedure mpi_allreduce_int_r0
      module procedure mpi_allreduce_int_r1
-     module procedure mpi_allreduce_real_r0
-     module procedure mpi_allreduce_real_r1
+     module procedure mpi_allreduce_real32_r0
+     module procedure mpi_allreduce_real32_r1
+     module procedure mpi_allreduce_real64_r0
+     module procedure mpi_allreduce_real64_r1
      module procedure mpi_allreduce_int_r1_inplace
-     module procedure mpi_allreduce_real_r0_inplace
-     module procedure mpi_allreduce_real_r1_inplace
+     module procedure mpi_allreduce_real32_r0_inplace
+     module procedure mpi_allreduce_real32_r1_inplace
   end interface mpi_allreduce
   
   interface mpi_reduce
      module procedure mpi_reduce_int_r0
      module procedure mpi_reduce_int_r1
-     module procedure mpi_reduce_real_r0
-     module procedure mpi_reduce_real_r1
+     module procedure mpi_reduce_real32_r0
+     module procedure mpi_reduce_real64_r0
+     module procedure mpi_reduce_real32_r1
+     module procedure mpi_reduce_real64_r1
   end interface mpi_reduce
   
   interface mpi_reduce_scatter
      module procedure mpi_reduce_scatter_int_r1
-     module procedure mpi_reduce_scatter_real_r1
+     module procedure mpi_reduce_scatter_real32_r1
   end interface mpi_reduce_scatter
   
   interface mpi_bcast
      module procedure mpi_bcast_int_r0
      module procedure mpi_bcast_int_r1
      module procedure mpi_bcast_int_r2
-     module procedure mpi_bcast_real4_r0
-     module procedure mpi_bcast_real8_r0
-     module procedure mpi_bcast_real4_r1
-     module procedure mpi_bcast_real8_r1
-     module procedure mpi_bcast_real4_r2
-     module procedure mpi_bcast_real8_r2
+     module procedure mpi_bcast_real32_r0
+     module procedure mpi_bcast_real64_r0
+     module procedure mpi_bcast_real32_r1
+     module procedure mpi_bcast_real64_r1
+     module procedure mpi_bcast_real32_r2
+     module procedure mpi_bcast_real64_r2
      module procedure mpi_bcast_char
   end interface mpi_bcast
 
   interface mpi_isend
      module procedure mpi_isend_int_r0
      module procedure mpi_isend_int_r1
-     module procedure mpi_isend_real4_r0
-     module procedure mpi_isend_real4_r1
-     module procedure mpi_isend_real8_r0
-     module procedure mpi_isend_real8_r1
+     module procedure mpi_isend_real32_r0
+     module procedure mpi_isend_real32_r1
+     module procedure mpi_isend_real64_r0
+     module procedure mpi_isend_real64_r1
   end interface mpi_isend
 
   interface mpi_irecv
      module procedure mpi_irecv_int_r0
      module procedure mpi_irecv_int_r1
-     module procedure mpi_irecv_real4_r0
-     module procedure mpi_irecv_real4_r1
-     module procedure mpi_irecv_real8_r0
-     module procedure mpi_irecv_real8_r1
+     module procedure mpi_irecv_real32_r0
+     module procedure mpi_irecv_real32_r1
+     module procedure mpi_irecv_real64_r0
+     module procedure mpi_irecv_real64_r1
   end interface mpi_irecv
   
   interface mpi_send
@@ -154,10 +160,10 @@ module atlas_mpistubs_module
      module procedure mpi_send_int_r1
      module procedure mpi_send_int_r2
      module procedure mpi_send_int_r2_fixedstatus
-     module procedure mpi_send_real4_r0
-     module procedure mpi_send_real4_r1
-     module procedure mpi_send_real8_r0
-     module procedure mpi_send_real8_r1
+     module procedure mpi_send_real32_r0
+     module procedure mpi_send_real32_r1
+     module procedure mpi_send_real64_r0
+     module procedure mpi_send_real64_r1
   end interface mpi_send
   
   interface mpi_recv
@@ -165,28 +171,28 @@ module atlas_mpistubs_module
      module procedure mpi_recv_int_r0_fixedstatus
      module procedure mpi_recv_int_r1
      module procedure mpi_recv_int_r2
-     module procedure mpi_recv_real_r0
-     module procedure mpi_recv_real_r1
+     module procedure mpi_recv_real32_r0
+     module procedure mpi_recv_real32_r1
   end interface mpi_recv
   
   interface mpi_pack
      module procedure mpi_pack_int_r0
      module procedure mpi_pack_int_r1
-     module procedure mpi_pack_real_r0
-     module procedure mpi_pack_real_r1
+     module procedure mpi_pack_real32_r0
+     module procedure mpi_pack_real32_r1
   end interface mpi_pack
 
   interface mpi_unpack
      module procedure mpi_unpack_int_r0
      module procedure mpi_unpack_int_r1
-     module procedure mpi_unpack_real_r0
-     module procedure mpi_unpack_real_r1
+     module procedure mpi_unpack_real32_r0
+     module procedure mpi_unpack_real32_r1
   end interface mpi_unpack
   
   interface mpi_copy
      module procedure mpi_copy_int_r1
-     module procedure mpi_copy_real4_r1
-     module procedure mpi_copy_real8_r1
+     module procedure mpi_copy_real32_r1
+     module procedure mpi_copy_real64_r1
   end interface mpi_copy
   
 
@@ -223,9 +229,6 @@ CONTAINS
   
   subroutine mpi_gather_int_r0( data1, nsend, sendtype, data2, nrecv, recvtype, root, comm, ierror )
     implicit none
-    
-    !include "mpi_stubs_f90.h"
-    
     integer nsend, nrecv, sendtype, recvtype, comm, ierror, root
     integer :: data1, data2(nsend)
     
@@ -235,11 +238,8 @@ CONTAINS
     
   end subroutine mpi_gather_int_r0
   
-  subroutine mpi_gather_real4_r0( data1, nsend, sendtype, data2, nrecv, recvtype, root, comm, ierror )
+  subroutine mpi_gather_real32_r0( data1, nsend, sendtype, data2, nrecv, recvtype, root, comm, ierror )
     implicit none
-    
-    !include "mpi_stubs_f90.h"
-    
     integer nsend, nrecv, sendtype, recvtype, comm, ierror, root
     real :: data1, data2(nsend)
     
@@ -247,26 +247,20 @@ CONTAINS
     
     data2(:) = data1
     
-  end subroutine mpi_gather_real4_r0
+  end subroutine mpi_gather_real32_r0
   
-  subroutine mpi_gather_real8_r0( data1, nsend, sendtype, data2, nrecv, recvtype, root, comm, ierror )
+  subroutine mpi_gather_real64_r0( data1, nsend, sendtype, data2, nrecv, recvtype, root, comm, ierror )
     implicit none
-    
-    !include "mpi_stubs_f90.h"
-    
     integer nsend, nrecv, sendtype, recvtype, comm, ierror, root
-    real*8 :: data1, data2(nsend)
+    real(c_double) :: data1, data2(nsend)
     
     ierror = MPI_SUCCESS
     data2(:) = data1
     
-  end subroutine mpi_gather_real8_r0
+  end subroutine mpi_gather_real64_r0
   
   subroutine mpi_gather_int_r1( data1, nsend, sendtype, data2, nrecv, recvtype, root, comm, ierror )
     implicit none
-    
-    !include "mpi_stubs_f90.h"
-    
     integer nsend, nrecv, sendtype, recvtype, comm, ierror, root
     integer :: data1(nsend), data2(nsend)
     
@@ -276,11 +270,8 @@ CONTAINS
     
   end subroutine mpi_gather_int_r1
   
-  subroutine mpi_gather_real4_r1( data1, nsend, sendtype, data2, nrecv, recvtype, root, comm, ierror )
+  subroutine mpi_gather_real32_r1( data1, nsend, sendtype, data2, nrecv, recvtype, root, comm, ierror )
     implicit none
-    
-    !include "mpi_stubs_f90.h"
-    
     integer nsend, nrecv, sendtype, recvtype, comm, ierror, root
     real :: data1(nsend), data2(nsend)
     
@@ -288,21 +279,18 @@ CONTAINS
     
     call mpi_copy( data1, data2, nsend, ierror )
     
-  end subroutine mpi_gather_real4_r1
+  end subroutine mpi_gather_real32_r1
   
-  subroutine mpi_gather_real8_r1( data1, nsend, sendtype,data2, nrecv, recvtype, root, comm, ierror )
+  subroutine mpi_gather_real64_r1( data1, nsend, sendtype,data2, nrecv, recvtype, root, comm, ierror )
     implicit none
-    
-    !include "mpi_stubs_f90.h"
-    
     integer nsend, nrecv, sendtype, recvtype, comm, ierror, root
-    real*8 :: data1(nsend), data2(nsend)
+    real(c_double) :: data1(nsend), data2(nsend)
     
     ierror = MPI_SUCCESS
     
     call mpi_copy( data1, data2, nsend, ierror )
     
-  end subroutine mpi_gather_real8_r1
+  end subroutine mpi_gather_real64_r1
   
   !*****************************************************************************
   !
@@ -312,9 +300,6 @@ CONTAINS
   
   subroutine mpi_allgather_int_r1( data1, nsend, sendtype, data2, nrecv, recvtype, comm, ierror )
     implicit none
-    
-    !include "mpi_stubs_f90.h"
-    
     integer nsend, nrecv, sendtype, recvtype, comm, ierror
     integer :: data1(nsend), data2(nsend)
     
@@ -324,19 +309,21 @@ CONTAINS
     
   end subroutine mpi_allgather_int_r1
   
-  subroutine mpi_allgather_real_r1( data1, nsend, sendtype,data2, nrecv, recvtype, comm, ierror )
+  subroutine mpi_allgather_real32_r1( data1, nsend, sendtype,data2, nrecv, recvtype, comm, ierror )
     implicit none
-    
-    !include "mpi_stubs_f90.h"
-    
     integer nsend, nrecv, sendtype, recvtype, comm, ierror
-    real :: data1(nsend), data2(nsend)
-    
+    real(c_float) :: data1(nsend), data2(nsend)
     ierror = MPI_SUCCESS
-    
     call mpi_copy( data1, data2, nsend, ierror )
-    
-  end subroutine mpi_allgather_real_r1
+  end subroutine mpi_allgather_real32_r1
+
+  subroutine mpi_allgather_real64_r1( data1, nsend, sendtype,data2, nrecv, recvtype, comm, ierror )
+    implicit none
+    integer nsend, nrecv, sendtype, recvtype, comm, ierror
+    real(c_double) :: data1(nsend), data2(nsend)
+    ierror = MPI_SUCCESS
+    call mpi_copy( data1, data2, nsend, ierror )
+  end subroutine mpi_allgather_real64_r1
 
   !*****************************************************************************80
   !
@@ -346,9 +333,6 @@ CONTAINS
   
   subroutine mpi_allgatherv_int_r1 ( data1, nsend, sendtype, data2, nrecv, ndispls, recvtype, comm, ierror )
     implicit none
-    
-    !include "mpi_stubs_f90.h"
-    
     integer :: nsend
     integer :: data1(nsend), data2(nsend)
     integer :: comm, ierror, ndispls, nrecv, recvtype, sendtype
@@ -359,11 +343,8 @@ CONTAINS
     
   end subroutine mpi_allgatherv_int_r1
   
-  subroutine mpi_allgatherv_real4_r1 ( data1, nsend, sendtype, data2, nrecv, ndispls, recvtype, comm, ierror )
+  subroutine mpi_allgatherv_real32_r1 ( data1, nsend, sendtype, data2, nrecv, ndispls, recvtype, comm, ierror )
     implicit none
-    
-    !include "mpi_stubs_f90.h"
-    
     integer :: nsend
     real :: data1(nsend), data2(nsend)
     integer :: comm, ierror, ndispls, nrecv, recvtype, sendtype
@@ -372,22 +353,19 @@ CONTAINS
     
     call mpi_copy( data1, data2, nsend, ierror )
     
-  end subroutine mpi_allgatherv_real4_r1
+  end subroutine mpi_allgatherv_real32_r1
   
-  subroutine mpi_allgatherv_real8_r1 ( data1, nsend, sendtype, data2, nrecv, ndispls, recvtype, comm, ierror )
+  subroutine mpi_allgatherv_real64_r1 ( data1, nsend, sendtype, data2, nrecv, ndispls, recvtype, comm, ierror )
     implicit none
-    
-    !include "mpi_stubs_f90.h"
-    
     integer :: nsend
-    real*8 :: data1(nsend), data2(nsend)
+    real(c_double) :: data1(nsend), data2(nsend)
     integer :: comm, ierror, ndispls, nrecv, recvtype, sendtype
     
     ierror = MPI_SUCCESS
     
     call mpi_copy( data1, data2, nsend, ierror )
     
-  end subroutine mpi_allgatherv_real8_r1
+  end subroutine mpi_allgatherv_real64_r1
   
   !*****************************************************************************80
   !
@@ -397,9 +375,6 @@ CONTAINS
   
   subroutine mpi_gatherv_int_r1 ( data1, nsend, sendtype, data2, nrecv, ndispls, recvtype, root, comm, ierror )
     implicit none
-    
-    !include "mpi_stubs_f90.h"
-    
     integer :: nsend
     integer :: data1(nsend), data2(nsend)
     integer :: comm, ierror, ndispls(:), nrecv(:), recvtype, sendtype, root
@@ -410,11 +385,8 @@ CONTAINS
     
   end subroutine mpi_gatherv_int_r1
   
-  subroutine mpi_gatherv_real4_r1 ( data1, nsend, sendtype, data2, nrecv, ndispls, recvtype, root, comm, ierror )
-    implicit none
-    
-    !include "mpi_stubs_f90.h"
-    
+  subroutine mpi_gatherv_real32_r1 ( data1, nsend, sendtype, data2, nrecv, ndispls, recvtype, root, comm, ierror )
+    implicit none    
     integer :: nsend
     real :: data1(nsend), data2(nsend)
     integer :: comm, ierror, ndispls(:), nrecv(:), recvtype, sendtype, root
@@ -423,22 +395,22 @@ CONTAINS
     
     call mpi_copy( data1, data2, nsend, ierror )
     
-  end subroutine mpi_gatherv_real4_r1
+  end subroutine mpi_gatherv_real32_r1
   
-  subroutine mpi_gatherv_real8_r1 ( data1, nsend, sendtype, data2, nrecv, ndispls, recvtype, root, comm, ierror )
+  subroutine mpi_gatherv_real64_r1 ( data1, nsend, sendtype, data2, nrecv, ndispls, recvtype, root, comm, ierror )
     implicit none
     
     !include "mpi_stubs_f90.h"
     
     integer :: nsend
-    real*8 :: data1(nsend), data2(nsend)
+    real(c_double) :: data1(nsend), data2(nsend)
     integer :: comm, ierror, ndispls(:), nrecv(:), recvtype, sendtype, root
     
     ierror = MPI_SUCCESS
     
     call mpi_copy( data1, data2, nsend, ierror )
     
-  end subroutine mpi_gatherv_real8_r1
+  end subroutine mpi_gatherv_real64_r1
   
   !*****************************************************************************
   !
@@ -453,19 +425,19 @@ CONTAINS
     data2 = data1
   end subroutine mpi_alltoall_int_r1
   
-  subroutine mpi_alltoall_real4_r1 ( data1, nsend, sendtype, data2, nrecv, recvtype, comm, ierror )
+  subroutine mpi_alltoall_real32_r1 ( data1, nsend, sendtype, data2, nrecv, recvtype, comm, ierror )
     integer :: nsend, nrecv
-    real*4 :: data1(nsend), data2(nrecv)
+    real(c_float) :: data1(nsend), data2(nrecv)
     integer :: comm, sendtype, recvtype, ierror
     data2(:) = data1(:)
-  end subroutine mpi_alltoall_real4_r1
+  end subroutine mpi_alltoall_real32_r1
     
-  subroutine mpi_alltoall_real8_r1 ( data1, nsend, sendtype, data2, nrecv, recvtype, comm, ierror )
+  subroutine mpi_alltoall_real64_r1 ( data1, nsend, sendtype, data2, nrecv, recvtype, comm, ierror )
     integer :: nsend, nrecv
-    real*8 :: data1(nsend), data2(nrecv)
+    real(c_double) :: data1(nsend), data2(nrecv)
     integer :: comm, sendtype, recvtype, ierror
     data2(:) = data1(:)
-  end subroutine mpi_alltoall_real8_r1
+  end subroutine mpi_alltoall_real64_r1
   
   !*****************************************************************************
   !
@@ -480,19 +452,19 @@ CONTAINS
     data2(:) = data1(:)
   end subroutine mpi_alltoallv_int_r1
   
-  subroutine mpi_alltoallv_real4_r1 ( data1, nsend, senddispls, sendtype, data2, nrecv, recvdispls, recvtype, comm, ierror )
+  subroutine mpi_alltoallv_real32_r1 ( data1, nsend, senddispls, sendtype, data2, nrecv, recvdispls, recvtype, comm, ierror )
     integer :: nsend(:), nrecv(:), senddispls(:), recvdispls(:)
-    real*4 :: data1(:), data2(:)
+    real(c_float) :: data1(:), data2(:)
     integer :: comm, sendtype, recvtype, ierror
     data2(:) = data1(:)
-  end subroutine mpi_alltoallv_real4_r1
+  end subroutine mpi_alltoallv_real32_r1
     
-  subroutine mpi_alltoallv_real8_r1 ( data1, nsend, senddispls, sendtype, data2, nrecv, recvdispls, recvtype, comm, ierror )
+  subroutine mpi_alltoallv_real64_r1 ( data1, nsend, senddispls, sendtype, data2, nrecv, recvdispls, recvtype, comm, ierror )
     integer :: nsend(:), nrecv(:), senddispls(:), recvdispls(:)
-    real*8 :: data1(:), data2(:)
+    real(c_double) :: data1(:), data2(:)
     integer :: comm, sendtype, recvtype, ierror
     data2(:) = data1(:)
-  end subroutine mpi_alltoallv_real8_r1
+  end subroutine mpi_alltoallv_real64_r1
   
   !*****************************************************************************
   !
@@ -502,99 +474,103 @@ CONTAINS
   
   subroutine mpi_allreduce_int_r0( data1, data2, n, datatype, operation, comm, ierror )
     implicit none
-    
-    !include "mpi_stubs_f90.h"
-    
     integer :: n
     integer :: data1, data2
     integer :: comm, datatype, ierror, operation
-    
     ierror = MPI_SUCCESS
     if( data1 .ne. MPI_IN_PLACE ) data2 = data1    
   end subroutine mpi_allreduce_int_r0
   
   subroutine mpi_allreduce_int_r1( data1, data2, n, datatype, operation, comm, ierror )
     implicit none
-    
-    !include "mpi_stubs_f90.h"
-    
     integer :: n
     integer :: data1(n), data2(n)
     integer :: comm, datatype, ierror, operation
-    
     ierror = MPI_SUCCESS
-
     data2 = data1    
   end subroutine mpi_allreduce_int_r1
   
   subroutine mpi_allreduce_int_r1_inplace( data1, data2, n, datatype, operation, comm, ierror )
     implicit none
-    
-    !include "mpi_stubs_f90.h"
-    
     integer :: n
     integer :: data1, data2(n)
     integer :: comm, datatype, ierror, operation
-    
     ierror = MPI_SUCCESS
   end subroutine mpi_allreduce_int_r1_inplace
   
-  subroutine mpi_allreduce_real_r0( data1, data2, n, datatype, operation, comm, ierror )
+  subroutine mpi_allreduce_real32_r0( data1, data2, n, datatype, operation, comm, ierror )
     implicit none
-    
-    !include "mpi_stubs_f90.h"
-    
     integer :: n
-    real :: data1, data2
+    real(c_float) :: data1, data2
     integer :: comm, datatype, ierror, operation
-    
     ierror = MPI_SUCCESS
-    
     data2 = data1
+  end subroutine mpi_allreduce_real32_r0
 
-  end subroutine mpi_allreduce_real_r0
-  
-  subroutine mpi_allreduce_real_r0_inplace( data1, data2, n, datatype, operation, comm, ierror )
+  subroutine mpi_allreduce_real64_r0( data1, data2, n, datatype, operation, comm, ierror )
     implicit none
-    
-    !include "mpi_stubs_f90.h"
-    
+    integer :: n
+    real(c_double) :: data1, data2
+    integer :: comm, datatype, ierror, operation
+    ierror = MPI_SUCCESS
+    data2 = data1
+  end subroutine mpi_allreduce_real64_r0
+
+  subroutine mpi_allreduce_real32_r0_inplace( data1, data2, n, datatype, operation, comm, ierror )
+    implicit none
     integer :: n
     integer :: data1
-    real :: data2
+    real(c_float) :: data2
     integer :: comm, datatype, ierror, operation
-    
     ierror = MPI_SUCCESS
-  end subroutine mpi_allreduce_real_r0_inplace
-  
-  subroutine mpi_allreduce_real_r1( data1, data2, n, datatype, operation, comm, ierror )
-    implicit none
-    
-    !include "mpi_stubs_f90.h"
-    
-    integer :: n
-    real :: data1(n), data2(n)
-    integer :: comm, datatype, ierror, operation
-    
-    ierror = MPI_SUCCESS
+  end subroutine mpi_allreduce_real32_r0_inplace
 
-    data2 = data1
-    
-  end subroutine mpi_allreduce_real_r1
-  
-  subroutine mpi_allreduce_real_r1_inplace( data1, data2, n, datatype, operation, comm, ierror )
+  subroutine mpi_allreduce_real64_r0_inplace( data1, data2, n, datatype, operation, comm, ierror )
     implicit none
-    
-    !include "mpi_stubs_f90.h"
-    
     integer :: n
     integer :: data1
-    real :: data2(n)
+    real(c_double) :: data2
     integer :: comm, datatype, ierror, operation
-    
+    ierror = MPI_SUCCESS
+  end subroutine mpi_allreduce_real64_r0_inplace
+
+  
+  subroutine mpi_allreduce_real32_r1( data1, data2, n, datatype, operation, comm, ierror )
+    implicit none
+    integer :: n
+    real(c_float):: data1(n), data2(n)
+    integer :: comm, datatype, ierror, operation
+    ierror = MPI_SUCCESS
+    data2 = data1
+  end subroutine mpi_allreduce_real32_r1
+
+  subroutine mpi_allreduce_real64_r1( data1, data2, n, datatype, operation, comm, ierror )
+    implicit none
+    integer :: n
+    real(c_double)    :: data1(n), data2(n)
+    integer :: comm, datatype, ierror, operation
+    ierror = MPI_SUCCESS
+    data2 = data1
+  end subroutine mpi_allreduce_real64_r1
+  
+  subroutine mpi_allreduce_real32_r1_inplace( data1, data2, n, datatype, operation, comm, ierror )
+    implicit none
+    integer :: n
+    integer :: data1
+    real(c_float)    :: data2(n)
+    integer :: comm, datatype, ierror, operation
     ierror = MPI_SUCCESS    
-  end subroutine mpi_allreduce_real_r1_inplace
-  
+  end subroutine mpi_allreduce_real32_r1_inplace
+
+  subroutine mpi_allreduce_real64_r1_inplace( data1, data2, n, datatype, operation, comm, ierror )
+    implicit none
+    integer :: n
+    integer :: data1
+    real(c_double)    :: data2(n)
+    integer :: comm, datatype, ierror, operation
+    ierror = MPI_SUCCESS
+  end subroutine mpi_allreduce_real64_r1_inplace
+
   !*****************************************************************************
   !
   ! MPI_BARRIER forces processes within a communicator to wait together.
@@ -622,11 +598,9 @@ CONTAINS
   
   subroutine mpi_reduce_int_r0( data1, data2, n, datatype, operation, receiver, comm, ierror )
     implicit none
-    
-    !include "mpi_stubs_f90.h"
-    
+    integer :: n
     integer :: data1, data2
-    integer :: n, datatype, operation, receiver, comm, ierror
+    integer :: datatype, operation, receiver, comm, ierror
     
     ierror = MPI_SUCCESS
     
@@ -637,11 +611,9 @@ CONTAINS
   
   subroutine mpi_reduce_int_r1( data1, data2, n, datatype, operation, receiver, comm, ierror )
     implicit none
-    
-    !include "mpi_stubs_f90.h"
-    
+    integer :: n
     integer :: data1(n), data2(n)
-    integer :: n, datatype, operation, receiver, comm, ierror
+    integer :: datatype, operation, receiver, comm, ierror
     
     ierror = MPI_SUCCESS
 
@@ -650,36 +622,45 @@ CONTAINS
     return
   end subroutine mpi_reduce_int_r1
   
-  subroutine mpi_reduce_real_r0( data1, data2, n, datatype, operation, receiver, comm, ierror )
+  subroutine mpi_reduce_real32_r0( data1, data2, n, datatype, operation, receiver, comm, ierror )
     implicit none
-    
-    !include "mpi_stubs_f90.h"
-    
-    real :: data1, data2
-    integer :: n, datatype, operation, receiver, comm, ierror
-    
+    integer :: n
+    real(c_float) :: data1, data2
+    integer :: datatype, operation, receiver, comm, ierror
     ierror = MPI_SUCCESS
-
     data2 = data1
-
     return
-  end subroutine mpi_reduce_real_r0
+  end subroutine mpi_reduce_real32_r0
   
-  subroutine mpi_reduce_real_r1 ( data1, data2, n, datatype, operation, receiver, comm, ierror )
+  subroutine mpi_reduce_real64_r0( data1, data2, n, datatype, operation, receiver, comm, ierror )
     implicit none
-    
-    !include "mpi_stubs_f90.h"
-    
-    real :: data1(n), data2(n)
-    integer :: n, datatype, operation, receiver, comm, ierror
-    
+    integer :: n
+    real(c_double) :: data1, data2
+    integer :: datatype, operation, receiver, comm, ierror
     ierror = MPI_SUCCESS
-    
     data2 = data1
-
     return
-  end subroutine mpi_reduce_real_r1
+  end subroutine mpi_reduce_real64_r0
+
+  subroutine mpi_reduce_real32_r1 ( data1, data2, n, datatype, operation, receiver, comm, ierror )
+    implicit none
+    integer :: n
+    real(c_float) :: data1(n), data2(n)
+    integer :: datatype, operation, receiver, comm, ierror
+    ierror = MPI_SUCCESS
+    data2 = data1
+    return
+  end subroutine mpi_reduce_real32_r1
   
+  subroutine mpi_reduce_real64_r1 ( data1, data2, n, datatype, operation, receiver, comm, ierror )
+    implicit none
+    integer :: n
+    real(c_double) :: data1(n), data2(n)
+    integer :: datatype, operation, receiver, comm, ierror
+    ierror = MPI_SUCCESS
+    data2 = data1
+    return
+  end subroutine mpi_reduce_real64_r1
   
   !*****************************************************************************
   !
@@ -689,9 +670,6 @@ CONTAINS
   
   subroutine mpi_reduce_scatter_int_r1( data1, data2, n, datatype, operation, comm, ierror )
     implicit none
-    
-    !include "mpi_stubs_f90.h"
-    
     integer :: n
     integer :: data1(n), data2(n)
     integer comm, datatype, ierror, operation
@@ -702,11 +680,8 @@ CONTAINS
     
   end subroutine mpi_reduce_scatter_int_r1
   
-  subroutine mpi_reduce_scatter_real_r1( data1, data2, n, datatype, operation, comm, ierror )
+  subroutine mpi_reduce_scatter_real32_r1( data1, data2, n, datatype, operation, comm, ierror )
     implicit none
-    
-    !include "mpi_stubs_f90.h"
-    
     integer :: n
     real :: data1(n), data2(n)
     integer comm, datatype, ierror, operation
@@ -715,7 +690,7 @@ CONTAINS
     
     data2(1:n) = data1(1:n)
     
-  end subroutine mpi_reduce_scatter_real_r1
+  end subroutine mpi_reduce_scatter_real32_r1
   
   
   
@@ -772,7 +747,7 @@ CONTAINS
     return
   end subroutine mpi_isend_int_r1
   
-  subroutine mpi_isend_real4_r0 ( data, n, datatype, iproc, itag, comm, request, ierror )
+  subroutine mpi_isend_real32_r0 ( data, n, datatype, iproc, itag, comm, request, ierror )
     implicit none
     
     !include "mpi_stubs_f90.h"
@@ -785,9 +760,9 @@ CONTAINS
     ierror = MPI_SUCCESS
     
     return
-  end subroutine mpi_isend_real4_r0
+  end subroutine mpi_isend_real32_r0
   
-  subroutine mpi_isend_real4_r1 ( data, n, datatype, iproc, itag, comm, request, ierror )
+  subroutine mpi_isend_real32_r1 ( data, n, datatype, iproc, itag, comm, request, ierror )
     implicit none
     
     !include "mpi_stubs_f90.h"
@@ -800,37 +775,37 @@ CONTAINS
     ierror = MPI_SUCCESS
     
     return
-  end subroutine mpi_isend_real4_r1
+  end subroutine mpi_isend_real32_r1
   
-  subroutine mpi_isend_real8_r0 ( data, n, datatype, iproc, itag, comm, request, ierror )
+  subroutine mpi_isend_real64_r0 ( data, n, datatype, iproc, itag, comm, request, ierror )
     implicit none
     
     !include "mpi_stubs_f90.h"
     
     integer :: n
-    real*8 :: data
+    real(c_double) :: data
     integer :: comm, datatype, ierror, iproc, itag, request
     
     request = 0
     ierror = MPI_SUCCESS
     
     return
-  end subroutine mpi_isend_real8_r0
+  end subroutine mpi_isend_real64_r0
   
-  subroutine mpi_isend_real8_r1 ( data, n, datatype, iproc, itag, comm, request, ierror )
+  subroutine mpi_isend_real64_r1 ( data, n, datatype, iproc, itag, comm, request, ierror )
     implicit none
     
     !include "mpi_stubs_f90.h"
     
     integer :: n
-    real*8 :: data(n)
+    real(c_double) :: data(n)
     integer :: comm, datatype, ierror, iproc, itag, request
     
     request = 0
     ierror = MPI_SUCCESS
     
     return
-  end subroutine mpi_isend_real8_r1
+  end subroutine mpi_isend_real64_r1
 
 
   !*****************************************************************************
@@ -871,7 +846,7 @@ CONTAINS
     return
   end subroutine mpi_irecv_int_r1
   
-  subroutine mpi_irecv_real4_r0 ( data, n, datatype, iproc, itag, comm, request, ierror )
+  subroutine mpi_irecv_real32_r0 ( data, n, datatype, iproc, itag, comm, request, ierror )
     implicit none
     
     !include "mpi_stubs_f90.h"
@@ -885,9 +860,9 @@ CONTAINS
     ierror = MPI_SUCCESS
     
     return
-  end subroutine mpi_irecv_real4_r0
+  end subroutine mpi_irecv_real32_r0
   
-  subroutine mpi_irecv_real4_r1 ( data, n, datatype, iproc, itag, comm, request, ierror )
+  subroutine mpi_irecv_real32_r1 ( data, n, datatype, iproc, itag, comm, request, ierror )
     implicit none
     
     !include "mpi_stubs_f90.h"
@@ -900,15 +875,15 @@ CONTAINS
     ierror = MPI_SUCCESS
     
     return
-  end subroutine mpi_irecv_real4_r1
+  end subroutine mpi_irecv_real32_r1
   
-  subroutine mpi_irecv_real8_r0 ( data, n, datatype, iproc, itag, comm, request, ierror )
+  subroutine mpi_irecv_real64_r0 ( data, n, datatype, iproc, itag, comm, request, ierror )
       implicit none
     
       !include "mpi_stubs_f90.h"
     
       integer :: n
-      real*8 :: data
+      real(c_double) :: data
       integer :: comm, datatype, ierror, iproc, itag, request
     
       data = 0
@@ -916,22 +891,22 @@ CONTAINS
       ierror = MPI_SUCCESS
     
       return
-    end subroutine mpi_irecv_real8_r0
+    end subroutine mpi_irecv_real64_r0
   
-    subroutine mpi_irecv_real8_r1 ( data, n, datatype, iproc, itag, comm, request, ierror )
+    subroutine mpi_irecv_real64_r1 ( data, n, datatype, iproc, itag, comm, request, ierror )
       implicit none
     
       !include "mpi_stubs_f90.h"
     
       integer :: n
-      real*8 :: data(n)
+      real(c_double) :: data(n)
       integer :: comm, datatype, ierror, iproc, itag, request
       data = 0
       request = 0
       ierror = MPI_SUCCESS
     
       return
-    end subroutine mpi_irecv_real8_r1
+    end subroutine mpi_irecv_real64_r1
   
   !*****************************************************************************
   !
@@ -996,7 +971,7 @@ CONTAINS
     return
   end subroutine mpi_send_int_r2_fixedstatus
   
-  subroutine mpi_send_real4_r0 ( buf, count, datatype, dest, tag, comm, ierror )
+  subroutine mpi_send_real32_r0 ( buf, count, datatype, dest, tag, comm, ierror )
     implicit none
     
     !include "mpi_stubs_f90.h"
@@ -1008,9 +983,9 @@ CONTAINS
     ierror = MPI_SUCCESS
     
     return
-  end subroutine mpi_send_real4_r0
+  end subroutine mpi_send_real32_r0
   
-  subroutine mpi_send_real4_r1 ( buf, count, datatype, dest, tag, comm, ierror )
+  subroutine mpi_send_real32_r1 ( buf, count, datatype, dest, tag, comm, ierror )
     implicit none
     
     !include "mpi_stubs_f90.h"
@@ -1022,35 +997,35 @@ CONTAINS
     ierror = MPI_SUCCESS
     
     return
-  end subroutine mpi_send_real4_r1
+  end subroutine mpi_send_real32_r1
   
-  subroutine mpi_send_real8_r0 ( buf, count, datatype, dest, tag, comm, ierror )
+  subroutine mpi_send_real64_r0 ( buf, count, datatype, dest, tag, comm, ierror )
     implicit none
     
     !include "mpi_stubs_f90.h"
     
     integer :: count
-    real*8 :: buf
+    real(c_double) :: buf
     integer :: datatype, dest, tag, comm, ierror
 
     ierror = MPI_SUCCESS
     
     return
-  end subroutine mpi_send_real8_r0
+  end subroutine mpi_send_real64_r0
   
-  subroutine mpi_send_real8_r1 ( buf, count, datatype, dest, tag, comm, ierror )
+  subroutine mpi_send_real64_r1 ( buf, count, datatype, dest, tag, comm, ierror )
     implicit none
     
     !include "mpi_stubs_f90.h"
     
     integer :: count
-    real*8 :: buf(count)
+    real(c_double) :: buf(count)
     integer :: datatype, dest, tag, comm, ierror
 
     ierror = MPI_SUCCESS
     
     return
-  end subroutine mpi_send_real8_r1
+  end subroutine mpi_send_real64_r1
   
   !*****************************************************************************
   !
@@ -1074,9 +1049,6 @@ CONTAINS
   
   subroutine mpi_recv_int_r0( data, n, datatype, iproc, itag, comm, istatus, ierror )
     implicit none
-    
-    !include "mpi_stubs_f90.h"
-    
     integer :: n
     integer :: data, istatus
     integer datatype, iproc, itag, comm, ierror
@@ -1088,9 +1060,6 @@ CONTAINS
   
   subroutine mpi_recv_int_r1( data, n, datatype, iproc, itag, comm, istatus, ierror )
     implicit none
-    
-    !include "mpi_stubs_f90.h"
-    
     integer :: n
     integer :: data(:), istatus(:)
     integer datatype, iproc, itag, comm, ierror
@@ -1102,9 +1071,6 @@ CONTAINS
   
   subroutine mpi_recv_int_r2( data, n, datatype, iproc, itag, comm, istatus, ierror )
     implicit none
-    
-    !include "mpi_stubs_f90.h"
-    
     integer :: n
     integer :: data(:,:), istatus(*)
     integer datatype, iproc, itag, comm, ierror
@@ -1114,11 +1080,8 @@ CONTAINS
     return
   end subroutine mpi_recv_int_r2
 
-  subroutine mpi_recv_real_r0( data, n, datatype, iproc, itag, comm, istatus, ierror )
+  subroutine mpi_recv_real32_r0( data, n, datatype, iproc, itag, comm, istatus, ierror )
     implicit none
-    
-    !include "mpi_stubs_f90.h"
-    
     integer :: n
     real :: data
     integer :: istatus
@@ -1127,13 +1090,10 @@ CONTAINS
     ierror = MPI_SUCCESS
     
     return
-  end subroutine mpi_recv_real_r0
+  end subroutine mpi_recv_real32_r0
 
-  subroutine mpi_recv_real_r1( data, n, datatype, iproc, itag, comm, istatus, ierror )
+  subroutine mpi_recv_real32_r1( data, n, datatype, iproc, itag, comm, istatus, ierror )
     implicit none
-    
-    !include "mpi_stubs_f90.h"
-    
     integer :: n
     real :: data(n)
     integer :: istatus(n)
@@ -1142,7 +1102,7 @@ CONTAINS
     ierror = MPI_SUCCESS
     
     return
-  end subroutine mpi_recv_real_r1
+  end subroutine mpi_recv_real32_r1
 
   !*****************************************************************************
   !
@@ -1161,18 +1121,13 @@ CONTAINS
     integer position
     integer comm
     integer ierror
-    
-    !include 'mpi_stubs_f90.h'
-    
     ierror = MPI_SUCCESS
     
     return
   end subroutine mpi_pack_int_r0
 
   subroutine mpi_pack_int_r1 ( inbuf, incount, datatype, outbuf, outcount, position, comm, ierror )
-    
     implicit none
-    
     integer incount, outcount
     integer inbuf(incount)
     integer outbuf(outcount)
@@ -1180,18 +1135,13 @@ CONTAINS
     integer position
     integer comm
     integer ierror
-    
-    !include 'mpi_stubs_f90.h'
-    
     ierror = MPI_SUCCESS
     
     return
   end subroutine mpi_pack_int_r1
 
-  subroutine mpi_pack_real_r0 ( inbuf, incount, datatype, outbuf, outcount, position, comm, ierror )
-    
+  subroutine mpi_pack_real32_r0 ( inbuf, incount, datatype, outbuf, outcount, position, comm, ierror )
     implicit none
-    
     integer incount, outcount
     real inbuf
     integer outbuf(outcount)
@@ -1199,18 +1149,12 @@ CONTAINS
     integer position
     integer comm
     integer ierror
-    
-    !include 'mpi_stubs_f90.h'
-    
     ierror = MPI_SUCCESS
-    
     return
-  end subroutine mpi_pack_real_r0
+  end subroutine mpi_pack_real32_r0
 
-  subroutine mpi_pack_real_r1 ( inbuf, incount, datatype, outbuf, outcount, position, comm, ierror )
-    
+  subroutine mpi_pack_real32_r1 ( inbuf, incount, datatype, outbuf, outcount, position, comm, ierror )
     implicit none
-    
     integer incount, outcount
     real inbuf(incount)
     integer outbuf(outcount)
@@ -1218,13 +1162,9 @@ CONTAINS
     integer position
     integer comm
     integer ierror
-    
-    !include 'mpi_stubs_f90.h'
-    
     ierror = MPI_SUCCESS
-    
     return
-  end subroutine mpi_pack_real_r1
+  end subroutine mpi_pack_real32_r1
 
   !*****************************************************************************
   !
@@ -1243,9 +1183,6 @@ CONTAINS
     integer position
     integer comm
     integer ierror
-    
-    !include 'mpi_stubs_f90.h'
-    
     ierror = MPI_SUCCESS
     
     return
@@ -1263,16 +1200,13 @@ CONTAINS
     integer position
     integer comm
     integer ierror
-    
-    !include 'mpi_stubs_f90.h'
-    
     ierror = MPI_SUCCESS
     
     return
     
   end subroutine mpi_unpack_int_r1
 
-  subroutine mpi_unpack_real_r0( inbuf, insize, position, outbuf, outcount, datatype, comm, ierror )
+  subroutine mpi_unpack_real32_r0( inbuf, insize, position, outbuf, outcount, datatype, comm, ierror )
     
     implicit none
     
@@ -1283,19 +1217,13 @@ CONTAINS
     integer position
     integer comm
     integer ierror
-    
-    !include 'mpi_stubs_f90.h'
-    
     ierror = MPI_SUCCESS
-    
     return
     
-  end subroutine mpi_unpack_real_r0
+  end subroutine mpi_unpack_real32_r0
 
-  subroutine mpi_unpack_real_r1( inbuf, insize, position, outbuf, outcount, datatype, comm, ierror )
-    
+  subroutine mpi_unpack_real32_r1( inbuf, insize, position, outbuf, outcount, datatype, comm, ierror )
     implicit none
-    
     integer insize, outcount
     integer inbuf(insize)
     real outbuf(outcount)
@@ -1303,14 +1231,9 @@ CONTAINS
     integer position
     integer comm
     integer ierror
-    
-    !include 'mpi_stubs_f90.h'
-    
     ierror = MPI_SUCCESS
-    
     return
-    
-  end subroutine mpi_unpack_real_r1
+  end subroutine mpi_unpack_real32_r1
 
 !*****************************************************************************80
 !
@@ -1338,9 +1261,7 @@ end subroutine mpi_bcast_int_r0
 
 subroutine mpi_bcast_int_r1( data, n, datatype, node, comm, ierror )
   implicit none
-
   integer n
-
   integer comm
   integer data(n)
   integer datatype
@@ -1372,13 +1293,11 @@ subroutine mpi_bcast_int_r2( data, n, datatype, node, comm, ierror )
   return
 end subroutine mpi_bcast_int_r2
 
-subroutine mpi_bcast_real4_r1( data, n, datatype, node, comm, ierror )
+subroutine mpi_bcast_real32_r1( data, n, datatype, node, comm, ierror )
   implicit none
-
   integer n
-
   integer comm
-  real*4 data(n)
+  real(c_float) data(n)
   integer datatype
   integer ierror
   integer, parameter :: MPI_FAILURE = 1
@@ -1388,103 +1307,81 @@ subroutine mpi_bcast_real4_r1( data, n, datatype, node, comm, ierror )
   ierror = MPI_SUCCESS
 
   return
-end subroutine mpi_bcast_real4_r1
+end subroutine mpi_bcast_real32_r1
 
-subroutine mpi_bcast_real4_r0( data, n, datatype, node, comm, ierror )
+subroutine mpi_bcast_real32_r0( data, n, datatype, node, comm, ierror )
   implicit none
-
   integer n
-
   integer comm
-  real*4 data
+  real(c_float) data
   integer datatype
   integer ierror
   integer, parameter :: MPI_FAILURE = 1
   integer, parameter :: MPI_SUCCESS = 0
   integer node
-
   ierror = MPI_SUCCESS
-
   return
-end subroutine mpi_bcast_real4_r0
+end subroutine mpi_bcast_real32_r0
 
-subroutine mpi_bcast_real8_r0( data, n, datatype, node, comm, ierror )
+subroutine mpi_bcast_real64_r0( data, n, datatype, node, comm, ierror )
   implicit none
-
   integer n
-
   integer comm
-  real*8 data
+  real(c_double) data
   integer datatype
   integer ierror
   integer, parameter :: MPI_FAILURE = 1
   integer, parameter :: MPI_SUCCESS = 0
   integer node
-
   ierror = MPI_SUCCESS
-
   return
-end subroutine mpi_bcast_real8_r0
+end subroutine mpi_bcast_real64_r0
 
-subroutine mpi_bcast_real8_r1( data, n, datatype, node, comm, ierror )
+subroutine mpi_bcast_real64_r1( data, n, datatype, node, comm, ierror )
   implicit none
-
   integer n
-
   integer comm
-  real*8 data(n)
+  real(c_double) data(n)
   integer datatype
   integer ierror
   integer, parameter :: MPI_FAILURE = 1
   integer, parameter :: MPI_SUCCESS = 0
   integer node
-
   ierror = MPI_SUCCESS
-
   return
-end subroutine mpi_bcast_real8_r1
+end subroutine mpi_bcast_real64_r1
 
-subroutine mpi_bcast_real4_r2( data, n, datatype, node, comm, ierror )
+subroutine mpi_bcast_real32_r2( data, n, datatype, node, comm, ierror )
   implicit none
-
   integer n
-
   integer comm
-  real*4 data(:,:)
+  real(c_float) data(:,:)
   integer datatype
   integer ierror
   integer, parameter :: MPI_FAILURE = 1
   integer, parameter :: MPI_SUCCESS = 0
   integer node
-
   ierror = MPI_SUCCESS
-
   return
-end subroutine mpi_bcast_real4_r2
+end subroutine mpi_bcast_real32_r2
 
-subroutine mpi_bcast_real8_r2( data, n, datatype, node, comm, ierror )
+subroutine mpi_bcast_real64_r2( data, n, datatype, node, comm, ierror )
   implicit none
-
   integer n
-
   integer comm
-  real*8 data(:,:)
+  real(c_double) data(:,:)
   integer datatype
   integer ierror
   integer, parameter :: MPI_FAILURE = 1
   integer, parameter :: MPI_SUCCESS = 0
   integer node
-
   ierror = MPI_SUCCESS
-
   return
-end subroutine mpi_bcast_real8_r2
+end subroutine mpi_bcast_real64_r2
 
 subroutine mpi_bcast_char( data, n, datatype, node, comm, ierror )
   implicit none
-
   integer n
-
   integer comm
   character(LEN=n) data
   integer datatype
@@ -1492,73 +1389,44 @@ subroutine mpi_bcast_char( data, n, datatype, node, comm, ierror )
   integer, parameter :: MPI_FAILURE = 1
   integer, parameter :: MPI_SUCCESS = 0
   integer node
-
   ierror = MPI_SUCCESS
-
   return
 end subroutine mpi_bcast_char
 
 
-
-!
-
-
-
-
 subroutine mpi_probe(data,itag,comm,istatus,ierror)
-
   implicit none
-  
   integer comm
   integer data
   integer itag
   integer istatus(*)
   integer ierror
-  
-  !include 'mpi_stubs_f90.h'
-  
   ierror = MPI_SUCCESS
-  
   return
-
 end subroutine mpi_probe
 
 subroutine mpi_iprobe(data,itag,comm,flag,istatus,ierror)
-
   implicit none
-  
   integer comm
   integer data
   integer itag
   integer istatus
   integer ierror
   logical flag
-  
-  !include 'mpi_stubs_f90.h'
-  
   ierror = MPI_SUCCESS
   flag   = .false.
-  
   return
-
 end subroutine mpi_iprobe
 
 
 subroutine mpi_test(request,flag,istatus,ierror)
-
   implicit none
-  
   integer request
   logical flag
   integer istatus
   integer ierror
-
-  !include 'mpi_stubs_f90.h'
-  
   ierror = MPI_SUCCESS
-  
   return
-  
 end subroutine mpi_test
 
 
@@ -1623,9 +1491,7 @@ end subroutine mpi_test
 !
 subroutine mpi_bsend ( data, n, datatype, iproc, itag, comm, ierror )
   implicit none
-
   integer n
-
   integer comm
   integer data(n)
   integer datatype
@@ -1634,7 +1500,6 @@ subroutine mpi_bsend ( data, n, datatype, iproc, itag, comm, ierror )
   integer itag
   integer, parameter :: MPI_FAILURE = 1
   integer, parameter :: MPI_SUCCESS = 0
-
   ierror = MPI_FAILURE
 
   write ( *, '(a)' ) ' '
@@ -2047,13 +1912,13 @@ end subroutine mpi_comm_split
 !
 !    Output, integer IERROR, is nonzero if an error occurred.
 !
-subroutine mpi_copy_real8_r1 ( data1, data2, n, ierror )
+subroutine mpi_copy_real64_r1 ( data1, data2, n, ierror )
   implicit none
 
   integer n
 
-  real*8 data1(n)
-  real*8 data2(n)
+  real(c_double) data1(n)
+  real(c_double) data2(n)
   integer ierror
   integer, parameter :: MPI_FAILURE = 1
   integer, parameter :: MPI_SUCCESS = 0
@@ -2063,7 +1928,7 @@ subroutine mpi_copy_real8_r1 ( data1, data2, n, ierror )
   data2(1:n) = data1(1:n)
 
   return
-end subroutine mpi_copy_real8_r1
+end subroutine mpi_copy_real64_r1
 
 
 !*****************************************************************************80
@@ -2157,7 +2022,7 @@ end subroutine mpi_copy_int_r1
 !
 !    Output, integer IERROR, is nonzero if an error occurred.
 !
-subroutine mpi_copy_real4_r1 ( data1, data2, n, ierror )
+subroutine mpi_copy_real32_r1 ( data1, data2, n, ierror )
   implicit none
 
   integer n
@@ -2173,7 +2038,7 @@ subroutine mpi_copy_real4_r1 ( data1, data2, n, ierror )
   data2(1:n) = data1(1:n)
 
   return
-end subroutine mpi_copy_real4_r1
+end subroutine mpi_copy_real32_r1
 
 
 !*****************************************************************************80

@@ -21,7 +21,6 @@ implicit none
 type(Mesh_type) :: mesh
 type(FunctionSpace_type) :: func_space
 type(Field_type) :: field
-contains
 end module fctest_atlas_mesh_fixture
 
 ! -----------------------------------------------------------------------------
