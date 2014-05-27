@@ -11,10 +11,11 @@
 #ifndef Mesh_hpp
 #define Mesh_hpp
 
-#include <vector>
 #include <map>
+#include <vector>
 #include <string>
-#include <memory>
+
+#include "eckit/memory/SharedPtr.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -28,9 +29,7 @@ class Mesh {
 
 public: // types
 
-
-// nawd: Cannot use this on Cray
-//    typedef std::shared_ptr<Mesh> Ptr;
+    typedef eckit::SharedPtr<Mesh> Ptr;
 
 public: // methods
 
