@@ -106,7 +106,7 @@ ecbuild_add_library( TARGET atlas
 		${atlas_mpl_srcs}
 		${atlas_actions_srcs}
 		atlas_mpi.h
-  LIBS ${MPI_CXX_LIBRARIES}
+  LIBS eckit ${MPI_CXX_LIBRARIES}
 ) 
 
 add_subdirectory( fortran )
