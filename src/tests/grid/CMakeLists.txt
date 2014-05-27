@@ -12,7 +12,7 @@ set(Boost_NO_SYSTEM_PATHS        ON)
 set(Boost_DETAILED_FAILURE_MSG   ON)
 #set(Boost_DEBUG                 ON)
 
-find_package( Boost 1.53.0 COMPONENTS  system thread unit_test_framework test_exec_monitor  )
+find_package( Boost 1.53.0 COMPONENTS  unit_test_framework test_exec_monitor  )
 
 # Available boost lib should be referenced as:
 #
