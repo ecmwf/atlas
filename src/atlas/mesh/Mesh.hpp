@@ -16,6 +16,7 @@
 #include <string>
 
 #include "eckit/memory/SharedPtr.h"
+#include "eckit/memory/Counted.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -25,7 +26,7 @@ class FunctionSpace;
 
 //------------------------------------------------------------------------------------------------------
 
-class Mesh {
+class Mesh : public eckit::OwnedNoLock {
 
 public: // types
 
