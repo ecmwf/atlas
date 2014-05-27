@@ -14,7 +14,7 @@
 //------------------------------------------------------------------------------------------------------
 
 #include "atlas/mesh/Field.hpp"
-#include "atlas/grid/Field.h"
+#include "atlas/grid/FieldSet.h"
 #include "atlas/mesh/FunctionSpace.hpp"
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/mesh/Parameters.hpp"
@@ -31,7 +31,7 @@ namespace eckit {
 
 //------------------------------------------------------------------------------------------------------
 
-void GribWrite::write( atlas::grid::FieldH& field, grib_handle* input_h )
+void GribWrite::write( atlas::grid::FieldHandle& field, grib_handle* input_h )
 {
     FieldT<double>& f = field.data();
     const size_t npts = f.size();
@@ -112,7 +112,7 @@ void GribWrite::write( atlas::grid::FieldH& field, grib_handle* input_h )
 #endif
 }
 
-void GribWrite::clone( FieldH& field, const std::string& source, const std::string& fname )
+void GribWrite::clone( FieldHandle& field, const std::string& source, const std::string& fname )
 {
     FILE* fh = ::fopen( source.c_str(), "r" );
     if( fh == 0 )
@@ -131,7 +131,7 @@ void GribWrite::clone( FieldH& field, const std::string& source, const std::stri
     grib_handle_delete(clone_h);
 }
 
-grib_handle* GribWrite::clone( FieldH& field, grib_handle* source )
+grib_handle* GribWrite::clone( FieldHandle& field, grib_handle* source )
 {
     FieldT<double>& f = field.data();
     const size_t npts = f.size();

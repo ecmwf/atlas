@@ -14,14 +14,25 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <memory>
+
+//------------------------------------------------------------------------------------------------------
 
 namespace atlas {
 
 class FunctionSpace;
 
+//------------------------------------------------------------------------------------------------------
+
 class Mesh {
 
-public:
+public: // types
+
+
+// nawd: Cannot use this on Cray
+//    typedef std::shared_ptr<Mesh> Ptr;
+
+public: // methods
 
     virtual ~Mesh();
 
@@ -39,7 +50,7 @@ public:
 
     int nb_function_spaces() { return function_spaces_.size(); }
 
-private:
+private: // members
 
     std::map< std::string, size_t > index_; ///< index of function spaces
 
@@ -47,7 +58,8 @@ private:
 
 };
 
-// ------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------
+
 // C wrapper interfaces to C++ routines
 extern "C" 
 {
@@ -56,7 +68,8 @@ extern "C"
   void atlas__Mesh__add_function_space (Mesh* This, FunctionSpace* function_space); 
   FunctionSpace* atlas__Mesh__function_space (Mesh* This, char* name); 
 }
-// ------------------------------------------------------------------
+
+//------------------------------------------------------------------------------------------------------
 
 } // namespace atlas
 

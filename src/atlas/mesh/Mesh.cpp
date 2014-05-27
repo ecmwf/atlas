@@ -8,20 +8,20 @@
  * does it submit to any jurisdiction.
  */
 
-
-
 #include <sstream>
 #include <stdexcept>
 
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/mesh/FunctionSpace.hpp"
 
+//------------------------------------------------------------------------------------------------------
+
 namespace atlas {
 
-Mesh::~Mesh() 
-{ 
-//  std::cout << "Mesh Destructor " << std::endl;
+//------------------------------------------------------------------------------------------------------
 
+Mesh::~Mesh()
+{ 
   index_.clear();
   for( size_t f=0; f<function_spaces_.size(); ++f )
     if( function_spaces_[f] ) delete(function_spaces_[f]);
@@ -47,14 +47,16 @@ FunctionSpace& Mesh::add_function_space( FunctionSpace* function_space )
 
 FunctionSpace& Mesh::function_space(const std::string& name)
 {
-  try {
-    return *function_spaces_[ index_.at(name) ];
-  }
-  catch( std::out_of_range& e ) {
-    std::stringstream msg;
-    msg << "Could not find function_space \"" << name << "\" in mesh";
-    throw std::out_of_range(msg.str());
-  }
+    try
+    {
+        return *function_spaces_[ index_.at(name) ];
+    }
+    catch( std::out_of_range& e )
+    {
+        std::stringstream msg;
+        msg << "Could not find function_space \"" << name << "\" in mesh";
+        throw std::out_of_range(msg.str());
+    }
 }
 
 FunctionSpace& Mesh::function_space(int idx)
@@ -63,7 +65,7 @@ FunctionSpace& Mesh::function_space(int idx)
 }
 
 
-// ------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
 Mesh* atlas__Mesh__new () { 
@@ -81,8 +83,7 @@ void atlas__Mesh__add_function_space (Mesh* This, FunctionSpace* function_space)
 FunctionSpace* atlas__Mesh__function_space (Mesh* This, char* name) {
   return &This->function_space( std::string(name) );
 }
-// ------------------------------------------------------------------
-
+//------------------------------------------------------------------------------------------------------
 
 } // namespace atlas
 

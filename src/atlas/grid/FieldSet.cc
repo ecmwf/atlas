@@ -10,7 +10,7 @@
 
 #include "eckit/log/Log.h"
 
-#include "atlas/grid/Field.h"
+#include "atlas/grid/FieldSet.h"
 
 using namespace eckit;
 
@@ -19,25 +19,16 @@ namespace grid {
 
 //-----------------------------------------------------------------------------
 
-MetaData::MetaData()
-{
-}
-
-//-----------------------------------------------------------------------------
-
-FieldH::FieldH( Grid::Ptr g, MetaData::Ptr md, Data& d ) :
+FieldHandle::FieldHandle( Grid::Ptr g, Data& d ) :
     grid_(g),
-    metadata_(std::move(md)),
     data_(d)
 {
-    ASSERT(grid_);
-    ASSERT(metadata_);
+    ASSERT( grid_ );
 }
 
 //-----------------------------------------------------------------------------
 
-FieldSet::FieldSet(const FieldH::Vector& fields) :
-    fields_(fields)
+FieldSet::FieldSet(const FieldHandle::Vector& fields) :  fields_(fields)
 {
 }
 

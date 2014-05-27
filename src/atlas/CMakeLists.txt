@@ -41,13 +41,15 @@ configure_file( atlas_version.cc.in atlas_version.cc )
 ### mpistubs
 
 if( NOT HAVE_MPI )
-	set( atlas_mpistubs_srcs mpistubs/mpi.h mpistubs/mpi.c )
+    set( atlas_mpistubs_srcs mpistubs/mpi.h mpistubs/mpi.c )
 
     ecbuild_add_library( TARGET atlas_mpistubs_fortran
 						 AUTO_VERSION
 						 CONDITION CMAKE_Fortran_COMPILER_LOADED
 						 SOURCES   mpistubs/atlas_mpistubs_module.F90 )
-	set( ATLAS_MPISTUBS_FORTRAN atlas_mpistubs_fortran )
+    set( ATLAS_MPI_FORTRAN_LIBRARIES atlas_mpistubs_fortran )
+else()
+    set( ATLAS_MPI_FORTRAN_LIBRARIES ${MPI_Fortran_LIBRARIES} )
 endif()
 
 ###

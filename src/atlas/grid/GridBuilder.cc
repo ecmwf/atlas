@@ -37,8 +37,8 @@ namespace grid {
 typedef std::vector< atlas::grid::Grid::Point > PointList;
 static PointList* read_number_of_data_points(grib_handle *h);
 
-
 //=====================================================================================
+
 GridBuilder::GridBuilder(){}
 GridBuilder::~GridBuilder(){}
 

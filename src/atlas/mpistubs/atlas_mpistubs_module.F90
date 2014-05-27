@@ -226,8 +226,8 @@ CONTAINS
     
     !include "mpi_stubs_f90.h"
     
-    integer :: data1, data2(nsend)
     integer nsend, nrecv, sendtype, recvtype, comm, ierror, root
+    integer :: data1, data2(nsend)
     
     ierror = MPI_SUCCESS
     
@@ -240,8 +240,8 @@ CONTAINS
     
     !include "mpi_stubs_f90.h"
     
-    real :: data1, data2(nsend)
     integer nsend, nrecv, sendtype, recvtype, comm, ierror, root
+    real :: data1, data2(nsend)
     
     ierror = MPI_SUCCESS
     
@@ -254,8 +254,8 @@ CONTAINS
     
     !include "mpi_stubs_f90.h"
     
-    real*8 :: data1, data2(nsend)
     integer nsend, nrecv, sendtype, recvtype, comm, ierror, root
+    real*8 :: data1, data2(nsend)
     
     ierror = MPI_SUCCESS
     data2(:) = data1
@@ -267,8 +267,8 @@ CONTAINS
     
     !include "mpi_stubs_f90.h"
     
-    integer :: data1(nsend), data2(nsend)
     integer nsend, nrecv, sendtype, recvtype, comm, ierror, root
+    integer :: data1(nsend), data2(nsend)
     
     ierror = MPI_SUCCESS
     
@@ -281,8 +281,8 @@ CONTAINS
     
     !include "mpi_stubs_f90.h"
     
-    real :: data1(nsend), data2(nsend)
     integer nsend, nrecv, sendtype, recvtype, comm, ierror, root
+    real :: data1(nsend), data2(nsend)
     
     ierror = MPI_SUCCESS
     
@@ -295,8 +295,8 @@ CONTAINS
     
     !include "mpi_stubs_f90.h"
     
-    real*8 :: data1(nsend), data2(nsend)
     integer nsend, nrecv, sendtype, recvtype, comm, ierror, root
+    real*8 :: data1(nsend), data2(nsend)
     
     ierror = MPI_SUCCESS
     
@@ -315,8 +315,8 @@ CONTAINS
     
     !include "mpi_stubs_f90.h"
     
-    integer :: data1(nsend), data2(nsend)
     integer nsend, nrecv, sendtype, recvtype, comm, ierror
+    integer :: data1(nsend), data2(nsend)
     
     ierror = MPI_SUCCESS
     
@@ -329,8 +329,8 @@ CONTAINS
     
     !include "mpi_stubs_f90.h"
     
-    real :: data1(nsend), data2(nsend)
     integer nsend, nrecv, sendtype, recvtype, comm, ierror
+    real :: data1(nsend), data2(nsend)
     
     ierror = MPI_SUCCESS
     

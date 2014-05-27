@@ -45,12 +45,12 @@ public:
     {
       strides_[n] = strides_[n+1]*extents_[n+1];
     }
-    size_t size = strides_[0]*extents_[0];
+    std::size_t size = strides_[0]*extents_[0];
     data_.resize(size);
   }
   const DATA_TYPE& operator[](int i) const { return *(data()+i); }
   DATA_TYPE&       operator[](int i)       { return *(data()+i); }
-  size_t size() const { return data_.size(); }
+  std::size_t size() const { return data_.size(); }
   DATA_TYPE*       data() { return data_.data(); }
   const DATA_TYPE* data() const { return data_.data(); }
   int stride(int i) const { return strides_[i]; }

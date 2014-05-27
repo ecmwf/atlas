@@ -1,6 +1,6 @@
 list( APPEND atlas_grid_srcs
-Field.cc
-Field.h
+FieldSet.cc
+FieldSet.h
 Gaussian.cc
 Gaussian.h
 GribRead.cc

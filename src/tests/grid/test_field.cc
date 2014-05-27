@@ -14,7 +14,7 @@
 #include "atlas/mesh/FunctionSpace.hpp"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/LatLon.h"
-#include "atlas/grid/Field.h"
+#include "atlas/grid/FieldSet.h"
 #include "atlas/grid/Tesselation.h"
 
 using namespace std;
@@ -69,10 +69,6 @@ void TestField::test_constructor()
 
     ASSERT( mesh.has_function_space("nodes") );
 
-    MetaData::Ptr md( new MetaData() );
-
-    ASSERT( md );
-
     atlas::FunctionSpace& nodes  = mesh.function_space( "nodes" );
 
     FieldT<double>& data = nodes.create_field<double>( sname,1);
@@ -82,20 +78,20 @@ void TestField::test_constructor()
 
     // create field handle
 
-    FieldH::Ptr f( new FieldH( g, std::move(md), nodes.field<double>( sname ) ) );
+    FieldHandle::Ptr f( new FieldHandle( g, nodes.field<double>( sname ) ) );
 
     ASSERT( f );
 
-    FieldH::Vector fields;
+    FieldHandle::Vector fields;
     fields.push_back(f);
 
     FieldSet fs(fields);
     
     // iterate over the fields
-    for (FieldH::Vector::iterator it = fs.fields().begin(); it != fs.fields().end(); ++it)
+    for (FieldHandle::Vector::iterator it = fs.fields().begin(); it != fs.fields().end(); ++it)
     {
         // extract and test the data
-        FieldH::Data& d = (*it)->data();
+        FieldHandle::Data& d = (*it)->data();
         for (size_t i = 0; i < ref_data.size(); i++)
         {
             ASSERT(ref_data[i] == d[i]);

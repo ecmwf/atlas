@@ -14,7 +14,7 @@
 #include "grib_api.h"
 
 #include "atlas/mesh/Mesh.hpp"
-#include "atlas/grid/Field.h"
+#include "atlas/grid/FieldSet.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -25,11 +25,11 @@ namespace eckit {
 class GribWrite {
 public:
 
-    static void write( atlas::grid::FieldH& field, grib_handle* input_h );
+    static void write( atlas::grid::FieldHandle& field, grib_handle* input_h );
 
-    static void clone( atlas::grid::FieldH& field, const std::string& source, const std::string& output );
+    static void clone( atlas::grid::FieldHandle& field, const std::string& source, const std::string& output );
 
-    static grib_handle* clone( atlas::grid::FieldH& field, grib_handle* source );
+    static grib_handle* clone( atlas::grid::FieldHandle& field, grib_handle* source );
 
 };
 
