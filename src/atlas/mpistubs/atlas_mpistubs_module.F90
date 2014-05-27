@@ -40,12 +40,12 @@ module atlas_mpistubs_module
   parameter ( MPI_INTEGER = 28 )
   integer MPI_REAL
   parameter ( MPI_REAL = 11 )
-  integer MPI_real32
-  parameter ( MPI_real32 = MPI_REAL )
+  integer MPI_REAL4
+  parameter ( MPI_REAL4 = MPI_REAL )
   integer mpi_double_precision
   parameter ( mpi_double_precision = 3 )
-  integer MPI_real64
-  parameter ( MPI_real64 = mpi_double_precision )
+  integer MPI_REAL8
+  parameter ( MPI_REAL8 = mpi_double_precision )
   integer mpi_logical
   parameter ( mpi_logical = 4 )
   integer mpi_character
@@ -431,7 +431,7 @@ CONTAINS
     integer :: comm, sendtype, recvtype, ierror
     data2(:) = data1(:)
   end subroutine mpi_alltoall_real32_r1
-    
+
   subroutine mpi_alltoall_real64_r1 ( data1, nsend, sendtype, data2, nrecv, recvtype, comm, ierror )
     integer :: nsend, nrecv
     real(c_double) :: data1(nsend), data2(nrecv)

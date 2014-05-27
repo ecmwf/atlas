@@ -26,7 +26,7 @@ if( CMAKE_Fortran_COMPILER_ID MATCHES "GNU" )
     set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Wall")
   endif( )
   set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -funroll-all-loops -finline-functions" )
-  set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -gdwarf-3 -gstrict-dwarf -fcheck=bounds -ffpe-trap=invalid,zero,overflow,underflow -fbacktrace" )
+  set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -fcheck=bounds -ffpe-trap=invalid,zero,overflow,underflow -fbacktrace" )
   set( CMAKE_Fortran_FLAGS_BIT     "-O2 -funroll-all-loops -finline-functions" )
 
   # -fstack-arrays     : Allocate automatic arrays on the stack

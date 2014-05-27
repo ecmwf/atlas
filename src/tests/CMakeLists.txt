@@ -9,7 +9,7 @@
 if( HAVE_FCTEST )
 
 add_fctest( TARGET fctest_atlas_mesh
-  LIBS            atlas_fortran atlas_mpl_fortran
+  LIBS            atlas_fortran atlas_mpl_fortran ${FCTEST_LIBRARIES}
   LINKER_LANGUAGE Fortran
   SOURCES         fctest_atlas_mesh.F90
 )
