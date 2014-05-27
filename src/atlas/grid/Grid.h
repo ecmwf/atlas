@@ -19,8 +19,9 @@
 #include <vector>
 #include <cmath>
 
-#include "eckit/memory/NonCopyable.h"
 #include "eckit/exception/Exceptions.h"
+#include "eckit/memory/Owned.h"
+#include "eckit/memory/SharedPtr.h"
 
 #include "eckit/geometry/Point2.h"
 
@@ -37,13 +38,14 @@ namespace grid {
 /// Interface to a grid of points in a 2d cartesian space
 /// For example a LatLon grid or a Reduced Graussian grid
 
-class Grid : private eckit::NonCopyable {
+class Grid : public eckit::Owned {
+
 public: // types
 
     typedef eckit::geometry::LLPoint2           Point;     ///< point type
     typedef eckit::geometry::BoundBox2<Point>   BoundBox;  ///< boundbox type
 
-    typedef std::shared_ptr<Grid> Ptr;
+    typedef eckit::SharedPtr<Grid> Ptr;
 
 //    class Iterator {
 //    public:
@@ -89,7 +91,7 @@ public: // methods
 
 private: // members
 
-    mutable std::shared_ptr< Mesh > mesh_;
+    mutable eckit::SharedPtr< Mesh > mesh_;
 
 };
 
