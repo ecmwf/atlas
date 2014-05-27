@@ -39,8 +39,6 @@ ecbuild_add_test(   TARGET      test_RegularLatLonGrid
                LIBS        atlas_grid  
                            ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} 
                            ${Boost_TEST_EXEC_MONITOR_LIBRARY}
-                           ${Boost_SYSTEM_LIBRARY}
-                           ${Boost_FILESYSTEM_LIBRARY}
                 )
 
 # ======================================================================================
