@@ -33,7 +33,6 @@ ecbuild_declare_project()
 
 ecbuild_use_package( PROJECT eckit VERSION 0.6 )
 
-################################################################################################
 # options & dependencies
 
 ecbuild_find_python()
@@ -56,8 +55,8 @@ ecbuild_add_option( FEATURE FORTRAN
 					DESCRIPTION "provide Fortran bindings" )
 
 if( ENABLE_FORTRAN )
-	ecbuild_enable_fortran( REQUIRED MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/module )
-  
+  ecbuild_enable_fortran( REQUIRED MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/module )
+
   ecbuild_add_option( FEATURE FCTEST
                       DEFAULT ${ENABLE_TESTS}
                       DESCRIPTION "Fortran Unit Test Framework"
@@ -146,8 +145,6 @@ if( HAVE_GRID )
 endif()
 
 get_directory_property( ATLAS_DEFINITIONS COMPILE_DEFINITIONS )
-
-debug_var( ATLAS_TPLS )
 
 foreach( _tpl ${ATLAS_TPLS} )
 	string( TOUPPER ${_tpl} TPL )
