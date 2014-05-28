@@ -16,6 +16,7 @@
 #include <iostream>
 
 #include "eckit/log/Timer.h"
+#include "eckit/memory/ScopedPtr.h"
 
 #include "atlas/atlas_config.h"
 
@@ -230,7 +231,7 @@ void Tesselation::tesselate( atlas::Mesh& mesh )
 
     // define polyhedron to hold convex hull
 
-    std::unique_ptr< Polyhedron_3 > poly( create_convex_hull_from_points( ipts ) );
+    eckit::ScopedPtr< Polyhedron_3 > poly( create_convex_hull_from_points( ipts ) );
 
 //    std::cout << "convex hull " << poly->size_of_vertices() << " vertices" << std::endl;
 

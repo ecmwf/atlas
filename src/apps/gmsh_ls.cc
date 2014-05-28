@@ -18,6 +18,7 @@
 #include <memory>
 
 #include "eckit/exception/Exceptions.h"
+#include "eckit/memory/ScopedPtr.h"
 #include "eckit/config/Resource.h"
 #include "eckit/runtime/Tool.h"
 
@@ -70,7 +71,7 @@ void GmshLs::run()
 
     // input grid + field
 
-    std::unique_ptr< atlas::Mesh > in_mesh ( atlas::Gmsh::read( in_filename ) );
+    atlas::Mesh::Ptr in_mesh ( atlas::Gmsh::read( in_filename ) );
 
     Mesh& mesh = *in_mesh;
 

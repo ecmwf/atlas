@@ -17,6 +17,8 @@
 #include <cstddef>
 #include <vector>
 
+#include "eckit/memory/ScopedPtr.h"
+
 #include "atlas/grid/Grid.h"
 
 //-----------------------------------------------------------------------------
@@ -50,7 +52,7 @@ public: // methods
 
 protected:
 
-    std::unique_ptr< std::vector< Point > > points_; ///< storage of coordinate points
+    eckit::ScopedPtr< std::vector< Point > > points_; ///< storage of coordinate points
 
     BoundBox bound_box_;              ///< bounding box for the domain
 

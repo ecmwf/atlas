@@ -108,7 +108,7 @@ void Grib2Gmsh::run()
 
     // input grid + field
 
-    std::unique_ptr< atlas::Mesh > in_mesh ( new Mesh() );
+    atlas::Mesh::Ptr in_mesh ( new Mesh() );
 
     grib_load( in_filename, *in_mesh );
 

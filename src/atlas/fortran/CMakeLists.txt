@@ -24,6 +24,8 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../actions/BuildPeriodicBoundaries.hp
 generate_fortran_bindings(FORTRAN_BINDINGS ../actions/BuildEdges.hpp)
 generate_fortran_bindings(FORTRAN_BINDINGS ../actions/BuildDualMesh.hpp)
 
+debug_var( FORTRAN_BINDINGS )
+
 ### atlas fortran lib
 
 ecbuild_add_library( TARGET atlas_fortran

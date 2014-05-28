@@ -32,7 +32,7 @@ using namespace atlas::grid;
 
 int main()
 {
-    std::unique_ptr<Mesh> mesh( new Mesh() );
+    Mesh::Ptr mesh( new Mesh() );
 
     Tesselation::generate_latlon_points( *mesh, NLATS, NLONG );
 

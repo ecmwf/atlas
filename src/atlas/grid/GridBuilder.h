@@ -16,8 +16,9 @@
 
 #include "grib_api.h"
 
-#include "eckit/memory/NonCopyable.h"
 #include "eckit/exception/Exceptions.h"
+#include "eckit/memory/NonCopyable.h"
+#include "eckit/memory/ScopedPtr.h"
 #include "eckit/filesystem/PathName.h"
 
 #include "eckit/geometry/Point2.h"
@@ -139,7 +140,7 @@ private:
 
 private:
    long   nj_;                      ///< No of points along Y axes
-   std::unique_ptr<ReducedGaussianGrid> the_grid_;
+   eckit::ScopedPtr<ReducedGaussianGrid> the_grid_;
 };
 
 // =============================================================================
@@ -160,7 +161,7 @@ private:
 
 private:
    long   nj_;                      /// No of points along Y axes
-   std::unique_ptr<RegularGaussianGrid> the_grid_;
+   eckit::ScopedPtr<RegularGaussianGrid> the_grid_;
 };
 
 // =============================================================================
@@ -190,7 +191,7 @@ private:
    long computeCols(double west, double east) const;
 
 private:
-   std::unique_ptr<RegularLatLonGrid> the_grid_;
+   eckit::ScopedPtr<RegularLatLonGrid> the_grid_;
 };
 
 //------------------------------------------------------------------------------------------------------

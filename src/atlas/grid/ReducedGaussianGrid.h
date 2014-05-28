@@ -45,6 +45,7 @@ namespace grid {
 
 class ReducedGaussianGrid : public Grid {
 public:
+
    ReducedGaussianGrid();
    virtual ~ReducedGaussianGrid();
 
