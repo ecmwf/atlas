@@ -33,16 +33,16 @@ module atlas_module
 
 !------------------------------------------------------------------------------
 use, intrinsic :: iso_c_binding
-use field_c_binding
-use fieldset_c_binding
-use functionspace_c_binding
-use mesh_c_binding
-use metadata_c_binding
-use haloexchange_c_binding
-use gmsh_c_binding
-use BuildPeriodicBoundaries_c_binding
-use BuildEdges_c_binding
-use BuildDualMesh_c_binding
+use atlas_field_c_binding
+use atlas_fieldset_c_binding
+use atlas_functionspace_c_binding
+use atlas_mesh_c_binding
+use atlas_metadata_c_binding
+use atlas_haloexchange_c_binding
+use atlas_gmsh_c_binding
+use atlas_BuildPeriodicBoundaries_c_binding
+use atlas_BuildEdges_c_binding
+use atlas_BuildDualMesh_c_binding
 implicit none
 
 integer, private, parameter :: MAX_STR_LEN = 255
