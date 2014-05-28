@@ -39,7 +39,7 @@ class ReducedGaussianGrid;
 /// Abstract base class for building Grid* objects
 /// The Grid objects themselves should be independent of building mechanism
 /// Currently we are building the Grid's from GRIB, however in the future
-/// this could from NetCDF or from reading a file
+/// this could be from NetCDF or from reading a file
 class GridBuilder : private eckit::NonCopyable {
 public: // methods
 
@@ -84,7 +84,7 @@ public:
 
 // =============================================================================
 
-/// Base helper class for creating Grid derivatives form GRIB files.
+/// Base helper class for creating Grid derivatives from GRIB files.
 class GribGridBuilderHelper : private eckit::NonCopyable {
 public:
    virtual ~GribGridBuilderHelper();

@@ -24,7 +24,7 @@ using namespace eckit;
 using namespace atlas::grid;
 
 /// Test for Grid* derivatives
-/// This test uses the grib samples director.
+/// This test uses the grib samples directory.
 /// We open each file and attempt to create the Grid* class.
 /// However this has exposed errors in the grib samples files,
 /// especially for reduced gaussian grids. Hence we will need to wait till Shahram has
@@ -122,6 +122,19 @@ static void test_grib_file(const std::string& the_file_path)
    std::cout << "\n===================================================================================================" << std::endl;
    std::cout << "Opening GRIB file " << the_file_path << std::endl;
    PathName thePath(the_file_path);
+#ifdef DEBUG_ME
+   cout << "PathName.dirName() " << thePath.dirName() << "\n";
+   cout << "PathName.fullName() " << thePath.fullName() << "\n";
+   cout << "PathName.clusterName() " << thePath.clusterName() << "\n";
+   cout << "PathName.baseName() " << thePath.baseName() << "\n";
+   cout << "PathName.baseName(false) " << thePath.baseName(false) << "\n";
+   cout << "PathName.exists() " << thePath.exists() << "\n";
+   cout << "PathName.available() " << thePath.available() << "\n";
+   cout << "PathName.size() " << thePath.size() << "\n";
+   cout << "PathName.isDir() " << thePath.isDir() << "\n";
+   cout << "PathName.node() " << thePath.node() << "\n";
+   cout << "PathName.path() " << thePath.path() << "\n";
+#endif
    eckit::StdFile theGribFile(thePath);
 
    std::cout << " Create a grib handle"<< std::endl;
@@ -134,7 +147,7 @@ static void test_grib_file(const std::string& the_file_path)
    char string_value[64];
    size_t len = sizeof(string_value)/sizeof(char);
    err = grib_get_string(handle,"gridType",string_value,&len);
-   BOOST_CHECK_MESSAGE(err == 0,"grib_get_string(gridType) failed for file " << the_file_path << " IGNORING !!!!\n");
+   BOOST_CHECK_MESSAGE(err == 0,"grib_get_string(gridType) failed for \nfile " << the_file_path << " IGNORING !!!!\n");
    if ( err != 0 ) return;
 
 
