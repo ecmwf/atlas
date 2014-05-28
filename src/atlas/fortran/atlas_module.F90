@@ -33,16 +33,16 @@ module atlas_module
 
 !------------------------------------------------------------------------------
 use, intrinsic :: iso_c_binding
-use field_c_binding
-use fieldset_c_binding
-use functionspace_c_binding
-use mesh_c_binding
-use metadata_c_binding
-use haloexchange_c_binding
-use gmsh_c_binding
-use BuildPeriodicBoundaries_c_binding
-use BuildEdges_c_binding
-use BuildDualMesh_c_binding
+use atlas_field_c_binding
+use atlas_fieldset_c_binding
+use atlas_functionspace_c_binding
+use atlas_mesh_c_binding
+use atlas_metadata_c_binding
+use atlas_haloexchange_c_binding
+use atlas_gmsh_c_binding
+use atlas_BuildPeriodicBoundaries_c_binding
+use atlas_BuildEdges_c_binding
+use atlas_BuildDualMesh_c_binding
 implicit none
 
 integer, private, parameter :: MAX_STR_LEN = 255
@@ -374,7 +374,7 @@ integer function real_kind(kind)
     real_kind = KIND_REAL32
   else
     write(0,*) "Unsupported kind"
-    call abort()
+    write(0,*) 'call abort()'
   end if
 end function
 
@@ -386,7 +386,7 @@ integer function integer_kind(kind)
       integer_kind = KIND_INT32
     else 
       write(0,*) "Unsupported kind"
-      call abort()
+      write(0,*) 'call abort()'
     end if
   end if
 end function
@@ -472,7 +472,7 @@ function view1d_real32_rank2(array) result( view )
 #ifndef  __GFORTRAN__
   if( .not. is_contiguous(array) ) then
     write(0,*) "ERROR: array is not contiguous in view1d"
-    call abort()
+    write(0,*) 'call abort()'
   end if
 #endif
   array_c_ptr = c_loc_real32(array(1,1))
@@ -530,7 +530,7 @@ function Mesh__function_space(this,name) result(function_space)
   character(len=*), intent(in) :: name
   type(FunctionSpace_type) :: function_space
   function_space%object = atlas__Mesh__function_space(this%object, c_str(name) )
-  if( .not. C_associated(function_space%object) ) call abort()
+  if( .not. C_associated(function_space%object) ) write(0,*) 'call abort()'
 end function Mesh__function_space
 
 subroutine Mesh__delete(this)
@@ -585,7 +585,7 @@ subroutine FunctionSpace__create_field(this,name,nvars,kind)
       call atlas__FunctionSpace__create_field_int(this%object,c_str(name),nvars)
     else
       write(0,*) "Unsupported kind"
-      call abort()
+      write(0,*) 'call abort()'
     endif
   else if (wp == c_double) then
     call atlas__FunctionSpace__create_field_double(this%object,c_str(name),nvars)
@@ -635,7 +635,7 @@ function FunctionSpace__field(this,name) result(field)
   character(len=*), intent(in) :: name
   type(Field_type) :: field
   field%object = atlas__FunctionSpace__field(this%object, c_str(name) )
-  if( .not. C_associated(field%object) ) call abort()
+  if( .not. C_associated(field%object) ) write(0,*) 'call abort()'
 end function FunctionSpace__field
 
 function FunctionSpace__has_field(this,name) result(flag)
@@ -669,7 +669,7 @@ subroutine FunctionSpace__halo_exchange_int32_r1(this, field_data)
 #ifndef  __GFORTRAN__
   if (.not. is_contiguous(field_data) ) then
     write(0,*) "ERROR: field_data is not contiguous"
-    call abort()
+    write(0,*) 'call abort()'
   end if
 #endif
   call atlas__FunctionSpace__halo_exchange_int( this%object, field_data, size(field_data) )
@@ -695,7 +695,7 @@ subroutine FunctionSpace__halo_exchange_real32_r1(this, field_data)
 #ifndef  __GFORTRAN__
   if (.not. is_contiguous(field_data) ) then
     write(0,*) "ERROR: field_data is not contiguous"
-    call abort()
+    write(0,*) 'call abort()'
   end if
 #endif
   call atlas__FunctionSpace__halo_exchange_float( this%object, field_data, size(field_data) )
@@ -721,7 +721,7 @@ subroutine FunctionSpace__halo_exchange_real64_r1(this, field_data)
 #ifndef  __GFORTRAN__
   if (.not. is_contiguous(field_data) ) then
     write(0,*) "ERROR: field_data is not contiguous"
-    call abort()
+    write(0,*) 'call abort()'
   end if
 #endif
   call atlas__FunctionSpace__halo_exchange_double( this%object, field_data, size(field_data) )
@@ -757,7 +757,7 @@ subroutine FunctionSpace__gather_real64_r1(this, field_data, glbfield_data)
 #ifndef  __GFORTRAN__
   if (.not. is_contiguous(field_data) ) then
     write(0,*) "ERROR: field_data is not contiguous"
-    call abort()
+    write(0,*) 'call abort()'
   end if
 #endif
   call atlas__FunctionSpace__gather_double( this%object, field_data, size(field_data), &
@@ -1125,7 +1125,7 @@ function Field__data2_wp(this) result(field)
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
   if (size(field_bounds) < 2) then
     write(0,*) "Cannot access field """,this%name(),""" with rank",field_rank," as rank 2"
-    call abort()
+    write(0,*) 'call abort()'
   end if
   field_size = 1
   do jbound=1,field_rank
@@ -1135,7 +1135,7 @@ function Field__data2_wp(this) result(field)
   if( size(field) /= field_size ) then
     write(0,*) "Requested bounds of field ", this%name(), "[", field_bounds(1:2), &
      & "] do not cover the entire field of size ", field_size
-    call abort()
+    write(0,*) 'call abort()'
   end if
 end function Field__data2_wp
 
@@ -1155,7 +1155,7 @@ function Field__data3_wp(this) result(field)
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
   if (size(field_bounds) < 3) then
     write(0,*) "Cannot access field """,this%name(),""" with rank",field_rank," as rank 3"
-    call abort()
+    write(0,*) 'call abort()'
   end if
   field_size = 1
   do jbound=1,field_rank
@@ -1164,7 +1164,7 @@ function Field__data3_wp(this) result(field)
   call C_F_POINTER ( field_c_ptr , field , field_bounds(1:3) )
   if( size(field) /= field_size ) then
     write(0,*) "Requested bounds of field ", field_bounds(1:3), " do not cover the entire field of size ", field_size
-    call abort()
+    write(0,*) 'call abort()'
   end if
 end function Field__data3_wp
 

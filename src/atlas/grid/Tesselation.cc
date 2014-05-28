@@ -17,8 +17,6 @@
 
 #include "eckit/log/Timer.h"
 
-#include <boost/progress.hpp>
-
 #include "atlas/atlas_config.h"
 
 //------------------------------------------------------------------------------------------------------

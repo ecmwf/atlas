@@ -16,10 +16,10 @@
 #define atlas_grid_FieldSet_H
 
 #include <vector>
-#include <memory>
 
 #include "eckit/types/Types.h"
-#include "eckit/memory/NonCopyable.h"
+#include "eckit/memory/Owned.h"
+#include "eckit/memory/SharedPtr.h"
 
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/mesh/Field.hpp"
@@ -33,10 +33,11 @@ namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
-class FieldHandle : private eckit::NonCopyable {
+class FieldHandle : public eckit::Owned {
+
 public: // types
 
-    typedef std::shared_ptr<FieldHandle> Ptr;
+    typedef eckit::SharedPtr<FieldHandle> Ptr;
     typedef std::vector< FieldHandle::Ptr > Vector;
 
     typedef atlas::FieldT< double > Data;

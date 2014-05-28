@@ -13,8 +13,10 @@ endif( )
 #######################################################################################
 # GNU
 #######################################################################################
-
+#Gfortran -W -Wall -pedantic-errors -std=2003 -fbounds-check
+#-Werror -ftrace=full
 if( CMAKE_Fortran_COMPILER_ID MATCHES "GNU" )
+  set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -std=f2008")
   if( ${OMP} )
     set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fopenmp")
   else( )
@@ -23,9 +25,9 @@ if( CMAKE_Fortran_COMPILER_ID MATCHES "GNU" )
   if( ENABLE_WARNINGS )
     set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Wall")
   endif( )
-  set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -funroll-all-loops -finline-functions -fstack-arrays" )
+  set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -funroll-all-loops -finline-functions" )
   set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -fcheck=bounds -ffpe-trap=invalid,zero,overflow,underflow -fbacktrace" )
-  set( CMAKE_Fortran_FLAGS_BIT     "-O2 -funroll-all-loops -finline-functions -fstack-arrays" )
+  set( CMAKE_Fortran_FLAGS_BIT     "-O2 -funroll-all-loops -finline-functions" )
 
   # -fstack-arrays     : Allocate automatic arrays on the stack
   # -funroll-all-loops : Unroll all loops
@@ -34,7 +36,8 @@ if( CMAKE_Fortran_COMPILER_ID MATCHES "GNU" )
 #######################################################################################
 # Intel
 #######################################################################################
-
+#ifort -check all -warn all,nodec,interfaces -gen interfaces -traceback
+#-fpe0 -fpstkchk
 elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Intel" )
   if( ${OMP} )
     set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -openmp")

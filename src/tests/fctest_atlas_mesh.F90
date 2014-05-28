@@ -21,7 +21,6 @@ implicit none
 type(Mesh_type) :: mesh
 type(FunctionSpace_type) :: func_space
 type(Field_type) :: field
-contains
 end module fctest_atlas_mesh_fixture
 
 ! -----------------------------------------------------------------------------
@@ -88,6 +87,7 @@ TEST( test_field_metadata )
   
   CHECK( true  .eqv. .True.  )
   CHECK( false .eqv. .False. )
+
   CHECK_EQUAL( int, 20 )
   CHECK_CLOSE( real32, real(0.1,kind=c_float), real(0.,kind=c_float) )
   CHECK_CLOSE( real64, real(0.2,kind=c_double), real(0.,kind=c_double) )
