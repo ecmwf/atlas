@@ -41,18 +41,18 @@ ecbuild_find_python()
 
 set(Boost_USE_MULTITHREADED      ON )
 ecbuild_add_option( FEATURE BOOST
-					DEFAULT ${ENABLE_TESTS}
-					DESCRIPTION "Boost Unit Test Framework"
-					REQUIRED_PACKAGES "Boost 1.45.0 COMPONENTS unit_test_framework" )
+                    DEFAULT ${ENABLE_TESTS}
+                    DESCRIPTION "Boost Unit Test Framework"
+                    REQUIRED_PACKAGES "Boost 1.45.0 COMPONENTS unit_test_framework" )
 set_package_properties( Boost PROPERTIES TYPE OPTIONAL PURPOSE "Testing Only" )
 
 ### Fortran ...
 
 ecbuild_add_option( FEATURE FORTRAN_NUMBERING
-					DESCRIPTION "data-structures are index with Fortran numbering" )
+                    DESCRIPTION "data-structures are index with Fortran numbering" )
 
 ecbuild_add_option( FEATURE FORTRAN
-					DESCRIPTION "provide Fortran bindings" )
+                    DESCRIPTION "provide Fortran bindings" )
 
 if( ENABLE_FORTRAN )
   ecbuild_enable_fortran( REQUIRED MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/module )
@@ -66,61 +66,69 @@ endif()
 ### OMP ...
 
 ecbuild_add_option( FEATURE OMP
-					DESCRIPTION "support for OpenMP threaded parallelism" )
+                    DESCRIPTION "support for OpenMP threaded parallelism" )
 
 # !! TODO !! add test for OpenMP
 
 ### MPI ...
 
 ecbuild_add_option( FEATURE MPI
-					DESCRIPTION "support for MPI distributed parallelism" )
+                    DESCRIPTION "support for MPI distributed parallelism" )
 
 if( ENABLE_MPI )
-   ecbuild_find_mpi()
-   if( MPI_CXX_FOUND )
-		cmake_add_c_flags( " ${MPI_C_COMPILE_FLAGS}" )
-		cmake_add_cxx_flags( " ${MPI_CXX_COMPILE_FLAGS}" )
-		include_directories(${MPI_C_INCLUDE_PATH})
-	else()
-		set( HAVE_MPI 0 )
-   endif()
+  ecbuild_find_mpi()
+  if( MPI_CXX_FOUND )
+    cmake_add_c_flags( " ${MPI_C_COMPILE_FLAGS}" )
+    cmake_add_cxx_flags( " ${MPI_CXX_COMPILE_FLAGS}" )
+    include_directories(${MPI_C_INCLUDE_PATH})
+  else()
+    set( HAVE_MPI 0 )
+  endif()
 
-   if( MPI_Fortran_FOUND )
-     message( STATUS " MPI_Fortran_INCLUDE_PATH ${MPI_Fortran_INCLUDE_PATH}" )
-     message( STATUS " MPI_Fortran_LIBRARIES ${MPI_Fortran_LIBRARIES}" )
-     add_definitions(${MPI_Fortran_COMPILE_FLAGS})
-     include_directories(${MPI_Fortran_INCLUDE_PATH})
-   endif()
+  if( MPI_Fortran_FOUND )
+    message( STATUS " MPI_Fortran_INCLUDE_PATH ${MPI_Fortran_INCLUDE_PATH}" )
+    message( STATUS " MPI_Fortran_LIBRARIES ${MPI_Fortran_LIBRARIES}" )
+    add_definitions(${MPI_Fortran_COMPILE_FLAGS})
+    include_directories(${MPI_Fortran_INCLUDE_PATH})
+  endif()
 endif()
 
 ### grid
 
 ecbuild_add_option( FEATURE GRID
-					DESCRIPTION "support for C++ grid interface" )
-
-if( HAVE_GRID )
-	ecbuild_add_cxx11_flags()
-endif()
+                    DESCRIPTION "support for C++ grid interface" )
 
 ### tesselation
 
 ecbuild_add_option( FEATURE TESSELATION
-					DESCRIPTION "support for unstructured mesh generation" )
+                    DESCRIPTION "support for unstructured mesh generation" )
 
 if( ENABLE_TESSELATION )
-   find_package( CGAL )
+  find_package( CGAL )
 
-   if( CGAL_FOUND )
-   	list( APPEND CGAL_LIBRARIES ${CGAL_LIBRARY} ${CGAL_3RD_PARTY_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES} )
-   endif()
+  if( CGAL_FOUND )
+    list( APPEND CGAL_LIBRARIES ${CGAL_LIBRARY} ${CGAL_3RD_PARTY_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES} )
+  endif()
    
-   list( APPEND ATLAS_TPLS CGAL )
+  list( APPEND ATLAS_TPLS CGAL )
 endif()
+
+### Eigen
+
+ecbuild_add_option( FEATURE EIGEN
+                    DESCRIPTION "Eigen Linear Algebra Library"
+                    REQUIRED_PACKAGES Eigen3 )
+
+### Grib
+
+ecbuild_add_option( FEATURE GRIB
+                    DESCRIPTION "support for GRIB format"
+                    REQUIRED_PACKAGES "PROJECT grib_api VERSION 1.9.9" )
 
 ### sandbox
 
 ecbuild_add_option( FEATURE SANDBOX
-					DESCRIPTION "build the sandbox stuff" )
+                    DESCRIPTION "build the sandbox stuff" )
 
 ############################################################################################
 # export package info
@@ -131,21 +139,21 @@ set( ATLAS_INCLUDE_DIRS   ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY
 set( ATLAS_LIBRARIES      atlas )
 
 if( ENABLE_FORTRAN )
-	list( APPEND ATLAS_INCLUDE_DIRS ${CMAKE_Fortran_MODULE_DIRECTORY} )
-	set( ATLAS_LIBRARIES atlas_fortran atlas_mpl_fortran ${ATLAS_LIBRARIES} )
+  list( APPEND ATLAS_INCLUDE_DIRS ${CMAKE_Fortran_MODULE_DIRECTORY} )
+  set( ATLAS_LIBRARIES atlas_fortran atlas_mpl_fortran ${ATLAS_LIBRARIES} )
 endif()
 
 if( HAVE_GRID )
-	list( APPEND ATLAS_LIBRARIES atlas_grid )
+  list( APPEND ATLAS_LIBRARIES atlas_grid )
 endif()
 
 get_directory_property( ATLAS_DEFINITIONS COMPILE_DEFINITIONS )
 
 foreach( _tpl ${ATLAS_TPLS} )
-	string( TOUPPER ${_tpl} TPL )
-	list( APPEND ATLAS_EXTRA_DEFINITIONS   ${${TPL}_DEFINITIONS} )
-	list( APPEND ATLAS_EXTRA_INCLUDE_DIRS  ${${TPL}_INCLUDE_DIRS} )
-	list( APPEND ATLAS_EXTRA_LIBRARIES     ${${TPL}_LIBRARIES} )
+  string( TOUPPER ${_tpl} TPL )
+  list( APPEND ATLAS_EXTRA_DEFINITIONS   ${${TPL}_DEFINITIONS} )
+  list( APPEND ATLAS_EXTRA_INCLUDE_DIRS  ${${TPL}_INCLUDE_DIRS} )
+  list( APPEND ATLAS_EXTRA_LIBRARIES     ${${TPL}_LIBRARIES} )
 endforeach()
 
 ############################################################################################

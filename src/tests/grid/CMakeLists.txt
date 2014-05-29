@@ -34,7 +34,7 @@ message( STATUS "Boost_LIBRARIES     : ${Boost_LIBRARIES}" )
 ecbuild_add_test(   TARGET      test_RegularLatLonGrid
                BOOST
                SOURCES     test_RegularLatLonGrid.cc
-               CONDITION   HAVE_GRID
+               CONDITION   HAVE_GRID AND HAVE_GRIB
                INCLUDES    ${Boost_INCLUDE_DIRS} 
                LIBS        atlas_grid  
                            ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} 

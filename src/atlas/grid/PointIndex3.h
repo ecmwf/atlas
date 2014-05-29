@@ -22,7 +22,6 @@
 #include "atlas/mesh/Parameters.hpp"
 
 #include "eckit/geometry/Point3.h"
-#include "atlas/grid/TriangleIntersection.h"
 
 //------------------------------------------------------------------------------------------------------
 
