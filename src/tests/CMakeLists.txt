@@ -23,6 +23,13 @@ ecbuild_add_test( TARGET test_gmsh
   CONDITION HAVE_BOOST
 )
 
+ecbuild_add_test( TARGET test_indexview
+  SOURCES  test_indexview.cpp
+  LIBS     atlas
+  INCLUDES  ${Boost_INCLUDE_DIRS}
+  CONDITION HAVE_BOOST
+)
+
 ecbuild_add_test( TARGET test_meshgen3d
   SOURCES   test_meshgen3d.cpp
   LIBS      atlas_meshgen atlas

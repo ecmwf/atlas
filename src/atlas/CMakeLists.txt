@@ -11,13 +11,13 @@
 ecbuild_generate_config_headers( DESTINATION ${INSTALL_INCLUDE_DIR}/atlas )
 
 function( fortranize file )
-    unset( result )
-    file( STRINGS "${file}" lines )
-    foreach(i IN LISTS lines)
-        STRING(REGEX REPLACE "^/\\* (#undef .*) \\*/$" "! \\1" i "${i}")
-        SET(result "${result}${i}\n")
-    endforeach()
-    file(WRITE "${file}" "${result}")
+  unset( result )
+  file( STRINGS "${file}" lines )
+  foreach( i IN LISTS lines )
+    string( REGEX REPLACE "^/\\* (#undef .*) \\*/$" "! \\1" i "${i}" )
+    set( result "${result}${i}\n" )
+  endforeach()
+  file( WRITE "${file}" "${result}" )
 endfunction()
 
 configure_file( atlas_defines.h.in  atlas_defines.h   )
@@ -28,86 +28,87 @@ configure_file( atlas_config.h.in   atlas_config.h  )
 
 configure_file( atlas_version.h.in  atlas_version.h )
 
-install(FILES
-			${CMAKE_CURRENT_BINARY_DIR}/atlas_defines.h
-			${CMAKE_CURRENT_BINARY_DIR}/atlas_defines.F90
-			${CMAKE_CURRENT_BINARY_DIR}/atlas_config.h
-			${CMAKE_CURRENT_BINARY_DIR}/atlas_version.h
-		DESTINATION
-			${INSTALL_INCLUDE_DIR}/atlas )
+install( FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/atlas_defines.h
+  ${CMAKE_CURRENT_BINARY_DIR}/atlas_defines.F90
+  ${CMAKE_CURRENT_BINARY_DIR}/atlas_config.h
+  ${CMAKE_CURRENT_BINARY_DIR}/atlas_version.h
+         DESTINATION
+  ${INSTALL_INCLUDE_DIR}/atlas )
 
 configure_file( atlas_version.cc.in atlas_version.cc )
 
 ### mpistubs
 
 if( NOT HAVE_MPI )
-    set( atlas_mpistubs_srcs mpistubs/mpi.h mpistubs/mpi.c )
+  set( atlas_mpistubs_srcs mpistubs/mpi.h mpistubs/mpi.c )
 
-    ecbuild_add_library( TARGET atlas_mpistubs_fortran
-						 AUTO_VERSION
-						 CONDITION CMAKE_Fortran_COMPILER_LOADED
-						 SOURCES   mpistubs/atlas_mpistubs_module.F90 )
-    set( ATLAS_MPI_FORTRAN_LIBRARIES atlas_mpistubs_fortran )
+  ecbuild_add_library( TARGET atlas_mpistubs_fortran
+                       AUTO_VERSION
+                       CONDITION CMAKE_Fortran_COMPILER_LOADED
+                       SOURCES   mpistubs/atlas_mpistubs_module.F90 )
+  set( ATLAS_MPI_FORTRAN_LIBRARIES atlas_mpistubs_fortran )
 else()
-    set( ATLAS_MPI_FORTRAN_LIBRARIES ${MPI_Fortran_LIBRARIES} )
+  set( ATLAS_MPI_FORTRAN_LIBRARIES ${MPI_Fortran_LIBRARIES} )
 endif()
 
 ###
 
 list( APPEND atlas_mpl_srcs
-		mpl/HaloExchange.hpp
-		mpl/HaloExchange.cpp
-		mpl/Gather.hpp
-		mpl/Gather.cpp
-		mpl/MPL.hpp
+  mpl/HaloExchange.hpp
+  mpl/HaloExchange.cpp
+  mpl/Gather.hpp
+  mpl/Gather.cpp
+  mpl/MPL.hpp
 )
 
 list( APPEND atlas_io_srcs
-		io/Gmsh.hpp
-		io/Gmsh.cpp
+  io/Gmsh.hpp
+  io/Gmsh.cpp
 )
 
 list( APPEND atlas_mesh_srcs
-		mesh/Array.hpp
-		mesh/ArrayView.hpp
-		mesh/ArrayView.cpp
-		mesh/Field.hpp
-		mesh/Field.cpp
-		mesh/FieldSet.hpp
-		mesh/FieldSet.cpp
-		mesh/FunctionSpace.hpp
-		mesh/FunctionSpace.cpp
-		mesh/Mesh.hpp
-		mesh/Mesh.cpp
-		mesh/Metadata.hpp
-		mesh/Metadata.cpp
-		mesh/Parameters.hpp
+  mesh/Array.hpp
+  mesh/ArrayView.hpp
+  mesh/ArrayView.cpp
+  mesh/IndexView.hpp
+  mesh/IndexView.cpp
+  mesh/Field.hpp
+  mesh/Field.cpp
+  mesh/FieldSet.hpp
+  mesh/FieldSet.cpp
+  mesh/FunctionSpace.hpp
+  mesh/FunctionSpace.cpp
+  mesh/Mesh.hpp
+  mesh/Mesh.cpp
+  mesh/Metadata.hpp
+  mesh/Metadata.cpp
+  mesh/Parameters.hpp
 )
 
 list( APPEND atlas_actions_srcs
-		actions/BuildDualMesh.hpp
-		actions/BuildDualMesh.cpp
-		actions/BuildEdges.hpp
-		actions/BuildEdges.cpp
-		actions/BuildHalo.hpp
-		actions/BuildHalo.cpp
-		actions/BuildPeriodicBoundaries.hpp
-		actions/BuildPeriodicBoundaries.cpp
+  actions/BuildDualMesh.hpp
+  actions/BuildDualMesh.cpp
+  actions/BuildEdges.hpp
+  actions/BuildEdges.cpp
+  actions/BuildHalo.hpp
+  actions/BuildHalo.cpp
+  actions/BuildPeriodicBoundaries.hpp
+  actions/BuildPeriodicBoundaries.cpp
 )
 
 ### atlas c++ library
 
 ecbuild_add_library( TARGET atlas
-	AUTO_VERSION
-	SOURCES
-		${atlas_mpistubs_srcs}
-		${atlas_io_srcs}
-		${atlas_mesh_srcs}
-		${atlas_mpl_srcs}
-		${atlas_actions_srcs}
-		atlas_mpi.h
-  LIBS eckit ${MPI_CXX_LIBRARIES}
-) 
+                     AUTO_VERSION
+                     SOURCES
+                       ${atlas_mpistubs_srcs}
+                       ${atlas_io_srcs}
+                       ${atlas_mesh_srcs}
+                       ${atlas_mpl_srcs}
+                       ${atlas_actions_srcs}
+                       atlas_mpi.h
+                     LIBS eckit ${MPI_CXX_LIBRARIES} )
 
 add_subdirectory( fortran )
 
