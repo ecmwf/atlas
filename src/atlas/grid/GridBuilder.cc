@@ -9,7 +9,6 @@
  */
 
 #include <iostream>
-#include <stdexcept>
 
 #include "atlas/grid/GridBuilder.h"
 #include "atlas/grid/Unstructured.h"
@@ -21,15 +20,12 @@
 #include "eckit/thread/Mutex.h"
 #include "eckit/thread/AutoLock.h"
 #include "eckit/io/StdFile.h"
+#include "eckit/exception/Exceptions.h"
 
 using namespace std;
 using namespace eckit;
 using namespace eckit::geometry;
 
-
-/// AREA_FACTOR is added because GRIB has precision for 3 dec places.
-/// For instance east for N640 is 359.8593750 intstead of 359.859
-static const double AREA_FACTOR = 1.e-3;
 
 namespace atlas {
 namespace grid {
@@ -61,15 +57,15 @@ Grid::Ptr GRIBGridBuilder::build(const eckit::PathName& pathname) const
    grib_handle* handle = grib_handle_new_from_file(0,theFile,&err);
    if (err != 0 || handle == 0) {
       std::stringstream ss; ss << "Could not create grib handle for file " << pathname << "  err=" << err;
-      throw std::runtime_error(ss.str());
+      throw SeriousBug(ss.str(),Here());
    }
 
    Grid::Ptr the_grid_ptr = build_grid_from_grib_handle(handle);
 
    err = grib_handle_delete(handle);
    if (err != 0) {
-      std::stringstream ss; ss << "Could not delete handle for file" << pathname;
-      throw std::runtime_error(ss.str());
+      std::stringstream ss; ss << "Could not delete handle for file " << pathname << " ";
+      throw SeriousBug(ss.str(),Here());
    }
 
    return the_grid_ptr;
@@ -81,7 +77,7 @@ Grid::Ptr GRIBGridBuilder::build_grid_from_grib_handle( grib_handle* handle ) co
    char string_value[64];
    size_t len = sizeof(string_value)/sizeof(char);
    if (grib_get_string(handle,"gridType",string_value,&len)  != 0) {
-      throw std::runtime_error("grib_get_string failed for gridType") ;
+      throw SeriousBug(string("grib_get_string failed for gridType"),Here());
    }
 
    if (strncasecmp(string_value,"regular_ll",10) == 0) {
@@ -160,8 +156,9 @@ GribGridBuilderHelper::GribGridBuilderHelper(grib_handle* handle)
   epsilon_(1e-6),
   numberOfDataPoints_(0)
 {
-   if (handle == NULL)
-      throw std::runtime_error("NULL grib_handle");
+   if (handle == NULL) {
+      throw SeriousBug(string("NULL grib_handle"),Here());
+   }
 
    GRIB_CHECK(grib_get_long(handle,"editionNumber",&editionNumber_),0);
    epsilon_ = (editionNumber_ == 1) ? 1e-3 : 1e-6;
@@ -223,7 +220,7 @@ void GribGridBuilderHelper::comparePointList(const std::vector<Grid::Point>& poi
    std::streamsize old_precision = cout.precision();
    for(size_t i =0;  i < points.size() && i < grib_pntlist.size(); i++) {
       if (!FloatCompare::is_equal(points[i].lat(),grib_pntlist[i].lat(),epsilon) ||
-               !FloatCompare::is_equal(points[i].lon(),grib_pntlist[i].lon(),epsilon))
+          !FloatCompare::is_equal(points[i].lon(),grib_pntlist[i].lon(),epsilon))
       {
          if (print_point_list == 0) Log::info() << " Point list DIFFER, show first 10, epsilon(" << epsilon << ")" << std::endl;
          Log::info() << setw(3) << i << " :"
@@ -376,27 +373,17 @@ Grid::BoundBox GribReducedGaussianGrid::boundingBox() const
 bool GribReducedGaussianGrid::isGlobalNorthSouth() const
 {
    return (the_grid_->gaussianNumber_*2 == nj_);
-   //std::cout << "isGlobalNorthSouth " << (fabs(south_ - latitudes_[gaussianNumber_*2-1])) << "     " << fabs( north_ - latitudes_[0]) << "\n";
-   //return (fabs(south_ - latitudes_[gaussianNumber_*2-1])) <= AREA_FACTOR && fabs( north_ - latitudes_[0]) <= AREA_FACTOR;
 }
 
 bool GribReducedGaussianGrid::isGlobalWestEast() const
 {
+   // GRIB way of determining globalness
    if (west_ == 0) {
-      // GRIB way of determining globalness
-      double last_long = 360.0 -  (90.0/(double)the_grid_->gaussianNumber_);
-//      cout << " GribReducedGaussianGrid::isGlobalWestEast() 360.0 - 90/N = " <<  last_long << endl;
+      double last_long = 360.0 - (90.0/(double)the_grid_->gaussianNumber_) ;
       return FloatCompare::is_equal(east_,last_long,epsilon());
    }
-
-   /// ecregrid way of determining globalness
-   /// AREA_FACTOR is added because grib has precision for 3 dec places.
-   double res = east_ - west_ + 90.0 / the_grid_->gaussianNumber_ + AREA_FACTOR;
-//   cout << " GribReducedGaussianGrid::isGlobalWestEast() 90.0 / gaussianNumber_ = " << double(90.0 /(double)the_grid_->gaussianNumber_) << endl;
-//   cout << " GribReducedGaussianGrid::isGlobalWestEast() RES = " << res << endl;
-   return res > 360.0 || FloatCompare::is_equal(res,360.0,epsilon());
+   return false;
 }
-
 
 // ========================================================================================
 
@@ -518,18 +505,16 @@ Grid::BoundBox GribRegularGaussianGrid::boundingBox() const
 bool GribRegularGaussianGrid::isGlobalNorthSouth() const
 {
    return (the_grid_->gaussianNumber_*2 == nj_);
-   //std::cout << "isGlobalNorthSouth " << (fabs(south_ - latitudes_[gaussianNumber_*2-1])) << "     " << fabs( north_ - latitudes_[0]) << "\n";
-   //return (fabs(south_ - latitudes_[gaussianNumber_*2-1])) <= AREA_FACTOR && fabs( north_ - latitudes_[0]) <= AREA_FACTOR;
 }
 
 bool GribRegularGaussianGrid::isGlobalWestEast() const
 {
-   /// AREA_FACTOR is added because grib has precision for 3 dec places.
-   double res = east_ - west_ + 90.0 / the_grid_->gaussianNumber_ + AREA_FACTOR;
-   //   cout << " RegularGaussianGrid::isGlobalWestEast() 90.0 / gaussianNumber_ = " << double(90.0 /(double)gaussianNumber_) << endl;
-   //   cout << " RegularGaussianGrid::isGlobalWestEast() double(360.0 /((double)4*gaussianNumber_)  = " << (360.0/((double)4*gaussianNumber_)) << endl;
-   //   cout << " RegularGaussianGrid::isGlobalWestEast() RES = " << res << endl;
-   return res > 360.0 || FloatCompare::is_equal(res,360.0,epsilon());
+   // GRIB way of determining globalness
+   if (west_ == 0) {
+      double last_long = 360.0 - (90.0/(double)the_grid_->gaussianNumber_) ;
+      return FloatCompare::is_equal(east_,last_long,epsilon());
+   }
+   return false;
 }
 
 // =====================================================================================
@@ -653,8 +638,9 @@ static PointList* read_number_of_data_points(grib_handle *h)
    /// i.e for Spherical Harmonics it is not implemented.
    int err = 0;
    grib_iterator *i = grib_iterator_new(h, 0, &err);
-   if(err != 0 )
-      throw std::runtime_error("error reading grib, could not create grib_iterator_new");
+   if(err != 0 ) {
+      throw SeriousBug(string("Error reading grib. Could not create grib_iterator_new"),Here()) ;
+   }
 
    PointList* pts = new PointList(nb_nodes);
 
