@@ -50,27 +50,12 @@ Grid::Ptr GRIBGridBuilder::build(const eckit::PathName& pathname) const
 {
    AutoLock<Mutex> lock(local_mutex);
 
-   /// Will by default open in read mode, destructor will close file
-   StdFile theFile(pathname);
+   GribFile the_grib_file(pathname);
 
-   int err;
-   grib_handle* handle = grib_handle_new_from_file(0,theFile,&err);
-   if (err != 0 || handle == 0) {
-      std::stringstream ss; ss << "Could not create grib handle for file " << pathname << "  err=" << err;
-      throw SeriousBug(ss.str(),Here());
-   }
-
-   Grid::Ptr the_grid_ptr = build_grid_from_grib_handle(handle);
-
-   err = grib_handle_delete(handle);
-   if (err != 0) {
-      std::stringstream ss; ss << "Could not delete handle for file " << pathname << " ";
-      throw SeriousBug(ss.str(),Here());
-   }
+   Grid::Ptr the_grid_ptr = build_grid_from_grib_handle(the_grib_file.handle());
 
    return the_grid_ptr;
 }
-
 
 Grid::Ptr GRIBGridBuilder::build_grid_from_grib_handle( grib_handle* handle ) const
 {
@@ -345,7 +330,7 @@ Grid::Ptr GribReducedGaussianGrid::build()
 
 GribReducedGaussianGrid::~GribReducedGaussianGrid()
 {
-   Log::info() << "Destroy a ReducedGaussianGrid" << std::endl;
+   Log::info() << "Destroy a GribReducedGaussianGrid" << std::endl;
 }
 
 void GribReducedGaussianGrid::add_point(int lat_index)
@@ -400,7 +385,7 @@ GribRegularGaussianGrid::GribRegularGaussianGrid(grib_handle* handle)
 
 GribRegularGaussianGrid::~GribRegularGaussianGrid()
 {
-   Log::info() << "Destroy a RegularGaussianGrid" << std::endl;
+   Log::info() << "Destroy a GribRegularGaussianGrid" << std::endl;
 }
 
 Grid::Ptr GribRegularGaussianGrid::build()
@@ -530,7 +515,7 @@ GribRegularLatLonGrid::GribRegularLatLonGrid(grib_handle* handle)
 
 GribRegularLatLonGrid::~GribRegularLatLonGrid()
 {
-   Log::info() << "Destroy a RegularLatLonGrid" << std::endl;
+   Log::info() << "Destroy a GribRegularLatLonGrid" << std::endl;
 }
 
 Grid::Ptr GribRegularLatLonGrid::build()
@@ -658,6 +643,34 @@ static PointList* read_number_of_data_points(grib_handle *h)
 
    ASSERT( idx == nb_nodes );
    return pts;
+}
+
+
+// ==================================================================================
+
+GribFile::GribFile(const std::string& the_file_path) : theGribFile_(PathName(the_file_path)), handle_(0)
+{
+   init(the_file_path);
+}
+
+GribFile::GribFile(const eckit::PathName& pathname) : theGribFile_(pathname), handle_(0)
+{
+   init(pathname.asString());
+}
+
+void GribFile::init(const std::string& the_file_path)
+{
+   Log::info() << " Create a grib handle" << std::endl;
+   int err;
+   handle_ = grib_handle_new_from_file(0,theGribFile_,&err);
+   if (err != 0) Log::error() <<  "grib_handle_new_from_file error " << err << " for file " << the_file_path << endl;
+}
+
+GribFile::~GribFile()
+{
+   Log::info()  << " close the grib file and delete handle" << std::endl;
+   int err = grib_handle_delete(handle_);
+   if (err != 0) Log::error() <<  " grib_handle_delete failed " << err << endl;
 }
 
 //-----------------------------------------------------------------------------
