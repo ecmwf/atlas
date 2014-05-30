@@ -83,7 +83,7 @@ static std::string determine_grib_samples_dir()
    size_t pos = grib_include_dir.find("/include");
    BOOST_REQUIRE_MESSAGE(pos != string::npos,"include not found in directory " << grib_include_dir);
 
-   grib_include_dir.replace(pos,grib_include_dir.length(),"/share/grib_api/samples");
+   grib_include_dir = grib_include_dir.replace(pos,grib_include_dir.length(),"/share/grib_api/samples");
    //std::cout << "GRIB_API_INCLUDE=" << grib_include_dir << "\n";
 
    return grib_include_dir;
@@ -98,12 +98,15 @@ static void test_grids_from_grib_sample_directory(const std::string& directory)
    BOOST_CHECK(dir_path.exists());
    BOOST_CHECK(dir_path.isDir());
 
+   int count = 0;
    std::vector<PathName> files;
    std::vector<PathName> directories;
    dir_path.children(files,directories);
    for(size_t i = 0; i < files.size(); i++) {
       try {
          test_grib_file(files[i].localPath());
+         //count++;
+         //if (count > 2) exit(0);
       }
       catch ( const std::exception & ex )
       {
@@ -121,56 +124,26 @@ static void test_grib_file(const std::string& the_file_path)
 {
    std::cout << "\n===================================================================================================" << std::endl;
    std::cout << "Opening GRIB file " << the_file_path << std::endl;
-   PathName thePath(the_file_path);
-#ifdef DEBUG_ME
-   cout << "PathName.dirName() " << thePath.dirName() << "\n";
-   cout << "PathName.fullName() " << thePath.fullName() << "\n";
-   cout << "PathName.clusterName() " << thePath.clusterName() << "\n";
-   cout << "PathName.baseName() " << thePath.baseName() << "\n";
-   cout << "PathName.baseName(false) " << thePath.baseName(false) << "\n";
-   cout << "PathName.exists() " << thePath.exists() << "\n";
-   cout << "PathName.available() " << thePath.available() << "\n";
-   cout << "PathName.size() " << thePath.size() << "\n";
-   cout << "PathName.isDir() " << thePath.isDir() << "\n";
-   cout << "PathName.node() " << thePath.node() << "\n";
-   cout << "PathName.path() " << thePath.path() << "\n";
-#endif
-   eckit::StdFile theGribFile(thePath);
-
-   std::cout << " Create a grib handle"<< std::endl;
-   int err;
-   grib_handle* handle = grib_handle_new_from_file(0,theGribFile,&err);
-   BOOST_REQUIRE_MESSAGE(err == 0,"grib_handle_new_from_file error " << err << " for file " << the_file_path);
-
+   GribFile the_grib_file(the_file_path);
 
    std::cout << " Get the grid type" << std::endl;
    char string_value[64];
    size_t len = sizeof(string_value)/sizeof(char);
-   err = grib_get_string(handle,"gridType",string_value,&len);
+   int err = grib_get_string(the_grib_file.handle(),"gridType",string_value,&len);
    BOOST_CHECK_MESSAGE(err == 0,"grib_get_string(gridType) failed for \nfile " << the_file_path << " IGNORING !!!!\n");
-   if ( err != 0 ) return;
-
 
    std::string gridType = string_value;
    std::cout << " Create Grid derivatives " << gridType << std::endl;
 
    if ( gridType == "polar_stereographic" || gridType == "rotated_ll" || gridType == "reduced_ll" || gridType == "sh" ) {
-
-      std::cout << " Ignoring grid types [ polar_stereographic | rotated_ll | reduced_ll || sh ] " << std::endl;
-      std::cout << " close the grib file" << std::endl;
-      err = grib_handle_delete(handle);
-      BOOST_CHECK_MESSAGE(err == 0,"grib_handle_delete failed for " << the_file_path);
+      std::cout << " ** Ignoring grid types [ polar_stereographic | rotated_ll | reduced_ll || sh ] " << std::endl;
       return;
    }
 
    // Unstructured grid can not handle Spherical harmonics
-   atlas::grid::Grid::Ptr the_grid = GRIBGridBuilder::instance().build_grid_from_grib_handle(handle);
+   atlas::grid::Grid::Ptr the_grid = GRIBGridBuilder::instance().build_grid_from_grib_handle(the_grib_file.handle());
    BOOST_CHECK_MESSAGE(the_grid,"GRIBGridBuilder::instance().build_grid_from_grib_handle failed for file " << the_file_path);
    if (!the_grid) return;
 
    BOOST_CHECK_MESSAGE(the_grid->gridType() == gridType,"gridType(" << gridType << ") did not match Grid constructor(" << the_grid->gridType() << ") for file " << the_file_path);
-
-   std::cout << " close the grib file" << std::endl;
-   err = grib_handle_delete(handle);
-   BOOST_CHECK_MESSAGE(err == 0,"grib_handle_delete failed for " << the_file_path);
 }
