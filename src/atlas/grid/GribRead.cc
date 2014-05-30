@@ -15,6 +15,7 @@
 #include "eckit/grib/GribAccessor.h"
 
 #include "atlas/mesh/Mesh.hpp"
+#include "atlas/mesh/ArrayView.hpp"
 #include "atlas/mesh/FunctionSpace.hpp"
 #include "atlas/mesh/Parameters.hpp"
 #include "atlas/mesh/Field.hpp"
@@ -58,9 +59,9 @@ void GribRead::read_nodes_from_grib( grib_handle* h, atlas::Mesh& mesh )
 
     ASSERT(  nodes.extents()[0] == nb_nodes );
 
-    FieldT<double>& coords  = nodes.field<double>("coordinates");
-    FieldT<double>& latlon  = nodes.field<double>("latlon");
-    FieldT<int>&    glb_idx = nodes.field<int>("glb_idx");
+    ArrayView<double,2> coords  ( nodes.field("coordinates") );
+    ArrayView<double,2> latlon  ( nodes.field("latlon") );
+    ArrayView<int,   1> glb_idx ( nodes.field("glb_idx") );
 
     grib_iterator *i = grib_iterator_new(h, 0, &err);
 
@@ -82,10 +83,10 @@ void GribRead::read_nodes_from_grib( grib_handle* h, atlas::Mesh& mesh )
 
         glb_idx(idx) = idx;
 
-        latlon(LAT,idx) = lat;
-        latlon(LON,idx) = lon;
+        latlon(idx,LAT) = lat;
+        latlon(idx,LON) = lon;
 
-        eckit::geometry::latlon_to_3d( lat, lon, coords.slice(idx) );
+        eckit::geometry::latlon_to_3d( lat, lon, coords[idx].data() );
 
         ++idx;
     }
@@ -103,9 +104,9 @@ void GribRead::read_field_from_grib(  grib_handle* h, atlas::Mesh& mesh, const s
 
     atlas::FunctionSpace& nodes  = mesh.function_space( "nodes" );
 
-    atlas::FieldT<double>& field = nodes.create_field<double>(name,1);
+    atlas::Field& field = nodes.create_field<double>(name,1);
 
-    read_field( h, &field.data()[0], field.size() );
+    read_field( h, field.data<double>(), field.size() );
 }
 
 //------------------------------------------------------------------------------------------------------
