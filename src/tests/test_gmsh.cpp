@@ -9,6 +9,7 @@
  */
 
 #define BOOST_TEST_MODULE TestGmsh
+
 #include <boost/test/included/unit_test.hpp>
 
 #include "atlas/mpl/MPL.hpp"

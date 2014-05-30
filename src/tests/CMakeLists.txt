@@ -8,19 +8,18 @@
 
 if( HAVE_FCTEST )
 
-add_fctest( TARGET fctest_atlas_mesh
-  LINKER_LANGUAGE Fortran
-  SOURCES         fctest_atlas_mesh.F90
-  LIBS            atlas_fortran atlas_mpl_fortran
-)
+	add_fctest( TARGET fctest_atlas_mesh
+	  LINKER_LANGUAGE Fortran
+	  SOURCES         fctest_atlas_mesh.F90
+	  LIBS            atlas_fortran atlas_mpl_fortran
+	)
 
 endif()
 
 ecbuild_add_test( TARGET test_gmsh
+  BOOST
   SOURCES  test_gmsh.cpp
   LIBS     atlas
-  INCLUDES  ${Boost_INCLUDE_DIRS}
-  CONDITION HAVE_BOOST
 )
 
 ecbuild_add_test( TARGET test_indexview
@@ -31,13 +30,13 @@ ecbuild_add_test( TARGET test_indexview
 )
 
 ecbuild_add_test( TARGET test_meshgen3d
+  BOOST
   SOURCES   test_meshgen3d.cpp
   LIBS      atlas_meshgen atlas
-  INCLUDES  ${Boost_INCLUDE_DIRS}
-  CONDITION HAVE_BOOST
 )
 
 ecbuild_add_test( TARGET test_rgg
+	BOOST
 	SOURCES  test_rgg.cpp
 	LIBS     atlas_meshgen atlas_testing
 )

@@ -1,4 +1,3 @@
-#define BOOST_TEST_MODULE TestGrid
 /*
  * (C) Copyright 1996-2012 ECMWF.
  *
@@ -8,9 +7,13 @@
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
+
 #include <string>
 #include <iostream>
-#include <boost/test/unit_test.hpp>
+
+#define BOOST_TEST_MODULE TestGrid
+
+#include <boost/test/included/unit_test.hpp>
 
 #include "eckit/io/StdFile.h"
 #include "eckit/filesystem/PathName.h"

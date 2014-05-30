@@ -37,15 +37,6 @@ ecbuild_use_package( PROJECT eckit VERSION 0.6 )
 
 ecbuild_find_python()
 
-# boost support
-
-set(Boost_USE_MULTITHREADED      ON )
-ecbuild_add_option( FEATURE BOOST
-                    DEFAULT ${ENABLE_TESTS}
-                    DESCRIPTION "Boost Unit Test Framework"
-                    REQUIRED_PACKAGES "Boost 1.45.0 COMPONENTS unit_test_framework" )
-set_package_properties( Boost PROPERTIES TYPE OPTIONAL PURPOSE "Testing Only" )
-
 ### Fortran ...
 
 ecbuild_add_option( FEATURE FORTRAN_NUMBERING
