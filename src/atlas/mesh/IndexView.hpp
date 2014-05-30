@@ -138,8 +138,11 @@ public:
   IndexView( const Array<DATA_TYPE>& array );
   IndexView( const Field& field );
   
-  DATA_TYPE operator()(int i) const { CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i) FROM_FORTRAN;   }
+  DATA_TYPE operator()(int i) const { CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i) FROM_FORTRAN; }
   Index     operator()(int i)       { CHECK_BOUNDS_1(i); return INDEX_REF(data_+strides_[0]*i); }
+
+  DATA_TYPE operator[](int i) const { CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i) FROM_FORTRAN; }
+  Index     operator[](int i)       { CHECK_BOUNDS_1(i); return INDEX_REF(data_+strides_[0]*i); }
 
   const int* strides() const   { return strides_; }
   const int* extents() const   { return extents_; }
@@ -178,6 +181,10 @@ public:
   DATA_TYPE operator()(int i, int j) const  { CHECK_BOUNDS_2(i,j); return *(data_+strides_[0]*i+j*strides_[1]) FROM_FORTRAN; }
   Index     operator()(int i, int j)        { CHECK_BOUNDS_2(i,j); return INDEX_REF(data_+strides_[0]*i+j*strides_[1]); }
 
+
+  const IndexView<DATA_TYPE,1> operator[](int i) const { CHECK_BOUNDS_1(i); return IndexView<DATA_TYPE,1>( data_+strides_[0]*i, strides_+1, extents_+1 ); }
+  IndexView<DATA_TYPE,1>       operator[](int i)       { CHECK_BOUNDS_1(i); return IndexView<DATA_TYPE,1>( data_+strides_[0]*i, strides_+1, extents_+1 ); }
+
   const int* strides() const   { return strides_; }
   const int* extents() const   { return extents_; }
   std::size_t size() const { return extents_[0]; }
@@ -214,6 +221,9 @@ public:
   
   DATA_TYPE operator()(int i, int j, int k) const { CHECK_BOUNDS_3(i,j,k); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]) FROM_FORTRAN; }
   Index     operator()(int i, int j, int k)       { CHECK_BOUNDS_3(i,j,k); return INDEX_REF(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]); }
+
+  const IndexView<DATA_TYPE,2> operator[](int i) const { CHECK_BOUNDS_1(i); return IndexView<DATA_TYPE,2>( data_+strides_[0]*i, strides_+1, extents_+1 ); }
+  IndexView<DATA_TYPE,2>       operator[](int i)       { CHECK_BOUNDS_1(i); return IndexView<DATA_TYPE,2>( data_+strides_[0]*i, strides_+1, extents_+1 ); }
 
   const int* strides() const   { return strides_; }
   const int* extents() const   { return extents_; }
@@ -252,6 +262,9 @@ public:
   
   DATA_TYPE operator()(int i, int j, int k, int l) const { CHECK_BOUNDS_4(i,j,k,l); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]+l*strides_[3]) FROM_FORTRAN; }
   Index     operator()(int i, int j, int k, int l)       { CHECK_BOUNDS_4(i,j,k,l); return INDEX_REF(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]+l*strides_[3]); }
+
+  const IndexView<DATA_TYPE,3> operator[](int i) const { CHECK_BOUNDS_4(i,j,k,l); return IndexView<DATA_TYPE,3>( data_+strides_[0]*i, strides_+1, extents_+1 ); }
+  IndexView<DATA_TYPE,3>       operator[](int i)       { CHECK_BOUNDS_4(i,j,k,l); return IndexView<DATA_TYPE,3>( data_+strides_[0]*i, strides_+1, extents_+1 ); }
 
   const int* strides() const   { return strides_; }
   const int* extents() const   { return extents_; }

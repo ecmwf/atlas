@@ -124,8 +124,8 @@ public:
   
   const DATA_TYPE& operator()(int i, int j) const  { CHECK_BOUNDS_2(i,j); return *(data_+strides_[0]*i+j*strides_[1]); }
   DATA_TYPE&       operator()(int i, int j)        { CHECK_BOUNDS_2(i,j); return *(data_+strides_[0]*i+j*strides_[1]); }
-  const ArrayView<DATA_TYPE,1> operator[](int i) const { CHECK_BOUNDS_1(i);return ArrayView<DATA_TYPE,1>( data_+strides_[0]*i, strides_+1, extents_+1 ); }
-  ArrayView<DATA_TYPE,1>       operator[](int i)       { return ArrayView<DATA_TYPE,1>( data_+strides_[0]*i, strides_+1, extents_+1 ); }
+  const ArrayView<DATA_TYPE,1> operator[](int i) const { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,1>( data_+strides_[0]*i, strides_+1, extents_+1 ); }
+  ArrayView<DATA_TYPE,1>       operator[](int i)       { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,1>( data_+strides_[0]*i, strides_+1, extents_+1 ); }
   DATA_TYPE* data()            { return data_; }
   const int* strides() const   { return strides_; }
   const int* extents() const   { return extents_; }
@@ -189,8 +189,8 @@ public:
   
   const DATA_TYPE& operator()(int i, int j, int k, int l) const { CHECK_BOUNDS_4(i,j,k,l); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]+l*strides_[3]); }
   DATA_TYPE&       operator()(int i, int j, int k, int l)       { CHECK_BOUNDS_4(i,j,k,l); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]+l*strides_[3]); }
-  const ArrayView<DATA_TYPE,3> operator[](int i) const { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,3>( data_+strides_[0]*i, strides_+1, extents_+1 ); }
-  ArrayView<DATA_TYPE,3>       operator[](int i)       { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,3>( data_+strides_[0]*i, strides_+1, extents_+1 ); }
+  const ArrayView<DATA_TYPE,3> operator[](int i) const { CHECK_BOUNDS_4(i,j,k,l); return ArrayView<DATA_TYPE,3>( data_+strides_[0]*i, strides_+1, extents_+1 ); }
+  ArrayView<DATA_TYPE,3>       operator[](int i)       { CHECK_BOUNDS_4(i,j,k,l); return ArrayView<DATA_TYPE,3>( data_+strides_[0]*i, strides_+1, extents_+1 ); }
   DATA_TYPE* data()            { return data_; }
   const int* strides() const   { return strides_; }
   const int* extents() const   { return extents_; }

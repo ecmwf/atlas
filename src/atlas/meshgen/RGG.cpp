@@ -15,6 +15,7 @@
 
 #include "atlas/mesh/Array.hpp"
 #include "atlas/mesh/ArrayView.hpp"
+#include "atlas/mesh/IndexView.hpp"
 #include "atlas/mesh/Field.hpp"
 #include "atlas/mesh/FunctionSpace.hpp"
 #include "atlas/mesh/Mesh.hpp"
