@@ -72,9 +72,7 @@ public:
 
   inline void finalize()
   {
-    int finalized;
-    MPL_CHECK_RESULT( MPI_Finalized( &finalized ) );
-    if( !finalized )
+    if( !finalized() )
       MPL_CHECK_RESULT( MPI_Finalize() );
   }
 

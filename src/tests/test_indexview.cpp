@@ -23,7 +23,6 @@ using namespace atlas;
 #define IN_FORTRAN -1
 #endif
 
-
 BOOST_AUTO_TEST_CASE( test_indexview_1d )
 {
   Array<int> array( 10 );
@@ -151,5 +150,3 @@ BOOST_AUTO_TEST_CASE( test_indexview_3d )
   val = iview(i,4,k)+1;
   BOOST_CHECK_EQUAL( val, 5 );
 }
-
-

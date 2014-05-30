@@ -22,7 +22,6 @@ BOOST_AUTO_TEST_CASE( test_read_write )
     using namespace atlas;
 
     MPL::init();
-
     Mesh* mesh = Gmsh::read( "T47.msh" );
 
     build_periodic_boundaries(*mesh);
