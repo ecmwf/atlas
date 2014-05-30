@@ -49,6 +49,8 @@ const Point_3 origin = Point_3(CGAL::ORIGIN);
 //------------------------------------------------------------------------------------------------------
 
 #include "atlas/mesh/Field.hpp"
+#include "atlas/mesh/ArrayView.hpp"
+#include "atlas/mesh/IndexView.hpp"
 #include "atlas/mesh/FunctionSpace.hpp"
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/mesh/Parameters.hpp"
@@ -114,7 +116,7 @@ void cgal_polyhedron_to_atlas_mesh(  atlas::Mesh& mesh, Polyhedron_3& poly, Poin
     FunctionSpace& triags  = mesh.add_function_space( new FunctionSpace( "triags", "Lagrange_P1", extents ) );
     triags.metadata().set("type",static_cast<int>(Entity::ELEMS));
 
-    FieldT<int>& triag_nodes = triags.create_field<int>("nodes",3);
+    IndexView<int,2> triag_nodes ( triags.create_field<int>("nodes",3) );
 
     Point3 pt;
     size_t idx[3];
@@ -164,9 +166,9 @@ void cgal_polyhedron_to_atlas_mesh(  atlas::Mesh& mesh, Polyhedron_3& poly, Poin
 
         /* define the triag */
 
-        triag_nodes(0,tidx) = idx[0];
-        triag_nodes(1,tidx) = idx[1];
-        triag_nodes(2,tidx) = idx[2];
+        triag_nodes(tidx,0) = idx[0];
+        triag_nodes(tidx,1) = idx[1];
+        triag_nodes(tidx,2) = idx[2];
 
         ++tidx;
 //        ++show_triag_progress;
@@ -295,9 +297,9 @@ void Tesselation::generate_latlon_points( atlas::Mesh& mesh,
 
     ASSERT(  nodes.extents()[0] == nb_nodes );
 
-    FieldT<double>& coords  = nodes.field<double>("coordinates");
-    FieldT<double>& latlon  = nodes.field<double>("latlon");
-    FieldT<int>&    glb_idx = nodes.field<int>("glb_idx");
+    ArrayView<double,2> coords  ( nodes.field("coordinates") );
+    ArrayView<double,2> latlon  ( nodes.field("latlon") );
+    ArrayView<int,   1> glb_idx ( nodes.field("glb_idx") );
 
     // generate lat/long points
 
@@ -328,10 +330,10 @@ void Tesselation::generate_latlon_points( atlas::Mesh& mesh,
 
             glb_idx(idx) = idx;
 
-            latlon(LAT,idx) = lat;
-            latlon(LON,idx) = lon;
+            latlon(idx,LAT) = lat;
+            latlon(idx,LON) = lon;
 
-            eckit::geometry::latlon_to_3d( lat, lon, coords.slice(idx) );
+            eckit::geometry::latlon_to_3d( lat, lon, coords[idx].data() );
 
             //            std::cout << idx << " [ " << lat << " ; " << lon << " ] " << p << std::endl;
 
@@ -354,9 +356,9 @@ void Tesselation::generate_latlon_grid( atlas::Mesh& mesh, const size_t& nlats, 
 
     ASSERT( nodes.extents()[0] == nb_nodes );
 
-    FieldT<double>& coords  = nodes.field<double>("coordinates");
-    FieldT<double>& latlon  = nodes.field<double>("latlon");
-    FieldT<int>&    glb_idx = nodes.field<int>("glb_idx");
+    ArrayView<double,2> coords  ( nodes.field("coordinates") );
+    ArrayView<double,2> latlon  ( nodes.field("latlon") );
+    ArrayView<int,   1> glb_idx ( nodes.field("glb_idx") );
 
     const double lat_inc = 180. / nlats;
     const double lat_start = -90.;
@@ -384,10 +386,10 @@ void Tesselation::generate_latlon_grid( atlas::Mesh& mesh, const size_t& nlats, 
 
             glb_idx(idx) = idx;
 
-            latlon(LAT,idx) = lat;
-            latlon(LON,idx) = lon;
+            latlon(idx,LAT) = lat;
+            latlon(idx,LON) = lon;
 
-            eckit::geometry::latlon_to_3d( lat, lon, coords.slice(idx) );
+            eckit::geometry::latlon_to_3d( lat, lon, coords[idx].data() );
 
             ++visits;
 
@@ -417,23 +419,23 @@ void Tesselation::create_cell_centres( Mesh& mesh )
     ASSERT( mesh.has_function_space("triags") );
 
     FunctionSpace& nodes     = mesh.function_space( "nodes" );
-    FieldT<double>& coords   = nodes.field<double>( "coordinates" );
+    ArrayView<double,2> coords  ( nodes.field("coordinates") );
 
     const size_t nb_nodes = nodes.extents()[0];
 
     FunctionSpace& triags      = mesh.function_space( "triags" );
-    FieldT<int>& triag_nodes   = triags.field<int>( "nodes" );
+    IndexView<int,2> triag_nodes ( triags.field( "nodes" ) );
 
     const size_t nb_triags = triags.extents()[0];
 
-    FieldT<double>& triags_centres   = triags.create_field<double>("centre",3);
+    ArrayView<double,2> triags_centres ( triags.create_field<double>("centre",3) );
 
     const double third = 1. / 3.;
     for( int e = 0; e < nb_triags; ++e )
     {
-        const int i0 =  triag_nodes(0,e);
-        const int i1 =  triag_nodes(1,e);
-        const int i2 =  triag_nodes(2,e);
+        const int i0 =  triag_nodes(e,0);
+        const int i1 =  triag_nodes(e,1);
+        const int i2 =  triag_nodes(e,2);
 
         assert( i0 < nb_nodes && i1 < nb_nodes && i2 < nb_nodes );
 
@@ -445,14 +447,14 @@ void Tesselation::create_cell_centres( Mesh& mesh )
                      << i0 << " " << i1 << " " << i2 << " ";
            for( int i = 0; i < 3; ++i )
                std::cout << "("
-                     <<  coords(XX,C_IDX( triag_nodes(i,e) )) << "; "
-                     <<  coords(YY,C_IDX( triag_nodes(i,e) )) << "; "
-                     <<  coords(ZZ,C_IDX( triag_nodes(i,e) )) << ")";
+                     <<  coords(triag_nodes(e,i),XX) << "; "
+                     <<  coords(triag_nodes(e,i),YY) << "; "
+                     <<  coords(triag_nodes(e,i),ZZ) << ")";
           std::cout << std::endl;
 #endif
-        triags_centres(XX,e) = third * ( coords(XX,i0) + coords(XX,i1) + coords(XX,i2) );
-        triags_centres(YY,e) = third * ( coords(YY,i0) + coords(YY,i1) + coords(YY,i2) );
-        triags_centres(ZZ,e) = third * ( coords(ZZ,i0) + coords(ZZ,i1) + coords(ZZ,i2) );
+        triags_centres(e,XX) = third * ( coords(i0,XX) + coords(i1,XX) + coords(i2,XX) );
+        triags_centres(e,YY) = third * ( coords(i0,YY) + coords(i1,YY) + coords(i2,YY) );
+        triags_centres(e,ZZ) = third * ( coords(i0,ZZ) + coords(i1,ZZ) + coords(i2,ZZ) );
 
 #if 0 /* print sorted triangle connectivity */
         std::vector<int> s;
@@ -467,9 +469,9 @@ void Tesselation::create_cell_centres( Mesh& mesh )
 #if 0 /* print triangle baricentres */
     for( int e = 0; e < nb_triags; ++e )
     {
-        std::cout << triags_centres(XX,e) << " "
-                  << triags_centres(YY,e) << " "
-                  << triags_centres(ZZ,e) << " "
+        std::cout << triags_centres(e,XX) << " "
+                  << triags_centres(e,YY) << " "
+                  << triags_centres(e,ZZ) << " "
                   << e << " "
                   << std::endl;
     }
@@ -488,9 +490,9 @@ void Tesselation::build_mesh( const Grid& grid, Mesh& mesh )
 
     ASSERT(  nodes.extents()[0] == npts );
 
-    FieldT<double>& coords  = nodes.field<double>("coordinates");
-    FieldT<double>& latlon  = nodes.field<double>("latlon");
-    FieldT<int>&    glb_idx = nodes.field<int>("glb_idx");
+    ArrayView<double,2> coords  ( nodes.field("coordinates") );
+    ArrayView<double,2> latlon  ( nodes.field("latlon") );
+    ArrayView<int,   1> glb_idx ( nodes.field("glb_idx") );
 
     ASSERT( npts == nodes.extents()[0] );
 
@@ -503,10 +505,10 @@ void Tesselation::build_mesh( const Grid& grid, Mesh& mesh )
         double lat = ll[i].lat();
         double lon = ll[i].lon();
 
-        latlon(LAT,i) = lat;
-        latlon(LON,i) = lon;
+        latlon(i,LAT) = lat;
+        latlon(i,LON) = lon;
 
-        eckit::geometry::latlon_to_3d( lat, lon, coords.slice(i) );
+        eckit::geometry::latlon_to_3d( lat, lon, coords[i].data() );
     }
 }
 

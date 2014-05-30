@@ -37,6 +37,7 @@
 #ifndef atlas_ArrayView_hpp
 #define atlas_ArrayView_hpp
 
+#include <cstddef>
 // #define ATLAS_ARRAYVIEW_BOUNDS_CHECKING
 
 #ifdef ATLAS_ARRAYVIEW_BOUNDS_CHECKING

@@ -102,20 +102,20 @@ public: // methods
 
     DATA_TYPE& operator[] (const size_t idx) { return data_[idx]; }
 
-    DATA_TYPE& operator() (int i, int j)
-    {
-        return *(data_.data()+ i + j*nb_vars_);
-    }
+//    DATA_TYPE& operator() (int i, int j)
+//    {
+//        return *(data_.data()+ i + j*nb_vars_);
+//    }
 
-    DATA_TYPE& operator() (int i)
-    {
-        return data_[i];
-    }
+//    DATA_TYPE& operator() (int i)
+//    {
+//        return data_[i];
+//    }
 
-    DATA_TYPE* slice( int j )
-    {
-        return data_.data() + j*nb_vars_;
-    }
+//    DATA_TYPE* slice( int j )
+//    {
+//        return data_.data() + j*nb_vars_;
+//    }
 
     virtual void halo_exchange();
 
