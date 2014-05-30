@@ -15,14 +15,15 @@
 #include <iostream>
 
 #include "atlas/atlas_mpi.h"
+#include "eckit/exception/Exceptions.h"
 
 #define MPL_CHECK_RESULT( MPI_CALL )\
 { \
   int ierr = MPI_CALL; \
   if (ierr != MPI_SUCCESS) { \
-    throw std::runtime_error( std::string("MPI call: ") + \
+    throw atlas::MPL::MPLError( std::string("MPI call: ") + \
       std::string(#MPI_CALL) + \
-      std::string(" did not return MPI_SUCCESS.")); \
+      std::string(" did not return MPI_SUCCESS."), Here() ); \
   } \
 }
 
@@ -30,19 +31,42 @@ namespace atlas {
 
 namespace MPL {
 
+
+class MPLError : public eckit::Exception {
+public:
+  MPLError(const std::string& msg, const eckit::CodeLocation& loc)
+  {
+    eckit::StrStream s;
+    s << "MPLError: " << msg << " " << " in " << loc << " "  << eckit::StrStream::ends;
+    reason(std::string(s));
+  }
+};
+
+
   template<typename DATA_TYPE>
   MPI_Datatype TYPE();
   template<> inline MPI_Datatype TYPE<int>()    { return MPI_INT; }
   template<> inline MPI_Datatype TYPE<float>()  { return MPI_FLOAT; }
   template<> inline MPI_Datatype TYPE<double>() { return MPI_DOUBLE; }
 
-  
 
-  inline void init(int argc=0, char *argv[]=0)
+  inline bool initialized()
   {
     int initialized;
     MPL_CHECK_RESULT( MPI_Initialized( &initialized ) );
-    if( !initialized )
+    return initialized;
+  }
+
+  inline bool finalized()
+  {
+    int finalized;
+    MPL_CHECK_RESULT( MPI_Finalized( &finalized ) );
+    return finalized;
+  }
+
+  inline void init(int argc=0, char *argv[]=0)
+  {
+    if( !initialized() )
       MPL_CHECK_RESULT( MPI_Init(&argc,&argv) );
   }
 
@@ -56,6 +80,7 @@ namespace MPL {
 
   inline int rank()
   {
+    if( !initialized() ) throw MPLError( "MPI not initialized when calling MPL::rank()", Here() );
     int rank;
     MPL_CHECK_RESULT( MPI_Comm_rank( MPI_COMM_WORLD, &rank ) );
     return rank;
@@ -63,6 +88,7 @@ namespace MPL {
 
   inline int size()
   {
+    if( !initialized() ) throw MPLError( "MPI not initialized when calling MPL::size()", Here() );
     int nproc;
     MPL_CHECK_RESULT( MPI_Comm_size( MPI_COMM_WORLD, &nproc ) );
     return nproc;
