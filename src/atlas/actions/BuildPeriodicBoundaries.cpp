@@ -21,6 +21,7 @@
 #include "atlas/actions/BuildPeriodicBoundaries.hpp"
 #include "atlas/mesh/Parameters.hpp"
 #include "atlas/mesh/ArrayView.hpp"
+#include "atlas/mesh/IndexView.hpp"
 
 namespace atlas {
 
@@ -32,7 +33,7 @@ void scan_bdry_elements( FunctionSpace& elements, FunctionSpace& nodes,
   ArrayView<double,2> coords         ( nodes.field("coordinates"   ) );
   ArrayView<int,   1> glb_idx        ( nodes.field("glb_idx"       ) );
   ArrayView<int,   1> master_glb_idx ( nodes.field("master_glb_idx") );
-  ArrayView<int,   2> elem_nodes     ( elements.field("nodes"      ) );
+  IndexView<int,   2> elem_nodes     ( elements.field("nodes"      ) );
 
   int nb_elems = elements.extents()[0];
   int nb_nodes_per_elem = elem_nodes.extents()[1];
@@ -40,7 +41,7 @@ void scan_bdry_elements( FunctionSpace& elements, FunctionSpace& nodes,
   {
     for (int n=0; n<nb_nodes_per_elem; ++n)
     {
-      int node = C_IDX( elem_nodes(elem,n) );
+      int node = elem_nodes(elem,n);
       if ( coords(node,XX) == max[XX] )
       {
         east_bdry_elements.push_back( ElementRef(elements.index(),elem) );
@@ -105,14 +106,14 @@ void build_periodic_boundaries( Mesh& mesh )
   FunctionSpace& triags = mesh.function_space("triags");
   std::vector<int> nb_elems(mesh.nb_function_spaces(),0);
   std::vector<int> nb_nodes_per_elem(mesh.nb_function_spaces(),0);
-  std::vector< ArrayView<int,2> > elem_nodes(mesh.nb_function_spaces());
+  std::vector< IndexView<int,2> > elem_nodes(mesh.nb_function_spaces());
 
   int elements_max_glb_idx=0;
   for (int f=0; f<mesh.nb_function_spaces(); ++f)
   {
     if (mesh.function_space(f).metadata<int>("type") == Entity::ELEMS)
     {
-      elem_nodes[f] = ArrayView<int,2>(mesh.function_space(f).field("nodes"));
+      elem_nodes[f] = IndexView<int,2>(mesh.function_space(f).field("nodes"));
       nb_elems[f]   = elem_nodes[f].extents()[0];
       nb_nodes_per_elem[f] = elem_nodes[f].extents()[1];
       elements_max_glb_idx = std::max(elements_max_glb_idx, mesh.function_space(f).metadata<int>("max_glb_idx"));
@@ -141,7 +142,7 @@ void build_periodic_boundaries( Mesh& mesh )
       ArrayView<int,1> elem_glb_idx       ( elements.field("glb_idx"       ) );
       ArrayView<int,1> elem_proc          ( elements.field("proc"          ) );
       ArrayView<int,1> elem_master_glb_idx( elements.field("master_glb_idx") );
-      elem_nodes[f] = ArrayView<int,2>( elements.field("nodes") );
+      elem_nodes[f] = IndexView<int,2>( elements.field("nodes") );
 
       // Add elements at west boundary for each element at east boundary
       int cnt=0;
@@ -155,7 +156,7 @@ void build_periodic_boundaries( Mesh& mesh )
           elem_master_glb_idx(new_elem) = elem_glb_idx(east_elem);
           for (int n1=0; n1<nb_nodes_per_elem[f]; ++n1)
           {
-            int east_node = C_IDX( elem_nodes[f](east_elem,n1) );
+            int east_node = elem_nodes[f](east_elem,n1);
 
             // if east-node is on boundary element but not ON east boundary
             if ( std::abs( coords(east_node,XX)-max[XX] ) > tol )
@@ -173,13 +174,13 @@ void build_periodic_boundaries( Mesh& mesh )
                 int west_elem      = west_bdry_elements[ielem].e;
                 for (int n2=0; n2<nb_nodes_per_elem[func_space_idx]; ++n2)
                 {
-                  int west_node = C_IDX( elem_nodes[func_space_idx](west_elem,n2) );
+                  int west_node = elem_nodes[func_space_idx](west_elem,n2);
                   if ( std::abs(coords(west_node,YY)-coords(east_node,YY))<tol && std::abs(coords(west_node,XX)-min[XX])<tol )
                   {
                     // Found matching node --> this east node has to become a ghost node
                     transform_to_ghost.insert(east_node);
                     master_glb_idx(east_node) = glb_idx(west_node);
-                    elem_nodes[f](new_elem,n1) = F_IDX( west_node );
+                    elem_nodes[f](new_elem,n1) = west_node;
                   }
                 }
               }
@@ -200,14 +201,14 @@ void build_periodic_boundaries( Mesh& mesh )
       if (mesh.function_space(f).metadata<int>("type") == Entity::ELEMS)
       {
         FunctionSpace& elements = mesh.function_space(f);
-        ArrayView<int,2> elem_nodes( elements.field("nodes") );
+        IndexView<int,2> elem_nodes( elements.field("nodes") );
         int nb_elems = elem_nodes.extents()[0];
         int nb_nodes_per_elem = elem_nodes.extents()[1];
         for (int elem=0; elem<nb_elems; ++elem)
         {
           for (int n=0; n<nb_nodes_per_elem; ++n)
           {
-            int node = C_IDX( elem_nodes(elem,n) );
+            int node = elem_nodes(elem,n);
             if (elem_nodes(elem,n) > 0 )
               elem_nodes(elem,n) = glb_idx(node);
           }
@@ -250,38 +251,6 @@ void build_periodic_boundaries( Mesh& mesh )
     master_glb_idx( node ) = glb_idx( node_orig_glb_to_loc[ orig_master_glb_idx[ node ] ] );
   }
 
-
-  if (0)
-  {
-    for (int node=0; node<nb_nodes; ++node)
-    {
-      //std::cout << node+1 << ": orig_master " << orig_master_glb_idx[node] << std::endl;
-      //std::cout << orig_glb_idx[node] << " is now " << glb_idx( node_orig_glb_to_loc[orig_glb_idx[node]] ) << std::endl;
-      master_glb_idx(node) = glb_idx( node_orig_glb_to_loc[orig_master_glb_idx[node]] );
-    }
-
-    for (int f=0; f<mesh.nb_function_spaces(); ++f)
-    {
-      if (mesh.function_space(f).metadata<int>("type") == Entity::ELEMS)
-      {
-        FunctionSpace& elements = mesh.function_space(f);
-        ArrayView<int,2> elem_nodes( elements.field("nodes") );
-        int nb_elems = elem_nodes.extents()[0];
-        int nb_nodes_per_elem = elem_nodes.extents()[1];
-        for (int elem=0; elem<nb_elems; ++elem)
-        {
-          for (int n=0; n<nb_nodes_per_elem; ++n)
-          {
-            int gid = elem_nodes(n,elem);
-            if (elem_nodes(elem,n) > 0 )
-              elem_nodes(elem,n) = F_IDX( node_orig_glb_to_loc[ gid ] );
-          }
-        }
-      }
-    }
-  }
-
-  //std::cout << "made it here" << std::endl;
 
   // Now add new nodes
   int nb_ghost_nodes = new_nodes.size();
@@ -326,7 +295,7 @@ void build_periodic_boundaries( Mesh& mesh )
           int gid = elem_nodes[f](elem,n);
           if ( gid < 0 )
           {
-            elem_nodes[f](elem,n) = F_IDX( node_mapping[ gid ] );
+            elem_nodes[f](elem,n) = node_mapping[ gid ];
           }
         }
       }
