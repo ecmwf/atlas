@@ -10,7 +10,11 @@
 
 #define BOOST_TEST_MODULE TestGmsh
 
+#ifdef BOOST_UNIT_TEST_FRAMEWORK_HEADER_ONLY
 #include <boost/test/included/unit_test.hpp>
+#else
+#include <boost/test/unit_test.hpp>
+#endif
 
 #include "atlas/mpl/MPL.hpp"
 #include "atlas/io/Gmsh.hpp"
