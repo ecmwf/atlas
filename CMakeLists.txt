@@ -113,8 +113,21 @@ ecbuild_add_option( FEATURE EIGEN
 ### Grib
 
 ecbuild_add_option( FEATURE GRIB
-                    DESCRIPTION "support for GRIB format"
-                    REQUIRED_PACKAGES "PROJECT grib_api VERSION 1.9.9" )
+                    DESCRIPTION "support for GRIB format encoding / decoding" )
+debug_var( ENABLE_GRIB )
+if( ENABLE_GRIB )
+  ecbuild_use_package( PROJECT grib_api VERSION 1.9.9 )
+  debug_var( GRIB_API_FOUND )
+  if( NOT GRIB_API_FOUND )
+    set( HAVE_GRIB 0 )
+  endif()
+endif()
+debug_var( HAVE_GRIB )
+if( HAVE_GRIB )
+  add_definitions( -DHAVE_GRIB )
+  include_directories( ${GRIB_API_INCLUDE_DIRS} )
+  list( APPEND TPL ${GRIB_API_LIBRARIES} )
+endif( )
 
 ### sandbox
 
@@ -125,6 +138,9 @@ ecbuild_add_option( FEATURE SANDBOX
 # export package info
 
 list( APPEND ATLAS_TPLS eckit )
+if( HAVE_GRIB )
+  list( APPEND ATLAS_TPLS grib_api )
+endif()
 
 set( ATLAS_INCLUDE_DIRS   ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src )
 set( ATLAS_LIBRARIES      atlas )
