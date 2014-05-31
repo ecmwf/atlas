@@ -9,7 +9,8 @@
  */
 
 #define BOOST_TEST_MODULE TestIndexView
-#include <boost/test/included/unit_test.hpp>
+#define BOOST_UNIT_TEST_FRAMEWORK_HEADER_ONLY
+#include "ecbuild/boost_test_framework.h"
 #include "atlas/mpl/MPL.hpp"
 #include "atlas/mesh/Array.hpp"
 #include "atlas/mesh/ArrayView.hpp"

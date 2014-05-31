@@ -9,7 +9,7 @@
  */
 
 #define BOOST_TEST_MODULE TestMeshGen3D
-
+#define BOOST_UNIT_TEST_FRAMEWORK_HEADER_ONLY
 #include "ecbuild/boost_test_framework.h"
 
 #include "atlas/atlas_config.h"

@@ -9,7 +9,7 @@
  */
 
 #define BOOST_TEST_MODULE TestGmsh
-
+#define BOOST_UNIT_TEST_FRAMEWORK_HEADER_ONLY
 #include "ecbuild/boost_test_framework.h"
 
 #include "atlas/mpl/MPL.hpp"
