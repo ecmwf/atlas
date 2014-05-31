@@ -10,11 +10,7 @@
 
 #define BOOST_TEST_MODULE TestMeshGen3D
 
-#ifdef BOOST_UNIT_TEST_FRAMEWORK_HEADER_ONLY
-#include <boost/test/included/unit_test.hpp>
-#else
-#include <boost/test/unit_test.hpp>
-#endif
+#include "ecbuild/boost_test_framework.h"
 
 #include "atlas/atlas_config.h"
 #include "atlas/mpl/MPL.hpp"

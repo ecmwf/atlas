@@ -13,11 +13,7 @@
 
 #define BOOST_TEST_MODULE TestGrid
 
-#ifdef BOOST_UNIT_TEST_FRAMEWORK_HEADER_ONLY
-#include <boost/test/included/unit_test.hpp>
-#else
-#include <boost/test/unit_test.hpp>
-#endif
+#include "ecbuild/boost_test_framework.h"
 
 #include "eckit/io/StdFile.h"
 #include "eckit/filesystem/PathName.h"
