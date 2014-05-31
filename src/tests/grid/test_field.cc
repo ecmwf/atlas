@@ -104,7 +104,9 @@ void TestField::test_constructor()
 
 void TestField::run()
 {
+    MPL::init();
     test_constructor();
+    MPL::finalize();
 }
 
 //-----------------------------------------------------------------------------
