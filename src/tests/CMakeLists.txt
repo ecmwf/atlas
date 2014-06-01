@@ -39,7 +39,7 @@ ecbuild_add_test( TARGET test_meshgen3d
 ecbuild_add_test( TARGET test_rgg
   BOOST
   SOURCES  test_rgg.cpp
-  LIBS     atlas_meshgen atlas_testing
+  LIBS     atlas_meshgen
 )
 
 if( HAVE_GRID )

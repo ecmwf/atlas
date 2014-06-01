@@ -14,21 +14,24 @@
 
 #include "atlas/mpl/MPL.hpp"
 #include "atlas/io/Gmsh.hpp"
+#include "atlas/mesh/Mesh.hpp"
 #include "atlas/actions/BuildEdges.hpp"
 #include "atlas/actions/BuildDualMesh.hpp"
 #include "atlas/actions/BuildPeriodicBoundaries.hpp"
 
 BOOST_AUTO_TEST_CASE( test_read_write )
 {
-    using namespace atlas;
+  using namespace atlas;
 
-    MPL::init();
-    Mesh* mesh = Gmsh::read( "T47.msh" );
+  MPL::init();
+  Mesh* mesh;
+  BOOST_REQUIRE_NO_THROW( mesh = Gmsh::read( "T47.msh" ) );
 
-    build_periodic_boundaries(*mesh);
-    build_edges(*mesh);
-    build_dual_mesh(*mesh);
+  build_periodic_boundaries(*mesh);
+  build_edges(*mesh);
+  build_dual_mesh(*mesh);
 
-    Gmsh::write(*mesh,"bla.msh");
-    MPL::finalize();
+  Gmsh::write(*mesh,"bla.msh");
+  delete mesh;
+  MPL::finalize();
 }

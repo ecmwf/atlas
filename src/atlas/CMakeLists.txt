@@ -115,5 +115,3 @@ add_subdirectory( fortran )
 add_subdirectory( grid )
 
 add_subdirectory( meshgen )
-
-add_subdirectory( testing )
