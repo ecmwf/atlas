@@ -6,33 +6,44 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
+include( ecbuild_check_fortran_source )
+
 ####################################################################
 # FLAGS COMMON TO ALL BUILD TYPES
 ####################################################################
 
 if( HAVE_OMP )
-  set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fopenmp")
+  cmake_add_fortran_flags( "-fopenmp" )
 else( )
-  set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-openmp")
+  cmake_add_fortran_flags( "-fno-openmp" )
 endif( )
 
 ####################################################################
 # RELEASE FLAGS
 ####################################################################
 
-set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -funroll-all-loops -finline-functions -fstack-arrays" )
+cmake_add_fortran_flags( "-O3"                BUILD RELEASE )
+cmake_add_fortran_flags( "-funroll-all-loops" BUILD RELEASE )
+cmake_add_fortran_flags( "-finline-functions" BUILD RELEASE )
+cmake_add_fortran_flags( "-fstack-arrays"     BUILD RELEASE )
 
 ####################################################################
 # DEBUG FLAGS
 ####################################################################
 
-set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -fcheck=bounds -ffpe-trap=invalid,zero,overflow,underflow -fbacktrace" )
+cmake_add_fortran_flags( "-O0 -g"         BUILD DEBUG )
+cmake_add_fortran_flags( "-fcheck=bounds" BUILD DEBUG )
+cmake_add_fortran_flags( "-fbacktrace"    BUILD DEBUG )
+cmake_add_fortran_flags( "-ffpe-trap=invalid,zero,overflow,underflow" BUILD DEBUG )
 
 ####################################################################
 # BIT REPRODUCIBLE FLAGS
 ####################################################################
 
-set( CMAKE_Fortran_FLAGS_BIT     "-O2 -funroll-all-loops -finline-functions -fstack-arrays" )
+cmake_add_fortran_flags( "-O2"                BUILD BIT )
+cmake_add_fortran_flags( "-funroll-all-loops" BUILD BIT )
+cmake_add_fortran_flags( "-finline-functions" BUILD BIT )
+cmake_add_fortran_flags( "-fstack-arrays"     BUILD BIT )
 
 ####################################################################
 # LINK FLAGS

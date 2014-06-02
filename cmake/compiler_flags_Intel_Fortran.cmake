@@ -6,33 +6,51 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
+include( ecbuild_check_fortran_source )
+
 ####################################################################
 # FLAGS COMMON TO ALL BUILD TYPES
 ####################################################################
 
 if( HAVE_OMP )
-  set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -openmp")
+  cmake_add_fortran_flags( "-openmp" )
 else( )
-  set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -openmp-stubs")
+  cmake_add_fortran_flags( "-openmp-stubs" )
 endif( )
 
 ####################################################################
 # RELEASE FLAGS
 ####################################################################
 
-set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -ip -unroll -inline -vec-report0 -no-heap-arrays" )
+cmake_add_fortran_flags( "-O3"             BUILD RELEASE )
+cmake_add_fortran_flags( "-ip"             BUILD RELEASE )
+cmake_add_fortran_flags( "-unroll"         BUILD RELEASE )
+cmake_add_fortran_flags( "-inline"         BUILD RELEASE )
+cmake_add_fortran_flags( "-vec-report0"    BUILD RELEASE )
+cmake_add_fortran_flags( "-no-heap-arrays" BUILD RELEASE )
 
 ####################################################################
 # DEBUG FLAGS
 ####################################################################
 
-set( CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -check bounds -traceback -warn all -heap-arrays -fpe-all=0 -fpe:0 -check all" )
+cmake_add_fortran_flags( "-O0 -g"                       BUILD DEBUG )
+cmake_add_fortran_flags( "-check bounds"                BUILD DEBUG )
+cmake_add_fortran_flags( "-traceback"                   BUILD DEBUG )
+cmake_add_fortran_flags( "-warn all"                    BUILD DEBUG )
+cmake_add_fortran_flags( "-heap-arrays"                 BUILD DEBUG )
+cmake_add_fortran_flags( "-fpe-all=0 -fpe:0 -check all" BUILD DEBUG )
 
 ####################################################################
 # BIT REPRODUCIBLE FLAGS
 ####################################################################
 
-set( CMAKE_Fortran_FLAGS_BIT     "-O2 -ip -ipo -unroll -inline -vec-report0 -no-heap-arrays" )
+cmake_add_fortran_flags( "-O2"             BUILD RELEASE )
+cmake_add_fortran_flags( "-ip"             BUILD RELEASE )
+cmake_add_fortran_flags( "-ipo"            BUILD RELEASE )
+cmake_add_fortran_flags( "-unroll"         BUILD RELEASE )
+cmake_add_fortran_flags( "-inline"         BUILD RELEASE )
+cmake_add_fortran_flags( "-vec-report0"    BUILD RELEASE )
+cmake_add_fortran_flags( "-no-heap-arrays" BUILD RELEASE )
 
 ####################################################################
 # LINK FLAGS

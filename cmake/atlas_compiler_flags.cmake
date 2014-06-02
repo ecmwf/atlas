@@ -24,7 +24,7 @@ elseif( CMAKE_Fortran_COMPILER_ID MATCHES "XL" )
 elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )
   include( compiler_flags_Cray_Fortran )
 else()
-  message( STATUS "Fortran compiler with ID ${CMAKE_CXX_COMPILER_ID} will be used with CMake default options")
+  message( STATUS "Fortran compiler with ID ${CMAKE_Fortran_COMPILER_ID} will be used with CMake default options")
 endif()
 
 #######################################################################################

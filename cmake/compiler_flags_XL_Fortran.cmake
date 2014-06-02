@@ -6,6 +6,7 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
+include( ecbuild_check_fortran_source )
 
 # WARNING!!
 # Following has not been thoroughly tested. Take these flags with grain of salt
@@ -19,32 +20,39 @@ set( CMAKE_Fortran_LINK_EXECUTABLE "<CMAKE_Fortran_COMPILER> <CMAKE_Fortran_LINK
 ####################################################################
 
 if( ${HAVE_OMP} )
-  set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -qsmp=omp" )
+  cmake_add_fortran_flags( "-qsmp=omp" )
   set( CMAKE_Fortran_LINK_FLAGS "${CMAKE_Fortran_LINK_FLAGS} -qsmp=omp" )
 else( )
-  set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -qsmp=noomp" )
+  cmake_add_fortran_flags( "-qsmp=noomp" )
   set( CMAKE_Fortran_LINK_FLAGS "${CMAKE_Fortran_LINK_FLAGS} -qsmp=noomp" )
 endif( )
 
-set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -qfree=F90 -qsuffix=cpp=F90 -qextname -q64=largetype -qarch=pwr5 -g -qsource,list -qsaveopt -NS32648" )
+cmake_add_fortran_flags( "-qfree=F90" )
+cmake_add_fortran_flags( "-qsuffix=cpp=F90" )
+cmake_add_fortran_flags( "-qextname" )
+cmake_add_fortran_flags( "-q64=largetype" )
+cmake_add_fortran_flags( "-qarch=pwr5" )
+cmake_add_fortran_flags( "-qsource,list" )
+cmake_add_fortran_flags( "-qsaveopt" )
+cmake_add_fortran_flags( "-NS32648" )
 
 ####################################################################
 # RELEASE FLAGS
 ####################################################################
 
-set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -qstrict" )
+cmake_add_fortran_flags( "-O3 -qstrict" BUILD RELEASE)
 
 ####################################################################
 # DEBUG FLAGS
 ####################################################################
 
-set( CMAKE_Fortran_FLAGS_DEBUG   "-O0" )
+cmake_add_fortran_flags( "-O0 -g" BUILD DEBUG)
 
 ####################################################################
 # BIT REPRODUCIBLE FLAGS
 ####################################################################
 
-set( CMAKE_Fortran_FLAGS_BIT     "-O3 -qstrict" )
+cmake_add_fortran_flags( "-O3 -qstrict" BUILD BIT)
 
 ####################################################################
 # LINK FLAGS
