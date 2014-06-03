@@ -565,7 +565,7 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& par
   extents = Extents(nquads,Field::UNDEF_VARS);
   FunctionSpace& quads = mesh->add_function_space( new FunctionSpace("quads","LagrangeP1",extents) );
   quads.metadata().set("type",static_cast<int>(Entity::ELEMS));
-  ArrayView<int,2> quad_nodes( quads.create_field<int>("nodes",4) );
+  IndexView<int,2> quad_nodes( quads.create_field<int>("nodes",4) );
   ArrayView<int,1> quad_glb_idx( quads.create_field<int>("glb_idx",1) );
   ArrayView<int,1> quad_master_glb_idx( quads.create_field<int>("master_glb_idx",1) );
   ArrayView<int,1> quad_proc( quads.create_field<int>("proc",1) );
@@ -573,7 +573,7 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& par
   extents = Extents(ntriags,Field::UNDEF_VARS);
   FunctionSpace& triags = mesh->add_function_space( new FunctionSpace("triags","LagrangeP1",extents) );
   triags.metadata().set("type",static_cast<int>(Entity::ELEMS));
-  ArrayView<int,2> triag_nodes( triags.create_field<int>("nodes",3) );
+  IndexView<int,2> triag_nodes( triags.create_field<int>("nodes",3) );
   ArrayView<int,1> triag_glb_idx( triags.create_field<int>("glb_idx",1) );
   ArrayView<int,1> triag_master_glb_idx( triags.create_field<int>("master_glb_idx",1) );
   ArrayView<int,1> triag_proc( triags.create_field<int>("proc",1) );
@@ -596,15 +596,15 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& par
 
       if(elem[2]>0 && elem[3]>0) // This is a quad
       {
-        quad_nodes(jquad,0) = F_IDX(offset_loc[ilatN] + elem[0] - region.lat_begin[jlatN]);
-        quad_nodes(jquad,1) = F_IDX(offset_loc[ilatS] + elem[1] - region.lat_begin[jlatS]);
-        quad_nodes(jquad,2) = F_IDX(offset_loc[ilatS] + elem[2] - region.lat_begin[jlatS]);
-        quad_nodes(jquad,3) = F_IDX(offset_loc[ilatN] + elem[3] - region.lat_begin[jlatN]);
+        quad_nodes(jquad,0) = offset_loc[ilatN] + elem[0] - region.lat_begin[jlatN];
+        quad_nodes(jquad,1) = offset_loc[ilatS] + elem[1] - region.lat_begin[jlatS];
+        quad_nodes(jquad,2) = offset_loc[ilatS] + elem[2] - region.lat_begin[jlatS];
+        quad_nodes(jquad,3) = offset_loc[ilatN] + elem[3] - region.lat_begin[jlatN];
         
         if( three_dimensional )
         {
-          if (elem[2] == rgg.nlon(jlatS)) quad_nodes(jquad,2) = F_IDX(offset_loc[ilatS]);
-          if (elem[3] == rgg.nlon(jlatN)) quad_nodes(jquad,3) = F_IDX(offset_loc[ilatN]);
+          if (elem[2] == rgg.nlon(jlatS)) quad_nodes(jquad,2) = offset_loc[ilatS];
+          if (elem[3] == rgg.nlon(jlatN)) quad_nodes(jquad,3) = offset_loc[ilatN];
         }
         
         // std::cout << quad_nodes(0,jquad) << " " << quad_nodes(1,jquad) << " " << quad_nodes(2,jquad) << " " << quad_nodes(3,jquad) << std::endl;
@@ -617,24 +617,24 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& par
       {
         if(elem[3]<0) // This is a triangle pointing up
         {
-          triag_nodes(jtriag,0) = F_IDX(offset_loc[ilatN] + elem[0] - region.lat_begin[jlatN]);
-          triag_nodes(jtriag,1) = F_IDX(offset_loc[ilatS] + elem[1] - region.lat_begin[jlatS]);
-          triag_nodes(jtriag,2) = F_IDX(offset_loc[ilatS] + elem[2] - region.lat_begin[jlatS]);
+          triag_nodes(jtriag,0) = offset_loc[ilatN] + elem[0] - region.lat_begin[jlatN];
+          triag_nodes(jtriag,1) = offset_loc[ilatS] + elem[1] - region.lat_begin[jlatS];
+          triag_nodes(jtriag,2) = offset_loc[ilatS] + elem[2] - region.lat_begin[jlatS];
           if( three_dimensional )
           {
-            if (elem[0] == rgg.nlon(jlatN)) triag_nodes(jtriag,0) = F_IDX(offset_loc[ilatN]);
-            if (elem[2] == rgg.nlon(jlatS)) triag_nodes(jtriag,2) = F_IDX(offset_loc[ilatS]);
+            if (elem[0] == rgg.nlon(jlatN)) triag_nodes(jtriag,0) = offset_loc[ilatN];
+            if (elem[2] == rgg.nlon(jlatS)) triag_nodes(jtriag,2) = offset_loc[ilatS];
           }
         }
         else // This is a triangle pointing down
         {
-          triag_nodes(jtriag,0) = F_IDX(offset_loc[ilatN] + elem[0] - region.lat_begin[jlatN]);
-          triag_nodes(jtriag,1) = F_IDX(offset_loc[ilatS] + elem[1] - region.lat_begin[jlatS]);
-          triag_nodes(jtriag,2) = F_IDX(offset_loc[ilatN] + elem[3] - region.lat_begin[jlatN]);
+          triag_nodes(jtriag,0) = offset_loc[ilatN] + elem[0] - region.lat_begin[jlatN];
+          triag_nodes(jtriag,1) = offset_loc[ilatS] + elem[1] - region.lat_begin[jlatS];
+          triag_nodes(jtriag,2) = offset_loc[ilatN] + elem[3] - region.lat_begin[jlatN];
           if( three_dimensional )
           {
-            if (elem[1] == rgg.nlon(jlatS)) triag_nodes(jtriag,1) = F_IDX(offset_loc[ilatS]);
-            if (elem[3] == rgg.nlon(jlatN)) triag_nodes(jtriag,2) = F_IDX(offset_loc[ilatN]);
+            if (elem[1] == rgg.nlon(jlatS)) triag_nodes(jtriag,1) = offset_loc[ilatS];
+            if (elem[3] == rgg.nlon(jlatN)) triag_nodes(jtriag,2) = offset_loc[ilatN];
           }
         }
         triag_glb_idx(jtriag) = jquad+jtriag+1;
@@ -654,9 +654,9 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& par
     {      
       int ip3 = ip2+1;
       if( three_dimensional && ip3 == rgg.nlon(0) ) ip3 = 0;
-      triag_nodes(jtriag,0) = F_IDX(jnorth           + ip1);
-      triag_nodes(jtriag,1) = F_IDX(offset_loc[ilat] + ip2);
-      triag_nodes(jtriag,2) = F_IDX(offset_loc[ilat] + ip3);
+      triag_nodes(jtriag,0) = jnorth           + ip1;
+      triag_nodes(jtriag,1) = offset_loc[ilat] + ip2;
+      triag_nodes(jtriag,2) = offset_loc[ilat] + ip3;
       triag_glb_idx(jtriag) = jquad+jtriag+1;
       triag_master_glb_idx(jtriag) = triag_glb_idx(jtriag);
       triag_proc(jtriag) = mypart;
@@ -672,10 +672,10 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& par
     for (int ip2=1; ip2<rgg.nlon(jlat)+1; ++ip2)
     {
       int ip3 = ip2-1;
-      triag_nodes(jtriag,0) = F_IDX(jsouth           + ip1);
-      triag_nodes(jtriag,1) = F_IDX(offset_loc[ilat] + ip2);
-      triag_nodes(jtriag,2) = F_IDX(offset_loc[ilat] + ip3);
-      if( three_dimensional && ip2 == rgg.nlon(jlat) ) triag_nodes(jtriag,1) = F_IDX(offset_loc[ilat] + 0);
+      triag_nodes(jtriag,0) = jsouth           + ip1;
+      triag_nodes(jtriag,1) = offset_loc[ilat] + ip2;
+      triag_nodes(jtriag,2) = offset_loc[ilat] + ip3;
+      if( three_dimensional && ip2 == rgg.nlon(jlat) ) triag_nodes(jtriag,1) = offset_loc[ilat] + 0;
       
       triag_glb_idx(jtriag) = jquad+jtriag+1;
       triag_master_glb_idx(jtriag) = triag_glb_idx(jtriag);

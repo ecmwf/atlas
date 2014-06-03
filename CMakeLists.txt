@@ -37,15 +37,6 @@ ecbuild_use_package( PROJECT eckit VERSION 0.6 )
 
 ecbuild_find_python()
 
-# boost support
-
-set(Boost_USE_MULTITHREADED      ON )
-ecbuild_add_option( FEATURE BOOST
-                    DEFAULT ${ENABLE_TESTS}
-                    DESCRIPTION "Boost Unit Test Framework"
-                    REQUIRED_PACKAGES "Boost 1.45.0 COMPONENTS unit_test_framework" )
-set_package_properties( Boost PROPERTIES TYPE OPTIONAL PURPOSE "Testing Only" )
-
 ### Fortran ...
 
 ecbuild_add_option( FEATURE FORTRAN_NUMBERING
@@ -122,8 +113,18 @@ ecbuild_add_option( FEATURE EIGEN
 ### Grib
 
 ecbuild_add_option( FEATURE GRIB
-                    DESCRIPTION "support for GRIB format"
-                    REQUIRED_PACKAGES "PROJECT grib_api VERSION 1.9.9" )
+                    DESCRIPTION "support for GRIB format encoding / decoding" )
+debug_var( ENABLE_GRIB )
+if( ENABLE_GRIB )
+  ecbuild_use_package( PROJECT grib_api VERSION 1.9.9 )
+  if( NOT GRIB_API_FOUND )
+    set( HAVE_GRIB 0 )
+  endif()
+endif()
+if( HAVE_GRIB )
+  include_directories( ${GRIB_API_INCLUDE_DIRS} )
+  list( APPEND TPL ${GRIB_API_LIBRARIES} )
+endif( )
 
 ### sandbox
 
@@ -134,6 +135,9 @@ ecbuild_add_option( FEATURE SANDBOX
 # export package info
 
 list( APPEND ATLAS_TPLS eckit )
+if( HAVE_GRIB )
+  list( APPEND ATLAS_TPLS grib_api )
+endif()
 
 set( ATLAS_INCLUDE_DIRS   ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src )
 set( ATLAS_LIBRARIES      atlas )

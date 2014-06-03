@@ -265,7 +265,7 @@ void FunctionSpace::parallelise()
   FieldT<int>& proc = field<int>("proc");
   FieldT<int>& glb_idx = field<int>("glb_idx");
   FieldT<int>& master_glb_idx = field<int>("master_glb_idx");
-  parallelise(proc.data().data(),glb_idx.data().data(),master_glb_idx.data().data());
+  parallelise(proc.data(),glb_idx.data(),master_glb_idx.data());
 }
 
 // ------------------------------------------------------------------

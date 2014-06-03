@@ -72,7 +72,7 @@ void GribWrite::write( atlas::grid::FieldHandle& field, grib_handle* input_h )
         {
             size_t idx = (grid_spec.Nj-j-1) + (grid_spec.Ni-i-1)*grid_spec.Nj;
             ASSERT( idx < npts );
-            values[idx] = f.data()[j+i*grid_spec.Nj];
+            values[idx] = f[j+i*grid_spec.Nj];
         }
     }
 
@@ -133,7 +133,7 @@ void GribWrite::clone( FieldHandle& field, const std::string& source, const std:
 
 grib_handle* GribWrite::clone( FieldHandle& field, grib_handle* source )
 {
-    FieldT<double>& f = field.data();
+    Field& f = field.data();
     const size_t npts = f.size();
 
     long nb_nodes = 0;
@@ -145,9 +145,9 @@ grib_handle* GribWrite::clone( FieldHandle& field, grib_handle* source )
     if(!h)
         throw eckit::WriteError( std::string("failed to clone output grib") );
 
-    GRIB_CHECK( grib_set_long(h,"bitsPerValue",16),0 );
+    GRIB_CHECK( grib_set_long(h,"bitsPerValue",16), 0 );
 
-    GRIB_CHECK(grib_set_double_array(h,"values",&(f.data()[0]),npts),0);
+    GRIB_CHECK( grib_set_double_array(h,"values", f.data<double>(),npts), 0 );
 
     return h;
 }

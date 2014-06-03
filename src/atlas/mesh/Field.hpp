@@ -37,8 +37,8 @@ public: // methods
 
   virtual ~Field();
 
-  template <typename DATA_TYPE> std::vector< DATA_TYPE >& data();
-  template <typename DATA_TYPE> const std::vector< DATA_TYPE >& data() const;
+  template <typename DATA_TYPE> DATA_TYPE* data();
+  template <typename DATA_TYPE> DATA_TYPE const* data() const;
 
   const std::string& data_type() const { return data_type_; }
 
@@ -97,25 +97,10 @@ public: // methods
 
     virtual void allocate(const std::vector<int>& bounds);
 
-    std::vector< DATA_TYPE >& data() { return data_; }
-    const std::vector< DATA_TYPE >& data() const { return data_; }
+    DATA_TYPE* data() { return data_.data(); }
+    DATA_TYPE const* data() const { return data_.data(); }
 
     DATA_TYPE& operator[] (const size_t idx) { return data_[idx]; }
-
-    DATA_TYPE& operator() (int i, int j)
-    {
-        return *(data_.data()+ i + j*nb_vars_);
-    }
-
-    DATA_TYPE& operator() (int i)
-    {
-        return data_[i];
-    }
-
-    DATA_TYPE* slice( int j )
-    {
-        return data_.data() + j*nb_vars_;
-    }
 
     virtual void halo_exchange();
 

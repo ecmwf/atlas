@@ -11,6 +11,7 @@
 #include "eckit/log/Log.h"
 #include "eckit/runtime/Tool.h"
 
+#include "atlas/mpl/MPL.hpp"
 #include "atlas/mesh/FunctionSpace.hpp"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/LatLon.h"
@@ -54,7 +55,7 @@ void TestField::test_constructor()
     // create some reference data for testing
 
     std::vector<double> ref_data;
-    ref_data.resize( g->nPoints() );
+    ref_data.reserve( g->nPoints() );
     for(size_t i = 0; i < ref_data.size(); ++i)
         ref_data.push_back((double)i);
 
@@ -103,7 +104,9 @@ void TestField::test_constructor()
 
 void TestField::run()
 {
+    MPL::init();
     test_constructor();
+    MPL::finalize();
 }
 
 //-----------------------------------------------------------------------------

@@ -9,7 +9,8 @@
  */
 
 #define BOOST_TEST_MODULE TestIndexView
-#include <boost/test/included/unit_test.hpp>
+#define BOOST_UNIT_TEST_FRAMEWORK_HEADER_ONLY
+#include "ecbuild/boost_test_framework.h"
 #include "atlas/mpl/MPL.hpp"
 #include "atlas/mesh/Array.hpp"
 #include "atlas/mesh/ArrayView.hpp"
@@ -22,7 +23,6 @@ using namespace atlas;
 #else
 #define IN_FORTRAN -1
 #endif
-
 
 BOOST_AUTO_TEST_CASE( test_indexview_1d )
 {
@@ -151,5 +151,3 @@ BOOST_AUTO_TEST_CASE( test_indexview_3d )
   val = iview(i,4,k)+1;
   BOOST_CHECK_EQUAL( val, 5 );
 }
-
-

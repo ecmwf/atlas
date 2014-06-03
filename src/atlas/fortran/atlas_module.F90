@@ -144,14 +144,22 @@ contains
       & FunctionSpace__halo_exchange_real64_r2, &
       & FunctionSpace__halo_exchange_real64_r3, &
       & FunctionSpace__halo_exchange_real64_r4
+      procedure, private :: FunctionSpace__gather_real32_r1
+      procedure, private :: FunctionSpace__gather_real32_r2
+      procedure, private :: FunctionSpace__gather_real32_r3
   procedure, private :: FunctionSpace__gather_real64_r1
   procedure, private :: FunctionSpace__gather_real64_r2
   procedure, private :: FunctionSpace__gather_real64_r3
+  procedure, private :: FunctionSpace__gather_int32_r1
   procedure, private :: FunctionSpace__gather_int32_r2
   generic :: gather => &
+      & FunctionSpace__gather_real32_r1, &
+      & FunctionSpace__gather_real32_r2, &
+      & FunctionSpace__gather_real32_r3, &
       & FunctionSpace__gather_real64_r1, &
       & FunctionSpace__gather_real64_r2, &
       & FunctionSpace__gather_real64_r3, &
+      & FunctionSpace__gather_int32_r1, &
       & FunctionSpace__gather_int32_r2
 END TYPE FunctionSpace_type
 
@@ -749,6 +757,49 @@ subroutine FunctionSpace__halo_exchange_real64_r4(this, field_data)
 end subroutine FunctionSpace__halo_exchange_real64_r4
 
 
+subroutine FunctionSpace__gather_real32_r1(this, field_data, glbfield_data)
+  class(FunctionSpace_type), intent(in) :: this
+  real(c_float), intent(in) :: field_data(:)
+  real(c_float), intent(inout) :: glbfield_data(:)
+#ifndef  __GFORTRAN__
+  if (.not. is_contiguous(field_data) ) then
+    write(0,*) "ERROR: field_data is not contiguous"
+    write(0,*) 'call abort()'
+  end if
+#endif
+  call atlas__FunctionSpace__gather_float( this%object, field_data, size(field_data), &
+                                          & glbfield_data, size(glbfield_data) )
+end subroutine FunctionSpace__gather_real32_r1
+
+
+subroutine FunctionSpace__gather_real32_r2(this, field_data, glbfield_data)
+  class(FunctionSpace_type), intent(in) :: this
+  real(c_float), intent(in) :: field_data(:,:)
+  real(c_float), intent(inout) :: glbfield_data(:,:)
+  real(c_float), pointer :: view(:), glbview(:)
+  view => view1d(field_data)
+  glbview => view
+  if( size(glbfield_data) /= 0 ) then
+    glbview => view1d(glbfield_data)
+  end if
+  call atlas__FunctionSpace__gather_float( this%object, view, size(field_data), &
+                                          & glbview, size(glbfield_data) )
+end subroutine FunctionSpace__gather_real32_r2
+
+
+subroutine FunctionSpace__gather_real32_r3(this, field_data, glbfield_data)
+  class(FunctionSpace_type), intent(in) :: this
+  real(c_float), intent(in) :: field_data(:,:,:)
+  real(c_float), intent(inout) :: glbfield_data(:,:,:)
+  real(c_float), pointer :: view(:), glbview(:)
+  view => view1d(field_data)
+  glbview => view
+  if( size(glbfield_data) /= 0 ) then
+    glbview => view1d(glbfield_data)
+  end if
+  call atlas__FunctionSpace__gather_float( this%object, view, size(field_data), &
+                                          & glbview, size(glbfield_data) )
+end subroutine FunctionSpace__gather_real32_r3
 
 subroutine FunctionSpace__gather_real64_r1(this, field_data, glbfield_data)
   class(FunctionSpace_type), intent(in) :: this
@@ -794,6 +845,19 @@ subroutine FunctionSpace__gather_real64_r3(this, field_data, glbfield_data)
                                           & glbview, size(glbfield_data) )
 end subroutine FunctionSpace__gather_real64_r3
 
+subroutine FunctionSpace__gather_int32_r1(this, field_data, glbfield_data)
+  class(FunctionSpace_type), intent(in) :: this
+  integer, intent(in) :: field_data(:)
+  integer, intent(inout) :: glbfield_data(:)
+#ifndef  __GFORTRAN__
+  if (.not. is_contiguous(field_data) ) then
+    write(0,*) "ERROR: field_data is not contiguous"
+    write(0,*) 'call abort()'
+  end if
+#endif
+  call atlas__FunctionSpace__gather_int( this%object, field_data, size(field_data), &
+                                       & glbfield_data, size(glbfield_data) )
+end subroutine FunctionSpace__gather_int32_r1
 
 subroutine FunctionSpace__gather_int32_r2(this, field_data, glbfield_data)
   class(FunctionSpace_type), intent(in) :: this

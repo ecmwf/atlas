@@ -29,7 +29,7 @@ Field::~Field()
 }
 
 template <>
-std::vector< int >& Field::data<int>()
+int* Field::data<int>()
 {
   try {
     return dynamic_cast< FieldT<int>& >(*this).data();
@@ -43,7 +43,7 @@ std::vector< int >& Field::data<int>()
 }
 
 template <>
-const std::vector< int >& Field::data<int>() const
+int const* Field::data<int>() const
 {
   try {
     return dynamic_cast< const FieldT<int>& >(*this).data();
@@ -57,7 +57,7 @@ const std::vector< int >& Field::data<int>() const
 }
 
 template <>
-std::vector< float >& Field::data<float>()
+float* Field::data<float>()
 {
   try {
     return dynamic_cast< FieldT<float>& >(*this).data();
@@ -71,7 +71,7 @@ std::vector< float >& Field::data<float>()
 }
 
 template <>
-const std::vector< float >& Field::data<float>() const
+float const* Field::data<float>() const
 {
   try {
     return dynamic_cast< const FieldT<float>& >(*this).data();
@@ -85,7 +85,7 @@ const std::vector< float >& Field::data<float>() const
 }
 
 template <>
-std::vector< double >& Field::data<double>()
+double* Field::data<double>()
 {
   try {
     return dynamic_cast< FieldT<double>& >(*this).data();
@@ -99,7 +99,7 @@ std::vector< double >& Field::data<double>()
 }
 
 template <>
-const std::vector< double >& Field::data<double>() const
+double const* Field::data<double>() const
 {
   try {
     return dynamic_cast< const FieldT<double>& >(*this).data();

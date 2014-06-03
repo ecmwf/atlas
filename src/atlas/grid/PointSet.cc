@@ -13,6 +13,7 @@
 //------------------------------------------------------------------------------------------------------
 
 #include "atlas/mesh/Field.hpp"
+#include "atlas/mesh/ArrayView.hpp"
 #include "atlas/mesh/FunctionSpace.hpp"
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/mesh/Parameters.hpp"
@@ -40,13 +41,13 @@ PointSet::PointSet( atlas::Mesh& mesh )
 
     ASSERT( nodes.has_field("coordinates") );
 
-    FieldT<double>& coords  = nodes.field<double>("coordinates");
+    ArrayView<double,2> coords ( nodes.field("coordinates") );
 
     std::vector< PointIndex3::Value > pidx;
     pidx.reserve(npts_);
 
     for( size_t ip = 0; ip < npts_; ++ip )
-        pidx.push_back( PointIndex3::Value( PointIndex3::Point( coords.slice(ip) ) , ip ) );
+        pidx.push_back( PointIndex3::Value( PointIndex3::Point( coords[ip].data() ) , ip ) );
 
     tree_ = new PointIndex3();
 

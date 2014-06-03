@@ -22,6 +22,7 @@
 #include "atlas/actions/BuildDualMesh.hpp"
 #include "atlas/mesh/Parameters.hpp"
 #include "atlas/mesh/ArrayView.hpp"
+#include "atlas/mesh/IndexView.hpp"
 
 namespace atlas {
 
@@ -30,7 +31,7 @@ inline double sqr(double a) { return a*a; }
 void build_centroids( FunctionSpace& func_space, ArrayView<double,2>& coords)
 {
   int nb_elems = func_space.extents()[0];
-  ArrayView<int,2> elem_nodes( func_space.field( "nodes" ) );
+  IndexView<int,2> elem_nodes( func_space.field( "nodes" ) );
   int nb_nodes_per_elem = elem_nodes.extents()[1];
   ArrayView<int,1> elem_glb_idx( func_space.field( "glb_idx" ) );
   ArrayView<double,2> elem_centroids( func_space.create_field<double>( "centroids", 2 ) );
@@ -40,8 +41,8 @@ void build_centroids( FunctionSpace& func_space, ArrayView<double,2>& coords)
     elem_centroids(e,YY) = 0.;
     for (int n=0; n<nb_nodes_per_elem; ++n)
     {
-      elem_centroids(e,XX) += coords( C_IDX(elem_nodes(e,n)), XX );
-      elem_centroids(e,YY) += coords( C_IDX(elem_nodes(e,n)), YY );
+      elem_centroids(e,XX) += coords( elem_nodes(e,n), XX );
+      elem_centroids(e,YY) += coords( elem_nodes(e,n), YY );
     }
     elem_centroids(e,XX) /= static_cast<double>(nb_nodes_per_elem);
     elem_centroids(e,YY) /= static_cast<double>(nb_nodes_per_elem);
@@ -56,10 +57,9 @@ void add_dual_volume_contribution(
 {
   int nb_elems = elements.extents()[0];
   ArrayView<double,2> elem_centroids ( elements.field("centroids") );
-  ArrayView<int,   2> elem_to_edges  ( elements.field("to_edge") );
+  IndexView<int,   2> elem_to_edges  ( elements.field("to_edge") );
   ArrayView<double,2> edge_centroids ( edges.field("centroids") );
-  ArrayView<int,   2> edge_nodes     ( edges.field("nodes") );
-  ArrayView<int,   2> edge_to_elem   ( edges.field("to_elem") );
+  IndexView<int,   2> edge_nodes     ( edges.field("nodes") );
   ArrayView<double,2> node_coords    ( nodes.field("coordinates") );
   int nb_edges_per_elem = elem_to_edges.extents()[1];
   for (int elem=0; elem<nb_elems; ++elem)
@@ -68,12 +68,12 @@ void add_dual_volume_contribution(
     double y0 = elem_centroids(elem,YY);
     for (int jedge=0; jedge<nb_edges_per_elem; ++jedge)
     {
-      int edge = C_IDX(elem_to_edges(elem,jedge));
+      int edge = elem_to_edges(elem,jedge);
       double x1 = edge_centroids(edge,XX);
       double y1 = edge_centroids(edge,YY);
       for( int j=0; j<2; ++j )
       {
-        int node = C_IDX(edge_nodes(edge,j));
+        int node = edge_nodes(edge,j);
         double x2 = node_coords(node,XX);
         double y2 = node_coords(node,YY);
         double triag_area = std::abs( x0*(y1-y2)+x1*(y2-y0)+x2*(y0-y1) )*0.5;
@@ -90,18 +90,18 @@ void add_dual_volume_contribution(
 {
   ArrayView<int,   1> node_glb_idx  ( nodes.field("glb_idx"    ) );
   ArrayView<double,2> edge_centroids( edges.field("centroids"  ) );
-  ArrayView<int,   2> edge_nodes    ( edges.field("nodes"      ) );
+  IndexView<int,   2> edge_nodes    ( edges.field("nodes"      ) );
   ArrayView<int,   1> edge_glb_idx  ( edges.field("glb_idx"    ) );
-  ArrayView<int,   2> edge_to_elem  ( edges.field("to_elem"    ) );
+  IndexView<int,   2> edge_to_elem  ( edges.field("to_elem"    ) );
   ArrayView<double,2> node_coords   ( nodes.field("coordinates") );
   int nb_edges = edges.extents()[0];
   std::map<int,std::vector<int> > node_to_bdry_edge;
   for(int edge=0; edge<nb_edges; ++edge)
   {
-    if (C_IDX(edge_to_elem(edge,0)) >= 0 && C_IDX(edge_to_elem(edge,3)) < 0)
+    if ( edge_to_elem(edge,0) >= 0 && edge_to_elem(edge,3) < 0)
     {
-      node_to_bdry_edge[ C_IDX(edge_nodes(edge,0)) ].push_back(edge);
-      node_to_bdry_edge[ C_IDX(edge_nodes(edge,1)) ].push_back(edge);
+      node_to_bdry_edge[ edge_nodes(edge,0) ].push_back(edge);
+      node_to_bdry_edge[ edge_nodes(edge,1) ].push_back(edge);
     }
   }
 
@@ -161,8 +161,8 @@ void build_dual_normals( Mesh& mesh )
 
   double xl, yl, xr, yr;
   FunctionSpace&  edges = mesh.function_space("edges");
-  ArrayView<int,   2> edge_to_elem  ( edges.field("to_elem"  ) );
-  ArrayView<int,   2> edge_nodes    ( edges.field("nodes"    ) );
+  IndexView<int,   2> edge_to_elem  ( edges.field("to_elem"  ) );
+  IndexView<int,   2> edge_nodes    ( edges.field("nodes"    ) );
   ArrayView<double,2> edge_centroids( edges.field("centroids") );
   ArrayView<double,2> dual_normals  ( edges.create_field<double>("dual_normals",2) );
   int nb_edges = edges.extents()[0];
@@ -170,22 +170,22 @@ void build_dual_normals( Mesh& mesh )
   std::map<int,std::vector<int> > node_to_bdry_edge;
   for(int edge=0; edge<nb_edges; ++edge)
   {
-    if (C_IDX(edge_to_elem(edge,0)) >= 0 && C_IDX(edge_to_elem(edge,3)) < 0)
+    if ( edge_to_elem(edge,0) >= 0 && edge_to_elem(edge,3) < 0)
     {
-      node_to_bdry_edge[ C_IDX(edge_nodes(edge,0)) ].push_back(edge);
-      node_to_bdry_edge[ C_IDX(edge_nodes(edge,1)) ].push_back(edge);
+      node_to_bdry_edge[ edge_nodes(edge,0) ].push_back(edge);
+      node_to_bdry_edge[ edge_nodes(edge,1) ].push_back(edge);
     }
   }
 
   for (int edge=0; edge<nb_edges; ++edge)
   {
-    if( C_IDX(edge_to_elem(edge,0)) < 0 )
+    if( edge_to_elem(edge,0) < 0 )
     {
       // this is a pole edge
       // only compute for one node
       for (int n=0; n<2; ++n)
       {
-        int node = C_IDX(edge_nodes(edge,n));
+        int node = edge_nodes(edge,n);
         std::vector<int>& bdry_edges = node_to_bdry_edge[node];
         double x[2];
         int cnt=0;
@@ -220,10 +220,10 @@ void build_dual_normals( Mesh& mesh )
     }
     else
     {
-      int left_func_space_idx  = C_IDX(edge_to_elem(edge,0));
-      int left_elem            = C_IDX(edge_to_elem(edge,1));
-      int right_func_space_idx = C_IDX(edge_to_elem(edge,2));
-      int right_elem           = C_IDX(edge_to_elem(edge,3));
+      int left_func_space_idx  = edge_to_elem(edge,0);
+      int left_elem            = edge_to_elem(edge,1);
+      int right_func_space_idx = edge_to_elem(edge,2);
+      int right_elem           = edge_to_elem(edge,3);
       xl = elem_centroids[left_func_space_idx](left_elem,XX);
       yl = elem_centroids[left_func_space_idx](left_elem,YY);
       if( right_elem < 0 )
@@ -266,8 +266,8 @@ void build_skewness( Mesh& mesh )
 
   double x1, y1, x2, y2, xc1, yc1, xc2, yc2, xi, yi;
   FunctionSpace&  edges = mesh.function_space("edges");
-  ArrayView<int   ,2> edge_to_elem  ( edges.field("to_elem"  ) );
-  ArrayView<int   ,2> edge_nodes    ( edges.field("nodes"    ) );
+  IndexView<int   ,2> edge_to_elem  ( edges.field("to_elem"  ) );
+  IndexView<int   ,2> edge_nodes    ( edges.field("nodes"    ) );
   ArrayView<double,2> edge_centroids( edges.field("centroids") );
   ArrayView<double,1> skewness      ( edges.create_field<double>("skewness",1) );
   int nb_edges = edges.extents()[0];
@@ -275,16 +275,16 @@ void build_skewness( Mesh& mesh )
   std::map<int,std::vector<int> > node_to_bdry_edge;
   for(int edge=0; edge<nb_edges; ++edge)
   {
-    if (C_IDX(edge_to_elem(edge,0)) >= 0 && C_IDX(edge_to_elem(edge,3)) < 0)
+    if ( edge_to_elem(edge,0) >= 0 && edge_to_elem(edge,3) < 0)
     {
-      node_to_bdry_edge[ C_IDX(edge_nodes(edge,0)) ].push_back(edge);
-      node_to_bdry_edge[ C_IDX(edge_nodes(edge,1)) ].push_back(edge);
+      node_to_bdry_edge[ edge_nodes(edge,0) ].push_back(edge);
+      node_to_bdry_edge[ edge_nodes(edge,1) ].push_back(edge);
     }
   }
 
   for (int edge=0; edge<nb_edges; ++edge)
   {
-    if( C_IDX(edge_to_elem(edge,0)) < 0 )
+    if( edge_to_elem(edge,0) < 0 )
     {
       // this is a pole edge
       // only compute for one node
@@ -292,10 +292,10 @@ void build_skewness( Mesh& mesh )
     }
     else
     {
-      int left_func_space_idx  = C_IDX(edge_to_elem(edge,0));
-      int left_elem            = C_IDX(edge_to_elem(edge,1));
-      int right_func_space_idx = C_IDX(edge_to_elem(edge,2));
-      int right_elem           = C_IDX(edge_to_elem(edge,3));
+      int left_func_space_idx  = edge_to_elem(edge,0);
+      int left_elem            = edge_to_elem(edge,1);
+      int right_func_space_idx = edge_to_elem(edge,2);
+      int right_elem           = edge_to_elem(edge,3);
       xc1 = elem_centroids[left_func_space_idx](left_elem,XX);
       yc1 = elem_centroids[left_func_space_idx](left_elem,YY);
       if( right_elem < 0 )
@@ -313,10 +313,10 @@ void build_skewness( Mesh& mesh )
         yc2 = elem_centroids[right_func_space_idx](right_elem,YY);
       }
 
-      x1 = node_coords(C_IDX(edge_nodes(edge,0)),XX);
-      y1 = node_coords(C_IDX(edge_nodes(edge,0)),YY);
-      x2 = node_coords(C_IDX(edge_nodes(edge,1)),XX);
-      y2 = node_coords(C_IDX(edge_nodes(edge,1)),YY);
+      x1 = node_coords(edge_nodes(edge,0),XX);
+      y1 = node_coords(edge_nodes(edge,0),YY);
+      x2 = node_coords(edge_nodes(edge,1),XX);
+      y2 = node_coords(edge_nodes(edge,1),YY);
 
       xi = ( x1*(xc2*(-y2 + yc1) + xc1*(y2 - yc2))
              + x2*(xc2*(y1 - yc1) + xc1*(-y1 + yc2)) ) /

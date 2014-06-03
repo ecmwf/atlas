@@ -8,23 +8,22 @@
  * does it submit to any jurisdiction.
  */
 
-#define BOOST_TEST_MAIN
-
-#include <boost/test/included/unit_test.hpp>
+#define BOOST_TEST_MODULE TestMeshGen3D
+#define BOOST_UNIT_TEST_FRAMEWORK_HEADER_ONLY
+#include "ecbuild/boost_test_framework.h"
 
 #include "atlas/atlas_config.h"
-
+#include "atlas/mpl/MPL.hpp"
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/meshgen/RGG.hpp"
 #include "atlas/io/Gmsh.hpp"
 
-BOOST_AUTO_TEST_SUITE( TestMeshGen3D )
+using namespace atlas;
+using namespace atlas::meshgen;
 
 BOOST_AUTO_TEST_CASE( test_create_mesh )
 {
-    using namespace atlas;
-    using namespace atlas::meshgen;
-
+    MPL::init();
     Mesh* m;
 
     RGGMeshGenerator generate;
@@ -42,6 +41,6 @@ BOOST_AUTO_TEST_CASE( test_create_mesh )
 //    atlas::actions::BuildXYZ(m);
 
     delete m;
-}
 
-BOOST_AUTO_TEST_SUITE_END()
+    MPL::finalize();
+}
