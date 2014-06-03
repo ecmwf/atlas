@@ -45,6 +45,13 @@ struct ElementRef
 
     int f;
     int e;
+
+    bool operator<(const ElementRef& other) const
+    {
+      if( f <  other.f ) return true;
+      if( f == other.f ) return (e < other.e);
+      return false;
+    };
 };
 
 //------------------------------------------------------------------------------------------------------

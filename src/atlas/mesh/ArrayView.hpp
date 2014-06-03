@@ -120,6 +120,11 @@ public:
     strides_[0]=strides[0];            extents_[0]=extents[0];
     strides_[1]=strides[1];            extents_[1]=extents[1];
   }
+  ArrayView( const DATA_TYPE* data, const int extents[2] ) : data_( const_cast<DATA_TYPE*>(data) )
+  {
+    extents_[0]=extents[0]; strides_[0]=extents_[1];
+    extents_[1]=extents[1]; strides_[1]=1;
+  }
   ArrayView( const Array<DATA_TYPE>& array );
   ArrayView( const Field& field );
   
