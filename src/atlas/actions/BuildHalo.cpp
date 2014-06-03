@@ -140,19 +140,31 @@ void build_halo( Mesh& mesh )
   }
 
   std::vector< int > par_nb_bdry_nodes( MPL::size() );
-  MPL_CHECK_RESULT( MPI_Alltoall( &nb_bdry_nodes, 1, MPI_INT, par_nb_bdry_nodes.data(), 1, MPI_INT, MPI_COMM_WORLD ) );
+  MPL_CHECK_RESULT( MPI_Allgather(&nb_bdry_nodes,            1, MPI_INT,
+                                   par_nb_bdry_nodes.data(), 1, MPI_INT, MPI_COMM_WORLD ) );
+
+  int recvcnt=0;
+  std::vector<int> recvcounts( MPL::size() );
+  std::vector<int> recvdispls( MPL::size() );
+  recvdispls[0] = 0;
+  recvcounts[0] = par_nb_bdry_nodes[0];
+  for( int jproc=1; jproc<MPL::size(); ++jproc )
+  {
+    recvcounts[jproc] = par_nb_bdry_nodes[jproc];
+    recvdispls[jproc] = recvdispls[jproc-1] + recvcounts[jproc-1];
+    recvcnt += recvcounts[jproc];
+  }
+  std::vector<int> recvbuf(recvcnt);
+  MPL_CHECK_RESULT( MPI_Allgatherv( bdry_nodes_glb_idx.data(), nb_bdry_nodes, MPI_INT,
+                    recvbuf.data(), recvcounts.data(), recvdispls.data(),
+                    MPI_INT, MPI_COMM_WORLD) );
+
+  std::vector< std::vector<int> > recv_bdry_nodes_glb_idx( MPL::size() );
 
   for (int jproc=0; jproc<MPL::size(); ++jproc)
   {
-    int recv_nb_bdry_nodes = nb_bdry_nodes;
-    MPL_CHECK_RESULT( MPI_Bcast( &recv_nb_bdry_nodes, 1, MPL::TYPE<int>() , jproc, MPI_COMM_WORLD ) );
-    std::vector<int> recv_bdry_nodes_glb_idx( recv_nb_bdry_nodes );
-
-    if( jproc == MPL::rank() )
-    {
-      recv_bdry_nodes_glb_idx = bdry_nodes_glb_idx;
-    }
-    MPL_CHECK_RESULT( MPI_Bcast( recv_bdry_nodes_glb_idx.data(), recv_nb_bdry_nodes, MPL::TYPE<int>() , jproc, MPI_COMM_WORLD ) );
+    int* recv_bdry_nodes_glb_idx = recvbuf.data()+recvdispls[jproc];
+    int recv_nb_bdry_nodes = par_nb_bdry_nodes[jproc];
 
     // Find elements that have these nodes
     // In order to do this, check the node_to_elem list
