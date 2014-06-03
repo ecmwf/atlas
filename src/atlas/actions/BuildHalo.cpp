@@ -31,10 +31,10 @@ struct Face
   ElementRef elems[2];
 };
 
-void scan_function_space(
+void accumulate_faces(
     FunctionSpace& func_space,
     std::vector< std::vector<int> >& node_to_face,
-    std::vector<int>& tmp_edges,
+    std::vector<int>& face_nodes_data,
     std::vector< Face >& connectivity_edge_to_elem,
     int& nb_faces,
     int& nb_inner_faces );
@@ -104,8 +104,8 @@ void build_halo( Mesh& mesh )
   int nb_faces = 0;
   int nb_inner_faces = 0;
 
-  scan_function_space(quads, node_to_face,faces_nodes_data,face_to_elem,nb_faces,nb_inner_faces);
-  scan_function_space(triags,node_to_face,faces_nodes_data,face_to_elem,nb_faces,nb_inner_faces);
+  accumulate_faces(quads, node_to_face,faces_nodes_data,face_to_elem,nb_faces,nb_inner_faces);
+  accumulate_faces(triags,node_to_face,faces_nodes_data,face_to_elem,nb_faces,nb_inner_faces);
   
   int extents[] = {nb_faces,4};
   ArrayView<int,2> face_nodes(faces_nodes_data.data(),extents);
@@ -268,12 +268,12 @@ void build_halo( Mesh& mesh )
 
   // Now communicate all found fields back
 
-  // rfn stands for "recv_found_nodes"
+  //    rfn stands for "recv_found_nodes"
   std::vector< std::vector<int> >    rfn_glb_idx(MPL::size());
   std::vector< std::vector<int> >    rfn_master_glb_idx(MPL::size());
   std::vector< std::vector<int> >    rfn_proc(MPL::size());
   std::vector< std::vector<double> > rfn_latlon(MPL::size());
-  // rfe stands for "recv_found_elems"
+  //    rfe stands for "recv_found_elems"
   std::vector< std::vector< std::vector<int> > > rfe_glb_idx( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
   std::vector< std::vector< std::vector<int> > > rfe_nodes  ( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
 
@@ -292,10 +292,13 @@ void build_halo( Mesh& mesh )
   // Now adapt the mesh
 }
 
-void scan_function_space(
+
+
+
+void accumulate_faces(
     FunctionSpace& func_space,
     std::vector< std::vector<int> >& node_to_face,
-    std::vector<int>& tmp_edges,
+    std::vector<int>& face_nodes_data,
     std::vector< Face >& connectivity_edge_to_elem,
     int& nb_faces,
     int& nb_inner_faces )
@@ -386,7 +389,7 @@ void scan_function_space(
         for (int n=0; n<nb_nodes_in_face; ++n)
         {
           node_to_face[face_nodes[n]].push_back(nb_faces);
-          tmp_edges.push_back(face_nodes[n]);
+          face_nodes_data.push_back(face_nodes[n]);
         }
         ++nb_faces;
       }
