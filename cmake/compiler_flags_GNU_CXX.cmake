@@ -6,33 +6,35 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
+include( ecbuild_check_cxx_source )
+
 ####################################################################
 # FLAGS COMMON TO ALL BUILD TYPES
 ####################################################################
 
 if( HAVE_OMP )
-  set( CMAKE_CXX_FLAGS     "${CMAKE_CXX_FLAGS} -fopenmp")
+  cmake_add_cxx_flags( "-fopenmp" )
 else( )
-  set( CMAKE_CXX_FLAGS     "${CMAKE_CXX_FLAGS} -fno-openmp")
+  cmake_add_cxx_flags( "-fno-openmp" )
 endif( )
 
 ####################################################################
 # RELEASE FLAGS
 ####################################################################
 
-set( CMAKE_CXX_FLAGS_RELEASE     "-O3" )
+cmake_add_cxx_flags( "-O3"  BUILD RELEASE )
 
 ####################################################################
 # DEBUG FLAGS
 ####################################################################
 
-set( CMAKE_CXX_FLAGS_DEBUG       "-O0 -g" )
+cmake_add_cxx_flags( "-O0 -g" BUILD DEBUG )
 
 ####################################################################
 # BIT REPRODUCIBLE FLAGS
 ####################################################################
 
-set( CMAKE_CXX_FLAGS_BIT         "-O2" )
+cmake_add_cxx_flags( "-O2" BUILD BIT )
 
 ####################################################################
 # LINK FLAGS
