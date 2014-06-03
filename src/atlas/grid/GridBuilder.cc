@@ -207,7 +207,10 @@ void GribGridBuilderHelper::comparePointList(const std::vector<Grid::Point>& poi
       if (!FloatCompare::is_equal(points[i].lat(),grib_pntlist[i].lat(),epsilon) ||
           !FloatCompare::is_equal(points[i].lon(),grib_pntlist[i].lon(),epsilon))
       {
-         if (print_point_list == 0) Log::info() << " Point list DIFFER, show first 10, epsilon(" << epsilon << ")" << std::endl;
+         if (print_point_list == 0) {
+            Log::info() << " Point list DIFFER, show first 10, epsilon(" << epsilon << ")" << std::endl;
+            Log::info() << setw(40) << left << "     computed " << setw(40) << left << "         grib"<< std::endl;
+         }
          Log::info() << setw(3) << i << " :"
                   << setw(20) << std::setprecision(std::numeric_limits<double>::digits10 + 1) << points[i].lat() << ", "
                   << setw(20) << std::setprecision(std::numeric_limits<double>::digits10 + 1) << points[i].lon() << "  "
@@ -240,7 +243,7 @@ GribReducedGaussianGrid::GribReducedGaussianGrid(grib_handle* handle)
 
 Grid::Ptr GribReducedGaussianGrid::build()
 {
-   // Extract the guassian grid attributes from the grib handle
+   // Extract the gaussian grid attributes from the grib handle
 
    GRIB_CHECK(grib_get_long(handle_,"numberOfParallelsBetweenAPoleAndTheEquator",&the_grid_->gaussianNumber_),0);
    GRIB_CHECK(grib_get_long(handle_,"Nj",&nj_),0);
@@ -319,8 +322,8 @@ Grid::Ptr GribReducedGaussianGrid::build()
    Log::info() << " points_.size()                                 " << the_grid_->points_.size() << std::endl;
 
    ASSERT(nj_ == 2*the_grid_->gaussianNumber_);
+   ASSERT(FloatCompare::is_equal(east_,EXPECTED_longitudeOfLastGridPointInDegrees,globalness_epsilon()));
    ASSERT(the_grid_->points_.size() == numberOfDataPoints_);
-   ASSERT(FloatCompare::is_equal(east_,EXPECTED_longitudeOfLastGridPointInDegrees,epsilon()));
 
    // Check point list compared with grib
    comparePointList(the_grid_->points_,epsilon(),handle_);
@@ -365,7 +368,7 @@ bool GribReducedGaussianGrid::isGlobalWestEast() const
    // GRIB way of determining globalness
    if (west_ == 0) {
       double last_long = 360.0 - (90.0/(double)the_grid_->gaussianNumber_) ;
-      return FloatCompare::is_equal(east_,last_long,epsilon());
+      return FloatCompare::is_equal(east_,last_long,globalness_epsilon());
    }
    return false;
 }
@@ -472,7 +475,7 @@ Grid::Ptr GribRegularGaussianGrid::build()
 
     ASSERT(the_grid_->points_.size() == numberOfDataPoints_);
 
-    ASSERT(FloatCompare::is_equal(east_,EXPECTED_longitudeOfLastGridPointInDegrees,epsilon()));
+    ASSERT(FloatCompare::is_equal(east_,EXPECTED_longitudeOfLastGridPointInDegrees,globalness_epsilon()));
 
     // Check point list compared with grib
     comparePointList(the_grid_->points_,epsilon(),handle_);
@@ -497,7 +500,7 @@ bool GribRegularGaussianGrid::isGlobalWestEast() const
    // GRIB way of determining globalness
    if (west_ == 0) {
       double last_long = 360.0 - (90.0/(double)the_grid_->gaussianNumber_) ;
-      return FloatCompare::is_equal(east_,last_long,epsilon());
+      return FloatCompare::is_equal(east_,last_long,globalness_epsilon());
    }
    return false;
 }

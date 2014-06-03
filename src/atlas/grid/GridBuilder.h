@@ -105,6 +105,12 @@ protected:
    /// Therefore the client needs access to this when dealing with double based comparisons (for tolerances)
    double epsilon() const { return epsilon_; }
 
+   /// It Appears as IFS does not honour longitude of last grid point for GRIB2 Guassian grids
+   /// It should be 360 - 90/N
+   /// However they appear to be using GRIB1 precision for GRIB2 files.
+   /// Hence our check for globalness will be incorrect.
+   double globalness_epsilon() const { return 0.001;}
+
    static int scanningMode(long iScansNegatively, long jScansPositively);
    static void comparePointList(const std::vector<Grid::Point>& points,  double epsilon, grib_handle* handle);
 
