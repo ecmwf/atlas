@@ -43,7 +43,7 @@ void scan_function_space(
 void build_halo( Mesh& mesh )
 {
   FunctionSpace& nodes         = mesh.function_space( "nodes" );
-  ArrayView<double,2> coords(         nodes.field( "coordinates"    ) );
+  ArrayView<double,2> latlon(         nodes.field( "coordinates"    ) );
   ArrayView<int   ,1> glb_idx(        nodes.field( "glb_idx"        ) );
   ArrayView<int   ,1> master_glb_idx( nodes.field( "master_glb_idx" ) );
   ArrayView<int   ,1> node_proc(      nodes.field( "proc"           ) );
@@ -52,6 +52,8 @@ void build_halo( Mesh& mesh )
   std::vector< std::vector< ElementRef > > node_to_elem(nb_nodes);
   
   std::vector< ArrayView<int,2> > elem_nodes( mesh.nb_function_spaces() );
+  std::vector< ArrayView<int,1> > elem_proc ( mesh.nb_function_spaces() );
+  std::vector< ArrayView<int,1> > elem_glb_idx ( mesh.nb_function_spaces() );
 
   for( int func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
   {
@@ -59,6 +61,8 @@ void build_halo( Mesh& mesh )
     if( elements.metadata<int>("type") == Entity::ELEMS )
     {
       elem_nodes[func_space_idx] = ArrayView<int,2>( elements.field("nodes") );
+      elem_proc [func_space_idx] = ArrayView<int,1>( elements.field("proc") );
+      elem_glb_idx [func_space_idx] = ArrayView<int,1>( elements.field("glb_idx") );
       int nb_elems = elem_nodes[func_space_idx].extents()[0];
       int nb_nodes_per_elem = elem_nodes[func_space_idx].extents()[1];
       for (int elem=0; elem<nb_elems; ++elem)
@@ -143,11 +147,11 @@ void build_halo( Mesh& mesh )
   MPL_CHECK_RESULT( MPI_Allgather(&nb_bdry_nodes,            1, MPI_INT,
                                    par_nb_bdry_nodes.data(), 1, MPI_INT, MPI_COMM_WORLD ) );
 
-  int recvcnt=0;
   std::vector<int> recvcounts( MPL::size() );
   std::vector<int> recvdispls( MPL::size() );
   recvdispls[0] = 0;
   recvcounts[0] = par_nb_bdry_nodes[0];
+  int recvcnt = recvcounts[0];
   for( int jproc=1; jproc<MPL::size(); ++jproc )
   {
     recvcounts[jproc] = par_nb_bdry_nodes[jproc];
@@ -159,7 +163,15 @@ void build_halo( Mesh& mesh )
                     recvbuf.data(), recvcounts.data(), recvdispls.data(),
                     MPI_INT, MPI_COMM_WORLD) );
 
-  std::vector< std::vector<int> > recv_bdry_nodes_glb_idx( MPL::size() );
+
+  // sfn stands for "send_found_nodes"
+  std::vector< std::vector<int>    > sfn_proc( MPL::size() );
+  std::vector< std::vector<int>    > sfn_master_glb_idx( MPL::size() );
+  std::vector< std::vector<int>    > sfn_glb_idx( MPL::size() );
+  std::vector< std::vector<double> > sfn_latlon ( MPL::size() );
+  // sfn stands for "send_found_elems"
+  std::vector< std::vector< std::vector<int> > > sfe_glb_idx( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
+  std::vector< std::vector< std::vector<int> > > sfe_nodes  ( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
 
   for (int jproc=0; jproc<MPL::size(); ++jproc)
   {
@@ -168,8 +180,9 @@ void build_halo( Mesh& mesh )
 
     // Find elements that have these nodes
     // In order to do this, check the node_to_elem list
+    // Warning: only add elements that are owned!
 
-    std::set<ElementRef> send_bdry_elements_set;
+    std::vector< std::set<int> > found_bdry_elements_set( mesh.nb_function_spaces() );
     if( jproc != MPL::rank() )
     {
       for( int jrecv=0; jrecv<recv_nb_bdry_nodes; ++jrecv )
@@ -178,43 +191,105 @@ void build_halo( Mesh& mesh )
         if( node_glb_to_loc.count(recv_glb_idx) )
         {
           int loc = node_glb_to_loc[recv_glb_idx];
-          send_bdry_elements_set.insert( node_to_elem[loc].begin(), node_to_elem[loc].end() );
+          for( int jelem=0; jelem<node_to_elem[loc].size(); ++jelem )
+          {
+            int f = node_to_elem[loc][jelem].f;
+            int e = node_to_elem[loc][jelem].e;
+            if( elem_proc[f](e) == MPL::rank() )
+            {
+              found_bdry_elements_set[f].insert( e );
+            }
+          }
         }
       }
     }
-    std::vector<ElementRef> send_bdry_elements(send_bdry_elements_set.begin(), send_bdry_elements_set.end() );
-    int nb_bdry_elems=send_bdry_elements.size();
+    std::vector< std::vector<int> > found_bdry_elements( mesh.nb_function_spaces() );
+    std::vector<int> nb_found_bdry_elems( mesh.nb_function_spaces() );
+    for( int f=0; f<mesh.nb_function_spaces(); ++f )
+    {
+      found_bdry_elements[f] = std::vector<int>( found_bdry_elements_set[f].begin(), found_bdry_elements_set[f].end() );
+      nb_found_bdry_elems[f] = found_bdry_elements[f].size();
+    }
 
     // Collect all nodes needed to complete the element
-    std::set<int> send_bdry_nodes_glb_idx_set;
+    std::set<int> found_bdry_nodes_glb_idx_set;
     if( jproc != MPL::rank() )
     {
-      for( int jelem=0; jelem<nb_bdry_elems; ++jelem )
+      for( int f=0; f<mesh.nb_function_spaces(); ++f )
       {
-        int f = send_bdry_elements[jelem].f;
-        int e = send_bdry_elements[jelem].e;
-        int nb_elem_nodes = elem_nodes[f].extents()[1];
-        for( int n=0; n<nb_elem_nodes; ++n )
+        for( int jelem=0; jelem<nb_found_bdry_elems[f]; ++jelem )
         {
-          send_bdry_nodes_glb_idx_set.insert( glb_idx[ elem_nodes[f](e,n) ] );
+          int e = found_bdry_elements[f][jelem];
+          int nb_elem_nodes = elem_nodes[f].extents()[1];
+          for( int n=0; n<nb_elem_nodes; ++n )
+          {
+            found_bdry_nodes_glb_idx_set.insert( glb_idx[ elem_nodes[f](e,n) ] );
+          }
         }
       }
       // Remove nodes we already have received, as we won't need to send them
       for( int jrecv=0; jrecv<recv_nb_bdry_nodes; ++jrecv)
       {
-        send_bdry_nodes_glb_idx_set.erase(recv_bdry_nodes_glb_idx[jrecv]);
+        found_bdry_nodes_glb_idx_set.erase(recv_bdry_nodes_glb_idx[jrecv]);
       }
     }
-    std::vector<int> send_bdry_nodes_glb_idx(send_bdry_nodes_glb_idx_set.begin(),send_bdry_nodes_glb_idx_set.end());
-    int nb_send_bdry_nodes = send_bdry_nodes_glb_idx.size();
+    int nb_found_bdry_nodes = found_bdry_nodes_glb_idx_set.size();
 
-    std::vector<int> send_bdry_nodes_loc_idx( nb_send_bdry_nodes );
-    for( int jnode=0; jnode<nb_send_bdry_nodes; ++jnode)
+    sfn_glb_idx[jproc] = std::vector<int>(found_bdry_nodes_glb_idx_set.begin(),found_bdry_nodes_glb_idx_set.end());
+    sfn_master_glb_idx.resize(nb_found_bdry_nodes);
+    sfn_proc.resize(nb_found_bdry_nodes);
+    sfn_latlon.resize(2*nb_found_bdry_nodes);
+    for( int jnode=0; jnode<nb_found_bdry_nodes; ++jnode)
     {
-      send_bdry_nodes_loc_idx[jnode] = node_glb_to_loc[send_bdry_nodes_glb_idx[jnode]];
+      int loc = node_glb_to_loc[sfn_glb_idx[jproc][jnode]];
+      sfn_master_glb_idx[jproc][jnode] = master_glb_idx[loc];
+      sfn_proc[jproc][jnode] = node_proc[loc];
+      sfn_latlon[jproc][jnode*2+XX] = latlon(loc,XX);
+      sfn_latlon[jproc][jnode*2+YY] = latlon(loc,YY);
+    }
+
+    for( int f=0; f<mesh.nb_function_spaces(); ++f )
+    {
+      int nb_elem_nodes = elem_nodes[f].extents()[1];
+      sfe_glb_idx[f][jproc].resize( nb_found_bdry_elems[f] );
+      sfe_nodes[f][jproc].resize( nb_found_bdry_elems[f]*nb_elem_nodes );
+      ArrayView<int,2> sfe_nodes_view( sfe_nodes[f][jproc].data(), Extents(nb_found_bdry_elems[f],nb_elem_nodes).data() );
+      for( int jelem=0; jelem<nb_found_bdry_elems[f]; ++jelem )
+      {
+        int e = found_bdry_elements[f][jelem];
+        sfe_glb_idx[f][jproc][jelem] = elem_glb_idx[f](e);
+        for( int n=0; n<nb_elem_nodes; ++n)
+        {
+          sfe_nodes_view(jelem,n) = elem_nodes[f](e,n);
+        }
+      }
     }
   }
 
+  // Now communicate all found fields back
+
+  // rfn stands for "recv_found_nodes"
+  std::vector< std::vector<int> >    rfn_glb_idx(MPL::size());
+  std::vector< std::vector<int> >    rfn_master_glb_idx(MPL::size());
+  std::vector< std::vector<int> >    rfn_proc(MPL::size());
+  std::vector< std::vector<double> > rfn_latlon(MPL::size());
+  // rfe stands for "recv_found_elems"
+  std::vector< std::vector< std::vector<int> > > rfe_glb_idx( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
+  std::vector< std::vector< std::vector<int> > > rfe_nodes  ( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
+
+  MPL::Alltoall(sfn_glb_idx,        rfn_glb_idx);
+  MPL::Alltoall(sfn_master_glb_idx, rfn_master_glb_idx);
+  MPL::Alltoall(sfn_proc,           rfn_proc);
+  MPL::Alltoall(sfn_latlon,         rfn_latlon);
+
+  for( int f=0; f<mesh.nb_function_spaces(); ++f )
+  {
+    MPL::Alltoall(sfe_glb_idx[f], sfe_glb_idx[f] );
+    MPL::Alltoall(sfe_nodes[f],   sfe_nodes[f]   );
+  }
+
+  // We now have everything we need in rfe_ and rfn_ vectors
+  // Now adapt the mesh
 }
 
 void scan_function_space(
