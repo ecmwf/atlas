@@ -9,6 +9,7 @@
  */
 
 
+/// @warning Still doesn't know about periodic BC to enlarge Halo
 
 #include <iostream>
 #include <stdexcept>

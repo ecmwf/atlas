@@ -343,17 +343,19 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
   generate.options.set("include_pole",false);
   generate.options.set("three_dimensional",false);
 
-  int nodes[]  = {312,317,333,338,335,352,350,359,360,361,358,360,359,370,337,334,338,335,332,314};
-  int quads[]  = {242,277,291,294,292,307,312,320,321,322,319,321,320,331,293,291,294,293,290,244};
-  int triags[] = {42, 12, 13, 12, 12, 15, 0,  1,  0,  0,  2,  0,  1,  0,  14, 12, 13, 11, 14, 42 };
+  int nodes[]  = {312,317,333,338,334,352,350,359,360,360,359,360,359,370,337,334,338,335,332,314};
+  int quads[]  = {242,277,291,294,292,307,312,320,321,321,320,321,320,331,293,291,294,293,290,244};
+  int triags[] = { 42, 12, 13, 13, 11, 15,  0,  1,  0,  1,  1,  0,  1,  0, 14, 12, 13, 11, 14, 42};
   for( int p=0; p<generate.options.get<int>("nb_parts"); ++p)
   {
     generate.options.set("part",p);
     Mesh* m = generate( T63() );
+    std::cout << "p = " << p << std::endl;
+    std::cout << "m->function_space(triags).extents()[0] =" << m->function_space("triags").extents()[0] << std::endl;
     BOOST_CHECK_EQUAL( m->function_space("nodes" ).extents()[0], nodes[p]  );
     BOOST_CHECK_EQUAL( m->function_space("quads" ).extents()[0], quads[p]  );
     BOOST_CHECK_EQUAL( m->function_space("triags").extents()[0], triags[p] );
-    std::stringstream filename; filename << "d" << p << ".msh";
+    std::stringstream filename; filename << "T63_p" << p << ".msh";
     Gmsh::write(*m,filename.str());
     delete m;
   }
