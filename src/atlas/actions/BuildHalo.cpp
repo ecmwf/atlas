@@ -54,10 +54,10 @@ void build_halo( Mesh& mesh, int nhalo )
 void increase_halo( Mesh& mesh )
 {
   FunctionSpace& nodes         = mesh.function_space( "nodes" );
-  ArrayView<double,2> latlon(         nodes.field( "coordinates"    ) );
-  ArrayView<int   ,1> glb_idx(        nodes.field( "glb_idx"        ) );
-  ArrayView<int   ,1> mglb_idx( nodes.field( "master_glb_idx" ) );
-  ArrayView<int   ,1> node_proc(      nodes.field( "proc"           ) );
+  ArrayView<double,2> latlon   ( nodes.field( "coordinates"    ) );
+  ArrayView<int   ,1> glb_idx  ( nodes.field( "glb_idx"        ) );
+  ArrayView<int   ,1> mglb_idx ( nodes.field( "master_glb_idx" ) );
+  ArrayView<int   ,1> node_proc( nodes.field( "proc"           ) );
   int nb_nodes = nodes.extents()[0];
 
   std::vector< std::vector< ElementRef > > node_to_elem(nb_nodes);
@@ -339,6 +339,9 @@ void increase_halo( Mesh& mesh )
 
   // Nodes might be duplicated from different Tasks. We need to identify unique entries
   std::set<int> rfn_glb_idx_unique;
+  for( int jnode=0; jnode<nb_nodes; ++jnode )
+    rfn_glb_idx_unique.insert( glb_idx(jnode) );
+
   std::vector< std::vector<int> > rfn_unique_idx(MPL::size());
   for( int jproc=0; jproc<MPL::size(); ++jproc )
   {
@@ -390,6 +393,9 @@ void increase_halo( Mesh& mesh )
     {
       // Elements might be duplicated from different Tasks. We need to identify unique entries
       std::set<int> rfe_glb_idx_unique;
+      for( int jelem=0; jelem<elements.extents()[0]; ++jelem )
+        rfe_glb_idx_unique.insert( elem_glb_idx[f](jelem) );
+
       std::vector< std::vector<int> > rfe_unique_idx(MPL::size());
       for( int jproc=0; jproc<MPL::size(); ++jproc )
       {
