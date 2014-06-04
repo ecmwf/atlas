@@ -73,10 +73,10 @@ Grid::Ptr GRIBGridBuilder::build_grid_from_grib_handle( grib_handle* handle ) co
    //      GribSphericalHarmonicGrid maker( handle );
    //      return SphericalHarmonicGrid( maker.hash(), maker.boundingBox(),...);
    //   }
-   //   else if (strncasecmp(string_value,"reduced_ll",10) == 0) {
-   //      GribReducedLatLonGrid maker( handle );
-   //      return ReducedLatLonGrid( maker.hash(), maker.boundingBox(),...);
-   //   }
+   else if (strncasecmp(string_value,"reduced_ll",10) == 0) {
+      GribReducedLatLonGrid maker( handle );
+      return maker.build();
+   }
    else if (strncasecmp(string_value,"reduced_gg",10) == 0) {
       GribReducedGaussianGrid maker( handle );
       return maker.build();
@@ -177,6 +177,12 @@ GribGridBuilderHelper::GribGridBuilderHelper(grib_handle* handle)
 GribGridBuilderHelper::~GribGridBuilderHelper(){}
 
 
+Grid::BoundBox GribGridBuilderHelper::boundingBox() const
+{
+   // Grid::BoundBox expects bottom left, top right
+   return Grid::BoundBox( Grid::Point(south_,west_),Grid::Point(north_,east_));
+}
+
 int GribGridBuilderHelper::scanningMode(long iScansNegatively, long jScansPositively)
 {
    if(iScansNegatively == 0 && jScansPositively == 0)
@@ -262,27 +268,33 @@ Grid::Ptr GribReducedGaussianGrid::build()
 
    // number of lines of latitude should, be twice the numberOfParallelsBetweenAPoleAndTheEquator
    ASSERT( the_grid_->rgSpec_.size() == 2 * the_grid_->gaussianNumber_);
+   ASSERT( the_grid_->rgSpec_.size() == the_grid_->latitudes_.size());
+
+
+   if (jScansPositively_ == 1 )
+      std::reverse(the_grid_->latitudes_.begin(), the_grid_->latitudes_.end());
 
 
    // Create point list based on area. To avoid rounding errors determine if we have
    // Global area, then use simple algorithm.
    if (isGlobalNorthSouth() && isGlobalWestEast()) {
       Log::info() << " GLOBAL " << std::endl;
-      for ( int i = 0; i < 2*the_grid_->gaussianNumber_ && i < the_grid_->rgSpec_.size(); i++ ) {
+      for ( size_t i = 0;  i < the_grid_->rgSpec_.size() && i < the_grid_->latitudes_.size(); i++ ) {
          long no_of_points_along_latitude = the_grid_->rgSpec_[i];
-         double east_west_grid_length = 360.0/no_of_points_along_latitude;
-         double plon = 0;
-         for(int k = 0; k < no_of_points_along_latitude; k++) {
-            the_grid_->points_.push_back( Grid::Point( the_grid_->latitudes_[i], plon ) );
-            plon += east_west_grid_length;
+         if (no_of_points_along_latitude > 0 ) {
+            double east_west_grid_length = 360.0/no_of_points_along_latitude;
+            double plon = 0;
+            for(int k = 0; k < no_of_points_along_latitude; k++) {
+               the_grid_->points_.push_back( Grid::Point( the_grid_->latitudes_[i], plon ) );
+               plon += east_west_grid_length;
+            }
          }
       }
    }
    else {
       Log::info() << " LOCAL " << std::endl;
-      for ( int i = 0; i < 2*the_grid_->gaussianNumber_ && i < the_grid_->rgSpec_.size(); i++ ) {
+      for ( size_t i = 0; i < the_grid_->rgSpec_.size() && i < the_grid_->latitudes_.size(); i++ ) {
          if ( FloatCompare::is_equal(the_grid_->latitudes_[i],north_,epsilon()) ) {
-            // Log::info() << " same north latitudes_[i] " <<  latitudes_[i] << " north_ " << north_ << std::endl;
             add_point(i);
             continue;
          }
@@ -295,8 +307,6 @@ Grid::Ptr GribReducedGaussianGrid::build()
          }
       }
    }
-   if (jScansPositively_ == 1 )
-      std::reverse(the_grid_->latitudes_.begin(), the_grid_->latitudes_.end());
 
    double EXPECTED_longitudeOfLastGridPointInDegrees = 360.0 - (90.0/(the_grid_->gaussianNumber_));
    Log::info() << " editionNumber                                  " << editionNumber_ << std::endl;
@@ -339,23 +349,19 @@ GribReducedGaussianGrid::~GribReducedGaussianGrid()
 void GribReducedGaussianGrid::add_point(int lat_index)
 {
    long no_of_points_along_latitude = the_grid_->rgSpec_[lat_index];
-   double east_west_grid_length = 360.0/no_of_points_along_latitude;
-   double plon = 0;
-   for(int k = 0; k < no_of_points_along_latitude; k++) {
-      if ( (plon > west_ && plon < east_) ||
-           (FloatCompare::is_equal(plon,west_,epsilon())  ||
-            FloatCompare::is_equal(plon,east_,epsilon()) )
-      ) {
-         the_grid_->points_.push_back( Grid::Point( the_grid_->latitudes_[lat_index], plon ) );
+   if ( no_of_points_along_latitude > 0) {
+      double east_west_grid_length = 360.0/no_of_points_along_latitude;
+      double plon = 0;
+      for(int k = 0; k < no_of_points_along_latitude; k++) {
+         if ( (plon > west_ && plon < east_) ||
+                  FloatCompare::is_equal(plon,west_,epsilon())  ||
+                  FloatCompare::is_equal(plon,east_,epsilon())
+         ) {
+            the_grid_->points_.push_back( Grid::Point( the_grid_->latitudes_[lat_index], plon ) );
+         }
          plon += east_west_grid_length;
       }
    }
-}
-
-Grid::BoundBox GribReducedGaussianGrid::boundingBox() const
-{
-   // Grid::BoundBox expects bottom left, top right
-   return Grid::BoundBox( Grid::Point(south_,west_),Grid::Point(north_,east_));
 }
 
 bool GribReducedGaussianGrid::isGlobalNorthSouth() const
@@ -365,7 +371,7 @@ bool GribReducedGaussianGrid::isGlobalNorthSouth() const
 
 bool GribReducedGaussianGrid::isGlobalWestEast() const
 {
-   // GRIB way of determining globalness
+   // GRIB way of determining globalness, bugs in IFS means we need a lower resolution epsilon for grib2
    if (west_ == 0) {
       double last_long = 360.0 - (90.0/(double)the_grid_->gaussianNumber_) ;
       return FloatCompare::is_equal(east_,last_long,globalness_epsilon());
@@ -402,17 +408,18 @@ Grid::Ptr GribRegularGaussianGrid::build()
     grib_get_gaussian_latitudes(the_grid_->gaussianNumber_, array);
 
 
+    for ( int i = 0; i < 2*the_grid_->gaussianNumber_; i++ ) {
+       double lat = array[i];
+       ASSERT(lat < 90.0 && lat > -90.0);
+       the_grid_->latitudes_.push_back(lat);
+    }
+    if (jScansPositively_ == 1 )
+       std::reverse(the_grid_->latitudes_.begin(), the_grid_->latitudes_.end());
+
     double nptsWE = 4 * the_grid_->gaussianNumber_ ;
     double weIncrement = 360.0/nptsWE;
     if (isGlobalNorthSouth() && isGlobalWestEast()) {
        Log::info() << " GLOBAL                      weIncrement = " << weIncrement << std::endl;
-       for ( int i = 0; i < 2*the_grid_->gaussianNumber_; i++ ) {
-          double lat = array[i];
-          ASSERT(lat < 90.0 && lat > -90.0);
-          the_grid_->latitudes_.push_back(lat);
-       }
-       if (jScansPositively_ == 1 )
-          std::reverse(the_grid_->latitudes_.begin(), the_grid_->latitudes_.end());
        for(size_t i = 0 ; i < the_grid_->latitudes_.size(); i++) {
           double plon = 0;
           for( size_t j = 0; j < nptsWE; ++j) {
@@ -423,29 +430,18 @@ Grid::Ptr GribRegularGaussianGrid::build()
     }
     else {
        Log::info() << " LOCAL " << std::endl;
-       for ( int i = 0; i < 2*the_grid_->gaussianNumber_; i++ ) {
-          double lat = array[i];
-          ASSERT(lat < 90.0 && lat > -90.0);
-          if ( FloatCompare::is_equal(lat,north_,epsilon()) ) {
-             the_grid_->latitudes_.push_back(lat);
-             continue;
-          }
-          if ( FloatCompare::is_equal(lat,south_,epsilon()) ) {
-             the_grid_->latitudes_.push_back(lat);
-             continue;
-          }
-          if ( lat < north_ && lat > south_) {
-             the_grid_->latitudes_.push_back(lat);
-          }
-       }
-
-       if (jScansPositively_ == 1 )
-          std::reverse(the_grid_->latitudes_.begin(), the_grid_->latitudes_.end());
        for(size_t i = 0 ; i < the_grid_->latitudes_.size(); i++) {
-          double plon = west_;
-          for( size_t j = 0; j < nptsWE; ++j) {
-             if (plon < east_ || FloatCompare::is_equal(plon,east_)) {
-                the_grid_->points_.push_back( Grid::Point( the_grid_->latitudes_[i], plon ) );
+          double plat = the_grid_->latitudes_[i];
+          if ( ( plat < north_ && plat > south_) ||
+                 FloatCompare::is_equal(plat,north_,epsilon()) ||
+                 FloatCompare::is_equal(plat,south_,epsilon())
+              ) {
+
+             double plon = west_;
+             for( size_t j = 0; j < nptsWE; ++j) {
+                if (plon < east_ || FloatCompare::is_equal(plon,east_)) {
+                   the_grid_->points_.push_back( Grid::Point( plat, plon ) );
+                }
                 plon += weIncrement;
              }
           }
@@ -482,12 +478,6 @@ Grid::Ptr GribRegularGaussianGrid::build()
 
     // take ownership
     return Grid::Ptr(the_grid_.release() );
-}
-
-Grid::BoundBox GribRegularGaussianGrid::boundingBox() const
-{
-   // Grid::BoundBox expects bottom left, top right
-   return Grid::BoundBox(Grid::Point(south_,west_),Grid::Point(north_,east_));
 }
 
 bool GribRegularGaussianGrid::isGlobalNorthSouth() const
@@ -551,8 +541,8 @@ Grid::Ptr GribRegularLatLonGrid::build()
    Log::info() << " longitudeOfFirstGridPointInDegrees             " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << west_ << std::endl;
    Log::info() << " latitudeOfLastGridPointInDegrees               " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << south_ << std::endl;
    Log::info() << " longitudeOfLastGridPointInDegrees              " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << east_ << std::endl;
-   Log::info() << " jDirectionIncrementInDegrees(north-south incr) " << the_grid_->nsIncrement_ << std::endl;
-   Log::info() << " iDirectionIncrementInDegrees(west-east   incr) " << the_grid_->weIncrement_ << std::endl;
+   Log::info() << " jDirectionIncrementInDegrees(north-south incr) " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << the_grid_->nsIncrement_ << std::endl;
+   Log::info() << " iDirectionIncrementInDegrees(west-east   incr) " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << the_grid_->weIncrement_ << std::endl;
    Log::info() << " Nj(num of points North South)                  " << the_grid_->nptsNS_ << std::endl;
    Log::info() << " Ni(num of points West East)                    " << the_grid_->nptsWE_ << std::endl;
    Log::info() << " numberOfDataPoints                             " << numberOfDataPoints_ << std::endl;
@@ -563,8 +553,8 @@ Grid::Ptr GribRegularLatLonGrid::build()
    Log::info() << " computeCols()   " << computeCols(west_,east_) <<  "     nptsWE_ " << the_grid_->nptsWE_ << std::endl;
    Log::info() << " points_.size()  " << the_grid_->points_.size() << "     numberOfDataPoints_ " << numberOfDataPoints_ << std::endl << std::endl;
 
-   ASSERT(the_grid_->nsIncrement_ == computeIncLat());
-   ASSERT(the_grid_->weIncrement_ == computeIncLon());
+   ASSERT(FloatCompare::is_equal(the_grid_->nsIncrement_,computeIncLat(),0.01));
+   ASSERT(FloatCompare::is_equal(the_grid_->weIncrement_,computeIncLon(),0.01));
    ASSERT(the_grid_->nptsNS_ == computeRows(north_,south_,west_,east_));
    ASSERT(the_grid_->nptsWE_ == computeCols(west_,east_));
    ASSERT(the_grid_->points_.size() == numberOfDataPoints_);
@@ -576,25 +566,29 @@ Grid::Ptr GribRegularLatLonGrid::build()
    return Grid::Ptr( the_grid_.release() );
 }
 
-Grid::BoundBox GribRegularLatLonGrid::boundingBox() const
-{
-   // Grid::BoundBox expects bottom left, top right
-   return Grid::BoundBox(Grid::Point(south_,west_),Grid::Point(north_,east_));
-}
-
-long GribRegularLatLonGrid::computeIncLat() const
+double GribRegularLatLonGrid::computeIncLat() const
 {
    double north_diff_south = 0.0;
    if (north_ > 0.0 && south_ > 0.0 ) north_diff_south = north_ - south_;
    else if ( north_ < 0.0 && south_ < 0.0) north_diff_south = fabs(north_) - fabs(south_);
    else north_diff_south  = fabs(north_) + fabs(south_);
 
-   return ( north_diff_south/(rows() + 1) + 0.5);
+   if (rows() > north_diff_south)
+      return north_diff_south/rows();
+   
+   // Avoid truncation errors
+   long inc_lat = north_diff_south/(rows() + 1) + 0.5;
+   return inc_lat;
 }
 
-long GribRegularLatLonGrid::computeIncLon() const
+double GribRegularLatLonGrid::computeIncLon() const
 {
-   return ((east_ - west_)/cols() + 0.5 );
+   if (cols() > (east_ - west_))
+      return ((east_ - west_)/cols());
+   
+   // Avoid truncation errors
+   long inc_lon = ((east_ - west_)/cols() + 0.5 );
+   return inc_lon;
 }
 
 long GribRegularLatLonGrid::computeRows(double north, double south, double west, double east) const
@@ -614,6 +608,148 @@ long GribRegularLatLonGrid::rows() const { return the_grid_->rows();}
 long GribRegularLatLonGrid::cols() const { return the_grid_->cols();}
 double GribRegularLatLonGrid::incLat() const { return the_grid_->incLat(); }
 double GribRegularLatLonGrid::incLon() const { return the_grid_->incLon(); }
+
+// =====================================================================================
+
+GribReducedLatLonGrid::GribReducedLatLonGrid(grib_handle* handle)
+: GribGridBuilderHelper(handle),
+  the_grid_( new ReducedLatLonGrid() )
+{
+   Log::info() << "Build a GribReducedLatLonGrid  " << std::endl;
+   the_grid_->bbox_ = boundingBox();
+   the_grid_->hash_ = hash_;
+}
+
+GribReducedLatLonGrid::~GribReducedLatLonGrid()
+{
+   Log::info() << "Destroy a GribReducedLatLonGrid" << std::endl;
+}
+
+Grid::Ptr GribReducedLatLonGrid::build()
+{
+   // Extract the regular lat long grid attributes from the grib handle
+
+   GRIB_CHECK(grib_get_double(handle_,"jDirectionIncrementInDegrees",&(the_grid_->nsIncrement_)),0);
+   GRIB_CHECK(grib_get_long(handle_,"Nj",&(the_grid_->nptsNS_)),0);
+
+   // get reduced grid specification. These are number of point's along the lines of latitude
+   size_t rgSpecLength = 0;
+   GRIB_CHECK(grib_get_size(handle_,"pl",&rgSpecLength),0);
+   the_grid_->rgSpec_.resize(rgSpecLength);
+   GRIB_CHECK(grib_get_long_array(handle_,"pl",&(the_grid_->rgSpec_[0]),&rgSpecLength),0);
+   ASSERT( rgSpecLength == the_grid_->nptsNS_);
+
+
+   // Create point list based on area. To avoid rounding errors determine if we have
+   // Global area, then use simple algorithm.
+   if (isGlobalNorthSouth() && isGlobalWestEast()) {
+      Log::info() << " GLOBAL " << std::endl;
+      double plat = north_;
+      for( size_t j = 0; j < the_grid_->nptsNS_ && j < the_grid_->rgSpec_.size(); ++j) {
+
+         long no_of_points_along_latitude = the_grid_->rgSpec_[j];
+         if (no_of_points_along_latitude > 0 ) {
+            double east_west_grid_length = 360.0/no_of_points_along_latitude;
+            double plon = 0;
+            for(int k = 0; k < no_of_points_along_latitude; k++) {
+               the_grid_->points_.push_back( Grid::Point( plat, plon ) );
+               plon += east_west_grid_length;
+            }
+         }
+
+         plat -= the_grid_->nsIncrement_;
+      }
+   }
+   else {
+      Log::info() << " LOCAL " << std::endl;
+
+      double plat = north_;
+      for( size_t j = 0; j < the_grid_->nptsNS_ && j < the_grid_->rgSpec_.size(); ++j) {
+
+         long no_of_points_along_latitude = the_grid_->rgSpec_[j];
+         if (no_of_points_along_latitude > 0 ) {
+
+            if ( FloatCompare::is_equal(plat,north_,epsilon()) ||
+                 FloatCompare::is_equal(plat,south_,epsilon()) ||
+                 ( plat < north_ && plat > south_)) {
+
+               double east_west_grid_length = 360.0/no_of_points_along_latitude;
+               double plon = 0;
+               for(int k = 0; k < no_of_points_along_latitude; k++) {
+
+                  if ( FloatCompare::is_equal(plon,west_,epsilon()) ||
+                           FloatCompare::is_equal(plon,east_,epsilon()) ||
+                           ( plon < east_ && plon > west_)) {
+
+                     ASSERT(plat < 90.0 && plat > -90.0);
+                     ASSERT(plon < 360.0 && plon >= 0);
+                     the_grid_->points_.push_back( Grid::Point( plat, plon ) );
+                  }
+                  plon += east_west_grid_length;
+               }
+            }
+         }
+
+         plat -= the_grid_->nsIncrement_;
+      }
+   }
+
+   Log::info() << " editionNumber                                  " << editionNumber_ << std::endl;
+   Log::info() << " isGlobalNorthSouth()                           " << isGlobalNorthSouth() << std::endl;
+   Log::info() << " isGlobalWestEast()                             " << isGlobalWestEast() << std::endl;
+   Log::info() << " iScansNegatively                               " << iScansNegatively_ << std::endl;
+   Log::info() << " jScansPositively                               " << jScansPositively_ << std::endl;
+   Log::info() << " scanning_mode                                  " << scanningMode(iScansNegatively_,jScansPositively_) << std::endl;
+   Log::info() << " latitudeOfFirstGridPointInDegrees              " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << north_ << std::endl;
+   Log::info() << " longitudeOfFirstGridPointInDegrees             " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << west_ << std::endl;
+   Log::info() << " latitudeOfLastGridPointInDegrees               " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << south_ << std::endl;
+   Log::info() << " longitudeOfLastGridPointInDegrees              " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << east_ << std::endl;
+   Log::info() << " jDirectionIncrementInDegrees(north-south incr) " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << the_grid_->nsIncrement_ << std::endl;
+   Log::info() << " Nj(num of points North South)                  " << the_grid_->nptsNS_ << std::endl;
+   Log::info() << " numberOfDataPoints                             " << numberOfDataPoints_ << std::endl;
+   Log::info() << " -----------------------------------------------" << std::endl;
+   Log::info() << " computeIncLat() " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << computeIncLat() << "      nsIncrement_ " << the_grid_->nsIncrement_ << std::endl;
+   Log::info() << " points_.size()  " << the_grid_->points_.size() << "     numberOfDataPoints_ " << numberOfDataPoints_ << std::endl << std::endl;
+
+   ASSERT(FloatCompare::is_equal(the_grid_->nsIncrement_,computeIncLat(),0.001));
+   ASSERT(the_grid_->points_.size() == numberOfDataPoints_);
+
+   // Check point list compared with grib
+   comparePointList(the_grid_->points_,epsilon(),handle_);
+
+   // take ownership
+   return Grid::Ptr( the_grid_.release() );
+}
+
+double GribReducedLatLonGrid::computeIncLat() const
+{
+   double north_diff_south = 0.0;
+   if (north_ > 0.0 && south_ > 0.0 ) north_diff_south = north_ - south_;
+   else if ( north_ < 0.0 && south_ < 0.0) north_diff_south = fabs(north_) - fabs(south_);
+   else north_diff_south  = fabs(north_) + fabs(south_);
+
+   return ( north_diff_south/rows() );
+}
+
+long GribReducedLatLonGrid::rows() const { return the_grid_->rows();}
+
+bool GribReducedLatLonGrid::isGlobalNorthSouth() const
+{
+   if (FloatCompare::is_equal(north_,90.0,globalness_epsilon()) && FloatCompare::is_equal(south_,-90.0,globalness_epsilon())) {
+      return true;
+   }
+   return false;
+}
+
+bool GribReducedLatLonGrid::isGlobalWestEast() const
+{
+   // ??
+   if (west_ == 0) {
+      double last_long = 360.0 - the_grid_->nsIncrement_;
+      return FloatCompare::is_equal(east_,last_long,globalness_epsilon());
+   }
+   return false;
+}
 
 // ========================================================================================
 static PointList* read_number_of_data_points(grib_handle *h)
@@ -647,7 +783,6 @@ static PointList* read_number_of_data_points(grib_handle *h)
    ASSERT( idx == nb_nodes );
    return pts;
 }
-
 
 // ==================================================================================
 

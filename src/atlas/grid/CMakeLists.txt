@@ -17,6 +17,8 @@ PointSet.cc
 PointSet.h
 ReducedGaussianGrid.h
 ReducedGaussianGrid.cc
+ReducedLatLonGrid.h
+ReducedLatLonGrid.cc
 RegularLatLonGrid.h
 RegularLatLonGrid.cc
 RegularGaussianGrid.h

@@ -24,6 +24,7 @@
 
 #include "eckit/geometry/Point2.h"
 #include "atlas/grid/RegularLatLonGrid.h"
+#include "atlas/grid/ReducedLatLonGrid.h"
 #include "atlas/grid/ReducedGaussianGrid.h"
 #include "atlas/grid/RegularGaussianGrid.h"
 
@@ -114,6 +115,8 @@ protected:
    static int scanningMode(long iScansNegatively, long jScansPositively);
    static void comparePointList(const std::vector<Grid::Point>& points,  double epsilon, grib_handle* handle);
 
+   Grid::BoundBox boundingBox() const;
+
 protected:
    grib_handle* handle_;             ///< No not delete
    long   editionNumber_;           ///< Grib 1 or Grib 2
@@ -140,7 +143,6 @@ public:
    virtual Grid::Ptr build();
 
 private:
-   Grid::BoundBox boundingBox() const;
    void add_point(int lat_index);
    bool isGlobalNorthSouth() const;
    bool isGlobalWestEast() const;
@@ -162,7 +164,6 @@ public:
    virtual Grid::Ptr build();
 
 private:
-   Grid::BoundBox boundingBox() const;
    bool isGlobalNorthSouth() const;
    bool isGlobalWestEast() const;
 
@@ -183,8 +184,6 @@ public:
    virtual Grid::Ptr build();
 
 private:
-   Grid::BoundBox boundingBox() const;
-
    // Functions specific to Regular Lat long grids
    long rows() const;
    long cols() const;
@@ -192,13 +191,37 @@ private:
    double incLon() const;
 
    // for verification/checks
-   long computeIncLat() const ;
-   long computeIncLon() const ;
+   double computeIncLat() const ;
+   double computeIncLon() const ;
    long computeRows(double north, double south, double west, double east) const;
    long computeCols(double west, double east) const;
 
 private:
    eckit::ScopedPtr<RegularLatLonGrid> the_grid_;
+};
+
+
+/// To avoid copying data, we placed the data directly into GRIB
+/// via use of friendship
+class GribReducedLatLonGrid : public GribGridBuilderHelper {
+public:
+   GribReducedLatLonGrid( grib_handle* h );
+   virtual ~GribReducedLatLonGrid();
+
+   virtual Grid::Ptr build();
+
+private:
+   // Functions specific to Regular Lat long grids
+   long rows() const;
+
+   // for verification/checks
+   double computeIncLat() const ;
+
+   bool isGlobalNorthSouth() const;
+   bool isGlobalWestEast() const;
+
+private:
+   eckit::ScopedPtr<ReducedLatLonGrid> the_grid_;
 };
 
 
