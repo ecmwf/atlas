@@ -45,7 +45,7 @@ void build_halo( Mesh& mesh )
   FunctionSpace& nodes         = mesh.function_space( "nodes" );
   ArrayView<double,2> latlon(         nodes.field( "coordinates"    ) );
   ArrayView<int   ,1> glb_idx(        nodes.field( "glb_idx"        ) );
-  ArrayView<int   ,1> master_glb_idx( nodes.field( "master_glb_idx" ) );
+  ArrayView<int   ,1> mglb_idx( nodes.field( "master_glb_idx" ) );
   ArrayView<int   ,1> node_proc(      nodes.field( "proc"           ) );
   int nb_nodes = nodes.extents()[0];
 
@@ -166,7 +166,7 @@ void build_halo( Mesh& mesh )
 
   // sfn stands for "send_found_nodes"
   std::vector< std::vector<int>    > sfn_proc( MPL::size() );
-  std::vector< std::vector<int>    > sfn_master_glb_idx( MPL::size() );
+  std::vector< std::vector<int>    > sfn_mglb_idx( MPL::size() );
   std::vector< std::vector<int>    > sfn_glb_idx( MPL::size() );
   std::vector< std::vector<double> > sfn_latlon ( MPL::size() );
   // sfn stands for "send_found_elems"
@@ -236,13 +236,13 @@ void build_halo( Mesh& mesh )
     int nb_found_bdry_nodes = found_bdry_nodes_glb_idx_set.size();
 
     sfn_glb_idx[jproc] = std::vector<int>(found_bdry_nodes_glb_idx_set.begin(),found_bdry_nodes_glb_idx_set.end());
-    sfn_master_glb_idx.resize(nb_found_bdry_nodes);
+    sfn_mglb_idx.resize(nb_found_bdry_nodes);
     sfn_proc.resize(nb_found_bdry_nodes);
     sfn_latlon.resize(2*nb_found_bdry_nodes);
     for( int jnode=0; jnode<nb_found_bdry_nodes; ++jnode)
     {
       int loc = node_glb_to_loc[sfn_glb_idx[jproc][jnode]];
-      sfn_master_glb_idx[jproc][jnode] = master_glb_idx[loc];
+      sfn_mglb_idx[jproc][jnode] = mglb_idx[loc];
       sfn_proc[jproc][jnode] = node_proc[loc];
       sfn_latlon[jproc][jnode*2+XX] = latlon(loc,XX);
       sfn_latlon[jproc][jnode*2+YY] = latlon(loc,YY);
@@ -270,17 +270,17 @@ void build_halo( Mesh& mesh )
 
   //    rfn stands for "recv_found_nodes"
   std::vector< std::vector<int> >    rfn_glb_idx(MPL::size());
-  std::vector< std::vector<int> >    rfn_master_glb_idx(MPL::size());
+  std::vector< std::vector<int> >    rfn_mglb_idx(MPL::size());
   std::vector< std::vector<int> >    rfn_proc(MPL::size());
   std::vector< std::vector<double> > rfn_latlon(MPL::size());
   //    rfe stands for "recv_found_elems"
   std::vector< std::vector< std::vector<int> > > rfe_glb_idx( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
   std::vector< std::vector< std::vector<int> > > rfe_nodes  ( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
 
-  MPL::Alltoall(sfn_glb_idx,        rfn_glb_idx);
-  MPL::Alltoall(sfn_master_glb_idx, rfn_master_glb_idx);
-  MPL::Alltoall(sfn_proc,           rfn_proc);
-  MPL::Alltoall(sfn_latlon,         rfn_latlon);
+  MPL::Alltoall(sfn_glb_idx,  rfn_glb_idx);
+  MPL::Alltoall(sfn_mglb_idx, rfn_mglb_idx);
+  MPL::Alltoall(sfn_proc,     rfn_proc);
+  MPL::Alltoall(sfn_latlon,   rfn_latlon);
 
   for( int f=0; f<mesh.nb_function_spaces(); ++f )
   {
@@ -290,10 +290,96 @@ void build_halo( Mesh& mesh )
 
   // We now have everything we need in rfe_ and rfn_ vectors
   // Now adapt the mesh
+
+  // Nodes might be duplicated from different Tasks. We need to identify unique entries
+  std::set<int> rfn_glb_idx_unique;
+  std::vector< std::vector<int> > rfn_unique_idx(MPL::size());
+  for( int jproc=0; jproc<MPL::size(); ++jproc )
+  {
+    rfn_unique_idx[jproc].reserve(rfn_glb_idx[jproc].size());
+  }
+
+  int nb_new_nodes=0;
+  for( int jproc=0; jproc<MPL::size(); ++jproc )
+  {
+    for( int n=0; n<rfn_glb_idx[jproc].size(); ++n )
+    {
+      bool inserted = rfn_glb_idx_unique.insert( rfn_glb_idx[jproc][n] ).second;
+      if( inserted )
+      {
+        rfn_unique_idx[jproc].push_back(n);
+      }
+    }
+    nb_new_nodes += rfn_unique_idx[jproc].size();
+  }
+
+  nodes.resize( Extents( nb_nodes+nb_new_nodes, Field::UNDEF_VARS ) );
+  glb_idx   = ArrayView<int,   1>( nodes.field("glb_idx") );
+  mglb_idx  = ArrayView<int,   1>( nodes.field("master_glb_idx") );
+  node_proc = ArrayView<int,   1>( nodes.field("proc") );
+  latlon    = ArrayView<double,2>( nodes.field("coordinates") );
+
+  int new_node=0;
+  for( int jproc=0; jproc<MPL::size(); ++jproc )
+  {
+    for( int n=0; n<rfn_unique_idx[jproc].size(); ++n )
+    {
+      glb_idx  (nb_nodes+new_node)    = rfn_glb_idx [jproc][rfn_unique_idx[jproc][n]];
+      mglb_idx (nb_nodes+new_node)    = rfn_mglb_idx[jproc][rfn_unique_idx[jproc][n]];
+      node_proc(nb_nodes+new_node)    = rfn_proc    [jproc][rfn_unique_idx[jproc][n]];
+      latlon   (nb_nodes+new_node,XX) = rfn_latlon  [jproc][rfn_unique_idx[jproc][n]*2+XX];
+      latlon   (nb_nodes+new_node,XX) = rfn_latlon  [jproc][rfn_unique_idx[jproc][n]*2+YY];
+      ++new_node;
+    }
+  }
+
+  for( int f=0; f<mesh.nb_function_spaces(); ++f )
+  {
+    FunctionSpace& elements = mesh.function_space(f);
+    if( elements.metadata<int>("type") == Entity::ELEMS )
+    {
+      // Elements might be duplicated from different Tasks. We need to identify unique entries
+      std::set<int> rfe_glb_idx_unique;
+      std::vector< std::vector<int> > rfe_unique_idx(MPL::size());
+      for( int jproc=0; jproc<MPL::size(); ++jproc )
+      {
+        rfe_unique_idx[jproc].reserve(rfe_glb_idx[f][jproc].size());
+      }
+
+      int nb_new_elems=0;
+      for( int jproc=0; jproc<MPL::size(); ++jproc )
+      {
+        for( int e=0; e<rfe_glb_idx[f][jproc].size(); ++e )
+        {
+          bool inserted = rfe_glb_idx_unique.insert( rfe_glb_idx[f][jproc][e] ).second;
+          if( inserted )
+          {
+            rfe_unique_idx[jproc].push_back(e);
+          }
+        }
+        nb_new_elems += rfe_unique_idx[jproc].size();
+      }
+      int nb_elems /*old*/ = elements.extents()[0];
+      int nb_nodes_per_elem = elem_nodes[f].extents()[1];
+      elements.resize( Extents( nb_elems+nb_new_elems, Field::UNDEF_VARS ) );
+      elem_glb_idx[f] = ArrayView<int,1>( nodes.field("glb_idx") );
+      elem_nodes[f]   = ArrayView<int,2>( nodes.field("nodes")   );
+      elem_proc[f]    = ArrayView<int,1>( nodes.field("proc")   );
+      int new_elem=0;
+      for( int jproc=0; jproc<MPL::size(); ++jproc )
+      {
+        for( int e=0; e<rfe_unique_idx[jproc].size(); ++e )
+        {
+          elem_glb_idx[f](nb_elems+new_elem)   = rfe_glb_idx[f][jproc][rfe_unique_idx[jproc][e]];
+          elem_proc   [f](nb_elems+new_elem)   = jproc;
+          for( int n=0; n<nb_nodes_per_elem; ++n )
+            elem_nodes[f](nb_elems+new_elem,n) = rfe_nodes [f][jproc][rfe_unique_idx[jproc][e]*nb_nodes_per_elem+n];
+          ++new_elem;
+        }
+      }
+    }
+  }
 }
-
-
-
 
 void accumulate_faces(
     FunctionSpace& func_space,
@@ -383,9 +469,9 @@ void accumulate_faces(
         connectivity_edge_to_elem.push_back( Face() );
         connectivity_edge_to_elem[nb_faces][0].f = func_space.index();
         connectivity_edge_to_elem[nb_faces][0].e = e;
-        // if 3rd or 4th element stays negative, it is a bdry face
-        connectivity_edge_to_elem[nb_faces][0].f = -1;
-        connectivity_edge_to_elem[nb_faces][0].e = -1;
+        // if 2nd element stays negative, it is a bdry face
+        connectivity_edge_to_elem[nb_faces][1].f = -1;
+        connectivity_edge_to_elem[nb_faces][1].e = -1;
         for (int n=0; n<nb_nodes_in_face; ++n)
         {
           node_to_face[face_nodes[n]].push_back(nb_faces);
