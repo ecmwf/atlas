@@ -18,11 +18,6 @@ endif()
 
 set( BOOST_UNIT_TEST_FRAMEWORK_HEADER_ONLY ON )
 set( BOOST_UNIT_TEST_FRAMEWORK_LINKED OFF )
-ecbuild_add_test( TARGET test_gmsh
-  BOOST
-  SOURCES  test_gmsh.cpp
-  LIBS     atlas
-)
 
 ecbuild_add_test( TARGET test_indexview
   BOOST
@@ -30,16 +25,29 @@ ecbuild_add_test( TARGET test_indexview
   LIBS     atlas
 )
 
-ecbuild_add_test( TARGET test_meshgen3d
+ecbuild_add_test( TARGET test_gmsh
   BOOST
-  SOURCES   test_meshgen3d.cpp
-  LIBS      atlas_meshgen atlas
+  SOURCES  test_gmsh.cpp
+  LIBS     atlas
 )
 
 ecbuild_add_test( TARGET test_rgg
   BOOST
   SOURCES  test_rgg.cpp
   LIBS     atlas_meshgen
+)
+
+ecbuild_add_test( TARGET test_halo
+  BOOST
+  MPI      2
+  SOURCES  test_halo.cpp
+  LIBS     atlas_meshgen
+)
+
+ecbuild_add_test( TARGET test_meshgen3d
+  BOOST
+  SOURCES   test_meshgen3d.cpp
+  LIBS      atlas_meshgen
 )
 
 if( HAVE_GRID )
