@@ -86,7 +86,7 @@ void HaloExchange::setup(const int proc[],
     Find the amount of nodes this proc has to send to each other proc
   */
 
-  MPL_CHECK_RESULT( MPI_Alltoall( &recvcounts_[0], 1, MPI_INT, &sendcounts_[0], 1, MPI_INT, MPI_COMM_WORLD ) );
+  MPL_CHECK_RESULT( MPI_Alltoall( recvcounts_.data(), 1, MPI_INT, sendcounts_.data(), 1, MPI_INT, MPI_COMM_WORLD ) );
   sendcnt_ = std::accumulate(sendcounts_.begin(),sendcounts_.end(),0);
   //std::cout << myproc << ":  sendcnt = " << sendcnt_ << std::endl;
 
@@ -131,8 +131,8 @@ void HaloExchange::setup(const int proc[],
 
   std::vector<int> recv_requests(sendcnt_);
 
-  MPL_CHECK_RESULT( MPI_Alltoallv( &send_requests[0], &recvcounts_[0], &recvdispls_[0], MPI_INT,
-                        &recv_requests[0], &sendcounts_[0], &senddispls_[0], MPI_INT,
+  MPL_CHECK_RESULT( MPI_Alltoallv( send_requests.data(), recvcounts_.data(), recvdispls_.data(), MPI_INT,
+                        recv_requests.data(), sendcounts_.data(), senddispls_.data(), MPI_INT,
                         MPI_COMM_WORLD ) );
 
   /*

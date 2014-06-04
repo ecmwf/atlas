@@ -38,7 +38,7 @@
 #define atlas_ArrayView_hpp
 
 #include <cstddef>
-// #define ATLAS_ARRAYVIEW_BOUNDS_CHECKING
+#define ATLAS_ARRAYVIEW_BOUNDS_CHECKING
 
 #ifdef ATLAS_ARRAYVIEW_BOUNDS_CHECKING
 #include <stdexcept>
@@ -120,6 +120,11 @@ public:
     strides_[0]=strides[0];            extents_[0]=extents[0];
     strides_[1]=strides[1];            extents_[1]=extents[1];
   }
+  ArrayView( const DATA_TYPE* data, const int extents[2] ) : data_( const_cast<DATA_TYPE*>(data) )
+  {
+    extents_[0]=extents[0]; strides_[0]=extents_[1];
+    extents_[1]=extents[1]; strides_[1]=1;
+  }
   ArrayView( const Array<DATA_TYPE>& array );
   ArrayView( const Field& field );
   
@@ -190,8 +195,8 @@ public:
   
   const DATA_TYPE& operator()(int i, int j, int k, int l) const { CHECK_BOUNDS_4(i,j,k,l); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]+l*strides_[3]); }
   DATA_TYPE&       operator()(int i, int j, int k, int l)       { CHECK_BOUNDS_4(i,j,k,l); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]+l*strides_[3]); }
-  const ArrayView<DATA_TYPE,3> operator[](int i) const { CHECK_BOUNDS_4(i,j,k,l); return ArrayView<DATA_TYPE,3>( data_+strides_[0]*i, strides_+1, extents_+1 ); }
-  ArrayView<DATA_TYPE,3>       operator[](int i)       { CHECK_BOUNDS_4(i,j,k,l); return ArrayView<DATA_TYPE,3>( data_+strides_[0]*i, strides_+1, extents_+1 ); }
+  const ArrayView<DATA_TYPE,3> operator[](int i) const { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,3>( data_+strides_[0]*i, strides_+1, extents_+1 ); }
+  ArrayView<DATA_TYPE,3>       operator[](int i)       { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,3>( data_+strides_[0]*i, strides_+1, extents_+1 ); }
   DATA_TYPE* data()            { return data_; }
   const int* strides() const   { return strides_; }
   const int* extents() const   { return extents_; }

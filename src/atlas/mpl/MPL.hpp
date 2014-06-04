@@ -92,6 +92,68 @@ public:
     return nproc;
   }
 
+  template< typename DATA_TYPE >
+  inline int Alltoall( std::vector< std::vector<DATA_TYPE> >& sendvec,
+                       std::vector< std::vector<DATA_TYPE> >& recvvec )
+  {
+    // Get send-information
+    std::vector<int> sendcounts(MPL::size());
+    std::vector<int> senddispls(MPL::size());
+    int sendcnt;
+    senddispls[0] = 0;
+    sendcounts[0] = sendvec[0].size();
+    sendcnt = sendcounts[0];
+    for( int jproc=1; jproc<MPL::size(); ++jproc )
+    {
+      senddispls[jproc] = senddispls[jproc-1] + sendcounts[jproc-1];
+      sendcounts[jproc] = sendvec[jproc].size();
+      sendcnt += sendcounts[jproc];
+    }
+
+    // Get recv-information
+    std::vector<int> recvcounts(MPL::size());
+    std::vector<int> recvdispls(MPL::size());
+    int recvcnt;
+    MPL_CHECK_RESULT( MPI_Alltoall( sendcounts.data(), MPL::size(), MPI_INT,
+                                    recvcounts.data(), MPL::size(), MPI_INT,
+                                    MPI_COMM_WORLD ) );
+    recvdispls[0] = 0;
+    recvcnt = recvcounts[0];
+    for( int jproc=1; jproc<MPL::size(); ++jproc )
+    {
+      recvdispls[jproc] = recvdispls[jproc-1] + recvcounts[jproc-1];
+      recvcnt += recvcounts[jproc];
+    }
+
+    // Communicate
+    std::vector<DATA_TYPE> sendbuf_vec(sendcnt);
+    std::vector<DATA_TYPE> recvbuf_vec(recvcnt);
+    DATA_TYPE* sendbuf = sendbuf_vec.data();
+    DATA_TYPE* recvbuf = recvbuf_vec.data();
+    for( int jproc=1; jproc<MPL::size(); ++jproc )
+    {
+      for( int i=0; i<sendcounts[jproc]; ++i )
+      {
+        *sendbuf = sendvec[jproc][i];
+        ++sendbuf;
+      }
+    }
+    MPL_CHECK_RESULT( MPI_Alltoallv(
+                        sendbuf, sendcounts.data(), senddispls.data(), MPL::TYPE<DATA_TYPE>(),
+                        recvbuf, recvcounts.data(), recvdispls.data(), MPL::TYPE<DATA_TYPE>(),
+                        MPI_COMM_WORLD ) );
+    for( int jproc=1; jproc<MPL::size(); ++jproc )
+    {
+      recvvec[jproc].resize(recvcounts[jproc]);
+      for( int i=0; i<recvcounts[jproc]; ++i )
+      {
+        recvvec[jproc][i] = *recvbuf;
+        ++recvbuf;
+      }
+    }
+    return MPI_SUCCESS;
+  }
+
 } // namespace MPL
 
 } // namepsace atlas
