@@ -95,13 +95,19 @@ ecbuild_add_option( FEATURE TESSELATION
                     DESCRIPTION "support for unstructured mesh generation" )
 
 if( ENABLE_TESSELATION )
-  find_package( CGAL )
 
-  if( CGAL_FOUND )
-    list( APPEND CGAL_LIBRARIES ${CGAL_LIBRARY} ${CGAL_3RD_PARTY_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES} )
-  endif()
-   
-  list( APPEND ATLAS_TPLS CGAL )
+	find_package( CGAL )
+
+	if( CGAL_FOUND )
+		set(Boost_USE_MULTITHREADED      ON )
+		find_package( Boost 1.45.0 REQUIRED )
+		set_package_properties( Boost PROPERTIES TYPE RECOMMENDED PURPOSE "CGAL support" )
+		list( APPEND CGAL_INCLUDE_DIRS ${Boost_INCLUDE_DIRS} )
+		list( APPEND CGAL_LIBRARIES ${CGAL_LIBRARY} ${CGAL_3RD_PARTY_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} )
+	endif()
+
+	list( APPEND ATLAS_TPLS CGAL )
+
 endif()
 
 ### Eigen
