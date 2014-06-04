@@ -23,9 +23,12 @@
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/mesh/FunctionSpace.hpp"
 #include "atlas/mesh/Metadata.hpp"
+#include "atlas/mesh/ArrayView.hpp"
+#include "atlas/mesh/IndexView.hpp"
 #include "atlas/actions/BuildEdges.hpp"
 #include "atlas/actions/BuildDualMesh.hpp"
 #include "atlas/actions/BuildPeriodicBoundaries.hpp"
+#include "atlas/mesh/Parameters.hpp"
 
 using namespace atlas;
 using namespace atlas::meshgen;
@@ -100,6 +103,39 @@ MinimalMesh::MinimalMesh(int nlat, int lon[])
   for (int i=nlat; i<2*nlat; ++i)
     lat_[i]=-M_PI/2.+lat_[i];
 } 
+
+double compute_latlon_area(Mesh& mesh)
+{
+  FunctionSpace& nodes  = mesh.function_space("nodes");
+  FunctionSpace& quads  = mesh.function_space("quads");
+  FunctionSpace& triags = mesh.function_space("triags");
+  ArrayView<double,2> latlon  ( nodes.field("coordinates") );
+  IndexView<int,2> quad_nodes ( quads. field("nodes") );
+  IndexView<int,2> triag_nodes( triags.field("nodes") );
+  double area=0;
+  for( int e=0; e<quads.extents()[0]; ++e )
+  {
+    int n0 = quad_nodes(e,0);
+    int n1 = quad_nodes(e,1);
+    int n2 = quad_nodes(e,2);
+    int n3 = quad_nodes(e,3);
+    double x0=latlon(n0,XX), x1=latlon(n1,XX), x2=latlon(n2,XX), x3=latlon(n3,XX);
+    double y0=latlon(n0,YY), y1=latlon(n1,YY), y2=latlon(n2,YY), y3=latlon(n3,YY);
+    area += std::abs( x0*(y1-y2)+x1*(y2-y0)+x2*(y0-y1) )*0.5;
+    area += std::abs( x2*(y3-y0)+x3*(y0-y2)+x0*(y2-y3) )*0.5;
+  }
+  for( int e=0; e<triags.extents()[0]; ++e )
+  {
+    int n0 = triag_nodes(e,0);
+    int n1 = triag_nodes(e,1);
+    int n2 = triag_nodes(e,2);
+    double x0=latlon(n0,XX), x1=latlon(n1,XX), x2=latlon(n2,XX);
+    double y0=latlon(n0,YY), y1=latlon(n1,YY), y2=latlon(n2,YY);
+    area += std::abs( x0*(y1-y2)+x1*(y2-y0)+x2*(y0-y1) )*0.5;
+  }
+  return area;
+}
+
 
 } // end namespace test
 } // end namespace atlas
@@ -245,6 +281,9 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_one_part )
     BOOST_CHECK_EQUAL( mesh->function_space("quads" ).extents()[0], 14 );
     BOOST_CHECK_EQUAL( mesh->function_space("triags").extents()[0],  4 );
 
+    double max_lat = test::MinimalMesh(nlat,lon).lat(0);
+    BOOST_CHECK_CLOSE( test::compute_latlon_area(*mesh), 2.*M_PI*2.*max_lat, 1e-8 );
+
     build_periodic_boundaries(*mesh);
     build_edges(*mesh);
     build_dual_mesh(*mesh);
@@ -343,6 +382,9 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
   generate.options.set("include_pole",false);
   generate.options.set("three_dimensional",false);
 
+  double max_lat = T63().lat(0);
+  double check_area = 2.*M_PI*2.*max_lat;
+  double area = 0;
   int nodes[]  = {312,317,333,338,334,352,350,359,360,360,359,360,359,370,337,334,338,335,332,314};
   int quads[]  = {242,277,291,294,292,307,312,320,321,321,320,321,320,331,293,291,294,293,290,244};
   int triags[] = { 42, 12, 13, 13, 11, 15,  0,  1,  0,  1,  1,  0,  1,  0, 14, 12, 13, 11, 14, 42};
@@ -350,8 +392,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
   {
     generate.options.set("part",p);
     Mesh* m = generate( T63() );
-    std::cout << "p = " << p << std::endl;
-    std::cout << "m->function_space(triags).extents()[0] =" << m->function_space("triags").extents()[0] << std::endl;
+    area += test::compute_latlon_area(*m);
     BOOST_CHECK_EQUAL( m->function_space("nodes" ).extents()[0], nodes[p]  );
     BOOST_CHECK_EQUAL( m->function_space("quads" ).extents()[0], quads[p]  );
     BOOST_CHECK_EQUAL( m->function_space("triags").extents()[0], triags[p] );
@@ -359,6 +400,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
     Gmsh::write(*m,filename.str());
     delete m;
   }
+  BOOST_CHECK_CLOSE( area, check_area, 1e-10 );
 }
 
 BOOST_AUTO_TEST_CASE( finalize ) { MPL::finalize(); }
