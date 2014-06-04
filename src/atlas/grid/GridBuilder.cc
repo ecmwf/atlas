@@ -744,8 +744,11 @@ bool GribReducedLatLonGrid::isGlobalNorthSouth() const
 bool GribReducedLatLonGrid::isGlobalWestEast() const
 {
    // ??
-   if (west_ == 0) {
-      double last_long = 360.0 - the_grid_->nsIncrement_;
+   if (west_ == 0 && !the_grid_->rgSpec_.empty()) {
+      long half_way = the_grid_->rgSpec_.size()/2;
+      double no_of_points_on_equator = the_grid_->rgSpec_[half_way];
+      double we_increment = 360.0/no_of_points_on_equator;
+      double last_long = 360.0 - we_increment;
       return FloatCompare::is_equal(east_,last_long,globalness_epsilon());
    }
    return false;
