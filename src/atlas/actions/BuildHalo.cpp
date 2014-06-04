@@ -52,7 +52,7 @@ void build_halo( Mesh& mesh )
 
   std::vector< std::vector< ElementRef > > node_to_elem(nb_nodes);
   
-  std::vector< ArrayView<int,2> > elem_nodes( mesh.nb_function_spaces() );
+  std::vector< IndexView<int,2> > elem_nodes( mesh.nb_function_spaces() );
   std::vector< ArrayView<int,1> > elem_proc ( mesh.nb_function_spaces() );
   std::vector< ArrayView<int,1> > elem_glb_idx ( mesh.nb_function_spaces() );
 
@@ -61,9 +61,9 @@ void build_halo( Mesh& mesh )
     FunctionSpace& elements = mesh.function_space(func_space_idx);
     if( elements.metadata<int>("type") == Entity::ELEMS )
     {
-      elem_nodes[func_space_idx] = ArrayView<int,2>( elements.field("nodes") );
-      elem_proc [func_space_idx] = ArrayView<int,1>( elements.field("proc") );
-      elem_glb_idx [func_space_idx] = ArrayView<int,1>( elements.field("glb_idx") );
+      elem_nodes  [func_space_idx] = IndexView<int,2>( elements.field("nodes") );
+      elem_proc   [func_space_idx] = ArrayView<int,1>( elements.field("proc") );
+      elem_glb_idx[func_space_idx] = ArrayView<int,1>( elements.field("glb_idx") );
       int nb_elems = elem_nodes[func_space_idx].extents()[0];
       int nb_nodes_per_elem = elem_nodes[func_space_idx].extents()[1];
       for (int elem=0; elem<nb_elems; ++elem)
@@ -364,7 +364,7 @@ void build_halo( Mesh& mesh )
       int nb_nodes_per_elem = elem_nodes[f].extents()[1];
       elements.resize( Extents( nb_elems+nb_new_elems, Field::UNDEF_VARS ) );
       elem_glb_idx[f] = ArrayView<int,1>( nodes.field("glb_idx") );
-      elem_nodes[f]   = ArrayView<int,2>( nodes.field("nodes")   );
+      elem_nodes[f]   = IndexView<int,2>( nodes.field("nodes")   );
       elem_proc[f]    = ArrayView<int,1>( nodes.field("proc")   );
       int new_elem=0;
       for( int jproc=0; jproc<MPL::size(); ++jproc )
