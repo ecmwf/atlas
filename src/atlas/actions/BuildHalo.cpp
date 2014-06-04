@@ -24,6 +24,7 @@
 #include "atlas/mesh/Array.hpp"
 
 namespace atlas {
+namespace actions {
 
 struct Face
 {
@@ -76,6 +77,8 @@ void build_halo( Mesh& mesh )
       }
     }
   }
+
+  std::cout << MPL::rank() << " : " << 1 << std::endl;
   
   /*
   1) Find nodes at boundary of partition
@@ -99,23 +102,28 @@ void build_halo( Mesh& mesh )
   FunctionSpace& triags      = mesh.function_space( "triags" );
 
   std::vector< std::vector<int> > node_to_face(nb_nodes);
-  std::vector< int > faces_nodes_data; faces_nodes_data.reserve(4*nb_nodes);
+  std::vector< int > face_nodes_data; face_nodes_data.reserve(4*nb_nodes);
   std::vector< Face > face_to_elem;
   face_to_elem.reserve(4*nb_nodes);
   int nb_faces = 0;
   int nb_inner_faces = 0;
 
-  accumulate_faces(quads, node_to_face,faces_nodes_data,face_to_elem,nb_faces,nb_inner_faces);
-  accumulate_faces(triags,node_to_face,faces_nodes_data,face_to_elem,nb_faces,nb_inner_faces);
-  
-  int extents[] = {nb_faces,4};
-  ArrayView<int,2> face_nodes(faces_nodes_data.data(),extents);
+  accumulate_faces(quads, node_to_face,face_nodes_data,face_to_elem,nb_faces,nb_inner_faces);
+  accumulate_faces(triags,node_to_face,face_nodes_data,face_to_elem,nb_faces,nb_inner_faces);
+
+  std::cout << MPL::rank() << " :  face_to_elem.size() = " << face_to_elem.size() << std::endl;
+  std::cout << MPL::rank() << " :  face_nodes_data.size() = " << face_nodes_data.size()/2. << std::endl;
+  std::cout << MPL::rank() << " :  nb_faces            = " << nb_faces << std::endl;
+
+  int extents[] = {nb_faces,2};
+  ArrayView<int,2> face_nodes(face_nodes_data.data(),extents);
+
 
   for( int jface=0; jface<nb_faces; ++jface )
   {
     if( face_to_elem[jface].is_bdry() )
     {
-      for( int jnode=0; jnode<4; ++jnode)
+      for( int jnode=0; jnode<2; ++jnode) // 2 nodes per face
       {
         if( face_nodes(jface,jnode) >= 0 )
         {
@@ -124,7 +132,9 @@ void build_halo( Mesh& mesh )
       }
     }
   }
-  std::vector<int> bdry_nodes( bdry_nodes.begin(), bdry_nodes.end());
+
+  std::vector<int> bdry_nodes( bdry_nodes_set.begin(), bdry_nodes_set.end());
+
 
   /*
   2) Communicate glb_index of these boundary nodes to other partitions
@@ -148,6 +158,7 @@ void build_halo( Mesh& mesh )
   MPL_CHECK_RESULT( MPI_Allgather(&nb_bdry_nodes,            1, MPI_INT,
                                    par_nb_bdry_nodes.data(), 1, MPI_INT, MPI_COMM_WORLD ) );
 
+
   std::vector<int> recvcounts( MPL::size() );
   std::vector<int> recvdispls( MPL::size() );
   recvdispls[0] = 0;
@@ -160,6 +171,7 @@ void build_halo( Mesh& mesh )
     recvcnt += recvcounts[jproc];
   }
   std::vector<int> recvbuf(recvcnt);
+
   MPL_CHECK_RESULT( MPI_Allgatherv( bdry_nodes_glb_idx.data(), nb_bdry_nodes, MPI_INT,
                     recvbuf.data(), recvcounts.data(), recvdispls.data(),
                     MPI_INT, MPI_COMM_WORLD) );
@@ -192,24 +204,24 @@ void build_halo( Mesh& mesh )
         if( node_glb_to_loc.count(recv_glb_idx) )
         {
           int loc = node_glb_to_loc[recv_glb_idx];
+          //std::cout << MPL::rank() << "   :   loc node = " << loc << std::endl;
           for( int jelem=0; jelem<node_to_elem[loc].size(); ++jelem )
           {
             int f = node_to_elem[loc][jelem].f;
             int e = node_to_elem[loc][jelem].e;
-            if( elem_proc[f](e) == MPL::rank() )
-            {
-              found_bdry_elements_set[f].insert( e );
-            }
+            //std::cout << MPL::rank() << "   :   connected to elem " << mesh.function_space(f).name() << "["<<e<<"]"<<std::endl;
+            found_bdry_elements_set[f].insert( e );
           }
         }
       }
     }
     std::vector< std::vector<int> > found_bdry_elements( mesh.nb_function_spaces() );
-    std::vector<int> nb_found_bdry_elems( mesh.nb_function_spaces() );
+    std::vector<int> nb_found_bdry_elems( mesh.nb_function_spaces(), 0 );
     for( int f=0; f<mesh.nb_function_spaces(); ++f )
     {
       found_bdry_elements[f] = std::vector<int>( found_bdry_elements_set[f].begin(), found_bdry_elements_set[f].end() );
       nb_found_bdry_elems[f] = found_bdry_elements[f].size();
+      if( jproc != MPL::rank() ) std::cout << MPL::rank() << "   :  found elems: " << nb_found_bdry_elems[f] << " " << mesh.function_space(f).name() << std::endl;
     }
 
     // Collect all nodes needed to complete the element
@@ -235,11 +247,14 @@ void build_halo( Mesh& mesh )
       }
     }
     int nb_found_bdry_nodes = found_bdry_nodes_glb_idx_set.size();
+    if( jproc != MPL::rank() ) std::cout << MPL::rank() << "   :  found nodes: " << nb_found_bdry_nodes << std::endl;
 
     sfn_glb_idx[jproc] = std::vector<int>(found_bdry_nodes_glb_idx_set.begin(),found_bdry_nodes_glb_idx_set.end());
-    sfn_mglb_idx.resize(nb_found_bdry_nodes);
-    sfn_proc.resize(nb_found_bdry_nodes);
-    sfn_latlon.resize(2*nb_found_bdry_nodes);
+    //std::cout << MPL::rank() << " :   debug 0" << std::endl;
+
+    sfn_mglb_idx[jproc].resize(nb_found_bdry_nodes);
+    sfn_proc[jproc].resize(nb_found_bdry_nodes);
+    sfn_latlon[jproc].resize(2*nb_found_bdry_nodes);
     for( int jnode=0; jnode<nb_found_bdry_nodes; ++jnode)
     {
       int loc = node_glb_to_loc[sfn_glb_idx[jproc][jnode]];
@@ -247,7 +262,10 @@ void build_halo( Mesh& mesh )
       sfn_proc[jproc][jnode] = node_proc[loc];
       sfn_latlon[jproc][jnode*2+XX] = latlon(loc,XX);
       sfn_latlon[jproc][jnode*2+YY] = latlon(loc,YY);
+      //if( MPL::rank() == 1 ) std::cout << "send node " << sfn_glb_idx[jproc][jnode] << std::endl;
     }
+
+    std::cout << MPL::rank() << " :   debug 1" << std::endl;
 
     for( int f=0; f<mesh.nb_function_spaces(); ++f )
     {
@@ -278,16 +296,28 @@ void build_halo( Mesh& mesh )
   std::vector< std::vector< std::vector<int> > > rfe_glb_idx( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
   std::vector< std::vector< std::vector<int> > > rfe_nodes  ( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
 
+  std::cout << MPL::rank() << " :   debug 4" << std::endl;
+
   MPL::Alltoall(sfn_glb_idx,  rfn_glb_idx);
+  std::cout << MPL::rank() << " :   debug 4.1" << std::endl;
+
   MPL::Alltoall(sfn_mglb_idx, rfn_mglb_idx);
+  std::cout << MPL::rank() << " :   debug 4.2" << std::endl;
+
   MPL::Alltoall(sfn_proc,     rfn_proc);
+  std::cout << MPL::rank() << " :   debug 4.3" << std::endl;
+
   MPL::Alltoall(sfn_latlon,   rfn_latlon);
+  std::cout << MPL::rank() << " :   debug 4.4" << std::endl;
 
   for( int f=0; f<mesh.nb_function_spaces(); ++f )
   {
     MPL::Alltoall(sfe_glb_idx[f], sfe_glb_idx[f] );
     MPL::Alltoall(sfe_nodes[f],   sfe_nodes[f]   );
   }
+
+  std::cout << MPL::rank() << " :   debug 7" << std::endl;
+
 
   // We now have everything we need in rfe_ and rfn_ vectors
   // Now adapt the mesh
@@ -305,6 +335,7 @@ void build_halo( Mesh& mesh )
   {
     for( int n=0; n<rfn_glb_idx[jproc].size(); ++n )
     {
+      if( MPL::rank() == 0 ) std::cout << "recv node " << rfn_glb_idx[jproc][n] << std::endl;
       bool inserted = rfn_glb_idx_unique.insert( rfn_glb_idx[jproc][n] ).second;
       if( inserted )
       {
@@ -313,6 +344,8 @@ void build_halo( Mesh& mesh )
     }
     nb_new_nodes += rfn_unique_idx[jproc].size();
   }
+
+  std::cout << MPL::rank() << "  :  new nodes: " << nb_new_nodes << " " << nodes.name() << std::endl;
 
   nodes.resize( Extents( nb_nodes+nb_new_nodes, Field::UNDEF_VARS ) );
   glb_idx   = ArrayView<int,   1>( nodes.field("glb_idx") );
@@ -360,12 +393,14 @@ void build_halo( Mesh& mesh )
         }
         nb_new_elems += rfe_unique_idx[jproc].size();
       }
+
+      std::cout << MPL::rank() << "  :  new elements: " << nb_new_elems << " " << elements.name() << std::endl;
       int nb_elems /*old*/ = elements.extents()[0];
       int nb_nodes_per_elem = elem_nodes[f].extents()[1];
       elements.resize( Extents( nb_elems+nb_new_elems, Field::UNDEF_VARS ) );
-      elem_glb_idx[f] = ArrayView<int,1>( nodes.field("glb_idx") );
-      elem_nodes[f]   = IndexView<int,2>( nodes.field("nodes")   );
-      elem_proc[f]    = ArrayView<int,1>( nodes.field("proc")   );
+      elem_glb_idx[f] = ArrayView<int,1>( elements.field("glb_idx") );
+      elem_nodes[f]   = IndexView<int,2>( elements.field("nodes")   );
+      elem_proc[f]    = ArrayView<int,1>( elements.field("proc")   );
       int new_elem=0;
       for( int jproc=0; jproc<MPL::size(); ++jproc )
       {
@@ -493,6 +528,6 @@ void atlas__build_halo ( Mesh* mesh) {
 
 // ------------------------------------------------------------------
 
-
+} // namespace actions
 } // namespace atlas
 

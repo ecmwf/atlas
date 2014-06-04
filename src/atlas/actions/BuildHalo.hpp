@@ -14,7 +14,8 @@
 #define BuildHalo_hpp
 #include <string>
 namespace atlas {
-class Mesh;
+  class Mesh;
+namespace actions {
 
 void build_halo( Mesh& mesh );
 
@@ -26,6 +27,7 @@ extern "C"
 }
 // ------------------------------------------------------------------
 
+} // namespace actions
 } // namespace atlas
 
 #endif // BuildHalo_hpp
