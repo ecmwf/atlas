@@ -40,7 +40,7 @@
 
 #include "atlas/atlas_defines.h"
 
-// #define ATLAS_INDEXVIEW_BOUNDS_CHECKING
+#define ATLAS_INDEXVIEW_BOUNDS_CHECKING
 
 #ifdef ATLAS_INDEXVIEW_BOUNDS_CHECKING
 #include <stdexcept>
@@ -263,8 +263,8 @@ public:
   DATA_TYPE operator()(int i, int j, int k, int l) const { CHECK_BOUNDS_4(i,j,k,l); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]+l*strides_[3]) FROM_FORTRAN; }
   Index     operator()(int i, int j, int k, int l)       { CHECK_BOUNDS_4(i,j,k,l); return INDEX_REF(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]+l*strides_[3]); }
 
-  const IndexView<DATA_TYPE,3> operator[](int i) const { CHECK_BOUNDS_4(i,j,k,l); return IndexView<DATA_TYPE,3>( data_+strides_[0]*i, strides_+1, extents_+1 ); }
-  IndexView<DATA_TYPE,3>       operator[](int i)       { CHECK_BOUNDS_4(i,j,k,l); return IndexView<DATA_TYPE,3>( data_+strides_[0]*i, strides_+1, extents_+1 ); }
+  const IndexView<DATA_TYPE,3> operator[](int i) const { CHECK_BOUNDS_1(i); return IndexView<DATA_TYPE,3>( data_+strides_[0]*i, strides_+1, extents_+1 ); }
+  IndexView<DATA_TYPE,3>       operator[](int i)       { CHECK_BOUNDS_1(i); return IndexView<DATA_TYPE,3>( data_+strides_[0]*i, strides_+1, extents_+1 ); }
 
   const int* strides() const   { return strides_; }
   const int* extents() const   { return extents_; }
