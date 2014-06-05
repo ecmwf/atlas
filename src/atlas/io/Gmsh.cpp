@@ -212,7 +212,7 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh )
 void Gmsh::write(Mesh& mesh, const std::string& file_path)
 {
   bool spherical=false;
-  bool include_ghost_elements = false;
+  bool include_ghost_elements = true;
 
   FunctionSpace& nodes    = mesh.function_space( "nodes" );
   ArrayView<double,2> coords  ( nodes.field( "coordinates" ) );

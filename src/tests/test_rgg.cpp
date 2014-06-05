@@ -283,10 +283,6 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_one_part )
 
     double max_lat = test::MinimalMesh(nlat,lon).lat(0);
     BOOST_CHECK_CLOSE( test::compute_latlon_area(*mesh), 2.*M_PI*2.*max_lat, 1e-8 );
-
-    build_periodic_boundaries(*mesh);
-    build_edges(*mesh);
-    build_dual_mesh(*mesh);
     Gmsh::write(*mesh,"minimal2.msh");
     delete mesh;
   }
@@ -298,10 +294,6 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_one_part )
     BOOST_CHECK_EQUAL( mesh->function_space("nodes" ).extents()[0], 42 );
     BOOST_CHECK_EQUAL( mesh->function_space("quads" ).extents()[0], 28 );
     BOOST_CHECK_EQUAL( mesh->function_space("triags").extents()[0],  8 );
-
-    build_periodic_boundaries(*mesh);
-    build_edges(*mesh);
-    build_dual_mesh(*mesh);
     Gmsh::write(*mesh,"minimal3.msh");
     delete mesh;
   }
@@ -313,10 +305,6 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_one_part )
     BOOST_CHECK_EQUAL( mesh->function_space("nodes" ).extents()[0], 64 );
     BOOST_CHECK_EQUAL( mesh->function_space("quads" ).extents()[0], 46 );
     BOOST_CHECK_EQUAL( mesh->function_space("triags").extents()[0], 12 );
-
-    build_periodic_boundaries(*mesh);
-    build_edges(*mesh);
-    build_dual_mesh(*mesh);
     Gmsh::write(*mesh,"minimal4.msh");
     delete mesh;
   }
@@ -325,52 +313,10 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_one_part )
     int nlat=5;
     int lon[] = { 6, 10, 18, 22, 22 };
     mesh = generate( test::MinimalMesh(nlat,lon) );
-    // BOOST_CHECK_EQUAL( mesh->function_space("nodes" ).extents()[0], 42 );
-    // BOOST_CHECK_EQUAL( mesh->function_space("quads" ).extents()[0], 28 );
-    // BOOST_CHECK_EQUAL( mesh->function_space("triags").extents()[0],  8 );
-
-    build_periodic_boundaries(*mesh);
-    build_edges(*mesh);
-    build_dual_mesh(*mesh);
+    BOOST_CHECK_EQUAL( mesh->function_space("nodes" ).extents()[0], 166 );
+    BOOST_CHECK_EQUAL( mesh->function_space("quads" ).extents()[0], 134 );
+    BOOST_CHECK_EQUAL( mesh->function_space("triags").extents()[0],  32 );
     Gmsh::write(*mesh,"minimal5.msh");
-    delete mesh;
-  }
-  // 10 latitudes WIP
-  ENABLE {
-    int nlat=6;
-    int lon[] = {
-      36-25,
-      40-25,
-      45-25,
-      50-25,
-      60-25,
-      64-25,
-      72-25,
-      75-25 };
-    // int lon[] = { 4, 6, 8, 10, 12, 14, 16, 18, 20, 22 };
-    mesh = generate( test::MinimalMesh(nlat,lon) );
-    // BOOST_CHECK_EQUAL( mesh->function_space("nodes" ).extents()[0], 42 );
-    // BOOST_CHECK_EQUAL( mesh->function_space("quads" ).extents()[0], 28 );
-    // BOOST_CHECK_EQUAL( mesh->function_space("triags").extents()[0],  8 );
-    Gmsh::write(*mesh,"before.msh");
-
-    build_periodic_boundaries(*mesh);
-    build_edges(*mesh);
-    // build_dual_mesh(*mesh);
-    Gmsh::write(*mesh,"after.msh");
-    delete mesh;
-  }
-  // T63 WIP
-  ENABLE {
-    mesh = generate( T63() );
-    // BOOST_CHECK_EQUAL( mesh->function_space("nodes" ).extents()[0], 42 );
-    // BOOST_CHECK_EQUAL( mesh->function_space("quads" ).extents()[0], 28 );
-    // BOOST_CHECK_EQUAL( mesh->function_space("triags").extents()[0],  8 );
-
-    build_periodic_boundaries(*mesh);
-    build_edges(*mesh);
-    build_dual_mesh(*mesh);
-    Gmsh::write(*mesh,"t63.msh");
     delete mesh;
   }
 }

@@ -707,7 +707,47 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& par
   triags.metadata().set("max_glb_idx",nquads+ntriags);
   edges.metadata().set("max_glb_idx", nquads+ntriags);
   
+
+  generate_global_element_numbering( *mesh );
+
   return mesh;
+}
+
+void RGGMeshGenerator::generate_global_element_numbering( Mesh& mesh )
+{
+  int loc_nb_elems = 0;
+  std::vector<int> elem_counts( MPL::size() );
+  std::vector<int> elem_displs( MPL::size() );
+  for( int f=0; f<mesh.nb_function_spaces(); ++f )
+  {
+    FunctionSpace& elements = mesh.function_space(f);
+    if( elements.metadata().get<int>("type") == Entity::ELEMS )
+    {
+      loc_nb_elems += elements.extents()[0];
+    }
+  }
+  MPL_CHECK_RESULT( MPI_Allgather( &loc_nb_elems, 1, MPI_INT, elem_counts.data(), 1, MPI_INT, MPI_COMM_WORLD) );
+  elem_displs[0] = 0;
+  for( int jproc=1; jproc<MPL::size(); ++jproc )
+  {
+    elem_displs[jproc] = elem_displs[jproc-1] + elem_counts[jproc-1];
+  }
+
+  int gid = 1+elem_displs[ MPL::rank() ];
+
+  for( int f=0; f<mesh.nb_function_spaces(); ++f )
+  {
+    FunctionSpace& elements = mesh.function_space(f);
+    if( elements.metadata().get<int>("type") == Entity::ELEMS )
+    {
+      ArrayView<int,1> glb_idx( elements.field("glb_idx") );
+      int nb_elems = elements.extents()[0];
+      for( int e=0; e<nb_elems; ++e )
+      {
+        glb_idx(e) = gid++;
+      }
+    }
+  }
 }
 
 } // namespace meshgen

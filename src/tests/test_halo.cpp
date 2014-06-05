@@ -45,17 +45,17 @@ BOOST_AUTO_TEST_CASE( init ) { MPL::init(); }
 BOOST_AUTO_TEST_CASE( test_halo_2parts )
 {
   RGGMeshGenerator generate;
-  generate.options.set("nb_parts",64);
+  generate.options.set("nb_parts",MPL::size());
   generate.options.set("include_pole",false);
   generate.options.set("three_dimensional",false);
 
   int parts[] = {10,11};
-  int part = parts[MPL::rank()];
+  int part = MPL::rank() ; //parts[MPL::rank()];
 
-  generate.options.set("part",part);
+  generate.options.set("part",MPL::rank());
   Mesh* m = generate( T63() );
 
-  actions::build_halo(*m);
+  actions::build_halo(*m,2);
 
   std::stringstream filename; filename << "T63_halo_p" << part << ".msh";
   Gmsh::write(*m,filename.str());

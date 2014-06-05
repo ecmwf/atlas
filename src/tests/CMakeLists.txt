@@ -39,7 +39,7 @@ ecbuild_add_test( TARGET test_rgg
 
 ecbuild_add_test( TARGET test_halo
   BOOST
-  MPI      2
+  MPI      12
   SOURCES  test_halo.cpp
   LIBS     atlas_meshgen
 )
