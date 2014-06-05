@@ -25,6 +25,7 @@ ecbuild_add_test( TARGET test_indexview
   LIBS     atlas
 )
 
+
 ecbuild_add_test( TARGET test_gmsh
   BOOST
   SOURCES  test_gmsh.cpp
@@ -34,6 +35,12 @@ ecbuild_add_test( TARGET test_gmsh
 ecbuild_add_test( TARGET test_rgg
   BOOST
   SOURCES  test_rgg.cpp
+  LIBS     atlas_meshgen
+)
+
+ecbuild_add_test( TARGET test_parfields
+  BOOST
+  SOURCES  test_parfields.cpp
   LIBS     atlas_meshgen
 )
 

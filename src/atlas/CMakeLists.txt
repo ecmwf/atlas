@@ -93,6 +93,8 @@ list( APPEND atlas_actions_srcs
   actions/BuildEdges.cpp
   actions/BuildHalo.hpp
   actions/BuildHalo.cpp
+  actions/BuildParallelFields.hpp
+  actions/BuildParallelFields.cpp
   actions/BuildPeriodicBoundaries.hpp
   actions/BuildPeriodicBoundaries.cpp
 )
