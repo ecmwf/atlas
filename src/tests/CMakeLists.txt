@@ -40,6 +40,7 @@ ecbuild_add_test( TARGET test_rgg
 
 ecbuild_add_test( TARGET test_parfields
   BOOST
+  MPI 2
   SOURCES  test_parfields.cpp
   LIBS     atlas_meshgen
 )

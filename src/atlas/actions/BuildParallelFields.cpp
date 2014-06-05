@@ -30,85 +30,6 @@ ArrayView<int,1> build_nodes_glb_idx_serial( FunctionSpace& nodes );
 ArrayView<int,1> build_nodes_partition( FunctionSpace& nodes );
 IndexView<int,1> build_nodes_remote_loc_idx( FunctionSpace& nodes );
 
-// ------------------------------------------------------------------
-
-void build_parallel_fields( Mesh& mesh )
-{
-  ASSERT( mesh.has_function_space("nodes") );
-
-  FunctionSpace& nodes = mesh.function_space("nodes");
-
-  ArrayView<int,1> nodes_glb_idx;
-  if( nodes.has_field("glb_idx") )
-    nodes_glb_idx = ArrayView<int,1> ( nodes.field("glb_idx") );
-  else if( MPL::size() > 1 )
-    throw eckit::SeriousBug( "parallel mesh needs nodes glb_idx", Here() );
-  else
-    nodes_glb_idx = build_nodes_glb_idx_serial( nodes );
-
-  ArrayView<int,1> nodes_part;
-  if( nodes.has_field("partition") )
-    nodes_part = ArrayView<int,1> ( nodes.field("partition") );
-  else
-    nodes_part = build_nodes_partition( nodes );
-
-  IndexView<int,1> nodes_loc_idx;
-  if( nodes.has_field("remote_loc_idx") )
-    nodes_loc_idx = IndexView<int,1> ( nodes.field("remote_loc_idx") );
-  else
-    nodes_loc_idx = build_nodes_remote_loc_idx( nodes );
-
-  make_periodic(mesh);
-}
-
-// ------------------------------------------------------------------
-
-ArrayView<int,1> build_nodes_glb_idx_serial( FunctionSpace& nodes )
-{
-  ArrayView<int,1> glb_idx ( nodes.create_field<int>("glb_idx",1) );
-  for( int jnode=0; jnode<glb_idx.extents()[0]; ++jnode )
-    glb_idx[jnode] = jnode+1;
-  return glb_idx;
-}
-
-// ------------------------------------------------------------------
-
-IndexView<int,1> build_nodes_remote_loc_idx( FunctionSpace& nodes )
-{
-  IndexView<int,1> loc_idx ( nodes.create_field<int>("remote_loc_idx",1) );
-  if( MPL::size() == 1 )
-  {
-    for( int jnode=0; jnode<loc_idx.extents()[0]; ++jnode )
-      loc_idx[jnode] = jnode;
-  }
-  else
-    NOTIMP;
-  return loc_idx;
-}
-
-// ------------------------------------------------------------------
-
-ArrayView<int,1> build_nodes_partition( FunctionSpace& nodes )
-{
-  ArrayView<int,1> part ( nodes.create_field<int>("partition",1) );
-  if( MPL::size() == 1 )
-    part = MPL::rank();
-  else
-  {
-    if( nodes.has_field("proc") )
-    {
-      ArrayView<int,1> proc( nodes.field("proc") );
-      for( int jnode=0; jnode<nodes.extents()[0]; ++jnode )
-        part(jnode) = proc(jnode);
-    }
-    else
-      NOTIMP;
-  }
-  return part;
-}
-
-// ------------------------------------------------------------------
-
 int microdeg( const double& deg )
 {
   return static_cast<int>(deg*1.e6);
@@ -136,7 +57,6 @@ struct LatLon
     y = microdeg(coord[YY]);
   }
   int x, y;
-  int n;
   bool operator < (const LatLon& other) const
   {
     if( y > other.y  ) return true;
@@ -145,6 +65,132 @@ struct LatLon
   }
 };
 
+// ------------------------------------------------------------------
+
+void build_parallel_fields( Mesh& mesh )
+{
+  ASSERT( mesh.has_function_space("nodes") );
+
+  FunctionSpace& nodes = mesh.function_space("nodes");
+
+  ArrayView<int,1> nodes_glb_idx;
+  if( nodes.has_field("glb_idx") )
+    nodes_glb_idx = ArrayView<int,1> ( nodes.field("glb_idx") );
+  else if( MPL::size() > 1 )
+    throw eckit::SeriousBug( "parallel mesh needs nodes glb_idx", Here() );
+  else
+    nodes_glb_idx = build_nodes_glb_idx_serial( nodes );
+
+  ArrayView<int,1> nodes_part;
+  if( nodes.has_field("partition") )
+    nodes_part = ArrayView<int,1> ( nodes.field("partition") );
+  else
+    nodes_part = build_nodes_partition( nodes );
+
+  IndexView<int,1> nodes_loc_idx;
+  if( nodes.has_field("remote_loc_idx") )
+    nodes_loc_idx = IndexView<int,1> ( nodes.field("remote_loc_idx") );
+  else
+    nodes_loc_idx = build_nodes_remote_loc_idx( nodes );
+}
+
+// ------------------------------------------------------------------
+
+ArrayView<int,1> build_nodes_glb_idx_serial( FunctionSpace& nodes )
+{
+  ArrayView<int,1> glb_idx ( nodes.create_field<int>("glb_idx",1) );
+  for( int jnode=0; jnode<glb_idx.extents()[0]; ++jnode )
+    glb_idx[jnode] = jnode+1;
+  return glb_idx;
+}
+
+// ------------------------------------------------------------------
+
+IndexView<int,1> build_nodes_remote_loc_idx( FunctionSpace& nodes )
+{
+  int mypart = MPL::rank();
+  IndexView<int,   1> loc_idx ( nodes.create_field<int>("remote_loc_idx",1) );
+  ArrayView<int,   1> part    ( nodes.field("partition")   );
+  ArrayView<double,2> latlon  ( nodes.field("coordinates") );
+
+  std::vector< std::vector<int> > send_needed( MPL::size() );
+  std::vector< std::vector<int> > recv_needed( MPL::size() );
+
+  int nb_nodes = nodes.extents()[0];
+  int sendcnt=0;
+  std::map<LatLon,int> lookup;
+  for( int jnode=0; jnode<nb_nodes; ++jnode )
+  {
+    LatLon ll(latlon[jnode]);
+    if( part(jnode)==mypart )
+    {
+      lookup[ ll ] = jnode;
+      loc_idx(jnode) = jnode;
+    }
+    else
+    {
+      send_needed[part(jnode)].push_back( ll.x  );
+      send_needed[part(jnode)].push_back( ll.y  );
+      send_needed[part(jnode)].push_back( jnode );
+      sendcnt++;
+    }
+  }
+
+  MPL::Alltoall( send_needed, recv_needed );
+
+  std::vector< std::vector<int> > send_found( MPL::size() );
+  std::vector< std::vector<int> > recv_found( MPL::size() );
+
+  for( int jpart=0; jpart<MPL::size(); ++jpart )
+  {
+    ArrayView<int,2> recv_node( recv_needed[jpart].data(), Extents(recv_needed[jpart].size()/3,3).data() );
+    for( int jnode=0; jnode<recv_node.extents()[0]; ++jnode )
+    {
+      LatLon ll( recv_node[jnode] );
+      if( lookup.count(ll) )
+      {
+        send_found[jpart].push_back( recv_node(jnode,2) );
+        send_found[jpart].push_back( lookup[ll] );
+      }
+    }
+  }
+
+  MPL::Alltoall( send_found, recv_found );
+
+  for( int jpart=0; jpart<MPL::size(); ++jpart )
+  {
+    ArrayView<int,2> recv_node( recv_found[jpart].data(), Extents(recv_found[jpart].size()/2,2).data() );
+    for( int jnode=0; jnode<recv_node.extents()[0]; ++jnode )
+    {
+      loc_idx( recv_node(jnode,0) ) = recv_node(jnode,1);
+    }
+  }
+
+  return loc_idx;
+}
+
+// ------------------------------------------------------------------
+
+ArrayView<int,1> build_nodes_partition( FunctionSpace& nodes )
+{
+  ArrayView<int,1> part ( nodes.create_field<int>("partition",1) );
+  if( MPL::size() == 1 )
+    part = MPL::rank();
+  else
+  {
+    if( nodes.has_field("proc") )
+    {
+      ArrayView<int,1> proc( nodes.field("proc") );
+      for( int jnode=0; jnode<nodes.extents()[0]; ++jnode )
+        part(jnode) = proc(jnode);
+    }
+    else
+      NOTIMP;
+  }
+  return part;
+}
+
+// ------------------------------------------------------------------
 
 void make_periodic( Mesh& mesh )
 {
@@ -154,7 +200,7 @@ void make_periodic( Mesh& mesh )
 
   IndexView<int,1> loc_idx ( nodes.field("remote_loc_idx") );
   ArrayView<int,1> part    ( nodes.field("partition")      );
-  ArrayView<int,1> glb_idx ( nodes.field("glb_idx")        );
+  //ArrayView<int,1> glb_idx ( nodes.field("glb_idx")        );
 
   int nb_nodes = nodes.extents()[0];
 
@@ -278,8 +324,8 @@ void make_periodic( Mesh& mesh )
 
   // Fill in data to communicate
   std::vector< std::vector<int> > recv_slave_idx( MPL::size() );
-  std::vector< std::vector<int> > send_master_glb_idx( MPL::size() );
-  std::vector< std::vector<int> > recv_master_glb_idx( MPL::size() );
+  //std::vector< std::vector<int> > send_master_glb_idx( MPL::size() );
+  //std::vector< std::vector<int> > recv_master_glb_idx( MPL::size() );
   std::vector< std::vector<int> > send_master_part( MPL::size() );
   std::vector< std::vector<int> > recv_master_part( MPL::size() );
   std::vector< std::vector<int> > send_master_loc( MPL::size() );
@@ -296,13 +342,13 @@ void make_periodic( Mesh& mesh )
     for( int jproc=0; jproc<MPL::size(); ++jproc )
     {
       int nb_found_master = found_master[jproc].size();
-      send_master_glb_idx[jproc].resize(nb_found_master);
+      //send_master_glb_idx[jproc].resize(nb_found_master);
       send_master_part   [jproc].resize(nb_found_master);
       send_master_loc    [jproc].resize(nb_found_master);
       for( int jnode=0; jnode<nb_found_master; ++jnode )
       {
         int loc_idx = found_master[jproc][jnode];
-        send_master_glb_idx[jproc][jnode] = glb_idx( loc_idx );
+        //send_master_glb_idx[jproc][jnode] = glb_idx( loc_idx );
         send_master_part   [jproc][jnode] = part   ( loc_idx );
         send_master_loc    [jproc][jnode] = loc_idx;
       }
@@ -323,7 +369,7 @@ void make_periodic( Mesh& mesh )
 
   // Communicate
   MPL::Alltoall( send_slave_idx,      recv_slave_idx      );
-  MPL::Alltoall( send_master_glb_idx, recv_master_glb_idx );
+  //MPL::Alltoall( send_master_glb_idx, recv_master_glb_idx );
   MPL::Alltoall( send_master_part,    recv_master_part    );
   MPL::Alltoall( send_master_loc,     recv_master_loc     );
                     //  MPL::Alltoall( send_slave_glb_idx,  recv_slave_glb_idx );
