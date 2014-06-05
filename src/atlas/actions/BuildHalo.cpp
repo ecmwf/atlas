@@ -43,9 +43,9 @@ void accumulate_faces(
 
 void increase_halo( Mesh& mesh );
 
-void build_halo( Mesh& mesh, int nhalo )
+void build_halo(Mesh& mesh, int nb_elems )
 {
-  for( int jhalo=0; jhalo<nhalo; ++jhalo )
+  for( int jhalo=0; jhalo<nb_elems; ++jhalo )
   {
     increase_halo( mesh );
   }
@@ -544,8 +544,8 @@ void accumulate_faces(
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
-void atlas__build_halo ( Mesh* mesh) {
-  build_halo(*mesh);
+void atlas__build_halo ( Mesh* mesh, int nb_elems ) {
+  build_halo(*mesh, nb_elems);
 }
 
 // ------------------------------------------------------------------

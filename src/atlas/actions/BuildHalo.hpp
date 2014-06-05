@@ -17,7 +17,7 @@ namespace atlas {
   class Mesh;
 namespace actions {
 
-void build_halo( Mesh& mesh, int nhalo=1 );
+void build_halo( Mesh& mesh, int nb_elems );
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
