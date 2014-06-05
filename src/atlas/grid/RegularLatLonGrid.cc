@@ -19,9 +19,7 @@
 // so whatever the samples say, is the convention
 // ==================================================================================
 
-#include <stdexcept>
-
-#include "eckit/log/Log.h"
+//#include "eckit/log/Log.h"
 #include "atlas/grid/RegularLatLonGrid.h"
 
 using namespace eckit;
@@ -40,12 +38,12 @@ RegularLatLonGrid::RegularLatLonGrid()
    nptsNS_(0),
    nptsWE_(0)
 {
-   Log::info() << "RegularLatLonGrid" << std::endl;
+//   Log::info() << "RegularLatLonGrid" << std::endl;
 }
 
 RegularLatLonGrid::~RegularLatLonGrid()
 {
-    Log::info() << "Destroy a RegularLatLonGrid" << std::endl;
+//    Log::info() << "Destroy a RegularLatLonGrid" << std::endl;
 }
 
 Grid::Point RegularLatLonGrid::latLon(size_t the_i, size_t the_j) const

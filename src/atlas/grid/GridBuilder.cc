@@ -26,12 +26,14 @@ using namespace std;
 using namespace eckit;
 using namespace eckit::geometry;
 
+#define DEBUG 1
 
 namespace atlas {
 namespace grid {
 
-typedef std::vector< atlas::grid::Grid::Point > PointList;
+typedef std::vector< Grid::Point > PointList;
 static PointList* read_number_of_data_points(grib_handle *h);
+static void read_data_points(grib_handle *h, PointList& points);
 
 //=====================================================================================
 
@@ -65,7 +67,19 @@ Grid::Ptr GRIBGridBuilder::build_grid_from_grib_handle( grib_handle* handle ) co
       throw SeriousBug(string("grib_get_string failed for gridType"),Here());
    }
 
-   if (strncasecmp(string_value,"regular_ll",10) == 0) {
+   if (strncasecmp(string_value,"reduced_gg",10) == 0) {
+      GribReducedGaussianGrid maker( handle );
+      return maker.build();
+   }
+   else if (strncasecmp(string_value,"reduced_ll",10) == 0) {
+      GribReducedLatLonGrid maker( handle );
+      return maker.build();
+   }
+   else if (strncasecmp(string_value,"regular_gg",10) == 0) {
+      GribRegularGaussianGrid maker( handle );
+      return maker.build();
+   }
+   else if (strncasecmp(string_value,"regular_ll",10) == 0) {
       GribRegularLatLonGrid maker( handle );
       return maker.build();
    }
@@ -73,17 +87,9 @@ Grid::Ptr GRIBGridBuilder::build_grid_from_grib_handle( grib_handle* handle ) co
    //      GribSphericalHarmonicGrid maker( handle );
    //      return SphericalHarmonicGrid( maker.hash(), maker.boundingBox(),...);
    //   }
-   else if (strncasecmp(string_value,"reduced_ll",10) == 0) {
-      GribReducedLatLonGrid maker( handle );
-      return maker.build();
-   }
-   else if (strncasecmp(string_value,"reduced_gg",10) == 0) {
-      GribReducedGaussianGrid maker( handle );
-      return maker.build();
-   }
-   else if (strncasecmp(string_value,"regular_gg",10) == 0) {
-      GribRegularGaussianGrid maker( handle );
-      return maker.build();
+   else if (strncasecmp(string_value,"rotated_ll",10) == 0) {
+       GribRotatedLatLonGrid maker( handle );
+       return maker.build();
    }
 
    // Unknown grid type, extract data points from the grib handle
@@ -139,7 +145,8 @@ GribGridBuilderHelper::GribGridBuilderHelper(grib_handle* handle)
   editionNumber_(0),
   north_(0.0),south_(0.0),west_(0.0),east_(0.0),
   epsilon_(1e-6),
-  numberOfDataPoints_(0)
+  numberOfDataPoints_(0),
+  hash_(grib_hash(handle))
 {
    if (handle == NULL) {
       throw SeriousBug(string("NULL grib_handle"),Here());
@@ -147,8 +154,6 @@ GribGridBuilderHelper::GribGridBuilderHelper(grib_handle* handle)
 
    GRIB_CHECK(grib_get_long(handle,"editionNumber",&editionNumber_),0);
    epsilon_ = (editionNumber_ == 1) ? 1e-3 : 1e-6;
-
-   hash_ = grib_hash(handle);
 
    GRIB_CHECK(grib_get_long(handle,"iScansNegatively",&iScansNegatively_),0);
    GRIB_CHECK(grib_get_long(handle,"jScansPositively",&jScansPositively_),0);
@@ -241,8 +246,9 @@ GribReducedGaussianGrid::GribReducedGaussianGrid(grib_handle* handle)
   nj_(0),
   the_grid_( new ReducedGaussianGrid() )
 {
+#ifdef DEBUG
    Log::info() << "Build a GribReducedGaussianGrid  " << std::endl;
-
+#endif
    the_grid_->bbox_ = boundingBox();
    the_grid_->hash_ = hash_;
 }
@@ -278,7 +284,9 @@ Grid::Ptr GribReducedGaussianGrid::build()
    // Create point list based on area. To avoid rounding errors determine if we have
    // Global area, then use simple algorithm.
    if (isGlobalNorthSouth() && isGlobalWestEast()) {
+#ifdef DEBUG
       Log::info() << " GLOBAL " << std::endl;
+#endif
       for ( size_t i = 0;  i < the_grid_->rgSpec_.size() && i < the_grid_->latitudes_.size(); i++ ) {
          long no_of_points_along_latitude = the_grid_->rgSpec_[i];
          if (no_of_points_along_latitude > 0 ) {
@@ -292,7 +300,9 @@ Grid::Ptr GribReducedGaussianGrid::build()
       }
    }
    else {
+#ifdef DEBUG
       Log::info() << " LOCAL " << std::endl;
+#endif
       for ( size_t i = 0; i < the_grid_->rgSpec_.size() && i < the_grid_->latitudes_.size(); i++ ) {
          if ( FloatCompare::is_equal(the_grid_->latitudes_[i],north_,epsilon()) ) {
             add_point(i);
@@ -309,6 +319,7 @@ Grid::Ptr GribReducedGaussianGrid::build()
    }
 
    double EXPECTED_longitudeOfLastGridPointInDegrees = 360.0 - (90.0/(the_grid_->gaussianNumber_));
+#ifdef DEBUG
    Log::info() << " editionNumber                                  " << editionNumber_ << std::endl;
    Log::info() << " epsilon()                                      " << epsilon() << std::endl;
    Log::info() << " gaussianNumber_                                " << the_grid_->gaussianNumber_ << std::endl;
@@ -330,20 +341,26 @@ Grid::Ptr GribReducedGaussianGrid::build()
    for(int i = 0; i < the_grid_->rgSpec_.size(); i++) no_of_points_in_pl += the_grid_->rgSpec_[i];
    Log::info() << " no_of_points_in_pl                             " << no_of_points_in_pl << std::endl;
    Log::info() << " points_.size()                                 " << the_grid_->points_.size() << std::endl;
+#endif
 
    ASSERT(nj_ == 2*the_grid_->gaussianNumber_);
    ASSERT(FloatCompare::is_equal(east_,EXPECTED_longitudeOfLastGridPointInDegrees,globalness_epsilon()));
    ASSERT(the_grid_->points_.size() == numberOfDataPoints_);
 
+
+#ifdef DEBUG
    // Check point list compared with grib
    comparePointList(the_grid_->points_,epsilon(),handle_);
+#endif
 
    return Grid::Ptr( the_grid_.release() );
 }
 
 GribReducedGaussianGrid::~GribReducedGaussianGrid()
 {
+#ifdef DEBUG
    Log::info() << "Destroy a GribReducedGaussianGrid" << std::endl;
+#endif
 }
 
 void GribReducedGaussianGrid::add_point(int lat_index)
@@ -386,15 +403,18 @@ GribRegularGaussianGrid::GribRegularGaussianGrid(grib_handle* handle)
   nj_(0),
   the_grid_( new RegularGaussianGrid() )
 {
+#ifdef DEBUG
    Log::info() << "Build a RegularGaussianGrid  " << std::endl;
-
+#endif
    the_grid_->bbox_ = boundingBox();
    the_grid_->hash_ = hash_;
 }
 
 GribRegularGaussianGrid::~GribRegularGaussianGrid()
 {
+#ifdef DEBUG
    Log::info() << "Destroy a GribRegularGaussianGrid" << std::endl;
+#endif
 }
 
 Grid::Ptr GribRegularGaussianGrid::build()
@@ -419,7 +439,9 @@ Grid::Ptr GribRegularGaussianGrid::build()
     double nptsWE = 4 * the_grid_->gaussianNumber_ ;
     double weIncrement = 360.0/nptsWE;
     if (isGlobalNorthSouth() && isGlobalWestEast()) {
+#ifdef DEBUG
        Log::info() << " GLOBAL                      weIncrement = " << weIncrement << std::endl;
+#endif
        for(size_t i = 0 ; i < the_grid_->latitudes_.size(); i++) {
           double plon = 0;
           for( size_t j = 0; j < nptsWE; ++j) {
@@ -429,7 +451,9 @@ Grid::Ptr GribRegularGaussianGrid::build()
        }
     }
     else {
+#ifdef DEBUG
        Log::info() << " LOCAL " << std::endl;
+#endif
        for(size_t i = 0 ; i < the_grid_->latitudes_.size(); i++) {
           double plat = the_grid_->latitudes_[i];
           if ( ( plat < north_ && plat > south_) ||
@@ -449,6 +473,7 @@ Grid::Ptr GribRegularGaussianGrid::build()
     }
 
     double EXPECTED_longitudeOfLastGridPointInDegrees = 360.0 - (90.0/(the_grid_->gaussianNumber_));
+#ifdef DEBUG
     Log::info() << " editionNumber                                  " << editionNumber_ << std::endl;
     Log::info() << " epsilon()                                      " << epsilon() << std::endl;
     Log::info() << " gaussianNumber_                                " << the_grid_->gaussianNumber_ << std::endl;
@@ -468,13 +493,15 @@ Grid::Ptr GribRegularGaussianGrid::build()
     Log::info() << " points_.size()  " << the_grid_->points_.size() << "       numberOfDataPoints " << numberOfDataPoints_ << std::endl;
     Log::info() << " point[0]                               " << the_grid_->points_[0].lat() << ", " << the_grid_->points_[0].lon() <<  std::endl;
     Log::info() << " point[1]                               " << the_grid_->points_[1].lat() << ", " << the_grid_->points_[1].lon() <<  std::endl;
+#endif
 
     ASSERT(the_grid_->points_.size() == numberOfDataPoints_);
-
     ASSERT(FloatCompare::is_equal(east_,EXPECTED_longitudeOfLastGridPointInDegrees,globalness_epsilon()));
 
+#ifdef DEBUG
     // Check point list compared with grib
     comparePointList(the_grid_->points_,epsilon(),handle_);
+#endif
 
     // take ownership
     return Grid::Ptr(the_grid_.release() );
@@ -501,14 +528,18 @@ GribRegularLatLonGrid::GribRegularLatLonGrid(grib_handle* handle)
 : GribGridBuilderHelper(handle),
   the_grid_( new RegularLatLonGrid() )
 {
+#ifdef DEBUG
    Log::info() << "Build a RegularLatLonGrid  " << std::endl;
+#endif
    the_grid_->bbox_ = boundingBox();
    the_grid_->hash_ = hash_;
 }
 
 GribRegularLatLonGrid::~GribRegularLatLonGrid()
 {
+#ifdef DEBUG
    Log::info() << "Destroy a GribRegularLatLonGrid" << std::endl;
+#endif
 }
 
 Grid::Ptr GribRegularLatLonGrid::build()
@@ -533,6 +564,7 @@ Grid::Ptr GribRegularLatLonGrid::build()
       plat -= the_grid_->nsIncrement_;
    }
 
+#ifdef DEBUG
    Log::info() << " editionNumber                                  " << editionNumber_ << std::endl;
    Log::info() << " iScansNegatively                               " << iScansNegatively_ << std::endl;
    Log::info() << " jScansPositively                               " << jScansPositively_ << std::endl;
@@ -552,6 +584,7 @@ Grid::Ptr GribRegularLatLonGrid::build()
    Log::info() << " computeRows()   " << computeRows(north_,south_,west_,east_) << "     nptsNS_ " << the_grid_->nptsNS_ << std::endl;
    Log::info() << " computeCols()   " << computeCols(west_,east_) <<  "     nptsWE_ " << the_grid_->nptsWE_ << std::endl;
    Log::info() << " points_.size()  " << the_grid_->points_.size() << "     numberOfDataPoints_ " << numberOfDataPoints_ << std::endl << std::endl;
+#endif
 
    ASSERT(FloatCompare::is_equal(the_grid_->nsIncrement_,computeIncLat(),0.01));
    ASSERT(FloatCompare::is_equal(the_grid_->weIncrement_,computeIncLon(),0.01));
@@ -559,8 +592,10 @@ Grid::Ptr GribRegularLatLonGrid::build()
    ASSERT(the_grid_->nptsWE_ == computeCols(west_,east_));
    ASSERT(the_grid_->points_.size() == numberOfDataPoints_);
 
+#ifdef DEBUG
    // Check point list compared with grib
    comparePointList(the_grid_->points_,epsilon(),handle_);
+#endif
 
    // take ownership
    return Grid::Ptr( the_grid_.release() );
@@ -615,7 +650,9 @@ GribReducedLatLonGrid::GribReducedLatLonGrid(grib_handle* handle)
 : GribGridBuilderHelper(handle),
   the_grid_( new ReducedLatLonGrid() )
 {
+#ifdef DEBUG
    Log::info() << "Build a GribReducedLatLonGrid  " << std::endl;
+#endif
    the_grid_->bbox_ = boundingBox();
    the_grid_->hash_ = hash_;
 }
@@ -643,7 +680,9 @@ Grid::Ptr GribReducedLatLonGrid::build()
    // Create point list based on area. To avoid rounding errors determine if we have
    // Global area, then use simple algorithm.
    if (isGlobalNorthSouth() && isGlobalWestEast()) {
+#ifdef DEBUG
       Log::info() << " GLOBAL " << std::endl;
+#endif
       double plat = north_;
       for( size_t j = 0; j < the_grid_->nptsNS_ && j < the_grid_->rgSpec_.size(); ++j) {
 
@@ -661,7 +700,9 @@ Grid::Ptr GribReducedLatLonGrid::build()
       }
    }
    else {
+#ifdef DEBUG
       Log::info() << " LOCAL " << std::endl;
+#endif
 
       double plat = north_;
       for( size_t j = 0; j < the_grid_->nptsNS_ && j < the_grid_->rgSpec_.size(); ++j) {
@@ -694,6 +735,7 @@ Grid::Ptr GribReducedLatLonGrid::build()
       }
    }
 
+#ifdef DEBUG
    Log::info() << " editionNumber                                  " << editionNumber_ << std::endl;
    Log::info() << " isGlobalNorthSouth()                           " << isGlobalNorthSouth() << std::endl;
    Log::info() << " isGlobalWestEast()                             " << isGlobalWestEast() << std::endl;
@@ -710,12 +752,15 @@ Grid::Ptr GribReducedLatLonGrid::build()
    Log::info() << " -----------------------------------------------" << std::endl;
    Log::info() << " computeIncLat() " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << computeIncLat() << "      nsIncrement_ " << the_grid_->nsIncrement_ << std::endl;
    Log::info() << " points_.size()  " << the_grid_->points_.size() << "     numberOfDataPoints_ " << numberOfDataPoints_ << std::endl << std::endl;
+#endif
 
    ASSERT(FloatCompare::is_equal(the_grid_->nsIncrement_,computeIncLat(),0.001));
    ASSERT(the_grid_->points_.size() == numberOfDataPoints_);
 
+#ifdef DEBUG
    // Check point list compared with grib
    comparePointList(the_grid_->points_,epsilon(),handle_);
+#endif
 
    // take ownership
    return Grid::Ptr( the_grid_.release() );
@@ -755,6 +800,127 @@ bool GribReducedLatLonGrid::isGlobalWestEast() const
 }
 
 // ========================================================================================
+
+GribRotatedLatLonGrid::GribRotatedLatLonGrid(grib_handle* handle)
+: GribGridBuilderHelper(handle),
+  the_grid_( new RotatedLatLonGrid() )
+{
+#ifdef DEBUG
+   Log::info() << "Build a RotatedLatLonGrid  " << std::endl;
+#endif
+   the_grid_->bbox_ = boundingBox();
+   the_grid_->hash_ = hash_;
+}
+
+GribRotatedLatLonGrid::~GribRotatedLatLonGrid()
+{
+#ifdef DEBUG
+   Log::info() << "Destroy a GribRotatedLatLonGrid" << std::endl;
+#endif
+}
+
+Grid::Ptr GribRotatedLatLonGrid::build()
+{
+   // Extract the rotated lat long grid attributes from the grib handle
+
+   GRIB_CHECK(grib_get_double(handle_,"jDirectionIncrementInDegrees",&(the_grid_->nsIncrement_)),0);
+   GRIB_CHECK(grib_get_double(handle_,"iDirectionIncrementInDegrees",&(the_grid_->weIncrement_)),0);
+
+   GRIB_CHECK(grib_get_long(handle_,"Ni",&(the_grid_->nptsWE_)),0);
+   GRIB_CHECK(grib_get_long(handle_,"Nj",&(the_grid_->nptsNS_)),0);
+
+   GRIB_CHECK(grib_get_double(handle_,"latitudeOfSouthernPoleInDegrees",&(the_grid_->rotated_latitude_)),0);
+   GRIB_CHECK(grib_get_double(handle_,"longitudeOfSouthernPoleInDegrees",&(the_grid_->rotated_longitude_)),0);
+   GRIB_CHECK(grib_get_double(handle_,"angleOfRotation",&(the_grid_->rotated_angle_)),0);
+
+   // NOTE: When that latitudeOfSouthernPoleInDegrees and longitudeOfSouthernPoleInDegrees and angleOfRotation
+   //       are all equal to zero, then its the same as regular lat long grid.
+   //       This is what we find from the grib samples files.
+   //
+   // NOTE: Grib iterator does *NOT* really rotate the points, so this is something we will need to do for ourselves
+   read_data_points(handle_, the_grid_->points_);
+
+#ifdef DEBUG
+   Log::info() << " editionNumber                                  " << editionNumber_ << std::endl;
+   Log::info() << " iScansNegatively                               " << iScansNegatively_ << std::endl;
+   Log::info() << " jScansPositively                               " << jScansPositively_ << std::endl;
+   Log::info() << " scanning_mode                                  " << scanningMode(iScansNegatively_,jScansPositively_) << std::endl;
+   Log::info() << " latitudeOfFirstGridPointInDegrees              " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << north_ << std::endl;
+   Log::info() << " longitudeOfFirstGridPointInDegrees             " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << west_ << std::endl;
+   Log::info() << " latitudeOfLastGridPointInDegrees               " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << south_ << std::endl;
+   Log::info() << " longitudeOfLastGridPointInDegrees              " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << east_ << std::endl;
+   Log::info() << " jDirectionIncrementInDegrees(north-south incr) " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << the_grid_->nsIncrement_ << std::endl;
+   Log::info() << " iDirectionIncrementInDegrees(west-east   incr) " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << the_grid_->weIncrement_ << std::endl;
+   Log::info() << " Nj(num of points North South)                  " << the_grid_->nptsNS_ << std::endl;
+   Log::info() << " Ni(num of points West East)                    " << the_grid_->nptsWE_ << std::endl;
+   Log::info() << " numberOfDataPoints                             " << numberOfDataPoints_ << std::endl;
+   Log::info() << " -----------------------------------------------" << std::endl;
+   Log::info() << " computeIncLat() " << computeIncLat() << "      nsIncrement_ " << the_grid_->nsIncrement_ << std::endl;
+   Log::info() << " computeIncLon() " << computeIncLon() << "      weIncrement_ " << the_grid_->nsIncrement_ << std::endl;
+   Log::info() << " computeRows()   " << computeRows(north_,south_,west_,east_) << "     nptsNS_ " << the_grid_->nptsNS_ << std::endl;
+   Log::info() << " computeCols()   " << computeCols(west_,east_) <<  "     nptsWE_ " << the_grid_->nptsWE_ << std::endl;
+   Log::info() << " points_.size()  " << the_grid_->points_.size() << "     numberOfDataPoints_ " << numberOfDataPoints_ << std::endl << std::endl;
+#endif
+
+   ASSERT(FloatCompare::is_equal(the_grid_->nsIncrement_,computeIncLat(),0.01));
+   ASSERT(FloatCompare::is_equal(the_grid_->weIncrement_,computeIncLon(),0.01));
+   ASSERT(the_grid_->nptsNS_ == computeRows(north_,south_,west_,east_));
+   ASSERT(the_grid_->nptsWE_ == computeCols(west_,east_));
+   ASSERT(the_grid_->points_.size() == numberOfDataPoints_);
+
+#ifdef DEBUG
+   // Check point list compared with grib
+   comparePointList(the_grid_->points_,epsilon(),handle_);
+#endif
+
+   // take ownership
+   return Grid::Ptr( the_grid_.release() );
+}
+
+double GribRotatedLatLonGrid::computeIncLat() const
+{
+   double north_diff_south = 0.0;
+   if (north_ > 0.0 && south_ > 0.0 ) north_diff_south = north_ - south_;
+   else if ( north_ < 0.0 && south_ < 0.0) north_diff_south = fabs(north_) - fabs(south_);
+   else north_diff_south  = fabs(north_) + fabs(south_);
+
+   if (rows() > north_diff_south)
+      return north_diff_south/rows();
+
+   // Avoid truncation errors
+   long inc_lat = north_diff_south/(rows() + 1) + 0.5;
+   return inc_lat;
+}
+
+double GribRotatedLatLonGrid::computeIncLon() const
+{
+   if (cols() > (east_ - west_))
+      return ((east_ - west_)/cols());
+
+   // Avoid truncation errors
+   long inc_lon = ((east_ - west_)/cols() + 0.5 );
+   return inc_lon;
+}
+
+long GribRotatedLatLonGrid::computeRows(double north, double south, double west, double east) const
+{
+   if (north > 0.0 && south > 0.0 ) return (north - south)/the_grid_->nsIncrement_ + 1;
+   else if ( north < 0.0 && south < 0.0) return (fabs(north) - fabs(south))/the_grid_->nsIncrement_ + 1;
+
+   return (fabs(north) + fabs(south))/the_grid_->nsIncrement_ + 1;
+}
+
+long GribRotatedLatLonGrid::computeCols(double west, double east) const
+{
+   return fabs((east - west)/the_grid_->weIncrement_) + 1;
+}
+
+long GribRotatedLatLonGrid::rows() const { return the_grid_->rows();}
+long GribRotatedLatLonGrid::cols() const { return the_grid_->cols();}
+double GribRotatedLatLonGrid::incLat() const { return the_grid_->incLat(); }
+double GribRotatedLatLonGrid::incLon() const { return the_grid_->incLon(); }
+
+// ========================================================================================
 static PointList* read_number_of_data_points(grib_handle *h)
 {
    // points to read
@@ -781,10 +947,41 @@ static PointList* read_number_of_data_points(grib_handle *h)
       (*pts)[idx].assign(lat,lon);
       ++idx;
    }
-   grib_iterator_delete(i);
+
+   if ( grib_iterator_delete(i) != 0 ) {
+      throw SeriousBug(string("Error reading grib. Could not delete grib iterator"),Here()) ;
+   }
 
    ASSERT( idx == nb_nodes );
    return pts;
+}
+
+static void read_data_points(grib_handle *h, PointList& points)
+{
+   // points to read
+   long nb_nodes = 0;
+   grib_get_long(h,"numberOfDataPoints",&nb_nodes);
+
+   points.reserve(nb_nodes);
+
+   /// It should be noted that grib iterator is *only* available for certain grids
+   /// i.e for Spherical Harmonics it is not implemented.
+   int err = 0;
+   grib_iterator *i = grib_iterator_new(h, 0, &err);
+   if ( err != 0 ) {
+      throw SeriousBug(string("Error reading grib. Could not create grib_iterator_new"),Here()) ;
+   }
+
+   double lat   = 0.;
+   double lon   = 0.;
+   double value = 0.;
+   while( grib_iterator_next(i,&lat,&lon,&value) ) {
+      points.push_back( Grid::Point(lat,lon) );
+   }
+   ASSERT( points.size() == nb_nodes );
+
+   if ( grib_iterator_delete(i) != 0 )
+      throw SeriousBug(string("Error reading grib. Could not delete grib iterator"),Here()) ;
 }
 
 // ==================================================================================
@@ -801,7 +998,9 @@ GribFile::GribFile(const eckit::PathName& pathname) : theGribFile_(pathname), ha
 
 void GribFile::init(const std::string& the_file_path)
 {
+#ifdef DEBUG
    Log::info() << " Create a grib handle" << std::endl;
+#endif
    int err;
    handle_ = grib_handle_new_from_file(0,theGribFile_,&err);
    if (err != 0) Log::error() <<  "grib_handle_new_from_file error " << err << " for file " << the_file_path << endl;
@@ -809,12 +1008,12 @@ void GribFile::init(const std::string& the_file_path)
 
 GribFile::~GribFile()
 {
+#ifdef DEBUG
    Log::info()  << " close the grib file and delete handle" << std::endl;
+#endif
    int err = grib_handle_delete(handle_);
    if (err != 0) Log::error() <<  " grib_handle_delete failed " << err << endl;
 }
-
-//-----------------------------------------------------------------------------
 
 } // namespace grid
 } // namespace eckit

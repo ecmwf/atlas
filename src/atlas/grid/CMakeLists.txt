@@ -21,6 +21,8 @@ ReducedLatLonGrid.h
 ReducedLatLonGrid.cc
 RegularLatLonGrid.h
 RegularLatLonGrid.cc
+RotatedLatLonGrid.h
+RotatedLatLonGrid.cc
 RegularGaussianGrid.h
 RegularGaussianGrid.cc
 Tesselation.cc
