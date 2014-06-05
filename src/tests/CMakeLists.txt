@@ -44,6 +44,13 @@ ecbuild_add_test( TARGET test_halo
   LIBS     atlas_meshgen
 )
 
+ecbuild_add_test( TARGET test_halo_eastwest
+  BOOST
+  SOURCES  test_halo_eastwest.cpp
+  LIBS     atlas_meshgen
+)
+
+
 ecbuild_add_test( TARGET test_meshgen3d
   BOOST
   SOURCES   test_meshgen3d.cpp
