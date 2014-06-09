@@ -61,12 +61,14 @@ public:
 
    /// Functions specific to Reduced Guassian grids
    long gaussianNumber() const { return gaussianNumber_;}
+   const std::vector<long>&  pointsPerLatitude() const { return rgSpec_;}
+   const std::vector<double>&  latitudes() const { return latitudes_;}
 
 private:
    std::string          hash_;
    BoundBox             bbox_;
    std::vector< Point > points_;                 ///< storage of coordinate points
-   std::vector<long>    rgSpec_;                ///< No of points per latitude
+   std::vector<long>   rgSpec_;                ///< No of points per latitude
    std::vector<double> latitudes_;              ///< the latitudes
    long                gaussianNumber_;         ///< No of points between pole and equator
 
