@@ -207,7 +207,7 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
 
   ArrayView<int,3> elemview(region.elems);
   
-  for (int jlat=region.north; jlat<region.south; ++jlat)
+  for (int jlat=lat_north; jlat<lat_south; ++jlat)
   {
     
     int ilat, latN, latS;
@@ -425,6 +425,7 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
   
   int nb_region_nodes = 0;
   for( int jlat=lat_north; jlat<=lat_south; ++jlat ) {
+    region.lat_begin[jlat] = std::max( 0, region.lat_begin[jlat] );
     nb_region_nodes += region.lat_end[jlat]-region.lat_begin[jlat]+1;
     
     // Count extra periodic node to be added in this case
@@ -706,7 +707,6 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& par
   quads.metadata().set("max_glb_idx", nquads+ntriags);
   triags.metadata().set("max_glb_idx",nquads+ntriags);
   edges.metadata().set("max_glb_idx", nquads+ntriags);
-  
 
   generate_global_element_numbering( *mesh );
 

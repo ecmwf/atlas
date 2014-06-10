@@ -180,7 +180,7 @@ BOOST_AUTO_TEST_CASE( test2 )
   }
 
   if( MPL::rank() == 0 ) BOOST_CHECK_EQUAL( nb_ghost, 129 );
-  if( MPL::rank() == 1 ) BOOST_CHECK_EQUAL( nb_ghost, 1   );
+  if( MPL::rank() == 1 ) BOOST_CHECK_EQUAL( nb_ghost, 0   );
 
   actions::make_periodic(*m);
 
