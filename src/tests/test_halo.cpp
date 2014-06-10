@@ -26,6 +26,7 @@
 #include "atlas/mesh/ArrayView.hpp"
 #include "atlas/mesh/IndexView.hpp"
 #include "atlas/actions/BuildHalo.hpp"
+#include "atlas/actions/BuildParallelFields.hpp"
 #include "atlas/mesh/Parameters.hpp"
 
 using namespace atlas;
@@ -55,6 +56,7 @@ BOOST_AUTO_TEST_CASE( test_halo_2parts )
   generate.options.set("part",MPL::rank());
   Mesh* m = generate( T63() );
 
+  actions::build_parallel_fields(*m);
   actions::build_halo(*m,2);
 
   std::stringstream filename; filename << "T63_halo_p" << part << ".msh";

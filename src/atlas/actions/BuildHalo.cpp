@@ -26,12 +26,86 @@
 namespace atlas {
 namespace actions {
 
+namespace buildhalo_detail {
 struct Face
 {
   ElementRef& operator[](int i) { return elems[i]; }
   bool is_bdry() const { return (elems[1].f < 0); }
   ElementRef elems[2];
 };
+
+int microdeg( const double& deg )
+{
+  return static_cast<int>(deg*1.e6);
+}
+
+int microdeg( const int& deg )
+{
+  return deg*1.e6;
+}
+
+int EAST = microdeg( 2.*M_PI );
+int WEST = 0;
+int NORTH = microdeg(  M_PI );
+int SOUTH = microdeg( -M_PI );
+
+
+// Node struct that holds the longitude and latitude in millidegrees (integers)
+// This structure is used in sorting algorithms, and uses less memory than
+// if x and y were in double precision.
+struct LatLon
+{
+  LatLon() {}
+  LatLon( int x_, int y_ )
+  {
+    x = x_;
+    y = y_;
+  }
+  LatLon( double x_, double y_ )
+  {
+    x = microdeg(x_);
+    y = microdeg(y_);
+  }
+  LatLon( const ArrayView<int,1>& coord )
+  {
+    x = coord[XX];
+    y = coord[YY];
+  }
+  LatLon( const ArrayView<double,1>& coord )
+  {
+    x = microdeg(coord[XX]);
+    y = microdeg(coord[YY]);
+  }
+
+  int uid() const
+  {
+    int i1 = (y+NORTH)  >>9;
+    int i2 = (x+5*EAST) >>10;
+    ASSERT( i1 > 0);
+    ASSERT( i2 > 0);
+    int pow = 10;
+    while(i2 >= pow)
+        pow *= 10;
+    int id = i1*pow + i2;
+    ASSERT( id > 0 );
+    return id;
+  }
+
+  mutable int x, y;
+  bool operator < (const LatLon& other) const
+  {
+    if( y > other.y  ) return true;
+    if( y == other.y ) return (x < other.x);
+    return false;
+  }
+};
+
+}
+
+using namespace buildhalo_detail;
+
+// ------------------------------------------------------------------
+
 
 void accumulate_faces(
     FunctionSpace& func_space,
@@ -56,14 +130,13 @@ void increase_halo( Mesh& mesh )
   FunctionSpace& nodes         = mesh.function_space( "nodes" );
   ArrayView<double,2> latlon   ( nodes.field( "coordinates"    ) );
   ArrayView<int   ,1> glb_idx  ( nodes.field( "glb_idx"        ) );
-  ArrayView<int   ,1> mglb_idx ( nodes.field( "master_glb_idx" ) );
-  ArrayView<int   ,1> node_proc( nodes.field( "proc"           ) );
+  ArrayView<int   ,1> node_part( nodes.field( "partition"      ) );
   int nb_nodes = nodes.extents()[0];
 
   std::vector< std::vector< ElementRef > > node_to_elem(nb_nodes);
   
   std::vector< IndexView<int,2> > elem_nodes( mesh.nb_function_spaces() );
-  std::vector< ArrayView<int,1> > elem_proc ( mesh.nb_function_spaces() );
+  std::vector< ArrayView<int,1> > elem_part ( mesh.nb_function_spaces() );
   std::vector< ArrayView<int,1> > elem_glb_idx ( mesh.nb_function_spaces() );
 
   for( int func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
@@ -72,7 +145,7 @@ void increase_halo( Mesh& mesh )
     if( elements.metadata<int>("type") == Entity::ELEMS )
     {
       elem_nodes  [func_space_idx] = IndexView<int,2>( elements.field("nodes") );
-      elem_proc   [func_space_idx] = ArrayView<int,1>( elements.field("proc") );
+      elem_part   [func_space_idx] = ArrayView<int,1>( elements.field("proc") );
       elem_glb_idx[func_space_idx] = ArrayView<int,1>( elements.field("glb_idx") );
       int nb_elems = elem_nodes[func_space_idx].extents()[0];
       int nb_nodes_per_elem = elem_nodes[func_space_idx].extents()[1];
@@ -87,7 +160,6 @@ void increase_halo( Mesh& mesh )
     }
   }
 
-  std::cout << MPL::rank() << " : " << 1 << std::endl;
   
   /*
   1) Find nodes at boundary of partition
@@ -120,9 +192,6 @@ void increase_halo( Mesh& mesh )
   accumulate_faces(quads, node_to_face,face_nodes_data,face_to_elem,nb_faces,nb_inner_faces);
   accumulate_faces(triags,node_to_face,face_nodes_data,face_to_elem,nb_faces,nb_inner_faces);
 
-  std::cout << MPL::rank() << " :  face_to_elem.size() = " << face_to_elem.size() << std::endl;
-  std::cout << MPL::rank() << " :  face_nodes_data.size() = " << face_nodes_data.size()/2. << std::endl;
-  std::cout << MPL::rank() << " :  nb_faces            = " << nb_faces << std::endl;
 
   int extents[] = {nb_faces,2};
   ArrayView<int,2> face_nodes(face_nodes_data.data(),extents);
@@ -144,99 +213,144 @@ void increase_halo( Mesh& mesh )
 
   std::vector<int> bdry_nodes( bdry_nodes_set.begin(), bdry_nodes_set.end());
 
-
   /*
   2) Communicate glb_index of these boundary nodes to other partitions
   3) Find received glb_index in glb_node_to_local_node list
   */
 
-  std::map<int,int> node_glb_to_loc;
+  std::map<int,int> node_uid_to_loc;
   for( int jnode=0; jnode<nb_nodes; ++jnode )
   {
-    node_glb_to_loc[ glb_idx(jnode) ] = jnode;
+    LatLon ll(latlon[jnode]);
+    if( node_uid_to_loc.count(ll.uid()) > 0 )
+    {
+      int other = node_uid_to_loc[ll.uid()];
+      std::stringstream msg;
+      msg << "Node uid: " << ll.uid() << "   " << glb_idx(jnode)
+          << " (" << latlon(jnode,XX) <<","<< latlon(jnode,YY)<<")  has already been added as node "
+          << glb_idx(other) << " (" << latlon(other,XX) <<","<< latlon(other,YY)<<")";
+      throw eckit::SeriousBug(msg.str(),Here());
+    }
+    node_uid_to_loc[ll.uid()] = jnode;
   }
 
   int nb_bdry_nodes = bdry_nodes.size();
-  std::vector<int> bdry_nodes_glb_idx( nb_bdry_nodes );
+  Array<int> arr_bdry_nodes_id(nb_bdry_nodes,3);
+  ArrayView<int,2> bdry_nodes_id(arr_bdry_nodes_id);
+  ASSERT( bdry_nodes_id.extents()[0] == nb_bdry_nodes );
+  ASSERT( bdry_nodes_id.extents()[1] == 3);
+
   for( int jnode=0; jnode<nb_bdry_nodes; ++jnode )
   {
-    bdry_nodes_glb_idx[jnode] = glb_idx[bdry_nodes[jnode]];
+    LatLon ll( latlon[bdry_nodes[jnode]] );
+    bdry_nodes_id(jnode,0) = ll.x;
+    bdry_nodes_id(jnode,1) = ll.y;
+    bdry_nodes_id(jnode,2) = glb_idx( bdry_nodes[jnode] );
   }
 
-  std::vector< int > par_nb_bdry_nodes( MPL::size() );
-  MPL_CHECK_RESULT( MPI_Allgather(&nb_bdry_nodes,            1, MPI_INT,
-                                   par_nb_bdry_nodes.data(), 1, MPI_INT, MPI_COMM_WORLD ) );
 
 
   std::vector<int> recvcounts( MPL::size() );
   std::vector<int> recvdispls( MPL::size() );
+  int sendcnt = bdry_nodes_id.total_size();
+  ASSERT( sendcnt == nb_bdry_nodes*3 );
+  MPL_CHECK_RESULT( MPI_Allgather( &sendcnt,          1, MPI_INT,
+                                   recvcounts.data(), 1, MPI_INT, MPI_COMM_WORLD ) );
+
   recvdispls[0] = 0;
-  recvcounts[0] = par_nb_bdry_nodes[0];
   int recvcnt = recvcounts[0];
-  for( int jproc=1; jproc<MPL::size(); ++jproc )
+  for( int jpart=1; jpart<MPL::size(); ++jpart )
   {
-    recvcounts[jproc] = par_nb_bdry_nodes[jproc];
-    recvdispls[jproc] = recvdispls[jproc-1] + recvcounts[jproc-1];
-    recvcnt += recvcounts[jproc];
+    recvdispls[jpart] = recvdispls[jpart-1] + recvcounts[jpart-1];
+    recvcnt += recvcounts[jpart];
   }
   std::vector<int> recvbuf(recvcnt);
 
-  MPL_CHECK_RESULT( MPI_Allgatherv( bdry_nodes_glb_idx.data(), nb_bdry_nodes, MPI_INT,
+  MPL_CHECK_RESULT( MPI_Allgatherv( bdry_nodes_id.data(), sendcnt, MPI_INT,
                     recvbuf.data(), recvcounts.data(), recvdispls.data(),
                     MPI_INT, MPI_COMM_WORLD) );
 
 
   // sfn stands for "send_found_nodes"
-  std::vector< std::vector<int>    > sfn_proc( MPL::size() );
-  std::vector< std::vector<int>    > sfn_mglb_idx( MPL::size() );
+  std::vector< std::vector<int>    > sfn_part( MPL::size() );
   std::vector< std::vector<int>    > sfn_glb_idx( MPL::size() );
   std::vector< std::vector<double> > sfn_latlon ( MPL::size() );
   // sfn stands for "send_found_elems"
-  std::vector< std::vector< std::vector<int> > > sfe_glb_idx( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
-  std::vector< std::vector< std::vector<int> > > sfe_gnodes ( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
-  std::vector< std::vector< std::vector<int> > > sfe_proc   ( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
+  std::vector< std::vector< std::vector<int> > > sfe_glb_idx ( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
+  std::vector< std::vector< std::vector<int> > > sfe_nodes_id( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
+  std::vector< std::vector< std::vector<int> > > sfe_part    ( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
 
-  for (int jproc=0; jproc<MPL::size(); ++jproc)
+  for (int jpart=0; jpart<MPL::size(); ++jpart)
   {
-    int* recv_bdry_nodes_glb_idx = recvbuf.data()+recvdispls[jproc];
-    int recv_nb_bdry_nodes = par_nb_bdry_nodes[jproc];
+    ArrayView<int,2> recv_bdry_nodes_id( recvbuf.data()+recvdispls[jpart], Extents( recvcounts[jpart]/3, 3 ).data() );
+    int recv_nb_bdry_nodes = recv_bdry_nodes_id.extents()[0];
 
     // Find elements that have these nodes
     // In order to do this, check the node_to_elem list
     // Warning: only add elements that are owned!
 
-    std::vector< std::set<int> > found_bdry_elements_set( mesh.nb_function_spaces() );
-    if( jproc != MPL::rank() )
+
+    std::vector< std::set< std::pair<int,int> > > found_bdry_elements_set( mesh.nb_function_spaces() );
+    for( int jrecv=0; jrecv<recv_nb_bdry_nodes; ++jrecv )
     {
-      for( int jrecv=0; jrecv<recv_nb_bdry_nodes; ++jrecv )
+      ASSERT( recv_bdry_nodes_id.extents()[1] == 3 );
+      int recv_x       = recv_bdry_nodes_id(jrecv,0);
+      int recv_y       = recv_bdry_nodes_id(jrecv,1);
+      int recv_glb_idx = recv_bdry_nodes_id(jrecv,2);
+
+      // Only search for nodes in the interior latlon domain
+      LatLon ll(recv_x,recv_y);
+      if     ( ll.x <= WEST) { while(ll.x <= WEST) { ll.x += EAST; } }
+      else if( ll.x >= EAST) { while(ll.x >= EAST) { ll.x -= EAST; } }
+
+      int recv_uid     = ll.uid();
+      int loc=-1;
+      std::map<int,int>::iterator found = node_uid_to_loc.find(recv_uid);
+      if( found != node_uid_to_loc.end() )
       {
-        int recv_glb_idx = recv_bdry_nodes_glb_idx[jrecv];
-        if( node_glb_to_loc.count(recv_glb_idx) )
+        loc = found->second;
+        if( MPL::rank() == jpart && glb_idx(loc) == recv_glb_idx ) loc = -1;
+      }
+
+      if( loc != -1 )
+      {
+        ASSERT( loc<glb_idx.size() );
         {
-          int loc = node_glb_to_loc[recv_glb_idx];
-          //std::cout << MPL::rank() << "   :   loc node = " << loc << std::endl;
           for( int jelem=0; jelem<node_to_elem[loc].size(); ++jelem )
           {
             int f = node_to_elem[loc][jelem].f;
             int e = node_to_elem[loc][jelem].e;
-            //std::cout << MPL::rank() << "   :   connected to elem " << mesh.function_space(f).name() << "["<<e<<"]"<<std::endl;
-            found_bdry_elements_set[f].insert( e );
+
+            if( elem_part[f](e) == MPL::rank() )
+              found_bdry_elements_set[f].insert( std::make_pair( e, recv_x - ll.x ) );
           }
         }
       }
     }
     std::vector< std::vector<int> > found_bdry_elements( mesh.nb_function_spaces() );
+    std::vector< std::vector<int> > found_bdry_elements_coord_transform( mesh.nb_function_spaces() );
+
     std::vector<int> nb_found_bdry_elems( mesh.nb_function_spaces(), 0 );
+
     for( int f=0; f<mesh.nb_function_spaces(); ++f )
     {
-      found_bdry_elements[f] = std::vector<int>( found_bdry_elements_set[f].begin(), found_bdry_elements_set[f].end() );
+      nb_found_bdry_elems[f] = found_bdry_elements_set[f].size();
+
+      found_bdry_elements[f].resize(nb_found_bdry_elems[f]);
+      found_bdry_elements_coord_transform[f].resize(nb_found_bdry_elems[f]);
+      int jelem=0;
+      std::set< std::pair<int,int> >::iterator it=found_bdry_elements_set[f].begin();
+      for( ; it!=found_bdry_elements_set[f].end(); ++it, ++jelem )
+      {
+        found_bdry_elements[f][jelem] = it->first;
+        found_bdry_elements_coord_transform[f][jelem] = it->second;
+      }
       nb_found_bdry_elems[f] = found_bdry_elements[f].size();
-      if( jproc != MPL::rank() ) std::cout << MPL::rank() << "   :  found elems: " << nb_found_bdry_elems[f] << " " << mesh.function_space(f).name() << std::endl;
     }
 
+
     // Collect all nodes needed to complete the element
-    std::set<int> found_bdry_nodes_glb_idx_set;
-    if( jproc != MPL::rank() )
+    std::set<LatLon> found_bdry_nodes_id_set;
     {
       for( int f=0; f<mesh.nb_function_spaces(); ++f )
       {
@@ -246,54 +360,91 @@ void increase_halo( Mesh& mesh )
           int nb_elem_nodes = elem_nodes[f].extents()[1];
           for( int n=0; n<nb_elem_nodes; ++n )
           {
-            found_bdry_nodes_glb_idx_set.insert( glb_idx[ elem_nodes[f](e,n) ] );
+            int x = microdeg( latlon( elem_nodes[f](e,n), XX) ) + found_bdry_elements_coord_transform[f][jelem];
+            int y = microdeg( latlon( elem_nodes[f](e,n), YY) );
+            found_bdry_nodes_id_set.insert( LatLon(x,y) );
           }
         }
       }
+
       // Remove nodes we already have received, as we won't need to send them
       for( int jrecv=0; jrecv<recv_nb_bdry_nodes; ++jrecv)
       {
-        found_bdry_nodes_glb_idx_set.erase(recv_bdry_nodes_glb_idx[jrecv]);
+        int x = recv_bdry_nodes_id(jrecv,0);
+        int y = recv_bdry_nodes_id(jrecv,1);
+        found_bdry_nodes_id_set.erase( LatLon(x,y) ) ;
       }
     }
-    int nb_found_bdry_nodes = found_bdry_nodes_glb_idx_set.size();
-    if( jproc != MPL::rank() ) std::cout << MPL::rank() << "   :  found nodes: " << nb_found_bdry_nodes << std::endl;
+    int nb_found_bdry_nodes = found_bdry_nodes_id_set.size();
 
-    sfn_glb_idx[jproc] = std::vector<int>(found_bdry_nodes_glb_idx_set.begin(),found_bdry_nodes_glb_idx_set.end());
-    //std::cout << MPL::rank() << " :   debug 0" << std::endl;
-
-    sfn_mglb_idx[jproc].resize(nb_found_bdry_nodes);
-    sfn_proc[jproc].resize(nb_found_bdry_nodes);
-    sfn_latlon[jproc].resize(2*nb_found_bdry_nodes);
-    for( int jnode=0; jnode<nb_found_bdry_nodes; ++jnode)
+    sfn_glb_idx[jpart].resize(nb_found_bdry_nodes);
+    sfn_part[jpart].resize(nb_found_bdry_nodes);
+    sfn_latlon[jpart].resize(2*nb_found_bdry_nodes);
+    //for( int jnode=0; jnode<nb_found_bdry_nodes; ++jnode)
     {
-      int loc = node_glb_to_loc[sfn_glb_idx[jproc][jnode]];
-      sfn_mglb_idx[jproc][jnode] = mglb_idx[loc];
-      sfn_proc[jproc][jnode] = node_proc[loc];
-      sfn_latlon[jproc][jnode*2+XX] = latlon(loc,XX);
-      sfn_latlon[jproc][jnode*2+YY] = latlon(loc,YY);
-      //if( MPL::rank() == 1 ) std::cout << "send node " << sfn_glb_idx[jproc][jnode] << std::endl;
+      int jnode=0;
+      std::set<LatLon>::iterator it=found_bdry_nodes_id_set.begin();
+      for( ; it!=found_bdry_nodes_id_set.end(); ++it, ++jnode )
+      {
+        int uid = it->uid();
+        std::map<int,int>::iterator found = node_uid_to_loc.find( uid );
+        if( found != node_uid_to_loc.end() )
+        {
+          int loc = found->second;
+          //std::cout << "uid = " << it->uid() << "   " << loc << loc << std::endl;
+          sfn_glb_idx[jpart][jnode]      = glb_idx  (loc);
+          sfn_part   [jpart][jnode]      = node_part(loc);
+          sfn_latlon [jpart][jnode*2+XX] = latlon   (loc,XX);
+          sfn_latlon [jpart][jnode*2+YY] = latlon   (loc,YY);
+        }
+        else // periodic node?
+        {
+          //std::cout << "new node!!!" << std::endl;
+          LatLon ll(it->x,it->y);
+          if     ( ll.x <= WEST) { while(ll.x <= WEST) { ll.x += EAST; } }
+          else if( ll.x >= EAST) { while(ll.x >= EAST) { ll.x -= EAST; } }
+
+          int pid = ll.uid();
+          found = node_uid_to_loc.find( pid );
+          ASSERT( found != node_uid_to_loc.end() );
+          int loc = node_uid_to_loc[ pid ];
+          sfn_glb_idx[jpart][jnode]      = uid; // glb_idx  (loc) + 1000000;
+          sfn_part   [jpart][jnode]      = node_part(loc);
+          sfn_latlon [jpart][jnode*2+XX] = latlon(loc,XX) + (it->x - ll.x)/EAST * 2.*M_PI;
+          sfn_latlon [jpart][jnode*2+YY] = latlon(loc,YY);
+        }
+      }
     }
 
-    std::cout << MPL::rank() << " :   debug 1" << std::endl;
 
     for( int f=0; f<mesh.nb_function_spaces(); ++f )
     {
       int nb_elem_nodes = elem_nodes[f].extents()[1];
-      sfe_glb_idx[f][jproc].resize( nb_found_bdry_elems[f] );
-      sfe_proc   [f][jproc].resize( nb_found_bdry_elems[f] );
-      sfe_gnodes [f][jproc].resize( nb_found_bdry_elems[f]*nb_elem_nodes );
-      ArrayView<int,2> sfe_gnodes_view( sfe_gnodes[f][jproc].data(), Extents(nb_found_bdry_elems[f],nb_elem_nodes).data() );
+      sfe_glb_idx [f][jpart].resize( nb_found_bdry_elems[f] );
+      sfe_part    [f][jpart].resize( nb_found_bdry_elems[f] );
+      sfe_nodes_id[f][jpart].resize( nb_found_bdry_elems[f]*nb_elem_nodes );
+      ArrayView<int,2> sfe_nodes_id_view( sfe_nodes_id[f][jpart].data(), Extents(nb_found_bdry_elems[f],nb_elem_nodes).data() );
       for( int jelem=0; jelem<nb_found_bdry_elems[f]; ++jelem )
       {
         int e = found_bdry_elements[f][jelem];
-        sfe_glb_idx[f][jproc][jelem] = elem_glb_idx[f](e);
-        sfe_proc[f][jproc][jelem]    = elem_proc[f][e];
-        std::cout << MPL::rank() << "  :   send elem " << mesh.function_space(f).name() << "["<<e<<"]  glb_idx(" << sfe_glb_idx[f][jproc][jelem] << ")" << std::endl;
+        int xper = found_bdry_elements_coord_transform[f][jelem];
+        sfe_part[f][jpart][jelem]    = elem_part[f][e];
+        double centroid[2];
+        centroid[XX] = 0.;
+        centroid[YY] = 0.;
         for( int n=0; n<nb_elem_nodes; ++n)
         {
-          sfe_gnodes_view(jelem,n) = glb_idx( elem_nodes[f](e,n) );
+          double x, y;
+          x = latlon(elem_nodes[f](e,n),XX) + xper/EAST*2.*M_PI;
+          y = latlon(elem_nodes[f](e,n),YY);
+          sfe_nodes_id_view(jelem,n) = LatLon( x, y ).uid();
+          centroid[XX] += x;
+          centroid[YY] += y;
         }
+        centroid[XX] /= static_cast<double>(nb_elem_nodes);
+        centroid[YY] /= static_cast<double>(nb_elem_nodes);
+
+        sfe_glb_idx[f][jpart][jelem] = LatLon( centroid[XX], centroid[YY] ).uid();
       }
     }
   }
@@ -302,86 +453,84 @@ void increase_halo( Mesh& mesh )
 
   //    rfn stands for "recv_found_nodes"
   std::vector< std::vector<int> >    rfn_glb_idx(MPL::size());
-  std::vector< std::vector<int> >    rfn_mglb_idx(MPL::size());
-  std::vector< std::vector<int> >    rfn_proc(MPL::size());
+  std::vector< std::vector<int> >    rfn_part(MPL::size());
   std::vector< std::vector<double> > rfn_latlon(MPL::size());
   //    rfe stands for "recv_found_elems"
-  std::vector< std::vector< std::vector<int> > > rfe_glb_idx( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
-  std::vector< std::vector< std::vector<int> > > rfe_proc   ( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
-  std::vector< std::vector< std::vector<int> > > rfe_gnodes ( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
-
-  std::cout << MPL::rank() << " :   debug 4" << std::endl;
+  std::vector< std::vector< std::vector<int> > > rfe_glb_idx ( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
+  std::vector< std::vector< std::vector<int> > > rfe_part    ( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
+  std::vector< std::vector< std::vector<int> > > rfe_nodes_id( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
 
   MPL::Alltoall(sfn_glb_idx,  rfn_glb_idx);
-  std::cout << MPL::rank() << " :   debug 4.1" << std::endl;
-
-  MPL::Alltoall(sfn_mglb_idx, rfn_mglb_idx);
-  std::cout << MPL::rank() << " :   debug 4.2" << std::endl;
-
-  MPL::Alltoall(sfn_proc,     rfn_proc);
-  std::cout << MPL::rank() << " :   debug 4.3" << std::endl;
-
+  MPL::Alltoall(sfn_part,     rfn_part);
   MPL::Alltoall(sfn_latlon,   rfn_latlon);
-  std::cout << MPL::rank() << " :   debug 4.4" << std::endl;
-
   for( int f=0; f<mesh.nb_function_spaces(); ++f )
   {
     MPL::Alltoall(sfe_glb_idx[f],  rfe_glb_idx[f] );
-    MPL::Alltoall(sfe_gnodes [f],  rfe_gnodes [f] );
-    MPL::Alltoall(sfe_proc   [f],  rfe_proc   [f] );
+    MPL::Alltoall(sfe_nodes_id [f],  rfe_nodes_id [f] );
+    MPL::Alltoall(sfe_part   [f],  rfe_part   [f] );
   }
-
-  std::cout << MPL::rank() << " :   debug 7" << std::endl;
 
 
   // We now have everything we need in rfe_ and rfn_ vectors
   // Now adapt the mesh
 
   // Nodes might be duplicated from different Tasks. We need to identify unique entries
-  std::set<int> rfn_glb_idx_unique;
+  std::set<int> node_uid;
   for( int jnode=0; jnode<nb_nodes; ++jnode )
-    rfn_glb_idx_unique.insert( glb_idx(jnode) );
-
-  std::vector< std::vector<int> > rfn_unique_idx(MPL::size());
-  for( int jproc=0; jproc<MPL::size(); ++jproc )
   {
-    rfn_unique_idx[jproc].reserve(rfn_glb_idx[jproc].size());
+    node_uid.insert( LatLon( latlon[jnode] ).uid() );
+  }
+  std::vector< std::vector<int> > rfn_idx(MPL::size());
+  for( int jpart=0; jpart<MPL::size(); ++jpart )
+  {
+    rfn_idx[jpart].reserve(rfn_glb_idx[jpart].size());
   }
 
   int nb_new_nodes=0;
-  for( int jproc=0; jproc<MPL::size(); ++jproc )
+  for( int jpart=0; jpart<MPL::size(); ++jpart )
   {
-    for( int n=0; n<rfn_glb_idx[jproc].size(); ++n )
+    for( int n=0; n<rfn_glb_idx[jpart].size(); ++n )
     {
-      if( MPL::rank() == 0 ) std::cout << "recv node " << rfn_glb_idx[jproc][n] << std::endl;
-      bool inserted = rfn_glb_idx_unique.insert( rfn_glb_idx[jproc][n] ).second;
+      bool inserted = node_uid.insert( LatLon( rfn_latlon[jpart][n*2+XX], rfn_latlon[jpart][n*2+YY] ).uid() ).second;
       if( inserted )
       {
-        rfn_unique_idx[jproc].push_back(n);
+        rfn_idx[jpart].push_back(n);
       }
     }
-    nb_new_nodes += rfn_unique_idx[jproc].size();
+    nb_new_nodes += rfn_idx[jpart].size();
   }
 
-  std::cout << MPL::rank() << "  :  new nodes: " << nb_new_nodes << " " << nodes.name() << std::endl;
 
   nodes.resize( Extents( nb_nodes+nb_new_nodes, Field::UNDEF_VARS ) );
   glb_idx   = ArrayView<int,   1>( nodes.field("glb_idx") );
-  mglb_idx  = ArrayView<int,   1>( nodes.field("master_glb_idx") );
-  node_proc = ArrayView<int,   1>( nodes.field("proc") );
+  node_part = ArrayView<int,   1>( nodes.field("partition") );
   latlon    = ArrayView<double,2>( nodes.field("coordinates") );
 
+
   int new_node=0;
-  for( int jproc=0; jproc<MPL::size(); ++jproc )
+  for( int jpart=0; jpart<MPL::size(); ++jpart )
   {
-    for( int n=0; n<rfn_unique_idx[jproc].size(); ++n )
+    for( int n=0; n<rfn_idx[jpart].size(); ++n )
     {
-      glb_idx  (nb_nodes+new_node)    = rfn_glb_idx [jproc][rfn_unique_idx[jproc][n]];
-      mglb_idx (nb_nodes+new_node)    = rfn_mglb_idx[jproc][rfn_unique_idx[jproc][n]];
-      node_proc(nb_nodes+new_node)    = rfn_proc    [jproc][rfn_unique_idx[jproc][n]];
-      latlon   (nb_nodes+new_node,XX) = rfn_latlon  [jproc][rfn_unique_idx[jproc][n]*2+XX];
-      latlon   (nb_nodes+new_node,YY) = rfn_latlon  [jproc][rfn_unique_idx[jproc][n]*2+YY];
-      node_glb_to_loc[ glb_idx(nb_nodes+new_node) ] = nb_nodes+new_node;
+      int loc_idx = nb_nodes+new_node;
+
+      glb_idx  (loc_idx)    = rfn_glb_idx [jpart][rfn_idx[jpart][n]];
+      node_part(loc_idx)    = rfn_part    [jpart][rfn_idx[jpart][n]];
+      latlon   (loc_idx,XX) = rfn_latlon  [jpart][rfn_idx[jpart][n]*2+XX];
+      latlon   (loc_idx,YY) = rfn_latlon  [jpart][rfn_idx[jpart][n]*2+YY];
+      int uid = LatLon( latlon[loc_idx] ).uid();
+
+      // make sure new node was not already there
+      std::map<int,int>::iterator found = node_uid_to_loc.find(uid);
+      if( found != node_uid_to_loc.end() )
+      {
+        int other = found->second;
+        std::stringstream msg;
+        msg << "New node with uid " << uid << ":\n"  << glb_idx(loc_idx) << "("<<latlon(loc_idx,XX)<<","<<latlon(loc_idx,YY)<<")\n";
+        msg << "Existing already loc "<< other << "  :  " << glb_idx(other) << "("<<latlon(other,XX)<<","<<latlon(other,YY)<<")\n";
+        throw eckit::SeriousBug(msg.str(),Here());
+      }
+      node_uid_to_loc[ uid ] = nb_nodes+new_node;
       ++new_node;
     }
   }
@@ -397,41 +546,40 @@ void increase_halo( Mesh& mesh )
         rfe_glb_idx_unique.insert( elem_glb_idx[f](jelem) );
 
       std::vector< std::vector<int> > rfe_unique_idx(MPL::size());
-      for( int jproc=0; jproc<MPL::size(); ++jproc )
+      for( int jpart=0; jpart<MPL::size(); ++jpart )
       {
-        rfe_unique_idx[jproc].reserve(rfe_glb_idx[f][jproc].size());
+        rfe_unique_idx[jpart].reserve(rfe_glb_idx[f][jpart].size());
       }
 
       int nb_new_elems=0;
-      for( int jproc=0; jproc<MPL::size(); ++jproc )
+      for( int jpart=0; jpart<MPL::size(); ++jpart )
       {
-        for( int e=0; e<rfe_glb_idx[f][jproc].size(); ++e )
+        for( int e=0; e<rfe_glb_idx[f][jpart].size(); ++e )
         {
-          bool inserted = rfe_glb_idx_unique.insert( rfe_glb_idx[f][jproc][e] ).second;
+          bool inserted = rfe_glb_idx_unique.insert( rfe_glb_idx[f][jpart][e] ).second;
           if( inserted )
           {
-            rfe_unique_idx[jproc].push_back(e);
+            rfe_unique_idx[jpart].push_back(e);
           }
         }
-        nb_new_elems += rfe_unique_idx[jproc].size();
+        nb_new_elems += rfe_unique_idx[jpart].size();
       }
 
-      std::cout << MPL::rank() << "  :  new elements: " << nb_new_elems << " " << elements.name() << std::endl;
       int nb_elems /*old*/ = elements.extents()[0];
       int nb_nodes_per_elem = elem_nodes[f].extents()[1];
       elements.resize( Extents( nb_elems+nb_new_elems, Field::UNDEF_VARS ) );
       elem_glb_idx[f] = ArrayView<int,1>( elements.field("glb_idx") );
       elem_nodes[f]   = IndexView<int,2>( elements.field("nodes")   );
-      elem_proc[f]    = ArrayView<int,1>( elements.field("proc")   );
+      elem_part[f]    = ArrayView<int,1>( elements.field("proc")   );
       int new_elem=0;
-      for( int jproc=0; jproc<MPL::size(); ++jproc )
+      for( int jpart=0; jpart<MPL::size(); ++jpart )
       {
-        for( int e=0; e<rfe_unique_idx[jproc].size(); ++e )
+        for( int e=0; e<rfe_unique_idx[jpart].size(); ++e )
         {
-          elem_glb_idx[f](nb_elems+new_elem)   = rfe_glb_idx[f][jproc][rfe_unique_idx[jproc][e]];
-          elem_proc   [f](nb_elems+new_elem)   = rfe_proc[f][jproc][rfe_unique_idx[jproc][e]];
+          elem_glb_idx[f](nb_elems+new_elem)   = rfe_glb_idx[f][jpart][rfe_unique_idx[jpart][e]];
+          elem_part   [f](nb_elems+new_elem)   = rfe_part[f][jpart][rfe_unique_idx[jpart][e]];
           for( int n=0; n<nb_nodes_per_elem; ++n )
-            elem_nodes[f](nb_elems+new_elem,n) = node_glb_to_loc[ rfe_gnodes[f][jproc][rfe_unique_idx[jproc][e]*nb_nodes_per_elem+n] ];
+            elem_nodes[f](nb_elems+new_elem,n) = node_uid_to_loc[ rfe_nodes_id[f][jpart][rfe_unique_idx[jpart][e]*nb_nodes_per_elem+n] ];
           ++new_elem;
         }
       }
