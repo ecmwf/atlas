@@ -121,6 +121,8 @@ FieldSet::FieldSet( const eckit::PathName& fname )
 
         FieldHandle::Ptr hf( new FieldHandle( grid_, fdata ) );
 
+        hf->grib( gh->clone() );
+
 //        {
 //            std::ofstream of;
 //            of.open( sname.c_str() );
@@ -171,6 +173,16 @@ std::vector<std::string> FieldSet::field_names() const
         ret.push_back( fields_[i]->data().name() );
 
     return ret;
+}
+
+void FieldHandle::grib(FieldHandle::Grib *g)
+{
+    grib_.reset(g);
+}
+
+FieldHandle::Grib& FieldHandle::grib() const
+{
+    return *grib_;
 }
 
 //-----------------------------------------------------------------------------

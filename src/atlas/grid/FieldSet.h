@@ -20,6 +20,9 @@
 #include "eckit/types/Types.h"
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
+#include "eckit/memory/ScopedPtr.h"
+
+#include "eckit/grib/GribHandle.h" ///< @todo this is to be removed
 
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/mesh/Field.hpp"
@@ -28,9 +31,11 @@
 
 //------------------------------------------------------------------------------------------------------
 
-namespace eckit {
+namespace eckit
+{
     class PathName;
     class DataHandle;
+    class GribHandle;
 }
 
 namespace atlas {
@@ -47,6 +52,8 @@ public: // types
 
     typedef atlas::FieldT< double > Data;
     typedef atlas::Mesh Mesh;
+
+    typedef eckit::GribHandle Grib;
 
 public: // methods
 
@@ -66,6 +73,11 @@ public: // methods
 
     friend std::ostream& operator<<( std::ostream& os, const FieldHandle& v);
 
+    /// @todo this is to be removed
+
+    void grib( Grib* g );
+    Grib& grib() const;
+
 private: // members
 
     void print( std::ostream& ) const;
@@ -75,6 +87,8 @@ protected: // members
     Grid::Ptr       grid_;      ///< describes the grid (shared)
     Mesh::Ptr       mesh_;      ///< mesh data structure (shared)
     Data&           data_;      ///< reference to the field data, not owned since it actually exists in the mesh_
+
+    eckit::ScopedPtr<Grib> grib_; ///< @todo this is to be removed
 
 };
 

@@ -18,6 +18,7 @@
 
 namespace eckit { class GribHandle; }
 namespace eckit { class PathName; }
+namespace eckit { class DataHandle; }
 
 namespace atlas {
 
@@ -33,9 +34,11 @@ public: // methods
 
 private: // methods
 
-    static void clone( const atlas::grid::FieldHandle& field, const eckit::PathName& src, const eckit::PathName& opath );
+    static void write( const atlas::grid::FieldHandle& field, const eckit::PathName& opath  );
 
-    static eckit::GribHandle* clone(const grid::FieldHandle &field, eckit::GribHandle& source );
+    static void clone( const atlas::grid::FieldHandle& field, const eckit::PathName& gridsec, eckit::DataHandle& );
+
+    static eckit::GribHandle* clone(const grid::FieldHandle &field, eckit::GribHandle& gridsec );
 
 };
 

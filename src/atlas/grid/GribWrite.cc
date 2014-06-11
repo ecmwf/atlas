@@ -16,6 +16,7 @@
 #include "eckit/grib/GribHandle.h"
 #include "eckit/utils/Translator.h"
 #include "eckit/memory/ScopedPtr.h"
+#include "eckit/io/DataHandle.h"
 
 #include "atlas/mesh/Field.hpp"
 #include "atlas/mesh/FunctionSpace.hpp"
@@ -40,52 +41,84 @@ namespace atlas {
 
 void GribWrite::write( const FieldSet& fields, const PathName& opath )
 {
-    NOTIMP;
+    for( size_t i = 0; i < fields.size(); ++i )
+    {
+        PathName pi( opath.asString() + "." + Translator<size_t,std::string>()(i) );
+        GribWrite::write(fields[i], pi);
+    }
 }
 
 void GribWrite::clone( const FieldSet& fields, const PathName& src, const PathName& opath )
 {
+    bool overwrite = true;
+
+    if( opath.exists() )
+        opath.unlink();
+
+    eckit::ScopedPtr<DataHandle> of( opath.fileHandle(overwrite) ); AutoClose of_close(*of);
+
+    ASSERT(of);
+
+    of->openForWrite(0);
+
     for( size_t i = 0; i < fields.size(); ++i )
     {
-        PathName pi( opath.asString() + "." + Translator<size_t,std::string>()(i) );
-        GribWrite::clone(fields[i], src, pi);
+        GribWrite::clone(fields[i], src, *of);
     }
 }
 
-void GribWrite::clone( const FieldHandle& field, const PathName& source, const PathName& fname )
+void GribWrite::write(const FieldHandle &field, const PathName &opath)
 {
-    FILE* fh = ::fopen( source.asString().c_str(), "r" );
+    NOTIMP;
+}
+
+void GribWrite::clone(const FieldHandle& field, const PathName& gridsec, DataHandle& out )
+{
+    FILE* fh = ::fopen( gridsec.asString().c_str(), "r" );
     if( fh == 0 )
-        throw ReadError( std::string("error opening file ") + source );
+        throw ReadError( std::string("error opening file ") + gridsec );
 
     int err = 0;
     grib_handle* clone_h = grib_handle_new_from_file(0,fh,&err);
     if( clone_h == 0 || err != 0 )
-        throw ReadError( std::string("error reading grib file ") + source );
+        throw ReadError( std::string("error reading grib file ") + gridsec );
 
     GribHandle ch(clone_h);
     ScopedPtr<GribHandle> h( GribWrite::clone( field, ch ) );
 
-    GRIB_CHECK( grib_write_message(h->raw(),fname.asString().c_str(),"w"), 0 );
+    //    GRIB_CHECK( grib_write_message(h->raw(),fname.asString().c_str(),"w"), 0 );
+
+    // dump the handle to the DataHandle
+    const void* buffer = NULL;
+    size_t size = 0;
+
+    GRIB_CHECK( grib_get_message( h->raw(), &buffer, &size), 0);
+
+    out.write(buffer, size);
 }
 
-GribHandle* GribWrite::clone(const FieldHandle& field, GribHandle& source )
+GribHandle* GribWrite::clone(const FieldHandle& field, GribHandle& gridsec )
 {
     const Field& f = field.data();
     const size_t npts = f.size();
 
-    long nb_nodes = 0;
-    GRIB_CHECK( grib_get_long(source.raw(),"numberOfDataPoints",&nb_nodes), 0 );
+    // check number of points matches
 
+    long nb_nodes = 0;
+    GRIB_CHECK( grib_get_long(gridsec.raw(),"numberOfDataPoints",&nb_nodes), 0 );
     ASSERT( npts == f.size() );
 
-    GribHandle* h = source.clone();
+    GribHandle& meta = field.grib();
 
-    GRIB_CHECK( grib_set_long(h->raw(),"bitsPerValue",16), 0 );
+    ///@todo move this to the eckit::grib interface
+    int err=0;
+    int what = GRIB_SECTION_GRID;
+    grib_handle* h = grib_util_sections_copy( gridsec.raw(), meta.raw(), what, &err); GRIB_CHECK(err,"grib_util_sections_copy()");
 
-    GRIB_CHECK( grib_set_double_array(h->raw(),"values", f.data<double>(),npts), 0 );
+    ///@todo move this to the eckit::grib interface
+    GRIB_CHECK( grib_set_double_array(h, "values", f.data<double>(),npts), 0 );
 
-    return h;
+    return new GribHandle(h);
 }
 
 #if 0
