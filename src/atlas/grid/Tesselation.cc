@@ -204,6 +204,8 @@ void Tesselation::tesselate( Grid& g )
     if( MeshCache::get( hash, mesh ) )
         return;
 
+    std::cout << "mesh not in cache -- tesselating grid " << hash << std::endl;
+
     Tesselation::tesselate( mesh );
 
     MeshCache::add( hash, mesh );
