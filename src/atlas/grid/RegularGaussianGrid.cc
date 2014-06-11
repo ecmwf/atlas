@@ -21,7 +21,7 @@
 
 #include <stdexcept>
 
-#include "eckit/log/Log.h"
+//#include "eckit/log/Log.h"
 #include "atlas/grid/RegularGaussianGrid.h"
 
 using namespace eckit;
@@ -37,12 +37,12 @@ namespace grid {
 RegularGaussianGrid::RegularGaussianGrid()
 : gaussianNumber_(0)
 {
-   Log::info() << "RegularGaussianGrid" << std::endl;
+//   Log::info() << "RegularGaussianGrid" << std::endl;
 }
 
 RegularGaussianGrid::~RegularGaussianGrid()
 {
-    Log::info() << "Destroy a RegularGaussianGrid" << std::endl;
+//    Log::info() << "Destroy a RegularGaussianGrid" << std::endl;
 }
 
 Grid::Point RegularGaussianGrid::latLon(size_t the_i, size_t the_j) const

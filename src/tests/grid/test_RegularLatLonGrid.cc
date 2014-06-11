@@ -138,8 +138,8 @@ static void test_grib_file(const std::string& the_file_path)
    std::string gridType = string_value;
    std::cout << " Create Grid derivatives " << gridType << std::endl;
 
-   if ( gridType == "polar_stereographic" || gridType == "rotated_ll" || gridType == "sh" ) {
-      std::cout << " ** Ignoring grid types [ polar_stereographic | rotated_ll | sh ] " << std::endl;
+   if ( gridType == "polar_stereographic" || gridType == "sh" ) {
+      std::cout << " ** Ignoring grid types [ polar_stereographic | sh ] " << std::endl;
       return;
    }
 

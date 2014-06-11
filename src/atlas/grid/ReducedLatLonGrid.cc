@@ -21,7 +21,7 @@
 
 #include <stdexcept>
 
-#include "eckit/log/Log.h"
+//#include "eckit/log/Log.h"
 #include "atlas/grid/ReducedLatLonGrid.h"
 
 using namespace eckit;
@@ -38,12 +38,12 @@ ReducedLatLonGrid::ReducedLatLonGrid()
 :  nsIncrement_(0),
    nptsNS_(0)
 {
-   Log::info() << "ReducedLatLonGrid" << std::endl;
+//   Log::info() << "ReducedLatLonGrid" << std::endl;
 }
 
 ReducedLatLonGrid::~ReducedLatLonGrid()
 {
-    Log::info() << "Destroy a ReducedLatLonGrid" << std::endl;
+//    Log::info() << "Destroy a ReducedLatLonGrid" << std::endl;
 }
 
 void ReducedLatLonGrid::coordinates( Grid::Coords& r ) const

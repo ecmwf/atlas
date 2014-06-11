@@ -19,8 +19,8 @@
 // so whatever the samples say, is the convention
 // ==================================================================================
 
-#include "eckit/log/Log.h"
-#include "atlas/grid/ReducedGaussianGrid.h"
+//#include "eckit/log/Log.h"
+#include "atlas/grid/RotatedLatLonGrid.h"
 
 using namespace eckit;
 using namespace std;
@@ -30,21 +30,43 @@ namespace grid {
 
 //-----------------------------------------------------------------------------
 // Area: Do we check the area.
-// Area: Can we assume area is multiple of the grids ? No.
-// NPoints: is this just the grids points, or includes area points, of area does not fit grid
-//          assumes it is grid points inclusive of the area.
+// Area: Can we assume area is multiple of the grids ?
 
-ReducedGaussianGrid::ReducedGaussianGrid()
-: gaussianNumber_(0)
+RotatedLatLonGrid::RotatedLatLonGrid()
+:  rotated_latitude_(0),
+   rotated_longitude_(0),
+   rotated_angle_(0),
+   nsIncrement_(0),
+   weIncrement_(0),
+   nptsNS_(0),
+   nptsWE_(0)
 {
+//   Log::info() << "RotatedLatLonGrid" << std::endl;
 }
 
-ReducedGaussianGrid::~ReducedGaussianGrid()
+RotatedLatLonGrid::~RotatedLatLonGrid()
 {
-//    Log::info() << "Destroy a ReducedGaussianGrid" << std::endl;
+//    Log::info() << "Destroy a RotatedLatLonGrid" << std::endl;
 }
 
-void ReducedGaussianGrid::coordinates( Grid::Coords& r ) const
+Grid::Point RotatedLatLonGrid::latLon(size_t the_i, size_t the_j) const
+{
+   double plon = bbox_.bottom_left_.lon(); // west
+   double plat = bbox_.top_right_.lat();   // north;
+   for( size_t j = 0; j <= nptsNS_; ++j) {
+      for( size_t i = 0; i <= nptsWE_; ++i) {
+         if (the_i == i && the_j == j) {
+            return Grid::Point( plat, plon );
+         }
+         plon += weIncrement_;
+      }
+      plat += nsIncrement_;
+   }
+   return Grid::Point();
+}
+
+
+void RotatedLatLonGrid::coordinates( Grid::Coords& r ) const
 {
     ASSERT( r.size() == points_.size() );
 

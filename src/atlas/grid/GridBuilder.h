@@ -25,17 +25,28 @@
 #include "eckit/geometry/Point2.h"
 #include "atlas/grid/RegularLatLonGrid.h"
 #include "atlas/grid/ReducedLatLonGrid.h"
+#include "atlas/grid/RotatedLatLonGrid.h"
 #include "atlas/grid/ReducedGaussianGrid.h"
 #include "atlas/grid/RegularGaussianGrid.h"
+
+/// Our operations currently(2014) produces data with following grids.
+///    o Spherical harmonics
+///    o reduced gaussian grid
+///    o reduced lat long grids/ quasi regular lat long grids
+///
+/// In the present(2014) product delivery we offer to our users:
+///    o 82.00% regular lat long grids
+///    o 10.70% rotated lat long grids
+///    o  5.80% reduced gaussian grid
+///    o  1.00% regular gaussian grid
+///    o  0.36% Spherical harmonics
+///    o  0.01% polar stereographic grid
+///    o  0.00% reduced lat long grids/ quasi regular lat long grids
 
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
 namespace grid {
-
-class RegularLatLonGrid;
-class RegularGaussianGrid;
-class ReducedGaussianGrid;
 
 //------------------------------------------------------------------------------------------------------
 
@@ -125,10 +136,10 @@ protected:
    double west_;                    ///< In degrees
    double east_;                    ///< In degrees
    double epsilon_;                 ///< Grib 1 or Grib 2
-   long   numberOfDataPoints_;
+   long   numberOfDataPoints_;      ///< Must match the grib iterator data points
    long   iScansNegatively_;
    long   jScansPositively_;
-   std::string hash_;
+   std::string hash_;               ///< may be used to persist grids
 };
 
 // =============================================================================
@@ -224,7 +235,36 @@ private:
    eckit::ScopedPtr<ReducedLatLonGrid> the_grid_;
 };
 
+/// To avoid copying data, we placed the data directly into GRIB
+/// via use of friendship
+/// NOTE: grib iterator does not rotate the data points.
+///       This grid is not currently produced by IFS
+class GribRotatedLatLonGrid : public GribGridBuilderHelper {
+public:
+   GribRotatedLatLonGrid( grib_handle* h );
+   virtual ~GribRotatedLatLonGrid();
 
+   virtual Grid::Ptr build();
+
+private:
+   // Functions specific to Regular Lat long grids
+   long rows() const;
+   long cols() const;
+   double incLat() const;
+   double incLon() const;
+
+   // for verification/checks
+   double computeIncLat() const ;
+   double computeIncLon() const ;
+   long computeRows(double north, double south, double west, double east) const;
+   long computeCols(double west, double east) const;
+
+private:
+   eckit::ScopedPtr<RotatedLatLonGrid> the_grid_;
+};
+
+
+// ==========================================================================
 // Ensures grib handle is always deleted, in presence of exceptions
 class GribFile {
 public:
