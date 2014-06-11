@@ -17,14 +17,12 @@
 
 #include "atlas/mpl/MPL.hpp"
 #include "atlas/atlas_config.h"
-#include "atlas/meshgen/RGG.hpp"
-#include "atlas/meshgen/EqualAreaPartitioner.hpp"
+#include "tests/TestMeshes.hpp"
 #include "atlas/io/Gmsh.hpp"
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/mesh/FunctionSpace.hpp"
-#include "atlas/mesh/Metadata.hpp"
-#include "atlas/mesh/ArrayView.hpp"
 #include "atlas/mesh/IndexView.hpp"
+#include "atlas/mesh/ArrayView.hpp"
 #include "atlas/actions/BuildHalo.hpp"
 #include "atlas/actions/BuildParallelFields.hpp"
 #include "atlas/mesh/Parameters.hpp"
@@ -32,36 +30,59 @@
 using namespace atlas;
 using namespace atlas::meshgen;
 
-#define DISABLE if(0)
-#define ENABLE if(1)
+struct MPIFixture {
+    MPIFixture()  { MPL::init(); }
+    ~MPIFixture() { MPL::finalize(); }
+};
 
-namespace atlas {
-namespace test {
+BOOST_GLOBAL_FIXTURE( MPIFixture )
 
-} // end namespace test
-} // end namespace atlas
-
-BOOST_AUTO_TEST_CASE( init ) { MPL::init(); }
-
-BOOST_AUTO_TEST_CASE( test_halo_2parts )
+BOOST_AUTO_TEST_CASE( test_small )
 {
-  RGGMeshGenerator generate;
-  generate.options.set("nb_parts",MPL::size());
-  generate.options.set("include_pole",false);
-  generate.options.set("three_dimensional",false);
-
-  int parts[] = {10,11};
-  int part = MPL::rank() ; //parts[MPL::rank()];
-
-  generate.options.set("part",MPL::rank());
-  Mesh* m = generate( T63() );
+  int nlat = 5;
+  int lon[5] = {10, 12, 14, 16, 16};
+  Mesh::Ptr m = test::generate_mesh(nlat, lon);
 
   actions::build_parallel_fields(*m);
+  actions::make_periodic(*m);
   actions::build_halo(*m,2);
 
-  std::stringstream filename; filename << "T63_halo_p" << part << ".msh";
+  IndexView<int,1> ridx ( m->function_space("nodes").field("remote_idx") );
+  ArrayView<int,1> gidx ( m->function_space("nodes").field("glb_idx") );
+
+  if( MPL::size() == 5 )
+  {
+    switch( MPL::rank() ) // with 5 tasks
+    {
+    case 0:
+      BOOST_CHECK_EQUAL( ridx(9),  9  );
+      BOOST_CHECK_EQUAL( gidx(9),  10 );
+      BOOST_CHECK_EQUAL( ridx(29), 9 );
+      BOOST_CHECK_EQUAL( gidx(29), 875430066 ); // hashed unique idx
+      break;
+    }
+  }
+  else
+  {
+    if( MPL::rank() == 0 )
+      std::cout << "skipping tests with 5 mpi tasks!" << std::endl;
+  }
+
+  std::stringstream filename; filename << "small_halo_p" << MPL::rank() << ".msh";
   Gmsh::write(*m,filename.str());
-  delete m;
 }
 
-BOOST_AUTO_TEST_CASE( finalize ) { MPL::finalize(); }
+#if 1
+BOOST_AUTO_TEST_CASE( test_t63 )
+{
+  Mesh::Ptr m = test::generate_mesh( T63() );
+
+  actions::build_parallel_fields(*m);
+  actions::make_periodic(*m);
+  actions::build_halo(*m,5);
+
+  std::stringstream filename; filename << "T63_halo_p" << MPL::rank() << ".msh";
+  Gmsh::write(*m,filename.str());
+}
+#endif
+

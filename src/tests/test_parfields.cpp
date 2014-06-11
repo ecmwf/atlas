@@ -29,6 +29,7 @@
 #include "atlas/mesh/IndexView.hpp"
 #include "atlas/actions/BuildParallelFields.hpp"
 #include "atlas/mesh/Parameters.hpp"
+#include "atlas/mesh/Util.hpp"
 
 using namespace atlas;
 using namespace atlas::meshgen;
@@ -36,33 +37,7 @@ using namespace atlas::meshgen;
 #define DISABLE if(0)
 #define ENABLE if(1)
 
-namespace atlas {
-namespace test {
-
-struct IsGhost
-{
-  IsGhost( FunctionSpace& nodes )
-  {
-    part    = ArrayView<int,1> (nodes.field("partition") );
-    loc_idx = IndexView<int,1> (nodes.field("remote_loc_idx") );
-    mypart  = MPL::rank();
-  }
-  bool operator()(int idx)
-  {
-    if( part   [idx] != mypart ) return true;
-    if( loc_idx[idx] != idx    ) return true;
-    return false;
-  }
-  int mypart;
-  ArrayView<int,1> part;
-  IndexView<int,1> loc_idx;
-};
-
-} // end namespace test
-} // end namespace atlas
-
 BOOST_AUTO_TEST_CASE( init ) { MPL::init(); }
-
 
 BOOST_AUTO_TEST_CASE( test1 )
 {
@@ -98,9 +73,9 @@ BOOST_AUTO_TEST_CASE( test1 )
 
   actions::build_parallel_fields(*m);
 
-  BOOST_REQUIRE( m->function_space("nodes").has_field("remote_loc_idx") );
+  BOOST_REQUIRE( m->function_space("nodes").has_field("remote_idx") );
 
-  IndexView<int,1> loc( nodes->field("remote_loc_idx") );
+  IndexView<int,1> loc( nodes->field("remote_idx") );
   BOOST_CHECK_EQUAL( loc(0) , 0 );
   BOOST_CHECK_EQUAL( loc(1) , 1 );
   BOOST_CHECK_EQUAL( loc(2) , 2 );
@@ -112,7 +87,7 @@ BOOST_AUTO_TEST_CASE( test1 )
   BOOST_CHECK_EQUAL( loc(8) , 8 );
   BOOST_CHECK_EQUAL( loc(9) , 9 );
 
-  test::IsGhost is_ghost( m->function_space("nodes") );
+  IsGhost is_ghost( m->function_space("nodes") );
 
   switch ( MPL::rank() )
   {
@@ -167,11 +142,11 @@ BOOST_AUTO_TEST_CASE( test2 )
   actions::build_parallel_fields(*m);
 
   FunctionSpace& nodes = m->function_space("nodes");
-  IndexView<int,1> loc_idx ( nodes.field("remote_loc_idx") );
+  IndexView<int,1> loc_idx ( nodes.field("remote_idx") );
   ArrayView<int,1> part    ( nodes.field("partition")      );
   ArrayView<int,1> glb_idx ( nodes.field("glb_idx")        );
 
-  test::IsGhost is_ghost(nodes);
+  IsGhost is_ghost(nodes);
 
   int nb_ghost = 0;
   for( int jnode=0; jnode<nodes.extents()[0]; ++jnode )

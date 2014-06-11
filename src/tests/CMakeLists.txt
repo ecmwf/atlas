@@ -47,17 +47,10 @@ ecbuild_add_test( TARGET test_parfields
 
 ecbuild_add_test( TARGET test_halo
   BOOST
-  MPI      12
-  SOURCES  test_halo.cpp
+  MPI      5
+  SOURCES  test_halo.cpp TestMeshes.hpp
   LIBS     atlas_meshgen
 )
-
-ecbuild_add_test( TARGET test_halo_eastwest
-  BOOST
-  SOURCES  test_halo_eastwest.cpp
-  LIBS     atlas_meshgen
-)
-
 
 ecbuild_add_test( TARGET test_meshgen3d
   BOOST

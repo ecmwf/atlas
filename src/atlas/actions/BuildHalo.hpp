@@ -17,6 +17,11 @@ namespace atlas {
   class Mesh;
 namespace actions {
 
+/// @brief Enlarge each partition of the mesh with a halo of elements
+/// @param [inout] mesh      The mesh to enlarge
+/// @param [in]    nb_elems  Size of the halo
+/// @author Willem Deconinck
+/// @date June 2014
 void build_halo( Mesh& mesh, int nb_elems );
 
 // ------------------------------------------------------------------

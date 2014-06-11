@@ -84,6 +84,7 @@ list( APPEND atlas_mesh_srcs
   mesh/Metadata.hpp
   mesh/Metadata.cpp
   mesh/Parameters.hpp
+  mesh/Util.hpp
 )
 
 list( APPEND atlas_actions_srcs

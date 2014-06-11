@@ -28,7 +28,7 @@ namespace actions {
 
 ArrayView<int,1> build_nodes_glb_idx_serial( FunctionSpace& nodes );
 ArrayView<int,1> build_nodes_partition( FunctionSpace& nodes );
-IndexView<int,1> build_nodes_remote_loc_idx( FunctionSpace& nodes );
+IndexView<int,1> build_nodes_remote_idx( FunctionSpace& nodes );
 
 int microdeg( const double& deg )
 {
@@ -88,10 +88,10 @@ void build_parallel_fields( Mesh& mesh )
     nodes_part = build_nodes_partition( nodes );
 
   IndexView<int,1> nodes_loc_idx;
-  if( nodes.has_field("remote_loc_idx") )
-    nodes_loc_idx = IndexView<int,1> ( nodes.field("remote_loc_idx") );
+  if( nodes.has_field("remote_idx") )
+    nodes_loc_idx = IndexView<int,1> ( nodes.field("remote_idx") );
   else
-    nodes_loc_idx = build_nodes_remote_loc_idx( nodes );
+    nodes_loc_idx = build_nodes_remote_idx( nodes );
 }
 
 // ------------------------------------------------------------------
@@ -106,10 +106,10 @@ ArrayView<int,1> build_nodes_glb_idx_serial( FunctionSpace& nodes )
 
 // ------------------------------------------------------------------
 
-IndexView<int,1> build_nodes_remote_loc_idx( FunctionSpace& nodes )
+IndexView<int,1> build_nodes_remote_idx( FunctionSpace& nodes )
 {
   int mypart = MPL::rank();
-  IndexView<int,   1> loc_idx ( nodes.create_field<int>("remote_loc_idx",1) );
+  IndexView<int,   1> loc_idx ( nodes.create_field<int>("remote_idx",1) );
   ArrayView<int,   1> part    ( nodes.field("partition")   );
   ArrayView<double,2> latlon  ( nodes.field("coordinates") );
 
@@ -198,7 +198,7 @@ void make_periodic( Mesh& mesh )
 
   FunctionSpace& nodes = mesh.function_space("nodes");
 
-  IndexView<int,1> loc_idx ( nodes.field("remote_loc_idx") );
+  IndexView<int,1> loc_idx ( nodes.field("remote_idx") );
   ArrayView<int,1> part    ( nodes.field("partition")      );
   //ArrayView<int,1> glb_idx ( nodes.field("glb_idx")        );
 
@@ -234,8 +234,8 @@ void make_periodic( Mesh& mesh )
     }
   }
 
-  std::cout << "found " << master_nodes.size()/3 << " master nodes " << std::endl;
-  std::cout << "found " <<  slave_nodes.size()/3 << "  slave nodes " << std::endl;
+//  std::cout << "found " << master_nodes.size()/3 << " master nodes " << std::endl;
+//  std::cout << "found " <<  slave_nodes.size()/3 << "  slave nodes " << std::endl;
 
                       //  std::vector< std::vector<int> > found_slave(MPL::size());
                       //  // Find slaves on other tasks to send to me

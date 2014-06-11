@@ -130,7 +130,9 @@ void increase_halo( Mesh& mesh )
   FunctionSpace& nodes         = mesh.function_space( "nodes" );
   ArrayView<double,2> latlon   ( nodes.field( "coordinates"    ) );
   ArrayView<int   ,1> glb_idx  ( nodes.field( "glb_idx"        ) );
-  ArrayView<int   ,1> node_part( nodes.field( "partition"      ) );
+  ArrayView<int   ,1> part     ( nodes.field( "partition"      ) );
+  IndexView<int   ,1> ridx     ( nodes.field( "remote_idx"     ) );
+
   int nb_nodes = nodes.extents()[0];
 
   std::vector< std::vector< ElementRef > > node_to_elem(nb_nodes);
@@ -273,16 +275,21 @@ void increase_halo( Mesh& mesh )
 
   // sfn stands for "send_found_nodes"
   std::vector< std::vector<int>    > sfn_part( MPL::size() );
+  std::vector< std::vector<int>    > sfn_ridx( MPL::size() );
   std::vector< std::vector<int>    > sfn_glb_idx( MPL::size() );
   std::vector< std::vector<double> > sfn_latlon ( MPL::size() );
   // sfn stands for "send_found_elems"
-  std::vector< std::vector< std::vector<int> > > sfe_glb_idx ( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
-  std::vector< std::vector< std::vector<int> > > sfe_nodes_id( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
-  std::vector< std::vector< std::vector<int> > > sfe_part    ( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
+  std::vector< std::vector< std::vector<int> > >
+      sfe_glb_idx ( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
+  std::vector< std::vector< std::vector<int> > >
+      sfe_nodes_id( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
+  std::vector< std::vector< std::vector<int> > >
+      sfe_part    ( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
 
   for (int jpart=0; jpart<MPL::size(); ++jpart)
   {
-    ArrayView<int,2> recv_bdry_nodes_id( recvbuf.data()+recvdispls[jpart], Extents( recvcounts[jpart]/3, 3 ).data() );
+    ArrayView<int,2> recv_bdry_nodes_id( recvbuf.data()+recvdispls[jpart],
+                                         Extents( recvcounts[jpart]/3, 3 ).data() );
     int recv_nb_bdry_nodes = recv_bdry_nodes_id.extents()[0];
 
     // Find elements that have these nodes
@@ -303,27 +310,25 @@ void increase_halo( Mesh& mesh )
       if     ( ll.x <= WEST) { while(ll.x <= WEST) { ll.x += EAST; } }
       else if( ll.x >= EAST) { while(ll.x >= EAST) { ll.x -= EAST; } }
 
-      int recv_uid     = ll.uid();
-      int loc=-1;
+      int recv_uid = ll.uid();
+      int loc = -1;
       std::map<int,int>::iterator found = node_uid_to_loc.find(recv_uid);
       if( found != node_uid_to_loc.end() )
       {
         loc = found->second;
-        if( MPL::rank() == jpart && glb_idx(loc) == recv_glb_idx ) loc = -1;
+        if( MPL::rank() == jpart && glb_idx(loc) == recv_glb_idx )
+          loc = -1;
       }
 
       if( loc != -1 )
       {
-        ASSERT( loc<glb_idx.size() );
+        for( int jelem=0; jelem<node_to_elem[loc].size(); ++jelem )
         {
-          for( int jelem=0; jelem<node_to_elem[loc].size(); ++jelem )
-          {
-            int f = node_to_elem[loc][jelem].f;
-            int e = node_to_elem[loc][jelem].e;
+          int f = node_to_elem[loc][jelem].f;
+          int e = node_to_elem[loc][jelem].e;
 
-            if( elem_part[f](e) == MPL::rank() )
-              found_bdry_elements_set[f].insert( std::make_pair( e, recv_x - ll.x ) );
-          }
+          if( elem_part[f](e) == MPL::rank() )
+            found_bdry_elements_set[f].insert( std::make_pair( e, recv_x - ll.x ) );
         }
       }
     }
@@ -379,8 +384,10 @@ void increase_halo( Mesh& mesh )
 
     sfn_glb_idx[jpart].resize(nb_found_bdry_nodes);
     sfn_part[jpart].resize(nb_found_bdry_nodes);
+    sfn_ridx[jpart].resize(nb_found_bdry_nodes);
     sfn_latlon[jpart].resize(2*nb_found_bdry_nodes);
-    //for( int jnode=0; jnode<nb_found_bdry_nodes; ++jnode)
+
+    // Fill buffers to send
     {
       int jnode=0;
       std::set<LatLon>::iterator it=found_bdry_nodes_id_set.begin();
@@ -391,15 +398,13 @@ void increase_halo( Mesh& mesh )
         if( found != node_uid_to_loc.end() )
         {
           int loc = found->second;
-          //std::cout << "uid = " << it->uid() << "   " << loc << loc << std::endl;
-          sfn_glb_idx[jpart][jnode]      = glb_idx  (loc);
-          sfn_part   [jpart][jnode]      = node_part(loc);
-          sfn_latlon [jpart][jnode*2+XX] = latlon   (loc,XX);
-          sfn_latlon [jpart][jnode*2+YY] = latlon   (loc,YY);
+          sfn_glb_idx[jpart][jnode]      = glb_idx(loc);
+          sfn_part   [jpart][jnode]      = part   (loc);
+          sfn_latlon [jpart][jnode*2+XX] = latlon (loc,XX);
+          sfn_latlon [jpart][jnode*2+YY] = latlon (loc,YY);
         }
-        else // periodic node?
+        else // periodic node
         {
-          //std::cout << "new node!!!" << std::endl;
           LatLon ll(it->x,it->y);
           if     ( ll.x <= WEST) { while(ll.x <= WEST) { ll.x += EAST; } }
           else if( ll.x >= EAST) { while(ll.x >= EAST) { ll.x -= EAST; } }
@@ -408,8 +413,9 @@ void increase_halo( Mesh& mesh )
           found = node_uid_to_loc.find( pid );
           ASSERT( found != node_uid_to_loc.end() );
           int loc = node_uid_to_loc[ pid ];
-          sfn_glb_idx[jpart][jnode]      = uid; // glb_idx  (loc) + 1000000;
-          sfn_part   [jpart][jnode]      = node_part(loc);
+          sfn_glb_idx[jpart][jnode]      = uid;
+          sfn_part   [jpart][jnode]      = part(loc);
+          sfn_ridx   [jpart][jnode]      = ridx(loc);
           sfn_latlon [jpart][jnode*2+XX] = latlon(loc,XX) + (it->x - ll.x)/EAST * 2.*M_PI;
           sfn_latlon [jpart][jnode*2+YY] = latlon(loc,YY);
         }
@@ -423,7 +429,8 @@ void increase_halo( Mesh& mesh )
       sfe_glb_idx [f][jpart].resize( nb_found_bdry_elems[f] );
       sfe_part    [f][jpart].resize( nb_found_bdry_elems[f] );
       sfe_nodes_id[f][jpart].resize( nb_found_bdry_elems[f]*nb_elem_nodes );
-      ArrayView<int,2> sfe_nodes_id_view( sfe_nodes_id[f][jpart].data(), Extents(nb_found_bdry_elems[f],nb_elem_nodes).data() );
+      ArrayView<int,2> sfe_nodes_id_view( sfe_nodes_id[f][jpart].data(),
+                                          Extents(nb_found_bdry_elems[f],nb_elem_nodes).data() );
       for( int jelem=0; jelem<nb_found_bdry_elems[f]; ++jelem )
       {
         int e = found_bdry_elements[f][jelem];
@@ -454,22 +461,26 @@ void increase_halo( Mesh& mesh )
   //    rfn stands for "recv_found_nodes"
   std::vector< std::vector<int> >    rfn_glb_idx(MPL::size());
   std::vector< std::vector<int> >    rfn_part(MPL::size());
+  std::vector< std::vector<int>    > rfn_ridx( MPL::size() );
   std::vector< std::vector<double> > rfn_latlon(MPL::size());
   //    rfe stands for "recv_found_elems"
-  std::vector< std::vector< std::vector<int> > > rfe_glb_idx ( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
-  std::vector< std::vector< std::vector<int> > > rfe_part    ( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
-  std::vector< std::vector< std::vector<int> > > rfe_nodes_id( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
+  std::vector< std::vector< std::vector<int> > >
+      rfe_glb_idx ( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
+  std::vector< std::vector< std::vector<int> > >
+      rfe_part    ( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
+  std::vector< std::vector< std::vector<int> > >
+      rfe_nodes_id( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
 
   MPL::Alltoall(sfn_glb_idx,  rfn_glb_idx);
   MPL::Alltoall(sfn_part,     rfn_part);
+  MPL::Alltoall(sfn_ridx,     rfn_ridx);
   MPL::Alltoall(sfn_latlon,   rfn_latlon);
   for( int f=0; f<mesh.nb_function_spaces(); ++f )
   {
-    MPL::Alltoall(sfe_glb_idx[f],  rfe_glb_idx[f] );
-    MPL::Alltoall(sfe_nodes_id [f],  rfe_nodes_id [f] );
-    MPL::Alltoall(sfe_part   [f],  rfe_part   [f] );
+    MPL::Alltoall(sfe_glb_idx [f], rfe_glb_idx [f] );
+    MPL::Alltoall(sfe_nodes_id[f], rfe_nodes_id[f] );
+    MPL::Alltoall(sfe_part    [f], rfe_part    [f] );
   }
-
 
   // We now have everything we need in rfe_ and rfn_ vectors
   // Now adapt the mesh
@@ -491,20 +502,21 @@ void increase_halo( Mesh& mesh )
   {
     for( int n=0; n<rfn_glb_idx[jpart].size(); ++n )
     {
-      bool inserted = node_uid.insert( LatLon( rfn_latlon[jpart][n*2+XX], rfn_latlon[jpart][n*2+YY] ).uid() ).second;
+      double x = rfn_latlon[jpart][n*2+XX];
+      double y = rfn_latlon[jpart][n*2+YY];
+      bool inserted = node_uid.insert( LatLon( x, y ).uid() ).second;
       if( inserted )
-      {
         rfn_idx[jpart].push_back(n);
-      }
     }
     nb_new_nodes += rfn_idx[jpart].size();
   }
 
 
   nodes.resize( Extents( nb_nodes+nb_new_nodes, Field::UNDEF_VARS ) );
-  glb_idx   = ArrayView<int,   1>( nodes.field("glb_idx") );
-  node_part = ArrayView<int,   1>( nodes.field("partition") );
-  latlon    = ArrayView<double,2>( nodes.field("coordinates") );
+  glb_idx = ArrayView<int,   1>( nodes.field("glb_idx") );
+  part    = ArrayView<int,   1>( nodes.field("partition") );
+  ridx    = IndexView<int,   1>( nodes.field("remote_idx") );
+  latlon  = ArrayView<double,2>( nodes.field("coordinates") );
 
 
   int new_node=0;
@@ -514,10 +526,11 @@ void increase_halo( Mesh& mesh )
     {
       int loc_idx = nb_nodes+new_node;
 
-      glb_idx  (loc_idx)    = rfn_glb_idx [jpart][rfn_idx[jpart][n]];
-      node_part(loc_idx)    = rfn_part    [jpart][rfn_idx[jpart][n]];
-      latlon   (loc_idx,XX) = rfn_latlon  [jpart][rfn_idx[jpart][n]*2+XX];
-      latlon   (loc_idx,YY) = rfn_latlon  [jpart][rfn_idx[jpart][n]*2+YY];
+      glb_idx(loc_idx)    = rfn_glb_idx [jpart][rfn_idx[jpart][n]];
+      part   (loc_idx)    = rfn_part    [jpart][rfn_idx[jpart][n]];
+      ridx   (loc_idx)    = rfn_ridx    [jpart][rfn_idx[jpart][n]];
+      latlon (loc_idx,XX) = rfn_latlon  [jpart][rfn_idx[jpart][n]*2+XX];
+      latlon (loc_idx,YY) = rfn_latlon  [jpart][rfn_idx[jpart][n]*2+YY];
       int uid = LatLon( latlon[loc_idx] ).uid();
 
       // make sure new node was not already there
@@ -526,8 +539,10 @@ void increase_halo( Mesh& mesh )
       {
         int other = found->second;
         std::stringstream msg;
-        msg << "New node with uid " << uid << ":\n"  << glb_idx(loc_idx) << "("<<latlon(loc_idx,XX)<<","<<latlon(loc_idx,YY)<<")\n";
-        msg << "Existing already loc "<< other << "  :  " << glb_idx(other) << "("<<latlon(other,XX)<<","<<latlon(other,YY)<<")\n";
+        msg << "New node with uid " << uid << ":\n"  << glb_idx(loc_idx)
+            << "("<<latlon(loc_idx,XX)<<","<<latlon(loc_idx,YY)<<")\n";
+        msg << "Existing already loc "<< other << "  :  " << glb_idx(other)
+            << "("<<latlon(other,XX)<<","<<latlon(other,YY)<<")\n";
         throw eckit::SeriousBug(msg.str(),Here());
       }
       node_uid_to_loc[ uid ] = nb_nodes+new_node;
@@ -576,10 +591,11 @@ void increase_halo( Mesh& mesh )
       {
         for( int e=0; e<rfe_unique_idx[jpart].size(); ++e )
         {
-          elem_glb_idx[f](nb_elems+new_elem)   = rfe_glb_idx[f][jpart][rfe_unique_idx[jpart][e]];
-          elem_part   [f](nb_elems+new_elem)   = rfe_part[f][jpart][rfe_unique_idx[jpart][e]];
+          int jelem = rfe_unique_idx[jpart][e];
+          elem_glb_idx[f](nb_elems+new_elem)   = rfe_glb_idx[f][jpart][jelem];
+          elem_part   [f](nb_elems+new_elem)   = rfe_part[f][jpart][jelem];
           for( int n=0; n<nb_nodes_per_elem; ++n )
-            elem_nodes[f](nb_elems+new_elem,n) = node_uid_to_loc[ rfe_nodes_id[f][jpart][rfe_unique_idx[jpart][e]*nb_nodes_per_elem+n] ];
+            elem_nodes[f](nb_elems+new_elem,n) = node_uid_to_loc[ rfe_nodes_id[f][jpart][jelem*nb_nodes_per_elem+n] ];
           ++new_elem;
         }
       }
