@@ -8,29 +8,87 @@
  * does it submit to any jurisdiction.
  */
 
+#include "grib_api.h"
+
 #include "eckit/eckit_config.h"
 #include "eckit/exception/Exceptions.h"
-
-//------------------------------------------------------------------------------------------------------
+#include "eckit/filesystem/PathName.h"
+#include "eckit/grib/GribHandle.h"
+#include "eckit/utils/Translator.h"
+#include "eckit/memory/ScopedPtr.h"
 
 #include "atlas/mesh/Field.hpp"
-#include "atlas/grid/FieldSet.h"
 #include "atlas/mesh/FunctionSpace.hpp"
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/mesh/Parameters.hpp"
 
-#include "GribWrite.h"
+#include "atlas/grid/FieldSet.h"
+#include "atlas/grid/GribWrite.h"
 
+//------------------------------------------------------------------------------------------------------
+
+using namespace eckit;
 using namespace atlas;
 using namespace atlas::grid;
 
 #define DBG     std::cout << Here() << std::endl;
 #define DBGX(x) std::cout << #x << " -> " << x << std::endl;
 
-namespace eckit {
+namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
 
+void GribWrite::write( const FieldSet& fields, const PathName& opath )
+{
+    NOTIMP;
+}
+
+void GribWrite::clone( const FieldSet& fields, const PathName& src, const PathName& opath )
+{
+    for( size_t i = 0; i < fields.size(); ++i )
+    {
+        PathName pi( opath.asString() + "." + Translator<size_t,std::string>()(i) );
+        GribWrite::clone(fields[i], src, pi);
+    }
+}
+
+void GribWrite::clone( const FieldHandle& field, const PathName& source, const PathName& fname )
+{
+    FILE* fh = ::fopen( source.asString().c_str(), "r" );
+    if( fh == 0 )
+        throw ReadError( std::string("error opening file ") + source );
+
+    int err = 0;
+    grib_handle* clone_h = grib_handle_new_from_file(0,fh,&err);
+    if( clone_h == 0 || err != 0 )
+        throw ReadError( std::string("error reading grib file ") + source );
+
+    GribHandle ch(clone_h);
+    ScopedPtr<GribHandle> h( GribWrite::clone( field, ch ) );
+
+    GRIB_CHECK( grib_write_message(h->raw(),fname.asString().c_str(),"w"), 0 );
+}
+
+GribHandle* GribWrite::clone(const FieldHandle& field, GribHandle& source )
+{
+    const Field& f = field.data();
+    const size_t npts = f.size();
+
+    long nb_nodes = 0;
+    GRIB_CHECK( grib_get_long(source.raw(),"numberOfDataPoints",&nb_nodes), 0 );
+
+    ASSERT( npts == f.size() );
+
+    GribHandle* h = source.clone();
+
+    GRIB_CHECK( grib_set_long(h->raw(),"bitsPerValue",16), 0 );
+
+    GRIB_CHECK( grib_set_double_array(h->raw(),"values", f.data<double>(),npts), 0 );
+
+    return h;
+}
+
+#if 0
 void GribWrite::write( atlas::grid::FieldHandle& field, grib_handle* input_h )
 {
     FieldT<double>& f = field.data();
@@ -111,48 +169,9 @@ void GribWrite::write( atlas::grid::FieldHandle& field, grib_handle* input_h )
     grib_handle_delete(h);
 #endif
 }
-
-void GribWrite::clone( FieldHandle& field, const std::string& source, const std::string& fname )
-{
-    FILE* fh = ::fopen( source.c_str(), "r" );
-    if( fh == 0 )
-        throw ReadError( std::string("error opening file ") + source );
-
-    int err = 0;
-    grib_handle* clone_h = grib_handle_new_from_file(0,fh,&err);
-    if( clone_h == 0 || err != 0 )
-        throw ReadError( std::string("error reading grib file ") + source );
-
-    grib_handle* h = GribWrite::clone( field, clone_h );
-
-    grib_write_message(h,fname.c_str(),"w");
-
-    grib_handle_delete(h);
-    grib_handle_delete(clone_h);
-}
-
-grib_handle* GribWrite::clone( FieldHandle& field, grib_handle* source )
-{
-    Field& f = field.data();
-    const size_t npts = f.size();
-
-    long nb_nodes = 0;
-    grib_get_long(source,"numberOfDataPoints",&nb_nodes);
-
-    ASSERT( npts == f.size() );
-
-    grib_handle* h = grib_handle_clone(source);
-    if(!h)
-        throw eckit::WriteError( std::string("failed to clone output grib") );
-
-    GRIB_CHECK( grib_set_long(h,"bitsPerValue",16), 0 );
-
-    GRIB_CHECK( grib_set_double_array(h,"values", f.data<double>(),npts), 0 );
-
-    return h;
-}
+#endif
 
 //------------------------------------------------------------------------------------------------------
 
-} // namespace eckit
+} // namespace atlas
 

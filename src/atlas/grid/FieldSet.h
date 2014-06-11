@@ -28,6 +28,11 @@
 
 //------------------------------------------------------------------------------------------------------
 
+namespace eckit {
+    class PathName;
+    class DataHandle;
+}
+
 namespace atlas {
 namespace grid {
 
@@ -59,6 +64,12 @@ public: // methods
     Data& data() { return data_; }
     const Data& data() const { return data_; }
 
+    friend std::ostream& operator<<( std::ostream& os, const FieldHandle& v);
+
+private: // members
+
+    void print( std::ostream& ) const;
+
 protected: // members
 
     Grid::Ptr       grid_;      ///< describes the grid (shared)
@@ -71,20 +82,46 @@ protected: // members
 
 /// Represents a set of fields
 /// The order of the fields is kept
-class FieldSet : private eckit::NonCopyable {
+
+class FieldSet : public eckit::Owned {
+
+public: // types
+
+    typedef eckit::SharedPtr<FieldSet> Ptr;
 
 public: // methods
 
+    /// Constructs a field set from a file (e.g. a GRIB file )
+    FieldSet( const eckit::PathName& );
+
+    /// @todo Constructor for a FieldSet from a DataHandle
+    //  FieldSet( const eckit::DataHandle& );
+
+    /// Constructs a field set with n fields from a Grid
+    FieldSet( const Grid::Ptr grid, std::vector<std::string> nfields );
+
+    /// Constructs a FielSet from predefined fields
     /// Takes ownership of the fields
-    FieldSet( const FieldHandle::Vector& fields = FieldHandle::Vector() );
+    FieldSet( const FieldHandle::Vector& fields );
+
+    const FieldHandle& operator[]( const size_t& i ) const { ASSERT(i<size()); return *fields_[i]; }
 
     const FieldHandle::Vector& fields() const { return fields_; }
-
     FieldHandle::Vector& fields() { return fields_; }
+
+    size_t size() const { return fields_.size(); }
+    bool empty() const { return ! fields_.size(); }
+
+    const Grid& grid() const { ASSERT( !empty() ); return *grid_; }
+    Grid& grid() { ASSERT( !empty() ); return *grid_; }
+
+    std::vector<std::string> field_names() const;
 
 protected:
 
-    FieldHandle::Vector fields_;
+    FieldHandle::Vector fields_; ///< field handle storage
+
+    Grid::Ptr           grid_;   ///< describes the grid (shared)
 
 };
 

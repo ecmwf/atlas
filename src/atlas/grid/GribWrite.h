@@ -8,34 +8,40 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef eckit_GribWrite_h
-#define eckit_GribWrite_h
-
-#include "grib_api.h"
+#ifndef atlas_GribWrite_h
+#define atlas_GribWrite_h
 
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/grid/FieldSet.h"
 
 //------------------------------------------------------------------------------------------------------
 
-namespace eckit {
+namespace eckit { class GribHandle; }
+namespace eckit { class PathName; }
+
+namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
 
 class GribWrite {
-public:
 
-    static void write( atlas::grid::FieldHandle& field, grib_handle* input_h );
+public: // methods
 
-    static void clone( atlas::grid::FieldHandle& field, const std::string& source, const std::string& output );
+    static void write( const atlas::grid::FieldSet& field, const eckit::PathName& opath  );
 
-    static grib_handle* clone( atlas::grid::FieldHandle& field, grib_handle* source );
+    static void clone( const atlas::grid::FieldSet& field, const eckit::PathName& src, const eckit::PathName& opath  );
+
+private: // methods
+
+    static void clone( const atlas::grid::FieldHandle& field, const eckit::PathName& src, const eckit::PathName& opath );
+
+    static eckit::GribHandle* clone(const grid::FieldHandle &field, eckit::GribHandle& source );
 
 };
 
 //---------------------------------------------------------------------------------------------------------
 
-} // namespace eckit
+} // namespace atlas
 
 #endif
 

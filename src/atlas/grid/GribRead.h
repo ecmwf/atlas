@@ -10,13 +10,12 @@
  * does it submit to any jurisdiction.
  */
 
+#include <vector>
 
 #include "grib_api.h"
-#include <vector>
 
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/grid/Grid.h"
-#include "eckit/geometry/Point3.h"
 
 //-----------------------------------------------------------------------------
 
@@ -26,6 +25,7 @@ namespace eckit {
 
 class GribRead {
 public:
+
     static atlas::grid::Grid::Ptr create_grid_from_grib( grib_handle* h );
 
     static void read_nodes_from_grib( grib_handle* h, atlas::Mesh& mesh );
