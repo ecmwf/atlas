@@ -26,7 +26,7 @@ using namespace std;
 using namespace eckit;
 using namespace eckit::geometry;
 
-#define DEBUG 1
+// #define DEBUG 1
 
 namespace atlas {
 namespace grid {
