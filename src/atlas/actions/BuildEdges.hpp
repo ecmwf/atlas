@@ -16,7 +16,10 @@
 namespace atlas {
 class Mesh;
 
+namespace actions {
+
 void build_edges( Mesh& mesh );
+void build_pole_edges( Mesh& mesh );
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
@@ -26,6 +29,7 @@ extern "C"
 }
 // ------------------------------------------------------------------
 
+} // namespace actions
 } // namespace atlas
 
 #endif // BuildEdges_hpp

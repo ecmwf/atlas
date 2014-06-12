@@ -14,6 +14,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <cmath>
+#include <limits>
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/mesh/FunctionSpace.hpp"
 #include "atlas/mesh/Field.hpp"
@@ -22,98 +23,22 @@
 #include "atlas/mesh/ArrayView.hpp"
 #include "atlas/mesh/IndexView.hpp"
 #include "atlas/mesh/Array.hpp"
+#include "atlas/mesh/Util.hpp"
 
 namespace atlas {
 namespace actions {
 
 namespace buildhalo_detail {
-struct Face
-{
-  ElementRef& operator[](int i) { return elems[i]; }
-  bool is_bdry() const { return (elems[1].f < 0); }
-  ElementRef elems[2];
-};
-
-int microdeg( const double& deg )
-{
-  return static_cast<int>(deg*1.e6);
-}
-
-int microdeg( const int& deg )
-{
-  return deg*1.e6;
-}
-
-int EAST = microdeg( 2.*M_PI );
-int WEST = 0;
-int NORTH = microdeg(  M_PI );
-int SOUTH = microdeg( -M_PI );
 
 
-// Node struct that holds the longitude and latitude in millidegrees (integers)
-// This structure is used in sorting algorithms, and uses less memory than
-// if x and y were in double precision.
-struct LatLon
-{
-  LatLon() {}
-  LatLon( int x_, int y_ )
-  {
-    x = x_;
-    y = y_;
-  }
-  LatLon( double x_, double y_ )
-  {
-    x = microdeg(x_);
-    y = microdeg(y_);
-  }
-  LatLon( const ArrayView<int,1>& coord )
-  {
-    x = coord[XX];
-    y = coord[YY];
-  }
-  LatLon( const ArrayView<double,1>& coord )
-  {
-    x = microdeg(coord[XX]);
-    y = microdeg(coord[YY]);
-  }
-
-  int uid() const
-  {
-    int i1 = (y+NORTH)  >>9;
-    int i2 = (x+5*EAST) >>10;
-    ASSERT( i1 > 0);
-    ASSERT( i2 > 0);
-    int pow = 10;
-    while(i2 >= pow)
-        pow *= 10;
-    int id = i1*pow + i2;
-    ASSERT( id > 0 );
-    return id;
-  }
-
-  mutable int x, y;
-  bool operator < (const LatLon& other) const
-  {
-    if( y > other.y  ) return true;
-    if( y == other.y ) return (x < other.x);
-    return false;
-  }
-};
+int EAST = BC::EAST;
+int WEST = BC::WEST;
 
 }
 
 using namespace buildhalo_detail;
 
 // ------------------------------------------------------------------
-
-
-void accumulate_faces(
-    FunctionSpace& func_space,
-    std::vector< std::vector<int> >& node_to_face,
-    std::vector<int>& face_nodes_data,
-    std::vector< Face >& connectivity_edge_to_elem,
-    int& nb_faces,
-    int& nb_inner_faces );
 
 void increase_halo( Mesh& mesh );
 
@@ -223,7 +148,7 @@ void increase_halo( Mesh& mesh )
   std::map<int,int> node_uid_to_loc;
   for( int jnode=0; jnode<nb_nodes; ++jnode )
   {
-    LatLon ll(latlon[jnode]);
+    LatLonPoint ll(latlon[jnode]);
     if( node_uid_to_loc.count(ll.uid()) > 0 )
     {
       int other = node_uid_to_loc[ll.uid()];
@@ -244,7 +169,7 @@ void increase_halo( Mesh& mesh )
 
   for( int jnode=0; jnode<nb_bdry_nodes; ++jnode )
   {
-    LatLon ll( latlon[bdry_nodes[jnode]] );
+    LatLonPoint ll( latlon[bdry_nodes[jnode]] );
     bdry_nodes_id(jnode,0) = ll.x;
     bdry_nodes_id(jnode,1) = ll.y;
     bdry_nodes_id(jnode,2) = glb_idx( bdry_nodes[jnode] );
@@ -306,7 +231,7 @@ void increase_halo( Mesh& mesh )
       int recv_glb_idx = recv_bdry_nodes_id(jrecv,2);
 
       // Only search for nodes in the interior latlon domain
-      LatLon ll(recv_x,recv_y);
+      LatLonPoint ll(recv_x,recv_y);
       if     ( ll.x <= WEST) { while(ll.x <= WEST) { ll.x += EAST; } }
       else if( ll.x >= EAST) { while(ll.x >= EAST) { ll.x -= EAST; } }
 
@@ -317,7 +242,9 @@ void increase_halo( Mesh& mesh )
       {
         loc = found->second;
         if( MPL::rank() == jpart && glb_idx(loc) == recv_glb_idx )
+        {
           loc = -1;
+        }
       }
 
       if( loc != -1 )
@@ -328,7 +255,9 @@ void increase_halo( Mesh& mesh )
           int e = node_to_elem[loc][jelem].e;
 
           if( elem_part[f](e) == MPL::rank() )
+          {
             found_bdry_elements_set[f].insert( std::make_pair( e, recv_x - ll.x ) );
+          }
         }
       }
     }
@@ -353,9 +282,8 @@ void increase_halo( Mesh& mesh )
       nb_found_bdry_elems[f] = found_bdry_elements[f].size();
     }
 
-
     // Collect all nodes needed to complete the element
-    std::set<LatLon> found_bdry_nodes_id_set;
+    std::set<LatLonPoint> found_bdry_nodes_id_set;
     {
       for( int f=0; f<mesh.nb_function_spaces(); ++f )
       {
@@ -367,7 +295,7 @@ void increase_halo( Mesh& mesh )
           {
             int x = microdeg( latlon( elem_nodes[f](e,n), XX) ) + found_bdry_elements_coord_transform[f][jelem];
             int y = microdeg( latlon( elem_nodes[f](e,n), YY) );
-            found_bdry_nodes_id_set.insert( LatLon(x,y) );
+            found_bdry_nodes_id_set.insert( LatLonPoint(x,y) );
           }
         }
       }
@@ -377,7 +305,7 @@ void increase_halo( Mesh& mesh )
       {
         int x = recv_bdry_nodes_id(jrecv,0);
         int y = recv_bdry_nodes_id(jrecv,1);
-        found_bdry_nodes_id_set.erase( LatLon(x,y) ) ;
+        found_bdry_nodes_id_set.erase( LatLonPoint(x,y) ) ;
       }
     }
     int nb_found_bdry_nodes = found_bdry_nodes_id_set.size();
@@ -390,29 +318,31 @@ void increase_halo( Mesh& mesh )
     // Fill buffers to send
     {
       int jnode=0;
-      std::set<LatLon>::iterator it=found_bdry_nodes_id_set.begin();
+      std::set<LatLonPoint>::iterator it=found_bdry_nodes_id_set.begin();
       for( ; it!=found_bdry_nodes_id_set.end(); ++it, ++jnode )
       {
         int uid = it->uid();
         std::map<int,int>::iterator found = node_uid_to_loc.find( uid );
-        if( found != node_uid_to_loc.end() )
+        if( found != node_uid_to_loc.end() ) // Point exists inside domain
         {
           int loc = found->second;
           sfn_glb_idx[jpart][jnode]      = glb_idx(loc);
           sfn_part   [jpart][jnode]      = part   (loc);
+          sfn_ridx   [jpart][jnode]      = ridx   (loc);
           sfn_latlon [jpart][jnode*2+XX] = latlon (loc,XX);
           sfn_latlon [jpart][jnode*2+YY] = latlon (loc,YY);
         }
-        else // periodic node
+        else // periodic point
         {
-          LatLon ll(it->x,it->y);
+          LatLonPoint ll(it->x,it->y);
+          // Here ll has the new coords
           if     ( ll.x <= WEST) { while(ll.x <= WEST) { ll.x += EAST; } }
           else if( ll.x >= EAST) { while(ll.x >= EAST) { ll.x -= EAST; } }
-
+          // Now ll has the coords of periodic point
           int pid = ll.uid();
           found = node_uid_to_loc.find( pid );
           ASSERT( found != node_uid_to_loc.end() );
-          int loc = node_uid_to_loc[ pid ];
+          int loc = found->second;
           sfn_glb_idx[jpart][jnode]      = uid;
           sfn_part   [jpart][jnode]      = part(loc);
           sfn_ridx   [jpart][jnode]      = ridx(loc);
@@ -421,7 +351,6 @@ void increase_halo( Mesh& mesh )
         }
       }
     }
-
 
     for( int f=0; f<mesh.nb_function_spaces(); ++f )
     {
@@ -444,14 +373,13 @@ void increase_halo( Mesh& mesh )
           double x, y;
           x = latlon(elem_nodes[f](e,n),XX) + xper/EAST*2.*M_PI;
           y = latlon(elem_nodes[f](e,n),YY);
-          sfe_nodes_id_view(jelem,n) = LatLon( x, y ).uid();
           centroid[XX] += x;
           centroid[YY] += y;
+          sfe_nodes_id_view(jelem,n) = LatLonPoint( x, y ).uid();
         }
         centroid[XX] /= static_cast<double>(nb_elem_nodes);
         centroid[YY] /= static_cast<double>(nb_elem_nodes);
-
-        sfe_glb_idx[f][jpart][jelem] = LatLon( centroid[XX], centroid[YY] ).uid();
+        sfe_glb_idx[f][jpart][jelem] = LatLonPoint( centroid[XX], centroid[YY ]).uid() ;
       }
     }
   }
@@ -489,7 +417,7 @@ void increase_halo( Mesh& mesh )
   std::set<int> node_uid;
   for( int jnode=0; jnode<nb_nodes; ++jnode )
   {
-    node_uid.insert( LatLon( latlon[jnode] ).uid() );
+    node_uid.insert( LatLonPoint( latlon[jnode] ).uid() );
   }
   std::vector< std::vector<int> > rfn_idx(MPL::size());
   for( int jpart=0; jpart<MPL::size(); ++jpart )
@@ -504,7 +432,7 @@ void increase_halo( Mesh& mesh )
     {
       double x = rfn_latlon[jpart][n*2+XX];
       double y = rfn_latlon[jpart][n*2+YY];
-      bool inserted = node_uid.insert( LatLon( x, y ).uid() ).second;
+      bool inserted = node_uid.insert( LatLonPoint( x, y ).uid() ).second;
       if( inserted )
         rfn_idx[jpart].push_back(n);
     }
@@ -531,7 +459,7 @@ void increase_halo( Mesh& mesh )
       ridx   (loc_idx)    = rfn_ridx    [jpart][rfn_idx[jpart][n]];
       latlon (loc_idx,XX) = rfn_latlon  [jpart][rfn_idx[jpart][n]*2+XX];
       latlon (loc_idx,YY) = rfn_latlon  [jpart][rfn_idx[jpart][n]*2+YY];
-      int uid = LatLon( latlon[loc_idx] ).uid();
+      int uid = LatLonPoint( latlon[loc_idx] ).uid();
 
       // make sure new node was not already there
       std::map<int,int>::iterator found = node_uid_to_loc.find(uid);
@@ -555,10 +483,14 @@ void increase_halo( Mesh& mesh )
     FunctionSpace& elements = mesh.function_space(f);
     if( elements.metadata<int>("type") == Entity::ELEMS )
     {
-      // Elements might be duplicated from different Tasks. We need to identify unique entries
-      std::set<int> rfe_glb_idx_unique;
-      for( int jelem=0; jelem<elements.extents()[0]; ++jelem )
-        rfe_glb_idx_unique.insert( elem_glb_idx[f](jelem) );
+      ComputeUniqueElementIndex compute_uid( nodes );
+
+      std::set<int> elem_uid;
+      int nb_elems = elements.extents()[0];
+      for( int jelem=0; jelem<nb_elems; ++jelem )
+      {
+        elem_uid.insert( compute_uid(elem_nodes[f][jelem]) );
+      }
 
       std::vector< std::vector<int> > rfe_unique_idx(MPL::size());
       for( int jpart=0; jpart<MPL::size(); ++jpart )
@@ -571,7 +503,7 @@ void increase_halo( Mesh& mesh )
       {
         for( int e=0; e<rfe_glb_idx[f][jpart].size(); ++e )
         {
-          bool inserted = rfe_glb_idx_unique.insert( rfe_glb_idx[f][jpart][e] ).second;
+          bool inserted = elem_uid.insert( rfe_glb_idx[f][jpart][e] ).second;
           if( inserted )
           {
             rfe_unique_idx[jpart].push_back(e);
@@ -580,7 +512,6 @@ void increase_halo( Mesh& mesh )
         nb_new_elems += rfe_unique_idx[jpart].size();
       }
 
-      int nb_elems /*old*/ = elements.extents()[0];
       int nb_nodes_per_elem = elem_nodes[f].extents()[1];
       elements.resize( Extents( nb_elems+nb_new_elems, Field::UNDEF_VARS ) );
       elem_glb_idx[f] = ArrayView<int,1>( elements.field("glb_idx") );
@@ -598,108 +529,6 @@ void increase_halo( Mesh& mesh )
             elem_nodes[f](nb_elems+new_elem,n) = node_uid_to_loc[ rfe_nodes_id[f][jpart][jelem*nb_nodes_per_elem+n] ];
           ++new_elem;
         }
-      }
-    }
-  }
-}
-
-void accumulate_faces(
-    FunctionSpace& func_space,
-    std::vector< std::vector<int> >& node_to_face,
-    std::vector<int>& face_nodes_data,
-    std::vector< Face >& connectivity_edge_to_elem,
-    int& nb_faces,
-    int& nb_inner_faces )
-{
-  IndexView<int,2> elem_nodes( func_space.field( "nodes" ) );
-  int nb_elems = func_space.extents()[0];
-  int nb_nodes_in_face = 2;
-
-  std::vector< std::vector<int> > face_node_numbering;
-  int nb_faces_in_elem;
-  if (func_space.name() == "quads")
-  {
-    nb_faces_in_elem = 4;
-    face_node_numbering.resize(nb_faces_in_elem, std::vector<int>(nb_nodes_in_face) );
-    face_node_numbering[0][0] = 0;
-    face_node_numbering[0][1] = 1;
-    face_node_numbering[1][0] = 1;
-    face_node_numbering[1][1] = 2;
-    face_node_numbering[2][0] = 2;
-    face_node_numbering[2][1] = 3;
-    face_node_numbering[3][0] = 3;
-    face_node_numbering[3][1] = 0;
-  }
-  else if (func_space.name() == "triags")
-  {
-    nb_faces_in_elem = 3;
-    face_node_numbering.resize(nb_faces_in_elem, std::vector<int>(nb_nodes_in_face) );
-    face_node_numbering[0][0] = 0;
-    face_node_numbering[0][1] = 1;
-    face_node_numbering[1][0] = 1;
-    face_node_numbering[1][1] = 2;
-    face_node_numbering[2][0] = 2;
-    face_node_numbering[2][1] = 0;
-  }
-  else
-  {
-    throw std::runtime_error(func_space.name()+" is not \"quads\" or \"triags\"");
-  }
-
-  for (int e=0; e<nb_elems; ++e)
-  {
-    for (int f=0; f<nb_faces_in_elem; ++f)
-    {
-      bool found_face = false;
-
-      std::vector<int> face_nodes(nb_nodes_in_face);
-      for (int jnode=0; jnode<nb_nodes_in_face; ++jnode)
-        face_nodes[jnode] = elem_nodes(e,face_node_numbering[f][jnode]);
-
-      int node = face_nodes[0];
-      for( int jface=0; jface< node_to_face[node].size(); ++jface )
-      {
-        int face = node_to_face[node][jface];
-        int nb_matched_nodes = 0;
-        if (nb_nodes_in_face>1) // 2D or 3D
-        {
-          for( int jnode=0; jnode<nb_nodes_in_face; ++jnode)
-          {
-            int other_node = face_nodes[jnode];
-            for( int iface=0; iface<node_to_face[other_node].size(); ++iface )
-            {
-              if( node_to_face[face_nodes[jnode]][iface] == face )
-              {
-                ++nb_matched_nodes;
-                break;
-              }
-            }
-          }
-          if (nb_matched_nodes == nb_nodes_in_face)
-          {
-            connectivity_edge_to_elem[face][1].f = func_space.index();
-            connectivity_edge_to_elem[face][1].e = e;
-            ++nb_inner_faces;
-            found_face = true;
-            break;
-          }
-        }
-      }
-
-      if (found_face == false)
-      {
-        connectivity_edge_to_elem.push_back( Face() );
-        connectivity_edge_to_elem[nb_faces][0].f = func_space.index();
-        connectivity_edge_to_elem[nb_faces][0].e = e;
-        // if 2nd element stays negative, it is a bdry face
-        connectivity_edge_to_elem[nb_faces][1].f = -1;
-        connectivity_edge_to_elem[nb_faces][1].e = -1;
-        for (int n=0; n<nb_nodes_in_face; ++n)
-        {
-          node_to_face[face_nodes[n]].push_back(nb_faces);
-          face_nodes_data.push_back(face_nodes[n]);
-        }
-        ++nb_faces;
       }
     }
   }

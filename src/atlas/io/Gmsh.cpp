@@ -211,7 +211,7 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh )
 
 void Gmsh::write(Mesh& mesh, const std::string& file_path)
 {
-  bool spherical=false;
+
   bool include_ghost_elements = true;
 
   FunctionSpace& nodes    = mesh.function_space( "nodes" );
@@ -243,6 +243,10 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path)
     nb_quads = quads.extents()[0];
     nb_triags = triags.extents()[0];
   }
+
+  for( int spherical=0; spherical<2; ++spherical )
+  {
+//  bool spherical=true;
 
   std::string ext = "";
   if( spherical ) ext = ".sphere";
@@ -301,11 +305,13 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path)
   file << std::flush;
   file.close();
 
-
+  }
   if (nodes.has_field("dual_volumes"))
   {
+    std::ofstream file;
     ArrayView<double,1> field( nodes.field("dual_volumes") );
-    file.open( "dual_volumes.msh" , std::ios::out );
+    std::stringstream filename; filename << "dual_volumes_p"<<MPL::rank()<<".msh";
+    file.open( filename.str().c_str() , std::ios::out );
     file << "$MeshFormat\n";
     file << "2.2 0 8\n";
     file << "$EndMeshFormat\n";
@@ -327,8 +333,10 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path)
 
   if (edges.has_field("dual_normals"))
   {
+    std::ofstream file;
     ArrayView<double,2> field ( edges.field("dual_normals") );
-    file.open( "dual_normals.msh" , std::ios::out );
+    std::stringstream filename; filename << "dual_normals_p"<<MPL::rank()<<".msh";
+    file.open( filename.str().c_str() , std::ios::out );
     file << "$MeshFormat\n";
     file << "2.2 0 8\n";
     file << "$EndMeshFormat\n";
@@ -355,6 +363,7 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path)
 
   if (edges.has_field("skewness"))
   {
+    std::ofstream file;
     ArrayView<double,1> field( edges.field("skewness") );
     file.open( "skewness.msh" , std::ios::out );
     file << "$MeshFormat\n";

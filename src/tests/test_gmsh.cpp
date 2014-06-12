@@ -28,8 +28,8 @@ BOOST_AUTO_TEST_CASE( test_read_write )
   BOOST_REQUIRE_NO_THROW( mesh = Gmsh::read( "T47.msh" ) );
 
   build_periodic_boundaries(*mesh);
-  build_edges(*mesh);
-  build_dual_mesh(*mesh);
+  actions::build_edges(*mesh);
+  actions::build_dual_mesh(*mesh);
 
   Gmsh::write(*mesh,"bla.msh");
   delete mesh;

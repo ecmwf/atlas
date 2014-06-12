@@ -16,6 +16,8 @@
 namespace atlas {
   class Mesh;
 
+namespace actions {
+
 void build_dual_mesh( Mesh& mesh );
 
 // ------------------------------------------------------------------
@@ -26,6 +28,7 @@ extern "C"
 }
 // ------------------------------------------------------------------
 
+} // namespace actions
 } // namespace atlas
 
 #endif // BuildEdges_hpp

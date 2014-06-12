@@ -8,13 +8,11 @@
  * does it submit to any jurisdiction.
  */
 
-
-
 #include <stdexcept>
 #include <cmath>
 #include <set>
-
-#include<iostream>
+#include <limits>
+#include <iostream>
 
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/mesh/FunctionSpace.hpp"
@@ -25,8 +23,31 @@
 #include "atlas/mesh/IndexView.hpp"
 
 namespace atlas {
+namespace actions {
 
 inline double sqr(double a) { return a*a; }
+
+inline void global_bounding_box( FunctionSpace& nodes, double min[2], double max[2] )
+{
+  ArrayView<double,2> latlon( nodes.field("coordinates") );
+  const int nb_nodes = nodes.extents()[0];
+  min[XX] =  std::numeric_limits<double>::max();
+  min[YY] =  std::numeric_limits<double>::max();
+  max[XX] = -std::numeric_limits<double>::max();
+  max[YY] = -std::numeric_limits<double>::max();
+  for (int node=0; node<nb_nodes; ++node)
+  {
+    min[XX] = std::min( min[XX], latlon(node,XX) );
+    min[YY] = std::min( min[YY], latlon(node,YY) );
+    max[XX] = std::max( max[XX], latlon(node,XX) );
+    max[YY] = std::max( max[YY], latlon(node,YY) );
+  }
+  MPL_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &min[XX], 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD ) );
+  MPL_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &min[YY], 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD ) );
+  MPL_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max[XX], 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD ) );
+  MPL_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max[YY], 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD ) );
+}
+
 
 void build_centroids( FunctionSpace& func_space, ArrayView<double,2>& coords)
 {
@@ -61,7 +82,10 @@ void add_dual_volume_contribution(
   ArrayView<double,2> edge_centroids ( edges.field("centroids") );
   IndexView<int,   2> edge_nodes     ( edges.field("nodes") );
   ArrayView<double,2> node_coords    ( nodes.field("coordinates") );
+  ArrayView<int,   1> elem_glb_idx   ( elements.field("glb_idx") );
+  ArrayView<int,   1> edge_glb_idx   ( edges.field("glb_idx") );
   int nb_edges_per_elem = elem_to_edges.extents()[1];
+
   for (int elem=0; elem<nb_elems; ++elem)
   {
     double x0 = elem_centroids(elem,XX);
@@ -106,9 +130,9 @@ void add_dual_volume_contribution(
   }
 
   double tol = 1.e-6;
-  double ymax = nodes.metadata<double>("ymax");
-  double ymin = nodes.metadata<double>("ymin");
-  double dx   = nodes.metadata<double>("xmax") - nodes.metadata<double>("xmin");
+  double min[2], max[2];
+  global_bounding_box( nodes, min, max );
+
   std::set<int> visited_nodes;
 
   std::map<int,std::vector<int> >::iterator it;
@@ -126,16 +150,16 @@ void add_dual_volume_contribution(
       y1 = edge_centroids(edge,YY);
       x2 = x1;
       y2 = 0.;
-      if ( std::abs(y1-ymax)<tol )
+      if ( std::abs(y1-max[YY])<tol )
         y2 = M_PI_2;
-      else if ( std::abs(y1-ymin)<tol )
+      else if ( std::abs(y1-min[YY])<tol )
         y2 = -M_PI_2;
 
       if( y2!=0 )
       {
-        //std::cout << "adding contribution for node " << node_glb_idx(node) << " and edge " << edge_glb_idx(edge) << std::endl;
-        double triag_area = std::abs( x0*(y1-y2)+x1*(y2-y0)+x2*(y0-y1) )*0.5;
-        dual_volumes(node) += triag_area;
+        //std::cout << "edge " << edge_glb_idx(edge) << " adding contribution for node " << node_glb_idx(node) << std::endl;
+        double quad_area = std::abs( (x1-x0)*(y2-y0) );
+        dual_volumes(node) += quad_area;
       }
     }
   }
@@ -154,9 +178,8 @@ void build_dual_normals( Mesh& mesh )
 
   FunctionSpace&  nodes = mesh.function_space("nodes");
   ArrayView<double,2> node_coords( nodes.field("coordinates") );
-  double ymax = nodes.metadata<double>("ymax");
-  double ymin = nodes.metadata<double>("ymin");
-  double xmin = nodes.metadata<double>("xmin");
+  double min[2], max[2];
+  global_bounding_box( nodes, min, max );
   double tol = 1.e-6;
 
   double xl, yl, xr, yr;
@@ -192,13 +215,13 @@ void build_dual_normals( Mesh& mesh )
         for (int jedge=0; jedge<bdry_edges.size(); ++jedge)
         {
           int bdry_edge = bdry_edges[jedge];
-          if ( std::abs(edge_centroids(bdry_edge,YY)-ymax)<tol )
+          if ( std::abs(edge_centroids(bdry_edge,YY)-max[YY])<tol )
           {
             edge_centroids(edge,YY) = M_PI_2;
             x[cnt] = edge_centroids(bdry_edge,XX);
             ++cnt;
           }
-          else if ( std::abs(edge_centroids(bdry_edge,YY)-ymin)<tol )
+          else if ( std::abs(edge_centroids(bdry_edge,YY)-min[YY])<tol )
           {
             edge_centroids(edge,YY) = -M_PI_2;
             x[cnt] = edge_centroids(bdry_edge,XX);
@@ -230,9 +253,9 @@ void build_dual_normals( Mesh& mesh )
       {
         xr = edge_centroids(edge,XX);
         yr = edge_centroids(edge,YY);;
-        if ( std::abs(yr-ymax)<tol )
+        if ( std::abs(yr-max[YY])<tol )
           yr = M_PI_2;
-        else if( std::abs(yr-ymin)<tol )
+        else if( std::abs(yr-min[YY])<tol )
           yr = -M_PI_2;
       }
       else
@@ -258,9 +281,8 @@ void build_skewness( Mesh& mesh )
 
   FunctionSpace&  nodes = mesh.function_space("nodes");
   ArrayView<double,2> node_coords( nodes.field<double>("coordinates") );
-  double ymax = nodes.metadata<double>("ymax");
-  double ymin = nodes.metadata<double>("ymin");
-  double xmin = nodes.metadata<double>("xmin");
+  double min[2], max[2];
+  global_bounding_box( nodes, min, max );
   double pi = acos(-1.);
   double tol = 1.e-6;
 
@@ -302,9 +324,9 @@ void build_skewness( Mesh& mesh )
       {
         xc2 = edge_centroids(edge,XX);
         yc2 = edge_centroids(edge,YY);
-        if ( std::abs(yc2-ymax)<tol )
+        if ( std::abs(yc2-max[YY])<tol )
           yc2 = M_PI_2;
-        else if( std::abs(yc2-ymin)<tol )
+        else if( std::abs(yc2-min[YY])<tol )
           yc2 = -M_PI_2;
       }
       else
@@ -337,18 +359,12 @@ void build_dual_mesh( Mesh& mesh )
 {
   FunctionSpace& nodes   = mesh.function_space( "nodes" );
   ArrayView<double,2> coords        ( nodes.field( "coordinates"    ) );
-  ArrayView<int,   1> glb_idx       ( nodes.field( "glb_idx"        ) );
-  ArrayView<int,   1> master_glb_idx( nodes.field( "master_glb_idx" ) );
-  ArrayView<int,   1> proc          ( nodes.field( "proc"           ) );
   ArrayView<double,1> dual_volumes  ( nodes.create_field<double>( "dual_volumes", 1 ) );
   int nb_nodes = nodes.extents()[0];
 
   FunctionSpace& quads       = mesh.function_space( "quads" );
   FunctionSpace& triags      = mesh.function_space( "triags" );
   FunctionSpace& edges       = mesh.function_space( "edges" );
-  ArrayView<int,   1> edge_proc          ( edges.field( "proc"           ) );
-  ArrayView<int,   1> edge_glb_idx       ( edges.field( "glb_idx"        ) );
-  ArrayView<int,   1> edge_master_glb_idx( edges.field( "master_glb_idx" ) );
 
   build_centroids(quads,  coords);
   build_centroids(triags, coords);
@@ -359,14 +375,12 @@ void build_dual_mesh( Mesh& mesh )
 
   add_dual_volume_contribution( quads,  edges, nodes, dual_volumes );
   add_dual_volume_contribution( triags, edges, nodes, dual_volumes );
-
   add_dual_volume_contribution( edges, nodes, dual_volumes );
-
   build_dual_normals( mesh );
 
-  build_skewness( mesh );
+  //build_skewness( mesh );
 
-//  std::cout << "proc" << std::endl;
+//  std::cout << "partition" << std::endl;
 //  for (int node=0; node<nb_nodes; ++node)
 //    std::cout << glb_idx(node) << "  :  " << proc(0,node) << std::endl;
 
@@ -375,11 +389,11 @@ void build_dual_mesh( Mesh& mesh )
 //    std::cout << glb_idx(node) << "  :  " << master_glb_idx(0,node) << std::endl;
 
 
-  nodes.parallelise();
-  edges.parallelise();
+//  nodes.parallelise();
+//  edges.parallelise();
 
-  nodes.field("dual_volumes").halo_exchange();
-  edges.field("dual_normals").halo_exchange();
+//  nodes.field("dual_volumes").halo_exchange();
+//  edges.field("dual_normals").halo_exchange();
 }
 
 
@@ -392,6 +406,6 @@ void atlas__build_dual_mesh ( Mesh* mesh) {
 
 // ------------------------------------------------------------------
 
-
+} // namespace actions
 } // namespace atlas
 
