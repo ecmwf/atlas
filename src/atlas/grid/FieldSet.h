@@ -20,6 +20,9 @@
 #include "eckit/types/Types.h"
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
+#include "eckit/memory/ScopedPtr.h"
+
+#include "eckit/grib/GribHandle.h" ///< @todo this is to be removed
 
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/mesh/Field.hpp"
@@ -27,6 +30,13 @@
 #include "atlas/grid/Grid.h"
 
 //------------------------------------------------------------------------------------------------------
+
+namespace eckit
+{
+    class PathName;
+    class DataHandle;
+    class GribHandle;
+}
 
 namespace atlas {
 namespace grid {
@@ -42,6 +52,8 @@ public: // types
 
     typedef atlas::FieldT< double > Data;
     typedef atlas::Mesh Mesh;
+
+    typedef eckit::GribHandle Grib;
 
 public: // methods
 
@@ -59,11 +71,24 @@ public: // methods
     Data& data() { return data_; }
     const Data& data() const { return data_; }
 
+    friend std::ostream& operator<<( std::ostream& os, const FieldHandle& v);
+
+    /// @todo this is to be removed
+
+    void grib( Grib* g );
+    Grib& grib() const;
+
+private: // members
+
+    void print( std::ostream& ) const;
+
 protected: // members
 
     Grid::Ptr       grid_;      ///< describes the grid (shared)
     Mesh::Ptr       mesh_;      ///< mesh data structure (shared)
     Data&           data_;      ///< reference to the field data, not owned since it actually exists in the mesh_
+
+    eckit::ScopedPtr<Grib> grib_; ///< @todo this is to be removed
 
 };
 
@@ -71,20 +96,46 @@ protected: // members
 
 /// Represents a set of fields
 /// The order of the fields is kept
-class FieldSet : private eckit::NonCopyable {
+
+class FieldSet : public eckit::Owned {
+
+public: // types
+
+    typedef eckit::SharedPtr<FieldSet> Ptr;
 
 public: // methods
 
+    /// Constructs a field set from a file (e.g. a GRIB file )
+    FieldSet( const eckit::PathName& );
+
+    /// @todo Constructor for a FieldSet from a DataHandle
+    //  FieldSet( const eckit::DataHandle& );
+
+    /// Constructs a field set with n fields from a Grid
+    FieldSet( const Grid::Ptr grid, std::vector<std::string> nfields );
+
+    /// Constructs a FielSet from predefined fields
     /// Takes ownership of the fields
-    FieldSet( const FieldHandle::Vector& fields = FieldHandle::Vector() );
+    FieldSet( const FieldHandle::Vector& fields );
+
+    const FieldHandle& operator[]( const size_t& i ) const { ASSERT(i<size()); return *fields_[i]; }
 
     const FieldHandle::Vector& fields() const { return fields_; }
-
     FieldHandle::Vector& fields() { return fields_; }
+
+    size_t size() const { return fields_.size(); }
+    bool empty() const { return ! fields_.size(); }
+
+    const Grid& grid() const { ASSERT( !empty() ); return *grid_; }
+    Grid& grid() { ASSERT( !empty() ); return *grid_; }
+
+    std::vector<std::string> field_names() const;
 
 protected:
 
-    FieldHandle::Vector fields_;
+    FieldHandle::Vector fields_; ///< field handle storage
+
+    Grid::Ptr           grid_;   ///< describes the grid (shared)
 
 };
 

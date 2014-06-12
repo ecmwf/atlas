@@ -8,8 +8,6 @@
  * does it submit to any jurisdiction.
  */
 
-
-
 #ifndef atlas_Parameters_hpp
 #define atlas_Parameters_hpp
 

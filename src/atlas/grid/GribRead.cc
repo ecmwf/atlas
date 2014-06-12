@@ -13,6 +13,7 @@
 #include "eckit/log/Seconds.h"
 #include "eckit/geometry/Point3.h"
 #include "eckit/grib/GribAccessor.h"
+#include "eckit/grib/GribHandle.h"
 
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/mesh/ArrayView.hpp"
@@ -34,12 +35,12 @@ namespace eckit { /// @todo this is still in eckit namespace because we plan to 
 
 //------------------------------------------------------------------------------------------------------
 
-grid::Grid::Ptr GribRead::create_grid_from_grib(grib_handle *h)
+grid::Grid::Ptr GribRead::create_grid_from_grib( grib_handle* h )
 {
-   ASSERT( h );
-   if ( 0 == h) throw std::runtime_error("GribRead::create_grid_from_grib NULL grib_handle");
+   if ( !h )
+       throw std::runtime_error("GribRead::create_grid_from_grib NULL grib_handle");
 
-   return GRIBGridBuilder::instance().build_grid_from_grib_handle(h);
+   return GRIBGridBuilder::instance().build_grid_from_grib_handle( h );
 }
 
 void GribRead::read_nodes_from_grib( grib_handle* h, atlas::Mesh& mesh )
