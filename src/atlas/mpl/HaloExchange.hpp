@@ -16,6 +16,7 @@
 #include <vector>
 #include <stdexcept>
 
+#include "eckit/exception/Exceptions.h"
 #include "atlas/mpl/MPL.hpp"
 
 namespace atlas {
@@ -73,7 +74,7 @@ void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
 {
   if( ! is_setup_ )
   {
-    throw std::runtime_error("HaloExchange was not setup");
+    throw eckit::SeriousBug("HaloExchange was not setup",Here());
   }
 #define FIELD_CONTIGUOUS true
 
