@@ -26,12 +26,25 @@
 #include "atlas/grid/FieldSet.h"
 #include "atlas/grid/GribRead.h"
 
+
+//------------------------------------------------------------------------------------------------------
+
+#if 1
+#define DBG     std::cout << Here() << std::endl;
+#define DBGX(x) std::cout << #x << " -> " << x << std::endl;
+#else
+#define DBG
+#define DBGX(x)
+#endif
+
+//------------------------------------------------------------------------------------------------------
+
 using namespace eckit;
 
 namespace atlas {
 namespace grid {
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------
 
 FieldHandle::FieldHandle( Grid::Ptr g, Data& d ) :
     grid_(g),
@@ -90,27 +103,32 @@ FieldSet::FieldSet( const eckit::PathName& fname )
         // check grid is the same
 
         if( !grid_ )
-            grid_.reset( GribRead::create_grid_from_grib( gh->raw() ) );  // first time create grid
-        else                                                       // then test
+        {
+            grid_.reset( GribRead::create_grid_from_grib( gh->raw() ) );  // first time create grid            
+        }
+        else
+        {
             if( grib_hash(*gh) != grid_->hash() )
                 throw eckit::UserError("GRIB fields don't match grid within FieldSet", Here() );
+        }
 
-        size_t nvalues = 0;
-        const double* values = gf->getValues(nvalues);
-
-        // check all fields have same nvalues
-
-        if( !check_nvalues ) check_nvalues = nvalues;
-        if( check_nvalues != nvalues )
-            throw eckit::UserError("GRIB file contains multiple fields with different sizes", Here() );
+        Mesh& mesh = grid_->mesh();
+        FunctionSpace&  nodes  = mesh.function_space( "nodes" );
 
         // get name for this field
         std::string sname = grib_shortName( gh->raw() ) + "_" + Translator<size_t,std::string>()(fidx);
 
-        // create the field
+        // get values
 
-        Mesh& mesh = grid_->mesh();
-        FunctionSpace&  nodes  = mesh.function_space( "nodes" );
+        size_t nvalues = 0;
+        const double* values = gf->getValues(nvalues);
+
+        /* check all fields have same nvalues */
+        if( !check_nvalues ) check_nvalues = nvalues;
+        if( check_nvalues != nvalues )
+            throw eckit::UserError("GRIB file contains multiple fields with different sizes", Here() );
+
+        // create the field
 
         if( nodes.extents()[0] != nvalues )
             throw SeriousBug( "Size of field in GRIB does not match Grid", Here() );
@@ -131,6 +149,8 @@ FieldSet::FieldSet( const eckit::PathName& fname )
 //        }
 
         fields_.push_back( hf );
+
+        gf->release(); // free this GribField
     }
 }
 
