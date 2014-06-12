@@ -1,6 +1,4 @@
 list( APPEND atlas_grid_srcs
-FieldSet.cc
-FieldSet.h
 Gaussian.cc
 Gaussian.h
 Grid.cc
@@ -40,6 +38,8 @@ endif()
 
 if( HAVE_GRIB )
   list( APPEND atlas_grid_srcs
+    FieldSet.cc
+    FieldSet.h
     GribRead.cc
     GribRead.h
     GribWrite.cc

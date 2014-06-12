@@ -20,5 +20,5 @@ ecbuild_add_test(   TARGET      test_gaussian
 ecbuild_add_test(   TARGET      test_field
 					BOOST
 					SOURCES     test_field.cc
-					CONDITION	HAVE_GRID
+          CONDITION	HAVE_GRID AND HAVE_GRIB
 					LIBS        atlas_grid )
