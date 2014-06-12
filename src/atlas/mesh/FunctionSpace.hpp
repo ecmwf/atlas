@@ -42,13 +42,13 @@ public: // methods
 
   int index() const { return idx_; }
 
-  Field& field( size_t );
-  Field& field(const std::string& name);
+  Field& field( size_t ) const;
+  Field& field(const std::string& name) const;
 
   template< typename DATA_TYPE>
-  FieldT<DATA_TYPE>& field(const std::string& name);
+  FieldT<DATA_TYPE>& field(const std::string& name) const;
 
-  bool has_field(const std::string& name) { return index_.count(name); }
+  bool has_field(const std::string& name) const { return index_.count(name); }
 
   template< typename DATA_TYPE >
   FieldT<DATA_TYPE>& create_field(const std::string& name, size_t nb_vars);

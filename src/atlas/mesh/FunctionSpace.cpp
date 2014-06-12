@@ -182,13 +182,13 @@ void FunctionSpace::remove_field(const std::string& name)
   }
 }
 
-Field& FunctionSpace::field( size_t idx )
+Field& FunctionSpace::field( size_t idx ) const
 {
   assert( idx < fields_.size() );
   return *fields_[ idx ];
 }
 
-Field& FunctionSpace::field(const std::string& name)
+Field& FunctionSpace::field(const std::string& name) const
 {
     //std::cout << "C++ : Access field " << name << std::endl;
   if( has_field(name) )
@@ -204,7 +204,7 @@ Field& FunctionSpace::field(const std::string& name)
 }
 
 template<>
-  FieldT<double> &FunctionSpace::field(const std::string& name)
+  FieldT<double> &FunctionSpace::field(const std::string& name) const
 {
   if( has_field(name) )
   {
@@ -219,7 +219,7 @@ template<>
 }
 
 template<>
-  FieldT<float> &FunctionSpace::field(const std::string& name)
+  FieldT<float> &FunctionSpace::field(const std::string& name) const
 {
   if( has_field(name) )
   {
@@ -234,7 +234,7 @@ template<>
 }
 
 template<>
-  FieldT<int> &FunctionSpace::field(const std::string& name)
+  FieldT<int> &FunctionSpace::field(const std::string& name) const
 {
   if( has_field(name) )
   {
