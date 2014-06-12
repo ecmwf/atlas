@@ -39,6 +39,11 @@ namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
 
+GribHandle *GribWrite::create_handle(const Grid &)
+{
+    NOTIMP;
+}
+
 void GribWrite::write( const FieldSet& fields, const PathName& opath )
 {
     for( size_t i = 0; i < fields.size(); ++i )

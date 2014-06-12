@@ -28,6 +28,8 @@ class GribWrite {
 
 public: // methods
 
+    eckit::GribHandle* create_handle( const grid::Grid& );
+
     static void write( const atlas::grid::FieldSet& field, const eckit::PathName& opath  );
 
     static void clone( const atlas::grid::FieldSet& field, const eckit::PathName& src, const eckit::PathName& opath  );
