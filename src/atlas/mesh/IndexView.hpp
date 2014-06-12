@@ -175,6 +175,11 @@ public:
     strides_[0]=strides[0];            extents_[0]=extents[0];
     strides_[1]=strides[1];            extents_[1]=extents[1];
   }
+  IndexView( const DATA_TYPE* data, const int extents[3] ) : data_( const_cast<DATA_TYPE*>(data) )
+  {
+    extents_[0]=extents[0]; strides_[0]=extents[1];
+    extents_[1]=extents[1]; strides_[1]=1;
+  }
   IndexView( const Array<DATA_TYPE>& array );
   IndexView( const Field& field );
   
@@ -215,6 +220,18 @@ public:
     strides_[0]=strides[0];            extents_[0]=extents[0];
     strides_[1]=strides[1];            extents_[1]=extents[1];
     strides_[2]=strides[2];            extents_[2]=extents[2];
+  }
+  IndexView( const DATA_TYPE* data, const int extents[3] ) : data_( const_cast<DATA_TYPE*>(data) )
+  {
+    extents_[0]=extents[0]; strides_[0]=extents[2]*extents[1];
+    extents_[1]=extents[1]; strides_[1]=extents[2];
+    extents_[2]=extents[2]; strides_[2]=1;
+  }
+  IndexView( const DATA_TYPE* data, const std::vector<int>& extents ) : data_( const_cast<DATA_TYPE*>(data) )
+  {
+    extents_[0]=extents[0]; strides_[0]=extents[2]*extents[1];
+    extents_[1]=extents[1]; strides_[1]=extents[2];
+    extents_[2]=extents[2]; strides_[2]=1;
   }
   IndexView( const Array<DATA_TYPE>& array );
   IndexView( const Field& field );
