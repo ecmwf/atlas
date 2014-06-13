@@ -11,7 +11,9 @@
 
 
 #include <numeric>
+#include <algorithm>
 #include <cmath>
+#include <limits>
 
 #include "atlas/mesh/Array.hpp"
 #include "atlas/mesh/ArrayView.hpp"
@@ -19,6 +21,7 @@
 #include "atlas/mesh/Field.hpp"
 #include "atlas/mesh/FunctionSpace.hpp"
 #include "atlas/mesh/Mesh.hpp"
+#include "atlas/mesh/Util.hpp"
 #include "atlas/mesh/Parameters.hpp"
 #include "atlas/meshgen/EqualAreaPartitioner.hpp"
 #include "atlas/meshgen/RGG.hpp"
@@ -302,18 +305,30 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
         elem[1] = ipS1;
         elem[2] = ipS2;
         elem[3] = ipN2;
-        // std::cout << "  .  " << std::endl;
         add_quad = false;
-        if( 0.5*(yN+yS) > 1e-6 )
+        int np[] = {pN1, pN2, pS1, pS2};
+        int cnt_mypart = std::count(np, np+4, mypart);
+        if( cnt_mypart > 0 )
         {
-          if( (pN1==mypart || pS1==mypart || pN2==mypart || pS2==mypart) && (pN1<=mypart && pS1<=mypart && pN2<=mypart && pS2<=mypart))
+          int pcnts[4];
+          for( int j=0; j<4; ++j )
+            pcnts[j] = std::count(np, np+4, np[j]);
+          int cnt_max = *std::max_element(pcnts,pcnts+4);
+
+          if( cnt_mypart > 2 ) // 3 or 4 points belong to mypart
           {
             add_quad = true;
           }
-        } else {
-          if( (pN1==mypart || pS1==mypart || pN2==mypart || pS2==mypart) && (pN1>=mypart && pS1>=mypart && pN2>=mypart && pS2>=mypart))
+          else if( cnt_max < 3 ) // 3 or 4 points don't belong to mypart
           {
-            add_quad = true;
+            if( 0.5*(yN+yS) > 1e-6 )
+            {
+              if ( pS2 == mypart )  add_quad = true;
+            }
+            else
+            {
+              if ( pN1 == mypart )  add_quad = true;
+            }
           }
         }
         if (add_quad)
@@ -346,17 +361,34 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
 
         add_triag = false;
         
-        if( 0.5*(yN+yS) > 1e-6 )
+        int cnt_mypart = 0;
+        int np[3] = {pN1, pN2, pS1};
+        for( int j=0; j<3; ++j )
+          if (np[j]==mypart) ++cnt_mypart;
+
+        if( cnt_mypart > 1 )
         {
-          if( (pN1==mypart || pS1==mypart || pN2==mypart) && (pN1<=mypart && pS1<=mypart && pN2<=mypart))
+          add_triag=true;
+        }
+        else if( cnt_mypart == 1)
+        {
+          int pcnts[3];
+          for( int j=0; j<3; ++j )
+            pcnts[j] = std::count(np, np+3, np[j]);
+          int cnt_max = *std::max_element(pcnts,pcnts+3);
+          if( cnt_max == 1)
           {
-            add_triag=true;
+            if( 0.5*(yN+yS) > 1e-6 )
+            {
+              if( pS1 == mypart )
+                add_triag = true;
+            }
+            else
+            {
+              if( pN1 == mypart )
+                add_triag = true;
+            }
           }
-        } else {
-          if( (pN1==mypart || pS1==mypart || pN2==mypart) && (pN1>=mypart && pS1>=mypart && pN2>=mypart))
-          {
-            add_triag=true;
-          }          
         }
         if (add_triag)
         {
@@ -387,18 +419,38 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
         elem[3] = -1;
 
         add_triag = false;
-        if( 0.5*(yN+yS) > 1e-6 )
+
+
+        int cnt_mypart = 0;
+        int np[3] = {pN1, pS1, pS2};
+        for( int j=0; j<3; ++j )
+          if (np[j]==mypart) ++cnt_mypart;
+
+        if( cnt_mypart > 1 )
         {
-          if( (pN1==mypart || pS1==mypart || pS2==mypart) && (pN1<=mypart && pS1<=mypart && pS2<=mypart))
-          {
-            add_triag=true;
-          }
-        } else {
-          if( (pN1==mypart || pS1==mypart || pS2==mypart) && (pN1>=mypart && pS1>=mypart && pS2>=mypart))
-          {
-            add_triag=true;
-          }          
+          add_triag=true;
         }
+        else if( cnt_mypart == 1)
+        {
+          int pcnts[3];
+          for( int j=0; j<3; ++j )
+            pcnts[j] = std::count(np, np+3, np[j]);
+          int cnt_max = *std::max_element(pcnts,pcnts+3);
+          if( cnt_max == 1)
+          {
+            if( 0.5*(yN+yS) > 1e-6 )
+            {
+              if( pS2 == mypart )
+                add_triag = true;
+            }
+            else
+            {
+              if( pN1 == mypart )
+                add_triag = true;
+            }
+          }
+        }
+
         if (add_triag)
         {
           ++region.ntriags;
@@ -434,7 +486,9 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
   region.nnodes = nb_region_nodes;
 }
 
-Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& parts, const Region& region)
+Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,
+                                      const std::vector<int>& parts,
+                                      const Region& region)
 {
   double tol = 1e-3;
   Mesh* mesh = new Mesh();
@@ -490,20 +544,14 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& par
 
   
   std::vector<int> extents = Extents(nnodes,Field::UNDEF_VARS);
-  FunctionSpace& nodes = mesh->add_function_space( new FunctionSpace("nodes","LagrangeP1",extents) );
+  FunctionSpace& nodes =
+      mesh->add_function_space( new FunctionSpace("nodes","LagrangeP1",extents) );
   nodes.metadata().set("type",static_cast<int>(Entity::NODES));
   ArrayView<double,2> coords        ( nodes.create_field<double>("coordinates",   2) );
   ArrayView<int,   1> glb_idx       ( nodes.create_field<int   >("glb_idx",       1) );
-  ArrayView<int,   1> master_glb_idx( nodes.create_field<int   >("master_glb_idx",1) );
-  ArrayView<int,   1> proc          ( nodes.create_field<int   >("proc",          1) );
+  ArrayView<int,   1> part          ( nodes.create_field<int   >("partition",     1) );
+  IndexView<int,   1> ridx          ( nodes.create_field<int   >("remote_idx",    1) );
   
-  // std::cout << "s1 = " << coords.strides()[0] << std::endl;
-  // std::cout << "s2 = " << coords.strides()[1] << std::endl;
-
-  // std::cout << "e1 = " << coords.extents()[0] << std::endl;
-  // std::cout << "e2 = " << coords.extents()[1] << std::endl;
-
-
   int jnode=0;
   l=0;
   for( int jlat=region.north; jlat<=region.south; ++jlat )
@@ -519,8 +567,9 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& par
       coords(jnode,XX) = x;
       coords(jnode,YY) = y;
       glb_idx(jnode)   = n+1;
-      master_glb_idx(jnode) = glb_idx(jnode);
-      proc(jnode) = parts[n];
+      part(jnode) = parts[n];
+      if( part(jnode) == mypart ) ridx(jnode) = jnode;
+      else ridx(jnode) = -1;
       ++jnode;
     }
     if( !three_dimensional &&  region.lat_end[jlat]==rgg.nlon(jlat)-1 ) // add periodic point
@@ -530,8 +579,9 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& par
       coords(jnode,XX) = x;
       coords(jnode,YY) = y;
       glb_idx(jnode)   = periodic_glb[jlat]+1;
-      master_glb_idx(jnode) = offset_glb[jlat];
-      proc(jnode) = parts[ offset_glb[jlat] ];
+      part(jnode)      = parts[ offset_glb[jlat] ];
+      if( part(jnode) == mypart ) ridx(jnode) = offset_glb[jlat];
+      else ridx(jnode) = -1;
       ++jnode;
     }
   };
@@ -545,21 +595,21 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& par
     coords(jnode,XX) = x;
     coords(jnode,YY) = y;
     glb_idx(jnode)   = periodic_glb[rgg.nlat()-1]+2;
-    master_glb_idx(jnode) = glb_idx(jnode);
-    proc(jnode) = mypart;
+    part(jnode)      = mypart;
+    ridx(jnode)      = jnode;
     ++jnode;
   }
   int jsouth=-1;
   if (include_south_pole)
   {
     jsouth = jnode;
-    double y = - M_PI_2;
-    double x = M_PI;
+    double y = -M_PI_2;
+    double x =  M_PI;
     coords(jnode,XX) = x;
     coords(jnode,YY) = y;
     glb_idx(jnode)   = periodic_glb[rgg.nlat()-1]+3;
-    master_glb_idx(jnode) = glb_idx(jnode);
-    proc(jnode) = mypart;
+    part(jnode)      = mypart;
+    ridx(jnode)      = jnode;
     ++jnode;
   }
     
@@ -568,16 +618,14 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& par
   quads.metadata().set("type",static_cast<int>(Entity::ELEMS));
   IndexView<int,2> quad_nodes( quads.create_field<int>("nodes",4) );
   ArrayView<int,1> quad_glb_idx( quads.create_field<int>("glb_idx",1) );
-  ArrayView<int,1> quad_master_glb_idx( quads.create_field<int>("master_glb_idx",1) );
-  ArrayView<int,1> quad_proc( quads.create_field<int>("proc",1) );
+  ArrayView<int,1> quad_part( quads.create_field<int>("partition",1) );
   
   extents = Extents(ntriags,Field::UNDEF_VARS);
   FunctionSpace& triags = mesh->add_function_space( new FunctionSpace("triags","LagrangeP1",extents) );
   triags.metadata().set("type",static_cast<int>(Entity::ELEMS));
   IndexView<int,2> triag_nodes( triags.create_field<int>("nodes",3) );
   ArrayView<int,1> triag_glb_idx( triags.create_field<int>("glb_idx",1) );
-  ArrayView<int,1> triag_master_glb_idx( triags.create_field<int>("master_glb_idx",1) );
-  ArrayView<int,1> triag_proc( triags.create_field<int>("proc",1) );
+  ArrayView<int,1> triag_part( triags.create_field<int>("partition",1) );
 
   /* 
   Fill in connectivity tables with global node indices first 
@@ -610,8 +658,7 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& par
         
         // std::cout << quad_nodes(0,jquad) << " " << quad_nodes(1,jquad) << " " << quad_nodes(2,jquad) << " " << quad_nodes(3,jquad) << std::endl;
         quad_glb_idx(jquad) = jquad+jtriag+1;
-        quad_master_glb_idx(jquad) = quad_glb_idx(jquad);
-        quad_proc(jquad) = mypart;
+        quad_part(jquad) = mypart;
         ++jquad;
       }
       else // This is a triag
@@ -639,8 +686,7 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& par
           }
         }
         triag_glb_idx(jtriag) = jquad+jtriag+1;
-        triag_master_glb_idx(jtriag) = triag_glb_idx(jtriag);
-        triag_proc(jtriag) = mypart;
+        triag_part(jtriag) = mypart;
         ++jtriag;
       }
     }
@@ -659,8 +705,7 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& par
       triag_nodes(jtriag,1) = offset_loc[ilat] + ip2;
       triag_nodes(jtriag,2) = offset_loc[ilat] + ip3;
       triag_glb_idx(jtriag) = jquad+jtriag+1;
-      triag_master_glb_idx(jtriag) = triag_glb_idx(jtriag);
-      triag_proc(jtriag) = mypart;
+      triag_part(jtriag) = mypart;
       ++jtriag;
     }
   }
@@ -676,28 +721,19 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& par
       triag_nodes(jtriag,0) = jsouth           + ip1;
       triag_nodes(jtriag,1) = offset_loc[ilat] + ip2;
       triag_nodes(jtriag,2) = offset_loc[ilat] + ip3;
-      if( three_dimensional && ip2 == rgg.nlon(jlat) ) triag_nodes(jtriag,1) = offset_loc[ilat] + 0;
+      if( three_dimensional && ip2 == rgg.nlon(jlat) )
+        triag_nodes(jtriag,1) = offset_loc[ilat] + 0;
       
       triag_glb_idx(jtriag) = jquad+jtriag+1;
-      triag_master_glb_idx(jtriag) = triag_glb_idx(jtriag);
-      triag_proc(jtriag) = mypart;
+      triag_part(jtriag) = mypart;
       ++jtriag;
     }
   }
   
 
-  extents[0]=0;
-  FunctionSpace& edges = mesh->add_function_space( new FunctionSpace("edges","LagrangeP1",extents) );
-  edges.metadata().set("type",static_cast<int>(Entity::FACES));
-  edges.create_field<int>("nodes",2);
-  edges.create_field<int>("glb_idx",1);
-  edges.create_field<int>("master_glb_idx",1);
-  edges.create_field<int>("proc",1);
-  
   nodes.metadata().set("nb_owned",nnodes);
   quads.metadata().set("nb_owned",nquads);
   triags.metadata().set("nb_owned",ntriags);
-  edges.metadata().set("nb_owned",0);
   
   int max_glb_idx = rgg.ngptot()+rgg.nlat();
   if( three_dimensional ) max_glb_idx -= rgg.nlat();
@@ -706,7 +742,6 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,const std::vector<int>& par
   nodes.metadata().set("max_glb_idx",max_glb_idx);
   quads.metadata().set("max_glb_idx", nquads+ntriags);
   triags.metadata().set("max_glb_idx",nquads+ntriags);
-  edges.metadata().set("max_glb_idx", nquads+ntriags);
 
   generate_global_element_numbering( *mesh );
 
@@ -726,11 +761,12 @@ void RGGMeshGenerator::generate_global_element_numbering( Mesh& mesh )
       loc_nb_elems += elements.extents()[0];
     }
   }
-  MPL_CHECK_RESULT( MPI_Allgather( &loc_nb_elems, 1, MPI_INT, elem_counts.data(), 1, MPI_INT, MPI_COMM_WORLD) );
+  MPL_CHECK_RESULT( MPI_Allgather( &loc_nb_elems, 1, MPI_INT,
+                                   elem_counts.data(), 1, MPI_INT, MPI_COMM_WORLD) );
   elem_displs[0] = 0;
-  for( int jproc=1; jproc<MPL::size(); ++jproc )
+  for( int jpart=1; jpart<MPL::size(); ++jpart )
   {
-    elem_displs[jproc] = elem_displs[jproc-1] + elem_counts[jproc-1];
+    elem_displs[jpart] = elem_displs[jpart-1] + elem_counts[jpart-1];
   }
 
   int gid = 1+elem_displs[ MPL::rank() ];
