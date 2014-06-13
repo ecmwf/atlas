@@ -9,6 +9,7 @@
  */
 
 #include <cmath>
+#include <sstream>
 #include "atlas/mpl/MPL.hpp"
 #include "atlas/atlas_config.h"
 #include "atlas/mesh/Mesh.hpp"
@@ -20,24 +21,45 @@
 
 #include <unistd.h>
 
-#define LOG_DEBUG(WHAT,RANK) \
-  if( RANK == -1 || MPL::rank() == RANK) \
-    std::cout << "["<< MPL::rank() << "] " << WHAT << std::endl;
 
-#define LOG_DEBUG_VAR(VAR,RANK) \
-  if( RANK < 0 || MPL::rank() == RANK) \
-    std::cout << "["<< MPL::rank() << "] " << #VAR << " = " << VAR << std::endl;
+/// DEBUG MACRO
+#define DEBUG_0()            std::cerr << "["<< MPL::rank() << "] DEBUG() @ " << Here() << std::endl;
+#define DEBUG_1(WHAT)        std::cerr << "["<< MPL::rank() << "] DEBUG( " << WHAT << " ) @ " << Here() << std::endl;
+#define DEBUG_2(WHAT,RANK)   if(MPL::rank() == RANK) { DEBUG_1(WHAT) }
+#define DEBUG_X(x,A,B,FUNC, ...)  FUNC
+#define DEBUG(...)  DEBUG_X(,##__VA_ARGS__,\
+                        DEBUG_2(__VA_ARGS__),\
+                        DEBUG_1(__VA_ARGS__),\
+                        DEBUG_0(__VA_ARGS__))
 
-#define PLOG_DEBUG(WHAT) \
+/// DEBUG_SYNC MACRO
+#define DEBUG_SYNC(...) \
   MPI_Barrier(MPI_COMM_WORLD);\
-  LOG_DEBUG(WHAT,-1);\
-  MPI_Barrier(MPI_COMM_WORLD); sleep(1);
+  DEBUG_X(,##__VA_ARGS__,\
+     DEBUG_2(__VA_ARGS__),\
+     DEBUG_1(__VA_ARGS__),\
+     DEBUG_0(__VA_ARGS__))\
+  MPI_Barrier(MPI_COMM_WORLD); usleep(1000); /*microseconds*/
 
-#define PLOG_DEBUG_VAR(VAR) \
+/// DEBUG_VAR MACRO
+#ifdef DEBUG_VAR
+  #undef DEBUG_VAR
+#endif
+#define DEBUG_VAR_1(VAR) \
+  std::cerr << "["<< MPL::rank() << "] DEBUG( " << #VAR << " : " << VAR << " ) @ " << Here() << std::endl;
+#define DEBUG_VAR_2(VAR,RANK) if(MPL::rank() == RANK) { DEBUG_VAR_1(VAR) }
+#define DEBUG_VAR_X(x,A,B,FUNC, ...)  FUNC
+#define DEBUG_VAR(...)  DEBUG_VAR_X(,##__VA_ARGS__,\
+                        DEBUG_VAR_2(__VA_ARGS__),\
+                        DEBUG_VAR_1(__VA_ARGS__))
+
+/// DEBUG_VAR_SYNC MACRO
+#define DEBUG_VAR_SYNC(...) \
   MPI_Barrier(MPI_COMM_WORLD);\
-  LOG_DEBUG_VAR(VAR,-1);\
-  MPI_Barrier(MPI_COMM_WORLD); sleep(1);
-
+  DEBUG_VAR_X(,##__VA_ARGS__,\
+     DEBUG_VAR_2(__VA_ARGS__),\
+     DEBUG_VAR_1(__VA_ARGS__))\
+  MPI_Barrier(MPI_COMM_WORLD); usleep(1000); /*microseconds*/
 
 namespace atlas {
 
@@ -108,19 +130,26 @@ struct IsGhost
 {
   IsGhost( FunctionSpace& nodes )
   {
-    part    = ArrayView<int,1> (nodes.field("partition") );
-    loc_idx = IndexView<int,1> (nodes.field("remote_idx") );
-    mypart  = MPL::rank();
+    part_   = ArrayView<int,1> (nodes.field("partition") );
+    ridx_   = IndexView<int,1> (nodes.field("remote_idx") );
+    mypart_ = MPL::rank();
   }
+  IsGhost( FunctionSpace& nodes, int mypart )
+  {
+    part_   = ArrayView<int,1> (nodes.field("partition") );
+    ridx_   = IndexView<int,1> (nodes.field("remote_idx") );
+    mypart_ = mypart;
+  }
+
   bool operator()(int idx)
   {
-    if( part   [idx] != mypart ) return true;
-    if( loc_idx[idx] != idx    ) return true;
+    if( part_[idx] != mypart_ ) return true;
+    if( ridx_[idx] != idx     ) return true;
     return false;
   }
-  int mypart;
-  ArrayView<int,1> part;
-  IndexView<int,1> loc_idx;
+  int mypart_;
+  ArrayView<int,1> part_;
+  IndexView<int,1> ridx_;
 };
 
 struct ComputeUniqueElementIndex
