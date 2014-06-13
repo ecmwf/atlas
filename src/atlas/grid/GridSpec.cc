@@ -37,6 +37,16 @@ void GridSpec::add(const std::string& name, const eckit::Value& value)
    grid_spec_.insert(std::make_pair(name,value));
 }
 
+eckit::Value GridSpec::find(const std::string& key) const
+{
+   std::map<std::string,eckit::Value>::const_iterator i = grid_spec_.find(key);
+   if (i != grid_spec_.end()) {
+      return (*i).second;
+   }
+   return eckit::Value();
+}
+
+
 //------------------------------------------------------------------------------------------------------
 
 } // namespace grid

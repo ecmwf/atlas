@@ -318,7 +318,7 @@ Grid::Ptr GribReducedGaussianGrid::build()
       }
    }
 
-   std::stringstream ss; ss << "N" << nj_;
+   std::stringstream ss; ss << "QG" << the_grid_->gaussianNumber_;
    the_grid_->the_grid_spec_.set_short_name(ss.str());
    the_grid_->the_grid_spec_.add("Nj",eckit::Value(nj_));
    the_grid_->the_grid_spec_.add("editionNumber_",eckit::Value(editionNumber_));
@@ -478,7 +478,7 @@ Grid::Ptr GribRegularGaussianGrid::build()
        }
     }
 
-    std::stringstream ss; ss << "N" << nj_;
+    std::stringstream ss; ss << "GG" << the_grid_->gaussianNumber_;
     the_grid_->the_grid_spec_.set_short_name(ss.str());
     the_grid_->the_grid_spec_.add("Nj",eckit::Value(nj_));
     the_grid_->the_grid_spec_.add("editionNumber_",eckit::Value(editionNumber_));
@@ -751,7 +751,7 @@ Grid::Ptr GribReducedLatLonGrid::build()
       }
    }
 
-   std::stringstream ss; ss << "RL" << the_grid_->nptsNS_;
+   std::stringstream ss; ss << "RedLL" << the_grid_->nptsNS_;
    the_grid_->the_grid_spec_.set_short_name(ss.str());
    the_grid_->the_grid_spec_.add("editionNumber_",eckit::Value(editionNumber_));
 
@@ -861,7 +861,7 @@ Grid::Ptr GribRotatedLatLonGrid::build()
    // NOTE: Grib iterator does *NOT* really rotate the points, so this is something we will need to do for ourselves
    read_data_points(handle_, the_grid_->points_);
 
-   std::stringstream ss; ss << "RotLL" ;
+   std::stringstream ss; ss << "RL" ;
    the_grid_->the_grid_spec_.set_short_name(ss.str());
    the_grid_->the_grid_spec_.add("editionNumber_",eckit::Value(editionNumber_));
 
