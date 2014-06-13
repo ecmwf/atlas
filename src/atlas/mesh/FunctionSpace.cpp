@@ -262,10 +262,10 @@ void FunctionSpace::parallelise(const int proc[], const int glb_idx[], const int
 
 void FunctionSpace::parallelise()
 {
-  FieldT<int>& proc = field<int>("proc");
+  FieldT<int>& part = field<int>("partition");
   FieldT<int>& glb_idx = field<int>("glb_idx");
   FieldT<int>& master_glb_idx = field<int>("master_glb_idx");
-  parallelise(proc.data(),glb_idx.data(),master_glb_idx.data());
+  parallelise(part.data(),glb_idx.data(),master_glb_idx.data());
 }
 
 // ------------------------------------------------------------------

@@ -243,8 +243,11 @@ void build_edges( Mesh& mesh )
   // Build edges
   int nb_edges = nb_faces;
   if( ! mesh.has_function_space("edges") )
+  {
     mesh.add_function_space( new FunctionSpace("edges","shapefunc", Extents(nb_edges,Field::UNDEF_VARS)) );
+  }
   FunctionSpace& edges = mesh.function_space("edges");
+  edges.metadata().set("type",static_cast<int>(Entity::FACES));
   edges.resize(Extents(nb_edges,Field::UNDEF_VARS));
 
   if( ! edges.has_field("nodes")      )  edges.create_field<int>("nodes",     2);
@@ -290,6 +293,8 @@ void build_pole_edges( Mesh& mesh )
   if( ! mesh.has_function_space("edges") )
     mesh.add_function_space( new FunctionSpace("edges","shapefunc", Extents(nb_edges,Field::UNDEF_VARS)) );
   FunctionSpace& edges = mesh.function_space("edges");
+  edges.metadata().set("type",static_cast<int>(Entity::FACES));
+
   nb_edges = edges.extents()[0];
 
   int nb_pole_edges;

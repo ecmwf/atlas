@@ -22,6 +22,7 @@
 #include "atlas/mesh/ArrayView.hpp"
 #include "atlas/mesh/IndexView.hpp"
 #include "atlas/mesh/Array.hpp"
+#include "atlas/mesh/Util.hpp"
 
 namespace atlas {
 namespace actions {
@@ -29,41 +30,6 @@ namespace actions {
 ArrayView<int,1> build_nodes_glb_idx_serial( FunctionSpace& nodes );
 ArrayView<int,1> build_nodes_partition( FunctionSpace& nodes );
 IndexView<int,1> build_nodes_remote_idx( FunctionSpace& nodes );
-
-int microdeg( const double& deg )
-{
-  return static_cast<int>(deg*1.e6);
-}
-
-// Node struct that holds the longitude and latitude in millidegrees (integers)
-// This structure is used in sorting algorithms, and uses less memory than
-// if x and y were in double precision.
-struct LatLon
-{
-  LatLon() {}
-  LatLon( int x_, int y_ )
-  {
-    x = x_;
-    y = y_;
-  }
-  LatLon( const ArrayView<int,1>& coord )
-  {
-    x = coord[XX];
-    y = coord[YY];
-  }
-  LatLon( const ArrayView<double,1>& coord )
-  {
-    x = microdeg(coord[XX]);
-    y = microdeg(coord[YY]);
-  }
-  int x, y;
-  bool operator < (const LatLon& other) const
-  {
-    if( y > other.y  ) return true;
-    if( y == other.y ) return (x < other.x);
-    return false;
-  }
-};
 
 // ------------------------------------------------------------------
 
@@ -81,17 +47,15 @@ void build_parallel_fields( Mesh& mesh )
   else
     nodes_glb_idx = build_nodes_glb_idx_serial( nodes );
 
+
   ArrayView<int,1> nodes_part;
   if( nodes.has_field("partition") )
     nodes_part = ArrayView<int,1> ( nodes.field("partition") );
   else
     nodes_part = build_nodes_partition( nodes );
 
-  IndexView<int,1> nodes_loc_idx;
-  if( nodes.has_field("remote_idx") )
-    nodes_loc_idx = IndexView<int,1> ( nodes.field("remote_idx") );
-  else
-    nodes_loc_idx = build_nodes_remote_idx( nodes );
+  build_nodes_remote_idx( nodes );
+
 }
 
 // ------------------------------------------------------------------
@@ -109,29 +73,38 @@ ArrayView<int,1> build_nodes_glb_idx_serial( FunctionSpace& nodes )
 IndexView<int,1> build_nodes_remote_idx( FunctionSpace& nodes )
 {
   int mypart = MPL::rank();
-  IndexView<int,   1> loc_idx ( nodes.create_field<int>("remote_idx",1) );
-  ArrayView<int,   1> part    ( nodes.field("partition")   );
-  ArrayView<double,2> latlon  ( nodes.field("coordinates") );
+  int nparts = MPL::size();
+
+  // This piece should be somewhere central ... could be NPROMA ?
+  // ---------->
+  std::vector< int > proc( nparts );
+  for( int jpart=0; jpart<nparts; ++jpart )
+    proc[jpart] = jpart;
+  // <---------
+
+  if( ! nodes.has_field("remote_idx") ) ( nodes.create_field<int>("remote_idx",1) );
+  IndexView<int,   1> ridx   ( nodes.field("remote_idx")  );
+  ArrayView<int,   1> part   ( nodes.field("partition")   );
+  ArrayView<double,2> latlon ( nodes.field("coordinates") );
+  int nb_nodes = nodes.extents()[0];
 
   std::vector< std::vector<int> > send_needed( MPL::size() );
   std::vector< std::vector<int> > recv_needed( MPL::size() );
-
-  int nb_nodes = nodes.extents()[0];
   int sendcnt=0;
-  std::map<LatLon,int> lookup;
+  std::map<LatLonPoint,int> lookup;
   for( int jnode=0; jnode<nb_nodes; ++jnode )
   {
-    LatLon ll(latlon[jnode]);
+    LatLonPoint ll(latlon[jnode]);
     if( part(jnode)==mypart )
     {
       lookup[ ll ] = jnode;
-      loc_idx(jnode) = jnode;
+      ridx(jnode) = jnode;
     }
     else
     {
-      send_needed[part(jnode)].push_back( ll.x  );
-      send_needed[part(jnode)].push_back( ll.y  );
-      send_needed[part(jnode)].push_back( jnode );
+      send_needed[ proc[part(jnode)] ].push_back( ll.x  );
+      send_needed[ proc[part(jnode)] ].push_back( ll.y  );
+      send_needed[ proc[part(jnode)] ].push_back( jnode );
       sendcnt++;
     }
   }
@@ -141,32 +114,33 @@ IndexView<int,1> build_nodes_remote_idx( FunctionSpace& nodes )
   std::vector< std::vector<int> > send_found( MPL::size() );
   std::vector< std::vector<int> > recv_found( MPL::size() );
 
-  for( int jpart=0; jpart<MPL::size(); ++jpart )
+  for( int jpart=0; jpart<nparts; ++jpart )
   {
-    ArrayView<int,2> recv_node( recv_needed[jpart].data(), Extents(recv_needed[jpart].size()/3,3).data() );
+    ArrayView<int,2> recv_node( recv_needed[ proc[jpart] ].data(),
+        Extents(recv_needed[ proc[jpart] ].size()/3,3) );
     for( int jnode=0; jnode<recv_node.extents()[0]; ++jnode )
     {
-      LatLon ll( recv_node[jnode] );
+      LatLonPoint ll( recv_node[jnode] );
       if( lookup.count(ll) )
       {
-        send_found[jpart].push_back( recv_node(jnode,2) );
-        send_found[jpart].push_back( lookup[ll] );
+        send_found[ proc[jpart] ].push_back( recv_node(jnode,2) );
+        send_found[ proc[jpart] ].push_back( lookup[ll] );
       }
     }
   }
 
   MPL::Alltoall( send_found, recv_found );
 
-  for( int jpart=0; jpart<MPL::size(); ++jpart )
+  for( int jpart=0; jpart<nparts; ++jpart )
   {
-    ArrayView<int,2> recv_node( recv_found[jpart].data(), Extents(recv_found[jpart].size()/2,2).data() );
+    ArrayView<int,2> recv_node( recv_found[ proc[jpart] ].data(),
+        Extents(recv_found[ proc[jpart] ].size()/2,2) );
     for( int jnode=0; jnode<recv_node.extents()[0]; ++jnode )
     {
-      loc_idx( recv_node(jnode,0) ) = recv_node(jnode,1);
+      ridx( recv_node(jnode,0) ) = recv_node(jnode,1);
     }
   }
-
-  return loc_idx;
+  return ridx;
 }
 
 // ------------------------------------------------------------------
@@ -177,16 +151,7 @@ ArrayView<int,1> build_nodes_partition( FunctionSpace& nodes )
   if( MPL::size() == 1 )
     part = MPL::rank();
   else
-  {
-    if( nodes.has_field("proc") )
-    {
-      ArrayView<int,1> proc( nodes.field("proc") );
-      for( int jnode=0; jnode<nodes.extents()[0]; ++jnode )
-        part(jnode) = proc(jnode);
-    }
-    else
-      NOTIMP;
-  }
+    NOTIMP;
   return part;
 }
 
@@ -198,8 +163,8 @@ void make_periodic( Mesh& mesh )
 
   FunctionSpace& nodes = mesh.function_space("nodes");
 
-  IndexView<int,1> loc_idx ( nodes.field("remote_idx") );
-  ArrayView<int,1> part    ( nodes.field("partition")      );
+  IndexView<int,1> ridx ( nodes.field("remote_idx") );
+  ArrayView<int,1> part ( nodes.field("partition")      );
   //ArrayView<int,1> glb_idx ( nodes.field("glb_idx")        );
 
   int nb_nodes = nodes.extents()[0];
@@ -208,29 +173,28 @@ void make_periodic( Mesh& mesh )
 
   // Identify my master and slave nodes on own partition
   // master nodes are at x=0,  slave nodes are at x=2pi
-  std::map<LatLon,int> master_lookup;
-  std::map<LatLon,int>  slave_lookup;
+  std::map<LatLonPoint,int> master_lookup;
+  std::map<LatLonPoint,int>  slave_lookup;
   std::vector<int> master_nodes; master_nodes.reserve( 3*nb_nodes );
   std::vector<int>  slave_nodes;  slave_nodes.reserve( 3*nb_nodes );
 
-  int west = 0;
-  int east = microdeg( 2.*M_PI );
   for( int jnode=0; jnode<nodes.extents()[0]; ++jnode)
   {
     int x = microdeg(latlon(jnode,XX));
-    if( x == west && (part(jnode)==mypart && jnode==loc_idx(jnode))  )
+    if( x == BC::WEST && (part(jnode)==mypart && jnode==ridx(jnode))  )
     {
-      master_lookup[ LatLon(latlon[jnode]) ] = jnode;
+      master_lookup[ LatLonPoint(latlon[jnode]) ] = jnode;
       master_nodes.push_back( x );
       master_nodes.push_back( microdeg(latlon(jnode,YY)) );
       master_nodes.push_back( jnode );
     }
-    if( x >= east )
+    if( x >= BC::EAST )
     {
-      slave_lookup[ LatLon(latlon[jnode]) ] = jnode;
+      slave_lookup[ LatLonPoint(latlon[jnode]) ] = jnode;
       slave_nodes.push_back( x );
       slave_nodes.push_back( microdeg(latlon(jnode,YY)) );
       slave_nodes.push_back( jnode );
+      ridx( jnode ) = -1;
     }
   }
 
@@ -309,7 +273,7 @@ void make_periodic( Mesh& mesh )
       ArrayView<int,2> recv_slave(recvbuf.data()+recvdispls[jproc], Extents(recvcounts[jproc]/3,3).data() );
       for( int jnode=0; jnode<recv_slave.extents()[0]; ++jnode )
       {
-        LatLon slave( recv_slave(jnode,XX)-east, recv_slave(jnode,YY) );
+        LatLonPoint slave( recv_slave(jnode,XX)-BC::EAST, recv_slave(jnode,YY) );
         if( master_lookup.count( slave ) )
         {
           int master_idx = master_lookup[ slave ];
@@ -385,8 +349,8 @@ void make_periodic( Mesh& mesh )
     {
       int slave_idx        = recv_slave_idx     [jproc][jnode];
       //glb_idx( slave_idx ) = recv_master_glb_idx[jproc][jnode];
-      part   ( slave_idx ) = recv_master_part   [jproc][jnode];
-      loc_idx( slave_idx ) = recv_master_loc    [jproc][jnode];
+      part( slave_idx ) = recv_master_part   [jproc][jnode];
+      ridx( slave_idx ) = recv_master_loc    [jproc][jnode];
 
       //std::cout << part( slave_idx ) <<"["<<loc_idx( slave_idx ) << "] master of " << mypart << "["<<slave_idx<<"]" << std::endl;
 

@@ -88,8 +88,8 @@ BOOST_AUTO_TEST_CASE( test_small )
     case 0:
       BOOST_CHECK_EQUAL( ridx(9),  9  );
       BOOST_CHECK_EQUAL( gidx(9),  10 );
-      BOOST_CHECK_EQUAL( ridx(29), 9 );
-      BOOST_CHECK_EQUAL( gidx(29), 875430066 ); // hashed unique idx
+      BOOST_CHECK_EQUAL( ridx(30), 9 );
+      BOOST_CHECK_EQUAL( gidx(30), 875430066 ); // hashed unique idx
       break;
     }
   }

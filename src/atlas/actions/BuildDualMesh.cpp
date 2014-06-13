@@ -380,15 +380,6 @@ void build_dual_mesh( Mesh& mesh )
 
   //build_skewness( mesh );
 
-//  std::cout << "partition" << std::endl;
-//  for (int node=0; node<nb_nodes; ++node)
-//    std::cout << glb_idx(node) << "  :  " << proc(0,node) << std::endl;
-
-//  std::cout << "master_glb_idx" << std::endl;
-//  for (int node=0; node<nb_nodes; ++node)
-//    std::cout << glb_idx(node) << "  :  " << master_glb_idx(0,node) << std::endl;
-
-
 //  nodes.parallelise();
 //  edges.parallelise();
 
