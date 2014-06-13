@@ -38,6 +38,8 @@
 #define atlas_ArrayView_hpp
 
 #include <cstddef>
+#include <vector>
+
 #define ATLAS_ARRAYVIEW_BOUNDS_CHECKING
 
 #ifdef ATLAS_ARRAYVIEW_BOUNDS_CHECKING
@@ -121,6 +123,11 @@ public:
     strides_[1]=strides[1];            extents_[1]=extents[1];
   }
   ArrayView( const DATA_TYPE* data, const int extents[2] ) : data_( const_cast<DATA_TYPE*>(data) )
+  {
+    extents_[0]=extents[0]; strides_[0]=extents[1];
+    extents_[1]=extents[1]; strides_[1]=1;
+  }
+  ArrayView( const DATA_TYPE* data, const std::vector<int>& extents ) : data_( const_cast<DATA_TYPE*>(data) )
   {
     extents_[0]=extents[0]; strides_[0]=extents[1];
     extents_[1]=extents[1]; strides_[1]=1;
