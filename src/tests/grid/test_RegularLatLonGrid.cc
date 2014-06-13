@@ -148,5 +148,5 @@ static void test_grib_file(const std::string& the_file_path)
    BOOST_CHECK_MESSAGE(the_grid,"GRIBGridBuilder::instance().build_grid_from_grib_handle failed for file " << the_file_path);
    if (!the_grid) return;
 
-   BOOST_CHECK_MESSAGE(the_grid->gridType() == gridType,"gridType(" << gridType << ") did not match Grid constructor(" << the_grid->gridType() << ") for file " << the_file_path);
+   BOOST_CHECK_MESSAGE(the_grid->spec().grid_type() == gridType,"gridType(" << gridType << ") did not match Grid constructor(" << the_grid->spec().grid_type() << ") for file " << the_file_path);
 }

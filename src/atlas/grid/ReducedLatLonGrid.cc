@@ -36,7 +36,8 @@ namespace grid {
 
 ReducedLatLonGrid::ReducedLatLonGrid()
 :  nsIncrement_(0),
-   nptsNS_(0)
+   nptsNS_(0),
+   the_grid_spec_("reduced_ll")
 {
 //   Log::info() << "ReducedLatLonGrid" << std::endl;
 }

@@ -35,7 +35,8 @@ namespace grid {
 // Area: Can we assume area is multiple of the grids ?
 
 RegularGaussianGrid::RegularGaussianGrid()
-: gaussianNumber_(0)
+: gaussianNumber_(0),
+  the_grid_spec_("regular_gg")
 {
 //   Log::info() << "RegularGaussianGrid" << std::endl;
 }

@@ -20,6 +20,7 @@
 #include "eckit/memory/ScopedPtr.h"
 
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/GridSpec.h"
 
 //-----------------------------------------------------------------------------
 
@@ -39,13 +40,13 @@ public: // methods
 
     virtual std::string hash() const;
 
-    virtual const char* gridType() const { return "unstructured"; }
-
     virtual BoundBox boundingBox() const;
 
     virtual size_t nPoints() const;
 
     virtual void coordinates( Grid::Coords & ) const;
+
+    virtual const GridSpec& spec() const { return the_grid_spec_ ;}
 
     /// @deprecated will be removed soon as it exposes the inner storage of the coordinates
     virtual const std::vector<Point>& coordinates() const { return *points_; }
@@ -58,6 +59,7 @@ protected:
 
     std::string hash_;
 
+    GridSpec   the_grid_spec_;       ///< unique description of Grid
 };
 
 //-----------------------------------------------------------------------------

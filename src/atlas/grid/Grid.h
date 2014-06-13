@@ -33,6 +33,8 @@ class Mesh;
 
 namespace grid {
 
+class GridSpec;
+
 //------------------------------------------------------------------------------------------------------
 
 /// Interface to a grid of points in a 2d cartesian space
@@ -78,13 +80,14 @@ public: // methods
 
     virtual std::string hash() const = 0;
 
-    virtual const char* gridType() const = 0;
-
     virtual BoundBox boundingBox() const = 0;
 
     virtual size_t nPoints() const = 0;
 
     virtual void coordinates( Grid::Coords& ) const = 0;
+
+    /// The GridSpec includes the gridType
+    virtual const GridSpec& spec() const = 0;
 
     /// @deprecated will be removed soon as it exposes the inner storage of the coordinates
     virtual const std::vector<Point>& coordinates() const = 0;

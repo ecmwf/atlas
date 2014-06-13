@@ -36,7 +36,8 @@ RegularLatLonGrid::RegularLatLonGrid()
 :  nsIncrement_(0),
    weIncrement_(0),
    nptsNS_(0),
-   nptsWE_(0)
+   nptsWE_(0),
+   the_grid_spec_("regular_ll")
 {
 //   Log::info() << "RegularLatLonGrid" << std::endl;
 }

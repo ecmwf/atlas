@@ -1,0 +1,44 @@
+/*
+ * (C) Copyright 1996-2014 ECMWF.
+ *
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
+ * granted to it by virtue of its status as an intergovernmental organisation nor
+ * does it submit to any jurisdiction.
+ */
+
+#include "atlas/grid/GridSpec.h"
+
+//------------------------------------------------------------------------------------------------------
+
+namespace atlas {
+namespace grid {
+
+//------------------------------------------------------------------------------------------------------
+
+
+GridSpec::GridSpec(const std::string& the_grid_type, const std::string& the_short_name)
+: the_grid_type_(the_grid_type),the_short_name_(the_short_name)
+{
+}
+
+GridSpec::GridSpec(const std::string& the_grid_type)
+: the_grid_type_(the_grid_type)
+{
+}
+
+GridSpec::~GridSpec()
+{
+}
+
+void GridSpec::add(const std::string& name, const eckit::Value& value)
+{
+   grid_spec_.insert(std::make_pair(name,value));
+}
+
+//------------------------------------------------------------------------------------------------------
+
+} // namespace grid
+} // namespace atlas
+

@@ -26,7 +26,7 @@ using namespace std;
 using namespace eckit;
 using namespace eckit::geometry;
 
-// #define DEBUG 1
+#define DEBUG 1
 
 namespace atlas {
 namespace grid {
@@ -318,6 +318,12 @@ Grid::Ptr GribReducedGaussianGrid::build()
       }
    }
 
+   std::stringstream ss; ss << "N" << nj_;
+   the_grid_->the_grid_spec_.set_short_name(ss.str());
+   the_grid_->the_grid_spec_.add("Nj",eckit::Value(nj_));
+   the_grid_->the_grid_spec_.add("editionNumber_",eckit::Value(editionNumber_));
+
+
    double EXPECTED_longitudeOfLastGridPointInDegrees = 360.0 - (90.0/(the_grid_->gaussianNumber_));
 #ifdef DEBUG
    Log::info() << " editionNumber                                  " << editionNumber_ << std::endl;
@@ -472,6 +478,11 @@ Grid::Ptr GribRegularGaussianGrid::build()
        }
     }
 
+    std::stringstream ss; ss << "N" << nj_;
+    the_grid_->the_grid_spec_.set_short_name(ss.str());
+    the_grid_->the_grid_spec_.add("Nj",eckit::Value(nj_));
+    the_grid_->the_grid_spec_.add("editionNumber_",eckit::Value(editionNumber_));
+
     double EXPECTED_longitudeOfLastGridPointInDegrees = 360.0 - (90.0/(the_grid_->gaussianNumber_));
 #ifdef DEBUG
     Log::info() << " editionNumber                                  " << editionNumber_ << std::endl;
@@ -563,6 +574,11 @@ Grid::Ptr GribRegularLatLonGrid::build()
       }
       plat -= the_grid_->nsIncrement_;
    }
+
+   std::stringstream ss; ss << "LL" << the_grid_->nptsNS_ << "_" << the_grid_->nptsWE_;
+   the_grid_->the_grid_spec_.set_short_name(ss.str());
+   the_grid_->the_grid_spec_.add("editionNumber_",eckit::Value(editionNumber_));
+
 
 #ifdef DEBUG
    Log::info() << " editionNumber                                  " << editionNumber_ << std::endl;
@@ -735,6 +751,11 @@ Grid::Ptr GribReducedLatLonGrid::build()
       }
    }
 
+   std::stringstream ss; ss << "RL" << the_grid_->nptsNS_;
+   the_grid_->the_grid_spec_.set_short_name(ss.str());
+   the_grid_->the_grid_spec_.add("editionNumber_",eckit::Value(editionNumber_));
+
+
 #ifdef DEBUG
    Log::info() << " editionNumber                                  " << editionNumber_ << std::endl;
    Log::info() << " isGlobalNorthSouth()                           " << isGlobalNorthSouth() << std::endl;
@@ -839,6 +860,10 @@ Grid::Ptr GribRotatedLatLonGrid::build()
    //
    // NOTE: Grib iterator does *NOT* really rotate the points, so this is something we will need to do for ourselves
    read_data_points(handle_, the_grid_->points_);
+
+   std::stringstream ss; ss << "RotLL" ;
+   the_grid_->the_grid_spec_.set_short_name(ss.str());
+   the_grid_->the_grid_spec_.add("editionNumber_",eckit::Value(editionNumber_));
 
 #ifdef DEBUG
    Log::info() << " editionNumber                                  " << editionNumber_ << std::endl;

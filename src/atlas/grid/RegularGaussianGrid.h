@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/GridSpec.h"
 
 //-----------------------------------------------------------------------------
 
@@ -41,10 +42,10 @@ public:
 
    /// Overridden functions
    virtual std::string hash() const { return hash_;}
-   virtual const char* gridType() const { return "regular_gg"; }
    virtual BoundBox boundingBox() const { return bbox_; }
    virtual size_t nPoints() const { return points_.size(); }
    virtual void coordinates( Grid::Coords & ) const;
+   virtual const GridSpec& spec() const { return the_grid_spec_ ;}
    /// @deprecated will be removed soon as it exposes the inner storage of the coordinates
    virtual const std::vector<Point>& coordinates() const { return points_; }
 
@@ -58,6 +59,7 @@ private:
    std::vector< Point > points_;     ///< storage of coordinate points
    std::vector<double> latitudes_;
    long   gaussianNumber_;          /// No of points between pole and equator
+   GridSpec   the_grid_spec_;       /// < unique description of Grid
 
    /// Added friend mechanism to minimise data copying, during construction
    friend class GribRegularGaussianGrid;

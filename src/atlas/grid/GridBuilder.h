@@ -144,7 +144,7 @@ protected:
 
 // =============================================================================
 
-/// To avoid copying data, we placed the data directly into GRIB
+/// To avoid copying data, we placed the data directly into GRID classes
 /// via use of friendship
 class GribReducedGaussianGrid : public GribGridBuilderHelper {
 public:
@@ -165,8 +165,8 @@ private:
 
 // =============================================================================
 
-/// To avoid copying data, we placed the data directly into GRIB
-/// via use of friendshi
+/// To avoid copying data, we placed the data directly into GRID
+/// via use of friendship
 class GribRegularGaussianGrid : public GribGridBuilderHelper {
 public:
    GribRegularGaussianGrid( grib_handle* h );
@@ -185,7 +185,7 @@ private:
 
 // =============================================================================
 
-/// To avoid copying data, we placed the data directly into GRIB
+/// To avoid copying data, we placed the data directly into GRID
 /// via use of friendship
 class GribRegularLatLonGrid : public GribGridBuilderHelper {
 public:
@@ -212,7 +212,7 @@ private:
 };
 
 
-/// To avoid copying data, we placed the data directly into GRIB
+/// To avoid copying data, we placed the data directly into GRID classes
 /// via use of friendship
 class GribReducedLatLonGrid : public GribGridBuilderHelper {
 public:
@@ -235,7 +235,7 @@ private:
    eckit::ScopedPtr<ReducedLatLonGrid> the_grid_;
 };
 
-/// To avoid copying data, we placed the data directly into GRIB
+/// To avoid copying data, we placed the data directly into GRID classes
 /// via use of friendship
 /// NOTE: grib iterator does not rotate the data points.
 ///       This grid is not currently produced by IFS
