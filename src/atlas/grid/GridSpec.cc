@@ -46,6 +46,18 @@ eckit::Value GridSpec::find(const std::string& key) const
    return eckit::Value();
 }
 
+void GridSpec::print( std::ostream& s) const
+{
+   s << "GridSpec[ " << the_grid_type_;
+   if (!the_short_name_.empty() ) s << ", " << the_short_name_;
+
+   std::map<std::string,eckit::Value>::const_iterator i = grid_spec_.begin();
+   for(i = grid_spec_.begin(); i != grid_spec_.end(); ++i) {
+      s << ", " << (*i).first << ":" << (*i).second;
+   }
+
+   s << " ]";
+}
 
 //------------------------------------------------------------------------------------------------------
 

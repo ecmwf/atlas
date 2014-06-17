@@ -1,3 +1,5 @@
+#ifndef atlas_GribWrite_h
+#define atlas_GribWrite_h
 /*
  * (C) Copyright 1996-2014 ECMWF.
  * 
@@ -8,10 +10,6 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_GribWrite_h
-#define atlas_GribWrite_h
-
-#include "atlas/mesh/Mesh.hpp"
 #include "atlas/grid/FieldSet.h"
 
 //------------------------------------------------------------------------------------------------------
@@ -28,11 +26,18 @@ class GribWrite {
 
 public: // methods
 
-    eckit::GribHandle* create_handle( const grid::Grid& );
+   /// Given a Grid, this function will find the closest matching GRIB samples file.
+   /// The cloned/new handle of the GRIB sample file is returned.
+   /// If no match found a NULL handle is returned.
+   static eckit::GribHandle* create_handle( const grid::Grid& );
 
-    static void write( const atlas::grid::FieldSet& field, const eckit::PathName& opath  );
+   // Given a GridSpec return closest grib samples file.
+   // If no match found returns an empty string
+   static std::string grib_sample_file( const grid::GridSpec& );
 
-    static void clone( const atlas::grid::FieldSet& field, const eckit::PathName& src, const eckit::PathName& opath  );
+   static void write( const atlas::grid::FieldSet& field, const eckit::PathName& opath  );
+
+   static void clone( const atlas::grid::FieldSet& field, const eckit::PathName& src, const eckit::PathName& opath  );
 
 private: // methods
 
@@ -41,7 +46,6 @@ private: // methods
     static void clone( const atlas::grid::FieldHandle& field, const eckit::PathName& gridsec, eckit::DataHandle& );
 
     static eckit::GribHandle* clone(const grid::FieldHandle &field, eckit::GribHandle& gridsec );
-
 };
 
 //---------------------------------------------------------------------------------------------------------

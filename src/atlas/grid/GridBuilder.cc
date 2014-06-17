@@ -7,11 +7,16 @@
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
+#define DEBUG 1
 
 #include <iostream>
 
 #include "atlas/grid/GridBuilder.h"
 #include "atlas/grid/Unstructured.h"
+#include "atlas/grid/StackGribFile.h"
+#ifdef DEBUG
+#include "atlas/grid/GribWrite.h"
+#endif
 
 #include "eckit/log/Log.h"
 #include "eckit/geometry/Point3.h"
@@ -26,7 +31,6 @@ using namespace std;
 using namespace eckit;
 using namespace eckit::geometry;
 
-#define DEBUG 1
 
 namespace atlas {
 namespace grid {
@@ -52,7 +56,7 @@ Grid::Ptr GRIBGridBuilder::build(const eckit::PathName& pathname) const
 {
    AutoLock<Mutex> lock(local_mutex);
 
-   GribFile the_grib_file(pathname);
+   StackGribFile the_grib_file(pathname);
 
    Grid::Ptr the_grid_ptr = build_grid_from_grib_handle(the_grib_file.handle());
 
@@ -318,10 +322,10 @@ Grid::Ptr GribReducedGaussianGrid::build()
       }
    }
 
-   std::stringstream ss; ss << "QG" << the_grid_->gaussianNumber_;
+   std::stringstream ss; ss << "QG" << the_grid_->gaussianNumber_ << "_" << editionNumber_;
    the_grid_->the_grid_spec_.set_short_name(ss.str());
    the_grid_->the_grid_spec_.add("Nj",eckit::Value(nj_));
-   the_grid_->the_grid_spec_.add("editionNumber_",eckit::Value(editionNumber_));
+   the_grid_->the_grid_spec_.add("editionNumber",eckit::Value(editionNumber_));
 
 
    double EXPECTED_longitudeOfLastGridPointInDegrees = 360.0 - (90.0/(the_grid_->gaussianNumber_));
@@ -343,6 +347,8 @@ Grid::Ptr GribReducedGaussianGrid::build()
    Log::info() << " longitudeOfLastGridPointInDegrees              " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << east_ << std::endl;
    Log::info() << " EXPECTED longitudeOfLastGridPointInDegrees     " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << EXPECTED_longitudeOfLastGridPointInDegrees << std::endl;
    Log::info() << " numberOfDataPoints                             " << numberOfDataPoints_ << std::endl;
+   Log::info() << " GridSpec                                       " << the_grid_->the_grid_spec_ << std::endl;
+   Log::info() << " GridSpec  to  sample_file                      " << GribWrite::grib_sample_file(the_grid_->the_grid_spec_) << std::endl;
    int no_of_points_in_pl = 0;
    for(int i = 0; i < the_grid_->rgSpec_.size(); i++) no_of_points_in_pl += the_grid_->rgSpec_[i];
    Log::info() << " no_of_points_in_pl                             " << no_of_points_in_pl << std::endl;
@@ -478,10 +484,18 @@ Grid::Ptr GribRegularGaussianGrid::build()
        }
     }
 
-    std::stringstream ss; ss << "GG" << the_grid_->gaussianNumber_;
+    std::stringstream ss; ss << "GG" << the_grid_->gaussianNumber_ << "_" << editionNumber_;
     the_grid_->the_grid_spec_.set_short_name(ss.str());
     the_grid_->the_grid_spec_.add("Nj",eckit::Value(nj_));
-    the_grid_->the_grid_spec_.add("editionNumber_",eckit::Value(editionNumber_));
+    the_grid_->the_grid_spec_.add("editionNumber",eckit::Value(editionNumber_));
+    // In our sample files, only the following 3 are used: [ ml | pl | sfc  ]
+    char string_value[64];
+    size_t len = sizeof(string_value)/sizeof(char);
+    if (grib_get_string(handle_,"typeOfLevel",string_value,&len) == 0) {
+       std::string type_of_level = string_value;
+       if (type_of_level == "pl" || type_of_level == "ml"  || type_of_level == "sfc" ||  type_of_level =="surface")
+          the_grid_->the_grid_spec_.add("typeOfLevel",eckit::Value(type_of_level));
+    }
 
     double EXPECTED_longitudeOfLastGridPointInDegrees = 360.0 - (90.0/(the_grid_->gaussianNumber_));
 #ifdef DEBUG
@@ -501,6 +515,8 @@ Grid::Ptr GribRegularGaussianGrid::build()
     Log::info() << " nptsWE                                         " << nptsWE << std::endl;
     Log::info() << " numberOfDataPoints                             " << numberOfDataPoints_ << std::endl;
     Log::info() << " -----------------------------------------------" << std::endl;
+    Log::info() << " GridSpec                                       " << the_grid_->the_grid_spec_ <<  std::endl;
+    Log::info() << " GridSpec  to  sample_file                      " << GribWrite::grib_sample_file(the_grid_->the_grid_spec_) << std::endl;
     Log::info() << " points_.size()  " << the_grid_->points_.size() << "       numberOfDataPoints " << numberOfDataPoints_ << std::endl;
     Log::info() << " point[0]                               " << the_grid_->points_[0].lat() << ", " << the_grid_->points_[0].lon() <<  std::endl;
     Log::info() << " point[1]                               " << the_grid_->points_[1].lat() << ", " << the_grid_->points_[1].lon() <<  std::endl;
@@ -575,10 +591,19 @@ Grid::Ptr GribRegularLatLonGrid::build()
       plat -= the_grid_->nsIncrement_;
    }
 
-   std::stringstream ss; ss << "LL" << the_grid_->nptsNS_ << "_" << the_grid_->nptsWE_;
+   std::stringstream ss; ss << "LL" << the_grid_->nptsNS_ << "_" << the_grid_->nptsWE_ << "_" << editionNumber_;
    the_grid_->the_grid_spec_.set_short_name(ss.str());
-   the_grid_->the_grid_spec_.add("editionNumber_",eckit::Value(editionNumber_));
-
+   the_grid_->the_grid_spec_.add("editionNumber",eckit::Value(editionNumber_));
+   the_grid_->the_grid_spec_.add("Nj",eckit::Value(the_grid_->nptsNS_));
+   the_grid_->the_grid_spec_.add("Ni",eckit::Value(the_grid_->nptsWE_));
+   // In our sample files, only the following 3 are used: [ ml | pl | sfc  ]
+   char string_value[64];
+   size_t len = sizeof(string_value)/sizeof(char);
+   if (grib_get_string(handle_,"typeOfLevel",string_value,&len) == 0) {
+      std::string type_of_level = string_value;
+      if (type_of_level == "pl" || type_of_level == "ml"  || type_of_level == "sfc" ||  type_of_level =="surface")
+         the_grid_->the_grid_spec_.add("typeOfLevel",eckit::Value(type_of_level));
+   }
 
 #ifdef DEBUG
    Log::info() << " editionNumber                                  " << editionNumber_ << std::endl;
@@ -595,6 +620,8 @@ Grid::Ptr GribRegularLatLonGrid::build()
    Log::info() << " Ni(num of points West East)                    " << the_grid_->nptsWE_ << std::endl;
    Log::info() << " numberOfDataPoints                             " << numberOfDataPoints_ << std::endl;
    Log::info() << " -----------------------------------------------" << std::endl;
+   Log::info() << " GridSpec                                       " << the_grid_->the_grid_spec_ << std::endl;
+   Log::info() << " GridSpec  to  sample_file                      " << GribWrite::grib_sample_file(the_grid_->the_grid_spec_) << std::endl;
    Log::info() << " computeIncLat() " << computeIncLat() << "      nsIncrement_ " << the_grid_->nsIncrement_ << std::endl;
    Log::info() << " computeIncLon() " << computeIncLon() << "      weIncrement_ " << the_grid_->nsIncrement_ << std::endl;
    Log::info() << " computeRows()   " << computeRows(north_,south_,west_,east_) << "     nptsNS_ " << the_grid_->nptsNS_ << std::endl;
@@ -751,10 +778,18 @@ Grid::Ptr GribReducedLatLonGrid::build()
       }
    }
 
-   std::stringstream ss; ss << "RedLL" << the_grid_->nptsNS_;
+   std::stringstream ss; ss << "RedLL" << the_grid_->nptsNS_ << "_" << editionNumber_;
    the_grid_->the_grid_spec_.set_short_name(ss.str());
-   the_grid_->the_grid_spec_.add("editionNumber_",eckit::Value(editionNumber_));
-
+   the_grid_->the_grid_spec_.add("editionNumber",eckit::Value(editionNumber_));
+   the_grid_->the_grid_spec_.add("Nj",eckit::Value(the_grid_->nptsNS_));
+   // In our sample files, only the following 3 are used: [ ml | pl | sfc  ]
+   char string_value[64];
+   size_t len = sizeof(string_value)/sizeof(char);
+   if (grib_get_string(handle_,"typeOfLevel",string_value,&len) == 0) {
+      std::string type_of_level = string_value;
+      if (type_of_level == "pl" || type_of_level == "ml"  || type_of_level == "sfc" ||  type_of_level =="surface")
+         the_grid_->the_grid_spec_.add("typeOfLevel",eckit::Value(type_of_level));
+   }
 
 #ifdef DEBUG
    Log::info() << " editionNumber                                  " << editionNumber_ << std::endl;
@@ -771,6 +806,8 @@ Grid::Ptr GribReducedLatLonGrid::build()
    Log::info() << " Nj(num of points North South)                  " << the_grid_->nptsNS_ << std::endl;
    Log::info() << " numberOfDataPoints                             " << numberOfDataPoints_ << std::endl;
    Log::info() << " -----------------------------------------------" << std::endl;
+   Log::info() << " GridSpec                                       " << the_grid_->the_grid_spec_ << std::endl;
+   Log::info() << " GridSpec  to  sample_file                      " << GribWrite::grib_sample_file(the_grid_->the_grid_spec_) << std::endl;
    Log::info() << " computeIncLat() " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << computeIncLat() << "      nsIncrement_ " << the_grid_->nsIncrement_ << std::endl;
    Log::info() << " points_.size()  " << the_grid_->points_.size() << "     numberOfDataPoints_ " << numberOfDataPoints_ << std::endl << std::endl;
 #endif
@@ -861,9 +898,11 @@ Grid::Ptr GribRotatedLatLonGrid::build()
    // NOTE: Grib iterator does *NOT* really rotate the points, so this is something we will need to do for ourselves
    read_data_points(handle_, the_grid_->points_);
 
-   std::stringstream ss; ss << "RL" ;
+   std::stringstream ss; ss << "RL" << the_grid_->nptsNS_ << "_" << editionNumber_;
    the_grid_->the_grid_spec_.set_short_name(ss.str());
-   the_grid_->the_grid_spec_.add("editionNumber_",eckit::Value(editionNumber_));
+   the_grid_->the_grid_spec_.add("editionNumber",eckit::Value(editionNumber_));
+   the_grid_->the_grid_spec_.add("Ni",eckit::Value(the_grid_->nptsWE_));
+   the_grid_->the_grid_spec_.add("Nj",eckit::Value(the_grid_->nptsNS_));
 
 #ifdef DEBUG
    Log::info() << " editionNumber                                  " << editionNumber_ << std::endl;
@@ -880,6 +919,8 @@ Grid::Ptr GribRotatedLatLonGrid::build()
    Log::info() << " Ni(num of points West East)                    " << the_grid_->nptsWE_ << std::endl;
    Log::info() << " numberOfDataPoints                             " << numberOfDataPoints_ << std::endl;
    Log::info() << " -----------------------------------------------" << std::endl;
+   Log::info() << " GridSpec                                       " << the_grid_->the_grid_spec_ << std::endl;
+   Log::info() << " GridSpec  to  sample_file                      " << GribWrite::grib_sample_file(the_grid_->the_grid_spec_) << std::endl;
    Log::info() << " computeIncLat() " << computeIncLat() << "      nsIncrement_ " << the_grid_->nsIncrement_ << std::endl;
    Log::info() << " computeIncLon() " << computeIncLon() << "      weIncrement_ " << the_grid_->nsIncrement_ << std::endl;
    Log::info() << " computeRows()   " << computeRows(north_,south_,west_,east_) << "     nptsNS_ " << the_grid_->nptsNS_ << std::endl;
@@ -1007,37 +1048,6 @@ static void read_data_points(grib_handle *h, PointList& points)
 
    if ( grib_iterator_delete(i) != 0 )
       throw SeriousBug(string("Error reading grib. Could not delete grib iterator"),Here()) ;
-}
-
-// ==================================================================================
-
-GribFile::GribFile(const std::string& the_file_path) : theGribFile_(PathName(the_file_path)), handle_(0)
-{
-   init(the_file_path);
-}
-
-GribFile::GribFile(const eckit::PathName& pathname) : theGribFile_(pathname), handle_(0)
-{
-   init(pathname.asString());
-}
-
-void GribFile::init(const std::string& the_file_path)
-{
-#ifdef DEBUG
-   Log::info() << " Create a grib handle" << std::endl;
-#endif
-   int err;
-   handle_ = grib_handle_new_from_file(0,theGribFile_,&err);
-   if (err != 0) Log::error() <<  "grib_handle_new_from_file error " << err << " for file " << the_file_path << endl;
-}
-
-GribFile::~GribFile()
-{
-#ifdef DEBUG
-   Log::info()  << " close the grib file and delete handle" << std::endl;
-#endif
-   int err = grib_handle_delete(handle_);
-   if (err != 0) Log::error() <<  " grib_handle_delete failed " << err << endl;
 }
 
 } // namespace grid

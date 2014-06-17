@@ -263,27 +263,6 @@ private:
    eckit::ScopedPtr<RotatedLatLonGrid> the_grid_;
 };
 
-
-// ==========================================================================
-// Ensures grib handle is always deleted, in presence of exceptions
-class GribFile {
-public:
-   GribFile(const std::string& the_file_path);
-   GribFile(const eckit::PathName& pathname);
-   ~GribFile();
-
-   grib_handle* handle() const { return handle_;}
-
-private:
-   eckit::StdFile theGribFile_;
-   grib_handle* handle_;
-
-private:
-   void init(const std::string& the_file_path);
-   GribFile(const GribFile&);            // prevent copies
-   GribFile& operator=(const GribFile&); // prevent assignment
-};
-
 //------------------------------------------------------------------------------------------------------
 
 } // namespace grid

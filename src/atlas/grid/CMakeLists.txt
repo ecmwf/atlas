@@ -48,6 +48,8 @@ if( HAVE_GRIB )
     GribWrite.h
     GridBuilder.h
     GridBuilder.cc
+    StackGribFile.cc
+    StackGribFile.h
   )
 endif()
 
