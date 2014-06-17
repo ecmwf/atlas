@@ -67,12 +67,16 @@ list( APPEND atlas_io_srcs
   io/Gmsh.cpp
 )
 
+list( APPEND atlas_util_srcs
+  util/Array.hpp
+  util/ArrayView.hpp
+  util/ArrayView.cpp
+  util/Debug.hpp
+  util/IndexView.hpp
+  util/IndexView.cpp
+)
+
 list( APPEND atlas_mesh_srcs
-  mesh/Array.hpp
-  mesh/ArrayView.hpp
-  mesh/ArrayView.cpp
-  mesh/IndexView.hpp
-  mesh/IndexView.cpp
   mesh/Field.hpp
   mesh/Field.cpp
   mesh/FieldSet.hpp
@@ -107,6 +111,7 @@ ecbuild_add_library( TARGET atlas
                      AUTO_VERSION
                      SOURCES
                        ${atlas_mpistubs_srcs}
+                       ${atlas_util_srcs}
                        ${atlas_io_srcs}
                        ${atlas_mesh_srcs}
                        ${atlas_mpl_srcs}

@@ -25,6 +25,12 @@ ecbuild_add_test( TARGET test_indexview
   LIBS     atlas
 )
 
+ecbuild_add_test( TARGET test_haloexchange
+  BOOST
+  MPI      3
+  SOURCES  test_haloexchange.cpp
+  LIBS     atlas
+)
 
 ecbuild_add_test( TARGET test_gmsh
   BOOST

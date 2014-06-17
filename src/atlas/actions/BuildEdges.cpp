@@ -20,9 +20,9 @@
 #include "atlas/mesh/Field.hpp"
 #include "atlas/actions/BuildEdges.hpp"
 #include "atlas/mesh/Parameters.hpp"
-#include "atlas/mesh/ArrayView.hpp"
-#include "atlas/mesh/Array.hpp"
-#include "atlas/mesh/IndexView.hpp"
+#include "atlas/util/ArrayView.hpp"
+#include "atlas/util/Array.hpp"
+#include "atlas/util/IndexView.hpp"
 #include "atlas/mesh/Util.hpp"
 
 namespace atlas {

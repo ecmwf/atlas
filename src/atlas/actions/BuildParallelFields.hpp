@@ -8,16 +8,40 @@
  * does it submit to any jurisdiction.
  */
 
-
+/// @author Willem Deconinck
+/// @date   June 2014
 
 #ifndef BuildParallelFields_hpp
 #define BuildParallelFields_hpp
 #include <string>
 namespace atlas {
   class Mesh;
+  class FunctionSpace;
 namespace actions {
 
+/*
+ * Build all parallel fields in the mesh
+ *  - calls build_nodes_parallel_fields()
+ */
 void build_parallel_fields( Mesh& mesh );
+
+/*
+ * Build parallel fields for the "nodes" function space if they don't exist.
+ * - glb_idx:    create unique indices for non-positive values
+ * - partition:  set to MPL::rank() for negative values
+ * - remote_idx: rebuild from scratch
+ */
+void build_nodes_parallel_fields( FunctionSpace& nodes );
+
+
+/*
+ * Make the mesh periodic
+ * - Find out which nodes at the WEST-BC are master nodes
+ *   of nodes at the EAST-BC
+ * - The remote_idx and partition of the EAST-BC nodes
+ *   are set to the master nodes at WEST-BC, whereas the
+ *   global index remains unchanged
+ */
 void make_periodic( Mesh& mesh );
 
 } // namespace actions

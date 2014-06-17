@@ -19,17 +19,17 @@
 #include "atlas/mesh/Field.hpp"
 #include "atlas/actions/BuildParallelFields.hpp"
 #include "atlas/mesh/Parameters.hpp"
-#include "atlas/mesh/ArrayView.hpp"
-#include "atlas/mesh/IndexView.hpp"
-#include "atlas/mesh/Array.hpp"
+#include "atlas/util/ArrayView.hpp"
+#include "atlas/util/IndexView.hpp"
+#include "atlas/util/Array.hpp"
 #include "atlas/mesh/Util.hpp"
 
 namespace atlas {
 namespace actions {
 
-ArrayView<int,1> build_nodes_glb_idx_serial( FunctionSpace& nodes );
-ArrayView<int,1> build_nodes_partition( FunctionSpace& nodes );
-IndexView<int,1> build_nodes_remote_idx( FunctionSpace& nodes );
+FieldT<int>& build_nodes_global_idx( FunctionSpace& nodes );
+FieldT<int>& build_nodes_partition ( FunctionSpace& nodes );
+FieldT<int>& build_nodes_remote_idx( FunctionSpace& nodes );
 
 // ------------------------------------------------------------------
 
@@ -37,40 +37,44 @@ void build_parallel_fields( Mesh& mesh )
 {
   ASSERT( mesh.has_function_space("nodes") );
 
-  FunctionSpace& nodes = mesh.function_space("nodes");
-
-  ArrayView<int,1> nodes_glb_idx;
-  if( nodes.has_field("glb_idx") )
-    nodes_glb_idx = ArrayView<int,1> ( nodes.field("glb_idx") );
-  else if( MPL::size() > 1 )
-    throw eckit::SeriousBug( "parallel mesh needs nodes glb_idx", Here() );
-  else
-    nodes_glb_idx = build_nodes_glb_idx_serial( nodes );
-
-
-  ArrayView<int,1> nodes_part;
-  if( nodes.has_field("partition") )
-    nodes_part = ArrayView<int,1> ( nodes.field("partition") );
-  else
-    nodes_part = build_nodes_partition( nodes );
-
-  build_nodes_remote_idx( nodes );
-
+  build_nodes_parallel_fields( mesh.function_space("nodes") );
 }
 
 // ------------------------------------------------------------------
 
-ArrayView<int,1> build_nodes_glb_idx_serial( FunctionSpace& nodes )
+void build_nodes_parallel_fields( FunctionSpace& nodes )
 {
-  ArrayView<int,1> glb_idx ( nodes.create_field<int>("glb_idx",1) );
-  for( int jnode=0; jnode<glb_idx.extents()[0]; ++jnode )
-    glb_idx[jnode] = jnode+1;
-  return glb_idx;
+  ASSERT( nodes.has_field("coordinates") );
+
+  build_nodes_global_idx( nodes );
+  build_nodes_partition ( nodes );
+  build_nodes_remote_idx( nodes );
 }
 
 // ------------------------------------------------------------------
 
-IndexView<int,1> build_nodes_remote_idx( FunctionSpace& nodes )
+FieldT<int>& build_nodes_global_idx( FunctionSpace& nodes )
+{
+  if( ! nodes.has_field("glb_idx") )
+  {
+    ArrayView<int,1> glb_idx ( nodes.create_field<int>("glb_idx",1) );
+    glb_idx = -1;
+  }
+
+  ArrayView<double,2> latlon  ( nodes.field("coordinates") );
+  ArrayView<int,   1> glb_idx ( nodes.field("glb_idx"    ) );
+
+  for( int jnode=0; jnode<glb_idx.extents()[0]; ++jnode )
+  {
+    if( glb_idx(jnode) <= 0 )
+      glb_idx(jnode) = LatLonPoint( latlon[jnode] ).uid();
+  }
+  return nodes.field<int>("glb_idx");
+}
+
+// ------------------------------------------------------------------
+
+FieldT<int>& build_nodes_remote_idx( FunctionSpace& nodes )
 {
   int mypart = MPL::rank();
   int nparts = MPL::size();
@@ -140,19 +144,19 @@ IndexView<int,1> build_nodes_remote_idx( FunctionSpace& nodes )
       ridx( recv_node(jnode,0) ) = recv_node(jnode,1);
     }
   }
-  return ridx;
+  return nodes.field<int>("remote_idx");
 }
 
 // ------------------------------------------------------------------
 
-ArrayView<int,1> build_nodes_partition( FunctionSpace& nodes )
+FieldT<int>& build_nodes_partition( FunctionSpace& nodes )
 {
-  ArrayView<int,1> part ( nodes.create_field<int>("partition",1) );
-  if( MPL::size() == 1 )
+  if( ! nodes.has_field("partition") )
+  {
+    ArrayView<int,1> part ( nodes.create_field<int>("partition",1) );
     part = MPL::rank();
-  else
-    NOTIMP;
-  return part;
+  }
+  return nodes.field<int>("partition");
 }
 
 // ------------------------------------------------------------------
@@ -165,7 +169,6 @@ void make_periodic( Mesh& mesh )
 
   IndexView<int,1> ridx ( nodes.field("remote_idx") );
   ArrayView<int,1> part ( nodes.field("partition")      );
-  //ArrayView<int,1> glb_idx ( nodes.field("glb_idx")        );
 
   int nb_nodes = nodes.extents()[0];
 
@@ -288,57 +291,49 @@ void make_periodic( Mesh& mesh )
 
   // Fill in data to communicate
   std::vector< std::vector<int> > recv_slave_idx( MPL::size() );
-  //std::vector< std::vector<int> > send_master_glb_idx( MPL::size() );
-  //std::vector< std::vector<int> > recv_master_glb_idx( MPL::size() );
   std::vector< std::vector<int> > send_master_part( MPL::size() );
   std::vector< std::vector<int> > recv_master_part( MPL::size() );
-  std::vector< std::vector<int> > send_master_loc( MPL::size() );
-  std::vector< std::vector<int> > recv_master_loc( MPL::size() );
+  std::vector< std::vector<int> > send_master_ridx( MPL::size() );
+  std::vector< std::vector<int> > recv_master_ridx( MPL::size() );
 
-                      //  std::vector< std::vector<int> > send_slave_glb_idx( MPL::size() );
-                      //  std::vector< std::vector<int> > recv_slave_glb_idx( MPL::size() );
                       //  std::vector< std::vector<int> > send_slave_part( MPL::size() );
                       //  std::vector< std::vector<int> > recv_slave_part( MPL::size() );
-                      //  std::vector< std::vector<int> > send_slave_loc( MPL::size() );
-                      //  std::vector< std::vector<int> > recv_slave_loc( MPL::size() );
+                      //  std::vector< std::vector<int> > send_slave_ridx( MPL::size() );
+                      //  std::vector< std::vector<int> > recv_slave_ridx( MPL::size() );
 
   {
     for( int jproc=0; jproc<MPL::size(); ++jproc )
     {
       int nb_found_master = found_master[jproc].size();
-      //send_master_glb_idx[jproc].resize(nb_found_master);
       send_master_part   [jproc].resize(nb_found_master);
-      send_master_loc    [jproc].resize(nb_found_master);
+      send_master_ridx    [jproc].resize(nb_found_master);
       for( int jnode=0; jnode<nb_found_master; ++jnode )
       {
         int loc_idx = found_master[jproc][jnode];
-        //send_master_glb_idx[jproc][jnode] = glb_idx( loc_idx );
-        send_master_part   [jproc][jnode] = part   ( loc_idx );
-        send_master_loc    [jproc][jnode] = loc_idx;
+        send_master_part[jproc][jnode] = part   ( loc_idx );
+        send_master_ridx[jproc][jnode] = loc_idx;
       }
 
                       //      int nb_found_slaves = found_slave[jproc].size();
                       //      send_slave_glb_idx[jproc].resize(nb_found_slaves);
                       //      send_slave_part   [jproc].resize(nb_found_slaves);
-                      //      send_slave_loc    [jproc].resize(nb_found_slaves);
+                      //      send_slave_ridx   [jproc].resize(nb_found_slaves);
                       //      for( int jnode=0; jnode<nb_found_slaves; ++jnode )
                       //      {
                       //        int loc_idx = found_slave[jproc][jnode];
                       //        send_slave_glb_idx[jproc][jnode] = glb_idx( loc_idx );
                       //        send_slave_part   [jproc][jnode] = part   ( loc_idx );
-                      //        send_slave_loc    [jproc][jnode] = loc_idx;
+                      //        send_slave_ridx   [jproc][jnode] = loc_idx;
                       //      }
     }
   }
 
   // Communicate
   MPL::Alltoall( send_slave_idx,      recv_slave_idx      );
-  //MPL::Alltoall( send_master_glb_idx, recv_master_glb_idx );
   MPL::Alltoall( send_master_part,    recv_master_part    );
-  MPL::Alltoall( send_master_loc,     recv_master_loc     );
-                    //  MPL::Alltoall( send_slave_glb_idx,  recv_slave_glb_idx );
+  MPL::Alltoall( send_master_ridx,     recv_master_ridx     );
                     //  MPL::Alltoall( send_slave_part,     recv_slave_part    );
-                    //  MPL::Alltoall( send_slave_loc,      recv_slave_loc     );
+                    //  MPL::Alltoall( send_slave_loc,      recv_slave_ridx    );
 
   // Fill in periodic
   int nb_recv_master = 0;
@@ -347,10 +342,9 @@ void make_periodic( Mesh& mesh )
     int nb_recv = recv_slave_idx[jproc].size();
     for( int jnode=0; jnode<nb_recv; ++jnode )
     {
-      int slave_idx        = recv_slave_idx     [jproc][jnode];
-      //glb_idx( slave_idx ) = recv_master_glb_idx[jproc][jnode];
-      part( slave_idx ) = recv_master_part   [jproc][jnode];
-      ridx( slave_idx ) = recv_master_loc    [jproc][jnode];
+      int slave_idx     = recv_slave_idx  [jproc][jnode];
+      part( slave_idx ) = recv_master_part[jproc][jnode];
+      ridx( slave_idx ) = recv_master_ridx[jproc][jnode];
 
       //std::cout << part( slave_idx ) <<"["<<loc_idx( slave_idx ) << "] master of " << mypart << "["<<slave_idx<<"]" << std::endl;
 

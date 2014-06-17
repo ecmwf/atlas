@@ -61,8 +61,8 @@ public: // methods
 
   void resize( const std::vector<int>& extents );
 
-  void parallelise(const int proc[], const int glb_idx[], const int master_glb_idx[]);
   void parallelise();
+  void parallelise(const int proc[], const int remote_idx[], int size);
 
   template< typename DATA_TYPE >
   void halo_exchange( DATA_TYPE field_data[], int field_size )
@@ -147,7 +147,7 @@ extern "C"
   const char* atlas__FunctionSpace__name (FunctionSpace* This);
   void atlas__FunctionSpace__boundsf (FunctionSpace* This, int* &bounds, int &rank);
   Field* atlas__FunctionSpace__field (FunctionSpace* This, char* name);
-  void atlas__FunctionSpace__parallelise (FunctionSpace* This, int proc[], int glb_idx[], int master_glb_idx[]);
+  void atlas__FunctionSpace__parallelise (FunctionSpace* This);
   void atlas__FunctionSpace__halo_exchange_int (FunctionSpace* This, int field_data[], int field_size); 
   void atlas__FunctionSpace__halo_exchange_float (FunctionSpace* This, float field_data[], int field_size); 
   void atlas__FunctionSpace__halo_exchange_double (FunctionSpace* This, double field_data[], int field_size); 

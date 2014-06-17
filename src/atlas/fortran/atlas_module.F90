@@ -659,10 +659,9 @@ function FunctionSpace__has_field(this,name) result(flag)
   end if
 end function FunctionSpace__has_field
 
-subroutine FunctionSpace__parallelise(this, proc, glb_idx, master_glb_idx)
+subroutine FunctionSpace__parallelise(this)
   class(FunctionSpace_type), intent(in) :: this
-  integer, intent(in) :: proc(:), glb_idx(:), master_glb_idx(:)
-  call atlas__FunctionSpace__parallelise(this%object, proc, glb_idx, master_glb_idx)
+  call atlas__FunctionSpace__parallelise(this%object)
 end subroutine FunctionSpace__parallelise
 
 function FunctionSpace__get_halo_exchange(this) result(halo_exchange)
@@ -892,14 +891,11 @@ subroutine HaloExchange__delete(this)
   this%object = C_NULL_ptr
 end subroutine HaloExchange__delete
 
-subroutine HaloExchange__setup(this, proc, glb_idx, master_glb_idx, bounds, par_bound)
+subroutine HaloExchange__setup(this, part, remote_idx)
   class(HaloExchange_type), intent(in) :: this
-  integer, intent(in) :: proc(:)
-  integer, intent(in) :: glb_idx(:)
-  integer, intent(in) :: master_glb_idx(:)
-  integer, intent(in) :: bounds(:)
-  integer, intent(in) :: par_bound
-  call atlas__HaloExchange__setup( this%object, proc, glb_idx, master_glb_idx, bounds, size(bounds), par_bound-1 )
+  integer, intent(in) :: part(:)
+  integer, intent(in) :: remote_idx(:)
+  call atlas__HaloExchange__setup( this%object, part, remote_idx, size(part) )
 end subroutine HaloExchange__setup
 
 

@@ -15,9 +15,9 @@
 #include <cmath>
 #include <limits>
 
-#include "atlas/mesh/Array.hpp"
-#include "atlas/mesh/ArrayView.hpp"
-#include "atlas/mesh/IndexView.hpp"
+#include "atlas/util/Array.hpp"
+#include "atlas/util/ArrayView.hpp"
+#include "atlas/util/IndexView.hpp"
 #include "atlas/mesh/Field.hpp"
 #include "atlas/mesh/FunctionSpace.hpp"
 #include "atlas/mesh/Mesh.hpp"
@@ -43,13 +43,6 @@ struct Region
   std::vector<int> nb_lat_elems;
 };
 
-double spherical_distance(double x1,double y1,double x2,double y2,double rad)
-{
-  using namespace std;
-  if((std::abs(x2-x1))<1e-8) return (y2-y1)*rad;
-  else if((std::abs(y2-y1))<1e-8) return (x2-x1)*rad;
-  else return acos(cos(x1)*cos(y1)*cos(x2)*cos(y2)+cos(x1)*sin(y1)*cos(x2)*sin(y2)+sin(x1)*sin(x2))*rad;
-}
 
 int RGG::ngptot() const
 {
@@ -280,9 +273,9 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
       try_make_quad = false;
     
       
-      dN1S2 = std::abs(xN1-xS2);//std::abs(spherical_distance(xN1,yN,xS2,yS,1.));
-      dS1N2 = std::abs(xS1-xN2);//std::abs(spherical_distance(xS1,yS,xN2,yN,1.));
-      dN2S2 = std::abs(xN2-xS2);//std::abs(spherical_distance(xN2,yN,xS2,yS,1.));
+      dN1S2 = std::abs(xN1-xS2);
+      dS1N2 = std::abs(xS1-xN2);
+      dN2S2 = std::abs(xN2-xS2);
       // std::cout << "  dN1S2 " << dN1S2 << "   dS1N2 " << dS1N2 << "   dN2S2 " << dN2S2 << std::endl;
       if ( (dN1S2 < dN2S2 && dN1S2 < dS1N2) && (ipS1 != ipS2) ) try_make_triangle_up = true;
       else if ( (dS1N2 < dN2S2 && dS1N2 < dN1S2) && (ipN1 != ipN2) ) try_make_triangle_down = true;

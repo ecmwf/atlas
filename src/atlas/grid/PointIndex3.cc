@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/mesh/ArrayView.hpp"
+#include "atlas/util/ArrayView.hpp"
 #include "atlas/grid/PointIndex3.h"
 
 //------------------------------------------------------------------------------------------------------

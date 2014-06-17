@@ -8,58 +8,21 @@
  * does it submit to any jurisdiction.
  */
 
+#ifndef atlas_mesh_Util_hpp
+#define atlas_mesh_Util_hpp
+
 #include <cmath>
 #include <sstream>
+
 #include "atlas/mpl/MPL.hpp"
 #include "atlas/atlas_config.h"
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/mesh/FunctionSpace.hpp"
 #include "atlas/mesh/Field.hpp"
-#include "atlas/mesh/ArrayView.hpp"
-#include "atlas/mesh/IndexView.hpp"
+#include "atlas/util/ArrayView.hpp"
+#include "atlas/util/IndexView.hpp"
+#include "atlas/util/Debug.hpp"
 #include "atlas/mesh/Parameters.hpp"
-
-#include <unistd.h>
-
-
-/// DEBUG MACRO
-#define DEBUG_0()            std::cerr << "["<< MPL::rank() << "] DEBUG() @ " << Here() << std::endl;
-#define DEBUG_1(WHAT)        std::cerr << "["<< MPL::rank() << "] DEBUG( " << WHAT << " ) @ " << Here() << std::endl;
-#define DEBUG_2(WHAT,RANK)   if(MPL::rank() == RANK) { DEBUG_1(WHAT) }
-#define DEBUG_X(x,A,B,FUNC, ...)  FUNC
-#define DEBUG(...)  DEBUG_X(,##__VA_ARGS__,\
-                        DEBUG_2(__VA_ARGS__),\
-                        DEBUG_1(__VA_ARGS__),\
-                        DEBUG_0(__VA_ARGS__))
-
-/// DEBUG_SYNC MACRO
-#define DEBUG_SYNC(...) \
-  MPI_Barrier(MPI_COMM_WORLD);\
-  DEBUG_X(,##__VA_ARGS__,\
-     DEBUG_2(__VA_ARGS__),\
-     DEBUG_1(__VA_ARGS__),\
-     DEBUG_0(__VA_ARGS__))\
-  MPI_Barrier(MPI_COMM_WORLD); usleep(1000); /*microseconds*/
-
-/// DEBUG_VAR MACRO
-#ifdef DEBUG_VAR
-  #undef DEBUG_VAR
-#endif
-#define DEBUG_VAR_1(VAR) \
-  std::cerr << "["<< MPL::rank() << "] DEBUG( " << #VAR << " : " << VAR << " ) @ " << Here() << std::endl;
-#define DEBUG_VAR_2(VAR,RANK) if(MPL::rank() == RANK) { DEBUG_VAR_1(VAR) }
-#define DEBUG_VAR_X(x,A,B,FUNC, ...)  FUNC
-#define DEBUG_VAR(...)  DEBUG_VAR_X(,##__VA_ARGS__,\
-                        DEBUG_VAR_2(__VA_ARGS__),\
-                        DEBUG_VAR_1(__VA_ARGS__))
-
-/// DEBUG_VAR_SYNC MACRO
-#define DEBUG_VAR_SYNC(...) \
-  MPI_Barrier(MPI_COMM_WORLD);\
-  DEBUG_VAR_X(,##__VA_ARGS__,\
-     DEBUG_VAR_2(__VA_ARGS__),\
-     DEBUG_VAR_1(__VA_ARGS__))\
-  MPI_Barrier(MPI_COMM_WORLD); usleep(1000); /*microseconds*/
 
 namespace atlas {
 
@@ -195,3 +158,5 @@ void accumulate_faces(
     int& nb_inner_faces );
 
 } // namespace atlas
+
+#endif

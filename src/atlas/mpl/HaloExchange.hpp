@@ -17,7 +17,9 @@
 #include <stdexcept>
 
 #include "eckit/exception/Exceptions.h"
+#include "atlas/util/ArrayView.hpp"
 #include "atlas/mpl/MPL.hpp"
+#include "atlas/util/Debug.hpp"
 
 namespace atlas {
 
@@ -29,14 +31,18 @@ public:
 
 public: // methods
 
-  void setup( const int proc[], 
-              const int glb_idx[], 
-              const int periodicicity[],
-              const std::vector<int>& bounds, 
-              int par_bound );
+  void setup( const int part[],
+              const int remote_idx[],
+              int size );
+
+  template <typename DATA_TYPE>
+  void execute( DATA_TYPE field[], const int var_strides[], const int var_extents[], int var_rank ) const;
 
   template <typename DATA_TYPE>
   void execute( DATA_TYPE field[], int nb_vars ) const;
+
+  template <typename DATA_TYPE, int RANK>
+  void execute( ArrayView<DATA_TYPE,RANK>& field ) const;
 
 private: // methods
 
@@ -50,8 +56,22 @@ private: // methods
   int index(int i, int j, int ni, int nj) const { return( i + ni*j ); }
 
 
+  template< typename DATA_TYPE>
+  void pack_send_buffer( const DATA_TYPE field[],
+                         const int var_strides[],
+                         const int var_extents[],
+                         int var_rank,
+                         DATA_TYPE send_buffer[] ) const;
+
+  template< typename DATA_TYPE>
+  void unpack_recv_buffer(const DATA_TYPE recv_buffer[],
+                          DATA_TYPE field[],
+                          const int var_strides[],
+                          const int var_extents[],
+                          int var_rank ) const;
+
+
 private: // data
-  int               packet_size_;
   int               sendcnt_;
   int               recvcnt_;
   std::vector<int>  sendcounts_;
@@ -60,6 +80,7 @@ private: // data
   std::vector<int>  recvdispls_;
   std::vector<int>  sendmap_;
   std::vector<int>  recvmap_;
+  int parsize_;
 
   int nproc;
   int myproc;
@@ -69,73 +90,38 @@ private: // data
   bool is_setup_;
 };
 
+
 template<typename DATA_TYPE>
-void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
+void HaloExchange::execute(DATA_TYPE field[], const int var_strides[], const int var_extents[], int var_rank ) const
 {
   if( ! is_setup_ )
   {
     throw eckit::SeriousBug("HaloExchange was not setup",Here());
   }
-#define FIELD_CONTIGUOUS true
 
   int tag=1;
   int ibuf;
-  int point_size = packet_size_ * nb_vars;
-  int send_size = sendcnt_ * point_size;
-  int recv_size = recvcnt_ * point_size;
+  int var_size = std::accumulate(var_extents,var_extents+var_rank,1,std::multiplies<int>());
+  int send_size  = sendcnt_ * var_size;
+  int recv_size  = recvcnt_ * var_size;
 
-#ifndef STACK_ARRAYS
-  std::vector<DATA_TYPE> send_buffer(send_size);
-  std::vector<DATA_TYPE> recv_buffer(recv_size);
-  std::vector<MPI_Request> send_req(nproc);
-  std::vector<MPI_Request> recv_req(nproc);
-  std::vector<int> send_displs(nproc);
-  std::vector<int> recv_displs(nproc);
-  std::vector<int> send_counts(nproc);
-  std::vector<int> recv_counts(nproc);
-#else // This seems to be slower on Intel ICC 13.0.1
-  DATA_TYPE send_buffer[send_size];
-  DATA_TYPE recv_buffer[recv_size];
-  MPI_Request send_req[nproc];
-  MPI_Request recv_req[nproc];
-  int send_displs[nproc];
-  int recv_displs[nproc];
-  int send_counts[nproc];
-  int recv_counts[nproc];
-#endif
-
-
-  // std::cout << myproc << "  :  field before = ";
-  // for( int i=0; i< nb_vars*bounds_[par_bound_]; ++i)
-  //   std::cout << field[i] << " ";
-  // std::cout << std::endl;
+  std::vector<DATA_TYPE  > send_buffer(send_size);
+  std::vector<DATA_TYPE  > recv_buffer(recv_size);
+  std::vector<int        > send_displs(nproc    );
+  std::vector<int        > recv_displs(nproc    );
+  std::vector<int        > send_counts(nproc    );
+  std::vector<int        > recv_counts(nproc    );
+  std::vector<MPI_Request> send_req   (nproc    );
+  std::vector<MPI_Request> recv_req   (nproc    );
 
   for (int jproc=0; jproc<nproc; ++jproc)
   {
-    send_counts[jproc] = sendcounts_[jproc]*point_size;
-    recv_counts[jproc] = recvcounts_[jproc]*point_size;
-    send_displs[jproc] = senddispls_[jproc]*point_size;
-    recv_displs[jproc] = recvdispls_[jproc]*point_size;
+    send_counts[jproc] = sendcounts_[jproc]*var_size;
+    recv_counts[jproc] = recvcounts_[jproc]*var_size;
+    send_displs[jproc] = senddispls_[jproc]*var_size;
+    recv_displs[jproc] = recvdispls_[jproc]*var_size;
   }
 
-#ifndef FIELD_CONTIGUOUS
-  // Create additional mapping
-  std::vector<int> send_map(send_size);
-  std::vector<int> recv_map(recv_size);
-  create_mappings(send_map,recv_map,nb_vars);
-#endif
-  // std::cout << myproc << "  :  send_map  = ";
-  // for( int i=0; i< send_map.size(); ++i)
-  //   std::cout << send_map[i] << " ";
-  // std::cout << std::endl;
-
-  // std::cout << myproc << "  :  recv_map  = ";
-  // for( int i=0; i< recv_map.size(); ++i)
-  //   std::cout << recv_map[i] << " ";
-  // std::cout << std::endl;
-
-  /// -----------------------------------------------------------
-  /// With mappings and everything in place, we can now call MPI
 
   /// Let MPI know what we like to receive
   for( int jproc=0; jproc<nproc; ++jproc )
@@ -148,20 +134,7 @@ void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
   }
 
   /// Pack
-#ifndef FIELD_CONTIGUOUS
-  // Use additional mapping
-  for( int jj=0; jj<send_size; ++jj)
-    send_buffer[jj] = field[ send_map[jj] ];
-#else
-  // Use original mapping + contiguous bits
-  ibuf = 0;
-  for( int jj=0; jj<sendcnt_; ++jj)
-  {
-    const int ii = point_size*sendmap_[jj];
-    for( int ip=0; ip<point_size; ++ip )
-      send_buffer[ibuf++] = field[ ii + ip ];
-  }
-#endif
+  pack_send_buffer(field,var_strides,var_extents,var_rank,send_buffer.data());
 
   /// Send
   for( int jproc=0; jproc<nproc; ++jproc )
@@ -183,22 +156,7 @@ void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
   }
 
   /// Unpack
-#ifndef FIELD_CONTIGUOUS
-  // Use additional mapping
-  for( int jj=0; jj<recv_size; ++jj)
-  {
-    field[ recv_map[jj] ] = recv_buffer[jj];
-  }
-#else
-  // Use original mapping + contiguous bits
-  ibuf = 0;
-  for( int jj=0; jj<recvcnt_; ++jj)
-  {
-    const int ii = point_size*recvmap_[jj];
-    for( int ip=0; ip<point_size; ++ip)
-      field[ ii + ip ] = recv_buffer[ibuf++];
-  }
-#endif
+  unpack_recv_buffer(recv_buffer.data(),field,var_strides,var_extents,var_rank);
 
   /// Wait for sending to finish
   for (int jproc=0; jproc<nproc; ++jproc)
@@ -209,11 +167,146 @@ void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
     }
   }
 
-  // std::cout << myproc << "  :  field after  = ";
-  // for( int i=0; i< nb_vars*bounds_[par_bound_]; ++i)
-  //   std::cout << field[i] << " ";
-  // std::cout << std::endl;
 }
+
+
+template<typename DATA_TYPE>
+void HaloExchange::unpack_recv_buffer( const DATA_TYPE recv_buffer[],
+                                       DATA_TYPE field[],
+                                       const int var_strides[],
+                                       const int var_extents[],
+                                       int var_rank ) const
+{
+  int ibuf = 0;
+  int recv_stride = var_strides[0]*var_extents[0];
+  switch( var_rank )
+  {
+  case 1:
+    for( int p=0; p<recvcnt_; ++p)
+    {
+      const int pp = recv_stride*recvmap_[p];
+      for( int i=0; i<var_extents[0]; ++i)
+      {
+        field[ pp + i*var_strides[0] ] = recv_buffer[ibuf++];
+      }
+    }
+    break;
+  case 2:
+    for( int p=0; p<recvcnt_; ++p)
+    {
+      const int pp = recv_stride*recvmap_[p];
+      for( int i=0; i<var_extents[0]; ++i )
+      {
+        for( int j=0; j<var_extents[1]; ++j )
+        {
+          field[ pp + i*var_strides[0] + j*var_strides[1] ] = recv_buffer[ibuf++];
+        }
+      }
+    }
+    break;
+  case 3:
+    for( int p=0; p<recvcnt_; ++p)
+    {
+      const int pp = recv_stride*recvmap_[p];
+      for( int i=0; i<var_extents[0]; ++i )
+      {
+        for( int j=0; j<var_extents[1]; ++j )
+        {
+          for( int k=0; k<var_extents[2]; ++k )
+          {
+            field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] ]
+                = recv_buffer[ibuf++];
+          }
+        }
+      }
+    }
+    break;
+  default:
+    NOTIMP;
+  }
+}
+
+template<typename DATA_TYPE>
+void HaloExchange::pack_send_buffer( const DATA_TYPE field[],
+                                     const int var_strides[],
+                                     const int var_extents[],
+                                     int var_rank,
+                                     DATA_TYPE send_buffer[] ) const
+{
+  int ibuf = 0;
+  int send_stride = var_strides[0]*var_extents[0];
+  switch( var_rank )
+  {
+  case 1:
+    for( int p=0; p<sendcnt_; ++p)
+    {
+      const int pp = send_stride*sendmap_[p];
+      for( int i=0; i<var_extents[0]; ++i )
+        send_buffer[ibuf++] = field[pp+i*var_strides[0]];
+    }
+    break;
+  case 2:
+    for( int p=0; p<sendcnt_; ++p)
+    {
+      const int pp = send_stride*sendmap_[p];
+      for( int i=0; i<var_extents[0]; ++i )
+      {
+        for( int j=0; j<var_extents[1]; ++j )
+        {
+          send_buffer[ibuf++] = field[pp+i*var_strides[0]+j*var_strides[1]];
+        }
+      }
+    }
+    break;
+  case 3:
+    for( int p=0; p<sendcnt_; ++p)
+    {
+      const int pp = send_stride*sendmap_[p];
+      for( int i=0; i<var_extents[0]; ++i )
+      {
+        for( int j=0; j<var_extents[1]; ++j )
+        {
+          for( int k=0; k<var_extents[2]; ++k )
+          {
+            send_buffer[ibuf++] =
+              field[ pp+i*var_strides[0]+j*var_strides[1]+k*var_strides[2]];
+          }
+        }
+      }
+    }
+    break;
+  default:
+    NOTIMP;
+  }
+}
+
+template<typename DATA_TYPE>
+void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
+{
+  int one[] = {1};
+  execute( field, one, one, 1);
+}
+
+
+template <typename DATA_TYPE, int RANK>
+void HaloExchange::execute( ArrayView<DATA_TYPE,RANK>& field ) const
+{
+  if( field.size() == parsize_ )
+  {
+    ArrayView<DATA_TYPE,RANK-1> vars(field[0]);
+    execute( field.data(), vars.strides(), vars.extents(), RANK-1 );
+  }
+  else
+  {
+    NOTIMP; // Need to implement with parallel ranks > 1
+  }
+}
+
+template <> void HaloExchange::execute<int,   1>( ArrayView<int,   1>& field ) const;
+template <> void HaloExchange::execute<float, 1>( ArrayView<float, 1>& field ) const;
+template <> void HaloExchange::execute<double,1>( ArrayView<double,1>& field ) const;
+
+
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
@@ -221,10 +314,13 @@ extern "C"
 {
   HaloExchange* atlas__HaloExchange__new ();
   void atlas__HaloExchange__delete (HaloExchange* This);
-  void atlas__HaloExchange__setup (HaloExchange* This, int proc[], int glb_idx[], int master_glb_idx[], int bounds[], int nb_bounds, int par_bound);
-  void atlas__HaloExchange__execute_int (HaloExchange* This, int field[], int nb_vars);
-  void atlas__HaloExchange__execute_float (HaloExchange* This, float field[], int nb_vars);
-  void atlas__HaloExchange__execute_double (HaloExchange* This, double field[], int nb_vars);
+  void atlas__HaloExchange__setup (HaloExchange* This, int part[], int remote_idx[], int size);
+  void atlas__HaloExchange__execute_strided_int (HaloExchange* This, int field[], int var_strides[], int var_extents[], int var_rank);
+  void atlas__HaloExchange__execute_strided_float (HaloExchange* This, float field[], int var_strides[], int var_extents[], int var_rank);
+  void atlas__HaloExchange__execute_strided_double (HaloExchange* This, double field[], int var_strides[], int var_extents[], int var_rank);
+  void atlas__HaloExchange__execute_int (HaloExchange* This, int field[], int var_rank);
+  void atlas__HaloExchange__execute_float (HaloExchange* This, float field[], int var_rank);
+  void atlas__HaloExchange__execute_double (HaloExchange* This, double field[], int var_rank);
 
 }
 // ------------------------------------------------------------------
