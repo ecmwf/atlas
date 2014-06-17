@@ -1,3 +1,4 @@
+
 /*
  * (C) Copyright 1996-2014 ECMWF.
  * 
@@ -24,15 +25,15 @@ PointIndex3* create_cell_centre_index( atlas::Mesh& mesh )
 
     const std::size_t npts = triags.extents()[0];
 
-    std::vector<typename PointIndex3::Value> p;
+    std::vector<PointIndex3::Value> p;
     p.reserve(npts);
 
     for( std::size_t ip = 0; ip < npts; ++ip )
     {
-        p.push_back( typename PointIndex3::Value(
-                         typename PointIndex3::Point( triags_centres(ip,atlas::XX),
-                                                      triags_centres(ip,atlas::YY),
-                                                      triags_centres(ip,atlas::ZZ) ), ip ) );
+        p.push_back( PointIndex3::Value(
+                         PointIndex3::Point(triags_centres(ip,atlas::XX),
+                                            triags_centres(ip,atlas::YY),
+                                            triags_centres(ip,atlas::ZZ) ), ip ) );
     }
 
     PointIndex3* tree = new PointIndex3();
