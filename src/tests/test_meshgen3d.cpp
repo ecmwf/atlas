@@ -16,6 +16,7 @@
 #include "atlas/mpl/MPL.hpp"
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/meshgen/RGG.hpp"
+#include "atlas/meshgen/RGGMeshGenerator.hpp"
 #include "atlas/io/Gmsh.hpp"
 
 using namespace atlas;

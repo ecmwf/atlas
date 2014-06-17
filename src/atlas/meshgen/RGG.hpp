@@ -15,13 +15,9 @@
 
 #include <math.h>
 #include <vector>
-#include "atlas/mesh/Metadata.hpp"
 
 namespace atlas {
-  class Mesh;
 namespace meshgen {
-
-struct Region;
   
 class RGG
 {
@@ -37,21 +33,6 @@ protected:
   std::vector<int>    lon_;
 };
 
-
-class RGGMeshGenerator
-{
-public:
-  RGGMeshGenerator();
-  Mesh* generate(const RGG& rgg);
-  Mesh* operator()(const RGG& rgg){ return generate(rgg); }
-private:
-  void generate_region(const RGG& rgg, const std::vector<int>& parts, int mypart, Region& region);
-  Mesh* generate_mesh(const RGG& rgg,const std::vector<int>& parts, const Region& region);
-  void generate_global_element_numbering( Mesh& mesh );
-  std::vector<int> partition(const RGG& rgg) const;
-public:
-  Metadata options;
-};
 
 class T63:   public RGG { public: T63();   };
 class T95:   public RGG { public: T95();   };

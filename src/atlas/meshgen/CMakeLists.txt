@@ -3,6 +3,8 @@ list( APPEND atlas_meshgen_src
   EqualAreaPartitioner.hpp
   RGG.cpp
   RGG.hpp
+  RGGMeshGenerator.cpp
+  RGGMeshGenerator.hpp
   T63.cpp
   T95.cpp
   T159.cpp

@@ -18,6 +18,7 @@
 #include "atlas/mpl/MPL.hpp"
 #include "atlas/atlas_config.h"
 #include "atlas/meshgen/RGG.hpp"
+#include "atlas/meshgen/RGGMeshGenerator.hpp"
 #include "atlas/meshgen/EqualAreaPartitioner.hpp"
 #include "atlas/io/Gmsh.hpp"
 #include "atlas/mesh/Mesh.hpp"
