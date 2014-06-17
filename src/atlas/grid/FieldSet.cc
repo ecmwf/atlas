@@ -21,7 +21,7 @@
 #include "eckit/utils/Translator.h"
 
 #include "atlas/mesh/Parameters.hpp"
-#include "atlas/mesh/ArrayView.hpp"
+#include "atlas/util/ArrayView.hpp"
 #include "atlas/mesh/FunctionSpace.hpp"
 #include "atlas/grid/FieldSet.h"
 #include "atlas/grid/GribRead.h"
