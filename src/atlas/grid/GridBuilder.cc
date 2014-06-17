@@ -488,7 +488,6 @@ Grid::Ptr GribRegularGaussianGrid::build()
     the_grid_->the_grid_spec_.set_short_name(ss.str());
     the_grid_->the_grid_spec_.add("Nj",eckit::Value(nj_));
     the_grid_->the_grid_spec_.add("editionNumber",eckit::Value(editionNumber_));
-    // In our sample files, only the following 3 are used: [ ml | pl | sfc  ]
     char string_value[64];
     size_t len = sizeof(string_value)/sizeof(char);
     if (grib_get_string(handle_,"typeOfLevel",string_value,&len) == 0) {
@@ -596,12 +595,11 @@ Grid::Ptr GribRegularLatLonGrid::build()
    the_grid_->the_grid_spec_.add("editionNumber",eckit::Value(editionNumber_));
    the_grid_->the_grid_spec_.add("Nj",eckit::Value(the_grid_->nptsNS_));
    the_grid_->the_grid_spec_.add("Ni",eckit::Value(the_grid_->nptsWE_));
-   // In our sample files, only the following 3 are used: [ ml | pl | sfc  ]
    char string_value[64];
    size_t len = sizeof(string_value)/sizeof(char);
    if (grib_get_string(handle_,"typeOfLevel",string_value,&len) == 0) {
       std::string type_of_level = string_value;
-      if (type_of_level == "pl" || type_of_level == "ml"  || type_of_level == "sfc" ||  type_of_level =="surface")
+      if (type_of_level == "pl" || type_of_level == "ml"  || type_of_level == "sfc" ||  type_of_level == "surface")
          the_grid_->the_grid_spec_.add("typeOfLevel",eckit::Value(type_of_level));
    }
 
@@ -782,7 +780,6 @@ Grid::Ptr GribReducedLatLonGrid::build()
    the_grid_->the_grid_spec_.set_short_name(ss.str());
    the_grid_->the_grid_spec_.add("editionNumber",eckit::Value(editionNumber_));
    the_grid_->the_grid_spec_.add("Nj",eckit::Value(the_grid_->nptsNS_));
-   // In our sample files, only the following 3 are used: [ ml | pl | sfc  ]
    char string_value[64];
    size_t len = sizeof(string_value)/sizeof(char);
    if (grib_get_string(handle_,"typeOfLevel",string_value,&len) == 0) {

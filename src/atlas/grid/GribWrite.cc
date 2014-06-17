@@ -48,6 +48,7 @@ GribHandle* GribWrite::create_handle(const Grid& the_grid)
    // From the Grid get the Grid Spec
    const GridSpec& the_grid_spec = the_grid.spec();
 
+   // From the grid spec, determine the closest corresponding grib samples file
    std::string grib_sample_file = GribWrite::grib_sample_file(the_grid_spec);
    if (!grib_sample_file.empty()) {
       return new GribHandle(grib_handle_new_from_samples(0,grib_sample_file.c_str()));
@@ -58,6 +59,7 @@ GribHandle* GribWrite::create_handle(const Grid& the_grid)
 
 static std::string map_short_name_to_grib_sample_file(const std::string& short_name)
 {
+   // Short cut, for mapping short name  to grib samples file.
    std::map<std::string,std::string> short_name_to_samples_map;
    short_name_to_samples_map.insert( std::make_pair(std::string("QG32_1"),std::string("reduced_gg_pl_32_grib1")) );
    short_name_to_samples_map.insert( std::make_pair(std::string("QG32_2"),std::string("reduced_gg_pl_32_grib2")) );
@@ -87,7 +89,6 @@ static std::string map_short_name_to_grib_sample_file(const std::string& short_n
    short_name_to_samples_map.insert( std::make_pair(std::string("QG1280_2"),std::string("reduced_gg_pl_1280_grib2")) );
    short_name_to_samples_map.insert( std::make_pair(std::string("QG2000_1"),std::string("reduced_gg_pl_2000_grib1")) );
    short_name_to_samples_map.insert( std::make_pair(std::string("QG2000_2"),std::string("reduced_gg_pl_2000_grib2")) );
-
 
    std::map<std::string,std::string>::const_iterator i = short_name_to_samples_map.find(short_name);
    if (i != short_name_to_samples_map.end()) {
@@ -141,7 +142,7 @@ static std::string determine_grib_samples_dir()
    return grib_samples_dir;
 }
 
-bool found_match( const GridSpec& the_grid_spec, grib_handle* handle, const std::string& file_path)
+bool match_grid_spec_with_sample_file( const GridSpec& the_grid_spec, grib_handle* handle, const std::string& file_path)
 {
    char string_value[64];
    size_t len = sizeof(string_value)/sizeof(char);
@@ -191,11 +192,10 @@ bool found_match( const GridSpec& the_grid_spec, grib_handle* handle, const std:
       }
    }
 
+   // ??
    eckit::Value spec_level = the_grid_spec.find("typeOfLevel");
    if (!spec_level.isNil()) {
-
       std::string the_spec_level = spec_level;
-
       char string_value[64];
       size_t len = sizeof(string_value)/sizeof(char);
       if (grib_get_string(handle,"typeOfLevel",string_value,&len) == 0) {
@@ -239,7 +239,7 @@ std::string GribWrite::grib_sample_file( const grid::GridSpec& the_grid_spec )
    // From the grid spec, we will look at the grid samples, and find the closest match
    std::string grib_samples_dir = determine_grib_samples_dir();
    if (grib_samples_dir.empty()) {
-      throw SeriousBug(string("Error reading grib sample dir. Could not create handle form grid"),Here()) ;
+      throw SeriousBug(string("Error reading grib sample dir. Could not create handle from grid"),Here()) ;
    }
    PathName dir_path(grib_samples_dir);
    if (!dir_path.exists()) {
@@ -247,7 +247,7 @@ std::string GribWrite::grib_sample_file( const grid::GridSpec& the_grid_spec )
       throw SeriousBug(ss.str(),Here()) ;
    }
    if (!dir_path.isDir()) {
-      std::stringstream ss; ss << "GRid sample directory " << grib_samples_dir << " is not a directory";
+      std::stringstream ss; ss << "GRid samples directory " << grib_samples_dir << " is not a directory";
       throw SeriousBug(ss.str(),Here()) ;
    }
 
@@ -259,7 +259,7 @@ std::string GribWrite::grib_sample_file( const grid::GridSpec& the_grid_spec )
          StackGribFile the_grib_file(std::string(files[i].localPath()));
 
          std::string grib_sample_file_tmpl = files[i].localPath();
-         if (found_match(the_grid_spec,the_grib_file.handle(),grib_sample_file_tmpl)) {
+         if (match_grid_spec_with_sample_file(the_grid_spec,the_grib_file.handle(),grib_sample_file_tmpl)) {
             // remove .tmpl extension
             eckit::LocalPathName path(grib_sample_file_tmpl);
             LocalPathName the_base_name = path.baseName(false);
@@ -267,9 +267,8 @@ std::string GribWrite::grib_sample_file( const grid::GridSpec& the_grid_spec )
             return grib_sample_file;
          }
       }
-      catch ( const std::exception & ex )
-      {
-         std::cout << files[i].localPath() << " " << ex.what() << std::endl;
+      catch ( const std::exception & ex ) {
+         Log::info() << files[i].localPath() << " " << ex.what() << std::endl;
       }
    }
 

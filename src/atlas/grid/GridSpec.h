@@ -27,6 +27,7 @@ namespace grid {
 /// The description of the grid is added as name value pairs
 /// This class will provides a short name for a GRID (i.e QG48_1)
 /// This allows for easier matching with samples files.
+/// However this interface is independent of GRIB/NETCDF
 ///
 /// Uses default copy constructor, assignment and equality operators
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8
@@ -50,11 +51,10 @@ public:
    // 'QG'  -  quasi regular gaussian grid
    // 'RL'  -  rotated lat long
    // 'RedLL' = reduced lat long
-   // Additionally we use _1/_2 to specify grib1/grib2 ??
    void set_short_name(const std::string& the_short_name) { the_short_name_ = the_short_name; }
    std::string short_name() const { return the_short_name_; }
 
-   /// Used to build up description of a grid
+   /// Used to build up description of a grid as name/value pairs
    void add(const std::string&, const eckit::Value& );
 
    /// Find the key and return the value, if key NOT found returns a Nil value
