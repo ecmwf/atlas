@@ -1,6 +1,6 @@
-ecbuild_add_test( TARGET      test_RegularLatLonGrid
+ecbuild_add_test( TARGET      test_Grid
 			   BOOST
-               SOURCES     test_RegularLatLonGrid.cc
+               SOURCES     test_Grid.cc
                CONDITION   HAVE_GRID AND HAVE_GRIB
                LIBS        atlas_grid  
                 )
