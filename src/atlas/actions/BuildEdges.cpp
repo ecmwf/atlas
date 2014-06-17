@@ -338,7 +338,9 @@ void build_pole_edges( Mesh& mesh )
 void atlas__build_edges ( Mesh* mesh) {
   build_edges(*mesh);
 }
-
+void atlas__build_pole_edges ( Mesh* mesh) {
+  build_pole_edges(*mesh);
+}
 // ------------------------------------------------------------------
 
 } // namespace actions

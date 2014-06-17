@@ -34,17 +34,16 @@ void build_parallel_fields( Mesh& mesh );
 void build_nodes_parallel_fields( FunctionSpace& nodes );
 
 
-/*
- * Make the mesh periodic
- * - Find out which nodes at the WEST-BC are master nodes
- *   of nodes at the EAST-BC
- * - The remote_idx and partition of the EAST-BC nodes
- *   are set to the master nodes at WEST-BC, whereas the
- *   global index remains unchanged
- */
-void make_periodic( Mesh& mesh );
+// ------------------------------------------------------------------
+// C wrapper interfaces to C++ routines
+extern "C"
+{
+  void atlas__build_parallel_fields (Mesh* mesh);
+}
+// ------------------------------------------------------------------
 
 } // namespace actions
 } // namespace atlas
+
 
 #endif // BuildParallelFields_hpp

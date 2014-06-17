@@ -43,6 +43,8 @@ use atlas_gmsh_c_binding
 use atlas_BuildPeriodicBoundaries_c_binding
 use atlas_BuildEdges_c_binding
 use atlas_BuildDualMesh_c_binding
+use atlas_BuildParallelFields_c_binding
+use atlas_BuildHalo_c_binding
 implicit none
 
 integer, private, parameter :: MAX_STR_LEN = 255
@@ -1414,15 +1416,31 @@ subroutine atlas_write_gmsh(mesh,filename)
   call atlas__write_gmsh(mesh%object,c_str(filename))
 end subroutine atlas_write_gmsh
 
+subroutine atlas_build_parallel_fields(mesh)
+  type(Mesh_type), intent(inout) :: mesh
+  call atlas__build_parallel_fields(mesh%object)
+end subroutine atlas_build_parallel_fields
+
 subroutine atlas_build_periodic_boundaries(mesh)
   type(Mesh_type), intent(inout) :: mesh
   call atlas__build_periodic_boundaries(mesh%object)
 end subroutine atlas_build_periodic_boundaries
 
+subroutine atlas_build_halo(mesh,nelems)
+  type(Mesh_type), intent(inout) :: mesh
+  integer, intent(in) :: nelems
+  call atlas__build_halo(mesh%object,nelems)
+end subroutine atlas_build_halo
+
 subroutine atlas_build_edges(mesh)
   type(Mesh_type), intent(inout) :: mesh
   call atlas__build_edges(mesh%object)
 end subroutine atlas_build_edges
+
+subroutine atlas_build_pole_edges(mesh)
+  type(Mesh_type), intent(inout) :: mesh
+  call atlas__build_pole_edges(mesh%object)
+end subroutine atlas_build_pole_edges
 
 subroutine atlas_build_dual_mesh(mesh)
   type(Mesh_type), intent(inout) :: mesh

@@ -25,6 +25,7 @@
 #include "atlas/util/ArrayView.hpp"
 #include "atlas/actions/BuildHalo.hpp"
 #include "atlas/actions/BuildParallelFields.hpp"
+#include "atlas/actions/BuildPeriodicBoundaries.hpp"
 #include "atlas/actions/BuildEdges.hpp"
 #include "atlas/actions/BuildDualMesh.hpp"
 #include "atlas/mesh/Parameters.hpp"
@@ -74,7 +75,7 @@ BOOST_AUTO_TEST_CASE( test_small )
   Mesh::Ptr m = test::generate_mesh(nlat, lon);
 
   actions::build_parallel_fields(*m);
-  actions::make_periodic(*m);
+  actions::build_periodic_boundaries(*m);
   actions::build_halo(*m,2);
 
 
@@ -115,7 +116,7 @@ BOOST_AUTO_TEST_CASE( test_t63 )
   Mesh::Ptr m = test::generate_mesh( T63() );
 
   actions::build_parallel_fields(*m);
-  actions::make_periodic(*m);
+  actions::build_periodic_boundaries(*m);
   actions::build_halo(*m,3);
   actions::build_edges(*m);
   actions::build_pole_edges(*m);

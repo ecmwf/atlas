@@ -16,6 +16,7 @@
 #include "atlas/io/Gmsh.hpp"
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/actions/BuildParallelFields.hpp"
+#include "atlas/actions/BuildPeriodicBoundaries.hpp"
 #include "atlas/actions/BuildHalo.hpp"
 #include "atlas/actions/BuildEdges.hpp"
 #include "atlas/actions/BuildDualMesh.hpp"
@@ -29,7 +30,7 @@ BOOST_AUTO_TEST_CASE( test_read_write )
   BOOST_REQUIRE_NO_THROW( mesh = Gmsh::read( "T47.msh" ) );
 
   actions::build_parallel_fields(*mesh);
-  actions::make_periodic(*mesh);
+  actions::build_periodic_boundaries(*mesh);
   actions::build_halo(*mesh,3);
   actions::build_edges(*mesh);
   actions::build_dual_mesh(*mesh);
