@@ -61,7 +61,9 @@ BOOST_AUTO_TEST_SUITE_END()
 
 static std::string determine_grib_samples_dir()
 {
-   // Ideally we should use: 'grib_info -t'
+   // TODO: This function will be replaced with GRIP API function.
+   //        See: GRIB-API GRIB-550 Need access to grib samples path (via API)
+
    // Try looking for environment variable GRIB_API_INCLUDE
    // GRIB_API_INCLUDE=-I/usr/local/lib/metaps/lib/grib_api/1.10.0/include
    //                  =/usr/local/lib/metaps/lib/grib_api/1.10.0/include /usr/local/apps/jasper/1.900.1/LP64/include /usr/local/apps/jasper/1.900.1/LP64/include

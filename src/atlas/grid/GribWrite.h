@@ -31,8 +31,8 @@ public: // methods
    /// If no match found a NULL handle is returned.
    static eckit::GribHandle* create_handle( const grid::Grid& );
 
-   // Given a GridSpec return closest grib samples file.
-   // If no match found returns an empty string
+   /// Given a GridSpec return closest grib samples file.
+   /// If no match found returns an empty string
    static std::string grib_sample_file( const grid::GridSpec& );
 
    static void write( const atlas::grid::FieldSet& field, const eckit::PathName& opath  );

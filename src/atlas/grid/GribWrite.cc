@@ -59,7 +59,7 @@ GribHandle* GribWrite::create_handle(const Grid& the_grid)
 
 static std::string map_short_name_to_grib_sample_file(const std::string& short_name)
 {
-   // Short cut, for mapping short name  to grib samples file.
+   // Short cut, for mapping short name to grib samples file.
    std::map<std::string,std::string> short_name_to_samples_map;
    short_name_to_samples_map.insert( std::make_pair(std::string("QG32_1"),std::string("reduced_gg_pl_32_grib1")) );
    short_name_to_samples_map.insert( std::make_pair(std::string("QG32_2"),std::string("reduced_gg_pl_32_grib2")) );
@@ -99,9 +99,9 @@ static std::string map_short_name_to_grib_sample_file(const std::string& short_n
 
 static std::string determine_grib_samples_dir()
 {
-   // This function will be replaced with GRIP API function.
+   // TODO: This function will be replaced with GRIP API function.
+   //        See: GRIB-API GRIB-550 Need access to grib samples path (via API)
 
-   // Ideally we should use: 'grib_info -t'
    // Try looking for environment variable GRIB_API_INCLUDE
    // GRIB_API_INCLUDE=-I/usr/local/lib/metaps/lib/grib_api/1.10.0/include
    //                  =/usr/local/lib/metaps/lib/grib_api/1.10.0/include /usr/local/apps/jasper/1.900.1/LP64/include /usr/local/apps/jasper/1.900.1/LP64/include
