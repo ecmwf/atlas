@@ -20,6 +20,7 @@
 
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/GridBuilder.h"
+#include "atlas/grid/StackGribFile.h"
 
 
 using namespace std;
@@ -127,7 +128,7 @@ static void test_grib_file(const std::string& the_file_path)
 {
    std::cout << "\n===================================================================================================" << std::endl;
    std::cout << "Opening GRIB file " << the_file_path << std::endl;
-   GribFile the_grib_file(the_file_path);
+   StackGribFile the_grib_file(the_file_path);
 
    std::cout << " Get the grid type" << std::endl;
    char string_value[64];
