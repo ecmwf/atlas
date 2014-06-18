@@ -32,9 +32,6 @@ using namespace eckit;
 using namespace atlas;
 using namespace atlas::grid;
 
-#define DBG     std::cout << Here() << std::endl;
-#define DBGX(x) std::cout << #x << " -> " << x << std::endl;
-
 namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
