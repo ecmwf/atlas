@@ -35,7 +35,7 @@ BOOST_AUTO_TEST_CASE( test_create_mesh )
     generate.options.set("three_dimensional", true); ///< creates links along date-line
     generate.options.set("include_pole", true);      ///< triangulate the pole point
 
-    m = generate( T159() );
+    m = generate( T159() ); //< 2*N - 1 => N80 grid
 
     Gmsh::write(*m,"out.msh");
 
