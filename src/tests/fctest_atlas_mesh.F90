@@ -201,8 +201,6 @@ TEST( test_meshgen )
   integer(c_int), pointer :: ridx(:)
   real(c_double), pointer :: arr(:,:)
   integer :: i, nnodes, nghost
-  integer, parameter :: C_ADDRESS = KIND(0)
-  integer(kind=C_ADDRESS) :: base_address
   call atlas_generate_latlon_grid(rgg,60,30)
 
 !  call atlas_generate_reduced_gaussian_grid(rgg,"T63")
@@ -239,8 +237,6 @@ TEST( test_meshgen )
   write(0,*) stride(ridx,1)
 
   write(0,*) stride(arr,1), stride(arr,2), stride(arr,3)
-
-  base_address = c_loc(ridx(1))
 
   call atlas_write_gmsh(rgg,"testf2.msh")
 END_TEST
