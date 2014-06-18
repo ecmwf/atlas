@@ -3,7 +3,14 @@ use, intrinsic :: iso_c_binding
 implicit none
 
 integer, private, parameter :: MAX_STR_LEN = 255
-integer, private, parameter :: FIELD_NB_VARS = -1
+
+type, private :: private_type
+  type(C_PTR), public :: object = C_NULL_PTR
+end type
+
+type, public :: object_type
+  type(private_type),public :: private
+end type
 
 INTERFACE view1d
   module procedure view1d_int32_rank2

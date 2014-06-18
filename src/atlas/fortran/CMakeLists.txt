@@ -3,7 +3,7 @@
 function(generate_fortran_bindings output filename)
 	get_filename_component(base ${filename} NAME_WE)
 	set(base_abs ${CMAKE_CURRENT_SOURCE_DIR}/${base})
-	set(outfile ${CMAKE_CURRENT_BINARY_DIR}/${base}.f90)
+  set(outfile ${CMAKE_CURRENT_BINARY_DIR}/${base}_c_binding.f90)
 	set(${output} ${${output}} ${outfile} PARENT_SCOPE)
 	add_custom_command(
 		OUTPUT ${outfile}
@@ -39,6 +39,22 @@ ecbuild_add_library( TARGET atlas_fortran
     atlas_C_interop.F90
   LIBS atlas
 )
+
+add_custom_target( atlas_fortran_inc SOURCES
+   atlas_module_Mesh_i.f
+   atlas_module_Mesh_c.f
+   atlas_module_FunctionSpace_i.f
+   atlas_module_FunctionSpace_c.f
+   atlas_module_Field_i.f
+   atlas_module_Field_c.f
+   atlas_module_FieldSet_i.f
+   atlas_module_FieldSet_c.f
+   atlas_module_Metadata_i.f
+   atlas_module_Metadata_c.f
+   atlas_module_HaloExchange_i.f
+   atlas_module_HaloExchange_c.f
+)
+
 
 ecbuild_add_library( TARGET atlas_mpl_fortran
 	AUTO_VERSION
