@@ -147,7 +147,7 @@ void build_periodic_boundaries( Mesh& mesh )
           int slave_idx  = recv_slave(jnode,2);
           found_master[jproc].push_back( master_idx );
           send_slave_idx[jproc].push_back( slave_idx );
-          //std::cout << master_idx << " master of " << slave_idx << std::endl;
+         // std::cout << master_idx << " master of " << slave_idx << std::endl;
         }
       }
     }
@@ -195,7 +195,7 @@ void build_periodic_boundaries( Mesh& mesh )
   // Communicate
   MPL::Alltoall( send_slave_idx,      recv_slave_idx      );
   MPL::Alltoall( send_master_part,    recv_master_part    );
-  MPL::Alltoall( send_master_ridx,     recv_master_ridx     );
+  MPL::Alltoall( send_master_ridx,    recv_master_ridx     );
                     //  MPL::Alltoall( send_slave_part,     recv_slave_part    );
                     //  MPL::Alltoall( send_slave_loc,      recv_slave_ridx    );
 
@@ -210,7 +210,7 @@ void build_periodic_boundaries( Mesh& mesh )
       part( slave_idx ) = recv_master_part[jproc][jnode];
       ridx( slave_idx ) = recv_master_ridx[jproc][jnode];
 
-      //std::cout << part( slave_idx ) <<"["<<loc_idx( slave_idx ) << "] master of " << mypart << "["<<slave_idx<<"]" << std::endl;
+      //std::cout << part( slave_idx ) <<"["<<ridx( slave_idx ) << "] master of " << mypart << "["<<slave_idx<<"]" << std::endl;
 
     }
   }

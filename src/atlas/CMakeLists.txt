@@ -76,6 +76,24 @@ list( APPEND atlas_util_srcs
   util/IndexView.cpp
 )
 
+list( APPEND atlas_meshgen_srcs
+  meshgen/EqualAreaPartitioner.cpp
+  meshgen/EqualAreaPartitioner.hpp
+  meshgen/RGG.cpp
+  meshgen/RGG.hpp
+  meshgen/RGGMeshGenerator.cpp
+  meshgen/RGGMeshGenerator.hpp
+  meshgen/T63.cpp
+  meshgen/T95.cpp
+  meshgen/T159.cpp
+  meshgen/T255.cpp
+  meshgen/T511.cpp
+  meshgen/T1279.cpp
+  meshgen/T2047.cpp
+  meshgen/T3999.cpp
+  meshgen/T7999.cpp
+)
+
 list( APPEND atlas_mesh_srcs
   mesh/Field.hpp
   mesh/Field.cpp
@@ -103,6 +121,8 @@ list( APPEND atlas_actions_srcs
   actions/BuildParallelFields.cpp
   actions/BuildPeriodicBoundaries.hpp
   actions/BuildPeriodicBoundaries.cpp
+  actions/GenerateMesh.hpp
+  actions/GenerateMesh.cpp
 )
 
 ### atlas c++ library
@@ -115,6 +135,7 @@ ecbuild_add_library( TARGET atlas
                        ${atlas_io_srcs}
                        ${atlas_mesh_srcs}
                        ${atlas_mpl_srcs}
+                       ${atlas_meshgen_srcs}
                        ${atlas_actions_srcs}
                        atlas_mpi.h
                      LIBS eckit ${MPI_CXX_LIBRARIES} )

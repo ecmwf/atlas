@@ -170,61 +170,7 @@ void HaloExchange::execute(DATA_TYPE field[], const int var_strides[], const int
 }
 
 
-template<typename DATA_TYPE>
-void HaloExchange::unpack_recv_buffer( const DATA_TYPE recv_buffer[],
-                                       DATA_TYPE field[],
-                                       const int var_strides[],
-                                       const int var_extents[],
-                                       int var_rank ) const
-{
-  int ibuf = 0;
-  int recv_stride = var_strides[0]*var_extents[0];
-  switch( var_rank )
-  {
-  case 1:
-    for( int p=0; p<recvcnt_; ++p)
-    {
-      const int pp = recv_stride*recvmap_[p];
-      for( int i=0; i<var_extents[0]; ++i)
-      {
-        field[ pp + i*var_strides[0] ] = recv_buffer[ibuf++];
-      }
-    }
-    break;
-  case 2:
-    for( int p=0; p<recvcnt_; ++p)
-    {
-      const int pp = recv_stride*recvmap_[p];
-      for( int i=0; i<var_extents[0]; ++i )
-      {
-        for( int j=0; j<var_extents[1]; ++j )
-        {
-          field[ pp + i*var_strides[0] + j*var_strides[1] ] = recv_buffer[ibuf++];
-        }
-      }
-    }
-    break;
-  case 3:
-    for( int p=0; p<recvcnt_; ++p)
-    {
-      const int pp = recv_stride*recvmap_[p];
-      for( int i=0; i<var_extents[0]; ++i )
-      {
-        for( int j=0; j<var_extents[1]; ++j )
-        {
-          for( int k=0; k<var_extents[2]; ++k )
-          {
-            field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] ]
-                = recv_buffer[ibuf++];
-          }
-        }
-      }
-    }
-    break;
-  default:
-    NOTIMP;
-  }
-}
+
 
 template<typename DATA_TYPE>
 void HaloExchange::pack_send_buffer( const DATA_TYPE field[],
@@ -235,6 +181,7 @@ void HaloExchange::pack_send_buffer( const DATA_TYPE field[],
 {
   int ibuf = 0;
   int send_stride = var_strides[0]*var_extents[0];
+
   switch( var_rank )
   {
   case 1:
@@ -278,6 +225,76 @@ void HaloExchange::pack_send_buffer( const DATA_TYPE field[],
   default:
     NOTIMP;
   }
+}
+
+template<typename DATA_TYPE>
+void HaloExchange::unpack_recv_buffer( const DATA_TYPE recv_buffer[],
+                                       DATA_TYPE field[],
+                                       const int var_strides[],
+                                       const int var_extents[],
+                                       int var_rank ) const
+{
+  bool field_changed = false;
+  DATA_TYPE tmp;
+  int ibuf = 0;
+  int recv_stride = var_strides[0]*var_extents[0];
+
+  switch( var_rank )
+  {
+  case 1:
+    for( int p=0; p<recvcnt_; ++p)
+    {
+      const int pp = recv_stride*recvmap_[p];
+      for( int i=0; i<var_extents[0]; ++i)
+      {
+        tmp = field[ pp + i*var_strides[0] ];
+        field[ pp + i*var_strides[0] ] = recv_buffer[ibuf++];
+        if( tmp != field[ pp + i*var_strides[0] ] ) field_changed = true;
+      }
+    }
+    break;
+  case 2:
+    for( int p=0; p<recvcnt_; ++p)
+    {
+      const int pp = recv_stride*recvmap_[p];
+      for( int i=0; i<var_extents[0]; ++i )
+      {
+        for( int j=0; j<var_extents[1]; ++j )
+        {
+          tmp = field[ pp + i*var_strides[0] + j*var_strides[1] ];
+          field[ pp + i*var_strides[0] + j*var_strides[1] ]
+              = recv_buffer[ibuf++];
+          if( field[ pp + i*var_strides[0] + j*var_strides[1] ] != tmp )
+            field_changed = true;
+        }
+      }
+    }
+    break;
+  case 3:
+    for( int p=0; p<recvcnt_; ++p)
+    {
+      const int pp = recv_stride*recvmap_[p];
+      for( int i=0; i<var_extents[0]; ++i )
+      {
+        for( int j=0; j<var_extents[1]; ++j )
+        {
+          for( int k=0; k<var_extents[2]; ++k )
+          {
+            tmp = field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] ];
+            field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] ]
+                = recv_buffer[ibuf++];
+            if( field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] ] != tmp )
+              field_changed = true;
+          }
+        }
+      }
+    }
+    break;
+  default:
+    NOTIMP;
+  }
+  if( !field_changed )
+    std::cout << "WARNING: halo-exchange did not change field" << std::endl;
 }
 
 template<typename DATA_TYPE>

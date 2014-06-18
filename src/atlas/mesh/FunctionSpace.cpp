@@ -17,6 +17,7 @@
 #include "atlas/mesh/FunctionSpace.hpp"
 #include "atlas/mesh/Field.hpp"
 #include "atlas/actions/BuildParallelFields.hpp"
+#include "atlas/util/Debug.hpp"
 
 namespace atlas {
 
@@ -249,10 +250,8 @@ template<>
   }
 }
 
-void FunctionSpace::parallelise(const int part[], const int remote_idx[], int size)
+void FunctionSpace::parallelise(const int part[], const int remote_idx[], int parsize)
 {
-  int parsize = std::accumulate(extents_.begin(),extents_.end(),1,std::multiplies<int>());
-  ASSERT( std::abs(parsize) == size );
   halo_exchange_.setup(part,remote_idx,parsize);
 //  gather_.setup(proc,glb_idx,master_glb_idx,bounds_,bounds_.size()-1);
   glb_dof_ = gather_.glb_dof();

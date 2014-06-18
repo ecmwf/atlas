@@ -41,27 +41,27 @@ ecbuild_add_test( TARGET test_gmsh
 ecbuild_add_test( TARGET test_rgg
   BOOST
   SOURCES  test_rgg.cpp
-  LIBS     atlas_meshgen
+  LIBS     atlas
 )
 
 ecbuild_add_test( TARGET test_parfields
   BOOST
   MPI 2
   SOURCES  test_parfields.cpp
-  LIBS     atlas_meshgen
+  LIBS     atlas
 )
 
 ecbuild_add_test( TARGET test_halo
   BOOST
   MPI      5
   SOURCES  test_halo.cpp TestMeshes.hpp
-  LIBS     atlas_meshgen
+  LIBS     atlas
 )
 
 ecbuild_add_test( TARGET test_meshgen3d
   BOOST
   SOURCES   test_meshgen3d.cpp
-  LIBS      atlas_meshgen
+  LIBS      atlas
 )
 
 if( HAVE_GRID )

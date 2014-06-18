@@ -33,6 +33,7 @@ module atlas_module
 
 !------------------------------------------------------------------------------
 use, intrinsic :: iso_c_binding
+use atlas_C_interop
 use atlas_field_c_binding
 use atlas_fieldset_c_binding
 use atlas_functionspace_c_binding
@@ -45,13 +46,13 @@ use atlas_BuildEdges_c_binding
 use atlas_BuildDualMesh_c_binding
 use atlas_BuildParallelFields_c_binding
 use atlas_BuildHalo_c_binding
+use atlas_GenerateMesh_c_binding
 implicit none
 
-integer, private, parameter :: MAX_STR_LEN = 255
-integer, private, parameter :: FIELD_NB_VARS = -1
 integer, private, parameter :: KIND_INT32  = -4
 integer, private, parameter :: KIND_REAL32 = 4
 integer, private, parameter :: KIND_REAL64 = 8
+integer, private, parameter :: FIELD_NB_VARS = -1
 integer, private, parameter :: wp = c_double ! working precision
 
 !------------------------------------------------------------------------------
@@ -362,19 +363,12 @@ end interface delete
 
 !------------------------------------------------------------------------------
 
-INTERFACE view1d
-  module procedure view1d_int32_rank2
-  module procedure view1d_int32_rank3
-  module procedure view1d_real32_rank2
-  module procedure view1d_real32_rank3
-  module procedure view1d_real64_rank2
-  module procedure view1d_real64_rank3
-  module procedure view1d_real64_rank4
-end interface view1d
+
 
 ! =============================================================================
 CONTAINS
 ! =============================================================================
+
 
 integer function real_kind(kind)
   integer :: kind
@@ -394,132 +388,13 @@ integer function integer_kind(kind)
   if ( present(kind) ) then
     if (kind == c_int) then
       integer_kind = KIND_INT32
-    else 
+    else
       write(0,*) "Unsupported kind"
       write(0,*) 'call abort()'
     end if
   end if
 end function
 
-
-! -----------------------------------------------------------------------------
-! Helper functions
-
-function c_to_f_string_str(s) result(str)
-  use iso_c_binding
-  character(kind=c_char,len=1), intent(in) :: s(*)
-  character(len=:), allocatable :: str
-  character(len=:), allocatable :: mold
-  integer i, nchars
-  i = 1
-  do
-     if (s(i) == c_null_char) exit
-     i = i + 1
-  end do
-  nchars = i - 1  ! Exclude null character from Fortran string
-  allocate(character(len=nchars) :: str)
-  allocate(character(len=nchars) :: mold)
-  str = transfer(s(1:nchars), mold)
-end function c_to_f_string_str
-
-function c_to_f_string_cptr(cptr) result(str)
-  use iso_c_binding
-  type(c_ptr), intent(in) :: cptr
-  character(len=:), allocatable :: str
-  character, dimension(:), pointer  :: s
-  call C_F_POINTER ( cptr , s, (/MAX_STR_LEN/) )
-  str = c_to_f_string_str(s)
-end function c_to_f_string_cptr
-
-function c_str(f_str)
-  use, intrinsic :: iso_c_binding
-  character(len=*), intent(in) :: f_str
-  character(len=len_trim(f_str)+1) :: c_str
-  c_str = trim(f_str) // c_null_char
-end function c_str
-
-function c_loc_int32(x)
-  use iso_c_binding
-  integer, target :: x
-  type(c_ptr) :: c_loc_int32
-  c_loc_int32 = C_LOC(x)
-end function
-
-function c_loc_real32(x)
-  use iso_c_binding
-  real(c_float), target :: x
-  type(c_ptr) :: c_loc_real32
-  c_loc_real32 = C_LOC(x)
-end function
-
-function c_loc_real64(x)
-  use iso_c_binding
-  real(c_double), target :: x
-  type(c_ptr) :: c_loc_real64
-  c_loc_real64 = C_LOC(x)
-end function
-
-function view1d_int32_rank2(array) result( view )
-  integer, intent(in), target :: array(:,:)
-  type(c_ptr) :: array_c_ptr
-  integer, pointer :: view(:)
-  array_c_ptr = c_loc_int32(array(1,1))
-  call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
-end function view1d_int32_rank2
-
-function view1d_int32_rank3(array) result( view )
-  integer, intent(in), target :: array(:,:,:)
-  type(c_ptr) :: array_c_ptr
-  integer, pointer :: view(:)
-  array_c_ptr = c_loc_int32(array(1,1,1))
-  call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
-end function view1d_int32_rank3
-
-function view1d_real32_rank2(array) result( view )
-  real(c_float), intent(in), target :: array(:,:)
-  type(c_ptr) :: array_c_ptr
-  real(c_float), pointer :: view(:)
-#ifndef  __GFORTRAN__
-  if( .not. is_contiguous(array) ) then
-    write(0,*) "ERROR: array is not contiguous in view1d"
-    write(0,*) 'call abort()'
-  end if
-#endif
-  array_c_ptr = c_loc_real32(array(1,1))
-  call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
-end function view1d_real32_rank2
-
-function view1d_real32_rank3(array) result( view )
-  real(c_float), intent(in), target :: array(:,:,:)
-  type(c_ptr) :: array_c_ptr
-  real(c_float), pointer :: view(:)
-  array_c_ptr = c_loc_real32(array(1,1,1))
-  call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
-end function view1d_real32_rank3
-
-function view1d_real64_rank2(array) result( view )
-  real(c_double), intent(in), target :: array(:,:)
-  type(c_ptr) :: array_c_ptr
-  real(c_double), pointer :: view(:)
-  array_c_ptr = c_loc_real64(array(1,1))
-  call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
-end function view1d_real64_rank2
-
-function view1d_real64_rank3(array) result( view )
-  real(c_double), intent(in), target :: array(:,:,:)
-  type(c_ptr) :: array_c_ptr
-  real(c_double), pointer :: view(:)
-  array_c_ptr = c_loc_real64(array(1,1,1))
-  call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
-end function view1d_real64_rank3
-
-function view1d_real64_rank4(array) result( view )
-  real(c_double), intent(in), target :: array(:,:,:,:)
-  type(c_ptr) :: array_c_ptr
-  real(c_double), pointer :: view(:)
-  array_c_ptr = c_loc_real64(array(1,1,1,1))
-  call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
-end function view1d_real64_rank4
 
 ! -----------------------------------------------------------------------------
 ! Mesh routines
@@ -1446,6 +1321,19 @@ subroutine atlas_build_dual_mesh(mesh)
   type(Mesh_type), intent(inout) :: mesh
   call atlas__build_dual_mesh(mesh%object)
 end subroutine atlas_build_dual_mesh
+
+subroutine atlas_generate_reduced_gaussian_grid(mesh,identifier)
+  type(Mesh_type), intent(inout) :: mesh
+  character(len=*), intent(in) :: identifier
+  mesh%object = atlas__generate_reduced_gaussian_grid(c_str(identifier))
+end subroutine atlas_generate_reduced_gaussian_grid
+
+subroutine atlas_generate_latlon_grid(mesh,nlon,nlat)
+  type(Mesh_type), intent(inout) :: mesh
+  integer, intent(in) :: nlon, nlat
+  mesh%object = atlas__generate_latlon_grid(nlon,nlat)
+end subroutine atlas_generate_latlon_grid
+
 
 ! -----------------------------------------------------------------------------
 

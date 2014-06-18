@@ -57,9 +57,9 @@ HaloExchange::HaloExchange() :
 
 void HaloExchange::setup( const int part[],
                           const int remote_idx[],
-                          const int size )
+                          const int parsize )
 {
-  parsize_ = size;
+  parsize_ = parsize;
   sendcounts_.resize(nproc,0);
   recvcounts_.resize(nproc,0);
   senddispls_.resize(nproc,0);
@@ -69,15 +69,14 @@ void HaloExchange::setup( const int part[],
     Find the amount of nodes this proc has to receive from each other proc
   */
 
-  IsGhostPoint is_ghost(part,remote_idx,size);
+  IsGhostPoint is_ghost(part,remote_idx,parsize_);
 
-  for (int jj=0; jj<size; ++jj)
+  for (int jj=0; jj<parsize_; ++jj)
   {
     if ( is_ghost(jj) )
       ++recvcounts_[part[jj]];
   }
   recvcnt_ = std::accumulate(recvcounts_.begin(),recvcounts_.end(),0);
-//  std::cout << myproc << ":  recvcnt = " << recvcnt_ << std::endl;
 
 
   /*
@@ -104,7 +103,7 @@ void HaloExchange::setup( const int part[],
 
   recvmap_.resize(recvcnt_);
   std::vector<int> cnt(nproc,0);
-  for (int jj=0; jj<size; ++jj)
+  for (int jj=0; jj<parsize_; ++jj)
   {
     if ( is_ghost(jj) )
     {

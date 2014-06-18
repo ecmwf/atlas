@@ -19,6 +19,7 @@
 namespace atlas {
 namespace meshgen {
   
+/// @brief Reduced Gaussian Grid
 class RGG
 {
 public:
@@ -33,6 +34,12 @@ protected:
   std::vector<int>    lon_;
 };
 
+/// @brief Gaussian Grid
+class GG: public RGG
+{
+public:
+  GG(int nlon, int nlat);
+};
 
 class T63:   public RGG { public: T63();   };
 class T95:   public RGG { public: T95();   };

@@ -9,4 +9,3 @@ ecbuild_add_executable(
   SOURCES     gmsh_ls.cc
   LIBS        ${ATLAS_LIBRARIES} ${ECKIT_LIBRARIES}
   CONDITION   HAVE_GRID )
-
