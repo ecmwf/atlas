@@ -26,17 +26,6 @@
 #include "atlas/grid/FieldSet.h"
 #include "atlas/grid/GribRead.h"
 
-
-//------------------------------------------------------------------------------------------------------
-
-#if 1
-#define DBG     std::cout << Here() << std::endl;
-#define DBGX(x) std::cout << #x << " -> " << x << std::endl;
-#else
-#define DBG
-#define DBGX(x)
-#endif
-
 //------------------------------------------------------------------------------------------------------
 
 using namespace eckit;
