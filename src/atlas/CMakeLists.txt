@@ -121,6 +121,8 @@ list( APPEND atlas_actions_srcs
   actions/BuildParallelFields.cpp
   actions/BuildPeriodicBoundaries.hpp
   actions/BuildPeriodicBoundaries.cpp
+  actions/DistributeMesh.hpp
+  actions/DistributeMesh.cpp
   actions/GenerateMesh.hpp
   actions/GenerateMesh.cpp
 )
