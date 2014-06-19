@@ -21,10 +21,11 @@
 #include "atlas/io/Gmsh.hpp"
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/mesh/FunctionSpace.hpp"
-#include "atlas/mesh/IndexView.hpp"
-#include "atlas/mesh/ArrayView.hpp"
+#include "atlas/util/IndexView.hpp"
+#include "atlas/util/ArrayView.hpp"
 #include "atlas/actions/BuildHalo.hpp"
 #include "atlas/actions/BuildParallelFields.hpp"
+#include "atlas/actions/BuildPeriodicBoundaries.hpp"
 #include "atlas/actions/BuildEdges.hpp"
 #include "atlas/actions/BuildDualMesh.hpp"
 #include "atlas/mesh/Parameters.hpp"
@@ -74,7 +75,7 @@ BOOST_AUTO_TEST_CASE( test_small )
   Mesh::Ptr m = test::generate_mesh(nlat, lon);
 
   actions::build_parallel_fields(*m);
-  actions::make_periodic(*m);
+  actions::build_periodic_boundaries(*m);
   actions::build_halo(*m,2);
 
 
@@ -88,8 +89,8 @@ BOOST_AUTO_TEST_CASE( test_small )
     case 0:
       BOOST_CHECK_EQUAL( ridx(9),  9  );
       BOOST_CHECK_EQUAL( gidx(9),  10 );
-      BOOST_CHECK_EQUAL( ridx(29), 9 );
-      BOOST_CHECK_EQUAL( gidx(29), 875430066 ); // hashed unique idx
+      BOOST_CHECK_EQUAL( ridx(30), 9 );
+      BOOST_CHECK_EQUAL( gidx(30), 875430066 ); // hashed unique idx
       break;
     }
   }
@@ -115,7 +116,7 @@ BOOST_AUTO_TEST_CASE( test_t63 )
   Mesh::Ptr m = test::generate_mesh( T63() );
 
   actions::build_parallel_fields(*m);
-  actions::make_periodic(*m);
+  actions::build_periodic_boundaries(*m);
   actions::build_halo(*m,3);
   actions::build_edges(*m);
   actions::build_pole_edges(*m);

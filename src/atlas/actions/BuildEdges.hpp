@@ -26,6 +26,7 @@ void build_pole_edges( Mesh& mesh );
 extern "C" 
 {
   void atlas__build_edges (Mesh* mesh);
+  void atlas__build_pole_edges (Mesh* mesh);
 }
 // ------------------------------------------------------------------
 

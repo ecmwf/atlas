@@ -16,7 +16,7 @@
 #include "eckit/grib/GribHandle.h"
 
 #include "atlas/mesh/Mesh.hpp"
-#include "atlas/mesh/ArrayView.hpp"
+#include "atlas/util/ArrayView.hpp"
 #include "atlas/mesh/FunctionSpace.hpp"
 #include "atlas/mesh/Parameters.hpp"
 #include "atlas/mesh/Field.hpp"

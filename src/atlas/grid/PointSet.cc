@@ -13,7 +13,7 @@
 //------------------------------------------------------------------------------------------------------
 
 #include "atlas/mesh/Field.hpp"
-#include "atlas/mesh/ArrayView.hpp"
+#include "atlas/util/ArrayView.hpp"
 #include "atlas/mesh/FunctionSpace.hpp"
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/mesh/Parameters.hpp"

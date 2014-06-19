@@ -16,6 +16,8 @@
 
 #include "atlas/mesh/FunctionSpace.hpp"
 #include "atlas/mesh/Field.hpp"
+#include "atlas/actions/BuildParallelFields.hpp"
+#include "atlas/util/Debug.hpp"
 
 namespace atlas {
 
@@ -248,10 +250,10 @@ template<>
   }
 }
 
-void FunctionSpace::parallelise(const int proc[], const int glb_idx[], const int master_glb_idx[] )
+void FunctionSpace::parallelise(const int part[], const int remote_idx[], int parsize)
 {
-  halo_exchange_.setup(proc,glb_idx,master_glb_idx,bounds_,bounds_.size()-1);
-  gather_.setup(proc,glb_idx,master_glb_idx,bounds_,bounds_.size()-1);
+  halo_exchange_.setup(part,remote_idx,parsize);
+//  gather_.setup(proc,glb_idx,master_glb_idx,bounds_,bounds_.size()-1);
   glb_dof_ = gather_.glb_dof();
   for( int b=bounds_.size()-2; b>=0; --b)
   {
@@ -262,10 +264,16 @@ void FunctionSpace::parallelise(const int proc[], const int glb_idx[], const int
 
 void FunctionSpace::parallelise()
 {
-  FieldT<int>& proc = field<int>("proc");
-  FieldT<int>& glb_idx = field<int>("glb_idx");
-  FieldT<int>& master_glb_idx = field<int>("master_glb_idx");
-  parallelise(proc.data(),glb_idx.data(),master_glb_idx.data());
+  if( name() == "nodes" )
+  {
+    FieldT<int>& part       = field<int>("partition");
+    FieldT<int>& remote_idx = field<int>("remote_idx");
+    parallelise(part.data(),remote_idx.data(),part.size());
+  }
+  else
+  {
+    NOTIMP;
+  }
 }
 
 // ------------------------------------------------------------------
@@ -317,8 +325,8 @@ Field* atlas__FunctionSpace__field (FunctionSpace* This, char* name) {
   return &This->field( std::string(name) );
 }
 
-void atlas__FunctionSpace__parallelise (FunctionSpace* This, int proc[], int glb_idx[], int master_glb_idx[]) {
-  This->parallelise(proc,glb_idx,master_glb_idx);
+void atlas__FunctionSpace__parallelise (FunctionSpace* This) {
+  This->parallelise();
 }
 
 void atlas__FunctionSpace__halo_exchange_int (FunctionSpace* This, int field_data[], int field_size) {

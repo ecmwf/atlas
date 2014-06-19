@@ -10,6 +10,7 @@
 
 #include "atlas/atlas_config.h"
 #include "atlas/meshgen/RGG.hpp"
+#include "atlas/meshgen/RGGMeshGenerator.hpp"
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/mpl/MPL.hpp"
 

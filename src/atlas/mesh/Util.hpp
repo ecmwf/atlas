@@ -8,36 +8,21 @@
  * does it submit to any jurisdiction.
  */
 
+#ifndef atlas_mesh_Util_hpp
+#define atlas_mesh_Util_hpp
+
 #include <cmath>
+#include <sstream>
+
 #include "atlas/mpl/MPL.hpp"
 #include "atlas/atlas_config.h"
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/mesh/FunctionSpace.hpp"
 #include "atlas/mesh/Field.hpp"
-#include "atlas/mesh/ArrayView.hpp"
-#include "atlas/mesh/IndexView.hpp"
+#include "atlas/util/ArrayView.hpp"
+#include "atlas/util/IndexView.hpp"
+#include "atlas/util/Debug.hpp"
 #include "atlas/mesh/Parameters.hpp"
-
-#include <unistd.h>
-
-#define LOG_DEBUG(WHAT,RANK) \
-  if( RANK == -1 || MPL::rank() == RANK) \
-    std::cout << "["<< MPL::rank() << "] " << WHAT << std::endl;
-
-#define LOG_DEBUG_VAR(VAR,RANK) \
-  if( RANK < 0 || MPL::rank() == RANK) \
-    std::cout << "["<< MPL::rank() << "] " << #VAR << " = " << VAR << std::endl;
-
-#define PLOG_DEBUG(WHAT) \
-  MPI_Barrier(MPI_COMM_WORLD);\
-  LOG_DEBUG(WHAT,-1);\
-  MPI_Barrier(MPI_COMM_WORLD); sleep(1);
-
-#define PLOG_DEBUG_VAR(VAR) \
-  MPI_Barrier(MPI_COMM_WORLD);\
-  LOG_DEBUG_VAR(VAR,-1);\
-  MPI_Barrier(MPI_COMM_WORLD); sleep(1);
-
 
 namespace atlas {
 
@@ -108,19 +93,26 @@ struct IsGhost
 {
   IsGhost( FunctionSpace& nodes )
   {
-    part    = ArrayView<int,1> (nodes.field("partition") );
-    loc_idx = IndexView<int,1> (nodes.field("remote_idx") );
-    mypart  = MPL::rank();
+    part_   = ArrayView<int,1> (nodes.field("partition") );
+    ridx_   = IndexView<int,1> (nodes.field("remote_idx") );
+    mypart_ = MPL::rank();
   }
+  IsGhost( FunctionSpace& nodes, int mypart )
+  {
+    part_   = ArrayView<int,1> (nodes.field("partition") );
+    ridx_   = IndexView<int,1> (nodes.field("remote_idx") );
+    mypart_ = mypart;
+  }
+
   bool operator()(int idx)
   {
-    if( part   [idx] != mypart ) return true;
-    if( loc_idx[idx] != idx    ) return true;
+    if( part_[idx] != mypart_ ) return true;
+    if( ridx_[idx] != idx     ) return true;
     return false;
   }
-  int mypart;
-  ArrayView<int,1> part;
-  IndexView<int,1> loc_idx;
+  int mypart_;
+  ArrayView<int,1> part_;
+  IndexView<int,1> ridx_;
 };
 
 struct ComputeUniqueElementIndex
@@ -166,3 +158,5 @@ void accumulate_faces(
     int& nb_inner_faces );
 
 } // namespace atlas
+
+#endif

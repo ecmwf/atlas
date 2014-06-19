@@ -192,6 +192,56 @@ TEST( test_fieldset )
   call delete(fieldset)
 END_TEST
 
+TEST( test_meshgen )
+
+  type(Mesh_type) :: rgg
+  type(FunctionSpace_type) :: nodes, edges
+  type(Field_type) :: field
+  integer, allocatable :: bounds(:)
+  integer(c_int), pointer :: ridx(:)
+  real(c_double), pointer :: arr(:,:)
+  integer :: i, nnodes, nghost
+  call atlas_generate_latlon_grid(rgg,60,30)
+
+!  call atlas_generate_reduced_gaussian_grid(rgg,"T63")
+  call atlas_build_parallel_fields(rgg)
+  call atlas_build_periodic_boundaries(rgg)
+  call atlas_build_halo(rgg,1)
+  call atlas_build_edges(rgg)
+  call atlas_build_pole_edges(rgg)
+  call atlas_build_dual_mesh(rgg)
+
+  nodes = rgg%function_space("nodes")
+  call nodes%parallelise()
+  bounds = nodes%bounds()
+  nnodes = bounds(2)
+
+  field = nodes%field("remote_idx")
+  call field%access_data(ridx)
+  nghost = 0
+  do i=1,nnodes
+    if( ridx(i) /= i ) nghost = nghost + 1
+  enddo
+
+  write(0,*) "nghost =",nghost
+
+  field = nodes%field("dual_volumes")
+  call field%access_data(arr)
+  call nodes%halo_exchange(arr)
+
+  edges = rgg%function_space("edges")
+  field = edges%field("dual_normals")
+  call field%access_data(arr)
+
+
+  write(0,*) stride(ridx,1)
+
+  write(0,*) stride(arr,1), stride(arr,2), stride(arr,3)
+
+  call atlas_write_gmsh(rgg,"testf2.msh")
+END_TEST
+
+
 ! -----------------------------------------------------------------------------
 
 END_TESTSUITE

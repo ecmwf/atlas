@@ -15,9 +15,38 @@
 #include <iostream>
 #include <sstream>
 
+#include "atlas/atlas_defines.h"
 #include "atlas/mpl/HaloExchange.hpp"
 
+#ifdef HAVE_FORTRAN_NUMBERING
+#define FORTRAN 1+
+#else
+#define FORTRAN
+#endif
+
 namespace atlas {
+
+namespace {
+struct IsGhostPoint
+{
+  IsGhostPoint( const int part[], const int ridx[], const int N )
+  {
+    part_   = part;
+    ridx_   = ridx;
+    mypart_ = MPL::rank();
+  }
+
+  bool operator()(int idx)
+  {
+    if( part_[idx] != mypart_     ) return true;
+    if( ridx_[idx] != FORTRAN idx ) return true;
+    return false;
+  }
+  int mypart_;
+  const int* part_;
+  const int* ridx_;
+};
+}
 
 HaloExchange::HaloExchange() :
   is_setup_(false)
@@ -26,60 +55,28 @@ HaloExchange::HaloExchange() :
   nproc  = MPL::size();
 }
 
-void HaloExchange::setup(const int proc[],
-                         const int glb_idx[],
-                         const int master_glb_idx[],
-                         const std::vector<int>& bounds,
-                         int par_bound )
+void HaloExchange::setup( const int part[],
+                          const int remote_idx[],
+                          const int parsize )
 {
-//  bounds_.resize(bounds.size());
-//  for(int i=0; i<bounds.size(); ++i)
-//    bounds_[i] = bounds[i];
-
-  bounds_ = bounds;
-  par_bound_ = par_bound;
-
-
+  parsize_ = parsize;
   sendcounts_.resize(nproc,0);
   recvcounts_.resize(nproc,0);
   senddispls_.resize(nproc,0);
   recvdispls_.resize(nproc,0);
 
-  int nb_nodes = bounds_[par_bound_];
-
-  /*
-    Create a temporary mapping from global to local indices
-    Currently this is quickly implemented using a LONG list...
-  */
-
-  int max_glb_idx = -1;
-  for (int jj=0; jj<nb_nodes; ++jj)
-  {
-    max_glb_idx = std::max( max_glb_idx, glb_idx[jj] );
-  }
-
-  MPL_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max_glb_idx, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD ) );
-
-  std::vector<int> map_glb_to_loc(max_glb_idx+1,-1);
-  for (int jj=0; jj<nb_nodes; ++jj)
-    map_glb_to_loc[glb_idx[jj]] = jj;
-
-//   std::cout << myproc << ":  map_glb_to_loc = ";
-//   for (int i=0; i<max_glb_idx+1; ++i)
-//     std::cout << map_glb_to_loc[i] << " ";
-//   std::cout << std::endl;
-
   /*
     Find the amount of nodes this proc has to receive from each other proc
   */
 
-  for (int jj=0; jj<nb_nodes; ++jj)
+  IsGhostPoint is_ghost(part,remote_idx,parsize_);
+
+  for (int jj=0; jj<parsize_; ++jj)
   {
-    if (proc[jj] != myproc || master_glb_idx[jj] != glb_idx[jj])
-      ++recvcounts_[proc[jj]];
+    if ( is_ghost(jj) )
+      ++recvcounts_[part[jj]];
   }
   recvcnt_ = std::accumulate(recvcounts_.begin(),recvcounts_.end(),0);
-//  std::cout << myproc << ":  recvcnt = " << recvcnt_ << std::endl;
 
 
   /*
@@ -98,7 +95,7 @@ void HaloExchange::setup(const int proc[],
     senddispls_[jproc]=sendcounts_[jproc-1]+senddispls_[jproc-1];
   }
   /*
-    Fill vector "send_requests" with global indices of nodes needed, but are on other procs
+    Fill vector "send_requests" with remote index of nodes needed, but are on other procs
     We can also fill in the vector "recvmap_" which holds local indices of requested nodes
   */
 
@@ -106,50 +103,34 @@ void HaloExchange::setup(const int proc[],
 
   recvmap_.resize(recvcnt_);
   std::vector<int> cnt(nproc,0);
-  for (int jj=0; jj<nb_nodes; ++jj)
+  for (int jj=0; jj<parsize_; ++jj)
   {
-    if (proc[jj] != myproc || master_glb_idx[jj] != glb_idx[jj])
+    if ( is_ghost(jj) )
     {
-      const int req_idx = recvdispls_[proc[jj]] + cnt[proc[jj]];
-      send_requests[req_idx] = master_glb_idx[jj];
+      const int req_idx = recvdispls_[part[jj]] + cnt[part[jj]];
+      send_requests[req_idx] = remote_idx[jj];
       recvmap_[req_idx] = jj;
-      ++cnt[proc[jj]];
+      ++cnt[part[jj]];
     }
-//    if (master_glb_idx[jj] != glb_idx[jj])
-//    {
-//      const int req_idx = recvdispls_[proc[jj]] + cnt[proc[jj]];
-//      send_requests[req_idx] = master_glb_idx[jj];
-//      recvmap_[req_idx] = jj;
-//      ++cnt[proc[jj]];
-//    }
-
   }
 
   /*
-    Fill vector "recv_requests" with global indices that are needed by other procs
+    Fill vector "recv_requests" with what is needed by other procs
   */
 
   std::vector<int> recv_requests(sendcnt_);
 
-  MPL_CHECK_RESULT( MPI_Alltoallv( send_requests.data(), recvcounts_.data(), recvdispls_.data(), MPI_INT,
-                        recv_requests.data(), sendcounts_.data(), senddispls_.data(), MPI_INT,
-                        MPI_COMM_WORLD ) );
+  MPL_CHECK_RESULT( MPI_Alltoallv(
+                      send_requests.data(), recvcounts_.data(), recvdispls_.data(), MPI_INT,
+                      recv_requests.data(), sendcounts_.data(), senddispls_.data(), MPI_INT,
+                      MPI_COMM_WORLD ) );
 
   /*
-    What needs to be sent to other procs can be found by a map from global to local indices
+    What needs to be sent to other procs is asked by remote_idx, which is local here
   */
   sendmap_.resize(sendcnt_);
   for( int jj=0; jj<sendcnt_; ++jj )
-    sendmap_[jj] = map_glb_to_loc[ recv_requests[jj] ];
-
-  // Packet size
-  packet_size_ = 1;
-  const int nb_bounds = bounds_.size();
-  for (int b=0; b<nb_bounds; ++b)
-  {
-    if ( b != par_bound_ && bounds_[b] >= 0)
-      packet_size_ *= bounds_[b];
-  }
+    sendmap_[jj] = recv_requests[jj];
 
 //   std::cout << myproc << "  :  sendmap_  = ";
 //   for( int i=0; i< sendmap_.size(); ++i)
@@ -166,146 +147,25 @@ void HaloExchange::setup(const int proc[],
 
 
 
-template<>
-inline void HaloExchange::create_mappings_impl<2,0>( 
-    std::vector<int>& send_map, 
-    std::vector<int>& recv_map,
-    int nb_vars) const
+template <>
+void HaloExchange::execute<int,1>( ArrayView<int,1>& field ) const
 {
-  const int nb_nodes = bounds_[0];
-  int send_idx(0);
-  for (int jnode=0; jnode<sendcnt_; ++jnode)
-  {
-    const int inode = sendmap_[jnode];
-    for (int jvar=0; jvar<nb_vars; ++jvar)
-    {
-      send_map[send_idx++] = index( inode,jvar,   nb_nodes,nb_vars);
-    }
-  }
-  int recv_idx(0);
-  for (int jnode=0; jnode<recvcnt_; ++jnode)
-  {
-    const int inode = recvmap_[jnode];
-    for (int jvar=0; jvar<nb_vars; ++jvar)
-    {
-      recv_map[recv_idx++] = index( inode,jvar,   nb_nodes,nb_vars);;
-    }
-  }
+  int one[] = {1};
+  execute( field.data(), one, one, 1 );
 }
 
-template<>
-inline void HaloExchange::create_mappings_impl<2,1>( 
-    std::vector<int>& send_map, 
-    std::vector<int>& recv_map,
-    int nb_vars) const
+template <>
+void HaloExchange::execute<float,1>( ArrayView<float,1>& field ) const
 {
-  const int nb_nodes = bounds_[1];
-  int send_idx(0);
-  for (int jnode=0; jnode<sendcnt_; ++jnode)
-  {
-    const int inode = sendmap_[jnode];
-    for (int jvar=0; jvar<nb_vars; ++jvar)
-    {
-      send_map[send_idx++] = index( jvar, inode,  nb_vars, nb_nodes);
-    }
-  }
-  int recv_idx(0);
-  for (int jnode=0; jnode<recvcnt_; ++jnode)
-  {
-    const int inode = recvmap_[jnode];
-    for (int jvar=0; jvar<nb_vars; ++jvar)
-    {
-      recv_map[recv_idx++] = index( jvar, inode,  nb_vars, nb_nodes);
-    }
-  }
+  int one[] = {1};
+  execute( field.data(), one, one, 1 );
 }
 
-/// create_mappings_impl<3,1>
-template<>
-inline void HaloExchange::create_mappings_impl<3,1>( 
-    std::vector<int>& send_map, 
-    std::vector<int>& recv_map,
-    int nb_vars) const
+template <>
+void HaloExchange::execute<double,1>( ArrayView<double,1>& field ) const
 {
-  const int nb_levs = bounds_[0];
-  const int nb_nodes = bounds_[1];
-  int send_idx(0);
-  int recv_idx(0);
-  for (int n=0; n<sendcnt_; ++n)
-  {
-    const int jnode = sendmap_[n];
-    for (int var=0; var<nb_vars; ++var)
-    {
-      const int varidx = var*nb_nodes;
-      const int nodevaridx = (jnode + varidx)*nb_levs;
-      for (int l=0; l<nb_levs; ++l)
-      {
-        const int levnodevaridx = l + nodevaridx;
-        send_map[send_idx++] = levnodevaridx;
-      }
-    }
-  }
-
-  for (int n=0; n<recvcnt_; ++n)
-  {
-    const int jnode = recvmap_[n];
-    for (int var=0; var<nb_vars; ++var)
-    {
-      const int varidx = var*nb_nodes;
-      const int nodevaridx = (jnode + varidx)*nb_levs;
-      for (int l=0; l<nb_levs; ++l)
-      {
-        const int levnodevaridx = l + nodevaridx;
-        recv_map[recv_idx++] = levnodevaridx;
-      }
-    }
-  }
-}
-
-void HaloExchange::create_mappings( 
-    std::vector<int>& send_map, 
-    std::vector<int>& recv_map,
-    int nb_vars ) const
-{
-  const int nb_bounds = bounds_.size();
-  switch (nb_bounds)
-  {
-    case 2:
-    {
-      switch (par_bound_)
-      {
-        case 0:
-          create_mappings_impl<2,0>(send_map,recv_map,nb_vars);
-          break;
-        case 1:
-          create_mappings_impl<2,1>(send_map,recv_map,nb_vars);
-          break;
-        default:
-          std::stringstream errmsg;
-          errmsg << "create_mappings<"<<nb_bounds<<","<<par_bound_<<"> not implemented";
-          throw std::runtime_error(errmsg.str());
-      }
-      break;
-    }
-    case 3:
-    {
-      switch (par_bound_)
-      {
-        case 1:
-          create_mappings_impl<3,1>(send_map,recv_map,nb_vars);
-          break;
-        default:
-          std::stringstream errmsg;
-          errmsg << "create_mappings<"<<nb_bounds<<","<<par_bound_<<"> not implemented";
-          throw std::runtime_error(errmsg.str());
-      }
-      break;
-    }
-    default:
-      std::stringstream errmsg;
-      errmsg << "create_mappings<"<<nb_bounds<<","<<par_bound_<<"> not implemented";
-      throw std::runtime_error(errmsg.str());
-  }
+  int one[] = {1};
+  execute( field.data(), one, one, 1 );
 }
 
 /////////////////////
@@ -319,21 +179,32 @@ void atlas__HaloExchange__delete (HaloExchange* This) {
   delete This;
 }
 
-void atlas__HaloExchange__setup (HaloExchange* This, int proc[], int glb_idx[], int master_glb_idx[], int bounds[], int nb_bounds, int par_bound)
+void atlas__HaloExchange__setup (HaloExchange* This, int part[], int remote_idx[], int size)
 {
-  std::vector<int> bounds_vec(bounds,bounds+nb_bounds);
-  This->setup(proc,glb_idx,master_glb_idx,bounds_vec,par_bound);
+  This->setup(part,remote_idx,size);
 }
 
-void atlas__HaloExchange__execute_int (HaloExchange* This, int field[], int nb_vars ) { 
+void atlas__HaloExchange__execute_strided_int (HaloExchange* This, int field[], int var_strides[], int var_extents[], int var_rank) {
+  This->execute(field,var_strides,var_extents,var_rank);
+}
+
+void atlas__HaloExchange__execute_strided_double (HaloExchange* This, float field[], int var_strides[], int var_extents[], int var_rank) {
+  This->execute(field,var_strides,var_extents,var_rank);
+}
+
+void atlas__HaloExchange__execute_strided_float (HaloExchange* This, double field[], int var_strides[], int var_extents[], int var_rank) {
+  This->execute(field,var_strides,var_extents,var_rank);
+}
+
+void atlas__HaloExchange__execute_int (HaloExchange* This, int field[], int nb_vars ) {
   This->execute(field,nb_vars);
 }
 
-void atlas__HaloExchange__execute_float (HaloExchange* This, float field[], int nb_vars ) { 
+void atlas__HaloExchange__execute_float (HaloExchange* This, float field[], int nb_vars ) {
   This->execute(field,nb_vars);
 }
 
-void atlas__HaloExchange__execute_double (HaloExchange* This, double field[], int nb_vars ) { 
+void atlas__HaloExchange__execute_double (HaloExchange* This, double field[], int nb_vars ) {
   This->execute(field,nb_vars);
 }
 

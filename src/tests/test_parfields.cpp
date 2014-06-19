@@ -18,16 +18,18 @@
 #include "atlas/mpl/MPL.hpp"
 #include "atlas/atlas_config.h"
 #include "atlas/meshgen/RGG.hpp"
+#include "atlas/meshgen/RGGMeshGenerator.hpp"
 #include "atlas/meshgen/EqualAreaPartitioner.hpp"
 #include "atlas/io/Gmsh.hpp"
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/mesh/FunctionSpace.hpp"
 #include "atlas/mesh/Field.hpp"
 #include "atlas/mesh/Metadata.hpp"
-#include "atlas/mesh/Array.hpp"
-#include "atlas/mesh/ArrayView.hpp"
-#include "atlas/mesh/IndexView.hpp"
+#include "atlas/util/Array.hpp"
+#include "atlas/util/ArrayView.hpp"
+#include "atlas/util/IndexView.hpp"
 #include "atlas/actions/BuildParallelFields.hpp"
+#include "atlas/actions/BuildPeriodicBoundaries.hpp"
 #include "atlas/mesh/Parameters.hpp"
 #include "atlas/mesh/Util.hpp"
 
@@ -117,7 +119,7 @@ BOOST_AUTO_TEST_CASE( test1 )
     break;
   }
 
-  actions::make_periodic(*m);
+  actions::build_periodic_boundaries(*m);
 
   // points 8 and 9 are periodic slave points of points 0 and 1
   BOOST_CHECK_EQUAL( part(8), 0 );
@@ -157,7 +159,7 @@ BOOST_AUTO_TEST_CASE( test2 )
   if( MPL::rank() == 0 ) BOOST_CHECK_EQUAL( nb_ghost, 129 );
   if( MPL::rank() == 1 ) BOOST_CHECK_EQUAL( nb_ghost, 0   );
 
-  actions::make_periodic(*m);
+  actions::build_periodic_boundaries(*m);
 
   int nb_periodic = -nb_ghost;
   for( int jnode=0; jnode<nodes.extents()[0]; ++jnode )

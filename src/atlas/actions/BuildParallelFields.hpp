@@ -8,19 +8,42 @@
  * does it submit to any jurisdiction.
  */
 
-
+/// @author Willem Deconinck
+/// @date   June 2014
 
 #ifndef BuildParallelFields_hpp
 #define BuildParallelFields_hpp
 #include <string>
 namespace atlas {
   class Mesh;
+  class FunctionSpace;
 namespace actions {
 
+/*
+ * Build all parallel fields in the mesh
+ *  - calls build_nodes_parallel_fields()
+ */
 void build_parallel_fields( Mesh& mesh );
-void make_periodic( Mesh& mesh );
+
+/*
+ * Build parallel fields for the "nodes" function space if they don't exist.
+ * - glb_idx:    create unique indices for non-positive values
+ * - partition:  set to MPL::rank() for negative values
+ * - remote_idx: rebuild from scratch
+ */
+void build_nodes_parallel_fields( FunctionSpace& nodes );
+
+
+// ------------------------------------------------------------------
+// C wrapper interfaces to C++ routines
+extern "C"
+{
+  void atlas__build_parallel_fields (Mesh* mesh);
+}
+// ------------------------------------------------------------------
 
 } // namespace actions
 } // namespace atlas
+
 
 #endif // BuildParallelFields_hpp

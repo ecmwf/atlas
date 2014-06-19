@@ -19,8 +19,8 @@
 #include "atlas/mesh/Field.hpp"
 #include "atlas/actions/BuildDualMesh.hpp"
 #include "atlas/mesh/Parameters.hpp"
-#include "atlas/mesh/ArrayView.hpp"
-#include "atlas/mesh/IndexView.hpp"
+#include "atlas/util/ArrayView.hpp"
+#include "atlas/util/IndexView.hpp"
 
 namespace atlas {
 namespace actions {
@@ -379,15 +379,6 @@ void build_dual_mesh( Mesh& mesh )
   build_dual_normals( mesh );
 
   //build_skewness( mesh );
-
-//  std::cout << "partition" << std::endl;
-//  for (int node=0; node<nb_nodes; ++node)
-//    std::cout << glb_idx(node) << "  :  " << proc(0,node) << std::endl;
-
-//  std::cout << "master_glb_idx" << std::endl;
-//  for (int node=0; node<nb_nodes; ++node)
-//    std::cout << glb_idx(node) << "  :  " << master_glb_idx(0,node) << std::endl;
-
 
 //  nodes.parallelise();
 //  edges.parallelise();

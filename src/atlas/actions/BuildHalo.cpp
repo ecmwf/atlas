@@ -20,9 +20,9 @@
 #include "atlas/mesh/Field.hpp"
 #include "atlas/actions/BuildHalo.hpp"
 #include "atlas/mesh/Parameters.hpp"
-#include "atlas/mesh/ArrayView.hpp"
-#include "atlas/mesh/IndexView.hpp"
-#include "atlas/mesh/Array.hpp"
+#include "atlas/util/ArrayView.hpp"
+#include "atlas/util/IndexView.hpp"
+#include "atlas/util/Array.hpp"
 #include "atlas/mesh/Util.hpp"
 
 namespace atlas {
@@ -72,7 +72,7 @@ void increase_halo( Mesh& mesh )
     if( elements.metadata<int>("type") == Entity::ELEMS )
     {
       elem_nodes  [func_space_idx] = IndexView<int,2>( elements.field("nodes") );
-      elem_part   [func_space_idx] = ArrayView<int,1>( elements.field("proc") );
+      elem_part   [func_space_idx] = ArrayView<int,1>( elements.field("partition") );
       elem_glb_idx[func_space_idx] = ArrayView<int,1>( elements.field("glb_idx") );
       int nb_elems = elem_nodes[func_space_idx].extents()[0];
       int nb_nodes_per_elem = elem_nodes[func_space_idx].extents()[1];
@@ -516,7 +516,7 @@ void increase_halo( Mesh& mesh )
       elements.resize( Extents( nb_elems+nb_new_elems, Field::UNDEF_VARS ) );
       elem_glb_idx[f] = ArrayView<int,1>( elements.field("glb_idx") );
       elem_nodes[f]   = IndexView<int,2>( elements.field("nodes")   );
-      elem_part[f]    = ArrayView<int,1>( elements.field("proc")   );
+      elem_part[f]    = ArrayView<int,1>( elements.field("partition")   );
       int new_elem=0;
       for( int jpart=0; jpart<MPL::size(); ++jpart )
       {

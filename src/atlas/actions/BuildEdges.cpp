@@ -20,9 +20,9 @@
 #include "atlas/mesh/Field.hpp"
 #include "atlas/actions/BuildEdges.hpp"
 #include "atlas/mesh/Parameters.hpp"
-#include "atlas/mesh/ArrayView.hpp"
-#include "atlas/mesh/Array.hpp"
-#include "atlas/mesh/IndexView.hpp"
+#include "atlas/util/ArrayView.hpp"
+#include "atlas/util/Array.hpp"
+#include "atlas/util/IndexView.hpp"
 #include "atlas/mesh/Util.hpp"
 
 namespace atlas {
@@ -243,8 +243,11 @@ void build_edges( Mesh& mesh )
   // Build edges
   int nb_edges = nb_faces;
   if( ! mesh.has_function_space("edges") )
+  {
     mesh.add_function_space( new FunctionSpace("edges","shapefunc", Extents(nb_edges,Field::UNDEF_VARS)) );
+  }
   FunctionSpace& edges = mesh.function_space("edges");
+  edges.metadata().set("type",static_cast<int>(Entity::FACES));
   edges.resize(Extents(nb_edges,Field::UNDEF_VARS));
 
   if( ! edges.has_field("nodes")      )  edges.create_field<int>("nodes",     2);
@@ -290,6 +293,8 @@ void build_pole_edges( Mesh& mesh )
   if( ! mesh.has_function_space("edges") )
     mesh.add_function_space( new FunctionSpace("edges","shapefunc", Extents(nb_edges,Field::UNDEF_VARS)) );
   FunctionSpace& edges = mesh.function_space("edges");
+  edges.metadata().set("type",static_cast<int>(Entity::FACES));
+
   nb_edges = edges.extents()[0];
 
   int nb_pole_edges;
@@ -333,7 +338,9 @@ void build_pole_edges( Mesh& mesh )
 void atlas__build_edges ( Mesh* mesh) {
   build_edges(*mesh);
 }
-
+void atlas__build_pole_edges ( Mesh* mesh) {
+  build_pole_edges(*mesh);
+}
 // ------------------------------------------------------------------
 
 } // namespace actions

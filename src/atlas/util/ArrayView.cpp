@@ -12,8 +12,8 @@
 
 #include <stdexcept>
 #include "atlas/mesh/Field.hpp"
-#include "atlas/mesh/Array.hpp"
-#include "atlas/mesh/ArrayView.hpp"
+#include "atlas/util/Array.hpp"
+#include "atlas/util/ArrayView.hpp"
 
 //------------------------------------------------------------------------------------------------------
 

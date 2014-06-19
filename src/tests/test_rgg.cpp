@@ -10,7 +10,7 @@
 
 #include <sstream>
 #include <algorithm>
-
+#include <iomanip>
 #define BOOST_TEST_MODULE TestRGG
 #define BOOST_UNIT_TEST_FRAMEWORK_HEADER_ONLY
 #include "ecbuild/boost_test_framework.h"
@@ -18,17 +18,17 @@
 #include "atlas/mpl/MPL.hpp"
 #include "atlas/atlas_config.h"
 #include "atlas/meshgen/RGG.hpp"
+#include "atlas/meshgen/RGGMeshGenerator.hpp"
 #include "atlas/meshgen/EqualAreaPartitioner.hpp"
 #include "atlas/io/Gmsh.hpp"
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/mesh/FunctionSpace.hpp"
 #include "atlas/mesh/Metadata.hpp"
-#include "atlas/mesh/ArrayView.hpp"
-#include "atlas/mesh/IndexView.hpp"
-#include "atlas/actions/BuildEdges.hpp"
-#include "atlas/actions/BuildDualMesh.hpp"
-#include "atlas/actions/BuildPeriodicBoundaries.hpp"
+#include "atlas/util/ArrayView.hpp"
+#include "atlas/util/IndexView.hpp"
+#include "atlas/actions/BuildParallelFields.hpp"
 #include "atlas/mesh/Parameters.hpp"
+#include "atlas/mesh/Util.hpp"
 
 using namespace atlas;
 using namespace atlas::meshgen;
@@ -328,25 +328,90 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
   generate.options.set("include_pole",false);
   generate.options.set("three_dimensional",false);
 
-  double max_lat = T63().lat(0);
+          //  Alternative grid for debugging
+          //  int nlat=10;
+          //  int lon[] = { 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 };
+          //  test::MinimalMesh grid(nlat,lon);
+  T63 grid;
+
+  double max_lat = grid.lat(0);
   double check_area = 2.*M_PI*2.*max_lat;
   double area = 0;
-  int nodes[]  = {312,317,333,338,334,352,350,359,360,360,359,360,359,370,337,334,338,335,332,314};
-  int quads[]  = {242,277,291,294,292,307,312,320,321,321,320,321,320,331,293,291,294,293,290,244};
-  int triags[] = { 42, 12, 13, 13, 11, 15,  0,  1,  0,  1,  1,  0,  1,  0, 14, 12, 13, 11, 14, 42};
+  int nodes[]  = {313,321,337,336,336,348,351,359,360,358,357,360,359,371,332,336,335,337,336,315};
+  int quads[]  = {243,279,293,291,294,304,313,320,321,319,318,321,320,332,289,294,291,294,293,245};
+  int triags[] = { 42, 13, 12, 13, 12, 14,  0,  1,  0,  1,  1,  0,  1,  0, 14, 12, 13, 11, 14, 42};
+  int nb_owned = 0;
+
+  std::vector<int> all_owned    ( grid.ngptot()+1, -1 );
+
   for( int p=0; p<generate.options.get<int>("nb_parts"); ++p)
   {
     generate.options.set("part",p);
-    Mesh* m = generate( T63() );
+    Mesh::Ptr m( generate( grid ) );
+    BOOST_TEST_CHECKPOINT("generated grid " << p);
+    IndexView<int,1> ridx( m->function_space("nodes").field("remote_idx") );
+    ArrayView<int,1> part( m->function_space("nodes").field("partition") );
+    ArrayView<int,1> gidx( m->function_space("nodes").field("glb_idx") );
+
     area += test::compute_latlon_area(*m);
-    BOOST_CHECK_EQUAL( m->function_space("nodes" ).extents()[0], nodes[p]  );
-    BOOST_CHECK_EQUAL( m->function_space("quads" ).extents()[0], quads[p]  );
-    BOOST_CHECK_EQUAL( m->function_space("triags").extents()[0], triags[p] );
-    std::stringstream filename; filename << "T63_p" << p << ".msh";
-    Gmsh::write(*m,filename.str());
-    delete m;
+    if( generate.options.get<int>("nb_parts") == 20 )
+    {
+      BOOST_CHECK_EQUAL( m->function_space("nodes" ).extents()[0], nodes[p]  );
+      BOOST_CHECK_EQUAL( m->function_space("quads" ).extents()[0], quads[p]  );
+      BOOST_CHECK_EQUAL( m->function_space("triags").extents()[0], triags[p] );
+    }
+    //    std::stringstream filename; filename << "T63_p" << p << ".msh";
+    //    Gmsh::write(*m,filename.str());
+
+
+    FunctionSpace& nodes = m->function_space("nodes");
+    int nb_nodes = nodes.extents()[0];
+
+    std::vector<int> node_elem_connections( nb_nodes, 0 );
+
+    for( int f=0; f<m->nb_function_spaces(); ++f )
+    {
+      FunctionSpace& elements = m->function_space(f);
+      if( elements.metadata<int>("type") == Entity::ELEMS )
+      {
+        int nb_elems = elements.extents()[0];
+        IndexView<int,2> elem_nodes ( elements.field("nodes") );
+        int nb_nodes_per_elem = elem_nodes.extents()[1];
+        for( int jelem=0; jelem<nb_elems; ++jelem )
+        {
+          for( int jnode=0; jnode<nb_nodes_per_elem; ++jnode )
+            node_elem_connections[ elem_nodes(jelem,jnode) ]++;
+        }
+      }
+    }
+    for( int jnode=0; jnode<nb_nodes; ++jnode )
+    {
+      BOOST_CHECK_GT( node_elem_connections[jnode] , 0 );
+    }
+
+
+    ArrayView<int,1> glb_idx( nodes.field("glb_idx") );
+    IsGhost is_ghost(nodes,p);
+    for( int n=0; n<nb_nodes; ++n )
+    {
+      int owned = !is_ghost(n);
+      if( ! is_ghost(n) )
+      {
+        ++nb_owned;
+        BOOST_CHECK( all_owned[ gidx(n) ] == -1 );
+        all_owned[ gidx(n) ] = part(n);
+      }
+    }
   }
+
+  for( int gid=1; gid<all_owned.size(); ++gid )
+  {
+    BOOST_CHECK( all_owned[gid] != -1 );
+  }
+  BOOST_CHECK_EQUAL( nb_owned, grid.ngptot() );
+
   BOOST_CHECK_CLOSE( area, check_area, 1e-10 );
+
 }
 
 BOOST_AUTO_TEST_CASE( finalize ) { MPL::finalize(); }

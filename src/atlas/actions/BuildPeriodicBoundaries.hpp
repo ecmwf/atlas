@@ -12,10 +12,19 @@
 
 #ifndef BuildPeriodicBoundaries_hpp
 #define BuildPeriodicBoundaries_hpp
-#include <string>
+
 namespace atlas {
 class Mesh;
 
+namespace actions {
+/*
+ * Make the mesh periodic
+ * - Find out which nodes at the WEST-BC are master nodes
+ *   of nodes at the EAST-BC
+ * - The remote_idx and partition of the EAST-BC nodes
+ *   are set to the master nodes at WEST-BC, whereas the
+ *   global index remains unchanged
+ */
 void build_periodic_boundaries( Mesh& mesh );
 
 // ------------------------------------------------------------------
@@ -26,6 +35,7 @@ extern "C"
 }
 // ------------------------------------------------------------------
 
+} // namespace actions
 } // namespace atlas
 
 #endif // BuildPeriodicBoundaries_hpp

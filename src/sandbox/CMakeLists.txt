@@ -8,3 +8,5 @@
 
 add_subdirectory( cgal )
 add_subdirectory( mpi )
+add_subdirectory( fortran_submodule )
+add_subdirectory( fortran_modinc )
