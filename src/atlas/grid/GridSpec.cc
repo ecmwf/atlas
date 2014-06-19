@@ -8,6 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
+#include "eckit/exception/Exceptions.h"
 #include "atlas/grid/GridSpec.h"
 
 //------------------------------------------------------------------------------------------------------
@@ -17,45 +18,51 @@ namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
-
 GridSpec::GridSpec(const std::string& the_grid_type, const std::string& the_short_name)
-: the_grid_type_(the_grid_type),the_short_name_(the_short_name)
 {
+   set("gridType",Properties::property_t(the_grid_type));
+   set("shortName",Properties::property_t(the_short_name));
 }
 
 GridSpec::GridSpec(const std::string& the_grid_type)
-: the_grid_type_(the_grid_type)
 {
+   set("gridType",Properties::property_t(the_grid_type));
 }
 
-GridSpec::~GridSpec()
-{
-}
+GridSpec::~GridSpec(){}
 
-void GridSpec::add(const std::string& name, const eckit::Value& value)
-{
-   grid_spec_.insert(std::make_pair(name,value));
-}
 
-eckit::Value GridSpec::find(const std::string& key) const
+std::string GridSpec::grid_type() const
 {
-   std::map<std::string,eckit::Value>::const_iterator i = grid_spec_.find(key);
-   if (i != grid_spec_.end()) {
-      return (*i).second;
+   Properties::property_t val = get("gridType");
+   if (val.isNil()) {
+      throw eckit::SeriousBug("GridSpec with no grid type specified", Here());
    }
-   return eckit::Value();
+
+   std::string the_grid_type = val;
+   return the_grid_type;
 }
+
+void GridSpec::set_short_name(const std::string& the_short_name)
+{
+   set("shortName",Properties::property_t(the_short_name));
+}
+
+std::string GridSpec::short_name() const
+{
+   Properties::property_t val = get("shortName");
+   if (val.isNil()) {
+      throw eckit::SeriousBug("GridSpec with no short name specified", Here());
+   }
+   std::string the_short_name = val;
+   return the_short_name;
+}
+
 
 void GridSpec::print( std::ostream& s) const
 {
-   s << "GridSpec[ " << the_grid_type_;
-   if (!the_short_name_.empty() ) s << ", " << the_short_name_;
-
-   std::map<std::string,eckit::Value>::const_iterator i = grid_spec_.begin();
-   for(i = grid_spec_.begin(); i != grid_spec_.end(); ++i) {
-      s << ", " << (*i).first << ":" << (*i).second;
-   }
-
+   s << "GridSpec[ ";
+   Properties::print(s) ;
    s << " ]";
 }
 

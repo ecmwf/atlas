@@ -159,32 +159,28 @@ bool match_grid_spec_with_sample_file( const GridSpec& the_grid_spec, grib_handl
 
    long editionNumber = 0;
    GRIB_CHECK(grib_get_long(handle,"editionNumber",&editionNumber),0);
-   eckit::Value spec_edition_number = the_grid_spec.find("editionNumber");
+   eckit::Value spec_edition_number = the_grid_spec.get("editionNumber");
    if ((long)spec_edition_number != editionNumber ) {
       //Log::info() << "GribWrite::found_match, the_edition_number in GridSpec " << spec_edition_number << " does not match  " << editionNumber << " in samples file " << file_path << " IGNORING " << std::endl;
       return false;
    }
 
-   eckit::Value spec_nj = the_grid_spec.find("Nj");
+   eckit::Value spec_nj = the_grid_spec.get("Nj");
    if (!spec_nj.isNil()) {
-
       long the_spec_nj = spec_nj;
       long grib_nj = 0;
       if (grib_get_long(handle,"Nj",&grib_nj) == 0 ) {
-
          if (the_spec_nj != grib_nj ) {
             //Log::info() << "GribWrite::found_match, Nj in GridSpec " << the_spec_nj << " does not match  " << grib_nj << " in samples file " << file_path << " IGNORING " << std::endl;
             return false;
          }
       }
    }
-   eckit::Value spec_ni = the_grid_spec.find("Ni");
+   eckit::Value spec_ni = the_grid_spec.get("Ni");
    if (!spec_ni.isNil()) {
-
       long the_spec_ni = spec_ni;
       long grib_ni = 0;
       if (grib_get_long(handle,"Ni",&grib_ni) == 0 ) {
-
          if (the_spec_ni != grib_ni ) {
             //Log::info() << "GribWrite::found_match, Ni in GridSpec " << the_spec_ni << " does not match  " << grib_ni << " in samples file " << file_path << " IGNORING " << std::endl;
             return false;
@@ -193,7 +189,7 @@ bool match_grid_spec_with_sample_file( const GridSpec& the_grid_spec, grib_handl
    }
 
    // ??
-   eckit::Value spec_level = the_grid_spec.find("typeOfLevel");
+   eckit::Value spec_level = the_grid_spec.get("typeOfLevel");
    if (!spec_level.isNil()) {
       std::string the_spec_level = spec_level;
       char string_value[64];
