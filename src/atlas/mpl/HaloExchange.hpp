@@ -32,7 +32,7 @@ public:
 public: // methods
 
   void setup( const int part[],
-              const int remote_idx[],
+              const int remote_idx[], const int base,
               int size );
 
   template <typename DATA_TYPE>
@@ -249,7 +249,8 @@ void HaloExchange::unpack_recv_buffer( const DATA_TYPE recv_buffer[],
       {
         tmp = field[ pp + i*var_strides[0] ];
         field[ pp + i*var_strides[0] ] = recv_buffer[ibuf++];
-        if( tmp != field[ pp + i*var_strides[0] ] ) field_changed = true;
+        if( tmp != field[ pp + i*var_strides[0] ] )
+          field_changed = true;
       }
     }
     break;
@@ -300,6 +301,7 @@ void HaloExchange::unpack_recv_buffer( const DATA_TYPE recv_buffer[],
 template<typename DATA_TYPE>
 void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
 {
+  DEBUG()
   int one[] = {1};
   execute( field, one, one, 1);
 }
@@ -331,7 +333,7 @@ extern "C"
 {
   HaloExchange* atlas__HaloExchange__new ();
   void atlas__HaloExchange__delete (HaloExchange* This);
-  void atlas__HaloExchange__setup (HaloExchange* This, int part[], int remote_idx[], int size);
+  void atlas__HaloExchange__setup (HaloExchange* This, int part[], int remote_idx[], int base, int size);
   void atlas__HaloExchange__execute_strided_int (HaloExchange* This, int field[], int var_strides[], int var_extents[], int var_rank);
   void atlas__HaloExchange__execute_strided_float (HaloExchange* This, float field[], int var_strides[], int var_extents[], int var_rank);
   void atlas__HaloExchange__execute_strided_double (HaloExchange* This, double field[], int var_strides[], int var_extents[], int var_rank);

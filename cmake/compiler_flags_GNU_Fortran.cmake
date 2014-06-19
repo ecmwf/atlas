@@ -12,6 +12,8 @@ include( ecbuild_check_fortran_source )
 # FLAGS COMMON TO ALL BUILD TYPES
 ####################################################################
 
+#cmake_add_fortran_flags( "-std=f2008" ) # fortran loc function is non-standard
+
 if( HAVE_OMP )
   cmake_add_fortran_flags( "-fopenmp" )
 else( )

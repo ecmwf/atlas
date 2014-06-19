@@ -19,6 +19,7 @@
 #include "atlas/mesh/Field.hpp"
 #include "atlas/actions/BuildDualMesh.hpp"
 #include "atlas/mesh/Parameters.hpp"
+#include "atlas/mesh/Util.hpp"
 #include "atlas/util/ArrayView.hpp"
 #include "atlas/util/IndexView.hpp"
 
@@ -360,6 +361,9 @@ void build_dual_mesh( Mesh& mesh )
   FunctionSpace& nodes   = mesh.function_space( "nodes" );
   ArrayView<double,2> coords        ( nodes.field( "coordinates"    ) );
   ArrayView<double,1> dual_volumes  ( nodes.create_field<double>( "dual_volumes", 1 ) );
+  ArrayView<int,1> ridx  ( nodes.field( "remote_idx" ) );
+  ArrayView<int,1> part  ( nodes.field( "partition" ) );
+  ArrayView<int,1> gidx  ( nodes.field( "glb_idx" ) );
   int nb_nodes = nodes.extents()[0];
 
   FunctionSpace& quads       = mesh.function_space( "quads" );
@@ -370,18 +374,43 @@ void build_dual_mesh( Mesh& mesh )
   build_centroids(triags, coords);
   build_centroids(edges,  coords);
 
-  for (int node=0; node<nb_nodes; ++node)
-    dual_volumes(node) = 0.;
-
   add_dual_volume_contribution( quads,  edges, nodes, dual_volumes );
   add_dual_volume_contribution( triags, edges, nodes, dual_volumes );
   add_dual_volume_contribution( edges, nodes, dual_volumes );
   build_dual_normals( mesh );
 
+
+  IsGhost is_ghost(nodes);
+  for (int node=0; node<nb_nodes; ++node)
+  {
+    if( is_ghost(node) )
+    {
+      dual_volumes(node) = -1;
+    }
+  }
+
+
   //build_skewness( mesh );
 
-//  nodes.parallelise();
+  nodes.parallelise();
 //  edges.parallelise();
+
+  nodes.halo_exchange().execute(dual_volumes);
+
+
+  int neg_vols = 0;
+  for (int node=0; node<nb_nodes; ++node)
+  {
+    if( dual_volumes(node) == -1 )
+    {
+      ++neg_vols;
+      DEBUG( "gidx " << gidx(node) << "  part " << part(node) << "  ridx " << ridx(node), 0 );
+    }
+  }
+  if( neg_vols > 0)
+  {
+    throw eckit::SeriousBug("Some dual_volumes are not correct",Here());
+  }
 
 //  nodes.field("dual_volumes").halo_exchange();
 //  edges.field("dual_normals").halo_exchange();

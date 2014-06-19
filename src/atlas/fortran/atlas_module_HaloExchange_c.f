@@ -20,7 +20,7 @@ subroutine HaloExchange__setup(this, part, remote_idx)
   class(HaloExchange_type), intent(in) :: this
   integer, intent(in) :: part(:)
   integer, intent(in) :: remote_idx(:)
-  call atlas__HaloExchange__setup( this%private%object, part, remote_idx, size(part) )
+  call atlas__HaloExchange__setup( this%private%object, part, remote_idx, 1, size(part) )
 end subroutine HaloExchange__setup
 
 

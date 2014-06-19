@@ -486,7 +486,9 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,
   
   bool include_north_pole = (mypart == 0       ) && options.get<bool>("include_pole");
   bool include_south_pole = (mypart == nparts-1) && options.get<bool>("include_pole");
-  bool three_dimensional  = (nparts == 1       ) && options.get<bool>("three_dimensional");
+  bool three_dimensional  = options.get<bool>("three_dimensional");
+  if( three_dimensional && nparts != 1 )
+    throw eckit::BadParameter("Cannot generate three_dimensional mesh in parallel",Here());
   int nnodes  = region.nnodes;
   int ntriags = region.ntriags;
   int nquads  = region.nquads;
@@ -538,7 +540,6 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,
   ArrayView<double,2> coords        ( nodes.create_field<double>("coordinates",   2) );
   ArrayView<int,   1> glb_idx       ( nodes.create_field<int   >("glb_idx",       1) );
   ArrayView<int,   1> part          ( nodes.create_field<int   >("partition",     1) );
-  IndexView<int,   1> ridx          ( nodes.create_field<int   >("remote_idx",    1) );
   
   int jnode=0;
   l=0;
@@ -556,8 +557,6 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,
       coords(jnode,YY) = y;
       glb_idx(jnode)   = n+1;
       part(jnode) = parts[n];
-      if( part(jnode) == mypart ) ridx(jnode) = jnode;
-      else ridx(jnode) = -1;
       ++jnode;
     }
     if( !three_dimensional &&  region.lat_end[jlat]==rgg.nlon(jlat)-1 ) // add periodic point
@@ -567,9 +566,7 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,
       coords(jnode,XX) = x;
       coords(jnode,YY) = y;
       glb_idx(jnode)   = periodic_glb[jlat]+1;
-      part(jnode)      = parts[ offset_glb[jlat] ];
-      if( part(jnode) == mypart ) ridx(jnode) = offset_glb[jlat];
-      else ridx(jnode) = -1;
+      part(jnode)      = part(jnode-1);
       ++jnode;
     }
   };
@@ -584,7 +581,6 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,
     coords(jnode,YY) = y;
     glb_idx(jnode)   = periodic_glb[rgg.nlat()-1]+2;
     part(jnode)      = mypart;
-    ridx(jnode)      = jnode;
     ++jnode;
   }
   int jsouth=-1;
@@ -597,7 +593,6 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,
     coords(jnode,YY) = y;
     glb_idx(jnode)   = periodic_glb[rgg.nlat()-1]+3;
     part(jnode)      = mypart;
-    ridx(jnode)      = jnode;
     ++jnode;
   }
     

@@ -88,9 +88,11 @@ template< typename DATA_TYPE >
 class FortranIndex
 {
 public:
+  enum { BASE = 1 };
+public:
   FortranIndex(DATA_TYPE* idx): idx_(idx) {}
-  void set(const DATA_TYPE& value) { *(idx_) = value+1; }
-  DATA_TYPE get() const { return *(idx_)-1; }
+  void set(const DATA_TYPE& value) { *(idx_) = value+BASE; }
+  DATA_TYPE get() const { return *(idx_)-BASE; }
   void operator=(const DATA_TYPE& value) { set(value); }
   FortranIndex<DATA_TYPE>& operator=(const FortranIndex<DATA_TYPE>& other) { set(other.get()); return *this; }
   FortranIndex<DATA_TYPE>& operator+(const DATA_TYPE& value) { *(idx_)+=value; return *this; }
@@ -304,5 +306,6 @@ private:
 #undef CHECK_BOUNDS_3
 #undef CHECK_BOUNDS_4
 #undef FROM_FORTRAN
+#undef TO_FORTRAN
 #undef INDEX_REF
 #endif

@@ -130,6 +130,10 @@ FieldT<int>& build_nodes_remote_idx( FunctionSpace& nodes )
         send_found[ proc[jpart] ].push_back( recv_node(jnode,2) );
         send_found[ proc[jpart] ].push_back( lookup[ll] );
       }
+      else
+      {
+        throw eckit::SeriousBug("Node that should be owned is not found",Here());
+      }
     }
   }
 

@@ -41,4 +41,4 @@ public:
 } // namespace meshgen
 } // namespace atlas
 
-#endif // RGG_hpp
+#endif // RGGMeshGenerator_hpp

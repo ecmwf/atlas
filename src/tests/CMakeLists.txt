@@ -58,6 +58,13 @@ ecbuild_add_test( TARGET test_halo
   LIBS     atlas
 )
 
+ecbuild_add_test( TARGET test_distmesh
+  BOOST
+  MPI      5
+  SOURCES  test_distmesh.cpp TestMeshes.hpp
+  LIBS     atlas
+)
+
 ecbuild_add_test( TARGET test_meshgen3d
   BOOST
   SOURCES   test_meshgen3d.cpp

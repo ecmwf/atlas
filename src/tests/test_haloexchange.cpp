@@ -19,6 +19,7 @@
 #include "atlas/atlas_config.h"
 #include "atlas/util/Array.hpp"
 #include "atlas/util/ArrayView.hpp"
+#include "atlas/util/IndexView.hpp"
 #include "atlas/mpl/HaloExchange.hpp"
 
 /// POD: Type to test
@@ -72,7 +73,7 @@ struct Fixture {
         break;
       }
     }
-    halo_exchange.setup(part.data(),ridx.data(),N);
+    halo_exchange.setup(part.data(),ridx.data(),0,N);
   }
   HaloExchange halo_exchange;
   std::vector<int> nb_nodes;

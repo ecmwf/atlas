@@ -342,14 +342,14 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
   int triags[] = { 42, 13, 12, 13, 12, 14,  0,  1,  0,  1,  1,  0,  1,  0, 14, 12, 13, 11, 14, 42};
   int nb_owned = 0;
 
-  std::vector<int> all_owned    ( grid.ngptot()+1, -1 );
+  std::vector<int> all_owned    ( grid.ngptot()+grid.nlat()+1, -1 );
 
   for( int p=0; p<generate.options.get<int>("nb_parts"); ++p)
   {
     generate.options.set("part",p);
     Mesh::Ptr m( generate( grid ) );
     BOOST_TEST_CHECKPOINT("generated grid " << p);
-    IndexView<int,1> ridx( m->function_space("nodes").field("remote_idx") );
+//    IndexView<int,1> ridx( m->function_space("nodes").field("remote_idx") );
     ArrayView<int,1> part( m->function_space("nodes").field("partition") );
     ArrayView<int,1> gidx( m->function_space("nodes").field("glb_idx") );
 
@@ -367,38 +367,42 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
     FunctionSpace& nodes = m->function_space("nodes");
     int nb_nodes = nodes.extents()[0];
 
-    std::vector<int> node_elem_connections( nb_nodes, 0 );
-
-    for( int f=0; f<m->nb_function_spaces(); ++f )
+    // Test if all nodes are connected
     {
-      FunctionSpace& elements = m->function_space(f);
-      if( elements.metadata<int>("type") == Entity::ELEMS )
+      std::vector<int> node_elem_connections( nb_nodes, 0 );
+
+      for( int f=0; f<m->nb_function_spaces(); ++f )
       {
-        int nb_elems = elements.extents()[0];
-        IndexView<int,2> elem_nodes ( elements.field("nodes") );
-        int nb_nodes_per_elem = elem_nodes.extents()[1];
-        for( int jelem=0; jelem<nb_elems; ++jelem )
+        FunctionSpace& elements = m->function_space(f);
+        if( elements.metadata<int>("type") == Entity::ELEMS )
         {
-          for( int jnode=0; jnode<nb_nodes_per_elem; ++jnode )
-            node_elem_connections[ elem_nodes(jelem,jnode) ]++;
+          int nb_elems = elements.extents()[0];
+          IndexView<int,2> elem_nodes ( elements.field("nodes") );
+          int nb_nodes_per_elem = elem_nodes.extents()[1];
+          for( int jelem=0; jelem<nb_elems; ++jelem )
+          {
+            for( int jnode=0; jnode<nb_nodes_per_elem; ++jnode )
+              node_elem_connections[ elem_nodes(jelem,jnode) ]++;
+          }
         }
       }
-    }
-    for( int jnode=0; jnode<nb_nodes; ++jnode )
-    {
-      BOOST_CHECK_GT( node_elem_connections[jnode] , 0 );
+      for( int jnode=0; jnode<nb_nodes; ++jnode )
+      {
+        BOOST_CHECK_GT( node_elem_connections[jnode] , 0 );
+      }
     }
 
-
+    // Test if all nodes are owned
     ArrayView<int,1> glb_idx( nodes.field("glb_idx") );
-    IsGhost is_ghost(nodes,p);
     for( int n=0; n<nb_nodes; ++n )
     {
-      int owned = !is_ghost(n);
-      if( ! is_ghost(n) )
+      int owned = (part(n)==p);
+      if( owned )
       {
         ++nb_owned;
         BOOST_CHECK( all_owned[ gidx(n) ] == -1 );
+        if( all_owned[ gidx(n)] != -1 )
+          std::cout << "node " << gidx(n) << " already visited for" << std::endl;
         all_owned[ gidx(n) ] = part(n);
       }
     }
@@ -408,7 +412,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
   {
     BOOST_CHECK( all_owned[gid] != -1 );
   }
-  BOOST_CHECK_EQUAL( nb_owned, grid.ngptot() );
+  BOOST_CHECK_EQUAL( nb_owned, grid.ngptot()+grid.nlat() );
 
   BOOST_CHECK_CLOSE( area, check_area, 1e-10 );
 
