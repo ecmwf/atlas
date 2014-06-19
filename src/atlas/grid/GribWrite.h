@@ -11,10 +11,10 @@
  */
 
 #include "atlas/grid/FieldSet.h"
+#include "eckit/grib/GribHandle.h"
 
 //------------------------------------------------------------------------------------------------------
 
-namespace eckit { class GribHandle; }
 namespace eckit { class PathName; }
 namespace eckit { class DataHandle; }
 
@@ -29,7 +29,7 @@ public: // methods
    /// Given a Grid, this function will find the closest matching GRIB samples file.
    /// The cloned/new handle of the GRIB sample file is returned.
    /// If no match found a NULL handle is returned.
-   static eckit::GribHandle* create_handle( const grid::Grid& );
+   static eckit::grib_handle_ptr create_handle( const grid::Grid& );
 
    /// Given a GridSpec return closest grib samples file.
    /// If no match found returns an empty string

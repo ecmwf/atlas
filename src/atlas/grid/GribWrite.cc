@@ -40,7 +40,7 @@ namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
 
-GribHandle* GribWrite::create_handle(const Grid& the_grid)
+eckit::grib_handle_ptr GribWrite::create_handle(const Grid& the_grid)
 {
    // From the Grid get the Grid Spec
    const GridSpec& the_grid_spec = the_grid.spec();
@@ -48,10 +48,11 @@ GribHandle* GribWrite::create_handle(const Grid& the_grid)
    // From the grid spec, determine the closest corresponding grib samples file
    std::string grib_sample_file = GribWrite::grib_sample_file(the_grid_spec);
    if (!grib_sample_file.empty()) {
-      return new GribHandle(grib_handle_new_from_samples(0,grib_sample_file.c_str()));
+      grib_handle* the_grib_handle = grib_handle_new_from_samples(0,grib_sample_file.c_str());
+      return eckit::grib_handle_ptr(new GribHandle(the_grib_handle));
    }
 
-   return NULL;
+   return eckit::grib_handle_ptr();
 }
 
 static std::string map_short_name_to_grib_sample_file(const std::string& short_name)
