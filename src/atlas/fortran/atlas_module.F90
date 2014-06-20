@@ -40,6 +40,7 @@ use atlas_functionspace_c_binding
 use atlas_mesh_c_binding
 use atlas_metadata_c_binding
 use atlas_haloexchange_c_binding
+use atlas_gather_c_binding
 use atlas_gmsh_c_binding
 use atlas_BuildPeriodicBoundaries_c_binding
 use atlas_BuildEdges_c_binding
@@ -65,6 +66,7 @@ integer, private, parameter :: wp = c_double ! working precision
 #include "atlas_module_FieldSet_i.f"
 #include "atlas_module_Metadata_i.f"
 #include "atlas_module_HaloExchange_i.f"
+#include "atlas_module_Gather_i.f"
 
 INTERFACE delete
 
@@ -125,6 +127,7 @@ end function
 #include "atlas_module_FieldSet_c.f"
 #include "atlas_module_Metadata_c.f"
 #include "atlas_module_HaloExchange_c.f"
+#include "atlas_module_Gather_c.f"
 
 
 ! -----------------------------------------------------------------------------

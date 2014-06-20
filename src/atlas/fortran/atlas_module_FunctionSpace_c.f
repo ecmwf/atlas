@@ -208,6 +208,12 @@ subroutine FunctionSpace__halo_exchange_real64_r4(this, field_data)
 end subroutine FunctionSpace__halo_exchange_real64_r4
 
 
+function FunctionSpace__get_gather(this) result(gather)
+  class(FunctionSpace_type), intent(in) :: this
+  type(Gather_type) :: gather
+  gather%private%object = atlas__FunctionSpace__gather( this%private%object )
+end function FunctionSpace__get_gather
+
 subroutine FunctionSpace__gather_real32_r1(this, field_data, glbfield_data)
   class(FunctionSpace_type), intent(in) :: this
   real(c_float), intent(in) :: field_data(:)

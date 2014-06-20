@@ -155,6 +155,7 @@ extern "C"
   void atlas__FunctionSpace__gather_float (FunctionSpace* This, float field_data[], int field_size, float glbfield_data[], int glbfield_size);
   void atlas__FunctionSpace__gather_double (FunctionSpace* This, double field_data[], int field_size, double glbfield_data[], int glbfield_size);
   HaloExchange const* atlas__FunctionSpace__halo_exchange (FunctionSpace* This);
+  Gather const* atlas__FunctionSpace__gather (FunctionSpace* This);
 
 }
 // ------------------------------------------------------------------

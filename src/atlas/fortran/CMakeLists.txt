@@ -51,6 +51,8 @@ add_custom_target( atlas_fortran_inc SOURCES
    atlas_module_FieldSet_c.f
    atlas_module_Metadata_i.f
    atlas_module_Metadata_c.f
+   atlas_module_Gather_i.f
+   atlas_module_Gather_c.f
    atlas_module_HaloExchange_i.f
    atlas_module_HaloExchange_c.f
 )

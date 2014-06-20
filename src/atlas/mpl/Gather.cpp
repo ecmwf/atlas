@@ -229,6 +229,11 @@ void atlas__Gather__setup (Gather* This,  int part[],
   This->setup(part,remote_idx,base,glb_idx,max_glb_idx,parsize);
 }
 
+int atlas__Gather__glb_dof (Gather* This)
+{
+  return This->glb_dof();
+}
+
 void atlas__Gather__execute_strided_int (Gather* This,
                                          int lfield[], int lvar_strides[], int lvar_extents[], int lvar_rank,
                                          int gfield[], int gvar_strides[], int gvar_extents[], int gvar_rank)

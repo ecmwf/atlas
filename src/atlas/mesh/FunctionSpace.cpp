@@ -367,6 +367,10 @@ HaloExchange const* atlas__FunctionSpace__halo_exchange (FunctionSpace* This) {
   return &This->halo_exchange();
 }
 
+Gather const* atlas__FunctionSpace__gather (FunctionSpace* This) {
+  return &This->gather();
+}
+
 
 void atlas__FunctionSpace__delete (FunctionSpace* This)  {
   delete This;

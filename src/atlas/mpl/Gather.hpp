@@ -331,6 +331,7 @@ extern "C"
   Gather* atlas__Gather__new ();
   void atlas__Gather__delete (Gather* This);
   void atlas__Gather__setup (Gather* This, int part[], int remote_idx[], int base, int glb_idx[], int max_glb_idx, int parsize);
+  int atlas__Gather__glb_dof (Gather* This);
   void atlas__Gather__execute_strided_int (Gather* This, int lfield[], int lvar_strides[], int lvar_extents[], int lvar_rank, int gfield[], int gvar_strides[], int gvar_extents[], int gvar_rank);
   void atlas__Gather__execute_strided_float (Gather* This, float lfield[], int lvar_strides[], int lvar_extents[], int lvar_rank, float gfield[], int gvar_strides[], int gvar_extents[], int gvar_rank);
   void atlas__Gather__execute_strided_double (Gather* This, double lfield[], int lvar_strides[], int lvar_extents[], int lvar_rank, double gfield[], int gvar_strides[], int gvar_extents[], int gvar_rank);
