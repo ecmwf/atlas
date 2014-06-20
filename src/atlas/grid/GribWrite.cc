@@ -11,6 +11,7 @@
 #include "grib_api.h"
 
 #include "eckit/eckit_config.h"
+#include "eckit/config/Resource.h"
 #include "eckit/exception/Exceptions.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/grib/GribHandle.h"
@@ -104,6 +105,10 @@ static std::string determine_grib_samples_dir()
    // GRIB_API_INCLUDE=-I/usr/local/lib/metaps/lib/grib_api/1.10.0/include
    //                  =/usr/local/lib/metaps/lib/grib_api/1.10.0/include /usr/local/apps/jasper/1.900.1/LP64/include /usr/local/apps/jasper/1.900.1/LP64/include
    // samples dir = /usr/local/lib/metaps/lib/grib_api/1.10.0/share/grib_api/samples
+
+    PathName samples_path ( eckit::Resource<std::string>("$GRIB_SAMPLES_PATH","") );
+    if( !samples_path.asString().empty() && samples_path.exists() )
+        return samples_path.asString();
 
    char* include_dir = getenv("GRIB_API_INCLUDE");
    if (!include_dir) return std::string();
