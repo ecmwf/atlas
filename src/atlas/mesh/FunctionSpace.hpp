@@ -62,7 +62,7 @@ public: // methods
   void resize( const std::vector<int>& extents );
 
   void parallelise();
-  void parallelise(const int proc[], const int remote_idx[], int size);
+  void parallelise(const int proc[], const int remote_idx[], const int glb_idx[], int size);
 
   template< typename DATA_TYPE >
   void halo_exchange( DATA_TYPE field_data[], int field_size )

@@ -97,7 +97,8 @@ public:
   DATA_TYPE&       operator()(int i)       { CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i); }
   const DATA_TYPE& operator[](int i) const { CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i); }
   DATA_TYPE&       operator[](int i)       { CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i); }
-  DATA_TYPE* data()            { return data_; }
+  DATA_TYPE*       data()        { return data_; }
+  const DATA_TYPE* data() const  { return data_; }
   const int* strides() const   { return strides_; }
   const int* extents() const   { return extents_; }
   std::size_t size() const { return extents_[0]; }
@@ -139,7 +140,8 @@ public:
   DATA_TYPE&       operator()(int i, int j)        { CHECK_BOUNDS_2(i,j); return *(data_+strides_[0]*i+j*strides_[1]); }
   const ArrayView<DATA_TYPE,1> operator[](int i) const { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,1>( data_+strides_[0]*i, strides_+1, extents_+1 ); }
   ArrayView<DATA_TYPE,1>       operator[](int i)       { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,1>( data_+strides_[0]*i, strides_+1, extents_+1 ); }
-  DATA_TYPE* data()            { return data_; }
+  DATA_TYPE*       data()            { return data_; }
+  const DATA_TYPE* data() const      { return data_; }
   const int* strides() const   { return strides_; }
   const int* extents() const   { return extents_; }
   std::size_t size() const { return extents_[0]; }
@@ -177,7 +179,8 @@ public:
   DATA_TYPE&       operator()(int i, int j, int k)       { CHECK_BOUNDS_3(i,j,k); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]); }
   const ArrayView<DATA_TYPE,2> operator[](int i) const { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,2>( data_+strides_[0]*i, strides_+1, extents_+1 ); }
   ArrayView<DATA_TYPE,2>       operator[](int i)       { CHECK_BOUNDS_1(i);return ArrayView<DATA_TYPE,2>( data_+strides_[0]*i, strides_+1, extents_+1 ); }
-  DATA_TYPE* data()            { return data_; }
+  DATA_TYPE*       data()            { return data_; }
+  const DATA_TYPE* data() const      { return data_; }
   const int* strides() const   { return strides_; }
   const int* extents() const   { return extents_; }
   std::size_t size() const { return extents_[0]; }
@@ -210,7 +213,8 @@ public:
   DATA_TYPE&       operator()(int i, int j, int k, int l)       { CHECK_BOUNDS_4(i,j,k,l); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]+l*strides_[3]); }
   const ArrayView<DATA_TYPE,3> operator[](int i) const { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,3>( data_+strides_[0]*i, strides_+1, extents_+1 ); }
   ArrayView<DATA_TYPE,3>       operator[](int i)       { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,3>( data_+strides_[0]*i, strides_+1, extents_+1 ); }
-  DATA_TYPE* data()            { return data_; }
+  DATA_TYPE*       data()            { return data_; }
+  const DATA_TYPE* data() const      { return data_; }
   const int* strides() const   { return strides_; }
   const int* extents() const   { return extents_; }
   std::size_t size() const { return extents_[0]; }

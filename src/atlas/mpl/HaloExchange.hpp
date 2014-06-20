@@ -8,7 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-
+/// @author Willem Deconinck
+/// @date   Nov 2013
 
 #ifndef HaloExchange_hpp
 #define HaloExchange_hpp
@@ -70,6 +71,10 @@ private: // methods
                           const int var_extents[],
                           int var_rank ) const;
 
+  template<typename DATA_TYPE, int RANK>
+  void var_info( const ArrayView<DATA_TYPE,RANK>& arr,
+                 std::vector<int>& varstrides,
+                 std::vector<int>& varextents ) const;
 
 private: // data
   int               sendcnt_;
@@ -301,30 +306,46 @@ void HaloExchange::unpack_recv_buffer( const DATA_TYPE recv_buffer[],
 template<typename DATA_TYPE>
 void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
 {
-  DEBUG()
-  int one[] = {1};
-  execute( field, one, one, 1);
+  int strides[] = {1};
+  int extents[] = {nb_vars};
+  execute( field, strides, extents, 1);
 }
 
+
+template<typename DATA_TYPE, int RANK>
+void HaloExchange::var_info( const ArrayView<DATA_TYPE,RANK>& arr,
+                             std::vector<int>& varstrides,
+                             std::vector<int>& varextents ) const
+{
+  int rank = std::max(1,RANK-1) ;
+  varstrides.resize(rank);
+  varextents.resize(rank);
+  if( RANK>1 )
+  {
+    varstrides.assign(arr.strides()+1,arr.strides()+RANK);
+    varextents.assign(arr.extents()+1,arr.extents()+RANK);
+  }
+  else
+  {
+    varstrides[0] = arr.strides()[0];
+    varextents[0] = 1;
+  }
+}
 
 template <typename DATA_TYPE, int RANK>
 void HaloExchange::execute( ArrayView<DATA_TYPE,RANK>& field ) const
 {
-  if( field.size() == parsize_ )
+  if( field.size() == parsize_)
   {
-    ArrayView<DATA_TYPE,RANK-1> vars(field[0]);
-    execute( field.data(), vars.strides(), vars.extents(), RANK-1 );
+    std::vector<int> varstrides, varextents;
+    var_info( field, varstrides, varextents );
+    execute( field.data(), varstrides.data(), varextents.data(), varstrides.size() );
   }
   else
   {
     NOTIMP; // Need to implement with parallel ranks > 1
   }
 }
-
-template <> void HaloExchange::execute<int,   1>( ArrayView<int,   1>& field ) const;
-template <> void HaloExchange::execute<float, 1>( ArrayView<float, 1>& field ) const;
-template <> void HaloExchange::execute<double,1>( ArrayView<double,1>& field ) const;
-
 
 
 // ------------------------------------------------------------------

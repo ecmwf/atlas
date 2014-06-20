@@ -9,6 +9,8 @@
  */
 
 
+/// @author Willem Deconinck
+/// @date   Nov 2013
 
 #include <stdexcept>
 #include <numeric>      // std::accumulate
@@ -141,28 +143,6 @@ void HaloExchange::setup( const int part[],
   is_setup_ = true;
 }
 
-
-
-template <>
-void HaloExchange::execute<int,1>( ArrayView<int,1>& field ) const
-{
-  int one[] = {1};
-  execute( field.data(), one, one, 1 );
-}
-
-template <>
-void HaloExchange::execute<float,1>( ArrayView<float,1>& field ) const
-{
-  int one[] = {1};
-  execute( field.data(), one, one, 1 );
-}
-
-template <>
-void HaloExchange::execute<double,1>( ArrayView<double,1>& field ) const
-{
-  int one[] = {1};
-  execute( field.data(), one, one, 1 );
-}
 
 /////////////////////
 

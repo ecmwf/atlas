@@ -13,6 +13,7 @@
 #include <cassert>
 #include <iostream>
 #include <sstream>
+#include <limits>
 
 #include "atlas/atlas_defines.h"
 #include "atlas/mesh/FunctionSpace.hpp"
@@ -258,10 +259,10 @@ template<>
   }
 }
 
-void FunctionSpace::parallelise(const int part[], const int remote_idx[], int parsize)
+void FunctionSpace::parallelise(const int part[], const int remote_idx[], const int glb_idx[], int parsize)
 {
   halo_exchange_.setup(part,remote_idx,REMOTE_IDX_BASE,parsize);
-//  gather_.setup(proc,glb_idx,master_glb_idx,bounds_,bounds_.size()-1);
+  gather_.setup(part,remote_idx,REMOTE_IDX_BASE,glb_idx,std::numeric_limits<int>::max(),parsize);
   glb_dof_ = gather_.glb_dof();
   for( int b=bounds_.size()-2; b>=0; --b)
   {
@@ -274,9 +275,10 @@ void FunctionSpace::parallelise()
 {
   if( name() == "nodes" )
   {
-    FieldT<int>& part       = field<int>("partition");
-    FieldT<int>& remote_idx = field<int>("remote_idx");
-    parallelise(part.data(),remote_idx.data(),part.size());
+    FieldT<int>& part = field<int>("partition");
+    FieldT<int>& ridx = field<int>("remote_idx");
+    FieldT<int>& gidx = field<int>("glb_idx");
+    parallelise(part.data(),ridx.data(),gidx.data(),part.size());
   }
   else
   {

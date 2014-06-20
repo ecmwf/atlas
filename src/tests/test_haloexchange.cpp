@@ -400,7 +400,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_v2, Fixture )
 BOOST_FIXTURE_TEST_CASE( test_rank0_ArrayView, Fixture )
 {
   int strides[] = {1};
-  int extents[] = {1};
+  int extents[] = {N};
   ArrayView<POD,1> arrv(gidx.data(),strides,extents);
 
   halo_exchange.execute(arrv);
