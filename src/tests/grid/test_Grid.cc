@@ -17,14 +17,18 @@
 
 #include "eckit/io/StdFile.h"
 #include "eckit/filesystem/PathName.h"
+#include "eckit/filesystem/LocalPathName.h"
 
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/GridBuilder.h"
+#include "atlas/grid/StackGribFile.h"
+#include "atlas/grid/GribWrite.h"
 
 
 using namespace std;
 using namespace eckit;
 using namespace atlas::grid;
+using namespace atlas;
 
 /// Test for Grid* derivatives
 /// This test uses the grib samples directory.
@@ -57,7 +61,9 @@ BOOST_AUTO_TEST_SUITE_END()
 
 static std::string determine_grib_samples_dir()
 {
-   // Ideally we should use: 'grib_info -t'
+   // TODO: This function will be replaced with GRIP API function.
+   //        See: GRIB-API GRIB-550 Need access to grib samples path (via API)
+
    // Try looking for environment variable GRIB_API_INCLUDE
    // GRIB_API_INCLUDE=-I/usr/local/lib/metaps/lib/grib_api/1.10.0/include
    //                  =/usr/local/lib/metaps/lib/grib_api/1.10.0/include /usr/local/apps/jasper/1.900.1/LP64/include /usr/local/apps/jasper/1.900.1/LP64/include
@@ -127,7 +133,7 @@ static void test_grib_file(const std::string& the_file_path)
 {
    std::cout << "\n===================================================================================================" << std::endl;
    std::cout << "Opening GRIB file " << the_file_path << std::endl;
-   GribFile the_grib_file(the_file_path);
+   StackGribFile the_grib_file(the_file_path);
 
    std::cout << " Get the grid type" << std::endl;
    char string_value[64];
@@ -137,7 +143,6 @@ static void test_grib_file(const std::string& the_file_path)
 
    std::string gridType = string_value;
    std::cout << " Create Grid derivatives " << gridType << std::endl;
-
    if ( gridType == "polar_stereographic" || gridType == "sh" ) {
       std::cout << " ** Ignoring grid types [ polar_stereographic | sh ] " << std::endl;
       return;
@@ -148,5 +153,24 @@ static void test_grib_file(const std::string& the_file_path)
    BOOST_CHECK_MESSAGE(the_grid,"GRIBGridBuilder::instance().build_grid_from_grib_handle failed for file " << the_file_path);
    if (!the_grid) return;
 
-   BOOST_CHECK_MESSAGE(the_grid->gridType() == gridType,"gridType(" << gridType << ") did not match Grid constructor(" << the_grid->gridType() << ") for file " << the_file_path);
+   // make sure the grid types match
+   BOOST_CHECK_MESSAGE(the_grid->spec().grid_type() == gridType,"gridType(" << gridType << ") did not match Grid constructor(" << the_grid->spec().grid_type() << ") for file " << the_file_path);
+
+   // The Grid produced, has a GRID spec, the grid spec can be used to, find the corresponding sample file.
+   // However we need to take into account that the GRIB samples, file are *NOT* unqique in their GRID definition.
+   // The sample file name produced does not have '.tmpl' extension
+   std::string generated_sample_file_name = GribWrite::grib_sample_file( the_grid->spec() );
+   BOOST_CHECK_MESSAGE( !generated_sample_file_name.empty()," Could find sample file for grid_spec " << the_grid->spec() );
+
+   // Note: many of the grib samples files are not UNIQUE in their grid specification:
+   // hence the use of WARN.
+   // remove .tmpl and get base part
+   eckit::LocalPathName path(the_file_path);
+   LocalPathName the_base_name = path.baseName(false);
+   std::string grib_sample_file = the_base_name.localPath();
+   BOOST_WARN_MESSAGE( generated_sample_file_name == grib_sample_file, "\nCould not match samples expected '"
+                       << grib_sample_file << "' but found('"
+                       << generated_sample_file_name
+                       << "') for grid spec "
+                       << the_grid->spec() );
 }

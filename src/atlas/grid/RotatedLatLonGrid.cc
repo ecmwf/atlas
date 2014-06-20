@@ -39,7 +39,8 @@ RotatedLatLonGrid::RotatedLatLonGrid()
    nsIncrement_(0),
    weIncrement_(0),
    nptsNS_(0),
-   nptsWE_(0)
+   nptsWE_(0),
+   the_grid_spec_("rotated_ll")
 {
 //   Log::info() << "RotatedLatLonGrid" << std::endl;
 }

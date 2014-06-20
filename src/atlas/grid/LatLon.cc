@@ -22,7 +22,8 @@ namespace grid {
 LatLon::LatLon( size_t nlat, size_t nlon, const BoundBox& bb) :
     nlat_(nlat),
     nlon_(nlon),
-    bound_box_(bb)
+    bound_box_(bb),
+    the_grid_spec_("latlon","LL")
 {
     ASSERT( nlat > 0 );
     ASSERT( nlon > 0 );

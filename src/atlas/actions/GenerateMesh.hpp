@@ -9,32 +9,28 @@
  */
 
 #ifndef atlas_GenerateMesh_hpp
-#define atlas_generateMesh_hpp
+#define atlas_GenerateMesh_hpp
 
 #include "atlas/mesh/Mesh.hpp"
 
 namespace atlas {
 namespace actions {
 
-
 Mesh* generate_reduced_gaussian_grid( const std::string& identifier );
 Mesh* generate_latlon_grid( int nlon, int nlat ); // must be even numbers
 
-
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
+
 extern "C"
 {
   Mesh* atlas__generate_reduced_gaussian_grid (char* identifier);
   Mesh* atlas__generate_latlon_grid (int nlon, int nlat);
 }
+
 // ------------------------------------------------------------------
-
-
-
 
 } // namespace actions
 } // namespace atlas
-
 
 #endif

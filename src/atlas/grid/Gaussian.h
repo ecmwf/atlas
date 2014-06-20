@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/GridSpec.h"
 
 //-----------------------------------------------------------------------------
 
@@ -37,13 +38,13 @@ public: // methods
 
     virtual std::string hash() const;
 
-    virtual const char* gridType() const { return "gaussian"; }
-
     virtual BoundBox boundingBox() const;
 
     virtual size_t nPoints() const { return coordinates_.size(); }
 
     virtual void coordinates( Grid::Coords & ) const;
+
+    virtual const GridSpec& spec() const { return the_grid_spec_ ;}
 
     /// @deprecated will be removed soon as it exposes the inner storage of the coordinates
     virtual const std::vector<Point>& coordinates() const { return coordinates_; }
@@ -58,6 +59,7 @@ protected:
 
 private:
 
+    GridSpec      the_grid_spec_;       /// < unique description of Grid
 };
 
 //-----------------------------------------------------------------------------

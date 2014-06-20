@@ -24,7 +24,8 @@ namespace grid {
 
 Gaussian::Gaussian( size_t resolution, const BoundBox& bb) :
     resolution_(resolution),
-    bound_box_(bb)
+    bound_box_(bb),
+    the_grid_spec_("gaussian","GG")
 {
     ASSERT( resolution_ > 0 );
 
@@ -75,7 +76,6 @@ Gaussian::Gaussian( size_t resolution, const BoundBox& bb) :
            coordinates_.push_back( Point( -lats[i], lons[j] ));
        }
     }
-
 }
 
 Gaussian::~Gaussian()

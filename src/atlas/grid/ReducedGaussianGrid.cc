@@ -35,7 +35,8 @@ namespace grid {
 //          assumes it is grid points inclusive of the area.
 
 ReducedGaussianGrid::ReducedGaussianGrid()
-: gaussianNumber_(0)
+: gaussianNumber_(0),
+  the_grid_spec_("reduced_gg")
 {
 }
 

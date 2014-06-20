@@ -23,7 +23,9 @@ namespace grid {
 
 Unstructured::Unstructured( std::vector< Point >* pts, const std::string& hash ) :
     points_(pts),
-    hash_(hash)
+    hash_(hash),
+    the_grid_spec_("unstructured","U")
+
 {
     const std::vector<Point>& p = *points_;
     const size_t npts = p.size();
