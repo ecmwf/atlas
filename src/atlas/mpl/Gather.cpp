@@ -153,18 +153,22 @@ void Gather::setup( const int part[],
     ++recvcounts_[node_sort[n].p] ;
   }
   recvdispls_[0]=0;
+
   for (int jproc=1; jproc<nproc; ++jproc) // start at 1
   {
     recvdispls_[jproc]=recvcounts_[jproc-1]+recvdispls_[jproc-1];
   }
   recvcnt_ = std::accumulate(recvcounts_.begin(),recvcounts_.end(),0);
 
+
+  recvmap_.clear(); recvmap_.resize(recvcnt_);
   std::vector<int> needed(recvcnt_);
   std::vector<int> idx(nproc,0);
   for( int n=0; n<node_sort.size(); ++n )
   {
     int jproc = node_sort[n].p;
     needed[ recvdispls_[jproc]+idx[jproc] ] = node_sort[n].i; // index on sending proc
+    recvmap_[recvdispls_[jproc]+idx[jproc]] = n;
     ++idx[jproc];
   }
 
@@ -204,6 +208,12 @@ void Gather::setup( const int part[],
 //   for( int i=0; i< sendcnt_; ++i)
 //     std::cout << sendmap_[i] << " ";
 //   std::cout << std::endl;
+
+
+//  for( int i=0; i<recvcnt_; ++i )
+//  {
+//    ASSERT( node_sort[i].g == i+1 );
+//  }
 
 
   is_setup_ = true;

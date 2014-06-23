@@ -164,11 +164,11 @@ void atlas__HaloExchange__execute_strided_int (HaloExchange* This, int field[], 
   This->execute(field,var_strides,var_extents,var_rank);
 }
 
-void atlas__HaloExchange__execute_strided_double (HaloExchange* This, float field[], int var_strides[], int var_extents[], int var_rank) {
+void atlas__HaloExchange__execute_strided_float (HaloExchange* This, float field[], int var_strides[], int var_extents[], int var_rank) {
   This->execute(field,var_strides,var_extents,var_rank);
 }
 
-void atlas__HaloExchange__execute_strided_float (HaloExchange* This, double field[], int var_strides[], int var_extents[], int var_rank) {
+void atlas__HaloExchange__execute_strided_double (HaloExchange* This, double field[], int var_strides[], int var_extents[], int var_rank) {
   This->execute(field,var_strides,var_extents,var_rank);
 }
 

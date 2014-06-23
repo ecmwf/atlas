@@ -93,6 +93,7 @@ private: // data
   std::vector<int>  recvcounts_;
   std::vector<int>  recvdispls_;
   std::vector<int>  sendmap_;
+  std::vector<int>  recvmap_;
 
   int nproc;
   int myproc;
@@ -115,7 +116,7 @@ void Gather::execute( const DATA_TYPE lfield[],
 {
   if( ! is_setup_ )
   {
-    throw eckit::SeriousBug("HaloExchange was not setup",Here());
+    throw eckit::SeriousBug("Gather was not setup",Here());
   }
 
   int tag=1;
@@ -226,7 +227,7 @@ void Gather::unpack_recv_buffer( const DATA_TYPE recv_buffer[],
   case 1:
     for( int p=0; p<recvcnt_; ++p)
     {
-      const int pp = recv_stride*p;
+      const int pp = recv_stride*recvmap_[p];
       for( int i=0; i<var_extents[0]; ++i)
       {
         field[ pp + i*var_strides[0] ] = recv_buffer[ibuf++];
@@ -236,7 +237,7 @@ void Gather::unpack_recv_buffer( const DATA_TYPE recv_buffer[],
   case 2:
     for( int p=0; p<recvcnt_; ++p)
     {
-      const int pp = recv_stride*p;
+      const int pp = recv_stride*recvmap_[p];
       for( int i=0; i<var_extents[0]; ++i )
       {
         for( int j=0; j<var_extents[1]; ++j )
@@ -250,7 +251,7 @@ void Gather::unpack_recv_buffer( const DATA_TYPE recv_buffer[],
   case 3:
     for( int p=0; p<recvcnt_; ++p)
     {
-      const int pp = recv_stride*p;
+      const int pp = recv_stride*recvmap_[p];
       for( int i=0; i<var_extents[0]; ++i )
       {
         for( int j=0; j<var_extents[1]; ++j )
