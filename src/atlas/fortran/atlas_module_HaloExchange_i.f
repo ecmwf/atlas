@@ -28,6 +28,7 @@ contains
   procedure, private :: HaloExchange__execute_real64_r1
   procedure, private :: HaloExchange__execute_real64_r2
   procedure, private :: HaloExchange__execute_real64_r3
+  procedure, private :: HaloExchange__execute_real64_r4
   generic :: execute => &
       & HaloExchange__execute_int32_r1, &
       & HaloExchange__execute_int32_r2, &
@@ -37,6 +38,7 @@ contains
       & HaloExchange__execute_real32_r3, &
       & HaloExchange__execute_real64_r1, &
       & HaloExchange__execute_real64_r2, &
-      & HaloExchange__execute_real64_r3
+      & HaloExchange__execute_real64_r3, &
+      & HaloExchange__execute_real64_r4
 END TYPE HaloExchange_type
 !------------------------------------------------------------------------------

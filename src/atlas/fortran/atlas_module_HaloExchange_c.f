@@ -24,89 +24,113 @@ subroutine HaloExchange__setup(this, part, remote_idx)
 end subroutine HaloExchange__setup
 
 
-subroutine HaloExchange__execute_int32_r1(this, field_data, nb_vars)
+subroutine HaloExchange__execute_int32_r1(this, field_data)
   class(HaloExchange_type), intent(in) :: this
   integer, intent(inout) :: field_data(:)
-  integer, optional, intent(in) :: nb_vars
-  if (.not. present(nb_vars) ) then
-    call atlas__HaloExchange__execute_int( this%private%object, field_data, 1 )
-  else
-    call atlas__HaloExchange__execute_int( this%private%object, field_data, nb_vars )
-  end if
+  integer :: strides(1), extents(1)
+  strides = (/ stride(field_data,1) /)
+  extents = (/ 1                    /)
+  call atlas__HaloExchange__execute_strided_int( this%private%object, field_data, &
+    & strides, extents, 1 )
 end subroutine HaloExchange__execute_int32_r1
 
-
-subroutine HaloExchange__execute_int32_r2(this, field_data, nb_vars)
+subroutine HaloExchange__execute_int32_r2(this, field_data)
   class(HaloExchange_type), intent(in) :: this
   integer, intent(inout) :: field_data(:,:)
-  integer, intent(in) :: nb_vars
   integer, pointer :: view(:)
+  integer :: strides(2), extents(2)
   view => view1d(field_data)
-  call atlas__HaloExchange__execute_int( this%private%object, view, nb_vars )
+  strides = (/ stride(field_data,2) , stride(field_data,1) /)
+  extents = (/ 1                    , ubound(field_data,1) /)
+  call atlas__HaloExchange__execute_strided_int( this%private%object, view, &
+    & strides, extents, 2 )
 end subroutine HaloExchange__execute_int32_r2
 
-
-subroutine HaloExchange__execute_int32_r3(this, field_data, nb_vars)
+subroutine HaloExchange__execute_int32_r3(this, field_data)
   class(HaloExchange_type), intent(in) :: this
   integer, intent(inout) :: field_data(:,:,:)
-  integer, intent(in) :: nb_vars
   integer, pointer :: view(:)
+  integer :: strides(3), extents(3)
   view => view1d(field_data)
-  call atlas__HaloExchange__execute_int( this%private%object, view, nb_vars )
+  strides = (/ stride(field_data,3), stride(field_data,2) , stride(field_data,1) /)
+  extents = (/ 1,                    ubound(field_data,2) , ubound(field_data,1) /)
+  call atlas__HaloExchange__execute_strided_int( this%private%object, view, &
+    & strides, extents, 3 )
 end subroutine HaloExchange__execute_int32_r3
 
-subroutine HaloExchange__execute_real32_r1(this, field_data, nb_vars)
+subroutine HaloExchange__execute_real32_r1(this, field_data)
   class(HaloExchange_type), intent(in) :: this
   real(c_float), intent(inout) :: field_data(:)
-  integer, optional, intent(in) :: nb_vars
-  if (.not. present(nb_vars) ) then
-    call atlas__HaloExchange__execute_float( this%private%object, field_data, 1 )
-  else
-    call atlas__HaloExchange__execute_float( this%private%object, field_data, nb_vars )
-  end if
+  integer :: strides(1), extents(1)
+  strides = (/ stride(field_data,1) /)
+  extents = (/ 1                    /)
+  call atlas__HaloExchange__execute_strided_float( this%private%object, field_data, &
+    & strides, extents, 1 )
 end subroutine HaloExchange__execute_real32_r1
-subroutine HaloExchange__execute_real32_r2(this, field_data, nb_vars)
+subroutine HaloExchange__execute_real32_r2(this, field_data)
   class(HaloExchange_type), intent(in) :: this
   real(c_float), intent(inout) :: field_data(:,:)
-  integer, intent(in) :: nb_vars
   real(c_float), pointer :: view(:)
+  integer :: strides(2), extents(2)
   view => view1d(field_data)
-  call atlas__HaloExchange__execute_float( this%private%object, view, nb_vars )
+  strides = (/ stride(field_data,2) , stride(field_data,1) /)
+  extents = (/ 1                    , ubound(field_data,1) /)
+  call atlas__HaloExchange__execute_strided_float( this%private%object, view, &
+    & strides, extents, 2 )
 end subroutine HaloExchange__execute_real32_r2
-subroutine HaloExchange__execute_real32_r3(this, field_data, nb_vars)
+subroutine HaloExchange__execute_real32_r3(this, field_data)
   class(HaloExchange_type), intent(in) :: this
   real(c_float), intent(inout) :: field_data(:,:,:)
-  integer, intent(in) :: nb_vars
   real(c_float), pointer :: view(:)
+  integer :: strides(3), extents(3), rank=3
   view => view1d(field_data)
-  call atlas__HaloExchange__execute_float( this%private%object, view, nb_vars )
+  strides = (/ stride(field_data,3), stride(field_data,2) , stride(field_data,1) /)
+  extents = (/ 1,                    ubound(field_data,2) , ubound(field_data,1) /)
+  call atlas__HaloExchange__execute_strided_float( this%private%object, view, &
+    & strides, extents, rank )
 end subroutine HaloExchange__execute_real32_r3
 
-subroutine HaloExchange__execute_real64_r1(this, field_data, nb_vars)
+subroutine HaloExchange__execute_real64_r1(this, field_data)
   class(HaloExchange_type), intent(in) :: this
   real(c_double), intent(inout) :: field_data(:)
-  integer, optional, intent(in) :: nb_vars
-  if (.not. present(nb_vars) ) then
-    call atlas__HaloExchange__execute_double( this%private%object, field_data, 1 )
-  else
-    call atlas__HaloExchange__execute_double( this%private%object, field_data, nb_vars )
-  end if
+  integer :: strides(1), extents(1)
+  strides = (/ stride(field_data,1) /)
+  extents = (/ 1                    /)
+  call atlas__HaloExchange__execute_strided_double( this%private%object, field_data, &
+    & strides, extents, 1 )
 end subroutine HaloExchange__execute_real64_r1
-subroutine HaloExchange__execute_real64_r2(this, field_data, nb_vars)
+subroutine HaloExchange__execute_real64_r2(this, field_data)
   class(HaloExchange_type), intent(in) :: this
   real(c_double), intent(inout) :: field_data(:,:)
-  integer, intent(in) :: nb_vars
   real(c_double), pointer :: view(:)
+  integer :: strides(2), extents(2)
   view => view1d(field_data)
-  call atlas__HaloExchange__execute_double( this%private%object, view, nb_vars )
+  strides = (/ stride(field_data,2) , stride(field_data,1) /)
+  extents = (/ 1                    , ubound(field_data,1) /)
+  call atlas__HaloExchange__execute_strided_double( this%private%object, view, &
+    & strides, extents, 2 )
 end subroutine HaloExchange__execute_real64_r2
-subroutine HaloExchange__execute_real64_r3(this, field_data, nb_vars)
+subroutine HaloExchange__execute_real64_r3(this, field_data)
   class(HaloExchange_type), intent(in) :: this
   real(c_double), intent(inout) :: field_data(:,:,:)
-  integer, intent(in) :: nb_vars
   real(c_double), pointer :: view(:)
+  integer :: strides(3), extents(3), rank=3
   view => view1d(field_data)
-  call atlas__HaloExchange__execute_double( this%private%object, view, nb_vars )
+  strides = (/ stride(field_data,3), stride(field_data,2) , stride(field_data,1) /)
+  extents = (/ 1,                    ubound(field_data,2) , ubound(field_data,1) /)
+  call atlas__HaloExchange__execute_strided_double( this%private%object, view, &
+    & strides, extents, rank )
 end subroutine HaloExchange__execute_real64_r3
+subroutine HaloExchange__execute_real64_r4(this, field_data)
+  class(HaloExchange_type), intent(in) :: this
+  real(c_double), intent(inout) :: field_data(:,:,:,:)
+  real(c_double), pointer :: view(:)
+  integer :: strides(4), extents(4), rank=4
+  view => view1d(field_data)
+  strides = (/ stride(field_data,4), stride(field_data,3), stride(field_data,2), stride(field_data,1) /)
+  extents = (/ 1,                    ubound(field_data,3), ubound(field_data,2), ubound(field_data,1) /)
+  call atlas__HaloExchange__execute_strided_double( this%private%object, view, &
+    & strides, extents, rank )
+end subroutine HaloExchange__execute_real64_r4
 
 ! -----------------------------------------------------------------------------

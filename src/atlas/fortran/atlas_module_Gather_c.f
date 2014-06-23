@@ -38,104 +38,164 @@ function Gather__glb_dof(this) result(glb_dof)
   glb_dof = atlas__Gather__glb_dof(this%private%object)
 end function Gather__glb_dof
 
-subroutine Gather__execute_int32_r1(this, loc_field_data, glb_field_data, nb_vars)
+subroutine Gather__execute_int32_r1_r1(this, loc_field_data, glb_field_data)
   class(Gather_type), intent(in) :: this
   integer, intent(in)  :: loc_field_data(:)
   integer, intent(out) :: glb_field_data(:)
-  integer, optional, intent(in) :: nb_vars
-  if (.not. present(nb_vars) ) then
-    call atlas__Gather__execute_int( this%private%object, loc_field_data, glb_field_data, 1 )
-  else
-    call atlas__Gather__execute_int( this%private%object, loc_field_data, glb_field_data, nb_vars )
-  end if
-end subroutine Gather__execute_int32_r1
+  integer :: lstrides(1), lextents(1), lrank=1
+  integer :: gstrides(1), gextents(1), grank=1
+  lstrides = (/ stride(loc_field_data,2) /)
+  lextents = (/ 1                        /)
+  gstrides = (/ stride(glb_field_data,2) /)
+  gextents = (/ 1                        /)
+  call atlas__Gather__execute_strided_int( this%private%object, &
+    &  loc_field_data, lstrides, lextents, lrank, &
+    &  glb_field_data, gstrides, gextents, grank )
+end subroutine Gather__execute_int32_r1_r1
 
 
-subroutine Gather__execute_int32_r2(this, loc_field_data, glb_field_data, nb_vars)
+subroutine Gather__execute_int32_r2_r2(this, loc_field_data, glb_field_data)
   class(Gather_type), intent(in) :: this
   integer, intent(in)  :: loc_field_data(:,:)
   integer, intent(out) :: glb_field_data(:,:)
-  integer, intent(in)  :: nb_vars
   integer, pointer :: lview(:), gview(:)
+  integer :: lstrides(2), lextents(2), lrank=2
+  integer :: gstrides(2), gextents(2), grank=2
+  lstrides = (/ stride(loc_field_data,2), stride(loc_field_data,1) /)
+  lextents = (/ 1,                        size  (loc_field_data,1) /)
   lview => view1d(loc_field_data)
+  gstrides = (/ stride(glb_field_data,2), stride(glb_field_data,1) /)
+  gextents = (/ 1,                        size  (glb_field_data,1) /)
   gview => view1d(glb_field_data)
-  call atlas__Gather__execute_int( this%private%object, lview, gview, nb_vars )
-end subroutine Gather__execute_int32_r2
+  call atlas__Gather__execute_strided_int( this%private%object, &
+    &  lview, lstrides, lextents, lrank, &
+    &  gview, gstrides, gextents, grank )
+end subroutine Gather__execute_int32_r2_r2
 
 
-subroutine Gather__execute_int32_r3(this, loc_field_data, glb_field_data, nb_vars)
+subroutine Gather__execute_int32_r3_r3(this, loc_field_data, glb_field_data)
   class(Gather_type), intent(in) :: this
   integer, intent(in)  :: loc_field_data(:,:,:)
   integer, intent(out) :: glb_field_data(:,:,:)
-  integer, intent(in)  :: nb_vars
   integer, pointer :: lview(:), gview(:)
+  integer :: lstrides(3), lextents(3), lrank=3
+  integer :: gstrides(3), gextents(3), grank=3
+  lstrides = (/ stride(loc_field_data,3), stride(loc_field_data,2) , stride(loc_field_data,1) /)
+  lextents = (/ 1,                        size  (loc_field_data,2) , size(loc_field_data,1) /)
   lview => view1d(loc_field_data)
+  gstrides = (/ stride(glb_field_data,3), stride(glb_field_data,2) , stride(glb_field_data,1) /)
+  gextents = (/ 1,                        size  (glb_field_data,2) , size  (glb_field_data,1) /)
   gview => view1d(glb_field_data)
-  call atlas__Gather__execute_int( this%private%object, lview, gview, nb_vars )
-end subroutine Gather__execute_int32_r3
+  call atlas__Gather__execute_strided_int( this%private%object, &
+    &  lview, lstrides, lextents, lrank, &
+    &  gview, gstrides, gextents, grank )
+end subroutine Gather__execute_int32_r3_r3
 
-subroutine Gather__execute_real32_r1(this, loc_field_data, glb_field_data, nb_vars)
+subroutine Gather__execute_real32_r1_r1(this, loc_field_data, glb_field_data)
   class(Gather_type), intent(in) :: this
   real(c_float), intent(in)  :: loc_field_data(:)
   real(c_float), intent(out) :: glb_field_data(:)
-  integer, optional, intent(in) :: nb_vars
-  if (.not. present(nb_vars) ) then
-    call atlas__Gather__execute_float( this%private%object, loc_field_data, glb_field_data, 1 )
-  else
-    call atlas__Gather__execute_float( this%private%object, loc_field_data, glb_field_data, nb_vars )
-  end if
-end subroutine Gather__execute_real32_r1
-subroutine Gather__execute_real32_r2(this, loc_field_data, glb_field_data, nb_vars)
+  integer :: lstrides(1), lextents(1), lrank=1
+  integer :: gstrides(1), gextents(1), grank=1
+  lstrides = (/ stride(loc_field_data,2) /)
+  lextents = (/ 1                        /)
+  gstrides = (/ stride(glb_field_data,2) /)
+  gextents = (/ 1                        /)
+  call atlas__Gather__execute_strided_float( this%private%object, &
+    &  loc_field_data, lstrides, lextents, lrank, &
+    &  glb_field_data, gstrides, gextents, grank )
+end subroutine Gather__execute_real32_r1_r1
+subroutine Gather__execute_real32_r2_r2(this, loc_field_data, glb_field_data)
   class(Gather_type), intent(in) :: this
   real(c_float), intent(in)  :: loc_field_data(:,:)
   real(c_float), intent(out) :: glb_field_data(:,:)
-  integer, intent(in) :: nb_vars
   real(c_float), pointer :: lview(:), gview(:)
+  integer :: lstrides(2), lextents(2), lrank=2
+  integer :: gstrides(2), gextents(2), grank=2
+  lstrides = (/ stride(loc_field_data,2), stride(loc_field_data,1) /)
+  lextents = (/ 1,                        size  (loc_field_data,1) /)
   lview => view1d(loc_field_data)
+  gstrides = (/ stride(glb_field_data,2), stride(glb_field_data,1) /)
+  gextents = (/ 1,                        size  (glb_field_data,1) /)
   gview => view1d(glb_field_data)
-  call atlas__Gather__execute_float( this%private%object, lview, gview, nb_vars )
-end subroutine Gather__execute_real32_r2
-subroutine Gather__execute_real32_r3(this, loc_field_data, glb_field_data, nb_vars)
+  call atlas__Gather__execute_strided_float( this%private%object, &
+    &  lview, lstrides, lextents, lrank, &
+    &  gview, gstrides, gextents, grank )
+end subroutine Gather__execute_real32_r2_r2
+subroutine Gather__execute_real32_r3_r3(this, loc_field_data, glb_field_data)
   class(Gather_type), intent(in) :: this
   real(c_float), intent(in)  :: loc_field_data(:,:,:)
   real(c_float), intent(out) :: glb_field_data(:,:,:)
-  integer, intent(in) :: nb_vars
   real(c_float), pointer :: lview(:), gview(:)
+  integer :: lstrides(3), lextents(3), lrank=3
+  integer :: gstrides(3), gextents(3), grank=3
+  lstrides = (/ stride(loc_field_data,3), stride(loc_field_data,2) , stride(loc_field_data,1) /)
+  lextents = (/ 1,                        size  (loc_field_data,2) , size  (loc_field_data,1) /)
   lview => view1d(loc_field_data)
+  gstrides = (/ stride(glb_field_data,3), stride(glb_field_data,2) , stride(glb_field_data,1) /)
+  gextents = (/ 1,                        size  (glb_field_data,2) , size  (glb_field_data,1) /)
   gview => view1d(glb_field_data)
-  call atlas__Gather__execute_float( this%private%object, lview, gview, nb_vars )
-end subroutine Gather__execute_real32_r3
+  call atlas__Gather__execute_strided_float( this%private%object, &
+    &  lview, lstrides, lextents, lrank, &
+    &  gview, gstrides, gextents, grank )
+end subroutine Gather__execute_real32_r3_r3
 
-subroutine Gather__execute_real64_r1(this, loc_field_data, glb_field_data, nb_vars)
+subroutine Gather__execute_real64_r1_r1(this, loc_field_data, glb_field_data)
   class(Gather_type), intent(in) :: this
   real(c_double), intent(in)   :: loc_field_data(:)
   real(c_double), intent(out)  :: glb_field_data(:)
-  integer, optional, intent(in)  :: nb_vars
-  if (.not. present(nb_vars) ) then
-    call atlas__Gather__execute_double( this%private%object, loc_field_data, glb_field_data, 1 )
-  else
-    call atlas__Gather__execute_double( this%private%object, loc_field_data, glb_field_data, nb_vars )
-  end if
-end subroutine Gather__execute_real64_r1
-subroutine Gather__execute_real64_r2(this, loc_field_data, glb_field_data, nb_vars)
+  integer :: lstrides(1), lextents(1), lrank=1
+  integer :: gstrides(1), gextents(1), grank=1
+  lstrides = (/ stride(loc_field_data,1) /)
+  lextents = (/ 1                        /)
+  gstrides = (/ stride(glb_field_data,1) /)
+  gextents = (/ 1                        /)
+  call atlas__Gather__execute_strided_double( this%private%object, &
+    &  loc_field_data, lstrides, lextents, lrank, &
+    &  glb_field_data, gstrides, gextents, grank )
+end subroutine Gather__execute_real64_r1_r1
+subroutine Gather__execute_real64_r2_r2(this, loc_field_data, glb_field_data)
   class(Gather_type), intent(in) :: this
   real(c_double), intent(in)  :: loc_field_data(:,:)
   real(c_double), intent(out) :: glb_field_data(:,:)
-  integer, intent(in) :: nb_vars
   real(c_double), pointer :: lview(:), gview(:)
+  integer :: lstrides(2), lextents(2), lrank=2
+  integer :: gstrides(2), gextents(2), grank=2
+  lstrides = (/ stride(loc_field_data,2), stride(loc_field_data,1) /)
+  lextents = (/ 1,                        size  (loc_field_data,1) /)
   lview => view1d(loc_field_data)
+  gstrides = (/ stride(glb_field_data,2), stride(glb_field_data,1) /)
+  gextents = (/ 1,                        size  (glb_field_data,1) /)
   gview => view1d(glb_field_data)
-  call atlas__Gather__execute_double( this%private%object, lview, gview, nb_vars )
-end subroutine Gather__execute_real64_r2
-subroutine Gather__execute_real64_r3(this, loc_field_data, glb_field_data, nb_vars)
+
+  write(0,*) "lsize = " , size(loc_field_data)
+  write(0,*) "gsize = " , size(glb_field_data)
+  write(0,*) "lstrides = ",lstrides
+  write(0,*) "lextents = ",lextents
+
+  write(0,*) "gstrides = ",lstrides
+  write(0,*) "gextents = ",lextents
+
+  call atlas__Gather__execute_strided_double( this%private%object, &
+    &  lview, lstrides, lextents, lrank, &
+    &  gview, gstrides, gextents, grank )
+end subroutine Gather__execute_real64_r2_r2
+subroutine Gather__execute_real64_r3_r3(this, loc_field_data, glb_field_data)
   class(Gather_type), intent(in) :: this
   real(c_double), intent(in)  :: loc_field_data(:,:,:)
   real(c_double), intent(out) :: glb_field_data(:,:,:)
-  integer, intent(in) :: nb_vars
   real(c_double), pointer :: lview(:), gview(:)
+  integer :: lstrides(3), lextents(3), lrank=3
+  integer :: gstrides(3), gextents(3), grank=3
+  lstrides = (/ stride(loc_field_data,3), stride(loc_field_data,2) , stride(loc_field_data,1) /)
+  lextents = (/ 1,                        size  (loc_field_data,2) , size  (loc_field_data,1) /)
   lview => view1d(loc_field_data)
+  gstrides = (/ stride(glb_field_data,3), stride(glb_field_data,2) , stride(glb_field_data,1) /)
+  gextents = (/ 1,                        size  (glb_field_data,2) , size  (glb_field_data,1) /)
   gview => view1d(glb_field_data)
-  call atlas__Gather__execute_double( this%private%object, lview, gview, nb_vars )
-end subroutine Gather__execute_real64_r3
+  call atlas__Gather__execute_strided_double( this%private%object, &
+    &  lview, lstrides, lextents, lrank, &
+    &  gview, gstrides, gextents, grank )
+end subroutine Gather__execute_real64_r3_r3
 
 ! -----------------------------------------------------------------------------

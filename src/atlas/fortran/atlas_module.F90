@@ -60,13 +60,13 @@ integer, private, parameter :: KIND_REAL64 =  8
 integer, private, parameter :: FIELD_NB_VARS = -1
 integer, private, parameter :: wp = c_double ! working precision
 
+#include "atlas_module_HaloExchange_i.f"
+#include "atlas_module_Gather_i.f"
 #include "atlas_module_Mesh_i.f"
 #include "atlas_module_FunctionSpace_i.f"
 #include "atlas_module_Field_i.f"
 #include "atlas_module_FieldSet_i.f"
 #include "atlas_module_Metadata_i.f"
-#include "atlas_module_HaloExchange_i.f"
-#include "atlas_module_Gather_i.f"
 
 INTERFACE delete
 
@@ -121,13 +121,14 @@ integer function integer_kind(kind)
   end if
 end function
 
+#include "atlas_module_HaloExchange_c.f"
+#include "atlas_module_Gather_c.f"
 #include "atlas_module_Mesh_c.f"
 #include "atlas_module_FunctionSpace_c.f"
 #include "atlas_module_Field_c.f"
 #include "atlas_module_FieldSet_c.f"
 #include "atlas_module_Metadata_c.f"
-#include "atlas_module_HaloExchange_c.f"
-#include "atlas_module_Gather_c.f"
+
 
 
 ! -----------------------------------------------------------------------------
