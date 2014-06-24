@@ -73,6 +73,12 @@ int MPI_Irecv ( void *buf, int count, MPI_Datatype datatype,
   int source, int tag, MPI_Comm comm, MPI_Request *request );
 int MPI_Isend ( void *buf, int count, MPI_Datatype datatype,
   int dest, int tag, MPI_Comm comm, MPI_Request *request );
+int MPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                void *recvbuf, int recvcount, MPI_Datatype recvtype,
+                int root, MPI_Comm comm);
+int MPI_Scatterv(void *sendbuf, int *sendcounts, int *displs,
+                 MPI_Datatype sendtype, void *recvbuf, int recvcount,
+                 MPI_Datatype recvtype, int root, MPI_Comm comm);
 int MPI_Wait ( MPI_Request *request, MPI_Status *status );
 
 /* If this is a C++ compiler, end C linkage */

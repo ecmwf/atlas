@@ -150,6 +150,22 @@ int MPI_Isend ( void *buf, int count, MPI_Datatype datatype,
   return MPI_SUCCESS;
 }
 
+int MPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                void *recvbuf, int recvcount, MPI_Datatype recvtype,
+                int root, MPI_Comm comm)
+{
+  memcpy( recvbuf, sendbuf, recvcount*MPI_SIZE(sendtype) );
+  return MPI_SUCCESS;
+}
+
+int MPI_Scatterv(void *sendbuf, int *sendcounts, int *displs,
+                 MPI_Datatype sendtype, void *recvbuf, int recvcount,
+                 MPI_Datatype recvtype, int root, MPI_Comm comm)
+{
+  memcpy( recvbuf, sendbuf, recvcount*MPI_SIZE(sendtype) );
+  return MPI_SUCCESS;
+}
+
 int MPI_Wait ( MPI_Request *request, MPI_Status *status ) 
 { 
   memcpy( MPI_glb_request.recvbuf, MPI_glb_request.sendbuf, 
