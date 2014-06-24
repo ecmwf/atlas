@@ -267,8 +267,9 @@ void build_edges( Mesh& mesh )
   int cnt=0;
   for( int edge=0; edge<nb_edges; ++edge )
   {
-    edge_nodes(edge,0)   = face_nodes(edge,0);
-    edge_nodes(edge,1)   = face_nodes(edge,1);
+    edge_nodes(edge,0) = face_nodes(edge,0);
+    edge_nodes(edge,1) = face_nodes(edge,1);
+
     ASSERT( edge_nodes(edge,0) < nb_nodes );
     ASSERT( edge_nodes(edge,1) < nb_nodes );
     edge_glb_idx(edge)   = uid(edge_nodes[edge]);
@@ -303,17 +304,24 @@ void build_pole_edges( Mesh& mesh )
   edges.resize( Extents(nb_edges+nb_pole_edges, Field::UNDEF_VARS) );
 
 
-  if( ! edges.has_field("nodes")      )  edges.create_field<int>("nodes",     2);
-  if( ! edges.has_field("glb_idx")    )  edges.create_field<int>("glb_idx",   1);
-  if( ! edges.has_field("partition")  )  edges.create_field<int>("partition", 1);
-  if( ! edges.has_field("to_elem")    )  edges.create_field<int>("to_elem",   4);
-  if( ! edges.has_field("remote_idx") )  edges.create_field<int>("remote_idx",1);
+  if( ! edges.has_field("nodes")      )    edges.create_field<int>("nodes",     2);
+  if( ! edges.has_field("glb_idx")    )    edges.create_field<int>("glb_idx",   1);
+  if( ! edges.has_field("partition")  )    edges.create_field<int>("partition", 1);
+  if( ! edges.has_field("to_elem")    )    edges.create_field<int>("to_elem",   4);
+  if( ! edges.has_field("remote_idx") )    edges.create_field<int>("remote_idx",1);
+  if( ! edges.has_field("is_pole_edge") )  edges.create_field<int>("is_pole_edge",1);
 
   IndexView<int,2> edge_nodes   ( edges.field( "nodes"      ) );
   ArrayView<int,1> edge_glb_idx ( edges.field( "glb_idx"    ) );
   ArrayView<int,1> edge_part    ( edges.field( "partition"  ) );
   IndexView<int,1> edge_ridx    ( edges.field( "remote_idx" ) );
+  ArrayView<int,1> is_pole_edge ( edges.field( "is_pole_edge" ) );
   IndexView<int,3> edge_to_elem ( edges.field( "to_elem"    ).data<int>(), Extents(nb_edges+nb_pole_edges,2,2) );
+
+  for(int edge=0; edge<nb_edges; ++edge)
+  {
+    is_pole_edge(edge) = 0;
+  }
 
   int cnt = 0;
   ComputeUniquePoleEdgeIndex uid( nodes );
@@ -328,6 +336,7 @@ void build_pole_edges( Mesh& mesh )
     edge_to_elem(edge,0,1) = -1;
     edge_to_elem(edge,1,0) = -1;
     edge_to_elem(edge,1,1) = -1;
+    is_pole_edge(edge) = 1;
   }
 }
 
