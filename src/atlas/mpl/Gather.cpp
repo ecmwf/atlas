@@ -50,28 +50,6 @@ bool operator < (const int g, const Node& n)
   return ( g < n.g );
 }
 
-
-struct IsGhostPoint
-{
-  IsGhostPoint( const int part[], const int ridx[], const int base, const int N )
-  {
-    part_   = part;
-    ridx_   = ridx;
-    base_   = base;
-    mypart_ = MPL::rank();
-  }
-
-  bool operator()(int idx)
-  {
-    if( part_[idx] != mypart_  ) return true;
-    if( ridx_[idx] != base_+idx ) return true;
-    return false;
-  }
-  int mypart_;
-  const int* part_;
-  const int* ridx_;
-  int base_;
-};
 }
 
 Gather::Gather() :
@@ -89,10 +67,10 @@ void Gather::setup( const int part[],
 {
   parsize_ = parsize;
 
-  sendcounts_.resize(nproc,0);
-  recvcounts_.resize(nproc,0);
-  senddispls_.resize(nproc,0);
-  recvdispls_.resize(nproc,0);
+  sendcounts_.resize(nproc); sendcounts_.assign(nproc,0);
+  recvcounts_.resize(nproc); recvcounts_.assign(nproc,0);
+  senddispls_.resize(nproc); senddispls_.assign(nproc,0);
+  recvdispls_.resize(nproc); recvdispls_.assign(nproc,0);
 
   Array<int> sendnodes(parsize_,3);
   ArrayView<int,2> nodes(sendnodes);

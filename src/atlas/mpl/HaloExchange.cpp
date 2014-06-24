@@ -58,10 +58,10 @@ void HaloExchange::setup( const int part[],
                           const int parsize )
 {
   parsize_ = parsize;
-  sendcounts_.resize(nproc,0);
-  recvcounts_.resize(nproc,0);
-  senddispls_.resize(nproc,0);
-  recvdispls_.resize(nproc,0);
+  sendcounts_.resize(nproc); sendcounts_.assign(nproc,0);
+  recvcounts_.resize(nproc); recvcounts_.assign(nproc,0);
+  senddispls_.resize(nproc); senddispls_.assign(nproc,0);
+  recvdispls_.resize(nproc); recvdispls_.assign(nproc,0);
 
   /*
     Find the amount of nodes this proc has to receive from each other proc
@@ -83,7 +83,8 @@ void HaloExchange::setup( const int part[],
 
   MPL_CHECK_RESULT( MPI_Alltoall( recvcounts_.data(), 1, MPI_INT, sendcounts_.data(), 1, MPI_INT, MPI_COMM_WORLD ) );
   sendcnt_ = std::accumulate(sendcounts_.begin(),sendcounts_.end(),0);
-  //std::cout << myproc << ":  sendcnt = " << sendcnt_ << std::endl;
+//  std::cout << myproc << ":  sendcnt = " << sendcnt_ << std::endl;
+//  std::cout << myproc << ":  recvcnt = " << recvcnt_ << std::endl;
 
   recvdispls_[0]=0;
   senddispls_[0]=0;
