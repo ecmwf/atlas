@@ -79,6 +79,7 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
   ArrayView<double,2> coords    ( nodes.field( "coordinates" ) );
   ArrayView<int,   1> glb_idx   ( nodes.field( "glb_idx"     ) );
   ArrayView<int,   1> part      ( nodes.field( "partition"   ) );
+  IndexView<int,   1> ridx      ( nodes.field( "remote_idx"  ) );
   int nb_nodes = nodes.extents()[0];
 
   double min[2], max[2];
@@ -109,13 +110,18 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
   for (int node=0; node<nb_nodes; ++node)
   {
     //std::cout << "node " << node << "   " << std::abs(coords(YY,node)-ymax) << std::endl;
-    if ( std::abs(coords(node,YY)-max[YY])<tol )
+
+    // Only add edges that connect non-ghost nodes
+    if( ridx(node) == node && part(node) == MPL::rank() )
     {
-      pole_nodes[NORTH].insert(node);
-    }
-    else if ( std::abs(coords(node,YY)-min[YY])<tol )
-    {
-      pole_nodes[SOUTH].insert(node);
+      if ( std::abs(coords(node,YY)-max[YY])<tol )
+      {
+        pole_nodes[NORTH].insert(node);
+      }
+      else if ( std::abs(coords(node,YY)-min[YY])<tol )
+      {
+        pole_nodes[SOUTH].insert(node);
+      }
     }
   }
 
@@ -158,24 +164,25 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
             recip_node = other_node;
           }
         }
-        if ( std::abs( std::abs(coords(recip_node,XX) - coords(node,XX)) - M_PI) > tol )
-        {
-          //std::cout << MPL::rank() << "  :  distance = " << coords(recip_node,XX) - coords(node,XX) << std::endl;
-          if( MPL::rank() == part(node) )
-          {
-            throw eckit::SeriousBug("Not implemented yet, when pole-lattitude is split, "
-                                    "or non-even number of longitudes at pole",Here());
-          }
-          else
-          {
-            // pole is in halo of other partition, and is not completely full to connect edge
-            std::stringstream msg;
-            msg << "Pole is in halo of partition " << MPL::rank()
-                << " and cannot create edge to connect to other side of pole";
-            throw eckit::SeriousBug(msg.str(),Here());
-          }
-        }
-        else
+// This no longer works as only edges that connect non-ghost nodes are added
+//        if ( std::abs( std::abs(coords(recip_node,XX) - coords(node,XX)) - M_PI) > tol )
+//        {
+//          //std::cout << MPL::rank() << "  :  distance = " << coords(recip_node,XX) - coords(node,XX) << std::endl;
+//          if( MPL::rank() == part(node) )
+//          {
+//            throw eckit::SeriousBug("Not implemented yet, when pole-lattitude is split, "
+//                                    "or non-even number of longitudes at pole",Here());
+//          }
+//          else
+//          {
+//            // pole is in halo of other partition, and is not completely full to connect edge
+//            std::stringstream msg;
+//            msg << "Pole is in halo of partition " << MPL::rank()
+//                << " and cannot create edge to connect to other side of pole";
+//            throw eckit::SeriousBug(msg.str(),Here());
+//          }
+//        }
+//        else
         {
           pole_edge_nodes.push_back(node);
           pole_edge_nodes.push_back(recip_node);
