@@ -167,15 +167,6 @@ subroutine Gather__execute_real64_r2_r2(this, loc_field_data, glb_field_data)
   gstrides = (/ stride(glb_field_data,2), stride(glb_field_data,1) /)
   gextents = (/ 1,                        size  (glb_field_data,1) /)
   gview => view1d(glb_field_data)
-
-  write(0,*) "lsize = " , size(loc_field_data)
-  write(0,*) "gsize = " , size(glb_field_data)
-  write(0,*) "lstrides = ",lstrides
-  write(0,*) "lextents = ",lextents
-
-  write(0,*) "gstrides = ",lstrides
-  write(0,*) "gextents = ",lextents
-
   call atlas__Gather__execute_strided_double( this%private%object, &
     &  lview, lstrides, lextents, lrank, &
     &  gview, gstrides, gextents, grank )
