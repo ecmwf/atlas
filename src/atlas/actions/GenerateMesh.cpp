@@ -12,11 +12,45 @@
 #include "atlas/meshgen/RGG.hpp"
 #include "atlas/meshgen/RGGMeshGenerator.hpp"
 #include "atlas/actions/GenerateMesh.hpp"
-
 using namespace atlas::meshgen;
 
 namespace atlas {
 namespace actions {
+
+namespace {
+class TestGrid: public meshgen::RGG {
+public:
+  TestGrid(int nlat, int lon[]);
+};
+
+TestGrid::TestGrid(int nlat, int lon[]) : RGG()
+{
+  /*
+  First prediction of colatitudes
+  */
+  std::vector<double> colat(nlat);
+  double z;
+  for( int i=0; i<nlat; ++i )
+  {
+    z = (4.*(i+1.)-1.)*M_PI/(4.*2.*nlat+2.);
+    colat[i] = z+1./(tan(z)*(8.*(2.*nlat)*(2.*nlat)));
+  }
+  /*
+  Fill in final structures
+  */
+  lat_.resize(2*nlat);
+  lon_.resize(2*nlat);
+  std::copy( lon, lon+nlat, lon_.begin() );
+  std::reverse_copy( lon, lon+nlat, lon_.begin()+nlat );
+  std::copy( colat.begin(), colat.begin()+nlat, lat_.begin() );
+  std::reverse_copy( colat.begin(), colat.begin()+nlat, lat_.begin()+nlat );
+  for (int i=0; i<nlat; ++i)
+    lat_[i]=M_PI/2.-lat_[i];
+  for (int i=nlat; i<2*nlat; ++i)
+    lat_[i]=-M_PI/2.+lat_[i];
+}
+
+}
 
 Mesh* generate_reduced_gaussian_grid( const std::string& identifier )
 {
@@ -35,6 +69,13 @@ Mesh* generate_reduced_gaussian_grid( const std::string& identifier )
   else if( identifier == "T2047" ) mesh = generate(T2047());
   else if( identifier == "T3999" ) mesh = generate(T3999());
   else if( identifier == "T7999" ) mesh = generate(T7999());
+  else if( identifier == "D5")
+  {
+    int lon[] = {4,6,8,8,8};
+    TestGrid grid(5,lon);
+
+    mesh = generate( grid );
+  }
   else throw eckit::BadParameter("Cannot generate mesh "+identifier,Here());
 
   return mesh;
