@@ -111,9 +111,9 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
   {
     //std::cout << "node " << node << "   " << std::abs(coords(YY,node)-ymax) << std::endl;
 
-    // Only add edges that connect non-ghost nodes
-    if( ridx(node) == node && part(node) == MPL::rank() )
-    {
+//    // Only add edges that connect non-ghost nodes
+//    if( ridx(node) == node && part(node) == MPL::rank() )
+//    {
       if ( std::abs(coords(node,YY)-max[YY])<tol )
       {
         pole_nodes[NORTH].insert(node);
@@ -122,7 +122,7 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
       {
         pole_nodes[SOUTH].insert(node);
       }
-    }
+//    }
   }
 
   // Sanity check
@@ -149,21 +149,23 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
     for( std::set<int>::iterator it=pole_nodes[NS].begin(); it!=pole_nodes[NS].end(); ++it)
     {
       int node = *it;
-      double x1 = coords(node,XX);
-      double x2 = coords(node,XX) + M_PI;
-      double dist = 2.*M_PI;
-      if( x1>=min[XX]-tol && x1<=(max[XX]-min[XX])*0.5+tol )
+      int x1 = microdeg( coords(node,XX) );
+      int x2 = microdeg( coords(node,XX) + M_PI );
+      if( x1 >= BC::WEST && x2 < BC::EAST )
       {
-        int recip_node = -1;
         for( std::set<int>::iterator itr=pole_nodes[NS].begin(); itr!=pole_nodes[NS].end(); ++itr)
         {
           int other_node = *itr;
-          if( std::abs(coords(other_node,XX)-x2 )<dist )
+          if( microdeg( coords(other_node,XX) ) == x2 )
           {
-            dist = std::abs(coords(other_node,XX)-x2);
-            recip_node = other_node;
+            pole_edge_nodes.push_back(node);
+            pole_edge_nodes.push_back(other_node);
+            ++nb_pole_edges;
           }
         }
+      }
+    }
+  }
 // This no longer works as only edges that connect non-ghost nodes are added
 //        if ( std::abs( std::abs(coords(recip_node,XX) - coords(node,XX)) - M_PI) > tol )
 //        {
@@ -183,14 +185,11 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
 //          }
 //        }
 //        else
-        {
-          pole_edge_nodes.push_back(node);
-          pole_edge_nodes.push_back(recip_node);
-          ++nb_pole_edges;
-        }
-      }
-    }
-  }
+//        {
+//          pole_edge_nodes.push_back(node);
+//          pole_edge_nodes.push_back(recip_node);
+//          ++nb_pole_edges;
+//        }
 }
 
 
