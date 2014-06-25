@@ -299,8 +299,8 @@ void HaloExchange::unpack_recv_buffer( const DATA_TYPE recv_buffer[],
   default:
     NOTIMP;
   }
-  if( !field_changed )
-    std::cout << "WARNING: halo-exchange did not change field" << std::endl;
+//  if( !field_changed )
+//    std::cout << "WARNING: halo-exchange did not change field" << std::endl;
 }
 
 template<typename DATA_TYPE>
