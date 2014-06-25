@@ -20,4 +20,9 @@ contains
     if (.not. finalized) call MPI_FINALIZE (ierr)
   end subroutine MPL_finalize
 
+  subroutine MPL_barrier()
+    integer :: ierr
+    call MPI_Barrier ( MPI_COMM_WORLD, ierr );
+  end subroutine
+
 end module atlas_mpl_module

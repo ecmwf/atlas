@@ -67,6 +67,9 @@ subroutine Gather__execute_int32_r2_r2(this, loc_field_data, glb_field_data)
   gstrides = (/ stride(glb_field_data,2), stride(glb_field_data,1) /)
   gextents = (/ 1,                        size  (glb_field_data,1) /)
   gview => view1d(glb_field_data)
+  if( size(gview) == 0 ) then
+    allocate(gview(0))
+  endif
   call atlas__Gather__execute_strided_int( this%private%object, &
     &  lview, lstrides, lextents, lrank, &
     &  gview, gstrides, gextents, grank )
@@ -86,6 +89,9 @@ subroutine Gather__execute_int32_r3_r3(this, loc_field_data, glb_field_data)
   gstrides = (/ stride(glb_field_data,3), stride(glb_field_data,2) , stride(glb_field_data,1) /)
   gextents = (/ 1,                        size  (glb_field_data,2) , size  (glb_field_data,1) /)
   gview => view1d(glb_field_data)
+  if( size(gview) == 0 ) then
+    allocate(gview(0))
+  endif
   call atlas__Gather__execute_strided_int( this%private%object, &
     &  lview, lstrides, lextents, lrank, &
     &  gview, gstrides, gextents, grank )
@@ -118,6 +124,9 @@ subroutine Gather__execute_real32_r2_r2(this, loc_field_data, glb_field_data)
   gstrides = (/ stride(glb_field_data,2), stride(glb_field_data,1) /)
   gextents = (/ 1,                        size  (glb_field_data,1) /)
   gview => view1d(glb_field_data)
+  if( size(gview) == 0 ) then
+    allocate(gview(0))
+  endif
   call atlas__Gather__execute_strided_float( this%private%object, &
     &  lview, lstrides, lextents, lrank, &
     &  gview, gstrides, gextents, grank )
@@ -135,6 +144,9 @@ subroutine Gather__execute_real32_r3_r3(this, loc_field_data, glb_field_data)
   gstrides = (/ stride(glb_field_data,3), stride(glb_field_data,2) , stride(glb_field_data,1) /)
   gextents = (/ 1,                        size  (glb_field_data,2) , size  (glb_field_data,1) /)
   gview => view1d(glb_field_data)
+  if( size(gview) == 0 ) then
+    allocate(gview(0))
+  endif
   call atlas__Gather__execute_strided_float( this%private%object, &
     &  lview, lstrides, lextents, lrank, &
     &  gview, gstrides, gextents, grank )
@@ -167,6 +179,9 @@ subroutine Gather__execute_real64_r2_r2(this, loc_field_data, glb_field_data)
   gstrides = (/ stride(glb_field_data,2), stride(glb_field_data,1) /)
   gextents = (/ 1,                        size  (glb_field_data,1) /)
   gview => view1d(glb_field_data)
+  if( size(gview) == 0 ) then
+    allocate(gview(0))
+  endif
   call atlas__Gather__execute_strided_double( this%private%object, &
     &  lview, lstrides, lextents, lrank, &
     &  gview, gstrides, gextents, grank )
@@ -184,6 +199,9 @@ subroutine Gather__execute_real64_r3_r3(this, loc_field_data, glb_field_data)
   gstrides = (/ stride(glb_field_data,3), stride(glb_field_data,2) , stride(glb_field_data,1) /)
   gextents = (/ 1,                        size  (glb_field_data,2) , size  (glb_field_data,1) /)
   gview => view1d(glb_field_data)
+  if( size(gview) == 0 ) then
+    allocate(gview(0))
+  endif
   call atlas__Gather__execute_strided_double( this%private%object, &
     &  lview, lstrides, lextents, lrank, &
     &  gview, gstrides, gextents, grank )
