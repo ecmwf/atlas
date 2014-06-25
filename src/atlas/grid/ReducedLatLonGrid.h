@@ -1,5 +1,3 @@
-#ifndef atlas_reduced_lat_lon_grid_H
-#define atlas_reduced_lat_lon_grid_H
 /*
  * (C) Copyright 1996-2014 ECMWF.
  *
@@ -9,12 +7,13 @@
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
+#ifndef atlas_grid_reduced_lat_lon_grid_H
+#define atlas_grid_reduced_lat_lon_grid_H
 
 #include <cstddef>
 #include <vector>
 
 #include "atlas/grid/Grid.h"
-#include "atlas/grid/GridSpec.h"
 
 //-----------------------------------------------------------------------------
 
@@ -33,7 +32,8 @@ public:
    virtual BoundBox boundingBox() const { return bbox_;}
    virtual size_t nPoints() const { return points_.size(); }
    virtual void coordinates( Grid::Coords & ) const;
-   virtual const GridSpec& spec() const { return the_grid_spec_ ;}
+   virtual std::string gridType() const { return std::string("reduced_ll") ;}
+   virtual GridSpec* spec() const;
    /// @deprecated will be removed soon as it exposes the inner storage of the coordinates
    virtual const std::vector<Point>& coordinates() const { return points_; }
 
@@ -45,10 +45,9 @@ private:
    std::string hash_;
    BoundBox bbox_;
    double nsIncrement_;                   ///< In degrees
-   long nptsNS_;
+   long nptsNS_;                          ///< No of points along Y axes
    std::vector<long>    rgSpec_;          ///< No of points per latitude
    std::vector< Point > points_;           ///< storage of coordinate points
-   GridSpec             the_grid_spec_;    ///< unique description of Grid
 
    /// Added friend mechanism to minimise data copying, during construction
    friend class GribReducedLatLonGrid;

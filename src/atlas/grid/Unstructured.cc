@@ -11,6 +11,7 @@
 #include <limits>
 
 #include "eckit/log/Log.h"
+#include "atlas/grid/GridSpec.h"
 
 #include "atlas/grid/Unstructured.h"
 
@@ -23,9 +24,7 @@ namespace grid {
 
 Unstructured::Unstructured( std::vector< Point >* pts, const std::string& hash ) :
     points_(pts),
-    hash_(hash),
-    the_grid_spec_("unstructured","U")
-
+    hash_(hash)
 {
     const std::vector<Point>& p = *points_;
     const size_t npts = p.size();
@@ -77,6 +76,12 @@ void Unstructured::coordinates( Grid::Coords& r ) const
         r.lat(i) = p[i].lat();
         r.lon(i) = p[i].lon();
     }
+}
+
+GridSpec* Unstructured::spec() const
+{
+   GridSpec* grid_spec = new GridSpec(gridType(),"U");
+   return grid_spec;
 }
 
 //-----------------------------------------------------------------------------

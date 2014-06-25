@@ -20,7 +20,10 @@
 // ==================================================================================
 
 //#include "eckit/log/Log.h"
+#include "eckit/value/Value.h"
+
 #include "atlas/grid/RegularLatLonGrid.h"
+#include "atlas/grid/GridSpec.h"
 
 using namespace eckit;
 using namespace std;
@@ -36,8 +39,7 @@ RegularLatLonGrid::RegularLatLonGrid()
 :  nsIncrement_(0),
    weIncrement_(0),
    nptsNS_(0),
-   nptsWE_(0),
-   the_grid_spec_("regular_ll")
+   nptsWE_(0)
 {
 //   Log::info() << "RegularLatLonGrid" << std::endl;
 }
@@ -73,6 +75,25 @@ void RegularLatLonGrid::coordinates( Grid::Coords& r ) const
         r.lat(i) = points_[i].lat();
         r.lon(i) = points_[i].lon();
     }
+}
+
+GridSpec* RegularLatLonGrid::spec() const
+{
+   GridSpec* grid_spec = new GridSpec(gridType());
+
+   std::stringstream ss; ss << "LL" << nptsNS_ << "_" << nptsWE_;
+   grid_spec->set_short_name(ss.str());
+
+   grid_spec->set("Nj",eckit::Value(nptsNS_));
+   grid_spec->set("Ni",eckit::Value(nptsWE_));
+
+   grid_spec->set("hash",eckit::Value(hash_));
+   grid_spec->set("bottom_left_lat",eckit::Value(bbox_.bottom_left_.lat()));
+   grid_spec->set("bottom_left_lon",eckit::Value(bbox_.bottom_left_.lon()));
+   grid_spec->set("top_right_lat",eckit::Value(bbox_.top_right_.lat()));
+   grid_spec->set("top_right_lon",eckit::Value(bbox_.top_right_.lon()));
+
+   return grid_spec;
 }
 
 //-----------------------------------------------------------------------------

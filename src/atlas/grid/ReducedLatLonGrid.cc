@@ -21,7 +21,10 @@
 
 #include <stdexcept>
 
+#include "eckit/value/Value.h"
 //#include "eckit/log/Log.h"
+
+#include "atlas/grid/GridSpec.h"
 #include "atlas/grid/ReducedLatLonGrid.h"
 
 using namespace eckit;
@@ -36,8 +39,7 @@ namespace grid {
 
 ReducedLatLonGrid::ReducedLatLonGrid()
 :  nsIncrement_(0),
-   nptsNS_(0),
-   the_grid_spec_("reduced_ll")
+   nptsNS_(0)
 {
 //   Log::info() << "ReducedLatLonGrid" << std::endl;
 }
@@ -56,6 +58,24 @@ void ReducedLatLonGrid::coordinates( Grid::Coords& r ) const
         r.lat(i) = points_[i].lat();
         r.lon(i) = points_[i].lon();
     }
+}
+
+GridSpec* ReducedLatLonGrid::spec() const
+{
+   GridSpec* grid_spec = new GridSpec(gridType());
+
+   std::stringstream ss; ss << "RedLL" << nptsNS_;
+   grid_spec->set_short_name(ss.str());
+   grid_spec->set("Nj",eckit::Value(nptsNS_));
+   grid_spec->set("nsIncrement",eckit::Value(nsIncrement_));
+
+   grid_spec->set("hash",eckit::Value(hash_));
+   grid_spec->set("bottom_left_lat",eckit::Value(bbox_.bottom_left_.lat()));
+   grid_spec->set("bottom_left_lon",eckit::Value(bbox_.bottom_left_.lon()));
+   grid_spec->set("top_right_lat",eckit::Value(bbox_.top_right_.lat()));
+   grid_spec->set("top_right_lon",eckit::Value(bbox_.top_right_.lon()));
+
+   return grid_spec;
 }
 
 //-----------------------------------------------------------------------------

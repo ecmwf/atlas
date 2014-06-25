@@ -66,6 +66,13 @@ void GridSpec::print( std::ostream& s) const
    s << " ]";
 }
 
+
+Grid::Ptr GridSpec::build( const GridSpec& spec)
+{
+
+   return Grid::Ptr();
+}
+
 //------------------------------------------------------------------------------------------------------
 
 } // namespace grid

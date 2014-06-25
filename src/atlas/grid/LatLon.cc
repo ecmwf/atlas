@@ -9,6 +9,7 @@
  */
 
 #include "eckit/log/Log.h"
+#include "atlas/grid/GridSpec.h"
 
 #include "atlas/grid/LatLon.h"
 
@@ -22,8 +23,7 @@ namespace grid {
 LatLon::LatLon( size_t nlat, size_t nlon, const BoundBox& bb) :
     nlat_(nlat),
     nlon_(nlon),
-    bound_box_(bb),
-    the_grid_spec_("latlon","LL")
+    bound_box_(bb)
 {
     ASSERT( nlat > 0 );
     ASSERT( nlon > 0 );
@@ -72,6 +72,12 @@ void LatLon::coordinates( Grid::Coords& r ) const
         r.lat(i) = points_[i].lat();
         r.lon(i) = points_[i].lon();
     }
+}
+
+GridSpec* LatLon::spec() const
+{
+   GridSpec* grid_spec = new GridSpec(gridType(),"LL");
+   return grid_spec;
 }
 
 //-----------------------------------------------------------------------------

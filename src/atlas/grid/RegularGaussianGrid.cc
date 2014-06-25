@@ -21,7 +21,10 @@
 
 #include <stdexcept>
 
+#include "eckit/value/Value.h"
 //#include "eckit/log/Log.h"
+
+#include "atlas/grid/GridSpec.h"
 #include "atlas/grid/RegularGaussianGrid.h"
 
 using namespace eckit;
@@ -35,8 +38,7 @@ namespace grid {
 // Area: Can we assume area is multiple of the grids ?
 
 RegularGaussianGrid::RegularGaussianGrid()
-: gaussianNumber_(0),
-  the_grid_spec_("regular_gg")
+: gaussianNumber_(0),nj_(0)
 {
 //   Log::info() << "RegularGaussianGrid" << std::endl;
 }
@@ -73,6 +75,24 @@ void RegularGaussianGrid::coordinates( Grid::Coords& r ) const
       r.lat(i) = points_[i].lat();
       r.lon(i) = points_[i].lon();
    }
+}
+
+GridSpec* RegularGaussianGrid::spec() const
+{
+   GridSpec* grid_spec = new GridSpec(gridType());
+
+   std::stringstream ss; ss << "GG" << gaussianNumber_;
+   grid_spec->set_short_name(ss.str());
+   grid_spec->set("Nj",eckit::Value(nj_));
+   grid_spec->set("gaussianNumber",eckit::Value(gaussianNumber_));
+
+   grid_spec->set("hash",eckit::Value(hash_));
+   grid_spec->set("bottom_left_lat",eckit::Value(bbox_.bottom_left_.lat()));
+   grid_spec->set("bottom_left_lon",eckit::Value(bbox_.bottom_left_.lon()));
+   grid_spec->set("top_right_lat",eckit::Value(bbox_.top_right_.lat()));
+   grid_spec->set("top_right_lon",eckit::Value(bbox_.top_right_.lon()));
+
+   return grid_spec;
 }
 
 //-----------------------------------------------------------------------------

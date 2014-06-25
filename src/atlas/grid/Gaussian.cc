@@ -11,6 +11,7 @@
 #include <cmath>
 
 #include "eckit/log/Log.h"
+#include "atlas/grid/GridSpec.h"
 
 #include "atlas/grid/Gaussian.h"
 #include "atlas/grid/Latitudes.h"
@@ -24,8 +25,7 @@ namespace grid {
 
 Gaussian::Gaussian( size_t resolution, const BoundBox& bb) :
     resolution_(resolution),
-    bound_box_(bb),
-    the_grid_spec_("gaussian","GG")
+    bound_box_(bb)
 {
     ASSERT( resolution_ > 0 );
 
@@ -102,6 +102,12 @@ void Gaussian::coordinates( Grid::Coords& r ) const
         r.lon(i) = coordinates_[i].lon();
     }
 }
+
+GridSpec* Gaussian::spec() const
+{
+   return new GridSpec(gridType(),"GG");
+}
+
 
 //-----------------------------------------------------------------------------
 

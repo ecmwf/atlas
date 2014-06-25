@@ -20,7 +20,9 @@
 // ==================================================================================
 
 #include "eckit/log/Log.h"
+#include "eckit/value/Value.h"
 #include "atlas/grid/ReducedGaussianGrid.h"
+#include "atlas/grid/GridSpec.h"
 
 using namespace eckit;
 using namespace std;
@@ -35,8 +37,7 @@ namespace grid {
 //          assumes it is grid points inclusive of the area.
 
 ReducedGaussianGrid::ReducedGaussianGrid()
-: gaussianNumber_(0),
-  the_grid_spec_("reduced_gg")
+: gaussianNumber_(0),nj_(0)
 {
 }
 
@@ -54,6 +55,28 @@ void ReducedGaussianGrid::coordinates( Grid::Coords& r ) const
         r.lat(i) = points_[i].lat();
         r.lon(i) = points_[i].lon();
     }
+}
+
+GridSpec* ReducedGaussianGrid::spec() const
+{
+   GridSpec* grid_spec = new GridSpec(gridType());
+
+   std::stringstream ss; ss << "QG" << gaussianNumber_;
+   grid_spec->set_short_name(ss.str());
+   grid_spec->set("Nj",eckit::Value(rgSpec_.size()));
+   grid_spec->set("gaussianNumber",eckit::Value(gaussianNumber_));
+
+   grid_spec->set("hash",eckit::Value(hash_));
+   grid_spec->set("bottom_left_lat",eckit::Value(bbox_.bottom_left_.lat()));
+   grid_spec->set("bottom_left_lon",eckit::Value(bbox_.bottom_left_.lon()));
+   grid_spec->set("top_right_lat",eckit::Value(bbox_.top_right_.lat()));
+   grid_spec->set("top_right_lon",eckit::Value(bbox_.top_right_.lon()));
+
+   return grid_spec;
+
+//   std::vector<Point>   points_;               ///< storage of coordinate points
+//   std::vector<long>   rgSpec_;               ///< No of points per latitude
+//   std::vector<double> latitudes_;            ///< the latitudes
 }
 
 //-----------------------------------------------------------------------------

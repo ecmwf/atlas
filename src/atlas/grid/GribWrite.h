@@ -1,5 +1,3 @@
-#ifndef atlas_GribWrite_h
-#define atlas_GribWrite_h
 /*
  * (C) Copyright 1996-2014 ECMWF.
  * 
@@ -9,6 +7,9 @@
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
+
+#ifndef atlas_GribWrite_h
+#define atlas_GribWrite_h
 
 #include "atlas/grid/FieldSet.h"
 #include "eckit/grib/GribHandle.h"
@@ -33,7 +34,10 @@ public: // methods
 
    /// Given a GridSpec return closest grib samples file.
    /// If no match found returns an empty string
-   static std::string grib_sample_file( const grid::GridSpec& );
+   static std::string grib_sample_file( const grid::GridSpec&, long editionNumber );
+
+   /// Helper function, used locally and in testing
+   static void determine_grib_samples_dir(std::vector<std::string>& sample_paths);
 
    static void write( const atlas::grid::FieldSet& field, const eckit::PathName& opath  );
 

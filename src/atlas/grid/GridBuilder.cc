@@ -7,7 +7,7 @@
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
-// #define DEBUG 1
+#define DEBUG 1
 
 #include <iostream>
 
@@ -247,7 +247,6 @@ void GribGridBuilderHelper::comparePointList(const std::vector<Grid::Point>& poi
 
 GribReducedGaussianGrid::GribReducedGaussianGrid(grib_handle* handle)
 : GribGridBuilderHelper(handle),
-  nj_(0),
   the_grid_( new ReducedGaussianGrid() )
 {
 #ifdef DEBUG
@@ -262,14 +261,14 @@ Grid::Ptr GribReducedGaussianGrid::build()
    // Extract the gaussian grid attributes from the grib handle
 
    GRIB_CHECK(grib_get_long(handle_,"numberOfParallelsBetweenAPoleAndTheEquator",&the_grid_->gaussianNumber_),0);
-   GRIB_CHECK(grib_get_long(handle_,"Nj",&nj_),0);
+   GRIB_CHECK(grib_get_long(handle_,"Nj",&the_grid_->nj_),0);
 
    // get reduced grid specification. These are number of point's along the lines of latitude
    size_t rgSpecLength = 0;
    GRIB_CHECK(grib_get_size(handle_,"pl",&rgSpecLength),0);
    the_grid_->rgSpec_.resize(rgSpecLength);
    GRIB_CHECK(grib_get_long_array(handle_,"pl",&(the_grid_->rgSpec_[0]),&rgSpecLength),0);
-   ASSERT( rgSpecLength == nj_);
+   ASSERT( rgSpecLength == the_grid_->nj_);
 
 
    // This provides the 'y' co-ordinate of each line of latitude
@@ -322,18 +321,12 @@ Grid::Ptr GribReducedGaussianGrid::build()
       }
    }
 
-   std::stringstream ss; ss << "QG" << the_grid_->gaussianNumber_ << "_" << editionNumber_;
-   the_grid_->the_grid_spec_.set_short_name(ss.str());
-   the_grid_->the_grid_spec_.set("Nj",eckit::Value(nj_));
-   the_grid_->the_grid_spec_.set("editionNumber",eckit::Value(editionNumber_));
-
-
    double EXPECTED_longitudeOfLastGridPointInDegrees = 360.0 - (90.0/(the_grid_->gaussianNumber_));
 #ifdef DEBUG
    Log::info() << " editionNumber                                  " << editionNumber_ << std::endl;
    Log::info() << " epsilon()                                      " << epsilon() << std::endl;
    Log::info() << " gaussianNumber_                                " << the_grid_->gaussianNumber_ << std::endl;
-   Log::info() << " nj                                             " << nj_ << std::endl;
+   Log::info() << " nj                                             " << the_grid_->nj_ << std::endl;
    Log::info() << " isGlobalNorthSouth()                           " << isGlobalNorthSouth() << std::endl;
    Log::info() << " isGlobalWestEast()                             " << isGlobalWestEast() << std::endl;
    Log::info() << " pl-size                                        " << rgSpecLength <<  " pl[0]="<< the_grid_->rgSpec_[0] << " pl[1]=" << the_grid_->rgSpec_[1] << std::endl;
@@ -347,8 +340,6 @@ Grid::Ptr GribReducedGaussianGrid::build()
    Log::info() << " longitudeOfLastGridPointInDegrees              " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << east_ << std::endl;
    Log::info() << " EXPECTED longitudeOfLastGridPointInDegrees     " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << EXPECTED_longitudeOfLastGridPointInDegrees << std::endl;
    Log::info() << " numberOfDataPoints                             " << numberOfDataPoints_ << std::endl;
-   Log::info() << " GridSpec                                       " << the_grid_->the_grid_spec_ << std::endl;
-   Log::info() << " GridSpec  to  sample_file                      " << GribWrite::grib_sample_file(the_grid_->the_grid_spec_) << std::endl;
    Log::info() << " -----------------------------------------------" << std::endl;
    int no_of_points_in_pl = 0;
    for(int i = 0; i < the_grid_->rgSpec_.size(); i++) no_of_points_in_pl += the_grid_->rgSpec_[i];
@@ -356,7 +347,7 @@ Grid::Ptr GribReducedGaussianGrid::build()
    Log::info() << " points_.size()                                 " << the_grid_->points_.size() << std::endl;
 #endif
 
-   ASSERT(nj_ == 2*the_grid_->gaussianNumber_);
+   ASSERT(the_grid_->nj_ == 2*the_grid_->gaussianNumber_);
    ASSERT(FloatCompare::is_equal(east_,EXPECTED_longitudeOfLastGridPointInDegrees,globalness_epsilon()));
    ASSERT(the_grid_->points_.size() == numberOfDataPoints_);
 
@@ -396,7 +387,7 @@ void GribReducedGaussianGrid::add_point(int lat_index)
 
 bool GribReducedGaussianGrid::isGlobalNorthSouth() const
 {
-   return (the_grid_->gaussianNumber_*2 == nj_);
+   return (the_grid_->gaussianNumber_*2 == the_grid_->nj_);
 }
 
 bool GribReducedGaussianGrid::isGlobalWestEast() const
@@ -413,7 +404,6 @@ bool GribReducedGaussianGrid::isGlobalWestEast() const
 
 GribRegularGaussianGrid::GribRegularGaussianGrid(grib_handle* handle)
 : GribGridBuilderHelper(handle),
-  nj_(0),
   the_grid_( new RegularGaussianGrid() )
 {
 #ifdef DEBUG
@@ -435,7 +425,7 @@ Grid::Ptr GribRegularGaussianGrid::build()
    // Extract the guassian grid attributes from the grib handle
 
     GRIB_CHECK(grib_get_long(handle_,"numberOfParallelsBetweenAPoleAndTheEquator",&the_grid_->gaussianNumber_),0);
-    GRIB_CHECK(grib_get_long(handle_,"Nj",&nj_),0);
+    GRIB_CHECK(grib_get_long(handle_,"Nj",&the_grid_->nj_),0);
 
     double array[2 *the_grid_->gaussianNumber_];
     grib_get_gaussian_latitudes(the_grid_->gaussianNumber_, array);
@@ -485,18 +475,6 @@ Grid::Ptr GribRegularGaussianGrid::build()
        }
     }
 
-    std::stringstream ss; ss << "GG" << the_grid_->gaussianNumber_ << "_" << editionNumber_;
-    the_grid_->the_grid_spec_.set_short_name(ss.str());
-    the_grid_->the_grid_spec_.set("Nj",eckit::Value(nj_));
-    the_grid_->the_grid_spec_.set("editionNumber",eckit::Value(editionNumber_));
-    char string_value[64];
-    size_t len = sizeof(string_value)/sizeof(char);
-    if (grib_get_string(handle_,"typeOfLevel",string_value,&len) == 0) {
-       std::string type_of_level = string_value;
-       if (type_of_level == "pl" || type_of_level == "ml"  || type_of_level == "sfc" ||  type_of_level =="surface")
-          the_grid_->the_grid_spec_.set("typeOfLevel",eckit::Value(type_of_level));
-    }
-
     double EXPECTED_longitudeOfLastGridPointInDegrees = 360.0 - (90.0/(the_grid_->gaussianNumber_));
 #ifdef DEBUG
     Log::info() << " editionNumber                                  " << editionNumber_ << std::endl;
@@ -514,8 +492,6 @@ Grid::Ptr GribRegularGaussianGrid::build()
     Log::info() << " nptsNS                                         " << 2 * the_grid_->gaussianNumber_ << std::endl;
     Log::info() << " nptsWE                                         " << nptsWE << std::endl;
     Log::info() << " numberOfDataPoints                             " << numberOfDataPoints_ << std::endl;
-    Log::info() << " GridSpec                                       " << the_grid_->the_grid_spec_ <<  std::endl;
-    Log::info() << " GridSpec  to  sample_file                      " << GribWrite::grib_sample_file(the_grid_->the_grid_spec_) << std::endl;
     Log::info() << " -----------------------------------------------" << std::endl;
     Log::info() << " points_.size()  " << the_grid_->points_.size() << "       numberOfDataPoints " << numberOfDataPoints_ << std::endl;
     Log::info() << " point[0]                               " << the_grid_->points_[0].lat() << ", " << the_grid_->points_[0].lon() <<  std::endl;
@@ -536,7 +512,7 @@ Grid::Ptr GribRegularGaussianGrid::build()
 
 bool GribRegularGaussianGrid::isGlobalNorthSouth() const
 {
-   return (the_grid_->gaussianNumber_*2 == nj_);
+   return (the_grid_->gaussianNumber_*2 == the_grid_->nj_);
 }
 
 bool GribRegularGaussianGrid::isGlobalWestEast() const
@@ -591,19 +567,6 @@ Grid::Ptr GribRegularLatLonGrid::build()
       plat -= the_grid_->nsIncrement_;
    }
 
-   std::stringstream ss; ss << "LL" << the_grid_->nptsNS_ << "_" << the_grid_->nptsWE_ << "_" << editionNumber_;
-   the_grid_->the_grid_spec_.set_short_name(ss.str());
-   the_grid_->the_grid_spec_.set("editionNumber",eckit::Value(editionNumber_));
-   the_grid_->the_grid_spec_.set("Nj",eckit::Value(the_grid_->nptsNS_));
-   the_grid_->the_grid_spec_.set("Ni",eckit::Value(the_grid_->nptsWE_));
-   char string_value[64];
-   size_t len = sizeof(string_value)/sizeof(char);
-   if (grib_get_string(handle_,"typeOfLevel",string_value,&len) == 0) {
-      std::string type_of_level = string_value;
-      if (type_of_level == "pl" || type_of_level == "ml"  || type_of_level == "sfc" ||  type_of_level == "surface")
-         the_grid_->the_grid_spec_.set("typeOfLevel",eckit::Value(type_of_level));
-   }
-
 #ifdef DEBUG
    Log::info() << " editionNumber                                  " << editionNumber_ << std::endl;
    Log::info() << " iScansNegatively                               " << iScansNegatively_ << std::endl;
@@ -618,8 +581,6 @@ Grid::Ptr GribRegularLatLonGrid::build()
    Log::info() << " Nj(num of points North South)                  " << the_grid_->nptsNS_ << std::endl;
    Log::info() << " Ni(num of points West East)                    " << the_grid_->nptsWE_ << std::endl;
    Log::info() << " numberOfDataPoints                             " << numberOfDataPoints_ << std::endl;
-   Log::info() << " GridSpec                                       " << the_grid_->the_grid_spec_ << std::endl;
-   Log::info() << " GridSpec  to  sample_file                      " << GribWrite::grib_sample_file(the_grid_->the_grid_spec_) << std::endl;
    Log::info() << " -----------------------------------------------" << std::endl;
    Log::info() << " computeIncLat() " << computeIncLat() << "      nsIncrement_ " << the_grid_->nsIncrement_ << std::endl;
    Log::info() << " computeIncLon() " << computeIncLon() << "      weIncrement_ " << the_grid_->nsIncrement_ << std::endl;
@@ -777,18 +738,6 @@ Grid::Ptr GribReducedLatLonGrid::build()
       }
    }
 
-   std::stringstream ss; ss << "RedLL" << the_grid_->nptsNS_ << "_" << editionNumber_;
-   the_grid_->the_grid_spec_.set_short_name(ss.str());
-   the_grid_->the_grid_spec_.set("editionNumber",eckit::Value(editionNumber_));
-   the_grid_->the_grid_spec_.set("Nj",eckit::Value(the_grid_->nptsNS_));
-   char string_value[64];
-   size_t len = sizeof(string_value)/sizeof(char);
-   if (grib_get_string(handle_,"typeOfLevel",string_value,&len) == 0) {
-      std::string type_of_level = string_value;
-      if (type_of_level == "pl" || type_of_level == "ml"  || type_of_level == "sfc" ||  type_of_level =="surface")
-         the_grid_->the_grid_spec_.set("typeOfLevel",eckit::Value(type_of_level));
-   }
-
 #ifdef DEBUG
    Log::info() << " editionNumber                                  " << editionNumber_ << std::endl;
    Log::info() << " isGlobalNorthSouth()                           " << isGlobalNorthSouth() << std::endl;
@@ -803,8 +752,6 @@ Grid::Ptr GribReducedLatLonGrid::build()
    Log::info() << " jDirectionIncrementInDegrees(north-south incr) " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << the_grid_->nsIncrement_ << std::endl;
    Log::info() << " Nj(num of points North South)                  " << the_grid_->nptsNS_ << std::endl;
    Log::info() << " numberOfDataPoints                             " << numberOfDataPoints_ << std::endl;
-   Log::info() << " GridSpec                                       " << the_grid_->the_grid_spec_ << std::endl;
-   Log::info() << " GridSpec  to  sample_file                      " << GribWrite::grib_sample_file(the_grid_->the_grid_spec_) << std::endl;
    Log::info() << " -----------------------------------------------" << std::endl;
    Log::info() << " computeIncLat() " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << computeIncLat() << "      nsIncrement_ " << the_grid_->nsIncrement_ << std::endl;
    Log::info() << " points_.size()  " << the_grid_->points_.size() << "     numberOfDataPoints_ " << numberOfDataPoints_ << std::endl << std::endl;
@@ -896,12 +843,6 @@ Grid::Ptr GribRotatedLatLonGrid::build()
    // NOTE: Grib iterator does *NOT* really rotate the points, so this is something we will need to do for ourselves
    read_data_points(handle_, the_grid_->points_);
 
-   std::stringstream ss; ss << "RL" << the_grid_->nptsNS_ << "_" << editionNumber_;
-   the_grid_->the_grid_spec_.set_short_name(ss.str());
-   the_grid_->the_grid_spec_.set("editionNumber",eckit::Value(editionNumber_));
-   the_grid_->the_grid_spec_.set("Ni",eckit::Value(the_grid_->nptsWE_));
-   the_grid_->the_grid_spec_.set("Nj",eckit::Value(the_grid_->nptsNS_));
-
 #ifdef DEBUG
    Log::info() << " editionNumber                                  " << editionNumber_ << std::endl;
    Log::info() << " iScansNegatively                               " << iScansNegatively_ << std::endl;
@@ -916,8 +857,6 @@ Grid::Ptr GribRotatedLatLonGrid::build()
    Log::info() << " Nj(num of points North South)                  " << the_grid_->nptsNS_ << std::endl;
    Log::info() << " Ni(num of points West East)                    " << the_grid_->nptsWE_ << std::endl;
    Log::info() << " numberOfDataPoints                             " << numberOfDataPoints_ << std::endl;
-   Log::info() << " GridSpec                                       " << the_grid_->the_grid_spec_ << std::endl;
-   Log::info() << " GridSpec  to  sample_file                      " << GribWrite::grib_sample_file(the_grid_->the_grid_spec_) << std::endl;
    Log::info() << " -----------------------------------------------" << std::endl;
    Log::info() << " computeIncLat() " << computeIncLat() << "      nsIncrement_ " << the_grid_->nsIncrement_ << std::endl;
    Log::info() << " computeIncLon() " << computeIncLon() << "      weIncrement_ " << the_grid_->nsIncrement_ << std::endl;

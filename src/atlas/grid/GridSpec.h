@@ -1,5 +1,3 @@
-#ifndef atlas_grid_GridSpec_H
-#define atlas_grid_GridSpec_H
 /*
  * (C) Copyright 1996-2014 ECMWF.
  *
@@ -10,8 +8,12 @@
  * does it submit to any jurisdiction.
  */
 
+#ifndef atlas_grid_GridSpec_H
+#define atlas_grid_GridSpec_H
+
 #include <cstddef>
 #include "eckit/value/Properties.h"
+#include "atlas/grid/Grid.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -25,7 +27,12 @@ namespace grid {
 /// The description of the grid is added as name value pairs
 /// This class will provides a short name for a GRID (i.e QG48_1)
 /// This allows for easier matching with samples files.
-/// However this interface is independent of GRIB/NETCDF
+/// However this interface is independent of GRIB/NETCDF, because:
+///
+///      DECODE                       ATLAS                      ENCODE
+///      NetCDFBuilder ---->|-------|         |----------|------>NetCDFWrite
+///                         | Grid  |<------> | GridSpec |
+///      GribBuilder ------>|-------|         |----------|------>GribWrite
 ///
 /// Uses default copy constructor, assignment and equality operators
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8
@@ -54,6 +61,9 @@ public:
    std::string short_name() const;
 
    friend std::ostream& operator<<( std::ostream& os, const GridSpec& v) { v.print(os); return os;}
+
+   /// Build a Grid* from a GridSpec
+   static Grid::Ptr build( const GridSpec&);
 
 private:
 

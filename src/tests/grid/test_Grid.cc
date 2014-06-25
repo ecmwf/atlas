@@ -23,6 +23,7 @@
 #include "atlas/grid/GridBuilder.h"
 #include "atlas/grid/StackGribFile.h"
 #include "atlas/grid/GribWrite.h"
+#include "atlas/grid/GridSpec.h"
 
 
 using namespace std;
@@ -37,7 +38,6 @@ using namespace atlas;
 /// especially for reduced gaussian grids. Hence we will need to wait till Shahram has
 /// has a chance to fix the issues, before all the tests pass.
 
-static std::string determine_grib_samples_dir();
 static void test_grids_from_grib_sample_directory( const std::string& directory);
 static void test_grib_file(const std::string& file);
 
@@ -49,54 +49,17 @@ BOOST_AUTO_TEST_CASE( test_grids_from_samples_dir )
    BOOST_CHECK(true); // stop boost test from complaining about no checks
 
    // Traverse all the GRIB samples files, for gridType first determine sample dir
-   std::string samples_dir = determine_grib_samples_dir();
-   BOOST_REQUIRE_MESSAGE(!samples_dir.empty(),"Expected sample dirs to be found");
+   std::vector<std::string> sample_dirs;
+   GribWrite::determine_grib_samples_dir(sample_dirs);
+   BOOST_REQUIRE_MESSAGE(!sample_dirs.empty(),"Expected sample dirs to be found");
 
-   // now test this dir
-   test_grids_from_grib_sample_directory(samples_dir);
+   // now test these dirs
+   for(size_t i = 0; i < sample_dirs.size(); ++i) {
+      test_grids_from_grib_sample_directory(sample_dirs[i]);
+   }
 }
 
 BOOST_AUTO_TEST_SUITE_END()
-
-
-static std::string determine_grib_samples_dir()
-{
-   // TODO: This function will be replaced with GRIP API function.
-   //        See: GRIB-API GRIB-550 Need access to grib samples path (via API)
-
-   // Try looking for environment variable GRIB_API_INCLUDE
-   // GRIB_API_INCLUDE=-I/usr/local/lib/metaps/lib/grib_api/1.10.0/include
-   //                  =/usr/local/lib/metaps/lib/grib_api/1.10.0/include /usr/local/apps/jasper/1.900.1/LP64/include /usr/local/apps/jasper/1.900.1/LP64/include
-   // samples dir = /usr/local/lib/metaps/lib/grib_api/1.10.0/share/grib_api/samples
-
-   char* include_dir = getenv("GRIB_API_INCLUDE");
-   BOOST_REQUIRE_MESSAGE(include_dir,"Expected GRIB_API_INCLUDE to be defined");
-
-   std::string grib_include_dir(include_dir);
-   BOOST_REQUIRE_MESSAGE(grib_include_dir.find("grib_api") != std::string::npos,"grib-api not found on directory " << grib_include_dir);
-
-   if (grib_include_dir.find("-I") != std::string::npos) {
-      //std::cout << "GRIB_API_INCLUDE=" << grib_include_dir << "\n";
-      grib_include_dir.erase(grib_include_dir.begin(),grib_include_dir.begin()+2); // remove -I
-   }
-
-   // Handle multiple include dirs
-   // If there are any spaces in the string, only take the first include
-   size_t space_pos = grib_include_dir.find(" ");
-   if (space_pos != std::string::npos) {
-      grib_include_dir = grib_include_dir.substr(0,space_pos);
-      //std::cout << "GRIB_API_INCLUDE=" << grib_include_dir << "\n";
-   }
-
-   // Remove the 'include' and replace with, 'share/grib_api/samples'
-   size_t pos = grib_include_dir.find("/include");
-   BOOST_REQUIRE_MESSAGE(pos != string::npos,"include not found in directory " << grib_include_dir);
-
-   grib_include_dir = grib_include_dir.replace(pos,grib_include_dir.length(),"/share/grib_api/samples");
-   //std::cout << "GRIB_API_INCLUDE=" << grib_include_dir << "\n";
-
-   return grib_include_dir;
-}
 
 
 static void test_grids_from_grib_sample_directory(const std::string& directory)
@@ -148,19 +111,29 @@ static void test_grib_file(const std::string& the_file_path)
       return;
    }
 
+   long editionNumber = 0;
+   GRIB_CHECK(grib_get_long(the_grib_file.handle(),"editionNumber",&editionNumber),0);
+
+
    // Unstructured grid can not handle Spherical harmonics
    atlas::grid::Grid::Ptr the_grid = GRIBGridBuilder::instance().build_grid_from_grib_handle(the_grib_file.handle());
    BOOST_CHECK_MESSAGE(the_grid,"GRIBGridBuilder::instance().build_grid_from_grib_handle failed for file " << the_file_path);
    if (!the_grid) return;
 
+   // The Grid produced, has a GRID spec, the grid spec can be used to,
    // make sure the grid types match
-   BOOST_CHECK_MESSAGE(the_grid->spec().grid_type() == gridType,"gridType(" << gridType << ") did not match Grid constructor(" << the_grid->spec().grid_type() << ") for file " << the_file_path);
+   eckit::ScopedPtr< GridSpec > the_grid_spec( the_grid->spec() );
+   std::cout << *the_grid_spec << "\n";
 
-   // The Grid produced, has a GRID spec, the grid spec can be used to, find the corresponding sample file.
-   // However we need to take into account that the GRIB samples, file are *NOT* unqique in their GRID definition.
+   BOOST_CHECK_MESSAGE(the_grid->gridType() == gridType,"gridType(" << gridType << ") did not match Grid constructor(" << the_grid->gridType() << ") for file " << the_file_path);
+   BOOST_CHECK_MESSAGE(the_grid_spec->grid_type() == gridType,"gridType(" << gridType << ") did not match GridSpec constructor(" << the_grid_spec->grid_type() << ") for file " << the_file_path);
+
+   // find the corresponding sample file.
+   // However we need to take into account that the GRIB samples, file are *NOT* unique in their GRID definition.
    // The sample file name produced does not have '.tmpl' extension
-   std::string generated_sample_file_name = GribWrite::grib_sample_file( the_grid->spec() );
-   BOOST_CHECK_MESSAGE( !generated_sample_file_name.empty()," Could find sample file for grid_spec " << the_grid->spec() );
+   std::string generated_sample_file_name = GribWrite::grib_sample_file( *the_grid_spec , editionNumber);
+   BOOST_CHECK_MESSAGE( !generated_sample_file_name.empty()," Could *not* find sample file for grid_spec " << *the_grid_spec );
+
 
    // Note: many of the grib samples files are not UNIQUE in their grid specification:
    // hence the use of WARN.
@@ -172,5 +145,5 @@ static void test_grib_file(const std::string& the_file_path)
                        << grib_sample_file << "' but found('"
                        << generated_sample_file_name
                        << "') for grid spec "
-                       << the_grid->spec() );
+                       << *the_grid_spec );
 }

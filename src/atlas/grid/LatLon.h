@@ -19,7 +19,6 @@
 #include <vector>
 
 #include "atlas/grid/Grid.h"
-#include "atlas/grid/GridSpec.h"
 
 //-----------------------------------------------------------------------------
 
@@ -44,7 +43,9 @@ public: // methods
 
     virtual void coordinates( Grid::Coords & ) const;
 
-    virtual const GridSpec& spec() const { return the_grid_spec_ ;}
+    virtual std::string gridType() const { return std::string("latlon") ;}
+
+    virtual GridSpec* spec() const;
 
     /// @deprecated will be removed soon as it exposes the inner storage of the coordinates
     virtual const std::vector<Point>& coordinates() const { return points_; }
@@ -57,8 +58,6 @@ protected:
     std::vector< Point > points_;     ///< storage of coordinate points
 
     BoundBox bound_box_;              ///< bounding box for the domain
-
-    GridSpec    the_grid_spec_;       /// < unique description of Grid
 };
 
 //-----------------------------------------------------------------------------
