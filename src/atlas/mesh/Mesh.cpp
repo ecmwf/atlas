@@ -28,7 +28,7 @@ Mesh::~Mesh()
   function_spaces_.clear();
 }
 
-bool Mesh::has_function_space(const std::string &name)
+bool Mesh::has_function_space(const std::string &name) const
 {
     return (index_.find(name) != index_.end());
 }
@@ -45,7 +45,7 @@ FunctionSpace& Mesh::add_function_space( FunctionSpace* function_space )
   return *function_space;
 }
 
-FunctionSpace& Mesh::function_space(const std::string& name)
+FunctionSpace& Mesh::function_space(const std::string& name) const
 {
     try
     {
@@ -59,7 +59,7 @@ FunctionSpace& Mesh::function_space(const std::string& name)
     }
 }
 
-FunctionSpace& Mesh::function_space(int idx)
+FunctionSpace& Mesh::function_space(int idx) const
 {
   return *function_spaces_[ idx ];
 }

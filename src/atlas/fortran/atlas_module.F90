@@ -48,6 +48,7 @@ use atlas_BuildDualMesh_c_binding
 use atlas_BuildParallelFields_c_binding
 use atlas_BuildHalo_c_binding
 use atlas_GenerateMesh_c_binding
+use atlas_WriteLoadBalanceReport_c_binding
 implicit none
 
 ! ----------------------------------------------------
@@ -175,6 +176,12 @@ subroutine atlas_build_dual_mesh(mesh)
   type(Mesh_type), intent(inout) :: mesh
   call atlas__build_dual_mesh(mesh%private%object)
 end subroutine atlas_build_dual_mesh
+
+subroutine atlas_write_load_balance_report(mesh,filename)
+  type(Mesh_type), intent(in) :: mesh
+  character(len=*), intent(in) :: filename
+  call atlas__write_load_balance_report(mesh%private%object,c_str(filename))
+end subroutine atlas_write_load_balance_report
 
 subroutine atlas_generate_reduced_gaussian_grid(mesh,identifier)
   type(Mesh_type), intent(inout) :: mesh

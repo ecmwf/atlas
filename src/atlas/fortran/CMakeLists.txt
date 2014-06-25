@@ -26,6 +26,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../actions/BuildHalo.hpp)
 generate_fortran_bindings(FORTRAN_BINDINGS ../actions/BuildEdges.hpp)
 generate_fortran_bindings(FORTRAN_BINDINGS ../actions/BuildDualMesh.hpp)
 generate_fortran_bindings(FORTRAN_BINDINGS ../actions/GenerateMesh.hpp)
+generate_fortran_bindings(FORTRAN_BINDINGS ../actions/WriteLoadBalanceReport.hpp)
 
 
 ### atlas fortran lib

@@ -29,6 +29,7 @@
 #include "atlas/actions/BuildEdges.hpp"
 #include "atlas/actions/BuildDualMesh.hpp"
 #include "atlas/actions/DistributeMesh.hpp"
+#include "atlas/actions/WriteLoadBalanceReport.hpp"
 #include "atlas/mesh/Parameters.hpp"
 #include "atlas/mesh/Util.hpp"
 
@@ -105,6 +106,8 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
 
   std::stringstream filename; filename << "T63_dist_p" << MPL::rank() << ".msh";
   Gmsh::write(*m,filename.str());
+
+  actions::write_load_balance_report(*m,"load_balance.dat");
 }
 
 
