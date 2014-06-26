@@ -87,18 +87,21 @@ GridSpec* RegularGaussianGrid::spec() const
    grid_spec->set("gaussianNumber",eckit::Value(gaussianNumber_));
 
    grid_spec->set("hash",eckit::Value(hash_));
-   grid_spec->set("bottom_left_lat",eckit::Value(bbox_.bottom_left_.lat()));
-   grid_spec->set("bottom_left_lon",eckit::Value(bbox_.bottom_left_.lon()));
-   grid_spec->set("top_right_lat",eckit::Value(bbox_.top_right_.lat()));
-   grid_spec->set("top_right_lon",eckit::Value(bbox_.top_right_.lon()));
-
-   std::vector<eckit::Value> latitudes; latitudes.reserve(latitudes_.size());
-   for(size_t i = 0; i < latitudes_.size(); ++i) {
-      latitudes.push_back(eckit::Value(latitudes_[i]));
-   }
-   grid_spec->set("latitudes",eckit::Value(latitudes) );
+   grid_spec->set_bounding_box(bbox_);
+   grid_spec->set_latitudes(latitudes_);
+   grid_spec->set_points(points_);
 
    return grid_spec;
+}
+
+void RegularGaussianGrid::constructFrom(const GridSpec& grid_spec)
+{
+   nj_ = grid_spec.get("Nj");
+   gaussianNumber_ = grid_spec.get("gaussianNumber");
+   hash_ = (std::string) grid_spec.get("hash");
+   grid_spec.get_bounding_box(bbox_);
+   grid_spec.get_latitudes(latitudes_);
+   grid_spec.get_points(points_);
 }
 
 //-----------------------------------------------------------------------------

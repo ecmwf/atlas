@@ -66,6 +66,11 @@ public:
    void set_rgspec(const std::vector<long>&  rgSpec);
    void set_bounding_box(const Grid::BoundBox& bbox );
 
+   void get_points(std::vector<Grid::Point>& ) const;
+   void get_latitudes(std::vector<double>& latitudes) const;
+   void get_rgspec(std::vector<long>& rgSpec) const;
+   void get_bounding_box(Grid::BoundBox& bbox ) const;
+
    friend std::ostream& operator<<( std::ostream& os, const GridSpec& v) { v.print(os); return os;}
 
    /// Build a Grid* from a GridSpec

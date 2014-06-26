@@ -103,6 +103,21 @@ GridSpec* RotatedLatLonGrid::spec() const
    return grid_spec;
 }
 
+void RotatedLatLonGrid::constructFrom(const GridSpec& grid_spec)
+{
+   nptsNS_ = grid_spec.get("Nj");
+   nptsWE_ = grid_spec.get("Ni");
+   rotated_latitude_ = grid_spec.get("rotated_latitude");
+   rotated_longitude_ = grid_spec.get("rotated_longitude");
+   rotated_angle_ = grid_spec.get("rotated_angle");
+   nsIncrement_ = grid_spec.get("nsIncrement");
+   weIncrement_ = grid_spec.get("weIncrement");
+
+   hash_ = (std::string) grid_spec.get("hash");
+   grid_spec.get_bounding_box(bbox_);
+   grid_spec.get_points(points_);
+}
+
 //-----------------------------------------------------------------------------
 
 } // namespace grid

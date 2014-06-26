@@ -34,6 +34,8 @@ public:
    virtual void coordinates( Grid::Coords & ) const;
    virtual std::string gridType() const { return std::string("regular_ll"); }
    virtual GridSpec* spec() const;
+   virtual void constructFrom(const GridSpec& );
+
    /// @deprecated will be removed soon as it exposes the inner storage of the coordinates
    virtual const std::vector<Point>& coordinates() const { return points_; }
 

@@ -114,6 +114,14 @@ GridSpec* Gaussian::spec() const
    return grid_spec;
 }
 
+void Gaussian::constructFrom(const GridSpec& grid_spec)
+{
+   resolution_ = grid_spec.get("resolution");
+
+   grid_spec.get_bounding_box(bound_box_);
+   grid_spec.get_points(coordinates_);
+}
+
 
 //-----------------------------------------------------------------------------
 

@@ -63,7 +63,6 @@ GridSpec* ReducedGaussianGrid::spec() const
 
    std::stringstream ss; ss << "QG" << gaussianNumber_;
    grid_spec->set_short_name(ss.str());
-   grid_spec->set("Nj",eckit::Value(rgSpec_.size()));
    grid_spec->set("gaussianNumber",eckit::Value(gaussianNumber_));
 
    grid_spec->set("hash",eckit::Value(hash_));
@@ -75,6 +74,17 @@ GridSpec* ReducedGaussianGrid::spec() const
 
    return grid_spec;
 }
+
+void ReducedGaussianGrid::constructFrom(const GridSpec& grid_spec)
+{
+   gaussianNumber_ = grid_spec.get("gaussianNumber");
+   hash_ = (std::string)grid_spec.get("hash");
+   grid_spec.get_bounding_box(bbox_);
+   grid_spec.get_rgspec(rgSpec_);
+   grid_spec.get_latitudes(latitudes_);
+   grid_spec.get_points(points_);
+}
+
 
 //-----------------------------------------------------------------------------
 

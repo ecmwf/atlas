@@ -78,6 +78,16 @@ GridSpec* ReducedLatLonGrid::spec() const
    return grid_spec;
 }
 
+void ReducedLatLonGrid::constructFrom(const GridSpec& grid_spec)
+{
+   nptsNS_ = grid_spec.get("Nj");
+   nsIncrement_ =  grid_spec.get("nsIncrement");
+   hash_ = (std::string)grid_spec.get("hash");
+   grid_spec.get_bounding_box(bbox_);
+   grid_spec.get_rgspec(rgSpec_);
+   grid_spec.get_points(points_);
+}
+
 //-----------------------------------------------------------------------------
 
 } // namespace grid

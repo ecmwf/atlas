@@ -96,6 +96,8 @@ public: // methods
     /// The GridSpec also includes the gridType, new allocated
     virtual GridSpec* spec() const = 0;
 
+    virtual void constructFrom(const GridSpec& ) = 0;
+
     /// @deprecated will be removed soon as it exposes the inner storage of the coordinates
     virtual const std::vector<Point>& coordinates() const = 0;
 

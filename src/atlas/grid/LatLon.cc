@@ -87,6 +87,14 @@ GridSpec* LatLon::spec() const
    return grid_spec;
 }
 
+void LatLon::constructFrom(const GridSpec& grid_spec)
+{
+   nlat_ = grid_spec.get("nlat");
+   nlon_ = grid_spec.get("nlon");
+   grid_spec.get_bounding_box(bound_box_);
+   grid_spec.get_points(points_);
+}
+
 //-----------------------------------------------------------------------------
 
 } // namespace grid

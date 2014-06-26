@@ -89,6 +89,11 @@ GridSpec* Unstructured::spec() const
    return grid_spec;
 }
 
+void Unstructured::constructFrom(const GridSpec& grid_spec)
+{
+
+}
+
 //-----------------------------------------------------------------------------
 
 } // namespace grid
