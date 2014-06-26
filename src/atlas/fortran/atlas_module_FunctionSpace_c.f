@@ -9,8 +9,10 @@ function new_FunctionSpace(name,shape_func,nb_nodes) result(function_space)
   character(len=*), intent(in) :: shape_func
   integer, intent(in) :: nb_nodes
   type(FunctionSpace_type) :: function_space
+  integer :: extents(2)
+  extents = (/nb_nodes,FIELD_NB_VARS/)
   function_space%private%object = atlas__FunctionSpace__new(c_str(name),c_str(shape_func), &
-    & (/nb_nodes,FIELD_NB_VARS/), 2 )
+    & extents, 2 )
 end function new_FunctionSpace
 
 function new_PrismaticFunctionSpace(name,shape_func,nb_levels,nb_nodes) result(function_space)
@@ -19,8 +21,10 @@ function new_PrismaticFunctionSpace(name,shape_func,nb_levels,nb_nodes) result(f
   integer, intent(in) :: nb_levels
   integer, intent(in) :: nb_nodes
   type(FunctionSpace_type) :: function_space
+  integer :: extents(3)
+  extents = (/nb_nodes,nb_levels,FIELD_NB_VARS/)
   function_space%private%object = atlas__FunctionSpace__new(c_str(name),c_str(shape_func), &
-    & (/nb_nodes,nb_levels,FIELD_NB_VARS/), 3 )
+    & extents, 3 )
 end function new_PrismaticFunctionSpace
 
 subroutine FunctionSpace__delete(this)
@@ -89,6 +93,7 @@ function FunctionSpace__bounds(this) result(bounds)
   call atlas__FunctionSpace__boundsf(this%private%object, bounds_c_ptr, field_rank)
   call C_F_POINTER ( bounds_c_ptr , bounds , (/field_rank/) )
 end function FunctionSpace__bounds
+
 
 function FunctionSpace__field(this,name) result(field)
   class(FunctionSpace_type), intent(in) :: this
