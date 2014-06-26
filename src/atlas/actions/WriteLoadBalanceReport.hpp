@@ -8,24 +8,21 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_GenerateMesh_hpp
-#define atlas_GenerateMesh_hpp
-
-#include "atlas/mesh/Mesh.hpp"
+#ifndef atlas_WriteLoadBalanceReport_hpp
+#define atlas_WriteLoadBalanceReport_hpp
 
 namespace atlas {
+class Mesh;
 namespace actions {
 
-Mesh* generate_reduced_gaussian_grid( const std::string& identifier );
-Mesh* generate_regular_grid( int nlon, int nlat ); // must be even numbers
+void write_load_balance_report( const Mesh& mesh, const std::string& filename );
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
 extern "C"
 {
-  Mesh* atlas__generate_reduced_gaussian_grid (char* identifier);
-  Mesh* atlas__generate_latlon_grid (int nlon, int nlat);
+  void atlas__write_load_balance_report (Mesh* mesh, char* filename);
 }
 
 // ------------------------------------------------------------------

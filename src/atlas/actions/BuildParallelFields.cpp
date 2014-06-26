@@ -92,6 +92,12 @@ FieldT<int>& build_nodes_remote_idx( FunctionSpace& nodes )
   ArrayView<double,2> latlon ( nodes.field("coordinates") );
   int nb_nodes = nodes.extents()[0];
 
+
+
+  ArrayView<int,   1> gidx   ( nodes.field("glb_idx")   );
+
+  int varsize=4;
+
   std::vector< std::vector<int> > send_needed( MPL::size() );
   std::vector< std::vector<int> > recv_needed( MPL::size() );
   int sendcnt=0;
@@ -109,6 +115,7 @@ FieldT<int>& build_nodes_remote_idx( FunctionSpace& nodes )
       send_needed[ proc[part(jnode)] ].push_back( ll.x  );
       send_needed[ proc[part(jnode)] ].push_back( ll.y  );
       send_needed[ proc[part(jnode)] ].push_back( jnode );
+      send_needed[ proc[part(jnode)] ].push_back( gidx(jnode) );
       sendcnt++;
     }
   }
@@ -121,7 +128,7 @@ FieldT<int>& build_nodes_remote_idx( FunctionSpace& nodes )
   for( int jpart=0; jpart<nparts; ++jpart )
   {
     ArrayView<int,2> recv_node( recv_needed[ proc[jpart] ].data(),
-        Extents(recv_needed[ proc[jpart] ].size()/3,3) );
+        Extents(recv_needed[ proc[jpart] ].size()/varsize,varsize) );
     for( int jnode=0; jnode<recv_node.extents()[0]; ++jnode )
     {
       LatLonPoint ll( recv_node[jnode] );
@@ -132,7 +139,10 @@ FieldT<int>& build_nodes_remote_idx( FunctionSpace& nodes )
       }
       else
       {
-        throw eckit::SeriousBug("Node that should be owned is not found",Here());
+        std::stringstream msg;
+        msg << "[" << MPL::rank() << "] " << "Node with gidx " << recv_node(jnode,3) << " requested by rank ["<<jpart<<"] with coords ";
+        msg << "("<<ll.x*180./M_PI*1.e-6 << ","<<ll.y*180./M_PI*1.e-6<<") that should be owned is not found";
+        throw eckit::SeriousBug(msg.str(),Here());
       }
     }
   }

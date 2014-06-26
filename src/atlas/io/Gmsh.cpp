@@ -248,7 +248,7 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path)
   ArrayView<int,1> triag_part    ( triags.field( "partition" ) );
   int nb_triags = triags.metadata<int>("nb_owned");
 
-  int nb_edges;
+  int nb_edges(0);
   if( mesh.has_function_space("edges") )
   {
     FunctionSpace& edges       = mesh.function_space( "edges" );

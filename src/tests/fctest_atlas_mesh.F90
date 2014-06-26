@@ -239,6 +239,8 @@ TEST( test_meshgen )
   write(0,*) stride(arr,1), stride(arr,2), stride(arr,3)
 
   call atlas_write_gmsh(rgg,"testf2.msh")
+
+  call atlas_write_load_balance_report(rgg,"T63_loadbalance.dat")
 END_TEST
 
 

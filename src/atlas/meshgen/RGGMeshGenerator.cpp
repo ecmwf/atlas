@@ -303,19 +303,33 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
             pcnts[j] = std::count(np, np+4, np[j]);
           int cnt_max = *std::max_element(pcnts,pcnts+4);
 
-          if( cnt_mypart > 2 ) // 3 or 4 points belong to mypart
+          if( latN == 0 )
+          {
+            if( pN1 == mypart )
+            {
+              add_quad = true;
+            }
+          }
+          else if ( latS == rgg.nlat()-1 )
+          {
+            if( pS2 == mypart )
+            {
+              add_quad = true;
+            }
+          }
+          else if( cnt_mypart > 2 ) // 3 or 4 points belong to mypart
           {
             add_quad = true;
           }
           else if( cnt_max < 3 ) // 3 or 4 points don't belong to mypart
           {
-            if( 0.5*(yN+yS) > 1e-6 )
+            if( 0.5*(yN+yS) > 1e-6)
             {
               if ( pS2 == mypart )  add_quad = true;
             }
             else
             {
-              if ( pN1 == mypart )  add_quad = true;
+              if ( pN2 == mypart )  add_quad = true;
             }
           }
         }
@@ -354,7 +368,21 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
         for( int j=0; j<3; ++j )
           if (np[j]==mypart) ++cnt_mypart;
 
-        if( cnt_mypart > 1 )
+        if( latN == 0 )
+        {
+          if( pN1 == mypart )
+          {
+            add_triag = true;
+          }
+        }
+        else if ( latS == rgg.nlat()-1 )
+        {
+          if( pS1 == mypart )
+          {
+            add_quad = true;
+          }
+        }
+        else if( cnt_mypart > 1 )
         {
           add_triag=true;
         }
@@ -414,7 +442,21 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
         for( int j=0; j<3; ++j )
           if (np[j]==mypart) ++cnt_mypart;
 
-        if( cnt_mypart > 1 )
+        if( latN == 0 )
+        {
+          if( pN1 == mypart )
+          {
+            add_triag = true;
+          }
+        }
+        else if ( latS == rgg.nlat()-1 )
+        {
+          if( pS2 == mypart )
+          {
+            add_triag = true;
+          }
+        }
+        else if( cnt_mypart > 1 )
         {
           add_triag=true;
         }
@@ -426,7 +468,11 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
           int cnt_max = *std::max_element(pcnts,pcnts+3);
           if( cnt_max == 1)
           {
-            if( 0.5*(yN+yS) > 1e-6 )
+            if( latN == 0 || latS == rgg.nlat()-1 )
+            {
+              add_triag = true;
+            }
+            else if( 0.5*(yN+yS) > 1e-6 )
             {
               if( pS2 == mypart )
                 add_triag = true;
@@ -472,6 +518,10 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
     if( region.lat_end[jlat] == rgg.nlon(jlat)-1 ) ++nb_region_nodes;
   }
   region.nnodes = nb_region_nodes;
+  if (region.nnodes == 0)
+  {
+    throw eckit::Exception("Trying to generate mesh with too many partitions. Reduce the number of partitions.",Here());
+  }
 }
 
 Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,

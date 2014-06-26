@@ -125,6 +125,8 @@ list( APPEND atlas_actions_srcs
   actions/DistributeMesh.cpp
   actions/GenerateMesh.hpp
   actions/GenerateMesh.cpp
+  actions/WriteLoadBalanceReport.hpp
+  actions/WriteLoadBalanceReport.cpp
 )
 
 ### atlas c++ library

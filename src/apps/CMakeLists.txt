@@ -9,3 +9,8 @@ ecbuild_add_executable(
   SOURCES     gmsh_ls.cc
   LIBS        ${ATLAS_LIBRARIES} ${ECKIT_LIBRARIES}
   CONDITION   HAVE_GRID )
+
+ecbuild_add_executable(
+  TARGET      meshgen_to_gmsh
+  SOURCES     meshgen_to_gmsh.cc
+  LIBS        ${ATLAS_LIBRARIES} ${ECKIT_LIBRARIES} )

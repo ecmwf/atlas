@@ -37,18 +37,18 @@ public: // methods
     virtual ~Mesh();
 
     /// checks if function space exists
-    bool has_function_space(const std::string& name);
+    bool has_function_space(const std::string& name) const;
 
     /// Takes ownership, and will be deleted automatically
     FunctionSpace& add_function_space( FunctionSpace* function_space );
 
     /// accessor by name
-    FunctionSpace& function_space(const std::string& name);
+    FunctionSpace& function_space(const std::string& name) const;
 
     /// accessor by index
-    FunctionSpace& function_space(int idx);
+    FunctionSpace& function_space(int idx) const;
 
-    int nb_function_spaces() { return function_spaces_.size(); }
+    int nb_function_spaces() const { return function_spaces_.size(); }
 
 private: // members
 
