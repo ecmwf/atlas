@@ -21,8 +21,6 @@
 #include "eckit/config/Resource.h"
 #include "eckit/runtime/Tool.h"
 #include "eckit/filesystem/PathName.h"
-#include "eckit/parser/Tokenizer.h"
-#include "eckit/value/ListContent.h"
 
 #include "atlas/io/Gmsh.hpp"
 #include "atlas/actions/GenerateMesh.hpp"
@@ -39,52 +37,49 @@ using namespace atlas::actions;
 
 class Meshgen2Gmsh : public eckit::Tool {
 
-    virtual void run();
+  virtual void run();
 
 public:
 
-    Meshgen2Gmsh(int argc,char **argv): eckit::Tool(argc,argv)
+  Meshgen2Gmsh(int argc,char **argv): eckit::Tool(argc,argv)
+  {
+    nlon_nlat  = Resource< std::vector<long> > ( "-reg", std::vector<long>() );
+    identifier = Resource< std::string       > ( "-rgg", "" );
+    if( identifier.empty() && nlon_nlat.empty() )
     {
-      lon  = Resource<int>("-lon",-1);
-      lat  = Resource<int>("-lat",-1);
-
-      identifier = Resource<std::string>("-rgg","");
-      if( identifier.empty() && (lon<0 || lat<0) )
-          throw UserError(Here(),"missing input mesh identifier, parameter -rgg");
-
-      path_out = Resource<std::string>("-o","");
-      if( path_out.asString().empty() )
-        throw UserError(Here(),"missing output filename, parameter -o");
-
+      throw UserError(Here(),"missing input mesh identifier, parameter -rgg or -reg");
     }
+    path_out = Resource<std::string> ( "-o", "" );
+    if( path_out.asString().empty() )
+      throw UserError(Here(),"missing output filename, parameter -o");
+  }
 
 private:
 
-    std::string identifier;
-    int lon, lat;
-    PathName path_out;
+  std::string identifier;
+  std::vector<long> nlon_nlat;
+  PathName path_out;
 };
 
 //------------------------------------------------------------------------------------------------------
 
 void Meshgen2Gmsh::run()
 {
-    MPL::init();
-    Mesh::Ptr mesh;
-    if( !identifier.empty() )
-      mesh = Mesh::Ptr( generate_reduced_gaussian_grid(identifier) );
-    else
-      mesh = Mesh::Ptr( generate_latlon_grid(lon,lat) );
-    atlas::Gmsh::write( *mesh, path_out );
-    MPL::finalize();
+  MPL::init();
+  Mesh::Ptr mesh;
+  if( !identifier.empty() )
+    mesh = Mesh::Ptr( generate_reduced_gaussian_grid(identifier) );
+  else
+    mesh = Mesh::Ptr( generate_regular_grid(nlon_nlat[0],nlon_nlat[1]) );
+  atlas::Gmsh::write( *mesh, path_out );
+  MPL::finalize();
 }
 
 //------------------------------------------------------------------------------------------------------
 
 int main( int argc, char **argv )
 {
-    Meshgen2Gmsh tool(argc,argv);
-    tool.start();
-    return 0;
+  Meshgen2Gmsh tool(argc,argv);
+  tool.start();
+  return 0;
 }
-

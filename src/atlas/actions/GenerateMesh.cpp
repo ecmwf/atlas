@@ -17,40 +17,29 @@ using namespace atlas::meshgen;
 namespace atlas {
 namespace actions {
 
-namespace {
-class TestGrid: public meshgen::RGG {
+namespace { // anonymous
+
+class RegularGrid: public meshgen::RGG {
 public:
-  TestGrid(int nlat, int lon[]);
+  RegularGrid(int nlon, int nlat);
 };
 
-TestGrid::TestGrid(int nlat, int lon[]) : RGG()
+RegularGrid::RegularGrid(int nlon, int nlat) : RGG()
 {
-  /*
-  First prediction of colatitudes
-  */
-  std::vector<double> colat(nlat);
-  double z;
+  double dy = M_PI/static_cast<double>(nlat);
+
+  lon_.resize(nlat);
+  lon_.assign(nlat,nlon);
+
+  lat_.resize(nlat);
   for( int i=0; i<nlat; ++i )
   {
-    z = (4.*(i+1.)-1.)*M_PI/(4.*2.*nlat+2.);
-    colat[i] = z+1./(tan(z)*(8.*(2.*nlat)*(2.*nlat)));
+    lat_[i] = M_PI_2 - (i+0.5)*dy;
   }
-  /*
-  Fill in final structures
-  */
-  lat_.resize(2*nlat);
-  lon_.resize(2*nlat);
-  std::copy( lon, lon+nlat, lon_.begin() );
-  std::reverse_copy( lon, lon+nlat, lon_.begin()+nlat );
-  std::copy( colat.begin(), colat.begin()+nlat, lat_.begin() );
-  std::reverse_copy( colat.begin(), colat.begin()+nlat, lat_.begin()+nlat );
-  for (int i=0; i<nlat; ++i)
-    lat_[i]=M_PI/2.-lat_[i];
-  for (int i=nlat; i<2*nlat; ++i)
-    lat_[i]=-M_PI/2.+lat_[i];
+  ASSERT( lat_[nlat-1] == -lat_[0] );
 }
 
-}
+} // anonymous namespace
 
 Mesh* generate_reduced_gaussian_grid( const std::string& identifier )
 {
@@ -69,13 +58,6 @@ Mesh* generate_reduced_gaussian_grid( const std::string& identifier )
   else if( identifier == "T2047" ) mesh = generate(T2047());
   else if( identifier == "T3999" ) mesh = generate(T3999());
   else if( identifier == "T7999" ) mesh = generate(T7999());
-  else if( identifier == "D5")
-  {
-    int lon[] = {4,6,8,8,8};
-    TestGrid grid(5,lon);
-
-    mesh = generate( grid );
-  }
   else throw eckit::BadParameter("Cannot generate mesh "+identifier,Here());
 
   return mesh;
@@ -83,7 +65,7 @@ Mesh* generate_reduced_gaussian_grid( const std::string& identifier )
 
 // ------------------------------------------------------------------
 
-Mesh* generate_latlon_grid( int nlon, int nlat )
+Mesh* generate_regular_grid( int nlon, int nlat )
 {
   if( nlon%2 != 0 ) throw eckit::BadParameter("nlon must be even number",Here());
   if( nlat%2 != 0 ) throw eckit::BadParameter("nlat must be even number",Here());
@@ -91,7 +73,7 @@ Mesh* generate_latlon_grid( int nlon, int nlat )
   RGGMeshGenerator generate;
   generate.options.set( "nb_parts", MPL::size() );
   generate.options.set( "part"    , MPL::rank() );
-  Mesh* mesh = generate(GG(nlon,nlat/2));
+  Mesh* mesh = generate(RegularGrid(nlon,nlat));
   return mesh;
 }
 
@@ -105,7 +87,7 @@ Mesh* atlas__generate_reduced_gaussian_grid (char* identifier)
 
 Mesh* atlas__generate_latlon_grid ( int nlon, int nlat )
 {
-  return generate_latlon_grid( nlon, nlat );
+  return generate_regular_grid( nlon, nlat );
 }
 
 // ------------------------------------------------------------------
