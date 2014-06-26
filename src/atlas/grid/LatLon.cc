@@ -77,6 +77,13 @@ void LatLon::coordinates( Grid::Coords& r ) const
 GridSpec* LatLon::spec() const
 {
    GridSpec* grid_spec = new GridSpec(gridType(),"LL");
+
+   grid_spec->set("nlat",eckit::Value(nlat_));
+   grid_spec->set("nlon",eckit::Value(nlon_));
+
+   grid_spec->set_bounding_box(bound_box_);
+   grid_spec->set_points(points_);
+
    return grid_spec;
 }
 

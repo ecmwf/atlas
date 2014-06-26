@@ -92,6 +92,12 @@ GridSpec* RegularGaussianGrid::spec() const
    grid_spec->set("top_right_lat",eckit::Value(bbox_.top_right_.lat()));
    grid_spec->set("top_right_lon",eckit::Value(bbox_.top_right_.lon()));
 
+   std::vector<eckit::Value> latitudes; latitudes.reserve(latitudes_.size());
+   for(size_t i = 0; i < latitudes_.size(); ++i) {
+      latitudes.push_back(eckit::Value(latitudes_[i]));
+   }
+   grid_spec->set("latitudes",eckit::Value(latitudes) );
+
    return grid_spec;
 }
 

@@ -105,7 +105,13 @@ void Gaussian::coordinates( Grid::Coords& r ) const
 
 GridSpec* Gaussian::spec() const
 {
-   return new GridSpec(gridType(),"GG");
+   GridSpec* grid_spec = new GridSpec(gridType(),"GG");
+
+   grid_spec->set("resolution",eckit::Value(resolution_));
+   grid_spec->set_bounding_box(bound_box_);
+   grid_spec->set_points(coordinates_);
+
+   return grid_spec;
 }
 
 

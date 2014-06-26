@@ -81,6 +81,11 @@ void Unstructured::coordinates( Grid::Coords& r ) const
 GridSpec* Unstructured::spec() const
 {
    GridSpec* grid_spec = new GridSpec(gridType(),"U");
+
+   grid_spec->set("hash",eckit::Value(hash_));
+   grid_spec->set_bounding_box(bound_box_);
+   grid_spec->set_points(coordinates());
+
    return grid_spec;
 }
 

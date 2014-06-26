@@ -67,16 +67,13 @@ GridSpec* ReducedGaussianGrid::spec() const
    grid_spec->set("gaussianNumber",eckit::Value(gaussianNumber_));
 
    grid_spec->set("hash",eckit::Value(hash_));
-   grid_spec->set("bottom_left_lat",eckit::Value(bbox_.bottom_left_.lat()));
-   grid_spec->set("bottom_left_lon",eckit::Value(bbox_.bottom_left_.lon()));
-   grid_spec->set("top_right_lat",eckit::Value(bbox_.top_right_.lat()));
-   grid_spec->set("top_right_lon",eckit::Value(bbox_.top_right_.lon()));
+
+   grid_spec->set_bounding_box(bbox_);
+   grid_spec->set_rgspec(rgSpec_);
+   grid_spec->set_latitudes(latitudes_);
+   grid_spec->set_points(points_);
 
    return grid_spec;
-
-//   std::vector<Point>   points_;               ///< storage of coordinate points
-//   std::vector<long>   rgSpec_;               ///< No of points per latitude
-//   std::vector<double> latitudes_;            ///< the latitudes
 }
 
 //-----------------------------------------------------------------------------

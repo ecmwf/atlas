@@ -60,6 +60,12 @@ public:
    void set_short_name(const std::string& the_short_name);
    std::string short_name() const;
 
+   /// Helper functions, Used to build up a grid spec
+   void set_points(const std::vector<Grid::Point>& );
+   void set_latitudes(const std::vector<double>& latitudes);
+   void set_rgspec(const std::vector<long>&  rgSpec);
+   void set_bounding_box(const Grid::BoundBox& bbox );
+
    friend std::ostream& operator<<( std::ostream& os, const GridSpec& v) { v.print(os); return os;}
 
    /// Build a Grid* from a GridSpec

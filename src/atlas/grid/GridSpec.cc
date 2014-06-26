@@ -66,6 +66,43 @@ void GridSpec::print( std::ostream& s) const
    s << " ]";
 }
 
+void GridSpec::set_points(const std::vector<Grid::Point>& points)
+{
+//   std::vector<eckit::Value> points_lat; points_lat.reserve(points.size());
+//   std::vector<eckit::Value> points_lon; points_lon.reserve(points.size());
+//   for(size_t i = 0; i < points.size(); ++i) {
+//      points_lat.push_back(eckit::Value(points[i].lat()));
+//      points_lon.push_back(eckit::Value(points[i].lon()));
+//   }
+//   set("points_lat",eckit::Value(points_lat) );
+//   set("points_lon",eckit::Value(points_lon) );
+}
+
+void GridSpec::set_latitudes(const std::vector<double>& latitudes_vec)
+{
+   std::vector<eckit::Value> latitudes; latitudes.reserve(latitudes_vec.size());
+   for(size_t i = 0; i < latitudes_vec.size(); ++i) {
+      latitudes.push_back(eckit::Value(latitudes_vec[i]));
+   }
+   set("latitudes",eckit::Value(latitudes) );
+}
+
+void GridSpec::set_rgspec(const std::vector<long>& rgSpec_vec)
+{
+   std::vector<eckit::Value> rgSpec; rgSpec.reserve(rgSpec_vec.size());
+   for(size_t i = 0; i < rgSpec_vec.size(); ++i) {
+      rgSpec.push_back(eckit::Value(rgSpec_vec[i]));
+   }
+   set("rgSpec",eckit::Value(rgSpec) );
+}
+
+void GridSpec::set_bounding_box(const Grid::BoundBox& bbox )
+{
+   set("bottom_left_lat",eckit::Value(bbox.bottom_left_.lat()));
+   set("bottom_left_lon",eckit::Value(bbox.bottom_left_.lon()));
+   set("top_right_lat",eckit::Value(bbox.top_right_.lat()));
+   set("top_right_lon",eckit::Value(bbox.top_right_.lon()));
+}
 
 Grid::Ptr GridSpec::build( const GridSpec& spec)
 {

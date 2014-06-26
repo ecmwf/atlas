@@ -123,7 +123,7 @@ static void test_grib_file(const std::string& the_file_path)
    // The Grid produced, has a GRID spec, the grid spec can be used to,
    // make sure the grid types match
    eckit::ScopedPtr< GridSpec > the_grid_spec( the_grid->spec() );
-   std::cout << *the_grid_spec << "\n";
+   // std::cout << *the_grid_spec << "\n";  // this will kill the performance since points are also written
 
    BOOST_CHECK_MESSAGE(the_grid->gridType() == gridType,"gridType(" << gridType << ") did not match Grid constructor(" << the_grid->gridType() << ") for file " << the_file_path);
    BOOST_CHECK_MESSAGE(the_grid_spec->grid_type() == gridType,"gridType(" << gridType << ") did not match GridSpec constructor(" << the_grid_spec->grid_type() << ") for file " << the_file_path);
