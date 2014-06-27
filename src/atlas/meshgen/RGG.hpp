@@ -41,6 +41,12 @@ public:
   GG(int nlon, int nlat);
 };
 
+class RegularGrid: public meshgen::RGG {
+public:
+  RegularGrid(int nlon, int nlat);
+};
+
+
 class T63:   public RGG { public: T63();   };
 class T95:   public RGG { public: T95();   };
 class T159:  public RGG { public: T159();  };

@@ -325,7 +325,7 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
           {
             if( 0.5*(yN+yS) > 1e-6)
             {
-              if ( pS2 == mypart )  add_quad = true;
+              if ( pS1 == mypart )  add_quad = true;
             }
             else
             {
@@ -379,7 +379,7 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
         {
           if( pS1 == mypart )
           {
-            add_quad = true;
+            add_triag = true;
           }
         }
         else if( cnt_mypart > 1 )

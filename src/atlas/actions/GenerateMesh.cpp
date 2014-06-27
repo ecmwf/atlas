@@ -12,34 +12,11 @@
 #include "atlas/meshgen/RGG.hpp"
 #include "atlas/meshgen/RGGMeshGenerator.hpp"
 #include "atlas/actions/GenerateMesh.hpp"
+#include "atlas/util/Debug.hpp"
 using namespace atlas::meshgen;
 
 namespace atlas {
 namespace actions {
-
-namespace { // anonymous
-
-class RegularGrid: public meshgen::RGG {
-public:
-  RegularGrid(int nlon, int nlat);
-};
-
-RegularGrid::RegularGrid(int nlon, int nlat) : RGG()
-{
-  double dy = M_PI/static_cast<double>(nlat);
-
-  lon_.resize(nlat);
-  lon_.assign(nlat,nlon);
-
-  lat_.resize(nlat);
-  for( int i=0; i<nlat; ++i )
-  {
-    lat_[i] = M_PI_2 - (i+0.5)*dy;
-  }
-  ASSERT( lat_[nlat-1] == -lat_[0] );
-}
-
-} // anonymous namespace
 
 Mesh* generate_reduced_gaussian_grid( const std::string& identifier )
 {

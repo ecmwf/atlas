@@ -333,12 +333,12 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
           //  int lon[] = { 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 };
           //  test::MinimalMesh grid(nlat,lon);
   T63 grid;
-
+//  RegularGrid grid(128,64);
   double max_lat = grid.lat(0);
   double check_area = 2.*M_PI*2.*max_lat;
   double area = 0;
-  int nodes[]  = {313,321,337,336,336,348,351,359,360,358,357,360,359,371,332,336,335,337,336,315};
-  int quads[]  = {243,279,293,291,294,304,313,320,321,319,318,321,320,332,289,294,291,294,293,245};
+  int nodes[]  = {313,332,336,338,334,337,348,359,360,361,360,360,359,370,321,334,338,335,348,315};
+  int quads[]  = {243,290,293,294,291,293,310,320,321,321,320,321,320,331,278,291,294,293,305,245};
   int triags[] = { 42, 13, 12, 13, 12, 14,  0,  1,  0,  1,  1,  0,  1,  0, 14, 12, 13, 11, 14, 42};
   int nb_owned = 0;
 
@@ -410,7 +410,11 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
 
   for( int gid=1; gid<all_owned.size(); ++gid )
   {
-    BOOST_CHECK( all_owned[gid] != -1 );
+    if( all_owned[gid] == -1 )
+    {
+      BOOST_ERROR( "node " << gid << " is not owned by anyone" );
+    }
+//    BOOST_CHECK( all_owned[gid] != -1 );
   }
   BOOST_CHECK_EQUAL( nb_owned, grid.ngptot()+grid.nlat() );
 

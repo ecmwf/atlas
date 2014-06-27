@@ -48,6 +48,22 @@ GG::GG(int nlon, int nlat) : RGG()
     lat_[i]=-M_PI/2.+lat_[i];
 }
 
+
+RegularGrid::RegularGrid(int nlon, int nlat) : RGG()
+{
+  double dy = M_PI/static_cast<double>(nlat);
+
+  lon_.resize(nlat);
+  lon_.assign(nlat,nlon);
+
+  lat_.resize(nlat);
+  for( int i=0; i<nlat; ++i )
+  {
+    lat_[i] = M_PI_2 - (i+0.5)*dy;
+  }
+}
+
+
 } // namespace meshgen
 } // namespace atlas
 
