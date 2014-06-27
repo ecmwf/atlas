@@ -197,7 +197,7 @@ TEST( test_meshgen )
   type(Mesh_type) :: rgg
   type(FunctionSpace_type) :: nodes, edges
   type(Field_type) :: field
-  integer, allocatable :: bounds(:)
+  integer, pointer :: bounds(:)
   integer(c_int), pointer :: ridx(:)
   real(c_double), pointer :: arr(:,:)
   integer :: i, nnodes, nghost
@@ -213,7 +213,8 @@ TEST( test_meshgen )
 
   nodes = rgg%function_space("nodes")
   call nodes%parallelise()
-  bounds = nodes%bounds()
+  bounds => nodes%bounds()
+
   nnodes = bounds(2)
 
   field = nodes%field("remote_idx")

@@ -9,8 +9,8 @@ contains
     logical :: initialized
     call MPI_INITIALIZED(initialized, ierr)
     if (.not. initialized) call MPI_INIT( ierr )
-    call MPI_COMM_RANK( MPI_COMM_WORLD, myproc, ierr )
-    call MPI_COMM_SIZE( MPI_COMM_WORLD, nproc,  ierr )
+!    call MPI_COMM_RANK( MPI_COMM_WORLD, myproc, ierr )
+!    call MPI_COMM_SIZE( MPI_COMM_WORLD, nproc,  ierr )
   end subroutine MPL_init
 
   subroutine MPL_finalize()
