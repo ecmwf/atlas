@@ -20,7 +20,7 @@
 #include "eckit/filesystem/LocalPathName.h"
 
 #include "atlas/grid/Grid.h"
-#include "atlas/grid/GridBuilder.h"
+#include "atlas/grid/GribGridBuilder.h"
 #include "atlas/grid/StackGribFile.h"
 #include "atlas/grid/GribWrite.h"
 #include "atlas/grid/GridSpec.h"

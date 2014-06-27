@@ -23,7 +23,7 @@
 
 #include "atlas/grid/GribRead.h"
 #include "atlas/grid/Tesselation.h"
-#include "atlas/grid/GridBuilder.h"
+#include "atlas/grid/GribGridBuilder.h"
 
 //-----------------------------------------------------------------------------
 

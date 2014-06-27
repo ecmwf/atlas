@@ -46,8 +46,8 @@ if( HAVE_GRIB )
     GribRead.h
     GribWrite.cc
     GribWrite.h
-    GridBuilder.h
-    GridBuilder.cc
+    GribGridBuilder.h
+    GribGridBuilder.cc
     StackGribFile.cc
     StackGribFile.h
   )

@@ -11,7 +11,7 @@
 
 #include <iostream>
 
-#include "atlas/grid/GridBuilder.h"
+#include "atlas/grid/GribGridBuilder.h"
 #include "atlas/grid/Unstructured.h"
 #include "atlas/grid/StackGribFile.h"
 #ifdef DEBUG

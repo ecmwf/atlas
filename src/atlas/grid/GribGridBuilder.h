@@ -7,8 +7,8 @@
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
-#ifndef atlas_grid_builder_H
-#define atlas_grid_builder_H
+#ifndef atlas_grib_grid_builder_H
+#define atlas_grib_grid_builder_H
 
 #include <cstddef>
 #include <vector>
