@@ -73,9 +73,6 @@ public:
 
    friend std::ostream& operator<<( std::ostream& os, const GridSpec& v) { v.print(os); return os;}
 
-   /// Build a Grid* from a GridSpec
-   static Grid::Ptr build( const GridSpec&);
-
 private:
 
    void print( std::ostream& ) const;

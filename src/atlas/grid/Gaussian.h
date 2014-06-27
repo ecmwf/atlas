@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/GridFactory.h"
 
 //-----------------------------------------------------------------------------
 
@@ -30,8 +31,11 @@ class GridSpec;
 //-----------------------------------------------------------------------------
 
 class Gaussian : public Grid {
+   REGISTER(Gaussian);
 
 public: // methods
+
+    Gaussian() : resolution_(0) {}
 
     Gaussian( size_t resolution, const BoundBox& bb );
 

@@ -143,13 +143,6 @@ void GridSpec::get_bounding_box(Grid::BoundBox& bbox ) const
    bbox.top_right_.assign(top_right_lat,top_right_lon);
 }
 
-
-Grid::Ptr GridSpec::build( const GridSpec& spec)
-{
-
-   return Grid::Ptr();
-}
-
 //------------------------------------------------------------------------------------------------------
 
 } // namespace grid

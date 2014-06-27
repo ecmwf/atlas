@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/GridFactory.h"
 
 //-----------------------------------------------------------------------------
 
@@ -45,6 +46,7 @@ namespace grid {
 // o The bitsmap shows where we have Data values.
 
 class ReducedGaussianGrid : public Grid {
+   REGISTER(ReducedGaussianGrid);
 public:
 
    ReducedGaussianGrid();

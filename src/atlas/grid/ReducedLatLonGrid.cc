@@ -88,6 +88,8 @@ void ReducedLatLonGrid::constructFrom(const GridSpec& grid_spec)
    grid_spec.get_points(points_);
 }
 
+REGISTERIMPL(ReducedLatLonGrid,"reduced_ll");
+
 //-----------------------------------------------------------------------------
 
 } // namespace grid

@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/GridFactory.h"
 
 //-----------------------------------------------------------------------------
 
@@ -35,6 +36,7 @@ namespace grid {
 // A reduced gaussian grid may also be called a quasi-regular Gaussian grid.
 
 class RegularGaussianGrid : public Grid {
+   REGISTER(RegularGaussianGrid);
 public:
    RegularGaussianGrid();
    virtual ~RegularGaussianGrid();

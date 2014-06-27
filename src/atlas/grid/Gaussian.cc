@@ -122,6 +122,8 @@ void Gaussian::constructFrom(const GridSpec& grid_spec)
    grid_spec.get_points(coordinates_);
 }
 
+REGISTERIMPL(Gaussian,"gaussian");
+
 
 //-----------------------------------------------------------------------------
 

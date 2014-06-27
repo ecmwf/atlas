@@ -95,6 +95,8 @@ void LatLon::constructFrom(const GridSpec& grid_spec)
    grid_spec.get_points(points_);
 }
 
+REGISTERIMPL(LatLon,"latlon");
+
 //-----------------------------------------------------------------------------
 
 } // namespace grid

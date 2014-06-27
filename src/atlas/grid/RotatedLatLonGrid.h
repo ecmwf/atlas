@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/GridFactory.h"
 
 //-----------------------------------------------------------------------------
 
@@ -24,6 +25,7 @@ namespace grid {
 //-----------------------------------------------------------------------------
 
 class RotatedLatLonGrid : public Grid {
+   REGISTER(RotatedLatLonGrid);
 public:
    RotatedLatLonGrid();
    virtual ~RotatedLatLonGrid();

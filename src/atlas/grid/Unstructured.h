@@ -20,6 +20,7 @@
 #include "eckit/memory/ScopedPtr.h"
 
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/GridFactory.h"
 
 //-----------------------------------------------------------------------------
 
@@ -30,8 +31,11 @@ namespace grid {
 //-----------------------------------------------------------------------------
 
 class Unstructured : public Grid {
+   REGISTER(Unstructured);
 
 public: // methods
+
+    Unstructured() {}
 
     /// @warning temporary constructor taking a list of points
     Unstructured( std::vector< Point >* pts, const std::string& hash );

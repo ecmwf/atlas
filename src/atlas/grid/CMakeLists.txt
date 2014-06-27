@@ -3,6 +3,8 @@ Gaussian.cc
 Gaussian.h
 Grid.cc
 Grid.h
+GridFactory.h
+GridFactory.cc
 GridSpec.cc
 GridSpec.h
 MeshCache.cc

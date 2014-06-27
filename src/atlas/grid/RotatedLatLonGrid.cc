@@ -118,6 +118,8 @@ void RotatedLatLonGrid::constructFrom(const GridSpec& grid_spec)
    grid_spec.get_points(points_);
 }
 
+REGISTERIMPL(RotatedLatLonGrid,"rotated_ll");
+
 //-----------------------------------------------------------------------------
 
 } // namespace grid

@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/GridFactory.h"
 
 //-----------------------------------------------------------------------------
 
@@ -28,8 +29,11 @@ namespace grid {
 //-----------------------------------------------------------------------------
 
 class LatLon : public Grid {
+   REGISTER(LatLon);
 
 public: // methods
+
+    LatLon() : nlat_(0), nlon_(0) {}
 
     LatLon( size_t nlat, size_t nlon, const BoundBox& bb );
 
