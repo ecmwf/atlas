@@ -104,21 +104,43 @@ void GridSpec::set_bounding_box(const Grid::BoundBox& bbox )
    set("top_right_lon",eckit::Value(bbox.top_right_.lon()));
 }
 
-void GridSpec::get_points(std::vector<Grid::Point>& ) const
+void GridSpec::get_points(std::vector<Grid::Point>& points) const
 {
+   eckit::ValueList vec_lat = get("points_lat");
+   eckit::ValueList vec_lon = get("points_lon");
+   ASSERT(vec_lat.size() ==  vec_lon.size());
+   points.reserve(vec_lat.size());
+   for(size_t i=0; i < vec_lat.size();++i) {
+      points.push_back(Grid::Point(vec_lat[i],vec_lon[i]));
+   }
 }
 
 void GridSpec::get_latitudes(std::vector<double>& latitudes) const
 {
+   eckit::ValueList vec = get("latitudes");
+   latitudes.reserve(vec.size());
+   for(size_t i=0; i < vec.size();++i) {
+      latitudes.push_back(vec[i]);
+   }
 }
 
 void GridSpec::get_rgspec(std::vector<long>& rgSpec) const
 {
+   eckit::ValueList vec = get("rgSpec");
+   rgSpec.reserve(vec.size());
+   for(size_t i=0; i < vec.size();++i) {
+      rgSpec.push_back(vec[i]);
+   }
 }
 
 void GridSpec::get_bounding_box(Grid::BoundBox& bbox ) const
 {
    double bottom_left_lat = get("bottom_left_lat");
+   double bottom_left_lon = get("bottom_left_lon");
+   double top_right_lat = get("top_right_lat");
+   double top_right_lon = get("top_right_lon");
+   bbox.bottom_left_.assign(bottom_left_lat,bottom_left_lon);
+   bbox.top_right_.assign(top_right_lat,top_right_lon);
 }
 
 
