@@ -39,6 +39,11 @@ class GridSpec;
 
 /// Interface to a grid of points in a 2d cartesian space
 /// For example a LatLon grid or a Reduced Graussian grid
+///
+///      DECODE                       ATLAS                      ENCODE
+///      NetCDFBuilder ---->|-------|         |----------|------>NetCDFWrite
+///                         | Grid  |<------> | GridSpec |
+///      GribBuilder ------>|-------|         |----------|------>GribWrite
 
 class Grid : public eckit::Owned {
 
@@ -86,8 +91,14 @@ public: // methods
 
     virtual void coordinates( Grid::Coords& ) const = 0;
 
-    /// The GridSpec includes the gridType
-    virtual const GridSpec& spec() const = 0;
+    virtual std::string gridType() const = 0;
+
+    /// The GridSpec also includes the gridType, new allocated
+    virtual GridSpec* spec() const = 0;
+
+    virtual void constructFrom(const GridSpec& ) = 0;
+
+    virtual bool compare(const Grid&) const = 0;
 
     /// @deprecated will be removed soon as it exposes the inner storage of the coordinates
     virtual const std::vector<Point>& coordinates() const = 0;

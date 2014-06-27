@@ -1,5 +1,3 @@
-#ifndef atlas_reduced_gaussian_grid_H
-#define atlas_reduced_gaussian_grid_H
 /*
  * (C) Copyright 1996-2014 ECMWF.
  *
@@ -9,12 +7,14 @@
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
+#ifndef atlas_grid_reduced_gaussian_grid_H
+#define atlas_grid_reduced_gaussian_grid_H
 
 #include <cstddef>
 #include <vector>
 
 #include "atlas/grid/Grid.h"
-#include "atlas/grid/GridSpec.h"
+#include "atlas/grid/GridFactory.h"
 
 //-----------------------------------------------------------------------------
 
@@ -46,6 +46,7 @@ namespace grid {
 // o The bitsmap shows where we have Data values.
 
 class ReducedGaussianGrid : public Grid {
+   REGISTER(ReducedGaussianGrid);
 public:
 
    ReducedGaussianGrid();
@@ -56,7 +57,11 @@ public:
    virtual BoundBox boundingBox() const { return bbox_;}
    virtual size_t nPoints() const { return points_.size(); }
    virtual void coordinates( Grid::Coords & ) const;
-   virtual const GridSpec& spec() const { return the_grid_spec_ ;}
+   virtual std::string gridType() const { return std::string("reduced_gg") ;}
+   virtual GridSpec* spec() const;
+   virtual void constructFrom(const GridSpec& );
+   virtual bool compare(const Grid&) const;
+
    /// @deprecated will be removed soon as it exposes the inner storage of the coordinates
    virtual const std::vector<Point>& coordinates() const { return points_; }
 
@@ -68,11 +73,11 @@ public:
 private:
    std::string          hash_;
    BoundBox             bbox_;
-   std::vector< Point > points_;               ///< storage of coordinate points
+   std::vector<Point>   points_;               ///< storage of coordinate points
    std::vector<long>   rgSpec_;               ///< No of points per latitude
    std::vector<double> latitudes_;            ///< the latitudes
    long                gaussianNumber_;       ///< No of points between pole and equator
-   GridSpec             the_grid_spec_;       /// < unique description of Grid
+   long   nj_;                                ///< No of points along Y axes
 
    /// Added friend mechanism to minimise data copying, during construction
    friend class GribReducedGaussianGrid;

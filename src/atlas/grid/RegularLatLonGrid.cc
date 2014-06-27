@@ -20,7 +20,10 @@
 // ==================================================================================
 
 //#include "eckit/log/Log.h"
+#include "eckit/value/Value.h"
+
 #include "atlas/grid/RegularLatLonGrid.h"
+#include "atlas/grid/GridSpec.h"
 
 using namespace eckit;
 using namespace std;
@@ -36,8 +39,7 @@ RegularLatLonGrid::RegularLatLonGrid()
 :  nsIncrement_(0),
    weIncrement_(0),
    nptsNS_(0),
-   nptsWE_(0),
-   the_grid_spec_("regular_ll")
+   nptsWE_(0)
 {
 //   Log::info() << "RegularLatLonGrid" << std::endl;
 }
@@ -74,6 +76,47 @@ void RegularLatLonGrid::coordinates( Grid::Coords& r ) const
         r.lon(i) = points_[i].lon();
     }
 }
+
+GridSpec* RegularLatLonGrid::spec() const
+{
+   GridSpec* grid_spec = new GridSpec(gridType());
+
+   std::stringstream ss; ss << "LL" << nptsNS_ << "_" << nptsWE_;
+   grid_spec->set_short_name(ss.str());
+
+   grid_spec->set("Nj",eckit::Value(nptsNS_));
+   grid_spec->set("Ni",eckit::Value(nptsWE_));
+
+   grid_spec->set("hash",eckit::Value(hash_));
+   grid_spec->set_bounding_box(bbox_);
+   grid_spec->set_points(points_);
+
+   return grid_spec;
+}
+
+void RegularLatLonGrid::constructFrom(const GridSpec& grid_spec)
+{
+   if (grid_spec.has("Nj"))      nptsNS_ = grid_spec.get("Nj");
+   if (grid_spec.has("Ni"))      nptsWE_ = grid_spec.get("Ni");
+   if (grid_spec.has("hash"))    hash_ = (std::string)grid_spec.get("hash");
+   grid_spec.get_bounding_box(bbox_);
+   grid_spec.get_points(points_);
+}
+
+bool RegularLatLonGrid::compare(const Grid& grid) const
+{
+   if (gridType() != grid.gridType()) return false;
+
+   if ( static_cast<const RegularLatLonGrid&>(grid).nptsNS_ != nptsNS_) return false;
+   if ( static_cast<const RegularLatLonGrid&>(grid).nptsWE_ != nptsWE_) return false;
+   if ( static_cast<const RegularLatLonGrid&>(grid).hash_ != hash_) return false;
+   if ( static_cast<const RegularLatLonGrid&>(grid).bbox_ != bbox_) return false;
+   if ( static_cast<const RegularLatLonGrid&>(grid).points_ != points_) return false;
+
+   return true;
+}
+
+REGISTERIMPL(RegularLatLonGrid,"regular_ll");
 
 //-----------------------------------------------------------------------------
 

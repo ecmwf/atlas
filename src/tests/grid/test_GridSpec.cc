@@ -11,7 +11,7 @@
 #include <string>
 #include <iostream>
 
-#define BOOST_TEST_MODULE TestGrid
+#define BOOST_TEST_MODULE TestGridSpec
 #define BOOST_UNIT_TEST_FRAMEWORK_HEADER_ONLY
 #include "ecbuild/boost_test_framework.h"
 
@@ -41,11 +41,31 @@ using namespace atlas;
 static void test_grids_from_grib_sample_directory( const std::string& directory);
 static void test_grib_file(const std::string& file);
 
-BOOST_AUTO_TEST_SUITE( TestGrid )
+BOOST_AUTO_TEST_SUITE( TestGridSpec )
 
-BOOST_AUTO_TEST_CASE( test_grids_from_samples_dir )
+BOOST_AUTO_TEST_CASE( test_gridspec )
 {
-   cout << "Grid:: ...test_grids_from_samples_dir\n";
+   std::vector<std::string> registered_grid_types;
+   registered_grid_types.push_back("gaussian");
+   registered_grid_types.push_back("latlon");
+   registered_grid_types.push_back("regular_gg");
+   registered_grid_types.push_back("reduced_ll");
+   registered_grid_types.push_back("reduced_gg");
+   registered_grid_types.push_back("regular_ll");
+   registered_grid_types.push_back("rotated_ll");
+   registered_grid_types.push_back("unstructured");
+
+   for(size_t i =0; i < registered_grid_types.size(); ++i) {
+      GridSpec spec(registered_grid_types[i]);
+      Grid::Ptr grid = GridFactory::create(spec);
+      BOOST_CHECK_MESSAGE(grid,"Failed to create Grid ");
+      BOOST_CHECK_MESSAGE(spec.grid_type() == grid->gridType(),"grid types dont match");
+   }
+}
+
+BOOST_AUTO_TEST_CASE( test_grib_to_grid_to_gridspec )
+{
+   cout << "Grid:: ...test_grib_to_grid_to_gridspec\n";
 
    // Traverse all the GRIB samples files, for gridType first determine sample dir
    std::vector<std::string> sample_dirs;
@@ -113,37 +133,23 @@ static void test_grib_file(const std::string& the_file_path)
       return;
    }
 
-   long editionNumber = 0;
-   GRIB_CHECK(grib_get_long(the_grib_file.handle(),"editionNumber",&editionNumber),0);
-
-
-   // Unstructured grid can not handle Spherical harmonics
-   atlas::grid::Grid::Ptr the_grid = GRIBGridBuilder::instance().build_grid_from_grib_handle(the_grib_file.handle());
-   BOOST_CHECK_MESSAGE(the_grid,"GRIBGridBuilder::instance().build_grid_from_grib_handle failed for file " << the_file_path);
-   if (!the_grid) return;
+   // Create Grid derivatives from the GRIB file
+   atlas::grid::Grid::Ptr grid_created_from_grib = GRIBGridBuilder::instance().build_grid_from_grib_handle(the_grib_file.handle());
+   BOOST_CHECK_MESSAGE(grid_created_from_grib,"GRIBGridBuilder::instance().build_grid_from_grib_handle failed for file " << the_file_path);
+   if (!grid_created_from_grib) return;
 
    // The Grid produced, has a GRID spec, the grid spec can be used to,
    // make sure the grid types match
-   eckit::ScopedPtr< GridSpec > the_grid_spec( the_grid->spec() );
-   BOOST_CHECK_MESSAGE(the_grid->gridType() == gridType,"gridType(" << gridType << ") did not match Grid constructor(" << the_grid->gridType() << ") for file " << the_file_path);
+   eckit::ScopedPtr< GridSpec > the_grid_spec( grid_created_from_grib->spec() );
+   the_grid_spec->print_simple(std::cout); std::cout << "\n";
+
+   BOOST_CHECK_MESSAGE(grid_created_from_grib->gridType() == gridType,"gridType(" << gridType << ") did not match Grid constructor(" << grid_created_from_grib->gridType() << ") for file " << the_file_path);
    BOOST_CHECK_MESSAGE(the_grid_spec->grid_type() == gridType,"gridType(" << gridType << ") did not match GridSpec constructor(" << the_grid_spec->grid_type() << ") for file " << the_file_path);
 
-   // find the corresponding sample file.
-   // However we need to take into account that the GRIB samples, file are *NOT* unique in their GRID definition.
-   // The sample file name produced does not have '.tmpl' extension
-   std::string generated_sample_file_name = GribWrite::grib_sample_file( *the_grid_spec , editionNumber);
-   BOOST_CHECK_MESSAGE( !generated_sample_file_name.empty()," Could *not* find sample file for grid_spec " << *the_grid_spec );
+   // From the Spec, create another Grid, we should get back the same Grid
+   Grid::Ptr grid_created_from_spec = GridFactory::create(*the_grid_spec);
+   BOOST_CHECK_MESSAGE(grid_created_from_spec,"Failed to create GRID from GridSpec");
+   bool grid_compare = grid_created_from_grib->compare(*grid_created_from_spec);
+   BOOST_CHECK_MESSAGE(grid_compare,"The grids are differnt");
 
-
-   // Note: many of the grib samples files are not UNIQUE in their grid specification:
-   // hence the use of WARN.
-   // remove .tmpl and get base part
-   eckit::LocalPathName path(the_file_path);
-   LocalPathName the_base_name = path.baseName(false);
-   std::string grib_sample_file = the_base_name.localPath();
-   BOOST_WARN_MESSAGE( generated_sample_file_name == grib_sample_file, "\nCould not match samples expected '"
-                       << grib_sample_file << "' but found('"
-                       << generated_sample_file_name
-                       << "') for grid spec "
-                       << *the_grid_spec );
 }

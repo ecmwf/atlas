@@ -20,7 +20,9 @@
 // ==================================================================================
 
 #include "eckit/log/Log.h"
+#include "eckit/value/Value.h"
 #include "atlas/grid/ReducedGaussianGrid.h"
+#include "atlas/grid/GridSpec.h"
 
 using namespace eckit;
 using namespace std;
@@ -35,8 +37,7 @@ namespace grid {
 //          assumes it is grid points inclusive of the area.
 
 ReducedGaussianGrid::ReducedGaussianGrid()
-: gaussianNumber_(0),
-  the_grid_spec_("reduced_gg")
+: gaussianNumber_(0),nj_(0)
 {
 }
 
@@ -55,6 +56,51 @@ void ReducedGaussianGrid::coordinates( Grid::Coords& r ) const
         r.lon(i) = points_[i].lon();
     }
 }
+
+GridSpec* ReducedGaussianGrid::spec() const
+{
+   GridSpec* grid_spec = new GridSpec(gridType());
+
+   std::stringstream ss; ss << "QG" << gaussianNumber_;
+   grid_spec->set_short_name(ss.str());
+   grid_spec->set("gaussianNumber",eckit::Value(gaussianNumber_));
+
+   grid_spec->set("hash",eckit::Value(hash_));
+
+   grid_spec->set_bounding_box(bbox_);
+   grid_spec->set_rgspec(rgSpec_);
+   grid_spec->set_latitudes(latitudes_);
+   grid_spec->set_points(points_);
+
+   return grid_spec;
+}
+
+void ReducedGaussianGrid::constructFrom(const GridSpec& grid_spec)
+{
+   if (grid_spec.has("gaussianNumber")) gaussianNumber_ = grid_spec.get("gaussianNumber");
+   if (grid_spec.has("hash"))           hash_ = (std::string)grid_spec.get("hash");
+   grid_spec.get_bounding_box(bbox_);
+   grid_spec.get_rgspec(rgSpec_);
+   grid_spec.get_latitudes(latitudes_);
+   grid_spec.get_points(points_);
+}
+
+bool ReducedGaussianGrid::compare(const Grid& grid) const
+{
+   if (gridType() != grid.gridType()) return false;
+
+   if ( static_cast<const ReducedGaussianGrid&>(grid).gaussianNumber_ != gaussianNumber_) return false;
+   if ( static_cast<const ReducedGaussianGrid&>(grid).hash_ != hash_) return false;
+   if ( static_cast<const ReducedGaussianGrid&>(grid).bbox_ != bbox_) return false;
+   if ( static_cast<const ReducedGaussianGrid&>(grid).rgSpec_ != rgSpec_) return false;
+   if ( static_cast<const ReducedGaussianGrid&>(grid).latitudes_ != latitudes_) return false;
+   if ( static_cast<const ReducedGaussianGrid&>(grid).points_ != points_) return false;
+
+   return true;
+}
+
+
+REGISTERIMPL(ReducedGaussianGrid,"reduced_gg");
 
 //-----------------------------------------------------------------------------
 

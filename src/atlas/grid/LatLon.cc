@@ -9,6 +9,7 @@
  */
 
 #include "eckit/log/Log.h"
+#include "atlas/grid/GridSpec.h"
 
 #include "atlas/grid/LatLon.h"
 
@@ -22,8 +23,7 @@ namespace grid {
 LatLon::LatLon( size_t nlat, size_t nlon, const BoundBox& bb) :
     nlat_(nlat),
     nlon_(nlon),
-    bound_box_(bb),
-    the_grid_spec_("latlon","LL")
+    bound_box_(bb)
 {
     ASSERT( nlat > 0 );
     ASSERT( nlon > 0 );
@@ -50,7 +50,7 @@ LatLon::LatLon( size_t nlat, size_t nlon, const BoundBox& bb) :
 
 LatLon::~LatLon()
 {
-    Log::info() << "Destroy a LatLon" << std::endl;
+    // Log::info() << "Destroy a LatLon" << std::endl;
 }
 
 std::string LatLon::hash() const
@@ -73,6 +73,40 @@ void LatLon::coordinates( Grid::Coords& r ) const
         r.lon(i) = points_[i].lon();
     }
 }
+
+GridSpec* LatLon::spec() const
+{
+   GridSpec* grid_spec = new GridSpec(gridType(),"LL");
+
+   grid_spec->set("nlat",eckit::Value(nlat_));
+   grid_spec->set("nlon",eckit::Value(nlon_));
+
+   grid_spec->set_bounding_box(bound_box_);
+   grid_spec->set_points(points_);
+
+   return grid_spec;
+}
+
+void LatLon::constructFrom(const GridSpec& grid_spec)
+{
+   if (grid_spec.has("nlat")) nlat_ = grid_spec.get("nlat");
+   if (grid_spec.has("nlon")) nlon_ = grid_spec.get("nlon");
+   grid_spec.get_bounding_box(bound_box_);
+   grid_spec.get_points(points_);
+}
+
+bool LatLon::compare(const Grid& grid) const
+{
+   if (gridType() != grid.gridType()) return false;
+   if ( static_cast<const LatLon&>(grid).nlat_ != nlat_) return false;
+   if ( static_cast<const LatLon&>(grid).nlon_ != nlon_) return false;
+   if ( static_cast<const LatLon&>(grid).bound_box_ != bound_box_) return false;
+   if ( static_cast<const LatLon&>(grid).points_ != points_) return false;
+
+   return true;
+}
+
+REGISTERIMPL(LatLon,"latlon");
 
 //-----------------------------------------------------------------------------
 

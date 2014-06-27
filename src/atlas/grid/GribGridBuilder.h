@@ -1,5 +1,3 @@
-#ifndef atlas_grid_builder_H
-#define atlas_grid_builder_H
 /*
  * (C) Copyright 1996-2014 ECMWF.
  *
@@ -9,6 +7,8 @@
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
+#ifndef atlas_grib_grid_builder_H
+#define atlas_grib_grid_builder_H
 
 #include <cstddef>
 #include <vector>
@@ -159,7 +159,6 @@ private:
    bool isGlobalWestEast() const;
 
 private:
-   long   nj_;                      ///< No of points along Y axes
    eckit::ScopedPtr<ReducedGaussianGrid> the_grid_;
 };
 
@@ -179,7 +178,6 @@ private:
    bool isGlobalWestEast() const;
 
 private:
-   long   nj_;                      /// No of points along Y axes
    eckit::ScopedPtr<RegularGaussianGrid> the_grid_;
 };
 

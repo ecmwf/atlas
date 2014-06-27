@@ -11,6 +11,7 @@
 #include <cmath>
 
 #include "eckit/log/Log.h"
+#include "atlas/grid/GridSpec.h"
 
 #include "atlas/grid/Gaussian.h"
 #include "atlas/grid/Latitudes.h"
@@ -24,8 +25,7 @@ namespace grid {
 
 Gaussian::Gaussian( size_t resolution, const BoundBox& bb) :
     resolution_(resolution),
-    bound_box_(bb),
-    the_grid_spec_("gaussian","GG")
+    bound_box_(bb)
 {
     ASSERT( resolution_ > 0 );
 
@@ -102,6 +102,37 @@ void Gaussian::coordinates( Grid::Coords& r ) const
         r.lon(i) = coordinates_[i].lon();
     }
 }
+
+GridSpec* Gaussian::spec() const
+{
+   GridSpec* grid_spec = new GridSpec(gridType(),"GG");
+
+   grid_spec->set("resolution",eckit::Value(resolution_));
+   grid_spec->set_bounding_box(bound_box_);
+   grid_spec->set_points(coordinates_);
+
+   return grid_spec;
+}
+
+void Gaussian::constructFrom(const GridSpec& grid_spec)
+{
+   if (grid_spec.has("resolution")) resolution_ = grid_spec.get("resolution");
+
+   grid_spec.get_bounding_box(bound_box_);
+   grid_spec.get_points(coordinates_);
+}
+
+bool Gaussian::compare(const Grid& grid) const
+{
+   if (gridType() != grid.gridType()) return false;
+   if ( static_cast<const Gaussian&>(grid).resolution_ != resolution_) return false;
+   if ( static_cast<const Gaussian&>(grid).bound_box_ != bound_box_) return false;
+   if ( static_cast<const Gaussian&>(grid).coordinates_ != coordinates_) return false;
+   return true;
+}
+
+REGISTERIMPL(Gaussian,"gaussian");
+
 
 //-----------------------------------------------------------------------------
 

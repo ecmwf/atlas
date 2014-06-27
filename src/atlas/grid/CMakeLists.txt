@@ -3,6 +3,8 @@ Gaussian.cc
 Gaussian.h
 Grid.cc
 Grid.h
+GridFactory.h
+GridFactory.cc
 GridSpec.cc
 GridSpec.h
 MeshCache.cc
@@ -46,8 +48,8 @@ if( HAVE_GRIB )
     GribRead.h
     GribWrite.cc
     GribWrite.h
-    GridBuilder.h
-    GridBuilder.cc
+    GribGridBuilder.h
+    GribGridBuilder.cc
     StackGribFile.cc
     StackGribFile.h
   )

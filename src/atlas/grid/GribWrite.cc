@@ -19,6 +19,7 @@
 #include "eckit/memory/ScopedPtr.h"
 #include "eckit/io/DataHandle.h"
 #include "eckit/filesystem/LocalPathName.h"
+#include "eckit/parser/StringTools.h"
 
 #include "atlas/mesh/Field.hpp"
 #include "atlas/mesh/FunctionSpace.hpp"
@@ -39,15 +40,41 @@ using namespace atlas::grid;
 
 namespace atlas {
 
+static std::string map_short_name_to_grib_sample_file(const std::string& short_name, long editionNumber);
+
 //------------------------------------------------------------------------------------------------------
 
 eckit::grib_handle_ptr GribWrite::create_handle(const Grid& the_grid)
 {
+   // TODO: We need determine choive of editionNumber form a user specified configuration file
+
    // From the Grid get the Grid Spec
-   const GridSpec& the_grid_spec = the_grid.spec();
+   eckit::ScopedPtr< GridSpec > the_grid_spec( the_grid.spec() );
+
+   // First match GridSpec short names, directly to a samples file
+   // If this fails, then try looking on disk,
+   long editionNumber = 2;
+   std::string sample_file = map_short_name_to_grib_sample_file( the_grid_spec->short_name(),editionNumber);
+   if (!sample_file.empty()) {
+      grib_handle* the_grib_handle = grib_handle_new_from_samples(0,sample_file.c_str());
+      return eckit::grib_handle_ptr(new GribHandle(the_grib_handle));
+   }
+   editionNumber = 1;
+   sample_file = map_short_name_to_grib_sample_file( the_grid_spec->short_name(),editionNumber);
+   if (!sample_file.empty()) {
+      grib_handle* the_grib_handle = grib_handle_new_from_samples(0,sample_file.c_str());
+      return eckit::grib_handle_ptr(new GribHandle(the_grib_handle));
+   }
 
    // From the grid spec, determine the closest corresponding grib samples file
-   std::string grib_sample_file = GribWrite::grib_sample_file(the_grid_spec);
+   editionNumber = 2;
+   std::string grib_sample_file = GribWrite::grib_sample_file(*the_grid_spec,editionNumber);
+   if (!grib_sample_file.empty()) {
+      grib_handle* the_grib_handle = grib_handle_new_from_samples(0,grib_sample_file.c_str());
+      return eckit::grib_handle_ptr(new GribHandle(the_grib_handle));
+   }
+   editionNumber = 1;
+   grib_sample_file = GribWrite::grib_sample_file(*the_grid_spec,editionNumber);
    if (!grib_sample_file.empty()) {
       grib_handle* the_grib_handle = grib_handle_new_from_samples(0,grib_sample_file.c_str());
       return eckit::grib_handle_ptr(new GribHandle(the_grib_handle));
@@ -56,8 +83,167 @@ eckit::grib_handle_ptr GribWrite::create_handle(const Grid& the_grid)
    return eckit::grib_handle_ptr();
 }
 
-static std::string map_short_name_to_grib_sample_file(const std::string& short_name)
+
+void GribWrite::determine_grib_samples_dir(std::vector<std::string>& sample_paths)
 {
+   char* the_paths = grib_samples_path(NULL);
+   if (the_paths) {
+      // Expect <path1>:<path2>:<path3:
+      // TODO: Need abstraction for path separator.
+      sample_paths = StringTools::split(":", std::string(the_paths));
+      return;
+   }
+
+   char* include_dir = getenv("GRIB_API_INCLUDE");
+   if (!include_dir) throw SeriousBug(string("grib_samples_path(NULL) returned a NULL path"),Here()) ;
+
+   std::string grib_include_dir(include_dir);
+   if (grib_include_dir.find("grib_api") == std::string::npos) {
+      // "grib-api not found on directory " << grib_include_dir
+      return throw SeriousBug(string("grib_samples_path(NULL) returned a NULL path"),Here()) ;
+   }
+
+   if (grib_include_dir.find("-I") != std::string::npos) {
+      //std::cout << "GRIB_API_INCLUDE=" << grib_include_dir << "\n";
+      grib_include_dir.erase(grib_include_dir.begin(),grib_include_dir.begin()+2); // remove -I
+   }
+
+   // Handle multiple include dirs
+   // If there are any spaces in the string, only take the first include
+   size_t space_pos = grib_include_dir.find(" ");
+   if (space_pos != std::string::npos) {
+      grib_include_dir = grib_include_dir.substr(0,space_pos);
+      //std::cout << "GRIB_API_INCLUDE=" << grib_include_dir << "\n";
+   }
+
+   // Remove the 'include' and replace with, 'share/grib_api/samples'
+   size_t pos = grib_include_dir.find("/include");
+   if ( pos == string::npos) {
+      // include not found in directory " << grib_include_dir);
+      throw SeriousBug(string("grib_samples_path(NULL) returned a NULL path"),Here()) ;
+   }
+
+   std::string grib_samples_dir = grib_include_dir.replace(pos,grib_include_dir.length(),"/share/grib_api/samples");
+   //std::cout << " GRIB SAMPLES=" << grib_include_dir << "\n";
+   sample_paths.push_back( grib_samples_dir );
+}
+
+bool match_grid_spec_with_sample_file(
+         const GridSpec& the_grid_spec,
+         grib_handle* handle,
+         long editionNumber,
+         const std::string& file_path)
+{
+   char string_value[64];
+   size_t len = sizeof(string_value)/sizeof(char);
+   int err = grib_get_string(handle,"gridType",string_value,&len);
+   if (err != 0) {
+      //Log::error() << "GribWrite::match_grid_spec_with_sample_file, grib_get_string(gridType) failed for \nfile " << file_path << " IGNORING !! " << std::endl;
+      return false;
+   }
+   std::string grib_grid_type = string_value;
+   if ( the_grid_spec.grid_type() != grib_grid_type ) {
+      //Log::info() << "grid_type in GridSpec " << the_grid_spec.grid_type() << " does not match " << grib_grid_type << " in samples file " << file_path << " IGNORING " << std::endl;
+      return false;
+   }
+
+   eckit::Value spec_nj = the_grid_spec.get("Nj");
+   if (!spec_nj.isNil()) {
+      long the_spec_nj = spec_nj;
+      long grib_nj = 0;
+      if (grib_get_long(handle,"Nj",&grib_nj) == 0 ) {
+         if (the_spec_nj != grib_nj ) {
+            //Log::info() << "GribWrite::match_grid_spec_with_sample_file, Nj in GridSpec " << the_spec_nj << " does not match  " << grib_nj << " in samples file " << file_path << " IGNORING " << std::endl;
+            return false;
+         }
+      }
+   }
+   eckit::Value spec_ni = the_grid_spec.get("Ni");
+   if (!spec_ni.isNil()) {
+      long the_spec_ni = spec_ni;
+      long grib_ni = 0;
+      if (grib_get_long(handle,"Ni",&grib_ni) == 0 ) {
+         if (the_spec_ni != grib_ni ) {
+            //Log::info() << "GribWrite::match_grid_spec_with_sample_file, Ni in GridSpec " << the_spec_ni << " does not match  " << grib_ni << " in samples file " << file_path << " IGNORING " << std::endl;
+            return false;
+         }
+      }
+   }
+
+   long grib_editionNumber = 0;
+   GRIB_CHECK(grib_get_long(handle,"editionNumber",&grib_editionNumber),0);
+   if (grib_editionNumber != editionNumber ) {
+      //Log::info() << "GribWrite::match_grid_spec_with_sample_file, the_edition_number passed in " << editionNumber << " does not match grib" << editionNumber << " in samples file " << file_path << " IGNORING " << std::endl;
+      return false;
+   }
+
+   return true;
+}
+
+std::string GribWrite::grib_sample_file( const grid::GridSpec& the_grid_spec, long editionNumber )
+{
+   // Note: many of the grib samples files are not UNIQUE in their grid specification:
+   // i.e
+   //   GRIB2.tmpl                        -> GridSpec[ regular_ll, LL31_16_2, Ni:16, Nj:31, typeOfLevel:surface ]
+   //   regular_ll_pl_grib2.tmpl          -> GridSpec[ regular_ll, LL31_16_2, Ni:16, Nj:31 ]
+   //   regular_ll_sfc_grib2.tmpl         -> GridSpec[ regular_ll, LL31_16_2, Ni:16, Nj:31 ]
+   //
+   //   reduced_gg_ml_grib1               -> GridSpec[ reduced_gg, QG32_1, Nj:64 ]
+   //   reduced_gg_pl_32_grib1            -> GridSpec[ reduced_gg, QG32_1, Nj:64 ]
+   //   reduced_gg_ml_grib2               -> GridSpec[ reduced_gg, QG32_2, Nj:64 ]
+   //   reduced_gg_pl_32_grib2            -> GridSpec[ reduced_gg, QG32_2, Nj:64 ]
+   //
+   // Others are just plain wrong, i.e
+   //   polar_stereographic_pl_grib2.tmpl -> GridSpec[ rotated_ll, RL31_2, Ni:16, Nj:31, editionNumber:2 ]
+
+   // From the grid spec, we will look at the grid samples, and find the closest match
+   std::vector<std::string> sample_paths;
+   determine_grib_samples_dir(sample_paths);
+   if ( sample_paths.empty() ) {
+      throw SeriousBug(string("Error no sample paths found"),Here()) ;
+   }
+
+   for(size_t path = 0; path < sample_paths.size(); ++path) {
+
+      std::string grib_samples_dir = sample_paths[path];
+      if (grib_samples_dir.empty()) {
+         throw SeriousBug(string("Error, empty samples path. Could not create handle from grid"),Here()) ;
+      }
+      PathName dir_path(grib_samples_dir);
+      if (!dir_path.exists()) continue;
+      if (!dir_path.isDir())  continue;
+
+      std::vector<PathName> files;
+      std::vector<PathName> directories;
+      dir_path.children(files,directories);
+      for(size_t i = 0; i < files.size(); i++) {
+         try {
+            StackGribFile the_grib_file(std::string(files[i].localPath()));
+
+            std::string grib_sample_file_tmpl = files[i].localPath();
+            if (match_grid_spec_with_sample_file(the_grid_spec,the_grib_file.handle(),editionNumber,grib_sample_file_tmpl)) {
+               // remove .tmpl extension
+               eckit::LocalPathName path(grib_sample_file_tmpl);
+               LocalPathName the_base_name = path.baseName(false);
+               std::string grib_sample_file = the_base_name.localPath();
+               return grib_sample_file;
+            }
+         }
+         catch ( const std::exception & ex ) {
+            Log::info() << files[i].localPath() << " " << ex.what() << std::endl;
+         }
+      }
+   }
+
+   Log::info() << "Could find grib samples match for grid_spec " << the_grid_spec << std::endl;
+   return std::string();
+}
+
+static std::string map_short_name_to_grib_sample_file(const std::string& short_name,long editionNumber)
+{
+   std::stringstream ss; ss << short_name << "_" << editionNumber;
+   std::string the_short_name = ss.str();
+
    // Short cut, for mapping short name to grib samples file.
    std::map<std::string,std::string> short_name_to_samples_map;
    short_name_to_samples_map.insert( std::make_pair(std::string("QG32_1"),std::string("reduced_gg_pl_32_grib1")) );
@@ -89,191 +275,13 @@ static std::string map_short_name_to_grib_sample_file(const std::string& short_n
    short_name_to_samples_map.insert( std::make_pair(std::string("QG2000_1"),std::string("reduced_gg_pl_2000_grib1")) );
    short_name_to_samples_map.insert( std::make_pair(std::string("QG2000_2"),std::string("reduced_gg_pl_2000_grib2")) );
 
-   std::map<std::string,std::string>::const_iterator i = short_name_to_samples_map.find(short_name);
+   std::map<std::string,std::string>::const_iterator i = short_name_to_samples_map.find(the_short_name);
    if (i != short_name_to_samples_map.end()) {
       return (*i).second;
    }
    return std::string();
 }
 
-static std::string determine_grib_samples_dir()
-{
-   // TODO: This function will be replaced with GRIP API function.
-   //        See: GRIB-API GRIB-550 Need access to grib samples path (via API)
-
-   // Try looking for environment variable GRIB_API_INCLUDE
-   // GRIB_API_INCLUDE=-I/usr/local/lib/metaps/lib/grib_api/1.10.0/include
-   //                  =/usr/local/lib/metaps/lib/grib_api/1.10.0/include /usr/local/apps/jasper/1.900.1/LP64/include /usr/local/apps/jasper/1.900.1/LP64/include
-   // samples dir = /usr/local/lib/metaps/lib/grib_api/1.10.0/share/grib_api/samples
-
-    PathName samples_path ( eckit::Resource<std::string>("$GRIB_SAMPLES_PATH","") );
-    if( !samples_path.asString().empty() && samples_path.exists() )
-        return samples_path.asString();
-
-   char* include_dir = getenv("GRIB_API_INCLUDE");
-   if (!include_dir) return std::string();
-
-   std::string grib_include_dir(include_dir);
-   if (grib_include_dir.find("grib_api") == std::string::npos) {
-      // "grib-api not found on directory " << grib_include_dir
-      return std::string();
-   }
-
-   if (grib_include_dir.find("-I") != std::string::npos) {
-      //std::cout << "GRIB_API_INCLUDE=" << grib_include_dir << "\n";
-      grib_include_dir.erase(grib_include_dir.begin(),grib_include_dir.begin()+2); // remove -I
-   }
-
-   // Handle multiple include dirs
-   // If there are any spaces in the string, only take the first include
-   size_t space_pos = grib_include_dir.find(" ");
-   if (space_pos != std::string::npos) {
-      grib_include_dir = grib_include_dir.substr(0,space_pos);
-      //std::cout << "GRIB_API_INCLUDE=" << grib_include_dir << "\n";
-   }
-
-   // Remove the 'include' and replace with, 'share/grib_api/samples'
-   size_t pos = grib_include_dir.find("/include");
-   if ( pos == string::npos) {
-      // include not found in directory " << grib_include_dir);
-      return std::string();
-   }
-
-   std::string grib_samples_dir = grib_include_dir.replace(pos,grib_include_dir.length(),"/share/grib_api/samples");
-   //std::cout << " GRIB SAMPLES=" << grib_include_dir << "\n";
-
-   return grib_samples_dir;
-}
-
-bool match_grid_spec_with_sample_file( const GridSpec& the_grid_spec, grib_handle* handle, const std::string& file_path)
-{
-   char string_value[64];
-   size_t len = sizeof(string_value)/sizeof(char);
-   int err = grib_get_string(handle,"gridType",string_value,&len);
-   if (err != 0) {
-      Log::error() << "GribWrite::found_match, grib_get_string(gridType) failed for \nfile " << file_path << " IGNORING !! " << std::endl;
-      return false;
-   }
-   std::string grib_grid_type = string_value;
-   if ( the_grid_spec.grid_type() != grib_grid_type ) {
-      //Log::info() << "grid_type in GridSpec " << the_grid_spec.grid_type() << " does not match " << grib_grid_type << " in samples file " << file_path << " IGNORING " << std::endl;
-      return false;
-   }
-
-   long editionNumber = 0;
-   GRIB_CHECK(grib_get_long(handle,"editionNumber",&editionNumber),0);
-   eckit::Value spec_edition_number = the_grid_spec.get("editionNumber");
-   if ((long)spec_edition_number != editionNumber ) {
-      //Log::info() << "GribWrite::found_match, the_edition_number in GridSpec " << spec_edition_number << " does not match  " << editionNumber << " in samples file " << file_path << " IGNORING " << std::endl;
-      return false;
-   }
-
-   eckit::Value spec_nj = the_grid_spec.get("Nj");
-   if (!spec_nj.isNil()) {
-      long the_spec_nj = spec_nj;
-      long grib_nj = 0;
-      if (grib_get_long(handle,"Nj",&grib_nj) == 0 ) {
-         if (the_spec_nj != grib_nj ) {
-            //Log::info() << "GribWrite::found_match, Nj in GridSpec " << the_spec_nj << " does not match  " << grib_nj << " in samples file " << file_path << " IGNORING " << std::endl;
-            return false;
-         }
-      }
-   }
-   eckit::Value spec_ni = the_grid_spec.get("Ni");
-   if (!spec_ni.isNil()) {
-      long the_spec_ni = spec_ni;
-      long grib_ni = 0;
-      if (grib_get_long(handle,"Ni",&grib_ni) == 0 ) {
-         if (the_spec_ni != grib_ni ) {
-            //Log::info() << "GribWrite::found_match, Ni in GridSpec " << the_spec_ni << " does not match  " << grib_ni << " in samples file " << file_path << " IGNORING " << std::endl;
-            return false;
-         }
-      }
-   }
-
-   // ??
-   eckit::Value spec_level = the_grid_spec.get("typeOfLevel");
-   if (!spec_level.isNil()) {
-      std::string the_spec_level = spec_level;
-      char string_value[64];
-      size_t len = sizeof(string_value)/sizeof(char);
-      if (grib_get_string(handle,"typeOfLevel",string_value,&len) == 0) {
-         std::string grid_type_of_level = string_value;
-         if (grid_type_of_level != the_spec_level) {
-            //Log::info() << "GribWrite::found_match, typeOfLevel in GridSpec " << the_spec_level << " does not match  " << grid_type_of_level << " in samples file " << file_path << " IGNORING " << std::endl;
-            return false;
-         }
-      }
-   }
-
-   return true;
-}
-
-std::string GribWrite::grib_sample_file( const grid::GridSpec& the_grid_spec )
-{
-   // Note: many of the grib samples files are not UNIQUE in their grid specification:
-   // i.e
-   //   GRIB2.tmpl                        -> GridSpec[ regular_ll, LL31_16_2, Ni:16, Nj:31, editionNumber:2, typeOfLevel:surface ]
-   //   regular_ll_pl_grib2.tmpl          -> GridSpec[ regular_ll, LL31_16_2, Ni:16, Nj:31, editionNumber:2 ]
-   //   regular_ll_sfc_grib2.tmpl         -> GridSpec[ regular_ll, LL31_16_2, Ni:16, Nj:31, editionNumber:2 ]
-   //
-   //   reduced_gg_ml_grib1               -> GridSpec[ reduced_gg, QG32_1, Nj:64, editionNumber:1 ]
-   //   reduced_gg_pl_32_grib1            -> GridSpec[ reduced_gg, QG32_1, Nj:64, editionNumber:1 ]
-   //   reduced_gg_ml_grib2               -> GridSpec[ reduced_gg, QG32_2, Nj:64, editionNumber:2 ]
-   //   reduced_gg_pl_32_grib2            -> GridSpec[ reduced_gg, QG32_2, Nj:64, editionNumber:2 ]
-   //
-   // Others are just plain wrong, i.e
-   //   polar_stereographic_pl_grib2.tmpl -> GridSpec[ rotated_ll, RL31_2, Ni:16, Nj:31, editionNumber:2 ]
-
-   // ------------------------------------------------------------------
-   // First match GridSpec short names, + GridSpec edition number directly to a samples file
-   // QG32_1 ---> reduced_gg_pl_32_grib1.tmpl
-   // QG32_2 ---> reduced_gg_pl_32_grib2.tmpl
-   std::string grib_sample_file = map_short_name_to_grib_sample_file( the_grid_spec.short_name());
-   if (!grib_sample_file.empty()) {
-      return grib_sample_file;
-   }
-
-   // If this fails, then try looking on disk,
-   // From the grid spec, we will look at the grid samples, and find the closest match
-   std::string grib_samples_dir = determine_grib_samples_dir();
-   if (grib_samples_dir.empty()) {
-      throw SeriousBug(string("Error reading grib sample dir. Could not create handle from grid"),Here()) ;
-   }
-   PathName dir_path(grib_samples_dir);
-   if (!dir_path.exists()) {
-      std::stringstream ss; ss << "GRid samples directory " << grib_samples_dir << " does not exist";
-      throw SeriousBug(ss.str(),Here()) ;
-   }
-   if (!dir_path.isDir()) {
-      std::stringstream ss; ss << "GRid samples directory " << grib_samples_dir << " is not a directory";
-      throw SeriousBug(ss.str(),Here()) ;
-   }
-
-   std::vector<PathName> files;
-   std::vector<PathName> directories;
-   dir_path.children(files,directories);
-   for(size_t i = 0; i < files.size(); i++) {
-      try {
-         StackGribFile the_grib_file(std::string(files[i].localPath()));
-
-         std::string grib_sample_file_tmpl = files[i].localPath();
-         if (match_grid_spec_with_sample_file(the_grid_spec,the_grib_file.handle(),grib_sample_file_tmpl)) {
-            // remove .tmpl extension
-            eckit::LocalPathName path(grib_sample_file_tmpl);
-            LocalPathName the_base_name = path.baseName(false);
-            std::string grib_sample_file = the_base_name.localPath();
-            return grib_sample_file;
-         }
-      }
-      catch ( const std::exception & ex ) {
-         Log::info() << files[i].localPath() << " " << ex.what() << std::endl;
-      }
-   }
-
-   Log::info() << "Could find grib samples match for grid_spec " << the_grid_spec << std::endl;
-   return std::string();
-}
 
 
 void GribWrite::write( const FieldSet& fields, const PathName& opath )

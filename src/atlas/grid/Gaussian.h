@@ -19,18 +19,23 @@
 #include <vector>
 
 #include "atlas/grid/Grid.h"
-#include "atlas/grid/GridSpec.h"
+#include "atlas/grid/GridFactory.h"
 
 //-----------------------------------------------------------------------------
 
 namespace atlas {
 namespace grid {
 
+class GridSpec;
+
 //-----------------------------------------------------------------------------
 
 class Gaussian : public Grid {
+   REGISTER(Gaussian);
 
 public: // methods
+
+    Gaussian() : resolution_(0) {}
 
     Gaussian( size_t resolution, const BoundBox& bb );
 
@@ -44,7 +49,13 @@ public: // methods
 
     virtual void coordinates( Grid::Coords & ) const;
 
-    virtual const GridSpec& spec() const { return the_grid_spec_ ;}
+    virtual std::string gridType() const { return std::string("gaussian") ;}
+
+    virtual GridSpec* spec() const;
+
+    virtual void constructFrom(const GridSpec& );
+
+    virtual bool compare(const Grid&) const;
 
     /// @deprecated will be removed soon as it exposes the inner storage of the coordinates
     virtual const std::vector<Point>& coordinates() const { return coordinates_; }
@@ -57,9 +68,6 @@ protected:
 
     BoundBox bound_box_;                ///< bounding box for the domain
 
-private:
-
-    GridSpec      the_grid_spec_;       /// < unique description of Grid
 };
 
 //-----------------------------------------------------------------------------
