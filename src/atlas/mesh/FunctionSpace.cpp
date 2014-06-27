@@ -371,6 +371,9 @@ Gather const* atlas__FunctionSpace__gather (FunctionSpace* This) {
   return &This->gather();
 }
 
+Checksum const* atlas__FunctionSpace__checksum (FunctionSpace* This) {
+  return &This->checksum();
+}
 
 void atlas__FunctionSpace__delete (FunctionSpace* This)  {
   delete This;

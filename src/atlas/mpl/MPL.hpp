@@ -45,9 +45,12 @@ public:
 
   template<typename DATA_TYPE>
   MPI_Datatype TYPE();
-  template<> inline MPI_Datatype TYPE<int>()    { return MPI_INT; }
-  template<> inline MPI_Datatype TYPE<float>()  { return MPI_FLOAT; }
-  template<> inline MPI_Datatype TYPE<double>() { return MPI_DOUBLE; }
+  template<> inline MPI_Datatype TYPE<int>()           { return MPI_INT; }
+  template<> inline MPI_Datatype TYPE<unsigned int>()  { return MPI_UNSIGNED; }
+  template<> inline MPI_Datatype TYPE<long>()          { return MPI_LONG; }
+  template<> inline MPI_Datatype TYPE<unsigned long>() { return MPI_UNSIGNED_LONG; }
+  template<> inline MPI_Datatype TYPE<float>()         { return MPI_FLOAT; }
+  template<> inline MPI_Datatype TYPE<double>()        { return MPI_DOUBLE; }
 
 
   inline bool initialized()

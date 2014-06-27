@@ -20,6 +20,7 @@
 
 #include "atlas/mpl/HaloExchange.hpp"
 #include "atlas/mpl/Gather.hpp"
+#include "atlas/mpl/Checksum.hpp"
 #include "atlas/mesh/Metadata.hpp"
 
 namespace atlas {
@@ -77,7 +78,7 @@ public: // methods
     halo_exchange_.execute( field_data, nb_vars );
   }
 
-  const HaloExchange& halo_exchange() { return halo_exchange_; }
+  const HaloExchange& halo_exchange() const { return halo_exchange_; }
 
   template< typename DATA_TYPE >
   void gather( DATA_TYPE field_data[], int field_size, DATA_TYPE glbfield_data[], int glbfield_size )
@@ -89,7 +90,9 @@ public: // methods
     gather_.execute( field_data, glbfield_data, nb_vars );
   }
 
-  const Gather& gather() { return gather_; }
+  const Gather& gather() const { return gather_; }
+
+  const Checksum& checksum() const { return checksum_; }
 
   void set_index(int idx) { idx_ = idx; }
 
@@ -120,8 +123,9 @@ protected: // members
   std::vector< Field* > fields_;
 
   HaloExchange halo_exchange_;
-  Gather gather_;
-  Metadata metadata_;
+  Gather       gather_;
+  Checksum     checksum_;
+  Metadata     metadata_;
 
 private: // copy not allowed
 
@@ -156,6 +160,7 @@ extern "C"
   void atlas__FunctionSpace__gather_double (FunctionSpace* This, double field_data[], int field_size, double glbfield_data[], int glbfield_size);
   HaloExchange const* atlas__FunctionSpace__halo_exchange (FunctionSpace* This);
   Gather const* atlas__FunctionSpace__gather (FunctionSpace* This);
+  Checksum const* atlas__FunctionSpace__checksum (FunctionSpace* This);
 
 }
 // ------------------------------------------------------------------
