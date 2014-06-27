@@ -335,3 +335,8 @@ subroutine FunctionSpace__gather_int32_r2(this, field_data, glbfield_data)
                                           & glbview, size(glbfield_data) )
 end subroutine FunctionSpace__gather_int32_r2
 
+function FunctionSpace__get_checksum(this) result(checksum)
+  class(FunctionSpace_type), intent(in) :: this
+  type(Checksum_type) :: checksum
+  checksum%private%object = atlas__FunctionSpace__checksum( this%private%object )
+end function FunctionSpace__get_checksum

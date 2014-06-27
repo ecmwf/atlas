@@ -263,6 +263,7 @@ void FunctionSpace::parallelise(const int part[], const int remote_idx[], const 
 {
   halo_exchange_.setup(part,remote_idx,REMOTE_IDX_BASE,parsize);
   gather_.setup(part,remote_idx,REMOTE_IDX_BASE,glb_idx,std::numeric_limits<int>::max(),parsize);
+  checksum_.setup(part,remote_idx,REMOTE_IDX_BASE,glb_idx,std::numeric_limits<int>::max(),parsize);
   glb_dof_ = gather_.glb_dof();
   for( int b=bounds_.size()-2; b>=0; --b)
   {

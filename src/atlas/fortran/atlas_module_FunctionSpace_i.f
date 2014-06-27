@@ -47,6 +47,7 @@ contains
   procedure, private :: FunctionSpace__halo_exchange_real64_r4
   procedure :: get_halo_exchange => FunctionSpace__get_halo_exchange
   procedure :: get_gather => FunctionSpace__get_gather
+  procedure :: get_checksum => FunctionSpace__get_checksum
   generic :: halo_exchange => &
       & FunctionSpace__halo_exchange_int32_r1, &
       & FunctionSpace__halo_exchange_int32_r2, &

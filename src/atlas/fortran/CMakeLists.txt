@@ -19,6 +19,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../mesh/Mesh.hpp)
 generate_fortran_bindings(FORTRAN_BINDINGS ../mesh/Metadata.hpp)
 generate_fortran_bindings(FORTRAN_BINDINGS ../mpl/HaloExchange.hpp)
 generate_fortran_bindings(FORTRAN_BINDINGS ../mpl/Gather.hpp)
+generate_fortran_bindings(FORTRAN_BINDINGS ../mpl/Checksum.hpp)
 generate_fortran_bindings(FORTRAN_BINDINGS ../io/Gmsh.hpp)
 generate_fortran_bindings(FORTRAN_BINDINGS ../actions/BuildParallelFields.hpp)
 generate_fortran_bindings(FORTRAN_BINDINGS ../actions/BuildPeriodicBoundaries.hpp)
@@ -42,6 +43,8 @@ ecbuild_add_library( TARGET atlas_fortran
 )
 
 add_custom_target( atlas_fortran_inc SOURCES
+   atlas_module_Checksum_i.f
+   atlas_module_Checksum_c.f
    atlas_module_Mesh_i.f
    atlas_module_Mesh_c.f
    atlas_module_FunctionSpace_i.f
