@@ -5,6 +5,13 @@ ecbuild_add_test( TARGET      test_Grid
                LIBS        atlas_grid  
                 )
 
+ecbuild_add_test( TARGET      test_GridSpec
+            BOOST
+               SOURCES     test_GridSpec.cc
+               CONDITION   HAVE_GRID AND HAVE_GRIB
+               LIBS        atlas_grid  
+                )
+
 ecbuild_add_test(	TARGET      test_latlon
 					BOOST
 					SOURCES     test_latlon.cc

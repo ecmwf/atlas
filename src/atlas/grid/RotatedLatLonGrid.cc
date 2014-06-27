@@ -105,17 +105,34 @@ GridSpec* RotatedLatLonGrid::spec() const
 
 void RotatedLatLonGrid::constructFrom(const GridSpec& grid_spec)
 {
-   nptsNS_ = grid_spec.get("Nj");
-   nptsWE_ = grid_spec.get("Ni");
-   rotated_latitude_ = grid_spec.get("rotated_latitude");
-   rotated_longitude_ = grid_spec.get("rotated_longitude");
-   rotated_angle_ = grid_spec.get("rotated_angle");
-   nsIncrement_ = grid_spec.get("nsIncrement");
-   weIncrement_ = grid_spec.get("weIncrement");
+   if (grid_spec.has("Nj")) nptsNS_ = grid_spec.get("Nj");
+   if (grid_spec.has("Ni")) nptsWE_ = grid_spec.get("Ni");
+   if (grid_spec.has("rotated_latitude")) rotated_latitude_ = grid_spec.get("rotated_latitude");
+   if (grid_spec.has("rotated_longitude")) rotated_longitude_ = grid_spec.get("rotated_longitude");
+   if (grid_spec.has("rotated_angle")) rotated_angle_ = grid_spec.get("rotated_angle");
+   if (grid_spec.has("nsIncrement")) nsIncrement_ = grid_spec.get("nsIncrement");
+   if (grid_spec.has("weIncrement")) weIncrement_ = grid_spec.get("weIncrement");
 
-   hash_ = (std::string) grid_spec.get("hash");
+   if (grid_spec.has("hash"))    hash_ = (std::string)grid_spec.get("hash");
    grid_spec.get_bounding_box(bbox_);
    grid_spec.get_points(points_);
+}
+
+bool RotatedLatLonGrid::compare(const Grid& grid) const
+{
+   if (gridType() != grid.gridType()) return false;
+
+   if ( static_cast<const RotatedLatLonGrid&>(grid).nptsNS_ != nptsNS_) return false;
+   if ( static_cast<const RotatedLatLonGrid&>(grid).nptsWE_ != nptsWE_) return false;
+   if ( static_cast<const RotatedLatLonGrid&>(grid).rotated_latitude_ != rotated_latitude_) return false;
+   if ( static_cast<const RotatedLatLonGrid&>(grid).rotated_longitude_ != rotated_longitude_) return false;
+   if ( static_cast<const RotatedLatLonGrid&>(grid).rotated_angle_ != rotated_angle_) return false;
+   if ( static_cast<const RotatedLatLonGrid&>(grid).weIncrement_ != weIncrement_) return false;
+   if ( static_cast<const RotatedLatLonGrid&>(grid).hash_ != hash_) return false;
+   if ( static_cast<const RotatedLatLonGrid&>(grid).bbox_ != bbox_) return false;
+   if ( static_cast<const RotatedLatLonGrid&>(grid).points_ != points_) return false;
+
+   return true;
 }
 
 REGISTERIMPL(RotatedLatLonGrid,"rotated_ll");

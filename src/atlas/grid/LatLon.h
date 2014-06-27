@@ -53,6 +53,8 @@ public: // methods
 
     virtual void constructFrom(const GridSpec& );
 
+    virtual bool compare(const Grid&) const;
+
     /// @deprecated will be removed soon as it exposes the inner storage of the coordinates
     virtual const std::vector<Point>& coordinates() const { return points_; }
 

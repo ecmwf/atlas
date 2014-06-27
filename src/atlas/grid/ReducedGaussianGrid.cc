@@ -77,13 +77,28 @@ GridSpec* ReducedGaussianGrid::spec() const
 
 void ReducedGaussianGrid::constructFrom(const GridSpec& grid_spec)
 {
-   gaussianNumber_ = grid_spec.get("gaussianNumber");
-   hash_ = (std::string)grid_spec.get("hash");
+   if (grid_spec.has("gaussianNumber")) gaussianNumber_ = grid_spec.get("gaussianNumber");
+   if (grid_spec.has("hash"))           hash_ = (std::string)grid_spec.get("hash");
    grid_spec.get_bounding_box(bbox_);
    grid_spec.get_rgspec(rgSpec_);
    grid_spec.get_latitudes(latitudes_);
    grid_spec.get_points(points_);
 }
+
+bool ReducedGaussianGrid::compare(const Grid& grid) const
+{
+   if (gridType() != grid.gridType()) return false;
+
+   if ( static_cast<const ReducedGaussianGrid&>(grid).gaussianNumber_ != gaussianNumber_) return false;
+   if ( static_cast<const ReducedGaussianGrid&>(grid).hash_ != hash_) return false;
+   if ( static_cast<const ReducedGaussianGrid&>(grid).bbox_ != bbox_) return false;
+   if ( static_cast<const ReducedGaussianGrid&>(grid).rgSpec_ != rgSpec_) return false;
+   if ( static_cast<const ReducedGaussianGrid&>(grid).latitudes_ != latitudes_) return false;
+   if ( static_cast<const ReducedGaussianGrid&>(grid).points_ != points_) return false;
+
+   return true;
+}
+
 
 REGISTERIMPL(ReducedGaussianGrid,"reduced_gg");
 

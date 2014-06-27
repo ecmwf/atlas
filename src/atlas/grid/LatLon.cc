@@ -50,7 +50,7 @@ LatLon::LatLon( size_t nlat, size_t nlon, const BoundBox& bb) :
 
 LatLon::~LatLon()
 {
-    Log::info() << "Destroy a LatLon" << std::endl;
+    // Log::info() << "Destroy a LatLon" << std::endl;
 }
 
 std::string LatLon::hash() const
@@ -89,10 +89,21 @@ GridSpec* LatLon::spec() const
 
 void LatLon::constructFrom(const GridSpec& grid_spec)
 {
-   nlat_ = grid_spec.get("nlat");
-   nlon_ = grid_spec.get("nlon");
+   if (grid_spec.has("nlat")) nlat_ = grid_spec.get("nlat");
+   if (grid_spec.has("nlon")) nlon_ = grid_spec.get("nlon");
    grid_spec.get_bounding_box(bound_box_);
    grid_spec.get_points(points_);
+}
+
+bool LatLon::compare(const Grid& grid) const
+{
+   if (gridType() != grid.gridType()) return false;
+   if ( static_cast<const LatLon&>(grid).nlat_ != nlat_) return false;
+   if ( static_cast<const LatLon&>(grid).nlon_ != nlon_) return false;
+   if ( static_cast<const LatLon&>(grid).bound_box_ != bound_box_) return false;
+   if ( static_cast<const LatLon&>(grid).points_ != points_) return false;
+
+   return true;
 }
 
 REGISTERIMPL(LatLon,"latlon");

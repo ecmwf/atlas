@@ -96,11 +96,24 @@ GridSpec* RegularLatLonGrid::spec() const
 
 void RegularLatLonGrid::constructFrom(const GridSpec& grid_spec)
 {
-   nptsNS_ = grid_spec.get("Nj");
-   nptsWE_ = grid_spec.get("Ni");
-   hash_ = (std::string) grid_spec.get("hash");
+   if (grid_spec.has("Nj"))      nptsNS_ = grid_spec.get("Nj");
+   if (grid_spec.has("Ni"))      nptsWE_ = grid_spec.get("Ni");
+   if (grid_spec.has("hash"))    hash_ = (std::string)grid_spec.get("hash");
    grid_spec.get_bounding_box(bbox_);
    grid_spec.get_points(points_);
+}
+
+bool RegularLatLonGrid::compare(const Grid& grid) const
+{
+   if (gridType() != grid.gridType()) return false;
+
+   if ( static_cast<const RegularLatLonGrid&>(grid).nptsNS_ != nptsNS_) return false;
+   if ( static_cast<const RegularLatLonGrid&>(grid).nptsWE_ != nptsWE_) return false;
+   if ( static_cast<const RegularLatLonGrid&>(grid).hash_ != hash_) return false;
+   if ( static_cast<const RegularLatLonGrid&>(grid).bbox_ != bbox_) return false;
+   if ( static_cast<const RegularLatLonGrid&>(grid).points_ != points_) return false;
+
+   return true;
 }
 
 REGISTERIMPL(RegularLatLonGrid,"regular_ll");

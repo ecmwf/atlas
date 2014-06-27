@@ -96,12 +96,26 @@ GridSpec* RegularGaussianGrid::spec() const
 
 void RegularGaussianGrid::constructFrom(const GridSpec& grid_spec)
 {
-   nj_ = grid_spec.get("Nj");
-   gaussianNumber_ = grid_spec.get("gaussianNumber");
-   hash_ = (std::string) grid_spec.get("hash");
+   if (grid_spec.has("Nj"))           nj_ = grid_spec.get("Nj");
+   if (grid_spec.has("gaussianNumber")) gaussianNumber_ = grid_spec.get("gaussianNumber");
+   if (grid_spec.has("hash"))           hash_ = (std::string)grid_spec.get("hash");
    grid_spec.get_bounding_box(bbox_);
    grid_spec.get_latitudes(latitudes_);
    grid_spec.get_points(points_);
+}
+
+bool RegularGaussianGrid::compare(const Grid& grid) const
+{
+   if (gridType() != grid.gridType()) return false;
+
+   if ( static_cast<const RegularGaussianGrid&>(grid).gaussianNumber_ != gaussianNumber_) return false;
+   if ( static_cast<const RegularGaussianGrid&>(grid).nj_ != nj_) return false;
+   if ( static_cast<const RegularGaussianGrid&>(grid).hash_ != hash_) return false;
+   if ( static_cast<const RegularGaussianGrid&>(grid).bbox_ != bbox_) return false;
+   if ( static_cast<const RegularGaussianGrid&>(grid).latitudes_ != latitudes_) return false;
+   if ( static_cast<const RegularGaussianGrid&>(grid).points_ != points_) return false;
+
+   return true;
 }
 
 REGISTERIMPL(RegularGaussianGrid,"regular_gg");

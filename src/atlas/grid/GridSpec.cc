@@ -58,6 +58,18 @@ std::string GridSpec::short_name() const
    return the_short_name;
 }
 
+void GridSpec::print_simple(std::ostream& s) const
+{
+   s << "GridSpec[ ";
+   s << "gridType:" << grid_type();
+   s << ", shortName:" << short_name();
+
+   Grid::BoundBox bbox;
+   get_bounding_box( bbox ) ;
+   s << ", bbox:(" << bbox.bottom_left_.lat() << "," << bbox.bottom_left_.lon() << "," << bbox.top_right_.lat() << "," << bbox.top_right_.lon() << ")";
+
+   s << " ]";
+}
 
 void GridSpec::print( std::ostream& s) const
 {
@@ -68,6 +80,8 @@ void GridSpec::print( std::ostream& s) const
 
 void GridSpec::set_points(const std::vector<Grid::Point>& points)
 {
+   points_ = points;
+
 //   std::vector<eckit::Value> points_lat; points_lat.reserve(points.size());
 //   std::vector<eckit::Value> points_lon; points_lon.reserve(points.size());
 //   for(size_t i = 0; i < points.size(); ++i) {
@@ -106,41 +120,51 @@ void GridSpec::set_bounding_box(const Grid::BoundBox& bbox )
 
 void GridSpec::get_points(std::vector<Grid::Point>& points) const
 {
-   eckit::ValueList vec_lat = get("points_lat");
-   eckit::ValueList vec_lon = get("points_lon");
-   ASSERT(vec_lat.size() ==  vec_lon.size());
-   points.reserve(vec_lat.size());
-   for(size_t i=0; i < vec_lat.size();++i) {
-      points.push_back(Grid::Point(vec_lat[i],vec_lon[i]));
-   }
+   points = points_;
+
+//   if (has("points_lat")) {
+//      eckit::ValueList vec_lat = get("points_lat");
+//      eckit::ValueList vec_lon = get("points_lon");
+//      ASSERT(vec_lat.size() ==  vec_lon.size());
+//      points.reserve(vec_lat.size());
+//      for(size_t i=0; i < vec_lat.size();++i) {
+//         points.push_back(Grid::Point(vec_lat[i],vec_lon[i]));
+//      }
+//   }
 }
 
 void GridSpec::get_latitudes(std::vector<double>& latitudes) const
 {
-   eckit::ValueList vec = get("latitudes");
-   latitudes.reserve(vec.size());
-   for(size_t i=0; i < vec.size();++i) {
-      latitudes.push_back(vec[i]);
+   if (has("latitudes")) {
+      eckit::ValueList vec = get("latitudes");
+      latitudes.reserve(vec.size());
+      for(size_t i=0; i < vec.size();++i) {
+         latitudes.push_back(vec[i]);
+      }
    }
 }
 
 void GridSpec::get_rgspec(std::vector<long>& rgSpec) const
 {
-   eckit::ValueList vec = get("rgSpec");
-   rgSpec.reserve(vec.size());
-   for(size_t i=0; i < vec.size();++i) {
-      rgSpec.push_back(vec[i]);
+   if (has("rgSpec")) {
+      eckit::ValueList vec = get("rgSpec");
+      rgSpec.reserve(vec.size());
+      for(size_t i=0; i < vec.size();++i) {
+         rgSpec.push_back(vec[i]);
+      }
    }
 }
 
 void GridSpec::get_bounding_box(Grid::BoundBox& bbox ) const
 {
-   double bottom_left_lat = get("bottom_left_lat");
-   double bottom_left_lon = get("bottom_left_lon");
-   double top_right_lat = get("top_right_lat");
-   double top_right_lon = get("top_right_lon");
-   bbox.bottom_left_.assign(bottom_left_lat,bottom_left_lon);
-   bbox.top_right_.assign(top_right_lat,top_right_lon);
+   if (has("bottom_left_lat")) {
+      double bottom_left_lat = get("bottom_left_lat");
+      double bottom_left_lon = get("bottom_left_lon");
+      double top_right_lat = get("top_right_lat");
+      double top_right_lon = get("top_right_lon");
+      bbox.bottom_left_.assign(bottom_left_lat,bottom_left_lon);
+      bbox.top_right_.assign(top_right_lat,top_right_lon);
+   }
 }
 
 //------------------------------------------------------------------------------------------------------

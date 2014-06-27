@@ -30,9 +30,9 @@ namespace grid {
 /// However this interface is independent of GRIB/NETCDF, because:
 ///
 ///      DECODE                       ATLAS                      ENCODE
-///      NetCDFBuilder ---->|-------|         |----------|------>NetCDFWrite
+///  NetCDFGridBuilder ---->|-------|         |----------|------>NetCDFGridWrite
 ///                         | Grid  |<------> | GridSpec |
-///      GribBuilder ------>|-------|         |----------|------>GribWrite
+///  GribGridBuilder ------>|-------|         |----------|------>GribGridWrite
 ///
 /// Uses default copy constructor, assignment and equality operators
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8
@@ -71,11 +71,19 @@ public:
    void get_rgspec(std::vector<long>& rgSpec) const;
    void get_bounding_box(Grid::BoundBox& bbox ) const;
 
+   /// Avoid printing points and latitudes.
+   void print_simple(std::ostream& os) const;
+
    friend std::ostream& operator<<( std::ostream& os, const GridSpec& v) { v.print(os); return os;}
 
 private:
 
    void print( std::ostream& ) const;
+
+   // TODO, stoing the points is ok , however destroting points, is a performance hog.
+   // Need a faster way ??
+   // Hack temp, store points locally.
+   std::vector<Grid::Point> points_;
 };
 
 //------------------------------------------------------------------------------------------------------

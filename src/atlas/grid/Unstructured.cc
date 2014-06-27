@@ -91,7 +91,8 @@ GridSpec* Unstructured::spec() const
 
 void Unstructured::constructFrom(const GridSpec& grid_spec)
 {
-   hash_ = (std::string)grid_spec.get("hash");
+   if (grid_spec.has("hash")) hash_ = (std::string)grid_spec.get("hash");
+
    grid_spec.get_bounding_box(bound_box_);
 
    std::vector< Grid::Point >* pts = new std::vector< Grid::Point >(0);
@@ -99,8 +100,18 @@ void Unstructured::constructFrom(const GridSpec& grid_spec)
    points_.reset(pts);
 }
 
-REGISTERIMPL(Unstructured,"unstructured");
+bool Unstructured::compare(const Grid& grid) const
+{
+   if (gridType() != grid.gridType()) return false;
 
+   if ( static_cast<const Unstructured&>(grid).hash_ != hash_) return false;
+   if ( static_cast<const Unstructured&>(grid).bound_box_ != bound_box_) return false;
+   if ( *static_cast<const Unstructured&>(grid).points_ != *points_) return false;
+
+   return true;
+}
+
+REGISTERIMPL(Unstructured,"unstructured");
 
 //-----------------------------------------------------------------------------
 

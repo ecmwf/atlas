@@ -116,10 +116,19 @@ GridSpec* Gaussian::spec() const
 
 void Gaussian::constructFrom(const GridSpec& grid_spec)
 {
-   resolution_ = grid_spec.get("resolution");
+   if (grid_spec.has("resolution")) resolution_ = grid_spec.get("resolution");
 
    grid_spec.get_bounding_box(bound_box_);
    grid_spec.get_points(coordinates_);
+}
+
+bool Gaussian::compare(const Grid& grid) const
+{
+   if (gridType() != grid.gridType()) return false;
+   if ( static_cast<const Gaussian&>(grid).resolution_ != resolution_) return false;
+   if ( static_cast<const Gaussian&>(grid).bound_box_ != bound_box_) return false;
+   if ( static_cast<const Gaussian&>(grid).coordinates_ != coordinates_) return false;
+   return true;
 }
 
 REGISTERIMPL(Gaussian,"gaussian");

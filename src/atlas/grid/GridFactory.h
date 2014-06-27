@@ -35,6 +35,7 @@ namespace grid {
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8
 
 /// Abstract base class that can create a Grid
+/// The constructor will register itself with the GridFactory
 class GridCreator {
 public:
    GridCreator(const std::string& grid_type);
@@ -43,6 +44,7 @@ public:
    virtual Grid::Ptr create() const = 0;
 };
 
+
 /// Concrete templatized class for creating Grid derivatives
 /// These should be registered with GridFactory
 template <class T>
@@ -50,11 +52,12 @@ class CreatorImpl : public GridCreator {
 public:
     CreatorImpl(const std::string& grid_type) : GridCreator(grid_type) {}
 
+    /// Grid derivatives must provide a default constructor
     virtual Grid::Ptr create() const { return Grid::Ptr(new T); }
 };
 
 
-/// GridFactory: relies on static object initialisation
+/// GridFactory: responsible for creating Grid derivatives from a GridSpec
 class GridFactory {
 public:
    /// Will find creator given a GridSpec. Will ask creator to create the GRID.
@@ -74,7 +77,7 @@ private:
 private: \
    static const CreatorImpl<classname> creator;
 
-/// Place in source file for the derived Grid class
+/// Place in source file of the derived Grid class
 #define REGISTERIMPL(classname,grid_type) \
    const CreatorImpl<classname> classname::creator(grid_type);
 

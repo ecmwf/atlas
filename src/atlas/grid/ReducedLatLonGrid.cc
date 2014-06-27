@@ -80,12 +80,26 @@ GridSpec* ReducedLatLonGrid::spec() const
 
 void ReducedLatLonGrid::constructFrom(const GridSpec& grid_spec)
 {
-   nptsNS_ = grid_spec.get("Nj");
-   nsIncrement_ =  grid_spec.get("nsIncrement");
-   hash_ = (std::string)grid_spec.get("hash");
+   if (grid_spec.has("Nj")) nptsNS_ = grid_spec.get("Nj");
+   if (grid_spec.has("nsIncrement")) nsIncrement_ =  grid_spec.get("nsIncrement");
+   if (grid_spec.has("hash"))        hash_ = (std::string)grid_spec.get("hash");
    grid_spec.get_bounding_box(bbox_);
    grid_spec.get_rgspec(rgSpec_);
    grid_spec.get_points(points_);
+}
+
+bool ReducedLatLonGrid::compare(const Grid& grid) const
+{
+   if (gridType() != grid.gridType()) return false;
+
+   if ( static_cast<const ReducedLatLonGrid&>(grid).nptsNS_ != nptsNS_) return false;
+   if ( static_cast<const ReducedLatLonGrid&>(grid).nsIncrement_ != nsIncrement_) return false;
+   if ( static_cast<const ReducedLatLonGrid&>(grid).hash_ != hash_) return false;
+   if ( static_cast<const ReducedLatLonGrid&>(grid).bbox_ != bbox_) return false;
+   if ( static_cast<const ReducedLatLonGrid&>(grid).rgSpec_ != rgSpec_) return false;
+   if ( static_cast<const ReducedLatLonGrid&>(grid).points_ != points_) return false;
+
+   return true;
 }
 
 REGISTERIMPL(ReducedLatLonGrid,"reduced_ll");
