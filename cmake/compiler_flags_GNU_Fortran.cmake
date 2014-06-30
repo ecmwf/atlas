@@ -13,7 +13,7 @@ include( ecbuild_check_fortran_source )
 ####################################################################
 
 #cmake_add_fortran_flags( "-std=f2008" ) # fortran loc function is non-standard
-
+cmake_add_fortran_flags( "-ffree-line-length-none" )
 if( HAVE_OMP )
   cmake_add_fortran_flags( "-fopenmp" )
 else( )
