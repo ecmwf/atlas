@@ -51,29 +51,37 @@ void atlas__Checksum__setup (Checksum* This,  int part[],
 }
 
 
-const char* atlas__Checksum__execute_strided_int (Checksum* This,
-                                         int lfield[], int lvar_strides[], int lvar_extents[], int lvar_rank)
+void atlas__Checksum__execute_strided_int ( Checksum* This,
+                                            int lfield[], int lvar_strides[], int lvar_extents[], int lvar_rank,
+                                            char* checksum )
 {
-  std::string checksum =
-  This->execute(lfield,lvar_strides,lvar_extents,lvar_rank);
-  return checksum.c_str();
+  std::strcpy( checksum, This->execute(lfield,lvar_strides,lvar_extents,lvar_rank).c_str() );
 }
 
-const char* atlas__Checksum__execute_strided_float (Checksum* This,
-                                           float lfield[], int lvar_strides[], int lvar_extents[], int lvar_rank)
+void atlas__Checksum__execute_strided_float ( Checksum* This,
+                                              float lfield[], int lvar_strides[], int lvar_extents[], int lvar_rank,
+                                              char* checksum )
 {
-  std::string checksum =
-  This->execute(lfield,lvar_strides,lvar_extents,lvar_rank);
-  return checksum.c_str();
+  std::strcpy( checksum, This->execute(lfield,lvar_strides,lvar_extents,lvar_rank).c_str() );
 }
 
-const char* atlas__Checksum__execute_strided_double (Checksum* This,
-                                            double lfield[], int lvar_strides[], int lvar_extents[], int lvar_rank)
+
+void atlas__Checksum__execute_strided_double ( Checksum* This,
+                                               double lfield[], int lvar_strides[], int lvar_extents[], int lvar_rank,
+                                               char* checksum )
 {
-  std::string checksum =
-  This->execute(lfield,lvar_strides,lvar_extents,lvar_rank);
-  return checksum.c_str();
+  std::strcpy( checksum, This->execute(lfield,lvar_strides,lvar_extents,lvar_rank).c_str() );
 }
+
+
+//const char* atlas__Checksum__execute_strided_double (Checksum* This,
+//                                            double lfield[], int lvar_strides[], int lvar_extents[], int lvar_rank)
+//{
+//  std::string checksum =
+//  This->execute(lfield,lvar_strides,lvar_extents,lvar_rank);
+//  return checksum.c_str();
+//}
+
 
 /////////////////////
 

@@ -14,7 +14,6 @@
 #define Checksum_hpp
 
 #include <vector>
-#include <stdexcept>
 
 #include "atlas/mpl/MPL.hpp"
 #include "atlas/mpl/Gather.hpp"
@@ -97,8 +96,7 @@ std::string Checksum::execute( const DATA_TYPE lfield[],
 
 
 template <typename DATA_TYPE>
-std::string Checksum::execute( DATA_TYPE lfield[],
-                        const int nb_vars ) const
+std::string Checksum::execute( DATA_TYPE lfield[], const int nb_vars ) const
 {
   int strides[] = {1};
   int extents[] = {nb_vars};
@@ -151,12 +149,11 @@ extern "C"
   Checksum* atlas__Checksum__new ();
   void atlas__Checksum__delete (Checksum* This);
   void atlas__Checksum__setup (Checksum* This, int part[], int remote_idx[], int base, int glb_idx[], int max_glb_idx, int parsize);
-  const char* atlas__Checksum__execute_strided_int (Checksum* This, int lfield[], int lvar_strides[], int lvar_extents[], int lvar_rank);
-  const char* atlas__Checksum__execute_strided_float (Checksum* This, float lfield[], int lvar_strides[], int lvar_extents[], int lvar_rank);
-  const char* atlas__Checksum__execute_strided_double (Checksum* This, double lfield[], int lvar_strides[], int lvar_extents[], int lvar_rank);
+  void atlas__Checksum__execute_strided_int (Checksum* This, int lfield[], int lvar_strides[], int lvar_extents[], int lvar_rank, char* checksum);
+  void atlas__Checksum__execute_strided_float (Checksum* This, float lfield[], int lvar_strides[], int lvar_extents[], int lvar_rank, char* checksum);
+  void atlas__Checksum__execute_strided_double (Checksum* This, double lfield[], int lvar_strides[], int lvar_extents[], int lvar_rank, char* checksum);
 }
 // ------------------------------------------------------------------
-
 
 } // namespace atlas
 
