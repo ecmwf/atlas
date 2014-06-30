@@ -59,37 +59,4 @@ checksum_t checksum(const checksum_t values[], size_t size)
   return checksum(reinterpret_cast<const char*>(&values[0]),size*sizeof(checksum_t));
 }
 
-
-std::string checksum_str(const int values[], size_t size)
-{
-  std::stringstream ss; ss << checksum(values,size);
-  return ss.str();
-}
-
-std::string checksum_str(const long values[], size_t size)
-{
-  std::stringstream ss; ss << checksum(values,size);
-  return ss.str();
-}
-
-std::string checksum_str(const float values[], size_t size)
-{
-  std::stringstream ss; ss << checksum(values,size);
-  return ss.str();
-}
-
-
-std::string checksum_str(const double values[], size_t size)
-{
-  std::stringstream ss; ss << checksum(values,size);
-  return ss.str();
-}
-
-std::string checksum_str(const checksum_t values[], size_t size)
-{
-  std::stringstream ss; ss << checksum(values,size);
-  return ss.str();
-}
-
-
 }// namespace atlas

@@ -125,7 +125,8 @@ void Gather::execute( const DATA_TYPE lfield[],
   int gvar_size = std::accumulate(gvar_extents,gvar_extents+gvar_rank,1,std::multiplies<int>());
   int send_size = sendcnt_ * lvar_size;
   int recv_size = recvcnt_ * gvar_size;
-
+//  DEBUG_VAR(send_size);
+//  DEBUG_VAR(recv_size);
   std::vector<DATA_TYPE> send_buffer(send_size);
   std::vector<DATA_TYPE> recv_buffer(recv_size);
   std::vector<MPI_Request> send_req(nproc);
@@ -165,14 +166,19 @@ void Gather::pack_send_buffer( const DATA_TYPE field[],
   int ibuf = 0;
   int send_stride = var_strides[0]*var_extents[0];
 
+  //DEBUG_VAR(var_rank);
   switch( var_rank )
   {
   case 1:
     for( int p=0; p<sendcnt_; ++p)
     {
       const int pp = send_stride*sendmap_[p];
+      //DEBUG("p " << sendmap_[p] << "  " << var_extents[0] << "  " << var_strides[0] << "    pp " << pp << "  ibuf " << ibuf);
       for( int i=0; i<var_extents[0]; ++i )
-        send_buffer[ibuf++] = field[pp+i*var_strides[0]];
+      {
+        DATA_TYPE tmp =  field[pp+i*var_strides[0]];
+        send_buffer[ibuf++] = tmp;
+      }
     }
     break;
   case 2:
@@ -217,6 +223,7 @@ void Gather::unpack_recv_buffer( const DATA_TYPE recv_buffer[],
                                        const int var_extents[],
                                        int var_rank ) const
 {
+//  DEBUG_SYNC("Gather::unpacking");
   bool field_changed = false;
   DATA_TYPE tmp;
   int ibuf = 0;
@@ -268,6 +275,7 @@ void Gather::unpack_recv_buffer( const DATA_TYPE recv_buffer[],
   default:
     NOTIMP;
   }
+//  DEBUG_SYNC("Gather::unpacking done");
 }
 
 

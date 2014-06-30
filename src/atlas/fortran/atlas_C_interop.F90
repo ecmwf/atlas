@@ -13,10 +13,13 @@ type, public :: object_type
 end type
 
 INTERFACE view1d
+  module procedure view1d_int32_rank1
   module procedure view1d_int32_rank2
   module procedure view1d_int32_rank3
+  module procedure view1d_real32_rank1
   module procedure view1d_real32_rank2
   module procedure view1d_real32_rank3
+  module procedure view1d_real64_rank1
   module procedure view1d_real64_rank2
   module procedure view1d_real64_rank3
   module procedure view1d_real64_rank4
@@ -102,6 +105,16 @@ function c_loc_real64(x)
   c_loc_real64 = C_LOC(x)
 end function
 
+function view1d_int32_rank1(array) result( view )
+  integer, intent(in), target :: array(:)
+  type(c_ptr) :: array_c_ptr
+  integer(c_int), pointer :: view(:)
+  if( size(array) > 0 ) then
+    array_c_ptr = c_loc_int32(array(1))
+    call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
+  endif
+end function view1d_int32_rank1
+
 function view1d_int32_rank2(array) result( view )
   integer, intent(in), target :: array(:,:)
   type(c_ptr) :: array_c_ptr
@@ -121,6 +134,16 @@ function view1d_int32_rank3(array) result( view )
     call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
   endif
 end function view1d_int32_rank3
+
+function view1d_real32_rank1(array) result( view )
+  real(c_float), intent(in), target :: array(:)
+  type(c_ptr) :: array_c_ptr
+  real(c_float), pointer :: view(:)
+  if( size(array) > 0 ) then
+    array_c_ptr = c_loc_real32(array(1))
+    call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
+  endif
+end function view1d_real32_rank1
 
 function view1d_real32_rank2(array) result( view )
   real(c_float), intent(in), target :: array(:,:)
@@ -148,6 +171,16 @@ function view1d_real32_rank3(array) result( view )
     call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
   endif
 end function view1d_real32_rank3
+
+function view1d_real64_rank1(array) result( view )
+  real(c_double), intent(in), target :: array(:)
+  type(c_ptr) :: array_c_ptr
+  real(c_double), pointer :: view(:)
+  if( size(array) > 0 ) then
+    array_c_ptr = c_loc_real64(array(1))
+    call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
+  endif
+end function view1d_real64_rank1
 
 function view1d_real64_rank2(array) result( view )
   real(c_double), intent(in), target :: array(:,:)

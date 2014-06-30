@@ -30,12 +30,19 @@
 
 /// DEBUG_SYNC MACRO
 #define DEBUG_SYNC(...) \
-  MPI_Barrier(MPI_COMM_WORLD);\
-  DEBUG_X(,##__VA_ARGS__,\
-     DEBUG_2(__VA_ARGS__),\
-     DEBUG_1(__VA_ARGS__),\
-     DEBUG_0(__VA_ARGS__))\
-  MPI_Barrier(MPI_COMM_WORLD); usleep(1000); /*microseconds*/
+  {MPI_Barrier(MPI_COMM_WORLD);\
+  int npid = MPL::size();\
+  for( int p=0; p<npid; ++p )\
+  {\
+    if( p==MPL::rank() )\
+    {\
+      DEBUG_X(,##__VA_ARGS__,\
+        DEBUG_2(__VA_ARGS__),\
+        DEBUG_1(__VA_ARGS__),\
+        DEBUG_0(__VA_ARGS__))\
+    }\
+    MPI_Barrier(MPI_COMM_WORLD); usleep(100); /*microseconds*/ \
+  }}
 
 /// DEBUG_VAR MACRO
 #ifdef DEBUG_VAR

@@ -33,6 +33,7 @@ module atlas_module
 
 !------------------------------------------------------------------------------
 use, intrinsic :: iso_c_binding
+use atlas_mpl_module
 use atlas_C_interop
 use atlas_field_c_binding
 use atlas_fieldset_c_binding

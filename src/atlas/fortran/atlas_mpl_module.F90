@@ -25,4 +25,16 @@ contains
     call MPI_Barrier ( MPI_COMM_WORLD, ierr );
   end subroutine
 
+  function MPL_rank()
+    integer :: ierr
+    integer :: MPL_rank
+    call MPI_COMM_RANK( MPI_COMM_WORLD, MPL_rank, ierr )
+  end function
+
+  function MPL_size()
+    integer :: ierr
+    integer :: MPL_size
+    call MPI_COMM_SIZE( MPI_COMM_WORLD, MPL_size,  ierr )
+  end function
+
 end module atlas_mpl_module

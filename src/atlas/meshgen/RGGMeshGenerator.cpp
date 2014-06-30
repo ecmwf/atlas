@@ -104,9 +104,8 @@ Mesh* RGGMeshGenerator::generate(const RGG& rgg)
   int mypart   = options.get<int>("part");
   int nb_parts = options.get<int>("nb_parts");
   EqualAreaPartitioner partitioner(nb_parts);
-  int ngptot = rgg.ngptot();
   int n;
-  
+  int ngptot = rgg.ngptot();
   std::vector<int> part(ngptot);
 
   /*
@@ -237,6 +236,10 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
     
     while (true)
     {
+      if( ipN1 == endN && ipS1 == endS ) break;
+
+      ASSERT(offset[latN]+ipN1 < parts.size());
+      ASSERT(offset[latS]+ipS1 < parts.size());
       int pN1 = parts[offset[latN]+ipN1];
       int pS1 = parts[offset[latS]+ipS1];
       int pN2;
@@ -250,8 +253,6 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
       else
         pS2 = parts[offset[latS]+ipS2];
 
-      if( ipN1 == endN && ipS1 == endS ) break;
-      
       xN1 = rgg.lon(ipN1,latN);
       xN2 = rgg.lon(ipN2,latN);
       xS1 = rgg.lon(ipS1,latS);

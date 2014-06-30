@@ -275,6 +275,12 @@ void build_edges( Mesh& mesh )
   {
     edge_nodes(edge,0) = face_nodes(edge,0);
     edge_nodes(edge,1) = face_nodes(edge,1);
+//    if( glb_idx(edge_nodes(edge,0)) > edge_nodes(edge,1) )
+//    {
+//      int tmp = edge_nodes(edge,1);
+//      edge_nodes(edge,1) = edge_nodes(edge,0);
+//      edge_nodes(edge,0) = tmp;
+//    }
 
     ASSERT( edge_nodes(edge,0) < nb_nodes );
     ASSERT( edge_nodes(edge,1) < nb_nodes );

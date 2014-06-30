@@ -9,7 +9,6 @@
  */
 
 
-
 #include <stdexcept>
 #include <numeric>      // std::accumulate
 #include <iostream>

@@ -354,32 +354,36 @@ void increase_halo( Mesh& mesh )
 
     for( int f=0; f<mesh.nb_function_spaces(); ++f )
     {
-      int nb_elem_nodes = elem_nodes[f].extents()[1];
-      sfe_glb_idx [f][jpart].resize( nb_found_bdry_elems[f] );
-      sfe_part    [f][jpart].resize( nb_found_bdry_elems[f] );
-      sfe_nodes_id[f][jpart].resize( nb_found_bdry_elems[f]*nb_elem_nodes );
-      ArrayView<int,2> sfe_nodes_id_view( sfe_nodes_id[f][jpart].data(),
-                                          Extents(nb_found_bdry_elems[f],nb_elem_nodes).data() );
-      for( int jelem=0; jelem<nb_found_bdry_elems[f]; ++jelem )
+      FunctionSpace& elements = mesh.function_space(f);
+      if( elements.metadata<int>("type") == Entity::ELEMS )
       {
-        int e = found_bdry_elements[f][jelem];
-        int xper = found_bdry_elements_coord_transform[f][jelem];
-        sfe_part[f][jpart][jelem]    = elem_part[f][e];
-        double centroid[2];
-        centroid[XX] = 0.;
-        centroid[YY] = 0.;
-        for( int n=0; n<nb_elem_nodes; ++n)
+        int nb_elem_nodes(elem_nodes[f].extents()[1]);
+        sfe_glb_idx [f][jpart].resize( nb_found_bdry_elems[f] );
+        sfe_part    [f][jpart].resize( nb_found_bdry_elems[f] );
+        sfe_nodes_id[f][jpart].resize( nb_found_bdry_elems[f]*nb_elem_nodes );
+        ArrayView<int,2> sfe_nodes_id_view( sfe_nodes_id[f][jpart].data(),
+                                            Extents(nb_found_bdry_elems[f],nb_elem_nodes).data() );
+        for( int jelem=0; jelem<nb_found_bdry_elems[f]; ++jelem )
         {
-          double x, y;
-          x = latlon(elem_nodes[f](e,n),XX) + xper/EAST*2.*M_PI;
-          y = latlon(elem_nodes[f](e,n),YY);
-          centroid[XX] += x;
-          centroid[YY] += y;
-          sfe_nodes_id_view(jelem,n) = LatLonPoint( x, y ).uid();
+          int e = found_bdry_elements[f][jelem];
+          int xper = found_bdry_elements_coord_transform[f][jelem];
+          sfe_part[f][jpart][jelem]    = elem_part[f][e];
+          double centroid[2];
+          centroid[XX] = 0.;
+          centroid[YY] = 0.;
+          for( int n=0; n<nb_elem_nodes; ++n)
+          {
+            double x, y;
+            x = latlon(elem_nodes[f](e,n),XX) + xper/EAST*2.*M_PI;
+            y = latlon(elem_nodes[f](e,n),YY);
+            centroid[XX] += x;
+            centroid[YY] += y;
+            sfe_nodes_id_view(jelem,n) = LatLonPoint( x, y ).uid();
+          }
+          centroid[XX] /= static_cast<double>(nb_elem_nodes);
+          centroid[YY] /= static_cast<double>(nb_elem_nodes);
+          sfe_glb_idx[f][jpart][jelem] = LatLonPoint( centroid[XX], centroid[YY ]).uid() ;
         }
-        centroid[XX] /= static_cast<double>(nb_elem_nodes);
-        centroid[YY] /= static_cast<double>(nb_elem_nodes);
-        sfe_glb_idx[f][jpart][jelem] = LatLonPoint( centroid[XX], centroid[YY ]).uid() ;
       }
     }
   }
