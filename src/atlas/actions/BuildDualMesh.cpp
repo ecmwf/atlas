@@ -13,6 +13,7 @@
 #include <set>
 #include <limits>
 #include <iostream>
+#include <algorithm>    // std::sort
 
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/mesh/FunctionSpace.hpp"
@@ -26,7 +27,37 @@
 namespace atlas {
 namespace actions {
 
+
+namespace {
+
+struct Node
+{
+  Node() {}
+  Node(int gid, int idx)
+  {
+    g = gid;
+    i = idx;
+  }
+  int g,i;
+  bool operator < (const Node& other) const
+  {
+    return ( g < other.g );
+  }
+  bool operator == (const Node& other) const
+  {
+    return ( g == other.g );
+  }
+};
+
+
+bool operator < (const int g, const Node& n)
+{
+  return ( g < n.g );
+}
+
 inline double sqr(double a) { return a*a; }
+
+}
 
 inline void global_bounding_box( FunctionSpace& nodes, double min[2], double max[2] )
 {
@@ -87,8 +118,19 @@ void add_dual_volume_contribution(
   ArrayView<int,   1> edge_glb_idx   ( edges.field("glb_idx") );
   int nb_edges_per_elem = elem_to_edges.extents()[1];
 
+
+  // special ordering for bit-identical results
+  std::vector<Node> ordering(nb_elems);
   for (int elem=0; elem<nb_elems; ++elem)
   {
+    ordering[elem] = Node( LatLonPoint(elem_centroids[elem]).uid(), elem );
+  }
+  std::sort( ordering.data(), ordering.data()+nb_elems );
+
+
+  for (int jelem=0; jelem<nb_elems; ++jelem)
+  {
+    int elem = ordering[jelem].i;
     double x0 = elem_centroids(elem,XX);
     double y0 = elem_centroids(elem,YY);
     for (int jedge=0; jedge<nb_edges_per_elem; ++jedge)

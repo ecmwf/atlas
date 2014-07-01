@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-
+#include <cstring>
 #include "atlas/mpl/Checksum.hpp"
 
 namespace atlas {
