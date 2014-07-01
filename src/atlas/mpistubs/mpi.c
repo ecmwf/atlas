@@ -81,6 +81,12 @@ int MPI_Barrier ( MPI_Comm comm )
   return MPI_SUCCESS; 
 }
 
+int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
+  int root, MPI_Comm comm)
+{
+  return MPI_SUCCESS;
+}
+
 int MPI_Comm_rank ( MPI_Comm comm, int *me ) 
 { 
   *me=0; 

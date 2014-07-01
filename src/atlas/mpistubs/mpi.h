@@ -36,6 +36,9 @@ extern "C" {
 #define MPI_DOUBLE 3
 #define MPI_DOUBLE_PRECISION 3
 #define MPI_BYTE 4
+#define MPI_UNSIGNED 5
+#define MPI_UNSIGNED_LONG 6
+#define MPI_LONG 7
 
 #define MPI_SUM 1
 #define MPI_MAX 2
@@ -58,6 +61,8 @@ int MPI_Alltoallv(void *sendbuf, int *sendcounts, int *sdispls,
   MPI_Datatype sendtype, void *recvbuf, int *recvcounts,
   int *rdispls, MPI_Datatype recvtype, MPI_Comm comm);
 int MPI_Barrier ( MPI_Comm comm );
+int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
+  int root, MPI_Comm comm);
 int MPI_Comm_rank ( MPI_Comm comm, int *me );
 int MPI_Comm_size ( MPI_Comm comm, int *nprocs );
 int MPI_Finalize ( void );
