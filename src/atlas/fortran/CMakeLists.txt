@@ -18,7 +18,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../mesh/FunctionSpace.hpp)
 generate_fortran_bindings(FORTRAN_BINDINGS ../mesh/Mesh.hpp)
 generate_fortran_bindings(FORTRAN_BINDINGS ../mesh/Metadata.hpp)
 generate_fortran_bindings(FORTRAN_BINDINGS ../mpl/HaloExchange.hpp)
-generate_fortran_bindings(FORTRAN_BINDINGS ../mpl/Gather.hpp)
+generate_fortran_bindings(FORTRAN_BINDINGS ../mpl/GatherScatter.hpp)
 generate_fortran_bindings(FORTRAN_BINDINGS ../mpl/Checksum.hpp)
 generate_fortran_bindings(FORTRAN_BINDINGS ../io/Gmsh.hpp)
 generate_fortran_bindings(FORTRAN_BINDINGS ../actions/BuildParallelFields.hpp)
@@ -55,8 +55,8 @@ add_custom_target( atlas_fortran_inc SOURCES
    atlas_module_FieldSet_c.f
    atlas_module_Metadata_i.f
    atlas_module_Metadata_c.f
-   atlas_module_Gather_i.f
-   atlas_module_Gather_c.f
+   atlas_module_GatherScatter_i.f
+   atlas_module_GatherScatter_c.f
    atlas_module_HaloExchange_i.f
    atlas_module_HaloExchange_c.f
 )

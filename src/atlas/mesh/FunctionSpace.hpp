@@ -19,7 +19,7 @@
 #include <iostream>
 
 #include "atlas/mpl/HaloExchange.hpp"
-#include "atlas/mpl/Gather.hpp"
+#include "atlas/mpl/GatherScatter.hpp"
 #include "atlas/mpl/Checksum.hpp"
 #include "atlas/mesh/Metadata.hpp"
 
@@ -87,10 +87,10 @@ public: // methods
     if( dof_*nb_vars != field_size ) std::cout << "ERROR in FunctionSpace::gather" << std::endl;
     if( glb_dof_*nb_vars != glbfield_size ) std::cout << "ERROR in FunctionSpace::gather" << std::endl;
 
-    gather_.execute( field_data, glbfield_data, nb_vars );
+    gather_.gather( field_data, glbfield_data, nb_vars );
   }
 
-  const Gather& gather() const { return gather_; }
+  const GatherScatter& gather() const { return gather_; }
 
   const Checksum& checksum() const { return checksum_; }
 
@@ -122,10 +122,10 @@ protected: // members
   std::map< std::string, size_t > index_;
   std::vector< Field* > fields_;
 
-  HaloExchange halo_exchange_;
-  Gather       gather_;
-  Checksum     checksum_;
-  Metadata     metadata_;
+  HaloExchange  halo_exchange_;
+  GatherScatter gather_;
+  Checksum      checksum_;
+  Metadata      metadata_;
 
 private: // copy not allowed
 
@@ -159,7 +159,7 @@ extern "C"
   void atlas__FunctionSpace__gather_float (FunctionSpace* This, float field_data[], int field_size, float glbfield_data[], int glbfield_size);
   void atlas__FunctionSpace__gather_double (FunctionSpace* This, double field_data[], int field_size, double glbfield_data[], int glbfield_size);
   HaloExchange const* atlas__FunctionSpace__halo_exchange (FunctionSpace* This);
-  Gather const* atlas__FunctionSpace__gather (FunctionSpace* This);
+  GatherScatter const* atlas__FunctionSpace__gather (FunctionSpace* This);
   Checksum const* atlas__FunctionSpace__checksum (FunctionSpace* This);
 
 }

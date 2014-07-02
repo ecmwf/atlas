@@ -16,7 +16,7 @@
 #include <vector>
 
 #include "atlas/mpl/MPL.hpp"
-#include "atlas/mpl/Gather.hpp"
+#include "atlas/mpl/GatherScatter.hpp"
 #include "atlas/util/Debug.hpp"
 #include "atlas/util/ArrayView.hpp"
 #include "atlas/util/Checksum.hpp"
@@ -63,7 +63,7 @@ public: // methods
                  std::vector<int>& varextents ) const;
 
 private: // data
-  Gather gather_;
+  GatherScatter gather_;
   bool is_setup_;
   int parsize_;
 };
@@ -87,7 +87,7 @@ std::string Checksum::execute( const DATA_TYPE lfield[],
   }
 
   std::vector<checksum_t> global_checksums(gather_.glb_dof());
-  gather_.execute(local_checksums.data(),global_checksums.data(),1);
+  gather_.gather(local_checksums.data(),global_checksums.data(),1);
 
   checksum_t glb_checksum = checksum(global_checksums.data(),global_checksums.size());
   MPI_Bcast(&glb_checksum,1,MPL::TYPE<checksum_t>(),0,MPI_COMM_WORLD);

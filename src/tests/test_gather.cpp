@@ -20,7 +20,7 @@
 #include "atlas/util/Array.hpp"
 #include "atlas/util/ArrayView.hpp"
 #include "atlas/util/IndexView.hpp"
-#include "atlas/mpl/Gather.hpp"
+#include "atlas/mpl/GatherScatter.hpp"
 #include "atlas/util/Debug.hpp"
 
 /// POD: Type to test
@@ -77,7 +77,7 @@ struct Fixture {
     gather.setup(part.data(),ridx.data(),0,gidx.data(),9,Nl);
     Ng = gather.glb_dof();
   }
-  Gather gather;
+  GatherScatter gather;
   std::vector<int> nb_nodes;
   std::vector<int> part;
   std::vector<int> ridx;
@@ -89,7 +89,7 @@ struct Fixture {
 
 BOOST_GLOBAL_FIXTURE( MPIFixture )
 
-BOOST_FIXTURE_TEST_CASE( test_rank0, Fixture )
+BOOST_FIXTURE_TEST_CASE( test_gather_rank0, Fixture )
 {
   std::vector<POD> loc(Nl);
   std::vector<POD> glb(Ng);
@@ -100,7 +100,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank0, Fixture )
 
   int strides[] = {1};
   int extents[] = {1};
-  gather.execute(loc.data(),strides,extents,1,glb.data(),strides,extents,1);
+  gather.gather(loc.data(),strides,extents,1,glb.data(),strides,extents,1);
 
   if( MPL::rank() == 0 )
   {
@@ -109,7 +109,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank0, Fixture )
   }
 }
 
-BOOST_FIXTURE_TEST_CASE( test_rank1, Fixture )
+BOOST_FIXTURE_TEST_CASE( test_gather_rank1, Fixture )
 {
   Array<POD> loc(Nl,2);
   Array<POD> glb(Ng,2);
@@ -127,7 +127,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank1, Fixture )
   int loc_extents[] = {2};
   int glb_strides[] = {1};
   int glb_extents[] = {2};
-  gather.execute( loc.data(), loc_strides, loc_extents, 1,
+  gather.gather( loc.data(), loc_strides, loc_extents, 1,
                   glb.data(), glb_strides, glb_extents, 1 );
   }
   if( MPL::rank() == 0 )
@@ -142,7 +142,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank1, Fixture )
     int loc_extents[] = {1};
     int glb_strides[] = {1};
     int glb_extents[] = {1};
-    gather.execute( loc.data(),  loc_strides, loc_extents, 1,
+    gather.gather( loc.data(),  loc_strides, loc_extents, 1,
                     glb1.data(), glb_strides, glb_extents, 1 );
   }
   if( MPL::rank() == 0 )
@@ -157,7 +157,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank1, Fixture )
     int loc_extents[] = {1};
     int glb_strides[] = {1};
     int glb_extents[] = {1};
-    gather.execute( loc.data()+1, loc_strides, loc_extents, 1,
+    gather.gather( loc.data()+1, loc_strides, loc_extents, 1,
                     glb2.data(),  glb_strides, glb_extents, 1 );
   }
   if( MPL::rank() == 0 )
@@ -167,7 +167,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank1, Fixture )
   }
 }
 
-BOOST_FIXTURE_TEST_CASE( test_rank2, Fixture )
+BOOST_FIXTURE_TEST_CASE( test_gather_rank2, Fixture )
 {
   Array<POD> loc(Nl,3,2);
   Array<POD> glb(Ng,3,2);
@@ -193,7 +193,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2, Fixture )
     int loc_extents[] = {3,2};
     int glb_strides[] = {2,1};
     int glb_extents[] = {3,2};
-    gather.execute( loc.data(), loc_strides, loc_extents, 2,
+    gather.gather( loc.data(), loc_strides, loc_extents, 2,
                     glb.data(), glb_strides, glb_extents, 2 );
   }
   if( MPL::rank() == 0 )
@@ -216,7 +216,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2, Fixture )
     int loc_extents[] = {3,1};
     int glb_strides[] = {1};
     int glb_extents[] = {3};
-    gather.execute( &locv(0,0,0), loc_strides, loc_extents, 2,
+    gather.gather( &locv(0,0,0), loc_strides, loc_extents, 2,
                     glbx1.data(), glb_strides, glb_extents, 1 );
   }
   if( MPL::rank() == 0 )
@@ -239,7 +239,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2, Fixture )
     int loc_extents[] = {3,1};
     int glb_strides[] = {1};
     int glb_extents[] = {3};
-    gather.execute( &locv(0,0,1), loc_strides, loc_extents, 2,
+    gather.gather( &locv(0,0,1), loc_strides, loc_extents, 2,
                     glbx2.data(), glb_strides, glb_extents, 1 );
   }
   if( MPL::rank() == 0 )
@@ -262,7 +262,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2, Fixture )
     int loc_extents[] = {1,2};
     int glb_strides[] = {1};
     int glb_extents[] = {2};
-    gather.execute( &locv(0,0,0), loc_strides, loc_extents, 2,
+    gather.gather( &locv(0,0,0), loc_strides, loc_extents, 2,
                     glb1x.data(), glb_strides, glb_extents, 1 );
   }
   if( MPL::rank() == 0 )
@@ -285,7 +285,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2, Fixture )
     int loc_extents[] = {1,2};
     int glb_strides[] = {1};
     int glb_extents[] = {2};
-    gather.execute( &locv(0,1,0), loc_strides, loc_extents, 2,
+    gather.gather( &locv(0,1,0), loc_strides, loc_extents, 2,
                     glb2x.data(), glb_strides, glb_extents, 1 );
   }
   if( MPL::rank() == 0 )
@@ -308,7 +308,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2, Fixture )
     int loc_extents[] = {1,1};
     int glb_strides[] = {1};
     int glb_extents[] = {1};
-    gather.execute( &locv(0,2,1), loc_strides, loc_extents, 2,
+    gather.gather( &locv(0,2,1), loc_strides, loc_extents, 2,
                     glb32.data(), glb_strides, glb_extents, 1 );
   }
   if( MPL::rank() == 0 )
@@ -328,7 +328,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2, Fixture )
 }
 
 
-BOOST_FIXTURE_TEST_CASE( test_rank0_ArrayView, Fixture )
+BOOST_FIXTURE_TEST_CASE( test_gather_rank0_ArrayView, Fixture )
 {
   Array<POD> loc(Nl);
   Array<POD> glb(Ng);
@@ -342,7 +342,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank0_ArrayView, Fixture )
 
   // Gather complete field
   {
-    gather.execute( locv, glbv );
+    gather.gather( locv, glbv );
   }
   if( MPL::rank() == 0 )
   {
@@ -360,7 +360,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank0_ArrayView, Fixture )
 
 }
 
-BOOST_FIXTURE_TEST_CASE( test_rank1_ArrayView, Fixture )
+BOOST_FIXTURE_TEST_CASE( test_gather_rank1_ArrayView, Fixture )
 {
   Array<POD> loc(Nl,2);
   Array<POD> glb(Ng,2);
@@ -375,7 +375,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank1_ArrayView, Fixture )
 
   // Gather complete field
   {
-    gather.execute( locv, glbv );
+    gather.gather( locv, glbv );
   }
   if( MPL::rank() == 0 )
   {
@@ -394,7 +394,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank1_ArrayView, Fixture )
 }
 
 
-BOOST_FIXTURE_TEST_CASE( test_rank2_ArrayView, Fixture )
+BOOST_FIXTURE_TEST_CASE( test_gather_rank2_ArrayView, Fixture )
 {
   Array<POD> loc(Nl,3,2);
   Array<POD> glb(Ng,3,2);
@@ -412,7 +412,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_ArrayView, Fixture )
 
   // Gather complete field
   {
-    gather.execute( locv, glbv );
+    gather.gather( locv, glbv );
   }
   if( MPL::rank() == 0 )
   {
@@ -429,4 +429,64 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_ArrayView, Fixture )
   }
 
 }
+
+BOOST_FIXTURE_TEST_CASE( test_scatter_rank2_ArrayView, Fixture )
+{
+  Array<POD> loc(Nl,3,2);
+  Array<POD> glb(Ng,3,2);
+
+  ArrayView<POD,3> locv(loc);
+  ArrayView<POD,3> glbv(glb);
+  if( MPL::rank() == 0 )
+  {
+    POD glb_c[] = { -1,1, -10,10, -100,100,
+                    -2,2, -20,20, -200,200,
+                    -3,3, -30,30, -300,300,
+                    -4,4, -40,40, -400,400,
+                    -5,5, -50,50, -500,500,
+                    -6,6, -60,60, -600,600,
+                    -7,7, -70,70, -700,700,
+                    -8,8, -80,80, -800,800,
+                    -9,9, -90,90, -900,900 };
+    glb.assign(glb_c,glb_c+Ng*6);
+  }
+
+  int nan = -1000.;
+  locv = nan;
+
+  gather.scatter( glbv, locv );
+
+  switch( MPL::rank() )
+  {
+  case 0: {
+    POD loc_c[] = { nan,nan, nan,nan, nan,nan,
+                     -1,1,   -10,10, -100,100,
+                     -2,2,   -20,20, -200,200,
+                     -3,3,   -30,30, -300,300,
+                    nan,nan, nan,nan, nan,nan,
+                    nan,nan, nan,nan, nan,nan };
+    BOOST_CHECK_EQUAL_COLLECTIONS(loc.data(),loc.data()+Nl*6, loc_c,loc_c+Nl*6);
+    break; }
+  case 1: {
+    POD loc_c[] = { nan,nan, nan,nan, nan,nan,
+                     -4,4,   -40,40, -400,400,
+                     -5,5,   -50,50, -500,500,
+                     -6,6,   -60,60, -600,600,
+                    nan,nan, nan,nan, nan,nan,
+                    nan,nan, nan,nan, nan,nan };
+    BOOST_CHECK_EQUAL_COLLECTIONS(loc.data(),loc.data()+Nl*6, loc_c,loc_c+Nl*6);
+    break; }
+  case 2: {
+      POD loc_c[] = { nan,nan, nan,nan, nan,nan,
+                      nan,nan, nan,nan, nan,nan,
+                       -7,7,   -70,70, -700,700,
+                       -8,8,   -80,80, -800,800,
+                       -9,9,   -90,90, -900,900,
+                      nan,nan, nan,nan, nan,nan,
+                      nan,nan, nan,nan, nan,nan };
+      BOOST_CHECK_EQUAL_COLLECTIONS(loc.data(),loc.data()+Nl*6, loc_c,loc_c+Nl*6);
+      break; }
+  }
+}
+
 

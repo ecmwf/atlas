@@ -41,7 +41,7 @@ use atlas_functionspace_c_binding
 use atlas_mesh_c_binding
 use atlas_metadata_c_binding
 use atlas_haloexchange_c_binding
-use atlas_gather_c_binding
+use atlas_gatherscatter_c_binding
 use atlas_checksum_c_binding
 use atlas_gmsh_c_binding
 use atlas_BuildPeriodicBoundaries_c_binding
@@ -64,7 +64,7 @@ integer, private, parameter :: FIELD_NB_VARS = -1
 integer, private, parameter :: wp = c_double ! working precision
 
 #include "atlas_module_HaloExchange_i.f"
-#include "atlas_module_Gather_i.f"
+#include "atlas_module_GatherScatter_i.f"
 #include "atlas_module_Checksum_i.f"
 #include "atlas_module_Mesh_i.f"
 #include "atlas_module_FunctionSpace_i.f"
@@ -126,7 +126,7 @@ integer function integer_kind(kind)
 end function
 
 #include "atlas_module_HaloExchange_c.f"
-#include "atlas_module_Gather_c.f"
+#include "atlas_module_GatherScatter_c.f"
 #include "atlas_module_Checksum_c.f"
 #include "atlas_module_Mesh_c.f"
 #include "atlas_module_FunctionSpace_c.f"

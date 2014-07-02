@@ -368,7 +368,7 @@ HaloExchange const* atlas__FunctionSpace__halo_exchange (FunctionSpace* This) {
   return &This->halo_exchange();
 }
 
-Gather const* atlas__FunctionSpace__gather (FunctionSpace* This) {
+GatherScatter const* atlas__FunctionSpace__gather (FunctionSpace* This) {
   return &This->gather();
 }
 

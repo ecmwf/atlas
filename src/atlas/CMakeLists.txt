@@ -59,8 +59,8 @@ list( APPEND atlas_mpl_srcs
   mpl/Checksum.cpp
   mpl/HaloExchange.hpp
   mpl/HaloExchange.cpp
-  mpl/Gather.hpp
-  mpl/Gather.cpp
+  mpl/GatherScatter.hpp
+  mpl/GatherScatter.cpp
   mpl/MPL.hpp
 )
 

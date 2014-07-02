@@ -58,7 +58,8 @@ public:
   const std::vector<int>& strides() const { return strides_; }
   const std::vector<int>& extents() const { return extents_; }
   void operator=(const DATA_TYPE& scalar) { for(int n=0; n<size(); ++n) data_[n]=scalar; }
-
+  template< class InputIt >
+  void assign( InputIt first, InputIt last ) { data_.assign(first,last); }
 private:
   std::vector<int> extents_;
   std::vector<int> strides_;
