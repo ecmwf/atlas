@@ -30,7 +30,7 @@ configure_file( atlas_version.h.in  atlas_version.h )
 
 install( FILES
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_defines.h
-  ${CMAKE_CURRENT_BINARY_DIR}/atlas_defines.F90
+  ${CMAKE_CURRENT_BINARY_DIR}/atlas_defines_fortran.h
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_config.h
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_version.h
          DESTINATION
