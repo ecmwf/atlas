@@ -12,7 +12,7 @@
 #include "atlas/mpl/Checksum.hpp"
 
 namespace atlas {
-
+namespace mpl {
 
 Checksum::Checksum()
 {
@@ -85,4 +85,5 @@ void atlas__Checksum__execute_strided_double ( Checksum* This,
 
 /////////////////////
 
-}
+} // namespace mpl
+} // namespace mpl

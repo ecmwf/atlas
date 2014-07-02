@@ -21,7 +21,7 @@
 #include "atlas/mpl/HaloExchange.hpp"
 
 namespace atlas {
-
+namespace mpl {
 namespace {
 struct IsGhostPoint
 {
@@ -187,4 +187,5 @@ void atlas__HaloExchange__execute_double (HaloExchange* This, double field[], in
 
 /////////////////////
 
-}
+} // namespace mpl
+} // namespace atlas

@@ -20,6 +20,7 @@
 #include "atlas/mpl/GatherScatter.hpp"
 
 namespace atlas {
+namespace mpl {
 
 namespace {
 
@@ -269,5 +270,5 @@ void atlas__GatherScatter__scatter_double ( GatherScatter* This,
 
 
 /////////////////////
-
-}
+} // namespace mpl
+} // namespace atlas

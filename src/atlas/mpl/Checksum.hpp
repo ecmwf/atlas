@@ -23,7 +23,7 @@
 #include "eckit/utils/Translator.h"
 
 namespace atlas {
-
+namespace mpl {
 class Checksum
 {
 public:
@@ -69,25 +69,27 @@ private: // data
 };
 
 template<typename DATA_TYPE>
-std::string Checksum::execute( const DATA_TYPE lfield[],
-                        const int lvar_strides[],
-                        const int lvar_extents[],
-                        const int lvar_rank ) const
+std::string Checksum::execute( const DATA_TYPE data[],
+                               const int var_strides[],
+                               const int var_extents[],
+                               const int var_rank ) const
 {
   if( ! is_setup_ )
   {
     throw eckit::SeriousBug("Checksum was not setup",Here());
   }
   std::vector<checksum_t> local_checksums(parsize_);
-  int var_size = lvar_extents[0]*lvar_strides[0];
+  int var_size = var_extents[0]*var_strides[0];
 
   for( int pp=0; pp<parsize_; ++pp )
   {
-    local_checksums[pp] = checksum(lfield+pp*var_size,var_size);
+    local_checksums[pp] = checksum(data+pp*var_size,var_size);
   }
 
   std::vector<checksum_t> global_checksums(gather_.glb_dof());
-  gather_.gather(local_checksums.data(),global_checksums.data(),1);
+  mpl::Field<checksum_t const> loc(local_checksums.data(),1);
+  mpl::Field<checksum_t> glb(global_checksums.data(),1);
+  gather_.gather(&loc,&glb,1);
 
   checksum_t glb_checksum = checksum(global_checksums.data(),global_checksums.size());
   MPI_Bcast(&glb_checksum,1,MPL::TYPE<checksum_t>(),0,MPI_COMM_WORLD);
@@ -155,6 +157,7 @@ extern "C"
 }
 // ------------------------------------------------------------------
 
+} // namespace mpl
 } // namespace atlas
 
 #endif // Checksum_hpp

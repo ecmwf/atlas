@@ -75,7 +75,7 @@ struct Fixture {
     }
     halo_exchange.setup(part.data(),ridx.data(),0,N);
   }
-  HaloExchange halo_exchange;
+  mpl::HaloExchange halo_exchange;
   std::vector<int> nb_nodes;
   std::vector<int> part;
   std::vector<int> ridx;

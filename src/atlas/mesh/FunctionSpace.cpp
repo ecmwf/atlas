@@ -364,15 +364,15 @@ void atlas__FunctionSpace__gather_double (FunctionSpace* This, double field_data
   This->gather(field_data,field_size, glbfield_data,glbfield_size);
 }
 
-HaloExchange const* atlas__FunctionSpace__halo_exchange (FunctionSpace* This) {
+mpl::HaloExchange const* atlas__FunctionSpace__halo_exchange (FunctionSpace* This) {
   return &This->halo_exchange();
 }
 
-GatherScatter const* atlas__FunctionSpace__gather (FunctionSpace* This) {
+mpl::GatherScatter const* atlas__FunctionSpace__gather (FunctionSpace* This) {
   return &This->gather();
 }
 
-Checksum const* atlas__FunctionSpace__checksum (FunctionSpace* This) {
+mpl::Checksum const* atlas__FunctionSpace__checksum (FunctionSpace* This) {
   return &This->checksum();
 }
 

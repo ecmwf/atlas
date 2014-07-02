@@ -23,6 +23,7 @@
 #include "atlas/util/Debug.hpp"
 
 namespace atlas {
+namespace mpl {
 
 class HaloExchange
 {
@@ -365,7 +366,7 @@ extern "C"
 }
 // ------------------------------------------------------------------
 
-
+} // namespace mpl
 } // namespace atlas
 
 #endif // HaloExchange_hpp

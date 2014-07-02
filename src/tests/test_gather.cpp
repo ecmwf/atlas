@@ -77,7 +77,7 @@ struct Fixture {
     gather.setup(part.data(),ridx.data(),0,gidx.data(),9,Nl);
     Ng = gather.glb_dof();
   }
-  GatherScatter gather;
+  mpl::GatherScatter gather;
   std::vector<int> nb_nodes;
   std::vector<int> part;
   std::vector<int> ridx;
@@ -128,7 +128,7 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1, Fixture )
   int glb_strides[] = {1};
   int glb_extents[] = {2};
   gather.gather( loc.data(), loc_strides, loc_extents, 1,
-                  glb.data(), glb_strides, glb_extents, 1 );
+                 glb.data(), glb_strides, glb_extents, 1 );
   }
   if( MPL::rank() == 0 )
   {
@@ -143,7 +143,7 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1, Fixture )
     int glb_strides[] = {1};
     int glb_extents[] = {1};
     gather.gather( loc.data(),  loc_strides, loc_extents, 1,
-                    glb1.data(), glb_strides, glb_extents, 1 );
+                   glb1.data(), glb_strides, glb_extents, 1 );
   }
   if( MPL::rank() == 0 )
   {
@@ -158,7 +158,7 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1, Fixture )
     int glb_strides[] = {1};
     int glb_extents[] = {1};
     gather.gather( loc.data()+1, loc_strides, loc_extents, 1,
-                    glb2.data(),  glb_strides, glb_extents, 1 );
+                   glb2.data(),  glb_strides, glb_extents, 1 );
   }
   if( MPL::rank() == 0 )
   {
@@ -309,7 +309,7 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank2, Fixture )
     int glb_strides[] = {1};
     int glb_extents[] = {1};
     gather.gather( &locv(0,2,1), loc_strides, loc_extents, 2,
-                    glb32.data(), glb_strides, glb_extents, 1 );
+                   glb32.data(), glb_strides, glb_extents, 1 );
   }
   if( MPL::rank() == 0 )
   {

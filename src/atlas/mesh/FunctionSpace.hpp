@@ -78,21 +78,24 @@ public: // methods
     halo_exchange_.execute( field_data, nb_vars );
   }
 
-  const HaloExchange& halo_exchange() const { return halo_exchange_; }
+  const mpl::HaloExchange& halo_exchange() const { return halo_exchange_; }
 
   template< typename DATA_TYPE >
-  void gather( DATA_TYPE field_data[], int field_size, DATA_TYPE glbfield_data[], int glbfield_size )
+  void gather( const DATA_TYPE field_data[], int field_size, DATA_TYPE glbfield_data[], int glbfield_size )
   {
     int nb_vars = field_size/dof_;
     if( dof_*nb_vars != field_size ) std::cout << "ERROR in FunctionSpace::gather" << std::endl;
     if( glb_dof_*nb_vars != glbfield_size ) std::cout << "ERROR in FunctionSpace::gather" << std::endl;
 
-    gather_.gather( field_data, glbfield_data, nb_vars );
+    mpl::Field<DATA_TYPE const> loc_field(field_data,nb_vars);
+    mpl::Field<DATA_TYPE      > glb_field(glbfield_data,nb_vars);
+
+    gather_.gather( &loc_field, &glb_field, 1 );
   }
 
-  const GatherScatter& gather() const { return gather_; }
+  const mpl::GatherScatter& gather() const { return gather_; }
 
-  const Checksum& checksum() const { return checksum_; }
+  const mpl::Checksum& checksum() const { return checksum_; }
 
   void set_index(int idx) { idx_ = idx; }
 
@@ -122,9 +125,9 @@ protected: // members
   std::map< std::string, size_t > index_;
   std::vector< Field* > fields_;
 
-  HaloExchange  halo_exchange_;
-  GatherScatter gather_;
-  Checksum      checksum_;
+  mpl::HaloExchange  halo_exchange_;
+  mpl::GatherScatter gather_;
+  mpl::Checksum      checksum_;
   Metadata      metadata_;
 
 private: // copy not allowed
@@ -134,9 +137,13 @@ private: // copy not allowed
 
 };
 
+typedef mpl::HaloExchange HaloExchange_t;
+typedef mpl::GatherScatter GatherScatter_t;
+typedef mpl::Checksum Checksum_t;
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
+
 extern "C" 
 {
   FunctionSpace* atlas__FunctionSpace__new (char* name, char* shape_func, int bounds[], int bounds_size);
@@ -158,9 +165,9 @@ extern "C"
   void atlas__FunctionSpace__gather_int (FunctionSpace* This, int field_data[], int field_size, int glbfield_data[], int glbfield_size);
   void atlas__FunctionSpace__gather_float (FunctionSpace* This, float field_data[], int field_size, float glbfield_data[], int glbfield_size);
   void atlas__FunctionSpace__gather_double (FunctionSpace* This, double field_data[], int field_size, double glbfield_data[], int glbfield_size);
-  HaloExchange const* atlas__FunctionSpace__halo_exchange (FunctionSpace* This);
-  GatherScatter const* atlas__FunctionSpace__gather (FunctionSpace* This);
-  Checksum const* atlas__FunctionSpace__checksum (FunctionSpace* This);
+  HaloExchange_t const* atlas__FunctionSpace__halo_exchange (FunctionSpace* This);
+  GatherScatter_t const* atlas__FunctionSpace__gather (FunctionSpace* This);
+  Checksum_t const* atlas__FunctionSpace__checksum (FunctionSpace* This);
 
 }
 // ------------------------------------------------------------------
