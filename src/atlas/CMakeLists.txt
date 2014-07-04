@@ -71,6 +71,7 @@ list( APPEND atlas_io_srcs
 
 list( APPEND atlas_util_srcs
   util/Array.hpp
+  util/ArrayUtil.hpp
   util/ArrayView.hpp
   util/ArrayView.cpp
   util/Checksum.hpp

@@ -24,6 +24,47 @@ using namespace atlas;
 #define IN_FORTRAN -1
 #endif
 
+namespace test {
+
+
+template< typename Iterator >
+std::string pos(Iterator& it)
+{
+  std::stringstream ss;
+  for( int i=0; i<it.pos().size(); ++i)  ss << it.pos()[i] << " ";
+  return ss.str();
+}
+
+
+}
+
+BOOST_AUTO_TEST_CASE( test_arrayview_iterator )
+{
+  Array<int> array(5,4,2);
+  int strides[2] = {8,1};
+  int extents[2] = {5,2};
+  ArrayView<int>       aview(array.data(),strides,extents,2);
+  ArrayView<int> const const_aview(array);
+
+  std::cout << "aview.size() = " << aview.size() << std::endl;
+  std::cout << "const_.size() = " << const_aview.size() << std::endl;
+
+  ArrayView<int>::iterator it;
+  ArrayView<int>::const_iterator const_it;
+
+  int i(0);
+  for(it = aview.begin(); it!=aview.end(); ++it, ++i)
+  {
+    std::cout << "set at pos " << test::pos(it) << " : " << i << std::endl;
+    *it = i;
+  }
+
+  for( const_it = const_aview.begin(); const_it!=const_aview.end(); ++const_it)
+  {
+    std::cout << "read at pos " << test::pos(const_it) << " : " << *const_it << std::endl;
+  }
+}
+
 BOOST_AUTO_TEST_CASE( test_indexview_1d )
 {
   Array<int> array( 10 );
