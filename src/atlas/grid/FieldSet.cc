@@ -143,6 +143,10 @@ FieldSet::FieldSet( const eckit::PathName& fname )
     }
 }
 
+FieldSet::FieldSet(const void *, size_t)
+{
+}
+
 FieldSet::FieldSet(const Grid::Ptr grid, std::vector<std::string> nfields )
 {
     ASSERT( grid );

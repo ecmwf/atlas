@@ -44,7 +44,7 @@ static std::string map_short_name_to_grib_sample_file(const std::string& short_n
 
 //------------------------------------------------------------------------------------------------------
 
-eckit::grib_handle_ptr GribWrite::create_handle(const Grid& the_grid)
+GribHandle::Ptr GribWrite::create_handle(const Grid& the_grid)
 {
    // TODO: We need determine choive of editionNumber form a user specified configuration file
 
@@ -57,13 +57,13 @@ eckit::grib_handle_ptr GribWrite::create_handle(const Grid& the_grid)
    std::string sample_file = map_short_name_to_grib_sample_file( the_grid_spec->short_name(),editionNumber);
    if (!sample_file.empty()) {
       grib_handle* the_grib_handle = grib_handle_new_from_samples(0,sample_file.c_str());
-      return eckit::grib_handle_ptr(new GribHandle(the_grib_handle));
+      return GribHandle::Ptr(new GribHandle(the_grib_handle));
    }
    editionNumber = 1;
    sample_file = map_short_name_to_grib_sample_file( the_grid_spec->short_name(),editionNumber);
    if (!sample_file.empty()) {
       grib_handle* the_grib_handle = grib_handle_new_from_samples(0,sample_file.c_str());
-      return eckit::grib_handle_ptr(new GribHandle(the_grib_handle));
+      return GribHandle::Ptr(new GribHandle(the_grib_handle));
    }
 
    // From the grid spec, determine the closest corresponding grib samples file
@@ -71,16 +71,16 @@ eckit::grib_handle_ptr GribWrite::create_handle(const Grid& the_grid)
    std::string grib_sample_file = GribWrite::grib_sample_file(*the_grid_spec,editionNumber);
    if (!grib_sample_file.empty()) {
       grib_handle* the_grib_handle = grib_handle_new_from_samples(0,grib_sample_file.c_str());
-      return eckit::grib_handle_ptr(new GribHandle(the_grib_handle));
+      return GribHandle::Ptr(new GribHandle(the_grib_handle));
    }
    editionNumber = 1;
    grib_sample_file = GribWrite::grib_sample_file(*the_grid_spec,editionNumber);
    if (!grib_sample_file.empty()) {
       grib_handle* the_grib_handle = grib_handle_new_from_samples(0,grib_sample_file.c_str());
-      return eckit::grib_handle_ptr(new GribHandle(the_grib_handle));
+      return GribHandle::Ptr(new GribHandle(the_grib_handle));
    }
 
-   return eckit::grib_handle_ptr();
+   return GribHandle::Ptr();
 }
 
 

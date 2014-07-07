@@ -108,6 +108,9 @@ public: // methods
     /// Constructs a field set from a file (e.g. a GRIB file )
     FieldSet( const eckit::PathName& );
 
+    /// @todo Constructor for a FieldSet from a a buffer
+    FieldSet( const void*, size_t );
+
     /// @todo Constructor for a FieldSet from a DataHandle
     //  FieldSet( const eckit::DataHandle& );
 
