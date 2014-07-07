@@ -31,7 +31,11 @@
 namespace atlas {
 
 FunctionSpace::FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<int>& extents) :
-  name_(name), extents_(extents)
+  name_(name),
+  extents_(extents),
+  gather_scatter_(new mpl::GatherScatter()),
+  halo_exchange_(new mpl::HaloExchange()),
+  checksum_(new mpl::Checksum() )
 { 
   //std::cout << "C++ : FunctionSpace Constructor" << std::endl;
   dof_ = 1;
@@ -261,15 +265,21 @@ template<>
 
 void FunctionSpace::parallelise(const int part[], const int remote_idx[], const int glb_idx[], int parsize)
 {
-  halo_exchange_.setup(part,remote_idx,REMOTE_IDX_BASE,parsize);
-  gather_.setup(part,remote_idx,REMOTE_IDX_BASE,glb_idx,std::numeric_limits<int>::max(),parsize);
-  checksum_.setup(part,remote_idx,REMOTE_IDX_BASE,glb_idx,std::numeric_limits<int>::max(),parsize);
-  glb_dof_ = gather_.glb_dof();
+  halo_exchange_->setup(part,remote_idx,REMOTE_IDX_BASE,parsize);
+  gather_scatter_->setup(part,remote_idx,REMOTE_IDX_BASE,glb_idx,std::numeric_limits<int>::max(),parsize);
+  checksum_->setup(part,remote_idx,REMOTE_IDX_BASE,glb_idx,std::numeric_limits<int>::max(),parsize);
+  glb_dof_ = gather_scatter_->glb_dof();
   for( int b=bounds_.size()-2; b>=0; --b)
   {
     if( bounds_[b] != Field::UNDEF_VARS )
       glb_dof_ *= bounds_[b];
   }
+}
+
+void FunctionSpace::parallelise(FunctionSpace& other_functionspace)
+{
+  halo_exchange_  = other_functionspace.halo_exchange();
+  gather_scatter_ = other_functionspace.gather_scatter();
 }
 
 void FunctionSpace::parallelise()
@@ -364,16 +374,16 @@ void atlas__FunctionSpace__gather_double (FunctionSpace* This, double field_data
   This->gather(field_data,field_size, glbfield_data,glbfield_size);
 }
 
-mpl::HaloExchange const* atlas__FunctionSpace__halo_exchange (FunctionSpace* This) {
-  return &This->halo_exchange();
+mpl::HaloExchange* atlas__FunctionSpace__halo_exchange (FunctionSpace* This) {
+  return This->halo_exchange().get();
 }
 
-mpl::GatherScatter const* atlas__FunctionSpace__gather (FunctionSpace* This) {
-  return &This->gather();
+mpl::GatherScatter* atlas__FunctionSpace__gather (FunctionSpace* This) {
+  return This->gather_scatter().get();
 }
 
-mpl::Checksum const* atlas__FunctionSpace__checksum (FunctionSpace* This) {
-  return &This->checksum();
+mpl::Checksum* atlas__FunctionSpace__checksum (FunctionSpace* This) {
+  return This->checksum().get();
 }
 
 void atlas__FunctionSpace__delete (FunctionSpace* This)  {

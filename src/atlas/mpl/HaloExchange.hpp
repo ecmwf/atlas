@@ -17,6 +17,9 @@
 #include <vector>
 #include <stdexcept>
 
+#include "eckit/memory/SharedPtr.h"
+#include "eckit/memory/Owned.h"
+
 #include "eckit/exception/Exceptions.h"
 #include "atlas/util/ArrayView.hpp"
 #include "atlas/mpl/MPL.hpp"
@@ -25,8 +28,10 @@
 namespace atlas {
 namespace mpl {
 
-class HaloExchange
-{
+class HaloExchange: public eckit::Owned {
+
+public: // types
+    typedef eckit::SharedPtr<HaloExchange> Ptr;
 public:
   HaloExchange();
   virtual ~HaloExchange() {}

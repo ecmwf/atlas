@@ -39,7 +39,9 @@
 
 #include <cstddef>
 #include <vector>
-#include <iostream>
+#include <iterator>     // std::iterator, std::input_iterator_tag
+#include <numeric> // std::accumulate
+#include <functional> // std::multiplies
 #define ATLAS_ARRAYVIEW_BOUNDS_CHECKING
 
 #ifdef ATLAS_ARRAYVIEW_BOUNDS_CHECKING
@@ -210,7 +212,13 @@ public:
   ArrayView( const DATA_TYPE* data,
              const ArrayStrides::value_type strides[],
              const ArrayExtents::value_type extents[],
-             const size_t rank );
+             const size_t rank ):
+    data_( const_cast<DATA_TYPE*>(data) ), rank_(rank)
+  {
+    strides_.assign(strides,strides+rank_);
+    extents_.assign(extents,extents+rank_);
+    size_ = std::accumulate(extents_.data(),extents_.data()+rank_,1,std::multiplies<int>());
+  }
 
   ArrayView( const Array<DATA_TYPE>& array );
   ArrayView( const Field& field );

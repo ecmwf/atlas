@@ -55,6 +55,7 @@ endif()
 ###
 
 list( APPEND atlas_mpl_srcs
+  mpl/MPLArrayView.hpp
   mpl/Checksum.hpp
   mpl/Checksum.cpp
   mpl/HaloExchange.hpp

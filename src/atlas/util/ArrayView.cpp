@@ -9,7 +9,6 @@
  */
 
 
-#include <numeric> // std::accumulate
 #include <stdexcept>
 #include "atlas/mesh/Field.hpp"
 #include "atlas/util/Array.hpp"
@@ -22,14 +21,6 @@ namespace atlas {
 //------------------------------------------------------------------------------------------------------
 
 #define TEMPLATE_SPECIALIZATION( DATA_TYPE ) \
-template<>\
-ArrayView <DATA_TYPE, 0 >::ArrayView( const DATA_TYPE* data, const ArrayStrides::value_type strides[], const ArrayExtents::value_type extents[], const size_t rank ) : \
-  data_( const_cast<DATA_TYPE*>(data) ), rank_(rank) \
-{ \
-  strides_.assign(strides,strides+rank_); \
-  extents_.assign(extents,extents+rank_); \
-  size_ = std::accumulate(extents_.data(),extents_.data()+rank_,1,std::multiplies<int>()); \
-} \
 template<>\
 ArrayView <DATA_TYPE, 0 >::ArrayView( const Array<DATA_TYPE>& array ) : data_( const_cast<DATA_TYPE*>(array.data()) ) \
 { \

@@ -15,6 +15,9 @@
 
 #include <vector>
 
+#include "eckit/memory/SharedPtr.h"
+#include "eckit/memory/Owned.h"
+
 #include "atlas/mpl/MPL.hpp"
 #include "atlas/mpl/GatherScatter.hpp"
 #include "atlas/util/Debug.hpp"
@@ -24,8 +27,11 @@
 
 namespace atlas {
 namespace mpl {
-class Checksum
-{
+class Checksum: public eckit::Owned {
+
+public: // types
+    typedef eckit::SharedPtr<Checksum> Ptr;
+
 public:
   Checksum();
   virtual ~Checksum() {}

@@ -437,7 +437,7 @@ void build_dual_mesh( Mesh& mesh )
   nodes.parallelise();
 //  edges.parallelise();
 
-  nodes.halo_exchange().execute(dual_volumes);
+  nodes.halo_exchange()->execute(dual_volumes);
 
 
   int neg_vols = 0;
