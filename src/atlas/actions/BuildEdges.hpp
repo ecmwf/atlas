@@ -20,6 +20,7 @@ namespace actions {
 
 void build_edges( Mesh& mesh );
 void build_pole_edges( Mesh& mesh );
+void build_element_to_edge_connectivity( Mesh& mesh );
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines

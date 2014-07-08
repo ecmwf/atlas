@@ -15,6 +15,7 @@
 #include <iostream>
 #include <algorithm>    // std::sort
 
+#include "atlas/mpl/Checksum.hpp"
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/mesh/FunctionSpace.hpp"
 #include "atlas/mesh/Field.hpp"
@@ -43,10 +44,10 @@ struct Node
   {
     return ( g < other.g );
   }
-  bool operator == (const Node& other) const
-  {
-    return ( g == other.g );
-  }
+//  bool operator == (const Node& other) const
+//  {
+//    return ( g == other.g );
+//  }
 };
 
 
@@ -435,10 +436,11 @@ void build_dual_mesh( Mesh& mesh )
   //build_skewness( mesh );
 
   nodes.parallelise();
-//  edges.parallelise();
-
   nodes.halo_exchange()->execute(dual_volumes);
 
+  ArrayView<double,2> dual_normals  ( edges.field( "dual_normals" ) );
+  edges.parallelise();
+  edges.halo_exchange()->execute(dual_normals);
 
   int neg_vols = 0;
   for (int node=0; node<nb_nodes; ++node)
@@ -453,9 +455,6 @@ void build_dual_mesh( Mesh& mesh )
   {
     throw eckit::SeriousBug("Some dual_volumes are not correct",Here());
   }
-
-//  nodes.field("dual_volumes").halo_exchange();
-//  edges.field("dual_normals").halo_exchange();
 }
 
 

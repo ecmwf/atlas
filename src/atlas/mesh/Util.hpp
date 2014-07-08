@@ -55,6 +55,11 @@ struct LatLonPoint
     x = microdeg(x_);
     y = microdeg(y_);
   }
+  LatLonPoint( const double coord[2] )
+  {
+    x = microdeg(coord[XX]);
+    y = microdeg(coord[YY]);
+  }
   LatLonPoint( const ArrayView<int,1>& coord )
   {
     x = coord[XX];

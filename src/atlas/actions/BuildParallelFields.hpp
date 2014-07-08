@@ -33,6 +33,17 @@ void build_parallel_fields( Mesh& mesh );
  */
 void build_nodes_parallel_fields( FunctionSpace& nodes );
 
+/*
+ * Build parallel fields for the "edges" function space if they don't exist.
+ * - glb_idx:    create unique indices for non-positive values
+ * - partition:  set to partition of node with lowest glb_idx
+ * - remote_idx: rebuild from scratch
+ *
+ *  TODO: Make sure that the edge-partition is at least one of the partition numbers of the
+ *        neighbouring elements.
+ *        Because of this problem, the size of the halo should be set to 2 instead of 1!!!
+ */
+void build_edges_parallel_fields( FunctionSpace& edges, FunctionSpace& nodes );
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines

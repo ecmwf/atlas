@@ -23,6 +23,27 @@ namespace atlas {
 namespace mpl {
 
 namespace {
+struct IsGhostPoint
+{
+  IsGhostPoint( const int part[], const int ridx[], const int base, const int N )
+  {
+    part_   = part;
+    ridx_   = ridx;
+    base_   = base;
+    mypart_ = MPL::rank();
+  }
+
+  bool operator()(int idx)
+  {
+    if( part_[idx] != mypart_  ) return true;
+    if( ridx_[idx] != base_+idx ) return true;
+    return false;
+  }
+  int mypart_;
+  const int* part_;
+  const int* ridx_;
+  int base_;
+};
 
 struct Node
 {
@@ -72,6 +93,23 @@ void GatherScatter::setup( const int part[],
   locdispls_.resize(nproc); locdispls_.assign(nproc,0);
   glbdispls_.resize(nproc); glbdispls_.assign(nproc,0);
 
+  int maxgid = max_glb_idx;
+  if(max_glb_idx<0)
+  {
+    IsGhostPoint is_ghost(part,remote_idx,base,parsize_);
+    maxgid = -1;
+    for (int jj=0; jj<parsize_; ++jj)
+    {
+      if ( !is_ghost(jj) )
+      {
+        maxgid = std::max(maxgid,glb_idx[jj]);
+      }
+    }
+    MPL_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&maxgid,1,MPI_INT,MPI_MAX,MPI_COMM_WORLD) );
+  }
+
+
+
   Array<int> sendnodes(parsize_,3);
   ArrayView<int,2> nodes(sendnodes);
   for( int n=0; n<parsize_; ++n )
@@ -112,7 +150,7 @@ void GatherScatter::setup( const int part[],
 
   // Sort on "g" member, remove nodes with g larger than max_glb_idx, and remove duplicates
   std::sort(node_sort.begin(), node_sort.end());
-  node_sort.erase( std::upper_bound ( node_sort.begin(), node_sort.end(), max_glb_idx ), node_sort.end() );
+  node_sort.erase( std::upper_bound ( node_sort.begin(), node_sort.end(), maxgid ), node_sort.end() );
   node_sort.erase( std::unique( node_sort.begin(), node_sort.end() ), node_sort.end() );
 
 //  if ( myproc == root )

@@ -266,8 +266,8 @@ template<>
 void FunctionSpace::parallelise(const int part[], const int remote_idx[], const int glb_idx[], int parsize)
 {
   halo_exchange_->setup(part,remote_idx,REMOTE_IDX_BASE,parsize);
-  gather_scatter_->setup(part,remote_idx,REMOTE_IDX_BASE,glb_idx,std::numeric_limits<int>::max(),parsize);
-  checksum_->setup(part,remote_idx,REMOTE_IDX_BASE,glb_idx,std::numeric_limits<int>::max(),parsize);
+  gather_scatter_->setup(part,remote_idx,REMOTE_IDX_BASE,glb_idx,-1,parsize);
+  checksum_->setup(part,remote_idx,REMOTE_IDX_BASE,glb_idx,-1,parsize);
   glb_dof_ = gather_scatter_->glb_dof();
   for( int b=bounds_.size()-2; b>=0; --b)
   {
@@ -284,7 +284,7 @@ void FunctionSpace::parallelise(FunctionSpace& other_functionspace)
 
 void FunctionSpace::parallelise()
 {
-  if( name() == "nodes" )
+  if( name() == "nodes" || name() == "edges" )
   {
     FieldT<int>& part = field<int>("partition");
     FieldT<int>& ridx = field<int>("remote_idx");

@@ -28,7 +28,24 @@
 namespace atlas {
 namespace actions {
 
-void build_element_to_edge_connectivity( Mesh& mesh, IndexView<int,3>& edge_to_elem )
+namespace {
+struct Sort
+{
+  Sort() {}
+  Sort(int gid, int idx)
+  {
+    g = gid;
+    i = idx;
+  }
+  int g,i;
+  bool operator < (const Sort& other) const
+  {
+    return ( g < other.g );
+  }
+};
+}
+
+void build_element_to_edge_connectivity( Mesh& mesh )
 {
   std::vector< IndexView<int,2> > elem_to_edge( mesh.nb_function_spaces() );
   std::vector< std::vector<int> > edge_cnt( mesh.nb_function_spaces() );
@@ -48,11 +65,49 @@ void build_element_to_edge_connectivity( Mesh& mesh, IndexView<int,3>& edge_to_e
     }
   }
 
-  ArrayView<int,1> edge_glb_idx( mesh.function_space("edges").field("glb_idx") );
-
-  int nb_edges = edge_to_elem.extents()[0];
-  for( int edge=0; edge<nb_edges; ++edge)
+  FunctionSpace& nodes = mesh.function_space("nodes");
+  FunctionSpace& edges = mesh.function_space("edges");
+  int nb_edges = edges.extents()[0];
+  IndexView<int,3> edge_to_elem ( edges.field( "to_elem" ).data<int>(), Extents(nb_edges,2,2) );
+  IndexView<int,2> edge_nodes   ( edges.field( "nodes" ) );
+  bool has_pole_edges(false);
+  ArrayView<int,1> is_pole_edge;
+  if( edges.has_field("is_pole_edge") )
   {
+    has_pole_edges = true;
+    is_pole_edge = ArrayView<int,1>( edges.field("is_pole_edge") );
+  }
+
+  ComputeUniqueElementIndex uid( nodes );
+
+  std::vector<Sort> edge_sort(nb_edges);
+  for( int edge=0; edge<nb_edges; ++edge )
+    edge_sort[edge] = Sort( uid(edge_nodes[edge]), edge );
+  std::sort( edge_sort.data(), edge_sort.data()+nb_edges );
+
+
+//  FunctionSpace& edges = mesh.function_space("edges");
+//  int nb_edges = edges.extents()[0];
+//  IndexView<int,3> edge_to_elem ( edges.field( "to_elem" ).data<int>(), Extents(nb_edges,2,2) );
+//  ArrayView<int,1> edge_gidx    ( edges.field( "glb_idx" ) );
+//  bool has_pole_edges(false);
+//  ArrayView<int,1> is_pole_edge;
+//  if( edges.has_field("is_pole_edge") )
+//  {
+//    has_pole_edges = true;
+//    is_pole_edge = ArrayView<int,1>( edges.field("is_pole_edge") );
+//  }
+
+
+//  std::vector<Sort> edge_sort(nb_edges);
+//  for( int edge=0; edge<nb_edges; ++edge )
+//    edge_sort[edge] = Sort(edge_gidx(edge),edge);
+//  std::sort( edge_sort.data(), edge_sort.data()+nb_edges );
+
+
+  for( int jedge=0; jedge<nb_edges; ++jedge)
+  {
+    int edge = edge_sort[jedge].i;
     for( int j=0; j<2; ++j)
     {
       int func_space_idx = edge_to_elem(edge,j,0);
@@ -63,10 +118,13 @@ void build_element_to_edge_connectivity( Mesh& mesh, IndexView<int,3>& edge_to_e
       }
       else
       {
-        if( func_space_idx >= 0)
-          throw eckit::SeriousBug("func_space_idx not negative",Here());
-        if( j==0 )
-          throw eckit::SeriousBug("edge has no element connected",Here());
+        if( !( has_pole_edges && is_pole_edge(edge) ) )
+        {
+          if( func_space_idx >= 0)
+            throw eckit::SeriousBug("func_space_idx not negative",Here());
+          if( j==0 )
+            throw eckit::SeriousBug("edge has no element connected",Here());
+        }
       }
     }
   }
@@ -268,6 +326,17 @@ void build_edges( Mesh& mesh )
   IndexView<int,1> edge_ridx    ( edges.field( "remote_idx" ) );
   IndexView<int,3> edge_to_elem ( edges.field( "to_elem"    ).data<int>(), Extents(nb_edges,2,2) );
 
+  std::vector< IndexView<int,2> > elem_nodes( mesh.nb_function_spaces() );
+
+  for( int func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
+  {
+    FunctionSpace& func_space = mesh.function_space(func_space_idx);
+    if( func_space.metadata<int>("type") == Entity::ELEMS )
+    {
+      elem_nodes[func_space_idx] = IndexView<int,2>(func_space.field("nodes"));
+    }
+  }
+
   ComputeUniqueElementIndex uid( nodes );
 
   int cnt=0;
@@ -275,27 +344,41 @@ void build_edges( Mesh& mesh )
   {
     edge_nodes(edge,0) = face_nodes(edge,0);
     edge_nodes(edge,1) = face_nodes(edge,1);
-//    if( glb_idx(edge_nodes(edge,0)) > edge_nodes(edge,1) )
-//    {
-//      int tmp = edge_nodes(edge,1);
-//      edge_nodes(edge,1) = edge_nodes(edge,0);
-//      edge_nodes(edge,0) = tmp;
-//    }
+    if( glb_idx(edge_nodes(edge,0)) > glb_idx(edge_nodes(edge,1)) )
+    {
+      int tmp = edge_nodes(edge,0);
+      edge_nodes(edge,0) = edge_nodes(edge,1);
+      edge_nodes(edge,1) = tmp;
+    }
 
     ASSERT( edge_nodes(edge,0) < nb_nodes );
     ASSERT( edge_nodes(edge,1) < nb_nodes );
     edge_glb_idx(edge)   = uid(edge_nodes[edge]);
-    edge_part(edge)      = std::min( glb_idx(edge_nodes(edge,0)), glb_idx(edge_nodes(edge,1) ) );
+    edge_part(edge)      = std::min( part(edge_nodes(edge,0)), part(edge_nodes(edge,1) ) );
     edge_ridx(edge)      = edge;
-    edge_to_elem(edge,0,0) = face_to_elem[edge][0].f;
-    edge_to_elem(edge,0,1) = face_to_elem[edge][0].e;
-    edge_to_elem(edge,1,0) = face_to_elem[edge][1].f;
-    edge_to_elem(edge,1,1) = face_to_elem[edge][1].e;
+
+    int f1 = face_to_elem[edge][0].f;
+    int f2 = face_to_elem[edge][1].f;
+    int e1 = face_to_elem[edge][0].e;
+    int e2 = face_to_elem[edge][1].e;
+
+    edge_to_elem(edge,0,0) = f1;
+    edge_to_elem(edge,0,1) = e1;
+    edge_to_elem(edge,1,0) = f2;
+    edge_to_elem(edge,1,1) = e2;
+
+    if( f2 >= 0 )
+    {
+      if( uid(elem_nodes[f1][e1]) > uid(elem_nodes[f2][e2]) )
+      {
+        edge_to_elem(edge,0,0) = f2;
+        edge_to_elem(edge,0,1) = e2;
+        edge_to_elem(edge,1,0) = f1;
+        edge_to_elem(edge,1,1) = e1;
+      }
+    }
   }
-
-  // Element to edge connectivity
-  build_element_to_edge_connectivity(mesh,edge_to_elem);
-
+  build_element_to_edge_connectivity(mesh);
 }
 
 void build_pole_edges( Mesh& mesh )

@@ -567,6 +567,7 @@ void GatherScatter::gather( const ArrayView<DATA_TYPE,LRANK>& ldata,
   }
   else
   {
+    DEBUG_VAR(parsize_);
     DEBUG_VAR(ldata.size());
     DEBUG_VAR(gdata.size());
     NOTIMP; // Need to implement with parallel ranks > 1
