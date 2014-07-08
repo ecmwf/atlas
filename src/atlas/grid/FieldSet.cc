@@ -69,6 +69,56 @@ std::ostream& operator<<( std::ostream& os, const FieldHandle& f)
 
 static GribAccessor<std::string> grib_shortName("shortName");
 
+
+FieldHandle::Ptr FieldSet::create_field( GribHandle& gh )
+{
+    // check grid is the same
+
+    if( !grid_ )
+    {
+        grid_.reset( GribRead::create_grid_from_grib( gh.raw() ) );  // first time create grid
+    }
+    else
+    {
+        if( grib_hash(gh) != grid_->hash() )
+            throw eckit::UserError("GRIB fields don't match grid within FieldSet", Here() );
+    }
+
+    Mesh& mesh = grid_->mesh();
+    FunctionSpace&  nodes  = mesh.function_space( "nodes" );
+
+    // get name for this field
+    std::string sname = grib_shortName( gh.raw() ) + "_" + Translator<size_t,std::string>()( fields_.size() );
+
+    // get values
+
+    size_t nvalues = gh.getDataValuesSize();
+
+    // create the field
+
+    if( nodes.extents()[0] != nvalues )
+        throw SeriousBug( "Size of field in GRIB does not match Grid", Here() );
+
+    FieldHandle::Data& fdata = nodes.create_field<double>(sname,1);
+
+    gh.getDataValues(fdata.data(),nvalues);
+
+    FieldHandle::Ptr hf( new FieldHandle( grid_, fdata ) );
+
+    hf->grib( gh.clone() );
+
+//        {
+//            std::ofstream of;
+//            of.open( sname.c_str() );
+//            of << *hf << std::endl;
+//            of.close();
+//        }
+
+    return hf;
+}
+
+//-----------------------------------------------------------------------------
+
 FieldSet::FieldSet( const eckit::PathName& fname )
 {
     ASSERT( !grid_ );
@@ -89,62 +139,21 @@ FieldSet::FieldSet( const eckit::PathName& fname )
         GribHandle* gh = gf->getHandle();
         ASSERT( gh );
 
-        // check grid is the same
-
-        if( !grid_ )
-        {
-            grid_.reset( GribRead::create_grid_from_grib( gh->raw() ) );  // first time create grid            
-        }
-        else
-        {
-            if( grib_hash(*gh) != grid_->hash() )
-                throw eckit::UserError("GRIB fields don't match grid within FieldSet", Here() );
-        }
-
-        Mesh& mesh = grid_->mesh();
-        FunctionSpace&  nodes  = mesh.function_space( "nodes" );
-
-        // get name for this field
-        std::string sname = grib_shortName( gh->raw() ) + "_" + Translator<size_t,std::string>()(fidx);
-
-        // get values
-
-        size_t nvalues = 0;
-        const double* values = gf->getValues(nvalues);
+        fields_.push_back( create_field(*gh) );
 
         /* check all fields have same nvalues */
-        if( !check_nvalues ) check_nvalues = nvalues;
-        if( check_nvalues != nvalues )
+        if( !check_nvalues ) check_nvalues = fields_.back()->data().size();
+        if( check_nvalues != fields_.back()->data().size() )
             throw eckit::UserError("GRIB file contains multiple fields with different sizes", Here() );
-
-        // create the field
-
-        if( nodes.extents()[0] != nvalues )
-            throw SeriousBug( "Size of field in GRIB does not match Grid", Here() );
-
-        FieldHandle::Data& fdata = nodes.create_field<double>(sname,1);
-
-        ::memcpy(fdata.data(), values, nvalues*sizeof(double) );
-
-        FieldHandle::Ptr hf( new FieldHandle( grid_, fdata ) );
-
-        hf->grib( gh->clone() );
-
-//        {
-//            std::ofstream of;
-//            of.open( sname.c_str() );
-//            of << *hf << std::endl;
-//            of.close();
-//        }
-
-        fields_.push_back( hf );
 
         gf->release(); // free this GribField
     }
 }
 
-FieldSet::FieldSet(const void *, size_t)
+FieldSet::FieldSet( const Buffer& buf )
 {
+    GribHandle gh( buf );
+    fields_.push_back( create_field(gh) );
 }
 
 FieldSet::FieldSet(const Grid::Ptr grid, std::vector<std::string> nfields )

@@ -108,8 +108,8 @@ public: // methods
     /// Constructs a field set from a file (e.g. a GRIB file )
     FieldSet( const eckit::PathName& );
 
-    /// @todo Constructor for a FieldSet from a a buffer
-    FieldSet( const void*, size_t );
+    /// @todo Constructor for a FieldSet from a buffer
+    FieldSet( const eckit::Buffer& );
 
     /// @todo Constructor for a FieldSet from a DataHandle
     //  FieldSet( const eckit::DataHandle& );
@@ -134,7 +134,11 @@ public: // methods
 
     std::vector<std::string> field_names() const;
 
-protected:
+protected: // methods
+
+    FieldHandle::Ptr create_field( eckit::GribHandle& );
+
+protected: // members
 
     FieldHandle::Vector fields_; ///< field handle storage
 
