@@ -41,7 +41,7 @@ ecbuild_add_test( TARGET test_gather
 
 ecbuild_add_test( TARGET test_gmsh
   BOOST
-  SOURCES  test_gmsh.cpp
+  SOURCES  test_gmsh.cpp TestMeshes.hpp
   LIBS     atlas
 )
 

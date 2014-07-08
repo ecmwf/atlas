@@ -12,6 +12,7 @@
 #define BOOST_UNIT_TEST_FRAMEWORK_HEADER_ONLY
 #include "ecbuild/boost_test_framework.h"
 
+#include "tests/TestMeshes.hpp"
 #include "atlas/mpl/MPL.hpp"
 #include "atlas/io/Gmsh.hpp"
 #include "atlas/mesh/Mesh.hpp"
@@ -26,16 +27,13 @@ BOOST_AUTO_TEST_CASE( test_read_write )
   using namespace atlas;
 
   MPL::init();
-  Mesh* mesh;
-  BOOST_REQUIRE_NO_THROW( mesh = Gmsh::read( "T47.msh" ) );
+  int nlat = 5;
+  int lon[5] = {10, 12, 14, 16, 16};
+  Mesh::Ptr mesh = test::generate_mesh(nlat, lon);
+  Gmsh::write(*mesh,"mesh.msh");
 
-  actions::build_parallel_fields(*mesh);
-  actions::build_periodic_boundaries(*mesh);
-  actions::build_halo(*mesh,3);
-  actions::build_edges(*mesh);
-  actions::build_dual_mesh(*mesh);
+  BOOST_REQUIRE_NO_THROW( mesh = Mesh::Ptr( Gmsh::read( "mesh.msh" ) ) );
 
-  Gmsh::write(*mesh,"bla.msh");
-  delete mesh;
+
   MPL::finalize();
 }
