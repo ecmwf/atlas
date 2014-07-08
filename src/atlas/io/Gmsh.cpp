@@ -267,7 +267,8 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path)
 
   std::string ext = "";
   if( spherical ) ext = ".sphere";
-  std::cout << "writing file " << file_path+ext << std::endl;
+  if( MPL::rank() == 0 )
+    std::cout << "writing file " << file_path+ext << std::endl;
   std::ofstream file;
   file.open( (file_path+ext).c_str(), std::ios::out );
 
@@ -317,12 +318,27 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path)
     FunctionSpace& edges       = mesh.function_space( "edges" );
     IndexView<int,2> edge_nodes   ( edges.field( "nodes" ) );
     ArrayView<int,1> edge_glb_idx ( edges.field( "glb_idx" ) );
-    for( int e=0; e<nb_edges; ++e)
+    if( edges.has_field("partition") )
     {
-     file << edge_glb_idx(e) << " 1 2 2 1";
-      for( int n=0; n<2; ++n )
-        file << " " << glb_idx( edge_nodes(e,n) );
-      file << "\n";
+      ArrayView<int,1> edge_part ( edges.field( "partition" ) );
+      for( int e=0; e<nb_edges; ++e)
+      {
+        file << edge_glb_idx(e) << " 1 4 1 1 1 " << edge_part(e);
+        for( int n=0; n<2; ++n )
+          file << " " << glb_idx( edge_nodes(e,n) );
+        file << "\n";
+      }
+    }
+    else
+    {
+      for( int e=0; e<nb_edges; ++e)
+      {
+        file << edge_glb_idx(e) << " 1 2 1 1";
+        for( int n=0; n<2; ++n )
+          file << " " << glb_idx( edge_nodes(e,n) );
+        file << "\n";
+      }
+
     }
   }
   file << "$EndElements\n";
