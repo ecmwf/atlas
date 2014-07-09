@@ -96,7 +96,7 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
   actions::build_halo(*m,2);
   actions::build_edges(*m);
   actions::build_pole_edges(*m);
-  actions::build_dual_mesh(*m);
+  actions::build_median_dual_mesh(*m);
   BOOST_CHECK_CLOSE( test::dual_volume(*m), 2.*M_PI*M_PI, 0.0001 );
   double difference = 2.*M_PI*M_PI - test::dual_volume(*m);
   if( difference > 1e-8 )

@@ -209,7 +209,7 @@ TEST( test_meshgen )
   call atlas_build_halo(rgg,1)
   call atlas_build_edges(rgg)
   call atlas_build_pole_edges(rgg)
-  call atlas_build_dual_mesh(rgg)
+  call atlas_build_median_dual_mesh(rgg)
 
   nodes = rgg%function_space("nodes")
   call nodes%parallelise()
