@@ -536,6 +536,13 @@ FieldT<int>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nodes 
 void atlas__build_parallel_fields ( Mesh* mesh) {
   build_parallel_fields(*mesh);
 }
+void atlas__build_nodes_parallel_fields (FunctionSpace* nodes) {
+  build_nodes_parallel_fields(*nodes);
+}
+void atlas__build_edges_parallel_fields (FunctionSpace* edges, FunctionSpace* nodes) {
+  build_edges_parallel_fields(*edges, *nodes);
+}
+
 // ------------------------------------------------------------------
 
 
