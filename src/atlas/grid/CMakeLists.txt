@@ -40,8 +40,7 @@ if( HAVE_EIGEN )
   )
 endif()
 
-if( HAVE_GRIB )
-  list( APPEND atlas_grid_srcs
+list( APPEND atlas_grid_srcs
     FieldSet.cc
     FieldSet.h
     GribRead.cc
@@ -52,8 +51,7 @@ if( HAVE_GRIB )
     GribGridBuilder.cc
     StackGribFile.cc
     StackGribFile.h
-  )
-endif()
+ )
 
 
 ecbuild_add_library(TARGET atlas_grid
