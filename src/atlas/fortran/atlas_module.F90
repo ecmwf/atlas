@@ -186,6 +186,11 @@ subroutine atlas_build_pole_edges(mesh)
   call atlas__build_pole_edges(mesh%private%object)
 end subroutine atlas_build_pole_edges
 
+subroutine atlas_build_node_to_edge_connectivity(mesh)
+  type(Mesh_type), intent(inout) :: mesh
+  call atlas__build_node_to_edge_connectivity(mesh%private%object)
+end subroutine atlas_build_node_to_edge_connectivity
+
 subroutine atlas_build_median_dual_mesh(mesh)
   type(Mesh_type), intent(inout) :: mesh
   call atlas__build_median_dual_mesh(mesh%private%object)
