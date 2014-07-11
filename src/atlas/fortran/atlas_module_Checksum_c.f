@@ -122,11 +122,13 @@ function Checksum__execute_real64_r1(this, loc_field_data) result(checksum)
   real(c_double), intent(in)   :: loc_field_data(:)
   character(len=:), allocatable :: checksum
   character(kind=c_char) :: checksum_c_str(132)
-  integer :: lstrides(1), lextents(1), lrank=1
+  integer :: lstrides(1), lextents(1), lrank=1, ierr
+  real(c_double), pointer :: lview(:)
   lstrides = (/ stride(loc_field_data,1) /)
   lextents = (/ 1                        /)
+  lview => view1d(loc_field_data)
   call atlas__Checksum__execute_strided_double( this%private%object, &
-    &  loc_field_data, lstrides, lextents, lrank, checksum_c_str )
+    &  lview, lstrides, lextents, lrank, checksum_c_str )
   checksum = c_to_f_string_str(checksum_c_str)
 end function Checksum__execute_real64_r1
 function Checksum__execute_real64_r2(this, loc_field_data) result(checksum)

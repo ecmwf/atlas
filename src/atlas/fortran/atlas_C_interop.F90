@@ -12,6 +12,10 @@ type, public :: object_type
   type(private_type),public :: private
 end type
 
+integer,        target :: zero_length_array_int32(0)
+real(c_float),  target :: zero_length_array_real32(0)
+real(c_double), target :: zero_length_array_real64(0)
+
 INTERFACE view1d
   module procedure view1d_int32_rank1
   module procedure view1d_int32_rank2
@@ -112,6 +116,8 @@ function view1d_int32_rank1(array) result( view )
   if( size(array) > 0 ) then
     array_c_ptr = c_loc_int32(array(1))
     call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
+  else
+    view => zero_length_array_int32
   endif
 end function view1d_int32_rank1
 
@@ -122,6 +128,8 @@ function view1d_int32_rank2(array) result( view )
   if( size(array) > 0 ) then
     array_c_ptr = c_loc_int32(array(1,1))
     call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
+  else
+    view => zero_length_array_int32
   endif
 end function view1d_int32_rank2
 
@@ -132,6 +140,8 @@ function view1d_int32_rank3(array) result( view )
   if( size(array) > 0 ) then
     array_c_ptr = c_loc_int32(array(1,1,1))
     call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
+  else
+    view => zero_length_array_int32
   endif
 end function view1d_int32_rank3
 
@@ -142,6 +152,8 @@ function view1d_real32_rank1(array) result( view )
   if( size(array) > 0 ) then
     array_c_ptr = c_loc_real32(array(1))
     call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
+  else
+    view => zero_length_array_real32
   endif
 end function view1d_real32_rank1
 
@@ -159,7 +171,10 @@ function view1d_real32_rank2(array) result( view )
 #endif
     array_c_ptr = c_loc_real32(array(1,1))
     call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
+  else
+    view => zero_length_array_real32
   endif
+
 end function view1d_real32_rank2
 
 function view1d_real32_rank3(array) result( view )
@@ -169,6 +184,8 @@ function view1d_real32_rank3(array) result( view )
   if( size(array) > 0 ) then
     array_c_ptr = c_loc_real32(array(1,1,1))
     call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
+  else
+    view => zero_length_array_real32
   endif
 end function view1d_real32_rank3
 
@@ -179,6 +196,8 @@ function view1d_real64_rank1(array) result( view )
   if( size(array) > 0 ) then
     array_c_ptr = c_loc_real64(array(1))
     call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
+  else
+    view => zero_length_array_real64
   endif
 end function view1d_real64_rank1
 
@@ -189,6 +208,8 @@ function view1d_real64_rank2(array) result( view )
   if( size(array) > 0 ) then
     array_c_ptr = c_loc_real64(array(1,1))
     call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
+  else
+    view => zero_length_array_real64
   endif
 end function view1d_real64_rank2
 
@@ -199,6 +220,8 @@ function view1d_real64_rank3(array) result( view )
   if( size(array) > 0 ) then
     array_c_ptr = c_loc_real64(array(1,1,1))
     call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
+  else
+    view => zero_length_array_real64
   endif
 end function view1d_real64_rank3
 
@@ -209,6 +232,8 @@ function view1d_real64_rank4(array) result( view )
   if( size(array) > 0 ) then
     array_c_ptr = c_loc_real64(array(1,1,1,1))
     call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
+  else
+    view => zero_length_array_real64
   endif
 end function view1d_real64_rank4
 
