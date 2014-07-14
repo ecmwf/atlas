@@ -90,7 +90,7 @@ void write_load_balance_report( const Mesh& mesh, const std::string& filename )
     int idt = 8;
     ofs.open( path.c_str(), std::ofstream::out );
     ofs << "# STATISTICS\n";
-    ofs << std::setw(1)  << "#" << std::setw(4) << "";
+    ofs << std::setw(1)  << "#" << std::setw(5) << "";
     ofs << std::setw(idt) << "nodes";
     ofs << std::setw(idt) << "onodes";
     ofs << std::setw(idt) << "gnodes";
@@ -98,7 +98,7 @@ void write_load_balance_report( const Mesh& mesh, const std::string& filename )
     ofs << std::setw(idt) << "oedges";
     ofs << std::setw(idt) << "gedges";
     ofs << "\n";
-    ofs << std::setw(5)  << "# tot";
+    ofs << std::setw(6)  << "# tot";
     ofs << std::setw(idt) << std::accumulate(nb_total_nodes.data(),nb_total_nodes.data()+npart,0);
     ofs << std::setw(idt) << std::accumulate(nb_owned_nodes.data(),nb_owned_nodes.data()+npart,0);
     ofs << std::setw(idt) << std::accumulate(nb_ghost_nodes.data(),nb_ghost_nodes.data()+npart,0);
@@ -106,7 +106,7 @@ void write_load_balance_report( const Mesh& mesh, const std::string& filename )
     ofs << std::setw(idt) << std::accumulate(nb_owned_edges.data(),nb_owned_edges.data()+npart,0);
     ofs << std::setw(idt) << std::accumulate(nb_ghost_edges.data(),nb_ghost_edges.data()+npart,0);
     ofs << "\n";
-    ofs << std::setw(5)  << "# max";
+    ofs << std::setw(6)  << "# max";
     ofs << std::setw(idt) << *std::max_element(nb_total_nodes.data(),nb_total_nodes.data()+npart);
     ofs << std::setw(idt) << *std::max_element(nb_owned_nodes.data(),nb_owned_nodes.data()+npart);
     ofs << std::setw(idt) << *std::max_element(nb_ghost_nodes.data(),nb_ghost_nodes.data()+npart);
@@ -114,7 +114,7 @@ void write_load_balance_report( const Mesh& mesh, const std::string& filename )
     ofs << std::setw(idt) << *std::max_element(nb_owned_edges.data(),nb_owned_edges.data()+npart);
     ofs << std::setw(idt) << *std::max_element(nb_ghost_edges.data(),nb_ghost_edges.data()+npart);
     ofs << "\n";
-    ofs << std::setw(5)  << "# min";
+    ofs << std::setw(6)  << "# min";
     ofs << std::setw(idt) << *std::min_element(nb_total_nodes.data(),nb_total_nodes.data()+npart);
     ofs << std::setw(idt) << *std::min_element(nb_owned_nodes.data(),nb_owned_nodes.data()+npart);
     ofs << std::setw(idt) << *std::min_element(nb_ghost_nodes.data(),nb_ghost_nodes.data()+npart);
@@ -122,7 +122,7 @@ void write_load_balance_report( const Mesh& mesh, const std::string& filename )
     ofs << std::setw(idt) << *std::min_element(nb_owned_edges.data(),nb_owned_edges.data()+npart);
     ofs << std::setw(idt) << *std::min_element(nb_ghost_edges.data(),nb_ghost_edges.data()+npart);
     ofs << "\n";
-    ofs << std::setw(5)  << "# avg";
+    ofs << std::setw(6)  << "# avg";
     ofs << std::setw(idt) << std::accumulate(nb_total_nodes.data(),nb_total_nodes.data()+npart,0)/npart;
     ofs << std::setw(idt) << std::accumulate(nb_owned_nodes.data(),nb_owned_nodes.data()+npart,0)/npart;
     ofs << std::setw(idt) << std::accumulate(nb_ghost_nodes.data(),nb_ghost_nodes.data()+npart,0)/npart;
@@ -132,7 +132,7 @@ void write_load_balance_report( const Mesh& mesh, const std::string& filename )
     ofs << "\n";
     ofs << "#----------------------------------------------------\n";
     ofs << "# PER TASK\n";
-    ofs << std::setw(5)  << "part";
+    ofs << std::setw(6)  << "# part";
     ofs << std::setw(idt) << "nodes";
     ofs << std::setw(idt) << "onodes";
     ofs << std::setw(idt) << "gnodes";
@@ -142,7 +142,7 @@ void write_load_balance_report( const Mesh& mesh, const std::string& filename )
     ofs << "\n";
     for( int jpart=0; jpart<npart; ++jpart )
     {
-      ofs << std::setw(5)  << jpart;
+      ofs << std::setw(6)  << jpart;
       ofs << std::setw(idt) << nb_total_nodes[jpart];
       ofs << std::setw(idt) << nb_owned_nodes[jpart];
       ofs << std::setw(idt) << nb_ghost_nodes[jpart];

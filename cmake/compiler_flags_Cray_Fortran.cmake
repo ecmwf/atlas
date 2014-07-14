@@ -45,7 +45,7 @@ cmake_add_fortran_flags( "-Ktrap=fp" BUILD DEBUG )
 cmake_add_fortran_flags( "-O2"                     BUILD BIT )
 cmake_add_fortran_flags( "-hflex_mp=conservative"  BUILD BIT )
 cmake_add_fortran_flags( "-hadd_paren"             BUILD BIT )
-cmake_add_fortran_flags( "hfp1"                    BUILD BIT )
+cmake_add_fortran_flags( "-hfp1"                   BUILD BIT )
 
 ####################################################################
 # LINK FLAGS

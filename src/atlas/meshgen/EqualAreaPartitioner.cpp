@@ -475,6 +475,12 @@ void EqualAreaPartitioner::partition(int nb_nodes, NodeInt nodes[], int part[]) 
   we can now easily split nodes in sectors.
   */
   double chunk_size = static_cast<double>(nb_nodes)/static_cast<double>(nb_parts);
+  // truncate precision
+  chunk_size = std::ceil(1.e12*chunk_size)/1.e12;
+
+  int chunk_size_int = std::floor(chunk_size);
+  int chunk_remainder = nb_nodes - chunk_size_int*nb_parts;
+
   begin = 0;
   p=0;
   for( band=0; band<nb_bands(); ++band )
