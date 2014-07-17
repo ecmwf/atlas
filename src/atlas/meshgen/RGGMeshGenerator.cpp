@@ -14,7 +14,6 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
-
 #include "atlas/util/Array.hpp"
 #include "atlas/util/ArrayView.hpp"
 #include "atlas/util/IndexView.hpp"
@@ -125,7 +124,7 @@ Mesh* RGGMeshGenerator::generate(const RGG& rgg)
   }
   partitioner.partition(ngptot,nodes.data(),part.data());
   std::vector<NodeInt>().swap(nodes); // Deallocate completely
-  
+
   Region region;
   generate_region(rgg,part,mypart,region);
   

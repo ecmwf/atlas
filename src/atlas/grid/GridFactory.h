@@ -75,11 +75,11 @@ private:
 /// Place in the header of the Derived Grid class
 #define REGISTER(classname) \
 private: \
-   static const CreatorImpl<classname> creator;
+   static const CreatorImpl<classname> creator
 
 /// Place in source file of the derived Grid class
 #define REGISTERIMPL(classname,grid_type) \
-   const CreatorImpl<classname> classname::creator(grid_type);
+   const CreatorImpl<classname> classname::creator(grid_type)
 
 //------------------------------------------------------------------------------------------------------
 
