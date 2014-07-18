@@ -9,7 +9,6 @@
 
 #cmakedefine HAVE_TESSELATION
 #cmakedefine HAVE_GRIB
-#cmakedefine HAVE_IFS_TRANS
 #cmakedefine HAVE_FORTRAN_NUMBERING
 
 #endif

@@ -119,28 +119,6 @@ if( ENABLE_TESSELATION )
 
 endif()
 
-### Eigen
-
-ecbuild_add_option( FEATURE EIGEN
-                    DESCRIPTION "Eigen Linear Algebra Library"
-                    REQUIRED_PACKAGES Eigen3 )
-
-### Grib
-
-ecbuild_add_option( FEATURE GRIB
-                    DESCRIPTION "support for GRIB format encoding / decoding" )
-debug_var( ENABLE_GRIB )
-if( ENABLE_GRIB )
-  ecbuild_use_package( PROJECT grib_api VERSION 1.9.9 )
-  if( NOT GRIB_API_FOUND )
-    set( HAVE_GRIB 0 )
-  endif()
-endif()
-if( HAVE_GRIB )
-  include_directories( ${GRIB_API_INCLUDE_DIRS} )
-  list( APPEND TPL ${GRIB_API_LIBRARIES} )
-endif( )
-
 ### sandbox
 
 ecbuild_add_option( FEATURE SANDBOX
