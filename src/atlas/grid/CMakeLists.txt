@@ -1,3 +1,4 @@
+
 list( APPEND atlas_grid_srcs
 Gaussian.cc
 Gaussian.h
@@ -33,26 +34,28 @@ Unstructured.cc
 Unstructured.h
 )
 
-if( HAVE_EIGEN )
+if( HAVE_ECKIT_MATHS )
   list( APPEND atlas_grid_srcs
     TriangleIntersection.cc
     TriangleIntersection.h
   )
 endif()
 
-list( APPEND atlas_grid_srcs
-    FieldSet.cc
-    FieldSet.h
-    GribRead.cc
-    GribRead.h
-    GribWrite.cc
-    GribWrite.h
-    GribGridBuilder.h
-    GribGridBuilder.cc
-    StackGribFile.cc
-    StackGribFile.h
- )
 
+if( HAVE_ECKIT_GRIB )
+  list( APPEND atlas_grid_srcs
+      FieldSet.cc
+      FieldSet.h
+      GribRead.cc
+      GribRead.h
+      GribWrite.cc
+      GribWrite.h
+      GribGridBuilder.h
+      GribGridBuilder.cc
+      StackGribFile.cc
+      StackGribFile.h
+   )
+endif()
 
 ecbuild_add_library(TARGET atlas_grid
                     AUTO_VERSION
@@ -61,4 +64,4 @@ ecbuild_add_library(TARGET atlas_grid
                     SOURCES ${atlas_grid_srcs}
                     HEADER_DESTINATION ${INSTALL_INCLUDE_DIR}/atlas/grid
                     INCLUDES "${CGAL_INCLUDE_DIRS}"
-					LIBS atlas "${ECKIT_LIBRARIES}" "${GRIB_API_LIBRARIES}" "${CGAL_LIBRARIES}" )
+                    LIBS atlas "${ATLAS_EXTRA_LIBRARIES};${CGAL_LIBRARIES}" )

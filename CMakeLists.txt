@@ -33,6 +33,15 @@ ecbuild_declare_project()
 
 ecbuild_use_package( PROJECT eckit VERSION 0.6 )
 
+list( FIND ECKIT_PACKAGES "ECKIT_GRIB" RESULT )
+if( NOT RESULT EQUAL -1  )
+  set( HAVE_ECKIT_GRIB 1 )
+endif()
+list( FIND ECKIT_PACKAGES "ECKIT_MATHS" RESULT )
+if( NOT RESULT EQUAL -1  )
+  set( HAVE_ECKIT_MATHS 1 )
+endif()
+
 # options & dependencies
 
 ecbuild_find_python()
@@ -161,10 +170,15 @@ get_directory_property( ATLAS_DEFINITIONS COMPILE_DEFINITIONS )
 
 foreach( _tpl ${ATLAS_TPLS} )
   string( TOUPPER ${_tpl} TPL )
-  list( APPEND ATLAS_EXTRA_DEFINITIONS   ${${TPL}_DEFINITIONS} )
-  list( APPEND ATLAS_EXTRA_INCLUDE_DIRS  ${${TPL}_INCLUDE_DIRS} )
-  list( APPEND ATLAS_EXTRA_LIBRARIES     ${${TPL}_LIBRARIES} )
+  list( APPEND ATLAS_EXTRA_DEFINITIONS   ${${TPL}_DEFINITIONS}  ${${TPL}_TPL_DEFINITIONS}  )
+  list( APPEND ATLAS_EXTRA_INCLUDE_DIRS  ${${TPL}_INCLUDE_DIRS} ${${TPL}_TPL_INCLUDE_DIRS} )
+  list( APPEND ATLAS_EXTRA_LIBRARIES     ${${TPL}_LIBRARIES}    ${${TPL}_TPL_LIBRARIES}    )
 endforeach()
+
+
+debug_var(ATLAS_EXTRA_LIBRARIES)
+debug_var(ATLAS_EXTRA_INCLUDE_DIRS)
+
 
 ############################################################################################
 # sources
