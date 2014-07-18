@@ -91,13 +91,15 @@ GridSpec* Unstructured::spec() const
 
 void Unstructured::constructFrom(const GridSpec& grid_spec)
 {
-   if (grid_spec.has("hash")) hash_ = (std::string)grid_spec.get("hash");
+    if (grid_spec.has("hash")) hash_ = (std::string)grid_spec.get("hash");
 
-   grid_spec.get_bounding_box(bound_box_);
+    grid_spec.get_bounding_box(bound_box_);
 
-   std::vector< Grid::Point >* pts = new std::vector< Grid::Point >(0);
-   grid_spec.get_points(*pts);
-   points_.reset(pts);
+    NOTIMP;
+
+    //   std::vector< Grid::Point >* pts = new std::vector< Grid::Point >(0);
+    //   grid_spec.get_points(*pts);
+    //   points_.reset(pts);
 }
 
 bool Unstructured::compare(const Grid& grid) const

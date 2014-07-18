@@ -52,7 +52,7 @@ public: // types
 
     typedef eckit::geometry::LLPoint2           Point;     ///< point type
 
-    typedef eckit::geometry::BoundBox2<Point>   BoundBox;
+    typedef eckit::geometry::LLBoundBox2        BoundBox;
 
     typedef eckit::SharedPtr<Grid> Ptr;
 
@@ -106,6 +106,8 @@ public: // methods
 
     /// @deprecated will be removed soon as it exposes the inner storage of the coordinates
     virtual const std::vector<Point>& coordinates() const = 0;
+
+    static BoundBox makeGlobalBBox();
 
 private: // members
 

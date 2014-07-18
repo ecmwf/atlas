@@ -47,6 +47,7 @@ public:
    Point latLon(size_t lat, size_t lon) const;
    long rows() const { return nptsNS_;}
    long cols() const { return nptsWE_;}
+
    double incLat() const { return nsIncrement_; }
    double incLon() const { return weIncrement_; }
 
@@ -57,6 +58,8 @@ public:
    long computeRows(double north, double south, double west, double east) const;
 
    long computeCols(double west, double east) const;
+
+   void computeCoords( std::vector< Point >& points_ );
 
 private:
    std::string hash_;

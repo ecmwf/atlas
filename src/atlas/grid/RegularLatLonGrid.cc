@@ -41,12 +41,10 @@ RegularLatLonGrid::RegularLatLonGrid()
    nptsNS_(0),
    nptsWE_(0)
 {
-//   Log::info() << "RegularLatLonGrid" << std::endl;
 }
 
 RegularLatLonGrid::~RegularLatLonGrid()
 {
-//    Log::info() << "Destroy a RegularLatLonGrid" << std::endl;
 }
 
 Grid::Point RegularLatLonGrid::latLon(size_t the_i, size_t the_j) const
@@ -117,6 +115,25 @@ long RegularLatLonGrid::computeCols(double west, double east) const
     return fabs((east - west)/ incLon()) + 1;
 }
 
+void RegularLatLonGrid::computeCoords( std::vector<Grid::Point>& points_ )
+{
+    const double plon = bbox_.west();    // west
+    const double plat = bbox_.north();   // north;
+
+    for( size_t j = 0; j <= nptsNS_; ++j)
+    {
+        for( size_t i = 0; i <= nptsWE_; ++i)
+        {
+            const size_t idx = j*nptsWE_ + i;
+
+            const double lat = plat - incLat()*j;
+            const double lon = plon + incLon()*i;
+
+            points_[ idx ].assign( lat, lon );
+        }
+    }
+}
+
 void RegularLatLonGrid::coordinates( Grid::Coords& r ) const
 {
     ASSERT( r.size() == points_.size() );
@@ -154,23 +171,37 @@ void RegularLatLonGrid::constructFrom(const GridSpec& grid_spec)
     grid_spec.get_points(points_);
 }
 
-void RegularLatLonGrid::constructFrom(const eckit::Params& p)
+void RegularLatLonGrid::constructFrom( const eckit::Params& p )
 {
-    nsIncrement_ = p.get("grid_ns");
-    weIncrement_ = p.get("grid_ew");
-
-    DEBUG_VAR(nsIncrement_);
-    DEBUG_VAR(weIncrement_);
+    nsIncrement_ = p["grid_ns"];
+    weIncrement_ = p["grid_ew"];
 
     if( ! p.get("area_s").isNil() )
     {
         bbox_ = BoundBox( p.get("area_n"), p.get("area_s"), p.get("area_e"), p.get("area_w") );
     }
+    else
+    {
+        bbox_ = BoundBox( Grid::makeGlobalBBox() );
+    }
 
     DEBUG_VAR(bbox_);
 
-    NOTIMP;
+    double east  = bbox_.top_right().lon();
+    double west  = bbox_.bottom_left().lon();
+    double north = bbox_.top_right().lat();
+    double south = bbox_.bottom_left().lat();
 
+    nptsNS_ = computeRows( north, south, west, east );
+    nptsWE_ = computeCols( west, east );
+
+    points_.resize( nptsNS_ * nptsWE_ );
+
+    computeCoords(points_);
+
+    hash_ = "?????????";
+
+    NOTIMP;
 }
 
 bool RegularLatLonGrid::compare(const Grid& grid) const
