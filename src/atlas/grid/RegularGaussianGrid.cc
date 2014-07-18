@@ -50,20 +50,22 @@ RegularGaussianGrid::~RegularGaussianGrid()
 
 Grid::Point RegularGaussianGrid::latLon(size_t the_i, size_t the_j) const
 {
-   long nptsWE = 4 * gaussianNumber_ ;
-   long weIncrement = 360.0 / nptsWE;
-   for(size_t i = 0 ; i < latitudes_.size(); i++) {
+    /// @todo this function is VERY inneficient -- please rewrite it!
 
-      double plon = bbox_.bottom_left_.lon(); // west_;
-      for( size_t j = 0; j < nptsWE; ++j) {
-         if ( i== the_i && j== the_j) {
-            return  Point( latitudes_[i], plon );
-         }
-         plon += weIncrement;
-      }
-   }
+    long nptsWE = 4 * gaussianNumber_ ;
+    long weIncrement = 360.0 / nptsWE;
+    for(size_t i = 0 ; i < latitudes_.size(); i++) {
 
-   return Grid::Point();
+        double plon = bbox_.bottom_left().lon(); // west_;
+        for( size_t j = 0; j < nptsWE; ++j) {
+            if ( i== the_i && j== the_j) {
+                return  Point( latitudes_[i], plon );
+            }
+            plon += weIncrement;
+        }
+    }
+
+    return Grid::Point();
 }
 
 void RegularGaussianGrid::coordinates( Grid::Coords& r ) const

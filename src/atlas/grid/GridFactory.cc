@@ -8,9 +8,13 @@
  * does it submit to any jurisdiction.
  */
 
+#include "eckit/value/Value.h"
+
 #include "atlas/grid/GridFactory.h"
 
 //------------------------------------------------------------------------------------------------------
+
+using namespace eckit;
 
 namespace atlas {
 namespace grid {
@@ -19,26 +23,45 @@ namespace grid {
 
 Grid::Ptr GridFactory::create(const GridSpec& grid_spec)
 {
-   std::map<std::string, GridCreator*>::iterator i = get_table().find(grid_spec.grid_type());
+    std::map<std::string, GridCreator*>::iterator i = get_table().find(grid_spec.grid_type());
 
-   if (i != get_table().end()) {
-      Grid::Ptr the_grid = i->second->create();
-      the_grid->constructFrom(grid_spec);
-      return the_grid;
-   }
+    if (i != get_table().end()) {
+        Grid::Ptr the_grid = i->second->create();
+        the_grid->constructFrom(grid_spec);
+        return the_grid;
+    }
 
-   return Grid::Ptr();
+    return Grid::Ptr();
+}
+
+Grid::Ptr GridFactory::create(const eckit::Params& p)
+{
+    DEBUG_HERE;
+
+    DEBUG_VAR( p.get( "grid_type" ) );
+
+    std::string grid_type = p.get( "grid_type" );
+
+    std::map<std::string, GridCreator*>::iterator i = get_table().find( grid_type );
+
+    if (i != get_table().end()) {
+        Grid::Ptr the_grid = i->second->create();
+        the_grid->constructFrom( p );
+        return the_grid;
+    }
+
+    return Grid::Ptr();
 }
 
 void GridFactory::registerit(const std::string& grid_type, GridCreator* creator)
 {
-   get_table()[grid_type] = creator;
+    get_table()[grid_type] = creator;
 }
 
 std::map<std::string, GridCreator*>& GridFactory::get_table()
 {
-   static std::map<std::string, GridCreator*> table;
-   return table;
+    static std::map<std::string, GridCreator*> table;
+    return table;
 }
 
 // ===============================================================================================
@@ -46,7 +69,7 @@ std::map<std::string, GridCreator*>& GridFactory::get_table()
 // have the creator's constructor do the registration
 GridCreator::GridCreator(const std::string& grid_type)
 {
-   GridFactory::registerit(grid_type, this);
+    GridFactory::registerit(grid_type, this);
 }
 
 GridCreator::~GridCreator() {}

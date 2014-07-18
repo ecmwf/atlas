@@ -22,7 +22,7 @@ namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
-/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8
+
 /// A concrete class that holds specification that uniquely identifies a Grid
 /// The description of the grid is added as name value pairs
 /// This class will provides a short name for a GRID (i.e QG48_1)
@@ -35,7 +35,7 @@ namespace grid {
 ///  GribGridBuilder ------>|-------|         |----------|------>GribGridWrite
 ///
 /// Uses default copy constructor, assignment and equality operators
-/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8
+
 
 class GridSpec : public eckit::Properties {
 public:

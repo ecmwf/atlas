@@ -32,13 +32,13 @@ LatLon::LatLon( size_t nlat, size_t nlon, const BoundBox& bb) :
 
     points_.reserve( (nlat_ + 1) * (nlon_ + 1) );
 
-    double dlat = ( bb.top_right_.lat() - bb.bottom_left_.lat() ) / nlat ;
-    double dlon = ( bb.top_right_.lon() - bb.bottom_left_.lon() ) / nlon ;
+    double dlat = ( bb.top_right().lat() - bb.bottom_left().lat() ) / nlat ;
+    double dlon = ( bb.top_right().lon() - bb.bottom_left().lon() ) / nlon ;
 
-    double plat = bb.bottom_left_.lat();
+    double plat = bb.bottom_left().lat();
     for( size_t i = 0; i <= nlat_; ++i )
     {
-        double plon = bb.bottom_left_.lon();
+        double plon = bb.bottom_left().lon();
         for( size_t j = 0; j <= nlon_; ++j )
         {
             points_.push_back( Point( plat, plon ) );

@@ -66,7 +66,7 @@ void GridSpec::print_simple(std::ostream& s) const
 
    Grid::BoundBox bbox;
    get_bounding_box( bbox ) ;
-   s << ", bbox:(" << bbox.bottom_left_.lat() << "," << bbox.bottom_left_.lon() << "," << bbox.top_right_.lat() << "," << bbox.top_right_.lon() << ")";
+   s << ", bbox:(" << bbox.bottom_left().lat() << "," << bbox.bottom_left().lon() << "," << bbox.top_right().lat() << "," << bbox.top_right().lon() << ")";
 
    s << " ]";
 }
@@ -112,10 +112,10 @@ void GridSpec::set_rgspec(const std::vector<long>& rgSpec_vec)
 
 void GridSpec::set_bounding_box(const Grid::BoundBox& bbox )
 {
-   set("bottom_left_lat",eckit::Value(bbox.bottom_left_.lat()));
-   set("bottom_left_lon",eckit::Value(bbox.bottom_left_.lon()));
-   set("top_right_lat",eckit::Value(bbox.top_right_.lat()));
-   set("top_right_lon",eckit::Value(bbox.top_right_.lon()));
+   set("area_s",eckit::Value(bbox.bottom_left().lat()));
+   set("area_w",eckit::Value(bbox.bottom_left().lon()));
+   set("area_n",eckit::Value(bbox.top_right().lat()));
+   set("area_e",eckit::Value(bbox.top_right().lon()));
 }
 
 void GridSpec::get_points(std::vector<Grid::Point>& points) const
@@ -155,15 +155,16 @@ void GridSpec::get_rgspec(std::vector<long>& rgSpec) const
    }
 }
 
-void GridSpec::get_bounding_box(Grid::BoundBox& bbox ) const
+void GridSpec::get_bounding_box(Grid::BoundBox& bbox) const
 {
-   if (has("bottom_left_lat")) {
-      double bottom_left_lat = get("bottom_left_lat");
-      double bottom_left_lon = get("bottom_left_lon");
-      double top_right_lat = get("top_right_lat");
-      double top_right_lon = get("top_right_lon");
-      bbox.bottom_left_.assign(bottom_left_lat,bottom_left_lon);
-      bbox.top_right_.assign(top_right_lat,top_right_lon);
+   if (has("area_s")) {
+      double area_s = get("area_s");
+      double area_w = get("area_w");
+      double area_n = get("area_n");
+      double area_e = get("area_e");
+      bbox.bottom_left().assign(area_s,area_w);
+      bbox.top_right().assign(area_n,area_e);
+      ASSERT( bbox.validate() );
    }
 }
 

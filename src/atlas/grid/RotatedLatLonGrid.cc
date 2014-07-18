@@ -54,8 +54,8 @@ RotatedLatLonGrid::~RotatedLatLonGrid()
 
 Grid::Point RotatedLatLonGrid::latLon(size_t the_i, size_t the_j) const
 {
-   double plon = bbox_.bottom_left_.lon(); // west
-   double plat = bbox_.top_right_.lat();   // north;
+   double plon = bbox_.bottom_left().lon(); // west
+   double plat = bbox_.top_right().lat();   // north;
    for( size_t j = 0; j <= nptsNS_; ++j) {
       for( size_t i = 0; i <= nptsWE_; ++i) {
          if (the_i == i && the_j == j) {

@@ -24,7 +24,7 @@ namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
-/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8
+
 /// Factory class, that allows Grid's to created from GridSpecs
 /// The Grid class derivatives, must register a creator
 /// This relies on automatic type registration. This is not well defined for
@@ -32,10 +32,11 @@ namespace grid {
 /// register with the factory.
 ///
 /// Requires that the Grid derivatives provide a default constructor.
-/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8
+
 
 /// Abstract base class that can create a Grid
 /// The constructor will register itself with the GridFactory
+
 class GridCreator {
 public:
    GridCreator(const std::string& grid_type);
@@ -47,6 +48,7 @@ public:
 
 /// Concrete templatized class for creating Grid derivatives
 /// These should be registered with GridFactory
+
 template <class T>
 class CreatorImpl : public GridCreator {
 public:
@@ -58,11 +60,17 @@ public:
 
 
 /// GridFactory: responsible for creating Grid derivatives from a GridSpec
+
 class GridFactory {
 public:
-   /// Will find creator given a GridSpec. Will ask creator to create the GRID.
+
+    /// Finds creator given a string with grid_type and asks creator to create the Grid.
+    /// Once created, the Grid is initialised from the GridSpec and returned.
+    static Grid::Ptr create(const eckit::Params&);
+
+   /// Finds creator given a GridSpec and asks creator to create the Grid.
    /// Once created, the Grid is initialised from the GridSpec and returned.
-   static Grid::Ptr create(const GridSpec&);
+   static Grid::Ptr create( const GridSpec& );
 
    /// Register the Creator for a given grid_type.
    /// The derived classes must remember to register with this factory

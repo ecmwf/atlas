@@ -199,12 +199,6 @@ private:
    double incLat() const;
    double incLon() const;
 
-   // for verification/checks
-   double computeIncLat() const ;
-   double computeIncLon() const ;
-   long computeRows(double north, double south, double west, double east) const;
-   long computeCols(double west, double east) const;
-
 private:
    eckit::ScopedPtr<RegularLatLonGrid> the_grid_;
 };

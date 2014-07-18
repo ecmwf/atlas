@@ -37,6 +37,7 @@ public:
    virtual std::string gridType() const { return std::string("regular_ll"); }
    virtual GridSpec* spec() const;
    virtual void constructFrom(const GridSpec& );
+   virtual void constructFrom(const eckit::Params&);
    virtual bool compare(const Grid&) const;
 
    /// @deprecated will be removed soon as it exposes the inner storage of the coordinates
@@ -48,6 +49,14 @@ public:
    long cols() const { return nptsWE_;}
    double incLat() const { return nsIncrement_; }
    double incLon() const { return weIncrement_; }
+
+   double computeIncLat() const;
+
+   double computeIncLon() const;
+
+   long computeRows(double north, double south, double west, double east) const;
+
+   long computeCols(double west, double east) const;
 
 private:
    std::string hash_;

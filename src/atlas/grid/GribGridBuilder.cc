@@ -7,7 +7,8 @@
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
-//#define DEBUG 1
+
+#define DEBUG 1
 
 #include <iostream>
 
@@ -582,17 +583,17 @@ Grid::Ptr GribRegularLatLonGrid::build()
    Log::info() << " Ni(num of points West East)                    " << the_grid_->nptsWE_ << std::endl;
    Log::info() << " numberOfDataPoints                             " << numberOfDataPoints_ << std::endl;
    Log::info() << " -----------------------------------------------" << std::endl;
-   Log::info() << " computeIncLat() " << computeIncLat() << "      nsIncrement_ " << the_grid_->nsIncrement_ << std::endl;
-   Log::info() << " computeIncLon() " << computeIncLon() << "      weIncrement_ " << the_grid_->nsIncrement_ << std::endl;
-   Log::info() << " computeRows()   " << computeRows(north_,south_,west_,east_) << "     nptsNS_ " << the_grid_->nptsNS_ << std::endl;
-   Log::info() << " computeCols()   " << computeCols(west_,east_) <<  "     nptsWE_ " << the_grid_->nptsWE_ << std::endl;
+   Log::info() << " computeIncLat() " << the_grid_->computeIncLat() << "      nsIncrement_ " << the_grid_->nsIncrement_ << std::endl;
+   Log::info() << " computeIncLon() " << the_grid_->computeIncLon() << "      weIncrement_ " << the_grid_->nsIncrement_ << std::endl;
+   Log::info() << " computeRows()   " << the_grid_->computeRows(north_,south_,west_,east_) << "     nptsNS_ " << the_grid_->nptsNS_ << std::endl;
+   Log::info() << " computeCols()   " << the_grid_->computeCols(west_,east_) <<  "     nptsWE_ " << the_grid_->nptsWE_ << std::endl;
    Log::info() << " points_.size()  " << the_grid_->points_.size() << "     numberOfDataPoints_ " << numberOfDataPoints_ << std::endl << std::endl;
 #endif
 
-   ASSERT(FloatCompare::is_equal(the_grid_->nsIncrement_,computeIncLat(),0.01));
-   ASSERT(FloatCompare::is_equal(the_grid_->weIncrement_,computeIncLon(),0.01));
-   ASSERT(the_grid_->nptsNS_ == computeRows(north_,south_,west_,east_));
-   ASSERT(the_grid_->nptsWE_ == computeCols(west_,east_));
+   ASSERT(FloatCompare::is_equal(the_grid_->nsIncrement_,the_grid_->computeIncLat(),0.01));
+   ASSERT(FloatCompare::is_equal(the_grid_->weIncrement_,the_grid_->computeIncLon(),0.01));
+   ASSERT(the_grid_->nptsNS_ == the_grid_->computeRows(north_,south_,west_,east_));
+   ASSERT(the_grid_->nptsWE_ == the_grid_->computeCols(west_,east_));
    ASSERT(the_grid_->points_.size() == numberOfDataPoints_);
 
 #ifdef DEBUG
@@ -602,44 +603,6 @@ Grid::Ptr GribRegularLatLonGrid::build()
 
    // take ownership
    return Grid::Ptr( the_grid_.release() );
-}
-
-double GribRegularLatLonGrid::computeIncLat() const
-{
-   double north_diff_south = 0.0;
-   if (north_ > 0.0 && south_ > 0.0 ) north_diff_south = north_ - south_;
-   else if ( north_ < 0.0 && south_ < 0.0) north_diff_south = fabs(north_) - fabs(south_);
-   else north_diff_south  = fabs(north_) + fabs(south_);
-
-   if (rows() > north_diff_south)
-      return north_diff_south/rows();
-   
-   // Avoid truncation errors
-   long inc_lat = north_diff_south/(rows() + 1) + 0.5;
-   return inc_lat;
-}
-
-double GribRegularLatLonGrid::computeIncLon() const
-{
-   if (cols() > (east_ - west_))
-      return ((east_ - west_)/cols());
-   
-   // Avoid truncation errors
-   long inc_lon = ((east_ - west_)/cols() + 0.5 );
-   return inc_lon;
-}
-
-long GribRegularLatLonGrid::computeRows(double north, double south, double west, double east) const
-{
-   if (north > 0.0 && south > 0.0 ) return (north - south)/the_grid_->nsIncrement_ + 1;
-   else if ( north < 0.0 && south < 0.0) return (fabs(north) - fabs(south))/the_grid_->nsIncrement_ + 1;
-
-   return (fabs(north) + fabs(south))/the_grid_->nsIncrement_ + 1;
-}
-
-long GribRegularLatLonGrid::computeCols(double west, double east) const
-{
-   return fabs((east - west)/the_grid_->weIncrement_) + 1;
 }
 
 long GribRegularLatLonGrid::rows() const { return the_grid_->rows();}

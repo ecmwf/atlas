@@ -22,6 +22,7 @@
 #include "eckit/exception/Exceptions.h"
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
+#include "eckit/value/Params.h"
 
 #include "eckit/geometry/Point2.h"
 
@@ -50,7 +51,8 @@ class Grid : public eckit::Owned {
 public: // types
 
     typedef eckit::geometry::LLPoint2           Point;     ///< point type
-    typedef eckit::geometry::BoundBox2<Point>   BoundBox;  ///< boundbox type
+
+    typedef eckit::geometry::BoundBox2<Point>   BoundBox;
 
     typedef eckit::SharedPtr<Grid> Ptr;
 
@@ -97,6 +99,8 @@ public: // methods
     virtual GridSpec* spec() const = 0;
 
     virtual void constructFrom(const GridSpec& ) = 0;
+
+    virtual void constructFrom( const eckit::Params& ) { NOTIMP; }
 
     virtual bool compare(const Grid&) const = 0;
 

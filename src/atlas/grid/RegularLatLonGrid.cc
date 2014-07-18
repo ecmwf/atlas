@@ -51,20 +51,71 @@ RegularLatLonGrid::~RegularLatLonGrid()
 
 Grid::Point RegularLatLonGrid::latLon(size_t the_i, size_t the_j) const
 {
-   double plon = bbox_.bottom_left_.lon(); // west
-   double plat = bbox_.top_right_.lat();   // north;
-   for( size_t j = 0; j <= nptsNS_; ++j) {
-      for( size_t i = 0; i <= nptsWE_; ++i) {
-         if (the_i == i && the_j == j) {
-            return Grid::Point( plat, plon );
-         }
-         plon += weIncrement_;
-      }
-      plat += nsIncrement_;
-   }
-   return Grid::Point();
+    /// @todo this function is VERY inneficient -- please rewrite it!
+
+    double plon = bbox_.bottom_left().lon(); // west
+    double plat = bbox_.top_right().lat();   // north;
+    for( size_t j = 0; j <= nptsNS_; ++j) {
+        for( size_t i = 0; i <= nptsWE_; ++i) {
+            if (the_i == i && the_j == j) {
+                return Grid::Point( plat, plon );
+            }
+            plon += weIncrement_;
+        }
+        plat += nsIncrement_;
+    }
+    return Grid::Point();
 }
 
+double RegularLatLonGrid::computeIncLat() const
+{
+    /// @note why not simply this??!!
+    //       return (bbox_.north() - bbox_.south()) / rows();
+
+    double north = bbox_.top_right().lat();
+    double south = bbox_.bottom_left().lat();
+
+    double north_diff_south = 0.0;
+    if (north > 0.0 && south > 0.0 ) north_diff_south = north - south;
+    else if ( north < 0.0 && south < 0.0) north_diff_south = fabs(north) - fabs(south);
+    else north_diff_south  = fabs(north) + fabs(south);
+
+    if (rows() > north_diff_south)
+        return north_diff_south/rows();
+
+    // Avoid truncation errors
+    long inc_lat = north_diff_south/(rows() + 1) + 0.5;
+    return inc_lat;
+}
+
+double RegularLatLonGrid::computeIncLon() const
+{
+    double east  = bbox_.top_right().lon();
+    double west  = bbox_.bottom_left().lon();
+
+    if (cols() > (east - west))
+        return ((east - west)/cols());
+
+    // Avoid truncation errors
+    long inc_lon = ((east - west)/cols() + 0.5 );
+    return inc_lon;
+}
+
+long RegularLatLonGrid::computeRows(double north, double south, double west, double east) const
+{
+    if (north > 0.0 && south > 0.0 )
+        return (north - south)/incLat() + 1;
+    else
+        if ( north < 0.0 && south < 0.0)
+            return (fabs(north) - fabs(south))/incLat() + 1;
+
+    return (fabs(north) + fabs(south))/incLat() + 1;
+}
+
+long RegularLatLonGrid::computeCols(double west, double east) const
+{
+    return fabs((east - west)/ incLon()) + 1;
+}
 
 void RegularLatLonGrid::coordinates( Grid::Coords& r ) const
 {
@@ -79,28 +130,47 @@ void RegularLatLonGrid::coordinates( Grid::Coords& r ) const
 
 GridSpec* RegularLatLonGrid::spec() const
 {
-   GridSpec* grid_spec = new GridSpec(gridType());
+    GridSpec* grid_spec = new GridSpec(gridType());
 
-   std::stringstream ss; ss << "LL" << nptsNS_ << "_" << nptsWE_;
-   grid_spec->set_short_name(ss.str());
+    std::stringstream ss; ss << "LL" << nptsNS_ << "_" << nptsWE_;
+    grid_spec->set_short_name(ss.str());
 
-   grid_spec->set("Nj",eckit::Value(nptsNS_));
-   grid_spec->set("Ni",eckit::Value(nptsWE_));
+    grid_spec->set("Nj",eckit::Value(nptsNS_));
+    grid_spec->set("Ni",eckit::Value(nptsWE_));
 
-   grid_spec->set("hash",eckit::Value(hash_));
-   grid_spec->set_bounding_box(bbox_);
-   grid_spec->set_points(points_);
+    grid_spec->set("hash",eckit::Value(hash_));
+    grid_spec->set_bounding_box(bbox_);
+    grid_spec->set_points(points_);
 
-   return grid_spec;
+    return grid_spec;
 }
 
 void RegularLatLonGrid::constructFrom(const GridSpec& grid_spec)
 {
-   if (grid_spec.has("Nj"))      nptsNS_ = grid_spec.get("Nj");
-   if (grid_spec.has("Ni"))      nptsWE_ = grid_spec.get("Ni");
-   if (grid_spec.has("hash"))    hash_ = (std::string)grid_spec.get("hash");
-   grid_spec.get_bounding_box(bbox_);
-   grid_spec.get_points(points_);
+    if (grid_spec.has("Nj"))      nptsNS_ = grid_spec.get("Nj");
+    if (grid_spec.has("Ni"))      nptsWE_ = grid_spec.get("Ni");
+    if (grid_spec.has("hash"))    hash_ = (std::string)grid_spec.get("hash");
+    grid_spec.get_bounding_box(bbox_);
+    grid_spec.get_points(points_);
+}
+
+void RegularLatLonGrid::constructFrom(const eckit::Params& p)
+{
+    nsIncrement_ = p.get("grid_ns");
+    weIncrement_ = p.get("grid_ew");
+
+    DEBUG_VAR(nsIncrement_);
+    DEBUG_VAR(weIncrement_);
+
+    if( ! p.get("area_s").isNil() )
+    {
+        bbox_ = BoundBox( p.get("area_n"), p.get("area_s"), p.get("area_e"), p.get("area_w") );
+    }
+
+    DEBUG_VAR(bbox_);
+
+    NOTIMP;
+
 }
 
 bool RegularLatLonGrid::compare(const Grid& grid) const
