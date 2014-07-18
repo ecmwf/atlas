@@ -36,8 +36,8 @@ cmake_add_fortran_flags( "-fstack-arrays"     BUILD RELEASE )
 cmake_add_fortran_flags( "-O0 -g"         BUILD DEBUG )
 cmake_add_fortran_flags( "-fcheck=bounds" BUILD DEBUG )
 cmake_add_fortran_flags( "-fbacktrace"    BUILD DEBUG )
-cmake_add_fortran_flags( "-finit-real=nan" BUILD DEBUG )
-cmake_add_fortran_flags( "-ffpe-trap=invalid,zero,overflow,underflow" BUILD DEBUG )
+cmake_add_fortran_flags( "-finit-real=snan" BUILD DEBUG )
+cmake_add_fortran_flags( "-ffpe-trap=invalid,zero,overflow" BUILD DEBUG )
 
 ####################################################################
 # BIT REPRODUCIBLE FLAGS

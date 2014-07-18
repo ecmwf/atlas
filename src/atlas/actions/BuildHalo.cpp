@@ -28,16 +28,6 @@
 namespace atlas {
 namespace actions {
 
-namespace buildhalo_detail {
-
-
-int EAST = BC::EAST;
-int WEST = BC::WEST;
-
-}
-
-using namespace buildhalo_detail;
-
 // ------------------------------------------------------------------
 
 void increase_halo( Mesh& mesh );
@@ -119,7 +109,6 @@ void increase_halo( Mesh& mesh )
   accumulate_faces(quads, node_to_face,face_nodes_data,face_to_elem,nb_faces,nb_inner_faces);
   accumulate_faces(triags,node_to_face,face_nodes_data,face_to_elem,nb_faces,nb_inner_faces);
 
-
   int extents[] = {nb_faces,2};
   ArrayView<int,2> face_nodes(face_nodes_data.data(),extents);
 
@@ -197,7 +186,6 @@ void increase_halo( Mesh& mesh )
                     recvbuf.data(), recvcounts.data(), recvdispls.data(),
                     MPI_INT, MPI_COMM_WORLD) );
 
-
   // sfn stands for "send_found_nodes"
   std::vector< std::vector<int>    > sfn_part( MPL::size() );
   std::vector< std::vector<int>    > sfn_ridx( MPL::size() );
@@ -210,6 +198,7 @@ void increase_halo( Mesh& mesh )
       sfe_nodes_id( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
   std::vector< std::vector< std::vector<int> > >
       sfe_part    ( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
+
 
   for (int jpart=0; jpart<MPL::size(); ++jpart)
   {
@@ -232,12 +221,13 @@ void increase_halo( Mesh& mesh )
 
       // Only search for nodes in the interior latlon domain
       LatLonPoint ll(recv_x,recv_y);
-      if     ( ll.x <= WEST) { while(ll.x <= WEST) { ll.x += EAST; } }
-      else if( ll.x >= EAST) { while(ll.x >= EAST) { ll.x -= EAST; } }
+      if     ( ll.x <= BC::WEST) { while(ll.x <= BC::WEST) { ll.x += BC::EAST; } }
+      else if( ll.x >= BC::EAST) { while(ll.x >= BC::EAST) { ll.x -= BC::EAST; } }
 
       int recv_uid = ll.uid();
       int loc = -1;
       std::map<int,int>::iterator found = node_uid_to_loc.find(recv_uid);
+
       if( found != node_uid_to_loc.end() )
       {
         loc = found->second;
@@ -253,7 +243,6 @@ void increase_halo( Mesh& mesh )
         {
           int f = node_to_elem[loc][jelem].f;
           int e = node_to_elem[loc][jelem].e;
-
           if( elem_part[f](e) == MPL::rank() )
           {
             found_bdry_elements_set[f].insert( std::make_pair( e, recv_x - ll.x ) );
@@ -261,6 +250,7 @@ void increase_halo( Mesh& mesh )
         }
       }
     }
+
     std::vector< std::vector<int> > found_bdry_elements( mesh.nb_function_spaces() );
     std::vector< std::vector<int> > found_bdry_elements_coord_transform( mesh.nb_function_spaces() );
 
@@ -336,8 +326,8 @@ void increase_halo( Mesh& mesh )
         {
           LatLonPoint ll(it->x,it->y);
           // Here ll has the new coords
-          if     ( ll.x <= WEST) { while(ll.x <= WEST) { ll.x += EAST; } }
-          else if( ll.x >= EAST) { while(ll.x >= EAST) { ll.x -= EAST; } }
+          if     ( ll.x <= BC::WEST) { while(ll.x <= BC::WEST) { ll.x += BC::EAST; } }
+          else if( ll.x >= BC::EAST) { while(ll.x >= BC::EAST) { ll.x -= BC::EAST; } }
           // Now ll has the coords of periodic point
           int pid = ll.uid();
           found = node_uid_to_loc.find( pid );
@@ -346,7 +336,7 @@ void increase_halo( Mesh& mesh )
           sfn_glb_idx[jpart][jnode]      = uid;
           sfn_part   [jpart][jnode]      = part(loc);
           sfn_ridx   [jpart][jnode]      = ridx(loc);
-          sfn_latlon [jpart][jnode*2+XX] = latlon(loc,XX) + (it->x - ll.x)/EAST * 2.*M_PI;
+          sfn_latlon [jpart][jnode*2+XX] = latlon(loc,XX) + (it->x - ll.x)/BC::EAST * 2.*M_PI;
           sfn_latlon [jpart][jnode*2+YY] = latlon(loc,YY);
         }
       }
@@ -374,7 +364,7 @@ void increase_halo( Mesh& mesh )
           for( int n=0; n<nb_elem_nodes; ++n)
           {
             double x, y;
-            x = latlon(elem_nodes[f](e,n),XX) + xper/EAST*2.*M_PI;
+            x = latlon(elem_nodes[f](e,n),XX) + xper/BC::EAST*2.*M_PI;
             y = latlon(elem_nodes[f](e,n),YY);
             centroid[XX] += x;
             centroid[YY] += y;

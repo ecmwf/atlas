@@ -130,6 +130,60 @@ void build_element_to_edge_connectivity( Mesh& mesh )
   }
 }
 
+void build_node_to_edge_connectivity( Mesh& mesh )
+{
+  FunctionSpace& nodes = mesh.function_space("nodes");
+  FunctionSpace& edges = mesh.function_space("edges");
+  int nb_nodes = nodes.extents()[0];
+  int nb_edges = edges.extents()[0];
+
+  IndexView<int,2> edge_nodes   ( edges.field( "nodes" ) );
+
+  // Get max_edge_cnt
+  ArrayView<int,1> to_edge_size ( nodes.create_field<int>("to_edge_size",1) );
+  to_edge_size = 0.;
+  for( int jedge=0; jedge<nb_edges; ++jedge)
+  {
+    for( int j=0; j<2; ++j)
+    {
+      ++to_edge_size( edge_nodes(jedge,j) );
+    }
+  }
+
+  int max_edge_cnt(0);
+  for( int jnode=0; jnode<nb_nodes; ++jnode )
+  {
+    max_edge_cnt = std::max(max_edge_cnt,to_edge_size(jnode));
+  }
+  MPL_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max_edge_cnt, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD ) );
+  DEBUG_VAR(max_edge_cnt,0);
+
+  IndexView<int,2> node_to_edge ( nodes.create_field<int>("to_edge",max_edge_cnt) );
+
+  ComputeUniqueElementIndex uid( nodes );
+  std::vector<Sort> edge_sort(nb_edges);
+  for( int edge=0; edge<nb_edges; ++edge )
+    edge_sort[edge] = Sort( uid(edge_nodes[edge]), edge );
+  std::stable_sort( edge_sort.data(), edge_sort.data()+nb_edges );
+
+//  ArrayView<int,1> edge_gidx    ( edges.field( "glb_idx" ) );
+//  std::vector<Sort> edge_sort(nb_edges);
+//  for( int edge=0; edge<nb_edges; ++edge )
+//    edge_sort[edge] = Sort(edge_gidx(edge),edge);
+//  std::sort( edge_sort.data(), edge_sort.data()+nb_edges );
+
+  to_edge_size = 0.;
+  for( int jedge=0; jedge<nb_edges; ++jedge)
+  {
+    int edge = edge_sort[jedge].i;
+    for( int j=0; j<2; ++j)
+    {
+      int node = edge_nodes(edge,j);
+      node_to_edge( node, to_edge_size(node)++ ) = edge;
+    }
+  }
+}
+
 
 void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& nb_pole_edges )
 {
@@ -445,6 +499,10 @@ void atlas__build_edges ( Mesh* mesh) {
 void atlas__build_pole_edges ( Mesh* mesh) {
   build_pole_edges(*mesh);
 }
+void atlas__build_node_to_edge_connectivity ( Mesh* mesh) {
+  build_node_to_edge_connectivity(*mesh);
+}
+
 // ------------------------------------------------------------------
 
 } // namespace actions

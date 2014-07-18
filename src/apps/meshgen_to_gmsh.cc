@@ -24,6 +24,10 @@
 
 #include "atlas/io/Gmsh.hpp"
 #include "atlas/actions/GenerateMesh.hpp"
+#include "atlas/actions/BuildEdges.hpp"
+#include "atlas/actions/BuildPeriodicBoundaries.hpp"
+#include "atlas/actions/BuildHalo.hpp"
+#include "atlas/actions/BuildParallelFields.hpp"
 #include "atlas/mpl/MPL.hpp"
 #include "atlas/mesh/Mesh.hpp"
 
@@ -45,6 +49,8 @@ public:
   {
     nlon_nlat  = Resource< std::vector<long> > ( "-reg", std::vector<long>() );
     identifier = Resource< std::string       > ( "-rgg", "" );
+    edges      = Resource< bool > ( "-edges", false );
+
     if( identifier.empty() && nlon_nlat.empty() )
     {
       throw UserError(Here(),"missing input mesh identifier, parameter -rgg or -reg");
@@ -56,6 +62,7 @@ public:
 
 private:
 
+  bool edges;
   std::string identifier;
   std::vector<long> nlon_nlat;
   PathName path_out;
@@ -71,6 +78,16 @@ void Meshgen2Gmsh::run()
     mesh = Mesh::Ptr( generate_reduced_gaussian_grid(identifier) );
   else
     mesh = Mesh::Ptr( generate_regular_grid(nlon_nlat[0],nlon_nlat[1]) );
+
+  if( edges ){
+    build_nodes_parallel_fields(mesh->function_space("nodes"));
+    build_periodic_boundaries(*mesh);
+    build_halo(*mesh,2);
+    build_edges(*mesh);
+    build_pole_edges(*mesh);
+    build_edges_parallel_fields(mesh->function_space("edges"),mesh->function_space("nodes"));
+  }
+
   atlas::Gmsh::write( *mesh, path_out );
   MPL::finalize();
 }

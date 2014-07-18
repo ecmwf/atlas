@@ -104,7 +104,7 @@ BOOST_AUTO_TEST_CASE( test_small )
   }
 
   actions::build_edges(*m);
-  actions::build_dual_mesh(*m);
+  actions::build_median_dual_mesh(*m);
 
   BOOST_CHECK_CLOSE( test::dual_volume(*m), 2.*M_PI*M_PI, 1e-6 );
 
@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE( test_t63 )
   actions::build_edges(*m);
   actions::build_pole_edges(*m);
   actions::build_edges_parallel_fields(m->function_space("edges"),m->function_space("nodes"));
-  actions::build_dual_mesh(*m);
+  actions::build_centroid_dual_mesh(*m);
   BOOST_CHECK_CLOSE( test::dual_volume(*m), 2.*M_PI*M_PI, 1e-6 );
   std::stringstream filename; filename << "T63_halo_p" << MPL::rank() << ".msh";
   Gmsh::write(*m,filename.str());
