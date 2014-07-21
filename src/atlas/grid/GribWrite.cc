@@ -18,6 +18,7 @@
 #include "eckit/utils/Translator.h"
 #include "eckit/memory/ScopedPtr.h"
 #include "eckit/io/DataHandle.h"
+#include "eckit/io/FileHandle.h"
 #include "eckit/filesystem/LocalPathName.h"
 #include "eckit/parser/StringTools.h"
 
@@ -44,43 +45,43 @@ static std::string map_short_name_to_grib_sample_file(const std::string& short_n
 
 //------------------------------------------------------------------------------------------------------
 
-GribHandle::Ptr GribWrite::create_handle(const Grid& the_grid)
+GribHandle::Ptr GribWrite::create_handle( const Grid& grid, long edition )
 {
-   // TODO: We need determine choive of editionNumber form a user specified configuration file
+    // determine choice of editionNumber from a resorce
 
-   // From the Grid get the Grid Spec
-   eckit::ScopedPtr< GridSpec > the_grid_spec( the_grid.spec() );
+    if( edition == 0 )
+        edition = Resource<unsigned>( "NewGribEditionNumber", 2 );
 
-   // First match GridSpec short names, directly to a samples file
-   // If this fails, then try looking on disk,
-   long editionNumber = 2;
-   std::string sample_file = map_short_name_to_grib_sample_file( the_grid_spec->short_name(),editionNumber);
-   if (!sample_file.empty()) {
-      grib_handle* the_grib_handle = grib_handle_new_from_samples(0,sample_file.c_str());
-      return GribHandle::Ptr(new GribHandle(the_grib_handle));
-   }
-   editionNumber = 1;
-   sample_file = map_short_name_to_grib_sample_file( the_grid_spec->short_name(),editionNumber);
-   if (!sample_file.empty()) {
-      grib_handle* the_grib_handle = grib_handle_new_from_samples(0,sample_file.c_str());
-      return GribHandle::Ptr(new GribHandle(the_grib_handle));
-   }
+    // From the Grid get the Grid Spec
+    eckit::ScopedPtr< GridSpec > gridspec( grid.spec() );
 
-   // From the grid spec, determine the closest corresponding grib samples file
-   editionNumber = 2;
-   std::string grib_sample_file = GribWrite::grib_sample_file(*the_grid_spec,editionNumber);
-   if (!grib_sample_file.empty()) {
-      grib_handle* the_grib_handle = grib_handle_new_from_samples(0,grib_sample_file.c_str());
-      return GribHandle::Ptr(new GribHandle(the_grib_handle));
-   }
-   editionNumber = 1;
-   grib_sample_file = GribWrite::grib_sample_file(*the_grid_spec,editionNumber);
-   if (!grib_sample_file.empty()) {
-      grib_handle* the_grib_handle = grib_handle_new_from_samples(0,grib_sample_file.c_str());
-      return GribHandle::Ptr(new GribHandle(the_grib_handle));
-   }
+    grib_handle* gh = 0;
+    std::string sample_file;
 
-   return GribHandle::Ptr();
+    // first match GridSpec short names, directly to a samples file
+
+    sample_file = map_short_name_to_grib_sample_file( gridspec->short_name(), edition );
+    if( !sample_file.empty() )
+    {
+        gh = grib_handle_new_from_samples(0,sample_file.c_str() );
+        if( !gh )
+            throw SeriousBug( "Failed to create GribHandle from sample: " + sample_file, Here() );
+    }
+    else // if this fails, then try looking on disk
+    {
+        sample_file = GribWrite::grib_sample_file(*gridspec,edition);
+        if (!sample_file.empty())
+        {
+            gh = grib_handle_new_from_samples(0,sample_file.c_str() );
+            if( !gh )
+                throw SeriousBug( "Failed to create GribHandle from sample: " + sample_file, Here() );
+        }
+    }
+
+    if(!gh)
+        throw SeriousBug( "Failed to create GribHandle from Grib", Here() );
+
+    return GribHandle::Ptr( new GribHandle(gh) );
 }
 
 
@@ -293,6 +294,37 @@ void GribWrite::write( const FieldSet& fields, const PathName& opath )
     }
 }
 
+void GribWrite::write(const FieldHandle& fh, DataHandle& dh)
+{
+    GribHandle::Ptr gh = GribWrite::create_handle( fh.grid(), fh.grib().edition() );
+
+    if( !gh )
+        throw SeriousBug("Failed to create GribHandle from FieldHandle", Here());
+
+    if( !gh->raw() )
+        throw SeriousBug("Failed to create GribHandle from FieldHandle", Here());
+
+    GribHandle::Ptr h = clone(fh,*gh);
+
+    // dump the handle to the DataHandle
+    const void* buffer = NULL;
+    size_t size = 0;
+
+    GRIB_CHECK( grib_get_message( h->raw(), &buffer, &size), 0);
+
+    dh.write(buffer, size);
+}
+
+GribHandle::Ptr GribWrite::write(const FieldHandle& fh)
+{
+    GribHandle::Ptr gh = GribWrite::create_handle( fh.grid(), fh.grib().edition() );
+
+    if( !gh )
+        throw SeriousBug("Failed to create GribHandle from FieldHandle", Here());
+
+    return clone(fh,*gh);
+}
+
 void GribWrite::clone( const FieldSet& fields, const PathName& src, const PathName& opath )
 {
     bool overwrite = true;
@@ -312,9 +344,16 @@ void GribWrite::clone( const FieldSet& fields, const PathName& src, const PathNa
     }
 }
 
-void GribWrite::write(const FieldHandle &field, const PathName &opath)
+void GribWrite::write(const FieldHandle& f, const PathName& opath)
 {
-    NOTIMP;
+    FileHandle fh( opath );
+
+    Length len;
+    fh.openForWrite(len);
+
+    write(f, fh);
+
+    fh.close();
 }
 
 void GribWrite::clone(const FieldHandle& field, const PathName& gridsec, DataHandle& out )
@@ -329,7 +368,8 @@ void GribWrite::clone(const FieldHandle& field, const PathName& gridsec, DataHan
         throw ReadError( std::string("error reading grib file ") + gridsec );
 
     GribHandle ch(clone_h);
-    ScopedPtr<GribHandle> h( GribWrite::clone( field, ch ) );
+
+    GribHandle::Ptr h = GribWrite::clone( field, ch );
 
     //    GRIB_CHECK( grib_write_message(h->raw(),fname.asString().c_str(),"w"), 0 );
 
@@ -342,112 +382,34 @@ void GribWrite::clone(const FieldHandle& field, const PathName& gridsec, DataHan
     out.write(buffer, size);
 }
 
-GribHandle* GribWrite::clone(const FieldHandle& field, GribHandle& gridsec )
+GribHandle::Ptr GribWrite::clone(const FieldHandle& field, GribHandle& gridsec )
 {
     const Field& f = field.data();
     const size_t npts = f.size();
 
     // check number of points matches
 
-    long nb_nodes = 0;
-    GRIB_CHECK( grib_get_long(gridsec.raw(),"numberOfDataPoints",&nb_nodes), 0 );
-    ASSERT( npts == f.size() );
-
-    GribHandle& meta = field.grib();
+    size_t nb_nodes = gridsec.getNbDataPoints();
+    ASSERT( nb_nodes == f.size() );
 
     ///@todo move this to the eckit::grib interface
     int err=0;
     int what = GRIB_SECTION_GRID;
-    grib_handle* h = grib_util_sections_copy( gridsec.raw(), meta.raw(), what, &err); GRIB_CHECK(err,"grib_util_sections_copy()");
 
-    ///@todo move this to the eckit::grib interface
-    GRIB_CHECK( grib_set_double_array(h, "values", f.data<double>(),npts), 0 );
+    GribHandle& meta = field.grib();
 
-    return new GribHandle(h);
-}
-
-#if 0
-void GribWrite::write( atlas::grid::FieldHandle& field, grib_handle* input_h )
-{
-    FieldT<double>& f = field.data();
-    const size_t npts = f.size();
-
-    std::vector<double> values (npts);
-
-    ///
-
-    grib_util_grid_spec grid_spec = {0,};
-
-    grid_spec.grid_type = GRIB_UTIL_GRID_SPEC_REGULAR_LL;
-    grid_spec.Ni = 60;
-    grid_spec.Nj = 30;
-
-    grid_spec.iDirectionIncrementInDegrees = 360. / grid_spec.Ni;
-    grid_spec.jDirectionIncrementInDegrees = 180. / (grid_spec.Nj-1);
-
-    grid_spec.longitudeOfFirstGridPointInDegrees =   0. + grid_spec.iDirectionIncrementInDegrees / 2;
-    grid_spec.longitudeOfLastGridPointInDegrees  = 360. - grid_spec.iDirectionIncrementInDegrees / 2;
-
-    grid_spec.latitudeOfFirstGridPointInDegrees =   90. - grid_spec.jDirectionIncrementInDegrees / 2;
-    grid_spec.latitudeOfLastGridPointInDegrees  =  -90. + grid_spec.jDirectionIncrementInDegrees / 2;
-
-    grib_util_packing_spec pack_spec = {0,};
-
-    pack_spec.packing_type = GRIB_UTIL_PACKING_TYPE_GRID_SIMPLE;
-    pack_spec.bitsPerValue = 16;
-
-    int err = 0;
-
-    //    grib_handle* output_h = grib_util_set_spec(input_h,&grid_spec,&pack_spec,0,&(field.data())[0],npts,&err);
-
-    /* flip points for correct grid ordering ???? */
-
-    for ( size_t i = 0; i < grid_spec.Ni; i++ )
-    {
-        for ( size_t j = 0; j < grid_spec.Nj; j++ )
-        {
-            size_t idx = (grid_spec.Nj-j-1) + (grid_spec.Ni-i-1)*grid_spec.Nj;
-            ASSERT( idx < npts );
-            values[idx] = f[j+i*grid_spec.Nj];
-        }
-    }
-
-    grib_handle* output_h = grib_util_set_spec(input_h,&grid_spec,&pack_spec,0,&(values)[0],npts,&err);
-
-    grib_write_message( output_h, "output.grib", "w" );
-
-    grib_handle_delete(output_h);
-
-#if 0
-    const char* filename = "regular_ll_pl_grib1";
-    grib_handle* h = grib_handle_new_from_samples(0,"regular_ll_pl_grib1");
+    grib_handle* h = grib_util_sections_copy( gridsec.raw(), meta.raw(), what, &err);
+    GRIB_CHECK(err,"grib_util_sections_copy()");
     ASSERT( h );
 
-    GRIB_CHECK( grib_set_long(h,"bitsPerValue",16),0 );
+    GribHandle::Ptr gh ( new GribHandle( h ) );
 
-    /* set data values*/
-    GRIB_CHECK(grib_set_double_array(h,"values",field.data(),npts),0);
+    ASSERT( gh );
 
-    grib_write_message(h,argv[1],"w");
+    gh->setDataValues(f.data<double>(),npts);
 
-    //    Ni = 16;
-    //    Nj = 31;
-    GRIB_CHECK( grib_set_long(h,"Ni", Ni ),0 );
-    GRIB_CHECK( grib_set_long(h,"Nj", Nj ),0 );
-
-    GRIB_CHECK( grib_set_double(h,"latitudeOfFirstGridPointInDegrees", latitudeOfFirstGridPointInDegrees ),0 );
-    GRIB_CHECK( grib_set_double(h,"longitudeOfFirstGridPointInDegrees", longitudeOfFirstGridPointInDegrees ),0 );
-
-    GRIB_CHECK( grib_set_double(h,"latitudeOfLastGridPointInDegrees", latitudeOfLastGridPointInDegrees ),0 );
-    GRIB_CHECK( grib_set_double(h,"longitudeOfLastGridPointInDegrees", longitudeOfLastGridPointInDegrees ),0 );
-
-    GRIB_CHECK( grib_set_double(h,"jDirectionIncrementInDegrees", jDirectionIncrementInDegrees ),0 );
-    GRIB_CHECK( grib_set_double(h,"iDirectionIncrementInDegrees", iDirectionIncrementInDegrees ),0 );
-
-    grib_handle_delete(h);
-#endif
+    return gh;
 }
-#endif
 
 //------------------------------------------------------------------------------------------------------
 

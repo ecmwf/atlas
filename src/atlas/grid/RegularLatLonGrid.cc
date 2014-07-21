@@ -120,14 +120,14 @@ void RegularLatLonGrid::computeCoords( std::vector<Grid::Point>& points_ )
     const double plon = bbox_.west();    // west
     const double plat = bbox_.north();   // north;
 
-    for( size_t j = 0; j <= nptsNS_; ++j)
+    for( size_t j = 0; j < nptsNS_; ++j )
     {
-        for( size_t i = 0; i <= nptsWE_; ++i)
+        const double lat = plat - nsIncrement_ * j;
+
+        for( size_t i = 0; i < nptsWE_; ++i )
         {
             const size_t idx = j*nptsWE_ + i;
-
-            const double lat = plat - incLat()*j;
-            const double lon = plon + incLon()*i;
+            const double lon = plon + weIncrement_ * i;
 
             points_[ idx ].assign( lat, lon );
         }
@@ -185,8 +185,6 @@ void RegularLatLonGrid::constructFrom( const eckit::Params& p )
         bbox_ = BoundBox( Grid::makeGlobalBBox() );
     }
 
-    DEBUG_VAR(bbox_);
-
     double east  = bbox_.top_right().lon();
     double west  = bbox_.bottom_left().lon();
     double north = bbox_.top_right().lat();
@@ -197,11 +195,16 @@ void RegularLatLonGrid::constructFrom( const eckit::Params& p )
 
     points_.resize( nptsNS_ * nptsWE_ );
 
-    computeCoords(points_);
+    DEBUG_VAR( nptsNS_ );
+    DEBUG_VAR( nptsWE_ );
 
-    hash_ = "?????????";
+    computeCoords( points_ );
 
-    NOTIMP;
+    /// @todo must solve how we do hashes, independently of the GRIB hash
+
+    hash_ = "d0ccb07e4b36a8911817cc07539cf859"; // regular_ll 1/1
+
+    DEBUG_HERE;
 }
 
 bool RegularLatLonGrid::compare(const Grid& grid) const
