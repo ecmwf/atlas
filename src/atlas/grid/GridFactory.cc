@@ -26,9 +26,9 @@ Grid::Ptr GridFactory::create(const GridSpec& grid_spec)
     std::map<std::string, GridCreator*>::iterator i = get_table().find(grid_spec.grid_type());
 
     if (i != get_table().end()) {
-        Grid::Ptr the_grid = i->second->create();
-        the_grid->constructFrom(grid_spec);
-        return the_grid;
+        Grid::Ptr grid = i->second->create();
+        grid->constructFrom(grid_spec);
+        return grid;
     }
 
     return Grid::Ptr();
@@ -36,18 +36,14 @@ Grid::Ptr GridFactory::create(const GridSpec& grid_spec)
 
 Grid::Ptr GridFactory::create(const eckit::Params& p)
 {
-    DEBUG_HERE;
-
-    DEBUG_VAR( p.get( "grid_type" ) );
-
-    std::string grid_type = p.get( "grid_type" );
+    std::string grid_type = p["grid_type"];
 
     std::map<std::string, GridCreator*>::iterator i = get_table().find( grid_type );
 
     if (i != get_table().end()) {
-        Grid::Ptr the_grid = i->second->create();
-        the_grid->constructFrom( p );
-        return the_grid;
+        Grid::Ptr grid = i->second->create();
+        grid->constructFrom( p );
+        return grid;
     }
 
     return Grid::Ptr();

@@ -25,7 +25,9 @@ namespace grid {
 
 class RegularLatLonGrid : public Grid {
    REGISTER(RegularLatLonGrid);
-public:
+
+public: // methods
+
    RegularLatLonGrid();
    virtual ~RegularLatLonGrid();
 
@@ -61,7 +63,8 @@ public:
 
    void computeCoords( std::vector< Point >& points_ );
 
-private:
+private: // members
+
    std::string hash_;
    BoundBox bbox_;
    double nsIncrement_;             ///< In degrees
