@@ -140,7 +140,7 @@ void GribWrite::determine_grib_samples_dir(std::vector<std::string>& sample_path
 }
 
 bool match_grid_spec_with_sample_file(
-         const GridSpec& the_grid_spec,
+		 const GridSpec& g_spec,
 		 grib_handle& handle,
          long editionNumber,
          const std::string& file_path)
@@ -153,12 +153,12 @@ bool match_grid_spec_with_sample_file(
       return false;
    }
    std::string grib_grid_type = string_value;
-   if ( the_grid_spec.grid_type() != grib_grid_type ) {
-      //Log::info() << "grid_type in GridSpec " << the_grid_spec.grid_type() << " does not match " << grib_grid_type << " in samples file " << file_path << " IGNORING " << std::endl;
+   if ( g_spec.grid_type() != grib_grid_type ) {
+	  //Log::info() << "grid_type in GridSpec " << g_spec.grid_type() << " does not match " << grib_grid_type << " in samples file " << file_path << " IGNORING " << std::endl;
       return false;
    }
 
-   eckit::Value spec_nj = the_grid_spec.get("Nj");
+   eckit::Value spec_nj = g_spec.get("Nj");
    if (!spec_nj.isNil()) {
       long the_spec_nj = spec_nj;
       long grib_nj = 0;
@@ -169,7 +169,7 @@ bool match_grid_spec_with_sample_file(
          }
       }
    }
-   eckit::Value spec_ni = the_grid_spec.get("Ni");
+   eckit::Value spec_ni = g_spec.get("Ni");
    if (!spec_ni.isNil()) {
       long the_spec_ni = spec_ni;
       long grib_ni = 0;
@@ -191,7 +191,7 @@ bool match_grid_spec_with_sample_file(
    return true;
 }
 
-std::string GribWrite::grib_sample_file( const grid::GridSpec& the_grid_spec, long editionNumber )
+std::string GribWrite::grib_sample_file( const grid::GridSpec& g_spec, long editionNumber )
 {
    // Note: many of the grib samples files are not UNIQUE in their grid specification:
    // i.e
@@ -232,7 +232,7 @@ std::string GribWrite::grib_sample_file( const grid::GridSpec& the_grid_spec, lo
             StackGribFile the_grib_file(std::string(files[i].localPath()));
 
             std::string grib_sample_file_tmpl = files[i].localPath();
-            if (match_grid_spec_with_sample_file(the_grid_spec,the_grib_file.handle(),editionNumber,grib_sample_file_tmpl)) {
+			if (match_grid_spec_with_sample_file(g_spec,the_grib_file.handle(),editionNumber,grib_sample_file_tmpl)) {
                // remove .tmpl extension
                eckit::LocalPathName path(grib_sample_file_tmpl);
                LocalPathName the_base_name = path.baseName(false);
@@ -246,7 +246,7 @@ std::string GribWrite::grib_sample_file( const grid::GridSpec& the_grid_spec, lo
       }
    }
 
-   Log::info() << "Could find grib samples match for grid_spec " << the_grid_spec << std::endl;
+   Log::info() << "Could find grib samples match for grid_spec " << g_spec << std::endl;
    return std::string();
 }
 

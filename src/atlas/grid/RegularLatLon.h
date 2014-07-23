@@ -38,6 +38,9 @@ class RegularLatLon : public Grid {
 
 public: // methods
 
+	static std::string className() { return "atlas.grid.RegularLatLon"; }
+	static std::string gridTypeStr() { return "regular_ll"; }
+
 	RegularLatLon( const eckit::Params& p );
 
 	RegularLatLon( size_t ni, size_t nj, const BoundBox& bbox );
@@ -57,27 +60,25 @@ public: // methods
 
 protected: // methods
 
-	Point latLon(size_t lat, size_t lon) const;
 	long rows() const { return nptsNS_;}
 	long cols() const { return nptsWE_;}
 
-	double incLat() const { return nsIncrement_; }
-	double incLon() const { return weIncrement_; }
+	double incLat() const { return incNS_; }
+	double incLon() const { return incWE_; }
 
 	double computeIncLat() const;
 
 	double computeIncLon() const;
 
-	long computeRows(double north, double south, double west, double east) const;
-
-	long computeCols(double west, double east) const;
+//	long computeRows(double north, double south, double west, double east) const;
+//	long computeCols(double west, double east) const;
 
 private: // members
 
 	std::string hash_;
 	BoundBox bbox_;
-	double nsIncrement_;             ///< In degrees
-	double weIncrement_;             ///< In degrees
+	double incNS_;             ///< in degrees
+	double incWE_;             ///< in degrees
 	long nptsNS_;
 	long nptsWE_;
 

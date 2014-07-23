@@ -48,8 +48,6 @@ BOOST_AUTO_TEST_SUITE( TestGridSpec )
 BOOST_AUTO_TEST_CASE( test_gridspec )
 {
    std::vector<std::string> registered_grid_types;
-   registered_grid_types.push_back("gaussian");
-   registered_grid_types.push_back("latlon");
    registered_grid_types.push_back("regular_gg");
    registered_grid_types.push_back("reduced_ll");
    registered_grid_types.push_back("reduced_gg");

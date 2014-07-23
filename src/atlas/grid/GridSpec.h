@@ -42,6 +42,7 @@ public:
 
    GridSpec(const std::string& the_grid_type);
    GridSpec(const std::string& the_grid_type, const std::string& the_short_name);
+
    ~GridSpec();
 
    /// returns the gridType. currently this matches grid _type found in GRIB

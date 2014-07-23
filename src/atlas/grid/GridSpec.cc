@@ -109,10 +109,10 @@ void GridSpec::set_rgspec(const std::vector<long>& rgSpec_vec)
 
 void GridSpec::set_bounding_box(const Grid::BoundBox& bbox )
 {
-   set("area_s",eckit::Value(bbox.bottom_left().lat()));
-   set("area_w",eckit::Value(bbox.bottom_left().lon()));
-   set("area_n",eckit::Value(bbox.top_right().lat()));
-   set("area_e",eckit::Value(bbox.top_right().lon()));
+   set("area_s", bbox.bottom_left().lat());
+   set("area_w", bbox.bottom_left().lon());
+   set("area_n", bbox.top_right().lat());
+   set("area_e", bbox.top_right().lon());
 }
 
 void GridSpec::get_points(std::vector<Grid::Point>& points) const

@@ -40,38 +40,39 @@ class ReducedLatLon : public Grid {
 
 public: // methods
 
-   ReducedLatLon( const eckit::Params& p );
+	static std::string className()   { return "atlas.grid.ReducedLatLon"; }
+	static std::string gridTypeStr() { return "reduced_ll"; }
 
-   virtual ~ReducedLatLon();
+	ReducedLatLon( const eckit::Params& p );
 
-   /// Overridden functions
-   virtual std::string hash() const { return hash_;}
-   virtual BoundBox boundingBox() const { return bbox_;}
-   virtual size_t nPoints() const { return points_.size(); }
+	virtual ~ReducedLatLon();
 
-   virtual void coordinates( std::vector<double>& ) const;
-   virtual void coordinates( std::vector<Point>& ) const;
+	/// Overridden functions
+	virtual std::string hash() const { return hash_;}
+	virtual BoundBox boundingBox() const { return bbox_;}
+	virtual size_t nPoints() const { return points_.size(); }
 
-   virtual std::string gridType() const { return std::string("reduced_ll") ;}
-   virtual GridSpec* spec() const;
-   virtual bool same(const Grid&) const;
+	virtual void coordinates( std::vector<double>& ) const;
+	virtual void coordinates( std::vector<Point>& ) const;
+
+	virtual std::string gridType() const;
+	virtual GridSpec* spec() const;
+	virtual bool same(const Grid&) const;
 
 protected: // methods
 
-   long rows() const { return nptsNS_;}
-   double incLat() const { return nsIncrement_; }
+	long rows() const { return nptsNS_;}
+	double incLat() const { return nsIncrement_; }
 
 private: // members
 
-   std::string hash_;
-   BoundBox bbox_;
-   double nsIncrement_;                   ///< In degrees
-   long nptsNS_;                          ///< No of points along Y axes
-   std::vector<long>    rgSpec_;          ///< No of points per latitude
-   std::vector< Point > points_;          ///< storage of coordinate points
+	std::string hash_;
+	BoundBox bbox_;
+	double nsIncrement_;                   ///< In degrees
+	long nptsNS_;                          ///< No of points along Y axes
+	std::vector<long>    rgSpec_;          ///< No of points per latitude
+	std::vector< Point > points_;          ///< storage of coordinate points
 
-   /// Added friend mechanism to minimise data copying, during construction
-   friend class GribReducedLatLon;
 };
 
 //-----------------------------------------------------------------------------

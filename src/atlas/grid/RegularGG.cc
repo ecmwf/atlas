@@ -74,6 +74,11 @@ void RegularGG::coordinates(std::vector<Grid::Point>&) const
 	NOTIMP;
 }
 
+string RegularGG::gridType() const
+{
+	return RegularGG::gridTypeStr();
+}
+
 GridSpec* RegularGG::spec() const
 {
    GridSpec* grid_spec = new GridSpec(gridType());

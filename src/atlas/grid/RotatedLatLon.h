@@ -40,46 +40,49 @@ class RotatedLatLon : public Grid {
 
 public: // methods
 
-   RotatedLatLon( const eckit::Params& p );
-   virtual ~RotatedLatLon();
+	static std::string className() { return "atlas.grid.RotatedLatLon"; }
+	static std::string gridTypeStr() { return "rotated_ll"; }
 
-   virtual std::string hash() const { return hash_;}
-   virtual BoundBox boundingBox() const { return bbox_;}
-   virtual size_t nPoints() const { return points_.size(); }
+	RotatedLatLon( const eckit::Params& p );
+	virtual ~RotatedLatLon();
 
-   virtual void coordinates( std::vector<double>& ) const;
-   virtual void coordinates( std::vector<Point>& ) const;
+	virtual std::string hash() const { return hash_;}
+	virtual BoundBox boundingBox() const { return bbox_;}
+	virtual size_t nPoints() const { return points_.size(); }
 
-   virtual std::string gridType() const { return std::string("rotated_ll"); }
-   virtual GridSpec* spec() const;
-   virtual bool same(const Grid&) const;
+	virtual void coordinates( std::vector<double>& ) const;
+	virtual void coordinates( std::vector<Point>& ) const;
+
+	virtual std::string gridType() const;
+	virtual GridSpec* spec() const;
+	virtual bool same(const Grid&) const;
 
 protected: // methods
 
-   double rotated_latitude() const { return rotated_latitude_; }
-   double rotated_longitude() const { return rotated_longitude_; }
-   double rotated_angle() const { return rotated_angle_; }
+	double rotated_latitude() const { return rotated_latitude_; }
+	double rotated_longitude() const { return rotated_longitude_; }
+	double rotated_angle() const { return rotated_angle_; }
 
-   Point latLon(size_t lat, size_t lon) const;
-   long rows() const { return nptsNS_;}
-   long cols() const { return nptsWE_;}
-   double incLat() const { return nsIncrement_; }
-   double incLon() const { return weIncrement_; }
+	Point latLon(size_t lat, size_t lon) const;
+	long rows() const { return nptsNS_;}
+	long cols() const { return nptsWE_;}
+	double incLat() const { return nsIncrement_; }
+	double incLon() const { return weIncrement_; }
 
 private: // members
 
-   std::string hash_;
-   BoundBox bbox_;
-   double rotated_latitude_;
-   double rotated_longitude_;
-   double rotated_angle_;
+	std::string hash_;
+	BoundBox bbox_;
+	double rotated_latitude_;
+	double rotated_longitude_;
+	double rotated_angle_;
 
-   double nsIncrement_;             ///< In degrees
-   double weIncrement_;             ///< In degrees
-   long nptsNS_;
-   long nptsWE_;
+	double nsIncrement_;             ///< In degrees
+	double weIncrement_;             ///< In degrees
+	long nptsNS_;
+	long nptsWE_;
 
-   std::vector< Point > points_;     ///< storage of coordinate points
+	std::vector< Point > points_;     ///< storage of coordinate points
 
 };
 

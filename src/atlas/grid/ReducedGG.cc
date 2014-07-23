@@ -23,7 +23,7 @@ namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
-ConcreteBuilderT1<Grid,ReducedGG> ReducedGG_builder;
+ConcreteBuilderT1<Grid,ReducedGG> ReducedGG_builder("reduced_gg");
 
 //void ReducedGG::constructFrom(const GridSpec& grid_spec)
 //{
@@ -52,6 +52,11 @@ void ReducedGG::coordinates( std::vector<double>& pts ) const
 void ReducedGG::coordinates(std::vector<Grid::Point>&) const
 {
 	NOTIMP;
+}
+
+string ReducedGG::gridType() const
+{
+	return ReducedGG::gridTypeStr();
 }
 
 GridSpec* ReducedGG::spec() const

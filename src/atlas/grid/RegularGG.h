@@ -52,33 +52,36 @@ class RegularGG : public Grid {
 
 public: // methods
 
-   RegularGG( const eckit::Params& p );
-   virtual ~RegularGG();
+	static std::string className() { return "atlas.grid.RegularGG"; }
+	static std::string gridTypeStr() { return "regular_gg"; }
 
-   virtual std::string hash() const { return hash_;}
-   virtual BoundBox boundingBox() const { return bbox_; }
-   virtual size_t nPoints() const { return points_.size(); }
+	RegularGG( const eckit::Params& p );
+	virtual ~RegularGG();
 
-   virtual void coordinates( std::vector<double>& ) const;
-   virtual void coordinates( std::vector<Point>& ) const;
+	virtual std::string hash() const { return hash_;}
+	virtual BoundBox boundingBox() const { return bbox_; }
+	virtual size_t nPoints() const { return points_.size(); }
 
-   virtual std::string gridType() const { return std::string("regular_gg"); }
-   virtual GridSpec* spec() const;
-   virtual bool same(const Grid&) const;
+	virtual void coordinates( std::vector<double>& ) const;
+	virtual void coordinates( std::vector<Point>& ) const;
+
+	virtual std::string gridType() const;
+	virtual GridSpec* spec() const;
+	virtual bool same(const Grid&) const;
 
 protected: // methods
 
-   Grid::Point latLon(size_t the_i, size_t the_j) const;
-   long gaussianNumber() const { return gaussianNumber_;}
+	Grid::Point latLon(size_t the_i, size_t the_j) const;
+	long gaussianNumber() const { return gaussianNumber_;}
 
 private: // members
 
-   std::string hash_;
-   BoundBox bbox_;
-   std::vector< Point > points_;     ///< storage of coordinate points
-   std::vector<double> latitudes_;
-   long   gaussianNumber_;          /// No of points between pole and equator
-   long   nj_;                     ///< No of points along Y axes
+	std::string hash_;
+	BoundBox bbox_;
+	std::vector< Point > points_;     ///< storage of coordinate points
+	std::vector<double> latitudes_;
+	long   gaussianNumber_;          /// No of points between pole and equator
+	long   nj_;                     ///< No of points along Y axes
 
 };
 

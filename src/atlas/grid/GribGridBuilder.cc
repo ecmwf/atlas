@@ -550,8 +550,8 @@ Grid::Ptr GribRegularLatLon::build()
 {
    // Extract the regular lat long grid attributes from the grib handle
 
-   GRIB_CHECK(grib_get_double(handle_,"jDirectionIncrementInDegrees",&(the_grid_->nsIncrement_)),0);
-   GRIB_CHECK(grib_get_double(handle_,"iDirectionIncrementInDegrees",&(the_grid_->weIncrement_)),0);
+   GRIB_CHECK(grib_get_double(handle_,"jDirectionIncrementInDegrees",&(the_grid_->incNS_)),0);
+   GRIB_CHECK(grib_get_double(handle_,"iDirectionIncrementInDegrees",&(the_grid_->incWE_)),0);
 
    GRIB_CHECK(grib_get_long(handle_,"Nj",&(the_grid_->nptsNS_)),0);
    GRIB_CHECK(grib_get_long(handle_,"Ni",&(the_grid_->nptsWE_)),0);
@@ -563,9 +563,9 @@ Grid::Ptr GribRegularLatLon::build()
       double plon = west_;
       for( size_t i = 0; i < the_grid_->nptsWE_; ++i) {
          the_grid_->points_.push_back( Grid::Point( plat, plon ) );
-         plon += the_grid_->weIncrement_;
+		 plon += the_grid_->incWE_;
       }
-      plat -= the_grid_->nsIncrement_;
+	  plat -= the_grid_->incNS_;
    }
 
 #ifdef DEBUG
@@ -577,21 +577,21 @@ Grid::Ptr GribRegularLatLon::build()
    Log::info() << " longitudeOfFirstGridPointInDegrees             " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << west_ << std::endl;
    Log::info() << " latitudeOfLastGridPointInDegrees               " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << south_ << std::endl;
    Log::info() << " longitudeOfLastGridPointInDegrees              " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << east_ << std::endl;
-   Log::info() << " jDirectionIncrementInDegrees(north-south incr) " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << the_grid_->nsIncrement_ << std::endl;
-   Log::info() << " iDirectionIncrementInDegrees(west-east   incr) " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << the_grid_->weIncrement_ << std::endl;
+   Log::info() << " jDirectionIncrementInDegrees(north-south incr) " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << the_grid_->incNS_ << std::endl;
+   Log::info() << " iDirectionIncrementInDegrees(west-east   incr) " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << the_grid_->incWE_ << std::endl;
    Log::info() << " Nj(num of points North South)                  " << the_grid_->nptsNS_ << std::endl;
    Log::info() << " Ni(num of points West East)                    " << the_grid_->nptsWE_ << std::endl;
    Log::info() << " numberOfDataPoints                             " << numberOfDataPoints_ << std::endl;
    Log::info() << " -----------------------------------------------" << std::endl;
-   Log::info() << " computeIncLat() " << the_grid_->computeIncLat() << "      nsIncrement_ " << the_grid_->nsIncrement_ << std::endl;
-   Log::info() << " computeIncLon() " << the_grid_->computeIncLon() << "      weIncrement_ " << the_grid_->nsIncrement_ << std::endl;
+   Log::info() << " computeIncLat() " << the_grid_->computeIncLat() << "      nsIncrement_ " << the_grid_->incNS_ << std::endl;
+   Log::info() << " computeIncLon() " << the_grid_->computeIncLon() << "      weIncrement_ " << the_grid_->incNS_ << std::endl;
    Log::info() << " computeRows()   " << the_grid_->computeRows(north_,south_,west_,east_) << "     nptsNS_ " << the_grid_->nptsNS_ << std::endl;
    Log::info() << " computeCols()   " << the_grid_->computeCols(west_,east_) <<  "     nptsWE_ " << the_grid_->nptsWE_ << std::endl;
    Log::info() << " points_.size()  " << the_grid_->points_.size() << "     numberOfDataPoints_ " << numberOfDataPoints_ << std::endl << std::endl;
 #endif
 
-   ASSERT(FloatCompare::is_equal(the_grid_->nsIncrement_,the_grid_->computeIncLat(),0.01));
-   ASSERT(FloatCompare::is_equal(the_grid_->weIncrement_,the_grid_->computeIncLon(),0.01));
+   ASSERT(FloatCompare::is_equal(the_grid_->incNS_,the_grid_->computeIncLat(),0.01));
+   ASSERT(FloatCompare::is_equal(the_grid_->incWE_,the_grid_->computeIncLon(),0.01));
    ASSERT(the_grid_->nptsNS_ == the_grid_->computeRows(north_,south_,west_,east_));
    ASSERT(the_grid_->nptsWE_ == the_grid_->computeCols(west_,east_));
    ASSERT(the_grid_->points_.size() == numberOfDataPoints_);

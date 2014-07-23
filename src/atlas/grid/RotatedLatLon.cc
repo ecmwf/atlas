@@ -75,6 +75,11 @@ void RotatedLatLon::coordinates(std::vector<Grid::Point>&) const
 	NOTIMP;
 }
 
+string RotatedLatLon::gridType() const
+{
+	return RotatedLatLon::gridTypeStr();
+}
+
 GridSpec* RotatedLatLon::spec() const
 {
    GridSpec* grid_spec = new GridSpec(gridType());
