@@ -20,11 +20,11 @@ using namespace eckit;
 namespace atlas {
 namespace grid {
 
-// ==================================================================================
+//------------------------------------------------------------------------------------------------------
 
-StackGribFile::StackGribFile(const std::string& the_file_path) : theGribFile_(PathName(the_file_path)), handle_(0)
+StackGribFile::StackGribFile(const std::string& path) : theGribFile_(PathName(path)), handle_(0)
 {
-   init(the_file_path);
+   init(path);
 }
 
 StackGribFile::StackGribFile(const eckit::PathName& pathname) : theGribFile_(pathname), handle_(0)
@@ -32,14 +32,14 @@ StackGribFile::StackGribFile(const eckit::PathName& pathname) : theGribFile_(pat
    init(pathname.asString());
 }
 
-void StackGribFile::init(const std::string& the_file_path)
+void StackGribFile::init(const std::string& path)
 {
 #ifdef DEBUG
    Log::info() << "StackGribFile::init Create a grib handle" << std::endl;
 #endif
    int err;
    handle_ = grib_handle_new_from_file(0,theGribFile_,&err);
-   if (err != 0) Log::error() <<  "StackGribFile::init: grib_handle_new_from_file error " << err << " for file " << the_file_path << endl;
+   if (err != 0) Log::error() <<  "StackGribFile::init: grib_handle_new_from_file error " << err << " for file " << path << endl;
 }
 
 StackGribFile::~StackGribFile()
@@ -50,6 +50,8 @@ StackGribFile::~StackGribFile()
    int err = grib_handle_delete(handle_);
    if (err != 0) Log::error() <<  "StackGribFile::~StackGribFile(): grib_handle_delete failed " << err << endl;
 }
+
+//------------------------------------------------------------------------------------------------------
 
 } // namespace grid
 } // namespace eckit

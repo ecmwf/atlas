@@ -8,14 +8,14 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_grid_rotated_lat_lon_grid_H
-#define atlas_grid_rotated_lat_lon_grid_H
+#ifndef atlas_grid_RotatedLatLon_H
+#define atlas_grid_RotatedLatLon_H
 
 #include <cstddef>
 #include <vector>
 
 #include "atlas/grid/Grid.h"
-#include "atlas/grid/GridFactory.h"
+
 
 //-----------------------------------------------------------------------------
 
@@ -24,26 +24,38 @@ namespace grid {
 
 //-----------------------------------------------------------------------------
 
-class RotatedLatLonGrid : public Grid {
-   REGISTER(RotatedLatLonGrid);
-public:
-   RotatedLatLonGrid();
-   virtual ~RotatedLatLonGrid();
+/// @note
+/// gribs use the following convention: (from Shahram)
+///
+/// Horizontally:  Points scan in the +i (+x) direction
+/// Vertically:    Points scan in the -j (-y) direction
+///
+/// The way I verified this was to look at our SAMPLE files (which IFS uses).
+/// I also verified that IFS does not modify the scanning modes
+/// so whatever the samples say, is the convention
+///
+/// @todo Do we check the area? Can we assume area is multiple of the grids ?
 
-   /// Overridden functions
+class RotatedLatLon : public Grid {
+
+public: // methods
+
+   RotatedLatLon( const eckit::Params& p );
+   virtual ~RotatedLatLon();
+
    virtual std::string hash() const { return hash_;}
    virtual BoundBox boundingBox() const { return bbox_;}
    virtual size_t nPoints() const { return points_.size(); }
-   virtual void coordinates( Grid::Coords & ) const;
+
+   virtual void coordinates( std::vector<double>& ) const;
+   virtual void coordinates( std::vector<Point>& ) const;
+
    virtual std::string gridType() const { return std::string("rotated_ll"); }
    virtual GridSpec* spec() const;
-   virtual void constructFrom(const GridSpec& );
-   virtual bool compare(const Grid&) const;
+   virtual bool same(const Grid&) const;
 
-   /// @deprecated will be removed soon as it exposes the inner storage of the coordinates
-   virtual const std::vector<Point>& coordinates() const { return points_; }
+protected: // methods
 
-   /// Functions specific to Rotated Lat long grids
    double rotated_latitude() const { return rotated_latitude_; }
    double rotated_longitude() const { return rotated_longitude_; }
    double rotated_angle() const { return rotated_angle_; }
@@ -54,7 +66,8 @@ public:
    double incLat() const { return nsIncrement_; }
    double incLon() const { return weIncrement_; }
 
-private:
+private: // members
+
    std::string hash_;
    BoundBox bbox_;
    double rotated_latitude_;
@@ -68,8 +81,6 @@ private:
 
    std::vector< Point > points_;     ///< storage of coordinate points
 
-   /// Added friend mechanism to minimise data copying, during construction
-   friend class GribRotatedLatLonGrid;
 };
 
 //-----------------------------------------------------------------------------

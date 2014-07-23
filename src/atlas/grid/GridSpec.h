@@ -11,8 +11,8 @@
 #ifndef atlas_grid_GridSpec_H
 #define atlas_grid_GridSpec_H
 
-#include <cstddef>
 #include "eckit/value/Properties.h"
+
 #include "atlas/grid/Grid.h"
 
 //------------------------------------------------------------------------------------------------------
@@ -29,10 +29,10 @@ namespace grid {
 /// This allows for easier matching with samples files.
 /// However this interface is independent of GRIB/NETCDF, because:
 ///
-///      DECODE                       ATLAS                      ENCODE
-///  NetCDFGridBuilder ---->|-------|         |----------|------>NetCDFGridWrite
-///                         | Grid  |<------> | GridSpec |
-///  GribGridBuilder ------>|-------|         |----------|------>GribGridWrite
+///      DECODE                   ATLAS                      ENCODE
+///  NetCDFParams ---->|-------|         |----------|------>NetCDFGridWrite
+///                    | Grid  |<------> | GridSpec |
+///  GribParams ------>|-------|         |----------|------>GribGridWrite
 ///
 /// Uses default copy constructor, assignment and equality operators
 

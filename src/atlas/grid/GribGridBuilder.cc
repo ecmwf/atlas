@@ -73,19 +73,19 @@ Grid::Ptr GRIBGridBuilder::build_grid_from_grib_handle( grib_handle* handle ) co
    }
 
    if (strncasecmp(string_value,"reduced_gg",10) == 0) {
-      GribReducedGaussianGrid maker( handle );
+	  GribReducedGG maker( handle );
       return maker.build();
    }
    else if (strncasecmp(string_value,"reduced_ll",10) == 0) {
-      GribReducedLatLonGrid maker( handle );
+	  GribReducedLatLon maker( handle );
       return maker.build();
    }
    else if (strncasecmp(string_value,"regular_gg",10) == 0) {
-      GribRegularGaussianGrid maker( handle );
+	  GribRegularGG maker( handle );
       return maker.build();
    }
    else if (strncasecmp(string_value,"regular_ll",10) == 0) {
-      GribRegularLatLonGrid maker( handle );
+	  GribRegularLatLon maker( handle );
       return maker.build();
    }
    //   else if (strncasecmp(string_value,"sh",2) == 0) {
@@ -93,13 +93,13 @@ Grid::Ptr GRIBGridBuilder::build_grid_from_grib_handle( grib_handle* handle ) co
    //      return SphericalHarmonicGrid( maker.hash(), maker.boundingBox(),...);
    //   }
    else if (strncasecmp(string_value,"rotated_ll",10) == 0) {
-       GribRotatedLatLonGrid maker( handle );
+	   GribRotatedLatLon maker( handle );
        return maker.build();
    }
 
    // Unknown grid type, extract data points from the grib handle
    PointList* pntlist = read_number_of_data_points(handle);
-   return Grid::Ptr(new grid::Unstructured( pntlist, grib_hash(handle) ));
+   return Grid::Ptr(new grid::Unstructured( pntlist, grib_geography_hash(handle) ));
 }
 
 
@@ -151,7 +151,7 @@ GribGridBuilderHelper::GribGridBuilderHelper(grib_handle* handle)
   north_(0.0),south_(0.0),west_(0.0),east_(0.0),
   epsilon_(1e-6),
   numberOfDataPoints_(0),
-  hash_(grib_hash(handle))
+  hash_(grib_geography_hash(handle))
 {
    if (handle == NULL) {
       throw SeriousBug(string("NULL grib_handle"),Here());
@@ -246,18 +246,18 @@ void GribGridBuilderHelper::comparePointList(const std::vector<Grid::Point>& poi
 
 // ================================================================================================
 
-GribReducedGaussianGrid::GribReducedGaussianGrid(grib_handle* handle)
+GribReducedGG::GribReducedGG(grib_handle* handle)
 : GribGridBuilderHelper(handle),
-  the_grid_( new ReducedGaussianGrid() )
+  the_grid_( new ReducedGG() )
 {
 #ifdef DEBUG
-   Log::info() << "Build a GribReducedGaussianGrid  " << std::endl;
+   Log::info() << "Build a GribReducedGG  " << std::endl;
 #endif
    the_grid_->bbox_ = boundingBox();
    the_grid_->hash_ = hash_;
 }
 
-Grid::Ptr GribReducedGaussianGrid::build()
+Grid::Ptr GribReducedGG::build()
 {
    // Extract the gaussian grid attributes from the grib handle
 
@@ -361,14 +361,14 @@ Grid::Ptr GribReducedGaussianGrid::build()
    return Grid::Ptr( the_grid_.release() );
 }
 
-GribReducedGaussianGrid::~GribReducedGaussianGrid()
+GribReducedGG::~GribReducedGG()
 {
 #ifdef DEBUG
-   Log::info() << "Destroy a GribReducedGaussianGrid" << std::endl;
+   Log::info() << "Destroy a GribReducedGG" << std::endl;
 #endif
 }
 
-void GribReducedGaussianGrid::add_point(int lat_index)
+void GribReducedGG::add_point(int lat_index)
 {
    long no_of_points_along_latitude = the_grid_->rgSpec_[lat_index];
    if ( no_of_points_along_latitude > 0) {
@@ -386,12 +386,12 @@ void GribReducedGaussianGrid::add_point(int lat_index)
    }
 }
 
-bool GribReducedGaussianGrid::isGlobalNorthSouth() const
+bool GribReducedGG::isGlobalNorthSouth() const
 {
    return (the_grid_->gaussianNumber_*2 == the_grid_->nj_);
 }
 
-bool GribReducedGaussianGrid::isGlobalWestEast() const
+bool GribReducedGG::isGlobalWestEast() const
 {
    // GRIB way of determining globalness, bugs in IFS means we need a lower resolution epsilon for grib2
    if (west_ == 0) {
@@ -403,25 +403,25 @@ bool GribReducedGaussianGrid::isGlobalWestEast() const
 
 // ========================================================================================
 
-GribRegularGaussianGrid::GribRegularGaussianGrid(grib_handle* handle)
+GribRegularGG::GribRegularGG(grib_handle* handle)
 : GribGridBuilderHelper(handle),
-  the_grid_( new RegularGaussianGrid() )
+  the_grid_( new RegularGG() )
 {
 #ifdef DEBUG
-   Log::info() << "Build a RegularGaussianGrid  " << std::endl;
+   Log::info() << "Build a RegularGG  " << std::endl;
 #endif
    the_grid_->bbox_ = boundingBox();
    the_grid_->hash_ = hash_;
 }
 
-GribRegularGaussianGrid::~GribRegularGaussianGrid()
+GribRegularGG::~GribRegularGG()
 {
 #ifdef DEBUG
-   Log::info() << "Destroy a GribRegularGaussianGrid" << std::endl;
+   Log::info() << "Destroy a GribRegularGG" << std::endl;
 #endif
 }
 
-Grid::Ptr GribRegularGaussianGrid::build()
+Grid::Ptr GribRegularGG::build()
 {
    // Extract the guassian grid attributes from the grib handle
 
@@ -511,12 +511,12 @@ Grid::Ptr GribRegularGaussianGrid::build()
     return Grid::Ptr(the_grid_.release() );
 }
 
-bool GribRegularGaussianGrid::isGlobalNorthSouth() const
+bool GribRegularGG::isGlobalNorthSouth() const
 {
    return (the_grid_->gaussianNumber_*2 == the_grid_->nj_);
 }
 
-bool GribRegularGaussianGrid::isGlobalWestEast() const
+bool GribRegularGG::isGlobalWestEast() const
 {
    // GRIB way of determining globalness
    if (west_ == 0) {
@@ -528,25 +528,25 @@ bool GribRegularGaussianGrid::isGlobalWestEast() const
 
 // =====================================================================================
 
-GribRegularLatLonGrid::GribRegularLatLonGrid(grib_handle* handle)
+GribRegularLatLon::GribRegularLatLon(grib_handle* handle)
 : GribGridBuilderHelper(handle),
-  the_grid_( new RegularLatLonGrid() )
+  the_grid_( new RegularLatLon() )
 {
 #ifdef DEBUG
-   Log::info() << "Build a RegularLatLonGrid  " << std::endl;
+   Log::info() << "Build a RegularLatLon  " << std::endl;
 #endif
    the_grid_->bbox_ = boundingBox();
    the_grid_->hash_ = hash_;
 }
 
-GribRegularLatLonGrid::~GribRegularLatLonGrid()
+GribRegularLatLon::~GribRegularLatLon()
 {
 #ifdef DEBUG
-   Log::info() << "Destroy a GribRegularLatLonGrid" << std::endl;
+   Log::info() << "Destroy a GribRegularLatLon" << std::endl;
 #endif
 }
 
-Grid::Ptr GribRegularLatLonGrid::build()
+Grid::Ptr GribRegularLatLon::build()
 {
    // Extract the regular lat long grid attributes from the grib handle
 
@@ -605,30 +605,30 @@ Grid::Ptr GribRegularLatLonGrid::build()
    return Grid::Ptr( the_grid_.release() );
 }
 
-long GribRegularLatLonGrid::rows() const { return the_grid_->rows();}
-long GribRegularLatLonGrid::cols() const { return the_grid_->cols();}
-double GribRegularLatLonGrid::incLat() const { return the_grid_->incLat(); }
-double GribRegularLatLonGrid::incLon() const { return the_grid_->incLon(); }
+long GribRegularLatLon::rows() const { return the_grid_->rows();}
+long GribRegularLatLon::cols() const { return the_grid_->cols();}
+double GribRegularLatLon::incLat() const { return the_grid_->incLat(); }
+double GribRegularLatLon::incLon() const { return the_grid_->incLon(); }
 
 // =====================================================================================
 
-GribReducedLatLonGrid::GribReducedLatLonGrid(grib_handle* handle)
+GribReducedLatLon::GribReducedLatLon(grib_handle* handle)
 : GribGridBuilderHelper(handle),
-  the_grid_( new ReducedLatLonGrid() )
+  the_grid_( new ReducedLatLon() )
 {
 #ifdef DEBUG
-   Log::info() << "Build a GribReducedLatLonGrid  " << std::endl;
+   Log::info() << "Build a GribReducedLatLon  " << std::endl;
 #endif
    the_grid_->bbox_ = boundingBox();
    the_grid_->hash_ = hash_;
 }
 
-GribReducedLatLonGrid::~GribReducedLatLonGrid()
+GribReducedLatLon::~GribReducedLatLon()
 {
-   Log::info() << "Destroy a GribReducedLatLonGrid" << std::endl;
+   Log::info() << "Destroy a GribReducedLatLon" << std::endl;
 }
 
-Grid::Ptr GribReducedLatLonGrid::build()
+Grid::Ptr GribReducedLatLon::build()
 {
    // Extract the regular lat long grid attributes from the grib handle
 
@@ -732,7 +732,7 @@ Grid::Ptr GribReducedLatLonGrid::build()
    return Grid::Ptr( the_grid_.release() );
 }
 
-double GribReducedLatLonGrid::computeIncLat() const
+double GribReducedLatLon::computeIncLat() const
 {
    double north_diff_south = 0.0;
    if (north_ > 0.0 && south_ > 0.0 ) north_diff_south = north_ - south_;
@@ -742,9 +742,9 @@ double GribReducedLatLonGrid::computeIncLat() const
    return ( north_diff_south/rows() );
 }
 
-long GribReducedLatLonGrid::rows() const { return the_grid_->rows();}
+long GribReducedLatLon::rows() const { return the_grid_->rows();}
 
-bool GribReducedLatLonGrid::isGlobalNorthSouth() const
+bool GribReducedLatLon::isGlobalNorthSouth() const
 {
    if (FloatCompare::is_equal(north_,90.0,globalness_epsilon()) && FloatCompare::is_equal(south_,-90.0,globalness_epsilon())) {
       return true;
@@ -752,7 +752,7 @@ bool GribReducedLatLonGrid::isGlobalNorthSouth() const
    return false;
 }
 
-bool GribReducedLatLonGrid::isGlobalWestEast() const
+bool GribReducedLatLon::isGlobalWestEast() const
 {
    // ??
    if (west_ == 0 && !the_grid_->rgSpec_.empty()) {
@@ -767,25 +767,25 @@ bool GribReducedLatLonGrid::isGlobalWestEast() const
 
 // ========================================================================================
 
-GribRotatedLatLonGrid::GribRotatedLatLonGrid(grib_handle* handle)
+GribRotatedLatLon::GribRotatedLatLon(grib_handle* handle)
 : GribGridBuilderHelper(handle),
-  the_grid_( new RotatedLatLonGrid() )
+  the_grid_( new RotatedLatLon() )
 {
 #ifdef DEBUG
-   Log::info() << "Build a RotatedLatLonGrid  " << std::endl;
+   Log::info() << "Build a RotatedLatLon  " << std::endl;
 #endif
    the_grid_->bbox_ = boundingBox();
    the_grid_->hash_ = hash_;
 }
 
-GribRotatedLatLonGrid::~GribRotatedLatLonGrid()
+GribRotatedLatLon::~GribRotatedLatLon()
 {
 #ifdef DEBUG
-   Log::info() << "Destroy a GribRotatedLatLonGrid" << std::endl;
+   Log::info() << "Destroy a GribRotatedLatLon" << std::endl;
 #endif
 }
 
-Grid::Ptr GribRotatedLatLonGrid::build()
+Grid::Ptr GribRotatedLatLon::build()
 {
    // Extract the rotated lat long grid attributes from the grib handle
 
@@ -843,7 +843,7 @@ Grid::Ptr GribRotatedLatLonGrid::build()
    return Grid::Ptr( the_grid_.release() );
 }
 
-double GribRotatedLatLonGrid::computeIncLat() const
+double GribRotatedLatLon::computeIncLat() const
 {
    double north_diff_south = 0.0;
    if (north_ > 0.0 && south_ > 0.0 ) north_diff_south = north_ - south_;
@@ -858,7 +858,7 @@ double GribRotatedLatLonGrid::computeIncLat() const
    return inc_lat;
 }
 
-double GribRotatedLatLonGrid::computeIncLon() const
+double GribRotatedLatLon::computeIncLon() const
 {
    if (cols() > (east_ - west_))
       return ((east_ - west_)/cols());
@@ -868,7 +868,7 @@ double GribRotatedLatLonGrid::computeIncLon() const
    return inc_lon;
 }
 
-long GribRotatedLatLonGrid::computeRows(double north, double south, double west, double east) const
+long GribRotatedLatLon::computeRows(double north, double south, double west, double east) const
 {
    if (north > 0.0 && south > 0.0 ) return (north - south)/the_grid_->nsIncrement_ + 1;
    else if ( north < 0.0 && south < 0.0) return (fabs(north) - fabs(south))/the_grid_->nsIncrement_ + 1;
@@ -876,79 +876,15 @@ long GribRotatedLatLonGrid::computeRows(double north, double south, double west,
    return (fabs(north) + fabs(south))/the_grid_->nsIncrement_ + 1;
 }
 
-long GribRotatedLatLonGrid::computeCols(double west, double east) const
+long GribRotatedLatLon::computeCols(double west, double east) const
 {
    return fabs((east - west)/the_grid_->weIncrement_) + 1;
 }
 
-long GribRotatedLatLonGrid::rows() const { return the_grid_->rows();}
-long GribRotatedLatLonGrid::cols() const { return the_grid_->cols();}
-double GribRotatedLatLonGrid::incLat() const { return the_grid_->incLat(); }
-double GribRotatedLatLonGrid::incLon() const { return the_grid_->incLon(); }
-
-// ========================================================================================
-static PointList* read_number_of_data_points(grib_handle *h)
-{
-   // points to read
-   long nb_nodes = 0;
-   grib_get_long(h,"numberOfDataPoints",&nb_nodes);
-
-   /// It should be noted that grib iterator is *only* available for certain grids
-   /// i.e for Spherical Harmonics it is not implemented.
-   int err = 0;
-   grib_iterator *i = grib_iterator_new(h, 0, &err);
-   if(err != 0 ) {
-      throw SeriousBug(string("Error reading grib. Could not create grib_iterator_new"),Here()) ;
-   }
-
-   PointList* pts = new PointList(nb_nodes);
-
-   double lat   = 0.;
-   double lon   = 0.;
-   double value = 0.;
-
-   size_t idx = 0;
-   while( grib_iterator_next(i,&lat,&lon,&value) )
-   {
-      (*pts)[idx].assign(lat,lon);
-      ++idx;
-   }
-
-   if ( grib_iterator_delete(i) != 0 ) {
-      throw SeriousBug(string("Error reading grib. Could not delete grib iterator"),Here()) ;
-   }
-
-   ASSERT( idx == nb_nodes );
-   return pts;
-}
-
-static void read_data_points(grib_handle *h, PointList& points)
-{
-   // points to read
-   long nb_nodes = 0;
-   grib_get_long(h,"numberOfDataPoints",&nb_nodes);
-
-   points.reserve(nb_nodes);
-
-   /// It should be noted that grib iterator is *only* available for certain grids
-   /// i.e for Spherical Harmonics it is not implemented.
-   int err = 0;
-   grib_iterator *i = grib_iterator_new(h, 0, &err);
-   if ( err != 0 ) {
-      throw SeriousBug(string("Error reading grib. Could not create grib_iterator_new"),Here()) ;
-   }
-
-   double lat   = 0.;
-   double lon   = 0.;
-   double value = 0.;
-   while( grib_iterator_next(i,&lat,&lon,&value) ) {
-      points.push_back( Grid::Point(lat,lon) );
-   }
-   ASSERT( points.size() == nb_nodes );
-
-   if ( grib_iterator_delete(i) != 0 )
-      throw SeriousBug(string("Error reading grib. Could not delete grib iterator"),Here()) ;
-}
+long GribRotatedLatLon::rows() const { return the_grid_->rows();}
+long GribRotatedLatLon::cols() const { return the_grid_->cols();}
+double GribRotatedLatLon::incLat() const { return the_grid_->incLat(); }
+double GribRotatedLatLon::incLon() const { return the_grid_->incLon(); }
 
 } // namespace grid
 } // namespace eckit

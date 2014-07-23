@@ -498,7 +498,8 @@ void Tesselation::build_mesh( const Grid& grid, Mesh& mesh )
 
     ASSERT( npts == nodes.extents()[0] );
 
-    const std::vector<Grid::Point>& ll = grid.coordinates();
+	std::vector<Grid::Point> ll(npts);
+	grid.coordinates(ll);
 
     for( size_t i = 0; i < npts; ++i )
     {

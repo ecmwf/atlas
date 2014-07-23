@@ -13,7 +13,9 @@
 #include <cstddef>
 #include <string>
 #include "grib_api.h"
+
 #include "eckit/filesystem/PathName.h"
+#include "eckit/memory/NonCopyable.h"
 #include "eckit/io/StdFile.h"
 
 //------------------------------------------------------------------------------------------------------
@@ -23,24 +25,21 @@ namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
-// ==========================================================================
 // Ensures grib handle is always deleted, in presence of exceptions
-class StackGribFile {
+class StackGribFile : private eckit::NonCopyable {
 public:
-   StackGribFile(const std::string& the_file_path);
+   StackGribFile(const std::string& path);
    StackGribFile(const eckit::PathName& pathname);
    ~StackGribFile();
 
-   grib_handle* handle() const { return handle_;}
+   grib_handle& handle() const { return *handle_; }
 
 private:
    eckit::StdFile theGribFile_;
    grib_handle* handle_;
 
 private:
-   void init(const std::string& the_file_path);
-   StackGribFile(const StackGribFile&);            // prevent copies
-   StackGribFile& operator=(const StackGribFile&); // prevent assignment
+   void init(const std::string& path);
 };
 
 //------------------------------------------------------------------------------------------------------

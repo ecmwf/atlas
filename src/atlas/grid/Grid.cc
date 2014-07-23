@@ -8,14 +8,29 @@
  * does it submit to any jurisdiction.
  */
 
+#include "eckit/memory/Factory.h"
+#include "eckit/memory/Builder.h"
+
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Tesselation.h"
+
+using namespace eckit;
 
 namespace atlas {
 namespace grid {
 
 //------------------------------------------------------------------------------------------------------
+
+Grid::Ptr Grid::create(const Params& p )
+{
+	return Grid::Ptr( Factory<Grid>::instance().get( p["gridType"] ).create(p) );
+}
+
+Grid::Ptr Grid::create(const GridSpec&)
+{
+	NOTIMP;
+}
 
 Grid::Grid()
 {
@@ -51,7 +66,15 @@ const Mesh& Grid::mesh() const
 
 Grid::BoundBox Grid::makeGlobalBBox()
 {
-    return Grid::BoundBox( 90., -90., 359.9999999, 0. );
+	return Grid::BoundBox( 90., -90., 359.9999999, 0. );
+}
+
+Grid::BoundBox Grid::makeBBox(const Params& p)
+{
+	return BoundBox( p["area_n"],
+					 p["area_s"],
+					 p["area_e"],
+					 p["area_w"] );
 }
 
 //------------------------------------------------------------------------------------------------------

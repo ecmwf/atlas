@@ -14,7 +14,7 @@
 #include <vector>
 
 #include "atlas/grid/Grid.h"
-#include "atlas/grid/GridFactory.h"
+
 
 //-----------------------------------------------------------------------------
 
@@ -23,39 +23,55 @@ namespace grid {
 
 //-----------------------------------------------------------------------------
 
-class ReducedLatLonGrid : public Grid {
-   REGISTER(ReducedLatLonGrid);
-public:
-   ReducedLatLonGrid();
-   virtual ~ReducedLatLonGrid();
+// ==================================================================================
+// gribs use the following convention: (from Shahram)
+//
+// Horizontally:  Points scan in the +i (+x) direction
+// Vertically:    Points scan in the -j (-y) direction
+//
+// The way I verified this was to look at our SAMPLE files (which IFS uses).
+// I also verified that IFS does not modify the scanning modes
+// so whatever the samples say, is the convention
+// ==================================================================================
+// Area: Do we check the area.
+// Area: Can we assume area is multiple of the grids ?
+
+class ReducedLatLon : public Grid {
+
+public: // methods
+
+   ReducedLatLon( const eckit::Params& p );
+
+   virtual ~ReducedLatLon();
 
    /// Overridden functions
    virtual std::string hash() const { return hash_;}
    virtual BoundBox boundingBox() const { return bbox_;}
    virtual size_t nPoints() const { return points_.size(); }
-   virtual void coordinates( Grid::Coords & ) const;
+
+   virtual void coordinates( std::vector<double>& ) const;
+   virtual void coordinates( std::vector<Point>& ) const;
+
    virtual std::string gridType() const { return std::string("reduced_ll") ;}
    virtual GridSpec* spec() const;
-   virtual void constructFrom(const GridSpec& );
-   virtual bool compare(const Grid&) const;
+   virtual bool same(const Grid&) const;
 
-   /// @deprecated will be removed soon as it exposes the inner storage of the coordinates
-   virtual const std::vector<Point>& coordinates() const { return points_; }
+protected: // methods
 
-   /// Functions specific to Reduced Lat long grids
    long rows() const { return nptsNS_;}
    double incLat() const { return nsIncrement_; }
 
-private:
+private: // members
+
    std::string hash_;
    BoundBox bbox_;
    double nsIncrement_;                   ///< In degrees
    long nptsNS_;                          ///< No of points along Y axes
    std::vector<long>    rgSpec_;          ///< No of points per latitude
-   std::vector< Point > points_;           ///< storage of coordinate points
+   std::vector< Point > points_;          ///< storage of coordinate points
 
    /// Added friend mechanism to minimise data copying, during construction
-   friend class GribReducedLatLonGrid;
+   friend class GribReducedLatLon;
 };
 
 //-----------------------------------------------------------------------------

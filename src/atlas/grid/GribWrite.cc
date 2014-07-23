@@ -14,13 +14,15 @@
 #include "eckit/config/Resource.h"
 #include "eckit/exception/Exceptions.h"
 #include "eckit/filesystem/PathName.h"
-#include "eckit/grib/GribHandle.h"
 #include "eckit/utils/Translator.h"
 #include "eckit/memory/ScopedPtr.h"
 #include "eckit/io/DataHandle.h"
 #include "eckit/io/FileHandle.h"
 #include "eckit/filesystem/LocalPathName.h"
 #include "eckit/parser/StringTools.h"
+
+#include "eckit/grib/GribParams.h"
+#include "eckit/grib/GribHandle.h"
 
 #include "atlas/mesh/Field.hpp"
 #include "atlas/mesh/FunctionSpace.hpp"
@@ -36,6 +38,7 @@
 
 using namespace std;
 using namespace eckit;
+using namespace eckit::grib;
 using namespace atlas;
 using namespace atlas::grid;
 
@@ -44,6 +47,13 @@ namespace atlas {
 static std::string map_short_name_to_grib_sample_file(const std::string& short_name, long editionNumber);
 
 //------------------------------------------------------------------------------------------------------
+
+Grid::Ptr GribWrite::create_grid(GribHandle& gh)
+{
+	GribParams* gp = GribParams::create(gh);
+	ASSERT( gp );
+	return Grid::create( *gp );
+}
 
 GribHandle::Ptr GribWrite::create_handle( const Grid& grid, long edition )
 {
@@ -131,13 +141,13 @@ void GribWrite::determine_grib_samples_dir(std::vector<std::string>& sample_path
 
 bool match_grid_spec_with_sample_file(
          const GridSpec& the_grid_spec,
-         grib_handle* handle,
+		 grib_handle& handle,
          long editionNumber,
          const std::string& file_path)
 {
    char string_value[64];
    size_t len = sizeof(string_value)/sizeof(char);
-   int err = grib_get_string(handle,"gridType",string_value,&len);
+   int err = grib_get_string(&handle,"gridType",string_value,&len);
    if (err != 0) {
       //Log::error() << "GribWrite::match_grid_spec_with_sample_file, grib_get_string(gridType) failed for \nfile " << file_path << " IGNORING !! " << std::endl;
       return false;
@@ -152,7 +162,7 @@ bool match_grid_spec_with_sample_file(
    if (!spec_nj.isNil()) {
       long the_spec_nj = spec_nj;
       long grib_nj = 0;
-      if (grib_get_long(handle,"Nj",&grib_nj) == 0 ) {
+	  if (grib_get_long(&handle,"Nj",&grib_nj) == 0 ) {
          if (the_spec_nj != grib_nj ) {
             //Log::info() << "GribWrite::match_grid_spec_with_sample_file, Nj in GridSpec " << the_spec_nj << " does not match  " << grib_nj << " in samples file " << file_path << " IGNORING " << std::endl;
             return false;
@@ -163,7 +173,7 @@ bool match_grid_spec_with_sample_file(
    if (!spec_ni.isNil()) {
       long the_spec_ni = spec_ni;
       long grib_ni = 0;
-      if (grib_get_long(handle,"Ni",&grib_ni) == 0 ) {
+	  if (grib_get_long(&handle,"Ni",&grib_ni) == 0 ) {
          if (the_spec_ni != grib_ni ) {
             //Log::info() << "GribWrite::match_grid_spec_with_sample_file, Ni in GridSpec " << the_spec_ni << " does not match  " << grib_ni << " in samples file " << file_path << " IGNORING " << std::endl;
             return false;
@@ -172,7 +182,7 @@ bool match_grid_spec_with_sample_file(
    }
 
    long grib_editionNumber = 0;
-   GRIB_CHECK(grib_get_long(handle,"editionNumber",&grib_editionNumber),0);
+   GRIB_CHECK(grib_get_long(&handle,"editionNumber",&grib_editionNumber),0);
    if (grib_editionNumber != editionNumber ) {
       //Log::info() << "GribWrite::match_grid_spec_with_sample_file, the_edition_number passed in " << editionNumber << " does not match grib" << editionNumber << " in samples file " << file_path << " IGNORING " << std::endl;
       return false;
@@ -389,7 +399,7 @@ GribHandle::Ptr GribWrite::clone(const FieldHandle& field, GribHandle& gridsec )
 
     // check number of points matches
 
-    size_t nb_nodes = gridsec.getNbDataPoints();
+    size_t nb_nodes = gridsec.nbDataPoints();
     ASSERT( nb_nodes == f.size() );
 
     ///@todo move this to the eckit::grib interface

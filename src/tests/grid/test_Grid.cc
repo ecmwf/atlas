@@ -19,8 +19,9 @@
 #include "eckit/filesystem/PathName.h"
 #include "eckit/filesystem/LocalPathName.h"
 
+#include "eckit/grib/GribHandle.h"
+
 #include "atlas/grid/Grid.h"
-#include "atlas/grid/GribGridBuilder.h"
 #include "atlas/grid/StackGribFile.h"
 #include "atlas/grid/GribWrite.h"
 #include "atlas/grid/GridSpec.h"
@@ -28,8 +29,9 @@
 
 using namespace std;
 using namespace eckit;
-using namespace atlas::grid;
+using namespace eckit::grib;
 using namespace atlas;
+using namespace atlas::grid;
 
 /// Test for Grid* derivatives
 /// This test uses the grib samples directory.
@@ -91,18 +93,18 @@ static void test_grids_from_grib_sample_directory(const std::string& directory)
    }
 }
 
-static void test_grib_file(const std::string& the_file_path)
+static void test_grib_file(const std::string& fpath)
 {
    std::cout << "\n===================================================================================================" << std::endl;
-   std::cout << "Opening GRIB file " << the_file_path << std::endl;
-   StackGribFile the_grib_file(the_file_path);
+   std::cout << "Opening GRIB file " << fpath << std::endl;
+   StackGribFile gf(fpath);
 
    std::cout << " Get the grid type" << std::endl;
    char string_value[64];
    size_t len = sizeof(string_value)/sizeof(char);
-   int err = grib_get_string(the_grib_file.handle(),"gridType",string_value,&len);
+   int err = grib_get_string( &gf.handle(),"gridType",string_value,&len);
    if (err != 0) {
-      BOOST_WARN_MESSAGE(err == 0,"grib_get_string(gridType) failed for \nfile " << the_file_path << " IGNORING !!!!\n");
+	  BOOST_WARN_MESSAGE(err == 0,"grib_get_string(gridType) failed for \nfile " << fpath << " IGNORING !!!!\n");
       return;
    }
 
@@ -114,36 +116,37 @@ static void test_grib_file(const std::string& the_file_path)
    }
 
    long editionNumber = 0;
-   GRIB_CHECK(grib_get_long(the_grib_file.handle(),"editionNumber",&editionNumber),0);
+   GRIB_CHECK(grib_get_long(&gf.handle(),"editionNumber",&editionNumber),0);
 
 
    // Unstructured grid can not handle Spherical harmonics
-   atlas::grid::Grid::Ptr the_grid = GRIBGridBuilder::instance().build_grid_from_grib_handle(the_grib_file.handle());
-   BOOST_CHECK_MESSAGE(the_grid,"GRIBGridBuilder::instance().build_grid_from_grib_handle failed for file " << the_file_path);
-   if (!the_grid) return;
+   GribHandle gh( gf.handle() );
+   atlas::grid::Grid::Ptr g = GribWrite::create_grid(gh);
+   BOOST_CHECK_MESSAGE(g,"GRIBGridBuilder::instance().build_grid_from_grib_handle failed for file " << fpath);
+   if (!g) return;
 
    // The Grid produced, has a GRID spec, the grid spec can be used to,
    // make sure the grid types match
-   eckit::ScopedPtr< GridSpec > the_grid_spec( the_grid->spec() );
-   BOOST_CHECK_MESSAGE(the_grid->gridType() == gridType,"gridType(" << gridType << ") did not match Grid constructor(" << the_grid->gridType() << ") for file " << the_file_path);
-   BOOST_CHECK_MESSAGE(the_grid_spec->grid_type() == gridType,"gridType(" << gridType << ") did not match GridSpec constructor(" << the_grid_spec->grid_type() << ") for file " << the_file_path);
+   eckit::ScopedPtr< GridSpec > g_spec( g->spec() );
+   BOOST_CHECK_MESSAGE(g->gridType() == gridType,"gridType(" << gridType << ") did not match Grid constructor(" << g->gridType() << ") for file " << fpath);
+   BOOST_CHECK_MESSAGE(g_spec->grid_type() == gridType,"gridType(" << gridType << ") did not match GridSpec constructor(" << g_spec->grid_type() << ") for file " << fpath);
 
    // find the corresponding sample file.
    // However we need to take into account that the GRIB samples, file are *NOT* unique in their GRID definition.
    // The sample file name produced does not have '.tmpl' extension
-   std::string generated_sample_file_name = GribWrite::grib_sample_file( *the_grid_spec , editionNumber);
-   BOOST_CHECK_MESSAGE( !generated_sample_file_name.empty()," Could *not* find sample file for grid_spec " << *the_grid_spec );
+   std::string generated_sample_file_name = GribWrite::grib_sample_file( *g_spec , editionNumber);
+   BOOST_CHECK_MESSAGE( !generated_sample_file_name.empty()," Could *not* find sample file for grid_spec " << *g_spec );
 
 
    // Note: many of the grib samples files are not UNIQUE in their grid specification:
    // hence the use of WARN.
    // remove .tmpl and get base part
-   eckit::LocalPathName path(the_file_path);
+   eckit::LocalPathName path(fpath);
    LocalPathName the_base_name = path.baseName(false);
    std::string grib_sample_file = the_base_name.localPath();
    BOOST_WARN_MESSAGE( generated_sample_file_name == grib_sample_file, "\nCould not match samples expected '"
                        << grib_sample_file << "' but found('"
                        << generated_sample_file_name
                        << "') for grid spec "
-                       << *the_grid_spec );
+					   << *g_spec );
 }

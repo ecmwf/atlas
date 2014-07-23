@@ -25,12 +25,12 @@ namespace grid {
 
 //-----------------------------------------------------------------------------
 
-/*static*/ void Latitudes::uniform(size_t resolution, std::vector<double>& lats) 
+void Latitudes::uniform(size_t resolution, std::vector<double>& lats)
 { 
     NOTIMP;
 }
 
-/*static*/void Latitudes::gaussian(size_t resolution, std::vector<double>& lats)
+void Latitudes::gaussian(size_t resolution, std::vector<double>& lats)
 {
     lats.resize(resolution);
 
@@ -42,7 +42,7 @@ namespace grid {
         Latitudes::refineGaussianLatitude(resolution, lats[i]);
 }
 
-/*static*/void Latitudes::refineGaussianLatitude(size_t resolution, double& value)
+void Latitudes::refineGaussianLatitude(size_t resolution, double& value)
 {
     // NB code only tested on positive (Northern) hemisphere
     //
@@ -84,7 +84,7 @@ namespace grid {
 }
     
 
-/*static*/void Latitudes::initialGaussianLatitudes(size_t resolution, std::vector<double>& lats) 
+void Latitudes::initialGaussianLatitudes(size_t resolution, std::vector<double>& lats)
 {
 
     // Computes initial approximations for Gaussian latitudes

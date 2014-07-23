@@ -38,9 +38,7 @@ std::string GridSpec::grid_type() const
    if (val.isNil()) {
       throw eckit::SeriousBug("GridSpec with no grid type specified", Here());
    }
-
-   std::string the_grid_type = val;
-   return the_grid_type;
+   return val.as<std::string>();
 }
 
 void GridSpec::set_short_name(const std::string& the_short_name)
@@ -54,8 +52,7 @@ std::string GridSpec::short_name() const
    if (val.isNil()) {
       throw eckit::SeriousBug("GridSpec with no short name specified", Here());
    }
-   std::string the_short_name = val;
-   return the_short_name;
+   return val.as<std::string>();
 }
 
 void GridSpec::print_simple(std::ostream& s) const

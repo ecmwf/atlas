@@ -23,6 +23,7 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 #include "eckit/value/Params.h"
+#include "eckit/memory/Builder.h"
 
 #include "eckit/geometry/Point2.h"
 
@@ -50,36 +51,20 @@ class Grid : public eckit::Owned {
 
 public: // types
 
-    typedef eckit::geometry::LLPoint2           Point;     ///< point type
+	typedef eckit::BuilderT1<Grid> builder_t;
+	typedef const eckit::Params&   ARG1;
 
-    typedef eckit::geometry::LLBoundBox2        BoundBox;
+    typedef eckit::geometry::LLPoint2           Point;     ///< point type
+	typedef eckit::geometry::LLBoundBox2        BoundBox;  ///< bounding box type
 
     typedef eckit::SharedPtr<Grid> Ptr;
 
-//    class Iterator {
-//    public:
-//        virtual ~GridIterator() {}
-//        virtual bool next( double& lat, double& lon ) = 0;
-//    };
-//    virtual Iterator* makeIterator() const = 0;
-
-    class Coords {
-    public:
-
-        Coords( std::vector<double>& v ) : coords_(v) { ASSERT( v.size() && v.size()%2 == 0 ); }
-        size_t size() const { return coords_.size() / 2; }
-        double& lat( size_t i ) { return coords_[i];   }
-        double& lon( size_t i ) { return coords_[i+1]; }
-
-    private:
-
-        std::vector<double>& coords_;
-    };
-
-    Mesh& mesh();
-    const Mesh& mesh() const;
-
 public: // methods
+
+	static std::string className() { return "atlas.grid.Grid"; }
+
+	static Grid::Ptr create( const eckit::Params& );
+	static Grid::Ptr create( const GridSpec& );
 
     Grid();
 
@@ -91,23 +76,25 @@ public: // methods
 
     virtual size_t nPoints() const = 0;
 
-    virtual void coordinates( Grid::Coords& ) const = 0;
+	virtual void coordinates( std::vector<double>& ) const = 0;
+	virtual void coordinates( std::vector<Point>& ) const = 0;
 
     virtual std::string gridType() const = 0;
 
-    /// The GridSpec also includes the gridType, new allocated
     virtual GridSpec* spec() const = 0;
 
-    virtual void constructFrom(const GridSpec& ) = 0;
+	virtual bool same(const Grid&) const = 0;
 
-    virtual void constructFrom( const eckit::Params& ) { NOTIMP; }
+	Mesh& mesh();
+	const Mesh& mesh() const;
 
-    virtual bool compare(const Grid&) const = 0;
+protected: // methods
 
-    /// @deprecated will be removed soon as it exposes the inner storage of the coordinates
-    virtual const std::vector<Point>& coordinates() const = 0;
+	/// helper function to initialize global grids, with a global area (BoundBox)
+	static BoundBox makeGlobalBBox();
 
-    static BoundBox makeGlobalBBox();
+	/// helper function to create bounding boxes (for non-global grids)
+	static BoundBox makeBBox( const eckit::Params& );
 
 private: // members
 

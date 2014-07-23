@@ -23,11 +23,11 @@
 #include "eckit/io/StdFile.h"
 
 #include "eckit/geometry/Point2.h"
-#include "atlas/grid/RegularLatLonGrid.h"
-#include "atlas/grid/ReducedLatLonGrid.h"
-#include "atlas/grid/RotatedLatLonGrid.h"
-#include "atlas/grid/ReducedGaussianGrid.h"
-#include "atlas/grid/RegularGaussianGrid.h"
+#include "atlas/grid/RegularLatLon.h"
+#include "atlas/grid/ReducedLatLon.h"
+#include "atlas/grid/RotatedLatLon.h"
+#include "atlas/grid/ReducedGG.h"
+#include "atlas/grid/RegularGG.h"
 
 /// Our operations currently(2014) produces data with following grids.
 ///    o Spherical harmonics
@@ -146,10 +146,10 @@ protected:
 
 /// To avoid copying data, we placed the data directly into GRID classes
 /// via use of friendship
-class GribReducedGaussianGrid : public GribGridBuilderHelper {
+class GribReducedGG : public GribGridBuilderHelper {
 public:
-   GribReducedGaussianGrid( grib_handle* h );
-   virtual ~GribReducedGaussianGrid();
+   GribReducedGG( grib_handle* h );
+   virtual ~GribReducedGG();
 
    virtual Grid::Ptr build();
 
@@ -159,17 +159,17 @@ private:
    bool isGlobalWestEast() const;
 
 private:
-   eckit::ScopedPtr<ReducedGaussianGrid> the_grid_;
+   eckit::ScopedPtr<ReducedGG> the_grid_;
 };
 
 // =============================================================================
 
 /// To avoid copying data, we placed the data directly into GRID
 /// via use of friendship
-class GribRegularGaussianGrid : public GribGridBuilderHelper {
+class GribRegularGG : public GribGridBuilderHelper {
 public:
-   GribRegularGaussianGrid( grib_handle* h );
-   virtual ~GribRegularGaussianGrid();
+   GribRegularGG( grib_handle* h );
+   virtual ~GribRegularGG();
 
    virtual Grid::Ptr build();
 
@@ -178,17 +178,17 @@ private:
    bool isGlobalWestEast() const;
 
 private:
-   eckit::ScopedPtr<RegularGaussianGrid> the_grid_;
+   eckit::ScopedPtr<RegularGG> the_grid_;
 };
 
 // =============================================================================
 
 /// To avoid copying data, we placed the data directly into GRID
 /// via use of friendship
-class GribRegularLatLonGrid : public GribGridBuilderHelper {
+class GribRegularLatLon : public GribGridBuilderHelper {
 public:
-   GribRegularLatLonGrid( grib_handle* h );
-   virtual ~GribRegularLatLonGrid();
+   GribRegularLatLon( grib_handle* h );
+   virtual ~GribRegularLatLon();
 
    virtual Grid::Ptr build();
 
@@ -200,16 +200,16 @@ private:
    double incLon() const;
 
 private:
-   eckit::ScopedPtr<RegularLatLonGrid> the_grid_;
+   eckit::ScopedPtr<RegularLatLon> the_grid_;
 };
 
 
 /// To avoid copying data, we placed the data directly into GRID classes
 /// via use of friendship
-class GribReducedLatLonGrid : public GribGridBuilderHelper {
+class GribReducedLatLon : public GribGridBuilderHelper {
 public:
-   GribReducedLatLonGrid( grib_handle* h );
-   virtual ~GribReducedLatLonGrid();
+   GribReducedLatLon( grib_handle* h );
+   virtual ~GribReducedLatLon();
 
    virtual Grid::Ptr build();
 
@@ -224,17 +224,17 @@ private:
    bool isGlobalWestEast() const;
 
 private:
-   eckit::ScopedPtr<ReducedLatLonGrid> the_grid_;
+   eckit::ScopedPtr<ReducedLatLon> the_grid_;
 };
 
 /// To avoid copying data, we placed the data directly into GRID classes
 /// via use of friendship
 /// NOTE: grib iterator does not rotate the data points.
 ///       This grid is not currently produced by IFS
-class GribRotatedLatLonGrid : public GribGridBuilderHelper {
+class GribRotatedLatLon : public GribGridBuilderHelper {
 public:
-   GribRotatedLatLonGrid( grib_handle* h );
-   virtual ~GribRotatedLatLonGrid();
+   GribRotatedLatLon( grib_handle* h );
+   virtual ~GribRotatedLatLon();
 
    virtual Grid::Ptr build();
 
@@ -252,7 +252,7 @@ private:
    long computeCols(double west, double east) const;
 
 private:
-   eckit::ScopedPtr<RotatedLatLonGrid> the_grid_;
+   eckit::ScopedPtr<RotatedLatLon> the_grid_;
 };
 
 //------------------------------------------------------------------------------------------------------

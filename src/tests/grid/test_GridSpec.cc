@@ -19,8 +19,9 @@
 #include "eckit/filesystem/PathName.h"
 #include "eckit/filesystem/LocalPathName.h"
 
+#include "eckit/grib/GribHandle.h"
+
 #include "atlas/grid/Grid.h"
-#include "atlas/grid/GribGridBuilder.h"
 #include "atlas/grid/StackGribFile.h"
 #include "atlas/grid/GribWrite.h"
 #include "atlas/grid/GridSpec.h"
@@ -28,8 +29,9 @@
 
 using namespace std;
 using namespace eckit;
-using namespace atlas::grid;
+using namespace eckit::grib;
 using namespace atlas;
+using namespace atlas::grid;
 
 /// Test for Grid* derivatives
 /// This test uses the grib samples directory.
@@ -57,7 +59,7 @@ BOOST_AUTO_TEST_CASE( test_gridspec )
 
    for(size_t i =0; i < registered_grid_types.size(); ++i) {
       GridSpec spec(registered_grid_types[i]);
-      Grid::Ptr grid = GridFactory::create(spec);
+	  Grid::Ptr grid = Grid::create(spec);
       BOOST_CHECK_MESSAGE(grid,"Failed to create Grid ");
       BOOST_CHECK_MESSAGE(spec.grid_type() == grid->gridType(),"grid types dont match");
    }
@@ -111,18 +113,18 @@ static void test_grids_from_grib_sample_directory(const std::string& directory)
    }
 }
 
-static void test_grib_file(const std::string& the_file_path)
+static void test_grib_file(const std::string& fpath)
 {
    std::cout << "\n===================================================================================================" << std::endl;
-   std::cout << "Opening GRIB file " << the_file_path << std::endl;
-   StackGribFile the_grib_file(the_file_path);
+   std::cout << "Opening GRIB file " << fpath << std::endl;
+   StackGribFile gf(fpath);
 
    std::cout << " Get the grid type" << std::endl;
    char string_value[64];
    size_t len = sizeof(string_value)/sizeof(char);
-   int err = grib_get_string(the_grib_file.handle(),"gridType",string_value,&len);
+   int err = grib_get_string(&gf.handle(),"gridType",string_value,&len);
    if (err != 0) {
-      BOOST_WARN_MESSAGE(err == 0,"grib_get_string(gridType) failed for \nfile " << the_file_path << " IGNORING !!!!\n");
+	  BOOST_WARN_MESSAGE(err == 0,"grib_get_string(gridType) failed for \nfile " << fpath << " IGNORING !!!!\n");
       return;
    }
 
@@ -134,22 +136,23 @@ static void test_grib_file(const std::string& the_file_path)
    }
 
    // Create Grid derivatives from the GRIB file
-   atlas::grid::Grid::Ptr grid_created_from_grib = GRIBGridBuilder::instance().build_grid_from_grib_handle(the_grib_file.handle());
-   BOOST_CHECK_MESSAGE(grid_created_from_grib,"GRIBGridBuilder::instance().build_grid_from_grib_handle failed for file " << the_file_path);
+   GribHandle gh( gf.handle() );
+   atlas::grid::Grid::Ptr grid_created_from_grib = GribWrite::create_grid(gh);
+   BOOST_CHECK_MESSAGE(grid_created_from_grib,"GRIBGridBuilder::instance().build_grid_from_grib_handle failed for file " << fpath);
    if (!grid_created_from_grib) return;
 
    // The Grid produced, has a GRID spec, the grid spec can be used to,
    // make sure the grid types match
-   eckit::ScopedPtr< GridSpec > the_grid_spec( grid_created_from_grib->spec() );
-   the_grid_spec->print_simple(std::cout); std::cout << "\n";
+   eckit::ScopedPtr< GridSpec > g_spec( grid_created_from_grib->spec() );
+   g_spec->print_simple(std::cout); std::cout << "\n";
 
-   BOOST_CHECK_MESSAGE(grid_created_from_grib->gridType() == gridType,"gridType(" << gridType << ") did not match Grid constructor(" << grid_created_from_grib->gridType() << ") for file " << the_file_path);
-   BOOST_CHECK_MESSAGE(the_grid_spec->grid_type() == gridType,"gridType(" << gridType << ") did not match GridSpec constructor(" << the_grid_spec->grid_type() << ") for file " << the_file_path);
+   BOOST_CHECK_MESSAGE(grid_created_from_grib->gridType() == gridType,"gridType(" << gridType << ") did not match Grid constructor(" << grid_created_from_grib->gridType() << ") for file " << fpath);
+   BOOST_CHECK_MESSAGE(g_spec->grid_type() == gridType,"gridType(" << gridType << ") did not match GridSpec constructor(" << g_spec->grid_type() << ") for file " << fpath);
 
    // From the Spec, create another Grid, we should get back the same Grid
-   Grid::Ptr grid_created_from_spec = GridFactory::create(*the_grid_spec);
+   Grid::Ptr grid_created_from_spec = Grid::create(*g_spec);
    BOOST_CHECK_MESSAGE(grid_created_from_spec,"Failed to create GRID from GridSpec");
-   bool grid_compare = grid_created_from_grib->compare(*grid_created_from_spec);
+   bool grid_compare = grid_created_from_grib->same(*grid_created_from_spec);
    BOOST_CHECK_MESSAGE(grid_compare,"The grids are differnt");
 
 }
