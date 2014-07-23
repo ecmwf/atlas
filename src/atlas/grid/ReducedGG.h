@@ -68,7 +68,7 @@ public: // methods
    virtual GridSpec* spec() const;
    virtual bool same(const Grid&) const;
 
-protected: // methods
+public: // methods
 
    long gaussianNumber() const { return gaussianNumber_;}
    const std::vector<long>&  pointsPerLatitude() const { return rgSpec_;}
