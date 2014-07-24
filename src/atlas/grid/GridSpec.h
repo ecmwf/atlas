@@ -40,50 +40,31 @@ namespace grid {
 class GridSpec : public eckit::Properties {
 public:
 
-   GridSpec(const std::string& grid_type);
+    GridSpec(const std::string& grid_type);
 
-   ~GridSpec();
+    ~GridSpec();
 
-   /// returns the gridType. currently this matches grid _type found in GRIB
-   std::string grid_type() const;
+    /// returns the gridType. currently this matches grid _type found in GRIB
+    std::string grid_type() const;
 
-   /// returns short name description of this grid
-   /// We use the following prefix:
-   /// 'LL'  -  regular lat/lon grid                             - other centres, wave data.
-   /// 'NP'  -  northern polar ster. projection (reg. lat/lon)
-   /// 'SP'  -  southern polar ster. projection (reg. lat/lon)
-   /// 'GG'  -  regular gaussian grid (surface)                  - Surface and some upper air fields.
-   /// 'SH'  -  spherical harmonics coefficients                 - Upper air fields.
-   /// 'QG'  -  quasi regular gaussian grid
-   /// 'RL'  -  rotated lat long
-   /// 'RedLL'- reduced lat long
-   void uid(const std::string&);
-   std::string uid() const;
+    void uid(const std::string&);
+    std::string uid() const;
 
-   /// Helper functions, Used to build up a grid spec
-   void set_points(const std::vector<Grid::Point>& );
-   void set_latitudes(const std::vector<double>& latitudes);
-   void set_rgspec(const std::vector<long>&  rgSpec);
-   void set_bounding_box(const Grid::BoundBox& bbox );
+    /// Helper functions, Used to build up a grid spec
+    void set_latitudes(const std::vector<double>& latitudes);
+    void set_rgspec(const std::vector<long>&  rgSpec);
+    void set_bounding_box(const Grid::BoundBox& bbox );
 
-   void get_points(std::vector<Grid::Point>& ) const;
-   void get_latitudes(std::vector<double>& latitudes) const;
-   void get_rgspec(std::vector<long>& rgSpec) const;
-   void get_bounding_box(Grid::BoundBox& bbox ) const;
+    void get_latitudes(std::vector<double>& latitudes) const;
+    void get_rgspec(std::vector<long>& rgSpec) const;
+    void get_bounding_box(Grid::BoundBox& bbox ) const;
 
-   /// Avoid printing points and latitudes.
-   void print_simple(std::ostream& os) const;
-
-   friend std::ostream& operator<<( std::ostream& os, const GridSpec& v) { v.print(os); return os;}
+    friend std::ostream& operator<<( std::ostream& os, const GridSpec& v) { v.print(os); return os;}
 
 private:
 
-   void print( std::ostream& ) const;
+    void print( std::ostream& ) const;
 
-   // TODO, stoing the points is ok , however destroting points, is a performance hog.
-   // Need a faster way ??
-   // Hack temp, store points locally.
-   std::vector<Grid::Point> points_;
 };
 
 //------------------------------------------------------------------------------------------------------

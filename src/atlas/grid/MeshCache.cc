@@ -20,7 +20,7 @@ namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
 
-std::string MeshCache::filename(const std::string &key)
+std::string MeshCache::filename(const std::string& key)
 {
 //    PathName base_path = Resource<PathName>("$MIR_CACHE_DIR;MirCacheDir","/tmp");
 

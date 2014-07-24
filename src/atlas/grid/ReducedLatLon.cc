@@ -79,7 +79,6 @@ GridSpec* ReducedLatLon::spec() const
 
    grid_spec->set_bounding_box(bbox_);
    grid_spec->set_rgspec(rgSpec_);
-   grid_spec->set_points(points_);
 
    return grid_spec;
 }

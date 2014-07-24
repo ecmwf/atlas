@@ -68,12 +68,16 @@ protected: // methods
 	double incLat() const { return incNS_; }
 	double incLon() const { return incWE_; }
 
-	double computeIncLat() const;
+private: // methods
 
-	double computeIncLon() const;
+    double computeIncLat() const;
+    double computeIncLon() const;
 
-//	long computeRows(double north, double south, double west, double east) const;
-//	long computeCols(double west, double east) const;
+    long computeRows() const;
+    long computeCols() const;
+
+    void computeGridNiNj( long Ni, long Nj );
+    void computeGridIncs( double, double );
 
 private: // members
 

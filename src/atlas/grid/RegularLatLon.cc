@@ -34,37 +34,63 @@ RegularLatLon::RegularLatLon( const eckit::Params& p )
 
 	bbox_ = makeBBox(p);
 
-	nptsNS_ = p["Nj"];
-	nptsWE_ = p["Ni"];
+    DEBUG_VAR( bbox_ );
+    DEBUG_VAR( bbox_.area() );
+
+    bool built_ninj = false;
+    bool built_incs = false;
+
+    if( p.has("Nj") && p.has("Ni") )
+    {
+        computeGridNiNj( p["Nj"], p["Ni"] );
+        built_ninj = true;
+    }
+
+    if( p.has("grid_ns_inc") && p.has("grid_ew_inc") )
+    {
+        computeGridIncs( p["grid_ns_inc"], p["grid_ew_inc"] );
+        built_incs = true;
+    }
+
+    if( ! built_ninj && ! built_incs )
+        throw BadParameter("Not enought information to build RegularLatLon", Here() );
+
+    /// checks
 
 	ASSERT( nptsNS_ > 1 ); // can't have a grid with just one row
 	ASSERT( nptsWE_ > 1 ); // can't have a grid with just one col
 
-	DEBUG_VAR( bbox_ );
-	DEBUG_VAR( bbox_.area() );
+    RealCompare<double> cmp( degrees_eps() );
 
-	RealCompare<double> cmp( Resource<double>("$MIR_EPSILON",1E-6) );
+    if( built_ninj && p.has("grid_ns_inc") )
+    {
+        double jInc = p["grid_ns_inc"];
+        if( ! cmp( incNS_, jInc ) )
+            Log::warning() << "Increment in latitude " <<  jInc << " does not match expected value " << incNS_ << std::endl;
+    }
 
-	if( ! p.get("grid_ns_inc").isNil() )
-	{
-		double jInc = p["grid_ns_inc"];
-		if( ! cmp(computeIncLat(), jInc ) )
-			Log::warning() << "Increment in latitude " <<  jInc << " does not match expected value " << computeIncLat() << std::endl;
-	}
+    if( built_ninj &&  p.has("grid_ew_inc") )
+    {
+        double iInc = p["grid_ew_inc"];
+        if( ! cmp( incWE_, iInc ) )
+            Log::warning() << "Increment in longitude " <<  iInc << " does not match expected value " << incWE_ << std::endl;
+    }
 
-	if( ! p.get("grid_ew_inc").isNil() )
-	{
-		double iInc = p["grid_ew_inc"];
-		if( ! cmp(computeIncLon(), iInc ) )
-			Log::warning() << "Increment in longitude " <<  iInc << " does not match expected value " << computeIncLon() << std::endl;
-	}
+    if( built_incs &&  p.has("Nj") )
+    {
+        long nj = p["Nj"];
+        if( nptsNS_ != nj )
+            Log::warning() << "Number of j columns " << nj << " does not match expected value " << nptsNS_ << std::endl;
+    }
 
-	incNS_ = computeIncLat();
-	incWE_ = computeIncLon();
+    if( built_incs &&  p.has("Ni") )
+    {
+        long ni = p["Ni"];
+        if( nptsWE_ != ni )
+            Log::warning() << "Number of i rows " << ni << " does not match expected value " << nptsWE_ << std::endl;
+    }
 
-	DEBUG_VAR( hash_ );
-
-	DEBUG_VAR( *spec() );
+    DEBUG_VAR( *spec() );
 }
 
 RegularLatLon::RegularLatLon(size_t ni, size_t nj, const Grid::BoundBox& bbox) :
@@ -132,7 +158,35 @@ double RegularLatLon::computeIncLon() const
 
 //	// Avoid truncation errors
 //	long inc_lon = ((east - west)/cols() + 0.5 );
-//	return inc_lon;
+    //	return inc_lon;
+}
+
+long RegularLatLon::computeRows() const
+{
+    return (bbox_.east() - bbox_.west()) / incLon() + 1;
+}
+
+long RegularLatLon::computeCols() const
+{
+    return (bbox_.north() - bbox_.south()) / incLat() + 1;
+}
+
+void RegularLatLon::computeGridNiNj(long Ni, long Nj)
+{
+    nptsNS_ = Ni;
+    nptsWE_ = Nj;
+
+    incNS_ = computeIncLat();
+    incWE_ = computeIncLon();
+}
+
+void RegularLatLon::computeGridIncs(double incNS, double incWE)
+{
+    incNS_ = incNS;
+    incWE_ = incWE;
+
+    nptsNS_ = computeRows();
+    nptsWE_ = computeCols();
 }
 
 //long RegularLatLon::computeRows(double north, double south, double west, double east) const

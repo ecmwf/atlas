@@ -72,13 +72,13 @@ Grid::BoundBox Grid::makeGlobalBBox()
 
 Grid::BoundBox Grid::makeBBox(const Params& p)
 {
-	if( p.get("area_s").isNil() )
+	if( p.get("grid_bbox_s").isNil() )
 		return Grid::makeGlobalBBox();
 
-	return BoundBox( p["area_n"],
-					 p["area_s"],
-					 p["area_e"],
-					 p["area_w"] );
+	return BoundBox( p["grib_bbox_n"],
+					 p["grid_bbox_s"],
+					 p["grid_bbox_e"],
+					 p["grid_bbox_w"] );
 }
 
 double Grid::degrees_eps()

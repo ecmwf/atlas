@@ -97,7 +97,6 @@ GridSpec* RegularGG::spec() const
    grid_spec->set("hash",eckit::Value(hash_));
    grid_spec->set_bounding_box(bbox_);
    grid_spec->set_latitudes(latitudes_);
-   grid_spec->set_points(points_);
 
    return grid_spec;
 }

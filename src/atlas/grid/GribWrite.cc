@@ -44,7 +44,7 @@ using namespace atlas::grid;
 
 namespace atlas {
 
-static std::string map_short_name_to_grib_sample_file(const std::string& short_name, long editionNumber);
+static std::string map_uid_to_grib_sample_file(const std::string& short_name, long edition);
 
 //------------------------------------------------------------------------------------------------------
 
@@ -69,9 +69,9 @@ GribHandle::Ptr GribWrite::create_handle( const Grid& grid, long edition )
     grib_handle* gh = 0;
     std::string sample_file;
 
-    // first match GridSpec short names, directly to a samples file
+    // first match GridSpec uid, directly to a samples file
 
-	sample_file = map_short_name_to_grib_sample_file( gridspec->uid(), edition );
+    sample_file = map_uid_to_grib_sample_file( gridspec->uid(), edition );
     if( !sample_file.empty() )
     {
         gh = grib_handle_new_from_samples(0,sample_file.c_str() );
@@ -98,11 +98,11 @@ GribHandle::Ptr GribWrite::create_handle( const Grid& grid, long edition )
 
 void GribWrite::determine_grib_samples_dir(std::vector<std::string>& sample_paths)
 {
-   char* the_paths = grib_samples_path(NULL);
-   if (the_paths) {
+   char* paths = grib_samples_path(NULL);
+   if (paths) {
       // Expect <path1>:<path2>:<path3:
       // TODO: Need abstraction for path separator.
-      sample_paths = StringTools::split(":", std::string(the_paths));
+      sample_paths = StringTools::split(":", std::string(paths));
       return;
    }
 
@@ -141,160 +141,148 @@ void GribWrite::determine_grib_samples_dir(std::vector<std::string>& sample_path
 }
 
 bool match_grid_spec_with_sample_file(
-		 const GridSpec& g_spec,
-		 grib_handle& handle,
-         long editionNumber,
-         const std::string& file_path)
+        const GridSpec& g_spec,
+        grib_handle& handle,
+        long edition,
+        const std::string& file_path )
 {
-   char string_value[64];
-   size_t len = sizeof(string_value)/sizeof(char);
-   int err = grib_get_string(&handle,"gridType",string_value,&len);
-   if (err != 0) {
-      //Log::error() << "GribWrite::match_grid_spec_with_sample_file, grib_get_string(gridType) failed for \nfile " << file_path << " IGNORING !! " << std::endl;
-      return false;
-   }
-   std::string grib_grid_type = string_value;
-   if ( g_spec.grid_type() != grib_grid_type ) {
-	  //Log::info() << "grid_type in GridSpec " << g_spec.grid_type() << " does not match " << grib_grid_type << " in samples file " << file_path << " IGNORING " << std::endl;
-      return false;
-   }
+    DEBUG_VAR(file_path);
 
-   eckit::Value spec_nj = g_spec.get("Nj");
-   if (!spec_nj.isNil()) {
-      long the_spec_nj = spec_nj;
-      long grib_nj = 0;
-	  if (grib_get_long(&handle,"Nj",&grib_nj) == 0 ) {
-         if (the_spec_nj != grib_nj ) {
-            //Log::info() << "GribWrite::match_grid_spec_with_sample_file, Nj in GridSpec " << the_spec_nj << " does not match  " << grib_nj << " in samples file " << file_path << " IGNORING " << std::endl;
-            return false;
-         }
-      }
-   }
-   eckit::Value spec_ni = g_spec.get("Ni");
-   if (!spec_ni.isNil()) {
-      long the_spec_ni = spec_ni;
-      long grib_ni = 0;
-	  if (grib_get_long(&handle,"Ni",&grib_ni) == 0 ) {
-         if (the_spec_ni != grib_ni ) {
-            //Log::info() << "GribWrite::match_grid_spec_with_sample_file, Ni in GridSpec " << the_spec_ni << " does not match  " << grib_ni << " in samples file " << file_path << " IGNORING " << std::endl;
-            return false;
-         }
-      }
-   }
+    char string_value[64];
+    size_t len = sizeof(string_value)/sizeof(char);
+    int err = grib_get_string(&handle,"gridType",string_value,&len);
+    if (err != 0) {
+        //Log::error() << "GribWrite::match_grid_spec_with_sample_file, grib_get_string(gridType) failed for \nfile " << file_path << " IGNORING !! " << std::endl;
+        return false;
+    }
 
-   long grib_editionNumber = 0;
-   GRIB_CHECK(grib_get_long(&handle,"editionNumber",&grib_editionNumber),0);
-   if (grib_editionNumber != editionNumber ) {
-      //Log::info() << "GribWrite::match_grid_spec_with_sample_file, the_edition_number passed in " << editionNumber << " does not match grib" << editionNumber << " in samples file " << file_path << " IGNORING " << std::endl;
-      return false;
-   }
+    std::string grib_grid_type = string_value;
+    if ( g_spec.grid_type() != grib_grid_type ) {
+        //Log::info() << "grid_type in GridSpec " << g_spec.grid_type() << " does not match " << grib_grid_type << " in samples file " << file_path << " IGNORING " << std::endl;
+        return false;
+    }
 
-   return true;
+//    eckit::Value spec_nj = g_spec.get("Nj");
+//    if (!spec_nj.isNil()) {
+//        long spec_nj = spec_nj;
+//        long grib_nj = 0;
+//        if (grib_get_long(&handle,"Nj",&grib_nj) == 0 ) {
+//            if (spec_nj != grib_nj ) {
+//                //Log::info() << "GribWrite::match_grid_spec_with_sample_file, Nj in GridSpec " << spec_nj << " does not match  " << grib_nj << " in samples file " << file_path << " IGNORING " << std::endl;
+//                return false;
+//            }
+//        }
+//    }
+//    eckit::Value spec_ni = g_spec.get("Ni");
+//    if (!spec_ni.isNil()) {
+//        long spec_ni = spec_ni;
+//        long grib_ni = 0;
+//        if (grib_get_long(&handle,"Ni",&grib_ni) == 0 ) {
+//            if (spec_ni != grib_ni ) {
+//                //Log::info() << "GribWrite::match_grid_spec_with_sample_file, Ni in GridSpec " << spec_ni << " does not match  " << grib_ni << " in samples file " << file_path << " IGNORING " << std::endl;
+//                return false;
+//            }
+//        }
+//    }
+
+    long grib_edition = 0;
+    GRIB_CHECK(grib_get_long(&handle,"editionNumber",&grib_edition),0);
+    if (grib_edition != edition ) {
+        //Log::info() << "GribWrite::match_grid_spec_with_sample_file, edition_number passed in " << edition << " does not match grib" << edition << " in samples file " << file_path << " IGNORING " << std::endl;
+        return false;
+    }
+
+    return true;
 }
 
-std::string GribWrite::grib_sample_file( const grid::GridSpec& g_spec, long editionNumber )
+std::string GribWrite::grib_sample_file( const grid::GridSpec& g_spec, long edition )
 {
-   // Note: many of the grib samples files are not UNIQUE in their grid specification:
-   // i.e
-   //   GRIB2.tmpl                        -> GridSpec[ regular_ll, LL31_16_2, Ni:16, Nj:31, typeOfLevel:surface ]
-   //   regular_ll_pl_grib2.tmpl          -> GridSpec[ regular_ll, LL31_16_2, Ni:16, Nj:31 ]
-   //   regular_ll_sfc_grib2.tmpl         -> GridSpec[ regular_ll, LL31_16_2, Ni:16, Nj:31 ]
-   //
-   //   reduced_gg_ml_grib1               -> GridSpec[ reduced_gg, QG32_1, Nj:64 ]
-   //   reduced_gg_pl_32_grib1            -> GridSpec[ reduced_gg, QG32_1, Nj:64 ]
-   //   reduced_gg_ml_grib2               -> GridSpec[ reduced_gg, QG32_2, Nj:64 ]
-   //   reduced_gg_pl_32_grib2            -> GridSpec[ reduced_gg, QG32_2, Nj:64 ]
-   //
-   // Others are just plain wrong, i.e
-   //   polar_stereographic_pl_grib2.tmpl -> GridSpec[ rotated_ll, RL31_2, Ni:16, Nj:31, editionNumber:2 ]
+    // Note: many of the grib samples files are not UNIQUE in their grid specification:
+    // i.e
+    //   GRIB2.tmpl                        -> GridSpec[ regular_ll, LL31_16_2, Ni:16, Nj:31, typeOfLevel:surface ]
+    //   regular_ll_pl_grib2.tmpl          -> GridSpec[ regular_ll, LL31_16_2, Ni:16, Nj:31 ]
+    //   regular_ll_sfc_grib2.tmpl         -> GridSpec[ regular_ll, LL31_16_2, Ni:16, Nj:31 ]
+    //
+    //   reduced_gg_ml_grib1               -> GridSpec[ reduced_gg, QG32_1, Nj:64 ]
+    //   reduced_gg_pl_32_grib1            -> GridSpec[ reduced_gg, QG32_1, Nj:64 ]
+    //   reduced_gg_ml_grib2               -> GridSpec[ reduced_gg, QG32_2, Nj:64 ]
+    //   reduced_gg_pl_32_grib2            -> GridSpec[ reduced_gg, QG32_2, Nj:64 ]
+    //
+    // Others are just plain wrong, i.e
+    //   polar_stereographic_pl_grib2.tmpl -> GridSpec[ rotated_ll, RL31_2, Ni:16, Nj:31, editionNumber:2 ]
+    //
+    // From the grid spec, we will look at the grid samples, and find the closest match
 
-   // From the grid spec, we will look at the grid samples, and find the closest match
-   std::vector<std::string> sample_paths;
-   determine_grib_samples_dir(sample_paths);
-   if ( sample_paths.empty() ) {
-      throw SeriousBug(string("Error no sample paths found"),Here()) ;
-   }
+    std::vector<std::string> sample_paths;
+    determine_grib_samples_dir(sample_paths);
 
-   for(size_t path = 0; path < sample_paths.size(); ++path) {
+    if ( sample_paths.empty() )
+        throw SeriousBug(string("Error no sample paths found"),Here()) ;
 
-      std::string grib_samples_dir = sample_paths[path];
-      if (grib_samples_dir.empty()) {
-         throw SeriousBug(string("Error, empty samples path. Could not create handle from grid"),Here()) ;
-      }
-      PathName dir_path(grib_samples_dir);
-      if (!dir_path.exists()) continue;
-      if (!dir_path.isDir())  continue;
+    for(size_t path = 0; path < sample_paths.size(); ++path)
+    {
+        std::string grib_samples_dir = sample_paths[path];
 
-      std::vector<PathName> files;
-      std::vector<PathName> directories;
-      dir_path.children(files,directories);
-      for(size_t i = 0; i < files.size(); i++) {
-         try {
-            StackGribFile the_grib_file(std::string(files[i].localPath()));
+        if (grib_samples_dir.empty())
+            throw SeriousBug(string("Error, empty samples path. Could not create handle from grid"),Here()) ;
 
-            std::string grib_sample_file_tmpl = files[i].localPath();
-			if (match_grid_spec_with_sample_file(g_spec,the_grib_file.handle(),editionNumber,grib_sample_file_tmpl)) {
-               // remove .tmpl extension
-               eckit::LocalPathName path(grib_sample_file_tmpl);
-               LocalPathName the_base_name = path.baseName(false);
-               std::string grib_sample_file = the_base_name.localPath();
-               return grib_sample_file;
+        PathName dir_path(grib_samples_dir);
+
+        if( !dir_path.exists() ) continue;
+        if( !dir_path.isDir()  ) continue;
+
+        std::vector<PathName> files;
+        std::vector<PathName> directories;
+        dir_path.children(files,directories);
+
+        for(size_t i = 0; i < files.size(); i++)
+        {
+            try
+            {
+                StackGribFile grib_file(string(files[i].localPath()));
+
+                std::string grib_sample_file_tmpl = files[i].localPath();
+                if( match_grid_spec_with_sample_file(g_spec,grib_file.handle(),edition,grib_sample_file_tmpl))
+                {
+                    // remove .tmpl extension
+                    eckit::LocalPathName path(grib_sample_file_tmpl);
+                    LocalPathName base_name = path.baseName(false);
+                    string grib_sample_file = base_name.localPath();
+                    return grib_sample_file;
+                }
             }
-         }
-         catch ( const std::exception & ex ) {
-            Log::info() << files[i].localPath() << " " << ex.what() << std::endl;
-         }
-      }
-   }
+            catch ( const std::exception & ex )
+            {
+                Log::info() << files[i].localPath() << " " << ex.what() << std::endl;
+            }
+        }
+    }
 
-   Log::info() << "Could find grib samples match for grid_spec " << g_spec << std::endl;
-   return std::string();
+    Log::info() << "Could find grib samples match for grid_spec " << g_spec << std::endl;
+    return std::string();
 }
 
-static std::string map_short_name_to_grib_sample_file(const std::string& short_name,long editionNumber)
+static std::string map_uid_to_grib_sample_file(const std::string& uid, long edition)
 {
-   std::stringstream ss; ss << short_name << "_" << editionNumber;
-   std::string the_short_name = ss.str();
+    using std::string;
 
-   // Short cut, for mapping short name to grib samples file.
-   std::map<std::string,std::string> short_name_to_samples_map;
-   short_name_to_samples_map.insert( std::make_pair(std::string("QG32_1"),std::string("reduced_gg_pl_32_grib1")) );
-   short_name_to_samples_map.insert( std::make_pair(std::string("QG32_2"),std::string("reduced_gg_pl_32_grib2")) );
-   short_name_to_samples_map.insert( std::make_pair(std::string("QG48_1"),std::string("reduced_gg_pl_48_grib1")) );
-   short_name_to_samples_map.insert( std::make_pair(std::string("QG48_2"),std::string("reduced_gg_pl_48_grib2")) );
-   short_name_to_samples_map.insert( std::make_pair(std::string("QG80_1"),std::string("reduced_gg_pl_80_grib1")) );
-   short_name_to_samples_map.insert( std::make_pair(std::string("QG80_2"),std::string("reduced_gg_pl_80_grib2")) );
-   short_name_to_samples_map.insert( std::make_pair(std::string("QG128_1"),std::string("reduced_gg_pl_128_grib1")) );
-   short_name_to_samples_map.insert( std::make_pair(std::string("QG128_2"),std::string("reduced_gg_pl_128_grib2")) );
-   short_name_to_samples_map.insert( std::make_pair(std::string("QG160_1"),std::string("reduced_gg_pl_160_grib1")) );
-   short_name_to_samples_map.insert( std::make_pair(std::string("QG160_2"),std::string("reduced_gg_pl_160_grib2")) );
-   short_name_to_samples_map.insert( std::make_pair(std::string("QG200_1"),std::string("reduced_gg_pl_200_grib1")) );
-   short_name_to_samples_map.insert( std::make_pair(std::string("QG200_2"),std::string("reduced_gg_pl_200_grib2")) );
-   short_name_to_samples_map.insert( std::make_pair(std::string("QG256_1"),std::string("reduced_gg_pl_256_grib1")) );
-   short_name_to_samples_map.insert( std::make_pair(std::string("QG256_2"),std::string("reduced_gg_pl_256_grib2")) );
-   short_name_to_samples_map.insert( std::make_pair(std::string("QG320_1"),std::string("reduced_gg_pl_320_grib1")) );
-   short_name_to_samples_map.insert( std::make_pair(std::string("QG320_2"),std::string("reduced_gg_pl_320_grib2")) );
-   short_name_to_samples_map.insert( std::make_pair(std::string("QG400_1"),std::string("reduced_gg_pl_400_grib1")) );
-   short_name_to_samples_map.insert( std::make_pair(std::string("QG400_2"),std::string("reduced_gg_pl_400_grib2")) );
-   short_name_to_samples_map.insert( std::make_pair(std::string("QG512_1"),std::string("reduced_gg_pl_512_grib1")) );
-   short_name_to_samples_map.insert( std::make_pair(std::string("QG512_2"),std::string("reduced_gg_pl_512_grib2")) );
-   short_name_to_samples_map.insert( std::make_pair(std::string("QG640_1"),std::string("reduced_gg_pl_640_grib1")) );
-   short_name_to_samples_map.insert( std::make_pair(std::string("QG640_2"),std::string("reduced_gg_pl_640_grib2")) );
-   short_name_to_samples_map.insert( std::make_pair(std::string("QG1024_1"),std::string("reduced_gg_pl_1024_grib1")) );
-   short_name_to_samples_map.insert( std::make_pair(std::string("QG1024_2"),std::string("reduced_gg_pl_1024_grib2")) );
-   short_name_to_samples_map.insert( std::make_pair(std::string("QG1280_1"),std::string("reduced_gg_pl_1280_grib1")) );
-   short_name_to_samples_map.insert( std::make_pair(std::string("QG1280_2"),std::string("reduced_gg_pl_1280_grib2")) );
-   short_name_to_samples_map.insert( std::make_pair(std::string("QG2000_1"),std::string("reduced_gg_pl_2000_grib1")) );
-   short_name_to_samples_map.insert( std::make_pair(std::string("QG2000_2"),std::string("reduced_gg_pl_2000_grib2")) );
+    long ns[14] = {32,48,80,128,160,200,256,320,400,512,640,1024,1280,2000};
 
-   std::map<std::string,std::string>::const_iterator i = short_name_to_samples_map.find(the_short_name);
-   if (i != short_name_to_samples_map.end()) {
-      return (*i).second;
-   }
-   return std::string();
+    std::map<std::string,std::string> uid_to_sample;
+
+    for( size_t i = 0; i < sizeof(ns)/sizeof(long); ++i)
+        uid_to_sample[ "reduced_gg_" + Translator<long,string>()(ns[i]) ] = string("reduced_gg_pl_" + Translator<long,string>()(ns[i]) );
+
+    string r;
+
+    std::map<string,string>::const_iterator i = uid_to_sample.find(uid);
+    if (i != uid_to_sample.end())
+    {
+      r = (*i).second + "_grib" + Translator<long,string>()(edition);
+    }
+
+    return r;
 }
-
-
 
 void GribWrite::write( const FieldSet& fields, const PathName& opath )
 {
