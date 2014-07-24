@@ -25,7 +25,7 @@ namespace grid {
 
 Grid::Ptr Grid::create(const Params& p )
 {
-	return Grid::Ptr( Factory<Grid>::instance().get( p["gridType"] ).create(p) );
+	return Grid::Ptr( Factory<Grid>::instance().get( p["grid_type"] ).create(p) );
 }
 
 Grid::Ptr Grid::create(const GridSpec&)
@@ -72,10 +72,13 @@ Grid::BoundBox Grid::makeGlobalBBox()
 
 Grid::BoundBox Grid::makeBBox(const Params& p)
 {
+	if( p.get("area_s").isNil() )
+		return Grid::makeGlobalBBox();
+
 	return BoundBox( p["area_n"],
 					 p["area_s"],
 					 p["area_e"],
-			p["area_w"] );
+					 p["area_w"] );
 }
 
 double Grid::degrees_eps()

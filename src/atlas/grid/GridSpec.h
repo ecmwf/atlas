@@ -40,8 +40,7 @@ namespace grid {
 class GridSpec : public eckit::Properties {
 public:
 
-   GridSpec(const std::string& the_grid_type);
-   GridSpec(const std::string& the_grid_type, const std::string& the_short_name);
+   GridSpec(const std::string& grid_type);
 
    ~GridSpec();
 
@@ -58,8 +57,8 @@ public:
    /// 'QG'  -  quasi regular gaussian grid
    /// 'RL'  -  rotated lat long
    /// 'RedLL'- reduced lat long
-   void set_short_name(const std::string& the_short_name);
-   std::string short_name() const;
+   void uid(const std::string&);
+   std::string uid() const;
 
    /// Helper functions, Used to build up a grid spec
    void set_points(const std::vector<Grid::Point>& );

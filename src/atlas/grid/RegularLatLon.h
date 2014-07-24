@@ -47,7 +47,9 @@ public: // methods
 
 	virtual ~RegularLatLon();
 
-	virtual std::string hash() const;
+	virtual std::string uid() const;
+	virtual std::string hash() const { return hash_;}
+
 	virtual BoundBox boundingBox() const;
 	virtual size_t nPoints() const;
 	virtual void coordinates( std::vector<double>& ) const;
@@ -76,9 +78,12 @@ protected: // methods
 private: // members
 
 	std::string hash_;
+
 	BoundBox bbox_;
+
 	double incNS_;             ///< in degrees
 	double incWE_;             ///< in degrees
+
 	long nptsNS_;
 	long nptsWE_;
 

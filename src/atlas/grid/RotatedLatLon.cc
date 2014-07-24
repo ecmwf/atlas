@@ -48,6 +48,13 @@ RotatedLatLon::~RotatedLatLon()
 {
 }
 
+string RotatedLatLon::uid() const
+{
+	std::stringstream ss;
+	ss << gridTypeStr() << "_" << nptsNS_;
+	return ss.str();
+}
+
 Grid::Point RotatedLatLon::latLon(size_t the_i, size_t the_j) const
 {
    double plon = bbox_.bottom_left().lon(); // west
@@ -84,8 +91,7 @@ GridSpec* RotatedLatLon::spec() const
 {
    GridSpec* grid_spec = new GridSpec(gridType());
 
-   std::stringstream ss; ss << "RL" << nptsNS_;
-   grid_spec->set_short_name(ss.str());
+   grid_spec->uid(uid());
    grid_spec->set("Ni",eckit::Value(nptsWE_));
    grid_spec->set("Nj",eckit::Value(nptsNS_));
 

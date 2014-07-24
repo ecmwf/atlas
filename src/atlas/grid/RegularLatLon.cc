@@ -29,36 +29,32 @@ ConcreteBuilderT1<Grid,RegularLatLon> RegularLatLon_builder("regular_ll");
 
 RegularLatLon::RegularLatLon( const eckit::Params& p )
 {
+	if( !p.get("hash").isNil() )
+		hash_ = p["hash"].as<std::string>();
+
+	bbox_ = makeBBox(p);
+
 	nptsNS_ = p["Nj"];
 	nptsWE_ = p["Ni"];
 
 	ASSERT( nptsNS_ > 1 ); // can't have a grid with just one row
 	ASSERT( nptsWE_ > 1 ); // can't have a grid with just one col
 
-	if( ! p.get("area_s").isNil() )
-	{
-		bbox_ = Grid::makeBBox(p);
-	}
-	else
-	{
-		bbox_ = Grid::makeGlobalBBox();
-	}
-
 	DEBUG_VAR( bbox_ );
 	DEBUG_VAR( bbox_.area() );
 
 	RealCompare<double> cmp( Resource<double>("$MIR_EPSILON",1E-6) );
 
-	if( ! p.get("jInc").isNil() )
+	if( ! p.get("grid_ns_inc").isNil() )
 	{
-		double jInc = p["jInc"];
+		double jInc = p["grid_ns_inc"];
 		if( ! cmp(computeIncLat(), jInc ) )
 			Log::warning() << "Increment in latitude " <<  jInc << " does not match expected value " << computeIncLat() << std::endl;
 	}
 
-	if( ! p.get("iInc").isNil() )
+	if( ! p.get("grid_ew_inc").isNil() )
 	{
-		double iInc = p["iInc"];
+		double iInc = p["grid_ew_inc"];
 		if( ! cmp(computeIncLon(), iInc ) )
 			Log::warning() << "Increment in longitude " <<  iInc << " does not match expected value " << computeIncLon() << std::endl;
 	}
@@ -66,13 +62,9 @@ RegularLatLon::RegularLatLon( const eckit::Params& p )
 	incNS_ = computeIncLat();
 	incWE_ = computeIncLon();
 
-	hash_ = p["hash"].as<std::string>();
-
 	DEBUG_VAR( hash_ );
 
 	DEBUG_VAR( *spec() );
-
-	NOTIMP;
 }
 
 RegularLatLon::RegularLatLon(size_t ni, size_t nj, const Grid::BoundBox& bbox) :
@@ -91,9 +83,11 @@ RegularLatLon::~RegularLatLon()
 {
 }
 
-string RegularLatLon::hash() const
+string RegularLatLon::uid() const
 {
-	 return hash_;
+	std::stringstream ss;
+	ss << RegularLatLon::gridTypeStr() << "_" << nptsNS_ << "_" << nptsWE_;
+	return ss.str();
 }
 
 Grid::BoundBox RegularLatLon::boundingBox() const
@@ -108,37 +102,37 @@ size_t RegularLatLon::nPoints() const
 
 double RegularLatLon::computeIncLat() const
 {
-	return (bbox_.north() - bbox_.south()) / rows();
+	return (bbox_.north() - bbox_.south()) / (rows() - 1);
 
-//    double north = bbox_.top_right().lat();
-//    double south = bbox_.bottom_left().lat();
+//	double north = bbox_.top_right().lat();
+//	double south = bbox_.bottom_left().lat();
 
-//    double north_diff_south = 0.0;
-//    if (north > 0.0 && south > 0.0 ) north_diff_south = north - south;
-//    else if ( north < 0.0 && south < 0.0) north_diff_south = fabs(north) - fabs(south);
-//    else north_diff_south  = fabs(north) + fabs(south);
+//	double north_diff_south = 0.0;
+//	if (north > 0.0 && south > 0.0 ) north_diff_south = north - south;
+//	else if ( north < 0.0 && south < 0.0) north_diff_south = fabs(north) - fabs(south);
+//	else north_diff_south  = fabs(north) + fabs(south);
 
-//    if (rows() > north_diff_south)
-//        return north_diff_south/rows();
+//	if (rows() > north_diff_south)
+//		return north_diff_south/rows();
 
-//    // Avoid truncation errors
-//    long inc_lat = north_diff_south/(rows() + 1) + 0.5;
-//    return inc_lat;
+//	// Avoid truncation errors
+//	long inc_lat = north_diff_south/(rows() + 1) + 0.5;
+//	return inc_lat;
 }
 
 double RegularLatLon::computeIncLon() const
 {
-	return (bbox_.east() - bbox_.west()) / cols();
+	return (bbox_.east() - bbox_.west()) / (cols() - 1);
 
-//    double east  = bbox_.top_right().lon();
-//    double west  = bbox_.bottom_left().lon();
+//	double east  = bbox_.top_right().lon();
+//	double west  = bbox_.bottom_left().lon();
 
-//    if (cols() > (east - west))
-//        return ((east - west)/cols());
+//	if (cols() > (east - west))
+//		return ((east - west)/cols());
 
-//    // Avoid truncation errors
-//    long inc_lon = ((east - west)/cols() + 0.5 );
-//    return inc_lon;
+//	// Avoid truncation errors
+//	long inc_lon = ((east - west)/cols() + 0.5 );
+//	return inc_lon;
 }
 
 //long RegularLatLon::computeRows(double north, double south, double west, double east) const
@@ -210,11 +204,7 @@ GridSpec* RegularLatLon::spec() const
 {
 	GridSpec* grid_spec = new GridSpec( gridType() );
 
-	std::stringstream ss;
-
-	ss << RegularLatLon::gridTypeStr() << "_" << nptsNS_ << "_" << nptsWE_;
-
-	grid_spec->set_short_name(ss.str());
+	grid_spec->uid( uid() );
 
     grid_spec->set("Nj",eckit::Value(nptsNS_));
     grid_spec->set("Ni",eckit::Value(nptsWE_));

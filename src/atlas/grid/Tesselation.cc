@@ -197,18 +197,18 @@ void cgal_polyhedron_to_atlas_mesh(  atlas::Mesh& mesh, Polyhedron_3& poly, Poin
 
 void Tesselation::tesselate( Grid& g )
 {
-    std::string hash = g.hash();
+	std::string uid = g.uid();
 
     Mesh& mesh = g.mesh();
 
-    if( MeshCache::get( hash, mesh ) )
+	if( MeshCache::get( uid, mesh ) )
         return;
 
-    std::cout << "mesh not in cache -- tesselating grid " << hash << std::endl;
+	std::cout << "mesh not in cache -- tesselating grid " << uid << std::endl;
 
     Tesselation::tesselate( mesh );
 
-    MeshCache::add( hash, mesh );
+	MeshCache::add( uid, mesh );
 }
 
 void Tesselation::tesselate( atlas::Mesh& mesh )

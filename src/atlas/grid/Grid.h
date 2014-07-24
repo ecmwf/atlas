@@ -70,7 +70,8 @@ public: // methods
 
     virtual ~Grid();
 
-    virtual std::string hash() const = 0;
+	virtual std::string uid() const = 0;
+	virtual std::string hash() const = 0;
 
     virtual BoundBox boundingBox() const = 0;
 

@@ -66,6 +66,11 @@ Unstructured::~Unstructured()
 {
 }
 
+std::string Unstructured::uid() const
+{
+	NOTIMP;
+}
+
 std::string Unstructured::hash() const
 {
     return hash_;
@@ -95,7 +100,9 @@ GridSpec* Unstructured::spec() const
 {
 	NOTIMP;
 
-	GridSpec* grid_spec = new GridSpec(gridType(),"U");
+	GridSpec* grid_spec = new GridSpec( gridType() );
+
+	grid_spec->uid("U");
 
 	grid_spec->set("hash",eckit::Value(hash_));
 	grid_spec->set_bounding_box(bound_box_);

@@ -58,7 +58,9 @@ public: // methods
 	RegularGG( const eckit::Params& p );
 	virtual ~RegularGG();
 
+	virtual std::string uid() const;
 	virtual std::string hash() const { return hash_;}
+
 	virtual BoundBox boundingBox() const { return bbox_; }
 	virtual size_t nPoints() const { return points_.size(); }
 

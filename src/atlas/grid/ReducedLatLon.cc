@@ -44,6 +44,13 @@ ReducedLatLon::~ReducedLatLon()
 {
 }
 
+string ReducedLatLon::uid() const
+{
+	std::stringstream ss;
+	ss << ReducedLatLon::gridTypeStr() << "_" << nptsNS_;
+	return ss.str();
+}
+
 void ReducedLatLon::coordinates(std::vector<double>& r ) const
 {
 	NOTIMP;
@@ -63,11 +70,7 @@ GridSpec* ReducedLatLon::spec() const
 {
    GridSpec* grid_spec = new GridSpec(gridType());
 
-   std::stringstream ss;
-
-   ss << ReducedLatLon::gridTypeStr() << "_" << nptsNS_;
-
-   grid_spec->set_short_name(ss.str());
+   grid_spec->uid( uid() );
 
    grid_spec->set("Nj",eckit::Value(nptsNS_));
    grid_spec->set("nsIncrement",eckit::Value(nsIncrement_));

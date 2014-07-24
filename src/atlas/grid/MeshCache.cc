@@ -67,6 +67,8 @@ bool MeshCache::get(const std::string &key, Mesh& mesh)
 {
     LocalPathName file( filename(key) );
 
+	Log::info() << "looking for file cache (" << file << ")" << std::endl;
+
     if( ! file.exists() )
     {
         return false;

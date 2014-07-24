@@ -30,10 +30,13 @@ ConcreteBuilderT1<Grid,ReducedGG> ReducedGG_builder("reduced_gg");
 
 ReducedGG::ReducedGG( const eckit::Params& p )
 {
-	gaussN_ = p["GaussN"];
-	nj_     = p["Nj"];
+	if( !p.get("hash").isNil() )
+		hash_ = p["hash"].as<std::string>();
 
 	bbox_ = makeBBox(p);
+
+	gaussN_ = p["GaussN"];
+	nj_     = p["Nj"];
 
 	ASSERT( nj_ == 2*gaussN_ );
 
@@ -69,6 +72,13 @@ ReducedGG::~ReducedGG()
 {
 }
 
+string ReducedGG::uid() const
+{
+	std::stringstream ss;
+	ss << gridTypeStr() << "_" << gaussN_;
+	return ss.str();
+}
+
 void ReducedGG::coordinates( std::vector<double>& pts ) const
 {
 	ASSERT( pts.size() && pts.size()%2 == 0 );
@@ -95,8 +105,7 @@ GridSpec* ReducedGG::spec() const
 {
    GridSpec* grid_spec = new GridSpec(gridType());
 
-   std::stringstream ss; ss << "QG" << gaussN_;
-   grid_spec->set_short_name(ss.str());
+   grid_spec->uid( uid() );
    grid_spec->set("gaussianNumber",eckit::Value(gaussN_));
 
    grid_spec->set("hash",eckit::Value(hash_));

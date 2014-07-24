@@ -52,6 +52,7 @@ Grid::Ptr GribWrite::create_grid(GribHandle& gh)
 {
 	GribParams* gp = GribParams::create(gh);
 	ASSERT( gp );
+	DEBUG_HERE;
 	return Grid::create( *gp );
 }
 
@@ -70,7 +71,7 @@ GribHandle::Ptr GribWrite::create_handle( const Grid& grid, long edition )
 
     // first match GridSpec short names, directly to a samples file
 
-    sample_file = map_short_name_to_grib_sample_file( gridspec->short_name(), edition );
+	sample_file = map_short_name_to_grib_sample_file( gridspec->uid(), edition );
     if( !sample_file.empty() )
     {
         gh = grib_handle_new_from_samples(0,sample_file.c_str() );

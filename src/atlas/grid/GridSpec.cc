@@ -18,35 +18,28 @@ namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
-GridSpec::GridSpec(const std::string& the_grid_type, const std::string& the_short_name)
+GridSpec::GridSpec(const std::string& grid_type)
 {
-   set("gridType",Properties::property_t(the_grid_type));
-   set("shortName",Properties::property_t(the_short_name));
-}
-
-GridSpec::GridSpec(const std::string& the_grid_type)
-{
-   set("gridType",Properties::property_t(the_grid_type));
+   set("grid_type",Properties::property_t(grid_type));
 }
 
 GridSpec::~GridSpec(){}
 
-
 std::string GridSpec::grid_type() const
 {
-   Properties::property_t val = get("gridType");
+   Properties::property_t val = get("grid_type");
    if (val.isNil()) {
       throw eckit::SeriousBug("GridSpec with no grid type specified", Here());
    }
    return val.as<std::string>();
 }
 
-void GridSpec::set_short_name(const std::string& the_short_name)
+void GridSpec::uid(const std::string& uid)
 {
-   set("shortName",Properties::property_t(the_short_name));
+   set("uid",Properties::property_t(uid));
 }
 
-std::string GridSpec::short_name() const
+std::string GridSpec::uid() const
 {
    Properties::property_t val = get("shortName");
    if (val.isNil()) {
@@ -59,7 +52,7 @@ void GridSpec::print_simple(std::ostream& s) const
 {
    s << "GridSpec[ ";
    s << "gridType:" << grid_type();
-   s << ", shortName:" << short_name();
+   s << ", shortName:" << uid();
 
    Grid::BoundBox bbox;
    get_bounding_box( bbox ) ;

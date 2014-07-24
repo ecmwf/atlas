@@ -43,7 +43,8 @@ public: // methods
 
     virtual ~Unstructured();
 
-    virtual std::string hash() const;
+	virtual std::string uid() const;
+	virtual std::string hash() const;
 
     virtual BoundBox boundingBox() const;
 

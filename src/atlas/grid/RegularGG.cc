@@ -44,6 +44,13 @@ RegularGG::~RegularGG()
 {
 }
 
+string RegularGG::uid() const
+{
+	std::stringstream ss;
+	ss << gridTypeStr() << "_" << gaussianNumber_;
+	return ss.str();
+}
+
 Grid::Point RegularGG::latLon(size_t the_i, size_t the_j) const
 {
     /// @todo this function is VERY inneficient -- please rewrite it!
@@ -83,8 +90,7 @@ GridSpec* RegularGG::spec() const
 {
    GridSpec* grid_spec = new GridSpec(gridType());
 
-   std::stringstream ss; ss << "GG" << gaussianNumber_;
-   grid_spec->set_short_name(ss.str());
+   grid_spec->uid( uid() );
    grid_spec->set("Nj",eckit::Value(nj_));
    grid_spec->set("gaussianNumber",eckit::Value(gaussianNumber_));
 
