@@ -73,22 +73,26 @@ public: // methods
 
 public: // methods
 
-	long gaussianNumber() const { return gaussianNumber_;}
+	long gaussianNumber() const { return gaussN_;}
+
 	const std::vector<long>&  pointsPerLatitude() const { return rgSpec_;}
 	const std::vector<double>&  latitudes() const { return latitudes_;}
+
+	void computePoints();
 
 private: // members
 
 	std::string          hash_;
 
-	long                 gaussianNumber_;      ///< No of points between pole and equator
+	long                 nbDataPoints_;        ///< no of data points in grid, taking into account the bounding box
+	long                 gaussN_;              ///< No of points between pole and equator
 	long                 nj_;                  ///< No of points along Y axes
 
 	BoundBox             bbox_;
 
-	std::vector<Point>   points_;              ///< storage of coordinate points
 	std::vector<long>    rgSpec_;              ///< No of points per latitude
 	std::vector<double>  latitudes_;           ///< the latitudes
+	std::vector<Point>   points_;
 };
 
 //-----------------------------------------------------------------------------

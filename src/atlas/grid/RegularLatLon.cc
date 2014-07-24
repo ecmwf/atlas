@@ -25,7 +25,7 @@ namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
-ConcreteBuilderT1<Grid,RegularLatLon> RegularLatLon_builder;
+ConcreteBuilderT1<Grid,RegularLatLon> RegularLatLon_builder("regular_ll");
 
 RegularLatLon::RegularLatLon( const eckit::Params& p )
 {
@@ -44,31 +44,35 @@ RegularLatLon::RegularLatLon( const eckit::Params& p )
 		bbox_ = Grid::makeGlobalBBox();
 	}
 
-	double east  = bbox_.top_right().lon();
-	double west  = bbox_.bottom_left().lon();
-	double north = bbox_.top_right().lat();
-	double south = bbox_.bottom_left().lat();
+	DEBUG_VAR( bbox_ );
+	DEBUG_VAR( bbox_.area() );
 
 	RealCompare<double> cmp( Resource<double>("$MIR_EPSILON",1E-6) );
 
-	if( p.get("jInc") )
+	if( ! p.get("jInc").isNil() )
 	{
 		double jInc = p["jInc"];
 		if( ! cmp(computeIncLat(), jInc ) )
 			Log::warning() << "Increment in latitude " <<  jInc << " does not match expected value " << computeIncLat() << std::endl;
 	}
 
-	if( p.get("iInc") )
+	if( ! p.get("iInc").isNil() )
 	{
 		double iInc = p["iInc"];
 		if( ! cmp(computeIncLon(), iInc ) )
-			Log::warning() << "Increment in latitude " <<  iInc << " does not match expected value " << computeIncLon() << std::endl;
+			Log::warning() << "Increment in longitude " <<  iInc << " does not match expected value " << computeIncLon() << std::endl;
 	}
 
 	incNS_ = computeIncLat();
 	incWE_ = computeIncLon();
 
 	hash_ = p["hash"].as<std::string>();
+
+	DEBUG_VAR( hash_ );
+
+	DEBUG_VAR( *spec() );
+
+	NOTIMP;
 }
 
 RegularLatLon::RegularLatLon(size_t ni, size_t nj, const Grid::BoundBox& bbox) :

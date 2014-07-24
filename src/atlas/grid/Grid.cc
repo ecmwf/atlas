@@ -10,6 +10,7 @@
 
 #include "eckit/memory/Factory.h"
 #include "eckit/memory/Builder.h"
+#include "eckit/config/Resource.h"
 
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/grid/Grid.h"
@@ -66,7 +67,7 @@ const Mesh& Grid::mesh() const
 
 Grid::BoundBox Grid::makeGlobalBBox()
 {
-	return Grid::BoundBox( 90., -90., 359.9999999, 0. );
+	return Grid::BoundBox( 90., -90., 360. - degrees_eps(), 0. );
 }
 
 Grid::BoundBox Grid::makeBBox(const Params& p)
@@ -74,7 +75,16 @@ Grid::BoundBox Grid::makeBBox(const Params& p)
 	return BoundBox( p["area_n"],
 					 p["area_s"],
 					 p["area_e"],
-					 p["area_w"] );
+			p["area_w"] );
+}
+
+double Grid::degrees_eps()
+{
+	/// default is 1E-3 because
+	/// some bugs in IFS means we need a lower resolution epsilon when decoding from grib2
+
+	static double eps = eckit::Resource<double>( "$ATLAS_GRID_DEGREES_EPSILON;GridDegreesEps", 1E-3 );
+	return eps;
 }
 
 //------------------------------------------------------------------------------------------------------

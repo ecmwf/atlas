@@ -261,7 +261,7 @@ Grid::Ptr GribReducedGG::build()
 {
    // Extract the gaussian grid attributes from the grib handle
 
-   GRIB_CHECK(grib_get_long(handle_,"numberOfParallelsBetweenAPoleAndTheEquator",&the_grid_->gaussianNumber_),0);
+   GRIB_CHECK(grib_get_long(handle_,"numberOfParallelsBetweenAPoleAndTheEquator",&the_grid_->gaussN_),0);
    GRIB_CHECK(grib_get_long(handle_,"Nj",&the_grid_->nj_),0);
 
    // get reduced grid specification. These are number of point's along the lines of latitude
@@ -273,11 +273,11 @@ Grid::Ptr GribReducedGG::build()
 
 
    // This provides the 'y' co-ordinate of each line of latitude
-   the_grid_->latitudes_.resize(2 *the_grid_->gaussianNumber_ );
-   grib_get_gaussian_latitudes(the_grid_->gaussianNumber_, &the_grid_->latitudes_[0]);
+   the_grid_->latitudes_.resize(2 *the_grid_->gaussN_ );
+   grib_get_gaussian_latitudes(the_grid_->gaussN_, &the_grid_->latitudes_[0]);
 
    // number of lines of latitude should, be twice the numberOfParallelsBetweenAPoleAndTheEquator
-   ASSERT( the_grid_->rgSpec_.size() == 2 * the_grid_->gaussianNumber_);
+   ASSERT( the_grid_->rgSpec_.size() == 2 * the_grid_->gaussN_);
    ASSERT( the_grid_->rgSpec_.size() == the_grid_->latitudes_.size());
 
 
@@ -322,11 +322,11 @@ Grid::Ptr GribReducedGG::build()
       }
    }
 
-   double EXPECTED_longitudeOfLastGridPointInDegrees = 360.0 - (90.0/(the_grid_->gaussianNumber_));
+   double EXPECTED_longitudeOfLastGridPointInDegrees = 360.0 - (90.0/(the_grid_->gaussN_));
 #ifdef DEBUG
    Log::info() << " editionNumber                                  " << editionNumber_ << std::endl;
    Log::info() << " epsilon()                                      " << epsilon() << std::endl;
-   Log::info() << " gaussianNumber_                                " << the_grid_->gaussianNumber_ << std::endl;
+   Log::info() << " gaussianNumber_                                " << the_grid_->gaussN_ << std::endl;
    Log::info() << " nj                                             " << the_grid_->nj_ << std::endl;
    Log::info() << " isGlobalNorthSouth()                           " << isGlobalNorthSouth() << std::endl;
    Log::info() << " isGlobalWestEast()                             " << isGlobalWestEast() << std::endl;
@@ -348,7 +348,7 @@ Grid::Ptr GribReducedGG::build()
    Log::info() << " points_.size()                                 " << the_grid_->points_.size() << std::endl;
 #endif
 
-   ASSERT(the_grid_->nj_ == 2*the_grid_->gaussianNumber_);
+   ASSERT(the_grid_->nj_ == 2*the_grid_->gaussN_);
    ASSERT(FloatCompare::is_equal(east_,EXPECTED_longitudeOfLastGridPointInDegrees,globalness_epsilon()));
    ASSERT(the_grid_->points_.size() == numberOfDataPoints_);
 
@@ -388,14 +388,14 @@ void GribReducedGG::add_point(int lat_index)
 
 bool GribReducedGG::isGlobalNorthSouth() const
 {
-   return (the_grid_->gaussianNumber_*2 == the_grid_->nj_);
+   return (the_grid_->gaussN_*2 == the_grid_->nj_);
 }
 
 bool GribReducedGG::isGlobalWestEast() const
 {
    // GRIB way of determining globalness, bugs in IFS means we need a lower resolution epsilon for grib2
    if (west_ == 0) {
-      double last_long = 360.0 - (90.0/(double)the_grid_->gaussianNumber_) ;
+      double last_long = 360.0 - (90.0/(double)the_grid_->gaussN_) ;
       return FloatCompare::is_equal(east_,last_long,globalness_epsilon());
    }
    return false;

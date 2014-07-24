@@ -8,9 +8,12 @@
  * does it submit to any jurisdiction.
  */
 
+#include "grib_api.h"
+
 #include "eckit/log/Log.h"
 #include "eckit/memory/Builder.h"
 #include "eckit/value/Value.h"
+#include "eckit/types/FloatCompare.h"
 
 #include "atlas/grid/GridSpec.h"
 #include "atlas/grid/ReducedGG.h"
@@ -25,19 +28,41 @@ namespace grid {
 
 ConcreteBuilderT1<Grid,ReducedGG> ReducedGG_builder("reduced_gg");
 
-//void ReducedGG::constructFrom(const GridSpec& grid_spec)
-//{
-//   if (grid_spec.has("gaussianNumber")) gaussianNumber_ = grid_spec.get("gaussianNumber");
-//   if (grid_spec.has("hash"))           hash_ = (std::string)grid_spec.get("hash");
-//   grid_spec.get_bounding_box(bbox_);
-//   grid_spec.get_rgspec(rgSpec_);
-//   grid_spec.get_latitudes(latitudes_);
-//   grid_spec.get_points(points_);
-//}
-
 ReducedGG::ReducedGG( const eckit::Params& p )
 {
-	NOTIMP;
+	gaussN_ = p["GaussN"];
+	nj_     = p["Nj"];
+
+	bbox_ = makeBBox(p);
+
+	ASSERT( nj_ == 2*gaussN_ );
+
+	ValueList nlats = p["NLats"];
+	rgSpec_.resize(nlats.size());
+	for( size_t i = 0; i < nlats.size(); ++i)
+		rgSpec_[i] = nlats[i];
+
+	ASSERT( rgSpec_.size() == 2 * gaussN_ ); // number of lines of latitude should, be twice the gaussN_
+
+	latitudes_.resize( rgSpec_.size() );
+
+	/// @todo this code should be moved into Atlas library and co-maintained with NA section
+	grib_get_gaussian_latitudes(gaussN_, &latitudes_[0]);
+
+	/// @todo this should not be necessary here -- check it...
+	///       we should either use latitudes (angle from equator) or colatitutes (angle from pole)
+	///       and class ReducedGG should stick to that definition
+	//	if (jScansPositively_ == 1 )
+	//	   std::reverse(latitudes_.begin(), latitudes_.end());
+
+	computePoints();
+
+	nbDataPoints_ = p["nbDataPoints"];
+
+	DEBUG_VAR( nbDataPoints_ );
+	DEBUG_VAR( points_.size() );
+
+	ASSERT( points_.size() == nbDataPoints_ );
 }
 
 ReducedGG::~ReducedGG()
@@ -46,12 +71,19 @@ ReducedGG::~ReducedGG()
 
 void ReducedGG::coordinates( std::vector<double>& pts ) const
 {
-	NOTIMP;
+	ASSERT( pts.size() && pts.size()%2 == 0 );
+	ASSERT( pts.size() == nPoints()*2 );
+	for( size_t i = 0; i < points_.size(); ++i )
+	{
+		pts[ 2*i   ] = points_[i].lat();
+		pts[ 2*i+1 ] = points_[i].lon();
+	}
 }
 
-void ReducedGG::coordinates(std::vector<Grid::Point>&) const
+void ReducedGG::coordinates(std::vector<Grid::Point>& pts) const
 {
-	NOTIMP;
+	ASSERT( pts.size() == nPoints() );
+	std::copy(points_.begin(),points_.end(),pts.begin());
 }
 
 string ReducedGG::gridType() const
@@ -63,9 +95,9 @@ GridSpec* ReducedGG::spec() const
 {
    GridSpec* grid_spec = new GridSpec(gridType());
 
-   std::stringstream ss; ss << "QG" << gaussianNumber_;
+   std::stringstream ss; ss << "QG" << gaussN_;
    grid_spec->set_short_name(ss.str());
-   grid_spec->set("gaussianNumber",eckit::Value(gaussianNumber_));
+   grid_spec->set("gaussianNumber",eckit::Value(gaussN_));
 
    grid_spec->set("hash",eckit::Value(hash_));
 
@@ -81,7 +113,7 @@ bool ReducedGG::same(const Grid& grid) const
 {
    if (gridType() != grid.gridType()) return false;
 
-   if ( static_cast<const ReducedGG&>(grid).gaussianNumber_ != gaussianNumber_) return false;
+   if ( static_cast<const ReducedGG&>(grid).gaussN_ != gaussN_) return false;
    if ( static_cast<const ReducedGG&>(grid).hash_ != hash_) return false;
    if ( static_cast<const ReducedGG&>(grid).bbox_ != bbox_) return false;
    if ( static_cast<const ReducedGG&>(grid).rgSpec_ != rgSpec_) return false;
@@ -91,6 +123,52 @@ bool ReducedGG::same(const Grid& grid) const
    return true;
 }
 
+void ReducedGG::computePoints()
+{
+	ASSERT( points_.size() == 0 );
+
+	RealCompare<double> isEqual(degrees_eps());
+
+	const double north = bbox_.north();
+	const double south = bbox_.south();
+	const double west = bbox_.west();
+	const double east = bbox_.east();
+
+//	DEBUG_VAR(north);
+//	DEBUG_VAR(south);
+//	DEBUG_VAR(west);
+//	DEBUG_VAR(east);
+
+	const std::vector<double>& lats = latitudes_;
+
+	for ( size_t i = 0;  i < rgSpec_.size(); ++i )
+	{
+		// check latitudes bound box
+		if( ( lats[i] <= north && lats[i] >= south )
+			|| isEqual(lats[i],north)
+			|| isEqual(lats[i],south) )
+		{
+			const long nlats = rgSpec_[i];
+
+			ASSERT( nlats > 0 );
+
+			const double delta_lat = 360.0/nlats;
+			double plon = 0;
+
+			for( long k = 0; k < nlats; ++k )
+			{
+				if( ( plon >= west && plon <= east ) || isEqual(plon,west) || isEqual(plon,east) )
+				{
+					points_.push_back( Grid::Point( lats[i], plon ) );
+				}
+//				else { std::cout << "skipped " << Grid::Point( lats[i], plon ) << std::endl; }
+
+				plon += delta_lat;
+			}
+		}
+//		else { std::cout << "skipped lats[" << i << "] : " << lats[i] << std::endl; }
+	}
+}
 
 //-----------------------------------------------------------------------------
 
