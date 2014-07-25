@@ -388,12 +388,6 @@ GribHandle::Ptr GribWrite::clone(const FieldHandle& field, GribHandle& gridsec )
     const Field& f = field.data();
     const size_t npts = f.size();
 
-    // check number of points matches
-
-    size_t nb_nodes = gridsec.nbDataPoints();
-    ASSERT( nb_nodes == f.size() );
-
-    ///@todo move this to the eckit::grib interface
     int err=0;
     int what = GRIB_SECTION_GRID;
 
