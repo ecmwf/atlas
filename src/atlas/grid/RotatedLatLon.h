@@ -56,7 +56,7 @@ public: // methods
 	virtual void coordinates( std::vector<Point>& ) const;
 
 	virtual std::string gridType() const;
-	virtual GridSpec* spec() const;
+	virtual GridSpec spec() const;
 	virtual bool same(const Grid&) const;
 
 protected: // methods

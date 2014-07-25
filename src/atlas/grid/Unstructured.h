@@ -55,7 +55,7 @@ public: // methods
 
     virtual std::string gridType() const { return std::string("unstructured"); }
 
-    virtual GridSpec* spec() const;
+	virtual GridSpec spec() const;
 
 	virtual bool same(const Grid&) const;
 

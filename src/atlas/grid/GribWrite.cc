@@ -23,6 +23,7 @@
 
 #include "eckit/grib/GribParams.h"
 #include "eckit/grib/GribHandle.h"
+#include "eckit/grib/GribMutator.h"
 
 #include "atlas/mesh/Field.hpp"
 #include "atlas/mesh/FunctionSpace.hpp"
@@ -43,6 +44,7 @@ using namespace atlas;
 using namespace atlas::grid;
 
 namespace atlas {
+namespace grid {
 
 static std::string map_uid_to_grib_sample_file(const std::string& short_name, long edition);
 
@@ -64,14 +66,14 @@ GribHandle::Ptr GribWrite::create_handle( const Grid& grid, long edition )
         edition = Resource<unsigned>( "NewGribEditionNumber", 2 );
 
     // From the Grid get the Grid Spec
-    eckit::ScopedPtr< GridSpec > gridspec( grid.spec() );
+	GridSpec grid_spec = grid.spec();
 
     grib_handle* gh = 0;
     std::string sample_file;
 
     // first match GridSpec uid, directly to a samples file
 
-    sample_file = map_uid_to_grib_sample_file( gridspec->uid(), edition );
+	sample_file = map_uid_to_grib_sample_file( grid_spec.uid(), edition );
     if( !sample_file.empty() )
     {
         gh = grib_handle_new_from_samples(0,sample_file.c_str() );
@@ -80,7 +82,7 @@ GribHandle::Ptr GribWrite::create_handle( const Grid& grid, long edition )
     }
     else // if this fails, then try looking on disk
     {
-        sample_file = GribWrite::grib_sample_file(*gridspec,edition);
+		sample_file = GribWrite::grib_sample_file(grid_spec,edition);
         if (!sample_file.empty())
         {
             gh = grib_handle_new_from_samples(0,sample_file.c_str() );
@@ -405,12 +407,60 @@ GribHandle::Ptr GribWrite::clone(const FieldHandle& field, GribHandle& gridsec )
 
     ASSERT( gh );
 
+	GridSpec grid_spec = field.grid().spec();
+
+	write_gridspec_to_grib( grid_spec , *gh );
+
     gh->setDataValues(f.data<double>(),npts);
 
-    return gh;
+	return gh;
+}
+
+struct gridspec_to_grib
+{
+	gridspec_to_grib(GridSpec& gspec, GribHandle& gh) :
+		gspec_(gspec),
+		gh_(gh)
+	{}
+
+	GribHandle& gh_;
+	GridSpec& gspec_;
+
+	template <typename T>
+	void set( std::string spec, std::string grib )
+	{
+		if( gspec_.has(spec) )
+		{
+			GribMutator<T>(grib).set( gh_, gspec_[spec] );
+		}
+	}
+};
+
+void GribWrite::write_gridspec_to_grib(GridSpec& gspec, GribHandle& gh)
+{
+	gridspec_to_grib gspec2grib(gspec,gh);
+
+	gspec2grib.set<long>( "Ni", "Ni" );
+	gspec2grib.set<long>( "Nj", "Nj" );
+
+	gspec2grib.set<double>( "grid_ns_inc", "jDirectionIncrementInDegrees" );
+	gspec2grib.set<double>( "grid_ew_inc", "iDirectionIncrementInDegrees" );
+
+	gspec2grib.set<long>( "GaussN", "numberOfParallelsBetweenAPoleAndTheEquator" );
+
+	gspec2grib.set<double>( "SouthPoleLat", "latitudeOfSouthernPoleInDegrees" );
+	gspec2grib.set<double>( "SouthPoleLon", "longitudeOfSouthernPoleInDegrees" );
+	gspec2grib.set<double>( "SouthPoleRotAngle", "angleOfRotation" );
+
+
+	gspec2grib.set<double>( "grib_bbox_n", "latitudeOfFirstGridPointInDegrees" );
+	gspec2grib.set<double>( "grid_bbox_s", "latitudeOfLastGridPointInDegrees" );
+	gspec2grib.set<double>( "grid_bbox_w", "longitudeOfFirstGridPointInDegrees" );
+	gspec2grib.set<double>( "grid_bbox_e", "longitudeOfLastGridPointInDegrees" );
 }
 
 //------------------------------------------------------------------------------------------------------
 
+} // namespace grid
 } // namespace atlas
 

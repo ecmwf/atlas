@@ -21,7 +21,6 @@
 
 #include "eckit/log/Log.h"
 #include "eckit/geometry/Point3.h"
-#include "eckit/grib/GribAccessor.h"
 #include "eckit/types/FloatCompare.h"
 #include "eckit/thread/Mutex.h"
 #include "eckit/thread/AutoLock.h"

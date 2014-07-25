@@ -86,17 +86,17 @@ string RegularGG::gridType() const
 	return RegularGG::gridTypeStr();
 }
 
-GridSpec* RegularGG::spec() const
+GridSpec RegularGG::spec() const
 {
-   GridSpec* grid_spec = new GridSpec(gridType());
+   GridSpec grid_spec(gridType());
 
-   grid_spec->uid( uid() );
-   grid_spec->set("Nj",eckit::Value(nj_));
-   grid_spec->set("gaussianNumber",eckit::Value(gaussianNumber_));
+   grid_spec.uid( uid() );
+   grid_spec.set("Nj", nj_);
+   grid_spec.set("gaussianNumber", gaussianNumber_);
 
-   grid_spec->set("hash",eckit::Value(hash_));
-   grid_spec->set_bounding_box(bbox_);
-   grid_spec->set_latitudes(latitudes_);
+   grid_spec.set("hash",hash_);
+   grid_spec.set_bounding_box(bbox_);
+   grid_spec.set_latitudes(latitudes_);
 
    return grid_spec;
 }

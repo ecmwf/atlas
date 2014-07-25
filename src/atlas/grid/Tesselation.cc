@@ -8,8 +8,6 @@
  * does it submit to any jurisdiction.
  */
 
-
-
 #include <cmath>
 #include <vector>
 #include <memory>
@@ -183,12 +181,12 @@ struct Polyhedron_3 {};
 
 Polyhedron_3* create_convex_hull_from_points( const std::vector< Point3 >& pts )
 {
-    throw std::string( "CGAL package not found -- triangulation is disabled" );
+	throw NotImplemented( "CGAL package not found -- triangulation is disabled", Here() );
 }
 
 void cgal_polyhedron_to_atlas_mesh(  atlas::Mesh& mesh, Polyhedron_3& poly, PointSet& points )
 {
-    throw std::string( "CGAL package not found -- triangulation is disabled" );
+	throw NotImplemented( "CGAL package not found -- triangulation is disabled", Here() );
 }
 
 #endif
@@ -245,7 +243,7 @@ void Tesselation::tesselate( atlas::Mesh& mesh )
 
 #else
 
-    throw std::string( "CGAL package not found -- triangulation is disabled" );
+	throw NotImplemented( "CGAL package not found -- triangulation is disabled", Here() );
 
 #endif
 }

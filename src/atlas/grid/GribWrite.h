@@ -11,8 +11,10 @@
 #ifndef atlas_GribWrite_h
 #define atlas_GribWrite_h
 
-#include "atlas/grid/FieldSet.h"
 #include "eckit/grib/GribHandle.h"
+
+#include "atlas/grid/FieldSet.h"
+#include "atlas/grid/GridSpec.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -20,6 +22,7 @@ namespace eckit { class PathName; }
 namespace eckit { class DataHandle; }
 
 namespace atlas {
+namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -56,10 +59,18 @@ private: // methods
 	static void clone( const atlas::grid::FieldHandle& field, const eckit::PathName& gridsec, eckit::DataHandle& );
 
 	static eckit::grib::GribHandle::Ptr clone(const grid::FieldHandle &field, eckit::grib::GribHandle& gridsec );
+
+	/// @todo this function is temporary, until we make an abstract interface to output to different formats
+	///       we must learn more about NetCDF, etc...
+	///
+	static void write_gridspec_to_grib(GridSpec& , eckit::grib::GribHandle&);
+
 };
 
 //---------------------------------------------------------------------------------------------------------
 
+
+} // namespace grid
 } // namespace atlas
 
 #endif

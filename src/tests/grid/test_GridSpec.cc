@@ -141,14 +141,16 @@ static void test_grib_file(const std::string& fpath)
 
    // The Grid produced, has a GRID spec, the grid spec can be used to,
    // make sure the grid types match
-   eckit::ScopedPtr< GridSpec > g_spec( grid_created_from_grib->spec() );
-   std::cout << *g_spec << std::endl;
+
+   GridSpec g_spec = grid_created_from_grib->spec();
+
+   std::cout << g_spec << std::endl;
 
    BOOST_CHECK_MESSAGE(grid_created_from_grib->gridType() == gridType,"gridType(" << gridType << ") did not match Grid constructor(" << grid_created_from_grib->gridType() << ") for file " << fpath);
-   BOOST_CHECK_MESSAGE(g_spec->grid_type() == gridType,"gridType(" << gridType << ") did not match GridSpec constructor(" << g_spec->grid_type() << ") for file " << fpath);
+   BOOST_CHECK_MESSAGE(g_spec.grid_type() == gridType,"gridType(" << gridType << ") did not match GridSpec constructor(" << g_spec.grid_type() << ") for file " << fpath);
 
    // From the Spec, create another Grid, we should get back the same Grid
-   Grid::Ptr grid_created_from_spec = Grid::create(*g_spec);
+   Grid::Ptr grid_created_from_spec = Grid::create(g_spec);
    BOOST_CHECK_MESSAGE(grid_created_from_spec,"Failed to create GRID from GridSpec");
    bool grid_compare = grid_created_from_grib->same(*grid_created_from_spec);
    BOOST_CHECK_MESSAGE(grid_compare,"The grids are differnt");

@@ -101,18 +101,18 @@ string ReducedGG::gridType() const
 	return ReducedGG::gridTypeStr();
 }
 
-GridSpec* ReducedGG::spec() const
+GridSpec ReducedGG::spec() const
 {
-   GridSpec* grid_spec = new GridSpec(gridType());
+   GridSpec grid_spec(gridType());
 
-   grid_spec->uid( uid() );
-   grid_spec->set("gaussianNumber",eckit::Value(gaussN_));
+   grid_spec.uid( uid() );
+   grid_spec.set("gaussianNumber",eckit::Value(gaussN_));
 
-   grid_spec->set("hash",eckit::Value(hash_));
+   grid_spec.set("hash",eckit::Value(hash_));
 
-   grid_spec->set_bounding_box(bbox_);
-   grid_spec->set_rgspec(rgSpec_);
-   grid_spec->set_latitudes(latitudes_);
+   grid_spec.set_bounding_box(bbox_);
+   grid_spec.set_rgspec(rgSpec_);
+   grid_spec.set_latitudes(latitudes_);
 
    return grid_spec;
 }

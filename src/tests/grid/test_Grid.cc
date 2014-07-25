@@ -127,15 +127,15 @@ static void test_grib_file(const std::string& fpath)
 
    // The Grid produced, has a GRID spec, the grid spec can be used to,
    // make sure the grid types match
-   eckit::ScopedPtr< GridSpec > g_spec( g->spec() );
+   GridSpec g_spec = g->spec();
    BOOST_CHECK_MESSAGE(g->gridType() == gridType,"gridType(" << gridType << ") did not match Grid constructor(" << g->gridType() << ") for file " << fpath);
-   BOOST_CHECK_MESSAGE(g_spec->grid_type() == gridType,"gridType(" << gridType << ") did not match GridSpec constructor(" << g_spec->grid_type() << ") for file " << fpath);
+   BOOST_CHECK_MESSAGE(g_spec.grid_type() == gridType,"gridType(" << gridType << ") did not match GridSpec constructor(" << g_spec.grid_type() << ") for file " << fpath);
 
    // find the corresponding sample file.
    // However we need to take into account that the GRIB samples, file are *NOT* unique in their GRID definition.
    // The sample file name produced does not have '.tmpl' extension
-   std::string generated_sample_file_name = GribWrite::grib_sample_file( *g_spec , editionNumber);
-   BOOST_CHECK_MESSAGE( !generated_sample_file_name.empty()," Could *not* find sample file for grid_spec " << *g_spec );
+   std::string generated_sample_file_name = GribWrite::grib_sample_file( g_spec , editionNumber);
+   BOOST_CHECK_MESSAGE( !generated_sample_file_name.empty()," Could *not* find sample file for grid_spec " << g_spec );
 
 
    // Note: many of the grib samples files are not UNIQUE in their grid specification:
@@ -148,5 +148,5 @@ static void test_grib_file(const std::string& fpath)
                        << grib_sample_file << "' but found('"
                        << generated_sample_file_name
                        << "') for grid spec "
-					   << *g_spec );
+					   << g_spec );
 }

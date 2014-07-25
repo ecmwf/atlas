@@ -66,19 +66,19 @@ string ReducedLatLon::gridType() const
 	return ReducedLatLon::gridTypeStr();
 }
 
-GridSpec* ReducedLatLon::spec() const
+GridSpec ReducedLatLon::spec() const
 {
-   GridSpec* grid_spec = new GridSpec(gridType());
+   GridSpec grid_spec(gridType());
 
-   grid_spec->uid( uid() );
+   grid_spec.uid( uid() );
 
-   grid_spec->set("Nj",eckit::Value(nptsNS_));
-   grid_spec->set("nsIncrement",eckit::Value(nsIncrement_));
+   grid_spec.set("Nj",eckit::Value(nptsNS_));
+   grid_spec.set("nsIncrement",eckit::Value(nsIncrement_));
 
-   grid_spec->set("hash",eckit::Value(hash_));
+   grid_spec.set("hash",eckit::Value(hash_));
 
-   grid_spec->set_bounding_box(bbox_);
-   grid_spec->set_rgspec(rgSpec_);
+   grid_spec.set_bounding_box(bbox_);
+   grid_spec.set_rgspec(rgSpec_);
 
    return grid_spec;
 }

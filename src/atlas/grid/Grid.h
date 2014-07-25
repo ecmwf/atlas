@@ -82,7 +82,7 @@ public: // methods
 
     virtual std::string gridType() const = 0;
 
-    virtual GridSpec* spec() const = 0;
+	virtual GridSpec spec() const = 0;
 
 	virtual bool same(const Grid&) const = 0;
 

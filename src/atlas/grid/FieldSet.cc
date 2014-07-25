@@ -17,7 +17,6 @@
 #include "eckit/grib/GribFieldSet.h"
 #include "eckit/grib/GribField.h"
 #include "eckit/grib/GribHandle.h"
-#include "eckit/grib/GribAccessor.h"
 #include "eckit/grib/GribParams.h"
 #include "eckit/utils/Translator.h"
 
@@ -68,9 +67,6 @@ std::ostream& operator<<( std::ostream& os, const FieldHandle& f)
 
 //-----------------------------------------------------------------------------
 
-static GribAccessor<std::string> grib_shortName("shortName");
-
-
 FieldHandle::Ptr FieldSet::create_field( GribHandle& gh )
 {
 	if( !grid_ ) // first time create grid
@@ -81,7 +77,7 @@ FieldHandle::Ptr FieldSet::create_field( GribHandle& gh )
     }
 	else // check grid is the same
     {
-		if( grib_geography_hash(gh.raw()) != grid_->hash() )
+		if( gh.geographyHash() != grid_->hash() )
             throw eckit::UserError("GRIB fields don't match grid within FieldSet", Here() );
     }
 
@@ -89,7 +85,7 @@ FieldHandle::Ptr FieldSet::create_field( GribHandle& gh )
     FunctionSpace&  nodes  = mesh.function_space( "nodes" );
 
     // get name for this field
-    std::string sname = grib_shortName( gh.raw() ) + "_" + Translator<size_t,std::string>()( fields_.size() );
+	std::string sname = gh.shortName() + "_" + Translator<size_t,std::string>()( fields_.size() );
 
     // get values
 

@@ -96,17 +96,17 @@ void Unstructured::coordinates(std::vector<Grid::Point>&) const
 	NOTIMP;
 }
 
-GridSpec* Unstructured::spec() const
+GridSpec Unstructured::spec() const
 {
 	NOTIMP;
 
-	GridSpec* grid_spec = new GridSpec( gridType() );
+	GridSpec grid_spec( gridType() );
 
-	grid_spec->uid("U");
+	grid_spec.uid("U");
 
-	grid_spec->set("hash",eckit::Value(hash_));
-	grid_spec->set_bounding_box(bound_box_);
-	//   grid_spec->set_points(coordinates());
+	grid_spec.set("hash",eckit::Value(hash_));
+	grid_spec.set_bounding_box(bound_box_);
+	//   grid_spec.set_points(coordinates());
 
 	return grid_spec;
 }

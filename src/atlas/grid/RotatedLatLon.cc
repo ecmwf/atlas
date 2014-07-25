@@ -87,23 +87,23 @@ string RotatedLatLon::gridType() const
 	return RotatedLatLon::gridTypeStr();
 }
 
-GridSpec* RotatedLatLon::spec() const
+GridSpec RotatedLatLon::spec() const
 {
-   GridSpec* grid_spec = new GridSpec(gridType());
+   GridSpec grid_spec(gridType());
 
-   grid_spec->uid(uid());
-   grid_spec->set("Ni",eckit::Value(nptsWE_));
-   grid_spec->set("Nj",eckit::Value(nptsNS_));
+   grid_spec.uid(uid());
+   grid_spec.set("Ni",eckit::Value(nptsWE_));
+   grid_spec.set("Nj",eckit::Value(nptsNS_));
 
-   grid_spec->set("rotated_latitude",eckit::Value(rotated_latitude_));
-   grid_spec->set("rotated_longitude",eckit::Value(rotated_longitude_));
-   grid_spec->set("rotated_angle",eckit::Value(rotated_angle_));
-   grid_spec->set("nsIncrement",eckit::Value(nsIncrement_));
-   grid_spec->set("weIncrement",eckit::Value(weIncrement_));
+   grid_spec.set("rotated_latitude",eckit::Value(rotated_latitude_));
+   grid_spec.set("rotated_longitude",eckit::Value(rotated_longitude_));
+   grid_spec.set("rotated_angle",eckit::Value(rotated_angle_));
+   grid_spec.set("nsIncrement",eckit::Value(nsIncrement_));
+   grid_spec.set("weIncrement",eckit::Value(weIncrement_));
 
-   grid_spec->set("hash",eckit::Value(hash_));
+   grid_spec.set("hash",eckit::Value(hash_));
 
-   grid_spec->set_bounding_box(bbox_);
+   grid_spec.set_bounding_box(bbox_);
 
    return grid_spec;
 }

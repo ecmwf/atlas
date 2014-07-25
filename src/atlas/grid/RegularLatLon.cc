@@ -90,7 +90,7 @@ RegularLatLon::RegularLatLon( const eckit::Params& p )
             Log::warning() << "Number of i rows " << ni << " does not match expected value " << nptsWE_ << std::endl;
     }
 
-    DEBUG_VAR( *spec() );
+	DEBUG_VAR( spec() );
 }
 
 RegularLatLon::RegularLatLon(size_t ni, size_t nj, const Grid::BoundBox& bbox) :
@@ -254,18 +254,18 @@ string RegularLatLon::gridType() const
 	return RegularLatLon::gridTypeStr();
 }
 
-GridSpec* RegularLatLon::spec() const
+GridSpec RegularLatLon::spec() const
 {
-	GridSpec* grid_spec = new GridSpec( gridType() );
+	GridSpec grid_spec( gridType() );
 
-	grid_spec->uid( uid() );
+	grid_spec.uid( uid() );
 
-    grid_spec->set("Nj",eckit::Value(nptsNS_));
-    grid_spec->set("Ni",eckit::Value(nptsWE_));
+	grid_spec.set("Nj",eckit::Value(nptsNS_));
+	grid_spec.set("Ni",eckit::Value(nptsWE_));
 
-    grid_spec->set("hash",eckit::Value(hash_));
+	grid_spec.set("hash",eckit::Value(hash_));
 
-    grid_spec->set_bounding_box(bbox_);
+	grid_spec.set_bounding_box(bbox_);
 
     return grid_spec;
 }
