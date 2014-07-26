@@ -50,14 +50,16 @@ public:
     void uid(const std::string&);
     std::string uid() const;
 
-    /// Helper functions, Used to build up a grid spec
-    void set_latitudes(const std::vector<double>& latitudes);
     void set_rgspec(const std::vector<long>&  rgSpec);
     void set_bounding_box(const Grid::BoundBox& bbox );
 
-    void get_latitudes(std::vector<double>& latitudes) const;
     void get_rgspec(std::vector<long>& rgSpec) const;
     void get_bounding_box(Grid::BoundBox& bbox ) const;
+
+	std::string str() const;
+
+	bool operator==(const GridSpec& rhs) { return str() == rhs.str();  }
+	bool operator!=(const GridSpec& rhs) { return !( (*this) == rhs ); }
 
     friend std::ostream& operator<<( std::ostream& os, const GridSpec& v) { v.print(os); return os;}
 

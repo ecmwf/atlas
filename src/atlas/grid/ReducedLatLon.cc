@@ -23,7 +23,7 @@ namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
-ConcreteBuilderT1<Grid,ReducedLatLon> ReducedLatLon_builder;
+ConcreteBuilderT1<Grid,ReducedLatLon> ReducedLatLon_builder( ReducedLatLon::gridTypeStr() );
 
 //void ReducedLatLon::constructFrom(const GridSpec& grid_spec)
 //{
@@ -85,16 +85,7 @@ GridSpec ReducedLatLon::spec() const
 
 bool ReducedLatLon::same(const Grid& grid) const
 {
-   if (gridType() != grid.gridType()) return false;
-
-   if ( static_cast<const ReducedLatLon&>(grid).nptsNS_ != nptsNS_) return false;
-   if ( static_cast<const ReducedLatLon&>(grid).nsIncrement_ != nsIncrement_) return false;
-   if ( static_cast<const ReducedLatLon&>(grid).hash_ != hash_) return false;
-   if ( static_cast<const ReducedLatLon&>(grid).bbox_ != bbox_) return false;
-   if ( static_cast<const ReducedLatLon&>(grid).rgSpec_ != rgSpec_) return false;
-   if ( static_cast<const ReducedLatLon&>(grid).points_ != points_) return false;
-
-   return true;
+	return spec() == grid.spec();
 }
 
 //-----------------------------------------------------------------------------

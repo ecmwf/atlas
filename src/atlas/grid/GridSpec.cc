@@ -57,16 +57,6 @@ void GridSpec::print( std::ostream& s) const
    s << " ]";
 }
 
-void GridSpec::set_latitudes(const std::vector<double>& latitudes_vec)
-{
-   std::vector<eckit::Value> latitudes; latitudes.reserve(latitudes_vec.size());
-   for(size_t i = 0; i < latitudes_vec.size(); ++i)
-   {
-      latitudes.push_back(eckit::Value(latitudes_vec[i]));
-   }
-   set("latitudes",eckit::Value(latitudes) );
-}
-
 void GridSpec::set_rgspec(const std::vector<long>& rgSpec_vec)
 {
    std::vector<eckit::Value> rgSpec; rgSpec.reserve(rgSpec_vec.size());
@@ -83,19 +73,6 @@ void GridSpec::set_bounding_box(const Grid::BoundBox& bbox )
    set("grid_bbox_w", bbox.bottom_left().lon());
    set("grib_bbox_n", bbox.top_right().lat());
    set("grid_bbox_e", bbox.top_right().lon());
-}
-
-void GridSpec::get_latitudes(std::vector<double>& latitudes) const
-{
-   if(has("latitudes"))
-   {
-      eckit::ValueList vec = get("latitudes");
-      latitudes.reserve(vec.size());
-      for(size_t i=0; i < vec.size();++i)
-      {
-         latitudes.push_back(vec[i]);
-      }
-   }
 }
 
 void GridSpec::get_rgspec(std::vector<long>& rgSpec) const
@@ -123,6 +100,13 @@ void GridSpec::get_bounding_box(Grid::BoundBox& bbox) const
       bbox.top_right().assign(area_n,area_e);
       ASSERT( bbox.validate() );
    }
+}
+
+std::string GridSpec::str() const
+{
+	std::ostringstream oss;
+	print(oss);
+	return oss.str();
 }
 
 //------------------------------------------------------------------------------------------------------

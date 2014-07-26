@@ -35,7 +35,7 @@ namespace eckit
 {
     class PathName;
     class DataHandle;
-	namespace grid { class GribHandle; }
+	namespace grib { class GribHandle; }
 }
 
 namespace atlas {

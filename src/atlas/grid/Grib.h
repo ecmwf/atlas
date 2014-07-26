@@ -26,7 +26,7 @@ namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
-class GribWrite {
+class Grib {
 
 public: // methods
 
@@ -63,7 +63,7 @@ private: // methods
 	/// @todo this function is temporary, until we make an abstract interface to output to different formats
 	///       we must learn more about NetCDF, etc...
 	///
-	static void write_gridspec_to_grib(GridSpec& , eckit::grib::GribHandle&);
+	static void write_gridspec_to_grib( const GridSpec&, eckit::grib::GribHandle& );
 
 };
 

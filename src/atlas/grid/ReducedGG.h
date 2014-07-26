@@ -64,7 +64,7 @@ public: // methods
 	virtual std::string hash() const { return hash_;}
 
 	virtual BoundBox boundingBox() const { return bbox_;}
-	virtual size_t nPoints() const { return points_.size(); }
+	virtual size_t nPoints() const { return nbDataPoints_; }
 
 	virtual void coordinates( std::vector<double>& ) const;
 	virtual void coordinates( std::vector<Point>& ) const;
@@ -78,9 +78,9 @@ public: // methods
 	long gaussianNumber() const { return gaussN_;}
 
 	const std::vector<long>&  pointsPerLatitude() const { return rgSpec_;}
-	const std::vector<double>&  latitudes() const { return latitudes_;}
 
-	void computePoints();
+	void computeLatitues(std::vector<double>&) const;
+	void computePoints( const std::vector<double>&, std::vector<Point>& pts ) const;
 
 private: // members
 
@@ -93,8 +93,6 @@ private: // members
 	BoundBox             bbox_;
 
 	std::vector<long>    rgSpec_;              ///< No of points per latitude
-	std::vector<double>  latitudes_;           ///< the latitudes
-	std::vector<Point>   points_;
 };
 
 //-----------------------------------------------------------------------------

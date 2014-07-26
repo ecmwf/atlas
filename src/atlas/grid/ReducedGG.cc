@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include "grib_api.h"
+#include "grib_api.h" // for grib_get_gaussian_latitudes()
 
 #include "eckit/log/Log.h"
 #include "eckit/memory/Builder.h"
@@ -26,7 +26,7 @@ namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
-ConcreteBuilderT1<Grid,ReducedGG> ReducedGG_builder("reduced_gg");
+ConcreteBuilderT1<Grid,ReducedGG> ReducedGG_builder( ReducedGG::gridTypeStr() );
 
 ReducedGG::ReducedGG( const eckit::Params& p )
 {
@@ -40,32 +40,14 @@ ReducedGG::ReducedGG( const eckit::Params& p )
 
 	ASSERT( nj_ == 2*gaussN_ );
 
-	ValueList nlats = p["NLats"];
+	ValueList nlats = p["NPtsPerLat"];
 	rgSpec_.resize(nlats.size());
 	for( size_t i = 0; i < nlats.size(); ++i)
 		rgSpec_[i] = nlats[i];
 
 	ASSERT( rgSpec_.size() == 2 * gaussN_ ); // number of lines of latitude should, be twice the gaussN_
 
-	latitudes_.resize( rgSpec_.size() );
-
-	/// @todo this code should be moved into Atlas library and co-maintained with NA section
-	grib_get_gaussian_latitudes(gaussN_, &latitudes_[0]);
-
-	/// @todo this should not be necessary here -- check it...
-	///       we should either use latitudes (angle from equator) or colatitutes (angle from pole)
-	///       and class ReducedGG should stick to that definition
-	//	if (jScansPositively_ == 1 )
-	//	   std::reverse(latitudes_.begin(), latitudes_.end());
-
-	computePoints();
-
 	nbDataPoints_ = p["nbDataPoints"];
-
-	DEBUG_VAR( nbDataPoints_ );
-	DEBUG_VAR( points_.size() );
-
-	ASSERT( points_.size() == nbDataPoints_ );
 }
 
 ReducedGG::~ReducedGG()
@@ -83,17 +65,28 @@ void ReducedGG::coordinates( std::vector<double>& pts ) const
 {
 	ASSERT( pts.size() && pts.size()%2 == 0 );
 	ASSERT( pts.size() == nPoints()*2 );
-	for( size_t i = 0; i < points_.size(); ++i )
+
+	std::vector<double>  latitudes;
+	computeLatitues(latitudes);
+
+	std::vector<Grid::Point> points;
+	computePoints(latitudes,points);
+
+	for( size_t i = 0; i < points.size(); ++i )
 	{
-		pts[ 2*i   ] = points_[i].lat();
-		pts[ 2*i+1 ] = points_[i].lon();
+		pts[ 2*i   ] = points[i].lat();
+		pts[ 2*i+1 ] = points[i].lon();
 	}
 }
 
 void ReducedGG::coordinates(std::vector<Grid::Point>& pts) const
 {
-	ASSERT( pts.size() == nPoints() );
-	std::copy(points_.begin(),points_.end(),pts.begin());
+	ASSERT( pts.size() == nbDataPoints_ );
+
+	std::vector<double>  latitudes;
+	computeLatitues(latitudes);
+
+	computePoints(latitudes,pts);
 }
 
 string ReducedGG::gridType() const
@@ -106,34 +99,40 @@ GridSpec ReducedGG::spec() const
    GridSpec grid_spec(gridType());
 
    grid_spec.uid( uid() );
-   grid_spec.set("gaussianNumber",eckit::Value(gaussN_));
+   grid_spec.set("GaussN", gaussN_);
 
-   grid_spec.set("hash",eckit::Value(hash_));
+   grid_spec.set("hash", hash_);
 
    grid_spec.set_bounding_box(bbox_);
    grid_spec.set_rgspec(rgSpec_);
-   grid_spec.set_latitudes(latitudes_);
 
    return grid_spec;
 }
 
 bool ReducedGG::same(const Grid& grid) const
 {
-   if (gridType() != grid.gridType()) return false;
-
-   if ( static_cast<const ReducedGG&>(grid).gaussN_ != gaussN_) return false;
-   if ( static_cast<const ReducedGG&>(grid).hash_ != hash_) return false;
-   if ( static_cast<const ReducedGG&>(grid).bbox_ != bbox_) return false;
-   if ( static_cast<const ReducedGG&>(grid).rgSpec_ != rgSpec_) return false;
-   if ( static_cast<const ReducedGG&>(grid).latitudes_ != latitudes_) return false;
-   if ( static_cast<const ReducedGG&>(grid).points_ != points_) return false;
-
-   return true;
+	return spec() == grid.spec();
 }
 
-void ReducedGG::computePoints()
+void ReducedGG::computeLatitues(std::vector<double>& lats) const
 {
-	ASSERT( points_.size() == 0 );
+	lats.resize(rgSpec_.size());
+
+	/// @todo this should not be necessary here -- check it...
+	///       we should either use latitudes (angle from equator) or colatitutes (angle from pole)
+	///       and class ReducedGG should stick to that definition
+	//	if (jScansPositively_ == 1 )
+	//	   std::reverse(lats.begin(), lats.end());
+
+	/// @todo this code should be moved into Atlas library and co-maintained with NA section
+	grib_get_gaussian_latitudes(gaussN_, &lats[0]);
+}
+
+void ReducedGG::computePoints( const std::vector<double>& lats, std::vector<Point>& pts ) const
+{
+	ASSERT( lats.size() == rgSpec_.size() );
+
+	pts.resize( nbDataPoints_ );
 
 	RealCompare<double> isEqual(degrees_eps());
 
@@ -142,40 +141,32 @@ void ReducedGG::computePoints()
 	const double west = bbox_.west();
 	const double east = bbox_.east();
 
-//	DEBUG_VAR(north);
-//	DEBUG_VAR(south);
-//	DEBUG_VAR(west);
-//	DEBUG_VAR(east);
-
-	const std::vector<double>& lats = latitudes_;
-
-	for ( size_t i = 0;  i < rgSpec_.size(); ++i )
+	size_t n = 0;
+	for ( size_t j = 0;  j < rgSpec_.size(); ++j )
 	{
 		// check latitudes bound box
-		if( ( lats[i] <= north && lats[i] >= south )
-			|| isEqual(lats[i],north)
-			|| isEqual(lats[i],south) )
+		if( ( lats[j] <= north && lats[j] >= south ) || isEqual(lats[j],north) || isEqual(lats[j],south) )
 		{
-			const long nlats = rgSpec_[i];
+			const long npts_per_lat = rgSpec_[j];
 
-			ASSERT( nlats > 0 );
+			ASSERT( npts_per_lat > 0 );
 
-			const double delta_lat = 360.0/nlats;
+			const double delta_lon = 360.0/npts_per_lat;
 			double plon = 0;
 
-			for( long k = 0; k < nlats; ++k )
+			for( long k = 0; k < npts_per_lat; ++k )
 			{
 				if( ( plon >= west && plon <= east ) || isEqual(plon,west) || isEqual(plon,east) )
 				{
-					points_.push_back( Grid::Point( lats[i], plon ) );
+					pts[n].assign( lats[j], plon );
+					++n;
 				}
-//				else { std::cout << "skipped " << Grid::Point( lats[i], plon ) << std::endl; }
-
-				plon += delta_lat;
+				plon += delta_lon;
 			}
 		}
-//		else { std::cout << "skipped lats[" << i << "] : " << lats[i] << std::endl; }
 	}
+
+	ASSERT( n == nbDataPoints_ );
 }
 
 //-----------------------------------------------------------------------------

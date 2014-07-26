@@ -63,6 +63,8 @@ public: // methods
 
 	static std::string className() { return "atlas.grid.Grid"; }
 
+	static double degrees_eps();
+
 	static Grid::Ptr create( const eckit::Params& );
 	static Grid::Ptr create( const GridSpec& );
 
@@ -96,8 +98,6 @@ protected: // methods
 
 	/// helper function to create bounding boxes (for non-global grids)
 	static BoundBox makeBBox( const eckit::Params& );
-
-	static double degrees_eps();
 
 private: // members
 

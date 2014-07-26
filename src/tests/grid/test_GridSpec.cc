@@ -22,8 +22,7 @@
 #include "eckit/grib/GribHandle.h"
 
 #include "atlas/grid/Grid.h"
-#include "atlas/grid/StackGribFile.h"
-#include "atlas/grid/GribWrite.h"
+#include "atlas/grid/Grib.h"
 #include "atlas/grid/GridSpec.h"
 
 
@@ -69,7 +68,7 @@ BOOST_AUTO_TEST_CASE( test_grib_to_grid_to_gridspec )
 
    // Traverse all the GRIB samples files, for gridType first determine sample dir
    std::vector<std::string> sample_dirs;
-   GribWrite::determine_grib_samples_dir(sample_dirs);
+   Grib::determine_grib_samples_dir(sample_dirs);
    BOOST_REQUIRE_MESSAGE(!sample_dirs.empty(),"Expected sample dirs to be found");
 
    // now test these dirs
@@ -115,27 +114,25 @@ static void test_grib_file(const std::string& fpath)
 {
    std::cout << "\n===================================================================================================" << std::endl;
    std::cout << "Opening GRIB file " << fpath << std::endl;
-   StackGribFile gf(fpath);
+
+   LocalPathName path(fpath);
+
+   eckit::grib::GribHandle gh(path);
 
    std::cout << " Get the grid type" << std::endl;
-   char string_value[64];
-   size_t len = sizeof(string_value)/sizeof(char);
-   int err = grib_get_string(&gf.handle(),"gridType",string_value,&len);
-   if (err != 0) {
-	  BOOST_WARN_MESSAGE(err == 0,"grib_get_string(gridType) failed for \nfile " << fpath << " IGNORING !!!!\n");
-      return;
-   }
+   std::string gridType = gh.gridType();
 
-   std::string gridType = string_value;
    std::cout << " Create Grid derivatives " << gridType << std::endl;
-   if ( gridType == "polar_stereographic" || gridType == "sh" ) {
+
+   if ( gridType == "polar_stereographic" || gridType == "sh" )
+   {
       std::cout << " ** Ignoring grid types [ polar_stereographic | sh ] " << std::endl;
       return;
    }
 
    // Create Grid derivatives from the GRIB file
-   GribHandle gh( gf.handle() );
-   atlas::grid::Grid::Ptr grid_created_from_grib = GribWrite::create_grid(gh);
+
+   atlas::grid::Grid::Ptr grid_created_from_grib = Grib::create_grid(gh);
    BOOST_CHECK_MESSAGE(grid_created_from_grib,"GRIBGridBuilder::instance().build_grid_from_grib_handle failed for file " << fpath);
    if (!grid_created_from_grib) return;
 

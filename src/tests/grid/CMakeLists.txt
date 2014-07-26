@@ -29,3 +29,10 @@ ecbuild_add_test(   TARGET      test_field
 					SOURCES     test_field.cc
           CONDITION	HAVE_GRID AND HAVE_ECKIT_GRIB
 					LIBS        atlas_grid )
+
+ecbuild_add_test(   TARGET      test_grid_from_grib
+					BOOST
+					SOURCES     test_grid_from_grib.cc
+					CONDITION	HAVE_GRID
+					LIBS        atlas_grid )
+

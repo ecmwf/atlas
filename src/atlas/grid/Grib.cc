@@ -31,9 +31,8 @@
 #include "atlas/mesh/Parameters.hpp"
 
 #include "atlas/grid/FieldSet.h"
-#include "atlas/grid/GribWrite.h"
+#include "atlas/grid/Grib.h"
 #include "atlas/grid/GridSpec.h"
-#include "atlas/grid/StackGribFile.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -50,15 +49,16 @@ static std::string map_uid_to_grib_sample_file(const std::string& short_name, lo
 
 //------------------------------------------------------------------------------------------------------
 
-Grid::Ptr GribWrite::create_grid(GribHandle& gh)
+Grid::Ptr Grib::create_grid(GribHandle& gh)
 {
 	GribParams* gp = GribParams::create(gh);
+
 	ASSERT( gp );
-	DEBUG_HERE;
+
 	return Grid::create( *gp );
 }
 
-GribHandle::Ptr GribWrite::create_handle( const Grid& grid, long edition )
+GribHandle::Ptr Grib::create_handle( const Grid& grid, long edition )
 {
     // determine choice of editionNumber from a resorce
 
@@ -82,7 +82,7 @@ GribHandle::Ptr GribWrite::create_handle( const Grid& grid, long edition )
     }
     else // if this fails, then try looking on disk
     {
-		sample_file = GribWrite::grib_sample_file(grid_spec,edition);
+		sample_file = Grib::grib_sample_file(grid_spec,edition);
         if (!sample_file.empty())
         {
             gh = grib_handle_new_from_samples(0,sample_file.c_str() );
@@ -94,14 +94,20 @@ GribHandle::Ptr GribWrite::create_handle( const Grid& grid, long edition )
     if(!gh)
         throw SeriousBug( "Failed to create GribHandle from Grib", Here() );
 
-    return GribHandle::Ptr( new GribHandle(gh) );
+	GribHandle::Ptr gh_ptr( new GribHandle(gh) );
+
+	write_gridspec_to_grib( grid.spec(), *gh_ptr );
+
+	return gh_ptr;
 }
 
 
-void GribWrite::determine_grib_samples_dir(std::vector<std::string>& sample_paths)
+void Grib::determine_grib_samples_dir(std::vector<std::string>& sample_paths)
 {
    char* paths = grib_samples_path(NULL);
-   if (paths) {
+
+   if (paths)
+   {
       // Expect <path1>:<path2>:<path3:
       // TODO: Need abstraction for path separator.
       sample_paths = StringTools::split(":", std::string(paths));
@@ -109,30 +115,37 @@ void GribWrite::determine_grib_samples_dir(std::vector<std::string>& sample_path
    }
 
    char* include_dir = getenv("GRIB_API_INCLUDE");
-   if (!include_dir) throw SeriousBug(string("grib_samples_path(NULL) returned a NULL path"),Here()) ;
+   if (!include_dir)
+	   throw SeriousBug(string("grib_samples_path(NULL) returned a NULL path"),Here()) ;
 
    std::string grib_include_dir(include_dir);
-   if (grib_include_dir.find("grib_api") == std::string::npos) {
+   if (grib_include_dir.find("grib_api") == std::string::npos)
+   {
       // "grib-api not found on directory " << grib_include_dir
-      return throw SeriousBug(string("grib_samples_path(NULL) returned a NULL path"),Here()) ;
+	  throw SeriousBug(string("grib_samples_path(NULL) returned a NULL path"),Here()) ;
    }
 
-   if (grib_include_dir.find("-I") != std::string::npos) {
+   if (grib_include_dir.find("-I") != std::string::npos)
+   {
       //std::cout << "GRIB_API_INCLUDE=" << grib_include_dir << "\n";
       grib_include_dir.erase(grib_include_dir.begin(),grib_include_dir.begin()+2); // remove -I
    }
 
    // Handle multiple include dirs
    // If there are any spaces in the string, only take the first include
+
    size_t space_pos = grib_include_dir.find(" ");
-   if (space_pos != std::string::npos) {
+   if (space_pos != std::string::npos)
+   {
       grib_include_dir = grib_include_dir.substr(0,space_pos);
       //std::cout << "GRIB_API_INCLUDE=" << grib_include_dir << "\n";
    }
 
    // Remove the 'include' and replace with, 'share/grib_api/samples'
+
    size_t pos = grib_include_dir.find("/include");
-   if ( pos == string::npos) {
+   if ( pos == string::npos)
+   {
       // include not found in directory " << grib_include_dir);
       throw SeriousBug(string("grib_samples_path(NULL) returned a NULL path"),Here()) ;
    }
@@ -142,24 +155,12 @@ void GribWrite::determine_grib_samples_dir(std::vector<std::string>& sample_path
    sample_paths.push_back( grib_samples_dir );
 }
 
-bool match_grid_spec_with_sample_file(
-        const GridSpec& g_spec,
-        grib_handle& handle,
-        long edition,
-        const std::string& file_path )
+bool match_grid_spec_with_sample_file( const GridSpec& g_spec,
+									   GribHandle& handle,
+									   long edition,
+									   const std::string& file_path )
 {
-    DEBUG_VAR(file_path);
-
-    char string_value[64];
-    size_t len = sizeof(string_value)/sizeof(char);
-    int err = grib_get_string(&handle,"gridType",string_value,&len);
-    if (err != 0) {
-        //Log::error() << "GribWrite::match_grid_spec_with_sample_file, grib_get_string(gridType) failed for \nfile " << file_path << " IGNORING !! " << std::endl;
-        return false;
-    }
-
-    std::string grib_grid_type = string_value;
-    if ( g_spec.grid_type() != grib_grid_type ) {
+	if ( g_spec.grid_type() != handle.gridType() ) {
         //Log::info() << "grid_type in GridSpec " << g_spec.grid_type() << " does not match " << grib_grid_type << " in samples file " << file_path << " IGNORING " << std::endl;
         return false;
     }
@@ -168,9 +169,9 @@ bool match_grid_spec_with_sample_file(
 //    if (!spec_nj.isNil()) {
 //        long spec_nj = spec_nj;
 //        long grib_nj = 0;
-//        if (grib_get_long(&handle,"Nj",&grib_nj) == 0 ) {
+//        if (grib_get_long(handle.raw(),"Nj",&grib_nj) == 0 ) {
 //            if (spec_nj != grib_nj ) {
-//                //Log::info() << "GribWrite::match_grid_spec_with_sample_file, Nj in GridSpec " << spec_nj << " does not match  " << grib_nj << " in samples file " << file_path << " IGNORING " << std::endl;
+//                //Log::info() << "Grib::match_grid_spec_with_sample_file, Nj in GridSpec " << spec_nj << " does not match  " << grib_nj << " in samples file " << file_path << " IGNORING " << std::endl;
 //                return false;
 //            }
 //        }
@@ -179,25 +180,23 @@ bool match_grid_spec_with_sample_file(
 //    if (!spec_ni.isNil()) {
 //        long spec_ni = spec_ni;
 //        long grib_ni = 0;
-//        if (grib_get_long(&handle,"Ni",&grib_ni) == 0 ) {
+//        if (grib_get_long(handle.raw(),"Ni",&grib_ni) == 0 ) {
 //            if (spec_ni != grib_ni ) {
-//                //Log::info() << "GribWrite::match_grid_spec_with_sample_file, Ni in GridSpec " << spec_ni << " does not match  " << grib_ni << " in samples file " << file_path << " IGNORING " << std::endl;
+//                //Log::info() << "Grib::match_grid_spec_with_sample_file, Ni in GridSpec " << spec_ni << " does not match  " << grib_ni << " in samples file " << file_path << " IGNORING " << std::endl;
 //                return false;
 //            }
 //        }
 //    }
 
-    long grib_edition = 0;
-    GRIB_CHECK(grib_get_long(&handle,"editionNumber",&grib_edition),0);
-    if (grib_edition != edition ) {
-        //Log::info() << "GribWrite::match_grid_spec_with_sample_file, edition_number passed in " << edition << " does not match grib" << edition << " in samples file " << file_path << " IGNORING " << std::endl;
+	if( handle.edition() != edition ) {
+		//Log::info() << "Grib::match_grid_spec_with_sample_file, edition_number passed in " << edition << " does not match grib" << edition << " in samples file " << file_path << " IGNORING " << std::endl;
         return false;
     }
 
     return true;
 }
 
-std::string GribWrite::grib_sample_file( const grid::GridSpec& g_spec, long edition )
+std::string Grib::grib_sample_file( const grid::GridSpec& g_spec, long edition )
 {
     // Note: many of the grib samples files are not UNIQUE in their grid specification:
     // i.e
@@ -241,14 +240,15 @@ std::string GribWrite::grib_sample_file( const grid::GridSpec& g_spec, long edit
         {
             try
             {
-                StackGribFile grib_file(string(files[i].localPath()));
+				GribHandle grib_h( files[i].localPath() );
 
-                std::string grib_sample_file_tmpl = files[i].localPath();
-                if( match_grid_spec_with_sample_file(g_spec,grib_file.handle(),edition,grib_sample_file_tmpl))
+				std::string fname = files[i].localPath();
+
+				if( match_grid_spec_with_sample_file(g_spec,grib_h,edition,fname))
                 {
                     // remove .tmpl extension
-                    eckit::LocalPathName path(grib_sample_file_tmpl);
-                    LocalPathName base_name = path.baseName(false);
+					eckit::LocalPathName path(fname);
+					LocalPathName base_name = path.baseName(false);
                     string grib_sample_file = base_name.localPath();
                     return grib_sample_file;
                 }
@@ -286,18 +286,18 @@ static std::string map_uid_to_grib_sample_file(const std::string& uid, long edit
     return r;
 }
 
-void GribWrite::write( const FieldSet& fields, const PathName& opath )
+void Grib::write( const FieldSet& fields, const PathName& opath )
 {
     for( size_t i = 0; i < fields.size(); ++i )
     {
         PathName pi( opath.asString() + "." + Translator<size_t,std::string>()(i) );
-        GribWrite::write(fields[i], pi);
+		Grib::write(fields[i], pi);
     }
 }
 
-void GribWrite::write(const FieldHandle& fh, DataHandle& dh)
+void Grib::write(const FieldHandle& fh, DataHandle& dh)
 {
-    GribHandle::Ptr gh = GribWrite::create_handle( fh.grid(), fh.grib().edition() );
+	GribHandle::Ptr gh = Grib::create_handle( fh.grid(), fh.grib().edition() );
 
     if( !gh )
         throw SeriousBug("Failed to create GribHandle from FieldHandle", Here());
@@ -316,9 +316,9 @@ void GribWrite::write(const FieldHandle& fh, DataHandle& dh)
     dh.write(buffer, size);
 }
 
-GribHandle::Ptr GribWrite::write(const FieldHandle& fh)
+GribHandle::Ptr Grib::write(const FieldHandle& fh)
 {
-    GribHandle::Ptr gh = GribWrite::create_handle( fh.grid(), fh.grib().edition() );
+	GribHandle::Ptr gh = Grib::create_handle( fh.grid(), fh.grib().edition() );
 
     if( !gh )
         throw SeriousBug("Failed to create GribHandle from FieldHandle", Here());
@@ -326,7 +326,7 @@ GribHandle::Ptr GribWrite::write(const FieldHandle& fh)
     return clone(fh,*gh);
 }
 
-void GribWrite::clone( const FieldSet& fields, const PathName& src, const PathName& opath )
+void Grib::clone( const FieldSet& fields, const PathName& src, const PathName& opath )
 {
     bool overwrite = true;
 
@@ -341,11 +341,11 @@ void GribWrite::clone( const FieldSet& fields, const PathName& src, const PathNa
 
     for( size_t i = 0; i < fields.size(); ++i )
     {
-        GribWrite::clone(fields[i], src, *of);
+		Grib::clone(fields[i], src, *of);
     }
 }
 
-void GribWrite::write(const FieldHandle& f, const PathName& opath)
+void Grib::write(const FieldHandle& f, const PathName& opath)
 {
     FileHandle fh( opath );
 
@@ -357,7 +357,7 @@ void GribWrite::write(const FieldHandle& f, const PathName& opath)
     fh.close();
 }
 
-void GribWrite::clone(const FieldHandle& field, const PathName& gridsec, DataHandle& out )
+void Grib::clone(const FieldHandle& field, const PathName& gridsec, DataHandle& out )
 {
     FILE* fh = ::fopen( gridsec.asString().c_str(), "r" );
     if( fh == 0 )
@@ -370,7 +370,7 @@ void GribWrite::clone(const FieldHandle& field, const PathName& gridsec, DataHan
 
     GribHandle ch(clone_h);
 
-    GribHandle::Ptr h = GribWrite::clone( field, ch );
+	GribHandle::Ptr h = Grib::clone( field, ch );
 
     //    GRIB_CHECK( grib_write_message(h->raw(),fname.asString().c_str(),"w"), 0 );
 
@@ -383,7 +383,7 @@ void GribWrite::clone(const FieldHandle& field, const PathName& gridsec, DataHan
     out.write(buffer, size);
 }
 
-GribHandle::Ptr GribWrite::clone(const FieldHandle& field, GribHandle& gridsec )
+GribHandle::Ptr Grib::clone(const FieldHandle& field, GribHandle& gridsec )
 {
     const Field& f = field.data();
     const size_t npts = f.size();
@@ -401,10 +401,6 @@ GribHandle::Ptr GribWrite::clone(const FieldHandle& field, GribHandle& gridsec )
 
     ASSERT( gh );
 
-	GridSpec grid_spec = field.grid().spec();
-
-	write_gridspec_to_grib( grid_spec , *gh );
-
     gh->setDataValues(f.data<double>(),npts);
 
 	return gh;
@@ -412,13 +408,13 @@ GribHandle::Ptr GribWrite::clone(const FieldHandle& field, GribHandle& gridsec )
 
 struct gridspec_to_grib
 {
-	gridspec_to_grib(GridSpec& gspec, GribHandle& gh) :
+	gridspec_to_grib( const GridSpec& gspec, GribHandle& gh) :
 		gspec_(gspec),
 		gh_(gh)
 	{}
 
 	GribHandle& gh_;
-	GridSpec& gspec_;
+	const GridSpec& gspec_;
 
 	template <typename T>
 	void set( std::string spec, std::string grib )
@@ -430,27 +426,27 @@ struct gridspec_to_grib
 	}
 };
 
-void GribWrite::write_gridspec_to_grib(GridSpec& gspec, GribHandle& gh)
+void Grib::write_gridspec_to_grib(const GridSpec& gspec, GribHandle& gh)
 {
 	gridspec_to_grib gspec2grib(gspec,gh);
 
 	gspec2grib.set<long>( "Ni", "Ni" );
 	gspec2grib.set<long>( "Nj", "Nj" );
 
-	gspec2grib.set<double>( "grid_ns_inc", "jDirectionIncrementInDegrees" );
-	gspec2grib.set<double>( "grid_ew_inc", "iDirectionIncrementInDegrees" );
-
 	gspec2grib.set<long>( "GaussN", "numberOfParallelsBetweenAPoleAndTheEquator" );
-
-	gspec2grib.set<double>( "SouthPoleLat", "latitudeOfSouthernPoleInDegrees" );
-	gspec2grib.set<double>( "SouthPoleLon", "longitudeOfSouthernPoleInDegrees" );
-	gspec2grib.set<double>( "SouthPoleRotAngle", "angleOfRotation" );
-
 
 	gspec2grib.set<double>( "grib_bbox_n", "latitudeOfFirstGridPointInDegrees" );
 	gspec2grib.set<double>( "grid_bbox_s", "latitudeOfLastGridPointInDegrees" );
 	gspec2grib.set<double>( "grid_bbox_w", "longitudeOfFirstGridPointInDegrees" );
 	gspec2grib.set<double>( "grid_bbox_e", "longitudeOfLastGridPointInDegrees" );
+
+	gspec2grib.set<double>( "grid_lat_inc", "jDirectionIncrementInDegrees" );
+	gspec2grib.set<double>( "grid_lon_inc", "iDirectionIncrementInDegrees" );
+
+
+	gspec2grib.set<double>( "SouthPoleLat", "latitudeOfSouthernPoleInDegrees" );
+	gspec2grib.set<double>( "SouthPoleLon", "longitudeOfSouthernPoleInDegrees" );
+	gspec2grib.set<double>( "SouthPoleRotAngle", "angleOfRotation" );
 }
 
 //------------------------------------------------------------------------------------------------------

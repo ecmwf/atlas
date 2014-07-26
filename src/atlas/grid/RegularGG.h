@@ -62,7 +62,7 @@ public: // methods
 	virtual std::string hash() const { return hash_;}
 
 	virtual BoundBox boundingBox() const { return bbox_; }
-	virtual size_t nPoints() const { return points_.size(); }
+	virtual size_t nPoints() const { return nbDataPoints_; }
 
 	virtual void coordinates( std::vector<double>& ) const;
 	virtual void coordinates( std::vector<Point>& ) const;
@@ -73,17 +73,23 @@ public: // methods
 
 protected: // methods
 
-	Grid::Point latLon(size_t the_i, size_t the_j) const;
-	long gaussianNumber() const { return gaussianNumber_;}
+	long gaussianNumber() const { return gaussN_;}
+
+	long nj() const { return 2*gaussN_; }
+
+	double computeIncLon() const;
+
+	void computePoints( const std::vector<double>&, std::vector<Point>& pts ) const;
 
 private: // members
 
 	std::string hash_;
-	BoundBox bbox_;
-	std::vector< Point > points_;     ///< storage of coordinate points
-	std::vector<double> latitudes_;
-	long   gaussianNumber_;          /// No of points between pole and equator
-	long   nj_;                     ///< No of points along Y axes
+
+	long        nbDataPoints_;             ///< no of data points in grid, taking into account the bounding box
+	long        gaussN_ ;                  ///< nb of points between pole and equator
+	long        ni_;                       ///< nb of points along a parallel
+
+	BoundBox    bbox_;
 
 };
 

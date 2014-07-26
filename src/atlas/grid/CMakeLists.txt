@@ -38,14 +38,10 @@ endif()
 
 if( HAVE_ECKIT_GRIB )
   list( APPEND atlas_grid_srcs
-      FieldSet.cc
+	  FieldSet.cc # to be removed once field set doesn't hold a gribhandle anymore
       FieldSet.h
-      GribWrite.cc
-      GribWrite.h
-#      GribGridBuilder.h
-#      GribGridBuilder.cc
-      StackGribFile.cc
-      StackGribFile.h
+	  Grib.cc # to be abstracted into a plugin
+	  Grib.h
    )
 endif()
 

@@ -23,7 +23,7 @@ namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
-ConcreteBuilderT1<Grid,RotatedLatLon> RotatedLatLon_builder;
+ConcreteBuilderT1<Grid,RotatedLatLon> RotatedLatLon_builder( RotatedLatLon::gridTypeStr() );
 
 //void RotatedLatLon::constructFrom(const GridSpec& grid_spec)
 //{
@@ -110,19 +110,7 @@ GridSpec RotatedLatLon::spec() const
 
 bool RotatedLatLon::same(const Grid& grid) const
 {
-   if (gridType() != grid.gridType()) return false;
-
-   if ( static_cast<const RotatedLatLon&>(grid).nptsNS_ != nptsNS_) return false;
-   if ( static_cast<const RotatedLatLon&>(grid).nptsWE_ != nptsWE_) return false;
-   if ( static_cast<const RotatedLatLon&>(grid).rotated_latitude_ != rotated_latitude_) return false;
-   if ( static_cast<const RotatedLatLon&>(grid).rotated_longitude_ != rotated_longitude_) return false;
-   if ( static_cast<const RotatedLatLon&>(grid).rotated_angle_ != rotated_angle_) return false;
-   if ( static_cast<const RotatedLatLon&>(grid).weIncrement_ != weIncrement_) return false;
-   if ( static_cast<const RotatedLatLon&>(grid).hash_ != hash_) return false;
-   if ( static_cast<const RotatedLatLon&>(grid).bbox_ != bbox_) return false;
-   if ( static_cast<const RotatedLatLon&>(grid).points_ != points_) return false;
-
-   return true;
+	return spec() == grid.spec();
 }
 
 //-----------------------------------------------------------------------------
