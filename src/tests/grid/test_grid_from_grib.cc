@@ -106,8 +106,8 @@ BOOST_AUTO_TEST_CASE( test_grid_creation )
 	std::vector< LocalPathName > gribs;
 
 	// these seem to fail, probably due to the low tolerance of grib1 1E-3
-//	gribs.push_back("ll005005.grib");
-//	gribs.push_back("ll0101.grib");
+	//	gribs.push_back("ll005005.grib");
+	//	gribs.push_back("ll0101.grib");
 
 	gribs.push_back("ll11.grib");
 	gribs.push_back("ll55.grib");
