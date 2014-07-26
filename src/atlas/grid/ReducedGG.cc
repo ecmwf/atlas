@@ -36,18 +36,36 @@ ReducedGG::ReducedGG( const eckit::Params& p )
 	bbox_ = makeBBox(p);
 
 	gaussN_ = p["GaussN"];
-	nj_     = p["Nj"];
 
-	ASSERT( nj_ == 2*gaussN_ );
+	if( p.has("Nj") )
+	{
+		long nj = p["Nj"];
+		if( nj != 2*gaussN_ )
+			Log::warning() << "Number of j columns " << nj << " does not match expected value " << 2*gaussN_ << std::endl;
+	}
 
-	ValueList nlats = p["NPtsPerLat"];
-	rgSpec_.resize(nlats.size());
-	for( size_t i = 0; i < nlats.size(); ++i)
-		rgSpec_[i] = nlats[i];
+	if( p.has("NPtsPerLat") )
+	{
+		ValueList nlats = p["NPtsPerLat"];
+		rgSpec_.resize(nlats.size());
+		for( size_t i = 0; i < nlats.size(); ++i)
+			rgSpec_[i] = nlats[i];
+	}
+	else
+		computeNPtsPerLat(rgSpec_);
 
 	ASSERT( rgSpec_.size() == 2 * gaussN_ ); // number of lines of latitude should, be twice the gaussN_
 
-	nbDataPoints_ = p["nbDataPoints"];
+	if( p.has("NPtsPerLat") )
+		nbDataPoints_ = p["nbDataPoints"];
+	else
+	{
+		std::vector<double>  latitudes;
+		computeLatitues(latitudes);
+		nbDataPoints_ = computeNPoints(latitudes);
+	}
+
+	ASSERT( nbDataPoints_ > 0 );
 }
 
 ReducedGG::~ReducedGG()
@@ -144,7 +162,6 @@ void ReducedGG::computePoints( const std::vector<double>& lats, std::vector<Poin
 	size_t n = 0;
 	for ( size_t j = 0;  j < rgSpec_.size(); ++j )
 	{
-		// check latitudes bound box
 		if( ( lats[j] <= north && lats[j] >= south ) || isEqual(lats[j],north) || isEqual(lats[j],south) )
 		{
 			const long npts_per_lat = rgSpec_[j];
@@ -167,6 +184,49 @@ void ReducedGG::computePoints( const std::vector<double>& lats, std::vector<Poin
 	}
 
 	ASSERT( n == nbDataPoints_ );
+}
+
+long ReducedGG::computeNPoints( const std::vector<double>& lats ) const
+{
+	ASSERT( lats.size() == rgSpec_.size() );
+
+	RealCompare<double> isEqual(degrees_eps());
+
+	const double north = bbox_.north();
+	const double south = bbox_.south();
+	const double west = bbox_.west();
+	const double east = bbox_.east();
+
+	long n = 0;
+	for ( size_t j = 0;  j < rgSpec_.size(); ++j )
+	{
+		if( ( lats[j] <= north && lats[j] >= south ) || isEqual(lats[j],north) || isEqual(lats[j],south) )
+		{
+			const long npts_per_lat = rgSpec_[j];
+
+			ASSERT( npts_per_lat > 0 );
+
+			const double delta_lon = 360.0/npts_per_lat;
+			double plon = 0;
+
+			for( long k = 0; k < npts_per_lat; ++k )
+			{
+				if( ( plon >= west && plon <= east ) || isEqual(plon,west) || isEqual(plon,east) )
+				{
+					++n;
+				}
+				plon += delta_lon;
+			}
+		}
+	}
+}
+
+
+void ReducedGG::computeNPtsPerLat(std::vector<long>& nlats)
+{
+	NOTIMP;
+
+	/// @todo deduce nlats from gauss number, probably using tablated values
 }
 
 //-----------------------------------------------------------------------------

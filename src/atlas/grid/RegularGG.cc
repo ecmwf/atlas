@@ -46,11 +46,27 @@ RegularGG::RegularGG( const eckit::Params& p )
 			Log::warning() << "Number of points along meridian" << Nj << " does not match expected value " << nj() << std::endl;
 	}
 
-	ni_ = p["Ni"];
+	if( p.has("Nj") )
+	{
+		ni_ = p["Ni"];
+		ASSERT( ni_ > 1 );
+	}
+	else
+	{
+		ni_ = 4*gaussN_;
+		Log::warning() << "Assuming number of points along parallel to be 4 * GaussianNumber " << ni_ << std::endl;
+	}
 
-	ASSERT( ni_ > 1 );
+	if( p.has("NPtsPerLat") )
+		nbDataPoints_ = p["nbDataPoints"];
+	else
+	{
+		std::vector<double> latitudes( nj() );
+		grib_get_gaussian_latitudes(gaussN_, &latitudes[0]);
+		nbDataPoints_ = computeNPoints(latitudes);
+	}
 
-	nbDataPoints_ = p["nbDataPoints"];
+	ASSERT( nbDataPoints_ > 0 );
 }
 
 RegularGG::~RegularGG()
@@ -144,7 +160,6 @@ void RegularGG::computePoints( const std::vector<double>& lats, std::vector<Poin
 	size_t n = 0;
 	for ( size_t j = 0;  j < nj(); ++j )
 	{
-		// check latitudes bound box
 		if( ( lats[j] <= north && lats[j] >= south ) || isEqual(lats[j],north) || isEqual(lats[j],south) )
 		{
 			double plon = 0;
@@ -162,6 +177,39 @@ void RegularGG::computePoints( const std::vector<double>& lats, std::vector<Poin
 	}
 
 	ASSERT( n == nbDataPoints_ );
+}
+
+long RegularGG::computeNPoints(const std::vector<double>& lats) const
+{
+	ASSERT( lats.size() == nj() );
+
+	RealCompare<double> isEqual(degrees_eps());
+
+	const double north = bbox_.north();
+	const double south = bbox_.south();
+	const double west  = bbox_.west();
+	const double east  = bbox_.east();
+
+	const double delta_lon = computeIncLon();
+
+	size_t n = 0;
+	for ( size_t j = 0;  j < nj(); ++j )
+	{
+		if( ( lats[j] <= north && lats[j] >= south ) || isEqual(lats[j],north) || isEqual(lats[j],south) )
+		{
+			double plon = 0;
+
+			for( long k = 0; k < ni_; ++k )
+			{
+				if( ( plon >= west && plon <= east ) || isEqual(plon,west) || isEqual(plon,east) )
+				{
+					++n;
+				}
+				plon += delta_lon;
+			}
+		}
+	}
+	return n;
 }
 
 //-----------------------------------------------------------------------------

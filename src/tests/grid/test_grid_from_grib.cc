@@ -55,7 +55,7 @@ static void test_grib_file( const LocalPathName& path )
 
 //	Log::info() << "grib_type : " << grid->gridType() << std::endl;
 //	Log::info() << "nb_nodes  : " << grid->nPoints() << std::endl;
-//	Log::info() << "spec      : " << spec << std::endl;
+	Log::info() << "spec      : " << spec << std::endl;
 
 	// check the latlon points
 
@@ -112,7 +112,12 @@ BOOST_AUTO_TEST_CASE( test_grid_creation )
 	gribs.push_back("ll11.grib");
 	gribs.push_back("ll55.grib");
 
+	// reduced_gg
+
 	gribs.push_back("rgg_n640.grib");
+	gribs.push_back("rgg_n1280.grib");
+
+	// regular_gg
 
 	gribs.push_back("n40.grib");
 	gribs.push_back("n60.grib");
@@ -122,7 +127,6 @@ BOOST_AUTO_TEST_CASE( test_grid_creation )
 	gribs.push_back("n400.grib");
 	gribs.push_back("n512.grib");
 	gribs.push_back("n1024.grib");
-	gribs.push_back("n1280.grib");
 
 	std::for_each( gribs.begin(), gribs.end(), test_grib_file );
 }

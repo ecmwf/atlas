@@ -81,6 +81,8 @@ public: // methods
 
 	void computeLatitues(std::vector<double>&) const;
 	void computePoints( const std::vector<double>&, std::vector<Point>& pts ) const;
+	long computeNPoints( const std::vector<double>& ) const;
+	void computeNPtsPerLat( std::vector<long>& );
 
 private: // members
 
@@ -88,7 +90,6 @@ private: // members
 
 	long                 nbDataPoints_;        ///< no of data points in grid, taking into account the bounding box
 	long                 gaussN_;              ///< No of points between pole and equator
-	long                 nj_;                  ///< No of points along Y axes
 
 	BoundBox             bbox_;
 
