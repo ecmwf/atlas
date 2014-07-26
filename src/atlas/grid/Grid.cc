@@ -28,8 +28,12 @@ Grid::Ptr Grid::create(const Params& p )
 	return Grid::Ptr( Factory<Grid>::instance().get( p["grid_type"] ).create(p) );
 }
 
-Grid::Ptr Grid::create(const GridSpec&)
+Grid::Ptr Grid::create(const GridSpec& g)
 {
+	/// @todo create a Params class from GridSpec (concrete GridSpecParams)
+
+	//  GridSpecParams p( g );
+	//	return Grid::Ptr( Factory<Grid>::instance().get( p["grid_type"] ).create(p) );
 	NOTIMP;
 }
 

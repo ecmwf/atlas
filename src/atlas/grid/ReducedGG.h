@@ -57,6 +57,7 @@ public: // methods
 	static std::string gridTypeStr() { return "reduced_gg"; }
 
 	ReducedGG( const eckit::Params& p );
+	ReducedGG( long gaussN );
 
 	virtual ~ReducedGG();
 

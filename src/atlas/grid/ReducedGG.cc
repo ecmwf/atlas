@@ -37,6 +37,8 @@ ReducedGG::ReducedGG( const eckit::Params& p )
 
 	gaussN_ = p["GaussN"];
 
+	ASSERT( gaussN_ > 1 );
+
 	if( p.has("Nj") )
 	{
 		long nj = p["Nj"];
@@ -66,6 +68,15 @@ ReducedGG::ReducedGG( const eckit::Params& p )
 	}
 
 	ASSERT( nbDataPoints_ > 0 );
+}
+
+ReducedGG::ReducedGG(long gaussN) : gaussN_(gaussN)
+{
+	ASSERT( gaussN_ > 1 );
+
+	/// @todo needs to have computeNPtsPerLat() implemented
+
+	NOTIMP;
 }
 
 ReducedGG::~ReducedGG()
