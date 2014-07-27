@@ -8,6 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
+#include "eckit/filesystem/PathName.h"
 #include "eckit/filesystem/LocalPathName.h"
 #include "eckit/config/Resource.h"
 
@@ -20,13 +21,13 @@ namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
 
-std::string MeshCache::filename(const std::string& key)
+LocalPathName MeshCache::filename(const std::string& key)
 {
-//    PathName base_path = Resource<PathName>("$MIR_CACHE_DIR;MirCacheDir","/tmp");
+    PathName base_path = Resource<PathName>("$ATLAS_CACHE_DIR;AtlasCacheDir", "/tmp/cache/atlas" );
 
-    std::stringstream ss;
-    ss << "cache/atlas/mesh/" << key << ".gmsh";
-    return ss.str();
+    PathName f = base_path / "mesh" / PathName( key + ".gmsh" );
+
+    return f.asString();
 }
 
 bool MeshCache::add(const std::string& key, Mesh& mesh)
