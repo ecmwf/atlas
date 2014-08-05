@@ -23,8 +23,9 @@ template <typename DATA_TYPE>
 class MPL_ArrayView : public ArrayView<DATA_TYPE>
 {
 public:
-  using typename ArrayView<DATA_TYPE>::value_t;
-  using typename ArrayView<DATA_TYPE>::const_value_t;
+  typedef typename ArrayView<DATA_TYPE>::value_t       value_t;
+  typedef typename ArrayView<DATA_TYPE>::const_value_t const_value_t;
+
 public:
   MPL_ArrayView();
   
@@ -35,7 +36,7 @@ public:
                  const int mpl_idxpos );
   
   template <int R> 
-    MPL_ArrayView( const ArrayView<value_t,R>& arrview, 
+    MPL_ArrayView( const ArrayView<MPL_ArrayView::value_t,R>& arrview,
                    const int mpl_idxpos[], const int mpl_rank );
 
   template <int R> 
