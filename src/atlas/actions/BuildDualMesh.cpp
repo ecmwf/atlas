@@ -109,6 +109,13 @@ void build_median_dual_mesh( Mesh& mesh )
 
   build_dual_normals( mesh );
 
+
+  ArrayView<double,1> skewness      ( edges.create_field<double>("skewness",1) );
+  ArrayView<double,1> alpha         ( edges.create_field<double>("alpha",1) );
+  skewness = 0.;
+  alpha = 0.5;
+
+
   nodes.parallelise();
   nodes.halo_exchange()->execute(dual_volumes);
 
