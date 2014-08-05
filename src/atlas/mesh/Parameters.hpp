@@ -54,16 +54,6 @@ struct ElementRef
 
 //------------------------------------------------------------------------------------------------------
 
-#ifndef NDEBUG
-#define DBG     std::cout << Here() << std::endl;
-#define DBGX(x) std::cout << #x << " -> " << x << std::endl;
-#else
-#define DBG
-#define DBGX(x)
-#endif
-
-//------------------------------------------------------------------------------------------------------
-
 } // namespace atlas
 
 #endif // atlas_Parameters_hpp

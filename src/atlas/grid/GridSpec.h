@@ -11,8 +11,8 @@
 #ifndef atlas_grid_GridSpec_H
 #define atlas_grid_GridSpec_H
 
-#include <cstddef>
 #include "eckit/value/Properties.h"
+
 #include "atlas/grid/Grid.h"
 
 //------------------------------------------------------------------------------------------------------
@@ -22,68 +22,51 @@ namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
-/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8
+
 /// A concrete class that holds specification that uniquely identifies a Grid
 /// The description of the grid is added as name value pairs
 /// This class will provides a short name for a GRID (i.e QG48_1)
 /// This allows for easier matching with samples files.
 /// However this interface is independent of GRIB/NETCDF, because:
 ///
-///      DECODE                       ATLAS                      ENCODE
-///  NetCDFGridBuilder ---->|-------|         |----------|------>NetCDFGridWrite
-///                         | Grid  |<------> | GridSpec |
-///  GribGridBuilder ------>|-------|         |----------|------>GribGridWrite
+///      DECODE                   ATLAS                      ENCODE
+///  NetCDFParams ---->|-------|         |----------|------>NetCDFGridWrite
+///                    | Grid  |<------> | GridSpec |
+///  GribParams ------>|-------|         |----------|------>GribGridWrite
 ///
 /// Uses default copy constructor, assignment and equality operators
-/////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8
+
 
 class GridSpec : public eckit::Properties {
 public:
 
-   GridSpec(const std::string& the_grid_type);
-   GridSpec(const std::string& the_grid_type, const std::string& the_short_name);
-   ~GridSpec();
+    GridSpec(const std::string& grid_type);
 
-   /// returns the gridType. currently this matches grid _type found in GRIB
-   std::string grid_type() const;
+    ~GridSpec();
 
-   /// returns short name description of this grid
-   /// We use the following prefix:
-   /// 'LL'  -  regular lat/lon grid                             - other centres, wave data.
-   /// 'NP'  -  northern polar ster. projection (reg. lat/lon)
-   /// 'SP'  -  southern polar ster. projection (reg. lat/lon)
-   /// 'GG'  -  regular gaussian grid (surface)                  - Surface and some upper air fields.
-   /// 'SH'  -  spherical harmonics coefficients                 - Upper air fields.
-   /// 'QG'  -  quasi regular gaussian grid
-   /// 'RL'  -  rotated lat long
-   /// 'RedLL'- reduced lat long
-   void set_short_name(const std::string& the_short_name);
-   std::string short_name() const;
+    /// returns the gridType. currently this matches grid _type found in GRIB
+    std::string grid_type() const;
 
-   /// Helper functions, Used to build up a grid spec
-   void set_points(const std::vector<Grid::Point>& );
-   void set_latitudes(const std::vector<double>& latitudes);
-   void set_rgspec(const std::vector<long>&  rgSpec);
-   void set_bounding_box(const Grid::BoundBox& bbox );
+    void uid(const std::string&);
+    std::string uid() const;
 
-   void get_points(std::vector<Grid::Point>& ) const;
-   void get_latitudes(std::vector<double>& latitudes) const;
-   void get_rgspec(std::vector<long>& rgSpec) const;
-   void get_bounding_box(Grid::BoundBox& bbox ) const;
+    void set_rgspec(const std::vector<long>&  rgSpec);
+    void set_bounding_box(const Grid::BoundBox& bbox );
 
-   /// Avoid printing points and latitudes.
-   void print_simple(std::ostream& os) const;
+    void get_rgspec(std::vector<long>& rgSpec) const;
+    void get_bounding_box(Grid::BoundBox& bbox ) const;
 
-   friend std::ostream& operator<<( std::ostream& os, const GridSpec& v) { v.print(os); return os;}
+	std::string str() const;
+
+	bool operator==(const GridSpec& rhs) { return str() == rhs.str();  }
+	bool operator!=(const GridSpec& rhs) { return !( (*this) == rhs ); }
+
+    friend std::ostream& operator<<( std::ostream& os, const GridSpec& v) { v.print(os); return os;}
 
 private:
 
-   void print( std::ostream& ) const;
+    void print( std::ostream& ) const;
 
-   // TODO, stoing the points is ok , however destroting points, is a performance hog.
-   // Need a faster way ??
-   // Hack temp, store points locally.
-   std::vector<Grid::Point> points_;
 };
 
 //------------------------------------------------------------------------------------------------------

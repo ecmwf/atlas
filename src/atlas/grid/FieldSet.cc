@@ -17,18 +17,18 @@
 #include "eckit/grib/GribFieldSet.h"
 #include "eckit/grib/GribField.h"
 #include "eckit/grib/GribHandle.h"
-#include "eckit/grib/GribAccessor.h"
+#include "eckit/grib/GribParams.h"
 #include "eckit/utils/Translator.h"
 
 #include "atlas/mesh/Parameters.hpp"
 #include "atlas/util/ArrayView.hpp"
 #include "atlas/mesh/FunctionSpace.hpp"
 #include "atlas/grid/FieldSet.h"
-#include "atlas/grid/GribRead.h"
 
 //------------------------------------------------------------------------------------------------------
 
 using namespace eckit;
+using namespace eckit::grib;
 
 namespace atlas {
 namespace grid {
@@ -67,20 +67,17 @@ std::ostream& operator<<( std::ostream& os, const FieldHandle& f)
 
 //-----------------------------------------------------------------------------
 
-static GribAccessor<std::string> grib_shortName("shortName");
-
-
 FieldHandle::Ptr FieldSet::create_field( GribHandle& gh )
 {
-    // check grid is the same
-
-    if( !grid_ )
+	if( !grid_ ) // first time create grid
     {
-        grid_.reset( GribRead::create_grid_from_grib( gh.raw() ) );  // first time create grid
+		GribParams* gp = GribParams::create(gh);
+		ASSERT( gp );
+		grid_.reset( Grid::create( *gp ) );
     }
-    else
+	else // check grid is the same
     {
-        if( grib_hash(gh) != grid_->hash() )
+		if( gh.geographyHash() != grid_->hash() )
             throw eckit::UserError("GRIB fields don't match grid within FieldSet", Here() );
     }
 
@@ -88,7 +85,7 @@ FieldHandle::Ptr FieldSet::create_field( GribHandle& gh )
     FunctionSpace&  nodes  = mesh.function_space( "nodes" );
 
     // get name for this field
-    std::string sname = grib_shortName( gh.raw() ) + "_" + Translator<size_t,std::string>()( fields_.size() );
+	std::string sname = gh.shortName() + "_" + Translator<size_t,std::string>()( fields_.size() );
 
     // get values
 

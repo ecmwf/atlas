@@ -11,8 +11,9 @@
 #include <limits>
 
 #include "eckit/log/Log.h"
-#include "atlas/grid/GridSpec.h"
+#include "eckit/memory/Builder.h"
 
+#include "atlas/grid/GridSpec.h"
 #include "atlas/grid/Unstructured.h"
 
 using namespace eckit;
@@ -21,6 +22,22 @@ namespace atlas {
 namespace grid {
 
 //-----------------------------------------------------------------------------
+
+ConcreteBuilderT1<Grid,Unstructured> unstructured_builder;
+
+//void Unstructured::constructFrom(const GridSpec& grid_spec)
+//{
+//    if (grid_spec.has("hash")) hash_ = (std::string)grid_spec.get("hash");
+//    grid_spec.get_bounding_box(bound_box_);
+//       std::vector< Grid::Point >* pts = new std::vector< Grid::Point >(0);
+//       grid_spec.get_points(*pts);
+//       points_.reset(pts);
+//}
+
+Unstructured::Unstructured(const Params& p)
+{
+	NOTIMP;
+}
 
 Unstructured::Unstructured( std::vector< Point >* pts, const std::string& hash ) :
     points_(pts),
@@ -49,6 +66,11 @@ Unstructured::~Unstructured()
 {
 }
 
+std::string Unstructured::uid() const
+{
+	NOTIMP;
+}
+
 std::string Unstructured::hash() const
 {
     return hash_;
@@ -64,43 +86,32 @@ size_t Unstructured::nPoints() const
     return points_->size();
 }
 
-void Unstructured::coordinates( Grid::Coords& r ) const
+void Unstructured::coordinates(std::vector<double>& r ) const
 {
-    ASSERT( r.size() == points_->size() );
-
-    const std::vector<Point>& p = *points_;
-    const size_t npts = p.size();
-
-    for( size_t i = 0; i < npts; ++i )
-    {
-        r.lat(i) = p[i].lat();
-        r.lon(i) = p[i].lon();
-    }
+	NOTIMP;
 }
 
-GridSpec* Unstructured::spec() const
+void Unstructured::coordinates(std::vector<Grid::Point>&) const
 {
-   GridSpec* grid_spec = new GridSpec(gridType(),"U");
-
-   grid_spec->set("hash",eckit::Value(hash_));
-   grid_spec->set_bounding_box(bound_box_);
-   grid_spec->set_points(coordinates());
-
-   return grid_spec;
+	NOTIMP;
 }
 
-void Unstructured::constructFrom(const GridSpec& grid_spec)
+GridSpec Unstructured::spec() const
 {
-   if (grid_spec.has("hash")) hash_ = (std::string)grid_spec.get("hash");
+	NOTIMP;
 
-   grid_spec.get_bounding_box(bound_box_);
+	GridSpec grid_spec( gridType() );
 
-   std::vector< Grid::Point >* pts = new std::vector< Grid::Point >(0);
-   grid_spec.get_points(*pts);
-   points_.reset(pts);
+	grid_spec.uid("U");
+
+	grid_spec.set("hash",eckit::Value(hash_));
+	grid_spec.set_bounding_box(bound_box_);
+	//   grid_spec.set_points(coordinates());
+
+	return grid_spec;
 }
 
-bool Unstructured::compare(const Grid& grid) const
+bool Unstructured::same(const Grid& grid) const
 {
    if (gridType() != grid.gridType()) return false;
 
@@ -110,8 +121,6 @@ bool Unstructured::compare(const Grid& grid) const
 
    return true;
 }
-
-REGISTERIMPL(Unstructured,"unstructured");
 
 //-----------------------------------------------------------------------------
 

@@ -58,10 +58,10 @@ void TestGaussian::test_constructor()
     ASSERT( g->nPoints() == (48 * 2 * ( 48 * 4 + 1) ) );
 
     /// @todo substitute these comparisons with proper floating point comparisons
-    ASSERT( g->boundingBox().bottom_left_.lat() == -90. );
-    ASSERT( g->boundingBox().bottom_left_.lon() ==   0. );
-    ASSERT( g->boundingBox().top_right_.lat() ==  90. );
-    ASSERT( g->boundingBox().top_right_.lon() == 360. );
+    ASSERT( g->boundingBox().bottom_left().lat() == -90. );
+    ASSERT( g->boundingBox().bottom_left().lon() ==   0. );
+    ASSERT( g->boundingBox().top_right().lat() ==  90. );
+    ASSERT( g->boundingBox().top_right().lon() == 360. );
 
 }
 

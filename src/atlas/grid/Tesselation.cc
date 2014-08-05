@@ -8,8 +8,6 @@
  * does it submit to any jurisdiction.
  */
 
-
-
 #include <cmath>
 #include <vector>
 #include <memory>
@@ -183,12 +181,12 @@ struct Polyhedron_3 {};
 
 Polyhedron_3* create_convex_hull_from_points( const std::vector< Point3 >& pts )
 {
-    throw std::string( "CGAL package not found -- triangulation is disabled" );
+	throw NotImplemented( "CGAL package not found -- triangulation is disabled", Here() );
 }
 
 void cgal_polyhedron_to_atlas_mesh(  atlas::Mesh& mesh, Polyhedron_3& poly, PointSet& points )
 {
-    throw std::string( "CGAL package not found -- triangulation is disabled" );
+	throw NotImplemented( "CGAL package not found -- triangulation is disabled", Here() );
 }
 
 #endif
@@ -197,18 +195,18 @@ void cgal_polyhedron_to_atlas_mesh(  atlas::Mesh& mesh, Polyhedron_3& poly, Poin
 
 void Tesselation::tesselate( Grid& g )
 {
-    std::string hash = g.hash();
+	std::string uid = g.uid();
 
     Mesh& mesh = g.mesh();
 
-    if( MeshCache::get( hash, mesh ) )
+	if( MeshCache::get( uid, mesh ) )
         return;
 
-    std::cout << "mesh not in cache -- tesselating grid " << hash << std::endl;
+	std::cout << "mesh not in cache -- tesselating grid " << uid << std::endl;
 
     Tesselation::tesselate( mesh );
 
-    MeshCache::add( hash, mesh );
+	MeshCache::add( uid, mesh );
 }
 
 void Tesselation::tesselate( atlas::Mesh& mesh )
@@ -245,7 +243,7 @@ void Tesselation::tesselate( atlas::Mesh& mesh )
 
 #else
 
-    throw std::string( "CGAL package not found -- triangulation is disabled" );
+	throw NotImplemented( "CGAL package not found -- triangulation is disabled", Here() );
 
 #endif
 }
@@ -498,7 +496,8 @@ void Tesselation::build_mesh( const Grid& grid, Mesh& mesh )
 
     ASSERT( npts == nodes.extents()[0] );
 
-    const std::vector<Grid::Point>& ll = grid.coordinates();
+	std::vector<Grid::Point> ll(npts);
+	grid.coordinates(ll);
 
     for( size_t i = 0; i < npts; ++i )
     {

@@ -1,33 +1,27 @@
 
 list( APPEND atlas_grid_srcs
-Gaussian.cc
-Gaussian.h
 Grid.cc
 Grid.h
-GridFactory.h
-GridFactory.cc
 GridSpec.cc
 GridSpec.h
-MeshCache.cc
-MeshCache.h
-LatLon.cc
-LatLon.h
 Latitudes.cc
 Latitudes.h
+MeshCache.cc
+MeshCache.h
 PointIndex3.cc
 PointIndex3.h
 PointSet.cc
 PointSet.h
-ReducedGaussianGrid.h
-ReducedGaussianGrid.cc
-ReducedLatLonGrid.h
-ReducedLatLonGrid.cc
-RegularLatLonGrid.h
-RegularLatLonGrid.cc
-RotatedLatLonGrid.h
-RotatedLatLonGrid.cc
-RegularGaussianGrid.h
-RegularGaussianGrid.cc
+ReducedGG.cc
+ReducedGG.h
+ReducedLatLon.cc
+ReducedLatLon.h
+RegularGG.cc
+RegularGG.h
+RegularLatLon.cc
+RegularLatLon.h
+RotatedLatLon.cc
+RotatedLatLon.h
 Tesselation.cc
 Tesselation.h
 Unstructured.cc
@@ -44,16 +38,10 @@ endif()
 
 if( HAVE_ECKIT_GRIB )
   list( APPEND atlas_grid_srcs
-      FieldSet.cc
+	  FieldSet.cc # to be removed once field set doesn't hold a gribhandle anymore
       FieldSet.h
-      GribRead.cc
-      GribRead.h
-      GribWrite.cc
-      GribWrite.h
-      GribGridBuilder.h
-      GribGridBuilder.cc
-      StackGribFile.cc
-      StackGribFile.h
+	  Grib.cc # to be abstracted into a plugin
+	  Grib.h
    )
 endif()
 

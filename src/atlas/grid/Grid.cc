@@ -8,14 +8,34 @@
  * does it submit to any jurisdiction.
  */
 
+#include "eckit/memory/Factory.h"
+#include "eckit/memory/Builder.h"
+#include "eckit/config/Resource.h"
+
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Tesselation.h"
 
+using namespace eckit;
+
 namespace atlas {
 namespace grid {
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------
+
+Grid::Ptr Grid::create(const Params& p )
+{
+	return Grid::Ptr( Factory<Grid>::instance().get( p["grid_type"] ).create(p) );
+}
+
+Grid::Ptr Grid::create(const GridSpec& g)
+{
+	/// @todo create a Params class from GridSpec (concrete GridSpecParams)
+
+	//  GridSpecParams p( g );
+	//	return Grid::Ptr( Factory<Grid>::instance().get( p["grid_type"] ).create(p) );
+	NOTIMP;
+}
 
 Grid::Grid()
 {
@@ -47,7 +67,34 @@ const Mesh& Grid::mesh() const
      return *mesh_;
 }
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------
+
+Grid::BoundBox Grid::makeGlobalBBox()
+{
+	return Grid::BoundBox( 90., -90., 360. - degrees_eps(), 0. );
+}
+
+Grid::BoundBox Grid::makeBBox(const Params& p)
+{
+	if( p.get("grid_bbox_s").isNil() )
+		return Grid::makeGlobalBBox();
+
+	return BoundBox( p["grib_bbox_n"],
+					 p["grid_bbox_s"],
+					 p["grid_bbox_e"],
+					 p["grid_bbox_w"] );
+}
+
+double Grid::degrees_eps()
+{
+	/// default is 1E-3 because
+	/// some bugs in IFS means we need a lower resolution epsilon when decoding from grib2
+
+	static double eps = eckit::Resource<double>( "$ATLAS_GRID_DEGREES_EPSILON;GridDegreesEps", 1E-3 );
+	return eps;
+}
+
+//------------------------------------------------------------------------------------------------------
 
 } // namespace grid
 } // namespace atlas

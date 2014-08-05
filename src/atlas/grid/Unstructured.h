@@ -7,12 +7,12 @@
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
+
 #ifndef atlas_grid_Unstructured_H
 #define atlas_grid_Unstructured_H
 
 /// @author Tiago Quintino
 /// @date April 2013
-
 
 #include <cstddef>
 #include <vector>
@@ -20,7 +20,7 @@
 #include "eckit/memory/ScopedPtr.h"
 
 #include "atlas/grid/Grid.h"
-#include "atlas/grid/GridFactory.h"
+
 
 //-----------------------------------------------------------------------------
 
@@ -31,35 +31,33 @@ namespace grid {
 //-----------------------------------------------------------------------------
 
 class Unstructured : public Grid {
-   REGISTER(Unstructured);
 
 public: // methods
 
-    Unstructured() {}
+	static std::string className() { return "atlas.grid.Unstructured"; }
+
+	Unstructured( const eckit::Params& p );
 
     /// @warning temporary constructor taking a list of points
     Unstructured( std::vector< Point >* pts, const std::string& hash );
 
     virtual ~Unstructured();
 
-    virtual std::string hash() const;
+	virtual std::string uid() const;
+	virtual std::string hash() const;
 
     virtual BoundBox boundingBox() const;
 
     virtual size_t nPoints() const;
 
-    virtual void coordinates( Grid::Coords & ) const;
+	virtual void coordinates( std::vector<double>& ) const;
+	virtual void coordinates( std::vector<Point>& ) const;
 
     virtual std::string gridType() const { return std::string("unstructured"); }
 
-    virtual GridSpec* spec() const;
+	virtual GridSpec spec() const;
 
-    virtual void constructFrom(const GridSpec& );
-
-    virtual bool compare(const Grid&) const;
-
-    /// @deprecated will be removed soon as it exposes the inner storage of the coordinates
-    virtual const std::vector<Point>& coordinates() const { return *points_; }
+	virtual bool same(const Grid&) const;
 
 protected:
 

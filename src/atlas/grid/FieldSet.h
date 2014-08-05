@@ -35,7 +35,7 @@ namespace eckit
 {
     class PathName;
     class DataHandle;
-    class GribHandle;
+	namespace grib { class GribHandle; }
 }
 
 namespace atlas {
@@ -53,7 +53,7 @@ public: // types
     typedef atlas::FieldT< double > Data;
     typedef atlas::Mesh Mesh;
 
-    typedef eckit::GribHandle Grib;
+	typedef eckit::grib::GribHandle Grib;
 
 public: // methods
 
@@ -122,6 +122,7 @@ public: // methods
     FieldSet( const FieldHandle::Vector& fields );
 
     const FieldHandle& operator[]( const size_t& i ) const { ASSERT(i<size()); return *fields_[i]; }
+    FieldHandle& operator[]( const size_t& i )             { ASSERT(i<size()); return *fields_[i]; }
 
     const FieldHandle::Vector& fields() const { return fields_; }
     FieldHandle::Vector& fields() { return fields_; }
@@ -136,7 +137,7 @@ public: // methods
 
 protected: // methods
 
-    FieldHandle::Ptr create_field( eckit::GribHandle& );
+	FieldHandle::Ptr create_field( eckit::grib::GribHandle& );
 
 protected: // members
 

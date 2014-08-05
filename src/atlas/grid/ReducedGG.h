@@ -7,14 +7,13 @@
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
-#ifndef atlas_grid_reduced_gaussian_grid_H
-#define atlas_grid_reduced_gaussian_grid_H
+#ifndef atlas_grid_ReducedGG_H
+#define atlas_grid_ReducedGG_H
 
 #include <cstddef>
 #include <vector>
 
 #include "atlas/grid/Grid.h"
-#include "atlas/grid/GridFactory.h"
 
 //-----------------------------------------------------------------------------
 
@@ -45,42 +44,57 @@ namespace grid {
 // o When BitMap is present,(we have and array), it is for the global, 0 - Missing,  1- data value present
 // o The bitsmap shows where we have Data values.
 
-class ReducedGaussianGrid : public Grid {
-   REGISTER(ReducedGaussianGrid);
-public:
+// Area: Do we check the area.
+// Area: Can we assume area is multiple of the grids ? No.
+// NPoints: is this just the grids points, or includes area points, of area does not fit grid
+//          assumes it is grid points inclusive of the area.
 
-   ReducedGaussianGrid();
-   virtual ~ReducedGaussianGrid();
+class ReducedGG : public Grid {
 
-   /// Overridden functions
-   virtual std::string hash() const { return hash_;}
-   virtual BoundBox boundingBox() const { return bbox_;}
-   virtual size_t nPoints() const { return points_.size(); }
-   virtual void coordinates( Grid::Coords & ) const;
-   virtual std::string gridType() const { return std::string("reduced_gg") ;}
-   virtual GridSpec* spec() const;
-   virtual void constructFrom(const GridSpec& );
-   virtual bool compare(const Grid&) const;
+public: // methods
 
-   /// @deprecated will be removed soon as it exposes the inner storage of the coordinates
-   virtual const std::vector<Point>& coordinates() const { return points_; }
+	static std::string className() { return "atlas.grid.ReducedGG"; }
+	static std::string gridTypeStr() { return "reduced_gg"; }
 
-   /// Functions specific to Reduced Guassian grids
-   long gaussianNumber() const { return gaussianNumber_;}
-   const std::vector<long>&  pointsPerLatitude() const { return rgSpec_;}
-   const std::vector<double>&  latitudes() const { return latitudes_;}
+	ReducedGG( const eckit::Params& p );
+	ReducedGG( long gaussN );
 
-private:
-   std::string          hash_;
-   BoundBox             bbox_;
-   std::vector<Point>   points_;               ///< storage of coordinate points
-   std::vector<long>   rgSpec_;               ///< No of points per latitude
-   std::vector<double> latitudes_;            ///< the latitudes
-   long                gaussianNumber_;       ///< No of points between pole and equator
-   long   nj_;                                ///< No of points along Y axes
+	virtual ~ReducedGG();
 
-   /// Added friend mechanism to minimise data copying, during construction
-   friend class GribReducedGaussianGrid;
+	virtual std::string uid() const;
+	virtual std::string hash() const { return hash_;}
+
+	virtual BoundBox boundingBox() const { return bbox_;}
+	virtual size_t nPoints() const { return nbDataPoints_; }
+
+	virtual void coordinates( std::vector<double>& ) const;
+	virtual void coordinates( std::vector<Point>& ) const;
+
+	virtual std::string gridType() const;
+	virtual GridSpec spec() const;
+	virtual bool same(const Grid&) const;
+
+public: // methods
+
+	long gaussianNumber() const { return gaussN_;}
+
+	const std::vector<long>&  pointsPerLatitude() const { return rgSpec_;}
+
+	void computeLatitues(std::vector<double>&) const;
+	void computePoints( const std::vector<double>&, std::vector<Point>& pts ) const;
+	long computeNPoints( const std::vector<double>& ) const;
+	void computeNPtsPerLat( std::vector<long>& );
+
+private: // members
+
+	std::string          hash_;
+
+	long                 nbDataPoints_;        ///< no of data points in grid, taking into account the bounding box
+	long                 gaussN_;              ///< No of points between pole and equator
+
+	BoundBox             bbox_;
+
+	std::vector<long>    rgSpec_;              ///< No of points per latitude
 };
 
 //-----------------------------------------------------------------------------

@@ -15,6 +15,7 @@
 #define atlas_grid_MeshCache_hpp
 
 #include "eckit/memory/NonCopyable.h"
+#include "eckit/filesystem/LocalPathName.h"
 
 #include "atlas/mesh/Mesh.hpp"
 
@@ -32,7 +33,7 @@ public: // methods
     /// @returns true if addition was succcessful
     static bool get( const std::string& key, atlas::Mesh& );
 
-    static std::string filename(const std::string& key);
+    static eckit::LocalPathName filename(const std::string& key);
 
 };
 

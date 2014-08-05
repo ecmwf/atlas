@@ -14,7 +14,7 @@
 #include "atlas/mpl/MPL.hpp"
 #include "atlas/mesh/FunctionSpace.hpp"
 #include "atlas/grid/Grid.h"
-#include "atlas/grid/LatLon.h"
+#include "atlas/grid/RegularLatLon.h"
 #include "atlas/grid/FieldSet.h"
 #include "atlas/grid/Tesselation.h"
 
@@ -50,7 +50,7 @@ void TestField::test_constructor()
 
     Grid::BoundBox earth ( Grid::Point(-90.,0.), Grid::Point(90.,360.) );
 
-    Grid::Ptr g (new LatLon( 4, 4, earth ) );
+	Grid::Ptr g (new RegularLatLon( 4, 4, earth ) );
 
     // create some reference data for testing
 

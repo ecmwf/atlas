@@ -53,11 +53,11 @@ Gaussian::Gaussian( size_t resolution, const BoundBox& bb) :
     // generate longitudes common to all latitudes for regular gaussian grids
     // 
     // work out the delta between longitudes
-    double dlon = ( bb.top_right_.lon() - bb.bottom_left_.lon() ) / nlon ;
+    double dlon = ( bb.top_right().lon() - bb.bottom_left().lon() ) / nlon ;
 
     // fill out a std::vector
     std::vector<double> lons;
-    double plon = bb.bottom_left_.lon();
+    double plon = bb.bottom_left().lon();
     for (size_t j = 0; j <= nlon; ++j)
     {
         lons.push_back(plon);
