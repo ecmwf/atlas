@@ -122,7 +122,7 @@ function Checksum__execute_real64_r1(this, loc_field_data) result(checksum)
   real(c_double), intent(in)   :: loc_field_data(:)
   character(len=:), allocatable :: checksum
   character(kind=c_char) :: checksum_c_str(132)
-  integer :: lstrides(1), lextents(1), lrank=1, ierr
+  integer :: lstrides(1), lextents(1), lrank=1
   real(c_double), pointer :: lview(:)
   lstrides = (/ stride(loc_field_data,1) /)
   lextents = (/ 1                        /)
