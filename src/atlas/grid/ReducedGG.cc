@@ -230,6 +230,7 @@ long ReducedGG::computeNPoints( const std::vector<double>& lats ) const
 			}
 		}
 	}
+  /* nawd: no return implemented here? */ NOTIMP;
 }
 
 
