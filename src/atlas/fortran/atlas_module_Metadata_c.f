@@ -17,6 +17,19 @@ subroutine Metadata__delete(this)
   this%private%object = C_NULL_ptr
 end subroutine Metadata__delete
 
+function Metadata__has(this, name) result(value)
+  class(Metadata_type), intent(inout) :: this
+  character(len=*), intent(in) :: name
+  logical :: value
+  integer :: value_int
+  value_int =  atlas__Metadata__has(this%private%object, c_str(name) )
+  if( value_int == 1 ) then
+    value = .True.
+  else
+    value = .False.
+  end if
+end function Metadata__has
+
 subroutine Metadata__add_logical(this, name, value)
   class(Metadata_type), intent(inout) :: this
   character(len=*), intent(in) :: name

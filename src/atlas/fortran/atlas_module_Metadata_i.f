@@ -25,6 +25,7 @@ contains
   procedure, private :: add_real32 => Metadata__add_real32
   procedure, private :: add_real64 => Metadata__add_real64
   procedure, private :: add_string => Metadata__add_string
+  procedure :: has => Metadata__has
   generic :: add => add_logical, add_integer, add_real32, add_real64, add_string
   generic :: set => add_logical, add_integer, add_real32, add_real64, add_string
   procedure :: get_integer => Metadata__get_integer

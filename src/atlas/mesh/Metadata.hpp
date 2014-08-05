@@ -49,6 +49,9 @@ extern "C"
   Metadata* atlas__Metadata__new ();
 
   void atlas__Metadata__delete (Metadata* This);
+
+  int  atlas__Metadata__has        (Metadata* This, const char* name);
+
   void atlas__Metadata__add_int    (Metadata* This, const char* name, int value);
   void atlas__Metadata__add_float  (Metadata* This, const char* name, float value);
   void atlas__Metadata__add_double (Metadata* This, const char* name, double value);

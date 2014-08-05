@@ -89,6 +89,15 @@ const char* atlas__Metadata__get_string (Metadata* This, const char* name)
 {
   return This->get<std::string>( std::string(name) ).c_str();
 }
+int  atlas__Metadata__has (Metadata* This, const char* name)
+{
+  return (
+      This->has<int>( std::string(name) ) ||
+      This->has<float>( std::string(name) ) ||
+      This->has<double>( std::string(name) ) ||
+      This->has<std::string>( std::string(name) ) );
+}
+
 // ------------------------------------------------------------------
 
 
