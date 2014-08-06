@@ -87,6 +87,7 @@ void add_centroid_dual_volume_contribution(
 void build_dual_normals( Mesh& mesh );
 void build_skewness(Mesh& mesh );
 
+void check_normals( Mesh& mesh );
 
 
 void build_median_dual_mesh( Mesh& mesh )
@@ -109,7 +110,6 @@ void build_median_dual_mesh( Mesh& mesh )
 
   build_dual_normals( mesh );
 
-
   ArrayView<double,1> skewness      ( edges.create_field<double>("skewness",1) );
   ArrayView<double,1> alpha         ( edges.create_field<double>("alpha",1) );
   skewness = 0.;
@@ -122,6 +122,8 @@ void build_median_dual_mesh( Mesh& mesh )
   ArrayView<double,2> dual_normals  ( edges.field( "dual_normals" ) );
   edges.parallelise();
   edges.halo_exchange()->execute(dual_normals);
+  check_normals(mesh);
+
 }
 
 void build_centroid_dual_mesh( Mesh& mesh )
@@ -483,6 +485,40 @@ void build_dual_normals( Mesh& mesh )
     }
   }
 }
+
+void check_normals( Mesh& mesh )
+{
+
+  FunctionSpace&  nodes = mesh.function_space("nodes");
+  ArrayView<double,2> node_coords( nodes.field("coordinates") );
+
+  FunctionSpace&  edges = mesh.function_space("edges");
+  IndexView<int,   2> edge_to_elem  ( edges.field("to_elem"  ) );
+  IndexView<int,   2> edge_nodes    ( edges.field("nodes"    ) );
+  ArrayView<double,2> dual_normals  ( edges.field("dual_normals") );
+  int nb_edges = edges.extents()[0];
+
+  for (int edge=0; edge<nb_edges; ++edge)
+  {
+    if( edge_to_elem(edge,0) < 0 )
+    {
+
+    }
+    else
+    {
+      // Make normal point from node 1 to node 2
+      double dx = node_coords( edge_nodes(edge,1), XX ) - node_coords( edge_nodes(edge,0), XX );
+      double dy = node_coords( edge_nodes(edge,1), YY ) - node_coords( edge_nodes(edge,0), YY );
+      if( dx*dual_normals(edge,XX) + dy*dual_normals(edge,YY) < 0 )
+      {
+        dual_normals(edge,XX) = - dual_normals(edge,XX);
+        dual_normals(edge,YY) = - dual_normals(edge,YY);
+      }
+    }
+  }
+}
+
+
 
 void build_skewness( Mesh& mesh )
 {
