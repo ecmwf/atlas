@@ -23,7 +23,6 @@ endif( )
 ####################################################################
 
 cmake_add_fortran_flags( "-O3"             BUILD RELEASE )
-cmake_add_fortran_flags( "-ip"             BUILD RELEASE )
 cmake_add_fortran_flags( "-unroll"         BUILD RELEASE )
 cmake_add_fortran_flags( "-inline"         BUILD RELEASE )
 cmake_add_fortran_flags( "-vec-report0"    BUILD RELEASE )
@@ -44,13 +43,11 @@ cmake_add_fortran_flags( "-fpe-all=0 -fpe:0 -check all" BUILD DEBUG )
 # BIT REPRODUCIBLE FLAGS
 ####################################################################
 
-cmake_add_fortran_flags( "-O2"             BUILD RELEASE )
-cmake_add_fortran_flags( "-ip"             BUILD RELEASE )
-cmake_add_fortran_flags( "-ipo"            BUILD RELEASE )
-cmake_add_fortran_flags( "-unroll"         BUILD RELEASE )
-cmake_add_fortran_flags( "-inline"         BUILD RELEASE )
-cmake_add_fortran_flags( "-vec-report0"    BUILD RELEASE )
-cmake_add_fortran_flags( "-no-heap-arrays" BUILD RELEASE )
+cmake_add_fortran_flags( "-O2"             BUILD BIT )
+cmake_add_fortran_flags( "-unroll"         BUILD BIT )
+cmake_add_fortran_flags( "-inline"         BUILD BIT )
+cmake_add_fortran_flags( "-vec-report0"    BUILD BIT )
+cmake_add_fortran_flags( "-no-heap-arrays" BUILD BIT )
 
 ####################################################################
 # LINK FLAGS
