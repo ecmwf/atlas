@@ -58,6 +58,6 @@ ecbuild_add_test(   TARGET      test_grid_from_grib
 					BOOST
 					SOURCES     test_grid_from_grib.cc
 #					DEPENDS     get_gribs
-					CONDITION	HAVE_GRID
+          CONDITION	HAVE_GRID AND HAVE_ECKIT_GRIB
 					LIBS        atlas_grid )
 
