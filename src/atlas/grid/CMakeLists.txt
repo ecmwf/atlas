@@ -12,12 +12,8 @@ PointIndex3.cc
 PointIndex3.h
 PointSet.cc
 PointSet.h
-ReducedGG.cc
-ReducedGG.h
 ReducedLatLon.cc
 ReducedLatLon.h
-RegularGG.cc
-RegularGG.h
 RegularLatLon.cc
 RegularLatLon.h
 RotatedLatLon.cc
@@ -42,6 +38,14 @@ if( HAVE_ECKIT_GRIB )
       FieldSet.h
 	  Grib.cc # to be abstracted into a plugin
 	  Grib.h
+
+# contains  include "grib_api.h"
+RegularGG.cc  
+RegularGG.h
+ReducedGG.cc
+ReducedGG.h
+
+
    )
 endif()
 
