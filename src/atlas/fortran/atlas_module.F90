@@ -160,6 +160,11 @@ subroutine atlas_build_nodes_parallel_fields(nodes)
   call atlas__build_nodes_parallel_fields(nodes%private%object)
 end subroutine atlas_build_nodes_parallel_fields
 
+subroutine atlas_renumber_nodes_glb_idx(nodes)
+  type(FunctionSpace_type), intent(inout) :: nodes
+  call atlas__renumber_nodes_glb_idx(nodes%private%object)
+end subroutine atlas_renumber_nodes_glb_idx
+
 subroutine atlas_build_edges_parallel_fields(edges, nodes)
   type(FunctionSpace_type), intent(inout) :: edges, nodes
   call atlas__build_edges_parallel_fields(edges%private%object,nodes%private%object)

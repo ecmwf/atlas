@@ -38,6 +38,27 @@ FieldT<int>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nodes 
 
 // ------------------------------------------------------------------
 
+namespace {
+
+struct Node
+{
+  Node(int gid, int idx)
+  {
+    g = gid;
+    i = idx;
+  }
+  int g,i;
+  bool operator < (const Node& other) const
+  {
+    return ( g<other.g );
+  }
+};
+
+}
+
+// ------------------------------------------------------------------
+
+
 void build_parallel_fields( Mesh& mesh )
 {
   ASSERT( mesh.has_function_space("nodes") );
@@ -95,6 +116,104 @@ FieldT<int>& build_nodes_global_idx( FunctionSpace& nodes )
       glb_idx(jnode) = LatLonPoint( latlon[jnode] ).uid();
   }
   return nodes.field<int>("glb_idx");
+}
+
+void renumber_nodes_glb_idx( FunctionSpace& nodes )
+{
+  int mypart = MPL::rank();
+  int nparts = MPL::size();
+  int root = 0;
+
+  if( ! nodes.has_field("glb_idx") )
+  {
+    ArrayView<int,1> glb_idx ( nodes.create_field<int>("glb_idx",1) );
+    glb_idx = -1;
+  }
+
+  ArrayView<double,2> latlon  ( nodes.field("coordinates") );
+  ArrayView<int,   1> glb_idx ( nodes.field("glb_idx"    ) );
+
+  /*
+   * Sorting following gidx will define global order of
+   * gathered fields. Special care needs to be taken for
+   * pole edges, as their centroid might coincide with
+   * other edges
+   */
+  int nb_nodes = glb_idx.extents()[0];
+  for( int jnode=0; jnode<nb_nodes; ++jnode )
+  {
+    if( glb_idx(jnode) <= 0 )
+      glb_idx(jnode) = LatLonPoint( latlon[jnode] ).uid();
+  }
+
+  /*
+   * REMOTE INDEX BASE = 1
+   */
+  const int ridx_base = 1;
+
+  // 1) Gather all global indices, together with location
+  Array<int> loc_id_arr(nb_nodes);
+  ArrayView<int,1> loc_id(loc_id_arr);
+
+  for( int jnode=0; jnode<nb_nodes; ++jnode )
+  {
+    loc_id(jnode) = glb_idx(jnode);
+  }
+
+  std::vector<int> recvcounts(MPL::size());
+  std::vector<int> recvdispls(MPL::size());
+  MPL_CHECK_RESULT( MPI_Gather( &nb_nodes, 1, MPI_INT,
+                                recvcounts.data(), 1, MPI_INT, root, MPI_COMM_WORLD) );
+  recvdispls[0]=0;
+  for (int jpart=1; jpart<nparts; ++jpart) // start at 1
+  {
+    recvdispls[jpart]=recvcounts[jpart-1]+recvdispls[jpart-1];
+  }
+  int glb_nb_nodes = std::accumulate(recvcounts.begin(),recvcounts.end(),0);
+
+  Array<int> glb_id_arr(glb_nb_nodes);
+  ArrayView<int,1> glb_id(glb_id_arr);
+
+  MPL_CHECK_RESULT(
+        MPI_Gatherv( loc_id.data(), nb_nodes, MPI_INT,
+                     glb_id.data(), recvcounts.data(), recvdispls.data(), MPI_INT,
+                     root, MPI_COMM_WORLD) );
+
+
+  // 2) Sort all global indices, and renumber from 1 to glb_nb_edges
+  std::vector<Node> node_sort; node_sort.reserve(glb_nb_nodes);
+  for( int jnode=0; jnode<glb_id.extent(0); ++jnode )
+  {
+    node_sort.push_back( Node(glb_id(jnode),jnode) );
+  }
+  std::sort(node_sort.begin(), node_sort.end());
+
+  // Assume edge gid start
+  int gid=0;
+  for( int jnode=0; jnode<node_sort.size(); ++jnode )
+  {
+    if( jnode == 0 )
+    {
+      ++gid;
+    }
+    else if( node_sort[jnode].g != node_sort[jnode-1].g )
+    {
+      ++gid;
+    }
+    int inode = node_sort[jnode].i;
+    glb_id(inode) = gid;
+  }
+
+  // 3) Scatter renumbered back
+  MPL_CHECK_RESULT(
+        MPI_Scatterv( glb_id.data(), recvcounts.data(), recvdispls.data(), MPI_INT,
+                      loc_id.data(), nb_nodes, MPI_INT,
+                      root, MPI_COMM_WORLD) );
+
+  for( int jnode=0; jnode<nb_nodes; ++jnode )
+  {
+    glb_idx(jnode) = loc_id(jnode);
+  }
 }
 
 // ------------------------------------------------------------------
@@ -393,23 +512,6 @@ FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes 
 
 }
 
-namespace {
-
-struct Node
-{
-  Node(int gid, int idx)
-  {
-    g = gid;
-    i = idx;
-  }
-  int g,i;
-  bool operator < (const Node& other) const
-  {
-    return ( g<other.g );
-  }
-};
-
-}
 FieldT<int>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nodes )
 {
   int mypart = MPL::rank();
@@ -499,7 +601,7 @@ FieldT<int>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nodes 
   std::sort(edge_sort.begin(), edge_sort.end());
 
   // Assume edge gid start
-  int gid=0;
+  int gid=200000;
   for( int jedge=0; jedge<edge_sort.size(); ++jedge )
   {
     if( jedge == 0 )
@@ -542,6 +644,11 @@ void atlas__build_nodes_parallel_fields (FunctionSpace* nodes) {
 void atlas__build_edges_parallel_fields (FunctionSpace* edges, FunctionSpace* nodes) {
   build_edges_parallel_fields(*edges, *nodes);
 }
+void atlas__renumber_nodes_glb_idx (FunctionSpace* nodes)
+{
+  renumber_nodes_glb_idx(*nodes);
+}
+
 
 // ------------------------------------------------------------------
 

@@ -45,6 +45,9 @@ void build_nodes_parallel_fields( FunctionSpace& nodes );
  */
 void build_edges_parallel_fields( FunctionSpace& edges, FunctionSpace& nodes );
 
+
+void renumber_nodes_glb_idx (FunctionSpace* nodes);
+
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 extern "C"
@@ -52,6 +55,7 @@ extern "C"
   void atlas__build_parallel_fields (Mesh* mesh);
   void atlas__build_nodes_parallel_fields (FunctionSpace* nodes);
   void atlas__build_edges_parallel_fields (FunctionSpace* edges, FunctionSpace* nodes);
+  void atlas__renumber_nodes_glb_idx (FunctionSpace* nodes);
 }
 // ------------------------------------------------------------------
 
