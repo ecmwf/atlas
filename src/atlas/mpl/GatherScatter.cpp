@@ -82,16 +82,20 @@ GatherScatter::GatherScatter() :
 }
 
 void GatherScatter::setup( const int part[],
-                    const int remote_idx[], const int base,
-                    const int glb_idx[], const int max_glb_idx,
-                    const int parsize )
+                           const int remote_idx[], const int base,
+                           const int glb_idx[], const int max_glb_idx,
+                           const int parsize )
 {
+  const bool include_ghost = false; // Warning: setting this to true might break scatter functionality
+                                    //   This feature allows to check periodic halo values in output
+
   parsize_ = parsize;
 
   loccounts_.resize(nproc); loccounts_.assign(nproc,0);
   glbcounts_.resize(nproc); glbcounts_.assign(nproc,0);
   locdispls_.resize(nproc); locdispls_.assign(nproc,0);
   glbdispls_.resize(nproc); glbdispls_.assign(nproc,0);
+
 
   int maxgid = max_glb_idx;
   if(max_glb_idx<0)
@@ -100,7 +104,7 @@ void GatherScatter::setup( const int part[],
     maxgid = -1;
     for (int jj=0; jj<parsize_; ++jj)
     {
-      if ( !is_ghost(jj) )
+      if ( !is_ghost(jj) && include_ghost )
       {
         maxgid = std::max(maxgid,glb_idx[jj]);
       }
@@ -109,14 +113,27 @@ void GatherScatter::setup( const int part[],
   }
 
 
-
   Array<int> sendnodes(parsize_,3);
   ArrayView<int,2> nodes(sendnodes);
-  for( int n=0; n<parsize_; ++n )
+
+  if( include_ghost )
   {
-    nodes(n,0) = glb_idx[n];
-    nodes(n,1) = part[n];
-    nodes(n,2) = remote_idx[n]-base;
+    for( int n=0; n<parsize_; ++n )
+    {
+      nodes(n,0) = glb_idx[n];
+      nodes(n,1) = myproc;
+      nodes(n,2) = n;
+    }
+  }
+  else
+  {
+    for( int n=0; n<parsize_; ++n )
+    {
+      nodes(n,0) = glb_idx[n];
+      nodes(n,1) = part[n];
+      nodes(n,2) = remote_idx[n]-base;
+    }
+
   }
 
   loccnt_ = nodes.total_size();

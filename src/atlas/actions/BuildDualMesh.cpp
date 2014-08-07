@@ -86,8 +86,7 @@ void add_centroid_dual_volume_contribution(
     ArrayView<double,1>& dual_volumes );
 void build_dual_normals( Mesh& mesh );
 void build_skewness(Mesh& mesh );
-
-void check_normals( Mesh& mesh );
+void make_dual_normals_outward( Mesh& mesh );
 
 
 void build_median_dual_mesh( Mesh& mesh )
@@ -122,7 +121,7 @@ void build_median_dual_mesh( Mesh& mesh )
   ArrayView<double,2> dual_normals  ( edges.field( "dual_normals" ) );
   edges.parallelise();
   edges.halo_exchange()->execute(dual_normals);
-  check_normals(mesh);
+  make_dual_normals_outward(mesh);
 
 }
 
@@ -473,20 +472,11 @@ void build_dual_normals( Mesh& mesh )
 
       dual_normals(edge,XX) =  yl-yr;
       dual_normals(edge,YY) = -xl+xr;
-
-      // Make normal point from node 1 to node 2
-      dx = node_coords( edge_nodes(edge,1), XX ) - node_coords( edge_nodes(edge,0), XX );
-      dy = node_coords( edge_nodes(edge,1), YY ) - node_coords( edge_nodes(edge,0), YY );
-      if( dx*dual_normals(edge,XX) + dy*dual_normals(edge,YY) < 0 )
-      {
-        dual_normals(edge,XX) = - dual_normals(edge,XX);
-        dual_normals(edge,YY) = - dual_normals(edge,YY);
-      }
     }
   }
 }
 
-void check_normals( Mesh& mesh )
+void make_dual_normals_outward( Mesh& mesh )
 {
 
   FunctionSpace&  nodes = mesh.function_space("nodes");

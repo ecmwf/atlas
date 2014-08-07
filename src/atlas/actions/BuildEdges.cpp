@@ -156,7 +156,6 @@ void build_node_to_edge_connectivity( Mesh& mesh )
     max_edge_cnt = std::max(max_edge_cnt,to_edge_size(jnode));
   }
   MPL_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max_edge_cnt, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD ) );
-  DEBUG_VAR(max_edge_cnt,0);
 
   IndexView<int,2> node_to_edge ( nodes.create_field<int>("to_edge",max_edge_cnt) );
 
@@ -339,6 +338,7 @@ void build_edges( Mesh& mesh )
   FunctionSpace& nodes   = mesh.function_space( "nodes" );
   ArrayView<int,1> glb_idx(        nodes.field( "glb_idx" ) );
   ArrayView<int,1> part   (        nodes.field( "partition" ) );
+  ArrayView<double,2> latlon (     nodes.field( "coordinates" ) );
   int nb_nodes = nodes.extents()[0];
 
   FunctionSpace& quads       = mesh.function_space( "quads" );
@@ -396,13 +396,15 @@ void build_edges( Mesh& mesh )
   int cnt=0;
   for( int edge=0; edge<nb_edges; ++edge )
   {
-    edge_nodes(edge,0) = face_nodes(edge,0);
-    edge_nodes(edge,1) = face_nodes(edge,1);
-    if( glb_idx(edge_nodes(edge,0)) > glb_idx(edge_nodes(edge,1)) )
+    const int ip1 = face_nodes(edge,0);
+    const int ip2 = face_nodes(edge,1);
+    edge_nodes(edge,0) = ip1;
+    edge_nodes(edge,1) = ip2;
+    //if( glb_idx(ip1) > glb_idx(ip2) )
+    if( LatLonPoint(latlon[ip1]).uid() > LatLonPoint(latlon[ip2]).uid()  )
     {
-      int tmp = edge_nodes(edge,0);
-      edge_nodes(edge,0) = edge_nodes(edge,1);
-      edge_nodes(edge,1) = tmp;
+      edge_nodes(edge,0) = ip2;
+      edge_nodes(edge,1) = ip1;
     }
 
     ASSERT( edge_nodes(edge,0) < nb_nodes );
@@ -411,10 +413,10 @@ void build_edges( Mesh& mesh )
     edge_part(edge)      = std::min( part(edge_nodes(edge,0)), part(edge_nodes(edge,1) ) );
     edge_ridx(edge)      = edge;
 
-    int f1 = face_to_elem[edge][0].f;
-    int f2 = face_to_elem[edge][1].f;
-    int e1 = face_to_elem[edge][0].e;
-    int e2 = face_to_elem[edge][1].e;
+    const int f1 = face_to_elem[edge][0].f;
+    const int f2 = face_to_elem[edge][1].f;
+    const int e1 = face_to_elem[edge][0].e;
+    const int e2 = face_to_elem[edge][1].e;
 
     edge_to_elem(edge,0,0) = f1;
     edge_to_elem(edge,0,1) = e1;
