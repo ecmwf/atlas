@@ -15,15 +15,17 @@
 #define BOOST_UNIT_TEST_FRAMEWORK_HEADER_ONLY
 #include "ecbuild/boost_test_framework.h"
 
-#include "eckit/io/StdFile.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/filesystem/LocalPathName.h"
 
 #include "eckit/grib/GribHandle.h"
+#include "eckit/grib/GribAccessor.h"
+#include "eckit/types/FloatCompare.h"
 
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Grib.h"
 #include "atlas/grid/GridSpec.h"
+#include "atlas/grid/ReducedGG.h"
 
 
 using namespace std;
@@ -41,26 +43,12 @@ using namespace atlas::grid;
 
 static void test_grids_from_grib_sample_directory( const std::string& directory);
 static void test_grib_file(const std::string& file);
+static void read_data_points(grib_handle *h, std::vector<Grid::Point> & points);
+static void comparePointList(const std::vector<Grid::Point>& grib_pntlist, const std::vector<Grid::Point>& points, double epsilon, eckit::grib::GribHandle& gh);
+
 
 BOOST_AUTO_TEST_SUITE( TestGridSpec )
 
-BOOST_AUTO_TEST_CASE( test_gridspec )
-{
-   std::vector<std::string> registered_grid_types;
-   registered_grid_types.push_back("regular_gg");
-   registered_grid_types.push_back("reduced_ll");
-   registered_grid_types.push_back("reduced_gg");
-   registered_grid_types.push_back("regular_ll");
-   registered_grid_types.push_back("rotated_ll");
-   registered_grid_types.push_back("unstructured");
-
-   for(size_t i =0; i < registered_grid_types.size(); ++i) {
-      GridSpec spec(registered_grid_types[i]);
-	  Grid::Ptr grid = Grid::create(spec);
-      BOOST_CHECK_MESSAGE(grid,"Failed to create Grid ");
-      BOOST_CHECK_MESSAGE(spec.grid_type() == grid->gridType(),"grid types dont match");
-   }
-}
 
 BOOST_AUTO_TEST_CASE( test_grib_to_grid_to_gridspec )
 {
@@ -112,44 +100,126 @@ static void test_grids_from_grib_sample_directory(const std::string& directory)
 
 static void test_grib_file(const std::string& fpath)
 {
-   std::cout << "\n===================================================================================================" << std::endl;
-   std::cout << "Opening GRIB file " << fpath << std::endl;
-
+   std::cout << "\n===============================================================================================================" << std::endl;
    LocalPathName path(fpath);
+   std::cout << "Opening GRIB file " << fpath << std::endl;
+   LocalPathName baseName = path.baseName(false);
+   if (baseName.path() == "budg") {
+      std::cout << "Ignoring " << path.baseName() << " not a grid based grib file\n";
+      return;
+   }
 
    eckit::grib::GribHandle gh(path);
-
-   std::cout << " Get the grid type" << std::endl;
    std::string gridType = gh.gridType();
-
    std::cout << " Create Grid derivatives " << gridType << std::endl;
 
-   if ( gridType == "polar_stereographic" || gridType == "sh" )
+   if ( gridType == "polar_stereographic" || gridType == "sh" || gridType.empty())
    {
       std::cout << " ** Ignoring grid types [ polar_stereographic | sh ] " << std::endl;
       return;
    }
 
    // Create Grid derivatives from the GRIB file
-
    atlas::grid::Grid::Ptr grid_created_from_grib = Grib::create_grid(gh);
    BOOST_CHECK_MESSAGE(grid_created_from_grib,"GRIBGridBuilder::instance().build_grid_from_grib_handle failed for file " << fpath);
    if (!grid_created_from_grib) return;
 
-   // The Grid produced, has a GRID spec, the grid spec can be used to,
-   // make sure the grid types match
 
+   // The Grid produced, has a GRID spec, the grid spec can be used to, make sure the grid types match
    GridSpec g_spec = grid_created_from_grib->spec();
-
-   std::cout << g_spec << std::endl;
-
+   std::cout << " " << g_spec << std::endl;
    BOOST_CHECK_MESSAGE(grid_created_from_grib->gridType() == gridType,"gridType(" << gridType << ") did not match Grid constructor(" << grid_created_from_grib->gridType() << ") for file " << fpath);
    BOOST_CHECK_MESSAGE(g_spec.grid_type() == gridType,"gridType(" << gridType << ") did not match GridSpec constructor(" << g_spec.grid_type() << ") for file " << fpath);
+
 
    // From the Spec, create another Grid, we should get back the same Grid
    Grid::Ptr grid_created_from_spec = Grid::create(g_spec);
    BOOST_CHECK_MESSAGE(grid_created_from_spec,"Failed to create GRID from GridSpec");
    bool grid_compare = grid_created_from_grib->same(*grid_created_from_spec);
-   BOOST_CHECK_MESSAGE(grid_compare,"The grids are differnt");
+   BOOST_CHECK_MESSAGE(grid_compare,"The grids are different");
 
+
+   // For reduced Guassian Grid, check the no of pts per latitude read from grib, matches the computed values
+   if (gridType == "reduced_gg") {
+
+      ReducedGG* read_from_grib = dynamic_cast<ReducedGG*>(grid_created_from_grib.get());
+      BOOST_CHECK_MESSAGE(read_from_grib,"Downcast to ReducedGG failed ?");
+
+      if (read_from_grib) {
+         // Create on the fly, this will compute no of pts per latitude on the fly
+         ReducedGG reducedgg(read_from_grib->gaussianNumber());
+         BOOST_CHECK_MESSAGE(read_from_grib->pointsPerLatitude() == reducedgg.pointsPerLatitude(),"Pts per latitide read from grib, different to computed pts per latitude");
+      }
+   }
+
+
+   // epsilon varies depending on the edition number
+   long editionNumber = GribAccessor<long>("editionNumber")(gh);
+   double epsilon = (editionNumber == 1) ? 1e-3 : 1e-6;
+
+   if (gridType == "reduced_gg" || gridType == "regular_gg") {
+
+      // ---------------------------------------------------------------------------------------
+      // Grib samples file have errors in the EXPECTED_longitudeOfLastGridPointInDegrees
+      // This can then effect, comparison of the points
+      // ----------------------------------------------------------------------------------------
+      double guass = GribAccessor<long>("numberOfParallelsBetweenAPoleAndTheEquator")(gh);
+      Grid::BoundBox bbox = grid_created_from_grib->boundingBox();
+
+      double EXPECTED_longitudeOfLastGridPointInDegrees = 360.0 - (90.0/guass);
+      std::cout << " EXPECTED longitudeOfLastGridPointInDegrees     " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << EXPECTED_longitudeOfLastGridPointInDegrees << std::endl;
+      std::cout << " east                                           " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << bbox.east() << std::endl;
+      BOOST_CHECK_CLOSE(bbox.east(),EXPECTED_longitudeOfLastGridPointInDegrees,epsilon);
+   }
+
+   // --------------------------------------------------------------------------------------
+   // compare GRID pts list with, GRIB's. Ignore Rotated lat long, not sure how to compute the point
+   // --------------------------------------------------------------------------------------
+   if (gridType == "rotated_ll"  ) {
+      std::cout << " ** ignoring ROTATED_LL pts comparison, How do we compute the pts set for rotated lat long\n";
+      return;
+   }
+
+   // get GRIB points
+   std::vector<Grid::Point> grib_pntlist;
+   gh.getLatLonPoints( grib_pntlist );
+   BOOST_CHECK_MESSAGE( grid_created_from_grib->nPoints() == grib_pntlist.size(),"GRIB pt list size " << grib_pntlist.size() << " different to GRID " << grid_created_from_grib->nPoints());
+
+   // get the GRID points
+   std::vector<Grid::Point> grid_points; grid_points.resize( grid_created_from_grib->nPoints());
+   grid_created_from_grib->coordinates(grid_points);
+
+   comparePointList(grib_pntlist,grid_points,epsilon,gh);
 }
+
+void comparePointList(const std::vector<Grid::Point>& grib_pntlist, const std::vector<Grid::Point>& points, double epsilon, eckit::grib::GribHandle& gh)
+{
+   BOOST_CHECK_MESSAGE(  points.size() == grib_pntlist.size(),"\n  **GRIB pt list size " << grib_pntlist.size() << " different to GRID " << points.size() );
+
+   RealCompare<double> isEqual(epsilon);
+
+   int print_point_list = 0;
+   std::streamsize old_precision = cout.precision();
+   for(size_t i =0;  i < points.size() && i < grib_pntlist.size(); i++) {
+      if (!isEqual(points[i].lat(),grib_pntlist[i].lat()) ||
+          !isEqual(points[i].lon(),grib_pntlist[i].lon()))
+      {
+         if (print_point_list == 0) {
+            Log::info() << " Point list DIFFER, show first 10, epsilon(" << epsilon << ")" << std::endl;
+            Log::info() << setw(40) << left << "     GRID   " << setw(40) << left << "         GRIB"<< std::endl;
+         }
+         Log::info() << setw(3) << i << " :"
+                  << setw(20) << std::setprecision(std::numeric_limits<double>::digits10 + 1) << points[i].lat() << ", "
+                  << setw(20) << std::setprecision(std::numeric_limits<double>::digits10 + 1) << points[i].lon() << "  "
+                  << setw(20) << std::setprecision(std::numeric_limits<double>::digits10 + 1) << grib_pntlist[i].lat() << ", "
+                  << setw(20) << std::setprecision(std::numeric_limits<double>::digits10 + 1) << grib_pntlist[i].lon()
+                  << std::endl;
+         print_point_list++;
+         if (print_point_list > 10) break;
+      }
+   }
+
+   // reset precision
+   Log::info() << std::setprecision(old_precision);
+}
+
