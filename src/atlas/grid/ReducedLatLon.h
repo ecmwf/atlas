@@ -51,7 +51,7 @@ public: // methods
 	virtual std::string hash() const { return hash_;}
 
 	virtual BoundBox boundingBox() const { return bbox_;}
-	virtual size_t nPoints() const { return points_.size(); }
+	virtual size_t nPoints() const;
 
 	virtual void coordinates( std::vector<double>& ) const;
 	virtual void coordinates( std::vector<Point>& ) const;
@@ -60,10 +60,15 @@ public: // methods
 	virtual GridSpec spec() const;
 	virtual bool same(const Grid&) const;
 
+   void computeNPtsPerLat( std::vector<long>& );
+
 protected: // methods
 
 	long rows() const { return nptsNS_;}
 	double incLat() const { return nsIncrement_; }
+
+	long computeRows() const;
+
 
 private: // members
 
@@ -72,8 +77,6 @@ private: // members
 	double nsIncrement_;                   ///< In degrees
 	long nptsNS_;                          ///< No of points along Y axes
 	std::vector<long>    rgSpec_;          ///< No of points per latitude
-	std::vector< Point > points_;          ///< storage of coordinate points
-
 };
 
 //-----------------------------------------------------------------------------

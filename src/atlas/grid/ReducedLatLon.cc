@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2013 ECMWF.
+ * (C) Copyright 1996-2014 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -11,6 +11,7 @@
 #include "eckit/log/Log.h"
 #include "eckit/memory/Builder.h"
 #include "eckit/value/Value.h"
+#include "eckit/types/FloatCompare.h"
 
 #include "atlas/grid/GridSpec.h"
 #include "atlas/grid/ReducedLatLon.h"
@@ -25,19 +26,34 @@ namespace grid {
 
 ConcreteBuilderT1<Grid,ReducedLatLon> ReducedLatLon_builder( ReducedLatLon::gridTypeStr() );
 
-//void ReducedLatLon::constructFrom(const GridSpec& grid_spec)
-//{
-//   if (grid_spec.has("Nj")) nptsNS_ = grid_spec.get("Nj");
-//   if (grid_spec.has("nsIncrement")) nsIncrement_ =  grid_spec.get("nsIncrement");
-//   if (grid_spec.has("hash"))        hash_ = (std::string)grid_spec.get("hash");
-//   grid_spec.get_bounding_box(bbox_);
-//   grid_spec.get_rgspec(rgSpec_);
-//   grid_spec.get_points(points_);
-//}
-
 ReducedLatLon::ReducedLatLon( const eckit::Params& p )
+ : nsIncrement_(0),nptsNS_(0)
 {
-	NOTIMP;
+   if( !p.get("hash").isNil() )
+      hash_ = p["hash"].as<std::string>();
+
+   bbox_ = makeBBox(p);
+
+   if( p.has("Nj") )
+   {
+      nptsNS_ = p["Nj"];
+   }
+
+   if( p.has("grid_lat_inc") )
+   {
+      nsIncrement_ = p["grid_lat_inc"];
+   }
+
+   if( p.has("NPtsPerLat") )
+   {
+      ValueList nlats = p["NPtsPerLat"];
+      rgSpec_.resize(nlats.size());
+      for( size_t i = 0; i < nlats.size(); ++i)
+         rgSpec_[i] = nlats[i];
+   }
+   else {
+      computeNPtsPerLat(rgSpec_);
+   }
 }
 
 ReducedLatLon::~ReducedLatLon()
@@ -53,12 +69,125 @@ string ReducedLatLon::uid() const
 
 void ReducedLatLon::coordinates(std::vector<double>& r ) const
 {
-	NOTIMP;
+   if (r.capacity() == 0)  r.reserve( nPoints() * 2);
+   r.clear();
+
+   RealCompare<double> isEqual(degrees_eps());
+
+   const double north = bbox_.north();
+   const double south = bbox_.south();
+   const double west = bbox_.west();
+   const double east = bbox_.east();
+
+   double plat = north;
+   for( size_t j = 0; j < rgSpec_.size() ; ++j) {
+
+      long no_of_points_along_latitude = rgSpec_[j];
+      if (no_of_points_along_latitude > 0 ) {
+
+         if ( isEqual(plat,north) || isEqual(plat,south) || ( plat < north && plat > south)) {
+
+            double east_west_grid_length = 360.0/no_of_points_along_latitude;
+            double plon = 0;
+            for(int k = 0; k < no_of_points_along_latitude; k++) {
+
+               if ( (isEqual(plon,west) || isEqual(plon,east)) || ( plon < east && plon > west)) {
+
+                  ASSERT(plat < 90.0 && plat > -90.0);
+                  ASSERT(plon < 360.0 && plon >= 0);
+                  r.push_back( plat );
+                  r.push_back( plon );
+               }
+               plon += east_west_grid_length;
+            }
+         }
+      }
+      plat -= nsIncrement_;
+   }
 }
 
-void ReducedLatLon::coordinates(std::vector<Grid::Point>&) const
+void ReducedLatLon::coordinates(std::vector<Grid::Point>& pts) const
 {
-	NOTIMP;
+   if (pts.size() == 0) {
+      pts.resize( nPoints() );
+   }
+
+   RealCompare<double> isEqual(degrees_eps());
+
+   const double north = bbox_.north();
+   const double south = bbox_.south();
+   const double west = bbox_.west();
+   const double east = bbox_.east();
+
+   int i = 0;
+   double plat = north;
+   for( size_t j = 0; j < rgSpec_.size() ; ++j) {
+
+      long no_of_points_along_latitude = rgSpec_[j];
+      if (no_of_points_along_latitude > 0 ) {
+
+         if ( isEqual(plat,north) || isEqual(plat,south) || ( plat < north && plat > south)) {
+
+            double east_west_grid_length = 360.0/no_of_points_along_latitude;
+            double plon = 0;
+            for(int k = 0; k < no_of_points_along_latitude; k++) {
+
+               if ( (isEqual(plon,west) || isEqual(plon,east)) || ( plon < east && plon > west)) {
+
+                  ASSERT(plat < 90.0 && plat > -90.0);
+                  ASSERT(plon < 360.0 && plon >= 0);
+                  ASSERT(i < pts.size());
+                  pts[i].assign( plat, plon );
+                  i++;
+               }
+               plon += east_west_grid_length;
+            }
+         }
+      }
+      plat -= nsIncrement_;
+   }
+}
+
+size_t ReducedLatLon::nPoints() const
+{
+   size_t nbDataPoints = 0;
+
+   RealCompare<double> isEqual(degrees_eps());
+
+   const double north = bbox_.north();
+   const double south = bbox_.south();
+   const double west = bbox_.west();
+   const double east = bbox_.east();
+
+   double plat = north;
+   for( size_t j = 0; j < rgSpec_.size() ; ++j) {
+
+      long no_of_points_along_latitude = rgSpec_[j];
+      if (no_of_points_along_latitude > 0 ) {
+
+         if ( isEqual(plat,north) || isEqual(plat,south) || ( plat < north && plat > south)) {
+
+            double east_west_grid_length = 360.0/no_of_points_along_latitude;
+            double plon = 0;
+            for(int k = 0; k < no_of_points_along_latitude; k++) {
+
+               if ( (isEqual(plon,west) || isEqual(plon,east)) || ( plon < east && plon > west)) {
+
+                  ASSERT(plat < 90.0 && plat > -90.0);
+                  ASSERT(plon < 360.0 && plon >= 0);
+                  nbDataPoints++;
+               }
+               plon += east_west_grid_length;
+            }
+         }
+      }
+      plat -= nsIncrement_;
+   }
+//
+//   for( size_t j = 0; j < rgSpec_.size(); ++j) {
+//      nbDataPoints += rgSpec_[j];
+//   }
+   return nbDataPoints;
 }
 
 string ReducedLatLon::gridType() const
@@ -73,12 +202,12 @@ GridSpec ReducedLatLon::spec() const
    grid_spec.uid( uid() );
 
    grid_spec.set("Nj",eckit::Value(nptsNS_));
-   grid_spec.set("nsIncrement",eckit::Value(nsIncrement_));
+   grid_spec.set("grid_lat_inc",eckit::Value(nsIncrement_));
 
    grid_spec.set("hash",eckit::Value(hash_));
 
    grid_spec.set_bounding_box(bbox_);
-   grid_spec.set_rgspec(rgSpec_);
+   grid_spec.set_npts_per_lat(rgSpec_);
 
    return grid_spec;
 }
@@ -86,6 +215,18 @@ GridSpec ReducedLatLon::spec() const
 bool ReducedLatLon::same(const Grid& grid) const
 {
 	return spec() == grid.spec();
+}
+
+long ReducedLatLon::computeRows() const
+{
+   return (bbox_.north() - bbox_.south()) / incLat() + 1;
+}
+
+void ReducedLatLon::computeNPtsPerLat( std::vector<long>& )
+{
+   // Not clear how this is computed.
+   // Note: For guassain number, we used the pre-defined tabulated values.
+   NOTIMP;
 }
 
 //-----------------------------------------------------------------------------
