@@ -4,6 +4,8 @@ Grid.cc
 Grid.h
 GridSpec.cc
 GridSpec.h
+GridSpecParams.cc
+GridSpecParams.h
 Latitudes.cc
 Latitudes.h
 MeshCache.cc
