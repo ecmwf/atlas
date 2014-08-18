@@ -25,23 +25,59 @@ namespace grid {
 
 ConcreteBuilderT1<Grid,RotatedLatLon> RotatedLatLon_builder( RotatedLatLon::gridTypeStr() );
 
-//void RotatedLatLon::constructFrom(const GridSpec& grid_spec)
-//{
-//   if (grid_spec.has("Nj")) nptsNS_ = grid_spec.get("Nj");
-//   if (grid_spec.has("Ni")) nptsWE_ = grid_spec.get("Ni");
-//   if (grid_spec.has("rotated_latitude")) rotated_latitude_ = grid_spec.get("rotated_latitude");
-//   if (grid_spec.has("rotated_longitude")) rotated_longitude_ = grid_spec.get("rotated_longitude");
-//   if (grid_spec.has("rotated_angle")) rotated_angle_ = grid_spec.get("rotated_angle");
-//   if (grid_spec.has("nsIncrement")) nsIncrement_ = grid_spec.get("nsIncrement");
-//   if (grid_spec.has("weIncrement")) weIncrement_ = grid_spec.get("weIncrement");
-//   if (grid_spec.has("hash"))    hash_ = (std::string)grid_spec.get("hash");
-//   grid_spec.get_bounding_box(bbox_);
-//   grid_spec.get_points(points_);
-//}
-
 RotatedLatLon::RotatedLatLon( const eckit::Params& p )
+: rotated_latitude_(0),
+  rotated_longitude_(0),
+  rotated_angle_(0),
+  nsIncrement_(0),
+  weIncrement_(0),
+  nptsNS_(0),
+  nptsWE_(0)
 {
-	NOTIMP;
+   if( !p.get("hash").isNil() )
+      hash_ = p["hash"].as<std::string>();
+
+   bbox_ = makeBBox(p);
+
+   if( p.has("Nj") )
+   {
+      nptsNS_ = p["Nj"];
+   }
+
+   if( p.has("Ni") )
+   {
+      nptsWE_ = p["Ni"];
+   }
+
+   if( p.has("grid_lat_inc") )
+   {
+      nsIncrement_ = p["grid_lat_inc"];
+   }
+
+   if( p.has("grid_lon_inc") )
+   {
+      weIncrement_ = p["grid_lon_inc"];
+   }
+
+   if( p.has("SouthPoleLat") )
+   {
+      rotated_latitude_ = p["SouthPoleLat"];
+   }
+
+   if( p.has("SouthPoleLon") )
+   {
+      rotated_longitude_ = p["SouthPoleLon"];
+   }
+
+   if( p.has("SouthPoleRotAngle") )
+   {
+      rotated_angle_ = p["SouthPoleRotAngle"];
+   }
+
+   ASSERT( nptsNS_ > 0 );
+   ASSERT( nptsWE_ > 0 );
+   ASSERT( nsIncrement_ > 0 );
+   ASSERT( weIncrement_ > 0 );
 }
 
 RotatedLatLon::~RotatedLatLon()
@@ -95,11 +131,11 @@ GridSpec RotatedLatLon::spec() const
    grid_spec.set("Ni",eckit::Value(nptsWE_));
    grid_spec.set("Nj",eckit::Value(nptsNS_));
 
-   grid_spec.set("rotated_latitude",eckit::Value(rotated_latitude_));
-   grid_spec.set("rotated_longitude",eckit::Value(rotated_longitude_));
-   grid_spec.set("rotated_angle",eckit::Value(rotated_angle_));
-   grid_spec.set("nsIncrement",eckit::Value(nsIncrement_));
-   grid_spec.set("weIncrement",eckit::Value(weIncrement_));
+   grid_spec.set("SouthPoleLat",eckit::Value(rotated_latitude_));
+   grid_spec.set("SouthPoleLon",eckit::Value(rotated_longitude_));
+   grid_spec.set("SouthPoleRotAngle",eckit::Value(rotated_angle_));
+   grid_spec.set("grid_lat_inc",eckit::Value(nsIncrement_));
+   grid_spec.set("grid_lon_inc",eckit::Value(weIncrement_));
 
    grid_spec.set("hash",eckit::Value(hash_));
 
