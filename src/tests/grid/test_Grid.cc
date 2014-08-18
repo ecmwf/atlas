@@ -91,7 +91,6 @@ static void test_grids_from_grib_sample_directory(const std::string& directory)
 	}
 
 	// recursively call this function for each directory found
-
 	for(size_t i = 0; i < directories.size(); i++)
 	{
 		test_grids_from_grib_sample_directory(directories[i].localPath());
@@ -114,10 +113,9 @@ static void test_grib_file(const std::string& fpath)
 	std::cout << "gridType : " << gridType << std::endl;
 
 	// skip polar_stereographic
-
-	if ( gridType == "polar_stereographic" || gridType == "sh" )
+	if ( gridType == "polar_stereographic" || gridType == "sh" || gridType.empty() )
 	{
-		std::cout << " ** Ignoring grid types [ polar_stereographic | sh ] " << std::endl;
+		std::cout << " ** Ignoring grid types [ polar_stereographic | sh | "" ] " << std::endl;
 		return;
 	}
 

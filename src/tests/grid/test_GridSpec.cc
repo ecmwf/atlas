@@ -155,6 +155,8 @@ static void test_grib_file(const std::string& fpath)
 
    // epsilon varies depending on the edition number
    long editionNumber = GribAccessor<long>("editionNumber")(gh);
+   BOOST_CHECK_MESSAGE(editionNumber ==  gh.edition(),"Edition numbers dont match");
+
    double epsilon = (editionNumber == 1) ? 1e-3 : 1e-6;
 
    if (gridType == "reduced_gg" || gridType == "regular_gg") {
