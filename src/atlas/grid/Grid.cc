@@ -15,6 +15,7 @@
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Tesselation.h"
+#include "atlas/grid/GridSpecParams.h"
 
 using namespace eckit;
 
@@ -28,13 +29,11 @@ Grid::Ptr Grid::create(const Params& p )
 	return Grid::Ptr( Factory<Grid>::instance().get( p["grid_type"] ).create(p) );
 }
 
+
 Grid::Ptr Grid::create(const GridSpec& g)
 {
-	/// @todo create a Params class from GridSpec (concrete GridSpecParams)
-
-	//  GridSpecParams p( g );
-	//	return Grid::Ptr( Factory<Grid>::instance().get( p["grid_type"] ).create(p) );
-	NOTIMP;
+	GridSpecParams p( g );
+   return Grid::Ptr( Factory<Grid>::instance().get( p["grid_type"] ).create(p) );
 }
 
 Grid::Grid()
