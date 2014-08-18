@@ -46,10 +46,10 @@ RegularGG::RegularGG( const eckit::Params& p )
 			Log::warning() << "Number of points along meridian" << Nj << " does not match expected value " << nj() << std::endl;
 	}
 
-	if( p.has("Nj") )
+	if( p.has("Ni") )
 	{
 		ni_ = p["Ni"];
-		ASSERT( ni_ > 1 );
+		ASSERT( ni_ == 4*gaussN_ );
 	}
 	else
 	{
@@ -57,7 +57,7 @@ RegularGG::RegularGG( const eckit::Params& p )
 		Log::warning() << "Assuming number of points along parallel to be 4 * GaussianNumber " << ni_ << std::endl;
 	}
 
-	if( p.has("NPtsPerLat") )
+	if( p.has("nbDataPoints") )
 		nbDataPoints_ = p["nbDataPoints"];
 	else
 	{
