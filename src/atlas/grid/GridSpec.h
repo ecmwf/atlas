@@ -50,10 +50,10 @@ public:
     void uid(const std::string&);
     std::string uid() const;
 
-    void set_rgspec(const std::vector<long>&  rgSpec);
+    void set_npts_per_lat(const std::vector<long>&  rgSpec);
     void set_bounding_box(const Grid::BoundBox& bbox );
 
-    void get_rgspec(std::vector<long>& rgSpec) const;
+    void get_npts_per_lat(std::vector<long>& rgSpec) const;
     void get_bounding_box(Grid::BoundBox& bbox ) const;
 
 	std::string str() const;

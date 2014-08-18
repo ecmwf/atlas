@@ -21,6 +21,7 @@ namespace grid {
 GridSpec::GridSpec(const std::string& grid_type)
 {
    set("grid_type",Properties::property_t(grid_type));
+   ASSERT(!empty());
 }
 
 GridSpec::~GridSpec()
@@ -57,14 +58,14 @@ void GridSpec::print( std::ostream& s) const
    s << " ]";
 }
 
-void GridSpec::set_rgspec(const std::vector<long>& rgSpec_vec)
+void GridSpec::set_npts_per_lat(const std::vector<long>& rgSpec_vec)
 {
    std::vector<eckit::Value> rgSpec; rgSpec.reserve(rgSpec_vec.size());
    for(size_t i = 0; i < rgSpec_vec.size(); ++i)
    {
       rgSpec.push_back(eckit::Value(rgSpec_vec[i]));
    }
-   set("rgSpec",eckit::Value(rgSpec) );
+   set("NPtsPerLat",eckit::Value(rgSpec) );
 }
 
 void GridSpec::set_bounding_box(const Grid::BoundBox& bbox )
@@ -75,11 +76,11 @@ void GridSpec::set_bounding_box(const Grid::BoundBox& bbox )
    set("grid_bbox_e", bbox.top_right().lon());
 }
 
-void GridSpec::get_rgspec(std::vector<long>& rgSpec) const
+void GridSpec::get_npts_per_lat(std::vector<long>& rgSpec) const
 {
-   if(has("rgSpec"))
+   if(has("NPtsPerLat"))
    {
-      eckit::ValueList vec = get("rgSpec");
+      eckit::ValueList vec = get("NPtsPerLat");
       rgSpec.reserve(vec.size());
       for(size_t i=0; i < vec.size();++i)
       {
