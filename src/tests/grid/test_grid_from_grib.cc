@@ -115,7 +115,7 @@ BOOST_AUTO_TEST_CASE( test_grid_creation )
 	// reduced_gg
 
 	gribs.push_back("rgg_n640.grib");
-	gribs.push_back("rgg_n1280.grib");
+	// te gribs.push_back("rgg_n1280.grib");
 
 	// regular_gg
 

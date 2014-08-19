@@ -96,6 +96,8 @@ GribHandle::Ptr Grib::create_handle( const Grid& grid, long edition )
 
 	GribHandle::Ptr gh_ptr( new GribHandle(gh) );
 
+
+
 	write_gridspec_to_grib( grid.spec(), *gh_ptr );
 
 	return gh_ptr;
@@ -238,25 +240,25 @@ std::string Grib::grib_sample_file( const grid::GridSpec& g_spec, long edition )
 
         for(size_t i = 0; i < files.size(); i++)
         {
-            try
-            {
-				GribHandle grib_h( files[i].localPath() );
+           try
+           {
+              GribHandle grib_h( files[i].localPath() );
 
-				std::string fname = files[i].localPath();
+              std::string fname = files[i].localPath();
 
-				if( match_grid_spec_with_sample_file(g_spec,grib_h,edition,fname))
-                {
-                    // remove .tmpl extension
-					eckit::LocalPathName path(fname);
-					LocalPathName base_name = path.baseName(false);
-                    string grib_sample_file = base_name.localPath();
-                    return grib_sample_file;
-                }
-            }
-            catch ( const std::exception & ex )
-            {
-                Log::info() << files[i].localPath() << " " << ex.what() << std::endl;
-            }
+              if( match_grid_spec_with_sample_file(g_spec,grib_h,edition,fname))
+              {
+                 // remove .tmpl extension
+                 eckit::LocalPathName path(fname);
+                 LocalPathName base_name = path.baseName(false);
+                 string grib_sample_file = base_name.localPath();
+                 return grib_sample_file;
+              }
+           }
+           catch ( const std::exception & ex )
+           {
+              Log::info() << files[i].localPath() << " " << ex.what() << std::endl;
+           }
         }
     }
 
@@ -429,6 +431,12 @@ struct gridspec_to_grib
 void Grib::write_gridspec_to_grib(const GridSpec& gspec, GribHandle& gh)
 {
 	gridspec_to_grib gspec2grib(gspec,gh);
+
+	if (gh.edition() == 1) {
+	   // Clear vertical co-ordinates levels, which for GRIB1 are in geometry section
+	   grib_set_long(gh.raw(),"PVPresent", 0 );
+	   grib_set_long(gh.raw(),"NV", 0 );
+	}
 
 	gspec2grib.set<long>( "Ni", "Ni" );
 	gspec2grib.set<long>( "Nj", "Nj" );
