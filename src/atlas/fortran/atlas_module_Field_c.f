@@ -161,7 +161,16 @@ subroutine Field__access_data3_real64(this, field)
   call C_F_POINTER ( field_c_ptr , field , field_bounds(field_rank-2:field_rank) )
 end subroutine Field__access_data3_real64
 
-
+subroutine Field__access_data3_real64_bounds(this, field, field_bounds)
+  class(Field_type), intent(in) :: this
+  real(c_double), pointer, intent(out) :: field(:,:,:)
+  integer, intent(in) :: field_bounds(:)
+  type(c_ptr) :: field_c_ptr
+  type(c_ptr) :: field_bounds_c_ptr
+  integer(c_int) :: field_rank
+  call atlas__Field__data_boundsf_double(this%private%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  call C_F_POINTER ( field_c_ptr , field , field_bounds )
+end subroutine Field__access_data3_real64_bounds
 
 function Field__data1_wp(this) result(field)
   class(Field_type), intent(in) :: this
