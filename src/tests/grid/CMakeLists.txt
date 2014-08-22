@@ -52,12 +52,12 @@ foreach( f ${test_grid_from_grib_data} )
   list(APPEND tgts "${tgt}")
 endforeach()
 
-add_custom_target( get_gribs DEPENDS ${tgts} )
+add_custom_target( atlas_tests_grid_get_gribs DEPENDS ${tgts} )
 
 ecbuild_add_test(   TARGET      test_grid_from_grib
 					BOOST
 					SOURCES     test_grid_from_grib.cc
-					DEPENDS     get_gribs
+          DEPENDS     atlas_tests_grid_get_gribs
           CONDITION	HAVE_GRID AND HAVE_ECKIT_GRIB
 					LIBS        atlas_grid )
 
