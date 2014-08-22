@@ -17,6 +17,7 @@
 
 #include "eckit/memory/SharedPtr.h"
 #include "eckit/memory/Owned.h"
+#include "atlas/mesh/Metadata.hpp"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -50,11 +51,15 @@ public: // methods
 
     int nb_function_spaces() const { return function_spaces_.size(); }
 
+    Metadata& metadata() { return metadata_; }
+
 private: // members
 
     std::map< std::string, size_t > index_; ///< index of function spaces
 
     std::vector< FunctionSpace* > function_spaces_; ///< function spaces
+
+    Metadata      metadata_;
 
 };
 
