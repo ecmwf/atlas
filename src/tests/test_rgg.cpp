@@ -220,7 +220,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_one_part )
   RGGMeshGenerator generate;
   generate.options.set("nb_parts",1);
   generate.options.set("part",    0);
-
+DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
   ENABLE {
     generate.options.set("three_dimensional",true);
     generate.options.set("include_pole",false);
@@ -320,6 +320,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_one_part )
     delete mesh;
   }
 }
+}
 
 BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
 {
@@ -348,20 +349,22 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
   {
     generate.options.set("part",p);
     Mesh::Ptr m( generate( grid ) );
+    m->metadata().set("part",p);
     BOOST_TEST_CHECKPOINT("generated grid " << p);
-//    IndexView<int,1> ridx( m->function_space("nodes").field("remote_idx") );
     ArrayView<int,1> part( m->function_space("nodes").field("partition") );
     ArrayView<int,1> gidx( m->function_space("nodes").field("glb_idx") );
 
     area += test::compute_latlon_area(*m);
+    DISABLE {  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     if( generate.options.get<int>("nb_parts") == 20 )
     {
       BOOST_CHECK_EQUAL( m->function_space("nodes" ).extents()[0], nodes[p]  );
       BOOST_CHECK_EQUAL( m->function_space("quads" ).extents()[0], quads[p]  );
       BOOST_CHECK_EQUAL( m->function_space("triags").extents()[0], triags[p] );
     }
-    //    std::stringstream filename; filename << "T63_p" << p << ".msh";
-    //    Gmsh::write(*m,filename.str());
+    }
+        std::stringstream filename; filename << "T63.msh";
+        Gmsh::write(*m,filename.str());
 
 
     FunctionSpace& nodes = m->function_space("nodes");
@@ -388,7 +391,11 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
       }
       for( int jnode=0; jnode<nb_nodes; ++jnode )
       {
-        BOOST_CHECK_GT( node_elem_connections[jnode] , 0 );
+        if( node_elem_connections[jnode] == 0 )
+        {
+          std::stringstream ss; ss << "part " << p << ": node_gid " << gidx(jnode) << " is not connected to any element.";
+          BOOST_ERROR( ss.str() );
+        }
       }
     }
 
@@ -414,7 +421,6 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
     {
       BOOST_ERROR( "node " << gid << " is not owned by anyone" );
     }
-//    BOOST_CHECK( all_owned[gid] != -1 );
   }
   BOOST_CHECK_EQUAL( nb_owned, grid.ngptot()+grid.nlat() );
 
