@@ -46,7 +46,7 @@ void build_nodes_parallel_fields( FunctionSpace& nodes );
 void build_edges_parallel_fields( FunctionSpace& edges, FunctionSpace& nodes );
 
 
-void renumber_nodes_glb_idx (FunctionSpace* nodes);
+void renumber_nodes_glb_idx (FunctionSpace& nodes);
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
