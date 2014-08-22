@@ -228,6 +228,10 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh )
 void Gmsh::write(Mesh& mesh, const std::string& file_path)
 {
 
+  int part = MPL::rank();
+  if( mesh.metadata().has<int>("part") )
+    part = mesh.metadata().get<int>("part");
+
   bool include_ghost_elements = true;
 
   FunctionSpace& nodes    = mesh.function_space( "nodes" );
@@ -265,12 +269,13 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path)
   {
 //  bool spherical=true;
 
-  std::string ext = "";
-  if( spherical ) ext = ".sphere";
+  std::stringstream ext;
+  if( spherical ) ext << ".sphere";
+  ext << "_p" << part;
   if( MPL::rank() == 0 )
-    std::cout << "writing file " << file_path+ext << std::endl;
+    std::cout << "writing file " << file_path+ext.str() << std::endl;
   std::ofstream file;
-  file.open( (file_path+ext).c_str(), std::ios::out );
+  file.open( (file_path+ext.str()).c_str(), std::ios::out );
 
   file << "$MeshFormat\n";
   file << "2.2 0 8\n";
@@ -346,11 +351,36 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path)
   file.close();
 
   }
+  if (nodes.has_field("partition"))
+  {
+    std::ofstream file;
+    ArrayView<int,1> field( nodes.field("partition") );
+    std::stringstream filename; filename << "partition_p"<<part<<".msh";
+    file.open( filename.str().c_str() , std::ios::out );
+    file << "$MeshFormat\n";
+    file << "2.2 0 8\n";
+    file << "$EndMeshFormat\n";
+    file << "$NodeData\n";
+    file << "1\n";
+    file << "\"partition\"\n";
+    file << "1\n";
+    file << "0.\n";
+    file << "3\n";
+    file << "0\n";
+    file << "1\n";
+    file << nb_nodes << "\n";
+    for( size_t n = 0; n < nb_nodes; ++n )
+      file << glb_idx(n) << " " << field(n)<<"\n";
+    file << "$EndNodeData\n";
+    file << std::flush;
+    file.close();
+  }
+
   if (nodes.has_field("dual_volumes"))
   {
     std::ofstream file;
     ArrayView<double,1> field( nodes.field("dual_volumes") );
-    std::stringstream filename; filename << "dual_volumes_p"<<MPL::rank()<<".msh";
+    std::stringstream filename; filename << "dual_volumes_p"<<part<<".msh";
     file.open( filename.str().c_str() , std::ios::out );
     file << "$MeshFormat\n";
     file << "2.2 0 8\n";
@@ -371,6 +401,7 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path)
     file.close();
   }
 
+
   if( mesh.has_function_space("edges") )
   {
     FunctionSpace& edges       = mesh.function_space( "edges" );
@@ -381,7 +412,7 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path)
     {
       std::ofstream file;
       ArrayView<double,2> field ( edges.field("dual_normals") );
-      std::stringstream filename; filename << "dual_normals_p"<<MPL::rank()<<".msh";
+      std::stringstream filename; filename << "dual_normals_p"<<part<<".msh";
       file.open( filename.str().c_str() , std::ios::out );
       file << "$MeshFormat\n";
       file << "2.2 0 8\n";
