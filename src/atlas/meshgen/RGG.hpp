@@ -23,6 +23,9 @@ namespace meshgen {
 class RGG
 {
 public:
+  RGG() {}
+  RGG(const int nlat, const int lon[]);
+  RGG(const size_t nlat, const long lon[]);
   int nlat() const { return lat_.size(); }
   int nlon(int jlat) const { return lon_[jlat]; }
   int nlonmax() const { return lon_[nlat()/2]; }
@@ -56,6 +59,7 @@ class T1279: public RGG { public: T1279(); };
 class T2047: public RGG { public: T2047(); };
 class T3999: public RGG { public: T3999(); };
 class T7999: public RGG { public: T7999(); };
+
 
 } // namespace meshgen
 } // namespace atlas

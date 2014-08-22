@@ -18,6 +18,60 @@
 namespace atlas {
 namespace meshgen {
 
+RGG::RGG(const int nlat, const int lon[])
+{
+  /*
+  First prediction of colatitudes
+  */
+  std::vector<double> colat(nlat);
+  double z;
+  for( int i=0; i<nlat; ++i )
+  {
+    z = (4.*(i+1.)-1.)*M_PI/(4.*2.*nlat+2.);
+    colat[i] = z+1./(tan(z)*(8.*(2.*nlat)*(2.*nlat)));
+  }
+  /*
+  Fill in final structures
+  */
+  lat_.resize(2*nlat);
+  lon_.resize(2*nlat);
+  std::copy( lon, lon+nlat, lon_.begin() );
+  std::reverse_copy( lon, lon+nlat, lon_.begin()+nlat );
+  std::copy( colat.begin(), colat.begin()+nlat, lat_.begin() );
+  std::reverse_copy( colat.begin(), colat.begin()+nlat, lat_.begin()+nlat );
+  for (int i=0; i<nlat; ++i)
+    lat_[i]=M_PI/2.-lat_[i];
+  for (int i=nlat; i<2*nlat; ++i)
+    lat_[i]=-M_PI/2.+lat_[i];
+}
+RGG::RGG(const size_t nlat, const long lon[])
+{
+  /*
+  First prediction of colatitudes
+  */
+  std::vector<double> colat(nlat);
+  double z;
+  for( int i=0; i<nlat; ++i )
+  {
+    z = (4.*(i+1.)-1.)*M_PI/(4.*2.*nlat+2.);
+    colat[i] = z+1./(tan(z)*(8.*(2.*nlat)*(2.*nlat)));
+  }
+  /*
+  Fill in final structures
+  */
+  lat_.resize(2*nlat);
+  lon_.resize(2*nlat);
+  std::copy( lon, lon+nlat, lon_.begin() );
+  std::reverse_copy( lon, lon+nlat, lon_.begin()+nlat );
+  std::copy( colat.begin(), colat.begin()+nlat, lat_.begin() );
+  std::reverse_copy( colat.begin(), colat.begin()+nlat, lat_.begin()+nlat );
+  for (int i=0; i<nlat; ++i)
+    lat_[i]=M_PI/2.-lat_[i];
+  for (int i=nlat; i<2*nlat; ++i)
+    lat_[i]=-M_PI/2.+lat_[i];
+}
+
+
 int RGG::ngptot() const
 {
   return std::accumulate(lon_.data(),lon_.data()+lon_.size(),0);
