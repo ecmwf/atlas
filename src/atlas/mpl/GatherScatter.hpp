@@ -336,7 +336,7 @@ void GatherScatter::scatter( mpl::Field<DATA_TYPE const> gfields[],
     /// Pack
     pack_send_buffer(gfields[jfield],glbmap_,glb_buffer.data());
 
-    /// Gather
+    /// Scatter
     MPL_CHECK_RESULT(
         MPI_Scatterv( glb_buffer.data(), glb_counts.data(), glb_displs.data(), MPL::TYPE<DATA_TYPE>(),
                       loc_buffer.data(), loc_size, MPL::TYPE<DATA_TYPE>(),
@@ -406,6 +406,7 @@ void GatherScatter::pack_send_buffer( const mpl::Field<DATA_TYPE const>& field,
                                       DATA_TYPE send_buffer[] ) const
 {
   const int sendcnt = sendmap.size();
+
   int ibuf = 0;
   const int send_stride = field.var_strides[0]*field.var_extents[0];
 

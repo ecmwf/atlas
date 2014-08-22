@@ -300,24 +300,24 @@ void atlas__GatherScatter__gather_double ( GatherScatter* This,
 }
 
 void atlas__GatherScatter__scatter_int ( GatherScatter* This,
-                                         int lfield[], int lvar_strides[], int lvar_extents[], int lvar_rank,
-                                         int gfield[], int gvar_strides[], int gvar_extents[], int gvar_rank )
+                                         int gfield[], int gvar_strides[], int gvar_extents[], int gvar_rank,
+                                         int lfield[], int lvar_strides[], int lvar_extents[], int lvar_rank )
 {
   This->scatter( gfield, gvar_strides, gvar_extents, gvar_rank,
                  lfield, lvar_strides, lvar_extents, lvar_rank );
 }
 
 void atlas__GatherScatter__scatter_float ( GatherScatter* This,
-                                           float lfield[], int lvar_strides[], int lvar_extents[], int lvar_rank,
-                                           float gfield[], int gvar_strides[], int gvar_extents[], int gvar_rank )
+                                           float gfield[], int gvar_strides[], int gvar_extents[], int gvar_rank,
+                                           float lfield[], int lvar_strides[], int lvar_extents[], int lvar_rank )
 {
   This->scatter( gfield, gvar_strides, gvar_extents, gvar_rank,
                  lfield, lvar_strides, lvar_extents, lvar_rank );
 }
 
 void atlas__GatherScatter__scatter_double ( GatherScatter* This,
-                                            double lfield[], int lvar_strides[], int lvar_extents[], int lvar_rank,
-                                            double gfield[], int gvar_strides[], int gvar_extents[], int gvar_rank )
+                                            double gfield[], int gvar_strides[], int gvar_extents[], int gvar_rank,
+                                            double lfield[], int lvar_strides[], int lvar_extents[], int lvar_rank )
 {
   This->scatter( gfield, gvar_strides, gvar_extents, gvar_rank,
                  lfield, lvar_strides, lvar_extents, lvar_rank );

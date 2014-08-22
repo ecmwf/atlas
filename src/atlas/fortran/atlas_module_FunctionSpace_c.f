@@ -215,7 +215,7 @@ end subroutine FunctionSpace__halo_exchange_real64_r4
 
 function FunctionSpace__get_gather(this) result(gather)
   class(FunctionSpace_type), intent(in) :: this
-  type(Gather_type) :: gather
+  type(GatherScatter_type) :: gather
   gather%private%object = atlas__FunctionSpace__gather( this%private%object )
 end function FunctionSpace__get_gather
 
