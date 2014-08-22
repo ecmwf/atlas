@@ -42,6 +42,19 @@ Mesh* generate_reduced_gaussian_grid( const std::string& identifier )
 
 // ------------------------------------------------------------------
 
+Mesh* generate_reduced_gaussian_grid( const std::vector<long>& nlon )
+{
+  RGGMeshGenerator generate;
+  generate.options.set( "nb_parts", MPL::size() );
+  generate.options.set( "part"    , MPL::rank() );
+
+  Mesh* mesh = generate( RGG(nlon.size(),nlon.data()) );
+
+  return mesh;
+}
+
+// ------------------------------------------------------------------
+
 Mesh* generate_regular_grid( int nlon, int nlat )
 {
   if( nlon%2 != 0 ) throw eckit::BadParameter("nlon must be even number",Here());

@@ -17,6 +17,7 @@ namespace atlas {
 namespace actions {
 
 Mesh* generate_reduced_gaussian_grid( const std::string& identifier );
+Mesh* generate_reduced_gaussian_grid( const std::vector<long>& nlon );
 Mesh* generate_regular_grid( int nlon, int nlat ); // must be even numbers
 
 // ------------------------------------------------------------------

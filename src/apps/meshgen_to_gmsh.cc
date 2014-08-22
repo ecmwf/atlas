@@ -28,6 +28,7 @@
 #include "atlas/actions/BuildPeriodicBoundaries.hpp"
 #include "atlas/actions/BuildHalo.hpp"
 #include "atlas/actions/BuildParallelFields.hpp"
+#include "atlas/actions/BuildDualMesh.hpp"
 #include "atlas/mpl/MPL.hpp"
 #include "atlas/mesh/Mesh.hpp"
 
@@ -47,11 +48,13 @@ public:
 
   Meshgen2Gmsh(int argc,char **argv): eckit::Tool(argc,argv)
   {
+    rgg_nlon   = Resource< std::vector<long> > ( "-rgg_nlon", std::vector<long>() );
     nlon_nlat  = Resource< std::vector<long> > ( "-reg", std::vector<long>() );
     identifier = Resource< std::string       > ( "-rgg", "" );
     edges      = Resource< bool > ( "-edges", false );
+    halo       = Resource< int > ( "-halo", 0 );
 
-    if( identifier.empty() && nlon_nlat.empty() )
+    if( identifier.empty() && nlon_nlat.empty() && rgg_nlon.empty() )
     {
       throw UserError(Here(),"missing input mesh identifier, parameter -rgg or -reg");
     }
@@ -62,9 +65,11 @@ public:
 
 private:
 
+  int halo;
   bool edges;
   std::string identifier;
   std::vector<long> nlon_nlat;
+  std::vector<long> rgg_nlon;
   PathName path_out;
 };
 
@@ -76,16 +81,22 @@ void Meshgen2Gmsh::run()
   Mesh::Ptr mesh;
   if( !identifier.empty() )
     mesh = Mesh::Ptr( generate_reduced_gaussian_grid(identifier) );
-  else
+  else if( !nlon_nlat.empty() )
     mesh = Mesh::Ptr( generate_regular_grid(nlon_nlat[0],nlon_nlat[1]) );
-
+  else if ( !rgg_nlon.empty() )
+    mesh = Mesh::Ptr( generate_reduced_gaussian_grid(rgg_nlon) );
+  else
+    throw UserError(Here(),"Could not generate mesh with given input");
   if( edges ){
     build_nodes_parallel_fields(mesh->function_space("nodes"));
     build_periodic_boundaries(*mesh);
-    build_halo(*mesh,2);
+    build_halo(*mesh,halo);
     build_edges(*mesh);
     build_pole_edges(*mesh);
     build_edges_parallel_fields(mesh->function_space("edges"),mesh->function_space("nodes"));
+    renumber_nodes_glb_idx(mesh->function_space("nodes"));
+
+    build_median_dual_mesh(*mesh);
   }
 
   atlas::Gmsh::write( *mesh, path_out );
