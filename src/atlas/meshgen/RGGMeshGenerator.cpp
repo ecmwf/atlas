@@ -287,7 +287,7 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
 // START RULES
 // ------------------------------------------------
       enum Rules{ MINIMISE_TRIAGS=0, TRIAG_BELTS=1 };
-      int rule = TRIAG_BELTS;
+      int rule = MINIMISE_TRIAGS;
       switch (rule)
       {
       case MINIMISE_TRIAGS:

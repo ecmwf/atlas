@@ -220,7 +220,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_one_part )
   RGGMeshGenerator generate;
   generate.options.set("nb_parts",1);
   generate.options.set("part",    0);
-DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
+ENABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
   ENABLE {
     generate.options.set("three_dimensional",true);
     generate.options.set("include_pole",false);
@@ -355,7 +355,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
     ArrayView<int,1> gidx( m->function_space("nodes").field("glb_idx") );
 
     area += test::compute_latlon_area(*m);
-    DISABLE {  // This is all valid for meshes generated with MINIMAL NB TRIAGS
+    ENABLE {  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     if( generate.options.get<int>("nb_parts") == 20 )
     {
       BOOST_CHECK_EQUAL( m->function_space("nodes" ).extents()[0], nodes[p]  );
