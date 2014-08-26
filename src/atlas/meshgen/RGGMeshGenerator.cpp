@@ -195,9 +195,6 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
   region.nquads=0;
   region.ntriags=0;
 
-
-  std::cout << mypart << "  lat_north, lat_south = " << lat_north << "," << lat_south << std::endl;
-
   ArrayView<int,3> elemview(region.elems);
   
   for (int jlat=lat_north; jlat<lat_south; ++jlat)
