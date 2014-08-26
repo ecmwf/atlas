@@ -218,6 +218,12 @@ subroutine atlas_generate_reduced_gaussian_grid(mesh,identifier)
   mesh%private%object = atlas__generate_reduced_gaussian_grid(c_str(identifier))
 end subroutine atlas_generate_reduced_gaussian_grid
 
+subroutine atlas_generate_full_gaussian_grid(mesh,nlon,nlat)
+  type(Mesh_type), intent(inout) :: mesh
+  integer, intent(in) :: nlon, nlat
+  mesh%private%object = atlas__generate_full_gaussian_grid(nlon,nlat)
+end subroutine atlas_generate_full_gaussian_grid
+
 subroutine atlas_generate_latlon_grid(mesh,nlon,nlat)
   type(Mesh_type), intent(inout) :: mesh
   integer, intent(in) :: nlon, nlat

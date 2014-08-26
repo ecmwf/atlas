@@ -69,10 +69,29 @@ Mesh* generate_regular_grid( int nlon, int nlat )
 
 // ------------------------------------------------------------------
 
+Mesh* generate_full_gaussian_grid( int nlon, int nlat )
+{
+  if( nlon%2 != 0 ) throw eckit::BadParameter("nlon must be even number",Here());
+  if( nlat%2 != 0 ) throw eckit::BadParameter("nlat must be even number",Here());
+
+  RGGMeshGenerator generate;
+  generate.options.set( "nb_parts", MPL::size() );
+  generate.options.set( "part"    , MPL::rank() );
+  Mesh* mesh = generate(GG(nlon,nlat/2.));
+  return mesh;
+}
+
+// ------------------------------------------------------------------
+
 // C wrapper interfaces to C++ routines
 Mesh* atlas__generate_reduced_gaussian_grid (char* identifier)
 {
   return generate_reduced_gaussian_grid( std::string(identifier) );
+}
+
+Mesh* atlas__generate_full_gaussian_grid ( int nlon, int nlat )
+{
+  return generate_full_gaussian_grid( nlon, nlat );
 }
 
 Mesh* atlas__generate_latlon_grid ( int nlon, int nlat )
