@@ -60,7 +60,7 @@ Grid::Ptr Grib::create_grid(GribHandle& gh)
 
 GribHandle::Ptr Grib::create_handle( const Grid& grid, long edition )
 {
-    // determine choice of editionNumber from a resorce
+    // determine choice of editionNumber from a resource
 
     if( edition == 0 )
         edition = Resource<unsigned>( "NewGribEditionNumber", 2 );

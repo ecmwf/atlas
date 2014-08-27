@@ -93,7 +93,11 @@ end interface delete
 
 !------------------------------------------------------------------------------
 
-
+ENUM, bind(c)
+  enumerator :: openmode
+  enumerator :: app = 1
+  enumerator :: out = 16
+end ENUM
 
 ! =============================================================================
 CONTAINS
@@ -147,8 +151,19 @@ end function atlas_read_gmsh
 subroutine atlas_write_gmsh(mesh,filename)
   type(Mesh_type), intent(in) :: mesh
   character(len=*), intent(in) :: filename
-  call atlas__write_gmsh(mesh%private%object,c_str(filename))
+  call atlas__write_gmsh_mesh(mesh%private%object,c_str(filename))
 end subroutine atlas_write_gmsh
+
+subroutine atlas_write_gmsh_field(field,filename,mode)
+  type(Field_type), intent(in) :: field
+  character(len=*), intent(in) :: filename
+  integer(kind(openmode)), optional :: mode
+  if( present(mode) ) then
+    call atlas__write_gmsh_field(field%private%object,c_str(filename),mode)
+  else
+    call atlas__write_gmsh_field(field%private%object,c_str(filename),out)
+  endif
+end subroutine atlas_write_gmsh_field
 
 subroutine atlas_build_parallel_fields(mesh)
   type(Mesh_type), intent(inout) :: mesh
