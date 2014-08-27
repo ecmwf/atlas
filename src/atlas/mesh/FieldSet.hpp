@@ -25,6 +25,7 @@ class FieldSet
 {
 public:
   FieldSet(const std::string& name="untitled");
+  const std::string& name() const { return name_; }
   void add_field(Field& field);
   bool has_field(const std::string& name) { return index_.count(name); }
   Field& field(const std::string& name);
