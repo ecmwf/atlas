@@ -332,8 +332,7 @@ private:
 //------------------------------------------------------------------------------------------------------
 
 template< typename DATA_TYPE >
-class ArrayView < DATA_TYPE, 2 >
-{
+class ArrayView < DATA_TYPE, 2 > {
 public:
   typedef ArrayView_iterator<DATA_TYPE,2>       iterator;
   typedef ArrayView_const_iterator<DATA_TYPE,2> const_iterator;

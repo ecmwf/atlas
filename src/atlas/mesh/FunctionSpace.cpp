@@ -30,12 +30,13 @@
 
 namespace atlas {
 
-FunctionSpace::FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<int>& extents) :
+FunctionSpace::FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<int>& extents, Mesh& mesh ) :
   name_(name),
   extents_(extents),
   gather_scatter_(new mpl::GatherScatter()),
   halo_exchange_(new mpl::HaloExchange()),
-  checksum_(new mpl::Checksum() )
+  checksum_(new mpl::Checksum() ),
+  mesh_(mesh)
 { 
   //std::cout << "C++ : FunctionSpace Constructor" << std::endl;
   dof_ = 1;

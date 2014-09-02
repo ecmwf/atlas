@@ -17,7 +17,9 @@
 
 #include "eckit/memory/SharedPtr.h"
 #include "eckit/memory/Owned.h"
+
 #include "atlas/mesh/Metadata.hpp"
+#include "atlas/grid/Grib.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -34,6 +36,10 @@ public: // types
     typedef eckit::SharedPtr<Mesh> Ptr;
 
 public: // methods
+
+	static Mesh& create( const eckit::Params& );
+
+	Mesh( const grid::Grid& );
 
     virtual ~Mesh();
 
@@ -60,6 +66,8 @@ private: // members
     std::vector< FunctionSpace* > function_spaces_; ///< function spaces
 
     Metadata      metadata_;
+
+	grid::Grid::Ptr grid_;
 
 };
 

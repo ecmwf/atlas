@@ -43,57 +43,6 @@ namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
-class FieldHandle : public eckit::Owned {
-
-public: // types
-
-    typedef eckit::SharedPtr<FieldHandle> Ptr;
-    typedef std::vector< FieldHandle::Ptr > Vector;
-
-    typedef atlas::FieldT< double > Data;
-    typedef atlas::Mesh Mesh;
-
-	typedef eckit::grib::GribHandle Grib;
-
-public: // methods
-
-    FieldHandle( Grid::Ptr, Data& );
-
-    const Grid& grid() const { return *grid_; }
-    Grid& grid() { return *grid_; }
-
-    const Mesh& mesh() const { return *mesh_; }
-    Mesh& mesh() { return *mesh_; }
-
-    const Metadata& metadata() const { return data_.metadata(); }
-    Metadata& metadata() { return data_.metadata(); }
-
-    Data& data() { return data_; }
-    const Data& data() const { return data_; }
-
-    friend std::ostream& operator<<( std::ostream& os, const FieldHandle& v);
-
-    /// @todo this is to be removed
-
-    void grib( Grib* g );
-    Grib& grib() const;
-
-private: // members
-
-    void print( std::ostream& ) const;
-
-protected: // members
-
-    Grid::Ptr       grid_;      ///< describes the grid (shared)
-    Mesh::Ptr       mesh_;      ///< mesh data structure (shared)
-    Data&           data_;      ///< reference to the field data, not owned since it actually exists in the mesh_
-
-    eckit::ScopedPtr<Grib> grib_; ///< @todo this is to be removed
-
-};
-
-//------------------------------------------------------------------------------------------------------
-
 /// Represents a set of fields
 /// The order of the fields is kept
 
@@ -104,6 +53,8 @@ public: // types
     typedef eckit::SharedPtr<FieldSet> Ptr;
 
 public: // methods
+
+	static FieldSet::Ptr create( );
 
     /// Constructs a field set from a file (e.g. a GRIB file )
     FieldSet( const eckit::PathName& );
@@ -119,13 +70,13 @@ public: // methods
 
     /// Constructs a FielSet from predefined fields
     /// Takes ownership of the fields
-    FieldSet( const FieldHandle::Vector& fields );
+	FieldSet( const Field::Vector& fields );
 
-    const FieldHandle& operator[]( const size_t& i ) const { ASSERT(i<size()); return *fields_[i]; }
-    FieldHandle& operator[]( const size_t& i )             { ASSERT(i<size()); return *fields_[i]; }
+	const Field& operator[]( const size_t& i ) const { ASSERT(i<size()); return *fields_[i]; }
+	Field& operator[]( const size_t& i )             { ASSERT(i<size()); return *fields_[i]; }
 
-    const FieldHandle::Vector& fields() const { return fields_; }
-    FieldHandle::Vector& fields() { return fields_; }
+	const Field::Vector& fields() const { return fields_; }
+	Field::Vector& fields() { return fields_; }
 
     size_t size() const { return fields_.size(); }
     bool empty() const { return ! fields_.size(); }
@@ -137,13 +88,13 @@ public: // methods
 
 protected: // methods
 
-	FieldHandle::Ptr create_field( eckit::grib::GribHandle& );
+	Field::Ptr create_field( eckit::grib::GribHandle& );
 
 protected: // members
 
-    FieldHandle::Vector fields_; ///< field handle storage
+	Field::Vector fields_; ///< field handle storage
 
-    Grid::Ptr           grid_;   ///< describes the grid (shared)
+	Grid::Ptr     grid_;   ///< describes the grid (shared)
 
 };
 

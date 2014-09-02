@@ -35,39 +35,7 @@ namespace grid {
 
 //------------------------------------------------------------------------------------------------------
 
-FieldHandle::FieldHandle( Grid::Ptr g, Data& d ) :
-    grid_(g),
-    data_(d)
-{
-    ASSERT( grid_ );
-}
-
-void FieldHandle::print(std::ostream& out) const
-{
-    FunctionSpace& nodes = data_.function_space();
-
-    ArrayView<double,1> values( data_ );
-
-//    ArrayView<double,2> coords( nodes.field("coordinates") );
-    ArrayView<double,2> latlon( nodes.field("latlon") );
-
-    ASSERT( values.extents()[0] == latlon.extents()[0] );
-
-//    Log::info() << "values.extents()[0] " << values.extents()[0] << std::endl;
-
-    for( size_t i = 0; i < latlon.extents()[0]; ++i )
-        out << latlon(i,LAT) << " " << latlon(i,LON) << " " << values(i) << std::endl;
-}
-
-std::ostream& operator<<( std::ostream& os, const FieldHandle& f)
-{
-    f.print(os);
-    return os;
-}
-
-//-----------------------------------------------------------------------------
-
-FieldHandle::Ptr FieldSet::create_field( GribHandle& gh )
+Field::Ptr FieldSet::create_field( GribHandle& gh )
 {
 	if( !grid_ ) // first time create grid
     {
@@ -96,11 +64,11 @@ FieldHandle::Ptr FieldSet::create_field( GribHandle& gh )
     if( nodes.extents()[0] != nvalues )
         throw SeriousBug( "Size of field in GRIB does not match Grid", Here() );
 
-    FieldHandle::Data& fdata = nodes.create_field<double>(sname,1);
+	Field::Data& fdata = nodes.create_field<double>(sname,1);
 
     gh.getDataValues(fdata.data(),nvalues);
 
-    FieldHandle::Ptr hf( new FieldHandle( grid_, fdata ) );
+	Field::Ptr hf( new Field( grid_, fdata ) );
 
     hf->grib( gh.clone() );
 
@@ -164,13 +132,13 @@ FieldSet::FieldSet(const Grid::Ptr grid, std::vector<std::string> nfields )
     fields_.reserve(nfields.size());
     for( size_t i = 0; i < nfields.size(); ++i )
     {
-        FieldHandle::Data& fdata = nodes.create_field<double>(nfields[i],1);
-        FieldHandle::Ptr hf( new FieldHandle( grid, fdata ) );
+		Field::Data& fdata = nodes.create_field<double>(nfields[i],1);
+		Field::Ptr hf( new Field( grid, fdata ) );
         fields_.push_back( hf );
     }
 }
 
-FieldSet::FieldSet(const FieldHandle::Vector& fields) :  fields_(fields)
+FieldSet::FieldSet(const Field::Vector& fields) :  fields_(fields)
 {
     for( size_t i = 0; i < fields_.size(); ++i )
     {
@@ -192,16 +160,6 @@ std::vector<std::string> FieldSet::field_names() const
         ret.push_back( fields_[i]->data().name() );
 
     return ret;
-}
-
-void FieldHandle::grib(FieldHandle::Grib *g)
-{
-    grib_.reset(g);
-}
-
-FieldHandle::Grib& FieldHandle::grib() const
-{
-    return *grib_;
 }
 
 //-----------------------------------------------------------------------------

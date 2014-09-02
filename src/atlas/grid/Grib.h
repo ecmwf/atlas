@@ -46,19 +46,19 @@ public: // methods
 
 	static void write( const atlas::grid::FieldSet& fset, const eckit::PathName& opath  );
 
-	static void write( const atlas::grid::FieldHandle& fh, eckit::DataHandle& dh );
+	static void write( const atlas::Field& fh, eckit::DataHandle& dh );
 
-	static eckit::grib::GribHandle::Ptr write( const atlas::grid::FieldHandle& fh );
+	static eckit::grib::GribHandle::Ptr write( const atlas::Field& fh );
 
 	static void clone( const atlas::grid::FieldSet& field, const eckit::PathName& src, const eckit::PathName& opath  );
 
 private: // methods
 
-	static void write( const atlas::grid::FieldHandle& field, const eckit::PathName& opath  );
+	static void write( const atlas::Field& field, const eckit::PathName& opath  );
 
-	static void clone( const atlas::grid::FieldHandle& field, const eckit::PathName& gridsec, eckit::DataHandle& );
+	static void clone( const atlas::Field& field, const eckit::PathName& gridsec, eckit::DataHandle& );
 
-	static eckit::grib::GribHandle::Ptr clone(const grid::FieldHandle &field, eckit::grib::GribHandle& gridsec );
+	static eckit::grib::GribHandle::Ptr clone(const Field& field, eckit::grib::GribHandle& gridsec );
 
 	/// @todo this function is temporary, until we make an abstract interface to output to different formats
 	///       we must learn more about NetCDF, etc...
