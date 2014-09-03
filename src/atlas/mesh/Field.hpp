@@ -23,17 +23,22 @@
 #include "eckit/memory/SharedPtr.h"
 #include "eckit/memory/ScopedPtr.h"
 
-#include "atlas/mesh/Parameters.hpp"
+#include "atlas/atlas_config.h"
+
+#ifdef ECKIT_HAVE_GRIB
+  #include "eckit/grib/GribHandle.h"
+#endif
+
+#include "atlas/grid/Grid.h"
+#include "atlas/mesh/FunctionSpace.hpp"
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/mesh/Metadata.hpp"
-#include "atlas/grid/Grid.h"
+#include "atlas/mesh/Parameters.hpp"
 #include "atlas/util/ArrayView.hpp"
 
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
-
-class FunctionSpace;
 
 //------------------------------------------------------------------------------------------------------
 
@@ -43,6 +48,7 @@ public: // types
 
 	typedef eckit::SharedPtr<Field> Ptr;
 	typedef std::vector< Field::Ptr > Vector;
+	typedef grid::Grid Grid;
 
 #ifdef ECKIT_HAVE_GRIB
 	typedef eckit::grib::GribHandle Grib;
@@ -73,7 +79,7 @@ public: // methods
   const Metadata& metadata() const { return metadata_; }
   Metadata& metadata() { return metadata_; }
 
-  FunctionSpace& function_space() { return function_space_; }
+  FunctionSpace& function_space() const { return function_space_; }
 
   const std::vector<int>& boundsf() const  { return bounds_; }
   const std::vector<int>& extents() const { return extents_; }
@@ -109,7 +115,9 @@ protected: // members
 
   int nb_vars_;
 
+#ifdef ECKIT_HAVE_GRIB
   eckit::ScopedPtr<Grib> grib_; ///< @todo this is to be removed
+#endif
 
 };
 
@@ -140,6 +148,8 @@ public: // methods
     DATA_TYPE& operator[] (const size_t idx) { return data_[idx]; }
 
     virtual void halo_exchange();
+
+	virtual void print(std::ostream& out) const;
 
 protected:
 
@@ -182,9 +192,9 @@ inline void FieldT<DATA_TYPE>::allocate(const std::vector<int>& extents)
 template< typename DATA_TYPE >
 inline void FieldT<DATA_TYPE>::print(std::ostream& out) const
 {
-	FunctionSpace& nodes = function_space();
+	const FunctionSpace& nodes = function_space();
 
-	ArrayView<DATA_TYPE,1> values( data_ );
+	ArrayView<DATA_TYPE,1> values( *this );
 
 //    ArrayView<DATA_TYPE,2> coords( nodes.field("coordinates") );
 	ArrayView<DATA_TYPE,2> latlon( nodes.field("latlon") );

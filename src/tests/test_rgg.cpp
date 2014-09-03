@@ -377,7 +377,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
       for( int f=0; f<m->nb_function_spaces(); ++f )
       {
         FunctionSpace& elements = m->function_space(f);
-        if( elements.metadata<int>("type") == Entity::ELEMS )
+        if( elements.metadata().get<int>("type") == Entity::ELEMS )
         {
           int nb_elems = elements.extents()[0];
           IndexView<int,2> elem_nodes ( elements.field("nodes") );

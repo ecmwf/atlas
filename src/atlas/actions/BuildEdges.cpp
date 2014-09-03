@@ -53,7 +53,7 @@ void build_element_to_edge_connectivity( Mesh& mesh )
   for( int func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
   {
     FunctionSpace& func_space = mesh.function_space(func_space_idx);
-    if( func_space.metadata<int>("type") == Entity::ELEMS )
+	if( func_space.metadata().get<int>("type") == Entity::ELEMS )
     {
       int nb_edges_per_elem;
       if (func_space.name() == "quads")  nb_edges_per_elem = 4;
@@ -385,7 +385,7 @@ void build_edges( Mesh& mesh )
   for( int func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
   {
     FunctionSpace& func_space = mesh.function_space(func_space_idx);
-    if( func_space.metadata<int>("type") == Entity::ELEMS )
+	if( func_space.metadata().get<int>("type") == Entity::ELEMS )
     {
       elem_nodes[func_space_idx] = IndexView<int,2>(func_space.field("nodes"));
     }

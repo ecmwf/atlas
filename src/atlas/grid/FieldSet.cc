@@ -64,13 +64,11 @@ Field::Ptr FieldSet::create_field( GribHandle& gh )
     if( nodes.extents()[0] != nvalues )
         throw SeriousBug( "Size of field in GRIB does not match Grid", Here() );
 
-	Field::Data& fdata = nodes.create_field<double>(sname,1);
+	Field& f = nodes.create_field<double>(sname,1);
 
-    gh.getDataValues(fdata.data(),nvalues);
+	gh.getDataValues( f.data<double>(), nvalues );
 
-	Field::Ptr hf( new Field( grid_, fdata ) );
-
-    hf->grib( gh.clone() );
+	f.grib( gh.clone() );
 
 //        {
 //            std::ofstream of;
@@ -79,7 +77,7 @@ Field::Ptr FieldSet::create_field( GribHandle& gh )
 //            of.close();
 //        }
 
-    return hf;
+	return Field::Ptr( &f );
 }
 
 //-----------------------------------------------------------------------------
@@ -107,8 +105,8 @@ FieldSet::FieldSet( const eckit::PathName& fname )
         fields_.push_back( create_field(*gh) );
 
         /* check all fields have same nvalues */
-        if( !check_nvalues ) check_nvalues = fields_.back()->data().size();
-        if( check_nvalues != fields_.back()->data().size() )
+		if( !check_nvalues ) check_nvalues = fields_.back()->size();
+		if( check_nvalues != fields_.back()->size() )
             throw eckit::UserError("GRIB file contains multiple fields with different sizes", Here() );
 
         gf->release(); // free this GribField
@@ -132,9 +130,8 @@ FieldSet::FieldSet(const Grid::Ptr grid, std::vector<std::string> nfields )
     fields_.reserve(nfields.size());
     for( size_t i = 0; i < nfields.size(); ++i )
     {
-		Field::Data& fdata = nodes.create_field<double>(nfields[i],1);
-		Field::Ptr hf( new Field( grid, fdata ) );
-        fields_.push_back( hf );
+		Field& f = nodes.create_field<double>(nfields[i],1);
+		fields_.push_back( Field::Ptr( &f ) );
     }
 }
 
@@ -157,7 +154,7 @@ std::vector<std::string> FieldSet::field_names() const
     ret.reserve(fields_.size());
 
     for( size_t i = 0; i < fields_.size(); ++i )
-        ret.push_back( fields_[i]->data().name() );
+		ret.push_back( fields_[i]->name() );
 
     return ret;
 }

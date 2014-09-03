@@ -2,13 +2,13 @@
 #define atlas_defines_h
 
 #cmakedefine CGAL_FOUND
-#cmakedefine ECKIT_FOUND
 
 #cmakedefine HAVE_OMP
 #cmakedefine HAVE_MPI
 
 #cmakedefine HAVE_TESSELATION
-#cmakedefine HAVE_GRIB
 #cmakedefine HAVE_FORTRAN_NUMBERING
+
+#cmakedefine ECKIT_HAVE_GRIB
 
 #endif

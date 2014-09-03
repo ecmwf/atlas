@@ -59,7 +59,7 @@ void increase_halo( Mesh& mesh )
   for( int func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
   {
     FunctionSpace& elements = mesh.function_space(func_space_idx);
-    if( elements.metadata<int>("type") == Entity::ELEMS )
+    if( elements.metadata().get<int>("type") == Entity::ELEMS )
     {
       elem_nodes  [func_space_idx] = IndexView<int,2>( elements.field("nodes") );
       elem_part   [func_space_idx] = ArrayView<int,1>( elements.field("partition") );
@@ -345,7 +345,7 @@ void increase_halo( Mesh& mesh )
     for( int f=0; f<mesh.nb_function_spaces(); ++f )
     {
       FunctionSpace& elements = mesh.function_space(f);
-      if( elements.metadata<int>("type") == Entity::ELEMS )
+      if( elements.metadata().get<int>("type") == Entity::ELEMS )
       {
         int nb_elem_nodes(elem_nodes[f].extents()[1]);
         sfe_glb_idx [f][jpart].resize( nb_found_bdry_elems[f] );
@@ -475,7 +475,7 @@ void increase_halo( Mesh& mesh )
   for( int f=0; f<mesh.nb_function_spaces(); ++f )
   {
     FunctionSpace& elements = mesh.function_space(f);
-    if( elements.metadata<int>("type") == Entity::ELEMS )
+    if( elements.metadata().get<int>("type") == Entity::ELEMS )
     {
       ComputeUniqueElementIndex compute_uid( nodes );
 

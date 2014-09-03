@@ -79,7 +79,7 @@ void TestField::test_constructor()
 
     // create field handle
 
-	Field::Ptr f( new Field( g, nodes.field<double>( sname ) ) );
+	Field::Ptr f( &nodes.field<double>( sname ) );
 
     ASSERT( f );
 

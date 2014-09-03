@@ -37,7 +37,7 @@ class FunctionSpace : private eckit::NonCopyable {
 
 public: // methods
 
-  FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<int>& extents, Mesh& mesh );
+  FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<int>& extents );
 
   virtual ~FunctionSpace();
 
@@ -106,8 +106,9 @@ public: // methods
   const Metadata& metadata() const { return metadata_; }
   Metadata& metadata() { return metadata_; }
 
-  const Mesh& mesh() const { return *mesh_; }
-  Mesh& mesh() { return *mesh_; }
+  const Mesh& mesh() const { ASSERT( mesh_ ); return *mesh_; }
+  Mesh& mesh() { ASSERT( mesh_ ); return *mesh_; }
+  void mesh( Mesh& m ) { mesh_ = &m; }
 
   int nb_fields() const { return fields_.size(); }
 
@@ -132,7 +133,7 @@ protected: // members
   mpl::Checksum::Ptr      checksum_;
 
   Metadata      metadata_;
-  Mesh&         mesh_;
+  Mesh*         mesh_;       ///< not owned, but may be null
 
 };
 

@@ -19,7 +19,7 @@
 #include "eckit/memory/Owned.h"
 
 #include "atlas/mesh/Metadata.hpp"
-#include "atlas/grid/Grib.h"
+#include "atlas/grid/Grid.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -33,13 +33,16 @@ class Mesh : public eckit::Owned {
 
 public: // types
 
-    typedef eckit::SharedPtr<Mesh> Ptr;
+	typedef grid::Grid Grid;
+	typedef eckit::SharedPtr<Mesh> Ptr;
 
 public: // methods
 
-	static Mesh& create( const eckit::Params& );
+//	static Mesh& create( const eckit::Params& );
 
-	Mesh( const grid::Grid& );
+	Mesh(); ///< @todo temporary until we finish the merge
+
+	Mesh( grid::Grid& );
 
     virtual ~Mesh();
 
@@ -59,6 +62,11 @@ public: // methods
 
     Metadata& metadata() { return metadata_; }
 
+	void grid( grid::Grid& p ) { grid_ = &p; } ///< @todo temporary until we finish the merge
+
+	const grid::Grid& grid() const {  ASSERT( grid_ ); return *grid_; }
+	grid::Grid& grid() { ASSERT( grid_ ); return *grid_; }
+
 private: // members
 
     std::map< std::string, size_t > index_; ///< index of function spaces
@@ -67,7 +75,7 @@ private: // members
 
     Metadata      metadata_;
 
-	grid::Grid::Ptr grid_;
+	grid::Grid* grid_;
 
 };
 

@@ -297,15 +297,15 @@ void Grib::write( const FieldSet& fields, const PathName& opath )
     }
 }
 
-void Grib::write(const FieldHandle& fh, DataHandle& dh)
+void Grib::write(const Field& fh, DataHandle& dh)
 {
 	GribHandle::Ptr gh = Grib::create_handle( fh.grid(), fh.grib().edition() );
 
     if( !gh )
-        throw SeriousBug("Failed to create GribHandle from FieldHandle", Here());
+		throw SeriousBug("Failed to create GribHandle from Field", Here());
 
     if( !gh->raw() )
-        throw SeriousBug("Failed to create GribHandle from FieldHandle", Here());
+		throw SeriousBug("Failed to create GribHandle from Field", Here());
 
     GribHandle::Ptr h = clone(fh,*gh);
 
@@ -318,12 +318,12 @@ void Grib::write(const FieldHandle& fh, DataHandle& dh)
     dh.write(buffer, size);
 }
 
-GribHandle::Ptr Grib::write(const FieldHandle& fh)
+GribHandle::Ptr Grib::write(const Field& fh)
 {
 	GribHandle::Ptr gh = Grib::create_handle( fh.grid(), fh.grib().edition() );
 
     if( !gh )
-        throw SeriousBug("Failed to create GribHandle from FieldHandle", Here());
+		throw SeriousBug("Failed to create GribHandle from Field", Here());
 
     return clone(fh,*gh);
 }
@@ -347,7 +347,7 @@ void Grib::clone( const FieldSet& fields, const PathName& src, const PathName& o
     }
 }
 
-void Grib::write(const FieldHandle& f, const PathName& opath)
+void Grib::write(const Field& f, const PathName& opath)
 {
     FileHandle fh( opath );
 
@@ -359,7 +359,7 @@ void Grib::write(const FieldHandle& f, const PathName& opath)
     fh.close();
 }
 
-void Grib::clone(const FieldHandle& field, const PathName& gridsec, DataHandle& out )
+void Grib::clone(const Field& field, const PathName& gridsec, DataHandle& out )
 {
     FILE* fh = ::fopen( gridsec.asString().c_str(), "r" );
     if( fh == 0 )
@@ -385,15 +385,14 @@ void Grib::clone(const FieldHandle& field, const PathName& gridsec, DataHandle& 
     out.write(buffer, size);
 }
 
-GribHandle::Ptr Grib::clone(const FieldHandle& field, GribHandle& gridsec )
+GribHandle::Ptr Grib::clone(const Field& f, GribHandle& gridsec )
 {
-    const Field& f = field.data();
     const size_t npts = f.size();
 
     int err=0;
     int what = GRIB_SECTION_GRID;
 
-    GribHandle& meta = field.grib();
+	GribHandle& meta = f.grib();
 
     grib_handle* h = grib_util_sections_copy( gridsec.raw(), meta.raw(), what, &err);
     GRIB_CHECK(err,"grib_util_sections_copy()");

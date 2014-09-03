@@ -35,11 +35,11 @@ ecbuild_use_package( PROJECT eckit VERSION 0.6 )
 
 list( FIND ECKIT_PACKAGES "ECKIT_GRIB" RESULT )
 if( NOT RESULT EQUAL -1  )
-  set( HAVE_ECKIT_GRIB 1 )
+  set( ECKIT_HAVE_GRIB 1 )
 endif()
 list( FIND ECKIT_PACKAGES "ECKIT_MATHS" RESULT )
 if( NOT RESULT EQUAL -1  )
-  set( HAVE_ECKIT_MATHS 1 )
+  set( ECKIT_HAVE_MATHS 1 )
 endif()
 
 # options & dependencies
