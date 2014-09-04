@@ -8,8 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef Mesh_hpp
-#define Mesh_hpp
+#ifndef atlas_Mesh_hpp
+#define atlas_Mesh_hpp
 
 #include <map>
 #include <vector>
@@ -40,11 +40,11 @@ public: // methods
 
 //	static Mesh& create( const eckit::Params& );
 
-	Mesh(); ///< @todo temporary until we finish the merge
-
-	Mesh( grid::Grid& );
+	Mesh();
 
     virtual ~Mesh();
+
+	Metadata& metadata() { return metadata_; }
 
     /// checks if function space exists
     bool has_function_space(const std::string& name) const;
@@ -58,24 +58,30 @@ public: // methods
     /// accessor by index
     FunctionSpace& function_space(int idx) const;
 
-    int nb_function_spaces() const { return function_spaces_.size(); }
+	/// number of functional spaces
+	int nb_function_spaces() const { return function_spaces_.size(); }
 
-    Metadata& metadata() { return metadata_; }
+	/// checks if has a Grid
+	bool has_grid() const { return grid_; }
 
-	void grid( grid::Grid& p ) { grid_ = &p; } ///< @todo temporary until we finish the merge
+	/// assign a Grid to this Mesh
+	void grid( grid::Grid& p ) { grid_ = &p; }
 
+	/// accessor of the Grid
 	const grid::Grid& grid() const {  ASSERT( grid_ ); return *grid_; }
+
+	/// accessor of the Grid
 	grid::Grid& grid() { ASSERT( grid_ ); return *grid_; }
 
 private: // members
 
+	Metadata      metadata_;
+
+	grid::Grid* grid_;
+
     std::map< std::string, size_t > index_; ///< index of function spaces
 
     std::vector< FunctionSpace* > function_spaces_; ///< function spaces
-
-    Metadata      metadata_;
-
-	grid::Grid* grid_;
 
 };
 
@@ -94,4 +100,4 @@ extern "C"
 
 } // namespace atlas
 
-#endif // Mesh_hpp
+#endif // atlas_Mesh_hpp

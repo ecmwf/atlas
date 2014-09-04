@@ -25,11 +25,6 @@ Mesh::Mesh() :
 {
 }
 
-Mesh::Mesh( Grid& g ) :
-	grid_(&g)
-{
-}
-
 Mesh::~Mesh()
 { 
   index_.clear();
