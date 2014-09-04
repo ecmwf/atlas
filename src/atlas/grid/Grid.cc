@@ -48,8 +48,8 @@ Mesh& Grid::mesh()
 {
     if( !mesh_ )
     {
-        mesh_.reset( new Mesh );
-        Tesselation::build_mesh( *this, *mesh_ );
+		mesh_.reset( new Mesh(*this) );
+		Tesselation::build_mesh( *mesh_ );
     }
 
     return *mesh_;
@@ -59,8 +59,8 @@ const Mesh& Grid::mesh() const
 {
      if( !mesh_ )
      {
-         mesh_.reset( new Mesh );
-         Tesselation::build_mesh( *this, *mesh_ );
+		 mesh_.reset( new Mesh( const_cast<Grid&>(*this) ) );
+		 Tesselation::build_mesh( *mesh_ );
      }
 
      return *mesh_;

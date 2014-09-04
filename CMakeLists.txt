@@ -29,9 +29,9 @@ ecbuild_requires_macro_version( 1.3 )
 
 set( PERSISTENT_NAMESPACE "eckit" CACHE INTERNAL "" )
 
-ecbuild_declare_project()
-
 ecbuild_use_package( PROJECT eckit VERSION 0.6 )
+
+ecbuild_declare_project()
 
 list( FIND ECKIT_PACKAGES "ECKIT_GRIB" RESULT )
 if( NOT RESULT EQUAL -1  )
@@ -70,17 +70,19 @@ ecbuild_add_option( FEATURE OMP
 
 # !! TODO !! add test for OpenMP
 
-### MPI ...
+### MPI
 
 ecbuild_add_option( FEATURE MPI
                     DESCRIPTION "support for MPI distributed parallelism" )
 
 if( ENABLE_MPI )
+
   ecbuild_find_mpi()
+
   if( MPI_CXX_FOUND )
-    cmake_add_c_flags( " ${MPI_C_COMPILE_FLAGS}" )
-    cmake_add_cxx_flags( " ${MPI_CXX_COMPILE_FLAGS}" )
-    include_directories(${MPI_C_INCLUDE_PATH})
+	cmake_add_c_flags( " ${MPI_C_COMPILE_FLAGS}" )
+	cmake_add_cxx_flags( " ${MPI_CXX_COMPILE_FLAGS}" )
+	include_directories( "${MPI_CXX_INCLUDE_PATH}" )
   else()
     set( HAVE_MPI 0 )
   endif()
@@ -91,6 +93,7 @@ if( ENABLE_MPI )
     add_definitions(${MPI_Fortran_COMPILE_FLAGS})
     include_directories(${MPI_Fortran_INCLUDE_PATH})
   endif()
+
 endif()
 
 ### grid
@@ -128,6 +131,7 @@ ecbuild_add_option( FEATURE SANDBOX
 # export package info
 
 list( APPEND ATLAS_TPLS eckit )
+
 if( HAVE_GRIB )
   list( APPEND ATLAS_TPLS grib_api )
 endif()
@@ -153,9 +157,8 @@ foreach( _tpl ${ATLAS_TPLS} )
   list( APPEND ATLAS_EXTRA_LIBRARIES     ${${TPL}_LIBRARIES}    ${${TPL}_TPL_LIBRARIES}    )
 endforeach()
 
-
-debug_var(ATLAS_EXTRA_LIBRARIES)
-debug_var(ATLAS_EXTRA_INCLUDE_DIRS)
+#debug_var(ATLAS_EXTRA_LIBRARIES)
+#debug_var(ATLAS_EXTRA_INCLUDE_DIRS)
 
 
 ############################################################################################

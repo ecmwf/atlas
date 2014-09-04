@@ -478,9 +478,11 @@ void Tesselation::create_cell_centres( Mesh& mesh )
 #endif
 }
 
-void Tesselation::build_mesh( const Grid& grid, Mesh& mesh )
+void Tesselation::build_mesh( Mesh& mesh )
 {
     if( mesh.has_function_space("nodes") ) return;
+
+	const Grid& grid = mesh.grid();
 
     const size_t npts = grid.nPoints();
 

@@ -42,7 +42,7 @@ public:
     /// @warning this function must be checked for the correct INDEX translation to Fortran
     static void create_cell_centres( atlas::Mesh& mesh );
 
-    static void build_mesh( const atlas::grid::Grid& g, atlas::Mesh& m );
+	static void build_mesh( atlas::Mesh& m );
 
     /// Ensures or creates the necessary nodal structure in the mesh object
     static void create_mesh_structure( atlas::Mesh& mesh, const size_t nb_nodes );
