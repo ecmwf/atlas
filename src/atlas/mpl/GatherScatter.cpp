@@ -104,14 +104,13 @@ void GatherScatter::setup( const int part[],
     maxgid = -1;
     for (int jj=0; jj<parsize_; ++jj)
     {
-      if ( !is_ghost(jj) && include_ghost )
+      if ( !is_ghost(jj) || include_ghost )
       {
         maxgid = std::max(maxgid,glb_idx[jj]);
       }
     }
     MPL_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&maxgid,1,MPI_INT,MPI_MAX,MPI_COMM_WORLD) );
   }
-
 
   Array<int> sendnodes(parsize_,3);
   ArrayView<int,2> nodes(sendnodes);
