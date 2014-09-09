@@ -22,10 +22,10 @@
 #include "eckit/config/Resource.h"
 #include "eckit/runtime/Tool.h"
 
-#include "atlas/io/Gmsh.hpp"
-#include "atlas/mesh/Mesh.hpp"
-#include "atlas/mesh/Field.hpp"
-#include "atlas/mesh/FunctionSpace.hpp"
+#include "atlas/io/Gmsh.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/Field.h"
+#include "atlas/mesh/FunctionSpace.h"
 
 //------------------------------------------------------------------------------------------------------
 

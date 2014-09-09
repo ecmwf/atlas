@@ -10,10 +10,10 @@
 
 
 
-#ifndef atlas_grid_Tesselation_hpp
-#define atlas_grid_Tesselation_hpp
+#ifndef atlas_grid_Tesselation_h
+#define atlas_grid_Tesselation_h
 
-#include "atlas/mesh/Mesh.hpp"
+#include "atlas/mesh/Mesh.h"
 
 namespace atlas {
 namespace grid {

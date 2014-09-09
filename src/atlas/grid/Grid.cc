@@ -12,7 +12,7 @@
 #include "eckit/memory/Builder.h"
 #include "eckit/config/Resource.h"
 
-#include "atlas/mesh/Mesh.hpp"
+#include "atlas/mesh/Mesh.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Tesselation.h"
 #include "atlas/grid/GridSpecParams.h"

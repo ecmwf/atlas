@@ -55,84 +55,84 @@ endif()
 ###
 
 list( APPEND atlas_mpl_srcs
-  mpl/MPLArrayView.hpp
-  mpl/Checksum.hpp
-  mpl/Checksum.cpp
-  mpl/HaloExchange.hpp
-  mpl/HaloExchange.cpp
-  mpl/GatherScatter.hpp
-  mpl/GatherScatter.cpp
-  mpl/MPL.hpp
+  mpl/MPLArrayView.h
+  mpl/Checksum.h
+  mpl/Checksum.cc
+  mpl/HaloExchange.h
+  mpl/HaloExchange.cc
+  mpl/GatherScatter.h
+  mpl/GatherScatter.cc
+  mpl/MPL.h
 )
 
 list( APPEND atlas_io_srcs
-  io/Gmsh.hpp
-  io/Gmsh.cpp
+  io/Gmsh.h
+  io/Gmsh.cc
 )
 
 list( APPEND atlas_util_srcs
-  util/Array.hpp
-  util/ArrayUtil.hpp
-  util/ArrayView.hpp
-  util/ArrayView.cpp
-  util/Checksum.hpp
-  util/Checksum.cpp
-  util/Debug.hpp
-  util/IndexView.hpp
-  util/IndexView.cpp
+  util/Array.h
+  util/ArrayUtil.h
+  util/ArrayView.h
+  util/ArrayView.cc
+  util/Checksum.h
+  util/Checksum.cc
+  util/Debug.h
+  util/IndexView.h
+  util/IndexView.cc
 )
 
 list( APPEND atlas_meshgen_srcs
-  meshgen/EqualAreaPartitioner.cpp
-  meshgen/EqualAreaPartitioner.hpp
-  meshgen/RGG.cpp
-  meshgen/RGG.hpp
-  meshgen/RGGMeshGenerator.cpp
-  meshgen/RGGMeshGenerator.hpp
-  meshgen/T63.cpp
-  meshgen/T95.cpp
-  meshgen/T159.cpp
-  meshgen/T255.cpp
-  meshgen/T511.cpp
-  meshgen/T1279.cpp
-  meshgen/T2047.cpp
-  meshgen/T3999.cpp
-  meshgen/T7999.cpp
+  meshgen/EqualAreaPartitioner.cc
+  meshgen/EqualAreaPartitioner.h
+  meshgen/RGG.cc
+  meshgen/RGG.h
+  meshgen/RGGMeshGenerator.cc
+  meshgen/RGGMeshGenerator.h
+  meshgen/T63.cc
+  meshgen/T95.cc
+  meshgen/T159.cc
+  meshgen/T255.cc
+  meshgen/T511.cc
+  meshgen/T1279.cc
+  meshgen/T2047.cc
+  meshgen/T3999.cc
+  meshgen/T7999.cc
 )
 
 list( APPEND atlas_mesh_srcs
-  mesh/Field.hpp
-  mesh/Field.cpp
-  mesh/FieldSet.hpp
-  mesh/FieldSet.cpp
-  mesh/FunctionSpace.hpp
-  mesh/FunctionSpace.cpp
-  mesh/Mesh.hpp
-  mesh/Mesh.cpp
-  mesh/Metadata.hpp
-  mesh/Metadata.cpp
-  mesh/Parameters.hpp
-  mesh/Util.hpp
-  mesh/Util.cpp
+  mesh/Field.h
+  mesh/Field.cc
+  mesh/FieldSet.h
+  mesh/FieldSet.cc
+  mesh/FunctionSpace.h
+  mesh/FunctionSpace.cc
+  mesh/Mesh.h
+  mesh/Mesh.cc
+  mesh/Metadata.h
+  mesh/Metadata.cc
+  mesh/Parameters.h
+  mesh/Util.h
+  mesh/Util.cc
 )
 
 list( APPEND atlas_actions_srcs
-  actions/BuildDualMesh.hpp
-  actions/BuildDualMesh.cpp
-  actions/BuildEdges.hpp
-  actions/BuildEdges.cpp
-  actions/BuildHalo.hpp
-  actions/BuildHalo.cpp
-  actions/BuildParallelFields.hpp
-  actions/BuildParallelFields.cpp
-  actions/BuildPeriodicBoundaries.hpp
-  actions/BuildPeriodicBoundaries.cpp
-  actions/DistributeMesh.hpp
-  actions/DistributeMesh.cpp
-  actions/GenerateMesh.hpp
-  actions/GenerateMesh.cpp
-  actions/WriteLoadBalanceReport.hpp
-  actions/WriteLoadBalanceReport.cpp
+  actions/BuildDualMesh.h
+  actions/BuildDualMesh.cc
+  actions/BuildEdges.h
+  actions/BuildEdges.cc
+  actions/BuildHalo.h
+  actions/BuildHalo.cc
+  actions/BuildParallelFields.h
+  actions/BuildParallelFields.cc
+  actions/BuildPeriodicBoundaries.h
+  actions/BuildPeriodicBoundaries.cc
+  actions/DistributeMesh.h
+  actions/DistributeMesh.cc
+  actions/GenerateMesh.h
+  actions/GenerateMesh.cc
+  actions/WriteLoadBalanceReport.h
+  actions/WriteLoadBalanceReport.cc
 )
 
 ### atlas c++ library

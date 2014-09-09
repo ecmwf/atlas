@@ -9,7 +9,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/util/ArrayView.hpp"
+#include "atlas/util/ArrayView.h"
 #include "atlas/grid/PointIndex3.h"
 
 //------------------------------------------------------------------------------------------------------

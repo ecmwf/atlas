@@ -11,8 +11,8 @@
 #include "eckit/log/Log.h"
 #include "eckit/runtime/Tool.h"
 
-#include "atlas/mpl/MPL.hpp"
-#include "atlas/mesh/FunctionSpace.hpp"
+#include "atlas/mpl/MPL.h"
+#include "atlas/mesh/FunctionSpace.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/RegularLatLon.h"
 #include "atlas/grid/FieldSet.h"

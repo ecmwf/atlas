@@ -20,9 +20,9 @@
 #include "eckit/grib/GribParams.h"
 #include "eckit/utils/Translator.h"
 
-#include "atlas/mesh/Parameters.hpp"
-#include "atlas/util/ArrayView.hpp"
-#include "atlas/mesh/FunctionSpace.hpp"
+#include "atlas/mesh/Parameters.h"
+#include "atlas/util/ArrayView.h"
+#include "atlas/mesh/FunctionSpace.h"
 #include "atlas/grid/FieldSet.h"
 
 //------------------------------------------------------------------------------------------------------

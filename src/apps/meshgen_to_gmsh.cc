@@ -22,15 +22,15 @@
 #include "eckit/runtime/Tool.h"
 #include "eckit/filesystem/PathName.h"
 
-#include "atlas/io/Gmsh.hpp"
-#include "atlas/actions/GenerateMesh.hpp"
-#include "atlas/actions/BuildEdges.hpp"
-#include "atlas/actions/BuildPeriodicBoundaries.hpp"
-#include "atlas/actions/BuildHalo.hpp"
-#include "atlas/actions/BuildParallelFields.hpp"
-#include "atlas/actions/BuildDualMesh.hpp"
-#include "atlas/mpl/MPL.hpp"
-#include "atlas/mesh/Mesh.hpp"
+#include "atlas/io/Gmsh.h"
+#include "atlas/actions/GenerateMesh.h"
+#include "atlas/actions/BuildEdges.h"
+#include "atlas/actions/BuildPeriodicBoundaries.h"
+#include "atlas/actions/BuildHalo.h"
+#include "atlas/actions/BuildParallelFields.h"
+#include "atlas/actions/BuildDualMesh.h"
+#include "atlas/mpl/MPL.h"
+#include "atlas/mesh/Mesh.h"
 
 //------------------------------------------------------------------------------------------------------
 

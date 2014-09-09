@@ -46,12 +46,12 @@ const Point_3 origin = Point_3(CGAL::ORIGIN);
 
 //------------------------------------------------------------------------------------------------------
 
-#include "atlas/mesh/Field.hpp"
-#include "atlas/util/ArrayView.hpp"
-#include "atlas/util/IndexView.hpp"
-#include "atlas/mesh/FunctionSpace.hpp"
-#include "atlas/mesh/Mesh.hpp"
-#include "atlas/mesh/Parameters.hpp"
+#include "atlas/mesh/Field.h"
+#include "atlas/util/ArrayView.h"
+#include "atlas/util/IndexView.h"
+#include "atlas/mesh/FunctionSpace.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/Parameters.h"
 
 #include "atlas/grid/PointSet.h"
 #include "atlas/grid/Tesselation.h"

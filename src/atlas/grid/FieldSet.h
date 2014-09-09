@@ -24,9 +24,9 @@
 
 #include "eckit/grib/GribHandle.h" ///< @todo this is to be removed
 
-#include "atlas/mesh/Mesh.hpp"
-#include "atlas/mesh/Field.hpp"
-#include "atlas/mesh/Metadata.hpp"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/Field.h"
+#include "atlas/mesh/Metadata.h"
 #include "atlas/grid/Grid.h"
 
 //------------------------------------------------------------------------------------------------------
