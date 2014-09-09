@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
   }
 
   std::stringstream filename; filename << "T63_dist_p" << MPL::rank() << ".msh";
-  Gmsh::write(*m,filename.str());
+  Gmsh().write(*m,filename.str());
 
   actions::write_load_balance_report(*m,"load_balance.dat");
 }

@@ -171,7 +171,7 @@ BOOST_AUTO_TEST_CASE( test2 )
   if( MPL::rank() == 1 ) BOOST_CHECK_EQUAL( nb_periodic, 32 );
 
   std::stringstream filename; filename << "periodic_p"<<MPL::rank()<<".msh";
-  Gmsh::write(*m,filename.str());
+  Gmsh().write(*m,filename.str());
   delete m;
 }
 

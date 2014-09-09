@@ -19,12 +19,14 @@
 #include <eckit/filesystem/LocalPathName.h>
 
 #include "atlas/io/Gmsh.hpp"
+#include "atlas/mpl/GatherScatter.hpp"
+#include "atlas/util/Array.hpp"
+#include "atlas/util/ArrayView.hpp"
+#include "atlas/util/IndexView.hpp"
 #include "atlas/mesh/Mesh.hpp"
 #include "atlas/mesh/FunctionSpace.hpp"
 #include "atlas/mesh/Field.hpp"
 #include "atlas/mesh/FieldSet.hpp"
-#include "atlas/util/ArrayView.hpp"
-#include "atlas/util/IndexView.hpp"
 #include "atlas/mesh/Parameters.hpp"
 
 namespace atlas {
@@ -43,7 +45,7 @@ public:
     bool is_new_file = (mode != std::ios_base::app || !par_path.exists() );
     if( MPL::size() == 1)
     {
-      std::ofstream::open(par_path.c_str(), std::ios_base::out );
+      std::ofstream::open(par_path.c_str(), mode );
     }
     else
     {
@@ -62,7 +64,7 @@ public:
       }
       eckit::LocalPathName path(file_path);
       path = path.dirName()+"/"+path.baseName(false)+"_p"+to_str(part)+".msh";
-      std::ofstream::open(path.c_str(), std::ios_base::out );
+      std::ofstream::open(path.c_str(), mode );
     }
   }
 };
@@ -77,51 +79,74 @@ void write_header(std::ostream& out)
 }
 
 template< typename DATA_TYPE >
-void write_field_nodes(Field& field, std::ostream& out)
+void write_field_nodes(const Gmsh& gmsh, Field& field, std::ostream& out)
 {
   FunctionSpace& function_space = field.function_space();
+  bool gather( gmsh.options.get<bool>("gather") );
+
   int ndata = field.extents()[0];
   int nvars = field.extents()[1];
-  double time   = field.metadata().has<double>("time") ? field.metadata().get<double>("time") : 0. ;
-  int time_step = field.metadata().has<int>("time_step") ? field.metadata().get<int>("time_step") : 0. ;
-  out << "$NodeData\n";
-  out << "1\n";
-  out << "\"" << field.name() << "\"\n";
-  out << "1\n";
-  out << time << "\n";
-  out << "4\n";
-  out << time_step << "\n";
-  if     ( nvars == 1 ) out << nvars << "\n";
-  else if( nvars <= 3 ) out << 3     << "\n";
-  out << ndata << "\n";
-  out << MPL::rank() << "\n";
+  ArrayView<int,1    > gidx ( function_space.field( "glb_idx" ) );
+  ArrayView<DATA_TYPE> data ( field );
+  if( gather )
+  {
+    mpl::GatherScatter::Ptr gather_scatter = function_space.gather_scatter();
+    function_space.parallelise();
+    ndata = gather_scatter->glb_dof();
+    DEBUG_VAR(gather_scatter->glb_dof());
+    DEBUG_VAR(gather_scatter->loc_dof());
+    Array<DATA_TYPE> field_glb_arr(Extents(ndata,nvars));
+    Array<int      > gidx_glb_arr (Extents(ndata));
+    ArrayView<DATA_TYPE> data_glb( field_glb_arr );
+    ArrayView<int,1> gidx_glb( gidx_glb_arr );
+    gather_scatter->gather( gidx, gidx_glb );
+    gather_scatter->gather( data, data_glb );
+    gidx = gidx_glb;
+    data = data_glb;
+  }
 
-  ArrayView<int,1> gidx ( function_space.field( "glb_idx" ) );
-  if( nvars == 1)
+  if( gather && MPL::rank() == 0 || !gather )
   {
-    ArrayView<DATA_TYPE,1> data( field );
-    for( size_t n = 0; n < ndata; ++n )
-      out << gidx(n) << " " << data(n) << "\n";
-  }
-  else if( nvars <= 3 )
-  {
-    std::vector<DATA_TYPE> data_vec(3,0.);
-    ArrayView<DATA_TYPE,2> data( field );
-    for( size_t n = 0; n < ndata; ++n )
+    double time   = field.metadata().has<double>("time") ? field.metadata().get<double>("time") : 0. ;
+    int time_step = field.metadata().has<int>("time_step") ? field.metadata().get<int>("time_step") : 0. ;
+    out << "$NodeData\n";
+    out << "1\n";
+    out << "\"" << field.name() << "\"\n";
+    out << "1\n";
+    out << time << "\n";
+    out << "4\n";
+    out << time_step << "\n";
+    if     ( nvars == 1 ) out << nvars << "\n";
+    else if( nvars <= 3 ) out << 3     << "\n";
+    out << ndata << "\n";
+    out << MPL::rank() << "\n";
+
+    if( nvars == 1)
     {
-      out << gidx(n);
-      for( int v=0; v<nvars; ++v)
-        data_vec[v] = data(n,v);
-      for( int v=0; v<3; ++v)
-        out << " " << data_vec[v];
-      out << "\n";
+      for( int n = 0; n < ndata; ++n )
+      {
+        out << gidx(n) << " " << data(n,0) << "\n";
+      }
     }
+    else if( nvars <= 3 )
+    {
+      std::vector<DATA_TYPE> data_vec(3,0.);
+      for( size_t n = 0; n < ndata; ++n )
+      {
+        out << gidx(n);
+        for( int v=0; v<nvars; ++v)
+          data_vec[v] = data(n,v);
+        for( int v=0; v<3; ++v)
+          out << " " << data_vec[v];
+        out << "\n";
+      }
+    }
+    out << "$EndNodeData\n";
   }
-  out << "$EndNodeData\n";
 }
 
 template< typename DATA_TYPE >
-void write_field_elems(Field& field, std::ostream& out)
+void write_field_elems(const Gmsh& gmsh, Field& field, std::ostream& out)
 {
   FunctionSpace& function_space = field.function_space();
   int ndata = field.extents()[0];
@@ -174,6 +199,11 @@ void write_field_elems(Field& field, std::ostream& out)
 }
 
 } // end anonymous namespace
+
+Gmsh::Gmsh()
+{
+  options.set<bool>("gather",true);
+}
 
 Gmsh::~Gmsh()
 {
@@ -372,7 +402,7 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh )
 }
 
 
-void Gmsh::write(Mesh& mesh, const std::string& file_path)
+void Gmsh::write(Mesh& mesh, const std::string& file_path) const
 {
   int part = MPL::rank();
   if( mesh.metadata().has<int>("part") )
@@ -523,10 +553,9 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path)
       write(edges.field("skewness"),mesh_info,std::ios_base::app);
     }
   }
-
 }
 
-void Gmsh::write(FieldSet& fieldset, const std::string& file_path, openmode mode)
+void Gmsh::write(FieldSet& fieldset, const std::string& file_path, openmode mode) const
 {
   eckit::LocalPathName path(file_path);
   bool is_new_file = (mode != std::ios_base::app || !path.exists() );
@@ -545,15 +574,15 @@ void Gmsh::write(FieldSet& fieldset, const std::string& file_path, openmode mode
     FunctionSpace& function_space = field.function_space();
     if( function_space.metadata().get<int>("type") == Entity::NODES )
     {
-      if     ( field.data_type() == "int32"  ) {  write_field_nodes<int   >(field,file); }
-      else if( field.data_type() == "real32" ) {  write_field_nodes<float >(field,file); }
-      else if( field.data_type() == "real64" ) {  write_field_nodes<double>(field,file); }
+      if     ( field.data_type() == "int32"  ) {  write_field_nodes<int   >(*this,field,file); }
+      else if( field.data_type() == "real32" ) {  write_field_nodes<float >(*this,field,file); }
+      else if( field.data_type() == "real64" ) {  write_field_nodes<double>(*this,field,file); }
     }
     else if( function_space.metadata().get<int>("type") == Entity::ELEMS )
     {
-      if     ( field.data_type() == "int32"  ) {  write_field_elems<int   >(field,file); }
-      else if( field.data_type() == "real32" ) {  write_field_elems<float >(field,file); }
-      else if( field.data_type() == "real64" ) {  write_field_elems<double>(field,file); }
+      if     ( field.data_type() == "int32"  ) {  write_field_elems<int   >(*this,field,file); }
+      else if( field.data_type() == "real32" ) {  write_field_elems<float >(*this,field,file); }
+      else if( field.data_type() == "real64" ) {  write_field_elems<double>(*this,field,file); }
     }
     file << std::flush;
   }
@@ -561,10 +590,11 @@ void Gmsh::write(FieldSet& fieldset, const std::string& file_path, openmode mode
   file.close();
 }
 
-void Gmsh::write(Field& field, const std::string& file_path, openmode mode)
+void Gmsh::write(Field& field, const std::string& file_path, openmode mode) const
 {
   eckit::LocalPathName path(file_path);
   bool is_new_file = (mode != std::ios_base::app || !path.exists() );
+
   GmshFile file(path,mode);
 
   if( MPL::rank() == 0) std::cout << "writing field " << field.name() << " to gmsh file " << path << std::endl;
@@ -575,18 +605,19 @@ void Gmsh::write(Field& field, const std::string& file_path, openmode mode)
 
   // Field
   FunctionSpace& function_space = field.function_space();
+
   if( function_space.metadata().get<int>("type") == Entity::NODES )
   {
-    if     ( field.data_type() == "int32"  ) {  write_field_nodes<int   >(field,file); }
-    else if( field.data_type() == "real32" ) {  write_field_nodes<float >(field,file); }
-    else if( field.data_type() == "real64" ) {  write_field_nodes<double>(field,file); }
+    if     ( field.data_type() == "int32"  ) {  write_field_nodes<int   >(*this,field,file); }
+    else if( field.data_type() == "real32" ) {  write_field_nodes<float >(*this,field,file); }
+    else if( field.data_type() == "real64" ) {  write_field_nodes<double>(*this,field,file); }
   }
   else if( function_space.metadata().get<int>("type") == Entity::ELEMS ||
            function_space.metadata().get<int>("type") == Entity::FACES )
   {
-    if     ( field.data_type() == "int32"  ) {  write_field_elems<int   >(field,file); }
-    else if( field.data_type() == "real32" ) {  write_field_elems<float >(field,file); }
-    else if( field.data_type() == "real64" ) {  write_field_elems<double>(field,file); }
+    if     ( field.data_type() == "int32"  ) {  write_field_elems<int   >(*this,field,file); }
+    else if( field.data_type() == "real32" ) {  write_field_elems<float >(*this,field,file); }
+    else if( field.data_type() == "real64" ) {  write_field_elems<double>(*this,field,file); }
   }
   file << std::flush;
   file.close();
@@ -740,15 +771,18 @@ Mesh* atlas__read_gmsh (char* file_path)
 }
 
 void atlas__write_gmsh_mesh (Mesh* mesh, char* file_path) {
-  Gmsh::write( *mesh, std::string(file_path) );
+  Gmsh writer;
+  writer.write( *mesh, std::string(file_path) );
 }
 
 void atlas__write_gmsh_fieldset (FieldSet* fieldset, char* file_path, int mode) {
-  Gmsh::write( *fieldset, std::string(file_path) );
+  Gmsh writer;
+  writer.write( *fieldset, std::string(file_path) );
 }
 
 void atlas__write_gmsh_field (Field* field, char* file_path, int mode) {
-  Gmsh::write( *field, std::string(file_path) );
+  Gmsh writer;
+  writer.write( *field, std::string(file_path) );
 }
 
 // ------------------------------------------------------------------

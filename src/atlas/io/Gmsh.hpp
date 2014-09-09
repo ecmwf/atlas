@@ -16,6 +16,8 @@
 #include <string>
 #include <iostream>
 
+#include "atlas/mesh/Metadata.hpp"
+
 namespace atlas {
 class Mesh;
 class Field;
@@ -26,6 +28,9 @@ class Gmsh
 private:
   typedef std::ios_base::openmode openmode;
 public:
+
+  Gmsh();
+
   virtual ~Gmsh();
 
   static Mesh* read(const std::string& file_path);
@@ -37,21 +42,23 @@ public:
   ///  - filename.msh.sphere  will have x-y-z coordinates (sphere)
   /// Extra file with available mesh information is written to a different file:
   ///  - filename_info.msh
-  static void write(Mesh& mesh, const std::string& file_path);
+  void write(Mesh& mesh, const std::string& file_path) const;
 
   /// Write fieldset to file
   ///  Depending on argument "mode", the fields will be appended,
   ///  or existing file will be overwritten
-  static void write(FieldSet& fieldset, const std::string& file_path, openmode mode = std::ios::out);
+  void write(FieldSet& fieldset, const std::string& file_path, openmode mode = std::ios::out) const;
 
   /// Write field to file
   ///  Depending on argument "mode", the fields will be appended,
   ///  or existing file will be overwritten
-  static void write(Field& field, const std::string& file_path, openmode mode = std::ios::out);
+  void write(Field& field, const std::string& file_path, openmode mode = std::ios::out) const;
 
   /// @todo to be merged with write()
-
   static void write3dsurf( Mesh& mesh, const std::string& file_path );
+
+public:
+  Metadata options;
 };
 
 

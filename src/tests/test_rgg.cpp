@@ -283,7 +283,7 @@ ENABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
 
     double max_lat = test::MinimalMesh(nlat,lon).lat(0);
     BOOST_CHECK_CLOSE( test::compute_latlon_area(*mesh), 2.*M_PI*2.*max_lat, 1e-8 );
-    Gmsh::write(*mesh,"minimal2.msh");
+    Gmsh().write(*mesh,"minimal2.msh");
     delete mesh;
   }
   // 3 latitudes
@@ -294,7 +294,7 @@ ENABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     BOOST_CHECK_EQUAL( mesh->function_space("nodes" ).extents()[0], 42 );
     BOOST_CHECK_EQUAL( mesh->function_space("quads" ).extents()[0], 28 );
     BOOST_CHECK_EQUAL( mesh->function_space("triags").extents()[0],  8 );
-    Gmsh::write(*mesh,"minimal3.msh");
+    Gmsh().write(*mesh,"minimal3.msh");
     delete mesh;
   }
   // 4 latitudes
@@ -305,7 +305,7 @@ ENABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     BOOST_CHECK_EQUAL( mesh->function_space("nodes" ).extents()[0], 64 );
     BOOST_CHECK_EQUAL( mesh->function_space("quads" ).extents()[0], 46 );
     BOOST_CHECK_EQUAL( mesh->function_space("triags").extents()[0], 12 );
-    Gmsh::write(*mesh,"minimal4.msh");
+    Gmsh().write(*mesh,"minimal4.msh");
     delete mesh;
   }
   // 5 latitudes WIP
@@ -316,7 +316,7 @@ ENABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     BOOST_CHECK_EQUAL( mesh->function_space("nodes" ).extents()[0], 166 );
     BOOST_CHECK_EQUAL( mesh->function_space("quads" ).extents()[0], 134 );
     BOOST_CHECK_EQUAL( mesh->function_space("triags").extents()[0],  32 );
-    Gmsh::write(*mesh,"minimal5.msh");
+    Gmsh().write(*mesh,"minimal5.msh");
     delete mesh;
   }
 }
@@ -364,7 +364,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
     }
     }
         std::stringstream filename; filename << "T63.msh";
-        Gmsh::write(*m,filename.str());
+        Gmsh().write(*m,filename.str());
 
 
     FunctionSpace& nodes = m->function_space("nodes");

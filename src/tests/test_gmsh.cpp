@@ -30,7 +30,7 @@ BOOST_AUTO_TEST_CASE( test_read_write )
   int nlat = 5;
   int lon[5] = {10, 12, 14, 16, 16};
   Mesh::Ptr mesh = test::generate_mesh(nlat, lon);
-  Gmsh::write(*mesh,"mesh.msh");
+  Gmsh().write(*mesh,"mesh.msh");
 
   BOOST_REQUIRE_NO_THROW( mesh = Mesh::Ptr( Gmsh::read( "mesh.msh" ) ) );
 

@@ -99,7 +99,7 @@ void Meshgen2Gmsh::run()
     build_median_dual_mesh(*mesh);
   }
 
-  atlas::Gmsh::write( *mesh, path_out );
+  atlas::Gmsh().write( *mesh, path_out );
   MPL::finalize();
 }
 

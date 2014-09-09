@@ -37,7 +37,7 @@ BOOST_AUTO_TEST_CASE( test_create_mesh )
 
     m = generate( T159() ); //< 2*N - 1 => N80 grid
 
-    Gmsh::write(*m,"out.msh");
+    Gmsh().write(*m,"out.msh");
 
 //    atlas::actions::BuildXYZ(m);
 

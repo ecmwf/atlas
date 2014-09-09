@@ -109,41 +109,44 @@ BOOST_AUTO_TEST_CASE( test_small )
   BOOST_CHECK_CLOSE( test::dual_volume(*m), 2.*M_PI*M_PI, 1e-6 );
 
   std::stringstream filename; filename << "small_halo_p" << MPL::rank() << ".msh";
-  Gmsh::write(*m,filename.str());
+  Gmsh().write(*m,filename.str());
 }
 #endif
 
 #if 1
 BOOST_AUTO_TEST_CASE( test_t63 )
 {
-  Mesh::Ptr m = test::generate_mesh( T63() );
+//  Mesh::Ptr m = test::generate_mesh( T63() );
 
-//  int nlat = 5;
-//  int lon[5] = {10, 12, 14, 16, 16};
-//  Mesh::Ptr m = test::generate_mesh(nlat, lon);
+  int nlat = 5;
+  int lon[5] = {10, 12, 14, 16, 16};
+  Mesh::Ptr m = test::generate_mesh(nlat, lon);
 
   actions::build_nodes_parallel_fields(m->function_space("nodes"));
   actions::build_periodic_boundaries(*m);
-  actions::build_halo(*m,2);
-  actions::build_edges(*m);
-  actions::build_pole_edges(*m);
-  actions::build_edges_parallel_fields(m->function_space("edges"),m->function_space("nodes"));
-  actions::build_centroid_dual_mesh(*m);
-  BOOST_CHECK_CLOSE( test::dual_volume(*m), 2.*M_PI*M_PI, 1e-6 );
-  std::stringstream filename; filename << "T63_halo_p" << MPL::rank() << ".msh";
-  Gmsh::write(*m,filename.str());
+  actions::build_halo(*m,1);
+  //actions::build_edges(*m);
+  //actions::build_pole_edges(*m);
+  //actions::build_edges_parallel_fields(m->function_space("edges"),m->function_space("nodes"));
+  //actions::build_centroid_dual_mesh(*m);
+  actions::renumber_nodes_glb_idx(m->function_space("nodes"));
 
-  FunctionSpace& nodes = m->function_space("nodes");
-  FunctionSpace& edges = m->function_space("edges");
-  ArrayView<double,1> dual_volumes  ( nodes.field( "dual_volumes" ) );
-  ArrayView<double,2> dual_normals  ( edges.field( "dual_normals" ) );
+  std::stringstream filename; filename << "T63_halo.msh";
+  Gmsh().write(*m,filename.str());
 
-  std::string checksum;
-  checksum = nodes.checksum()->execute(dual_volumes);
-  DEBUG("dual_volumes checksum "<<checksum,0);
+//  BOOST_CHECK_CLOSE( test::dual_volume(*m), 2.*M_PI*M_PI, 1e-6 );
 
-  checksum = edges.checksum()->execute(dual_normals);
-  DEBUG("dual_normals checksum "<<checksum,0);
+//  FunctionSpace& nodes = m->function_space("nodes");
+//  FunctionSpace& edges = m->function_space("edges");
+//  ArrayView<double,1> dual_volumes  ( nodes.field( "dual_volumes" ) );
+//  ArrayView<double,2> dual_normals  ( edges.field( "dual_normals" ) );
+
+//  std::string checksum;
+//  checksum = nodes.checksum()->execute(dual_volumes);
+//  DEBUG("dual_volumes checksum "<<checksum,0);
+
+//  checksum = edges.checksum()->execute(dual_normals);
+//  DEBUG("dual_normals checksum "<<checksum,0);
 
 }
 #endif
