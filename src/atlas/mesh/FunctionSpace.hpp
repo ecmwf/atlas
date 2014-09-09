@@ -24,6 +24,8 @@
 #include "atlas/mesh/Metadata.hpp"
 
 namespace atlas {
+
+class Mesh;
 class Field;
 template <typename T> class FieldT;
 
@@ -31,11 +33,11 @@ template <typename T> class FieldT;
 // Horizontal nodes are always the slowest moving index
 // Then variables
 // Then levels are fastest moving index
-class FunctionSpace {
+class FunctionSpace : private eckit::NonCopyable {
 
 public: // methods
 
-  FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<int>& extents);
+  FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<int>& extents );
 
   virtual ~FunctionSpace();
 
@@ -101,13 +103,12 @@ public: // methods
 
   void set_index(int idx) { idx_ = idx; }
 
+  const Metadata& metadata() const { return metadata_; }
   Metadata& metadata() { return metadata_; }
 
-  template< typename ValueT >
-  const ValueT& metadata(const std::string name) const
-  {
-    return metadata_.get<ValueT>(name);
-  }
+  const Mesh& mesh() const { ASSERT( mesh_ ); return *mesh_; }
+  Mesh& mesh() { ASSERT( mesh_ ); return *mesh_; }
+  void mesh( Mesh& m ) { mesh_ = &m; }
 
   int nb_fields() const { return fields_.size(); }
 
@@ -130,12 +131,9 @@ protected: // members
   mpl::HaloExchange::Ptr  halo_exchange_;
   mpl::GatherScatter::Ptr gather_scatter_;
   mpl::Checksum::Ptr      checksum_;
+
   Metadata      metadata_;
-
-private: // copy not allowed
-
-    FunctionSpace(const FunctionSpace&);
-    FunctionSpace& operator=(const FunctionSpace&);
+  Mesh*         mesh_;       ///< not owned, but may be null
 
 };
 

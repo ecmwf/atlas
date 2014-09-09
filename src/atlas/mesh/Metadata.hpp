@@ -8,10 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-
-
-#ifndef Metadata_hpp
-#define Metadata_hpp
+#ifndef atlas_Metadata_hpp
+#define atlas_Metadata_hpp
 
 #include <vector>
 #include <map>
@@ -21,10 +19,11 @@ namespace atlas {
 class Field;
 
 /// @brief Contains a list of field-pointers, no ownership
-class Metadata
-{
+class Metadata {
+
 public:
-  template<typename ValueT>
+
+	template<typename ValueT>
   Metadata& set(const std::string& name, const ValueT& value);
 
   template<typename ValueT>
@@ -34,12 +33,14 @@ public:
   bool has(const std::string& name) const; 
 
 private:
-//  std::map< std::string, void* >        dict_;
+
+  //  std::map< std::string, void* >        dict_;
   std::map< std::string, bool >         map_bool_;
   std::map< std::string, int >          map_int_;
   std::map< std::string, float >        map_float_;
   std::map< std::string, double >       map_double_;
   std::map< std::string, std::string >  map_string_;
+
 };
 
 // ------------------------------------------------------------------

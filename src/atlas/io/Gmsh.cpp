@@ -243,7 +243,7 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh )
   }
   else
   {
-    mesh.add_function_space( new FunctionSpace( "nodes", "Lagrange_P0", extents ) )
+	mesh.add_function_space( new FunctionSpace( "nodes", "Lagrange_P0", extents ) )
             .metadata().set("type",static_cast<int>(Entity::NODES));
   }
 
@@ -413,20 +413,20 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path) const
   FunctionSpace& nodes    = mesh.function_space( "nodes" );
   ArrayView<double,2> coords  ( nodes.field( "coordinates" ) );
   ArrayView<int,   1> glb_idx ( nodes.field( "glb_idx" ) );
-  int nb_nodes = nodes.metadata<int>("nb_owned");
+  int nb_nodes = nodes.metadata().get<int>("nb_owned");
   nb_nodes = nodes.extents()[0];
 
   FunctionSpace& quads       = mesh.function_space( "quads" );
   IndexView<int,2> quad_nodes   ( quads.field( "nodes" ) );
   ArrayView<int,1> quad_glb_idx ( quads.field( "glb_idx" ) );
   ArrayView<int,1> quad_part    ( quads.field( "partition" ) );
-  int nb_quads = quads.metadata<int>("nb_owned");
+  int nb_quads = quads.metadata().get<int>("nb_owned");
 
   FunctionSpace& triags      = mesh.function_space( "triags" );
   IndexView<int,2> triag_nodes   ( triags.field( "nodes" ) );
   ArrayView<int,1> triag_glb_idx ( triags.field( "glb_idx" ) );
   ArrayView<int,1> triag_part    ( triags.field( "partition" ) );
-  int nb_triags = triags.metadata<int>("nb_owned");
+  int nb_triags = triags.metadata().get<int>("nb_owned");
 
   int nb_edges(0);
   if( mesh.has_function_space("edges") )

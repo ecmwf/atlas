@@ -20,6 +20,11 @@ namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
 
+Mesh::Mesh() :
+	grid_(NULL)
+{
+}
+
 Mesh::~Mesh()
 { 
   index_.clear();
@@ -39,9 +44,13 @@ FunctionSpace& Mesh::add_function_space( FunctionSpace* function_space )
   {
     throw std::runtime_error("Functionspace "+function_space->name()+" already added");
   }
+
   index_[function_space->name()] = function_spaces_.size();
   function_space->set_index( index_[function_space->name()] );
   function_spaces_.push_back( function_space );
+
+  function_space->mesh(*this);
+
   return *function_space;
 }
 

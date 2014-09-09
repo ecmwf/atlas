@@ -8,26 +8,51 @@
  * does it submit to any jurisdiction.
  */
 
+/// @author Willem Deconinck
+/// @author Tiago Quintino
+/// @date Sep 2014
 
-
-#ifndef atlas_Field_hpp
-#define atlas_Field_hpp
+#ifndef atlas_mesh_Field_hpp
+#define atlas_mesh_Field_hpp
 
 #include <algorithm>
 #include <vector>
 #include <string>
 
+#include "eckit/memory/Owned.h"
+#include "eckit/memory/SharedPtr.h"
+#include "eckit/memory/ScopedPtr.h"
+
+#include "atlas/atlas_config.h"
+
+#ifdef ECKIT_HAVE_GRIB
+  #include "eckit/grib/GribHandle.h"
+#endif
+
+#include "atlas/grid/Grid.h"
+#include "atlas/mesh/FunctionSpace.hpp"
+#include "atlas/mesh/Mesh.hpp"
 #include "atlas/mesh/Metadata.hpp"
+#include "atlas/mesh/Parameters.hpp"
+#include "atlas/util/ArrayView.hpp"
 
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
 
-class FunctionSpace;
-
 //------------------------------------------------------------------------------------------------------
 
-class Field {
+class Field : public eckit::Owned {
+
+public: // types
+
+	typedef eckit::SharedPtr<Field> Ptr;
+	typedef std::vector< Field::Ptr > Vector;
+	typedef grid::Grid Grid;
+
+#ifdef ECKIT_HAVE_GRIB
+	typedef eckit::grib::GribHandle Grib;
+#endif
 
 public: // methods
 
@@ -45,9 +70,16 @@ public: // methods
   virtual void allocate(const std::vector<int>& bounds)=0;
   const std::string& name() const { return name_; }
 
+  const Grid& grid() const { return mesh().grid(); }
+  Grid& grid() { return mesh().grid(); }
+
+  const Mesh& mesh() const { return function_space_.mesh(); }
+  Mesh& mesh() { return function_space_.mesh(); }
+
+  const Metadata& metadata() const { return metadata_; }
   Metadata& metadata() { return metadata_; }
 
-  FunctionSpace& function_space() { return function_space_; }
+  FunctionSpace& function_space() const { return function_space_; }
 
   const std::vector<int>& boundsf() const  { return bounds_; }
   const std::vector<int>& extents() const { return extents_; }
@@ -59,6 +91,17 @@ public: // methods
   virtual size_t size() const = 0;
   virtual void halo_exchange() = 0;
 
+#ifdef ECKIT_HAVE_GRIB
+  void grib( Grib* g );   ///< @todo this is to be removed
+  Grib& grib() const;     ///< @todo this is to be removed
+#endif
+
+  friend std::ostream& operator<<( std::ostream& os, const Field& v);
+
+private: // members
+
+	virtual void print( std::ostream& ) const = 0;
+
 protected: // members
 
   std::string name_;
@@ -66,14 +109,16 @@ protected: // members
   std::vector<int> bounds_;
   std::vector<int> extents_;
   std::vector<int> strides_;
+
   FunctionSpace& function_space_;
   Metadata metadata_;
+
   int nb_vars_;
 
-private: // copy not allowed
+#ifdef ECKIT_HAVE_GRIB
+  eckit::ScopedPtr<Grib> grib_; ///< @todo this is to be removed
+#endif
 
-    Field(const Field&);
-    Field& operator=(const Field&);
 };
 
 //------------------------------------------------------------------------------------------------------
@@ -103,6 +148,8 @@ public: // methods
     DATA_TYPE& operator[] (const size_t idx) { return data_[idx]; }
 
     virtual void halo_exchange();
+
+	virtual void print(std::ostream& out) const;
 
 protected:
 
@@ -140,6 +187,24 @@ inline void FieldT<DATA_TYPE>::allocate(const std::vector<int>& extents)
   {
     strides_[n] = strides_[n+1]*extents_[n+1];
   }
+}
+
+template< typename DATA_TYPE >
+inline void FieldT<DATA_TYPE>::print(std::ostream& out) const
+{
+	const FunctionSpace& nodes = function_space();
+
+	ArrayView<DATA_TYPE,1> values( *this );
+
+//    ArrayView<DATA_TYPE,2> coords( nodes.field("coordinates") );
+	ArrayView<DATA_TYPE,2> latlon( nodes.field("latlon") );
+
+	ASSERT( values.extents()[0] == latlon.extents()[0] );
+
+//    Log::info() << "values.extents()[0] " << values.extents()[0] << std::endl;
+
+	for( size_t i = 0; i < latlon.extents()[0]; ++i )
+		out << latlon(i,LAT) << " " << latlon(i,LON) << " " << values(i) << std::endl;
 }
 
 //------------------------------------------------------------------------------------------------------

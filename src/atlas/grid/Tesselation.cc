@@ -87,7 +87,7 @@ Polyhedron_3* create_convex_hull_from_points( const std::vector< Point3 >& pts )
     return poly;
 }
 
-void cgal_polyhedron_to_atlas_mesh(  atlas::Mesh& mesh, Polyhedron_3& poly, PointSet& points )
+void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, PointSet& points )
 {
     bool ensure_outward_normals = true;
 
@@ -184,7 +184,7 @@ Polyhedron_3* create_convex_hull_from_points( const std::vector< Point3 >& pts )
 	throw NotImplemented( "CGAL package not found -- triangulation is disabled", Here() );
 }
 
-void cgal_polyhedron_to_atlas_mesh(  atlas::Mesh& mesh, Polyhedron_3& poly, PointSet& points )
+void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, PointSet& points )
 {
 	throw NotImplemented( "CGAL package not found -- triangulation is disabled", Here() );
 }
@@ -209,7 +209,7 @@ void Tesselation::tesselate( Grid& g )
 	MeshCache::add( uid, mesh );
 }
 
-void Tesselation::tesselate( atlas::Mesh& mesh )
+void Tesselation::tesselate( Mesh& mesh )
 {
     // don't tesselate meshes already with triags or quads
     if( mesh.has_function_space("triags") || mesh.has_function_space("quads") )
@@ -250,7 +250,7 @@ void Tesselation::tesselate( atlas::Mesh& mesh )
 
 //------------------------------------------------------------------------------------------------------
 
-void Tesselation::create_mesh_structure( atlas::Mesh& mesh, const size_t nb_nodes )
+void Tesselation::create_mesh_structure( Mesh& mesh, const size_t nb_nodes )
 {
     // create / ensure mesh has coordinates
 
@@ -285,7 +285,7 @@ void Tesselation::create_mesh_structure( atlas::Mesh& mesh, const size_t nb_node
 
 //------------------------------------------------------------------------------------------------------
 
-void Tesselation::generate_latlon_points( atlas::Mesh& mesh,
+void Tesselation::generate_latlon_points( Mesh& mesh,
                                           const size_t& nlats,
                                           const size_t& nlong )
 {
@@ -346,7 +346,7 @@ void Tesselation::generate_latlon_points( atlas::Mesh& mesh,
 
 //------------------------------------------------------------------------------------------------------
 
-void Tesselation::generate_latlon_grid( atlas::Mesh& mesh, const size_t& nlats, const size_t& nlong )
+void Tesselation::generate_latlon_grid( Mesh& mesh, const size_t& nlats, const size_t& nlong )
 {
     const size_t nb_nodes = (nlats+1) * (nlong+1);
 

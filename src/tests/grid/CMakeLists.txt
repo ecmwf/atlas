@@ -1,14 +1,14 @@
 ecbuild_add_test( TARGET      test_Grid
 			   BOOST
                SOURCES     test_Grid.cc
-               CONDITION   HAVE_GRID AND HAVE_ECKIT_GRIB
+               CONDITION   HAVE_GRID AND ECKIT_HAVE_GRIB
                LIBS        atlas_grid  
                 )
 
 ecbuild_add_test( TARGET      test_GridSpec
             BOOST
                SOURCES     test_GridSpec.cc
-               CONDITION   HAVE_GRID AND HAVE_ECKIT_GRIB
+               CONDITION   HAVE_GRID AND ECKIT_HAVE_GRIB
                LIBS        atlas_grid  
                 )
 
@@ -27,7 +27,7 @@ ecbuild_add_test( TARGET      test_GridSpec
 ecbuild_add_test(   TARGET      test_field
 					BOOST
 					SOURCES     test_field.cc
-          CONDITION	HAVE_GRID AND HAVE_ECKIT_GRIB
+          CONDITION	HAVE_GRID AND ECKIT_HAVE_GRIB
 					LIBS        atlas_grid )
 
 list( APPEND test_grid_from_grib_data
@@ -58,6 +58,6 @@ ecbuild_add_test(   TARGET      test_grid_from_grib
 					BOOST
 					SOURCES     test_grid_from_grib.cc
           DEPENDS     atlas_tests_grid_get_gribs
-          CONDITION	HAVE_GRID AND HAVE_ECKIT_GRIB
+          CONDITION	HAVE_GRID AND ECKIT_HAVE_GRIB
 					LIBS        atlas_grid )
 

@@ -26,7 +26,7 @@ Unstructured.cc
 Unstructured.h
 )
 
-if( HAVE_ECKIT_MATHS )
+if( ECKIT_HAVE_MATHS )
   list( APPEND atlas_grid_srcs
     TriangleIntersection.cc
     TriangleIntersection.h
@@ -34,7 +34,7 @@ if( HAVE_ECKIT_MATHS )
 endif()
 
 
-if( HAVE_ECKIT_GRIB )
+if( ECKIT_HAVE_GRIB )
   list( APPEND atlas_grid_srcs
 	  FieldSet.cc # to be removed once field set doesn't hold a gribhandle anymore
       FieldSet.h

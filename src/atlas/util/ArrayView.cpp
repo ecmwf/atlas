@@ -8,8 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-
 #include <stdexcept>
+
 #include "atlas/mesh/Field.hpp"
 #include "atlas/util/Array.hpp"
 #include "atlas/util/ArrayView.hpp"
