@@ -71,11 +71,19 @@ public:
 
 enum GmshElementTypes { LINE=1, TRIAG=2, QUAD=3, POINT=15 };
 
-void write_header(std::ostream& out)
+void write_header_ascii(std::ostream& out)
 {
   out << "$MeshFormat\n";
-  out << "2.2 0 8\n";
+  out << "2.2 0 "<<sizeof(double)<<"\n";
   out << "$EndMeshFormat\n";
+}
+void write_header_binary(std::ostream& out)
+{
+  out << "$MeshFormat\n";
+  out << "2.2 1 "<<sizeof(double)<<"\n";
+	int one = 1;
+	out.write(reinterpret_cast<const char*>(&one),sizeof(int));
+  out << "\n$EndMeshFormat\n";
 }
 
 template< typename DATA_TYPE >
@@ -202,6 +210,7 @@ Gmsh::Gmsh()
   options.set<bool>("gather",false);
   options.set<int>("surfdim",2);    // lonlat
   options.set<bool>("ghost",true);
+	options.set<bool>("ascii",true);
 }
 
 Gmsh::~Gmsh()
@@ -222,7 +231,20 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh )
   if( !file.is_open() )
     throw std::runtime_error("Could not open file "+file_path);
 
-  std::string line;
+	std::string line;
+
+  while(line != "$MeshFormat")
+    std::getline(file,line);
+	double version;
+	int binary;
+	int size_of_real;
+	file >> version >> binary >> size_of_real;
+
+	if( binary )
+	{
+		throw eckit::NotImplemented("Reading of binary format not implemented",Here());
+	}
+
   while(line != "$Nodes")
     std::getline(file,line);
 
@@ -444,78 +466,178 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path) const
 	eckit::LocalPathName path(file_path);
 
 	if( MPL::rank() == 0 ) std::cout << "writing mesh to gmsh file " << path << std::endl;
-	GmshFile file(path,std::ios_base::out,part);
+
+	bool binary = !options.get<bool>("ascii");
+
+	openmode mode = std::ios::out;
+	if( binary )
+		mode = std::ios::out | std::ios::binary;
+	GmshFile file(path,mode,part);
 
 	// Header
-	write_header(file);
+	if( binary )
+		write_header_binary(file);
+  else
+		write_header_ascii(file);
 
 	// Nodes
 	file << "$Nodes\n";
 	file << nb_nodes << "\n";
+	double xyz[3] = {0.,0.,0.};
+	double r      = 1.;
 	for( size_t n = 0; n < nb_nodes; ++n )
 	{
-		double r     = 1.;
-		double lon   = coords(n,XX);
-		double lat   = coords(n,YY);
+    double lon = coords(n,XX);
+		double lat = coords(n,YY);
 
+		if(surfdim == 2)
+		{
+      xyz[XX] = lon;
+			xyz[YY] = lat;
+		}
 		if(surfdim == 3)
 		{
-			double x = r*std::cos(lat)*std::cos(lon);
-			double y = r*std::cos(lat)*std::sin(lon);
-			double z = r*std::sin(lat);
-			file << glb_idx(n) << " " << x << " " << y << " " << z << "\n";
+			xyz[XX] = r*std::cos(lat)*std::cos(lon);
+			xyz[YY] = r*std::cos(lat)*std::sin(lon);
+			xyz[ZZ] = r*std::sin(lat);
+		}
+		if( binary )
+		{
+			file.write(reinterpret_cast<const char*>(&glb_idx(n)), sizeof(int));
+			file.write(reinterpret_cast<const char*>(&xyz), sizeof(double)*3 );
 		}
 		else
 		{
-			file << glb_idx(n) << " " << lon << " " << lat << " " << 0. << "\n";
+			file << glb_idx(n) << " " << xyz[XX] << " " << xyz[YY] << " " << xyz[ZZ] << "\n";
 		}
 	}
+	if( binary ) file << "\n";
 	file << "$EndNodes\n";
 
 	// Elements
 	file << "$Elements\n";
-	file << nb_quads+nb_triags+nb_edges << "\n";
-	for( int e=0; e<nb_quads; ++e)
-	{
-		file << quad_glb_idx(e) << " 3 4 1 1 1 " << quad_part(e);
-		for( int n=0; n<4; ++n )
-			file << " " << glb_idx( quad_nodes(e,n) );
-		file << "\n";
-	}
-	for( int e=0; e<nb_triags; ++e)
-	{
-		file << triag_glb_idx(e) << " 2 4 1 1 1 " << triag_part(e);
-		for( int n=0; n<3; ++n )
-			file << " " << glb_idx( triag_nodes(e,n) );
-		file << "\n";
-	}
 
-	if( mesh.has_function_space("edges") )
+	if( binary)
 	{
-		FunctionSpace& edges       = mesh.function_space( "edges" );
-		IndexView<int,2> edge_nodes   ( edges.field( "nodes" ) );
-		ArrayView<int,1> edge_glb_idx ( edges.field( "glb_idx" ) );
-		if( edges.has_field("partition") )
+		file << nb_quads+nb_triags+nb_edges << "\n";
+		int header[3];
+		int data[9];
+		header[0] = 3;         // elm_type
+		header[1] = nb_quads;  // nb_elems
+		header[2] = 4;         // nb_tags
+		file.write(reinterpret_cast<const char*>(&header), sizeof(int)*3 );
+		data[1]=1;
+		data[2]=1;
+		data[3]=1;
+		for( int e=0; e<nb_quads; ++e)
 		{
-			ArrayView<int,1> edge_part ( edges.field( "partition" ) );
-			for( int e=0; e<nb_edges; ++e)
+			data[0] = quad_glb_idx(e);
+			data[4] = quad_part(e);
+			for( int n=0; n<4; ++n )
+				data[5+n] = glb_idx( quad_nodes(e,n) );
+			file.write(reinterpret_cast<const char*>(&data), sizeof(int)*9 );
+		}
+		header[0] = 2;         // elm_type
+		header[1] = nb_triags; // nb_elems
+		header[2] = 4;         // nb_tags
+		file.write(reinterpret_cast<const char*>(&header), sizeof(int)*3 );
+		data[1]=1;
+		data[2]=1;
+		data[3]=1;
+		for( int e=0; e<nb_triags; ++e)
+		{
+			data[0] = triag_glb_idx(e);
+			data[4] = triag_part(e);
+			for( int n=0; n<3; ++n )
+				data[5+n] = glb_idx( triag_nodes(e,n) );
+			file.write(reinterpret_cast<const char*>(&data), sizeof(int)*8 );
+		}
+		if( mesh.has_function_space("edges") )
+		{
+			FunctionSpace& edges       = mesh.function_space( "edges" );
+			IndexView<int,2> edge_nodes   ( edges.field( "nodes" ) );
+			ArrayView<int,1> edge_glb_idx ( edges.field( "glb_idx" ) );
+			header[0] = 1;         // elm_type
+			header[1] = nb_edges;  // nb_elems
+			if( edges.has_field("partition") )
 			{
-				file << edge_glb_idx(e) << " 1 4 1 1 1 " << edge_part(e);
-				for( int n=0; n<2; ++n )
-					file << " " << glb_idx( edge_nodes(e,n) );
-				file << "\n";
+				header[2] = 4;         // nb_tags
+				data[1]=1;
+				data[2]=1;
+				data[3]=1;
+				ArrayView<int,1> edge_part ( edges.field( "partition" ) );
+				for( int e=0; e<nb_edges; ++e)
+				{
+					data[0] = edge_glb_idx(e);
+					data[4] = edge_part(e);
+					for( int n=0; n<2; ++n )
+						data[5+n] = glb_idx(edge_nodes(e,n) );
+					file.write(reinterpret_cast<const char*>(&data), sizeof(int)*7 );
+				}
+			}
+			else
+			{
+				header[2] = 2;         // nb_tags
+				data[1]=1;
+				data[2]=1;
+				for( int e=0; e<nb_edges; ++e)
+				{
+					data[0] = edge_glb_idx(e);
+					file << edge_glb_idx(e) << " 1 2 1 1";
+					for( int n=0; n<2; ++n )
+						data[3+n] = glb_idx(edge_nodes(e,n) );
+					file.write(reinterpret_cast<const char*>(&data), sizeof(int)*5 );
+				}
 			}
 		}
-		else
-		{
-			for( int e=0; e<nb_edges; ++e)
-			{
-				file << edge_glb_idx(e) << " 1 2 1 1";
-				for( int n=0; n<2; ++n )
-					file << " " << glb_idx( edge_nodes(e,n) );
-				file << "\n";
-			}
 
+		file << "\n";
+	}
+	else
+	{
+		file << nb_quads+nb_triags+nb_edges << "\n";
+		for( int e=0; e<nb_quads; ++e)
+		{
+			file << quad_glb_idx(e) << " 3 4 1 1 1 " << quad_part(e);
+			for( int n=0; n<4; ++n )
+				file << " " << glb_idx( quad_nodes(e,n) );
+			file << "\n";
+		}
+		for( int e=0; e<nb_triags; ++e)
+		{
+			file << triag_glb_idx(e) << " 2 4 1 1 1 " << triag_part(e);
+			for( int n=0; n<3; ++n )
+				file << " " << glb_idx( triag_nodes(e,n) );
+			file << "\n";
+		}
+
+		if( mesh.has_function_space("edges") )
+		{
+			FunctionSpace& edges       = mesh.function_space( "edges" );
+			IndexView<int,2> edge_nodes   ( edges.field( "nodes" ) );
+			ArrayView<int,1> edge_glb_idx ( edges.field( "glb_idx" ) );
+			if( edges.has_field("partition") )
+			{
+				ArrayView<int,1> edge_part ( edges.field( "partition" ) );
+				for( int e=0; e<nb_edges; ++e)
+				{
+					file << edge_glb_idx(e) << " 1 4 1 1 1 " << edge_part(e);
+					for( int n=0; n<2; ++n )
+						file << " " << glb_idx( edge_nodes(e,n) );
+					file << "\n";
+				}
+			}
+			else
+			{
+				for( int e=0; e<nb_edges; ++e)
+				{
+					file << edge_glb_idx(e) << " 1 2 1 1";
+					for( int n=0; n<2; ++n )
+						file << " " << glb_idx( edge_nodes(e,n) );
+					file << "\n";
+				}
+
+			}
 		}
 	}
 	file << "$EndElements\n";
@@ -530,23 +652,24 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path) const
     write(nodes.field("partition"),mesh_info,std::ios_base::out);
   }
 
-  if (nodes.has_field("dual_volumes"))
+	if (nodes.has_field("dual_volumes"))
   {
     write(nodes.field("dual_volumes"),mesh_info,std::ios_base::app);
   }
 
   if( mesh.has_function_space("edges") )
   {
-    FunctionSpace& edges = mesh.function_space( "edges" );
-    if (edges.has_field("dual_normals"))
+		FunctionSpace& edges = mesh.function_space( "edges" );
+
+		if (edges.has_field("dual_normals"))
     {
-      write(edges.field("dual_normals"),mesh_info,std::ios_base::app);
-    }
+			write(edges.field("dual_normals"),mesh_info,std::ios_base::app);
+		}
 
     if (edges.has_field("skewness"))
     {
-      write(edges.field("skewness"),mesh_info,std::ios_base::app);
-    }
+			write(edges.field("skewness"),mesh_info,std::ios_base::app);
+		}
   }
 }
 
@@ -560,7 +683,7 @@ void Gmsh::write(FieldSet& fieldset, const std::string& file_path, openmode mode
 
   // Header
   if( is_new_file )
-    write_header(file);
+    write_header_ascii(file);
 
   // Fields
   for( int field_idx=0; field_idx<fieldset.size(); ++field_idx )
@@ -596,7 +719,7 @@ void Gmsh::write(Field& field, const std::string& file_path, openmode mode) cons
 
   // Header
   if( is_new_file )
-    write_header(file);
+    write_header_ascii(file);
 
   // Field
   FunctionSpace& function_space = field.function_space();
@@ -616,6 +739,7 @@ void Gmsh::write(Field& field, const std::string& file_path, openmode mode) cons
   }
   file << std::flush;
   file.close();
+	if( MPL::rank() == 0) std::cout << "done writing field " << field.name() << " to gmsh file " << path << std::endl;
 }
 
 
@@ -630,7 +754,7 @@ void Gmsh::write3dsurf(Mesh &mesh, const std::string& file_path)
     file.open( (file_path).c_str(), std::ios::out );
 
     // header
-    write_header(file);
+    write_header_ascii(file);
 
     // nodes
 

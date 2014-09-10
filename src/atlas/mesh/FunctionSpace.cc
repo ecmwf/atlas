@@ -35,7 +35,7 @@ FunctionSpace::FunctionSpace(const std::string& name, const std::string& shape_f
 	shape_(shape),
 	gather_scatter_(new mpl::GatherScatter()),
 	halo_exchange_(new mpl::HaloExchange()),
-	checksum_(new mpl::Checksum() ),
+	checksum_(new mpl::Checksum()),
 	mesh_(NULL)
 {
 	//std::cout << "C++ : shape Constructor" << std::endl;

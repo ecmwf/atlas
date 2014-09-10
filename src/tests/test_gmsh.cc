@@ -14,6 +14,7 @@
 #include "tests/TestMeshes.h"
 #include "atlas/mpl/MPL.h"
 #include "atlas/io/Gmsh.h"
+#include "atlas/util/Debug.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/actions/BuildParallelFields.h"
 #include "atlas/actions/BuildPeriodicBoundaries.h"
@@ -28,11 +29,15 @@ BOOST_AUTO_TEST_CASE( test_read_write )
   MPL::init();
   int nlat = 5;
   int lon[5] = {10, 12, 14, 16, 16};
-  Mesh::Ptr mesh = test::generate_mesh(nlat, lon);
-  Gmsh().write(*mesh,"mesh.msh");
 
-  BOOST_REQUIRE_NO_THROW( mesh = Mesh::Ptr( Gmsh::read( "mesh.msh" ) ) );
+	Mesh::Ptr mesh = test::generate_mesh(nlat, lon);
+//	Mesh::Ptr mesh = test::generate_mesh(meshgen::T255());
 
+	Gmsh gmsh;
+	gmsh.options.set("ascii",false);
+  gmsh.write(*mesh,"mesh.msh");
 
+	if( gmsh.options.get<bool>("ascii") )
+	  BOOST_REQUIRE_NO_THROW( mesh = Mesh::Ptr( Gmsh::read( "mesh.msh" ) ) );
   MPL::finalize();
 }

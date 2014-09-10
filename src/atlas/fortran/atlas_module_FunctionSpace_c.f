@@ -21,10 +21,10 @@ function new_PrismaticFunctionSpace(name,shape_func,nb_levels,nb_nodes) result(f
   integer, intent(in) :: nb_levels
   integer, intent(in) :: nb_nodes
   type(FunctionSpace_type) :: function_space
-  integer :: extents(3)
-  extents = (/nb_nodes,nb_levels,FIELD_NB_VARS/)
+  integer :: shape(3)
+  shape = (/nb_nodes,nb_levels,FIELD_NB_VARS/)
   function_space%private%object = atlas__FunctionSpace__new(c_str(name),c_str(shape_func), &
-    & extents, 3 )
+    & shape, 3 )
 end function new_PrismaticFunctionSpace
 
 subroutine FunctionSpace__delete(this)
