@@ -95,11 +95,11 @@ public: // methods
 		gather_scatter_->gather( &loc_field, &glb_field, 1 );
 	}
 
-	mpl::HaloExchange::Ptr halo_exchange() const { return halo_exchange_; }
+	mpl::HaloExchange& halo_exchange() const { return *halo_exchange_; }
 
-	mpl::GatherScatter::Ptr gather_scatter() const { return gather_scatter_; }
+	mpl::GatherScatter& gather_scatter() const { return *gather_scatter_; }
 
-	mpl::Checksum::Ptr checksum() const { return checksum_; }
+	mpl::Checksum& checksum() const { return *checksum_; }
 
 	void set_index(int idx) { idx_ = idx; }
 

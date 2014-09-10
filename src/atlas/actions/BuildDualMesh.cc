@@ -116,11 +116,11 @@ void build_median_dual_mesh( Mesh& mesh )
 
 
   nodes.parallelise();
-  nodes.halo_exchange()->execute(dual_volumes);
+  nodes.halo_exchange().execute(dual_volumes);
 
   ArrayView<double,2> dual_normals  ( edges.field( "dual_normals" ) );
   edges.parallelise();
-  edges.halo_exchange()->execute(dual_normals);
+  edges.halo_exchange().execute(dual_normals);
   make_dual_normals_outward(mesh);
 
 }
@@ -146,11 +146,11 @@ void build_centroid_dual_mesh( Mesh& mesh )
   build_skewness( mesh );
 
   nodes.parallelise();
-  nodes.halo_exchange()->execute(dual_volumes);
+  nodes.halo_exchange().execute(dual_volumes);
 
   ArrayView<double,2> dual_normals  ( edges.field( "dual_normals" ) );
   edges.parallelise();
-  edges.halo_exchange()->execute(dual_normals);
+  edges.halo_exchange().execute(dual_normals);
 }
 
 

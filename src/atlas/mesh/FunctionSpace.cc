@@ -194,7 +194,7 @@ void FunctionSpace::remove_field(const std::string& name)
 	else
 	{
 		std::stringstream msg;
-		msg << "Could not find field \"" << name << "\" in shape \"" << name_ << "\"";
+		msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
 		throw std::out_of_range(msg.str());
 	}
 }
@@ -214,7 +214,7 @@ Field& FunctionSpace::field(const std::string& name) const
 	else
 	{
 		std::stringstream msg;
-		msg << "Could not find field \"" << name << "\" in shape \"" << name_ << "\"";
+		msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
 		throw std::out_of_range(msg.str());
 	}
 }
@@ -229,7 +229,7 @@ template<>
 	else
 	{
 		std::stringstream msg;
-		msg << "Could not find field \"" << name << "\" in shape \"" << name_ << "\"";
+		msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
 		throw std::out_of_range(msg.str());
 	}
 }
@@ -244,7 +244,7 @@ template<>
 	else
 	{
 		std::stringstream msg;
-		msg << "Could not find field \"" << name << "\" in shape \"" << name_ << "\"";
+		msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
 		throw std::out_of_range(msg.str());
 	}
 }
@@ -259,7 +259,7 @@ template<>
 	else
 	{
 		std::stringstream msg;
-		msg << "Could not find field \"" << name << "\" in shape \"" << name_ << "\"";
+		msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
 		throw std::out_of_range(msg.str());
 	}
 }
@@ -279,16 +279,16 @@ void FunctionSpace::parallelise(const int part[], const int remote_idx[], const 
 
 void FunctionSpace::parallelise(FunctionSpace& other_shape)
 {
-	halo_exchange_	= other_shape.halo_exchange();
-	gather_scatter_ = other_shape.gather_scatter();
+	halo_exchange_ = mpl::HaloExchange::Ptr( &other_shape.halo_exchange() );
+	gather_scatter_ = mpl::GatherScatter::Ptr( &other_shape.gather_scatter() );
 }
 
 void FunctionSpace::parallelise()
 {
 	if( name() == "nodes" || name() == "edges" )
 	{
-		FieldT<int>& part = field<int>("partition");
 		FieldT<int>& ridx = field<int>("remote_idx");
+		FieldT<int>& part = field<int>("partition");
 		FieldT<int>& gidx = field<int>("glb_idx");
 		parallelise(part.data(),ridx.data(),gidx.data(),part.size());
 	}
@@ -376,15 +376,15 @@ void atlas__FunctionSpace__gather_double (FunctionSpace* This, double field_data
 }
 
 mpl::HaloExchange* atlas__FunctionSpace__halo_exchange (FunctionSpace* This) {
-	return This->halo_exchange().get();
+	return &This->halo_exchange();
 }
 
 mpl::GatherScatter* atlas__FunctionSpace__gather (FunctionSpace* This) {
-	return This->gather_scatter().get();
+	return &This->gather_scatter();
 }
 
 mpl::Checksum* atlas__FunctionSpace__checksum (FunctionSpace* This) {
-	return This->checksum().get();
+	return &This->checksum();
 }
 
 void atlas__FunctionSpace__delete (FunctionSpace* This) {

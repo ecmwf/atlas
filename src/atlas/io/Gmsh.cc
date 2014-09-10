@@ -90,17 +90,14 @@ void write_field_nodes(const Gmsh& gmsh, Field& field, std::ostream& out)
   ArrayView<DATA_TYPE> data ( field );
   if( gather )
   {
-    mpl::GatherScatter::Ptr gather_scatter = function_space.gather_scatter();
-    function_space.parallelise();
-    ndata = gather_scatter->glb_dof();
-    DEBUG_VAR(gather_scatter->glb_dof());
-    DEBUG_VAR(gather_scatter->loc_dof());
+    mpl::GatherScatter& gather_scatter = function_space.gather_scatter();
+    ndata = gather_scatter.glb_dof();
     Array<DATA_TYPE> field_glb_arr(ndata,nvars);
     Array<int      > gidx_glb_arr (ndata);
     ArrayView<DATA_TYPE> data_glb( field_glb_arr );
     ArrayView<int,1> gidx_glb( gidx_glb_arr );
-    gather_scatter->gather( gidx, gidx_glb );
-    gather_scatter->gather( data, data_glb );
+    gather_scatter.gather( gidx, gidx_glb );
+    gather_scatter.gather( data, data_glb );
     gidx = gidx_glb;
     data = data_glb;
   }
@@ -202,7 +199,9 @@ void write_field_elems(const Gmsh& gmsh, Field& field, std::ostream& out)
 
 Gmsh::Gmsh()
 {
-  options.set<bool>("gather",true);
+  options.set<bool>("gather",false);
+  options.set<int>("surfdim",2);    // lonlat
+  options.set<bool>("ghost",true);
 }
 
 Gmsh::~Gmsh()
@@ -408,7 +407,8 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path) const
   if( mesh.metadata().has<int>("part") )
     part = mesh.metadata().get<int>("part");
 
-  bool include_ghost_elements = true;
+  bool include_ghost_elements = options.get<bool>("ghost");
+	int surfdim = options.get<int>("surfdim");
 
   FunctionSpace& nodes    = mesh.function_space( "nodes" );
   ArrayView<double,2> coords  ( nodes.field( "coordinates" ) );
@@ -441,91 +441,86 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path) const
     nb_triags = triags.shape(0);
   }
 
-  for( int spherical=0; spherical<2; ++spherical )
-  {
-    eckit::LocalPathName path(file_path);
-    if( spherical )
-      path = path.dirName()+"/"+path.baseName(false)+"_sphere.msh";
+	eckit::LocalPathName path(file_path);
 
-    if( MPL::rank() == 0 ) std::cout << "writing mesh to gmsh file " << path << std::endl;
-    GmshFile file(path,std::ios_base::out,part);
+	if( MPL::rank() == 0 ) std::cout << "writing mesh to gmsh file " << path << std::endl;
+	GmshFile file(path,std::ios_base::out,part);
 
-    // Header
-    write_header(file);
+	// Header
+	write_header(file);
 
-    // Nodes
-    file << "$Nodes\n";
-    file << nb_nodes << "\n";
-    for( size_t n = 0; n < nb_nodes; ++n )
-    {
-      double r     = 1.;
-      double lon   = coords(n,XX);
-      double lat   = coords(n,YY);
+	// Nodes
+	file << "$Nodes\n";
+	file << nb_nodes << "\n";
+	for( size_t n = 0; n < nb_nodes; ++n )
+	{
+		double r     = 1.;
+		double lon   = coords(n,XX);
+		double lat   = coords(n,YY);
 
-      if(spherical)
-      {
-        double x = r*std::cos(lat)*std::cos(lon);
-        double y = r*std::cos(lat)*std::sin(lon);
-        double z = r*std::sin(lat);
-        file << glb_idx(n) << " " << x << " " << y << " " << z << "\n";
-      }
-      else
-      {
-        file << glb_idx(n) << " " << lon << " " << lat << " " << 0. << "\n";
-      }
-    }
-    file << "$EndNodes\n";
+		if(surfdim == 3)
+		{
+			double x = r*std::cos(lat)*std::cos(lon);
+			double y = r*std::cos(lat)*std::sin(lon);
+			double z = r*std::sin(lat);
+			file << glb_idx(n) << " " << x << " " << y << " " << z << "\n";
+		}
+		else
+		{
+			file << glb_idx(n) << " " << lon << " " << lat << " " << 0. << "\n";
+		}
+	}
+	file << "$EndNodes\n";
 
-    // Elements
-    file << "$Elements\n";
-    file << nb_quads+nb_triags+nb_edges << "\n";
-    for( int e=0; e<nb_quads; ++e)
-    {
-      file << quad_glb_idx(e) << " 3 4 1 1 1 " << quad_part(e);
-      for( int n=0; n<4; ++n )
-        file << " " << glb_idx( quad_nodes(e,n) );
-      file << "\n";
-    }
-    for( int e=0; e<nb_triags; ++e)
-    {
-      file << triag_glb_idx(e) << " 2 4 1 1 1 " << triag_part(e);
-      for( int n=0; n<3; ++n )
-        file << " " << glb_idx( triag_nodes(e,n) );
-      file << "\n";
-    }
+	// Elements
+	file << "$Elements\n";
+	file << nb_quads+nb_triags+nb_edges << "\n";
+	for( int e=0; e<nb_quads; ++e)
+	{
+		file << quad_glb_idx(e) << " 3 4 1 1 1 " << quad_part(e);
+		for( int n=0; n<4; ++n )
+			file << " " << glb_idx( quad_nodes(e,n) );
+		file << "\n";
+	}
+	for( int e=0; e<nb_triags; ++e)
+	{
+		file << triag_glb_idx(e) << " 2 4 1 1 1 " << triag_part(e);
+		for( int n=0; n<3; ++n )
+			file << " " << glb_idx( triag_nodes(e,n) );
+		file << "\n";
+	}
 
-    if( mesh.has_function_space("edges") )
-    {
-      FunctionSpace& edges       = mesh.function_space( "edges" );
-      IndexView<int,2> edge_nodes   ( edges.field( "nodes" ) );
-      ArrayView<int,1> edge_glb_idx ( edges.field( "glb_idx" ) );
-      if( edges.has_field("partition") )
-      {
-        ArrayView<int,1> edge_part ( edges.field( "partition" ) );
-        for( int e=0; e<nb_edges; ++e)
-        {
-          file << edge_glb_idx(e) << " 1 4 1 1 1 " << edge_part(e);
-          for( int n=0; n<2; ++n )
-            file << " " << glb_idx( edge_nodes(e,n) );
-          file << "\n";
-        }
-      }
-      else
-      {
-        for( int e=0; e<nb_edges; ++e)
-        {
-          file << edge_glb_idx(e) << " 1 2 1 1";
-          for( int n=0; n<2; ++n )
-            file << " " << glb_idx( edge_nodes(e,n) );
-          file << "\n";
-        }
+	if( mesh.has_function_space("edges") )
+	{
+		FunctionSpace& edges       = mesh.function_space( "edges" );
+		IndexView<int,2> edge_nodes   ( edges.field( "nodes" ) );
+		ArrayView<int,1> edge_glb_idx ( edges.field( "glb_idx" ) );
+		if( edges.has_field("partition") )
+		{
+			ArrayView<int,1> edge_part ( edges.field( "partition" ) );
+			for( int e=0; e<nb_edges; ++e)
+			{
+				file << edge_glb_idx(e) << " 1 4 1 1 1 " << edge_part(e);
+				for( int n=0; n<2; ++n )
+					file << " " << glb_idx( edge_nodes(e,n) );
+				file << "\n";
+			}
+		}
+		else
+		{
+			for( int e=0; e<nb_edges; ++e)
+			{
+				file << edge_glb_idx(e) << " 1 2 1 1";
+				for( int n=0; n<2; ++n )
+					file << " " << glb_idx( edge_nodes(e,n) );
+				file << "\n";
+			}
 
-      }
-    }
-    file << "$EndElements\n";
-    file << std::flush;
-    file.close();
-  }
+		}
+	}
+	file << "$EndElements\n";
+	file << std::flush;
+	file.close();
 
   eckit::LocalPathName mesh_info(file_path);
   mesh_info = mesh_info.dirName()+"/"+mesh_info.baseName(false)+"_info.msh";
@@ -542,7 +537,7 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path) const
 
   if( mesh.has_function_space("edges") )
   {
-    FunctionSpace& edges       = mesh.function_space( "edges" );
+    FunctionSpace& edges = mesh.function_space( "edges" );
     if (edges.has_field("dual_normals"))
     {
       write(edges.field("dual_normals"),mesh_info,std::ios_base::app);
