@@ -1,9 +1,9 @@
 /*
  * (C) Copyright 1996-2014 ECMWF.
- * 
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
- * In applying this licence, ECMWF does not waive the privileges and immunities 
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
@@ -61,14 +61,14 @@ void build_element_to_edge_connectivity( Mesh& mesh )
       elem_to_edge[func_space_idx] =
           IndexView<int,2>(func_space.create_field<int>("to_edge",nb_edges_per_elem));
       elem_to_edge[func_space_idx] = -1;
-      edge_cnt[func_space_idx].resize( func_space.extents()[0], 0);
+      edge_cnt[func_space_idx].resize( func_space.shape(0), 0);
     }
   }
 
   FunctionSpace& nodes = mesh.function_space("nodes");
   FunctionSpace& edges = mesh.function_space("edges");
-  int nb_edges = edges.extents()[0];
-  IndexView<int,3> edge_to_elem ( edges.field( "to_elem" ).data<int>(), Extents(nb_edges,2,2) );
+  int nb_edges = edges.shape(0);
+  IndexView<int,3> edge_to_elem ( edges.field( "to_elem" ).data<int>(), make_shape(nb_edges,2,2) );
   IndexView<int,2> edge_nodes   ( edges.field( "nodes" ) );
   bool has_pole_edges(false);
   ArrayView<int,1> is_pole_edge;
@@ -87,7 +87,7 @@ void build_element_to_edge_connectivity( Mesh& mesh )
 
 
 //  FunctionSpace& edges = mesh.function_space("edges");
-//  int nb_edges = edges.extents()[0];
+//  int nb_edges = edges.shape(0);
 //  IndexView<int,3> edge_to_elem ( edges.field( "to_elem" ).data<int>(), Extents(nb_edges,2,2) );
 //  ArrayView<int,1> edge_gidx    ( edges.field( "glb_idx" ) );
 //  bool has_pole_edges(false);
@@ -134,8 +134,8 @@ void build_node_to_edge_connectivity( Mesh& mesh )
 {
   FunctionSpace& nodes = mesh.function_space("nodes");
   FunctionSpace& edges = mesh.function_space("edges");
-  int nb_nodes = nodes.extents()[0];
-  int nb_edges = edges.extents()[0];
+  int nb_nodes = nodes.shape(0);
+  int nb_edges = edges.shape(0);
 
   IndexView<int,2> edge_nodes   ( edges.field( "nodes" ) );
 
@@ -191,7 +191,7 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
   ArrayView<int,   1> glb_idx   ( nodes.field( "glb_idx"     ) );
   ArrayView<int,   1> part      ( nodes.field( "partition"   ) );
   IndexView<int,   1> ridx      ( nodes.field( "remote_idx"  ) );
-  int nb_nodes = nodes.extents()[0];
+  int nb_nodes = nodes.shape(0);
 
   double min[2], max[2];
   min[XX] =  std::numeric_limits<double>::max();
@@ -339,7 +339,7 @@ void build_edges( Mesh& mesh )
   ArrayView<int,1> glb_idx(        nodes.field( "glb_idx" ) );
   ArrayView<int,1> part   (        nodes.field( "partition" ) );
   ArrayView<double,2> latlon (     nodes.field( "coordinates" ) );
-  int nb_nodes = nodes.extents()[0];
+  int nb_nodes = nodes.shape(0);
 
   FunctionSpace& quads       = mesh.function_space( "quads" );
   FunctionSpace& triags      = mesh.function_space( "triags" );
@@ -362,11 +362,11 @@ void build_edges( Mesh& mesh )
   int nb_edges = nb_faces;
   if( ! mesh.has_function_space("edges") )
   {
-    mesh.add_function_space( new FunctionSpace("edges","shapefunc", Extents(nb_edges,Field::UNDEF_VARS)) );
+    mesh.add_function_space( new FunctionSpace("edges","shapefunc", make_shape(nb_edges,Field::UNDEF_VARS)) );
   }
   FunctionSpace& edges = mesh.function_space("edges");
   edges.metadata().set("type",static_cast<int>(Entity::FACES));
-  edges.resize(Extents(nb_edges,Field::UNDEF_VARS));
+  edges.resize(make_shape(nb_edges,Field::UNDEF_VARS));
 
   if( ! edges.has_field("nodes")      )  edges.create_field<int>("nodes",     2);
   if( ! edges.has_field("glb_idx")    )  edges.create_field<int>("glb_idx",   1);
@@ -378,7 +378,7 @@ void build_edges( Mesh& mesh )
   ArrayView<int,1> edge_glb_idx ( edges.field( "glb_idx"    ) );
   ArrayView<int,1> edge_part    ( edges.field( "partition"  ) );
   IndexView<int,1> edge_ridx    ( edges.field( "remote_idx" ) );
-  IndexView<int,3> edge_to_elem ( edges.field( "to_elem"    ).data<int>(), Extents(nb_edges,2,2) );
+  IndexView<int,3> edge_to_elem ( edges.field( "to_elem"    ).data<int>(), make_shape(nb_edges,2,2) );
 
   std::vector< IndexView<int,2> > elem_nodes( mesh.nb_function_spaces() );
 
@@ -443,16 +443,16 @@ void build_pole_edges( Mesh& mesh )
   ArrayView<int,1> part   (        nodes.field( "partition" ) );
   int nb_edges = 0;
   if( ! mesh.has_function_space("edges") )
-    mesh.add_function_space( new FunctionSpace("edges","shapefunc", Extents(nb_edges,Field::UNDEF_VARS)) );
+    mesh.add_function_space( new FunctionSpace("edges","shapefunc", make_shape(nb_edges,Field::UNDEF_VARS)) );
   FunctionSpace& edges = mesh.function_space("edges");
   edges.metadata().set("type",static_cast<int>(Entity::FACES));
 
-  nb_edges = edges.extents()[0];
+  nb_edges = edges.shape(0);
 
   int nb_pole_edges;
   std::vector<int> pole_edge_nodes;
   accumulate_pole_edges( mesh, pole_edge_nodes, nb_pole_edges );
-  edges.resize( Extents(nb_edges+nb_pole_edges, Field::UNDEF_VARS) );
+  edges.resize( make_shape(nb_edges+nb_pole_edges, Field::UNDEF_VARS) );
 
 
   if( ! edges.has_field("nodes")      )    edges.create_field<int>("nodes",     2);
@@ -467,7 +467,7 @@ void build_pole_edges( Mesh& mesh )
   ArrayView<int,1> edge_part    ( edges.field( "partition"  ) );
   IndexView<int,1> edge_ridx    ( edges.field( "remote_idx" ) );
   ArrayView<int,1> is_pole_edge ( edges.field( "is_pole_edge" ) );
-  IndexView<int,3> edge_to_elem ( edges.field( "to_elem"    ).data<int>(), Extents(nb_edges+nb_pole_edges,2,2) );
+  IndexView<int,3> edge_to_elem ( edges.field( "to_elem"    ).data<int>(), make_shape(nb_edges+nb_pole_edges,2,2) );
 
   for(int edge=0; edge<nb_edges; ++edge)
   {

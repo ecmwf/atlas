@@ -1,9 +1,9 @@
 /*
  * (C) Copyright 1996-2014 ECMWF.
- * 
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
- * In applying this licence, ECMWF does not waive the privileges and immunities 
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
@@ -12,7 +12,6 @@
 #include <algorithm>
 
 #define BOOST_TEST_MODULE TestGather
-#define BOOST_UNIT_TEST_FRAMEWORK_HEADER_ONLY
 #include "ecbuild/boost_test_framework.h"
 #include "eckit/utils/Translator.h"
 #include "atlas/mpl/MPL.h"
@@ -197,17 +196,17 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1, Fixture )
 
   BOOST_CHECK_EQUAL(lview.var_rank(),1);
   BOOST_CHECK_EQUAL(lview.var_stride(0),1);
-  BOOST_CHECK_EQUAL(lview.var_extent(0),2);
+  BOOST_CHECK_EQUAL(lview.var_shape(0),2);
   BOOST_CHECK_EQUAL(gview.var_rank(),1);
   BOOST_CHECK_EQUAL(gview.var_stride(0),1);
-  BOOST_CHECK_EQUAL(gview.var_extent(0),2);
+  BOOST_CHECK_EQUAL(gview.var_shape(0),2);
 
   BOOST_CHECK_EQUAL(lview.mpl_rank(),1);
   BOOST_CHECK_EQUAL(lview.mpl_stride(0),2);
-  BOOST_CHECK_EQUAL(lview.mpl_extent(0),Nl);
+  BOOST_CHECK_EQUAL(lview.mpl_shape(0),Nl);
   BOOST_CHECK_EQUAL(gview.mpl_rank(),1);
   BOOST_CHECK_EQUAL(gview.mpl_stride(0),2);
-  BOOST_CHECK_EQUAL(gview.mpl_extent(0),Ng);
+  BOOST_CHECK_EQUAL(gview.mpl_shape(0),Ng);
 
   gather_scatter.gather( loc.data(), loc_strides, loc_extents, loc_rank, loc_mpl_idxpos, loc_mpl_rank,
                          glb.data(), glb_strides, glb_extents, glb_rank, glb_mpl_idxpos, glb_mpl_rank,
@@ -236,18 +235,18 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1, Fixture )
     mpl::MPL_ArrayView<POD> lview(loc.data(),loc_strides,loc_extents,loc_rank,loc_mpl_idxpos,loc_mpl_rank);
     BOOST_CHECK_EQUAL(lview.var_rank(),1);
     BOOST_CHECK_EQUAL(lview.var_stride(0),2);
-    BOOST_CHECK_EQUAL(lview.var_extent(0),1);
+    BOOST_CHECK_EQUAL(lview.var_shape(0),1);
     BOOST_CHECK_EQUAL(lview.mpl_rank(),1);
     BOOST_CHECK_EQUAL(lview.mpl_stride(0),2);
-    BOOST_CHECK_EQUAL(lview.mpl_extent(0),Nl);
+    BOOST_CHECK_EQUAL(lview.mpl_shape(0),Nl);
 
     mpl::MPL_ArrayView<POD> gview(glb1.data(),glb_strides,glb_extents,glb_rank,glb_mpl_idxpos,glb_mpl_rank);
     BOOST_CHECK_EQUAL(gview.var_rank(),1);
     BOOST_CHECK_EQUAL(gview.var_stride(0),1);
-    BOOST_CHECK_EQUAL(gview.var_extent(0),1);
+    BOOST_CHECK_EQUAL(gview.var_shape(0),1);
     BOOST_CHECK_EQUAL(gview.mpl_rank(),1);
     BOOST_CHECK_EQUAL(gview.mpl_stride(0),1);
-    BOOST_CHECK_EQUAL(gview.mpl_extent(0),Ng);
+    BOOST_CHECK_EQUAL(gview.mpl_shape(0),Ng);
 
     gather_scatter.gather( loc.data(),  loc_strides, loc_extents, loc_rank, loc_mpl_idxpos, loc_mpl_rank,
                            glb1.data(), glb_strides, glb_extents, glb_rank, glb_mpl_idxpos, glb_mpl_rank,

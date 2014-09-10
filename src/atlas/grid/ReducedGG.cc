@@ -63,7 +63,7 @@ ReducedGG::ReducedGG( const eckit::Params& p )
 	else
 	{
 		std::vector<double>  latitudes;
-		computeLatitues(latitudes);
+		computeLatitudes(latitudes);
 		nbDataPoints_ = computeNPoints(latitudes);
 	}
 
@@ -82,7 +82,7 @@ ReducedGG::ReducedGG(long gaussN) : nbDataPoints_(0), gaussN_(gaussN)
    computeNPtsPerLat(rgSpec_);
 
    std::vector<double> latitudes;
-   computeLatitues(latitudes);
+   computeLatitudes(latitudes);
    nbDataPoints_ = computeNPoints(latitudes);
 
    ASSERT( nbDataPoints_ > 0 );
@@ -106,7 +106,7 @@ void ReducedGG::coordinates( std::vector<double>& pts ) const
 	ASSERT( pts.size() == nPoints()*2 );
 
 	std::vector<double>  latitudes;
-	computeLatitues(latitudes);
+	computeLatitudes(latitudes);
 
 	std::vector<Grid::Point> points;
 	computePoints(latitudes,points);
@@ -123,7 +123,7 @@ void ReducedGG::coordinates(std::vector<Grid::Point>& pts) const
 	ASSERT( pts.size() == nbDataPoints_ );
 
 	std::vector<double>  latitudes;
-	computeLatitues(latitudes);
+	computeLatitudes(latitudes);
 
 	computePoints(latitudes,pts);
 }
@@ -153,7 +153,7 @@ bool ReducedGG::same(const Grid& grid) const
 	return spec() == grid.spec();
 }
 
-void ReducedGG::computeLatitues(std::vector<double>& lats) const
+void ReducedGG::computeLatitudes(std::vector<double>& lats) const
 {
 	lats.resize(rgSpec_.size());
 
@@ -801,7 +801,7 @@ static const long N2000[4000] = {
 
 void ReducedGG::computeNPtsPerLat(std::vector<long>& nlats)
 {
-   if (gaussN_ == 32)         nlats.assign(N32,  N32 + 64 );
+   if      (gaussN_ == 32)   nlats.assign(N32,   N32 + 64 );
    else if (gaussN_ == 48)   nlats.assign(N48,   N48 + 96 );
    else if (gaussN_ == 80)   nlats.assign(N80,   N80 + 160 );
    else if (gaussN_ == 128)  nlats.assign(N128,  N128 + 256 );

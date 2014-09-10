@@ -1,9 +1,9 @@
 /*
  * (C) Copyright 1996-2014 ECMWF.
- * 
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
- * In applying this licence, ECMWF does not waive the privileges and immunities 
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
@@ -12,7 +12,6 @@
 #include <algorithm>
 
 #define BOOST_TEST_MODULE TestBuildParallelFields
-#define BOOST_UNIT_TEST_FRAMEWORK_HEADER_ONLY
 #include "ecbuild/boost_test_framework.h"
 
 #include "atlas/mpl/MPL.h"
@@ -44,7 +43,7 @@ BOOST_AUTO_TEST_CASE( init ) { MPL::init(); }
 BOOST_AUTO_TEST_CASE( test1 )
 {
   Mesh* m = new Mesh();
-  FunctionSpace* nodes =  new FunctionSpace( "nodes", "shapefunc", Extents(10,Field::UNDEF_VARS) );
+  FunctionSpace* nodes =  new FunctionSpace( "nodes", "shapefunc", make_shape(10,Field::UNDEF_VARS) );
   m->add_function_space( nodes );
   ArrayView<double,2> latlon( m->function_space("nodes").create_field<double>("coordinates",2) );
   ArrayView<int,1> glb_idx( m->function_space("nodes").create_field<int>("glb_idx",1) );
@@ -151,7 +150,7 @@ BOOST_AUTO_TEST_CASE( test2 )
   IsGhost is_ghost(nodes);
 
   int nb_ghost = 0;
-  for( int jnode=0; jnode<nodes.extents()[0]; ++jnode )
+  for( int jnode=0; jnode<nodes.shape(0); ++jnode )
   {
     if( is_ghost(jnode) ) ++nb_ghost;
   }
@@ -162,7 +161,7 @@ BOOST_AUTO_TEST_CASE( test2 )
   actions::build_periodic_boundaries(*m);
 
   int nb_periodic = -nb_ghost;
-  for( int jnode=0; jnode<nodes.extents()[0]; ++jnode )
+  for( int jnode=0; jnode<nodes.shape(0); ++jnode )
   {
     if( is_ghost(jnode) ) ++nb_periodic;
   }

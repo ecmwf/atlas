@@ -1,9 +1,9 @@
 /*
  * (C) Copyright 1996-2014 ECMWF.
- * 
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
- * In applying this licence, ECMWF does not waive the privileges and immunities 
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
@@ -13,7 +13,6 @@
 #include <iomanip>
 
 #define BOOST_TEST_MODULE TestHalo
-#define BOOST_UNIT_TEST_FRAMEWORK_HEADER_ONLY
 #include "ecbuild/boost_test_framework.h"
 #include "eckit/filesystem/LocalPathName.h"
 
@@ -44,7 +43,7 @@ double dual_volume(Mesh& mesh)
 {
   FunctionSpace& nodes = mesh.function_space("nodes");
   IsGhost is_ghost_node(nodes);
-  int nb_nodes = nodes.extents()[0];
+  int nb_nodes = nodes.shape(0);
   ArrayView<double,1> dual_volumes ( nodes.field("dual_volumes") );
   ArrayView<int,1> glb_idx ( nodes.field("glb_idx") );
   double area=0;

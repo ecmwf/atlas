@@ -37,7 +37,7 @@ class FunctionSpace : private eckit::NonCopyable {
 
 public: // methods
 
-	FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<int>& extents );
+	FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<int>& shape );
 
 	virtual ~FunctionSpace();
 
@@ -58,11 +58,11 @@ public: // methods
 
 	void remove_field(const std::string& name);
 
-	// This is a Fortran view of the extents (i.e. reverse order)
-	const std::vector<int>& boundsf() const { return bounds_; }
-	const std::vector<int>& extents() const { return extents_; }
-
-	void resize( const std::vector<int>& extents );
+	// This is a Fortran view of the shape (i.e. reverse order)
+	const std::vector<int>& shapef() const { return shape_; }
+	const std::vector<int>& shape() const { return shape_; }
+	int shape(const int i) const { ASSERT(i<shape_.size()); return shape_[i]; }
+	void resize( const std::vector<int>& shape );
 
 
 	void parallelise();
@@ -90,7 +90,7 @@ public: // methods
 		if( glb_dof_*nb_vars != glbfield_size ) std::cout << "ERROR in FunctionSpace::gather" << std::endl;
 
 		mpl::Field<DATA_TYPE const> loc_field(field_data,nb_vars);
-		mpl::Field<DATA_TYPE			> glb_field(glbfield_data,nb_vars);
+		mpl::Field<DATA_TYPE      > glb_field(glbfield_data,nb_vars);
 
 		gather_scatter_->gather( &loc_field, &glb_field, 1 );
 	}
@@ -121,20 +121,16 @@ protected: // members
 	int idx_;
 	int dof_;
 	int glb_dof_;
-
 	std::string name_;
-	std::vector<int> bounds_; // deprecated, use extents which is reverse order
-	std::vector<int> extents_;
+	std::vector<int> shapef_; // deprecated, use shape which is reverse order
+	std::vector<int> shape_;
 	std::map< std::string, size_t > index_;
 	std::vector< Field* > fields_;
-
-	mpl::HaloExchange::Ptr	halo_exchange_;
+	mpl::HaloExchange::Ptr  halo_exchange_;
 	mpl::GatherScatter::Ptr gather_scatter_;
-	mpl::Checksum::Ptr			checksum_;
-
-	Metadata			metadata_;
-	Mesh*				 mesh_;			 ///< not owned, but may be null
-
+	mpl::Checksum::Ptr      checksum_;
+	Metadata metadata_;
+	Mesh*    mesh_;  ///< not owned, but may be null
 };
 
 typedef mpl::HaloExchange HaloExchange_t;
@@ -146,7 +142,7 @@ typedef mpl::Checksum Checksum_t;
 
 extern "C"
 {
-	FunctionSpace* atlas__FunctionSpace__new (char* name, char* shape_func, int bounds[], int bounds_size);
+	FunctionSpace* atlas__FunctionSpace__new (char* name, char* shape_func, int shape[], int rank);
 	void atlas__FunctionSpace__delete (FunctionSpace* This);
 	int atlas__FunctionSpace__dof (FunctionSpace* This);
 	int atlas__FunctionSpace__glb_dof (FunctionSpace* This);
@@ -156,7 +152,7 @@ extern "C"
 	void atlas__FunctionSpace__remove_field (FunctionSpace* This, char* name);
 	int atlas__FunctionSpace__has_field (FunctionSpace* This, char* name);
 	const char* atlas__FunctionSpace__name (FunctionSpace* This);
-	void atlas__FunctionSpace__boundsf (FunctionSpace* This, int* &bounds, int &rank);
+	void atlas__FunctionSpace__shapef (FunctionSpace* This, int* &shape, int &rank);
 	Field* atlas__FunctionSpace__field (FunctionSpace* This, char* name);
 	void atlas__FunctionSpace__parallelise (FunctionSpace* This);
 	void atlas__FunctionSpace__halo_exchange_int (FunctionSpace* This, int field_data[], int field_size);

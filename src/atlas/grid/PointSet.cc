@@ -35,7 +35,7 @@ PointSet::PointSet( atlas::Mesh& mesh )
 
     FunctionSpace& nodes = mesh.function_space( "nodes" );
 
-    npts_ = nodes.extents()[0];
+    npts_ = nodes.shape(0);
 
     ASSERT( npts_ > 0 );
 

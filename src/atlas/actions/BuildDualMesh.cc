@@ -1,9 +1,9 @@
 /*
  * (C) Copyright 1996-2014 ECMWF.
- * 
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
- * In applying this licence, ECMWF does not waive the privileges and immunities 
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
@@ -34,7 +34,7 @@ namespace {
 void global_bounding_box( FunctionSpace& nodes, double min[2], double max[2] )
 {
   ArrayView<double,2> latlon( nodes.field("coordinates") );
-  const int nb_nodes = nodes.extents()[0];
+  const int nb_nodes = nodes.shape(0);
   min[XX] =  std::numeric_limits<double>::max();
   min[YY] =  std::numeric_limits<double>::max();
   max[XX] = -std::numeric_limits<double>::max();
@@ -159,9 +159,9 @@ void build_centroids( FunctionSpace& func_space, ArrayView<double,2>& coords)
 {
   if( !func_space.has_field("centroids") )
   {
-    int nb_elems = func_space.extents()[0];
+    int nb_elems = func_space.shape(0);
     IndexView<int,2> elem_nodes( func_space.field( "nodes" ) );
-    int nb_nodes_per_elem = elem_nodes.extents()[1];
+    int nb_nodes_per_elem = elem_nodes.shape(1);
     ArrayView<int,1> elem_glb_idx( func_space.field( "glb_idx" ) );
     ArrayView<double,2> elem_centroids( func_space.create_field<double>( "centroids", 2 ) );
     for (int e=0; e<nb_elems; ++e)
@@ -185,7 +185,7 @@ void add_median_dual_volume_contribution(
     FunctionSpace& nodes,
     ArrayView<double,1>& dual_volumes )
 {
-  int nb_elems = elements.extents()[0];
+  int nb_elems = elements.shape(0);
   ArrayView<double,2> elem_centroids ( elements.field("centroids") );
   IndexView<int,   2> elem_to_edges  ( elements.field("to_edge") );
   ArrayView<double,2> edge_centroids ( edges.field("centroids") );
@@ -193,7 +193,7 @@ void add_median_dual_volume_contribution(
   ArrayView<double,2> node_coords    ( nodes.field("coordinates") );
   ArrayView<int,   1> elem_glb_idx   ( elements.field("glb_idx") );
   ArrayView<int,   1> edge_glb_idx   ( edges.field("glb_idx") );
-  int nb_edges_per_elem = elem_to_edges.extents()[1];
+  int nb_edges_per_elem = elem_to_edges.shape(1);
 
 
   // special ordering for bit-identical results
@@ -238,7 +238,7 @@ void add_median_dual_volume_contribution(
   ArrayView<int,   1> edge_glb_idx  ( edges.field("glb_idx"    ) );
   IndexView<int,   2> edge_to_elem  ( edges.field("to_elem"    ) );
   ArrayView<double,2> node_coords   ( nodes.field("coordinates") );
-  int nb_edges = edges.extents()[0];
+  int nb_edges = edges.shape(0);
   std::map<int,std::vector<int> > node_to_bdry_edge;
   for(int edge=0; edge<nb_edges; ++edge)
   {
@@ -310,7 +310,7 @@ void add_centroid_dual_volume_contribution(
   double min[2], max[2];
   global_bounding_box( nodes, min, max );
 
-  int nb_edges = edges.extents()[0];
+  int nb_edges = edges.shape(0);
 
   // special ordering for bit-identical results
   std::vector<Node> ordering(nb_edges);
@@ -394,7 +394,7 @@ void build_dual_normals( Mesh& mesh )
   IndexView<int,   2> edge_nodes    ( edges.field("nodes"    ) );
   ArrayView<double,2> edge_centroids( edges.field("centroids") );
   ArrayView<double,2> dual_normals  ( edges.create_field<double>("dual_normals",2) );
-  int nb_edges = edges.extents()[0];
+  int nb_edges = edges.shape(0);
 
   std::map<int,std::vector<int> > node_to_bdry_edge;
   for(int edge=0; edge<nb_edges; ++edge)
@@ -486,7 +486,7 @@ void make_dual_normals_outward( Mesh& mesh )
   IndexView<int,   2> edge_to_elem  ( edges.field("to_elem"  ) );
   IndexView<int,   2> edge_nodes    ( edges.field("nodes"    ) );
   ArrayView<double,2> dual_normals  ( edges.field("dual_normals") );
-  int nb_edges = edges.extents()[0];
+  int nb_edges = edges.shape(0);
 
   for (int edge=0; edge<nb_edges; ++edge)
   {
@@ -534,7 +534,7 @@ void build_skewness( Mesh& mesh )
   ArrayView<double,2> edge_centroids( edges.field("centroids") );
   ArrayView<double,1> skewness      ( edges.create_field<double>("skewness",1) );
   ArrayView<double,1> alpha         ( edges.create_field<double>("alpha",1) );
-  int nb_edges = edges.extents()[0];
+  int nb_edges = edges.shape(0);
 
   // special ordering for bit-identical results
   std::vector<Node> ordering(nb_edges);

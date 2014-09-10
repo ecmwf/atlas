@@ -1,9 +1,9 @@
 /*
  * (C) Copyright 1996-2014 ECMWF.
- * 
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
- * In applying this licence, ECMWF does not waive the privileges and immunities 
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
@@ -48,10 +48,10 @@ void increase_halo( Mesh& mesh )
   ArrayView<int   ,1> part     ( nodes.field( "partition"      ) );
   IndexView<int   ,1> ridx     ( nodes.field( "remote_idx"     ) );
 
-  int nb_nodes = nodes.extents()[0];
+  int nb_nodes = nodes.shape(0);
 
   std::vector< std::vector< ElementRef > > node_to_elem(nb_nodes);
-  
+
   std::vector< IndexView<int,2> > elem_nodes( mesh.nb_function_spaces() );
   std::vector< ArrayView<int,1> > elem_part ( mesh.nb_function_spaces() );
   std::vector< ArrayView<int,1> > elem_glb_idx ( mesh.nb_function_spaces() );
@@ -64,8 +64,8 @@ void increase_halo( Mesh& mesh )
       elem_nodes  [func_space_idx] = IndexView<int,2>( elements.field("nodes") );
       elem_part   [func_space_idx] = ArrayView<int,1>( elements.field("partition") );
       elem_glb_idx[func_space_idx] = ArrayView<int,1>( elements.field("glb_idx") );
-      int nb_elems = elem_nodes[func_space_idx].extents()[0];
-      int nb_nodes_per_elem = elem_nodes[func_space_idx].extents()[1];
+      int nb_elems = elem_nodes[func_space_idx].shape(0);
+      int nb_nodes_per_elem = elem_nodes[func_space_idx].shape(1);
       for (int elem=0; elem<nb_elems; ++elem)
       {
         for (int n=0; n<nb_nodes_per_elem; ++n)
@@ -77,7 +77,7 @@ void increase_halo( Mesh& mesh )
     }
   }
 
-  
+
   /*
   1) Find nodes at boundary of partition
   2) Communicate glb_index of these boundary nodes to other partitions
@@ -95,7 +95,7 @@ void increase_halo( Mesh& mesh )
   - if edge is bdry_edge, then the nodes are bdry nodes
   */
   std::set<int> bdry_nodes_set;
-  
+
   FunctionSpace& quads       = mesh.function_space( "quads" );
   FunctionSpace& triags      = mesh.function_space( "triags" );
 
@@ -153,8 +153,8 @@ void increase_halo( Mesh& mesh )
   int nb_bdry_nodes = bdry_nodes.size();
   Array<int> arr_bdry_nodes_id(nb_bdry_nodes,3);
   ArrayView<int,2> bdry_nodes_id(arr_bdry_nodes_id);
-  ASSERT( bdry_nodes_id.extents()[0] == nb_bdry_nodes );
-  ASSERT( bdry_nodes_id.extents()[1] == 3);
+  ASSERT( bdry_nodes_id.shape(0) == nb_bdry_nodes );
+  ASSERT( bdry_nodes_id.shape(1) == 3);
 
   for( int jnode=0; jnode<nb_bdry_nodes; ++jnode )
   {
@@ -203,8 +203,8 @@ void increase_halo( Mesh& mesh )
   for (int jpart=0; jpart<MPL::size(); ++jpart)
   {
     ArrayView<int,2> recv_bdry_nodes_id( recvbuf.data()+recvdispls[jpart],
-                                         Extents( recvcounts[jpart]/3, 3 ).data() );
-    int recv_nb_bdry_nodes = recv_bdry_nodes_id.extents()[0];
+                                         make_shape( recvcounts[jpart]/3, 3 ).data() );
+    int recv_nb_bdry_nodes = recv_bdry_nodes_id.shape(0);
 
     // Find elements that have these nodes
     // In order to do this, check the node_to_elem list
@@ -214,7 +214,7 @@ void increase_halo( Mesh& mesh )
     std::vector< std::set< std::pair<int,int> > > found_bdry_elements_set( mesh.nb_function_spaces() );
     for( int jrecv=0; jrecv<recv_nb_bdry_nodes; ++jrecv )
     {
-      ASSERT( recv_bdry_nodes_id.extents()[1] == 3 );
+      ASSERT( recv_bdry_nodes_id.shape(1) == 3 );
       int recv_x       = recv_bdry_nodes_id(jrecv,0);
       int recv_y       = recv_bdry_nodes_id(jrecv,1);
       int recv_glb_idx = recv_bdry_nodes_id(jrecv,2);
@@ -280,7 +280,7 @@ void increase_halo( Mesh& mesh )
         for( int jelem=0; jelem<nb_found_bdry_elems[f]; ++jelem )
         {
           int e = found_bdry_elements[f][jelem];
-          int nb_elem_nodes = elem_nodes[f].extents()[1];
+          int nb_elem_nodes = elem_nodes[f].shape(1);
           for( int n=0; n<nb_elem_nodes; ++n )
           {
             int x = microdeg( latlon( elem_nodes[f](e,n), XX) ) + found_bdry_elements_coord_transform[f][jelem];
@@ -347,12 +347,12 @@ void increase_halo( Mesh& mesh )
       FunctionSpace& elements = mesh.function_space(f);
       if( elements.metadata().get<int>("type") == Entity::ELEMS )
       {
-        int nb_elem_nodes(elem_nodes[f].extents()[1]);
+        int nb_elem_nodes(elem_nodes[f].shape(1));
         sfe_glb_idx [f][jpart].resize( nb_found_bdry_elems[f] );
         sfe_part    [f][jpart].resize( nb_found_bdry_elems[f] );
         sfe_nodes_id[f][jpart].resize( nb_found_bdry_elems[f]*nb_elem_nodes );
         ArrayView<int,2> sfe_nodes_id_view( sfe_nodes_id[f][jpart].data(),
-                                            Extents(nb_found_bdry_elems[f],nb_elem_nodes).data() );
+                                            make_shape(nb_found_bdry_elems[f],nb_elem_nodes).data() );
         for( int jelem=0; jelem<nb_found_bdry_elems[f]; ++jelem )
         {
           int e = found_bdry_elements[f][jelem];
@@ -434,7 +434,7 @@ void increase_halo( Mesh& mesh )
   }
 
 
-  nodes.resize( Extents( nb_nodes+nb_new_nodes, Field::UNDEF_VARS ) );
+  nodes.resize( make_shape( nb_nodes+nb_new_nodes, Field::UNDEF_VARS ) );
   glb_idx = ArrayView<int,   1>( nodes.field("glb_idx") );
   part    = ArrayView<int,   1>( nodes.field("partition") );
   ridx    = IndexView<int,   1>( nodes.field("remote_idx") );
@@ -480,7 +480,7 @@ void increase_halo( Mesh& mesh )
       ComputeUniqueElementIndex compute_uid( nodes );
 
       std::set<int> elem_uid;
-      int nb_elems = elements.extents()[0];
+      int nb_elems = elements.shape(0);
       for( int jelem=0; jelem<nb_elems; ++jelem )
       {
         elem_uid.insert( compute_uid(elem_nodes[f][jelem]) );
@@ -506,8 +506,8 @@ void increase_halo( Mesh& mesh )
         nb_new_elems += rfe_unique_idx[jpart].size();
       }
 
-      int nb_nodes_per_elem = elem_nodes[f].extents()[1];
-      elements.resize( Extents( nb_elems+nb_new_elems, Field::UNDEF_VARS ) );
+      int nb_nodes_per_elem = elem_nodes[f].shape(1);
+      elements.resize( make_shape( nb_elems+nb_new_elems, Field::UNDEF_VARS ) );
       elem_glb_idx[f] = ArrayView<int,1>( elements.field("glb_idx") );
       elem_nodes[f]   = IndexView<int,2>( elements.field("nodes")   );
       elem_part[f]    = ArrayView<int,1>( elements.field("partition")   );

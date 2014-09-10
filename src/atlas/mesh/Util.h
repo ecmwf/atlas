@@ -132,7 +132,7 @@ struct ComputeUniqueElementIndex
 		double centroid[2];
 		centroid[XX] = 0.;
 		centroid[YY] = 0.;
-		int nb_elem_nodes = elem_nodes.extents()[0];
+		int nb_elem_nodes = elem_nodes.shape(0);
 		for( int jnode=0; jnode<nb_elem_nodes; ++jnode )
 		{
 			centroid[XX] += coords( elem_nodes(jnode), XX );

@@ -1,9 +1,9 @@
 /*
  * (C) Copyright 1996-2014 ECMWF.
- * 
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
- * In applying this licence, ECMWF does not waive the privileges and immunities 
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
@@ -12,7 +12,6 @@
 #include <algorithm>
 #include <iomanip>
 #define BOOST_TEST_MODULE TestRGG
-#define BOOST_UNIT_TEST_FRAMEWORK_HEADER_ONLY
 #include "ecbuild/boost_test_framework.h"
 
 #include "atlas/mpl/MPL.h"
@@ -38,7 +37,7 @@ using namespace atlas::meshgen;
 
 namespace atlas {
 namespace test {
-  
+
 class DebugMesh:   public RGG { public: DebugMesh(); };
 DebugMesh::DebugMesh()
 {
@@ -73,9 +72,9 @@ DebugMesh::DebugMesh()
     lat_[i]=M_PI/2.-lat_[i];
   for (int i=nlat; i<2*nlat; ++i)
     lat_[i]=-M_PI/2.+lat_[i];
-} 
+}
 
-  
+
 class MinimalMesh:   public RGG { public: MinimalMesh(int nlat, int lon[]); };
 MinimalMesh::MinimalMesh(int nlat, int lon[])
 {
@@ -102,7 +101,7 @@ MinimalMesh::MinimalMesh(int nlat, int lon[])
     lat_[i]=M_PI/2.-lat_[i];
   for (int i=nlat; i<2*nlat; ++i)
     lat_[i]=-M_PI/2.+lat_[i];
-} 
+}
 
 double compute_latlon_area(Mesh& mesh)
 {
@@ -113,7 +112,7 @@ double compute_latlon_area(Mesh& mesh)
   IndexView<int,2> quad_nodes ( quads. field("nodes") );
   IndexView<int,2> triag_nodes( triags.field("nodes") );
   double area=0;
-  for( int e=0; e<quads.extents()[0]; ++e )
+  for( int e=0; e<quads.shape(0); ++e )
   {
     int n0 = quad_nodes(e,0);
     int n1 = quad_nodes(e,1);
@@ -124,7 +123,7 @@ double compute_latlon_area(Mesh& mesh)
     area += std::abs( x0*(y1-y2)+x1*(y2-y0)+x2*(y0-y1) )*0.5;
     area += std::abs( x2*(y3-y0)+x3*(y0-y2)+x0*(y2-y3) )*0.5;
   }
-  for( int e=0; e<triags.extents()[0]; ++e )
+  for( int e=0; e<triags.shape(0); ++e )
   {
     int n0 = triag_nodes(e,0);
     int n1 = triag_nodes(e,1);
@@ -160,7 +159,7 @@ BOOST_AUTO_TEST_CASE( test_eq_caps )
   BOOST_CHECK_EQUAL( n_regions[2], 4 );
   BOOST_CHECK_EQUAL( n_regions[3], 1 );
 }
-  
+
 BOOST_AUTO_TEST_CASE( test_partitioner )
 {
   // 12 partitions
@@ -213,7 +212,7 @@ BOOST_AUTO_TEST_CASE( test_partitioner )
     BOOST_CHECK_EQUAL( partitioner.nb_regions(9),  1 );
   }
 }
-  
+
 BOOST_AUTO_TEST_CASE( test_rgg_meshgen_one_part )
 {
   Mesh* m;
@@ -225,9 +224,9 @@ ENABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     generate.options.set("three_dimensional",true);
     generate.options.set("include_pole",false);
     m = generate( atlas::test::DebugMesh() );
-    BOOST_CHECK_EQUAL( m->function_space("nodes" ).extents()[0], 156 );
-    BOOST_CHECK_EQUAL( m->function_space("quads" ).extents()[0], 134 );
-    BOOST_CHECK_EQUAL( m->function_space("triags").extents()[0],  32 );
+    BOOST_CHECK_EQUAL( m->function_space("nodes" ).shape(0), 156 );
+    BOOST_CHECK_EQUAL( m->function_space("quads" ).shape(0), 134 );
+    BOOST_CHECK_EQUAL( m->function_space("triags").shape(0),  32 );
     BOOST_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<int>("max_glb_idx"), 156 );
     BOOST_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<int>("nb_owned"),    156 );
     BOOST_CHECK_EQUAL( m->function_space("quads" ).metadata().get<int>("max_glb_idx"), 166 );
@@ -241,9 +240,9 @@ ENABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     generate.options.set("three_dimensional",false);
     generate.options.set("include_pole",false);
     m = generate( atlas::test::DebugMesh() );
-    BOOST_CHECK_EQUAL( m->function_space("nodes" ).extents()[0], 166 );
-    BOOST_CHECK_EQUAL( m->function_space("quads" ).extents()[0], 134 );
-    BOOST_CHECK_EQUAL( m->function_space("triags").extents()[0],  32 );
+    BOOST_CHECK_EQUAL( m->function_space("nodes" ).shape(0), 166 );
+    BOOST_CHECK_EQUAL( m->function_space("quads" ).shape(0), 134 );
+    BOOST_CHECK_EQUAL( m->function_space("triags").shape(0),  32 );
     BOOST_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<int>("max_glb_idx"), 166 );
     BOOST_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<int>("nb_owned"),    166 );
     BOOST_CHECK_EQUAL( m->function_space("quads" ).metadata().get<int>("max_glb_idx"), 166 );
@@ -257,9 +256,9 @@ ENABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     generate.options.set("three_dimensional",true);
     generate.options.set("include_pole",true);
     m = generate( atlas::test::DebugMesh() );
-    BOOST_CHECK_EQUAL( m->function_space("nodes" ).extents()[0], 158 );
-    BOOST_CHECK_EQUAL( m->function_space("quads" ).extents()[0], 134 );
-    BOOST_CHECK_EQUAL( m->function_space("triags").extents()[0],  44 );
+    BOOST_CHECK_EQUAL( m->function_space("nodes" ).shape(0), 158 );
+    BOOST_CHECK_EQUAL( m->function_space("quads" ).shape(0), 134 );
+    BOOST_CHECK_EQUAL( m->function_space("triags").shape(0),  44 );
     BOOST_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<int>("max_glb_idx"), 158 );
     BOOST_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<int>("nb_owned"),    158 );
     BOOST_CHECK_EQUAL( m->function_space("quads" ).metadata().get<int>("max_glb_idx"), 178 );
@@ -277,9 +276,9 @@ ENABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     int nlat=2;
     int lon[] = { 4, 6 };
     mesh = generate( test::MinimalMesh(nlat,lon) );
-    BOOST_CHECK_EQUAL( mesh->function_space("nodes" ).extents()[0], 24 );
-    BOOST_CHECK_EQUAL( mesh->function_space("quads" ).extents()[0], 14 );
-    BOOST_CHECK_EQUAL( mesh->function_space("triags").extents()[0],  4 );
+    BOOST_CHECK_EQUAL( mesh->function_space("nodes" ).shape(0), 24 );
+    BOOST_CHECK_EQUAL( mesh->function_space("quads" ).shape(0), 14 );
+    BOOST_CHECK_EQUAL( mesh->function_space("triags").shape(0),  4 );
 
     double max_lat = test::MinimalMesh(nlat,lon).lat(0);
     BOOST_CHECK_CLOSE( test::compute_latlon_area(*mesh), 2.*M_PI*2.*max_lat, 1e-8 );
@@ -291,9 +290,9 @@ ENABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     int nlat=3;
     int lon[] = { 4, 6, 8 };
     mesh = generate( test::MinimalMesh(nlat,lon) );
-    BOOST_CHECK_EQUAL( mesh->function_space("nodes" ).extents()[0], 42 );
-    BOOST_CHECK_EQUAL( mesh->function_space("quads" ).extents()[0], 28 );
-    BOOST_CHECK_EQUAL( mesh->function_space("triags").extents()[0],  8 );
+    BOOST_CHECK_EQUAL( mesh->function_space("nodes" ).shape(0), 42 );
+    BOOST_CHECK_EQUAL( mesh->function_space("quads" ).shape(0), 28 );
+    BOOST_CHECK_EQUAL( mesh->function_space("triags").shape(0),  8 );
     Gmsh().write(*mesh,"minimal3.msh");
     delete mesh;
   }
@@ -302,9 +301,9 @@ ENABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     int nlat=4;
     int lon[] = { 4, 6, 8, 10 };
     mesh = generate( test::MinimalMesh(nlat,lon) );
-    BOOST_CHECK_EQUAL( mesh->function_space("nodes" ).extents()[0], 64 );
-    BOOST_CHECK_EQUAL( mesh->function_space("quads" ).extents()[0], 46 );
-    BOOST_CHECK_EQUAL( mesh->function_space("triags").extents()[0], 12 );
+    BOOST_CHECK_EQUAL( mesh->function_space("nodes" ).shape(0), 64 );
+    BOOST_CHECK_EQUAL( mesh->function_space("quads" ).shape(0), 46 );
+    BOOST_CHECK_EQUAL( mesh->function_space("triags").shape(0), 12 );
     Gmsh().write(*mesh,"minimal4.msh");
     delete mesh;
   }
@@ -313,9 +312,9 @@ ENABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     int nlat=5;
     int lon[] = { 6, 10, 18, 22, 22 };
     mesh = generate( test::MinimalMesh(nlat,lon) );
-    BOOST_CHECK_EQUAL( mesh->function_space("nodes" ).extents()[0], 166 );
-    BOOST_CHECK_EQUAL( mesh->function_space("quads" ).extents()[0], 134 );
-    BOOST_CHECK_EQUAL( mesh->function_space("triags").extents()[0],  32 );
+    BOOST_CHECK_EQUAL( mesh->function_space("nodes" ).shape(0), 166 );
+    BOOST_CHECK_EQUAL( mesh->function_space("quads" ).shape(0), 134 );
+    BOOST_CHECK_EQUAL( mesh->function_space("triags").shape(0),  32 );
     Gmsh().write(*mesh,"minimal5.msh");
     delete mesh;
   }
@@ -358,9 +357,9 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
     ENABLE {  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     if( generate.options.get<int>("nb_parts") == 20 )
     {
-      BOOST_CHECK_EQUAL( m->function_space("nodes" ).extents()[0], nodes[p]  );
-      BOOST_CHECK_EQUAL( m->function_space("quads" ).extents()[0], quads[p]  );
-      BOOST_CHECK_EQUAL( m->function_space("triags").extents()[0], triags[p] );
+      BOOST_CHECK_EQUAL( m->function_space("nodes" ).shape(0), nodes[p]  );
+      BOOST_CHECK_EQUAL( m->function_space("quads" ).shape(0), quads[p]  );
+      BOOST_CHECK_EQUAL( m->function_space("triags").shape(0), triags[p] );
     }
     }
         std::stringstream filename; filename << "T63.msh";
@@ -368,7 +367,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
 
 
     FunctionSpace& nodes = m->function_space("nodes");
-    int nb_nodes = nodes.extents()[0];
+    int nb_nodes = nodes.shape(0);
 
     // Test if all nodes are connected
     {
@@ -379,9 +378,9 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
         FunctionSpace& elements = m->function_space(f);
         if( elements.metadata().get<int>("type") == Entity::ELEMS )
         {
-          int nb_elems = elements.extents()[0];
+          int nb_elems = elements.shape(0);
           IndexView<int,2> elem_nodes ( elements.field("nodes") );
-          int nb_nodes_per_elem = elem_nodes.extents()[1];
+          int nb_nodes_per_elem = elem_nodes.shape(1);
           for( int jelem=0; jelem<nb_elems; ++jelem )
           {
             for( int jnode=0; jnode<nb_nodes_per_elem; ++jnode )

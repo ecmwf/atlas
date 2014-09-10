@@ -29,7 +29,7 @@ void distribute_mesh( Mesh& mesh )
   int mypart = MPL::rank();
 
   FunctionSpace& nodes = mesh.function_space("nodes");
-  int nb_nodes = nodes.extents()[0];
+  int nb_nodes = nodes.shape(0);
   ArrayView<double,2> latlon    ( nodes.field("coordinates") );
   ArrayView<int,   1> node_part ( nodes.field("partition")   );
   ArrayView<int,   1> node_gidx ( nodes.field("glb_idx")   );
@@ -77,11 +77,11 @@ void distribute_mesh( Mesh& mesh )
     FunctionSpace& elements = mesh.function_space(f);
     if( elements.metadata().get<int>("type") == Entity::ELEMS )
     {
-      int nb_elems = elements.extents()[0];
+      int nb_elems = elements.shape(0);
       ArrayView<int,1> elem_gidx( elements.field("glb_idx") );
       ArrayView<int,1> elem_part( elements.field("partition") );
       IndexView<int,2> elem_nodes( elements.field("nodes") );
-      int nb_nodes_per_elem = elem_nodes.extents()[1];
+      int nb_nodes_per_elem = elem_nodes.shape(1);
       int nb_keep_elems = 0;
       std::vector<int> keep_elems(nb_elems,0);
       std::vector<int> elem_loc(nb_elems,-1);
@@ -131,9 +131,9 @@ void distribute_mesh( Mesh& mesh )
         }
       }
       nb_elems = nb_keep_elems;
-      std::vector<int> extents = elements.extents();
-      extents[0] = nb_elems;
-      elements.resize(extents);
+      std::vector<int> shape = elements.shape();
+      shape[0] = nb_elems;
+      elements.resize(shape);
       elem_gidx  = ArrayView<int,1> ( elements.field("glb_idx") );
       elem_part  = ArrayView<int,1> ( elements.field("partition") );
       elem_nodes = IndexView<int,2> ( elements.field("nodes") );
@@ -165,9 +165,9 @@ void distribute_mesh( Mesh& mesh )
     }
   }
   nb_nodes = nb_keep_nodes;
-  std::vector<int> extents = nodes.extents();
-  extents[0] = nb_nodes;
-  nodes.resize(extents);
+  std::vector<int> shape = nodes.shape();
+  shape[0] = nb_nodes;
+  nodes.resize(shape);
   node_gidx  = ArrayView<int,   1> ( nodes.field("glb_idx") );
   node_part  = ArrayView<int,   1> ( nodes.field("partition") );
   latlon     = ArrayView<double,2> ( nodes.field("coordinates") );

@@ -12,7 +12,6 @@
 #include <iostream>
 
 #define BOOST_TEST_MODULE TestGridSpec
-#define BOOST_UNIT_TEST_FRAMEWORK_HEADER_ONLY
 #include "ecbuild/boost_test_framework.h"
 
 #include "eckit/filesystem/PathName.h"

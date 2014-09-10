@@ -1,9 +1,9 @@
 /*
  * (C) Copyright 1996-2014 ECMWF.
- * 
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
- * In applying this licence, ECMWF does not waive the privileges and immunities 
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
@@ -154,7 +154,7 @@ void GatherScatter::setup( const int part[],
   // Load recvnodes in sorting structure
   int nb_recv_nodes = glbcnt_/3;
   std::vector<Node> node_sort(nb_recv_nodes);
-  nodes = ArrayView<int,2> (recvnodes.data(),Extents(nb_recv_nodes,3));
+  nodes = ArrayView<int,2> (recvnodes.data(),make_shape(nb_recv_nodes,3));
   for( int n=0; n<nb_recv_nodes; ++n )
   {
     node_sort[n].g = nodes(n,0);

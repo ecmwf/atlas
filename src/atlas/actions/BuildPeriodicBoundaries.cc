@@ -1,9 +1,9 @@
 /*
  * (C) Copyright 1996-2014 ECMWF.
- * 
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
- * In applying this licence, ECMWF does not waive the privileges and immunities 
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
@@ -34,7 +34,7 @@ void build_periodic_boundaries( Mesh& mesh )
   IndexView<int,1> ridx ( nodes.field("remote_idx") );
   ArrayView<int,1> part ( nodes.field("partition")      );
 
-  int nb_nodes = nodes.extents()[0];
+  int nb_nodes = nodes.shape(0);
 
   ArrayView<double,2> latlon ( nodes.field("coordinates") );
 
@@ -45,7 +45,7 @@ void build_periodic_boundaries( Mesh& mesh )
   std::vector<int> master_nodes; master_nodes.reserve( 3*nb_nodes );
   std::vector<int>  slave_nodes;  slave_nodes.reserve( 3*nb_nodes );
 
-  for( int jnode=0; jnode<nodes.extents()[0]; ++jnode)
+  for( int jnode=0; jnode<nodes.shape(0); ++jnode)
   {
     int x = microdeg(latlon(jnode,XX));
     if( x == BC::WEST && (part(jnode)==mypart && jnode==ridx(jnode))  )
@@ -96,7 +96,7 @@ void build_periodic_boundaries( Mesh& mesh )
                       //    {
                       //      found_slave.reserve(slave_nodes.size());
                       //      ArrayView<int,2> recv_master_latlon(recvbuf.data()+recvdispls[jproc], Extents(recvcounts[jproc]/2,2).data() );
-                      //      for( int jnode=0; jnode<recv_master_latlon.extents()[0]; ++jnode )
+                      //      for( int jnode=0; jnode<recv_master_latlon.shape(0); ++jnode )
                       //      {
                       //        LatLon master( recv_master_latlon(jnode,XX)+east, recv_master_latlon(jnode,YY) );
                       //        if( slave_lookup.count( master ) )
@@ -137,8 +137,8 @@ void build_periodic_boundaries( Mesh& mesh )
     {
       found_master.reserve(master_nodes.size());
       send_slave_idx.reserve(master_nodes.size());
-      ArrayView<int,2> recv_slave(recvbuf.data()+recvdispls[jproc], Extents(recvcounts[jproc]/3,3).data() );
-      for( int jnode=0; jnode<recv_slave.extents()[0]; ++jnode )
+      ArrayView<int,2> recv_slave(recvbuf.data()+recvdispls[jproc], make_shape(recvcounts[jproc]/3,3).data() );
+      for( int jnode=0; jnode<recv_slave.shape(0); ++jnode )
       {
         LatLonPoint slave( recv_slave(jnode,XX)-BC::EAST, recv_slave(jnode,YY) );
         if( master_lookup.count( slave ) )

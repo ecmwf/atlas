@@ -1,9 +1,9 @@
 /*
  * (C) Copyright 1996-2014 ECMWF.
- * 
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
- * In applying this licence, ECMWF does not waive the privileges and immunities 
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
@@ -47,17 +47,17 @@ RGGMeshGenerator::RGGMeshGenerator()
 {
   // This option creates a point at the pole when true
   options.set("include_pole",false);
-  
+
   // This option creates elements that connect east to west at greenwich meridian
   // when true, instead of creating periodic ghost-points at east boundary when false
   options.set("three_dimensional",false);
-  
+
   // This option sets number of parts the mesh will be split in
   options.set("nb_parts",1);
-  
+
   // This option sets the part that will be generated
   options.set("part",0);
-  
+
 }
 
 //std::vector<int> RGGMeshGenerator::partition(const RGG& rgg) const
@@ -72,12 +72,12 @@ RGGMeshGenerator::RGGMeshGenerator()
 //  int begin;
 //  int end;
 //  int band;
-  
+
 //  double mem_per_node_in_MB = (32+2*32+32)/8./1024./1024.;
 //  std::cout << "required memory = " << static_cast<double>(ngptot)*mem_per_node_in_MB << " MB" << std::endl;
 //  std::cout << "required memory T8K ~ " << static_cast<double>(16e3*8e3*2./3.)*mem_per_node_in_MB << " MB" << std::endl;
 //  std::cout << "required memory T16K ~ " << static_cast<double>(32e3*16e3*2./3.)*mem_per_node_in_MB << " MB" << std::endl;
-  
+
 //  // Output
 //  std::vector<int> part(ngptot);
 
@@ -127,7 +127,7 @@ Mesh* RGGMeshGenerator::generate(const RGG& rgg)
 
   Region region;
   generate_region(rgg,part,mypart,region);
-  
+
   Mesh* mesh = generate_mesh(rgg,part,region);
   return mesh;
 }
@@ -150,7 +150,7 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
       ++n;
     }
   } end_north:
-  
+
   n=rgg.ngptot()-1;
   int lat_south=-1;
   for( int jlat=rgg.nlat()-1; jlat>=0; --jlat) {
@@ -162,7 +162,7 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
       --n;
     }
   } end_south:
-    
+
   std::vector<int> offset(rgg.nlat(),0);
 
   n=0;
@@ -171,7 +171,7 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
     offset[jlat]=n;
     n+=rgg.nlon(jlat);
   };
-  
+
   /*
   We need to connect to next region
   */
@@ -185,32 +185,32 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
   region.nb_lat_elems.resize(rgg.nlat(),-1);
   region.north = lat_north;
   region.south = lat_south;
-  
-  std::vector<int> extents = Extents(region.south-region.north, 4*rgg.nlonmax(), 4);
+
+  ArrayShape shape = make_shape(region.south-region.north, 4*rgg.nlonmax(), 4);
   // std::cout << "allocating elems" <<  "(" << extents[0] << "," << extents[1] << "," << extents[2] << ")" << std::endl;
-  region.elems.resize(extents);
+  region.elems.resize(shape);
   region.elems = -1;
-  
+
   int nelems=0;
   region.nquads=0;
   region.ntriags=0;
 
   ArrayView<int,3> elemview(region.elems);
-  
+
   for (int jlat=lat_north; jlat<lat_south; ++jlat)
   {
-    
+
     int ilat, latN, latS;
     int ipN1, ipN2, ipS1, ipS2;
     double xN1, xN2, yN, xS1, xS2, yS;
     double dN1S2, dS1N2, dN2S2;
     bool try_make_triangle_up, try_make_triangle_down, try_make_quad;
     bool add_triag, add_quad;
-    
+
     ilat = jlat-region.north;
-    
+
     ArrayView<int,2> lat_elems_view = elemview[ilat];
-    
+
     latN = jlat;
     latS = jlat+1;
     yN = rgg.lat(latN);
@@ -229,11 +229,11 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
     ipS2 = ipS1+1;
 
     int jelem=0;
-    
+
 #if DEBUG_OUTPUT
     std::cout << "=================" << std::endl;
 #endif
-    
+
     while (true)
     {
       if( ipN1 == endN && ipS1 == endS ) break;
@@ -268,7 +268,7 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
       xN2 = rgg.lon(ipN2,latN);
       xS1 = rgg.lon(ipS1,latS);
       xS2 = rgg.lon(ipS2,latS);
-  
+
 #if DEBUG_OUTPUT
       std::cout << "-------" << std::endl;
 #endif
@@ -278,7 +278,7 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
       try_make_triangle_up   = false;
       try_make_triangle_down = false;
       try_make_quad = false;
-    
+
 
 // ------------------------------------------------
 // START RULES
@@ -325,7 +325,7 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
 
 
       ArrayView<int,1> elem = lat_elems_view[jelem];
-      
+
 
 
       if( try_make_quad )
@@ -383,14 +383,14 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
         {
           ++region.nquads;
           ++jelem;
-          ++nelems;        
-          
+          ++nelems;
+
           if( region.lat_begin[latN] == -1 ) region.lat_begin[latN] = ipN1;
           if( region.lat_begin[latS] == -1 ) region.lat_begin[latS] = ipS1;
           region.lat_begin[latN] = std::min(region.lat_begin[latN], ipN1);
           region.lat_begin[latS] = std::min(region.lat_begin[latS], ipS1);
           region.lat_end[latN] = std::max(region.lat_end[latN], ipN2);
-          region.lat_end[latS] = std::max(region.lat_end[latS], ipS2);  
+          region.lat_end[latS] = std::max(region.lat_end[latS], ipS2);
         }
         ipN1=ipN2;
         ipS1=ipS2;
@@ -408,7 +408,7 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
         elem[3] = ipN2;
 
         add_triag = false;
-        
+
         int cnt_mypart = 0;
         int np[3] = {pN1, pN2, pS1};
         for( int j=0; j<3; ++j )
@@ -456,8 +456,8 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
         {
           ++region.ntriags;
           ++jelem;
-          ++nelems;        
-        
+          ++nelems;
+
           if( region.lat_begin[latN] == -1 ) region.lat_begin[latN] = ipN1;
           if( region.lat_begin[latS] == -1 ) region.lat_begin[latS] = ipS1;
           region.lat_begin[latN] = std::min(region.lat_begin[latN], ipN1);
@@ -536,8 +536,8 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
         {
           ++region.ntriags;
           ++jelem;
-          ++nelems;        
-          
+          ++nelems;
+
           if( region.lat_begin[latN] == -1 ) region.lat_begin[latN] = ipN1;
           if( region.lat_begin[latS] == -1 ) region.lat_begin[latS] = ipS1;
           region.lat_begin[latN] = std::min(region.lat_begin[latN], ipN1);
@@ -555,7 +555,7 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
     region.lat_end[latN] = std::min(region.lat_end[latN], rgg.nlon(latN)-1);
     region.lat_end[latS] = std::min(region.lat_end[latS], rgg.nlon(latS)-1);
   }
-  
+
 //  std::cout << "nb_triags = " << region.ntriags << std::endl;
 //  std::cout << "nb_quads = " << region.nquads << std::endl;
 //  std::cout << "nb_elems = " << nelems << std::endl;
@@ -564,7 +564,7 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
   for( int jlat=lat_north; jlat<=lat_south; ++jlat ) {
     region.lat_begin[jlat] = std::max( 0, region.lat_begin[jlat] );
     nb_region_nodes += region.lat_end[jlat]-region.lat_begin[jlat]+1;
-    
+
     // Count extra periodic node to be added in this case
     if( region.lat_end[jlat] == rgg.nlon(jlat)-1 ) ++nb_region_nodes;
   }
@@ -584,7 +584,7 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,
   int mypart = options.get<int>("part");
   int nparts = options.get<int>("nb_parts");
   int n, l;
-  
+
   bool include_north_pole = (mypart == 0       ) && options.get<bool>("include_pole");
   bool include_south_pole = (mypart == nparts-1) && options.get<bool>("include_pole");
   bool three_dimensional  = options.get<bool>("three_dimensional");
@@ -604,7 +604,7 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,
   if (three_dimensional) {
     nnodes -= rgg.nlat();
   }
-  
+
   std::vector<int> offset_glb(rgg.nlat());
   std::vector<int> offset_loc(region.south-region.north+1,0);
 
@@ -614,34 +614,34 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,
     offset_glb[jlat]=n;
     n+=rgg.nlon(jlat);
   };
-  
+
   std::vector<int> periodic_glb(rgg.nlat());
-  
+
   if( !three_dimensional )
   {
     for( int jlat=0; jlat<rgg.nlat(); ++jlat )
     {
       periodic_glb[jlat] = n;
       ++n;
-    }    
+    }
   }
   else
   {
     for( int jlat=0; jlat<rgg.nlat(); ++jlat )
     {
       periodic_glb[jlat] = offset_glb[jlat] + rgg.nlon(jlat)-1;
-    }    
+    }
   }
 
-  
-  std::vector<int> extents = Extents(nnodes,Field::UNDEF_VARS);
+
+  ArrayShape shape = make_shape(nnodes,Field::UNDEF_VARS);
   FunctionSpace& nodes =
-      mesh->add_function_space( new FunctionSpace("nodes","LagrangeP1",extents) );
+      mesh->add_function_space( new FunctionSpace("nodes","LagrangeP1",shape) );
   nodes.metadata().set("type",static_cast<int>(Entity::NODES));
   ArrayView<double,2> coords        ( nodes.create_field<double>("coordinates",   2) );
   ArrayView<int,   1> glb_idx       ( nodes.create_field<int   >("glb_idx",       1) );
   ArrayView<int,   1> part          ( nodes.create_field<int   >("partition",     1) );
-  
+
   int jnode=0;
   l=0;
   for( int jlat=region.north; jlat<=region.south; ++jlat )
@@ -671,7 +671,7 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,
       ++jnode;
     }
   };
-  
+
   int jnorth=-1;
   if (include_north_pole)
   {
@@ -696,23 +696,23 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,
     part(jnode)      = mypart;
     ++jnode;
   }
-    
-  extents = Extents(nquads,Field::UNDEF_VARS);
-  FunctionSpace& quads = mesh->add_function_space( new FunctionSpace("quads","LagrangeP1",extents) );
+
+  shape = make_shape(nquads,Field::UNDEF_VARS);
+  FunctionSpace& quads = mesh->add_function_space( new FunctionSpace("quads","LagrangeP1",shape) );
   quads.metadata().set("type",static_cast<int>(Entity::ELEMS));
   IndexView<int,2> quad_nodes( quads.create_field<int>("nodes",4) );
   ArrayView<int,1> quad_glb_idx( quads.create_field<int>("glb_idx",1) );
   ArrayView<int,1> quad_part( quads.create_field<int>("partition",1) );
-  
-  extents = Extents(ntriags,Field::UNDEF_VARS);
-  FunctionSpace& triags = mesh->add_function_space( new FunctionSpace("triags","LagrangeP1",extents) );
+
+  shape = make_shape(ntriags,Field::UNDEF_VARS);
+  FunctionSpace& triags = mesh->add_function_space( new FunctionSpace("triags","LagrangeP1",shape) );
   triags.metadata().set("type",static_cast<int>(Entity::ELEMS));
   IndexView<int,2> triag_nodes( triags.create_field<int>("nodes",3) );
   ArrayView<int,1> triag_glb_idx( triags.create_field<int>("glb_idx",1) );
   ArrayView<int,1> triag_part( triags.create_field<int>("partition",1) );
 
-  /* 
-  Fill in connectivity tables with global node indices first 
+  /*
+  Fill in connectivity tables with global node indices first
   */
   int jquad = 0;
   int jtriag = 0;
@@ -733,13 +733,13 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,
         quad_nodes(jquad,1) = offset_loc[ilatS] + elem[1] - region.lat_begin[jlatS];
         quad_nodes(jquad,2) = offset_loc[ilatS] + elem[2] - region.lat_begin[jlatS];
         quad_nodes(jquad,3) = offset_loc[ilatN] + elem[3] - region.lat_begin[jlatN];
-        
+
         if( three_dimensional )
         {
           if (elem[2] == rgg.nlon(jlatS)) quad_nodes(jquad,2) = offset_loc[ilatS];
           if (elem[3] == rgg.nlon(jlatN)) quad_nodes(jquad,3) = offset_loc[ilatN];
         }
-        
+
         // std::cout << quad_nodes(0,jquad) << " " << quad_nodes(1,jquad) << " " << quad_nodes(2,jquad) << " " << quad_nodes(3,jquad) << std::endl;
         quad_glb_idx(jquad) = jquad+jtriag+1;
         quad_part(jquad) = mypart;
@@ -775,14 +775,14 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,
       }
     }
   }
-  
+
   if (include_north_pole)
   {
     int jlat = 0;
     int ilat = 0;
     int ip1  = 0;
     for (int ip2=0; ip2<rgg.nlon(0); ++ip2)
-    {      
+    {
       int ip3 = ip2+1;
       if( three_dimensional && ip3 == rgg.nlon(0) ) ip3 = 0;
       triag_nodes(jtriag,0) = jnorth           + ip1;
@@ -793,7 +793,7 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,
       ++jtriag;
     }
   }
-  
+
   if (include_south_pole)
   {
     int jlat = rgg.nlat()-1;
@@ -807,18 +807,18 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,
       triag_nodes(jtriag,2) = offset_loc[ilat] + ip3;
       if( three_dimensional && ip2 == rgg.nlon(jlat) )
         triag_nodes(jtriag,1) = offset_loc[ilat] + 0;
-      
+
       triag_glb_idx(jtriag) = jquad+jtriag+1;
       triag_part(jtriag) = mypart;
       ++jtriag;
     }
   }
-  
+
 
   nodes.metadata().set("nb_owned",nnodes);
   quads.metadata().set("nb_owned",nquads);
   triags.metadata().set("nb_owned",ntriags);
-  
+
   int max_glb_idx = rgg.ngptot()+rgg.nlat();
   if( three_dimensional ) max_glb_idx -= rgg.nlat();
   if( include_north_pole ) max_glb_idx += 1;
@@ -842,7 +842,7 @@ void RGGMeshGenerator::generate_global_element_numbering( Mesh& mesh )
     FunctionSpace& elements = mesh.function_space(f);
     if( elements.metadata().get<int>("type") == Entity::ELEMS )
     {
-      loc_nb_elems += elements.extents()[0];
+      loc_nb_elems += elements.shape(0);
     }
   }
   MPL_CHECK_RESULT( MPI_Allgather( &loc_nb_elems, 1, MPI_INT,
@@ -861,7 +861,7 @@ void RGGMeshGenerator::generate_global_element_numbering( Mesh& mesh )
     if( elements.metadata().get<int>("type") == Entity::ELEMS )
     {
       ArrayView<int,1> glb_idx( elements.field("glb_idx") );
-      int nb_elems = elements.extents()[0];
+      int nb_elems = elements.shape(0);
       for( int e=0; e<nb_elems; ++e )
       {
         glb_idx(e) = gid++;

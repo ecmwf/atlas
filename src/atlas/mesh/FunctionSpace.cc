@@ -30,74 +30,74 @@
 
 namespace atlas {
 
-FunctionSpace::FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<int>& extents ) :
+FunctionSpace::FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<int>& shape ) :
 	name_(name),
-	extents_(extents),
+	shape_(shape),
 	gather_scatter_(new mpl::GatherScatter()),
 	halo_exchange_(new mpl::HaloExchange()),
 	checksum_(new mpl::Checksum() ),
 	mesh_(NULL)
 {
-	//std::cout << "C++ : FunctionSpace Constructor" << std::endl;
+	//std::cout << "C++ : shape Constructor" << std::endl;
 	dof_ = 1;
-	size_t extsize = extents_.size();
-	bounds_.resize(extsize);
+	size_t extsize = shape_.size();
+	shapef_.resize(extsize);
 	for (size_t i=0; i<extsize; ++i)
 	{
-		bounds_[extsize-1-i] = extents_[i];
-		if( extents_[i] != Field::UNDEF_VARS )
-			dof_ *= extents_[i];
+		shapef_[extsize-1-i] = shape_[i];
+		if( shape_[i] != Field::UNDEF_VARS )
+			dof_ *= shape_[i];
 	}
 	glb_dof_ = dof_;
 }
 
 FunctionSpace::~FunctionSpace()
 {
-//	std::cout << "FunctionSpace Destructor ("<<name_<<")" << std::endl;
+//	std::cout << "shape Destructor ("<<name_<<")" << std::endl;
 	index_.clear();
 	for( size_t f=0; f<fields_.size(); ++f )
 		if( fields_[f] ) delete(fields_[f]);
 	fields_.clear();
 }
 
-void FunctionSpace::resize(const std::vector<int>& extents)
+void FunctionSpace::resize(const std::vector<int>& shape)
 {
-	if (extents.size() != extents_.size() )
-		throw std::runtime_error("Cannot resize functionspace: extents sizes don't match.");
+	if (shape.size() != shape_.size() )
+		throw std::runtime_error("Cannot resize shape: shape sizes don't match.");
 
-	size_t extsize = extents_.size();
+	size_t extsize = shape_.size();
 
 	for (size_t i=1; i<extsize; ++i)
 	{
-		if (extents[i] != extents_[i])
+		if (shape[i] != shape_[i])
 			throw std::runtime_error("Only the first extent can be resized for now!");
 	}
 
-	extents_ = extents;
-	bounds_.resize(extsize);
+	shape_ = shape;
+	shapef_.resize(extsize);
 	for (size_t i=0; i<extsize; ++i)
 	{
-		bounds_[extsize-1-i] = extents_[i];
+		shapef_[extsize-1-i] = shape_[i];
 	}
 
 	dof_ = 1;
 	for (size_t i=0; i<extsize; ++i)
 	{
-		if( extents_[i] != Field::UNDEF_VARS )
-			dof_ *= extents_[i];
+		if( shape_[i] != Field::UNDEF_VARS )
+			dof_ *= shape_[i];
 	}
 
 	for( int f=0; f<fields_.size(); ++f)
 	{
-		std::vector< int > field_extents(extsize);
+		std::vector< int > field_shape(extsize);
 		for (size_t i=0; i<extsize; ++i)
 		{
-			if( extents_[i] == Field::UNDEF_VARS )
-				field_extents[i] = fields_[f]->nb_vars();
+			if( shape_[i] == Field::UNDEF_VARS )
+				field_shape[i] = fields_[f]->nb_vars();
 			else
-				field_extents[i] = extents_[i];
+				field_shape[i] = shape_[i];
 		}
-		fields_[f]->allocate(field_extents);
+		fields_[f]->allocate(field_shape);
 	}
 }
 
@@ -110,80 +110,81 @@ FieldT<double>& FunctionSpace::create_field(const std::string& name, size_t nb_v
 		throw std::runtime_error( msg.str() );
 	}
 
-	// std::cout << "C++ : Create field " << name << " with vars" << nb_vars << std::endl;
 	index_[name] = fields_.size();
 	FieldT<double>* field = new FieldT<double>(name,nb_vars,*this);
 	fields_.push_back( field );
 
-	size_t extsize = extents_.size();
-	std::vector< int > field_extents(extsize);
-	for (size_t i=0; i<extsize; ++i)
+	size_t rank = shape_.size();
+	std::vector< int > field_shape(rank);
+	for (size_t i=0; i<rank; ++i)
 	{
-		if( extents_[i] == Field::UNDEF_VARS )
-			field_extents[i] = field->nb_vars();
+		if( shape_[i] == Field::UNDEF_VARS )
+			field_shape[i] = field->nb_vars();
 		else
-			field_extents[i] = extents_[i];
+			field_shape[i] = shape_[i];
 	}
 
-	field->allocate(field_extents);
+	field->allocate(field_shape);
 	return *field;
 }
 
 template <>
 FieldT<float>& FunctionSpace::create_field(const std::string& name, size_t nb_vars)
 {
-	// std::cout << "C++ : Create field " << name << " with size " << size*nb_nodes_ << std::endl;
+	if( has_field(name) )
+	{
+		std::ostringstream msg; msg << "field with name " << name << "already exists" << std::endl;
+		throw std::runtime_error( msg.str() );
+	}
+
 	index_[name] = fields_.size();
 	FieldT<float>* field = new FieldT<float>(name,nb_vars,*this);
 	fields_.push_back( field );
 
-	size_t bsize = bounds_.size();
-	std::vector< int > bounds(bsize);
-	//std::cout << "Allocating field<real32> " << name << " ( ";
-
-	size_t extsize = extents_.size();
-	std::vector< int > field_extents(extsize);
-	for (size_t i=0; i<extsize; ++i)
+	size_t rank = shape_.size();
+	std::vector< int > field_shape(rank);
+	for (size_t i=0; i<rank; ++i)
 	{
-		if( extents_[i] == Field::UNDEF_VARS )
-			field_extents[i] = field->nb_vars();
+		if( shape_[i] == Field::UNDEF_VARS )
+			field_shape[i] = field->nb_vars();
 		else
-			field_extents[i] = extents_[i];
+			field_shape[i] = shape_[i];
 	}
 
-	field->allocate(field_extents);
+	field->allocate(field_shape);
 	return *field;
 }
 
 template <>
 FieldT<int>& FunctionSpace::create_field(const std::string& name, size_t nb_vars)
 {
-	// std::cout << "C++ : Create field " << name << " with vars " << nb_vars << std::endl;
+	if( has_field(name) )
+	{
+		std::ostringstream msg; msg << "field with name " << name << "already exists" << std::endl;
+		throw std::runtime_error( msg.str() );
+	}
+
 	index_[name] = fields_.size();
 	FieldT<int>* field = new FieldT<int>(name,nb_vars,*this);
 	fields_.push_back( field );
 
-	size_t bsize = bounds_.size();
-	std::vector< int > bounds(bsize);
-	//std::cout << "Allocating field<int32> " << name << " ( ";
 
-	size_t extsize = extents_.size();
-	std::vector< int > field_extents(extsize);
-	for (size_t i=0; i<extsize; ++i)
+	size_t rank = shape_.size();
+	std::vector< int > field_shape(rank);
+	for (size_t i=0; i<rank; ++i)
 	{
-		if( extents_[i] == Field::UNDEF_VARS )
-			field_extents[i] = field->nb_vars();
+		if( shape_[i] == Field::UNDEF_VARS )
+			field_shape[i] = field->nb_vars();
 		else
-			field_extents[i] = extents_[i];
+			field_shape[i] = shape_[i];
 	}
 
-	field->allocate(field_extents);
+	field->allocate(field_shape);
 	return *field;
 }
 
 void FunctionSpace::remove_field(const std::string& name)
 {
-	//std::cout << "C++ : Create field " << name << " with size " << size*nb_nodes_ << std::endl;
 	if( has_field(name) )
 	{
 		delete( fields_[ index_.at(name) ] );
@@ -193,7 +194,7 @@ void FunctionSpace::remove_field(const std::string& name)
 	else
 	{
 		std::stringstream msg;
-		msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
+		msg << "Could not find field \"" << name << "\" in shape \"" << name_ << "\"";
 		throw std::out_of_range(msg.str());
 	}
 }
@@ -206,7 +207,6 @@ Field& FunctionSpace::field( size_t idx ) const
 
 Field& FunctionSpace::field(const std::string& name) const
 {
-		//std::cout << "C++ : Access field " << name << std::endl;
 	if( has_field(name) )
 	{
 		return *fields_[ index_.at(name) ];
@@ -214,7 +214,7 @@ Field& FunctionSpace::field(const std::string& name) const
 	else
 	{
 		std::stringstream msg;
-		msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
+		msg << "Could not find field \"" << name << "\" in shape \"" << name_ << "\"";
 		throw std::out_of_range(msg.str());
 	}
 }
@@ -229,7 +229,7 @@ template<>
 	else
 	{
 		std::stringstream msg;
-		msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
+		msg << "Could not find field \"" << name << "\" in shape \"" << name_ << "\"";
 		throw std::out_of_range(msg.str());
 	}
 }
@@ -244,7 +244,7 @@ template<>
 	else
 	{
 		std::stringstream msg;
-		msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
+		msg << "Could not find field \"" << name << "\" in shape \"" << name_ << "\"";
 		throw std::out_of_range(msg.str());
 	}
 }
@@ -259,7 +259,7 @@ template<>
 	else
 	{
 		std::stringstream msg;
-		msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
+		msg << "Could not find field \"" << name << "\" in shape \"" << name_ << "\"";
 		throw std::out_of_range(msg.str());
 	}
 }
@@ -270,17 +270,17 @@ void FunctionSpace::parallelise(const int part[], const int remote_idx[], const 
 	gather_scatter_->setup(part,remote_idx,REMOTE_IDX_BASE,glb_idx,-1,parsize);
 	checksum_->setup(part,remote_idx,REMOTE_IDX_BASE,glb_idx,-1,parsize);
 	glb_dof_ = gather_scatter_->glb_dof();
-	for( int b=bounds_.size()-2; b>=0; --b)
+	for( int b=shapef_.size()-2; b>=0; --b)
 	{
-		if( bounds_[b] != Field::UNDEF_VARS )
-			glb_dof_ *= bounds_[b];
+		if( shapef_[b] != Field::UNDEF_VARS )
+			glb_dof_ *= shapef_[b];
 	}
 }
 
-void FunctionSpace::parallelise(FunctionSpace& other_functionspace)
+void FunctionSpace::parallelise(FunctionSpace& other_shape)
 {
-	halo_exchange_	= other_functionspace.halo_exchange();
-	gather_scatter_ = other_functionspace.gather_scatter();
+	halo_exchange_	= other_shape.halo_exchange();
+	gather_scatter_ = other_shape.gather_scatter();
 }
 
 void FunctionSpace::parallelise()
@@ -301,9 +301,9 @@ void FunctionSpace::parallelise()
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
-FunctionSpace* atlas__FunctionSpace__new (char* name, char* shape_func, int extents[], int extents_size) {
-	std::vector<int> extents_vec(extents,extents+extents_size);
-	return new FunctionSpace( std::string(name), std::string(shape_func), extents_vec );
+FunctionSpace* atlas__FunctionSpace__new (char* name, char* shape_func, int shape[], int shape_size) {
+	std::vector<int> shape_vec(shape,shape+shape_size);
+	return new FunctionSpace( std::string(name), std::string(shape_func), shape_vec );
 }
 
 int atlas__FunctionSpace__dof (FunctionSpace* This) {
@@ -338,9 +338,9 @@ const char* atlas__FunctionSpace__name (FunctionSpace* This) {
 	return This->name().c_str();
 }
 
-void atlas__FunctionSpace__boundsf (FunctionSpace* This, int* &bounds, int &rank) {
-	bounds = const_cast<int*>(&(This->boundsf()[0]));
-	rank = This->boundsf().size();
+void atlas__FunctionSpace__shapef (FunctionSpace* This, int* &shape, int &rank) {
+	shape = const_cast<int*>(&(This->shapef()[0]));
+	rank = This->shapef().size();
 }
 
 Field* atlas__FunctionSpace__field (FunctionSpace* This, char* name) {
@@ -387,7 +387,7 @@ mpl::Checksum* atlas__FunctionSpace__checksum (FunctionSpace* This) {
 	return This->checksum().get();
 }
 
-void atlas__FunctionSpace__delete (FunctionSpace* This)	{
+void atlas__FunctionSpace__delete (FunctionSpace* This) {
 	delete This;
 }
 // ------------------------------------------------------------------

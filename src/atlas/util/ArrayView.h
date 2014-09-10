@@ -1,9 +1,9 @@
 /*
  * (C) Copyright 1996-2014 ECMWF.
- * 
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
- * In applying this licence, ECMWF does not waive the privileges and immunities 
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
@@ -13,19 +13,19 @@
 /// @file ArrayView.h
 /// This file contains the ArrayView class, a class that allows to wrap any contiguous raw data into
 /// a view which is accessible with multiple indices.
-/// All it needs is the strides for each index, and the extent of each index.
+/// All it needs is the strides for each index, and the shape of each index.
 /// ATTENTION: The last index is stride 1
 ///
 /// Bounds-checking can be turned ON by defining "ATLAS_ARRAYVIEW_BOUNDS_CHECKING"
 /// before including this header.
-///  
+///
 /// Example:
 /// int[] array = { 1, 2, 3, 4, 5, 6, 7, 8, 9};
 /// int[2] strides = { 3, 1 };
-/// int[2] extents = { 3, 3 };
-/// ArrayView<int,2> matrix( array, strides, extents );
-/// for( int i=0; i<matrix.extent(0); ++i ) {
-///   for( int j=0; j<matrix.extent(1); ++j ) {
+/// int[2] shape = { 3, 3 };
+/// ArrayView<int,2> matrix( array, strides, shape );
+/// for( int i=0; i<matrix.shape(0); ++i ) {
+///   for( int j=0; j<matrix.shape(1); ++j ) {
 ///     matrix(i,j) *= 10;
 ///   }
 /// }
@@ -50,27 +50,27 @@
   if(rank()!=R) {throw std::range_error("rank mismatch");}
 #define CHECK_BOUNDS(idx) {\
   for( int d=0; d<rank(); ++d ) { \
-    if(idx[d]>=extents_[d]) {throw std::range_error("index out of bounds");}}}
+    if(idx[d]>=shape_[d]) {throw std::range_error("index out of bounds");}}}
 #define CHECK_BOUNDS_1(i)\
-  if(i>=extents_[0]) {throw std::range_error("index 'i' out of bounds");}
+  if(i>=shape_[0]) {throw std::range_error("index 'i' out of bounds");}
 #define CHECK_BOUNDS_2(i,j)\
-  if(i>=extents_[0]) {throw std::range_error("index 'i' out of bounds");} \
-  if(j>=extents_[1]) {throw std::range_error("index 'j' out of bounds");}
+  if(i>=shape_[0]) {throw std::range_error("index 'i' out of bounds");} \
+  if(j>=shape_[1]) {throw std::range_error("index 'j' out of bounds");}
 #define CHECK_BOUNDS_3(i,j,k)\
-  if(i>=extents_[0]) {throw std::range_error("index 'i' out of bounds");} \
-  if(j>=extents_[1]) {throw std::range_error("index 'j' out of bounds");} \
-  if(k>=extents_[2]) {throw std::range_error("index 'k' out of bounds");}
+  if(i>=shape_[0]) {throw std::range_error("index 'i' out of bounds");} \
+  if(j>=shape_[1]) {throw std::range_error("index 'j' out of bounds");} \
+  if(k>=shape_[2]) {throw std::range_error("index 'k' out of bounds");}
 #define CHECK_BOUNDS_4(i,j,k,l)\
-  if(i>=extents_[0]) {throw std::range_error("index 'i' out of bounds");} \
-  if(j>=extents_[1]) {throw std::range_error("index 'j' out of bounds");} \
-  if(k>=extents_[2]) {throw std::range_error("index 'k' out of bounds");} \
-  if(l>=extents_[3]) {throw std::range_error("index 'l' out of bounds");}  
+  if(i>=shape_[0]) {throw std::range_error("index 'i' out of bounds");} \
+  if(j>=shape_[1]) {throw std::range_error("index 'j' out of bounds");} \
+  if(k>=shape_[2]) {throw std::range_error("index 'k' out of bounds");} \
+  if(l>=shape_[3]) {throw std::range_error("index 'l' out of bounds");}
 #define CHECK_BOUNDS_5(i,j,k,l,m)\
-  if(i>=extents_[0]) {throw std::range_error("index 'i' out of bounds");} \
-  if(j>=extents_[1]) {throw std::range_error("index 'j' out of bounds");} \
-  if(k>=extents_[2]) {throw std::range_error("index 'k' out of bounds");} \
-  if(l>=extents_[3]) {throw std::range_error("index 'l' out of bounds");} \
-  if(m>=extents_[4]) {throw std::range_error("index 'm' out of bounds");}
+  if(i>=shape_[0]) {throw std::range_error("index 'i' out of bounds");} \
+  if(j>=shape_[1]) {throw std::range_error("index 'j' out of bounds");} \
+  if(k>=shape_[2]) {throw std::range_error("index 'k' out of bounds");} \
+  if(l>=shape_[3]) {throw std::range_error("index 'l' out of bounds");} \
+  if(m>=shape_[4]) {throw std::range_error("index 'm' out of bounds");}
 #else
 #define CHECK_RANK(R)
 #define CHECK_BOUNDS(i,max)
@@ -211,13 +211,13 @@ public:
   ArrayView() {}
   ArrayView( const DATA_TYPE* data,
              const ArrayStrides::value_type strides[],
-             const ArrayExtents::value_type extents[],
+             const ArrayShape::value_type shape[],
              const size_t rank ):
     data_( const_cast<DATA_TYPE*>(data) ), rank_(rank)
   {
     strides_.assign(strides,strides+rank_);
-    extents_.assign(extents,extents+rank_);
-    size_ = std::accumulate(extents_.data(),extents_.data()+rank_,1,std::multiplies<int>());
+    shape_.assign(shape,shape+rank_);
+    size_ = std::accumulate(shape_.data(),shape_.data()+rank_,1,std::multiplies<int>());
   }
 
   ArrayView( const Array<DATA_TYPE>& array );
@@ -255,16 +255,16 @@ public:
   DATA_TYPE*       data()        { return data_; }
   const DATA_TYPE* data() const  { return data_; }
   const ArrayStrides::value_type* strides() const  { return strides_.data(); }
-  const ArrayExtents::value_type* extents() const  { return extents_.data(); }
+  const ArrayShape::value_type* shape() const  { return shape_.data(); }
   ArrayStrides::value_type stride(int i) const { return strides_[i]; }
-  ArrayExtents::value_type extent(int i) const { return extents_[i]; }
+  ArrayShape::value_type shape(int i) const { return shape_[i]; }
   size_t rank() const       { return rank_; }
   size_t size() const       { return size_; }
   void operator=(const DATA_TYPE& scalar) { for(int n=0; n<size_; ++n) *(data_+n)=scalar; }
 private:
   DATA_TYPE* data_;
   ArrayStrides strides_;
-  ArrayExtents extents_;
+  ArrayShape shape_;
   size_t rank_;
   size_t size_;
 };
@@ -282,13 +282,13 @@ public:
   typedef typename add_const<DATA_TYPE>::type     const_value_t;
 public:
   ArrayView() {}
-  ArrayView( DATA_TYPE* data, const ArrayStrides::value_type strides[1], const ArrayExtents::value_type extents[1] ) : data_( const_cast<DATA_TYPE*>(data) )
+  ArrayView( DATA_TYPE* data, const ArrayStrides::value_type strides[1], const ArrayShape::value_type shape[1] ) : data_( const_cast<DATA_TYPE*>(data) )
   {
-    strides_[0]=strides[0];       extents_[0]=extents[0];
+    strides_[0]=strides[0];       shape_[0]=shape[0];
   }
   ArrayView( const Array<DATA_TYPE>& array );
   ArrayView( const Field& field );
-  
+
   iterator begin() { return iterator(this); }
   iterator end()   { return iterator(); }
   const_iterator begin() const  { return const_iterator(this); }
@@ -316,17 +316,17 @@ public:
   DATA_TYPE*       data()        { return data_; }
   const DATA_TYPE* data() const  { return data_; }
   const ArrayStrides::value_type* strides() const   { return strides_; }
-  const ArrayExtents::value_type* extents() const   { return extents_; }
-  ArrayStrides::value_type stride(int i) const { return strides_[i]; }
-  ArrayExtents::value_type extent(int i) const { return extents_[i]; }
+  const ArrayShape::value_type* shape() const   { return shape_; }
+	ArrayShape::value_type shape(const int i) const { return shape_[0]; }
+  ArrayStrides::value_type stride(int i) const { return strides_[0]; }
   int rank() const { return 1; }
-  std::size_t size() const { return extents_[0]; }
-  std::size_t total_size() const { return extents_[0]; }
+  std::size_t size() const { return shape_[0]; }
+  std::size_t total_size() const { return shape_[0]; }
   void operator=(const DATA_TYPE& scalar) { for(int n=0; n<total_size(); ++n) *(data_+n)=scalar; }
 private:
   DATA_TYPE* data_;
   ArrayStrides::value_type strides_[1];
-  ArrayExtents::value_type extents_[1];
+  ArrayShape::value_type shape_[1];
 };
 
 //------------------------------------------------------------------------------------------------------
@@ -340,26 +340,26 @@ public:
   typedef typename remove_const<DATA_TYPE>::type  value_t;
   typedef typename add_const<DATA_TYPE>::type     const_value_t;
 public:
-  
+
   ArrayView() {}
-  ArrayView( const DATA_TYPE* data, const ArrayStrides::value_type strides[2], const ArrayExtents::value_type extents[2] ) : data_( const_cast<DATA_TYPE*>(data) )
+  ArrayView( const DATA_TYPE* data, const ArrayStrides::value_type strides[2], const ArrayShape::value_type shape[2] ) : data_( const_cast<DATA_TYPE*>(data) )
   {
-    strides_[0]=strides[0];            extents_[0]=extents[0];
-    strides_[1]=strides[1];            extents_[1]=extents[1];
+    strides_[0]=strides[0];            shape_[0]=shape[0];
+    strides_[1]=strides[1];            shape_[1]=shape[1];
   }
-  ArrayView( const DATA_TYPE* data, const ArrayExtents::value_type extents[2] ) : data_( const_cast<DATA_TYPE*>(data) )
+  ArrayView( const DATA_TYPE* data, const ArrayShape::value_type shape[2] ) : data_( const_cast<DATA_TYPE*>(data) )
   {
-    extents_[0]=extents[0]; strides_[0]=extents[1];
-    extents_[1]=extents[1]; strides_[1]=1;
+    shape_[0]=shape[0]; strides_[0]=shape[1];
+    shape_[1]=shape[1]; strides_[1]=1;
   }
-  ArrayView( const DATA_TYPE* data, const std::vector<int>& extents ) : data_( const_cast<DATA_TYPE*>(data) )
+  ArrayView( const DATA_TYPE* data, const std::vector<int>& shape ) : data_( const_cast<DATA_TYPE*>(data) )
   {
-    extents_[0]=extents[0]; strides_[0]=extents[1];
-    extents_[1]=extents[1]; strides_[1]=1;
+    shape_[0]=shape[0]; strides_[0]=shape[1];
+    shape_[1]=shape[1]; strides_[1]=1;
   }
   ArrayView( const Array<DATA_TYPE>& array );
   ArrayView( const Field& field );
-  
+
   iterator begin() { return iterator(this); }
   iterator end()   { return iterator(); }
   const_iterator begin() const  { return const_iterator(this); }
@@ -382,22 +382,22 @@ public:
       p += idx[d]*strides_[d];
     return *(data_+p);
   }
-  const ArrayView<DATA_TYPE,1> operator[](int i) const { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,1>( data_+strides_[0]*i, strides_+1, extents_+1 ); }
-  ArrayView<DATA_TYPE,1>       operator[](int i)       { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,1>( data_+strides_[0]*i, strides_+1, extents_+1 ); }
+  const ArrayView<DATA_TYPE,1> operator[](int i) const { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,1>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
+  ArrayView<DATA_TYPE,1>       operator[](int i)       { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,1>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
   DATA_TYPE*       data()            { return data_; }
   const DATA_TYPE* data() const      { return data_; }
   const int* strides() const   { return strides_; }
-  const int* extents() const   { return extents_; }
+  const int* shape() const   { return shape_; }
   ArrayStrides::value_type stride(int i) const { return strides_[i]; }
-  ArrayExtents::value_type extent(int i) const { return extents_[i]; }
+  ArrayShape::value_type shape(int i) const {return shape_[i]; }
   int rank() const { return 2; }
-  std::size_t size() const { return extents_[0]; }
-  std::size_t total_size() const { return extents_[0]*extents_[1]; }
+  std::size_t size() const { return shape_[0]; }
+  std::size_t total_size() const { return shape_[0]*shape_[1]; }
   void operator=(const DATA_TYPE& scalar) { for(int n=0; n<total_size(); ++n) *(data_+n)=scalar; }
 private:
   DATA_TYPE* data_;
   ArrayStrides::value_type strides_[2];
-  ArrayExtents::value_type extents_[2];
+  ArrayShape::value_type shape_[2];
 };
 
 //------------------------------------------------------------------------------------------------------
@@ -412,21 +412,21 @@ public:
   typedef typename add_const<DATA_TYPE>::type     const_value_t;
 public:
   ArrayView() {}
-  ArrayView( const DATA_TYPE* data, const ArrayStrides::value_type strides [3], const ArrayExtents::value_type extents[3] ) : data_( const_cast<DATA_TYPE*>(data) )
+  ArrayView( const DATA_TYPE* data, const ArrayStrides::value_type strides [3], const ArrayShape::value_type shape[3] ) : data_( const_cast<DATA_TYPE*>(data) )
   {
-    strides_[0]=strides[0];            extents_[0]=extents[0];
-    strides_[1]=strides[1];            extents_[1]=extents[1];
-    strides_[2]=strides[2];            extents_[2]=extents[2];
+    strides_[0]=strides[0];            shape_[0]=shape[0];
+    strides_[1]=strides[1];            shape_[1]=shape[1];
+    strides_[2]=strides[2];            shape_[2]=shape[2];
   }
-  ArrayView( const DATA_TYPE* data, const ArrayExtents::value_type extents[3] ) : data_( const_cast<DATA_TYPE*>(data) )
+  ArrayView( const DATA_TYPE* data, const ArrayShape::value_type shape[3] ) : data_( const_cast<DATA_TYPE*>(data) )
   {
-    extents_[0]=extents[0]; strides_[0]=extents[2]*extents[1];
-    extents_[1]=extents[1]; strides_[1]=extents[2];
-    extents_[2]=extents[2]; strides_[2]=1;
+    shape_[0]=shape[0]; strides_[0]=shape[2]*shape[1];
+    shape_[1]=shape[1]; strides_[1]=shape[2];
+    shape_[2]=shape[2]; strides_[2]=1;
   }
   ArrayView( const Array<DATA_TYPE>& array );
   ArrayView( const Field& field );
-  
+
   iterator begin() { return iterator(this); }
   iterator end()   { return iterator(); }
   const_iterator begin() const  { return const_iterator(this); }
@@ -449,22 +449,22 @@ public:
       p += idx[d]*strides_[d];
     return *(data_+p);
   }
-  const ArrayView<DATA_TYPE,2> operator[](int i) const { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,2>( data_+strides_[0]*i, strides_+1, extents_+1 ); }
-  ArrayView<DATA_TYPE,2>       operator[](int i)       { CHECK_BOUNDS_1(i);return ArrayView<DATA_TYPE,2>( data_+strides_[0]*i, strides_+1, extents_+1 ); }
+  const ArrayView<DATA_TYPE,2> operator[](int i) const { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,2>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
+  ArrayView<DATA_TYPE,2>       operator[](int i)       { CHECK_BOUNDS_1(i);return ArrayView<DATA_TYPE,2>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
   DATA_TYPE*       data()            { return data_; }
   const DATA_TYPE* data() const      { return data_; }
   const int* strides() const   { return strides_; }
-  const int* extents() const   { return extents_; }
+  const int* shape() const   { return shape_; }
   ArrayStrides::value_type stride(int i) const { return strides_[i]; }
-  ArrayExtents::value_type extent(int i) const { return extents_[i]; }
+  ArrayShape::value_type shape(int i) const { return shape_[i]; }
   int rank() const { return 3; }
-  std::size_t size() const { return extents_[0]; }
-  std::size_t total_size() const { return extents_[0]*extents_[1]*extents_[2]; }
+  std::size_t size() const { return shape_[0]; }
+  std::size_t total_size() const { return shape_[0]*shape_[1]*shape_[2]; }
   void operator=(const DATA_TYPE& scalar) { for(int n=0; n<total_size(); ++n) *(data_+n)=scalar; }
 private:
   DATA_TYPE* data_;
   ArrayStrides::value_type strides_[3];
-  ArrayExtents::value_type extents_[3];
+  ArrayShape::value_type shape_[3];
 };
 
 //------------------------------------------------------------------------------------------------------
@@ -479,16 +479,16 @@ public:
   typedef typename add_const<DATA_TYPE>::type     const_value_t;
 public:
   ArrayView() {}
-  ArrayView( DATA_TYPE* data, const ArrayStrides::value_type strides[4], const ArrayExtents::value_type extents[4] ) : data_( const_cast<DATA_TYPE*>(data) )
+  ArrayView( DATA_TYPE* data, const ArrayStrides::value_type strides[4], const ArrayShape::value_type shape[4] ) : data_( const_cast<DATA_TYPE*>(data) )
   {
-    strides_[0]=strides[0];            extents_[0]=extents[0];
-    strides_[1]=strides[1];            extents_[1]=extents[1];
-    strides_[2]=strides[2];            extents_[2]=extents[2];
-    strides_[3]=strides[3];            extents_[3]=extents[3];
+    strides_[0]=strides[0];            shape_[0]=shape[0];
+    strides_[1]=strides[1];            shape_[1]=shape[1];
+    strides_[2]=strides[2];            shape_[2]=shape[2];
+    strides_[3]=strides[3];            shape_[3]=shape[3];
   }
   ArrayView( const Array<DATA_TYPE>& array );
   ArrayView( const Field& field );
-  
+
   iterator begin() { return iterator(this); }
   iterator end()   { return iterator(); }
   const_iterator begin() const  { return const_iterator(this); }
@@ -511,23 +511,23 @@ public:
       p += idx[d]*strides_[d];
     return *(data_+p);
   }
-  const ArrayView<DATA_TYPE,3> operator[](int i) const { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,3>( data_+strides_[0]*i, strides_+1, extents_+1 ); }
-  ArrayView<DATA_TYPE,3>       operator[](int i)       { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,3>( data_+strides_[0]*i, strides_+1, extents_+1 ); }
+  const ArrayView<DATA_TYPE,3> operator[](int i) const { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,3>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
+  ArrayView<DATA_TYPE,3>       operator[](int i)       { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,3>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
   DATA_TYPE*       data()            { return data_; }
   const DATA_TYPE* data() const      { return data_; }
   const int* strides() const   { return strides_; }
-  const int* extents() const   { return extents_; }
+  const int* shape() const   { return shape_; }
   ArrayStrides::value_type stride(int i) const { return strides_[i]; }
-  ArrayExtents::value_type extent(int i) const { return extents_[i]; }
+  ArrayShape::value_type shape(int i) const { return shape_[i]; }
   int rank() const { return 4; }
-  std::size_t size() const { return extents_[0]; }
-  std::size_t total_size() const { return extents_[0]*extents_[1]*extents_[2]*extents_[3]; }
+  std::size_t size() const { return shape_[0]; }
+  std::size_t total_size() const { return shape_[0]*shape_[1]*shape_[2]*shape_[3]; }
   void operator=(const DATA_TYPE& scalar) { for(int n=0; n<total_size(); ++n) *(data_+n)=scalar; }
-  
+
 private:
   DATA_TYPE* data_;
   ArrayStrides::value_type strides_[4];
-  ArrayExtents::value_type extents_[4];
+  ArrayShape::value_type shape_[4];
 };
 
 //------------------------------------------------------------------------------------------------------
@@ -564,9 +564,9 @@ ArrayView_iterator<DATA_TYPE,RANK>& ArrayView_iterator<DATA_TYPE,RANK>::incremen
 {
   ++loc_[d];
   p_ += arr_->stride(d);
-  if( loc_[d] == arr_->extent(d) )
+  if( loc_[d] == arr_->shape(d) )
   {
-    p_ -= arr_->stride(d)*arr_->extent(d);
+    p_ -= arr_->stride(d)*arr_->shape(d);
     loc_[d]=0;
     if(d==0)
     {
@@ -621,9 +621,9 @@ ArrayView_const_iterator<DATA_TYPE,RANK>& ArrayView_const_iterator<DATA_TYPE,RAN
 {
   ++loc_[d];
   p_ += arr_->stride(d);
-  if( loc_[d] == arr_->extent(d) )
+  if( loc_[d] == arr_->shape(d) )
   {
-    p_ -= arr_->stride(d)*arr_->extent(d);
+    p_ -= arr_->stride(d)*arr_->shape(d);
     loc_[d]=0;
     if(d==0)
     {

@@ -1,9 +1,9 @@
 /*
  * (C) Copyright 1996-2014 ECMWF.
- * 
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
- * In applying this licence, ECMWF does not waive the privileges and immunities 
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
@@ -84,8 +84,8 @@ void write_field_nodes(const Gmsh& gmsh, Field& field, std::ostream& out)
   FunctionSpace& function_space = field.function_space();
   bool gather( gmsh.options.get<bool>("gather") );
 
-  int ndata = field.extents()[0];
-  int nvars = field.extents()[1];
+  int ndata = field.shape(0);
+  int nvars = field.shape(1);
   ArrayView<int,1    > gidx ( function_space.field( "glb_idx" ) );
   ArrayView<DATA_TYPE> data ( field );
   if( gather )
@@ -95,8 +95,8 @@ void write_field_nodes(const Gmsh& gmsh, Field& field, std::ostream& out)
     ndata = gather_scatter->glb_dof();
     DEBUG_VAR(gather_scatter->glb_dof());
     DEBUG_VAR(gather_scatter->loc_dof());
-    Array<DATA_TYPE> field_glb_arr(Extents(ndata,nvars));
-    Array<int      > gidx_glb_arr (Extents(ndata));
+    Array<DATA_TYPE> field_glb_arr(ndata,nvars);
+    Array<int      > gidx_glb_arr (ndata);
     ArrayView<DATA_TYPE> data_glb( field_glb_arr );
     ArrayView<int,1> gidx_glb( gidx_glb_arr );
     gather_scatter->gather( gidx, gidx_glb );
@@ -149,11 +149,11 @@ template< typename DATA_TYPE >
 void write_field_elems(const Gmsh& gmsh, Field& field, std::ostream& out)
 {
   FunctionSpace& function_space = field.function_space();
-  int ndata = field.extents()[0];
-  int nvars = field.extents()[1];
+  int ndata = field.shape(0);
+  int nvars = field.shape(1);
   double time   = field.metadata().has<double>("time") ? field.metadata().get<double>("time") : 0. ;
   int time_step = field.metadata().has<int>("time_step") ? field.metadata().get<int>("time_step") : 0. ;
-  int nnodes = IndexView<int,2>( function_space.field("nodes") ).extents()[1];
+  int nnodes = IndexView<int,2>( function_space.field("nodes") ).shape(1);
   out << "$ElementNodeData\n";
   out << "1\n";
   out << "\"" << field.name() << "\"\n";
@@ -235,10 +235,10 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh )
 
   extents[0] = nb_nodes;
   extents[1] = Field::UNDEF_VARS;
-  
+
   if( mesh.has_function_space("nodes") )
   {
-      if( mesh.function_space("nodes").extents()[0] != nb_nodes )
+      if( mesh.function_space("nodes").shape(0)!= nb_nodes )
           throw std::runtime_error("existing nodes function space has incompatible number of nodes");
   }
   else
@@ -414,7 +414,7 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path) const
   ArrayView<double,2> coords  ( nodes.field( "coordinates" ) );
   ArrayView<int,   1> glb_idx ( nodes.field( "glb_idx" ) );
   int nb_nodes = nodes.metadata().get<int>("nb_owned");
-  nb_nodes = nodes.extents()[0];
+  nb_nodes = nodes.shape(0);
 
   FunctionSpace& quads       = mesh.function_space( "quads" );
   IndexView<int,2> quad_nodes   ( quads.field( "nodes" ) );
@@ -432,13 +432,13 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path) const
   if( mesh.has_function_space("edges") )
   {
     FunctionSpace& edges       = mesh.function_space( "edges" );
-    nb_edges = edges.extents()[0];
+    nb_edges = edges.shape(0);
   }
 
   if( include_ghost_elements == true )
   {
-    nb_quads = quads.extents()[0];
-    nb_triags = triags.extents()[0];
+    nb_quads = quads.shape(0);
+    nb_triags = triags.shape(0);
   }
 
   for( int spherical=0; spherical<2; ++spherical )
@@ -643,7 +643,7 @@ void Gmsh::write3dsurf(Mesh &mesh, const std::string& file_path)
     ArrayView<double,2> coords  ( nodes.field( "coordinates" ) );
     ArrayView<int,   1> glb_idx ( nodes.field( "glb_idx" ) );
 
-    nb_nodes = nodes.extents()[0];
+    nb_nodes = nodes.shape(0);
 
     file << "$Nodes\n";
     file << nb_nodes << "\n";
@@ -663,9 +663,9 @@ void Gmsh::write3dsurf(Mesh &mesh, const std::string& file_path)
 
     file << "$Elements\n";
 
-    if( mesh.has_function_space("triags") ) nb_triags = mesh.function_space( "triags" ).extents()[0];
-    if( mesh.has_function_space("quads") )  nb_quads = mesh.function_space( "quads" ).extents()[0];
-    if( mesh.has_function_space("edges") )  nb_edges = mesh.function_space( "edges" ).extents()[0];
+    if( mesh.has_function_space("triags") ) nb_triags = mesh.function_space( "triags" ).shape(0);
+    if( mesh.has_function_space("quads") )  nb_quads = mesh.function_space( "quads" ).shape(0);
+    if( mesh.has_function_space("edges") )  nb_edges = mesh.function_space( "edges" ).shape(0);
 
     file << nb_triags + nb_quads + nb_edges << "\n";
 
@@ -725,7 +725,7 @@ void Gmsh::write3dsurf(Mesh &mesh, const std::string& file_path)
         {
             ArrayView<double,2> f ( field );
 
-            for( size_t idx = 0; idx < field.extents()[1]; ++idx )
+            for( size_t idx = 0; idx < field.shape(1); ++idx )
             {
                 file << "$NodeData\n";
                 file << "1\n";

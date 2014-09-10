@@ -36,7 +36,7 @@ void write_load_balance_report( const Mesh& mesh, const std::string& filename )
   {
     FunctionSpace& nodes = mesh.function_space("nodes");
     IsGhost is_ghost(nodes);
-    int nb_nodes = nodes.extents()[0];
+    int nb_nodes = nodes.shape(0);
     int nowned(0);
     int nghost(0);
     for( int n=0; n<nb_nodes; ++n )
@@ -62,7 +62,7 @@ void write_load_balance_report( const Mesh& mesh, const std::string& filename )
     IsGhost is_ghost(nodes);
     FunctionSpace& edges = mesh.function_space("edges");
     IndexView<int,2> edge_nodes ( edges.field("nodes") );
-    int nb_edges = edges.extents()[0];
+    int nb_edges = edges.shape(0);
     int nowned(0);
     int nghost(0);
     for( int j=0; j<nb_edges; ++j )

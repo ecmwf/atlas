@@ -1,9 +1,9 @@
 /*
  * (C) Copyright 1996-2014 ECMWF.
- * 
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
- * In applying this licence, ECMWF does not waive the privileges and immunities 
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
@@ -110,7 +110,7 @@ FieldT<int>& build_nodes_global_idx( FunctionSpace& nodes )
   ArrayView<double,2> latlon  ( nodes.field("coordinates") );
   ArrayView<int,   1> glb_idx ( nodes.field("glb_idx"    ) );
 
-  for( int jnode=0; jnode<glb_idx.extents()[0]; ++jnode )
+  for( int jnode=0; jnode<glb_idx.shape(0); ++jnode )
   {
     if( glb_idx(jnode) <= 0 )
       glb_idx(jnode) = LatLonPoint( latlon[jnode] ).uid();
@@ -139,7 +139,7 @@ void renumber_nodes_glb_idx( FunctionSpace& nodes )
    * pole edges, as their centroid might coincide with
    * other edges
    */
-  int nb_nodes = glb_idx.extents()[0];
+  int nb_nodes = glb_idx.shape(0);
   for( int jnode=0; jnode<nb_nodes; ++jnode )
   {
     if( glb_idx(jnode) <= 0 )
@@ -182,7 +182,7 @@ void renumber_nodes_glb_idx( FunctionSpace& nodes )
 
   // 2) Sort all global indices, and renumber from 1 to glb_nb_edges
   std::vector<Node> node_sort; node_sort.reserve(glb_nb_nodes);
-  for( int jnode=0; jnode<glb_id.extent(0); ++jnode )
+  for( int jnode=0; jnode<glb_id.shape(0); ++jnode )
   {
     node_sort.push_back( Node(glb_id(jnode),jnode) );
   }
@@ -234,7 +234,7 @@ FieldT<int>& build_nodes_remote_idx( FunctionSpace& nodes )
   IndexView<int,   1> ridx   ( nodes.field("remote_idx")  );
   ArrayView<int,   1> part   ( nodes.field("partition")   );
   ArrayView<double,2> latlon ( nodes.field("coordinates") );
-  int nb_nodes = nodes.extents()[0];
+  int nb_nodes = nodes.shape(0);
 
 
   int varsize=3;
@@ -268,8 +268,8 @@ FieldT<int>& build_nodes_remote_idx( FunctionSpace& nodes )
   for( int jpart=0; jpart<nparts; ++jpart )
   {
     ArrayView<int,2> recv_node( recv_needed[ proc[jpart] ].data(),
-        Extents(recv_needed[ proc[jpart] ].size()/varsize,varsize) );
-    for( int jnode=0; jnode<recv_node.extents()[0]; ++jnode )
+        make_shape(recv_needed[ proc[jpart] ].size()/varsize,varsize) );
+    for( int jnode=0; jnode<recv_node.shape(0); ++jnode )
     {
       LatLonPoint ll( recv_node[jnode] );
       if( lookup.count(ll) )
@@ -292,8 +292,8 @@ FieldT<int>& build_nodes_remote_idx( FunctionSpace& nodes )
   for( int jpart=0; jpart<nparts; ++jpart )
   {
     ArrayView<int,2> recv_node( recv_found[ proc[jpart] ].data(),
-        Extents(recv_found[ proc[jpart] ].size()/2,2) );
-    for( int jnode=0; jnode<recv_node.extents()[0]; ++jnode )
+        make_shape(recv_found[ proc[jpart] ].size()/2,2) );
+    for( int jnode=0; jnode<recv_node.shape(0); ++jnode )
     {
       ridx( recv_node(jnode,0) ) = recv_node(jnode,1);
     }
@@ -335,7 +335,7 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
   ArrayView<double,2> latlon     ( nodes.field("coordinates") );
 
   // Set all edges partition to the minimum partition number of nodes
-  int nb_edges = edges.extents()[0];
+  int nb_edges = edges.shape(0);
   for( int jedge=0; jedge<nb_edges; ++jedge )
   {
     int p1 = node_part( edge_nodes(jedge,0) );
@@ -382,8 +382,8 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
   for( int jpart=0; jpart<nparts; ++jpart )
   {
     ArrayView<int,2> recv_edge( recv_needed[ jpart ].data(),
-        Extents(recv_needed[ jpart ].size()/varsize,varsize) );
-    for( int jedge=0; jedge<recv_edge.extents()[0]; ++jedge )
+        make_shape(recv_needed[ jpart ].size()/varsize,varsize) );
+    for( int jedge=0; jedge<recv_edge.shape(0); ++jedge )
     {
       int uid      = recv_edge(jedge,0);
       int recv_idx = recv_edge(jedge,1);
@@ -431,8 +431,8 @@ FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes 
     is_pole_edge = ArrayView<int,1>( edges.field("is_pole_edge") );
   }
 
-  const int nb_nodes = nodes.extents()[0];
-  const int nb_edges = edges.extents()[0];
+  const int nb_nodes = nodes.shape(0);
+  const int nb_edges = edges.shape(0);
 
   int varsize=2;
   double centroid[2];
@@ -476,8 +476,8 @@ FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes 
   for( int jpart=0; jpart<nparts; ++jpart )
   {
     ArrayView<int,2> recv_edge( recv_needed[ jpart ].data(),
-        Extents(recv_needed[ jpart ].size()/varsize,varsize) );
-    for( int jedge=0; jedge<recv_edge.extents()[0]; ++jedge )
+        make_shape(recv_needed[ jpart ].size()/varsize,varsize) );
+    for( int jedge=0; jedge<recv_edge.shape(0); ++jedge )
     {
       int recv_uid = recv_edge(jedge,0);
       int recv_idx = recv_edge(jedge,1);
@@ -502,8 +502,8 @@ FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes 
   for( int jpart=0; jpart<nparts; ++jpart )
   {
     ArrayView<int,2> recv_edge( recv_found[ jpart ].data(),
-        Extents(recv_found[ jpart ].size()/2,2) );
-    for( int jedge=0; jedge<recv_edge.extents()[0]; ++jedge )
+        make_shape(recv_found[ jpart ].size()/2,2) );
+    for( int jedge=0; jedge<recv_edge.shape(0); ++jedge )
     {
       edge_ridx( recv_edge(jedge,0) ) = recv_edge(jedge,1);
     }
@@ -542,7 +542,7 @@ FieldT<int>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nodes 
    * other edges
    */
   double centroid[2];
-  int nb_edges = edges.extents()[0];
+  int nb_edges = edges.shape(0);
   for( int jedge=0; jedge<nb_edges; ++jedge )
   {
     if( edge_gidx(jedge) <= 0 )
@@ -594,7 +594,7 @@ FieldT<int>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nodes 
 
   // 2) Sort all global indices, and renumber from 1 to glb_nb_edges
   std::vector<Node> edge_sort; edge_sort.reserve(glb_nb_edges);
-  for( int jedge=0; jedge<glb_edge_id.extent(0); ++jedge )
+  for( int jedge=0; jedge<glb_edge_id.shape(0); ++jedge )
   {
     edge_sort.push_back( Node(glb_edge_id(jedge),jedge) );
   }

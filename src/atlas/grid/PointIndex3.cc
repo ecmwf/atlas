@@ -23,7 +23,7 @@ PointIndex3* create_cell_centre_index( atlas::Mesh& mesh )
     atlas::FunctionSpace& triags = mesh.function_space( "triags" );
     ArrayView<double,2> triags_centres ( triags.field( "centre" ) );
 
-    const std::size_t npts = triags.extents()[0];
+    const std::size_t npts = triags.shape(0);
 
     std::vector<PointIndex3::Value> p;
     p.reserve(npts);

@@ -1,9 +1,9 @@
 /*
  * (C) Copyright 1996-2014 ECMWF.
- * 
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
- * In applying this licence, ECMWF does not waive the privileges and immunities 
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
@@ -43,7 +43,7 @@ public: // methods
               int size );
 
   template <typename DATA_TYPE>
-  void execute( DATA_TYPE field[], const int var_strides[], const int var_extents[], int var_rank ) const;
+  void execute( DATA_TYPE field[], const int var_strides[], const int var_shape[], int var_rank ) const;
 
   template <typename DATA_TYPE>
   void execute( DATA_TYPE field[], int nb_vars ) const;
@@ -66,7 +66,7 @@ private: // methods
   template< typename DATA_TYPE>
   void pack_send_buffer( const DATA_TYPE field[],
                          const int var_strides[],
-                         const int var_extents[],
+                         const int var_shape[],
                          int var_rank,
                          DATA_TYPE send_buffer[] ) const;
 
@@ -74,13 +74,13 @@ private: // methods
   void unpack_recv_buffer(const DATA_TYPE recv_buffer[],
                           DATA_TYPE field[],
                           const int var_strides[],
-                          const int var_extents[],
+                          const int var_shape[],
                           int var_rank ) const;
 
   template<typename DATA_TYPE, int RANK>
   void var_info( const ArrayView<DATA_TYPE,RANK>& arr,
                  std::vector<int>& varstrides,
-                 std::vector<int>& varextents ) const;
+                 std::vector<int>& varshape ) const;
 
 private: // data
   int               sendcnt_;
@@ -103,7 +103,7 @@ private: // data
 
 
 template<typename DATA_TYPE>
-void HaloExchange::execute(DATA_TYPE field[], const int var_strides[], const int var_extents[], int var_rank ) const
+void HaloExchange::execute(DATA_TYPE field[], const int var_strides[], const int var_shape[], int var_rank ) const
 {
   if( ! is_setup_ )
   {
@@ -112,7 +112,7 @@ void HaloExchange::execute(DATA_TYPE field[], const int var_strides[], const int
 
   int tag=1;
   int ibuf;
-  int var_size = std::accumulate(var_extents,var_extents+var_rank,1,std::multiplies<int>());
+  int var_size = std::accumulate(var_shape,var_shape+var_rank,1,std::multiplies<int>());
   int send_size  = sendcnt_ * var_size;
   int recv_size  = recvcnt_ * var_size;
 
@@ -145,7 +145,7 @@ void HaloExchange::execute(DATA_TYPE field[], const int var_strides[], const int
   }
 
   /// Pack
-  pack_send_buffer(field,var_strides,var_extents,var_rank,send_buffer.data());
+  pack_send_buffer(field,var_strides,var_shape,var_rank,send_buffer.data());
 
   /// Send
   for( int jproc=0; jproc<nproc; ++jproc )
@@ -167,7 +167,7 @@ void HaloExchange::execute(DATA_TYPE field[], const int var_strides[], const int
   }
 
   /// Unpack
-  unpack_recv_buffer(recv_buffer.data(),field,var_strides,var_extents,var_rank);
+  unpack_recv_buffer(recv_buffer.data(),field,var_strides,var_shape,var_rank);
 
   /// Wait for sending to finish
   for (int jproc=0; jproc<nproc; ++jproc)
@@ -186,12 +186,12 @@ void HaloExchange::execute(DATA_TYPE field[], const int var_strides[], const int
 template<typename DATA_TYPE>
 void HaloExchange::pack_send_buffer( const DATA_TYPE field[],
                                      const int var_strides[],
-                                     const int var_extents[],
+                                     const int var_shape[],
                                      int var_rank,
                                      DATA_TYPE send_buffer[] ) const
 {
   int ibuf = 0;
-  int send_stride = var_strides[0]*var_extents[0];
+  int send_stride = var_strides[0]*var_shape[0];
 
   switch( var_rank )
   {
@@ -199,7 +199,7 @@ void HaloExchange::pack_send_buffer( const DATA_TYPE field[],
     for( int p=0; p<sendcnt_; ++p)
     {
       const int pp = send_stride*sendmap_[p];
-      for( int i=0; i<var_extents[0]; ++i )
+      for( int i=0; i<var_shape[0]; ++i )
         send_buffer[ibuf++] = field[pp+i*var_strides[0]];
     }
     break;
@@ -207,9 +207,9 @@ void HaloExchange::pack_send_buffer( const DATA_TYPE field[],
     for( int p=0; p<sendcnt_; ++p)
     {
       const int pp = send_stride*sendmap_[p];
-      for( int i=0; i<var_extents[0]; ++i )
+      for( int i=0; i<var_shape[0]; ++i )
       {
-        for( int j=0; j<var_extents[1]; ++j )
+        for( int j=0; j<var_shape[1]; ++j )
         {
           send_buffer[ibuf++] = field[pp+i*var_strides[0]+j*var_strides[1]];
         }
@@ -220,11 +220,11 @@ void HaloExchange::pack_send_buffer( const DATA_TYPE field[],
     for( int p=0; p<sendcnt_; ++p)
     {
       const int pp = send_stride*sendmap_[p];
-      for( int i=0; i<var_extents[0]; ++i )
+      for( int i=0; i<var_shape[0]; ++i )
       {
-        for( int j=0; j<var_extents[1]; ++j )
+        for( int j=0; j<var_shape[1]; ++j )
         {
-          for( int k=0; k<var_extents[2]; ++k )
+          for( int k=0; k<var_shape[2]; ++k )
           {
             send_buffer[ibuf++] =
               field[ pp+i*var_strides[0]+j*var_strides[1]+k*var_strides[2]];
@@ -242,13 +242,13 @@ template<typename DATA_TYPE>
 void HaloExchange::unpack_recv_buffer( const DATA_TYPE recv_buffer[],
                                        DATA_TYPE field[],
                                        const int var_strides[],
-                                       const int var_extents[],
+                                       const int var_shape[],
                                        int var_rank ) const
 {
   bool field_changed = false;
   DATA_TYPE tmp;
   int ibuf = 0;
-  int recv_stride = var_strides[0]*var_extents[0];
+  int recv_stride = var_strides[0]*var_shape[0];
 
   switch( var_rank )
   {
@@ -256,7 +256,7 @@ void HaloExchange::unpack_recv_buffer( const DATA_TYPE recv_buffer[],
     for( int p=0; p<recvcnt_; ++p)
     {
       const int pp = recv_stride*recvmap_[p];
-      for( int i=0; i<var_extents[0]; ++i)
+      for( int i=0; i<var_shape[0]; ++i)
       {
         tmp = field[ pp + i*var_strides[0] ];
         field[ pp + i*var_strides[0] ] = recv_buffer[ibuf++];
@@ -269,9 +269,9 @@ void HaloExchange::unpack_recv_buffer( const DATA_TYPE recv_buffer[],
     for( int p=0; p<recvcnt_; ++p)
     {
       const int pp = recv_stride*recvmap_[p];
-      for( int i=0; i<var_extents[0]; ++i )
+      for( int i=0; i<var_shape[0]; ++i )
       {
-        for( int j=0; j<var_extents[1]; ++j )
+        for( int j=0; j<var_shape[1]; ++j )
         {
           tmp = field[ pp + i*var_strides[0] + j*var_strides[1] ];
           field[ pp + i*var_strides[0] + j*var_strides[1] ]
@@ -286,11 +286,11 @@ void HaloExchange::unpack_recv_buffer( const DATA_TYPE recv_buffer[],
     for( int p=0; p<recvcnt_; ++p)
     {
       const int pp = recv_stride*recvmap_[p];
-      for( int i=0; i<var_extents[0]; ++i )
+      for( int i=0; i<var_shape[0]; ++i )
       {
-        for( int j=0; j<var_extents[1]; ++j )
+        for( int j=0; j<var_shape[1]; ++j )
         {
-          for( int k=0; k<var_extents[2]; ++k )
+          for( int k=0; k<var_shape[2]; ++k )
           {
             tmp = field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] ];
             field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] ]
@@ -313,28 +313,28 @@ template<typename DATA_TYPE>
 void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
 {
   int strides[] = {1};
-  int extents[] = {nb_vars};
-  execute( field, strides, extents, 1);
+  int shape[] = {nb_vars};
+  execute( field, strides, shape, 1);
 }
 
 
 template<typename DATA_TYPE, int RANK>
 void HaloExchange::var_info( const ArrayView<DATA_TYPE,RANK>& arr,
                              std::vector<int>& varstrides,
-                             std::vector<int>& varextents ) const
+                             std::vector<int>& varshape ) const
 {
   int rank = std::max(1,RANK-1) ;
   varstrides.resize(rank);
-  varextents.resize(rank);
+  varshape.resize(rank);
   if( RANK>1 )
   {
     varstrides.assign(arr.strides()+1,arr.strides()+RANK);
-    varextents.assign(arr.extents()+1,arr.extents()+RANK);
+    varshape.assign(arr.shape()+1,arr.shape()+RANK);
   }
   else
   {
     varstrides[0] = arr.strides()[0];
-    varextents[0] = 1;
+    varshape[0] = 1;
   }
 }
 
@@ -343,9 +343,9 @@ void HaloExchange::execute( ArrayView<DATA_TYPE,RANK>& field ) const
 {
   if( field.size() == parsize_)
   {
-    std::vector<int> varstrides, varextents;
-    var_info( field, varstrides, varextents );
-    execute( field.data(), varstrides.data(), varextents.data(), varstrides.size() );
+    std::vector<int> varstrides, varshape;
+    var_info( field, varstrides, varshape );
+    execute( field.data(), varstrides.data(), varshape.data(), varstrides.size() );
   }
   else
   {
@@ -356,14 +356,14 @@ void HaloExchange::execute( ArrayView<DATA_TYPE,RANK>& field ) const
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
-extern "C" 
+extern "C"
 {
   HaloExchange* atlas__HaloExchange__new ();
   void atlas__HaloExchange__delete (HaloExchange* This);
   void atlas__HaloExchange__setup (HaloExchange* This, int part[], int remote_idx[], int base, int size);
-  void atlas__HaloExchange__execute_strided_int (HaloExchange* This, int field[], int var_strides[], int var_extents[], int var_rank);
-  void atlas__HaloExchange__execute_strided_float (HaloExchange* This, float field[], int var_strides[], int var_extents[], int var_rank);
-  void atlas__HaloExchange__execute_strided_double (HaloExchange* This, double field[], int var_strides[], int var_extents[], int var_rank);
+  void atlas__HaloExchange__execute_strided_int (HaloExchange* This, int field[], int var_strides[], int var_shape[], int var_rank);
+  void atlas__HaloExchange__execute_strided_float (HaloExchange* This, float field[], int var_strides[], int var_shape[], int var_rank);
+  void atlas__HaloExchange__execute_strided_double (HaloExchange* This, double field[], int var_strides[], int var_shape[], int var_rank);
   void atlas__HaloExchange__execute_int (HaloExchange* This, int field[], int var_rank);
   void atlas__HaloExchange__execute_float (HaloExchange* This, float field[], int var_rank);
   void atlas__HaloExchange__execute_double (HaloExchange* This, double field[], int var_rank);

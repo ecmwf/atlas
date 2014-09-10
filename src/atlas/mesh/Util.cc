@@ -26,7 +26,7 @@ void accumulate_faces(
 		int& nb_inner_faces )
 {
 	IndexView<int,2> elem_nodes( func_space.field( "nodes" ) );
-	int nb_elems = func_space.extents()[0];
+	int nb_elems = func_space.shape(0);
 	int nb_nodes_in_face = 2;
 
 	std::vector< std::vector<int> > face_node_numbering;

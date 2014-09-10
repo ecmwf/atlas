@@ -67,7 +67,7 @@ public: // methods
 
 	const std::string& data_type() const { return data_type_; }
 
-	virtual void allocate(const std::vector<int>& bounds)=0;
+	virtual void allocate(const std::vector<int>& shapef)=0;
 	const std::string& name() const { return name_; }
 
 	const Grid& grid() const { return mesh().grid(); }
@@ -81,11 +81,11 @@ public: // methods
 
 	FunctionSpace& function_space() const { return function_space_; }
 
-	const std::vector<int>& boundsf() const	{ return bounds_; }
-	const std::vector<int>& extents() const { return extents_; }
+	const std::vector<int>& shapef() const	{ return shapef_; }
+	const std::vector<int>& shape() const { return shape_; }
 	const std::vector<int>& strides() const { return strides_; }
 	int stride(int i) const { return strides_[i];}
-	int extent(int i) const { return extents_[i];}
+	int shape(int i) const { return shape_[i];}
 	int nb_vars() const { return nb_vars_; }
 
 	virtual size_t size() const = 0;
@@ -106,8 +106,8 @@ protected: // members
 
 	std::string name_;
 	std::string data_type_;
-	std::vector<int> bounds_;
-	std::vector<int> extents_;
+	std::vector<int> shapef_;
+	std::vector<int> shape_;
 	std::vector<int> strides_;
 
 	FunctionSpace& function_space_;
@@ -140,7 +140,7 @@ public: // methods
 
 	virtual size_t size() const { return data_.size(); }
 
-	virtual void allocate(const std::vector<int>& bounds);
+	virtual void allocate(const std::vector<int>& shapef);
 
 	DATA_TYPE* data() { return data_.data(); }
 	DATA_TYPE const* data() const { return data_.data(); }
@@ -172,20 +172,20 @@ inline FieldT<DATA_TYPE>::~FieldT()
 }
 
 template< typename DATA_TYPE >
-inline void FieldT<DATA_TYPE>::allocate(const std::vector<int>& extents)
+inline void FieldT<DATA_TYPE>::allocate(const std::vector<int>& shape)
 {
-	extents_ = extents;
-	size_t tot_size(1); for (int i = 0; i < extents_.size(); ++i) tot_size *= extents_[i];
+	shape_ = shape;
+	size_t tot_size(1); for (int i = 0; i < shape_.size(); ++i) tot_size *= shape_[i];
 	data_.resize(tot_size);
 
-	bounds_.resize(extents_.size());
-	std::reverse_copy( extents_.begin(), extents_.end(), bounds_.begin() );
+	shapef_.resize(shape_.size());
+	std::reverse_copy( shape_.begin(), shape_.end(), shapef_.begin() );
 
-	strides_.resize(extents_.size());
-	strides_[extents_.size()-1] = 1;
-	for( int n=extents_.size()-2; n>=0; --n )
+	strides_.resize(shape_.size());
+	strides_[shape_.size()-1] = 1;
+	for( int n=shape_.size()-2; n>=0; --n )
 	{
-		strides_[n] = strides_[n+1]*extents_[n+1];
+		strides_[n] = strides_[n+1]*shape_[n+1];
 	}
 }
 
@@ -199,11 +199,11 @@ inline void FieldT<DATA_TYPE>::print(std::ostream& out) const
 	// ArrayView<DATA_TYPE,2> coords( nodes.field("coordinates") );
 	ArrayView<DATA_TYPE,2> latlon( nodes.field("latlon") );
 
-	ASSERT( values.extents()[0] == latlon.extents()[0] );
+	ASSERT( values.shape()[0] == latlon.shape()[0] );
 
-	// Log::info() << "values.extents()[0] " << values.extents()[0] << std::endl;
+	// Log::info() << "values.shape()[0] " << values.shape()[0] << std::endl;
 
-	for( size_t i = 0; i < latlon.extents()[0]; ++i )
+	for( size_t i = 0; i < latlon.shape()[0]; ++i )
 		out << latlon(i,LAT) << " " << latlon(i,LON) << " " << values(i) << std::endl;
 }
 
@@ -215,9 +215,9 @@ extern "C"
 	const char* atlas__Field__name (Field* This);
 	const char* atlas__Field__data_type (Field* This);
 	int atlas__Field__nb_vars (Field* This);
-	void atlas__Field__data_boundsf_double (Field* This, double* &field_data, int* &field_bounds, int &rank);
-	void atlas__Field__data_boundsf_float (Field* This, float* &field_data, int* &field_bounds, int &rank);
-	void atlas__Field__data_boundsf_int (Field* This, int* &field_data, int* &field_bounds, int &rank);
+	void atlas__Field__data_shapef_double (Field* This, double* &field_data, int* &field_shapef, int &rank);
+	void atlas__Field__data_shapef_float (Field* This, float* &field_data, int* &field_shapef, int &rank);
+	void atlas__Field__data_shapef_int (Field* This, int* &field_data, int* &field_shapef, int &rank);
 	Metadata* atlas__Field__metadata (Field* This);
 	FunctionSpace* atlas__Field__function_space (Field* This);
 }

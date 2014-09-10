@@ -97,7 +97,7 @@ void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, PointSet& p
 
     FunctionSpace& nodes = mesh.function_space( "nodes" );
 
-    ASSERT( points.size() == nodes.extents()[0] );
+    ASSERT( points.size() == nodes.shape(0) );
 
     const size_t nb_nodes = points.size();
 
@@ -265,7 +265,7 @@ void Tesselation::create_mesh_structure( Mesh& mesh, const size_t nb_nodes )
 
     FunctionSpace& nodes = mesh.function_space( "nodes" );
 
-    ASSERT(  nodes.extents()[0] == nb_nodes );
+    ASSERT(  nodes.shape(0) == nb_nodes );
 
     // create / ensure mesh has coordinates
 
@@ -295,7 +295,7 @@ void Tesselation::generate_latlon_points( Mesh& mesh,
 
     FunctionSpace& nodes = mesh.function_space( "nodes" );
 
-    ASSERT(  nodes.extents()[0] == nb_nodes );
+    ASSERT(  nodes.shape(0) == nb_nodes );
 
     ArrayView<double,2> coords  ( nodes.field("coordinates") );
     ArrayView<double,2> latlon  ( nodes.field("latlon") );
@@ -354,7 +354,7 @@ void Tesselation::generate_latlon_grid( Mesh& mesh, const size_t& nlats, const s
 
     FunctionSpace& nodes = mesh.function_space( "nodes" );
 
-    ASSERT( nodes.extents()[0] == nb_nodes );
+    ASSERT( nodes.shape(0) == nb_nodes );
 
     ArrayView<double,2> coords  ( nodes.field("coordinates") );
     ArrayView<double,2> latlon  ( nodes.field("latlon") );
@@ -421,12 +421,12 @@ void Tesselation::create_cell_centres( Mesh& mesh )
     FunctionSpace& nodes     = mesh.function_space( "nodes" );
     ArrayView<double,2> coords  ( nodes.field("coordinates") );
 
-    const size_t nb_nodes = nodes.extents()[0];
+    const size_t nb_nodes = nodes.shape(0);
 
     FunctionSpace& triags      = mesh.function_space( "triags" );
     IndexView<int,2> triag_nodes ( triags.field( "nodes" ) );
 
-    const size_t nb_triags = triags.extents()[0];
+    const size_t nb_triags = triags.shape(0);
 
     ArrayView<double,2> triags_centres ( triags.create_field<double>("centre",3) );
 
@@ -488,13 +488,13 @@ void Tesselation::build_mesh( const Grid& grid, Mesh& mesh )
 
     FunctionSpace& nodes = mesh.function_space( "nodes" );
 
-    ASSERT(  nodes.extents()[0] == npts );
+    ASSERT(  nodes.shape(0) == npts );
 
     ArrayView<double,2> coords  ( nodes.field("coordinates") );
     ArrayView<double,2> latlon  ( nodes.field("latlon") );
     ArrayView<int,   1> glb_idx ( nodes.field("glb_idx") );
 
-    ASSERT( npts == nodes.extents()[0] );
+    ASSERT( npts == nodes.shape(0) );
 
 	std::vector<Grid::Point> ll(npts);
 	grid.coordinates(ll);

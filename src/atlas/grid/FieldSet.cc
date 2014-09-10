@@ -61,7 +61,7 @@ Field::Ptr FieldSet::create_field( GribHandle& gh )
 
     // create the field
 
-    if( nodes.extents()[0] != nvalues )
+    if( nodes.shape(0) != nvalues )
         throw SeriousBug( "Size of field in GRIB does not match Grid", Here() );
 
 	Field& f = nodes.create_field<double>(sname,1);
