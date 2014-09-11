@@ -30,14 +30,13 @@ BOOST_AUTO_TEST_CASE( test_read_write )
   int nlat = 5;
   int lon[5] = {10, 12, 14, 16, 16};
 
-	Mesh::Ptr mesh = test::generate_mesh(nlat, lon);
-//	Mesh::Ptr mesh = test::generate_mesh(meshgen::T255());
+//	Mesh::Ptr mesh = test::generate_mesh(nlat, lon);
+	Mesh::Ptr mesh = test::generate_mesh(meshgen::T255());
 
 	Gmsh gmsh;
-	gmsh.options.set("ascii",false);
-  gmsh.write(*mesh,"mesh.msh");
+	gmsh.options.set("ascii",true);
+	gmsh.write(*mesh,"mesh.msh");
 
-	if( gmsh.options.get<bool>("ascii") )
-	  BOOST_REQUIRE_NO_THROW( mesh = Mesh::Ptr( Gmsh::read( "mesh.msh" ) ) );
-  MPL::finalize();
+	BOOST_REQUIRE_NO_THROW( mesh = Mesh::Ptr( Gmsh::read( "mesh.msh" ) ) );
+	MPL::finalize();
 }
