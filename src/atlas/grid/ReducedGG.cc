@@ -49,14 +49,14 @@ ReducedGG::ReducedGG( const eckit::Params& p )
 	if( p.has("NPtsPerLat") )
 	{
 		ValueList nlats = p["NPtsPerLat"];
-		rgSpec_.resize(nlats.size());
+		nbPtsPerLat_.resize(nlats.size());
 		for( size_t i = 0; i < nlats.size(); ++i)
-			rgSpec_[i] = nlats[i];
+			nbPtsPerLat_[i] = nlats[i];
 	}
 	else
-		computeNPtsPerLat(rgSpec_);
+		computeNPtsPerLat(nbPtsPerLat_);
 
-	ASSERT( rgSpec_.size() == 2 * gaussN_ ); // number of lines of latitude should, be twice the gaussN_
+	ASSERT( nbPtsPerLat_.size() == 2 * gaussN_ ); // number of lines of latitude should, be twice the gaussN_
 
 	if( p.has("nbDataPoints") )
 		nbDataPoints_ = p["nbDataPoints"];
@@ -79,14 +79,14 @@ ReducedGG::ReducedGG(long gaussN) : nbDataPoints_(0), gaussN_(gaussN)
 
    hash_ = ReducedGG::className(); //  @todo ?
 
-   computeNPtsPerLat(rgSpec_);
+   computeNPtsPerLat(nbPtsPerLat_);
 
    std::vector<double> latitudes;
    computeLatitues(latitudes);
    nbDataPoints_ = computeNPoints(latitudes);
 
    ASSERT( nbDataPoints_ > 0 );
-   ASSERT( rgSpec_.size() == 2 * gaussN_ ); // number of lines of latitude should, be twice the gaussN_
+   ASSERT( nbPtsPerLat_.size() == 2 * gaussN_ ); // number of lines of latitude should, be twice the gaussN_
 }
 
 ReducedGG::~ReducedGG()
@@ -143,7 +143,7 @@ GridSpec ReducedGG::spec() const
    grid_spec.set("hash", hash_);
 
    grid_spec.set_bounding_box(bbox_);
-   grid_spec.set_npts_per_lat(rgSpec_);
+   grid_spec.set_npts_per_lat(nbPtsPerLat_);
 
    return grid_spec;
 }
@@ -155,7 +155,7 @@ bool ReducedGG::same(const Grid& grid) const
 
 void ReducedGG::computeLatitues(std::vector<double>& lats) const
 {
-	lats.resize(rgSpec_.size());
+	lats.resize(nbPtsPerLat_.size());
 
 	/// @todo this should not be necessary here -- check it...
 	///       we should either use latitudes (angle from equator) or colatitutes (angle from pole)
@@ -169,7 +169,7 @@ void ReducedGG::computeLatitues(std::vector<double>& lats) const
 
 void ReducedGG::computePoints( const std::vector<double>& lats, std::vector<Point>& pts ) const
 {
-	ASSERT( lats.size() == rgSpec_.size() );
+	ASSERT( lats.size() == nbPtsPerLat_.size() );
 
 	pts.resize( nbDataPoints_ );
 
@@ -181,11 +181,11 @@ void ReducedGG::computePoints( const std::vector<double>& lats, std::vector<Poin
 	const double east = bbox_.east();
 
 	size_t n = 0;
-	for ( size_t j = 0;  j < rgSpec_.size(); ++j )
+	for ( size_t j = 0;  j < nbPtsPerLat_.size(); ++j )
 	{
 		if( ( lats[j] <= north && lats[j] >= south ) || isEqual(lats[j],north) || isEqual(lats[j],south) )
 		{
-			const long npts_per_lat = rgSpec_[j];
+			const long npts_per_lat = nbPtsPerLat_[j];
 
 			ASSERT( npts_per_lat > 0 );
 
@@ -209,7 +209,7 @@ void ReducedGG::computePoints( const std::vector<double>& lats, std::vector<Poin
 
 long ReducedGG::computeNPoints( const std::vector<double>& lats ) const
 {
-	ASSERT( lats.size() == rgSpec_.size() );
+	ASSERT( lats.size() == nbPtsPerLat_.size() );
 
 	RealCompare<double> isEqual(degrees_eps());
 
@@ -219,11 +219,11 @@ long ReducedGG::computeNPoints( const std::vector<double>& lats ) const
 	const double east = bbox_.east();
 
 	long n = 0;
-	for ( size_t j = 0;  j < rgSpec_.size(); ++j )
+	for ( size_t j = 0;  j < nbPtsPerLat_.size(); ++j )
 	{
 		if( ( lats[j] <= north && lats[j] >= south ) || isEqual(lats[j],north) || isEqual(lats[j],south) )
 		{
-			const long npts_per_lat = rgSpec_[j];
+			const long npts_per_lat = nbPtsPerLat_[j];
 
 			ASSERT( npts_per_lat > 0 );
 

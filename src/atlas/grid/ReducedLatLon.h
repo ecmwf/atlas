@@ -76,7 +76,7 @@ private: // members
 	BoundBox bbox_;
 	double nsIncrement_;                   ///< In degrees
 	long nptsNS_;                          ///< No of points along Y axes
-	std::vector<long>    rgSpec_;          ///< No of points per latitude
+	std::vector<long> nbPtsPerLat_;        ///< No of points per latitude
 };
 
 //-----------------------------------------------------------------------------

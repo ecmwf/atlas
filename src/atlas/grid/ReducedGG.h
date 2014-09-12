@@ -78,7 +78,7 @@ public: // methods
 
 	long gaussianNumber() const { return gaussN_;}
 
-	const std::vector<long>&  pointsPerLatitude() const { return rgSpec_;}
+	const std::vector<long>&  pointsPerLatitude() const { return nbPtsPerLat_;}
 
 	void computeLatitues(std::vector<double>&) const;
 	void computePoints( const std::vector<double>&, std::vector<Point>& pts ) const;
@@ -94,7 +94,7 @@ private: // members
 
 	BoundBox             bbox_;
 
-	std::vector<long>    rgSpec_;              ///< No of points per latitude
+	std::vector<long>    nbPtsPerLat_;         ///< No of points per latitude
 };
 
 //-----------------------------------------------------------------------------
