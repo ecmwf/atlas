@@ -51,7 +51,7 @@ public: // methods
 	virtual std::string hash() const { return hash_;}
 
 	virtual BoundBox boundingBox() const { return bbox_;}
-	virtual size_t nPoints() const { return points_.size(); }
+	virtual size_t nPoints() const;
 
 	virtual void coordinates( std::vector<double>& ) const;
 	virtual void coordinates( std::vector<Point>& ) const;
@@ -84,9 +84,6 @@ private: // members
 	double weIncrement_;             ///< In degrees
 	long nptsNS_;
 	long nptsWE_;
-
-	std::vector< Point > points_;     ///< storage of coordinate points
-
 };
 
 //-----------------------------------------------------------------------------
