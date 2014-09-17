@@ -139,7 +139,7 @@ void ideal_region_list(int N, const double& c_polar, int n_collars, double r_reg
   //  r_regions[n_collars+2] is 1.
   //  The sum of r_regions is N.
   // 
-  // real(kind=jprw),intent(out) :: r_regions(n_collars+2)
+  // real(wp),intent(out) :: r_regions(n_collars+2)
   double ideal_region_area,ideal_collar_area;
   r_regions[0] = 1.;
   if( n_collars > 0 )

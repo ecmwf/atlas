@@ -1,9 +1,9 @@
 /*
  * (C) Copyright 1996-2014 ECMWF.
- * 
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
- * In applying this licence, ECMWF does not waive the privileges and immunities 
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
@@ -37,9 +37,7 @@ public:
 
   static void read(const std::string& file_path, Mesh& mesh );
 
-  /// Write 2 mesh files in ASCII format.
-  ///  - filename.msh         will have lon-lat coordinates
-  ///  - filename.msh.sphere  will have x-y-z coordinates (sphere)
+  /// Write mesh file
   /// Extra file with available mesh information is written to a different file:
   ///  - filename_info.msh
   void write(Mesh& mesh, const std::string& file_path) const;
@@ -64,7 +62,7 @@ public:
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
-extern "C" 
+extern "C"
 {
   Gmsh* atlas__Gmsh__new ();
   void atlas__Gmsh__delete (Gmsh* This);

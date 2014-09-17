@@ -103,6 +103,7 @@ public: // methods
 
 	void set_index(int idx) { idx_ = idx; }
 
+
 	const Metadata& metadata() const { return metadata_; }
 	Metadata& metadata() { return metadata_; }
 

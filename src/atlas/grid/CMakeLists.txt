@@ -22,33 +22,25 @@ RotatedLatLon.cc
 RotatedLatLon.h
 Tesselation.cc
 Tesselation.h
+TriangleIntersection.cc
+TriangleIntersection.h
 Unstructured.cc
 Unstructured.h
 )
 
-if( ECKIT_HAVE_MATHS )
-  list( APPEND atlas_grid_srcs
-    TriangleIntersection.cc
-    TriangleIntersection.h
-  )
-endif()
-
-
 if( ECKIT_HAVE_GRIB )
-  list( APPEND atlas_grid_srcs
-	  FieldSet.cc # to be removed once field set doesn't hold a gribhandle anymore
-      FieldSet.h
-	  Grib.cc # to be abstracted into a plugin
-	  Grib.h
+list( APPEND atlas_grid_srcs
+FieldSet.cc # to be removed once field set doesn't hold a gribhandle anymore
+FieldSet.h
+Grib.cc # to be abstracted into a plugin
+Grib.h
 
 # contains  include "grib_api.h"
-RegularGG.cc  
+RegularGG.cc
 RegularGG.h
 ReducedGG.cc
 ReducedGG.h
-
-
-   )
+)
 endif()
 
 ecbuild_add_library(TARGET atlas_grid
