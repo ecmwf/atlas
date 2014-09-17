@@ -1,15 +1,22 @@
 ecbuild_add_test( TARGET      test_Grid
-			   BOOST
-               SOURCES     test_Grid.cc
-               CONDITION   HAVE_GRID AND HAVE_ECKIT_GRIB
-               LIBS        atlas_grid  
+			      BOOST
+                  SOURCES     test_Grid.cc
+                  CONDITION   HAVE_GRID AND HAVE_ECKIT_GRIB
+                  LIBS        atlas_grid  
                 )
 
 ecbuild_add_test( TARGET      test_GridSpec
-            BOOST
-               SOURCES     test_GridSpec.cc
-               CONDITION   HAVE_GRID AND HAVE_ECKIT_GRIB
-               LIBS        atlas_grid  
+                  BOOST
+                  SOURCES     test_GridSpec.cc
+                  CONDITION   HAVE_GRID AND HAVE_ECKIT_GRIB
+                  LIBS        atlas_grid  
+                )
+
+ecbuild_add_test( TARGET      test_rotatedlatlon
+                  BOOST
+                  SOURCES     test_rotatedlatlon.cc
+                  CONDITION   HAVE_GRID AND HAVE_ECKIT_GRIB
+                  LIBS        atlas_grid  
                 )
 
 #ecbuild_add_test(	TARGET      test_latlon

@@ -174,13 +174,6 @@ static void test_grib_file(const std::string& fpath)
       BOOST_CHECK_CLOSE(bbox.east(),EXPECTED_longitudeOfLastGridPointInDegrees,epsilon);
    }
 
-   // --------------------------------------------------------------------------------------
-   // compare GRID pts list with, GRIB's. Ignore Rotated lat long, not sure how to compute the point
-   // --------------------------------------------------------------------------------------
-   if (gridType == "rotated_ll"  ) {
-      std::cout << " ** ignoring ROTATED_LL pts comparison, How do we compute the pts set for rotated lat long\n";
-      return;
-   }
 
    // get GRIB points
    std::vector<Grid::Point> grib_pntlist;
