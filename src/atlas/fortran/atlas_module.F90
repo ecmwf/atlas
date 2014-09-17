@@ -51,6 +51,7 @@ use atlas_BuildParallelFields_c_binding
 use atlas_BuildHalo_c_binding
 use atlas_GenerateMesh_c_binding
 use atlas_WriteLoadBalanceReport_c_binding
+use atlas_eckit_logging_c_binding
 implicit none
 
 ! ----------------------------------------------------
@@ -76,7 +77,7 @@ INTERFACE delete
 
 ! Purpose :
 ! -------
-!   *delete* : Common interface to properly call the destructor 
+!   *delete* : Common interface to properly call the destructor
 !              of class objects
 
 ! Author :
@@ -99,10 +100,103 @@ ENUM, bind(c)
   enumerator :: out = 16
 end ENUM
 
+!------------------------------------------------------------------------------
+
+TYPE , extends(object_type) :: LogChannel_t
+contains
+  procedure, public :: config => LogChannel__config
+  procedure, public :: write => LogChannel__write
+END TYPE
+
+
+TYPE, extends(object_type) :: Log_t
+
+  character(len=1024), public :: message
+!  TYPE(LogChannel_t), private :: debug_channel
+!  TYPE(LogChannel_t), private :: info_channel
+!  TYPE(LogChannel_t), private :: warning_channel
+!  TYPE(LogChannel_t), private :: error_channel
+
+contains
+
+  procedure, public :: set_debug
+  procedure, public :: debug
+  procedure, public :: info
+
+!  procedure, public :: warning
+!  procedure, public :: error
+
+END TYPE
+
+TYPE(Log_t) :: logger
+
 ! =============================================================================
 CONTAINS
 ! =============================================================================
 
+subroutine LogChannel__config(this)
+  CLASS(LogChannel_t), intent(in) :: this
+  write(0,*) "config"
+  !call atlas__LogChannel__write(message)
+end subroutine
+
+subroutine LogChannel__write(this,message)
+  CLASS(LogChannel_t), intent(in) :: this
+  character(kind=c_char,len=*), intent(in) :: message
+  write(0,'(A)') message
+  !call atlas__LogChannel__write(message)
+end subroutine
+
+subroutine set_debug(this,level)
+  CLASS(Log_t), intent(in) :: this
+  integer , intent(in) :: level
+  call eckit__log_debug_set_level(level)
+end subroutine
+
+subroutine debug(this,message,level,endl)
+  CLASS(Log_t), intent(in) :: this
+  integer, intent(in), optional :: level
+  character(kind=c_char,len=*), intent(in), optional :: message
+  logical, intent(in), optional :: endl
+  integer :: opt_level
+  if( present(level) ) then
+    opt_level = level
+  else
+    opt_level = 1
+  endif
+  if( .not. present(endl) .or. endl ) then
+    if (present(message)) then
+      call eckit__log_debug_endl(opt_level,c_str(trim(message)))
+    else
+      call eckit__log_debug_endl(opt_level,c_str(trim(this%message)))
+    end if
+  else
+	if (present(message)) then
+	  call eckit__log_debug(opt_level,c_str(trim(message)))
+	else
+	  call eckit__log_debug(opt_level,c_str(trim(this%message)))
+	end if
+  endif
+end subroutine
+
+subroutine info(this,message,endl)
+  CLASS(Log_t), intent(in) :: this
+  character(kind=c_char,len=*), intent(in), optional :: message
+  logical, intent(in), optional :: endl
+  if( .not. present(endl) .or. endl ) then
+    if (present(message)) then
+      call eckit__log_info_endl(c_str(trim(message)))
+    else
+      call eckit__log_info_endl(c_str(trim(this%message)))
+    end if
+  else
+	if (present(message)) then
+	  call eckit__log_info(c_str(trim(message)))
+	else
+	  call eckit__log_info(c_str(trim(this%message)))
+	end if
+  endif
+end subroutine
 
 integer function real_kind(kind)
   integer :: kind

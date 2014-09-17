@@ -14,6 +14,12 @@ if( HAVE_FCTEST )
     LIBS            atlas_fortran atlas_mpl_fortran
   )
 
+  add_fctest( TARGET fctest_atlas_logging
+    LINKER_LANGUAGE Fortran
+    SOURCES         fctest_atlas_logging.F90
+    LIBS            atlas_fortran
+  )
+
 endif()
 
 set( BOOST_UNIT_TEST_FRAMEWORK_HEADER_ONLY ON )
@@ -37,6 +43,12 @@ ecbuild_add_test( TARGET test_gather
   MPI      3
   SOURCES  test_gather.cc
   LIBS     atlas
+)
+
+ecbuild_add_test( TARGET test_functionspace
+  BOOST
+  SOURCES  test_functionspace.cc
+  LIBS     atlas eckit_maths
 )
 
 ecbuild_add_test( TARGET test_gmsh

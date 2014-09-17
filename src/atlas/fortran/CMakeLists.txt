@@ -28,6 +28,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../actions/BuildEdges.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../actions/BuildDualMesh.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../actions/GenerateMesh.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../actions/WriteLoadBalanceReport.h)
+generate_fortran_bindings(FORTRAN_BINDINGS eckit_logging.h)
 
 
 ### atlas fortran lib
@@ -38,7 +39,9 @@ ecbuild_add_library( TARGET atlas_fortran
 	SOURCES
 		${FORTRAN_BINDINGS}
 		atlas_module.F90
-    atlas_C_interop.F90
+		atlas_C_interop.F90
+		eckit_logging.h
+		eckit_logging.cc
   LIBS atlas
 )
 
