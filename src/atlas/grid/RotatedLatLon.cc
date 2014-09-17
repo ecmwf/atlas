@@ -26,9 +26,9 @@ namespace grid {
 ConcreteBuilderT1<Grid,RotatedLatLon> RotatedLatLon_builder( RotatedLatLon::gridTypeStr() );
 
 RotatedLatLon::RotatedLatLon( const eckit::Params& p )
-: rotated_latitude_(0),
-  rotated_longitude_(0),
-  rotated_angle_(0),
+: south_pole_lat_(0),
+  south_pole_lon_(0),
+  south_pole_rot_angle_(0),
   nsIncrement_(0),
   weIncrement_(0),
   nptsNS_(0),
@@ -61,17 +61,17 @@ RotatedLatLon::RotatedLatLon( const eckit::Params& p )
 
    if( p.has("SouthPoleLat") )
    {
-      rotated_latitude_ = p["SouthPoleLat"];
+      south_pole_lat_ = p["SouthPoleLat"];
    }
 
    if( p.has("SouthPoleLon") )
    {
-      rotated_longitude_ = p["SouthPoleLon"];
+      south_pole_lon_ = p["SouthPoleLon"];
    }
 
    if( p.has("SouthPoleRotAngle") )
    {
-      rotated_angle_ = p["SouthPoleRotAngle"];
+      south_pole_rot_angle_ = p["SouthPoleRotAngle"];
    }
 
    ASSERT( nptsNS_ > 0 );
@@ -131,9 +131,9 @@ GridSpec RotatedLatLon::spec() const
    grid_spec.set("Ni",eckit::Value(nptsWE_));
    grid_spec.set("Nj",eckit::Value(nptsNS_));
 
-   grid_spec.set("SouthPoleLat",eckit::Value(rotated_latitude_));
-   grid_spec.set("SouthPoleLon",eckit::Value(rotated_longitude_));
-   grid_spec.set("SouthPoleRotAngle",eckit::Value(rotated_angle_));
+   grid_spec.set("SouthPoleLat",eckit::Value(south_pole_lat_));
+   grid_spec.set("SouthPoleLon",eckit::Value(south_pole_lon_));
+   grid_spec.set("SouthPoleRotAngle",eckit::Value(south_pole_rot_angle_));
    grid_spec.set("grid_lat_inc",eckit::Value(nsIncrement_));
    grid_spec.set("grid_lon_inc",eckit::Value(weIncrement_));
 

@@ -47,12 +47,12 @@ ReducedLatLon::ReducedLatLon( const eckit::Params& p )
    if( p.has("NPtsPerLat") )
    {
       ValueList nlats = p["NPtsPerLat"];
-      rgSpec_.resize(nlats.size());
+      nbPtsPerLat_.resize(nlats.size());
       for( size_t i = 0; i < nlats.size(); ++i)
-         rgSpec_[i] = nlats[i];
+         nbPtsPerLat_[i] = nlats[i];
    }
    else {
-      computeNPtsPerLat(rgSpec_);
+      computeNPtsPerLat(nbPtsPerLat_);
    }
 }
 
@@ -80,9 +80,9 @@ void ReducedLatLon::coordinates(std::vector<double>& r ) const
    const double east = bbox_.east();
 
    double plat = north;
-   for( size_t j = 0; j < rgSpec_.size() ; ++j) {
+   for( size_t j = 0; j < nbPtsPerLat_.size() ; ++j) {
 
-      long no_of_points_along_latitude = rgSpec_[j];
+      long no_of_points_along_latitude = nbPtsPerLat_[j];
       if (no_of_points_along_latitude > 0 ) {
 
          if ( isEqual(plat,north) || isEqual(plat,south) || ( plat < north && plat > south)) {
@@ -121,9 +121,9 @@ void ReducedLatLon::coordinates(std::vector<Grid::Point>& pts) const
 
    int i = 0;
    double plat = north;
-   for( size_t j = 0; j < rgSpec_.size() ; ++j) {
+   for( size_t j = 0; j < nbPtsPerLat_.size() ; ++j) {
 
-      long no_of_points_along_latitude = rgSpec_[j];
+      long no_of_points_along_latitude = nbPtsPerLat_[j];
       if (no_of_points_along_latitude > 0 ) {
 
          if ( isEqual(plat,north) || isEqual(plat,south) || ( plat < north && plat > south)) {
@@ -160,9 +160,9 @@ size_t ReducedLatLon::nPoints() const
    const double east = bbox_.east();
 
    double plat = north;
-   for( size_t j = 0; j < rgSpec_.size() ; ++j) {
+   for( size_t j = 0; j < nbPtsPerLat_.size() ; ++j) {
 
-      long no_of_points_along_latitude = rgSpec_[j];
+      long no_of_points_along_latitude = nbPtsPerLat_[j];
       if (no_of_points_along_latitude > 0 ) {
 
          if ( isEqual(plat,north) || isEqual(plat,south) || ( plat < north && plat > south)) {
@@ -184,8 +184,8 @@ size_t ReducedLatLon::nPoints() const
       plat -= nsIncrement_;
    }
 //
-//   for( size_t j = 0; j < rgSpec_.size(); ++j) {
-//      nbDataPoints += rgSpec_[j];
+//   for( size_t j = 0; j < nbPtsPerLat_.size(); ++j) {
+//      nbDataPoints += nbPtsPerLat_[j];
 //   }
    return nbDataPoints;
 }
@@ -207,7 +207,7 @@ GridSpec ReducedLatLon::spec() const
    grid_spec.set("hash",eckit::Value(hash_));
 
    grid_spec.set_bounding_box(bbox_);
-   grid_spec.set_npts_per_lat(rgSpec_);
+   grid_spec.set_npts_per_lat(nbPtsPerLat_);
 
    return grid_spec;
 }

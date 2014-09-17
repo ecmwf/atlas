@@ -23,7 +23,8 @@ namespace atlas {
 namespace grid {
 
 //-----------------------------------------------------------------------------
-
+/// RotatedLatLon is a grid where the poles are shifted
+///
 /// @note
 /// gribs use the following convention: (from Shahram)
 ///
@@ -61,9 +62,9 @@ public: // methods
 
 protected: // methods
 
-	double rotated_latitude() const { return rotated_latitude_; }
-	double rotated_longitude() const { return rotated_longitude_; }
-	double rotated_angle() const { return rotated_angle_; }
+	double rotated_latitude() const { return south_pole_lat_; }
+	double rotated_longitude() const { return south_pole_lon_; }
+	double rotated_angle() const { return south_pole_rot_angle_; }
 
 	Point latLon(size_t lat, size_t lon) const;
 	long rows() const { return nptsNS_;}
@@ -75,9 +76,9 @@ private: // members
 
 	std::string hash_;
 	BoundBox bbox_;
-	double rotated_latitude_;
-	double rotated_longitude_;
-	double rotated_angle_;
+	double south_pole_lat_;
+	double south_pole_lon_;
+	double south_pole_rot_angle_;
 
 	double nsIncrement_;             ///< In degrees
 	double weIncrement_;             ///< In degrees
