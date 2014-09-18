@@ -194,7 +194,6 @@ Rotgrid::Rotgrid(const Grid::Point& south_pole,
    lonmax_(lonMin + 360.0)
 {
    double south_pole_lat_in_radians = south_pole.lat() * degree_to_radian_ ;
-
    cossouth_pole_lat_ = cos(south_pole_lat_in_radians);
    sinsouth_pole_lat_ = sin(south_pole_lat_in_radians);
 
@@ -351,7 +350,7 @@ Grid::Point Rotgrid::rotate( const Grid::Point& point) const
    // z   ( sin(ϑ) cos(φ), -sin(ϑ) sin(φ),  cos(ϑ)) (z')
 
    double t = -(90.0 + south_pole_.lat());
-   double o = -south_pole_.lon();
+   double o = -south_pole_.lon() + south_pole_rot_angle_;
 
    double sin_t = sin(degree_to_radian_ * t);
    double cos_t = cos(degree_to_radian_ * t);
@@ -371,6 +370,12 @@ Grid::Point Rotgrid::rotate( const Grid::Point& point) const
    double ret_lat = asin(z) * radian_to_degree_;
 
    double ret_lon = atan2(y, x) * radian_to_degree_;
+
+   ret_lon -= south_pole_rot_angle_;
+
+//   // Still get a very small rounding error, round to 6 decimal places
+//   ret_lat = roundf( ret_lat * 1000000.0 )/1000000.0;
+//   ret_lon = roundf( ret_lon * 1000000.0 )/1000000.0;
 
    ret_lon -= south_pole_rot_angle_;
 
@@ -403,7 +408,7 @@ Grid::Point Rotgrid::unrotate( const Grid::Point& point) const
    // z = -sin(ϑ) x' + cos(ϑ) z'
 
    double t = -(90.0 + south_pole_.lat());
-   double o = -south_pole_.lon() + south_pole_rot_angle_;
+   double o = -south_pole_.lon();
 
    double sin_t = sin(degree_to_radian_ * t);
    double cos_t = cos(degree_to_radian_ * t);
@@ -423,9 +428,11 @@ Grid::Point Rotgrid::unrotate( const Grid::Point& point) const
    double ret_lat = asin(z)*radian_to_degree_;
    double ret_lon = atan2(y, x)*radian_to_degree_;
 
-   // Still get a very small rounding error
-   ret_lat += 0.00000000000001;
-   ret_lon += 0.00000000000001;
+   // Still get a very small rounding error, round to 6 decimal places
+   ret_lat = roundf( ret_lat * 1000000.0 )/1000000.0;
+   ret_lon = roundf( ret_lon * 1000000.0 )/1000000.0;
+
+   ret_lon +=south_pole_rot_angle_;
 
    // Make sure ret_lon is in range
    while (ret_lon < lonmin_) ret_lon += 360.0;
