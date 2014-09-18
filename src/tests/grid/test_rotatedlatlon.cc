@@ -34,6 +34,22 @@ using namespace eckit::grib;
 using namespace atlas;
 using namespace atlas::grid;
 
+static void rotgrid_py(double sp_lat,double sp_lon, double sp_rot, double lat, double lon) {
+
+  // Location of pole of rotated grid as seen in non-rotated grid: sp_lat,sp_lon ;
+  // Additional axial rotation about pole of rotated grid: sp_rot
+  // Location of chosen point in non-rotated grid  lat,lon
+  // Location of chosen point as seen in rotated grid  tr_point
+  // Location of chosen point put back into non-rotated grid tr_point2
+   RotgridPy mapping(sp_lat,sp_lon, sp_rot);
+   std::pair<double,double> tr_point = mapping.transform(lat,lon);
+   std::pair<double,double> tr_point2 = mapping.transform(tr_point.first, tr_point.second, true);
+   std::cout << " sp(" << sp_lat << "," << sp_lon << ")"
+            << " sp_rot(" << sp_rot << ") " << "(" << lat << "," << lon << ")"
+            << "    Py rotated " << "(" << tr_point.first << "," << tr_point.second << ")"
+            << " unrotated  " << "(" << tr_point2.first << "," << tr_point2.second << ")"
+            << "\n";
+}
 
 BOOST_AUTO_TEST_SUITE( TestRotatedLatLon )
 
@@ -42,36 +58,26 @@ BOOST_AUTO_TEST_CASE( test_rotated_lat_lon )
 {
    cout << "\nGrid:: ...test_rotated_lat_lon\n";
 
-   Grid::Point south_pole(37.5,177.5);
+   double sp_lat = 37.5;
+   double sp_lon = 177.5;
    double polerot = 10.0 ;
+   Grid::Point south_pole(sp_lat,sp_lon);
 
-   Grid::Point point(51.0,-3.0);
+   double lat = 51.0 ;
+   double lon = -3.0 ;
+   Grid::Point point(lat,lon);
 
-   Rotgrid mapping(south_pole, polerot);
-   Grid::Point tr_point = mapping.transform(point);
-   Grid::Point point2 = mapping.transform(tr_point, true);
-
-   std::cout << " Location of pole of rotated grid as seen in non-rotated grid: " << south_pole << "\n";
-   std::cout << " Additional axial rotation about pole of rotated grid: polerot= " << polerot << "\n";
-   std::cout << " Location of chosen point in non-rotated grid           : " << point << "\n";
-   std::cout << " Location of chosen point as seen in rotated grid       : " << tr_point << "\n";
-   std::cout << " Location of chosen point put back into non-rotated grid: " << point2 << "\n";
-//   BOOST_CHECK_CLOSE(point2.lat(),point.lat(),Grid::degrees_eps());
-//   BOOST_CHECK_CLOSE(point2.lon(),point.lon(),Grid::degrees_eps());
-
+   rotgrid_py(sp_lat,sp_lon,polerot,lat,lon);
    {
-       Grid::Point tr_point = mapping.transform(point);
-       Grid::Point point2 = mapping.transform(tr_point);
-       std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " rotate        = " << tr_point << " unrotated " << point2 << "\n";
+      Rotgrid mapping(south_pole , polerot);
+      Grid::Point rotated = mapping.magics_rotate(point);
+      Grid::Point unrotated = mapping.magics_rotate(rotated);
+      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " Magic rotated " <<  rotated << " unrotated " << unrotated << "  **ignores south pol rotation**\n";
 
-       Grid::Point rotated = mapping.magics_rotate(point);
-       Grid::Point unrotated = mapping.magics_rotate(rotated);
-       std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " Magic rotated = " <<  rotated << " unrotated " << unrotated << "\n";
-
-       Grid::Point rotated1 = mapping.rotate(point);
-       Grid::Point unrotated2 = mapping.unrotate(rotated1);
-       std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " My    rotated = " <<  rotated1 << " unrotated " << unrotated2 << "\n";
-    }
+      Grid::Point rotated1 = mapping.rotate(point);
+      Grid::Point unrotated2 = mapping.unrotate(rotated1);
+      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " My    rotated " <<  rotated1 << " unrotated " << unrotated2 << "\n";
+   }
 }
 
 
@@ -110,83 +116,88 @@ BOOST_AUTO_TEST_CASE( test_rotated_lat_lon_2 )
    //   12.0000 54.0000
    //   12.0000 53.0000
 
-   Grid::Point south_pole(18,-39);
+   double sp_lat = 18;
+   double sp_lon = -39;
+   Grid::Point south_pole(sp_lat,sp_lon);
+
    double polerot = 0.0 ;
    Rotgrid mapping(south_pole, polerot);
    {
-      Grid::Point point(12,55);
-      Grid::Point tr_point = mapping.transform(point);
-      Grid::Point point2 = mapping.transform(tr_point);
-      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " rotate        = " << tr_point << " unrotated " << point2 << "\n";
+      double lat = 12.0 ;
+      double lon = 55.0 ;
+      rotgrid_py(sp_lat,sp_lon,polerot,lat,lon);
 
+      Grid::Point point(lat,lon);
       Grid::Point rotated = mapping.magics_rotate(point);
       Grid::Point unrotated = mapping.magics_rotate(rotated);
-      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " Magic rotated = " <<  rotated << " unrotated " << unrotated << "\n";
+      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " Magic rotated " <<  rotated << " unrotated " << unrotated << "  **ignores south pol rotation**\n";
 
       Grid::Point rotated1 = mapping.rotate(point);
       Grid::Point unrotated2 = mapping.unrotate(rotated1);
-      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " My    rotated = " <<  rotated1 << " unrotated " << unrotated2 << "\n";
+      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " My    rotated " <<  rotated1 << " unrotated " << unrotated2 << "\n";
       BOOST_CHECK_CLOSE(point.lat(),unrotated2.lat(),Grid::degrees_eps());
       BOOST_CHECK_CLOSE(point.lon(),unrotated2.lon(),Grid::degrees_eps());
    }
 
    {
-      Grid::Point point(12,54);
-      Grid::Point tr_point = mapping.transform(point);
-      Grid::Point point2 = mapping.transform(tr_point);
-      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " rotate        = " << tr_point << " unrotated " << point2 << "\n";
+      double lat = 12.0 ;
+      double lon = 54.0 ;
+      rotgrid_py(sp_lat,sp_lon,polerot,lat,lon);
 
+      Grid::Point point(lat,lon);
       Grid::Point rotated = mapping.magics_rotate(point);
       Grid::Point unrotated = mapping.magics_rotate(rotated);
-      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " Magic rotated = " <<  rotated << " unrotated " << unrotated << "\n";
+      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " Magic rotated " <<  rotated << " unrotated " << unrotated << "  **ignores south pol rotation**\n";
 
       Grid::Point rotated1 = mapping.rotate(point);
       Grid::Point unrotated2 = mapping.unrotate(rotated1);
-      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " My    rotated = " <<  rotated1 << " unrotated " << unrotated2 << "\n";
+      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " My    rotated " <<  rotated1 << " unrotated " << unrotated2 << "\n";
       BOOST_CHECK_CLOSE(point.lat(),unrotated2.lat(),Grid::degrees_eps());
       BOOST_CHECK_CLOSE(point.lon(),unrotated2.lon(),Grid::degrees_eps());
    }
 
    {
-      Grid::Point point(12,53);
-      Grid::Point tr_point = mapping.transform(point);
-      Grid::Point point2 = mapping.transform(tr_point);
-      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " rotate        = " << tr_point << " unrotated " << point2 << "\n";
+      double lat = 12.0 ;
+      double lon = 53.0 ;
+      rotgrid_py(sp_lat,sp_lon,polerot,lat,lon);
 
+      Grid::Point point(lat,lon);
       Grid::Point rotated = mapping.magics_rotate(point);
       Grid::Point unrotated = mapping.magics_rotate(rotated);
-      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " Magic rotated = " <<  rotated << " unrotated " << unrotated << "\n";
+      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " Magic rotated " <<  rotated << " unrotated " << unrotated << "  **ignores south pol rotation**\n";
 
       Grid::Point rotated1 = mapping.rotate(point);
       Grid::Point unrotated2 = mapping.unrotate(rotated1);
-      std::cout <<  " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " My    rotated = " <<  rotated1 << " unrotated " << unrotated2 << "\n";
+      std::cout <<  " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " My    rotated " <<  rotated1 << " unrotated " << unrotated2 << "\n";
       BOOST_CHECK_CLOSE(point.lat(),unrotated2.lat(),Grid::degrees_eps());
       BOOST_CHECK_CLOSE(point.lon(),unrotated2.lon(),Grid::degrees_eps());
    }
 }
 
-BOOST_AUTO_TEST_CASE( test_south_pole_at_minus_90_0 )
+BOOST_AUTO_TEST_CASE( test_south_pole_at_south_pole )
 {
-   cout << "\nGrid:: ...test_south_pole_at_minus_90_0\n";
+   cout << "\nGrid:: ...test_south_pole_at_south_pole\n";
 
    // Rotation of -90,0 for south pole, should mean no change, since -90,0 is at the south pole
    // Should end up with identity matrix and hence no change, likewise for un-rotate
-   Grid::Point south_pole(-90,0);
+   double sp_lat = -90.0;
+   double sp_lon = 0;
    double polerot = 0.0 ;
+   Grid::Point south_pole(sp_lat,sp_lon);
    Rotgrid mapping(south_pole, polerot);
    {
-      Grid::Point point(12,55);
-      Grid::Point tr_point = mapping.transform(point);
-      Grid::Point point2 = mapping.transform(tr_point);
-      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " rotate        = " << tr_point << " unrotated " << point2 << "\n";
+      double lat = 12.0 ;
+      double lon = 55.0 ;
+      rotgrid_py(sp_lat,sp_lon,polerot,lat,lon);
 
+      Grid::Point point(lat,lon);
       Grid::Point rotated = mapping.magics_rotate(point);
       Grid::Point unrotated = mapping.magics_rotate(rotated);
-      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " Magic rotated = " <<  rotated << " unrotated " << unrotated << "\n";
+      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " Magic rotated " <<  rotated << " unrotated " << unrotated << "  **ignores south pol rotation**\n";
 
       Grid::Point rotated1 = mapping.rotate(point);
       Grid::Point unrotated2 = mapping.unrotate(rotated1);
-      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " My    rotated = " <<  rotated1 << " unrotated " << unrotated2 << "\n";
+      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " My    rotated " <<  rotated1 << " unrotated " << unrotated2 << "\n";
       BOOST_CHECK_CLOSE(point.lat(),rotated1.lat(),Grid::degrees_eps());
       BOOST_CHECK_CLOSE(point.lon(),rotated1.lon(),Grid::degrees_eps());
       BOOST_CHECK_CLOSE(point.lat(),unrotated2.lat(),Grid::degrees_eps());
@@ -194,27 +205,29 @@ BOOST_AUTO_TEST_CASE( test_south_pole_at_minus_90_0 )
    }
 }
 
-BOOST_AUTO_TEST_CASE( test_south_pole_at_90_0 )
+BOOST_AUTO_TEST_CASE( test_south_pole_at_north_pole )
 {
-   cout << "\nGrid:: ...test_south_pole_at_90_0\n";
+   cout << "\nGrid:: ...test_south_pole_at_north_pole\n";
    // Change south pole to north pole ?
    // Should end up with identity matrix and hence no change, likewise for un-rotate
-   Grid::Point south_pole(90,0);
+   double sp_lat = 90.0;
+   double sp_lon = 0;
    double polerot = 0.0 ;
+   Grid::Point south_pole(sp_lat,sp_lon);
    Rotgrid mapping(south_pole, polerot);
    {
-      Grid::Point point(12,55);
-      Grid::Point tr_point = mapping.transform(point);
-      Grid::Point point2 = mapping.transform(tr_point);
-      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " rotate        = " << tr_point << " unrotated " << point2 << "\n";
+      double lat = 12.0 ;
+      double lon = 55.0 ;
+      rotgrid_py(sp_lat,sp_lon,polerot,lat,lon);
 
+      Grid::Point point(lat,lon);
       Grid::Point rotated = mapping.magics_rotate(point);
       Grid::Point unrotated = mapping.magics_rotate(rotated);
-      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " Magic rotated = " <<  rotated << " unrotated " << unrotated << "\n";
+      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " Magic rotated " <<  rotated << " unrotated " << unrotated << "  **ignores south pol rotation**\n";
 
       Grid::Point rotated1 = mapping.rotate(point);
       Grid::Point unrotated2 = mapping.unrotate(rotated1);
-      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " My    rotated = " <<  rotated1 << " unrotated " << unrotated2 << "\n";
+      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " My    rotated " <<  rotated1 << " unrotated " << unrotated2 << "\n";
       BOOST_CHECK_CLOSE(-12.0,rotated1.lat(),Grid::degrees_eps());
       BOOST_CHECK_CLOSE(125.0,rotated1.lon(),Grid::degrees_eps());
       BOOST_CHECK_CLOSE(point.lat(),unrotated2.lat(),Grid::degrees_eps());
@@ -222,31 +235,34 @@ BOOST_AUTO_TEST_CASE( test_south_pole_at_90_0 )
    }
 }
 
-BOOST_AUTO_TEST_CASE( test_south_pole_at_0_0 )
+BOOST_AUTO_TEST_CASE( test_south_pole_at_equator )
 {
-   cout << "\nGrid:: ...test_south_pole_at_0_0\n";
+   cout << "\nGrid:: ...test_south_pole_at_equator\n";
 
    // Move south pole to the equator
    // Henve a poit at the south pole ,  shold move to the equator
-   Grid::Point south_pole(0,0); double polerot = 0.0 ;
+   double sp_lat = 0;
+   double sp_lon = 0;
+   double polerot = 0.0 ;
+   Grid::Point south_pole(sp_lat,sp_lon);
    Rotgrid mapping(south_pole, polerot);
    {
-      Grid::Point point(0,0);
-      Grid::Point tr_point = mapping.transform(point);
-      Grid::Point point2 = mapping.transform(tr_point);
-      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " rotate        = " << tr_point << " unrotated " << point2 << "\n";
+      double lat = 0 ;
+      double lon = 0 ;
+      rotgrid_py(sp_lat,sp_lon,polerot,lat,lon);
 
+      Grid::Point point(lat,lon);
       Grid::Point rotated = mapping.magics_rotate(point);
       Grid::Point unrotated = mapping.magics_rotate(rotated);
-      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " Magic rotated = " <<  rotated << " unrotated " << unrotated << "\n";
+      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " Magic rotated " <<  rotated << " unrotated " << unrotated << "  **ignores south pol rotation**\n";
 
       Grid::Point rotated1 = mapping.rotate(point);
       Grid::Point unrotated2 = mapping.unrotate(rotated1);
+      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " My    rotated " <<  rotated1 << " unrotated " << unrotated2 << "\n";
       BOOST_CHECK_CLOSE(rotated1.lat(),-90.0,Grid::degrees_eps());
       BOOST_CHECK_CLOSE(rotated1.lon(),  0.0,Grid::degrees_eps());
       BOOST_CHECK_CLOSE(point.lat(),unrotated2.lat(),Grid::degrees_eps());
       BOOST_CHECK_CLOSE(point.lon(),unrotated2.lon(),Grid::degrees_eps());
-      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " My    rotated = " <<  rotated1 << " unrotated " << unrotated2 << "\n";
    }
 }
 
@@ -255,22 +271,24 @@ BOOST_AUTO_TEST_CASE( test_south_pole_at_minus_90_0_rot_10 )
    cout << "\nGrid:: ...test_south_pole_at_minus_90_0_rot_10\n";
 
    // South pole at -90,0 (i.e unchanged) but with a rotation angle of 10
-   Grid::Point south_pole(-90,0);
+   double sp_lat = -90;
+   double sp_lon = 0;
    double polerot = 10.0 ;
+   Grid::Point south_pole(sp_lat,sp_lon);
    Rotgrid mapping(south_pole, polerot);
    {
-      Grid::Point point(12,55);
-      Grid::Point tr_point = mapping.transform(point);
-      Grid::Point point2 = mapping.transform(tr_point);
-      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " rotate        = " << tr_point << " unrotated " << point2 << "\n";
+      double lat = 12 ;
+      double lon = 55 ;
+      rotgrid_py(sp_lat,sp_lon,polerot,lat,lon);
 
+      Grid::Point point(lat,lon);
       Grid::Point rotated = mapping.magics_rotate(point);
       Grid::Point unrotated = mapping.magics_rotate(rotated);
-      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " Magic rotated = " <<  rotated << " unrotated " << unrotated << "\n";
+      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " Magic rotated " <<  rotated << " unrotated " << unrotated << "  **ignores south pol rotation**\n";
 
       Grid::Point rotated1 = mapping.rotate(point);
       Grid::Point unrotated2 = mapping.unrotate(rotated1);
-      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " My    rotated = " <<  rotated1 << " unrotated " << unrotated2 << "\n";
+      std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " My    rotated " <<  rotated1 << " unrotated " << unrotated2 << "\n";
       BOOST_CHECK_CLOSE(point.lat(),unrotated2.lat(),Grid::degrees_eps());
       BOOST_CHECK_CLOSE(point.lon(),unrotated2.lon(),Grid::degrees_eps());
    }

@@ -184,7 +184,6 @@ bool RotatedLatLon::same(const Grid& grid) const
 
 Rotgrid::Rotgrid(const Grid::Point& south_pole,
                  double  south_pole_rot_angle,
-                 double  nPoleGridLon,
                  double lonMin)
  : degree_to_radian_(M_PI / 180.0),
    radian_to_degree_(1/degree_to_radian_),
@@ -193,87 +192,10 @@ Rotgrid::Rotgrid(const Grid::Point& south_pole,
    lonmin_(lonMin),
    lonmax_(lonMin + 360.0)
 {
-   double south_pole_lat_in_radians = south_pole.lat() * degree_to_radian_ ;
-   cossouth_pole_lat_ = cos(south_pole_lat_in_radians);
-   sinsouth_pole_lat_ = sin(south_pole_lat_in_radians);
-
-   if (nPoleGridLon != 0)
-      south_pole_rot_angle_ = south_pole.lon()  - nPoleGridLon + 180.0;
 }
 
-Grid::Point Rotgrid::transform(const Grid::Point& point, bool inverse) const
-{
-   // calculate trig terms relating to longitude
-   double south_pole_lon = south_pole_.lon();
-
-   double lon = point.lon();
-
-   if (inverse) {
-      south_pole_lon += 180.0;
-      lon += south_pole_rot_angle_;
-   }
-
-   double lon_decr_south_pole_lon = lon - south_pole_lon;
-   double dlonr = lon_decr_south_pole_lon * degree_to_radian_;
-   double cosdlonr = cos(dlonr);
-   double sindlonr = sin(dlonr);
-
-   // likewise for latitude
-   double latr = point.lat() * degree_to_radian_;
-   double coslatr = cos(latr);
-   double sinlatr = sin(latr);
-
-   // now the main calculation
-   Grid::Point ret = rotgrid_core( cossouth_pole_lat_, sinsouth_pole_lat_,
-                          cosdlonr, sindlonr,
-                          coslatr, sinlatr );
-
-   // first is long, second is lat
-   double dlonrotr = ret.lon();
-   double latrotr = ret.lat();
-
-   double lonrot = south_pole_lon + dlonrotr * radian_to_degree_;
-   double latrot = latrotr * radian_to_degree_;
-
-   if (!inverse)
-      lonrot -= south_pole_rot_angle_;
-
-   // put lonrot back in range
-   while (lonrot < lonmin_) lonrot += 360.0;
-   while (lonrot >= lonmax_) lonrot -= 360.0;
-
-//   std::cout << "Transform returning (" << lonrot << "," <<  latrot << ")\n";
-   return  Grid::Point(latrot,lonrot);
-}
-
-Grid::Point Rotgrid::rotgrid_core(
-               double cossouth_pole_lat, double sinsouth_pole_lat,
-               double cosdlon, double sindlon, double coslat, double sinlat) const
-{
-    double cycdx = coslat * cosdlon ;
-
-    // Evaluate rotated longitude, use atan2 to convert back to degrees
-    double dlonrot = atan2(coslat * sindlon,
-                             cycdx * sinsouth_pole_lat - sinlat * cossouth_pole_lat);
-
-    // Evaluate rotated latitude
-    double sinlatrot = cycdx * cossouth_pole_lat + sinlat * sinsouth_pole_lat ;
-
-    // Uses arc sin, to convert back to degrees
-    // put in range -1 to 1 in case of slight rounding error
-    //  avoid error on calculating e.g. asin(1.00000001)
-    if (sinlatrot > 1.0)  sinlatrot = 1.0;
-    if (sinlatrot < -1.0)  sinlatrot = -1.0;
-
-    double latrot = asin(sinlatrot);
-
-    return Grid::Point(latrot,dlonrot);
-}
-
-
-// For reference, this what magics uses, it appears as if it originated form fortran
-// Unfortunately there is no reference.
-
+// For reference, this what magics uses, it appears as if it originated from fortran code
+// Unfortunately there is no reference. Also tests show unrotate is broken
 Grid::Point Rotgrid::magics_rotate( const Grid::Point& point ) const
 {
    double lat_y = point.lat();
@@ -340,6 +262,7 @@ Grid::Point Rotgrid::rotate( const Grid::Point& point) const
    double yd = sin(lonr)*cos(latr);
    double zd = sin(latr);
 
+   // P' = Rot(y) * Rot(z) * Pv
    // x   (  cos(ϑ), 0, -sin(ϑ)) ( cos(φ), -sin(φ), 0) (x')
    // y = (  0     , 1,  0     ) ( sin(φ), cos(φ),  0) (y')
    // z   ( sin(ϑ), 0,   cos(ϑ)) ( 0     , 0     ,  1) (z')
@@ -368,14 +291,13 @@ Grid::Point Rotgrid::rotate( const Grid::Point& point) const
    if (z > 1.0)  z = 1.0;
    if (z < -1.0) z = -1.0;
    double ret_lat = asin(z) * radian_to_degree_;
-
    double ret_lon = atan2(y, x) * radian_to_degree_;
 
    ret_lon -= south_pole_rot_angle_;
 
-//   // Still get a very small rounding error, round to 6 decimal places
-//   ret_lat = roundf( ret_lat * 1000000.0 )/1000000.0;
-//   ret_lon = roundf( ret_lon * 1000000.0 )/1000000.0;
+   // Still get a very small rounding error, round to 6 decimal places
+   ret_lat = roundf( ret_lat * 1000000.0 )/1000000.0;
+   ret_lon = roundf( ret_lon * 1000000.0 )/1000000.0;
 
    ret_lon -= south_pole_rot_angle_;
 
@@ -395,6 +317,7 @@ Grid::Point Rotgrid::unrotate( const Grid::Point& point) const
    double yd = sin(lonr)*cos(latr);
    double zd = sin(latr);
 
+   // P' = Rot(z) * Rot(y) * Pv
    // Since we're undoing the rotation described in the definition of the coordinate system,
    // we first rotate by ϑ = -(90 + south_pole_lat) around the y' axis (along the rotated Greenwich meridian)
    // and then by φ = -south_pole_lon = +15 degrees around the z axis):
@@ -442,6 +365,93 @@ Grid::Point Rotgrid::unrotate( const Grid::Point& point) const
 }
 
 //-----------------------------------------------------------------------------
+
+RotgridPy::RotgridPy(double south_pole_lat, double south_pole_lon,
+                 double  south_pole_rot_angle,
+                 double  nPoleGridLon,
+                 double lonMin)
+ : degree_to_radian_(M_PI / 180.0),
+   radian_to_degree_(1/degree_to_radian_),
+   south_pole_lat_(south_pole_lat),
+   south_pole_lon_(south_pole_lon),
+   south_pole_rot_angle_(south_pole_rot_angle),
+   lonmin_(lonMin),
+   lonmax_(lonMin + 360.0)
+{
+   double south_pole_lat_in_radians = south_pole_lat * degree_to_radian_ ;
+   cossouth_pole_lat_ = cos(south_pole_lat_in_radians);
+   sinsouth_pole_lat_ = sin(south_pole_lat_in_radians);
+
+   if (nPoleGridLon != 0)
+      south_pole_rot_angle_ = south_pole_lon - nPoleGridLon + 180.0;
+}
+
+std::pair<double,double> RotgridPy::transform(double lat, double lon, bool inverse) const
+{
+   // calculate trig terms relating to longitude
+   double south_pole_lon = south_pole_lon_;
+
+   if (inverse) {
+      south_pole_lon += 180.0;
+      lon += south_pole_rot_angle_;
+   }
+
+   double lon_decr_south_pole_lon = lon - south_pole_lon;
+   double dlonr = lon_decr_south_pole_lon * degree_to_radian_;
+   double cosdlonr = cos(dlonr);
+   double sindlonr = sin(dlonr);
+
+   // likewise for latitude
+   double latr = lat * degree_to_radian_;
+   double coslatr = cos(latr);
+   double sinlatr = sin(latr);
+
+   // now the main calculation
+   std::pair<double,double> ret = rotgrid_core( cossouth_pole_lat_, sinsouth_pole_lat_,
+                          cosdlonr, sindlonr,
+                          coslatr, sinlatr );
+
+   // first is long, second is lat
+   double latrotr = ret.first;
+   double dlonrotr = ret.second;
+
+   double lonrot = south_pole_lon + dlonrotr * radian_to_degree_;
+   double latrot = latrotr * radian_to_degree_;
+
+   if (!inverse)
+      lonrot -= south_pole_rot_angle_;
+
+   // put lonrot back in range
+   while (lonrot < lonmin_) lonrot += 360.0;
+   while (lonrot >= lonmax_) lonrot -= 360.0;
+
+//   std::cout << "Transform returning (" << lonrot << "," <<  latrot << ")\n";
+   return std::pair<double,double>(latrot,lonrot);
+}
+
+std::pair<double,double> RotgridPy::rotgrid_core(
+               double cossouth_pole_lat, double sinsouth_pole_lat,
+               double cosdlon, double sindlon, double coslat, double sinlat) const
+{
+    double cycdx = coslat * cosdlon ;
+
+    // Evaluate rotated longitude, use atan2 to convert back to degrees
+    double dlonrot = atan2(coslat * sindlon,
+                             cycdx * sinsouth_pole_lat - sinlat * cossouth_pole_lat);
+
+    // Evaluate rotated latitude
+    double sinlatrot = cycdx * cossouth_pole_lat + sinlat * sinsouth_pole_lat ;
+
+    // Uses arc sin, to convert back to degrees
+    // put in range -1 to 1 in case of slight rounding error
+    //  avoid error on calculating e.g. asin(1.00000001)
+    if (sinlatrot > 1.0)  sinlatrot = 1.0;
+    if (sinlatrot < -1.0)  sinlatrot = -1.0;
+
+    double latrot = asin(sinlatrot);
+
+    return std::pair<double,double>(latrot,dlonrot);
+}
 
 } // namespace grid
 } // namespace eckit
