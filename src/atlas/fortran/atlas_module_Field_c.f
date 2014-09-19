@@ -38,7 +38,7 @@ function Field__function_space(this) result(function_space)
   function_space%private%object = atlas__Field__function_space(this%private%object)
 end function Field__function_space
 
-subroutine Field__access_data1_integer(this, field) 
+subroutine Field__access_data1_integer(this, field)
   class(Field_type), intent(in) :: this
   integer, pointer, intent(out) :: field(:)
   integer, pointer :: field_bounds(:)
@@ -46,7 +46,7 @@ subroutine Field__access_data1_integer(this, field)
   type(c_ptr) :: field_bounds_c_ptr
   integer(c_int) :: field_rank
   integer :: field_size, jbound
-  call atlas__Field__data_boundsf_int(this%private%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  call atlas__Field__data_shapef_int(this%private%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
   field_size = 1
   do jbound=1,field_rank
@@ -55,31 +55,31 @@ subroutine Field__access_data1_integer(this, field)
   call C_F_POINTER ( field_c_ptr , field , (/field_size/) )
 end subroutine Field__access_data1_integer
 
-subroutine Field__access_data2_integer(this, field) 
+subroutine Field__access_data2_integer(this, field)
   class(Field_type), intent(in) :: this
   integer, pointer, intent(out) :: field(:,:)
   integer, pointer :: field_bounds(:)
   type(c_ptr) :: field_c_ptr
   type(c_ptr) :: field_bounds_c_ptr
   integer(c_int) :: field_rank
-  call atlas__Field__data_boundsf_int(this%private%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  call atlas__Field__data_shapef_int(this%private%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
   call C_F_POINTER ( field_c_ptr , field , field_bounds(field_rank-1:field_rank) )
 end subroutine Field__access_data2_integer
 
-subroutine Field__access_data3_integer(this, field) 
+subroutine Field__access_data3_integer(this, field)
   class(Field_type), intent(in) :: this
   integer, pointer, intent(out) :: field(:,:,:)
   integer, pointer :: field_bounds(:)
   type(c_ptr) :: field_c_ptr
   type(c_ptr) :: field_bounds_c_ptr
   integer(c_int) :: field_rank
-  call atlas__Field__data_boundsf_int(this%private%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  call atlas__Field__data_shapef_int(this%private%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
   call C_F_POINTER ( field_c_ptr , field , field_bounds(field_rank-2:field_rank) )
 end subroutine Field__access_data3_integer
 
-subroutine Field__access_data1_real32(this, field) 
+subroutine Field__access_data1_real32(this, field)
   class(Field_type), intent(in) :: this
   real(c_float), pointer, intent(out) :: field(:)
   integer, pointer :: field_bounds(:)
@@ -87,7 +87,7 @@ subroutine Field__access_data1_real32(this, field)
   type(c_ptr) :: field_bounds_c_ptr
   integer(c_int) :: field_rank
   integer :: field_size, jbound
-  call atlas__Field__data_boundsf_float(this%private%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  call atlas__Field__data_shapef_float(this%private%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
   field_size = 1
   do jbound=1,field_rank
@@ -96,31 +96,31 @@ subroutine Field__access_data1_real32(this, field)
   call C_F_POINTER ( field_c_ptr , field , (/field_size/) )
 end subroutine Field__access_data1_real32
 
-subroutine Field__access_data2_real32(this, field) 
+subroutine Field__access_data2_real32(this, field)
   class(Field_type), intent(in) :: this
   real(c_float), pointer, intent(out) :: field(:,:)
   integer, pointer :: field_bounds(:)
   type(c_ptr) :: field_c_ptr
   type(c_ptr) :: field_bounds_c_ptr
   integer(c_int) :: field_rank
-  call atlas__Field__data_boundsf_float(this%private%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  call atlas__Field__data_shapef_float(this%private%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
   call C_F_POINTER ( field_c_ptr , field , field_bounds(field_rank-1:field_rank) )
 end subroutine Field__access_data2_real32
 
-subroutine Field__access_data3_real32(this, field) 
+subroutine Field__access_data3_real32(this, field)
   class(Field_type), intent(in) :: this
   real(c_float), pointer, intent(out) :: field(:,:,:)
   integer, pointer :: field_bounds(:)
   type(c_ptr) :: field_c_ptr
   type(c_ptr) :: field_bounds_c_ptr
   integer(c_int) :: field_rank
-  call atlas__Field__data_boundsf_float(this%private%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  call atlas__Field__data_shapef_float(this%private%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
   call C_F_POINTER ( field_c_ptr , field , field_bounds(field_rank-2:field_rank) )
 end subroutine Field__access_data3_real32
 
-subroutine Field__access_data1_real64(this, field) 
+subroutine Field__access_data1_real64(this, field)
   class(Field_type), intent(in) :: this
   real(c_double), pointer, intent(out) :: field(:)
   integer, pointer :: field_bounds(:)
@@ -128,7 +128,7 @@ subroutine Field__access_data1_real64(this, field)
   type(c_ptr) :: field_bounds_c_ptr
   integer(c_int) :: field_rank
   integer :: field_size, jbound
-  call atlas__Field__data_boundsf_double(this%private%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  call atlas__Field__data_shapef_double(this%private%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
   field_size = 1
   do jbound=1,field_rank
@@ -137,26 +137,26 @@ subroutine Field__access_data1_real64(this, field)
   call C_F_POINTER ( field_c_ptr , field , (/field_size/) )
 end subroutine Field__access_data1_real64
 
-subroutine Field__access_data2_real64(this, field) 
+subroutine Field__access_data2_real64(this, field)
   class(Field_type), intent(in) :: this
   real(c_double), pointer, intent(out) :: field(:,:)
   integer, pointer :: field_bounds(:)
   type(c_ptr) :: field_c_ptr
   type(c_ptr) :: field_bounds_c_ptr
   integer(c_int) :: field_rank
-  call atlas__Field__data_boundsf_double(this%private%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  call atlas__Field__data_shapef_double(this%private%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
   call C_F_POINTER ( field_c_ptr , field , field_bounds(field_rank-1:field_rank) )
 end subroutine Field__access_data2_real64
 
-subroutine Field__access_data3_real64(this, field) 
+subroutine Field__access_data3_real64(this, field)
   class(Field_type), intent(in) :: this
   real(c_double), pointer, intent(out) :: field(:,:,:)
   integer, pointer :: field_bounds(:)
   type(c_ptr) :: field_c_ptr
   type(c_ptr) :: field_bounds_c_ptr
   integer(c_int) :: field_rank
-  call atlas__Field__data_boundsf_double(this%private%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  call atlas__Field__data_shapef_double(this%private%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
   call C_F_POINTER ( field_c_ptr , field , field_bounds(field_rank-2:field_rank) )
 end subroutine Field__access_data3_real64
@@ -168,7 +168,7 @@ subroutine Field__access_data3_real64_bounds(this, field, field_bounds)
   type(c_ptr) :: field_c_ptr
   type(c_ptr) :: field_bounds_c_ptr
   integer(c_int) :: field_rank
-  call atlas__Field__data_boundsf_double(this%private%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+  call atlas__Field__data_shapef_double(this%private%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   call C_F_POINTER ( field_c_ptr , field , field_bounds )
 end subroutine Field__access_data3_real64_bounds
 
@@ -181,9 +181,9 @@ function Field__data1_wp(this) result(field)
   integer(c_int) :: field_rank
   integer :: field_size, jbound
   if( wp == c_double ) then
-    call atlas__Field__data_boundsf_double(this%private%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+    call atlas__Field__data_shapef_double(this%private%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   else if (wp == c_float ) then
-    call atlas__Field__data_boundsf_float(this%private%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+    call atlas__Field__data_shapef_float(this%private%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   end if
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
   field_size = 1
@@ -202,9 +202,9 @@ function Field__data2_wp(this) result(field)
   integer(c_int) :: field_rank
   integer :: field_size, jbound
   if( wp == c_double ) then
-    call atlas__Field__data_boundsf_double(this%private%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+    call atlas__Field__data_shapef_double(this%private%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   else if (wp == c_float ) then
-    call atlas__Field__data_boundsf_float(this%private%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+    call atlas__Field__data_shapef_float(this%private%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   end if
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
   if (size(field_bounds) < 2) then
@@ -232,9 +232,9 @@ function Field__data3_wp(this) result(field)
   integer(c_int) :: field_rank
   integer :: field_size, jbound
   if( wp == c_double ) then
-    call atlas__Field__data_boundsf_double(this%private%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+    call atlas__Field__data_shapef_double(this%private%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   else if (wp == c_float ) then
-    call atlas__Field__data_boundsf_float(this%private%object, field_c_ptr, field_bounds_c_ptr, field_rank)
+    call atlas__Field__data_shapef_float(this%private%object, field_c_ptr, field_bounds_c_ptr, field_rank)
   end if
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
   if (size(field_bounds) < 3) then

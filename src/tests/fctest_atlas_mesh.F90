@@ -98,8 +98,8 @@ END_TEST
 
 TEST( test_field_size )
   integer, pointer :: fdata_int(:)
-  real(kind=c_float),  pointer :: fdata_real32(:)
-  real(kind=c_double), pointer :: fdata_real64(:)
+  real(c_float),  pointer :: fdata_real32(:)
+  real(c_double), pointer :: fdata_real64(:)
   call func_space%create_field("field_0",0,integer_kind())
   field = func_space%field("field_0")
   call field%access_data(fdata_int)
@@ -134,8 +134,8 @@ END_TEST
 ! -----------------------------------------------------------------------------
 
 TEST( test_prismatic_function_space )
-  real(kind=c_double), pointer :: scalar(:,:)
-  real(kind=c_float), pointer :: vector(:,:,:)
+  real(c_double), pointer :: scalar(:,:)
+  real(c_float), pointer :: vector(:,:,:)
   call mesh%add_function_space( new_PrismaticFunctionSpace("prismatic", "P1-C", 5, 10 ) ) 
 
   func_space = mesh%function_space("prismatic")

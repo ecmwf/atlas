@@ -47,6 +47,30 @@ CONTAINS
 ! =============================================================================
 
 
+subroutine get_c_arguments(argc,argv)
+  integer(c_int), intent(out) :: argc
+  type(c_ptr), intent(out) :: argv(:)
+  character(kind=c_char,len=1), save, target :: args(255)
+  character(kind=c_char,len=5), save, target :: cmd
+  character(kind=c_char,len=255) :: arg
+  integer :: iarg, arglen, pos, ich, argpos
+  argc = command_argument_count()+1
+  cmd = "cmd"//c_null_char
+  argv(1) = c_loc(cmd(1:1))
+  pos = 1
+  do iarg=1,argc
+    argpos = pos
+    call get_command_argument(iarg, arg )
+    arglen = len_trim(arg)
+    do ich=1,arglen
+      args(pos) = arg(ich:ich)
+      pos = pos+1
+    end do
+    args(pos) = c_null_char;  pos = pos+1
+    args(pos) = " ";          pos = pos+1
+    argv(iarg+1) = c_loc(args(argpos))
+  enddo
+end subroutine
 
 
 ! -----------------------------------------------------------------------------

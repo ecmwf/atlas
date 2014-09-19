@@ -22,10 +22,10 @@
 #include "eckit/config/Resource.h"
 #include "eckit/runtime/Tool.h"
 
-#include "atlas/io/Gmsh.hpp"
-#include "atlas/mesh/Mesh.hpp"
-#include "atlas/mesh/Field.hpp"
-#include "atlas/mesh/FunctionSpace.hpp"
+#include "atlas/io/Gmsh.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/Field.h"
+#include "atlas/mesh/FunctionSpace.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -69,13 +69,13 @@ void GmshLs::run()
     FieldT<double>& coords = nodes.field<double>( "coordinates" );
     FieldT<int>& glb_idx   = nodes.field<int>( "glb_idx" );
 
-    size_t nb_nodes = nodes.extents()[0];
+    size_t nb_nodes = nodes.shape(0);
 
     Log::info() << "nb_nodes = " << nb_nodes << std::endl;
 
-    if( mesh.has_function_space("triags") ) Log::info() << "nb_triags = " << mesh.function_space( "triags" ).extents()[0] << std::endl;
-    if( mesh.has_function_space("quads") )  Log::info() << "nb_quads = "  << mesh.function_space( "quads" ).extents()[0] << std::endl;
-    if( mesh.has_function_space("edges") )  Log::info() << "nb_edges = "  << mesh.function_space( "edges" ).extents()[0] << std::endl;
+    if( mesh.has_function_space("triags") ) Log::info() << "nb_triags = " << mesh.function_space( "triags" ).shape(0) << std::endl;
+    if( mesh.has_function_space("quads") )  Log::info() << "nb_quads = "  << mesh.function_space( "quads" ).shape(0) << std::endl;
+    if( mesh.has_function_space("edges") )  Log::info() << "nb_edges = "  << mesh.function_space( "edges" ).shape(0) << std::endl;
 
 }
 

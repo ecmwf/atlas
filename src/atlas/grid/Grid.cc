@@ -12,7 +12,7 @@
 #include "eckit/memory/Builder.h"
 #include "eckit/config/Resource.h"
 
-#include "atlas/mesh/Mesh.hpp"
+#include "atlas/mesh/Mesh.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Tesselation.h"
 #include "atlas/grid/GridSpecParams.h"
@@ -48,8 +48,8 @@ Mesh& Grid::mesh()
 {
     if( !mesh_ )
     {
-        mesh_.reset( new Mesh );
-        Tesselation::build_mesh( *this, *mesh_ );
+		mesh_.reset( new Mesh() );
+		Tesselation::build_mesh( *this, *mesh_ );
     }
 
     return *mesh_;
@@ -59,8 +59,8 @@ const Mesh& Grid::mesh() const
 {
      if( !mesh_ )
      {
-         mesh_.reset( new Mesh );
-         Tesselation::build_mesh( *this, *mesh_ );
+		 mesh_.reset( new Mesh() );
+		 Tesselation::build_mesh( *this, *mesh_ );
      }
 
      return *mesh_;

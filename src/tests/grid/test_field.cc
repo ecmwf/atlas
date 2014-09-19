@@ -11,8 +11,8 @@
 #include "eckit/log/Log.h"
 #include "eckit/runtime/Tool.h"
 
-#include "atlas/mpl/MPL.hpp"
-#include "atlas/mesh/FunctionSpace.hpp"
+#include "atlas/mpl/MPL.h"
+#include "atlas/mesh/FunctionSpace.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/RegularLatLon.h"
 #include "atlas/grid/FieldSet.h"
@@ -79,23 +79,23 @@ void TestField::test_constructor()
 
     // create field handle
 
-    FieldHandle::Ptr f( new FieldHandle( g, nodes.field<double>( sname ) ) );
+	Field::Ptr f( &nodes.field<double>( sname ) );
 
     ASSERT( f );
 
-    FieldHandle::Vector fields;
+	Field::Vector fields;
     fields.push_back(f);
 
     FieldSet fs(fields);
     
     // iterate over the fields
-    for (FieldHandle::Vector::iterator it = fs.fields().begin(); it != fs.fields().end(); ++it)
+	for (Field::Vector::iterator it = fs.fields().begin(); it != fs.fields().end(); ++it)
     {
-        // extract and test the data
-        FieldHandle::Data& d = (*it)->data();
-        for (size_t i = 0; i < ref_data.size(); i++)
+		ArrayView<double> vdata( **it );
+
+		for( size_t i = 0; i < ref_data.size(); ++i )
         {
-            ASSERT(ref_data[i] == d[i]);
+			ASSERT( ref_data[i] == vdata(i) );
         }   
     }
 }

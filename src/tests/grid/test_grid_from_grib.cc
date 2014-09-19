@@ -13,7 +13,6 @@
 #include <algorithm>
 
 #define BOOST_TEST_MODULE TestGrid
-#define BOOST_UNIT_TEST_FRAMEWORK_HEADER_ONLY
 #include "ecbuild/boost_test_framework.h"
 
 #include "eckit/types/FloatCompare.h"

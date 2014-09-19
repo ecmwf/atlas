@@ -46,12 +46,12 @@ const Point_3 origin = Point_3(CGAL::ORIGIN);
 
 //------------------------------------------------------------------------------------------------------
 
-#include "atlas/mesh/Field.hpp"
-#include "atlas/util/ArrayView.hpp"
-#include "atlas/util/IndexView.hpp"
-#include "atlas/mesh/FunctionSpace.hpp"
-#include "atlas/mesh/Mesh.hpp"
-#include "atlas/mesh/Parameters.hpp"
+#include "atlas/mesh/Field.h"
+#include "atlas/util/ArrayView.h"
+#include "atlas/util/IndexView.h"
+#include "atlas/mesh/FunctionSpace.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/Parameters.h"
 
 #include "atlas/grid/PointSet.h"
 #include "atlas/grid/Tesselation.h"
@@ -87,7 +87,7 @@ Polyhedron_3* create_convex_hull_from_points( const std::vector< Point3 >& pts )
     return poly;
 }
 
-void cgal_polyhedron_to_atlas_mesh(  atlas::Mesh& mesh, Polyhedron_3& poly, PointSet& points )
+void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, PointSet& points )
 {
     bool ensure_outward_normals = true;
 
@@ -97,7 +97,7 @@ void cgal_polyhedron_to_atlas_mesh(  atlas::Mesh& mesh, Polyhedron_3& poly, Poin
 
     FunctionSpace& nodes = mesh.function_space( "nodes" );
 
-    ASSERT( points.size() == nodes.extents()[0] );
+    ASSERT( points.size() == nodes.shape(0) );
 
     const size_t nb_nodes = points.size();
 
@@ -184,7 +184,7 @@ Polyhedron_3* create_convex_hull_from_points( const std::vector< Point3 >& pts )
 	throw NotImplemented( "CGAL package not found -- triangulation is disabled", Here() );
 }
 
-void cgal_polyhedron_to_atlas_mesh(  atlas::Mesh& mesh, Polyhedron_3& poly, PointSet& points )
+void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, PointSet& points )
 {
 	throw NotImplemented( "CGAL package not found -- triangulation is disabled", Here() );
 }
@@ -209,7 +209,7 @@ void Tesselation::tesselate( Grid& g )
 	MeshCache::add( uid, mesh );
 }
 
-void Tesselation::tesselate( atlas::Mesh& mesh )
+void Tesselation::tesselate( Mesh& mesh )
 {
     // don't tesselate meshes already with triags or quads
     if( mesh.has_function_space("triags") || mesh.has_function_space("quads") )
@@ -250,7 +250,7 @@ void Tesselation::tesselate( atlas::Mesh& mesh )
 
 //------------------------------------------------------------------------------------------------------
 
-void Tesselation::create_mesh_structure( atlas::Mesh& mesh, const size_t nb_nodes )
+void Tesselation::create_mesh_structure( Mesh& mesh, const size_t nb_nodes )
 {
     // create / ensure mesh has coordinates
 
@@ -265,7 +265,7 @@ void Tesselation::create_mesh_structure( atlas::Mesh& mesh, const size_t nb_node
 
     FunctionSpace& nodes = mesh.function_space( "nodes" );
 
-    ASSERT(  nodes.extents()[0] == nb_nodes );
+    ASSERT(  nodes.shape(0) == nb_nodes );
 
     // create / ensure mesh has coordinates
 
@@ -285,7 +285,7 @@ void Tesselation::create_mesh_structure( atlas::Mesh& mesh, const size_t nb_node
 
 //------------------------------------------------------------------------------------------------------
 
-void Tesselation::generate_latlon_points( atlas::Mesh& mesh,
+void Tesselation::generate_latlon_points( Mesh& mesh,
                                           const size_t& nlats,
                                           const size_t& nlong )
 {
@@ -295,7 +295,7 @@ void Tesselation::generate_latlon_points( atlas::Mesh& mesh,
 
     FunctionSpace& nodes = mesh.function_space( "nodes" );
 
-    ASSERT(  nodes.extents()[0] == nb_nodes );
+    ASSERT(  nodes.shape(0) == nb_nodes );
 
     ArrayView<double,2> coords  ( nodes.field("coordinates") );
     ArrayView<double,2> latlon  ( nodes.field("latlon") );
@@ -346,7 +346,7 @@ void Tesselation::generate_latlon_points( atlas::Mesh& mesh,
 
 //------------------------------------------------------------------------------------------------------
 
-void Tesselation::generate_latlon_grid( atlas::Mesh& mesh, const size_t& nlats, const size_t& nlong )
+void Tesselation::generate_latlon_grid( Mesh& mesh, const size_t& nlats, const size_t& nlong )
 {
     const size_t nb_nodes = (nlats+1) * (nlong+1);
 
@@ -354,7 +354,7 @@ void Tesselation::generate_latlon_grid( atlas::Mesh& mesh, const size_t& nlats, 
 
     FunctionSpace& nodes = mesh.function_space( "nodes" );
 
-    ASSERT( nodes.extents()[0] == nb_nodes );
+    ASSERT( nodes.shape(0) == nb_nodes );
 
     ArrayView<double,2> coords  ( nodes.field("coordinates") );
     ArrayView<double,2> latlon  ( nodes.field("latlon") );
@@ -421,12 +421,12 @@ void Tesselation::create_cell_centres( Mesh& mesh )
     FunctionSpace& nodes     = mesh.function_space( "nodes" );
     ArrayView<double,2> coords  ( nodes.field("coordinates") );
 
-    const size_t nb_nodes = nodes.extents()[0];
+    const size_t nb_nodes = nodes.shape(0);
 
     FunctionSpace& triags      = mesh.function_space( "triags" );
     IndexView<int,2> triag_nodes ( triags.field( "nodes" ) );
 
-    const size_t nb_triags = triags.extents()[0];
+    const size_t nb_triags = triags.shape(0);
 
     ArrayView<double,2> triags_centres ( triags.create_field<double>("centre",3) );
 
@@ -488,13 +488,13 @@ void Tesselation::build_mesh( const Grid& grid, Mesh& mesh )
 
     FunctionSpace& nodes = mesh.function_space( "nodes" );
 
-    ASSERT(  nodes.extents()[0] == npts );
+    ASSERT(  nodes.shape(0) == npts );
 
     ArrayView<double,2> coords  ( nodes.field("coordinates") );
     ArrayView<double,2> latlon  ( nodes.field("latlon") );
     ArrayView<int,   1> glb_idx ( nodes.field("glb_idx") );
 
-    ASSERT( npts == nodes.extents()[0] );
+    ASSERT( npts == nodes.shape(0) );
 
 	std::vector<Grid::Point> ll(npts);
 	grid.coordinates(ll);

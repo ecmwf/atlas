@@ -12,22 +12,24 @@ function(generate_fortran_bindings output filename)
 	set_source_files_properties(${outfile} PROPERTIES GENERATED TRUE)
 endfunction()
 
-generate_fortran_bindings(FORTRAN_BINDINGS ../mesh/Field.hpp)
-generate_fortran_bindings(FORTRAN_BINDINGS ../mesh/FieldSet.hpp)
-generate_fortran_bindings(FORTRAN_BINDINGS ../mesh/FunctionSpace.hpp)
-generate_fortran_bindings(FORTRAN_BINDINGS ../mesh/Mesh.hpp)
-generate_fortran_bindings(FORTRAN_BINDINGS ../mesh/Metadata.hpp)
-generate_fortran_bindings(FORTRAN_BINDINGS ../mpl/HaloExchange.hpp)
-generate_fortran_bindings(FORTRAN_BINDINGS ../mpl/GatherScatter.hpp)
-generate_fortran_bindings(FORTRAN_BINDINGS ../mpl/Checksum.hpp)
-generate_fortran_bindings(FORTRAN_BINDINGS ../io/Gmsh.hpp)
-generate_fortran_bindings(FORTRAN_BINDINGS ../actions/BuildParallelFields.hpp)
-generate_fortran_bindings(FORTRAN_BINDINGS ../actions/BuildPeriodicBoundaries.hpp)
-generate_fortran_bindings(FORTRAN_BINDINGS ../actions/BuildHalo.hpp)
-generate_fortran_bindings(FORTRAN_BINDINGS ../actions/BuildEdges.hpp)
-generate_fortran_bindings(FORTRAN_BINDINGS ../actions/BuildDualMesh.hpp)
-generate_fortran_bindings(FORTRAN_BINDINGS ../actions/GenerateMesh.hpp)
-generate_fortran_bindings(FORTRAN_BINDINGS ../actions/WriteLoadBalanceReport.hpp)
+generate_fortran_bindings(FORTRAN_BINDINGS ../mesh/Field.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../mesh/FieldSet.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../mesh/FunctionSpace.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../mesh/Mesh.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../mesh/Metadata.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../mpl/HaloExchange.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../mpl/GatherScatter.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../mpl/Checksum.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../io/Gmsh.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../actions/BuildParallelFields.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../actions/BuildPeriodicBoundaries.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../actions/BuildHalo.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../actions/BuildEdges.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../actions/BuildDualMesh.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../actions/GenerateMesh.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../actions/WriteLoadBalanceReport.h)
+generate_fortran_bindings(FORTRAN_BINDINGS eckit_logging.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas.h)
 
 
 ### atlas fortran lib
@@ -38,8 +40,11 @@ ecbuild_add_library( TARGET atlas_fortran
 	SOURCES
 		${FORTRAN_BINDINGS}
 		atlas_module.F90
-    atlas_C_interop.F90
-  LIBS atlas
+		atlas_mpl_module.F90
+		atlas_C_interop.F90
+		eckit_logging.h
+		eckit_logging.cc
+  LIBS atlas ${ATLAS_MPI_FORTRAN_LIBRARIES}
 )
 
 add_custom_target( atlas_fortran_inc SOURCES

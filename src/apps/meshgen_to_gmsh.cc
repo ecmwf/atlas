@@ -1,9 +1,9 @@
 /*
  * (C) Copyright 1996-2014 ECMWF.
- * 
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
- * In applying this licence, ECMWF does not waive the privileges and immunities 
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
@@ -22,15 +22,15 @@
 #include "eckit/runtime/Tool.h"
 #include "eckit/filesystem/PathName.h"
 
-#include "atlas/io/Gmsh.hpp"
-#include "atlas/actions/GenerateMesh.hpp"
-#include "atlas/actions/BuildEdges.hpp"
-#include "atlas/actions/BuildPeriodicBoundaries.hpp"
-#include "atlas/actions/BuildHalo.hpp"
-#include "atlas/actions/BuildParallelFields.hpp"
-#include "atlas/actions/BuildDualMesh.hpp"
-#include "atlas/mpl/MPL.hpp"
-#include "atlas/mesh/Mesh.hpp"
+#include "atlas/io/Gmsh.h"
+#include "atlas/actions/GenerateMesh.h"
+#include "atlas/actions/BuildEdges.h"
+#include "atlas/actions/BuildPeriodicBoundaries.h"
+#include "atlas/actions/BuildHalo.h"
+#include "atlas/actions/BuildParallelFields.h"
+#include "atlas/actions/BuildDualMesh.h"
+#include "atlas/mpl/MPL.h"
+#include "atlas/mesh/Mesh.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -49,12 +49,13 @@ public:
   Meshgen2Gmsh(int argc,char **argv): eckit::Tool(argc,argv)
   {
     rgg_nlon   = Resource< std::vector<long> > ( "-rgg_nlon", std::vector<long>() );
-    nlon_nlat  = Resource< std::vector<long> > ( "-reg", std::vector<long>() );
+    reg_nlon_nlat  = Resource< std::vector<long> > ( "-reg", std::vector<long>() );
+    fgg_nlon_nlat  = Resource< std::vector<long> > ( "-fgg", std::vector<long>() );
     identifier = Resource< std::string       > ( "-rgg", "" );
     edges      = Resource< bool > ( "-edges", false );
     halo       = Resource< int > ( "-halo", 0 );
 
-    if( identifier.empty() && nlon_nlat.empty() && rgg_nlon.empty() )
+    if( identifier.empty() && reg_nlon_nlat.empty() && fgg_nlon_nlat.empty() && rgg_nlon.empty() )
     {
       throw UserError(Here(),"missing input mesh identifier, parameter -rgg or -reg");
     }
@@ -68,7 +69,8 @@ private:
   int halo;
   bool edges;
   std::string identifier;
-  std::vector<long> nlon_nlat;
+  std::vector<long> reg_nlon_nlat;
+	std::vector<long> fgg_nlon_nlat;
   std::vector<long> rgg_nlon;
   PathName path_out;
 };
@@ -81,8 +83,10 @@ void Meshgen2Gmsh::run()
   Mesh::Ptr mesh;
   if( !identifier.empty() )
     mesh = Mesh::Ptr( generate_reduced_gaussian_grid(identifier) );
-  else if( !nlon_nlat.empty() )
-    mesh = Mesh::Ptr( generate_regular_grid(nlon_nlat[0],nlon_nlat[1]) );
+  else if( !fgg_nlon_nlat.empty() )
+    mesh = Mesh::Ptr( generate_full_gaussian_grid(fgg_nlon_nlat[0],fgg_nlon_nlat[1]) );
+  else if( !reg_nlon_nlat.empty() )
+    mesh = Mesh::Ptr( generate_regular_grid(reg_nlon_nlat[0],reg_nlon_nlat[1]) );
   else if ( !rgg_nlon.empty() )
     mesh = Mesh::Ptr( generate_reduced_gaussian_grid(rgg_nlon) );
   else

@@ -35,6 +35,7 @@ module atlas_module
 use, intrinsic :: iso_c_binding
 use atlas_mpl_module
 use atlas_C_interop
+use atlas_atlas_c_binding
 use atlas_field_c_binding
 use atlas_fieldset_c_binding
 use atlas_functionspace_c_binding
@@ -51,6 +52,7 @@ use atlas_BuildParallelFields_c_binding
 use atlas_BuildHalo_c_binding
 use atlas_GenerateMesh_c_binding
 use atlas_WriteLoadBalanceReport_c_binding
+use atlas_eckit_logging_c_binding
 implicit none
 
 ! ----------------------------------------------------
@@ -76,7 +78,7 @@ INTERFACE delete
 
 ! Purpose :
 ! -------
-!   *delete* : Common interface to properly call the destructor 
+!   *delete* : Common interface to properly call the destructor
 !              of class objects
 
 ! Author :
@@ -99,9 +101,148 @@ ENUM, bind(c)
   enumerator :: out = 16
 end ENUM
 
+!------------------------------------------------------------------------------
+
+TYPE, extends(object_type) :: Logger_t
+
+  character(len=1024), public :: message
+
+  integer, private :: proc = -1 ! MPI rank
+  integer, public :: debug_proc = 0 ! only proc 0
+  integer, public :: info_proc  = 0 ! only proc 0
+  integer, public :: warning_proc = 0 ! only proc 0
+  integer, public :: error_proc = -1 ! only proc 0
+
+contains
+
+  procedure, public :: init => Logger__init
+  procedure, public :: set_debug => Logger__set_debug
+  procedure, public :: debug => Logger__debug
+  procedure, public :: info => Logger__info
+  procedure, public :: warning => Logger__warning
+  procedure, public :: error => Logger__error
+  procedure, public :: panic => Logger__panic
+
+END TYPE
+
+TYPE(Logger_t) :: logger
+
 ! =============================================================================
 CONTAINS
 ! =============================================================================
+
+subroutine atlas_init()
+  integer :: argc
+  type(c_ptr) :: argv(15)
+  call get_c_arguments(argc,argv)
+  call atlas_initf(argc,argv)
+end subroutine
+
+subroutine Logger__set_debug(this,level)
+  CLASS(Logger_t), intent(in) :: this
+  integer , intent(in) :: level
+  call eckit__log_debug_set_level(level)
+end subroutine
+
+subroutine Logger__init(this,debug)
+  CLASS(Logger_t), intent(inout) :: this
+  integer, intent(in), optional :: debug
+end subroutine
+
+subroutine Logger__debug(this,message,level,endl)
+  CLASS(Logger_t), intent(in) :: this
+  integer, intent(in), optional :: level
+  character(kind=c_char,len=*), intent(in), optional :: message
+  logical, intent(in), optional :: endl
+  integer :: opt_level
+  if( present(level) ) then
+	opt_level = level
+  else
+	opt_level = 1
+  endif
+  if( .not. present(endl) .or. endl ) then
+	if (present(message)) then
+	  call eckit__log_debug_endl(opt_level,c_str(trim(message)))
+	else
+	  call eckit__log_debug_endl(opt_level,c_str(trim(this%message)))
+	end if
+  else
+	if (present(message)) then
+	  call eckit__log_debug(opt_level,c_str(trim(message)))
+	else
+	  call eckit__log_debug(opt_level,c_str(trim(this%message)))
+	end if
+  endif
+end subroutine
+
+subroutine Logger__info(this,message,endl)
+  CLASS(Logger_t), intent(in) :: this
+  character(kind=c_char,len=*), intent(in), optional :: message
+  logical, intent(in), optional :: endl
+  if( .not. present(endl) .or. endl ) then
+	if (present(message)) then
+	  call eckit__log_info_endl(c_str(trim(message)))
+	else
+	  call eckit__log_info_endl(c_str(trim(this%message)))
+	end if
+  else
+	if (present(message)) then
+	  call eckit__log_info(c_str(trim(message)))
+	else
+	  call eckit__log_info(c_str(trim(this%message)))
+	end if
+  endif
+end subroutine
+
+subroutine Logger__warning(this,message,endl)
+  CLASS(Logger_t), intent(in) :: this
+  character(kind=c_char,len=*), intent(in), optional :: message
+  logical, intent(in), optional :: endl
+  if( .not. present(endl) .or. endl ) then
+	if (present(message)) then
+	  call eckit__log_warning_endl(c_str(trim(message)))
+	else
+	  call eckit__log_warning_endl(c_str(trim(this%message)))
+	end if
+  else
+	if (present(message)) then
+	  call eckit__log_warning(c_str(trim(message)))
+	else
+	  call eckit__log_warning(c_str(trim(this%message)))
+	end if
+  endif
+end subroutine
+
+subroutine Logger__error(this,message,endl)
+  CLASS(Logger_t), intent(in) :: this
+  character(kind=c_char,len=*), intent(in), optional :: message
+  logical, intent(in), optional :: endl
+  if( .not. present(endl) .or. endl ) then
+	if (present(message)) then
+	  call eckit__log_error_endl(c_str(trim(message)))
+	else
+	  call eckit__log_error_endl(c_str(trim(this%message)))
+	end if
+  else
+	if (present(message)) then
+	  call eckit__log_error(c_str(trim(message)))
+	else
+	  call eckit__log_error(c_str(trim(this%message)))
+	end if
+  endif
+end subroutine
+
+subroutine Logger__panic(this,message)
+  CLASS(Logger_t), intent(in) :: this
+  character(kind=c_char,len=*), intent(in), optional :: message
+  if( present(message) ) then
+    write(0,*) message
+  else
+    write(0,*) this%message
+  endif
+end subroutine
+
+
 
 
 integer function real_kind(kind)

@@ -80,7 +80,7 @@ public: // methods
 
 	const std::vector<long>&  pointsPerLatitude() const { return nbPtsPerLat_;}
 
-	void computeLatitues(std::vector<double>&) const;
+	void computeLatitudes(std::vector<double>&) const;
 	void computePoints( const std::vector<double>&, std::vector<Point>& pts ) const;
 	long computeNPoints( const std::vector<double>& ) const;
 	void computeNPtsPerLat( std::vector<long>& );

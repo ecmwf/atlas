@@ -11,13 +11,13 @@
 /// @author Tiago Quintino
 /// @date Mar 2013
 
-#ifndef atlas_grid_MeshCache_hpp
-#define atlas_grid_MeshCache_hpp
+#ifndef atlas_grid_MeshCache_h
+#define atlas_grid_MeshCache_h
 
 #include "eckit/memory/NonCopyable.h"
 #include "eckit/filesystem/LocalPathName.h"
 
-#include "atlas/mesh/Mesh.hpp"
+#include "atlas/mesh/Mesh.h"
 
 namespace atlas {
 
