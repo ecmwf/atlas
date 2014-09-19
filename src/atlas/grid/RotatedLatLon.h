@@ -90,9 +90,6 @@ private: // members
 
 class Rotgrid {
 public:
-//    Rotated grid class.  For more info, see doc strings for '__init__'
-//    and 'transform' methods.
-
    // Set up rotated grid for transformations.
    // Inputs:
    //
@@ -107,9 +104,10 @@ public:
    //             pole of the rotated grid, then set this input to the
    //             value in degrees
    //
-   // lonMin:  minimum longitude for output of transforms to be perfomed
+   // lonMin:  minimum longitude for output of rotate to be performed
    //          defaults to 0 so that longitudes are normally output in
    //          the range [0 360] but e.g. specify as -180 if [-180, 180] is desired.
+   //
    Rotgrid(const Grid::Point& south_pole,
            double polerotate = 0,
            double lonMin = 0); // for -180 - +180, choose lonMin as -180

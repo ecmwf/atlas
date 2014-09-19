@@ -49,7 +49,6 @@ static void comparePointList(const std::vector<Grid::Point>& grib_pntlist, const
 
 BOOST_AUTO_TEST_SUITE( TestGridSpec )
 
-
 BOOST_AUTO_TEST_CASE( test_grib_to_grid_to_gridspec )
 {
    cout << "Grid:: ...test_grib_to_grid_to_gridspec\n";
@@ -63,6 +62,17 @@ BOOST_AUTO_TEST_CASE( test_grib_to_grid_to_gridspec )
    for(size_t i = 0; i < sample_dirs.size(); ++i) {
       test_grids_from_grib_sample_directory(sample_dirs[i]);
    }
+}
+
+
+BOOST_AUTO_TEST_CASE( test_rotated_grids )
+{
+   cout << "Grid:: ...test_rotated_grids \n";
+
+   // Note: we need to wait till grib iterator, rotates the points.
+   // At the moment(grib 13.1) it just, return the points, in regular lat long fashion.
+   std::string path = "/scratch/ma/ma0/wind_rotated_latlon.grb";
+   test_grib_file( path );
 }
 
 BOOST_AUTO_TEST_SUITE_END()

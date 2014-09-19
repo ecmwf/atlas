@@ -18,13 +18,11 @@
 #include "eckit/io/StdFile.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/filesystem/LocalPathName.h"
-
 #include "eckit/grib/GribHandle.h"
 
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Grib.h"
 #include "atlas/grid/GridSpec.h"
-
 
 using namespace std;
 using namespace eckit;
@@ -35,9 +33,6 @@ using namespace atlas::grid;
 /// Test for Grid* derivatives
 /// This test uses the grib samples directory.
 /// We open each file and attempt to create the Grid* class.
-/// However this has exposed errors in the grib samples files,
-/// especially for reduced gaussian grids. Hence we will need to wait till Shahram has
-/// has a chance to fix the issues, before all the tests pass.
 
 static void test_grids_from_grib_sample_directory( const std::string& directory);
 static void test_grib_file(const std::string& file);
@@ -49,14 +44,12 @@ BOOST_AUTO_TEST_CASE( test_grids_from_samples_dir )
    cout << "Grid:: ...test_grids_from_samples_dir\n";
 
    // Traverse all the GRIB samples files, for gridType first determine sample dir
-
    std::vector<std::string> sample_dirs;
    Grib::determine_grib_samples_dir(sample_dirs);
-
    BOOST_REQUIRE_MESSAGE(!sample_dirs.empty(),"Expected sample dirs to be found");
 
-   // now test each sample dir
 
+   // now test each sample dir
    for(size_t i = 0; i < sample_dirs.size(); ++i)
    {
       test_grids_from_grib_sample_directory(sample_dirs[i]);
@@ -123,7 +116,7 @@ static void test_grib_file(const std::string& fpath)
 
 	atlas::grid::Grid::Ptr g = Grib::create_grid(gh);
 
-	BOOST_CHECK_MESSAGE(g,"GRIBGridBuilder::instance().build_grid_from_grib_handle failed for file " << fpath);
+	BOOST_CHECK_MESSAGE(g,"Grib::create_grid failed for file " << fpath);
 	if (!g) return;
 
 	// The Grid produced, has a GRID spec, the grid spec can be used to,

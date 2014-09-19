@@ -310,6 +310,7 @@ Grid::Point Rotgrid::rotate( const Grid::Point& point) const
 
 Grid::Point Rotgrid::unrotate( const Grid::Point& point) const
 {
+   // See: http://gis.stackexchange.com/questions/10808/lon-lat-transformation/14445
    // First convert the data point from spherical lat lon to (x',y',z') using:
    double latr = point.lat() * degree_to_radian_ ;
    double lonr = point.lon() * degree_to_radian_ ;
@@ -417,6 +418,10 @@ std::pair<double,double> RotgridPy::transform(double lat, double lon, bool inver
 
    double lonrot = south_pole_lon + dlonrotr * radian_to_degree_;
    double latrot = latrotr * radian_to_degree_;
+
+   // Still get a very small rounding error, round to 6 decimal places
+   lonrot = roundf( lonrot * 1000000.0 )/1000000.0;
+   latrot = roundf( latrot * 1000000.0 )/1000000.0;
 
    if (!inverse)
       lonrot -= south_pole_rot_angle_;
