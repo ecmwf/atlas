@@ -140,6 +140,9 @@ list( APPEND atlas_actions_srcs
 ecbuild_add_library( TARGET atlas
                      AUTO_VERSION
                      SOURCES
+                       atlas.h
+                       atlas.cc
+                       atlas_mpi.h
                        ${atlas_mpistubs_srcs}
                        ${atlas_util_srcs}
                        ${atlas_io_srcs}
@@ -147,7 +150,10 @@ ecbuild_add_library( TARGET atlas
                        ${atlas_mpl_srcs}
                        ${atlas_meshgen_srcs}
                        ${atlas_actions_srcs}
-                       atlas_mpi.h
+                       ${CMAKE_CURRENT_BINARY_DIR}/atlas_version.h
+                       ${CMAKE_CURRENT_BINARY_DIR}/atlas_version.cc
+                       ${CMAKE_CURRENT_BINARY_DIR}/atlas_config.h
+                       ${CMAKE_CURRENT_BINARY_DIR}/atlas_defines.h
                      LIBS eckit ${MPI_CXX_LIBRARIES} )
 
 add_subdirectory( fortran )

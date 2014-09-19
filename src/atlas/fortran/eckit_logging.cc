@@ -20,7 +20,7 @@ extern "C"
 
 	void eckit__log_info (char* name)
 	{
-		eckit::Log::info() << name;
+		eckit::Log::info() << name << std::flush;
 	}
 
 	void eckit__log_warning (char* name)
@@ -45,7 +45,7 @@ extern "C"
 
 	void eckit__log_info_endl (char* name)
 	{
-		eckit::Log::info() << name << std::endl;
+		eckit::Log::info() << name <<std::endl;
 	}
 
 	void eckit__log_warning_endl (char* name)

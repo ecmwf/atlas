@@ -17,6 +17,7 @@ module fctest_atlas_logging_fixture
 use atlas_module
 use iso_c_binding
 implicit none
+
 end module fctest_atlas_logging_fixture
 
 ! -----------------------------------------------------------------------------
@@ -24,16 +25,14 @@ end module fctest_atlas_logging_fixture
 TESTSUITE_WITH_FIXTURE(fctest_atlas_logging,fctest_atlas_logging_fixture)
 
 ! -----------------------------------------------------------------------------
-
 TESTSUITE_INIT
-call logger%set_debug(2)
-call logger%info("")
-call logger%info("")
+  call atlas_init()
 END_TESTSUITE_INIT
 
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_FINALIZE
+call MPL_finalize()
 END_TESTSUITE_FINALIZE
 
 ! -----------------------------------------------------------------------------
@@ -41,10 +40,13 @@ END_TESTSUITE_FINALIZE
 TEST( test_logging )
 call logger%info("test_logging begin")
 call logger%debug("hello world",level=0)
+call logger%warning("World is ending")
 write(logger%message,'(A)') "goodbye"
 call logger%debug(endl=.False.,level=1)
 call logger%debug(" world",level=1)
+call logger%error(" oops ")
 call logger%info("test_logging end")
+call logger%panic("AAAAAGRRG")
 END_TEST
 
 
