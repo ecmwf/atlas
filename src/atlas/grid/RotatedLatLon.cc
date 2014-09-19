@@ -95,12 +95,14 @@ string RotatedLatLon::uid() const
 
 Grid::Point RotatedLatLon::latLon(size_t the_i, size_t the_j) const
 {
+   Rotgrid rotgrid(Grid::Point(south_pole_lat_,south_pole_lon_),south_pole_rot_angle_);
+
    double plon = bbox_.bottom_left().lon(); // west
    double plat = bbox_.top_right().lat();   // north;
    for( size_t j = 0; j < nptsNS_; ++j) {
       for( size_t i = 0; i < nptsWE_; ++i) {
          if (the_i == i && the_j == j) {
-            return Grid::Point( plat, plon );
+            return rotgrid.rotate( Grid::Point( plat, plon ) );
          }
          plon += weIncrement_;
       }
@@ -253,6 +255,7 @@ Grid::Point Rotgrid::magics_unrotate( const Grid::Point& point ) const
 Grid::Point Rotgrid::rotate( const Grid::Point& point) const
 {
    // First convert the data point from spherical lat lon to (x',y',z') using:
+   // See: http://rbrundritt.wordpress.com/2008/10/14/conversion-between-spherical-and-cartesian-coordinates-systems/
    double latr = point.lat() * degree_to_radian_ ;
    double lonr = point.lon() * degree_to_radian_ ;
    double xd = cos(lonr)*cos(latr);
@@ -282,6 +285,19 @@ Grid::Point Rotgrid::rotate( const Grid::Point& point) const
    double z = sin_t*cos_o*xd - sin_t*sin_o*yd + cos_t*zd;
 
    // Then convert back to 'normal' (lat,lon)
+   // z = r.cosϑ  ( r is earths radius, assume 1)
+   // r = sqrt(x.x + y.y + z.z)
+   // z = r.cosϑ  => ϑ = cos-1(z/r)
+   // ϑ = con-1( z/ sqrt(x.x + y.y + z.z) )
+   // By rearranging the formulas for the x and y components we can solve the value for the Φ angle.
+   //    y                  x
+   //   ---     = sinφ =   ----
+   //   r.sinϑ             r.cosϑ
+   //
+   //  y/x = sinϑ/cosϑ = tanϑ
+   //
+   //  ϑ = tan-1(y/x)   => lon = atan2(y, x)
+
 
    // Uses arc sin, to convert back to degrees, put in range -1 to 1 in case of slight rounding error
    // avoid error on calculating e.g. asin(1.00000001)

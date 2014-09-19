@@ -108,6 +108,7 @@ public:
    //          defaults to 0 so that longitudes are normally output in
    //          the range [0 360] but e.g. specify as -180 if [-180, 180] is desired.
    //
+   // Assumes earth is a sphere. (if you need it as a ellipsoid, this will not suffice)
    Rotgrid(const Grid::Point& south_pole,
            double polerotate = 0,
            double lonMin = 0); // for -180 - +180, choose lonMin as -180
