@@ -109,13 +109,10 @@ Grid::Point RotatedLatLon::latLon(size_t the_i, size_t the_j) const
    return Grid::Point();
 }
 
-
 size_t RotatedLatLon::nPoints() const
 {
-   // ?? TODO do we take bbox_ in to account
    return nptsNS_ * nptsWE_;
 }
-
 
 void RotatedLatLon::coordinates(std::vector<double>& pts ) const
 {
