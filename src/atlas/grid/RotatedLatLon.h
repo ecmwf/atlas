@@ -25,7 +25,23 @@ namespace grid {
 //-----------------------------------------------------------------------------
 /// RotatedLatLon is a grid where the poles are shifted
 ///
-/// @note
+///=== WMO specification ===
+/// (6) Three parameters define a general latitude/longitude coordinate system,
+///    formed by a general rotation of the sphere. One
+///     choice for these parameters is:
+///     (a)  The geographic latitude in degrees of the southern pole of the coordinate system, θp for example;
+///
+///     (b)  The geographic longitude in degrees of the southern pole of the coordinate system, λp for example;
+///
+///     (c)  The angle of rotation in degrees about the new polar axis
+///          (measured clockwise when looking from the southern to the northern pole)
+///          of the coordinate system, assuming the new
+///          axis to have been obtained by first rotating the
+///          sphere through λp degrees about the geographic polar axis, and
+///          then rotating through (90 + θp) degrees so that
+///          the southern pole moved along the (previously rotated) Greenwich meridian.
+///=== end WMO specification ===
+
 /// gribs use the following convention: (from Shahram)
 ///
 /// Horizontally:  Points scan in the +i (+x) direction
