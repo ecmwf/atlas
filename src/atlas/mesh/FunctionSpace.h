@@ -59,7 +59,7 @@ public: // methods
 	void remove_field(const std::string& name);
 
 	// This is a Fortran view of the shape (i.e. reverse order)
-	const std::vector<int>& shapef() const { return shape_; }
+	const std::vector<int>& shapef() const { return shapef_; }
 	const std::vector<int>& shape() const { return shape_; }
 	int shape(const int i) const { ASSERT(i<shape_.size()); return shape_[i]; }
 	void resize( const std::vector<int>& shape );
