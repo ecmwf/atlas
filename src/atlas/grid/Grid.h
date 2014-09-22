@@ -61,35 +61,37 @@ public: // types
 
 public: // methods
 
-	static std::string className() { return "atlas.grid.Grid"; }
+    static std::string className() { return "atlas.grid.Grid"; }
 
-	static double degrees_eps();
+    static double degrees_eps();
 
-	static Grid::Ptr create( const eckit::Params& );
-	static Grid::Ptr create( const GridSpec& );
+    static Grid::Ptr create( const eckit::Params& );
+    static Grid::Ptr create( const GridSpec& );
 
     Grid();
 
     virtual ~Grid();
 
-	virtual std::string uid() const = 0;
-	virtual std::string hash() const = 0;
+    virtual std::string uid() const = 0;
+    virtual std::string hash() const = 0;
 
     virtual BoundBox boundingBox() const = 0;
 
     virtual size_t nPoints() const = 0;
 
-	virtual void coordinates( std::vector<double>& ) const = 0;
-	virtual void coordinates( std::vector<Point>& ) const = 0;
+    /// Assumes we start at NORTH,WEST --> SOUTH,EAST
+    /// Assumes that the input vectors have the correct size.
+    virtual void coordinates( std::vector<double>& ) const = 0;
+    virtual void coordinates( std::vector<Point>& ) const = 0;
 
     virtual std::string gridType() const = 0;
 
-	virtual GridSpec spec() const = 0;
+    virtual GridSpec spec() const = 0;
 
-	virtual bool same(const Grid&) const = 0;
+    virtual bool same(const Grid&) const = 0;
 
-	Mesh& mesh();
-	const Mesh& mesh() const;
+    Mesh& mesh();
+    const Mesh& mesh() const;
 
 protected: // methods
 

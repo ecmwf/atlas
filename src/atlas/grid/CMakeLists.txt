@@ -35,7 +35,7 @@ FieldSet.h
 Grib.cc # to be abstracted into a plugin
 Grib.h
 
-# contains  include "grib_api.h"
+# contains  include "grib_api.h" for grib_get_gaussian_latitudes()
 RegularGG.cc
 RegularGG.h
 ReducedGG.cc
