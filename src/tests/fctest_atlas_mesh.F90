@@ -213,7 +213,7 @@ TEST( test_meshgen )
 
   nodes = rgg%function_space("nodes")
   call nodes%parallelise()
-  bounds => nodes%bounds()
+  bounds => nodes%shape()
 
   nnodes = bounds(2)
 
