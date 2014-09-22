@@ -14,7 +14,7 @@
 #include <iostream>
 #include <sstream>
 #include <limits>
-
+#include <eckit/exception/Exceptions.h>
 #include "atlas/atlas_defines.h"
 #include "atlas/mesh/FunctionSpace.h"
 #include "atlas/mesh/Field.h"
@@ -63,14 +63,14 @@ FunctionSpace::~FunctionSpace()
 void FunctionSpace::resize(const std::vector<int>& shape)
 {
 	if (shape.size() != shape_.size() )
-		throw std::runtime_error("Cannot resize shape: shape sizes don't match.");
+		throw eckit::BadParameter("Cannot resize shape: shape sizes don't match.",Here());
 
 	size_t extsize = shape_.size();
 
 	for (size_t i=1; i<extsize; ++i)
 	{
 		if (shape[i] != shape_[i])
-			throw std::runtime_error("Only the first extent can be resized for now!");
+			throw eckit::BadParameter("Only the first extent can be resized for now!",Here());
 	}
 
 	shape_ = shape;
@@ -107,7 +107,7 @@ FieldT<double>& FunctionSpace::create_field(const std::string& name, size_t nb_v
 	if( has_field(name) )
 	{
 		std::ostringstream msg; msg << "field with name " << name << "already exists" << std::endl;
-		throw std::runtime_error( msg.str() );
+		throw eckit::Exception( msg.str(), Here() );
 	}
 
 	index_[name] = fields_.size();
@@ -134,7 +134,7 @@ FieldT<float>& FunctionSpace::create_field(const std::string& name, size_t nb_va
 	if( has_field(name) )
 	{
 		std::ostringstream msg; msg << "field with name " << name << "already exists" << std::endl;
-		throw std::runtime_error( msg.str() );
+		throw eckit::Exception( msg.str(), Here() );
 	}
 
 	index_[name] = fields_.size();
@@ -161,7 +161,7 @@ FieldT<int>& FunctionSpace::create_field(const std::string& name, size_t nb_vars
 	if( has_field(name) )
 	{
 		std::ostringstream msg; msg << "field with name " << name << "already exists" << std::endl;
-		throw std::runtime_error( msg.str() );
+		throw eckit::Exception( msg.str(), Here() );
 	}
 
 	index_[name] = fields_.size();
@@ -195,7 +195,7 @@ void FunctionSpace::remove_field(const std::string& name)
 	{
 		std::stringstream msg;
 		msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
-		throw std::out_of_range(msg.str());
+		throw eckit::OutOfRange(msg.str(),Here());
 	}
 }
 
@@ -215,7 +215,7 @@ Field& FunctionSpace::field(const std::string& name) const
 	{
 		std::stringstream msg;
 		msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
-		throw std::out_of_range(msg.str());
+		throw eckit::OutOfRange(msg.str(),Here());
 	}
 }
 
@@ -230,7 +230,7 @@ template<>
 	{
 		std::stringstream msg;
 		msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
-		throw std::out_of_range(msg.str());
+		throw eckit::OutOfRange(msg.str(),Here());
 	}
 }
 
@@ -245,7 +245,7 @@ template<>
 	{
 		std::stringstream msg;
 		msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
-		throw std::out_of_range(msg.str());
+		throw eckit::OutOfRange(msg.str(),Here());
 	}
 }
 
@@ -260,7 +260,7 @@ template<>
 	{
 		std::stringstream msg;
 		msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
-		throw std::out_of_range(msg.str());
+		throw eckit::OutOfRange(msg.str(),Here());
 	}
 }
 

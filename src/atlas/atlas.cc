@@ -124,9 +124,20 @@ void atlas_init(int argc, char** argv)
 	Log::info() << "    git     [" << atlas_git_sha1()<< "]" << std::endl;
 }
 
+void atlas_finalize()
+{
+  Log::info() << "Atlas finalized" << std::endl;
+  MPL::finalize();
+}
+
 void atlas__atlas_init(int argc, char **argv)
 {
 	atlas_init(argc,argv);
+}
+
+void atlas__atlas_finalize()
+{
+	atlas_finalize();
 }
 
 } // namespace atlas

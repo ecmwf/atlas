@@ -10,7 +10,7 @@
 
 #include <sstream>
 #include <stdexcept>
-
+#include <eckit/exception/Exceptions.h>
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/FunctionSpace.h"
 
@@ -42,7 +42,7 @@ FunctionSpace& Mesh::add_function_space( FunctionSpace* function_space )
 {
 	if (index_.count(function_space->name()) )
 	{
-		throw std::runtime_error("Functionspace "+function_space->name()+" already added");
+		throw eckit::Exception( "Functionspace "+function_space->name()+" already added", Here() );
 	}
 
 	index_[function_space->name()] = function_spaces_.size();
@@ -56,20 +56,19 @@ FunctionSpace& Mesh::add_function_space( FunctionSpace* function_space )
 
 FunctionSpace& Mesh::function_space(const std::string& name) const
 {
-	try
-	{
-		return *function_spaces_[ index_.at(name) ];
-	}
-	catch( std::out_of_range& e )
+	if( ! has_function_space(name) )
 	{
 		std::stringstream msg;
-		msg << "Could not find function_space \"" << name << "\" in mesh";
-		throw std::out_of_range(msg.str());
+		msg << "Could not find functionspace \"" << name << "\" in mesh";
+		throw eckit::OutOfRange(msg.str(),Here());
 	}
+	return *function_spaces_[ index_.at(name) ];
 }
 
 FunctionSpace& Mesh::function_space(int idx) const
 {
+	if( idx >= function_spaces_.size() )
+		throw eckit::OutOfRange(idx,function_spaces_.size(),Here());
 	return *function_spaces_[ idx ];
 }
 

@@ -1,9 +1,9 @@
 /*
  * (C) Copyright 1996-2014 ECMWF.
- * 
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
- * In applying this licence, ECMWF does not waive the privileges and immunities 
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
@@ -22,6 +22,7 @@
 #include "eckit/config/Resource.h"
 #include "eckit/runtime/Tool.h"
 
+#include "atlas/atlas.h"
 #include "atlas/io/Gmsh.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Field.h"
@@ -42,6 +43,7 @@ public:
 
     GmshLs(int argc,char **argv): eckit::Tool(argc,argv)
     {
+        atlas_init(argc,argv);
         in_filename = Resource<std::string>("-i","");
         if( in_filename.empty() )
             throw UserError(Here(),"missing input filename, parameter -i");
@@ -55,7 +57,7 @@ private:
 //------------------------------------------------------------------------------------------------------
 
 void GmshLs::run()
-{    
+{
     std::cout.precision(std::numeric_limits< double >::digits10);
     std::cout << std::fixed;
 
@@ -76,6 +78,8 @@ void GmshLs::run()
     if( mesh.has_function_space("triags") ) Log::info() << "nb_triags = " << mesh.function_space( "triags" ).shape(0) << std::endl;
     if( mesh.has_function_space("quads") )  Log::info() << "nb_quads = "  << mesh.function_space( "quads" ).shape(0) << std::endl;
     if( mesh.has_function_space("edges") )  Log::info() << "nb_edges = "  << mesh.function_space( "edges" ).shape(0) << std::endl;
+
+    atlas_finalize();
 
 }
 
