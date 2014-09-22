@@ -262,6 +262,7 @@ Grid::Point Rotgrid::rotate( const Grid::Point& point) const
    double yd = sin(lonr)*cos(latr);
    double zd = sin(latr);
 
+   // Assume right hand rule.
    // P' = Rot(y) * Rot(z) * Pv
    // x   (  cos(ϑ), 0, -sin(ϑ)) ( cos(φ), -sin(φ), 0) (x')
    // y = (  0     , 1,  0     ) ( sin(φ), cos(φ),  0) (y')
@@ -306,13 +307,9 @@ Grid::Point Rotgrid::rotate( const Grid::Point& point) const
    double ret_lat = asin(z) * radian_to_degree_;
    double ret_lon = atan2(y, x) * radian_to_degree_;
 
-   ret_lon -= south_pole_rot_angle_;
-
    // Still get a very small rounding error, round to 6 decimal places
    ret_lat = roundf( ret_lat * 1000000.0 )/1000000.0;
    ret_lon = roundf( ret_lon * 1000000.0 )/1000000.0;
-
-   ret_lon -= south_pole_rot_angle_;
 
    // Make sure ret_lon is in range
    while (ret_lon < lonmin_) ret_lon += 360.0;
@@ -369,7 +366,7 @@ Grid::Point Rotgrid::unrotate( const Grid::Point& point) const
    ret_lat = roundf( ret_lat * 1000000.0 )/1000000.0;
    ret_lon = roundf( ret_lon * 1000000.0 )/1000000.0;
 
-   ret_lon +=south_pole_rot_angle_;
+   ret_lon -=south_pole_rot_angle_;
 
    // Make sure ret_lon is in range
    while (ret_lon < lonmin_) ret_lon += 360.0;

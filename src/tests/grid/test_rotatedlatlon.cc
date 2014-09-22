@@ -77,6 +77,8 @@ BOOST_AUTO_TEST_CASE( test_rotated_lat_lon )
       Grid::Point rotated1 = mapping.rotate(point);
       Grid::Point unrotated2 = mapping.unrotate(rotated1);
       std::cout << " sp" << south_pole << " sp_rot(" << polerot << ") " << point << " My    rotated " <<  rotated1 << " unrotated " << unrotated2 << "\n";
+      BOOST_CHECK_CLOSE(point.lat(),unrotated2.lat(),Grid::degrees_eps());
+      BOOST_CHECK_CLOSE(point.lon(),unrotated2.lon(),Grid::degrees_eps());
    }
 }
 
