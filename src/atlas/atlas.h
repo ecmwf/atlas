@@ -9,9 +9,14 @@ namespace atlas {
 
 void atlas_init(int argc, char** argv);
 
-extern "C" {
-void atlas_initf(int argc, char** argv);
+// ------------------------------------------------------------------
+// C wrapper interfaces to C++ routines
+extern "C"
+{
+  void atlas__atlas_init (int argc, char** argv);
 }
+// ------------------------------------------------------------------
+
 
 } // namespace atlas
 

@@ -135,7 +135,7 @@ subroutine atlas_init()
   integer :: argc
   type(c_ptr) :: argv(15)
   call get_c_arguments(argc,argv)
-  call atlas_initf(argc,argv)
+  call atlas__atlas_init(argc,argv)
 end subroutine
 
 subroutine Logger__set_debug(this,level)

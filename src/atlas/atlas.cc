@@ -46,75 +46,66 @@ public:
 	virtual void reconfigure();
 
 private:
-	LogContext debug_ctxt;
-	LogContext info_ctxt;
-	LogContext warn_ctxt;
-	LogContext error_ctxt;
+
+	struct CallBackContext {
+		CallBackContext() { }
+		std::string prefix;
+		int my_proc;
+		int log_proc;
+		std::ostream* stream;
+	};
+	static void callback( void* ctxt, const char* msg )
+	{
+		CallBackContext& context = *reinterpret_cast<CallBackContext*>(ctxt);
+		if( context.log_proc < 0 || context.log_proc == context.my_proc )
+			*(context.stream) << context.prefix << msg ;
+	}
+
+	CallBackContext debug_ctxt;
+	CallBackContext info_ctxt;
+	CallBackContext warn_ctxt;
+	CallBackContext error_ctxt;
 };
-
-static void debug_callback( void* ctxt, const char* msg )
-{
-	Behavior::LogContext& log_ctxt = *reinterpret_cast<Behavior::LogContext*>(ctxt);
-	if( log_ctxt.logger_proc < 0 || log_ctxt.logger_proc == log_ctxt.myproc )
-		std::cout << log_ctxt.rank_prefix << "[DEBUG] -- " << msg ;
-}
-
-static void info_callback( void* ctxt, const char* msg )
-{
-	Behavior::LogContext& log_ctxt = *reinterpret_cast<Behavior::LogContext*>(ctxt);
-	if( log_ctxt.logger_proc < 0 || log_ctxt.logger_proc == log_ctxt.myproc )
-		std::cout << log_ctxt.rank_prefix << "[INFO]  -- " << msg ;
-}
-
-static void warn_callback( void* ctxt, const char* msg )
-{
-	Behavior::LogContext& log_ctxt = *reinterpret_cast<Behavior::LogContext*>(ctxt);
-	if( log_ctxt.logger_proc < 0 || log_ctxt.logger_proc == log_ctxt.myproc )
-		std::cout << log_ctxt.rank_prefix << "[WARN]  -- " << msg ;
-}
-
-static void error_callback( void* ctxt, const char* msg )
-{
-	Behavior::LogContext& log_ctxt = *reinterpret_cast<Behavior::LogContext*>(ctxt);
-	if( log_ctxt.logger_proc < 0 || log_ctxt.logger_proc == log_ctxt.myproc )
-		std::cout << log_ctxt.rank_prefix << "[ERROR] -- " << msg ;
-}
 
 
 Behavior::Behavior() : eckit::LibBehavior()
 {
 	std::stringstream stream; stream << "["<<MPL::rank()<<"] -- ";
 	std::string rank_prefix = ( MPL::size() > 1 ) ? stream.str() : std::string();
-	debug_ctxt.myproc = MPL::rank();
-	debug_ctxt.logger_proc = 0;
-	debug_ctxt.rank_prefix = rank_prefix;
+	debug_ctxt.stream = &std::cout;
+	debug_ctxt.my_proc = MPL::rank();
+	debug_ctxt.log_proc = 0;
+	debug_ctxt.prefix = rank_prefix + "[DEBUG] -- ";
 
-	info_ctxt.myproc = MPL::rank();
-	info_ctxt.logger_proc = 0;
-	info_ctxt.rank_prefix = rank_prefix;
+	info_ctxt.stream = &std::cout;
+	info_ctxt.my_proc = MPL::rank();
+	info_ctxt.log_proc = 0;
+	info_ctxt.prefix = rank_prefix + "[INFO]  -- ";
 
-	warn_ctxt.myproc = MPL::rank();
-	warn_ctxt.logger_proc = 0;
-	warn_ctxt.rank_prefix = rank_prefix;
+	warn_ctxt.stream = &std::cout;
+	warn_ctxt.my_proc = MPL::rank();
+	warn_ctxt.log_proc = 0;
+	warn_ctxt.prefix = rank_prefix + "[WARN]  -- ";
 
-	error_ctxt.myproc = MPL::rank();
-	error_ctxt.logger_proc = -1;
-	error_ctxt.rank_prefix = rank_prefix;
+	error_ctxt.stream = &std::cout;
+	error_ctxt.my_proc = MPL::rank();
+	error_ctxt.log_proc = -1;
+	error_ctxt.prefix = rank_prefix + "[ERROR] -- ";
 }
 
 void Behavior::reconfigure()
 {
 	CallbackChannel& debug = *dynamic_cast<CallbackChannel*>(&Context::instance().debugChannel());
-	debug.register_callback( &debug_callback, &debug_ctxt );
+	debug.register_callback( &callback, &debug_ctxt );
 
 	CallbackChannel& info = *dynamic_cast<CallbackChannel*>(&Context::instance().infoChannel());
-	info.register_callback( &info_callback, &info_ctxt );
+	info.register_callback( &callback, &info_ctxt );
 
 	CallbackChannel& warn = *dynamic_cast<CallbackChannel*>(&Context::instance().warnChannel());
-	warn.register_callback( &warn_callback, &warn_ctxt );
+	warn.register_callback( &callback, &warn_ctxt );
 
 	CallbackChannel& error = *dynamic_cast<CallbackChannel*>(&Context::instance().errorChannel());
-	error.register_callback( &error_callback, &error_ctxt );
+	error.register_callback( &callback, &error_ctxt );
 }
 
 Behavior::~Behavior() {}
@@ -133,7 +124,7 @@ void atlas_init(int argc, char** argv)
 	Log::info() << "    git     [" << atlas_git_sha1()<< "]" << std::endl;
 }
 
-void atlas_initf(int argc, char** argv)
+void atlas__atlas_init(int argc, char **argv)
 {
 	atlas_init(argc,argv);
 }
