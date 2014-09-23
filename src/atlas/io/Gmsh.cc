@@ -112,7 +112,7 @@ void write_field_nodes(const Gmsh& gmsh, Field& field, std::ostream& out)
     data = data_glb;
   }
 
-  if( gather && MPL::rank() == 0 || !gather )
+  if( ( gather && MPL::rank() == 0 ) || !gather )
   {
     double time   = field.metadata().has<double>("time") ? field.metadata().get<double>("time") : 0. ;
     int time_step = field.metadata().has<int>("time_step") ? field.metadata().get<int>("time_step") : 0. ;
