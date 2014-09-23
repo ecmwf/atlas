@@ -75,6 +75,8 @@ public: // methods
     virtual std::string uid() const = 0;
     virtual std::string hash() const = 0;
 
+    /// Assumes north > south, and east > west.
+    /// and hence independent of scanning mode(since that is GRIB specific)
     virtual BoundBox boundingBox() const = 0;
 
     virtual size_t nPoints() const = 0;
