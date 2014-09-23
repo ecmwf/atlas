@@ -21,7 +21,7 @@
 #include "eckit/config/Resource.h"
 #include "eckit/runtime/Tool.h"
 #include "eckit/filesystem/PathName.h"
-
+#include "atlas/atlas.h"
 #include "atlas/io/Gmsh.h"
 #include "atlas/actions/GenerateMesh.h"
 #include "atlas/actions/BuildEdges.h"
@@ -48,6 +48,8 @@ public:
 
   Meshgen2Gmsh(int argc,char **argv): eckit::Tool(argc,argv)
   {
+    atlas_init(argc,argv);
+
     rgg_nlon   = Resource< std::vector<long> > ( "-rgg_nlon", std::vector<long>() );
     reg_nlon_nlat  = Resource< std::vector<long> > ( "-reg", std::vector<long>() );
     fgg_nlon_nlat  = Resource< std::vector<long> > ( "-fgg", std::vector<long>() );
@@ -70,7 +72,7 @@ private:
   bool edges;
   std::string identifier;
   std::vector<long> reg_nlon_nlat;
-	std::vector<long> fgg_nlon_nlat;
+  std::vector<long> fgg_nlon_nlat;
   std::vector<long> rgg_nlon;
   PathName path_out;
 };
@@ -79,7 +81,6 @@ private:
 
 void Meshgen2Gmsh::run()
 {
-  MPL::init();
   Mesh::Ptr mesh;
   if( !identifier.empty() )
     mesh = Mesh::Ptr( generate_reduced_gaussian_grid(identifier) );
@@ -104,7 +105,7 @@ void Meshgen2Gmsh::run()
   }
 
   atlas::Gmsh().write( *mesh, path_out );
-  MPL::finalize();
+  atlas_finalize();
 }
 
 //------------------------------------------------------------------------------------------------------

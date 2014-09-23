@@ -13,7 +13,7 @@
 #include <typeinfo>			 // std::bad_cast
 #include <sstream>
 #include <stdexcept>
-
+#include <eckit/exception/Exceptions.h>
 #include "atlas/mesh/Field.h"
 #include "atlas/mesh/FunctionSpace.h"
 
@@ -38,7 +38,7 @@ int* Field::data<int>()
 		std::stringstream msg;
 		msg << "Could not cast Field " << name()
 		    << " with data_type " << data_type() << " to int32";
-		throw std::runtime_error(msg.str());
+		throw eckit::BadCast(msg.str(),Here());
 	}
 }
 
@@ -52,7 +52,7 @@ int const* Field::data<int>() const
 		std::stringstream msg;
 		msg << "Could not cast Field " << name()
 		    << " with data_type " << data_type() << " to int32";
-		throw std::runtime_error(msg.str());
+		throw eckit::BadCast(msg.str(),Here());
 	}
 }
 
@@ -66,7 +66,7 @@ float* Field::data<float>()
 		std::stringstream msg;
 		msg << "Could not cast Field " << name()
 		    << " with data_type " << data_type() << " to real32";
-		throw std::runtime_error(msg.str());
+		throw eckit::BadCast(msg.str(),Here());
 	}
 }
 
@@ -80,7 +80,7 @@ float const* Field::data<float>() const
 		std::stringstream msg;
 		msg << "Could not cast Field " << name()
 		    << " with data_type " << data_type() << " to real32";
-		throw std::runtime_error(msg.str());
+		throw eckit::BadCast(msg.str(),Here());
 	}
 }
 
@@ -94,7 +94,7 @@ double* Field::data<double>()
 		std::stringstream msg;
 		msg << "Could not cast Field " << name()
 		    << " with data_type " << data_type() << " to real64";
-		throw std::runtime_error(msg.str());
+		throw eckit::BadCast(msg.str(),Here());
 	}
 }
 
@@ -108,7 +108,7 @@ double const* Field::data<double>() const
 		std::stringstream msg;
 		msg << "Could not cast Field " << name()
 		    << " with data_type " << data_type() << " to real64";
-		throw std::runtime_error(msg.str());
+		throw eckit::BadCast(msg.str(),Here());
 	}
 }
 

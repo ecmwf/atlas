@@ -5,7 +5,7 @@ TYPE, extends(object_type) :: FunctionSpace_type
 
 ! Purpose :
 ! -------
-!   *FunctionSpace* : 
+!   *FunctionSpace* :
 !       Container type of fields that are defined on the same points
 !       Describes how nodes are ordered
 !       Describes how parallelisation for fields is done
@@ -31,7 +31,7 @@ contains
   procedure :: glb_dof => FunctionSpace__glb_dof
   procedure :: create_field => FunctionSpace__create_field
   procedure :: remove_field => FunctionSpace__remove_field
-  procedure :: bounds => FunctionSpace__bounds
+  procedure :: shape => FunctionSpace__shape
   procedure :: field => FunctionSpace__field
   procedure, public :: has_field => FunctionSpace__has_field
   procedure :: parallelise => FunctionSpace__parallelise

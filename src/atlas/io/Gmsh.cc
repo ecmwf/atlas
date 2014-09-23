@@ -17,7 +17,8 @@
 #include <limits>
 
 #include <eckit/filesystem/LocalPathName.h>
-
+#include <eckit/exception/Exceptions.h>
+#include <eckit/log/Log.h>
 #include "atlas/io/Gmsh.h"
 #include "atlas/mpl/GatherScatter.h"
 #include "atlas/util/Array.h"
@@ -312,7 +313,7 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh )
 	std::ifstream file;
 	file.open( file_path.c_str() , std::ios::in | std::ios::binary );
 	if( !file.is_open() )
-		throw std::runtime_error("Could not open file "+file_path);
+		throw eckit::CantOpenFile(file_path);
 
 	std::string line;
 
@@ -343,7 +344,7 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh )
 	if( mesh.has_function_space("nodes") )
 	{
 			if( mesh.function_space("nodes").shape(0)!= nb_nodes )
-					throw std::runtime_error("existing nodes function space has incompatible number of nodes");
+					throw eckit::Exception("existing nodes function space has incompatible number of nodes",Here());
 	}
 	else
 	{
@@ -454,7 +455,7 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh )
 				break;
 			default:
 				std::cout << "etype " << etype << std::endl;
-				throw std::runtime_error("ERROR: element type not supported");
+				throw eckit::Exception("ERROR: element type not supported",Here());
 			}
 			extents[0] = netype;
 			FunctionSpace& funcspace = mesh.add_function_space( new FunctionSpace( name, "Lagrange_P1", extents ) );
@@ -567,7 +568,7 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh )
 					break;
 				default:
 					std::cout << "etype " << etype << std::endl;
-					throw std::runtime_error("ERROR: element type not supported");
+					throw eckit::Exception("ERROR: element type not supported",Here());
 			}
 		}
 		quads.metadata().set("nb_owned",nb_etype[QUAD]);
@@ -635,7 +636,7 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path) const
 
 	eckit::LocalPathName path(file_path);
 
-	if( MPL::rank() == 0 ) std::cout << "writing mesh to gmsh file " << path << std::endl;
+	eckit::Log::info() << "writing mesh to gmsh file " << path << std::endl;
 
 	bool binary = !options.get<bool>("ascii");
 
@@ -849,7 +850,7 @@ void Gmsh::write(FieldSet& fieldset, const std::string& file_path, openmode mode
 	bool is_new_file = (mode != std::ios_base::app || !path.exists() );
 	GmshFile file(path,mode);
 
-	if( MPL::rank() == 0) std::cout << "writing fieldset " << fieldset.name() << " to gmsh file " << path << std::endl;
+	eckit::Log::info() << "writing fieldset " << fieldset.name() << " to gmsh file " << path << std::endl;
 
 	// Header
 	if( is_new_file )
@@ -886,7 +887,7 @@ void Gmsh::write(Field& field, const std::string& file_path, openmode mode) cons
 	if ( binary ) mode |= std::ios_base::binary;
 	GmshFile file(path,mode);
 
-	if( MPL::rank() == 0) std::cout << "writing field " << field.name() << " to gmsh file " << path << std::endl;
+	eckit::Log::info() << "writing field " << field.name() << " to gmsh file " << path << std::endl;
 
 	// Header
 	if( is_new_file )
@@ -915,7 +916,6 @@ void Gmsh::write(Field& field, const std::string& file_path, openmode mode) cons
 	}
 	file << std::flush;
 	file.close();
-	if( MPL::rank() == 0) std::cout << "done writing field " << field.name() << " to gmsh file " << path << std::endl;
 }
 
 

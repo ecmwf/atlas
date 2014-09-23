@@ -85,14 +85,14 @@ function FunctionSpace__glb_dof(this) result(glb_dof)
   glb_dof = atlas__FunctionSpace__glb_dof(this%private%object)
 end function FunctionSpace__glb_dof
 
-function FunctionSpace__bounds(this) result(bounds)
+function FunctionSpace__shape(this) result(shape)
   class(FunctionSpace_type), intent(in) :: this
-  integer, pointer :: bounds(:)
-  type(c_ptr) :: bounds_c_ptr
+  integer, pointer :: shape(:)
+  type(c_ptr) :: shape_c_ptr
   integer(c_int) :: field_rank
-  call atlas__FunctionSpace__shapef(this%private%object, bounds_c_ptr, field_rank)
-  call C_F_POINTER ( bounds_c_ptr , bounds , (/field_rank/) )
-end function FunctionSpace__bounds
+  call atlas__FunctionSpace__shapef(this%private%object, shape_c_ptr, field_rank)
+  call C_F_POINTER ( shape_c_ptr , shape , (/field_rank/) )
+end function FunctionSpace__shape
 
 
 function FunctionSpace__field(this,name) result(field)

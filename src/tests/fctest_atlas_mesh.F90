@@ -30,7 +30,7 @@ TESTSUITE_WITH_FIXTURE(fctest_atlas_mesh,fctest_atlas_mesh_fixture)
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_INIT
-  call MPL_Init()
+  call atlas_init()
   mesh = new_Mesh()
 END_TESTSUITE_INIT
 
@@ -84,7 +84,7 @@ TEST( test_field_metadata )
   call metadata%get("real32",real32)
   call metadata%get("real64",real64)
   call metadata%get("string",string)
-  
+
   CHECK( true  .eqv. .True.  )
   CHECK( false .eqv. .False. )
 
@@ -136,7 +136,7 @@ END_TEST
 TEST( test_prismatic_function_space )
   real(c_double), pointer :: scalar(:,:)
   real(c_float), pointer :: vector(:,:,:)
-  call mesh%add_function_space( new_PrismaticFunctionSpace("prismatic", "P1-C", 5, 10 ) ) 
+  call mesh%add_function_space( new_PrismaticFunctionSpace("prismatic", "P1-C", 5, 10 ) )
 
   func_space = mesh%function_space("prismatic")
   call func_space%create_field("vector_field",3,real_kind(c_float))
@@ -213,7 +213,7 @@ TEST( test_meshgen )
 
   nodes = rgg%function_space("nodes")
   call nodes%parallelise()
-  bounds => nodes%bounds()
+  bounds => nodes%shape()
 
   nnodes = bounds(2)
 

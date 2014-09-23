@@ -11,7 +11,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <sstream>
-
+#include <eckit/exception/Exceptions.h>
 #include "atlas/mesh/Metadata.h"
 #include "atlas/mesh/Field.h"
 
@@ -38,8 +38,7 @@ const VALUE_TYPE& Metadata::get(const std::string& name) const\
 	else {\
 		std::stringstream msg;\
 		msg << "Could not find metadata \"" << name << "\"";\
-		std::cout << msg.str() << std::endl; \
-		throw std::out_of_range(msg.str());\
+		throw eckit::OutOfRange(msg.str(),Here());\
 	}\
 }
 

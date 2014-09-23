@@ -107,12 +107,6 @@ TYPE, extends(object_type) :: Logger_t
 
   character(len=1024), public :: message
 
-  integer, private :: proc = -1 ! MPI rank
-  integer, public :: debug_proc = 0 ! only proc 0
-  integer, public :: info_proc  = 0 ! only proc 0
-  integer, public :: warning_proc = 0 ! only proc 0
-  integer, public :: error_proc = -1 ! only proc 0
-
 contains
 
   procedure, public :: init => Logger__init
@@ -125,6 +119,7 @@ contains
 
 END TYPE
 
+! Logger singleton
 TYPE(Logger_t) :: logger
 
 ! =============================================================================
@@ -135,8 +130,13 @@ subroutine atlas_init()
   integer :: argc
   type(c_ptr) :: argv(15)
   call get_c_arguments(argc,argv)
-  call atlas_initf(argc,argv)
+  call atlas__atlas_init(argc,argv)
 end subroutine
+
+subroutine atlas_finalize()
+  call atlas__atlas_finalize()
+end subroutine
+
 
 subroutine Logger__set_debug(this,level)
   CLASS(Logger_t), intent(in) :: this

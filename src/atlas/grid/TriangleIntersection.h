@@ -80,13 +80,11 @@ struct Triag
     Eigen::Vector3d v0;
     Eigen::Vector3d v1;
     Eigen::Vector3d v2;
+
+	/// Implements @link http://www.scratchapixel.com/lessons/3d-basic-lessons/lesson-9-ray-triangle-intersection/m-ller-trumbore-algorithm
+	bool intersects( const Ray& r, Isect& isect, const double slack = 2*std::numeric_limits<double>::epsilon() );
+
 };
-
-//------------------------------------------------------------------------------------------------------
-
-/// http://www.scratchapixel.com/lessons/3d-basic-lessons/lesson-9-ray-triangle-intersection/m-ller-trumbore-algorithm
-
-bool triag_intersection( const Triag& tg, const Ray& r, Isect& isect, const double slack = 2*std::numeric_limits<double>::epsilon() );
 
 //------------------------------------------------------------------------------------------------------
 

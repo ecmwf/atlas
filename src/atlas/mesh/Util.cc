@@ -57,7 +57,7 @@ void accumulate_faces(
 	}
 	else
 	{
-		throw std::runtime_error(func_space.name()+" is not \"quads\" or \"triags\"");
+		throw eckit::BadParameter(func_space.name()+" is not \"quads\" or \"triags\"",Here());
 	}
 
 	for (int e=0; e<nb_elems; ++e)

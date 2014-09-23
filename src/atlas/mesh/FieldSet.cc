@@ -13,7 +13,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <sstream>
-
+#include <eckit/exception/Exceptions.h>
 #include "atlas/mesh/FieldSet.h"
 #include "atlas/mesh/Field.h"
 
@@ -40,7 +40,7 @@ Field& FieldSet::field(const std::string& name)
 	{
 		std::stringstream msg;
 		msg << "Could not find field \"" << name << "\" in fieldset \"" << name_ << "\"";
-		throw std::out_of_range(msg.str());
+		throw eckit::OutOfRange(msg.str(),Here());
 	}
 }
 

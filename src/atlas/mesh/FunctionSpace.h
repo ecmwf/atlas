@@ -17,7 +17,7 @@
 #include <map>
 #include <string>
 #include <iostream>
-
+#include <eckit/log/Log.h>
 #include "atlas/mpl/HaloExchange.h"
 #include "atlas/mpl/GatherScatter.h"
 #include "atlas/mpl/Checksum.h"
@@ -59,7 +59,7 @@ public: // methods
 	void remove_field(const std::string& name);
 
 	// This is a Fortran view of the shape (i.e. reverse order)
-	const std::vector<int>& shapef() const { return shape_; }
+	const std::vector<int>& shapef() const { return shapef_; }
 	const std::vector<int>& shape() const { return shape_; }
 	int shape(const int i) const { ASSERT(i<shape_.size()); return shape_[i]; }
 	void resize( const std::vector<int>& shape );
@@ -75,9 +75,9 @@ public: // methods
 		int nb_vars = field_size/dof_;
 		if( dof_*nb_vars != field_size )
 		{
-			std::cout << "ERROR in FunctionSpace::halo_exchange" << std::endl;
-			std::cout << "field_size = " << field_size << std::endl;
-			std::cout << "dof_ = " << dof_ << std::endl;
+			eckit::Log::error() << "ERROR in FunctionSpace::halo_exchange" << std::endl;
+			eckit::Log::error() << "field_size = " << field_size << std::endl;
+			eckit::Log::error() << "dof_ = " << dof_ << std::endl;
 		}
 		halo_exchange_->execute( field_data, nb_vars );
 	}
@@ -86,8 +86,8 @@ public: // methods
 	void gather( const DATA_TYPE field_data[], int field_size, DATA_TYPE glbfield_data[], int glbfield_size )
 	{
 		int nb_vars = field_size/dof_;
-		if( dof_*nb_vars != field_size ) std::cout << "ERROR in FunctionSpace::gather" << std::endl;
-		if( glb_dof_*nb_vars != glbfield_size ) std::cout << "ERROR in FunctionSpace::gather" << std::endl;
+		if( dof_*nb_vars != field_size ) eckit::Log::error() << "ERROR in FunctionSpace::gather" << std::endl;
+		if( glb_dof_*nb_vars != glbfield_size ) eckit::Log::error() << "ERROR in FunctionSpace::gather" << std::endl;
 
 		mpl::Field<DATA_TYPE const> loc_field(field_data,nb_vars);
 		mpl::Field<DATA_TYPE      > glb_field(glbfield_data,nb_vars);
