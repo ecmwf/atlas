@@ -169,6 +169,11 @@ FunctionSpace* atlas__Field__function_space (Field* This)
 	return &This->function_space();
 }
 
+void atlas__Field__shapef (Field* This, int* &shape, int &rank)
+{
+	shape = const_cast<int*>(&This->shapef().front());
+	rank = This->shapef().size();
+}
 
 void atlas__Field__data_shapef_double (Field* This, double* &field_data, int* &field_bounds, int &rank)
 {
