@@ -207,6 +207,8 @@ public:
 			case DEBUG: return debugChannel();
 			case STATS: return statsChannel();
 		}
+		throw Exception("Logging category "+Translator<int,std::string>()(cat)+" not known.",Here());
+		return infoChannel();
 	}
 
 	/// Configuration
