@@ -24,6 +24,7 @@ contains
   procedure :: nb_vars => Field__nb_vars
   procedure :: metadata => Field__metadata
   procedure :: function_space => Field__function_space
+  procedure :: shape => Field__shape
   procedure, private :: access_data1_integer => Field__access_data1_integer
   procedure, private :: access_data2_integer => Field__access_data2_integer
   procedure, private :: access_data3_integer => Field__access_data3_integer

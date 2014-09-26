@@ -52,7 +52,7 @@ use atlas_BuildParallelFields_c_binding
 use atlas_BuildHalo_c_binding
 use atlas_GenerateMesh_c_binding
 use atlas_WriteLoadBalanceReport_c_binding
-use atlas_eckit_logging_c_binding
+use atlas_atlas_logging_c_binding
 implicit none
 
 ! ----------------------------------------------------
@@ -65,6 +65,7 @@ integer, private, parameter :: KIND_REAL64 =  8
 integer, private, parameter :: FIELD_NB_VARS = -1
 integer, private, parameter :: wp = c_double ! working precision
 
+#include "atlas_module_Logging_i.f"
 #include "atlas_module_HaloExchange_i.f"
 #include "atlas_module_GatherScatter_i.f"
 #include "atlas_module_Checksum_i.f"
@@ -103,22 +104,6 @@ end ENUM
 
 !------------------------------------------------------------------------------
 
-TYPE, extends(object_type) :: Logger_t
-
-  character(len=1024), public :: message
-
-contains
-
-  procedure, public :: init => Logger__init
-  procedure, public :: set_debug => Logger__set_debug
-  procedure, public :: debug => Logger__debug
-  procedure, public :: info => Logger__info
-  procedure, public :: warning => Logger__warning
-  procedure, public :: error => Logger__error
-  procedure, public :: panic => Logger__panic
-
-END TYPE
-
 ! Logger singleton
 TYPE(Logger_t) :: logger
 
@@ -136,113 +121,6 @@ end subroutine
 subroutine atlas_finalize()
   call atlas__atlas_finalize()
 end subroutine
-
-
-subroutine Logger__set_debug(this,level)
-  CLASS(Logger_t), intent(in) :: this
-  integer , intent(in) :: level
-  call eckit__log_debug_set_level(level)
-end subroutine
-
-subroutine Logger__init(this,debug)
-  CLASS(Logger_t), intent(inout) :: this
-  integer, intent(in), optional :: debug
-end subroutine
-
-subroutine Logger__debug(this,message,level,endl)
-  CLASS(Logger_t), intent(in) :: this
-  integer, intent(in), optional :: level
-  character(kind=c_char,len=*), intent(in), optional :: message
-  logical, intent(in), optional :: endl
-  integer :: opt_level
-  if( present(level) ) then
-	opt_level = level
-  else
-	opt_level = 1
-  endif
-  if( .not. present(endl) .or. endl ) then
-	if (present(message)) then
-	  call eckit__log_debug_endl(opt_level,c_str(trim(message)))
-	else
-	  call eckit__log_debug_endl(opt_level,c_str(trim(this%message)))
-	end if
-  else
-	if (present(message)) then
-	  call eckit__log_debug(opt_level,c_str(trim(message)))
-	else
-	  call eckit__log_debug(opt_level,c_str(trim(this%message)))
-	end if
-  endif
-end subroutine
-
-subroutine Logger__info(this,message,endl)
-  CLASS(Logger_t), intent(in) :: this
-  character(kind=c_char,len=*), intent(in), optional :: message
-  logical, intent(in), optional :: endl
-  if( .not. present(endl) .or. endl ) then
-	if (present(message)) then
-	  call eckit__log_info_endl(c_str(trim(message)))
-	else
-	  call eckit__log_info_endl(c_str(trim(this%message)))
-	end if
-  else
-	if (present(message)) then
-	  call eckit__log_info(c_str(trim(message)))
-	else
-	  call eckit__log_info(c_str(trim(this%message)))
-	end if
-  endif
-end subroutine
-
-subroutine Logger__warning(this,message,endl)
-  CLASS(Logger_t), intent(in) :: this
-  character(kind=c_char,len=*), intent(in), optional :: message
-  logical, intent(in), optional :: endl
-  if( .not. present(endl) .or. endl ) then
-	if (present(message)) then
-	  call eckit__log_warning_endl(c_str(trim(message)))
-	else
-	  call eckit__log_warning_endl(c_str(trim(this%message)))
-	end if
-  else
-	if (present(message)) then
-	  call eckit__log_warning(c_str(trim(message)))
-	else
-	  call eckit__log_warning(c_str(trim(this%message)))
-	end if
-  endif
-end subroutine
-
-subroutine Logger__error(this,message,endl)
-  CLASS(Logger_t), intent(in) :: this
-  character(kind=c_char,len=*), intent(in), optional :: message
-  logical, intent(in), optional :: endl
-  if( .not. present(endl) .or. endl ) then
-	if (present(message)) then
-	  call eckit__log_error_endl(c_str(trim(message)))
-	else
-	  call eckit__log_error_endl(c_str(trim(this%message)))
-	end if
-  else
-	if (present(message)) then
-	  call eckit__log_error(c_str(trim(message)))
-	else
-	  call eckit__log_error(c_str(trim(this%message)))
-	end if
-  endif
-end subroutine
-
-subroutine Logger__panic(this,message)
-  CLASS(Logger_t), intent(in) :: this
-  character(kind=c_char,len=*), intent(in), optional :: message
-  if( present(message) ) then
-    write(0,*) message
-  else
-    write(0,*) this%message
-  endif
-end subroutine
-
-
 
 
 integer function real_kind(kind)
@@ -270,6 +148,7 @@ integer function integer_kind(kind)
   end if
 end function
 
+#include "atlas_module_Logging_c.f"
 #include "atlas_module_HaloExchange_c.f"
 #include "atlas_module_GatherScatter_c.f"
 #include "atlas_module_Checksum_c.f"

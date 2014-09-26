@@ -28,7 +28,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../actions/BuildEdges.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../actions/BuildDualMesh.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../actions/GenerateMesh.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../actions/WriteLoadBalanceReport.h)
-generate_fortran_bindings(FORTRAN_BINDINGS eckit_logging.h)
+generate_fortran_bindings(FORTRAN_BINDINGS atlas_logging.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas.h)
 
 
@@ -42,14 +42,16 @@ ecbuild_add_library( TARGET atlas_fortran
 		atlas_module.F90
 		atlas_mpl_module.F90
 		atlas_C_interop.F90
-		eckit_logging.h
-		eckit_logging.cc
+		atlas_logging.h
+		atlas_logging.cc
   LIBS atlas ${ATLAS_MPI_FORTRAN_LIBRARIES}
 )
 
 add_custom_target( atlas_fortran_inc SOURCES
    atlas_module_Checksum_i.f
    atlas_module_Checksum_c.f
+   atlas_module_Logging_i.f
+   atlas_module_Logging_c.f
    atlas_module_Mesh_i.f
    atlas_module_Mesh_c.f
    atlas_module_FunctionSpace_i.f

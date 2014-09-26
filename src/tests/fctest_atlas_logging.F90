@@ -39,11 +39,11 @@ END_TESTSUITE_FINALIZE
 
 TEST( test_logging )
 call logger%info("test_logging begin")
-call logger%debug("hello world",level=0)
+call logger%debug("hello world",lvl=0)
 call logger%warning("World is ending")
 write(logger%message,'(A)') "goodbye"
-call logger%debug(endl=.False.,level=1)
-call logger%debug(" world",level=1)
+call logger%debug(endl=.False.,lvl=1)
+call logger%debug(" world",lvl=1)
 call logger%error(" oops ")
 call logger%info("test_logging end")
 call logger%panic("AAAAAGRRG")

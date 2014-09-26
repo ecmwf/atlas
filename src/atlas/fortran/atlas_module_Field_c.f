@@ -38,6 +38,17 @@ function Field__function_space(this) result(function_space)
   function_space%private%object = atlas__Field__function_space(this%private%object)
 end function Field__function_space
 
+
+function Field__shape(this) result(shape)
+  class(Field_type), intent(in) :: this
+  integer, pointer :: shape(:)
+  type(c_ptr) :: shape_c_ptr
+  integer(c_int) :: field_rank
+  call atlas__Field__shapef(this%private%object, shape_c_ptr, field_rank)
+  call C_F_POINTER ( shape_c_ptr , shape , (/field_rank/) )
+end function Field__shape
+
+
 subroutine Field__access_data1_integer(this, field)
   class(Field_type), intent(in) :: this
   integer, pointer, intent(out) :: field(:)

@@ -58,23 +58,30 @@ Channel& standard_error()
 
 struct CreateLogFile
 {
+	LocalPathName file_path;
+	CreateLogFile(const LocalPathName& path) : file_path(path) {}
 	FileChannel* operator()()
 	{
 		char s[5];
 		std::sprintf(s, "%05d",MPL::rank());
-		FileChannel* ch = new FileChannel(LocalPathName("logfile.p"+std::string(s)) );
+		FileChannel* ch = new FileChannel(file_path+".p"+std::string(s)) ;
 		return ch;
 	}
 };
 
-Channel& logfile()
+
+// nawd: What I would really like is that depending on different file_path,
+// a new singleton is created, but in case of same file_path, the logfiles
+// should match for different channels
+Channel& logfile( const CreateLogFile& alloc)
 {
-	static ThreadSingleton<Channel,CreateLogFile> x;
+	static ThreadSingleton<Channel,CreateLogFile> x( alloc );
 	return x.instance();
 }
 
 struct ChannelConfig
 {
+	LocalPathName logfile_path;
 	int  console_rank;
 	bool console_enabled;
 	bool logfile_enabled;
@@ -82,8 +89,10 @@ struct ChannelConfig
 	ColorizeFormat* console_format;
 	ColorizeFormat* logfile_format;
 
+
 	ChannelConfig()
 	{
+		logfile_path = "logfile";
 		console_rank = 0;
 		console_enabled = true;
 		logfile_enabled = true;
@@ -110,7 +119,7 @@ struct ChannelConfig
 		}
 
 		if( logfile_enabled && !mc->has("logfile") )
-			mc->add( "logfile", new FormatChannel(logfile(),logfile_format) );
+			mc->add( "logfile", new FormatChannel(logfile(CreateLogFile(logfile_path)),logfile_format) );
 
 		if( console_enabled && !mc->has("console") && (console_rank < 0 || console_rank == MPL::rank()) )
 			mc->add( "console" , new FormatChannel(standard_out(),console_format) );
@@ -138,6 +147,7 @@ struct CreateDebugChannel : CreateChannel {};
 struct CreateInfoChannel  : CreateChannel {};
 struct CreateWarnChannel  : CreateChannel {};
 struct CreateErrorChannel : CreateChannel {};
+struct CreateStatsChannel : CreateChannel {};
 
 
 class Behavior : public eckit::ContextBehavior {
@@ -179,22 +189,52 @@ public:
 		return x.instance();
 	}
 
+	/// Stats channel
+	virtual Channel& statsChannel()
+	{
+		static ThreadSingleton<Channel,CreateStatsChannel> x;
+		return x.instance();
+	}
+
+  enum ChannelCategory { ERROR=0, WARN=1, INFO=2, DEBUG=3, STATS=4 };
+
+	virtual Channel& channel(int cat)
+	{
+		switch( cat ) {
+			case ERROR: return errorChannel();
+			case WARN:  return warnChannel();
+			case INFO:  return infoChannel();
+			case DEBUG: return debugChannel();
+			case STATS: return statsChannel();
+		}
+	}
+
 	/// Configuration
 	virtual void reconfigure()
 	{
+		// Logfile path
+		LocalPathName logfile ( Resource<std::string>(&Context::instance(),"log;$LOG;-log","out") );
+		debug_ctxt.logfile_path = logfile;
+		info_ctxt. logfile_path = logfile;
+		warn_ctxt. logfile_path = logfile;
+		error_ctxt.logfile_path = logfile;
+		stats_ctxt.logfile_path = logfile;
+
 		// Console format
 		char p[5];
 		std::sprintf(p, "%05d",MPL::rank());
-		debug_ctxt.console_format->prefix("[P"+std::string(p)+" D] -- ");
-		info_ctxt. console_format->prefix("[P"+std::string(p)+" I] -- ");
-		warn_ctxt. console_format->prefix("[P"+std::string(p)+" W] -- ");
-		error_ctxt.console_format->prefix("[P"+std::string(p)+" E] -- ");
+		debug_ctxt.console_format->prefix("(P"+std::string(p)+" D) -- ");
+		info_ctxt. console_format->prefix("(P"+std::string(p)+" I) -- ");
+		warn_ctxt. console_format->prefix("(P"+std::string(p)+" W) -- ");
+		error_ctxt.console_format->prefix("(P"+std::string(p)+" E) -- ");
+		stats_ctxt.console_format->prefix("(P"+std::string(p)+" S) -- ");
 
 		// Logfile format
-		debug_ctxt.logfile_format->prefix("[D] -- ");
-		info_ctxt. logfile_format->prefix("[I] -- ");
-		warn_ctxt. logfile_format->prefix("[W] -- ");
-		error_ctxt.logfile_format->prefix("[E] -- ");
+		debug_ctxt.logfile_format->prefix("(D) -- ");
+		info_ctxt. logfile_format->prefix("(I) -- ");
+		warn_ctxt. logfile_format->prefix("(W) -- ");
+		error_ctxt.logfile_format->prefix("(E) -- ");
+		stats_ctxt.logfile_format->prefix("(S) -- ");
 
 		// Debug configuration
 		debug_ctxt.console_enabled = false;
@@ -209,6 +249,10 @@ public:
 		// Error configuration
 		error_ctxt.console_rank = -1; // all ranks log errors to console
 		error_ctxt.apply(errorChannel());
+
+		// Stats configuration
+		stats_ctxt.console_enabled = false;
+		stats_ctxt.apply(statsChannel());
 	}
 
 private:
@@ -217,7 +261,7 @@ private:
 	ChannelConfig info_ctxt;
 	ChannelConfig warn_ctxt;
 	ChannelConfig error_ctxt;
-
+	ChannelConfig stats_ctxt;
 };
 
 
