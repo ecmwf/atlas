@@ -1,9 +1,9 @@
 /*
  * (C) Copyright 1996-2014 ECMWF.
- * 
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
- * In applying this licence, ECMWF does not waive the privileges and immunities 
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
@@ -14,6 +14,8 @@
 #define RGGMeshGenerator_h
 
 #include <vector>
+#include <eckit/config/Configurable.h>
+#include <eckit/config/Resource.h>
 #include "atlas/mesh/Metadata.h"
 
 namespace atlas {
@@ -23,7 +25,7 @@ namespace meshgen {
 struct Region;
 class RGG;
 
-class RGGMeshGenerator
+class RGGMeshGenerator : public eckit::Configurable
 {
 public:
   RGGMeshGenerator();
@@ -36,6 +38,8 @@ private:
   //std::vector<int> partition(const RGG& rgg) const;
 public:
   Metadata options;
+  double max_angle_;
+	virtual void reconfigure() {}
 };
 
 } // namespace meshgen

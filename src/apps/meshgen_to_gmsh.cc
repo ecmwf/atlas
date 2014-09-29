@@ -56,6 +56,7 @@ public:
     identifier = Resource< std::string       > ( "-rgg", "" );
     edges      = Resource< bool > ( "-edges", false );
     halo       = Resource< int > ( "-halo", 0 );
+    surfdim    = Resource< int > ( "-surfdim", 2 );
 
     if( identifier.empty() && reg_nlon_nlat.empty() && fgg_nlon_nlat.empty() && rgg_nlon.empty() )
     {
@@ -70,6 +71,7 @@ private:
 
   int halo;
   bool edges;
+  int surfdim;
   std::string identifier;
   std::vector<long> reg_nlon_nlat;
   std::vector<long> fgg_nlon_nlat;
@@ -104,7 +106,9 @@ void Meshgen2Gmsh::run()
     build_median_dual_mesh(*mesh);
   }
 
-  atlas::Gmsh().write( *mesh, path_out );
+  atlas::Gmsh gmsh;
+  gmsh.options.set("surfdim",surfdim);
+  gmsh.write( *mesh, path_out );
   atlas_finalize();
 }
 

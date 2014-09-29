@@ -43,7 +43,7 @@ struct Region
   std::vector<int> nb_lat_elems;
 };
 
-RGGMeshGenerator::RGGMeshGenerator()
+RGGMeshGenerator::RGGMeshGenerator() : eckit::Configurable()
 {
   // This option creates a point at the pole when true
   options.set("include_pole",false);
@@ -58,6 +58,10 @@ RGGMeshGenerator::RGGMeshGenerator()
   // This option sets the part that will be generated
   options.set("part",0);
 
+  // This option sets the maximum angle deviation for a quadrilateral element
+  // max_angle = 30  -->  minimises number of triangles
+  // max_angle = 0   -->  maximises number of triangles
+  max_angle_ = eckit::Resource< double > ( "-max_angle", 27. );
 }
 
 //std::vector<int> RGGMeshGenerator::partition(const RGG& rgg) const
@@ -135,6 +139,8 @@ Mesh* RGGMeshGenerator::generate(const RGG& rgg)
 
 void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& parts, int mypart, Region& region)
 {
+  double max_angle = max_angle_;
+
   int n;
   /*
   Find min and max latitudes used by this part.
@@ -283,41 +289,25 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
 // ------------------------------------------------
 // START RULES
 // ------------------------------------------------
-      enum Rules{ MINIMISE_TRIAGS=0, TRIAG_BELTS=1 };
-      int rule = MINIMISE_TRIAGS;
-      switch (rule)
+      const double dxN = std::abs(xN2-xN1);
+      const double dxS = std::abs(xS2-xS1);
+      const double dx  = std::min(dxN,dxS);
+      const double alpha1 = std::atan2((xN1-xS1)/dx,1.) * 180./M_PI;
+      const double alpha2 = std::atan2((xN2-xS2)/dx,1.) * 180./M_PI;
+      if( std::abs(alpha1) < max_angle && std::abs(alpha2) < max_angle )
       {
-      case MINIMISE_TRIAGS:
+        try_make_quad = true;
+      }
+      else
       {
         dN1S2 = std::abs(xN1-xS2);
         dS1N2 = std::abs(xS1-xN2);
         dN2S2 = std::abs(xN2-xS2);
         // std::cout << "  dN1S2 " << dN1S2 << "   dS1N2 " << dS1N2 << "   dN2S2 " << dN2S2 << std::endl;
-        if ( (dN1S2 < dN2S2 && dN1S2 < dS1N2) && (ipS1 != ipS2) ) try_make_triangle_up = true;
-        else if ( (dS1N2 < dN2S2 && dS1N2 < dN1S2) && (ipN1 != ipN2) ) try_make_triangle_down = true;
-        else try_make_quad = true;
+        if( (dN1S2 <= dS1N2) && (ipS1 != ipS2) ) { try_make_triangle_up = true;}
+        else if( (dN1S2 >= dS1N2) && (ipN1 != ipN2) ) { try_make_triangle_down = true;}
+        else eckit::Exception("Should not try to make a quadrilateral!",Here());
       }
-        break;
-      case TRIAG_BELTS:
-      {
-        if( rgg.nlon(latN) != rgg.nlon(latS) )
-        {
-          dN1S2 = std::abs(xN1-xS2);
-          dS1N2 = std::abs(xS1-xN2);
-          dN2S2 = std::abs(xN2-xS2);
-          // std::cout << "  dN1S2 " << dN1S2 << "   dS1N2 " << dS1N2 << "   dN2S2 " << dN2S2 << std::endl;
-          if( (dN1S2 <= dS1N2) && (ipS1 != ipS2) ) try_make_triangle_up = true;
-          else if( (dN1S2 >= dS1N2) && (ipN1 != ipN2) ) try_make_triangle_down = true;
-          else try_make_quad = true;
-        }
-        else
-        {
-          try_make_quad = true;
-        }
-      }
-        break;
-      }
-
 // ------------------------------------------------
 // END RULES
 // ------------------------------------------------
