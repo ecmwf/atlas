@@ -265,6 +265,12 @@ subroutine atlas_generate_latlon_grid(mesh,nlon,nlat)
   mesh%private%object = atlas__generate_latlon_grid(nlon,nlat)
 end subroutine atlas_generate_latlon_grid
 
+subroutine atlas_generate_custom_reduced_gaussian_grid(mesh,nlon)
+  type(Mesh_type), intent(inout) :: mesh
+  integer, intent(in) :: nlon(:)
+  mesh%private%object = atlas__generate_custom_reduced_gaussian_grid(nlon,size(nlon))
+end subroutine atlas_generate_custom_reduced_gaussian_grid
+
 
 ! -----------------------------------------------------------------------------
 

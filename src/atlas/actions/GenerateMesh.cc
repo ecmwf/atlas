@@ -99,6 +99,13 @@ Mesh* atlas__generate_latlon_grid ( int nlon, int nlat )
   return generate_regular_grid( nlon, nlat );
 }
 
+Mesh* atlas__generate_custom_reduced_gaussian_grid( int nlon[], int nlat )
+{
+  std::vector<long> nlon_vector;
+  nlon_vector.assign(nlon,nlon+nlat);
+  return generate_reduced_gaussian_grid(nlon_vector);
+}
+
 // ------------------------------------------------------------------
 
 
