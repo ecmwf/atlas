@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <eckit/runtime/Context.h>
 #include "atlas/util/Array.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
@@ -43,7 +44,7 @@ struct Region
   std::vector<int> nb_lat_elems;
 };
 
-RGGMeshGenerator::RGGMeshGenerator() : eckit::Configurable()
+RGGMeshGenerator::RGGMeshGenerator()
 {
   // This option creates a point at the pole when true
   options.set("include_pole",false);
@@ -61,7 +62,8 @@ RGGMeshGenerator::RGGMeshGenerator() : eckit::Configurable()
   // This option sets the maximum angle deviation for a quadrilateral element
   // max_angle = 30  -->  minimises number of triangles
   // max_angle = 0   -->  maximises number of triangles
-  max_angle_ = eckit::Resource< double > ( "-max_angle", 27. );
+  max_angle_ = eckit::Resource< double > ( &eckit::Context::instance(), "-max_angle", 27. );
+	triangulate_quads_ = eckit::Resource< double > ( &eckit::Context::instance(), "-triangulate_quads", false );
 }
 
 //std::vector<int> RGGMeshGenerator::partition(const RGG& rgg) const
@@ -294,9 +296,15 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
       const double dx  = std::min(dxN,dxS);
       const double alpha1 = std::atan2((xN1-xS1)/dx,1.) * 180./M_PI;
       const double alpha2 = std::atan2((xN2-xS2)/dx,1.) * 180./M_PI;
-      if( std::abs(alpha1) < max_angle && std::abs(alpha2) < max_angle )
+      if( std::abs(alpha1) <= max_angle && std::abs(alpha2) <= max_angle )
       {
-        try_make_quad = true;
+				if( triangulate_quads_ )
+				{
+					try_make_triangle_up   = (jlat+ipN1) % 2;
+					try_make_triangle_down = (jlat+ipN1+1) % 2;
+				}
+				else
+					try_make_quad = true;
       }
       else
       {

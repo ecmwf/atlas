@@ -25,7 +25,7 @@ namespace meshgen {
 struct Region;
 class RGG;
 
-class RGGMeshGenerator : public eckit::Configurable
+class RGGMeshGenerator
 {
 public:
   RGGMeshGenerator();
@@ -39,7 +39,7 @@ private:
 public:
   Metadata options;
   double max_angle_;
-	virtual void reconfigure() {}
+	bool triangulate_quads_;
 };
 
 } // namespace meshgen
