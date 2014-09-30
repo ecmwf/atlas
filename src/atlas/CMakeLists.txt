@@ -44,8 +44,9 @@ if( NOT HAVE_MPI )
   set( atlas_mpistubs_srcs mpistubs/mpi.h mpistubs/mpi.c )
 
   ecbuild_add_library( TARGET atlas_mpistubs_fortran
-                       AUTO_VERSION
-                       CONDITION CMAKE_Fortran_COMPILER_LOADED
+					   AUTO_VERSION
+					   INSTALL_HEADERS ALL
+					   CONDITION CMAKE_Fortran_COMPILER_LOADED
                        SOURCES   mpistubs/atlas_mpistubs_module.F90 )
   set( ATLAS_MPI_FORTRAN_LIBRARIES atlas_mpistubs_fortran )
 else()
@@ -138,8 +139,9 @@ list( APPEND atlas_actions_srcs
 ### atlas c++ library
 
 ecbuild_add_library( TARGET atlas
-                     AUTO_VERSION
-                     SOURCES
+					AUTO_VERSION
+					INSTALL_HEADERS ALL
+					SOURCES
                        atlas.h
                        atlas.cc
                        atlas_mpi.h

@@ -29,7 +29,7 @@ ecbuild_requires_macro_version( 1.3 )
 
 set( PERSISTENT_NAMESPACE "eckit" CACHE INTERNAL "" )
 
-ecbuild_use_package( PROJECT eckit VERSION 0.6 )
+ecbuild_use_package( PROJECT eckit VERSION 0.6 REQUIRED )
 
 ecbuild_declare_project()
 
@@ -52,9 +52,10 @@ ecbuild_add_option( FEATURE FORTRAN_NUMBERING
                     DESCRIPTION "data-structures are index with Fortran numbering" )
 
 ecbuild_add_option( FEATURE FORTRAN
-                    DESCRIPTION "provide Fortran bindings" )
+					DESCRIPTION "provide Fortran bindings" )
 
 if( ENABLE_FORTRAN )
+
   ecbuild_enable_fortran( REQUIRED MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/module )
 
   ecbuild_add_option( FEATURE FCTEST
