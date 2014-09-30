@@ -112,8 +112,8 @@ CONTAINS
 ! =============================================================================
 
 subroutine atlas_init()
-  integer :: argc
-  type(c_ptr) :: argv(15)
+  integer, save :: argc
+  type(c_ptr), save :: argv(15)
   call get_c_arguments(argc,argv)
   call atlas__atlas_init(argc,argv)
 end subroutine
