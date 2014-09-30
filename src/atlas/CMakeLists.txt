@@ -46,6 +46,7 @@ if( NOT HAVE_MPI )
   ecbuild_add_library( TARGET atlas_mpistubs_fortran
 					   AUTO_VERSION
 					   INSTALL_HEADERS ALL
+					   HEADER_DESTINATION  ${INSTALL_INCLUDE_DIR}/atlas
 					   CONDITION CMAKE_Fortran_COMPILER_LOADED
                        SOURCES   mpistubs/atlas_mpistubs_module.F90 )
   set( ATLAS_MPI_FORTRAN_LIBRARIES atlas_mpistubs_fortran )
@@ -141,6 +142,7 @@ list( APPEND atlas_actions_srcs
 ecbuild_add_library( TARGET atlas
 					AUTO_VERSION
 					INSTALL_HEADERS ALL
+					HEADER_DESTINATION  ${INSTALL_INCLUDE_DIR}/atlas
 					SOURCES
                        atlas.h
                        atlas.cc

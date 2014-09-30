@@ -46,8 +46,8 @@ endif()
 ecbuild_add_library(TARGET atlas_grid
                     AUTO_VERSION
                     INSTALL_HEADERS ALL
-                    CONDITION HAVE_GRID AND HAVE_TESSELATION
+					HEADER_DESTINATION ${INSTALL_INCLUDE_DIR}/atlas/grid
+					CONDITION HAVE_GRID AND HAVE_TESSELATION
                     SOURCES ${atlas_grid_srcs}
-                    HEADER_DESTINATION ${INSTALL_INCLUDE_DIR}/atlas/grid
                     INCLUDES "${CGAL_INCLUDE_DIRS}"
                     LIBS atlas "${ATLAS_EXTRA_LIBRARIES};${CGAL_LIBRARIES}" )
