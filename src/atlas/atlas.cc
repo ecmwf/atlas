@@ -215,12 +215,22 @@ public:
 	virtual void reconfigure()
 	{
 		// Logfile path
-		LocalPathName logfile ( Resource<std::string>(&Context::instance(),"log;$LOG;-log","out") );
+		LocalPathName logfile ( Resource<std::string>(&Context::instance(),"logfile;$ATLAS_LOGFILE;-logfile","out") );
 		debug_ctxt.logfile_path = logfile;
 		info_ctxt. logfile_path = logfile;
 		warn_ctxt. logfile_path = logfile;
 		error_ctxt.logfile_path = logfile;
 		stats_ctxt.logfile_path = logfile;
+
+		int logfile_rank = ( Resource<int>(&Context::instance(),"logfile_task;$ATLAS_LOGFILE_TASK;-logfile_task",-1) );
+		if( logfile_rank >= 0 && logfile_rank != MPL::rank() )
+		{
+			debug_ctxt.logfile_enabled = false;
+			info_ctxt. logfile_enabled = false;
+			warn_ctxt. logfile_enabled = false;
+			error_ctxt.logfile_enabled = false;
+			stats_ctxt.logfile_enabled = false;
+		}
 
 		// Console format
 		char p[5];
