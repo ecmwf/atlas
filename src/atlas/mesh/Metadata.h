@@ -30,6 +30,9 @@ public:
 	const ValueT& get(const std::string& name) const;
 
 	template<typename ValueT>
+	const ValueT& get(const std::string& name, const ValueT& deflault_value) const;
+
+	template<typename ValueT>
 	bool has(const std::string& name) const;
 
 private:

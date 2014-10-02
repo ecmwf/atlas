@@ -40,9 +40,17 @@ const VALUE_TYPE& Metadata::get(const std::string& name) const\
 		msg << "Could not find metadata \"" << name << "\"";\
 		throw eckit::OutOfRange(msg.str(),Here());\
 	}\
+}\
+template<>\
+const VALUE_TYPE& Metadata::get(const std::string& name, const VALUE_TYPE& deflault_value) const\
+{\
+	if( has<VALUE_TYPE>(name) ) {\
+		return map_##VALUE_TYPE##_.at(name);\
+	}\
+	else {\
+		return deflault_value;\
+	}\
 }
-
-
 
 
 #define METADATA_C_BINDING( VALUE_TYPE ) \
