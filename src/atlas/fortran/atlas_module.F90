@@ -185,6 +185,17 @@ subroutine atlas_write_gmsh_field(field,filename,mode)
   endif
 end subroutine atlas_write_gmsh_field
 
+subroutine atlas_write_gmsh_fieldset(field,filename,mode)
+  type(FieldSet_type), intent(in) :: field
+  character(len=*), intent(in) :: filename
+  integer(kind(openmode)), optional :: mode
+  if( present(mode) ) then
+    call atlas__write_gmsh_fieldset(field%private%object,c_str(filename),mode)
+  else
+    call atlas__write_gmsh_fieldset(field%private%object,c_str(filename),out)
+  endif
+end subroutine atlas_write_gmsh_fieldset
+
 subroutine atlas_build_parallel_fields(mesh)
   type(Mesh_type), intent(inout) :: mesh
   call atlas__build_parallel_fields(mesh%private%object)

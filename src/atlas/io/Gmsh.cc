@@ -92,10 +92,10 @@ void write_field_nodes(const Gmsh& gmsh, Field& field, std::ostream& out)
 {
   FunctionSpace& function_space = field.function_space();
   bool gather( gmsh.options.get<bool>("gather") );
-	bool binary( !gmsh.options.get<bool>("ascii") );
-
+  bool binary( !gmsh.options.get<bool>("ascii") );
+  int nlev = field.metadata().get<int>("nb_levels",1);
   int ndata = field.shape(0);
-  int nvars = field.shape(1);
+  int nvars = field.shape(1)/nlev;
   ArrayView<int,1    > gidx ( function_space.field( "glb_idx" ) );
   ArrayView<DATA_TYPE> data ( field );
   if( gather )
@@ -112,166 +112,185 @@ void write_field_nodes(const Gmsh& gmsh, Field& field, std::ostream& out)
     data = data_glb;
   }
 
-  if( ( gather && MPL::rank() == 0 ) || !gather )
+  for (int jlev=0; jlev<nlev; ++jlev)
   {
-    double time   = field.metadata().has<double>("time") ? field.metadata().get<double>("time") : 0. ;
-    int time_step = field.metadata().has<int>("time_step") ? field.metadata().get<int>("time_step") : 0. ;
-    out << "$NodeData\n";
-    out << "1\n";
-    out << "\"" << field.name() << "\"\n";
-    out << "1\n";
-    out << time << "\n";
-    out << "4\n";
-    out << time_step << "\n";
-    if     ( nvars == 1 ) out << nvars << "\n";
-    else if( nvars <= 3 ) out << 3     << "\n";
-    out << ndata << "\n";
-    out << MPL::rank() << "\n";
-
-		if( binary )
+		if( ( gather && MPL::rank() == 0 ) || !gather )
 		{
-			if( nvars == 1)
-	    {
-				double value;
-	      for( int n = 0; n < ndata; ++n )
-	      {
-					out.write(reinterpret_cast<const char*>(&gidx(n)),sizeof(int));
-					value = data(n,0);
-					out.write(reinterpret_cast<const char*>(&value),sizeof(double));
+			char field_lev[5];
+			if( field.metadata().has<int>("nb_levels") )
+				std::sprintf(field_lev, "[%03d]",jlev);
+		  else
+				std::sprintf(field_lev, "",jlev);
+			double time   = field.metadata().get<double>("time",0.);
+			int time_step = field.metadata().get<int>("time_step",0) ;
+			out << "$NodeData\n";
+			out << "1\n";
+			out << "\"" << field.name() << field_lev << "\"\n";
+			out << "1\n";
+			out << time << "\n";
+			out << "4\n";
+			out << time_step << "\n";
+			if     ( nvars == 1 ) out << nvars << "\n";
+			else if( nvars <= 3 ) out << 3     << "\n";
+			out << ndata << "\n";
+			out << MPL::rank() << "\n";
+
+			if( binary )
+			{
+				if( nvars == 1)
+				{
+					double value;
+					for( int n = 0; n < ndata; ++n )
+					{
+						out.write(reinterpret_cast<const char*>(&gidx(n)),sizeof(int));
+						value = data(n,jlev*nvars+0);
+						out.write(reinterpret_cast<const char*>(&value),sizeof(double));
+					}
 				}
-	    }
-	    else if( nvars <= 3 )
-	    {
-				double value[3] = {0,0,0};
-	      for( size_t n = 0; n < ndata; ++n )
-	      {
-					out.write(reinterpret_cast<const char*>(&gidx(n)),sizeof(int));
-	        for( int v=0; v<nvars; ++v)
-	          value[v] = data(n,v);
-					out.write(reinterpret_cast<const char*>(&value),sizeof(double)*3);
-	      }
-	    }
-			out << "\n";
-		}
-		else
-		{
-			if( nvars == 1)
-	    {
-	      for( int n = 0; n < ndata; ++n )
-	      {
-	        out << gidx(n) << " " << data(n,0) << "\n";
-	      }
-	    }
-	    else if( nvars <= 3 )
-	    {
-	      std::vector<DATA_TYPE> data_vec(3,0.);
-	      for( size_t n = 0; n < ndata; ++n )
-	      {
-	        out << gidx(n);
-	        for( int v=0; v<nvars; ++v)
-	          data_vec[v] = data(n,v);
-	        for( int v=0; v<3; ++v)
-	          out << " " << data_vec[v];
-	        out << "\n";
-	      }
-	    }
+				else if( nvars <= 3 )
+				{
+					double value[3] = {0,0,0};
+					for( size_t n = 0; n < ndata; ++n )
+					{
+						out.write(reinterpret_cast<const char*>(&gidx(n)),sizeof(int));
+						for( int v=0; v<nvars; ++v)
+							value[v] = data(n,jlev*nvars+v);
+						out.write(reinterpret_cast<const char*>(&value),sizeof(double)*3);
+					}
+				}
+				out << "\n";
+			}
+			else
+			{
+				if( nvars == 1)
+				{
+					for( int n = 0; n < ndata; ++n )
+					{
+						out << gidx(n) << " " << data(n,jlev*nvars+0) << "\n";
+					}
+				}
+				else if( nvars <= 3 )
+				{
+					std::vector<DATA_TYPE> data_vec(3,0.);
+					for( size_t n = 0; n < ndata; ++n )
+					{
+						out << gidx(n);
+						for( int v=0; v<nvars; ++v)
+							data_vec[v] = data(n,jlev*nvars+v);
+						for( int v=0; v<3; ++v)
+							out << " " << data_vec[v];
+						out << "\n";
+					}
+				}
 
+			}
+			out << "$EndNodeData\n";
 		}
-    out << "$EndNodeData\n";
-  }
+	}
 }
 
 template< typename DATA_TYPE >
 void write_field_elems(const Gmsh& gmsh, Field& field, std::ostream& out)
 {
 	bool binary( !gmsh.options.get<bool>("ascii") );
+	int nlev = field.metadata().get<int>("nb_levels",1);
+	int nvars = field.shape(1)/nlev;
+	int ndata = field.shape(0);
 
 	FunctionSpace& function_space = field.function_space();
-	int ndata = field.shape(0);
-	int nvars = field.shape(1);
-	double time   = field.metadata().has<double>("time") ? field.metadata().get<double>("time") : 0. ;
-	int time_step = field.metadata().has<int>("time_step") ? field.metadata().get<int>("time_step") : 0. ;
+	double time   = field.metadata().get<double>("time",0.);
+  int time_step = field.metadata().get<int>("time_step",0) ;
 	int nnodes = IndexView<int,2>( function_space.field("nodes") ).shape(1);
-	out << "$ElementNodeData\n";
-	out << "1\n";
-	out << "\"" << field.name() << "\"\n";
-	out << "1\n";
-	out << time << "\n";
-	out << "4\n";
-	out << time_step << "\n";
-	if     ( nvars == 1 ) out << nvars << "\n";
-	else if( nvars <= 3 ) out << 3     << "\n";
-	out << ndata << "\n";
-	out << MPL::rank() << "\n";
 
-	ArrayView<int,1> gidx ( function_space.field( "glb_idx" ) );
+	for (int jlev=0; jlev<nlev; ++jlev)
+	{
+		char field_lev[5];
+		if( field.metadata().has<int>("nb_levels") )
+			std::sprintf(field_lev, "[%03d]",jlev);
+	  else
+			std::sprintf(field_lev, "",jlev);
 
-	if( binary )
-	{
-		if( nvars == 1)
+	  out << "$ElementNodeData\n";
+		out << "1\n";
+		out << "\"" << field.name() << field_lev << "\"\n";
+		out << "1\n";
+		out << time << "\n";
+		out << "4\n";
+		out << time_step << "\n";
+		if     ( nvars == 1 ) out << nvars << "\n";
+		else if( nvars <= 3 ) out << 3     << "\n";
+		out << ndata << "\n";
+		out << MPL::rank() << "\n";
+
+		ArrayView<int,1> gidx ( function_space.field( "glb_idx" ) );
+
+		if( binary )
 		{
-			ArrayView<DATA_TYPE,1> data( field );
-			double value;
-			for (size_t jelem=0; jelem<ndata; ++jelem)
+			if( nvars == 1)
 			{
-				out.write(reinterpret_cast<const char*>(&gidx(jelem)),sizeof(int));
-				out.write(reinterpret_cast<const char*>(&nnodes),sizeof(int));
-				for (size_t n=0; n<nnodes; ++n)
+				ArrayView<DATA_TYPE,2> data( field );
+				double value;
+				for (size_t jelem=0; jelem<ndata; ++jelem)
 				{
-					value = data(jelem);
-					out.write(reinterpret_cast<const char*>(&value),sizeof(double));
+					out.write(reinterpret_cast<const char*>(&gidx(jelem)),sizeof(int));
+					out.write(reinterpret_cast<const char*>(&nnodes),sizeof(int));
+					for (size_t n=0; n<nnodes; ++n)
+					{
+						value = data(jelem,jlev);
+						out.write(reinterpret_cast<const char*>(&value),sizeof(double));
+					}
+				}
+			}
+			else if( nvars <= 3 )
+			{
+				double value[3] = {0,0,0};
+				ArrayView<DATA_TYPE,2> data( field );
+				for (size_t jelem=0; jelem<ndata; ++jelem)
+				{
+					out << gidx(jelem) << " " << nnodes;
+					for (size_t n=0; n<nnodes; ++n)
+					{
+						for( int v=0; v<nvars; ++v)
+							value[v] = data(jelem,jlev*nvars+v);
+						out.write(reinterpret_cast<const char*>(&value),sizeof(double)*3);
+					}
+				}
+			}
+			out <<"\n";
+		}
+		else
+		{
+			if( nvars == 1)
+			{
+				ArrayView<DATA_TYPE,2> data( field );
+				for (size_t jelem=0; jelem<ndata; ++jelem)
+				{
+					out << gidx(jelem) << " " << nnodes;
+					for (size_t n=0; n<nnodes; ++n)
+						out << " " << data(jelem,jlev);
+					out <<"\n";
+				}
+			}
+			else if( nvars <= 3 )
+			{
+				std::vector<DATA_TYPE> data_vec(3,0.);
+				ArrayView<DATA_TYPE,2> data( field );
+				for (size_t jelem=0; jelem<ndata; ++jelem)
+				{
+					out << gidx(jelem) << " " << nnodes;
+					for (size_t n=0; n<nnodes; ++n)
+					{
+						for( int v=0; v<nvars; ++v)
+							data_vec[v] = data(jelem,jlev*nvars+v);
+						for( int v=0; v<3; ++v)
+							out << " " << data_vec[v];
+					}
+					out <<"\n";
 				}
 			}
 		}
-		else if( nvars <= 3 )
-		{
-			double value[3] = {0,0,0};
-			ArrayView<DATA_TYPE,2> data( field );
-			for (size_t jelem=0; jelem<ndata; ++jelem)
-			{
-				out << gidx(jelem) << " " << nnodes;
-				for (size_t n=0; n<nnodes; ++n)
-				{
-					for( int v=0; v<nvars; ++v)
-						value[v] = data(jelem,v);
-					out.write(reinterpret_cast<const char*>(&value),sizeof(double)*3);
-				}
-			}
-		}
-		out <<"\n";
+		out << "$EndElementNodeData\n";
 	}
-	else
-	{
-		if( nvars == 1)
-		{
-			ArrayView<DATA_TYPE,1> data( field );
-			for (size_t jelem=0; jelem<ndata; ++jelem)
-			{
-				out << gidx(jelem) << " " << nnodes;
-				for (size_t n=0; n<nnodes; ++n)
-					out << " " << data(jelem);
-				out <<"\n";
-			}
-		}
-		else if( nvars <= 3 )
-		{
-			std::vector<DATA_TYPE> data_vec(3,0.);
-			ArrayView<DATA_TYPE,2> data( field );
-			for (size_t jelem=0; jelem<ndata; ++jelem)
-			{
-				out << gidx(jelem) << " " << nnodes;
-				for (size_t n=0; n<nnodes; ++n)
-				{
-					for( int v=0; v<nvars; ++v)
-						data_vec[v] = data(jelem,v);
-					for( int v=0; v<3; ++v)
-						out << " " << data_vec[v];
-				}
-				out <<"\n";
-			}
-		}
-	}
-	out << "$EndElementNodeData\n";
 }
 
 void swap_bytes(char *array, int size, int n)
@@ -590,36 +609,26 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh )
 
 void Gmsh::write(Mesh& mesh, const std::string& file_path) const
 {
-	int part = MPL::rank();
-	if( mesh.metadata().has<int>("part") )
-		part = mesh.metadata().get<int>("part");
-
+	int part = mesh.metadata().get<int>("part",MPL::rank());
 	bool include_ghost_elements = options.get<bool>("ghost");
 	int surfdim = options.get<int>("surfdim");
 
 	FunctionSpace& nodes    = mesh.function_space( "nodes" );
 	ArrayView<double,2> coords  ( nodes.field( "coordinates" ) );
 	ArrayView<int,   1> glb_idx ( nodes.field( "glb_idx" ) );
-	int nb_nodes;
-	if( nodes.metadata().has<int>("nb_owned") )
-		nb_nodes = nodes.metadata().get<int>("nb_owned");
-	nb_nodes = nodes.shape(0);
+	int nb_nodes = nodes.shape(0);
 
 	FunctionSpace& quads       = mesh.function_space( "quads" );
 	IndexView<int,2> quad_nodes   ( quads.field( "nodes" ) );
 	ArrayView<int,1> quad_glb_idx ( quads.field( "glb_idx" ) );
 	ArrayView<int,1> quad_part    ( quads.field( "partition" ) );
-	int nb_quads = quads.shape(0);
-	if( quads.metadata().has<int>("nb_owned") )
-		nb_quads = quads.metadata().get<int>("nb_owned");
+	int nb_quads = quads.metadata().get<int>("nb_owned", quads.shape(0) );
 
 	FunctionSpace& triags      = mesh.function_space( "triags" );
 	IndexView<int,2> triag_nodes   ( triags.field( "nodes" ) );
 	ArrayView<int,1> triag_glb_idx ( triags.field( "glb_idx" ) );
 	ArrayView<int,1> triag_part    ( triags.field( "partition" ) );
-	int nb_triags = quads.shape(0);
-	if( triags.metadata().has<int>("nb_owned") )
-		nb_triags = triags.metadata().get<int>("nb_owned");
+	int nb_triags = triags.metadata().get<int>("nb_owned",triags.shape(0));
 
 	int nb_edges(0);
 	if( mesh.has_function_space("edges") )
@@ -900,6 +909,11 @@ void Gmsh::write(Field& field, const std::string& file_path, openmode mode) cons
 
 	// Field
 	FunctionSpace& function_space = field.function_space();
+
+	if( !function_space.metadata().has<int>("type") )
+	{
+		throw eckit::Exception("function_space "+function_space.name()+" has no type.. ?");
+	}
 
 	if( function_space.metadata().get<int>("type") == Entity::NODES )
 	{
