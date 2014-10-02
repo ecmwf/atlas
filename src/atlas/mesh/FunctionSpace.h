@@ -145,6 +145,7 @@ extern "C"
 {
 	FunctionSpace* atlas__FunctionSpace__new (char* name, char* shape_func, int shape[], int rank);
 	void atlas__FunctionSpace__delete (FunctionSpace* This);
+	Metadata* atlas__FunctionSpace__metadata (FunctionSpace* This);
 	int atlas__FunctionSpace__dof (FunctionSpace* This);
 	int atlas__FunctionSpace__glb_dof (FunctionSpace* This);
 	void atlas__FunctionSpace__create_field_int (FunctionSpace* This, char* name, int nb_vars);

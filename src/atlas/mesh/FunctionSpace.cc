@@ -306,6 +306,11 @@ FunctionSpace* atlas__FunctionSpace__new (char* name, char* shape_func, int shap
 	return new FunctionSpace( std::string(name), std::string(shape_func), shape_vec );
 }
 
+Metadata* atlas__FunctionSpace__metadata (FunctionSpace* This)
+{
+	return &This->metadata();
+}
+
 int atlas__FunctionSpace__dof (FunctionSpace* This) {
 	return This->dof();
 }

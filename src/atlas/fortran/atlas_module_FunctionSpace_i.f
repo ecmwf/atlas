@@ -34,6 +34,7 @@ contains
   procedure :: shape => FunctionSpace__shape
   procedure :: field => FunctionSpace__field
   procedure, public :: has_field => FunctionSpace__has_field
+  procedure :: metadata => FunctionSpace__metadata
   procedure :: parallelise => FunctionSpace__parallelise
   procedure, private :: FunctionSpace__halo_exchange_int32_r1
   procedure, private :: FunctionSpace__halo_exchange_int32_r2
