@@ -15,21 +15,6 @@ function new_FunctionSpace(name,shape_func,nb_nodes) result(function_space)
     & extents, 2 )
 end function new_FunctionSpace
 
-function new_PrismaticFunctionSpace(name,shape_func,nb_levels,nb_nodes) result(function_space)
-  character(len=*), intent(in) :: name
-  character(len=*), intent(in) :: shape_func
-  integer, intent(in) :: nb_levels
-  integer, intent(in) :: nb_nodes
-  type(FunctionSpace_type) :: function_space
-  type(Metadata_type) :: metadata
-  integer :: shape(3)
-  shape = (/nb_nodes,nb_levels,FIELD_NB_VARS/)
-  function_space%private%object = atlas__FunctionSpace__new(c_str(name),c_str(shape_func), &
-    & shape, 3 )
-  metadata = function_space%metadata()
-  call metadata%set("nb_levels",nb_levels)
-end function new_PrismaticFunctionSpace
-
 subroutine FunctionSpace__delete(this)
   type(FunctionSpace_type), intent(inout) :: this
   if ( c_associated(this%private%object) ) then

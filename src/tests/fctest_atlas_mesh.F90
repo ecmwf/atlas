@@ -124,35 +124,27 @@ END_TEST
 ! -----------------------------------------------------------------------------
 
 TEST( test_create_remove )
+  real(c_double), pointer :: scalar(:)
+  real(c_float), pointer :: vector(:,:)
+
   call func_space%create_field("bla",1,integer_kind())
   field = func_space%field("bla")
   CHECK_EQUAL( field%name(), "bla" )
 
   call func_space%remove_field("bla")
-END_TEST
 
-! -----------------------------------------------------------------------------
-
-TEST( test_prismatic_function_space )
-  real(c_double), pointer :: scalar(:,:)
-  real(c_float), pointer :: vector(:,:,:)
-  call mesh%add_function_space( new_PrismaticFunctionSpace("prismatic", "P1-C", 5, 10 ) )
-
-  func_space = mesh%function_space("prismatic")
   call func_space%create_field("vector_field",3,real_kind(c_float))
   field = func_space%field("vector_field")
   call field%access_data(vector)
-  CHECK_EQUAL( size(vector),   150 )
+  CHECK_EQUAL( size(vector),   30 )
   CHECK_EQUAL( size(vector,1), 3   )
-  CHECK_EQUAL( size(vector,2), 5   )
-  CHECK_EQUAL( size(vector,3), 10  )
+  CHECK_EQUAL( size(vector,2), 10   )
 
   call func_space%create_field("scalar_field",1,real_kind(c_double))
   field = func_space%field("scalar_field")
-  scalar => field%data2()
-  CHECK_EQUAL( size(scalar),   50 )
-  CHECK_EQUAL( size(scalar,1), 5  )
-  CHECK_EQUAL( size(scalar,2), 10 )
+  scalar => field%data1()
+  CHECK_EQUAL( size(scalar),   10 )
+  CHECK_EQUAL( size(scalar,1), 10  )
 END_TEST
 
 ! -----------------------------------------------------------------------------
@@ -167,7 +159,6 @@ TEST( test_fieldset )
   call fieldset%add_field( func_space%field("field_1") )
   call fieldset%add_field( func_space%field("field_2") )
 
-  func_space = mesh%function_space("prismatic")
   call fieldset%add_field( func_space%field("vector_field") )
 
   CHECK_EQUAL( fieldset%size(), 4 )
@@ -193,7 +184,6 @@ TEST( test_fieldset )
 END_TEST
 
 TEST( test_meshgen )
-
   type(Mesh_type) :: rgg
   type(FunctionSpace_type) :: nodes, edges
   type(Field_type) :: field
