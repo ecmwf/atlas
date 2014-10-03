@@ -285,14 +285,14 @@ void atlas_init(int argc, char** argv)
 	Context::instance().behavior( new atlas::Behavior() );
 	Context::instance().behavior().debug( Resource<int>(&Context::instance(),"debug;$DEBUG;-debug",0) );
 	Context::instance().behavior().reconfigure();
-	Log::info() << "Atlas initialized" << std::endl;
-	Log::info() << "    version [" << atlas_version() << "]" << std::endl;
-	Log::info() << "    git     [" << atlas_git_sha1()<< "]" << std::endl;
+	Log::debug() << "Atlas initialized" << std::endl;
+	Log::debug() << "    version [" << atlas_version() << "]" << std::endl;
+	Log::debug() << "    git     [" << atlas_git_sha1()<< "]" << std::endl;
 }
 
 void atlas_finalize()
 {
-  Log::info() << "Atlas finalized" << std::endl;
+  Log::debug() << "Atlas finalized" << std::endl;
   MPL::finalize();
 }
 
