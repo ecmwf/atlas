@@ -8,6 +8,8 @@
 #define ATLAS_MINOR_VERSION @ATLAS_MINOR_VERSION@
 #define ATLAS_PATCH_VERSION @ATLAS_PATCH_VERSION@
 
+#ifdef __cplusplus
+
 const char * atlas_version();
 
 unsigned int atlas_version_int();
@@ -15,5 +17,11 @@ unsigned int atlas_version_int();
 const char * atlas_version_str();
 
 const char * atlas_git_sha1();
+
+#else
+
+#define ATLAS_GIT_SHA1 "@ATLAS_GIT_SHA1@"
+
+#endif
 
 #endif

@@ -1,6 +1,7 @@
 ! (C) Copyright 2013-2014 ECMWF.
 
 #include "atlas/atlas_defines_fortran.h"
+#include "atlas/atlas_version.h"
 
 module atlas_module
 
@@ -161,6 +162,16 @@ end function
 
 
 ! -----------------------------------------------------------------------------
+
+function atlas_version()
+  character(len=5) :: atlas_version
+  atlas_version = ATLAS_VERSION
+end function atlas_version
+
+function atlas_git_sha1()
+  character(len=40) :: atlas_git_sha1
+  atlas_git_sha1 = ATLAS_GIT_SHA1
+end function atlas_git_sha1
 
 function atlas_read_gmsh(filename) result(mesh)
   character(len=*), intent(in) :: filename
