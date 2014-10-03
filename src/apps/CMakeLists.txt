@@ -14,3 +14,9 @@ ecbuild_add_executable(
   TARGET      meshgen_to_gmsh
   SOURCES     meshgen_to_gmsh.cc
   LIBS        ${ATLAS_LIBRARIES} ${ECKIT_LIBRARIES} )
+
+ecbuild_add_executable(
+  TARGET      gmsh_extract
+  SOURCES     gmsh_extract.cc
+  LIBS        ${ATLAS_LIBRARIES} ${ECKIT_LIBRARIES} )
+
