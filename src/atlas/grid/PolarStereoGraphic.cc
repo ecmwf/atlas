@@ -68,9 +68,9 @@ PolarStereoGraphic::PolarStereoGraphic( const eckit::Params& p )
       lov_ = p["Lov"];
    }
 
-   if( p.has("Lad") )
+   if( p.has("LaD") )
    {
-      lad_ = p["Lad"];
+      lad_ = p["LaD"];
    }
 
    double lat = 0;
@@ -127,7 +127,7 @@ GridSpec PolarStereoGraphic::spec() const
    grid_spec.set("Lov",eckit::Value(lov_));
    grid_spec.set("La1",eckit::Value(first_grid_pt_.lat()));
    grid_spec.set("Lo1",eckit::Value(first_grid_pt_.lon()));
-   grid_spec.set("Lad",eckit::Value(lad_));
+   grid_spec.set("LaD",eckit::Value(lad_));
    grid_spec.set("north_pole_on_projection_plane",eckit::Value(north_pole_on_projection_plane_));
    grid_spec.set("spherical_earth",eckit::Value(spherical_earth_));
 
