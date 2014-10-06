@@ -99,6 +99,8 @@ public: // methods
 
 	mpl::GatherScatter& gather_scatter() const { return *gather_scatter_; }
 
+	mpl::GatherScatter& fullgather() const { return *fullgather_; }
+
 	mpl::Checksum& checksum() const { return *checksum_; }
 
 	void set_index(int idx) { idx_ = idx; }
@@ -128,7 +130,8 @@ protected: // members
 	std::map< std::string, size_t > index_;
 	std::vector< Field* > fields_;
 	mpl::HaloExchange::Ptr  halo_exchange_;
-	mpl::GatherScatter::Ptr gather_scatter_;
+	mpl::GatherScatter::Ptr gather_scatter_; // without ghost
+	mpl::GatherScatter::Ptr fullgather_; // includes halo
 	mpl::Checksum::Ptr      checksum_;
 	Metadata metadata_;
 	Mesh*    mesh_;  ///< not owned, but may be null

@@ -34,6 +34,7 @@ FunctionSpace::FunctionSpace(const std::string& name, const std::string& shape_f
 	name_(name),
 	shape_(shape),
 	gather_scatter_(new mpl::GatherScatter()),
+	fullgather_(new mpl::GatherScatter()),
 	halo_exchange_(new mpl::HaloExchange()),
 	checksum_(new mpl::Checksum()),
 	mesh_(NULL)
@@ -268,6 +269,7 @@ void FunctionSpace::parallelise(const int part[], const int remote_idx[], const 
 {
 	halo_exchange_->setup(part,remote_idx,REMOTE_IDX_BASE,parsize);
 	gather_scatter_->setup(part,remote_idx,REMOTE_IDX_BASE,glb_idx,-1,parsize);
+	fullgather_->setup(part,remote_idx,REMOTE_IDX_BASE,glb_idx,-1,parsize,true);
 	checksum_->setup(part,remote_idx,REMOTE_IDX_BASE,glb_idx,-1,parsize);
 	glb_dof_ = gather_scatter_->glb_dof();
 	for( int b=shapef_.size()-2; b>=0; --b)
