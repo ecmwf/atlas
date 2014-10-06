@@ -16,6 +16,7 @@
 #include "eckit/log/ColorizeFormat.h"
 
 #include <eckit/config/Resource.h>
+#include <eckit/config/ResourceMgr.h>
 #include <eckit/thread/ThreadSingleton.h>
 #include <eckit/thread/AutoLock.h>
 #include <eckit/thread/Mutex.h>
@@ -282,6 +283,9 @@ void atlas_init(int argc, char** argv)
 	MPL::init(argc,argv);
 	Context::instance().setup(argc, argv);
 
+	LocalPathName atlas_conf( Resource<std::string>(&Context::instance(),"$ATLAS_CONFIGFILE;-atlas_conf","atlas.cfg" ) );
+	if( atlas_conf.exists() )
+		ResourceMgr::instance().appendConfig(atlas_conf);
 	Context::instance().behavior( new atlas::Behavior() );
 	Context::instance().behavior().debug( Resource<int>(&Context::instance(),"debug;$DEBUG;-debug",0) );
 	Context::instance().behavior().reconfigure();
