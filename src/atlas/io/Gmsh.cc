@@ -19,6 +19,8 @@
 #include <eckit/filesystem/LocalPathName.h>
 #include <eckit/exception/Exceptions.h>
 #include <eckit/log/Log.h>
+#include <eckit/config/Resource.h>
+#include <eckit/runtime/Context.h>
 #include "atlas/io/Gmsh.h"
 #include "atlas/mpl/GatherScatter.h"
 #include "atlas/util/Array.h"
@@ -29,6 +31,8 @@
 #include "atlas/mesh/Field.h"
 #include "atlas/mesh/FieldSet.h"
 #include "atlas/mesh/Parameters.h"
+
+using namespace eckit;
 
 namespace atlas {
 
@@ -42,28 +46,28 @@ class GmshFile : public std::ofstream
 public:
   GmshFile(const std::string& file_path, std::ios_base::openmode mode, int part=MPL::rank())
   {
-    eckit::LocalPathName par_path(file_path);
+    LocalPathName par_path(file_path);
     bool is_new_file = (mode != std::ios_base::app || !par_path.exists() );
-    if( MPL::size() == 1)
+    if( MPL::size() == 1 || part == -1)
     {
       std::ofstream::open(par_path.c_str(), mode );
     }
     else
     {
-      eckit::Translator<int,std::string> to_str;
+      Translator<int,std::string> to_str;
       if( MPL::rank() == 0 )
       {
-        eckit::LocalPathName par_path(file_path);
+        LocalPathName par_path(file_path);
         std::ofstream par_file( par_path.c_str(), std::ios_base::out );
         for (int p=0; p<MPL::size(); ++p)
         {
-          eckit::LocalPathName loc_path(file_path);
+          LocalPathName loc_path(file_path);
           loc_path = loc_path.dirName()+"/"+loc_path.baseName(false)+"_p"+to_str(p)+".msh";
           par_file << "Merge \"" << loc_path << "\";" << std::endl;
         }
         par_file.close();
       }
-      eckit::LocalPathName path(file_path);
+      LocalPathName path(file_path);
       path = path.dirName()+"/"+path.baseName(false)+"_p"+to_str(part)+".msh";
       std::ofstream::open(path.c_str(), mode );
     }
@@ -90,6 +94,8 @@ void write_header_binary(std::ostream& out)
 template< typename DATA_TYPE >
 void write_field_nodes(const Gmsh& gmsh, Field& field, std::ostream& out)
 {
+  Log::info() << "writing field " << field.name() << "..." << std::endl;
+
   FunctionSpace& function_space = field.function_space();
   bool gather( gmsh.options.get<bool>("gather") );
   bool binary( !gmsh.options.get<bool>("ascii") );
@@ -98,17 +104,19 @@ void write_field_nodes(const Gmsh& gmsh, Field& field, std::ostream& out)
   int nvars = field.shape(1)/nlev;
   ArrayView<int,1    > gidx ( function_space.field( "glb_idx" ) );
   ArrayView<DATA_TYPE> data ( field );
+  Array<DATA_TYPE> field_glb_arr;
+  Array<int      > gidx_glb_arr;
   if( gather )
   {
-    mpl::GatherScatter& gather_scatter = function_space.gather_scatter();
-    ndata = gather_scatter.glb_dof();
-    Array<DATA_TYPE> field_glb_arr(ndata,nvars);
-    Array<int      > gidx_glb_arr (ndata);
+    mpl::GatherScatter& fullgather = function_space.fullgather();
+    ndata = fullgather.glb_dof();
+    field_glb_arr = Array<DATA_TYPE> (ndata,field.shape(1));
+    gidx_glb_arr  = Array<int      > (ndata);
     ArrayView<DATA_TYPE> data_glb( field_glb_arr );
     ArrayView<int,1> gidx_glb( gidx_glb_arr );
-    gather_scatter.gather( gidx, gidx_glb );
-    gather_scatter.gather( data, data_glb );
-    gidx = gidx_glb;
+    fullgather.gather( gidx, gidx_glb );
+    fullgather.gather( data, data_glb );
+    gidx = ArrayView<int,1>( gidx_glb_arr );
     data = data_glb;
   }
 
@@ -122,14 +130,14 @@ void write_field_nodes(const Gmsh& gmsh, Field& field, std::ostream& out)
 		  else
 				std::sprintf(field_lev, "",jlev);
 			double time   = field.metadata().get<double>("time",0.);
-			int time_step = field.metadata().get<int>("time_step",0) ;
+			int step = field.metadata().get<int>("step",0) ;
 			out << "$NodeData\n";
 			out << "1\n";
 			out << "\"" << field.name() << field_lev << "\"\n";
 			out << "1\n";
 			out << time << "\n";
 			out << "4\n";
-			out << time_step << "\n";
+			out << step << "\n";
 			if     ( nvars == 1 ) out << nvars << "\n";
 			else if( nvars <= 3 ) out << 3     << "\n";
 			out << ndata << "\n";
@@ -166,6 +174,8 @@ void write_field_nodes(const Gmsh& gmsh, Field& field, std::ostream& out)
 				{
 					for( int n = 0; n < ndata; ++n )
 					{
+						ASSERT( jlev*nvars < data.shape(1) );
+						ASSERT( n < gidx.shape(0) );
 						out << gidx(n) << " " << data(n,jlev*nvars+0) << "\n";
 					}
 				}
@@ -192,14 +202,33 @@ void write_field_nodes(const Gmsh& gmsh, Field& field, std::ostream& out)
 template< typename DATA_TYPE >
 void write_field_elems(const Gmsh& gmsh, Field& field, std::ostream& out)
 {
-	bool binary( !gmsh.options.get<bool>("ascii") );
-	int nlev = field.metadata().get<int>("nb_levels",1);
-	int nvars = field.shape(1)/nlev;
-	int ndata = field.shape(0);
-
+	Log::info() << "writing field " << field.name() << "..." << std::endl;
 	FunctionSpace& function_space = field.function_space();
+	bool gather( gmsh.options.get<bool>("gather") );
+  bool binary( !gmsh.options.get<bool>("ascii") );
+  int nlev = field.metadata().get<int>("nb_levels",1);
+  int ndata = field.shape(0);
+  int nvars = field.shape(1)/nlev;
+  ArrayView<int,1    > gidx ( function_space.field( "glb_idx" ) );
+  ArrayView<DATA_TYPE> data ( field );
+  Array<DATA_TYPE> field_glb_arr;
+  Array<int      > gidx_glb_arr;
+  if( gather )
+  {
+    mpl::GatherScatter& fullgather = function_space.fullgather();
+    ndata = fullgather.glb_dof();
+    field_glb_arr = Array<DATA_TYPE> (ndata,field.shape(1));
+    gidx_glb_arr  = Array<int      > (ndata);
+    ArrayView<DATA_TYPE> data_glb( field_glb_arr );
+    ArrayView<int,1> gidx_glb( gidx_glb_arr );
+    fullgather.gather( gidx, gidx_glb );
+    fullgather.gather( data, data_glb );
+    gidx = ArrayView<int,1>( gidx_glb_arr );
+    data = data_glb;
+  }
+
 	double time   = field.metadata().get<double>("time",0.);
-  int time_step = field.metadata().get<int>("time_step",0) ;
+	int step = field.metadata().get<int>("step",0) ;
 	int nnodes = IndexView<int,2>( function_space.field("nodes") ).shape(1);
 
 	for (int jlev=0; jlev<nlev; ++jlev)
@@ -216,19 +245,16 @@ void write_field_elems(const Gmsh& gmsh, Field& field, std::ostream& out)
 		out << "1\n";
 		out << time << "\n";
 		out << "4\n";
-		out << time_step << "\n";
+		out << step << "\n";
 		if     ( nvars == 1 ) out << nvars << "\n";
 		else if( nvars <= 3 ) out << 3     << "\n";
 		out << ndata << "\n";
 		out << MPL::rank() << "\n";
 
-		ArrayView<int,1> gidx ( function_space.field( "glb_idx" ) );
-
 		if( binary )
 		{
 			if( nvars == 1)
 			{
-				ArrayView<DATA_TYPE,2> data( field );
 				double value;
 				for (size_t jelem=0; jelem<ndata; ++jelem)
 				{
@@ -244,7 +270,6 @@ void write_field_elems(const Gmsh& gmsh, Field& field, std::ostream& out)
 			else if( nvars <= 3 )
 			{
 				double value[3] = {0,0,0};
-				ArrayView<DATA_TYPE,2> data( field );
 				for (size_t jelem=0; jelem<ndata; ++jelem)
 				{
 					out << gidx(jelem) << " " << nnodes;
@@ -262,7 +287,6 @@ void write_field_elems(const Gmsh& gmsh, Field& field, std::ostream& out)
 		{
 			if( nvars == 1)
 			{
-				ArrayView<DATA_TYPE,2> data( field );
 				for (size_t jelem=0; jelem<ndata; ++jelem)
 				{
 					out << gidx(jelem) << " " << nnodes;
@@ -274,7 +298,6 @@ void write_field_elems(const Gmsh& gmsh, Field& field, std::ostream& out)
 			else if( nvars <= 3 )
 			{
 				std::vector<DATA_TYPE> data_vec(3,0.);
-				ArrayView<DATA_TYPE,2> data( field );
 				for (size_t jelem=0; jelem<ndata; ++jelem)
 				{
 					out << gidx(jelem) << " " << nnodes;
@@ -310,10 +333,13 @@ void swap_bytes(char *array, int size, int n)
 
 Gmsh::Gmsh()
 {
-  options.set<bool>("gather",false);
-  options.set<int>("surfdim",2);    // lonlat
-  options.set<bool>("ghost",true);
-	options.set<bool>("ascii",true);
+	Context* ctx = &Context::instance();
+	options.set<int >("surfdim", Resource<int >(ctx,"gmsh.surfdim", 2    ));
+	options.set<bool>("gather",  Resource<bool>(ctx,"gmsh.gather",  false));
+	options.set<bool>("ghost",   Resource<bool>(ctx,"gmsh.ghost",   false));
+	options.set<bool>("ascii",   Resource<bool>(ctx,"gmsh.ascii",   true ));
+	options.set<bool>("elements",Resource<bool>(ctx,"gmsh.elements",true ));
+	options.set<bool>("edges",   Resource<bool>(ctx,"gmsh.edges",   true ));
 }
 
 Gmsh::~Gmsh()
@@ -332,7 +358,7 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh )
 	std::ifstream file;
 	file.open( file_path.c_str() , std::ios::in | std::ios::binary );
 	if( !file.is_open() )
-		throw eckit::CantOpenFile(file_path);
+		throw CantOpenFile(file_path);
 
 	std::string line;
 
@@ -345,7 +371,7 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh )
 
 //	if( binary )
 //	{
-//		throw eckit::NotImplemented("Reading of binary format not implemented",Here());
+//		throw NotImplemented("Reading of binary format not implemented",Here());
 //	}
 
 	while(line != "$Nodes")
@@ -363,7 +389,7 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh )
 	if( mesh.has_function_space("nodes") )
 	{
 			if( mesh.function_space("nodes").shape(0)!= nb_nodes )
-					throw eckit::Exception("existing nodes function space has incompatible number of nodes",Here());
+					throw Exception("existing nodes function space has incompatible number of nodes",Here());
 	}
 	else
 	{
@@ -474,7 +500,7 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh )
 				break;
 			default:
 				std::cout << "etype " << etype << std::endl;
-				throw eckit::Exception("ERROR: element type not supported",Here());
+				throw Exception("ERROR: element type not supported",Here());
 			}
 			extents[0] = netype;
 			FunctionSpace& funcspace = mesh.add_function_space( new FunctionSpace( name, "Lagrange_P1", extents ) );
@@ -587,7 +613,7 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh )
 					break;
 				default:
 					std::cout << "etype " << etype << std::endl;
-					throw eckit::Exception("ERROR: element type not supported",Here());
+					throw Exception("ERROR: element type not supported",Here());
 			}
 		}
 		quads.metadata().set("nb_owned",nb_etype[QUAD]);
@@ -618,34 +644,43 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path) const
 	ArrayView<int,   1> glb_idx ( nodes.field( "glb_idx" ) );
 	int nb_nodes = nodes.shape(0);
 
-	FunctionSpace& quads       = mesh.function_space( "quads" );
-	IndexView<int,2> quad_nodes   ( quads.field( "nodes" ) );
-	ArrayView<int,1> quad_glb_idx ( quads.field( "glb_idx" ) );
-	ArrayView<int,1> quad_part    ( quads.field( "partition" ) );
-	int nb_quads = quads.metadata().get<int>("nb_owned", quads.shape(0) );
+	// Find out number of elements to write
+	int nb_quads(0);
+	if( mesh.has_function_space("quads") )
+	{
+		FunctionSpace& quads       = mesh.function_space( "quads" );
+		nb_quads = quads.metadata().get<int>("nb_owned", quads.shape(0) );
+		if( include_ghost_elements == true )
+			nb_quads = quads.shape(0);
+		if( options.get<bool>("elements") == false )
+			nb_quads = 0;
+	}
 
-	FunctionSpace& triags      = mesh.function_space( "triags" );
-	IndexView<int,2> triag_nodes   ( triags.field( "nodes" ) );
-	ArrayView<int,1> triag_glb_idx ( triags.field( "glb_idx" ) );
-	ArrayView<int,1> triag_part    ( triags.field( "partition" ) );
-	int nb_triags = triags.metadata().get<int>("nb_owned",triags.shape(0));
+	int nb_triags(0);
+	if( mesh.has_function_space("triags") )
+	{
+		FunctionSpace& triags       = mesh.function_space( "triags" );
+		nb_triags = triags.metadata().get<int>("nb_owned",triags.shape(0));
+		if( include_ghost_elements == true )
+			nb_triags = triags.shape(0);
+		if( options.get<bool>("elements") == false )
+			nb_triags = 0;
+	}
 
 	int nb_edges(0);
 	if( mesh.has_function_space("edges") )
 	{
 		FunctionSpace& edges       = mesh.function_space( "edges" );
-		nb_edges = edges.shape(0);
+		nb_edges = edges.metadata().get<int>("nb_owned",edges.shape(0));
+		if( include_ghost_elements == true )
+			nb_edges = edges.shape(0);
+		if( options.get<bool>("edges") == false && (nb_triags+nb_quads) > 0 )
+			nb_edges = 0;
 	}
 
-	if( include_ghost_elements == true )
-	{
-		nb_quads = quads.shape(0);
-		nb_triags = triags.shape(0);
-	}
+	LocalPathName path(file_path);
 
-	eckit::LocalPathName path(file_path);
-
-	eckit::Log::info() << "writing mesh to gmsh file " << path << std::endl;
+	Log::info() << "writing mesh to gmsh file " << path << std::endl;
 
 	bool binary = !options.get<bool>("ascii");
 
@@ -702,37 +737,51 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path) const
 		file << nb_quads+nb_triags+nb_edges << "\n";
 		int header[3];
 		int data[9];
-		header[0] = 3;         // elm_type = QUAD
-		header[1] = nb_quads;  // nb_elems
-		header[2] = 4;         // nb_tags
-		file.write(reinterpret_cast<const char*>(&header), sizeof(int)*3 );
-		data[1]=1;
-		data[2]=1;
-		data[3]=1;
-		for( int e=0; e<nb_quads; ++e)
+		if( nb_quads )
 		{
-			data[0] = quad_glb_idx(e);
-			data[4] = quad_part(e);
-			for( int n=0; n<4; ++n )
-				data[5+n] = glb_idx( quad_nodes(e,n) );
-			file.write(reinterpret_cast<const char*>(&data), sizeof(int)*9 );
+			FunctionSpace& quads       = mesh.function_space( "quads" );
+			IndexView<int,2> quad_nodes   ( quads.field( "nodes" ) );
+			ArrayView<int,1> quad_glb_idx ( quads.field( "glb_idx" ) );
+			ArrayView<int,1> quad_part    ( quads.field( "partition" ) );
+			header[0] = 3;         // elm_type = QUAD
+			header[1] = nb_quads;  // nb_elems
+			header[2] = 4;         // nb_tags
+			file.write(reinterpret_cast<const char*>(&header), sizeof(int)*3 );
+			data[1]=1;
+			data[2]=1;
+			data[3]=1;
+			for( int e=0; e<nb_quads; ++e)
+			{
+				data[0] = quad_glb_idx(e);
+				data[4] = quad_part(e);
+				for( int n=0; n<4; ++n )
+					data[5+n] = glb_idx( quad_nodes(e,n) );
+				file.write(reinterpret_cast<const char*>(&data), sizeof(int)*9 );
+			}
 		}
-		header[0] = 2;         // elm_type = TRIAG
-		header[1] = nb_triags; // nb_elems
-		header[2] = 4;         // nb_tags
-		file.write(reinterpret_cast<const char*>(&header), sizeof(int)*3 );
-		data[1]=1;
-		data[2]=1;
-		data[3]=1;
-		for( int e=0; e<nb_triags; ++e)
+		if( nb_triags )
 		{
-			data[0] = triag_glb_idx(e);
-			data[4] = triag_part(e);
-			for( int n=0; n<3; ++n )
-				data[5+n] = glb_idx( triag_nodes(e,n) );
-			file.write(reinterpret_cast<const char*>(&data), sizeof(int)*8 );
+			FunctionSpace& triags      = mesh.function_space( "triags" );
+			IndexView<int,2> triag_nodes   ( triags.field( "nodes" ) );
+			ArrayView<int,1> triag_glb_idx ( triags.field( "glb_idx" ) );
+			ArrayView<int,1> triag_part    ( triags.field( "partition" ) );
+			header[0] = 2;         // elm_type = TRIAG
+			header[1] = nb_triags; // nb_elems
+			header[2] = 4;         // nb_tags
+			file.write(reinterpret_cast<const char*>(&header), sizeof(int)*3 );
+			data[1]=1;
+			data[2]=1;
+			data[3]=1;
+			for( int e=0; e<nb_triags; ++e)
+			{
+				data[0] = triag_glb_idx(e);
+				data[4] = triag_part(e);
+				for( int n=0; n<3; ++n )
+					data[5+n] = glb_idx( triag_nodes(e,n) );
+				file.write(reinterpret_cast<const char*>(&data), sizeof(int)*8 );
+			}
 		}
-		if( mesh.has_function_space("edges") )
+		if( nb_edges )
 		{
 			FunctionSpace& edges       = mesh.function_space( "edges" );
 			IndexView<int,2> edge_nodes   ( edges.field( "nodes" ) );
@@ -776,22 +825,37 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path) const
 	else
 	{
 		file << nb_quads+nb_triags+nb_edges << "\n";
-		for( int e=0; e<nb_quads; ++e)
+		if( nb_quads )
 		{
-			file << quad_glb_idx(e) << " 3 4 1 1 1 " << quad_part(e);
-			for( int n=0; n<4; ++n )
-				file << " " << glb_idx( quad_nodes(e,n) );
-			file << "\n";
-		}
-		for( int e=0; e<nb_triags; ++e)
-		{
-			file << triag_glb_idx(e) << " 2 4 1 1 1 " << triag_part(e);
-			for( int n=0; n<3; ++n )
-				file << " " << glb_idx( triag_nodes(e,n) );
-			file << "\n";
-		}
+			FunctionSpace& quads       = mesh.function_space( "quads" );
+			IndexView<int,2> quad_nodes   ( quads.field( "nodes" ) );
+			ArrayView<int,1> quad_glb_idx ( quads.field( "glb_idx" ) );
+			ArrayView<int,1> quad_part    ( quads.field( "partition" ) );
 
-		if( mesh.has_function_space("edges") )
+			for( int e=0; e<nb_quads; ++e)
+			{
+				file << quad_glb_idx(e) << " 3 4 1 1 1 " << quad_part(e);
+				for( int n=0; n<4; ++n )
+					file << " " << glb_idx( quad_nodes(e,n) );
+				file << "\n";
+			}
+		}
+		if( nb_triags )
+		{
+			FunctionSpace& triags      = mesh.function_space( "triags" );
+			IndexView<int,2> triag_nodes   ( triags.field( "nodes" ) );
+			ArrayView<int,1> triag_glb_idx ( triags.field( "glb_idx" ) );
+			ArrayView<int,1> triag_part    ( triags.field( "partition" ) );
+
+			for( int e=0; e<nb_triags; ++e)
+			{
+				file << triag_glb_idx(e) << " 2 4 1 1 1 " << triag_part(e);
+				for( int n=0; n<3; ++n )
+					file << " " << glb_idx( triag_nodes(e,n) );
+				file << "\n";
+			}
+		}
+		if( nb_edges )
 		{
 			FunctionSpace& edges       = mesh.function_space( "edges" );
 			IndexView<int,2> edge_nodes   ( edges.field( "nodes" ) );
@@ -816,7 +880,6 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path) const
 						file << " " << glb_idx( edge_nodes(e,n) );
 					file << "\n";
 				}
-
 			}
 		}
 	}
@@ -824,7 +887,7 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path) const
 	file << std::flush;
 	file.close();
 
-	eckit::LocalPathName mesh_info(file_path);
+	LocalPathName mesh_info(file_path);
 	mesh_info = mesh_info.dirName()+"/"+mesh_info.baseName(false)+"_info.msh";
 
 	if (nodes.has_field("partition"))
@@ -855,11 +918,12 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path) const
 
 void Gmsh::write(FieldSet& fieldset, const std::string& file_path, openmode mode) const
 {
-	eckit::LocalPathName path(file_path);
+	LocalPathName path(file_path);
 	bool is_new_file = (mode != std::ios_base::app || !path.exists() );
-	GmshFile file(path,mode);
+	bool gather = options.get<bool>("gather",false);
+	GmshFile file(path,mode,gather?-1:MPL::rank());
 
-	eckit::Log::info() << "writing fieldset " << fieldset.name() << " to gmsh file " << path << std::endl;
+	Log::info() << "writing fieldset " << fieldset.name() << " to gmsh file " << path << std::endl;
 
 	// Header
 	if( is_new_file )
@@ -876,7 +940,8 @@ void Gmsh::write(FieldSet& fieldset, const std::string& file_path, openmode mode
 			else if( field.data_type() == "real32" ) {  write_field_nodes<float >(*this,field,file); }
 			else if( field.data_type() == "real64" ) {  write_field_nodes<double>(*this,field,file); }
 		}
-		else if( function_space.metadata().get<int>("type") == Entity::ELEMS )
+		else if( function_space.metadata().get<int>("type") == Entity::ELEMS
+					|| function_space.metadata().get<int>("type") == Entity::FACES )
 		{
 			if     ( field.data_type() == "int32"  ) {  write_field_elems<int   >(*this,field,file); }
 			else if( field.data_type() == "real32" ) {  write_field_elems<float >(*this,field,file); }
@@ -890,13 +955,14 @@ void Gmsh::write(FieldSet& fieldset, const std::string& file_path, openmode mode
 
 void Gmsh::write(Field& field, const std::string& file_path, openmode mode) const
 {
-	eckit::LocalPathName path(file_path);
+	LocalPathName path(file_path);
 	bool is_new_file = (mode != std::ios_base::app || !path.exists() );
 	bool binary( !options.get<bool>("ascii") );
 	if ( binary ) mode |= std::ios_base::binary;
-	GmshFile file(path,mode);
+	bool gather = options.get<bool>("gather",false);
+	GmshFile file(path,mode,gather?-1:MPL::rank());
 
-	eckit::Log::info() << "writing field " << field.name() << " to gmsh file " << path << std::endl;
+	Log::info() << "writing field " << field.name() << " to gmsh file " << path << std::endl;
 
 	// Header
 	if( is_new_file )
@@ -912,7 +978,7 @@ void Gmsh::write(Field& field, const std::string& file_path, openmode mode) cons
 
 	if( !function_space.metadata().has<int>("type") )
 	{
-		throw eckit::Exception("function_space "+function_space.name()+" has no type.. ?");
+		throw Exception("function_space "+function_space.name()+" has no type.. ?");
 	}
 
 	if( function_space.metadata().get<int>("type") == Entity::NODES )
@@ -1086,7 +1152,7 @@ void atlas__write_gmsh_mesh (Mesh* mesh, char* file_path) {
 
 void atlas__write_gmsh_fieldset (FieldSet* fieldset, char* file_path, int mode) {
   Gmsh writer;
-  writer.write( *fieldset, std::string(file_path) );
+	writer.write( *fieldset, std::string(file_path) );
 }
 
 void atlas__write_gmsh_field (Field* field, char* file_path, int mode) {
