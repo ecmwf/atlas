@@ -94,34 +94,46 @@ void write_header_binary(std::ostream& out)
 template< typename DATA_TYPE >
 void write_field_nodes(const Gmsh& gmsh, Field& field, std::ostream& out)
 {
-  Log::info() << "writing field " << field.name() << "..." << std::endl;
+	Log::info() << "writing field " << field.name() << "..." << std::endl;
 
-  FunctionSpace& function_space = field.function_space();
-  bool gather( gmsh.options.get<bool>("gather") );
-  bool binary( !gmsh.options.get<bool>("ascii") );
-  int nlev = field.metadata().get<int>("nb_levels",1);
-  int ndata = field.shape(0);
-  int nvars = field.shape(1)/nlev;
-  ArrayView<int,1    > gidx ( function_space.field( "glb_idx" ) );
-  ArrayView<DATA_TYPE> data ( field );
-  Array<DATA_TYPE> field_glb_arr;
-  Array<int      > gidx_glb_arr;
-  if( gather )
-  {
-    mpl::GatherScatter& fullgather = function_space.fullgather();
-    ndata = fullgather.glb_dof();
-    field_glb_arr = Array<DATA_TYPE> (ndata,field.shape(1));
-    gidx_glb_arr  = Array<int      > (ndata);
-    ArrayView<DATA_TYPE> data_glb( field_glb_arr );
-    ArrayView<int,1> gidx_glb( gidx_glb_arr );
-    fullgather.gather( gidx, gidx_glb );
-    fullgather.gather( data, data_glb );
-    gidx = ArrayView<int,1>( gidx_glb_arr );
-    data = data_glb;
-  }
+	FunctionSpace& function_space = field.function_space();
+	bool gather( gmsh.options.get<bool>("gather") );
+	bool binary( !gmsh.options.get<bool>("ascii") );
+	int nlev = field.metadata().get<int>("nb_levels",1);
+	int ndata = field.shape(0);
+	int nvars = field.shape(1)/nlev;
+	ArrayView<int,1    > gidx ( function_space.field( "glb_idx" ) );
+	ArrayView<DATA_TYPE> data ( field );
+	Array<DATA_TYPE> field_glb_arr;
+	Array<int      > gidx_glb_arr;
+	if( gather )
+	{
+		mpl::GatherScatter& fullgather = function_space.fullgather();
+		ndata = fullgather.glb_dof();
+		field_glb_arr = Array<DATA_TYPE> (ndata,field.shape(1));
+		gidx_glb_arr  = Array<int      > (ndata);
+		ArrayView<DATA_TYPE> data_glb( field_glb_arr );
+		ArrayView<int,1> gidx_glb( gidx_glb_arr );
+		fullgather.gather( gidx, gidx_glb );
+		fullgather.gather( data, data_glb );
+		gidx = ArrayView<int,1>( gidx_glb_arr );
+		data = data_glb;
+	}
 
-  for (int jlev=0; jlev<nlev; ++jlev)
-  {
+	std::vector<long> lev;
+	if( gmsh.levels.empty() || nlev == 1 )
+	{
+		lev.resize(nlev);
+		for (int ilev=0; ilev<nlev; ++ilev)
+			lev[ilev] = ilev;
+	}
+	else
+	{
+		lev = gmsh.levels;
+	}
+	for (int ilev=0; ilev<lev.size(); ++ilev)
+	{
+		int jlev = lev[ilev];
 		if( ( gather && MPL::rank() == 0 ) || !gather )
 		{
 			char field_lev[5];
@@ -340,6 +352,7 @@ Gmsh::Gmsh()
 	options.set<bool>("ascii",   Resource<bool>(ctx,"gmsh.ascii",   true ));
 	options.set<bool>("elements",Resource<bool>(ctx,"gmsh.elements",true ));
 	options.set<bool>("edges",   Resource<bool>(ctx,"gmsh.edges",   true ));
+	levels = Resource< std::vector<long> >(ctx,"gmsh.levels", std::vector<long>() );
 }
 
 Gmsh::~Gmsh()
