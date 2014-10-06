@@ -28,6 +28,9 @@
 #include "atlas/meshgen/RGGMeshGenerator.h"
 
 #define DEBUG_OUTPUT 0
+
+using namespace eckit;
+
 namespace atlas {
 namespace meshgen {
 
@@ -62,8 +65,8 @@ RGGMeshGenerator::RGGMeshGenerator()
   // This option sets the maximum angle deviation for a quadrilateral element
   // max_angle = 30  -->  minimises number of triangles
   // max_angle = 0   -->  maximises number of triangles
-  max_angle_ = eckit::Resource< double > ( &eckit::Context::instance(), "-max_angle", 27. );
-	triangulate_quads_ = eckit::Resource< double > ( &eckit::Context::instance(), "-triangulate_quads", false );
+  max_angle_ = Resource< double > ( &Context::instance(), "meshgen.angle;-max_angle", 27. );
+  triangulate_quads_ = Resource< bool > ( &Context::instance(), "meshgen.triangulate_quads;-triangulate_quads", false );
 }
 
 //std::vector<int> RGGMeshGenerator::partition(const RGG& rgg) const
@@ -314,7 +317,7 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
         // std::cout << "  dN1S2 " << dN1S2 << "   dS1N2 " << dS1N2 << "   dN2S2 " << dN2S2 << std::endl;
         if( (dN1S2 <= dS1N2) && (ipS1 != ipS2) ) { try_make_triangle_up = true;}
         else if( (dN1S2 >= dS1N2) && (ipN1 != ipN2) ) { try_make_triangle_down = true;}
-        else eckit::Exception("Should not try to make a quadrilateral!",Here());
+        else Exception("Should not try to make a quadrilateral!",Here());
       }
 // ------------------------------------------------
 // END RULES
@@ -569,7 +572,7 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
   region.nnodes = nb_region_nodes;
   if (region.nnodes == 0)
   {
-    throw eckit::Exception("Trying to generate mesh with too many partitions. Reduce the number of partitions.",Here());
+    throw Exception("Trying to generate mesh with too many partitions. Reduce the number of partitions.",Here());
   }
 }
 
@@ -587,7 +590,7 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,
   bool include_south_pole = (mypart == nparts-1) && options.get<bool>("include_pole");
   bool three_dimensional  = options.get<bool>("three_dimensional");
   if( three_dimensional && nparts != 1 )
-    throw eckit::BadParameter("Cannot generate three_dimensional mesh in parallel",Here());
+    throw BadParameter("Cannot generate three_dimensional mesh in parallel",Here());
   int nnodes  = region.nnodes;
   int ntriags = region.ntriags;
   int nquads  = region.nquads;
