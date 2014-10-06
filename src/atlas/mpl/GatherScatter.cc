@@ -84,11 +84,8 @@ GatherScatter::GatherScatter() :
 void GatherScatter::setup( const int part[],
                            const int remote_idx[], const int base,
                            const int glb_idx[], const int max_glb_idx,
-                           const int parsize )
+                           const int parsize, const bool include_ghost )
 {
-  const bool include_ghost = false; // Warning: setting this to true might break scatter functionality
-                                    //   This feature allows to check periodic halo values in output
-
   parsize_ = parsize;
 
   loccounts_.resize(nproc); loccounts_.assign(nproc,0);

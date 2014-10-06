@@ -61,15 +61,15 @@ public:
   Field( const ArrayView<NON_CONST_DATA_TYPE,RANK>& arr )
   {
     data = const_cast<DATA_TYPE*>(arr.data());
-    var_rank = std::max(1,RANK-1);
+    var_rank = std::max(1,(int)arr.rank()-1);
     var_strides.resize(var_rank);
     var_shape.resize(var_rank);
-    if( RANK>1 )
+    if( arr.rank()>1 )
     {
-      var_strides.assign(arr.strides()+1,arr.strides()+RANK);
-      var_shape.assign(arr.shape()+1,arr.shape()+RANK);
+      var_strides.assign(arr.strides()+1,arr.strides()+arr.rank());
+      var_shape.assign(arr.shape()+1,arr.shape()+arr.rank());
     }
-    else
+    if( arr.rank() == 1 )
     {
       var_strides[0] = arr.strides()[0];
       var_shape[0] = 1;
@@ -86,7 +86,7 @@ public:
 class GatherScatter: public eckit::Owned {
 
 public: // types
-    typedef eckit::SharedPtr<GatherScatter> Ptr;
+  typedef eckit::SharedPtr<GatherScatter> Ptr;
 public:
   GatherScatter();
   virtual ~GatherScatter() {}
@@ -101,10 +101,13 @@ public: // methods
   /// @param [in] max_glb_idx  maximum glb index we want to gather.
   ///                          To gather everything, set to val > max value in domain
   /// @param [in] parsize      size of given lists
+  /// @param [in] include_ghost    Warning: setting this to true breaks scatter
+  ///                              functionality. This feature allows to check periodic
+  ///                              halo values in output when TRUE
   void setup( const int part[],
               const int remote_idx[], const int base,
               const int glb_idx[], const int max_glb_idx,
-              const int parsize );
+              const int parsize, const bool include_ghost = false );
 
   template <typename DATA_TYPE>
   void gather( const DATA_TYPE ldata[],
@@ -560,7 +563,7 @@ void GatherScatter::gather( const ArrayView<DATA_TYPE,LRANK>& ldata,
                             ArrayView<DATA_TYPE,GRANK>& gdata,
                             const int root ) const
 {
-  if( ldata.size() == parsize_ && gdata.size() == glbcnt_ )
+  if( ldata.shape(0) == parsize_ && gdata.shape(0) == glbcnt_ )
   {
     std::vector< mpl::Field<DATA_TYPE const> > lfields(1, mpl::Field<DATA_TYPE const>(ldata) );
     std::vector< mpl::Field<DATA_TYPE> >       gfields(1, mpl::Field<DATA_TYPE>(gdata) );
@@ -569,8 +572,9 @@ void GatherScatter::gather( const ArrayView<DATA_TYPE,LRANK>& ldata,
   else
   {
     DEBUG_VAR(parsize_);
-    DEBUG_VAR(ldata.size());
-    DEBUG_VAR(gdata.size());
+    DEBUG_VAR(ldata.shape(0));
+    DEBUG_VAR(glbcnt_);
+    DEBUG_VAR(gdata.shape(0));
     NOTIMP; // Need to implement with parallel ranks > 1
   }
 }
@@ -580,7 +584,7 @@ void GatherScatter::scatter( const ArrayView<DATA_TYPE,GRANK>& gdata,
                              ArrayView<DATA_TYPE,LRANK>& ldata,
                              const int root ) const
 {
-  if( ldata.size() == parsize_ && gdata.size() == glbcnt_ )
+  if( ldata.shape(0) == parsize_ && gdata.shape(0) == glbcnt_ )
   {
     std::vector< mpl::Field<DATA_TYPE const> > gfields(1, mpl::Field<DATA_TYPE const>(gdata) );
     std::vector< mpl::Field<DATA_TYPE> >       lfields(1, mpl::Field<DATA_TYPE>(ldata) );
@@ -588,8 +592,10 @@ void GatherScatter::scatter( const ArrayView<DATA_TYPE,GRANK>& gdata,
   }
   else
   {
-    DEBUG_VAR(ldata.size());
-    DEBUG_VAR(gdata.size());
+    DEBUG_VAR(parsize_);
+    DEBUG_VAR(ldata.shape(0));
+    DEBUG_VAR(glbcnt_);
+    DEBUG_VAR(gdata.shape(0));
     NOTIMP; // Need to implement with parallel ranks > 1
   }
 }
