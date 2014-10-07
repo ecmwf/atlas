@@ -82,7 +82,7 @@ Channel& logfile( const CreateLogFile& alloc)
 
 struct ChannelConfig
 {
-	LocalPathName logfile_path;
+	std::string logfile_path;
 	int  console_rank;
 	bool console_enabled;
 	bool logfile_enabled;
@@ -216,7 +216,7 @@ public:
 	virtual void reconfigure()
 	{
 		// Logfile path
-		LocalPathName logfile ( Resource<std::string>(&Context::instance(),"logfile;$ATLAS_LOGFILE;-logfile","out") );
+		std::string logfile = Resource<std::string>(&Context::instance(),"logfile;$ATLAS_LOGFILE;-logfile","out") ;
 		debug_ctxt.logfile_path = logfile;
 		info_ctxt. logfile_path = logfile;
 		warn_ctxt. logfile_path = logfile;
@@ -260,7 +260,7 @@ public:
 		warn_ctxt.apply(warnChannel());
 
 		// Error configuration
-		error_ctxt.console_rank = -1; // all ranks log errors to console
+		//error_ctxt.console_rank = -1; // all ranks log errors to console
 		error_ctxt.apply(errorChannel());
 
 		// Stats configuration
@@ -281,17 +281,39 @@ private:
 void atlas_init(int argc, char** argv)
 {
 	MPL::init(argc,argv);
-	Context::instance().setup(argc, argv);
 
-	LocalPathName atlas_conf( Resource<std::string>(&Context::instance(),"$ATLAS_CONFIGFILE;-atlas_conf","atlas.cfg" ) );
+    Context::instance().setup(argc, argv);
+	
+    LocalPathName atlas_conf( Resource<std::string>(&Context::instance(),"$ATLAS_CONFIGFILE;-atlas_conf","atlas.cfg" ) );
 	if( atlas_conf.exists() )
+	{
 		ResourceMgr::instance().appendConfig(atlas_conf);
+	}
+	else
+	{
+#if 0 // DEBUG
+		std::cout << Here() << " WARNING: atlas_conf not found on rank " << MPL::rank() << std::endl;
+#endif
+	}
+
 	Context::instance().behavior( new atlas::Behavior() );
 	Context::instance().behavior().debug( Resource<int>(&Context::instance(),"debug;$DEBUG;-debug",0) );
 	Context::instance().behavior().reconfigure();
+
 	Log::debug() << "Atlas initialized" << std::endl;
 	Log::debug() << "    version [" << atlas_version() << "]" << std::endl;
 	Log::debug() << "    git     [" << atlas_git_sha1()<< "]" << std::endl;
+
+#if 0 // DEBUG
+	bool  triangulate = Resource< bool > ( &Context::instance(), "meshgen.triangulate;-triangulate", false );
+	if( triangulate == false )
+	{
+    	Log::error() << "triangulate =" << triangulate << std::endl;
+    }
+
+  	Log::error() << "angle =" << Resource< double > ( &Context::instance(), "meshgen.angle", 15.0 ) << std::endl;
+#endif
+
 }
 
 void atlas_finalize()
@@ -302,6 +324,13 @@ void atlas_finalize()
 
 void atlas__atlas_init(int argc, char **argv)
 {
+	atlas_init(argc,argv);
+}
+
+void atlas__atlas_init_noargs()
+{
+	static int argc = 1;
+	static char *argv[] = {"atlas_program"};
 	atlas_init(argc,argv);
 }
 

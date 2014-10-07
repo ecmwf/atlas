@@ -5,15 +5,16 @@
 
 namespace atlas {
 
-void atlas_init(int argc, char** argv);
+void atlas_init(int argc=0, char **argv=0);
 void atlas_finalize();
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 extern "C"
 {
+  void atlas__atlas_init_noargs();
   void atlas__atlas_init (int argc, char** argv);
-	void atlas__atlas_finalize ();
+  void atlas__atlas_finalize ();
 }
 // ------------------------------------------------------------------
 
