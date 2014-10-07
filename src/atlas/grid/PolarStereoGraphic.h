@@ -80,6 +80,10 @@ private: // members
    long lov_;                            // orientation of grid
    bool north_pole_on_projection_plane_; // false means on south_pole_projection_plane
    bool spherical_earth_ ;               // true 6367470m,false mean oblate spheroid, 6378160m,6356775m, f=1/297.0
+   double radius_;
+   double semi_major_;
+   double semi_minor_;
+   double e_;
 };
 
 //-----------------------------------------------------------------------------

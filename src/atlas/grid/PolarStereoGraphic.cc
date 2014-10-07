@@ -38,7 +38,11 @@ PolarStereoGraphic::PolarStereoGraphic( const eckit::Params& p )
   lov_(0),
   lad_(60),
   north_pole_on_projection_plane_(true),
-  spherical_earth_(true)
+  spherical_earth_(true),
+  radius_(6371229),
+  semi_major_(6378137),
+  semi_minor_(6356752.3),
+  e_(0.081819191)
 {
    if( !p.get("hash").isNil() )
       hash_ = p["hash"].as<std::string>();
@@ -63,9 +67,9 @@ PolarStereoGraphic::PolarStereoGraphic( const eckit::Params& p )
       y_grid_length_ = p["Dy"];
    }
 
-   if( p.has("Lov") )
+   if( p.has("LoV") )
    {
-      lov_ = p["Lov"];
+      lov_ = p["LoV"];
    }
 
    if( p.has("LaD") )
@@ -94,20 +98,33 @@ PolarStereoGraphic::PolarStereoGraphic( const eckit::Params& p )
       spherical_earth_ = p["spherical_earth"];
    }
 
+   if (spherical_earth_) {
+      if (p.has("radius")) {
+         radius_ = p["radius"];
+      }
+   }
+   else {
+      if (p.has("semi_major")) {
+         semi_major_ = p["semi_major"];
+      }
+      if (p.has("semi_major")) {
+         semi_minor_ = p["semi_major"];
+      }
+      e_ = sqrt( 1.0 - (double) semi_minor_*semi_minor_/(double)semi_major_*semi_major_ );
+   }
+
    ASSERT( npts_xaxis_ > 0);
    ASSERT( npts_yaxis_ > 0);
    ASSERT( x_grid_length_ > 0);
    ASSERT( y_grid_length_ > 0);
-   ASSERT( lov_ > 0);
+   ASSERT( semi_major_ > semi_minor_);
+   ASSERT( e_ < 1.0);
    ASSERT( lad_ > 0);
 
    // North Pole projection, cant project point on the south pole, and vice versa
    RealCompare<double> isEqual(degrees_eps());
    ASSERT( north_pole_on_projection_plane_ && !(isEqual(lat,-90.0) && isEqual(lon,0)));
    ASSERT( !north_pole_on_projection_plane_ && !(isEqual(lat,90.0) && isEqual(lon,0)));
-
-   // Bounding box is computed
-   // bbox_ = makeBBox(p);
 }
 
 PolarStereoGraphic::~PolarStereoGraphic()
@@ -124,12 +141,15 @@ GridSpec PolarStereoGraphic::spec() const
 
    grid_spec.set("Dx",eckit::Value(x_grid_length_));
    grid_spec.set("Dy",eckit::Value(y_grid_length_));
-   grid_spec.set("Lov",eckit::Value(lov_));
    grid_spec.set("La1",eckit::Value(first_grid_pt_.lat()));
    grid_spec.set("Lo1",eckit::Value(first_grid_pt_.lon()));
+   grid_spec.set("LoV",eckit::Value(lov_));
    grid_spec.set("LaD",eckit::Value(lad_));
    grid_spec.set("north_pole_on_projection_plane",eckit::Value(north_pole_on_projection_plane_));
    grid_spec.set("spherical_earth",eckit::Value(spherical_earth_));
+   grid_spec.set("radius",eckit::Value(radius_));
+   grid_spec.set("semi_major",eckit::Value(semi_major_));
+   grid_spec.set("semi_minor_",eckit::Value(semi_minor_));
 
    grid_spec.set("hash",eckit::Value(hash_));
 
@@ -171,6 +191,11 @@ void PolarStereoGraphic::coordinates(std::vector<Grid::Point>& points) const
    ASSERT( points.size() == nPoints() );
 
    PolarStereoGraphicProj ps(north_pole_on_projection_plane_,spherical_earth_,lov_);
+   if (spherical_earth_) ps.set_radius(radius_);
+   else {
+      ps.set_radius(semi_major_);
+      ps.set_eccentricity(e_);
+   }
 
    Point2 first_pt_on_plane = ps.map_to_plane(first_grid_pt_);
    double x = first_pt_on_plane[0];
@@ -192,6 +217,12 @@ Grid::BoundBox PolarStereoGraphic::boundingBox() const
    // One point first_grid_pt_
    // Map this to the plane.
    PolarStereoGraphicProj ps(north_pole_on_projection_plane_,spherical_earth_,lov_);
+   if (spherical_earth_) ps.set_radius(radius_);
+   else {
+      ps.set_radius(semi_major_);
+      ps.set_eccentricity(e_);
+   }
+
    Point2 first_pt_on_plane = ps.map_to_plane(first_grid_pt_);
 
    // Find the last point on the plane
