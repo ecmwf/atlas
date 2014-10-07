@@ -32,16 +32,25 @@ using namespace eckit;
 
 namespace atlas {
 
+
+static Once<Mutex> local_mutex; 
+
 template< typename TYPE >
 struct OutAlloc {
     OutAlloc() {}
-    TYPE* operator() () { return new TYPE( new ChannelBuffer( std::cout ) ); }
+    TYPE* operator() () 
+    { 
+    	return new TYPE( new ChannelBuffer( std::cout ) ); 
+    }
 };
 
 template< typename TYPE >
 struct ErrAlloc {
     ErrAlloc() {}
-    TYPE* operator() () { return new TYPE( new ChannelBuffer( std::cerr ) ); }
+    TYPE* operator() () 
+    { 
+    	return new TYPE( new ChannelBuffer( std::cerr ) ); 
+    }
 };
 
 
@@ -93,7 +102,7 @@ struct ChannelConfig
 
 	ChannelConfig()
 	{
-		logfile_path = "logfile";
+		logfile_path = "out";
 		console_rank = 0;
 		console_enabled = true;
 		logfile_enabled = true;
@@ -156,7 +165,60 @@ class Behavior : public eckit::ContextBehavior {
 public:
 
 	/// Contructors
-	Behavior() : ContextBehavior() {
+	Behavior() : ContextBehavior(),
+	  logfile_("logfile;$ATLAS_LOGFILE;-logfile","out"),
+	  logfile_rank_("logfile_task;$ATLAS_LOGFILE_TASK;-logfile_task",-1)
+	{
+		// Logfile path
+		debug_ctxt.logfile_path = logfile_;
+		info_ctxt. logfile_path = logfile_;
+		warn_ctxt. logfile_path = logfile_;
+		error_ctxt.logfile_path = logfile_;
+		stats_ctxt.logfile_path = logfile_;
+
+		int rank = logfile_rank_;
+		if( rank >= 0 && rank != MPL::rank() )
+		{
+			debug_ctxt.logfile_enabled = false;
+			info_ctxt. logfile_enabled = false;
+			warn_ctxt. logfile_enabled = false;
+			error_ctxt.logfile_enabled = false;
+			stats_ctxt.logfile_enabled = false;
+		}
+
+		// Console format
+		char p[5];
+		std::sprintf(p, "%05d",MPL::rank());
+		debug_ctxt.console_format->prefix("(P"+std::string(p)+" D) -- ");
+		info_ctxt. console_format->prefix("(P"+std::string(p)+" I) -- ");
+		warn_ctxt. console_format->prefix("(P"+std::string(p)+" W) -- ");
+		error_ctxt.console_format->prefix("(P"+std::string(p)+" E) -- ");
+		stats_ctxt.console_format->prefix("(P"+std::string(p)+" S) -- ");
+
+		// Logfile format
+		debug_ctxt.logfile_format->prefix("(D) -- ");
+		info_ctxt. logfile_format->prefix("(I) -- ");
+		warn_ctxt. logfile_format->prefix("(W) -- ");
+		error_ctxt.logfile_format->prefix("(E) -- ");
+		stats_ctxt.logfile_format->prefix("(S) -- ");
+
+		// Debug configuration
+		debug_ctxt.console_enabled = false;
+		debug_ctxt.apply(debugChannel());
+
+		// Info configuration
+		info_ctxt.apply(infoChannel());
+
+		// Warning configuration
+		warn_ctxt.apply(warnChannel());
+
+		// Error configuration
+		//error_ctxt.console_rank = -1; // all ranks log errors to console
+		error_ctxt.apply(errorChannel());
+
+		// Stats configuration
+		stats_ctxt.console_enabled = false;
+		stats_ctxt.apply(statsChannel());
 	}
 
 	/// Destructor
@@ -215,61 +277,12 @@ public:
 	/// Configuration
 	virtual void reconfigure()
 	{
-		// Logfile path
-		std::string logfile = Resource<std::string>(&Context::instance(),"logfile;$ATLAS_LOGFILE;-logfile","out") ;
-		debug_ctxt.logfile_path = logfile;
-		info_ctxt. logfile_path = logfile;
-		warn_ctxt. logfile_path = logfile;
-		error_ctxt.logfile_path = logfile;
-		stats_ctxt.logfile_path = logfile;
-
-		int logfile_rank = ( Resource<int>(&Context::instance(),"logfile_task;$ATLAS_LOGFILE_TASK;-logfile_task",-1) );
-		if( logfile_rank >= 0 && logfile_rank != MPL::rank() )
-		{
-			debug_ctxt.logfile_enabled = false;
-			info_ctxt. logfile_enabled = false;
-			warn_ctxt. logfile_enabled = false;
-			error_ctxt.logfile_enabled = false;
-			stats_ctxt.logfile_enabled = false;
-		}
-
-		// Console format
-		char p[5];
-		std::sprintf(p, "%05d",MPL::rank());
-		debug_ctxt.console_format->prefix("(P"+std::string(p)+" D) -- ");
-		info_ctxt. console_format->prefix("(P"+std::string(p)+" I) -- ");
-		warn_ctxt. console_format->prefix("(P"+std::string(p)+" W) -- ");
-		error_ctxt.console_format->prefix("(P"+std::string(p)+" E) -- ");
-		stats_ctxt.console_format->prefix("(P"+std::string(p)+" S) -- ");
-
-		// Logfile format
-		debug_ctxt.logfile_format->prefix("(D) -- ");
-		info_ctxt. logfile_format->prefix("(I) -- ");
-		warn_ctxt. logfile_format->prefix("(W) -- ");
-		error_ctxt.logfile_format->prefix("(E) -- ");
-		stats_ctxt.logfile_format->prefix("(S) -- ");
-
-		// Debug configuration
-		debug_ctxt.console_enabled = false;
-		debug_ctxt.apply(debugChannel());
-
-		// Info configuration
-		info_ctxt.apply(infoChannel());
-
-		// Warning configuration
-		warn_ctxt.apply(warnChannel());
-
-		// Error configuration
-		//error_ctxt.console_rank = -1; // all ranks log errors to console
-		error_ctxt.apply(errorChannel());
-
-		// Stats configuration
-		stats_ctxt.console_enabled = false;
-		stats_ctxt.apply(statsChannel());
 	}
 
 private:
 
+    Resource<std::string> logfile_;
+    Resource<int> logfile_rank_;
 	ChannelConfig debug_ctxt;
 	ChannelConfig info_ctxt;
 	ChannelConfig warn_ctxt;
@@ -297,8 +310,7 @@ void atlas_init(int argc, char** argv)
 	}
 
 	Context::instance().behavior( new atlas::Behavior() );
-	Context::instance().behavior().debug( Resource<int>(&Context::instance(),"debug;$DEBUG;-debug",0) );
-	Context::instance().behavior().reconfigure();
+	Context::instance().behavior().debug( Resource<int>("debug;$DEBUG;-debug",0) );
 
 	Log::debug() << "Atlas initialized" << std::endl;
 	Log::debug() << "    version [" << atlas_version() << "]" << std::endl;
