@@ -273,9 +273,8 @@ private:
 
 void atlas_init(int argc, char** argv)
 {
-	MPL::init(argc,argv);
-
     Context::instance().setup(argc, argv);
+	MPL::init( Context::instance().argc(), Context::instance().argvs() );
 	
     LocalPathName atlas_conf( Resource<std::string>(&Context::instance(),"$ATLAS_CONFIGFILE;-atlas_conf","atlas.cfg" ) );
 	if( atlas_conf.exists() )
