@@ -102,10 +102,11 @@ struct ChannelConfig
 
 	ChannelConfig()
 	{
-		logfile_path = "out";
+		int logfile_rank = Resource<int>("logfile_task;$ATLAS_LOGFILE_TASK;-logfile_task",-1);
+		logfile_path    = Resource<std::string>("logfile;$ATLAS_LOGFILE;-logfile","");
+		logfile_enabled = !logfile_path.empty() && ( logfile_rank < 0 || logfile_rank == MPL::rank() );
 		console_rank = 0;
 		console_enabled = true;
-		logfile_enabled = true;
 		console_format = new ColorizeFormat();
 		logfile_format = new ColorizeFormat();
 	}
@@ -165,27 +166,8 @@ class Behavior : public eckit::ContextBehavior {
 public:
 
 	/// Contructors
-	Behavior() : ContextBehavior(),
-	  logfile_("logfile;$ATLAS_LOGFILE;-logfile","out"),
-	  logfile_rank_("logfile_task;$ATLAS_LOGFILE_TASK;-logfile_task",-1)
+	Behavior() : ContextBehavior()
 	{
-		// Logfile path
-		debug_ctxt.logfile_path = logfile_;
-		info_ctxt. logfile_path = logfile_;
-		warn_ctxt. logfile_path = logfile_;
-		error_ctxt.logfile_path = logfile_;
-		stats_ctxt.logfile_path = logfile_;
-
-		int rank = logfile_rank_;
-		if( rank >= 0 && rank != MPL::rank() )
-		{
-			debug_ctxt.logfile_enabled = false;
-			info_ctxt. logfile_enabled = false;
-			warn_ctxt. logfile_enabled = false;
-			error_ctxt.logfile_enabled = false;
-			stats_ctxt.logfile_enabled = false;
-		}
-
 		// Console format
 		char p[5];
 		std::sprintf(p, "%05d",MPL::rank());
@@ -281,8 +263,6 @@ public:
 
 private:
 
-    Resource<std::string> logfile_;
-    Resource<int> logfile_rank_;
 	ChannelConfig debug_ctxt;
 	ChannelConfig info_ctxt;
 	ChannelConfig warn_ctxt;
