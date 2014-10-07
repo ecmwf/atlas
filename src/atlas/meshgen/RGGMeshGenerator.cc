@@ -65,8 +65,13 @@ RGGMeshGenerator::RGGMeshGenerator()
   // This option sets the maximum angle deviation for a quadrilateral element
   // max_angle = 30  -->  minimises number of triangles
   // max_angle = 0   -->  maximises number of triangles
-  max_angle_ = Resource< double > ( &Context::instance(), "meshgen.angle;-max_angle", 27. );
-  triangulate_quads_ = Resource< bool > ( &Context::instance(), "meshgen.triangulate_quads;-triangulate_quads", false );
+  //Resource<double>( &Context::instance(), "meshgen.angle", 27 ).dump(Log::warning());
+  //Log::warning() << "\n\n Getting max_angle_ ... " << std::endl;
+  max_angle_ = Resource< double > ( &Context::instance(), "meshgen.angle", 29.5 );
+  //Log::warning() << "max_angle_ = " << max_angle_ << std::endl;
+
+  triangulate_quads_ = Resource< bool > ( &Context::instance(), "meshgen.triangulate", false );
+  //Log::error() << "triangulate =" << triangulate_quads_ << std::endl;
 }
 
 //std::vector<int> RGGMeshGenerator::partition(const RGG& rgg) const
@@ -297,8 +302,8 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
       const double dxN = std::abs(xN2-xN1);
       const double dxS = std::abs(xS2-xS1);
       const double dx  = std::min(dxN,dxS);
-      const double alpha1 = std::atan2((xN1-xS1)/dx,1.) * 180./M_PI;
-      const double alpha2 = std::atan2((xN2-xS2)/dx,1.) * 180./M_PI;
+      const double alpha1 = ( dx==0. ? 0. : std::atan2((xN1-xS1)/dx,1.) * 180./M_PI );
+      const double alpha2 = ( dx==0. ? 0. : std::atan2((xN2-xS2)/dx,1.) * 180./M_PI );
       if( std::abs(alpha1) <= max_angle && std::abs(alpha2) <= max_angle )
       {
 				if( triangulate_quads_ )
