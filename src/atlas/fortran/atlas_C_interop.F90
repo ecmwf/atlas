@@ -51,12 +51,18 @@ subroutine get_c_arguments(argc,argv)
   integer(c_int), intent(out) :: argc
   type(c_ptr), intent(out) :: argv(:)
   character(kind=c_char,len=1), save, target :: args(255)
-  character(kind=c_char,len=5), save, target :: cmd
+  character(kind=c_char,len=255), save, target :: cmd
   character(kind=c_char,len=255) :: arg
   integer :: iarg, arglen, pos, ich, argpos
-  argc = command_argument_count()+1
-  cmd = "cmd"//c_null_char
+  call get_command(cmd)
+  do ich=1,len_trim(cmd)
+    if (cmd(ich:ich) == " ") then
+      cmd(ich:ich) = c_null_char
+      exit
+    endif
+  enddo
   argv(1) = c_loc(cmd(1:1))
+  argc = command_argument_count()+1
   pos = 1
   do iarg=1,argc
     argpos = pos

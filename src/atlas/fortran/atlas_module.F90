@@ -117,6 +117,7 @@ subroutine atlas_init()
   type(c_ptr), save :: argv(15)
   call get_c_arguments(argc,argv)
   call atlas__atlas_init(argc,argv)
+  !call atlas__atlas_init_noargs()
 end subroutine
 
 subroutine atlas_finalize()
