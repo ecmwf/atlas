@@ -180,7 +180,7 @@ end function atlas_version
 
 function atlas_git_sha1()
   character(len=40) :: atlas_git_sha1
-  atlas_git_sha1 = ATLAS_GIT_SHA1
+  atlas_git_sha1 = c_to_f_string_cptr(atlas__atlas_git_sha1())
 end function atlas_git_sha1
 
 function atlas_read_gmsh(filename) result(mesh)
