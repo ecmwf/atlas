@@ -31,6 +31,7 @@ extern "C" {
 #define MPI_Datatype int
 #define MPI_Op int
 
+#define MPI_CHAR 0
 #define MPI_INT 1
 #define MPI_FLOAT 2
 #define MPI_DOUBLE 3
