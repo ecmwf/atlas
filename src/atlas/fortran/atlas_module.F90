@@ -1,7 +1,6 @@
 ! (C) Copyright 2013-2014 ECMWF.
 
 #include "atlas/atlas_defines_fortran.h"
-#include "atlas/atlas_version.h"
 
 module atlas_module
 
@@ -164,9 +163,19 @@ end function
 
 ! -----------------------------------------------------------------------------
 
+function eckit_version()
+  character(len=5) :: eckit_version
+  eckit_version = c_to_f_string_cptr(atlas__eckit_version())
+end function eckit_version
+
+function eckit_git_sha1()
+  character(len=40) :: eckit_git_sha1
+  eckit_git_sha1 = c_to_f_string_cptr(atlas__eckit_git_sha1())
+end function eckit_git_sha1
+
 function atlas_version()
   character(len=5) :: atlas_version
-  atlas_version = ATLAS_VERSION
+  atlas_version = c_to_f_string_cptr(atlas__atlas_version())
 end function atlas_version
 
 function atlas_git_sha1()

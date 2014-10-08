@@ -335,6 +335,27 @@ void atlas__atlas_finalize()
 	atlas_finalize();
 }
 
+
+const char* atlas__eckit_version()
+{
+	return eckit_version();
+}
+
+const char* atlas__eckit_git_sha1()
+{
+	return eckit_git_sha1();
+}
+
+const char* atlas__atlas_version()
+{
+	return atlas_version();
+}
+
+const char* atlas__atlas_git_sha1()
+{
+	return atlas_git_sha1();
+}
+
 } // namespace atlas
 
 
