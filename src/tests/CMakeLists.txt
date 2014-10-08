@@ -8,15 +8,15 @@
 
 if( HAVE_FCTEST )
 
-  add_fctest( TARGET fctest_atlas_mesh
+  add_fctest( TARGET atlas_fctest_mesh
     LINKER_LANGUAGE Fortran
-    SOURCES         fctest_atlas_mesh.F90
+    SOURCES         fctest_mesh.F90
     LIBS            atlas_fortran atlas_mpl_fortran
   )
 
-  add_fctest( TARGET fctest_atlas_logging
+  add_fctest( TARGET atlas_fctest_logging
     LINKER_LANGUAGE Fortran
-    SOURCES         fctest_atlas_logging.F90
+    SOURCES         fctest_logging.F90
     LIBS            atlas_fortran
   )
 
@@ -25,66 +25,66 @@ endif()
 set( BOOST_UNIT_TEST_FRAMEWORK_HEADER_ONLY ON )
 set( BOOST_UNIT_TEST_FRAMEWORK_LINKED OFF )
 
-ecbuild_add_test( TARGET test_indexview
+ecbuild_add_test( TARGET atlas_test_indexview
   BOOST
   SOURCES  test_indexview.cc
   LIBS     atlas
 )
 
-ecbuild_add_test( TARGET test_haloexchange
+ecbuild_add_test( TARGET atlas_test_haloexchange
   BOOST
   MPI      3
   SOURCES  test_haloexchange.cc
   LIBS     atlas
 )
 
-ecbuild_add_test( TARGET test_gather
+ecbuild_add_test( TARGET atlas_test_gather
   BOOST
   MPI      3
   SOURCES  test_gather.cc
   LIBS     atlas
 )
 
-ecbuild_add_test( TARGET test_functionspace
+ecbuild_add_test( TARGET atlas_test_functionspace
   BOOST
   SOURCES  test_functionspace.cc
   LIBS     atlas eckit_maths
 )
 
-ecbuild_add_test( TARGET test_gmsh
+ecbuild_add_test( TARGET atlas_test_gmsh
   BOOST
   SOURCES  test_gmsh.cc TestMeshes.h
   LIBS     atlas
 )
 
-ecbuild_add_test( TARGET test_rgg
+ecbuild_add_test( TARGET atlas_test_rgg
   BOOST
   SOURCES  test_rgg.cc
   LIBS     atlas
 )
 
-ecbuild_add_test( TARGET test_parfields
+ecbuild_add_test( TARGET atlas_test_parfields
   BOOST
   MPI 2
   SOURCES  test_parfields.cc
   LIBS     atlas
 )
 
-ecbuild_add_test( TARGET test_halo
+ecbuild_add_test( TARGET atlas_test_halo
   BOOST
   MPI      5
   SOURCES  test_halo.cc TestMeshes.h
   LIBS     atlas
 )
 
-ecbuild_add_test( TARGET test_distmesh
+ecbuild_add_test( TARGET atlas_test_distmesh
   BOOST
   MPI      5
   SOURCES  test_distmesh.cc TestMeshes.h
   LIBS     atlas
 )
 
-ecbuild_add_test( TARGET test_meshgen3d
+ecbuild_add_test( TARGET atlas_test_meshgen3d
   BOOST
   SOURCES   test_meshgen3d.cc
   LIBS      atlas

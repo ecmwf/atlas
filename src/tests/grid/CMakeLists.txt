@@ -1,15 +1,15 @@
-ecbuild_add_test( TARGET      test_Grid
+ecbuild_add_test( TARGET      atlas_test_Grid
 			      BOOST
                   SOURCES     test_Grid.cc
                CONDITION   HAVE_GRID AND ECKIT_HAVE_GRIB
-                  LIBS        atlas_grid  
+                  LIBS        atlas_grid
                 )
 
-ecbuild_add_test( TARGET      test_GridSpec
+ecbuild_add_test( TARGET      atlas_test_GridSpec
                   BOOST
                   SOURCES     test_GridSpec.cc
                CONDITION   HAVE_GRID AND ECKIT_HAVE_GRIB
-                  LIBS        atlas_grid  
+                  LIBS        atlas_grid
                 )
 
 
@@ -18,14 +18,14 @@ ecbuild_add_test( TARGET      test_GridSpec
 #					SOURCES     test_latlon.cc
 #					CONDITION   HAVE_GRID
 #					LIBS        atlas_grid  )
-            
+
 #ecbuild_add_test(   TARGET      test_gaussian
 #					BOOST
 #					SOURCES     test_gaussian.cc
 #					CONDITION	HAVE_GRID
 #					LIBS        atlas_grid )
 
-ecbuild_add_test(   TARGET      test_field
+ecbuild_add_test(   TARGET      atlas_test_field
 					BOOST
 					SOURCES     test_field.cc
           			CONDITION	HAVE_GRID AND ECKIT_HAVE_GRIB AND OFF
@@ -55,7 +55,7 @@ endforeach()
 
 add_custom_target( atlas_tests_grid_get_gribs DEPENDS ${tgts} )
 
-ecbuild_add_test(   TARGET      test_grid_from_grib
+ecbuild_add_test(   TARGET      atlas_test_grid_from_grib
 					BOOST
 					SOURCES     test_grid_from_grib.cc
           DEPENDS     atlas_tests_grid_get_gribs
