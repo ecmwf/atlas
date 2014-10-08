@@ -267,6 +267,47 @@ private:
 	ChannelConfig stats_ctxt;
 };
 
+void read_config(const LocalPathName& path, const int master_task = 0)
+{
+	/// This function lets only one MPI task read the config file,
+	/// and broadcasts to remaining tasks. This is beneficial at
+	/// large scale.
+	std::stringstream stream;
+	char* buf;
+	int buf_len;
+	if( MPL::rank() == master_task )
+	{
+		if( path.exists() )
+		{
+			std::fstream file( path.c_str(), std::ios_base::in );
+			if ( file )
+			{
+				stream << file.rdbuf();
+				file.close();
+			}
+			std::string str = stream.str();
+			buf = const_cast<char*>(str.c_str());
+			buf_len = str.size();
+			MPI_Bcast(&buf_len,1,MPL::TYPE<int >(),master_task,MPI_COMM_WORLD);
+			if (buf_len)
+				MPI_Bcast(buf,buf_len,MPL::TYPE<char>(),master_task,MPI_COMM_WORLD);
+		}
+	}
+	else
+	{
+		MPI_Bcast(&buf_len,1,MPL::TYPE<int>(),master_task,MPI_COMM_WORLD);
+		if( buf_len )
+		{
+			buf = new char[buf_len];
+			MPI_Bcast(buf,buf_len,MPL::TYPE<char>(),master_task,MPI_COMM_WORLD);
+			stream.write(buf,buf_len);
+			delete[] buf;
+		}
+	}
+	if (buf_len)
+		ResourceMgr::instance().appendConfig(stream);
+}
+
 
 void atlas_init(int argc, char** argv)
 {
@@ -278,20 +319,9 @@ void atlas_init(int argc, char** argv)
 		Context::instance().runName(
 			PathName(Context::instance().argv(0)).baseName(false));
 	}
-	Context::instance().displayName(
-		Resource<std::string>("-name",Context::instance().runName()) );
+	Context::instance().displayName( Resource<std::string>("-name","") );
 
-	LocalPathName atlas_conf( Resource<std::string>(&Context::instance(),"$ATLAS_CONFIGFILE;-atlas_conf","atlas.cfg" ) );
-	if( atlas_conf.exists() )
-	{
-		ResourceMgr::instance().appendConfig(atlas_conf);
-	}
-	else
-	{
-#if 0 // DEBUG
-		std::cout << Here() << " WARNING: atlas_conf not found on rank " << MPL::rank() << std::endl;
-#endif
-	}
+	read_config( LocalPathName( Resource<std::string>("$ATLAS_CONFIGFILE;-atlas_conf","atlas.cfg") ) );
 
 	Context::instance().behavior( new atlas::Behavior() );
 	Context::instance().behavior().debug( Resource<int>("debug;$DEBUG;-debug",0) );
@@ -304,10 +334,10 @@ void atlas_init(int argc, char** argv)
 	bool  triangulate = Resource< bool > ( &Context::instance(), "meshgen.triangulate;-triangulate", false );
 	if( triangulate == false )
 	{
-    	Log::error() << "triangulate =" << triangulate << std::endl;
-    }
+		Log::error() << "triangulate =" << triangulate << std::endl;
+	}
 
-  	Log::error() << "angle =" << Resource< double > ( &Context::instance(), "meshgen.angle", 15.0 ) << std::endl;
+		Log::error() << "angle =" << Resource< double > ( &Context::instance(), "meshgen.angle", 15.0 ) << std::endl;
 #endif
 
 }
