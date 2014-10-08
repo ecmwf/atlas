@@ -48,16 +48,16 @@ void TestField::test_constructor()
 
     // create a grid
 
-    Grid::BoundBox earth ( Grid::Point(-90.,0.), Grid::Point(90.,360.) );
+	Grid::BoundBox earth ( Grid::Point(-90.,0.), Grid::Point(90.,359.999999) );
 
-	Grid::Ptr g (new RegularLatLon( 4, 4, earth ) );
+	Grid::Ptr g (new RegularLatLon( 20, 10, earth ) );
 
     // create some reference data for testing
 
     std::vector<double> ref_data;
     ref_data.reserve( g->nPoints() );
     for(size_t i = 0; i < ref_data.size(); ++i)
-        ref_data.push_back((double)i);
+		ref_data.push_back( (double)i );
 
     // now build a test field handle
 
@@ -79,9 +79,13 @@ void TestField::test_constructor()
 
     // create field handle
 
-	Field::Ptr f( &nodes.field<double>( sname ) );
+	Field::Ptr f ( &nodes.field( sname ) );
 
-    ASSERT( f );
+	ASSERT( f );
+
+	std::cout << f.owners() << std::endl;
+
+	ASSERT( f.owners() == 2 );
 
 	Field::Vector fields;
     fields.push_back(f);

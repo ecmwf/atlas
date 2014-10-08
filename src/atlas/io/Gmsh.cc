@@ -17,8 +17,8 @@
 #include <limits>
 
 #include <eckit/filesystem/LocalPathName.h>
-#include <eckit/exception/Exceptions.h>
-#include <eckit/log/Log.h>
+#include "eckit/exception/Exceptions.h"
+#include "eckit/log/Log.h"
 #include <eckit/config/Resource.h>
 #include <eckit/runtime/Context.h>
 #include "atlas/io/Gmsh.h"

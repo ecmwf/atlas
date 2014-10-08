@@ -11,7 +11,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <sstream>
-#include <eckit/exception/Exceptions.h>
+#include "eckit/exception/Exceptions.h"
 #include "atlas/mesh/Metadata.h"
 #include "atlas/mesh/Field.h"
 
