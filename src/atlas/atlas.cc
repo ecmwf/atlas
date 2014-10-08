@@ -3,10 +3,7 @@
 #include <eckit/runtime/LibBehavior.h>
 #include <eckit/runtime/Context.h>
 #include <eckit/log/Log.h>
-
 #include <eckit/log/ChannelBuffer.h>
-#include <eckit/thread/ThreadSingleton.h>
-
 #include <eckit/log/Colour.h>
 #include <eckit/log/Channel.h>
 #include <eckit/log/ChannelBuffer.h>
@@ -14,14 +11,14 @@
 #include <eckit/log/FileChannel.h>
 #include <eckit/log/FormatChannel.h>
 #include "eckit/log/ColorizeFormat.h"
-
 #include <eckit/config/Resource.h>
 #include <eckit/config/ResourceMgr.h>
+#include <eckit/filesystem/PathName.h>
 #include <eckit/thread/ThreadSingleton.h>
 #include <eckit/thread/AutoLock.h>
 #include <eckit/thread/Mutex.h>
 #include <eckit/thread/Once.h>
-
+#include <eckit/thread/ThreadSingleton.h>
 #include <eckit/os/BackTrace.h>
 
 
@@ -33,23 +30,23 @@ using namespace eckit;
 namespace atlas {
 
 
-static Once<Mutex> local_mutex; 
+static Once<Mutex> local_mutex;
 
 template< typename TYPE >
 struct OutAlloc {
     OutAlloc() {}
-    TYPE* operator() () 
-    { 
-    	return new TYPE( new ChannelBuffer( std::cout ) ); 
+    TYPE* operator() ()
+    {
+    	return new TYPE( new ChannelBuffer( std::cout ) );
     }
 };
 
 template< typename TYPE >
 struct ErrAlloc {
     ErrAlloc() {}
-    TYPE* operator() () 
-    { 
-    	return new TYPE( new ChannelBuffer( std::cerr ) ); 
+    TYPE* operator() ()
+    {
+    	return new TYPE( new ChannelBuffer( std::cerr ) );
     }
 };
 
@@ -273,10 +270,18 @@ private:
 
 void atlas_init(int argc, char** argv)
 {
-    Context::instance().setup(argc, argv);
+	Context::instance().setup(argc, argv);
 	MPL::init( Context::instance().argc(), Context::instance().argvs() );
-	
-    LocalPathName atlas_conf( Resource<std::string>(&Context::instance(),"$ATLAS_CONFIGFILE;-atlas_conf","atlas.cfg" ) );
+
+	if( Context::instance().argc() > 0 )
+	{
+		Context::instance().runName(
+			PathName(Context::instance().argv(0)).baseName(false));
+	}
+	Context::instance().displayName(
+		Resource<std::string>("-name",Context::instance().runName()) );
+
+	LocalPathName atlas_conf( Resource<std::string>(&Context::instance(),"$ATLAS_CONFIGFILE;-atlas_conf","atlas.cfg" ) );
 	if( atlas_conf.exists() )
 	{
 		ResourceMgr::instance().appendConfig(atlas_conf);
@@ -291,9 +296,9 @@ void atlas_init(int argc, char** argv)
 	Context::instance().behavior( new atlas::Behavior() );
 	Context::instance().behavior().debug( Resource<int>("debug;$DEBUG;-debug",0) );
 
-	Log::debug() << "Atlas initialized" << std::endl;
-	Log::debug() << "    version [" << atlas_version() << "]" << std::endl;
-	Log::debug() << "    git     [" << atlas_git_sha1()<< "]" << std::endl;
+	Log::debug() << "Atlas program " << Context::instance().runName() << " initialized" << std::endl;
+	Log::debug() << "    Atlas version [" << atlas_version() << "]" << std::endl;
+	Log::debug() << "    Atlas git     [" << atlas_git_sha1()<< "]" << std::endl;
 
 #if 0 // DEBUG
 	bool  triangulate = Resource< bool > ( &Context::instance(), "meshgen.triangulate;-triangulate", false );
@@ -313,7 +318,7 @@ void atlas_finalize()
   MPL::finalize();
 }
 
-void atlas__atlas_init(int argc, char **argv)
+void atlas__atlas_init(int argc, char* argv[])
 {
 	atlas_init(argc,argv);
 }
@@ -321,8 +326,8 @@ void atlas__atlas_init(int argc, char **argv)
 void atlas__atlas_init_noargs()
 {
 	static int argc = 1;
-	static char *argv[] = {"atlas_program"};
-	atlas_init(argc,argv);
+	static char const *argv[] = {"atlas_program"};
+	atlas_init(argc,(char**)argv);
 }
 
 void atlas__atlas_finalize()
