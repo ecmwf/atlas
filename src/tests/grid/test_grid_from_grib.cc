@@ -26,7 +26,6 @@
 #include "atlas/grid/Grib.h"
 #include "atlas/grid/GridSpec.h"
 
-
 using namespace std;
 using namespace eckit;
 using namespace eckit::grib;
@@ -38,9 +37,7 @@ BOOST_AUTO_TEST_SUITE( TestGridFromGrib )
 
 static void test_grib_file( const LocalPathName& path )
 {
-	RealCompare<double> requal( Grid::degrees_eps() );
-
-	Log::info() << ">>> testing file " << path << std::endl;
+	Log::info() << "\n>>> testing file " << path << std::endl;
 
 	// create a grid from the GRIB
 
@@ -48,7 +45,7 @@ static void test_grib_file( const LocalPathName& path )
 
 	Grid::Ptr grid = Grib::create_grid( gh );
 
-	BOOST_CHECK( grid );
+	BOOST_REQUIRE_MESSAGE( grid, " Could not create GRID ptr for file " << path);
 
 	GridSpec spec = grid->spec();
 
@@ -65,15 +62,23 @@ static void test_grib_file( const LocalPathName& path )
 	vector< Grid::Point > grib_pts;
 	gh.getLatLonPoints( grib_pts );
 
-	BOOST_CHECK_EQUAL( pts.size(), grib_pts.size() );
+	BOOST_CHECK_MESSAGE( pts.size() == grib_pts.size()," Pts sizes differ GRIB:" << grib_pts.size() << " GRID: " << pts.size() );
 
-	for( size_t i = 0; i < pts.size(); ++i )
-	{
-		BOOST_CHECK_CLOSE( pts[i].lat(), grib_pts[i].lat(), Grid::degrees_eps() );
-		BOOST_CHECK_CLOSE( pts[i].lon(), grib_pts[i].lon(), Grid::degrees_eps() );
+	// Checking against the grib *only* makes sense when we have the same scanning mode.
+	//    Atlas:  North,west -> south,east
+	//    Grid:   Depended on scanning mode
+	// Ignore for polar stereographic since we know that will fail.
+   RealCompare<double> requal( Grid::degrees_eps() );
 
-		BOOST_CHECK( requal( pts[i].lat(), grib_pts[i].lat() ) );
-		BOOST_CHECK( requal( pts[i].lon(), grib_pts[i].lon() ) );
+	if (grid->gridType() != "polar_stereographic") {
+	   for( size_t i = 0; i < pts.size(); ++i )
+	   {
+//	      BOOST_CHECK_CLOSE( pts[i].lat(), grib_pts[i].lat(), Grid::degrees_eps() );
+//	      BOOST_CHECK_CLOSE( pts[i].lon(), grib_pts[i].lon(), Grid::degrees_eps() );
+
+	      BOOST_CHECK_MESSAGE( requal( pts[i].lat(), grib_pts[i].lat() ), " lats differ at pt index " << i << " GRIB: " << grib_pts[i].lat() << " GRID:" << pts[i].lat());
+	      BOOST_CHECK_MESSAGE( requal( pts[i].lon(), grib_pts[i].lon() ), " lons differ at pt index " << i << " GRIB: " << grib_pts[i].lon() << " GRID:" << pts[i].lon());
+	   }
 	}
 
 	// use the GridSpec to create another GRIB
@@ -81,11 +86,14 @@ static void test_grib_file( const LocalPathName& path )
 
 	GribHandle::Ptr newgh = Grib::create_handle( *grid, gh.edition() );
 
-	BOOST_CHECK( newgh );
+	BOOST_CHECK_MESSAGE( newgh , "Could not create GribHandle from Grid ptr");
 
-	BOOST_CHECK_EQUAL( gh.gridType(), newgh->gridType() );
+	BOOST_CHECK_MESSAGE( gh.gridType() == newgh->gridType(),"Grid type differ GRIB: " << gh.gridType() << " GRID: " << newgh->gridType());
 
-	BOOST_CHECK_EQUAL( gh.geographyHash(), newgh->geographyHash() );
+//   if (grid->gridType() != "polar_stereographic") {
+      // The geography has will be different, since data is from canada, will not match grib samples
+      BOOST_CHECK_MESSAGE( gh.geographyHash() == newgh->geographyHash() ,"Geography hash different \nGRIB:" << gh.geographyHash() << "\nGRID:" << newgh->geographyHash());
+//   }
 
 	// write a new grib file
 
@@ -104,6 +112,9 @@ BOOST_AUTO_TEST_CASE( test_grid_creation )
 {
 	std::vector< LocalPathName > gribs;
 
+	// Polar stereographic grids
+   gribs.push_back("CMC_hrdps_east_TMP_TGL_2_ps2.5km_2014081512_P000-00.grib2");
+
 	// these seem to fail, probably due to the low tolerance of grib1 1E-3
 	//	gribs.push_back("ll005005.grib");
 	//	gribs.push_back("ll0101.grib");
@@ -117,7 +128,6 @@ BOOST_AUTO_TEST_CASE( test_grid_creation )
 	// te gribs.push_back("rgg_n1280.grib");
 
 	// regular_gg
-
 	gribs.push_back("n40.grib");
 	gribs.push_back("n60.grib");
 	gribs.push_back("n160.grib");
