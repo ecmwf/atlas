@@ -111,7 +111,7 @@ ecbuild_add_option( FEATURE TESSELATION
 
 if( ENABLE_TESSELATION )
 
-	find_package( CGAL )
+	find_package( CGAL QUIET )
 
 	if( CGAL_FOUND )
 		set(Boost_USE_MULTITHREADED      ON )
@@ -135,11 +135,8 @@ ecbuild_add_option( FEATURE SANDBOX
 
 list( APPEND ATLAS_TPLS eckit )
 
-if( HAVE_GRIB )
-  list( APPEND ATLAS_TPLS grib_api )
-endif()
-
 set( ATLAS_INCLUDE_DIRS   ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src )
+
 set( ATLAS_LIBRARIES      atlas )
 
 if( ENABLE_FORTRAN )
@@ -159,10 +156,6 @@ foreach( _tpl ${ATLAS_TPLS} )
   list( APPEND ATLAS_EXTRA_INCLUDE_DIRS  ${${TPL}_INCLUDE_DIRS} ${${TPL}_TPL_INCLUDE_DIRS} )
   list( APPEND ATLAS_EXTRA_LIBRARIES     ${${TPL}_LIBRARIES}    ${${TPL}_TPL_LIBRARIES}    )
 endforeach()
-
-#debug_var(ATLAS_EXTRA_LIBRARIES)
-#debug_var(ATLAS_EXTRA_INCLUDE_DIRS)
-
 
 ############################################################################################
 # sources
