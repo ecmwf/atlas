@@ -68,16 +68,16 @@ private: // members
    long npts_yaxis_;                  // No of points in y-axes *ON* the projected plane
    long x_grid_length_;               // x grid length *ON* the projected plane, in meters
    long y_grid_length_;               // y grid length *ON* the projected plane, in meters
-   long resolutionAndComponentFlag_;  // is used to determine sphere/oblate, But this is extracted separately, to avoid having to mess with bits.
-                                       // Needed to match geography hash, in tests
+   long resolutionAndComponentFlag_;  // is used to determine sphere/oblate, But this is extracted separately,
+                                       // to avoid having to mess with bits. Needed to match geography hash grid_spec -> grid in tests
    double lad_;                       // latitude where points npts_xaxis_ and npts_yaxis_ are specified
-   double orientationOfTheGrid_;      // east longitude value, in degrees
+   double orientationOfTheGrid_;      // east longitude value, in degrees ( longitude of natural origin)
    bool southPoleOnProjectionPlane_;
    bool earth_is_oblate_;             // true 6367470m,false mean oblate spheroid, 6378160m,6356775m, f=1/297.0
-   double radius_;
-   double semi_major_;
-   double semi_minor_;
-   double e_;
+   double radius_;                    // default 6371229
+   double semi_major_;                // default 6378137   (a)
+   double semi_minor_;                // default 6356752.3 (b)
+   double e_;                         // calculated e = sqrt( 1 - b*b/a*a)
 };
 
 //-----------------------------------------------------------------------------
