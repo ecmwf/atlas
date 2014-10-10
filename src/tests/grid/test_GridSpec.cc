@@ -124,6 +124,7 @@ static void test_grib_file(const std::string& fpath)
 
    if ( gridType == "polar_stereographic" || gridType == "sh" || gridType.empty())
    {
+      // The GRIB samples for polar stereographic are corrupt in terms of the GRID section, hence IGNORE
       std::cout << " ** Ignoring grid types [ polar_stereographic | sh ] " << std::endl;
       return;
    }

@@ -14,6 +14,8 @@ PointIndex3.cc
 PointIndex3.h
 PointSet.cc
 PointSet.h
+PolarStereoGraphic.h
+PolarStereoGraphic.cc
 ReducedLatLon.cc
 ReducedLatLon.h
 RegularLatLon.cc

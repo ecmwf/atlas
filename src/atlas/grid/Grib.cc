@@ -454,6 +454,23 @@ void Grib::write_gridspec_to_grib(const GridSpec& gspec, GribHandle& gh)
 	gspec2grib.set<double>( "SouthPoleLat", "latitudeOfSouthernPoleInDegrees" );
 	gspec2grib.set<double>( "SouthPoleLon", "longitudeOfSouthernPoleInDegrees" );
 	gspec2grib.set<double>( "SouthPoleRotAngle", "angleOfRotation" );
+
+	// Polar stereo Graphic
+   gspec2grib.set<long>( "resolutionAndComponentFlag", "resolutionAndComponentFlag" );
+   gspec2grib.set<long>( "Nx", "Nx" );
+   gspec2grib.set<long>( "Ny", "Ny" );
+   gspec2grib.set<long>( "numberOfDataPoints", "numberOfDataPoints" );
+
+   gspec2grib.set<double>( "Dx", "DxInMetres" );
+   gspec2grib.set<double>( "Dy", "DyInMetres" );
+   gspec2grib.set<double>( "orientationOfTheGrid", "orientationOfTheGridInDegrees" );
+   gspec2grib.set<double>( "LaD", "LaDInDegrees" );
+   gspec2grib.set<double>( "latitudeOfFirstGridPoint", "latitudeOfFirstGridPointInDegrees" );
+   gspec2grib.set<double>( "longitudeOfFirstGridPoint", "longitudeOfFirstGridPointInDegrees" );
+
+   gspec2grib.set<bool>( "iScansPositively", "iScansPositively" );
+   gspec2grib.set<bool>( "jScansPositively", "jScansPositively" );
+   gspec2grib.set<bool>( "southPoleOnProjectionPlane", "southPoleOnProjectionPlane" );
 }
 
 //------------------------------------------------------------------------------------------------------
