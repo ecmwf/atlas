@@ -73,8 +73,8 @@ static void test_grib_file( const LocalPathName& path )
 	if (grid->gridType() != "polar_stereographic") {
 	   for( size_t i = 0; i < pts.size(); ++i )
 	   {
-//	      BOOST_CHECK_CLOSE( pts[i].lat(), grib_pts[i].lat(), Grid::degrees_eps() );
-//	      BOOST_CHECK_CLOSE( pts[i].lon(), grib_pts[i].lon(), Grid::degrees_eps() );
+	      BOOST_CHECK_CLOSE( pts[i].lat(), grib_pts[i].lat(), Grid::degrees_eps() );
+	      BOOST_CHECK_CLOSE( pts[i].lon(), grib_pts[i].lon(), Grid::degrees_eps() );
 
 	      BOOST_CHECK_MESSAGE( requal( pts[i].lat(), grib_pts[i].lat() ), " lats differ at pt index " << i << " GRIB: " << grib_pts[i].lat() << " GRID:" << pts[i].lat());
 	      BOOST_CHECK_MESSAGE( requal( pts[i].lon(), grib_pts[i].lon() ), " lons differ at pt index " << i << " GRIB: " << grib_pts[i].lon() << " GRID:" << pts[i].lon());
@@ -90,10 +90,7 @@ static void test_grib_file( const LocalPathName& path )
 
 	BOOST_CHECK_MESSAGE( gh.gridType() == newgh->gridType(),"Grid type differ GRIB: " << gh.gridType() << " GRID: " << newgh->gridType());
 
-//   if (grid->gridType() != "polar_stereographic") {
-      // The geography has will be different, since data is from canada, will not match grib samples
-      BOOST_CHECK_MESSAGE( gh.geographyHash() == newgh->geographyHash() ,"Geography hash different \nGRIB:" << gh.geographyHash() << "\nGRID:" << newgh->geographyHash());
-//   }
+   BOOST_CHECK_MESSAGE( gh.geographyHash() == newgh->geographyHash() ,"Geography hash different \nGRIB:" << gh.geographyHash() << "\nGRID:" << newgh->geographyHash());
 
 	// write a new grib file
 

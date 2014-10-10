@@ -90,9 +90,9 @@ PolarStereoGraphic::PolarStereoGraphic( const eckit::Params& p )
       lad_ = p["LaD"];
    }
 
-   // resolutionAndComponentFlag is used sphere/oblate
+   // resolutionAndComponentFlag is used to indicate sphere/oblate
    // But this is extracted separately, to avoid having to mess with bits.
-   // Needed to match geography hash, when gridSpec written to grib
+   // Stored since needed to match geography hash, when gridSpec written to grib
    if( p.has("resolutionAndComponentFlag") )
    {
       resolutionAndComponentFlag_ = p["resolutionAndComponentFlag"];
@@ -119,6 +119,7 @@ PolarStereoGraphic::PolarStereoGraphic( const eckit::Params& p )
       earth_is_oblate_ = p["earthIsOblate"];
    }
 
+
    if (earth_is_oblate_) {
 
       if (p.has("earthMajorAxis")) {
@@ -129,7 +130,7 @@ PolarStereoGraphic::PolarStereoGraphic( const eckit::Params& p )
          semi_minor_ = p["earthMinorAxis"];
       }
 
-      e_ = sqrt( 1.0 - (double) semi_minor_*semi_minor_/(double)semi_major_*semi_major_ );
+      e_ = sqrt( 1.0 - ((double) semi_minor_*semi_minor_) / ((double) semi_major_*semi_major_));
    }
    else {
       if (p.has("radius")) {
@@ -269,8 +270,7 @@ void PolarStereoGraphic::coordinates(std::vector<Grid::Point>& points) const
 
 Grid::BoundBox PolarStereoGraphic::boundingBox() const
 {
-   // One point first_grid_pt_
-   // Map this to the plane.
+   // Map first_grid_pt_ to the plane.
    PolarStereoGraphicProj ps(southPoleOnProjectionPlane_,earth_is_oblate_,orientationOfTheGrid_);
    if (earth_is_oblate_) {
       ps.set_radius(semi_major_);
@@ -282,7 +282,8 @@ Grid::BoundBox PolarStereoGraphic::boundingBox() const
 
    Point2 first_pt_on_plane = ps.map_to_plane(first_grid_pt_);
 
-   // Depending on the scanning mode, find the last point on the plane
+   // *Depending* on the scanning mode, find the last point on the plane
+   // Note: without the scanning mode we can not find the correct bounding box.
    double last_point_x = first_pt_on_plane[0] + npts_xaxis_ * x_grid_length_;
    double last_point_y = first_pt_on_plane[1] + npts_yaxis_ * y_grid_length_;
 

@@ -38,7 +38,7 @@ public: // methods
    virtual std::string uid() const;
    virtual std::string hash() const { return hash_;}
 
-   /// To compute bounding box in spherical co-ordinates we need:
+   /// To compute bounding box in spherical co-ordinates we need to:
    ///   1/ project the first spherical pt, on to the plane.
    ///   2/ From this first x/y we compute the last point on the projected plane
    ///   3/ Convert the last point back into spherical space (lat/long)
@@ -61,19 +61,19 @@ private: // members
 
    std::string hash_;
 
-   bool iScansPositively_;
-   bool jScansPositively_;
-   Point first_grid_pt_;                  // This is in spherical lat long co-ordinate
-   long npts_xaxis_;                     // No of points in x-axes *ON* the projected plane
-   long npts_yaxis_;                     // No of points in y-axes *ON* the projected plane
-   long x_grid_length_;                  // x grid length *ON* the projected plane, in meters
-   long y_grid_length_;                  // y grid length *ON* the projected plane, in meters
-   long resolutionAndComponentFlag_;     // is used to determine sphere/oblate, But this is extracted separately, to avoid having to mess with bits.
-                                          // Needed to match geography hash, in tests
-   double lad_;                          // latitude where points npts_xaxis_ and npts_yaxis_ are specified
-   double orientationOfTheGrid_;         // east longitude value, in degrees
+   bool iScansPositively_;            // Used to determine correct bounding box
+   bool jScansPositively_;            // Used to determine correct bounding box
+   Point first_grid_pt_;               // This is in spherical lat long co-ordinate
+   long npts_xaxis_;                  // No of points in x-axes *ON* the projected plane
+   long npts_yaxis_;                  // No of points in y-axes *ON* the projected plane
+   long x_grid_length_;               // x grid length *ON* the projected plane, in meters
+   long y_grid_length_;               // y grid length *ON* the projected plane, in meters
+   long resolutionAndComponentFlag_;  // is used to determine sphere/oblate, But this is extracted separately, to avoid having to mess with bits.
+                                       // Needed to match geography hash, in tests
+   double lad_;                       // latitude where points npts_xaxis_ and npts_yaxis_ are specified
+   double orientationOfTheGrid_;      // east longitude value, in degrees
    bool southPoleOnProjectionPlane_;
-   bool earth_is_oblate_;                // true 6367470m,false mean oblate spheroid, 6378160m,6356775m, f=1/297.0
+   bool earth_is_oblate_;             // true 6367470m,false mean oblate spheroid, 6378160m,6356775m, f=1/297.0
    double radius_;
    double semi_major_;
    double semi_minor_;
