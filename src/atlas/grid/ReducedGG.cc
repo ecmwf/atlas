@@ -59,18 +59,18 @@ ReducedGG::ReducedGG( const eckit::Params& p )
 	ASSERT( nbPtsPerLat_.size() == 2 * gaussN_ ); // number of lines of latitude should, be twice the gaussN_
 
 	if( p.has("nbDataPoints") )
-		nbDataPoints_ = p["nbDataPoints"];
+		npts_ = p["nbDataPoints"];
 	else
 	{
 		std::vector<double>  latitudes;
 		computeLatitudes(latitudes);
-		nbDataPoints_ = computeNPoints(latitudes);
+		npts_ = computeNPoints(latitudes);
 	}
 
-	ASSERT( nbDataPoints_ > 0 );
+	ASSERT( npts_ > 0 );
 }
 
-ReducedGG::ReducedGG(long gaussN) : nbDataPoints_(0), gaussN_(gaussN)
+ReducedGG::ReducedGG(long gaussN) : npts_(0), gaussN_(gaussN)
 {
 	ASSERT( gaussN_ > 1 );
 
@@ -83,9 +83,9 @@ ReducedGG::ReducedGG(long gaussN) : nbDataPoints_(0), gaussN_(gaussN)
 
    std::vector<double> latitudes;
    computeLatitudes(latitudes);
-   nbDataPoints_ = computeNPoints(latitudes);
+   npts_ = computeNPoints(latitudes);
 
-   ASSERT( nbDataPoints_ > 0 );
+   ASSERT( npts_ > 0 );
    ASSERT( nbPtsPerLat_.size() == 2 * gaussN_ ); // number of lines of latitude should, be twice the gaussN_
 }
 
@@ -120,7 +120,7 @@ void ReducedGG::coordinates( std::vector<double>& pts ) const
 
 void ReducedGG::coordinates(std::vector<Grid::Point>& pts) const
 {
-	ASSERT( pts.size() == nbDataPoints_ );
+	ASSERT( pts.size() == npts_ );
 
 	std::vector<double>  latitudes;
 	computeLatitudes(latitudes);
@@ -171,7 +171,7 @@ void ReducedGG::computePoints( const std::vector<double>& lats, std::vector<Poin
 {
 	ASSERT( lats.size() == nbPtsPerLat_.size() );
 
-	pts.resize( nbDataPoints_ );
+	pts.resize( npts_ );
 
 	RealCompare<double> isEqual(degrees_eps());
 
@@ -204,7 +204,7 @@ void ReducedGG::computePoints( const std::vector<double>& lats, std::vector<Poin
 		}
 	}
 
-	ASSERT( n == nbDataPoints_ );
+	ASSERT( n == npts_ );
 }
 
 long ReducedGG::computeNPoints( const std::vector<double>& lats ) const

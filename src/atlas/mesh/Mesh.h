@@ -65,7 +65,12 @@ public: // methods
 	bool has_grid() const { return grid_; }
 
 	/// assign a Grid to this Mesh
-	void grid( grid::Grid& p ) { grid_ = &p; }
+	void grid( grid::Grid& p )
+	{
+		DEBUG_VAR(grid_);
+		grid_ = &p;
+		DEBUG_VAR(grid_);
+	}
 
 	/// accessor of the Grid
 	const grid::Grid& grid() const {  ASSERT( grid_ ); return *grid_; }
