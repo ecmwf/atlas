@@ -212,11 +212,11 @@ Field& FunctionSpace::field(const std::string& name) const
 }
 
 template<>
-	FieldT<double> &FunctionSpace::field(const std::string& name) const
+FieldT<double>& FunctionSpace::field(const std::string& name) const
 {
 	if( has_field(name) )
 	{
-		return *dynamic_cast< FieldT<double>* >(fields_.get(name));
+		return dynamic_cast< FieldT<double>& >( *fields_[ name ] );
 	}
 	else
 	{
@@ -227,11 +227,11 @@ template<>
 }
 
 template<>
-	FieldT<float> &FunctionSpace::field(const std::string& name) const
+FieldT<float>& FunctionSpace::field(const std::string& name) const
 {
 	if( has_field(name) )
 	{
-		return *dynamic_cast< FieldT<float>* >(fields_.get(name));
+		return dynamic_cast< FieldT<float>& >( *fields_[ name ] );
 	}
 	else
 	{
@@ -242,11 +242,11 @@ template<>
 }
 
 template<>
-	FieldT<int> &FunctionSpace::field(const std::string& name) const
+FieldT<int>& FunctionSpace::field(const std::string& name) const
 {
 	if( has_field(name) )
 	{
-		return *dynamic_cast< FieldT<int>* >(fields_.get(name));
+		return dynamic_cast< FieldT<int>& >( *fields_[ name ] );
 	}
 	else
 	{
