@@ -15,7 +15,6 @@
 
 #include "atlas/grid/Grid.h"
 
-
 //-----------------------------------------------------------------------------
 
 namespace atlas {
@@ -24,6 +23,16 @@ namespace grid {
 //-----------------------------------------------------------------------------
 
 // ==================================================================================
+// In a reduced gaussian grid, the number of longitude points along a latitude is specified.
+// Latitudes may have differing numbers of points but the grid is symmetrical about the Equator.
+// A reduced gaussian grid may also be called a quasi-regular gaussian grid.
+//
+// In the reduced grids used by ECMWF, the number of points on each latitude row
+// is chosen so that the local east-west grid length remains approximately constant
+// for all latitudes, with the restriction that the number should be suitable for the
+// Fast Fourier Transform used to interpolate spectral fields to grid point fields,
+// ie number = 2^p * 3^q * 5^r.
+//
 // gribs use the following convention: (from Shahram)
 //
 // Horizontally:  Points scan in the +i (+x) direction
