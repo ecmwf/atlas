@@ -43,6 +43,7 @@ use atlas_mesh_c_binding
 use atlas_metadata_c_binding
 use atlas_haloexchange_c_binding
 use atlas_gatherscatter_c_binding
+use atlas_rgg_c_binding
 use atlas_checksum_c_binding
 use atlas_gmsh_c_binding
 use atlas_BuildPeriodicBoundaries_c_binding
@@ -68,6 +69,7 @@ integer, private, parameter :: wp = c_double ! working precision
 #include "atlas_module_Logging_i.f"
 #include "atlas_module_HaloExchange_i.f"
 #include "atlas_module_GatherScatter_i.f"
+#include "atlas_module_Grid_i.f"
 #include "atlas_module_Checksum_i.f"
 #include "atlas_module_Mesh_i.f"
 #include "atlas_module_FunctionSpace_i.f"
@@ -152,6 +154,7 @@ end function
 #include "atlas_module_Logging_c.f"
 #include "atlas_module_HaloExchange_c.f"
 #include "atlas_module_GatherScatter_c.f"
+#include "atlas_module_Grid_c.f"
 #include "atlas_module_Checksum_c.f"
 #include "atlas_module_Mesh_c.f"
 #include "atlas_module_FunctionSpace_c.f"
@@ -206,14 +209,14 @@ subroutine atlas_write_gmsh_field(field,filename,mode)
   endif
 end subroutine atlas_write_gmsh_field
 
-subroutine atlas_write_gmsh_fieldset(field,filename,mode)
-  type(FieldSet_type), intent(in) :: field
+subroutine atlas_write_gmsh_fieldset(fieldset,filename,mode)
+  type(FieldSet_type), intent(in) :: fieldset
   character(len=*), intent(in) :: filename
   integer(kind(openmode)), optional :: mode
   if( present(mode) ) then
-    call atlas__write_gmsh_fieldset(field%private%object,c_str(filename),mode)
+    call atlas__write_gmsh_fieldset(fieldset%private%object,c_str(filename),mode)
   else
-    call atlas__write_gmsh_fieldset(field%private%object,c_str(filename),out)
+    call atlas__write_gmsh_fieldset(fieldset%private%object,c_str(filename),out)
   endif
 end subroutine atlas_write_gmsh_fieldset
 
@@ -302,6 +305,12 @@ subroutine atlas_generate_custom_reduced_gaussian_grid(mesh,nlon)
   integer, intent(in) :: nlon(:)
   mesh%private%object = atlas__generate_custom_reduced_gaussian_grid(nlon,size(nlon))
 end subroutine atlas_generate_custom_reduced_gaussian_grid
+
+function atlas_generate_mesh(rgg) result(mesh)
+  type(Mesh_type) :: mesh
+  type(ReducedGG_type) :: rgg
+  mesh%private%object = atlas__generate_mesh(rgg%private%object)
+end function atlas_generate_mesh
 
 
 ! -----------------------------------------------------------------------------
