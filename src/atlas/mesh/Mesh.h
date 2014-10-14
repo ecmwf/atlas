@@ -92,6 +92,8 @@ private: // members
 
 //------------------------------------------------------------------------------------------------------
 
+typedef grid::Grid Grid;
+
 // C wrapper interfaces to C++ routines
 extern "C"
 {
@@ -99,7 +101,7 @@ extern "C"
 	void atlas__Mesh__delete (Mesh* This);
 	void atlas__Mesh__add_function_space (Mesh* This, FunctionSpace* function_space);
 	FunctionSpace* atlas__Mesh__function_space (Mesh* This, char* name);
-	grid::Grid* atlas__Mesh__grid (Mesh* This);
+	Grid* atlas__Mesh__grid (Mesh* This);
 }
 
 //------------------------------------------------------------------------------------------------------
