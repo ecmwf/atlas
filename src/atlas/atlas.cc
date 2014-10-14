@@ -69,7 +69,7 @@ struct CreateLogFile
 	CreateLogFile(const LocalPathName& path) : file_path(path) {}
 	FileChannel* operator()()
 	{
-		char s[5];
+		char s[6];
 		std::sprintf(s, "%05d",MPL::rank());
 		FileChannel* ch = new FileChannel(file_path+".p"+std::string(s)) ;
 		return ch;
@@ -166,7 +166,7 @@ public:
 	Behavior() : ContextBehavior()
 	{
 		// Console format
-		char p[5];
+		char p[6];
 		std::sprintf(p, "%05d",MPL::rank());
 		debug_ctxt.console_format->prefix("(P"+std::string(p)+" D) -- ");
 		info_ctxt. console_format->prefix("(P"+std::string(p)+" I) -- ");
@@ -274,7 +274,7 @@ void read_config(const LocalPathName& path, const int master_task = 0)
 	/// large scale.
 	std::stringstream stream;
 	char* buf;
-	int buf_len;
+	int buf_len(0);
 	if( MPL::rank() == master_task )
 	{
 		if( path.exists() )

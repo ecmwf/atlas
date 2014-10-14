@@ -89,7 +89,7 @@ void distribute_mesh( Mesh& mesh )
       {
         int maxpart = -1;
         int minpart = std::numeric_limits<int>::max();
-        double y;
+        double y(0.);
         for( int jnode=0; jnode<nb_nodes_per_elem; ++jnode )
         {
           int n = elem_nodes(jelem,jnode);
