@@ -77,6 +77,10 @@ public: // methods
 
     /// Assumes north > south, and east > west.
     /// and hence independent of scanning mode(since that is GRIB specific)
+    /// Assumes lat -90 --> +90
+    /// Assumes lon   0 --> +360
+    /// When the bounding box is not on the grid, the co-ordinate values, will be
+    /// on the enclosing grid points
     virtual BoundBox boundingBox() const = 0;
 
     virtual size_t nPoints() const = 0;
