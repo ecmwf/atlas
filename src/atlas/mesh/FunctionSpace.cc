@@ -108,6 +108,7 @@ FieldT<double>& FunctionSpace::create_field(const std::string& name, size_t nb_v
 
 	FieldT<double>* field = new FieldT<double>(name,nb_vars,*this);
 	fields_.insert( name, Field::Ptr(field) );
+	fields_.sort();
 
 	size_t rank = shape_.size();
 	std::vector< int > field_shape(rank);
@@ -134,6 +135,7 @@ FieldT<float>& FunctionSpace::create_field(const std::string& name, size_t nb_va
 
 	FieldT<float>* field = new FieldT<float>(name,nb_vars,*this);
 	fields_.insert( name, Field::Ptr(field) );
+	fields_.sort();
 
 	size_t rank = shape_.size();
 	std::vector< int > field_shape(rank);
@@ -159,8 +161,9 @@ FieldT<int>& FunctionSpace::create_field(const std::string& name, size_t nb_vars
 	}
 
 	FieldT<int>* field = new FieldT<int>(name,nb_vars,*this);
-	fields_.insert( name, Field::Ptr(field) );
 
+	fields_.insert( name, Field::Ptr(field) );
+	fields_.sort();
 
 	size_t rank = shape_.size();
 	std::vector< int > field_shape(rank);

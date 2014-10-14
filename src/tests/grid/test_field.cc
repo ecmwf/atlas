@@ -62,11 +62,12 @@ void TestField::test_constructor()
     // now build a test field handle
 
     std::string sname("field_name");
-    ASSERT( g );
 
-    Tesselation::create_mesh_structure( g->mesh(), g->nPoints() );
+	ASSERT( g );
 
-    Mesh& mesh = g->mesh();
+	Mesh& mesh = g->mesh();
+
+	ASSERT( mesh.grid().uid() == g->uid() );
 
     ASSERT( mesh.has_function_space("nodes") );
 
@@ -74,7 +75,7 @@ void TestField::test_constructor()
 
     FieldT<double>& data = nodes.create_field<double>( sname,1);
 
-    for(size_t i = 0; i < ref_data.size(); i++)
+	for(size_t i = 0; i < ref_data.size(); i++)
         data[i] = ref_data[i];
 
     // create field handle

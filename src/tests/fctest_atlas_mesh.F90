@@ -131,7 +131,7 @@ TEST( test_create_remove )
   field = func_space%field("bla")
   CHECK_EQUAL( field%name(), "bla" )
 
-  call func_space%remove_field("bla")
+!  call func_space%remove_field("bla")
 
   call func_space%create_field("vector_field",3,real_kind(c_float))
   field = func_space%field("vector_field")
