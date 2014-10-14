@@ -8,12 +8,12 @@
  * does it submit to any jurisdiction.
  */
 
-
-
 #include <typeinfo>			 // std::bad_cast
 #include <sstream>
 #include <stdexcept>
-#include <eckit/exception/Exceptions.h>
+
+#include "eckit/exception/Exceptions.h"
+
 #include "atlas/mesh/Field.h"
 #include "atlas/mesh/FunctionSpace.h"
 

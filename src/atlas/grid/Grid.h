@@ -108,6 +108,10 @@ protected: // methods
 	/// helper function to create bounding boxes (for non-global grids)
 	static BoundBox makeBBox( const eckit::Params& );
 
+private: // methods
+
+	void buildMesh() const;
+
 private: // members
 
     mutable eckit::SharedPtr< Mesh > mesh_;

@@ -48,25 +48,26 @@ void TestField::test_constructor()
 
     // create a grid
 
-    Grid::BoundBox earth ( Grid::Point(-90.,0.), Grid::Point(90.,360.) );
+	Grid::BoundBox earth ( Grid::Point(-90.,0.), Grid::Point(90.,359.999999) );
 
-	Grid::Ptr g (new RegularLatLon( 4, 4, earth ) );
+	Grid::Ptr g (new RegularLatLon( 20, 10, earth ) );
 
     // create some reference data for testing
 
     std::vector<double> ref_data;
     ref_data.reserve( g->nPoints() );
     for(size_t i = 0; i < ref_data.size(); ++i)
-        ref_data.push_back((double)i);
+		ref_data.push_back( (double)i );
 
     // now build a test field handle
 
     std::string sname("field_name");
-    ASSERT( g );
 
-    Tesselation::create_mesh_structure( g->mesh(), g->nPoints() );
+	ASSERT( g );
 
-    Mesh& mesh = g->mesh();
+	Mesh& mesh = g->mesh();
+
+	ASSERT( mesh.grid().uid() == g->uid() );
 
     ASSERT( mesh.has_function_space("nodes") );
 
@@ -74,14 +75,18 @@ void TestField::test_constructor()
 
     FieldT<double>& data = nodes.create_field<double>( sname,1);
 
-    for(size_t i = 0; i < ref_data.size(); i++)
+	for(size_t i = 0; i < ref_data.size(); i++)
         data[i] = ref_data[i];
 
     // create field handle
 
-	Field::Ptr f( &nodes.field<double>( sname ) );
+	Field::Ptr f ( &nodes.field( sname ) );
 
-    ASSERT( f );
+	ASSERT( f );
+
+	std::cout << f.owners() << std::endl;
+
+	ASSERT( f.owners() == 2 );
 
 	Field::Vector fields;
     fields.push_back(f);

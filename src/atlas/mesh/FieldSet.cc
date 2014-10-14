@@ -13,7 +13,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <sstream>
-#include <eckit/exception/Exceptions.h>
+#include "eckit/exception/Exceptions.h"
 #include "atlas/mesh/FieldSet.h"
 #include "atlas/mesh/Field.h"
 
