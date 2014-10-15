@@ -85,7 +85,7 @@ static void test_grids_from_grib_sample_directory(const std::string& directory)
    BOOST_CHECK(dir_path.exists());
    BOOST_CHECK(dir_path.isDir());
 
-   int count = 0;
+   //int count = 0;
    std::vector<PathName> files;
    std::vector<PathName> directories;
    dir_path.children(files,directories);
