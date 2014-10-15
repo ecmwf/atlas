@@ -71,21 +71,29 @@ public: // methods
 
    void computeNPtsPerLat( std::vector<long>& );
 
-protected: // methods
+private: // methods
 
 	long rows() const { return nptsNS_;}
-	double incLat() const { return nsIncrement_; }
+	double incLat() const { return nsInc_; }
 
 	long computeRows() const;
+	size_t computeNPts() const;
 
+	template <class T>
+	void iterate(T&) const;
 
 private: // members
 
-	std::string hash_;
-	BoundBox bbox_;
-	double nsIncrement_;                   ///< In degrees
-	long nptsNS_;                          ///< No of points along Y axes
+	size_t                   npts_;        ///< no of data points in grid, taking into account the bounding box
+	long                     nptsNS_;      ///< No of points along NS axis
+
+	double                   nsInc_;       ///< increment in NS axis
+
+	BoundBox                 bbox_;        ///< bounding box for data, only points within are considered part of grid
+
 	std::vector<long> nbPtsPerLat_;        ///< No of points per latitude
+
+	std::string hash_;
 };
 
 //-----------------------------------------------------------------------------

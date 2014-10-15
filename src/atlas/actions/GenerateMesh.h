@@ -12,17 +12,22 @@
 #define atlas_GenerateMesh_h
 
 #include "atlas/mesh/Mesh.h"
+#include "atlas/meshgen/RGG.h"
 
 namespace atlas {
 namespace actions {
 
+Mesh* generate_mesh (const meshgen::RGG& rgg);
 Mesh* generate_reduced_gaussian_grid( const std::string& identifier );
 Mesh* generate_reduced_gaussian_grid( const std::vector<long>& nlon );
 Mesh* generate_full_gaussian_grid( int nlon, int nlat );
 Mesh* generate_regular_grid( int nlon, int nlat ); // must be even numbers
 
+
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
+
+typedef meshgen::RGG RGG;
 
 extern "C"
 {
@@ -30,6 +35,7 @@ extern "C"
   Mesh* atlas__generate_full_gaussian_grid (int nlon, int nlat);
   Mesh* atlas__generate_latlon_grid (int nlon, int nlat);
   Mesh* atlas__generate_custom_reduced_gaussian_grid (int nlon[], int nlat);
+  Mesh* atlas__generate_mesh (RGG* rgg);
 }
 
 // ------------------------------------------------------------------

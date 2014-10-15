@@ -15,6 +15,7 @@
 
 #include <math.h>
 #include <vector>
+#include <string>
 
 namespace atlas {
 namespace meshgen {
@@ -29,9 +30,16 @@ public:
   int nlat() const { return lat_.size(); }
   int nlon(int jlat) const { return lon_[jlat]; }
   int nlonmax() const { return lon_[nlat()/2]; }
-  double lon(const int jlon, const int jlat) const { return 2.*M_PI/static_cast<double>(nlon(jlat))*static_cast<double>(jlon); }
-  double lat(const int jlat) const { return lat_[jlat]; }
   int ngptot() const;
+  const std::vector<int>& nlon() const { return lon_; }
+
+  double lon(const int jlon, const int jlat) const
+  {
+    return 2.*M_PI/static_cast<double>(nlon(jlat))*static_cast<double>(jlon);
+  }
+  double lat(const int jlat) const { return lat_[jlat]; }
+  const std::vector<double>& lat() const { return lat_; }
+
 protected:
   std::vector<double> lat_;
   std::vector<int>    lon_;
@@ -60,6 +68,25 @@ class T2047: public RGG { public: T2047(); };
 class T3999: public RGG { public: T3999(); };
 class T7999: public RGG { public: T7999(); };
 
+
+RGG* new_reduced_gaussian_grid(const std::string& identifier);
+RGG* new_reduced_gaussian_grid(const std::vector<long>& nlon);
+RGG* new_regular_gaussian_grid(int nlon, int nlat);
+RGG* new_regular_latlon_grid(int nlon, int nlat);
+
+extern "C"
+{
+  RGG* atlas__new_reduced_gaussian_grid(char* identifier);
+  RGG* atlas__new_regular_gaussian_grid(int nlon, int nlat);
+  RGG* atlas__new_regular_latlon_grid(int nlon, int nlat);
+  RGG* atlas__new_custom_reduced_gaussian_grid(int nlon[], int nlat);
+  int  atlas__RGG__nlat(RGG* This);
+  void atlas__RGG__nlon(RGG* This, const int* &nlon, int &size);
+  int atlas__RGG__ngptot(RGG* This);
+  double atlas__RGG__lon(RGG* This,int jlon,int jlat);
+  double atlas__RGG__lat(RGG* This,int jlat);
+  void atlas__RGG__lats(RGG* This, const double* &lats, int &size);
+}
 
 } // namespace meshgen
 } // namespace atlas

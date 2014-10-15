@@ -12,6 +12,7 @@ function(generate_fortran_bindings output filename)
 	set_source_files_properties(${outfile} PROPERTIES GENERATED TRUE)
 endfunction()
 
+generate_fortran_bindings(FORTRAN_BINDINGS ../meshgen/RGG.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../mesh/Field.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../mesh/FieldSet.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../mesh/FunctionSpace.h)
@@ -64,6 +65,8 @@ add_custom_target( atlas_fortran_inc SOURCES
    atlas_module_Metadata_c.f
    atlas_module_GatherScatter_i.f
    atlas_module_GatherScatter_c.f
+   atlas_module_Grid_i.f
+   atlas_module_Grid_c.f
    atlas_module_HaloExchange_i.f
    atlas_module_HaloExchange_c.f
 )

@@ -17,8 +17,8 @@
 #include <limits>
 
 #include <eckit/filesystem/LocalPathName.h>
-#include <eckit/exception/Exceptions.h>
-#include <eckit/log/Log.h>
+#include "eckit/exception/Exceptions.h"
+#include "eckit/log/Log.h"
 #include <eckit/config/Resource.h>
 #include <eckit/runtime/Context.h>
 #include "atlas/io/Gmsh.h"
@@ -136,7 +136,7 @@ void write_field_nodes(const Gmsh& gmsh, Field& field, std::ostream& out)
 		int jlev = lev[ilev];
 		if( ( gather && MPL::rank() == 0 ) || !gather )
 		{
-			char field_lev[5];
+			char field_lev[6];
 			if( field.metadata().has<int>("nb_levels") )
 				std::sprintf(field_lev, "[%03d]",jlev);
 		  else
@@ -245,7 +245,7 @@ void write_field_elems(const Gmsh& gmsh, Field& field, std::ostream& out)
 
 	for (int jlev=0; jlev<nlev; ++jlev)
 	{
-		char field_lev[5];
+		char field_lev[6];
 		if( field.metadata().has<int>("nb_levels") )
 			std::sprintf(field_lev, "[%03d]",jlev);
 	  else

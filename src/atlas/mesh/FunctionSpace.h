@@ -8,8 +8,6 @@
  * does it submit to any jurisdiction.
  */
 
-
-
 #ifndef FunctionSpace_h
 #define FunctionSpace_h
 
@@ -17,17 +15,25 @@
 #include <map>
 #include <string>
 #include <iostream>
-#include <eckit/log/Log.h>
+
+#include "eckit/log/Log.h"
+#include "eckit/container/DenseMap.h"
+
 #include "atlas/mpl/HaloExchange.h"
 #include "atlas/mpl/GatherScatter.h"
 #include "atlas/mpl/Checksum.h"
 #include "atlas/mesh/Metadata.h"
 
+//------------------------------------------------------------------------------------------------------
+
 namespace atlas {
 
 class Mesh;
 class Field;
+
 template <typename T> class FieldT;
+
+//------------------------------------------------------------------------------------------------------
 
 /// @todo
 // Horizontal nodes are always the slowest moving index
@@ -51,7 +57,7 @@ public: // methods
 	template< typename DATA_TYPE>
 	FieldT<DATA_TYPE>& field(const std::string& name) const;
 
-	bool has_field(const std::string& name) const { return index_.count(name); }
+	bool has_field(const std::string& name) const { return fields_.has(name); }
 
 	template< typename DATA_TYPE >
 	FieldT<DATA_TYPE>& create_field(const std::string& name, size_t nb_vars);
@@ -124,16 +130,21 @@ protected: // members
 	int idx_;
 	int dof_;
 	int glb_dof_;
+
 	std::string name_;
+
 	std::vector<int> shapef_; // deprecated, use shape which is reverse order
 	std::vector<int> shape_;
-	std::map< std::string, size_t > index_;
-	std::vector< Field* > fields_;
+
+	eckit::DenseMap< std::string, eckit::SharedPtr<Field> > fields_;
+
 	mpl::HaloExchange::Ptr  halo_exchange_;
 	mpl::GatherScatter::Ptr gather_scatter_; // without ghost
 	mpl::GatherScatter::Ptr fullgather_; // includes halo
 	mpl::Checksum::Ptr      checksum_;
+
 	Metadata metadata_;
+
 	Mesh*    mesh_;  ///< not owned, but may be null
 };
 
@@ -141,7 +152,8 @@ typedef mpl::HaloExchange HaloExchange_t;
 typedef mpl::GatherScatter GatherScatter_t;
 typedef mpl::Checksum Checksum_t;
 
-// ------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------
+
 // C wrapper interfaces to C++ routines
 
 extern "C"
@@ -171,7 +183,8 @@ extern "C"
 	Checksum_t* atlas__FunctionSpace__checksum (FunctionSpace* This);
 
 }
-// ------------------------------------------------------------------
+
+//------------------------------------------------------------------------------------------------------
 
 } // namespace atlas
 

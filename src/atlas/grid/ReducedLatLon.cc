@@ -8,10 +8,11 @@
  * does it submit to any jurisdiction.
  */
 
+#include "eckit/geometry/Point2.h"
 #include "eckit/log/Log.h"
 #include "eckit/memory/Builder.h"
-#include "eckit/value/Value.h"
 #include "eckit/types/FloatCompare.h"
+#include "eckit/value/Value.h"
 
 #include "atlas/grid/GridSpec.h"
 #include "atlas/grid/ReducedLatLon.h"
@@ -26,8 +27,10 @@ namespace grid {
 
 ConcreteBuilderT1<Grid,ReducedLatLon> ReducedLatLon_builder( ReducedLatLon::gridTypeStr() );
 
-ReducedLatLon::ReducedLatLon( const eckit::Params& p )
- : nsIncrement_(0),nptsNS_(0)
+ReducedLatLon::ReducedLatLon( const eckit::Params& p ) :
+	npts_(0),
+	nsInc_(0),
+	nptsNS_(0)
 {
    if( !p.get("hash").isNil() )
       hash_ = p["hash"].as<std::string>();
@@ -41,7 +44,7 @@ ReducedLatLon::ReducedLatLon( const eckit::Params& p )
 
    if( p.has("grid_lat_inc") )
    {
-      nsIncrement_ = p["grid_lat_inc"];
+	  nsInc_ = p["grid_lat_inc"];
    }
 
    if( p.has("NPtsPerLat") )
@@ -51,9 +54,12 @@ ReducedLatLon::ReducedLatLon( const eckit::Params& p )
       for( size_t i = 0; i < nlats.size(); ++i)
          nbPtsPerLat_[i] = nlats[i];
    }
-   else {
+   else
+   {
       computeNPtsPerLat(nbPtsPerLat_);
    }
+
+   npts_ = computeNPts();
 }
 
 ReducedLatLon::~ReducedLatLon()
@@ -67,127 +73,53 @@ string ReducedLatLon::uid() const
 	return ss.str();
 }
 
+struct ReducedLatLon_CoordDD
+{
+	ReducedLatLon_CoordDD( std::vector<double>& pts ) : pts_(pts) {}
+	void operator()(double lat, double lon)
+	{
+		pts_.push_back( lat );
+		pts_.push_back( lon );
+	}
+	std::vector<double>& pts_;
+};
+
+
 void ReducedLatLon::coordinates(std::vector<double>& r ) const
 {
-   if (r.capacity() == 0)  r.reserve( nPoints() * 2);
-   r.clear();
+	r.clear();
+	r.reserve( nPoints() * 2);
 
-   RealCompare<double> isEqual(degrees_eps());
+	ReducedLatLon_CoordDD f(r);
 
-   const double north = bbox_.north();
-   const double south = bbox_.south();
-   const double west = bbox_.west();
-   const double east = bbox_.east();
-
-   double plat = north;
-   for( size_t j = 0; j < nbPtsPerLat_.size() ; ++j) {
-
-      long no_of_points_along_latitude = nbPtsPerLat_[j];
-      if (no_of_points_along_latitude > 0 ) {
-
-         if ( isEqual(plat,north) || isEqual(plat,south) || ( plat < north && plat > south)) {
-
-            double east_west_grid_length = 360.0/no_of_points_along_latitude;
-            double plon = 0;
-            for(int k = 0; k < no_of_points_along_latitude; k++) {
-
-               if ( (isEqual(plon,west) || isEqual(plon,east)) || ( plon < east && plon > west)) {
-
-                  ASSERT(plat < 90.0 && plat > -90.0);
-                  ASSERT(plon < 360.0 && plon >= 0);
-                  r.push_back( plat );
-                  r.push_back( plon );
-               }
-               plon += east_west_grid_length;
-            }
-         }
-      }
-      plat -= nsIncrement_;
-   }
+	iterate(f);
 }
 
-void ReducedLatLon::coordinates(std::vector<Grid::Point>& pts) const
+struct ReducedLatLon_Coord
 {
-   if (pts.size() == 0) {
-      pts.resize( nPoints() );
-   }
+	ReducedLatLon_Coord( std::vector<Grid::Point>& pts ) : pts_(pts) {}
+	void operator()(double lat, double lon)
+	{
+		pts_.push_back( Grid::Point(lat,lon) );
+	}
+	std::vector<Grid::Point>& pts_;
+};
 
-   RealCompare<double> isEqual(degrees_eps());
 
-   const double north = bbox_.north();
-   const double south = bbox_.south();
-   const double west = bbox_.west();
-   const double east = bbox_.east();
+void ReducedLatLon::coordinates( std::vector<Grid::Point>& pts) const
+{
+	pts.clear();
 
-   int i = 0;
-   double plat = north;
-   for( size_t j = 0; j < nbPtsPerLat_.size() ; ++j) {
+	pts.reserve( nPoints() );
 
-      long no_of_points_along_latitude = nbPtsPerLat_[j];
-      if (no_of_points_along_latitude > 0 ) {
+	ReducedLatLon_Coord f(pts);
 
-         if ( isEqual(plat,north) || isEqual(plat,south) || ( plat < north && plat > south)) {
-
-            double east_west_grid_length = 360.0/no_of_points_along_latitude;
-            double plon = 0;
-            for(int k = 0; k < no_of_points_along_latitude; k++) {
-
-               if ( (isEqual(plon,west) || isEqual(plon,east)) || ( plon < east && plon > west)) {
-
-                  ASSERT(plat < 90.0 && plat > -90.0);
-                  ASSERT(plon < 360.0 && plon >= 0);
-                  ASSERT(i < pts.size());
-                  pts[i].assign( plat, plon );
-                  i++;
-               }
-               plon += east_west_grid_length;
-            }
-         }
-      }
-      plat -= nsIncrement_;
-   }
+	iterate(f);
 }
 
 size_t ReducedLatLon::nPoints() const
 {
-   size_t nbDataPoints = 0;
-
-   RealCompare<double> isEqual(degrees_eps());
-
-   const double north = bbox_.north();
-   const double south = bbox_.south();
-   const double west = bbox_.west();
-   const double east = bbox_.east();
-
-   double plat = north;
-   for( size_t j = 0; j < nbPtsPerLat_.size() ; ++j) {
-
-      long no_of_points_along_latitude = nbPtsPerLat_[j];
-      if (no_of_points_along_latitude > 0 ) {
-
-         if ( isEqual(plat,north) || isEqual(plat,south) || ( plat < north && plat > south)) {
-
-            double east_west_grid_length = 360.0/no_of_points_along_latitude;
-            double plon = 0;
-            for(int k = 0; k < no_of_points_along_latitude; k++) {
-
-               if ( (isEqual(plon,west) || isEqual(plon,east)) || ( plon < east && plon > west)) {
-
-                  ASSERT(plat < 90.0 && plat > -90.0);
-                  ASSERT(plon < 360.0 && plon >= 0);
-                  nbDataPoints++;
-               }
-               plon += east_west_grid_length;
-            }
-         }
-      }
-      plat -= nsIncrement_;
-   }
-//
-//   for( size_t j = 0; j < nbPtsPerLat_.size(); ++j) {
-//      nbDataPoints += nbPtsPerLat_[j];
-//   }
-   return nbDataPoints;
+	return npts_;
 }
 
 string ReducedLatLon::gridType() const
@@ -202,7 +134,7 @@ GridSpec ReducedLatLon::spec() const
    grid_spec.uid( uid() );
 
    grid_spec.set("Nj",eckit::Value(nptsNS_));
-   grid_spec.set("grid_lat_inc",eckit::Value(nsIncrement_));
+   grid_spec.set("grid_lat_inc",eckit::Value(nsInc_));
 
    grid_spec.set("hash",eckit::Value(hash_));
 
@@ -219,7 +151,26 @@ bool ReducedLatLon::same(const Grid& grid) const
 
 long ReducedLatLon::computeRows() const
 {
-   return (bbox_.north() - bbox_.south()) / incLat() + 1;
+	return (bbox_.north() - bbox_.south()) / incLat() + 1;
+}
+
+struct ReducedLatLon_Counter
+{
+	ReducedLatLon_Counter() : count_(0) {}
+	void operator()(double lat, double lon)
+	{
+		++count_;
+	}
+	size_t count_;
+};
+
+size_t ReducedLatLon::computeNPts() const
+{
+	ReducedLatLon_Counter f;
+
+	iterate(f);
+
+	return f.count_;
 }
 
 void ReducedLatLon::computeNPtsPerLat( std::vector<long>& )
@@ -227,6 +178,44 @@ void ReducedLatLon::computeNPtsPerLat( std::vector<long>& )
    // Not clear how this is computed.
    // Note: For guassain number, we used the pre-defined tabulated values.
    NOTIMP;
+}
+
+template <class T>
+void ReducedLatLon::iterate( T& f ) const
+{
+	RealCompare<double> isEqual(degrees_eps());
+
+	const double north = bbox_.north();
+	const double south = bbox_.south();
+	const double west = bbox_.west();
+	const double east = bbox_.east();
+
+	double plat = north;
+	for( size_t j = 0; j < nbPtsPerLat_.size() ; ++j) {
+
+	   long no_of_points_along_latitude = nbPtsPerLat_[j];
+	   if (no_of_points_along_latitude > 0 ) {
+
+		  if ( isEqual(plat,north) || isEqual(plat,south) || ( plat < north && plat > south)) {
+
+			 double east_west_grid_length = 360.0/no_of_points_along_latitude;
+			 double plon = 0;
+			 for(int k = 0; k < no_of_points_along_latitude; k++) {
+
+				if ( (isEqual(plon,west) || isEqual(plon,east)) || ( plon < east && plon > west)) {
+
+				   ASSERT(plat <= 90.0 && plat >= -90.0);
+				   ASSERT(plon < 360.0 && plon >= 0);
+				   f(plat,plon);
+				}
+				plon += east_west_grid_length;
+				geometry::reduceTo2Pi(plon);
+
+			 }
+		  }
+	   }
+	   plat -= nsInc_;
+	}
 }
 
 //-----------------------------------------------------------------------------

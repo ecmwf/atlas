@@ -8,13 +8,13 @@
  * does it submit to any jurisdiction.
  */
 
-
-
 #include <cassert>
 #include <iostream>
 #include <sstream>
 #include <limits>
-#include <eckit/exception/Exceptions.h>
+
+#include "eckit/exception/Exceptions.h"
+
 #include "atlas/atlas_defines.h"
 #include "atlas/mesh/FunctionSpace.h"
 #include "atlas/mesh/Field.h"
@@ -54,11 +54,6 @@ FunctionSpace::FunctionSpace(const std::string& name, const std::string& shape_f
 
 FunctionSpace::~FunctionSpace()
 {
-//	std::cout << "shape Destructor ("<<name_<<")" << std::endl;
-	index_.clear();
-	for( size_t f=0; f<fields_.size(); ++f )
-		if( fields_[f] ) delete(fields_[f]);
-	fields_.clear();
 }
 
 void FunctionSpace::resize(const std::vector<int>& shape)
@@ -111,9 +106,9 @@ FieldT<double>& FunctionSpace::create_field(const std::string& name, size_t nb_v
 		throw eckit::Exception( msg.str(), Here() );
 	}
 
-	index_[name] = fields_.size();
 	FieldT<double>* field = new FieldT<double>(name,nb_vars,*this);
-	fields_.push_back( field );
+	fields_.insert( name, Field::Ptr(field) );
+	fields_.sort();
 
 	size_t rank = shape_.size();
 	std::vector< int > field_shape(rank);
@@ -138,9 +133,9 @@ FieldT<float>& FunctionSpace::create_field(const std::string& name, size_t nb_va
 		throw eckit::Exception( msg.str(), Here() );
 	}
 
-	index_[name] = fields_.size();
 	FieldT<float>* field = new FieldT<float>(name,nb_vars,*this);
-	fields_.push_back( field );
+	fields_.insert( name, Field::Ptr(field) );
+	fields_.sort();
 
 	size_t rank = shape_.size();
 	std::vector< int > field_shape(rank);
@@ -165,10 +160,10 @@ FieldT<int>& FunctionSpace::create_field(const std::string& name, size_t nb_vars
 		throw eckit::Exception( msg.str(), Here() );
 	}
 
-	index_[name] = fields_.size();
 	FieldT<int>* field = new FieldT<int>(name,nb_vars,*this);
-	fields_.push_back( field );
 
+	fields_.insert( name, Field::Ptr(field) );
+	fields_.sort();
 
 	size_t rank = shape_.size();
 	std::vector< int > field_shape(rank);
@@ -186,31 +181,30 @@ FieldT<int>& FunctionSpace::create_field(const std::string& name, size_t nb_vars
 
 void FunctionSpace::remove_field(const std::string& name)
 {
-	if( has_field(name) )
-	{
-		delete( fields_[ index_.at(name) ] );
-		fields_[ index_.at(name) ] = 0;
-		index_.erase(name);
-	}
-	else
-	{
-		std::stringstream msg;
-		msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
-		throw eckit::OutOfRange(msg.str(),Here());
-	}
+	NOTIMP; ///< @todo DenseMap needs to have erase() function
+
+//	if( has_field(name) )
+//	{
+//		fields_.erase(name);
+//	}
+//	else
+//	{
+//		std::stringstream msg;
+//		msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
+//		throw eckit::OutOfRange(msg.str(),Here());
+//	}
 }
 
 Field& FunctionSpace::field( size_t idx ) const
 {
-	assert( idx < fields_.size() );
-	return *fields_[ idx ];
+	return *fields_.at( idx );
 }
 
 Field& FunctionSpace::field(const std::string& name) const
 {
 	if( has_field(name) )
 	{
-		return *fields_[ index_.at(name) ];
+		return *fields_.get(name);
 	}
 	else
 	{
@@ -221,11 +215,11 @@ Field& FunctionSpace::field(const std::string& name) const
 }
 
 template<>
-	FieldT<double> &FunctionSpace::field(const std::string& name) const
+FieldT<double>& FunctionSpace::field(const std::string& name) const
 {
 	if( has_field(name) )
 	{
-		return *dynamic_cast< FieldT<double>* >(fields_[ index_.at(name) ]);
+		return dynamic_cast< FieldT<double>& >( *fields_[ name ] );
 	}
 	else
 	{
@@ -236,11 +230,11 @@ template<>
 }
 
 template<>
-	FieldT<float> &FunctionSpace::field(const std::string& name) const
+FieldT<float>& FunctionSpace::field(const std::string& name) const
 {
 	if( has_field(name) )
 	{
-		return *dynamic_cast< FieldT<float>* >(fields_[ index_.at(name) ]);
+		return dynamic_cast< FieldT<float>& >( *fields_[ name ] );
 	}
 	else
 	{
@@ -251,11 +245,11 @@ template<>
 }
 
 template<>
-	FieldT<int> &FunctionSpace::field(const std::string& name) const
+FieldT<int>& FunctionSpace::field(const std::string& name) const
 {
 	if( has_field(name) )
 	{
-		return *dynamic_cast< FieldT<int>* >(fields_[ index_.at(name) ]);
+		return dynamic_cast< FieldT<int>& >( *fields_[ name ] );
 	}
 	else
 	{

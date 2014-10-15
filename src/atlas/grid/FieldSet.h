@@ -54,9 +54,7 @@ public: // types
 
 public: // methods
 
-	static FieldSet::Ptr create( );
-
-    /// Constructs a field set from a file (e.g. a GRIB file )
+	/// Constructs a field set from a file (e.g. a GRIB file )
     FieldSet( const eckit::PathName& );
 
     /// @todo Constructor for a FieldSet from a buffer
@@ -81,8 +79,8 @@ public: // methods
     size_t size() const { return fields_.size(); }
     bool empty() const { return ! fields_.size(); }
 
-    const Grid& grid() const { ASSERT( !empty() ); return *grid_; }
-    Grid& grid() { ASSERT( !empty() ); return *grid_; }
+	const Grid& grid() const { ASSERT( !empty() ); return fields_[0]->grid(); }
+	Grid& grid() { ASSERT( !empty() ); return fields_[0]->grid(); }
 
     std::vector<std::string> field_names() const;
 
@@ -93,8 +91,6 @@ protected: // methods
 protected: // members
 
 	Field::Vector fields_; ///< field handle storage
-
-	Grid::Ptr     grid_;   ///< describes the grid (shared)
 
 };
 

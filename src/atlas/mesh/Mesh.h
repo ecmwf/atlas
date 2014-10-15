@@ -65,7 +65,12 @@ public: // methods
 	bool has_grid() const { return grid_; }
 
 	/// assign a Grid to this Mesh
-	void grid( grid::Grid& p ) { grid_ = &p; }
+	void grid( grid::Grid& p )
+	{
+		DEBUG_VAR(grid_);
+		grid_ = &p;
+		DEBUG_VAR(grid_);
+	}
 
 	/// accessor of the Grid
 	const grid::Grid& grid() const {  ASSERT( grid_ ); return *grid_; }
@@ -87,6 +92,8 @@ private: // members
 
 //------------------------------------------------------------------------------------------------------
 
+typedef grid::Grid Grid;
+
 // C wrapper interfaces to C++ routines
 extern "C"
 {
@@ -94,6 +101,7 @@ extern "C"
 	void atlas__Mesh__delete (Mesh* This);
 	void atlas__Mesh__add_function_space (Mesh* This, FunctionSpace* function_space);
 	FunctionSpace* atlas__Mesh__function_space (Mesh* This, char* name);
+	Grid* atlas__Mesh__grid (Mesh* This);
 }
 
 //------------------------------------------------------------------------------------------------------

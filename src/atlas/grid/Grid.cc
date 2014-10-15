@@ -44,26 +44,26 @@ Grid::~Grid()
 {
 }
 
+void Grid::buildMesh() const
+{
+	if( ! mesh_ )
+	{
+		mesh_.reset( new Mesh() );
+		mesh_->grid( const_cast<Grid&>(*this) );
+		Tesselation::build_mesh( *this, *mesh_ );
+	}
+}
+
 Mesh& Grid::mesh()
 {
-    if( !mesh_ )
-    {
-		mesh_.reset( new Mesh() );
-		Tesselation::build_mesh( *this, *mesh_ );
-    }
-
+	buildMesh();
     return *mesh_;
 }
 
 const Mesh& Grid::mesh() const
 {
-     if( !mesh_ )
-     {
-		 mesh_.reset( new Mesh() );
-		 Tesselation::build_mesh( *this, *mesh_ );
-     }
-
-     return *mesh_;
+	buildMesh();
+	return *mesh_;
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -81,7 +81,7 @@ Grid::BoundBox Grid::makeBBox(const Params& p)
 	return BoundBox( p["grib_bbox_n"],
 					 p["grid_bbox_s"],
 					 p["grid_bbox_e"],
-					 p["grid_bbox_w"] );
+			p["grid_bbox_w"] );
 }
 
 double Grid::degrees_eps()

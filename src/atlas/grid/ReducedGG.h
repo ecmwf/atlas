@@ -65,7 +65,7 @@ public: // methods
 	virtual std::string hash() const { return hash_;}
 
 	virtual BoundBox boundingBox() const { return bbox_;}
-	virtual size_t nPoints() const { return nbDataPoints_; }
+	virtual size_t nPoints() const { return npts_; }
 
 	virtual void coordinates( std::vector<double>& ) const;
 	virtual void coordinates( std::vector<Point>& ) const;
@@ -87,14 +87,15 @@ public: // methods
 
 private: // members
 
+	long                 npts_;        ///< no of data points in grid, taking into account the bounding box
+	long                 gaussN_;      ///< No of points between pole and equator
+
+	BoundBox             bbox_;        ///< bounding box for data, only points within are considered part of grid
+
 	std::string          hash_;
 
-	long                 nbDataPoints_;        ///< no of data points in grid, taking into account the bounding box
-	long                 gaussN_;              ///< No of points between pole and equator
+	std::vector<long>    nbPtsPerLat_; ///< No of points per latitude
 
-	BoundBox             bbox_;
-
-	std::vector<long>    nbPtsPerLat_;         ///< No of points per latitude
 };
 
 //-----------------------------------------------------------------------------

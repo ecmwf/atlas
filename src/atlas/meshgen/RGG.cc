@@ -1,16 +1,16 @@
 /*
  * (C) Copyright 1996-2014 ECMWF.
- * 
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
- * In applying this licence, ECMWF does not waive the privileges and immunities 
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
 
 #include <numeric>
 #include <algorithm>
-
+#include <eckit/exception/Exceptions.h>
 #include "atlas/meshgen/RGG.h"
 
 #define DEBUG_OUTPUT 0
@@ -115,6 +115,105 @@ RegularGrid::RegularGrid(int nlon, int nlat) : RGG()
   {
     lat_[i] = M_PI_2 - (i+0.5)*dy;
   }
+}
+
+// ------------------------------------------------------------------
+
+RGG* new_reduced_gaussian_grid( const std::string& identifier )
+{
+  RGG* rgg = 0;
+
+  if     ( identifier == "T63"   ) rgg = new T63();
+  else if( identifier == "T95"   ) rgg = new T95();
+  else if( identifier == "T159"  ) rgg = new T159();
+  else if( identifier == "T255"  ) rgg = new T255();
+  else if( identifier == "T511"  ) rgg = new T511();
+  else if( identifier == "T1279" ) rgg = new T1279();
+  else if( identifier == "T2047" ) rgg = new T2047();
+  else if( identifier == "T3999" ) rgg = new T3999();
+  else if( identifier == "T7999" ) rgg = new T7999();
+  else throw eckit::BadParameter("Cannot create grid"+identifier,Here());
+  return rgg;
+}
+
+// ------------------------------------------------------------------
+
+RGG* new_reduced_gaussian_grid( const std::vector<long>& nlon )
+{
+  return new RGG(nlon.size(),nlon.data());
+}
+
+// ------------------------------------------------------------------
+
+RGG* new_regular_latlon_grid( int nlon, int nlat )
+{
+  if( nlon%2 != 0 ) throw eckit::BadParameter("nlon must be even number",Here());
+  if( nlat%2 != 0 ) throw eckit::BadParameter("nlat must be even number",Here());
+  return new RegularGrid(nlon,nlat);
+}
+
+// ------------------------------------------------------------------
+
+RGG* new_regular_gaussian_grid( int nlon, int nlat )
+{
+  if( nlon%2 != 0 ) throw eckit::BadParameter("nlon must be even number",Here());
+  if( nlat%2 != 0 ) throw eckit::BadParameter("nlat must be even number",Here());
+  return new GG(nlon,nlat/2.);
+}
+
+
+RGG* atlas__new_reduced_gaussian_grid(char* identifier)
+{
+	return new_reduced_gaussian_grid( std::string(identifier) );
+}
+
+RGG* atlas__new_regular_gaussian_grid ( int nlon, int nlat )
+{
+  return new_regular_gaussian_grid( nlon, nlat );
+}
+
+RGG* atlas__new_regular_latlon_grid(int nlon, int nlat)
+{
+  return new_regular_latlon_grid( nlon, nlat );
+}
+
+RGG* atlas__new_custom_reduced_gaussian_grid(int nlon[], int nlat)
+{
+  std::vector<long> nlon_vector;
+  nlon_vector.assign(nlon,nlon+nlat);
+  return new_reduced_gaussian_grid(nlon_vector);
+}
+
+int  atlas__RGG__nlat(RGG* This)
+{
+  return This->nlat();
+}
+
+void atlas__RGG__nlon(RGG* This, const int* &nlon, int &size)
+{
+  nlon = This->nlon().data();
+  size = This->nlon().size();
+}
+
+int atlas__RGG__ngptot(RGG* This)
+{
+  return This->ngptot();
+}
+
+double atlas__RGG__lon(RGG* This,int jlon,int jlat)
+{
+  return This->lon(jlon,jlat);
+}
+
+double atlas__RGG__lat(RGG* This,int jlat)
+{
+  return This->lat(jlat);
+}
+
+void atlas__RGG__lats(RGG* This, const double* &lats, int &size)
+{
+  lats = This->lat().data();
+  size = This->lat().size();
 }
 
 

@@ -83,7 +83,10 @@ public: // methods
     /// on the enclosing grid points
     virtual BoundBox boundingBox() const = 0;
 
-    virtual size_t nPoints() const = 0;
+	/// Returns the number of points
+	/// This methods should have constant access time
+	/// If necessary derived classes should compute it at cosntruction
+	virtual size_t nPoints() const = 0;
 
     /// Assumes we start at NORTH,WEST --> SOUTH,EAST
     /// Assumes that the input vectors have the correct size.
@@ -107,6 +110,10 @@ protected: // methods
 
 	/// helper function to create bounding boxes (for non-global grids)
 	static BoundBox makeBBox( const eckit::Params& );
+
+private: // methods
+
+	void buildMesh() const;
 
 private: // members
 

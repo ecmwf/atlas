@@ -10,7 +10,7 @@
 
 #include <sstream>
 #include <stdexcept>
-#include <eckit/exception/Exceptions.h>
+#include "eckit/exception/Exceptions.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/FunctionSpace.h"
 
@@ -91,6 +91,11 @@ void atlas__Mesh__add_function_space (Mesh* This, FunctionSpace* function_space)
 FunctionSpace* atlas__Mesh__function_space (Mesh* This, char* name) {
 	return &This->function_space( std::string(name) );
 }
+
+grid::Grid* atlas__Mesh__grid (Mesh* This) {
+	return &This->grid();
+}
+
 //------------------------------------------------------------------------------------------------------
 
 } // namespace atlas
