@@ -72,6 +72,8 @@ public: // methods
 
     virtual ~Grid();
 
+	Ptr self() { return Ptr(this); }
+
     virtual std::string uid() const = 0;
     virtual std::string hash() const = 0;
 

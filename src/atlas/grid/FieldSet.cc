@@ -102,7 +102,9 @@ bool FieldSet::checkConsistency() const
 
 //-----------------------------------------------------------------------------
 
-FieldSet::FieldSet( const eckit::PathName& fname )
+FieldSet::FieldSet( const eckit::PathName& fname ) :
+	fields_(),
+	grid_()
 {
     GribFieldSet gribfs(fname);
 
@@ -120,28 +122,34 @@ FieldSet::FieldSet( const eckit::PathName& fname )
         GribHandle* gh = gf->getHandle();
         ASSERT( gh );
 
-        fields_.push_back( create_field(*gh) );
+		fields_.push_back( create_field(*gh) ); // grid_ built on first call
 
         gf->release(); // free this GribField
     }
 
+	ASSERT( grid_ );
 	ASSERT( checkConsistency() );
 }
 
-FieldSet::FieldSet( const Buffer& buf )
+FieldSet::FieldSet( const Buffer& buf ) :
+	fields_(),
+	grid_()
 {
     GribHandle gh( buf );
 
-    fields_.push_back( create_field(gh) );
+	fields_.push_back( create_field(gh) ); // grid_ built inside
 
+	ASSERT( grid_ );
 	ASSERT( checkConsistency() );
 }
 
-FieldSet::FieldSet(const Grid::Ptr grid, std::vector<std::string> nfields )
+FieldSet::FieldSet(const Grid::Ptr grid, std::vector<std::string> nfields ) :
+	fields_(),
+	grid_(grid)
 {
-    ASSERT( grid );
+	ASSERT( grid_ );
 
-	Mesh& mesh = grid->mesh();
+	Mesh& mesh = grid_->mesh();
 
 	FunctionSpace& nodes = mesh.function_space( "nodes" );
     fields_.reserve(nfields.size());
@@ -153,10 +161,18 @@ FieldSet::FieldSet(const Grid::Ptr grid, std::vector<std::string> nfields )
 
 		fields_.push_back( Field::Ptr( &f ) );
     }
+
+	ASSERT( checkConsistency() );
 }
 
-FieldSet::FieldSet(const Field::Vector& fields) :  fields_(fields)
+FieldSet::FieldSet(const Field::Vector& fields) :
+	fields_(fields),
+	grid_()
 {
+	if( !fields_.empty() )
+		grid_.reset( fields_[0]->grid().self() );
+
+	ASSERT( grid_ );
 	ASSERT( checkConsistency() );
 }
 
