@@ -62,6 +62,8 @@ public: // methods
 
 	virtual ~Field();
 
+	Ptr self() { return Ptr(this); }
+
 	template <typename DATA_TYPE> DATA_TYPE* data();
 	template <typename DATA_TYPE> DATA_TYPE const* data() const;
 

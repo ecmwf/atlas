@@ -84,13 +84,17 @@ public: // methods
 
     std::vector<std::string> field_names() const;
 
-protected: // methods
+private: // methods
 
 	Field::Ptr create_field( eckit::grib::GribHandle& );
+
+	bool checkConsistency() const;
 
 protected: // members
 
 	Field::Vector fields_; ///< field handle storage
+
+	Grid::Ptr grid_;
 
 };
 

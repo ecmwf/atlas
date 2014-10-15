@@ -37,22 +37,19 @@ namespace grid {
 
 Field::Ptr FieldSet::create_field( GribHandle& gh )
 {
-	Grid::Ptr grid;
-
-	if( empty() ) // first field, so create grid
-    {
+	if(!grid_)
+	{
 		GribParams* gp = GribParams::create(gh);
 		ASSERT( gp );
-		grid.reset( Grid::create( *gp ) );
-    }
+		grid_.reset( Grid::create( *gp ) );
+	}
 	else // check grid is the same
-    {
-		grid.reset( &( fields_[0]->grid() ) );
-		if( gh.geographyHash() != grid->hash() )
-            throw eckit::UserError("GRIB fields don't match grid within FieldSet", Here() );
-    }
+	{
+		if( gh.geographyHash() != grid_->hash() )
+			throw eckit::UserError("GRIB fields don't match grid within FieldSet", Here() );
+	}
 
-	Mesh& mesh = grid->mesh();
+	Mesh& mesh = grid_->mesh();
     FunctionSpace&  nodes  = mesh.function_space( "nodes" );
 
     // get name for this field
@@ -80,7 +77,27 @@ Field::Ptr FieldSet::create_field( GribHandle& gh )
 //            of.close();
 //        }
 
-	return Field::Ptr( &f );
+	return f.self();
+}
+
+bool FieldSet::checkConsistency() const
+{
+	if( fields_.empty() ) return true;
+
+	bool result = true;
+
+	std::string uid = grid_->uid();
+
+	for( size_t i = 0; i < fields_.size(); ++i )
+	{
+		if( fields_[i]->grid().uid() != uid )
+		{
+			Log::error() << "fields_["<< i <<"] (" << fields_[i]->name() << ") doesn't match the same grid as FieldSet @ " << Here() << std::endl;
+			result = false;
+		}
+	}
+
+	return result;
 }
 
 //-----------------------------------------------------------------------------
@@ -105,19 +122,19 @@ FieldSet::FieldSet( const eckit::PathName& fname )
 
         fields_.push_back( create_field(*gh) );
 
-        /* check all fields have same nvalues */
-		if( !check_nvalues ) check_nvalues = fields_.back()->size();
-		if( check_nvalues != fields_.back()->size() )
-            throw eckit::UserError("GRIB file contains multiple fields with different sizes", Here() );
-
         gf->release(); // free this GribField
     }
+
+	ASSERT( checkConsistency() );
 }
 
 FieldSet::FieldSet( const Buffer& buf )
 {
     GribHandle gh( buf );
+
     fields_.push_back( create_field(gh) );
+
+	ASSERT( checkConsistency() );
 }
 
 FieldSet::FieldSet(const Grid::Ptr grid, std::vector<std::string> nfields )
@@ -140,15 +157,7 @@ FieldSet::FieldSet(const Grid::Ptr grid, std::vector<std::string> nfields )
 
 FieldSet::FieldSet(const Field::Vector& fields) :  fields_(fields)
 {
-	if( fields.empty() ) return;
-
-	std::string uid = fields_[0]->grid().uid();
-
-	for( size_t i = 1; i < fields_.size(); ++i )
-	{
-		if( fields_[i]->grid().hash() != uid )
-			throw eckit::UserError("list of fields don't match the same grid to build a FieldSet", Here() );
-	}
+	ASSERT( checkConsistency() );
 }
 
 std::vector<std::string> FieldSet::field_names() const
