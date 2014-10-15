@@ -19,7 +19,7 @@ TYPE, extends(object_type) :: Mesh_type
 
 !------------------------------------------------------------------------------
 contains
-  procedure :: add_function_space => Mesh__add_function_space
+  procedure :: create_function_space => Mesh__create_function_space
   procedure :: function_space => Mesh__function_space
 END TYPE Mesh_type
 

@@ -14,23 +14,23 @@
 #define BOOST_TEST_MODULE TestBuildParallelFields
 #include "ecbuild/boost_test_framework.h"
 
-#include "atlas/mpl/MPL.h"
+#include "atlas/actions/BuildParallelFields.h"
+#include "atlas/actions/BuildPeriodicBoundaries.h"
 #include "atlas/atlas_config.h"
+#include "atlas/io/Gmsh.h"
+#include "atlas/mesh/Field.h"
+#include "atlas/mesh/FunctionSpace.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/Metadata.h"
+#include "atlas/mesh/Parameters.h"
+#include "atlas/mesh/Util.h"
+#include "atlas/meshgen/EqualAreaPartitioner.h"
 #include "atlas/meshgen/RGG.h"
 #include "atlas/meshgen/RGGMeshGenerator.h"
-#include "atlas/meshgen/EqualAreaPartitioner.h"
-#include "atlas/io/Gmsh.h"
-#include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/FunctionSpace.h"
-#include "atlas/mesh/Field.h"
-#include "atlas/mesh/Metadata.h"
+#include "atlas/mpl/MPL.h"
 #include "atlas/util/Array.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
-#include "atlas/actions/BuildParallelFields.h"
-#include "atlas/actions/BuildPeriodicBoundaries.h"
-#include "atlas/mesh/Parameters.h"
-#include "atlas/mesh/Util.h"
 
 using namespace atlas;
 using namespace atlas::meshgen;
@@ -42,12 +42,13 @@ BOOST_AUTO_TEST_CASE( init ) { MPL::init(); }
 
 BOOST_AUTO_TEST_CASE( test1 )
 {
-  Mesh* m = new Mesh();
-  FunctionSpace* nodes =  new FunctionSpace( "nodes", "shapefunc", make_shape(10,Field::UNDEF_VARS) );
-  m->add_function_space( nodes );
+	Mesh::Ptr m = Mesh::create();
+
+	FunctionSpace& nodes = m->create_function_space( "nodes", "shapefunc", make_shape(10,Field::UNDEF_VARS) );
+
   ArrayView<double,2> latlon( m->function_space("nodes").create_field<double>("coordinates",2) );
   ArrayView<int,1> glb_idx( m->function_space("nodes").create_field<int>("glb_idx",1) );
-  ArrayView<int,1> part ( nodes->create_field<int>("partition",1) );
+  ArrayView<int,1> part ( nodes.create_field<int>("partition",1) );
 
   // This is typically available
   glb_idx(0) = 1;    part(0) = 0;
@@ -76,7 +77,7 @@ BOOST_AUTO_TEST_CASE( test1 )
 
   BOOST_REQUIRE( m->function_space("nodes").has_field("remote_idx") );
 
-  IndexView<int,1> loc( nodes->field("remote_idx") );
+  IndexView<int,1> loc( nodes.field("remote_idx") );
   BOOST_CHECK_EQUAL( loc(0) , 0 );
   BOOST_CHECK_EQUAL( loc(1) , 1 );
   BOOST_CHECK_EQUAL( loc(2) , 2 );
@@ -130,8 +131,6 @@ BOOST_AUTO_TEST_CASE( test1 )
     BOOST_CHECK_EQUAL( is_ghost(8), true );
     BOOST_CHECK_EQUAL( is_ghost(9), true );
   }
-
-  delete m;
 }
 
 BOOST_AUTO_TEST_CASE( test2 )

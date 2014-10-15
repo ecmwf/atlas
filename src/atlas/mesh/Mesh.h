@@ -11,12 +11,13 @@
 #ifndef atlas_Mesh_h
 #define atlas_Mesh_h
 
-#include <map>
-#include <vector>
+#include <iosfwd>
 #include <string>
+#include <vector>
 
-#include "eckit/memory/SharedPtr.h"
+#include "eckit/container/DenseMap.h"
 #include "eckit/memory/Owned.h"
+#include "eckit/memory/SharedPtr.h"
 
 #include "atlas/mesh/Metadata.h"
 #include "atlas/grid/Grid.h"
@@ -34,11 +35,12 @@ class Mesh : public eckit::Owned {
 public: // types
 
 	typedef grid::Grid Grid;
+
 	typedef eckit::SharedPtr<Mesh> Ptr;
 
 public: // methods
 
-//	static Mesh& create( const eckit::Params& );
+	static Mesh::Ptr create();
 
 	Mesh();
 
@@ -50,13 +52,13 @@ public: // methods
 	bool has_function_space(const std::string& name) const;
 
 	/// Takes ownership, and will be deleted automatically
-	FunctionSpace& add_function_space( FunctionSpace* function_space );
+	FunctionSpace& create_function_space(const std::string& name, const std::string& shape_func, const std::vector<int>& shape);
 
 	/// accessor by name
 	FunctionSpace& function_space(const std::string& name) const;
 
 	/// accessor by index
-	FunctionSpace& function_space(int idx) const;
+	FunctionSpace& function_space( size_t ) const;
 
 	/// number of functional spaces
 	int nb_function_spaces() const { return function_spaces_.size(); }
@@ -65,12 +67,7 @@ public: // methods
 	bool has_grid() const { return grid_; }
 
 	/// assign a Grid to this Mesh
-	void grid( grid::Grid& p )
-	{
-		DEBUG_VAR(grid_);
-		grid_ = &p;
-		DEBUG_VAR(grid_);
-	}
+	void grid( grid::Grid& p ) { grid_ = &p; }
 
 	/// accessor of the Grid
 	const grid::Grid& grid() const {  ASSERT( grid_ ); return *grid_; }
@@ -84,9 +81,7 @@ private: // members
 
 	grid::Grid* grid_;
 
-	std::map< std::string, size_t > index_; ///< index of function spaces
-
-	std::vector< FunctionSpace* > function_spaces_; ///< function spaces
+	eckit::DenseMap< std::string, eckit::SharedPtr<FunctionSpace> > function_spaces_;
 
 };
 
@@ -99,7 +94,7 @@ extern "C"
 {
 	Mesh* atlas__Mesh__new ();
 	void atlas__Mesh__delete (Mesh* This);
-	void atlas__Mesh__add_function_space (Mesh* This, FunctionSpace* function_space);
+	void atlas__Mesh__create_function_space (Mesh* This, char* name,char* shape_func,int shape[], int shape_size);
 	FunctionSpace* atlas__Mesh__function_space (Mesh* This, char* name);
 	Grid* atlas__Mesh__grid (Mesh* This);
 }

@@ -10,7 +10,10 @@
 
 #include <sstream>
 #include <stdexcept>
+
 #include "eckit/exception/Exceptions.h"
+#include "eckit/log/Log.h"
+
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/FunctionSpace.h"
 
@@ -20,6 +23,11 @@ namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
 
+Mesh::Ptr Mesh::create()
+{
+	return Mesh::Ptr( new Mesh( /* eckit::Params ??? */ ) );
+}
+
 Mesh::Mesh() :
 	grid_(NULL)
 {
@@ -27,31 +35,28 @@ Mesh::Mesh() :
 
 Mesh::~Mesh()
 {
-	index_.clear();
-	for( size_t f=0; f<function_spaces_.size(); ++f )
-		if( function_spaces_[f] ) delete(function_spaces_[f]);
-	function_spaces_.clear();
 }
 
-bool Mesh::has_function_space(const std::string &name) const
+bool Mesh::has_function_space(const std::string& name) const
 {
-	return (index_.find(name) != index_.end());
+	return function_spaces_.has(name);
 }
 
-FunctionSpace& Mesh::add_function_space( FunctionSpace* function_space )
+FunctionSpace& Mesh::create_function_space(const std::string& name, const std::string& shape_func, const std::vector<int>& shape)
 {
-	if (index_.count(function_space->name()) )
+	if( has_function_space(name) )
 	{
-		throw eckit::Exception( "Functionspace "+function_space->name()+" already added", Here() );
+		throw eckit::Exception( "Functionspace '" + name + "' already exists", Here() );
 	}
 
-	index_[function_space->name()] = function_spaces_.size();
-	function_space->set_index( index_[function_space->name()] );
-	function_spaces_.push_back( function_space );
+	FunctionSpace::Ptr fs( new FunctionSpace(name,shape_func,shape,*this) );
 
-	function_space->mesh(*this);
+	function_spaces_.insert(name,fs);
+	function_spaces_.sort();
 
-	return *function_space;
+	fs->set_index( function_spaces_.size() - 1 ); ///< @todo revisit this once we can remove functionspaces
+
+	return *fs;
 }
 
 FunctionSpace& Mesh::function_space(const std::string& name) const
@@ -59,13 +64,13 @@ FunctionSpace& Mesh::function_space(const std::string& name) const
 	if( ! has_function_space(name) )
 	{
 		std::stringstream msg;
-		msg << "Could not find functionspace \"" << name << "\" in mesh";
+		msg << "Could not find FunctionSpace '" << name << "' in mesh";
 		throw eckit::OutOfRange(msg.str(),Here());
 	}
-	return *function_spaces_[ index_.at(name) ];
+	return *( function_spaces_[ name ] );
 }
 
-FunctionSpace& Mesh::function_space(int idx) const
+FunctionSpace& Mesh::function_space( size_t idx) const
 {
 	if( idx >= function_spaces_.size() )
 		throw eckit::OutOfRange(idx,function_spaces_.size(),Here());
@@ -84,8 +89,10 @@ void atlas__Mesh__delete (Mesh* This) {
 	delete This;
 }
 
-void atlas__Mesh__add_function_space (Mesh* This, FunctionSpace* function_space) {
-	This->add_function_space(function_space);
+void atlas__Mesh__create_function_space(Mesh* This, char* name,char* shape_func,int shape[], int shape_size)
+{
+	std::vector<int> vshape(shape,shape+shape_size);
+	This->create_function_space(std::string(name), std::string(shape_func),vshape);
 }
 
 FunctionSpace* atlas__Mesh__function_space (Mesh* This, char* name) {

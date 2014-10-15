@@ -8,16 +8,17 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef FunctionSpace_h
-#define FunctionSpace_h
+#ifndef atlas_FunctionSpace_h
+#define atlas_FunctionSpace_h
 
-#include <vector>
-#include <map>
+#include <iosfwd>
 #include <string>
-#include <iostream>
+#include <vector>
 
-#include "eckit/log/Log.h"
 #include "eckit/container/DenseMap.h"
+#include "eckit/log/Log.h"
+#include "eckit/memory/Owned.h"
+#include "eckit/memory/SharedPtr.h"
 
 #include "atlas/mpl/HaloExchange.h"
 #include "atlas/mpl/GatherScatter.h"
@@ -39,11 +40,15 @@ template <typename T> class FieldT;
 // Horizontal nodes are always the slowest moving index
 // Then variables
 // Then levels are fastest moving index
-class FunctionSpace : private eckit::NonCopyable {
+class FunctionSpace : public eckit::Owned {
+
+public: // types
+
+	typedef eckit::SharedPtr<FunctionSpace> Ptr;
 
 public: // methods
 
-	FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<int>& shape );
+	FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<int>& shape, Mesh& mesh );
 
 	virtual ~FunctionSpace();
 
@@ -115,9 +120,8 @@ public: // methods
 	const Metadata& metadata() const { return metadata_; }
 	Metadata& metadata() { return metadata_; }
 
-	const Mesh& mesh() const { ASSERT( mesh_ ); return *mesh_; }
-	Mesh& mesh() { ASSERT( mesh_ ); return *mesh_; }
-	void mesh( Mesh& m ) { mesh_ = &m; }
+	const Mesh& mesh() const { return mesh_; }
+	Mesh& mesh() { return mesh_; }
 
 	int nb_fields() const { return fields_.size(); }
 
@@ -145,7 +149,7 @@ protected: // members
 
 	Metadata metadata_;
 
-	Mesh*    mesh_;  ///< not owned, but may be null
+	Mesh&    mesh_;
 };
 
 typedef mpl::HaloExchange HaloExchange_t;
@@ -158,8 +162,6 @@ typedef mpl::Checksum Checksum_t;
 
 extern "C"
 {
-	FunctionSpace* atlas__FunctionSpace__new (char* name, char* shape_func, int shape[], int rank);
-	void atlas__FunctionSpace__delete (FunctionSpace* This);
 	Metadata* atlas__FunctionSpace__metadata (FunctionSpace* This);
 	int atlas__FunctionSpace__dof (FunctionSpace* This);
 	int atlas__FunctionSpace__glb_dof (FunctionSpace* This);
@@ -188,4 +190,4 @@ extern "C"
 
 } // namespace atlas
 
-#endif // functionspace_h
+#endif // atlas_FunctionSpace_h

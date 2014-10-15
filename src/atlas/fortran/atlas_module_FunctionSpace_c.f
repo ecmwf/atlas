@@ -4,25 +4,6 @@
 ! -----------------------------------------------------------------------------
 ! FunctionSpace routines
 
-function new_FunctionSpace(name,shape_func,nb_nodes) result(function_space)
-  character(len=*), intent(in) :: name
-  character(len=*), intent(in) :: shape_func
-  integer, intent(in) :: nb_nodes
-  type(FunctionSpace_type) :: function_space
-  integer :: extents(2)
-  extents = (/nb_nodes,FIELD_NB_VARS/)
-  function_space%private%object = atlas__FunctionSpace__new(c_str(name),c_str(shape_func), &
-    & extents, 2 )
-end function new_FunctionSpace
-
-subroutine FunctionSpace__delete(this)
-  type(FunctionSpace_type), intent(inout) :: this
-  if ( c_associated(this%private%object) ) then
-    call atlas__FunctionSpace__delete(this%private%object)
-  end if
-  this%private%object = C_NULL_ptr
-end subroutine FunctionSpace__delete
-
 function FunctionSpace__metadata(this) result(metadata)
   class(FunctionSpace_type), intent(in) :: this
   type(Metadata_type) :: Metadata

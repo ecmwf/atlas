@@ -111,7 +111,7 @@ void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, PointSet& p
     extents[0] = nb_triags;
     extents[1] = Field::UNDEF_VARS;
 
-    FunctionSpace& triags  = mesh.add_function_space( new FunctionSpace( "triags", "Lagrange_P1", extents ) );
+	FunctionSpace& triags  = mesh.create_function_space( "triags", "Lagrange_P1", extents );
     triags.metadata().set("type",static_cast<int>(Entity::ELEMS));
 
     IndexView<int,2> triag_nodes ( triags.create_field<int>("nodes",3) );
@@ -259,7 +259,7 @@ void Tesselation::create_mesh_structure( Mesh& mesh, const size_t nb_nodes )
     {
         extents[0] = nb_nodes;
         extents[1] = Field::UNDEF_VARS;
-        FunctionSpace& nodes = mesh.add_function_space( new FunctionSpace( "nodes", "Lagrange_P0", extents ) );
+		FunctionSpace& nodes = mesh.create_function_space(  "nodes", "Lagrange_P0", extents );
         nodes.metadata().set("type",static_cast<int>(Entity::NODES));
     }
 

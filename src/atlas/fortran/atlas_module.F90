@@ -90,7 +90,6 @@ INTERFACE delete
 
 ! -----------------------------------------------------------------------------
   module procedure Mesh__delete
-  module procedure FunctionSpace__delete
   module procedure FieldSet__delete
   module procedure HaloExchange__delete
   module procedure Metadata__delete

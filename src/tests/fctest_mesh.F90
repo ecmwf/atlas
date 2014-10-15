@@ -44,7 +44,10 @@ END_TESTSUITE_FINALIZE
 ! -----------------------------------------------------------------------------
 
 TEST( test_function_space )
-  call mesh%add_function_space( new_FunctionSpace("nodes", "P1-C", 10) )
+
+  write(*,*) "test_function_space starting"
+
+  call mesh%create_function_space( "nodes", "P1-C", 10 )
   func_space = mesh%function_space("nodes")
   CHECK_EQUAL( func_space%name() , "nodes"  )
 END_TEST
@@ -66,6 +69,9 @@ TEST( test_field_metadata )
   real(c_double) :: real64
   character(len=:), allocatable :: string
   type(MetaData_type) metadata
+
+  write(*,*) "test_field_metadata starting"
+
   call func_space%create_field("field_prop",1,real_kind(c_float))
   field = func_space%field("field_prop")
 
@@ -100,6 +106,9 @@ TEST( test_field_size )
   integer, pointer :: fdata_int(:)
   real(c_float),  pointer :: fdata_real32(:)
   real(c_double), pointer :: fdata_real64(:)
+
+  write(*,*) "test_field_size starting"
+
   call func_space%create_field("field_0",0,integer_kind())
   field = func_space%field("field_0")
   call field%access_data(fdata_int)
@@ -127,6 +136,8 @@ TEST( test_create_remove )
   real(c_double), pointer :: scalar(:)
   real(c_float), pointer :: vector(:,:)
 
+  write(*,*) "test_create_remove starting"
+
   call func_space%create_field("bla",1,integer_kind())
   field = func_space%field("bla")
   CHECK_EQUAL( field%name(), "bla" )
@@ -152,6 +163,9 @@ END_TEST
 TEST( test_fieldset )
   type(FieldSet_type) :: fieldset
   type(Field_type), allocatable :: fields(:)
+
+  write(*,*) "test_fieldset starting"
+
   fieldset = new_FieldSet("fieldset")
   func_space = mesh%function_space("nodes")
 
@@ -191,6 +205,9 @@ TEST( test_meshgen )
   integer(c_int), pointer :: ridx(:)
   real(c_double), pointer :: arr(:,:)
   integer :: i, nnodes, nghost
+
+  write(*,*) "test_meshgen starting"
+
   call atlas_generate_latlon_grid(rgg,60,30)
 
 !  call atlas_generate_reduced_gaussian_grid(rgg,"T63")

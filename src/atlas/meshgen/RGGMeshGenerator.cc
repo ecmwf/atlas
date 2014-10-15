@@ -641,9 +641,11 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,
 
 
   ArrayShape shape = make_shape(nnodes,Field::UNDEF_VARS);
-  FunctionSpace& nodes =
-      mesh->add_function_space( new FunctionSpace("nodes","LagrangeP1",shape) );
+
+  FunctionSpace& nodes = mesh->create_function_space( "nodes","LagrangeP1",shape );
+
   nodes.metadata().set("type",static_cast<int>(Entity::NODES));
+
   ArrayView<double,2> coords        ( nodes.create_field<double>("coordinates",   2) );
   ArrayView<int,   1> glb_idx       ( nodes.create_field<int   >("glb_idx",       1) );
   ArrayView<int,   1> part          ( nodes.create_field<int   >("partition",     1) );
@@ -704,14 +706,14 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,
   }
 
   shape = make_shape(nquads,Field::UNDEF_VARS);
-  FunctionSpace& quads = mesh->add_function_space( new FunctionSpace("quads","LagrangeP1",shape) );
+  FunctionSpace& quads = mesh->create_function_space( "quads","LagrangeP1",shape );
   quads.metadata().set("type",static_cast<int>(Entity::ELEMS));
   IndexView<int,2> quad_nodes( quads.create_field<int>("nodes",4) );
   ArrayView<int,1> quad_glb_idx( quads.create_field<int>("glb_idx",1) );
   ArrayView<int,1> quad_part( quads.create_field<int>("partition",1) );
 
   shape = make_shape(ntriags,Field::UNDEF_VARS);
-  FunctionSpace& triags = mesh->add_function_space( new FunctionSpace("triags","LagrangeP1",shape) );
+  FunctionSpace& triags = mesh->create_function_space( "triags","LagrangeP1",shape );
   triags.metadata().set("type",static_cast<int>(Entity::ELEMS));
   IndexView<int,2> triag_nodes( triags.create_field<int>("nodes",3) );
   ArrayView<int,1> triag_glb_idx( triags.create_field<int>("glb_idx",1) );

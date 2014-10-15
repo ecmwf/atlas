@@ -362,7 +362,7 @@ void build_edges( Mesh& mesh )
   int nb_edges = nb_faces;
   if( ! mesh.has_function_space("edges") )
   {
-    mesh.add_function_space( new FunctionSpace("edges","shapefunc", make_shape(nb_edges,Field::UNDEF_VARS)) );
+	mesh.create_function_space( "edges", "shapefunc", make_shape(nb_edges,Field::UNDEF_VARS) );
   }
   FunctionSpace& edges = mesh.function_space("edges");
   edges.metadata().set("type",static_cast<int>(Entity::FACES));
@@ -440,10 +440,13 @@ void build_edges( Mesh& mesh )
 void build_pole_edges( Mesh& mesh )
 {
   FunctionSpace& nodes   = mesh.function_space( "nodes" );
+
   ArrayView<int,1> part   (        nodes.field( "partition" ) );
   int nb_edges = 0;
+
   if( ! mesh.has_function_space("edges") )
-    mesh.add_function_space( new FunctionSpace("edges","shapefunc", make_shape(nb_edges,Field::UNDEF_VARS)) );
+	mesh.create_function_space( "edges","shapefunc", make_shape(nb_edges,Field::UNDEF_VARS) );
+
   FunctionSpace& edges = mesh.function_space("edges");
   edges.metadata().set("type",static_cast<int>(Entity::FACES));
 

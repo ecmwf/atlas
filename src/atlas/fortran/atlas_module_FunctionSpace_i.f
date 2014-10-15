@@ -79,7 +79,4 @@ contains
       & FunctionSpace__gather_int32_r2
 END TYPE FunctionSpace_type
 
-interface new_FunctionSpace
-  module procedure new_FunctionSpace
-end interface
 !------------------------------------------------------------------------------

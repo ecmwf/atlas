@@ -401,13 +401,13 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh )
 
 	if( mesh.has_function_space("nodes") )
 	{
-			if( mesh.function_space("nodes").shape(0)!= nb_nodes )
-					throw Exception("existing nodes function space has incompatible number of nodes",Here());
+		if( mesh.function_space("nodes").shape(0)!= nb_nodes )
+			throw Exception("existing nodes function space has incompatible number of nodes",Here());
 	}
 	else
 	{
-	mesh.add_function_space( new FunctionSpace( "nodes", "Lagrange_P0", extents ) )
-						.metadata().set("type",static_cast<int>(Entity::NODES));
+		mesh.create_function_space( "nodes", "Lagrange_P0", extents )
+			.metadata().set("type",static_cast<int>(Entity::NODES));
 	}
 
 	FunctionSpace& nodes = mesh.function_space("nodes");
@@ -515,12 +515,17 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh )
 				std::cout << "etype " << etype << std::endl;
 				throw Exception("ERROR: element type not supported",Here());
 			}
+
 			extents[0] = netype;
-			FunctionSpace& funcspace = mesh.add_function_space( new FunctionSpace( name, "Lagrange_P1", extents ) );
-			funcspace.metadata().set("type",static_cast<int>(Entity::ELEMS));
-			IndexView<int,2> conn  ( funcspace.create_field<int>("nodes",         4) );
-			ArrayView<int,1> egidx ( funcspace.create_field<int>("glb_idx",       1) );
-			ArrayView<int,1> epart ( funcspace.create_field<int>("partition",     1) );
+
+			FunctionSpace& fs = mesh.create_function_space( name, "Lagrange_P1", extents );
+
+			fs.metadata().set("type",static_cast<int>(Entity::ELEMS));
+
+			IndexView<int,2> conn  ( fs.create_field<int>("nodes",         4) );
+			ArrayView<int,1> egidx ( fs.create_field<int>("glb_idx",       1) );
+			ArrayView<int,1> epart ( fs.create_field<int>("partition",     1) );
+
 			int dsize = 1+ntags+nnodes_per_elem;
 			int part;
 			for (int e=0; e<netype; ++e)
@@ -552,7 +557,7 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh )
 
 		int nb_quads = nb_etype[QUAD];
 		extents[0] = nb_quads;
-		FunctionSpace& quads      = mesh.add_function_space( new FunctionSpace( "quads", "Lagrange_P1", extents ) );
+		FunctionSpace& quads      = mesh.create_function_space( "quads", "Lagrange_P1", extents );
 		quads.metadata().set("type",static_cast<int>(Entity::ELEMS));
 		IndexView<int,2> quad_nodes          ( quads.create_field<int>("nodes",         4) );
 		ArrayView<int,1> quad_glb_idx        ( quads.create_field<int>("glb_idx",       1) );
@@ -560,7 +565,7 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh )
 
 		int nb_triags = nb_etype[TRIAG];
 		extents[0] = nb_triags;
-		FunctionSpace& triags      = mesh.add_function_space( new FunctionSpace( "triags", "Lagrange_P1", extents ) );
+		FunctionSpace& triags      = mesh.create_function_space( "triags", "Lagrange_P1", extents );
 		triags.metadata().set("type",static_cast<int>(Entity::ELEMS));
 		IndexView<int,2> triag_nodes          ( triags.create_field<int>("nodes",         3) );
 		ArrayView<int,1> triag_glb_idx        ( triags.create_field<int>("glb_idx",       1) );
@@ -574,7 +579,7 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh )
 		if( nb_edges > 0 )
 		{
 			extents[0] = nb_edges;
-			FunctionSpace& edges      = mesh.add_function_space( new FunctionSpace( "edges", "Lagrange_P1", extents ) );
+			FunctionSpace& edges      = mesh.create_function_space( "edges", "Lagrange_P1", extents );
 			edges.metadata().set("type",static_cast<int>(Entity::FACES));
 			edge_nodes   = IndexView<int,2> ( edges.create_field<int>("nodes",         2) );
 			edge_glb_idx = ArrayView<int,1> ( edges.create_field<int>("glb_idx",       1) );

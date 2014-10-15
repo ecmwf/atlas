@@ -39,6 +39,7 @@
 
 #include <cstddef>
 #include <vector>
+#include <sstream>
 #include <iterator>     // std::iterator, std::input_iterator_tag
 #include <numeric> // std::accumulate
 #include <functional> // std::multiplies
@@ -52,7 +53,7 @@
   for( int d=0; d<rank(); ++d ) { \
     if(idx[d]>=shape_[d]) {throw std::range_error("index out of bounds");}}}
 #define CHECK_BOUNDS_1(i)\
-  if(i>=shape_[0]) {throw std::range_error("index 'i' out of bounds");}
+	if(i>=shape_[0]) {std::ostringstream msg; msg << "index out of bounds: i=" << i << " >= " << shape_[0]; throw std::range_error(msg.str()); }
 #define CHECK_BOUNDS_2(i,j)\
   if(i>=shape_[0]) {throw std::range_error("index 'i' out of bounds");} \
   if(j>=shape_[1]) {throw std::range_error("index 'j' out of bounds");}

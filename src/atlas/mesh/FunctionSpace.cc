@@ -30,14 +30,14 @@
 
 namespace atlas {
 
-FunctionSpace::FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<int>& shape ) :
+FunctionSpace::FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<int>& shape , Mesh& mesh) :
 	name_(name),
 	shape_(shape),
 	gather_scatter_(new mpl::GatherScatter()),
 	fullgather_(new mpl::GatherScatter()),
 	halo_exchange_(new mpl::HaloExchange()),
 	checksum_(new mpl::Checksum()),
-	mesh_(NULL)
+	mesh_(mesh)
 {
 	//std::cout << "C++ : shape Constructor" << std::endl;
 	dof_ = 1;
@@ -296,11 +296,6 @@ void FunctionSpace::parallelise()
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
-
-FunctionSpace* atlas__FunctionSpace__new (char* name, char* shape_func, int shape[], int shape_size) {
-	std::vector<int> shape_vec(shape,shape+shape_size);
-	return new FunctionSpace( std::string(name), std::string(shape_func), shape_vec );
-}
 
 Metadata* atlas__FunctionSpace__metadata (FunctionSpace* This)
 {
