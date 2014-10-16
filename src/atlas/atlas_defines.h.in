@@ -10,5 +10,6 @@
 #cmakedefine HAVE_FORTRAN_NUMBERING
 
 #cmakedefine ECKIT_HAVE_GRIB
+#cmakedefine HAVE_GRIB_API_1130
 
 #endif
