@@ -106,7 +106,12 @@ GribHandle::Ptr Grib::create_handle( const Grid& grid, long edition )
 
 void Grib::determine_grib_samples_dir(std::vector<std::string>& sample_paths)
 {
-   char* paths = grib_samples_path(NULL);
+   char* paths = NULL;
+#ifdef HAVE_GRIB_API_1130
+   paths = grib_samples_path(NULL);
+#else
+	return;
+#endif
 
    if (paths)
    {
