@@ -44,13 +44,13 @@ public:
 
 void TestField::test_constructor()
 {
-    using namespace atlas::grid;
+//    using namespace atlas::grid;
 
     // create a grid
 
 	Grid::BoundBox earth ( Grid::Point(-90.,0.), Grid::Point(90.,359.999999) );
 
-	Grid::Ptr g (new RegularLatLon( 20, 10, earth ) );
+	Grid::Ptr g (new atlas::grid::RegularLatLon( 20, 10, earth ) );
 
     // create some reference data for testing
 
@@ -91,7 +91,7 @@ void TestField::test_constructor()
 	Field::Vector fields;
     fields.push_back(f);
 
-    FieldSet fs(fields);
+    atlas::grid::FieldSet fs(fields);
     
     // iterate over the fields
 	for (Field::Vector::iterator it = fs.fields().begin(); it != fs.fields().end(); ++it)
