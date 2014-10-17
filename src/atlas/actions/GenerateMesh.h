@@ -11,7 +11,7 @@
 #ifndef atlas_GenerateMesh_h
 #define atlas_GenerateMesh_h
 
-#include "atlas/mesh/Mesh.h"
+#include "atlas/Mesh.h"
 #include "atlas/meshgen/RGG.h"
 
 namespace atlas {

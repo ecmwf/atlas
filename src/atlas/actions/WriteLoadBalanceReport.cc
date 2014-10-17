@@ -12,8 +12,8 @@
 #include <fstream>
 #include "eckit/filesystem/LocalPathName.h"
 #include "atlas/mpl/MPL.h"
-#include "atlas/mesh/Util.h"
-#include "atlas/mesh/Mesh.h"
+#include "atlas/Util.h"
+#include "atlas/Mesh.h"
 #include "atlas/actions/WriteLoadBalanceReport.h"
 
 namespace atlas {

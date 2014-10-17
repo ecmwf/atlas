@@ -15,7 +15,7 @@
 #include "atlas/mpl/MPL.h"
 #include "atlas/io/Gmsh.h"
 #include "atlas/util/Debug.h"
-#include "atlas/mesh/Mesh.h"
+#include "atlas/Mesh.h"
 #include "atlas/actions/BuildParallelFields.h"
 #include "atlas/actions/BuildPeriodicBoundaries.h"
 #include "atlas/actions/BuildHalo.h"
@@ -24,13 +24,14 @@
 
 BOOST_AUTO_TEST_CASE( test_read_write )
 {
-  using namespace atlas;
+	using namespace atlas;
+	using namespace atlas::io;
 
-  MPL::init();
-  int nlat = 5;
-  int lon[5] = {10, 12, 14, 16, 16};
+	MPL::init();
+	int nlat = 5;
+	int lon[5] = {10, 12, 14, 16, 16};
 
-//	Mesh::Ptr mesh = test::generate_mesh(nlat, lon);
+	//	Mesh::Ptr mesh = test::generate_mesh(nlat, lon);
 	Mesh::Ptr mesh = test::generate_mesh(meshgen::T255());
 
 	Gmsh gmsh;

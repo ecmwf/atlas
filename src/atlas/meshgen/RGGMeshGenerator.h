@@ -16,7 +16,7 @@
 #include <vector>
 #include <eckit/config/Configurable.h>
 #include <eckit/config/Resource.h>
-#include "atlas/mesh/Metadata.h"
+#include "atlas/Metadata.h"
 
 namespace atlas {
   class Mesh;
