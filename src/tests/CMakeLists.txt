@@ -90,7 +90,5 @@ ecbuild_add_test( TARGET atlas_test_meshgen3d
   LIBS      atlas
 )
 
-if( HAVE_GRID )
-  add_subdirectory( grid )
-endif()
+add_subdirectory( grid )
 
