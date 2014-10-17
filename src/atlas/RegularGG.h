@@ -82,6 +82,8 @@ protected: // methods
 	void computePoints( const std::vector<double>&, std::vector<Point>& pts ) const;
 	long computeNPoints( const std::vector<double>& ) const;
 
+	void computeLatitudes(std::vector<double>&) const;
+
 private: // members
 
 	std::string hash_;

@@ -8,7 +8,11 @@
  * does it submit to any jurisdiction.
  */
 
+#include "atlas/atlas_config.h"
+
+#ifdef ECKIT_HAVE_GRIB
 #include "grib_api.h" // for grib_get_gaussian_latitudes()
+#endif
 
 #include "eckit/log/Log.h"
 #include "eckit/memory/Builder.h"
@@ -61,8 +65,8 @@ RegularGG::RegularGG( const eckit::Params& p )
 		nbDataPoints_ = p["nbDataPoints"];
 	else
 	{
-		std::vector<double> latitudes( nj() );
-		grib_get_gaussian_latitudes(gaussN_, &latitudes[0]);
+		std::vector<double> latitudes;
+		computeLatitudes(latitudes);
 		nbDataPoints_ = computeNPoints(latitudes);
 	}
 
@@ -85,8 +89,8 @@ void RegularGG::coordinates( std::vector<double>& pts ) const
 	ASSERT( pts.size() && pts.size()%2 == 0 );
 	ASSERT( pts.size() == nPoints()*2 );
 
-	std::vector<double> latitudes( nj() );
-	grib_get_gaussian_latitudes(gaussN_, &latitudes[0]);
+	std::vector<double> latitudes;
+	computeLatitudes(latitudes);
 
 	std::vector<Grid::Point> points;
 	computePoints(latitudes,points);
@@ -102,8 +106,8 @@ void RegularGG::coordinates(std::vector<Grid::Point>& pts) const
 {
 	ASSERT( pts.size() == nbDataPoints_ );
 
-	std::vector<double> latitudes( nj() );
-	grib_get_gaussian_latitudes(gaussN_, &latitudes[0]);
+	std::vector<double> latitudes;
+	computeLatitudes(latitudes);
 
 	computePoints(latitudes,pts);
 }
@@ -210,6 +214,24 @@ long RegularGG::computeNPoints(const std::vector<double>& lats) const
 		}
 	}
 	return n;
+}
+
+void RegularGG::computeLatitudes(std::vector<double>& lats) const
+{
+	lats.resize( nj() );
+
+	/// @todo this should not be necessary here -- check it...
+	///       we should either use latitudes (angle from equator) or colatitutes (angle from pole)
+	///       and class ReducedGG should stick to that definition
+	//	if (jScansPositively_ == 1 )
+	//	   std::reverse(lats.begin(), lats.end());
+
+#ifdef ECKIT_HAVE_GRIB
+	/// @todo this code should be moved into Atlas library and co-maintained with NA section
+	grib_get_gaussian_latitudes(gaussN_, &lats[0]);
+#else
+	NOTIMP;
+#endif
 }
 
 //-----------------------------------------------------------------------------

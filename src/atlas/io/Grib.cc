@@ -8,7 +8,11 @@
  * does it submit to any jurisdiction.
  */
 
-#include "grib_api.h"
+#include "atlas/atlas_config.h"
+
+#ifdef ECKIT_HAVE_GRIB
+
+#include "grib_api.h" // remove this once we use only eckit::grib
 
 #include "eckit/eckit_config.h"
 #include "eckit/config/Resource.h"
@@ -482,3 +486,6 @@ void Grib::write_gridspec_to_grib(const GridSpec& gspec, GribHandle& gh)
 } // namespace io
 } // namespace atlas
 
+#else
+#warning "Missing eckit::grib so cannot generate grib output"
+#endif
