@@ -30,7 +30,7 @@
 #include "atlas/actions/BuildParallelFields.h"
 #include "atlas/actions/BuildDualMesh.h"
 #include "atlas/mpl/MPL.h"
-#include "atlas/mesh/Mesh.h"
+#include "atlas/Mesh.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -106,7 +106,7 @@ void Meshgen2Gmsh::run()
     build_median_dual_mesh(*mesh);
   }
 
-  atlas::Gmsh gmsh;
+  atlas::io::Gmsh gmsh;
   gmsh.options.set("surfdim",surfdim);
   gmsh.write( *mesh, path_out );
   atlas_finalize();

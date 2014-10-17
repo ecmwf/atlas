@@ -18,12 +18,12 @@
 #include "atlas/actions/BuildPeriodicBoundaries.h"
 #include "atlas/atlas_config.h"
 #include "atlas/io/Gmsh.h"
-#include "atlas/mesh/Field.h"
-#include "atlas/mesh/FunctionSpace.h"
-#include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/Metadata.h"
-#include "atlas/mesh/Parameters.h"
-#include "atlas/mesh/Util.h"
+#include "atlas/Field.h"
+#include "atlas/FunctionSpace.h"
+#include "atlas/Mesh.h"
+#include "atlas/Metadata.h"
+#include "atlas/Parameters.h"
+#include "atlas/Util.h"
 #include "atlas/meshgen/EqualAreaPartitioner.h"
 #include "atlas/meshgen/RGG.h"
 #include "atlas/meshgen/RGGMeshGenerator.h"
@@ -33,6 +33,7 @@
 #include "atlas/util/IndexView.h"
 
 using namespace atlas;
+using namespace atlas::io;
 using namespace atlas::meshgen;
 
 #define DISABLE if(0)

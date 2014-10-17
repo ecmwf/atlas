@@ -8,25 +8,31 @@
  * does it submit to any jurisdiction.
  */
 
-
-
 #ifndef Gmsh_h
 #define Gmsh_h
 
 #include <string>
 #include <iostream>
 
-#include "atlas/mesh/Metadata.h"
+#include "atlas/Metadata.h"
+
+//------------------------------------------------------------------------------------------------------
 
 namespace atlas {
+
 class Mesh;
 class Field;
-class FieldSet;
+class FieldGroup;
 
-class Gmsh
-{
+namespace io {
+
+//------------------------------------------------------------------------------------------------------
+
+class Gmsh {
 private:
+
   typedef std::ios_base::openmode openmode;
+
 public:
 
   Gmsh();
@@ -45,7 +51,7 @@ public:
   /// Write fieldset to file
   ///  Depending on argument "mode", the fields will be appended,
   ///  or existing file will be overwritten
-  void write(FieldSet& fieldset, const std::string& file_path, openmode mode = std::ios::out) const;
+  void write(FieldGroup& fieldset, const std::string& file_path, openmode mode = std::ios::out) const;
 
   /// Write field to file
   ///  Depending on argument "mode", the fields will be appended,
@@ -56,13 +62,17 @@ public:
   static void write3dsurf( Mesh& mesh, const std::string& file_path );
 
 public:
+
   Metadata options;
+
 public: // this should really belong in options
+
   std::vector<long> levels;
+
 };
 
+//------------------------------------------------------------------------------------------------------
 
-// ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 extern "C"
 {
@@ -72,11 +82,13 @@ extern "C"
   void atlas__Gmsh__write (Gmsh* This, Mesh* mesh, char* file_path);
   Mesh* atlas__read_gmsh (char* file_path);
   void atlas__write_gmsh_mesh (Mesh* mesh, char* file_path);
-  void atlas__write_gmsh_fieldset (FieldSet* fieldset, char* file_path, int mode);
+  void atlas__write_gmsh_fieldset (FieldGroup* fieldset, char* file_path, int mode);
   void atlas__write_gmsh_field (Field* field, char* file_path, int mode);
 }
-// ------------------------------------------------------------------
 
+//------------------------------------------------------------------------------------------------------
+
+} // namespace io
 } // namespace atlas
 
 #endif // Gmsh_h

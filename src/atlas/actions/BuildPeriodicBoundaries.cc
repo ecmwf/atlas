@@ -13,11 +13,11 @@
 #include <iostream>
 #include <cmath>
 
-#include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/FunctionSpace.h"
+#include "atlas/Mesh.h"
+#include "atlas/FunctionSpace.h"
 #include "atlas/actions/BuildPeriodicBoundaries.h"
-#include "atlas/mesh/Parameters.h"
-#include "atlas/mesh/Util.h"
+#include "atlas/Parameters.h"
+#include "atlas/Util.h"
 #include "atlas/util/Array.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"

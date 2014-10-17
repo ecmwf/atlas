@@ -14,15 +14,15 @@
 #include <cmath>
 
 #include "eckit/exception/Exceptions.h"
-#include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/FunctionSpace.h"
-#include "atlas/mesh/Field.h"
+#include "atlas/Mesh.h"
+#include "atlas/FunctionSpace.h"
+#include "atlas/Field.h"
 #include "atlas/actions/BuildParallelFields.h"
-#include "atlas/mesh/Parameters.h"
+#include "atlas/Parameters.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
 #include "atlas/util/Array.h"
-#include "atlas/mesh/Util.h"
+#include "atlas/Util.h"
 #include "atlas/mpl/MPL.h"
 #include "atlas/mpl/GatherScatter.h"
 

@@ -20,8 +20,8 @@
 #include "atlas/atlas_config.h"
 #include "tests/TestMeshes.h"
 #include "atlas/io/Gmsh.h"
-#include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/FunctionSpace.h"
+#include "atlas/Mesh.h"
+#include "atlas/FunctionSpace.h"
 #include "atlas/util/IndexView.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/Array.h"
@@ -30,10 +30,11 @@
 #include "atlas/actions/BuildPeriodicBoundaries.h"
 #include "atlas/actions/BuildEdges.h"
 #include "atlas/actions/BuildDualMesh.h"
-#include "atlas/mesh/Parameters.h"
-#include "atlas/mesh/Util.h"
+#include "atlas/Parameters.h"
+#include "atlas/Util.h"
 
 using namespace atlas;
+using namespace atlas::io;
 using namespace atlas::meshgen;
 
 namespace atlas {

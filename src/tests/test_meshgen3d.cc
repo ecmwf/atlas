@@ -13,34 +13,33 @@
 
 #include "atlas/atlas_config.h"
 #include "atlas/mpl/MPL.h"
-#include "atlas/mesh/Mesh.h"
+#include "atlas/Mesh.h"
 #include "atlas/meshgen/RGG.h"
 #include "atlas/meshgen/RGGMeshGenerator.h"
 #include "atlas/io/Gmsh.h"
 
 using namespace atlas;
+using namespace atlas::io;
 using namespace atlas::meshgen;
 
 BOOST_AUTO_TEST_CASE( test_create_mesh )
 {
-    MPL::init();
-    Mesh* m;
+	MPL::init();
+	Mesh::Ptr m = Mesh::create();
 
-    RGGMeshGenerator generate;
+	RGGMeshGenerator generate;
 
-    // generate.options.set("nb_parts",1); // default = 1
-    // generate.options.set("part",    0); // default = 0
+	// generate.options.set("nb_parts",1); // default = 1
+	// generate.options.set("part",    0); // default = 0
 
-    generate.options.set("three_dimensional", true); ///< creates links along date-line
-    generate.options.set("include_pole", true);      ///< triangulate the pole point
+	generate.options.set("three_dimensional", true); ///< creates links along date-line
+	generate.options.set("include_pole", true);      ///< triangulate the pole point
 
-    m = generate( T159() ); //< 2*N - 1 => N80 grid
+	m = generate( T159() ); //< 2*N - 1 => N80 grid
 
-    Gmsh().write(*m,"out.msh");
+	Gmsh().write(*m,"out.msh");
 
-//    atlas::actions::BuildXYZ(m);
+	//    atlas::actions::BuildXYZ(m);
 
-    delete m;
-
-    MPL::finalize();
+	MPL::finalize();
 }

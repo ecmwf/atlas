@@ -99,11 +99,6 @@ if( ENABLE_MPI )
 
 endif()
 
-### grid
-
-ecbuild_add_option( FEATURE GRID
-                    DESCRIPTION "support for C++ grid interface" )
-
 ### tesselation
 
 ecbuild_add_option( FEATURE TESSELATION
@@ -142,10 +137,6 @@ set( ATLAS_LIBRARIES      atlas )
 if( ENABLE_FORTRAN )
   list( APPEND ATLAS_INCLUDE_DIRS ${CMAKE_Fortran_MODULE_DIRECTORY} )
   set( ATLAS_LIBRARIES atlas_fortran atlas_mpl_fortran ${ATLAS_LIBRARIES} )
-endif()
-
-if( HAVE_GRID )
-  list( APPEND ATLAS_LIBRARIES atlas_grid )
 endif()
 
 get_directory_property( ATLAS_DEFINITIONS COMPILE_DEFINITIONS )
