@@ -8,7 +8,11 @@
  * does it submit to any jurisdiction.
  */
 
+#include "atlas/atlas_config.h"
+
+#ifdef ECKIT_HAVE_GRIB
 #include "grib_api.h" // for grib_get_gaussian_latitudes()
+#endif
 
 #include "eckit/log/Log.h"
 #include "eckit/memory/Builder.h"
@@ -163,8 +167,12 @@ void ReducedGG::computeLatitudes(std::vector<double>& lats) const
 	//	if (jScansPositively_ == 1 )
 	//	   std::reverse(lats.begin(), lats.end());
 
+#ifdef ECKIT_HAVE_GRIB
 	/// @todo this code should be moved into Atlas library and co-maintained with NA section
 	grib_get_gaussian_latitudes(gaussN_, &lats[0]);
+#else
+	NOTIMP;
+#endif
 }
 
 void ReducedGG::computePoints( const std::vector<double>& lats, std::vector<Point>& pts ) const

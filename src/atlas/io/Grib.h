@@ -11,6 +11,10 @@
 #ifndef atlas_io_Grib_h
 #define atlas_io_Grib_h
 
+#include "atlas/atlas_config.h"
+
+#ifdef ECKIT_HAVE_GRIB
+
 #include "eckit/grib/GribHandle.h"
 
 #include "atlas/FieldSet.h"
@@ -71,6 +75,8 @@ private: // methods
 
 } // namespace io
 } // namespace atlas
+
+#endif // ECKIT_HAVE_GRIB
 
 #endif // atlas_io_Grib_h
 
