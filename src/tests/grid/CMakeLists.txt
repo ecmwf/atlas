@@ -1,15 +1,15 @@
 ecbuild_add_test( TARGET      atlas_test_Grid
 			      BOOST
                   SOURCES     test_Grid.cc
-                  CONDITION   HAVE_GRID AND ECKIT_HAVE_GRIB
-                  LIBS        atlas_grid
+				  CONDITION   ECKIT_HAVE_GRIB AND OFF
+				  LIBS        atlas
                 )
 
 ecbuild_add_test( TARGET      atlas_test_GridSpec
                   BOOST
                   SOURCES     test_GridSpec.cc
-                  CONDITION   HAVE_GRID AND ECKIT_HAVE_GRIB
-                  LIBS        atlas_grid  
+				  CONDITION   ECKIT_HAVE_GRIB AND OFF
+				  LIBS        atlas
                 )
 
 
@@ -17,19 +17,19 @@ ecbuild_add_test( TARGET      atlas_test_GridSpec
 #					BOOST
 #					SOURCES     test_latlon.cc
 #					CONDITION   HAVE_GRID
-#					LIBS        atlas_grid  )
+#					LIBS        atlas  )
 
 #ecbuild_add_test(   TARGET      test_gaussian
 #					BOOST
 #					SOURCES     test_gaussian.cc
 #					CONDITION	HAVE_GRID
-#					LIBS        atlas_grid )
+#					LIBS        atlas )
 
 ecbuild_add_test(   TARGET      atlas_test_field
 					BOOST
 					SOURCES     test_field.cc
-					CONDITION	HAVE_GRID AND ECKIT_HAVE_GRIB
-					LIBS        atlas_grid )
+					CONDITION	ECKIT_HAVE_GRIB
+					LIBS        atlas )
 
 list( APPEND test_grid_from_grib_data
 CMC_hrdps_east_TMP_TGL_2_ps2.5km_2014081512_P000-00.grib2
@@ -60,5 +60,5 @@ ecbuild_add_test(   TARGET      atlas_test_grid_from_grib
 					BOOST
 					SOURCES     test_grid_from_grib.cc
                     DEPENDS     atlas_tests_grid_get_gribs
-                    CONDITION	HAVE_GRID AND ECKIT_HAVE_GRIB
-					LIBS        atlas_grid )
+					CONDITION	ECKIT_HAVE_GRIB AND OFF
+					LIBS        atlas )

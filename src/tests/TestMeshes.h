@@ -11,7 +11,7 @@
 #include "atlas/atlas_config.h"
 #include "atlas/meshgen/RGG.h"
 #include "atlas/meshgen/RGGMeshGenerator.h"
-#include "atlas/mesh/Mesh.h"
+#include "atlas/Mesh.h"
 #include "atlas/mpl/MPL.h"
 
 using namespace atlas;

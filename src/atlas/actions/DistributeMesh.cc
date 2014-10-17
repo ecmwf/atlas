@@ -12,9 +12,9 @@
 #include "atlas/mpl/MPL.h"
 #include "atlas/util/Array.h"
 #include "atlas/util/ArrayView.h"
-#include "atlas/mesh/Util.h"
-#include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/FunctionSpace.h"
+#include "atlas/Util.h"
+#include "atlas/Mesh.h"
+#include "atlas/FunctionSpace.h"
 #include "atlas/meshgen/EqualAreaPartitioner.h"
 
 using namespace atlas::meshgen;

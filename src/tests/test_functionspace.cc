@@ -17,7 +17,7 @@
 #include "atlas/mpl/MPL.h"
 #include "atlas/io/Gmsh.h"
 #include "atlas/util/Debug.h"
-#include "atlas/mesh/Mesh.h"
+#include "atlas/Mesh.h"
 #include "atlas/util/Array.h"
 #include "atlas/actions/BuildParallelFields.h"
 #include "atlas/actions/BuildPeriodicBoundaries.h"
@@ -29,8 +29,8 @@
 
 using namespace eckit::maths;
 
-namespace atlas_test
-{
+namespace atlas {
+namespace test {
 
   template< int NDIM >
   class Mononomial
@@ -107,10 +107,10 @@ namespace atlas_test
 	class Polynomial
 	{
 	public:
-		typedef atlas_test::Mononomial<NDIM> Mononomial;
+		typedef Mononomial<NDIM> monomial_type;
 	public:
 
-		Polynomial& add( const Mononomial& mononomial )
+		Polynomial& add( const monomial_type& mononomial )
 		{
 			if( mononomial.coeff != 0 )
 				mononomials_.push_back(mononomial);
@@ -286,7 +286,7 @@ namespace atlas_test
 
 
 	private:
-		std::vector< Mononomial > mononomials_;
+		std::vector< monomial_type > mononomials_;
 	};
 
 	class Element : public eckit::Owned
@@ -537,9 +537,10 @@ namespace atlas_test
 		return basis;
 	}
 
-}
+} // namespace test
+} // namespace atlas
 
-using namespace atlas_test;
+using namespace atlas::test;
 
 BOOST_AUTO_TEST_CASE( test_functionspace )
 {
@@ -573,33 +574,33 @@ BOOST_AUTO_TEST_CASE( test_functionspace )
 	edges.nodes( nodes );
 	edges.add("LineP0",9);
 
-	typedef atlas_test::Polynomial<2> Polynomial;
-	typedef Polynomial::Mononomial Mononomial;
+	typedef Polynomial<2> polynomial_type;
+	typedef polynomial_type::monomial_type monomial_type;
 
 
-	Polynomial p;
+	polynomial_type p;
 
-	p.add( Mononomial( 3., 0,0 ) );
-	p.add( Mononomial( 1., 1,0 ) );
-	p.add( Mononomial( 1., 2,0 ) );
+	p.add( monomial_type( 3., 0,0 ) );
+	p.add( monomial_type( 1., 1,0 ) );
+	p.add( monomial_type( 1., 2,0 ) );
 	DEBUG_VAR(p(2,2));
 
-	Polynomial dpdx = p.deriv(0);
+	polynomial_type dpdx = p.deriv(0);
 	DEBUG_VAR(dpdx(2,2));
 
-	Polynomial dpdy = p.deriv(1);
+	polynomial_type dpdy = p.deriv(1);
 	DEBUG_VAR(dpdy(2,2));
 
-	std::vector<Polynomial> grad = p.grad();
+	std::vector<polynomial_type> grad = p.grad();
 
-	std::vector<Polynomial> pvec(2,p);
-	Polynomial div = Polynomial::div(pvec);
+	std::vector<polynomial_type> pvec(2,p);
+	polynomial_type div = polynomial_type::div(pvec);
 	DEBUG_VAR(div(2,2));
 
-	DEBUG_VAR( Polynomial::curl_z(grad)(2,2) );
+	DEBUG_VAR( polynomial_type::curl_z(grad)(2,2) );
 
-	typedef std::vector< atlas_test::Polynomial<1> > PolynomialBasis1D;
-	typedef std::vector< atlas_test::Polynomial<2> > PolynomialBasis2D;
+	typedef std::vector< Polynomial<1> > PolynomialBasis1D;
+	typedef std::vector< Polynomial<2> > PolynomialBasis2D;
 
 
 	Matrix<int> m;

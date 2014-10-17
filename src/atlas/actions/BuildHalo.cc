@@ -15,15 +15,15 @@
 #include <stdexcept>
 #include <cmath>
 #include <limits>
-#include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/FunctionSpace.h"
-#include "atlas/mesh/Field.h"
+#include "atlas/Mesh.h"
+#include "atlas/FunctionSpace.h"
+#include "atlas/Field.h"
 #include "atlas/actions/BuildHalo.h"
-#include "atlas/mesh/Parameters.h"
+#include "atlas/Parameters.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
 #include "atlas/util/Array.h"
-#include "atlas/mesh/Util.h"
+#include "atlas/Util.h"
 
 namespace atlas {
 namespace actions {
