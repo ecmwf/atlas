@@ -75,17 +75,6 @@ endforeach()
 
 add_custom_target( atlas_grib_api_samples DEPENDS ${tgts} )
 
-ecbuild_add_test( 
-                  TARGET      atlas_test_Grid
-			      BOOST
-			      ARGS        reduced_gg_pl_160_grib1.tmpl
-                  SOURCES     test_Grid.cc
-				  CONDITION   ECKIT_HAVE_GRIB
-				  DEPENDS     atlas_grib_api_samples
-                  LIBS        atlas
-                )
-
-
 ecbuild_add_test( TARGET      atlas_test_GridSpec
                   BOOST
                   ARGS        reduced_gg_pl_160_grib1.tmpl
@@ -99,13 +88,6 @@ foreach( file ${grib_api_samples_data} )
     
     # Add the test which depends on the above executable, 
     # passing in individual grib samples files as ARGUMENTs
-    ecbuild_add_test( 
-                      TARGET f_${file}_test
-                      TYPE SCRIPT
-                      COMMAND atlas_test_Grid
-                      ARGS ${file}
-                     )
-                     
     ecbuild_add_test( 
                       TARGET ${file}_test
                       TYPE SCRIPT

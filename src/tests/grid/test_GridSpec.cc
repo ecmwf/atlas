@@ -21,26 +21,23 @@
 #include "eckit/grib/GribAccessor.h"
 #include "eckit/types/FloatCompare.h"
 
-#include "atlas/grid/Grib.h"
-#include "atlas/grid/GridSpec.h"
-#include "atlas/grid/ReducedGG.h"
-#include "atlas/grid/Grid.h"
+#include "atlas/io/Grib.h"
+#include "atlas/GridSpec.h"
+#include "atlas/ReducedGG.h"
+#include "atlas/Grid.h"
 
 using namespace std;
 using namespace eckit;
 using namespace eckit::grib;
 using namespace atlas;
-using namespace atlas::grid;
+using namespace atlas::io;
 
 /// Test for Grid* derivatives
-/// This test uses the grib samples directory.
+/// This test uses the grib samples directory, this grib_api/1.13.0 move to test data server
 /// We open each file and attempt to create the Grid* class.
-/// However this has exposed errors in the grib samples files,
-/// especially for reduced gaussian grids. Hence we will need to wait till Shahram has
-/// has a chance to fix the issues, before all the tests pass.
 
 static void test_grib_file(const std::string& file);
-static void comparePointList(const std::vector<atlas::grid::Grid::Point>& grib_pntlist, const std::vector<atlas::grid::Grid::Point>& points, double epsilon, eckit::grib::GribHandle& gh);
+static void comparePointList(const std::vector<Grid::Point>& grib_pntlist, const std::vector<Grid::Point>& points, double epsilon, eckit::grib::GribHandle& gh);
 
 
 BOOST_AUTO_TEST_SUITE( TestGridSpec )
@@ -76,13 +73,12 @@ BOOST_AUTO_TEST_SUITE_END()
 
 static void test_grib_file(const std::string& fpath)
 {
-   std::cout << "\n===============================================================================================================" << std::endl;
-   std::cout << "Opening GRIB file " << fpath << std::endl;
+   std::cout << "   Opening GRIB file " << fpath << std::endl;
 
    LocalPathName path(fpath);
    eckit::grib::GribHandle gh(path);
    std::string gridType = gh.gridType();
-   std::cout << " Create Grid derivatives " << gridType << std::endl;
+   std::cout << "   Create Grid derivatives " << gridType << std::endl;
 
    if ( gridType == "polar_stereographic" || gridType == "sh" || gridType.empty())
    {
@@ -92,20 +88,20 @@ static void test_grib_file(const std::string& fpath)
    }
 
    // Create Grid derivatives from the GRIB file
-   atlas::grid::Grid::Ptr grid_created_from_grib = Grib::create_grid(gh);
-   BOOST_CHECK_MESSAGE(grid_created_from_grib,"GRIBGridBuilder::instance().build_grid_from_grib_handle failed for file " << fpath);
+   Grid::Ptr grid_created_from_grib = Grib::create_grid(gh);
+   BOOST_CHECK_MESSAGE(grid_created_from_grib,"Grib::create_grid  failed for file " << fpath);
    if (!grid_created_from_grib) return;
 
 
    // The Grid produced, has a GRID spec, the grid spec can be used to, make sure the grid types match
    GridSpec g_spec = grid_created_from_grib->spec();
-   std::cout << " " << g_spec << std::endl;
+   std::cout << "   " << g_spec << std::endl;
    BOOST_CHECK_MESSAGE(grid_created_from_grib->gridType() == gridType,"gridType(" << gridType << ") did not match Grid constructor(" << grid_created_from_grib->gridType() << ") for file " << fpath);
    BOOST_CHECK_MESSAGE(g_spec.grid_type() == gridType,"gridType(" << gridType << ") did not match GridSpec constructor(" << g_spec.grid_type() << ") for file " << fpath);
 
 
    // From the Spec, create another Grid, we should get back the same Grid
-   atlas::grid::Grid::Ptr grid_created_from_spec = atlas::grid::Grid::create(g_spec);
+   Grid::Ptr grid_created_from_spec = Grid::create(g_spec);
    BOOST_CHECK_MESSAGE(grid_created_from_spec,"Failed to create GRID from GridSpec");
    bool grid_compare = grid_created_from_grib->same(*grid_created_from_spec);
    BOOST_CHECK_MESSAGE(grid_compare,"The grids are different");
@@ -124,7 +120,6 @@ static void test_grib_file(const std::string& fpath)
       }
    }
 
-
    // epsilon varies depending on the edition number
    long editionNumber = GribAccessor<long>("editionNumber")(gh);
    BOOST_CHECK_MESSAGE(editionNumber ==  gh.edition(),"Edition numbers dont match");
@@ -134,32 +129,53 @@ static void test_grib_file(const std::string& fpath)
    if (gridType == "reduced_gg" || gridType == "regular_gg") {
 
       // ---------------------------------------------------------------------------------------
-      // Grib samples file have errors in the EXPECTED_longitudeOfLastGridPointInDegrees
+      // Old Grib samples file have errors in the EXPECTED_longitudeOfLastGridPointInDegrees
       // This can then effect, comparison of the points
       // ----------------------------------------------------------------------------------------
       double guass = GribAccessor<long>("numberOfParallelsBetweenAPoleAndTheEquator")(gh);
-      atlas::grid::Grid::BoundBox bbox = grid_created_from_grib->boundingBox();
+      Grid::BoundBox bbox = grid_created_from_grib->boundingBox();
 
       double EXPECTED_longitudeOfLastGridPointInDegrees = 360.0 - (90.0/guass);
-      std::cout << " EXPECTED longitudeOfLastGridPointInDegrees     " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << EXPECTED_longitudeOfLastGridPointInDegrees << std::endl;
-      std::cout << " east                                           " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << bbox.east() << std::endl;
+      std::cout << "   EXPECTED longitudeOfLastGridPointInDegrees     " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << EXPECTED_longitudeOfLastGridPointInDegrees << std::endl;
+      std::cout << "   east                                           " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << bbox.east() << std::endl;
       BOOST_CHECK_CLOSE(bbox.east(),EXPECTED_longitudeOfLastGridPointInDegrees,epsilon);
    }
 
 
+   // =============================================================================================
+   // Compare GRID point with GRID points,
    // get GRIB points
-   std::vector<atlas::grid::Grid::Point> grib_pntlist;
+   std::vector<Grid::Point> grib_pntlist;
    gh.getLatLonPoints( grib_pntlist );
    BOOST_CHECK_MESSAGE( grid_created_from_grib->nPoints() == grib_pntlist.size(),"GRIB pt list size " << grib_pntlist.size() << " different to GRID " << grid_created_from_grib->nPoints());
 
    // get the GRID points
-   std::vector<atlas::grid::Grid::Point> grid_points; grid_points.resize( grid_created_from_grib->nPoints());
+   std::vector<Grid::Point> grid_points; grid_points.resize( grid_created_from_grib->nPoints());
    grid_created_from_grib->coordinates(grid_points);
 
    comparePointList(grib_pntlist,grid_points,epsilon,gh);
+
+
+   // ===================================================================================================
+   // Inverse check given a GridSpec find corresponding GRIB sample file
+   // However we need to take into account that the GRIB samples, file are *NOT* unique in their GRID definition.
+   // The sample file name produced does not have '.tmpl' extension
+   std::string generated_sample_file_name = Grib::grib_sample_file( g_spec , gh.edition());
+   BOOST_CHECK_MESSAGE( !generated_sample_file_name.empty(),"   Could *not* find sample file for grid_spec " << g_spec );
+
+
+   // Note: many of the grib samples files are not UNIQUE in their grid specification:
+   // hence the use of WARN. remove .tmpl and get base part
+   LocalPathName base_name = path.baseName(false);
+   std::string grib_sample_file = base_name.localPath();
+   BOOST_WARN_MESSAGE( generated_sample_file_name == grib_sample_file, "\n   Could not match samples expected '"
+                  << grib_sample_file << "' but found('"
+                  << generated_sample_file_name
+                  << "') for grid spec "
+                  << g_spec );
 }
 
-void comparePointList(const std::vector<atlas::grid::Grid::Point>& grib_pntlist, const std::vector<atlas::grid::Grid::Point>& points, double epsilon, eckit::grib::GribHandle& gh)
+void comparePointList(const std::vector<Grid::Point>& grib_pntlist, const std::vector<Grid::Point>& points, double epsilon, eckit::grib::GribHandle& gh)
 {
    BOOST_CHECK_MESSAGE(  points.size() == grib_pntlist.size(),"\n  **GRIB pt list size " << grib_pntlist.size() << " different to GRID " << points.size() );
 
