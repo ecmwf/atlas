@@ -12,11 +12,11 @@
 #include "eckit/runtime/Tool.h"
 
 #include "atlas/mpl/MPL.h"
-#include "atlas/mesh/FunctionSpace.h"
-#include "atlas/grid/Grid.h"
-#include "atlas/grid/RegularLatLon.h"
-#include "atlas/grid/FieldSet.h"
-#include "atlas/grid/Tesselation.h"
+#include "atlas/FunctionSpace.h"
+#include "atlas/Grid.h"
+#include "atlas/RegularLatLon.h"
+#include "atlas/FieldSet.h"
+#include "atlas/Tesselation.h"
 
 using namespace std;
 using namespace eckit;
@@ -24,7 +24,8 @@ using namespace atlas;
 
 //-----------------------------------------------------------------------------
 
-namespace eckit_test {
+namespace atlas {
+namespace  test {
 
 //-----------------------------------------------------------------------------
 
@@ -116,13 +117,14 @@ void TestField::run()
 
 //-----------------------------------------------------------------------------
 
-} // namespace eckit_test
+} // namespace test
+} // namespace atlas
 
 //-----------------------------------------------------------------------------
 
 int main(int argc,char **argv)
 {
-    eckit_test::TestField mytest(argc,argv);
+	atlas::test::TestField mytest(argc,argv);
     mytest.start();
     return 0;
 }

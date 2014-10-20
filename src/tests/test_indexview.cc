@@ -15,16 +15,14 @@
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
 
-using namespace atlas;
-
 #ifdef HAVE_FORTRAN_NUMBERING
 #define IN_FORTRAN
 #else
 #define IN_FORTRAN -1
 #endif
 
+namespace atlas {
 namespace test {
-
 
 template< typename Iterator >
 std::string pos(Iterator& it)
@@ -34,8 +32,10 @@ std::string pos(Iterator& it)
   return ss.str();
 }
 
+} // namespace test
+} // namespace atlas
 
-}
+using namespace atlas;
 
 BOOST_AUTO_TEST_CASE( test_arrayview_iterator )
 {

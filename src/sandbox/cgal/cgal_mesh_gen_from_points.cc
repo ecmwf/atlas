@@ -15,13 +15,13 @@
 #include <memory>
 
 #include "atlas/io/Gmsh.h"
-#include "atlas/mesh/Mesh.h"
-#include "atlas/grid/Tesselation.h"
+#include "atlas/Mesh.h"
+#include "atlas/Tesselation.h"
 
 //------------------------------------------------------------------------------------------------------
 
 using namespace atlas;
-using namespace atlas::grid;
+using namespace atlas::io;
 
 //------------------------------------------------------------------------------------------------------
 
@@ -38,7 +38,7 @@ int main()
 
     Tesselation::tesselate(*mesh);
 
-    Gmsh::write3dsurf(*mesh, std::string("earth.msh") );
+	Gmsh::write3dsurf(*mesh, std::string("earth.msh") );
 
     return 0;
 }

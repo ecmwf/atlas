@@ -20,16 +20,17 @@
 #include "atlas/meshgen/RGGMeshGenerator.h"
 #include "atlas/meshgen/EqualAreaPartitioner.h"
 #include "atlas/io/Gmsh.h"
-#include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/FunctionSpace.h"
-#include "atlas/mesh/Metadata.h"
+#include "atlas/Mesh.h"
+#include "atlas/FunctionSpace.h"
+#include "atlas/Metadata.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
 #include "atlas/actions/BuildParallelFields.h"
-#include "atlas/mesh/Parameters.h"
-#include "atlas/mesh/Util.h"
+#include "atlas/Parameters.h"
+#include "atlas/Util.h"
 
 using namespace atlas;
+using namespace atlas::io;
 using namespace atlas::meshgen;
 
 #define DISABLE if(0)
