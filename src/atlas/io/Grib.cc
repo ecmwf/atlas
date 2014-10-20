@@ -112,57 +112,31 @@ void Grib::determine_grib_samples_dir(std::vector<std::string>& sample_paths)
    char* paths = NULL;
 #ifdef HAVE_GRIB_API_1130
    paths = grib_samples_path(NULL);
-#else
-	return;
 #endif
 
    if (paths)
    {
       // Expect <path1>:<path2>:<path3:
-      // TODO: Need abstraction for path separator.
       sample_paths = StringTools::split(":", std::string(paths));
       return;
    }
 
-   char* include_dir = getenv("GRIB_API_INCLUDE");
-   if (!include_dir)
-	   throw SeriousBug(string("grib_samples_path(NULL) returned a NULL path"),Here()) ;
+   // GRIB_SAMPLES_PATH may be set by the user, if set use in preference to GRIB_API_PATH
+   char* samples_dir = getenv("GRIB_SAMPLES_PATH");
+   if (!samples_dir) {
 
-   std::string grib_include_dir(include_dir);
-   if (grib_include_dir.find("grib_api") == std::string::npos)
-   {
-      // "grib-api not found on directory " << grib_include_dir
-	  throw SeriousBug(string("grib_samples_path(NULL) returned a NULL path"),Here()) ;
+      // GRIB_API_PATH is set for all grib versions at ecmwf, when using modules functionality
+      samples_dir = getenv("GRIB_API_PATH");
+      if (samples_dir) {
+         std::string path = samples_dir;
+         path += "/share/samples";
+         sample_paths.push_back(path);
+         return;
+      }
+	   throw SeriousBug(string("GRIB_SAMPLES_PATH not defined"),Here()) ;
    }
 
-   if (grib_include_dir.find("-I") != std::string::npos)
-   {
-      //std::cout << "GRIB_API_INCLUDE=" << grib_include_dir << "\n";
-      grib_include_dir.erase(grib_include_dir.begin(),grib_include_dir.begin()+2); // remove -I
-   }
-
-   // Handle multiple include dirs
-   // If there are any spaces in the string, only take the first include
-
-   size_t space_pos = grib_include_dir.find(" ");
-   if (space_pos != std::string::npos)
-   {
-      grib_include_dir = grib_include_dir.substr(0,space_pos);
-      //std::cout << "GRIB_API_INCLUDE=" << grib_include_dir << "\n";
-   }
-
-   // Remove the 'include' and replace with, 'share/grib_api/samples'
-
-   size_t pos = grib_include_dir.find("/include");
-   if ( pos == string::npos)
-   {
-      // include not found in directory " << grib_include_dir);
-      throw SeriousBug(string("grib_samples_path(NULL) returned a NULL path"),Here()) ;
-   }
-
-   std::string grib_samples_dir = grib_include_dir.replace(pos,grib_include_dir.length(),"/share/grib_api/samples");
-   //std::cout << " GRIB SAMPLES=" << grib_include_dir << "\n";
-   sample_paths.push_back( grib_samples_dir );
+   sample_paths = StringTools::split(":", std::string(samples_dir));
 }
 
 bool match_grid_spec_with_sample_file( const GridSpec& g_spec,
