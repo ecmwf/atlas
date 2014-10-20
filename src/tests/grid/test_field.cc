@@ -51,7 +51,7 @@ void TestField::test_constructor()
 
 	Grid::BoundBox earth ( Grid::Point(-90.,0.), Grid::Point(90.,359.999999) );
 
-	Grid::Ptr g (new atlas::grid::RegularLatLon( 20, 10, earth ) );
+	Grid::Ptr g (new atlas::RegularLatLon( 20, 10, earth ) );
 
     // create some reference data for testing
 
@@ -92,7 +92,7 @@ void TestField::test_constructor()
 	Field::Vector fields;
     fields.push_back(f);
 
-    atlas::grid::FieldSet fs(fields);
+    atlas::FieldSet fs(fields);
     
     // iterate over the fields
 	for (Field::Vector::iterator it = fs.fields().begin(); it != fs.fields().end(); ++it)
