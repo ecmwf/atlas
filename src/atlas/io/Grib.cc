@@ -28,6 +28,7 @@
 #include "eckit/grib/GribParams.h"
 #include "eckit/grib/GribHandle.h"
 #include "eckit/grib/GribMutator.h"
+#include "eckit/grib/GribAccessor.h"
 
 #include "atlas/Field.h"
 #include "atlas/FunctionSpace.h"
@@ -37,6 +38,11 @@
 #include "atlas/FieldSet.h"
 #include "atlas/io/Grib.h"
 #include "atlas/GridSpec.h"
+#include "atlas/ReducedGG.h"
+#include "atlas/RegularGG.h"
+#include "atlas/RegularLatLon.h"
+#include "atlas/RotatedLatLon.h"
+#include "atlas/ReducedLatLon.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -48,6 +54,7 @@ using namespace atlas;
 namespace atlas {
 namespace io {
 
+static std::string match_grid_spec_with_sample_file( const GridSpec& g_spec, long edition );
 static std::string map_uid_to_grib_sample_file(const std::string& short_name, long edition);
 
 //------------------------------------------------------------------------------------------------------
@@ -63,47 +70,46 @@ Grid::Ptr Grib::create_grid(GribHandle& gh)
 
 GribHandle::Ptr Grib::create_handle( const Grid& grid, long edition )
 {
-    // determine choice of editionNumber from a resource
+   // determine choice of editionNumber from a resource
+   if( edition == 0 )
+      edition = Resource<unsigned>( "NewGribEditionNumber", 2 );
 
-    if( edition == 0 )
-        edition = Resource<unsigned>( "NewGribEditionNumber", 2 );
 
-    // From the Grid get the Grid Spec
-	GridSpec grid_spec = grid.spec();
+   // From the Grid get the Grid Spec
+   GridSpec grid_spec = grid.spec();
 
-    grib_handle* gh = 0;
-    std::string sample_file;
 
-    // first match GridSpec uid, directly to a samples file
+   // Try to match grid with samples file *WITHOUT* going to disk
+   // This should succeed most of the time.
+   // Will fail for Polar Stereographic, since the sample for these are not correct
+   std::string sample_file = match_grid_spec_with_sample_file(grid_spec,edition);
 
-	sample_file = map_uid_to_grib_sample_file( grid_spec.uid(), edition );
-    if( !sample_file.empty() )
-    {
-        gh = grib_handle_new_from_samples(0,sample_file.c_str() );
-        if( !gh )
+   grib_handle* gh = 0;
+   if( !sample_file.empty() )
+   {
+      gh = grib_handle_new_from_samples(0,sample_file.c_str() );
+      if( !gh )
+         throw SeriousBug( "Failed to create GribHandle from sample: " + sample_file, Here() );
+   }
+   else // if this fails, then try looking on disk
+   {
+      sample_file = Grib::grib_sample_file(grid_spec,edition);
+      if (!sample_file.empty())
+      {
+         gh = grib_handle_new_from_samples(0,sample_file.c_str() );
+         if( !gh )
             throw SeriousBug( "Failed to create GribHandle from sample: " + sample_file, Here() );
-    }
-    else // if this fails, then try looking on disk
-    {
-		sample_file = Grib::grib_sample_file(grid_spec,edition);
-        if (!sample_file.empty())
-        {
-            gh = grib_handle_new_from_samples(0,sample_file.c_str() );
-            if( !gh )
-                throw SeriousBug( "Failed to create GribHandle from sample: " + sample_file, Here() );
-        }
-    }
+      }
+   }
 
-    if(!gh)
-        throw SeriousBug( "Failed to create GribHandle from Grib", Here() );
+   if(!gh)
+      throw SeriousBug( "Failed to create GribHandle from Grib", Here() );
 
-	GribHandle::Ptr gh_ptr( new GribHandle(gh) );
+   GribHandle::Ptr gh_ptr( new GribHandle(gh) );
 
+   write_gridspec_to_grib( grid.spec(), *gh_ptr );
 
-
-	write_gridspec_to_grib( grid.spec(), *gh_ptr );
-
-	return gh_ptr;
+   return gh_ptr;
 }
 
 
@@ -136,51 +142,116 @@ void Grib::determine_grib_samples_dir(std::vector<std::string>& sample_paths)
          sample_paths.push_back(path);
          return;
       }
-	   throw SeriousBug(string("GRIB_SAMPLES_PATH not defined"),Here()) ;
+	   throw SeriousBug(string("GRIB_SAMPLES_PATH and GRIB_API_PATH not defined, please call: module load grib_api"),Here()) ;
    }
 
    sample_paths = StringTools::split(":", std::string(samples_dir));
 }
 
+
+static std::string match_grid_spec_with_sample_file( const GridSpec& g_spec, long edition )
+{
+   // First get the grid_type
+   std::string grid_type = g_spec.grid_type();
+
+   // For reduced gaussain, first match GridSpec uid, directly to a samples file
+   if (grid_type == ReducedGG::gridTypeStr() ) {
+      return map_uid_to_grib_sample_file(g_spec.uid(),edition);
+   }
+
+   // For regular gaussian grids
+   if (grid_type == RegularGG::gridTypeStr() ) {
+
+      // regular_gg_ml_grib1.tmpl  --> GridSpec[ (GaussN,32)(Ni,128)(Nj,64)(uid,regular_gg_32) ]
+      // regular_gg_ml_grib2.tmpl  --> GridSpec[ (GaussN,32)(Ni,128)(Nj,64)(uid,regular_gg_32) ]
+      // regular_gg_pl_grib1.tmpl  --> GridSpec[ (GaussN,32)(Ni,128)(Nj,64)(uid,regular_gg_32) ]
+      // regular_gg_pl_grib2.tmpl  --> GridSpec[ (GaussN,32)(Ni,128)(Nj,64)(uid,regular_gg_32) ]
+      // regular_gg_sfc_grib1.tmpl --> GridSpec[ (GaussN,32)(Ni,128)(Nj,64)(uid,regular_gg_32) ]
+      // regular_gg_sfc_grib2.tmpl --> GridSpec[ (GaussN,32)(Ni,128)(Nj,64)(uid,regular_gg_32) ]
+      if (edition == 1) return "regular_gg_ml_grib1";
+      return "regular_gg_ml_grib2";
+   }
+
+
+   // For reduced lat long, Choice of two only, if we dont have 501 points number of pts north to south, were out of luck.
+   if (grid_type == ReducedLatLon::gridTypeStr() ) {
+      if (edition == 1) return "reduced_ll_sfc_grib1";
+      return "reduced_ll_sfc_grib2";
+   }
+
+   if (grid_type == RegularLatLon::gridTypeStr() ) {
+
+      // regular_ll_pl_grib1.tmpl  --> GridSpec[ (Ni,16)(Nj,31) (grid_lat_inc,2)(grid_lon_inc,2)(uid,regular_ll_31_16) ]
+      // regular_ll_pl_grib2.tmpl  --> GridSpec[ (Ni,16)(Nj,31) (grid_lat_inc,2)(grid_lon_inc,2)(uid,regular_ll_31_16) ]
+      // regular_ll_sfc_grib1.tmpl --> GridSpec[ (Ni,16)(Nj,31) (grid_lat_inc,2)(grid_lon_inc,2)(uid,regular_ll_31_16) ]
+      // regular_ll_sfc_grib2.tmpl --> GridSpec[ (Ni,16)(Nj,31) (grid_lat_inc,2)(grid_lon_inc,2)(uid,regular_ll_31_16) ]
+      if (edition == 1) return "regular_ll_pl_grib1";
+      return "regular_ll_pl_grib2";;
+   }
+
+   if (grid_type == RotatedLatLon::gridTypeStr() ) {
+
+      // rotated_ll_pl_grib1.tmpl  --> GridSpec[ (Ni,16)(Nj,31)(SouthPoleLat,0)(SouthPoleLon,0)(SouthPoleRotAngle,0)(grid_lat_inc,2)(grid_lon_inc,2)(uid,rotated_ll_31) ]
+      // rotated_ll_pl_grib2.tmpl  --> GridSpec[ (Ni,16)(Nj,31)(SouthPoleLat,0)(SouthPoleLon,0)(SouthPoleRotAngle,0)(grid_lat_inc,2)(grid_lon_inc,2)(uid,rotated_ll_31) ]
+      // rotated_ll_sfc_grib1.tmpl --> GridSpec[ (Ni,16)(Nj,31)(SouthPoleLat,0)(SouthPoleLon,0)(SouthPoleRotAngle,0)(grid_lat_inc,2)(grid_lon_inc,2)(uid,rotated_ll_31) ]
+      // rotated_ll_sfc_grib2.tmpl --> GridSpec[ (Ni,16)(Nj,31)(SouthPoleLat,0)(SouthPoleLon,0)(SouthPoleRotAngle,0)(grid_lat_inc,2)(grid_lon_inc,2)(uid,rotated_ll_31) ]
+      if (edition == 1) return "rotated_ll_pl_grib1";
+      return "rotated_ll_pl_grib2";
+   }
+
+   // The Grib samples for polar stereographic are in-correct, and we don't handle spherical harmonics yet
+   throw SeriousBug( "Could not match grid to a corresponding GRIB sample file.", Here() );
+   return std::string();
+}
+
+static std::string map_uid_to_grib_sample_file(const std::string& uid, long edition)
+{
+    using std::string;
+
+    long ns[14] = {32,48,80,128,160,200,256,320,400,512,640,1024,1280,2000};
+
+    std::map<std::string,std::string> uid_to_sample;
+
+    for( size_t i = 0; i < sizeof(ns)/sizeof(long); ++i)
+        uid_to_sample[ "reduced_gg_" + Translator<long,string>()(ns[i]) ] = string("reduced_gg_pl_" + Translator<long,string>()(ns[i]) );
+
+    string r;
+
+    std::map<string,string>::const_iterator i = uid_to_sample.find(uid);
+    if (i != uid_to_sample.end())
+    {
+      r = (*i).second + "_grib" + Translator<long,string>()(edition);
+    }
+
+    return r;
+}
+
 bool match_grid_spec_with_sample_file( const GridSpec& g_spec,
-									   GribHandle& handle,
+									   GribHandle& gh,
 									   long edition,
 									   const std::string& file_path )
 {
-	if ( g_spec.grid_type() != handle.gridType() ) {
-        //Log::info() << "grid_type in GridSpec " << g_spec.grid_type() << " does not match " << grib_grid_type << " in samples file " << file_path << " IGNORING " << std::endl;
-        return false;
-    }
+   if ( g_spec.grid_type() != gh.gridType() ) {
+      //Log::info() << "grid_type in GridSpec " << g_spec.grid_type() << " does not match " << grib_grid_type << " in samples file " << file_path << " IGNORING " << std::endl;
+      return false;
+   }
 
-//    eckit::Value spec_nj = g_spec.get("Nj");
-//    if (!spec_nj.isNil()) {
-//        long spec_nj = spec_nj;
-//        long grib_nj = 0;
-//        if (grib_get_long(handle.raw(),"Nj",&grib_nj) == 0 ) {
-//            if (spec_nj != grib_nj ) {
-//                //Log::info() << "Grib::match_grid_spec_with_sample_file, Nj in GridSpec " << spec_nj << " does not match  " << grib_nj << " in samples file " << file_path << " IGNORING " << std::endl;
-//                return false;
-//            }
-//        }
-//    }
-//    eckit::Value spec_ni = g_spec.get("Ni");
-//    if (!spec_ni.isNil()) {
-//        long spec_ni = spec_ni;
-//        long grib_ni = 0;
-//        if (grib_get_long(handle.raw(),"Ni",&grib_ni) == 0 ) {
-//            if (spec_ni != grib_ni ) {
-//                //Log::info() << "Grib::match_grid_spec_with_sample_file, Ni in GridSpec " << spec_ni << " does not match  " << grib_ni << " in samples file " << file_path << " IGNORING " << std::endl;
-//                return false;
-//            }
-//        }
-//    }
+   if( gh.edition() != edition ) {
+      //Log::info() << "Grib::match_grid_spec_with_sample_file, edition_number passed in " << edition << " does not match grib" << edition << " in samples file " << file_path << " IGNORING " << std::endl;
+      return false;
+   }
 
-	if( handle.edition() != edition ) {
-		//Log::info() << "Grib::match_grid_spec_with_sample_file, edition_number passed in " << edition << " does not match grib" << edition << " in samples file " << file_path << " IGNORING " << std::endl;
-        return false;
-    }
+   if (g_spec.grid_type() == ReducedGG::gridTypeStr() ) {
+      if (g_spec.has("GaussN")) {
+         long grid_gausn = g_spec.get("GaussN");
+         long grib_gausn = GribAccessor<long>("numberOfParallelsBetweenAPoleAndTheEquator")(gh);
+         if (grid_gausn != grib_gausn) {
+            return false;
+         }
+      }
+   }
 
-    return true;
+   return true;
 }
 
 std::string Grib::grib_sample_file( const GridSpec& g_spec, long edition )
@@ -251,56 +322,36 @@ std::string Grib::grib_sample_file( const GridSpec& g_spec, long edition )
     return std::string();
 }
 
-static std::string map_uid_to_grib_sample_file(const std::string& uid, long edition)
-{
-    using std::string;
 
-    long ns[14] = {32,48,80,128,160,200,256,320,400,512,640,1024,1280,2000};
-
-    std::map<std::string,std::string> uid_to_sample;
-
-    for( size_t i = 0; i < sizeof(ns)/sizeof(long); ++i)
-        uid_to_sample[ "reduced_gg_" + Translator<long,string>()(ns[i]) ] = string("reduced_gg_pl_" + Translator<long,string>()(ns[i]) );
-
-    string r;
-
-    std::map<string,string>::const_iterator i = uid_to_sample.find(uid);
-    if (i != uid_to_sample.end())
-    {
-      r = (*i).second + "_grib" + Translator<long,string>()(edition);
-    }
-
-    return r;
-}
 
 void Grib::write( const FieldSet& fields, const PathName& opath )
 {
-    for( size_t i = 0; i < fields.size(); ++i )
-    {
-        PathName pi( opath.asString() + "." + Translator<size_t,std::string>()(i) );
-		Grib::write(fields[i], pi);
-    }
+   for( size_t i = 0; i < fields.size(); ++i )
+   {
+      PathName pi( opath.asString() + "." + Translator<size_t,std::string>()(i) );
+      Grib::write(fields[i], pi);
+   }
 }
 
 void Grib::write(const Field& fh, DataHandle& dh)
 {
-	GribHandle::Ptr gh = Grib::create_handle( fh.grid(), fh.grib().edition() );
+   GribHandle::Ptr gh = Grib::create_handle( fh.grid(), fh.grib().edition() );
 
-    if( !gh )
-		throw SeriousBug("Failed to create GribHandle from Field", Here());
+   if( !gh )
+      throw SeriousBug("Failed to create GribHandle from Field", Here());
 
-    if( !gh->raw() )
-		throw SeriousBug("Failed to create GribHandle from Field", Here());
+   if( !gh->raw() )
+      throw SeriousBug("Failed to create GribHandle from Field", Here());
 
-    GribHandle::Ptr h = clone(fh,*gh);
+   GribHandle::Ptr h = clone(fh,*gh);
 
-    // dump the handle to the DataHandle
-    const void* buffer = NULL;
-    size_t size = 0;
+   // dump the handle to the DataHandle
+   const void* buffer = NULL;
+   size_t size = 0;
 
-    GRIB_CHECK( grib_get_message( h->raw(), &buffer, &size), 0);
+   GRIB_CHECK( grib_get_message( h->raw(), &buffer, &size), 0);
 
-    dh.write(buffer, size);
+   dh.write(buffer, size);
 }
 
 GribHandle::Ptr Grib::write(const Field& fh)
@@ -315,21 +366,21 @@ GribHandle::Ptr Grib::write(const Field& fh)
 
 void Grib::clone( const FieldSet& fields, const PathName& src, const PathName& opath )
 {
-    bool overwrite = true;
+   bool overwrite = true;
 
-    if( opath.exists() )
-        opath.unlink();
+   if( opath.exists() )
+      opath.unlink();
 
-    eckit::ScopedPtr<DataHandle> of( opath.fileHandle(overwrite) ); AutoClose of_close(*of);
+   eckit::ScopedPtr<DataHandle> of( opath.fileHandle(overwrite) ); AutoClose of_close(*of);
 
-    ASSERT(of);
+   ASSERT(of);
 
-    of->openForWrite(0);
+   of->openForWrite(0);
 
-    for( size_t i = 0; i < fields.size(); ++i )
-    {
-		Grib::clone(fields[i], src, *of);
-    }
+   for( size_t i = 0; i < fields.size(); ++i )
+   {
+      Grib::clone(fields[i], src, *of);
+   }
 }
 
 void Grib::write(const Field& f, const PathName& opath)
@@ -346,28 +397,28 @@ void Grib::write(const Field& f, const PathName& opath)
 
 void Grib::clone(const Field& field, const PathName& gridsec, DataHandle& out )
 {
-    FILE* fh = ::fopen( gridsec.asString().c_str(), "r" );
-    if( fh == 0 )
-        throw ReadError( std::string("error opening file ") + gridsec );
+   FILE* fh = ::fopen( gridsec.asString().c_str(), "r" );
+   if( fh == 0 )
+      throw ReadError( std::string("error opening file ") + gridsec );
 
-    int err = 0;
-    grib_handle* clone_h = grib_handle_new_from_file(0,fh,&err);
-    if( clone_h == 0 || err != 0 )
-        throw ReadError( std::string("error reading grib file ") + gridsec );
+   int err = 0;
+   grib_handle* clone_h = grib_handle_new_from_file(0,fh,&err);
+   if( clone_h == 0 || err != 0 )
+      throw ReadError( std::string("error reading grib file ") + gridsec );
 
-    GribHandle ch(clone_h);
+   GribHandle ch(clone_h);
 
-	GribHandle::Ptr h = Grib::clone( field, ch );
+   GribHandle::Ptr h = Grib::clone( field, ch );
 
-    //    GRIB_CHECK( grib_write_message(h->raw(),fname.asString().c_str(),"w"), 0 );
+   //    GRIB_CHECK( grib_write_message(h->raw(),fname.asString().c_str(),"w"), 0 );
 
-    // dump the handle to the DataHandle
-    const void* buffer = NULL;
-    size_t size = 0;
+   // dump the handle to the DataHandle
+   const void* buffer = NULL;
+   size_t size = 0;
 
-    GRIB_CHECK( grib_get_message( h->raw(), &buffer, &size), 0);
+   GRIB_CHECK( grib_get_message( h->raw(), &buffer, &size), 0);
 
-    out.write(buffer, size);
+   out.write(buffer, size);
 }
 
 GribHandle::Ptr Grib::clone(const Field& f, GribHandle& gridsec )
