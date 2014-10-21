@@ -109,6 +109,9 @@ GribHandle::Ptr Grib::create_handle( const Grid& grid, long edition )
 
 void Grib::determine_grib_samples_dir(std::vector<std::string>& sample_paths)
 {
+   // The grib samples has the format: <dir-path1> : <dir-path2> : <dir-path3>
+   // Also only grib files in these directories that have a '.tmpl' are considered
+   //
    char* paths = NULL;
 #ifdef HAVE_GRIB_API_1130
    paths = grib_samples_path(NULL);

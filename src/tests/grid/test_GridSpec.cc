@@ -143,8 +143,8 @@ static void test_grib_file(const std::string& fpath)
 
 
    // =============================================================================================
-   // Compare GRID point with GRID points,
-   // get GRIB points
+   // Compare GRIB points with GRID points,
+   // get GRIB points, caution grib iterator depends on scanning mode, Grid is always left ->right, top -> bottom
    std::vector<Grid::Point> grib_pntlist;
    gh.getLatLonPoints( grib_pntlist );
    BOOST_CHECK_MESSAGE( grid_created_from_grib->nPoints() == grib_pntlist.size(),"GRIB pt list size " << grib_pntlist.size() << " different to GRID " << grid_created_from_grib->nPoints());
@@ -160,12 +160,12 @@ static void test_grib_file(const std::string& fpath)
    // Inverse check given a GridSpec find corresponding GRIB sample file
    // However we need to take into account that the GRIB samples, file are *NOT* unique in their GRID definition.
    // The sample file name produced does not have '.tmpl' extension
+   //
+   // Comment this section out if we do not want to depend on Grib::grib_sample_file !
+   //
    std::string generated_sample_file_name = Grib::grib_sample_file( g_spec , gh.edition());
    BOOST_CHECK_MESSAGE( !generated_sample_file_name.empty(),"   Could *not* find sample file for grid_spec " << g_spec );
 
-
-   // Note: many of the grib samples files are not UNIQUE in their grid specification:
-   // hence the use of WARN. remove .tmpl and get base part
    LocalPathName base_name = path.baseName(false);
    std::string grib_sample_file = base_name.localPath();
    BOOST_WARN_MESSAGE( generated_sample_file_name == grib_sample_file, "\n   Could not match samples expected '"
