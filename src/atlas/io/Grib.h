@@ -38,7 +38,7 @@ public: // methods
 
 	/// Given a Grid, this function will find the closest matching GRIB samples file.
 	/// The cloned/new handle of the GRIB sample file is returned.
-	/// If no match found a NULL handle is returned.
+	/// If no match found an exception is thrown
 	static eckit::grib::GribHandle::Ptr create_handle( const Grid&, long edition = 0 );
 
 	/// Given a GridSpec return closest grib samples file.
