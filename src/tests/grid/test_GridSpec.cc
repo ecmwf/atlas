@@ -53,7 +53,7 @@ BOOST_FIXTURE_TEST_CASE ( test_grib_to_grid_to_gridspec, ArgsFixture ) {
     cout << "Grid:: ...test_grib_to_grid_to_gridspec argc = " << argc << " ";
     if (argc == 2) cout << argv[1];
     cout << "\n";
-    BOOST_REQUIRE_MESSAGE( argc == 2, "You miss one argument" );
+    BOOST_REQUIRE_MESSAGE( argc == 2, "You missed one argument" );
 
     test_grib_file(argv[1]);
 }
