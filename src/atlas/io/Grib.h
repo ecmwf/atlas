@@ -45,9 +45,6 @@ public: // methods
 	/// If no match found returns an empty string
 	static std::string grib_sample_file( const GridSpec&, long editionNumber );
 
-	/// Helper function, used locally and in testing
-	static void determine_grib_samples_dir(std::vector<std::string>& sample_paths);
-
 	static void write( const atlas::FieldSet& fset, const eckit::PathName& opath  );
 
 	static void write( const atlas::Field& fh, eckit::DataHandle& dh );
@@ -57,6 +54,9 @@ public: // methods
 	static void clone( const atlas::FieldSet& field, const eckit::PathName& src, const eckit::PathName& opath  );
 
 private: // methods
+
+	/// Helper function, used as an extreme fallback
+	static void determine_grib_samples_dir(std::vector<std::string>& sample_paths);
 
 	static void write( const atlas::Field& field, const eckit::PathName& opath  );
 
