@@ -91,6 +91,7 @@ foreach( file ${grib_api_samples_data} )
     ecbuild_add_test( 
                       TARGET test_grid_spec_${file}
                       TYPE SCRIPT
+					  DEPENDS ${tgts}
                       COMMAND atlas_test_GridSpec
                       ARGS ${file}
                      )
