@@ -163,16 +163,20 @@ static void test_grib_file(const std::string& fpath)
    //
    // Comment this section out if we do not want to depend on Grib::grib_sample_file !
    //
-   std::string generated_sample_file_name = Grib::grib_sample_file( g_spec , gh.edition());
-   BOOST_CHECK_MESSAGE( !generated_sample_file_name.empty(),"   Could *not* find sample file for grid_spec " << g_spec );
+   // This test will fail, if grib_api module has not been loaded. Guard against this.
+   if ( getenv("GRIB_SAMPLES_PATH") || getenv("GRIB_API_PATH") ) {
 
-   LocalPathName base_name = path.baseName(false);
-   std::string grib_sample_file = base_name.localPath();
-   BOOST_WARN_MESSAGE( generated_sample_file_name == grib_sample_file, "\n   Could not match samples expected '"
-                  << grib_sample_file << "' but found('"
-                  << generated_sample_file_name
-                  << "') for grid spec "
-                  << g_spec );
+      std::string generated_sample_file_name = Grib::grib_sample_file( g_spec , gh.edition());
+      BOOST_CHECK_MESSAGE( !generated_sample_file_name.empty(),"   Could *not* find sample file for grid_spec " << g_spec );
+
+      LocalPathName base_name = path.baseName(false);
+      std::string grib_sample_file = base_name.localPath();
+      BOOST_WARN_MESSAGE( generated_sample_file_name == grib_sample_file, "\n   Could not match samples expected '"
+                          << grib_sample_file << "' but found('"
+                          << generated_sample_file_name
+                          << "') for grid spec "
+                          << g_spec );
+   }
 }
 
 void comparePointList(const std::vector<Grid::Point>& grib_pntlist, const std::vector<Grid::Point>& points, double epsilon, eckit::grib::GribHandle& gh)
