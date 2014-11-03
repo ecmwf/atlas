@@ -1,9 +1,9 @@
 /*
  * (C) Copyright 1996-2014 ECMWF.
- * 
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
- * In applying this licence, ECMWF does not waive the privileges and immunities 
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
@@ -14,13 +14,14 @@
 #include <sstream>
 #include <unistd.h>
 
+#include <eckit/log/Log.h>
 #include "atlas/mpl/MPL.h"
 #include "atlas/atlas_config.h"
 
 
 /// DEBUG MACRO
-#define DEBUG_0()            std::cerr << "["<< MPL::rank() << "] DEBUG() @ " << Here() << std::endl;
-#define DEBUG_1(WHAT)        std::cerr << "["<< MPL::rank() << "] DEBUG( " << WHAT << " ) @ " << Here() << std::endl;
+#define DEBUG_0()            eckit::Log::info() << "["<< MPL::rank() << "] DEBUG() @ " << Here() << std::endl;
+#define DEBUG_1(WHAT)        eckit::Log::info() << "["<< MPL::rank() << "] DEBUG( " << WHAT << " ) @ " << Here() << std::endl;
 #define DEBUG_2(WHAT,RANK)   if(MPL::rank() == RANK) { DEBUG_1(WHAT) }
 #define DEBUG_X(x,A,B,FUNC, ...)  FUNC
 #define DEBUG(...)  DEBUG_X(,##__VA_ARGS__,\
@@ -49,7 +50,7 @@
   #undef DEBUG_VAR
 #endif
 #define DEBUG_VAR_1(VAR) \
-  std::cerr << "["<< MPL::rank() << "] DEBUG( " << #VAR << " : " << VAR << " ) @ " << Here() << std::endl;
+  eckit::Log::info() << "["<< MPL::rank() << "] DEBUG( " << #VAR << " : " << VAR << " ) @ " << Here() << std::endl;
 #define DEBUG_VAR_2(VAR,RANK) if(MPL::rank() == RANK) { DEBUG_VAR_1(VAR) }
 #define DEBUG_VAR_X(x,A,B,FUNC, ...)  FUNC
 #define DEBUG_VAR(...)  DEBUG_VAR_X(,##__VA_ARGS__,\
