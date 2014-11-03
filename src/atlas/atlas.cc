@@ -102,7 +102,7 @@ struct ChannelConfig
 		int logfile_rank = Resource<int>("logfile_task;$ATLAS_LOGFILE_TASK;-logfile_task",-1);
 		logfile_path    = Resource<std::string>("logfile;$ATLAS_LOGFILE;-logfile","");
 		logfile_enabled = !logfile_path.empty() && ( logfile_rank < 0 || logfile_rank == MPL::rank() );
-		console_rank = 0;
+		console_rank = Resource<int>("console_task;$ATLAS_CONSOLE_TASK;-console_task",0);
 		console_enabled = true;
 		console_format = new ColorizeFormat();
 		logfile_format = new ColorizeFormat();
