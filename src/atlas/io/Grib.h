@@ -38,15 +38,12 @@ public: // methods
 
 	/// Given a Grid, this function will find the closest matching GRIB samples file.
 	/// The cloned/new handle of the GRIB sample file is returned.
-	/// If no match found a NULL handle is returned.
+	/// If no match found an exception is thrown
 	static eckit::grib::GribHandle::Ptr create_handle( const Grid&, long edition = 0 );
 
 	/// Given a GridSpec return closest grib samples file.
 	/// If no match found returns an empty string
 	static std::string grib_sample_file( const GridSpec&, long editionNumber );
-
-	/// Helper function, used locally and in testing
-	static void determine_grib_samples_dir(std::vector<std::string>& sample_paths);
 
 	static void write( const atlas::FieldSet& fset, const eckit::PathName& opath  );
 
@@ -57,6 +54,9 @@ public: // methods
 	static void clone( const atlas::FieldSet& field, const eckit::PathName& src, const eckit::PathName& opath  );
 
 private: // methods
+
+	/// Helper function, used as an extreme fallback
+	static void determine_grib_samples_dir(std::vector<std::string>& sample_paths);
 
 	static void write( const atlas::Field& field, const eckit::PathName& opath  );
 
