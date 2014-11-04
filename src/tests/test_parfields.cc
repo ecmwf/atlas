@@ -50,6 +50,8 @@ BOOST_AUTO_TEST_CASE( test1 )
   ArrayView<double,2> latlon( m->function_space("nodes").create_field<double>("coordinates",2) );
   ArrayView<int,1> glb_idx( m->function_space("nodes").create_field<int>("glb_idx",1) );
   ArrayView<int,1> part ( nodes.create_field<int>("partition",1) );
+  ArrayView<int,1> flags ( nodes.create_field<int>("flags",1) );
+  flags = Topology::NONE;
 
   // This is typically available
   glb_idx(0) = 1;    part(0) = 0;
@@ -63,16 +65,16 @@ BOOST_AUTO_TEST_CASE( test1 )
   glb_idx(8) = 9;    part(8) = 1;
   glb_idx(9) = 10;   part(9) = 1;
 
-  latlon(0,XX) = 0.;         latlon(0,YY) = 1.;
-  latlon(1,XX) = 0.;         latlon(1,YY) =-1.;
+  latlon(0,XX) = 0.;         latlon(0,YY) = 1.;    Topology::set( flags(0), Topology::BC_WEST );
+  latlon(1,XX) = 0.;         latlon(1,YY) =-1.;    Topology::set( flags(1), Topology::BC_WEST );
   latlon(2,XX) = M_PI/4.;    latlon(2,YY) = 1.;
   latlon(3,XX) = M_PI/4.;    latlon(3,YY) =-1.;
   latlon(4,XX) = M_PI/2.;    latlon(4,YY) = 1.;
   latlon(5,XX) = M_PI/2.;    latlon(5,YY) =-1.;
   latlon(6,XX) = 3.*M_PI/4.; latlon(6,YY) = 1.;
   latlon(7,XX) = 3.*M_PI/4.; latlon(7,YY) =-1.;
-  latlon(8,XX) = 2.*M_PI;    latlon(8,YY) = 1.;
-  latlon(9,XX) = 2.*M_PI;    latlon(9,YY) =-1.;
+  latlon(8,XX) = 2.*M_PI;    latlon(8,YY) = 1.;    Topology::set( flags(8), Topology::BC_EAST );
+  latlon(9,XX) = 2.*M_PI;    latlon(9,YY) =-1.;    Topology::set( flags(9), Topology::BC_EAST );
 
   actions::build_parallel_fields(*m);
 
