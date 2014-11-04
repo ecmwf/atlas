@@ -42,13 +42,17 @@ void build_halo(Mesh& mesh, int nb_elems )
 
 void increase_halo( Mesh& mesh )
 {
+  //DEBUG( "\n\n" << "Increase halo!! \n\n");
   FunctionSpace& nodes         = mesh.function_space( "nodes" );
   ArrayView<double,2> latlon   ( nodes.field( "coordinates"    ) );
   ArrayView<int   ,1> glb_idx  ( nodes.field( "glb_idx"        ) );
   ArrayView<int   ,1> part     ( nodes.field( "partition"      ) );
   IndexView<int   ,1> ridx     ( nodes.field( "remote_idx"     ) );
+  ArrayView<int   ,1> flags    ( nodes.field( "flags"          ) );
 
   int nb_nodes = nodes.shape(0);
+
+  PeriodicTransform transform;
 
   std::vector< std::vector< ElementRef > > node_to_elem(nb_nodes);
 
@@ -151,10 +155,10 @@ void increase_halo( Mesh& mesh )
   }
 
   int nb_bdry_nodes = bdry_nodes.size();
-  Array<int> arr_bdry_nodes_id(nb_bdry_nodes,3);
+  Array<int> arr_bdry_nodes_id(nb_bdry_nodes,4);
   ArrayView<int,2> bdry_nodes_id(arr_bdry_nodes_id);
   ASSERT( bdry_nodes_id.shape(0) == nb_bdry_nodes );
-  ASSERT( bdry_nodes_id.shape(1) == 3);
+  ASSERT( bdry_nodes_id.shape(1) == 4);
 
   for( int jnode=0; jnode<nb_bdry_nodes; ++jnode )
   {
@@ -162,6 +166,7 @@ void increase_halo( Mesh& mesh )
     bdry_nodes_id(jnode,0) = ll.x;
     bdry_nodes_id(jnode,1) = ll.y;
     bdry_nodes_id(jnode,2) = glb_idx( bdry_nodes[jnode] );
+    bdry_nodes_id(jnode,3) = flags( bdry_nodes[jnode] );
   }
 
 
@@ -169,7 +174,7 @@ void increase_halo( Mesh& mesh )
   std::vector<int> recvcounts( MPL::size() );
   std::vector<int> recvdispls( MPL::size() );
   int sendcnt = bdry_nodes_id.total_size();
-  ASSERT( sendcnt == nb_bdry_nodes*3 );
+  ASSERT( sendcnt == nb_bdry_nodes*4 );
   MPL_CHECK_RESULT( MPI_Allgather( &sendcnt,          1, MPI_INT,
                                    recvcounts.data(), 1, MPI_INT, MPI_COMM_WORLD ) );
 
@@ -190,6 +195,7 @@ void increase_halo( Mesh& mesh )
   std::vector< std::vector<int>    > sfn_part( MPL::size() );
   std::vector< std::vector<int>    > sfn_ridx( MPL::size() );
   std::vector< std::vector<int>    > sfn_glb_idx( MPL::size() );
+  std::vector< std::vector<int>    > sfn_flags ( MPL::size() );
   std::vector< std::vector<double> > sfn_latlon ( MPL::size() );
   // sfn stands for "send_found_elems"
   std::vector< std::vector< std::vector<int> > >
@@ -199,11 +205,14 @@ void increase_halo( Mesh& mesh )
   std::vector< std::vector< std::vector<int> > >
       sfe_part    ( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
 
+  // 4) Find elements in node_to_elem list that belong to me
+  // 5) Make list of all nodes that complete the elements
 
   for (int jpart=0; jpart<MPL::size(); ++jpart)
   {
+    //DEBUG( "\n looking for part " << jpart );
     ArrayView<int,2> recv_bdry_nodes_id( recvbuf.data()+recvdispls[jpart],
-                                         make_shape( recvcounts[jpart]/3, 3 ).data() );
+                                         make_shape( recvcounts[jpart]/4, 4 ).data() );
     int recv_nb_bdry_nodes = recv_bdry_nodes_id.shape(0);
 
     // Find elements that have these nodes
@@ -214,45 +223,67 @@ void increase_halo( Mesh& mesh )
     std::vector< std::set< std::pair<int,int> > > found_bdry_elements_set( mesh.nb_function_spaces() );
     for( int jrecv=0; jrecv<recv_nb_bdry_nodes; ++jrecv )
     {
-      ASSERT( recv_bdry_nodes_id.shape(1) == 3 );
+      ASSERT( recv_bdry_nodes_id.shape(1) == 4 );
       int recv_x       = recv_bdry_nodes_id(jrecv,0);
       int recv_y       = recv_bdry_nodes_id(jrecv,1);
       int recv_glb_idx = recv_bdry_nodes_id(jrecv,2);
+      int recv_flags   = recv_bdry_nodes_id(jrecv,3);
 
-      // Only search for nodes in the interior latlon domain
       LatLonPoint ll(recv_x,recv_y);
-      if     ( ll.x <= BC::WEST) { while(ll.x <= BC::WEST) { ll.x += BC::EAST; } }
-      else if( ll.x >= BC::EAST) { while(ll.x >= BC::EAST) { ll.x -= BC::EAST; } }
 
-      int recv_uid = ll.uid();
-      int loc = -1;
-      std::map<int,int>::iterator found = node_uid_to_loc.find(recv_uid);
-
-      if( found != node_uid_to_loc.end() )
+      int periodic=0;
+      // If the received node is flagged as periodic, look for point following periodic transformation
+      if( Topology::check(recv_flags,Topology::PERIODIC) )
       {
-        loc = found->second;
-        if( MPL::rank() == jpart && glb_idx(loc) == recv_glb_idx )
-        {
-          loc = -1;
-        }
+        if( Topology::check(recv_flags,Topology::BC_EAST) )
+          periodic = -1; // If the node is at BC_EAST (so slave), the master is in negative direction (-360 deg)
+        else if( Topology::check(recv_flags,Topology::BC_WEST) )
+          periodic =  1; // If the node is at BC_WEST (so master), the slave is in positive direction (+360 deg)
+        else
+          NOTIMP;
       }
 
-      if( loc != -1 )
+      std::vector<int> recv_uids; recv_uids.reserve(2);
+      recv_uids.push_back( ll.uid() );
+      if( periodic ) {
+        transform( ll, periodic );
+        recv_uids.push_back( ll.uid() );
+      }
+
+      for( int juid = 0; juid < recv_uids.size(); ++juid )
       {
-        for( int jelem=0; jelem<node_to_elem[loc].size(); ++jelem )
+        int recv_uid = recv_uids[juid];
+        int loc = -1;
+
+        // search and get local node index for received node
+        std::map<int,int>::iterator found = node_uid_to_loc.find(recv_uid);
+        if( found != node_uid_to_loc.end() )
         {
-          int f = node_to_elem[loc][jelem].f;
-          int e = node_to_elem[loc][jelem].e;
-          if( elem_part[f](e) == MPL::rank() )
+          loc = found->second;
+          if( MPL::rank() == jpart && glb_idx(loc) == recv_glb_idx ) loc = -1;
+        }
+        //if( periodic && loc != -1 ) DEBUG(" found it at " << glb_idx(loc));
+
+        if( loc != -1 )
+        {
+          for( int jelem=0; jelem<node_to_elem[loc].size(); ++jelem )
           {
-            found_bdry_elements_set[f].insert( std::make_pair( e, recv_x - ll.x ) );
+            int f = node_to_elem[loc][jelem].f;
+            int e = node_to_elem[loc][jelem].e;
+            if( elem_part[f](e) == MPL::rank() )
+            {
+              //DEBUG( "node " << recv_glb_idx << "\t  --> " << elem_glb_idx[f][e] );
+              found_bdry_elements_set[f].insert( std::make_pair( e, (juid==0 ? 0 : -periodic) ) );
+              //if( periodic && loc != -1 ) DEBUG(" going to send element " << elem_glb_idx[f][e]);
+            }
           }
         }
       }
     }
+    // found_bdry_elements_set now contains elements for the nodes
 
     std::vector< std::vector<int> > found_bdry_elements( mesh.nb_function_spaces() );
-    std::vector< std::vector<int> > found_bdry_elements_coord_transform( mesh.nb_function_spaces() );
+    std::vector< std::vector<int> > found_bdry_elements_periodic( mesh.nb_function_spaces() );
 
     std::vector<int> nb_found_bdry_elems( mesh.nb_function_spaces(), 0 );
 
@@ -261,19 +292,19 @@ void increase_halo( Mesh& mesh )
       nb_found_bdry_elems[f] = found_bdry_elements_set[f].size();
 
       found_bdry_elements[f].resize(nb_found_bdry_elems[f]);
-      found_bdry_elements_coord_transform[f].resize(nb_found_bdry_elems[f]);
+      found_bdry_elements_periodic[f].resize(nb_found_bdry_elems[f]);
       int jelem=0;
       std::set< std::pair<int,int> >::iterator it=found_bdry_elements_set[f].begin();
       for( ; it!=found_bdry_elements_set[f].end(); ++it, ++jelem )
       {
         found_bdry_elements[f][jelem] = it->first;
-        found_bdry_elements_coord_transform[f][jelem] = it->second;
+        found_bdry_elements_periodic[f][jelem] = it->second;
       }
       nb_found_bdry_elems[f] = found_bdry_elements[f].size();
     }
 
-    // Collect all nodes needed to complete the element
-    std::set<LatLonPoint> found_bdry_nodes_id_set;
+    // Collect all nodes needed to complete the element, and mark if they become periodic on requesting task
+    std::set< std::pair<LatLonPoint,int> > found_bdry_nodes_id_set;
     {
       for( int f=0; f<mesh.nb_function_spaces(); ++f )
       {
@@ -283,9 +314,10 @@ void increase_halo( Mesh& mesh )
           int nb_elem_nodes = elem_nodes[f].shape(1);
           for( int n=0; n<nb_elem_nodes; ++n )
           {
-            int x = microdeg( latlon( elem_nodes[f](e,n), XX) ) + found_bdry_elements_coord_transform[f][jelem];
+            int x = microdeg( latlon( elem_nodes[f](e,n), XX) );
             int y = microdeg( latlon( elem_nodes[f](e,n), YY) );
-            found_bdry_nodes_id_set.insert( LatLonPoint(x,y) );
+            int periodic = found_bdry_elements_periodic[f][jelem];
+            found_bdry_nodes_id_set.insert( std::make_pair(LatLonPoint(x,y),periodic) );
           }
         }
       }
@@ -295,23 +327,44 @@ void increase_halo( Mesh& mesh )
       {
         int x = recv_bdry_nodes_id(jrecv,0);
         int y = recv_bdry_nodes_id(jrecv,1);
-        found_bdry_nodes_id_set.erase( LatLonPoint(x,y) ) ;
+        int periodic=0;
+        if( Topology::check(recv_bdry_nodes_id(jrecv,3),Topology::PERIODIC) )
+        {
+          if( Topology::check(recv_bdry_nodes_id(jrecv,3),Topology::BC_EAST) )
+            periodic = -1; // If the node is ghost (so slave), the master is in negative direction (-360 deg)
+          else if( Topology::check(recv_bdry_nodes_id(jrecv,3),Topology::BC_WEST) )
+            periodic = 1; // If the node is not ghost (so master), the slave is in positive direction (+360 deg)
+          else
+            NOTIMP;
+        }
+        LatLonPoint ll(x,y);
+        found_bdry_nodes_id_set.erase( std::make_pair(ll,periodic) ) ;
+        // DO I HAVE TO ALSO CHECK FOR PERIODICITY HERE?
       }
     }
     int nb_found_bdry_nodes = found_bdry_nodes_id_set.size();
-
     sfn_glb_idx[jpart].resize(nb_found_bdry_nodes);
     sfn_part[jpart].resize(nb_found_bdry_nodes);
     sfn_ridx[jpart].resize(nb_found_bdry_nodes);
+    sfn_flags[jpart].resize(nb_found_bdry_nodes,Topology::NONE);
     sfn_latlon[jpart].resize(2*nb_found_bdry_nodes);
-
+    //DEBUG_VAR( nb_found_bdry_nodes );
     // Fill buffers to send
     {
       int jnode=0;
-      std::set<LatLonPoint>::iterator it=found_bdry_nodes_id_set.begin();
-      for( ; it!=found_bdry_nodes_id_set.end(); ++it, ++jnode )
+      std::set<std::pair<LatLonPoint,int> >::iterator it;
+      for( it=found_bdry_nodes_id_set.begin(); it!=found_bdry_nodes_id_set.end(); ++it, ++jnode )
       {
-        int uid = it->uid();
+        LatLonPoint ll = it->first;
+        int periodic = it->second;
+        //eckit::Log::warning() << "\n" << "Looking for node with coords " << ll.x*1.e-6*180./M_PI << "," << ll.y*1.e-6*180./M_PI << ".  periodic = " << periodic << std::endl;
+
+        //DEBUG_VAR( periodic );
+        int uid = ll.uid();
+
+
+
+        int pid = ll.uid();
         std::map<int,int>::iterator found = node_uid_to_loc.find( uid );
         if( found != node_uid_to_loc.end() ) // Point exists inside domain
         {
@@ -321,25 +374,53 @@ void increase_halo( Mesh& mesh )
           sfn_ridx   [jpart][jnode]      = ridx   (loc);
           sfn_latlon [jpart][jnode*2+XX] = latlon (loc,XX);
           sfn_latlon [jpart][jnode*2+YY] = latlon (loc,YY);
+          //DEBUG_VAR(glb_idx(loc));
+          if( periodic )
+          {
+            sfn_glb_idx[jpart][jnode]      = uid;
+            Topology::set(sfn_flags[jpart][jnode],Topology::PERIODIC);
+            if( periodic > 0 )
+              Topology::set(sfn_flags[jpart][jnode],Topology::BC_EAST);
+            else
+              Topology::set(sfn_flags[jpart][jnode],Topology::BC_WEST);
+            transform(&sfn_latlon[jpart][2*jnode],(double) periodic);
+          }
+          else
+          {
+            Topology::set(sfn_flags[jpart][jnode],Topology::INTERIOR);
+          }
         }
-        else // periodic point
+        else
         {
-          LatLonPoint ll(it->x,it->y);
-          // Here ll has the new coords
-          if     ( ll.x <= BC::WEST) { while(ll.x <= BC::WEST) { ll.x += BC::EAST; } }
-          else if( ll.x >= BC::EAST) { while(ll.x >= BC::EAST) { ll.x -= BC::EAST; } }
-          // Now ll has the coords of periodic point
-          int pid = ll.uid();
-          found = node_uid_to_loc.find( pid );
-          ASSERT( found != node_uid_to_loc.end() );
-          int loc = found->second;
-          sfn_glb_idx[jpart][jnode]      = uid;
-          sfn_part   [jpart][jnode]      = part(loc);
-          sfn_ridx   [jpart][jnode]      = ridx(loc);
-          sfn_latlon [jpart][jnode*2+XX] = latlon(loc,XX) + (it->x - ll.x)/BC::EAST * 2.*M_PI;
-          sfn_latlon [jpart][jnode*2+YY] = latlon(loc,YY);
+          eckit::Log::warning() << "Node needed by ["<<jpart<<"] with coords " << ll.x*1.e-6 << "," << ll.y*1.e-6 << " was not found in ["<<MPL::rank()<<"]." << std::endl;
+          ASSERT(false);
         }
+//        if( periodic != 0 )
+//        {
+//           eckit::Log::warning() << "Node needed by ["<<jpart<<"] with coords " << ll.x*1.e-6 << "," << ll.y*1.e-6 << " was not found in ["<<MPL::rank()<<"]." << std::endl;
+//        }
       }
+//        LatLonPoint ll(it->x,it->y);
+//        // Here ll has the new coords
+//        if     ( ll.x <= BC::WEST) { while(ll.x <= BC::WEST) { ll.x += BC::EAST; } }
+//        else if( ll.x >= BC::EAST) { while(ll.x >= BC::EAST) { ll.x -= BC::EAST; } }
+//        // Now ll has the coords of periodic point
+//        int pid = ll.uid();
+//        found = node_uid_to_loc.find( pid );
+//        if( found == node_uid_to_loc.end() )
+//          {
+//            eckit::Log::warning() << "Node needed by ["<<jpart<<"] with coords " << it->x*1.e-6 << "," << it->y*1.e-6 << " was not found in ["<<MPL::rank()<<"]." << std::endl;
+//          }
+//          ASSERT( found != node_uid_to_loc.end() );
+//          int loc = found->second;
+//          sfn_glb_idx[jpart][jnode]      = uid;
+//          sfn_part   [jpart][jnode]      = part(loc);
+//          sfn_ridx   [jpart][jnode]      = ridx(loc);
+//          sfn_latlon [jpart][jnode*2+XX] = latlon(loc,XX) + (it->x - ll.x)/BC::EAST * 2.*M_PI;
+//          sfn_latlon [jpart][jnode*2+YY] = latlon(loc,YY);
+//        }
+//      }
+      //DEBUG_VAR( jnode );
     }
 
     for( int f=0; f<mesh.nb_function_spaces(); ++f )
@@ -356,34 +437,36 @@ void increase_halo( Mesh& mesh )
         for( int jelem=0; jelem<nb_found_bdry_elems[f]; ++jelem )
         {
           int e = found_bdry_elements[f][jelem];
-          int xper = found_bdry_elements_coord_transform[f][jelem];
+          int periodic = found_bdry_elements_periodic[f][jelem];
           sfe_part[f][jpart][jelem]    = elem_part[f][e];
           double centroid[2];
           centroid[XX] = 0.;
           centroid[YY] = 0.;
           for( int n=0; n<nb_elem_nodes; ++n)
           {
-            double x, y;
-            x = latlon(elem_nodes[f](e,n),XX) + xper/BC::EAST*2.*M_PI;
-            y = latlon(elem_nodes[f](e,n),YY);
-            centroid[XX] += x;
-            centroid[YY] += y;
-            sfe_nodes_id_view(jelem,n) = LatLonPoint( x, y ).uid();
+            double crd[2];
+            crd[XX] = latlon(elem_nodes[f](e,n),XX);
+            crd[YY] = latlon(elem_nodes[f](e,n),YY);
+            transform(crd, (double)periodic);
+            centroid[XX] += crd[XX];
+            centroid[YY] += crd[YY];
+            sfe_nodes_id_view(jelem,n) = LatLonPoint( crd ).uid();
           }
           centroid[XX] /= static_cast<double>(nb_elem_nodes);
           centroid[YY] /= static_cast<double>(nb_elem_nodes);
-          sfe_glb_idx[f][jpart][jelem] = LatLonPoint( centroid[XX], centroid[YY ]).uid() ;
+          sfe_glb_idx[f][jpart][jelem] = LatLonPoint( centroid ).uid() ;
         }
       }
     }
   }
 
-  // Now communicate all found fields back
+  // 6) Now communicate all found fields back
 
   //    rfn stands for "recv_found_nodes"
   std::vector< std::vector<int> >    rfn_glb_idx(MPL::size());
   std::vector< std::vector<int> >    rfn_part(MPL::size());
   std::vector< std::vector<int>    > rfn_ridx( MPL::size() );
+  std::vector< std::vector<int>    > rfn_flags( MPL::size() );
   std::vector< std::vector<double> > rfn_latlon(MPL::size());
   //    rfe stands for "recv_found_elems"
   std::vector< std::vector< std::vector<int> > >
@@ -396,6 +479,7 @@ void increase_halo( Mesh& mesh )
   MPL::Alltoall(sfn_glb_idx,  rfn_glb_idx);
   MPL::Alltoall(sfn_part,     rfn_part);
   MPL::Alltoall(sfn_ridx,     rfn_ridx);
+  MPL::Alltoall(sfn_flags,    rfn_flags);
   MPL::Alltoall(sfn_latlon,   rfn_latlon);
   for( int f=0; f<mesh.nb_function_spaces(); ++f )
   {
@@ -427,14 +511,17 @@ void increase_halo( Mesh& mesh )
       double x = rfn_latlon[jpart][n*2+XX];
       double y = rfn_latlon[jpart][n*2+YY];
       bool inserted = node_uid.insert( LatLonPoint( x, y ).uid() ).second;
-      if( inserted )
+      if( inserted ) {
         rfn_idx[jpart].push_back(n);
+      }
     }
     nb_new_nodes += rfn_idx[jpart].size();
   }
 
+  //DEBUG_VAR(nb_new_nodes);
 
   nodes.resize( make_shape( nb_nodes+nb_new_nodes, Field::UNDEF_VARS ) );
+  flags   = ArrayView<int,   1>( nodes.field("flags") );
   glb_idx = ArrayView<int,   1>( nodes.field("glb_idx") );
   part    = ArrayView<int,   1>( nodes.field("partition") );
   ridx    = IndexView<int,   1>( nodes.field("remote_idx") );
@@ -447,7 +534,7 @@ void increase_halo( Mesh& mesh )
     for( int n=0; n<rfn_idx[jpart].size(); ++n )
     {
       int loc_idx = nb_nodes+new_node;
-
+      Topology::reset(flags(loc_idx),rfn_flags[jpart][rfn_idx[jpart][n]]);
       glb_idx(loc_idx)    = rfn_glb_idx [jpart][rfn_idx[jpart][n]];
       part   (loc_idx)    = rfn_part    [jpart][rfn_idx[jpart][n]];
       ridx   (loc_idx)    = rfn_ridx    [jpart][rfn_idx[jpart][n]];
@@ -505,6 +592,8 @@ void increase_halo( Mesh& mesh )
         }
         nb_new_elems += rfe_unique_idx[jpart].size();
       }
+
+      //DEBUG_VAR( nb_new_elems );
 
       int nb_nodes_per_elem = elem_nodes[f].shape(1);
       elements.resize( make_shape( nb_elems+nb_new_elems, Field::UNDEF_VARS ) );
