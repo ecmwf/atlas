@@ -37,6 +37,7 @@ namespace atlas {
 
 Field::Ptr FieldSet::create_field( GribHandle& gh )
 {
+#ifdef ECKIT_HAVE_GRIB
 	if(!grid_)
 	{
 		GribParams* gp = GribParams::create(gh);
@@ -70,14 +71,18 @@ Field::Ptr FieldSet::create_field( GribHandle& gh )
 
 	f.grib( gh.clone() );
 
+	return f.self();
+
 //        {
 //            std::ofstream of;
 //            of.open( sname.c_str() );
 //            of << *hf << std::endl;
 //            of.close();
 //        }
-
-	return f.self();
+#else
+  throw eckit::Exception("eckit was built without GRIB support\n  --> Cannot create field from GribHandle", Here());
+	return Field::Ptr();
+#endif
 }
 
 bool FieldSet::checkConsistency() const
