@@ -21,7 +21,7 @@
 #include "atlas/actions/BuildParallelFields.h"
 #include "atlas/util/Debug.h"
 
-#ifdef HAVE_FORTRAN_NUMBERING
+#ifdef HAVE_FORTRAN
 #define REMOTE_IDX_BASE 1
 #else
 #define REMOTE_IDX_BASE 0

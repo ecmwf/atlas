@@ -12,8 +12,8 @@ function( fortranize file )
   unset( result )
   file( STRINGS "${file}" lines )
   foreach( i IN LISTS lines )
-	string( REGEX REPLACE "^/\\* (#undef .*) \\*/$" "! \\1" i "${i}" )
-	set( result "${result}${i}\n" )
+  string( REGEX REPLACE "^/\\* (#undef .*) \\*/$" "! \\1" i "${i}" )
+  set( result "${result}${i}\n" )
   endforeach()
   file( WRITE "${file}" "${result}" )
 endfunction()
@@ -26,31 +26,30 @@ configure_file( atlas_config.h.in   atlas_config.h  )
 configure_file( atlas_version.h.in  atlas_version.h )
 configure_file( atlas_defines.h.in  atlas_defines.h   )
 configure_file( atlas_defines.h.in  atlas_defines_fortran.h )
-
 fortranize( ${CMAKE_CURRENT_BINARY_DIR}/atlas_defines_fortran.h )
 
 install( FILES
-	${CMAKE_CURRENT_BINARY_DIR}/atlas_defines.h
-	${CMAKE_CURRENT_BINARY_DIR}/atlas_defines_fortran.h
-	${CMAKE_CURRENT_BINARY_DIR}/atlas_config.h
-	${CMAKE_CURRENT_BINARY_DIR}/atlas_version.h
-	DESTINATION
-	${INSTALL_INCLUDE_DIR}/atlas )
+  ${CMAKE_CURRENT_BINARY_DIR}/atlas_defines.h
+  ${CMAKE_CURRENT_BINARY_DIR}/atlas_defines_fortran.h
+  ${CMAKE_CURRENT_BINARY_DIR}/atlas_config.h
+  ${CMAKE_CURRENT_BINARY_DIR}/atlas_version.h
+  DESTINATION
+  ${INSTALL_INCLUDE_DIR}/atlas )
 
 configure_file( atlas_version.cc.in atlas_version.cc )
 
 ### mpistubs
 
 if( NOT HAVE_MPI )
- 
- 	set( atlas_mpistubs_srcs mpistubs/mpi.h mpistubs/mpi.c )
 
-	ecbuild_add_library( TARGET atlas_mpistubs_fortran
-		AUTO_VERSION
-		INSTALL_HEADERS ALL
-		HEADER_DESTINATION  ${INSTALL_INCLUDE_DIR}/atlas
-		CONDITION CMAKE_Fortran_COMPILER_LOADED
-		SOURCES   mpistubs/atlas_mpistubs_module.F90 )
+   set( atlas_mpistubs_srcs mpistubs/mpi.h mpistubs/mpi.c )
+
+  ecbuild_add_library( TARGET atlas_mpistubs_fortran
+    AUTO_VERSION
+    INSTALL_HEADERS ALL
+    HEADER_DESTINATION  ${INSTALL_INCLUDE_DIR}/atlas
+    CONDITION HAVE_FORTRAN AND CMAKE_Fortran_COMPILER_LOADED
+    SOURCES   mpistubs/atlas_mpistubs_module.F90 )
 
   set( ATLAS_MPI_FORTRAN_LIBRARIES atlas_mpistubs_fortran )
 
@@ -184,27 +183,29 @@ Util.h
 ### atlas c++ library
 
 ecbuild_add_library( TARGET atlas
-	AUTO_VERSION
-	INSTALL_HEADERS ALL
-	HEADER_DESTINATION  ${INSTALL_INCLUDE_DIR}/atlas
-	SOURCES
-	atlas.h
-	atlas.cc
-	atlas_mpi.h
-	${atlas_srcs}
-	${atlas_mpistubs_srcs}
-	${atlas_util_srcs}
-	${atlas_io_srcs}
-	${atlas_mpl_srcs}
-	${atlas_meshgen_srcs}
-	${atlas_actions_srcs}
-	${CMAKE_CURRENT_BINARY_DIR}/atlas_version.h
-	${CMAKE_CURRENT_BINARY_DIR}/atlas_version.cc
-	${CMAKE_CURRENT_BINARY_DIR}/atlas_config.h
-	${CMAKE_CURRENT_BINARY_DIR}/atlas_defines.h
-	INCLUDES "${CGAL_INCLUDE_DIRS}"
-	LIBS eckit "${ATLAS_EXTRA_LIBRARIES}" "${CGAL_LIBRARIES}" "${MPI_CXX_LIBRARIES}" )
+  AUTO_VERSION
+  INSTALL_HEADERS ALL
+  HEADER_DESTINATION  ${INSTALL_INCLUDE_DIR}/atlas
+  SOURCES
+  atlas.h
+  atlas.cc
+  atlas_mpi.h
+  ${atlas_srcs}
+  ${atlas_mpistubs_srcs}
+  ${atlas_util_srcs}
+  ${atlas_io_srcs}
+  ${atlas_mpl_srcs}
+  ${atlas_meshgen_srcs}
+  ${atlas_actions_srcs}
+  ${CMAKE_CURRENT_BINARY_DIR}/atlas_version.h
+  ${CMAKE_CURRENT_BINARY_DIR}/atlas_version.cc
+  ${CMAKE_CURRENT_BINARY_DIR}/atlas_config.h
+  ${CMAKE_CURRENT_BINARY_DIR}/atlas_defines.h
+  INCLUDES "${CGAL_INCLUDE_DIRS}"
+  LIBS eckit "${ATLAS_EXTRA_LIBRARIES}" "${CGAL_LIBRARIES}" "${MPI_CXX_LIBRARIES}" )
 
-add_subdirectory( fortran )
+if( HAVE_FORTRAN )
+  add_subdirectory( fortran )
+endif()
 
 add_subdirectory( meshgen )

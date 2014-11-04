@@ -109,7 +109,7 @@ private:
 }
 
 
-#ifdef HAVE_FORTRAN_NUMBERING
+#ifdef HAVE_FORTRAN
 #define INDEX_REF Index
 #define FROM_FORTRAN -1
 #define TO_FORTRAN   +1
@@ -125,7 +125,7 @@ template< typename DATA_TYPE >
 class IndexView < DATA_TYPE, 1 >
 {
 public:
-#ifdef HAVE_FORTRAN_NUMBERING
+#ifdef HAVE_FORTRAN
 	typedef detail::FortranIndex<DATA_TYPE> Index;
 #else
     typedef DATA_TYPE& Index;
@@ -165,7 +165,7 @@ template< typename DATA_TYPE >
 class IndexView < DATA_TYPE, 2 >
 {
 public:
-#ifdef HAVE_FORTRAN_NUMBERING
+#ifdef HAVE_FORTRAN
     typedef detail::FortranIndex<DATA_TYPE> Index;
 #else
     typedef DATA_TYPE& Index;
@@ -213,7 +213,7 @@ template< typename DATA_TYPE >
 class IndexView < DATA_TYPE, 3 >
 {
 public:
-#ifdef HAVE_FORTRAN_NUMBERING
+#ifdef HAVE_FORTRAN
     typedef detail::FortranIndex<DATA_TYPE> Index;
 #else
     typedef DATA_TYPE& Index;

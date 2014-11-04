@@ -15,7 +15,7 @@
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
 
-#ifdef HAVE_FORTRAN_NUMBERING
+#ifdef HAVE_FORTRAN
 #define IN_FORTRAN
 #else
 #define IN_FORTRAN -1

@@ -7,7 +7,7 @@
 #cmakedefine HAVE_MPI
 
 #cmakedefine HAVE_TESSELATION
-#cmakedefine HAVE_FORTRAN_NUMBERING
+#cmakedefine HAVE_FORTRAN
 
 #cmakedefine ECKIT_HAVE_GRIB
 #cmakedefine HAVE_GRIB_API_1130
