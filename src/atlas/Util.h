@@ -39,6 +39,53 @@ struct BC
 	static int SOUTH;
 };
 
+
+class Flags
+{
+public:
+	static void reset(int& flags, int bit = 0)
+	{
+		flags = bit;
+	}
+
+	static void set(int& flags, int bit)
+	{
+		flags |= bit;
+	}
+
+	static void unset(int& flags, int bit)
+	{
+		flags &= (~bit);
+	}
+
+	static void toggle(int& flags, int bit)
+	{
+		flags ^= bit;
+	}
+
+	static int check(int flags, int bit)
+	{
+		int result = flags&bit;
+		return flags & bit;
+	}
+};
+
+class Topology : public Flags
+{
+public:
+  enum {
+    NONE     = 0x00,
+    INTERIOR = 0x01,
+    GHOST    = 0x02,
+    PERIODIC = 0x04,
+    BC_WEST  = 0x08,
+    BC_EAST  = 0x10,
+    BC_NORTH = 0x20,
+    BC_SOUTH = 0x40
+  };
+};
+
+
 struct LatLonPoint
 {
 	// Storage is in microdegrees
@@ -93,6 +140,50 @@ struct LatLonPoint
 		return false;
 	}
 };
+
+class PeriodicTransform
+{
+private:
+	double x_translation_;
+
+public:
+	PeriodicTransform()
+	{
+		x_translation_ = 2.*M_PI;
+	}
+
+	void operator()(double source[2], double dest[2], double direction, double scale = 1.) const
+	{
+		dest[0] = source[0] + direction*x_translation_*scale;
+		dest[1] = source[1];
+	}
+
+	void operator()(int source[2], int dest[2], int direction, int scale = 1) const
+	{
+		dest[0] = source[0] + direction*static_cast<int>(x_translation_*scale);
+		dest[1] = source[1];
+	}
+
+	void operator()(double inplace[2], double direction, double scale = 1.) const
+	{
+		inplace[0] = inplace[0] + direction*x_translation_*scale;
+		inplace[1] = inplace[1];
+	}
+
+	void operator()(int inplace[2], int direction, int scale = 1) const
+	{
+		inplace[0] = inplace[0] + direction*static_cast<int>(x_translation_*scale);
+		inplace[1] = inplace[1];
+	}
+
+	void operator()(LatLonPoint& inplace, int direction) const
+	{
+		inplace.x = inplace.x + direction*static_cast<int>(x_translation_*1.e6);
+		inplace.y = inplace.y;
+	}
+
+};
+
 
 struct IsGhost
 {
