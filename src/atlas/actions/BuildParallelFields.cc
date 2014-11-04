@@ -490,9 +490,10 @@ FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes 
       else
       {
         std::stringstream msg;
-        msg << "[" << MPL::rank() << "] " << "Edge with uid " << recv_uid << " requested by rank ["<<jpart<<"]";
-        msg << " that should be owned is not found";
-        throw eckit::SeriousBug(msg.str(),Here());
+        msg << "Edge with uid " << recv_uid << " requested by rank ["<<jpart<<"]";
+        msg << " that should be owned is not found. This could be because no halo was built.";
+        //throw eckit::SeriousBug(msg.str(),Here());
+        eckit::Log::warning() << msg.str() << " @ " << Here() << std::endl;
       }
     }
   }
