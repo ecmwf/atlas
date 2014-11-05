@@ -226,6 +226,7 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
   ArrayView<double,2> coords    ( nodes.field( "coordinates" ) );
   ArrayView<int,   1> glb_idx   ( nodes.field( "glb_idx"     ) );
   ArrayView<int,   1> part      ( nodes.field( "partition"   ) );
+  ArrayView<int,   1> flags     ( nodes.field( "flags"       ) );
   IndexView<int,   1> ridx      ( nodes.field( "remote_idx"  ) );
   int nb_nodes = nodes.shape(0);
 
@@ -296,23 +297,27 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
     for( std::set<int>::iterator it=pole_nodes[NS].begin(); it!=pole_nodes[NS].end(); ++it)
     {
       int node = *it;
-      int x1 = microdeg( coords(node,XX) );
-      int x2 = microdeg( coords(node,XX) + M_PI );
-      if( x1 >= BC::WEST && x2 < BC::EAST )
+      if( Topology::check(flags(node),Topology::INTERIOR) )
       {
+        int x1 = microdeg( coords(node,XX) );
+        int x2 = microdeg( coords(node,XX) + M_PI );
         for( std::set<int>::iterator itr=pole_nodes[NS].begin(); itr!=pole_nodes[NS].end(); ++itr)
         {
           int other_node = *itr;
           if( microdeg( coords(other_node,XX) ) == x2 )
           {
-            pole_edge_nodes.push_back(node);
-            pole_edge_nodes.push_back(other_node);
-            ++nb_pole_edges;
+            if( Topology::check(flags(other_node),Topology::INTERIOR) )
+            {
+              pole_edge_nodes.push_back(node);
+              pole_edge_nodes.push_back(other_node);
+              ++nb_pole_edges;
+            }
           }
         }
       }
     }
   }
+
 // This no longer works as only edges that connect non-ghost nodes are added
 //        if ( std::abs( std::abs(coords(recip_node,XX) - coords(node,XX)) - M_PI) > tol )
 //        {
@@ -398,7 +403,7 @@ void build_edges( Mesh& mesh )
   int nb_edges = nb_faces;
   if( ! mesh.has_function_space("edges") )
   {
-	mesh.create_function_space( "edges", "shapefunc", make_shape(nb_edges,Field::UNDEF_VARS) );
+    mesh.create_function_space( "edges", "shapefunc", make_shape(nb_edges,Field::UNDEF_VARS) );
   }
   FunctionSpace& edges = mesh.function_space("edges");
   edges.metadata().set("type",static_cast<int>(Entity::FACES));
