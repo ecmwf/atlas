@@ -63,7 +63,7 @@ public:
         for (int p=0; p<MPL::size(); ++p)
         {
           LocalPathName loc_path(file_path);
-          loc_path = loc_path.dirName()+"/"+loc_path.baseName(false)+"_p"+to_str(p)+".msh";
+          loc_path = loc_path.baseName(false)+"_p"+to_str(p)+".msh";
           par_file << "Merge \"" << loc_path << "\";" << std::endl;
         }
         par_file.close();
