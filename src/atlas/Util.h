@@ -31,15 +31,6 @@ inline int microdeg( const double& deg )
 	return static_cast<int>(deg*1.e6);
 }
 
-struct BC
-{
-	static int WEST;
-	static int EAST;
-	static int NORTH;
-	static int SOUTH;
-};
-
-
 class Flags
 {
 public:
@@ -63,10 +54,30 @@ public:
 		flags ^= bit;
 	}
 
-	static int check(int flags, int bit)
+	static bool check(int flags, int bits)
 	{
-		int result = flags&bit;
-		return flags & bit;
+		return (flags & bits) == bits;
+	}
+
+	static bool check_all(int flags, int bits)
+	{
+		return (flags & bits) == bits;
+	}
+
+	static bool check_any(int flags, int bits)
+	{
+		return flags & bits;
+	}
+
+	static std::string bitstr(int flags)
+	{
+	  char str[9] = {0};
+	  int i;
+	  for (i=7; i>=0; i--) {
+	    str[i] = (flags&1)?'1':'0';
+	    flags >>= 1;
+	  }
+		return std::string(str,9);
 	}
 };
 
@@ -74,14 +85,14 @@ class Topology : public Flags
 {
 public:
   enum {
-    NONE     = 0x00,
-    INTERIOR = 0x01,
-    GHOST    = 0x02,
-    PERIODIC = 0x04,
-    BC_WEST  = 0x08,
-    BC_EAST  = 0x10,
-    BC_NORTH = 0x20,
-    BC_SOUTH = 0x40
+    NONE     = 0,
+    INTERIOR = (1<<1),
+    GHOST    = (1<<2),
+    PERIODIC = (1<<3),
+    BC_WEST  = (1<<4),
+    BC_EAST  = (1<<5),
+    BC_NORTH = (1<<6),
+    BC_SOUTH = (1<<7)
   };
 };
 
@@ -120,8 +131,8 @@ struct LatLonPoint
 
 	int uid() const
 	{
-		int i1 = (y+BC::NORTH*2) >>9;
-		int i2 = (x+BC::EAST*5)  >>10;
+		int i1 = (y+NORTH*2) >>9;
+		int i2 = (x+EAST*5)  >>10;
 		ASSERT( i1 > 0);
 		ASSERT( i2 > 0);
 		int pow = 10;
@@ -139,6 +150,11 @@ struct LatLonPoint
 		if( y == other.y ) return (x < other.x);
 		return false;
 	}
+private:
+	static int WEST;
+	static int EAST;
+	static int NORTH;
+	static int SOUTH;
 };
 
 class PeriodicTransform
