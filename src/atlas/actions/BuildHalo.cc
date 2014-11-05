@@ -233,15 +233,10 @@ void increase_halo( Mesh& mesh )
 
       int periodic=0;
       // If the received node is flagged as periodic, look for point following periodic transformation
-      if( Topology::check(recv_flags,Topology::PERIODIC) )
-      {
-        if( Topology::check(recv_flags,Topology::BC_EAST) )
-          periodic = -1; // If the node is at BC_EAST (so slave), the master is in negative direction (-360 deg)
-        else if( Topology::check(recv_flags,Topology::BC_WEST) )
-          periodic =  1; // If the node is at BC_WEST (so master), the slave is in positive direction (+360 deg)
-        else
-          NOTIMP;
-      }
+      if( Topology::check(recv_flags,Topology::BC_EAST) )
+        periodic = -1; // If the node is at BC_EAST (so slave), the master is in negative direction (-360 deg)
+      else if( Topology::check(recv_flags,Topology::BC_WEST) )
+        periodic =  1; // If the node is at BC_WEST (so master), the slave is in positive direction (+360 deg)
 
       std::vector<int> recv_uids; recv_uids.reserve(2);
       recv_uids.push_back( ll.uid() );
@@ -328,16 +323,12 @@ void increase_halo( Mesh& mesh )
         int x = recv_bdry_nodes_id(jrecv,0);
         int y = recv_bdry_nodes_id(jrecv,1);
         int periodic=0;
-        if( Topology::check(recv_bdry_nodes_id(jrecv,3),Topology::PERIODIC) )
-        {
-          if( Topology::check(recv_bdry_nodes_id(jrecv,3),Topology::BC_EAST) )
-            periodic = -1; // If the node is ghost (so slave), the master is in negative direction (-360 deg)
-          else if( Topology::check(recv_bdry_nodes_id(jrecv,3),Topology::BC_WEST) )
-            periodic = 1; // If the node is not ghost (so master), the slave is in positive direction (+360 deg)
-          else
-            NOTIMP;
-        }
-        LatLonPoint ll(x,y);
+        if( Topology::check(recv_bdry_nodes_id(jrecv,3),Topology::BC_EAST) )
+          periodic = -1; // If the node is ghost (so slave), the master is in negative direction (-360 deg)
+        else if( Topology::check(recv_bdry_nodes_id(jrecv,3),Topology::BC_WEST) )
+          periodic = 1; // If the node is not ghost (so master), the slave is in positive direction (+360 deg)
+
+				LatLonPoint ll(x,y);
         found_bdry_nodes_id_set.erase( std::make_pair(ll,periodic) ) ;
         // DO I HAVE TO ALSO CHECK FOR PERIODICITY HERE?
       }
@@ -378,16 +369,18 @@ void increase_halo( Mesh& mesh )
           if( periodic )
           {
             sfn_glb_idx[jpart][jnode]      = uid;
-            Topology::set(sfn_flags[jpart][jnode],Topology::PERIODIC);
             if( periodic > 0 )
               Topology::set(sfn_flags[jpart][jnode],Topology::BC_EAST);
             else
               Topology::set(sfn_flags[jpart][jnode],Topology::BC_WEST);
+            Topology::set(sfn_flags[jpart][jnode],Topology::PERIODIC);
             transform(&sfn_latlon[jpart][2*jnode],(double) periodic);
           }
           else
           {
-            Topology::set(sfn_flags[jpart][jnode],Topology::INTERIOR);
+						// When a node in a partition corner is found through an interior element, but touches the east boundary, it should
+						// also be flagged as periodic and bc_east
+						Topology::set(sfn_flags[jpart][jnode],flags(loc));
           }
         }
         else

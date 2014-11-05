@@ -50,8 +50,6 @@ void build_periodic_boundaries( Mesh& mesh )
   {
     if( Topology::check(flags(jnode),Topology::BC_WEST) )
     {
-      Topology::set(flags(jnode),Topology::PERIODIC);
-
       if( part(jnode) == mypart )
       {
         LatLonPoint ll(latlon[jnode]);
