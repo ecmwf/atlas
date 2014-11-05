@@ -31,8 +31,9 @@ void build_periodic_boundaries( Mesh& mesh )
 
   FunctionSpace& nodes = mesh.function_space("nodes");
 
+  ArrayView<int,1> flags( nodes.field("flags") );
   IndexView<int,1> ridx ( nodes.field("remote_idx") );
-  ArrayView<int,1> part ( nodes.field("partition")      );
+  ArrayView<int,1> part ( nodes.field("partition") );
 
   int nb_nodes = nodes.shape(0);
 
@@ -40,33 +41,36 @@ void build_periodic_boundaries( Mesh& mesh )
 
   // Identify my master and slave nodes on own partition
   // master nodes are at x=0,  slave nodes are at x=2pi
-  std::map<LatLonPoint,int> master_lookup;
-  std::map<LatLonPoint,int>  slave_lookup;
+  std::map<int,int> master_lookup;
+  std::map<int,int>  slave_lookup;
   std::vector<int> master_nodes; master_nodes.reserve( 3*nb_nodes );
   std::vector<int>  slave_nodes;  slave_nodes.reserve( 3*nb_nodes );
 
   for( int jnode=0; jnode<nodes.shape(0); ++jnode)
   {
-    int x = microdeg(latlon(jnode,XX));
-    if( x == BC::WEST && (part(jnode)==mypart && jnode==ridx(jnode))  )
+    if( Topology::check(flags(jnode),Topology::BC_WEST) )
     {
-      master_lookup[ LatLonPoint(latlon[jnode]) ] = jnode;
-      master_nodes.push_back( x );
-      master_nodes.push_back( microdeg(latlon(jnode,YY)) );
-      master_nodes.push_back( jnode );
+      if( part(jnode) == mypart )
+      {
+        LatLonPoint ll(latlon[jnode]);
+        master_lookup[ ll.uid() ] = jnode;
+        master_nodes.push_back( ll.x );
+        master_nodes.push_back( ll.y );
+        master_nodes.push_back( jnode );
+      }
     }
-    if( x >= BC::EAST )
+    else if( Topology::check(flags(jnode),Topology::BC_EAST) )
     {
-      slave_lookup[ LatLonPoint(latlon[jnode]) ] = jnode;
-      slave_nodes.push_back( x );
-      slave_nodes.push_back( microdeg(latlon(jnode,YY)) );
+      Topology::set(flags(jnode),Topology::PERIODIC);
+      Topology::set(flags(jnode),Topology::GHOST);
+      LatLonPoint ll(latlon[jnode]);
+      slave_lookup[ ll.uid() ] = jnode;
+      slave_nodes.push_back( ll.x );
+      slave_nodes.push_back( ll.y );
       slave_nodes.push_back( jnode );
       ridx( jnode ) = -1;
     }
   }
-
-//  std::cout << "found " << master_nodes.size()/3 << " master nodes " << std::endl;
-//  std::cout << "found " <<  slave_nodes.size()/3 << "  slave nodes " << std::endl;
 
                       //  std::vector< std::vector<int> > found_slave(MPL::size());
                       //  // Find slaves on other tasks to send to me
@@ -133,6 +137,7 @@ void build_periodic_boundaries( Mesh& mesh )
                       MPI_INT, MPI_COMM_WORLD) );
 
 
+    PeriodicTransform transform;
     for( int jproc=0; jproc<MPL::size(); ++jproc )
     {
       found_master.reserve(master_nodes.size());
@@ -140,14 +145,15 @@ void build_periodic_boundaries( Mesh& mesh )
       ArrayView<int,2> recv_slave(recvbuf.data()+recvdispls[jproc], make_shape(recvcounts[jproc]/3,3).data() );
       for( int jnode=0; jnode<recv_slave.shape(0); ++jnode )
       {
-        LatLonPoint slave( recv_slave(jnode,XX)-BC::EAST, recv_slave(jnode,YY) );
-        if( master_lookup.count( slave ) )
+        LatLonPoint slave( recv_slave(jnode,XX), recv_slave(jnode,YY) );
+        transform(slave,-1);
+        int slave_uid = slave.uid();
+        if( master_lookup.count( slave_uid ) )
         {
-          int master_idx = master_lookup[ slave ];
+          int master_idx = master_lookup[ slave_uid ];
           int slave_idx  = recv_slave(jnode,2);
           found_master[jproc].push_back( master_idx );
           send_slave_idx[jproc].push_back( slave_idx );
-         // std::cout << master_idx << " master of " << slave_idx << std::endl;
         }
       }
     }
@@ -209,9 +215,6 @@ void build_periodic_boundaries( Mesh& mesh )
       int slave_idx     = recv_slave_idx  [jproc][jnode];
       part( slave_idx ) = recv_master_part[jproc][jnode];
       ridx( slave_idx ) = recv_master_ridx[jproc][jnode];
-
-      //std::cout << part( slave_idx ) <<"["<<ridx( slave_idx ) << "] master of " << mypart << "["<<slave_idx<<"]" << std::endl;
-
     }
   }
 

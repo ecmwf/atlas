@@ -25,6 +25,12 @@ endif()
 set( BOOST_UNIT_TEST_FRAMEWORK_HEADER_ONLY ON )
 set( BOOST_UNIT_TEST_FRAMEWORK_LINKED OFF )
 
+ecbuild_add_test( TARGET atlas_test_flags
+  BOOST
+  SOURCES  test_flags.cc
+  LIBS     atlas
+)
+
 ecbuild_add_test( TARGET atlas_test_indexview
   BOOST
   SOURCES  test_indexview.cc

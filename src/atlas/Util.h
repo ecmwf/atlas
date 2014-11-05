@@ -31,13 +31,71 @@ inline int microdeg( const double& deg )
 	return static_cast<int>(deg*1.e6);
 }
 
-struct BC
+class Flags
 {
-	static int WEST;
-	static int EAST;
-	static int NORTH;
-	static int SOUTH;
+public:
+	static void reset(int& flags, int bit = 0)
+	{
+		flags = bit;
+	}
+
+	static void set(int& flags, int bit)
+	{
+		flags |= bit;
+	}
+
+	static void unset(int& flags, int bit)
+	{
+		flags &= (~bit);
+	}
+
+	static void toggle(int& flags, int bit)
+	{
+		flags ^= bit;
+	}
+
+	static bool check(int flags, int bits)
+	{
+		return (flags & bits) == bits;
+	}
+
+	static bool check_all(int flags, int bits)
+	{
+		return (flags & bits) == bits;
+	}
+
+	static bool check_any(int flags, int bits)
+	{
+		return flags & bits;
+	}
+
+	static std::string bitstr(int flags)
+	{
+	  char str[9] = {0};
+	  int i;
+	  for (i=7; i>=0; i--) {
+	    str[i] = (flags&1)?'1':'0';
+	    flags >>= 1;
+	  }
+		return std::string(str,9);
+	}
 };
+
+class Topology : public Flags
+{
+public:
+  enum {
+    NONE     = 0,
+    INTERIOR = (1<<1),
+    GHOST    = (1<<2),
+    PERIODIC = (1<<3),
+    BC_WEST  = (1<<4),
+    BC_EAST  = (1<<5),
+    BC_NORTH = (1<<6),
+    BC_SOUTH = (1<<7)
+  };
+};
+
 
 struct LatLonPoint
 {
@@ -73,8 +131,8 @@ struct LatLonPoint
 
 	int uid() const
 	{
-		int i1 = (y+BC::NORTH*2) >>9;
-		int i2 = (x+BC::EAST*5)  >>10;
+		int i1 = (y+NORTH*2) >>9;
+		int i2 = (x+EAST*5)  >>10;
 		ASSERT( i1 > 0);
 		ASSERT( i2 > 0);
 		int pow = 10;
@@ -92,7 +150,56 @@ struct LatLonPoint
 		if( y == other.y ) return (x < other.x);
 		return false;
 	}
+private:
+	static int WEST;
+	static int EAST;
+	static int NORTH;
+	static int SOUTH;
 };
+
+class PeriodicTransform
+{
+private:
+	double x_translation_;
+
+public:
+	PeriodicTransform()
+	{
+		x_translation_ = 2.*M_PI;
+	}
+
+	void operator()(double source[2], double dest[2], double direction, double scale = 1.) const
+	{
+		dest[0] = source[0] + direction*x_translation_*scale;
+		dest[1] = source[1];
+	}
+
+	void operator()(int source[2], int dest[2], int direction, int scale = 1) const
+	{
+		dest[0] = source[0] + direction*static_cast<int>(x_translation_*scale);
+		dest[1] = source[1];
+	}
+
+	void operator()(double inplace[2], double direction, double scale = 1.) const
+	{
+		inplace[0] = inplace[0] + direction*x_translation_*scale;
+		inplace[1] = inplace[1];
+	}
+
+	void operator()(int inplace[2], int direction, int scale = 1) const
+	{
+		inplace[0] = inplace[0] + direction*static_cast<int>(x_translation_*scale);
+		inplace[1] = inplace[1];
+	}
+
+	void operator()(LatLonPoint& inplace, int direction) const
+	{
+		inplace.x = inplace.x + direction*static_cast<int>(x_translation_*1.e6);
+		inplace.y = inplace.y;
+	}
+
+};
+
 
 struct IsGhost
 {

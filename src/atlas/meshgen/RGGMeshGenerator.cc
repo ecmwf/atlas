@@ -62,21 +62,24 @@ RGGMeshGenerator::RGGMeshGenerator()
   // This option sets the part that will be generated
   options.set("part",0);
 
+	// Experimental option. The result is a non-standard Reduced Gaussian Grid, with a ragged Greenwich line
+  options.set("stagger", bool( Resource<bool>("-stagger;meshgen.stagger", false ) ) );
+
   // This option sets the maximum angle deviation for a quadrilateral element
   // max_angle = 30  -->  minimises number of triangles
   // max_angle = 0   -->  maximises number of triangles
   //Resource<double>( &Context::instance(), "meshgen.angle", 27 ).dump(Log::warning());
   //Log::warning() << "\n\n Getting max_angle_ ... " << std::endl;
-  max_angle_ = Resource< double > ( &Context::instance(), "meshgen.angle", 29.5 );
+  max_angle_ = Resource< double > ( "meshgen.angle", 29.5 );
   //Log::warning() << "max_angle_ = " << max_angle_ << std::endl;
 
-  triangulate_quads_ = Resource< bool > ( &Context::instance(), "meshgen.triangulate", false );
+  triangulate_quads_ = Resource< bool > ( "-triangulate;meshgen.triangulate", false );
   //Log::error() << "triangulate =" << triangulate_quads_ << std::endl;
 }
 
 //std::vector<int> RGGMeshGenerator::partition(const RGG& rgg) const
 //{
-//  std::cout << "partition start" << std::endl;
+//  eckit::Log::info(Here())  << "partition start" << std::endl;
 //  int nb_parts = options.get<int>("nb_parts");
 //  EqualAreaPartitioner partitioner(nb_parts);
 //  int ngptot = rgg.ngptot();
@@ -88,9 +91,9 @@ RGGMeshGenerator::RGGMeshGenerator()
 //  int band;
 
 //  double mem_per_node_in_MB = (32+2*32+32)/8./1024./1024.;
-//  std::cout << "required memory = " << static_cast<double>(ngptot)*mem_per_node_in_MB << " MB" << std::endl;
-//  std::cout << "required memory T8K ~ " << static_cast<double>(16e3*8e3*2./3.)*mem_per_node_in_MB << " MB" << std::endl;
-//  std::cout << "required memory T16K ~ " << static_cast<double>(32e3*16e3*2./3.)*mem_per_node_in_MB << " MB" << std::endl;
+//  eckit::Log::info(Here())  << "required memory = " << static_cast<double>(ngptot)*mem_per_node_in_MB << " MB" << std::endl;
+//  eckit::Log::info(Here())  << "required memory T8K ~ " << static_cast<double>(16e3*8e3*2./3.)*mem_per_node_in_MB << " MB" << std::endl;
+//  eckit::Log::info(Here())  << "required memory T16K ~ " << static_cast<double>(32e3*16e3*2./3.)*mem_per_node_in_MB << " MB" << std::endl;
 
 //  // Output
 //  std::vector<int> part(ngptot);
@@ -120,6 +123,7 @@ Mesh* RGGMeshGenerator::generate(const RGG& rgg)
   int n;
   int ngptot = rgg.ngptot();
   std::vector<int> part(ngptot);
+	bool stagger = options.get<bool>("stagger");
 
   /*
   Create structure which we can partition with multiple keys (lat and lon)
@@ -131,6 +135,7 @@ Mesh* RGGMeshGenerator::generate(const RGG& rgg)
     for( int jlon=0; jlon<rgg.nlon(jlat); ++jlon)
     {
       nodes[n].x = static_cast<int>(rgg.lon(jlon,jlat)*1e6);
+			if( stagger ) nodes[n].x += static_cast<int>(1e6*M_PI/static_cast<double>(rgg.nlon(jlat)));
       nodes[n].y = static_cast<int>(rgg.lat(jlat)*1e6);
       nodes[n].n = n;
       ++n;
@@ -203,7 +208,7 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
   region.south = lat_south;
 
   ArrayShape shape = make_shape(region.south-region.north, 4*rgg.nlonmax(), 4);
-  // std::cout << "allocating elems" <<  "(" << extents[0] << "," << extents[1] << "," << extents[2] << ")" << std::endl;
+  // eckit::Log::info(Here())  << "allocating elems" <<  "(" << extents[0] << "," << extents[1] << "," << extents[2] << ")" << std::endl;
   region.elems.resize(shape);
   region.elems = -1;
 
@@ -213,6 +218,7 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
 
   ArrayView<int,3> elemview(region.elems);
 
+	bool stagger = options.get<bool>("stagger");
   for (int jlat=lat_north; jlat<lat_south; ++jlat)
   {
 
@@ -247,7 +253,7 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
     int jelem=0;
 
 #if DEBUG_OUTPUT
-    std::cout << "=================" << std::endl;
+    eckit::Log::info(Here())  << "=================" << std::endl;
 #endif
 
     while (true)
@@ -276,8 +282,8 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
       else
         pS2 = parts[offset[latS]+ipS2];
 
-      //std::cout << ipN1 << "("<<pN1<<") " << ipN2 <<"("<<pN2<<")" <<  std::endl;
-      //std::cout << ipS1 << "("<<pS2<<") " << ipS2 <<"("<<pS2<<")" <<  std::endl;
+      //eckit::Log::info(Here())  << ipN1 << "("<<pN1<<") " << ipN2 <<"("<<pN2<<")" <<  std::endl;
+      //eckit::Log::info(Here())  << ipS1 << "("<<pS2<<") " << ipS2 <<"("<<pS2<<")" <<  std::endl;
 
 
       xN1 = rgg.lon(ipN1,latN);
@@ -285,12 +291,17 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
       xS1 = rgg.lon(ipS1,latS);
       xS2 = rgg.lon(ipS2,latS);
 
+			if( stagger && (latN+1)%2==0 ) xN1 += M_PI/static_cast<double>(rgg.nlon(latN));
+			if( stagger && (latN+1)%2==0 ) xN2 += M_PI/static_cast<double>(rgg.nlon(latN));
+			if( stagger && (latS+1)%2==0 ) xS1 += M_PI/static_cast<double>(rgg.nlon(latS));
+			if( stagger && (latS+1)%2==0 ) xS2 += M_PI/static_cast<double>(rgg.nlon(latS));
+
 #if DEBUG_OUTPUT
-      std::cout << "-------" << std::endl;
+      eckit::Log::info(Here())  << "-------" << std::endl;
 #endif
-      // std::cout << "  access  " << region.elems.stride(0)*(jlat-region.north) + region.elems.stride(1)*jelem + 5 << std::endl;
-//      std::cout << ipN1 << "("<< xN1 << ")  " << ipN2 <<  "("<< xN2 << ")  " << std::endl;
-//      std::cout << ipS1 << "("<< xS1 << ")  " << ipS2 <<  "("<< xS2 << ")  " << std::endl;
+      // eckit::Log::info(Here())  << "  access  " << region.elems.stride(0)*(jlat-region.north) + region.elems.stride(1)*jelem + 5 << std::endl;
+//      eckit::Log::info(Here())  << ipN1 << "("<< xN1 << ")  " << ipN2 <<  "("<< xN2 << ")  " << std::endl;
+//      eckit::Log::info(Here())  << ipS1 << "("<< xS1 << ")  " << ipS2 <<  "("<< xS2 << ")  " << std::endl;
       try_make_triangle_up   = false;
       try_make_triangle_down = false;
       try_make_quad = false;
@@ -308,18 +319,49 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
       {
 				if( triangulate_quads_ )
 				{
-					try_make_triangle_up   = (jlat+ipN1) % 2;
-					try_make_triangle_down = (jlat+ipN1+1) % 2;
+					if( false) //std::abs(alpha1) < 1 && std::abs(alpha2) < 1)
+					{
+  					try_make_triangle_up   = (jlat+ipN1) % 2;
+  					try_make_triangle_down = (jlat+ipN1+1) % 2;
+					}
+          else
+					{
+						dN1S2 = std::abs(xN1-xS2);
+						dS1N2 = std::abs(xS1-xN2);
+						dN2S2 = std::abs(xN2-xS2);
+						// eckit::Log::info(Here())  << "  dN1S2 " << dN1S2 << "   dS1N2 " << dS1N2 << "   dN2S2 " << dN2S2 << std::endl;
+						if (dN1S2 <= dS1N2)
+						{
+							if (ipS1 != ipS2) { try_make_triangle_up = true; }
+							else { try_make_triangle_down = true ; }
+						}
+						else if (dN1S2 >= dS1N2)
+						{
+							if (ipN1 != ipN2) { try_make_triangle_down = true;}
+							else { try_make_triangle_up = true; }
+						}
+						else
+						{
+							throw eckit::Exception("Should not be here", Here());
+						}
+					}
+
 				}
 				else
-					try_make_quad = true;
+				{
+					if     ( ipN1 == ipN2 ) try_make_triangle_up   = true;
+					else if( ipS1 == ipS2 ) try_make_triangle_down = true;
+					else                    try_make_quad          = true;
+
+//					try_make_quad          = true;
+				}
       }
       else
       {
         dN1S2 = std::abs(xN1-xS2);
         dS1N2 = std::abs(xS1-xN2);
         dN2S2 = std::abs(xN2-xS2);
-        // std::cout << "  dN1S2 " << dN1S2 << "   dS1N2 " << dS1N2 << "   dN2S2 " << dN2S2 << std::endl;
+        // eckit::Log::info(Here())  << "  dN1S2 " << dN1S2 << "   dS1N2 " << dS1N2 << "   dN2S2 " << dN2S2 << std::endl;
         if( (dN1S2 <= dS1N2) && (ipS1 != ipS2) ) { try_make_triangle_up = true;}
         else if( (dN1S2 >= dS1N2) && (ipN1 != ipN2) ) { try_make_triangle_down = true;}
         else Exception("Should not try to make a quadrilateral!",Here());
@@ -329,17 +371,18 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
 // ------------------------------------------------
 
 
+#if DEBUG_OUTPUT
+			DEBUG_VAR(jelem);
+#endif
 
       ArrayView<int,1> elem = lat_elems_view[jelem];
-
-
 
       if( try_make_quad )
       {
         // add quadrilateral
 #if DEBUG_OUTPUT
-        std::cout << "          " << ipN1 << "  " << ipN2 << std::endl;
-        std::cout << "          " << ipS1 << "  " << ipS2 << std::endl;
+        eckit::Log::info(Here())  << "          " << ipN1 << "  " << ipN2 << std::endl;
+        eckit::Log::info(Here())  << "          " << ipS1 << "  " << ipS2 << std::endl;
 #endif
         elem[0] = ipN1;
         elem[1] = ipS1;
@@ -405,8 +448,8 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
       {
         // triangle without ip3
 #if DEBUG_OUTPUT
-        std::cout << "          " << ipN1 << "  " << ipN2 << std::endl;
-        std::cout << "          " << ipS1 << std::endl;
+        eckit::Log::info(Here())  << "          " << ipN1 << "  " << ipN2 << std::endl;
+        eckit::Log::info(Here())  << "          " << ipS1 << std::endl;
 #endif
         elem[0] = ipN1;
         elem[1] = ipS1;
@@ -479,8 +522,8 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
       {
         // triangle without ip4
 #if DEBUG_OUTPUT
-        std::cout << "          " << ipN1 << std::endl;
-        std::cout << "          " << ipS1 << "  " << ipS2 << std::endl;
+        eckit::Log::info(Here())  << "          " << ipN1 << std::endl;
+        eckit::Log::info(Here())  << "          " << ipS1 << "  " << ipS2 << std::endl;
 #endif
         elem[0] = ipN1;
         elem[1] = ipS1;
@@ -562,9 +605,9 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
     region.lat_end[latS] = std::min(region.lat_end[latS], rgg.nlon(latS)-1);
   }
 
-//  std::cout << "nb_triags = " << region.ntriags << std::endl;
-//  std::cout << "nb_quads = " << region.nquads << std::endl;
-//  std::cout << "nb_elems = " << nelems << std::endl;
+//  eckit::Log::info(Here())  << "nb_triags = " << region.ntriags << std::endl;
+//  eckit::Log::info(Here())  << "nb_quads = " << region.nquads << std::endl;
+//  eckit::Log::info(Here())  << "nb_elems = " << nelems << std::endl;
 
   int nb_region_nodes = 0;
   for( int jlat=lat_north; jlat<=lat_south; ++jlat ) {
@@ -649,6 +692,9 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,
   ArrayView<double,2> coords        ( nodes.create_field<double>("coordinates",   2) );
   ArrayView<int,   1> glb_idx       ( nodes.create_field<int   >("glb_idx",       1) );
   ArrayView<int,   1> part          ( nodes.create_field<int   >("partition",     1) );
+	ArrayView<int,   1> flags         ( nodes.create_field<int   >("flags",         1) );
+
+	bool stagger = options.get<bool>("stagger");
 
   int jnode=0;
   l=0;
@@ -662,20 +708,38 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,
     {
       n = offset_glb[jlat] + jlon;
       double x = rgg.lon(jlon,jlat);
+      if( stagger && (jlat+1)%2==0 ) x += M_PI/static_cast<double>(rgg.nlon(jlat));
+
       coords(jnode,XX) = x;
       coords(jnode,YY) = y;
       glb_idx(jnode)   = n+1;
       part(jnode) = parts[n];
+			Topology::reset(flags(jnode));
+			Topology::set(flags(jnode),Topology::INTERIOR);
+			if( jlat == 0 && !include_north_pole)
+				Topology::set(flags(jnode),Topology::BC_NORTH);
+			if( jlat == rgg.nlat()-1 && !include_south_pole)
+				Topology::set(flags(jnode),Topology::BC_SOUTH);
+			if( jlon == 0 && !three_dimensional)
+				Topology::set(flags(jnode),Topology::BC_WEST);
+			if( part(jnode) != parts[n] )
+				Topology::set(flags(jnode),Topology::GHOST);
       ++jnode;
     }
     if( !three_dimensional &&  region.lat_end[jlat]==rgg.nlon(jlat)-1 ) // add periodic point
     {
       ++l;
       double x = rgg.lon(rgg.nlon(jlat),jlat);
+      if( stagger && (jlat+1)%2==0 ) x += M_PI/static_cast<double>(rgg.nlon(jlat));
+
       coords(jnode,XX) = x;
       coords(jnode,YY) = y;
       glb_idx(jnode)   = periodic_glb[jlat]+1;
       part(jnode)      = part(jnode-1);
+			Topology::reset(flags(jnode));
+			Topology::set(flags(jnode),Topology::BC_EAST);
+			if( part(jnode) != parts[n] )
+				Topology::set(flags(jnode),Topology::GHOST);
       ++jnode;
     }
   };
@@ -690,6 +754,9 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,
     coords(jnode,YY) = y;
     glb_idx(jnode)   = periodic_glb[rgg.nlat()-1]+2;
     part(jnode)      = mypart;
+		Topology::reset(flags(jnode));
+		Topology::set(flags(jnode),Topology::BC_NORTH);
+		Topology::set(flags(jnode),Topology::INTERIOR);
     ++jnode;
   }
   int jsouth=-1;
@@ -702,6 +769,9 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,
     coords(jnode,YY) = y;
     glb_idx(jnode)   = periodic_glb[rgg.nlat()-1]+3;
     part(jnode)      = mypart;
+		Topology::reset(flags(jnode));
+		Topology::set(flags(jnode),Topology::BC_SOUTH);
+		Topology::set(flags(jnode),Topology::INTERIOR);
     ++jnode;
   }
 
@@ -748,7 +818,7 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,
           if (elem[3] == rgg.nlon(jlatN)) quad_nodes(jquad,3) = offset_loc[ilatN];
         }
 
-        // std::cout << quad_nodes(0,jquad) << " " << quad_nodes(1,jquad) << " " << quad_nodes(2,jquad) << " " << quad_nodes(3,jquad) << std::endl;
+        // eckit::Log::info(Here())  << quad_nodes(0,jquad) << " " << quad_nodes(1,jquad) << " " << quad_nodes(2,jquad) << " " << quad_nodes(3,jquad) << std::endl;
         quad_glb_idx(jquad) = jquad+jtriag+1;
         quad_part(jquad) = mypart;
         ++jquad;

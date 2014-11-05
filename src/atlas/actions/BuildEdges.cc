@@ -47,6 +47,7 @@ struct Sort
 
 void build_element_to_edge_connectivity( Mesh& mesh )
 {
+
   std::vector< IndexView<int,2> > elem_to_edge( mesh.nb_function_spaces() );
   std::vector< std::vector<int> > edge_cnt( mesh.nb_function_spaces() );
 
@@ -112,6 +113,7 @@ void build_element_to_edge_connectivity( Mesh& mesh )
     {
       int func_space_idx = edge_to_elem(edge,j,0);
       int elem           = edge_to_elem(edge,j,1);
+
       if ( elem >= 0 )
       {
         elem_to_edge[func_space_idx](elem,edge_cnt[func_space_idx][elem]++) = edge;
@@ -128,6 +130,40 @@ void build_element_to_edge_connectivity( Mesh& mesh )
       }
     }
   }
+
+
+	// Verify that all edges have been found
+	ASSERT( nb_edges > 0 );
+	for( int func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
+  {
+    FunctionSpace& func_space = mesh.function_space(func_space_idx);
+	if( func_space.metadata().get<int>("type") == Entity::ELEMS )
+    {
+      int nb_edges_per_elem;
+      if (func_space.name() == "quads")  nb_edges_per_elem = 4;
+      if (func_space.name() == "triags") nb_edges_per_elem = 3;
+			for( int jelem=0; jelem< func_space.shape(0); ++jelem )
+			{
+				for( int jedge=0; jedge<nb_edges_per_elem; ++jedge )
+				{
+					if( elem_to_edge[func_space_idx](jelem,jedge) < 0 )
+					{
+						const IndexView<int,2> elem_nodes ( func_space.field<int>("nodes") );
+						const ArrayView<int,1> gidx (nodes.field<int>("glb_idx"));
+
+						std::stringstream msg; msg << "Could not find edge " << jedge << " for " << func_space.name() << " elem " << jelem << " with nodes ( ";
+						for( int jnode=0; jnode<elem_nodes.shape(1); ++jnode )
+						{
+							msg << gidx(elem_nodes(jelem,jnode)) <<" ";
+						}
+						msg << ")";
+						throw eckit::SeriousBug(msg.str(),Here());
+					}
+				}
+			}
+    }
+  }
+
 }
 
 void build_node_to_edge_connectivity( Mesh& mesh )
@@ -190,6 +226,7 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
   ArrayView<double,2> coords    ( nodes.field( "coordinates" ) );
   ArrayView<int,   1> glb_idx   ( nodes.field( "glb_idx"     ) );
   ArrayView<int,   1> part      ( nodes.field( "partition"   ) );
+  ArrayView<int,   1> flags     ( nodes.field( "flags"       ) );
   IndexView<int,   1> ridx      ( nodes.field( "remote_idx"  ) );
   int nb_nodes = nodes.shape(0);
 
@@ -260,23 +297,27 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
     for( std::set<int>::iterator it=pole_nodes[NS].begin(); it!=pole_nodes[NS].end(); ++it)
     {
       int node = *it;
-      int x1 = microdeg( coords(node,XX) );
-      int x2 = microdeg( coords(node,XX) + M_PI );
-      if( x1 >= BC::WEST && x2 < BC::EAST )
+      if( Topology::check(flags(node),Topology::INTERIOR) )
       {
+        int x1 = microdeg( coords(node,XX) );
+        int x2 = microdeg( coords(node,XX) + M_PI );
         for( std::set<int>::iterator itr=pole_nodes[NS].begin(); itr!=pole_nodes[NS].end(); ++itr)
         {
           int other_node = *itr;
           if( microdeg( coords(other_node,XX) ) == x2 )
           {
-            pole_edge_nodes.push_back(node);
-            pole_edge_nodes.push_back(other_node);
-            ++nb_pole_edges;
+            if( Topology::check(flags(other_node),Topology::INTERIOR) )
+            {
+              pole_edge_nodes.push_back(node);
+              pole_edge_nodes.push_back(other_node);
+              ++nb_pole_edges;
+            }
           }
         }
       }
     }
   }
+
 // This no longer works as only edges that connect non-ghost nodes are added
 //        if ( std::abs( std::abs(coords(recip_node,XX) - coords(node,XX)) - M_PI) > tol )
 //        {
@@ -362,7 +403,7 @@ void build_edges( Mesh& mesh )
   int nb_edges = nb_faces;
   if( ! mesh.has_function_space("edges") )
   {
-	mesh.create_function_space( "edges", "shapefunc", make_shape(nb_edges,Field::UNDEF_VARS) );
+    mesh.create_function_space( "edges", "shapefunc", make_shape(nb_edges,Field::UNDEF_VARS) );
   }
   FunctionSpace& edges = mesh.function_space("edges");
   edges.metadata().set("type",static_cast<int>(Entity::FACES));
