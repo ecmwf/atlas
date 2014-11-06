@@ -233,9 +233,9 @@ void increase_halo( Mesh& mesh )
 
       int periodic=0;
       // If the received node is flagged as periodic, look for point following periodic transformation
-      if( Topology::check(recv_flags,Topology::BC_EAST) )
+      if( Topology::check(recv_flags,Topology::EAST) )
         periodic = -1; // If the node is at BC_EAST (so slave), the master is in negative direction (-360 deg)
-      else if( Topology::check(recv_flags,Topology::BC_WEST) )
+      else if( Topology::check(recv_flags,Topology::WEST) )
         periodic =  1; // If the node is at BC_WEST (so master), the slave is in positive direction (+360 deg)
 
       std::vector<int> recv_uids; recv_uids.reserve(2);
@@ -323,9 +323,9 @@ void increase_halo( Mesh& mesh )
         int x = recv_bdry_nodes_id(jrecv,0);
         int y = recv_bdry_nodes_id(jrecv,1);
         int periodic=0;
-        if( Topology::check(recv_bdry_nodes_id(jrecv,3),Topology::BC_EAST) )
+        if( Topology::check(recv_bdry_nodes_id(jrecv,3),Topology::EAST) )
           periodic = -1; // If the node is ghost (so slave), the master is in negative direction (-360 deg)
-        else if( Topology::check(recv_bdry_nodes_id(jrecv,3),Topology::BC_WEST) )
+        else if( Topology::check(recv_bdry_nodes_id(jrecv,3),Topology::WEST) )
           periodic = 1; // If the node is not ghost (so master), the slave is in positive direction (+360 deg)
 
 				LatLonPoint ll(x,y);
@@ -370,10 +370,19 @@ void increase_halo( Mesh& mesh )
           {
             sfn_glb_idx[jpart][jnode]      = uid;
             if( periodic > 0 )
-              Topology::set(sfn_flags[jpart][jnode],Topology::BC_EAST);
+              Topology::set(sfn_flags[jpart][jnode],Topology::EAST);
             else
-              Topology::set(sfn_flags[jpart][jnode],Topology::BC_WEST);
-            Topology::set(sfn_flags[jpart][jnode],Topology::PERIODIC);
+              Topology::set(sfn_flags[jpart][jnode],Topology::WEST);
+            if( Topology::check(flags(loc),Topology::BC ) )
+            {
+              Topology::set(sfn_flags[jpart][jnode],Topology::BC );
+              if( !Topology::check(flags(loc),Topology::EAST) )
+                Topology::set(sfn_flags[jpart][jnode],Topology::PERIODIC);
+            }
+            else
+            {
+              Topology::set(sfn_flags[jpart][jnode],Topology::PERIODIC);
+            }
             transform(&sfn_latlon[jpart][2*jnode],(double) periodic);
           }
           else

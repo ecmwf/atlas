@@ -715,13 +715,12 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,
       glb_idx(jnode)   = n+1;
       part(jnode) = parts[n];
 			Topology::reset(flags(jnode));
-			Topology::set(flags(jnode),Topology::INTERIOR);
 			if( jlat == 0 && !include_north_pole)
-				Topology::set(flags(jnode),Topology::BC_NORTH);
+				Topology::set(flags(jnode),Topology::BC|Topology::NORTH);
 			if( jlat == rgg.nlat()-1 && !include_south_pole)
-				Topology::set(flags(jnode),Topology::BC_SOUTH);
+				Topology::set(flags(jnode),Topology::BC|Topology::SOUTH);
 			if( jlon == 0 && !three_dimensional)
-				Topology::set(flags(jnode),Topology::BC_WEST);
+				Topology::set(flags(jnode),Topology::BC|Topology::WEST);
 			if( part(jnode) != parts[n] )
 				Topology::set(flags(jnode),Topology::GHOST);
       ++jnode;
@@ -737,7 +736,7 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,
       glb_idx(jnode)   = periodic_glb[jlat]+1;
       part(jnode)      = part(jnode-1);
 			Topology::reset(flags(jnode));
-			Topology::set(flags(jnode),Topology::BC_EAST);
+			Topology::set(flags(jnode),Topology::BC|Topology::EAST);
 			if( part(jnode) != parts[n] )
 				Topology::set(flags(jnode),Topology::GHOST);
       ++jnode;
@@ -755,8 +754,7 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,
     glb_idx(jnode)   = periodic_glb[rgg.nlat()-1]+2;
     part(jnode)      = mypart;
 		Topology::reset(flags(jnode));
-		Topology::set(flags(jnode),Topology::BC_NORTH);
-		Topology::set(flags(jnode),Topology::INTERIOR);
+		Topology::set(flags(jnode),Topology::NORTH);
     ++jnode;
   }
   int jsouth=-1;
@@ -770,8 +768,7 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,
     glb_idx(jnode)   = periodic_glb[rgg.nlat()-1]+3;
     part(jnode)      = mypart;
 		Topology::reset(flags(jnode));
-		Topology::set(flags(jnode),Topology::BC_SOUTH);
-		Topology::set(flags(jnode),Topology::INTERIOR);
+		Topology::set(flags(jnode),Topology::SOUTH);
     ++jnode;
   }
 

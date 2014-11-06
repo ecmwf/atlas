@@ -373,18 +373,17 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
 
       bool possibly_wrong(false);
 
-      int west_periodic = Topology::PERIODIC|Topology::BC_WEST;
-      int east_periodic = Topology::PERIODIC|Topology::BC_EAST;
+      int west_periodic = Topology::PERIODIC|Topology::WEST;
+      int east_periodic = Topology::PERIODIC|Topology::EAST;
       if(    (Topology::check_all(flags(ip1),west_periodic) || Topology::check_all(flags(ip2),west_periodic))   // WEST boundary
           || (Topology::check_all(flags(ip1),east_periodic) && Topology::check_all(flags(ip2),east_periodic)) ) // EAST boundary
       {
-        //DEBUG( "need edge("<<gidx(ip1)<<","<<gidx(ip2)<<") ");
         possibly_wrong = true;
-        if( Topology::check(flags(ip1),Topology::BC_WEST) || Topology::check(flags(ip2),Topology::BC_WEST) )
+        if( Topology::check(flags(ip1),Topology::WEST) || Topology::check(flags(ip2),Topology::WEST) )
         {
           transform(ll,+1);
         }
-        if( Topology::check(flags(ip1),Topology::BC_EAST) || Topology::check(flags(ip2),Topology::BC_EAST) )
+        if( Topology::check(flags(ip1),Topology::EAST) || Topology::check(flags(ip2),Topology::EAST) )
         {
           transform(ll,-1);
         }
@@ -437,7 +436,6 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
         int p2 = node_part( edge_nodes(iedge,1) );
         // Minimum partition of 2 nodes was wrong, so now assign maximum
         edge_part(iedge) = std::max(p1,p2);
-        //DEBUG("change owner of " << edge_gidx(iedge) << " from " << std::min(p1,p2) << "to " << std::max(p1,p2));
       }
     }
   }
@@ -460,6 +458,7 @@ FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes 
   ArrayView<int,   1> edge_part  ( edges.field("partition")   );
   ArrayView<double,2> latlon     ( nodes.field("coordinates") );
   ArrayView<int,   1> flags      ( nodes.field("flags")       );
+
   ArrayView<int,1> is_pole_edge;
   bool has_pole_edges = false;
   if( edges.has_field("is_pole_edge") )
@@ -494,21 +493,22 @@ FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes 
 
     bool needed(false);
 
-    int west_periodic = Topology::PERIODIC|Topology::BC_WEST;
-    int east_periodic = Topology::PERIODIC|Topology::BC_EAST;
+    int west_periodic = Topology::PERIODIC|Topology::WEST;
+    int east_periodic = Topology::PERIODIC|Topology::EAST;
     if(    (Topology::check_all(flags(ip1),west_periodic) || Topology::check_all(flags(ip2),west_periodic))   // WEST boundary
         || (Topology::check_all(flags(ip1),east_periodic) && Topology::check_all(flags(ip2),east_periodic)) ) // EAST boundary
     {
       needed = true;
-      if( Topology::check(flags(ip1),Topology::BC_WEST) || Topology::check(flags(ip2),Topology::BC_WEST) )
+      if( Topology::check(flags(ip1),Topology::WEST) || Topology::check(flags(ip2),Topology::WEST) )
       {
         transform(ll,+1);
       }
-      if( Topology::check(flags(ip1),Topology::BC_EAST) || Topology::check(flags(ip2),Topology::BC_EAST) )
+      if( Topology::check(flags(ip1),Topology::EAST) || Topology::check(flags(ip2),Topology::EAST) )
       {
         transform(ll,-1);
       }
     }
+
     int uid = ll.uid();
     if( edge_part(jedge)==mypart && !needed ) // All interior edges fall here
     {
@@ -565,6 +565,7 @@ FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes 
       edge_ridx( recv_edge(jedge,0) ) = recv_edge(jedge,1);
     }
   }
+
   return edges.field<int>("remote_idx");
 
 }

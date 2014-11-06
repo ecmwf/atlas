@@ -297,7 +297,7 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
     for( std::set<int>::iterator it=pole_nodes[NS].begin(); it!=pole_nodes[NS].end(); ++it)
     {
       int node = *it;
-      if( Topology::check(flags(node),Topology::INTERIOR) )
+      if( !Topology::check(flags(node),Topology::PERIODIC) )
       {
         int x1 = microdeg( coords(node,XX) );
         int x2 = microdeg( coords(node,XX) + M_PI );
@@ -306,7 +306,7 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
           int other_node = *itr;
           if( microdeg( coords(other_node,XX) ) == x2 )
           {
-            if( Topology::check(flags(other_node),Topology::INTERIOR) )
+            if( !Topology::check(flags(other_node),Topology::PERIODIC) )
             {
               pole_edge_nodes.push_back(node);
               pole_edge_nodes.push_back(other_node);

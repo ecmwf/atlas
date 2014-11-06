@@ -48,7 +48,7 @@ void build_periodic_boundaries( Mesh& mesh )
 
   for( int jnode=0; jnode<nodes.shape(0); ++jnode)
   {
-    if( Topology::check(flags(jnode),Topology::BC_WEST) )
+    if( Topology::check_all(flags(jnode),Topology::BC|Topology::WEST) )
     {
       if( part(jnode) == mypart )
       {
@@ -59,7 +59,7 @@ void build_periodic_boundaries( Mesh& mesh )
         master_nodes.push_back( jnode );
       }
     }
-    else if( Topology::check(flags(jnode),Topology::BC_EAST) )
+    else if( Topology::check(flags(jnode),Topology::BC|Topology::EAST) )
     {
       Topology::set(flags(jnode),Topology::PERIODIC);
       Topology::set(flags(jnode),Topology::GHOST);

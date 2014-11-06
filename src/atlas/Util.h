@@ -86,13 +86,13 @@ class Topology : public Flags
 public:
   enum {
     NONE     = 0,
-    INTERIOR = (1<<1),
-    GHOST    = (1<<2),
-    PERIODIC = (1<<3),
-    BC_WEST  = (1<<4),
-    BC_EAST  = (1<<5),
-    BC_NORTH = (1<<6),
-    BC_SOUTH = (1<<7)
+    GHOST    = (1<<1),
+    PERIODIC = (1<<2),
+    BC       = (1<<3),
+    WEST     = (1<<4),
+    EAST     = (1<<5),
+    NORTH    = (1<<6),
+    SOUTH    = (1<<7)
   };
 };
 

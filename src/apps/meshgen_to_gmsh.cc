@@ -58,6 +58,20 @@ public:
     halo       = Resource< int > ( "-halo", 0 );
     surfdim    = Resource< int > ( "-surfdim", 2 );
 
+    int col = Resource< int >( "-col", 0);
+    if( col )
+    {
+      rgg_nlon.resize(col);
+      for( int jlat=0; jlat<(col-4); ++jlat )
+      {
+        rgg_nlon[jlat] = 20+4*jlat;
+      }
+      for( int jlat=(col-4); jlat<col; ++jlat )
+      {
+        rgg_nlon[jlat] = rgg_nlon[(col-4)-1];
+      }
+    }
+
     if( identifier.empty() && reg_nlon_nlat.empty() && fgg_nlon_nlat.empty() && rgg_nlon.empty() )
     {
       throw UserError(Here(),"missing input mesh identifier, parameter -rgg or -reg");
@@ -98,11 +112,10 @@ void Meshgen2Gmsh::run()
     build_nodes_parallel_fields(mesh->function_space("nodes"));
     build_periodic_boundaries(*mesh);
     build_halo(*mesh,halo);
+    renumber_nodes_glb_idx(mesh->function_space("nodes"));
     build_edges(*mesh);
     build_pole_edges(*mesh);
     build_edges_parallel_fields(mesh->function_space("edges"),mesh->function_space("nodes"));
-    renumber_nodes_glb_idx(mesh->function_space("nodes"));
-
     build_median_dual_mesh(*mesh);
   }
 
