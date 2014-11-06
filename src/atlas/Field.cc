@@ -12,7 +12,7 @@
 #include <sstream>
 #include <stdexcept>
 
-#include "eckit/exception/Exceptions.h"
+#include <eckit/exception/Exceptions.h>
 
 #include "atlas/Field.h"
 #include "atlas/FunctionSpace.h"

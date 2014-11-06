@@ -17,12 +17,16 @@
 
 #include <vector>
 
-#include "eckit/types/Types.h"
-#include "eckit/memory/Owned.h"
-#include "eckit/memory/SharedPtr.h"
-#include "eckit/memory/ScopedPtr.h"
+#include <eckit/types/Types.h>
+#include <eckit/memory/Owned.h>
+#include <eckit/memory/SharedPtr.h>
+#include <eckit/memory/ScopedPtr.h>
 
-#include "eckit/grib/GribHandle.h" ///< @todo this is to be removed
+#include "atlas/atlas_config.h"
+
+#ifdef ECKIT_HAVE_GRIB
+  #include <eckit/grib/GribHandle.h> ///< @todo this is to be removed
+#endif
 
 #include "atlas/Mesh.h"
 #include "atlas/Field.h"
@@ -33,9 +37,10 @@
 
 namespace eckit
 {
-    class PathName;
-    class DataHandle;
-	namespace grib { class GribHandle; }
+  class PathName;
+  class DataHandle;
+
+  namespace grib { class GribHandle; }
 }
 
 namespace atlas {
@@ -86,7 +91,7 @@ public: // methods
 
 private: // methods
 
-	Field::Ptr create_field( eckit::grib::GribHandle& );
+  Field::Ptr create_field( eckit::grib::GribHandle& );
 
 	bool checkConsistency() const;
 

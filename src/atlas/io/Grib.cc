@@ -1,9 +1,9 @@
 /*
  * (C) Copyright 1996-2014 ECMWF.
- * 
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
- * In applying this licence, ECMWF does not waive the privileges and immunities 
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
@@ -515,5 +515,5 @@ void Grib::write_gridspec_to_grib(const GridSpec& gspec, GribHandle& gh)
 } // namespace atlas
 
 #else
-#warning "Missing eckit::grib so cannot generate grib output"
+#warning "Missing eckit::grib so GRIB IO is not supported in Atlas"
 #endif

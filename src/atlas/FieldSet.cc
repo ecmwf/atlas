@@ -10,15 +10,20 @@
 
 #include <cstring>
 
-#include "eckit/exception/Exceptions.h"
-#include "eckit/log/Log.h"
-#include "eckit/filesystem/PathName.h"
-#include "eckit/io/DataHandle.h"
-#include "eckit/grib/GribFieldSet.h"
-#include "eckit/grib/GribField.h"
-#include "eckit/grib/GribHandle.h"
-#include "eckit/grib/GribParams.h"
-#include "eckit/utils/Translator.h"
+#include "atlas/atlas_config.h"
+
+#include <eckit/exception/Exceptions.h>
+#include <eckit/log/Log.h>
+#include <eckit/filesystem/PathName.h>
+#include <eckit/io/DataHandle.h>
+#include <eckit/utils/Translator.h>
+
+#ifdef ECKIT_HAVE_GRIB
+  #include <eckit/grib/GribFieldSet.h>
+  #include <eckit/grib/GribField.h>
+  #include <eckit/grib/GribHandle.h>
+  #include <eckit/grib/GribParams.h>
+#endif
 
 #include "atlas/Parameters.h"
 #include "atlas/util/ArrayView.h"
@@ -81,7 +86,7 @@ Field::Ptr FieldSet::create_field( GribHandle& gh )
 //        }
 #else
   throw eckit::Exception("eckit was built without GRIB support\n  --> Cannot create field from GribHandle", Here());
-	return Field::Ptr();
+  return Field::Ptr();
 #endif
 }
 
@@ -111,6 +116,7 @@ FieldSet::FieldSet( const eckit::PathName& fname ) :
 	fields_(),
 	grid_()
 {
+#ifdef ECKIT_HAVE_GRIB
     GribFieldSet gribfs(fname);
 
     if( gribfs.size() == 0 ) return;
@@ -134,18 +140,25 @@ FieldSet::FieldSet( const eckit::PathName& fname ) :
 
 	ASSERT( grid_ );
 	ASSERT( checkConsistency() );
+#else
+  throw eckit::Exception("eckit was built without GRIB support\n  --> Cannot construct FieldSet from grib", Here());
+#endif
 }
 
 FieldSet::FieldSet( const Buffer& buf ) :
 	fields_(),
 	grid_()
 {
+#ifdef ECKIT_HAVE_GRIB
     GribHandle gh( buf );
 
 	fields_.push_back( create_field(gh) ); // grid_ built inside
 
 	ASSERT( grid_ );
 	ASSERT( checkConsistency() );
+#else
+  throw eckit::Exception("eckit was built without GRIB support\n  --> Cannot construct FieldSet from grib buffer", Here());
+#endif
 }
 
 FieldSet::FieldSet(const Grid::Ptr grid, std::vector<std::string> nfields ) :
