@@ -33,6 +33,8 @@ ecbuild_use_package( PROJECT eckit VERSION 0.6 REQUIRED )
 
 ecbuild_declare_project()
 
+# this will be replaced once ecbuild exports subcomponents between packages
+
 list( FIND ECKIT_PACKAGES "ECKIT_GRIB" RESULT )
 if( NOT RESULT EQUAL -1  )
   set( ECKIT_HAVE_GRIB 1 )
@@ -58,7 +60,7 @@ if( ENABLE_FORTRAN )
   ecbuild_add_option( FEATURE FCTEST
                       DEFAULT ${ENABLE_TESTS}
                       DESCRIPTION "Fortran Unit Test Framework"
-                      REQUIRED_PACKAGES "PROJECT fctest VERSION 0.1.0" )
+					  REQUIRED_PACKAGES "PROJECT fctest VERSION 0.1" )
 endif()
 
 ### OMP ...
@@ -68,7 +70,7 @@ ecbuild_add_option( FEATURE OMP
 
 # !! TODO !! add test for OpenMP
 
-### MPI
+### MPI ...
 
 ecbuild_add_option( FEATURE MPI
                     DESCRIPTION "support for MPI distributed parallelism" )
@@ -95,6 +97,13 @@ if( ENABLE_MPI )
   endif()
 
 endif()
+
+### trans_api ...
+
+	ecbuild_add_option( FEATURE SHTRANS
+		DEFAULT ON
+		DESCRIPTION "Support for trasnformations between SH and Grid space"
+		REQUIRED_PACKAGES "PROJECT trans_api VERSION 0.1" )
 
 ### tesselation
 
