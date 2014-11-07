@@ -26,6 +26,24 @@
 #include "atlas/mpl/MPL.h"
 #include "atlas/mpl/GatherScatter.h"
 
+//#define DEBUGGING_PARFIELDS
+#ifdef DEBUGGING_PARFIELDS
+#define EDGE(jedge) "Edge("<<gidx(edge_nodes(jedge,0))<<" "<<gidx(edge_nodes(jedge,1))<<")"
+#define own1 12
+#define own2 17
+#define OWNED_EDGE(jedge) ((gidx(edge_nodes(jedge,0)) == own1 && gidx(edge_nodes(jedge,1)) == own2)\
+                        || (gidx(edge_nodes(jedge,0)) == own2 && gidx(edge_nodes(jedge,1)) == own1))
+#define per1 -1
+#define per2 -1
+#define PERIODIC_EDGE(jedge) ((gidx(edge_nodes(jedge,0)) == per1 && gidx(edge_nodes(jedge,1)) == per2)\
+                          ||  (gidx(edge_nodes(jedge,0)) == per2 && gidx(edge_nodes(jedge,1)) == per1))
+#define find1 12
+#define find2 17
+#define FIND_EDGE(jedge) ((gidx(edge_nodes(jedge,0)) == find1 && gidx(edge_nodes(jedge,1)) == find2)\
+                      ||  (gidx(edge_nodes(jedge,0)) == find2 && gidx(edge_nodes(jedge,1)) == find1))
+
+#endif
+
 namespace atlas {
 namespace actions {
 
@@ -327,6 +345,7 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
   if( ! edges.has_field("partition") ) edges.create_field<int>("partition",1) ;
   ArrayView<int,1> edge_part  ( edges.field("partition") );
   IndexView<int,2> edge_nodes ( edges.field("nodes")     );
+  IndexView<int,2> edge_to_elem ( edges.field("to_elem")     );
 
   ArrayView<int,1> is_pole_edge;
   bool has_pole_edges = false;
@@ -339,17 +358,102 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
   ArrayView<int,1> node_part  ( nodes.field("partition") );
   ArrayView<double,2> latlon  ( nodes.field("coordinates") );
   ArrayView<int,   1> flags   ( nodes.field("flags")       );
+#ifdef DEBUGGING_PARFIELDS
+  ArrayView<int,   1> gidx    ( nodes.field("glb_idx")       );
+#endif
+  std::vector< IndexView<int,2> > elem_nodes( edges.mesh().nb_function_spaces() );
+  std::vector< ArrayView<int,1> > elem_part ( edges.mesh().nb_function_spaces() );
+  std::vector< ArrayView<int,1> > elem_glb_idx ( edges.mesh().nb_function_spaces() );
+
+  for( int func_space_idx=0; func_space_idx<edges.mesh().nb_function_spaces(); ++func_space_idx)
+  {
+    FunctionSpace& elements = edges.mesh().function_space(func_space_idx);
+    if( elements.metadata().get<int>("type") == Entity::ELEMS )
+    {
+      elem_nodes  [func_space_idx] = IndexView<int,2>( elements.field("nodes") );
+      elem_part   [func_space_idx] = ArrayView<int,1>( elements.field("partition") );
+      elem_glb_idx[func_space_idx] = ArrayView<int,1>( elements.field("glb_idx") );
+//      int nb_elems = elem_nodes[func_space_idx].shape(0);
+//      int nb_nodes_per_elem = elem_nodes[func_space_idx].shape(1);
+//      for (int elem=0; elem<nb_elems; ++elem)
+//      {
+//        for (int n=0; n<nb_nodes_per_elem; ++n)
+//        {
+//          int node = elem_nodes[func_space_idx](elem,n);
+//          node_to_elem[node].push_back( ElementRef(elements.index(),elem) );
+//        }
+//      }
+    }
+  }
+
 
   PeriodicTransform transform;
 
-  // Set all edges partition to the minimum partition number of nodes
   int nb_edges = edges.shape(0);
+
+  Array<int> periodic(nb_edges);
+
   for( int jedge=0; jedge<nb_edges; ++jedge )
   {
-    int p1 = node_part( edge_nodes(jedge,0) );
-    int p2 = node_part( edge_nodes(jedge,1) );
-    edge_part(jedge) = std::min( p1,p2 );            // ---> Minimum partition of 2 nodes assigned
-  }
+    periodic[jedge] = 0;
+    int ip1 = edge_nodes(jedge,0);
+    int ip2 = edge_nodes(jedge,1);
+    int pn1 = node_part( ip1 );
+    int pn2 = node_part( ip2 );
+    if( pn1 == pn2 )
+      edge_part(jedge) == pn1;
+    else
+    {
+      if( edge_to_elem(jedge,2) < 0 ) // This is a edge at partition boundary
+      {
+        if( (Topology::check(flags(ip1),Topology::PERIODIC) && Topology::check(flags(ip2),Topology::PERIODIC)) ||
+            (Topology::check(flags(ip1),Topology::PERIODIC)          && Topology::check(flags(ip2),Topology::BC|Topology::WEST)) ||
+            (Topology::check(flags(ip1),Topology::BC|Topology::WEST) && Topology::check(flags(ip2),Topology::PERIODIC)) )
+        {
+          edge_part(jedge) = -1;
+          if( Topology::check(flags(ip1),Topology::EAST ) )
+            periodic[jedge] = -1;
+          else
+            periodic[jedge] = +1;
+        }
+        else if( Topology::check(flags(ip1),Topology::BC) && Topology::check(flags(ip2),Topology::BC) )
+        {
+          int pe1 = elem_part[ edge_to_elem(jedge,0) ](edge_to_elem(jedge,1));
+          int pmx = std::max(pn1,pn2);
+          if( pe1 == pmx )
+            edge_part(jedge) = pmx;
+          else
+            edge_part(jedge) = std::min(pn1,pn2);;
+        }
+        else
+        {
+          edge_part(jedge) = -1;
+        }
+      }
+      else
+      {
+        int pe1 = elem_part[ edge_to_elem(jedge,0) ](edge_to_elem(jedge,1));
+        int pe2 = elem_part[ edge_to_elem(jedge,2) ](edge_to_elem(jedge,3));
+        int pc[] = {0,0};
+        if( pn1 == pe1 ) ++pc[0];
+        if( pn1 == pe2 ) ++pc[0];
+        if( pn2 == pe1 ) ++pc[1];
+        if( pn2 == pe2 ) ++pc[1];
+        if     ( pc[0] > pc[1] ) edge_part(jedge) = pn1;
+        else if( pc[0] < pc[1] ) edge_part(jedge) = pn2;
+        else edge_part(jedge) = std::min(pn1,pn2);
+      }
+    }
+#ifdef DEBUGGING_PARFIELDS
+    if( periodic[jedge] )
+      DEBUG(EDGE(jedge)<<" is periodic  " << periodic[jedge]);
+#endif
+
+#ifdef DEBUGGING_PARFIELDS
+    if( PERIODIC_EDGE(jedge) )
+      DEBUG( EDGE(jedge) <<": edge_part="<<edge_part(jedge)<<"  periodic="<<periodic[jedge]);
+#endif
+ }
 
   // In the periodic halo's, the partition MAY be assigned wrongly
   // following scoped piece of code will fix this.
@@ -357,12 +461,15 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
     std::map<int,int> lookup;
     int varsize=2;
     double centroid[2];
-    std::vector< std::vector<int> > send_possibly_wrong( MPL::size() );
-    std::vector< std::vector<int> > recv_possibly_wrong( MPL::size() );
+    std::vector< std::vector<int> > send_unknown( MPL::size() );
+    std::vector< std::vector<int> > recv_unknown( MPL::size() );
     for( int jedge=0; jedge<nb_edges; ++jedge )
     {
       int ip1 = edge_nodes(jedge,0);
       int ip2 = edge_nodes(jedge,1);
+      int pn1 = node_part( ip1 );
+      int pn2 = node_part( ip2 );
+
       centroid[XX] = 0.5*(latlon( ip1, XX ) + latlon( ip2, XX ) );
       centroid[YY] = 0.5*(latlon( ip1, YY ) + latlon( ip2, YY ) );
       if( has_pole_edges && is_pole_edge(jedge) )
@@ -371,37 +478,37 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
       }
       LatLonPoint ll(centroid);
 
-      bool possibly_wrong(false);
-
-      int west_periodic = Topology::PERIODIC|Topology::WEST;
-      int east_periodic = Topology::PERIODIC|Topology::EAST;
-      if(    (Topology::check_all(flags(ip1),west_periodic) || Topology::check_all(flags(ip2),west_periodic))   // WEST boundary
-          || (Topology::check_all(flags(ip1),east_periodic) && Topology::check_all(flags(ip2),east_periodic)) ) // EAST boundary
-      {
-        possibly_wrong = true;
-        if( Topology::check(flags(ip1),Topology::WEST) || Topology::check(flags(ip2),Topology::WEST) )
-        {
-          transform(ll,+1);
-        }
-        if( Topology::check(flags(ip1),Topology::EAST) || Topology::check(flags(ip2),Topology::EAST) )
-        {
-          transform(ll,-1);
-        }
-      }
-
+      transform(ll,periodic[jedge]);
       int uid = ll.uid();
-      if( edge_part(jedge)==mypart && !possibly_wrong )
+
+      if( edge_part(jedge)==mypart )
       {
         lookup[ uid ] = jedge;
+#ifdef DEBUGGING_PARFIELDS
+        if( OWNED_EDGE(jedge) )
+          DEBUG_VAR( uid );
+#endif
       }
       else
       {
-        send_possibly_wrong[ edge_part(jedge) ].push_back( uid   );
-        send_possibly_wrong[ edge_part(jedge) ].push_back( jedge );
+        if( edge_part(jedge)<0 )
+        {
+          ASSERT(pn1!=pn2);
+          send_unknown[ pn1 ].push_back( uid   );
+          send_unknown[ pn1 ].push_back( jedge );
+          send_unknown[ pn2 ].push_back( uid   );
+          send_unknown[ pn2 ].push_back( jedge );
+
+#ifdef DEBUGGING_PARFIELDS
+          if( PERIODIC_EDGE(jedge) )
+            DEBUG_VAR( uid );
+#endif
+
+        }
       }
     }
 
-    MPL::Alltoall( send_possibly_wrong, recv_possibly_wrong );
+    MPL::Alltoall( send_unknown, recv_unknown );
 
     // So now we have identified all possible edges with wrong partition.
     // We still need to check if it is actually wrong. This can be achieved
@@ -409,35 +516,65 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
     // assigned edge partition. If the edge is not found on that partition,
     // then its other node must be the edge partition.
 
-    std::vector< std::vector<int> > send_notfound( MPL::size() );
-    std::vector< std::vector<int> > recv_notfound( MPL::size() );
+    std::vector< std::vector<int> > send_found( MPL::size() );
+    std::vector< std::vector<int> > recv_found( MPL::size() );
 
     for( int jpart=0; jpart<nparts; ++jpart )
     {
-      ArrayView<int,2> recv_edge( recv_possibly_wrong[ jpart ].data(),
-          make_shape(recv_possibly_wrong[ jpart ].size()/varsize,varsize) );
+      ArrayView<int,2> recv_edge( recv_unknown[ jpart ].data(),
+          make_shape(recv_unknown[ jpart ].size()/varsize,varsize) );
       for( int jedge=0; jedge<recv_edge.shape(0); ++jedge )
       {
         int uid      = recv_edge(jedge,0);
         int recv_idx = recv_edge(jedge,1);
-        if( lookup.count(uid) == 0 )
-          send_notfound[ jpart ].push_back( recv_idx );
+        if( lookup.count(uid) )
+        {
+          send_found[ jpart ].push_back( recv_idx );
+        }
       }
     }
 
-    MPL::Alltoall( send_notfound, recv_notfound );
+    MPL::Alltoall( send_found, recv_found );
 
     for( int jpart=0; jpart<nparts; ++jpart )
     {
-      for( int jedge=0; jedge<recv_notfound[jpart].size(); ++jedge )
+      for( int jedge=0; jedge<recv_found[jpart].size(); ++jedge )
       {
-        int iedge = recv_notfound[jpart][jedge];
-        int p1 = node_part( edge_nodes(iedge,0) );
-        int p2 = node_part( edge_nodes(iedge,1) );
-        // Minimum partition of 2 nodes was wrong, so now assign maximum
-        edge_part(iedge) = std::max(p1,p2);
+        int iedge = recv_found[jpart][jedge];
+#ifdef DEBUGGING_PARFIELDS
+        DEBUG(EDGE(iedge)<< " found on part " << jpart);
+        if( edge_part(iedge) != -1 )
+        {
+          std::stringstream msg;
+          msg << "Edge ("<<gidx(edge_nodes(iedge,0))<<" "<<gidx(edge_nodes(iedge,1))
+              << ") was already found on part " << edge_part(iedge);
+          throw eckit::Exception(msg.str(),Here());
+        }
+#endif
+        ASSERT( edge_part(iedge) == -1 );
+        edge_part(iedge) = jpart;
       }
     }
+  }
+  for( int jedge=0; jedge<nb_edges; ++jedge )
+  {
+    int ip1 = edge_nodes(jedge,0);
+    int ip2 = edge_nodes(jedge,1);
+    if( edge_part(jedge) == -1 )
+    {
+      std::stringstream msg;
+#ifdef DEBUGGING_PARFIELDS
+      msg << EDGE(jedge) << " was not found on part "<< node_part(ip1) << " or " << node_part(ip2);
+#else
+      msg << "Edge was not found on part "<< node_part(ip1) << " or " <<node_part(ip2);
+#endif
+      throw eckit::SeriousBug(msg.str(),Here());
+    }
+
+#ifdef DEBUGGING_PARFIELDS
+    if( PERIODIC_EDGE(jedge) )
+      DEBUG_VAR( "           the part is " << edge_part(jedge) );
+#endif
   }
   /// TODO: Make sure that the edge-partition is at least one of the partition numbers of the
   /// neighbouring elements.
@@ -458,6 +595,9 @@ FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes 
   ArrayView<int,   1> edge_part  ( edges.field("partition")   );
   ArrayView<double,2> latlon     ( nodes.field("coordinates") );
   ArrayView<int,   1> flags      ( nodes.field("flags")       );
+#ifdef DEBUGGING_PARFIELDS
+  ArrayView<int,   1> gidx      ( nodes.field("glb_idx")       );
+#endif
 
   ArrayView<int,1> is_pole_edge;
   bool has_pole_edges = false;
@@ -470,7 +610,6 @@ FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes 
   const int nb_nodes = nodes.shape(0);
   const int nb_edges = edges.shape(0);
 
-  int varsize=2;
   double centroid[2];
   std::vector< std::vector<int> > send_needed( MPL::size() );
   std::vector< std::vector<int> > recv_needed( MPL::size() );
@@ -493,20 +632,15 @@ FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes 
 
     bool needed(false);
 
-    int west_periodic = Topology::PERIODIC|Topology::WEST;
-    int east_periodic = Topology::PERIODIC|Topology::EAST;
-    if(    (Topology::check_all(flags(ip1),west_periodic) || Topology::check_all(flags(ip2),west_periodic))   // WEST boundary
-        || (Topology::check_all(flags(ip1),east_periodic) && Topology::check_all(flags(ip2),east_periodic)) ) // EAST boundary
+    if( (Topology::check(flags(ip1),Topology::PERIODIC) && Topology::check(flags(ip2),Topology::PERIODIC)) ||
+        (Topology::check(flags(ip1),Topology::PERIODIC)          && Topology::check(flags(ip2),Topology::BC|Topology::WEST)) ||
+        (Topology::check(flags(ip1),Topology::BC|Topology::WEST) && Topology::check(flags(ip2),Topology::PERIODIC)) )
     {
       needed = true;
-      if( Topology::check(flags(ip1),Topology::WEST) || Topology::check(flags(ip2),Topology::WEST) )
-      {
-        transform(ll,+1);
-      }
-      if( Topology::check(flags(ip1),Topology::EAST) || Topology::check(flags(ip2),Topology::EAST) )
-      {
+      if( Topology::check(flags(ip1),Topology::EAST ) )
         transform(ll,-1);
-      }
+      else
+        transform(ll,+1);
     }
 
     int uid = ll.uid();
@@ -514,15 +648,30 @@ FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes 
     {
       lookup[ uid ] = jedge;
       edge_ridx(jedge) = jedge;
+
+#ifdef DEBUGGING_PARFIELDS
+      if( FIND_EDGE(jedge) )
+      {
+        DEBUG( "Found "<<EDGE(jedge));
+      }
+#endif
+
     }
     else // All ghost edges PLUS the periodic edges identified edges above fall here
     {
       send_needed[ edge_part(jedge) ].push_back( uid   );
       send_needed[ edge_part(jedge) ].push_back( jedge );
+#ifdef DEBUGGING_PARFIELDS
+      send_needed[ edge_part(jedge) ].push_back( gidx(ip1) );
+      send_needed[ edge_part(jedge) ].push_back( gidx(ip2) );
+#endif
       sendcnt++;
     }
   }
-
+  int varsize=2;
+#ifdef DEBUGGING_PARFIELDS
+  varsize=4;
+#endif
   MPL::Alltoall( send_needed, recv_needed );
 
   std::vector< std::vector<int> > send_found( MPL::size() );
@@ -546,7 +695,12 @@ FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes 
       else
       {
         std::stringstream msg;
-        msg << "Edge with uid " << recv_uid << " requested by rank ["<<jpart<<"]";
+#ifdef DEBUGGING_PARFIELDS
+        msg << "Edge("<<recv_edge(jedge,2)<<" "<<recv_edge(jedge,3)<<")";
+#else
+        msg << "Edge with uid " << recv_uid;
+#endif
+        msg << " requested by rank ["<<jpart<<"]";
         msg << " that should be owned is not found. This could be because no halo was built.";
         //throw eckit::SeriousBug(msg.str(),Here());
         eckit::Log::warning() << msg.str() << " @ " << Here() << std::endl;
