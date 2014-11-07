@@ -8,11 +8,11 @@ reduced_gg_pl_160_grib2.tmpl
 reduced_gg_pl_640_grib1.tmpl    
 regular_ll_pl_grib1.tmpl
 gg_sfc_grib2.tmpl                   
-reduced_gg_pl_2000_grib1.tmpl  
+# reduced_gg_pl_2000_grib1.tmpl  
 reduced_gg_pl_640_grib2.tmpl    
 regular_ll_pl_grib2.tmpl
 GRIB1.tmpl                          
-reduced_gg_pl_2000_grib2.tmpl  
+# reduced_gg_pl_2000_grib2.tmpl  
 reduced_gg_pl_80_grib1.tmpl     
 regular_ll_sfc_grib1.tmpl
 GRIB2.tmpl                          
