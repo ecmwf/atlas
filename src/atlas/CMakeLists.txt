@@ -160,6 +160,8 @@ PointSet.cc
 PointSet.h
 PolarStereoGraphic.cc
 PolarStereoGraphic.h
+ReducedGrid.h
+ReducedGrid.cc
 ReducedLatLon.cc
 ReducedLatLon.h
 RegularGG.cc
