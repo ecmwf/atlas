@@ -13,36 +13,31 @@
 #ifndef RGG_h
 #define RGG_h
 
-#include <math.h>
-#include <vector>
-#include <string>
+#include "atlas/ReducedGrid.h"
 
 namespace atlas {
 namespace meshgen {
 
+enum AngleUnit{ DEG=0, RAD=1 };
+
+void colat_to_lat(const int N, const double colat[], const AngleUnit, std::vector<double>& lats, const AngleUnit);
+
+void predict_gaussian_colatitudes_hemisphere(const int N, std::vector<double>& colat);
+
+void predict_gaussian_latitudes(const int _N, std::vector<double>& _lats);
+
+
 /// @brief Reduced Gaussian Grid
-class RGG
+class RGG : public ReducedGrid
 {
 public:
-  RGG() {}
+  RGG(): ReducedGrid() {}
   RGG(const int nlat, const int lon[]);
   RGG(const size_t nlat, const long lon[]);
-  int nlat() const { return lat_.size(); }
-  int nlon(int jlat) const { return lon_[jlat]; }
-  int nlonmax() const { return lon_[nlat()/2]; }
+
   int ngptot() const;
-  const std::vector<int>& nlon() const { return lon_; }
-
-  double lon(const int jlon, const int jlat) const
-  {
-    return 2.*M_PI/static_cast<double>(nlon(jlat))*static_cast<double>(jlon);
-  }
-  double lat(const int jlat) const { return lat_[jlat]; }
-  const std::vector<double>& lat() const { return lat_; }
-
 protected:
-  std::vector<double> lat_;
-  std::vector<int>    lon_;
+  void setup_rtable_hemisphere(const int N, const int lon[], const double colat[], const AngleUnit);
 };
 
 /// @brief Gaussian Grid

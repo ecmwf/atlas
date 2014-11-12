@@ -18,103 +18,103 @@
 namespace atlas {
 namespace meshgen {
 
-RGG::RGG(const int nlat, const int lon[])
+static const double rad_to_deg = 180.*M_1_PI;
+
+void colat_to_lat(const int N, const double colat[], const AngleUnit colat_unit, std::vector<double>& lats, const AngleUnit lat_unit)
 {
-  /*
-  First prediction of colatitudes
-  */
-  std::vector<double> colat(nlat);
-  double z;
-  for( int i=0; i<nlat; ++i )
+  lats.resize(2*N);
+  std::copy( colat, colat+N, lats.begin() );
+  std::reverse_copy( colat, colat+N, lats.begin()+N );
+  double pole = colat_unit == DEG ? 90. : M_PI_2;
+  for (int i=0; i<N; ++i)
+    lats[i]=pole-lats[i];
+  for (int i=N; i<2*N; ++i)
+    lats[i]=-pole+lats[i];
+
+  if ( colat_unit != lat_unit)
   {
-    z = (4.*(i+1.)-1.)*M_PI/(4.*2.*nlat+2.);
-    colat[i] = z+1./(tan(z)*(8.*(2.*nlat)*(2.*nlat)));
+    double conversion = colat_unit == DEG ? M_PI/180. : M_1_PI*180.;
+    for (int i=0; i<2*N; ++i)
+    {
+      lats[i] *= conversion;
+    }
   }
-  /*
-  Fill in final structures
-  */
-  lat_.resize(2*nlat);
-  lon_.resize(2*nlat);
-  std::copy( lon, lon+nlat, lon_.begin() );
-  std::reverse_copy( lon, lon+nlat, lon_.begin()+nlat );
-  std::copy( colat.begin(), colat.begin()+nlat, lat_.begin() );
-  std::reverse_copy( colat.begin(), colat.begin()+nlat, lat_.begin()+nlat );
-  for (int i=0; i<nlat; ++i)
-    lat_[i]=M_PI/2.-lat_[i];
-  for (int i=nlat; i<2*nlat; ++i)
-    lat_[i]=-M_PI/2.+lat_[i];
-}
-RGG::RGG(const size_t nlat, const long lon[])
-{
-  /*
-  First prediction of colatitudes
-  */
-  std::vector<double> colat(nlat);
-  double z;
-  for( int i=0; i<nlat; ++i )
-  {
-    z = (4.*(i+1.)-1.)*M_PI/(4.*2.*nlat+2.);
-    colat[i] = z+1./(tan(z)*(8.*(2.*nlat)*(2.*nlat)));
-  }
-  /*
-  Fill in final structures
-  */
-  lat_.resize(2*nlat);
-  lon_.resize(2*nlat);
-  std::copy( lon, lon+nlat, lon_.begin() );
-  std::reverse_copy( lon, lon+nlat, lon_.begin()+nlat );
-  std::copy( colat.begin(), colat.begin()+nlat, lat_.begin() );
-  std::reverse_copy( colat.begin(), colat.begin()+nlat, lat_.begin()+nlat );
-  for (int i=0; i<nlat; ++i)
-    lat_[i]=M_PI/2.-lat_[i];
-  for (int i=nlat; i<2*nlat; ++i)
-    lat_[i]=-M_PI/2.+lat_[i];
 }
 
+void predict_gaussian_colatitudes_hemisphere(const int N, std::vector<double>& colat)
+{
+  colat.resize(N);
+  double z;
+  for( int i=0; i<N; ++i )
+  {
+    z = (4.*(i+1.)-1.)*M_PI/(4.*2.*N+2.);
+    colat[i] = ( z+1./(tan(z)*(8.*(2.*N)*(2.*N))) ) * rad_to_deg;
+  }
+}
+
+void predict_gaussian_latitudes(const int N, std::vector<double>& lats)
+{
+  std::vector<double> colat;
+  predict_gaussian_colatitudes_hemisphere(N,colat);
+  colat_to_lat(N,colat.data(),DEG,lats,DEG);
+}
+
+
+RGG::RGG(const int N, const int lon[]) : ReducedGrid()
+{
+  std::vector<double> lats;
+  std::vector<int>    nlons(2*N);
+  std::copy( lon, lon+N, nlons.begin() );
+  std::reverse_copy( lon, lon+N, nlons.begin()+N );
+  predict_gaussian_latitudes(N,lats);
+  setup(2*N,nlons.data(),lats.data());
+}
+
+RGG::RGG(const size_t N, const long lon[])
+{
+  std::vector<double> lats;
+  std::vector<int>    nlons(2*N);
+  std::copy( lon, lon+N, nlons.begin() );
+  std::reverse_copy( lon, lon+N, nlons.begin()+N );
+  predict_gaussian_latitudes(N,lats);
+  setup(2*N,nlons.data(),lats.data());
+}
+
+void RGG::setup_rtable_hemisphere(const int N, const int lon[], const double colat[], const AngleUnit colat_unit)
+{
+  std::vector<int> nlons(2*N);
+  std::copy( lon, lon+N, nlons.begin() );
+  std::reverse_copy( lon, lon+N, nlons.begin()+N );
+  std::vector<double> lats;
+  colat_to_lat(N,colat,colat_unit,lats,DEG);
+  setup(2*N,nlons.data(),lats.data());
+}
 
 int RGG::ngptot() const
 {
-  return std::accumulate(lon_.data(),lon_.data()+lon_.size(),0);
+  return nPoints();
 }
 
-GG::GG(int nlon, int nlat) : RGG()
+GG::GG(int nlon, int N) : RGG()
 {
-  /*
-  First prediction of colatitudes
-  */
-  std::vector<double> colat(nlat);
-  double z;
-  for( int i=0; i<nlat; ++i )
-  {
-    z = (4.*(i+1.)-1.)*M_PI/(4.*2.*nlat+2.);
-    colat[i] = z+1./(tan(z)*(8.*(2.*nlat)*(2.*nlat)));
-  }
-  /*
-  Fill in final structures
-  */
-  lon_.assign(2*nlat,nlon);
-  lat_.resize(2*nlat);
-  std::copy( colat.begin(), colat.begin()+nlat, lat_.begin() );
-  std::reverse_copy( colat.begin(), colat.begin()+nlat, lat_.begin()+nlat );
-  for (int i=0; i<nlat; ++i)
-    lat_[i]=M_PI/2.-lat_[i];
-  for (int i=nlat; i<2*nlat; ++i)
-    lat_[i]=-M_PI/2.+lat_[i];
+  std::vector<double> lats;
+  std::vector<int>    nlons(2*N,nlon);
+  predict_gaussian_latitudes(N,lats);
+  setup(2*N,nlons.data(),lats.data());
 }
 
 
 RegularGrid::RegularGrid(int nlon, int nlat) : RGG()
 {
-  double dy = M_PI/static_cast<double>(nlat);
+  std::vector<double> lats(nlat);
+  std::vector<int>    nlons(nlat,nlon);
 
-  lon_.resize(nlat);
-  lon_.assign(nlat,nlon);
-
-  lat_.resize(nlat);
+  double dy = 180./static_cast<double>(nlat);
   for( int i=0; i<nlat; ++i )
   {
-    lat_[i] = M_PI_2 - (i+0.5)*dy;
+    lats[i] = 90. - (i+0.5)*dy;
   }
+  setup(nlat,nlons.data(),lats.data());
 }
 
 // ------------------------------------------------------------------
@@ -189,10 +189,10 @@ int  atlas__RGG__nlat(RGG* This)
   return This->nlat();
 }
 
-void atlas__RGG__nlon(RGG* This, const int* &nlon, int &size)
+void atlas__RGG__nlon(RGG* This, const int* &nlons, int &size)
 {
-  nlon = This->nlon().data();
-  size = This->nlon().size();
+  nlons = This->nlons().data();
+  size  = This->nlons().size();
 }
 
 int atlas__RGG__ngptot(RGG* This)
@@ -202,7 +202,7 @@ int atlas__RGG__ngptot(RGG* This)
 
 double atlas__RGG__lon(RGG* This,int jlon,int jlat)
 {
-  return This->lon(jlon,jlat);
+  return This->lon(jlat,jlon);
 }
 
 double atlas__RGG__lat(RGG* This,int jlat)
@@ -210,9 +210,9 @@ double atlas__RGG__lat(RGG* This,int jlat)
   return This->lat(jlat);
 }
 
-void atlas__RGG__lats(RGG* This, const double* &lats, int &size)
+void atlas__RGG__lats(RGG* This, const double* &lat, int &size)
 {
-  lats = This->lat().data();
+  lat  = This->lat().data();
   size = This->lat().size();
 }
 

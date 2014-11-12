@@ -105,7 +105,7 @@ RGGMeshGenerator::RGGMeshGenerator()
 //  {
 //    for( int jlon=0; jlon<rgg.nlon(jlat); ++jlon)
 //    {
-//      nodes[n].x = static_cast<int>(rgg.lon(jlon,jlat)*1e6);
+//      nodes[n].x = static_cast<int>(rgg.lon(jlat,jlon)*1e6);
 //      nodes[n].y = static_cast<int>(rgg.lat(jlat)*1e6);
 //      nodes[n].n = n;
 //      ++n;
@@ -134,7 +134,7 @@ Mesh* RGGMeshGenerator::generate(const RGG& rgg)
   {
     for( int jlon=0; jlon<rgg.nlon(jlat); ++jlon)
     {
-      nodes[n].x = static_cast<int>(rgg.lon(jlon,jlat)*1e6);
+      nodes[n].x = static_cast<int>(rgg.lon(jlat,jlon)*1e6);
 			if( stagger ) nodes[n].x += static_cast<int>(1e6*M_PI/static_cast<double>(rgg.nlon(jlat)));
       nodes[n].y = static_cast<int>(rgg.lat(jlat)*1e6);
       nodes[n].n = n;
@@ -286,10 +286,10 @@ void RGGMeshGenerator::generate_region(const RGG& rgg, const std::vector<int>& p
       //eckit::Log::info(Here())  << ipS1 << "("<<pS2<<") " << ipS2 <<"("<<pS2<<")" <<  std::endl;
 
 
-      xN1 = rgg.lon(ipN1,latN);
-      xN2 = rgg.lon(ipN2,latN);
-      xS1 = rgg.lon(ipS1,latS);
-      xS2 = rgg.lon(ipS2,latS);
+      xN1 = rgg.lon(latN,ipN1);
+      xN2 = rgg.lon(latN,ipN2);
+      xS1 = rgg.lon(latS,ipS1);
+      xS2 = rgg.lon(latS,ipS2);
 
 			if( stagger && (latN+1)%2==0 ) xN1 += M_PI/static_cast<double>(rgg.nlon(latN));
 			if( stagger && (latN+1)%2==0 ) xN2 += M_PI/static_cast<double>(rgg.nlon(latN));
@@ -704,10 +704,11 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,
     offset_loc[ilat]=l;
     l+=region.lat_end[jlat]-region.lat_begin[jlat]+1;
     double y = rgg.lat(jlat);
+    std::cout << y << std::endl;
     for( int jlon=region.lat_begin[jlat]; jlon<=region.lat_end[jlat]; ++jlon )
     {
       n = offset_glb[jlat] + jlon;
-      double x = rgg.lon(jlon,jlat);
+      double x = rgg.lon(jlat,jlon);
       if( stagger && (jlat+1)%2==0 ) x += M_PI/static_cast<double>(rgg.nlon(jlat));
 
       coords(jnode,XX) = x;
@@ -728,7 +729,7 @@ Mesh* RGGMeshGenerator::generate_mesh(const RGG& rgg,
     if( !three_dimensional &&  region.lat_end[jlat]==rgg.nlon(jlat)-1 ) // add periodic point
     {
       ++l;
-      double x = rgg.lon(rgg.nlon(jlat),jlat);
+      double x = rgg.lon(jlat,rgg.nlon(jlat));
       if( stagger && (jlat+1)%2==0 ) x += M_PI/static_cast<double>(rgg.nlon(jlat));
 
       coords(jnode,XX) = x;

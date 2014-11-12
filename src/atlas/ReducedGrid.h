@@ -76,6 +76,7 @@ protected:
   std::vector<double> lat_;   ///<! Latitude values
   std::vector<int>    nlons_;  ///<! Number of points per latitude (int32 type for Fortran interoperability)
   size_t              npts_;   ///<! Total number of unique points in the grid
+  int                 nlonmax_;
   BoundBox            bbox_;   ///<! bounding box for data, only points within are considered part of grid
 };
 

@@ -36,6 +36,7 @@ void ReducedGrid::setup(const int nlat, const int nlons[], const double lats[])
   double lon_min(1000), lon_max(-1000);
   for( int jlat=0; jlat<nlat; ++jlat )
   {
+    nlonmax_ = std::max(nlon(jlat),nlonmax_);
     lon_min = std::min(lon_min,lon(jlat,0));
     lon_max = std::max(lon_max,lon(jlat,nlon(jlat)-1));
     npts_ += nlons_[jlat];
@@ -149,7 +150,7 @@ int ReducedGrid::nlon(int jlat) const
 
 int ReducedGrid::nlonmax() const
 {
-  return nlons_[nlat()/2];
+  return nlonmax_;
 }
 
 const std::vector<int>&  ReducedGrid::nlons() const

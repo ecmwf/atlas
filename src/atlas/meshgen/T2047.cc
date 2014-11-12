@@ -1,9 +1,9 @@
 /*
  * (C) Copyright 1996-2014 ECMWF.
- * 
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
- * In applying this licence, ECMWF does not waive the privileges and immunities 
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
@@ -16,10 +16,10 @@
 
 namespace atlas {
 namespace meshgen {
-  
+
 T2047::T2047()
 {
-  int nlat=1024;
+  int N=1024;
   int lon[] = {
     18,
     25,
@@ -1046,7 +1046,7 @@ T2047::T2047()
     4096,
     4096
   };
-double colat[] = {    
+double colat[] = {
         0.00117394461011356460,
     0.00269469272905833741,
     0.00422442168756934858,
@@ -2072,17 +2072,7 @@ double colat[] = {
     1.56849591730501991549,
     1.57002952363160419580
   };
-  
-  lat_.resize(2*nlat);
-  lon_.resize(2*nlat);
-  std::copy( lon, lon+nlat, lon_.begin() );
-  std::reverse_copy( lon, lon+nlat, lon_.begin()+nlat );
-  std::copy( colat, colat+nlat, lat_.begin() );
-  std::reverse_copy( colat, colat+nlat, lat_.begin()+nlat );
-  for (int i=0; i<nlat; ++i)
-    lat_[i]=M_PI/2.-lat_[i];
-  for (int i=nlat; i<2*nlat; ++i)
-    lat_[i]=-M_PI/2.+lat_[i];
+  setup_rtable_hemisphere(N,lon,colat,RAD);
 }
 
 } // namespace meshgen
