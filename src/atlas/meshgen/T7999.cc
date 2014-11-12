@@ -4024,9 +4024,9 @@ T7999::T7999()
     16000
   };
 
-  std::vector<double> colat;
-  predict_gaussian_colatitudes_hemisphere(N,colat);
-  setup_rtable_hemisphere(N,lon,colat.data(),DEG);
+  std::vector<double> lat(N);
+  predict_gaussian_latitudes_hemisphere(N,lat.data());
+  setup_lat_hemisphere(N,lon,lat.data(),DEG);
 }
 
 } // namespace meshgen

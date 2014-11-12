@@ -20,11 +20,11 @@ namespace meshgen {
 
 enum AngleUnit{ DEG=0, RAD=1 };
 
-void colat_to_lat(const int N, const double colat[], const AngleUnit, std::vector<double>& lats, const AngleUnit);
+void colat_to_lat_hemisphere(const int N, const double colat[], double lats[], const AngleUnit unit);
 
-void predict_gaussian_colatitudes_hemisphere(const int N, std::vector<double>& colat);
+void predict_gaussian_colatitudes_hemisphere(const int N, double colat[]);
 
-void predict_gaussian_latitudes(const int _N, std::vector<double>& _lats);
+void predict_gaussian_latitudes_hemisphere(const int N, double lat[]);
 
 
 /// @brief Reduced Gaussian Grid
@@ -35,9 +35,9 @@ public:
   RGG(const int nlat, const int lon[]);
   RGG(const size_t nlat, const long lon[]);
 
-  int ngptot() const;
 protected:
-  void setup_rtable_hemisphere(const int N, const int lon[], const double colat[], const AngleUnit);
+  void setup_colat_hemisphere(const int N, const int lon[], const double colat[], const AngleUnit);
+  void setup_lat_hemisphere(const int N, const int lon[], const double lat[], const AngleUnit);
 };
 
 /// @brief Gaussian Grid

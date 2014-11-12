@@ -26,9 +26,9 @@ public:
 
 TestGrid::TestGrid(int N, int lon[]) : RGG()
 {
-  std::vector<double> colat;
-  meshgen::predict_gaussian_colatitudes_hemisphere(N,colat);
-  setup_rtable_hemisphere(N,lon,colat.data(),meshgen::DEG);
+  std::vector<double> colat(N);
+  meshgen::predict_gaussian_colatitudes_hemisphere(N,colat.data());
+  setup_colat_hemisphere(N,lon,colat.data(),meshgen::DEG);
 }
 
 Mesh::Ptr generate_mesh( const meshgen::RGG& rgg )

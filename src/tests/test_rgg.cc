@@ -50,18 +50,18 @@ DebugMesh::DebugMesh()
     22,
     22,
   };
-  std::vector<double> colat;
-  predict_gaussian_colatitudes_hemisphere(N,colat);
-  setup_rtable_hemisphere(N,lon,colat.data(),DEG);
+  std::vector<double> colat(N);
+  predict_gaussian_colatitudes_hemisphere(N,colat.data());
+  setup_colat_hemisphere(N,lon,colat.data(),DEG);
 }
 
 
 class MinimalMesh:   public RGG { public: MinimalMesh(int N, int lon[]); };
 MinimalMesh::MinimalMesh(int N, int lon[])
 {
-  std::vector<double> colat;
-  predict_gaussian_colatitudes_hemisphere(N,colat);
-  setup_rtable_hemisphere(N,lon,colat.data(),DEG);
+  std::vector<double> colat(N);
+  predict_gaussian_colatitudes_hemisphere(N,colat.data());
+  setup_colat_hemisphere(N,lon,colat.data(),DEG);
 }
 
 double compute_latlon_area(Mesh& mesh)
@@ -303,18 +303,22 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
   int triags[] = { 42, 13, 12, 13, 12, 14,  0,  1,  0,  1,  1,  0,  1,  0, 14, 12, 13, 11, 14, 42};
   int nb_owned = 0;
 
-  std::vector<int> all_owned    ( grid.ngptot()+grid.nlat()+1, -1 );
+  std::vector<int> all_owned    ( grid.nPoints()+grid.nlat()+1, -1 );
 
   for( int p=0; p<generate.options.get<int>("nb_parts"); ++p)
   {
+    DEBUG_VAR(p);
     generate.options.set("part",p);
     Mesh::Ptr m( generate( grid ) );
+    DEBUG();
     m->metadata().set("part",p);
     BOOST_TEST_CHECKPOINT("generated grid " << p);
     ArrayView<int,1> part( m->function_space("nodes").field("partition") );
     ArrayView<int,1> gidx( m->function_space("nodes").field("glb_idx") );
 
     area += test::compute_latlon_area(*m);
+    DEBUG();
+
     DISABLE {  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     if( generate.options.get<int>("nb_parts") == 20 )
     {
@@ -323,6 +327,8 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
       BOOST_CHECK_EQUAL( m->function_space("triags").shape(0), triags[p] );
     }
     }
+    DEBUG();
+
         std::stringstream filename; filename << "T63.msh";
         Gmsh().write(*m,filename.str());
 
@@ -384,7 +390,7 @@ DISABLE{
       BOOST_ERROR( "node " << gid << " is not owned by anyone" );
     }
   }
-  BOOST_CHECK_EQUAL( nb_owned, grid.ngptot()+grid.nlat() );
+  BOOST_CHECK_EQUAL( nb_owned, grid.nPoints()+grid.nlat() );
 
   BOOST_CHECK_CLOSE( area, check_area, 1e-10 );
 

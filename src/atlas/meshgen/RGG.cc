@@ -20,30 +20,16 @@ namespace meshgen {
 
 static const double rad_to_deg = 180.*M_1_PI;
 
-void colat_to_lat(const int N, const double colat[], const AngleUnit colat_unit, std::vector<double>& lats, const AngleUnit lat_unit)
+void colat_to_lat_hemisphere(const int N, const double colat[], double lats[], const AngleUnit unit)
 {
-  lats.resize(2*N);
-  std::copy( colat, colat+N, lats.begin() );
-  std::reverse_copy( colat, colat+N, lats.begin()+N );
-  double pole = colat_unit == DEG ? 90. : M_PI_2;
+  std::copy( colat, colat+N, lats );
+  double pole = (unit == DEG ? 90. : M_PI_2);
   for (int i=0; i<N; ++i)
     lats[i]=pole-lats[i];
-  for (int i=N; i<2*N; ++i)
-    lats[i]=-pole+lats[i];
-
-  if ( colat_unit != lat_unit)
-  {
-    double conversion = colat_unit == DEG ? M_PI/180. : M_1_PI*180.;
-    for (int i=0; i<2*N; ++i)
-    {
-      lats[i] *= conversion;
-    }
-  }
 }
 
-void predict_gaussian_colatitudes_hemisphere(const int N, std::vector<double>& colat)
+void predict_gaussian_colatitudes_hemisphere(const int N, double colat[])
 {
-  colat.resize(N);
   double z;
   for( int i=0; i<N; ++i )
   {
@@ -52,55 +38,69 @@ void predict_gaussian_colatitudes_hemisphere(const int N, std::vector<double>& c
   }
 }
 
-void predict_gaussian_latitudes(const int N, std::vector<double>& lats)
+void predict_gaussian_latitudes_hemisphere(const int N, double lats[])
 {
-  std::vector<double> colat;
-  predict_gaussian_colatitudes_hemisphere(N,colat);
-  colat_to_lat(N,colat.data(),DEG,lats,DEG);
+  std::vector<double> colat(N);
+  predict_gaussian_colatitudes_hemisphere(N,colat.data());
+  colat_to_lat_hemisphere(N,colat.data(),lats,DEG);
 }
 
 
 RGG::RGG(const int N, const int lon[]) : ReducedGrid()
 {
-  std::vector<double> lats;
-  std::vector<int>    nlons(2*N);
-  std::copy( lon, lon+N, nlons.begin() );
-  std::reverse_copy( lon, lon+N, nlons.begin()+N );
-  predict_gaussian_latitudes(N,lats);
-  setup(2*N,nlons.data(),lats.data());
+  std::vector<double> lat(N);
+  predict_gaussian_latitudes_hemisphere(N,lat.data());
+  setup_lat_hemisphere(N,lon,lat.data(),DEG);
 }
 
 RGG::RGG(const size_t N, const long lon[])
 {
-  std::vector<double> lats;
-  std::vector<int>    nlons(2*N);
+  std::vector<double> lat(N);
+  std::vector<int>    nlons(N);
   std::copy( lon, lon+N, nlons.begin() );
-  std::reverse_copy( lon, lon+N, nlons.begin()+N );
-  predict_gaussian_latitudes(N,lats);
-  setup(2*N,nlons.data(),lats.data());
+  predict_gaussian_latitudes_hemisphere(N,lat.data());
+  setup_lat_hemisphere(N,nlons.data(),lat.data(),DEG);
+
 }
 
-void RGG::setup_rtable_hemisphere(const int N, const int lon[], const double colat[], const AngleUnit colat_unit)
+void RGG::setup_colat_hemisphere(const int N, const int lon[], const double colat[], const AngleUnit unit)
 {
   std::vector<int> nlons(2*N);
   std::copy( lon, lon+N, nlons.begin() );
   std::reverse_copy( lon, lon+N, nlons.begin()+N );
-  std::vector<double> lats;
-  colat_to_lat(N,colat,colat_unit,lats,DEG);
+  std::vector<double> lats(2*N);
+  colat_to_lat_hemisphere(N,colat,lats.data(),unit);
+  std::reverse_copy( lats.data(), lats.data()+N, lats.begin()+N );
+  double convert = (unit == RAD ? 180.*M_1_PI : 1.);
+  for( int j=0; j<N; ++j )
+    lats[j] *= convert;
+  for( int j=N; j<2*N; ++j )
+    lats[j] *= -convert;
   setup(2*N,nlons.data(),lats.data());
 }
 
-int RGG::ngptot() const
+void RGG::setup_lat_hemisphere(const int N, const int lon[], const double lat[], const AngleUnit unit)
 {
-  return nPoints();
+  std::vector<int> nlons(2*N);
+  std::copy( lon, lon+N, nlons.begin() );
+  std::reverse_copy( lon, lon+N, nlons.begin()+N );
+  std::vector<double> lats(2*N);
+  std::copy( lat, lat+N, lats.begin() );
+  std::reverse_copy( lat, lat+N, lats.begin()+N );
+  double convert = (unit == RAD ? 180.*M_1_PI : 1.);
+  for( int j=0; j<N; ++j )
+    lats[j] *= convert;
+  for( int j=N; j<2*N; ++j )
+    lats[j] *= -convert;
+  setup(2*N,nlons.data(),lats.data());
 }
 
 GG::GG(int nlon, int N) : RGG()
 {
-  std::vector<double> lats;
-  std::vector<int>    nlons(2*N,nlon);
-  predict_gaussian_latitudes(N,lats);
-  setup(2*N,nlons.data(),lats.data());
+  std::vector<double> lat(N);
+  std::vector<int>    nlons(N,nlon);
+  predict_gaussian_latitudes_hemisphere(N,lat.data());
+  setup_lat_hemisphere(N,nlons.data(),lat.data(),DEG);
 }
 
 
@@ -197,7 +197,7 @@ void atlas__RGG__nlon(RGG* This, const int* &nlons, int &size)
 
 int atlas__RGG__ngptot(RGG* This)
 {
-  return This->ngptot();
+  return This->nPoints();
 }
 
 double atlas__RGG__lon(RGG* This,int jlon,int jlat)

@@ -413,7 +413,7 @@ T255::T255()
     1.55242447484047,
     1.56467237614226
   };
-  setup_rtable_hemisphere(N,lon,colat,RAD);
+  setup_colat_hemisphere(N,lon,colat,RAD);
 }
 
 } // namespace meshgen

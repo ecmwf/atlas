@@ -2072,7 +2072,7 @@ double colat[] = {
     1.56849591730501991549,
     1.57002952363160419580
   };
-  setup_rtable_hemisphere(N,lon,colat,RAD);
+  setup_colat_hemisphere(N,lon,colat,RAD);
 }
 
 } // namespace meshgen

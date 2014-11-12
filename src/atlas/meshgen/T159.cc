@@ -184,7 +184,7 @@ T159::T159()
     1.54143579029739,
     1.56100948128359
   };
-  setup_rtable_hemisphere(N,lon,colat,RAD);
+  setup_colat_hemisphere(N,lon,colat,RAD);
 }
 
 } // namespace meshgen

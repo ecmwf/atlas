@@ -13,33 +13,37 @@
 #ifndef RGGMeshGenerator_h
 #define RGGMeshGenerator_h
 
-#include <vector>
-#include <eckit/config/Configurable.h>
-#include <eckit/config/Resource.h>
 #include "atlas/Metadata.h"
 
 namespace atlas {
   class Mesh;
+  class ReducedGrid;
+
 namespace meshgen {
 
 struct Region;
-class RGG;
 
 class RGGMeshGenerator
 {
 public:
   RGGMeshGenerator();
-  Mesh* generate(const RGG& rgg);
-  Mesh* operator()(const RGG& rgg){ return generate(rgg); }
+
+  Mesh* generate( const ReducedGrid& );
+
+  Mesh* operator()( const ReducedGrid& );
+
 private:
-  void generate_region(const RGG& rgg, const std::vector<int>& parts, int mypart, Region& region);
-  Mesh* generate_mesh(const RGG& rgg,const std::vector<int>& parts, const Region& region);
+  void generate_region( const ReducedGrid&, const std::vector<int>& parts, int mypart, Region& region );
+
+  Mesh* generate_mesh( const ReducedGrid&,const std::vector<int>& parts, const Region& region );
+
   void generate_global_element_numbering( Mesh& mesh );
-  //std::vector<int> partition(const RGG& rgg) const;
+
 public:
+
   Metadata options;
   double max_angle_;
-	bool triangulate_quads_;
+  bool triangulate_quads_;
 };
 
 } // namespace meshgen

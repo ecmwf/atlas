@@ -17,7 +17,7 @@
 namespace atlas {
 namespace actions {
 
-Mesh* generate_mesh (const meshgen::RGG& rgg);
+Mesh* generate_mesh (const ReducedGrid& rgg);
 Mesh* generate_reduced_gaussian_grid( const std::string& identifier );
 Mesh* generate_reduced_gaussian_grid( const std::vector<long>& nlon );
 Mesh* generate_full_gaussian_grid( int nlon, int nlat );
