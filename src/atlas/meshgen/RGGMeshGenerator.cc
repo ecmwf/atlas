@@ -52,7 +52,7 @@ struct Region
   std::vector<int> nb_lat_elems;
 };
 
-RGGMeshGenerator::RGGMeshGenerator()
+ReducedGridMeshGenerator::ReducedGridMeshGenerator()
 {
   // This option creates a point at the pole when true
   options.set("include_pole",false);
@@ -82,7 +82,7 @@ RGGMeshGenerator::RGGMeshGenerator()
   //Log::error() << "triangulate =" << triangulate_quads_ << std::endl;
 }
 
-Mesh* RGGMeshGenerator::operator()( const ReducedGrid& grid )
+Mesh* ReducedGridMeshGenerator::operator()( const ReducedGrid& grid )
 {
   return generate(grid);
 }
@@ -126,7 +126,7 @@ Mesh* RGGMeshGenerator::operator()( const ReducedGrid& grid )
 //  return part;
 //}
 
-Mesh* RGGMeshGenerator::generate(const ReducedGrid& rgg)
+Mesh* ReducedGridMeshGenerator::generate(const ReducedGrid& rgg)
 {
   int mypart   = options.get<int>("part");
   int nb_parts = options.get<int>("nb_parts");
@@ -163,7 +163,7 @@ Mesh* RGGMeshGenerator::generate(const ReducedGrid& rgg)
 }
 
 
-void RGGMeshGenerator::generate_region(const ReducedGrid& rgg, const std::vector<int>& parts, int mypart, Region& region)
+void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rgg, const std::vector<int>& parts, int mypart, Region& region)
 {
   double max_angle = max_angle_;
 
@@ -635,7 +635,7 @@ void RGGMeshGenerator::generate_region(const ReducedGrid& rgg, const std::vector
   }
 }
 
-Mesh* RGGMeshGenerator::generate_mesh(const ReducedGrid& rgg,
+Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
                                       const std::vector<int>& parts,
                                       const Region& region)
 {
@@ -919,7 +919,7 @@ Mesh* RGGMeshGenerator::generate_mesh(const ReducedGrid& rgg,
   return mesh;
 }
 
-void RGGMeshGenerator::generate_global_element_numbering( Mesh& mesh )
+void ReducedGridMeshGenerator::generate_global_element_numbering( Mesh& mesh )
 {
   int loc_nb_elems = 0;
   std::vector<int> elem_counts( MPL::size() );

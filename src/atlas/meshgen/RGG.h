@@ -14,73 +14,62 @@
 #define RGG_h
 
 #include "atlas/ReducedGrid.h"
+#include "atlas/Util.h"
 
 namespace atlas {
 namespace meshgen {
-
-enum AngleUnit{ DEG=0, RAD=1 };
-
-void colat_to_lat_hemisphere(const int N, const double colat[], double lats[], const AngleUnit unit);
-
-void predict_gaussian_colatitudes_hemisphere(const int N, double colat[]);
-
-void predict_gaussian_latitudes_hemisphere(const int N, double lat[]);
-
 
 /// @brief Reduced Gaussian Grid
 class RGG : public ReducedGrid
 {
 public:
   RGG(): ReducedGrid() {}
-  RGG(const int nlat, const int lon[]);
-  RGG(const size_t nlat, const long lon[]);
+  RGG(const int N, const int lon[]);
+  RGG(const size_t N, const long lon[]);
 
-protected:
-  void setup_colat_hemisphere(const int N, const int lon[], const double colat[], const AngleUnit);
-  void setup_lat_hemisphere(const int N, const int lon[], const double lat[], const AngleUnit);
 };
 
 /// @brief Gaussian Grid
-class GG: public RGG
+class GG: public ReducedGrid
 {
 public:
-  GG(int nlon, int nlat);
+  GG(int nlon, int N);
 };
 
-class RegularGrid: public meshgen::RGG {
+class RegularGrid: public ReducedGrid {
 public:
   RegularGrid(int nlon, int nlat);
 };
 
 
-class T63:   public RGG { public: T63();   };
-class T95:   public RGG { public: T95();   };
-class T159:  public RGG { public: T159();  };
-class T255:  public RGG { public: T255();  };
-class T511:  public RGG { public: T511();  };
-class T1279: public RGG { public: T1279(); };
-class T2047: public RGG { public: T2047(); };
-class T3999: public RGG { public: T3999(); };
-class T7999: public RGG { public: T7999(); };
+class T63:   public ReducedGrid { public: T63();   };
+class T95:   public ReducedGrid { public: T95();   };
+class T159:  public ReducedGrid { public: T159();  };
+class T255:  public ReducedGrid { public: T255();  };
+class T511:  public ReducedGrid { public: T511();  };
+class T1279: public ReducedGrid { public: T1279(); };
+class T2047: public ReducedGrid { public: T2047(); };
+class T3999: public ReducedGrid { public: T3999(); };
+class T7999: public ReducedGrid { public: T7999(); };
 
 
-RGG* new_reduced_gaussian_grid(const std::string& identifier);
-RGG* new_reduced_gaussian_grid(const std::vector<long>& nlon);
-RGG* new_regular_gaussian_grid(int nlon, int nlat);
-RGG* new_regular_latlon_grid(int nlon, int nlat);
+ReducedGrid* new_reduced_gaussian_grid(const std::string& identifier);
+ReducedGrid* new_reduced_gaussian_grid(const std::vector<long>& nlon);
+ReducedGrid* new_regular_gaussian_grid(int nlon, int nlat);
+ReducedGrid* new_regular_latlon_grid(int nlon, int nlat);
 
 extern "C"
 {
-  RGG* atlas__new_reduced_gaussian_grid(char* identifier);
-  RGG* atlas__new_regular_gaussian_grid(int nlon, int nlat);
-  RGG* atlas__new_regular_latlon_grid(int nlon, int nlat);
-  RGG* atlas__new_custom_reduced_gaussian_grid(int nlon[], int nlat);
-  int  atlas__RGG__nlat(RGG* This);
-  void atlas__RGG__nlon(RGG* This, const int* &nlon, int &size);
-  int atlas__RGG__ngptot(RGG* This);
-  double atlas__RGG__lon(RGG* This,int jlon,int jlat);
-  double atlas__RGG__lat(RGG* This,int jlat);
-  void atlas__RGG__lats(RGG* This, const double* &lats, int &size);
+  ReducedGrid* atlas__new_reduced_gaussian_grid(char* identifier);
+  ReducedGrid* atlas__new_regular_gaussian_grid(int nlon, int nlat);
+  ReducedGrid* atlas__new_regular_latlon_grid(int nlon, int nlat);
+  ReducedGrid* atlas__new_custom_reduced_gaussian_grid(int nlon[], int nlat);
+  int  atlas__RGG__nlat(ReducedGrid* This);
+  void atlas__RGG__nlon(ReducedGrid* This, const int* &nlon, int &size);
+  int atlas__RGG__ngptot(ReducedGrid* This);
+  double atlas__RGG__lon(ReducedGrid* This,int jlon,int jlat);
+  double atlas__RGG__lat(ReducedGrid* This,int jlat);
+  void atlas__RGG__lats(ReducedGrid* This, const double* &lats, int &size);
 }
 
 } // namespace meshgen

@@ -27,15 +27,13 @@ Mesh* generate_regular_grid( int nlon, int nlat ); // must be even numbers
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
-typedef meshgen::RGG RGG;
-
 extern "C"
 {
   Mesh* atlas__generate_reduced_gaussian_grid (char* identifier);
   Mesh* atlas__generate_full_gaussian_grid (int nlon, int nlat);
   Mesh* atlas__generate_latlon_grid (int nlon, int nlat);
   Mesh* atlas__generate_custom_reduced_gaussian_grid (int nlon[], int nlat);
-  Mesh* atlas__generate_mesh (RGG* rgg);
+  Mesh* atlas__generate_mesh (ReducedGrid* rgg);
 }
 
 // ------------------------------------------------------------------

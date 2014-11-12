@@ -177,7 +177,7 @@ BOOST_AUTO_TEST_CASE( test_partitioner )
 BOOST_AUTO_TEST_CASE( test_rgg_meshgen_one_part )
 {
   Mesh* m;
-  RGGMeshGenerator generate;
+  ReducedGridMeshGenerator generate;
   generate.options.set("nb_parts",1);
   generate.options.set("part",    0);
 DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
@@ -284,7 +284,7 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
 
 BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
 {
-  RGGMeshGenerator generate;
+  ReducedGridMeshGenerator generate;
   generate.options.set("nb_parts",20);
   generate.options.set("include_pole",false);
   generate.options.set("three_dimensional",false);

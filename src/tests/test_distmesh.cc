@@ -71,7 +71,7 @@ BOOST_GLOBAL_FIXTURE( MPIFixture )
 BOOST_AUTO_TEST_CASE( test_distribute_t63 )
 {
   // Every task builds full mesh
-  meshgen::RGGMeshGenerator generator;
+  meshgen::ReducedGridMeshGenerator generator;
   generator.options.set("nb_parts",1);
   generator.options.set("part",0);
 

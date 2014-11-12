@@ -27,6 +27,22 @@ ReducedGrid::ReducedGrid()
 {
 }
 
+ReducedGrid::ReducedGrid( const std::vector<size_t>& _nlons, const std::vector<double>& _lats )
+{
+  int nlat = _nlons.size();
+  std::vector<int> nlons(nlat);
+  for( int j=0; j<nlat; ++j )
+  {
+    nlons[j] = static_cast<int>(nlons[j]);
+  }
+  setup(nlat,nlons.data(),_lats.data());
+}
+
+ReducedGrid::ReducedGrid( const int nlons[], const double lats[], const int nlat )
+{
+  setup(nlat,nlons,lats);
+}
+
 void ReducedGrid::setup(const int nlat, const int nlons[], const double lats[])
 {
   nlons_.assign(nlons,nlons+nlat);
@@ -44,21 +60,38 @@ void ReducedGrid::setup(const int nlat, const int nlons[], const double lats[])
   bbox_ = BoundBox(lat_[0]/*north*/, lat_[nlat-1]/*south*/, lon_max/*east*/, lon_min/*west*/ );
 }
 
-ReducedGrid::ReducedGrid( const std::vector<size_t>& _nlons, const std::vector<double>& _lats )
+void ReducedGrid::setup_colat_hemisphere(const int N, const int lon[], const double colat[], const AngleUnit unit)
 {
-  int nlat = _nlons.size();
-  std::vector<int> nlons(nlat);
-  for( int j=0; j<nlat; ++j )
-  {
-    nlons[j] = static_cast<int>(nlons[j]);
-  }
-  setup(nlat,nlons.data(),_lats.data());
+  std::vector<int> nlons(2*N);
+  std::copy( lon, lon+N, nlons.begin() );
+  std::reverse_copy( lon, lon+N, nlons.begin()+N );
+  std::vector<double> lats(2*N);
+  colat_to_lat_hemisphere(N,colat,lats.data(),unit);
+  std::reverse_copy( lats.data(), lats.data()+N, lats.begin()+N );
+  double convert = (unit == RAD ? 180.*M_1_PI : 1.);
+  for( int j=0; j<N; ++j )
+    lats[j] *= convert;
+  for( int j=N; j<2*N; ++j )
+    lats[j] *= -convert;
+  setup(2*N,nlons.data(),lats.data());
 }
 
-ReducedGrid::ReducedGrid( const int nlons[], const double lats[], const int nlat )
+void ReducedGrid::setup_lat_hemisphere(const int N, const int lon[], const double lat[], const AngleUnit unit)
 {
-  setup(nlat,nlons,lats);
+  std::vector<int> nlons(2*N);
+  std::copy( lon, lon+N, nlons.begin() );
+  std::reverse_copy( lon, lon+N, nlons.begin()+N );
+  std::vector<double> lats(2*N);
+  std::copy( lat, lat+N, lats.begin() );
+  std::reverse_copy( lat, lat+N, lats.begin()+N );
+  double convert = (unit == RAD ? 180.*M_1_PI : 1.);
+  for( int j=0; j<N; ++j )
+    lats[j] *= convert;
+  for( int j=N; j<2*N; ++j )
+    lats[j] *= -convert;
+  setup(2*N,nlons.data(),lats.data());
 }
+
 
 Grid::BoundBox ReducedGrid::boundingBox() const
 {

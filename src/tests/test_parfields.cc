@@ -138,7 +138,7 @@ BOOST_AUTO_TEST_CASE( test1 )
 
 BOOST_AUTO_TEST_CASE( test2 )
 {
-  RGGMeshGenerator generate;
+  ReducedGridMeshGenerator generate;
   generate.options.set("nb_parts",MPL::size());
   generate.options.set("part",MPL::rank());
   Mesh* m = generate( T63() );

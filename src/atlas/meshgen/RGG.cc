@@ -12,39 +12,12 @@
 #include <algorithm>
 #include <eckit/exception/Exceptions.h>
 #include "atlas/meshgen/RGG.h"
+#include "atlas/Util.h"
 
 #define DEBUG_OUTPUT 0
 
 namespace atlas {
 namespace meshgen {
-
-static const double rad_to_deg = 180.*M_1_PI;
-
-void colat_to_lat_hemisphere(const int N, const double colat[], double lats[], const AngleUnit unit)
-{
-  std::copy( colat, colat+N, lats );
-  double pole = (unit == DEG ? 90. : M_PI_2);
-  for (int i=0; i<N; ++i)
-    lats[i]=pole-lats[i];
-}
-
-void predict_gaussian_colatitudes_hemisphere(const int N, double colat[])
-{
-  double z;
-  for( int i=0; i<N; ++i )
-  {
-    z = (4.*(i+1.)-1.)*M_PI/(4.*2.*N+2.);
-    colat[i] = ( z+1./(tan(z)*(8.*(2.*N)*(2.*N))) ) * rad_to_deg;
-  }
-}
-
-void predict_gaussian_latitudes_hemisphere(const int N, double lats[])
-{
-  std::vector<double> colat(N);
-  predict_gaussian_colatitudes_hemisphere(N,colat.data());
-  colat_to_lat_hemisphere(N,colat.data(),lats,DEG);
-}
-
 
 RGG::RGG(const int N, const int lon[]) : ReducedGrid()
 {
@@ -63,39 +36,8 @@ RGG::RGG(const size_t N, const long lon[])
 
 }
 
-void RGG::setup_colat_hemisphere(const int N, const int lon[], const double colat[], const AngleUnit unit)
-{
-  std::vector<int> nlons(2*N);
-  std::copy( lon, lon+N, nlons.begin() );
-  std::reverse_copy( lon, lon+N, nlons.begin()+N );
-  std::vector<double> lats(2*N);
-  colat_to_lat_hemisphere(N,colat,lats.data(),unit);
-  std::reverse_copy( lats.data(), lats.data()+N, lats.begin()+N );
-  double convert = (unit == RAD ? 180.*M_1_PI : 1.);
-  for( int j=0; j<N; ++j )
-    lats[j] *= convert;
-  for( int j=N; j<2*N; ++j )
-    lats[j] *= -convert;
-  setup(2*N,nlons.data(),lats.data());
-}
 
-void RGG::setup_lat_hemisphere(const int N, const int lon[], const double lat[], const AngleUnit unit)
-{
-  std::vector<int> nlons(2*N);
-  std::copy( lon, lon+N, nlons.begin() );
-  std::reverse_copy( lon, lon+N, nlons.begin()+N );
-  std::vector<double> lats(2*N);
-  std::copy( lat, lat+N, lats.begin() );
-  std::reverse_copy( lat, lat+N, lats.begin()+N );
-  double convert = (unit == RAD ? 180.*M_1_PI : 1.);
-  for( int j=0; j<N; ++j )
-    lats[j] *= convert;
-  for( int j=N; j<2*N; ++j )
-    lats[j] *= -convert;
-  setup(2*N,nlons.data(),lats.data());
-}
-
-GG::GG(int nlon, int N) : RGG()
+GG::GG(int nlon, int N)
 {
   std::vector<double> lat(N);
   std::vector<int>    nlons(N,nlon);
@@ -104,7 +46,7 @@ GG::GG(int nlon, int N) : RGG()
 }
 
 
-RegularGrid::RegularGrid(int nlon, int nlat) : RGG()
+RegularGrid::RegularGrid(int nlon, int nlat)
 {
   std::vector<double> lats(nlat);
   std::vector<int>    nlons(nlat,nlon);
@@ -119,9 +61,9 @@ RegularGrid::RegularGrid(int nlon, int nlat) : RGG()
 
 // ------------------------------------------------------------------
 
-RGG* new_reduced_gaussian_grid( const std::string& identifier )
+ReducedGrid* new_reduced_gaussian_grid( const std::string& identifier )
 {
-  RGG* rgg = 0;
+  ReducedGrid* rgg = 0;
 
   if     ( identifier == "T63"   ) rgg = new T63();
   else if( identifier == "T95"   ) rgg = new T95();
@@ -138,14 +80,14 @@ RGG* new_reduced_gaussian_grid( const std::string& identifier )
 
 // ------------------------------------------------------------------
 
-RGG* new_reduced_gaussian_grid( const std::vector<long>& nlon )
+ReducedGrid* new_reduced_gaussian_grid( const std::vector<long>& nlon )
 {
   return new RGG(nlon.size(),nlon.data());
 }
 
 // ------------------------------------------------------------------
 
-RGG* new_regular_latlon_grid( int nlon, int nlat )
+ReducedGrid* new_regular_latlon_grid( int nlon, int nlat )
 {
   if( nlon%2 != 0 ) throw eckit::BadParameter("nlon must be even number",Here());
   if( nlat%2 != 0 ) throw eckit::BadParameter("nlat must be even number",Here());
@@ -154,7 +96,7 @@ RGG* new_regular_latlon_grid( int nlon, int nlat )
 
 // ------------------------------------------------------------------
 
-RGG* new_regular_gaussian_grid( int nlon, int nlat )
+ReducedGrid* new_regular_gaussian_grid( int nlon, int nlat )
 {
   if( nlon%2 != 0 ) throw eckit::BadParameter("nlon must be even number",Here());
   if( nlat%2 != 0 ) throw eckit::BadParameter("nlat must be even number",Here());
@@ -162,55 +104,55 @@ RGG* new_regular_gaussian_grid( int nlon, int nlat )
 }
 
 
-RGG* atlas__new_reduced_gaussian_grid(char* identifier)
+ReducedGrid* atlas__new_reduced_gaussian_grid(char* identifier)
 {
 	return new_reduced_gaussian_grid( std::string(identifier) );
 }
 
-RGG* atlas__new_regular_gaussian_grid ( int nlon, int nlat )
+ReducedGrid* atlas__new_regular_gaussian_grid ( int nlon, int nlat )
 {
   return new_regular_gaussian_grid( nlon, nlat );
 }
 
-RGG* atlas__new_regular_latlon_grid(int nlon, int nlat)
+ReducedGrid* atlas__new_regular_latlon_grid(int nlon, int nlat)
 {
   return new_regular_latlon_grid( nlon, nlat );
 }
 
-RGG* atlas__new_custom_reduced_gaussian_grid(int nlon[], int nlat)
+ReducedGrid* atlas__new_custom_reduced_gaussian_grid(int nlon[], int nlat)
 {
   std::vector<long> nlon_vector;
   nlon_vector.assign(nlon,nlon+nlat);
   return new_reduced_gaussian_grid(nlon_vector);
 }
 
-int  atlas__RGG__nlat(RGG* This)
+int  atlas__RGG__nlat(ReducedGrid* This)
 {
   return This->nlat();
 }
 
-void atlas__RGG__nlon(RGG* This, const int* &nlons, int &size)
+void atlas__RGG__nlon(ReducedGrid* This, const int* &nlons, int &size)
 {
   nlons = This->nlons().data();
   size  = This->nlons().size();
 }
 
-int atlas__RGG__ngptot(RGG* This)
+int atlas__RGG__ngptot(ReducedGrid* This)
 {
   return This->nPoints();
 }
 
-double atlas__RGG__lon(RGG* This,int jlon,int jlat)
+double atlas__RGG__lon(ReducedGrid* This,int jlon,int jlat)
 {
   return This->lon(jlat,jlon);
 }
 
-double atlas__RGG__lat(RGG* This,int jlat)
+double atlas__RGG__lat(ReducedGrid* This,int jlat)
 {
   return This->lat(jlat);
 }
 
-void atlas__RGG__lats(RGG* This, const double* &lat, int &size)
+void atlas__RGG__lats(ReducedGrid* This, const double* &lat, int &size)
 {
   lat  = This->lat().data();
   size = This->lat().size();

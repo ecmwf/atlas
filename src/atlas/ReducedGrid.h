@@ -14,6 +14,7 @@
 #define ReducedGrid_h
 
 #include "atlas/Grid.h"
+#include "atlas/Util.h"
 
 namespace atlas {
 
@@ -71,6 +72,8 @@ public:
 
 protected:
   void setup(const int nlat, const int nlons[], const double lats[]);
+  void setup_colat_hemisphere(const int N, const int lon[], const double colat[], const AngleUnit);
+  void setup_lat_hemisphere(const int N, const int lon[], const double lat[], const AngleUnit);
 
 protected:
   std::vector<double> lat_;   ///<! Latitude values

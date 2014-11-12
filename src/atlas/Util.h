@@ -31,6 +31,15 @@ inline int microdeg( const double& deg )
 	return static_cast<int>(deg*1.e6);
 }
 
+enum AngleUnit{ DEG=0, RAD=1 };
+
+void colat_to_lat_hemisphere(const int N, const double colat[], double lats[], const AngleUnit unit);
+
+void predict_gaussian_colatitudes_hemisphere(const int N, double colat[]);
+
+void predict_gaussian_latitudes_hemisphere(const int N, double lat[]);
+
+
 class Flags
 {
 public:

@@ -19,21 +19,21 @@ using namespace atlas;
 namespace atlas {
 namespace test {
 
-class TestGrid: public meshgen::RGG {
+class TestGrid: public ReducedGrid {
 public:
   TestGrid(int N, int lon[]);
 };
 
-TestGrid::TestGrid(int N, int lon[]) : RGG()
+TestGrid::TestGrid(int N, int lon[])
 {
   std::vector<double> colat(N);
-  meshgen::predict_gaussian_colatitudes_hemisphere(N,colat.data());
-  setup_colat_hemisphere(N,lon,colat.data(),meshgen::DEG);
+  predict_gaussian_colatitudes_hemisphere(N,colat.data());
+  setup_colat_hemisphere(N,lon,colat.data(),DEG);
 }
 
-Mesh::Ptr generate_mesh( const meshgen::RGG& rgg )
+Mesh::Ptr generate_mesh( const ReducedGrid& rgg )
 {
-  meshgen::RGGMeshGenerator generator;
+  meshgen::ReducedGridMeshGenerator generator;
   generator.options.set("nb_parts",MPL::size());
   generator.options.set("part",MPL::rank());
   return Mesh::Ptr( generator.generate( rgg ) );

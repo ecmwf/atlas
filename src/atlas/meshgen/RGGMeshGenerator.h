@@ -10,8 +10,8 @@
 
 
 
-#ifndef RGGMeshGenerator_h
-#define RGGMeshGenerator_h
+#ifndef ReducedGridMeshGenerator_h
+#define ReducedGridMeshGenerator_h
 
 #include "atlas/Metadata.h"
 
@@ -23,10 +23,10 @@ namespace meshgen {
 
 struct Region;
 
-class RGGMeshGenerator
+class ReducedGridMeshGenerator
 {
 public:
-  RGGMeshGenerator();
+  ReducedGridMeshGenerator();
 
   Mesh* generate( const ReducedGrid& );
 
@@ -49,4 +49,4 @@ public:
 } // namespace meshgen
 } // namespace atlas
 
-#endif // RGGMeshGenerator_h
+#endif // ReducedGridMeshGenerator_h
