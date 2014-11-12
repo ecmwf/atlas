@@ -44,6 +44,7 @@ use atlas_metadata_c_binding
 use atlas_haloexchange_c_binding
 use atlas_gatherscatter_c_binding
 use atlas_rgg_c_binding
+use atlas_reducedgrid_c_binding
 use atlas_checksum_c_binding
 use atlas_gmsh_c_binding
 use atlas_BuildPeriodicBoundaries_c_binding
@@ -305,10 +306,10 @@ subroutine atlas_generate_custom_reduced_gaussian_grid(mesh,nlon)
   mesh%private%object = atlas__generate_custom_reduced_gaussian_grid(nlon,size(nlon))
 end subroutine atlas_generate_custom_reduced_gaussian_grid
 
-function atlas_generate_mesh(rgg) result(mesh)
+function atlas_generate_mesh(grid) result(mesh)
   type(Mesh_type) :: mesh
-  type(ReducedGG_type) :: rgg
-  mesh%private%object = atlas__generate_mesh(rgg%private%object)
+  type(ReducedGrid_type) :: grid
+  mesh%private%object = atlas__generate_mesh(grid%private%object)
 end function atlas_generate_mesh
 
 

@@ -13,6 +13,7 @@ function(generate_fortran_bindings output filename)
 endfunction()
 
 generate_fortran_bindings(FORTRAN_BINDINGS ../meshgen/RGG.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../ReducedGrid.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../Field.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../FieldGroup.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../FunctionSpace.h)

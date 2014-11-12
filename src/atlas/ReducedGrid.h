@@ -62,7 +62,7 @@ public:
 
   const std::vector<int>& nlons() const;
 
-  const std::vector<double>& lat() const;
+  const std::vector<double>& latitudes() const;
 
   double lon( const int jlat, const int jlon ) const;
 
@@ -82,6 +82,16 @@ protected:
   int                 nlonmax_;
   BoundBox            bbox_;   ///<! bounding box for data, only points within are considered part of grid
 };
+
+extern "C"
+{
+  int  atlas__ReducedGrid__nlat(ReducedGrid* This);
+  void atlas__ReducedGrid__nlon(ReducedGrid* This, const int* &nlon, int &size);
+  int atlas__ReducedGrid__npts(ReducedGrid* This);
+  double atlas__ReducedGrid__lon(ReducedGrid* This,int jlat,int jlon);
+  double atlas__ReducedGrid__lat(ReducedGrid* This,int jlat);
+  void atlas__ReducedGrid__latitudes(ReducedGrid* This, const double* &lats, int &size);
+}
 
 } // namespace atlas
 

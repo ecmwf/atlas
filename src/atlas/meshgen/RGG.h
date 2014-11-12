@@ -64,12 +64,6 @@ extern "C"
   ReducedGrid* atlas__new_regular_gaussian_grid(int nlon, int nlat);
   ReducedGrid* atlas__new_regular_latlon_grid(int nlon, int nlat);
   ReducedGrid* atlas__new_custom_reduced_gaussian_grid(int nlon[], int nlat);
-  int  atlas__RGG__nlat(ReducedGrid* This);
-  void atlas__RGG__nlon(ReducedGrid* This, const int* &nlon, int &size);
-  int atlas__RGG__ngptot(ReducedGrid* This);
-  double atlas__RGG__lon(ReducedGrid* This,int jlon,int jlat);
-  double atlas__RGG__lat(ReducedGrid* This,int jlat);
-  void atlas__RGG__lats(ReducedGrid* This, const double* &lats, int &size);
 }
 
 } // namespace meshgen

@@ -207,7 +207,7 @@ void ReducedGrid::lonlat( const int jlon, const int jlat, double crd[] ) const
   crd[1] = lat(jlat);
 }
 
-const std::vector<double>& ReducedGrid::lat() const
+const std::vector<double>& ReducedGrid::latitudes() const
 {
   return lat_;
 }
@@ -222,6 +222,38 @@ std::string ReducedGrid::hash() const
 {
   throw eckit::NotImplemented("atlas::ReducedGrid is a base class and has no hash",Here());
   return ReducedGrid::className();
+}
+
+int  atlas__ReducedGrid__nlat(ReducedGrid* This)
+{
+  return This->nlat();
+}
+
+void atlas__ReducedGrid__nlon(ReducedGrid* This, const int* &nlons, int &size)
+{
+  nlons = This->nlons().data();
+  size  = This->nlons().size();
+}
+
+int atlas__ReducedGrid__npts(ReducedGrid* This)
+{
+  return This->nPoints();
+}
+
+double atlas__ReducedGrid__lon(ReducedGrid* This,int jlon,int jlat)
+{
+  return This->lon(jlat,jlon);
+}
+
+double atlas__ReducedGrid__lat(ReducedGrid* This,int jlat)
+{
+  return This->lat(jlat);
+}
+
+void atlas__ReducedGrid__latitudes(ReducedGrid* This, const double* &lat, int &size)
+{
+  lat  = This->latitudes().data();
+  size = This->latitudes().size();
 }
 
 } // namespace atlas

@@ -14,8 +14,6 @@
 #include "atlas/meshgen/RGG.h"
 #include "atlas/Util.h"
 
-#define DEBUG_OUTPUT 0
-
 namespace atlas {
 namespace meshgen {
 
@@ -33,7 +31,6 @@ RGG::RGG(const size_t N, const long lon[])
   std::copy( lon, lon+N, nlons.begin() );
   predict_gaussian_latitudes_hemisphere(N,lat.data());
   setup_lat_hemisphere(N,nlons.data(),lat.data(),DEG);
-
 }
 
 
@@ -125,39 +122,6 @@ ReducedGrid* atlas__new_custom_reduced_gaussian_grid(int nlon[], int nlat)
   nlon_vector.assign(nlon,nlon+nlat);
   return new_reduced_gaussian_grid(nlon_vector);
 }
-
-int  atlas__RGG__nlat(ReducedGrid* This)
-{
-  return This->nlat();
-}
-
-void atlas__RGG__nlon(ReducedGrid* This, const int* &nlons, int &size)
-{
-  nlons = This->nlons().data();
-  size  = This->nlons().size();
-}
-
-int atlas__RGG__ngptot(ReducedGrid* This)
-{
-  return This->nPoints();
-}
-
-double atlas__RGG__lon(ReducedGrid* This,int jlon,int jlat)
-{
-  return This->lon(jlat,jlon);
-}
-
-double atlas__RGG__lat(ReducedGrid* This,int jlat)
-{
-  return This->lat(jlat);
-}
-
-void atlas__RGG__lats(ReducedGrid* This, const double* &lat, int &size)
-{
-  lat  = This->lat().data();
-  size = This->lat().size();
-}
-
 
 } // namespace meshgen
 } // namespace atlas
