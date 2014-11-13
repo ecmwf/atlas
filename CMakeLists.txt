@@ -145,6 +145,10 @@ if( ENABLE_FORTRAN )
   set( ATLAS_LIBRARIES atlas_fortran atlas_mpl_fortran ${ATLAS_LIBRARIES} )
 endif()
 
+if( HAVE_SHTRANS )
+	list( APPEND ATLAS_TPLS trans_api )
+endif()
+
 get_directory_property( ATLAS_DEFINITIONS COMPILE_DEFINITIONS )
 
 foreach( _tpl ${ATLAS_TPLS} )

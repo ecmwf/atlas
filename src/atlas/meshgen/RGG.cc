@@ -74,7 +74,7 @@ RGG::RGG(const size_t nlat, const long lon[])
 
 int RGG::ngptot() const
 {
-  return std::accumulate(lon_.data(),lon_.data()+lon_.size(),0);
+	return std::accumulate(lon_.data(),lon_.data()+lon_.size(),0);
 }
 
 GG::GG(int nlon, int nlat) : RGG()
