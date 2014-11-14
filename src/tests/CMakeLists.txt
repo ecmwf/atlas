@@ -96,5 +96,13 @@ ecbuild_add_test( TARGET atlas_test_meshgen3d
   LIBS      atlas
 )
 
+ecbuild_add_test( TARGET atlas_test_grids
+  BOOST
+  SOURCES   test_grids.cc
+  LIBS      atlas_grids
+)
+
+
+
 add_subdirectory( grid )
 

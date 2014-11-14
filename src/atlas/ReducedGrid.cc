@@ -9,6 +9,8 @@
  */
 
 #include <typeinfo> // std::bad_cast
+#include <eckit/memory/Builder.h>
+
 #include "atlas/ReducedGrid.h"
 #include "atlas/GridSpec.h"
 

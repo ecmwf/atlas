@@ -27,6 +27,9 @@ namespace atlas {
 /// distribution can be represented with this class
 class ReducedGrid: public Grid {
 public:
+  typedef eckit::BuilderT0<ReducedGrid> builder_t;
+
+public:
 
   ReducedGrid();
 

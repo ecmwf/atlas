@@ -210,4 +210,5 @@ if( HAVE_FORTRAN )
   add_subdirectory( fortran )
 endif()
 
-add_subdirectory( meshgen )
+add_subdirectory( grids )
+
