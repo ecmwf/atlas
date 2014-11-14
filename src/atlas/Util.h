@@ -140,8 +140,8 @@ struct LatLonPoint
 
 	int uid() const
 	{
-		int i1 = (y+NORTH*2) >>9;
-		int i2 = (x+EAST*5)  >>10;
+		int i1 = (y/100+NORTH/100*2) >>9;
+		int i2 = (x/100+EAST/100*5)  >>10;
 		ASSERT( i1 > 0);
 		ASSERT( i2 > 0);
 		int pow = 10;
@@ -174,7 +174,7 @@ private:
 public:
 	PeriodicTransform()
 	{
-		x_translation_ = 2.*M_PI;
+		x_translation_ = 360.;
 	}
 
 	void operator()(double source[2], double dest[2], double direction, double scale = 1.) const

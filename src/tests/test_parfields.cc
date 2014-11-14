@@ -65,16 +65,16 @@ BOOST_AUTO_TEST_CASE( test1 )
   glb_idx(8) = 9;    part(8) = 1;
   glb_idx(9) = 10;   part(9) = 1;
 
-  latlon(0,XX) = 0.;         latlon(0,YY) = 1.;    Topology::set( flags(0), Topology::BC|Topology::WEST );
-  latlon(1,XX) = 0.;         latlon(1,YY) =-1.;    Topology::set( flags(1), Topology::BC|Topology::WEST );
-  latlon(2,XX) = M_PI/4.;    latlon(2,YY) = 1.;
-  latlon(3,XX) = M_PI/4.;    latlon(3,YY) =-1.;
-  latlon(4,XX) = M_PI/2.;    latlon(4,YY) = 1.;
-  latlon(5,XX) = M_PI/2.;    latlon(5,YY) =-1.;
-  latlon(6,XX) = 3.*M_PI/4.; latlon(6,YY) = 1.;
-  latlon(7,XX) = 3.*M_PI/4.; latlon(7,YY) =-1.;
-  latlon(8,XX) = 2.*M_PI;    latlon(8,YY) = 1.;    Topology::set( flags(8), Topology::BC|Topology::EAST );
-  latlon(9,XX) = 2.*M_PI;    latlon(9,YY) =-1.;    Topology::set( flags(9), Topology::BC|Topology::EAST );
+  latlon(0,XX) = 0.;    latlon(0,YY) = 80.;    Topology::set( flags(0), Topology::BC|Topology::WEST );
+  latlon(1,XX) = 0.;    latlon(1,YY) =-80.;    Topology::set( flags(1), Topology::BC|Topology::WEST );
+  latlon(2,XX) = 90.;   latlon(2,YY) = 80.;
+  latlon(3,XX) = 90.;   latlon(3,YY) =-80.;
+  latlon(4,XX) = 180.;  latlon(4,YY) = 80.;
+  latlon(5,XX) = 180.;  latlon(5,YY) =-80.;
+  latlon(6,XX) = 270.;  latlon(6,YY) = 80.;
+  latlon(7,XX) = 270.;  latlon(7,YY) =-80.;
+  latlon(8,XX) = 360.;  latlon(8,YY) = 80.;    Topology::set( flags(8), Topology::BC|Topology::EAST );
+  latlon(9,XX) = 360.;  latlon(9,YY) =-80.;    Topology::set( flags(9), Topology::BC|Topology::EAST );
 
   actions::build_parallel_fields(*m);
 
@@ -171,7 +171,7 @@ BOOST_AUTO_TEST_CASE( test2 )
   if( MPL::rank() == 0 ) BOOST_CHECK_EQUAL( nb_periodic, 32 );
   if( MPL::rank() == 1 ) BOOST_CHECK_EQUAL( nb_periodic, 32 );
 
-  std::stringstream filename; filename << "periodic_p"<<MPL::rank()<<".msh";
+  std::stringstream filename; filename << "periodic.msh";
   Gmsh().write(*m,filename.str());
   delete m;
 }

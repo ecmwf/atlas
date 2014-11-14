@@ -39,8 +39,8 @@ namespace io {
 
 namespace {
 
-double deg_to_rad = M_PI / 180.;
-double rad_to_deg = 180. * M_1_PI;
+static double deg = 180. * M_1_PI;
+static double rad = M_PI/180.;
 
 class GmshFile : public std::ofstream
 {
@@ -457,12 +457,12 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh )
 		xmax = std::max(x,xmax);
 		zmax = std::max(z,zmax);
 	}
-	if( xmax > 4*M_PI && zmax == 0. )
+	if( xmax < 4*M_PI && zmax == 0. )
 	{
 		for( size_t n = 0; n < nb_nodes; ++n )
 		{
-			coords(n,XX) *= deg_to_rad;
-			coords(n,YY) *= deg_to_rad;
+			coords(n,XX) *= deg;
+			coords(n,YY) *= deg;
 		}
 	}
 	for (int i=0; i<3; ++i)
@@ -731,6 +731,8 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path) const
 		}
 		if(surfdim == 3)
 		{
+      lon *= rad;
+      lat *= rad;
 			xyz[XX] = r*std::cos(lat)*std::cos(lon);
 			xyz[YY] = r*std::cos(lat)*std::sin(lon);
 			xyz[ZZ] = r*std::sin(lat);

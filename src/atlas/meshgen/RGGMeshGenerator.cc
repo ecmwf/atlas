@@ -39,6 +39,11 @@ using namespace eckit;
 namespace atlas {
 namespace meshgen {
 
+namespace {
+static double to_rad = M_PI/180.;
+static double to_deg = 180.*M_1_PI;
+}
+
 struct Region
 {
   int north;
@@ -146,7 +151,7 @@ Mesh* ReducedGridMeshGenerator::generate(const ReducedGrid& rgg)
     for( int jlon=0; jlon<rgg.nlon(jlat); ++jlon)
     {
       nodes[n].x = static_cast<int>(rgg.lon(jlat,jlon)*1e6);
-      if( stagger ) nodes[n].x += static_cast<int>(1e6*M_PI/static_cast<double>(rgg.nlon(jlat)));
+      if( stagger ) nodes[n].x += static_cast<int>(1e6*180./static_cast<double>(rgg.nlon(jlat)));
       nodes[n].y = static_cast<int>(rgg.lat(jlat)*1e6);
       nodes[n].n = n;
       ++n;
@@ -297,10 +302,10 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rgg, const std
       //eckit::Log::info(Here())  << ipS1 << "("<<pS2<<") " << ipS2 <<"("<<pS2<<")" <<  std::endl;
 
 
-      xN1 = rgg.lon(latN,ipN1);
-      xN2 = rgg.lon(latN,ipN2);
-      xS1 = rgg.lon(latS,ipS1);
-      xS2 = rgg.lon(latS,ipS2);
+      xN1 = rgg.lon(latN,ipN1) * to_rad;
+      xN2 = rgg.lon(latN,ipN2) * to_rad;
+      xS1 = rgg.lon(latS,ipS1) * to_rad;
+      xS2 = rgg.lon(latS,ipS2) * to_rad;
 
       if( stagger && (latN+1)%2==0 ) xN1 += M_PI/static_cast<double>(rgg.nlon(latN));
       if( stagger && (latN+1)%2==0 ) xN2 += M_PI/static_cast<double>(rgg.nlon(latN));
@@ -324,8 +329,8 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rgg, const std
       const double dxN = std::abs(xN2-xN1);
       const double dxS = std::abs(xS2-xS1);
       const double dx  = std::min(dxN,dxS);
-      const double alpha1 = ( dx==0. ? 0. : std::atan2((xN1-xS1)/dx,1.) * 180./M_PI );
-      const double alpha2 = ( dx==0. ? 0. : std::atan2((xN2-xS2)/dx,1.) * 180./M_PI );
+      const double alpha1 = ( dx==0. ? 0. : std::atan2((xN1-xS1)/dx,1.) * to_deg );
+      const double alpha2 = ( dx==0. ? 0. : std::atan2((xN2-xS2)/dx,1.) * to_deg );
       if( std::abs(alpha1) <= max_angle && std::abs(alpha2) <= max_angle )
       {
         if( triangulate_quads_ )
@@ -720,7 +725,7 @@ Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
     {
       n = offset_glb[jlat] + jlon;
       double x = rgg.lon(jlat,jlon);
-      if( stagger && (jlat+1)%2==0 ) x += M_PI/static_cast<double>(rgg.nlon(jlat));
+      if( stagger && (jlat+1)%2==0 ) x += 180./static_cast<double>(rgg.nlon(jlat));
 
       coords(jnode,XX) = x;
       coords(jnode,YY) = y;
@@ -741,7 +746,7 @@ Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
     {
       ++l;
       double x = rgg.lon(jlat,rgg.nlon(jlat));
-      if( stagger && (jlat+1)%2==0 ) x += M_PI/static_cast<double>(rgg.nlon(jlat));
+      if( stagger && (jlat+1)%2==0 ) x += 180./static_cast<double>(rgg.nlon(jlat));
 
       coords(jnode,XX) = x;
       coords(jnode,YY) = y;
@@ -759,8 +764,8 @@ Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
   if (include_north_pole)
   {
     jnorth = jnode;
-    double y = M_PI_2;
-    double x = M_PI;
+    double y = 90.;
+    double x = 180.;
     coords(jnode,XX) = x;
     coords(jnode,YY) = y;
     glb_idx(jnode)   = periodic_glb[rgg.nlat()-1]+2;
@@ -773,8 +778,8 @@ Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
   if (include_south_pole)
   {
     jsouth = jnode;
-    double y = -M_PI_2;
-    double x =  M_PI;
+    double y = -90.;
+    double x =  180.;
     coords(jnode,XX) = x;
     coords(jnode,YY) = y;
     glb_idx(jnode)   = periodic_glb[rgg.nlat()-1]+3;

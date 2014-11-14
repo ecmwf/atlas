@@ -296,7 +296,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
   T63 grid;
 //  RegularGrid grid(128,64);
   double max_lat = grid.lat(0);
-  double check_area = 2.*M_PI*2.*max_lat;
+  double check_area = 360.*2.*max_lat;
   double area = 0;
   int nodes[]  = {313,332,336,338,334,337,348,359,360,361,360,360,359,370,321,334,338,335,348,315};
   int quads[]  = {243,290,293,294,291,293,310,320,321,321,320,321,320,331,278,291,294,293,305,245};

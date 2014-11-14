@@ -17,7 +17,7 @@
 namespace atlas {
 
 namespace {
-static double units = M_PI/180.; // radians
+static double units =1;// M_PI/180.; // radians
 }
 
 std::string ReducedGrid::className()
