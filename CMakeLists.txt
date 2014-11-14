@@ -100,7 +100,7 @@ endif()
 
 ### trans_api ...
 
-	ecbuild_add_option( FEATURE SHTRANS
+	ecbuild_add_option( FEATURE TRANS
 		DEFAULT ON
 		DESCRIPTION "Support for trasnformations between SH and Grid space"
 		REQUIRED_PACKAGES "PROJECT trans_api VERSION 0.1" )
@@ -134,7 +134,8 @@ ecbuild_add_option( FEATURE SANDBOX
 ############################################################################################
 # export package info
 
-list( APPEND ATLAS_TPLS eckit )
+set( ATLAS_PACKAGES  "" )
+set( ATLAS_TPLS      eckit )
 
 set( ATLAS_INCLUDE_DIRS   ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src )
 
@@ -145,8 +146,9 @@ if( ENABLE_FORTRAN )
   set( ATLAS_LIBRARIES atlas_fortran atlas_mpl_fortran ${ATLAS_LIBRARIES} )
 endif()
 
-if( HAVE_SHTRANS )
+if( HAVE_TRANS )
 	list( APPEND ATLAS_TPLS trans_api )
+	list( APPEND ATLAS_PACKAGES ATLAS_TRANS )
 endif()
 
 get_directory_property( ATLAS_DEFINITIONS COMPILE_DEFINITIONS )

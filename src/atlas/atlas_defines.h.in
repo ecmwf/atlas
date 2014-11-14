@@ -8,6 +8,7 @@
 
 #cmakedefine HAVE_TESSELATION
 #cmakedefine HAVE_FORTRAN
+#cmakedefine HAVE_TRANS
 
 #cmakedefine ECKIT_HAVE_GRIB
 #cmakedefine HAVE_GRIB_API_1130
