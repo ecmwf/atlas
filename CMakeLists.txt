@@ -65,8 +65,9 @@ endif()
 
 ### OMP ...
 
-ecbuild_add_option( FEATURE OMP
-                    DESCRIPTION "support for OpenMP threaded parallelism" )
+ecbuild_add_option(
+	FEATURE OMP
+	DESCRIPTION "support for OpenMP threaded parallelism" )
 
 # !! TODO !! add test for OpenMP
 
@@ -100,27 +101,27 @@ endif()
 
 ### trans_api ...
 
-	ecbuild_add_option( FEATURE TRANS
-		DEFAULT ON
-		DESCRIPTION "Support for trasnformations between SH and Grid space"
-		REQUIRED_PACKAGES "PROJECT trans_api VERSION 0.1" )
+ecbuild_add_option(
+	FEATURE TRANS
+	DESCRIPTION "Support for trasnformations between SH and Grid space"
+	REQUIRED_PACKAGES "PROJECT trans_api VERSION 0.1" )
 
 ### tesselation
 
-ecbuild_add_option( FEATURE TESSELATION
-                    DESCRIPTION "support for unstructured mesh generation" )
+ecbuild_add_option(
+	FEATURE TESSELATION
+	DESCRIPTION "support for unstructured mesh generation"
+	REQUIRED_PACKAGES "CGAL QUIET" )
 
-if( ENABLE_TESSELATION )
+if( HAVE_TESSELATION )
 
-	find_package( CGAL QUIET )
+	# CGAL needs boost
 
-	if( CGAL_FOUND )
-		set(Boost_USE_MULTITHREADED      ON )
-		find_package( Boost 1.45.0 REQUIRED )
-		set_package_properties( Boost PROPERTIES TYPE RECOMMENDED PURPOSE "CGAL support" )
-		list( APPEND CGAL_INCLUDE_DIRS ${Boost_INCLUDE_DIRS} )
-		list( APPEND CGAL_LIBRARIES ${CGAL_LIBRARY} ${CGAL_3RD_PARTY_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} )
-	endif()
+	set(Boost_USE_MULTITHREADED      ON )
+	find_package( Boost 1.45.0 REQUIRED )
+	set_package_properties( Boost PROPERTIES TYPE RECOMMENDED PURPOSE "CGAL support" )
+	list( APPEND CGAL_INCLUDE_DIRS ${Boost_INCLUDE_DIRS} )
+	list( APPEND CGAL_LIBRARIES ${CGAL_LIBRARY} ${CGAL_3RD_PARTY_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} )
 
 	list( APPEND ATLAS_TPLS CGAL )
 

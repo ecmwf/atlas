@@ -12,11 +12,13 @@
 #include "ecbuild/boost_test_framework.h"
 
 #include "atlas/atlas_config.h"
-#include "atlas/mpl/MPL.h"
+
 #include "atlas/Mesh.h"
+#include "atlas/io/Gmsh.h"
 #include "atlas/meshgen/RGG.h"
 #include "atlas/meshgen/RGGMeshGenerator.h"
-#include "atlas/io/Gmsh.h"
+#include "atlas/mpl/MPL.h"
+
 
 using namespace atlas;
 using namespace atlas::io;

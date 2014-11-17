@@ -302,7 +302,7 @@ std::string Grib::grib_sample_file( const GridSpec& g_spec, long edition )
 
               std::string fname = files[i].localPath();
 
-              if( match_grid_spec_with_sample_file(g_spec,grib_h,edition,fname))
+			  if( match_grid_spec_with_sample_file(g_spec,grib_h,edition,fname))
               {
                  // remove .tmpl extension
                  eckit::LocalPathName path(fname);
@@ -335,7 +335,7 @@ void Grib::write( const FieldSet& fields, const PathName& opath )
 
 void Grib::write(const Field& fh, DataHandle& dh)
 {
-   GribHandle::Ptr gh = Grib::create_handle( fh.grid(), fh.grib().edition() );
+   GribHandle::Ptr gh = Grib::create_handle( fh.grid() );
 
    if( !gh )
       throw SeriousBug("Failed to create GribHandle from Field", Here());
@@ -343,16 +343,10 @@ void Grib::write(const Field& fh, DataHandle& dh)
    if( !gh->raw() )
       throw SeriousBug("Failed to create GribHandle from Field", Here());
 
-   GribHandle::Ptr h = clone(fh,*gh);
+   GribHandle::Ptr h ( clone(fh,*gh) );
 
-   // dump the handle to the DataHandle
-   const void* buffer = NULL;
-   size_t size = 0;
-
-   GRIB_CHECK( grib_get_message( h->raw(), &buffer, &size), 0);
-
-   dh.write(buffer, size);
-}
+   h->write(dh);
+ }
 
 GribHandle::Ptr Grib::write(const Field& fh)
 {
@@ -361,7 +355,7 @@ GribHandle::Ptr Grib::write(const Field& fh)
     if( !gh )
 		throw SeriousBug("Failed to create GribHandle from Field", Here());
 
-    return clone(fh,*gh);
+	return GribHandle::Ptr( clone(fh,*gh) );
 }
 
 void Grib::clone( const FieldSet& fields, const PathName& src, const PathName& opath )
@@ -381,6 +375,18 @@ void Grib::clone( const FieldSet& fields, const PathName& src, const PathName& o
    {
       Grib::clone(fields[i], src, *of);
    }
+}
+
+GribHandle* Grib::copy_metadata(const GribHandle& from, GribHandle& to)
+{
+	int err=0;
+	int what = GRIB_SECTION_PRODUCT | GRIB_SECTION_LOCAL;
+
+	grib_handle* h = grib_util_sections_copy( from.raw(), to.raw(), what, &err);
+	GRIB_CHECK(err,"grib_util_sections_copy()");
+	ASSERT( h );
+
+	return new GribHandle( h );
 }
 
 void Grib::write(const Field& f, const PathName& opath)
@@ -408,20 +414,12 @@ void Grib::clone(const Field& field, const PathName& gridsec, DataHandle& out )
 
    GribHandle ch(clone_h);
 
-   GribHandle::Ptr h = Grib::clone( field, ch );
+   GribHandle::Ptr h ( Grib::clone( field, ch ) );
 
-   //    GRIB_CHECK( grib_write_message(h->raw(),fname.asString().c_str(),"w"), 0 );
-
-   // dump the handle to the DataHandle
-   const void* buffer = NULL;
-   size_t size = 0;
-
-   GRIB_CHECK( grib_get_message( h->raw(), &buffer, &size), 0);
-
-   out.write(buffer, size);
+   h->write(out);
 }
 
-GribHandle::Ptr Grib::clone(const Field& f, GribHandle& gridsec )
+GribHandle* Grib::clone(const Field& f, GribHandle& gridsec )
 {
     const size_t npts = f.size();
 
@@ -434,7 +432,7 @@ GribHandle::Ptr Grib::clone(const Field& f, GribHandle& gridsec )
     GRIB_CHECK(err,"grib_util_sections_copy()");
     ASSERT( h );
 
-    GribHandle::Ptr gh ( new GribHandle( h ) );
+	GribHandle* gh  = new GribHandle( h );
 
     ASSERT( gh );
 

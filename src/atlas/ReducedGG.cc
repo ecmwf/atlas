@@ -79,18 +79,23 @@ ReducedGG::ReducedGG(long gaussN) : npts_(0), gaussN_(gaussN)
 	ASSERT( gaussN_ > 1 );
 
 	// assume global
-   bbox_ = BoundBox(90.0/*top*/, -90.0/*bottom*/, 360.0 - (double)(90.0/(double)gaussN_) /*right*/, 0/*left*/);
 
-   hash_ = ReducedGG::className(); //  @todo ?
+	hash_ = ReducedGG::className(); //  @todo ?
 
-   computeNPtsPerLat(nbPtsPerLat_);
+	computeNPtsPerLat(nbPtsPerLat_);
 
-   std::vector<double> latitudes;
-   computeLatitudes(latitudes);
-   npts_ = computeNPoints(latitudes);
+	std::vector<double> latitudes;
+	computeLatitudes(latitudes);
 
-   ASSERT( npts_ > 0 );
-   ASSERT( nbPtsPerLat_.size() == 2 * gaussN_ ); // number of lines of latitude should, be twice the gaussN_
+	double maxLat = *std::max_element(latitudes.begin(),latitudes.end()); /* top */
+	double minLat = *std::min_element(latitudes.begin(),latitudes.end()); /* bottom */
+
+	bbox_ = BoundBox(maxLat, minLat, 360.0 - (double)(90.0/(double)gaussN_) /*right*/, 0/*left*/);
+
+	npts_ = computeNPoints(latitudes);
+
+	ASSERT( npts_ > 0 );
+	ASSERT( nbPtsPerLat_.size() == 2 * gaussN_ ); // number of lines of latitude should, be twice the gaussN_
 }
 
 ReducedGG::~ReducedGG()
