@@ -20,3 +20,9 @@ ecbuild_add_executable(
   SOURCES     gmsh_extract.cc
   LIBS        ${ATLAS_LIBRARIES} ${ECKIT_LIBRARIES} )
 
+ecbuild_add_executable(
+  TARGET      atlas-grids
+  SOURCES     atlas_grids.cc
+  LIBS        ${ATLAS_LIBRARIES} atlas_grids ${ECKIT_LIBRARIES} )
+
+

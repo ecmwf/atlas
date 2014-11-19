@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include <typeinfo>			 // std::bad_cast
+#include <typeinfo> // std::bad_cast
 #include <sstream>
 #include <stdexcept>
 

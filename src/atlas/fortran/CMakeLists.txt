@@ -73,10 +73,10 @@ add_custom_target( atlas_fortran_inc SOURCES
 )
 
 
-ecbuild_add_library( TARGET atlas_mpl_fortran
-	AUTO_VERSION
-	CONDITION CMAKE_Fortran_COMPILER_LOADED
-	SOURCES
-		atlas_mpl_module.F90
-	LIBS ${ATLAS_MPI_FORTRAN_LIBRARIES}
-)
+#ecbuild_add_library( TARGET atlas_mpl_fortran
+#	AUTO_VERSION
+#	CONDITION CMAKE_Fortran_COMPILER_LOADED
+#	SOURCES
+#		atlas_mpl_module.F90
+#	LIBS ${ATLAS_MPI_FORTRAN_LIBRARIES}
+#)
