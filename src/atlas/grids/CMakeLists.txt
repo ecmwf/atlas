@@ -7,7 +7,6 @@ reduced_gg/N48.cc    # TL95
 reduced_gg/N64.cc    # TL127
 reduced_gg/N80.cc    # TL159
 reduced_gg/N96.cc    # TL191
-reduced_gg/N108.cc   # TL215
 reduced_gg/N128.cc   # TL255
 reduced_gg/N160.cc   # TL319
 reduced_gg/N200.cc   # TL399

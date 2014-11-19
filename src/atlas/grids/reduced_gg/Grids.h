@@ -36,6 +36,8 @@ public:\
   CLASS(Grid::ARG1 arg1) { construct(); }\
   void construct();\
   static std::string className() { return "atlas.grids.reduced_gg."+std::string(#CLASS); }\
+  virtual std::string uid() const { return "reduced_gg."+std::string(#CLASS); } \
+  virtual std::string hash() const { return "reduced_gg."+std::string(#CLASS); } \
   \
   struct regist { \
     typedef eckit::ConcreteBuilderT1<Grid,CLASS> GridBuilder;\

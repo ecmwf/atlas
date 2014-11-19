@@ -120,7 +120,11 @@ private:
 
 SharedPtr<ReducedGrid> reduced_grid(std::string& key)
 {
-  SharedPtr<ReducedGrid> grid( Factory<ReducedGrid>::instance().get(key).create() );
+  if( !Factory<ReducedGrid>::instance().exists(key) )
+  {
+    return SharedPtr<ReducedGrid>();
+  }
+  SharedPtr<ReducedGrid> grid ( Factory<ReducedGrid>::instance().get(key).create() );
   return grid;
 }
 
@@ -137,24 +141,47 @@ void AtlasGrids::run()
     typedef Factory<ReducedGrid> Factory_t;
     Factory_t& factory = Factory_t::instance();
     std::vector<std::string> keys = factory.keys();
+    Log::info() << "Available grids:" << std::endl;
     for( int i=0; i< keys.size(); ++i )
     {
-      Log::info() << "  - " << keys[i] << std::endl;
+      Log::info() << "  -- " << keys[i] << std::endl;
     }
   }
 
   if( !key.empty() )
   {
     SharedPtr< ReducedGrid > grid = reduced_grid(key);
+    if( !grid )
+    {
+      Log::error() << "Grid " << key << " was not found." << std::endl;
+      return;
+    }
     if( info )
     {
       Log::info() << "Grid " << key << std::endl;
-      Log::info() << "   number of points:                 " << grid->nPoints() << std::endl;
-      Log::info() << "   number of latitudes (N-S):        " << grid->nlat() << std::endl;
-      Log::info() << "   approximate resolution for Earth: " << 40075 / (2.* grid->nlat()) << " km" << std::endl;
-      Log::info() << "   spectral truncation -- linear:    " << grid->nlat() - 1 << std::endl;
-      Log::info() << "   spectral truncation -- quadratic: " << static_cast<int>(2./3.*grid->nlat()+0.5) - 1 << std::endl;
-      Log::info() << "   spectral truncation -- cubic:     " << static_cast<int>(0.5*grid->nlat()+0.5) - 1 << std::endl;
+      Log::info() << "   number of points:                 "
+                  << grid->nPoints() << std::endl;
+      Log::info() << "   number of latitudes (N-S):        "
+                  << grid->nlat() << std::endl;
+      Log::info() << "   number of longitudes (max):       "
+                  << grid->nlonmax() << std::endl;
+      Log::info() << "   approximate resolution:           "
+                  << 180./grid->nlat() << " deg" << std::endl;
+      Log::info() << "   approximate resolution for Earth: "
+                  << 40075 / (2.* grid->nlat()) << " km" << std::endl;
+      Log::info() << "   spectral truncation -- linear:    "
+                  << grid->nlat() - 1 << std::endl;
+      Log::info() << "   spectral truncation -- quadratic: "
+                  << static_cast<int>(std::floor(2./3.*grid->nlat()+0.5))-1 << std::endl;
+      Log::info() << "   spectral truncation -- cubic:     "
+                  << static_cast<int>(std::floor(0.5*grid->nlat()+0.5))-1 << std::endl;
+      Log::info() << "   bounding box -- lat N-S (deg):    "
+                  << grid->boundingBox().top_right().lat() << " , "
+                  << grid->boundingBox().bottom_left().lat() << std::endl;
+      Log::info() << "   bounding box -- lon W-E (deg):    "
+                  << grid->boundingBox().bottom_left().lon() << " , "
+                  << grid->boundingBox().top_right().lon() << std::endl;
+
     }
     if( json )
     {
@@ -162,6 +189,7 @@ void AtlasGrids::run()
       JSON js(stream);
       js.startObject();
       {
+        js << "uid" << grid->uid();
         js << "nlat" << grid->nlat();
         js << "nlon";
         js.startList();
@@ -174,7 +202,10 @@ void AtlasGrids::run()
         js.startList();
         {
           for( int jlat=0; jlat<grid->nlat(); ++jlat )
-            js << grid->lat(jlat);
+          {
+            if( jlat != 0) stream << ",";
+            stream<< std::fixed << std::setprecision(16) << grid->lat(jlat);
+          }
         }
         js.endList();
       }
