@@ -531,7 +531,7 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rgg, const std
           region.lat_end[latS] = std::max(region.lat_end[latS], ipS1);
         }
         ipN1=ipN2;
-        ipS1=ipS1;
+        // and ipS1=ipS1;
 
       }
       else // make triangle up
@@ -610,8 +610,9 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rgg, const std
           region.lat_end[latN] = std::max(region.lat_end[latN], ipN1);
           region.lat_end[latS] = std::max(region.lat_end[latS], ipS2);
         }
-        ipN1=ipN1;
         ipS1=ipS2;
+        // and ipN1=ipN1;
+
       }
       ipN2 = std::min(endN,ipN1+1);
       ipS2 = std::min(endS,ipS1+1);

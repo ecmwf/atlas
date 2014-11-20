@@ -141,7 +141,7 @@ void write_field_nodes(const Gmsh& gmsh, Field& field, std::ostream& out)
 			if( field.metadata().has<int>("nb_levels") )
 				std::sprintf(field_lev, "[%03d]",jlev);
 		  else
-				std::sprintf(field_lev, "",jlev);
+				std::sprintf(field_lev, "");
 			double time   = field.metadata().get<double>("time",0.);
 			int step = field.metadata().get<int>("step",0) ;
 			out << "$NodeData\n";
@@ -250,7 +250,7 @@ void write_field_elems(const Gmsh& gmsh, Field& field, std::ostream& out)
 		if( field.metadata().has<int>("nb_levels") )
 			std::sprintf(field_lev, "[%03d]",jlev);
 	  else
-			std::sprintf(field_lev, "",jlev);
+			std::sprintf(field_lev, "");
 
 	  out << "$ElementNodeData\n";
 		out << "1\n";
