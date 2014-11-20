@@ -6,8 +6,6 @@ namespace atlas {
 namespace grids {
 namespace reduced_gg {
 
-N2000::regist N2000_builders;
-
 void N2000::construct()
 {
   int N=2000;
@@ -2019,6 +2017,6 @@ void N2000::construct()
   setup_lat_hemisphere(N,lon,lat.data(),DEG);
 }
 
-}
-}
-}
+} // namespace reduced_gg
+} // namespace grids
+} // namespace atlas

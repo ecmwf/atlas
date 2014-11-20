@@ -11,6 +11,8 @@
 #include <numeric>
 #include <algorithm>
 #include <eckit/exception/Exceptions.h>
+#include <eckit/memory/Factory.h>
+#include <eckit/memory/Builder.h>
 #include "atlas/meshgen/RGG.h"
 #include "atlas/Util.h"
 
@@ -71,7 +73,16 @@ ReducedGrid* new_reduced_gaussian_grid( const std::string& identifier )
   else if( identifier == "T2047" ) rgg = new T2047();
   else if( identifier == "T3999" ) rgg = new T3999();
   else if( identifier == "T7999" ) rgg = new T7999();
-  else throw eckit::BadParameter("Cannot create grid"+identifier,Here());
+  else
+  {
+    if( !eckit::Factory<ReducedGrid>::instance().exists(identifier) )
+    {
+      std::stringstream msg;
+      msg << "Cannot find grid "<<identifier<<" in " << eckit::Factory<ReducedGrid>::instance();
+      throw eckit::BadParameter(msg.str(),Here());
+    }
+    rgg = eckit::Factory<ReducedGrid>::instance().get(identifier).create();
+  }
   return rgg;
 }
 

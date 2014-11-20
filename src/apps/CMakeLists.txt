@@ -13,7 +13,7 @@ ecbuild_add_executable(
 ecbuild_add_executable(
   TARGET      meshgen_to_gmsh
   SOURCES     meshgen_to_gmsh.cc
-  LIBS        atlas ${ECKIT_LIBRARIES} )
+  LIBS        ${ATLAS_LIBRARIES} ${ECKIT_LIBRARIES} )
 
 ecbuild_add_executable(
   TARGET      gmsh_extract
@@ -23,6 +23,6 @@ ecbuild_add_executable(
 ecbuild_add_executable(
   TARGET      atlas-grids
   SOURCES     atlas-grids.cc
-  LIBS        ${ATLAS_LIBRARIES} ${ECKIT_LIBRARIES} )
+  LIBS        ${ATLAS_LIBRARIES} atlas_grids ${ECKIT_LIBRARIES} )
 
 

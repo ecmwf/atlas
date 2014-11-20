@@ -1,4 +1,5 @@
 list( APPEND atlas_grids_srcs
+Grids.h
 reduced_gg/Grids.h
 reduced_gg/N16.cc    # TL31
 reduced_gg/N24.cc    # TL47
@@ -28,5 +29,12 @@ reduced_gg/N8000.cc  # TL15999
 ecbuild_add_library( TARGET atlas_grids
   AUTO_VERSION
   SOURCES ${atlas_grids_srcs}
-  LIBS atlas
+  LIBS ${libatlas}
 )
+
+ecbuild_add_library( TARGET atlas_grids_fortran
+  CONDITION CMAKE_Fortran_COMPILER_LOADED
+  SOURCES Grids.cc atlas_grids_module.F90
+  LIBS atlas_grids
+)
+

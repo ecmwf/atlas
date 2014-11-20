@@ -6,8 +6,6 @@ namespace atlas {
 namespace grids {
 namespace reduced_gg {
 
-N200::regist N200_builders;
-
 void N200::construct()
 {
   int N=200;
@@ -418,6 +416,6 @@ void N200::construct()
   setup_lat_hemisphere(N,lon,lat,DEG);
 }
 
-}
-}
-}
+} // namespace reduced_gg
+} // namespace grids
+} // namespace atlas

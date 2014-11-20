@@ -6,8 +6,6 @@ namespace atlas {
 namespace grids {
 namespace reduced_gg {
 
-N640::regist N640_builders;
-
 void N640::construct()
 {
   int N=640;
@@ -1298,6 +1296,6 @@ void N640::construct()
   setup_colat_hemisphere(N,lon,colat,RAD);
 }
 
-}
-}
-}
+} // namespace reduced_gg
+} // namespace grids
+} // namespace atlas

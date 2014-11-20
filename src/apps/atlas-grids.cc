@@ -28,9 +28,9 @@
 #include <eckit/parser/JSON.h>
 
 #include "atlas/atlas.h"
-#include "atlas/ReducedGrid.h"
 #include "atlas/GridSpec.h"
 #include "atlas/GridSpecParams.h"
+#include "atlas/grids/Grids.h"
 
 
 //------------------------------------------------------------------------------------------------------

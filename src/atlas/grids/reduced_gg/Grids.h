@@ -11,6 +11,9 @@
 /// @author Willem Deconinck
 /// @date Nov 2014
 
+#ifndef atlas_grids_reduced_gg_Grids_h
+#define atlas_grids_reduced_gg_Grids_h
+
 #include <eckit/memory/Builder.h>
 #include <eckit/value/Params.h>
 #include "atlas/ReducedGrid.h"
@@ -41,19 +44,15 @@ public:\
     grid_type_ = "reduced_gg"; \
   }\
   static std::string className() { return "atlas.grids.reduced_gg."+std::string(#CLASS); }\
-  \
-  struct regist { \
-    typedef eckit::ConcreteBuilderT1<Grid,CLASS> GridBuilder;\
-    typedef eckit::ConcreteBuilderT0<ReducedGrid,CLASS> ReducedGridBuilder;\
-    static std::string buildName() { return "reduced_gg."+std::string(#CLASS); }\
-    regist() : \
-      gridbuilder(buildName()),\
-      reducedgridbuilder(buildName())\
-    {}\
-    GridBuilder        gridbuilder;\
-    ReducedGridBuilder reducedgridbuilder;\
-  };\
-}
+};\
+static struct CLASS##_regist \
+{\
+  static std::string build_name() { return "reduced_gg."+std::string(#CLASS); }\
+  CLASS##_regist() {\
+    static eckit::ConcreteBuilderT1<Grid,       CLASS>         grid(build_name()); \
+    static eckit::ConcreteBuilderT0<ReducedGrid,CLASS> reduced_grid(build_name()); \
+  }\
+} CLASS##_registration;
 
 DEFINE_GRID(N16);
 DEFINE_GRID(N24);
@@ -62,7 +61,6 @@ DEFINE_GRID(N48);
 DEFINE_GRID(N64);
 DEFINE_GRID(N80);
 DEFINE_GRID(N96);
-DEFINE_GRID(N108);
 DEFINE_GRID(N128);
 DEFINE_GRID(N160);
 DEFINE_GRID(N200);
@@ -81,6 +79,7 @@ DEFINE_GRID(N4000);
 DEFINE_GRID(N8000);
 
 #undef DEFINE_GRID
-}
-}
-}
+} // namespace reduced_gg
+} // namespace grids
+} // namespace atlas
+#endif // atlas_grids_reduced_gg_Grids_h

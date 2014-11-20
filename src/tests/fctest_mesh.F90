@@ -16,6 +16,7 @@
 module fctest_atlas_mesh_fixture
 use atlas_module
 use atlas_mpl_module
+use atlas_grids_module
 use iso_c_binding
 implicit none
 type(Mesh_type) :: mesh
@@ -31,6 +32,7 @@ TESTSUITE_WITH_FIXTURE(fctest_atlas_mesh,fctest_atlas_mesh_fixture)
 
 TESTSUITE_INIT
   call atlas_init()
+  call atlas_grids_load()
   mesh = new_Mesh()
 END_TESTSUITE_INIT
 
@@ -208,7 +210,9 @@ TEST( test_meshgen )
 
   write(*,*) "test_meshgen starting"
 
-  call atlas_generate_latlon_grid(rgg,60,30)
+!  call atlas_generate_latlon_grid(rgg,60,30)
+
+  call atlas_generate_reduced_gaussian_grid(rgg,"reduced_gg.N320")
 
 !  call atlas_generate_reduced_gaussian_grid(rgg,"T63")
   call atlas_build_parallel_fields(rgg)

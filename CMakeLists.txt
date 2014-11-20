@@ -53,14 +53,14 @@ ecbuild_find_python()
 ecbuild_add_option( FEATURE FORTRAN
                     DESCRIPTION "provide Fortran bindings" )
 
-if( ENABLE_FORTRAN )
+if( HAVE_FORTRAN )
 
   ecbuild_enable_fortran( REQUIRED MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/module )
 
   ecbuild_add_option( FEATURE FCTEST
                       DEFAULT ${ENABLE_TESTS}
                       DESCRIPTION "Fortran Unit Test Framework"
-					  REQUIRED_PACKAGES "PROJECT fctest VERSION 0.1" )
+                      REQUIRED_PACKAGES "PROJECT fctest VERSION 0.1" )
 endif()
 
 ### OMP ...
@@ -138,11 +138,16 @@ list( APPEND ATLAS_TPLS eckit )
 
 set( ATLAS_INCLUDE_DIRS   ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src )
 
-set( ATLAS_LIBRARIES      atlas atlas_grids )
+set( libatlas atlas_core )
 
-if( ENABLE_FORTRAN )
+list( APPEND ATLAS_LIBRARIES
+  ${libatlas} atlas_grids
+#  -Wl,--whole-archive atlas_grids -Wl,--no-whole-archive
+)
+
+if( HAVE_FORTRAN )
   list( APPEND ATLAS_INCLUDE_DIRS ${CMAKE_Fortran_MODULE_DIRECTORY} )
-  set( ATLAS_LIBRARIES atlas_fortran ${ATLAS_LIBRARIES} )
+  set( ATLAS_LIBRARIES atlas_fortran atlas_grids_fortran ${ATLAS_LIBRARIES} )
 endif()
 
 get_directory_property( ATLAS_DEFINITIONS COMPILE_DEFINITIONS )
@@ -160,6 +165,8 @@ endforeach()
 include( atlas_compiler_flags )
 
 include_directories( ${ATLAS_INCLUDE_DIRS} ${ATLAS_EXTRA_INCLUDE_DIRS} )
+
+debug_var( ATLAS_INCLUDE_DIRS )
 
 add_subdirectory( src )
 

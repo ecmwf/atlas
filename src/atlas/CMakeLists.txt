@@ -184,7 +184,7 @@ Util.h
 
 ### atlas c++ library
 
-ecbuild_add_library( TARGET atlas
+ecbuild_add_library( TARGET atlas_core
   AUTO_VERSION
   INSTALL_HEADERS ALL
   HEADER_DESTINATION  ${INSTALL_INCLUDE_DIR}/atlas
