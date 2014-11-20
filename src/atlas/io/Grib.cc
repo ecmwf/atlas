@@ -46,7 +46,6 @@
 
 //------------------------------------------------------------------------------------------------------
 
-using namespace std;
 using namespace eckit;
 using namespace eckit::grib;
 using namespace atlas;
@@ -142,7 +141,7 @@ void Grib::determine_grib_samples_dir(std::vector<std::string>& sample_paths)
          sample_paths.push_back(path);
          return;
       }
-	   throw SeriousBug(string("GRIB_SAMPLES_PATH and GRIB_API_PATH not defined, please call: module load grib_api"),Here()) ;
+	   throw SeriousBug("GRIB_SAMPLES_PATH and GRIB_API_PATH not defined, please call: module load grib_api",Here()) ;
    }
 
    sample_paths = StringTools::split(":", std::string(samples_dir));
@@ -276,14 +275,14 @@ std::string Grib::grib_sample_file( const GridSpec& g_spec, long edition )
     determine_grib_samples_dir(sample_paths);
 
     if ( sample_paths.empty() )
-        throw SeriousBug(string("Error no sample paths found"),Here()) ;
+        throw SeriousBug("Error no sample paths found",Here()) ;
 
     for(size_t path = 0; path < sample_paths.size(); ++path)
     {
         std::string grib_samples_dir = sample_paths[path];
 
         if (grib_samples_dir.empty())
-            throw SeriousBug(string("Error, empty samples path. Could not create handle from grid"),Here()) ;
+            throw SeriousBug("Error, empty samples path. Could not create handle from grid",Here()) ;
 
         PathName dir_path(grib_samples_dir);
 
@@ -307,7 +306,7 @@ std::string Grib::grib_sample_file( const GridSpec& g_spec, long edition )
                  // remove .tmpl extension
                  eckit::LocalPathName path(fname);
                  LocalPathName base_name = path.baseName(false);
-                 string grib_sample_file = base_name.localPath();
+                 std::string grib_sample_file = base_name.localPath();
                  return grib_sample_file;
               }
            }
