@@ -108,7 +108,7 @@ PolarStereoGraphic::PolarStereoGraphic( const eckit::Params& p )
    {
       lon =  p["longitudeOfFirstGridPoint"];
    }
-   first_grid_pt_.assign(lat,lon);
+   first_grid_pt_.assign(lon,lat);
 
 
    if (p.has("southPoleOnProjectionPlane")) {
@@ -198,26 +198,24 @@ size_t PolarStereoGraphic::npts() const
    return npts_xaxis_ * npts_yaxis_;
 }
 
-void PolarStereoGraphic::coordinates(std::vector<double>& pts ) const
+void PolarStereoGraphic::lonlat( double pts[] ) const
 {
-   ASSERT( pts.size() && pts.size()%2 == 0 );
-
    std::vector<Grid::Point> gpts;
-   gpts.resize( pts.size()/ 2);
-   coordinates(gpts);
+   lonlat(gpts);
 
+   int c(0);
    for(size_t i = 0; i < gpts.size(); i++) {
-      pts[i] = gpts[i].lat();
-      pts[i+1] = gpts[i].lon();
+      pts[c++] = gpts[i].lon();
+      pts[c++] = gpts[i].lat();
    }
 }
 
 //Enable to test against grib iterator
 //#define GRIB_COMPAT 1
 
-void PolarStereoGraphic::coordinates(std::vector<Grid::Point>& points) const
+void PolarStereoGraphic::lonlat(std::vector<Grid::Point>& points) const
 {
-   ASSERT( points.size() == npts() );
+   points.resize(npts());
 
    PolarStereoGraphicProj ps(southPoleOnProjectionPlane_,earth_is_oblate_,orientationOfTheGrid_);
    if (earth_is_oblate_) {

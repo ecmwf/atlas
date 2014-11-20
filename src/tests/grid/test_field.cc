@@ -49,7 +49,7 @@ void TestField::test_constructor()
 
     // create a grid
 
-	Grid::BoundBox earth ( Grid::Point(-90.,0.), Grid::Point(90.,359.999999) );
+	Grid::BoundBox earth ( Grid::Point(0.,-90.), Grid::Point(359.999999,90.) );
 
 	Grid::Ptr g (new atlas::RegularLatLon( 20, 10, earth ) );
 

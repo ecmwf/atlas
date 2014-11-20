@@ -104,27 +104,25 @@ string ReducedGG::uid() const
 	return ss.str();
 }
 
-void ReducedGG::coordinates( std::vector<double>& pts ) const
+void ReducedGG::lonlat( double pts[] ) const
 {
-	ASSERT( pts.size() && pts.size()%2 == 0 );
-	ASSERT( pts.size() == npts()*2 );
-
 	std::vector<double>  latitudes;
 	computeLatitudes(latitudes);
 
 	std::vector<Grid::Point> points;
 	computePoints(latitudes,points);
 
+  int c(0);
 	for( size_t i = 0; i < points.size(); ++i )
 	{
-		pts[ 2*i   ] = points[i].lat();
-		pts[ 2*i+1 ] = points[i].lon();
+		pts[c++] = points[i].lon();
+		pts[c++] = points[i].lat();
 	}
 }
 
-void ReducedGG::coordinates(std::vector<Grid::Point>& pts) const
+void ReducedGG::lonlat(std::vector<Grid::Point>& pts) const
 {
-	ASSERT( pts.size() == npts_ );
+  pts.resize(npts());
 
 	std::vector<double>  latitudes;
 	computeLatitudes(latitudes);
@@ -204,7 +202,7 @@ void ReducedGG::computePoints( const std::vector<double>& lats, std::vector<Poin
 			{
 				if( ( plon >= west && plon <= east ) || isEqual(plon,west) || isEqual(plon,east) )
 				{
-					pts[n].assign( lats[j], plon );
+					pts[n].assign( plon, lats[j] );
 					++n;
 				}
 				plon += delta_lon;

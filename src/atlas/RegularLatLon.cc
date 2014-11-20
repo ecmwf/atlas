@@ -172,11 +172,8 @@ void RegularLatLon::computeGridIncs(double incNS, double incWE)
     nptsWE_ = computeCols();
 }
 
-void RegularLatLon::coordinates( std::vector<double>& pts ) const
+void RegularLatLon::lonlat( double pts[] ) const
 {
-	ASSERT( pts.size() && pts.size()%2 == 0 );
-	ASSERT( pts.size() == npts()*2 );
-
 	const double plon = bbox_.west();    // west
 	const double plat = bbox_.north();   // north;
 
@@ -189,17 +186,16 @@ void RegularLatLon::coordinates( std::vector<double>& pts ) const
 			const size_t idx = j*nptsWE_ + i;
 			const double lon = plon + incWE_ * i;
 
-			pts[ 2*idx   ] = lat;
-			pts[ 2*idx+1 ] = lon;
+			pts[ 2*idx   ] = lon;
+			pts[ 2*idx+1 ] = lat;
 		}
 	}
 }
 
-void RegularLatLon::coordinates( std::vector<Grid::Point>& pts ) const
+void RegularLatLon::lonlat( std::vector<Grid::Point>& pts ) const
 {
-	ASSERT( pts.size() == npts() );
-
-	const double plon = bbox_.west();    // west
+  pts.resize(npts());
+  const double plon = bbox_.west();    // west
 	const double plat = bbox_.north();   // north;
 
 	for( size_t j = 0; j < nptsNS_; ++j )
@@ -211,7 +207,7 @@ void RegularLatLon::coordinates( std::vector<Grid::Point>& pts ) const
 			const size_t idx = j*nptsWE_ + i;
 			const double lon = plon + incWE_ * i;
 
-			pts[ idx ].assign( lat, lon );
+			pts[ idx ].assign( lon, lat );
 		}
 	}
 }

@@ -59,7 +59,7 @@ Unstructured::Unstructured( std::vector< Point >* pts, const std::string& hash )
         lon_max = std::max( lon_max, p[n].lon() );
     }
 
-    bound_box_ = BoundBox( Point(lat_min,lon_min), Point(lat_max,lon_max) );
+    bound_box_ = BoundBox( Point(lon_min,lat_min), Point(lon_max,lat_max) );
 }
 
 Unstructured::~Unstructured()
@@ -86,12 +86,12 @@ size_t Unstructured::npts() const
     return points_->size();
 }
 
-void Unstructured::coordinates(std::vector<double>& r ) const
+void Unstructured::lonlat( double[] ) const
 {
 	NOTIMP;
 }
 
-void Unstructured::coordinates(std::vector<Grid::Point>&) const
+void Unstructured::lonlat(std::vector<Grid::Point>&) const
 {
 	NOTIMP;
 }

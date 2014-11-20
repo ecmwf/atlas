@@ -146,12 +146,12 @@ static void test_grib_file(const std::string& fpath)
    // Compare GRIB points with GRID points,
    // get GRIB points, caution grib iterator depends on scanning mode, Grid is always left ->right, top -> bottom
    std::vector<Grid::Point> grib_pntlist;
-   gh.getLatLonPoints( grib_pntlist );
+   gh.getLonLatPoints( grib_pntlist );
    BOOST_CHECK_MESSAGE( grid_created_from_grib->npts() == grib_pntlist.size(),"GRIB pt list size " << grib_pntlist.size() << " different to GRID " << grid_created_from_grib->npts());
 
    // get the GRID points
    std::vector<Grid::Point> grid_points; grid_points.resize( grid_created_from_grib->npts());
-   grid_created_from_grib->coordinates(grid_points);
+   grid_created_from_grib->lonlat(grid_points);
 
    comparePointList(grib_pntlist,grid_points,epsilon,gh);
 

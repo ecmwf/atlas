@@ -50,8 +50,8 @@ public: // methods
    ///   1/ project the first spherical point on to the plane x/y
    ///   2/ Add x_grid_length_/y_grid_length_ to this point
    ///   3/ Convert this back to lat long values, and then repeat.
-   virtual void coordinates( std::vector<double>& ) const;
-   virtual void coordinates( std::vector<Point>& ) const;
+   virtual void lonlat( double[] ) const;
+   virtual void lonlat( std::vector<Point>& ) const;
 
    virtual std::string grid_type() const;
    virtual GridSpec spec() const;

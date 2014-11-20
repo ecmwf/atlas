@@ -44,6 +44,12 @@ Grid::~Grid()
 {
 }
 
+void Grid::lonlat( std::vector<double>& crd )
+{
+  crd.resize(npts()*2);
+  lonlat(crd.data());
+}
+
 void Grid::build_mesh() const
 {
   if( ! mesh_ )

@@ -145,25 +145,22 @@ size_t ReducedGrid::npts() const
   return npts_;
 }
 
-void ReducedGrid::coordinates( std::vector<double>& crds) const
+void ReducedGrid::lonlat( double crds[] ) const
 {
-  ///@todo this should be first longitude, then latitude
-  crds.resize(2*npts());
   int c(0);
   for( int jlat=0; jlat<nlat(); ++jlat )
   {
-    double y = lat(jlat);
+    double ylat = lat(jlat);
     for( int jlon=0; jlon<nlon(jlat); ++jlat )
     {
-      crds[c++] = y;
       crds[c++] = lon(jlat,jlon);
+      crds[c++] = ylat;
     }
   }
 }
 
-void ReducedGrid::coordinates( std::vector<Point>& pts ) const
+void ReducedGrid::lonlat( std::vector<Point>& pts ) const
 {
-  ///@todo this should be first longitude, then latitude
   pts.resize(npts());
   int c(0);
   for( int jlat=0; jlat<nlat(); ++jlat )
@@ -171,7 +168,7 @@ void ReducedGrid::coordinates( std::vector<Point>& pts ) const
     double y = lat(jlat);
     for( int jlon=0; jlon<nlon(jlat); ++jlat )
     {
-      pts[c++].assign(y,lon(jlat,jlon));
+      pts[c++].assign(lon(jlat,jlon),y);
     }
   }
 }

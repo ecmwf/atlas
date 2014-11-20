@@ -274,8 +274,8 @@ void Tesselation::create_mesh_structure( Mesh& mesh, const size_t nb_nodes )
 
     // create / ensure mesh has latlon
 
-    if( ! nodes.has_field("latlon") )
-        nodes.create_field<double>("latlon",2);
+    if( ! nodes.has_field("lonlat") )
+        nodes.create_field<double>("lonlat",2);
 
     // create / ensure mesh has global indexes
 
@@ -285,7 +285,7 @@ void Tesselation::create_mesh_structure( Mesh& mesh, const size_t nb_nodes )
 
 //------------------------------------------------------------------------------------------------------
 
-void Tesselation::generate_latlon_points( Mesh& mesh,
+void Tesselation::generate_lonlat_points( Mesh& mesh,
                                           const size_t& nlats,
                                           const size_t& nlong )
 {
@@ -298,7 +298,7 @@ void Tesselation::generate_latlon_points( Mesh& mesh,
     ASSERT(  nodes.shape(0) == nb_nodes );
 
     ArrayView<double,2> coords  ( nodes.field("coordinates") );
-    ArrayView<double,2> latlon  ( nodes.field("latlon") );
+    ArrayView<double,2> lonlat  ( nodes.field("lonlat") );
     ArrayView<int,   1> glb_idx ( nodes.field("glb_idx") );
 
     // generate lat/long points
@@ -330,8 +330,8 @@ void Tesselation::generate_latlon_points( Mesh& mesh,
 
             glb_idx(idx) = idx;
 
-            latlon(idx,LAT) = lat;
-            latlon(idx,LON) = lon;
+            lonlat(idx,LON) = lon;
+            lonlat(idx,LAT) = lat;
 
             eckit::geometry::latlon_to_3d( lat, lon, coords[idx].data() );
 
@@ -346,7 +346,7 @@ void Tesselation::generate_latlon_points( Mesh& mesh,
 
 //------------------------------------------------------------------------------------------------------
 
-void Tesselation::generate_latlon_grid( Mesh& mesh, const size_t& nlats, const size_t& nlong )
+void Tesselation::generate_lonlat_grid( Mesh& mesh, const size_t& nlats, const size_t& nlong )
 {
     const size_t nb_nodes = (nlats+1) * (nlong+1);
 
@@ -357,7 +357,7 @@ void Tesselation::generate_latlon_grid( Mesh& mesh, const size_t& nlats, const s
     ASSERT( nodes.shape(0) == nb_nodes );
 
     ArrayView<double,2> coords  ( nodes.field("coordinates") );
-    ArrayView<double,2> latlon  ( nodes.field("latlon") );
+    ArrayView<double,2> lonlat  ( nodes.field("lonlat") );
     ArrayView<int,   1> glb_idx ( nodes.field("glb_idx") );
 
     const double lat_inc = 180. / nlats;
@@ -386,8 +386,8 @@ void Tesselation::generate_latlon_grid( Mesh& mesh, const size_t& nlats, const s
 
             glb_idx(idx) = idx;
 
-            latlon(idx,LAT) = lat;
-            latlon(idx,LON) = lon;
+            lonlat(idx,LON) = lon;
+            lonlat(idx,LAT) = lat;
 
             eckit::geometry::latlon_to_3d( lat, lon, coords[idx].data() );
 
@@ -491,25 +491,22 @@ void Tesselation::build_mesh( const Grid& grid, Mesh& mesh )
     ASSERT(  nodes.shape(0) == npts );
 
     ArrayView<double,2> coords  ( nodes.field("coordinates") );
-    ArrayView<double,2> latlon  ( nodes.field("latlon") );
+    ArrayView<double,2> lonlat  ( nodes.field("lonlat") );
     ArrayView<int,   1> glb_idx ( nodes.field("glb_idx") );
 
     ASSERT( npts == nodes.shape(0) );
 
-	std::vector<Grid::Point> ll(npts);
-	grid.coordinates(ll);
+    std::vector<Grid::Point> ll(npts);
+    grid.lonlat(lonlat.data());
 
     for( size_t i = 0; i < npts; ++i )
     {
         glb_idx(i) = i;
 
-        double lat = ll[i].lat();
-        double lon = ll[i].lon();
+        double lon = lonlat(i,LON);
+        double lat = lonlat(i,LAT);
 
-        latlon(i,LAT) = lat;
-        latlon(i,LON) = lon;
-
-        eckit::geometry::latlon_to_3d( lat, lon, coords[i].data() );
+        eckit::geometry::lonlat_to_3d( lon, lat, coords[i].data() );
     }
 }
 

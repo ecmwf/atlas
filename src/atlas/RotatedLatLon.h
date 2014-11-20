@@ -69,8 +69,8 @@ public: // methods
 	virtual BoundBox bounding_box() const { return bbox_;}
 	virtual size_t npts() const;
 
-	virtual void coordinates( std::vector<double>& ) const;
-	virtual void coordinates( std::vector<Point>& ) const;
+	virtual void lonlat( double[] ) const;
+	virtual void lonlat( std::vector<Point>& ) const;
 
 	virtual std::string grid_type() const;
 	virtual GridSpec spec() const;
@@ -82,7 +82,7 @@ protected: // methods
 	double rotated_longitude() const { return south_pole_lon_; }
 	double rotated_angle() const { return south_pole_rot_angle_; }
 
-	Point latLon(size_t lat, size_t lon) const;
+	Point lonlat(size_t jlon, size_t jlat) const;
 	long rows() const { return nptsNS_;}
 	long cols() const { return nptsWE_;}
 	double incLat() const { return nsIncrement_; }

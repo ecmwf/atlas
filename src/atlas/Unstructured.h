@@ -50,8 +50,8 @@ public: // methods
 
     virtual size_t npts() const;
 
-	virtual void coordinates( std::vector<double>& ) const;
-	virtual void coordinates( std::vector<Point>& ) const;
+	virtual void lonlat( double[] ) const;
+	virtual void lonlat( std::vector<Point>& ) const;
 
     virtual std::string grid_type() const { return std::string("unstructured"); }
 

@@ -73,46 +73,44 @@ string ReducedLatLon::uid() const
 	return ss.str();
 }
 
-struct ReducedLatLon_CoordDD
+struct ReducedLonLat_CoordDD
 {
-	ReducedLatLon_CoordDD( std::vector<double>& pts ) : pts_(pts) {}
-	void operator()(double lat, double lon)
+	ReducedLonLat_CoordDD( double pts[] ) : pts_(pts), c(0) {}
+	void operator()(double lon, double lat)
 	{
-		pts_.push_back( lat );
-		pts_.push_back( lon );
+		pts_[c++] = lon;
+		pts_[c++] = lat;
 	}
-	std::vector<double>& pts_;
+	double* pts_;
+	int c;
 };
 
 
-void ReducedLatLon::coordinates(std::vector<double>& r ) const
+void ReducedLatLon::lonlat( double pts[] ) const
 {
-	r.clear();
-	r.reserve( npts() * 2);
-
-	ReducedLatLon_CoordDD f(r);
+	ReducedLonLat_CoordDD f(pts);
 
 	iterate(f);
 }
 
-struct ReducedLatLon_Coord
+struct ReducedLonLat_Coord
 {
-	ReducedLatLon_Coord( std::vector<Grid::Point>& pts ) : pts_(pts) {}
+	ReducedLonLat_Coord( std::vector<Grid::Point>& pts ) : pts_(pts) {}
 	void operator()(double lat, double lon)
 	{
-		pts_.push_back( Grid::Point(lat,lon) );
+		pts_.push_back( Grid::Point(lon,lat) );
 	}
 	std::vector<Grid::Point>& pts_;
 };
 
 
-void ReducedLatLon::coordinates( std::vector<Grid::Point>& pts) const
+void ReducedLatLon::lonlat( std::vector<Grid::Point>& pts) const
 {
 	pts.clear();
 
 	pts.reserve( npts() );
 
-	ReducedLatLon_Coord f(pts);
+	ReducedLonLat_Coord f(pts);
 
 	iterate(f);
 }
@@ -206,7 +204,7 @@ void ReducedLatLon::iterate( T& f ) const
 
 				   ASSERT(plat <= 90.0 && plat >= -90.0);
 				   ASSERT(plon < 360.0 && plon >= 0);
-				   f(plat,plon);
+				   f(plon,plat);
 				}
 				plon += east_west_grid_length;
 				geometry::reduceTo2Pi(plon);

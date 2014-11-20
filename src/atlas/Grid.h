@@ -90,8 +90,9 @@ public: // methods
   /// Assumes we start at NORTH,WEST --> SOUTH,EAST
   /// Assumes that the input vectors have the correct size.
   /// Points represent latitude and longitude values
-  virtual void coordinates( std::vector<double>& ) const = 0;
-  virtual void coordinates( std::vector<Point>& ) const = 0;
+  virtual void lonlat( double[] ) const = 0;
+  virtual void lonlat( std::vector<double>& );
+  virtual void lonlat( std::vector<Point>& ) const = 0;
 
   virtual std::string grid_type() const = 0;
 
