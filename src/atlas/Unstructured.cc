@@ -76,12 +76,12 @@ std::string Unstructured::hash() const
     return hash_;
 }
 
-Grid::BoundBox Unstructured::boundingBox() const
+Grid::BoundBox Unstructured::bounding_box() const
 {
     return bound_box_;
 }
 
-size_t Unstructured::nPoints() const
+size_t Unstructured::npts() const
 {
     return points_->size();
 }
@@ -100,7 +100,7 @@ GridSpec Unstructured::spec() const
 {
 	NOTIMP;
 
-	GridSpec grid_spec( gridType() );
+	GridSpec grid_spec( grid_type() );
 
 	grid_spec.uid("U");
 
@@ -113,7 +113,7 @@ GridSpec Unstructured::spec() const
 
 bool Unstructured::same(const Grid& grid) const
 {
-   if (gridType() != grid.gridType()) return false;
+   if (grid_type() != grid.grid_type()) return false;
 
    if ( static_cast<const Unstructured&>(grid).hash_ != hash_) return false;
    if ( static_cast<const Unstructured&>(grid).bound_box_ != bound_box_) return false;

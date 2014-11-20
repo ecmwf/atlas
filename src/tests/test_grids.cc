@@ -30,7 +30,7 @@ BOOST_AUTO_TEST_CASE( test_factory )
   SharedPtr<ReducedGrid> reducedgrid( Factory<ReducedGrid>::instance().get("reduced_gg.N80").create() );
   SharedPtr<Grid> grid( Factory<Grid>::instance().get("reduced_gg.N24").create(eckit::ValueParams()) );
   std::cout << "reducedgrid->nlat() = " << reducedgrid->nlat() << std::endl;
-  std::cout << "grid->nPoints() = " << grid->nPoints() << std::endl;
+  std::cout << "grid->npts() = " << grid->npts() << std::endl;
 
   std::vector<std::string> keys = Factory<ReducedGrid>::instance().keys();
   for( int i=0; i< keys.size(); ++i )

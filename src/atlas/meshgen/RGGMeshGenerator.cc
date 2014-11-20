@@ -137,7 +137,7 @@ Mesh* ReducedGridMeshGenerator::generate(const ReducedGrid& rgg)
   int nb_parts = options.get<int>("nb_parts");
   EqualAreaPartitioner partitioner(nb_parts);
   int n;
-  int ngptot = rgg.nPoints();
+  int ngptot = rgg.npts();
   std::vector<int> part(ngptot);
   bool stagger = options.get<bool>("stagger");
 
@@ -188,7 +188,7 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rgg, const std
     }
   } end_north:
 
-  n=rgg.nPoints()-1;
+  n=rgg.npts()-1;
   int lat_south=-1;
   for( int jlat=rgg.nlat()-1; jlat>=0; --jlat) {
     for( int jlon=rgg.nlon(jlat)-1; jlon>=0; --jlon) {
@@ -911,7 +911,7 @@ Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
   quads.metadata().set("nb_owned",nquads);
   triags.metadata().set("nb_owned",ntriags);
 
-  int max_glb_idx = rgg.nPoints()+rgg.nlat();
+  int max_glb_idx = rgg.npts()+rgg.nlat();
   if( three_dimensional ) max_glb_idx -= rgg.nlat();
   if( include_north_pole ) max_glb_idx += 1;
   if( include_south_pole ) max_glb_idx += 1;

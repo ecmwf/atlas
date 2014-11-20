@@ -59,17 +59,17 @@ public: // methods
 	virtual std::string uid() const;
 	virtual std::string hash() const { return hash_;}
 
-	virtual BoundBox boundingBox() const { return bbox_;}
-	virtual size_t nPoints() const;
+	virtual BoundBox bounding_box() const { return bbox_;}
+	virtual size_t npts() const;
 
 	virtual void coordinates( std::vector<double>& ) const;
 	virtual void coordinates( std::vector<Point>& ) const;
 
-	virtual std::string gridType() const;
+	virtual std::string grid_type() const;
 	virtual GridSpec spec() const;
 	virtual bool same(const Grid&) const;
 
-   void computeNPtsPerLat( std::vector<long>& );
+   void computenpts_per_lat( std::vector<int>& );
 
 private: // methods
 
@@ -91,7 +91,7 @@ private: // members
 
 	BoundBox                 bbox_;        ///< bounding box for data, only points within are considered part of grid
 
-	std::vector<long> nbPtsPerLat_;        ///< No of points per latitude
+	std::vector<int> nbPtsPerLat_;        ///< No of points per latitude
 
 	std::string hash_;
 };

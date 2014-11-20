@@ -33,9 +33,11 @@ public:
 
   ReducedGrid();
 
+  ReducedGrid(const eckit::Params&);
+
   ReducedGrid( const std::vector<size_t>& nlon, const std::vector<double>& lats );
 
-  ReducedGrid( const int nlons[], const double lats[], const int nlat );
+  ReducedGrid( const int npts_per_lat[], const double lats[], const int nlat );
 
   static std::string className();
 
@@ -43,19 +45,22 @@ public:
 
   virtual std::string hash() const;
 
-  virtual BoundBox boundingBox() const;
+  virtual BoundBox bounding_box() const;
 
-  virtual size_t nPoints() const;
+  virtual size_t npts() const;
 
   virtual void coordinates( std::vector<double>& ) const;
 
   virtual void coordinates( std::vector<Point>& ) const;
 
-  virtual std::string gridType() const;
+  virtual std::string grid_type() const;
 
   virtual GridSpec spec() const;
 
   virtual bool same( const Grid& ) const;
+
+  // number of latitudes in hemisphere
+  int N() const { return N_; }
 
   int nlat() const;
 
@@ -63,7 +68,7 @@ public:
 
   int nlonmax() const;
 
-  const std::vector<int>& nlons() const;
+  const std::vector<int>& npts_per_lat() const;
 
   const std::vector<double>& latitudes() const;
 
@@ -74,7 +79,7 @@ public:
   void lonlat( const int jlon, const int jlat, double crd[] ) const;
 
 protected:
-  void setup(const int nlat, const int nlons[], const double lats[]);
+  void setup(const int nlat, const int npts_per_lat[], const double lats[]);
   void setup_colat_hemisphere(const int N, const int lon[], const double colat[], const AngleUnit);
   void setup_lat_hemisphere(const int N, const int lon[], const double lat[], const AngleUnit);
 
@@ -83,7 +88,11 @@ protected:
   std::vector<int>    nlons_;  ///<! Number of points per latitude (int32 type for Fortran interoperability)
   size_t              npts_;   ///<! Total number of unique points in the grid
   int                 nlonmax_;
-  BoundBox            bbox_;   ///<! bounding box for data, only points within are considered part of grid
+  BoundBox            bounding_box_;   ///<! bounding box for data, only points within are considered part of grid
+  std::string         uid_;
+  std::string         hash_;
+  std::string         grid_type_;
+  int                 N_;
 };
 
 extern "C"

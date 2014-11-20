@@ -26,14 +26,14 @@ namespace atlas {
 
 Grid::Ptr Grid::create(const Params& p )
 {
-	return Grid::Ptr( Factory<Grid>::instance().get( p["grid_type"] ).create(p) );
+  return Grid::Ptr( Factory<Grid>::instance().get( p["grid_type"] ).create(p) );
 }
 
 
 Grid::Ptr Grid::create(const GridSpec& g)
 {
-	GridSpecParams p( g );
-   return Grid::Ptr( Factory<Grid>::instance().get( p["grid_type"] ).create(p) );
+  GridSpecParams p( g );
+  return Grid::Ptr( Factory<Grid>::instance().get( p["grid_type"] ).create(p) );
 }
 
 Grid::Grid()
@@ -44,53 +44,53 @@ Grid::~Grid()
 {
 }
 
-void Grid::buildMesh() const
+void Grid::build_mesh() const
 {
-	if( ! mesh_ )
-	{
-		mesh_.reset( new Mesh() );
-		mesh_->grid( const_cast<Grid&>(*this) );
-		Tesselation::build_mesh( *this, *mesh_ );
-	}
+  if( ! mesh_ )
+  {
+    mesh_.reset( new Mesh() );
+    mesh_->grid( const_cast<Grid&>(*this) );
+    Tesselation::build_mesh( *this, *mesh_ );
+  }
 }
 
 Mesh& Grid::mesh()
 {
-	buildMesh();
-    return *mesh_;
+  build_mesh();
+  return *mesh_;
 }
 
 const Mesh& Grid::mesh() const
 {
-	buildMesh();
-	return *mesh_;
+  build_mesh();
+  return *mesh_;
 }
 
 //------------------------------------------------------------------------------------------------------
 
-Grid::BoundBox Grid::makeGlobalBBox()
+Grid::BoundBox Grid::make_global_bounding_box()
 {
-	return Grid::BoundBox( 90., -90., 360. - degrees_eps(), 0. );
+  return Grid::BoundBox( 90., -90., 360. - degrees_eps(), 0. );
 }
 
-Grid::BoundBox Grid::makeBBox(const Params& p)
+Grid::BoundBox Grid::make_bounding_box(const Params& p)
 {
-	if( p.get("grid_bbox_s").isNil() )
-		return Grid::makeGlobalBBox();
+  if( p.get("bbox_s").isNil() )
+    return Grid::make_global_bounding_box();
 
-	return BoundBox( p["grib_bbox_n"],
-					 p["grid_bbox_s"],
-					 p["grid_bbox_e"],
-			p["grid_bbox_w"] );
+  return BoundBox( p["bbox_n"],
+                   p["bbox_s"],
+                   p["bbox_e"],
+                   p["bbox_w"] );
 }
 
 double Grid::degrees_eps()
 {
-	/// default is 1E-3 because
-	/// some bugs in IFS means we need a lower resolution epsilon when decoding from grib2
+  /// default is 1E-3 because
+  /// some bugs in IFS means we need a lower resolution epsilon when decoding from grib2
 
-	static double eps = eckit::Resource<double>( "$atlas_DEGREES_EPSILON;GridDegreesEps", 1E-3 );
-	return eps;
+  static double eps = eckit::Resource<double>( "$ATLAS_DEGREES_EPSILON;GridDegreesEps", 1E-3 );
+  return eps;
 }
 
 //------------------------------------------------------------------------------------------------------

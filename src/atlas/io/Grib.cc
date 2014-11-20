@@ -181,20 +181,20 @@ static std::string match_grid_spec_with_sample_file( const GridSpec& g_spec, lon
 
    if (grid_type == RegularLatLon::gridTypeStr() ) {
 
-      // regular_ll_pl_grib1.tmpl  --> GridSpec[ (Ni,16)(Nj,31) (grid_lat_inc,2)(grid_lon_inc,2)(uid,regular_ll_31_16) ]
-      // regular_ll_pl_grib2.tmpl  --> GridSpec[ (Ni,16)(Nj,31) (grid_lat_inc,2)(grid_lon_inc,2)(uid,regular_ll_31_16) ]
-      // regular_ll_sfc_grib1.tmpl --> GridSpec[ (Ni,16)(Nj,31) (grid_lat_inc,2)(grid_lon_inc,2)(uid,regular_ll_31_16) ]
-      // regular_ll_sfc_grib2.tmpl --> GridSpec[ (Ni,16)(Nj,31) (grid_lat_inc,2)(grid_lon_inc,2)(uid,regular_ll_31_16) ]
+      // regular_ll_pl_grib1.tmpl  --> GridSpec[ (Ni,16)(Nj,31) (lat_inc,2)(lon_inc,2)(uid,regular_ll_31_16) ]
+      // regular_ll_pl_grib2.tmpl  --> GridSpec[ (Ni,16)(Nj,31) (lat_inc,2)(lon_inc,2)(uid,regular_ll_31_16) ]
+      // regular_ll_sfc_grib1.tmpl --> GridSpec[ (Ni,16)(Nj,31) (lat_inc,2)(lon_inc,2)(uid,regular_ll_31_16) ]
+      // regular_ll_sfc_grib2.tmpl --> GridSpec[ (Ni,16)(Nj,31) (lat_inc,2)(lon_inc,2)(uid,regular_ll_31_16) ]
       if (edition == 1) return "regular_ll_pl_grib1";
       return "regular_ll_pl_grib2";;
    }
 
    if (grid_type == RotatedLatLon::gridTypeStr() ) {
 
-      // rotated_ll_pl_grib1.tmpl  --> GridSpec[ (Ni,16)(Nj,31)(SouthPoleLat,0)(SouthPoleLon,0)(SouthPoleRotAngle,0)(grid_lat_inc,2)(grid_lon_inc,2)(uid,rotated_ll_31) ]
-      // rotated_ll_pl_grib2.tmpl  --> GridSpec[ (Ni,16)(Nj,31)(SouthPoleLat,0)(SouthPoleLon,0)(SouthPoleRotAngle,0)(grid_lat_inc,2)(grid_lon_inc,2)(uid,rotated_ll_31) ]
-      // rotated_ll_sfc_grib1.tmpl --> GridSpec[ (Ni,16)(Nj,31)(SouthPoleLat,0)(SouthPoleLon,0)(SouthPoleRotAngle,0)(grid_lat_inc,2)(grid_lon_inc,2)(uid,rotated_ll_31) ]
-      // rotated_ll_sfc_grib2.tmpl --> GridSpec[ (Ni,16)(Nj,31)(SouthPoleLat,0)(SouthPoleLon,0)(SouthPoleRotAngle,0)(grid_lat_inc,2)(grid_lon_inc,2)(uid,rotated_ll_31) ]
+      // rotated_ll_pl_grib1.tmpl  --> GridSpec[ (Ni,16)(Nj,31)(SouthPoleLat,0)(SouthPoleLon,0)(SouthPoleRotAngle,0)(lat_inc,2)(lon_inc,2)(uid,rotated_ll_31) ]
+      // rotated_ll_pl_grib2.tmpl  --> GridSpec[ (Ni,16)(Nj,31)(SouthPoleLat,0)(SouthPoleLon,0)(SouthPoleRotAngle,0)(lat_inc,2)(lon_inc,2)(uid,rotated_ll_31) ]
+      // rotated_ll_sfc_grib1.tmpl --> GridSpec[ (Ni,16)(Nj,31)(SouthPoleLat,0)(SouthPoleLon,0)(SouthPoleRotAngle,0)(lat_inc,2)(lon_inc,2)(uid,rotated_ll_31) ]
+      // rotated_ll_sfc_grib2.tmpl --> GridSpec[ (Ni,16)(Nj,31)(SouthPoleLat,0)(SouthPoleLon,0)(SouthPoleRotAngle,0)(lat_inc,2)(lon_inc,2)(uid,rotated_ll_31) ]
       if (edition == 1) return "rotated_ll_pl_grib1";
       return "rotated_ll_pl_grib2";
    }
@@ -242,8 +242,8 @@ bool match_grid_spec_with_sample_file( const GridSpec& g_spec,
    }
 
    if (g_spec.grid_type() == ReducedGG::gridTypeStr() ) {
-      if (g_spec.has("GaussN")) {
-         long grid_gausn = g_spec.get("GaussN");
+      if (g_spec.has("N")) {
+         long grid_gausn = g_spec.get("N");
          long grib_gausn = GribAccessor<long>("numberOfParallelsBetweenAPoleAndTheEquator")(gh);
          if (grid_gausn != grib_gausn) {
             return false;
@@ -476,15 +476,15 @@ void Grib::write_gridspec_to_grib(const GridSpec& gspec, GribHandle& gh)
 	gspec2grib.set<long>( "Ni", "Ni" );
 	gspec2grib.set<long>( "Nj", "Nj" );
 
-	gspec2grib.set<long>( "GaussN", "numberOfParallelsBetweenAPoleAndTheEquator" );
+	gspec2grib.set<long>( "N", "numberOfParallelsBetweenAPoleAndTheEquator" );
 
-	gspec2grib.set<double>( "grib_bbox_n", "latitudeOfFirstGridPointInDegrees" );
-	gspec2grib.set<double>( "grid_bbox_s", "latitudeOfLastGridPointInDegrees" );
-	gspec2grib.set<double>( "grid_bbox_w", "longitudeOfFirstGridPointInDegrees" );
-	gspec2grib.set<double>( "grid_bbox_e", "longitudeOfLastGridPointInDegrees" );
+	gspec2grib.set<double>( "bbox_n", "latitudeOfFirstGridPointInDegrees" );
+	gspec2grib.set<double>( "bbox_s", "latitudeOfLastGridPointInDegrees" );
+	gspec2grib.set<double>( "bbox_w", "longitudeOfFirstGridPointInDegrees" );
+	gspec2grib.set<double>( "bbox_e", "longitudeOfLastGridPointInDegrees" );
 
-	gspec2grib.set<double>( "grid_lat_inc", "jDirectionIncrementInDegrees" );
-	gspec2grib.set<double>( "grid_lon_inc", "iDirectionIncrementInDegrees" );
+	gspec2grib.set<double>( "lat_inc", "jDirectionIncrementInDegrees" );
+	gspec2grib.set<double>( "lon_inc", "iDirectionIncrementInDegrees" );
 
 
 	gspec2grib.set<double>( "SouthPoleLat", "latitudeOfSouthernPoleInDegrees" );
@@ -495,7 +495,7 @@ void Grib::write_gridspec_to_grib(const GridSpec& gspec, GribHandle& gh)
    gspec2grib.set<long>( "resolutionAndComponentFlag", "resolutionAndComponentFlag" );
    gspec2grib.set<long>( "Nx", "Nx" );
    gspec2grib.set<long>( "Ny", "Ny" );
-   gspec2grib.set<long>( "numberOfDataPoints", "numberOfDataPoints" );
+   gspec2grib.set<long>( "npts", "numberOfDataPoints" );
 
    gspec2grib.set<double>( "Dx", "DxInMetres" );
    gspec2grib.set<double>( "Dy", "DyInMetres" );

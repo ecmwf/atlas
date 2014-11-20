@@ -64,13 +64,13 @@ public: // methods
 	virtual std::string uid() const;
 	virtual std::string hash() const { return hash_;}
 
-	virtual BoundBox boundingBox() const { return bbox_;}
-	virtual size_t nPoints() const { return npts_; }
+	virtual BoundBox bounding_box() const { return bbox_;}
+	virtual size_t npts() const { return npts_; }
 
 	virtual void coordinates( std::vector<double>& ) const;
 	virtual void coordinates( std::vector<Point>& ) const;
 
-	virtual std::string gridType() const;
+	virtual std::string grid_type() const;
 	virtual GridSpec spec() const;
 	virtual bool same(const Grid&) const;
 
@@ -78,12 +78,12 @@ public: // methods
 
 	long gaussianNumber() const { return gaussN_;}
 
-	const std::vector<long>&  pointsPerLatitude() const { return nbPtsPerLat_;}
+	const std::vector<int>&  pointsPerLatitude() const { return nbPtsPerLat_;}
 
 	void computeLatitudes(std::vector<double>&) const;
 	void computePoints( const std::vector<double>&, std::vector<Point>& pts ) const;
 	long computeNPoints( const std::vector<double>& ) const;
-	void computeNPtsPerLat( std::vector<long>& );
+	void computenpts_per_lat( std::vector<int>& );
 
 private: // members
 
@@ -94,7 +94,7 @@ private: // members
 
 	std::string          hash_;
 
-	std::vector<long>    nbPtsPerLat_; ///< No of points per latitude
+	std::vector<int>    nbPtsPerLat_; ///< No of points per latitude
 
 };
 

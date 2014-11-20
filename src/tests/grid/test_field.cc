@@ -56,7 +56,7 @@ void TestField::test_constructor()
     // create some reference data for testing
 
     std::vector<double> ref_data;
-    ref_data.reserve( g->nPoints() );
+    ref_data.reserve( g->npts() );
     for(size_t i = 0; i < ref_data.size(); ++i)
 		ref_data.push_back( (double)i );
 
@@ -93,7 +93,7 @@ void TestField::test_constructor()
     fields.push_back(f);
 
     atlas::FieldSet fs(fields);
-    
+
     // iterate over the fields
 	for (Field::Vector::iterator it = fs.fields().begin(); it != fs.fields().end(); ++it)
     {
@@ -102,7 +102,7 @@ void TestField::test_constructor()
 		for( size_t i = 0; i < ref_data.size(); ++i )
         {
 			ASSERT( ref_data[i] == vdata(i) );
-        }   
+        }
     }
 }
 

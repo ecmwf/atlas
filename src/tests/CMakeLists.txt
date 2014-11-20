@@ -11,7 +11,7 @@ if( HAVE_FCTEST )
   add_fctest( TARGET atlas_fctest_mesh
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_mesh.F90
-    LIBS            atlas_fortran atlas_mpl_fortran
+    LIBS            atlas_fortran
   )
 
   add_fctest( TARGET atlas_fctest_logging

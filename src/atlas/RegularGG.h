@@ -61,13 +61,13 @@ public: // methods
 	virtual std::string uid() const;
 	virtual std::string hash() const { return hash_;}
 
-	virtual BoundBox boundingBox() const { return bbox_; }
-	virtual size_t nPoints() const { return nbDataPoints_; }
+	virtual BoundBox bounding_box() const { return bbox_; }
+	virtual size_t npts() const { return npts_; }
 
 	virtual void coordinates( std::vector<double>& ) const;
 	virtual void coordinates( std::vector<Point>& ) const;
 
-	virtual std::string gridType() const;
+	virtual std::string grid_type() const;
 	virtual GridSpec spec() const;
 	virtual bool same(const Grid&) const;
 
@@ -88,7 +88,7 @@ private: // members
 
 	std::string hash_;
 
-	long        nbDataPoints_;             ///< no of data points in grid, taking into account the bounding box
+	long        npts_;             ///< no of data points in grid, taking into account the bounding box
 	long        gaussN_ ;                  ///< nb of points between pole and equator
 	long        ni_;                       ///< nb of points along a parallel
 

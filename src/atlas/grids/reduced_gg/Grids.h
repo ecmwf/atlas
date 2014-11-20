@@ -32,12 +32,15 @@ namespace reduced_gg {
 class CLASS : public ReducedGrid { \
 public:\
 \
-  CLASS() { construct(); }\
-  CLASS(Grid::ARG1 arg1) { construct(); }\
+  CLASS() { construct(); set_typeinfo(); }\
+  CLASS(Grid::ARG1 arg1) { construct();  set_typeinfo(); }\
   void construct();\
+  void set_typeinfo() { \
+    uid_ = "reduced_gg."+std::string(#CLASS); \
+    hash_ = uid_; \
+    grid_type_ = "reduced_gg"; \
+  }\
   static std::string className() { return "atlas.grids.reduced_gg."+std::string(#CLASS); }\
-  virtual std::string uid() const { return "reduced_gg."+std::string(#CLASS); } \
-  virtual std::string hash() const { return "reduced_gg."+std::string(#CLASS); } \
   \
   struct regist { \
     typedef eckit::ConcreteBuilderT1<Grid,CLASS> GridBuilder;\
@@ -49,7 +52,7 @@ public:\
     {}\
     GridBuilder        gridbuilder;\
     ReducedGridBuilder reducedgridbuilder;\
-};\
+  };\
 }
 
 DEFINE_GRID(N16);

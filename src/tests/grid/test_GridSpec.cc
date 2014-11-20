@@ -96,7 +96,7 @@ static void test_grib_file(const std::string& fpath)
    // The Grid produced, has a GRID spec, the grid spec can be used to, make sure the grid types match
    GridSpec g_spec = grid_created_from_grib->spec();
    std::cout << "   " << g_spec << std::endl;
-   BOOST_CHECK_MESSAGE(grid_created_from_grib->gridType() == gridType,"gridType(" << gridType << ") did not match Grid constructor(" << grid_created_from_grib->gridType() << ") for file " << fpath);
+   BOOST_CHECK_MESSAGE(grid_created_from_grib->grid_type() == gridType,"gridType(" << gridType << ") did not match Grid constructor(" << grid_created_from_grib->grid_type() << ") for file " << fpath);
    BOOST_CHECK_MESSAGE(g_spec.grid_type() == gridType,"gridType(" << gridType << ") did not match GridSpec constructor(" << g_spec.grid_type() << ") for file " << fpath);
 
 
@@ -133,7 +133,7 @@ static void test_grib_file(const std::string& fpath)
       // This can then effect, comparison of the points
       // ----------------------------------------------------------------------------------------
       double guass = GribAccessor<long>("numberOfParallelsBetweenAPoleAndTheEquator")(gh);
-      Grid::BoundBox bbox = grid_created_from_grib->boundingBox();
+      Grid::BoundBox bbox = grid_created_from_grib->bounding_box();
 
       double EXPECTED_longitudeOfLastGridPointInDegrees = 360.0 - (90.0/guass);
       std::cout << "   EXPECTED longitudeOfLastGridPointInDegrees     " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << EXPECTED_longitudeOfLastGridPointInDegrees << std::endl;
@@ -147,10 +147,10 @@ static void test_grib_file(const std::string& fpath)
    // get GRIB points, caution grib iterator depends on scanning mode, Grid is always left ->right, top -> bottom
    std::vector<Grid::Point> grib_pntlist;
    gh.getLatLonPoints( grib_pntlist );
-   BOOST_CHECK_MESSAGE( grid_created_from_grib->nPoints() == grib_pntlist.size(),"GRIB pt list size " << grib_pntlist.size() << " different to GRID " << grid_created_from_grib->nPoints());
+   BOOST_CHECK_MESSAGE( grid_created_from_grib->npts() == grib_pntlist.size(),"GRIB pt list size " << grib_pntlist.size() << " different to GRID " << grid_created_from_grib->npts());
 
    // get the GRID points
-   std::vector<Grid::Point> grid_points; grid_points.resize( grid_created_from_grib->nPoints());
+   std::vector<Grid::Point> grid_points; grid_points.resize( grid_created_from_grib->npts());
    grid_created_from_grib->coordinates(grid_points);
 
    comparePointList(grib_pntlist,grid_points,epsilon,gh);

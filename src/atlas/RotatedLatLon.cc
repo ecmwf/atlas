@@ -41,7 +41,7 @@ RotatedLatLon::RotatedLatLon( const eckit::Params& p )
    if( !p.get("hash").isNil() )
       hash_ = p["hash"].as<std::string>();
 
-   bbox_ = makeBBox(p);
+   bbox_ = make_bounding_box(p);
 
    if( p.has("Nj") )
    {
@@ -53,14 +53,14 @@ RotatedLatLon::RotatedLatLon( const eckit::Params& p )
       nptsWE_ = p["Ni"];
    }
 
-   if( p.has("grid_lat_inc") )
+   if( p.has("lat_inc") )
    {
-      nsIncrement_ = p["grid_lat_inc"];
+      nsIncrement_ = p["lat_inc"];
    }
 
-   if( p.has("grid_lon_inc") )
+   if( p.has("lon_inc") )
    {
-      weIncrement_ = p["grid_lon_inc"];
+      weIncrement_ = p["lon_inc"];
    }
 
    if( p.has("SouthPoleLat") )
@@ -113,7 +113,7 @@ Grid::Point RotatedLatLon::latLon(size_t the_i, size_t the_j) const
    return Grid::Point();
 }
 
-size_t RotatedLatLon::nPoints() const
+size_t RotatedLatLon::npts() const
 {
    return nptsNS_ * nptsWE_;
 }
@@ -150,14 +150,14 @@ void RotatedLatLon::coordinates(std::vector<Grid::Point>& points) const
    }
 }
 
-string RotatedLatLon::gridType() const
+string RotatedLatLon::grid_type() const
 {
 	return RotatedLatLon::gridTypeStr();
 }
 
 GridSpec RotatedLatLon::spec() const
 {
-   GridSpec grid_spec(gridType());
+   GridSpec grid_spec(grid_type());
 
    grid_spec.uid(uid());
    grid_spec.set("Ni",eckit::Value(nptsWE_));
@@ -166,8 +166,8 @@ GridSpec RotatedLatLon::spec() const
    grid_spec.set("SouthPoleLat",eckit::Value(south_pole_lat_));
    grid_spec.set("SouthPoleLon",eckit::Value(south_pole_lon_));
    grid_spec.set("SouthPoleRotAngle",eckit::Value(south_pole_rot_angle_));
-   grid_spec.set("grid_lat_inc",eckit::Value(nsIncrement_));
-   grid_spec.set("grid_lon_inc",eckit::Value(weIncrement_));
+   grid_spec.set("lat_inc",eckit::Value(nsIncrement_));
+   grid_spec.set("lon_inc",eckit::Value(weIncrement_));
 
    grid_spec.set("hash",eckit::Value(hash_));
 

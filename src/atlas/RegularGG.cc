@@ -37,9 +37,9 @@ RegularGG::RegularGG( const eckit::Params& p )
 	if( !p.get("hash").isNil() )
 		hash_ = p["hash"].as<std::string>();
 
-	bbox_ = makeBBox(p);
+	bbox_ = make_bounding_box(p);
 
-	gaussN_ = p["GaussN"];
+	gaussN_ = p["N"];
 
 	ASSERT( gaussN_ > 1 );
 
@@ -61,16 +61,16 @@ RegularGG::RegularGG( const eckit::Params& p )
 		Log::warning() << "Assuming number of points along parallel to be 4 * GaussianNumber " << ni_ << std::endl;
 	}
 
-	if( p.has("nbDataPoints") )
-		nbDataPoints_ = p["nbDataPoints"];
+	if( p.has("npts") )
+		npts_ = p["npts"];
 	else
 	{
 		std::vector<double> latitudes;
 		computeLatitudes(latitudes);
-		nbDataPoints_ = computeNPoints(latitudes);
+		npts_ = computeNPoints(latitudes);
 	}
 
-	ASSERT( nbDataPoints_ > 0 );
+	ASSERT( npts_ > 0 );
 }
 
 RegularGG::~RegularGG()
@@ -87,7 +87,7 @@ string RegularGG::uid() const
 void RegularGG::coordinates( std::vector<double>& pts ) const
 {
 	ASSERT( pts.size() && pts.size()%2 == 0 );
-	ASSERT( pts.size() == nPoints()*2 );
+	ASSERT( pts.size() == npts()*2 );
 
 	std::vector<double> latitudes;
 	computeLatitudes(latitudes);
@@ -104,7 +104,7 @@ void RegularGG::coordinates( std::vector<double>& pts ) const
 
 void RegularGG::coordinates(std::vector<Grid::Point>& pts) const
 {
-	ASSERT( pts.size() == nbDataPoints_ );
+	ASSERT( pts.size() == npts_ );
 
 	std::vector<double> latitudes;
 	computeLatitudes(latitudes);
@@ -112,23 +112,23 @@ void RegularGG::coordinates(std::vector<Grid::Point>& pts) const
 	computePoints(latitudes,pts);
 }
 
-string RegularGG::gridType() const
+string RegularGG::grid_type() const
 {
 	return RegularGG::gridTypeStr();
 }
 
 GridSpec RegularGG::spec() const
 {
-   GridSpec grid_spec(gridType());
+   GridSpec grid_spec(grid_type());
 
    grid_spec.uid( uid() );
 
-   grid_spec.set("GaussN", gaussN_);
+   grid_spec.set("N", gaussN_);
 
    grid_spec.set("Ni", ni_);
    grid_spec.set("Nj", nj());
 
-   grid_spec.set("grid_lon_inc", computeIncLon() );
+   grid_spec.set("lon_inc", computeIncLon() );
 
    grid_spec.set("hash",hash_);
    grid_spec.set_bounding_box(bbox_);
@@ -150,7 +150,7 @@ void RegularGG::computePoints( const std::vector<double>& lats, std::vector<Poin
 {
 	ASSERT( lats.size() == nj() );
 
-	pts.resize( nPoints() );
+	pts.resize( npts() );
 
 	RealCompare<double> isEqual(degrees_eps());
 
@@ -180,7 +180,7 @@ void RegularGG::computePoints( const std::vector<double>& lats, std::vector<Poin
 		}
 	}
 
-	ASSERT( n == nbDataPoints_ );
+	ASSERT( n == npts_ );
 }
 
 long RegularGG::computeNPoints(const std::vector<double>& lats) const

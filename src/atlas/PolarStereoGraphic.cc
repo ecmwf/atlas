@@ -154,7 +154,7 @@ PolarStereoGraphic::~PolarStereoGraphic()
 
 GridSpec PolarStereoGraphic::spec() const
 {
-   GridSpec grid_spec(gridType());
+   GridSpec grid_spec(grid_type());
 
    grid_spec.uid(uid());
    grid_spec.set("Nx",eckit::Value(npts_xaxis_));
@@ -174,13 +174,13 @@ GridSpec PolarStereoGraphic::spec() const
    grid_spec.set("radius",eckit::Value(radius_));
    grid_spec.set("earthMajorAxis",eckit::Value(semi_major_));
    grid_spec.set("earthMinorAxis",eckit::Value(semi_minor_));
-   grid_spec.set("numberOfDataPoints",eckit::Value(nPoints()));
+   grid_spec.set("npts",eckit::Value(npts()));
    grid_spec.set("resolutionAndComponentFlag",eckit::Value(resolutionAndComponentFlag_));
 
    grid_spec.set("hash",eckit::Value(hash_));
 
    // Bounding box can be computed
-   // grid_spec.set_bounding_box(boundingBox());
+   // grid_spec.set_bounding_box(bounding_box());
 
    return grid_spec;
 }
@@ -193,7 +193,7 @@ string PolarStereoGraphic::uid() const
    return ss.str();
 }
 
-size_t PolarStereoGraphic::nPoints() const
+size_t PolarStereoGraphic::npts() const
 {
    return npts_xaxis_ * npts_yaxis_;
 }
@@ -217,7 +217,7 @@ void PolarStereoGraphic::coordinates(std::vector<double>& pts ) const
 
 void PolarStereoGraphic::coordinates(std::vector<Grid::Point>& points) const
 {
-   ASSERT( points.size() == nPoints() );
+   ASSERT( points.size() == npts() );
 
    PolarStereoGraphicProj ps(southPoleOnProjectionPlane_,earth_is_oblate_,orientationOfTheGrid_);
    if (earth_is_oblate_) {
@@ -230,7 +230,7 @@ void PolarStereoGraphic::coordinates(std::vector<Grid::Point>& points) const
 
 #ifndef GRIB_COMPAT
    // Points go from North,West --> South,east
-   Grid::BoundBox bbox = boundingBox();
+   Grid::BoundBox bbox = bounding_box();
    const double north = bbox.north();
    const double west  = bbox.west();
 
@@ -268,7 +268,7 @@ void PolarStereoGraphic::coordinates(std::vector<Grid::Point>& points) const
 #endif
 }
 
-Grid::BoundBox PolarStereoGraphic::boundingBox() const
+Grid::BoundBox PolarStereoGraphic::bounding_box() const
 {
    // Map first_grid_pt_ to the plane.
    PolarStereoGraphicProj ps(southPoleOnProjectionPlane_,earth_is_oblate_,orientationOfTheGrid_);
@@ -301,7 +301,7 @@ Grid::BoundBox PolarStereoGraphic::boundingBox() const
    return BoundBox(top,bottom,right,left);
 }
 
-string PolarStereoGraphic::gridType() const
+string PolarStereoGraphic::grid_type() const
 {
    return PolarStereoGraphic::gridTypeStr();
 }

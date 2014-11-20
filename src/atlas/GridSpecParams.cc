@@ -38,7 +38,7 @@ Params::value_t GridSpecParams::get( const key_t& key ) const
 
 void GridSpecParams::print(std::ostream& s) const
 {
-   s << spec_;
+  s << spec_;
 }
 
 // ------------------------------------------------------------------

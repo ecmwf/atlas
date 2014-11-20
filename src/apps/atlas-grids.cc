@@ -29,6 +29,8 @@
 
 #include "atlas/atlas.h"
 #include "atlas/ReducedGrid.h"
+#include "atlas/GridSpec.h"
+#include "atlas/GridSpecParams.h"
 
 
 //------------------------------------------------------------------------------------------------------
@@ -132,9 +134,6 @@ SharedPtr<ReducedGrid> reduced_grid(std::string& key)
 void AtlasGrids::run()
 {
   if( !do_run ) return;
-  Log::debug() << "Command line:" << std::endl;
-  for( int i=0; i< Context::instance().argc(); ++i)
-    Log::debug() << Context::instance().argv(i) << std::endl;
 
   if( all )
   {
@@ -159,8 +158,14 @@ void AtlasGrids::run()
     if( info )
     {
       Log::info() << "Grid " << key << std::endl;
+      Log::info() << "   type:                             "
+                  << grid->grid_type() << std::endl;
+      Log::info() << "   uid:                              "
+                  << grid->uid() << std::endl;
+      Log::info() << "   N number:                         "
+                  << grid->N() << std::endl;
       Log::info() << "   number of points:                 "
-                  << grid->nPoints() << std::endl;
+                  << grid->npts() << std::endl;
       Log::info() << "   number of latitudes (N-S):        "
                   << grid->nlat() << std::endl;
       Log::info() << "   number of longitudes (max):       "
@@ -176,41 +181,19 @@ void AtlasGrids::run()
       Log::info() << "   spectral truncation -- cubic:     "
                   << static_cast<int>(std::floor(0.5*grid->nlat()+0.5))-1 << std::endl;
       Log::info() << "   bounding box -- lat N-S (deg):    "
-                  << grid->boundingBox().top_right().lat() << " , "
-                  << grid->boundingBox().bottom_left().lat() << std::endl;
+                  << grid->bounding_box().top_right().lat() << ", "
+                  << grid->bounding_box().bottom_left().lat() << std::endl;
       Log::info() << "   bounding box -- lon W-E (deg):    "
-                  << grid->boundingBox().bottom_left().lon() << " , "
-                  << grid->boundingBox().top_right().lon() << std::endl;
-
+                  << grid->bounding_box().bottom_left().lon() << ", "
+                  << grid->bounding_box().top_right().lon() << std::endl;
     }
     if( json )
     {
       std::stringstream stream;
       JSON js(stream);
-      js.startObject();
-      {
-        js << "uid" << grid->uid();
-        js << "nlat" << grid->nlat();
-        js << "nlon";
-        js.startList();
-        {
-          for( int jlat=0; jlat<grid->nlat(); ++jlat )
-            js << grid->nlon(jlat);
-        }
-        js.endList();
-        js << "latitudes";
-        js.startList();
-        {
-          for( int jlat=0; jlat<grid->nlat(); ++jlat )
-          {
-            if( jlat != 0) stream << ",";
-            stream<< std::fixed << std::setprecision(16) << grid->lat(jlat);
-          }
-        }
-        js.endList();
-      }
-      js.endObject();
-      Log::info() << stream.str() << std::endl;
+      js.precision(16);
+      js << grid->spec();
+      std::cout << stream.str() << std::endl;
     }
 
     if( rtable )
@@ -220,9 +203,8 @@ void AtlasGrids::run()
       for( int jlat=0; jlat<grid->nlat(); ++jlat )
         stream << " NRGRI("<< std::setfill('0') << std::setw(5) << 1+jlat <<")="<< std::setfill(' ') << std::setw(5) << grid->nlon(jlat) <<",\n";
       stream << "/" << std::flush;
-      Log::info() << stream.str() << std::endl;
+      std::cout << stream.str() << std::endl;
     }
-
   }
   //atlas_finalize();
 }
