@@ -11,12 +11,12 @@
 /// @author Willem Deconinck
 /// @date Nov 2014
 
-#ifndef atlas_grids_reduced_gg_Grids_h
-#define atlas_grids_reduced_gg_Grids_h
+#ifndef atlas_grids_reduced_gg_reduced_gg_h
+#define atlas_grids_reduced_gg_reduced_gg_h
 
 #include <eckit/memory/Builder.h>
 #include <eckit/value/Params.h>
-#include "atlas/ReducedGrid.h"
+#include "atlas/grids/ReducedGrid.h"
 
 namespace atlas {
 namespace grids {
@@ -46,7 +46,7 @@ public:\
   static std::string className() { return "atlas.grids.reduced_gg."+std::string(#CLASS); }\
 };\
 register_BuilderT1(Grid,       CLASS,"reduced_gg."+std::string(#CLASS));\
-register_BuilderT0(ReducedGrid,CLASS,"reduced_gg."+std::string(#CLASS));
+register_BuilderT0(ReducedGrid,CLASS,"reduced_gg."+std::string(#CLASS))
 
 DEFINE_GRID(N16);
 DEFINE_GRID(N24);
@@ -76,4 +76,4 @@ DEFINE_GRID(N8000);
 } // namespace reduced_gg
 } // namespace grids
 } // namespace atlas
-#endif // atlas_grids_reduced_gg_Grids_h
+#endif // atlas_grids_reduced_gg_reduced_gg_h

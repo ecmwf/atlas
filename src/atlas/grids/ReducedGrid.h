@@ -19,14 +19,15 @@
 #include "atlas/Util.h"
 
 namespace atlas {
+namespace grids {
 
 /// @brief Reduced Grid
 ///
 /// This class is a base class for all grids that can be described by
-/// constant latitudes with a uniform distribution of points on each latitude
+/// constant latitudes with a uniform distribution of points per latitude
 /// in zonal direction.
 /// This means any full grid and reduced grid, both regular, gaussian or other
-/// distribution can be represented with this class
+/// such distribution can be represented with this class
 class ReducedGrid: public Grid {
 public:
   typedef eckit::BuilderT0<ReducedGrid> builder_t;
@@ -110,6 +111,7 @@ extern "C"
   void atlas__ReducedGrid__latitudes(ReducedGrid* This, const double* &lats, int &size);
 }
 
+} // namespace grids
 } // namespace atlas
 
 #endif // ReducedGrid_h

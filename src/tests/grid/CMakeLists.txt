@@ -80,7 +80,7 @@ ecbuild_add_test( TARGET      atlas_test_GridSpec
                   ARGS        reduced_gg_pl_160_grib1.tmpl
                   SOURCES     test_GridSpec.cc
                   CONDITION   ECKIT_HAVE_GRIB
-                  LIBS        ${libatlas}
+                  LIBS        atlas
                 )
 
 
@@ -117,7 +117,7 @@ ecbuild_add_test(   TARGET      atlas_test_field
 					BOOST
 					SOURCES     test_field.cc
 					CONDITION	ECKIT_HAVE_GRIB
-					LIBS        ${libatlas} )
+					LIBS        atlas )
 
 list( APPEND test_grid_from_grib_data
 CMC_hrdps_east_TMP_TGL_2_ps2.5km_2014081512_P000-00.grib2
@@ -149,4 +149,4 @@ ecbuild_add_test(   TARGET      atlas_test_grid_from_grib
 					SOURCES     test_grid_from_grib.cc
                     DEPENDS     atlas_tests_grid_get_gribs
 					CONDITION	ECKIT_HAVE_GRIB AND OFF
-					LIBS        ${libatlas} )
+					LIBS        atlas )

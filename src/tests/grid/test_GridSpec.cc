@@ -23,18 +23,14 @@
 
 #include "atlas/io/Grib.h"
 #include "atlas/GridSpec.h"
-#include "atlas/ReducedGG.h"
-#include "atlas/RegularGG.h"
-#include "atlas/ReducedLatLon.h"
-#include "atlas/RegularLatLon.h"
-#include "atlas/RotatedLatLon.h"
-#include "atlas/Grid.h"
+#include "atlas/grids/grids.h"
 
 using namespace std;
 using namespace eckit;
 using namespace eckit::grib;
 using namespace atlas;
 using namespace atlas::io;
+using namespace atlas::grids;
 
 /// Test for Grid* derivatives
 /// This test uses the grib samples directory, this grib_api/1.13.0 move to test data server

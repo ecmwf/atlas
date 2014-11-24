@@ -138,16 +138,15 @@ list( APPEND ATLAS_TPLS eckit )
 
 set( ATLAS_INCLUDE_DIRS   ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src )
 
-set( libatlas atlas_core )
+set( atlas_f "atlas_f" )
 
 list( APPEND ATLAS_LIBRARIES
-  ${libatlas} atlas_grids
-#  -Wl,--whole-archive atlas_grids -Wl,--no-whole-archive
+  atlas
 )
 
 if( HAVE_FORTRAN )
   list( APPEND ATLAS_INCLUDE_DIRS ${CMAKE_Fortran_MODULE_DIRECTORY} )
-  set( ATLAS_LIBRARIES atlas_fortran atlas_grids_fortran ${ATLAS_LIBRARIES} )
+  set( ATLAS_LIBRARIES ${atlas_f} ${ATLAS_LIBRARIES} )
 endif()
 
 get_directory_property( ATLAS_DEFINITIONS COMPILE_DEFINITIONS )

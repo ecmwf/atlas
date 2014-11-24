@@ -29,12 +29,13 @@
 #include "atlas/Util.h"
 #include "atlas/Parameters.h"
 #include "atlas/meshgen/EqualAreaPartitioner.h"
-#include "atlas/ReducedGrid.h"
+#include "atlas/grids/ReducedGrid.h"
 #include "atlas/meshgen/RGGMeshGenerator.h"
 
 #define DEBUG_OUTPUT 0
 
 using namespace eckit;
+using namespace atlas::grids;
 
 namespace atlas {
 namespace meshgen {

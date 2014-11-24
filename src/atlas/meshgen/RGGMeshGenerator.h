@@ -16,9 +16,9 @@
 #include "atlas/Metadata.h"
 
 namespace atlas {
-  class Mesh;
-  class ReducedGrid;
+class Mesh;
 
+namespace grids { class ReducedGrid; }
 namespace meshgen {
 
 struct Region;
@@ -28,14 +28,14 @@ class ReducedGridMeshGenerator
 public:
   ReducedGridMeshGenerator();
 
-  Mesh* generate( const ReducedGrid& );
+  Mesh* generate( const grids::ReducedGrid& );
 
-  Mesh* operator()( const ReducedGrid& );
+  Mesh* operator()( const grids::ReducedGrid& );
 
 private:
-  void generate_region( const ReducedGrid&, const std::vector<int>& parts, int mypart, Region& region );
+  void generate_region( const grids::ReducedGrid&, const std::vector<int>& parts, int mypart, Region& region );
 
-  Mesh* generate_mesh( const ReducedGrid&,const std::vector<int>& parts, const Region& region );
+  Mesh* generate_mesh( const grids::ReducedGrid&,const std::vector<int>& parts, const Region& region );
 
   void generate_global_element_numbering( Mesh& mesh );
 

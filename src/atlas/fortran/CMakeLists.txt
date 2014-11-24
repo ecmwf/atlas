@@ -1,19 +1,19 @@
 ### fortran bindings
 
 function(generate_fortran_bindings output filename)
-	get_filename_component(base ${filename} NAME_WE)
-	set(base_abs ${CMAKE_CURRENT_SOURCE_DIR}/${base})
+    get_filename_component(base ${filename} NAME_WE)
+    set(base_abs ${CMAKE_CURRENT_SOURCE_DIR}/${base})
   set(outfile ${CMAKE_CURRENT_BINARY_DIR}/${base}_c_binding.f90)
-	set(${output} ${${output}} ${outfile} PARENT_SCOPE)
-	add_custom_command(
-		OUTPUT ${outfile}
-		COMMAND ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/c2f.py ${CMAKE_CURRENT_SOURCE_DIR}/${filename} -o ${outfile}
-		DEPENDS ${filename} )
-	set_source_files_properties(${outfile} PROPERTIES GENERATED TRUE)
+    set(${output} ${${output}} ${outfile} PARENT_SCOPE)
+    add_custom_command(
+        OUTPUT ${outfile}
+        COMMAND ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/c2f.py ${CMAKE_CURRENT_SOURCE_DIR}/${filename} -o ${outfile}
+        DEPENDS ${filename} )
+    set_source_files_properties(${outfile} PROPERTIES GENERATED TRUE)
 endfunction()
 
 generate_fortran_bindings(FORTRAN_BINDINGS ../meshgen/RGG.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../ReducedGrid.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../grids/ReducedGrid.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../Field.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../FieldGroup.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../FunctionSpace.h)
@@ -36,17 +36,18 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas.h)
 
 ### atlas fortran lib
 
-ecbuild_add_library( TARGET atlas_fortran
-	AUTO_VERSION
-	CONDITION CMAKE_Fortran_COMPILER_LOADED
-	SOURCES
-		${FORTRAN_BINDINGS}
-		atlas_module.F90
-		atlas_mpl_module.F90
-		atlas_C_interop.F90
-		atlas_logging.h
-		atlas_logging.cc
-  LIBS ${libatlas} ${ATLAS_MPI_FORTRAN_LIBRARIES}
+ecbuild_add_library( TARGET ${atlas_f}
+    AUTO_VERSION
+    CONDITION CMAKE_Fortran_COMPILER_LOADED
+    SOURCES
+        ${FORTRAN_BINDINGS}
+        atlas_module.F90
+        atlas_mpl_module.F90
+        atlas_grids_module.F90
+        atlas_C_interop.F90
+        atlas_logging.h
+        atlas_logging.cc
+  LIBS atlas ${ATLAS_MPI_FORTRAN_LIBRARIES}
 )
 
 add_custom_target( atlas_fortran_inc SOURCES
@@ -74,9 +75,9 @@ add_custom_target( atlas_fortran_inc SOURCES
 
 
 #ecbuild_add_library( TARGET atlas_mpl_fortran
-#	AUTO_VERSION
-#	CONDITION CMAKE_Fortran_COMPILER_LOADED
-#	SOURCES
-#		atlas_mpl_module.F90
-#	LIBS ${ATLAS_MPI_FORTRAN_LIBRARIES}
+#    AUTO_VERSION
+#    CONDITION CMAKE_Fortran_COMPILER_LOADED
+#    SOURCES
+#        atlas_mpl_module.F90
+#    LIBS ${ATLAS_MPI_FORTRAN_LIBRARIES}
 #)

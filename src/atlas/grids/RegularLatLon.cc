@@ -15,13 +15,13 @@
 #include "eckit/config/Resource.h"
 
 #include "atlas/GridSpec.h"
-#include "atlas/RegularLatLon.h"
+#include "atlas/grids/RegularLatLon.h"
 
 using namespace eckit;
 using namespace std;
 
 namespace atlas {
-
+namespace grids {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -242,4 +242,5 @@ bool RegularLatLon::same(const Grid& grid) const
 //-----------------------------------------------------------------------------
 
 
-} // namespace eckit
+} // namespace grids
+} // namespace atlas

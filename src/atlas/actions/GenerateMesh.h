@@ -17,7 +17,7 @@
 namespace atlas {
 namespace actions {
 
-Mesh* generate_mesh (const ReducedGrid& rgg);
+Mesh* generate_mesh (const grids::ReducedGrid& rgg);
 Mesh* generate_reduced_gaussian_grid( const std::string& identifier );
 Mesh* generate_reduced_gaussian_grid( const std::vector<long>& nlon );
 Mesh* generate_full_gaussian_grid( int nlon, int nlat );
@@ -27,13 +27,14 @@ Mesh* generate_regular_grid( int nlon, int nlat ); // must be even numbers
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
+typedef grids::ReducedGrid __ReducedGrid;
 extern "C"
 {
   Mesh* atlas__generate_reduced_gaussian_grid (char* identifier);
   Mesh* atlas__generate_full_gaussian_grid (int nlon, int nlat);
   Mesh* atlas__generate_latlon_grid (int nlon, int nlat);
   Mesh* atlas__generate_custom_reduced_gaussian_grid (int nlon[], int nlat);
-  Mesh* atlas__generate_mesh (ReducedGrid* rgg);
+  Mesh* atlas__generate_mesh (__ReducedGrid* rgg);
 }
 
 // ------------------------------------------------------------------

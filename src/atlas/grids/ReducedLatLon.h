@@ -18,7 +18,7 @@
 //-----------------------------------------------------------------------------
 
 namespace atlas {
-
+namespace grids {
 
 //-----------------------------------------------------------------------------
 
@@ -100,7 +100,7 @@ register_BuilderT1(Grid,ReducedLatLon,ReducedLatLon::gridTypeStr());
 
 //-----------------------------------------------------------------------------
 
-
-} // namespace eckit
+} // namespace grids
+} // namespace atlas
 
 #endif

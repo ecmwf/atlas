@@ -14,12 +14,12 @@
 #include "eckit/memory/Builder.h"
 
 #include "atlas/GridSpec.h"
-#include "atlas/Unstructured.h"
+#include "atlas/grids/Unstructured.h"
 
 using namespace eckit;
 
 namespace atlas {
-
+namespace grids {
 
 //-----------------------------------------------------------------------------
 
@@ -124,5 +124,5 @@ bool Unstructured::same(const Grid& grid) const
 
 //-----------------------------------------------------------------------------
 
-
-} // namespace eckit
+} // namespace grids
+} // namespace atlas

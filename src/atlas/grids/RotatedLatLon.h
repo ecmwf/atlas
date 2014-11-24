@@ -21,7 +21,7 @@
 //-----------------------------------------------------------------------------
 
 namespace atlas {
-
+namespace grids {
 
 //-----------------------------------------------------------------------------
 /// RotatedLatLon is a grid where the poles are shifted
@@ -108,7 +108,7 @@ register_BuilderT1(Grid,RotatedLatLon,RotatedLatLon::gridTypeStr());
 
 //-----------------------------------------------------------------------------
 
-
-} // namespace eckit
+} // namespace grids
+} // namespace atlas
 
 #endif

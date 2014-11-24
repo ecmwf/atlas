@@ -129,6 +129,50 @@ actions/WriteLoadBalanceReport.h
 actions/WriteLoadBalanceReport.cc
 )
 
+list( APPEND atlas_grids_srcs
+grids/grids.h
+grids/grids.cc
+grids/PolarStereoGraphic.cc
+grids/PolarStereoGraphic.h
+grids/ReducedGrid.h
+grids/ReducedGrid.cc
+grids/ReducedLatLon.cc
+grids/ReducedLatLon.h
+grids/RegularGG.cc
+grids/RegularGG.h
+grids/ReducedGG.cc
+grids/ReducedGG.h
+grids/RegularLatLon.cc
+grids/RegularLatLon.h
+grids/RotatedLatLon.cc
+grids/RotatedLatLon.h
+grids/Unstructured.cc
+grids/Unstructured.h
+grids/reduced_gg/reduced_gg.h
+grids/reduced_gg/N16.cc    # TL31
+grids/reduced_gg/N24.cc    # TL47
+grids/reduced_gg/N32.cc    # TL63
+grids/reduced_gg/N48.cc    # TL95
+grids/reduced_gg/N64.cc    # TL127
+grids/reduced_gg/N80.cc    # TL159
+grids/reduced_gg/N96.cc    # TL191
+grids/reduced_gg/N128.cc   # TL255
+grids/reduced_gg/N160.cc   # TL319
+grids/reduced_gg/N200.cc   # TL399
+grids/reduced_gg/N256.cc   # TL511
+grids/reduced_gg/N320.cc   # TL639
+grids/reduced_gg/N400.cc   # TL799
+grids/reduced_gg/N512.cc   # TL1023
+grids/reduced_gg/N576.cc   # TL1151
+grids/reduced_gg/N640.cc   # TL1279
+grids/reduced_gg/N800.cc   # TL1599
+grids/reduced_gg/N1024.cc  # TL2047
+grids/reduced_gg/N1280.cc  # TL2559
+grids/reduced_gg/N1600.cc  # TL3199
+grids/reduced_gg/N2000.cc  # TL3999
+grids/reduced_gg/N4000.cc  # TL7999
+grids/reduced_gg/N8000.cc  # TL15999
+)
 
 list( APPEND atlas_srcs
 Field.cc
@@ -158,33 +202,17 @@ PointIndex3.cc
 PointIndex3.h
 PointSet.cc
 PointSet.h
-PolarStereoGraphic.cc
-PolarStereoGraphic.h
-ReducedGrid.h
-ReducedGrid.cc
-ReducedLatLon.cc
-ReducedLatLon.h
-RegularGG.cc
-RegularGG.h
-ReducedGG.cc
-ReducedGG.h
-RegularLatLon.cc
-RegularLatLon.h
-RotatedLatLon.cc
-RotatedLatLon.h
 Tesselation.cc
 Tesselation.h
 TriangleIntersection.cc
 TriangleIntersection.h
-Unstructured.cc
-Unstructured.h
 Util.cc
 Util.h
 )
 
 ### atlas c++ library
 
-ecbuild_add_library( TARGET atlas_core
+ecbuild_add_library( TARGET atlas
   AUTO_VERSION
   INSTALL_HEADERS ALL
   HEADER_DESTINATION  ${INSTALL_INCLUDE_DIR}/atlas
@@ -199,6 +227,7 @@ ecbuild_add_library( TARGET atlas_core
   ${atlas_mpl_srcs}
   ${atlas_meshgen_srcs}
   ${atlas_actions_srcs}
+  ${atlas_grids_srcs}
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_version.h
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_version.cc
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_config.h
@@ -209,6 +238,4 @@ ecbuild_add_library( TARGET atlas_core
 if( HAVE_FORTRAN )
   add_subdirectory( fortran )
 endif()
-
-add_subdirectory( grids )
 

@@ -15,6 +15,7 @@
 #include "atlas/mpl/MPL.h"
 
 using namespace atlas;
+using namespace atlas::grids;
 
 namespace atlas {
 namespace test {

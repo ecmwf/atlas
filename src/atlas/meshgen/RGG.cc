@@ -19,7 +19,7 @@
 namespace atlas {
 namespace meshgen {
 
-RGG::RGG(const int N, const int lon[]) : ReducedGrid()
+RGG::RGG(const int N, const int lon[]) : grids::ReducedGrid()
 {
   std::vector<double> lat(N);
   predict_gaussian_latitudes_hemisphere(N,lat.data());
@@ -60,9 +60,9 @@ RegularGrid::RegularGrid(int nlon, int nlat)
 
 // ------------------------------------------------------------------
 
-ReducedGrid* new_reduced_gaussian_grid( const std::string& identifier )
+grids::ReducedGrid* new_reduced_gaussian_grid( const std::string& identifier )
 {
-  ReducedGrid* rgg = 0;
+  grids::ReducedGrid* rgg = 0;
 
   if     ( identifier == "T63"   ) rgg = new T63();
   else if( identifier == "T95"   ) rgg = new T95();
@@ -75,27 +75,27 @@ ReducedGrid* new_reduced_gaussian_grid( const std::string& identifier )
   else if( identifier == "T7999" ) rgg = new T7999();
   else
   {
-    if( !eckit::Factory<ReducedGrid>::instance().exists(identifier) )
+    if( !eckit::Factory<grids::ReducedGrid>::instance().exists(identifier) )
     {
       std::stringstream msg;
-      msg << "Cannot find grid "<<identifier<<" in " << eckit::Factory<ReducedGrid>::instance();
+      msg << "Cannot find grid "<<identifier<<" in " << eckit::Factory<grids::ReducedGrid>::instance();
       throw eckit::BadParameter(msg.str(),Here());
     }
-    rgg = eckit::Factory<ReducedGrid>::instance().get(identifier).create();
+    rgg = eckit::Factory<grids::ReducedGrid>::instance().get(identifier).create();
   }
   return rgg;
 }
 
 // ------------------------------------------------------------------
 
-ReducedGrid* new_reduced_gaussian_grid( const std::vector<long>& nlon )
+grids::ReducedGrid* new_reduced_gaussian_grid( const std::vector<long>& nlon )
 {
   return new RGG(nlon.size(),nlon.data());
 }
 
 // ------------------------------------------------------------------
 
-ReducedGrid* new_regular_latlon_grid( int nlon, int nlat )
+grids::ReducedGrid* new_regular_latlon_grid( int nlon, int nlat )
 {
   if( nlon%2 != 0 ) throw eckit::BadParameter("nlon must be even number",Here());
   if( nlat%2 != 0 ) throw eckit::BadParameter("nlat must be even number",Here());
@@ -104,7 +104,7 @@ ReducedGrid* new_regular_latlon_grid( int nlon, int nlat )
 
 // ------------------------------------------------------------------
 
-ReducedGrid* new_regular_gaussian_grid( int nlon, int nlat )
+grids::ReducedGrid* new_regular_gaussian_grid( int nlon, int nlat )
 {
   if( nlon%2 != 0 ) throw eckit::BadParameter("nlon must be even number",Here());
   if( nlat%2 != 0 ) throw eckit::BadParameter("nlat must be even number",Here());
@@ -112,22 +112,22 @@ ReducedGrid* new_regular_gaussian_grid( int nlon, int nlat )
 }
 
 
-ReducedGrid* atlas__new_reduced_gaussian_grid(char* identifier)
+grids::ReducedGrid* atlas__new_reduced_gaussian_grid(char* identifier)
 {
 	return new_reduced_gaussian_grid( std::string(identifier) );
 }
 
-ReducedGrid* atlas__new_regular_gaussian_grid ( int nlon, int nlat )
+grids::ReducedGrid* atlas__new_regular_gaussian_grid ( int nlon, int nlat )
 {
   return new_regular_gaussian_grid( nlon, nlat );
 }
 
-ReducedGrid* atlas__new_regular_latlon_grid(int nlon, int nlat)
+grids::ReducedGrid* atlas__new_regular_latlon_grid(int nlon, int nlat)
 {
   return new_regular_latlon_grid( nlon, nlat );
 }
 
-ReducedGrid* atlas__new_custom_reduced_gaussian_grid(int nlon[], int nlat)
+grids::ReducedGrid* atlas__new_custom_reduced_gaussian_grid(int nlon[], int nlat)
 {
   std::vector<long> nlon_vector;
   nlon_vector.assign(nlon,nlon+nlat);

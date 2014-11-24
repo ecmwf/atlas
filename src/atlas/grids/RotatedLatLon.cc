@@ -15,13 +15,14 @@
 #include "eckit/geometry/RotateGrid.h"
 
 #include "atlas/GridSpec.h"
-#include "atlas/RotatedLatLon.h"
+#include "atlas/grids/RotatedLatLon.h"
 
 using namespace eckit;
 using namespace eckit::geometry;
 using namespace std;
 
 namespace atlas {
+namespace grids {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -179,4 +180,5 @@ bool RotatedLatLon::same(const Grid& grid) const
 //-----------------------------------------------------------------------------
 
 
-} // namespace eckit
+} // namespace grids
+} // namespace atlas

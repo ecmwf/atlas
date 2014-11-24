@@ -17,10 +17,11 @@
 #include <eckit/memory/Factory.h>
 #include <eckit/memory/Builder.h>
 #include "atlas/atlas.h"
-#include "atlas/grids/Grids.h"
+#include "atlas/grids/grids.h"
 
 using namespace eckit;
 using namespace atlas;
+using namespace atlas::grids;
 
 BOOST_AUTO_TEST_CASE( init ) { MPL::init(); }
 

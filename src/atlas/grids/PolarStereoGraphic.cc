@@ -17,14 +17,14 @@
 #include "eckit/types/FloatCompare.h"
 
 #include "atlas/GridSpec.h"
-#include "atlas/PolarStereoGraphic.h"
+#include "atlas/grids/PolarStereoGraphic.h"
 
 using namespace eckit;
 using namespace eckit::geometry;
 using namespace std;
 
 namespace atlas {
-
+namespace grids {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -312,4 +312,5 @@ bool PolarStereoGraphic::same(const Grid& grid) const
 //-----------------------------------------------------------------------------
 
 
-} // namespace eckit
+} // namespace grids
+} // namespace atlas

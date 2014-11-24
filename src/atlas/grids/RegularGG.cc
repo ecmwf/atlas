@@ -20,13 +20,13 @@
 #include "eckit/value/Value.h"
 
 #include "atlas/GridSpec.h"
-#include "atlas/RegularGG.h"
+#include "atlas/grids/RegularGG.h"
 
 using namespace eckit;
 using namespace std;
 
 namespace atlas {
-
+namespace grids {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -233,4 +233,5 @@ void RegularGG::computeLatitudes(std::vector<double>& lats) const
 //-----------------------------------------------------------------------------
 
 
-} // namespace eckit
+} // namespace grids
+} // namespace atlas

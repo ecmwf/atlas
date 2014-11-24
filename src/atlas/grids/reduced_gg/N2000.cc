@@ -1,6 +1,6 @@
 // TL3999
 
-#include "atlas/grids/reduced_gg/Grids.h"
+#include "atlas/grids/reduced_gg/reduced_gg.h"
 
 namespace atlas {
 namespace grids {

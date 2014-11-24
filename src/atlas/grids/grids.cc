@@ -9,12 +9,17 @@
  */
 
 #include <eckit/log/Log.h>
-#include "atlas/grids/Grids.h"
+#include "atlas/grids/grids.h"
+
+void load()
+{
+  eckit::Log::info() << "Loading library [atlas::grids]" << std::endl;
+}
 
 extern "C"
 {
   void atlas__grids__load()
   {
-    eckit::Log::info() << "Loading library [atlas::grids]" << std::endl;
+    load();
   }
 }

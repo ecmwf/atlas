@@ -20,13 +20,13 @@
 #include "eckit/types/FloatCompare.h"
 
 #include "atlas/GridSpec.h"
-#include "atlas/ReducedGG.h"
+#include "atlas/grids/ReducedGG.h"
 
 using namespace eckit;
 using namespace std;
 
 namespace atlas {
-
+namespace grids {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -830,4 +830,5 @@ void ReducedGG::computenpts_per_lat(std::vector<int> &nlats)
 //-----------------------------------------------------------------------------
 
 
-} // namespace eckit
+} // namespace grids
+} // namespace atlas

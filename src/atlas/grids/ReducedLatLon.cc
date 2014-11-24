@@ -15,13 +15,13 @@
 #include "eckit/value/Value.h"
 
 #include "atlas/GridSpec.h"
-#include "atlas/ReducedLatLon.h"
+#include "atlas/grids/ReducedLatLon.h"
 
 using namespace eckit;
 using namespace std;
 
 namespace atlas {
-
+namespace grids {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -217,4 +217,5 @@ void ReducedLatLon::iterate( T& f ) const
 //-----------------------------------------------------------------------------
 
 
-} // namespace eckit
+} // namespace grids
+} // namespace atlas

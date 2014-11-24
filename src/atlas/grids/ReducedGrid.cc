@@ -11,11 +11,12 @@
 #include <typeinfo> // std::bad_cast
 #include <eckit/memory/Builder.h>
 
-#include "atlas/ReducedGrid.h"
+#include "atlas/grids/ReducedGrid.h"
 #include "atlas/GridSpec.h"
 #include "atlas/util/Debug.h"
 
 namespace atlas {
+namespace grids {
 
 namespace {
 static double units =1;// M_PI/180.; // radians
@@ -304,5 +305,5 @@ void atlas__ReducedGrid__latitudes(ReducedGrid* This, const double* &lat, int &s
   size = This->latitudes().size();
 }
 
+} // namespace grids
 } // namespace atlas
-
