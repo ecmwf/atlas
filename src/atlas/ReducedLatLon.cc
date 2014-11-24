@@ -25,8 +25,6 @@ namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
 
-ConcreteBuilderT1<Grid,ReducedLatLon> ReducedLatLon_builder( ReducedLatLon::gridTypeStr() );
-
 ReducedLatLon::ReducedLatLon( const eckit::Params& p ) :
 	npts_(0),
 	nsInc_(0),

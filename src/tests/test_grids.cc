@@ -17,7 +17,7 @@
 #include <eckit/memory/Factory.h>
 #include <eckit/memory/Builder.h>
 #include "atlas/atlas.h"
-#include "atlas/ReducedGrid.h"
+#include "atlas/grids/Grids.h"
 
 using namespace eckit;
 using namespace atlas;

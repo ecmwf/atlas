@@ -30,8 +30,6 @@ namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
 
-ConcreteBuilderT1<Grid,RegularGG> RegularGG_builder( RegularGG::gridTypeStr() );
-
 RegularGG::RegularGG( const eckit::Params& p )
 {
 	if( !p.get("hash").isNil() )

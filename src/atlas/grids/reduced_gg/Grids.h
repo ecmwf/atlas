@@ -45,14 +45,8 @@ public:\
   }\
   static std::string className() { return "atlas.grids.reduced_gg."+std::string(#CLASS); }\
 };\
-static struct CLASS##_regist \
-{\
-  static std::string build_name() { return "reduced_gg."+std::string(#CLASS); }\
-  CLASS##_regist() {\
-    static eckit::ConcreteBuilderT1<Grid,       CLASS>         grid(build_name()); \
-    static eckit::ConcreteBuilderT0<ReducedGrid,CLASS> reduced_grid(build_name()); \
-  }\
-} CLASS##_registration;
+register_BuilderT1(Grid,       CLASS,"reduced_gg."+std::string(#CLASS));\
+register_BuilderT0(ReducedGrid,CLASS,"reduced_gg."+std::string(#CLASS));
 
 DEFINE_GRID(N16);
 DEFINE_GRID(N24);

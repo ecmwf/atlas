@@ -11,7 +11,6 @@
 #include <cmath>
 
 #include "eckit/log/Log.h"
-#include "eckit/memory/Builder.h"
 #include "eckit/value/Value.h"
 #include "eckit/geometry/RotateGrid.h"
 
@@ -24,10 +23,7 @@ using namespace std;
 
 namespace atlas {
 
-
 //------------------------------------------------------------------------------------------------------
-
-ConcreteBuilderT1<Grid,RotatedLatLon> RotatedLatLon_builder( RotatedLatLon::gridTypeStr() );
 
 RotatedLatLon::RotatedLatLon( const eckit::Params& p )
 : south_pole_lat_(0),

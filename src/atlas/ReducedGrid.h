@@ -13,6 +13,8 @@
 #ifndef ReducedGrid_h
 #define ReducedGrid_h
 
+#include <eckit/memory/Builder.h>
+
 #include "atlas/Grid.h"
 #include "atlas/Util.h"
 
@@ -94,6 +96,9 @@ protected:
   std::string         grid_type_;
   int                 N_;
 };
+
+register_BuilderT1(Grid,ReducedGrid,"ReducedGrid");
+
 
 extern "C"
 {

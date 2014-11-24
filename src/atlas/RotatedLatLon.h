@@ -14,6 +14,7 @@
 #include <cstddef>
 #include <vector>
 
+#include <eckit/memory/Builder.h>
 #include "atlas/Grid.h"
 
 
@@ -101,6 +102,9 @@ private: // members
 	long nptsNS_;
 	long nptsWE_;
 };
+
+register_BuilderT1(Grid,RotatedLatLon,RotatedLatLon::gridTypeStr());
+
 
 //-----------------------------------------------------------------------------
 

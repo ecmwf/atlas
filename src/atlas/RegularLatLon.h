@@ -93,9 +93,11 @@ private: // members
 
 };
 
+register_BuilderT1(Grid,RegularLatLon,RegularLatLon::gridTypeStr());
+
 //-----------------------------------------------------------------------------
 
 
-} // namespace eckit
+} // namespace atlas
 
 #endif

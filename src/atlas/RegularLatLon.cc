@@ -25,8 +25,6 @@ namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
 
-ConcreteBuilderT1<Grid,RegularLatLon> RegularLatLon_builder( RegularLatLon::gridTypeStr() );
-
 RegularLatLon::RegularLatLon( const eckit::Params& p )
 {
 	if( !p.get("hash").isNil() )

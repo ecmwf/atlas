@@ -96,6 +96,8 @@ private: // members
 	std::string hash_;
 };
 
+register_BuilderT1(Grid,ReducedLatLon,ReducedLatLon::gridTypeStr());
+
 //-----------------------------------------------------------------------------
 
 

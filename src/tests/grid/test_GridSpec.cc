@@ -24,6 +24,10 @@
 #include "atlas/io/Grib.h"
 #include "atlas/GridSpec.h"
 #include "atlas/ReducedGG.h"
+#include "atlas/RegularGG.h"
+#include "atlas/ReducedLatLon.h"
+#include "atlas/RegularLatLon.h"
+#include "atlas/RotatedLatLon.h"
 #include "atlas/Grid.h"
 
 using namespace std;

@@ -212,7 +212,7 @@ TEST( test_meshgen )
 
 !  call atlas_generate_latlon_grid(rgg,60,30)
 
-  call atlas_generate_reduced_gaussian_grid(rgg,"reduced_gg.N320")
+  call atlas_generate_reduced_gaussian_grid(rgg,"reduced_gg.N24")
 
 !  call atlas_generate_reduced_gaussian_grid(rgg,"T63")
   call atlas_build_parallel_fields(rgg)
