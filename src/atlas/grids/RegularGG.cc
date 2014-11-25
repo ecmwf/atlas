@@ -56,7 +56,7 @@ RegularGG::RegularGG( const eckit::Params& p )
 	else
 	{
 		ni_ = 4*gaussN_;
-		Log::warning() << "Assuming number of points along parallel to be 4 * GaussianNumber " << ni_ << std::endl;
+		Log::warning() << "Assuming number of points along parallel to be 4 * N " << ni_ << std::endl;
 	}
 
 	if( p.has("npts") )

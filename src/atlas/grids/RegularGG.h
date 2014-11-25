@@ -73,7 +73,7 @@ public: // methods
 
 protected: // methods
 
-	long gaussianNumber() const { return gaussN_;}
+	long N() const { return gaussN_;}
 
 	long nj() const { return 2*gaussN_; }
 

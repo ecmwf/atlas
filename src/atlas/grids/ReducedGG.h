@@ -76,9 +76,9 @@ public: // methods
 
 public: // methods
 
-	long gaussianNumber() const { return gaussN_;}
+	long N() const { return gaussN_;}
 
-	const std::vector<int>&  pointsPerLatitude() const { return nbPtsPerLat_;}
+	const std::vector<int>&  npts_per_lat() const { return nbPtsPerLat_;}
 
 	void computeLatitudes(std::vector<double>&) const;
 	void computePoints( const std::vector<double>&, std::vector<Point>& pts ) const;

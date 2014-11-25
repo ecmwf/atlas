@@ -115,8 +115,8 @@ static void test_grib_file(const std::string& fpath)
 
       if (read_from_grib) {
          // Create on the fly, this will compute no of pts per latitude on the fly
-         ReducedGG reducedgg(read_from_grib->gaussianNumber());
-         BOOST_CHECK_MESSAGE(read_from_grib->pointsPerLatitude() == reducedgg.pointsPerLatitude(),"Pts per latitide read from grib, different to computed pts per latitude");
+         ReducedGG reducedgg(read_from_grib->N());
+         BOOST_CHECK_MESSAGE(read_from_grib->npts_per_lat() == reducedgg.npts_per_lat(),"Pts per latitide read from grib, different to computed pts per latitude");
       }
    }
 
