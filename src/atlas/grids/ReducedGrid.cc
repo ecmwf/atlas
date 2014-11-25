@@ -18,10 +18,6 @@
 namespace atlas {
 namespace grids {
 
-namespace {
-static double units =1;// M_PI/180.; // radians
-}
-
 std::string ReducedGrid::className()
 {
   return "atlas.ReducedGrid";
@@ -58,6 +54,7 @@ ReducedGrid::ReducedGrid(const eckit::Params& params)
 
   setup(latitudes.size(),npts_per_lat.data(),latitudes.data());
 
+  crop(params);
   grid_type_ = params.get("grid_type").as<std::string>();
   uid_ = params.get("uid").as<std::string>();
   hash_ = params.get("hash").as<std::string>();
@@ -82,9 +79,13 @@ ReducedGrid::ReducedGrid( const int nlons[], const double lats[], const int nlat
 void ReducedGrid::setup(const int nlat, const int nlons[], const double lats[])
 {
   N_ = nlat/2;
+
   nlons_.assign(nlons,nlons+nlat);
 
   lat_.assign(lats,lats+nlat);
+
+  lonmin_.resize(nlat);
+  lonmax_.resize(nlat);
 
   npts_ = 0;
   nlonmax_ = 0;
@@ -92,11 +93,16 @@ void ReducedGrid::setup(const int nlat, const int nlons[], const double lats[])
   for( int jlat=0; jlat<nlat; ++jlat )
   {
     nlonmax_ = std::max(nlon(jlat),nlonmax_);
-    lon_min = std::min(lon_min,lon(jlat,0));
-    lon_max = std::max(lon_max,lon(jlat,nlon(jlat)-1));
+
+    lonmin_[jlat] = 0.;
+    lonmax_[jlat] = 360. - 360./nlon(jlat);
+
+    lon_min = std::min(lon_min,lonmin_[jlat]);
+    lon_max = std::max(lon_max,lonmax_[jlat]);
     npts_ += nlons_[jlat];
   }
 
+  // Default is global
   bounding_box_ = BoundBox(lat_[0]/*north*/, lat_[nlat-1]/*south*/, lon_max/*east*/, lon_min/*west*/ );
 
   if( grid_type_.empty() )
@@ -184,11 +190,12 @@ GridSpec ReducedGrid::spec() const
   GridSpec grid_spec(grid_type());
 
   grid_spec.uid( uid() );
-  grid_spec.set("hash", hash_);
-  grid_spec.set("N", N_ );
-  grid_spec.set_bounding_box(bounding_box_);
+  grid_spec.set("hash", hash());
+  grid_spec.set("N", N() );
   grid_spec.set_latitudes(latitudes());
   grid_spec.set_npts_per_lat(npts_per_lat());
+  if( !bounding_box().global() )
+    grid_spec.set_bounding_box(bounding_box());
 
   return grid_spec;
 }
@@ -242,12 +249,12 @@ const std::vector<int>&  ReducedGrid::npts_per_lat() const
 
 double ReducedGrid::lon(const int jlat, const int jlon) const
 {
-  return static_cast<double>(jlon) * 360./static_cast<double>(nlon(jlat)) * units;
+  return lonmin_[jlat] + (double)jlon * lonmax_[jlat] / ( (double)nlon(jlat) - 1. );
 }
 
 double ReducedGrid::lat(const int jlat) const
 {
-  return lat_[jlat] * units;
+  return lat_[jlat];
 }
 
 void ReducedGrid::lonlat( const int jlon, const int jlat, double crd[] ) const
@@ -273,6 +280,82 @@ std::string ReducedGrid::hash() const
   return hash_;
 }
 
+void ReducedGrid::crop(const BoundBox& bbox)
+{
+  if( !bbox.global() )
+  {
+    /// 1) Figure out mask
+    double latmin = bbox.min().lat();
+    double latmax = bbox.max().lat();
+    double lonmin = bbox.min().lon();
+    double lonmax = bbox.max().lon();
+
+    std::vector<int> masklat(nlat(),-1);
+    std::vector<int> masklon_first(nlat(),-1);
+    std::vector<int> masklon_last (nlat(),-1);
+    int new_nlat(0);
+    int new_npts(0);
+    for( int jlat=0; jlat<nlat(); ++jlat )
+    {
+      masklat[jlat] = 0;
+      if( lat(jlat) >= latmin-degrees_eps() && lat(jlat) <= latmax+degrees_eps() )
+      {
+        masklon_first[jlat] = nlon(jlat);
+        masklon_last [jlat] = -1;
+        for( int jlon=0; jlon<nlon(jlat); ++jlon )
+        {
+          if( lon(jlat,jlon) >= lonmin-degrees_eps() && lon(jlat,jlon) <= lonmax+degrees_eps() )
+          {
+            ++new_npts;
+            if( !masklat[jlat] ) ++new_nlat;
+            masklat[jlat] = 1;
+            masklon_first[jlat] = std::min(masklon_first[jlat],jlon);
+            masklon_last [jlat] = std::max(masklon_last [jlat],jlon);
+          }
+          else
+          {
+            //std::cout << "jlat,jlon " << jlat<<","<<jlon<<"    lat,lon " << lat(jlat) << "," << lon(jlat,jlon) << std::endl;
+          }
+        }
+      }
+    }
+
+    /// 2) modify grid
+    std::vector<double> new_lat;     new_lat.reserve(new_nlat);
+    std::vector<double> new_lonmin;  new_lonmin.reserve(new_nlat);
+    std::vector<double> new_lonmax;  new_lonmax.reserve(new_nlat);
+    std::vector<int>    new_nlons;   new_nlons.reserve(new_nlat);
+    int c(0);
+    for( int jlat=0; jlat< nlat(); ++jlat )
+    {
+      if( masklat[jlat] )
+      {
+        new_lat.   push_back( lat(jlat) );
+        new_lonmin.push_back( lon(jlat,masklon_first[jlat]) );
+        new_lonmax.push_back( lon(jlat,masklon_last [jlat]) );
+        new_nlons. push_back( masklon_last[jlat]-masklon_first[jlat]+1 );
+        c += new_nlons.back();
+      }
+    }
+    ASSERT( c == new_npts );
+    npts_  = new_npts;
+    lat_   = new_lat;
+    nlons_ = new_nlons;
+    lonmin_ = new_lonmin;
+    lonmax_ = new_lonmax;
+  }
+  bounding_box_ = bbox;
+}
+
+void ReducedGrid::crop(const eckit::Params& params)
+{
+  // If there is a "bbox_s" value in params,
+  // then make_bounding_box(params).global() will be false.
+  /// @todo revisit how bounding_box is defined to be global
+  crop( make_bounding_box(params) );
+}
+
+
 int  atlas__ReducedGrid__nlat(ReducedGrid* This)
 {
   return This->nlat();
@@ -289,7 +372,7 @@ int atlas__ReducedGrid__npts(ReducedGrid* This)
   return This->npts();
 }
 
-double atlas__ReducedGrid__lon(ReducedGrid* This,int jlon,int jlat)
+double atlas__ReducedGrid__lon(ReducedGrid* This,int jlat,int jlon)
 {
   return This->lon(jlat,jlon);
 }

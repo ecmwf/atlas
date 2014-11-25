@@ -35,8 +35,17 @@ namespace reduced_gg {
 class CLASS : public ReducedGrid { \
 public:\
 \
-  CLASS() { construct(); set_typeinfo(); }\
-  CLASS(Grid::ARG1 arg1) { construct();  set_typeinfo(); }\
+  CLASS() \
+  {\
+    construct();\
+    set_typeinfo();\
+  }\
+  CLASS(Grid::ARG1 arg1)\
+  {\
+    construct();\
+    crop(arg1);\
+    set_typeinfo();\
+  }\
   void construct();\
   void set_typeinfo() { \
     uid_ = "reduced_gg."+std::string(#CLASS); \

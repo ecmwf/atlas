@@ -82,10 +82,10 @@ void GridSpec::set_npts_per_lat(const std::vector<int>& rgSpec_vec)
 
 void GridSpec::set_bounding_box(const Grid::BoundBox& bbox )
 {
-   set("bbox_s", bbox.lonlat_min().lat());
-   set("bbox_w", bbox.lonlat_min().lon());
-   set("bbox_n", bbox.lonlat_max().lat());
-   set("bbox_e", bbox.lonlat_max().lon());
+   set("bbox_s", bbox.min().lat());
+   set("bbox_w", bbox.min().lon());
+   set("bbox_n", bbox.max().lat());
+   set("bbox_e", bbox.max().lon());
 }
 
 void GridSpec::get_npts_per_lat(std::vector<int> &rgSpec) const
@@ -109,8 +109,8 @@ void GridSpec::get_bounding_box(Grid::BoundBox& bbox) const
       double area_w = get("bbox_w");
       double area_n = get("bbox_n");
       double area_e = get("bbox_e");
-      bbox.lonlat_min().assign(area_w,area_s);
-      bbox.lonlat_max().assign(area_e,area_n);
+      bbox.min().assign(area_w,area_s);
+      bbox.max().assign(area_e,area_n);
       ASSERT( bbox.validate() );
    }
 }

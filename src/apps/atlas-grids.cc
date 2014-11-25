@@ -182,11 +182,11 @@ void AtlasGrids::run()
       Log::info() << "   spectral truncation -- cubic:     "
                   << static_cast<int>(std::floor(0.5*grid->nlat()+0.5))-1 << std::endl;
       Log::info() << "   bounding box -- lat N-S (deg):    "
-                  << grid->bounding_box().lonlat_max().lat() << ", "
-                  << grid->bounding_box().lonlat_min().lat() << std::endl;
+                  << grid->bounding_box().max().lat() << ", "
+                  << grid->bounding_box().min().lat() << std::endl;
       Log::info() << "   bounding box -- lon W-E (deg):    "
-                  << grid->bounding_box().lonlat_min().lon() << ", "
-                  << grid->bounding_box().lonlat_max().lon() << std::endl;
+                  << grid->bounding_box().min().lon() << ", "
+                  << grid->bounding_box().max().lon() << std::endl;
     }
     if( json )
     {

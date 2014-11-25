@@ -87,7 +87,8 @@ Grid::BoundBox Grid::make_bounding_box(const Params& p)
   return BoundBox( p["bbox_n"],
                    p["bbox_s"],
                    p["bbox_e"],
-                   p["bbox_w"] );
+                   p["bbox_w"] ).
+                   global(false);
 }
 
 double Grid::degrees_eps()

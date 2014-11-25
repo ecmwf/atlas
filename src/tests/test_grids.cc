@@ -40,4 +40,24 @@ BOOST_AUTO_TEST_CASE( test_factory )
   }
 }
 
+
+BOOST_AUTO_TEST_CASE( crop )
+{
+  grids::reduced_gg::N32 grid;
+
+  BOOST_CHECK_EQUAL(grid.nlat(), 64);
+  BOOST_CHECK_EQUAL(grid.npts(), 6114);
+
+  grid.crop( Grid::BoundBox( 90., -90., 360.-grid.degrees_eps(), 0.).global(false) );
+
+  BOOST_CHECK_EQUAL(grid.nlat(), 64);
+  BOOST_CHECK_EQUAL(grid.npts(), 6114);
+
+  grid.crop( Grid::BoundBox( 90., 0., 180., 0.).global(false) );
+
+  BOOST_CHECK_EQUAL(grid.nlat(), 32);
+  BOOST_CHECK_EQUAL(grid.npts(), 1527);
+
+}
+
 BOOST_AUTO_TEST_CASE( finalize ) { MPL::finalize(); }

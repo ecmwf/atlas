@@ -96,8 +96,8 @@ Grid::Point RotatedLatLon::lonlat(size_t jlon, size_t jlat) const
 {
    RotateGrid rotgrid(Grid::Point(south_pole_lon_,south_pole_lat_),south_pole_rot_angle_);
 
-   double plon = bbox_.lonlat_min().lon(); // west
-   double plat = bbox_.lonlat_max().lat();   // north;
+   double plon = bbox_.min().lon(); // west
+   double plat = bbox_.max().lat();   // north;
    for( size_t ilat = 0; ilat < nptsNS_; ++ilat) {
       for( size_t ilon = 0; ilon < nptsWE_; ++ilon) {
          if (jlon == ilon && jlat == ilat) {
@@ -133,8 +133,8 @@ void RotatedLatLon::lonlat(std::vector<Grid::Point>& points) const
    RotateGrid rotgrid(Grid::Point(south_pole_lon_,south_pole_lat_),south_pole_rot_angle_);
 
    size_t index = 0;
-   double plon = bbox_.lonlat_min().lon(); // west
-   double plat = bbox_.lonlat_max().lat();   // north;
+   double plon = bbox_.min().lon(); // west
+   double plat = bbox_.max().lat();   // north;
    for( size_t j = 0; j < nptsNS_; ++j) {
       for( size_t i = 0; i < nptsWE_; ++i) {
          ASSERT( index < points.size() );
