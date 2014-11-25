@@ -69,6 +69,7 @@ public: // methods
 	virtual GridSpec spec() const;
 	virtual bool same(const Grid&) const;
 
+private:
    void computenpts_per_lat( std::vector<int>& );
 
 private: // methods

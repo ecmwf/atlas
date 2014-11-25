@@ -77,7 +77,7 @@ public: // methods
 	virtual GridSpec spec() const;
 	virtual bool same(const Grid&) const;
 
-protected: // methods
+private: // methods
 
 	double rotated_latitude() const { return south_pole_lat_; }
 	double rotated_longitude() const { return south_pole_lon_; }

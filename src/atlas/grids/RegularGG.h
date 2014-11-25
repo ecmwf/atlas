@@ -71,7 +71,7 @@ public: // methods
 	virtual GridSpec spec() const;
 	virtual bool same(const Grid&) const;
 
-protected: // methods
+private: // methods
 
 	long N() const { return gaussN_;}
 

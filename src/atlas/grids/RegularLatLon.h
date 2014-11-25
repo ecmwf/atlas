@@ -60,7 +60,7 @@ public: // methods
 
 	virtual bool same(const Grid&) const;
 
-protected: // methods
+private: // methods
 
 	long rows() const { return nptsNS_;}
 	long cols() const { return nptsWE_;}
