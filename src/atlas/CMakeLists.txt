@@ -142,10 +142,10 @@ grids/ReducedGrid.h
 grids/ReducedGrid.cc
 grids/ReducedLatLon.cc
 grids/ReducedLatLon.h
-grids/RegularGG.cc
-grids/RegularGG.h
-grids/ReducedGG.cc
-grids/ReducedGG.h
+#grids/RegularGG.cc
+#grids/RegularGG.h
+#grids/ReducedGG.cc
+#grids/ReducedGG.h
 grids/RegularLatLon.cc
 grids/RegularLatLon.h
 grids/RotatedLatLon.cc

@@ -34,6 +34,8 @@ class ReducedGaussianGrid: public ReducedGrid {
 
 public:
 
+  static std::string gtype() { return "reduced_gg"; }
+
   ReducedGaussianGrid();
 
   ReducedGaussianGrid( const eckit::Params& );
@@ -55,7 +57,7 @@ protected:
 
 };
 
-register_BuilderT1(Grid,       ReducedGaussianGrid,"reduced_gg");
+register_BuilderT1(Grid,ReducedGaussianGrid,ReducedGaussianGrid::gtype());
 
 } // namespace grids
 } // namespace atlas

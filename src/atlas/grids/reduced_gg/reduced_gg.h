@@ -16,7 +16,7 @@
 
 #include <eckit/memory/Builder.h>
 #include <eckit/value/Params.h>
-#include "atlas/grids/ReducedGrid.h"
+#include "atlas/grids/ReducedGaussianGrid.h"
 
 namespace atlas {
 namespace grids {
@@ -32,7 +32,7 @@ namespace reduced_gg {
 
 ///@todo these classes will inherit from ReducedGaussianGrid when it's ready
 #define DEFINE_GRID(CLASS)\
-class CLASS : public ReducedGrid { \
+class CLASS : public ReducedGaussianGrid { \
 public:\
 \
   CLASS() \

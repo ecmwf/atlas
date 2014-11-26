@@ -57,6 +57,8 @@ class GaussianGrid: public ReducedGrid {
 
 public:
 
+  static std::string gtype() { return "regular_gg"; }
+
   GaussianGrid();
 
   GaussianGrid( const eckit::Params& );

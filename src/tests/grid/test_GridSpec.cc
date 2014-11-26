@@ -114,7 +114,7 @@ static void test_grib_file(const std::string& fpath)
    if (gridType == "reduced_gg") {
 
       ReducedGaussianGrid* read_from_grib = dynamic_cast<ReducedGaussianGrid*>(grid_created_from_grib.get());
-      BOOST_CHECK_MESSAGE(read_from_grib,"Downcast to ReducedGG failed ?");
+      BOOST_CHECK_MESSAGE(read_from_grib,"Downcast to ReducedGaussianGrid failed ?");
 
       if (read_from_grib) {
          // Create on the fly, this will compute no of pts per latitude on the fly
@@ -129,9 +129,9 @@ static void test_grib_file(const std::string& fpath)
 
    double epsilon = (editionNumber == 1) ? 1e-3 : 1e-6;
 
-   if (gridType == "reduced_gg" || gridType == "regular_gg") {
+   if (gridType == ReducedGaussianGrid::gtype() || gridType == GaussianGrid::gtype() ) {
 
-      // ---------------------------------------------------------------------------------------
+     // ---------------------------------------------------------------------------------------
       // Old Grib samples file have errors in the EXPECTED_longitudeOfLastGridPointInDegrees
       // This can then effect, comparison of the points
       // ----------------------------------------------------------------------------------------
