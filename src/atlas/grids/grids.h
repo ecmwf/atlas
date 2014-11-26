@@ -14,11 +14,13 @@
 #ifndef atlas_grids_grids_h
 #define atlas_grids_grids_h
 
+#include "atlas/grids/GaussianGrid.h"
 #include "atlas/grids/PolarStereoGraphic.h"
+#include "atlas/grids/ReducedGaussianGrid.h"
 #include "atlas/grids/ReducedGrid.h"
-#include "atlas/grids/ReducedGG.h"
+//#include "atlas/grids/ReducedGG.h"
 #include "atlas/grids/ReducedLatLon.h"
-#include "atlas/grids/RegularGG.h"
+//#include "atlas/grids/RegularGG.h"
 #include "atlas/grids/RegularLatLon.h"
 #include "atlas/grids/RotatedLatLon.h"
 #include "atlas/grids/Unstructured.h"

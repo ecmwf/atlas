@@ -30,7 +30,11 @@ namespace grids {
 /// such distribution can be represented with this class
 class ReducedGrid: public Grid {
 public:
-  typedef eckit::BuilderT0<ReducedGrid> builder_t;
+  typedef eckit::SharedPtr<ReducedGrid> Ptr;
+
+  static ReducedGrid* create( const eckit::Params& );
+  static ReducedGrid* create( const GridSpec& );
+  static ReducedGrid* create( const std::string& uid );
 
 public:
 
@@ -83,10 +87,11 @@ public:
   void lonlat( const int jlon, const int jlat, double crd[] ) const;
 
   /// @brief Crop the grid according to the bounding box (or mask)
-  virtual void crop(const BoundBox&);
-  virtual void crop(const eckit::Params&);
+  void crop(const BoundBox&);
+  void crop(const eckit::Params&);
 
 protected:
+  void setup(const eckit::Params&);
   void setup(const int nlat, const int npts_per_lat[], const double lats[]);
   void setup_colat_hemisphere(const int N, const int lon[], const double colat[], const AngleUnit);
   void setup_lat_hemisphere(const int N, const int lon[], const double lat[], const AngleUnit);
@@ -105,7 +110,7 @@ protected:
   int                 N_;
 };
 
-register_BuilderT1(Grid,ReducedGrid,"ReducedGrid");
+register_BuilderT1(Grid,ReducedGrid,"reduced");
 
 
 extern "C"

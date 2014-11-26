@@ -75,13 +75,13 @@ grids::ReducedGrid* new_reduced_gaussian_grid( const std::string& identifier )
   else if( identifier == "T7999" ) rgg = new T7999();
   else
   {
-    if( !eckit::Factory<grids::ReducedGrid>::instance().exists(identifier) )
+    if( !eckit::Factory<Grid>::instance().exists(identifier) )
     {
       std::stringstream msg;
       msg << "Cannot find grid "<<identifier<<" in " << eckit::Factory<grids::ReducedGrid>::instance();
       throw eckit::BadParameter(msg.str(),Here());
     }
-    rgg = eckit::Factory<grids::ReducedGrid>::instance().get(identifier).create();
+    rgg = grids::ReducedGrid::create(identifier);
   }
   return rgg;
 }

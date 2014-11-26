@@ -62,8 +62,9 @@ public: // methods
 
   static double degrees_eps();
 
-  static Grid::Ptr create( const eckit::Params& );
-  static Grid::Ptr create( const GridSpec& );
+  static Grid* create( const eckit::Params& );
+  static Grid* create( const GridSpec& );
+  static Grid* create( const std::string& uid );
 
   Grid();
 

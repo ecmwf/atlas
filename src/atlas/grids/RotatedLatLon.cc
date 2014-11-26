@@ -107,6 +107,7 @@ Grid::Point RotatedLatLon::lonlat(size_t jlon, size_t jlat) const
       }
       plat += nsIncrement_;
    }
+   // should not be here
    return Grid::Point();
 }
 

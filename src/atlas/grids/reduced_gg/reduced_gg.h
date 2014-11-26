@@ -54,8 +54,7 @@ public:\
   }\
   static std::string className() { return "atlas.grids.reduced_gg."+std::string(#CLASS); }\
 };\
-register_BuilderT1(Grid,       CLASS,"reduced_gg."+std::string(#CLASS));\
-register_BuilderT0(ReducedGrid,CLASS,"reduced_gg."+std::string(#CLASS))
+register_BuilderT1(Grid,CLASS,"reduced_gg."+std::string(#CLASS));
 
 DEFINE_GRID(N16);
 DEFINE_GRID(N24);

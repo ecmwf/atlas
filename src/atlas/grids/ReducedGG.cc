@@ -30,7 +30,7 @@ namespace grids {
 
 //------------------------------------------------------------------------------------------------------
 
-ConcreteBuilderT1<Grid,ReducedGG> ReducedGG_builder( ReducedGG::gridTypeStr() );
+ConcreteBuilderT1<Grid,ReducedGG> ReducedGG_builder( ReducedGG::gridTypeStr()+"_depr" );
 
 ReducedGG::ReducedGG( const eckit::Params& p )
 {

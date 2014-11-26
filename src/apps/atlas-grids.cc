@@ -16,7 +16,6 @@
 #include <cmath>
 #include <vector>
 #include <memory>
-#include <typeinfo> // std::bad_cast
 
 #include <eckit/exception/Exceptions.h>
 #include <eckit/config/Resource.h>
@@ -50,7 +49,7 @@ public:
   AtlasGrids(int argc,char **argv): eckit::Tool(argc,argv)
   {
     //atlas_init(argc,argv);
-    do_run = true;
+    do_run = false;
 
     bool help = Resource< bool >("-h",false);
 
@@ -81,13 +80,8 @@ public:
     if( help )
     {
       std::cout << help_str << std::endl;
-      do_run = false;
       return;
     }
-
-
-    all = Resource< bool >("-a",false);
-    if( all ) do_run = true;
 
     key = "";
     for( int i=0; i<argc; ++i )
@@ -107,6 +101,16 @@ public:
     rtable = Resource< bool >("-rtable",false);
     if( rtable && !key.empty() ) do_run = true;
 
+    all = false;
+    if( do_run == false && key.empty() )
+    {
+      all = true;
+      do_run = true;
+    }
+    if( !key.empty() && do_run == false )
+    {
+      Log::error() << "Option wrong or missing after '" << key << "'" << std::endl;
+    }
   }
 
 private:
@@ -121,26 +125,13 @@ private:
 
 //------------------------------------------------------------------------------------------------------
 
-SharedPtr<ReducedGrid> reduced_grid(std::string& key)
-{
-  if( !Factory<ReducedGrid>::instance().exists(key) )
-  {
-    return SharedPtr<ReducedGrid>();
-  }
-  SharedPtr<ReducedGrid> grid ( Factory<ReducedGrid>::instance().get(key).create() );
-  return grid;
-}
-
-
 void AtlasGrids::run()
 {
   if( !do_run ) return;
 
   if( all )
   {
-    typedef Factory<ReducedGrid> Factory_t;
-    Factory_t& factory = Factory_t::instance();
-    std::vector<std::string> keys = factory.keys();
+    std::vector<std::string> keys = Factory<Grid>::instance().keys();
     Log::info() << "Available grids:" << std::endl;
     for( int i=0; i< keys.size(); ++i )
     {
@@ -150,12 +141,13 @@ void AtlasGrids::run()
 
   if( !key.empty() )
   {
-    SharedPtr< ReducedGrid > grid = reduced_grid(key);
-    if( !grid )
+    if( !Factory<Grid>::instance().exists(key) )
     {
       Log::error() << "Grid " << key << " was not found." << std::endl;
       return;
     }
+
+    ReducedGrid::Ptr grid ( ReducedGrid::create(key) );
     if( info )
     {
       Log::info() << "Grid " << key << std::endl;

@@ -132,8 +132,12 @@ actions/WriteLoadBalanceReport.cc
 list( APPEND atlas_grids_srcs
 grids/grids.h
 grids/grids.cc
+grids/GaussianGrid.cc
+grids/GaussianGrid.h
 grids/PolarStereoGraphic.cc
 grids/PolarStereoGraphic.h
+grids/ReducedGaussianGrid.cc
+grids/ReducedGaussianGrid.h
 grids/ReducedGrid.h
 grids/ReducedGrid.cc
 grids/ReducedLatLon.cc

@@ -64,7 +64,7 @@ Grid::Ptr Grib::create_grid(GribHandle& gh)
 
 	ASSERT( gp );
 
-	return Grid::create( *gp );
+	return Grid::Ptr( Grid::create( *gp ) );
 }
 
 GribHandle::Ptr Grib::create_handle( const Grid& grid, long edition )

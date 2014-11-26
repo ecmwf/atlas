@@ -94,7 +94,7 @@ void ReducedLatLon::lonlat( double pts[] ) const
 struct ReducedLonLat_Coord
 {
 	ReducedLonLat_Coord( std::vector<Grid::Point>& pts ) : pts_(pts) {}
-	void operator()(double lat, double lon)
+	void operator()(double lon, double lat)
 	{
 		pts_.push_back( Grid::Point(lon,lat) );
 	}

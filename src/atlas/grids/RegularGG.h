@@ -96,7 +96,7 @@ private: // members
 
 };
 
-register_BuilderT1(Grid,RegularGG,RegularGG::gridTypeStr());
+register_BuilderT1(Grid,RegularGG,RegularGG::gridTypeStr()+"_depr");
 
 
 //-----------------------------------------------------------------------------

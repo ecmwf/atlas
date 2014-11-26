@@ -24,16 +24,32 @@ namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
 
-Grid::Ptr Grid::create(const Params& p )
+Grid* Grid::create( const Params& p )
 {
-  return Grid::Ptr( Factory<Grid>::instance().get( p["grid_type"] ).create(p) );
+  if( p.has("uid") )
+  {
+    if( Factory<Grid>::instance().exists(p["uid"]) )
+    {
+      return Factory<Grid>::instance().get(p["uid"]).create(p);
+    }
+  }
+  return Factory<Grid>::instance().get( p["grid_type"] ).create(p);
 }
 
-
-Grid::Ptr Grid::create(const GridSpec& g)
+Grid* Grid::create(const std::string& uid)
 {
-  GridSpecParams p( g );
-  return Grid::Ptr( Factory<Grid>::instance().get( p["grid_type"] ).create(p) );
+  if( ! Factory<Grid>::instance().exists(uid) )
+  {
+    std::stringstream msg;
+    msg << "No grid with uid " << uid << " found in\n"<< Factory<Grid>::instance();
+    throw BadParameter(msg.str(),Here());
+  }
+  return Factory<Grid>::instance().get(uid).create(ValueParams());
+}
+
+Grid* Grid::create(const GridSpec& g)
+{
+  return Grid::create( GridSpecParams(g) );
 }
 
 Grid::Grid()
