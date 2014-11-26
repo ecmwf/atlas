@@ -28,6 +28,28 @@ using namespace std;
 namespace atlas {
 
 
+static bool check_symmetry(const std::vector<long>& nbPtsPerLat)
+{
+   if (nbPtsPerLat.empty()) return true;
+
+   size_t mid_way = nbPtsPerLat.size()/2;
+   size_t end = nbPtsPerLat.size();
+   if (end == 0) {
+      return false;
+   }
+
+   for(size_t i=0; i< mid_way ; ++i) {
+      const long pl_start = nbPtsPerLat[i];
+      const long pl_end = nbPtsPerLat[end-1-i];
+      if ( pl_start != pl_end ) {
+         std::cout << "ERROR: Reduced Gaussian grids : number of points per latitude size(" << nbPtsPerLat.size()
+                   << ") is not symmetric: pl[" << i << "]=" << pl_start << " pl[ " << end-1-i << "]=" << pl_end << "\n";
+         return false;
+      }
+   }
+   return true;
+}
+
 //------------------------------------------------------------------------------------------------------
 
 ConcreteBuilderT1<Grid,ReducedGG> ReducedGG_builder( ReducedGG::gridTypeStr() );
@@ -60,7 +82,6 @@ ReducedGG::ReducedGG( const eckit::Params& p )
 	else
 		computeNPtsPerLat(nbPtsPerLat_);
 
-	ASSERT( nbPtsPerLat_.size() == 2 * gaussN_ ); // number of lines of latitude should, be twice the gaussN_
 
 	if( p.has("nbDataPoints") )
 		npts_ = p["nbDataPoints"];
@@ -71,7 +92,10 @@ ReducedGG::ReducedGG( const eckit::Params& p )
 		npts_ = computeNPoints(latitudes);
 	}
 
+
 	ASSERT( npts_ > 0 );
+	ASSERT( nbPtsPerLat_.size() == 2 * gaussN_ ); // number of lines of latitude should, be twice the gaussN_
+   ASSERT( (nbPtsPerLat_.size() % 2 == 0) && check_symmetry(nbPtsPerLat_) );
 }
 
 ReducedGG::ReducedGG(long gaussN) : npts_(0), gaussN_(gaussN)
@@ -96,7 +120,9 @@ ReducedGG::ReducedGG(long gaussN) : npts_(0), gaussN_(gaussN)
 
 	ASSERT( npts_ > 0 );
 	ASSERT( nbPtsPerLat_.size() == 2 * gaussN_ ); // number of lines of latitude should, be twice the gaussN_
+	ASSERT( (nbPtsPerLat_.size() % 2 == 0) && check_symmetry(nbPtsPerLat_) );
 }
+
 
 ReducedGG::~ReducedGG()
 {
