@@ -105,6 +105,11 @@ static void test_grib_file(const std::string& fpath)
    BOOST_CHECK_MESSAGE(grid_created_from_spec,"Failed to create GRID from GridSpec");
    bool grid_compare = grid_created_from_grib->same(*grid_created_from_spec);
    BOOST_CHECK_MESSAGE(grid_compare,"The grids are different");
+   if( !grid_compare )
+   {
+     Log::info() << "GRIB: " << g_spec << std::endl;
+     Log::info() << "GRID: " << grid_created_from_spec->spec() << std::endl;
+   }
 
 
    // For reduced Guassian Grid, check the no of pts per latitude read from grib, matches the computed values

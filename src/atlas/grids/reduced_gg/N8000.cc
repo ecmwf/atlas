@@ -814,7 +814,7 @@ void N8000::construct()
   std::vector<double> lat(N);
   eckit::Log::warning() << className() << " uses predicted gaussian latitudes" << std::endl;
   predict_gaussian_latitudes_hemisphere(N,lat.data());
-  setup_lat_hemisphere(N,lon,lat.data(),DEG);
+  setup_lat_hemisphere(N,lat.data(),lon,DEG);
 }
 
 } // namespace reduced_gg

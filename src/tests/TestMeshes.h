@@ -29,7 +29,7 @@ TestGrid::TestGrid(int N, int lon[])
 {
   std::vector<double> colat(N);
   predict_gaussian_colatitudes_hemisphere(N,colat.data());
-  setup_colat_hemisphere(N,lon,colat.data(),DEG);
+  setup_colat_hemisphere(N,colat.data(),lon,DEG);
 }
 
 Mesh::Ptr generate_mesh( const ReducedGrid& rgg )

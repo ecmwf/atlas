@@ -4026,7 +4026,7 @@ T7999::T7999()
 
   std::vector<double> lat(N);
   predict_gaussian_latitudes_hemisphere(N,lat.data());
-  setup_lat_hemisphere(N,lon,lat.data(),DEG);
+  setup_lat_hemisphere(N,lat.data(),lon,DEG);
 }
 
 } // namespace meshgen

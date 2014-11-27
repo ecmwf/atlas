@@ -23,7 +23,7 @@ RGG::RGG(const int N, const int lon[]) : grids::ReducedGrid()
 {
   std::vector<double> lat(N);
   predict_gaussian_latitudes_hemisphere(N,lat.data());
-  setup_lat_hemisphere(N,lon,lat.data(),DEG);
+  setup_lat_hemisphere(N,lat.data(),lon,DEG);
 }
 
 RGG::RGG(const size_t N, const long lon[])
@@ -32,7 +32,7 @@ RGG::RGG(const size_t N, const long lon[])
   std::vector<int>    nlons(N);
   std::copy( lon, lon+N, nlons.begin() );
   predict_gaussian_latitudes_hemisphere(N,lat.data());
-  setup_lat_hemisphere(N,nlons.data(),lat.data(),DEG);
+  setup_lat_hemisphere(N,lat.data(),nlons.data(),DEG);
 }
 
 
@@ -41,7 +41,7 @@ GG::GG(int nlon, int N)
   std::vector<double> lat(N);
   std::vector<int>    nlons(N,nlon);
   predict_gaussian_latitudes_hemisphere(N,lat.data());
-  setup_lat_hemisphere(N,nlons.data(),lat.data(),DEG);
+  setup_lat_hemisphere(N,lat.data(),nlons.data(),DEG);
 }
 
 
@@ -55,7 +55,7 @@ RegularGrid::RegularGrid(int nlon, int nlat)
   {
     lats[i] = 90. - (i+0.5)*dy;
   }
-  setup(nlat,nlons.data(),lats.data());
+  setup(nlat,lats.data(),nlons.data());
 }
 
 // ------------------------------------------------------------------

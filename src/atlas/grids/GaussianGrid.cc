@@ -63,7 +63,7 @@ GaussianGrid::GaussianGrid(const eckit::Params& params)
     lat.resize( 2*N );
     for(int j=0; j<2*N; ++j)
       lat[j] = list[j];
-    ReducedGrid::setup(lat.size(),nlons.data(),lat.data());
+    ReducedGrid::setup(lat.size(),lat.data(),nlons.data());
   }
 
   crop(params);
@@ -84,19 +84,19 @@ void GaussianGrid::setup(const int N)
 
   /// @todo this code should be moved into Atlas library and co-maintained with NA section
   grib_get_gaussian_latitudes(N, lats.data());
-  ReducedGrid::setup(2*N,nlons.data(),lats.data());
+  ReducedGrid::setup(2*N,lats.data(),nlons.data());
 #else
   // hemisphere
   std::vector<double> lats (N);
   predict_gaussian_latitudes_hemisphere(N,lats.data());
-  setup_lat_hemisphere(N,lats.data(),DEG);
+  setup_lat_hemisphere(N,lats.data());
 #endif
 }
 
 void GaussianGrid::setup_lat_hemisphere(const int N, const double lats[])
 {
   std::vector<int> nlons(N,4*N);
-  ReducedGrid::setup_lat_hemisphere(N,nlons.data(),lats,DEG);
+  ReducedGrid::setup_lat_hemisphere(N,lats,nlons.data(),DEG);
 }
 
 GridSpec GaussianGrid::spec() const

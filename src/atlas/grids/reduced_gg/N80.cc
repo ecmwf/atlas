@@ -173,7 +173,7 @@ void N80::construct()
     1.54143579029739,
     1.56100948128359
   };
-  setup_colat_hemisphere(N,lon,colat,RAD);
+  setup_colat_hemisphere(N,colat,lon,RAD);
 }
 
 } // namespace reduced_gg

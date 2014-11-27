@@ -141,7 +141,7 @@ void N64::construct()
      2.1011514025789726,
      0.7003838029733294
   };
-  setup_lat_hemisphere(N,lon,lat,DEG);
+  setup_lat_hemisphere(N,lat,lon,DEG);
 }
 
 } // namespace reduced_gg

@@ -134,6 +134,8 @@ grids/grids.h
 grids/grids.cc
 grids/GaussianGrid.cc
 grids/GaussianGrid.h
+grids/LonLatGrid.cc
+grids/LonLatGrid.h
 grids/PolarStereoGraphic.cc
 grids/PolarStereoGraphic.h
 grids/ReducedGaussianGrid.cc
@@ -146,8 +148,8 @@ grids/ReducedLatLon.h
 #grids/RegularGG.h
 #grids/ReducedGG.cc
 #grids/ReducedGG.h
-grids/RegularLatLon.cc
-grids/RegularLatLon.h
+#grids/RegularLatLon.cc
+#grids/RegularLatLon.h
 grids/RotatedLatLon.cc
 grids/RotatedLatLon.h
 grids/Unstructured.cc

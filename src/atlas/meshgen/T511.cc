@@ -536,7 +536,7 @@ T511::T511()
     1.5616014258433499,
     1.5677313598110112
   };
-  setup_colat_hemisphere(N,lon,colat,RAD);
+  setup_colat_hemisphere(N,colat,lon,RAD);
 }
 
 } // namespace meshgen

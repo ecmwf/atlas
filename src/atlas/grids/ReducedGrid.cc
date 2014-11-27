@@ -93,10 +93,10 @@ void ReducedGrid::setup(const eckit::Params& params)
   for(int j=0; j<latitudes.size(); ++j)
     latitudes[j] = list[j];
 
-  setup(latitudes.size(),npts_per_lat.data(),latitudes.data());
+  setup(latitudes.size(),latitudes.data(),npts_per_lat.data());
 }
 
-ReducedGrid::ReducedGrid( const std::vector<size_t>& _nlons, const std::vector<double>& _lats )
+ReducedGrid::ReducedGrid( const std::vector<double>& _lats, const std::vector<size_t>& _nlons )
 {
   int nlat = _nlons.size();
   std::vector<int> nlons(nlat);
@@ -104,16 +104,19 @@ ReducedGrid::ReducedGrid( const std::vector<size_t>& _nlons, const std::vector<d
   {
     nlons[j] = static_cast<int>(nlons[j]);
   }
-  setup(nlat,nlons.data(),_lats.data());
+  setup(nlat,_lats.data(),nlons.data());
 }
 
-ReducedGrid::ReducedGrid( const int nlons[], const double lats[], const int nlat )
+ReducedGrid::ReducedGrid( const int nlat, const double lats[], const int nlons[] )
 {
-  setup(nlat,nlons,lats);
+  setup(nlat,lats,nlons);
 }
 
-void ReducedGrid::setup(const int nlat, const int nlons[], const double lats[])
+
+void ReducedGrid::setup( const int nlat, const double lats[], const int nlons[], const double lonmin[], const double lonmax[] )
 {
+  ASSERT( nlat > 1 ); // can't have a grid with just one latitude
+
   ///@todo remove this
   N_ = nlat/2;
 
@@ -121,8 +124,8 @@ void ReducedGrid::setup(const int nlat, const int nlons[], const double lats[])
 
   lat_.assign(lats,lats+nlat);
 
-  lonmin_.resize(nlat);
-  lonmax_.resize(nlat);
+  lonmin_.assign(lonmin,lonmin+nlat);
+  lonmax_.assign(lonmax,lonmax+nlat);
 
   npts_ = 0;
   nlonmax_ = 0;
@@ -130,10 +133,8 @@ void ReducedGrid::setup(const int nlat, const int nlons[], const double lats[])
 
   for( int jlat=0; jlat<nlat; ++jlat )
   {
+    ASSERT( nlon(jlat) > 1 ); // can't have grid with just one longitude
     nlonmax_ = std::max(nlon(jlat),nlonmax_);
-
-    lonmin_[jlat] = 0.;
-    lonmax_[jlat] = 360. - 360./nlon(jlat);
 
     lon_min = std::min(lon_min,lonmin_[jlat]);
     lon_max = std::max(lon_max,lonmax_[jlat]);
@@ -145,7 +146,17 @@ void ReducedGrid::setup(const int nlat, const int nlons[], const double lats[])
   bounding_box_ = BoundBox(lat_[0]/*north*/, lat_[nlat-1]/*south*/, lon_max/*east*/, lon_min/*west*/ );
 }
 
-void ReducedGrid::setup_colat_hemisphere(const int N, const int lon[], const double colat[], const AngleUnit unit)
+
+void ReducedGrid::setup( const int nlat, const double lats[], const int nlons[] )
+{
+  std::vector<double> lonmin(nlat,0.);
+  std::vector<double> lonmax(nlat);
+  for( int jlat=0; jlat<nlat; ++jlat )
+    lonmax[jlat] = 360.-360./static_cast<double>(nlons[jlat]);
+  setup(nlat,lats,nlons,lonmin.data(),lonmax.data());
+}
+
+void ReducedGrid::setup_colat_hemisphere(const int N, const double colat[], const int lon[], const AngleUnit unit)
 {
   std::vector<int> nlons(2*N);
   std::copy( lon, lon+N, nlons.begin() );
@@ -158,10 +169,10 @@ void ReducedGrid::setup_colat_hemisphere(const int N, const int lon[], const dou
     lats[j] *= convert;
   for( int j=N; j<2*N; ++j )
     lats[j] *= -convert;
-  setup(2*N,nlons.data(),lats.data());
+  setup(2*N,lats.data(),nlons.data());
 }
 
-void ReducedGrid::setup_lat_hemisphere(const int N, const int lon[], const double lat[], const AngleUnit unit)
+void ReducedGrid::setup_lat_hemisphere(const int N, const double lat[], const int lon[], const AngleUnit unit)
 {
   std::vector<int> nlons(2*N);
   std::copy( lon, lon+N, nlons.begin() );
@@ -174,7 +185,7 @@ void ReducedGrid::setup_lat_hemisphere(const int N, const int lon[], const doubl
     lats[j] *= convert;
   for( int j=N; j<2*N; ++j )
     lats[j] *= -convert;
-  setup(2*N,nlons.data(),lats.data());
+  setup(2*N,lats.data(),nlons.data());
 }
 
 

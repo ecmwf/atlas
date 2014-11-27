@@ -122,4 +122,73 @@ BOOST_AUTO_TEST_CASE( test_reduced_gg_ifs )
   BOOST_CHECK_EQUAL(grid.npts(), 1559);
 }
 
+BOOST_AUTO_TEST_CASE( test_regular_ll )
+{
+  // Constructor for N=8
+  grids::LonLatGrid grid(32,16);
+
+  BOOST_CHECK_EQUAL(grid.nlon(), 32);
+  BOOST_CHECK_EQUAL(grid.nlat(), 16);
+  BOOST_CHECK_EQUAL(grid.npts(), 512);
+  BOOST_CHECK_EQUAL(grid.grid_type(),"regular_ll");
+  BOOST_CHECK_EQUAL(grid.lat(0), 90.-0.5*(180./16.));
+  BOOST_CHECK_EQUAL(grid.lat(grid.nlat()-1), -90.+0.5*(180./16.));
+  BOOST_CHECK_EQUAL(grid.lon(0), 0.);
+  BOOST_CHECK_EQUAL(grid.lon(grid.nlon()-1), 360.-360./32.);
+
+  // Cropping with global boundbox should not do anything
+  grid.crop( Grid::BoundBox( 90., -90., 360.-grid.degrees_eps(), 0.).global(false) );
+
+  BOOST_CHECK_EQUAL(grid.nlat(), 16);
+  BOOST_CHECK_EQUAL(grid.npts(), 512);
+  BOOST_CHECK_EQUAL(grid.lat(0), 90.-0.5*(180./16.));
+  BOOST_CHECK_EQUAL(grid.lat(grid.nlat()-1), -90.+0.5*(180./16.));
+  BOOST_CHECK_EQUAL(grid.lon(0), 0.);
+  BOOST_CHECK_EQUAL(grid.lon(grid.nlon()-1), 360.-360./32.);
+
+  // Crop
+  grid.crop( Grid::BoundBox( 90., 0., 180., 0.).global(false) );
+  BOOST_CHECK_EQUAL(grid.lat(0), 90.-0.5*(180./16.));
+  BOOST_CHECK_EQUAL(grid.lat(grid.nlat()-1),+0.5*(180./16.));
+  BOOST_CHECK_EQUAL(grid.lon(0), 0. );
+  BOOST_CHECK_EQUAL(grid.lon(grid.nlon()-1), 180.);
+
+  BOOST_CHECK_EQUAL(grid.nlat(), 8);
+  BOOST_CHECK_EQUAL(grid.npts(), 136);
+
+  // Construct using builders/factories
+
+  Grid::Ptr gridptr;
+  grids::LonLatGrid* ll;
+
+  // Global Grid
+  GridSpec spec("regular_ll");
+  spec.set("nlon",32);
+  spec.set("nlat",16);
+  gridptr = Grid::Ptr( Grid::create(spec) );
+  BOOST_CHECK_EQUAL(gridptr->npts(), 512);
+  BOOST_CHECK_EQUAL(gridptr->grid_type(),"regular_ll");
+
+  // Add bounding box to spec --> This will not create a cropped version of previous (global) one,
+  // but rather creates a new (32x16) grid within given bounding box... This is somewhat
+  // inconsistent with GaussianGrid behaviour....
+  spec.set_bounding_box( Grid::BoundBox( 90., 0., 180., 0.) );
+  gridptr = Grid::Ptr( Grid::create(spec) );
+  BOOST_CHECK_EQUAL(gridptr->npts(), 512);
+  BOOST_CHECK_EQUAL(gridptr->grid_type(),"regular_ll");
+  ll = dynamic_cast<grids::LonLatGrid*>(gridptr.get());
+  BOOST_CHECK_EQUAL(ll->lat(0), 90.);
+  BOOST_CHECK_EQUAL(ll->lat(ll->nlat()-1), 0.);
+  BOOST_CHECK_EQUAL(ll->lon(0), 0.);
+  BOOST_CHECK_EQUAL(ll->lon(ll->nlon()-1), 180.);
+
+  GridSpec spec2("regular_ll");
+  spec2.set("N",8);
+  gridptr = Grid::Ptr( Grid::create(spec2) );
+  BOOST_CHECK_EQUAL(gridptr->npts(), 512);
+  BOOST_CHECK_EQUAL(gridptr->grid_type(),"regular_ll");
+
+}
+
+
 BOOST_AUTO_TEST_CASE( finalize ) { MPL::finalize(); }

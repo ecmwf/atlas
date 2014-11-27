@@ -42,9 +42,9 @@ public:
 
   ReducedGrid( const eckit::Params& );
 
-  ReducedGrid( const std::vector<size_t>& nlon, const std::vector<double>& lats );
+  ReducedGrid( const std::vector<double>& lats, const std::vector<size_t>& nlon );
 
-  ReducedGrid( const int npts_per_lat[], const double lats[], const int nlat );
+  ReducedGrid( const int nlat, const double lats[], const int npts_per_lat[] );
 
   static std::string className();
 
@@ -91,10 +91,11 @@ public:
   void crop(const eckit::Params&);
 
 protected:
-  void setup(const eckit::Params&);
-  void setup(const int nlat, const int npts_per_lat[], const double lats[]);
-  void setup_colat_hemisphere(const int N, const int lon[], const double colat[], const AngleUnit);
-  void setup_lat_hemisphere(const int N, const int lon[], const double lat[], const AngleUnit);
+  void setup( const eckit::Params& );
+  void setup( const int nlat, const double lats[], const int npts_per_lat[] );
+  void setup( const int nlat, const double lats[], const int nlons[], const double lonmin[], const double lonmax[] );
+  void setup_colat_hemisphere( const int N, const double colat[], const int lon[], const AngleUnit );
+  void setup_lat_hemisphere( const int N, const double lat[], const int lon[], const AngleUnit );
 
 protected:
   std::vector<double> lat_;    ///<! Latitude values

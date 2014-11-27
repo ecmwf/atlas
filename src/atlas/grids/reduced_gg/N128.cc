@@ -269,7 +269,7 @@ void N128::construct()
     1.55242447484047,
     1.56467237614226
   };
-  setup_colat_hemisphere(N,lon,colat,RAD);
+  setup_colat_hemisphere(N,colat,lon,RAD);
 }
 
 } // namespace reduced_gg

@@ -40,7 +40,7 @@
 #include "atlas/GridSpec.h"
 #include "atlas/grids/ReducedGaussianGrid.h"
 #include "atlas/grids/GaussianGrid.h"
-#include "atlas/grids/RegularLatLon.h"
+#include "atlas/grids/LonLatGrid.h"
 #include "atlas/grids/RotatedLatLon.h"
 #include "atlas/grids/ReducedLatLon.h"
 
@@ -179,7 +179,7 @@ static std::string match_grid_spec_with_sample_file( const GridSpec& g_spec, lon
       return "reduced_ll_sfc_grib2";
    }
 
-   if (grid_type == grids::RegularLatLon::gridTypeStr() ) {
+   if (grid_type == grids::LonLatGrid::gtype() ) {
 
       // regular_ll_pl_grib1.tmpl  --> GridSpec[ (Ni,16)(Nj,31) (lat_inc,2)(lon_inc,2)(uid,regular_ll_31_16) ]
       // regular_ll_pl_grib2.tmpl  --> GridSpec[ (Ni,16)(Nj,31) (lat_inc,2)(lon_inc,2)(uid,regular_ll_31_16) ]
@@ -473,8 +473,8 @@ void Grib::write_gridspec_to_grib(const GridSpec& gspec, GribHandle& gh)
 	   grib_set_long(gh.raw(),"NV", 0 );
 	}
 
-	gspec2grib.set<long>( "Ni", "Ni" );
-	gspec2grib.set<long>( "Nj", "Nj" );
+	gspec2grib.set<long>( "nlon", "Ni" );
+	gspec2grib.set<long>( "nlat", "Nj" );
 
 	gspec2grib.set<long>( "N", "numberOfParallelsBetweenAPoleAndTheEquator" );
 
