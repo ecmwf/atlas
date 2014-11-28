@@ -45,11 +45,11 @@ ReducedLonLatGrid::ReducedLonLatGrid() : ReducedGrid()
 {
 }
 
-ReducedLonLatGrid::ReducedLonLatGrid( const int nlat, const int nlons[], bool pole )
+ReducedLonLatGrid::ReducedLonLatGrid( const int nlat, const int nlons[], bool poles )
 {
   ReducedGrid::N_ = nlat;
-  pole_ = pole;
-  setup(nlat,nlons,pole_);
+  poles_ = poles;
+  setup(nlat,nlons,poles_);
   set_typeinfo();
 }
 
@@ -72,8 +72,8 @@ void ReducedLonLatGrid::setup( const Params& params )
   else
     N_ = nlat;
 
-  pole_ = false;
-  if( params.has("pole") ) pole_ = params["pole"];
+  poles_ = defaults::poles();
+  if( params.has("poles") ) poles_ = params["poles"];
 
 
   eckit::ValueList list = params.get("npts_per_lat");
@@ -87,17 +87,17 @@ void ReducedLonLatGrid::setup( const Params& params )
   }
   else
   {
-    setup(nlat,nlons.data(),pole_);
+    setup(nlat,nlons.data(),poles_);
   }
 }
 
-void ReducedLonLatGrid::setup( const int nlat, const int nlons[], bool pole )
+void ReducedLonLatGrid::setup( const int nlat, const int nlons[], bool poles )
 {
   std::vector<double> lats (nlat);
 
   double delta, latmax;
 
-  if( pole )
+  if( poles )
   {
     delta = 180./static_cast<double>(nlat-1);
     latmax = 90.;
@@ -113,12 +113,6 @@ void ReducedLonLatGrid::setup( const int nlat, const int nlons[], bool pole )
     lats[jlat] = latmax - static_cast<double>(jlat)*delta;
   }
   ReducedGrid::setup(lats.size(),lats.data(),nlons);
-
-  eckit::Log::info() << "nlat = " << ReducedLonLatGrid::nlat() << std::endl;
-  eckit::Log::info() << "latmin = " << lat(ReducedLonLatGrid::nlat()-1) << std::endl;
-  eckit::Log::info() << "latmax = " << lat(0) << std::endl;
-
-//  ReducedGrid::setup_lat_hemisphere(N,lats.data(),nlons,DEG);
 }
 
 
@@ -136,7 +130,7 @@ GridSpec ReducedLonLatGrid::spec() const
   if( nlat() != N() )
     grid_spec.set_latitudes(latitudes());
 
-  grid_spec.set("pole",pole_);
+  grid_spec.set("poles",poles_);
   if( !bounding_box().global() )
     grid_spec.set_bounding_box(bounding_box());
 

@@ -32,6 +32,16 @@ namespace grids {
 class ReducedLonLatGrid: public ReducedGrid {
 
 public:
+  enum {EXCLUDES_POLES=0, INCLUDES_POLES=1};
+
+private:
+
+  struct defaults {
+    // By default LonLat grids have the pole excluded
+    static bool poles() { return EXCLUDES_POLES; }
+  };
+
+public:
 
   static std::string gtype();
 
@@ -39,7 +49,7 @@ public:
 
   ReducedLonLatGrid( const eckit::Params& );
 
-  ReducedLonLatGrid( const int nlat, const int npts_per_lat[], bool pole=false );
+  ReducedLonLatGrid( const int nlat, const int npts_per_lat[], bool poles=defaults::poles() );
 
   static std::string className();
 
@@ -48,11 +58,11 @@ public:
 protected:
 
   void setup( const eckit::Params& );
-  void setup( const int N, const int npts_per_lat[], bool pole );
+  void setup( const int N, const int npts_per_lat[], bool poles=defaults::poles() );
   void set_typeinfo();
 
 private:
-  bool pole_;
+  bool poles_;
 };
 
 register_BuilderT1(Grid,ReducedLonLatGrid,ReducedLonLatGrid::gtype());

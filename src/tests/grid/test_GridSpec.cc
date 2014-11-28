@@ -95,7 +95,6 @@ static void test_grib_file(const std::string& fpath)
 
    // The Grid produced, has a GRID spec, the grid spec can be used to, make sure the grid types match
    GridSpec g_spec = grid_created_from_grib->spec();
-   std::cout << "GRIB 1   " << g_spec << std::endl;
    BOOST_CHECK_MESSAGE(grid_created_from_grib->grid_type() == gridType,"gridType(" << gridType << ") did not match Grid constructor(" << grid_created_from_grib->grid_type() << ") for file " << fpath);
    BOOST_CHECK_MESSAGE(g_spec.grid_type() == gridType,"gridType(" << gridType << ") did not match GridSpec constructor(" << g_spec.grid_type() << ") for file " << fpath);
 
@@ -115,7 +114,7 @@ static void test_grib_file(const std::string& fpath)
    // For reduced Guassian Grid, check the no of pts per latitude read from grib, matches the computed values
 
    Log::warning() << Here() << " (Willem) --> This check needs to be revisited.\n"
-                     "Grib needs to IMPOSE the used grid, even if it doesn't match." << std::endl;
+                     "Grib IMPOSES the used grid, even if it doesn't match." << std::endl;
    if (gridType == "reduced_gg") {
 
       ReducedGaussianGrid* read_from_grib = dynamic_cast<ReducedGaussianGrid*>(grid_created_from_grib.get());
