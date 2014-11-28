@@ -250,8 +250,7 @@ GridSpec ReducedGrid::spec() const
   grid_spec.set("nlat",nlat());
   grid_spec.set_latitudes(latitudes());
   grid_spec.set_npts_per_lat(npts_per_lat());
-  if( !bounding_box().global() )
-    grid_spec.set_bounding_box(bounding_box());
+  grid_spec.set_bounding_box(bounding_box());
 
   if( N_ != 0 )
     grid_spec.set("N", N_ );
@@ -341,7 +340,11 @@ std::string ReducedGrid::hash() const
 
 void ReducedGrid::mask(const Domain& dom)
 {
-  if ( dom.global() )
+  // If the mask is larger or equal to the domain, no need to mask!
+  if ( dom.max().lat() >= bounding_box_.max().lat() &&
+       dom.max().lon() >= bounding_box_.max().lon() &&
+       dom.min().lat() <= bounding_box_.min().lat() &&
+       dom.min().lon() <= bounding_box_.min().lon() )
     return;
 
   /// 1) Figure out mask
@@ -421,7 +424,7 @@ void ReducedGrid::mask(const Domain& dom)
   nlons_  = new_nlons;
   lonmin_ = new_lonmin;
   lonmax_ = new_lonmax;
-  bounding_box_ = BoundBox(new_bblatmax,new_bblatmin,new_bblonmax,new_bblonmin).global( false );
+  bounding_box_ = BoundBox(new_bblatmax,new_bblatmin,new_bblonmax,new_bblonmin);
 }
 
 void ReducedGrid::mask(const eckit::Params& p)

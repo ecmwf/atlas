@@ -105,8 +105,7 @@ GridSpec ReducedGaussianGrid::spec() const
   grid_spec.set_latitudes(latitudes());
   grid_spec.set("N", N() );
 
-  if( !bounding_box().global() )
-    grid_spec.set_bounding_box(bounding_box());
+  grid_spec.set_bounding_box(bounding_box());
 
   return grid_spec;
 }

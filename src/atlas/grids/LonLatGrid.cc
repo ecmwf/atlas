@@ -233,8 +233,7 @@ GridSpec LonLatGrid::spec() const
   grid_spec.set("nlon", nlon() );
   grid_spec.set("nlat", nlat() );
 
-  if( !bounding_box().global() )
-    grid_spec.set_bounding_box(bounding_box());
+  grid_spec.set_bounding_box(bounding_box());
 
   return grid_spec;
 }

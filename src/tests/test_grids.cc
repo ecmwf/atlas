@@ -51,13 +51,13 @@ BOOST_AUTO_TEST_CASE( test_regular_gg )
   BOOST_CHECK_EQUAL(grid.grid_type(),"regular_gg");
 
   // Cropping with global boundbox should not do anything
-  grid.mask( Grid::Domain( 90., -90., 360.-grid.degrees_eps(), 0.).global(false) );
+  grid.mask( Grid::Domain( 90., -90., 360.-grid.degrees_eps(), 0.) );
 
   BOOST_CHECK_EQUAL(grid.nlat(), 64);
   BOOST_CHECK_EQUAL(grid.npts(), 8192);
 
   // Crop
-  grid.mask( Grid::Domain( 90., 0., 180., 0.).global(false) );
+  grid.mask( Grid::Domain( 90., 0., 180., 0.) );
 
   BOOST_CHECK_EQUAL(grid.nlat(), 32);
   BOOST_CHECK_EQUAL(grid.npts(), 2080);
@@ -111,12 +111,12 @@ BOOST_AUTO_TEST_CASE( test_reduced_gg_ifs )
   BOOST_CHECK_EQUAL(grid.grid_type(),"reduced_gg");
 
 
-  grid.mask( Grid::Domain( 90., -90., 360.-grid.degrees_eps(), 0.).global(false) );
+  grid.mask( Grid::Domain( 90., -90., 360.-grid.degrees_eps(), 0.) );
 
   BOOST_CHECK_EQUAL(grid.nlat(), 64);
   BOOST_CHECK_EQUAL(grid.npts(), 6114);
 
-  grid.mask( Grid::Domain( 90., 0., 180., 0.).global(false) );
+  grid.mask( Grid::Domain( 90., 0., 180., 0.) );
 
   BOOST_CHECK_EQUAL(grid.nlat(), 32);
   BOOST_CHECK_EQUAL(grid.npts(), 1559);
@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
   BOOST_CHECK_EQUAL(grid.lon(grid.nlon()-1), 360.-360./32.);
 
   // Cropping with global boundbox should not do anything
-  grid.mask( Grid::Domain( 90., -90., 360.-grid.degrees_eps(), 0.).global(false) );
+  grid.mask( Grid::Domain( 90., -90., 360.-grid.degrees_eps(), 0.) );
 
   BOOST_CHECK_EQUAL(grid.nlat(), 16);
   BOOST_CHECK_EQUAL(grid.npts(), 512);
@@ -147,7 +147,7 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
   BOOST_CHECK_EQUAL(grid.lon(grid.nlon()-1), 360.-360./32.);
 
   // Crop
-  grid.mask( Grid::Domain( 90., 0., 180., 0.).global(false) );
+  grid.mask( Grid::Domain( 90., 0., 180., 0.) );
   BOOST_CHECK_EQUAL(grid.lat(0), 90.-0.5*(180./16.));
   BOOST_CHECK_EQUAL(grid.lat(grid.nlat()-1),+0.5*(180./16.));
   BOOST_CHECK_EQUAL(grid.lon(0), 0. );
