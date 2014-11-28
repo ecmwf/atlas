@@ -16,13 +16,16 @@
 
 #include "atlas/grids/GaussianGrid.h"
 #include "atlas/grids/LonLatGrid.h"
-#include "atlas/grids/PolarStereoGraphic.h"
 #include "atlas/grids/ReducedGaussianGrid.h"
 #include "atlas/grids/ReducedGrid.h"
-#include "atlas/grids/ReducedLatLon.h"
-#include "atlas/grids/RotatedLatLon.h"
+#include "atlas/grids/ReducedLonLatGrid.h"
 #include "atlas/grids/Unstructured.h"
 #include "atlas/grids/reduced_gg/reduced_gg.h"
+
+/// @todo remaining to be reworked
+#include "atlas/grids/PolarStereoGraphic.h"
+#include "atlas/grids/RotatedLatLon.h"
+
 
 namespace atlas {
 namespace grids {

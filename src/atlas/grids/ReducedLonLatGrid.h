@@ -10,8 +10,8 @@
 
 
 
-#ifndef atlas_grids_ReducedGaussianGrid_h
-#define atlas_grids_ReducedGaussianGrid_h
+#ifndef atlas_grids_ReducedLonLatGrid_h
+#define atlas_grids_ReducedLonLatGrid_h
 
 #include "atlas/grids/ReducedGrid.h"
 #include "atlas/Util.h"
@@ -19,28 +19,27 @@
 namespace atlas {
 namespace grids {
 
-/// @brief Reduced Gaussian Grid
+/// @brief Reduced LonLat Grid
 ///
-/// This grid is a special case of the class ReducedGrid, in which
-/// the latitudes are distributed according to the roots of the
-/// Legendre Polynomials, and a equidistant distribution in zonal
+/// This grid is a special case of the class ReducedGrid, with
+/// equidistant distribution of latitudes, and a equidistant distribution in zonal
 /// direction, which reduce in number going closer towards poles,
 /// essentially making the grid more uniform on the sphere
 /// It can be constructed with following definition:
 ///   N   = number of latitudes in hemisphere
 ///   npts_per_lat[] = number of points on each latitude
 
-class ReducedGaussianGrid: public ReducedGrid {
+class ReducedLonLatGrid: public ReducedGrid {
 
 public:
 
-  static std::string gtype() { return "reduced_gg"; }
+  static std::string gtype();
 
-  ReducedGaussianGrid();
+  ReducedLonLatGrid();
 
-  ReducedGaussianGrid( const eckit::Params& );
+  ReducedLonLatGrid( const eckit::Params& );
 
-  ReducedGaussianGrid( const int N, const int npts_per_lat[] );
+  ReducedLonLatGrid( const int nlat, const int npts_per_lat[], bool pole=false );
 
   static std::string className();
 
@@ -49,14 +48,16 @@ public:
 protected:
 
   void setup( const eckit::Params& );
-  void setup_N_hemisphere( const int N, const int npts_per_lat[] );
+  void setup( const int N, const int npts_per_lat[], bool pole );
   void set_typeinfo();
 
+private:
+  bool pole_;
 };
 
-register_BuilderT1(Grid,ReducedGaussianGrid,ReducedGaussianGrid::gtype());
+register_BuilderT1(Grid,ReducedLonLatGrid,ReducedLonLatGrid::gtype());
 
 } // namespace grids
 } // namespace atlas
 
-#endif // atlas_grids_ReducedGaussianGrid_h
+#endif // atlas_grids_ReducedLonLatGrid_h

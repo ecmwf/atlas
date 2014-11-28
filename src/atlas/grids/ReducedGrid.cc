@@ -55,18 +55,18 @@ std::string ReducedGrid::className()
   return "atlas.ReducedGrid";
 }
 
-ReducedGrid::ReducedGrid()
+ReducedGrid::ReducedGrid() : N_(0)
 {
 }
 
-ReducedGrid::ReducedGrid(const eckit::Params& params)
+ReducedGrid::ReducedGrid(const Params& params) : N_(0)
 {
   setup(params);
-  crop(params);
+  mask(params);
 
-  if( ! params.has("grid_type") ) throw eckit::BadParameter("grid_type missing in Params",Here());
-  if( ! params.has("uid") ) throw eckit::BadParameter("uid missing in Params",Here());
-  if( ! params.has("hash") ) throw eckit::BadParameter("hash missing in Params",Here());
+  if( ! params.has("grid_type") ) throw BadParameter("grid_type missing in Params",Here());
+  if( ! params.has("uid") ) throw BadParameter("uid missing in Params",Here());
+  if( ! params.has("hash") ) throw BadParameter("hash missing in Params",Here());
 
   grid_type_ = params.get("grid_type").as<std::string>();
   uid_ = params.get("uid").as<std::string>();
@@ -80,8 +80,8 @@ void ReducedGrid::setup(const eckit::Params& params)
   std::vector<int> npts_per_lat;
   std::vector<double> latitudes;
 
-  if( ! params.has("npts_per_lat") ) throw eckit::BadParameter("npts_per_lat missing in Params",Here());
-  if( ! params.has("latitudes") ) throw eckit::BadParameter("latitudes missing in Params",Here());
+  if( ! params.has("npts_per_lat") ) throw BadParameter("npts_per_lat missing in Params",Here());
+  if( ! params.has("latitudes") ) throw BadParameter("latitudes missing in Params",Here());
 
   list = params.get("npts_per_lat");
   npts_per_lat.resize( list.size() );
@@ -92,6 +92,9 @@ void ReducedGrid::setup(const eckit::Params& params)
   latitudes.resize( list.size() );
   for(int j=0; j<latitudes.size(); ++j)
     latitudes[j] = list[j];
+
+  if( params.has("N") )
+    N_ = params["N"];
 
   setup(latitudes.size(),latitudes.data(),npts_per_lat.data());
 }
@@ -117,9 +120,6 @@ void ReducedGrid::setup( const int nlat, const double lats[], const int nlons[],
 {
   ASSERT( nlat > 1 ); // can't have a grid with just one latitude
 
-  ///@todo remove this
-  N_ = nlat/2;
-
   nlons_.assign(nlons,nlons+nlat);
 
   lat_.assign(lats,lats+nlat);
@@ -133,7 +133,7 @@ void ReducedGrid::setup( const int nlat, const double lats[], const int nlons[],
 
   for( int jlat=0; jlat<nlat; ++jlat )
   {
-    ASSERT( nlon(jlat) > 1 ); // can't have grid with just one longitude
+    //ASSERT( nlon(jlat) > 1 ); // can't have grid with just one longitude
     nlonmax_ = std::max(nlon(jlat),nlonmax_);
 
     lon_min = std::min(lon_min,lonmin_[jlat]);
@@ -188,6 +188,15 @@ void ReducedGrid::setup_lat_hemisphere(const int N, const double lat[], const in
   setup(2*N,lats.data(),nlons.data());
 }
 
+int ReducedGrid::N() const
+{
+  if( N_==0 )
+  {
+    throw eckit::Exception("N cannot be returned because grid of type "+grid_type()+
+                           " is not based on a global grid.", Here() );
+  }
+  return N_;
+}
 
 Grid::BoundBox ReducedGrid::bounding_box() const
 {
@@ -244,9 +253,8 @@ GridSpec ReducedGrid::spec() const
   if( !bounding_box().global() )
     grid_spec.set_bounding_box(bounding_box());
 
-  /// @todo move to base class
-  grid_spec.set("N", N() );
-
+  if( N_ != 0 )
+    grid_spec.set("N", N_ );
 
   return grid_spec;
 }
@@ -331,16 +339,16 @@ std::string ReducedGrid::hash() const
   return hash_;
 }
 
-void ReducedGrid::crop(const BoundBox& bbox)
+void ReducedGrid::mask(const Domain& dom)
 {
-  if ( bbox.global() )
+  if ( dom.global() )
     return;
 
   /// 1) Figure out mask
-  const double bblatmin = bbox.min().lat()-degrees_eps();
-  const double bblatmax = bbox.max().lat()+degrees_eps();
-  const double bblonmin = bbox.min().lon()-degrees_eps();
-  const double bblonmax = bbox.max().lon()+degrees_eps();
+  const double bblatmin = dom.min().lat()-degrees_eps();
+  const double bblatmax = dom.max().lat()+degrees_eps();
+  const double bblonmin = dom.min().lon()-degrees_eps();
+  const double bblonmax = dom.max().lon()+degrees_eps();
 
   std::vector<int> masklat(nlat(),-1);
   std::vector<int> masklon_first(nlat(),-1);
@@ -360,6 +368,17 @@ void ReducedGrid::crop(const BoundBox& bbox)
       const int __nlon = nlon(jlat);
       masklon_first[jlat] = __nlon;
       masklon_last [jlat] = -1;
+
+//      if( __nlon == 0 )
+//      {
+//        if( !masklat[jlat] ) ++new_nlat;
+//        masklat[jlat] = 1;
+//        masklon_first[jlat] = 0;
+//        masklon_last[jlat]  = -1;
+//        new_bblatmin = std::min(new_bblatmin,__lat);
+//        new_bblatmax = std::max(new_bblatmax,__lat);
+//      }
+
       for( int jlon=0; jlon<__nlon; ++jlon )
       {
         const double __lon = lon(jlat,jlon);
@@ -374,7 +393,6 @@ void ReducedGrid::crop(const BoundBox& bbox)
           new_bblatmax = std::max(new_bblatmax,__lat);
           new_bblonmin = std::min(new_bblonmin,__lon);
           new_bblonmax = std::max(new_bblonmax,__lon);
-
         }
       }
     }
@@ -406,12 +424,19 @@ void ReducedGrid::crop(const BoundBox& bbox)
   bounding_box_ = BoundBox(new_bblatmax,new_bblatmin,new_bblonmax,new_bblonmin).global( false );
 }
 
-void ReducedGrid::crop(const eckit::Params& params)
+void ReducedGrid::mask(const eckit::Params& p)
 {
-  // If there is a "bbox_s" value in params,
-  // then make_bounding_box(params).global() will be false.
-  /// @todo revisit how bounding_box is defined to be global
-  crop( make_bounding_box(params) );
+  if( p.has("domain_s") )
+  {
+    Domain dom(p["domain_n"],p["domain_s"],p["domain_e"],p["domain_w"]);
+    mask( dom );
+  }
+  else
+  {
+    // If there is a "bbox_s" value in params,
+    // then make_bounding_box(params).global() will be false.
+    mask( make_bounding_box(p) );
+  }
 }
 
 

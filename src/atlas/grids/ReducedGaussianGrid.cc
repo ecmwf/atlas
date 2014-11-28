@@ -43,6 +43,8 @@ ReducedGaussianGrid::ReducedGaussianGrid() : ReducedGrid()
 
 ReducedGaussianGrid::ReducedGaussianGrid( const int N, const int nlons[] )
 {
+  ReducedGrid::N_ = N;
+
   setup_N_hemisphere(N,nlons);
   set_typeinfo();
 }
@@ -50,7 +52,7 @@ ReducedGaussianGrid::ReducedGaussianGrid( const int N, const int nlons[] )
 ReducedGaussianGrid::ReducedGaussianGrid(const eckit::Params& params)
 {
   setup(params);
-  crop(params);
+  mask(params);
   set_typeinfo();
 }
 
@@ -58,6 +60,7 @@ void ReducedGaussianGrid::setup( const eckit::Params& params )
 {
   if( ! params.has("N") ) throw eckit::BadParameter("N missing in Params",Here());
   int N = params.get("N");
+  ReducedGrid::N_ = N;
 
   if( ! params.has("latitudes") )
   {
@@ -78,7 +81,7 @@ void ReducedGaussianGrid::setup_N_hemisphere( const int N, const int nlons[] )
 {
 #ifdef ECKIT_HAVE_GRIB
   std::vector<double> lats (2*N);
-  /// @todo this code should be moved into Atlas library and co-maintained with NA section
+  /// @todo this code should be moved into Atlas library and maintained by NA section
   grib_get_gaussian_latitudes(N, lats.data());
   ReducedGrid::setup_lat_hemisphere(N,lats.data(),nlons,DEG);
 #else
@@ -93,9 +96,17 @@ void ReducedGaussianGrid::setup_N_hemisphere( const int N, const int nlons[] )
 
 GridSpec ReducedGaussianGrid::spec() const
 {
-  GridSpec grid_spec( ReducedGrid::spec() );
+  GridSpec grid_spec( gtype() );
 
+  grid_spec.uid( uid() );
+  grid_spec.set("hash", hash());
+  grid_spec.set("nlat",nlat());
+  grid_spec.set_npts_per_lat(npts_per_lat());
+  grid_spec.set_latitudes(latitudes());
   grid_spec.set("N", N() );
+
+  if( !bounding_box().global() )
+    grid_spec.set_bounding_box(bounding_box());
 
   return grid_spec;
 }

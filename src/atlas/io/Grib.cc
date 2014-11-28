@@ -41,8 +41,8 @@
 #include "atlas/grids/ReducedGaussianGrid.h"
 #include "atlas/grids/GaussianGrid.h"
 #include "atlas/grids/LonLatGrid.h"
+#include "atlas/grids/ReducedLonLatGrid.h"
 #include "atlas/grids/RotatedLatLon.h"
-#include "atlas/grids/ReducedLatLon.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -174,7 +174,7 @@ static std::string match_grid_spec_with_sample_file( const GridSpec& g_spec, lon
 
 
    // For reduced lat long, Choice of two only, if we dont have 501 points number of pts north to south, were out of luck.
-   if (grid_type == grids::ReducedLatLon::gridTypeStr() ) {
+   if (grid_type == grids::ReducedLonLatGrid::gtype() ) {
       if (edition == 1) return "reduced_ll_sfc_grib1";
       return "reduced_ll_sfc_grib2";
    }
@@ -445,53 +445,56 @@ GribHandle::Ptr Grib::clone(const Field& f, GribHandle& gridsec )
 
 struct gridspec_to_grib
 {
-	gridspec_to_grib( const GridSpec& gspec, GribHandle& gh) :
-		gspec_(gspec),
-		gh_(gh)
-	{}
+  gridspec_to_grib( const GridSpec& gspec, GribHandle& gh) :
+    gspec_(gspec),
+    gh_(gh)
+  {}
 
-	GribHandle& gh_;
-	const GridSpec& gspec_;
+  GribHandle& gh_;
+  const GridSpec& gspec_;
 
-	template <typename T>
-	void set( std::string spec, std::string grib )
-	{
-		if( gspec_.has(spec) )
-		{
-			GribMutator<T>(grib).set( gh_, gspec_[spec] );
-		}
-	}
+  template <typename T>
+  void set( std::string spec, std::string grib )
+  {
+    if( gspec_.has(spec) )
+    {
+      GribMutator<T>(grib).set( gh_, gspec_[spec] );
+    }
+  }
 };
 
 void Grib::write_gridspec_to_grib(const GridSpec& gspec, GribHandle& gh)
 {
-	gridspec_to_grib gspec2grib(gspec,gh);
+  gridspec_to_grib gspec2grib(gspec,gh);
 
-	if (gh.edition() == 1) {
-	   // Clear vertical co-ordinates levels, which for GRIB1 are in geometry section
-	   grib_set_long(gh.raw(),"PVPresent", 0 );
-	   grib_set_long(gh.raw(),"NV", 0 );
-	}
+  if (gh.edition() == 1) {
+    // Clear vertical co-ordinates levels, which for GRIB1 are in geometry section
+    grib_set_long(gh.raw(),"PVPresent", 0 );
+    grib_set_long(gh.raw(),"NV", 0 );
+  }
 
-	gspec2grib.set<long>( "nlon", "Ni" );
-	gspec2grib.set<long>( "nlat", "Nj" );
+  gspec2grib.set<long>( "nlon", "Ni" );
+  gspec2grib.set<long>( "nlat", "Nj" );
 
-	gspec2grib.set<long>( "N", "numberOfParallelsBetweenAPoleAndTheEquator" );
+  // N number for (Reduced) Gaussian Grids
+  if( gspec["grid_type"] == grids::GaussianGrid::gtype() ||
+      gspec["grid_type"] == grids::ReducedGaussianGrid::gtype() )
+    gspec2grib.set<long>( "N", "numberOfParallelsBetweenAPoleAndTheEquator" );
 
-	gspec2grib.set<double>( "bbox_n", "latitudeOfFirstGridPointInDegrees" );
-	gspec2grib.set<double>( "bbox_s", "latitudeOfLastGridPointInDegrees" );
-	gspec2grib.set<double>( "bbox_w", "longitudeOfFirstGridPointInDegrees" );
-	gspec2grib.set<double>( "bbox_e", "longitudeOfLastGridPointInDegrees" );
+  gspec2grib.set<double>( "bbox_n", "latitudeOfFirstGridPointInDegrees" );
+  gspec2grib.set<double>( "bbox_s", "latitudeOfLastGridPointInDegrees" );
+  gspec2grib.set<double>( "bbox_w", "longitudeOfFirstGridPointInDegrees" );
+  gspec2grib.set<double>( "bbox_e", "longitudeOfLastGridPointInDegrees" );
 
-	gspec2grib.set<double>( "lat_inc", "jDirectionIncrementInDegrees" );
-	gspec2grib.set<double>( "lon_inc", "iDirectionIncrementInDegrees" );
+  gspec2grib.set<double>( "lat_inc", "jDirectionIncrementInDegrees" );
+  gspec2grib.set<double>( "lon_inc", "iDirectionIncrementInDegrees" );
 
 
-	gspec2grib.set<double>( "SouthPoleLat", "latitudeOfSouthernPoleInDegrees" );
-	gspec2grib.set<double>( "SouthPoleLon", "longitudeOfSouthernPoleInDegrees" );
-	gspec2grib.set<double>( "SouthPoleRotAngle", "angleOfRotation" );
+  gspec2grib.set<double>( "SouthPoleLat", "latitudeOfSouthernPoleInDegrees" );
+  gspec2grib.set<double>( "SouthPoleLon", "longitudeOfSouthernPoleInDegrees" );
+  gspec2grib.set<double>( "SouthPoleRotAngle", "angleOfRotation" );
 
-	// Polar stereo Graphic
+  // Polar stereo Graphic
    gspec2grib.set<long>( "resolutionAndComponentFlag", "resolutionAndComponentFlag" );
    gspec2grib.set<long>( "Nx", "Nx" );
    gspec2grib.set<long>( "Ny", "Ny" );

@@ -49,6 +49,8 @@ GaussianGrid::GaussianGrid(const eckit::Params& params)
 
   int N = params.get("N");
 
+  N_ = N;
+
   if( ! params.has("latitudes") )
   {
     setup(N);
@@ -66,12 +68,13 @@ GaussianGrid::GaussianGrid(const eckit::Params& params)
     ReducedGrid::setup(lat.size(),lat.data(),nlons.data());
   }
 
-  crop(params);
+  mask(params);
   set_typeinfo();
 }
 
 GaussianGrid::GaussianGrid( const int N )
 {
+  ReducedGrid::N_ = N;
   setup(N);
   set_typeinfo();
 }
@@ -82,7 +85,7 @@ void GaussianGrid::setup(const int N)
   std::vector<int>    nlons(2*N,4*N);
   std::vector<double> lats (2*N);
 
-  /// @todo this code should be moved into Atlas library and co-maintained with NA section
+  /// @todo this code should be moved into Atlas library and maintained by NA section
   grib_get_gaussian_latitudes(N, lats.data());
   ReducedGrid::setup(2*N,lats.data(),nlons.data());
 #else
@@ -101,9 +104,17 @@ void GaussianGrid::setup_lat_hemisphere(const int N, const double lats[])
 
 GridSpec GaussianGrid::spec() const
 {
-  GridSpec grid_spec( ReducedGrid::spec() );
+  GridSpec grid_spec( gtype() );
 
   grid_spec.set("N", N() );
+  grid_spec.set_latitudes(latitudes());
+
+  grid_spec.uid( uid() );
+  grid_spec.set("hash", hash());
+  grid_spec.set("nlat",nlat());
+
+  if( !bounding_box().global() )
+    grid_spec.set_bounding_box(bounding_box());
 
   return grid_spec;
 }

@@ -155,8 +155,16 @@ void AtlasGrids::run()
                   << grid->grid_type() << std::endl;
       Log::info() << "   uid:                              "
                   << grid->uid() << std::endl;
-      Log::info() << "   N number:                         "
-                  << grid->N() << std::endl;
+      if( grid->grid_type() == GaussianGrid::gtype() )
+      {
+        Log::info() << "   N number:                         "
+                    << dynamic_cast<GaussianGrid*>(grid.get())->N() << std::endl;
+      }
+      if( grid->grid_type() == ReducedGaussianGrid::gtype() )
+      {
+        Log::info() << "   N number:                         "
+                    << dynamic_cast<ReducedGaussianGrid*>(grid.get())->N() << std::endl;
+      }
       Log::info() << "   number of points:                 "
                   << grid->npts() << std::endl;
       Log::info() << "   number of latitudes (N-S):        "

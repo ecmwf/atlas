@@ -142,14 +142,8 @@ grids/ReducedGaussianGrid.cc
 grids/ReducedGaussianGrid.h
 grids/ReducedGrid.h
 grids/ReducedGrid.cc
-grids/ReducedLatLon.cc
-grids/ReducedLatLon.h
-#grids/RegularGG.cc
-#grids/RegularGG.h
-#grids/ReducedGG.cc
-#grids/ReducedGG.h
-#grids/RegularLatLon.cc
-#grids/RegularLatLon.h
+grids/ReducedLonLatGrid.cc
+grids/ReducedLonLatGrid.h
 grids/RotatedLatLon.cc
 grids/RotatedLatLon.h
 grids/Unstructured.cc
@@ -178,6 +172,17 @@ grids/reduced_gg/N1600.cc  # TL3199
 grids/reduced_gg/N2000.cc  # TL3999
 grids/reduced_gg/N4000.cc  # TL7999
 grids/reduced_gg/N8000.cc  # TL15999
+)
+
+add_custom_target( atlas_grids_dead SOURCES
+grids/dead/ReducedLatLon.cc
+grids/dead/ReducedLatLon.h
+grids/dead/RegularGG.cc
+grids/dead/RegularGG.h
+grids/dead/ReducedGG.cc
+grids/dead/ReducedGG.h
+grids/dead/RegularLatLon.cc
+grids/dead/RegularLatLon.h
 )
 
 list( APPEND atlas_srcs

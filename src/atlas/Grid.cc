@@ -60,6 +60,33 @@ Grid::~Grid()
 {
 }
 
+Grid::Domain Grid::domain() const
+{
+  return bounding_box();
+}
+
+void Grid::mask( const Domain& )
+{
+  NOTIMP;
+}
+
+void Grid::mask( const eckit::Params& )
+{
+  NOTIMP;
+}
+
+Grid* Grid::masked( const Domain& ) const
+{
+  NOTIMP;
+  return NULL;
+}
+
+Grid* Grid::masked( const eckit::Params& ) const
+{
+  NOTIMP;
+  return NULL;
+}
+
 void Grid::lonlat( std::vector<double>& crd )
 {
   crd.resize(npts()*2);

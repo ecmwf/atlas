@@ -51,13 +51,13 @@ BOOST_AUTO_TEST_CASE( test_regular_gg )
   BOOST_CHECK_EQUAL(grid.grid_type(),"regular_gg");
 
   // Cropping with global boundbox should not do anything
-  grid.crop( Grid::BoundBox( 90., -90., 360.-grid.degrees_eps(), 0.).global(false) );
+  grid.mask( Grid::Domain( 90., -90., 360.-grid.degrees_eps(), 0.).global(false) );
 
   BOOST_CHECK_EQUAL(grid.nlat(), 64);
   BOOST_CHECK_EQUAL(grid.npts(), 8192);
 
   // Crop
-  grid.crop( Grid::BoundBox( 90., 0., 180., 0.).global(false) );
+  grid.mask( Grid::Domain( 90., 0., 180., 0.).global(false) );
 
   BOOST_CHECK_EQUAL(grid.nlat(), 32);
   BOOST_CHECK_EQUAL(grid.npts(), 2080);
@@ -111,12 +111,12 @@ BOOST_AUTO_TEST_CASE( test_reduced_gg_ifs )
   BOOST_CHECK_EQUAL(grid.grid_type(),"reduced_gg");
 
 
-  grid.crop( Grid::BoundBox( 90., -90., 360.-grid.degrees_eps(), 0.).global(false) );
+  grid.mask( Grid::Domain( 90., -90., 360.-grid.degrees_eps(), 0.).global(false) );
 
   BOOST_CHECK_EQUAL(grid.nlat(), 64);
   BOOST_CHECK_EQUAL(grid.npts(), 6114);
 
-  grid.crop( Grid::BoundBox( 90., 0., 180., 0.).global(false) );
+  grid.mask( Grid::Domain( 90., 0., 180., 0.).global(false) );
 
   BOOST_CHECK_EQUAL(grid.nlat(), 32);
   BOOST_CHECK_EQUAL(grid.npts(), 1559);
@@ -125,7 +125,7 @@ BOOST_AUTO_TEST_CASE( test_reduced_gg_ifs )
 BOOST_AUTO_TEST_CASE( test_regular_ll )
 {
   // Constructor for N=8
-  grids::LonLatGrid grid(32,16);
+  LonLatGrid grid(32,16,LonLatGrid::EXCLUDES_POLES);
 
   BOOST_CHECK_EQUAL(grid.nlon(), 32);
   BOOST_CHECK_EQUAL(grid.nlat(), 16);
@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
   BOOST_CHECK_EQUAL(grid.lon(grid.nlon()-1), 360.-360./32.);
 
   // Cropping with global boundbox should not do anything
-  grid.crop( Grid::BoundBox( 90., -90., 360.-grid.degrees_eps(), 0.).global(false) );
+  grid.mask( Grid::Domain( 90., -90., 360.-grid.degrees_eps(), 0.).global(false) );
 
   BOOST_CHECK_EQUAL(grid.nlat(), 16);
   BOOST_CHECK_EQUAL(grid.npts(), 512);
@@ -147,7 +147,7 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
   BOOST_CHECK_EQUAL(grid.lon(grid.nlon()-1), 360.-360./32.);
 
   // Crop
-  grid.crop( Grid::BoundBox( 90., 0., 180., 0.).global(false) );
+  grid.mask( Grid::Domain( 90., 0., 180., 0.).global(false) );
   BOOST_CHECK_EQUAL(grid.lat(0), 90.-0.5*(180./16.));
   BOOST_CHECK_EQUAL(grid.lat(grid.nlat()-1),+0.5*(180./16.));
   BOOST_CHECK_EQUAL(grid.lon(0), 0. );
@@ -165,6 +165,7 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
   GridSpec spec("regular_ll");
   spec.set("nlon",32);
   spec.set("nlat",16);
+  spec.set("poles",LonLatGrid::EXCLUDES_POLES);
   gridptr = Grid::Ptr( Grid::create(spec) );
   BOOST_CHECK_EQUAL(gridptr->npts(), 512);
   BOOST_CHECK_EQUAL(gridptr->grid_type(),"regular_ll");
@@ -183,10 +184,23 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
   BOOST_CHECK_EQUAL(ll->lon(ll->nlon()-1), 180.);
 
   GridSpec spec2("regular_ll");
-  spec2.set("N",8);
+  spec2.set("N",16);
+  spec2.set("poles",LonLatGrid::EXCLUDES_POLES);
   gridptr = Grid::Ptr( Grid::create(spec2) );
   BOOST_CHECK_EQUAL(gridptr->npts(), 512);
   BOOST_CHECK_EQUAL(gridptr->grid_type(),"regular_ll");
+
+  LonLatGrid ll_poles(90.,90.,LonLatGrid::INCLUDES_POLES);
+  BOOST_CHECK_EQUAL( ll_poles.nlat(), 3);
+  BOOST_CHECK_EQUAL( ll_poles.nlon(), 4);
+
+  LonLatGrid ll_nopoles(90.,90.,LonLatGrid::EXCLUDES_POLES);
+  BOOST_CHECK_EQUAL( ll_nopoles.nlat(), 2);
+  BOOST_CHECK_EQUAL( ll_nopoles.nlon(), 4);
+
+  LonLatGrid ll_lam(45.,45.,Grid::BoundBox(90.,0.,180.,0.));
+  BOOST_CHECK_EQUAL( ll_lam.nlat(), 3);
+  BOOST_CHECK_EQUAL( ll_lam.nlon(), 5);
 
 }
 

@@ -67,8 +67,7 @@ public:
   virtual bool same( const Grid& ) const;
 
   // number of latitudes in hemispherecd
-  /// @todo temporary: this should go to the GaussianGrid classes
-  int N() const { return N_; }
+  virtual int N() const;
 
   int nlat() const;
 
@@ -86,9 +85,9 @@ public:
 
   void lonlat( const int jlon, const int jlat, double crd[] ) const;
 
-  /// @brief Crop the grid according to the bounding box (or mask)
-  void crop(const BoundBox&);
-  void crop(const eckit::Params&);
+  /// @brief Mask the grid according to the domain
+  virtual void mask( const Domain& );
+  virtual void mask( const eckit::Params& );
 
 protected:
   void setup( const eckit::Params& );

@@ -38,12 +38,14 @@ public:\
   CLASS() \
   {\
     construct();\
+    ReducedGrid::N_ = nlat()/2;\
     set_typeinfo();\
   }\
   CLASS(Grid::ARG1 arg1)\
   {\
     construct();\
-    crop(arg1);\
+    ReducedGrid::N_ = nlat()/2;\
+    mask(arg1);\
     set_typeinfo();\
   }\
   void construct();\

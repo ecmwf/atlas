@@ -34,6 +34,7 @@ namespace atlas {
 class Mesh;
 class GridSpec;
 
+
 //------------------------------------------------------------------------------------------------------
 
 /// Interface to a grid of points in a 2d cartesian space
@@ -53,6 +54,7 @@ public: // types
 
   typedef eckit::geometry::LLPoint2           Point;     ///< point type
   typedef eckit::geometry::LLBoundBox2        BoundBox;  ///< bounding box type
+  typedef BoundBox Domain; // To become abstract class used to mask a grid
 
   typedef eckit::SharedPtr<Grid> Ptr;
 
@@ -82,6 +84,22 @@ public: // methods
   /// When the bounding box is not on the grid, the co-ordinate values, will be
   /// on the enclosing grid points
   virtual BoundBox bounding_box() const = 0;
+
+  /// Area to which the original grid is cropped or masked
+  /// @todo For now this is alias of bounding_box()
+  virtual Domain domain() const;
+
+  /// Mask with given Domain
+  virtual void mask( const Domain& );
+
+  /// Mask with given Params
+  virtual void mask( const eckit::Params& );
+
+  /// Return a copy of the grid, masked with given Domain
+  virtual Grid* masked( const Domain& ) const;
+
+  /// Return a copy of the grid, masked with given Params
+  virtual Grid* masked( const eckit::Params& ) const;
 
   /// Returns the number of points
   /// This methods should have constant access time

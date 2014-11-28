@@ -69,9 +69,6 @@ public:
 
   virtual GridSpec spec() const;
 
-  // number of latitudes in hemisphere
-  int N() const { return nlat()/2; }
-
   int nlon() const { return ReducedGrid::nlon(0); }
 
   double lon( const int jlon ) const { return ReducedGrid::lon(0,jlon); }

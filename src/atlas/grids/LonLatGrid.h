@@ -28,6 +28,16 @@ namespace grids {
 class LonLatGrid: public ReducedGrid {
 
 public:
+  enum {EXCLUDES_POLES=0, INCLUDES_POLES=1};
+
+private:
+
+  struct defaults {
+    // By default LonLat grids have the pole excluded
+    static bool poles() { return EXCLUDES_POLES; }
+  };
+
+public:
 
   static std::string gtype();
 
@@ -36,18 +46,17 @@ public:
   /// @brief Constructor, possibly limited area
   ///
   /// If bounding box present in Params:
-  ///   dlon = (east-west)/(nlon-1)
-  ///   dlat = (north-south)/(nlat-1)
+  ///   If (nlon,nlat) present:
+  ///     dlon = (east-west)/(nlon-1)
+  ///     dlat = (north-south)/(nlat-1)
+  ///   Else
+  ///     dlon = "lon_inc"
+  ///     dlat = "lat_inc"
   ///   Longitudes: [west  :  dlon : east ]
   ///   Latitudes:  [north : -dlat : south]
-  /// Else:
-  ///   As constructor LonLatGrid(nlon,nlat) for global grid
-  ///
-  /// The constructor with bounding box will *NOT* create a cropped version
-  /// of the global one, but rather creates a new (nlon x nlat) grid within
-  /// given bounding box... This is somewhat inconsistent with GaussianGrid
-  /// behaviour, where the limited area fits exactly in the global grid.
-  /// @todo introduce new parameter to make distinction.
+  /// Else: global grid
+  ///   - LonLatGrid(nlon,nlat,poles)
+  ///   - LonLatGrid(londeg,latdeg,poles)
   LonLatGrid( const eckit::Params& );
 
   /// @brief Constructor, limited area grid
@@ -60,18 +69,35 @@ public:
 
   /// @brief Constructor, global grid
   ///
-  /// dlon = 360/nlon
-  /// dlat = 180/nlat
-  /// Longitudes: [0         :  dlon :  360-dlon ]
-  /// Latitudes:  [90-dlat/2 : -dlat : -90+dlat/2]
-  LonLatGrid( const int nlon, const int nlat );
+  /// If poles==false:
+  ///   dlon = 360/nlon
+  ///   dlat = 180/nlat
+  ///   Longitudes: [0         :  dlon :  360-dlon ]
+  ///   Latitudes:  [90-dlat/2 : -dlat : -90+dlat/2]
+  /// Else:
+  ///   dlon = 360/nlon
+  ///   dlat = 180/(nlat-1)
+  ///   Longitudes: [0  :  dlon :  360-dlon ]
+  ///   Latitudes:  [90 : -dlat : -90       ]
+  LonLatGrid( const int nlon, const int nlat, bool poles=defaults::poles() );
 
   /// @brief Constructor, global grid
   ///
-  /// N = nlat/2 = number of latitudes between pole and equator
-  /// nlon = 4*N
-  /// nlat = 2*N
-  LonLatGrid( const int N );
+  /// If poles==false:
+  ///   Longitudes: [0           :  londeg :  360-londeg ]
+  ///   Latitudes:  [90-latdeg/2 : -latdeg : -90+latdeg/2]
+  /// Else:
+  ///   Longitudes: [0  :  londeg :  360-londeg ]
+  ///   Latitudes:  [90 : -latdeg : -90         ]
+  LonLatGrid( const double londeg, const double latdeg, bool poles=defaults::poles() );
+
+  /// @brief Constructor, limited area grid
+  LonLatGrid( const double londeg, const double latdeg, const BoundBox& );
+
+  /// @brief Constructor, global grid
+  ///
+  /// nlon = 2*nlat
+  LonLatGrid( const int nlat, bool poles=defaults::poles() );
 
   static std::string className();
 
@@ -83,9 +109,11 @@ public:
 
 protected:
 
-  void setup(const eckit::Params& p);
-  void setup(const int nlon, const int nlat, const BoundBox& );
-  void setup(const int nlon, const int nlat);
+  void setup( const eckit::Params& p);
+  void setup( const double londeg, const double latdeg, bool poles );
+  void setup( const double londeg, const double latdeg, const BoundBox& );
+  void setup( const int nlon, const int nlat, const BoundBox& );
+  void setup( const int nlon, const int nlat, bool poles );
   void set_typeinfo();
 };
 
