@@ -105,4 +105,5 @@ ecbuild_add_test( TARGET atlas_test_grids
 
 
 add_subdirectory( grid )
+add_subdirectory( cgal )
 

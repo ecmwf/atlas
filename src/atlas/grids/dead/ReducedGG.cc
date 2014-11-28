@@ -28,6 +28,28 @@ using namespace std;
 namespace atlas {
 namespace grids {
 
+static bool check_symmetry(const std::vector<long>& nbPtsPerLat)
+{
+   if (nbPtsPerLat.empty()) return true;
+
+   size_t mid_way = nbPtsPerLat.size()/2;
+   size_t end = nbPtsPerLat.size();
+   if (end == 0) {
+      return false;
+   }
+
+   for(size_t i=0; i< mid_way ; ++i) {
+      const long pl_start = nbPtsPerLat[i];
+      const long pl_end = nbPtsPerLat[end-1-i];
+      if ( pl_start != pl_end ) {
+         std::cout << "ERROR: Reduced Gaussian grids : number of points per latitude size(" << nbPtsPerLat.size()
+                   << ") is not symmetric: pl[" << i << "]=" << pl_start << " pl[ " << end-1-i << "]=" << pl_end << "\n";
+         return false;
+      }
+   }
+   return true;
+}
+
 //------------------------------------------------------------------------------------------------------
 
 ConcreteBuilderT1<Grid,ReducedGG> ReducedGG_builder( ReducedGG::gridTypeStr()+"_depr" );
@@ -60,7 +82,6 @@ ReducedGG::ReducedGG( const eckit::Params& p )
 	else
 		computenpts_per_lat(nbPtsPerLat_);
 
-	ASSERT( nbPtsPerLat_.size() == 2 * gaussN_ ); // number of lines of latitude should, be twice the gaussN_
 
 	if( p.has("npts") )
 		npts_ = p["npts"];
@@ -71,7 +92,10 @@ ReducedGG::ReducedGG( const eckit::Params& p )
 		npts_ = computeNPoints(latitudes);
 	}
 
+
 	ASSERT( npts_ > 0 );
+	ASSERT( nbPtsPerLat_.size() == 2 * gaussN_ ); // number of lines of latitude should, be twice the gaussN_
+   ASSERT( (nbPtsPerLat_.size() % 2 == 0) && check_symmetry(nbPtsPerLat_) );
 }
 
 ReducedGG::ReducedGG(long gaussN) : npts_(0), gaussN_(gaussN)
@@ -79,19 +103,26 @@ ReducedGG::ReducedGG(long gaussN) : npts_(0), gaussN_(gaussN)
 	ASSERT( gaussN_ > 1 );
 
 	// assume global
-   bbox_ = BoundBox(90.0/*top*/, -90.0/*bottom*/, 360.0 - (double)(90.0/(double)gaussN_) /*right*/, 0/*left*/);
 
-   hash_ = ReducedGG::className(); //  @todo ?
+	hash_ = ReducedGG::className(); //  @todo ?
 
    computenpts_per_lat(nbPtsPerLat_);
 
-   std::vector<double> latitudes;
-   computeLatitudes(latitudes);
-   npts_ = computeNPoints(latitudes);
+	std::vector<double> latitudes;
+	computeLatitudes(latitudes);
 
-   ASSERT( npts_ > 0 );
-   ASSERT( nbPtsPerLat_.size() == 2 * gaussN_ ); // number of lines of latitude should, be twice the gaussN_
+	double maxLat = *std::max_element(latitudes.begin(),latitudes.end()); /* top */
+	double minLat = *std::min_element(latitudes.begin(),latitudes.end()); /* bottom */
+
+	bbox_ = BoundBox(maxLat, minLat, 360.0 - (double)(90.0/(double)gaussN_) /*right*/, 0/*left*/);
+
+	npts_ = computeNPoints(latitudes);
+
+	ASSERT( npts_ > 0 );
+	ASSERT( nbPtsPerLat_.size() == 2 * gaussN_ ); // number of lines of latitude should, be twice the gaussN_
+	ASSERT( (nbPtsPerLat_.size() % 2 == 0) && check_symmetry(nbPtsPerLat_) );
 }
+
 
 ReducedGG::~ReducedGG()
 {

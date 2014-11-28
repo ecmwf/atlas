@@ -6,7 +6,6 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-add_subdirectory( cgal )
 add_subdirectory( mpi )
 add_subdirectory( fortran_submodule )
 add_subdirectory( fortran_modinc )

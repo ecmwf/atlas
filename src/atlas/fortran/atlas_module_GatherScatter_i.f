@@ -29,6 +29,11 @@ contains
   procedure, private :: GatherScatter__gather_real64_r1_r1
   procedure, private :: GatherScatter__gather_real64_r2_r2
   procedure, private :: GatherScatter__gather_real64_r3_r3
+  procedure, private :: GatherScatter__scatter_int32_r1_r1
+  procedure, private :: GatherScatter__scatter_int32_r2_r2
+  procedure, private :: GatherScatter__scatter_real32_r1_r1
+  procedure, private :: GatherScatter__scatter_real32_r2_r2
+  procedure, private :: GatherScatter__scatter_real64_r1_r1
   procedure, private :: GatherScatter__scatter_real64_r2_r2
   generic :: gather => &
       & GatherScatter__gather_int32_r1_r1, &
@@ -41,6 +46,11 @@ contains
       & GatherScatter__gather_real64_r2_r2, &
       & GatherScatter__gather_real64_r3_r3
   generic :: scatter => &
+      & GatherScatter__scatter_int32_r1_r1, &
+      & GatherScatter__scatter_int32_r2_r2, &
+      & GatherScatter__scatter_real32_r1_r1, &
+      & GatherScatter__scatter_real32_r2_r2, &
+      & GatherScatter__scatter_real64_r1_r1, &
       & GatherScatter__scatter_real64_r2_r2
 
 END TYPE GatherScatter_type

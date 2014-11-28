@@ -42,9 +42,10 @@ static void comparePointList(const std::vector<Grid::Point>& grib_pntlist, const
 
 BOOST_AUTO_TEST_SUITE( TestGridSpec )
 
+// Allow access to the argc/argv inside of boost test
 struct ArgsFixture {
    ArgsFixture(): argc(boost::framework::master_test_suite().argc),
-           argv(boost::framework::master_test_suite().argv){}
+                   argv(boost::framework::master_test_suite().argv){}
    int argc;
    char **argv;
 };
@@ -53,7 +54,7 @@ BOOST_FIXTURE_TEST_CASE ( test_grib_to_grid_to_gridspec, ArgsFixture ) {
     cout << "Grid:: ...test_grib_to_grid_to_gridspec argc = " << argc << " ";
     if (argc == 2) cout << argv[1];
     cout << "\n";
-    BOOST_REQUIRE_MESSAGE( argc == 2, "You missed one argument" );
+    BOOST_REQUIRE_MESSAGE( argc == 2, "You missed filename argument" );
 
     test_grib_file(argv[1]);
 }

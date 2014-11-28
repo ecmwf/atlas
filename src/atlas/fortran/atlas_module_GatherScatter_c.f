@@ -232,6 +232,97 @@ end subroutine GatherScatter__gather_real64_r3_r3
 
 ! -----------------------------------------------------------------------------
 
+subroutine GatherScatter__scatter_int32_r1_r1(this, glb_field_data, loc_field_data)
+  class(GatherScatter_type), intent(in) :: this
+  integer, intent(in)  :: glb_field_data(:)
+  integer, intent(out) :: loc_field_data(:)
+  integer, pointer :: lview(:), gview(:)
+  integer :: lstrides(1), lextents(1), lrank=1
+  integer :: gstrides(1), gextents(1), grank=1
+  lstrides = (/ stride(loc_field_data,1) /)
+  lextents = (/ 1                        /)
+  lview => view1d(loc_field_data)
+  gstrides = (/ stride(glb_field_data,1) /)
+  gextents = (/ 1                        /)
+  gview => view1d(glb_field_data)
+  call atlas__GatherScatter__scatter_int( this%private%object, &
+    &  gview, gstrides, gextents, grank, &
+    &  lview, lstrides, lextents, lrank )
+end subroutine GatherScatter__scatter_int32_r1_r1
+subroutine GatherScatter__scatter_int32_r2_r2(this, glb_field_data, loc_field_data)
+  class(GatherScatter_type), intent(in) :: this
+  integer, intent(in)  :: glb_field_data(:,:)
+  integer, intent(out) :: loc_field_data(:,:)
+  integer, pointer :: lview(:), gview(:)
+  integer :: lstrides(2), lextents(2), lrank=2
+  integer :: gstrides(2), gextents(2), grank=2
+  lstrides = (/ stride(loc_field_data,2), stride(loc_field_data,1) /)
+  lextents = (/ 1,                        size  (loc_field_data,1) /)
+  lview => view1d(loc_field_data)
+  gstrides = (/ stride(glb_field_data,2), stride(glb_field_data,1) /)
+  gextents = (/ 1,                        size  (glb_field_data,1) /)
+  gview => view1d(glb_field_data)
+  if( size(gview) == 0 ) then
+    allocate(gview(0))
+  endif
+  call atlas__GatherScatter__scatter_int( this%private%object, &
+    &  gview, gstrides, gextents, grank, &
+    &  lview, lstrides, lextents, lrank )
+end subroutine GatherScatter__scatter_int32_r2_r2
+subroutine GatherScatter__scatter_real32_r1_r1(this, glb_field_data, loc_field_data)
+  class(GatherScatter_type), intent(in) :: this
+  real(c_float), intent(in)  :: glb_field_data(:)
+  real(c_float), intent(out) :: loc_field_data(:)
+  real(c_float), pointer :: lview(:), gview(:)
+  integer :: lstrides(1), lextents(1), lrank=1
+  integer :: gstrides(1), gextents(1), grank=1
+  lstrides = (/ stride(loc_field_data,1) /)
+  lextents = (/ 1                        /)
+  lview => view1d(loc_field_data)
+  gstrides = (/ stride(glb_field_data,1) /)
+  gextents = (/ 1                        /)
+  gview => view1d(glb_field_data)
+  call atlas__GatherScatter__scatter_float( this%private%object, &
+    &  gview, gstrides, gextents, grank, &
+    &  lview, lstrides, lextents, lrank )
+end subroutine GatherScatter__scatter_real32_r1_r1
+subroutine GatherScatter__scatter_real32_r2_r2(this, glb_field_data, loc_field_data)
+  class(GatherScatter_type), intent(in) :: this
+  real(c_float), intent(in)  :: glb_field_data(:,:)
+  real(c_float), intent(out) :: loc_field_data(:,:)
+  real(c_float), pointer :: lview(:), gview(:)
+  integer :: lstrides(2), lextents(2), lrank=2
+  integer :: gstrides(2), gextents(2), grank=2
+  lstrides = (/ stride(loc_field_data,2), stride(loc_field_data,1) /)
+  lextents = (/ 1,                        size  (loc_field_data,1) /)
+  lview => view1d(loc_field_data)
+  gstrides = (/ stride(glb_field_data,2), stride(glb_field_data,1) /)
+  gextents = (/ 1,                        size  (glb_field_data,1) /)
+  gview => view1d(glb_field_data)
+  if( size(gview) == 0 ) then
+    allocate(gview(0))
+  endif
+  call atlas__GatherScatter__scatter_float( this%private%object, &
+    &  gview, gstrides, gextents, grank, &
+    &  lview, lstrides, lextents, lrank )
+end subroutine GatherScatter__scatter_real32_r2_r2
+subroutine GatherScatter__scatter_real64_r1_r1(this, glb_field_data, loc_field_data)
+  class(GatherScatter_type), intent(in) :: this
+  real(c_double), intent(in)  :: glb_field_data(:)
+  real(c_double), intent(out) :: loc_field_data(:)
+  real(c_double), pointer :: lview(:), gview(:)
+  integer :: lstrides(1), lextents(1), lrank=1
+  integer :: gstrides(1), gextents(1), grank=1
+  lstrides = (/ stride(loc_field_data,1) /)
+  lextents = (/ 1                        /)
+  lview => view1d(loc_field_data)
+  gstrides = (/ stride(glb_field_data,1) /)
+  gextents = (/ 1                        /)
+  gview => view1d(glb_field_data)
+  call atlas__GatherScatter__scatter_double( this%private%object, &
+    &  gview, gstrides, gextents, grank, &
+    &  lview, lstrides, lextents, lrank )
+end subroutine GatherScatter__scatter_real64_r1_r1
 subroutine GatherScatter__scatter_real64_r2_r2(this, glb_field_data, loc_field_data)
   class(GatherScatter_type), intent(in) :: this
   real(c_double), intent(in)  :: glb_field_data(:,:)

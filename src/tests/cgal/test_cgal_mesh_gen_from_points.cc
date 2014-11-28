@@ -14,9 +14,12 @@
 #include <vector>
 #include <memory>
 
-#include "atlas/io/Gmsh.h"
+#include "atlas/atlas_config.h"
+
 #include "atlas/Mesh.h"
 #include "atlas/Tesselation.h"
+#include "atlas/io/Gmsh.h"
+#include "atlas/mpl/MPL.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -25,13 +28,15 @@ using namespace atlas::io;
 
 //------------------------------------------------------------------------------------------------------
 
-#define NLATS 256
-#define NLONG 256
+#define NLATS 64
+#define NLONG 128
 
 //------------------------------------------------------------------------------------------------------
 
 int main()
 {
+	atlas::MPL::init();
+
     Mesh::Ptr mesh( new Mesh() );
 
     Tesselation::generate_latlon_points( *mesh, NLATS, NLONG );
@@ -39,6 +44,8 @@ int main()
     Tesselation::tesselate(*mesh);
 
 	Gmsh::write3dsurf(*mesh, std::string("earth.msh") );
+
+	atlas::MPL::finalize();
 
     return 0;
 }

@@ -43,7 +43,7 @@ public: // methods
 
 	/// Given a GridSpec return closest grib samples file.
 	/// If no match found returns an empty string
-	static std::string grib_sample_file( const GridSpec&, long editionNumber );
+	static std::string grib_sample_file( const GridSpec&, long edition );
 
 	static void write( const atlas::FieldSet& fset, const eckit::PathName& opath  );
 
@@ -53,6 +53,10 @@ public: // methods
 
 	static void clone( const atlas::FieldSet& field, const eckit::PathName& src, const eckit::PathName& opath  );
 
+	static eckit::grib::GribHandle* clone(const Field& field, eckit::grib::GribHandle& gridsec );
+
+	static eckit::grib::GribHandle* copy_metadata( const eckit::grib::GribHandle& from, eckit::grib::GribHandle& to );
+
 private: // methods
 
 	/// Helper function, used as an extreme fallback
@@ -61,8 +65,6 @@ private: // methods
 	static void write( const atlas::Field& field, const eckit::PathName& opath  );
 
 	static void clone( const atlas::Field& field, const eckit::PathName& gridsec, eckit::DataHandle& );
-
-	static eckit::grib::GribHandle::Ptr clone(const Field& field, eckit::grib::GribHandle& gridsec );
 
 	/// @todo this function is temporary, until we make an abstract interface to output to different formats
 	///       we must learn more about NetCDF, etc...
