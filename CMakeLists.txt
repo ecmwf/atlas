@@ -29,7 +29,7 @@ ecbuild_requires_macro_version( 1.3 )
 
 set( PERSISTENT_NAMESPACE "eckit" CACHE INTERNAL "" )
 
-ecbuild_use_package( PROJECT eckit VERSION 0.6 REQUIRED )
+ecbuild_use_package( PROJECT eckit VERSION 0.8 REQUIRED )
 
 ecbuild_declare_project()
 
