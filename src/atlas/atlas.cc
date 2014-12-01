@@ -238,7 +238,7 @@ public:
 		return x.instance();
 	}
 
-  enum ChannelCategory { ERROR=0, WARN=1, INFO=2, DEBUG=3, STATS=4 };
+	enum ChannelCategory { ERROR=0, WARN=1, INFO=2, DEBUG=3, STATS=4 };
 
 	virtual Channel& channel(int cat)
 	{
@@ -292,6 +292,10 @@ void read_config(const LocalPathName& path, const int master_task = 0)
 			if (buf_len)
 				MPI_Bcast(buf,buf_len,MPL::TYPE<char>(),master_task,MPI_COMM_WORLD);
 		}
+		else
+		{
+			MPI_Bcast(&buf_len,1,MPL::TYPE<int >(),master_task,MPI_COMM_WORLD);
+		}
 	}
 	else
 	{
@@ -305,13 +309,16 @@ void read_config(const LocalPathName& path, const int master_task = 0)
 		}
 	}
 	if (buf_len)
+	{
 		ResourceMgr::instance().appendConfig(stream);
+	}
 }
 
 
 void atlas_init(int argc, char** argv)
 {
 	Context::instance().setup(argc, argv);
+
 	MPL::init( Context::instance().argc(), Context::instance().argvs() );
 
 	if( Context::instance().argc() > 0 )
