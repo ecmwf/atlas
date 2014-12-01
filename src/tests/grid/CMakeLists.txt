@@ -22,19 +22,19 @@ regular_ll_sfc_grib2.tmpl
 polar_stereographic_pl_grib1.tmpl
 reduced_gg_pl_200_grib2.tmpl
 reduced_gg_pl_grib1.tmpl
-rotated_ll_pl_grib1.tmpl
+# rotated_ll_pl_grib1.tmpl            disabled until  GRIB-238 (see ATLAS-22)
 polar_stereographic_pl_grib2.tmpl
 reduced_gg_pl_256_grib1.tmpl
 reduced_gg_pl_grib2.tmpl
-rotated_ll_pl_grib2.tmpl
+# rotated_ll_pl_grib2.tmpl            disabled until  GRIB-238 (see ATLAS-22)
 polar_stereographic_sfc_grib1.tmpl
 reduced_gg_pl_256_grib2.tmpl
 reduced_gg_sfc_grib1.tmpl
-rotated_ll_sfc_grib1.tmpl
+# rotated_ll_sfc_grib1.tmpl           disabled until  GRIB-238 (see ATLAS-22)
 polar_stereographic_sfc_grib2.tmpl
 reduced_gg_pl_320_grib1.tmpl
 reduced_gg_sfc_grib2.tmpl
-rotated_ll_sfc_grib2.tmpl
+# rotated_ll_sfc_grib2.tmpl           disabled until  GRIB-238 (see ATLAS-22)
 reduced_gg_ml_grib1.tmpl
 reduced_gg_pl_320_grib2.tmpl
 reduced_gg_sfc_jpeg_grib2.tmpl
