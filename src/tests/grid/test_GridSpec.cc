@@ -37,7 +37,7 @@ using namespace atlas::io;
 /// We open each file and attempt to create the Grid* class.
 
 static void test_grib_file(const std::string& file);
-static void comparePointList(const std::vector<Grid::Point>& grib_pntlist, const std::vector<Grid::Point>& points, double epsilon, eckit::grib::GribHandle& gh);
+static bool comparePointList(const std::vector<Grid::Point>& grib_pntlist, const std::vector<Grid::Point>& points, double epsilon, eckit::grib::GribHandle& gh);
 
 
 BOOST_AUTO_TEST_SUITE( TestGridSpec )
@@ -154,7 +154,10 @@ static void test_grib_file(const std::string& fpath)
    std::vector<Grid::Point> grid_points; grid_points.resize( grid_created_from_grib->nPoints());
    grid_created_from_grib->coordinates(grid_points);
 
-   comparePointList(grib_pntlist,grid_points,epsilon,gh);
+   bool points_compare = comparePointList(grib_pntlist,grid_points,epsilon,gh);
+
+   // Pts comparison will fail for rotated lat long, until GRIB-238 is implemented, hence ignore.
+   if (gridType != "rotated_ll" ) BOOST_CHECK_MESSAGE( points_compare,"Point list comparison failed");
 
 
    // ===================================================================================================
@@ -180,18 +183,23 @@ static void test_grib_file(const std::string& fpath)
    }
 }
 
-void comparePointList(const std::vector<Grid::Point>& grib_pntlist, const std::vector<Grid::Point>& points, double epsilon, eckit::grib::GribHandle& gh)
+bool comparePointList(
+         const std::vector<Grid::Point>& grib_pntlist,
+         const std::vector<Grid::Point>& points,
+         double epsilon, eckit::grib::GribHandle& gh)
 {
    BOOST_CHECK_MESSAGE(  points.size() == grib_pntlist.size(),"\n  **GRIB pt list size " << grib_pntlist.size() << " different to GRID " << points.size() );
 
    RealCompare<double> isEqual(epsilon);
 
+   bool ret = true;
    int print_point_list = 0;
    std::streamsize old_precision = cout.precision();
    for(size_t i =0;  i < points.size() && i < grib_pntlist.size(); i++) {
       if (!isEqual(points[i].lat(),grib_pntlist[i].lat()) ||
           !isEqual(points[i].lon(),grib_pntlist[i].lon()))
       {
+         ret = false;
          if (print_point_list == 0) {
             Log::info() << " Point list DIFFER, show first 10, epsilon(" << epsilon << ")" << std::endl;
             Log::info() << setw(40) << left << "     GRID   " << setw(40) << left << "         GRIB"<< std::endl;
@@ -209,5 +217,6 @@ void comparePointList(const std::vector<Grid::Point>& grib_pntlist, const std::v
 
    // reset precision
    Log::info() << std::setprecision(old_precision);
+   return ret;
 }
 
