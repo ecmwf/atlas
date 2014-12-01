@@ -1,9 +1,9 @@
 /*
  * (C) Copyright 1996-2014 ECMWF.
- * 
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
- * In applying this licence, ECMWF does not waive the privileges and immunities 
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
@@ -12,7 +12,7 @@
 
 //     Purpose.
 //     --------
-//           eq_regions provides the code to perform a high level 
+//           eq_regions provides the code to perform a high level
 //           partitioning of the surface of a sphere into regions of
 //           equal area and small diameter.
 //
@@ -20,14 +20,14 @@
 //     -----------
 //     This C++ implementation is ported from the MATLAB
 //     "Recursive Zonal Equal Area (EQ) Sphere Partitioning Toolbox" of the
-//     same name developed by Paul Leopardi at the University of New South Wales. 
-//     This version has been coded specifically for the case of partitioning the 
+//     same name developed by Paul Leopardi at the University of New South Wales.
+//     This version has been coded specifically for the case of partitioning the
 //     surface of a sphere or S^dim (where dim=2) as denoted in the original code.
 //     Only a subset of the original eq_regions package has been coded to determin
-//     the high level distribution of regions on a sphere, as the detailed 
+//     the high level distribution of regions on a sphere, as the detailed
 //     distribution of grid points to each region is left to implentatios.
 //
-//     The following copyright notice for the eq_regions package is included from 
+//     The following copyright notice for the eq_regions package is included from
 //     the original MatLab release.
 //
 //     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -55,7 +55,7 @@
 //     + SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                  +
 //     +                                                                         +
 //     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//   
+//
 
 #ifndef EqualAreaPartitioner_h
 #define EqualAreaPartitioner_h
@@ -82,15 +82,26 @@ class EqualAreaPartitioner
 {
 public:
   EqualAreaPartitioner(int N);
+
+  // x and y in radians
   int partition(const double& x, const double& y) const;
+
+  // y in radians
+
   int band(const double& y) const;
+
+  // x in radians
   int sector(int band, const double& x) const;
+
   void area(int partition, int& band, int& sector) const;
   int nb_bands() const { return bands_.size(); }
   int nb_sectors(int band) const { return nb_regions(band); }
   int nb_regions(int band) const { return sectors_[band]; }
+
+  // Doesn't matter if nodes[] is in degrees or radians, as a sorting
+  // algorithm is used internally
   void partition(int nb_nodes, NodeInt nodes[], int part[]) const;
-  
+
 private:
   int N_;
   std::vector<double> bands_;

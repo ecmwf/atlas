@@ -198,14 +198,14 @@ inline void FieldT<DATA_TYPE>::print(std::ostream& out) const
 	ArrayView<DATA_TYPE,1> values( *this );
 
 	// ArrayView<DATA_TYPE,2> coords( nodes.field("coordinates") );
-	ArrayView<DATA_TYPE,2> latlon( nodes.field("latlon") );
+	ArrayView<DATA_TYPE,2> lonlat( nodes.field("lonlat") );
 
-	ASSERT( values.shape()[0] == latlon.shape()[0] );
+	ASSERT( values.shape()[0] == lonlat.shape()[0] );
 
 	// Log::info() << "values.shape()[0] " << values.shape()[0] << std::endl;
 
-	for( size_t i = 0; i < latlon.shape()[0]; ++i )
-		out << latlon(i,LAT) << " " << latlon(i,LON) << " " << values(i) << std::endl;
+	for( size_t i = 0; i < lonlat.shape()[0]; ++i )
+		out << lonlat(i,LON) << " " << lonlat(i,LAT) << " " << values(i) << std::endl;
 }
 
 //------------------------------------------------------------------------------------------------------

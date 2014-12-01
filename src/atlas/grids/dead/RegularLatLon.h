@@ -18,7 +18,7 @@
 //-----------------------------------------------------------------------------
 
 namespace atlas {
-
+namespace grids {
 
 //-----------------------------------------------------------------------------
 
@@ -39,7 +39,7 @@ class RegularLatLon : public Grid {
 public: // methods
 
 	static std::string className() { return "atlas.grid.RegularLatLon"; }
-	static std::string gridTypeStr() { return "regular_ll"; }
+	static std::string gridTypeStr() { return "regular_ll_depr"; }
 
 	RegularLatLon( const eckit::Params& p );
 
@@ -50,12 +50,12 @@ public: // methods
 	virtual std::string uid() const;
 	virtual std::string hash() const { return hash_;}
 
-	virtual BoundBox boundingBox() const;
-	virtual size_t nPoints() const;
-	virtual void coordinates( std::vector<double>& ) const;
-	virtual void coordinates( std::vector<Point>& ) const;
+	virtual BoundBox bounding_box() const;
+	virtual size_t npts() const;
+	virtual void lonlat( double[] ) const;
+	virtual void lonlat( std::vector<Point>& ) const;
 
-	virtual std::string gridType() const;
+	virtual std::string grid_type() const;
 	virtual GridSpec spec() const;
 
 	virtual bool same(const Grid&) const;
@@ -93,9 +93,11 @@ private: // members
 
 };
 
+register_BuilderT1(Grid,RegularLatLon,RegularLatLon::gridTypeStr());
+
 //-----------------------------------------------------------------------------
 
-
-} // namespace eckit
+} // namespace grids
+} // namespace atlas
 
 #endif

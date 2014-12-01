@@ -14,13 +14,14 @@
 #include <cstddef>
 #include <vector>
 
+#include <eckit/memory/Builder.h>
 #include "atlas/Grid.h"
 
 
 //-----------------------------------------------------------------------------
 
 namespace atlas {
-
+namespace grids {
 
 //-----------------------------------------------------------------------------
 /// RotatedLatLon is a grid where the poles are shifted
@@ -66,23 +67,23 @@ public: // methods
 	virtual std::string uid() const;
 	virtual std::string hash() const { return hash_;}
 
-	virtual BoundBox boundingBox() const { return bbox_;}
-	virtual size_t nPoints() const;
+	virtual BoundBox bounding_box() const { return bbox_;}
+	virtual size_t npts() const;
 
-	virtual void coordinates( std::vector<double>& ) const;
-	virtual void coordinates( std::vector<Point>& ) const;
+	virtual void lonlat( double[] ) const;
+	virtual void lonlat( std::vector<Point>& ) const;
 
-	virtual std::string gridType() const;
+	virtual std::string grid_type() const;
 	virtual GridSpec spec() const;
 	virtual bool same(const Grid&) const;
 
-protected: // methods
+private: // methods
 
 	double rotated_latitude() const { return south_pole_lat_; }
 	double rotated_longitude() const { return south_pole_lon_; }
 	double rotated_angle() const { return south_pole_rot_angle_; }
 
-	Point latLon(size_t lat, size_t lon) const;
+	Point lonlat(size_t jlon, size_t jlat) const;
 	long rows() const { return nptsNS_;}
 	long cols() const { return nptsWE_;}
 	double incLat() const { return nsIncrement_; }
@@ -102,9 +103,12 @@ private: // members
 	long nptsWE_;
 };
 
+register_BuilderT1(Grid,RotatedLatLon,RotatedLatLon::gridTypeStr());
+
+
 //-----------------------------------------------------------------------------
 
-
-} // namespace eckit
+} // namespace grids
+} // namespace atlas
 
 #endif

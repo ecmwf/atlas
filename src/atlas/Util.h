@@ -31,6 +31,15 @@ inline int microdeg( const double& deg )
 	return static_cast<int>(deg*1.e6);
 }
 
+enum AngleUnit{ DEG=0, RAD=1 };
+
+void colat_to_lat_hemisphere(const int N, const double colat[], double lats[], const AngleUnit unit);
+
+void predict_gaussian_colatitudes_hemisphere(const int N, double colat[]);
+
+void predict_gaussian_latitudes_hemisphere(const int N, double lat[]);
+
+
 class Flags
 {
 public:
@@ -131,8 +140,8 @@ struct LatLonPoint
 
 	int uid() const
 	{
-		int i1 = (y+NORTH*2) >>9;
-		int i2 = (x+EAST*5)  >>10;
+		int i1 = (y/100+NORTH/100*2) >>9;
+		int i2 = (x/100+EAST/100*5)  >>10;
 		ASSERT( i1 > 0);
 		ASSERT( i2 > 0);
 		int pow = 10;
@@ -165,7 +174,7 @@ private:
 public:
 	PeriodicTransform()
 	{
-		x_translation_ = 2.*M_PI;
+		x_translation_ = 360.;
 	}
 
 	void operator()(double source[2], double dest[2], double direction, double scale = 1.) const

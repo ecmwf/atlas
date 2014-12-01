@@ -19,7 +19,7 @@ namespace meshgen {
 
 T255::T255()
 {
-  int nlat=128;
+  int N=128;
 #if 1
   int lon[] = {
      18,
@@ -413,16 +413,7 @@ T255::T255()
     1.55242447484047,
     1.56467237614226
   };
-  lat_.resize(2*nlat);
-  lon_.resize(2*nlat);
-  std::copy( lon, lon+nlat, lon_.begin() );
-  std::reverse_copy( lon, lon+nlat, lon_.begin()+nlat );
-  std::copy( colat, colat+nlat, lat_.begin() );
-  std::reverse_copy( colat, colat+nlat, lat_.begin()+nlat );
-  for (int i=0; i<nlat; ++i)
-    lat_[i]=M_PI/2.-lat_[i];
-  for (int i=nlat; i<2*nlat; ++i)
-    lat_[i]=-M_PI/2.+lat_[i];
+  setup_colat_hemisphere(N,colat,lon,RAD);
 }
 
 } // namespace meshgen

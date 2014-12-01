@@ -15,17 +15,15 @@
 #include "eckit/value/Value.h"
 
 #include "atlas/GridSpec.h"
-#include "atlas/ReducedLatLon.h"
+#include "atlas/grids/ReducedLatLon.h"
 
 using namespace eckit;
 using namespace std;
 
 namespace atlas {
-
+namespace grids {
 
 //------------------------------------------------------------------------------------------------------
-
-ConcreteBuilderT1<Grid,ReducedLatLon> ReducedLatLon_builder( ReducedLatLon::gridTypeStr() );
 
 ReducedLatLon::ReducedLatLon( const eckit::Params& p ) :
 	npts_(0),
@@ -35,28 +33,28 @@ ReducedLatLon::ReducedLatLon( const eckit::Params& p ) :
    if( !p.get("hash").isNil() )
       hash_ = p["hash"].as<std::string>();
 
-   bbox_ = makeBBox(p);
+   bbox_ = make_bounding_box(p);
 
    if( p.has("Nj") )
    {
       nptsNS_ = p["Nj"];
    }
 
-   if( p.has("grid_lat_inc") )
+   if( p.has("lat_inc") )
    {
-	  nsInc_ = p["grid_lat_inc"];
+	  nsInc_ = p["lat_inc"];
    }
 
-   if( p.has("NPtsPerLat") )
+   if( p.has("npts_per_lat") )
    {
-      ValueList nlats = p["NPtsPerLat"];
+      ValueList nlats = p["npts_per_lat"];
       nbPtsPerLat_.resize(nlats.size());
       for( size_t i = 0; i < nlats.size(); ++i)
          nbPtsPerLat_[i] = nlats[i];
    }
    else
    {
-      computeNPtsPerLat(nbPtsPerLat_);
+      computenpts_per_lat(nbPtsPerLat_);
    }
 
    npts_ = computeNPts();
@@ -73,68 +71,66 @@ string ReducedLatLon::uid() const
 	return ss.str();
 }
 
-struct ReducedLatLon_CoordDD
+struct ReducedLonLat_CoordDD
 {
-	ReducedLatLon_CoordDD( std::vector<double>& pts ) : pts_(pts) {}
-	void operator()(double lat, double lon)
+	ReducedLonLat_CoordDD( double pts[] ) : pts_(pts), c(0) {}
+	void operator()(double lon, double lat)
 	{
-		pts_.push_back( lat );
-		pts_.push_back( lon );
+		pts_[c++] = lon;
+		pts_[c++] = lat;
 	}
-	std::vector<double>& pts_;
+	double* pts_;
+	int c;
 };
 
 
-void ReducedLatLon::coordinates(std::vector<double>& r ) const
+void ReducedLatLon::lonlat( double pts[] ) const
 {
-	r.clear();
-	r.reserve( nPoints() * 2);
-
-	ReducedLatLon_CoordDD f(r);
+	ReducedLonLat_CoordDD f(pts);
 
 	iterate(f);
 }
 
-struct ReducedLatLon_Coord
+struct ReducedLonLat_Coord
 {
-	ReducedLatLon_Coord( std::vector<Grid::Point>& pts ) : pts_(pts) {}
-	void operator()(double lat, double lon)
+	ReducedLonLat_Coord( std::vector<Grid::Point>& pts ) : pts_(pts) {}
+	void operator()(double lon, double lat)
 	{
-		pts_.push_back( Grid::Point(lat,lon) );
+		pts_.push_back( Grid::Point(lon,lat) );
 	}
 	std::vector<Grid::Point>& pts_;
 };
 
 
-void ReducedLatLon::coordinates( std::vector<Grid::Point>& pts) const
+void ReducedLatLon::lonlat( std::vector<Grid::Point>& pts) const
 {
 	pts.clear();
 
-	pts.reserve( nPoints() );
+	pts.reserve( npts() );
 
-	ReducedLatLon_Coord f(pts);
+	ReducedLonLat_Coord f(pts);
 
 	iterate(f);
 }
 
-size_t ReducedLatLon::nPoints() const
+size_t ReducedLatLon::npts() const
 {
 	return npts_;
 }
 
-string ReducedLatLon::gridType() const
+string ReducedLatLon::grid_type() const
 {
 	return ReducedLatLon::gridTypeStr();
 }
 
 GridSpec ReducedLatLon::spec() const
 {
-   GridSpec grid_spec(gridType());
+   GridSpec grid_spec(grid_type());
 
    grid_spec.uid( uid() );
 
    grid_spec.set("Nj",eckit::Value(nptsNS_));
-   grid_spec.set("grid_lat_inc",eckit::Value(nsInc_));
+   grid_spec.set("lat_inc",eckit::Value(nsInc_));
 
    grid_spec.set("hash",eckit::Value(hash_));
 
@@ -173,7 +169,7 @@ size_t ReducedLatLon::computeNPts() const
 	return f.count_;
 }
 
-void ReducedLatLon::computeNPtsPerLat( std::vector<long>& )
+void ReducedLatLon::computenpts_per_lat( std::vector<int>& )
 {
    // Not clear how this is computed.
    // Note: For guassain number, we used the pre-defined tabulated values.
@@ -206,7 +202,7 @@ void ReducedLatLon::iterate( T& f ) const
 
 				   ASSERT(plat <= 90.0 && plat >= -90.0);
 				   ASSERT(plon < 360.0 && plon >= 0);
-				   f(plat,plon);
+				   f(plon,plat);
 				}
 				plon += east_west_grid_length;
 				geometry::reduceTo2Pi(plon);
@@ -221,4 +217,5 @@ void ReducedLatLon::iterate( T& f ) const
 //-----------------------------------------------------------------------------
 
 
-} // namespace eckit
+} // namespace grids
+} // namespace atlas

@@ -303,7 +303,7 @@ FieldT<int>& build_nodes_remote_idx( FunctionSpace& nodes )
       {
         std::stringstream msg;
         msg << "[" << MPL::rank() << "] " << "Node requested by rank ["<<jpart<<"] with coords ";
-        msg << "("<<ll.x*180./M_PI*1.e-6 << ","<<ll.y*180./M_PI*1.e-6<<") that should be owned is not found";
+        msg << "("<<ll.x*1.e-6 << ","<<ll.y*1.e-6<<") that should be owned is not found";
         throw eckit::SeriousBug(msg.str(),Here());
       }
     }
@@ -474,7 +474,7 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
       centroid[YY] = 0.5*(latlon( ip1, YY ) + latlon( ip2, YY ) );
       if( has_pole_edges && is_pole_edge(jedge) )
       {
-        centroid[YY] = centroid[YY] > 0 ? M_PI_2 : -M_PI_2;
+        centroid[YY] = centroid[YY] > 0 ? 90. : -90.;
       }
       LatLonPoint ll(centroid);
 
@@ -626,7 +626,7 @@ FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes 
     centroid[YY] = 0.5*(latlon( ip1, YY ) + latlon( ip2, YY ) );
     if( has_pole_edges && is_pole_edge(jedge) )
     {
-      centroid[YY] = centroid[YY] > 0 ? M_PI_2 : -M_PI_2;
+      centroid[YY] = centroid[YY] > 0 ? 90. : -90.;
     }
     LatLonPoint ll(centroid);
 
@@ -763,7 +763,7 @@ FieldT<int>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nodes 
       centroid[YY] = 0.5*(latlon( edge_nodes(jedge,0), YY ) + latlon( edge_nodes(jedge,1), YY ) );
       if( has_pole_edges && is_pole_edge(jedge) )
       {
-        centroid[YY] = centroid[YY] > 0 ? M_PI_2 : -M_PI_2;
+        centroid[YY] = centroid[YY] > 0 ? 90. : -90.;
       }
       LatLonPoint ll(centroid);
       edge_gidx(jedge) = ll.uid();

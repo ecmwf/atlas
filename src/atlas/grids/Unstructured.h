@@ -25,8 +25,7 @@
 //-----------------------------------------------------------------------------
 
 namespace atlas {
-
-
+namespace grids {
 
 //-----------------------------------------------------------------------------
 
@@ -46,14 +45,14 @@ public: // methods
 	virtual std::string uid() const;
 	virtual std::string hash() const;
 
-    virtual BoundBox boundingBox() const;
+    virtual BoundBox bounding_box() const;
 
-    virtual size_t nPoints() const;
+    virtual size_t npts() const;
 
-	virtual void coordinates( std::vector<double>& ) const;
-	virtual void coordinates( std::vector<Point>& ) const;
+	virtual void lonlat( double[] ) const;
+	virtual void lonlat( std::vector<Point>& ) const;
 
-    virtual std::string gridType() const { return std::string("unstructured"); }
+    virtual std::string grid_type() const { return std::string("unstructured"); }
 
 	virtual GridSpec spec() const;
 
@@ -69,9 +68,12 @@ protected:
 
 };
 
+register_BuilderT1(Grid,Unstructured,"unstructured");
+
+
 //-----------------------------------------------------------------------------
 
-
-} // namespace eckit
+} // namespace grids
+} // namespace atlas
 
 #endif

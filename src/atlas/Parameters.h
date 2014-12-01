@@ -21,7 +21,7 @@ namespace atlas {
 
 enum { XX = 0, YY = 1, ZZ = 2 };
 
-enum { LAT = 0, LON = 1 }; ///< @todo check the impact of LON=0 (x) LAT=1 (y)
+enum { LON = 0, LAT = 1 };
 
 //------------------------------------------------------------------------------------------------------
 

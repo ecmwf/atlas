@@ -14,15 +14,15 @@
 #include "atlas/actions/GenerateMesh.h"
 #include "atlas/util/Debug.h"
 using namespace atlas::meshgen;
-
+using namespace atlas::grids;
 namespace atlas {
 namespace actions {
 
 // ------------------------------------------------------------------
 
-Mesh* generate_mesh (const RGG& rgg)
+Mesh* generate_mesh (const ReducedGrid& rgg)
 {
-  RGGMeshGenerator generate;
+  ReducedGridMeshGenerator generate;
   generate.options.set( "nb_parts", MPL::size() );
   generate.options.set( "part"    , MPL::rank() );
   return generate(rgg);
@@ -32,40 +32,40 @@ Mesh* generate_mesh (const RGG& rgg)
 
 Mesh* generate_reduced_gaussian_grid( const std::string& identifier )
 {
-	RGG* rgg = new_reduced_gaussian_grid(identifier);
-	Mesh* mesh = generate_mesh(*rgg);
-	delete rgg;
-	return mesh;
+  ReducedGrid* rgg = new_reduced_gaussian_grid(identifier);
+  Mesh* mesh = generate_mesh(*rgg);
+  delete rgg;
+  return mesh;
 }
 
 // ------------------------------------------------------------------
 
 Mesh* generate_reduced_gaussian_grid( const std::vector<long>& nlon )
 {
-	RGG* rgg = new_reduced_gaussian_grid(nlon);
-	Mesh* mesh = generate_mesh(*rgg);
-	delete rgg;
-	return mesh;
+  ReducedGrid* rgg = new_reduced_gaussian_grid(nlon);
+  Mesh* mesh = generate_mesh(*rgg);
+  delete rgg;
+  return mesh;
 }
 
 // ------------------------------------------------------------------
 
 Mesh* generate_regular_grid( int nlon, int nlat )
 {
-	RGG* rgg = new_regular_latlon_grid(nlon,nlat);
-	Mesh* mesh = generate_mesh(*rgg);
-	delete rgg;
-	return mesh;
+  ReducedGrid* rgg = new_regular_latlon_grid(nlon,nlat);
+  Mesh* mesh = generate_mesh(*rgg);
+  delete rgg;
+  return mesh;
 }
 
 // ------------------------------------------------------------------
 
 Mesh* generate_full_gaussian_grid( int nlon, int nlat )
 {
-	RGG* rgg = new_regular_gaussian_grid(nlon,nlat);
-	Mesh* mesh = generate_mesh(*rgg);
-	delete rgg;
-	return mesh;
+  ReducedGrid* rgg = new_regular_gaussian_grid(nlon,nlat);
+  Mesh* mesh = generate_mesh(*rgg);
+  delete rgg;
+  return mesh;
 }
 
 // ------------------------------------------------------------------
@@ -93,7 +93,7 @@ Mesh* atlas__generate_custom_reduced_gaussian_grid( int nlon[], int nlat )
   return generate_reduced_gaussian_grid(nlon_vector);
 }
 
-Mesh* atlas__generate_mesh (RGG* rgg)
+Mesh* atlas__generate_mesh (ReducedGrid* rgg)
 {
   return generate_mesh(*rgg);
 }

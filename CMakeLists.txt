@@ -29,7 +29,7 @@ ecbuild_requires_macro_version( 1.3 )
 
 set( PERSISTENT_NAMESPACE "eckit" CACHE INTERNAL "" )
 
-ecbuild_use_package( PROJECT eckit VERSION 0.6 REQUIRED )
+ecbuild_use_package( PROJECT eckit VERSION 0.8 REQUIRED )
 
 ecbuild_declare_project()
 
@@ -53,14 +53,14 @@ ecbuild_find_python()
 ecbuild_add_option( FEATURE FORTRAN
                     DESCRIPTION "provide Fortran bindings" )
 
-if( ENABLE_FORTRAN )
+if( HAVE_FORTRAN )
 
   ecbuild_enable_fortran( REQUIRED MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/module )
 
   ecbuild_add_option( FEATURE FCTEST
                       DEFAULT ${ENABLE_TESTS}
                       DESCRIPTION "Fortran Unit Test Framework"
-					  REQUIRED_PACKAGES "PROJECT fctest VERSION 0.1" )
+                      REQUIRED_PACKAGES "PROJECT fctest VERSION 0.1" )
 endif()
 
 ### OMP ...
@@ -140,11 +140,15 @@ set( ATLAS_TPLS      eckit )
 
 set( ATLAS_INCLUDE_DIRS   ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src )
 
-set( ATLAS_LIBRARIES      atlas )
+set( atlas_f "atlas_f" )
 
-if( ENABLE_FORTRAN )
+list( APPEND ATLAS_LIBRARIES
+  atlas
+)
+
+if( HAVE_FORTRAN )
   list( APPEND ATLAS_INCLUDE_DIRS ${CMAKE_Fortran_MODULE_DIRECTORY} )
-  set( ATLAS_LIBRARIES atlas_fortran atlas_mpl_fortran ${ATLAS_LIBRARIES} )
+  set( ATLAS_LIBRARIES ${atlas_f} ${ATLAS_LIBRARIES} )
 endif()
 
 if( HAVE_TRANS )
@@ -167,6 +171,8 @@ endforeach()
 include( atlas_compiler_flags )
 
 include_directories( ${ATLAS_INCLUDE_DIRS} ${ATLAS_EXTRA_INCLUDE_DIRS} )
+
+debug_var( ATLAS_INCLUDE_DIRS )
 
 add_subdirectory( src )
 

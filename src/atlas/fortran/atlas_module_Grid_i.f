@@ -1,11 +1,11 @@
 ! (C) Copyright 2013-2014 ECMWF.
 
 !------------------------------------------------------------------------------
-TYPE, extends(object_type) :: ReducedGG_type
+TYPE, extends(object_type) :: ReducedGrid_type
 
 ! Purpose :
 ! -------
-!   *ReducedGG* : Object Grid specifications for Reduced Gaussian Grids
+!   *ReducedGrid* : Object Grid specifications for Reduced Grids
 
 ! Methods :
 ! -------
@@ -16,11 +16,11 @@ TYPE, extends(object_type) :: ReducedGG_type
 
 !------------------------------------------------------------------------------
 contains
-  procedure :: ngptot => ReducedGG__ngptot
-  procedure :: nlat => ReducedGG__nlat
-  procedure :: nlon => ReducedGG__nlon
-  procedure :: lats => ReducedGG__lats
-END TYPE ReducedGG_type
+  procedure :: npts => ReducedGrid__npts
+  procedure :: nlat => ReducedGrid__nlat
+  procedure :: nlon => ReducedGrid__nlon
+  procedure :: lat => ReducedGrid__lat
+END TYPE ReducedGrid_type
 
 interface new_GaussianGrid
   module procedure new_reduced_gaussian_grid

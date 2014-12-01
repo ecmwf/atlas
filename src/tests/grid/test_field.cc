@@ -14,7 +14,7 @@
 #include "atlas/mpl/MPL.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Grid.h"
-#include "atlas/RegularLatLon.h"
+#include "atlas/grids/LonLatGrid.h"
 #include "atlas/FieldSet.h"
 #include "atlas/Tesselation.h"
 
@@ -49,14 +49,14 @@ void TestField::test_constructor()
 
     // create a grid
 
-	Grid::BoundBox earth ( Grid::Point(-90.,0.), Grid::Point(90.,359.999999) );
+	Grid::BoundBox earth ( Grid::Point(0.,-90.), Grid::Point(359.999999,90.) );
 
-	Grid::Ptr g (new atlas::RegularLatLon( 20, 10, earth ) );
+	Grid::Ptr g (new atlas::grids::LonLatGrid( 20, 10, earth ) );
 
     // create some reference data for testing
 
     std::vector<double> ref_data;
-    ref_data.reserve( g->nPoints() );
+    ref_data.reserve( g->npts() );
     for(size_t i = 0; i < ref_data.size(); ++i)
 		ref_data.push_back( (double)i );
 
@@ -93,7 +93,7 @@ void TestField::test_constructor()
     fields.push_back(f);
 
     atlas::FieldSet fs(fields);
-    
+
     // iterate over the fields
 	for (Field::Vector::iterator it = fs.fields().begin(); it != fs.fields().end(); ++it)
     {
@@ -102,7 +102,7 @@ void TestField::test_constructor()
 		for( size_t i = 0; i < ref_data.size(); ++i )
         {
 			ASSERT( ref_data[i] == vdata(i) );
-        }   
+        }
     }
 }
 

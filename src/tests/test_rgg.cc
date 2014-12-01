@@ -28,6 +28,7 @@
 #include "atlas/actions/BuildParallelFields.h"
 #include "atlas/Parameters.h"
 #include "atlas/Util.h"
+#include "atlas/grids/reduced_gg/reduced_gg.h"
 
 using namespace atlas;
 using namespace atlas::io;
@@ -42,7 +43,7 @@ namespace test {
 class DebugMesh:   public RGG { public: DebugMesh(); };
 DebugMesh::DebugMesh()
 {
-  int nlat=5;
+  int N=5;
   int lon[] = {
     6,
     10,
@@ -50,58 +51,18 @@ DebugMesh::DebugMesh()
     22,
     22,
   };
-  /*
-  First prediction of colatitudes
-  */
-  std::vector<double> colat(nlat);
-  double z;
-  for( int i=0; i<nlat; ++i )
-  {
-    z = (4.*(i+1.)-1.)*M_PI/(4.*2.*nlat+2.);
-    colat[i] = z+1./(tan(z)*(8.*(2.*nlat)*(2.*nlat)));
-  }
-  /*
-  Fill in final structures
-  */
-  lat_.resize(2*nlat);
-  lon_.resize(2*nlat);
-  std::copy( lon, lon+nlat, lon_.begin() );
-  std::reverse_copy( lon, lon+nlat, lon_.begin()+nlat );
-  std::copy( colat.begin(), colat.begin()+nlat, lat_.begin() );
-  std::reverse_copy( colat.begin(), colat.begin()+nlat, lat_.begin()+nlat );
-  for (int i=0; i<nlat; ++i)
-    lat_[i]=M_PI/2.-lat_[i];
-  for (int i=nlat; i<2*nlat; ++i)
-    lat_[i]=-M_PI/2.+lat_[i];
+  std::vector<double> colat(N);
+  predict_gaussian_colatitudes_hemisphere(N,colat.data());
+  setup_colat_hemisphere(N,colat.data(),lon,DEG);
 }
 
 
-class MinimalMesh:   public RGG { public: MinimalMesh(int nlat, int lon[]); };
-MinimalMesh::MinimalMesh(int nlat, int lon[])
+class MinimalMesh:   public RGG { public: MinimalMesh(int N, int lon[]); };
+MinimalMesh::MinimalMesh(int N, int lon[])
 {
-  /*
-  First prediction of colatitudes
-  */
-  std::vector<double> colat(nlat);
-  double z;
-  for( int i=0; i<nlat; ++i )
-  {
-    z = (4.*(i+1.)-1.)*M_PI/(4.*2.*nlat+2.);
-    colat[i] = z+1./(tan(z)*(8.*(2.*nlat)*(2.*nlat)));
-  }
-  /*
-  Fill in final structures
-  */
-  lat_.resize(2*nlat);
-  lon_.resize(2*nlat);
-  std::copy( lon, lon+nlat, lon_.begin() );
-  std::reverse_copy( lon, lon+nlat, lon_.begin()+nlat );
-  std::copy( colat.begin(), colat.begin()+nlat, lat_.begin() );
-  std::reverse_copy( colat.begin(), colat.begin()+nlat, lat_.begin()+nlat );
-  for (int i=0; i<nlat; ++i)
-    lat_[i]=M_PI/2.-lat_[i];
-  for (int i=nlat; i<2*nlat; ++i)
-    lat_[i]=-M_PI/2.+lat_[i];
+  std::vector<double> colat(N);
+  predict_gaussian_colatitudes_hemisphere(N,colat.data());
+  setup_colat_hemisphere(N,colat.data(),lon,DEG);
 }
 
 double compute_latlon_area(Mesh& mesh)
@@ -217,7 +178,7 @@ BOOST_AUTO_TEST_CASE( test_partitioner )
 BOOST_AUTO_TEST_CASE( test_rgg_meshgen_one_part )
 {
   Mesh* m;
-  RGGMeshGenerator generate;
+  ReducedGridMeshGenerator generate;
   generate.options.set("nb_parts",1);
   generate.options.set("part",    0);
 DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
@@ -324,7 +285,7 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
 
 BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
 {
-  RGGMeshGenerator generate;
+  ReducedGridMeshGenerator generate;
   generate.options.set("nb_parts",20);
   generate.options.set("include_pole",false);
   generate.options.set("three_dimensional",false);
@@ -336,25 +297,29 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
   T63 grid;
 //  RegularGrid grid(128,64);
   double max_lat = grid.lat(0);
-  double check_area = 2.*M_PI*2.*max_lat;
+  double check_area = 360.*2.*max_lat;
   double area = 0;
   int nodes[]  = {313,332,336,338,334,337,348,359,360,361,360,360,359,370,321,334,338,335,348,315};
   int quads[]  = {243,290,293,294,291,293,310,320,321,321,320,321,320,331,278,291,294,293,305,245};
   int triags[] = { 42, 13, 12, 13, 12, 14,  0,  1,  0,  1,  1,  0,  1,  0, 14, 12, 13, 11, 14, 42};
   int nb_owned = 0;
 
-  std::vector<int> all_owned    ( grid.ngptot()+grid.nlat()+1, -1 );
+  std::vector<int> all_owned    ( grid.npts()+grid.nlat()+1, -1 );
 
   for( int p=0; p<generate.options.get<int>("nb_parts"); ++p)
   {
+    DEBUG_VAR(p);
     generate.options.set("part",p);
     Mesh::Ptr m( generate( grid ) );
+    DEBUG();
     m->metadata().set("part",p);
     BOOST_TEST_CHECKPOINT("generated grid " << p);
     ArrayView<int,1> part( m->function_space("nodes").field("partition") );
     ArrayView<int,1> gidx( m->function_space("nodes").field("glb_idx") );
 
     area += test::compute_latlon_area(*m);
+    DEBUG();
+
     DISABLE {  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     if( generate.options.get<int>("nb_parts") == 20 )
     {
@@ -363,6 +328,8 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
       BOOST_CHECK_EQUAL( m->function_space("triags").shape(0), triags[p] );
     }
     }
+    DEBUG();
+
         std::stringstream filename; filename << "T63.msh";
         Gmsh().write(*m,filename.str());
 
@@ -424,7 +391,7 @@ DISABLE{
       BOOST_ERROR( "node " << gid << " is not owned by anyone" );
     }
   }
-  BOOST_CHECK_EQUAL( nb_owned, grid.ngptot()+grid.nlat() );
+  BOOST_CHECK_EQUAL( nb_owned, grid.npts()+grid.nlat() );
 
   BOOST_CHECK_CLOSE( area, check_area, 1e-10 );
 

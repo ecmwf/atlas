@@ -15,24 +15,22 @@
 #include "eckit/config/Resource.h"
 
 #include "atlas/GridSpec.h"
-#include "atlas/RegularLatLon.h"
+#include "atlas/grids/RegularLatLon.h"
 
 using namespace eckit;
 using namespace std;
 
 namespace atlas {
-
+namespace grids {
 
 //------------------------------------------------------------------------------------------------------
-
-ConcreteBuilderT1<Grid,RegularLatLon> RegularLatLon_builder( RegularLatLon::gridTypeStr() );
 
 RegularLatLon::RegularLatLon( const eckit::Params& p )
 {
 	if( !p.get("hash").isNil() )
 		hash_ = p["hash"].as<std::string>();
 
-	bbox_ = makeBBox(p);
+	bbox_ = make_bounding_box(p);
 
 	bool built_ninj = false;
     bool built_incs = false;
@@ -43,9 +41,9 @@ RegularLatLon::RegularLatLon( const eckit::Params& p )
 		built_ninj = true;
 	}
 
-	if( !built_ninj && p.has("grid_lat_inc") && p.has("grid_lon_inc") )
+	if( !built_ninj && p.has("lat_inc") && p.has("lon_inc") )
     {
-		computeGridIncs( p["grid_lat_inc"], p["grid_lon_inc"] );
+		computeGridIncs( p["lat_inc"], p["lon_inc"] );
         built_incs = true;
     }
 
@@ -59,16 +57,16 @@ RegularLatLon::RegularLatLon( const eckit::Params& p )
 
     RealCompare<double> cmp( degrees_eps() );
 
-	if( built_ninj && p.has("grid_lat_inc") )
+	if( built_ninj && p.has("lat_inc") )
     {
-		double jInc = p["grid_lat_inc"];
+		double jInc = p["lat_inc"];
         if( ! cmp( incNS_, jInc ) )
             Log::warning() << "Increment in latitude " <<  jInc << " does not match expected value " << incNS_ << std::endl;
     }
 
-	if( built_ninj &&  p.has("grid_lon_inc") )
+	if( built_ninj &&  p.has("lon_inc") )
     {
-		double iInc = p["grid_lon_inc"];
+		double iInc = p["lon_inc"];
         if( ! cmp( incWE_, iInc ) )
             Log::warning() << "Increment in longitude " <<  iInc << " does not match expected value " << incWE_ << std::endl;
     }
@@ -87,11 +85,11 @@ RegularLatLon::RegularLatLon( const eckit::Params& p )
             Log::warning() << "Number of i rows " << ni << " does not match expected value " << nptsWE_ << std::endl;
     }
 
-	if( p.has("nbDataPoints") )
+	if( p.has("npts") )
 	{
-		long npts = p["nbDataPoints"];
-		if( npts != nPoints() )
-			Log::warning() << "Number of data points " << npts << " does not match expected value " << nPoints() << std::endl;
+		long nb_pts = p["npts"];
+		if( nb_pts != npts() )
+			Log::warning() << "Number of data points " << nb_pts << " does not match expected value " << npts() << std::endl;
 	}
 
 //	DEBUG_VAR( bbox_ );
@@ -124,12 +122,12 @@ string RegularLatLon::uid() const
 	return ss.str();
 }
 
-Grid::BoundBox RegularLatLon::boundingBox() const
+Grid::BoundBox RegularLatLon::bounding_box() const
 {
 	return bbox_;
 }
 
-size_t RegularLatLon::nPoints() const
+size_t RegularLatLon::npts() const
 {
 	return nptsNS_ * nptsWE_;
 }
@@ -172,11 +170,8 @@ void RegularLatLon::computeGridIncs(double incNS, double incWE)
     nptsWE_ = computeCols();
 }
 
-void RegularLatLon::coordinates( std::vector<double>& pts ) const
+void RegularLatLon::lonlat( double pts[] ) const
 {
-	ASSERT( pts.size() && pts.size()%2 == 0 );
-	ASSERT( pts.size() == nPoints()*2 );
-
 	const double plon = bbox_.west();    // west
 	const double plat = bbox_.north();   // north;
 
@@ -189,17 +184,16 @@ void RegularLatLon::coordinates( std::vector<double>& pts ) const
 			const size_t idx = j*nptsWE_ + i;
 			const double lon = plon + incWE_ * i;
 
-			pts[ 2*idx   ] = lat;
-			pts[ 2*idx+1 ] = lon;
+			pts[ 2*idx   ] = lon;
+			pts[ 2*idx+1 ] = lat;
 		}
 	}
 }
 
-void RegularLatLon::coordinates( std::vector<Grid::Point>& pts ) const
+void RegularLatLon::lonlat( std::vector<Grid::Point>& pts ) const
 {
-	ASSERT( pts.size() == nPoints() );
-
-	const double plon = bbox_.west();    // west
+  pts.resize(npts());
+  const double plon = bbox_.west();    // west
 	const double plat = bbox_.north();   // north;
 
 	for( size_t j = 0; j < nptsNS_; ++j )
@@ -211,27 +205,27 @@ void RegularLatLon::coordinates( std::vector<Grid::Point>& pts ) const
 			const size_t idx = j*nptsWE_ + i;
 			const double lon = plon + incWE_ * i;
 
-			pts[ idx ].assign( lat, lon );
+			pts[ idx ].assign( lon, lat );
 		}
 	}
 }
 
-string RegularLatLon::gridType() const
+string RegularLatLon::grid_type() const
 {
 	return RegularLatLon::gridTypeStr();
 }
 
 GridSpec RegularLatLon::spec() const
 {
-	GridSpec grid_spec( gridType() );
+	GridSpec grid_spec( grid_type() );
 
 	grid_spec.uid( uid() );
 
 	grid_spec.set("Nj", nptsNS_ );
 	grid_spec.set("Ni", nptsWE_ );
 
-	grid_spec.set("grid_lat_inc", incNS_);
-	grid_spec.set("grid_lon_inc", incWE_);
+	grid_spec.set("lat_inc", incNS_);
+	grid_spec.set("lon_inc", incWE_);
 
 	grid_spec.set("hash", hash_ );
 
@@ -248,4 +242,5 @@ bool RegularLatLon::same(const Grid& grid) const
 //-----------------------------------------------------------------------------
 
 
-} // namespace eckit
+} // namespace grids
+} // namespace atlas
