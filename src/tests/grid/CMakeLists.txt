@@ -1,69 +1,69 @@
 # ==========================================================================
 list( APPEND grib_api_samples_data
-reduced_gg_pl_160_grib1.tmpl  
-reduced_gg_pl_512_grib2.tmpl    
+reduced_gg_pl_160_grib1.tmpl
+reduced_gg_pl_512_grib2.tmpl
 regular_gg_sfc_grib2.tmpl
-gg_sfc_grib1.tmpl                   
-reduced_gg_pl_160_grib2.tmpl   
-reduced_gg_pl_640_grib1.tmpl    
+gg_sfc_grib1.tmpl
+reduced_gg_pl_160_grib2.tmpl
+reduced_gg_pl_640_grib1.tmpl
 regular_ll_pl_grib1.tmpl
-gg_sfc_grib2.tmpl                   
-# reduced_gg_pl_2000_grib1.tmpl  
-reduced_gg_pl_640_grib2.tmpl    
+gg_sfc_grib2.tmpl
+# reduced_gg_pl_2000_grib1.tmpl
+reduced_gg_pl_640_grib2.tmpl
 regular_ll_pl_grib2.tmpl
-GRIB1.tmpl                          
-# reduced_gg_pl_2000_grib2.tmpl  
-reduced_gg_pl_80_grib1.tmpl     
+GRIB1.tmpl
+# reduced_gg_pl_2000_grib2.tmpl
+reduced_gg_pl_80_grib1.tmpl
 regular_ll_sfc_grib1.tmpl
-GRIB2.tmpl                          
-reduced_gg_pl_200_grib1.tmpl   
-reduced_gg_pl_80_grib2.tmpl     
+GRIB2.tmpl
+reduced_gg_pl_200_grib1.tmpl
+reduced_gg_pl_80_grib2.tmpl
 regular_ll_sfc_grib2.tmpl
-polar_stereographic_pl_grib1.tmpl   
-reduced_gg_pl_200_grib2.tmpl   
-reduced_gg_pl_grib1.tmpl        
-rotated_ll_pl_grib1.tmpl
-polar_stereographic_pl_grib2.tmpl   
-reduced_gg_pl_256_grib1.tmpl   
-reduced_gg_pl_grib2.tmpl        
-rotated_ll_pl_grib2.tmpl
-polar_stereographic_sfc_grib1.tmpl  
-reduced_gg_pl_256_grib2.tmpl   
-reduced_gg_sfc_grib1.tmpl       
-rotated_ll_sfc_grib1.tmpl
-polar_stereographic_sfc_grib2.tmpl  
-reduced_gg_pl_320_grib1.tmpl   
-reduced_gg_sfc_grib2.tmpl       
-rotated_ll_sfc_grib2.tmpl
-reduced_gg_ml_grib1.tmpl            
-reduced_gg_pl_320_grib2.tmpl   
-reduced_gg_sfc_jpeg_grib2.tmpl  
+polar_stereographic_pl_grib1.tmpl
+reduced_gg_pl_200_grib2.tmpl
+reduced_gg_pl_grib1.tmpl
+# rotated_ll_pl_grib1.tmpl            disabled until  GRIB-238 (see ATLAS-22)
+polar_stereographic_pl_grib2.tmpl
+reduced_gg_pl_256_grib1.tmpl
+reduced_gg_pl_grib2.tmpl
+# rotated_ll_pl_grib2.tmpl            disabled until  GRIB-238 (see ATLAS-22)
+polar_stereographic_sfc_grib1.tmpl
+reduced_gg_pl_256_grib2.tmpl
+reduced_gg_sfc_grib1.tmpl
+# rotated_ll_sfc_grib1.tmpl           disabled until  GRIB-238 (see ATLAS-22)
+polar_stereographic_sfc_grib2.tmpl
+reduced_gg_pl_320_grib1.tmpl
+reduced_gg_sfc_grib2.tmpl
+# rotated_ll_sfc_grib2.tmpl           disabled until  GRIB-238 (see ATLAS-22)
+reduced_gg_ml_grib1.tmpl
+reduced_gg_pl_320_grib2.tmpl
+reduced_gg_sfc_jpeg_grib2.tmpl
 sh_ml_grib1.tmpl
-reduced_gg_ml_grib2.tmpl            
-reduced_gg_pl_32_grib1.tmpl    
-reduced_ll_sfc_grib1.tmpl       
+reduced_gg_ml_grib2.tmpl
+reduced_gg_pl_32_grib1.tmpl
+reduced_ll_sfc_grib1.tmpl
 sh_ml_grib2.tmpl
-reduced_gg_pl_1024_grib1.tmpl       
-reduced_gg_pl_32_grib2.tmpl    
-reduced_ll_sfc_grib2.tmpl       
+reduced_gg_pl_1024_grib1.tmpl
+reduced_gg_pl_32_grib2.tmpl
+reduced_ll_sfc_grib2.tmpl
 sh_pl_grib1.tmpl
-reduced_gg_pl_1024_grib2.tmpl       
-reduced_gg_pl_400_grib1.tmpl   
-regular_gg_ml_grib1.tmpl        
+reduced_gg_pl_1024_grib2.tmpl
+reduced_gg_pl_400_grib1.tmpl
+regular_gg_ml_grib1.tmpl
 sh_pl_grib2.tmpl
-reduced_gg_pl_1280_grib1.tmpl       
-reduced_gg_pl_400_grib2.tmpl   
-regular_gg_ml_grib2.tmpl        
+reduced_gg_pl_1280_grib1.tmpl
+reduced_gg_pl_400_grib2.tmpl
+regular_gg_ml_grib2.tmpl
 sh_sfc_grib1.tmpl
-reduced_gg_pl_1280_grib2.tmpl       
-reduced_gg_pl_48_grib1.tmpl    
-regular_gg_pl_grib1.tmpl        
+reduced_gg_pl_1280_grib2.tmpl
+reduced_gg_pl_48_grib1.tmpl
+regular_gg_pl_grib1.tmpl
 sh_sfc_grib2.tmpl
-reduced_gg_pl_128_grib1.tmpl        
-reduced_gg_pl_48_grib2.tmpl    
+reduced_gg_pl_128_grib1.tmpl
+reduced_gg_pl_48_grib2.tmpl
 regular_gg_pl_grib2.tmpl
-reduced_gg_pl_128_grib2.tmpl        
-reduced_gg_pl_512_grib1.tmpl   
+reduced_gg_pl_128_grib2.tmpl
+reduced_gg_pl_512_grib1.tmpl
 regular_gg_sfc_grib1.tmpl
 )
 
@@ -80,15 +80,15 @@ ecbuild_add_test( TARGET      atlas_test_GridSpec
                   ARGS        reduced_gg_pl_160_grib1.tmpl
                   SOURCES     test_GridSpec.cc
                   CONDITION   ECKIT_HAVE_GRIB
-                  LIBS        atlas 
+                  LIBS        atlas
                 )
 
 
 foreach( file ${grib_api_samples_data} )
-    
-    # Add the test which depends on the above executable, 
+
+    # Add the test which depends on the above executable,
     # passing in individual grib samples files as ARGUMENTs
-    ecbuild_add_test( 
+    ecbuild_add_test(
                       TARGET test_grid_spec_${file}
                       TYPE SCRIPT
 					  DEPENDS ${tgts}
@@ -99,7 +99,7 @@ endforeach()
 
 
 # =========================================================================
-                
+
 
 #ecbuild_add_test(	TARGET      test_latlon
 #					BOOST

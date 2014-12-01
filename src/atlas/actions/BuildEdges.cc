@@ -300,7 +300,7 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
       if( !Topology::check(flags(node),Topology::PERIODIC) )
       {
         int x1 = microdeg( coords(node,XX) );
-        int x2 = microdeg( coords(node,XX) + M_PI );
+        int x2 = microdeg( coords(node,XX) + 180. );
         for( std::set<int>::iterator itr=pole_nodes[NS].begin(); itr!=pole_nodes[NS].end(); ++itr)
         {
           int other_node = *itr;
@@ -319,7 +319,7 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
   }
 
 // This no longer works as only edges that connect non-ghost nodes are added
-//        if ( std::abs( std::abs(coords(recip_node,XX) - coords(node,XX)) - M_PI) > tol )
+//        if ( std::abs( std::abs(coords(recip_node,XX) - coords(node,XX)) - 180.) > tol )
 //        {
 //          //std::cout << MPL::rank() << "  :  distance = " << coords(recip_node,XX) - coords(node,XX) << std::endl;
 //          if( MPL::rank() == part(node) )
@@ -365,9 +365,9 @@ struct ComputeUniquePoleEdgeIndex
     centroid[XX] /= 2.;
     centroid[YY] /= 2.;
     if( centroid[YY] > 0 )
-      centroid[YY] =  M_PI_2;
+      centroid[YY] =  90.;
     else
-      centroid[YY] = -M_PI_2;
+      centroid[YY] = -90.;
     return LatLonPoint( centroid[XX], centroid[YY] ).uid();
   }
 

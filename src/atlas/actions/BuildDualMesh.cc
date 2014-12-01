@@ -271,9 +271,9 @@ void add_median_dual_volume_contribution(
       x2 = x1;
       y2 = 0.;
       if ( std::abs(y1-max[YY])<tol )
-        y2 = M_PI_2;
+        y2 = 90.;
       else if ( std::abs(y1-min[YY])<tol )
-        y2 = -M_PI_2;
+        y2 = -90.;
 
       if( y2!=0 )
       {
@@ -348,9 +348,9 @@ void add_centroid_dual_volume_contribution(
       double y1 = 0;
       double y_edge = edge_centroids(edge,YY);
       if ( std::abs(y_edge-max[YY])<tol )
-        y1 = M_PI_2;
+        y1 = 90.;
       else if ( std::abs(y_edge-min[YY])<tol )
-        y1 = -M_PI_2;
+        y1 = -90.;
 
       if( y1 != 0. )
       {
@@ -423,13 +423,13 @@ void build_dual_normals( Mesh& mesh )
           int bdry_edge = bdry_edges[jedge];
           if ( std::abs(edge_centroids(bdry_edge,YY)-max[YY])<tol )
           {
-            edge_centroids(edge,YY) = M_PI_2;
+            edge_centroids(edge,YY) = 90.;
             x[cnt] = edge_centroids(bdry_edge,XX);
             ++cnt;
           }
           else if ( std::abs(edge_centroids(bdry_edge,YY)-min[YY])<tol )
           {
-            edge_centroids(edge,YY) = -M_PI_2;
+            edge_centroids(edge,YY) = -90.;
             x[cnt] = edge_centroids(bdry_edge,XX);
             ++cnt;
           }
@@ -460,9 +460,9 @@ void build_dual_normals( Mesh& mesh )
         xr = edge_centroids(edge,XX);
         yr = edge_centroids(edge,YY);;
         if ( std::abs(yr-max[YY])<tol )
-          yr = M_PI_2;
+          yr = 90.;
         else if( std::abs(yr-min[YY])<tol )
-          yr = -M_PI_2;
+          yr = -90.;
       }
       else
       {
@@ -524,7 +524,6 @@ void build_skewness( Mesh& mesh )
   ArrayView<double,2> node_coords( nodes.field<double>("coordinates") );
   double min[2], max[2];
   global_bounding_box( nodes, min, max );
-  double pi = acos(-1.);
   double tol = 1.e-6;
 
   double x1, y1, x2, y2, xc1, yc1, xc2, yc2, xi, yi;
@@ -567,9 +566,9 @@ void build_skewness( Mesh& mesh )
         xc2 = edge_centroids(edge,XX);
         yc2 = edge_centroids(edge,YY);
         if ( std::abs(yc2-max[YY])<tol )
-          yc2 = M_PI_2;
+          yc2 = 90.;
         else if( std::abs(yc2-min[YY])<tol )
-          yc2 = -M_PI_2;
+          yc2 = -90.;
       }
       else
       {

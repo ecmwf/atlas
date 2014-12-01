@@ -11,13 +11,13 @@ if( HAVE_FCTEST )
   add_fctest( TARGET atlas_fctest_mesh
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_mesh.F90
-    LIBS            atlas_fortran atlas_mpl_fortran
+    LIBS            ${atlas_f}
   )
 
   add_fctest( TARGET atlas_fctest_logging
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_logging.F90
-    LIBS            atlas_fortran
+    LIBS            ${atlas_f}
   )
 
 endif()
@@ -95,6 +95,14 @@ ecbuild_add_test( TARGET atlas_test_meshgen3d
   SOURCES   test_meshgen3d.cc
   LIBS      atlas
 )
+
+ecbuild_add_test( TARGET atlas_test_grids
+  BOOST
+  SOURCES   test_grids.cc
+  LIBS      atlas
+)
+
+
 
 add_subdirectory( grid )
 add_subdirectory( cgal )

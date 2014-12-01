@@ -20,26 +20,24 @@
 #include "eckit/value/Value.h"
 
 #include "atlas/GridSpec.h"
-#include "atlas/RegularGG.h"
+#include "atlas/grids/RegularGG.h"
 
 using namespace eckit;
 using namespace std;
 
 namespace atlas {
-
+namespace grids {
 
 //------------------------------------------------------------------------------------------------------
-
-ConcreteBuilderT1<Grid,RegularGG> RegularGG_builder( RegularGG::gridTypeStr() );
 
 RegularGG::RegularGG( const eckit::Params& p )
 {
 	if( !p.get("hash").isNil() )
 		hash_ = p["hash"].as<std::string>();
 
-	bbox_ = makeBBox(p);
+	bbox_ = make_bounding_box(p);
 
-	gaussN_ = p["GaussN"];
+	gaussN_ = p["N"];
 
 	ASSERT( gaussN_ > 1 );
 
@@ -58,19 +56,19 @@ RegularGG::RegularGG( const eckit::Params& p )
 	else
 	{
 		ni_ = 4*gaussN_;
-		Log::warning() << "Assuming number of points along parallel to be 4 * GaussianNumber " << ni_ << std::endl;
+		Log::warning() << "Assuming number of points along parallel to be 4 * N " << ni_ << std::endl;
 	}
 
-	if( p.has("nbDataPoints") )
-		nbDataPoints_ = p["nbDataPoints"];
+	if( p.has("npts") )
+		npts_ = p["npts"];
 	else
 	{
 		std::vector<double> latitudes;
 		computeLatitudes(latitudes);
-		nbDataPoints_ = computeNPoints(latitudes);
+		npts_ = computeNPoints(latitudes);
 	}
 
-	ASSERT( nbDataPoints_ > 0 );
+	ASSERT( npts_ > 0 );
 }
 
 RegularGG::~RegularGG()
@@ -84,27 +82,25 @@ string RegularGG::uid() const
 	return ss.str();
 }
 
-void RegularGG::coordinates( std::vector<double>& pts ) const
+void RegularGG::lonlat( double pts[] ) const
 {
-	ASSERT( pts.size() && pts.size()%2 == 0 );
-	ASSERT( pts.size() == nPoints()*2 );
-
 	std::vector<double> latitudes;
 	computeLatitudes(latitudes);
 
 	std::vector<Grid::Point> points;
 	computePoints(latitudes,points);
 
+  int c(0);
 	for( size_t i = 0; i < points.size(); ++i )
 	{
-		pts[ 2*i   ] = points[i].lat();
-		pts[ 2*i+1 ] = points[i].lon();
+		pts[c++] = points[i].lon();
+		pts[c++] = points[i].lat();
 	}
 }
 
-void RegularGG::coordinates(std::vector<Grid::Point>& pts) const
+void RegularGG::lonlat(std::vector<Grid::Point>& pts) const
 {
-	ASSERT( pts.size() == nbDataPoints_ );
+	ASSERT( pts.size() == npts_ );
 
 	std::vector<double> latitudes;
 	computeLatitudes(latitudes);
@@ -112,23 +108,23 @@ void RegularGG::coordinates(std::vector<Grid::Point>& pts) const
 	computePoints(latitudes,pts);
 }
 
-string RegularGG::gridType() const
+string RegularGG::grid_type() const
 {
 	return RegularGG::gridTypeStr();
 }
 
 GridSpec RegularGG::spec() const
 {
-   GridSpec grid_spec(gridType());
+   GridSpec grid_spec(grid_type());
 
    grid_spec.uid( uid() );
 
-   grid_spec.set("GaussN", gaussN_);
+   grid_spec.set("N", gaussN_);
 
    grid_spec.set("Ni", ni_);
    grid_spec.set("Nj", nj());
 
-   grid_spec.set("grid_lon_inc", computeIncLon() );
+   grid_spec.set("lon_inc", computeIncLon() );
 
    grid_spec.set("hash",hash_);
    grid_spec.set_bounding_box(bbox_);
@@ -150,7 +146,7 @@ void RegularGG::computePoints( const std::vector<double>& lats, std::vector<Poin
 {
 	ASSERT( lats.size() == nj() );
 
-	pts.resize( nPoints() );
+	pts.resize( npts() );
 
 	RealCompare<double> isEqual(degrees_eps());
 
@@ -172,7 +168,7 @@ void RegularGG::computePoints( const std::vector<double>& lats, std::vector<Poin
 			{
 				if( ( plon >= west && plon <= east ) || isEqual(plon,west) || isEqual(plon,east) )
 				{
-					pts[n].assign( lats[j], plon );
+					pts[n].assign( plon, lats[j] );
 					++n;
 				}
 				plon += delta_lon;
@@ -180,7 +176,7 @@ void RegularGG::computePoints( const std::vector<double>& lats, std::vector<Poin
 		}
 	}
 
-	ASSERT( n == nbDataPoints_ );
+	ASSERT( n == npts_ );
 }
 
 long RegularGG::computeNPoints(const std::vector<double>& lats) const
@@ -237,4 +233,5 @@ void RegularGG::computeLatitudes(std::vector<double>& lats) const
 //-----------------------------------------------------------------------------
 
 
-} // namespace eckit
+} // namespace grids
+} // namespace atlas

@@ -19,7 +19,7 @@
 //-----------------------------------------------------------------------------
 
 namespace atlas {
-
+namespace grids {
 
 //-----------------------------------------------------------------------------
 /// PolarStereoGraphic is a projected grid
@@ -42,18 +42,18 @@ public: // methods
    ///   1/ project the first spherical pt, on to the plane.
    ///   2/ From this first x/y we compute the last point on the projected plane
    ///   3/ Convert the last point back into spherical space (lat/long)
-   virtual BoundBox boundingBox() const;
-   virtual size_t nPoints() const;
+   virtual BoundBox bounding_box() const;
+   virtual size_t npts() const;
 
    /// The Points are in spherical (lat/long) co-ordinates
    /// Hence we need:
    ///   1/ project the first spherical point on to the plane x/y
    ///   2/ Add x_grid_length_/y_grid_length_ to this point
    ///   3/ Convert this back to lat long values, and then repeat.
-   virtual void coordinates( std::vector<double>& ) const;
-   virtual void coordinates( std::vector<Point>& ) const;
+   virtual void lonlat( double[] ) const;
+   virtual void lonlat( std::vector<Point>& ) const;
 
-   virtual std::string gridType() const;
+   virtual std::string grid_type() const;
    virtual GridSpec spec() const;
    virtual bool same(const Grid&) const;
 
@@ -82,7 +82,7 @@ private: // members
 
 //-----------------------------------------------------------------------------
 
-
-} // namespace eckit
+} // namespace grids
+} // namespace atlas
 
 #endif

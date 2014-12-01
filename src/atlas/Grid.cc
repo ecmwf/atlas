@@ -24,16 +24,32 @@ namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
 
-Grid::Ptr Grid::create(const Params& p )
+Grid* Grid::create( const Params& p )
 {
-	return Grid::Ptr( Factory<Grid>::instance().get( p["grid_type"] ).create(p) );
+  if( p.has("uid") )
+  {
+    if( Factory<Grid>::instance().exists(p["uid"]) )
+    {
+      return Factory<Grid>::instance().get(p["uid"]).create(p);
+    }
+  }
+  return Factory<Grid>::instance().get( p["grid_type"] ).create(p);
 }
 
-
-Grid::Ptr Grid::create(const GridSpec& g)
+Grid* Grid::create(const std::string& uid)
 {
-	GridSpecParams p( g );
-   return Grid::Ptr( Factory<Grid>::instance().get( p["grid_type"] ).create(p) );
+  if( ! Factory<Grid>::instance().exists(uid) )
+  {
+    std::stringstream msg;
+    msg << "No grid with uid " << uid << " found in\n"<< Factory<Grid>::instance();
+    throw BadParameter(msg.str(),Here());
+  }
+  return Factory<Grid>::instance().get(uid).create(ValueParams());
+}
+
+Grid* Grid::create(const GridSpec& g)
+{
+  return Grid::create( GridSpecParams(g) );
 }
 
 Grid::Grid()
@@ -44,54 +60,86 @@ Grid::~Grid()
 {
 }
 
-void Grid::buildMesh() const
+Grid::Domain Grid::domain() const
 {
-	if( ! mesh_ )
-	{
-		mesh_.reset( new Mesh() );
-		mesh_->grid( const_cast<Grid&>(*this) );
-		Tesselation::build_mesh( *this, *mesh_ );
-	}
+  return bounding_box();
+}
+
+void Grid::mask( const Domain& )
+{
+  NOTIMP;
+}
+
+void Grid::mask( const eckit::Params& )
+{
+  NOTIMP;
+}
+
+Grid* Grid::masked( const Domain& ) const
+{
+  NOTIMP;
+  return NULL;
+}
+
+Grid* Grid::masked( const eckit::Params& ) const
+{
+  NOTIMP;
+  return NULL;
+}
+
+void Grid::lonlat( std::vector<double>& crd )
+{
+  crd.resize(npts()*2);
+  lonlat(crd.data());
+}
+
+void Grid::build_mesh() const
+{
+  if( ! mesh_ )
+  {
+    mesh_.reset( new Mesh() );
+    mesh_->grid( const_cast<Grid&>(*this) );
+    Tesselation::build_mesh( *this, *mesh_ );
+  }
 }
 
 Mesh& Grid::mesh()
 {
-	buildMesh();
-    return *mesh_;
+  build_mesh();
+  return *mesh_;
 }
 
 const Mesh& Grid::mesh() const
 {
-	buildMesh();
-	return *mesh_;
+  build_mesh();
+  return *mesh_;
 }
 
 //------------------------------------------------------------------------------------------------------
 
-Grid::BoundBox Grid::makeGlobalBBox()
+Grid::BoundBox Grid::make_global_bounding_box()
 {
-	return Grid::BoundBox( 90., -90., 360. - degrees_eps(), 0. );
+  return Grid::BoundBox( 90., -90., 360. - degrees_eps(), 0. );
 }
 
-Grid::BoundBox Grid::makeBBox(const Params& p)
+Grid::BoundBox Grid::make_bounding_box(const Params& p)
 {
-	if( p.get("grid_bbox_s").isNil() )
-		return Grid::makeGlobalBBox();
+  if( p.get("bbox_s").isNil() )
+    return Grid::make_global_bounding_box();
 
-	return BoundBox(
-			p["grib_bbox_n"],
-			p["grid_bbox_s"],
-			p["grid_bbox_e"],
-			p["grid_bbox_w"] );
+  return BoundBox( p["bbox_n"],
+                   p["bbox_s"],
+                   p["bbox_e"],
+                   p["bbox_w"] );
 }
 
 double Grid::degrees_eps()
 {
-	/// default is 1E-3 because
-	/// some bugs in IFS means we need a lower resolution epsilon when decoding from grib2
+  /// default is 1E-3 because
+  /// some bugs in IFS means we need a lower resolution epsilon when decoding from grib2
 
-	static double eps = eckit::Resource<double>( "$atlas_DEGREES_EPSILON;GridDegreesEps", 1E-3 );
-	return eps;
+  static double eps = eckit::Resource<double>( "$ATLAS_DEGREES_EPSILON;GridDegreesEps", 1E-3 );
+  return eps;
 }
 
 //------------------------------------------------------------------------------------------------------

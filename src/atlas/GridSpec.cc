@@ -8,7 +8,9 @@
  * does it submit to any jurisdiction.
  */
 
-#include "eckit/exception/Exceptions.h"
+#include <eckit/exception/Exceptions.h>
+#include <eckit/parser/JSON.h>
+
 #include "atlas/GridSpec.h"
 
 //------------------------------------------------------------------------------------------------------
@@ -53,34 +55,44 @@ std::string GridSpec::uid() const
 
 void GridSpec::print( std::ostream& s) const
 {
-   s << "GridSpec[ ";
-   Properties::print(s) ;
-   s << " ]";
+   eckit::JSON js(s);
+   js.precision(16);
+   js << *this;
 }
 
-void GridSpec::set_npts_per_lat(const std::vector<long>& rgSpec_vec)
+void GridSpec::set_latitudes(const std::vector<double>& latitudes)
+{
+   std::vector<eckit::Value> lats; lats.reserve(latitudes.size());
+   for(size_t i = 0; i < latitudes.size(); ++i)
+   {
+      lats.push_back(eckit::Value(latitudes[i]));
+   }
+   set("latitudes",eckit::Value(lats) );
+}
+
+void GridSpec::set_npts_per_lat(const std::vector<int>& rgSpec_vec)
 {
    std::vector<eckit::Value> rgSpec; rgSpec.reserve(rgSpec_vec.size());
    for(size_t i = 0; i < rgSpec_vec.size(); ++i)
    {
       rgSpec.push_back(eckit::Value(rgSpec_vec[i]));
    }
-   set("NPtsPerLat",eckit::Value(rgSpec) );
+   set("npts_per_lat",eckit::Value(rgSpec) );
 }
 
 void GridSpec::set_bounding_box(const Grid::BoundBox& bbox )
 {
-   set("grid_bbox_s", bbox.bottom_left().lat());
-   set("grid_bbox_w", bbox.bottom_left().lon());
-   set("grib_bbox_n", bbox.top_right().lat());
-   set("grid_bbox_e", bbox.top_right().lon());
+   set("bbox_s", bbox.min().lat());
+   set("bbox_w", bbox.min().lon());
+   set("bbox_n", bbox.max().lat());
+   set("bbox_e", bbox.max().lon());
 }
 
-void GridSpec::get_npts_per_lat(std::vector<long>& rgSpec) const
+void GridSpec::get_npts_per_lat(std::vector<int> &rgSpec) const
 {
-   if(has("NPtsPerLat"))
+   if(has("npts_per_lat"))
    {
-      eckit::ValueList vec = get("NPtsPerLat");
+      eckit::ValueList vec = get("npts_per_lat");
       rgSpec.reserve(vec.size());
       for(size_t i=0; i < vec.size();++i)
       {
@@ -91,14 +103,14 @@ void GridSpec::get_npts_per_lat(std::vector<long>& rgSpec) const
 
 void GridSpec::get_bounding_box(Grid::BoundBox& bbox) const
 {
-   if(has("grid_bbox_s"))
+   if(has("bbox_s"))
    {
-      double area_s = get("grid_bbox_s");
-      double area_w = get("grid_bbox_w");
-      double area_n = get("grib_bbox_n");
-      double area_e = get("grid_bbox_e");
-      bbox.bottom_left().assign(area_s,area_w);
-      bbox.top_right().assign(area_n,area_e);
+      double area_s = get("bbox_s");
+      double area_w = get("bbox_w");
+      double area_n = get("bbox_n");
+      double area_e = get("bbox_e");
+      bbox.min().assign(area_w,area_s);
+      bbox.max().assign(area_e,area_n);
       ASSERT( bbox.validate() );
    }
 }

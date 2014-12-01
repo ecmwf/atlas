@@ -14,12 +14,12 @@
 #include "eckit/memory/Builder.h"
 
 #include "atlas/GridSpec.h"
-#include "atlas/Unstructured.h"
+#include "atlas/grids/Unstructured.h"
 
 using namespace eckit;
 
 namespace atlas {
-
+namespace grids {
 
 //-----------------------------------------------------------------------------
 
@@ -59,7 +59,7 @@ Unstructured::Unstructured( std::vector< Point >* pts, const std::string& hash )
         lon_max = std::max( lon_max, p[n].lon() );
     }
 
-    bound_box_ = BoundBox( Point(lat_min,lon_min), Point(lat_max,lon_max) );
+    bound_box_ = BoundBox( Point(lon_min,lat_min), Point(lon_max,lat_max) );
 }
 
 Unstructured::~Unstructured()
@@ -76,22 +76,22 @@ std::string Unstructured::hash() const
     return hash_;
 }
 
-Grid::BoundBox Unstructured::boundingBox() const
+Grid::BoundBox Unstructured::bounding_box() const
 {
     return bound_box_;
 }
 
-size_t Unstructured::nPoints() const
+size_t Unstructured::npts() const
 {
     return points_->size();
 }
 
-void Unstructured::coordinates(std::vector<double>& r ) const
+void Unstructured::lonlat( double[] ) const
 {
 	NOTIMP;
 }
 
-void Unstructured::coordinates(std::vector<Grid::Point>&) const
+void Unstructured::lonlat(std::vector<Grid::Point>&) const
 {
 	NOTIMP;
 }
@@ -100,7 +100,7 @@ GridSpec Unstructured::spec() const
 {
 	NOTIMP;
 
-	GridSpec grid_spec( gridType() );
+	GridSpec grid_spec( grid_type() );
 
 	grid_spec.uid("U");
 
@@ -113,7 +113,7 @@ GridSpec Unstructured::spec() const
 
 bool Unstructured::same(const Grid& grid) const
 {
-   if (gridType() != grid.gridType()) return false;
+   if (grid_type() != grid.grid_type()) return false;
 
    if ( static_cast<const Unstructured&>(grid).hash_ != hash_) return false;
    if ( static_cast<const Unstructured&>(grid).bound_box_ != bound_box_) return false;
@@ -124,5 +124,5 @@ bool Unstructured::same(const Grid& grid) const
 
 //-----------------------------------------------------------------------------
 
-
-} // namespace eckit
+} // namespace grids
+} // namespace atlas

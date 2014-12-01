@@ -40,32 +40,34 @@ namespace atlas {
 class GridSpec : public eckit::Properties {
 public:
 
-    GridSpec(const std::string& grid_type);
+  GridSpec(const std::string& grid_type);
 
-    ~GridSpec();
+  ~GridSpec();
 
-    /// returns the gridType. currently this matches grid _type found in GRIB
-    std::string grid_type() const;
+  /// returns the gridType. currently this matches grid _type found in GRIB
+  std::string grid_type() const;
 
-    void uid(const std::string&);
-    std::string uid() const;
+  void uid(const std::string&);
+  std::string uid() const;
 
-    void set_npts_per_lat(const std::vector<long>&  rgSpec);
-    void set_bounding_box(const Grid::BoundBox& bbox );
+  void set_latitudes(const std::vector<double>& latitudes_vec);
 
-    void get_npts_per_lat(std::vector<long>& rgSpec) const;
-    void get_bounding_box(Grid::BoundBox& bbox ) const;
+  void set_npts_per_lat(const std::vector<int>& rgSpec);
+  void set_bounding_box(const Grid::BoundBox& bbox );
 
-	std::string str() const;
+  void get_npts_per_lat(std::vector<int>& rgSpec) const;
+  void get_bounding_box(Grid::BoundBox& bbox ) const;
 
-	bool operator==(const GridSpec& rhs) { return str() == rhs.str();  }
-	bool operator!=(const GridSpec& rhs) { return !( (*this) == rhs ); }
+  std::string str() const;
 
-    friend std::ostream& operator<<( std::ostream& os, const GridSpec& v) { v.print(os); return os;}
+  bool operator==(const GridSpec& rhs) { return str() == rhs.str();  }
+  bool operator!=(const GridSpec& rhs) { return !( (*this) == rhs ); }
+
+  friend std::ostream& operator<<( std::ostream& os, const GridSpec& v) { v.print(os); return os;}
 
 private:
 
-    void print( std::ostream& ) const;
+  void print( std::ostream& ) const;
 
 };
 
