@@ -39,7 +39,7 @@ int main()
 
     Mesh::Ptr mesh( new Mesh() );
 
-    Tesselation::generate_latlon_points( *mesh, NLATS, NLONG );
+    Tesselation::generate_lonlat_points( *mesh, NLATS, NLONG );
 
     Tesselation::tesselate(*mesh);
 
