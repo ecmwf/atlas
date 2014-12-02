@@ -7,7 +7,7 @@
 # does it submit to any jurisdiction.
 
 ecbuild_add_test(
-		TARGET      test_cgal_mesh_gen_from_points
+		TARGET      atlas_test_cgal_mesh_gen_from_points
 		SOURCES     test_cgal_mesh_gen_from_points.cc
 		CONDITION   HAVE_TESSELATION
 		LIBS        atlas )

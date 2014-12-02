@@ -11,13 +11,13 @@ ecbuild_add_executable(
   CONDITION   HAVE_GRID )
 
 ecbuild_add_executable(
-  TARGET      meshgen_to_gmsh
-  SOURCES     meshgen_to_gmsh.cc
+  TARGET      atlas-meshgen
+  SOURCES     atlas-meshgen.cc
   LIBS        ${ATLAS_LIBRARIES} ${ECKIT_LIBRARIES} )
 
 ecbuild_add_executable(
-  TARGET      gmsh_extract
-  SOURCES     gmsh_extract.cc
+  TARGET      atlas-gmsh-extract
+  SOURCES     atlas-gmsh-extract.cc
   LIBS        ${ATLAS_LIBRARIES} ${ECKIT_LIBRARIES} )
 
 ecbuild_add_executable(

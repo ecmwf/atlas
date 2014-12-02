@@ -33,42 +33,44 @@ class Unstructured : public Grid {
 
 public: // methods
 
-	static std::string className() { return "atlas.grid.Unstructured"; }
+  static std::string gtype() { return "unstructured"; }
 
-	Unstructured( const eckit::Params& p );
+  static std::string className() { return "atlas.grid.Unstructured"; }
 
-    /// @warning temporary constructor taking a list of points
-    Unstructured( std::vector< Point >* pts, const std::string& hash );
+  Unstructured( const eckit::Params& p );
 
-    virtual ~Unstructured();
+  /// @warning temporary constructor taking a list of points
+  Unstructured( std::vector< Point >* pts, const std::string& hash );
 
-	virtual std::string uid() const;
-	virtual std::string hash() const;
+  virtual ~Unstructured();
 
-    virtual BoundBox bounding_box() const;
+  virtual std::string uid() const;
+  virtual std::string hash() const;
 
-    virtual size_t npts() const;
+  virtual BoundBox bounding_box() const;
 
-	virtual void lonlat( double[] ) const;
-	virtual void lonlat( std::vector<Point>& ) const;
+  virtual size_t npts() const;
 
-    virtual std::string grid_type() const { return std::string("unstructured"); }
+  virtual void lonlat( double[] ) const;
+  virtual void lonlat( std::vector<Point>& ) const;
 
-	virtual GridSpec spec() const;
+  virtual std::string grid_type() const { return gtype(); }
 
-	virtual bool same(const Grid&) const;
+  virtual GridSpec spec() const;
+
+  virtual bool same(const Grid&) const;
 
 protected:
 
-    eckit::ScopedPtr< std::vector< Point > > points_; ///< storage of coordinate points
+  eckit::ScopedPtr< std::vector< Point > > points_; ///< storage of coordinate points
 
-    BoundBox bound_box_;              ///< bounding box for the domain
+  BoundBox bound_box_;              ///< bounding box for the domain
 
-    std::string hash_;
+  std::string hash_;
 
 };
 
-register_BuilderT1(Grid,Unstructured,"unstructured");
+register_BuilderT1(Grid,Unstructured,Unstructured::gtype());
 
 
 //-----------------------------------------------------------------------------
