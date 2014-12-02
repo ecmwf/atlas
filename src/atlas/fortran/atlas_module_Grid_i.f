@@ -19,7 +19,7 @@ contains
   procedure :: npts => ReducedGrid__npts
   procedure :: nlat => ReducedGrid__nlat
   procedure :: nlon => ReducedGrid__nlon
-  procedure :: lat => ReducedGrid__lat
+  procedure :: lat => ReducedGrid__latitudes
 END TYPE ReducedGrid_type
 
 interface new_GaussianGrid

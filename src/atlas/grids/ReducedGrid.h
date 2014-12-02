@@ -60,6 +60,8 @@ public:
 
   virtual void lonlat( std::vector<Point>& ) const;
 
+  virtual void lonlat( std::vector<double>& ) const;
+
   virtual std::string grid_type() const;
 
   virtual GridSpec spec() const;

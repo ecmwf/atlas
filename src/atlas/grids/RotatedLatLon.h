@@ -71,6 +71,7 @@ public: // methods
 	virtual size_t npts() const;
 
 	virtual void lonlat( double[] ) const;
+  virtual void lonlat( std::vector<double>& v ) const { Grid::lonlat(v); }
 	virtual void lonlat( std::vector<Point>& ) const;
 
 	virtual std::string grid_type() const;

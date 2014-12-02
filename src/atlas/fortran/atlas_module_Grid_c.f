@@ -49,12 +49,12 @@ function ReducedGrid__nlon(this) result(nlon)
   call C_F_POINTER ( nlon_c_ptr , nlon , (/nlon_size/) )
 end function ReducedGrid__nlon
 
-function ReducedGrid__lat(this) result(lat)
+function ReducedGrid__latitudes(this) result(lat)
   class(ReducedGrid_type), intent(in) :: this
   real(c_double), pointer :: lat(:)
   type(c_ptr) :: lat_c_ptr
   integer(c_int) :: lat_size
   call atlas__ReducedGrid__latitudes(this%private%object, lat_c_ptr, lat_size)
   call C_F_POINTER (  lat_c_ptr , lat , (/lat_size/) )
-end function ReducedGrid__lat
+end function ReducedGrid__latitudes
 

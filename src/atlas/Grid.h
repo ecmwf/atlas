@@ -110,7 +110,7 @@ public: // methods
   /// Assumes that the input vectors have the correct size.
   /// Points represent latitude and longitude values
   virtual void lonlat( double[] ) const = 0;
-  virtual void lonlat( std::vector<double>& );
+  virtual void lonlat( std::vector<double>& ) const;
   virtual void lonlat( std::vector<Point>& ) const = 0;
 
   virtual std::string grid_type() const = 0;

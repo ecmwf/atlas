@@ -51,6 +51,7 @@ public: // methods
    ///   2/ Add x_grid_length_/y_grid_length_ to this point
    ///   3/ Convert this back to lat long values, and then repeat.
    virtual void lonlat( double[] ) const;
+   virtual void lonlat( std::vector<double>& v ) const { Grid::lonlat(v); }
    virtual void lonlat( std::vector<Point>& ) const;
 
    virtual std::string grid_type() const;

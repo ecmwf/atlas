@@ -87,7 +87,7 @@ Grid* Grid::masked( const eckit::Params& ) const
   return NULL;
 }
 
-void Grid::lonlat( std::vector<double>& crd )
+void Grid::lonlat( std::vector<double>& crd ) const
 {
   crd.resize(npts()*2);
   lonlat(crd.data());
