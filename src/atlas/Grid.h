@@ -79,8 +79,8 @@ public: // methods
 
   /// Assumes north > south, and east > west.
   /// and hence independent of scanning mode(since that is GRIB specific)
-  /// Assumes lat -90 --> +90
-  /// Assumes lon   0 --> +360
+  /// Assumes lat range: -90 --> +90
+  /// Assumes lon range:-360 --> +360
   /// When the bounding box is not on the grid, the co-ordinate values, will be
   /// on the enclosing grid points
   virtual BoundBox bounding_box() const = 0;
@@ -103,7 +103,7 @@ public: // methods
 
   /// Returns the number of points
   /// This methods should have constant access time
-  /// If necessary derived classes should compute it at cosntruction
+  /// If necessary derived classes should compute it at construction
   virtual size_t npts() const = 0;
 
   /// Assumes we start at NORTH,WEST --> SOUTH,EAST
@@ -124,7 +124,7 @@ public: // methods
 
 protected: // methods
 
-  /// helper function to initialize global grids, with a global area (BoundBox)
+  /// helper function to initialise global grids, with a global area (BoundBox)
   static BoundBox make_global_bounding_box();
 
   /// helper function to create bounding boxes (for non-global grids)

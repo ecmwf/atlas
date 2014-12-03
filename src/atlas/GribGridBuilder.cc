@@ -175,8 +175,8 @@ GribGridBuilderHelper::GribGridBuilderHelper(grib_handle* handle)
    ASSERT(south_ > -90.0 || FloatCompare::is_equal(south_,-90.0,epsilon_));
 
    // make sure we are in range 0-360.0 ??
-   while(west_ < 0) west_ = west_ + 360.0;
-   while(east_ < 0) east_ = east_ + 360.0;
+   while(west_ < -360) west_ = west_ + 360.0;
+   while(east_ < -360) east_ = east_ + 360.0;
    while(west_ > 360.0) west_ = west_ - 360.0;
    while(east_ > 360.0) east_ = east_ - 360.0;
 
@@ -688,7 +688,7 @@ Grid::Ptr GribReducedLatLon::build()
                            ( plon < east_ && plon > west_)) {
 
                      ASSERT(plat < 90.0 && plat > -90.0);
-                     ASSERT(plon < 360.0 && plon >= 0);
+                     ASSERT(plon < 360.0 && plon >= -360);
                      the_grid_->points_.push_back( Grid::Point( plat, plon ) );
                   }
                   plon += east_west_grid_length;
