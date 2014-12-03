@@ -294,6 +294,18 @@ void FunctionSpace::parallelise()
 	}
 }
 
+//------------------------------------------------------------------------------------------------------
+
+std::ostream& operator<<(std::ostream& s,const FunctionSpace& fs)
+{
+	s << "FunctionSpace [" << fs.name() << "]" << std::endl;
+	for( size_t i = 0; i < fs.nb_fields() ; ++i )
+	{
+		s << "  Field [ " << fs.field(i).name() << " ] <" << fs.field(i).data_type() << ">" << std::endl;
+	}
+	return s;
+}
+
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 

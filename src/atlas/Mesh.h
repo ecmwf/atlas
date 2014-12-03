@@ -73,13 +73,17 @@ public: // methods
 	/// accessor of the Grid
 	Grid& grid() { ASSERT( grid_ ); return *grid_; }
 
+	friend std::ostream& operator<<(std::ostream&, const Mesh&);
+
 private: // members
 
 	Metadata      metadata_;
 
 	Grid* grid_;
 
-	eckit::DenseMap< std::string, eckit::SharedPtr<FunctionSpace> > function_spaces_;
+	typedef eckit::DenseMap< std::string, eckit::SharedPtr<FunctionSpace> > StoreFS_t;
+
+	StoreFS_t function_spaces_;
 
 };
 
