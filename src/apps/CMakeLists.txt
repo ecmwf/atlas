@@ -25,4 +25,7 @@ ecbuild_add_executable(
   SOURCES     atlas-grids.cc
   LIBS        ${ATLAS_LIBRARIES} ${ECKIT_LIBRARIES} )
 
-
+ecbuild_add_executable(
+  TARGET      atlas-benchmark
+  SOURCES     atlas-benchmark.cc
+  LIBS        ${ATLAS_LIBRARIES} ${ECKIT_LIBRARIES} )
