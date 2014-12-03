@@ -45,7 +45,7 @@
 #ifdef HAVE_OMP
   #include <omp.h>
 #else
-  void omp_set_num_threads(int) { eckit::Log::warning() << "OpenMP not available!"; }
+  void omp_set_num_threads(int) { eckit::Log::warning() << "\nWARNING: OpenMP not available!\n" << std::endl; }
   int omp_get_max_threads() { return 0; }
 #endif
 
@@ -323,7 +323,10 @@ void AtlasBenchmark::iteration()
   Array<double> avgS_arr(nedges,nlev,2);
   ArrayView<double,3> avgS(avgS_arr);
 
+
+#ifdef HAVE_OMP
   #pragma omp parallel for
+#endif
   for( int jedge=0; jedge<nedges; ++jedge )
   {
     int ip1 = edge2node(jedge,0);
@@ -337,7 +340,9 @@ void AtlasBenchmark::iteration()
     }
   }
 
+#ifdef HAVE_OMP
   #pragma omp parallel for
+#endif
   for( int jnode=0; jnode<nnodes; ++jnode )
   {
     for( int jlev=0; jlev<nlev; ++jlev )
