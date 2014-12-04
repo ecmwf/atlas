@@ -180,8 +180,6 @@ private:
 
   TimerStats iteration_timer;
   TimerStats haloexchange_timer;
-  static const double deg2rad = M_PI/180.;
-
   bool do_run;
 };
 
@@ -262,6 +260,7 @@ void AtlasBenchmark::setup()
   mesh->function_space("nodes").field("grad").metadata().set("nb_levels",nlev);
 
   double radius = 6371.22e+03; // Earth's radius
+  double deg2rad = M_PI/180.;
   for( int jnode=0; jnode<nnodes; ++jnode )
   {
     lonlat(jnode,XX) = coords(jnode,XX) * deg2rad;
