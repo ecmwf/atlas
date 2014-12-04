@@ -10,9 +10,11 @@
 
 #include <numeric>
 #include <algorithm>
+
 #include <eckit/exception/Exceptions.h>
-#include <eckit/memory/Factory.h>
-#include <eckit/memory/Builder.h>
+#include "eckit/memory/Factory.h"
+#include "eckit/memory/Builder.h"
+
 #include "atlas/meshgen/RGG.h"
 #include "atlas/Util.h"
 

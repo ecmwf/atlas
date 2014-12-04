@@ -14,16 +14,14 @@
 #include <cstddef>
 #include <vector>
 
-#include <eckit/memory/Builder.h>
+#include "eckit/memory/Builder.h"
 #include "atlas/Grid.h"
-
-
-//-----------------------------------------------------------------------------
 
 namespace atlas {
 namespace grids {
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------
+
 /// RotatedLatLon is a grid where the poles are shifted
 ///
 ///=== WMO specification ===
@@ -59,7 +57,7 @@ class RotatedLatLon : public Grid {
 public: // methods
 
 	static std::string className() { return "atlas.grid.RotatedLatLon"; }
-	static std::string gridTypeStr() { return "rotated_ll"; }
+	static std::string grid_type_str() { return "rotated_ll"; }
 
 	RotatedLatLon( const eckit::Params& p );
 	virtual ~RotatedLatLon();
@@ -104,10 +102,7 @@ private: // members
 	long nptsWE_;
 };
 
-register_BuilderT1(Grid,RotatedLatLon,RotatedLatLon::gridTypeStr());
-
-
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------
 
 } // namespace grids
 } // namespace atlas

@@ -9,7 +9,8 @@
  */
 
 #include <typeinfo> // std::bad_cast
-#include <eckit/memory/Builder.h>
+
+#include "eckit/memory/Builder.h"
 
 #include "atlas/atlas_config.h"
 #include "atlas/grids/ReducedLonLatGrid.h"
@@ -22,7 +23,11 @@ using eckit::BadParameter;
 namespace atlas {
 namespace grids {
 
-std::string ReducedLonLatGrid::gtype()
+//------------------------------------------------------------------------------------------------------
+
+register_BuilderT1(Grid,ReducedLonLatGrid,ReducedLonLatGrid::grid_type_str());
+
+std::string ReducedLonLatGrid::grid_type_str()
 {
   return "reduced_ll";
 }
@@ -35,10 +40,10 @@ std::string ReducedLonLatGrid::className()
 void ReducedLonLatGrid::set_typeinfo()
 {
   std::stringstream stream;
-  stream << gtype()<<".N"<<N();
+  stream << grid_type_str()<<".N"<<N();
   uid_ = stream.str();
   hash_ = stream.str();
-  grid_type_ = gtype();
+  grid_type_ = grid_type_str();
 }
 
 ReducedLonLatGrid::ReducedLonLatGrid() : ReducedGrid()
@@ -118,7 +123,7 @@ void ReducedLonLatGrid::setup( const int nlat, const int nlons[], bool poles )
 
 GridSpec ReducedLonLatGrid::spec() const
 {
-  GridSpec grid_spec( gtype() );
+  GridSpec grid_spec( grid_type_str() );
 
   grid_spec.uid(uid());
   grid_spec.set("hash", hash() );
@@ -135,6 +140,8 @@ GridSpec ReducedLonLatGrid::spec() const
 
   return grid_spec;
 }
+
+//------------------------------------------------------------------------------------------------------
 
 } // namespace grids
 } // namespace atlas

@@ -30,7 +30,7 @@ class PolarStereoGraphic : public Grid {
 public: // methods
 
    static std::string className() { return "atlas.grid.PolarStereoGraphic"; }
-   static std::string gridTypeStr() { return "polar_stereographic"; }
+   static std::string grid_type_str() { return "polar_stereographic"; }
 
    PolarStereoGraphic( const eckit::Params& p );
    virtual ~PolarStereoGraphic();

@@ -52,7 +52,7 @@ static bool check_symmetry(const std::vector<long>& nbPtsPerLat)
 
 //------------------------------------------------------------------------------------------------------
 
-ConcreteBuilderT1<Grid,ReducedGG> ReducedGG_builder( ReducedGG::gridTypeStr()+"_depr" );
+ConcreteBuilderT1<Grid,ReducedGG> ReducedGG_builder( ReducedGG::grid_type_str()+"_depr" );
 
 ReducedGG::ReducedGG( const eckit::Params& p )
 {
@@ -131,7 +131,7 @@ ReducedGG::~ReducedGG()
 string ReducedGG::uid() const
 {
 	std::stringstream ss;
-	ss << gridTypeStr() << "_" << gaussN_;
+	ss << grid_type_str() << "_" << gaussN_;
 	return ss.str();
 }
 
@@ -163,7 +163,7 @@ void ReducedGG::lonlat(std::vector<Grid::Point>& pts) const
 
 string ReducedGG::grid_type() const
 {
-	return ReducedGG::gridTypeStr();
+	return ReducedGG::grid_type_str();
 }
 
 GridSpec ReducedGG::spec() const

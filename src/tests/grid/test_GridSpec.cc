@@ -134,7 +134,7 @@ static void test_grib_file(const std::string& fpath)
 
    double epsilon = (editionNumber == 1) ? 1e-3 : 1e-6;
 
-   if (gridType == ReducedGaussianGrid::gtype() || gridType == GaussianGrid::gtype() ) {
+   if (gridType == ReducedGaussianGrid::grid_type_str() || gridType == GaussianGrid::grid_type_str() ) {
 
      // ---------------------------------------------------------------------------------------
       // Old Grib samples file have errors in the EXPECTED_longitudeOfLastGridPointInDegrees

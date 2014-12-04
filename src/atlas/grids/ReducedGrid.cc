@@ -9,8 +9,9 @@
  */
 
 #include <typeinfo> // std::bad_cast
-#include <eckit/memory/Builder.h>
-#include <eckit/memory/Factory.h>
+
+#include "eckit/memory/Builder.h"
+#include "eckit/memory/Factory.h"
 
 #include "atlas/grids/ReducedGrid.h"
 #include "atlas/GridSpec.h"
@@ -25,6 +26,9 @@ using eckit::BadParameter;
 namespace atlas {
 namespace grids {
 
+//------------------------------------------------------------------------------------------------------
+
+register_BuilderT1(Grid,ReducedGrid,ReducedGrid::grid_type_str());
 
 ReducedGrid* ReducedGrid::create( const Params& p )
 {

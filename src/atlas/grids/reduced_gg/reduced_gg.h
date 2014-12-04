@@ -14,7 +14,7 @@
 #ifndef atlas_grids_reduced_gg_reduced_gg_h
 #define atlas_grids_reduced_gg_reduced_gg_h
 
-#include <eckit/memory/Builder.h>
+#include "eckit/memory/Builder.h"
 #include <eckit/value/Params.h>
 #include "atlas/grids/ReducedGaussianGrid.h"
 
@@ -22,6 +22,7 @@ namespace atlas {
 namespace grids {
 namespace reduced_gg {
 
+//------------------------------------------------------------------------------------------------------
 
 /// To get the grid:
 ///
@@ -29,12 +30,11 @@ namespace reduced_gg {
 /// or
 ///   SharedPtr< ReducedGrid > grid( Factory< ReducedGrid >::instance().get( "N80" ).create() );
 
-
-///@todo these classes will inherit from ReducedGaussianGrid when it's ready
 #define DEFINE_GRID(CLASS)\
 class CLASS : public ReducedGaussianGrid { \
 public:\
 \
+	static std::string grid_type_str() { return "reduced_gg_" + std::string(#CLASS); } \
   CLASS() \
   {\
     construct();\
@@ -55,8 +55,9 @@ public:\
     grid_type_ = "reduced_gg"; \
   }\
   static std::string className() { return "atlas.grids.reduced_gg."+std::string(#CLASS); }\
-};\
-register_BuilderT1(Grid,CLASS,"reduced_gg."+std::string(#CLASS));
+};
+
+// list of reduced_gg grid definitions
 
 DEFINE_GRID(N16);
 DEFINE_GRID(N24);
@@ -83,7 +84,11 @@ DEFINE_GRID(N4000);
 DEFINE_GRID(N8000);
 
 #undef DEFINE_GRID
+
+//------------------------------------------------------------------------------------------------------
+
 } // namespace reduced_gg
 } // namespace grids
 } // namespace atlas
+
 #endif // atlas_grids_reduced_gg_reduced_gg_h

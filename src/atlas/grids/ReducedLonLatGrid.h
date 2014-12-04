@@ -8,8 +8,6 @@
  * does it submit to any jurisdiction.
  */
 
-
-
 #ifndef atlas_grids_ReducedLonLatGrid_h
 #define atlas_grids_ReducedLonLatGrid_h
 
@@ -18,6 +16,8 @@
 
 namespace atlas {
 namespace grids {
+
+//------------------------------------------------------------------------------------------------------
 
 /// @brief Reduced LonLat Grid
 ///
@@ -43,7 +43,7 @@ private:
 
 public:
 
-  static std::string gtype();
+  static std::string grid_type_str();
 
   ReducedLonLatGrid();
 
@@ -62,10 +62,12 @@ protected:
   void set_typeinfo();
 
 private:
+
   bool poles_;
+
 };
 
-register_BuilderT1(Grid,ReducedLonLatGrid,ReducedLonLatGrid::gtype());
+//------------------------------------------------------------------------------------------------------
 
 } // namespace grids
 } // namespace atlas

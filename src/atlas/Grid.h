@@ -23,7 +23,7 @@
 #include <eckit/memory/Owned.h>
 #include <eckit/memory/SharedPtr.h>
 #include <eckit/value/Params.h>
-#include <eckit/memory/Builder.h>
+#include "eckit/memory/Builder.h"
 
 #include <eckit/geometry/Point2.h>
 

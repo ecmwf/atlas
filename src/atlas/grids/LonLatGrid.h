@@ -19,6 +19,8 @@
 namespace atlas {
 namespace grids {
 
+//------------------------------------------------------------------------------------------------------
+
 /// @brief Regular LonLat Grid
 ///
 /// This grid is a special case of the class ReducedGrid, with
@@ -39,7 +41,7 @@ private:
 
 public:
 
-  static std::string gtype();
+  static std::string grid_type_str();
 
   LonLatGrid();
 
@@ -117,7 +119,7 @@ protected:
   void set_typeinfo();
 };
 
-register_BuilderT1(Grid,LonLatGrid,LonLatGrid::gtype());
+//------------------------------------------------------------------------------------------------------
 
 } // namespace grids
 } // namespace atlas

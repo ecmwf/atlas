@@ -6,6 +6,8 @@ namespace atlas {
 namespace grids {
 namespace reduced_gg {
 
+register_BuilderT1(Grid,N32,N32::grid_type_str());
+
 void N32::construct()
 {
   int N=32;

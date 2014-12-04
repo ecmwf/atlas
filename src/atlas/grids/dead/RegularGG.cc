@@ -78,7 +78,7 @@ RegularGG::~RegularGG()
 string RegularGG::uid() const
 {
 	std::stringstream ss;
-	ss << gridTypeStr() << "_" << gaussN_;
+	ss << grid_type_str() << "_" << gaussN_;
 	return ss.str();
 }
 
@@ -110,7 +110,7 @@ void RegularGG::lonlat(std::vector<Grid::Point>& pts) const
 
 string RegularGG::grid_type() const
 {
-	return RegularGG::gridTypeStr();
+	return RegularGG::grid_type_str();
 }
 
 GridSpec RegularGG::spec() const

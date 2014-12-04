@@ -8,18 +8,18 @@
  * does it submit to any jurisdiction.
  */
 
-
-
 #ifndef ReducedGrid_h
 #define ReducedGrid_h
 
-#include <eckit/memory/Builder.h>
+#include "eckit/memory/Builder.h"
 
 #include "atlas/Grid.h"
 #include "atlas/Util.h"
 
 namespace atlas {
 namespace grids {
+
+//------------------------------------------------------------------------------------------------------
 
 /// @brief Reduced Grid
 ///
@@ -30,6 +30,7 @@ namespace grids {
 /// such distribution can be represented with this class
 class ReducedGrid: public Grid {
 public:
+
   typedef eckit::SharedPtr<ReducedGrid> Ptr;
 
   static ReducedGrid* create( const eckit::Params& );
@@ -38,6 +39,9 @@ public:
 
 public:
 
+  static std::string className();
+  static std::string grid_type_str() { return "reduced"; }
+
   ReducedGrid();
 
   ReducedGrid( const eckit::Params& );
@@ -45,8 +49,6 @@ public:
   ReducedGrid( const std::vector<double>& lats, const std::vector<size_t>& nlon );
 
   ReducedGrid( const int nlat, const double lats[], const int npts_per_lat[] );
-
-  static std::string className();
 
   virtual std::string uid() const;
 
@@ -92,6 +94,7 @@ public:
   virtual void mask( const eckit::Params& );
 
 protected:
+
   void setup( const eckit::Params& );
   void setup( const int nlat, const double lats[], const int npts_per_lat[] );
   void setup( const int nlat, const double lats[], const int nlons[], const double lonmin[], const double lonmax[] );
@@ -99,6 +102,7 @@ protected:
   void setup_lat_hemisphere( const int N, const double lat[], const int lon[], const AngleUnit );
 
 protected:
+
   std::vector<double> lat_;    ///<! Latitude values
   std::vector<int>    nlons_;  ///<! Number of points per latitude (int32 type for Fortran interoperability)
   std::vector<double> lonmin_; ///<! Value of minimum longitude per latitude [default=0]
@@ -112,8 +116,7 @@ protected:
   int                 N_;
 };
 
-register_BuilderT1(Grid,ReducedGrid,"reduced");
-
+//------------------------------------------------------------------------------------------------------
 
 extern "C"
 {
@@ -124,6 +127,8 @@ extern "C"
   double atlas__ReducedGrid__lat(ReducedGrid* This,int jlat);
   void atlas__ReducedGrid__latitudes(ReducedGrid* This, const double* &lats, int &size);
 }
+
+//------------------------------------------------------------------------------------------------------
 
 } // namespace grids
 } // namespace atlas
