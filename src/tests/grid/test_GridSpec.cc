@@ -19,6 +19,7 @@
 
 #include "eckit/grib/GribHandle.h"
 #include "eckit/grib/GribAccessor.h"
+#include "eckit/grib/GribMutator.h"
 #include "eckit/types/FloatCompare.h"
 
 #include "atlas/io/Grib.h"
@@ -38,6 +39,7 @@ using namespace atlas::grids;
 
 static void test_grib_file(const std::string& file);
 static bool comparePointList(const std::vector<Grid::Point>& grib_pntlist, const std::vector<Grid::Point>& points, double epsilon, eckit::grib::GribHandle& gh);
+static void align_grib_iterator_to_eckit_defaults( eckit::grib::GribHandle& gh);
 
 
 BOOST_AUTO_TEST_SUITE( TestGridSpec )
@@ -87,6 +89,10 @@ static void test_grib_file(const std::string& fpath)
       std::cout << " ** Ignoring grid types [ polar_stereographic | sh ] " << std::endl;
       return;
    }
+
+   // Align the iterator to our own defaults access pattern
+   // This is needed to correctly compare the points.
+   align_grib_iterator_to_eckit_defaults(gh);
 
    // Create Grid derivatives from the GRIB file
    Grid::Ptr grid_created_from_grib ( Grib::create_grid(gh) );
@@ -231,3 +237,47 @@ bool comparePointList(
    return ret;
 }
 
+void align_grib_iterator_to_eckit_defaults( eckit::grib::GribHandle& gh)
+{
+   // *****************************************************************************
+   // get the scanning mode,
+   // and to align iterators to atlas/mir defaults
+   // make sure any access to grib iterators, returns the points according to our defaults: i.e
+   //    iScansPositively(true),
+   //    jScansPositively(false),
+   //    jPointsAreConsecutive(false)
+   //    alternativeRowScanning(false)
+   bool iScansPositively = true;
+   if (gh.hasKey("iScansPositively")) {
+
+      iScansPositively = GribAccessor<bool>("iScansPositively")(gh);
+      if ( !iScansPositively ) {
+         GribMutator<bool> mt("iScansPositively");
+         mt.set(gh,true);
+      }
+   }
+
+   bool jScansPositively = false;
+   if (gh.hasKey("jScansPositively")) {
+
+      jScansPositively = GribAccessor<bool>("jScansPositively")(gh);
+      if (jScansPositively) {
+         GribMutator<bool> mt("jScansPositively");
+         mt.set(gh,false);
+      }
+   }
+
+   if (gh.hasKey("jPointsAreConsecutive")) {
+      bool consec = GribAccessor<bool>("jPointsAreConsecutive")(gh);
+      if (consec) {
+         GribMutator<bool> mt("jPointsAreConsecutive");
+         mt.set(gh,false);
+      }
+   }
+
+   if (gh.hasKey("alternativeRowScanning")) {
+      // Available in GRIB, but not supported, assert if we come across it.
+      bool alter = GribAccessor<bool>("alternativeRowScanning")(gh);
+      ASSERT(!alter);
+   }
+}
