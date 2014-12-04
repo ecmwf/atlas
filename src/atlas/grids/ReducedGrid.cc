@@ -9,8 +9,9 @@
  */
 
 #include <typeinfo> // std::bad_cast
-#include <eckit/memory/Builder.h>
-#include <eckit/memory/Factory.h>
+
+#include "eckit/memory/Builder.h"
+#include "eckit/memory/Factory.h"
 
 #include "atlas/grids/ReducedGrid.h"
 #include "atlas/GridSpec.h"
@@ -25,6 +26,9 @@ using eckit::BadParameter;
 namespace atlas {
 namespace grids {
 
+//------------------------------------------------------------------------------------------------------
+
+register_BuilderT1(Grid,ReducedGrid,ReducedGrid::grid_type_str());
 
 ReducedGrid* ReducedGrid::create( const Params& p )
 {
@@ -152,7 +156,12 @@ void ReducedGrid::setup( const int nlat, const double lats[], const int nlons[] 
   std::vector<double> lonmin(nlat,0.);
   std::vector<double> lonmax(nlat);
   for( int jlat=0; jlat<nlat; ++jlat )
-    lonmax[jlat] = 360.-360./static_cast<double>(nlons[jlat]);
+  {
+    if( nlons[jlat] )
+      lonmax[jlat] = 360.-360./static_cast<double>(nlons[jlat]);
+    else
+      lonmax[jlat] = 0.;
+  }
   setup(nlat,lats,nlons,lonmin.data(),lonmax.data());
 }
 

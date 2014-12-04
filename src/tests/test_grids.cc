@@ -30,9 +30,9 @@ BOOST_AUTO_TEST_CASE( init ) { MPL::init(); }
 
 BOOST_AUTO_TEST_CASE( test_factory )
 {
-  ReducedGrid::Ptr reducedgrid( ReducedGrid::create("reduced_gg.N80") );
+  ReducedGrid::Ptr reducedgrid( ReducedGrid::create("reduced_gg_N80") );
 
-  Grid::Ptr grid ( Grid::create("reduced_gg.N24") );
+  Grid::Ptr grid ( Grid::create("reduced_gg_N24") );
 
   std::cout << "reducedgrid->nlat() = " << reducedgrid->nlat() << std::endl;
   std::cout << "grid->npts() = " << grid->npts() << std::endl;

@@ -50,7 +50,7 @@ class ReducedLatLon : public Grid {
 public: // methods
 
 	static std::string className()   { return "atlas.grid.ReducedLatLon"; }
-	static std::string gridTypeStr() { return "reduced_ll_depr"; }
+	static std::string grid_type_str() { return "reduced_ll_depr"; }
 
 	ReducedLatLon( const eckit::Params& p );
 
@@ -97,7 +97,7 @@ private: // members
 	std::string hash_;
 };
 
-register_BuilderT1(Grid,ReducedLatLon,ReducedLatLon::gridTypeStr());
+register_BuilderT1(Grid,ReducedLatLon,ReducedLatLon::grid_type_str());
 
 //-----------------------------------------------------------------------------
 

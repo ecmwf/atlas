@@ -21,19 +21,16 @@
 
 #include "atlas/Grid.h"
 
-
-//-----------------------------------------------------------------------------
-
 namespace atlas {
 namespace grids {
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------
 
 class Unstructured : public Grid {
 
 public: // methods
 
-  static std::string gtype() { return "unstructured"; }
+  static std::string grid_type_str() { return "unstructured"; }
 
   static std::string className() { return "atlas.grid.Unstructured"; }
 
@@ -53,8 +50,9 @@ public: // methods
 
   virtual void lonlat( double[] ) const;
   virtual void lonlat( std::vector<Point>& ) const;
+  virtual void lonlat( std::vector<double>& v ) const { Grid::lonlat(v); }
 
-  virtual std::string grid_type() const { return gtype(); }
+  virtual std::string grid_type() const { return grid_type_str(); }
 
   virtual GridSpec spec() const;
 
@@ -70,10 +68,7 @@ protected:
 
 };
 
-register_BuilderT1(Grid,Unstructured,Unstructured::gtype());
-
-
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------
 
 } // namespace grids
 } // namespace atlas

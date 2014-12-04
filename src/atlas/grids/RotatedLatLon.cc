@@ -26,6 +26,8 @@ namespace grids {
 
 //------------------------------------------------------------------------------------------------------
 
+register_BuilderT1(Grid,RotatedLatLon,RotatedLatLon::grid_type_str());
+
 RotatedLatLon::RotatedLatLon( const eckit::Params& p )
 : south_pole_lat_(0),
   south_pole_lon_(0),
@@ -88,7 +90,7 @@ RotatedLatLon::~RotatedLatLon()
 string RotatedLatLon::uid() const
 {
 	std::stringstream ss;
-	ss << gridTypeStr() << "_" << nptsNS_;
+	ss << grid_type_str() << "_" << nptsNS_;
 	return ss.str();
 }
 
@@ -149,7 +151,7 @@ void RotatedLatLon::lonlat(std::vector<Grid::Point>& points) const
 
 string RotatedLatLon::grid_type() const
 {
-	return RotatedLatLon::gridTypeStr();
+	return RotatedLatLon::grid_type_str();
 }
 
 GridSpec RotatedLatLon::spec() const
@@ -178,8 +180,7 @@ bool RotatedLatLon::same(const Grid& grid) const
 	return spec() == grid.spec();
 }
 
-//-----------------------------------------------------------------------------
-
+//------------------------------------------------------------------------------------------------------
 
 } // namespace grids
 } // namespace atlas

@@ -317,7 +317,8 @@ void read_config(const LocalPathName& path, const int master_task = 0)
 
 void atlas_init(int argc, char** argv)
 {
-	Context::instance().setup(argc, argv);
+  if( argc > 0 )
+	  Context::instance().setup(argc, argv);
 
 	MPL::init( Context::instance().argc(), Context::instance().argvs() );
 

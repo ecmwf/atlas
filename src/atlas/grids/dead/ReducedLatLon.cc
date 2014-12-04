@@ -67,7 +67,7 @@ ReducedLatLon::~ReducedLatLon()
 string ReducedLatLon::uid() const
 {
 	std::stringstream ss;
-	ss << ReducedLatLon::gridTypeStr() << "_" << nptsNS_;
+	ss << ReducedLatLon::grid_type_str() << "_" << nptsNS_;
 	return ss.str();
 }
 
@@ -120,7 +120,7 @@ size_t ReducedLatLon::npts() const
 
 string ReducedLatLon::grid_type() const
 {
-	return ReducedLatLon::gridTypeStr();
+	return ReducedLatLon::grid_type_str();
 }
 
 GridSpec ReducedLatLon::spec() const

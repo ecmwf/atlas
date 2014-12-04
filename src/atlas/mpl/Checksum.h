@@ -1,9 +1,9 @@
 /*
  * (C) Copyright 1996-2014 ECMWF.
- * 
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
- * In applying this licence, ECMWF does not waive the privileges and immunities 
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
@@ -123,7 +123,7 @@ void Checksum::var_info( const ArrayView<DATA_TYPE,RANK>& arr,
   if( RANK>1 )
   {
     varstrides.assign(arr.strides()+1,arr.strides()+RANK);
-    varextents.assign(arr.extents()+1,arr.extents()+RANK);
+    varextents.assign(arr.shape()+1,arr.shape()+RANK);
   }
   else
   {
@@ -152,7 +152,7 @@ std::string Checksum::execute( const ArrayView<DATA_TYPE,LRANK>& lfield ) const
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
-extern "C" 
+extern "C"
 {
   Checksum* atlas__Checksum__new ();
   void atlas__Checksum__delete (Checksum* This);

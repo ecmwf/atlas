@@ -9,7 +9,7 @@
  */
 
 #include <typeinfo> // std::bad_cast
-#include <eckit/memory/Builder.h>
+#include "eckit/memory/Builder.h"
 
 #include "atlas/atlas_config.h"
 #ifdef ECKIT_HAVE_GRIB
@@ -22,6 +22,10 @@
 
 namespace atlas {
 namespace grids {
+
+//------------------------------------------------------------------------------------------------------
+
+register_BuilderT1(Grid,ReducedGaussianGrid,ReducedGaussianGrid::grid_type_str());
 
 std::string ReducedGaussianGrid::className()
 {
@@ -96,7 +100,7 @@ void ReducedGaussianGrid::setup_N_hemisphere( const int N, const int nlons[] )
 
 GridSpec ReducedGaussianGrid::spec() const
 {
-  GridSpec grid_spec( gtype() );
+  GridSpec grid_spec( grid_type_str() );
 
   grid_spec.uid( uid() );
   grid_spec.set("hash", hash());
@@ -109,6 +113,8 @@ GridSpec ReducedGaussianGrid::spec() const
 
   return grid_spec;
 }
+
+//------------------------------------------------------------------------------------------------------
 
 } // namespace grids
 } // namespace atlas

@@ -22,8 +22,8 @@
 #include <eckit/runtime/Tool.h>
 #include <eckit/runtime/Context.h>
 #include <eckit/filesystem/PathName.h>
-#include <eckit/memory/Factory.h>
-#include <eckit/memory/Builder.h>
+#include "eckit/memory/Factory.h"
+#include "eckit/memory/Builder.h"
 #include <eckit/parser/JSON.h>
 
 #include "atlas/atlas.h"
@@ -155,12 +155,12 @@ void AtlasGrids::run()
                   << grid->grid_type() << std::endl;
       Log::info() << "   uid:                              "
                   << grid->uid() << std::endl;
-      if( grid->grid_type() == GaussianGrid::gtype() )
+      if( grid->grid_type() == GaussianGrid::grid_type_str() )
       {
         Log::info() << "   N number:                         "
                     << dynamic_cast<GaussianGrid*>(grid.get())->N() << std::endl;
       }
-      if( grid->grid_type() == ReducedGaussianGrid::gtype() )
+      if( grid->grid_type() == ReducedGaussianGrid::grid_type_str() )
       {
         Log::info() << "   N number:                         "
                     << dynamic_cast<ReducedGaussianGrid*>(grid.get())->N() << std::endl;
