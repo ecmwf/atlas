@@ -15,6 +15,8 @@
 #include <stdexcept>
 #include <cmath>
 #include <limits>
+
+#include "atlas/atlas.h"
 #include "atlas/Mesh.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Field.h"
@@ -27,6 +29,9 @@
 
 namespace atlas {
 namespace actions {
+
+
+typedef int uid_t;
 
 // ------------------------------------------------------------------
 
@@ -45,7 +50,7 @@ void increase_halo( Mesh& mesh )
   //DEBUG( "\n\n" << "Increase halo!! \n\n");
   FunctionSpace& nodes         = mesh.function_space( "nodes" );
   ArrayView<double,2> latlon   ( nodes.field( "coordinates"    ) );
-  ArrayView<int   ,1> glb_idx  ( nodes.field( "glb_idx"        ) );
+  ArrayView<gidx_t,1> glb_idx  ( nodes.field( "glb_idx"        ) );
   ArrayView<int   ,1> part     ( nodes.field( "partition"      ) );
   IndexView<int   ,1> ridx     ( nodes.field( "remote_idx"     ) );
   ArrayView<int   ,1> flags    ( nodes.field( "flags"          ) );
@@ -58,7 +63,7 @@ void increase_halo( Mesh& mesh )
 
   std::vector< IndexView<int,2> > elem_nodes( mesh.nb_function_spaces() );
   std::vector< ArrayView<int,1> > elem_part ( mesh.nb_function_spaces() );
-  std::vector< ArrayView<int,1> > elem_glb_idx ( mesh.nb_function_spaces() );
+  std::vector< ArrayView<gidx_t,1> > elem_glb_idx ( mesh.nb_function_spaces() );
 
   for( int func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
   {
@@ -67,7 +72,7 @@ void increase_halo( Mesh& mesh )
     {
       elem_nodes  [func_space_idx] = IndexView<int,2>( elements.field("nodes") );
       elem_part   [func_space_idx] = ArrayView<int,1>( elements.field("partition") );
-      elem_glb_idx[func_space_idx] = ArrayView<int,1>( elements.field("glb_idx") );
+      elem_glb_idx[func_space_idx] = ArrayView<gidx_t,1>( elements.field("glb_idx") );
       int nb_elems = elem_nodes[func_space_idx].shape(0);
       int nb_nodes_per_elem = elem_nodes[func_space_idx].shape(1);
       for (int elem=0; elem<nb_elems; ++elem)
@@ -138,7 +143,7 @@ void increase_halo( Mesh& mesh )
   3) Find received glb_index in glb_node_to_local_node list
   */
 
-  std::map<int,int> node_uid_to_loc;
+  std::map<uid_t,int> node_uid_to_loc;
   for( int jnode=0; jnode<nb_nodes; ++jnode )
   {
     LatLonPoint ll(latlon[jnode]);
@@ -155,8 +160,8 @@ void increase_halo( Mesh& mesh )
   }
 
   int nb_bdry_nodes = bdry_nodes.size();
-  Array<int> arr_bdry_nodes_id(nb_bdry_nodes,4);
-  ArrayView<int,2> bdry_nodes_id(arr_bdry_nodes_id);
+  Array<uid_t> arr_bdry_nodes_id(nb_bdry_nodes,4);
+  ArrayView<uid_t,2> bdry_nodes_id(arr_bdry_nodes_id);
   ASSERT( bdry_nodes_id.shape(0) == nb_bdry_nodes );
   ASSERT( bdry_nodes_id.shape(1) == 4);
 
@@ -168,8 +173,6 @@ void increase_halo( Mesh& mesh )
     bdry_nodes_id(jnode,2) = glb_idx( bdry_nodes[jnode] );
     bdry_nodes_id(jnode,3) = flags( bdry_nodes[jnode] );
   }
-
-
 
   std::vector<int> recvcounts( MPL::size() );
   std::vector<int> recvdispls( MPL::size() );
@@ -185,23 +188,23 @@ void increase_halo( Mesh& mesh )
     recvdispls[jpart] = recvdispls[jpart-1] + recvcounts[jpart-1];
     recvcnt += recvcounts[jpart];
   }
-  std::vector<int> recvbuf(recvcnt);
+  std::vector<uid_t> recvbuf(recvcnt);
 
-  MPL_CHECK_RESULT( MPI_Allgatherv( bdry_nodes_id.data(), sendcnt, MPI_INT,
+  MPL_CHECK_RESULT( MPI_Allgatherv( bdry_nodes_id.data(), sendcnt, MPL::TYPE<uid_t>(),
                     recvbuf.data(), recvcounts.data(), recvdispls.data(),
-                    MPI_INT, MPI_COMM_WORLD) );
+                    MPL::TYPE<uid_t>(), MPI_COMM_WORLD) );
 
   // sfn stands for "send_found_nodes"
   std::vector< std::vector<int>    > sfn_part( MPL::size() );
   std::vector< std::vector<int>    > sfn_ridx( MPL::size() );
-  std::vector< std::vector<int>    > sfn_glb_idx( MPL::size() );
+  std::vector< std::vector<uid_t> > sfn_glb_idx( MPL::size() );
   std::vector< std::vector<int>    > sfn_flags ( MPL::size() );
   std::vector< std::vector<double> > sfn_latlon ( MPL::size() );
   // sfn stands for "send_found_elems"
-  std::vector< std::vector< std::vector<int> > >
-      sfe_glb_idx ( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
-  std::vector< std::vector< std::vector<int> > >
-      sfe_nodes_id( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
+  std::vector< std::vector< std::vector<uid_t> > >
+      sfe_glb_idx ( mesh.nb_function_spaces(), std::vector< std::vector<uid_t> >( MPL::size() ) );
+  std::vector< std::vector< std::vector<uid_t> > >
+      sfe_nodes_id( mesh.nb_function_spaces(), std::vector< std::vector<uid_t> >( MPL::size() ) );
   std::vector< std::vector< std::vector<int> > >
       sfe_part    ( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
 
@@ -210,8 +213,7 @@ void increase_halo( Mesh& mesh )
 
   for (int jpart=0; jpart<MPL::size(); ++jpart)
   {
-    //DEBUG( "\n looking for part " << jpart );
-    ArrayView<int,2> recv_bdry_nodes_id( recvbuf.data()+recvdispls[jpart],
+    ArrayView<uid_t,2> recv_bdry_nodes_id( recvbuf.data()+recvdispls[jpart],
                                          make_shape( recvcounts[jpart]/4, 4 ).data() );
     int recv_nb_bdry_nodes = recv_bdry_nodes_id.shape(0);
 
@@ -226,7 +228,7 @@ void increase_halo( Mesh& mesh )
       ASSERT( recv_bdry_nodes_id.shape(1) == 4 );
       int recv_x       = recv_bdry_nodes_id(jrecv,0);
       int recv_y       = recv_bdry_nodes_id(jrecv,1);
-      int recv_glb_idx = recv_bdry_nodes_id(jrecv,2);
+      uid_t recv_glb_idx = recv_bdry_nodes_id(jrecv,2);
       int recv_flags   = recv_bdry_nodes_id(jrecv,3);
 
       LatLonPoint ll(recv_x,recv_y);
@@ -238,7 +240,7 @@ void increase_halo( Mesh& mesh )
       else if( Topology::check(recv_flags,Topology::WEST) )
         periodic =  1; // If the node is at BC_WEST (so master), the slave is in positive direction (+360 deg)
 
-      std::vector<int> recv_uids; recv_uids.reserve(2);
+      std::vector<uid_t> recv_uids; recv_uids.reserve(2);
       recv_uids.push_back( ll.uid() );
       if( periodic ) {
         transform( ll, periodic );
@@ -247,11 +249,11 @@ void increase_halo( Mesh& mesh )
 
       for( int juid = 0; juid < recv_uids.size(); ++juid )
       {
-        int recv_uid = recv_uids[juid];
+        uid_t recv_uid = recv_uids[juid];
         int loc = -1;
 
         // search and get local node index for received node
-        std::map<int,int>::iterator found = node_uid_to_loc.find(recv_uid);
+        std::map<uid_t,int>::iterator found = node_uid_to_loc.find(recv_uid);
         if( found != node_uid_to_loc.end() )
         {
           loc = found->second;
@@ -351,12 +353,12 @@ void increase_halo( Mesh& mesh )
         //eckit::Log::warning() << "\n" << "Looking for node with coords " << ll.x*1.e-6*180./M_PI << "," << ll.y*1.e-6*180./M_PI << ".  periodic = " << periodic << std::endl;
 
         //DEBUG_VAR( periodic );
-        int uid = ll.uid();
+        uid_t uid = ll.uid();
 
 
 
-        int pid = ll.uid();
-        std::map<int,int>::iterator found = node_uid_to_loc.find( uid );
+        uid_t pid = ll.uid();
+        std::map<uid_t,int>::iterator found = node_uid_to_loc.find( uid );
         if( found != node_uid_to_loc.end() ) // Point exists inside domain
         {
           int loc = found->second;
@@ -434,8 +436,10 @@ void increase_halo( Mesh& mesh )
         sfe_glb_idx [f][jpart].resize( nb_found_bdry_elems[f] );
         sfe_part    [f][jpart].resize( nb_found_bdry_elems[f] );
         sfe_nodes_id[f][jpart].resize( nb_found_bdry_elems[f]*nb_elem_nodes );
-        ArrayView<int,2> sfe_nodes_id_view( sfe_nodes_id[f][jpart].data(),
+
+        ArrayView<uid_t,2> sfe_nodes_id_view( sfe_nodes_id[f][jpart].data(),
                                             make_shape(nb_found_bdry_elems[f],nb_elem_nodes).data() );
+
         for( int jelem=0; jelem<nb_found_bdry_elems[f]; ++jelem )
         {
           int e = found_bdry_elements[f][jelem];
@@ -465,18 +469,18 @@ void increase_halo( Mesh& mesh )
   // 6) Now communicate all found fields back
 
   //    rfn stands for "recv_found_nodes"
-  std::vector< std::vector<int> >    rfn_glb_idx(MPL::size());
-  std::vector< std::vector<int> >    rfn_part(MPL::size());
+  std::vector< std::vector<uid_t>  > rfn_glb_idx(MPL::size());
+  std::vector< std::vector<int>    > rfn_part(MPL::size());
   std::vector< std::vector<int>    > rfn_ridx( MPL::size() );
   std::vector< std::vector<int>    > rfn_flags( MPL::size() );
   std::vector< std::vector<double> > rfn_latlon(MPL::size());
   //    rfe stands for "recv_found_elems"
-  std::vector< std::vector< std::vector<int> > >
-      rfe_glb_idx ( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
+  std::vector< std::vector< std::vector<uid_t> > >
+      rfe_glb_idx ( mesh.nb_function_spaces(), std::vector< std::vector<uid_t> >( MPL::size() ) );
   std::vector< std::vector< std::vector<int> > >
       rfe_part    ( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
-  std::vector< std::vector< std::vector<int> > >
-      rfe_nodes_id( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
+  std::vector< std::vector< std::vector<uid_t> > >
+      rfe_nodes_id( mesh.nb_function_spaces(), std::vector< std::vector<uid_t> >( MPL::size() ) );
 
   MPL::Alltoall(sfn_glb_idx,  rfn_glb_idx);
   MPL::Alltoall(sfn_part,     rfn_part);
@@ -490,11 +494,12 @@ void increase_halo( Mesh& mesh )
     MPL::Alltoall(sfe_part    [f], rfe_part    [f] );
   }
 
+
   // We now have everything we need in rfe_ and rfn_ vectors
   // Now adapt the mesh
 
   // Nodes might be duplicated from different Tasks. We need to identify unique entries
-  std::set<int> node_uid;
+  std::set<uid_t> node_uid;
   for( int jnode=0; jnode<nb_nodes; ++jnode )
   {
     node_uid.insert( LatLonPoint( latlon[jnode] ).uid() );
@@ -524,7 +529,7 @@ void increase_halo( Mesh& mesh )
 
   nodes.resize( make_shape( nb_nodes+nb_new_nodes, Field::UNDEF_VARS ) );
   flags   = ArrayView<int,   1>( nodes.field("flags") );
-  glb_idx = ArrayView<int,   1>( nodes.field("glb_idx") );
+  glb_idx = ArrayView<gidx_t,1>( nodes.field("glb_idx") );
   part    = ArrayView<int,   1>( nodes.field("partition") );
   ridx    = IndexView<int,   1>( nodes.field("remote_idx") );
   latlon  = ArrayView<double,2>( nodes.field("coordinates") );
@@ -542,10 +547,10 @@ void increase_halo( Mesh& mesh )
       ridx   (loc_idx)    = rfn_ridx    [jpart][rfn_idx[jpart][n]];
       latlon (loc_idx,XX) = rfn_latlon  [jpart][rfn_idx[jpart][n]*2+XX];
       latlon (loc_idx,YY) = rfn_latlon  [jpart][rfn_idx[jpart][n]*2+YY];
-      int uid = LatLonPoint( latlon[loc_idx] ).uid();
+      uid_t uid = LatLonPoint( latlon[loc_idx] ).uid();
 
       // make sure new node was not already there
-      std::map<int,int>::iterator found = node_uid_to_loc.find(uid);
+      std::map<uid_t,int>::iterator found = node_uid_to_loc.find(uid);
       if( found != node_uid_to_loc.end() )
       {
         int other = found->second;
@@ -575,7 +580,7 @@ void increase_halo( Mesh& mesh )
         elem_uid.insert( compute_uid(elem_nodes[f][jelem]) );
       }
 
-      std::vector< std::vector<int> > rfe_unique_idx(MPL::size());
+      std::vector< std::vector<uid_t> > rfe_unique_idx(MPL::size());
       for( int jpart=0; jpart<MPL::size(); ++jpart )
       {
         rfe_unique_idx[jpart].reserve(rfe_glb_idx[f][jpart].size());
@@ -599,7 +604,7 @@ void increase_halo( Mesh& mesh )
 
       int nb_nodes_per_elem = elem_nodes[f].shape(1);
       elements.resize( make_shape( nb_elems+nb_new_elems, Field::UNDEF_VARS ) );
-      elem_glb_idx[f] = ArrayView<int,1>( elements.field("glb_idx") );
+      elem_glb_idx[f] = ArrayView<gidx_t,1>( elements.field("glb_idx") );
       elem_nodes[f]   = IndexView<int,2>( elements.field("nodes")   );
       elem_part[f]    = ArrayView<int,1>( elements.field("partition")   );
       int new_elem=0;

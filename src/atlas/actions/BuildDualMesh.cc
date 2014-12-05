@@ -15,6 +15,7 @@
 #include <iostream>
 #include <algorithm>    // std::sort
 
+#include "atlas/atlas.h"
 #include "atlas/mpl/Checksum.h"
 #include "atlas/Mesh.h"
 #include "atlas/FunctionSpace.h"
@@ -55,12 +56,14 @@ void global_bounding_box( FunctionSpace& nodes, double min[2], double max[2] )
 struct Node
 {
   Node() {}
-  Node(int gid, int idx)
+  Node(gidx_t gid, int idx)
   {
     g = gid;
     i = idx;
   }
-  int g,i;
+  gidx_t g;
+  int i;
+
   bool operator < (const Node& other) const
   {
     return ( g < other.g );
@@ -162,7 +165,7 @@ void build_centroids( FunctionSpace& func_space, ArrayView<double,2>& coords)
     int nb_elems = func_space.shape(0);
     IndexView<int,2> elem_nodes( func_space.field( "nodes" ) );
     int nb_nodes_per_elem = elem_nodes.shape(1);
-    ArrayView<int,1> elem_glb_idx( func_space.field( "glb_idx" ) );
+    ArrayView<gidx_t,1> elem_glb_idx( func_space.field( "glb_idx" ) );
     ArrayView<double,2> elem_centroids( func_space.create_field<double>( "centroids", 2 ) );
     for (int e=0; e<nb_elems; ++e)
     {
@@ -191,8 +194,8 @@ void add_median_dual_volume_contribution(
   ArrayView<double,2> edge_centroids ( edges.field("centroids") );
   IndexView<int,   2> edge_nodes     ( edges.field("nodes") );
   ArrayView<double,2> node_coords    ( nodes.field("coordinates") );
-  ArrayView<int,   1> elem_glb_idx   ( elements.field("glb_idx") );
-  ArrayView<int,   1> edge_glb_idx   ( edges.field("glb_idx") );
+  ArrayView<gidx_t,1> elem_glb_idx   ( elements.field("glb_idx") );
+  ArrayView<gidx_t,1> edge_glb_idx   ( edges.field("glb_idx") );
   int nb_edges_per_elem = elem_to_edges.shape(1);
 
 
@@ -232,10 +235,10 @@ void add_median_dual_volume_contribution(
     FunctionSpace& nodes,
     ArrayView<double,1>& dual_volumes )
 {
-  ArrayView<int,   1> node_glb_idx  ( nodes.field("glb_idx"    ) );
+  ArrayView<gidx_t,1> node_glb_idx  ( nodes.field("glb_idx"    ) );
   ArrayView<double,2> edge_centroids( edges.field("centroids"  ) );
   IndexView<int,   2> edge_nodes    ( edges.field("nodes"      ) );
-  ArrayView<int,   1> edge_glb_idx  ( edges.field("glb_idx"    ) );
+  ArrayView<gidx_t,1> edge_glb_idx  ( edges.field("glb_idx"    ) );
   IndexView<int,   2> edge_to_elem  ( edges.field("to_elem"    ) );
   ArrayView<double,2> node_coords   ( nodes.field("coordinates") );
   int nb_edges = edges.shape(0);
@@ -291,10 +294,10 @@ void add_centroid_dual_volume_contribution(
 {
   FunctionSpace& nodes = mesh.function_space("nodes");
   FunctionSpace& edges = mesh.function_space("edges");
-  ArrayView<int,   1> node_glb_idx  ( nodes.field("glb_idx"    ) );
+  ArrayView<gidx_t,1> node_glb_idx  ( nodes.field("glb_idx"    ) );
   ArrayView<double,2> edge_centroids( edges.field("centroids"  ) );
   IndexView<int,   2> edge_nodes    ( edges.field("nodes"      ) );
-  ArrayView<int,   1> edge_glb_idx  ( edges.field("glb_idx"    ) );
+  ArrayView<gidx_t,1> edge_glb_idx  ( edges.field("glb_idx"    ) );
   IndexView<int,   2> edge_to_elem  ( edges.field("to_elem"    ) );
   ArrayView<double,2> node_coords   ( nodes.field("coordinates") );
   std::vector< ArrayView<double,2> > elem_centroids(mesh.nb_function_spaces());

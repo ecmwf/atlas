@@ -127,6 +127,9 @@ if( HAVE_TESSELATION )
 
 endif()
 
+### Type for Global indices and unique point id's
+set( ATLAS_BITS_GLOBAL 32 )
+
 ### sandbox
 
 ecbuild_add_option( FEATURE SANDBOX

@@ -15,7 +15,7 @@
 
 #include "eckit/exception/Exceptions.h"
 
-#include "atlas/atlas_defines.h"
+#include "atlas/atlas.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Field.h"
 #include "atlas/actions/BuildParallelFields.h"
@@ -179,6 +179,35 @@ FieldT<int>& FunctionSpace::create_field(const std::string& name, size_t nb_vars
 	return *field;
 }
 
+template <>
+FieldT<long>& FunctionSpace::create_field(const std::string& name, size_t nb_vars)
+{
+	if( has_field(name) )
+	{
+		std::ostringstream msg; msg << "field with name " << name << "already exists" << std::endl;
+		throw eckit::Exception( msg.str(), Here() );
+	}
+
+	FieldT<long>* field = new FieldT<long>(name,nb_vars,*this);
+
+	fields_.insert( name, Field::Ptr(field) );
+	fields_.sort();
+
+	size_t rank = shape_.size();
+	std::vector< int > field_shape(rank);
+	for (size_t i=0; i<rank; ++i)
+	{
+		if( shape_[i] == Field::UNDEF_VARS )
+			field_shape[i] = field->nb_vars();
+		else
+			field_shape[i] = shape_[i];
+	}
+
+	field->allocate(field_shape);
+	return *field;
+}
+
+
 void FunctionSpace::remove_field(const std::string& name)
 {
 	NOTIMP; ///< @todo DenseMap needs to have erase() function
@@ -245,6 +274,21 @@ FieldT<float>& FunctionSpace::field(const std::string& name) const
 }
 
 template<>
+FieldT<long>& FunctionSpace::field(const std::string& name) const
+{
+	if( has_field(name) )
+	{
+		return dynamic_cast< FieldT<long>& >( *fields_[ name ] );
+	}
+	else
+	{
+		std::stringstream msg;
+		msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
+		throw eckit::OutOfRange(msg.str(),Here());
+	}
+}
+
+template<>
 FieldT<int>& FunctionSpace::field(const std::string& name) const
 {
 	if( has_field(name) )
@@ -259,7 +303,7 @@ FieldT<int>& FunctionSpace::field(const std::string& name) const
 	}
 }
 
-void FunctionSpace::parallelise(const int part[], const int remote_idx[], const int glb_idx[], int parsize)
+void FunctionSpace::parallelise(const int part[], const int remote_idx[], const gidx_t glb_idx[], int parsize)
 {
 	halo_exchange_->setup(part,remote_idx,REMOTE_IDX_BASE,parsize);
 	gather_scatter_->setup(part,remote_idx,REMOTE_IDX_BASE,glb_idx,-1,parsize);
@@ -285,7 +329,7 @@ void FunctionSpace::parallelise()
 	{
 		FieldT<int>& ridx = field<int>("remote_idx");
 		FieldT<int>& part = field<int>("partition");
-		FieldT<int>& gidx = field<int>("glb_idx");
+		FieldT<gidx_t>& gidx = field<gidx_t>("glb_idx");
 		parallelise(part.data(),ridx.data(),gidx.data(),part.size());
 	}
 	else

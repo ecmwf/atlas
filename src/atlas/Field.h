@@ -23,7 +23,7 @@
 #include "eckit/memory/SharedPtr.h"
 #include "eckit/memory/ScopedPtr.h"
 
-#include "atlas/atlas_config.h"
+#include "atlas/atlas.h"
 
 #ifdef ECKIT_HAVE_GRIB
 	#include "eckit/grib/GribHandle.h"
@@ -127,6 +127,7 @@ protected: // members
 
 template< typename DATA_TYPE > inline std::string data_type_to_str();
 template<> inline std::string data_type_to_str<int>()		{ return "int32";	}
+template<> inline std::string data_type_to_str<long>()		{ return "int64";	}
 template<> inline std::string data_type_to_str<float>()	{ return "real32"; }
 template<> inline std::string data_type_to_str<double>() { return "real64"; }
 

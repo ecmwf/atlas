@@ -55,21 +55,21 @@ struct Fixture {
       {               //./----> extra ghost point with nonstandard gidx
         int part_c[] = {2,0,0,0,1,2 };  part = vec(part_c);
         int ridx_c[] = {4,1,2,3,1,3 };  ridx = vec(ridx_c);
-        int gidx_c[] = {9,1,2,3,4,20};  gidx = vec(gidx_c);
+        gidx_t gidx_c[] = {9,1,2,3,4,20};  gidx = vec(gidx_c);
       break;
       }
       case 1:
       {
         int part_c[] = {0,1,1,1,2,2};  part = vec(part_c);
         int ridx_c[] = {3,1,2,3,2,3};  ridx = vec(ridx_c);
-        int gidx_c[] = {3,4,5,6,7,8};  gidx = vec(gidx_c);
+        gidx_t gidx_c[] = {3,4,5,6,7,8};  gidx = vec(gidx_c);
         break;
       }
       case 2:
       {
         int part_c[] = {1,1,2,2,2,0,0};  part = vec(part_c);
         int ridx_c[] = {2,3,2,3,4,1,2};  ridx = vec(ridx_c);
-        int gidx_c[] = {5,6,7,8,9,1,2};  gidx = vec(gidx_c);
+        gidx_t gidx_c[] = {5,6,7,8,9,1,2};  gidx = vec(gidx_c);
         break;
       }
     }
@@ -80,7 +80,7 @@ struct Fixture {
   std::vector<int> nb_nodes;
   std::vector<int> part;
   std::vector<int> ridx;
-  std::vector<int> gidx;
+  std::vector<gidx_t> gidx;
 
   int Nl, Ng;
 };

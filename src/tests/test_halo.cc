@@ -46,7 +46,7 @@ double dual_volume(Mesh& mesh)
   IsGhost is_ghost_node(nodes);
   int nb_nodes = nodes.shape(0);
   ArrayView<double,1> dual_volumes ( nodes.field("dual_volumes") );
-  ArrayView<int,1> glb_idx ( nodes.field("glb_idx") );
+  ArrayView<gidx_t,1> glb_idx ( nodes.field("glb_idx") );
   double area=0;
   for( int node=0; node<nb_nodes; ++node )
   {
@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE( test_small )
   if( MPL::size() == 5 )
   {
     IndexView<int,1> ridx ( m->function_space("nodes").field("remote_idx") );
-    ArrayView<int,1> gidx ( m->function_space("nodes").field("glb_idx") );
+    ArrayView<gidx_t,1> gidx ( m->function_space("nodes").field("glb_idx") );
 
     switch( MPL::rank() ) // with 5 tasks
     {

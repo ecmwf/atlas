@@ -47,18 +47,22 @@ struct IsGhostPoint
 
 struct Node
 {
+  int p,i;
+  gidx_t g;
+
   Node() {}
-  Node(int gid, int part, int idx)
+  Node(gidx_t gid, int part, int idx)
   {
     g = gid;
     p = part;
     i = idx;
   }
-  int g,p,i;
+
   bool operator < (const Node& other) const
   {
     return ( g < other.g );
   }
+
   bool operator == (const Node& other) const
   {
     return ( g == other.g );
@@ -66,7 +70,7 @@ struct Node
 };
 
 
-bool operator < (const int g, const Node& n)
+bool operator < (const gidx_t g, const Node& n)
 {
   return ( g < n.g );
 }
@@ -81,9 +85,9 @@ GatherScatter::GatherScatter() :
   root_   = 0;
 }
 
-void GatherScatter::setup( const int part[],
+void GatherScatter::setup(const int part[],
                            const int remote_idx[], const int base,
-                           const int glb_idx[], const int max_glb_idx,
+                           const gidx_t glb_idx[], const gidx_t max_glb_idx,
                            const int parsize, const bool include_ghost )
 {
   parsize_ = parsize;
@@ -94,7 +98,7 @@ void GatherScatter::setup( const int part[],
   glbdispls_.resize(nproc); glbdispls_.assign(nproc,0);
 
 
-  int maxgid = max_glb_idx;
+  gidx_t maxgid = max_glb_idx;
   if(max_glb_idx<0)
   {
     IsGhostPoint is_ghost(part,remote_idx,base,parsize_);
@@ -106,7 +110,7 @@ void GatherScatter::setup( const int part[],
         maxgid = std::max(maxgid,glb_idx[jj]);
       }
     }
-    MPL_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&maxgid,1,MPI_INT,MPI_MAX,MPI_COMM_WORLD) );
+    MPL_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&maxgid,1,MPL::TYPE<gidx_t>(),MPI_MAX,MPI_COMM_WORLD) );
   }
 
   Array<int> sendnodes(parsize_,3);
@@ -258,12 +262,38 @@ void atlas__GatherScatter__delete ( GatherScatter* This) {
   delete This;
 }
 
-void atlas__GatherScatter__setup ( GatherScatter* This,  int part[],
-                                   int remote_idx[], int base,
-                                   int glb_idx[], int max_glb_idx,
-                                   int parsize )
+void atlas__GatherScatter__setup32 ( GatherScatter* This,  int part[],
+                                     int remote_idx[], int base,
+                                     int glb_idx[], int max_glb_idx,
+                                     int parsize )
 {
+#if ATLAS_BITS_GLOBAL==32
   This->setup(part,remote_idx,base,glb_idx,max_glb_idx,parsize);
+#else
+  std::vector<gidx_t> glb_idx_convert(parsize);
+  for( int j=0; j<parsize; ++j )
+  {
+    glb_idx_convert[j] = glb_idx[j];
+  }
+  This->setup(part,remote_idx,base,glb_idx_convert.data(),max_glb_idx,parsize);
+#endif
+}
+
+void atlas__GatherScatter__setup64 ( GatherScatter* This,  int part[],
+                                     int remote_idx[], int base,
+                                     long glb_idx[], long max_glb_idx,
+                                     int parsize )
+{
+#if ATLAS_BITS_GLOBAL==64
+  This->setup(part,remote_idx,base,glb_idx,max_glb_idx,parsize);
+#else
+  std::vector<gidx_t> glb_idx_convert(parsize);
+  for( int j=0; j<parsize; ++j )
+  {
+    glb_idx_convert[j] = glb_idx[j];
+  }
+  This->setup(part,remote_idx,base,glb_idx_convert.data(),max_glb_idx,parsize);
+#endif
 }
 
 int atlas__GatherScatter__glb_dof ( GatherScatter* This )

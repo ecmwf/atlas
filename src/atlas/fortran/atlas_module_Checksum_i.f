@@ -18,7 +18,8 @@ TYPE, extends(object_type) :: Checksum_type
 
 !------------------------------------------------------------------------------
 contains
-  procedure :: setup => Checksum__setup
+  procedure, private :: Checksum__setup32
+  procedure, private :: Checksum__setup64
   procedure, private :: Checksum__execute_int32_r1
   procedure, private :: Checksum__execute_int32_r2
   procedure, private :: Checksum__execute_int32_r3
@@ -28,6 +29,9 @@ contains
   procedure, private :: Checksum__execute_real64_r1
   procedure, private :: Checksum__execute_real64_r3
   procedure, private :: Checksum__execute_real64_r2
+  generic :: setup => &
+      & Checksum__setup32, &
+      & Checksum__setup64
   generic :: execute => &
       & Checksum__execute_int32_r1, &
       & Checksum__execute_int32_r2, &

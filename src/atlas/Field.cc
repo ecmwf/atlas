@@ -57,6 +57,34 @@ int const* Field::data<int>() const
 }
 
 template <>
+long* Field::data<long>()
+{
+	try {
+		return dynamic_cast< FieldT<long>& >(*this).data();
+	}
+	catch (std::bad_cast& e) {
+		std::stringstream msg;
+		msg << "Could not cast Field " << name()
+		    << " with data_type " << data_type() << " to real64";
+		throw eckit::BadCast(msg.str(),Here());
+	}
+}
+
+template <>
+long const* Field::data<long>() const
+{
+	try {
+		return dynamic_cast< const FieldT<long>& >(*this).data();
+	}
+	catch (std::bad_cast& e) {
+		std::stringstream msg;
+		msg << "Could not cast Field " << name()
+		    << " with data_type " << data_type() << " to real64";
+		throw eckit::BadCast(msg.str(),Here());
+	}
+}
+
+template <>
 float* Field::data<float>()
 {
 	try {
@@ -115,6 +143,8 @@ double const* Field::data<double>() const
 
 template<>
 void FieldT<int>::halo_exchange() { function_space().halo_exchange(data_.data(),data_.size()); }
+template<>
+void FieldT<long>::halo_exchange() { function_space().halo_exchange(data_.data(),data_.size()); }
 template<>
 void FieldT<float>::halo_exchange() { function_space().halo_exchange(data_.data(),data_.size()); }
 template<>

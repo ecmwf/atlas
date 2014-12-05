@@ -45,7 +45,7 @@ double dual_volume(Mesh& mesh)
   IsGhost is_ghost_node(nodes);
   int nb_nodes = nodes.shape(0);
   ArrayView<double,1> dual_volumes ( nodes.field("dual_volumes") );
-  ArrayView<int,1> glb_idx ( nodes.field("glb_idx") );
+  ArrayView<gidx_t,1> glb_idx ( nodes.field("glb_idx") );
   double area=0;
   for( int node=0; node<nb_nodes; ++node )
   {

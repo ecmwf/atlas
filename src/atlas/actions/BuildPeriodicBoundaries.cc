@@ -25,6 +25,8 @@
 namespace atlas {
 namespace actions {
 
+typedef int uid_t;
+
 void build_periodic_boundaries( Mesh& mesh )
 {
   int mypart = MPL::rank();
@@ -41,10 +43,10 @@ void build_periodic_boundaries( Mesh& mesh )
 
   // Identify my master and slave nodes on own partition
   // master nodes are at x=0,  slave nodes are at x=2pi
-  std::map<int,int> master_lookup;
-  std::map<int,int>  slave_lookup;
+  std::map<uid_t,int> master_lookup;
+  std::map<uid_t,int>  slave_lookup;
   std::vector<int> master_nodes; master_nodes.reserve( 3*nb_nodes );
-  std::vector<int>  slave_nodes;  slave_nodes.reserve( 3*nb_nodes );
+  std::vector<int> slave_nodes;  slave_nodes.reserve( 3*nb_nodes );
 
   for( int jnode=0; jnode<nodes.shape(0); ++jnode)
   {
@@ -72,46 +74,6 @@ void build_periodic_boundaries( Mesh& mesh )
     }
   }
 
-                      //  std::vector< std::vector<int> > found_slave(MPL::size());
-                      //  // Find slaves on other tasks to send to me
-                      //  {
-                      //    int sendcnt = master_nodes.size();
-                      //    std::vector< int > recvcounts( MPL::size() );
-                      //    MPL_CHECK_RESULT( MPI_Allgather(&sendcnt,           1, MPI_INT,
-                      //                                     recvcounts.data(), 1, MPI_INT, MPI_COMM_WORLD ) );
-
-                      //    std::vector<int> recvdispls( MPL::size() );
-                      //    recvdispls[0] = 0;
-                      //    int recvcnt = recvcounts[0];
-                      //    for( int jproc=1; jproc<MPL::size(); ++jproc )
-                      //    {
-                      //      recvdispls[jproc] = recvdispls[jproc-1] + recvcounts[jproc-1];
-                      //      recvcnt += recvcounts[jproc];
-                      //    }
-                      //    std::vector<int> recvbuf(recvcnt);
-
-                      //    MPL_CHECK_RESULT( MPI_Allgatherv(
-                      //                      master_nodes.data(), master_nodes.size(), MPI_INT,
-                      //                      recvbuf.data(), recvcounts.data(), recvdispls.data(),
-                      //                      MPI_INT, MPI_COMM_WORLD) );
-
-
-                      //    for( int jproc=0; jproc<MPL::size(); ++jproc )
-                      //    {
-                      //      found_slave.reserve(slave_nodes.size());
-                      //      ArrayView<int,2> recv_master_latlon(recvbuf.data()+recvdispls[jproc], Extents(recvcounts[jproc]/2,2).data() );
-                      //      for( int jnode=0; jnode<recv_master_latlon.shape(0); ++jnode )
-                      //      {
-                      //        LatLon master( recv_master_latlon(jnode,XX)+east, recv_master_latlon(jnode,YY) );
-                      //        if( slave_lookup.count( master ) )
-                      //        {
-                      //          int loc_idx = slave_lookup[ master ];
-                      //          found_slave[jproc].push_back( loc_idx );
-                      //        }
-                      //      }
-                      //    }
-                      //  }
-
   std::vector< std::vector<int> > found_master(MPL::size());
   std::vector< std::vector<int> > send_slave_idx(MPL::size());
   // Find masters on other tasks to send to me
@@ -132,9 +94,9 @@ void build_periodic_boundaries( Mesh& mesh )
     std::vector<int> recvbuf(recvcnt);
 
     MPL_CHECK_RESULT( MPI_Allgatherv(
-                      slave_nodes.data(), slave_nodes.size(), MPI_INT,
+                      slave_nodes.data(), slave_nodes.size(), MPL::TYPE<int>(),
                       recvbuf.data(), recvcounts.data(), recvdispls.data(),
-                      MPI_INT, MPI_COMM_WORLD) );
+                      MPL::TYPE<int>(), MPI_COMM_WORLD) );
 
 
     PeriodicTransform transform;
@@ -147,7 +109,7 @@ void build_periodic_boundaries( Mesh& mesh )
       {
         LatLonPoint slave( recv_slave(jnode,XX), recv_slave(jnode,YY) );
         transform(slave,-1);
-        int slave_uid = slave.uid();
+        uid_t slave_uid = slave.uid();
         if( master_lookup.count( slave_uid ) )
         {
           int master_idx = master_lookup[ slave_uid ];

@@ -16,7 +16,7 @@
 #include "eckit/log/Timer.h"
 #include "eckit/memory/ScopedPtr.h"
 
-#include "atlas/atlas_config.h"
+#include "atlas/atlas.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -280,7 +280,7 @@ void Tesselation::create_mesh_structure( Mesh& mesh, const size_t nb_nodes )
     // create / ensure mesh has global indexes
 
     if( ! nodes.has_field("glb_idx") )
-        nodes.create_field<int>("glb_idx",1);
+        nodes.create_field<gidx_t>("glb_idx",1);
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -299,7 +299,7 @@ void Tesselation::generate_lonlat_points( Mesh& mesh,
 
     ArrayView<double,2> coords  ( nodes.field("coordinates") );
     ArrayView<double,2> lonlat  ( nodes.field("lonlat") );
-    ArrayView<int,   1> glb_idx ( nodes.field("glb_idx") );
+    ArrayView<gidx_t,1> glb_idx ( nodes.field("glb_idx") );
 
     // generate lat/long points
 
@@ -358,7 +358,7 @@ void Tesselation::generate_lonlat_grid( Mesh& mesh, const size_t& nlats, const s
 
     ArrayView<double,2> coords  ( nodes.field("coordinates") );
     ArrayView<double,2> lonlat  ( nodes.field("lonlat") );
-    ArrayView<int,   1> glb_idx ( nodes.field("glb_idx") );
+    ArrayView<gidx_t,1> glb_idx ( nodes.field("glb_idx") );
 
     const double lat_inc = 180. / nlats;
     const double lat_start = -90.;
@@ -492,7 +492,7 @@ void Tesselation::build_mesh( const Grid& grid, Mesh& mesh )
 
     ArrayView<double,2> coords  ( nodes.field("coordinates") );
     ArrayView<double,2> lonlat  ( nodes.field("lonlat") );
-    ArrayView<int,   1> glb_idx ( nodes.field("glb_idx") );
+    ArrayView<gidx_t,1> glb_idx ( nodes.field("glb_idx") );
 
     ASSERT( npts == nodes.shape(0) );
 

@@ -19,6 +19,7 @@
 #include "eckit/memory/SharedPtr.h"
 #include "eckit/memory/Owned.h"
 
+#include "atlas/atlas.h"
 #include "atlas/mpl/MPL.h"
 #include "atlas/util/Debug.h"
 #include "atlas/util/ArrayView.h"
@@ -106,7 +107,7 @@ public: // methods
   ///                              halo values in output when TRUE
   void setup( const int part[],
               const int remote_idx[], const int base,
-              const int glb_idx[], const int max_glb_idx,
+              const gidx_t glb_idx[], const gidx_t max_glb_idx,
               const int parsize, const bool include_ghost = false );
 
   template <typename DATA_TYPE>
@@ -607,7 +608,8 @@ extern "C"
 {
   GatherScatter* atlas__GatherScatter__new ();
   void atlas__GatherScatter__delete (GatherScatter* This);
-  void atlas__GatherScatter__setup (GatherScatter* This, int part[], int remote_idx[], int base, int glb_idx[], int max_glb_idx, int parsize);
+  void atlas__GatherScatter__setup32 (GatherScatter* This, int part[], int remote_idx[], int base, int glb_idx[], int max_glb_idx, int parsize);
+  void atlas__GatherScatter__setup64 (GatherScatter* This, int part[], int remote_idx[], int base, long glb_idx[], long max_glb_idx, int parsize);
   int atlas__GatherScatter__glb_dof (GatherScatter* This);
   void atlas__GatherScatter__gather_int (GatherScatter* This, int ldata[], int lvar_strides[], int lvar_shape[], int lvar_rank, int gdata[], int gvar_strides[], int gvar_shape[], int gvar_rank);
   void atlas__GatherScatter__gather_float (GatherScatter* This, float ldata[], int lvar_strides[], int lvar_shape[], int lvar_rank, float gdata[], int gvar_strides[], int gvar_shape[], int gvar_rank);

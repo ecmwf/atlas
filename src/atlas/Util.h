@@ -117,7 +117,12 @@ struct LatLonPoint
 		x = x_;
 		y = y_;
 	}
-	LatLonPoint( double x_, double y_ )
+  LatLonPoint( long x_, long y_ )
+	{
+		x = x_;
+		y = y_;
+	}
+  LatLonPoint( double x_, double y_ )
 	{
 		x = microdeg(x_);
 		y = microdeg(y_);
@@ -138,7 +143,20 @@ struct LatLonPoint
 		y = microdeg(coord[YY]);
 	}
 
-	int uid() const
+  long uid64() const
+  {
+    long i1 = x+2*EAST;
+    long i2 = y+NORTH;
+    ASSERT( i1 >= 0 );
+    ASSERT( i2 >= 0 );
+    i1 = (i1 << 32);
+    ASSERT( i1 >= 0 );
+    long id = i1 | i2;
+    ASSERT( id >= 0 );
+    return id;
+  }
+
+	int uid32() const
 	{
 		int i1 = (y/100+NORTH/100*2) >>9;
 		int i2 = (x/100+EAST/100*5)  >>10;
@@ -152,6 +170,8 @@ struct LatLonPoint
 		return id;
 	}
 
+  gidx_t uid() const;
+
 	mutable int x, y;
 	bool operator < (const LatLonPoint& other) const
 	{
@@ -160,11 +180,17 @@ struct LatLonPoint
 		return false;
 	}
 private:
-	static int WEST;
+
+  template<typename T>
+  gidx_t uidT() const;
+
+  static int WEST;
 	static int EAST;
 	static int NORTH;
 	static int SOUTH;
 };
+
+
 
 class PeriodicTransform
 {

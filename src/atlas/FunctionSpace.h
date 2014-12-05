@@ -19,7 +19,7 @@
 #include "eckit/log/Log.h"
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
-
+#include "atlas.h"
 #include "atlas/mpl/HaloExchange.h"
 #include "atlas/mpl/GatherScatter.h"
 #include "atlas/mpl/Checksum.h"
@@ -77,7 +77,7 @@ public: // methods
 
 
 	void parallelise();
-	void parallelise(const int proc[], const int remote_idx[], const int glb_idx[], int size);
+	void parallelise(const int proc[], const int remote_idx[], const gidx_t glb_idx[], int size);
 	void parallelise(FunctionSpace& other_functionspace);
 
 	template< typename DATA_TYPE >

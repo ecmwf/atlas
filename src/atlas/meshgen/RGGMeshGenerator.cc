@@ -708,7 +708,7 @@ Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
   nodes.metadata().set("type",static_cast<int>(Entity::NODES));
 
   ArrayView<double,2> coords        ( nodes.create_field<double>("coordinates",   2) );
-  ArrayView<int,   1> glb_idx       ( nodes.create_field<int   >("glb_idx",       1) );
+  ArrayView<gidx_t,1> glb_idx       ( nodes.create_field<gidx_t>("glb_idx",       1) );
   ArrayView<int,   1> part          ( nodes.create_field<int   >("partition",     1) );
   ArrayView<int,   1> flags         ( nodes.create_field<int   >("flags",         1) );
 
@@ -795,14 +795,14 @@ Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
   FunctionSpace& quads = mesh->create_function_space( "quads","LagrangeP1",shape );
   quads.metadata().set("type",static_cast<int>(Entity::ELEMS));
   IndexView<int,2> quad_nodes( quads.create_field<int>("nodes",4) );
-  ArrayView<int,1> quad_glb_idx( quads.create_field<int>("glb_idx",1) );
+  ArrayView<gidx_t,1> quad_glb_idx( quads.create_field<gidx_t>("glb_idx",1) );
   ArrayView<int,1> quad_part( quads.create_field<int>("partition",1) );
 
   shape = make_shape(ntriags,Field::UNDEF_VARS);
   FunctionSpace& triags = mesh->create_function_space( "triags","LagrangeP1",shape );
   triags.metadata().set("type",static_cast<int>(Entity::ELEMS));
   IndexView<int,2> triag_nodes( triags.create_field<int>("nodes",3) );
-  ArrayView<int,1> triag_glb_idx( triags.create_field<int>("glb_idx",1) );
+  ArrayView<gidx_t,1> triag_glb_idx( triags.create_field<gidx_t>("glb_idx",1) );
   ArrayView<int,1> triag_part( triags.create_field<int>("partition",1) );
 
   /*
@@ -954,7 +954,7 @@ void ReducedGridMeshGenerator::generate_global_element_numbering( Mesh& mesh )
     FunctionSpace& elements = mesh.function_space(f);
     if( elements.metadata().get<int>("type") == Entity::ELEMS )
     {
-      ArrayView<int,1> glb_idx( elements.field("glb_idx") );
+      ArrayView<gidx_t,1> glb_idx( elements.field("glb_idx") );
       int nb_elems = elements.shape(0);
       for( int e=0; e<nb_elems; ++e )
       {

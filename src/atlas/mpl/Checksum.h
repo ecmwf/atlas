@@ -48,7 +48,7 @@ public: // methods
   /// @param [in] parsize      size of given lists
   void setup( const int part[],
               const int remote_idx[], const int base,
-              const int glb_idx[], const int max_glb_idx,
+              const gidx_t glb_idx[], const gidx_t max_glb_idx,
               const int parsize );
 
   template <typename DATA_TYPE>
@@ -156,7 +156,8 @@ extern "C"
 {
   Checksum* atlas__Checksum__new ();
   void atlas__Checksum__delete (Checksum* This);
-  void atlas__Checksum__setup (Checksum* This, int part[], int remote_idx[], int base, int glb_idx[], int max_glb_idx, int parsize);
+  void atlas__Checksum__setup32 (Checksum* This, int part[], int remote_idx[], int base, int glb_idx[], int max_glb_idx, int parsize);
+  void atlas__Checksum__setup64 (Checksum* This, int part[], int remote_idx[], int base, long glb_idx[], long max_glb_idx, int parsize);
   void atlas__Checksum__execute_strided_int (Checksum* This, int lfield[], int lvar_strides[], int lvar_extents[], int lvar_rank, char* checksum);
   void atlas__Checksum__execute_strided_float (Checksum* This, float lfield[], int lvar_strides[], int lvar_extents[], int lvar_rank, char* checksum);
   void atlas__Checksum__execute_strided_double (Checksum* This, double lfield[], int lvar_strides[], int lvar_extents[], int lvar_rank, char* checksum);
