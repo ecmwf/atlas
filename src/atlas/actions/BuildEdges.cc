@@ -33,12 +33,13 @@ namespace {
 struct Sort
 {
   Sort() {}
-  Sort(int gid, int idx)
+  Sort(gidx_t gid, int idx)
   {
     g = gid;
     i = idx;
   }
-  int g,i;
+  gidx_t g;
+  int i;
   bool operator < (const Sort& other) const
   {
     return ( g < other.g );

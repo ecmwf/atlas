@@ -721,6 +721,7 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path) const
 	double r      = 1.;
 	for( size_t n = 0; n < nb_nodes; ++n )
 	{
+    int g = glb_idx(n);
 		double lon = coords(n,XX);
 		double lat = coords(n,YY);
 
@@ -739,12 +740,12 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path) const
 		}
 		if( binary )
 		{
-			file.write(reinterpret_cast<const char*>(&glb_idx(n)), sizeof(int));
+      file.write(reinterpret_cast<const char*>(&g), sizeof(int));
 			file.write(reinterpret_cast<const char*>(&xyz), sizeof(double)*3 );
 		}
 		else
 		{
-			file << glb_idx(n) << " " << xyz[XX] << " " << xyz[YY] << " " << xyz[ZZ] << "\n";
+			file << g << " " << xyz[XX] << " " << xyz[YY] << " " << xyz[ZZ] << "\n";
 		}
 	}
 	if( binary ) file << "\n";

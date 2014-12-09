@@ -31,7 +31,7 @@ namespace atlas {
 namespace actions {
 
 
-typedef int uid_t;
+typedef gidx_t uid_t;
 
 // ------------------------------------------------------------------
 
@@ -235,8 +235,7 @@ void increase_halo( Mesh& mesh )
 
       int periodic=0;
       // If the received node is flagged as periodic, look for point following periodic transformation
-      if( Topology::check(recv_flags,Topology::EAST) )
-        periodic = -1; // If the node is at BC_EAST (so slave), the master is in negative direction (-360 deg)
+      if( Topology::check(recv_flags,Topology::EAST) ) periodic = -1; // If the node is at BC_EAST (so slave), the master is in negative direction (-360 deg)
       else if( Topology::check(recv_flags,Topology::WEST) )
         periodic =  1; // If the node is at BC_WEST (so master), the slave is in positive direction (+360 deg)
 
@@ -355,9 +354,6 @@ void increase_halo( Mesh& mesh )
         //DEBUG_VAR( periodic );
         uid_t uid = ll.uid();
 
-
-
-        uid_t pid = ll.uid();
         std::map<uid_t,int>::iterator found = node_uid_to_loc.find( uid );
         if( found != node_uid_to_loc.end() ) // Point exists inside domain
         {
@@ -370,7 +366,6 @@ void increase_halo( Mesh& mesh )
           //DEBUG_VAR(glb_idx(loc));
           if( periodic )
           {
-            sfn_glb_idx[jpart][jnode]      = uid;
             if( periodic > 0 )
               Topology::set(sfn_flags[jpart][jnode],Topology::EAST);
             else
@@ -386,6 +381,8 @@ void increase_halo( Mesh& mesh )
               Topology::set(sfn_flags[jpart][jnode],Topology::PERIODIC);
             }
             transform(&sfn_latlon[jpart][2*jnode],(double) periodic);
+            // The glb_idx is based on the destination location
+            sfn_glb_idx[jpart][jnode] = LatLonPoint(sfn_latlon[jpart][jnode*2+XX],sfn_latlon[jpart][jnode*2+YY]).uid();
           }
           else
           {
@@ -396,7 +393,8 @@ void increase_halo( Mesh& mesh )
         }
         else
         {
-          eckit::Log::warning() << "Node needed by ["<<jpart<<"] with coords " << ll.x*1.e-6 << "," << ll.y*1.e-6 << " was not found in ["<<MPL::rank()<<"]." << std::endl;
+          eckit::Log::warning() << "Node needed by ["<<jpart<<"] with coords " << ll.x*1.e-6 << ","
+                                << ll.y*1.e-6 << " was not found in ["<<MPL::rank()<<"]." << std::endl;
           ASSERT(false);
         }
 //        if( periodic != 0 )
@@ -404,32 +402,12 @@ void increase_halo( Mesh& mesh )
 //           eckit::Log::warning() << "Node needed by ["<<jpart<<"] with coords " << ll.x*1.e-6 << "," << ll.y*1.e-6 << " was not found in ["<<MPL::rank()<<"]." << std::endl;
 //        }
       }
-//        LatLonPoint ll(it->x,it->y);
-//        // Here ll has the new coords
-//        if     ( ll.x <= BC::WEST) { while(ll.x <= BC::WEST) { ll.x += BC::EAST; } }
-//        else if( ll.x >= BC::EAST) { while(ll.x >= BC::EAST) { ll.x -= BC::EAST; } }
-//        // Now ll has the coords of periodic point
-//        int pid = ll.uid();
-//        found = node_uid_to_loc.find( pid );
-//        if( found == node_uid_to_loc.end() )
-//          {
-//            eckit::Log::warning() << "Node needed by ["<<jpart<<"] with coords " << it->x*1.e-6 << "," << it->y*1.e-6 << " was not found in ["<<MPL::rank()<<"]." << std::endl;
-//          }
-//          ASSERT( found != node_uid_to_loc.end() );
-//          int loc = found->second;
-//          sfn_glb_idx[jpart][jnode]      = uid;
-//          sfn_part   [jpart][jnode]      = part(loc);
-//          sfn_ridx   [jpart][jnode]      = ridx(loc);
-//          sfn_latlon [jpart][jnode*2+XX] = latlon(loc,XX) + (it->x - ll.x)/BC::EAST * 2.*M_PI;
-//          sfn_latlon [jpart][jnode*2+YY] = latlon(loc,YY);
-//        }
-//      }
-      //DEBUG_VAR( jnode );
     }
 
     for( int f=0; f<mesh.nb_function_spaces(); ++f )
     {
       FunctionSpace& elements = mesh.function_space(f);
+
       if( elements.metadata().get<int>("type") == Entity::ELEMS )
       {
         int nb_elem_nodes(elem_nodes[f].shape(1));
@@ -445,6 +423,7 @@ void increase_halo( Mesh& mesh )
           int e = found_bdry_elements[f][jelem];
           int periodic = found_bdry_elements_periodic[f][jelem];
           sfe_part[f][jpart][jelem]    = elem_part[f][e];
+
           double centroid[2];
           centroid[XX] = 0.;
           centroid[YY] = 0.;
@@ -573,17 +552,17 @@ void increase_halo( Mesh& mesh )
     {
       ComputeUniqueElementIndex compute_uid( nodes );
 
-      std::set<int> elem_uid;
+      std::set<uid_t> elem_uid;
       int nb_elems = elements.shape(0);
       for( int jelem=0; jelem<nb_elems; ++jelem )
       {
         elem_uid.insert( compute_uid(elem_nodes[f][jelem]) );
       }
 
-      std::vector< std::vector<uid_t> > rfe_unique_idx(MPL::size());
+      std::vector< std::vector<int> > received_new_elems(MPL::size());
       for( int jpart=0; jpart<MPL::size(); ++jpart )
       {
-        rfe_unique_idx[jpart].reserve(rfe_glb_idx[f][jpart].size());
+        received_new_elems[jpart].reserve(rfe_glb_idx[f][jpart].size());
       }
 
       int nb_new_elems=0;
@@ -594,10 +573,10 @@ void increase_halo( Mesh& mesh )
           bool inserted = elem_uid.insert( rfe_glb_idx[f][jpart][e] ).second;
           if( inserted )
           {
-            rfe_unique_idx[jpart].push_back(e);
+            received_new_elems[jpart].push_back(e);
           }
         }
-        nb_new_elems += rfe_unique_idx[jpart].size();
+        nb_new_elems += received_new_elems[jpart].size();
       }
 
       //DEBUG_VAR( nb_new_elems );
@@ -610,9 +589,9 @@ void increase_halo( Mesh& mesh )
       int new_elem=0;
       for( int jpart=0; jpart<MPL::size(); ++jpart )
       {
-        for( int e=0; e<rfe_unique_idx[jpart].size(); ++e )
+        for( int e=0; e<received_new_elems[jpart].size(); ++e )
         {
-          int jelem = rfe_unique_idx[jpart][e];
+          int jelem = received_new_elems[jpart][e];
           elem_glb_idx[f](nb_elems+new_elem)   = rfe_glb_idx[f][jpart][jelem];
           elem_part   [f](nb_elems+new_elem)   = rfe_part[f][jpart][jelem];
           for( int n=0; n<nb_nodes_per_elem; ++n )

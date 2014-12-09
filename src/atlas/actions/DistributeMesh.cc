@@ -115,7 +115,7 @@ void distribute_mesh( Mesh& mesh )
           }
         }
       }
-      std::vector<int> new_elem_gidx(nb_keep_elems);
+      std::vector<gidx_t> new_elem_gidx(nb_keep_elems);
       Array<int> new_elem_nodes_arr(nb_keep_elems,nb_nodes_per_elem);
       ArrayView<int,2> new_elem_nodes( new_elem_nodes_arr );
       for( int jelem = 0; jelem<nb_elems; ++jelem )

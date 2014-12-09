@@ -913,7 +913,7 @@ Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
   quads.metadata().set("nb_owned",nquads);
   triags.metadata().set("nb_owned",ntriags);
 
-  int max_glb_idx = rgg.npts()+rgg.nlat();
+  gidx_t max_glb_idx = rgg.npts()+rgg.nlat();
   if( three_dimensional ) max_glb_idx -= rgg.nlat();
   if( include_north_pole ) max_glb_idx += 1;
   if( include_south_pole ) max_glb_idx += 1;
@@ -947,7 +947,7 @@ void ReducedGridMeshGenerator::generate_global_element_numbering( Mesh& mesh )
     elem_displs[jpart] = elem_displs[jpart-1] + elem_counts[jpart-1];
   }
 
-  int gid = 1+elem_displs[ MPL::rank() ];
+  gidx_t gid = 1+elem_displs[ MPL::rank() ];
 
   for( int f=0; f<mesh.nb_function_spaces(); ++f )
   {

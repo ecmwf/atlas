@@ -17,25 +17,6 @@ int LatLonPoint::EAST  = microdeg( 360. );
 int LatLonPoint::NORTH = microdeg(  90. );
 int LatLonPoint::SOUTH = microdeg( -90. );
 
-
-template<>
-gidx_t LatLonPoint::uidT<int>() const
-{
-  return uid32();
-}
-
-template<>
-gidx_t LatLonPoint::uidT<long int>() const
-{
-  return uid64();
-}
-
-gidx_t LatLonPoint::uid() const
-{
-  return uid32();
-//  return uidT<gidx_t>();
-}
-
 void accumulate_faces(
 		FunctionSpace& func_space,
 		std::vector< std::vector<int> >& node_to_face,

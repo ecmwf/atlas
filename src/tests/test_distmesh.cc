@@ -31,6 +31,7 @@
 #include "atlas/actions/WriteLoadBalanceReport.h"
 #include "atlas/Parameters.h"
 #include "atlas/Util.h"
+#include "atlas/grids/reduced_gg/reduced_gg.h"
 
 using namespace atlas;
 using namespace atlas::io;
@@ -62,8 +63,8 @@ double dual_volume(Mesh& mesh)
 }
 
 struct MPIFixture {
-    MPIFixture()  { MPL::init(); }
-    ~MPIFixture() { MPL::finalize(); }
+     MPIFixture()  { atlas_init(); }
+    ~MPIFixture()  { atlas_finalize(); }
 };
 
 BOOST_GLOBAL_FIXTURE( MPIFixture )
@@ -79,7 +80,7 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
       // test::TestGrid grid(5,lon);
 
       //  GG grid(120,60);
-  T63 grid;
+  grids::reduced_gg::N16 grid;
 
 
   generator.options.set("nb_parts", MPL::size());
@@ -93,9 +94,11 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
 
   actions::build_parallel_fields(*m);
   actions::build_periodic_boundaries(*m);
-  actions::build_halo(*m,2);
+  actions::build_halo(*m,1);
+  //actions::renumber_nodes_glb_idx(m->function_space("nodes"));
   actions::build_edges(*m);
   actions::build_pole_edges(*m);
+  actions::build_edges_parallel_fields(m->function_space("edges"),m->function_space("nodes"));
   actions::build_median_dual_mesh(*m);
   BOOST_CHECK_CLOSE( test::dual_volume(*m), 360.*180., 0.0001 );
   double difference = 360.*180. - test::dual_volume(*m);
@@ -104,7 +107,7 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
     std::cout << "difference = " << difference << std::endl;
   }
 
-  std::stringstream filename; filename << "T63_dist_p" << MPL::rank() << ".msh";
+  std::stringstream filename; filename << "N32_dist.msh";
   Gmsh().write(*m,filename.str());
 
   actions::write_load_balance_report(*m,"load_balance.dat");

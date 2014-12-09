@@ -26,11 +26,11 @@
 #include "atlas/mpl/MPL.h"
 #include "atlas/mpl/GatherScatter.h"
 
-#define DEBUGGING_PARFIELDS
+//#define DEBUGGING_PARFIELDS
 #ifdef DEBUGGING_PARFIELDS
-#define EDGE(jedge) "Edge("<<gidx(edge_nodes(jedge,0))<<" "<<gidx(edge_nodes(jedge,1))<<")"
-#define own1 422
-#define own2 423
+#define EDGE(jedge) "Edge("<<gidx(edge_nodes(jedge,0))<<"[p"<<node_part(edge_nodes(jedge,0))<<"] "<<gidx(edge_nodes(jedge,1))<<"p["<<node_part(edge_nodes(jedge,1))<<"])"
+#define own1 1697
+#define own2 1698
 #define OWNED_EDGE(jedge) ((gidx(edge_nodes(jedge,0)) == own1 && gidx(edge_nodes(jedge,1)) == own2)\
                         || (gidx(edge_nodes(jedge,0)) == own2 && gidx(edge_nodes(jedge,1)) == own1))
 #define per1 -1
@@ -56,7 +56,7 @@ FieldT<gidx_t>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nod
 
 // ------------------------------------------------------------------
 
-typedef int uid_t;
+typedef gidx_t uid_t;
 
 namespace {
 
@@ -171,10 +171,6 @@ void renumber_nodes_glb_idx( FunctionSpace& nodes )
       glb_idx(jnode) = LatLonPoint( latlon[jnode] ).uid();
   }
 
-  /*
-   * REMOTE INDEX BASE = 1
-   */
-  const int ridx_base = 1;
 
   // 1) Gather all global indices, together with location
   Array<uid_t> loc_id_arr(nb_nodes);
@@ -426,7 +422,7 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
           if( pe1 == pmx )
             edge_part(jedge) = pmx;
           else
-            edge_part(jedge) = std::min(pn1,pn2);;
+            edge_part(jedge) = std::min(pn1,pn2);
         }
         else
         {
@@ -445,8 +441,20 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
         if     ( pc[0] > pc[1] ) edge_part(jedge) = pn1;
         else if( pc[0] < pc[1] ) edge_part(jedge) = pn2;
         else edge_part(jedge) = std::min(pn1,pn2);
+
+#ifdef DEBUGGING_PARFIELDS
+        if( OWNED_EDGE(jedge) )
+          DEBUG( EDGE(jedge) << " -->    pn1,pn2,pe1,pe2 " << pn1 << "," << pn2<< "," << pe1 << "," << pe2);
+#endif
+
       }
     }
+
+#ifdef DEBUGGING_PARFIELDS
+        if( OWNED_EDGE(jedge) )
+          DEBUG( EDGE(jedge) << " -->    pn1,pn2 " << pn1 << "," << pn2);
+#endif
+
 #ifdef DEBUGGING_PARFIELDS_disable
     if( periodic[jedge] )
       DEBUG(EDGE(jedge)<<" is periodic  " << periodic[jedge]);
@@ -487,10 +495,6 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
       if( edge_part(jedge)==mypart )
       {
         lookup[ uid ] = jedge;
-#ifdef DEBUGGING_PARFIELDS
-        if( OWNED_EDGE(jedge) )
-          DEBUG_VAR( uid );
-#endif
       }
       else
       {
@@ -509,6 +513,11 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
 
         }
       }
+#ifdef DEBUGGING_PARFIELDS
+        if( OWNED_EDGE(jedge) )
+          DEBUG( EDGE(jedge) << " --> " << uid << "   part " << edge_part(jedge));
+#endif
+
     }
 
     MPL::Alltoall( send_unknown, recv_unknown );
@@ -574,6 +583,12 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
       throw eckit::SeriousBug(msg.str(),Here());
     }
 
+#ifdef DEBUGGING_PARFIELDS
+        if( OWNED_EDGE(jedge) )
+          DEBUG( EDGE(jedge) << " -->    part " << edge_part(jedge));
+#endif
+
+
 #ifdef DEBUGGING_PARFIELDS_disable
     if( PERIODIC_EDGE(jedge) )
       DEBUG_VAR( "           the part is " << edge_part(jedge) );
@@ -600,6 +615,7 @@ FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes 
   ArrayView<int,   1> flags      ( nodes.field("flags")       );
 #ifdef DEBUGGING_PARFIELDS
   ArrayView<gidx_t,   1> gidx      ( nodes.field("glb_idx")       );
+  ArrayView<int,   1> node_part      ( nodes.field("partition")       );
 #endif
 
   ArrayView<int,1> is_pole_edge;
@@ -667,13 +683,15 @@ FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes 
 #ifdef DEBUGGING_PARFIELDS
       send_needed[ edge_part(jedge) ].push_back( gidx(ip1) );
       send_needed[ edge_part(jedge) ].push_back( gidx(ip2) );
+      send_needed[ edge_part(jedge) ].push_back( node_part(ip1) );
+      send_needed[ edge_part(jedge) ].push_back( node_part(ip2) );
 #endif
       sendcnt++;
     }
   }
   int varsize=2;
 #ifdef DEBUGGING_PARFIELDS
-  varsize=4;
+  varsize=6;
 #endif
   MPL::Alltoall( send_needed, recv_needed );
 
@@ -699,7 +717,7 @@ FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes 
       {
         std::stringstream msg;
 #ifdef DEBUGGING_PARFIELDS
-        msg << "Edge("<<recv_edge(jedge,2)<<" "<<recv_edge(jedge,3)<<")";
+        msg << "Edge("<<recv_edge(jedge,2)<<"[p"<<recv_edge(jedge,4)<<"] "<<recv_edge(jedge,3)<<"[p"<<recv_edge(jedge,5)<<"])";
 #else
         msg << "Edge with uid " << recv_uid;
 #endif
