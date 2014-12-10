@@ -29,19 +29,20 @@
 //#define DEBUGGING_PARFIELDS
 #ifdef DEBUGGING_PARFIELDS
 #define EDGE(jedge) "Edge("<<gidx(edge_nodes(jedge,0))<<"[p"<<node_part(edge_nodes(jedge,0))<<"] "<<gidx(edge_nodes(jedge,1))<<"p["<<node_part(edge_nodes(jedge,1))<<"])"
-#define own1 1697
-#define own2 1698
+#define own1 2419089
+#define own2 2423185
 #define OWNED_EDGE(jedge) ((gidx(edge_nodes(jedge,0)) == own1 && gidx(edge_nodes(jedge,1)) == own2)\
                         || (gidx(edge_nodes(jedge,0)) == own2 && gidx(edge_nodes(jedge,1)) == own1))
 #define per1 -1
 #define per2 -1
 #define PERIODIC_EDGE(jedge) ((gidx(edge_nodes(jedge,0)) == per1 && gidx(edge_nodes(jedge,1)) == per2)\
                           ||  (gidx(edge_nodes(jedge,0)) == per2 && gidx(edge_nodes(jedge,1)) == per1))
-#define find1 12
-#define find2 17
+#define find1 -12
+#define find2 -17
 #define FIND_EDGE(jedge) ((gidx(edge_nodes(jedge,0)) == find1 && gidx(edge_nodes(jedge,1)) == find2)\
                       ||  (gidx(edge_nodes(jedge,0)) == find2 && gidx(edge_nodes(jedge,1)) == find1))
-
+#define ownuid 547124520
+#define OWNED_UID(UID) (UID == ownuid)
 #endif
 
 namespace atlas {
@@ -518,6 +519,21 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
           DEBUG( EDGE(jedge) << " --> " << uid << "   part " << edge_part(jedge));
 #endif
 
+#ifdef DEBUGGING_PARFIELDS
+        if( OWNED_UID(uid) )
+        {
+          double x1,y1, x2,y2, xe,ye;
+          x1 = latlon(ip1,XX);
+          y1 = latlon(ip1,YY);
+          x2 = latlon(ip2,XX);
+          y2 = latlon(ip2,YY);
+          xe = centroid[XX];
+          ye = centroid[YY];
+          DEBUG( uid << " --> " << EDGE(jedge) << "   x1,y1 - x2,y2 - xe,ye " << x1<<","<<y1
+                 << " - " << x2<<","<<y2<< " - " << xe <<","<<ye<< "     part " << edge_part(jedge));
+        }
+#endif
+
     }
 
     MPL::Alltoall( send_unknown, recv_unknown );
@@ -558,8 +574,8 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
         if( edge_part(iedge) != -1 )
         {
           std::stringstream msg;
-          msg << "Edge ("<<gidx(edge_nodes(iedge,0))<<" "<<gidx(edge_nodes(iedge,1))
-              << ") was already found on part " << edge_part(iedge);
+          msg << "Edge ("<<gidx(edge_nodes(iedge,0))<<"[p"<<node_part(edge_nodes(iedge,0))<<"] "<<gidx(edge_nodes(iedge,1))
+              << "[p"<<node_part(edge_nodes(iedge,1))<<"]) from part " << jpart << " was already found on part " << edge_part(iedge);
           throw eckit::Exception(msg.str(),Here());
         }
 #endif

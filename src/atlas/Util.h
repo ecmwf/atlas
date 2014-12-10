@@ -169,6 +169,16 @@ private:
 template<> inline gidx_t LatLonPoint::uidT<int >() const { return uid32(); }
 template<> inline gidx_t LatLonPoint::uidT<long>() const { return uid64(); }
 
+inline int LatLonPoint::uid32() const
+{
+  // max precision is 0.02 degree
+  int iy = static_cast<int>((NORTH-y)*5e-5);
+  int ix = static_cast<int>((x+EAST)*5e-5);
+  iy <<= 17;
+  int id = iy | ix;
+  return id;
+}
+
 inline long LatLonPoint::uid64() const
 {
   // max precision is 10 microdegree
@@ -176,16 +186,6 @@ inline long LatLonPoint::uid64() const
   long ix = static_cast<long>((x+4*EAST));
   iy <<= 31;
   long id = iy | ix;
-  return id;
-}
-
-inline int LatLonPoint::uid32() const
-{
-  // max precision is 0.02 degree
-  int iy = static_cast<int>((NORTH-y)*2e-5);
-  int ix = static_cast<int>((x+4*EAST)*2e-5);
-  iy <<= 17;
-  int id = iy | ix;
   return id;
 }
 
