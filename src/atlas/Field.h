@@ -218,9 +218,10 @@ extern "C"
 	const char* atlas__Field__data_type (Field* This);
 	int atlas__Field__nb_vars (Field* This);
 	void atlas__Field__shapef (Field* This, int* &shape, int &rank);
-	void atlas__Field__data_shapef_double (Field* This, double* &field_data, int* &field_shapef, int &rank);
-	void atlas__Field__data_shapef_float (Field* This, float* &field_data, int* &field_shapef, int &rank);
-	void atlas__Field__data_shapef_int (Field* This, int* &field_data, int* &field_shapef, int &rank);
+  void atlas__Field__data_shapef_int (Field* This, int* &field_data, int* &field_shapef, int &rank);
+  void atlas__Field__data_shapef_long (Field* This, long* &field_data, int* &field_shapef, int &rank);
+  void atlas__Field__data_shapef_float (Field* This, float* &field_data, int* &field_shapef, int &rank);
+  void atlas__Field__data_shapef_double (Field* This, double* &field_data, int* &field_shapef, int &rank);
 	Metadata* atlas__Field__metadata (Field* This);
 	FunctionSpace* atlas__Field__function_space (Field* This);
 }

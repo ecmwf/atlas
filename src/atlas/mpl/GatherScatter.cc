@@ -309,6 +309,14 @@ void atlas__GatherScatter__gather_int ( GatherScatter* This,
                gfield,gvar_strides,gvar_extents,gvar_rank);
 }
 
+void atlas__GatherScatter__gather_long ( GatherScatter* This,
+                                         long lfield[], int lvar_strides[], int lvar_extents[], int lvar_rank,
+                                         long gfield[], int gvar_strides[], int gvar_extents[], int gvar_rank)
+{
+  This->gather(lfield,lvar_strides,lvar_extents,lvar_rank,
+               gfield,gvar_strides,gvar_extents,gvar_rank);
+}
+
 void atlas__GatherScatter__gather_float ( GatherScatter* This,
                                           float lfield[], int lvar_strides[], int lvar_extents[], int lvar_rank,
                                           float gfield[], int gvar_strides[], int gvar_extents[], int gvar_rank)
@@ -328,6 +336,14 @@ void atlas__GatherScatter__gather_double ( GatherScatter* This,
 void atlas__GatherScatter__scatter_int ( GatherScatter* This,
                                          int gfield[], int gvar_strides[], int gvar_extents[], int gvar_rank,
                                          int lfield[], int lvar_strides[], int lvar_extents[], int lvar_rank )
+{
+  This->scatter( gfield, gvar_strides, gvar_extents, gvar_rank,
+                 lfield, lvar_strides, lvar_extents, lvar_rank );
+}
+
+void atlas__GatherScatter__scatter_long ( GatherScatter* This,
+                                          long gfield[], int gvar_strides[], int gvar_extents[], int gvar_rank,
+                                          long lfield[], int lvar_strides[], int lvar_extents[], int lvar_rank )
 {
   This->scatter( gfield, gvar_strides, gvar_extents, gvar_rank,
                  lfield, lvar_strides, lvar_extents, lvar_rank );

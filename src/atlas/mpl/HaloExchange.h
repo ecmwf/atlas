@@ -362,6 +362,7 @@ extern "C"
   void atlas__HaloExchange__delete (HaloExchange* This);
   void atlas__HaloExchange__setup (HaloExchange* This, int part[], int remote_idx[], int base, int size);
   void atlas__HaloExchange__execute_strided_int (HaloExchange* This, int field[], int var_strides[], int var_shape[], int var_rank);
+  void atlas__HaloExchange__execute_strided_long (HaloExchange* This, long field[], int var_strides[], int var_shape[], int var_rank);
   void atlas__HaloExchange__execute_strided_float (HaloExchange* This, float field[], int var_strides[], int var_shape[], int var_rank);
   void atlas__HaloExchange__execute_strided_double (HaloExchange* This, double field[], int var_strides[], int var_shape[], int var_rank);
   void atlas__HaloExchange__execute_int (HaloExchange* This, int field[], int var_rank);

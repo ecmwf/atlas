@@ -205,9 +205,16 @@ void atlas__Field__shapef (Field* This, int* &shape, int &rank)
 	rank = This->shapef().size();
 }
 
-void atlas__Field__data_shapef_double (Field* This, double* &field_data, int* &field_bounds, int &rank)
+void atlas__Field__data_shapef_int (Field* This, int* &field_data, int* &field_bounds, int &rank)
 {
-	field_data = &This->data<double>()[0];
+	field_data = &This->data<int>()[0];
+	field_bounds = const_cast<int*>(&(This->shapef()[0]));
+	rank = This->shapef().size();
+}
+
+void atlas__Field__data_shapef_long (Field* This, long* &field_data, int* &field_bounds, int &rank)
+{
+	field_data = &This->data<long>()[0];
 	field_bounds = const_cast<int*>(&(This->shapef()[0]));
 	rank = This->shapef().size();
 }
@@ -219,12 +226,13 @@ void atlas__Field__data_shapef_float (Field* This, float* &field_data, int* &fie
 	rank = This->shapef().size();
 }
 
-void atlas__Field__data_shapef_int (Field* This, int* &field_data, int* &field_bounds, int &rank)
+void atlas__Field__data_shapef_double (Field* This, double* &field_data, int* &field_bounds, int &rank)
 {
-	field_data = &This->data<int>()[0];
+	field_data = &This->data<double>()[0];
 	field_bounds = const_cast<int*>(&(This->shapef()[0]));
 	rank = This->shapef().size();
 }
+
 
 // ------------------------------------------------------------------
 

@@ -25,9 +25,12 @@ contains
   procedure :: metadata => Field__metadata
   procedure :: function_space => Field__function_space
   procedure :: shape => Field__shape
-  procedure, private :: access_data1_integer => Field__access_data1_integer
-  procedure, private :: access_data2_integer => Field__access_data2_integer
-  procedure, private :: access_data3_integer => Field__access_data3_integer
+  procedure, private :: access_data1_int32 => Field__access_data1_int32
+  procedure, private :: access_data2_int32 => Field__access_data2_int32
+  procedure, private :: access_data3_int32 => Field__access_data3_int32
+  procedure, private :: access_data1_int64 => Field__access_data1_int64
+  procedure, private :: access_data2_int64 => Field__access_data2_int64
+  procedure, private :: access_data3_int64 => Field__access_data3_int64
   procedure, private :: access_data1_real32 => Field__access_data1_real32
   procedure, private :: access_data2_real32 => Field__access_data2_real32
   procedure, private :: access_data3_real32 => Field__access_data3_real32
@@ -38,9 +41,9 @@ contains
   procedure, private :: access_data3_real64_bounds => Field__access_data3_real64_bounds
   procedure, private :: access_data4_real64_bounds => Field__access_data4_real64_bounds
   generic :: access_data => &
-    & access_data1_integer, access_data1_real32, access_data1_real64, &
-    & access_data2_integer, access_data2_real32, access_data2_real64, access_data2_real64_bounds, &
-    & access_data3_integer, access_data3_real32, access_data3_real64, access_data3_real64_bounds, &
+    & access_data1_int32, access_data1_int64, access_data1_real32, access_data1_real64, &
+    & access_data2_int32, access_data2_int64, access_data2_real32, access_data2_real64, access_data2_real64_bounds, &
+    & access_data3_int32, access_data3_int64, access_data3_real32, access_data3_real64, access_data3_real64_bounds, &
     &                                                                 access_data4_real64_bounds
   procedure :: data1 => Field__data1_wp
   procedure :: data2 => Field__data2_wp

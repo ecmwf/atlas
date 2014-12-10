@@ -366,6 +366,10 @@ void atlas__FunctionSpace__create_field_int (FunctionSpace* This, char* name, in
 	This->create_field<int>( std::string(name), nb_vars );
 }
 
+void atlas__FunctionSpace__create_field_long (FunctionSpace* This, char* name, int nb_vars) {
+  This->create_field<long>( std::string(name), nb_vars );
+}
+
 void atlas__FunctionSpace__remove_field (FunctionSpace* This, char* name ) {
 	This->remove_field( std::string(name) );
 }

@@ -612,9 +612,11 @@ extern "C"
   void atlas__GatherScatter__setup64 (GatherScatter* This, int part[], int remote_idx[], int base, long glb_idx[], long max_glb_idx, int parsize);
   int atlas__GatherScatter__glb_dof (GatherScatter* This);
   void atlas__GatherScatter__gather_int (GatherScatter* This, int ldata[], int lvar_strides[], int lvar_shape[], int lvar_rank, int gdata[], int gvar_strides[], int gvar_shape[], int gvar_rank);
+  void atlas__GatherScatter__gather_long (GatherScatter* This, long ldata[], int lvar_strides[], int lvar_shape[], int lvar_rank, long gdata[], int gvar_strides[], int gvar_shape[], int gvar_rank);
   void atlas__GatherScatter__gather_float (GatherScatter* This, float ldata[], int lvar_strides[], int lvar_shape[], int lvar_rank, float gdata[], int gvar_strides[], int gvar_shape[], int gvar_rank);
   void atlas__GatherScatter__gather_double (GatherScatter* This, double ldata[], int lvar_strides[], int lvar_shape[], int lvar_rank, double gdata[], int gvar_strides[], int gvar_shape[], int gvar_rank);
   void atlas__GatherScatter__scatter_int (GatherScatter* This, int gdata[], int gvar_strides[], int gvar_shape[], int gvar_rank, int ldata[], int lvar_strides[], int lvar_shape[], int lvar_rank);
+  void atlas__GatherScatter__scatter_long (GatherScatter* This, long gdata[], int gvar_strides[], int gvar_shape[], int gvar_rank, long ldata[], int lvar_strides[], int lvar_shape[], int lvar_rank);
   void atlas__GatherScatter__scatter_float (GatherScatter* This, float gdata[], int gvar_strides[], int gvar_shape[], int gvar_rank, float ldata[], int lvar_strides[], int lvar_shape[], int lvar_rank);
   void atlas__GatherScatter__scatter_double (GatherScatter* This, double gdata[], int gvar_strides[], int gvar_shape[], int gvar_rank, double ldata[], int lvar_strides[], int lvar_shape[], int lvar_rank);
 }
