@@ -234,9 +234,9 @@ void AtlasBenchmark::run()
 
   setup();
 
-  Log::info() << "  Doing " << niter << " iterations: \n";
+  Log::info() << "  Executing " << niter << " iterations: \n";
   Log::info() << "      0%   10   20   30   40   50   60   70   80   90   100%\n";
-  Log::info() << "      |----|----|----|----|----|----|----|----|----|----|"   << std::endl;
+  Log::info() << "      |----|----|----|----|----|----|----|----|----|----|\n";
   Log::info() << "      " << std::flush;
   int tic=0;
   for( int i=0; i<niter; ++i )
