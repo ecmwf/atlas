@@ -35,7 +35,7 @@ std::string GaussianGrid::className()
 void GaussianGrid::set_typeinfo()
 {
   std::stringstream stream;
-  stream << "regular_gg.N"<<N();
+  stream << "gg.N"<<N();
   uid_ = stream.str();
   hash_ = stream.str();
   grid_type_ = grid_type_str();

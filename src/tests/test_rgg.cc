@@ -28,7 +28,7 @@
 #include "atlas/actions/BuildParallelFields.h"
 #include "atlas/Parameters.h"
 #include "atlas/Util.h"
-#include "atlas/grids/reduced_gg/reduced_gg.h"
+#include "atlas/grids/rgg/rgg.h"
 
 using namespace atlas;
 using namespace atlas::io;

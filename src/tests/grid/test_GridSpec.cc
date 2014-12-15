@@ -57,7 +57,7 @@ BOOST_FIXTURE_TEST_CASE ( test_grib_to_grid_to_gridspec, ArgsFixture ) {
     if (argc == 2) cout << argv[1];
     cout << "\n";
     BOOST_REQUIRE_MESSAGE( argc == 2, "You missed filename argument" );
-
+    atlas::grids::load();
     test_grib_file(argv[1]);
 }
 
