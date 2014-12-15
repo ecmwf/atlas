@@ -53,7 +53,7 @@ class RegularGG : public Grid {
 public: // methods
 
 	static std::string className() { return "atlas.grid.RegularGG"; }
-	static std::string gridTypeStr() { return "regular_gg"; }
+	static std::string grid_type_str() { return "regular_gg"; }
 
 	RegularGG( const eckit::Params& p );
 	virtual ~RegularGG();
@@ -96,7 +96,7 @@ private: // members
 
 };
 
-register_BuilderT1(Grid,RegularGG,RegularGG::gridTypeStr()+"_depr");
+register_BuilderT1(Grid,RegularGG,RegularGG::grid_type_str()+"_depr");
 
 
 //-----------------------------------------------------------------------------

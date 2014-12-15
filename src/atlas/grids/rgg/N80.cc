@@ -1,10 +1,13 @@
 // TL159
 
-#include "atlas/grids/reduced_gg/reduced_gg.h"
+#include "atlas/grids/rgg/rgg.h"
 
 namespace atlas {
 namespace grids {
-namespace reduced_gg {
+namespace rgg {
+
+eckit::ConcreteBuilderT1<Grid,N80> builder_N80 (N80::grid_type_str());
+eckit::ConcreteBuilderT1<Grid,N80> builder_TL159("rgg.TL159");
 
 void N80::construct()
 {
@@ -176,6 +179,6 @@ void N80::construct()
   setup_colat_hemisphere(N,colat,lon,RAD);
 }
 
-} // namespace reduced_gg
+} // namespace rgg
 } // namespace grids
 } // namespace atlas

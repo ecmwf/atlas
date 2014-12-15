@@ -272,7 +272,9 @@ void AtlasBenchmark::setup()
 {
   Timer timer( "setup", Log::debug());
 
-  std::stringstream gridname; gridname << "reduced_gg.N"<<N;
+  atlas::grids::load();
+
+  std::stringstream gridname; gridname << "rgg.N"<<N;
   mesh = Mesh::Ptr( generate_reduced_gaussian_grid(gridname.str()) );
   // mesh = Mesh::Ptr( generate_regular_grid( 2*N, N) );
   build_nodes_parallel_fields(mesh->function_space("nodes"));

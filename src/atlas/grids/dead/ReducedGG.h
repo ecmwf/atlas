@@ -54,7 +54,7 @@ class ReducedGG : public Grid {
 public: // methods
 
 	static std::string className() { return "atlas.grid.ReducedGG"; }
-	static std::string gridTypeStr() { return "reduced_gg"; }
+	static std::string grid_type_str() { return "reduced_gg"; }
 
 	ReducedGG( const eckit::Params& p );
 	ReducedGG( long gaussN );

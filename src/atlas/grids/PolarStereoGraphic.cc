@@ -28,7 +28,7 @@ namespace grids {
 
 //------------------------------------------------------------------------------------------------------
 
-ConcreteBuilderT1<Grid,PolarStereoGraphic> PolarStereoGraphic_builder( PolarStereoGraphic::gridTypeStr() );
+register_BuilderT1(Grid,PolarStereoGraphic,PolarStereoGraphic::grid_type_str());
 
 PolarStereoGraphic::PolarStereoGraphic( const eckit::Params& p )
 : iScansPositively_(true),
@@ -189,7 +189,7 @@ GridSpec PolarStereoGraphic::spec() const
 string PolarStereoGraphic::uid() const
 {
    std::stringstream ss;
-   ss << gridTypeStr() << "_" << npts_xaxis_ << "_" << npts_yaxis_;
+   ss << grid_type_str() << "_" << npts_xaxis_ << "_" << npts_yaxis_;
    return ss.str();
 }
 
@@ -301,7 +301,7 @@ Grid::BoundBox PolarStereoGraphic::bounding_box() const
 
 string PolarStereoGraphic::grid_type() const
 {
-   return PolarStereoGraphic::gridTypeStr();
+   return PolarStereoGraphic::grid_type_str();
 }
 
 bool PolarStereoGraphic::same(const Grid& grid) const

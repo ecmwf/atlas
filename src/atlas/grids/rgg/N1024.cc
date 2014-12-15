@@ -1,10 +1,14 @@
 // TL2047
 
-#include "atlas/grids/reduced_gg/reduced_gg.h"
+#include "atlas/grids/rgg/rgg.h"
 
 namespace atlas {
 namespace grids {
-namespace reduced_gg {
+namespace rgg {
+
+eckit::ConcreteBuilderT1<Grid,N1024> builder_N1024 (N1024::grid_type_str());
+eckit::ConcreteBuilderT1<Grid,N1024> builder_TL2047("rgg.TL2047");
+eckit::ConcreteBuilderT1<Grid,N1024> builder_TC1023("rgg.TC1023");
 
 void N1024::construct()
 {
@@ -2064,6 +2068,6 @@ void N1024::construct()
   setup_colat_hemisphere(N,colat,lon,RAD);
 }
 
-} // namespace reduced_gg
+} // namespace rgg
 } // namespace grids
 } // namespace atlas

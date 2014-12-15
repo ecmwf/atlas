@@ -118,7 +118,7 @@ RegularLatLon::~RegularLatLon()
 string RegularLatLon::uid() const
 {
 	std::stringstream ss;
-	ss << RegularLatLon::gridTypeStr() << "_" << nptsNS_ << "_" << nptsWE_;
+	ss << RegularLatLon::grid_type_str() << "_" << nptsNS_ << "_" << nptsWE_;
 	return ss.str();
 }
 
@@ -212,7 +212,7 @@ void RegularLatLon::lonlat( std::vector<Grid::Point>& pts ) const
 
 string RegularLatLon::grid_type() const
 {
-	return RegularLatLon::gridTypeStr();
+	return RegularLatLon::grid_type_str();
 }
 
 GridSpec RegularLatLon::spec() const

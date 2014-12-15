@@ -1,10 +1,14 @@
 // TL2559
 
-#include "atlas/grids/reduced_gg/reduced_gg.h"
+#include "atlas/grids/rgg/rgg.h"
 
 namespace atlas {
 namespace grids {
-namespace reduced_gg {
+namespace rgg {
+
+eckit::ConcreteBuilderT1<Grid,N1280> builder_N1280 (N1280::grid_type_str());
+eckit::ConcreteBuilderT1<Grid,N1280> builder_TL2559("rgg.TL2559");
+eckit::ConcreteBuilderT1<Grid,N1280> builder_TC1279("rgg.TC1279");
 
 void N1280::construct()
 {
@@ -1553,6 +1557,6 @@ void N1280::construct()
 
 }
 
-} // namespace reduced_gg
+} // namespace rgg
 } // namespace grids
 } // namespace atlas

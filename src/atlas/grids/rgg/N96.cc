@@ -1,10 +1,13 @@
 // TL191
 
-#include "atlas/grids/reduced_gg/reduced_gg.h"
+#include "atlas/grids/rgg/rgg.h"
 
 namespace atlas {
 namespace grids {
-namespace reduced_gg {
+namespace rgg {
+
+eckit::ConcreteBuilderT1<Grid,N96> builder_N96 (N96::grid_type_str());
+eckit::ConcreteBuilderT1<Grid,N96> builder_TL191("rgg.TL191");
 
 void N96::construct()
 {
@@ -208,6 +211,6 @@ void N96::construct()
   setup_lat_hemisphere(N,lat,lon,DEG);
 }
 
-} // namespace reduced_gg
+} // namespace rgg
 } // namespace grids
 } // namespace atlas

@@ -31,7 +31,7 @@
 #include "atlas/actions/WriteLoadBalanceReport.h"
 #include "atlas/Parameters.h"
 #include "atlas/Util.h"
-#include "atlas/grids/reduced_gg/reduced_gg.h"
+#include "atlas/grids/rgg/rgg.h"
 
 using namespace atlas;
 using namespace atlas::io;
@@ -80,7 +80,7 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
       // test::TestGrid grid(5,lon);
 
       //  GG grid(120,60);
-  grids::reduced_gg::N16 grid;
+  grids::rgg::N16 grid;
 
 
   generator.options.set("nb_parts", MPL::size());

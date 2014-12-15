@@ -9,7 +9,8 @@
  */
 
 #include <typeinfo> // std::bad_cast
-#include <eckit/memory/Builder.h>
+
+#include "eckit/memory/Builder.h"
 
 #include "atlas/atlas_config.h"
 #include "atlas/grids/LonLatGrid.h"
@@ -22,7 +23,11 @@ using eckit::Params;
 namespace atlas {
 namespace grids {
 
-std::string LonLatGrid::gtype()
+//------------------------------------------------------------------------------------------------------
+
+register_BuilderT1(Grid,LonLatGrid,LonLatGrid::grid_type_str());
+
+std::string LonLatGrid::grid_type_str()
 {
   return "regular_ll";
 }
@@ -35,10 +40,10 @@ std::string LonLatGrid::className()
 void LonLatGrid::set_typeinfo()
 {
   std::stringstream stream;
-  stream << gtype()<<"."<<nlon()<<"x"<<nlat();
+  stream << "ll."<<nlon()<<"x"<<nlat();
   uid_ = stream.str();
   hash_ = stream.str();
-  grid_type_ = gtype();
+  grid_type_ = grid_type_str();
 }
 
 LonLatGrid::LonLatGrid() : ReducedGrid()
@@ -225,7 +230,7 @@ void LonLatGrid::setup( const double londeg, const double latdeg, const BoundBox
 
 GridSpec LonLatGrid::spec() const
 {
-  GridSpec grid_spec( gtype() );
+  GridSpec grid_spec( grid_type_str() );
 
   grid_spec.uid(uid());
   grid_spec.set("hash", hash() );
@@ -237,6 +242,8 @@ GridSpec LonLatGrid::spec() const
 
   return grid_spec;
 }
+
+//------------------------------------------------------------------------------------------------------
 
 } // namespace grids
 } // namespace atlas

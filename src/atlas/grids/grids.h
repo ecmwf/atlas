@@ -20,7 +20,7 @@
 #include "atlas/grids/ReducedGrid.h"
 #include "atlas/grids/ReducedLonLatGrid.h"
 #include "atlas/grids/Unstructured.h"
-#include "atlas/grids/reduced_gg/reduced_gg.h"
+#include "atlas/grids/rgg/rgg.h"
 
 /// @todo remaining to be reworked
 #include "atlas/grids/PolarStereoGraphic.h"
@@ -31,6 +31,7 @@ namespace atlas {
 namespace grids {
 
 void load();
+void unload();
 
 } // namespace grids
 } // namespace atlas

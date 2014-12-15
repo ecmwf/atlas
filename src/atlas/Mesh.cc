@@ -77,6 +77,17 @@ FunctionSpace& Mesh::function_space( size_t idx) const
 	return *function_spaces_[ idx ];
 }
 
+//------------------------------------------------------------------------------------------------------
+
+std::ostream& operator<<(std::ostream& s,const Mesh& m)
+{
+	s << "Mesh" << std::endl;
+	for( size_t i = 0; i < m.nb_function_spaces(); ++i )
+	{
+		s << m.function_space(i) << std::endl;
+	}
+	return s;
+}
 
 //------------------------------------------------------------------------------------------------------
 // C wrapper interfaces to C++ routines

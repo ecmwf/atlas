@@ -39,7 +39,7 @@ class RegularLatLon : public Grid {
 public: // methods
 
 	static std::string className() { return "atlas.grid.RegularLatLon"; }
-	static std::string gridTypeStr() { return "regular_ll_depr"; }
+	static std::string grid_type_str() { return "regular_ll_depr"; }
 
 	RegularLatLon( const eckit::Params& p );
 
@@ -93,7 +93,7 @@ private: // members
 
 };
 
-register_BuilderT1(Grid,RegularLatLon,RegularLatLon::gridTypeStr());
+register_BuilderT1(Grid,RegularLatLon,RegularLatLon::grid_type_str());
 
 //-----------------------------------------------------------------------------
 

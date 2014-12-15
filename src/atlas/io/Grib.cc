@@ -154,12 +154,12 @@ static std::string match_grid_spec_with_sample_file( const GridSpec& g_spec, lon
    std::string grid_type = g_spec.grid_type();
 
    // For reduced gaussain, first match GridSpec uid, directly to a samples file
-   if (grid_type == grids::ReducedGaussianGrid::gtype() ) {
+   if (grid_type == grids::ReducedGaussianGrid::grid_type_str() ) {
       return map_uid_to_grib_sample_file(g_spec.uid(),edition);
    }
 
    // For regular gaussian grids
-   if (grid_type == grids::GaussianGrid::gtype() ) {
+   if (grid_type == grids::GaussianGrid::grid_type_str() ) {
 
 
       // regular_gg_ml_grib1.tmpl  --> GridSpec[ (GaussN,32)(Ni,128)(Nj,64)(uid,regular_gg_32) ]
@@ -174,12 +174,12 @@ static std::string match_grid_spec_with_sample_file( const GridSpec& g_spec, lon
 
 
    // For reduced lat long, Choice of two only, if we dont have 501 points number of pts north to south, were out of luck.
-   if (grid_type == grids::ReducedLonLatGrid::gtype() ) {
+   if (grid_type == grids::ReducedLonLatGrid::grid_type_str() ) {
       if (edition == 1) return "reduced_ll_sfc_grib1";
       return "reduced_ll_sfc_grib2";
    }
 
-   if (grid_type == grids::LonLatGrid::gtype() ) {
+   if (grid_type == grids::LonLatGrid::grid_type_str() ) {
 
       // regular_ll_pl_grib1.tmpl  --> GridSpec[ (Ni,16)(Nj,31) (lat_inc,2)(lon_inc,2)(uid,regular_ll_31_16) ]
       // regular_ll_pl_grib2.tmpl  --> GridSpec[ (Ni,16)(Nj,31) (lat_inc,2)(lon_inc,2)(uid,regular_ll_31_16) ]
@@ -189,7 +189,7 @@ static std::string match_grid_spec_with_sample_file( const GridSpec& g_spec, lon
       return "regular_ll_pl_grib2";;
    }
 
-   if (grid_type == grids::RotatedLatLon::gridTypeStr() ) {
+   if (grid_type == grids::RotatedLatLon::grid_type_str() ) {
 
       // rotated_ll_pl_grib1.tmpl  --> GridSpec[ (Ni,16)(Nj,31)(SouthPoleLat,0)(SouthPoleLon,0)(SouthPoleRotAngle,0)(lat_inc,2)(lon_inc,2)(uid,rotated_ll_31) ]
       // rotated_ll_pl_grib2.tmpl  --> GridSpec[ (Ni,16)(Nj,31)(SouthPoleLat,0)(SouthPoleLon,0)(SouthPoleRotAngle,0)(lat_inc,2)(lon_inc,2)(uid,rotated_ll_31) ]
@@ -241,7 +241,7 @@ bool match_grid_spec_with_sample_file( const GridSpec& g_spec,
       return false;
    }
 
-   if (g_spec.grid_type() == grids::ReducedGaussianGrid::gtype() ) {
+   if (g_spec.grid_type() == grids::ReducedGaussianGrid::grid_type_str() ) {
       if (g_spec.has("N")) {
          long grid_gausn = g_spec.get("N");
          long grib_gausn = GribAccessor<long>("numberOfParallelsBetweenAPoleAndTheEquator")(gh);
@@ -475,8 +475,8 @@ void Grib::write_gridspec_to_grib(const GridSpec& gspec, GribHandle& gh)
   gspec2grib.set<long>( "nlat", "Nj" );
 
   // N number for (Reduced) Gaussian Grids
-  if( gspec["grid_type"] == grids::GaussianGrid::gtype() ||
-      gspec["grid_type"] == grids::ReducedGaussianGrid::gtype() )
+  if( gspec["grid_type"] == grids::GaussianGrid::grid_type_str() ||
+      gspec["grid_type"] == grids::ReducedGaussianGrid::grid_type_str() )
     gspec2grib.set<long>( "N", "numberOfParallelsBetweenAPoleAndTheEquator" );
 
   gspec2grib.set<double>( "bbox_n", "latitudeOfFirstGridPointInDegrees" );

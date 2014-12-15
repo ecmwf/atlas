@@ -26,13 +26,13 @@ using namespace eckit;
 using namespace atlas;
 using namespace atlas::grids;
 
-BOOST_AUTO_TEST_CASE( init ) { MPL::init(); }
+BOOST_AUTO_TEST_CASE( init ) { MPL::init(); atlas::grids::load(); }
 
 BOOST_AUTO_TEST_CASE( test_factory )
 {
-  ReducedGrid::Ptr reducedgrid( ReducedGrid::create("reduced_gg.N80") );
+  ReducedGrid::Ptr reducedgrid( ReducedGrid::create("rgg.N80") );
 
-  Grid::Ptr grid ( Grid::create("reduced_gg.N24") );
+  Grid::Ptr grid ( Grid::create("rgg.N24") );
 
   std::cout << "reducedgrid->nlat() = " << reducedgrid->nlat() << std::endl;
   std::cout << "grid->npts() = " << grid->npts() << std::endl;
@@ -103,7 +103,7 @@ BOOST_AUTO_TEST_CASE( test_reduced_gg )
 
 BOOST_AUTO_TEST_CASE( test_reduced_gg_ifs )
 {
-  grids::reduced_gg::N32 grid;
+  grids::rgg::N32 grid;
 
   BOOST_CHECK_EQUAL(grid.N(),    32);
   BOOST_CHECK_EQUAL(grid.nlat(), 64);

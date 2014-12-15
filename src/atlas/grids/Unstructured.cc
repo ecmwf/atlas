@@ -23,6 +23,8 @@ namespace grids {
 
 //-----------------------------------------------------------------------------
 
+register_BuilderT1(Grid,Unstructured,Unstructured::grid_type_str());
+
 //void Unstructured::constructFrom(const GridSpec& grid_spec)
 //{
 //    if (grid_spec.has("hash")) hash_ = (std::string)grid_spec.get("hash");

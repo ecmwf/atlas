@@ -8,8 +8,6 @@
  * does it submit to any jurisdiction.
  */
 
-
-
 #ifndef atlas_grids_ReducedGaussianGrid_h
 #define atlas_grids_ReducedGaussianGrid_h
 
@@ -18,6 +16,8 @@
 
 namespace atlas {
 namespace grids {
+
+//------------------------------------------------------------------------------------------------------
 
 /// @brief Reduced Gaussian Grid
 ///
@@ -34,7 +34,7 @@ class ReducedGaussianGrid: public ReducedGrid {
 
 public:
 
-  static std::string gtype() { return "reduced_gg"; }
+  static std::string grid_type_str() { return "reduced_gg"; }
 
   ReducedGaussianGrid();
 
@@ -54,7 +54,7 @@ protected:
 
 };
 
-register_BuilderT1(Grid,ReducedGaussianGrid,ReducedGaussianGrid::gtype());
+//------------------------------------------------------------------------------------------------------
 
 } // namespace grids
 } // namespace atlas

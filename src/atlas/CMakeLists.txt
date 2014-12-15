@@ -148,30 +148,30 @@ grids/RotatedLatLon.cc
 grids/RotatedLatLon.h
 grids/Unstructured.cc
 grids/Unstructured.h
-grids/reduced_gg/reduced_gg.h
-grids/reduced_gg/N16.cc    # TL31
-grids/reduced_gg/N24.cc    # TL47
-grids/reduced_gg/N32.cc    # TL63
-grids/reduced_gg/N48.cc    # TL95
-grids/reduced_gg/N64.cc    # TL127
-grids/reduced_gg/N80.cc    # TL159
-grids/reduced_gg/N96.cc    # TL191
-grids/reduced_gg/N128.cc   # TL255
-grids/reduced_gg/N160.cc   # TL319
-grids/reduced_gg/N200.cc   # TL399
-grids/reduced_gg/N256.cc   # TL511
-grids/reduced_gg/N320.cc   # TL639
-grids/reduced_gg/N400.cc   # TL799
-grids/reduced_gg/N512.cc   # TL1023
-grids/reduced_gg/N576.cc   # TL1151
-grids/reduced_gg/N640.cc   # TL1279
-grids/reduced_gg/N800.cc   # TL1599
-grids/reduced_gg/N1024.cc  # TL2047
-grids/reduced_gg/N1280.cc  # TL2559
-grids/reduced_gg/N1600.cc  # TL3199
-grids/reduced_gg/N2000.cc  # TL3999
-grids/reduced_gg/N4000.cc  # TL7999
-grids/reduced_gg/N8000.cc  # TL15999
+grids/rgg/rgg.h
+grids/rgg/N16.cc    # TL31
+grids/rgg/N24.cc    # TL47
+grids/rgg/N32.cc    # TL63
+grids/rgg/N48.cc    # TL95
+grids/rgg/N64.cc    # TL127
+grids/rgg/N80.cc    # TL159
+grids/rgg/N96.cc    # TL191
+grids/rgg/N128.cc   # TL255
+grids/rgg/N160.cc   # TL319
+grids/rgg/N200.cc   # TL399
+grids/rgg/N256.cc   # TL511
+grids/rgg/N320.cc   # TL639
+grids/rgg/N400.cc   # TL799
+grids/rgg/N512.cc   # TL1023
+grids/rgg/N576.cc   # TL1151
+grids/rgg/N640.cc   # TL1279
+grids/rgg/N800.cc   # TL1599
+grids/rgg/N1024.cc  # TL2047
+grids/rgg/N1280.cc  # TL2559
+grids/rgg/N1600.cc  # TL3199
+grids/rgg/N2000.cc  # TL3999
+grids/rgg/N4000.cc  # TL7999
+grids/rgg/N8000.cc  # TL15999
 )
 
 add_custom_target( atlas_grids_dead SOURCES

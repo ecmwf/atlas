@@ -129,6 +129,8 @@ public: // methods
 
 	int glb_dof() const { return glb_dof_; }
 
+	friend std::ostream& operator<<(std::ostream&, const FunctionSpace&);
+
 protected: // members
 
 	int idx_;
