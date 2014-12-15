@@ -172,8 +172,8 @@ template<> inline gidx_t LatLonPoint::uidT<long>() const { return uid64(); }
 inline int LatLonPoint::uid32() const
 {
   // max precision is 0.02 degree
-  int iy = static_cast<int>((NORTH-y)*5e-5);
-  int ix = static_cast<int>((x+EAST)*5e-5);
+  int iy = static_cast<int>((2*NORTH-y)*5e-5);
+  int ix = static_cast<int>((x+2*EAST)*5e-5);
   iy <<= 17;
   int id = iy | ix;
   return id;
@@ -182,7 +182,7 @@ inline int LatLonPoint::uid32() const
 inline long LatLonPoint::uid64() const
 {
   // max precision is 10 microdegree
-  long iy = static_cast<long>((NORTH-y));
+  long iy = static_cast<long>((4*NORTH-y));
   long ix = static_cast<long>((x+4*EAST));
   iy <<= 31;
   long id = iy | ix;
@@ -190,15 +190,13 @@ inline long LatLonPoint::uid64() const
 }
 
 inline gidx_t LatLonPoint::uid() const {
-  /// @todo this should be the amount of bits used for gidx_t
-  ///       but for now this is not working yet
-  return uid32();
+  return uidT<gidx_t>();
 }
 
 
 class PeriodicTransform
 {
-private:
+protected:
 	double x_translation_;
 
 public:
@@ -266,14 +264,27 @@ struct IsGhost
 	IndexView<int,1> ridx_;
 };
 
-struct ComputeUniqueElementIndex
+
+struct ComputeUid
 {
-	ComputeUniqueElementIndex( const FunctionSpace& nodes )
+  ComputeUid() {}
+	ComputeUid( const FunctionSpace& nodes ):
+    funcspace(&nodes)
 	{
-		coords = ArrayView<double,2> ( nodes.field("coordinates") );
+		update();
 	}
 
-	gidx_t operator()( const IndexView<int,1>& elem_nodes ) const
+  gidx_t operator()( const double crd[] ) const
+	{
+		return LatLonPoint( crd ).uid();
+	}
+
+	gidx_t operator()( int node ) const
+	{
+		return LatLonPoint( coords[node] ).uid();
+	}
+
+  gidx_t operator()( const IndexView<int,1>& elem_nodes ) const
 	{
 		double centroid[2];
 		centroid[XX] = 0.;
@@ -289,8 +300,31 @@ struct ComputeUniqueElementIndex
 		return LatLonPoint( centroid[XX], centroid[YY] ).uid32();
 	}
 
-	ArrayView<double,2> coords;
+  gidx_t operator()( double crds[], int npts ) const
+	{
+		double centroid[2];
+		centroid[XX] = 0.;
+		centroid[YY] = 0.;
+		for( int jnode=0; jnode<npts; ++jnode )
+		{
+			centroid[XX] += crds[jnode*2+XX];
+			centroid[YY] += crds[jnode*2+YY];
+		}
+		centroid[XX] /= static_cast<double>(npts);
+		centroid[YY] /= static_cast<double>(npts);
+		return LatLonPoint( centroid[XX], centroid[YY] ).uid32();
+	}
+
+
+  void update()
+  {
+    coords = ArrayView<double,2> ( funcspace->field("coordinates") );
+  }
+private:
+  const FunctionSpace* funcspace;
+  ArrayView<double,2> coords;
 };
+
 
 
 struct Face

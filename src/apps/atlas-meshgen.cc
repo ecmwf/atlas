@@ -114,13 +114,17 @@ void Meshgen2Gmsh::run()
   else
     throw UserError(Here(),"Could not generate mesh with given input");
 
+  build_nodes_parallel_fields(mesh->function_space("nodes"));
+  build_periodic_boundaries(*mesh);
+
   if( halo )
   {
-    build_nodes_parallel_fields(mesh->function_space("nodes"));
-    build_periodic_boundaries(*mesh);
     build_halo(*mesh,halo);
     renumber_nodes_glb_idx(mesh->function_space("nodes"));
   }
+  mesh->function_space("nodes").parallelise();
+  ArrayView<double,2> coords( mesh->function_space("nodes").field("coordinates") );
+  Log::info() << "  checksum coordinates : " << mesh->function_space("nodes").checksum().execute( coords ) << std::endl;
   if( edges )
   {
     build_edges(*mesh);

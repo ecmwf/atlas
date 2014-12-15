@@ -20,6 +20,7 @@
 #include "atlas/Field.h"
 #include "atlas/actions/BuildParallelFields.h"
 #include "atlas/util/Debug.h"
+#include "atlas/Util.h"
 
 #ifdef HAVE_FORTRAN
 #define REMOTE_IDX_BASE 1
@@ -325,17 +326,42 @@ void FunctionSpace::parallelise(FunctionSpace& other_shape)
 
 void FunctionSpace::parallelise()
 {
-	if( name() == "nodes" || name() == "edges" )
-	{
-		FieldT<int>& ridx = field<int>("remote_idx");
-		FieldT<int>& part = field<int>("partition");
-		FieldT<gidx_t>& gidx = field<gidx_t>("glb_idx");
-		parallelise(part.data(),ridx.data(),gidx.data(),part.size());
-	}
-	else
-	{
-		NOTIMP;
-	}
+  FieldT<int>& ridx = field<int>("remote_idx");
+  FieldT<int>& part = field<int>("partition");
+  FieldT<gidx_t>& gidx = field<gidx_t>("glb_idx");
+
+  if( name() == "nodes")
+  {
+    ArrayView<int,1> flags ( field<int>("flags") );
+    std::vector<int> mask(shape(0));
+    for( int j=0; j<mask.size(); ++j )
+    {
+      mask[j] = Flags::check(flags(j),Topology::GHOST) ? 1 : 0;
+    }
+    halo_exchange_->setup(part.data(),ridx.data(),REMOTE_IDX_BASE,shape(0));
+    gather_scatter_->setup(part.data(),ridx.data(),REMOTE_IDX_BASE,gidx.data(),mask.data(),shape(0));
+    fullgather_->setup(part.data(),ridx.data(),REMOTE_IDX_BASE,gidx.data(),-1,shape(0),true);
+    checksum_->setup(part.data(),ridx.data(),REMOTE_IDX_BASE,gidx.data(),mask.data(),shape(0));
+    glb_dof_ = gather_scatter_->glb_dof();
+    for( int b=shapef_.size()-2; b>=0; --b)
+    {
+      if( shapef_[b] != Field::UNDEF_VARS )
+        glb_dof_ *= shapef_[b];
+    }
+  }
+  else
+  {
+    halo_exchange_->setup(part.data(),ridx.data(),REMOTE_IDX_BASE,shape(0));
+    gather_scatter_->setup(part.data(),ridx.data(),REMOTE_IDX_BASE,gidx.data(),-1,shape(0));
+    fullgather_->setup(part.data(),ridx.data(),REMOTE_IDX_BASE,gidx.data(),-1,shape(0),true);
+    checksum_->setup(part.data(),ridx.data(),REMOTE_IDX_BASE,gidx.data(),-1,shape(0));
+  }
+  glb_dof_ = gather_scatter_->glb_dof();
+  for( int b=shapef_.size()-2; b>=0; --b)
+  {
+    if( shapef_[b] != Field::UNDEF_VARS )
+      glb_dof_ *= shapef_[b];
+  }
 }
 
 // ------------------------------------------------------------------

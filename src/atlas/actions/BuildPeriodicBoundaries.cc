@@ -25,7 +25,7 @@
 namespace atlas {
 namespace actions {
 
-typedef int uid_t;
+typedef gidx_t uid_t;
 
 void build_periodic_boundaries( Mesh& mesh )
 {
@@ -54,6 +54,7 @@ void build_periodic_boundaries( Mesh& mesh )
     {
       if( part(jnode) == mypart )
       {
+        Topology::set(flags(jnode),Topology::PERIODIC);
         LatLonPoint ll(latlon[jnode]);
         master_lookup[ ll.uid() ] = jnode;
         master_nodes.push_back( ll.x );

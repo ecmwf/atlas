@@ -31,6 +31,16 @@ void Checksum::setup( const int part[],
 }
 
 
+void Checksum::setup( const int part[],
+                      const int remote_idx[], const int base,
+                      const gidx_t glb_idx[], const int mask[], const int parsize )
+{
+  parsize_ = parsize;
+  gather_.setup(part,remote_idx,base,
+                glb_idx,mask,parsize);
+  is_setup_ = true;
+}
+
 /////////////////////
 
 

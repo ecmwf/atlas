@@ -110,6 +110,19 @@ public: // methods
               const gidx_t glb_idx[], const gidx_t max_glb_idx,
               const int parsize, const bool include_ghost = false );
 
+
+  /// @brief Setup
+  /// @param [in] part         List of partitions
+  /// @param [in] remote_idx   List of local indices on remote partitions
+  /// @param [in] base         values of remote_idx start at "base"
+  /// @param [in] glb_idx      List of global indices
+  /// @param [in] parsize      size of given lists
+  /// @param [in] mask         Mask indices not to include in the communication
+  ///                          pattern (0=include,1=exclude)
+  void setup( const int part[],
+              const int remote_idx[], const int base,
+              const gidx_t glb_idx[], const int mask[],  const int parsize );
+
   template <typename DATA_TYPE>
   void gather( const DATA_TYPE ldata[],
                const int lstrides[],

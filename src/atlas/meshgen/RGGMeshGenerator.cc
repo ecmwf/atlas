@@ -151,9 +151,9 @@ Mesh* ReducedGridMeshGenerator::generate(const ReducedGrid& rgg)
   {
     for( int jlon=0; jlon<rgg.nlon(jlat); ++jlon)
     {
-      nodes[n].x = static_cast<int>(rgg.lon(jlat,jlon)*1e6);
+      nodes[n].x = microdeg(rgg.lon(jlat,jlon));
       if( stagger ) nodes[n].x += static_cast<int>(1e6*180./static_cast<double>(rgg.nlon(jlat)));
-      nodes[n].y = static_cast<int>(rgg.lat(jlat)*1e6);
+      nodes[n].y = microdeg(rgg.lat(jlat));
       nodes[n].n = n;
       ++n;
     }
@@ -165,6 +165,7 @@ Mesh* ReducedGridMeshGenerator::generate(const ReducedGrid& rgg)
   generate_region(rgg,part,mypart,region);
 
   Mesh* mesh = generate_mesh(rgg,part,region);
+  mesh->grid(rgg);
   return mesh;
 }
 
@@ -740,8 +741,10 @@ Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
         Topology::set(flags(jnode),Topology::BC|Topology::SOUTH);
       if( jlon == 0 && !three_dimensional)
         Topology::set(flags(jnode),Topology::BC|Topology::WEST);
-      if( part(jnode) != parts[n] )
+      if( part(jnode) != mypart )
         Topology::set(flags(jnode),Topology::GHOST);
+
+      //Log::info() << "meshgen " << std::setw(2) << glb_idx(jnode) << " ghost = " << Topology::check(flags(jnode),Topology::GHOST) << std::endl;
       ++jnode;
     }
     if( !three_dimensional &&  region.lat_end[jlat]==rgg.nlon(jlat)-1 ) // add periodic point
@@ -756,7 +759,7 @@ Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
       part(jnode)      = part(jnode-1);
       Topology::reset(flags(jnode));
       Topology::set(flags(jnode),Topology::BC|Topology::EAST);
-      if( part(jnode) != parts[n] )
+      if( part(jnode) != mypart )
         Topology::set(flags(jnode),Topology::GHOST);
       ++jnode;
     }

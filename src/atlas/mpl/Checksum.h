@@ -51,6 +51,18 @@ public: // methods
               const gidx_t glb_idx[], const gidx_t max_glb_idx,
               const int parsize );
 
+  /// @brief Setup
+  /// @param [in] part         List of partitions
+  /// @param [in] remote_idx   List of local indices on remote partitions
+  /// @param [in] base         values of remote_idx start at "base"
+  /// @param [in] glb_idx      List of global indices
+  /// @param [in] mask         Mask indices not to include in the communication
+  ///                          pattern (0=include,1=exclude)
+  /// @param [in] parsize      size of given lists
+  void setup( const int part[],
+              const int remote_idx[], const int base,
+              const gidx_t glb_idx[], const int mask[], const int parsize );
+
   template <typename DATA_TYPE>
   std::string execute( const DATA_TYPE lfield[],
                        const int lvar_strides[],

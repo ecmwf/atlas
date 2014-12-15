@@ -23,8 +23,7 @@ template <typename DATA_TYPE>
 class MPL_ArrayView : public ArrayView<DATA_TYPE>
 {
 public:
-  typedef typename ArrayView<DATA_TYPE>::value_t       value_t;
-  typedef typename ArrayView<DATA_TYPE>::const_value_t const_value_t;
+  typedef typename ArrayView<DATA_TYPE>::value_type       value_type;
 
 public:
   MPL_ArrayView();
@@ -36,11 +35,11 @@ public:
                  const int mpl_idxpos );
 
   template <int R>
-    MPL_ArrayView( const ArrayView<MPL_ArrayView::value_t,R>& arrview,
+    MPL_ArrayView( const ArrayView<MPL_ArrayView::value_type,R>& arrview,
                    const int mpl_idxpos[], const int mpl_rank );
 
   template <int R>
-     MPL_ArrayView( const ArrayView<const_value_t,R>& arrview,
+     MPL_ArrayView( const ArrayView<const value_type,R>& arrview,
                     const int mpl_idxpos[], const int mpl_rank );
 
   int mpl_rank() const { return mpl_rank_; }
@@ -100,7 +99,7 @@ MPL_ArrayView<DATA_TYPE>::MPL_ArrayView( const DATA_TYPE* data, const int stride
 
 template <typename DATA_TYPE>
 template <int R>
-MPL_ArrayView<DATA_TYPE>::MPL_ArrayView( const ArrayView<value_t,R>& arrview,
+MPL_ArrayView<DATA_TYPE>::MPL_ArrayView( const ArrayView<value_type,R>& arrview,
                const int mpl_idxpos[], const int mpl_rank ) :
   ArrayView<DATA_TYPE>(arrview.data(),arrview.strides(),arrview.shape(),arrview.rank())
 {
@@ -109,7 +108,7 @@ MPL_ArrayView<DATA_TYPE>::MPL_ArrayView( const ArrayView<value_t,R>& arrview,
 
 template <typename DATA_TYPE>
 template <int R>
-MPL_ArrayView<DATA_TYPE>::MPL_ArrayView( const ArrayView<const_value_t,R>& arrview,
+MPL_ArrayView<DATA_TYPE>::MPL_ArrayView( const ArrayView<const value_type,R>& arrview,
                const int mpl_idxpos[], const int mpl_rank ) :
   ArrayView<DATA_TYPE>(arrview.data(),arrview.strides(),arrview.shape(),arrview.rank())
 {

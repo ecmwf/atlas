@@ -81,7 +81,7 @@ void build_element_to_edge_connectivity( Mesh& mesh )
     is_pole_edge = ArrayView<int,1>( edges.field("is_pole_edge") );
   }
 
-  ComputeUniqueElementIndex uid( nodes );
+  ComputeUid uid( nodes );
 
   std::vector<Sort> edge_sort(nb_edges);
   for( int edge=0; edge<nb_edges; ++edge )
@@ -197,7 +197,7 @@ void build_node_to_edge_connectivity( Mesh& mesh )
 
   IndexView<int,2> node_to_edge ( nodes.create_field<int>("to_edge",max_edge_cnt) );
 
-  ComputeUniqueElementIndex uid( nodes );
+  ComputeUid uid( nodes );
   std::vector<Sort> edge_sort(nb_edges);
   for( int edge=0; edge<nb_edges; ++edge )
     edge_sort[edge] = Sort( uid(edge_nodes[edge]), edge );
@@ -287,7 +287,9 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
         else if ( part(node) != npart )
         {
           // Not implemented yet, when pole-lattitude is split.
-          throw eckit::NotImplemented(Here());
+          std::stringstream msg;
+          msg << "Split pole-latitude is not supported yet...  node "<<node<<"[p"<<part(node)<<"] should belong to part " << npart;
+          throw eckit::NotImplemented(msg.str(),Here());
         }
       }
     }
@@ -299,7 +301,7 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
     for( std::set<int>::iterator it=pole_nodes[NS].begin(); it!=pole_nodes[NS].end(); ++it)
     {
       int node = *it;
-      if( !Topology::check(flags(node),Topology::PERIODIC) )
+      if( !Topology::check(flags(node),Topology::PERIODIC|Topology::GHOST) )
       {
         int x1 = microdeg( coords(node,XX) );
         int x2 = microdeg( coords(node,XX) + 180. );
@@ -370,7 +372,7 @@ struct ComputeUniquePoleEdgeIndex
       centroid[YY] =  90.;
     else
       centroid[YY] = -90.;
-    return LatLonPoint( centroid[XX], centroid[YY] ).uid();
+    return LatLonPoint( centroid[XX], centroid[YY] ).uid32();
   }
 
   ArrayView<double,2> coords;
@@ -434,7 +436,7 @@ void build_edges( Mesh& mesh )
     }
   }
 
-  ComputeUniqueElementIndex uid( nodes );
+  ComputeUid compute_uid( nodes );
 
   int cnt=0;
   for( int edge=0; edge<nb_edges; ++edge )
@@ -444,7 +446,7 @@ void build_edges( Mesh& mesh )
     edge_nodes(edge,0) = ip1;
     edge_nodes(edge,1) = ip2;
     //if( glb_idx(ip1) > glb_idx(ip2) )
-    if( LatLonPoint(latlon[ip1]).uid() > LatLonPoint(latlon[ip2]).uid()  )
+    if( compute_uid(ip1) > compute_uid(ip2) )
     {
       edge_nodes(edge,0) = ip2;
       edge_nodes(edge,1) = ip1;
@@ -452,7 +454,7 @@ void build_edges( Mesh& mesh )
 
     ASSERT( edge_nodes(edge,0) < nb_nodes );
     ASSERT( edge_nodes(edge,1) < nb_nodes );
-    edge_glb_idx(edge)   = uid(edge_nodes[edge]);
+    edge_glb_idx(edge)   = compute_uid(edge_nodes[edge]);
     edge_part(edge)      = std::min( part(edge_nodes(edge,0)), part(edge_nodes(edge,1) ) );
     edge_ridx(edge)      = edge;
 
@@ -468,7 +470,7 @@ void build_edges( Mesh& mesh )
 
     if( f2 >= 0 )
     {
-      if( uid(elem_nodes[f1][e1]) > uid(elem_nodes[f2][e2]) )
+      if( compute_uid(elem_nodes[f1][e1]) > compute_uid(elem_nodes[f2][e2]) )
       {
         edge_to_elem(edge,0,0) = f2;
         edge_to_elem(edge,0,1) = e2;
@@ -521,12 +523,12 @@ void build_pole_edges( Mesh& mesh )
   }
 
   int cnt = 0;
-  ComputeUniquePoleEdgeIndex uid( nodes );
+  ComputeUniquePoleEdgeIndex compute_uid( nodes );
   for(int edge=nb_edges; edge<nb_edges+nb_pole_edges; ++edge)
   {
     edge_nodes(edge,0)   = pole_edge_nodes[cnt++];
     edge_nodes(edge,1)   = pole_edge_nodes[cnt++];
-    edge_glb_idx(edge)   = uid( edge_nodes[edge] );
+    edge_glb_idx(edge)   = compute_uid( edge_nodes[edge] );
     edge_part(edge)      = std::min( part(edge_nodes(edge,0)), part(edge_nodes(edge,1) ) );
     edge_ridx(edge)      = edge;
     edge_to_elem(edge,0,0) = -1;

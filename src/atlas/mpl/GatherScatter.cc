@@ -14,10 +14,14 @@
 #include <iostream>
 #include <sstream>
 
+#include "eckit/log/Log.h"
 #include "atlas/util/Array.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/Debug.h"
 #include "atlas/mpl/GatherScatter.h"
+#include "atlas/util/Checksum.h"
+
+using eckit::Log;
 
 namespace atlas {
 namespace mpl {
@@ -47,7 +51,7 @@ struct IsGhostPoint
 
 struct Node
 {
-  int p,i;
+  gidx_t p,i;
   gidx_t g;
 
   Node() {}
@@ -85,7 +89,107 @@ GatherScatter::GatherScatter() :
   root_   = 0;
 }
 
-void GatherScatter::setup(const int part[],
+
+
+void GatherScatter::setup( const int part[],
+                           const int remote_idx[], const int base,
+                           const gidx_t glb_idx[], const int mask[], const int parsize )
+{
+  parsize_ = parsize;
+
+  loccounts_.resize(nproc); loccounts_.assign(nproc,0);
+  glbcounts_.resize(nproc); glbcounts_.assign(nproc,0);
+  locdispls_.resize(nproc); locdispls_.assign(nproc,0);
+  glbdispls_.resize(nproc); glbdispls_.assign(nproc,0);
+
+  const int nvar = 3;
+
+  std::vector<gidx_t> sendnodes(parsize_*nvar);
+
+  loccnt_ = 0;
+  for( int n=0; n<parsize_; ++n )
+  {
+    if ( ! mask[n] )
+    {
+      sendnodes[loccnt_++] = glb_idx[n];
+      sendnodes[loccnt_++] = part[n];
+      sendnodes[loccnt_++] = remote_idx[n]-base;
+    }
+  }
+
+  MPL_CHECK_RESULT( MPI_Gather( &loccnt_, 1, MPI_INT,
+                                glbcounts_.data(), 1, MPI_INT,
+                                root_, MPI_COMM_WORLD ) );
+  glbcnt_ = std::accumulate(glbcounts_.begin(),glbcounts_.end(),0);
+
+  glbdispls_[0]=0;
+  for (int jproc=1; jproc<nproc; ++jproc) // start at 1
+  {
+    glbdispls_[jproc]=glbcounts_[jproc-1]+glbdispls_[jproc-1];
+  }
+  std::vector<gidx_t> recvnodes(glbcnt_);
+  MPL_CHECK_RESULT( MPI_Gatherv( sendnodes.data(), loccnt_, MPL::TYPE<gidx_t>(),
+                                 recvnodes.data(), glbcounts_.data(), glbdispls_.data(), MPL::TYPE<gidx_t>(),
+                                 root_, MPI_COMM_WORLD) );
+
+  // Load recvnodes in sorting structure
+  int nb_recv_nodes = glbcnt_/nvar;
+  std::vector<Node> node_sort(nb_recv_nodes);
+  for( int n=0; n<nb_recv_nodes; ++n )
+  {
+    node_sort[n].g = recvnodes[n*3+0];
+    node_sort[n].p = recvnodes[n*3+1];
+    node_sort[n].i = recvnodes[n*3+2];
+  }
+
+  recvnodes.clear();
+
+  // Sort on "g" member, and remove duplicates
+  std::sort(node_sort.begin(), node_sort.end());
+  node_sort.erase( std::unique( node_sort.begin(), node_sort.end() ), node_sort.end() );
+
+  glbcounts_.assign(nproc,0);
+  glbdispls_.assign(nproc,0);
+  for( int n=0; n<node_sort.size(); ++n )
+  {
+    ++glbcounts_[node_sort[n].p] ;
+  }
+  glbdispls_[0]=0;
+
+  for (int jproc=1; jproc<nproc; ++jproc) // start at 1
+  {
+    glbdispls_[jproc]=glbcounts_[jproc-1]+glbdispls_[jproc-1];
+  }
+  glbcnt_ = std::accumulate(glbcounts_.begin(),glbcounts_.end(),0);
+
+
+  glbmap_.clear(); glbmap_.resize(glbcnt_);
+  std::vector<int> needed(glbcnt_);
+  std::vector<int> idx(nproc,0);
+  for( int n=0; n<node_sort.size(); ++n )
+  {
+    int jproc = node_sort[n].p;
+    needed [ glbdispls_[jproc]+idx[jproc] ] = node_sort[n].i; // index on sending proc
+    glbmap_[ glbdispls_[jproc]+idx[jproc] ] = n;
+    ++idx[jproc];
+  }
+
+  // Get loccnt_
+  MPL_CHECK_RESULT( MPI_Scatter( glbcounts_.data(), 1, MPI_INT,
+                                 &loccnt_,          1, MPI_INT,
+                                 root_, MPI_COMM_WORLD) );
+
+  locmap_.resize(loccnt_);
+
+  MPL_CHECK_RESULT( MPI_Scatterv( needed.data(), glbcounts_.data(), glbdispls_.data(),
+                                  MPI_INT, locmap_.data(), loccnt_,
+                                  MPI_INT, root_, MPI_COMM_WORLD ) );
+  is_setup_ = true;
+}
+
+
+
+void GatherScatter::setup( const int part[],
                            const int remote_idx[], const int base,
                            const gidx_t glb_idx[], const gidx_t max_glb_idx,
                            const int parsize, const bool include_ghost )
@@ -169,6 +273,22 @@ void GatherScatter::setup(const int part[],
   std::sort(node_sort.begin(), node_sort.end());
   node_sort.erase( std::upper_bound ( node_sort.begin(), node_sort.end(), maxgid ), node_sort.end() );
   node_sort.erase( std::unique( node_sort.begin(), node_sort.end() ), node_sort.end() );
+
+
+//    if ( myproc == root_ )
+//    {
+//      std::vector<gidx_t> gnodes(node_sort.size());
+//      for( int i=0; i<node_sort.size(); ++i)
+//      {
+//        gnodes[i] = node_sort[i].g;
+////        if(!include_ghost)
+////        {
+////        //std::cout << "gnodes["<<i<<"] = " << gnodes[i] << std::endl;
+////        ASSERT( gnodes[i] == i+1 );
+////        }
+//      }
+//      //eckit::Log::info() << "checksum glb_idx[0:"<<node_sort.size()<<"] = " << checksum(gnodes.data(),gnodes.size()) << std::endl;
+//    }
 
 //  if ( myproc == root )
 //  {
