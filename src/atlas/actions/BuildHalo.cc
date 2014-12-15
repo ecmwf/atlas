@@ -733,13 +733,18 @@ public:
       if ( jnote > 0 ) stream << "\n";
       stream << notes[jnote];
     }
+    return stream.str();
   }
 
   operator std::string() const { return str(); }
 
 private:
+  friend std::ostream& operator<<(std::ostream& s, const Notification& notes) { s << notes.str();  return s; }
+
+private:
   std::vector<std::string> notes;
 };
+
 
 typedef std::map<uid_t,int> Uid2Node;
 void build_lookup_uid2node( Mesh& mesh, Uid2Node& uid2node )
