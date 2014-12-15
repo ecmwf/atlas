@@ -14,6 +14,7 @@
 #include <cmath>
 
 #include "eckit/exception/Exceptions.h"
+#include "eckit/log/Log.h"
 #include "atlas/Mesh.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Field.h"
@@ -28,44 +29,50 @@
 
 //#define DEBUGGING_PARFIELDS
 #ifdef DEBUGGING_PARFIELDS
-#define EDGE(jedge) "Edge("<<gidx(edge_nodes(jedge,0))<<" "<<gidx(edge_nodes(jedge,1))<<")"
-#define own1 12
-#define own2 17
+#define EDGE(jedge) "Edge("<<gidx(edge_nodes(jedge,0))<<"[p"<<node_part(edge_nodes(jedge,0))<<"] "<<gidx(edge_nodes(jedge,1))<<"p["<<node_part(edge_nodes(jedge,1))<<"])"
+#define own1 2419089
+#define own2 2423185
 #define OWNED_EDGE(jedge) ((gidx(edge_nodes(jedge,0)) == own1 && gidx(edge_nodes(jedge,1)) == own2)\
                         || (gidx(edge_nodes(jedge,0)) == own2 && gidx(edge_nodes(jedge,1)) == own1))
 #define per1 -1
 #define per2 -1
 #define PERIODIC_EDGE(jedge) ((gidx(edge_nodes(jedge,0)) == per1 && gidx(edge_nodes(jedge,1)) == per2)\
                           ||  (gidx(edge_nodes(jedge,0)) == per2 && gidx(edge_nodes(jedge,1)) == per1))
-#define find1 12
-#define find2 17
+#define find1 -12
+#define find2 -17
 #define FIND_EDGE(jedge) ((gidx(edge_nodes(jedge,0)) == find1 && gidx(edge_nodes(jedge,1)) == find2)\
                       ||  (gidx(edge_nodes(jedge,0)) == find2 && gidx(edge_nodes(jedge,1)) == find1))
-
+#define ownuid 547124520
+#define OWNED_UID(UID) (UID == ownuid)
 #endif
+
+using eckit::Log;
 
 namespace atlas {
 namespace actions {
 
 FieldT<int>& build_nodes_partition ( FunctionSpace& nodes );
 FieldT<int>& build_nodes_remote_idx( FunctionSpace& nodes );
-FieldT<int>& build_nodes_global_idx( FunctionSpace& nodes );
+FieldT<gidx_t>& build_nodes_global_idx( FunctionSpace& nodes );
 FieldT<int>& build_edges_partition ( FunctionSpace& edges, FunctionSpace& nodes );
 FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes );
-FieldT<int>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nodes );
+FieldT<gidx_t>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nodes );
 
 // ------------------------------------------------------------------
+
+typedef gidx_t uid_t;
 
 namespace {
 
 struct Node
 {
-  Node(int gid, int idx)
+  Node(gidx_t gid, int idx)
   {
     g = gid;
     i = idx;
   }
-  int g,i;
+  gidx_t g;
+  gidx_t i;
   bool operator < (const Node& other) const
   {
     return ( g<other.g );
@@ -117,23 +124,24 @@ void build_edges_parallel_fields( FunctionSpace& edges, FunctionSpace& nodes )
 
 // ------------------------------------------------------------------
 
-FieldT<int>& build_nodes_global_idx( FunctionSpace& nodes )
+FieldT<gidx_t>& build_nodes_global_idx( FunctionSpace& nodes )
 {
   if( ! nodes.has_field("glb_idx") )
   {
-    ArrayView<int,1> glb_idx ( nodes.create_field<int>("glb_idx",1) );
+    ArrayView<gidx_t,1> glb_idx ( nodes.create_field<gidx_t>("glb_idx",1) );
     glb_idx = -1;
   }
 
-  ArrayView<double,2> latlon  ( nodes.field("coordinates") );
-  ArrayView<int,   1> glb_idx ( nodes.field("glb_idx"    ) );
+  ArrayView<gidx_t,1> glb_idx ( nodes.field("glb_idx"    ) );
+
+  ComputeUid compute_uid(nodes);
 
   for( int jnode=0; jnode<glb_idx.shape(0); ++jnode )
   {
     if( glb_idx(jnode) <= 0 )
-      glb_idx(jnode) = LatLonPoint( latlon[jnode] ).uid();
+      glb_idx(jnode) = compute_uid(jnode);
   }
-  return nodes.field<int>("glb_idx");
+  return nodes.field<gidx_t>("glb_idx");
 }
 
 void renumber_nodes_glb_idx( FunctionSpace& nodes )
@@ -142,18 +150,19 @@ void renumber_nodes_glb_idx( FunctionSpace& nodes )
 // --> Those specific periodic points at the EAST boundary are not checked for uid,
 //     and could receive different gidx for different tasks
 
+  ComputeUid compute_uid(nodes);
+
   int mypart = MPL::rank();
   int nparts = MPL::size();
   int root = 0;
 
   if( ! nodes.has_field("glb_idx") )
   {
-    ArrayView<int,1> glb_idx ( nodes.create_field<int>("glb_idx",1) );
+    ArrayView<gidx_t,1> glb_idx ( nodes.create_field<gidx_t>("glb_idx",1) );
     glb_idx = -1;
   }
 
-  ArrayView<double,2> latlon  ( nodes.field("coordinates") );
-  ArrayView<int,   1> glb_idx ( nodes.field("glb_idx"    ) );
+  ArrayView<gidx_t,1> glb_idx ( nodes.field("glb_idx"    ) );
 
   /*
    * Sorting following gidx will define global order of
@@ -165,17 +174,13 @@ void renumber_nodes_glb_idx( FunctionSpace& nodes )
   for( int jnode=0; jnode<nb_nodes; ++jnode )
   {
     if( glb_idx(jnode) <= 0 )
-      glb_idx(jnode) = LatLonPoint( latlon[jnode] ).uid();
+      glb_idx(jnode) = compute_uid(jnode);
   }
 
-  /*
-   * REMOTE INDEX BASE = 1
-   */
-  const int ridx_base = 1;
 
   // 1) Gather all global indices, together with location
-  Array<int> loc_id_arr(nb_nodes);
-  ArrayView<int,1> loc_id(loc_id_arr);
+  Array<uid_t> loc_id_arr(nb_nodes);
+  ArrayView<uid_t,1> loc_id(loc_id_arr);
 
   for( int jnode=0; jnode<nb_nodes; ++jnode )
   {
@@ -193,12 +198,12 @@ void renumber_nodes_glb_idx( FunctionSpace& nodes )
   }
   int glb_nb_nodes = std::accumulate(recvcounts.begin(),recvcounts.end(),0);
 
-  Array<int> glb_id_arr(glb_nb_nodes);
-  ArrayView<int,1> glb_id(glb_id_arr);
+  Array<uid_t> glb_id_arr(glb_nb_nodes);
+  ArrayView<uid_t,1> glb_id(glb_id_arr);
 
   MPL_CHECK_RESULT(
-        MPI_Gatherv( loc_id.data(), nb_nodes, MPI_INT,
-                     glb_id.data(), recvcounts.data(), recvdispls.data(), MPI_INT,
+        MPI_Gatherv( loc_id.data(), nb_nodes, MPL::TYPE<uid_t>(),
+                     glb_id.data(), recvcounts.data(), recvdispls.data(), MPL::TYPE<uid_t>(),
                      root, MPI_COMM_WORLD) );
 
 
@@ -211,7 +216,7 @@ void renumber_nodes_glb_idx( FunctionSpace& nodes )
   std::sort(node_sort.begin(), node_sort.end());
 
   // Assume edge gid start
-  int gid=0;
+  uid_t gid=0;
   for( int jnode=0; jnode<node_sort.size(); ++jnode )
   {
     if( jnode == 0 )
@@ -228,8 +233,8 @@ void renumber_nodes_glb_idx( FunctionSpace& nodes )
 
   // 3) Scatter renumbered back
   MPL_CHECK_RESULT(
-        MPI_Scatterv( glb_id.data(), recvcounts.data(), recvdispls.data(), MPI_INT,
-                      loc_id.data(), nb_nodes, MPI_INT,
+        MPI_Scatterv( glb_id.data(), recvcounts.data(), recvdispls.data(), MPL::TYPE<uid_t>(),
+                      loc_id.data(), nb_nodes, MPL::TYPE<uid_t>(),
                       root, MPI_COMM_WORLD) );
 
   for( int jnode=0; jnode<nb_nodes; ++jnode )
@@ -245,6 +250,8 @@ FieldT<int>& build_nodes_remote_idx( FunctionSpace& nodes )
   int mypart = MPL::rank();
   int nparts = MPL::size();
 
+  ComputeUid compute_uid(nodes);
+
   // This piece should be somewhere central ... could be NPROMA ?
   // ---------->
   std::vector< int > proc( nparts );
@@ -259,24 +266,23 @@ FieldT<int>& build_nodes_remote_idx( FunctionSpace& nodes )
   int nb_nodes = nodes.shape(0);
 
 
-  int varsize=3;
+  int varsize=2;
 
-  std::vector< std::vector<int> > send_needed( MPL::size() );
-  std::vector< std::vector<int> > recv_needed( MPL::size() );
+  std::vector< std::vector<uid_t> > send_needed( MPL::size() );
+  std::vector< std::vector<uid_t> > recv_needed( MPL::size() );
   int sendcnt=0;
-  std::map<LatLonPoint,int> lookup;
+  std::map<uid_t,int> lookup;
   for( int jnode=0; jnode<nb_nodes; ++jnode )
   {
-    LatLonPoint ll(latlon[jnode]);
+    uid_t uid = compute_uid(jnode);
     if( part(jnode)==mypart )
     {
-      lookup[ ll ] = jnode;
+      lookup[ uid ] = jnode;
       ridx(jnode) = jnode;
     }
     else
     {
-      send_needed[ proc[part(jnode)] ].push_back( ll.x  );
-      send_needed[ proc[part(jnode)] ].push_back( ll.y  );
+      send_needed[ proc[part(jnode)] ].push_back( uid  );
       send_needed[ proc[part(jnode)] ].push_back( jnode );
       sendcnt++;
     }
@@ -289,21 +295,22 @@ FieldT<int>& build_nodes_remote_idx( FunctionSpace& nodes )
 
   for( int jpart=0; jpart<nparts; ++jpart )
   {
-    ArrayView<int,2> recv_node( recv_needed[ proc[jpart] ].data(),
+    ArrayView<uid_t,2> recv_node( recv_needed[ proc[jpart] ].data(),
         make_shape(recv_needed[ proc[jpart] ].size()/varsize,varsize) );
     for( int jnode=0; jnode<recv_node.shape(0); ++jnode )
     {
-      LatLonPoint ll( recv_node[jnode] );
-      if( lookup.count(ll) )
+      uid_t uid = recv_node(jnode,0);
+      int inode = recv_node(jnode,1);
+      if( lookup.count(uid) )
       {
-        send_found[ proc[jpart] ].push_back( recv_node(jnode,2) );
-        send_found[ proc[jpart] ].push_back( lookup[ll] );
+        send_found[ proc[jpart] ].push_back( inode );
+        send_found[ proc[jpart] ].push_back( lookup[uid] );
       }
       else
       {
         std::stringstream msg;
-        msg << "[" << MPL::rank() << "] " << "Node requested by rank ["<<jpart<<"] with coords ";
-        msg << "("<<ll.x*1.e-6 << ","<<ll.y*1.e-6<<") that should be owned is not found";
+        msg << "[" << MPL::rank() << "] " << "Node requested by rank ["<<jpart
+            << "] with uid [" << uid << "] that should be owned is not found";
         throw eckit::SeriousBug(msg.str(),Here());
       }
     }
@@ -339,6 +346,8 @@ FieldT<int>& build_nodes_partition( FunctionSpace& nodes )
 
 FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
 {
+  ComputeUid compute_uid(nodes);
+
   int mypart = MPL::rank();
   int nparts = MPL::size();
 
@@ -359,11 +368,11 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
   ArrayView<double,2> latlon  ( nodes.field("coordinates") );
   ArrayView<int,   1> flags   ( nodes.field("flags")       );
 #ifdef DEBUGGING_PARFIELDS
-  ArrayView<int,   1> gidx    ( nodes.field("glb_idx")       );
+  ArrayView<gidx_t,   1> gidx    ( nodes.field("glb_idx")       );
 #endif
   std::vector< IndexView<int,2> > elem_nodes( edges.mesh().nb_function_spaces() );
   std::vector< ArrayView<int,1> > elem_part ( edges.mesh().nb_function_spaces() );
-  std::vector< ArrayView<int,1> > elem_glb_idx ( edges.mesh().nb_function_spaces() );
+  std::vector< ArrayView<gidx_t,1> > elem_glb_idx ( edges.mesh().nb_function_spaces() );
 
   for( int func_space_idx=0; func_space_idx<edges.mesh().nb_function_spaces(); ++func_space_idx)
   {
@@ -372,7 +381,7 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
     {
       elem_nodes  [func_space_idx] = IndexView<int,2>( elements.field("nodes") );
       elem_part   [func_space_idx] = ArrayView<int,1>( elements.field("partition") );
-      elem_glb_idx[func_space_idx] = ArrayView<int,1>( elements.field("glb_idx") );
+      elem_glb_idx[func_space_idx] = ArrayView<gidx_t,1>( elements.field("glb_idx") );
 //      int nb_elems = elem_nodes[func_space_idx].shape(0);
 //      int nb_nodes_per_elem = elem_nodes[func_space_idx].shape(1);
 //      for (int elem=0; elem<nb_elems; ++elem)
@@ -406,9 +415,12 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
     {
       if( edge_to_elem(jedge,2) < 0 ) // This is a edge at partition boundary
       {
-        if( (Topology::check(flags(ip1),Topology::PERIODIC) && Topology::check(flags(ip2),Topology::PERIODIC)) ||
-            (Topology::check(flags(ip1),Topology::PERIODIC)          && Topology::check(flags(ip2),Topology::BC|Topology::WEST)) ||
-            (Topology::check(flags(ip1),Topology::BC|Topology::WEST) && Topology::check(flags(ip2),Topology::PERIODIC)) )
+        if( (Topology::check(flags(ip1),Topology::PERIODIC) && !Topology::check(flags(ip1),Topology::BC|Topology::WEST) &&
+             Topology::check(flags(ip2),Topology::PERIODIC) && !Topology::check(flags(ip2),Topology::BC|Topology::WEST)) ||
+            (Topology::check(flags(ip1),Topology::PERIODIC) && !Topology::check(flags(ip1),Topology::BC|Topology::WEST) &&
+             Topology::check(flags(ip2),Topology::BC|Topology::WEST)) ||
+            (Topology::check(flags(ip1),Topology::BC|Topology::WEST) &&
+             Topology::check(flags(ip2),Topology::PERIODIC) && !Topology::check(flags(ip2),Topology::BC|Topology::WEST)) )
         {
           edge_part(jedge) = -1;
           if( Topology::check(flags(ip1),Topology::EAST ) )
@@ -423,7 +435,7 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
           if( pe1 == pmx )
             edge_part(jedge) = pmx;
           else
-            edge_part(jedge) = std::min(pn1,pn2);;
+            edge_part(jedge) = std::min(pn1,pn2);
         }
         else
         {
@@ -442,14 +454,26 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
         if     ( pc[0] > pc[1] ) edge_part(jedge) = pn1;
         else if( pc[0] < pc[1] ) edge_part(jedge) = pn2;
         else edge_part(jedge) = std::min(pn1,pn2);
+
+#ifdef DEBUGGING_PARFIELDS
+        if( OWNED_EDGE(jedge) )
+          DEBUG( EDGE(jedge) << " -->    pn1,pn2,pe1,pe2 " << pn1 << "," << pn2<< "," << pe1 << "," << pe2);
+#endif
+
       }
     }
+
 #ifdef DEBUGGING_PARFIELDS
+        if( OWNED_EDGE(jedge) )
+          DEBUG( EDGE(jedge) << " -->    pn1,pn2 " << pn1 << "," << pn2);
+#endif
+
+#ifdef DEBUGGING_PARFIELDS_disable
     if( periodic[jedge] )
       DEBUG(EDGE(jedge)<<" is periodic  " << periodic[jedge]);
 #endif
 
-#ifdef DEBUGGING_PARFIELDS
+#ifdef DEBUGGING_PARFIELDS_disable
     if( PERIODIC_EDGE(jedge) )
       DEBUG( EDGE(jedge) <<": edge_part="<<edge_part(jedge)<<"  periodic="<<periodic[jedge]);
 #endif
@@ -458,11 +482,11 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
   // In the periodic halo's, the partition MAY be assigned wrongly
   // following scoped piece of code will fix this.
   {
-    std::map<int,int> lookup;
+    std::map<uid_t,int> lookup;
     int varsize=2;
     double centroid[2];
-    std::vector< std::vector<int> > send_unknown( MPL::size() );
-    std::vector< std::vector<int> > recv_unknown( MPL::size() );
+    std::vector< std::vector<uid_t> > send_unknown( MPL::size() );
+    std::vector< std::vector<uid_t> > recv_unknown( MPL::size() );
     for( int jedge=0; jedge<nb_edges; ++jedge )
     {
       int ip1 = edge_nodes(jedge,0);
@@ -476,18 +500,13 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
       {
         centroid[YY] = centroid[YY] > 0 ? 90. : -90.;
       }
-      LatLonPoint ll(centroid);
 
-      transform(ll,periodic[jedge]);
-      int uid = ll.uid();
+      transform(centroid,periodic[jedge]);
+      uid_t uid = compute_uid(centroid);
 
       if( edge_part(jedge)==mypart )
       {
         lookup[ uid ] = jedge;
-#ifdef DEBUGGING_PARFIELDS
-        if( OWNED_EDGE(jedge) )
-          DEBUG_VAR( uid );
-#endif
       }
       else
       {
@@ -499,13 +518,33 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
           send_unknown[ pn2 ].push_back( uid   );
           send_unknown[ pn2 ].push_back( jedge );
 
-#ifdef DEBUGGING_PARFIELDS
+#ifdef DEBUGGING_PARFIELDS_disable
           if( PERIODIC_EDGE(jedge) )
             DEBUG_VAR( uid );
 #endif
 
         }
       }
+#ifdef DEBUGGING_PARFIELDS
+        if( OWNED_EDGE(jedge) )
+          DEBUG( EDGE(jedge) << " --> " << uid << "   part " << edge_part(jedge));
+#endif
+
+#ifdef DEBUGGING_PARFIELDS
+        if( OWNED_UID(uid) )
+        {
+          double x1,y1, x2,y2, xe,ye;
+          x1 = latlon(ip1,XX);
+          y1 = latlon(ip1,YY);
+          x2 = latlon(ip2,XX);
+          y2 = latlon(ip2,YY);
+          xe = centroid[XX];
+          ye = centroid[YY];
+          DEBUG( uid << " --> " << EDGE(jedge) << "   x1,y1 - x2,y2 - xe,ye " << x1<<","<<y1
+                 << " - " << x2<<","<<y2<< " - " << xe <<","<<ye<< "     part " << edge_part(jedge));
+        }
+#endif
+
     }
 
     MPL::Alltoall( send_unknown, recv_unknown );
@@ -521,12 +560,12 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
 
     for( int jpart=0; jpart<nparts; ++jpart )
     {
-      ArrayView<int,2> recv_edge( recv_unknown[ jpart ].data(),
+      ArrayView<uid_t,2> recv_edge( recv_unknown[ jpart ].data(),
           make_shape(recv_unknown[ jpart ].size()/varsize,varsize) );
       for( int jedge=0; jedge<recv_edge.shape(0); ++jedge )
       {
-        int uid      = recv_edge(jedge,0);
-        int recv_idx = recv_edge(jedge,1);
+        uid_t uid      = recv_edge(jedge,0);
+        int    recv_idx = recv_edge(jedge,1);
         if( lookup.count(uid) )
         {
           send_found[ jpart ].push_back( recv_idx );
@@ -542,12 +581,12 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
       {
         int iedge = recv_found[jpart][jedge];
 #ifdef DEBUGGING_PARFIELDS
-        DEBUG(EDGE(iedge)<< " found on part " << jpart);
+        //DEBUG(EDGE(iedge)<< " found on part " << jpart);
         if( edge_part(iedge) != -1 )
         {
           std::stringstream msg;
-          msg << "Edge ("<<gidx(edge_nodes(iedge,0))<<" "<<gidx(edge_nodes(iedge,1))
-              << ") was already found on part " << edge_part(iedge);
+          msg << "Edge ("<<gidx(edge_nodes(iedge,0))<<"[p"<<node_part(edge_nodes(iedge,0))<<"] "<<gidx(edge_nodes(iedge,1))
+              << "[p"<<node_part(edge_nodes(iedge,1))<<"]) from part " << jpart << " was already found on part " << edge_part(iedge);
           throw eckit::Exception(msg.str(),Here());
         }
 #endif
@@ -572,6 +611,12 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
     }
 
 #ifdef DEBUGGING_PARFIELDS
+        if( OWNED_EDGE(jedge) )
+          DEBUG( EDGE(jedge) << " -->    part " << edge_part(jedge));
+#endif
+
+
+#ifdef DEBUGGING_PARFIELDS_disable
     if( PERIODIC_EDGE(jedge) )
       DEBUG_VAR( "           the part is " << edge_part(jedge) );
 #endif
@@ -586,6 +631,8 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
 
 FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes )
 {
+  ComputeUid compute_uid(nodes);
+
   int mypart = MPL::rank();
   int nparts = MPL::size();
 
@@ -596,7 +643,8 @@ FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes 
   ArrayView<double,2> latlon     ( nodes.field("coordinates") );
   ArrayView<int,   1> flags      ( nodes.field("flags")       );
 #ifdef DEBUGGING_PARFIELDS
-  ArrayView<int,   1> gidx      ( nodes.field("glb_idx")       );
+  ArrayView<gidx_t,   1> gidx      ( nodes.field("glb_idx")       );
+  ArrayView<int,   1> node_part      ( nodes.field("partition")       );
 #endif
 
   ArrayView<int,1> is_pole_edge;
@@ -611,10 +659,10 @@ FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes 
   const int nb_edges = edges.shape(0);
 
   double centroid[2];
-  std::vector< std::vector<int> > send_needed( MPL::size() );
-  std::vector< std::vector<int> > recv_needed( MPL::size() );
+  std::vector< std::vector<uid_t> > send_needed( MPL::size() );
+  std::vector< std::vector<uid_t> > recv_needed( MPL::size() );
   int sendcnt=0;
-  std::map<int,int> lookup;
+  std::map<uid_t,int> lookup;
 
   PeriodicTransform transform;
 
@@ -628,22 +676,24 @@ FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes 
     {
       centroid[YY] = centroid[YY] > 0 ? 90. : -90.;
     }
-    LatLonPoint ll(centroid);
 
     bool needed(false);
 
-    if( (Topology::check(flags(ip1),Topology::PERIODIC) && Topology::check(flags(ip2),Topology::PERIODIC)) ||
-        (Topology::check(flags(ip1),Topology::PERIODIC)          && Topology::check(flags(ip2),Topology::BC|Topology::WEST)) ||
-        (Topology::check(flags(ip1),Topology::BC|Topology::WEST) && Topology::check(flags(ip2),Topology::PERIODIC)) )
+    if( (Topology::check(flags(ip1),Topology::PERIODIC) && !Topology::check(flags(ip1),Topology::BC|Topology::WEST) &&
+         Topology::check(flags(ip2),Topology::PERIODIC) && !Topology::check(flags(ip2),Topology::BC|Topology::WEST)) ||
+        (Topology::check(flags(ip1),Topology::PERIODIC) && !Topology::check(flags(ip1),Topology::BC|Topology::WEST) &&
+         Topology::check(flags(ip2),Topology::BC|Topology::WEST)) ||
+        (Topology::check(flags(ip1),Topology::BC|Topology::WEST) &&
+         Topology::check(flags(ip2),Topology::PERIODIC) && !Topology::check(flags(ip2),Topology::BC|Topology::WEST)) )
     {
       needed = true;
       if( Topology::check(flags(ip1),Topology::EAST ) )
-        transform(ll,-1);
+        transform(centroid,-1);
       else
-        transform(ll,+1);
+        transform(centroid,+1);
     }
 
-    int uid = ll.uid();
+    uid_t uid = compute_uid(centroid);
     if( edge_part(jedge)==mypart && !needed ) // All interior edges fall here
     {
       lookup[ uid ] = jedge;
@@ -664,27 +714,29 @@ FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes 
 #ifdef DEBUGGING_PARFIELDS
       send_needed[ edge_part(jedge) ].push_back( gidx(ip1) );
       send_needed[ edge_part(jedge) ].push_back( gidx(ip2) );
+      send_needed[ edge_part(jedge) ].push_back( node_part(ip1) );
+      send_needed[ edge_part(jedge) ].push_back( node_part(ip2) );
 #endif
       sendcnt++;
     }
   }
   int varsize=2;
 #ifdef DEBUGGING_PARFIELDS
-  varsize=4;
+  varsize=6;
 #endif
   MPL::Alltoall( send_needed, recv_needed );
 
   std::vector< std::vector<int> > send_found( MPL::size() );
   std::vector< std::vector<int> > recv_found( MPL::size() );
 
-  std::map<int,int>::iterator found;
+  std::map<uid_t,int>::iterator found;
   for( int jpart=0; jpart<nparts; ++jpart )
   {
-    ArrayView<int,2> recv_edge( recv_needed[ jpart ].data(),
+    ArrayView<uid_t,2> recv_edge( recv_needed[ jpart ].data(),
         make_shape(recv_needed[ jpart ].size()/varsize,varsize) );
     for( int jedge=0; jedge<recv_edge.shape(0); ++jedge )
     {
-      int recv_uid = recv_edge(jedge,0);
+      uid_t recv_uid = recv_edge(jedge,0);
       int recv_idx = recv_edge(jedge,1);
       found = lookup.find(recv_uid);
       if( found != lookup.end() )
@@ -696,7 +748,7 @@ FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes 
       {
         std::stringstream msg;
 #ifdef DEBUGGING_PARFIELDS
-        msg << "Edge("<<recv_edge(jedge,2)<<" "<<recv_edge(jedge,3)<<")";
+        msg << "Edge("<<recv_edge(jedge,2)<<"[p"<<recv_edge(jedge,4)<<"] "<<recv_edge(jedge,3)<<"[p"<<recv_edge(jedge,5)<<"])";
 #else
         msg << "Edge with uid " << recv_uid;
 #endif
@@ -724,19 +776,21 @@ FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes 
 
 }
 
-FieldT<int>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nodes )
+FieldT<gidx_t>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nodes )
 {
+  ComputeUid compute_uid(nodes);
+
   int mypart = MPL::rank();
   int nparts = MPL::size();
   int root = 0;
 
   if( ! edges.has_field("glb_idx") )
   {
-    ArrayView<int,1> edge_gidx ( edges.create_field<int>("glb_idx",1) );
+    ArrayView<gidx_t,1> edge_gidx ( edges.create_field<gidx_t>("glb_idx",1) );
     edge_gidx = -1;
   }
 
-  ArrayView<int,   1> edge_gidx  ( edges.field("glb_idx")     );
+  ArrayView<gidx_t,1> edge_gidx  ( edges.field("glb_idx")     );
   IndexView<int,   2> edge_nodes ( edges.field("nodes")       );
   ArrayView<double,2> latlon     ( nodes.field("coordinates") );
   ArrayView<int,1> is_pole_edge;
@@ -765,8 +819,7 @@ FieldT<int>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nodes 
       {
         centroid[YY] = centroid[YY] > 0 ? 90. : -90.;
       }
-      LatLonPoint ll(centroid);
-      edge_gidx(jedge) = ll.uid();
+      edge_gidx(jedge) = compute_uid(centroid);
     }
   }
 
@@ -776,8 +829,8 @@ FieldT<int>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nodes 
   const int ridx_base = 1;
 
   // 1) Gather all global indices, together with location
-  Array<int> loc_edge_id_arr(nb_edges);
-  ArrayView<int,1> loc_edge_id(loc_edge_id_arr);
+  Array<uid_t> loc_edge_id_arr(nb_edges);
+  ArrayView<uid_t,1> loc_edge_id(loc_edge_id_arr);
 
   for( int jedge=0; jedge<nb_edges; ++jedge )
   {
@@ -795,12 +848,12 @@ FieldT<int>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nodes 
   }
   int glb_nb_edges = std::accumulate(recvcounts.begin(),recvcounts.end(),0);
 
-  Array<int> glb_edge_id_arr(glb_nb_edges);
-  ArrayView<int,1> glb_edge_id(glb_edge_id_arr);
+  Array<uid_t> glb_edge_id_arr(glb_nb_edges);
+  ArrayView<uid_t,1> glb_edge_id(glb_edge_id_arr);
 
   MPL_CHECK_RESULT(
-        MPI_Gatherv( loc_edge_id.data(), nb_edges, MPI_INT,
-                     glb_edge_id.data(), recvcounts.data(), recvdispls.data(), MPI_INT,
+        MPI_Gatherv( loc_edge_id.data(), nb_edges, MPL::TYPE<uid_t>(),
+                     glb_edge_id.data(), recvcounts.data(), recvdispls.data(), MPL::TYPE<uid_t>(),
                      root, MPI_COMM_WORLD) );
 
 
@@ -813,7 +866,7 @@ FieldT<int>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nodes 
   std::sort(edge_sort.begin(), edge_sort.end());
 
   // Assume edge gid start
-  int gid=200000;
+  uid_t gid=200000;
   for( int jedge=0; jedge<edge_sort.size(); ++jedge )
   {
     if( jedge == 0 )
@@ -830,8 +883,8 @@ FieldT<int>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nodes 
 
   // 3) Scatter renumbered back
   MPL_CHECK_RESULT(
-        MPI_Scatterv( glb_edge_id.data(), recvcounts.data(), recvdispls.data(), MPI_INT,
-                      loc_edge_id.data(), nb_edges, MPI_INT,
+        MPI_Scatterv( glb_edge_id.data(), recvcounts.data(), recvdispls.data(), MPL::TYPE<uid_t>(),
+                      loc_edge_id.data(), nb_edges, MPL::TYPE<uid_t>(),
                       root, MPI_COMM_WORLD) );
 
 
@@ -841,7 +894,7 @@ FieldT<int>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nodes 
     edge_gidx(jedge) = loc_edge_id(jedge);
   }
 
-  return edges.field<int>("glb_idx");
+  return edges.field<gidx_t>("glb_idx");
 }
 
 // ------------------------------------------------------------------

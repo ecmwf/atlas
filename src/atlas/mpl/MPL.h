@@ -15,6 +15,7 @@
 #include <iostream>
 
 #include "atlas/atlas_mpi.h"
+#include "atlas/util/ArrayView.h"
 #include "eckit/exception/Exceptions.h"
 
 #define MPL_CHECK_RESULT( MPI_CALL )\
@@ -96,6 +97,22 @@ public:
     return nproc;
   }
 
+
+  template <typename DATA_TYPE>
+  struct BufferBase
+  {
+    int                    cnt;
+    std::vector<int>       counts;
+    std::vector<int>       displs;
+    std::vector<DATA_TYPE> buf;
+
+    BufferBase()
+    {
+      counts.resize( MPL::size() );
+      displs.resize( MPL::size() );
+    }
+  };
+
   template< typename DATA_TYPE >
   inline int Alltoall( std::vector< std::vector<DATA_TYPE> >& sendvec,
                        std::vector< std::vector<DATA_TYPE> >& recvvec )
@@ -158,6 +175,49 @@ public:
     }
     return MPI_SUCCESS;
   }
+
+
+  template<typename DATA_TYPE>
+  void all_gather( const DATA_TYPE send[], int sendcnt, BufferBase<DATA_TYPE>& recv )
+  {
+    MPL_CHECK_RESULT( MPI_Allgather( &sendcnt,           1, MPI_INT,
+                                     recv.counts.data(), 1, MPI_INT, MPI_COMM_WORLD ) );
+    recv.displs[0] = 0;
+    recv.cnt = recv.counts[0];
+    for( int jpart=1; jpart<MPL::size(); ++jpart )
+    {
+      recv.displs[jpart] = recv.displs[jpart-1] + recv.counts[jpart-1];
+      recv.cnt += recv.counts[jpart];
+    }
+    recv.buf.resize(recv.cnt);
+
+    MPL_CHECK_RESULT( MPI_Allgatherv( const_cast<DATA_TYPE*>(send), sendcnt, MPL::TYPE<DATA_TYPE>(),
+                      recv.buf.data(), recv.counts.data(), recv.displs.data(),
+                      MPL::TYPE<DATA_TYPE>(), MPI_COMM_WORLD) );
+  }
+
+  template<typename VECTOR>
+  void all_gather( const VECTOR& send, BufferBase<typename VECTOR::value_type>& recv )
+  {
+    all_gather(send.data(),send.size(),recv);
+  }
+
+
+  template <typename DATA_TYPE,int RANK>
+  struct Buffer : BufferBase<DATA_TYPE>
+  {
+  };
+
+  template <typename DATA_TYPE>
+  struct Buffer<DATA_TYPE,1> : public BufferBase<DATA_TYPE>
+  {
+    ArrayView<DATA_TYPE,1> operator[](int p)
+    {
+      return ArrayView<DATA_TYPE,1> ( BufferBase<DATA_TYPE>::buf.data()+BufferBase<DATA_TYPE>::displs[p],
+                                      make_shape( BufferBase<DATA_TYPE>::counts[p] ).data() );
+    }
+  };
+
 
 } // namespace MPL
 

@@ -28,7 +28,7 @@ namespace atlas {
 
 inline int microdeg( const double& deg )
 {
-	return static_cast<int>(deg*1.e6);
+	return static_cast<int>(deg*1.e6 + 0.5);
 }
 
 enum AngleUnit{ DEG=0, RAD=1 };
@@ -117,7 +117,12 @@ struct LatLonPoint
 		x = x_;
 		y = y_;
 	}
-	LatLonPoint( double x_, double y_ )
+  LatLonPoint( long x_, long y_ )
+	{
+		x = x_;
+		y = y_;
+	}
+  LatLonPoint( double x_, double y_ )
 	{
 		x = microdeg(x_);
 		y = microdeg(y_);
@@ -138,19 +143,11 @@ struct LatLonPoint
 		y = microdeg(coord[YY]);
 	}
 
-	int uid() const
-	{
-		int i1 = (y/100+NORTH/100*2) >>9;
-		int i2 = (x/100+EAST/100*5)  >>10;
-		ASSERT( i1 > 0);
-		ASSERT( i2 > 0);
-		int pow = 10;
-		while(i2 >= pow)
-				pow *= 10;
-		int id = i1*pow + i2;
-		ASSERT( id > 0 );
-		return id;
-	}
+  long uid64() const;
+
+  int uid32() const;
+
+  gidx_t uid() const;
 
 	mutable int x, y;
 	bool operator < (const LatLonPoint& other) const
@@ -160,15 +157,46 @@ struct LatLonPoint
 		return false;
 	}
 private:
-	static int WEST;
+
+  template<typename T> gidx_t uidT() const;
+
+  static int WEST;
 	static int EAST;
 	static int NORTH;
 	static int SOUTH;
 };
 
+template<> inline gidx_t LatLonPoint::uidT<int >() const { return uid32(); }
+template<> inline gidx_t LatLonPoint::uidT<long>() const { return uid64(); }
+
+inline int LatLonPoint::uid32() const
+{
+  // max precision is 0.02 degree
+  int iy = static_cast<int>((2*NORTH-y)*5e-5);
+  int ix = static_cast<int>((x+2*EAST)*5e-5);
+  iy <<= 17;
+  int id = iy | ix;
+  return id;
+}
+
+inline long LatLonPoint::uid64() const
+{
+  // max precision is 10 microdegree
+  long iy = static_cast<long>((4*NORTH-y));
+  long ix = static_cast<long>((x+4*EAST));
+  iy <<= 31;
+  long id = iy | ix;
+  return id;
+}
+
+inline gidx_t LatLonPoint::uid() const {
+  return uidT<gidx_t>();
+}
+
+
 class PeriodicTransform
 {
-private:
+protected:
 	double x_translation_;
 
 public:
@@ -203,7 +231,7 @@ public:
 
 	void operator()(LatLonPoint& inplace, int direction) const
 	{
-		inplace.x = inplace.x + direction*static_cast<int>(x_translation_*1.e6);
+		inplace.x = inplace.x + direction*microdeg(x_translation_);
 		inplace.y = inplace.y;
 	}
 
@@ -236,14 +264,27 @@ struct IsGhost
 	IndexView<int,1> ridx_;
 };
 
-struct ComputeUniqueElementIndex
+
+struct ComputeUid
 {
-	ComputeUniqueElementIndex( const FunctionSpace& nodes )
+  ComputeUid() {}
+	ComputeUid( const FunctionSpace& nodes ):
+    funcspace(&nodes)
 	{
-		coords = ArrayView<double,2> ( nodes.field("coordinates") );
+		update();
 	}
 
-	int operator()( const IndexView<int,1>& elem_nodes ) const
+  gidx_t operator()( const double crd[] ) const
+	{
+		return LatLonPoint( crd ).uid();
+	}
+
+	gidx_t operator()( int node ) const
+	{
+		return LatLonPoint( coords[node] ).uid();
+	}
+
+  gidx_t operator()( const IndexView<int,1>& elem_nodes ) const
 	{
 		double centroid[2];
 		centroid[XX] = 0.;
@@ -256,11 +297,34 @@ struct ComputeUniqueElementIndex
 		}
 		centroid[XX] /= static_cast<double>(nb_elem_nodes);
 		centroid[YY] /= static_cast<double>(nb_elem_nodes);
-		return LatLonPoint( centroid[XX], centroid[YY] ).uid();
+		return LatLonPoint( centroid[XX], centroid[YY] ).uid32();
 	}
 
-	ArrayView<double,2> coords;
+  gidx_t operator()( double crds[], int npts ) const
+	{
+		double centroid[2];
+		centroid[XX] = 0.;
+		centroid[YY] = 0.;
+		for( int jnode=0; jnode<npts; ++jnode )
+		{
+			centroid[XX] += crds[jnode*2+XX];
+			centroid[YY] += crds[jnode*2+YY];
+		}
+		centroid[XX] /= static_cast<double>(npts);
+		centroid[YY] /= static_cast<double>(npts);
+		return LatLonPoint( centroid[XX], centroid[YY] ).uid32();
+	}
+
+
+  void update()
+  {
+    coords = ArrayView<double,2> ( funcspace->field("coordinates") );
+  }
+private:
+  const FunctionSpace* funcspace;
+  ArrayView<double,2> coords;
 };
+
 
 
 struct Face

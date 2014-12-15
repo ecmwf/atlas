@@ -208,8 +208,7 @@ class ArrayView<DATA_TYPE,0>
 public:
   typedef ArrayView_iterator<DATA_TYPE,0>       iterator;
   typedef ArrayView_const_iterator<DATA_TYPE,0> const_iterator;
-  typedef typename remove_const<DATA_TYPE>::type  value_t;
-  typedef typename add_const<DATA_TYPE>::type     const_value_t;
+  typedef typename remove_const<DATA_TYPE>::type  value_type;
 public:
   ArrayView() {}
   ArrayView( const DATA_TYPE* data,
@@ -281,13 +280,20 @@ class ArrayView < DATA_TYPE, 1 >
 public:
   typedef ArrayView_iterator<DATA_TYPE,1>       iterator;
   typedef ArrayView_const_iterator<DATA_TYPE,1> const_iterator;
-  typedef typename remove_const<DATA_TYPE>::type  value_t;
-  typedef typename add_const<DATA_TYPE>::type     const_value_t;
+  typedef typename remove_const<DATA_TYPE>::type  value_type;
 public:
   ArrayView() {}
   ArrayView( DATA_TYPE* data, const ArrayStrides::value_type strides[1], const ArrayShape::value_type shape[1] ) : data_( const_cast<DATA_TYPE*>(data) )
   {
     strides_[0]=strides[0];       shape_[0]=shape[0];
+  }
+  ArrayView( const DATA_TYPE* data, const ArrayShape::value_type shape[1] ) : data_( const_cast<DATA_TYPE*>(data) )
+  {
+    shape_[0]=shape[0]; strides_[0]=1;
+  }
+  ArrayView( const DATA_TYPE* data, const std::vector<int>& shape ) : data_( const_cast<DATA_TYPE*>(data) )
+  {
+    shape_[0]=shape[0]; strides_[0]=1;
   }
   ArrayView( const Array<DATA_TYPE>& array );
   ArrayView( const Field& field );
@@ -340,8 +346,7 @@ class ArrayView < DATA_TYPE, 2 >
 public:
   typedef ArrayView_iterator<DATA_TYPE,2>       iterator;
   typedef ArrayView_const_iterator<DATA_TYPE,2> const_iterator;
-  typedef typename remove_const<DATA_TYPE>::type  value_t;
-  typedef typename add_const<DATA_TYPE>::type     const_value_t;
+  typedef typename remove_const<DATA_TYPE>::type  value_type;
 public:
 
   ArrayView() {}
@@ -411,8 +416,7 @@ class ArrayView < DATA_TYPE, 3 >
 public:
   typedef ArrayView_iterator<DATA_TYPE,3>       iterator;
   typedef ArrayView_const_iterator<DATA_TYPE,3> const_iterator;
-  typedef typename remove_const<DATA_TYPE>::type  value_t;
-  typedef typename add_const<DATA_TYPE>::type     const_value_t;
+  typedef typename remove_const<DATA_TYPE>::type  value_type;
 public:
   ArrayView() {}
   ArrayView( const DATA_TYPE* data, const ArrayStrides::value_type strides [3], const ArrayShape::value_type shape[3] ) : data_( const_cast<DATA_TYPE*>(data) )
@@ -478,8 +482,7 @@ class ArrayView < DATA_TYPE, 4 >
 public:
   typedef ArrayView_iterator<DATA_TYPE,4>       iterator;
   typedef ArrayView_const_iterator<DATA_TYPE,4> const_iterator;
-  typedef typename remove_const<DATA_TYPE>::type  value_t;
-  typedef typename add_const<DATA_TYPE>::type     const_value_t;
+  typedef typename remove_const<DATA_TYPE>::type  value_type;
 public:
   ArrayView() {}
   ArrayView( DATA_TYPE* data, const ArrayStrides::value_type strides[4], const ArrayShape::value_type shape[4] ) : data_( const_cast<DATA_TYPE*>(data) )

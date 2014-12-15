@@ -15,7 +15,7 @@
 #include "atlas/Metadata.h"
 #include "atlas/Field.h"
 
-using namespace std;
+using std::string;
 
 #define METADATA( VALUE_TYPE ) \
 template<>\
@@ -68,6 +68,7 @@ namespace atlas {
 
 METADATA(bool)
 METADATA(int)
+METADATA(long)
 METADATA(float)
 METADATA(double)
 METADATA(string)
@@ -85,6 +86,7 @@ void atlas__Metadata__delete (Metadata* This) {
 }
 
 METADATA_C_BINDING(int)
+METADATA_C_BINDING(long)
 METADATA_C_BINDING(float)
 METADATA_C_BINDING(double)
 
@@ -100,9 +102,10 @@ int	atlas__Metadata__has (Metadata* This, const char* name)
 {
 	return (
 		This->has<int>( std::string(name) ) ||
+		This->has<long>( std::string(name) ) ||
 		This->has<float>( std::string(name) ) ||
 		This->has<double>( std::string(name) ) ||
-		This->has<std::string>( std::string(name) ) );
+		This->has<string>( std::string(name) ) );
 }
 
 // ------------------------------------------------------------------

@@ -12,7 +12,8 @@ type, public :: object_type
   type(private_type),public :: private
 end type
 
-integer,        target :: zero_length_array_int32(0)
+integer(c_int), target :: zero_length_array_int32(0)
+integer(c_long),target :: zero_length_array_int64(0)
 real(c_float),  target :: zero_length_array_real32(0)
 real(c_double), target :: zero_length_array_real64(0)
 
@@ -20,6 +21,9 @@ INTERFACE view1d
   module procedure view1d_int32_rank1
   module procedure view1d_int32_rank2
   module procedure view1d_int32_rank3
+  module procedure view1d_int64_rank1
+  module procedure view1d_int64_rank2
+  module procedure view1d_int64_rank3
   module procedure view1d_real32_rank1
   module procedure view1d_real32_rank2
   module procedure view1d_real32_rank3
@@ -33,6 +37,9 @@ INTERFACE stride
   module procedure stride_int32_r1
   module procedure stride_int32_r2
   module procedure stride_int32_r3
+  module procedure stride_int64_r1
+  module procedure stride_int64_r2
+  module procedure stride_int64_r3
   module procedure stride_real32_r1
   module procedure stride_real32_r2
   module procedure stride_real32_r3
@@ -120,9 +127,16 @@ end function c_str
 
 function c_loc_int32(x)
   use iso_c_binding
-  integer, target :: x
+  integer(c_int), target :: x
   type(c_ptr) :: c_loc_int32
   c_loc_int32 = C_LOC(x)
+end function
+
+function c_loc_int64(x)
+  use iso_c_binding
+  integer(c_long), target :: x
+  type(c_ptr) :: c_loc_int64
+  c_loc_int64 = C_LOC(x)
 end function
 
 function c_loc_real32(x)
@@ -174,6 +188,42 @@ function view1d_int32_rank3(array) result( view )
     view => zero_length_array_int32
   endif
 end function view1d_int32_rank3
+
+function view1d_int64_rank1(array) result( view )
+  integer(c_long), intent(in), target :: array(:)
+  type(c_ptr) :: array_c_ptr
+  integer(c_long), pointer :: view(:)
+  if( size(array) > 0 ) then
+    array_c_ptr = c_loc_int64(array(1))
+    call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
+  else
+    view => zero_length_array_int64
+  endif
+end function view1d_int64_rank1
+
+function view1d_int64_rank2(array) result( view )
+  integer(c_long), intent(in), target :: array(:,:)
+  type(c_ptr) :: array_c_ptr
+  integer(c_long), pointer :: view(:)
+  if( size(array) > 0 ) then
+    array_c_ptr = c_loc_int64(array(1,1))
+    call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
+  else
+    view => zero_length_array_int64
+  endif
+end function view1d_int64_rank2
+
+function view1d_int64_rank3(array) result( view )
+  integer(c_long), intent(in), target :: array(:,:,:)
+  type(c_ptr) :: array_c_ptr
+  integer(c_long), pointer :: view(:)
+  if( size(array) > 0 ) then
+    array_c_ptr = c_loc_int64(array(1,1,1))
+    call C_F_POINTER ( array_c_ptr , view , (/size(array)/) )
+  else
+    view => zero_length_array_int64
+  endif
+end function view1d_int64_rank3
 
 function view1d_real32_rank1(array) result( view )
   real(c_float), intent(in), target :: array(:)
@@ -319,6 +369,58 @@ function stride_int32_r4(arr,dim) result( stride )
     stride = 0
   endif
 end function stride_int32_r4
+
+
+function stride_int64_r1(arr,dim) result( stride )
+  integer(c_long) :: arr(:)
+  integer :: dim
+  integer :: stride
+  stride = 1
+  if (dim == 1 .AND. ubound(arr,1) > 1) stride = (loc(arr(2))-loc(arr(1)))/4
+end function stride_int64_r1
+
+function stride_int64_r2(arr,dim) result( stride )
+  integer(c_long) :: arr(:,:)
+  integer :: dim
+  integer :: stride
+  stride = 1
+  if( size(arr) > 0 ) then
+    if (dim == 1 .AND. ubound(arr,1) > 1) stride = (loc(arr(2,1))-loc(arr(1,1)))/4
+    if (dim == 2 .AND. ubound(arr,1) > 1) stride = (loc(arr(1,2))-loc(arr(1,1)))/4
+  else
+    stride = 0
+  endif
+end function stride_int64_r2
+
+function stride_int64_r3(arr,dim) result( stride )
+  integer(c_long) :: arr(:,:,:)
+  integer :: dim
+  integer :: stride
+  stride = 1
+  if( size(arr) > 0 ) then
+    if (dim == 1 .AND. ubound(arr,1) > 1) stride = (loc(arr(2,1,1))-loc(arr(1,1,1)))/4
+    if (dim == 2 .AND. ubound(arr,2) > 1) stride = (loc(arr(1,2,1))-loc(arr(1,1,1)))/4
+    if (dim == 3 .AND. ubound(arr,3) > 1) stride = (loc(arr(1,1,2))-loc(arr(1,1,1)))/4
+  else
+    stride = 0
+  endif
+end function stride_int64_r3
+
+function stride_int64_r4(arr,dim) result( stride )
+  integer(c_long) :: arr(:,:,:,:)
+  integer :: dim
+  integer :: stride
+  stride = 1
+  if( size(arr) > 0 ) then
+    if (dim == 1 .AND. ubound(arr,1) > 1) stride = (loc(arr(2,1,1,1))-loc(arr(1,1,1,1)))/4
+    if (dim == 2 .AND. ubound(arr,2) > 1) stride = (loc(arr(1,2,1,1))-loc(arr(1,1,1,1)))/4
+    if (dim == 3 .AND. ubound(arr,3) > 1) stride = (loc(arr(1,1,2,1))-loc(arr(1,1,1,1)))/4
+    if (dim == 4 .AND. ubound(arr,4) > 1) stride = (loc(arr(1,1,1,2))-loc(arr(1,1,1,1)))/4
+  else
+    stride = 0
+  endif
+end function stride_int64_r4
+
 
 function stride_real32_r1(arr,dim) result( stride )
   real(c_float) :: arr(:)

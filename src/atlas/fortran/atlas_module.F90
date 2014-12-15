@@ -60,12 +60,21 @@ implicit none
 ! ----------------------------------------------------
 ! ENUM FieldType
 integer, private, parameter :: KIND_INT32  = -4
+integer, private, parameter :: KIND_INT64  = -8
 integer, private, parameter :: KIND_REAL32 =  4
 integer, private, parameter :: KIND_REAL64 =  8
 ! ----------------------------------------------------
 
 integer, private, parameter :: FIELD_NB_VARS = -1
 integer, private, parameter :: wp = c_double ! working precision
+
+#if ATLAS_BITS_GLOBAL == 32
+integer, public, parameter :: gidx_t = c_int
+#elif ATLAS_BITS_GLOBAL == 64
+integer, public, parameter :: gidx_t = c_long
+#else
+#error ATLAS_BITS_GLOBAL must be either 32 or 64
+#endif
 
 #include "atlas_module_Logging_i.f"
 #include "atlas_module_HaloExchange_i.f"
@@ -144,6 +153,8 @@ integer function integer_kind(kind)
   if ( present(kind) ) then
     if (kind == c_int) then
       integer_kind = KIND_INT32
+    else if (kind == c_long) then
+      integer_kind = KIND_INT64
     else
       write(0,*) "Unsupported kind"
       write(0,*) 'call abort()'

@@ -1,9 +1,9 @@
 /*
  * (C) Copyright 1996-2014 ECMWF.
- * 
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
- * In applying this licence, ECMWF does not waive the privileges and immunities 
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
@@ -148,8 +148,8 @@ void HaloExchange::setup( const int part[],
 /////////////////////
 
 
-HaloExchange* atlas__HaloExchange__new () { 
-  return new HaloExchange(); 
+HaloExchange* atlas__HaloExchange__new () {
+  return new HaloExchange();
 }
 
 void atlas__HaloExchange__delete (HaloExchange* This) {
@@ -162,6 +162,10 @@ void atlas__HaloExchange__setup (HaloExchange* This, int part[], int remote_idx[
 }
 
 void atlas__HaloExchange__execute_strided_int (HaloExchange* This, int field[], int var_strides[], int var_extents[], int var_rank) {
+  This->execute(field,var_strides,var_extents,var_rank);
+}
+
+void atlas__HaloExchange__execute_strided_long (HaloExchange* This, long field[], int var_strides[], int var_extents[], int var_rank) {
   This->execute(field,var_strides,var_extents,var_rank);
 }
 

@@ -23,6 +23,9 @@ namespace atlas {
 template< typename DATA_TYPE >
 class Array {
 public:
+  typedef typename remove_const<DATA_TYPE>::type  value_type;
+  typedef typename add_const<DATA_TYPE>::type     const_value_type;
+public:
   Array() {}
   Array(int size) { resize( make_shape(size) ); }
   Array(int size1, int size2) { resize( make_shape(size1,size2) ); }

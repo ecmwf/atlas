@@ -8,6 +8,26 @@
  * does it submit to any jurisdiction.
  */
 
+/**
+ * @file atlas-benchmark.cc
+ * @author Willem Deconinck
+ *
+ * Benchmark testing parallel performance of gradient computation using the
+ * Green-Gauss Theorem on an edge-based median-dual mesh.
+ *
+ * Configurable is
+ *   - Horizontal mesh resolution, which is unstructured and
+ *     domain-decomposed,
+ *   - Vertical resolution, which is structured, and is beneficial for caching
+ *   - Number of iterations, so caches can warm up, and timings can be averaged
+ *   - Number of OpenMP threads per MPI task
+ *
+ * Results should be bit-identical when changing number of OpenMP threads or MPI tasks.
+ * A checksum on all bits is used to verify between scaling runs.
+ *
+ *
+ */
+
 #include <limits>
 #include <cassert>
 #include <sstream>
@@ -18,15 +38,15 @@
 #include <vector>
 #include <memory>
 
-#include <eckit/exception/Exceptions.h>
-#include <eckit/config/Resource.h>
-#include <eckit/runtime/Tool.h>
-#include <eckit/runtime/Context.h>
-#include <eckit/filesystem/PathName.h>
-#include <eckit/memory/Factory.h>
-#include <eckit/memory/Builder.h>
-#include <eckit/parser/JSON.h>
-#include <eckit/log/Timer.h>
+#include "eckit/exception/Exceptions.h"
+#include "eckit/config/Resource.h"
+#include "eckit/runtime/Tool.h"
+#include "eckit/runtime/Context.h"
+#include "eckit/filesystem/PathName.h"
+#include "eckit/memory/Factory.h"
+#include "eckit/memory/Builder.h"
+#include "eckit/parser/JSON.h"
+#include "eckit/log/Timer.h"
 
 
 #include "atlas/atlas.h"
@@ -100,8 +120,8 @@ public:
 
   AtlasBenchmark(int argc,char **argv): eckit::Tool(argc,argv), do_run(true)
   {
-    N     = Resource<int>("-N",80);
-    nlev  = Resource<int>("-nlev",100);
+    N     = Resource<int>("-N",1280);
+    nlev  = Resource<int>("-nlev",137);
     niter = Resource<int>("-niter",100);
     omp_threads = Resource<int>("-omp",-1);
     iteration_timer = TimerStats("iteration");
@@ -177,6 +197,7 @@ private:
   int N;
   int niter;
   int omp_threads;
+  double dz;
 
   TimerStats iteration_timer;
   TimerStats haloexchange_timer;
@@ -213,8 +234,26 @@ void AtlasBenchmark::run()
 
   setup();
 
+  Log::info() << "  Executing " << niter << " iterations: \n";
+  Log::info() << "      0%   10   20   30   40   50   60   70   80   90   100%\n";
+  Log::info() << "      |----|----|----|----|----|----|----|----|----|----|\n";
+  Log::info() << "      " << std::flush;
+  int tic=0;
   for( int i=0; i<niter; ++i )
+  {
+    unsigned int tics_needed = static_cast<unsigned int>(static_cast<double>(i)/static_cast<double>(niter-1)*50.0);
+    while( tic <= tics_needed )
+    {
+      Log::info() << '*' << std::flush;
+      ++tic;
+    }
+    if ( i == niter-1 )
+    {
+      if ( tic < 51 ) Log::info() << '*';
+        Log::info() << std::endl;
+    }
     iteration();
+  }
 
   Log::info() << "  " << iteration_timer.str() << std::endl;
   Log::info() << "  " << haloexchange_timer.str() << std::endl;
@@ -227,6 +266,7 @@ void AtlasBenchmark::run()
   atlas_finalize();
 }
 
+//------------------------------------------------------------------------------------------------------
 
 void AtlasBenchmark::setup()
 {
@@ -236,7 +276,7 @@ void AtlasBenchmark::setup()
 
   std::stringstream gridname; gridname << "rgg.N"<<N;
   mesh = Mesh::Ptr( generate_reduced_gaussian_grid(gridname.str()) );
-//  mesh = Mesh::Ptr( generate_regular_grid( 2*N, N) );
+  // mesh = Mesh::Ptr( generate_regular_grid( 2*N, N) );
   build_nodes_parallel_fields(mesh->function_space("nodes"));
   build_periodic_boundaries(*mesh);
   build_halo(*mesh,1);
@@ -262,6 +302,7 @@ void AtlasBenchmark::setup()
   mesh->function_space("nodes").field("grad").metadata().set("nb_levels",nlev);
 
   double radius = 6371.22e+03; // Earth's radius
+  double height = 80.e+03;     // Height of atmosphere
   double deg2rad = M_PI/180.;
   for( int jnode=0; jnode<nnodes; ++jnode )
   {
@@ -281,6 +322,7 @@ void AtlasBenchmark::setup()
     S(jedge,XX) *= deg2rad;
     S(jedge,YY) *= deg2rad;
   }
+  dz = height/static_cast<double>(nlev);
 
   edge_is_pole   = ArrayView<int,1> ( mesh->function_space("edges").field("is_pole_edge") );
   node2edge      = IndexView<int,2> ( mesh->function_space("nodes").field("to_edge") );
@@ -314,8 +356,21 @@ void AtlasBenchmark::setup()
   for( int jedge=0; jedge<c; ++jedge )
     pole_edges.push_back(tmp[jedge]);
 
+
   Log::info() << "  setup: " << timer.elapsed() << std::endl;
+
+
+  // Check bit-reproducibility after setup()
+  // ---------------------------------------
+  //ArrayView<double,1> V ( mesh->function_space("nodes").field("dual_volumes") );
+  //ArrayView<double,2> S ( mesh->function_space("edges").field("dual_normals") );
+  //Log::info() << "  checksum coordinates : " << mesh->function_space("nodes").checksum().execute( coords ) << std::endl;
+  //Log::info() << "  checksum dual_volumes: " << mesh->function_space("nodes").checksum().execute( V ) << std::endl;
+  //Log::info() << "  checksum dual_normals: " << mesh->function_space("edges").checksum().execute( S ) << std::endl;
+  //Log::info() << "  checksum field       : " << mesh->function_space("nodes").checksum().execute( field ) << std::endl;
 }
+
+//------------------------------------------------------------------------------------------------------
 
 void AtlasBenchmark::iteration()
 {
@@ -366,7 +421,6 @@ void AtlasBenchmark::iteration()
     {
       grad(jnode,jlev*3+XX) /= V(jnode);
       grad(jnode,jlev*3+YY) /= V(jnode);
-      grad(jnode,jlev*3+ZZ) /= V(jnode);
     }
   }
   // special treatment for the north & south pole cell faces
@@ -381,6 +435,22 @@ void AtlasBenchmark::iteration()
       grad(ip2,jlev*3+YY) += 2.*avgS(iedge,jlev,YY)/V(ip2);
   }
 
+  double dzi = 1./dz;
+  double dzi_2 = 0.5*dzi;
+
+#ifdef HAVE_OMP
+  #pragma omp parallel for
+#endif
+  for( int jnode=0; jnode<nnodes; ++jnode )
+  {
+    for( int jlev=1; jlev<nlev-1; ++jlev )
+    {
+      grad(jnode,jlev*3+ZZ)   = (field(jnode,(jlev+1))     - field(jnode,(jlev-1)))*dzi_2;
+    }
+    grad(jnode,   0    *3+ZZ) = (field(jnode,(   0    +1)) - field(jnode,(   0    +0)))*dzi;
+    grad(jnode,(nlev-1)*3+ZZ) = (field(jnode,((nlev-1)-1)) - field(jnode,((nlev-1)-0)))*dzi;
+  }
+
   // halo-exchange
   {
     Timer halo("halo-exchange", Log::debug());
@@ -390,6 +460,8 @@ void AtlasBenchmark::iteration()
   }
   iteration_timer.update(t);
 }
+
+//------------------------------------------------------------------------------------------------------
 
 void AtlasBenchmark::result()
 {

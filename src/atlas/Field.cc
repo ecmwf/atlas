@@ -57,6 +57,34 @@ int const* Field::data<int>() const
 }
 
 template <>
+long* Field::data<long>()
+{
+	try {
+		return dynamic_cast< FieldT<long>& >(*this).data();
+	}
+	catch (std::bad_cast& e) {
+		std::stringstream msg;
+		msg << "Could not cast Field " << name()
+		    << " with data_type " << data_type() << " to real64";
+		throw eckit::BadCast(msg.str(),Here());
+	}
+}
+
+template <>
+long const* Field::data<long>() const
+{
+	try {
+		return dynamic_cast< const FieldT<long>& >(*this).data();
+	}
+	catch (std::bad_cast& e) {
+		std::stringstream msg;
+		msg << "Could not cast Field " << name()
+		    << " with data_type " << data_type() << " to real64";
+		throw eckit::BadCast(msg.str(),Here());
+	}
+}
+
+template <>
 float* Field::data<float>()
 {
 	try {
@@ -115,6 +143,8 @@ double const* Field::data<double>() const
 
 template<>
 void FieldT<int>::halo_exchange() { function_space().halo_exchange(data_.data(),data_.size()); }
+template<>
+void FieldT<long>::halo_exchange() { function_space().halo_exchange(data_.data(),data_.size()); }
 template<>
 void FieldT<float>::halo_exchange() { function_space().halo_exchange(data_.data(),data_.size()); }
 template<>
@@ -175,9 +205,16 @@ void atlas__Field__shapef (Field* This, int* &shape, int &rank)
 	rank = This->shapef().size();
 }
 
-void atlas__Field__data_shapef_double (Field* This, double* &field_data, int* &field_bounds, int &rank)
+void atlas__Field__data_shapef_int (Field* This, int* &field_data, int* &field_bounds, int &rank)
 {
-	field_data = &This->data<double>()[0];
+	field_data = &This->data<int>()[0];
+	field_bounds = const_cast<int*>(&(This->shapef()[0]));
+	rank = This->shapef().size();
+}
+
+void atlas__Field__data_shapef_long (Field* This, long* &field_data, int* &field_bounds, int &rank)
+{
+	field_data = &This->data<long>()[0];
 	field_bounds = const_cast<int*>(&(This->shapef()[0]));
 	rank = This->shapef().size();
 }
@@ -189,12 +226,13 @@ void atlas__Field__data_shapef_float (Field* This, float* &field_data, int* &fie
 	rank = This->shapef().size();
 }
 
-void atlas__Field__data_shapef_int (Field* This, int* &field_data, int* &field_bounds, int &rank)
+void atlas__Field__data_shapef_double (Field* This, double* &field_data, int* &field_bounds, int &rank)
 {
-	field_data = &This->data<int>()[0];
+	field_data = &This->data<double>()[0];
 	field_bounds = const_cast<int*>(&(This->shapef()[0]));
 	rank = This->shapef().size();
 }
+
 
 // ------------------------------------------------------------------
 

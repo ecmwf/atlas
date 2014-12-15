@@ -15,6 +15,7 @@
 #include <cmath>
 #include <limits>
 #include <set>
+#include "atlas/atlas.h"
 #include "atlas/Mesh.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Field.h"
@@ -32,12 +33,13 @@ namespace {
 struct Sort
 {
   Sort() {}
-  Sort(int gid, int idx)
+  Sort(gidx_t gid, int idx)
   {
     g = gid;
     i = idx;
   }
-  int g,i;
+  gidx_t g;
+  int i;
   bool operator < (const Sort& other) const
   {
     return ( g < other.g );
@@ -79,7 +81,7 @@ void build_element_to_edge_connectivity( Mesh& mesh )
     is_pole_edge = ArrayView<int,1>( edges.field("is_pole_edge") );
   }
 
-  ComputeUniqueElementIndex uid( nodes );
+  ComputeUid uid( nodes );
 
   std::vector<Sort> edge_sort(nb_edges);
   for( int edge=0; edge<nb_edges; ++edge )
@@ -90,7 +92,7 @@ void build_element_to_edge_connectivity( Mesh& mesh )
 //  FunctionSpace& edges = mesh.function_space("edges");
 //  int nb_edges = edges.shape(0);
 //  IndexView<int,3> edge_to_elem ( edges.field( "to_elem" ).data<int>(), Extents(nb_edges,2,2) );
-//  ArrayView<int,1> edge_gidx    ( edges.field( "glb_idx" ) );
+//  ArrayView<gidx_t,1> edge_gidx    ( edges.field( "glb_idx" ) );
 //  bool has_pole_edges(false);
 //  ArrayView<int,1> is_pole_edge;
 //  if( edges.has_field("is_pole_edge") )
@@ -149,7 +151,7 @@ void build_element_to_edge_connectivity( Mesh& mesh )
 					if( elem_to_edge[func_space_idx](jelem,jedge) < 0 )
 					{
 						const IndexView<int,2> elem_nodes ( func_space.field<int>("nodes") );
-						const ArrayView<int,1> gidx (nodes.field<int>("glb_idx"));
+						const ArrayView<gidx_t,1> gidx (nodes.field<gidx_t>("glb_idx"));
 
 						std::stringstream msg; msg << "Could not find edge " << jedge << " for " << func_space.name() << " elem " << jelem << " with nodes ( ";
 						for( int jnode=0; jnode<elem_nodes.shape(1); ++jnode )
@@ -195,13 +197,13 @@ void build_node_to_edge_connectivity( Mesh& mesh )
 
   IndexView<int,2> node_to_edge ( nodes.create_field<int>("to_edge",max_edge_cnt) );
 
-  ComputeUniqueElementIndex uid( nodes );
+  ComputeUid uid( nodes );
   std::vector<Sort> edge_sort(nb_edges);
   for( int edge=0; edge<nb_edges; ++edge )
     edge_sort[edge] = Sort( uid(edge_nodes[edge]), edge );
   std::stable_sort( edge_sort.data(), edge_sort.data()+nb_edges );
 
-//  ArrayView<int,1> edge_gidx    ( edges.field( "glb_idx" ) );
+//  ArrayView<gidx_t,1> edge_gidx    ( edges.field( "glb_idx" ) );
 //  std::vector<Sort> edge_sort(nb_edges);
 //  for( int edge=0; edge<nb_edges; ++edge )
 //    edge_sort[edge] = Sort(edge_gidx(edge),edge);
@@ -224,7 +226,7 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
 {
   FunctionSpace& nodes   = mesh.function_space( "nodes" );
   ArrayView<double,2> coords    ( nodes.field( "coordinates" ) );
-  ArrayView<int,   1> glb_idx   ( nodes.field( "glb_idx"     ) );
+  ArrayView<gidx_t,1> glb_idx   ( nodes.field( "glb_idx"     ) );
   ArrayView<int,   1> part      ( nodes.field( "partition"   ) );
   ArrayView<int,   1> flags     ( nodes.field( "flags"       ) );
   IndexView<int,   1> ridx      ( nodes.field( "remote_idx"  ) );
@@ -285,7 +287,9 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
         else if ( part(node) != npart )
         {
           // Not implemented yet, when pole-lattitude is split.
-          throw eckit::NotImplemented(Here());
+          std::stringstream msg;
+          msg << "Split pole-latitude is not supported yet...  node "<<node<<"[p"<<part(node)<<"] should belong to part " << npart;
+          throw eckit::NotImplemented(msg.str(),Here());
         }
       }
     }
@@ -297,7 +301,7 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
     for( std::set<int>::iterator it=pole_nodes[NS].begin(); it!=pole_nodes[NS].end(); ++it)
     {
       int node = *it;
-      if( !Topology::check(flags(node),Topology::PERIODIC) )
+      if( !Topology::check(flags(node),Topology::PERIODIC|Topology::GHOST) )
       {
         int x1 = microdeg( coords(node,XX) );
         int x2 = microdeg( coords(node,XX) + 180. );
@@ -352,7 +356,7 @@ struct ComputeUniquePoleEdgeIndex
     coords = ArrayView<double,2> ( nodes.field("coordinates") );
   }
 
-  int operator()( const IndexView<int,1>& edge_nodes ) const
+  gidx_t operator()( const IndexView<int,1>& edge_nodes ) const
   {
     double centroid[2];
     centroid[XX] = 0.;
@@ -368,7 +372,7 @@ struct ComputeUniquePoleEdgeIndex
       centroid[YY] =  90.;
     else
       centroid[YY] = -90.;
-    return LatLonPoint( centroid[XX], centroid[YY] ).uid();
+    return LatLonPoint( centroid[XX], centroid[YY] ).uid32();
   }
 
   ArrayView<double,2> coords;
@@ -377,7 +381,7 @@ struct ComputeUniquePoleEdgeIndex
 void build_edges( Mesh& mesh )
 {
   FunctionSpace& nodes   = mesh.function_space( "nodes" );
-  ArrayView<int,1> glb_idx(        nodes.field( "glb_idx" ) );
+  ArrayView<gidx_t,1> glb_idx(        nodes.field( "glb_idx" ) );
   ArrayView<int,1> part   (        nodes.field( "partition" ) );
   ArrayView<double,2> latlon (     nodes.field( "coordinates" ) );
   int nb_nodes = nodes.shape(0);
@@ -410,13 +414,13 @@ void build_edges( Mesh& mesh )
   edges.resize(make_shape(nb_edges,Field::UNDEF_VARS));
 
   if( ! edges.has_field("nodes")      )  edges.create_field<int>("nodes",     2);
-  if( ! edges.has_field("glb_idx")    )  edges.create_field<int>("glb_idx",   1);
+  if( ! edges.has_field("glb_idx")    )  edges.create_field<gidx_t>("glb_idx",   1);
   if( ! edges.has_field("partition")  )  edges.create_field<int>("partition", 1);
   if( ! edges.has_field("to_elem")    )  edges.create_field<int>("to_elem",   4);
   if( ! edges.has_field("remote_idx") )  edges.create_field<int>("remote_idx",1);
 
   IndexView<int,2> edge_nodes   ( edges.field( "nodes"      ) );
-  ArrayView<int,1> edge_glb_idx ( edges.field( "glb_idx"    ) );
+  ArrayView<gidx_t,1> edge_glb_idx ( edges.field( "glb_idx"    ) );
   ArrayView<int,1> edge_part    ( edges.field( "partition"  ) );
   IndexView<int,1> edge_ridx    ( edges.field( "remote_idx" ) );
   IndexView<int,3> edge_to_elem ( edges.field( "to_elem"    ).data<int>(), make_shape(nb_edges,2,2) );
@@ -432,7 +436,7 @@ void build_edges( Mesh& mesh )
     }
   }
 
-  ComputeUniqueElementIndex uid( nodes );
+  ComputeUid compute_uid( nodes );
 
   int cnt=0;
   for( int edge=0; edge<nb_edges; ++edge )
@@ -442,7 +446,7 @@ void build_edges( Mesh& mesh )
     edge_nodes(edge,0) = ip1;
     edge_nodes(edge,1) = ip2;
     //if( glb_idx(ip1) > glb_idx(ip2) )
-    if( LatLonPoint(latlon[ip1]).uid() > LatLonPoint(latlon[ip2]).uid()  )
+    if( compute_uid(ip1) > compute_uid(ip2) )
     {
       edge_nodes(edge,0) = ip2;
       edge_nodes(edge,1) = ip1;
@@ -450,7 +454,7 @@ void build_edges( Mesh& mesh )
 
     ASSERT( edge_nodes(edge,0) < nb_nodes );
     ASSERT( edge_nodes(edge,1) < nb_nodes );
-    edge_glb_idx(edge)   = uid(edge_nodes[edge]);
+    edge_glb_idx(edge)   = compute_uid(edge_nodes[edge]);
     edge_part(edge)      = std::min( part(edge_nodes(edge,0)), part(edge_nodes(edge,1) ) );
     edge_ridx(edge)      = edge;
 
@@ -466,7 +470,7 @@ void build_edges( Mesh& mesh )
 
     if( f2 >= 0 )
     {
-      if( uid(elem_nodes[f1][e1]) > uid(elem_nodes[f2][e2]) )
+      if( compute_uid(elem_nodes[f1][e1]) > compute_uid(elem_nodes[f2][e2]) )
       {
         edge_to_elem(edge,0,0) = f2;
         edge_to_elem(edge,0,1) = e2;
@@ -500,14 +504,14 @@ void build_pole_edges( Mesh& mesh )
 
 
   if( ! edges.has_field("nodes")      )    edges.create_field<int>("nodes",     2);
-  if( ! edges.has_field("glb_idx")    )    edges.create_field<int>("glb_idx",   1);
+  if( ! edges.has_field("glb_idx")    )    edges.create_field<gidx_t>("glb_idx",   1);
   if( ! edges.has_field("partition")  )    edges.create_field<int>("partition", 1);
   if( ! edges.has_field("to_elem")    )    edges.create_field<int>("to_elem",   4);
   if( ! edges.has_field("remote_idx") )    edges.create_field<int>("remote_idx",1);
   if( ! edges.has_field("is_pole_edge") )  edges.create_field<int>("is_pole_edge",1);
 
   IndexView<int,2> edge_nodes   ( edges.field( "nodes"      ) );
-  ArrayView<int,1> edge_glb_idx ( edges.field( "glb_idx"    ) );
+  ArrayView<gidx_t,1> edge_glb_idx ( edges.field( "glb_idx"    ) );
   ArrayView<int,1> edge_part    ( edges.field( "partition"  ) );
   IndexView<int,1> edge_ridx    ( edges.field( "remote_idx" ) );
   ArrayView<int,1> is_pole_edge ( edges.field( "is_pole_edge" ) );
@@ -519,12 +523,12 @@ void build_pole_edges( Mesh& mesh )
   }
 
   int cnt = 0;
-  ComputeUniquePoleEdgeIndex uid( nodes );
+  ComputeUniquePoleEdgeIndex compute_uid( nodes );
   for(int edge=nb_edges; edge<nb_edges+nb_pole_edges; ++edge)
   {
     edge_nodes(edge,0)   = pole_edge_nodes[cnt++];
     edge_nodes(edge,1)   = pole_edge_nodes[cnt++];
-    edge_glb_idx(edge)   = uid( edge_nodes[edge] );
+    edge_glb_idx(edge)   = compute_uid( edge_nodes[edge] );
     edge_part(edge)      = std::min( part(edge_nodes(edge,0)), part(edge_nodes(edge,1) ) );
     edge_ridx(edge)      = edge;
     edge_to_elem(edge,0,0) = -1;
