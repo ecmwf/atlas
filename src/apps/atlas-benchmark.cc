@@ -234,7 +234,7 @@ void AtlasBenchmark::setup()
 
   std::stringstream gridname; gridname << "reduced_gg.N"<<N;
   mesh = Mesh::Ptr( generate_reduced_gaussian_grid(gridname.str()) );
-//  mesh = Mesh::Ptr( generate_regular_grid( 2*N, N) );
+  // mesh = Mesh::Ptr( generate_regular_grid( 2*N, N) );
   build_nodes_parallel_fields(mesh->function_space("nodes"));
   build_periodic_boundaries(*mesh);
   build_halo(*mesh,1);
@@ -312,7 +312,18 @@ void AtlasBenchmark::setup()
   for( int jedge=0; jedge<c; ++jedge )
     pole_edges.push_back(tmp[jedge]);
 
+
   Log::info() << "  setup: " << timer.elapsed() << std::endl;
+
+
+  // Check bit-reproducibility after setup()
+  // ---------------------------------------
+  //ArrayView<double,1> V ( mesh->function_space("nodes").field("dual_volumes") );
+  //ArrayView<double,2> S ( mesh->function_space("edges").field("dual_normals") );
+  //Log::info() << "  checksum coordinates : " << mesh->function_space("nodes").checksum().execute( coords ) << std::endl;
+  //Log::info() << "  checksum dual_volumes: " << mesh->function_space("nodes").checksum().execute( V ) << std::endl;
+  //Log::info() << "  checksum dual_normals: " << mesh->function_space("edges").checksum().execute( S ) << std::endl;
+  //Log::info() << "  checksum field       : " << mesh->function_space("nodes").checksum().execute( field ) << std::endl;
 }
 
 void AtlasBenchmark::iteration()
