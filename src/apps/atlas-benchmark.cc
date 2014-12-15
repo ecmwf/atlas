@@ -213,8 +213,26 @@ void AtlasBenchmark::run()
 
   setup();
 
+  Log::info() << "  Doing " << niter << " iterations: \n";
+  Log::info() << "      0%   10   20   30   40   50   60   70   80   90   100%\n";
+  Log::info() << "      |----|----|----|----|----|----|----|----|----|----|"   << std::endl;
+  Log::info() << "      " << std::flush;
+  int tic=0;
   for( int i=0; i<niter; ++i )
+  {
+    unsigned int tics_needed = static_cast<unsigned int>(static_cast<double>(i)/static_cast<double>(niter-1)*50.0);
+    while( tic <= tics_needed )
+    {
+      Log::info() << '*' << std::flush;
+      ++tic;
+    }
+    if ( i == niter-1 )
+    {
+      if ( tic < 51 ) Log::info() << '*';
+        Log::info() << std::endl;
+    }
     iteration();
+  }
 
   Log::info() << "  " << iteration_timer.str() << std::endl;
   Log::info() << "  " << haloexchange_timer.str() << std::endl;
