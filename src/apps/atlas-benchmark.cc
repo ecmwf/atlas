@@ -120,8 +120,8 @@ public:
 
   AtlasBenchmark(int argc,char **argv): eckit::Tool(argc,argv), do_run(true)
   {
-    N     = Resource<int>("-N",80);
-    nlev  = Resource<int>("-nlev",100);
+    N     = Resource<int>("-N",1280);
+    nlev  = Resource<int>("-nlev",137);
     niter = Resource<int>("-niter",100);
     omp_threads = Resource<int>("-omp",-1);
     iteration_timer = TimerStats("iteration");
