@@ -61,16 +61,22 @@
 #include "atlas/Mesh.h"
 #include "atlas/grids/grids.h"
 #include "atlas/io/Gmsh.h"
-
-#ifdef HAVE_OMP
-  #include <omp.h>
-#else
-  void omp_set_num_threads(int) { eckit::Log::warning() << "\nWARNING: OpenMP not available!\n" << std::endl; }
-  int omp_get_max_threads() { return 0; }
-#endif
-
+#include "atlas/atlas_omp.h"
 
 //------------------------------------------------------------------------------------------------------
+
+using std::string;
+using std::stringstream;
+using std::min;
+using std::max;
+using std::vector;
+using std::setw;
+using std::setprecision;
+using std::scientific;
+using std::fixed;
+using std::cout;
+using std::endl;
+using std::numeric_limits;
 
 using namespace eckit;
 using namespace atlas;
@@ -81,7 +87,7 @@ using namespace atlas::actions;
 
 struct TimerStats
 {
-  TimerStats(const std::string& _name = "timer")
+  TimerStats(const string& _name = "timer")
   {
     max = -1;
     min = -1;
@@ -99,13 +105,13 @@ struct TimerStats
     avg = (avg*cnt+t)/(cnt+1);
     ++cnt;
   }
-  std::string str()
+  string str()
   {
-    std::stringstream stream;
+    stringstream stream;
     stream << name << ": min, max, avg -- " << min << ", " << max << ", " << avg;
     return stream.str();
   }
-  std::string name;
+  string name;
   double max;
   double min;
   double avg;
@@ -124,13 +130,14 @@ public:
     nlev  = Resource<int>("-nlev",137);
     niter = Resource<int>("-niter",100);
     omp_threads = Resource<int>("-omp",-1);
+    progress = Resource<bool>("-progress",false);
     iteration_timer = TimerStats("iteration");
     haloexchange_timer = TimerStats("halo-exchange");
 
     bool help = Resource<bool>("-h",false);
     if( help )
     {
-      std::string help_str =
+      string help_str =
           "NAME\n"
           "       atlas-benchmark - Benchmark parallel performance\n"
           "\n"
@@ -159,7 +166,7 @@ public:
       MPL::init();
       if( MPL::rank()==0 )
       {
-        std::cout << help_str << std::endl;
+        std::cout << help_str << endl;
       }
       MPL::finalize();
       do_run = false;
@@ -183,13 +190,13 @@ private:
   ArrayView<double,2> S;
 
   ArrayView<double,2> field;
-  ArrayView<double,2> grad;
+  ArrayView<double,3> grad;
 
   IndexView<int,   2> node2edge;
   ArrayView<int,   1> node2edge_size;
   ArrayView<double,2> node2edge_sign;
   ArrayView<int,   1> edge_is_pole;
-  std::vector<int> pole_edges;
+  vector<int> pole_edges;
 
   int nnodes;
   int nedges;
@@ -201,6 +208,8 @@ private:
 
   TimerStats iteration_timer;
   TimerStats haloexchange_timer;
+  int iter;
+  bool progress;
   bool do_run;
 };
 
@@ -216,50 +225,64 @@ void AtlasBenchmark::run()
   if( omp_threads > 0 )
     omp_set_num_threads(omp_threads);
 
-  Log::info() << "atlas-benchmark\n" << std::endl;
-  Log::info() << "Atlas:" << std::endl;
-  Log::info() << "  version:  ["<< atlas_version() << "]" << std::endl;
-  Log::info() << "  git:      ["<< atlas_git_sha1() << "]" << std::endl;
-  Log::info() << std::endl;
-  Log::info() << "Configuration:" << std::endl;
-  Log::info() << "  N: " << N << std::endl;
-  Log::info() << "  nlev: " << nlev << std::endl;
-  Log::info() << "  niter: " << niter << std::endl;
-  Log::info() << std::endl;
-  Log::info() << "  MPI tasks: "<<MPL::size()<<std::endl;
-  Log::info() << "  OpenMP threads per MPI task: " << omp_get_max_threads() << std::endl;
-  Log::info() << std::endl;
+  Log::info() << "atlas-benchmark\n" << endl;
+  Log::info() << "Atlas:" << endl;
+  Log::info() << "  version:  ["<< atlas_version() << "]" << endl;
+  Log::info() << "  git:      ["<< atlas_git_sha1() << "]" << endl;
+  Log::info() << endl;
+  Log::info() << "Configuration:" << endl;
+  Log::info() << "  N: " << N << endl;
+  Log::info() << "  nlev: " << nlev << endl;
+  Log::info() << "  niter: " << niter << endl;
+  Log::info() << endl;
+  Log::info() << "  MPI tasks: "<<MPL::size()<<endl;
+  Log::info() << "  OpenMP threads per MPI task: " << omp_get_max_threads() << endl;
+  Log::info() << endl;
 
-  Log::info() << "Timings:" << std::endl;
+  Log::info() << "Timings:" << endl;
 
   setup();
 
   Log::info() << "  Executing " << niter << " iterations: \n";
-  Log::info() << "      0%   10   20   30   40   50   60   70   80   90   100%\n";
-  Log::info() << "      |----|----|----|----|----|----|----|----|----|----|\n";
-  Log::info() << "      " << std::flush;
-  int tic=0;
-  for( int i=0; i<niter; ++i )
+  if( progress )
   {
-    unsigned int tics_needed = static_cast<unsigned int>(static_cast<double>(i)/static_cast<double>(niter-1)*50.0);
-    while( tic <= tics_needed )
+    Log::info() << "      0%   10   20   30   40   50   60   70   80   90   100%\n";
+    Log::info() << "      |----|----|----|----|----|----|----|----|----|----|\n";
+    Log::info() << "      " << std::flush;
+  }
+  int tic=0;
+  for( iter=0; iter<niter; ++iter )
+  {
+    if( progress )
     {
-      Log::info() << '*' << std::flush;
-      ++tic;
-    }
-    if ( i == niter-1 )
-    {
-      if ( tic < 51 ) Log::info() << '*';
-        Log::info() << std::endl;
+      unsigned int tics_needed = static_cast<unsigned int>(static_cast<double>(iter)/static_cast<double>(niter-1)*50.0);
+      while( tic <= tics_needed )
+      {
+        Log::info() << '*' << std::flush;
+        ++tic;
+      }
+      if ( iter == niter-1 )
+      {
+        if ( tic < 51 ) Log::info() << '*';
+          Log::info() << endl;
+      }
     }
     iteration();
   }
 
-  Log::info() << "  " << iteration_timer.str() << std::endl;
-  Log::info() << "  " << haloexchange_timer.str() << std::endl;
 
-  Log::info() << std::endl;
-  Log::info() << "Results:" << std::endl;
+  Log::info() << "Iteration timer Statistics:\n"
+              << "  min: " << setprecision(5) << fixed << iteration_timer.min
+              << "  max: " << setprecision(5) << fixed << iteration_timer.max
+              << "  avg: " << setprecision(5) << fixed << iteration_timer.avg << endl;
+  Log::info() << "Communication timer Statistics:\n"
+              << "  min: " << setprecision(5) << fixed << haloexchange_timer.min
+              << "  max: " << setprecision(5) << fixed << haloexchange_timer.max
+              << "  avg: " << setprecision(5) << fixed << haloexchange_timer.avg
+              << " ( "<< setprecision(2) << haloexchange_timer.avg/iteration_timer.avg*100. << "% )" << endl;
+
+  Log::info() << endl;
+  Log::info() << "Results:" << endl;
 
   result();
 
@@ -272,9 +295,9 @@ void AtlasBenchmark::setup()
 {
   Timer timer( "setup", Log::debug());
 
-  atlas::grids::load();
+  grids::load();
 
-  std::stringstream gridname; gridname << "rgg.N"<<N;
+  stringstream gridname; gridname << "rgg.N"<<N;
   mesh = Mesh::Ptr( generate_reduced_gaussian_grid(gridname.str()) );
   // mesh = Mesh::Ptr( generate_regular_grid( 2*N, N) );
   build_nodes_parallel_fields(mesh->function_space("nodes"));
@@ -297,7 +320,8 @@ void AtlasBenchmark::setup()
   V      = ArrayView<double,1> ( mesh->function_space("nodes").field("dual_volumes") );
   S      = ArrayView<double,2> ( mesh->function_space("edges").field("dual_normals") );
   field  = ArrayView<double,2> ( mesh->function_space("nodes").create_field<double>("field",nlev)  );
-  grad   = ArrayView<double,2> ( mesh->function_space("nodes").create_field<double>("grad",nlev*3) );
+  FieldT<double>& gradfield = ( mesh->function_space("nodes").create_field<double>("grad",nlev*3) );
+  grad   = ArrayView<double,3> ( gradfield.data(), make_shape(nnodes,nlev,3) );
   mesh->function_space("nodes").field("field").metadata().set("nb_levels",nlev);
   mesh->function_space("nodes").field("grad").metadata().set("nb_levels",nlev);
 
@@ -345,7 +369,7 @@ void AtlasBenchmark::setup()
     }
   }
 
-  std::vector<int> tmp(nedges);
+  vector<int> tmp(nedges);
   int c(0);
   for( int jedge=0; jedge<nedges; ++jedge )
   {
@@ -357,28 +381,27 @@ void AtlasBenchmark::setup()
     pole_edges.push_back(tmp[jedge]);
 
 
-  Log::info() << "  setup: " << timer.elapsed() << std::endl;
+  Log::info() << "  setup: " << timer.elapsed() << endl;
 
 
   // Check bit-reproducibility after setup()
   // ---------------------------------------
   //ArrayView<double,1> V ( mesh->function_space("nodes").field("dual_volumes") );
   //ArrayView<double,2> S ( mesh->function_space("edges").field("dual_normals") );
-  //Log::info() << "  checksum coordinates : " << mesh->function_space("nodes").checksum().execute( coords ) << std::endl;
-  //Log::info() << "  checksum dual_volumes: " << mesh->function_space("nodes").checksum().execute( V ) << std::endl;
-  //Log::info() << "  checksum dual_normals: " << mesh->function_space("edges").checksum().execute( S ) << std::endl;
-  //Log::info() << "  checksum field       : " << mesh->function_space("nodes").checksum().execute( field ) << std::endl;
+  //Log::info() << "  checksum coordinates : " << mesh->function_space("nodes").checksum().execute( coords ) << endl;
+  //Log::info() << "  checksum dual_volumes: " << mesh->function_space("nodes").checksum().execute( V ) << endl;
+  //Log::info() << "  checksum dual_normals: " << mesh->function_space("edges").checksum().execute( S ) << endl;
+  //Log::info() << "  checksum field       : " << mesh->function_space("nodes").checksum().execute( field ) << endl;
 }
 
 //------------------------------------------------------------------------------------------------------
 
 void AtlasBenchmark::iteration()
 {
-  Timer t("iteration", Log::debug());
+  Timer t("iteration", Log::debug(5));
 
   Array<double> avgS_arr(nedges,nlev,2);
   ArrayView<double,3> avgS(avgS_arr);
-
 
 #ifdef HAVE_OMP
   #pragma omp parallel for
@@ -403,9 +426,8 @@ void AtlasBenchmark::iteration()
   {
     for( int jlev=0; jlev<nlev; ++jlev )
     {
-      grad(jnode,jlev*3+XX) = 0.;
-      grad(jnode,jlev*3+YY) = 0.;
-      grad(jnode,jlev*3+ZZ) = 0.;
+      grad(jnode,jlev,XX) = 0.;
+      grad(jnode,jlev,YY) = 0.;
     }
     for( int jedge=0; jedge<node2edge_size(jnode); ++jedge )
     {
@@ -413,14 +435,14 @@ void AtlasBenchmark::iteration()
       double add = node2edge_sign(jnode,jedge);
       for( int jlev=0; jlev<nlev; ++jlev )
       {
-        grad(jnode,jlev*3+XX) += add*avgS(iedge,jlev,XX);
-        grad(jnode,jlev*3+YY) += add*avgS(iedge,jlev,YY);
+        grad(jnode,jlev,XX) += add*avgS(iedge,jlev,XX);
+        grad(jnode,jlev,YY) += add*avgS(iedge,jlev,YY);
       }
     }
     for( int jlev=0; jlev<nlev; ++jlev )
     {
-      grad(jnode,jlev*3+XX) /= V(jnode);
-      grad(jnode,jlev*3+YY) /= V(jnode);
+      grad(jnode,jlev,XX) /= V(jnode);
+      grad(jnode,jlev,YY) /= V(jnode);
     }
   }
   // special treatment for the north & south pole cell faces
@@ -432,7 +454,7 @@ void AtlasBenchmark::iteration()
     int ip2 = edge2node(iedge,1);
     // correct for wrong Y-derivatives in previous loop
     for( int jlev=0; jlev<nlev; ++jlev )
-      grad(ip2,jlev*3+YY) += 2.*avgS(iedge,jlev,YY)/V(ip2);
+      grad(ip2,jlev,YY) += 2.*avgS(iedge,jlev,YY)/V(ip2);
   }
 
   double dzi = 1./dz;
@@ -443,47 +465,68 @@ void AtlasBenchmark::iteration()
 #endif
   for( int jnode=0; jnode<nnodes; ++jnode )
   {
-    for( int jlev=1; jlev<nlev-1; ++jlev )
+    if( nlev > 2 )
     {
-      grad(jnode,jlev*3+ZZ)   = (field(jnode,(jlev+1))     - field(jnode,(jlev-1)))*dzi_2;
+      for( int jlev=1; jlev<nlev-1; ++jlev )
+      {
+        grad(jnode,jlev,ZZ)   = (field(jnode,jlev+1)     - field(jnode,jlev-1))*dzi_2;
+      }
     }
-    grad(jnode,   0    *3+ZZ) = (field(jnode,(   0    +1)) - field(jnode,(   0    +0)))*dzi;
-    grad(jnode,(nlev-1)*3+ZZ) = (field(jnode,((nlev-1)-1)) - field(jnode,((nlev-1)-0)))*dzi;
+    if( nlev > 1 )
+    {
+      grad(jnode,  0   ,ZZ) = (field(jnode,  1   ) - field(jnode,  0   ))*dzi;
+      grad(jnode,nlev-1,ZZ) = (field(jnode,nlev-2) - field(jnode,nlev-1))*dzi;
+    }
+    if( nlev == 1 )
+      grad(jnode,0,ZZ) = 0.;
   }
 
   // halo-exchange
-  {
-    Timer halo("halo-exchange", Log::debug());
-    mesh->function_space("nodes").halo_exchange().execute(grad);
-    t.stop();
-    haloexchange_timer.update(halo);
-  }
+  MPI_Barrier(MPI_COMM_WORLD);
+  Timer halo("halo-exchange", Log::debug(5));
+  mesh->function_space("nodes").halo_exchange().execute(grad);
+  MPI_Barrier(MPI_COMM_WORLD);
+  t.stop();
+  halo.stop();
+
+  haloexchange_timer.update(halo);
   iteration_timer.update(t);
+
+  if( !progress )
+  {
+    Log::info() << setw(6) << iter+1
+                << "    total: " << fixed << setprecision(5) << t.elapsed()
+                << "    communication: " << setprecision(5) << halo.elapsed()
+                << " ( "<< setprecision(2) << fixed << setw(3)
+                << halo.elapsed()/t.elapsed()*100 << "% )" << endl;
+  }
 }
 
 //------------------------------------------------------------------------------------------------------
 
 void AtlasBenchmark::result()
 {
-  double maxval = -1000;
-  double minval =  1000;
+  double maxval = numeric_limits<double>::min();
+  double minval = numeric_limits<double>::max();;
+
   for( int jnode=0; jnode<nnodes; ++jnode )
   {
     for( int jlev=0; jlev<nlev; ++jlev )
     {
-      maxval = std::max(maxval,grad(jnode,jlev*3+XX));
-      maxval = std::max(maxval,grad(jnode,jlev*3+YY));
-      maxval = std::max(maxval,grad(jnode,jlev*3+ZZ));
-      minval = std::min(minval,grad(jnode,jlev*3+XX));
-      minval = std::min(minval,grad(jnode,jlev*3+YY));
-      minval = std::min(minval,grad(jnode,jlev*3+ZZ));
+      maxval = max(maxval,grad(jnode,jlev,XX));
+      maxval = max(maxval,grad(jnode,jlev,YY));
+      maxval = max(maxval,grad(jnode,jlev,ZZ));
+      minval = min(minval,grad(jnode,jlev,XX));
+      minval = min(minval,grad(jnode,jlev,YY));
+      minval = min(minval,grad(jnode,jlev,ZZ));
     }
   }
+
   MPL_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&maxval,1,MPL::TYPE<double>(),MPI_MAX,MPI_COMM_WORLD) );
   MPL_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&minval,1,MPL::TYPE<double>(),MPI_MIN,MPI_COMM_WORLD) );
-  Log::info() << "  maxval: " << std::setw(14) << maxval << std::endl;
-  Log::info() << "  minval: " << std::setw(14) << minval << std::endl;
-  Log::info() << "  checksum: " << mesh->function_space("nodes").checksum().execute( grad ) << std::endl;
+  Log::info() << "  maxval: " << setw(13) << setprecision(6) << scientific << maxval << endl;
+  Log::info() << "  minval: " << setw(13) << setprecision(6) << scientific << minval << endl;
+  Log::info() << "  checksum: " << mesh->function_space("nodes").checksum().execute( grad ) << endl;
 
   //io::Gmsh().write(mesh->function_space("nodes").field("field"),"benchmark.gmsh",std::ios_base::out);
   //io::Gmsh().write(mesh->function_space("nodes").field("grad"),"benchmark.gmsh",std::ios_base::app);
