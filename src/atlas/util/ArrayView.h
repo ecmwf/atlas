@@ -431,6 +431,12 @@ public:
     shape_[1]=shape[1]; strides_[1]=shape[2];
     shape_[2]=shape[2]; strides_[2]=1;
   }
+  ArrayView( const DATA_TYPE* data, const std::vector<int>& shape ) : data_( const_cast<DATA_TYPE*>(data) )
+  {
+    shape_[0]=shape[0]; strides_[0]=shape[2]*shape[1];
+    shape_[1]=shape[1]; strides_[1]=shape[2];
+    shape_[2]=shape[2]; strides_[2]=1;
+  }
   ArrayView( const Array<DATA_TYPE>& array );
   ArrayView( const Field& field );
 
@@ -491,6 +497,20 @@ public:
     strides_[1]=strides[1];            shape_[1]=shape[1];
     strides_[2]=strides[2];            shape_[2]=shape[2];
     strides_[3]=strides[3];            shape_[3]=shape[3];
+  }
+  ArrayView( const DATA_TYPE* data, const std::vector<int>& shape ) : data_( const_cast<DATA_TYPE*>(data) )
+  {
+    shape_[0]=shape[0]; strides_[0]=shape[3]*shape[2]*shape[1];
+    shape_[1]=shape[1]; strides_[1]=shape[3]*shape[2];
+    shape_[2]=shape[2]; strides_[2]=shape[3];
+    shape_[3]=shape[3]; strides_[3]=1;
+  }
+  ArrayView( const DATA_TYPE* data, const ArrayShape::value_type shape[4] ) : data_( const_cast<DATA_TYPE*>(data) )
+  {
+    shape_[0]=shape[0]; strides_[0]=shape[3]*shape[2]*shape[1];
+    shape_[1]=shape[1]; strides_[1]=shape[3]*shape[2];
+    shape_[2]=shape[2]; strides_[2]=shape[3];
+    shape_[3]=shape[3]; strides_[3]=1;
   }
   ArrayView( const Array<DATA_TYPE>& array );
   ArrayView( const Field& field );
