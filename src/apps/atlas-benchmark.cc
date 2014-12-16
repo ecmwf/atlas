@@ -303,6 +303,7 @@ void AtlasBenchmark::run()
 
   double res = result();
 
+  Log::info() << endl;
   exit_code = verify( res );
 
   atlas_finalize();
@@ -587,39 +588,47 @@ int AtlasBenchmark::verify(const double& norm)
 {
   if( nlev != 137 )
   {
-    Log::warning() << "Cannot verify with nlev != 137" << endl;
+    Log::warning() << "Results cannot be verified with nlev != 137" << endl;
     return 1;
   }
   std::map<int,double> norms;
-  norms[16]  = 1.473937e-09;
-  norms[24]  = 2.090045e-09;
-  norms[32]  = 2.736576e-09;
-  norms[48]  = 3.980306e-09;
-  norms[64]  = 5.219642e-09;
-  norms[80]  = 6.451913e-09;
-  norms[96]  = 7.647690e-09;
-  norms[128] = 1.009042e-08;
-  norms[160] = 1.254571e-08;
-  norms[200] = 1.557589e-08;
-  norms[256] = 1.983944e-08;
-  norms[320] = 2.469347e-08;
-  norms[400] = 3.076775e-08;
-  norms[512] = 3.924470e-08;
-  norms[640] = 4.894316e-08;
+  norms[  16] = 1.473937e-09;
+  norms[  24] = 2.090045e-09;
+  norms[  32] = 2.736576e-09;
+  norms[  48] = 3.980306e-09;
+  norms[  64] = 5.219642e-09;
+  norms[  80] = 6.451913e-09;
+  norms[  96] = 7.647690e-09;
+  norms[ 128] = 1.009042e-08;
+  norms[ 160] = 1.254571e-08;
+  norms[ 200] = 1.557589e-08;
+  norms[ 256] = 1.983944e-08;
+  norms[ 320] = 2.469347e-08;
+  norms[ 400] = 3.076775e-08;
+  norms[ 512] = 3.924470e-08;
+  norms[ 576] = 4.409003e-08;
+  norms[ 640] = 4.894316e-08;
+  norms[ 800] = 6.104009e-08;
+  norms[1024] = 7.796900e-08;
+  norms[1280] = 9.733947e-08;
+  norms[1600] = 1.215222e-07;
+  norms[2000] = 1.517164e-07;
+  norms[4000] = 2.939562e-07;
 
   if( norms.count(N) == 0 )
   {
-    Log::warning() << "Cannot verify with resolution N="<< N << endl;
+    Log::warning() << "Results cannot be verified with resolution N="<< N << endl;
     return 1;
   }
 
-  if( (norm-norms[N])/norms[N] < 0.01 )
+  double diff = (norm-norms[N])/norms[N];
+  if( diff < 0.01 )
   {
-    Log::info() << "Results are verified and correct." << endl;
+    Log::info() << "Results are verified and correct.\n  difference = " << setprecision(6) << fixed << diff*100 << "%" << endl;
     return 0;
   }
 
-  Log::info() << "Results are wrong." << endl;
+  Log::info() << "Results are wrong.\n  difference = " << setprecision(6) << fixed << diff*100 << "%" << endl;
   return 1;
 }
 
