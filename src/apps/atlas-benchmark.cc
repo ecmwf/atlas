@@ -134,6 +134,7 @@ public:
     iteration_timer = TimerStats("iteration");
     haloexchange_timer = TimerStats("halo-exchange");
     exclude = Resource<int>("-exclude", niter==1?0:1);
+    output = Resource<bool>("-output", false);
     bool help = Resource<bool>("-h",false);
     if( help )
     {
@@ -149,13 +150,20 @@ public:
           "       Green-Gauss theorem on median-dual mesh based on\n"
           "       IFS reduced Gaussian grid\n"
           "\n"
-          "       -N       Horizontal resolution: half amount of latitudes\n"
+          "       -N         Horizontal resolution: Number of\n"
+          "                  latitudes between pole and equator\n"
           "\n"
-          "       -nlev    Vertical resolution: Number of levels\n"
+          "       -nlev      Vertical resolution: Number of levels\n"
           "\n"
-          "       -niter   Number of iterations to run\n"
+          "       -niter     Number of iterations to run\n"
           "\n"
-          "       -omp     Number of threads per MPI task\n"
+          "       -omp       Number of threads per MPI task\n"
+          "\n"
+          "       -exclude   Exclude number of iterations in statistics (default=1)\n"
+          "\n"
+          "       -progress  Show progress bar instead of intermediate timings\n"
+          "\n"
+          "       -output    Write output in gmsh format\n"
           "\n"
           "AUTHOR\n"
           "       Written by Willem Deconinck.\n"
@@ -177,7 +185,9 @@ public:
 
   void iteration();
 
-  void result();
+  double result();
+
+  int verify(const double&);
 
 private:
 
@@ -197,6 +207,7 @@ private:
   ArrayView<double,2> node2edge_sign;
   ArrayView<int,   1> edge_is_pole;
   vector<int> pole_edges;
+  vector<bool> is_ghost;
 
   int nnodes;
   int nedges;
@@ -204,6 +215,7 @@ private:
   int N;
   int niter;
   int exclude;
+  bool output;
   int omp_threads;
   double dz;
 
@@ -212,6 +224,10 @@ private:
   int iter;
   bool progress;
   bool do_run;
+
+public:
+  int exit_code;
+
 };
 
 //------------------------------------------------------------------------------------------------------
@@ -285,7 +301,9 @@ void AtlasBenchmark::run()
   Log::info() << endl;
   Log::info() << "Results:" << endl;
 
-  result();
+  double res = result();
+
+  exit_code = verify( res );
 
   atlas_finalize();
 }
@@ -380,6 +398,13 @@ void AtlasBenchmark::setup()
   pole_edges.reserve(c);
   for( int jedge=0; jedge<c; ++jedge )
     pole_edges.push_back(tmp[jedge]);
+
+  ArrayView<int,1> flags( mesh->function_space("nodes").field("flags") );
+  is_ghost.reserve(nnodes);
+  for( int jnode=0; jnode<nnodes; ++jnode )
+  {
+    is_ghost.push_back( Flags::check(flags(jnode),Topology::GHOST) );
+  }
 
 
   Log::info() << "  setup: " << timer.elapsed() << endl;
@@ -508,33 +533,94 @@ void AtlasBenchmark::iteration()
 
 //------------------------------------------------------------------------------------------------------
 
-void AtlasBenchmark::result()
+template< typename DATA_TYPE >
+DATA_TYPE vecnorm( DATA_TYPE vec[], size_t size )
+{
+  DATA_TYPE norm=0;
+  for( int j=0; j<size; ++j )
+    norm += std::pow(vec[j],2);
+  return std::sqrt(norm);
+}
+
+double AtlasBenchmark::result()
 {
   double maxval = numeric_limits<double>::min();
   double minval = numeric_limits<double>::max();;
-
+  double norm = 0.;
   for( int jnode=0; jnode<nnodes; ++jnode )
   {
-    for( int jlev=0; jlev<nlev; ++jlev )
+    if( !is_ghost[jnode] )
     {
-      maxval = max(maxval,grad(jnode,jlev,XX));
-      maxval = max(maxval,grad(jnode,jlev,YY));
-      maxval = max(maxval,grad(jnode,jlev,ZZ));
-      minval = min(minval,grad(jnode,jlev,XX));
-      minval = min(minval,grad(jnode,jlev,YY));
-      minval = min(minval,grad(jnode,jlev,ZZ));
+      for( int jlev=0; jlev<nlev; ++jlev )
+      {
+        maxval = max(maxval,grad(jnode,jlev,XX));
+        maxval = max(maxval,grad(jnode,jlev,YY));
+        maxval = max(maxval,grad(jnode,jlev,ZZ));
+        minval = min(minval,grad(jnode,jlev,XX));
+        minval = min(minval,grad(jnode,jlev,YY));
+        minval = min(minval,grad(jnode,jlev,ZZ));
+        norm += std::pow(vecnorm(grad[jnode][jlev].data(),3),2);
+      }
     }
   }
 
   MPL_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&maxval,1,MPL::TYPE<double>(),MPI_MAX,MPI_COMM_WORLD) );
   MPL_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&minval,1,MPL::TYPE<double>(),MPI_MIN,MPI_COMM_WORLD) );
+  MPL_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&norm  ,1,MPL::TYPE<double>(),MPI_SUM,MPI_COMM_WORLD) );
+  norm = std::sqrt(norm);
+
+  Log::info() << "  checksum: " << mesh->function_space("nodes").checksum().execute( grad ) << endl;
   Log::info() << "  maxval: " << setw(13) << setprecision(6) << scientific << maxval << endl;
   Log::info() << "  minval: " << setw(13) << setprecision(6) << scientific << minval << endl;
-  Log::info() << "  checksum: " << mesh->function_space("nodes").checksum().execute( grad ) << endl;
+  Log::info() << "  norm:   " << setw(13) << setprecision(6) << scientific << norm << endl;
 
-  //io::Gmsh().write(mesh->function_space("nodes").field("field"),"benchmark.gmsh",std::ios_base::out);
-  //io::Gmsh().write(mesh->function_space("nodes").field("grad"),"benchmark.gmsh",std::ios_base::app);
-  //io::Gmsh().write(mesh->function_space("nodes").field("dual_volumes"),"benchmark.gmsh",std::ios_base::app);
+  if( output )
+  {
+    //io::Gmsh().write(mesh->function_space("nodes").field("dual_volumes"),"benchmark.gmsh",std::ios_base::app);
+    //io::Gmsh().write(mesh->function_space("nodes").field("field"),"benchmark.gmsh",std::ios_base::out);
+    io::Gmsh().write(mesh->function_space("nodes").field("grad"),"benchmark.gmsh",std::ios_base::app);
+  }
+  return norm;
+}
+
+int AtlasBenchmark::verify(const double& norm)
+{
+  if( nlev != 137 )
+  {
+    Log::warning() << "Cannot verify with nlev != 137" << endl;
+    return 1;
+  }
+  std::map<int,double> norms;
+  norms[16]  = 1.473937e-09;
+  norms[24]  = 2.090045e-09;
+  norms[32]  = 2.736576e-09;
+  norms[48]  = 3.980306e-09;
+  norms[64]  = 5.219642e-09;
+  norms[80]  = 6.451913e-09;
+  norms[96]  = 7.647690e-09;
+  norms[128] = 1.009042e-08;
+  norms[160] = 1.254571e-08;
+  norms[200] = 1.557589e-08;
+  norms[256] = 1.983944e-08;
+  norms[320] = 2.469347e-08;
+  norms[400] = 3.076775e-08;
+  norms[512] = 3.924470e-08;
+  norms[640] = 4.894316e-08;
+
+  if( norms.count(N) == 0 )
+  {
+    Log::warning() << "Cannot verify with resolution N="<< N << endl;
+    return 1;
+  }
+
+  if( (norm-norms[N])/norms[N] < 0.01 )
+  {
+    Log::info() << "Results are verified and correct." << endl;
+    return 0;
+  }
+
+  Log::info() << "Results are wrong." << endl;
+  return 1;
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -543,5 +629,5 @@ int main( int argc, char **argv )
 {
   AtlasBenchmark tool(argc,argv);
   tool.start();
-  return 0;
+  return tool.exit_code;
 }
