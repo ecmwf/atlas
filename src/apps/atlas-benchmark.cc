@@ -133,7 +133,7 @@ public:
     progress = Resource<bool>("-progress",false);
     iteration_timer = TimerStats("iteration");
     haloexchange_timer = TimerStats("halo-exchange");
-
+    exclude = Resource<int>("-exclude", niter==1?0:1);
     bool help = Resource<bool>("-h",false);
     if( help )
     {
@@ -203,6 +203,7 @@ private:
   int nlev;
   int N;
   int niter;
+  int exclude;
   int omp_threads;
   double dz;
 
@@ -489,8 +490,11 @@ void AtlasBenchmark::iteration()
   t.stop();
   halo.stop();
 
-  haloexchange_timer.update(halo);
-  iteration_timer.update(t);
+  if( iter >= exclude )
+  {
+    haloexchange_timer.update(halo);
+    iteration_timer.update(t);
+  }
 
   if( !progress )
   {
