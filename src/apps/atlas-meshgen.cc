@@ -102,6 +102,7 @@ private:
 
 void Meshgen2Gmsh::run()
 {
+  grids::load();
   Mesh::Ptr mesh;
   if( !identifier.empty() )
     mesh = Mesh::Ptr( generate_reduced_gaussian_grid(identifier) );
