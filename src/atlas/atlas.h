@@ -1,7 +1,6 @@
 #ifndef atlas_atlas_h
 #define atlas_atlas_h
 
-#include <stdint.h>
 #include "atlas/atlas_config.h"
 
 namespace atlas {

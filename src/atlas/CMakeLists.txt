@@ -231,6 +231,7 @@ ecbuild_add_library( TARGET atlas
   atlas.h
   atlas.cc
   atlas_mpi.h
+  atlas_omp.h
   ${atlas_srcs}
   ${atlas_mpistubs_srcs}
   ${atlas_util_srcs}
