@@ -182,6 +182,7 @@ add_subdirectory( src )
 ############################################################################################
 # finalize
 
+add_custom_target( atlas-readme SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/README.md )
 ecbuild_install_project( NAME Atlas )
 
 ecbuild_print_summary()
