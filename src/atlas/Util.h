@@ -181,7 +181,7 @@ inline int LatLonPoint::uid32() const
 
 inline long LatLonPoint::uid64() const
 {
-  // max precision is 10 microdegree
+  // max precision is 1 microdegree
   long iy = static_cast<long>((4*NORTH-y));
   long ix = static_cast<long>((x+4*EAST));
   iy <<= 31;
