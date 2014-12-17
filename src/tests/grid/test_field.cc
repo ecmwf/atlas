@@ -45,8 +45,6 @@ public:
 
 void TestField::test_constructor()
 {
-//    using namespace atlas::grid;
-
     // create a grid
 
 	Grid::BoundBox earth ( Grid::Point(0.,-90.), Grid::Point(359.999999,90.) );

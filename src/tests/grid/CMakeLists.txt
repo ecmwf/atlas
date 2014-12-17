@@ -1,4 +1,3 @@
-# ==========================================================================
 list( APPEND grib_api_samples_data
 reduced_gg_pl_160_grib1.tmpl
 reduced_gg_pl_512_grib2.tmpl
