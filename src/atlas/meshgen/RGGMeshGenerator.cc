@@ -81,10 +81,10 @@ ReducedGridMeshGenerator::ReducedGridMeshGenerator()
   // max_angle = 0   -->  maximises number of triangles
   //Resource<double>( &Context::instance(), "meshgen.angle", 27 ).dump(Log::warning());
   //Log::warning() << "\n\n Getting max_angle_ ... " << std::endl;
-  max_angle_ = Resource< double > ( "meshgen.angle", 29.5 );
+  max_angle_ = Resource< double > ( "atlas.meshgen.angle", 29.5 );
   //Log::warning() << "max_angle_ = " << max_angle_ << std::endl;
 
-  triangulate_quads_ = Resource< bool > ( "-triangulate;meshgen.triangulate", false );
+  triangulate_quads_ = Resource< bool > ( "-triangulate;atlas.meshgen.triangulate", false );
   //Log::error() << "triangulate =" << triangulate_quads_ << std::endl;
 }
 

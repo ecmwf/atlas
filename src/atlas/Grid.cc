@@ -138,7 +138,7 @@ double Grid::degrees_eps()
   /// default is 1E-3 because
   /// some bugs in IFS means we need a lower resolution epsilon when decoding from grib2
 
-  static double eps = eckit::Resource<double>( "$ATLAS_DEGREES_EPSILON;GridDegreesEps", 1E-3 );
+  static double eps = eckit::Resource<double>( "$ATLAS_DEGREES_EPSILON;atlas.degrees_epsilon", 1E-3 );
   return eps;
 }
 
