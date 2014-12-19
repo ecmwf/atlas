@@ -23,6 +23,7 @@
 #include "eckit/parser/StringTools.h"
 
 #include "atlas/atlas.h"
+#include "atlas/grids/grids.h"
 #include "atlas/mpl/MPL.h"
 
 using namespace eckit;
@@ -343,6 +344,8 @@ void atlas_init(int argc, char** argv)
 
   Context::instance().behavior( new atlas::Behavior() );
   Context::instance().behavior().debug( Resource<int>("debug;$DEBUG;-debug",0) );
+
+  atlas::grids::load();
 
   Log::debug() << "Atlas program " << Context::instance().displayName() << " initialized" << std::endl;
   Log::debug() << "    Atlas version [" << atlas_version() << "]" << std::endl;
