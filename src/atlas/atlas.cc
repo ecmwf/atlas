@@ -182,7 +182,6 @@ public:
 		stats_ctxt.logfile_format->prefix("(S) -- ");
 
 		// Debug configuration
-		debug_ctxt.console_enabled = false;
 		debug_ctxt.apply(debugChannel());
 
 		// Info configuration
@@ -279,6 +278,7 @@ void read_config(const LocalPathName& path, const int master_task = 0)
 	{
 		if( path.exists() )
 		{
+			Log::debug() << "Reading config file " << path.fullName() << std::endl;
 			std::fstream file( path.c_str(), std::ios_base::in );
 			if ( file )
 			{
@@ -333,16 +333,21 @@ void atlas_init(int argc, char** argv)
   read_config( LocalPathName(
     Resource<std::string>("$"+StringTools::upper(Context::instance().runName())+"_CONFIGFILE",
                           Context::instance().runName()+".cfg") ) );
+  std::string default_conf("");
+  if( Context::instance().displayName() != Context::instance().runName() )
+    default_conf = Context::instance().displayName()+".cfg";
   read_config( LocalPathName(
-    Resource<std::string>("$"+StringTools::upper(Context::instance().displayName())+"_CONFIGFILE;-conf",
-                          Context::instance().displayName()+".cfg") ) );
+    Resource<std::string>(
+       "$"+StringTools::upper(Context::instance().displayName())+"_CONFIGFILE;-conf",
+       default_conf) ) );
 
   Context::instance().behavior( new atlas::Behavior() );
   Context::instance().behavior().debug( Resource<int>("debug;$DEBUG;-debug",0) );
 
-  Log::info() << "Atlas program " << Context::instance().displayName() << " initialized" << std::endl;
-  Log::info() << "    Atlas version [" << atlas_version() << "]" << std::endl;
-  Log::info() << "    Atlas git     [" << atlas_git_sha1()<< "]" << std::endl;
+  Log::debug() << "Atlas program " << Context::instance().displayName() << " initialized" << std::endl;
+  Log::debug() << "    Atlas version [" << atlas_version() << "]" << std::endl;
+  Log::debug() << "    Atlas git     [" << atlas_git_sha1()<< "]" << std::endl;
+
 }
 
 void atlas_finalize()
