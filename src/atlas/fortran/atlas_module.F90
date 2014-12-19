@@ -187,6 +187,15 @@ function eckit_git_sha1()
   eckit_git_sha1 = c_to_f_string_cptr(atlas__eckit_git_sha1())
 end function eckit_git_sha1
 
+function eckit_git_sha1_abbrev(length)
+  character(len=40) :: eckit_git_sha1_abbrev
+  integer(c_int), optional :: length
+  integer(c_int) :: opt_length
+  opt_length = 7
+  if( present(length) ) opt_length = length
+  eckit_git_sha1_abbrev = c_to_f_string_cptr(atlas__eckit_git_sha1_abbrev(opt_length))
+end function eckit_git_sha1_abbrev
+
 function atlas_version()
   character(len=5) :: atlas_version
   atlas_version = c_to_f_string_cptr(atlas__atlas_version())
@@ -196,6 +205,16 @@ function atlas_git_sha1()
   character(len=40) :: atlas_git_sha1
   atlas_git_sha1 = c_to_f_string_cptr(atlas__atlas_git_sha1())
 end function atlas_git_sha1
+
+function atlas_git_sha1_abbrev(length)
+  character(len=40) :: atlas_git_sha1_abbrev
+  integer(c_int), optional :: length
+  integer(c_int) :: opt_length
+  opt_length = 7
+  if( present(length) ) opt_length = length
+  atlas_git_sha1_abbrev = c_to_f_string_cptr(atlas__atlas_git_sha1_abbrev(opt_length))
+end function atlas_git_sha1_abbrev
+
 
 function atlas_read_gmsh(filename) result(mesh)
   character(len=*), intent(in) :: filename

@@ -44,15 +44,13 @@ void Version::run()
   }
   else if( Resource<bool>("--git",false) )
   {
-    Log::info() << atlas_git_sha1() << std::endl;
+    Log::info() << atlas_git_sha1_abbrev(12) << std::endl;
     return;
   }
   else if( Resource<bool>("--info",false) )
   {
-    std::string git_sha1(atlas_git_sha1());
-    if( git_sha1.empty() ) git_sha1 = "not available";
-    else                   git_sha1 = git_sha1.substr(0,7);
-    Log::info() << "atlas version (" << atlas_version_str() << "), git-sha1 "<<git_sha1<< std::endl;
+    Log::info() << "atlas version (" << atlas_version_str() << "), "
+                << "git-sha1 "<< atlas_git_sha1_abbrev(7) << std::endl;
     Log::info() << std::endl;
     Log::info() << "  Build:" << std::endl;
     Log::info() << "    build type      : " << ATLAS_BUILD_TYPE << std::endl

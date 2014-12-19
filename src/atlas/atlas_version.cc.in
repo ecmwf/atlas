@@ -1,3 +1,4 @@
+#include <string>
 #include "atlas/atlas_version.h"
 
 const char * atlas_version()     { return ATLAS_VERSION; }
@@ -9,4 +10,11 @@ unsigned int atlas_version_int()
 }
 
 const char * atlas_git_sha1() { return "@ATLAS_GIT_SHA1@"; }
+const char * atlas_git_sha1_abbrev(unsigned int length)
+{
+  static std::string git_sha1(atlas_git_sha1());
+  if( git_sha1.empty() ) git_sha1 = "not available";
+  else                   git_sha1 = git_sha1.substr(0,std::min(length,40u));
+  return git_sha1.c_str();
+}
 

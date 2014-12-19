@@ -376,22 +376,35 @@ void atlas__atlas_finalize()
 
 const char* atlas__eckit_version()
 {
-	return eckit_version();
+  return eckit_version();
 }
 
 const char* atlas__eckit_git_sha1()
 {
-	return eckit_git_sha1();
+  return eckit_git_sha1();
+}
+
+const char* atlas__eckit_git_sha1_abbrev(int length)
+{
+  static std::string git_sha1(eckit_git_sha1());
+  if( git_sha1.empty() ) git_sha1 = "not available";
+  else                   git_sha1 = git_sha1.substr(0,std::min(length,40));
+  return git_sha1.c_str();
 }
 
 const char* atlas__atlas_version()
 {
-	return atlas_version();
+  return atlas_version();
 }
 
 const char* atlas__atlas_git_sha1()
 {
-	return atlas_git_sha1();
+  return atlas_git_sha1();
+}
+
+const char* atlas__atlas_git_sha1_abbrev(int length)
+{
+  return atlas_git_sha1_abbrev(length);
 }
 
 } // namespace atlas
