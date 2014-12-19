@@ -31,6 +31,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../actions/BuildDualMesh.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../actions/GenerateMesh.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../actions/WriteLoadBalanceReport.h)
 generate_fortran_bindings(FORTRAN_BINDINGS atlas_logging.h)
+generate_fortran_bindings(FORTRAN_BINDINGS atlas_resource.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas.h)
 
 
@@ -47,6 +48,8 @@ ecbuild_add_library( TARGET ${atlas_f}
         atlas_C_interop.F90
         atlas_logging.h
         atlas_logging.cc
+        atlas_resource.h
+        atlas_resource.cc
   LIBS atlas ${ATLAS_MPI_FORTRAN_LIBRARIES}
 )
 

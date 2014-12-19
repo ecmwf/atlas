@@ -55,6 +55,7 @@ use atlas_BuildHalo_c_binding
 use atlas_GenerateMesh_c_binding
 use atlas_WriteLoadBalanceReport_c_binding
 use atlas_atlas_logging_c_binding
+use atlas_atlas_resource_c_binding
 implicit none
 
 ! ----------------------------------------------------
@@ -107,6 +108,24 @@ end interface delete
 
 !------------------------------------------------------------------------------
 
+INTERFACE resource
+
+! Purpose :
+! -------
+!   *resource* : Configuration
+!
+! Author :
+! ------
+!   20-dec-2014 Willem Deconinck     *ECMWF*
+! -----------------------------------------------------------------------------
+  module procedure resource_int32
+  module procedure resource_int64
+  module procedure resource_real32
+  module procedure resource_real64
+  module procedure resource_string
+end interface resource
+
+
 ENUM, bind(c)
   enumerator :: openmode
   enumerator :: app = 1
@@ -121,6 +140,47 @@ TYPE(Logger_t) :: logger
 ! =============================================================================
 CONTAINS
 ! =============================================================================
+
+
+subroutine resource_int32(resource_str,default_value,value)
+  character(len=*), intent(in) :: resource_str
+  integer(c_int), intent(in) :: default_value
+  integer(c_int), intent(out) :: value
+  value = atlas__resource_int( c_str(resource_str), default_value )
+end subroutine
+
+subroutine resource_int64(resource_str,default_value,value)
+  character(len=*), intent(in) :: resource_str
+  integer(c_long), intent(in) :: default_value
+  integer(c_long), intent(out) :: value
+  value = atlas__resource_long( c_str(resource_str), default_value )
+end subroutine
+
+subroutine resource_real32(resource_str,default_value,value)
+  character(len=*), intent(in) :: resource_str
+  real(c_float), intent(in) :: default_value
+  real(c_float), intent(out) :: value
+  value = atlas__resource_float( c_str(resource_str), default_value )
+end subroutine
+
+subroutine resource_real64(resource_str,default_value,value)
+  character(len=*), intent(in) :: resource_str
+  real(c_double), intent(in) :: default_value
+  real(c_double), intent(out) :: value
+  value = atlas__resource_double( c_str(resource_str), default_value )
+end subroutine
+
+subroutine resource_string(resource_str,default_value,value)
+  character(len=*), intent(in) :: resource_str
+  character(len=*), intent(in) :: default_value
+  character(len=*), intent(out) :: value
+  type(c_ptr) :: value_c_str
+  value_c_str = atlas__resource_string( c_str(resource_str), c_str(default_value) )
+  value = c_to_f_string_cptr(value_c_str)
+end subroutine
+
+! =============================================================================
+
 
 subroutine atlas_init()
   integer, save :: argc
@@ -341,7 +401,6 @@ function atlas_generate_mesh(grid) result(mesh)
   type(ReducedGrid_type) :: grid
   mesh%private%object = atlas__generate_mesh(grid%private%object)
 end function atlas_generate_mesh
-
 
 ! -----------------------------------------------------------------------------
 
