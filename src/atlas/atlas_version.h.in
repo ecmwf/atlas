@@ -16,4 +16,6 @@ const char * atlas_version_str();
 
 const char * atlas_git_sha1();
 
+const char * atlas_git_sha1_abbrev(unsigned int length=7);
+
 #endif

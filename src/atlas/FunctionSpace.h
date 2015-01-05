@@ -19,7 +19,7 @@
 #include "eckit/log/Log.h"
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
-
+#include "atlas.h"
 #include "atlas/mpl/HaloExchange.h"
 #include "atlas/mpl/GatherScatter.h"
 #include "atlas/mpl/Checksum.h"
@@ -77,7 +77,7 @@ public: // methods
 
 
 	void parallelise();
-	void parallelise(const int proc[], const int remote_idx[], const int glb_idx[], int size);
+	void parallelise(const int proc[], const int remote_idx[], const gidx_t glb_idx[], int size);
 	void parallelise(FunctionSpace& other_functionspace);
 
 	template< typename DATA_TYPE >
@@ -168,7 +168,8 @@ extern "C"
 	int atlas__FunctionSpace__dof (FunctionSpace* This);
 	int atlas__FunctionSpace__glb_dof (FunctionSpace* This);
 	void atlas__FunctionSpace__create_field_int (FunctionSpace* This, char* name, int nb_vars);
-	void atlas__FunctionSpace__create_field_float (FunctionSpace* This, char* name, int nb_vars);
+  void atlas__FunctionSpace__create_field_long (FunctionSpace* This, char* name, int nb_vars);
+  void atlas__FunctionSpace__create_field_float (FunctionSpace* This, char* name, int nb_vars);
 	void atlas__FunctionSpace__create_field_double (FunctionSpace* This, char* name, int nb_vars);
 	void atlas__FunctionSpace__remove_field (FunctionSpace* This, char* name);
 	int atlas__FunctionSpace__has_field (FunctionSpace* This, char* name);

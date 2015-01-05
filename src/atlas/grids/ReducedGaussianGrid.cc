@@ -35,10 +35,10 @@ std::string ReducedGaussianGrid::className()
 void ReducedGaussianGrid::set_typeinfo()
 {
   std::stringstream stream;
-  stream << "reduced_gg.N"<<N();
+  stream << "rgg.N"<<N();
   uid_ = stream.str();
   hash_ = stream.str();
-  grid_type_ = "reduced_gg";
+  grid_type_ = grid_type_str();
 }
 
 ReducedGaussianGrid::ReducedGaussianGrid() : ReducedGrid()

@@ -212,7 +212,7 @@ TEST( test_meshgen )
 
 !  call atlas_generate_latlon_grid(rgg,60,30)
 
-  call atlas_generate_reduced_gaussian_grid(rgg,"reduced_gg.N24")
+  call atlas_generate_reduced_gaussian_grid(rgg,"rgg.N24")
 
 !  call atlas_generate_reduced_gaussian_grid(rgg,"T63")
   call atlas_build_parallel_fields(rgg)
@@ -252,7 +252,7 @@ TEST( test_meshgen )
 
   call atlas_write_gmsh(rgg,"testf2.msh")
 
-  call atlas_write_load_balance_report(rgg,"T63_loadbalance.dat")
+  call atlas_write_load_balance_report(rgg,"N24_loadbalance.dat")
 END_TEST
 
 

@@ -5,4 +5,15 @@
 #include "atlas/atlas_version.h"
 #include "atlas/atlas_defines.h"
 
+namespace atlas {
+
+// Type for gidx_t (global indices and unique node id's)
+#if ATLAS_BITS_GLOBAL==32
+  typedef int  gidx_t;
+#else
+  typedef long gidx_t;
+#endif
+
+}
+
 #endif

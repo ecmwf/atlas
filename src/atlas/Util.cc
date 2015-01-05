@@ -17,6 +17,7 @@ int LatLonPoint::EAST  = microdeg( 360. );
 int LatLonPoint::NORTH = microdeg(  90. );
 int LatLonPoint::SOUTH = microdeg( -90. );
 
+
 void accumulate_faces(
 		FunctionSpace& func_space,
 		std::vector< std::vector<int> >& node_to_face,

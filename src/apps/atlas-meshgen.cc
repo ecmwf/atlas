@@ -80,6 +80,10 @@ public:
     path_out = Resource<std::string> ( "-o", "" );
     if( path_out.asString().empty() )
       throw UserError(Here(),"missing output filename, parameter -o");
+
+    if( edges )
+      halo = std::max(halo,1);
+
   }
 
 private:
@@ -98,6 +102,7 @@ private:
 
 void Meshgen2Gmsh::run()
 {
+  grids::load();
   Mesh::Ptr mesh;
   if( !identifier.empty() )
     mesh = Mesh::Ptr( generate_reduced_gaussian_grid(identifier) );
@@ -109,11 +114,20 @@ void Meshgen2Gmsh::run()
     mesh = Mesh::Ptr( generate_reduced_gaussian_grid(rgg_nlon) );
   else
     throw UserError(Here(),"Could not generate mesh with given input");
-  if( edges ){
-    build_nodes_parallel_fields(mesh->function_space("nodes"));
-    build_periodic_boundaries(*mesh);
+
+  build_nodes_parallel_fields(mesh->function_space("nodes"));
+  build_periodic_boundaries(*mesh);
+
+  if( halo )
+  {
     build_halo(*mesh,halo);
     renumber_nodes_glb_idx(mesh->function_space("nodes"));
+  }
+  mesh->function_space("nodes").parallelise();
+  ArrayView<double,2> coords( mesh->function_space("nodes").field("coordinates") );
+  Log::info() << "  checksum coordinates : " << mesh->function_space("nodes").checksum().execute( coords ) << std::endl;
+  if( edges )
+  {
     build_edges(*mesh);
     build_pole_edges(*mesh);
     build_edges_parallel_fields(mesh->function_space("edges"),mesh->function_space("nodes"));

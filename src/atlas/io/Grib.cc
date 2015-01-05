@@ -516,5 +516,5 @@ void Grib::write_gridspec_to_grib(const GridSpec& gspec, GribHandle& gh)
 } // namespace atlas
 
 #else
-#warning "Missing eckit::grib so GRIB IO is not supported in Atlas"
+ // Missing eckit::grib so GRIB IO is not supported in Atlas
 #endif

@@ -20,6 +20,13 @@ if( HAVE_FCTEST )
     LIBS            ${atlas_f}
   )
 
+  add_fctest( TARGET atlas_fctest_resource
+    LINKER_LANGUAGE Fortran
+    SOURCES         fctest_resource.F90
+    ARGS            -integer 10 -long 5000000000 -float 0.123456 -double 0.1234567890123456789 -string "hello world"
+    LIBS            ${atlas_f}
+  )
+
 endif()
 
 set( BOOST_UNIT_TEST_FRAMEWORK_HEADER_ONLY ON )

@@ -55,17 +55,27 @@ use atlas_BuildHalo_c_binding
 use atlas_GenerateMesh_c_binding
 use atlas_WriteLoadBalanceReport_c_binding
 use atlas_atlas_logging_c_binding
+use atlas_atlas_resource_c_binding
 implicit none
 
 ! ----------------------------------------------------
 ! ENUM FieldType
 integer, private, parameter :: KIND_INT32  = -4
+integer, private, parameter :: KIND_INT64  = -8
 integer, private, parameter :: KIND_REAL32 =  4
 integer, private, parameter :: KIND_REAL64 =  8
 ! ----------------------------------------------------
 
 integer, private, parameter :: FIELD_NB_VARS = -1
 integer, private, parameter :: wp = c_double ! working precision
+
+#if ATLAS_BITS_GLOBAL == 32
+integer, public, parameter :: gidx_t = c_int
+#elif ATLAS_BITS_GLOBAL == 64
+integer, public, parameter :: gidx_t = c_long
+#else
+#error ATLAS_BITS_GLOBAL must be either 32 or 64
+#endif
 
 #include "atlas_module_Logging_i.f"
 #include "atlas_module_HaloExchange_i.f"
@@ -98,6 +108,24 @@ end interface delete
 
 !------------------------------------------------------------------------------
 
+INTERFACE resource
+
+! Purpose :
+! -------
+!   *resource* : Configuration
+!
+! Author :
+! ------
+!   20-dec-2014 Willem Deconinck     *ECMWF*
+! -----------------------------------------------------------------------------
+  module procedure resource_int32
+  module procedure resource_int64
+  module procedure resource_real32
+  module procedure resource_real64
+  module procedure resource_string
+end interface resource
+
+
 ENUM, bind(c)
   enumerator :: openmode
   enumerator :: app = 1
@@ -112,6 +140,47 @@ TYPE(Logger_t) :: logger
 ! =============================================================================
 CONTAINS
 ! =============================================================================
+
+
+subroutine resource_int32(resource_str,default_value,value)
+  character(len=*), intent(in) :: resource_str
+  integer(c_int), intent(in) :: default_value
+  integer(c_int), intent(out) :: value
+  value = atlas__resource_int( c_str(resource_str), default_value )
+end subroutine
+
+subroutine resource_int64(resource_str,default_value,value)
+  character(len=*), intent(in) :: resource_str
+  integer(c_long), intent(in) :: default_value
+  integer(c_long), intent(out) :: value
+  value = atlas__resource_long( c_str(resource_str), default_value )
+end subroutine
+
+subroutine resource_real32(resource_str,default_value,value)
+  character(len=*), intent(in) :: resource_str
+  real(c_float), intent(in) :: default_value
+  real(c_float), intent(out) :: value
+  value = atlas__resource_float( c_str(resource_str), default_value )
+end subroutine
+
+subroutine resource_real64(resource_str,default_value,value)
+  character(len=*), intent(in) :: resource_str
+  real(c_double), intent(in) :: default_value
+  real(c_double), intent(out) :: value
+  value = atlas__resource_double( c_str(resource_str), default_value )
+end subroutine
+
+subroutine resource_string(resource_str,default_value,value)
+  character(len=*), intent(in) :: resource_str
+  character(len=*), intent(in) :: default_value
+  character(len=*), intent(out) :: value
+  type(c_ptr) :: value_c_str
+  value_c_str = atlas__resource_string( c_str(resource_str), c_str(default_value) )
+  value = c_to_f_string_cptr(value_c_str)
+end subroutine
+
+! =============================================================================
+
 
 subroutine atlas_init()
   integer, save :: argc
@@ -144,6 +213,8 @@ integer function integer_kind(kind)
   if ( present(kind) ) then
     if (kind == c_int) then
       integer_kind = KIND_INT32
+    else if (kind == c_long) then
+      integer_kind = KIND_INT64
     else
       write(0,*) "Unsupported kind"
       write(0,*) 'call abort()'
@@ -176,6 +247,15 @@ function eckit_git_sha1()
   eckit_git_sha1 = c_to_f_string_cptr(atlas__eckit_git_sha1())
 end function eckit_git_sha1
 
+function eckit_git_sha1_abbrev(length)
+  character(len=40) :: eckit_git_sha1_abbrev
+  integer(c_int), optional :: length
+  integer(c_int) :: opt_length
+  opt_length = 7
+  if( present(length) ) opt_length = length
+  eckit_git_sha1_abbrev = c_to_f_string_cptr(atlas__eckit_git_sha1_abbrev(opt_length))
+end function eckit_git_sha1_abbrev
+
 function atlas_version()
   character(len=5) :: atlas_version
   atlas_version = c_to_f_string_cptr(atlas__atlas_version())
@@ -185,6 +265,16 @@ function atlas_git_sha1()
   character(len=40) :: atlas_git_sha1
   atlas_git_sha1 = c_to_f_string_cptr(atlas__atlas_git_sha1())
 end function atlas_git_sha1
+
+function atlas_git_sha1_abbrev(length)
+  character(len=40) :: atlas_git_sha1_abbrev
+  integer(c_int), optional :: length
+  integer(c_int) :: opt_length
+  opt_length = 7
+  if( present(length) ) opt_length = length
+  atlas_git_sha1_abbrev = c_to_f_string_cptr(atlas__atlas_git_sha1_abbrev(opt_length))
+end function atlas_git_sha1_abbrev
+
 
 function atlas_read_gmsh(filename) result(mesh)
   character(len=*), intent(in) :: filename
@@ -311,7 +401,6 @@ function atlas_generate_mesh(grid) result(mesh)
   type(ReducedGrid_type) :: grid
   mesh%private%object = atlas__generate_mesh(grid%private%object)
 end function atlas_generate_mesh
-
 
 ! -----------------------------------------------------------------------------
 

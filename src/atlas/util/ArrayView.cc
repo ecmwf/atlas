@@ -91,6 +91,7 @@ ArrayView<DATA_TYPE,4>::ArrayView( const Field& field ) : data_( const_cast<DATA
 }\
 
 TEMPLATE_SPECIALIZATION(int);
+TEMPLATE_SPECIALIZATION(long);
 TEMPLATE_SPECIALIZATION(float);
 TEMPLATE_SPECIALIZATION(double);
 

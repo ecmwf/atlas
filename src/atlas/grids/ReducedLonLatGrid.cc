@@ -40,7 +40,7 @@ std::string ReducedLonLatGrid::className()
 void ReducedLonLatGrid::set_typeinfo()
 {
   std::stringstream stream;
-  stream << grid_type_str()<<".N"<<N();
+  stream << "rll.N"<<N();
   uid_ = stream.str();
   hash_ = stream.str();
   grid_type_ = grid_type_str();

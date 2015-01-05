@@ -129,6 +129,8 @@ void AtlasGrids::run()
 {
   if( !do_run ) return;
 
+  atlas::grids::load();
+
   if( all )
   {
     std::vector<std::string> keys = Factory<Grid>::instance().keys();

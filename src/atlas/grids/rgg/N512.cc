@@ -1,12 +1,13 @@
 // TL1023
 
-#include "atlas/grids/reduced_gg/reduced_gg.h"
+#include "atlas/grids/rgg/rgg.h"
 
 namespace atlas {
 namespace grids {
-namespace reduced_gg {
+namespace rgg {
 
-register_BuilderT1(Grid,N512,N512::grid_type_str());
+eckit::ConcreteBuilderT1<Grid,N512> builder_N512 (N512::grid_type_str());
+eckit::ConcreteBuilderT1<Grid,N512> builder_TL1023("rgg.TL1023");
 
 void N512::construct()
 {
@@ -1043,6 +1044,6 @@ void N512::construct()
   setup_lat_hemisphere(N,lat,lon,DEG);
 }
 
-} // namespace reduced_gg
+} // namespace rgg
 } // namespace grids
 } // namespace atlas

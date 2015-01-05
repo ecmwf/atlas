@@ -81,10 +81,10 @@ ReducedGridMeshGenerator::ReducedGridMeshGenerator()
   // max_angle = 0   -->  maximises number of triangles
   //Resource<double>( &Context::instance(), "meshgen.angle", 27 ).dump(Log::warning());
   //Log::warning() << "\n\n Getting max_angle_ ... " << std::endl;
-  max_angle_ = Resource< double > ( "meshgen.angle", 29.5 );
+  max_angle_ = Resource< double > ( "atlas.meshgen.angle", 29.5 );
   //Log::warning() << "max_angle_ = " << max_angle_ << std::endl;
 
-  triangulate_quads_ = Resource< bool > ( "-triangulate;meshgen.triangulate", false );
+  triangulate_quads_ = Resource< bool > ( "-triangulate;atlas.meshgen.triangulate", false );
   //Log::error() << "triangulate =" << triangulate_quads_ << std::endl;
 }
 
@@ -151,9 +151,9 @@ Mesh* ReducedGridMeshGenerator::generate(const ReducedGrid& rgg)
   {
     for( int jlon=0; jlon<rgg.nlon(jlat); ++jlon)
     {
-      nodes[n].x = static_cast<int>(rgg.lon(jlat,jlon)*1e6);
+      nodes[n].x = microdeg(rgg.lon(jlat,jlon));
       if( stagger ) nodes[n].x += static_cast<int>(1e6*180./static_cast<double>(rgg.nlon(jlat)));
-      nodes[n].y = static_cast<int>(rgg.lat(jlat)*1e6);
+      nodes[n].y = microdeg(rgg.lat(jlat));
       nodes[n].n = n;
       ++n;
     }
@@ -165,6 +165,7 @@ Mesh* ReducedGridMeshGenerator::generate(const ReducedGrid& rgg)
   generate_region(rgg,part,mypart,region);
 
   Mesh* mesh = generate_mesh(rgg,part,region);
+  mesh->grid(rgg);
   return mesh;
 }
 
@@ -708,7 +709,7 @@ Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
   nodes.metadata().set("type",static_cast<int>(Entity::NODES));
 
   ArrayView<double,2> coords        ( nodes.create_field<double>("coordinates",   2) );
-  ArrayView<int,   1> glb_idx       ( nodes.create_field<int   >("glb_idx",       1) );
+  ArrayView<gidx_t,1> glb_idx       ( nodes.create_field<gidx_t>("glb_idx",       1) );
   ArrayView<int,   1> part          ( nodes.create_field<int   >("partition",     1) );
   ArrayView<int,   1> flags         ( nodes.create_field<int   >("flags",         1) );
 
@@ -740,8 +741,10 @@ Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
         Topology::set(flags(jnode),Topology::BC|Topology::SOUTH);
       if( jlon == 0 && !three_dimensional)
         Topology::set(flags(jnode),Topology::BC|Topology::WEST);
-      if( part(jnode) != parts[n] )
+      if( part(jnode) != mypart )
         Topology::set(flags(jnode),Topology::GHOST);
+
+      //Log::info() << "meshgen " << std::setw(2) << glb_idx(jnode) << " ghost = " << Topology::check(flags(jnode),Topology::GHOST) << std::endl;
       ++jnode;
     }
     if( !three_dimensional &&  region.lat_end[jlat]==rgg.nlon(jlat)-1 ) // add periodic point
@@ -756,7 +759,7 @@ Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
       part(jnode)      = part(jnode-1);
       Topology::reset(flags(jnode));
       Topology::set(flags(jnode),Topology::BC|Topology::EAST);
-      if( part(jnode) != parts[n] )
+      if( part(jnode) != mypart )
         Topology::set(flags(jnode),Topology::GHOST);
       ++jnode;
     }
@@ -795,14 +798,14 @@ Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
   FunctionSpace& quads = mesh->create_function_space( "quads","LagrangeP1",shape );
   quads.metadata().set("type",static_cast<int>(Entity::ELEMS));
   IndexView<int,2> quad_nodes( quads.create_field<int>("nodes",4) );
-  ArrayView<int,1> quad_glb_idx( quads.create_field<int>("glb_idx",1) );
+  ArrayView<gidx_t,1> quad_glb_idx( quads.create_field<gidx_t>("glb_idx",1) );
   ArrayView<int,1> quad_part( quads.create_field<int>("partition",1) );
 
   shape = make_shape(ntriags,Field::UNDEF_VARS);
   FunctionSpace& triags = mesh->create_function_space( "triags","LagrangeP1",shape );
   triags.metadata().set("type",static_cast<int>(Entity::ELEMS));
   IndexView<int,2> triag_nodes( triags.create_field<int>("nodes",3) );
-  ArrayView<int,1> triag_glb_idx( triags.create_field<int>("glb_idx",1) );
+  ArrayView<gidx_t,1> triag_glb_idx( triags.create_field<gidx_t>("glb_idx",1) );
   ArrayView<int,1> triag_part( triags.create_field<int>("partition",1) );
 
   /*
@@ -913,7 +916,7 @@ Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
   quads.metadata().set("nb_owned",nquads);
   triags.metadata().set("nb_owned",ntriags);
 
-  int max_glb_idx = rgg.npts()+rgg.nlat();
+  gidx_t max_glb_idx = rgg.npts()+rgg.nlat();
   if( three_dimensional ) max_glb_idx -= rgg.nlat();
   if( include_north_pole ) max_glb_idx += 1;
   if( include_south_pole ) max_glb_idx += 1;
@@ -947,14 +950,14 @@ void ReducedGridMeshGenerator::generate_global_element_numbering( Mesh& mesh )
     elem_displs[jpart] = elem_displs[jpart-1] + elem_counts[jpart-1];
   }
 
-  int gid = 1+elem_displs[ MPL::rank() ];
+  gidx_t gid = 1+elem_displs[ MPL::rank() ];
 
   for( int f=0; f<mesh.nb_function_spaces(); ++f )
   {
     FunctionSpace& elements = mesh.function_space(f);
     if( elements.metadata().get<int>("type") == Entity::ELEMS )
     {
-      ArrayView<int,1> glb_idx( elements.field("glb_idx") );
+      ArrayView<gidx_t,1> glb_idx( elements.field("glb_idx") );
       int nb_elems = elements.shape(0);
       for( int e=0; e<nb_elems; ++e )
       {

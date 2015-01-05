@@ -13,4 +13,6 @@
 #cmakedefine ECKIT_HAVE_GRIB
 #cmakedefine HAVE_GRIB_API_1130
 
+#define ATLAS_BITS_GLOBAL @ATLAS_BITS_GLOBAL@
+
 #endif

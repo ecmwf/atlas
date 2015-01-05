@@ -1,28 +1,29 @@
 #include <typeinfo>  // std::bad_cast
 
-#include <eckit/runtime/LibBehavior.h>
-#include <eckit/runtime/Context.h>
-#include <eckit/log/Log.h>
-#include <eckit/log/ChannelBuffer.h>
-#include <eckit/log/Colour.h>
-#include <eckit/log/Channel.h>
-#include <eckit/log/ChannelBuffer.h>
-#include <eckit/log/MultiChannel.h>
-#include <eckit/log/FileChannel.h>
-#include <eckit/log/FormatChannel.h>
+#include "eckit/runtime/LibBehavior.h"
+#include "eckit/runtime/Context.h"
+#include "eckit/log/Log.h"
+#include "eckit/log/ChannelBuffer.h"
+#include "eckit/log/Colour.h"
+#include "eckit/log/Channel.h"
+#include "eckit/log/ChannelBuffer.h"
+#include "eckit/log/MultiChannel.h"
+#include "eckit/log/FileChannel.h"
+#include "eckit/log/FormatChannel.h"
 #include "eckit/log/ColorizeFormat.h"
-#include <eckit/config/Resource.h>
-#include <eckit/config/ResourceMgr.h>
-#include <eckit/filesystem/PathName.h>
-#include <eckit/thread/ThreadSingleton.h>
-#include <eckit/thread/AutoLock.h>
-#include <eckit/thread/Mutex.h>
-#include <eckit/thread/Once.h>
-#include <eckit/thread/ThreadSingleton.h>
-#include <eckit/os/BackTrace.h>
-
+#include "eckit/config/Resource.h"
+#include "eckit/config/ResourceMgr.h"
+#include "eckit/filesystem/PathName.h"
+#include "eckit/thread/ThreadSingleton.h"
+#include "eckit/thread/AutoLock.h"
+#include "eckit/thread/Mutex.h"
+#include "eckit/thread/Once.h"
+#include "eckit/thread/ThreadSingleton.h"
+#include "eckit/os/BackTrace.h"
+#include "eckit/parser/StringTools.h"
 
 #include "atlas/atlas.h"
+#include "atlas/grids/grids.h"
 #include "atlas/mpl/MPL.h"
 
 using namespace eckit;
@@ -99,10 +100,10 @@ struct ChannelConfig
 
 	ChannelConfig()
 	{
-		int logfile_rank = Resource<int>("logfile_task;$ATLAS_LOGFILE_TASK;-logfile_task",-1);
-		logfile_path    = Resource<std::string>("logfile;$ATLAS_LOGFILE;-logfile","");
+		int logfile_rank = Resource<int>("atlas.logfile_task;$ATLAS_LOGFILE_TASK;-logfile_task",-1);
+		logfile_path    = Resource<std::string>("atlas.logfile;$ATLAS_LOGFILE;-logfile","");
 		logfile_enabled = !logfile_path.empty() && ( logfile_rank < 0 || logfile_rank == MPL::rank() );
-		console_rank = Resource<int>("console_task;$ATLAS_CONSOLE_TASK;-console_task",0);
+		console_rank = Resource<int>("atlas.console_task;$ATLAS_CONSOLE_TASK;-console_task",0);
 		console_enabled = true;
 		console_format = new ColorizeFormat();
 		logfile_format = new ColorizeFormat();
@@ -182,7 +183,6 @@ public:
 		stats_ctxt.logfile_format->prefix("(S) -- ");
 
 		// Debug configuration
-		debug_ctxt.console_enabled = false;
 		debug_ctxt.apply(debugChannel());
 
 		// Info configuration
@@ -279,6 +279,7 @@ void read_config(const LocalPathName& path, const int master_task = 0)
 	{
 		if( path.exists() )
 		{
+			Log::debug() << "Reading config file " << path.fullName() << std::endl;
 			std::fstream file( path.c_str(), std::ios_base::in );
 			if ( file )
 			{
@@ -318,35 +319,37 @@ void read_config(const LocalPathName& path, const int master_task = 0)
 void atlas_init(int argc, char** argv)
 {
   if( argc > 0 )
-	  Context::instance().setup(argc, argv);
+    Context::instance().setup(argc, argv);
 
-	MPL::init( Context::instance().argc(), Context::instance().argvs() );
+  MPL::init( Context::instance().argc(), Context::instance().argvs() );
 
-	if( Context::instance().argc() > 0 )
-	{
-		Context::instance().runName(
-			PathName(Context::instance().argv(0)).baseName(false));
-	}
-	Context::instance().displayName( Resource<std::string>("-name","") );
+  if( Context::instance().argc() > 0 )
+  {
+    Context::instance().runName(
+      PathName(Context::instance().argv(0)).baseName(false));
+  }
+  Context::instance().displayName( Resource<std::string>("-name","") );
 
-	read_config( LocalPathName( Resource<std::string>("$ATLAS_CONFIGFILE;-atlas_conf","atlas.cfg") ) );
+  read_config( LocalPathName( Resource<std::string>("atlas.configfile,$ATLAS_CONFIGFILE;-atlas_conf","atlas.cfg") ) );
+  read_config( LocalPathName(
+    Resource<std::string>("$"+StringTools::upper(Context::instance().runName())+"_CONFIGFILE",
+                          Context::instance().runName()+".cfg") ) );
+  std::string default_conf("");
+  if( Context::instance().displayName() != Context::instance().runName() )
+    default_conf = Context::instance().displayName()+".cfg";
+  read_config( LocalPathName(
+    Resource<std::string>(
+       "$"+StringTools::upper(Context::instance().displayName())+"_CONFIGFILE;-conf",
+       default_conf) ) );
 
-	Context::instance().behavior( new atlas::Behavior() );
-	Context::instance().behavior().debug( Resource<int>("debug;$DEBUG;-debug",0) );
+  Context::instance().behavior( new atlas::Behavior() );
+  Context::instance().behavior().debug( Resource<int>("debug;$DEBUG;-debug",0) );
 
-	Log::debug() << "Atlas program " << Context::instance().runName() << " initialized" << std::endl;
-	Log::debug() << "    Atlas version [" << atlas_version() << "]" << std::endl;
-	Log::debug() << "    Atlas git     [" << atlas_git_sha1()<< "]" << std::endl;
+  atlas::grids::load();
 
-#if 0 // DEBUG
-	bool  triangulate = Resource< bool > ( &Context::instance(), "meshgen.triangulate;-triangulate", false );
-	if( triangulate == false )
-	{
-		Log::error() << "triangulate =" << triangulate << std::endl;
-	}
-
-		Log::error() << "angle =" << Resource< double > ( &Context::instance(), "meshgen.angle", 15.0 ) << std::endl;
-#endif
+  Log::debug() << "Atlas program " << Context::instance().displayName() << " initialized" << std::endl;
+  Log::debug() << "    Atlas version [" << atlas_version() << "]" << std::endl;
+  Log::debug() << "    Atlas git     [" << atlas_git_sha1()<< "]" << std::endl;
 
 }
 
@@ -358,40 +361,53 @@ void atlas_finalize()
 
 void atlas__atlas_init(int argc, char* argv[])
 {
-	atlas_init(argc,argv);
+  atlas_init(argc,argv);
 }
 
 void atlas__atlas_init_noargs()
 {
-	static int argc = 1;
-	static char const *argv[] = {"atlas_program"};
-	atlas_init(argc,(char**)argv);
+  static int argc = 1;
+  static char const *argv[] = {"atlas_program"};
+  atlas_init(argc,(char**)argv);
 }
 
 void atlas__atlas_finalize()
 {
-	atlas_finalize();
+  atlas_finalize();
 }
 
 
 const char* atlas__eckit_version()
 {
-	return eckit_version();
+  return eckit_version();
 }
 
 const char* atlas__eckit_git_sha1()
 {
-	return eckit_git_sha1();
+  return eckit_git_sha1();
+}
+
+const char* atlas__eckit_git_sha1_abbrev(int length)
+{
+  static std::string git_sha1(eckit_git_sha1());
+  if( git_sha1.empty() ) git_sha1 = "not available";
+  else                   git_sha1 = git_sha1.substr(0,std::min(length,40));
+  return git_sha1.c_str();
 }
 
 const char* atlas__atlas_version()
 {
-	return atlas_version();
+  return atlas_version();
 }
 
 const char* atlas__atlas_git_sha1()
 {
-	return atlas_git_sha1();
+  return atlas_git_sha1();
+}
+
+const char* atlas__atlas_git_sha1_abbrev(int length)
+{
+  return atlas_git_sha1_abbrev(length);
 }
 
 } // namespace atlas

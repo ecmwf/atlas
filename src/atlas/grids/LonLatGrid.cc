@@ -40,7 +40,7 @@ std::string LonLatGrid::className()
 void LonLatGrid::set_typeinfo()
 {
   std::stringstream stream;
-  stream << grid_type_str()<<"."<<nlon()<<"x"<<nlat();
+  stream << "ll."<<nlon()<<"x"<<nlat();
   uid_ = stream.str();
   hash_ = stream.str();
   grid_type_ = grid_type_str();

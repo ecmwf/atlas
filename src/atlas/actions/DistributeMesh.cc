@@ -32,7 +32,7 @@ void distribute_mesh( Mesh& mesh )
   int nb_nodes = nodes.shape(0);
   ArrayView<double,2> latlon    ( nodes.field("coordinates") );
   ArrayView<int,   1> node_part ( nodes.field("partition")   );
-  ArrayView<int,   1> node_gidx ( nodes.field("glb_idx")   );
+  ArrayView<gidx_t,1> node_gidx ( nodes.field("glb_idx")   );
 
   /*
   Create structure which we can partition with multiple keys (lat and lon)
@@ -78,7 +78,7 @@ void distribute_mesh( Mesh& mesh )
     if( elements.metadata().get<int>("type") == Entity::ELEMS )
     {
       int nb_elems = elements.shape(0);
-      ArrayView<int,1> elem_gidx( elements.field("glb_idx") );
+      ArrayView<gidx_t,1> elem_gidx( elements.field("glb_idx") );
       ArrayView<int,1> elem_part( elements.field("partition") );
       IndexView<int,2> elem_nodes( elements.field("nodes") );
       int nb_nodes_per_elem = elem_nodes.shape(1);
@@ -115,7 +115,7 @@ void distribute_mesh( Mesh& mesh )
           }
         }
       }
-      std::vector<int> new_elem_gidx(nb_keep_elems);
+      std::vector<gidx_t> new_elem_gidx(nb_keep_elems);
       Array<int> new_elem_nodes_arr(nb_keep_elems,nb_nodes_per_elem);
       ArrayView<int,2> new_elem_nodes( new_elem_nodes_arr );
       for( int jelem = 0; jelem<nb_elems; ++jelem )
@@ -134,7 +134,7 @@ void distribute_mesh( Mesh& mesh )
       std::vector<int> shape = elements.shape();
       shape[0] = nb_elems;
       elements.resize(shape);
-      elem_gidx  = ArrayView<int,1> ( elements.field("glb_idx") );
+      elem_gidx  = ArrayView<gidx_t,1> ( elements.field("glb_idx") );
       elem_part  = ArrayView<int,1> ( elements.field("partition") );
       elem_nodes = IndexView<int,2> ( elements.field("nodes") );
       for( int jelem=0; jelem<nb_elems; ++jelem )
@@ -168,7 +168,7 @@ void distribute_mesh( Mesh& mesh )
   std::vector<int> shape = nodes.shape();
   shape[0] = nb_nodes;
   nodes.resize(shape);
-  node_gidx  = ArrayView<int,   1> ( nodes.field("glb_idx") );
+  node_gidx  = ArrayView<gidx_t,   1> ( nodes.field("glb_idx") );
   node_part  = ArrayView<int,   1> ( nodes.field("partition") );
   latlon     = ArrayView<double,2> ( nodes.field("coordinates") );
   int nb_owned = 0;

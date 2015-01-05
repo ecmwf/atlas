@@ -127,6 +127,9 @@ if( HAVE_TESSELATION )
 
 endif()
 
+### Type for Global indices and unique point id's
+set( ATLAS_BITS_GLOBAL 64 )
+
 ### sandbox
 
 ecbuild_add_option( FEATURE SANDBOX
@@ -179,6 +182,7 @@ add_subdirectory( src )
 ############################################################################################
 # finalize
 
+add_custom_target( atlas-readme SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/README.md )
 ecbuild_install_project( NAME Atlas )
 
 ecbuild_print_summary()

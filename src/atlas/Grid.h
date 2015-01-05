@@ -60,7 +60,7 @@ public: // types
 
 public: // methods
 
-  static std::string className() { return "atlas.grid.Grid"; }
+  static std::string className() { return "atlas.Grid"; }
 
   static double degrees_eps();
 

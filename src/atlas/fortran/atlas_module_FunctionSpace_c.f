@@ -22,6 +22,8 @@ subroutine FunctionSpace__create_field(this,name,nvars,kind)
       call atlas__FunctionSpace__create_field_float(this%private%object,c_str(name),nvars)
     else if (kind == KIND_INT32) then
       call atlas__FunctionSpace__create_field_int(this%private%object,c_str(name),nvars)
+    else if (kind == KIND_INT64) then
+      call atlas__FunctionSpace__create_field_long(this%private%object,c_str(name),nvars)
     else
       write(0,*) "Unsupported kind"
       write(0,*) 'call abort()'

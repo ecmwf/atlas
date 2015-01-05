@@ -15,14 +15,16 @@
 #define atlas_grids_reduced_gg_reduced_gg_h
 
 #include "eckit/memory/Builder.h"
-#include <eckit/value/Params.h>
+#include "eckit/value/Params.h"
 #include "atlas/grids/ReducedGaussianGrid.h"
 
 namespace atlas {
 namespace grids {
-namespace reduced_gg {
+namespace rgg {
 
 //------------------------------------------------------------------------------------------------------
+
+inline std::string ns_name() { return "rgg"; };
 
 /// To get the grid:
 ///
@@ -34,7 +36,7 @@ namespace reduced_gg {
 class CLASS : public ReducedGaussianGrid { \
 public:\
 \
-	static std::string grid_type_str() { return "reduced_gg_" + std::string(#CLASS); } \
+  static std::string grid_type_str() { return ns_name()+"."+std::string(#CLASS); } \
   CLASS() \
   {\
     construct();\
@@ -50,11 +52,11 @@ public:\
   }\
   void construct();\
   void set_typeinfo() { \
-    uid_ = "reduced_gg."+std::string(#CLASS); \
+    uid_ = "rgg."+std::string(#CLASS); \
     hash_ = uid_; \
-    grid_type_ = "reduced_gg"; \
+    grid_type_ = ReducedGaussianGrid::grid_type_str(); \
   }\
-  static std::string className() { return "atlas.grids.reduced_gg."+std::string(#CLASS); }\
+  static std::string className() { return "atlas.grids.rgg."+std::string(#CLASS); }\
 };
 
 // list of reduced_gg grid definitions
@@ -87,7 +89,7 @@ DEFINE_GRID(N8000);
 
 //------------------------------------------------------------------------------------------------------
 
-} // namespace reduced_gg
+} // namespace rgg
 } // namespace grids
 } // namespace atlas
 
