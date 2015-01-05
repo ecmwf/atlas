@@ -91,7 +91,7 @@ static void test_grib_file(const std::string& fpath)
    }
 
    // Align the *GRIB* iterators to our own defaults access pattern
-   // This is needed to correctly compare the points.
+   // This is needed to correctly compare the points. ECKIT-24
    align_grib_iterator_to_eckit_defaults(gh);
 
    // Create Grid derivatives from the GRIB file
