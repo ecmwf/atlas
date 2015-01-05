@@ -90,7 +90,7 @@ static void test_grib_file(const std::string& fpath)
       return;
    }
 
-   // Align the iterator to our own defaults access pattern
+   // Align the *GRIB* iterators to our own defaults access pattern
    // This is needed to correctly compare the points.
    align_grib_iterator_to_eckit_defaults(gh);
 
@@ -247,20 +247,18 @@ void align_grib_iterator_to_eckit_defaults( eckit::grib::GribHandle& gh)
    //    jScansPositively(false),
    //    jPointsAreConsecutive(false)
    //    alternativeRowScanning(false)
-   bool iScansPositively = true;
    if (gh.hasKey("iScansPositively")) {
 
-      iScansPositively = GribAccessor<bool>("iScansPositively")(gh);
+      bool iScansPositively = GribAccessor<bool>("iScansPositively")(gh);
       if ( !iScansPositively ) {
          GribMutator<bool> mt("iScansPositively");
          mt.set(gh,true);
       }
    }
 
-   bool jScansPositively = false;
    if (gh.hasKey("jScansPositively")) {
 
-      jScansPositively = GribAccessor<bool>("jScansPositively")(gh);
+      bool jScansPositively = GribAccessor<bool>("jScansPositively")(gh);
       if (jScansPositively) {
          GribMutator<bool> mt("jScansPositively");
          mt.set(gh,false);
@@ -268,6 +266,7 @@ void align_grib_iterator_to_eckit_defaults( eckit::grib::GribHandle& gh)
    }
 
    if (gh.hasKey("jPointsAreConsecutive")) {
+
       bool consec = GribAccessor<bool>("jPointsAreConsecutive")(gh);
       if (consec) {
          GribMutator<bool> mt("jPointsAreConsecutive");
