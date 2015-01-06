@@ -59,6 +59,9 @@ void load()
   load_grid<rgg::N2000>();
   load_grid<rgg::N4000>();
   load_grid<rgg::N8000>();
+
+  load_grid<rgg::OctahedralRGG>();
+
 }
 
 } // namespace grids
