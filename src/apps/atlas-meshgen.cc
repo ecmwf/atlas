@@ -21,6 +21,7 @@
 #include "eckit/config/Resource.h"
 #include "eckit/runtime/Tool.h"
 #include "eckit/filesystem/PathName.h"
+#include "eckit/parser/Tokenizer.h"
 #include "atlas/atlas.h"
 #include "atlas/io/Gmsh.h"
 #include "atlas/actions/GenerateMesh.h"
@@ -29,15 +30,18 @@
 #include "atlas/actions/BuildHalo.h"
 #include "atlas/actions/BuildParallelFields.h"
 #include "atlas/actions/BuildDualMesh.h"
+#include "atlas/actions/BuildStatistics.h"
 #include "atlas/mpl/MPL.h"
 #include "atlas/Mesh.h"
 #include "atlas/grids/grids.h"
+#include "atlas/GridSpec.h"
 
 //------------------------------------------------------------------------------------------------------
 
 using namespace eckit;
 using namespace atlas;
 using namespace atlas::actions;
+using namespace atlas::grids;
 
 //------------------------------------------------------------------------------------------------------
 
@@ -49,36 +53,58 @@ public:
 
   Meshgen2Gmsh(int argc,char **argv): eckit::Tool(argc,argv)
   {
+    bool help = Resource< bool >("--help",false);
+
+    do_run = true;
+
+    std::string help_str =
+        "NAME\n"
+        "       atlas-meshgen - Mesh generator for ReducedGrid compatible meshes\n"
+        "\n"
+        "SYNOPSIS\n"
+        "       atlas-meshgen GRID [OPTION]... [--help] \n"
+        "\n"
+        "DESCRIPTION\n"
+        "\n"
+        "       GRID: unique identifier for grid \n"
+        "           Example values: rgg.N80, rgg.TL159, gg.N40, ll.128x64\n"
+        "\n"
+        "       -o       Output file for mesh\n"
+        "\n"
+        "AUTHOR\n"
+        "       Written by Willem Deconinck.\n"
+        "\n"
+        "ECMWF                        November 2014"
+        ;
+    if( help )
+    {
+      Log::info() << help_str << std::endl;
+      do_run = false;
+    }
+
+    if( argc == 1 )
+    {
+      Log::info() << "usage: atlas-meshgen GRID [OPTION]... [--help]" << std::endl;
+      do_run = false;
+    }
+
     atlas_init(argc,argv);
 
-    rgg_nlon   = Resource< std::vector<long> > ( "-rgg_nlon", std::vector<long>() );
-    reg_nlon_nlat  = Resource< std::vector<long> > ( "-reg", std::vector<long>() );
-    fgg_nlon_nlat  = Resource< std::vector<long> > ( "-fgg", std::vector<long>() );
-    identifier = Resource< std::string       > ( "-rgg", "" );
-    edges      = Resource< bool > ( "-edges", false );
+    key = "";
+    for( int i=0; i<argc; ++i )
+    {
+      if( i==1 && argv[i][0] != '-' )
+      {
+        key = std::string(argv[i]);
+      }
+    }
+
+    edges      = Resource< bool> ( "-edges", false );
     halo       = Resource< int > ( "-halo", 0 );
     surfdim    = Resource< int > ( "-surfdim", 2 );
 
-    int col = Resource< int >( "-col", 0);
-    if( col )
-    {
-      rgg_nlon.resize(col);
-      for( int jlat=0; jlat<(col-4); ++jlat )
-      {
-        rgg_nlon[jlat] = 20+4*jlat;
-      }
-      for( int jlat=(col-4); jlat<col; ++jlat )
-      {
-        rgg_nlon[jlat] = rgg_nlon[(col-4)-1];
-      }
-    }
-
-    if( identifier.empty() && reg_nlon_nlat.empty() && fgg_nlon_nlat.empty() && rgg_nlon.empty() )
-    {
-      throw UserError(Here(),"missing input mesh identifier, parameter -rgg or -reg");
-    }
     path_out = Resource<std::string> ( "-o", "" );
-    if( path_out.asString().empty() )
+    if( path_out.asString().empty() && do_run )
       throw UserError(Here(),"missing output filename, parameter -o");
 
     if( edges )
@@ -88,6 +114,8 @@ public:
 
 private:
 
+  bool do_run;
+  std::string key;
   int halo;
   bool edges;
   int surfdim;
@@ -100,20 +128,76 @@ private:
 
 //------------------------------------------------------------------------------------------------------
 
+ReducedGrid::Ptr create_grid(const std::string& key)
+{
+  int N=0;
+  int nlon=0;
+  int nlat=0;
+  Tokenizer tokenize(".");
+  std::vector<std::string> tokens;
+  tokenize(key,tokens);
+  Translator<std::string,int> to_int;
+  std::string uid = tokens[0];
+  if( uid == "ll" ) uid = "regular_ll";
+  if( uid == "gg" ) uid = "regular_gg";
+  if( uid == "reduced_gg") uid = "rgg";
+
+  if( tokens.size() > 1 )
+  {
+    if( tokens[1][0] == 'N' )
+    {
+      std::string Nstr(tokens[1],1,tokens[1].size()-1);
+      N = to_int(Nstr);
+    }
+    else
+    {
+      std::vector<std::string> lonlat;
+      Tokenizer tokenize_lonlat("x");
+      tokenize_lonlat(tokens[1],lonlat);
+      if( lonlat.size() > 0 )
+      {
+        nlon = to_int(lonlat[0]);
+        nlat = to_int(lonlat[1]);
+      }
+    }
+  }
+  if ( uid == "rgg" )
+  {
+    if( tokens.size() > 1 ) uid = key;
+    else
+      uid = "rgg.N"+Translator<int,std::string>()( Resource<int>("-N",N ) );
+  }
+  if( !N ) N = Resource<int>("-N",N);
+  if( !nlon ) nlon = Resource<int>("-nlon",nlon);
+  if( !nlat ) nlat = Resource<int>("-nlat",nlat);
+
+  if( !Factory<Grid>::instance().exists(uid) )
+  {
+    Log::error() << "Grid " << uid << " was not found." << std::endl;
+    return ReducedGrid::Ptr();
+  }
+
+  GridSpec specs(uid);
+  ReducedGrid::Ptr grid;
+  if( N ) specs.set("N",N);
+  if( nlon ) specs.set("nlon",nlon);
+  if( nlat ) specs.set("nlat",nlat);
+
+  grid = ReducedGrid::Ptr( ReducedGrid::create(specs) );
+  return grid;
+}
+
 void Meshgen2Gmsh::run()
 {
+  if( !do_run ) return;
   grids::load();
+
+  ReducedGrid::Ptr grid = create_grid(key);
+
+  if( !grid ) return;
   Mesh::Ptr mesh;
-  if( !identifier.empty() )
-    mesh = Mesh::Ptr( generate_reduced_gaussian_grid(identifier) );
-  else if( !fgg_nlon_nlat.empty() )
-    mesh = Mesh::Ptr( generate_full_gaussian_grid(fgg_nlon_nlat[0],fgg_nlon_nlat[1]) );
-  else if( !reg_nlon_nlat.empty() )
-    mesh = Mesh::Ptr( generate_regular_grid(reg_nlon_nlat[0],reg_nlon_nlat[1]) );
-  else if ( !rgg_nlon.empty() )
-    mesh = Mesh::Ptr( generate_reduced_gaussian_grid(rgg_nlon) );
-  else
-    throw UserError(Here(),"Could not generate mesh with given input");
+
+  mesh = Mesh::Ptr( generate_mesh(*grid) );
 
   build_nodes_parallel_fields(mesh->function_space("nodes"));
   build_periodic_boundaries(*mesh);
@@ -132,6 +216,7 @@ void Meshgen2Gmsh::run()
     build_pole_edges(*mesh);
     build_edges_parallel_fields(mesh->function_space("edges"),mesh->function_space("nodes"));
     build_median_dual_mesh(*mesh);
+    build_statistics(*mesh);
   }
 
   atlas::io::Gmsh gmsh;
