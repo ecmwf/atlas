@@ -121,6 +121,8 @@ actions/BuildParallelFields.h
 actions/BuildParallelFields.cc
 actions/BuildPeriodicBoundaries.h
 actions/BuildPeriodicBoundaries.cc
+actions/BuildStatistics.h
+actions/BuildStatistics.cc
 actions/DistributeMesh.h
 actions/DistributeMesh.cc
 actions/GenerateMesh.h
@@ -172,6 +174,8 @@ grids/rgg/N1600.cc  # TL3199
 grids/rgg/N2000.cc  # TL3999
 grids/rgg/N4000.cc  # TL7999
 grids/rgg/N8000.cc  # TL15999
+grids/rgg/OctahedralRGG.h
+grids/rgg/OctahedralRGG.cc
 )
 
 add_custom_target( atlas_grids_dead SOURCES

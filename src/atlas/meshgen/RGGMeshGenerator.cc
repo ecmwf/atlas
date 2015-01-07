@@ -337,7 +337,7 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rgg, const std
       {
         if( triangulate_quads_ )
         {
-          if( false) //std::abs(alpha1) < 1 && std::abs(alpha2) < 1)
+          if( false ) //std::abs(alpha1) < 1 && std::abs(alpha2) < 1)
           {
             try_make_triangle_up   = (jlat+ipN1) % 2;
             try_make_triangle_down = (jlat+ipN1+1) % 2;
@@ -348,12 +348,17 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rgg, const std
             dS1N2 = std::abs(xS1-xN2);
             dN2S2 = std::abs(xN2-xS2);
             // eckit::Log::info(Here())  << "  dN1S2 " << dN1S2 << "   dS1N2 " << dS1N2 << "   dN2S2 " << dN2S2 << std::endl;
-            if (dN1S2 <= dS1N2)
+            if (dN1S2 == dS1N2)
+            {
+              try_make_triangle_up   = (jlat+ipN1) % 2;
+              try_make_triangle_down = (jlat+ipN1+1) % 2;
+            }
+            else if (dN1S2 < dS1N2)
             {
               if (ipS1 != ipS2) { try_make_triangle_up = true; }
               else { try_make_triangle_down = true ; }
             }
-            else if (dN1S2 >= dS1N2)
+            else if (dN1S2 > dS1N2)
             {
               if (ipN1 != ipN2) { try_make_triangle_down = true;}
               else { try_make_triangle_up = true; }

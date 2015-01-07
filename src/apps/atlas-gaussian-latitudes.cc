@@ -42,31 +42,30 @@ public:
 
   AtlasGaussianLatitudes(int argc,char **argv): eckit::Tool(argc,argv)
   {
-    //atlas_init(argc,argv);
     do_run = false;
 
-    bool help = Resource< bool >("-h",false);
+    bool help = Resource< bool >("--help",false);
 
     std::string help_str =
         "NAME\n"
         "       atlas-gaussian-latitudes - Compute gaussian latitudes, given the N number\n"
         "\n"
         "SYNOPSIS\n"
-        "       atlas-gaussian-latitudes [OPTION]...\n"
+        "       atlas-gaussian-latitudes [--help] [-N] [OPTION]...\n"
         "\n"
         "DESCRIPTION\n"
         "       Compute gaussian latitudes, given the N number.\n"
         "       Latitudes start at the pole (+90), and decrease in value.\n"
         "\n"
-        "       -N         Number of points between pole and equator\n"
+        "       -N          Number of points between pole and equator\n"
         "\n"
-        "       -full      If set, all latitudes will be given, otherwise only\n"
-        "                  between North pole and equator.\n"
+        "       --full      If set, all latitudes will be given, otherwise only\n"
+        "                   between North pole and equator.\n"
         "\n"
-        "       -format    \"table\" (default)\n"
-        "                  \"C\"\n"
+        "       --format    \"table\" (default)\n"
+        "                   \"C\"\n"
         "\n"
-        "       -compact   Write 5 latitudes per line if the format supports it\n"
+        "       --compact   Write 5 latitudes per line if the format supports it\n"
         "\n"
         "AUTHOR\n"
         "       Written by Willem Deconinck.\n"
@@ -74,19 +73,13 @@ public:
         "ECMWF                        December 2014"
         ;
 
-    if( help )
-    {
-      std::cout << help_str << std::endl;
-      return;
-    }
-
     N = Resource< int >("-N",0);
 
-    full = Resource< bool >("-full",false);
+    full = Resource< bool >("--full",false);
 
-    compact = Resource< bool >("-compact",false);
+    compact = Resource< bool >("--compact",false);
 
-    format = Resource< std::string >("-format", std::string("table") );
+    format = Resource< std::string >("--format", std::string("table") );
 
     if( N > 0 ) do_run = true;
 
@@ -95,6 +88,13 @@ public:
     do_run = false;
 #endif
 
+    if( do_run == false )
+    {
+      if( help )
+        Log::info() << help_str << std::endl;
+      else
+        Log::info() << "usage: atlas-gaussian-latitudes [--help] [-N] [OPTION]..." << std::endl;
+    }
   }
 
 private:
