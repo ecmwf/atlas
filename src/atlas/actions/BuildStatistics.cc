@@ -16,6 +16,8 @@
 #include <algorithm>    // std::sort
 
 #include "eckit/geometry/Point2.h"
+#include "eckit/geometry/Point3.h"
+#include "eckit/filesystem/LocalPathName.h"
 #include "atlas/atlas.h"
 #include "atlas/mpl/Checksum.h"
 #include "atlas/Mesh.h"
@@ -28,13 +30,11 @@
 #include "atlas/util/IndexView.h"
 
 using eckit::geometry::LLPoint2;
+using eckit::geometry::lonlat_to_3d;
 namespace atlas {
 namespace actions {
 
 namespace {
-
-/// @brief The usual PI/180 constant
-static const double DEG_TO_RAD = M_PI/180.;
 
 /** @brief Computes the arc, in radian, between two positions.
   *
@@ -62,20 +62,77 @@ double arc_in_rad(const LLPoint2& from, const LLPoint2& to) {
     return 2.0 * std::asin(std::sqrt(lat_H + tmp*lon_H));
 }
 
+double quad_quality( const LLPoint2& p1, const LLPoint2& p2, const LLPoint2& p3, const LLPoint2& p4)
+{
+  // see http://geuz.org/gmsh/doc/preprints/gmsh_quad_preprint.pdf
+
+  double xyz1[3];
+  double xyz2[3];
+  double xyz3[3];
+  double xyz4[3];
+
+  lonlat_to_3d(p1.lon(),p1.lat(),xyz1,1.,0.);
+  lonlat_to_3d(p2.lon(),p2.lat(),xyz2,1.,0.);
+  lonlat_to_3d(p3.lon(),p3.lat(),xyz3,1.,0.);
+  lonlat_to_3d(p4.lon(),p4.lat(),xyz4,1.,0.);
+
+  double l2m1[3];
+  l2m1[0] = xyz2[0]-xyz1[0];
+  l2m1[2] = xyz2[1]-xyz1[1];
+  l2m1[1] = xyz2[2]-xyz1[2];
+
+  double l3m2[3];
+  l3m2[0] = xyz3[0]-xyz2[0];
+  l3m2[2] = xyz3[1]-xyz2[1];
+  l3m2[1] = xyz3[2]-xyz2[2];
+
+  double l4m3[3];
+  l4m3[0] = xyz4[0]-xyz3[0];
+  l4m3[2] = xyz4[1]-xyz3[1];
+  l4m3[1] = xyz4[2]-xyz3[2];
+
+  double l1m4[3];
+  l1m4[0] = xyz1[0]-xyz4[0];
+  l1m4[2] = xyz1[1]-xyz4[1];
+  l1m4[1] = xyz1[2]-xyz4[2];
+
+  double norm_l2m1 = std::sqrt( l2m1[0]*l2m1[0] + l2m1[1]*l2m1[1] + l2m1[2]*l2m1[2] );
+  double norm_l3m2 = std::sqrt( l3m2[0]*l3m2[0] + l3m2[1]*l3m2[1] + l3m2[2]*l3m2[2] );
+  double norm_l4m3 = std::sqrt( l4m3[0]*l4m3[0] + l4m3[1]*l4m3[1] + l4m3[2]*l4m3[2] );
+  double norm_l1m4 = std::sqrt( l1m4[0]*l1m4[0] + l1m4[1]*l1m4[1] + l1m4[2]*l1m4[2] );
+
+  double dot_l4m1_l2m1 = -l1m4[0]*l2m1[0]-l1m4[1]*l2m1[1]-l1m4[2]*l2m1[2];
+  double dot_l1m2_l3m2 = -l2m1[0]*l3m2[0]-l2m1[1]*l3m2[1]-l2m1[2]*l3m2[2];
+  double dot_l2m3_l4m3 = -l3m2[0]*l4m3[0]-l3m2[1]*l4m3[1]-l3m2[2]*l4m3[2];
+  double dot_l3m4_l1m4 = -l4m3[0]*l1m4[0]-l4m3[1]*l1m4[1]-l4m3[2]*l1m4[2];
+
+  // Angles at each quad corner
+  double a1 = std::acos( dot_l4m1_l2m1 / ( norm_l1m4 * norm_l2m1 ) );
+  double a2 = std::acos( dot_l1m2_l3m2 / ( norm_l2m1 * norm_l3m2 ) );
+  double a3 = std::acos( dot_l2m3_l4m3 / ( norm_l3m2 * norm_l4m3 ) );
+  double a4 = std::acos( dot_l3m4_l1m4 / ( norm_l4m3 * norm_l1m4 ) );
+
+  double max_inner = std::max( std::max( std::max(
+    std::abs(M_PI_2-a1), std::abs(M_PI_2-a2) ), std::abs(M_PI_2-a3) ), std::abs(M_PI_2-a4));
+
+  return std::max(1. - M_2_PI*max_inner, 0.);
+}
+
 }
 
 void build_statistics( Mesh& mesh )
 {
+  const double radius_km = EARTH::RADIUS*1e-3;
+
   FunctionSpace& nodes = mesh.function_space( "nodes" );
   ArrayView<double,2> coords ( nodes.field( "coordinates"    ) );
-  ArrayView<double,1> dist_lon_deg ( nodes.create_field<double>("dist_lon_deg",1) );
 
   if( mesh.has_function_space("edges") )
   {
     FunctionSpace& edges = mesh.function_space( "edges" );
-    if( !edges.has_field("length_deg") )
-      edges.create_field<double>("length_deg",1);
-    ArrayView<double,1> dist ( edges.field("length_deg") );
+    if( !edges.has_field("arc_length") )
+      edges.create_field<double>("arc_length",1);
+    ArrayView<double,1> dist ( edges.field("arc_length") );
 
     IndexView<int,2> edge_nodes ( edges.field("nodes") );
     const int nb_edges = edges.shape(0);
@@ -85,15 +142,148 @@ void build_statistics( Mesh& mesh )
       int ip2 = edge_nodes(jedge,1);
       LLPoint2 p1(coords(ip1,LON),coords(ip1,LAT));
       LLPoint2 p2(coords(ip2,LON),coords(ip2,LAT));
-      dist(jedge) = arc_in_rad(p1,p2)/DEG_TO_RAD;
+      dist(jedge) = arc_in_rad(p1,p2)*radius_km;
+    }
+  }
 
-      if( p1.lat() == p2.lat() )
+  std::ofstream ofs;
+  eckit::LocalPathName stats_path("stats.txt");
+  int idt = 10;
+  if( MPL::size() == 1 )
+  {
+    ofs.open( stats_path.c_str(), std::ofstream::out );
+    ofs << "# STATISTICS rho (min_length/max_length), eta (quality) \n";
+    ofs << std::setw(idt) << "# rho";
+    ofs << std::setw(idt) << "eta";
+    ofs << "\n";
+    ofs.close();
+  }
+
+  if( mesh.has_function_space("triags") )
+  {
+    if( MPL::size() == 1 )
+      ofs.open( stats_path.c_str(), std::ofstream::app );
+
+    FunctionSpace& elems = mesh.function_space("triags");
+    ArrayView<double,1> rho ( elems.create_field<double>("stats_rho",1) );
+    ArrayView<double,1> eta ( elems.create_field<double>("stats_eta",1) );
+
+    IndexView<int,2> elem_nodes ( elems.field("nodes") );
+    const int nb_elems = elems.shape(0);
+    for( int jelem=0; jelem<nb_elems; ++jelem )
+    {
+      int ip1 = elem_nodes(jelem,0);
+      int ip2 = elem_nodes(jelem,1);
+      int ip3 = elem_nodes(jelem,2);
+      LLPoint2 p1(coords(ip1,LON),coords(ip1,LAT));
+      LLPoint2 p2(coords(ip2,LON),coords(ip2,LAT));
+      LLPoint2 p3(coords(ip3,LON),coords(ip3,LAT));
+
+      double l12 = arc_in_rad(p1,p2)/DEG_TO_RAD;
+      double l23 = arc_in_rad(p2,p3)/DEG_TO_RAD;
+      double l31 = arc_in_rad(p3,p1)/DEG_TO_RAD;
+
+      double min_length = std::min(std::min(l12,l23),l31);
+      double max_length = std::max(std::max(l12,l23),l31);
+      rho(jelem) = min_length/max_length;
+
+      double s = 0.5*(l12 + l23 + l31);
+      double area = std::sqrt(s * (s - l12) * (s - l23) * (s - l31));
+
+      // see http://www.gidhome.com/component/manual/referencemanual/preprocessing/mesh_menu/mesh_quality
+      eta(jelem) = (4*area*std::sqrt(3.))/( std::pow(l12,2)+std::pow(l23,2)+std::pow(l31,2) );
+
+      if( MPL::size() == 1 )
       {
-        dist_lon_deg(ip1) = dist(jedge);
-        dist_lon_deg(ip2) = dist(jedge);
+        ofs << std::setw(idt) << rho[jelem]
+            << std::setw(idt) << eta[jelem]
+            << "\n";
+      }
+    }
+
+    if( MPL::size() == 1 )
+      ofs.close();
+  }
+  if( mesh.has_function_space("quads") )
+  {
+    if( MPL::size() == 1 )
+      ofs.open( stats_path.c_str(), std::ofstream::app );
+
+    FunctionSpace& elems = mesh.function_space("quads");
+    ArrayView<double,1> rho ( elems.create_field<double>("stats_rho",1) );
+    ArrayView<double,1> eta ( elems.create_field<double>("stats_eta",1) );
+
+    IndexView<int,2> elem_nodes ( elems.field("nodes") );
+    const int nb_elems = elems.shape(0);
+    for( int jelem=0; jelem<nb_elems; ++jelem )
+    {
+      int ip1 = elem_nodes(jelem,0);
+      int ip2 = elem_nodes(jelem,1);
+      int ip3 = elem_nodes(jelem,2);
+      int ip4 = elem_nodes(jelem,3);
+
+      LLPoint2 p1(coords(ip1,LON),coords(ip1,LAT));
+      LLPoint2 p2(coords(ip2,LON),coords(ip2,LAT));
+      LLPoint2 p3(coords(ip3,LON),coords(ip3,LAT));
+      LLPoint2 p4(coords(ip4,LON),coords(ip4,LAT));
+
+      eta(jelem) = quad_quality(p1,p2,p3,p4);
+
+      double l12 = arc_in_rad(p1,p2);
+      double l23 = arc_in_rad(p2,p3);
+      double l34 = arc_in_rad(p3,p4);
+      double l41 = arc_in_rad(p4,p1);
+
+      double min_length = std::min(std::min(std::min(l12,l23),l34),l41);
+      double max_length = std::max(std::max(std::max(l12,l23),l34),l41);
+      rho(jelem) = min_length/max_length;
+
+      if( MPL::size() == 1 )
+      {
+        ofs << std::setw(idt) << rho[jelem]
+            << std::setw(idt) << eta[jelem]
+            << "\n";
+      }
+    }
+    if( MPL::size() == 1 )
+      ofs.close();
+  }
+
+  eckit::LocalPathName dual_stats_path("dual_stats.txt");
+  if( MPL::size() == 1 )
+  {
+    ofs.open( dual_stats_path.c_str(), std::ofstream::out );
+    ofs << "# STATISTICS dual_area \n";
+    ofs << std::setw(idt) << "# area";
+    ofs << "\n";
+  }
+
+  if( nodes.has_field("dual_volumes") )
+  {
+    ArrayView<double,1> dual_volumes ( nodes.field("dual_volumes") );
+    ArrayView<double,1> dual_delta_sph  ( nodes.create_field<double>( "dual_delta_sph", 1 ) );
+
+    for( int jnode=0; jnode<nodes.shape(0); ++jnode )
+    {
+      const double lat = coords(jnode,YY)*DEG_TO_RAD;
+      const double hx = radius_km*std::cos(lat)*DEG_TO_RAD;
+      const double hy = radius_km*DEG_TO_RAD;
+      dual_delta_sph(jnode) = std::sqrt(dual_volumes(jnode)*hx*hy);
+    }
+
+    if( MPL::size() == 1 )
+    {
+      for( int jnode=0; jnode<nodes.shape(0); ++jnode )
+      {
+        ofs << std::setw(idt) << dual_delta_sph(jnode)
+            << "\n";
       }
     }
   }
+  if( MPL::size() == 1 )
+    ofs.close();
+
+
 }
 
 // ------------------------------------------------------------------

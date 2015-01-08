@@ -100,6 +100,7 @@ public:
     }
 
     edges      = Resource< bool> ( "-edges", false );
+    stats      = Resource< bool> ( "-stats", false );
     halo       = Resource< int > ( "-halo", 0 );
     surfdim    = Resource< int > ( "-surfdim", 2 );
 
@@ -118,6 +119,7 @@ private:
   std::string key;
   int halo;
   bool edges;
+  bool stats;
   int surfdim;
   std::string identifier;
   std::vector<long> reg_nlon_nlat;
@@ -216,8 +218,10 @@ void Meshgen2Gmsh::run()
     build_pole_edges(*mesh);
     build_edges_parallel_fields(mesh->function_space("edges"),mesh->function_space("nodes"));
     build_median_dual_mesh(*mesh);
-    build_statistics(*mesh);
   }
+
+  if( stats )
+    build_statistics(*mesh);
 
   atlas::io::Gmsh gmsh;
   gmsh.options.set("surfdim",surfdim);

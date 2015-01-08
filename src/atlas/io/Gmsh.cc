@@ -922,9 +922,9 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path) const
 		write(nodes.field("dual_volumes"),mesh_info,std::ios_base::app);
 	}
 
-  if (nodes.has_field("dist_lon_deg"))
+  if (nodes.has_field("dual_delta_sph"))
 	{
-		write(nodes.field("dist_lon_deg"),mesh_info,std::ios_base::out);
+		write(nodes.field("dual_delta_sph"),mesh_info,std::ios_base::app);
 	}
 
 	if( mesh.has_function_space("edges") )
@@ -941,12 +941,12 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path) const
 			write(edges.field("skewness"),mesh_info,std::ios_base::app);
 		}
 
-    if (edges.has_field("length_deg"))
+    if (edges.has_field("arc_length"))
 		{
-			write(edges.field("length_deg"),mesh_info,std::ios_base::app);
+			write(edges.field("arc_length"),mesh_info,std::ios_base::app);
 		}
-
   }
+
 }
 
 void Gmsh::write(FieldGroup& fieldset, const std::string& file_path, openmode mode) const
