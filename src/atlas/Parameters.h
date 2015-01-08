@@ -11,8 +11,6 @@
 #ifndef atlas_Parameters_h
 #define atlas_Parameters_h
 
-#include <cmath>
-
 #include "atlas/atlas_defines.h"
 
 //------------------------------------------------------------------------------------------------------
@@ -25,14 +23,11 @@ enum { XX = 0, YY = 1, ZZ = 2 };
 
 enum { LON = 0, LAT = 1 };
 
-/// @brief The usual PI/180 constant
-static const double DEG_TO_RAD = M_PI/180.;
-
 //------------------------------------------------------------------------------------------------------
 
-struct EARTH
+struct Earth
 {
-  static const double RADIUS = 6371.22e+03;
+  static double radius() { return 6371.22e+03; }
 };
 
 struct Entity

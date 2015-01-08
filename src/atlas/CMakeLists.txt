@@ -213,6 +213,7 @@ MeshCache.h
 Metadata.cc
 Metadata.h
 Parameters.h
+Parameters.cc
 PointIndex3.cc
 PointIndex3.h
 PointSet.cc

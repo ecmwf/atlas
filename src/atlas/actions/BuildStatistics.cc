@@ -34,6 +34,8 @@ using eckit::geometry::lonlat_to_3d;
 namespace atlas {
 namespace actions {
 
+static const double DEG_TO_RAD = M_PI/180.;
+
 namespace {
 
 /** @brief Computes the arc, in radian, between two positions.
@@ -122,7 +124,7 @@ double quad_quality( const LLPoint2& p1, const LLPoint2& p2, const LLPoint2& p3,
 
 void build_statistics( Mesh& mesh )
 {
-  const double radius_km = EARTH::RADIUS*1e-3;
+  const double radius_km = Earth::radius()*1e-3;
 
   FunctionSpace& nodes = mesh.function_space( "nodes" );
   ArrayView<double,2> coords ( nodes.field( "coordinates"    ) );
