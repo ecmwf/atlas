@@ -410,6 +410,18 @@ const char* atlas__atlas_git_sha1_abbrev(int length)
   return atlas_git_sha1_abbrev(length);
 }
 
+const char* atlas__run_name ()
+{
+  static std::string str( Context::instance().runName() );
+  return str.c_str();
+}
+
+const char* atlas__display_name ()
+{
+  static std::string str( Context::instance().displayName() );
+  return str.c_str();
+}
+
 } // namespace atlas
 
 

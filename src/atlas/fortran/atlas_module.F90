@@ -275,6 +275,15 @@ function atlas_git_sha1_abbrev(length)
   atlas_git_sha1_abbrev = c_to_f_string_cptr(atlas__atlas_git_sha1_abbrev(opt_length))
 end function atlas_git_sha1_abbrev
 
+function atlas_run_name()
+  character(len=128) :: atlas_run_name
+  atlas_run_name = c_to_f_string_cptr(atlas__run_name())
+end function atlas_run_name
+
+function atlas_display_name()
+  character(len=128) :: atlas_display_name
+  atlas_display_name = c_to_f_string_cptr(atlas__display_name())
+end function atlas_display_name
 
 function atlas_read_gmsh(filename) result(mesh)
   character(len=*), intent(in) :: filename

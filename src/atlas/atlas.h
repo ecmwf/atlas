@@ -21,6 +21,8 @@ extern "C"
   const char* atlas__atlas_version();
   const char* atlas__atlas_git_sha1();
   const char* atlas__atlas_git_sha1_abbrev (int length);
+  const char* atlas__run_name ();
+  const char* atlas__display_name ();
 }
 // ------------------------------------------------------------------
 
