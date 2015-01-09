@@ -1,5 +1,5 @@
 #include <typeinfo>  // std::bad_cast
-
+#include <unistd.h>
 #include "eckit/runtime/LibBehavior.h"
 #include "eckit/runtime/Context.h"
 #include "eckit/log/Log.h"
@@ -318,6 +318,11 @@ std::string read_config(const LocalPathName& path, const int master_task = 0)
 	return config;
 }
 
+std::string rundir()
+{
+	static LocalPathName cwd( LocalPathName::cwd() );
+	return cwd;
+}
 
 void atlas_init(int argc, char** argv)
 {
@@ -331,9 +336,9 @@ void atlas_init(int argc, char** argv)
     Context::instance().runName(
       PathName(Context::instance().argv(0)).baseName(false));
   }
-  Context::instance().displayName( Resource<std::string>("--name","") );
+  Context::instance().displayName( Resource<std::string>("--name;$ATLAS_DISPLAYNAME","") );
 
-  LocalPathName atlas_config_path ( Resource<std::string>("atlas.configfile,$ATLAS_CONFIGFILE;--atlas_conf","atlas.cfg") );
+  LocalPathName atlas_config_path ( Resource<std::string>("atlas.configfile;$ATLAS_CONFIGFILE;--atlas_conf","atlas.cfg") );
   std::string atlas_config = read_config( atlas_config_path );
   
   LocalPathName runname_config_path (
@@ -351,6 +356,14 @@ void atlas_init(int argc, char** argv)
        default_conf) );
   std::string displayname_config = read_config( displayname_config_path );
 
+  LocalPathName workdir ( Resource<std::string>("workdir;$ATLAS_WORKDIR;--workdir",rundir()) );
+  if( workdir != rundir() )
+  {
+  	workdir.mkdir();
+ 	Log::debug() << "Changing working directory to " << workdir << std::endl;
+  	chdir(workdir.c_str());
+  }
+
   Context::instance().behavior( new atlas::Behavior() );
   Context::instance().behavior().debug( Resource<int>("debug;$DEBUG;--debug",0) );
 
@@ -361,18 +374,21 @@ void atlas_init(int argc, char** argv)
   Log::debug() << "    Atlas git     [" << atlas_git_sha1()<< "]" << std::endl;
 
   if( atlas_config.size() ) {
-    Log::debug() << "    Read config file " << atlas_config_path << std::endl;
+    Log::debug() << "    Read config file " << atlas_config_path.fullName() << std::endl;
 	Log::debug() << atlas_config << std::endl;
   }
 
   if( runname_config.size() ) {
-    Log::debug() << "    Read config file " << runname_config_path << std::endl;
+    Log::debug() << "    Read config file " << runname_config_path.fullName() << std::endl;
     Log::debug() << runname_config << std::endl;
   }
   if( displayname_config.size() ) {
-  	Log::debug() << "    Read config file " << displayname_config_path << std::endl;
+  	Log::debug() << "    Read config file " << displayname_config_path.fullName() << std::endl;
     Log::debug() << displayname_config << std::endl;
   }
+
+  Log::debug() << "    rundir  : " << LocalPathName(rundir()).fullName() << std::endl;
+  Log::debug() << "    workdir : " << LocalPathName::cwd().fullName() << std::endl;
 }
 
 void atlas_finalize()
@@ -442,6 +458,17 @@ const char* atlas__display_name ()
 {
   static std::string str( Context::instance().displayName() );
   return str.c_str();
+}
+
+const char* atlas__rundir ()
+{
+  return rundir().c_str();
+}
+
+const char* atlas__workdir ()
+{
+  static LocalPathName workdir = LocalPathName::cwd().fullName();
+  return workdir.c_str();
 }
 
 } // namespace atlas

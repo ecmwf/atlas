@@ -285,6 +285,16 @@ function atlas_display_name()
   atlas_display_name = c_to_f_string_cptr(atlas__display_name())
 end function atlas_display_name
 
+function atlas_rundir()
+  character(len=128) :: atlas_rundir
+  atlas_rundir = c_to_f_string_cptr(atlas__rundir())
+end function atlas_rundir
+
+function atlas_workdir()
+  character(len=128) :: atlas_workdir
+  atlas_workdir = c_to_f_string_cptr(atlas__workdir())
+end function atlas_workdir
+
 function atlas_read_gmsh(filename) result(mesh)
   character(len=*), intent(in) :: filename
   type(Mesh_type) :: mesh
