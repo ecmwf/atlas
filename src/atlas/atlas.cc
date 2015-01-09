@@ -100,10 +100,10 @@ struct ChannelConfig
 
 	ChannelConfig()
 	{
-		int logfile_rank = Resource<int>("atlas.logfile_task;$ATLAS_LOGFILE_TASK;-logfile_task",-1);
-		logfile_path    = Resource<std::string>("atlas.logfile;$ATLAS_LOGFILE;-logfile","");
+		int logfile_rank = Resource<int>("atlas.logfile_task;$ATLAS_LOGFILE_TASK;--logfile_task",-1);
+		logfile_path    = Resource<std::string>("atlas.logfile;$ATLAS_LOGFILE;--logfile","");
 		logfile_enabled = !logfile_path.empty() && ( logfile_rank < 0 || logfile_rank == MPL::rank() );
-		console_rank = Resource<int>("atlas.console_task;$ATLAS_CONSOLE_TASK;-console_task",0);
+		console_rank = Resource<int>("atlas.console_task;$ATLAS_CONSOLE_TASK;--console_task",0);
 		console_enabled = true;
 		console_format = new ColorizeFormat();
 		logfile_format = new ColorizeFormat();
@@ -267,8 +267,10 @@ private:
 	ChannelConfig stats_ctxt;
 };
 
-void read_config(const LocalPathName& path, const int master_task = 0)
+std::string read_config(const LocalPathName& path, const int master_task = 0)
 {
+	std::string config;
+
 	/// This function lets only one MPI task read the config file,
 	/// and broadcasts to remaining tasks. This is beneficial at
 	/// large scale.
@@ -279,7 +281,6 @@ void read_config(const LocalPathName& path, const int master_task = 0)
 	{
 		if( path.exists() )
 		{
-			Log::debug() << "Reading config file " << path.fullName() << std::endl;
 			std::fstream file( path.c_str(), std::ios_base::in );
 			if ( file )
 			{
@@ -312,7 +313,9 @@ void read_config(const LocalPathName& path, const int master_task = 0)
 	if (buf_len)
 	{
 		ResourceMgr::instance().appendConfig(stream);
+		config = stream.str();
 	}
+	return config;
 }
 
 
@@ -328,22 +331,28 @@ void atlas_init(int argc, char** argv)
     Context::instance().runName(
       PathName(Context::instance().argv(0)).baseName(false));
   }
-  Context::instance().displayName( Resource<std::string>("-name","") );
+  Context::instance().displayName( Resource<std::string>("--name","") );
 
-  read_config( LocalPathName( Resource<std::string>("atlas.configfile,$ATLAS_CONFIGFILE;-atlas_conf","atlas.cfg") ) );
-  read_config( LocalPathName(
+  LocalPathName atlas_config_path ( Resource<std::string>("atlas.configfile,$ATLAS_CONFIGFILE;--atlas_conf","atlas.cfg") );
+  std::string atlas_config = read_config( atlas_config_path );
+  
+  LocalPathName runname_config_path (
     Resource<std::string>("$"+StringTools::upper(Context::instance().runName())+"_CONFIGFILE",
-                          Context::instance().runName()+".cfg") ) );
+                          Context::instance().runName()+".cfg") );
+  std::string runname_config = read_config( runname_config_path );
+
   std::string default_conf("");
   if( Context::instance().displayName() != Context::instance().runName() )
     default_conf = Context::instance().displayName()+".cfg";
-  read_config( LocalPathName(
+  
+  LocalPathName displayname_config_path(
     Resource<std::string>(
-       "$"+StringTools::upper(Context::instance().displayName())+"_CONFIGFILE;-conf",
-       default_conf) ) );
+       "$"+StringTools::upper(Context::instance().displayName())+"_CONFIGFILE;--conf",
+       default_conf) );
+  std::string displayname_config = read_config( displayname_config_path );
 
   Context::instance().behavior( new atlas::Behavior() );
-  Context::instance().behavior().debug( Resource<int>("debug;$DEBUG;-debug",0) );
+  Context::instance().behavior().debug( Resource<int>("debug;$DEBUG;--debug",0) );
 
   atlas::grids::load();
 
@@ -351,6 +360,19 @@ void atlas_init(int argc, char** argv)
   Log::debug() << "    Atlas version [" << atlas_version() << "]" << std::endl;
   Log::debug() << "    Atlas git     [" << atlas_git_sha1()<< "]" << std::endl;
 
+  if( atlas_config.size() ) {
+    Log::debug() << "    Read config file " << atlas_config_path << std::endl;
+	Log::debug() << atlas_config << std::endl;
+  }
+
+  if( runname_config.size() ) {
+    Log::debug() << "    Read config file " << runname_config_path << std::endl;
+    Log::debug() << runname_config << std::endl;
+  }
+  if( displayname_config.size() ) {
+  	Log::debug() << "    Read config file " << displayname_config_path << std::endl;
+    Log::debug() << displayname_config << std::endl;
+  }
 }
 
 void atlas_finalize()

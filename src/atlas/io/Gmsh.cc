@@ -346,14 +346,13 @@ void swap_bytes(char *array, int size, int n)
 
 Gmsh::Gmsh()
 {
-	Context* ctx = &Context::instance();
-	options.set<int >("surfdim", Resource<int >(ctx,"atlas.gmsh.surfdim", 2    ));
-	options.set<bool>("gather",  Resource<bool>(ctx,"atlas.gmsh.gather",  false));
-	options.set<bool>("ghost",   Resource<bool>(ctx,"atlas.gmsh.ghost",   false));
-	options.set<bool>("ascii",   Resource<bool>(ctx,"atlas.gmsh.ascii",   true ));
-	options.set<bool>("elements",Resource<bool>(ctx,"atlas.gmsh.elements",true ));
-	options.set<bool>("edges",   Resource<bool>(ctx,"atlas.gmsh.edges",   true ));
-	levels = Resource< std::vector<long> >(ctx,"atlas.gmsh.levels", std::vector<long>() );
+	options.set<int >("surfdim", Resource<int >("atlas.gmsh.surfdim", 2    ));
+	options.set<bool>("gather",  Resource<bool>("atlas.gmsh.gather",  false));
+	options.set<bool>("ghost",   Resource<bool>("atlas.gmsh.ghost",   false));
+	options.set<bool>("ascii",   Resource<bool>("atlas.gmsh.ascii",   true ));
+	options.set<bool>("elements",Resource<bool>("atlas.gmsh.elements",true ));
+	options.set<bool>("edges",   Resource<bool>("atlas.gmsh.edges",   true ));
+	levels = Resource< std::vector<long> >("atlas.gmsh.levels", std::vector<long>() );
 }
 
 Gmsh::~Gmsh()

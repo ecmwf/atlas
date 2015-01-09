@@ -83,25 +83,26 @@ Atlas behaviour can be configured through variables defined at the command-line,
 environment, or in configuration files.
 In following table, the column "variable" can be edited in configuration files.
 
-| variable                    | command line    | environment              | default            |
-|-----------------------------|-----------------|--------------------------|--------------------|
-|                             | `-name`         |                          | `<app>`            |
-| `<name>.configfile`         | `-conf`         | `$<name>_CONFIGFILE`     | `<name>.cfg`       |
-| `<app>.configfile`          |                 | `$<app>_CONFIGFILE`      | `<app>.cfg`        |
-| `atlas.configfile`          | `-atlas_conf`   | `$ATLAS_CONFIGFILE`      | `atlas.cfg`        |
-| `atlas.degrees_epsilon`     |                 | `$ATLAS_DEGREES_EPSILON` | `1.e-3`            |
-| `atlas.logfile`             | `-logfile`      | `$ATLAS_LOGFILE`         |                    |
-| `atlas.logfile_task`        | `-logfile_task` | `$ATLAS_LOGFILE_TASK`    | `-1`               |
-| `atlas.console_task`        | `-console_task` | `$ATLAS_CONSOLE_TASK`    | `0`                |
-| `atlas.gmsh.surfdim`        |                 |                          | `2`                |
-| `atlas.gmsh.gather`         |                 |                          | `false`            |
-| `atlas.gmsh.ghost`          |                 |                          | `false`            |
-| `atlas.gmsh.ascii`          |                 |                          | `true`             |
-| `atlas.gmsh.elements`       |                 |                          | `true`             |
-| `atlas.gmsh.edges`          |                 |                          | `true`             |
-| `atlas.gmsh.levels`         |                 |                          | `[]`               |
-| `atlas.meshgen.angle`       |                 |                          | `29.5`             |
-| `atlas.meshgen.triangulate` |                 |                          | `false`            |
-| `AtlasCacheDir`             |                 | `$ATLAS_CACHE_DIR`       | `/tmp/cache/atlas` |
+| variable                    | command line     | environment              | default            |
+|-----------------------------|------------------|--------------------------|--------------------|
+| `debug`                     | `--debug`        | `$DEBUG`                 | `0`                |
+|                             | `--name`         |                          | `<app>`            |
+| `<name>.configfile`         | `--conf`         | `$<name>_CONFIGFILE`     | `<name>.cfg`       |
+| `<app>.configfile`          |                  | `$<app>_CONFIGFILE`      | `<app>.cfg`        |
+| `atlas.configfile`          | `--atlas_conf`   | `$ATLAS_CONFIGFILE`      | `atlas.cfg`        |
+| `atlas.degrees_epsilon`     |                  | `$ATLAS_DEGREES_EPSILON` | `1.e-3`            |
+| `atlas.logfile`             | `--logfile`      | `$ATLAS_LOGFILE`         |                    |
+| `atlas.logfile_task`        | `--logfile_task` | `$ATLAS_LOGFILE_TASK`    | `-1`               |
+| `atlas.console_task`        | `--console_task` | `$ATLAS_CONSOLE_TASK`    | `0`                |
+| `atlas.gmsh.surfdim`        |                  |                          | `2`                |
+| `atlas.gmsh.gather`         |                  |                          | `false`            |
+| `atlas.gmsh.ghost`          |                  |                          | `false`            |
+| `atlas.gmsh.ascii`          |                  |                          | `true`             |
+| `atlas.gmsh.elements`       |                  |                          | `true`             |
+| `atlas.gmsh.edges`          |                  |                          | `true`             |
+| `atlas.gmsh.levels`         |                  |                          | `[]`               |
+| `atlas.meshgen.angle`       |                  |                          | `29.5`             |
+| `atlas.meshgen.triangulate` |                  |                          | `false`            |
+| `AtlasCacheDir`             |                  | `$ATLAS_CACHE_DIR`       | `/tmp/cache/atlas` |
 
 
