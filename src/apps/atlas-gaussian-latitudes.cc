@@ -17,15 +17,13 @@
 #include <vector>
 #include <memory>
 
-#include <eckit/exception/Exceptions.h>
-#include <eckit/config/Resource.h>
-#include <eckit/runtime/Tool.h>
-#include <eckit/runtime/Context.h>
+#include "eckit/exception/Exceptions.h"
+#include "eckit/config/Resource.h"
+#include "eckit/runtime/Tool.h"
+#include "eckit/runtime/Context.h"
 
 #include "atlas/atlas.h"
-#ifdef ECKIT_HAVE_GRIB
-#include "grib_api.h" // for grib_get_gaussian_latitudes()
-#endif
+#include "atlas/grids/GaussianLatitudes.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -83,11 +81,6 @@ public:
 
     if( N > 0 ) do_run = true;
 
-#ifndef ECKIT_HAVE_GRIB
-    std::cout << "Unfortunately, the computations of the gaussian latitudes require for now grib_api dependency" << std::endl;
-    do_run = false;
-#endif
-
     if( do_run == false )
     {
       if( help )
@@ -114,9 +107,14 @@ void AtlasGaussianLatitudes::run()
 
   std::vector<double> lats (2*N);
 
-#ifdef ECKIT_HAVE_GRIB
-  grib_get_gaussian_latitudes(N, lats.data());
-#endif
+  try {
+    atlas::grids::gaussian_latitudes_npole_spole(N,lats.data());
+  }
+  catch( eckit::NotImplemented& err )
+  {
+    std::cout << err.what() << std::endl;
+    return;
+  }
 
   int end = full ? 2*N : N;
 

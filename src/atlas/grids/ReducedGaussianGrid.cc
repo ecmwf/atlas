@@ -11,12 +11,9 @@
 #include <typeinfo> // std::bad_cast
 #include "eckit/memory/Builder.h"
 
-#include "atlas/atlas_config.h"
-#ifdef ECKIT_HAVE_GRIB
-#include "grib_api.h" // for grib_get_gaussian_latitudes()
-#endif
 
 #include "atlas/grids/ReducedGaussianGrid.h"
+#include "atlas/grids/GaussianLatitudes.h"
 #include "atlas/GridSpec.h"
 #include "atlas/util/Debug.h"
 
@@ -83,17 +80,10 @@ void ReducedGaussianGrid::setup( const eckit::Params& params )
 
 void ReducedGaussianGrid::setup_N_hemisphere( const int N, const int nlons[] )
 {
-#ifdef ECKIT_HAVE_GRIB
-  std::vector<double> lats (2*N);
-  /// @todo this code should be moved into Atlas library and maintained by NA section
-  grib_get_gaussian_latitudes(N, lats.data());
-  ReducedGrid::setup_lat_hemisphere(N,lats.data(),nlons,DEG);
-#else
   // hemisphere
   std::vector<double> lats (N);
-  predict_gaussian_latitudes_hemisphere(N,lats.data());
+  gaussian_latitudes_npole_equator(N,lats.data());
   ReducedGrid::setup_lat_hemisphere(N,lats.data(),nlons,DEG);
-#endif
 }
 
 
