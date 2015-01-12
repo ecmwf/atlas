@@ -165,22 +165,6 @@ void ReducedGrid::setup( const int nlat, const double lats[], const int nlons[] 
   setup(nlat,lats,nlons,lonmin.data(),lonmax.data());
 }
 
-void ReducedGrid::setup_colat_hemisphere(const int N, const double colat[], const int lon[], const AngleUnit unit)
-{
-  std::vector<int> nlons(2*N);
-  std::copy( lon, lon+N, nlons.begin() );
-  std::reverse_copy( lon, lon+N, nlons.begin()+N );
-  std::vector<double> lats(2*N);
-  colat_to_lat_hemisphere(N,colat,lats.data(),unit);
-  std::reverse_copy( lats.data(), lats.data()+N, lats.begin()+N );
-  double convert = (unit == RAD ? 180.*M_1_PI : 1.);
-  for( int j=0; j<N; ++j )
-    lats[j] *= convert;
-  for( int j=N; j<2*N; ++j )
-    lats[j] *= -convert;
-  setup(2*N,lats.data(),nlons.data());
-}
-
 void ReducedGrid::setup_lat_hemisphere(const int N, const double lat[], const int lon[], const AngleUnit unit)
 {
   std::vector<int> nlons(2*N);

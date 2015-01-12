@@ -12,7 +12,7 @@ function(generate_fortran_bindings output filename)
     set_source_files_properties(${outfile} PROPERTIES GENERATED TRUE)
 endfunction()
 
-generate_fortran_bindings(FORTRAN_BINDINGS ../meshgen/RGG.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../grids/grids.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../grids/ReducedGrid.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../Field.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../FieldGroup.h)

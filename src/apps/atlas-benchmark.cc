@@ -318,7 +318,8 @@ void AtlasBenchmark::setup()
   grids::load();
 
   stringstream gridname; gridname << "rgg.N"<<N;
-  mesh = Mesh::Ptr( generate_reduced_gaussian_grid(gridname.str()) );
+  ReducedGrid::Ptr grid( ReducedGrid::create(gridname.str()) );
+  mesh = Mesh::Ptr( generate_mesh(*grid) );
   // mesh = Mesh::Ptr( generate_regular_grid( 2*N, N) );
   build_nodes_parallel_fields(mesh->function_space("nodes"));
   build_periodic_boundaries(*mesh);

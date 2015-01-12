@@ -130,66 +130,6 @@ private:
 
 //------------------------------------------------------------------------------------------------------
 
-ReducedGrid::Ptr create_grid(const std::string& key)
-{
-  int N=0;
-  int nlon=0;
-  int nlat=0;
-  Tokenizer tokenize(".");
-  std::vector<std::string> tokens;
-  tokenize(key,tokens);
-  Translator<std::string,int> to_int;
-  std::string uid = tokens[0];
-  if( uid == "ll" ) uid = "regular_ll";
-  if( uid == "gg" ) uid = "regular_gg";
-  if( uid == "reduced_gg") uid = "rgg";
-
-  if( tokens.size() > 1 )
-  {
-    if( tokens[1][0] == 'N' )
-    {
-      std::string Nstr(tokens[1],1,tokens[1].size()-1);
-      N = to_int(Nstr);
-    }
-    else
-    {
-      std::vector<std::string> lonlat;
-      Tokenizer tokenize_lonlat("x");
-      tokenize_lonlat(tokens[1],lonlat);
-      if( lonlat.size() > 0 )
-      {
-        nlon = to_int(lonlat[0]);
-        nlat = to_int(lonlat[1]);
-      }
-    }
-  }
-  if ( uid == "rgg" )
-  {
-    if( tokens.size() > 1 ) uid = key;
-    else
-      uid = "rgg.N"+Translator<int,std::string>()( Resource<int>("-N",N ) );
-  }
-  if( !N ) N = Resource<int>("-N",N);
-  if( !nlon ) nlon = Resource<int>("-nlon",nlon);
-  if( !nlat ) nlat = Resource<int>("-nlat",nlat);
-
-  if( !Factory<Grid>::instance().exists(uid) )
-  {
-    Log::error() << "Grid " << uid << " was not found." << std::endl;
-    return ReducedGrid::Ptr();
-  }
-
-  GridSpec specs(uid);
-  ReducedGrid::Ptr grid;
-  if( N ) specs.set("N",N);
-  if( nlon ) specs.set("nlon",nlon);
-  if( nlat ) specs.set("nlat",nlat);
-
-  grid = ReducedGrid::Ptr( ReducedGrid::create(specs) );
-  return grid;
-}
-
-
 void AtlasGrids::run()
 {
   if( !do_run ) return;
@@ -209,7 +149,9 @@ void AtlasGrids::run()
 
   if( !key.empty() )
   {
-    ReducedGrid::Ptr grid = create_grid(key);
+    ReducedGrid::Ptr grid;
+    try{ grid = ReducedGrid::Ptr( ReducedGrid::create(key) ); }
+    catch( eckit::BadParameter& err ){}
 
     if( !grid ) return;
 

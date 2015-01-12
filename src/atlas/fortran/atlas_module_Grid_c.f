@@ -4,29 +4,29 @@
 ! -----------------------------------------------------------------------------
 ! ReducedGrid routines
 
-function new_reduced_gaussian_grid(identifier) result(grid)
+function new_reduced_grid(identifier) result(grid)
   type(ReducedGrid_type) :: grid
   character(len=*) :: identifier
-  grid%private%object = atlas__new_reduced_gaussian_grid(c_str(identifier))
-end function new_reduced_gaussian_grid
+  grid%private%object = atlas__new_reduced_grid(c_str(identifier))
+end function new_reduced_grid
 
-function new_regular_gaussian_grid(nlon,nlat) result(grid)
+function new_gaussian_grid(N) result(grid)
   type(ReducedGrid_type) :: grid
-  integer, intent(in) :: nlon, nlat
-  grid%private%object = atlas__new_regular_gaussian_grid(nlon,nlat)
-end function new_regular_gaussian_grid
+  integer, intent(in) :: N
+  grid%private%object = atlas__new_gaussian_grid(N)
+end function new_gaussian_grid
 
-function new_custom_reduced_gaussian_grid(nlon) result(grid)
+function new_reduced_gaussian_grid(nlon) result(grid)
   type(ReducedGrid_type) :: grid
   integer, intent(in) :: nlon(:)
-  grid%private%object = atlas__new_custom_reduced_gaussian_grid(nlon,size(nlon))
-end function new_custom_reduced_gaussian_grid
+  grid%private%object = atlas__new_reduced_gaussian_grid(nlon,size(nlon))
+end function new_reduced_gaussian_grid
 
-function new_regular_latlon_grid(nlon,nlat) result(grid)
+function new_lonlat_grid(nlon,nlat) result(grid)
   type(ReducedGrid_type) :: grid
   integer, intent(in) :: nlon, nlat
-  grid%private%object = atlas__new_regular_latlon_grid(nlon,nlat)
-end function new_regular_latlon_grid
+  grid%private%object = atlas__new_lonlat_grid(nlon,nlat)
+end function new_lonlat_grid
 
 function ReducedGrid__npts(this) result(npts)
   class(ReducedGrid_type), intent(in) :: this

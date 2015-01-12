@@ -32,7 +32,7 @@ BOOST_AUTO_TEST_CASE( test_read_write )
 	int lon[5] = {10, 12, 14, 16, 16};
 
 	//	Mesh::Ptr mesh = test::generate_mesh(nlat, lon);
-	Mesh::Ptr mesh = test::generate_mesh(meshgen::T255());
+	Mesh::Ptr mesh = test::generate_mesh(grids::rgg::N128());
 
 	Gmsh gmsh;
 	gmsh.options.set("ascii",true);

@@ -95,19 +95,8 @@ util/IndexView.cc
 list( APPEND atlas_meshgen_srcs
 meshgen/EqualAreaPartitioner.cc
 meshgen/EqualAreaPartitioner.h
-meshgen/RGG.cc
-meshgen/RGG.h
-meshgen/RGGMeshGenerator.cc
-meshgen/RGGMeshGenerator.h
-meshgen/T63.cc
-meshgen/T95.cc
-meshgen/T159.cc
-meshgen/T255.cc
-meshgen/T511.cc
-meshgen/T1279.cc
-meshgen/T2047.cc
-meshgen/T3999.cc
-meshgen/T7999.cc
+meshgen/ReducedGridMeshGenerator.cc
+meshgen/ReducedGridMeshGenerator.h
 )
 
 list( APPEND atlas_actions_srcs
@@ -136,6 +125,8 @@ grids/grids.h
 grids/grids.cc
 grids/GaussianGrid.cc
 grids/GaussianGrid.h
+grids/GaussianLatitudes.h
+grids/GaussianLatitudes.cc
 grids/LonLatGrid.cc
 grids/LonLatGrid.h
 grids/PolarStereoGraphic.cc
@@ -150,6 +141,31 @@ grids/RotatedLatLon.cc
 grids/RotatedLatLon.h
 grids/Unstructured.cc
 grids/Unstructured.h
+grids/gausslat/gausslat.h
+grids/gausslat/gausslat.cc
+grids/gausslat/N16.cc    # TL31
+grids/gausslat/N24.cc    # TL47
+grids/gausslat/N32.cc    # TL63
+grids/gausslat/N48.cc    # TL95
+grids/gausslat/N64.cc    # TL127
+grids/gausslat/N80.cc    # TL159
+grids/gausslat/N96.cc    # TL191
+grids/gausslat/N128.cc   # TL255
+grids/gausslat/N160.cc   # TL319
+grids/gausslat/N200.cc   # TL399
+grids/gausslat/N256.cc   # TL511
+grids/gausslat/N320.cc   # TL639
+grids/gausslat/N400.cc   # TL799
+grids/gausslat/N512.cc   # TL1023
+grids/gausslat/N576.cc   # TL1151
+grids/gausslat/N640.cc   # TL1279
+grids/gausslat/N800.cc   # TL1599
+grids/gausslat/N1024.cc  # TL2047
+grids/gausslat/N1280.cc  # TL2559
+grids/gausslat/N1600.cc  # TL3199
+grids/gausslat/N2000.cc  # TL3999
+grids/gausslat/N4000.cc  # TL7999
+grids/gausslat/N8000.cc  # TL15999
 grids/rgg/rgg.h
 grids/rgg/N16.cc    # TL31
 grids/rgg/N24.cc    # TL47
@@ -176,17 +192,6 @@ grids/rgg/N4000.cc  # TL7999
 grids/rgg/N8000.cc  # TL15999
 grids/rgg/OctahedralRGG.h
 grids/rgg/OctahedralRGG.cc
-)
-
-add_custom_target( atlas_grids_dead SOURCES
-grids/dead/ReducedLatLon.cc
-grids/dead/ReducedLatLon.h
-grids/dead/RegularGG.cc
-grids/dead/RegularGG.h
-grids/dead/ReducedGG.cc
-grids/dead/ReducedGG.h
-grids/dead/RegularLatLon.cc
-grids/dead/RegularLatLon.h
 )
 
 list( APPEND atlas_srcs

@@ -8,12 +8,76 @@
  * does it submit to any jurisdiction.
  */
 
-#include <eckit/log/Log.h>
+#include "eckit/log/Log.h"
+#include "eckit/parser/Tokenizer.h"
+#include "eckit/utils/Translator.h"
+#include "eckit/memory/Builder.h"
 #include "atlas/grids/grids.h"
+#include "atlas/GridSpecParams.h"
 
+using eckit::Log;
+using eckit::Tokenizer;
+using eckit::Translator;
+using eckit::Factory;
 
 namespace atlas {
 namespace grids {
+
+Grid* grid_from_uid(const std::string& uid)
+{
+  Grid* grid = NULL;
+  if( Factory<Grid>::instance().exists(uid) )
+  {
+    grid = Grid::create( GridSpec(uid) );
+  }
+  else
+  {
+    Tokenizer tokenize(".");
+    std::vector<std::string> tokens;
+    tokenize(uid,tokens);
+    Translator<std::string,int> to_int;
+    std::string grid_type = tokens[0];
+    if( grid_type == "ll" ) grid_type = LonLatGrid::grid_type_str();
+    if( grid_type == "gg" ) grid_type = GaussianGrid::grid_type_str();
+    if( grid_type == "rgg") grid_type = ReducedGaussianGrid::grid_type_str();
+
+    if( grid_type == ReducedGaussianGrid::grid_type_str() )
+    {
+      throw eckit::BadParameter("Grid ["+uid+"] does not exist.",Here());
+    }
+    else if( tokens.size() > 1)
+    {
+      GridSpec gridspec(grid_type);
+
+      if( tokens[1][0] == 'N' )
+      {
+        std::string Nstr(tokens[1],1,tokens[1].size()-1);
+        int N = to_int(Nstr);
+        gridspec.set("N",N);
+      }
+      else
+      {
+        std::vector<std::string> lonlat;
+        Tokenizer tokenize_lonlat("x");
+        tokenize_lonlat(tokens[1],lonlat);
+        if( lonlat.size() > 1 )
+        {
+          int nlon = to_int(lonlat[0]);
+          int nlat = to_int(lonlat[1]);
+          gridspec.set("nlon",nlon);
+          gridspec.set("nlat",nlat);
+        }
+      }
+      grid = Grid::create(gridspec);
+    }
+    else
+    {
+      throw eckit::BadParameter("Insufficient information to construct grid "+uid+" or grid does not exist.",Here());
+    }
+  }
+  return grid;
+}
+
 
 template<typename CONCRETE>
 void load_grid()
@@ -64,13 +128,62 @@ void load()
 
 }
 
-} // namespace grids
-} // namespace atlas
 
-extern "C"
-{
+//extern "C"
+//{
+
+  ReducedGrid* new_reduced_grid( const std::string& identifier )
+  {
+    return ReducedGrid::create(identifier);
+  }
+
+  ReducedGrid* new_reduced_gaussian_grid( const std::vector<int>& nlon )
+  {
+    return new ReducedGaussianGrid(nlon.size(),nlon.data());
+  }
+
+  ReducedGrid* new_lonlat_grid( int nlon, int nlat )
+  {
+    return new LonLatGrid(nlon,nlat);
+  }
+
+  ReducedGrid* new_gaussian_grid( int N )
+  {
+    return new GaussianGrid(N);
+  }
+
+
+  ReducedGrid* atlas__new_reduced_grid(char* identifier)
+  {
+    return new_reduced_grid( std::string(identifier) );
+  }
+
+  ReducedGrid* atlas__new_gaussian_grid ( int N )
+  {
+    return new_gaussian_grid( N );
+  }
+
+  ReducedGrid* atlas__new_lonlat_grid(int nlon, int nlat)
+  {
+    return new_lonlat_grid( nlon, nlat );
+  }
+
+  ReducedGrid* atlas__new_reduced_gaussian_grid(int nlon[], int nlat)
+  {
+    std::vector<int> nlon_vector;
+    nlon_vector.assign(nlon,nlon+nlat);
+    return new_reduced_gaussian_grid(nlon_vector);
+  }
+
   void atlas__grids__load()
   {
     atlas::grids::load();
   }
-}
+
+//}
+
+
+
+} // namespace grids
+} // namespace atlas
+

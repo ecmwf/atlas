@@ -98,7 +98,6 @@ protected:
   void setup( const eckit::Params& );
   void setup( const int nlat, const double lats[], const int npts_per_lat[] );
   void setup( const int nlat, const double lats[], const int nlons[], const double lonmin[], const double lonmax[] );
-  void setup_colat_hemisphere( const int N, const double colat[], const int lon[], const AngleUnit );
   void setup_lat_hemisphere( const int N, const double lat[], const int lon[], const AngleUnit );
 
 protected:

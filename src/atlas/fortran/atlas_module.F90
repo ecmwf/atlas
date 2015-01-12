@@ -43,7 +43,7 @@ use atlas_mesh_c_binding
 use atlas_metadata_c_binding
 use atlas_haloexchange_c_binding
 use atlas_gatherscatter_c_binding
-use atlas_rgg_c_binding
+use atlas_grids_c_binding
 use atlas_reducedgrid_c_binding
 use atlas_checksum_c_binding
 use atlas_gmsh_c_binding
@@ -390,30 +390,6 @@ subroutine atlas_write_load_balance_report(mesh,filename)
   character(len=*), intent(in) :: filename
   call atlas__write_load_balance_report(mesh%private%object,c_str(filename))
 end subroutine atlas_write_load_balance_report
-
-subroutine atlas_generate_reduced_gaussian_grid(mesh,identifier)
-  type(Mesh_type), intent(inout) :: mesh
-  character(len=*), intent(in) :: identifier
-  mesh%private%object = atlas__generate_reduced_gaussian_grid(c_str(identifier))
-end subroutine atlas_generate_reduced_gaussian_grid
-
-subroutine atlas_generate_full_gaussian_grid(mesh,nlon,nlat)
-  type(Mesh_type), intent(inout) :: mesh
-  integer, intent(in) :: nlon, nlat
-  mesh%private%object = atlas__generate_full_gaussian_grid(nlon,nlat)
-end subroutine atlas_generate_full_gaussian_grid
-
-subroutine atlas_generate_latlon_grid(mesh,nlon,nlat)
-  type(Mesh_type), intent(inout) :: mesh
-  integer, intent(in) :: nlon, nlat
-  mesh%private%object = atlas__generate_latlon_grid(nlon,nlat)
-end subroutine atlas_generate_latlon_grid
-
-subroutine atlas_generate_custom_reduced_gaussian_grid(mesh,nlon)
-  type(Mesh_type), intent(inout) :: mesh
-  integer, intent(in) :: nlon(:)
-  mesh%private%object = atlas__generate_custom_reduced_gaussian_grid(nlon,size(nlon))
-end subroutine atlas_generate_custom_reduced_gaussian_grid
 
 function atlas_generate_mesh(grid) result(mesh)
   type(Mesh_type) :: mesh
