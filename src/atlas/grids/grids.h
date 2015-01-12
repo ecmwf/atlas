@@ -14,6 +14,7 @@
 #ifndef atlas_grids_grids_h
 #define atlas_grids_grids_h
 
+#include "atlas/Grid.h"
 #include "atlas/grids/GaussianGrid.h"
 #include "atlas/grids/LonLatGrid.h"
 #include "atlas/grids/ReducedGaussianGrid.h"
@@ -32,6 +33,8 @@ namespace grids {
 
 void load();
 void unload();
+
+Grid* grid_from_uid(const std::string& uid);
 
 } // namespace grids
 } // namespace atlas

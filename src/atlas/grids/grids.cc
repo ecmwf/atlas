@@ -8,12 +8,76 @@
  * does it submit to any jurisdiction.
  */
 
-#include <eckit/log/Log.h>
+#include "eckit/log/Log.h"
+#include "eckit/parser/Tokenizer.h"
+#include "eckit/utils/Translator.h"
+#include "eckit/memory/Builder.h"
 #include "atlas/grids/grids.h"
+#include "atlas/GridSpecParams.h"
 
+using eckit::Log;
+using eckit::Tokenizer;
+using eckit::Translator;
+using eckit::Factory;
 
 namespace atlas {
 namespace grids {
+
+Grid* grid_from_uid(const std::string& uid)
+{
+  Grid* grid = NULL;
+  if( Factory<Grid>::instance().exists(uid) )
+  {
+    grid = Grid::create( GridSpec(uid) );
+  }
+  else
+  {
+    Tokenizer tokenize(".");
+    std::vector<std::string> tokens;
+    tokenize(uid,tokens);
+    Translator<std::string,int> to_int;
+    std::string grid_type = tokens[0];
+    if( grid_type == "ll" ) grid_type = LonLatGrid::grid_type_str();
+    if( grid_type == "gg" ) grid_type = GaussianGrid::grid_type_str();
+    if( grid_type == "rgg") grid_type = ReducedGaussianGrid::grid_type_str();
+
+    if( grid_type == ReducedGaussianGrid::grid_type_str() )
+    {
+      throw eckit::BadParameter("Grid ["+uid+"] does not exist.",Here());
+    }
+    else if( tokens.size() > 1)
+    {
+      GridSpec gridspec(grid_type);
+
+      if( tokens[1][0] == 'N' )
+      {
+        std::string Nstr(tokens[1],1,tokens[1].size()-1);
+        int N = to_int(Nstr);
+        gridspec.set("N",N);
+      }
+      else
+      {
+        std::vector<std::string> lonlat;
+        Tokenizer tokenize_lonlat("x");
+        tokenize_lonlat(tokens[1],lonlat);
+        if( lonlat.size() > 1 )
+        {
+          int nlon = to_int(lonlat[0]);
+          int nlat = to_int(lonlat[1]);
+          gridspec.set("nlon",nlon);
+          gridspec.set("nlat",nlat);
+        }
+      }
+      grid = Grid::create(gridspec);
+    }
+    else
+    {
+      throw eckit::BadParameter("Insufficient information to construct grid "+uid+" or grid does not exist.",Here());
+    }
+  }
+  return grid;
+}
+
 
 template<typename CONCRETE>
 void load_grid()

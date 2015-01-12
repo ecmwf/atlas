@@ -16,6 +16,7 @@
 #include "atlas/Grid.h"
 #include "atlas/Tesselation.h"
 #include "atlas/GridSpecParams.h"
+#include "atlas/grids/grids.h"
 
 using namespace eckit;
 
@@ -38,13 +39,7 @@ Grid* Grid::create( const Params& p )
 
 Grid* Grid::create(const std::string& uid)
 {
-  if( ! Factory<Grid>::instance().exists(uid) )
-  {
-    std::stringstream msg;
-    msg << "No grid with uid " << uid << " found in\n"<< Factory<Grid>::instance();
-    throw BadParameter(msg.str(),Here());
-  }
-  return Factory<Grid>::instance().get(uid).create(ValueParams());
+  return grids::grid_from_uid(uid);
 }
 
 Grid* Grid::create(const GridSpec& g)
