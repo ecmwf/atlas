@@ -966,7 +966,13 @@ void Gmsh::write(FieldGroup& fieldset, const std::string& file_path, openmode mo
 	{
 		Field& field = fieldset.field(field_idx);
 		FunctionSpace& function_space = field.function_space();
-		if( function_space.metadata().get<int>("type") == Entity::NODES )
+
+    if( !function_space.metadata().has<int>("type") )
+    {
+      throw Exception("function_space "+function_space.name()+" has no type.. ?");
+    }
+
+    if( function_space.metadata().get<int>("type") == Entity::NODES )
 		{
 			if     ( field.data_type() == "int32"  ) {  write_field_nodes<int   >(*this,field,file); }
       else if( field.data_type() == "int64"  ) {  write_field_nodes<long  >(*this,field,file); }
