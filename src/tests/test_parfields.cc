@@ -25,8 +25,8 @@
 #include "atlas/Parameters.h"
 #include "atlas/Util.h"
 #include "atlas/meshgen/EqualAreaPartitioner.h"
-#include "atlas/meshgen/RGG.h"
-#include "atlas/meshgen/RGGMeshGenerator.h"
+#include "atlas/grids/grids.h"
+#include "atlas/meshgen/ReducedGridMeshGenerator.h"
 #include "atlas/mpl/MPL.h"
 #include "atlas/util/Array.h"
 #include "atlas/util/ArrayView.h"
@@ -141,7 +141,7 @@ BOOST_AUTO_TEST_CASE( test2 )
   ReducedGridMeshGenerator generate;
   generate.options.set("nb_parts",MPL::size());
   generate.options.set("part",MPL::rank());
-  Mesh* m = generate( T63() );
+  Mesh* m = generate( grids::rgg::N32() );
   actions::build_parallel_fields(*m);
 
   FunctionSpace& nodes = m->function_space("nodes");

@@ -128,13 +128,62 @@ void load()
 
 }
 
-} // namespace grids
-} // namespace atlas
 
-extern "C"
-{
+//extern "C"
+//{
+
+  ReducedGrid* new_reduced_grid( const std::string& identifier )
+  {
+    return ReducedGrid::create(identifier);
+  }
+
+  ReducedGrid* new_reduced_gaussian_grid( const std::vector<int>& nlon )
+  {
+    return new ReducedGaussianGrid(nlon.size(),nlon.data());
+  }
+
+  ReducedGrid* new_lonlat_grid( int nlon, int nlat )
+  {
+    return new LonLatGrid(nlon,nlat);
+  }
+
+  ReducedGrid* new_gaussian_grid( int N )
+  {
+    return new GaussianGrid(N);
+  }
+
+
+  ReducedGrid* atlas__new_reduced_grid(char* identifier)
+  {
+    return new_reduced_grid( std::string(identifier) );
+  }
+
+  ReducedGrid* atlas__new_gaussian_grid ( int N )
+  {
+    return new_gaussian_grid( N );
+  }
+
+  ReducedGrid* atlas__new_lonlat_grid(int nlon, int nlat)
+  {
+    return new_lonlat_grid( nlon, nlat );
+  }
+
+  ReducedGrid* atlas__new_reduced_gaussian_grid(int nlon[], int nlat)
+  {
+    std::vector<int> nlon_vector;
+    nlon_vector.assign(nlon,nlon+nlat);
+    return new_reduced_gaussian_grid(nlon_vector);
+  }
+
   void atlas__grids__load()
   {
     atlas::grids::load();
   }
-}
+
+//}
+
+
+
+} // namespace grids
+} // namespace atlas
+

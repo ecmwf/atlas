@@ -95,19 +95,8 @@ util/IndexView.cc
 list( APPEND atlas_meshgen_srcs
 meshgen/EqualAreaPartitioner.cc
 meshgen/EqualAreaPartitioner.h
-meshgen/RGG.cc
-meshgen/RGG.h
-meshgen/RGGMeshGenerator.cc
-meshgen/RGGMeshGenerator.h
-meshgen/T63.cc
-meshgen/T95.cc
-meshgen/T159.cc
-meshgen/T255.cc
-meshgen/T511.cc
-meshgen/T1279.cc
-meshgen/T2047.cc
-meshgen/T3999.cc
-meshgen/T7999.cc
+meshgen/ReducedGridMeshGenerator.cc
+meshgen/ReducedGridMeshGenerator.h
 )
 
 list( APPEND atlas_actions_srcs
@@ -203,17 +192,6 @@ grids/rgg/N4000.cc  # TL7999
 grids/rgg/N8000.cc  # TL15999
 grids/rgg/OctahedralRGG.h
 grids/rgg/OctahedralRGG.cc
-)
-
-add_custom_target( atlas_grids_dead SOURCES
-grids/dead/ReducedLatLon.cc
-grids/dead/ReducedLatLon.h
-grids/dead/RegularGG.cc
-grids/dead/RegularGG.h
-grids/dead/ReducedGG.cc
-grids/dead/ReducedGG.h
-grids/dead/RegularLatLon.cc
-grids/dead/RegularLatLon.h
 )
 
 list( APPEND atlas_srcs

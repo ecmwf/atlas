@@ -30,7 +30,7 @@
 #include "atlas/Parameters.h"
 #include "atlas/meshgen/EqualAreaPartitioner.h"
 #include "atlas/grids/ReducedGrid.h"
-#include "atlas/meshgen/RGGMeshGenerator.h"
+#include "atlas/meshgen/ReducedGridMeshGenerator.h"
 
 #define DEBUG_OUTPUT 0
 

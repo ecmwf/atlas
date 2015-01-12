@@ -1,5 +1,7 @@
 ! (C) Copyright 2013-2014 ECMWF.
 
+
+
 !------------------------------------------------------------------------------
 TYPE, extends(object_type) :: ReducedGrid_type
 
@@ -22,14 +24,11 @@ contains
   procedure :: lat => ReducedGrid__latitudes
 END TYPE ReducedGrid_type
 
-interface new_GaussianGrid
+interface new_ReducedGrid
+  module procedure new_reduced_grid
+  module procedure new_gaussian_grid
   module procedure new_reduced_gaussian_grid
-  module procedure new_regular_gaussian_grid
-  module procedure new_custom_reduced_gaussian_grid
-end interface
-
-interface new_LatlonGrid
-  module procedure new_regular_latlon_grid
+  module procedure new_lonlat_grid
 end interface
 
 !------------------------------------------------------------------------------

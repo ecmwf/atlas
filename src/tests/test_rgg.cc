@@ -17,8 +17,8 @@
 #include "atlas/mpl/MPL.h"
 #include "atlas/atlas_config.h"
 #include "atlas/grids/GaussianLatitudes.h"
-#include "atlas/meshgen/RGG.h"
-#include "atlas/meshgen/RGGMeshGenerator.h"
+#include "atlas/grids/grids.h"
+#include "atlas/meshgen/ReducedGridMeshGenerator.h"
 #include "atlas/meshgen/EqualAreaPartitioner.h"
 #include "atlas/io/Gmsh.h"
 #include "atlas/Mesh.h"
@@ -41,7 +41,7 @@ using namespace atlas::meshgen;
 namespace atlas {
 namespace test {
 
-class DebugMesh:   public RGG { public: DebugMesh(); };
+class DebugMesh:   public grids::ReducedGaussianGrid { public: DebugMesh(); };
 DebugMesh::DebugMesh()
 {
   int N=5;
@@ -58,7 +58,7 @@ DebugMesh::DebugMesh()
 }
 
 
-class MinimalMesh:   public RGG { public: MinimalMesh(int N, int lon[]); };
+class MinimalMesh:   public grids::ReducedGaussianGrid { public: MinimalMesh(int N, int lon[]); };
 MinimalMesh::MinimalMesh(int N, int lon[])
 {
   std::vector<double> lat(N);
@@ -295,7 +295,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
           //  int nlat=10;
           //  int lon[] = { 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 };
           //  test::MinimalMesh grid(nlat,lon);
-  T63 grid;
+  grids::rgg::N32 grid;
 //  RegularGrid grid(128,64);
   double max_lat = grid.lat(0);
   double check_area = 360.*2.*max_lat;

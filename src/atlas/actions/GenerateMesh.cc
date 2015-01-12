@@ -9,8 +9,7 @@
  */
 
 #include "atlas/mpl/MPL.h"
-#include "atlas/meshgen/RGG.h"
-#include "atlas/meshgen/RGGMeshGenerator.h"
+#include "atlas/meshgen/ReducedGridMeshGenerator.h"
 #include "atlas/actions/GenerateMesh.h"
 #include "atlas/util/Debug.h"
 using namespace atlas::meshgen;
@@ -30,68 +29,6 @@ Mesh* generate_mesh (const ReducedGrid& rgg)
 
 // ------------------------------------------------------------------
 
-Mesh* generate_reduced_gaussian_grid( const std::string& identifier )
-{
-  ReducedGrid* rgg = new_reduced_gaussian_grid(identifier);
-  Mesh* mesh = generate_mesh(*rgg);
-  delete rgg;
-  return mesh;
-}
-
-// ------------------------------------------------------------------
-
-Mesh* generate_reduced_gaussian_grid( const std::vector<long>& nlon )
-{
-  ReducedGrid* rgg = new_reduced_gaussian_grid(nlon);
-  Mesh* mesh = generate_mesh(*rgg);
-  delete rgg;
-  return mesh;
-}
-
-// ------------------------------------------------------------------
-
-Mesh* generate_regular_grid( int nlon, int nlat )
-{
-  ReducedGrid* rgg = new_regular_latlon_grid(nlon,nlat);
-  Mesh* mesh = generate_mesh(*rgg);
-  delete rgg;
-  return mesh;
-}
-
-// ------------------------------------------------------------------
-
-Mesh* generate_full_gaussian_grid( int nlon, int nlat )
-{
-  ReducedGrid* rgg = new_regular_gaussian_grid(nlon,nlat);
-  Mesh* mesh = generate_mesh(*rgg);
-  delete rgg;
-  return mesh;
-}
-
-// ------------------------------------------------------------------
-
-// C wrapper interfaces to C++ routines
-Mesh* atlas__generate_reduced_gaussian_grid (char* identifier)
-{
-  return generate_reduced_gaussian_grid( std::string(identifier) );
-}
-
-Mesh* atlas__generate_full_gaussian_grid ( int nlon, int nlat )
-{
-  return generate_full_gaussian_grid( nlon, nlat );
-}
-
-Mesh* atlas__generate_latlon_grid ( int nlon, int nlat )
-{
-  return generate_regular_grid( nlon, nlat );
-}
-
-Mesh* atlas__generate_custom_reduced_gaussian_grid( int nlon[], int nlat )
-{
-  std::vector<long> nlon_vector;
-  nlon_vector.assign(nlon,nlon+nlat);
-  return generate_reduced_gaussian_grid(nlon_vector);
-}
 
 Mesh* atlas__generate_mesh (ReducedGrid* rgg)
 {
