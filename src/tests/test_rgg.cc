@@ -16,6 +16,7 @@
 
 #include "atlas/mpl/MPL.h"
 #include "atlas/atlas_config.h"
+#include "atlas/grids/GaussianLatitudes.h"
 #include "atlas/meshgen/RGG.h"
 #include "atlas/meshgen/RGGMeshGenerator.h"
 #include "atlas/meshgen/EqualAreaPartitioner.h"
@@ -51,18 +52,18 @@ DebugMesh::DebugMesh()
     22,
     22,
   };
-  std::vector<double> colat(N);
-  predict_gaussian_colatitudes_hemisphere(N,colat.data());
-  setup_colat_hemisphere(N,colat.data(),lon,DEG);
+  std::vector<double> lat(N);
+  grids::gaussian_latitudes_npole_equator(N,lat.data());
+  setup_lat_hemisphere(N,lat.data(),lon,DEG);
 }
 
 
 class MinimalMesh:   public RGG { public: MinimalMesh(int N, int lon[]); };
 MinimalMesh::MinimalMesh(int N, int lon[])
 {
-  std::vector<double> colat(N);
-  predict_gaussian_colatitudes_hemisphere(N,colat.data());
-  setup_colat_hemisphere(N,colat.data(),lon,DEG);
+  std::vector<double> lat(N);
+  grids::gaussian_latitudes_npole_equator(N,lat.data());
+  setup_lat_hemisphere(N,lat.data(),lon,DEG);
 }
 
 double compute_latlon_area(Mesh& mesh)

@@ -10,9 +10,7 @@
 
 
 
-#include <algorithm>
-#include <cmath>
-
+#include "atlas/grids/GaussianLatitudes.h"
 #include "atlas/meshgen/RGG.h"
 
 namespace atlas {
@@ -2023,9 +2021,9 @@ T3999::T3999()
     8000,
     8000
   };
-  std::vector<double> lat(N);
-  predict_gaussian_latitudes_hemisphere(N,lat.data());
-  setup_lat_hemisphere(N,lat.data(),lon,DEG);
+  std::vector<double> lats(N);
+  grids::gaussian_latitudes_npole_equator(N,lats.data());
+  setup_lat_hemisphere(N,lats.data(),lon,DEG);
 }
 
 } // namespace meshgen

@@ -13,6 +13,7 @@
 
 #include "atlas/atlas_config.h"
 #include "atlas/grids/gausslat/gausslat.h"
+#include "atlas/Util.h"
 
 #ifdef ECKIT_HAVE_GRIB
   #include "grib_api.h"
@@ -28,6 +29,10 @@ using atlas::grids::gausslat::GaussianLatitudes;
 namespace atlas {
 namespace grids {
 
+void predict_gaussian_colatitudes_hemisphere(const int N, double colat[]);
+
+void predict_gaussian_latitudes_hemisphere(const int N, double lat[]);
+
 //------------------------------------------------------------------------------------------------------
 
 void gaussian_latitudes_npole_equator(const int N, double lats[])
@@ -42,10 +47,10 @@ void gaussian_latitudes_npole_equator(const int N, double lats[])
   else
   {
 #ifndef ECKIT_HAVE_GRIB
-    throw eckit::NotImplemented("Unfortunately, the computations of the gaussian latitudes require for now grib_api dependency, and no hard-coded version is provided",Here());
-
+    Log::warning() << "Unfortunately, the computations of the gaussian latitudes require for now grib_api dependency,\nand no hard-coded version is provided. Using predicted latitudes instead (accuracy of 2 decimals)" << std::endl;
+    predict_gaussian_latitudes_hemisphere(N,lats);
 #else
-    Log::info() << "using grib..." << std::endl;
+    Log::warning() << "Using grib_api to compute gaussian latitudes..." << std::endl;
     std::vector<double> lats2(2*N);
     grib_get_gaussian_latitudes(N, lats2.data());
     for( int jlat=0; jlat<N; ++jlat )
@@ -62,6 +67,27 @@ void gaussian_latitudes_npole_spole(const int N, double lats[])
     lats[end-jlat] = lats[jlat];
 }
 
+
+namespace {
+static const double rad_to_deg = 180.*M_1_PI;
+}
+
+void predict_gaussian_colatitudes_hemisphere(const int N, double colat[])
+{
+  double z;
+  for( int i=0; i<N; ++i )
+  {
+    z = (4.*(i+1.)-1.)*M_PI/(4.*2.*N+2.);
+    colat[i] = ( z+1./(tan(z)*(8.*(2.*N)*(2.*N))) ) * rad_to_deg;
+  }
+}
+
+void predict_gaussian_latitudes_hemisphere(const int N, double lats[])
+{
+  std::vector<double> colat(N);
+  predict_gaussian_colatitudes_hemisphere(N,colat.data());
+  colat_to_lat_hemisphere(N,colat.data(),lats,DEG);
+}
 //------------------------------------------------------------------------------------------------------
 
 } // namespace grids

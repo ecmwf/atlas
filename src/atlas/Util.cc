@@ -132,21 +132,4 @@ void colat_to_lat_hemisphere(const int N, const double colat[], double lats[], c
     lats[i]=pole-lats[i];
 }
 
-void predict_gaussian_colatitudes_hemisphere(const int N, double colat[])
-{
-  double z;
-  for( int i=0; i<N; ++i )
-  {
-    z = (4.*(i+1.)-1.)*M_PI/(4.*2.*N+2.);
-    colat[i] = ( z+1./(tan(z)*(8.*(2.*N)*(2.*N))) ) * rad_to_deg;
-  }
-}
-
-void predict_gaussian_latitudes_hemisphere(const int N, double lats[])
-{
-  std::vector<double> colat(N);
-  predict_gaussian_colatitudes_hemisphere(N,colat.data());
-  colat_to_lat_hemisphere(N,colat.data(),lats,DEG);
-}
-
 } // namespace atlas

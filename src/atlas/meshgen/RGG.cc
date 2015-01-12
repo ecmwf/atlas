@@ -15,6 +15,7 @@
 #include "eckit/memory/Factory.h"
 #include "eckit/memory/Builder.h"
 
+#include "atlas/grids/GaussianLatitudes.h"
 #include "atlas/meshgen/RGG.h"
 #include "atlas/Util.h"
 
@@ -24,7 +25,7 @@ namespace meshgen {
 RGG::RGG(const int N, const int lon[]) : grids::ReducedGrid()
 {
   std::vector<double> lat(N);
-  predict_gaussian_latitudes_hemisphere(N,lat.data());
+  grids::gaussian_latitudes_npole_equator(N,lat.data());
   setup_lat_hemisphere(N,lat.data(),lon,DEG);
 }
 
@@ -33,7 +34,7 @@ RGG::RGG(const size_t N, const long lon[])
   std::vector<double> lat(N);
   std::vector<int>    nlons(N);
   std::copy( lon, lon+N, nlons.begin() );
-  predict_gaussian_latitudes_hemisphere(N,lat.data());
+  grids::gaussian_latitudes_npole_equator(N,lat.data());
   setup_lat_hemisphere(N,lat.data(),nlons.data(),DEG);
 }
 
@@ -42,7 +43,7 @@ GG::GG(int nlon, int N)
 {
   std::vector<double> lat(N);
   std::vector<int>    nlons(N,nlon);
-  predict_gaussian_latitudes_hemisphere(N,lat.data());
+  grids::gaussian_latitudes_npole_equator(N,lat.data());
   setup_lat_hemisphere(N,lat.data(),nlons.data(),DEG);
 }
 

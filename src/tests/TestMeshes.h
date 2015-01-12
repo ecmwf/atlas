@@ -9,6 +9,7 @@
  */
 
 #include "atlas/atlas_config.h"
+#include "atlas/grids/GaussianLatitudes.h"
 #include "atlas/meshgen/RGG.h"
 #include "atlas/meshgen/RGGMeshGenerator.h"
 #include "atlas/Mesh.h"
@@ -27,9 +28,9 @@ public:
 
 TestGrid::TestGrid(int N, int lon[])
 {
-  std::vector<double> colat(N);
-  predict_gaussian_colatitudes_hemisphere(N,colat.data());
-  setup_colat_hemisphere(N,colat.data(),lon,DEG);
+  std::vector<double> lats(N);
+  grids::gaussian_latitudes_npole_equator(N,lats.data());
+  setup_lat_hemisphere(N,lats.data(),lon,DEG);
 }
 
 Mesh::Ptr generate_mesh( const ReducedGrid& rgg )
