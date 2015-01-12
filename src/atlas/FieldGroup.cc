@@ -33,21 +33,32 @@ void FieldGroup::add_field(Field& field)
 
 Field& FieldGroup::field(const std::string& name)
 {
-	if( has_field(name) )
-	{
-		return *fields_[ index_.at(name) ];
-	}
-	else
-	{
-		std::stringstream msg;
-		msg << "Could not find field \"" << name << "\" in fieldset \"" << name_ << "\"";
-		throw eckit::OutOfRange(msg.str(),Here());
-	}
+  if (!has_field(name))
+  {
+    const std::string msg("Could not find field \"" + name + "\" in fieldset \"" + name_ + "\"");
+    throw eckit::OutOfRange(msg,Here());
+  }
+  return *fields_[ index_.at(name) ];
 }
 
 Field& FieldGroup::field(size_t idx)
 {
-	return *fields_[ idx ];
+  return *fields_[ idx ];
+}
+
+const Field& FieldGroup::field(const std::string& name) const
+{
+  if (!has_field(name))
+  {
+    const std::string msg("Could not find field \"" + name + "\" in fieldset \"" + name_ + "\"");
+    throw eckit::OutOfRange(msg,Here());
+  }
+  return *fields_[ index_.at(name) ];
+}
+
+const Field& FieldGroup::field(size_t idx) const
+{
+  return *fields_[ idx ];
 }
 
 //------------------------------------------------------------------------------------------------------

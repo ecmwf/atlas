@@ -75,6 +75,8 @@ mpl/MPL.h
 list( APPEND atlas_io_srcs
 io/Gmsh.h
 io/Gmsh.cc
+io/SimpleText.h
+io/SimpleText.cc
 # to be abstracted into a plugin
 io/Grib.cc
 io/Grib.h
