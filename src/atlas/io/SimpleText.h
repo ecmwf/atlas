@@ -12,10 +12,11 @@
 #define SimpleText_h
 
 #include <string>
+#include <vector>
 
 
 namespace atlas {
-class Mesh;
+namespace grids { class Unstructured; }
 class FieldGroup;
 class Field;
 namespace io {
@@ -25,33 +26,53 @@ class SimpleText {
 public:
 
   /**
-   * @brief Read SimpleText file
+   * @brief Read SimpleText file into a Grid
    * @param file_path input file path
-   * @param mesh data structure pointer to reuse, allocates new data structure if NULL (default)
-   * @return mesh data structure pointer
+   * @param Grid data structure pointer to use
+   * @return Grid data structure pointer
    */
-  static Mesh* read(const std::string& file_path, Mesh* mesh=NULL);
+  static grids::Unstructured* read(const std::string& file_path);
 
   /**
-   * @brief Write SimpleText file
+   * @brief Write Grid to SimpleText file (overwrites possibly existing file)
    * @param file_path output file path
-   * @param mesh mesh data structure
+   * @param grid Grid data structure
    */
-  void write(const std::string& file_path, const Mesh& mesh) const;
+  static void write(const std::string& file_path, const grids::Unstructured& grid);
 
   /**
    * @brief Write FieldGroup to SimpleText file (overwrites possibly existing file)
    * @param file_path output file path
    * @param fieldset FieldGroup data structure
    */
-  void write(const std::string& file_path, const FieldGroup& fieldset) const;
+  static void write(const std::string& file_path, const FieldGroup& fieldset);
 
   /**
    * @brief Write Field to SimpleText file (overwrites possibly existing file)
    * @param file_path output file path
    * @param field Field data structure
    */
-  void write(const std::string& file_path, const Field& field) const;
+  static void write(const std::string& file_path, const Field& field);
+
+  /**
+   * @brief
+   * @param
+   * @param field Field data structure
+   */
+
+  /**
+   * @brief Write lan/lon to SimpleText file (overwrites possibly existing file)
+   * @param file_path output file path
+   * @param npnt number of points in unstructured grid
+   * @param lon array pointer containing longitude (continuous, length npnt)
+   * @param lat array pointer containing latitude (continuous, length npnt)
+   * @param nfld number of fields (default none)
+   * @param afields array (of length nfld) of arrays (of length nfld), containing (continuous) fields to write
+   */
+  static void write(
+      const std::string& file_path,
+      const int npnt, const double*& lon, const double*& lat,
+      const int nfld=0, const double** afields=NULL );
 
 };
 
@@ -59,18 +80,15 @@ public:
 // C wrapper interfaces to C++ routines
 extern "C"
 {
-  SimpleText* atlas__simpletext__new ();
-  void        atlas__simpletext__delete        (SimpleText* This);
-  Mesh*       atlas__simpletext__read          (SimpleText* This, char* file_path);
-  void        atlas__simpletext__write         (SimpleText* This, char* file_path, Mesh* mesh);
-  Mesh*       atlas__read_simpletext           (char* file_path);
-  void        atlas__write_simpletext_mesh     (char* file_path, Mesh* mesh);
-  void        atlas__write_simpletext_fieldset (char* file_path, FieldGroup* fieldset);
-  void        atlas__write_simpletext_field    (char* file_path, Field* field);
+  SimpleText*          atlas__simpletext__new ();
+  void                 atlas__simpletext__delete        (SimpleText* This);
+  grids::Unstructured* atlas__simpletext__read          (SimpleText* This, char* file_path);
+  grids::Unstructured* atlas__read_simpletext           (char* file_path);
+  void                 atlas__write_simpletext_fieldset (char* file_path, FieldGroup* fieldset);
+  void                 atlas__write_simpletext_field    (char* file_path, Field* field);
 }
 
 
 } // namespace io
 } // namespace atlas
-
 #endif // SimpleText_h
