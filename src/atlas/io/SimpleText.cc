@@ -52,8 +52,6 @@ Mesh* SimpleText::read(const std::string& file_path, Mesh *mesh)
 {
   if (mesh==NULL)
     mesh = new Mesh();
-  ASSERT(mesh);
-  Mesh& m(*mesh);
 
   std::ifstream file(file_path.c_str());
   if (!file.is_open())
@@ -62,26 +60,23 @@ Mesh* SimpleText::read(const std::string& file_path, Mesh *mesh)
   int nb_nodes;
   file >> nb_nodes;
 
-  std::vector< int > extents(2);
-  extents[0] = nb_nodes;
-  extents[1] = Field::UNDEF_VARS;
+  if (!mesh->has_function_space("nodes")) {
+    std::vector< int > shape(2);
+    shape[0] = nb_nodes;
+    shape[1] = Field::UNDEF_VARS;
+    mesh->create_function_space("nodes","Lagrange_P0",shape)
+        .metadata().set("type",static_cast< int >(Entity::NODES));
+  }
 
-  if( m.has_function_space("nodes") &&
-      m.function_space("nodes").shape(0)!= nb_nodes ) {
+  if (mesh->function_space("nodes").shape(0) != nb_nodes) {
     throw Exception("existing nodes function space has incompatible number of nodes",Here());
   }
-  else
-  {
-    m.create_function_space( "nodes", "Lagrange_P0", extents )
-        .metadata().set("type",static_cast<int>(Entity::NODES));
-  }
 
-  FunctionSpace& nodes = m.function_space("nodes");
+  FunctionSpace& nodes = mesh->function_space("nodes");
+  if (!nodes.has_field("coordinates"))
+    nodes.create_field< double >("coordinates",3);
 
-  if( ! nodes.has_field("coordinates") )
-    nodes.create_field<double>("coordinates",3);
-
-  ArrayView< double, 2 > coords( nodes.field("coordinates") );
+  ArrayView< double, 2 > coords(nodes.field("coordinates"));
   for (size_t n=0; n<nb_nodes; ++n)
     file >> coords(n,XX) >> coords(n,YY);
 
@@ -100,9 +95,9 @@ void SimpleText::write(const std::string& file_path, const Mesh &mesh) const
   ArrayView< double, 2 > coords( nodes.field( "coordinates" ) );
   const int nb_nodes = nodes.shape(0);
 
-  file << nb_nodes << "\n";
+  file << nb_nodes << '\n';
   for( size_t n = 0; n < nb_nodes; ++n )
-    file << coords(n,XX) << " " << coords(n,YY) << "\n";
+    file << coords(n,XX) << ' ' << coords(n,YY) << '\n';
 
   file << std::flush;
   file.close();
@@ -117,11 +112,16 @@ void SimpleText::write(const std::string& file_path, const FieldGroup &fieldset)
 
   for (int i=0; i<fieldset.size(); ++i) {
     const Field& field = fieldset.field(i);
-    if (field.function_space().metadata().get<int>("type") == Entity::NODES) {
-      if      (field.data_type() == "int32" ) { write_field_nodes< int    >(*this,field,file); }
-      else if (field.data_type() == "int64" ) { write_field_nodes< long   >(*this,field,file); }
-      else if (field.data_type() == "real32") { write_field_nodes< float  >(*this,field,file); }
-      else if (field.data_type() == "real64") { write_field_nodes< double >(*this,field,file); }
+    if (field.function_space().metadata().has< int >("type") &&
+        field.function_space().metadata().get< int >("type") == Entity::NODES) {
+      field.data_type()=="int32"?  write_field_nodes< int    >(*this,field,file) :
+      field.data_type()=="int64"?  write_field_nodes< long   >(*this,field,file) :
+      field.data_type()=="real32"? write_field_nodes< float  >(*this,field,file) :
+      field.data_type()=="real64"? write_field_nodes< double >(*this,field,file) :
+                                   void();
+    }
+    else {
+      throw Exception("function_space "+field.function_space().name()+" has no type.. ?");
     }
     file << std::flush;
   }
@@ -136,16 +136,16 @@ void SimpleText::write(const std::string& file_path, const Field &field) const
   Log::info() << "writing field " << field.name() << " to file " << path << std::endl;
   std::ofstream file(path.c_str());
 
-  FunctionSpace& function_space = field.function_space();
-  if (function_space.metadata().has< int >("type") &&
-      function_space.metadata().get< int >("type") == Entity::NODES) {
-    if      (field.data_type() == "int32" ) { write_field_nodes< int    >(*this,field,file); }
-    else if (field.data_type() == "int64" ) { write_field_nodes< long   >(*this,field,file); }
-    else if (field.data_type() == "real32") { write_field_nodes< float  >(*this,field,file); }
-    else if (field.data_type() == "real64") { write_field_nodes< double >(*this,field,file); }
+  if (field.function_space().metadata().has< int >("type") &&
+      field.function_space().metadata().get< int >("type") == Entity::NODES) {
+    field.data_type()=="int32"?  write_field_nodes< int    >(*this,field,file) :
+    field.data_type()=="int64"?  write_field_nodes< long   >(*this,field,file) :
+    field.data_type()=="real32"? write_field_nodes< float  >(*this,field,file) :
+    field.data_type()=="real64"? write_field_nodes< double >(*this,field,file) :
+                                 void();
   }
   else {
-    throw Exception("function_space "+function_space.name()+" has no type.. ?");
+    throw Exception("function_space "+field.function_space().name()+" has no type.. ?");
   }
 
   file << std::flush;
