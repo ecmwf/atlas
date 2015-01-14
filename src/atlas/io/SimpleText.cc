@@ -10,7 +10,6 @@
 
 
 #include <fstream>
-#include <iterator>
 #include <algorithm>
 
 #include "eckit/exception/Exceptions.h"
@@ -37,12 +36,27 @@ namespace io {
 namespace {
 
 
+// versioning of input/output files to (maybe) help in the future
+static const std::string SIMPLETEXT_VERSION("ST/1");
+
+
 template< typename DATA_TYPE >
 void write_field_nodes(const Field& field, std::ostream& out)
 {
 #if 0
   ArrayView< DATA_TYPE > data(field);
 #endif
+}
+
+
+void sanitize_field_name(std::string& s)
+{
+  // replace non-printable characters, then trim right & left
+  std::replace_if(s.begin(), s.end(), ::isspace, '_');
+  s.erase(s.find_last_not_of('_')+1);
+  s.erase(0, s.find_first_not_of('_'));
+  if (!s.length())
+    s = "_";
 }
 
 
@@ -60,26 +74,20 @@ grids::Unstructured* SimpleText::read(const std::string& file_path)
   if (!file.is_open())
     throw eckit::CantOpenFile(file_path);
 
-  int nb_nodes;
-  file >> nb_nodes;
+  size_t
+      nb_nodes,
+      nb_fields;
+  file >> nb_nodes >> nb_fields;
+
+  std::vector< int > shape(2);
+  shape[0] = nb_nodes;
+  shape[1] = Field::UNDEF_VARS;
+  grid->mesh().create_function_space("nodes","Lagrange_P0",shape).metadata().set("type",static_cast< int >(Entity::NODES));
+
+  FunctionSpace& nodes = grid->mesh().function_space("nodes");
+  nodes.create_field< double >("coordinates",3);
 
 #if 0
-  if (!grid->has_function_space("nodes")) {
-    std::vector< int > shape(2);
-    shape[0] = nb_nodes;
-    shape[1] = Field::UNDEF_VARS;
-    grid->create_function_space("nodes","Lagrange_P0",shape)
-        .metadata().set("type",static_cast< int >(Entity::NODES));
-  }
-
-  if (grid->function_space("nodes").shape(0) != nb_nodes) {
-    throw Exception("existing nodes function space has incompatible number of nodes",Here());
-  }
-
-  FunctionSpace& nodes = grid->function_space("nodes");
-  if (!nodes.has_field("coordinates"))
-    nodes.create_field< double >("coordinates",3);
-
   ArrayView< double, 2 > coords(nodes.field("coordinates"));
   for (size_t n=0; n<nb_nodes; ++n)
     file >> coords(n,XX) >> coords(n,YY);
@@ -147,34 +155,34 @@ void SimpleText::write(const std::string& file_path, const Field &field)
 
 void SimpleText::write(
     const std::string& file_path,
-    const int npnt, const double*& lon, const double*& lat,
-    const int nfld, const double** afields )
+    const int& nb_nodes, const double*& lon, const double*& lat,
+    const int& nb_fields, const double** afvalues, const char** afnames )
 {
   const size_t
-      Npnt (npnt>=0?         npnt : 0),
-      Nfld (nfld>=0 && Npnt? nfld : 0);
-  if (!Npnt)
-    throw eckit::BadParameter("SimpleText::write: invalid number of points (npnt)");
+      Nnod (nb_nodes>0?  nb_nodes  : 0),
+      Nfld (nb_fields>0? nb_fields : 0);
+  if (!Nnod)
+    throw eckit::BadParameter("SimpleText::write: invalid number of points (n)");
 
   std::ofstream file(file_path.c_str());
   if (!file.is_open())
     throw eckit::CantOpenFile(file_path);
 
   // header
-  file << Npnt << ' ' << Nfld << '\n';
+  file << SIMPLETEXT_VERSION << ' ' << Nnod << ' ' << Nfld << "\n"
+          "lon\tlat";
+  for (size_t j=0; j<Nfld; ++j) {
+    std::string fname(afnames[j]);
+    sanitize_field_name(fname);
+    file << '\t' << fname;
+  }
+  file << '\n';
 
   // data
-  for (size_t i=0; i<Npnt; ++i) {
-    file << lon[i] << '\t' << lon[i];
-#if 0
+  for (size_t i=0; i<Nnod; ++i) {
+    file << lon[i] << '\t' << lat[i];
     for (size_t j=0; j<Nfld; ++j)
-      file << '\t' << afields[i][j];
-#else
-  std::copy(
-    afields[i],
-    afields[i] + sizeof(afields[i])/sizeof(double),
-    std::ostream_iterator< double >(file,"\t") );
-#endif
+      file << '\t' << afvalues[j][i];
     file << '\n';
   }
 

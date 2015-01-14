@@ -55,24 +55,19 @@ public:
   static void write(const std::string& file_path, const Field& field);
 
   /**
-   * @brief
-   * @param
-   * @param field Field data structure
-   */
-
-  /**
-   * @brief Write lan/lon to SimpleText file (overwrites possibly existing file)
+   * @brief Write lan/lon and fields to SimpleText file (overwrites possibly existing file)
    * @param file_path output file path
-   * @param npnt number of points in unstructured grid
-   * @param lon array pointer containing longitude (continuous, length npnt)
-   * @param lat array pointer containing latitude (continuous, length npnt)
-   * @param nfld number of fields (default none)
-   * @param afields array (of length nfld) of arrays (of length nfld), containing (continuous) fields to write
+   * @param nb_nodes number of points in unstructured grid
+   * @param lon array (of length nb_nodes) pointer containing longitude (contiguous)
+   * @param lat array (of length nb_nodes) pointer containing latitude (contiguous)
+   * @param nb_fields number of fields (default none)
+   * @param afvalues array (of length nb_fields) of arrays (of length nb_nodes), containing contiguous field values
+   * @param afnames array (of length nb_fields) of field names
    */
   static void write(
       const std::string& file_path,
-      const int npnt, const double*& lon, const double*& lat,
-      const int nfld=0, const double** afields=NULL );
+      const int& nb_nodes, const double*& lon, const double*& lat,
+      const int& nb_fields=0, const double** afvalues=NULL , const char** afnames=NULL );
 
 };
 
