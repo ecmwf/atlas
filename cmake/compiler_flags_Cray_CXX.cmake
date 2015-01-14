@@ -12,14 +12,6 @@
 set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -emf -rmoid -lhugetlbfs")
 set( CMAKE_CXX_FLAGS     "${CMAKE_CXX_FLAGS} -lhugetlbfs")
 
-if( HAVE_OMP )
-  set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -homp")
-  set( CMAKE_CXX_FLAGS     "${CMAKE_CXX_FLAGS} -homp")
-else( )
-  set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -hnoomp")
-  set( CMAKE_CXX_FLAGS     "${CMAKE_CXX_FLAGS} -hnoomp")
-endif( )
-
 ####################################################################
 # RELEASE FLAGS
 ####################################################################

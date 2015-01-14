@@ -12,11 +12,6 @@ include( ecbuild_check_fortran_source )
 # FLAGS COMMON TO ALL BUILD TYPES
 ####################################################################
 
-if( HAVE_OMP )
-  cmake_add_fortran_flags( "-openmp" )
-else( )
-  cmake_add_fortran_flags( "-openmp-stubs" )
-endif( )
 
 ####################################################################
 # RELEASE FLAGS
