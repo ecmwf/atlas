@@ -10,6 +10,7 @@
 
 
 #include <fstream>
+#include <sstream>
 #include <algorithm>
 
 #include "eckit/exception/Exceptions.h"
@@ -18,7 +19,6 @@
 #include "atlas/Field.h"
 #include "atlas/FieldGroup.h"
 #include "atlas/FunctionSpace.h"
-#include "atlas/Grid.h"
 #include "atlas/grids/Unstructured.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/io/SimpleText.h"
@@ -33,11 +33,10 @@ namespace atlas {
 namespace io {
 
 
+// ------------------------------------------------------------------
+
+
 namespace {
-
-
-// versioning of input/output files to (maybe) help in the future
-static const std::string SIMPLETEXT_VERSION("ST/1");
 
 
 template< typename DATA_TYPE >
@@ -63,37 +62,106 @@ void sanitize_field_name(std::string& s)
 } // end anonymous namespace
 
 
+// ------------------------------------------------------------------
+
+
 grids::Unstructured* SimpleText::read(const std::string& file_path)
 {
-  std::vector< Grid::Point >* pts;
+  std::vector< Grid::Point >* pts = 0;
+  std::vector< std::string > fnames;
+  std::vector< std::vector< double > > fvalues;
+
+  {
+    LocalPathName path(file_path);
+    std::ifstream file(path.c_str());
+    if (!file.is_open())
+      throw eckit::CantOpenFile(path);
+
+
+    // read header section
+    // (validates nb_pts, nb_columns, nb_fields, and fnames)
+
+    std::istringstream iss;
+    std::ostringstream oss;
+    std::string line;
+    size_t
+        nb_pts,
+        nb_columns,
+        i,
+        j;
+
+    std::getline(file,line);
+    iss.str(line);
+    iss >> nb_pts >> nb_columns;
+    const size_t nb_fld = (nb_columns>2? nb_columns-2 : 0);
+
+    Log::info() << "SimpleText::read: nb_pts/nb_columns: " << nb_pts << " / " << nb_columns << std::endl;
+    if (nb_pts==0)
+      throw eckit::BadValue("SimpleText::read: invalid number of points (nb_pts==0)");
+    if (nb_columns<2)
+      throw eckit::BadValue("SimpleText::read: invalid number of columns (nb_columns<2)");
+
+    std::getline(file,line);
+    iss.str(line);
+    iss >> line >> line;  // (skip "lat lon")
+    if (nb_fld)
+      fnames.resize(nb_fld);
+    for (j=0; iss && j<nb_fld; ++j)
+      iss >> fnames[j];
+    if (j!=nb_fld) {
+      oss << "invalid number of fields in header section, "
+             "read " << j << " fields, expected " << nb_fld << ".";
+      throw eckit::BadValue("SimpleText::read: "+oss.str());
+    }
+
+
+    // read data section
+    // (grid is created after reading coordinates because the internal bounding box needs them)
+
+    pts = new std::vector< Grid::Point >(nb_pts);
+    if (nb_fld)
+      fvalues.assign(nb_fld,std::vector< double >(nb_pts,0.));
+
+    for (i=0; file && i<nb_pts; ++i) {
+      std::getline(file,line);
+      iss.str(line);
+
+      double lon, lat;
+      iss >> lon >> lat;
+      for (j=0; iss && j<nb_fld; ++j)
+        iss >> fvalues[j][i];
+      if (j<nb_fld) {
+        oss << "invalid number of fields in data section, "
+               "on line " << i << ", read " << j << " fields, expected " << nb_fld << ".";
+        throw eckit::BadValue("SimpleText::read: "+oss.str());
+      }
+
+      pts->operator[](i).assign(lon,lat);
+    }
+    if (i<nb_pts) {
+      oss << "invalid number of lines in data section, "
+             "read " << i << " lines, expected " << nb_pts << ".";
+      throw eckit::BadValue("SimpleText::read: "+oss.str());
+    }
+
+
+    file.close();
+  }
+
+
+  // build unstructured grid, to return
+  // (copies read-in data section into scalar fields)
 
   grids::Unstructured* grid = new grids::Unstructured(pts);
   ASSERT(grid);
+  Mesh& m = grid->mesh();  
+  for (size_t j=0; j<fvalues.size(); ++j) {
+    Field& f = m.function_space("nodes").create_field< double >(fnames[j],1);
+    ArrayView< double, 1 > field(f);
+    for (size_t i=0; i<grid->npts(); ++i)
+      field(i) = fvalues[j][i];
+  }
 
-  std::ifstream file(file_path.c_str());
-  if (!file.is_open())
-    throw eckit::CantOpenFile(file_path);
-
-  size_t
-      nb_nodes,
-      nb_fields;
-  file >> nb_nodes >> nb_fields;
-
-  std::vector< int > shape(2);
-  shape[0] = nb_nodes;
-  shape[1] = Field::UNDEF_VARS;
-  grid->mesh().create_function_space("nodes","Lagrange_P0",shape).metadata().set("type",static_cast< int >(Entity::NODES));
-
-  FunctionSpace& nodes = grid->mesh().function_space("nodes");
-  nodes.create_field< double >("coordinates",3);
-
-#if 0
-  ArrayView< double, 2 > coords(nodes.field("coordinates"));
-  for (size_t n=0; n<nb_nodes; ++n)
-    file >> coords(n,XX) >> coords(n,YY);
-#endif
-
-  file.close();
   return grid;
 }
 
@@ -107,7 +175,7 @@ void SimpleText::write(const std::string &file_path, const grids::Unstructured &
 void SimpleText::write(const std::string& file_path, const FieldGroup &fieldset)
 {
   LocalPathName path(file_path);
-  Log::info() << "writing FieldGroup " << fieldset.name() << " to file " << path << std::endl;
+  Log::info() << "SimpleText::write: FieldGroup " << fieldset.name() << " to file " << path << std::endl;
   std::ofstream file(path.c_str());
 
   for (int i=0; i<fieldset.size(); ++i) {
@@ -121,7 +189,7 @@ void SimpleText::write(const std::string& file_path, const FieldGroup &fieldset)
                                    void();
     }
     else {
-      throw eckit::Exception("function_space "+field.function_space().name()+" has no type.. ?");
+      throw eckit::Exception("SimpleText::write: function_space "+field.function_space().name()+" has no type.. ?");
     }
     file << std::flush;
   }
@@ -133,7 +201,7 @@ void SimpleText::write(const std::string& file_path, const FieldGroup &fieldset)
 void SimpleText::write(const std::string& file_path, const Field &field)
 {
   LocalPathName path(file_path);
-  Log::info() << "writing field " << field.name() << " to file " << path << std::endl;
+  Log::info() << "SimpleText::write: Field " << field.name() << " to file " << path << std::endl;
   std::ofstream file(path.c_str());
 
   if (field.function_space().metadata().has< int >("type") &&
@@ -145,7 +213,7 @@ void SimpleText::write(const std::string& file_path, const Field &field)
                                  void();
   }
   else {
-    throw eckit::Exception("function_space "+field.function_space().name()+" has no type.. ?");
+    throw eckit::Exception("SimpleText::write: function_space "+field.function_space().name()+" has no type.?");
   }
 
   file << std::flush;
@@ -155,21 +223,23 @@ void SimpleText::write(const std::string& file_path, const Field &field)
 
 void SimpleText::write(
     const std::string& file_path,
-    const int& nb_nodes, const double*& lon, const double*& lat,
-    const int& nb_fields, const double** afvalues, const char** afnames )
+    const int& nb_pts, const double* lon, const double* lat,
+    const int& nb_fld, const double** afvalues, const char** afnames )
 {
-  const size_t
-      Nnod (nb_nodes>0?  nb_nodes  : 0),
-      Nfld (nb_fields>0? nb_fields : 0);
-  if (!Nnod)
-    throw eckit::BadParameter("SimpleText::write: invalid number of points (n)");
+  LocalPathName path(file_path);
 
-  std::ofstream file(file_path.c_str());
+  const size_t
+      Npts (nb_pts>0? nb_pts : 0),
+      Nfld (nb_fld>0? nb_fld : 0);
+  if (!Npts)
+    throw eckit::BadParameter("SimpleText::write: invalid number of points (nb_nodes)");
+
+  std::ofstream file(path.c_str());
   if (!file.is_open())
-    throw eckit::CantOpenFile(file_path);
+    throw eckit::CantOpenFile(path);
 
   // header
-  file << SIMPLETEXT_VERSION << ' ' << Nnod << ' ' << Nfld << "\n"
+  file << Npts << ' ' << (2+Nfld) << "\n"
           "lon\tlat";
   for (size_t j=0; j<Nfld; ++j) {
     std::string fname(afnames[j]);
@@ -179,7 +249,7 @@ void SimpleText::write(
   file << '\n';
 
   // data
-  for (size_t i=0; i<Nnod; ++i) {
+  for (size_t i=0; i<Npts; ++i) {
     file << lon[i] << '\t' << lat[i];
     for (size_t j=0; j<Nfld; ++j)
       file << '\t' << afvalues[j][i];

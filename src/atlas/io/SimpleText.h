@@ -57,17 +57,17 @@ public:
   /**
    * @brief Write lan/lon and fields to SimpleText file (overwrites possibly existing file)
    * @param file_path output file path
-   * @param nb_nodes number of points in unstructured grid
-   * @param lon array (of length nb_nodes) pointer containing longitude (contiguous)
-   * @param lat array (of length nb_nodes) pointer containing latitude (contiguous)
-   * @param nb_fields number of fields (default none)
-   * @param afvalues array (of length nb_fields) of arrays (of length nb_nodes), containing contiguous field values
-   * @param afnames array (of length nb_fields) of field names
+   * @param nb_pts number of points in unstructured grid
+   * @param lon array (of length nb_pts) pointer containing longitude
+   * @param lat array (of length nb_pts) pointer containing latitude
+   * @param nb_fld number of fields (default none)
+   * @param afvalues array (of length nb_fld) of arrays (of length nb_pts), containing field values
+   * @param afnames array (of length nb_fld) of field names
    */
   static void write(
       const std::string& file_path,
-      const int& nb_nodes, const double*& lon, const double*& lat,
-      const int& nb_fields=0, const double** afvalues=NULL , const char** afnames=NULL );
+      const int& nb_pts, const double* lon, const double* lat,
+      const int& nb_fld=0, const double** afvalues=NULL , const char** afnames=NULL );
 
 };
 
