@@ -109,6 +109,12 @@ ecbuild_add_test( TARGET atlas_test_grids
   LIBS      atlas
 )
 
+ecbuild_add_test( TARGET atlas_test_simpletext
+  BOOST
+  SOURCES   test_simpletext.cc
+  LIBS      atlas
+)
+
 
 
 add_subdirectory( grid )

@@ -29,6 +29,9 @@ using eckit::LocalPathName;
 using eckit::Log;
 
 
+//NOTE: this class only supports reading/writing doubles
+
+
 namespace atlas {
 namespace io {
 
@@ -71,6 +74,9 @@ grids::Unstructured* SimpleText::read(const std::string& file_path)
   std::vector< std::string > fnames;
   std::vector< std::vector< double > > fvalues;
 
+  std::ostringstream oss;
+  oss << "SimpleText::read: ";
+
   {
     LocalPathName path(file_path);
     std::ifstream file(path.c_str());
@@ -81,18 +87,15 @@ grids::Unstructured* SimpleText::read(const std::string& file_path)
     // read header section
     // (validates nb_pts, nb_columns, nb_fields, and fnames)
 
-    std::istringstream iss;
-    std::ostringstream oss;
-    std::string line;
+    std::string discard;
     size_t
         nb_pts,
         nb_columns,
         i,
         j;
 
-    std::getline(file,line);
-    iss.str(line);
-    iss >> nb_pts >> nb_columns;
+    file >> nb_pts >> nb_columns;
+    std::getline(file,discard);
     const size_t nb_fld = (nb_columns>2? nb_columns-2 : 0);
 
     Log::info() << "SimpleText::read: nb_pts/nb_columns: " << nb_pts << " / " << nb_columns << std::endl;
@@ -101,17 +104,17 @@ grids::Unstructured* SimpleText::read(const std::string& file_path)
     if (nb_columns<2)
       throw eckit::BadValue("SimpleText::read: invalid number of columns (nb_columns<2)");
 
-    std::getline(file,line);
-    iss.str(line);
-    iss >> line >> line;  // (skip "lat lon")
+    file >> discard >> discard;  // (skip "lat lon")
     if (nb_fld)
       fnames.resize(nb_fld);
-    for (j=0; iss && j<nb_fld; ++j)
-      iss >> fnames[j];
+    for (j=0; file && j<nb_fld; ++j)
+      file >> fnames[j];
+    std::getline(file,discard);// (discard until end of line)
+
     if (j!=nb_fld) {
       oss << "invalid number of fields in header section, "
              "read " << j << " fields, expected " << nb_fld << ".";
-      throw eckit::BadValue("SimpleText::read: "+oss.str());
+      throw eckit::BadValue(oss.str());
     }
 
 
@@ -123,25 +126,25 @@ grids::Unstructured* SimpleText::read(const std::string& file_path)
       fvalues.assign(nb_fld,std::vector< double >(nb_pts,0.));
 
     for (i=0; file && i<nb_pts; ++i) {
-      std::getline(file,line);
-      iss.str(line);
-
       double lon, lat;
-      iss >> lon >> lat;
-      for (j=0; iss && j<nb_fld; ++j)
-        iss >> fvalues[j][i];
+
+      file >> lon >> lat;
+      pts->operator[](i).assign(lon,lat);
+
+      for (j=0; file && j<nb_fld; ++j)
+        file >> fvalues[j][i];
       if (j<nb_fld) {
         oss << "invalid number of fields in data section, "
                "on line " << i << ", read " << j << " fields, expected " << nb_fld << ".";
-        throw eckit::BadValue("SimpleText::read: "+oss.str());
+        throw eckit::BadValue(oss.str());
       }
 
-      pts->operator[](i).assign(lon,lat);
+      std::getline(file,discard);  // (discard until end of line)
     }
     if (i<nb_pts) {
       oss << "invalid number of lines in data section, "
              "read " << i << " lines, expected " << nb_pts << ".";
-      throw eckit::BadValue("SimpleText::read: "+oss.str());
+      throw eckit::BadValue(oss.str());
     }
 
 
@@ -233,13 +236,17 @@ void SimpleText::write(
       Nfld (nb_fld>0? nb_fld : 0);
   if (!Npts)
     throw eckit::BadParameter("SimpleText::write: invalid number of points (nb_nodes)");
+  if (!lon)
+    throw eckit::BadParameter("SimpleText::write: invalid array describing longitude (lon)");
+  if (!lat)
+    throw eckit::BadParameter("SimpleText::write: invalid array describing latitude (lat)");
 
   std::ofstream file(path.c_str());
   if (!file.is_open())
     throw eckit::CantOpenFile(path);
 
   // header
-  file << Npts << ' ' << (2+Nfld) << "\n"
+  file << Npts << '\t' << (2+Nfld) << "\n"
           "lon\tlat";
   for (size_t j=0; j<Nfld; ++j) {
     std::string fname(afnames[j]);
