@@ -410,7 +410,7 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
     int pn1 = node_part( ip1 );
     int pn2 = node_part( ip2 );
     if( pn1 == pn2 )
-      edge_part(jedge) == pn1;
+      edge_part(jedge) = pn1;
     else
     {
       if( edge_to_elem(jedge,2) < 0 ) // This is a edge at partition boundary
