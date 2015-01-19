@@ -233,6 +233,26 @@ void HaloExchange::pack_send_buffer( const DATA_TYPE field[],
       }
     }
     break;
+  case 4:
+    for( int p=0; p<sendcnt_; ++p)
+    {
+      const int pp = send_stride*sendmap_[p];
+      for( int i=0; i<var_shape[0]; ++i )
+      {
+        for( int j=0; j<var_shape[1]; ++j )
+        {
+          for( int k=0; k<var_shape[2]; ++k )
+          {
+           for( int l=0; l<var_shape[3]; ++l )
+           { 
+            send_buffer[ibuf++] =
+              field[ pp+i*var_strides[0]+j*var_strides[1]+k*var_strides[2]+l*var_strides[3]];
+           }
+          }
+        }
+      }
+    }
+    break;
   default:
     NOTIMP;
   }
@@ -297,6 +317,29 @@ void HaloExchange::unpack_recv_buffer( const DATA_TYPE recv_buffer[],
                 = recv_buffer[ibuf++];
             if( field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] ] != tmp )
               field_changed = true;
+          }
+        }
+      }
+    }
+    break;
+  case 4:
+    for( int p=0; p<recvcnt_; ++p)
+    {
+      const int pp = recv_stride*recvmap_[p];
+      for( int i=0; i<var_shape[0]; ++i )
+      {
+        for( int j=0; j<var_shape[1]; ++j )
+        {
+          for( int k=0; k<var_shape[2]; ++k )
+          {
+           for( int l=0; l<var_shape[3]; ++l )
+           {
+            tmp = field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] +l*var_strides[3] ];
+            field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] + l*var_strides[3] ]
+                = recv_buffer[ibuf++];
+            if( field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] +l*var_strides[3] ] != tmp )
+              field_changed = true;
+           }
           }
         }
       }
