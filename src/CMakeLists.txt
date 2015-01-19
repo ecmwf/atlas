@@ -14,4 +14,6 @@ add_subdirectory( apps )
 
 add_subdirectory( tests )
 
-add_subdirectory( sandbox )
+if( HAVE_SANDBOX )
+    add_subdirectory( sandbox )
+endif()

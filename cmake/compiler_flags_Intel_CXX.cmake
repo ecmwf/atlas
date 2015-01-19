@@ -10,11 +10,6 @@
 # FLAGS COMMON TO ALL BUILD TYPES
 ####################################################################
 
-if( HAVE_OMP )
-  set( CMAKE_CXX_FLAGS     "${CMAKE_CXX_FLAGS} -openmp")
-else( )
-  set( CMAKE_CXX_FLAGS     "${CMAKE_CXX_FLAGS} -openmp-stubs")
-endif( )
 
 ####################################################################
 # RELEASE FLAGS

@@ -12,11 +12,6 @@ include( ecbuild_check_cxx_source )
 # FLAGS COMMON TO ALL BUILD TYPES
 ####################################################################
 
-if( HAVE_OMP )
-  cmake_add_cxx_flags( "-fopenmp" )
-else( )
-  cmake_add_cxx_flags( "-fno-openmp" )
-endif( )
 
 ####################################################################
 # RELEASE FLAGS

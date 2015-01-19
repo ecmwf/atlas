@@ -68,8 +68,11 @@ endif()
 ecbuild_add_option(
 	FEATURE OMP
 	DESCRIPTION "support for OpenMP threaded parallelism" )
-
-# !! TODO !! add test for OpenMP
+if( ENABLE_OMP )
+    ecbuild_enable_omp()
+else()
+    ecbuild_enable_ompstubs()
+endif()
 
 ### MPI ...
 
@@ -78,23 +81,10 @@ ecbuild_add_option( FEATURE MPI
 
 if( ENABLE_MPI )
 
-  ecbuild_find_mpi()
+  ecbuild_enable_mpi()
 
-  if( MPI_CXX_FOUND )
-	cmake_add_c_flags( " ${MPI_C_COMPILE_FLAGS}" )
-	cmake_add_cxx_flags( " ${MPI_CXX_COMPILE_FLAGS}" )
-	if( MPI_CXX_INCLUDE_PATH )
-	  include_directories( "${MPI_CXX_INCLUDE_PATH}" )
-	endif()
-  else()
+  if( NOT MPI_CXX_FOUND )
     set( HAVE_MPI 0 )
-  endif()
-
-  if( MPI_Fortran_FOUND )
-    message( STATUS " MPI_Fortran_INCLUDE_PATH ${MPI_Fortran_INCLUDE_PATH}" )
-    message( STATUS " MPI_Fortran_LIBRARIES ${MPI_Fortran_LIBRARIES}" )
-    add_definitions(${MPI_Fortran_COMPILE_FLAGS})
-    include_directories(${MPI_Fortran_INCLUDE_PATH})
   endif()
 
 endif()
@@ -106,7 +96,7 @@ ecbuild_add_option(
 	DESCRIPTION "Support for trasnformations between SH and Grid space"
 	REQUIRED_PACKAGES "PROJECT trans_api VERSION 0.1" )
 
-### tesselation
+### tesselation ...
 
 ecbuild_add_option(
 	FEATURE TESSELATION
@@ -123,23 +113,23 @@ if( HAVE_TESSELATION )
 	list( APPEND CGAL_INCLUDE_DIRS ${Boost_INCLUDE_DIRS} )
 	list( APPEND CGAL_LIBRARIES ${CGAL_LIBRARY} ${CGAL_3RD_PARTY_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} )
 
-	list( APPEND ATLAS_TPLS CGAL )
-
 endif()
 
 ### Type for Global indices and unique point id's
+
 set( ATLAS_BITS_GLOBAL 64 )
 
 ### sandbox
 
 ecbuild_add_option( FEATURE SANDBOX
+                    DEFAULT OFF
                     DESCRIPTION "build the sandbox stuff" )
 
 ############################################################################################
 # export package info
 
 set( ATLAS_PACKAGES  "" )
-set( ATLAS_TPLS      eckit )
+list( APPEND ATLAS_TPLS      eckit )
 
 set( ATLAS_INCLUDE_DIRS   ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src )
 
@@ -159,6 +149,10 @@ if( HAVE_TRANS )
 	list( APPEND ATLAS_PACKAGES ATLAS_TRANS )
 endif()
 
+if( HAVE_TESSELATION )
+  list( APPEND ATLAS_TPLS CGAL )
+endif()
+
 get_directory_property( ATLAS_DEFINITIONS COMPILE_DEFINITIONS )
 
 foreach( _tpl ${ATLAS_TPLS} )
@@ -174,8 +168,6 @@ endforeach()
 include( atlas_compiler_flags )
 
 include_directories( ${ATLAS_INCLUDE_DIRS} ${ATLAS_EXTRA_INCLUDE_DIRS} )
-
-debug_var( ATLAS_INCLUDE_DIRS )
 
 add_subdirectory( src )
 

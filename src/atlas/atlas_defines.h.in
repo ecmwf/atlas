@@ -3,7 +3,10 @@
 
 #cmakedefine CGAL_FOUND
 
-#cmakedefine HAVE_OMP
+#cmakedefine OMP_CXX_FOUND
+#ifdef OMP_CXX_FOUND
+#define HAVE_OMP
+#endif
 #cmakedefine HAVE_MPI
 
 #cmakedefine HAVE_TESSELATION

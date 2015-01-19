@@ -15,12 +15,6 @@ include( ecbuild_check_fortran_source )
 cmake_add_fortran_flags( "-emf -rmoid" )
 cmake_add_fortran_flags( "-lhugetlbfs" )
 
-if( HAVE_OMP )
-  cmake_add_fortran_flags( "-homp")
-else( )
-  cmake_add_fortran_flags( "-hnoomp")
-endif( )
-
 ####################################################################
 # RELEASE FLAGS
 ####################################################################
