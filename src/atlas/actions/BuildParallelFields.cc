@@ -25,6 +25,7 @@
 #include "atlas/util/Array.h"
 #include "atlas/Util.h"
 #include "atlas/mpi/mpi.h"
+#include "atlas/mpi/collectives.h"
 #include "atlas/mpl/GatherScatter.h"
 
 //#define DEBUGGING_PARFIELDS

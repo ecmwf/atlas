@@ -16,6 +16,7 @@
 #include <cmath>
 #include <limits>
 
+#include "atlas/mpi/collectives.h"
 #include "atlas/atlas.h"
 #include "atlas/Mesh.h"
 #include "atlas/FunctionSpace.h"

@@ -13,6 +13,7 @@
 #include <iostream>
 #include <cmath>
 
+#include "atlas/mpi/collectives.h"
 #include "atlas/Mesh.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/actions/BuildPeriodicBoundaries.h"
