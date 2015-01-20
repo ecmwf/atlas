@@ -82,7 +82,7 @@ void build_periodic_boundaries( Mesh& mesh )
     int sendcnt = slave_nodes.size();
     std::vector< int > recvcounts( mpi::size() );
     MPL_CHECK_RESULT( MPI_Allgather(&sendcnt,           1, MPI_INT,
-                                     recvcounts.data(), 1, MPI_INT, MPI_COMM_WORLD ) );
+                                     recvcounts.data(), 1, MPI_INT, mpi::Comm::instance() ) );
 
     std::vector<int> recvdispls( mpi::size() );
     recvdispls[0] = 0;
@@ -97,7 +97,7 @@ void build_periodic_boundaries( Mesh& mesh )
     MPL_CHECK_RESULT( MPI_Allgatherv(
                       slave_nodes.data(), slave_nodes.size(), mpi::TYPE<int>(),
                       recvbuf.data(), recvcounts.data(), recvdispls.data(),
-                      mpi::TYPE<int>(), MPI_COMM_WORLD) );
+                      mpi::TYPE<int>(), mpi::Comm::instance()) );
 
 
     PeriodicTransform transform;

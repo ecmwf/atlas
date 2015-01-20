@@ -190,7 +190,7 @@ void renumber_nodes_glb_idx( FunctionSpace& nodes )
   std::vector<int> recvcounts(mpi::size());
   std::vector<int> recvdispls(mpi::size());
   MPL_CHECK_RESULT( MPI_Gather( &nb_nodes, 1, MPI_INT,
-                                recvcounts.data(), 1, MPI_INT, root, MPI_COMM_WORLD) );
+                                recvcounts.data(), 1, MPI_INT, root, mpi::Comm::instance()) );
   recvdispls[0]=0;
   for (int jpart=1; jpart<nparts; ++jpart) // start at 1
   {
@@ -204,7 +204,7 @@ void renumber_nodes_glb_idx( FunctionSpace& nodes )
   MPL_CHECK_RESULT(
         MPI_Gatherv( loc_id.data(), nb_nodes, mpi::TYPE<uid_t>(),
                      glb_id.data(), recvcounts.data(), recvdispls.data(), mpi::TYPE<uid_t>(),
-                     root, MPI_COMM_WORLD) );
+                     root, mpi::Comm::instance()) );
 
 
   // 2) Sort all global indices, and renumber from 1 to glb_nb_edges
@@ -235,7 +235,7 @@ void renumber_nodes_glb_idx( FunctionSpace& nodes )
   MPL_CHECK_RESULT(
         MPI_Scatterv( glb_id.data(), recvcounts.data(), recvdispls.data(), mpi::TYPE<uid_t>(),
                       loc_id.data(), nb_nodes, mpi::TYPE<uid_t>(),
-                      root, MPI_COMM_WORLD) );
+                      root, mpi::Comm::instance()) );
 
   for( int jnode=0; jnode<nb_nodes; ++jnode )
   {
@@ -840,7 +840,7 @@ FieldT<gidx_t>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nod
   std::vector<int> recvcounts(mpi::size());
   std::vector<int> recvdispls(mpi::size());
   MPL_CHECK_RESULT( MPI_Gather( &nb_edges, 1, MPI_INT,
-                                recvcounts.data(), 1, MPI_INT, root, MPI_COMM_WORLD) );
+                                recvcounts.data(), 1, MPI_INT, root, mpi::Comm::instance()) );
   recvdispls[0]=0;
   for (int jpart=1; jpart<nparts; ++jpart) // start at 1
   {
@@ -854,7 +854,7 @@ FieldT<gidx_t>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nod
   MPL_CHECK_RESULT(
         MPI_Gatherv( loc_edge_id.data(), nb_edges, mpi::TYPE<uid_t>(),
                      glb_edge_id.data(), recvcounts.data(), recvdispls.data(), mpi::TYPE<uid_t>(),
-                     root, MPI_COMM_WORLD) );
+                     root, mpi::Comm::instance()) );
 
 
   // 2) Sort all global indices, and renumber from 1 to glb_nb_edges
@@ -885,7 +885,7 @@ FieldT<gidx_t>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nod
   MPL_CHECK_RESULT(
         MPI_Scatterv( glb_edge_id.data(), recvcounts.data(), recvdispls.data(), mpi::TYPE<uid_t>(),
                       loc_edge_id.data(), nb_edges, mpi::TYPE<uid_t>(),
-                      root, MPI_COMM_WORLD) );
+                      root, mpi::Comm::instance()) );
 
 
 

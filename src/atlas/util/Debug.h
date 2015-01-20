@@ -31,7 +31,7 @@
 
 /// DEBUG_SYNC MACRO
 #define DEBUG_SYNC(...) do {\
-  {MPI_Barrier(MPI_COMM_WORLD);\
+  {mpi::barrier();\
   int npid = mpi::size();\
   for( int p=0; p<npid; ++p )\
   {\
@@ -42,7 +42,7 @@
         DEBUG_1(__VA_ARGS__),\
         DEBUG_0(__VA_ARGS__))\
     }\
-    MPI_Barrier(MPI_COMM_WORLD); usleep(100); /*microseconds*/ \
+    mpi::barrier(); usleep(100); /*microseconds*/ \
   }}} while(0)
 
 /// DEBUG_VAR MACRO
@@ -59,11 +59,11 @@
 
 /// DEBUG_VAR_SYNC MACRO
 #define DEBUG_VAR_SYNC(...) do {\
-  MPI_Barrier(MPI_COMM_WORLD);\
+  mpi::barrier();\
   DEBUG_VAR_X(,##__VA_ARGS__,\
      DEBUG_VAR_2(__VA_ARGS__),\
      DEBUG_VAR_1(__VA_ARGS__))\
-  MPI_Barrier(MPI_COMM_WORLD); usleep(1000); /*microseconds*/\
+  mpi::barrier(); usleep(1000); /*microseconds*/\
   } while(0)
 
 #endif

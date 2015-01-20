@@ -948,7 +948,7 @@ void ReducedGridMeshGenerator::generate_global_element_numbering( Mesh& mesh )
     }
   }
   MPL_CHECK_RESULT( MPI_Allgather( &loc_nb_elems, 1, MPI_INT,
-                                   elem_counts.data(), 1, MPI_INT, MPI_COMM_WORLD) );
+                                   elem_counts.data(), 1, MPI_INT, mpi::Comm::instance()) );
   elem_displs[0] = 0;
   for( int jpart=1; jpart<mpi::size(); ++jpart )
   {

@@ -48,13 +48,13 @@ void write_load_balance_report( const Mesh& mesh, const std::string& filename )
     }
     MPL_CHECK_RESULT( MPI_Gather( &nb_nodes, 1, MPI_INT,
                                   nb_total_nodes.data(), 1, MPI_INT,
-                                  root, MPI_COMM_WORLD ) );
+                                  root, mpi::Comm::instance() ) );
     MPL_CHECK_RESULT( MPI_Gather( &nowned, 1, MPI_INT,
                                   nb_owned_nodes.data(), 1, MPI_INT,
-                                  root, MPI_COMM_WORLD ) );
+                                  root, mpi::Comm::instance() ) );
     MPL_CHECK_RESULT( MPI_Gather( &nghost, 1, MPI_INT,
                                   nb_ghost_nodes.data(), 1, MPI_INT,
-                                  root, MPI_COMM_WORLD ) );  }
+                                  root, mpi::Comm::instance() ) );  }
 
   if( mesh.has_function_space("edges") )
   {

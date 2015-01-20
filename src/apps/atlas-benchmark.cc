@@ -62,6 +62,7 @@
 #include "atlas/grids/grids.h"
 #include "atlas/io/Gmsh.h"
 #include "atlas/atlas_omp.h"
+#include "atlas/mpl/MPL.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -510,10 +511,10 @@ void AtlasBenchmark::iteration()
   }
 
   // halo-exchange
-  MPI_Barrier(MPI_COMM_WORLD);
+  mpi::barrier();
   Timer halo("halo-exchange", Log::debug(5));
   mesh->function_space("nodes").halo_exchange().execute(grad);
-  MPI_Barrier(MPI_COMM_WORLD);
+  mpi::barrier();
   t.stop();
   halo.stop();
 
@@ -566,9 +567,9 @@ double AtlasBenchmark::result()
     }
   }
 
-  MPL_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&maxval,1,mpi::TYPE<double>(),MPI_MAX,MPI_COMM_WORLD) );
-  MPL_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&minval,1,mpi::TYPE<double>(),MPI_MIN,MPI_COMM_WORLD) );
-  MPL_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&norm  ,1,mpi::TYPE<double>(),MPI_SUM,MPI_COMM_WORLD) );
+  MPL_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&maxval,1,mpi::TYPE<double>(),MPI_MAX,mpi::Comm::instance()) );
+  MPL_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&minval,1,mpi::TYPE<double>(),MPI_MIN,mpi::Comm::instance()) );
+  MPL_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&norm  ,1,mpi::TYPE<double>(),MPI_SUM,mpi::Comm::instance()) );
   norm = std::sqrt(norm);
 
   Log::info() << "  checksum: " << mesh->function_space("nodes").checksum().execute( grad ) << endl;

@@ -193,7 +193,7 @@ void build_node_to_edge_connectivity( Mesh& mesh )
   {
     max_edge_cnt = std::max(max_edge_cnt,to_edge_size(jnode));
   }
-  MPL_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max_edge_cnt, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD ) );
+  MPL_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max_edge_cnt, 1, MPI_INT, MPI_MAX, mpi::Comm::instance() ) );
 
   IndexView<int,2> node_to_edge ( nodes.create_field<int>("to_edge",max_edge_cnt) );
 
@@ -244,10 +244,10 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
     max[XX] = std::max( max[XX], coords(node,XX) );
     max[YY] = std::max( max[YY], coords(node,YY) );
   }
-  MPL_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &min[XX], 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD ) );
-  MPL_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &min[YY], 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD ) );
-  MPL_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max[XX], 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD ) );
-  MPL_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max[YY], 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD ) );
+  MPL_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &min[XX], 1, MPI_DOUBLE, MPI_MIN, mpi::Comm::instance() ) );
+  MPL_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &min[YY], 1, MPI_DOUBLE, MPI_MIN, mpi::Comm::instance() ) );
+  MPL_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max[XX], 1, MPI_DOUBLE, MPI_MAX, mpi::Comm::instance() ) );
+  MPL_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max[YY], 1, MPI_DOUBLE, MPI_MAX, mpi::Comm::instance() ) );
 
   double tol = 1e-6;
   std::vector<int> north_pole_edges;

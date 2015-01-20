@@ -290,22 +290,22 @@ std::string read_config(const LocalPathName& path, const int master_task = 0)
 			std::string str = stream.str();
 			buf = const_cast<char*>(str.c_str());
 			buf_len = str.size();
-			MPI_Bcast(&buf_len,1,mpi::TYPE<int >(),master_task,MPI_COMM_WORLD);
+			MPI_Bcast(&buf_len,1,mpi::TYPE<int >(),master_task,mpi::Comm::instance());
 			if (buf_len)
-				MPI_Bcast(buf,buf_len,mpi::TYPE<char>(),master_task,MPI_COMM_WORLD);
+				MPI_Bcast(buf,buf_len,mpi::TYPE<char>(),master_task,mpi::Comm::instance());
 		}
 		else
 		{
-			MPI_Bcast(&buf_len,1,mpi::TYPE<int >(),master_task,MPI_COMM_WORLD);
+			MPI_Bcast(&buf_len,1,mpi::TYPE<int >(),master_task,mpi::Comm::instance());
 		}
 	}
 	else
 	{
-		MPI_Bcast(&buf_len,1,mpi::TYPE<int>(),master_task,MPI_COMM_WORLD);
+		MPI_Bcast(&buf_len,1,mpi::TYPE<int>(),master_task,mpi::Comm::instance());
 		if( buf_len )
 		{
 			buf = new char[buf_len];
-			MPI_Bcast(buf,buf_len,mpi::TYPE<char>(),master_task,MPI_COMM_WORLD);
+			MPI_Bcast(buf,buf_len,mpi::TYPE<char>(),master_task,mpi::Comm::instance());
 			stream.write(buf,buf_len);
 			delete[] buf;
 		}
@@ -340,7 +340,7 @@ void atlas_init(int argc, char** argv)
 
   LocalPathName atlas_config_path ( Resource<std::string>("atlas.configfile;$ATLAS_CONFIGFILE;--atlas_conf","atlas.cfg") );
   std::string atlas_config = read_config( atlas_config_path );
-  
+
   LocalPathName runname_config_path (
     Resource<std::string>("$"+StringTools::upper(Context::instance().runName())+"_CONFIGFILE",
                           Context::instance().runName()+".cfg") );
@@ -349,7 +349,7 @@ void atlas_init(int argc, char** argv)
   std::string default_conf("");
   if( Context::instance().displayName() != Context::instance().runName() )
     default_conf = Context::instance().displayName()+".cfg";
-  
+
   LocalPathName displayname_config_path(
     Resource<std::string>(
        "$"+StringTools::upper(Context::instance().displayName())+"_CONFIGFILE;--conf",
