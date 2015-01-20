@@ -17,7 +17,7 @@
 #include "atlas/io/Gmsh.h"
 #include "atlas/grids/grids.h"
 #include "atlas/meshgen/ReducedGridMeshGenerator.h"
-#include "atlas/mpl/MPL.h"
+#include "atlas/mpi/mpi.h"
 
 
 using namespace atlas;
@@ -26,7 +26,7 @@ using namespace atlas::meshgen;
 
 BOOST_AUTO_TEST_CASE( test_create_mesh )
 {
-	MPL::init();
+	mpi::init();
 	Mesh::Ptr m = Mesh::create();
 
 	ReducedGridMeshGenerator generate;
@@ -43,5 +43,5 @@ BOOST_AUTO_TEST_CASE( test_create_mesh )
 
 	//    atlas::actions::BuildXYZ(m);
 
-	MPL::finalize();
+	mpi::finalize();
 }

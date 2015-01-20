@@ -14,7 +14,7 @@
 #define BOOST_TEST_MODULE TestDistributeMesh
 #include "ecbuild/boost_test_framework.h"
 
-#include "atlas/mpl/MPL.h"
+#include "atlas/mpi/mpi.h"
 #include "atlas/atlas_config.h"
 #include "tests/TestMeshes.h"
 #include "atlas/io/Gmsh.h"
@@ -83,8 +83,8 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
   grids::rgg::N16 grid;
 
 
-  generator.options.set("nb_parts", MPL::size());
-  generator.options.set("part", MPL::rank());
+  generator.options.set("nb_parts", mpi::size());
+  generator.options.set("part", mpi::rank());
 
   Mesh::Ptr m( generator.generate( grid ) );
 

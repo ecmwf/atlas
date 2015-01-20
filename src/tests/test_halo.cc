@@ -16,7 +16,7 @@
 #include "ecbuild/boost_test_framework.h"
 #include "eckit/filesystem/LocalPathName.h"
 
-#include "atlas/mpl/MPL.h"
+#include "atlas/mpi/mpi.h"
 #include "atlas/atlas_config.h"
 #include "tests/TestMeshes.h"
 #include "atlas/io/Gmsh.h"
@@ -63,8 +63,8 @@ double dual_volume(Mesh& mesh)
 }
 
 struct MPIFixture {
-    MPIFixture()  { MPL::init(); }
-    ~MPIFixture() { MPL::finalize(); }
+    MPIFixture()  { mpi::init(); }
+    ~MPIFixture() { mpi::finalize(); }
 };
 
 BOOST_GLOBAL_FIXTURE( MPIFixture )
@@ -82,12 +82,12 @@ BOOST_AUTO_TEST_CASE( test_small )
   actions::build_halo(*m,2);
 
 
-  if( MPL::size() == 5 )
+  if( mpi::size() == 5 )
   {
     IndexView<int,1> ridx ( m->function_space("nodes").field("remote_idx") );
     ArrayView<gidx_t,1> gidx ( m->function_space("nodes").field("glb_idx") );
 
-    switch( MPL::rank() ) // with 5 tasks
+    switch( mpi::rank() ) // with 5 tasks
     {
     case 0:
       BOOST_CHECK_EQUAL( ridx(9),  9  );
@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE( test_small )
   }
   else
   {
-    if( MPL::rank() == 0 )
+    if( mpi::rank() == 0 )
       std::cout << "skipping tests with 5 mpi tasks!" << std::endl;
   }
 
@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_CASE( test_small )
 
   BOOST_CHECK_CLOSE( test::dual_volume(*m), 2.*M_PI*M_PI, 1e-6 );
 
-  std::stringstream filename; filename << "small_halo_p" << MPL::rank() << ".msh";
+  std::stringstream filename; filename << "small_halo_p" << mpi::rank() << ".msh";
   Gmsh().write(*m,filename.str());
 }
 #endif

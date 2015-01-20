@@ -11,7 +11,7 @@
 #include "eckit/log/Log.h"
 #include "eckit/runtime/Tool.h"
 
-#include "atlas/mpl/MPL.h"
+#include "atlas/mpi/mpi.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Grid.h"
 #include "atlas/grids/LonLatGrid.h"
@@ -108,9 +108,9 @@ void TestField::test_constructor()
 
 void TestField::run()
 {
-    MPL::init();
+    mpi::init();
     test_constructor();
-    MPL::finalize();
+    mpi::finalize();
 }
 
 //-----------------------------------------------------------------------------

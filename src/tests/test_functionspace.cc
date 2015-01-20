@@ -14,7 +14,7 @@
 #include <map>
 
 #include "tests/TestMeshes.h"
-#include "atlas/mpl/MPL.h"
+#include "atlas/mpi/mpi.h"
 #include "atlas/io/Gmsh.h"
 #include "atlas/util/Debug.h"
 #include "atlas/Mesh.h"
@@ -545,7 +545,7 @@ using namespace atlas::test;
 BOOST_AUTO_TEST_CASE( test_functionspace )
 {
 
-	atlas::MPL::init();
+	atlas::mpi::init();
 
 	Element::Ptr point( new Point );
 	Element::Ptr quad( new QuadP1 );
@@ -647,5 +647,5 @@ BOOST_AUTO_TEST_CASE( test_functionspace )
 
 
 
-	MPL::finalize();
+	mpi::finalize();
 }

@@ -13,7 +13,7 @@
 #include "atlas/grids/grids.h"
 #include "atlas/meshgen/ReducedGridMeshGenerator.h"
 #include "atlas/Mesh.h"
-#include "atlas/mpl/MPL.h"
+#include "atlas/mpi/mpi.h"
 
 using namespace atlas;
 using namespace atlas::grids;
@@ -36,8 +36,8 @@ TestGrid::TestGrid(int N, int lon[])
 Mesh::Ptr generate_mesh( const ReducedGrid& rgg )
 {
   meshgen::ReducedGridMeshGenerator generator;
-  generator.options.set("nb_parts",MPL::size());
-  generator.options.set("part",MPL::rank());
+  generator.options.set("nb_parts",mpi::size());
+  generator.options.set("part",mpi::rank());
   return Mesh::Ptr( generator.generate( rgg ) );
 }
 

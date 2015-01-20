@@ -359,9 +359,10 @@ void atlas_init(int argc, char** argv)
   LocalPathName workdir ( Resource<std::string>("workdir;$ATLAS_WORKDIR;--workdir",rundir()) );
   if( workdir != rundir() )
   {
-  	workdir.mkdir();
- 	Log::debug() << "Changing working directory to " << workdir << std::endl;
-  	chdir(workdir.c_str());
+    if( mpi::rank() == 0 ) workdir.mkdir();
+    mpi::barrier();
+    Log::debug() << "Changing working directory to " << workdir << std::endl;
+    chdir(workdir.c_str());
   }
 
   Context::instance().behavior( new atlas::Behavior() );
