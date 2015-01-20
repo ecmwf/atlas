@@ -33,6 +33,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../actions/WriteLoadBalanceReport.h)
 generate_fortran_bindings(FORTRAN_BINDINGS atlas_logging.h)
 generate_fortran_bindings(FORTRAN_BINDINGS atlas_resource.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../mpi/mpi.h)
 
 
 ### atlas fortran lib

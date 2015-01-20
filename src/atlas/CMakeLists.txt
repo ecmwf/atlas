@@ -62,6 +62,7 @@ endif()
 ### sources
 
 list( APPEND atlas_mpl_srcs
+mpi/mpi.h
 mpl/MPLArrayView.h
 mpl/Checksum.h
 mpl/Checksum.cc
@@ -69,7 +70,6 @@ mpl/HaloExchange.h
 mpl/HaloExchange.cc
 mpl/GatherScatter.h
 mpl/GatherScatter.cc
-mpl/MPL.h
 )
 
 list( APPEND atlas_io_srcs

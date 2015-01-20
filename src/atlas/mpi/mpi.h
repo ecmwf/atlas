@@ -255,6 +255,14 @@ struct Buffer<DATA_TYPE,1> : public BufferBase<DATA_TYPE>
   }
 };
 
+// ------------------------------------------------------------------
+// C wrapper interfaces to C++ routines
+extern "C"
+{
+  void atlas_mpi_Comm_assign (int comm);
+}
+// ------------------------------------------------------------------
+
 
 } // namespace mpi
 

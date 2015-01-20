@@ -62,7 +62,7 @@
 #include "atlas/grids/grids.h"
 #include "atlas/io/Gmsh.h"
 #include "atlas/atlas_omp.h"
-#include "atlas/mpl/MPL.h"
+#include "atlas/mpi/mpi.h"
 
 //------------------------------------------------------------------------------------------------------
 

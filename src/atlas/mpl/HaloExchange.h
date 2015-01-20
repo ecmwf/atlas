@@ -22,7 +22,7 @@
 
 #include "eckit/exception/Exceptions.h"
 #include "atlas/util/ArrayView.h"
-#include "atlas/mpl/MPL.h"
+#include "atlas/mpi/mpi.h"
 #include "atlas/util/Debug.h"
 
 namespace atlas {

@@ -36,6 +36,7 @@ use, intrinsic :: iso_c_binding
 use atlas_mpl_module
 use atlas_C_interop
 use atlas_atlas_c_binding
+use atlas_mpi_c_binding
 use atlas_field_c_binding
 use atlas_fieldgroup_c_binding
 use atlas_functionspace_c_binding
@@ -194,6 +195,10 @@ subroutine atlas_finalize()
   call atlas__atlas_finalize()
 end subroutine
 
+subroutine atlas_set_mpi_communicator( mpi_communicator )
+  integer :: mpi_communicator
+  call atlas_mpi_Comm_assign( mpi_communicator )
+end subroutine
 
 integer function real_kind(kind)
   integer :: kind

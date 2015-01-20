@@ -18,7 +18,7 @@
 #include "eckit/memory/SharedPtr.h"
 #include "eckit/memory/Owned.h"
 
-#include "atlas/mpl/MPL.h"
+#include "atlas/mpi/mpi.h"
 #include "atlas/mpl/GatherScatter.h"
 #include "atlas/util/Debug.h"
 #include "atlas/util/ArrayView.h"

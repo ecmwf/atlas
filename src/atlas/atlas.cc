@@ -24,7 +24,7 @@
 
 #include "atlas/atlas.h"
 #include "atlas/grids/grids.h"
-#include "atlas/mpl/MPL.h"
+#include "atlas/mpi/mpi.h"
 
 using namespace eckit;
 

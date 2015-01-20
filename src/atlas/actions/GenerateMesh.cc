@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/mpl/MPL.h"
+#include "atlas/mpi/mpi.h"
 #include "atlas/meshgen/ReducedGridMeshGenerator.h"
 #include "atlas/actions/GenerateMesh.h"
 #include "atlas/util/Debug.h"

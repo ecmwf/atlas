@@ -24,7 +24,7 @@
 #include "atlas/util/IndexView.h"
 #include "atlas/util/Array.h"
 #include "atlas/Util.h"
-#include "atlas/mpl/MPL.h"
+#include "atlas/mpi/mpi.h"
 #include "atlas/mpl/GatherScatter.h"
 
 //#define DEBUGGING_PARFIELDS

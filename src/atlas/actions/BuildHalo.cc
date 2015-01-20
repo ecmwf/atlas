@@ -198,7 +198,7 @@ void increase_halo( Mesh& mesh )
   int sendcnt = bdry_nodes_id.total_size();
   ASSERT( sendcnt == nb_bdry_nodes*4 );
   MPL_CHECK_RESULT( MPI_Allgather( &sendcnt,          1, MPI_INT,
-                                   recvcounts.data(), 1, MPI_INT, MPI_COMM_WORLD ) );
+                                   recvcounts.data(), 1, MPI_INT, mpi::Comm::instance() ) );
 
   recvdispls[0] = 0;
   int recvcnt = recvcounts[0];
@@ -211,7 +211,7 @@ void increase_halo( Mesh& mesh )
 
   MPL_CHECK_RESULT( MPI_Allgatherv( bdry_nodes_id.data(), sendcnt, mpi::TYPE<uid_t>(),
                     recvbuf.data(), recvcounts.data(), recvdispls.data(),
-                    mpi::TYPE<uid_t>(), MPI_COMM_WORLD) );
+                    mpi::TYPE<uid_t>(), mpi::Comm::instance()) );
 
   // sfn stands for "send_found_nodes"
   std::vector< std::vector<int>    > sfn_part( mpi::size() );

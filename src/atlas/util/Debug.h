@@ -15,7 +15,7 @@
 #include <unistd.h>
 
 #include <eckit/log/Log.h>
-#include "atlas/mpl/MPL.h"
+#include "atlas/mpi/mpi.h"
 #include "atlas/atlas_config.h"
 
 

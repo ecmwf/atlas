@@ -31,7 +31,7 @@
 #include "atlas/actions/BuildParallelFields.h"
 #include "atlas/actions/BuildDualMesh.h"
 #include "atlas/actions/BuildStatistics.h"
-#include "atlas/mpl/MPL.h"
+#include "atlas/mpi/mpi.h"
 #include "atlas/Mesh.h"
 #include "atlas/grids/grids.h"
 #include "atlas/GridSpec.h"

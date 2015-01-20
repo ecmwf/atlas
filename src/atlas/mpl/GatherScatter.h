@@ -20,7 +20,7 @@
 #include "eckit/memory/Owned.h"
 
 #include "atlas/atlas.h"
-#include "atlas/mpl/MPL.h"
+#include "atlas/mpi/mpi.h"
 #include "atlas/util/Debug.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/mpl/MPLArrayView.h"
