@@ -117,7 +117,7 @@ void GatherScatter::setup( const int part[],
     }
   }
 
-  MPL_CHECK_RESULT( MPI_Gather( &loccnt_, 1, MPI_INT,
+  ATLAS_MPI_CHECK_RESULT( MPI_Gather( &loccnt_, 1, MPI_INT,
                                 glbcounts_.data(), 1, MPI_INT,
                                 root_, mpi::Comm::instance() ) );
   glbcnt_ = std::accumulate(glbcounts_.begin(),glbcounts_.end(),0);
@@ -128,8 +128,8 @@ void GatherScatter::setup( const int part[],
     glbdispls_[jproc]=glbcounts_[jproc-1]+glbdispls_[jproc-1];
   }
   std::vector<gidx_t> recvnodes(glbcnt_);
-  MPL_CHECK_RESULT( MPI_Gatherv( sendnodes.data(), loccnt_, mpi::TYPE<gidx_t>(),
-                                 recvnodes.data(), glbcounts_.data(), glbdispls_.data(), mpi::TYPE<gidx_t>(),
+  ATLAS_MPI_CHECK_RESULT( MPI_Gatherv( sendnodes.data(), loccnt_, mpi::datatype<gidx_t>(),
+                                 recvnodes.data(), glbcounts_.data(), glbdispls_.data(), mpi::datatype<gidx_t>(),
                                  root_, mpi::Comm::instance()) );
 
   // Load recvnodes in sorting structure
@@ -175,13 +175,13 @@ void GatherScatter::setup( const int part[],
   }
 
   // Get loccnt_
-  MPL_CHECK_RESULT( MPI_Scatter( glbcounts_.data(), 1, MPI_INT,
+  ATLAS_MPI_CHECK_RESULT( MPI_Scatter( glbcounts_.data(), 1, MPI_INT,
                                  &loccnt_,          1, MPI_INT,
                                  root_, mpi::Comm::instance()) );
 
   locmap_.resize(loccnt_);
 
-  MPL_CHECK_RESULT( MPI_Scatterv( needed.data(), glbcounts_.data(), glbdispls_.data(),
+  ATLAS_MPI_CHECK_RESULT( MPI_Scatterv( needed.data(), glbcounts_.data(), glbdispls_.data(),
                                   MPI_INT, locmap_.data(), loccnt_,
                                   MPI_INT, root_, mpi::Comm::instance() ) );
   is_setup_ = true;
@@ -214,7 +214,7 @@ void GatherScatter::setup( const int part[],
         maxgid = std::max(maxgid,glb_idx[jj]);
       }
     }
-    MPL_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&maxgid,1,mpi::TYPE<gidx_t>(),MPI_MAX,mpi::Comm::instance()) );
+    ATLAS_MPI_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&maxgid,1,mpi::datatype<gidx_t>(),MPI_MAX,mpi::Comm::instance()) );
   }
 
   Array<int> sendnodes(parsize_,3);
@@ -241,7 +241,7 @@ void GatherScatter::setup( const int part[],
   }
 
   loccnt_ = nodes.total_size();
-  MPL_CHECK_RESULT( MPI_Gather( &loccnt_, 1, MPI_INT,
+  ATLAS_MPI_CHECK_RESULT( MPI_Gather( &loccnt_, 1, MPI_INT,
                      glbcounts_.data(), 1, MPI_INT,
                      root_, mpi::Comm::instance() ) );
   glbcnt_ = std::accumulate(glbcounts_.begin(),glbcounts_.end(),0);
@@ -252,7 +252,7 @@ void GatherScatter::setup( const int part[],
     glbdispls_[jproc]=glbcounts_[jproc-1]+glbdispls_[jproc-1];
   }
   std::vector<int> recvnodes(glbcnt_);
-  MPL_CHECK_RESULT( MPI_Gatherv( sendnodes.data(), loccnt_, MPI_INT,
+  ATLAS_MPI_CHECK_RESULT( MPI_Gatherv( sendnodes.data(), loccnt_, MPI_INT,
                                  recvnodes.data(), glbcounts_.data(), glbdispls_.data(), MPI_INT,
                       root_, mpi::Comm::instance()) );
 
@@ -345,14 +345,14 @@ void GatherScatter::setup( const int part[],
 //  std::cout << std::endl;
 
   // Get loccnt_
-  MPL_CHECK_RESULT( MPI_Scatter( glbcounts_.data(), 1, MPI_INT,
+  ATLAS_MPI_CHECK_RESULT( MPI_Scatter( glbcounts_.data(), 1, MPI_INT,
                                  &loccnt_,     1, MPI_INT,
                                  root_, mpi::Comm::instance()) );
 
 //  DEBUG_VAR_SYNC(loccnt_);
   locmap_.resize(loccnt_);
 
-  MPL_CHECK_RESULT( MPI_Scatterv( needed.data(), glbcounts_.data(), glbdispls_.data(),
+  ATLAS_MPI_CHECK_RESULT( MPI_Scatterv( needed.data(), glbcounts_.data(), glbdispls_.data(),
                                   MPI_INT, locmap_.data(), loccnt_,
                                   MPI_INT, root_, mpi::Comm::instance() ) );
 

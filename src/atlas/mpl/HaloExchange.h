@@ -139,8 +139,8 @@ void HaloExchange::execute(DATA_TYPE field[], const int var_strides[], const int
   {
     if(recv_counts[jproc] > 0)
     {
-      MPL_CHECK_RESULT( MPI_Irecv( &recv_buffer[recv_displs[jproc]] , recv_counts[jproc],
-        mpi::TYPE<DATA_TYPE>(), jproc, tag, mpi::Comm::instance(), &recv_req[jproc] ) );
+      ATLAS_MPI_CHECK_RESULT( MPI_Irecv( &recv_buffer[recv_displs[jproc]] , recv_counts[jproc],
+        mpi::datatype<DATA_TYPE>(), jproc, tag, mpi::Comm::instance(), &recv_req[jproc] ) );
     }
   }
 
@@ -152,8 +152,8 @@ void HaloExchange::execute(DATA_TYPE field[], const int var_strides[], const int
   {
     if(send_counts[jproc] > 0)
     {
-      MPL_CHECK_RESULT( MPI_Isend( &send_buffer[send_displs[jproc]], send_counts[jproc],
-        mpi::TYPE<DATA_TYPE>(), jproc, tag, mpi::Comm::instance(), &send_req[jproc] ) );
+      ATLAS_MPI_CHECK_RESULT( MPI_Isend( &send_buffer[send_displs[jproc]], send_counts[jproc],
+        mpi::datatype<DATA_TYPE>(), jproc, tag, mpi::Comm::instance(), &send_req[jproc] ) );
     }
   }
 
@@ -162,7 +162,7 @@ void HaloExchange::execute(DATA_TYPE field[], const int var_strides[], const int
   {
     if( recvcounts_[jproc] > 0)
     {
-      MPL_CHECK_RESULT( MPI_Wait(&recv_req[jproc], MPI_STATUS_IGNORE ) );
+      ATLAS_MPI_CHECK_RESULT( MPI_Wait(&recv_req[jproc], MPI_STATUS_IGNORE ) );
     }
   }
 
@@ -174,7 +174,7 @@ void HaloExchange::execute(DATA_TYPE field[], const int var_strides[], const int
   {
     if( sendcounts_[jproc] > 0)
     {
-      MPL_CHECK_RESULT( MPI_Wait(&send_req[jproc], MPI_STATUS_IGNORE ) );
+      ATLAS_MPI_CHECK_RESULT( MPI_Wait(&send_req[jproc], MPI_STATUS_IGNORE ) );
     }
   }
 

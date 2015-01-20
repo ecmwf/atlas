@@ -197,7 +197,7 @@ void increase_halo( Mesh& mesh )
   std::vector<int> recvdispls( mpi::size() );
   int sendcnt = bdry_nodes_id.total_size();
   ASSERT( sendcnt == nb_bdry_nodes*4 );
-  MPL_CHECK_RESULT( MPI_Allgather( &sendcnt,          1, MPI_INT,
+  ATLAS_MPI_CHECK_RESULT( MPI_Allgather( &sendcnt,          1, MPI_INT,
                                    recvcounts.data(), 1, MPI_INT, mpi::Comm::instance() ) );
 
   recvdispls[0] = 0;
@@ -209,9 +209,9 @@ void increase_halo( Mesh& mesh )
   }
   std::vector<uid_t> recvbuf(recvcnt);
 
-  MPL_CHECK_RESULT( MPI_Allgatherv( bdry_nodes_id.data(), sendcnt, mpi::TYPE<uid_t>(),
+  ATLAS_MPI_CHECK_RESULT( MPI_Allgatherv( bdry_nodes_id.data(), sendcnt, mpi::datatype<uid_t>(),
                     recvbuf.data(), recvcounts.data(), recvdispls.data(),
-                    mpi::TYPE<uid_t>(), mpi::Comm::instance()) );
+                    mpi::datatype<uid_t>(), mpi::Comm::instance()) );
 
   // sfn stands for "send_found_nodes"
   std::vector< std::vector<int>    > sfn_part( mpi::size() );
@@ -480,16 +480,16 @@ void increase_halo( Mesh& mesh )
   std::vector< std::vector< std::vector<uid_t> > >
       rfe_nodes_id( mesh.nb_function_spaces(), std::vector< std::vector<uid_t> >( mpi::size() ) );
 
-  mpi::Alltoall(sfn_glb_idx,  rfn_glb_idx);
-  mpi::Alltoall(sfn_part,     rfn_part);
-  mpi::Alltoall(sfn_ridx,     rfn_ridx);
-  mpi::Alltoall(sfn_flags,    rfn_flags);
-  mpi::Alltoall(sfn_latlon,   rfn_latlon);
+  mpi::all_to_all(sfn_glb_idx,  rfn_glb_idx);
+  mpi::all_to_all(sfn_part,     rfn_part);
+  mpi::all_to_all(sfn_ridx,     rfn_ridx);
+  mpi::all_to_all(sfn_flags,    rfn_flags);
+  mpi::all_to_all(sfn_latlon,   rfn_latlon);
   for( int f=0; f<mesh.nb_function_spaces(); ++f )
   {
-    mpi::Alltoall(sfe_glb_idx [f], rfe_glb_idx [f] );
-    mpi::Alltoall(sfe_nodes_id[f], rfe_nodes_id[f] );
-    mpi::Alltoall(sfe_part    [f], rfe_part    [f] );
+    mpi::all_to_all(sfe_glb_idx [f], rfe_glb_idx [f] );
+    mpi::all_to_all(sfe_nodes_id[f], rfe_nodes_id[f] );
+    mpi::all_to_all(sfe_part    [f], rfe_part    [f] );
   }
 
 
@@ -893,16 +893,16 @@ public:
   };
   static void all_to_all(Buffers& send, Buffers& recv)
   {
-    mpi::Alltoall(send.node_glb_idx,  recv.node_glb_idx);
-    mpi::Alltoall(send.node_part,     recv.node_part);
-    mpi::Alltoall(send.node_ridx,     recv.node_ridx);
-    mpi::Alltoall(send.node_flags,    recv.node_flags);
-    mpi::Alltoall(send.node_lonlat,   recv.node_lonlat);
+    mpi::all_to_all(send.node_glb_idx,  recv.node_glb_idx);
+    mpi::all_to_all(send.node_part,     recv.node_part);
+    mpi::all_to_all(send.node_ridx,     recv.node_ridx);
+    mpi::all_to_all(send.node_flags,    recv.node_flags);
+    mpi::all_to_all(send.node_lonlat,   recv.node_lonlat);
     for( int f=0; f<send.elem_glb_idx.size(); ++f )
     {
-      mpi::Alltoall(send.elem_glb_idx [f], recv.elem_glb_idx [f] );
-      mpi::Alltoall(send.elem_nodes_id[f], recv.elem_nodes_id[f] );
-      mpi::Alltoall(send.elem_part    [f], recv.elem_part    [f] );
+      mpi::all_to_all(send.elem_glb_idx [f], recv.elem_glb_idx [f] );
+      mpi::all_to_all(send.elem_nodes_id[f], recv.elem_nodes_id[f] );
+      mpi::all_to_all(send.elem_part    [f], recv.elem_part    [f] );
     }
   }
 

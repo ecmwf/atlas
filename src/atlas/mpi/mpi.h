@@ -18,11 +18,11 @@
 #include "atlas/util/ArrayView.h"
 #include "eckit/exception/Exceptions.h"
 
-#define MPL_CHECK_RESULT( MPI_CALL )\
+#define ATLAS_MPI_CHECK_RESULT( MPI_CALL )\
 { \
   int ierr = MPI_CALL; \
   if (ierr != MPI_SUCCESS) { \
-    throw atlas::mpi::MPIError( std::string("MPI call: ") + \
+    throw atlas::mpi::Error( std::string("MPI call: ") + \
       std::string(#MPI_CALL) + \
       std::string(" did not return MPI_SUCCESS."), Here() ); \
   } \
@@ -33,9 +33,9 @@ namespace atlas {
 namespace mpi {
 
 
-class MPIError : public eckit::Exception {
+class Error : public eckit::Exception {
 public:
-  MPIError(const std::string& msg, const eckit::CodeLocation& loc)
+  Error(const std::string& msg, const eckit::CodeLocation& loc)
   {
     eckit::StrStream s;
     s << "MPI Error: " << msg << " " << " in " << loc << " "  << eckit::StrStream::ends;
@@ -45,96 +45,66 @@ public:
 
 
 template<typename DATA_TYPE>
-MPI_Datatype TYPE();
-template<> inline MPI_Datatype TYPE<char>()          { return MPI_CHAR; }
-template<> inline MPI_Datatype TYPE<int>()           { return MPI_INT; }
-template<> inline MPI_Datatype TYPE<unsigned int>()  { return MPI_UNSIGNED; }
-template<> inline MPI_Datatype TYPE<long>()          { return MPI_LONG; }
-template<> inline MPI_Datatype TYPE<unsigned long>() { return MPI_UNSIGNED_LONG; }
-template<> inline MPI_Datatype TYPE<float>()         { return MPI_FLOAT; }
-template<> inline MPI_Datatype TYPE<double>()        { return MPI_DOUBLE; }
+MPI_Datatype datatype();
 
-inline bool initialized()
-{
-  int initialized;
-  MPL_CHECK_RESULT( MPI_Initialized( &initialized ) );
-  return initialized;
-}
+template<typename DATA_TYPE>
+MPI_Datatype datatype(DATA_TYPE&);
 
-inline bool finalized()
-{
-  int finalized;
-  MPL_CHECK_RESULT( MPI_Finalized( &finalized ) );
-  return finalized;
-}
 
-inline void init(int argc=0, char *argv[]=0)
-{
-  if( !initialized() )
-    MPL_CHECK_RESULT( MPI_Init(&argc,&argv) );
-}
+bool initialized();
 
-inline void finalize()
-{
-  if( !finalized() )
-    MPL_CHECK_RESULT( MPI_Finalize() );
-}
+bool finalized();
 
+void init(int argc=0, char *argv[]=0);
+
+void finalize();
 
 class Comm
 {
 public:
 
-  Comm()
-  {
-    if( ! initialized() )
-      throw MPIError( "Trying to construct MPI communicator without MPI being initialized", Here() );
-    comm_ = MPI_COMM_WORLD;
-  }
+  Comm();
 
-  static Comm& instance()
-  {
-    static Comm comm_instance;
-    return comm_instance;
-  }
+  Comm( MPI_Comm );
+  
+  Comm( int fortran_comm );
+
+  static Comm& instance();
 
   operator MPI_Comm() const { return comm_; }
 
-  void assign( const int fortran_comm )
-  {
-    comm_ = MPI_Comm_f2c( fortran_comm );
-  }
+  void assign( const int fortran_comm );
 
-  void assign( MPI_Comm comm )
-  {
-    comm_ = comm;
-  }
+  void assign( MPI_Comm comm );
+  
+  int size() const;
+  
+  int rank() const;
+  
+  void barrier() const;
 
 private:
   MPI_Comm comm_;
 };
 
-inline int rank()
+class World : private Comm
 {
-  if( !initialized() ) throw MPIError( "MPI not initialized when calling mpi::rank()", Here() );
-  int rank;
-  MPL_CHECK_RESULT( MPI_Comm_rank( Comm::instance(), &rank ) );
-  return rank;
-}
+public:
+  World() : Comm() {}
+  static World& instance();
+  operator MPI_Comm() const { return MPI_COMM_WORLD; }
+};
 
-inline int size()
-{
-  if( !initialized() ) throw MPIError( "MPI not initialized when calling mpi::size()", Here() );
-  int nproc;
-  MPL_CHECK_RESULT( MPI_Comm_size( Comm::instance(), &nproc ) );
-  return nproc;
-}
+int rank();
 
-inline void barrier()
-{
-  MPL_CHECK_RESULT( MPI_Barrier(Comm::instance()) );
-}
+int size();
 
+void barrier();
+
+/// @brief BufferBase
+///
+/// Class that keeps allocation of a MPI buffer including
+/// counts and displacements
 template <typename DATA_TYPE>
 struct BufferBase
 {
@@ -150,96 +120,12 @@ struct BufferBase
   }
 };
 
-template< typename DATA_TYPE >
-inline int Alltoall( std::vector< std::vector<DATA_TYPE> >& sendvec,
-                     std::vector< std::vector<DATA_TYPE> >& recvvec )
-{
-  int cnt;
-
-  // Get send-information
-  std::vector<int> sendcounts(mpi::size());
-  std::vector<int> senddispls(mpi::size());
-  int sendcnt;
-  senddispls[0] = 0;
-  sendcounts[0] = sendvec[0].size();
-  sendcnt = sendcounts[0];
-  for( int jproc=1; jproc<mpi::size(); ++jproc )
-  {
-    senddispls[jproc] = senddispls[jproc-1] + sendcounts[jproc-1];
-    sendcounts[jproc] = sendvec[jproc].size();
-    sendcnt += sendcounts[jproc];
-  }
-
-
-  // Get recv-information
-  std::vector<int> recvcounts(mpi::size());
-  std::vector<int> recvdispls(mpi::size());
-  int recvcnt;
-  MPL_CHECK_RESULT( MPI_Alltoall( sendcounts.data(), 1, MPI_INT,
-                                  recvcounts.data(), 1, MPI_INT,
-                                  Comm::instance() ) );
-  recvdispls[0] = 0;
-  recvcnt = recvcounts[0];
-  for( int jproc=1; jproc<mpi::size(); ++jproc )
-  {
-    recvdispls[jproc] = recvdispls[jproc-1] + recvcounts[jproc-1];
-    recvcnt += recvcounts[jproc];
-  }
-
-  // Communicate
-  std::vector<DATA_TYPE> sendbuf(sendcnt);
-  std::vector<DATA_TYPE> recvbuf(recvcnt);
-  cnt = 0;
-  for( int jproc=0; jproc<mpi::size(); ++jproc )
-  {
-    for( int i=0; i<sendcounts[jproc]; ++i )
-    {
-      sendbuf[cnt++] = sendvec[jproc][i];
-    }
-  }
-  MPL_CHECK_RESULT( MPI_Alltoallv(
-                      sendbuf.data(), sendcounts.data(), senddispls.data(), mpi::TYPE<DATA_TYPE>(),
-                      recvbuf.data(), recvcounts.data(), recvdispls.data(), mpi::TYPE<DATA_TYPE>(),
-                      Comm::instance() ) );
-  cnt=0;
-  for( int jproc=0; jproc<mpi::size(); ++jproc )
-  {
-    recvvec[jproc].resize(recvcounts[jproc]);
-    for( int i=0; i<recvcounts[jproc]; ++i )
-    {
-      recvvec[jproc][i] = recvbuf[cnt++];
-    }
-  }
-  return MPI_SUCCESS;
-}
-
-
-template<typename DATA_TYPE>
-void all_gather( const DATA_TYPE send[], int sendcnt, BufferBase<DATA_TYPE>& recv )
-{
-  MPL_CHECK_RESULT( MPI_Allgather( &sendcnt,           1, MPI_INT,
-                                   recv.counts.data(), 1, MPI_INT, Comm::instance() ) );
-  recv.displs[0] = 0;
-  recv.cnt = recv.counts[0];
-  for( int jpart=1; jpart<mpi::size(); ++jpart )
-  {
-    recv.displs[jpart] = recv.displs[jpart-1] + recv.counts[jpart-1];
-    recv.cnt += recv.counts[jpart];
-  }
-  recv.buf.resize(recv.cnt);
-
-  MPL_CHECK_RESULT( MPI_Allgatherv( const_cast<DATA_TYPE*>(send), sendcnt, mpi::TYPE<DATA_TYPE>(),
-                    recv.buf.data(), recv.counts.data(), recv.displs.data(),
-                    mpi::TYPE<DATA_TYPE>(), Comm::instance()) );
-}
-
-template<typename VECTOR>
-void all_gather( const VECTOR& send, BufferBase<typename VECTOR::value_type>& recv )
-{
-  all_gather(send.data(),send.size(),recv);
-}
-
-
+/// @brief Buffer<DATA_TYPE,SHAPE>
+///
+/// Class that keeps allocation of a MPI buffer including
+/// counts and displacements, but with added index operator[]
+/// that returns an ArrayView<DATA_TYPE,SHAPE> of the part
+/// of the buffer for a processor index.
 template <typename DATA_TYPE,int RANK>
 struct Buffer : BufferBase<DATA_TYPE>
 {
@@ -254,6 +140,120 @@ struct Buffer<DATA_TYPE,1> : public BufferBase<DATA_TYPE>
                                     make_shape( BufferBase<DATA_TYPE>::counts[p] ).data() );
   }
 };
+
+
+
+template< typename DATA_TYPE >
+inline int all_to_all( const Comm& comm,
+                       std::vector< std::vector<DATA_TYPE> >& sendvec,
+                       std::vector< std::vector<DATA_TYPE> >& recvvec )
+{
+  int cnt;
+  int mpi_size = comm.size();
+  // Get send-information
+  std::vector<int> sendcounts(mpi_size);
+  std::vector<int> senddispls(mpi_size);
+  int sendcnt;
+  senddispls[0] = 0;
+  sendcounts[0] = sendvec[0].size();
+  sendcnt = sendcounts[0];
+  for( int jproc=1; jproc<mpi_size; ++jproc )
+  {
+    senddispls[jproc] = senddispls[jproc-1] + sendcounts[jproc-1];
+    sendcounts[jproc] = sendvec[jproc].size();
+    sendcnt += sendcounts[jproc];
+  }
+
+
+  // Get recv-information
+  std::vector<int> recvcounts(mpi_size);
+  std::vector<int> recvdispls(mpi_size);
+  int recvcnt;
+  ATLAS_MPI_CHECK_RESULT( MPI_Alltoall( sendcounts.data(), 1, MPI_INT,
+                                  recvcounts.data(), 1, MPI_INT,
+                                  comm ) );
+  recvdispls[0] = 0;
+  recvcnt = recvcounts[0];
+  for( int jproc=1; jproc<mpi_size; ++jproc )
+  {
+    recvdispls[jproc] = recvdispls[jproc-1] + recvcounts[jproc-1];
+    recvcnt += recvcounts[jproc];
+  }
+
+  // Communicate
+  std::vector<DATA_TYPE> sendbuf(sendcnt);
+  std::vector<DATA_TYPE> recvbuf(recvcnt);
+  cnt = 0;
+  for( int jproc=0; jproc<mpi_size; ++jproc )
+  {
+    for( int i=0; i<sendcounts[jproc]; ++i )
+    {
+      sendbuf[cnt++] = sendvec[jproc][i];
+    }
+  }
+  ATLAS_MPI_CHECK_RESULT( MPI_Alltoallv(
+                      sendbuf.data(), sendcounts.data(), senddispls.data(), mpi::datatype<DATA_TYPE>(),
+                      recvbuf.data(), recvcounts.data(), recvdispls.data(), mpi::datatype<DATA_TYPE>(),
+                      comm ) );
+  cnt=0;
+  for( int jproc=0; jproc<mpi_size; ++jproc )
+  {
+    recvvec[jproc].resize(recvcounts[jproc]);
+    for( int i=0; i<recvcounts[jproc]; ++i )
+    {
+      recvvec[jproc][i] = recvbuf[cnt++];
+    }
+  }
+  return MPI_SUCCESS;
+}
+
+template< typename DATA_TYPE >
+inline int all_to_all( std::vector< std::vector<DATA_TYPE> >& sendvec,
+                       std::vector< std::vector<DATA_TYPE> >& recvvec )
+{
+  return all_to_all( Comm::instance(), sendvec, recvvec );
+}
+
+
+template<typename DATA_TYPE>
+void all_gather( const Comm& comm, const DATA_TYPE send[], int sendcnt, BufferBase<DATA_TYPE>& recv )
+{
+  int mpi_size = comm.size();
+  ATLAS_MPI_CHECK_RESULT( MPI_Allgather( &sendcnt,           1, MPI_INT,
+                                   recv.counts.data(), 1, MPI_INT, comm ) );
+  recv.displs[0] = 0;
+  recv.cnt = recv.counts[0];
+  for( int jpart=1; jpart<mpi_size; ++jpart )
+  {
+    recv.displs[jpart] = recv.displs[jpart-1] + recv.counts[jpart-1];
+    recv.cnt += recv.counts[jpart];
+  }
+  recv.buf.resize(recv.cnt);
+
+  ATLAS_MPI_CHECK_RESULT( MPI_Allgatherv( const_cast<DATA_TYPE*>(send), sendcnt, mpi::datatype<DATA_TYPE>(),
+                    recv.buf.data(), recv.counts.data(), recv.displs.data(),
+                    mpi::datatype<DATA_TYPE>(), comm ) );
+}
+template<typename DATA_TYPE>
+void all_gather( const DATA_TYPE send[], int sendcnt, BufferBase<DATA_TYPE>& recv )
+{
+  return all_gather( Comm::instance(), send, sendcnt, recv );
+}
+
+template<typename VECTOR>
+void all_gather( const Comm& comm, const VECTOR& send, BufferBase<typename VECTOR::value_type>& recv )
+{
+  all_gather( comm, send.data(), send.size(), recv );
+}
+
+template<typename VECTOR>
+void all_gather( const VECTOR& send, BufferBase<typename VECTOR::value_type>& recv )
+{
+  all_gather( Comm::instance(), send, recv );
+}
+
+
+
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines

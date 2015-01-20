@@ -189,7 +189,7 @@ void renumber_nodes_glb_idx( FunctionSpace& nodes )
 
   std::vector<int> recvcounts(mpi::size());
   std::vector<int> recvdispls(mpi::size());
-  MPL_CHECK_RESULT( MPI_Gather( &nb_nodes, 1, MPI_INT,
+  ATLAS_MPI_CHECK_RESULT( MPI_Gather( &nb_nodes, 1, MPI_INT,
                                 recvcounts.data(), 1, MPI_INT, root, mpi::Comm::instance()) );
   recvdispls[0]=0;
   for (int jpart=1; jpart<nparts; ++jpart) // start at 1
@@ -201,9 +201,9 @@ void renumber_nodes_glb_idx( FunctionSpace& nodes )
   Array<uid_t> glb_id_arr(glb_nb_nodes);
   ArrayView<uid_t,1> glb_id(glb_id_arr);
 
-  MPL_CHECK_RESULT(
-        MPI_Gatherv( loc_id.data(), nb_nodes, mpi::TYPE<uid_t>(),
-                     glb_id.data(), recvcounts.data(), recvdispls.data(), mpi::TYPE<uid_t>(),
+  ATLAS_MPI_CHECK_RESULT(
+        MPI_Gatherv( loc_id.data(), nb_nodes, mpi::datatype<uid_t>(),
+                     glb_id.data(), recvcounts.data(), recvdispls.data(), mpi::datatype<uid_t>(),
                      root, mpi::Comm::instance()) );
 
 
@@ -232,9 +232,9 @@ void renumber_nodes_glb_idx( FunctionSpace& nodes )
   }
 
   // 3) Scatter renumbered back
-  MPL_CHECK_RESULT(
-        MPI_Scatterv( glb_id.data(), recvcounts.data(), recvdispls.data(), mpi::TYPE<uid_t>(),
-                      loc_id.data(), nb_nodes, mpi::TYPE<uid_t>(),
+  ATLAS_MPI_CHECK_RESULT(
+        MPI_Scatterv( glb_id.data(), recvcounts.data(), recvdispls.data(), mpi::datatype<uid_t>(),
+                      loc_id.data(), nb_nodes, mpi::datatype<uid_t>(),
                       root, mpi::Comm::instance()) );
 
   for( int jnode=0; jnode<nb_nodes; ++jnode )
@@ -288,7 +288,7 @@ FieldT<int>& build_nodes_remote_idx( FunctionSpace& nodes )
     }
   }
 
-  mpi::Alltoall( send_needed, recv_needed );
+  mpi::all_to_all( send_needed, recv_needed );
 
   std::vector< std::vector<int> > send_found( mpi::size() );
   std::vector< std::vector<int> > recv_found( mpi::size() );
@@ -316,7 +316,7 @@ FieldT<int>& build_nodes_remote_idx( FunctionSpace& nodes )
     }
   }
 
-  mpi::Alltoall( send_found, recv_found );
+  mpi::all_to_all( send_found, recv_found );
 
   for( int jpart=0; jpart<nparts; ++jpart )
   {
@@ -547,7 +547,7 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
 
     }
 
-    mpi::Alltoall( send_unknown, recv_unknown );
+    mpi::all_to_all( send_unknown, recv_unknown );
 
     // So now we have identified all possible edges with wrong partition.
     // We still need to check if it is actually wrong. This can be achieved
@@ -573,7 +573,7 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
       }
     }
 
-    mpi::Alltoall( send_found, recv_found );
+    mpi::all_to_all( send_found, recv_found );
 
     for( int jpart=0; jpart<nparts; ++jpart )
     {
@@ -724,7 +724,7 @@ FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes 
 #ifdef DEBUGGING_PARFIELDS
   varsize=6;
 #endif
-  mpi::Alltoall( send_needed, recv_needed );
+  mpi::all_to_all( send_needed, recv_needed );
 
   std::vector< std::vector<int> > send_found( mpi::size() );
   std::vector< std::vector<int> > recv_found( mpi::size() );
@@ -760,7 +760,7 @@ FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes 
     }
   }
 
-  mpi::Alltoall( send_found, recv_found );
+  mpi::all_to_all( send_found, recv_found );
 
   for( int jpart=0; jpart<nparts; ++jpart )
   {
@@ -839,7 +839,7 @@ FieldT<gidx_t>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nod
 
   std::vector<int> recvcounts(mpi::size());
   std::vector<int> recvdispls(mpi::size());
-  MPL_CHECK_RESULT( MPI_Gather( &nb_edges, 1, MPI_INT,
+  ATLAS_MPI_CHECK_RESULT( MPI_Gather( &nb_edges, 1, MPI_INT,
                                 recvcounts.data(), 1, MPI_INT, root, mpi::Comm::instance()) );
   recvdispls[0]=0;
   for (int jpart=1; jpart<nparts; ++jpart) // start at 1
@@ -851,9 +851,9 @@ FieldT<gidx_t>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nod
   Array<uid_t> glb_edge_id_arr(glb_nb_edges);
   ArrayView<uid_t,1> glb_edge_id(glb_edge_id_arr);
 
-  MPL_CHECK_RESULT(
-        MPI_Gatherv( loc_edge_id.data(), nb_edges, mpi::TYPE<uid_t>(),
-                     glb_edge_id.data(), recvcounts.data(), recvdispls.data(), mpi::TYPE<uid_t>(),
+  ATLAS_MPI_CHECK_RESULT(
+        MPI_Gatherv( loc_edge_id.data(), nb_edges, mpi::datatype<uid_t>(),
+                     glb_edge_id.data(), recvcounts.data(), recvdispls.data(), mpi::datatype<uid_t>(),
                      root, mpi::Comm::instance()) );
 
 
@@ -882,9 +882,9 @@ FieldT<gidx_t>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nod
   }
 
   // 3) Scatter renumbered back
-  MPL_CHECK_RESULT(
-        MPI_Scatterv( glb_edge_id.data(), recvcounts.data(), recvdispls.data(), mpi::TYPE<uid_t>(),
-                      loc_edge_id.data(), nb_edges, mpi::TYPE<uid_t>(),
+  ATLAS_MPI_CHECK_RESULT(
+        MPI_Scatterv( glb_edge_id.data(), recvcounts.data(), recvdispls.data(), mpi::datatype<uid_t>(),
+                      loc_edge_id.data(), nb_edges, mpi::datatype<uid_t>(),
                       root, mpi::Comm::instance()) );
 
 

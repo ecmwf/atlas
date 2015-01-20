@@ -567,9 +567,9 @@ double AtlasBenchmark::result()
     }
   }
 
-  MPL_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&maxval,1,mpi::TYPE<double>(),MPI_MAX,mpi::Comm::instance()) );
-  MPL_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&minval,1,mpi::TYPE<double>(),MPI_MIN,mpi::Comm::instance()) );
-  MPL_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&norm  ,1,mpi::TYPE<double>(),MPI_SUM,mpi::Comm::instance()) );
+  ATLAS_MPI_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&maxval,1,mpi::datatype<double>(),MPI_MAX,mpi::Comm::instance()) );
+  ATLAS_MPI_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&minval,1,mpi::datatype<double>(),MPI_MIN,mpi::Comm::instance()) );
+  ATLAS_MPI_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&norm  ,1,mpi::datatype<double>(),MPI_SUM,mpi::Comm::instance()) );
   norm = std::sqrt(norm);
 
   Log::info() << "  checksum: " << mesh->function_space("nodes").checksum().execute( grad ) << endl;

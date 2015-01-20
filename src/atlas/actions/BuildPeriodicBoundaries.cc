@@ -81,7 +81,7 @@ void build_periodic_boundaries( Mesh& mesh )
   {
     int sendcnt = slave_nodes.size();
     std::vector< int > recvcounts( mpi::size() );
-    MPL_CHECK_RESULT( MPI_Allgather(&sendcnt,           1, MPI_INT,
+    ATLAS_MPI_CHECK_RESULT( MPI_Allgather(&sendcnt,           1, MPI_INT,
                                      recvcounts.data(), 1, MPI_INT, mpi::Comm::instance() ) );
 
     std::vector<int> recvdispls( mpi::size() );
@@ -94,10 +94,10 @@ void build_periodic_boundaries( Mesh& mesh )
     }
     std::vector<int> recvbuf(recvcnt);
 
-    MPL_CHECK_RESULT( MPI_Allgatherv(
-                      slave_nodes.data(), slave_nodes.size(), mpi::TYPE<int>(),
+    ATLAS_MPI_CHECK_RESULT( MPI_Allgatherv(
+                      slave_nodes.data(), slave_nodes.size(), mpi::datatype<int>(),
                       recvbuf.data(), recvcounts.data(), recvdispls.data(),
-                      mpi::TYPE<int>(), mpi::Comm::instance()) );
+                      mpi::datatype<int>(), mpi::Comm::instance()) );
 
 
     PeriodicTransform transform;
@@ -162,11 +162,11 @@ void build_periodic_boundaries( Mesh& mesh )
   }
 
   // Communicate
-  mpi::Alltoall( send_slave_idx,      recv_slave_idx      );
-  mpi::Alltoall( send_master_part,    recv_master_part    );
-  mpi::Alltoall( send_master_ridx,    recv_master_ridx     );
-                    //  mpi::Alltoall( send_slave_part,     recv_slave_part    );
-                    //  mpi::Alltoall( send_slave_loc,      recv_slave_ridx    );
+  mpi::all_to_all( send_slave_idx,      recv_slave_idx      );
+  mpi::all_to_all( send_master_part,    recv_master_part    );
+  mpi::all_to_all( send_master_ridx,    recv_master_ridx     );
+                    //  mpi::all_to_all( send_slave_part,     recv_slave_part    );
+                    //  mpi::all_to_all( send_slave_loc,      recv_slave_ridx    );
 
   // Fill in periodic
   int nb_recv_master = 0;

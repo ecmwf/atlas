@@ -290,22 +290,22 @@ std::string read_config(const LocalPathName& path, const int master_task = 0)
 			std::string str = stream.str();
 			buf = const_cast<char*>(str.c_str());
 			buf_len = str.size();
-			MPI_Bcast(&buf_len,1,mpi::TYPE<int >(),master_task,mpi::Comm::instance());
+			MPI_Bcast(&buf_len,1,mpi::datatype<int >(),master_task,mpi::Comm::instance());
 			if (buf_len)
-				MPI_Bcast(buf,buf_len,mpi::TYPE<char>(),master_task,mpi::Comm::instance());
+				MPI_Bcast(buf,buf_len,mpi::datatype<char>(),master_task,mpi::Comm::instance());
 		}
 		else
 		{
-			MPI_Bcast(&buf_len,1,mpi::TYPE<int >(),master_task,mpi::Comm::instance());
+			MPI_Bcast(&buf_len,1,mpi::datatype<int >(),master_task,mpi::Comm::instance());
 		}
 	}
 	else
 	{
-		MPI_Bcast(&buf_len,1,mpi::TYPE<int>(),master_task,mpi::Comm::instance());
+		MPI_Bcast(&buf_len,1,mpi::datatype<int>(),master_task,mpi::Comm::instance());
 		if( buf_len )
 		{
 			buf = new char[buf_len];
-			MPI_Bcast(buf,buf_len,mpi::TYPE<char>(),master_task,mpi::Comm::instance());
+			MPI_Bcast(buf,buf_len,mpi::datatype<char>(),master_task,mpi::Comm::instance());
 			stream.write(buf,buf_len);
 			delete[] buf;
 		}

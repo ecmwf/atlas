@@ -55,7 +55,7 @@ double dual_volume(Mesh& mesh)
       area += dual_volumes(node);
     }
   }
-  MPL_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &area, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD ) );
+  ATLAS_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &area, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD ) );
   return area;
 }
 
