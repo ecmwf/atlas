@@ -25,8 +25,8 @@ namespace actions {
 
 void distribute_mesh( Mesh& mesh )
 {
-  EqualAreaPartitioner partitioner( MPL::size() );
-  int mypart = MPL::rank();
+  EqualAreaPartitioner partitioner( mpi::size() );
+  int mypart = mpi::rank();
 
   FunctionSpace& nodes = mesh.function_space("nodes");
   int nb_nodes = nodes.shape(0);

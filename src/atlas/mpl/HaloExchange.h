@@ -140,7 +140,7 @@ void HaloExchange::execute(DATA_TYPE field[], const int var_strides[], const int
     if(recv_counts[jproc] > 0)
     {
       MPL_CHECK_RESULT( MPI_Irecv( &recv_buffer[recv_displs[jproc]] , recv_counts[jproc],
-        MPL::TYPE<DATA_TYPE>(), jproc, tag, MPI_COMM_WORLD, &recv_req[jproc] ) );
+        mpi::TYPE<DATA_TYPE>(), jproc, tag, MPI_COMM_WORLD, &recv_req[jproc] ) );
     }
   }
 
@@ -153,7 +153,7 @@ void HaloExchange::execute(DATA_TYPE field[], const int var_strides[], const int
     if(send_counts[jproc] > 0)
     {
       MPL_CHECK_RESULT( MPI_Isend( &send_buffer[send_displs[jproc]], send_counts[jproc],
-        MPL::TYPE<DATA_TYPE>(), jproc, tag, MPI_COMM_WORLD, &send_req[jproc] ) );
+        mpi::TYPE<DATA_TYPE>(), jproc, tag, MPI_COMM_WORLD, &send_req[jproc] ) );
     }
   }
 

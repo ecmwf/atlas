@@ -21,7 +21,7 @@ namespace actions {
 
 void write_load_balance_report( const Mesh& mesh, const std::string& filename )
 {
-  int npart = MPL::size();
+  int npart = mpi::size();
   int root = 0;
 
   std::vector<int> nb_total_nodes(npart,0);
@@ -83,7 +83,7 @@ void write_load_balance_report( const Mesh& mesh, const std::string& filename )
                                   root, MPI_COMM_WORLD ) );
   }
 
-  if( MPL::rank() == 0 )
+  if( mpi::rank() == 0 )
   {
     eckit::LocalPathName path(filename);
     std::ofstream ofs;

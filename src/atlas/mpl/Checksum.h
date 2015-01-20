@@ -110,7 +110,7 @@ std::string Checksum::execute( const DATA_TYPE data[],
   gather_.gather(&loc,&glb,1);
 
   checksum_t glb_checksum = checksum(global_checksums.data(),global_checksums.size());
-  MPI_Bcast(&glb_checksum,1,MPL::TYPE<checksum_t>(),0,MPI_COMM_WORLD);
+  MPI_Bcast(&glb_checksum,1,mpi::TYPE<checksum_t>(),0,MPI_COMM_WORLD);
   return eckit::Translator<checksum_t,std::string>()(glb_checksum);
 }
 

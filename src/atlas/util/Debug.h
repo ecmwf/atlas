@@ -20,9 +20,9 @@
 
 
 /// DEBUG MACRO
-#define DEBUG_0()            eckit::Log::info() << "["<< MPL::rank() << "] DEBUG() @ " << Here() << std::endl;
-#define DEBUG_1(WHAT)        eckit::Log::info() << "["<< MPL::rank() << "] DEBUG( " << WHAT << " ) @ " << Here() << std::endl;
-#define DEBUG_2(WHAT,RANK)   if(MPL::rank() == RANK) { DEBUG_1(WHAT) }
+#define DEBUG_0()            eckit::Log::info() << "["<< mpi::rank() << "] DEBUG() @ " << Here() << std::endl;
+#define DEBUG_1(WHAT)        eckit::Log::info() << "["<< mpi::rank() << "] DEBUG( " << WHAT << " ) @ " << Here() << std::endl;
+#define DEBUG_2(WHAT,RANK)   if(mpi::rank() == RANK) { DEBUG_1(WHAT) }
 #define DEBUG_X(x,A,B,FUNC, ...)  FUNC
 #define DEBUG(...)  do {DEBUG_X(,##__VA_ARGS__,\
                         DEBUG_2(__VA_ARGS__),\
@@ -32,10 +32,10 @@
 /// DEBUG_SYNC MACRO
 #define DEBUG_SYNC(...) do {\
   {MPI_Barrier(MPI_COMM_WORLD);\
-  int npid = MPL::size();\
+  int npid = mpi::size();\
   for( int p=0; p<npid; ++p )\
   {\
-    if( p==MPL::rank() )\
+    if( p==mpi::rank() )\
     {\
       DEBUG_X(,##__VA_ARGS__,\
         DEBUG_2(__VA_ARGS__),\
@@ -50,8 +50,8 @@
   #undef DEBUG_VAR
 #endif
 #define DEBUG_VAR_1(VAR) \
-  eckit::Log::info() << "["<< MPL::rank() << "] DEBUG( " << #VAR << " : " << VAR << " ) @ " << Here() << std::endl;
-#define DEBUG_VAR_2(VAR,RANK) if(MPL::rank() == RANK) { DEBUG_VAR_1(VAR) }
+  eckit::Log::info() << "["<< mpi::rank() << "] DEBUG( " << #VAR << " : " << VAR << " ) @ " << Here() << std::endl;
+#define DEBUG_VAR_2(VAR,RANK) if(mpi::rank() == RANK) { DEBUG_VAR_1(VAR) }
 #define DEBUG_VAR_X(x,A,B,FUNC, ...)  FUNC
 #define DEBUG_VAR(...)  do {DEBUG_VAR_X(,##__VA_ARGS__,\
                             DEBUG_VAR_2(__VA_ARGS__),\

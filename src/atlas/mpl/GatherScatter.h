@@ -272,8 +272,8 @@ void GatherScatter::gather( mpl::Field<DATA_TYPE const> lfields[],
 
     /// Gather
     MPL_CHECK_RESULT(
-        MPI_Gatherv( loc_buffer.data(), loc_size, MPL::TYPE<DATA_TYPE>(),
-                     glb_buffer.data(), glb_counts.data(), glb_displs.data(), MPL::TYPE<DATA_TYPE>(),
+        MPI_Gatherv( loc_buffer.data(), loc_size, mpi::TYPE<DATA_TYPE>(),
+                     glb_buffer.data(), glb_counts.data(), glb_displs.data(), mpi::TYPE<DATA_TYPE>(),
                      root, MPI_COMM_WORLD ) );
 
     /// Unpack
@@ -355,8 +355,8 @@ void GatherScatter::scatter( mpl::Field<DATA_TYPE const> gfields[],
 
     /// Scatter
     MPL_CHECK_RESULT(
-        MPI_Scatterv( glb_buffer.data(), glb_counts.data(), glb_displs.data(), MPL::TYPE<DATA_TYPE>(),
-                      loc_buffer.data(), loc_size, MPL::TYPE<DATA_TYPE>(),
+        MPI_Scatterv( glb_buffer.data(), glb_counts.data(), glb_displs.data(), mpi::TYPE<DATA_TYPE>(),
+                      loc_buffer.data(), loc_size, mpi::TYPE<DATA_TYPE>(),
                       root, MPI_COMM_WORLD ) );
 
     /// Unpack

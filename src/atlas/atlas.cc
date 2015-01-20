@@ -71,7 +71,7 @@ struct CreateLogFile
 	FileChannel* operator()()
 	{
 		char s[6];
-		std::sprintf(s, "%05d",MPL::rank());
+		std::sprintf(s, "%05d",mpi::rank());
 		FileChannel* ch = new FileChannel(file_path+".p"+std::string(s)) ;
 		return ch;
 	}
@@ -102,7 +102,7 @@ struct ChannelConfig
 	{
 		int logfile_rank = Resource<int>("atlas.logfile_task;$ATLAS_LOGFILE_TASK;--logfile_task",-1);
 		logfile_path    = Resource<std::string>("atlas.logfile;$ATLAS_LOGFILE;--logfile","");
-		logfile_enabled = !logfile_path.empty() && ( logfile_rank < 0 || logfile_rank == MPL::rank() );
+		logfile_enabled = !logfile_path.empty() && ( logfile_rank < 0 || logfile_rank == mpi::rank() );
 		console_rank = Resource<int>("atlas.console_task;$ATLAS_CONSOLE_TASK;--console_task",0);
 		console_enabled = true;
 		console_format = new ColorizeFormat();
@@ -130,10 +130,10 @@ struct ChannelConfig
 		if( logfile_enabled && !mc->has("logfile") )
 			mc->add( "logfile", new FormatChannel(logfile(CreateLogFile(logfile_path)),logfile_format) );
 
-		if( console_enabled && !mc->has("console") && (console_rank < 0 || console_rank == MPL::rank()) )
+		if( console_enabled && !mc->has("console") && (console_rank < 0 || console_rank == mpi::rank()) )
 			mc->add( "console" , new FormatChannel(standard_out(),console_format) );
 
-		if( mc->has("console") && (!console_enabled || (console_rank >= 0 && console_rank != MPL::rank() ) ) )
+		if( mc->has("console") && (!console_enabled || (console_rank >= 0 && console_rank != mpi::rank() ) ) )
 			mc->remove("console");
 
 		if( !mc->has("callback") )
@@ -168,7 +168,7 @@ public:
 	{
 		// Console format
 		char p[6];
-		std::sprintf(p, "%05d",MPL::rank());
+		std::sprintf(p, "%05d",mpi::rank());
 		debug_ctxt.console_format->prefix("(P"+std::string(p)+" D) -- ");
 		info_ctxt. console_format->prefix("(P"+std::string(p)+" I) -- ");
 		warn_ctxt. console_format->prefix("(P"+std::string(p)+" W) -- ");
@@ -277,7 +277,7 @@ std::string read_config(const LocalPathName& path, const int master_task = 0)
 	std::stringstream stream;
 	char* buf;
 	int buf_len(0);
-	if( MPL::rank() == master_task )
+	if( mpi::rank() == master_task )
 	{
 		if( path.exists() )
 		{
@@ -290,22 +290,22 @@ std::string read_config(const LocalPathName& path, const int master_task = 0)
 			std::string str = stream.str();
 			buf = const_cast<char*>(str.c_str());
 			buf_len = str.size();
-			MPI_Bcast(&buf_len,1,MPL::TYPE<int >(),master_task,MPI_COMM_WORLD);
+			MPI_Bcast(&buf_len,1,mpi::TYPE<int >(),master_task,MPI_COMM_WORLD);
 			if (buf_len)
-				MPI_Bcast(buf,buf_len,MPL::TYPE<char>(),master_task,MPI_COMM_WORLD);
+				MPI_Bcast(buf,buf_len,mpi::TYPE<char>(),master_task,MPI_COMM_WORLD);
 		}
 		else
 		{
-			MPI_Bcast(&buf_len,1,MPL::TYPE<int >(),master_task,MPI_COMM_WORLD);
+			MPI_Bcast(&buf_len,1,mpi::TYPE<int >(),master_task,MPI_COMM_WORLD);
 		}
 	}
 	else
 	{
-		MPI_Bcast(&buf_len,1,MPL::TYPE<int>(),master_task,MPI_COMM_WORLD);
+		MPI_Bcast(&buf_len,1,mpi::TYPE<int>(),master_task,MPI_COMM_WORLD);
 		if( buf_len )
 		{
 			buf = new char[buf_len];
-			MPI_Bcast(buf,buf_len,MPL::TYPE<char>(),master_task,MPI_COMM_WORLD);
+			MPI_Bcast(buf,buf_len,mpi::TYPE<char>(),master_task,MPI_COMM_WORLD);
 			stream.write(buf,buf_len);
 			delete[] buf;
 		}
@@ -329,7 +329,7 @@ void atlas_init(int argc, char** argv)
   if( argc > 0 )
     Context::instance().setup(argc, argv);
 
-  MPL::init( Context::instance().argc(), Context::instance().argvs() );
+  mpi::init( Context::instance().argc(), Context::instance().argvs() );
 
   if( Context::instance().argc() > 0 )
   {
@@ -394,7 +394,7 @@ void atlas_init(int argc, char** argv)
 void atlas_finalize()
 {
   Log::debug() << "Atlas finalized" << std::endl;
-  MPL::finalize();
+  mpi::finalize();
 }
 
 void atlas__atlas_init(int argc, char* argv[])

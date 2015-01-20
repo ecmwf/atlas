@@ -152,8 +152,8 @@ void renumber_nodes_glb_idx( FunctionSpace& nodes )
 
   ComputeUid compute_uid(nodes);
 
-  int mypart = MPL::rank();
-  int nparts = MPL::size();
+  int mypart = mpi::rank();
+  int nparts = mpi::size();
   int root = 0;
 
   if( ! nodes.has_field("glb_idx") )
@@ -187,8 +187,8 @@ void renumber_nodes_glb_idx( FunctionSpace& nodes )
     loc_id(jnode) = glb_idx(jnode);
   }
 
-  std::vector<int> recvcounts(MPL::size());
-  std::vector<int> recvdispls(MPL::size());
+  std::vector<int> recvcounts(mpi::size());
+  std::vector<int> recvdispls(mpi::size());
   MPL_CHECK_RESULT( MPI_Gather( &nb_nodes, 1, MPI_INT,
                                 recvcounts.data(), 1, MPI_INT, root, MPI_COMM_WORLD) );
   recvdispls[0]=0;
@@ -202,8 +202,8 @@ void renumber_nodes_glb_idx( FunctionSpace& nodes )
   ArrayView<uid_t,1> glb_id(glb_id_arr);
 
   MPL_CHECK_RESULT(
-        MPI_Gatherv( loc_id.data(), nb_nodes, MPL::TYPE<uid_t>(),
-                     glb_id.data(), recvcounts.data(), recvdispls.data(), MPL::TYPE<uid_t>(),
+        MPI_Gatherv( loc_id.data(), nb_nodes, mpi::TYPE<uid_t>(),
+                     glb_id.data(), recvcounts.data(), recvdispls.data(), mpi::TYPE<uid_t>(),
                      root, MPI_COMM_WORLD) );
 
 
@@ -233,8 +233,8 @@ void renumber_nodes_glb_idx( FunctionSpace& nodes )
 
   // 3) Scatter renumbered back
   MPL_CHECK_RESULT(
-        MPI_Scatterv( glb_id.data(), recvcounts.data(), recvdispls.data(), MPL::TYPE<uid_t>(),
-                      loc_id.data(), nb_nodes, MPL::TYPE<uid_t>(),
+        MPI_Scatterv( glb_id.data(), recvcounts.data(), recvdispls.data(), mpi::TYPE<uid_t>(),
+                      loc_id.data(), nb_nodes, mpi::TYPE<uid_t>(),
                       root, MPI_COMM_WORLD) );
 
   for( int jnode=0; jnode<nb_nodes; ++jnode )
@@ -247,8 +247,8 @@ void renumber_nodes_glb_idx( FunctionSpace& nodes )
 
 FieldT<int>& build_nodes_remote_idx( FunctionSpace& nodes )
 {
-  int mypart = MPL::rank();
-  int nparts = MPL::size();
+  int mypart = mpi::rank();
+  int nparts = mpi::size();
 
   ComputeUid compute_uid(nodes);
 
@@ -268,8 +268,8 @@ FieldT<int>& build_nodes_remote_idx( FunctionSpace& nodes )
 
   int varsize=2;
 
-  std::vector< std::vector<uid_t> > send_needed( MPL::size() );
-  std::vector< std::vector<uid_t> > recv_needed( MPL::size() );
+  std::vector< std::vector<uid_t> > send_needed( mpi::size() );
+  std::vector< std::vector<uid_t> > recv_needed( mpi::size() );
   int sendcnt=0;
   std::map<uid_t,int> lookup;
   for( int jnode=0; jnode<nb_nodes; ++jnode )
@@ -288,10 +288,10 @@ FieldT<int>& build_nodes_remote_idx( FunctionSpace& nodes )
     }
   }
 
-  MPL::Alltoall( send_needed, recv_needed );
+  mpi::Alltoall( send_needed, recv_needed );
 
-  std::vector< std::vector<int> > send_found( MPL::size() );
-  std::vector< std::vector<int> > recv_found( MPL::size() );
+  std::vector< std::vector<int> > send_found( mpi::size() );
+  std::vector< std::vector<int> > recv_found( mpi::size() );
 
   for( int jpart=0; jpart<nparts; ++jpart )
   {
@@ -309,14 +309,14 @@ FieldT<int>& build_nodes_remote_idx( FunctionSpace& nodes )
       else
       {
         std::stringstream msg;
-        msg << "[" << MPL::rank() << "] " << "Node requested by rank ["<<jpart
+        msg << "[" << mpi::rank() << "] " << "Node requested by rank ["<<jpart
             << "] with uid [" << uid << "] that should be owned is not found";
         throw eckit::SeriousBug(msg.str(),Here());
       }
     }
   }
 
-  MPL::Alltoall( send_found, recv_found );
+  mpi::Alltoall( send_found, recv_found );
 
   for( int jpart=0; jpart<nparts; ++jpart )
   {
@@ -337,7 +337,7 @@ FieldT<int>& build_nodes_partition( FunctionSpace& nodes )
   if( ! nodes.has_field("partition") )
   {
     ArrayView<int,1> part ( nodes.create_field<int>("partition",1) );
-    part = MPL::rank();
+    part = mpi::rank();
   }
   return nodes.field<int>("partition");
 }
@@ -348,8 +348,8 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
 {
   ComputeUid compute_uid(nodes);
 
-  int mypart = MPL::rank();
-  int nparts = MPL::size();
+  int mypart = mpi::rank();
+  int nparts = mpi::size();
 
   if( ! edges.has_field("partition") ) edges.create_field<int>("partition",1) ;
   ArrayView<int,1> edge_part  ( edges.field("partition") );
@@ -485,8 +485,8 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
     std::map<uid_t,int> lookup;
     int varsize=2;
     double centroid[2];
-    std::vector< std::vector<uid_t> > send_unknown( MPL::size() );
-    std::vector< std::vector<uid_t> > recv_unknown( MPL::size() );
+    std::vector< std::vector<uid_t> > send_unknown( mpi::size() );
+    std::vector< std::vector<uid_t> > recv_unknown( mpi::size() );
     for( int jedge=0; jedge<nb_edges; ++jedge )
     {
       int ip1 = edge_nodes(jedge,0);
@@ -547,7 +547,7 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
 
     }
 
-    MPL::Alltoall( send_unknown, recv_unknown );
+    mpi::Alltoall( send_unknown, recv_unknown );
 
     // So now we have identified all possible edges with wrong partition.
     // We still need to check if it is actually wrong. This can be achieved
@@ -555,8 +555,8 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
     // assigned edge partition. If the edge is not found on that partition,
     // then its other node must be the edge partition.
 
-    std::vector< std::vector<int> > send_found( MPL::size() );
-    std::vector< std::vector<int> > recv_found( MPL::size() );
+    std::vector< std::vector<int> > send_found( mpi::size() );
+    std::vector< std::vector<int> > recv_found( mpi::size() );
 
     for( int jpart=0; jpart<nparts; ++jpart )
     {
@@ -573,7 +573,7 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
       }
     }
 
-    MPL::Alltoall( send_found, recv_found );
+    mpi::Alltoall( send_found, recv_found );
 
     for( int jpart=0; jpart<nparts; ++jpart )
     {
@@ -633,8 +633,8 @@ FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes 
 {
   ComputeUid compute_uid(nodes);
 
-  int mypart = MPL::rank();
-  int nparts = MPL::size();
+  int mypart = mpi::rank();
+  int nparts = mpi::size();
 
   if( ! edges.has_field("remote_idx") ) ( edges.create_field<int>("remote_idx",1) );
   IndexView<int,   2> edge_nodes ( edges.field("nodes")       );
@@ -659,8 +659,8 @@ FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes 
   const int nb_edges = edges.shape(0);
 
   double centroid[2];
-  std::vector< std::vector<uid_t> > send_needed( MPL::size() );
-  std::vector< std::vector<uid_t> > recv_needed( MPL::size() );
+  std::vector< std::vector<uid_t> > send_needed( mpi::size() );
+  std::vector< std::vector<uid_t> > recv_needed( mpi::size() );
   int sendcnt=0;
   std::map<uid_t,int> lookup;
 
@@ -724,10 +724,10 @@ FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes 
 #ifdef DEBUGGING_PARFIELDS
   varsize=6;
 #endif
-  MPL::Alltoall( send_needed, recv_needed );
+  mpi::Alltoall( send_needed, recv_needed );
 
-  std::vector< std::vector<int> > send_found( MPL::size() );
-  std::vector< std::vector<int> > recv_found( MPL::size() );
+  std::vector< std::vector<int> > send_found( mpi::size() );
+  std::vector< std::vector<int> > recv_found( mpi::size() );
 
   std::map<uid_t,int>::iterator found;
   for( int jpart=0; jpart<nparts; ++jpart )
@@ -760,7 +760,7 @@ FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes 
     }
   }
 
-  MPL::Alltoall( send_found, recv_found );
+  mpi::Alltoall( send_found, recv_found );
 
   for( int jpart=0; jpart<nparts; ++jpart )
   {
@@ -780,8 +780,8 @@ FieldT<gidx_t>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nod
 {
   ComputeUid compute_uid(nodes);
 
-  int mypart = MPL::rank();
-  int nparts = MPL::size();
+  int mypart = mpi::rank();
+  int nparts = mpi::size();
   int root = 0;
 
   if( ! edges.has_field("glb_idx") )
@@ -837,8 +837,8 @@ FieldT<gidx_t>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nod
     loc_edge_id(jedge) = edge_gidx(jedge);
   }
 
-  std::vector<int> recvcounts(MPL::size());
-  std::vector<int> recvdispls(MPL::size());
+  std::vector<int> recvcounts(mpi::size());
+  std::vector<int> recvdispls(mpi::size());
   MPL_CHECK_RESULT( MPI_Gather( &nb_edges, 1, MPI_INT,
                                 recvcounts.data(), 1, MPI_INT, root, MPI_COMM_WORLD) );
   recvdispls[0]=0;
@@ -852,8 +852,8 @@ FieldT<gidx_t>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nod
   ArrayView<uid_t,1> glb_edge_id(glb_edge_id_arr);
 
   MPL_CHECK_RESULT(
-        MPI_Gatherv( loc_edge_id.data(), nb_edges, MPL::TYPE<uid_t>(),
-                     glb_edge_id.data(), recvcounts.data(), recvdispls.data(), MPL::TYPE<uid_t>(),
+        MPI_Gatherv( loc_edge_id.data(), nb_edges, mpi::TYPE<uid_t>(),
+                     glb_edge_id.data(), recvcounts.data(), recvdispls.data(), mpi::TYPE<uid_t>(),
                      root, MPI_COMM_WORLD) );
 
 
@@ -883,8 +883,8 @@ FieldT<gidx_t>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nod
 
   // 3) Scatter renumbered back
   MPL_CHECK_RESULT(
-        MPI_Scatterv( glb_edge_id.data(), recvcounts.data(), recvdispls.data(), MPL::TYPE<uid_t>(),
-                      loc_edge_id.data(), nb_edges, MPL::TYPE<uid_t>(),
+        MPI_Scatterv( glb_edge_id.data(), recvcounts.data(), recvdispls.data(), mpi::TYPE<uid_t>(),
+                      loc_edge_id.data(), nb_edges, mpi::TYPE<uid_t>(),
                       root, MPI_COMM_WORLD) );
 
 

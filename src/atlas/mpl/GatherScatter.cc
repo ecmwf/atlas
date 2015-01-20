@@ -34,7 +34,7 @@ struct IsGhostPoint
     part_   = part;
     ridx_   = ridx;
     base_   = base;
-    mypart_ = MPL::rank();
+    mypart_ = mpi::rank();
   }
 
   bool operator()(int idx)
@@ -84,8 +84,8 @@ bool operator < (const gidx_t g, const Node& n)
 GatherScatter::GatherScatter() :
   is_setup_(false)
 {
-  myproc = MPL::rank();
-  nproc  = MPL::size();
+  myproc = mpi::rank();
+  nproc  = mpi::size();
   root_   = 0;
 }
 
@@ -128,8 +128,8 @@ void GatherScatter::setup( const int part[],
     glbdispls_[jproc]=glbcounts_[jproc-1]+glbdispls_[jproc-1];
   }
   std::vector<gidx_t> recvnodes(glbcnt_);
-  MPL_CHECK_RESULT( MPI_Gatherv( sendnodes.data(), loccnt_, MPL::TYPE<gidx_t>(),
-                                 recvnodes.data(), glbcounts_.data(), glbdispls_.data(), MPL::TYPE<gidx_t>(),
+  MPL_CHECK_RESULT( MPI_Gatherv( sendnodes.data(), loccnt_, mpi::TYPE<gidx_t>(),
+                                 recvnodes.data(), glbcounts_.data(), glbdispls_.data(), mpi::TYPE<gidx_t>(),
                                  root_, MPI_COMM_WORLD) );
 
   // Load recvnodes in sorting structure
@@ -214,7 +214,7 @@ void GatherScatter::setup( const int part[],
         maxgid = std::max(maxgid,glb_idx[jj]);
       }
     }
-    MPL_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&maxgid,1,MPL::TYPE<gidx_t>(),MPI_MAX,MPI_COMM_WORLD) );
+    MPL_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&maxgid,1,mpi::TYPE<gidx_t>(),MPI_MAX,MPI_COMM_WORLD) );
   }
 
   Array<int> sendnodes(parsize_,3);

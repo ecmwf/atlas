@@ -22,7 +22,7 @@
 { \
   int ierr = MPI_CALL; \
   if (ierr != MPI_SUCCESS) { \
-    throw atlas::MPL::MPLError( std::string("MPI call: ") + \
+    throw atlas::mpi::MPIError( std::string("MPI call: ") + \
       std::string(#MPI_CALL) + \
       std::string(" did not return MPI_SUCCESS."), Here() ); \
   } \
@@ -30,15 +30,15 @@
 
 namespace atlas {
 
-namespace MPL {
+namespace mpi {
 
 
-class MPLError : public eckit::Exception {
+class MPIError : public eckit::Exception {
 public:
-  MPLError(const std::string& msg, const eckit::CodeLocation& loc)
+  MPIError(const std::string& msg, const eckit::CodeLocation& loc)
   {
     eckit::StrStream s;
-    s << "MPLError: " << msg << " " << " in " << loc << " "  << eckit::StrStream::ends;
+    s << "MPI Error: " << msg << " " << " in " << loc << " "  << eckit::StrStream::ends;
     reason(std::string(s));
   }
 };
@@ -83,7 +83,7 @@ public:
 
   inline int rank()
   {
-    if( !initialized() ) throw MPLError( "MPI not initialized when calling MPL::rank()", Here() );
+    if( !initialized() ) throw MPIError( "MPI not initialized when calling mpi::rank()", Here() );
     int rank;
     MPL_CHECK_RESULT( MPI_Comm_rank( MPI_COMM_WORLD, &rank ) );
     return rank;
@@ -91,7 +91,7 @@ public:
 
   inline int size()
   {
-    if( !initialized() ) throw MPLError( "MPI not initialized when calling MPL::size()", Here() );
+    if( !initialized() ) throw MPIError( "MPI not initialized when calling mpi::size()", Here() );
     int nproc;
     MPL_CHECK_RESULT( MPI_Comm_size( MPI_COMM_WORLD, &nproc ) );
     return nproc;
@@ -108,8 +108,8 @@ public:
 
     BufferBase()
     {
-      counts.resize( MPL::size() );
-      displs.resize( MPL::size() );
+      counts.resize( mpi::size() );
+      displs.resize( mpi::size() );
     }
   };
 
@@ -120,13 +120,13 @@ public:
     int cnt;
 
     // Get send-information
-    std::vector<int> sendcounts(MPL::size());
-    std::vector<int> senddispls(MPL::size());
+    std::vector<int> sendcounts(mpi::size());
+    std::vector<int> senddispls(mpi::size());
     int sendcnt;
     senddispls[0] = 0;
     sendcounts[0] = sendvec[0].size();
     sendcnt = sendcounts[0];
-    for( int jproc=1; jproc<MPL::size(); ++jproc )
+    for( int jproc=1; jproc<mpi::size(); ++jproc )
     {
       senddispls[jproc] = senddispls[jproc-1] + sendcounts[jproc-1];
       sendcounts[jproc] = sendvec[jproc].size();
@@ -135,15 +135,15 @@ public:
 
 
     // Get recv-information
-    std::vector<int> recvcounts(MPL::size());
-    std::vector<int> recvdispls(MPL::size());
+    std::vector<int> recvcounts(mpi::size());
+    std::vector<int> recvdispls(mpi::size());
     int recvcnt;
     MPL_CHECK_RESULT( MPI_Alltoall( sendcounts.data(), 1, MPI_INT,
                                     recvcounts.data(), 1, MPI_INT,
                                     MPI_COMM_WORLD ) );
     recvdispls[0] = 0;
     recvcnt = recvcounts[0];
-    for( int jproc=1; jproc<MPL::size(); ++jproc )
+    for( int jproc=1; jproc<mpi::size(); ++jproc )
     {
       recvdispls[jproc] = recvdispls[jproc-1] + recvcounts[jproc-1];
       recvcnt += recvcounts[jproc];
@@ -153,7 +153,7 @@ public:
     std::vector<DATA_TYPE> sendbuf(sendcnt);
     std::vector<DATA_TYPE> recvbuf(recvcnt);
     cnt = 0;
-    for( int jproc=0; jproc<MPL::size(); ++jproc )
+    for( int jproc=0; jproc<mpi::size(); ++jproc )
     {
       for( int i=0; i<sendcounts[jproc]; ++i )
       {
@@ -161,11 +161,11 @@ public:
       }
     }
     MPL_CHECK_RESULT( MPI_Alltoallv(
-                        sendbuf.data(), sendcounts.data(), senddispls.data(), MPL::TYPE<DATA_TYPE>(),
-                        recvbuf.data(), recvcounts.data(), recvdispls.data(), MPL::TYPE<DATA_TYPE>(),
+                        sendbuf.data(), sendcounts.data(), senddispls.data(), mpi::TYPE<DATA_TYPE>(),
+                        recvbuf.data(), recvcounts.data(), recvdispls.data(), mpi::TYPE<DATA_TYPE>(),
                         MPI_COMM_WORLD ) );
     cnt=0;
-    for( int jproc=0; jproc<MPL::size(); ++jproc )
+    for( int jproc=0; jproc<mpi::size(); ++jproc )
     {
       recvvec[jproc].resize(recvcounts[jproc]);
       for( int i=0; i<recvcounts[jproc]; ++i )
@@ -184,16 +184,16 @@ public:
                                      recv.counts.data(), 1, MPI_INT, MPI_COMM_WORLD ) );
     recv.displs[0] = 0;
     recv.cnt = recv.counts[0];
-    for( int jpart=1; jpart<MPL::size(); ++jpart )
+    for( int jpart=1; jpart<mpi::size(); ++jpart )
     {
       recv.displs[jpart] = recv.displs[jpart-1] + recv.counts[jpart-1];
       recv.cnt += recv.counts[jpart];
     }
     recv.buf.resize(recv.cnt);
 
-    MPL_CHECK_RESULT( MPI_Allgatherv( const_cast<DATA_TYPE*>(send), sendcnt, MPL::TYPE<DATA_TYPE>(),
+    MPL_CHECK_RESULT( MPI_Allgatherv( const_cast<DATA_TYPE*>(send), sendcnt, mpi::TYPE<DATA_TYPE>(),
                       recv.buf.data(), recv.counts.data(), recv.displs.data(),
-                      MPL::TYPE<DATA_TYPE>(), MPI_COMM_WORLD) );
+                      mpi::TYPE<DATA_TYPE>(), MPI_COMM_WORLD) );
   }
 
   template<typename VECTOR>
@@ -219,7 +219,7 @@ public:
   };
 
 
-} // namespace MPL
+} // namespace mpi
 
 } // namepsace atlas
 

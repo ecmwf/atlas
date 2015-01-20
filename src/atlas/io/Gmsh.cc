@@ -45,22 +45,22 @@ static double rad = M_PI/180.;
 class GmshFile : public std::ofstream
 {
 public:
-  GmshFile(const std::string& file_path, std::ios_base::openmode mode, int part=MPL::rank())
+  GmshFile(const std::string& file_path, std::ios_base::openmode mode, int part=mpi::rank())
   {
     LocalPathName par_path(file_path);
     bool is_new_file = (mode != std::ios_base::app || !par_path.exists() );
-    if( MPL::size() == 1 || part == -1)
+    if( mpi::size() == 1 || part == -1)
     {
       std::ofstream::open(par_path.c_str(), mode );
     }
     else
     {
       Translator<int,std::string> to_str;
-      if( MPL::rank() == 0 )
+      if( mpi::rank() == 0 )
       {
         LocalPathName par_path(file_path);
         std::ofstream par_file( par_path.c_str(), std::ios_base::out );
-        for (int p=0; p<MPL::size(); ++p)
+        for (int p=0; p<mpi::size(); ++p)
         {
           LocalPathName loc_path(file_path);
           loc_path = loc_path.baseName(false)+"_p"+to_str(p)+".msh";
@@ -135,7 +135,7 @@ void write_field_nodes(const Gmsh& gmsh, Field& field, std::ostream& out)
 	for (int ilev=0; ilev<lev.size(); ++ilev)
 	{
 		int jlev = lev[ilev];
-		if( ( gather && MPL::rank() == 0 ) || !gather )
+		if( ( gather && mpi::rank() == 0 ) || !gather )
 		{
 			char field_lev[6];
 			if( field.metadata().has<int>("nb_levels") )
@@ -154,7 +154,7 @@ void write_field_nodes(const Gmsh& gmsh, Field& field, std::ostream& out)
 			if     ( nvars == 1 ) out << nvars << "\n";
 			else if( nvars <= 3 ) out << 3     << "\n";
 			out << ndata << "\n";
-			out << MPL::rank() << "\n";
+			out << mpi::rank() << "\n";
 
 			if( binary )
 			{
@@ -262,7 +262,7 @@ void write_field_elems(const Gmsh& gmsh, Field& field, std::ostream& out)
 		if     ( nvars == 1 ) out << nvars << "\n";
 		else if( nvars <= 3 ) out << 3     << "\n";
 		out << ndata << "\n";
-		out << MPL::rank() << "\n";
+		out << mpi::rank() << "\n";
 
 		if( binary )
 		{
@@ -653,7 +653,7 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh )
 
 void Gmsh::write(Mesh& mesh, const std::string& file_path) const
 {
-	int part = mesh.metadata().get<int>("part",MPL::rank());
+	int part = mesh.metadata().get<int>("part",mpi::rank());
 	bool include_ghost_elements = options.get<bool>("ghost");
 	int surfdim = options.get<int>("surfdim");
 
@@ -953,7 +953,7 @@ void Gmsh::write(FieldGroup& fieldset, const std::string& file_path, openmode mo
 	LocalPathName path(file_path);
 	bool is_new_file = (mode != std::ios_base::app || !path.exists() );
 	bool gather = options.get<bool>("gather",false);
-	GmshFile file(path,mode,gather?-1:MPL::rank());
+	GmshFile file(path,mode,gather?-1:mpi::rank());
 
 	Log::info() << "writing fieldset " << fieldset.name() << " to gmsh file " << path << std::endl;
 
@@ -1000,7 +1000,7 @@ void Gmsh::write(Field& field, const std::string& file_path, openmode mode) cons
 	bool binary( !options.get<bool>("ascii") );
 	if ( binary ) mode |= std::ios_base::binary;
 	bool gather = options.get<bool>("gather",false);
-	GmshFile file(path,mode,gather?-1:MPL::rank());
+	GmshFile file(path,mode,gather?-1:mpi::rank());
 
 	Log::info() << "writing field " << field.name() << " to gmsh file " << path << std::endl;
 

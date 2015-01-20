@@ -30,7 +30,7 @@ struct IsGhostPoint
     part_   = part;
     ridx_   = ridx;
     base_   = base;
-    mypart_ = MPL::rank();
+    mypart_ = mpi::rank();
   }
 
   bool operator()(int idx)
@@ -49,8 +49,8 @@ struct IsGhostPoint
 HaloExchange::HaloExchange() :
   is_setup_(false)
 {
-  myproc = MPL::rank();
-  nproc  = MPL::size();
+  myproc = mpi::rank();
+  nproc  = mpi::size();
 }
 
 void HaloExchange::setup( const int part[],

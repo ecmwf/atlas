@@ -171,12 +171,12 @@ public:
           "ECMWF                        December 2014"
           ;
 
-      MPL::init();
-      if( MPL::rank()==0 )
+      mpi::init();
+      if( mpi::rank()==0 )
       {
         std::cout << help_str << endl;
       }
-      MPL::finalize();
+      mpi::finalize();
       do_run = false;
     }
   }
@@ -252,7 +252,7 @@ void AtlasBenchmark::run()
   Log::info() << "  nlev: " << nlev << endl;
   Log::info() << "  niter: " << niter << endl;
   Log::info() << endl;
-  Log::info() << "  MPI tasks: "<<MPL::size()<<endl;
+  Log::info() << "  MPI tasks: "<<mpi::size()<<endl;
   Log::info() << "  OpenMP threads per MPI task: " << omp_get_max_threads() << endl;
   Log::info() << endl;
 
@@ -566,9 +566,9 @@ double AtlasBenchmark::result()
     }
   }
 
-  MPL_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&maxval,1,MPL::TYPE<double>(),MPI_MAX,MPI_COMM_WORLD) );
-  MPL_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&minval,1,MPL::TYPE<double>(),MPI_MIN,MPI_COMM_WORLD) );
-  MPL_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&norm  ,1,MPL::TYPE<double>(),MPI_SUM,MPI_COMM_WORLD) );
+  MPL_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&maxval,1,mpi::TYPE<double>(),MPI_MAX,MPI_COMM_WORLD) );
+  MPL_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&minval,1,mpi::TYPE<double>(),MPI_MIN,MPI_COMM_WORLD) );
+  MPL_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&norm  ,1,mpi::TYPE<double>(),MPI_SUM,MPI_COMM_WORLD) );
   norm = std::sqrt(norm);
 
   Log::info() << "  checksum: " << mesh->function_space("nodes").checksum().execute( grad ) << endl;
