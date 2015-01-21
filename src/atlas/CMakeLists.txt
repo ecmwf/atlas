@@ -64,6 +64,7 @@ endif()
 list( APPEND atlas_mpl_srcs
 mpi/mpi.h
 mpi/mpi.cc
+mpi/collectives.h
 mpl/MPLArrayView.h
 mpl/Checksum.h
 mpl/Checksum.cc
