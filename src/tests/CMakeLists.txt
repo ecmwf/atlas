@@ -109,9 +109,9 @@ ecbuild_add_test( TARGET atlas_test_grids
   LIBS      atlas
 )
 
-ecbuild_add_test( TARGET atlas_test_simpletext
+ecbuild_add_test( TARGET atlas_test_pointcloud
   BOOST
-  SOURCES   test_simpletext.cc
+  SOURCES   test_pointcloud.cc
   LIBS      atlas
 )
 
