@@ -91,6 +91,17 @@ int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
   return MPI_SUCCESS;
 }
 
+MPI_Fint MPI_Comm_c2f( MPI_Comm comm )
+{
+  return 0;
+}
+
+MPI_Comm MPI_Comm_f2c( MPI_Fint f_handle )
+{
+  MPI_Comm comm;
+  return comm;
+}
+
 int MPI_Comm_rank ( MPI_Comm comm, int *me ) 
 { 
   *me=0; 
@@ -101,6 +112,12 @@ int MPI_Comm_size ( MPI_Comm comm, int *nprocs )
 { 
   *nprocs=1; 
   return MPI_SUCCESS; 
+}
+
+int MPI_Error_string ( int errcode, char* errstr, int *errsize )
+{
+  *errsize=0;
+  return MPI_SUCCESS;
 }
 
 int MPI_Finalize ( void ) 
