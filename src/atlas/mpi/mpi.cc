@@ -83,6 +83,12 @@ Comm& Comm::instance()
   return comm_instance;
 }
 
+int Comm::fortran()
+{
+  MPI_Fint fortran_comm = MPI_Comm_c2f(*this);
+  return fortran_comm;
+}
+
 void Comm::assign( const int fortran_comm )
 {
   comm_ = MPI_Comm_f2c( fortran_comm );
@@ -114,9 +120,9 @@ void Comm::barrier() const
   ATLAS_MPI_CHECK_RESULT( MPI_Barrier(*this) );
 }
 
-World& World::instance()
+CommWorld& CommWorld::instance()
 {
-  static World world_instance;
+  static CommWorld world_instance;
   return world_instance;
 }
 
@@ -141,6 +147,10 @@ extern "C"
   void atlas_mpi_Comm_assign (int comm)
   {
     Comm::instance().assign(comm);
+  }
+  int atlas_mpi_Comm_fortran ()
+  {
+    return Comm::instance().fortran();
   }
 }
 

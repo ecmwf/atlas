@@ -33,7 +33,6 @@
 }
 
 namespace atlas {
-
 namespace mpi {
 
 
@@ -76,6 +75,8 @@ public:
   static Comm& instance();
 
   operator MPI_Comm() const { return comm_; }
+  
+  int fortran();
 
   void assign( const int fortran_comm );
 
@@ -91,11 +92,11 @@ private:
   MPI_Comm comm_;
 };
 
-class World : private Comm
+class CommWorld : private Comm
 {
 public:
-  World() : Comm() {}
-  static World& instance();
+  CommWorld() : Comm(MPI_COMM_WORLD) {}
+  static CommWorld& instance();
   operator MPI_Comm() const { return MPI_COMM_WORLD; }
 };
 
@@ -113,6 +114,7 @@ void barrier();
 extern "C"
 {
   void atlas_mpi_Comm_assign (int comm);
+  int atlas_mpi_Comm_fortran ();
 }
 // ------------------------------------------------------------------
 
