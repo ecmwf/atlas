@@ -324,10 +324,27 @@ std::string rundir()
 	return cwd;
 }
 
+class Environment
+{
+public:
+  Environment(): finalize_mpi_(true) {}
+  static Environment& instance()
+  {
+    static Environment atlas_state;
+    return atlas_state;
+  }
+  void set_finalize_mpi( bool finalize ) { finalize_mpi_ = finalize; }
+  bool finalize_mpi() const { return finalize_mpi_; }
+private:
+  bool finalize_mpi_;
+};
+
 void atlas_init(int argc, char** argv)
 {
   if( argc > 0 )
     Context::instance().setup(argc, argv);
+
+  if( mpi::initialized() ) Environment::instance().set_finalize_mpi(false);
 
   mpi::init( Context::instance().argc(), Context::instance().argvs() );
 
@@ -395,7 +412,8 @@ void atlas_init(int argc, char** argv)
 void atlas_finalize()
 {
   Log::debug() << "Atlas finalized" << std::endl;
-  mpi::finalize();
+  if( Environment::instance().finalize_mpi() )
+    mpi::finalize();
 }
 
 void atlas__atlas_init(int argc, char* argv[])
