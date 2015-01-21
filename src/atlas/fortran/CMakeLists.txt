@@ -44,7 +44,7 @@ ecbuild_add_library( TARGET ${atlas_f}
     SOURCES
         ${FORTRAN_BINDINGS}
         atlas_module.F90
-        atlas_mpl_module.F90
+        atlas_mpi_module.F90
         atlas_grids_module.F90
         atlas_C_interop.F90
         atlas_logging.h
