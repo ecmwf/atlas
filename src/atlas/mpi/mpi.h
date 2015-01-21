@@ -8,8 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef MPL_h
-#define MPL_h
+#ifndef ATLAS_MPI_MPI_h
+#define ATLAS_MPI_MPI_h
 
 #include <stdexcept>
 #include <iostream>
@@ -70,21 +70,19 @@ public:
 
   Comm( MPI_Comm );
   
-  Comm( int fortran_comm );
-
   static Comm& instance();
 
   operator MPI_Comm() const { return comm_; }
   
-  int fortran();
+  MPI_Fint fortran_handle();
 
-  void assign( const int fortran_comm );
+  void set_with_fortran_handle( MPI_Fint );
 
-  void assign( MPI_Comm comm );
+  void set_with_C_handle( MPI_Comm );
   
-  int size() const;
+  size_t size() const;
   
-  int rank() const;
+  size_t rank() const;
   
   void barrier() const;
 
@@ -100,9 +98,9 @@ public:
   operator MPI_Comm() const { return MPI_COMM_WORLD; }
 };
 
-int rank();
+size_t rank();
 
-int size();
+size_t size();
 
 void barrier();
 
@@ -113,9 +111,9 @@ void barrier();
 // C wrapper interfaces to C++ routines
 extern "C"
 {
-  void atlas_mpi_Comm_assign (int comm);
-  int atlas_mpi_Comm_fortran ();
+  void atlas_mpi_comm_set_with_fortran_handle (int comm);
+  int atlas_mpi_comm_fortran_handle ();
 }
 // ------------------------------------------------------------------
 
-#endif // MPL_h
+#endif // ATLAS_MPI_MPI_h

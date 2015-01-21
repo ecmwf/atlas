@@ -59,23 +59,15 @@ Comm::Comm()
 {
   if( ! initialized() )
     throw mpi::Error( "Trying to construct MPI communicator without MPI being initialized", Here() );
-  assign(MPI_COMM_WORLD);
+  set_with_C_handle(MPI_COMM_WORLD);
 }
 
 Comm::Comm( MPI_Comm comm )
 {
   if( ! initialized() )
     throw mpi::Error( "Trying to construct MPI communicator without MPI being initialized", Here() );
-  assign(comm);
+  set_with_C_handle(comm);
 }
-
-Comm::Comm( int fortran_comm )
-{
-  if( ! initialized() )
-    throw mpi::Error( "Trying to construct MPI communicator without MPI being initialized", Here() );
-  assign(fortran_comm);
-}
-
 
 Comm& Comm::instance()
 {
@@ -83,23 +75,23 @@ Comm& Comm::instance()
   return comm_instance;
 }
 
-int Comm::fortran()
+MPI_Fint Comm::fortran_handle()
 {
   MPI_Fint fortran_comm = MPI_Comm_c2f(*this);
   return fortran_comm;
 }
 
-void Comm::assign( const int fortran_comm )
+void Comm::set_with_fortran_handle( MPI_Fint handle )
 {
-  comm_ = MPI_Comm_f2c( fortran_comm );
+  comm_ = MPI_Comm_f2c( handle );
 }
 
-void Comm::assign( MPI_Comm comm )
+void Comm::set_with_C_handle( MPI_Comm handle )
 {
-  comm_ = comm;
+  comm_ = handle;
 }
 
-int Comm::rank() const
+size_t Comm::rank() const
 {
   if( !initialized() ) throw mpi::Error( "MPI not initialized when calling mpi::rank()", Here() );
   int rank;
@@ -107,7 +99,7 @@ int Comm::rank() const
   return rank;
 }
 
-int Comm::size() const
+size_t Comm::size() const
 {
   if( !initialized() ) throw mpi::Error( "MPI not initialized when calling mpi::size()", Here() );
   int nproc;
@@ -126,12 +118,12 @@ CommWorld& CommWorld::instance()
   return world_instance;
 }
 
-int rank()
+size_t rank()
 {
   return Comm::instance().rank();
 }
 
-int size()
+size_t size()
 {
   return Comm::instance().size();
 }
@@ -144,13 +136,13 @@ void barrier()
 
 extern "C"
 {
-  void atlas_mpi_Comm_assign (int comm)
+  void atlas_mpi_comm_set_with_fortran_handle (int comm)
   {
-    Comm::instance().assign(comm);
+    Comm::instance().set_with_fortran_handle(comm);
   }
-  int atlas_mpi_Comm_fortran ()
+  int atlas_mpi_comm_fortran_handle ()
   {
-    return Comm::instance().fortran();
+    return Comm::instance().fortran_handle();
   }
 }
 
