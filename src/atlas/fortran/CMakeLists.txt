@@ -38,7 +38,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../mpi/mpi.h)
 
 ### atlas fortran lib
 
-ecbuild_add_library( TARGET ${atlas_f}
+ecbuild_add_library( TARGET atlas_f
     AUTO_VERSION
     CONDITION CMAKE_Fortran_COMPILER_LOADED
     SOURCES

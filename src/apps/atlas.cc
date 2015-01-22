@@ -48,13 +48,17 @@ void Version::run()
     Log::info() << atlas_git_sha1_abbrev(12) << std::endl;
     return;
   }
-  else if( Resource<bool>("--include",false) )
+  else if( Resource<bool>("--libs",false) )
   {
-    Log::info() << ATLAS_INCLUDE << std::endl;
+    Log::info() << ATLAS_PKG_CFG_LIBS << std::endl;
   }
-  else if( Resource<bool>("--link",false) )
+  else if( Resource<bool>("--cflags",false) )
   {
-    Log::info() << ATLAS_LINK << std::endl;
+    Log::info() << ATLAS_PKG_CFG_CFLAGS << std::endl;
+  }
+  else if( Resource<bool>("--fflags",false) )
+  {
+    Log::info() << ATLAS_PKG_CFG_FFLAGS << std::endl;
   }
   else if( Resource<bool>("--info",false) )
   {

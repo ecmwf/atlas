@@ -11,20 +11,20 @@ if( HAVE_FCTEST )
   add_fctest( TARGET atlas_fctest_mesh
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_mesh.F90
-    LIBS            ${atlas_f}
+    LIBS            atlas_f
   )
 
   add_fctest( TARGET atlas_fctest_logging
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_logging.F90
-    LIBS            ${atlas_f}
+    LIBS            atlas_f
   )
 
   add_fctest( TARGET atlas_fctest_resource
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_resource.F90
     ARGS            -integer 10 -long 5000000000 -float 0.123456 -double 0.1234567890123456789 -string "hello world"
-    LIBS            ${atlas_f}
+    LIBS            atlas_f
   )
 
 endif()

@@ -133,15 +133,13 @@ list( APPEND ATLAS_TPLS      eckit )
 
 set( ATLAS_INCLUDE_DIRS   ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src )
 
-set( atlas_f "atlas_f" )
-
 list( APPEND ATLAS_LIBRARIES
   atlas
 )
 
 if( HAVE_FORTRAN )
   list( APPEND ATLAS_INCLUDE_DIRS ${CMAKE_Fortran_MODULE_DIRECTORY} )
-  set( ATLAS_LIBRARIES ${atlas_f} ${ATLAS_LIBRARIES} )
+  set( ATLAS_LIBRARIES atlas_f ${ATLAS_LIBRARIES} )
 endif()
 
 if( HAVE_TRANS )
@@ -165,36 +163,101 @@ endforeach()
 
 ######################################################################################
 # Find  ATLAS_INCLUDE and ATLAS_LINK CMake variables, to configure in atlas_config.h
-function( ecbuild_get_link LINK LIBRARIES )
+
+function( ecbuild_library_dependencies dependencies libraries )
+  ### TODO:  MOVE THIS FUNCTION TO ECBUILD
+
+  set( _libraries ${${libraries}} )
+
+  foreach( _lib ${_libraries})
+
+    unset( _location )
+
+    if( TARGET ${_lib} ) # check if this is an existing target
+
+      get_property( _location TARGET ${_lib} PROPERTY LOCATION )
+
+      get_property( _config TARGET ${_lib} PROPERTY IMPORTED_CONFIGURATIONS )
+      get_property( _deps TARGET ${_lib} PROPERTY IMPORTED_LINK_INTERFACE_LIBRARIES_${_config} )
+
+      ecbuild_library_dependencies( _deps_location _deps )
+      list( APPEND _location ${_deps_location} )
+
+    else()
+
+      set( _location ${_lib} )
+
+    endif()
+
+    list( APPEND _dependencies ${_location} )
+
+  endforeach()
+
+  list( REVERSE           _dependencies )
+  list( REMOVE_DUPLICATES _dependencies )
+  list( REVERSE           _dependencies )
+  
+  set( ${dependencies} ${_dependencies} PARENT_SCOPE )
+
+endfunction(ecbuild_library_dependencies)
+
+function( ecbuild_pkg_cfg_libs pkg_cfg_libs libraries )
 
   ### TODO:  MOVE THIS FUNCTION TO ECBUILD
 
-  set( _LIBS ${${LIBRARIES}} )
+  set( _libraries ${${libraries}} )
 
-  foreach( _LIB ${_LIBS})
-    get_filename_component(_LIB_NAME ${_LIB} NAME_WE)
-    string(REGEX REPLACE "^lib" "" _NAME ${_LIB_NAME})
-    list(APPEND _ATLAS_EXTRA_LIBS "-l${_NAME}")
-    get_filename_component(_LIB_DIR ${_LIB} PATH)
-    if( _LIB_DIR )
-      list(APPEND _LINK "-L${_LIB_DIR}")
+  foreach( _lib ${_libraries})
+
+    if( ${_lib} MATCHES "-.+" )
+      list( APPEND _pkg_cfg_libs ${_lib} )
+    else() 
+
+      unset( _name )
+      unset( _dir  )
+   
+
+      if( TARGET ${_lib} ) # check if this is an existing target
+
+        get_property( _location TARGET ${_lib} PROPERTY LOCATION )
+
+        get_property( _config TARGET ${_lib} PROPERTY IMPORTED_CONFIGURATIONS )
+        get_property( _deps TARGET ${_lib} PROPERTY IMPORTED_LINK_INTERFACE_LIBRARIES_${_config} )
+
+
+      else()
+
+        set( _location ${_lib} )
+
+      endif()
+
+      get_filename_component( _name ${_location} NAME_WE )
+      get_filename_component( _dir  ${_location} PATH )
+
+      if( NOT _name )
+        set( _name ${_lib} )
+      endif()
+
+      if( NOT _dir )
+        set( _dir  "${CMAKE_INSTALL_PREFIX}/lib" )
+      endif()
+
+      string( REGEX REPLACE "^lib" "" _name ${_name} )
+      
+      list( APPEND _pkg_cfg_libs "-L${_dir}" "-l${_name}" )
+
     endif()
-    list(APPEND _LINK "-l${_NAME}")
+
   endforeach()
 
-  list(REMOVE_DUPLICATES _LINK)
-  string(REPLACE ";" " " _LINK "${_LINK}")
-  if( DEVELOPER_MODE )
-    set( _LINK "-L${CMAKE_BINARY_DIR}/lib ${_LINK}")
-  else()
-    set( _LINK "-L${CMAKE_INSTALL_PREFIX}/lib ${_LINK}")
-  endif()
+  list( REMOVE_DUPLICATES _pkg_cfg_libs )
+  string( REPLACE ";" " " _pkg_cfg_libs "${_pkg_cfg_libs}" )
   
-  set( ${LINK} ${_LINK} PARENT_SCOPE )
+  set( ${pkg_cfg_libs} ${_pkg_cfg_libs} PARENT_SCOPE )
 
-endfunction()
+endfunction(ecbuild_pkg_cfg_libs)
 
-function( ecbuild_get_include INCLUDE INCLUDE_DIRS )
+function( ecbuild_pkg_cfg_include INCLUDE INCLUDE_DIRS )
 
   ### TODO:  MOVE THIS FUNCTION TO ECBUILD
 
@@ -206,17 +269,23 @@ function( ecbuild_get_include INCLUDE INCLUDE_DIRS )
 
   set( ${INCLUDE} ${_INCLUDE} PARENT_SCOPE )
 
-endfunction()
+endfunction(ecbuild_pkg_cfg_include)
 
 
-list( APPEND ATLAS_ALL_LIBRARIES ${ATLAS_LIBRARIES} ${ATLAS_EXTRA_LIBRARIES} )
-ecbuild_get_link( ATLAS_LINK ATLAS_ALL_LIBRARIES )
+############################################################################################
+# pkg-config
 
-ecbuild_get_include( ATLAS_EXTRA_INCLUDE ATLAS_EXTRA_INCLUDE_DIRS )
-set( ATLAS_INCLUDE "-I${CMAKE_INSTALL_PREFIX}/include ${ATLAS_EXTRA_INCLUDE}" )
+ecbuild_library_dependencies( ATLAS_DEPS ATLAS_EXTRA_LIBRARIES )
+list( APPEND ATLAS_PKG_CFG_LIBS ${ATLAS_LIBRARIES} ${ATLAS_DEPS} )
+ecbuild_pkg_cfg_libs( ATLAS_PKG_CFG_LIBS ATLAS_PKG_CFG_LIBS )
 
-debug_var(ATLAS_LINK)
-debug_var(ATLAS_INCLUDE)
+ecbuild_pkg_cfg_include( ATLAS_PKG_CFG_CFLAGS ATLAS_EXTRA_INCLUDE_DIRS )
+set( ATLAS_PKG_CFG_CFLAGS "-I${CMAKE_INSTALL_PREFIX}/include ${ATLAS_PKG_CFG_CFLAGS}" )
+set( ATLAS_PKG_CFG_FFLAGS "-I${CMAKE_INSTALL_PREFIX}/include" )
+
+debug_var( ATLAS_PKG_CFG_LIBS   )
+debug_var( ATLAS_PKG_CFG_CFLAGS )
+debug_var( ATLAS_PKG_CFG_FFLAGS )
 
 ############################################################################################
 # sources
@@ -226,6 +295,8 @@ include( atlas_compiler_flags )
 include_directories( ${ATLAS_INCLUDE_DIRS} ${ATLAS_EXTRA_INCLUDE_DIRS} )
 
 add_subdirectory( src )
+
+
 
 ############################################################################################
 # finalize

@@ -5,8 +5,8 @@
 // They are placed in separate file to avoid recompilation of entire
 // project
 
-#define ATLAS_INCLUDE      "@ATLAS_INCLUDE@"
-#define ATLAS_LINK         "@ATLAS_LINK@"
-#define ATLAS_DEFINITIONS  "@ATLAS_DEFINITIONS@"
+#define ATLAS_PKG_CFG_LIBS    "@ATLAS_PKG_CFG_LIBS@"
+#define ATLAS_PKG_CFG_CFLAGS  "@ATLAS_PKG_CFG_CFLAGS@"
+#define ATLAS_PKG_CFG_FFLAGS  "@ATLAS_PKG_CFG_FFLAGS@"
 
 #endif
