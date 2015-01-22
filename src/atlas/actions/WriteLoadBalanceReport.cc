@@ -11,7 +11,7 @@
 #include <iomanip>
 #include <fstream>
 #include "eckit/filesystem/LocalPathName.h"
-#include "atlas/mpl/MPL.h"
+#include "atlas/mpi/mpi.h"
 #include "atlas/Util.h"
 #include "atlas/Mesh.h"
 #include "atlas/actions/WriteLoadBalanceReport.h"
@@ -21,7 +21,7 @@ namespace actions {
 
 void write_load_balance_report( const Mesh& mesh, const std::string& filename )
 {
-  int npart = MPL::size();
+  int npart = mpi::size();
   int root = 0;
 
   std::vector<int> nb_total_nodes(npart,0);
@@ -46,15 +46,15 @@ void write_load_balance_report( const Mesh& mesh, const std::string& filename )
       else
         ++nowned;
     }
-    MPL_CHECK_RESULT( MPI_Gather( &nb_nodes, 1, MPI_INT,
+    ATLAS_MPI_CHECK_RESULT( MPI_Gather( &nb_nodes, 1, MPI_INT,
                                   nb_total_nodes.data(), 1, MPI_INT,
-                                  root, MPI_COMM_WORLD ) );
-    MPL_CHECK_RESULT( MPI_Gather( &nowned, 1, MPI_INT,
+                                  root, mpi::Comm::instance() ) );
+    ATLAS_MPI_CHECK_RESULT( MPI_Gather( &nowned, 1, MPI_INT,
                                   nb_owned_nodes.data(), 1, MPI_INT,
-                                  root, MPI_COMM_WORLD ) );
-    MPL_CHECK_RESULT( MPI_Gather( &nghost, 1, MPI_INT,
+                                  root, mpi::Comm::instance() ) );
+    ATLAS_MPI_CHECK_RESULT( MPI_Gather( &nghost, 1, MPI_INT,
                                   nb_ghost_nodes.data(), 1, MPI_INT,
-                                  root, MPI_COMM_WORLD ) );  }
+                                  root, mpi::Comm::instance() ) );  }
 
   if( mesh.has_function_space("edges") )
   {
@@ -72,18 +72,18 @@ void write_load_balance_report( const Mesh& mesh, const std::string& filename )
       else
         ++nowned;
     }
-    MPL_CHECK_RESULT( MPI_Gather( &nb_edges, 1, MPI_INT,
+    ATLAS_MPI_CHECK_RESULT( MPI_Gather( &nb_edges, 1, MPI_INT,
                                   nb_total_edges.data(), 1, MPI_INT,
                                   root, MPI_COMM_WORLD ) );
-    MPL_CHECK_RESULT( MPI_Gather( &nowned, 1, MPI_INT,
+    ATLAS_MPI_CHECK_RESULT( MPI_Gather( &nowned, 1, MPI_INT,
                                   nb_owned_edges.data(), 1, MPI_INT,
                                   root, MPI_COMM_WORLD ) );
-    MPL_CHECK_RESULT( MPI_Gather( &nghost, 1, MPI_INT,
+    ATLAS_MPI_CHECK_RESULT( MPI_Gather( &nghost, 1, MPI_INT,
                                   nb_ghost_edges.data(), 1, MPI_INT,
                                   root, MPI_COMM_WORLD ) );
   }
 
-  if( MPL::rank() == 0 )
+  if( mpi::rank() == 0 )
   {
     eckit::LocalPathName path(filename);
     std::ofstream ofs;

@@ -20,7 +20,7 @@
 #include "eckit/memory/Owned.h"
 
 #include "atlas/atlas.h"
-#include "atlas/mpl/MPL.h"
+#include "atlas/mpi/mpi.h"
 #include "atlas/util/Debug.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/mpl/MPLArrayView.h"
@@ -271,10 +271,10 @@ void GatherScatter::gather( mpl::Field<DATA_TYPE const> lfields[],
     pack_send_buffer(lfields[jfield],locmap_,loc_buffer.data());
 
     /// Gather
-    MPL_CHECK_RESULT(
-        MPI_Gatherv( loc_buffer.data(), loc_size, MPL::TYPE<DATA_TYPE>(),
-                     glb_buffer.data(), glb_counts.data(), glb_displs.data(), MPL::TYPE<DATA_TYPE>(),
-                     root, MPI_COMM_WORLD ) );
+    ATLAS_MPI_CHECK_RESULT(
+        MPI_Gatherv( loc_buffer.data(), loc_size, mpi::datatype<DATA_TYPE>(),
+                     glb_buffer.data(), glb_counts.data(), glb_displs.data(), mpi::datatype<DATA_TYPE>(),
+                     root, mpi::Comm::instance() ) );
 
     /// Unpack
     unpack_recv_buffer(glbmap_,glb_buffer.data(),gfields[jfield]);
@@ -354,10 +354,10 @@ void GatherScatter::scatter( mpl::Field<DATA_TYPE const> gfields[],
     pack_send_buffer(gfields[jfield],glbmap_,glb_buffer.data());
 
     /// Scatter
-    MPL_CHECK_RESULT(
-        MPI_Scatterv( glb_buffer.data(), glb_counts.data(), glb_displs.data(), MPL::TYPE<DATA_TYPE>(),
-                      loc_buffer.data(), loc_size, MPL::TYPE<DATA_TYPE>(),
-                      root, MPI_COMM_WORLD ) );
+    ATLAS_MPI_CHECK_RESULT(
+        MPI_Scatterv( glb_buffer.data(), glb_counts.data(), glb_displs.data(), mpi::datatype<DATA_TYPE>(),
+                      loc_buffer.data(), loc_size, mpi::datatype<DATA_TYPE>(),
+                      root, mpi::Comm::instance() ) );
 
     /// Unpack
     unpack_recv_buffer(locmap_,loc_buffer.data(),lfields[jfield]);

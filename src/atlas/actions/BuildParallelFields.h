@@ -28,7 +28,7 @@ void build_parallel_fields( Mesh& mesh );
 /*
  * Build parallel fields for the "nodes" function space if they don't exist.
  * - glb_idx:    create unique indices for non-positive values
- * - partition:  set to MPL::rank() for negative values
+ * - partition:  set to mpi::rank() for negative values
  * - remote_idx: rebuild from scratch
  */
 void build_nodes_parallel_fields( FunctionSpace& nodes );

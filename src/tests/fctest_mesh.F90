@@ -15,7 +15,6 @@
 
 module fctest_atlas_mesh_fixture
 use atlas_module
-use atlas_mpl_module
 use atlas_grids_module
 use iso_c_binding
 implicit none
@@ -40,7 +39,7 @@ END_TESTSUITE_INIT
 
 TESTSUITE_FINALIZE
   call delete( mesh )
-  call MPL_Finalize()
+  call atlas_mpi_finalize()
 END_TESTSUITE_FINALIZE
 
 ! -----------------------------------------------------------------------------

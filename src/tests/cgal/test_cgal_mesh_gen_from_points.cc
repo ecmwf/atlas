@@ -19,7 +19,7 @@
 #include "atlas/Mesh.h"
 #include "atlas/Tesselation.h"
 #include "atlas/io/Gmsh.h"
-#include "atlas/mpl/MPL.h"
+#include "atlas/mpi/mpi.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -35,7 +35,7 @@ using namespace atlas::io;
 
 int main()
 {
-	atlas::MPL::init();
+	atlas::mpi::init();
 
     Mesh::Ptr mesh( new Mesh() );
 
@@ -45,7 +45,7 @@ int main()
 
 	Gmsh::write3dsurf(*mesh, std::string("earth.msh") );
 
-	atlas::MPL::finalize();
+	atlas::mpi::finalize();
 
     return 0;
 }

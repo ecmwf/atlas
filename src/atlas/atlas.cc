@@ -24,7 +24,7 @@
 
 #include "atlas/atlas.h"
 #include "atlas/grids/grids.h"
-#include "atlas/mpl/MPL.h"
+#include "atlas/mpi/mpi.h"
 
 using namespace eckit;
 
@@ -71,7 +71,7 @@ struct CreateLogFile
 	FileChannel* operator()()
 	{
 		char s[6];
-		std::sprintf(s, "%05d",MPL::rank());
+		std::sprintf(s, "%05d",mpi::rank());
 		FileChannel* ch = new FileChannel(file_path+".p"+std::string(s)) ;
 		return ch;
 	}
@@ -102,7 +102,7 @@ struct ChannelConfig
 	{
 		int logfile_rank = Resource<int>("atlas.logfile_task;$ATLAS_LOGFILE_TASK;--logfile_task",-1);
 		logfile_path    = Resource<std::string>("atlas.logfile;$ATLAS_LOGFILE;--logfile","");
-		logfile_enabled = !logfile_path.empty() && ( logfile_rank < 0 || logfile_rank == MPL::rank() );
+		logfile_enabled = !logfile_path.empty() && ( logfile_rank < 0 || logfile_rank == mpi::rank() );
 		console_rank = Resource<int>("atlas.console_task;$ATLAS_CONSOLE_TASK;--console_task",0);
 		console_enabled = true;
 		console_format = new ColorizeFormat();
@@ -130,10 +130,10 @@ struct ChannelConfig
 		if( logfile_enabled && !mc->has("logfile") )
 			mc->add( "logfile", new FormatChannel(logfile(CreateLogFile(logfile_path)),logfile_format) );
 
-		if( console_enabled && !mc->has("console") && (console_rank < 0 || console_rank == MPL::rank()) )
+		if( console_enabled && !mc->has("console") && (console_rank < 0 || console_rank == mpi::rank()) )
 			mc->add( "console" , new FormatChannel(standard_out(),console_format) );
 
-		if( mc->has("console") && (!console_enabled || (console_rank >= 0 && console_rank != MPL::rank() ) ) )
+		if( mc->has("console") && (!console_enabled || (console_rank >= 0 && console_rank != mpi::rank() ) ) )
 			mc->remove("console");
 
 		if( !mc->has("callback") )
@@ -168,7 +168,7 @@ public:
 	{
 		// Console format
 		char p[6];
-		std::sprintf(p, "%05d",MPL::rank());
+		std::sprintf(p, "%05d",mpi::rank());
 		debug_ctxt.console_format->prefix("(P"+std::string(p)+" D) -- ");
 		info_ctxt. console_format->prefix("(P"+std::string(p)+" I) -- ");
 		warn_ctxt. console_format->prefix("(P"+std::string(p)+" W) -- ");
@@ -277,7 +277,7 @@ std::string read_config(const LocalPathName& path, const int master_task = 0)
 	std::stringstream stream;
 	char* buf;
 	int buf_len(0);
-	if( MPL::rank() == master_task )
+	if( mpi::rank() == master_task )
 	{
 		if( path.exists() )
 		{
@@ -290,22 +290,22 @@ std::string read_config(const LocalPathName& path, const int master_task = 0)
 			std::string str = stream.str();
 			buf = const_cast<char*>(str.c_str());
 			buf_len = str.size();
-			MPI_Bcast(&buf_len,1,MPL::TYPE<int >(),master_task,MPI_COMM_WORLD);
+			MPI_Bcast(&buf_len,1,mpi::datatype<int >(),master_task,mpi::Comm::instance());
 			if (buf_len)
-				MPI_Bcast(buf,buf_len,MPL::TYPE<char>(),master_task,MPI_COMM_WORLD);
+				MPI_Bcast(buf,buf_len,mpi::datatype<char>(),master_task,mpi::Comm::instance());
 		}
 		else
 		{
-			MPI_Bcast(&buf_len,1,MPL::TYPE<int >(),master_task,MPI_COMM_WORLD);
+			MPI_Bcast(&buf_len,1,mpi::datatype<int >(),master_task,mpi::Comm::instance());
 		}
 	}
 	else
 	{
-		MPI_Bcast(&buf_len,1,MPL::TYPE<int>(),master_task,MPI_COMM_WORLD);
+		MPI_Bcast(&buf_len,1,mpi::datatype<int>(),master_task,mpi::Comm::instance());
 		if( buf_len )
 		{
 			buf = new char[buf_len];
-			MPI_Bcast(buf,buf_len,MPL::TYPE<char>(),master_task,MPI_COMM_WORLD);
+			MPI_Bcast(buf,buf_len,mpi::datatype<char>(),master_task,mpi::Comm::instance());
 			stream.write(buf,buf_len);
 			delete[] buf;
 		}
@@ -324,12 +324,29 @@ std::string rundir()
 	return cwd;
 }
 
+class Environment
+{
+public:
+  Environment(): finalize_mpi_(true) {}
+  static Environment& instance()
+  {
+    static Environment atlas_state;
+    return atlas_state;
+  }
+  void set_finalize_mpi( bool finalize ) { finalize_mpi_ = finalize; }
+  bool finalize_mpi() const { return finalize_mpi_; }
+private:
+  bool finalize_mpi_;
+};
+
 void atlas_init(int argc, char** argv)
 {
   if( argc > 0 )
     Context::instance().setup(argc, argv);
 
-  MPL::init( Context::instance().argc(), Context::instance().argvs() );
+  if( mpi::initialized() ) Environment::instance().set_finalize_mpi(false);
+
+  mpi::init( Context::instance().argc(), Context::instance().argvs() );
 
   if( Context::instance().argc() > 0 )
   {
@@ -340,7 +357,7 @@ void atlas_init(int argc, char** argv)
 
   LocalPathName atlas_config_path ( Resource<std::string>("atlas.configfile;$ATLAS_CONFIGFILE;--atlas_conf","atlas.cfg") );
   std::string atlas_config = read_config( atlas_config_path );
-  
+
   LocalPathName runname_config_path (
     Resource<std::string>("$"+StringTools::upper(Context::instance().runName())+"_CONFIGFILE",
                           Context::instance().runName()+".cfg") );
@@ -349,7 +366,7 @@ void atlas_init(int argc, char** argv)
   std::string default_conf("");
   if( Context::instance().displayName() != Context::instance().runName() )
     default_conf = Context::instance().displayName()+".cfg";
-  
+
   LocalPathName displayname_config_path(
     Resource<std::string>(
        "$"+StringTools::upper(Context::instance().displayName())+"_CONFIGFILE;--conf",
@@ -359,9 +376,10 @@ void atlas_init(int argc, char** argv)
   LocalPathName workdir ( Resource<std::string>("workdir;$ATLAS_WORKDIR;--workdir",rundir()) );
   if( workdir != rundir() )
   {
-  	workdir.mkdir();
- 	Log::debug() << "Changing working directory to " << workdir << std::endl;
-  	chdir(workdir.c_str());
+    if( mpi::rank() == 0 ) workdir.mkdir();
+    mpi::barrier();
+    Log::debug() << "Changing working directory to " << workdir << std::endl;
+    chdir(workdir.c_str());
   }
 
   Context::instance().behavior( new atlas::Behavior() );
@@ -394,7 +412,8 @@ void atlas_init(int argc, char** argv)
 void atlas_finalize()
 {
   Log::debug() << "Atlas finalized" << std::endl;
-  MPL::finalize();
+  if( Environment::instance().finalize_mpi() )
+    mpi::finalize();
 }
 
 void atlas__atlas_init(int argc, char* argv[])

@@ -14,7 +14,7 @@
 #define BOOST_TEST_MODULE TestRGG
 #include "ecbuild/boost_test_framework.h"
 
-#include "atlas/mpl/MPL.h"
+#include "atlas/mpi/mpi.h"
 #include "atlas/atlas_config.h"
 #include "atlas/grids/GaussianLatitudes.h"
 #include "atlas/grids/grids.h"
@@ -102,7 +102,7 @@ double compute_latlon_area(Mesh& mesh)
 } // end namespace test
 } // end namespace atlas
 
-BOOST_AUTO_TEST_CASE( init ) { MPL::init(); }
+BOOST_AUTO_TEST_CASE( init ) { mpi::init(); }
 
 BOOST_AUTO_TEST_CASE( test_eq_caps )
 {
@@ -398,4 +398,4 @@ DISABLE{
 
 }
 
-BOOST_AUTO_TEST_CASE( finalize ) { MPL::finalize(); }
+BOOST_AUTO_TEST_CASE( finalize ) { mpi::finalize(); }

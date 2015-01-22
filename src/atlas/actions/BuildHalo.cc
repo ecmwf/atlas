@@ -16,6 +16,7 @@
 #include <cmath>
 #include <limits>
 
+#include "atlas/mpi/collectives.h"
 #include "atlas/atlas.h"
 #include "atlas/Mesh.h"
 #include "atlas/FunctionSpace.h"
@@ -193,44 +194,44 @@ void increase_halo( Mesh& mesh )
     bdry_nodes_id(jnode,3) = flags( bdry_nodes[jnode] );
   }
 
-  std::vector<int> recvcounts( MPL::size() );
-  std::vector<int> recvdispls( MPL::size() );
+  std::vector<int> recvcounts( mpi::size() );
+  std::vector<int> recvdispls( mpi::size() );
   int sendcnt = bdry_nodes_id.total_size();
   ASSERT( sendcnt == nb_bdry_nodes*4 );
-  MPL_CHECK_RESULT( MPI_Allgather( &sendcnt,          1, MPI_INT,
-                                   recvcounts.data(), 1, MPI_INT, MPI_COMM_WORLD ) );
+  ATLAS_MPI_CHECK_RESULT( MPI_Allgather( &sendcnt,          1, MPI_INT,
+                                   recvcounts.data(), 1, MPI_INT, mpi::Comm::instance() ) );
 
   recvdispls[0] = 0;
   int recvcnt = recvcounts[0];
-  for( int jpart=1; jpart<MPL::size(); ++jpart )
+  for( int jpart=1; jpart<mpi::size(); ++jpart )
   {
     recvdispls[jpart] = recvdispls[jpart-1] + recvcounts[jpart-1];
     recvcnt += recvcounts[jpart];
   }
   std::vector<uid_t> recvbuf(recvcnt);
 
-  MPL_CHECK_RESULT( MPI_Allgatherv( bdry_nodes_id.data(), sendcnt, MPL::TYPE<uid_t>(),
+  ATLAS_MPI_CHECK_RESULT( MPI_Allgatherv( bdry_nodes_id.data(), sendcnt, mpi::datatype<uid_t>(),
                     recvbuf.data(), recvcounts.data(), recvdispls.data(),
-                    MPL::TYPE<uid_t>(), MPI_COMM_WORLD) );
+                    mpi::datatype<uid_t>(), mpi::Comm::instance()) );
 
   // sfn stands for "send_found_nodes"
-  std::vector< std::vector<int>    > sfn_part( MPL::size() );
-  std::vector< std::vector<int>    > sfn_ridx( MPL::size() );
-  std::vector< std::vector<uid_t> > sfn_glb_idx( MPL::size() );
-  std::vector< std::vector<int>    > sfn_flags ( MPL::size() );
-  std::vector< std::vector<double> > sfn_latlon ( MPL::size() );
+  std::vector< std::vector<int>    > sfn_part( mpi::size() );
+  std::vector< std::vector<int>    > sfn_ridx( mpi::size() );
+  std::vector< std::vector<uid_t> > sfn_glb_idx( mpi::size() );
+  std::vector< std::vector<int>    > sfn_flags ( mpi::size() );
+  std::vector< std::vector<double> > sfn_latlon ( mpi::size() );
   // sfn stands for "send_found_elems"
   std::vector< std::vector< std::vector<uid_t> > >
-      sfe_glb_idx ( mesh.nb_function_spaces(), std::vector< std::vector<uid_t> >( MPL::size() ) );
+      sfe_glb_idx ( mesh.nb_function_spaces(), std::vector< std::vector<uid_t> >( mpi::size() ) );
   std::vector< std::vector< std::vector<uid_t> > >
-      sfe_nodes_id( mesh.nb_function_spaces(), std::vector< std::vector<uid_t> >( MPL::size() ) );
+      sfe_nodes_id( mesh.nb_function_spaces(), std::vector< std::vector<uid_t> >( mpi::size() ) );
   std::vector< std::vector< std::vector<int> > >
-      sfe_part    ( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
+      sfe_part    ( mesh.nb_function_spaces(), std::vector< std::vector<int> >( mpi::size() ) );
 
   // 4) Find elements in node_to_elem list that belong to me
   // 5) Make list of all nodes that complete the elements
 
-  for (int jpart=0; jpart<MPL::size(); ++jpart)
+  for (int jpart=0; jpart<mpi::size(); ++jpart)
   {
     ArrayView<uid_t,2> recv_bdry_nodes_id( recvbuf.data()+recvdispls[jpart],
                                          make_shape( recvcounts[jpart]/4, 4 ).data() );
@@ -275,7 +276,7 @@ void increase_halo( Mesh& mesh )
         if( found != node_uid_to_loc.end() )
         {
           loc = found->second;
-          if( MPL::rank() == jpart && glb_idx(loc) == recv_glb_idx ) loc = -1;
+          if( mpi::rank() == jpart && glb_idx(loc) == recv_glb_idx ) loc = -1;
         }
         //if( periodic && loc != -1 ) DEBUG(" found it at " << glb_idx(loc));
 
@@ -285,7 +286,7 @@ void increase_halo( Mesh& mesh )
           {
             int f = node_to_elem[loc][jelem].f;
             int e = node_to_elem[loc][jelem].e;
-            if( elem_part[f](e) == MPL::rank() )
+            if( elem_part[f](e) == mpi::rank() )
             {
               //DEBUG( "node " << recv_glb_idx << "\t  --> " << elem_glb_idx[f][e] );
               found_bdry_elements_set[f].insert( std::make_pair( e, (juid==0 ? 0 : -periodic) ) );
@@ -413,12 +414,12 @@ void increase_halo( Mesh& mesh )
         else
         {
           eckit::Log::warning() << "Node needed by ["<<jpart<<"] with coords " << ll.x*1.e-6 << ","
-                                << ll.y*1.e-6 << " was not found in ["<<MPL::rank()<<"]." << std::endl;
+                                << ll.y*1.e-6 << " was not found in ["<<mpi::rank()<<"]." << std::endl;
           ASSERT(false);
         }
 //        if( periodic != 0 )
 //        {
-//           eckit::Log::warning() << "Node needed by ["<<jpart<<"] with coords " << ll.x*1.e-6 << "," << ll.y*1.e-6 << " was not found in ["<<MPL::rank()<<"]." << std::endl;
+//           eckit::Log::warning() << "Node needed by ["<<jpart<<"] with coords " << ll.x*1.e-6 << "," << ll.y*1.e-6 << " was not found in ["<<mpi::rank()<<"]." << std::endl;
 //        }
       }
     }
@@ -467,29 +468,29 @@ void increase_halo( Mesh& mesh )
   // 6) Now communicate all found fields back
 
   //    rfn stands for "recv_found_nodes"
-  std::vector< std::vector<uid_t>  > rfn_glb_idx(MPL::size());
-  std::vector< std::vector<int>    > rfn_part(MPL::size());
-  std::vector< std::vector<int>    > rfn_ridx( MPL::size() );
-  std::vector< std::vector<int>    > rfn_flags( MPL::size() );
-  std::vector< std::vector<double> > rfn_latlon(MPL::size());
+  std::vector< std::vector<uid_t>  > rfn_glb_idx(mpi::size());
+  std::vector< std::vector<int>    > rfn_part(mpi::size());
+  std::vector< std::vector<int>    > rfn_ridx( mpi::size() );
+  std::vector< std::vector<int>    > rfn_flags( mpi::size() );
+  std::vector< std::vector<double> > rfn_latlon(mpi::size());
   //    rfe stands for "recv_found_elems"
   std::vector< std::vector< std::vector<uid_t> > >
-      rfe_glb_idx ( mesh.nb_function_spaces(), std::vector< std::vector<uid_t> >( MPL::size() ) );
+      rfe_glb_idx ( mesh.nb_function_spaces(), std::vector< std::vector<uid_t> >( mpi::size() ) );
   std::vector< std::vector< std::vector<int> > >
-      rfe_part    ( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
+      rfe_part    ( mesh.nb_function_spaces(), std::vector< std::vector<int> >( mpi::size() ) );
   std::vector< std::vector< std::vector<uid_t> > >
-      rfe_nodes_id( mesh.nb_function_spaces(), std::vector< std::vector<uid_t> >( MPL::size() ) );
+      rfe_nodes_id( mesh.nb_function_spaces(), std::vector< std::vector<uid_t> >( mpi::size() ) );
 
-  MPL::Alltoall(sfn_glb_idx,  rfn_glb_idx);
-  MPL::Alltoall(sfn_part,     rfn_part);
-  MPL::Alltoall(sfn_ridx,     rfn_ridx);
-  MPL::Alltoall(sfn_flags,    rfn_flags);
-  MPL::Alltoall(sfn_latlon,   rfn_latlon);
+  mpi::all_to_all(sfn_glb_idx,  rfn_glb_idx);
+  mpi::all_to_all(sfn_part,     rfn_part);
+  mpi::all_to_all(sfn_ridx,     rfn_ridx);
+  mpi::all_to_all(sfn_flags,    rfn_flags);
+  mpi::all_to_all(sfn_latlon,   rfn_latlon);
   for( int f=0; f<mesh.nb_function_spaces(); ++f )
   {
-    MPL::Alltoall(sfe_glb_idx [f], rfe_glb_idx [f] );
-    MPL::Alltoall(sfe_nodes_id[f], rfe_nodes_id[f] );
-    MPL::Alltoall(sfe_part    [f], rfe_part    [f] );
+    mpi::all_to_all(sfe_glb_idx [f], rfe_glb_idx [f] );
+    mpi::all_to_all(sfe_nodes_id[f], rfe_nodes_id[f] );
+    mpi::all_to_all(sfe_part    [f], rfe_part    [f] );
   }
 
 
@@ -502,14 +503,14 @@ void increase_halo( Mesh& mesh )
   {
     node_uid.insert( LatLonPoint( latlon[jnode] ).uid() );
   }
-  std::vector< std::vector<int> > rfn_idx(MPL::size());
-  for( int jpart=0; jpart<MPL::size(); ++jpart )
+  std::vector< std::vector<int> > rfn_idx(mpi::size());
+  for( int jpart=0; jpart<mpi::size(); ++jpart )
   {
     rfn_idx[jpart].reserve(rfn_glb_idx[jpart].size());
   }
 
   int nb_new_nodes=0;
-  for( int jpart=0; jpart<MPL::size(); ++jpart )
+  for( int jpart=0; jpart<mpi::size(); ++jpart )
   {
     for( int n=0; n<rfn_glb_idx[jpart].size(); ++n )
     {
@@ -534,7 +535,7 @@ void increase_halo( Mesh& mesh )
 
 
   int new_node=0;
-  for( int jpart=0; jpart<MPL::size(); ++jpart )
+  for( int jpart=0; jpart<mpi::size(); ++jpart )
   {
     for( int n=0; n<rfn_idx[jpart].size(); ++n )
     {
@@ -577,14 +578,14 @@ void increase_halo( Mesh& mesh )
         elem_uid.insert( compute_uid(elem_nodes[f][jelem]) );
       }
 
-      std::vector< std::vector<int> > received_new_elems(MPL::size());
-      for( int jpart=0; jpart<MPL::size(); ++jpart )
+      std::vector< std::vector<int> > received_new_elems(mpi::size());
+      for( int jpart=0; jpart<mpi::size(); ++jpart )
       {
         received_new_elems[jpart].reserve(rfe_glb_idx[f][jpart].size());
       }
 
       int nb_new_elems=0;
-      for( int jpart=0; jpart<MPL::size(); ++jpart )
+      for( int jpart=0; jpart<mpi::size(); ++jpart )
       {
         for( int e=0; e<rfe_glb_idx[f][jpart].size(); ++e )
         {
@@ -605,7 +606,7 @@ void increase_halo( Mesh& mesh )
       elem_nodes[f]   = IndexView<int,2>( elements.field("nodes")   );
       elem_part[f]    = ArrayView<int,1>( elements.field("partition")   );
       int new_elem=0;
-      for( int jpart=0; jpart<MPL::size(); ++jpart )
+      for( int jpart=0; jpart<mpi::size(); ++jpart )
       {
         for( int e=0; e<received_new_elems[jpart].size(); ++e )
         {
@@ -819,7 +820,7 @@ void accumulate_elements( const Mesh& mesh,
       {
         int f = node2elem[inode][jelem].f;
         int e = node2elem[inode][jelem].e;
-        if( elem_part[f](e) == MPL::rank() )
+        if( elem_part[f](e) == mpi::rank() )
         {
           found_elements_set[f].insert( e );
         }
@@ -881,28 +882,28 @@ public:
 
     Buffers(Mesh& mesh)
     {
-      node_part.resize(MPL::size());
-      node_ridx.resize(MPL::size());
-      node_flags.resize(MPL::size());
-      node_glb_idx.resize(MPL::size());
-      node_lonlat.resize(MPL::size());
-      elem_glb_idx.resize( mesh.nb_function_spaces(), std::vector< std::vector<uid_t> >( MPL::size() ) );
-      elem_nodes_id.resize( mesh.nb_function_spaces(), std::vector< std::vector<uid_t> >( MPL::size() ) );
-      elem_part.resize( mesh.nb_function_spaces(), std::vector< std::vector<int> >( MPL::size() ) );
+      node_part.resize(mpi::size());
+      node_ridx.resize(mpi::size());
+      node_flags.resize(mpi::size());
+      node_glb_idx.resize(mpi::size());
+      node_lonlat.resize(mpi::size());
+      elem_glb_idx.resize( mesh.nb_function_spaces(), std::vector< std::vector<uid_t> >( mpi::size() ) );
+      elem_nodes_id.resize( mesh.nb_function_spaces(), std::vector< std::vector<uid_t> >( mpi::size() ) );
+      elem_part.resize( mesh.nb_function_spaces(), std::vector< std::vector<int> >( mpi::size() ) );
     }
   };
   static void all_to_all(Buffers& send, Buffers& recv)
   {
-    MPL::Alltoall(send.node_glb_idx,  recv.node_glb_idx);
-    MPL::Alltoall(send.node_part,     recv.node_part);
-    MPL::Alltoall(send.node_ridx,     recv.node_ridx);
-    MPL::Alltoall(send.node_flags,    recv.node_flags);
-    MPL::Alltoall(send.node_lonlat,   recv.node_lonlat);
+    mpi::all_to_all(send.node_glb_idx,  recv.node_glb_idx);
+    mpi::all_to_all(send.node_part,     recv.node_part);
+    mpi::all_to_all(send.node_ridx,     recv.node_ridx);
+    mpi::all_to_all(send.node_flags,    recv.node_flags);
+    mpi::all_to_all(send.node_lonlat,   recv.node_lonlat);
     for( int f=0; f<send.elem_glb_idx.size(); ++f )
     {
-      MPL::Alltoall(send.elem_glb_idx [f], recv.elem_glb_idx [f] );
-      MPL::Alltoall(send.elem_nodes_id[f], recv.elem_nodes_id[f] );
-      MPL::Alltoall(send.elem_part    [f], recv.elem_part    [f] );
+      mpi::all_to_all(send.elem_glb_idx [f], recv.elem_glb_idx [f] );
+      mpi::all_to_all(send.elem_nodes_id[f], recv.elem_nodes_id[f] );
+      mpi::all_to_all(send.elem_part    [f], recv.elem_part    [f] );
     }
   }
 
@@ -986,7 +987,7 @@ public:
       }
       else
       {
-        eckit::Log::warning() << "Node with uid " << uid << " needed by ["<<p<<"] was not found in ["<<MPL::rank()<<"]." << std::endl;
+        eckit::Log::warning() << "Node with uid " << uid << " needed by ["<<p<<"] was not found in ["<<mpi::rank()<<"]." << std::endl;
         ASSERT(false);
       }
     }
@@ -1050,7 +1051,7 @@ public:
       }
       else
       {
-        eckit::Log::warning() << "Node with uid " << uid << " needed by ["<<p<<"] was not found in ["<<MPL::rank()<<"]." << std::endl;
+        eckit::Log::warning() << "Node with uid " << uid << " needed by ["<<p<<"] was not found in ["<<mpi::rank()<<"]." << std::endl;
         ASSERT(false);
       }
     }
@@ -1102,14 +1103,14 @@ public:
     {
       node_uid.insert( compute_uid(jnode) );
     }
-    std::vector< std::vector<int> > rfn_idx(MPL::size());
-    for( int jpart=0; jpart<MPL::size(); ++jpart )
+    std::vector< std::vector<int> > rfn_idx(mpi::size());
+    for( int jpart=0; jpart<mpi::size(); ++jpart )
     {
       rfn_idx[jpart].reserve(buf.node_glb_idx[jpart].size());
     }
 
     int nb_new_nodes=0;
-    for( int jpart=0; jpart<MPL::size(); ++jpart )
+    for( int jpart=0; jpart<mpi::size(); ++jpart )
     {
       for( int n=0; n<buf.node_glb_idx[jpart].size(); ++n )
       {
@@ -1136,7 +1137,7 @@ public:
     // Add new nodes
     // -------------
     int new_node=0;
-    for( int jpart=0; jpart<MPL::size(); ++jpart )
+    for( int jpart=0; jpart<mpi::size(); ++jpart )
     {
       for( int n=0; n<rfn_idx[jpart].size(); ++n )
       {
@@ -1183,14 +1184,14 @@ public:
           elem_uid.insert( compute_uid(elem_nodes[f][jelem]) );
         }
 
-        std::vector< std::vector<int> > received_new_elems(MPL::size());
-        for( int jpart=0; jpart<MPL::size(); ++jpart )
+        std::vector< std::vector<int> > received_new_elems(mpi::size());
+        for( int jpart=0; jpart<mpi::size(); ++jpart )
         {
           received_new_elems[jpart].reserve(buf.elem_glb_idx[f][jpart].size());
         }
 
         int nb_new_elems=0;
-        for( int jpart=0; jpart<MPL::size(); ++jpart )
+        for( int jpart=0; jpart<mpi::size(); ++jpart )
         {
           for( int e=0; e<buf.elem_glb_idx[f][jpart].size(); ++e )
           {
@@ -1214,7 +1215,7 @@ public:
         // -------------
         int nb_nodes_per_elem = elem_nodes[f].shape(1);
         int new_elem=0;
-        for( int jpart=0; jpart<MPL::size(); ++jpart )
+        for( int jpart=0; jpart<mpi::size(); ++jpart )
         {
           for( int e=0; e<received_new_elems[jpart].size(); ++e )
           {
@@ -1264,10 +1265,10 @@ void increase_halo_interior( BuildHaloHelper& helper )
   for( int jnode=0; jnode<bdry_nodes.size(); ++jnode )
     send_bdry_nodes_uid[jnode] = helper.compute_uid(bdry_nodes[jnode]);
 
-  MPL::Buffer<uid_t,1> recv_bdry_nodes_uid_from_parts;
-  MPL::all_gather(send_bdry_nodes_uid,recv_bdry_nodes_uid_from_parts);
+  mpi::Buffer<uid_t,1> recv_bdry_nodes_uid_from_parts;
+  mpi::all_gather(send_bdry_nodes_uid,recv_bdry_nodes_uid_from_parts);
 
-  for (int jpart=0; jpart<MPL::size(); ++jpart)
+  for (int jpart=0; jpart<mpi::size(); ++jpart)
   {
     // 3) Find elements and nodes completing these elements in
     //    other tasks that have my nodes through its UID
@@ -1345,10 +1346,10 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
     transform(crd,+1);
     send_bdry_nodes_uid[jnode] = helper.compute_uid(crd);
   }
-  MPL::Buffer<uid_t,1> recv_bdry_nodes_uid_from_parts;
-  MPL::all_gather(send_bdry_nodes_uid,recv_bdry_nodes_uid_from_parts);
+  mpi::Buffer<uid_t,1> recv_bdry_nodes_uid_from_parts;
+  mpi::all_gather(send_bdry_nodes_uid,recv_bdry_nodes_uid_from_parts);
 
-  for (int jpart=0; jpart<MPL::size(); ++jpart)
+  for (int jpart=0; jpart<mpi::size(); ++jpart)
   {
     // 3) Find elements and nodes completing these elements in
     //    other tasks that have my nodes through its UID

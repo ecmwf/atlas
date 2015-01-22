@@ -193,7 +193,7 @@ void build_node_to_edge_connectivity( Mesh& mesh )
   {
     max_edge_cnt = std::max(max_edge_cnt,to_edge_size(jnode));
   }
-  MPL_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max_edge_cnt, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD ) );
+  ATLAS_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max_edge_cnt, 1, MPI_INT, MPI_MAX, mpi::Comm::instance() ) );
 
   IndexView<int,2> node_to_edge ( nodes.create_field<int>("to_edge",max_edge_cnt) );
 
@@ -244,10 +244,10 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
     max[XX] = std::max( max[XX], coords(node,XX) );
     max[YY] = std::max( max[YY], coords(node,YY) );
   }
-  MPL_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &min[XX], 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD ) );
-  MPL_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &min[YY], 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD ) );
-  MPL_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max[XX], 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD ) );
-  MPL_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max[YY], 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD ) );
+  ATLAS_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &min[XX], 1, MPI_DOUBLE, MPI_MIN, mpi::Comm::instance() ) );
+  ATLAS_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &min[YY], 1, MPI_DOUBLE, MPI_MIN, mpi::Comm::instance() ) );
+  ATLAS_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max[XX], 1, MPI_DOUBLE, MPI_MAX, mpi::Comm::instance() ) );
+  ATLAS_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max[YY], 1, MPI_DOUBLE, MPI_MAX, mpi::Comm::instance() ) );
 
   double tol = 1e-6;
   std::vector<int> north_pole_edges;
@@ -262,7 +262,7 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
     //std::cout << "node " << node << "   " << std::abs(coords(YY,node)-ymax) << std::endl;
 
 //    // Only add edges that connect non-ghost nodes
-//    if( ridx(node) == node && part(node) == MPL::rank() )
+//    if( ridx(node) == node && part(node) == mpi::rank() )
 //    {
       if ( std::abs(coords(node,YY)-max[YY])<tol )
       {
@@ -325,8 +325,8 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
 // This no longer works as only edges that connect non-ghost nodes are added
 //        if ( std::abs( std::abs(coords(recip_node,XX) - coords(node,XX)) - 180.) > tol )
 //        {
-//          //std::cout << MPL::rank() << "  :  distance = " << coords(recip_node,XX) - coords(node,XX) << std::endl;
-//          if( MPL::rank() == part(node) )
+//          //std::cout << mpi::rank() << "  :  distance = " << coords(recip_node,XX) - coords(node,XX) << std::endl;
+//          if( mpi::rank() == part(node) )
 //          {
 //            throw eckit::SeriousBug("Not implemented yet, when pole-lattitude is split, "
 //                                    "or non-even number of longitudes at pole",Here());
@@ -335,7 +335,7 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
 //          {
 //            // pole is in halo of other partition, and is not completely full to connect edge
 //            std::stringstream msg;
-//            msg << "Pole is in halo of partition " << MPL::rank()
+//            msg << "Pole is in halo of partition " << mpi::rank()
 //                << " and cannot create edge to connect to other side of pole";
 //            throw eckit::SeriousBug(msg.str(),Here());
 //          }

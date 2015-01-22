@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/mpl/MPL.h"
+#include "atlas/mpi/mpi.h"
 #include "atlas/meshgen/ReducedGridMeshGenerator.h"
 #include "atlas/actions/GenerateMesh.h"
 #include "atlas/util/Debug.h"
@@ -22,8 +22,8 @@ namespace actions {
 Mesh* generate_mesh (const ReducedGrid& rgg)
 {
   ReducedGridMeshGenerator generate;
-  generate.options.set( "nb_parts", MPL::size() );
-  generate.options.set( "part"    , MPL::rank() );
+  generate.options.set( "nb_parts", (int) mpi::size() );
+  generate.options.set( "part"    , (int) mpi::rank() );
   return generate(rgg);
 }
 

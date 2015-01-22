@@ -33,6 +33,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../actions/WriteLoadBalanceReport.h)
 generate_fortran_bindings(FORTRAN_BINDINGS atlas_logging.h)
 generate_fortran_bindings(FORTRAN_BINDINGS atlas_resource.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../mpi/mpi.h)
 
 
 ### atlas fortran lib
@@ -43,7 +44,7 @@ ecbuild_add_library( TARGET ${atlas_f}
     SOURCES
         ${FORTRAN_BINDINGS}
         atlas_module.F90
-        atlas_mpl_module.F90
+        atlas_mpi_module.F90
         atlas_grids_module.F90
         atlas_C_interop.F90
         atlas_logging.h
@@ -84,6 +85,6 @@ install( FILES ${CMAKE_Fortran_MODULE_DIRECTORY}/${CMAKE_CFG_INTDIR}/atlas_modul
 #    AUTO_VERSION
 #    CONDITION CMAKE_Fortran_COMPILER_LOADED
 #    SOURCES
-#        atlas_mpl_module.F90
+#        atlas_mpi_module.F90
 #    LIBS ${ATLAS_MPI_FORTRAN_LIBRARIES}
 #)

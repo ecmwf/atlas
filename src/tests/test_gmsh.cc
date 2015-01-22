@@ -12,7 +12,7 @@
 #include "ecbuild/boost_test_framework.h"
 
 #include "tests/TestMeshes.h"
-#include "atlas/mpl/MPL.h"
+#include "atlas/mpi/mpi.h"
 #include "atlas/io/Gmsh.h"
 #include "atlas/util/Debug.h"
 #include "atlas/Mesh.h"
@@ -27,7 +27,7 @@ BOOST_AUTO_TEST_CASE( test_read_write )
 	using namespace atlas;
 	using namespace atlas::io;
 
-	MPL::init();
+	mpi::init();
 	int nlat = 5;
 	int lon[5] = {10, 12, 14, 16, 16};
 
@@ -39,5 +39,5 @@ BOOST_AUTO_TEST_CASE( test_read_write )
 	gmsh.write(*mesh,"mesh.msh");
 
 	BOOST_REQUIRE_NO_THROW( mesh = Mesh::Ptr( Gmsh::read( "mesh.msh" ) ) );
-	MPL::finalize();
+	mpi::finalize();
 }

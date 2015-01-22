@@ -22,11 +22,12 @@ extern "C" {
 
 #define MPI_FAILURE 1
 #define MPI_SUCCESS 0
+#define MPI_MAX_ERROR_STRING 0
 
 #define MPI_Status int
 #define MPI_STATUS_IGNORE ((MPI_Status *) 0)
 #define MPI_IN_PLACE ((void *) 1)
-#define MPI_Comm int
+typedef struct mpi_communicator_t { int comm; } *MPI_Comm;
 
 #define MPI_Datatype int
 #define MPI_Op int
@@ -40,6 +41,7 @@ extern "C" {
 #define MPI_UNSIGNED 5
 #define MPI_UNSIGNED_LONG 6
 #define MPI_LONG 7
+#define MPI_Fint int
 
 #define MPI_SUM 1
 #define MPI_MAX 2
@@ -65,8 +67,11 @@ int MPI_Alltoallv(void *sendbuf, int *sendcounts, int *sdispls,
 int MPI_Barrier ( MPI_Comm comm );
 int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
   int root, MPI_Comm comm);
+MPI_Fint MPI_Comm_c2f( MPI_Comm comm );
+MPI_Comm MPI_Comm_f2c( MPI_Fint f_handle );
 int MPI_Comm_rank ( MPI_Comm comm, int *me );
 int MPI_Comm_size ( MPI_Comm comm, int *nprocs );
+int MPI_Error_string ( int errcode, char* errstr, int *errsize );
 int MPI_Finalize ( void );
 int MPI_Finalized ( int *flag );
 int MPI_Gather(void *sendbuf, int sendcount, MPI_Datatype sendtype,

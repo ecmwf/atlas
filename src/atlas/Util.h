@@ -14,7 +14,7 @@
 #include <cmath>
 #include <sstream>
 
-#include "atlas/mpl/MPL.h"
+#include "atlas/mpi/mpi.h"
 #include "atlas/atlas_config.h"
 #include "atlas/Mesh.h"
 #include "atlas/FunctionSpace.h"
@@ -239,7 +239,7 @@ struct IsGhost
 	{
 		part_	 = ArrayView<int,1> (nodes.field("partition") );
 		ridx_	 = IndexView<int,1> (nodes.field("remote_idx") );
-		mypart_ = MPL::rank();
+		mypart_ = mpi::rank();
 	}
 	IsGhost( FunctionSpace& nodes, int mypart )
 	{

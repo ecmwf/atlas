@@ -12,7 +12,7 @@
 #define MPL_ArrayView_h
 
 #include <vector>
-#include "atlas/mpl/MPL.h"
+#include "atlas/mpi/mpi.h"
 #include "atlas/util/Debug.h"
 #include "atlas/util/ArrayView.h"
 

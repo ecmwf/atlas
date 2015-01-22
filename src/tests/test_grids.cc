@@ -26,7 +26,7 @@ using namespace eckit;
 using namespace atlas;
 using namespace atlas::grids;
 
-BOOST_AUTO_TEST_CASE( init ) { MPL::init(); atlas::grids::load(); }
+BOOST_AUTO_TEST_CASE( init ) { mpi::init(); atlas::grids::load(); }
 
 BOOST_AUTO_TEST_CASE( test_factory )
 {
@@ -205,4 +205,4 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
 }
 
 
-BOOST_AUTO_TEST_CASE( finalize ) { MPL::finalize(); }
+BOOST_AUTO_TEST_CASE( finalize ) { mpi::finalize(); }

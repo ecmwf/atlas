@@ -259,11 +259,11 @@ subroutine GatherScatter__gather_real64_r1_r1(this, loc_field_data, glb_field_da
   gstrides = (/ stride(glb_field_data,1) /)
   gextents = (/ 1                        /)
   gview => view1d(glb_field_data)
-  !write(0,*) MPL_rank(),"lstrides",lstrides
-  !write(0,*) MPL_rank(),"lextents",lextents
-  !write(0,*) MPL_rank(),"gstrides",gstrides
-  !write(0,*) MPL_rank(),"gextents",gextents
-  !write(0,*) MPL_rank(),"localsize",lstrides(1)*lextents(1)*size(loc_field_data)
+  !write(0,*) atlas_mpi_rank(),"lstrides",lstrides
+  !write(0,*) atlas_mpi_rank(),"lextents",lextents
+  !write(0,*) atlas_mpi_rank(),"gstrides",gstrides
+  !write(0,*) atlas_mpi_rank(),"gextents",gextents
+  !write(0,*) atlas_mpi_rank(),"localsize",lstrides(1)*lextents(1)*size(loc_field_data)
   !write(0,*) "loc address, size = ",loc(loc_field_data(1)),size(loc_field_data), loc(lview(1))
   !write(0,*) "glb address, size = ",loc(gview(1)),size(gview)
 
