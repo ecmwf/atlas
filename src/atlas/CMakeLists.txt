@@ -79,6 +79,8 @@ mpl/GatherScatter.cc
 list( APPEND atlas_io_srcs
 io/Gmsh.h
 io/Gmsh.cc
+io/PointCloud.h
+io/PointCloud.cc
 # to be abstracted into a plugin
 io/Grib.cc
 io/Grib.h

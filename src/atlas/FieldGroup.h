@@ -35,12 +35,15 @@ public:
 	const std::string& name() const { return name_; }
 
 	void add_field(Field& field);
-	bool has_field(const std::string& name) { return index_.count(name); }
+  bool has_field(const std::string& name) const { return index_.count(name); }
 
-	Field& field(const std::string& name);
-	Field& field(size_t idx);
+  Field& field(const std::string& name);
+  Field& field(size_t idx);
 
-	std::vector<Field*>& fields() { return fields_; }
+  const Field& field(const std::string& name) const;
+  const Field& field(size_t idx) const;
+
+  std::vector<Field*>& fields() { return fields_; }
 	size_t size() const { return fields_.size(); }
 
 private:

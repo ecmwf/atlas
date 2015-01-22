@@ -12,19 +12,19 @@
 #define atlas_Unstructured_H
 
 /// @author Tiago Quintino
-/// @date April 2013
+/// @author Pedro Maciel
+/// @date January 2015
 
 #include <cstddef>
 #include <vector>
 
 #include "eckit/memory/ScopedPtr.h"
-
 #include "atlas/Grid.h"
+
 
 namespace atlas {
 namespace grids {
 
-//------------------------------------------------------------------------------------------------------
 
 class Unstructured : public Grid {
 
@@ -34,10 +34,11 @@ public: // methods
 
   static std::string className() { return "atlas.grid.Unstructured"; }
 
-  Unstructured( const eckit::Params& p );
+  /// Constructor taking a list of parameters
+  Unstructured(const eckit::Params& p);
 
-  /// @warning temporary constructor taking a list of points
-  Unstructured( std::vector< Point >* pts, const std::string& hash );
+  /// Constructor taking a list of points
+  Unstructured(std::vector< Point >* pts);
 
   virtual ~Unstructured();
 
@@ -48,9 +49,9 @@ public: // methods
 
   virtual size_t npts() const;
 
-  virtual void lonlat( double[] ) const;
-  virtual void lonlat( std::vector<Point>& ) const;
-  virtual void lonlat( std::vector<double>& v ) const { Grid::lonlat(v); }
+  virtual void lonlat(double[]) const;
+  virtual void lonlat(std::vector< Point >&) const;
+  virtual void lonlat(std::vector< double >&) const;
 
   virtual std::string grid_type() const { return grid_type_str(); }
 
@@ -60,17 +61,13 @@ public: // methods
 
 protected:
 
-  eckit::ScopedPtr< std::vector< Point > > points_; ///< storage of coordinate points
+  eckit::ScopedPtr< std::vector< Point > > points_;  ///< storage of coordinate points
 
-  BoundBox bound_box_;              ///< bounding box for the domain
-
-  std::string hash_;
+  BoundBox bound_box_;                               ///< bounding box for the domain
 
 };
 
-//------------------------------------------------------------------------------------------------------
 
 } // namespace grids
 } // namespace atlas
-
 #endif

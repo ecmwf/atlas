@@ -10,7 +10,8 @@
 
 /// @author Peter Bispham
 /// @author Tiago Quintino
-/// @date Oct 2013
+/// @author Pedro Maciel
+/// @date Jan 2015
 
 #ifndef atlas_Grid_H
 #define atlas_Grid_H
@@ -37,14 +38,16 @@ class GridSpec;
 
 //------------------------------------------------------------------------------------------------------
 
-/// Interface to a grid of points in a 2d cartesian space
-/// For example a LatLon grid or a Reduced Graussian grid
-///
-///      DECODE                       ATLAS                      ENCODE
-///      NetCDFBuilder ---->|-------|         |----------|------>NetCDFWrite
-///                         | Grid  |<------> | GridSpec |
-///      GribBuilder ------>|-------|         |----------|------>GribWrite
-
+/**
+ * Interface to a grid of points in a 2d cartesian space
+ * For example a LatLon grid or a Reduced Graussian grid
+ *
+ *      DECODE                       ATLAS                      ENCODE
+ *      NetCDFBuilder ---->|-------|         |----------|------>NetCDFWrite
+ *                         | Grid  |<------> | GridSpec |
+ *      GribBuilder ------>|-------|         |----------|------>GribWrite
+ *
+ */
 class Grid : public eckit::Owned {
 
 public: // types
@@ -52,8 +55,8 @@ public: // types
   typedef eckit::BuilderT1<Grid> builder_t;
   typedef const eckit::Params&   ARG1;
 
-  typedef eckit::geometry::LLPoint2           Point;     ///< point type
-  typedef eckit::geometry::LLBoundBox2        BoundBox;  ///< bounding box type
+  typedef eckit::geometry::LLPoint2    Point;     ///< point type
+  typedef eckit::geometry::LLBoundBox2 BoundBox;  ///< bounding box type
   typedef BoundBox Domain; // To become abstract class used to mask a grid
 
   typedef eckit::SharedPtr<Grid> Ptr;
@@ -77,16 +80,20 @@ public: // methods
   virtual std::string uid() const = 0;
   virtual std::string hash() const = 0;
 
-  /// Assumes north > south, and east > west.
-  /// and hence independent of scanning mode(since that is GRIB specific)
-  /// Assumes lat range: -90 --> +90
-  /// Assumes lon range:-360 --> +360
-  /// When the bounding box is not on the grid, the co-ordinate values, will be
-  /// on the enclosing grid points
+  /**
+   * @return bounding box
+   * @note when the bounding box is not on the grid, the coordinate values will
+   * be on the enclosing grid points
+   * @note assumes NORTH-->SOUTH, and EAST-->WEST (hence independent of scanning
+   * mode, since that is GRIB specific)
+   * @note assumes range for latitude: [-90,+90] and longitude [-360,+360]
+   */
   virtual BoundBox bounding_box() const = 0;
 
-  /// Area to which the original grid is cropped or masked
-  /// @todo For now this is alias of bounding_box()
+  /**
+   * @return rea to which the original grid is cropped or masked
+   * @todo For now this is alias of bounding_box()
+   */
   virtual Domain domain() const;
 
   /// Mask with given Domain
@@ -101,17 +108,21 @@ public: // methods
   /// Return a copy of the grid, masked with given Params
   virtual Grid* masked( const eckit::Params& ) const;
 
-  /// Returns the number of points
-  /// This methods should have constant access time
-  /// If necessary derived classes should compute it at construction
+  /**
+   * @return number of grid points
+   * @note This methods should have constant access time, if necessary derived
+   * classes should compute it at construction
+   */
   virtual size_t npts() const = 0;
 
-  /// Assumes we start at NORTH,WEST --> SOUTH,EAST
-  /// Assumes that the input vectors have the correct size.
-  /// Points represent latitude and longitude values
+  /**
+   * @brief fill provided parameter with grid points, as (lon,lat) values
+   * @note assumes that the input vectors have the correct size.
+   * @note assumes we start at NORTH,WEST-->SOUTH,EAST
+   */
   virtual void lonlat( double[] ) const = 0;
-  virtual void lonlat( std::vector<double>& ) const;
-  virtual void lonlat( std::vector<Point>& ) const = 0;
+  virtual void lonlat( std::vector< double >& ) const;
+  virtual void lonlat( std::vector< Point >& ) const = 0;
 
   virtual std::string grid_type() const = 0;
 
