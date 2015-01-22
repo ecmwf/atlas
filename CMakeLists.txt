@@ -162,44 +162,61 @@ foreach( _tpl ${ATLAS_TPLS} )
   list( APPEND ATLAS_EXTRA_LIBRARIES     ${${TPL}_LIBRARIES}    ${${TPL}_TPL_LIBRARIES}    )
 endforeach()
 
-list( APPEND ATLAS_ALL_LIBRARIES ${ATLAS_LIBRARIES} ${ATLAS_EXTRA_LIBRARIES} )
-FOREACH(_LIB ${ATLAS_ALL_LIBRARIES})
-  GET_FILENAME_COMPONENT(_LIB_NAME ${_LIB} NAME_WE)
-  STRING(REGEX REPLACE "^lib" "" _NAME ${_LIB_NAME})
-  LIST(APPEND _ATLAS_EXTRA_LIBS "-l${_NAME}")
-  GET_FILENAME_COMPONENT(_LIB_DIR ${_LIB} PATH)
-  if( _LIB_DIR )
-    LIST(APPEND LINKFLAGS "-L${_LIB_DIR}")
-    LIST(APPEND ATLAS_LINK "-L${_LIB_DIR}")
+
+######################################################################################
+# Find  ATLAS_INCLUDE and ATLAS_LINK CMake variables, to configure in atlas_config.h
+function( ecbuild_get_link LINK LIBRARIES )
+
+  ### TODO:  MOVE THIS FUNCTION TO ECBUILD
+
+  set( _LIBS ${${LIBRARIES}} )
+
+  foreach( _LIB ${_LIBS})
+    get_filename_component(_LIB_NAME ${_LIB} NAME_WE)
+    string(REGEX REPLACE "^lib" "" _NAME ${_LIB_NAME})
+    list(APPEND _ATLAS_EXTRA_LIBS "-l${_NAME}")
+    get_filename_component(_LIB_DIR ${_LIB} PATH)
+    if( _LIB_DIR )
+      list(APPEND _LINK "-L${_LIB_DIR}")
+    endif()
+    list(APPEND _LINK "-l${_NAME}")
+  endforeach()
+
+  list(REMOVE_DUPLICATES _LINK)
+  string(REPLACE ";" " " _LINK "${_LINK}")
+  if( DEVELOPER_MODE )
+    set( _LINK "-L${CMAKE_BINARY_DIR}/lib ${_LINK}")
+  else()
+    set( _LINK "-L${CMAKE_INSTALL_PREFIX}/lib ${_LINK}")
   endif()
-  LIST(APPEND ATLAS_LINK "-l${_NAME}")
-ENDFOREACH()
+  
+  set( ${LINK} ${_LINK} PARENT_SCOPE )
 
-LIST(REMOVE_DUPLICATES ATLAS_LINK)
-STRING(REPLACE ";" " " ATLAS_LINK "${ATLAS_LINK}")
-if( DEVELOPER_MODE )
-  set( ATLAS_LINK "-L${CMAKE_BINARY_DIR}/lib ${ATLAS_LINK}")
-else()
-  set( ATLAS_LINK "-L${CMAKE_INSTALL_PREFIX}/lib ${ATLAS_LINK}")
-endif()
+endfunction()
 
-FOREACH(_INCDIR ${ATLAS_EXTRA_INCLUDE_DIRS})
-  LIST(APPEND ATLAS_EXTRA_INCLUDE "-I${_INCDIR}")
-ENDFOREACH()
-LIST(REMOVE_DUPLICATES ATLAS_EXTRA_INCLUDE)
-STRING(REPLACE ";" " " ATLAS_EXTRA_INCLUDE "${ATLAS_EXTRA_INCLUDE}")
-if( DEVELOPER_MODE )
-  FOREACH(_INCDIR ${ATLAS_INCLUDE_DIRS})
-    LIST(APPEND ATLAS_INCLUDE "-I${_INCDIR}")
-  ENDFOREACH()
-  LIST(REMOVE_DUPLICATES ATLAS_INCLUDE)
-  STRING(REPLACE ";" " " ATLAS_INCLUDE "${ATLAS_INCLUDE}")
-else()
-  set( ATLAS_INCLUDE "-I${ATLAS_FULL_INSTALL_INCLUDE_DIR}" )
-endif()
+function( ecbuild_get_include INCLUDE INCLUDE_DIRS )
+
+  ### TODO:  MOVE THIS FUNCTION TO ECBUILD
+
+  foreach( _INCDIR ${${INCLUDE_DIRS}} )
+    list( APPEND _INCLUDE "-I${_INCDIR}")
+  endforeach()
+  list( REMOVE_DUPLICATES _INCLUDE)
+  string( REPLACE ";" " " _INCLUDE "${_INCLUDE}")
+
+  set( ${INCLUDE} ${_INCLUDE} PARENT_SCOPE )
+
+endfunction()
+
+
+list( APPEND ATLAS_ALL_LIBRARIES ${ATLAS_LIBRARIES} ${ATLAS_EXTRA_LIBRARIES} )
+ecbuild_get_link( ATLAS_LINK ATLAS_ALL_LIBRARIES )
+
+ecbuild_get_include( ATLAS_EXTRA_INCLUDE ATLAS_EXTRA_INCLUDE_DIRS )
+set( ATLAS_INCLUDE "-I${CMAKE_INSTALL_PREFIX}/include ${ATLAS_EXTRA_INCLUDE}" )
+
 debug_var(ATLAS_LINK)
 debug_var(ATLAS_INCLUDE)
-debug_var(ATLAS_EXTRA_INCLUDE)
 
 ############################################################################################
 # sources

@@ -12,6 +12,7 @@
 #include "eckit/runtime/Tool.h"
 #include "eckit/config/Resource.h"
 #include "atlas/atlas.h"
+#include "atlas/atlas_install.h"
 
 //-----------------------------------------------------------------------------
 
@@ -46,6 +47,14 @@ void Version::run()
   {
     Log::info() << atlas_git_sha1_abbrev(12) << std::endl;
     return;
+  }
+  else if( Resource<bool>("--include",false) )
+  {
+    Log::info() << ATLAS_INCLUDE << std::endl;
+  }
+  else if( Resource<bool>("--link",false) )
+  {
+    Log::info() << ATLAS_LINK << std::endl;
   }
   else if( Resource<bool>("--info",false) )
   {

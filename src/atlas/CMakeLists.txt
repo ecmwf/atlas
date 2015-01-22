@@ -22,6 +22,7 @@ endfunction()
 
 ecbuild_generate_config_headers( DESTINATION ${INSTALL_INCLUDE_DIR}/atlas )
 
+configure_file( atlas_install.h.in  atlas_install.h )
 configure_file( atlas_config.h.in   atlas_config.h  )
 configure_file( atlas_version.h.in  atlas_version.h )
 configure_file( atlas_defines.h.in  atlas_defines.h   )
@@ -29,6 +30,7 @@ configure_file( atlas_defines.h.in  atlas_defines_fortran.h )
 fortranize( ${CMAKE_CURRENT_BINARY_DIR}/atlas_defines_fortran.h )
 
 install( FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/atlas_install.h
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_defines.h
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_defines_fortran.h
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_config.h
