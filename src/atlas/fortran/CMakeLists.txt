@@ -85,6 +85,6 @@ install( FILES ${CMAKE_Fortran_MODULE_DIRECTORY}/${CMAKE_CFG_INTDIR}/atlas_modul
 #    AUTO_VERSION
 #    CONDITION CMAKE_Fortran_COMPILER_LOADED
 #    SOURCES
-#        atlas_mpl_module.F90
+#        atlas_mpi_module.F90
 #    LIBS ${ATLAS_MPI_FORTRAN_LIBRARIES}
 #)

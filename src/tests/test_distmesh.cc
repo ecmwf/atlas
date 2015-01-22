@@ -83,8 +83,8 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
   grids::rgg::N16 grid;
 
 
-  generator.options.set("nb_parts", mpi::size());
-  generator.options.set("part", mpi::rank());
+  generator.options.set<int>("nb_parts", mpi::size());
+  generator.options.set<int>("part", mpi::rank());
 
   Mesh::Ptr m( generator.generate( grid ) );
 

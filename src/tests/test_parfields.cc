@@ -139,8 +139,8 @@ BOOST_AUTO_TEST_CASE( test1 )
 BOOST_AUTO_TEST_CASE( test2 )
 {
   ReducedGridMeshGenerator generate;
-  generate.options.set("nb_parts",mpi::size());
-  generate.options.set("part",mpi::rank());
+  generate.options.set<int>("nb_parts",mpi::size());
+  generate.options.set<int>("part",mpi::rank());
   Mesh* m = generate( grids::rgg::N32() );
   actions::build_parallel_fields(*m);
 
