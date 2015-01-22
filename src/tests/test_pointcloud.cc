@@ -8,153 +8,441 @@
  * does it submit to any jurisdiction.
  */
 
-#define BOOST_TEST_MODULE TestPointCloud
-#include "ecbuild/boost_test_framework.h"
-
-
+#include <cmath>
 #include <string>
 
 #include "atlas/atlas_config.h"
 
-#include "atlas/grids/Unstructured.h"
-#include "atlas/Mesh.h"
-#include "atlas/FunctionSpace.h"
+#define BOOST_TEST_MODULE test_atlas_io
+#include "ecbuild/boost_test_framework.h"
+
+#include "eckit/memory/ScopedPtr.h"
+#include "eckit/exception/Exceptions.h"
+
 #include "atlas/Field.h"
+#include "atlas/FieldGroup.h"
+#include "atlas/FunctionSpace.h"
+#include "atlas/Mesh.h"
+#include "atlas/grids/Unstructured.h"
 #include "atlas/io/PointCloud.h"
+
+
+// ------------------------------------------------------------------
 
 
 namespace {
 
 
-  bool pointcloud_write_test_file(const std::string& file_path, int nb_pts=5, int nb_columns=4)
+  namespace test_arrays {
+
+    const size_t nb_pts = 5;
+    const size_t nb_fld = 2;
+    const size_t nb_columns = 2+nb_fld;
+
+    const double lon[] = { -31.233, -28.717, -27.217, -25.750, -16.917 };
+    const double lat[] = {  39.467,  38.583,  38.483,  37.817,  32.650 };
+
+    const double helper_f1[] = {  1.,   2.,   3.,   4.,   5.  };
+    const double helper_f2[] = { -0.1, -0.2, -0.3, -0.4, -0.5 };
+
+    const double *fvalues[] = { helper_f1, helper_f2 };
+    const char   *fnames [] = { " f_1  ", "f    2 " };
+
+  }
+
+
+  namespace test_vectors {
+
+    const size_t nb_pts = test_arrays::nb_pts;
+    const size_t nb_fld = test_arrays::nb_fld;
+    const size_t nb_columns = test_arrays::nb_columns;
+
+    const std::vector< double > lon(test_arrays::lon, test_arrays::lon + nb_pts);
+    const std::vector< double > lat(test_arrays::lat, test_arrays::lat + nb_pts);
+
+    std::vector< double >  helper_f1(test_arrays::helper_f1, test_arrays::helper_f1  + nb_pts);
+    std::vector< double >  helper_f2(test_arrays::helper_f2, test_arrays::helper_f2  + nb_pts);
+    std::vector< double >* helper_fvalues[] = { &helper_f1, &helper_f2 };
+
+    const std::vector< std::vector< double >* > fvalues (helper_fvalues,      helper_fvalues      + nb_fld);
+    const std::vector< std::string >            fnames  (test_arrays::fnames, test_arrays::fnames + nb_fld);
+
+  }
+
+
+  bool test_write_file(const std::string& file_path, const size_t& nb_pts, const size_t& nb_columns)
   {
-    if (nb_pts<1 || nb_columns<2)
+    if (!nb_pts)
       return false;
     std::ofstream f(file_path.c_str());
-    return (f?
-              f << "PointCloud " << nb_pts << "	" << nb_columns << "  lon	lat	f_1				__f3			more resilience	\n"
+    return (f && f << "PointCloud " << nb_pts << "	" << nb_columns << "  lon	lat	f_1				__f3			more resilience	\n"
                    "-31.233	39.467	1.	-0.1\n"
                    "-28.717	38.583	2.	-0.2 even	more resilience\n"
                    "-27.217	38.483	3.	-0.3\n"
                    "-25.750	37.817	4.	-0.4\n"
-                   "-16.917	32.650	5.	-0.5\n"
-            : false);
+                   "-16.917	32.650	5.	-0.5\n" );
   }
 
 
-  namespace pointcloud_test_arrays {
-
-
-    const double
-        lon[] = { -31.233, -28.717, -27.217, -25.750, -16.917 },
-        lat[] = {  39.467,  38.583,  38.483,  37.817,  32.650 },
-        f1[] = {  1.,   2.,   3.,   4.,   5.  },
-        f2[] = { -0.1, -0.2, -0.3, -0.4, -0.5 };
-    const double *afvalues[] = {  f1,   f2  };
-    const char   *afnames [] = { " f_1  ", "f    2 " };
-
-
+  bool test_write_file_bad(const std::string& file_path)
+  {
+    std::ofstream f(file_path.c_str());
+    return (f && f << '?');
   }
-}
+
+
+} // end anonymous namespace
+
+
+// ------------------------------------------------------------------
 
 
 using namespace atlas;
 
 
-BOOST_AUTO_TEST_CASE( test_pointcloud_read_grid_sample_file )
+BOOST_AUTO_TEST_SUITE( test_pointcloud )
+
+
+BOOST_AUTO_TEST_CASE( read_inexistent_file )
+{
+  BOOST_CHECK_THROW(
+        io::PointCloud::read("pointcloud.txt_should_not_exist"),
+        eckit::CantOpenFile );
+}
+
+
+BOOST_AUTO_TEST_CASE( read_badly_formatted_file )
+{
+  BOOST_REQUIRE(test_write_file_bad("pointcloud.txt"));
+  BOOST_CHECK_THROW(
+        io::PointCloud::read("pointcloud.txt"),
+        eckit::BadParameter );
+}
+
+
+
+BOOST_AUTO_TEST_CASE( read_grid_sample_file )
 {
   // test sample file, header properly formatted (some fluff is present)
-  BOOST_REQUIRE(pointcloud_write_test_file("pointcloud.txt"));
+  BOOST_REQUIRE(test_write_file(
+                  "pointcloud.txt",
+                  test_arrays::nb_pts,
+                  test_arrays::nb_columns ));
 
-  grids::Unstructured* grid = io::PointCloud::read("pointcloud.txt");
+  eckit::ScopedPtr< grids::Unstructured > grid( io::PointCloud::read("pointcloud.txt") );
   BOOST_REQUIRE(grid);
 
-  BOOST_CHECK_EQUAL(grid->npts(),5);
-  BOOST_CHECK_EQUAL(true,grid->mesh().has_function_space("nodes"));
-  BOOST_CHECK_EQUAL(true,grid->mesh().function_space(0).has_field("f_1"));
-  BOOST_CHECK_EQUAL(true,grid->mesh().function_space(0).has_field("f3"));
-
-  delete grid;
+  BOOST_CHECK_EQUAL(grid->npts(),test_arrays::nb_pts);
+  BOOST_CHECK_EQUAL(grid->mesh().has_function_space("nodes"),        true);
+  BOOST_CHECK_EQUAL(grid->mesh().function_space(0).has_field("f_1"), true);
+  BOOST_CHECK_EQUAL(grid->mesh().function_space(0).has_field("f3"),  true);
 }
 
 
-BOOST_AUTO_TEST_CASE( test_pointcloud_read_grid_sample_file_header_less_rows )
+BOOST_AUTO_TEST_CASE( read_grid_sample_file_header_less_rows )
 {
   // test sample file with (wrong) header with less rows
-  BOOST_REQUIRE(pointcloud_write_test_file("pointcloud.txt",3,4));
+  BOOST_REQUIRE(test_write_file(
+                  "pointcloud.txt",
+                  test_arrays::nb_pts-2,
+                  test_arrays::nb_columns ));
 
-  grids::Unstructured* grid = io::PointCloud::read("pointcloud.txt");
+  eckit::ScopedPtr< grids::Unstructured > grid( io::PointCloud::read("pointcloud.txt") );
   BOOST_REQUIRE(grid);
 
-  BOOST_CHECK_EQUAL(grid->npts(),3);
-  BOOST_CHECK_EQUAL(true,grid->mesh().function_space(0).has_field("f_1"));
-  BOOST_CHECK_EQUAL(true,grid->mesh().function_space(0).has_field("f3"));
-
-  delete grid;
+  BOOST_CHECK_EQUAL(grid->npts(),test_arrays::nb_pts-2);
+  BOOST_CHECK_EQUAL(grid->mesh().function_space(0).has_field("f_1"), true);
+  BOOST_CHECK_EQUAL(grid->mesh().function_space(0).has_field("f3"),  true);
 }
 
 
-BOOST_AUTO_TEST_CASE( test_pointcloud_read_grid_sample_file_header_less_columns )
+BOOST_AUTO_TEST_CASE( read_grid_sample_file_header_less_columns_1 )
 {
-  // test sample file with (wrong) header with less columns
-  BOOST_REQUIRE(pointcloud_write_test_file("pointcloud.txt",5,3));
+  // test sample file with (wrong) header with one field less
+  BOOST_REQUIRE(test_write_file(
+                  "pointcloud.txt",
+                  test_arrays::nb_pts,
+                  test_arrays::nb_columns-1 ));
 
-  grids::Unstructured* grid = io::PointCloud::read("pointcloud.txt");
+  eckit::ScopedPtr< grids::Unstructured > grid( io::PointCloud::read("pointcloud.txt") );
   BOOST_REQUIRE(grid);
 
-  BOOST_CHECK_EQUAL(grid->npts(),5);
-  BOOST_CHECK_EQUAL(true, grid->mesh().function_space(0).has_field("f_1"));
-  BOOST_CHECK_EQUAL(false,grid->mesh().function_space(0).has_field("f3"));
-
-  delete grid;
-  BOOST_REQUIRE(pointcloud_write_test_file("pointcloud.txt",5,2));
-
-  grid = io::PointCloud::read("pointcloud.txt");
-  BOOST_REQUIRE(grid);
-
-  BOOST_CHECK_EQUAL(grid->npts(),5);
-  BOOST_CHECK_EQUAL(false,grid->mesh().function_space(0).has_field("f_1"));
-  BOOST_CHECK_EQUAL(false,grid->mesh().function_space(0).has_field("f3"));
-
-  delete grid;
+  BOOST_CHECK_EQUAL(grid->npts(),test_arrays::nb_pts);
+  BOOST_CHECK_EQUAL(grid->mesh().function_space(0).has_field("f_1"), true);
+  BOOST_CHECK_EQUAL(grid->mesh().function_space(0).has_field("f3"),  false);
 }
 
 
-BOOST_AUTO_TEST_CASE( test_pointcloud_write_array )
+BOOST_AUTO_TEST_CASE( read_grid_sample_file_header_less_columns_2 )
 {
-  using namespace atlas;
+  // test sample file with (wrong) header with no fields
+  BOOST_REQUIRE(test_write_file(
+                  "pointcloud.txt",
+                  test_arrays::nb_pts,
+                  test_arrays::nb_columns-test_arrays::nb_fld ));
 
-  using pointcloud_test_arrays::lon;
-  using pointcloud_test_arrays::lat;
-  using pointcloud_test_arrays::afvalues;
-  using pointcloud_test_arrays::afnames;
+  eckit::ScopedPtr< grids::Unstructured > grid( io::PointCloud::read("pointcloud.txt") );
+  BOOST_REQUIRE(grid);
+
+  BOOST_CHECK_EQUAL(grid->npts(),test_arrays::nb_pts);
+  BOOST_CHECK_EQUAL(grid->mesh().function_space(0).has_field("f_1"), false);
+  BOOST_CHECK_EQUAL(grid->mesh().function_space(0).has_field("f3"),  false);
+}
+
+
+BOOST_AUTO_TEST_CASE( write_array )
+{
+  std::ifstream f;
+  std::string signature, str_lon, str_lat, str_f1, str_f2;
+  size_t nb_pts, nb_columns;
+
+  io::PointCloud::write(
+        "pointcloud.txt",
+        test_arrays::nb_pts, test_arrays::lon, test_arrays::lat );
+  f.open("pointcloud.txt");
+  BOOST_REQUIRE(f);
+  f >> signature >> nb_pts >> nb_columns >> str_lon >> str_lat >> str_f1 >> str_f2;
+  f.close();
+
+  BOOST_CHECK_EQUAL( nb_pts,     test_arrays::nb_pts     );
+  BOOST_CHECK_EQUAL( nb_columns, test_arrays::nb_columns-test_arrays::nb_fld );
+  BOOST_CHECK_EQUAL( str_lon,    "lon"    );
+  BOOST_CHECK_EQUAL( str_lat,    "lat"    );
+  BOOST_CHECK_NE   ( str_f1,     "f_1"    );  // (this column is not written)
+  BOOST_CHECK_NE   ( str_f2,     "f____2" );  // (this column is not written)
+}
+
+
+BOOST_AUTO_TEST_CASE( write_array_less_rows )
+{
+  std::ifstream f;
+  std::string signature, str_lon, str_lat, str_f1, str_f2;
+  size_t nb_pts, nb_columns;
+
+  io::PointCloud::write(
+        "pointcloud.txt",
+        test_arrays::nb_pts-1 /* deliberate */, test_arrays::lon, test_arrays::lat,
+        test_arrays::nb_fld, test_arrays::fvalues, test_arrays::fnames );
+  f.open("pointcloud.txt");
+  BOOST_REQUIRE(f);
+  f >> signature >> nb_pts >> nb_columns >> str_lon >> str_lat >> str_f1 >> str_f2;
+  f.close();
+
+  BOOST_CHECK_EQUAL( nb_pts,     test_arrays::nb_pts-1   );  // (one row is not written)
+  BOOST_CHECK_EQUAL( nb_columns, test_arrays::nb_columns );
+  BOOST_CHECK_EQUAL( str_lon,    "lon"    );
+  BOOST_CHECK_EQUAL( str_lat,    "lat"    );
+  BOOST_CHECK_EQUAL( str_f1,     "f_1"    );
+  BOOST_CHECK_EQUAL( str_f2,     "f____2" );
+}
+
+
+BOOST_AUTO_TEST_CASE( write_array_less_columns )
+{
+  std::ifstream f;
+  std::string signature, str_lon, str_lat, str_f1, str_f2;
+  size_t nb_pts, nb_columns;
+
+  io::PointCloud::write(
+        "pointcloud.txt",
+        test_arrays::nb_pts, test_arrays::lon, test_arrays::lat,
+        test_arrays::nb_fld-1 /* deliberate */, test_arrays::fvalues, test_arrays::fnames );
+  f.open("pointcloud.txt");
+  BOOST_REQUIRE(f);
+  f >> signature >> nb_pts >> nb_columns >> str_lon >> str_lat >> str_f1 >> str_f2;
+  f.close();
+
+  BOOST_CHECK_EQUAL( nb_pts,     test_arrays::nb_pts       );
+  BOOST_CHECK_EQUAL( nb_columns, test_arrays::nb_columns-1 );  // (one column is not written)
+  BOOST_CHECK_EQUAL( str_lon,    "lon"    );
+  BOOST_CHECK_EQUAL( str_lat,    "lat"    );
+  BOOST_CHECK_EQUAL( str_f1,     "f_1"    );
+  BOOST_CHECK_NE   ( str_f2,     "f____2" );  // (this column is not written)
+}
+
+
+BOOST_AUTO_TEST_CASE( write_vector_all_fields )
+{
+  std::ifstream f;
+  std::string signature, str_lon, str_lat, str_f1, str_f2;
+  size_t nb_pts, nb_columns;
+
+  io::PointCloud::write(
+        "pointcloud.txt",
+        test_vectors::lon, test_vectors::lat,
+        test_vectors::fvalues, test_vectors::fnames );
+  f.open("pointcloud.txt");
+  BOOST_REQUIRE(f);
+  f >> signature >> nb_pts >> nb_columns >> str_lon >> str_lat >> str_f1 >> str_f2;
+  f.close();
+
+  BOOST_CHECK_EQUAL( nb_pts,     test_vectors::nb_pts     );
+  BOOST_CHECK_EQUAL( nb_columns, test_vectors::nb_columns );
+  BOOST_CHECK_EQUAL( str_lon,    "lon"    );
+  BOOST_CHECK_EQUAL( str_lat,    "lat"    );
+  BOOST_CHECK_EQUAL( str_f1,     "f_1"    );
+  BOOST_CHECK_EQUAL( str_f2,     "f____2" );
+}
+
+
+BOOST_AUTO_TEST_CASE( write_vector_no_fields )
+{
+  std::ifstream f;
+  std::string signature, str_lon, str_lat, str_f1, str_f2;
+  size_t nb_pts, nb_columns;
+
+  io::PointCloud::write(
+        "pointcloud.txt",
+        test_vectors::lon, test_vectors::lat );
+  f.open("pointcloud.txt");
+  BOOST_REQUIRE(f);
+  f >> signature >> nb_pts >> nb_columns >> str_lon >> str_lat >> str_f1 >> str_f2;
+  f.close();
+
+  BOOST_CHECK_EQUAL( nb_pts,     test_vectors::nb_pts);
+  BOOST_CHECK_EQUAL( nb_columns, test_vectors::nb_columns-test_vectors::nb_fld);
+  BOOST_CHECK_EQUAL( str_lon,    "lon"    );
+  BOOST_CHECK_EQUAL( str_lat,    "lat"    );
+  BOOST_CHECK_NE   ( str_f1,     "f_1"    );  // (this column is not written)
+  BOOST_CHECK_NE   ( str_f2,     "f____2" );  // (this column is not written)
+}
+
+
+BOOST_AUTO_TEST_CASE( write_read_write_field )
+{
+#define FUNNY_FORMULA(X) ((double) (X)) * std::pow((double) -1.,(int) (X))
+
+
+  // build suitable data structures do hold field name & values
+  std::string field_name("my_super_field");
+  std::vector< double > field_values(test_vectors::nb_pts,0.);
+  for (size_t i=0; i<test_vectors::nb_pts; ++i)
+  {
+    field_values[i] = FUNNY_FORMULA(i);
+  }
+
+
+  // PART 1
+  // write field vector values as column in file "pointcloud.txt"
 
   std::ifstream f;
-  std::string signature;
-  size_t
-      nb_pts,
-      nb_columns;
+  std::string signature, str_lon, str_lat, str_f;
+  size_t nb_pts, nb_columns;
 
-  io::PointCloud::write("pointcloud_0f.txt", 5, lon, lat);
-  f.open("pointcloud_0f.txt");
-  f >> signature >> nb_pts >> nb_columns;
+  io::PointCloud::write(
+        "pointcloud.txt",
+        test_vectors::lon,
+        test_vectors::lat,
+        std::vector< std::vector< double >* >(1, &field_values ),
+        std::vector< std::string            >(1,  field_name   ) );
+  f.open("pointcloud.txt");
+  BOOST_REQUIRE(f);
+  f >> signature >> nb_pts >> nb_columns >> str_lon >> str_lat >> str_f;
   f.close();
-  BOOST_CHECK_EQUAL(5,nb_pts);
-  BOOST_CHECK_EQUAL(2,nb_columns);
 
-  io::PointCloud::write("pointcloud_1f.txt", 5, lon, lat, 1, afvalues, afnames);
-  f.open("pointcloud_1f.txt");
-  f >> signature >> nb_pts >> nb_columns;
-  f.close();
-  BOOST_CHECK_EQUAL(5,nb_pts);
-  BOOST_CHECK_EQUAL(3,nb_columns);
+  BOOST_CHECK_EQUAL( nb_pts,     test_vectors::nb_pts);
+  BOOST_CHECK_EQUAL( nb_columns, 2+1);  // (lon,lat,my_super_field)
+  BOOST_CHECK_EQUAL( str_lon,    "lon" );
+  BOOST_CHECK_EQUAL( str_lat,    "lat" );
+  BOOST_CHECK_EQUAL( str_f,      "my_super_field" );
 
-  io::PointCloud::write("pointcloud_2f.txt", 4, lon, lat, 2, afvalues, afnames);
-  f.open("pointcloud_2f.txt");
-  f >> signature >> nb_pts >> nb_columns;
-  f.close();
-  BOOST_CHECK_EQUAL(4,nb_pts);
-  BOOST_CHECK_EQUAL(4,nb_columns);
+
+  // PART 2
+  // read field vector from just-created file
+
+  eckit::ScopedPtr< grids::Unstructured > grid( io::PointCloud::read("pointcloud.txt") );
+  BOOST_REQUIRE(grid);
+
+  BOOST_CHECK_EQUAL(grid->npts(),test_vectors::nb_pts);
+  BOOST_CHECK_EQUAL(grid->mesh().has_function_space("nodes"), true);
+
+  FunctionSpace& nodes = grid->mesh().function_space("nodes");
+  BOOST_CHECK_EQUAL(nodes.has_field("my_super_field"),       true);
+  BOOST_CHECK_EQUAL(nodes.has_field("_StRaNgE_FiElD_NaMe_"), false);
+
+
+  // PART 3
+  // check field values to a very small tolerance (relative tol. 0.001%)
+  const Field& field(nodes.field("my_super_field"));
+  BOOST_REQUIRE_EQUAL(
+        /* data used to write file*/ test_vectors::nb_pts,
+        /* data read from file*/     field.size() );
+
+  ArrayView< double, 1 > field_data(field);
+  for (size_t i=0; i<field_data.size(); ++i)
+  {
+    BOOST_CHECK_CLOSE( FUNNY_FORMULA(i), field_data(i), 0.001);  // 0.001% relative error
+  }
+
+
+  // PART 4
+  // write to file a Field (the just-read one),
+  // a FieldGroup, and
+  // a Grid (should be exactly the same)
+
+  FieldGroup fieldset;
+  fieldset.add_field(const_cast< Field& >(field));
+
+  BOOST_CHECK_NO_THROW( io::PointCloud::write("pointcloud_Field.txt",      field    ) );
+  BOOST_CHECK_NO_THROW( io::PointCloud::write("pointcloud_FieldGroup.txt", fieldset ) );
+  BOOST_CHECK_NO_THROW( io::PointCloud::write("pointcloud_Grid.txt",       *grid    ) );
+
+  eckit::ScopedPtr< grids::Unstructured > grid_from_Field     ( io::PointCloud::read("pointcloud_Field.txt"   ) );
+  eckit::ScopedPtr< grids::Unstructured > grid_from_FieldGroup( io::PointCloud::read("pointcloud_FieldGroup.txt") );
+  eckit::ScopedPtr< grids::Unstructured > grid_from_Grid      ( io::PointCloud::read("pointcloud_Grid.txt"    ) );
+  BOOST_REQUIRE( grid_from_Field      );
+  BOOST_REQUIRE( grid_from_FieldGroup );
+  BOOST_REQUIRE( grid_from_Grid       );
+
+  // (guarantee different grids, to make checks useful)
+  BOOST_REQUIRE_NE( grid.get(), grid_from_Field     .get() );
+  BOOST_REQUIRE_NE( grid.get(), grid_from_FieldGroup.get() );
+  BOOST_REQUIRE_NE( grid.get(), grid_from_Grid      .get() );
+
+
+  // PART 5
+  // compare reading of reference data to:
+  // - grid_from_Field,
+  // - grid_from_FieldGroup, and
+  // - grid_from_Grid (all different but equivalent writing methods)
+
+  // (header section)
+  BOOST_CHECK_EQUAL(grid_from_Field     ->npts(),                                                     test_arrays::nb_pts);
+  BOOST_CHECK_EQUAL(grid_from_Field     ->mesh().has_function_space("nodes"),                         true );
+  BOOST_CHECK_EQUAL(grid_from_Field     ->mesh().function_space(0).has_field("my_super_field"),       true );
+  BOOST_CHECK_EQUAL(grid_from_Field     ->mesh().function_space(0).has_field("_StRaNgE_FiElD_NaMe_"), false);
+
+  BOOST_CHECK_EQUAL(grid_from_FieldGroup->npts(),                                                     test_arrays::nb_pts);
+  BOOST_CHECK_EQUAL(grid_from_FieldGroup->mesh().has_function_space("nodes"),                         true );
+  BOOST_CHECK_EQUAL(grid_from_FieldGroup->mesh().function_space(0).has_field("my_super_field"),       true );
+  BOOST_CHECK_EQUAL(grid_from_FieldGroup->mesh().function_space(0).has_field("_StRaNgE_FiElD_NaMe_"), false);
+
+  BOOST_CHECK_EQUAL(grid_from_Grid      ->npts(),                                                     test_arrays::nb_pts);
+  BOOST_CHECK_EQUAL(grid_from_Grid      ->mesh().has_function_space("nodes"),                         true );
+  BOOST_CHECK_EQUAL(grid_from_Grid      ->mesh().function_space(0).has_field("my_super_field"),       true );
+  BOOST_CHECK_EQUAL(grid_from_Grid      ->mesh().function_space(0).has_field("_StRaNgE_FiElD_NaMe_"), false);
+
+  // (data section: guarantee data are from different places, to make checks useful)
+  const Field& field_from_Field     (grid_from_Field     ->mesh().function_space(0).field("my_super_field"));
+  const Field& field_from_FieldGroup(grid_from_FieldGroup->mesh().function_space(0).field("my_super_field"));
+  const Field& field_from_Grid      (grid_from_Grid      ->mesh().function_space(0).field("my_super_field"));
+  BOOST_CHECK_NE( field_from_Field.data< double >(), field                .data< double >() );
+  BOOST_CHECK_NE( field_from_Field.data< double >(), field_from_FieldGroup.data< double >() );
+  BOOST_CHECK_NE( field_from_Field.data< double >(), field_from_Grid      .data< double >() );
+
+  ArrayView< double,1 > field_from_Field_data     (field_from_Field     );
+  ArrayView< double,1 > field_from_FieldGroup_data(field_from_FieldGroup);
+  ArrayView< double,1 > field_from_Grid_data      (field_from_Grid      );
+  for (size_t i=0; i<test_arrays::nb_pts; ++i)
+  {
+    BOOST_CHECK_CLOSE( field_data(i), field_from_Field_data     (i), 0.001);  // 0.001% relative error
+    BOOST_CHECK_CLOSE( field_data(i), field_from_FieldGroup_data(i), 0.001);  // ...
+    BOOST_CHECK_CLOSE( field_data(i), field_from_Grid_data      (i), 0.001);  // ...
+  }
+
+
+#undef FUNNY_FORMULA
 }
 
 
+BOOST_AUTO_TEST_SUITE_END()
