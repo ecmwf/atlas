@@ -1,3 +1,4 @@
+
 # (C) Copyright 1996-2014 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
@@ -31,18 +32,11 @@ set( PERSISTENT_NAMESPACE "eckit" CACHE INTERNAL "" )
 
 ecbuild_use_package( PROJECT eckit VERSION 0.8 REQUIRED )
 
+if( ECKIT_HAVE_GRIB )
+   message( STATUS "eckit has GRIB support")
+endif()
+
 ecbuild_declare_project()
-
-# this will be replaced once ecbuild exports subcomponents between packages
-
-list( FIND ECKIT_PACKAGES "ECKIT_GRIB" RESULT )
-if( NOT RESULT EQUAL -1  )
-  set( ECKIT_HAVE_GRIB 1 )
-endif()
-list( FIND ECKIT_PACKAGES "ECKIT_MATHS" RESULT )
-if( NOT RESULT EQUAL -1  )
-  set( ECKIT_HAVE_MATHS 1 )
-endif()
 
 # options & dependencies
 
