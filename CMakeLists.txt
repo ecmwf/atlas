@@ -122,23 +122,19 @@ ecbuild_add_option( FEATURE SANDBOX
 ############################################################################################
 # export package info
 
-set( ATLAS_PACKAGES  "" )
 list( APPEND ATLAS_TPLS      eckit )
 
 set( ATLAS_INCLUDE_DIRS   ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src )
 
-list( APPEND ATLAS_LIBRARIES
-  atlas
-)
+list( APPEND ATLAS_LIBRARIES  atlas )
 
 if( HAVE_FORTRAN )
   list( APPEND ATLAS_INCLUDE_DIRS ${CMAKE_Fortran_MODULE_DIRECTORY} )
   set( ATLAS_LIBRARIES atlas_f ${ATLAS_LIBRARIES} )
 endif()
 
-if( HAVE_TRANS )
+if( ATLAS_HAVE_TRANS )
 	list( APPEND ATLAS_TPLS trans_api )
-	list( APPEND ATLAS_PACKAGES ATLAS_TRANS )
 endif()
 
 if( HAVE_TESSELATION )
