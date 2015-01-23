@@ -23,7 +23,7 @@ set( ECBUILD_DEFAULT_BUILD_TYPE Release )
 
 include( ecbuild_system )
 
-ecbuild_requires_macro_version( 1.3 )
+ecbuild_requires_macro_version( 1.6 )
 
 ###############################################################################
 # project
