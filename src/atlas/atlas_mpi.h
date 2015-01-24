@@ -17,7 +17,7 @@
 #ifdef HAVE_MPI
 #include <mpi.h>
 #else
-#include "atlas/mpistubs/mpi.h"
+#include "mpistubs/mpistubs.h"
 #endif
 
 #endif

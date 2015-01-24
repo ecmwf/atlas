@@ -71,7 +71,7 @@ struct CreateLogFile
 	FileChannel* operator()()
 	{
 		char s[6];
-		std::sprintf(s, "%05d",mpi::rank());
+		std::sprintf(s, "%05zu",mpi::rank());
 		FileChannel* ch = new FileChannel(file_path+".p"+std::string(s)) ;
 		return ch;
 	}
@@ -168,7 +168,7 @@ public:
 	{
 		// Console format
 		char p[6];
-		std::sprintf(p, "%05d",mpi::rank());
+		std::sprintf(p, "%05zu",mpi::rank());
 		debug_ctxt.console_format->prefix("(P"+std::string(p)+" D) -- ");
 		info_ctxt. console_format->prefix("(P"+std::string(p)+" I) -- ");
 		warn_ctxt. console_format->prefix("(P"+std::string(p)+" W) -- ");

@@ -10,8 +10,8 @@
 
 
 
-#ifndef ATLAS_MPI_H
-#define ATLAS_MPI_H
+#ifndef MPISTUBS_H
+#define MPISTUBS_H
 
 /* If this is a C++ compiler, use C linkage */
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -98,4 +98,4 @@ int MPI_Wait ( MPI_Request *request, MPI_Status *status );
 }
 #endif
 
-#endif  // ATLAS_MPI_H
+#endif  // MPISTUBS_H
