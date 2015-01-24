@@ -47,7 +47,7 @@ if( NOT HAVE_MPI )
 
 else()
 
-  set( ATLAS_MPI_C_LIBRARIES       ${MPI_C_LIBRARIES} )
+  set( ATLAS_MPI_C_LIBRARIES       ${MPI_CXX_LIBRARIES} )
   set( ATLAS_MPI_FORTRAN_LIBRARIES ${MPI_Fortran_LIBRARIES} )
 
 endif()
