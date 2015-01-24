@@ -150,133 +150,6 @@ foreach( _tpl ${ATLAS_TPLS} )
   list( APPEND ATLAS_EXTRA_LIBRARIES     ${${TPL}_LIBRARIES}    ${${TPL}_TPL_LIBRARIES}    )
 endforeach()
 
-
-######################################################################################
-# Find  ATLAS_INCLUDE and ATLAS_LINK CMake variables, to configure in atlas_config.h
-
-function( ecbuild_library_dependencies dependencies libraries )
-  ### TODO:  MOVE THIS FUNCTION TO ECBUILD
-
-  set( _libraries ${${libraries}} )
-
-  foreach( _lib ${_libraries})
-
-    unset( _location )
-
-    if( TARGET ${_lib} ) # check if this is an existing target
-
-      get_property( _location TARGET ${_lib} PROPERTY LOCATION )
-
-      get_property( _config TARGET ${_lib} PROPERTY IMPORTED_CONFIGURATIONS )
-      get_property( _deps TARGET ${_lib} PROPERTY IMPORTED_LINK_INTERFACE_LIBRARIES_${_config} )
-
-      ecbuild_library_dependencies( _deps_location _deps )
-      list( APPEND _location ${_deps_location} )
-
-    else()
-
-      set( _location ${_lib} )
-
-    endif()
-
-    list( APPEND _dependencies ${_location} )
-
-  endforeach()
-
-  list( REVERSE           _dependencies )
-  list( REMOVE_DUPLICATES _dependencies )
-  list( REVERSE           _dependencies )
-  
-  set( ${dependencies} ${_dependencies} PARENT_SCOPE )
-
-endfunction(ecbuild_library_dependencies)
-
-function( ecbuild_pkg_cfg_libs pkg_cfg_libs libraries )
-
-  ### TODO:  MOVE THIS FUNCTION TO ECBUILD
-
-  set( _libraries ${${libraries}} )
-
-  foreach( _lib ${_libraries})
-
-    if( ${_lib} MATCHES "-.+" )
-      list( APPEND _pkg_cfg_libs ${_lib} )
-    else() 
-
-      unset( _name )
-      unset( _dir  )
-   
-
-      if( TARGET ${_lib} ) # check if this is an existing target
-
-        get_property( _location TARGET ${_lib} PROPERTY LOCATION )
-
-        get_property( _config TARGET ${_lib} PROPERTY IMPORTED_CONFIGURATIONS )
-        get_property( _deps TARGET ${_lib} PROPERTY IMPORTED_LINK_INTERFACE_LIBRARIES_${_config} )
-
-
-      else()
-
-        set( _location ${_lib} )
-
-      endif()
-
-      get_filename_component( _name ${_location} NAME_WE )
-      get_filename_component( _dir  ${_location} PATH )
-
-      if( NOT _name )
-        set( _name ${_lib} )
-      endif()
-
-      if( NOT _dir )
-        set( _dir  "${CMAKE_INSTALL_PREFIX}/lib" )
-      endif()
-
-      string( REGEX REPLACE "^lib" "" _name ${_name} )
-      
-      list( APPEND _pkg_cfg_libs "-L${_dir}" "-l${_name}" )
-
-    endif()
-
-  endforeach()
-
-  list( REMOVE_DUPLICATES _pkg_cfg_libs )
-  string( REPLACE ";" " " _pkg_cfg_libs "${_pkg_cfg_libs}" )
-  
-  set( ${pkg_cfg_libs} ${_pkg_cfg_libs} PARENT_SCOPE )
-
-endfunction(ecbuild_pkg_cfg_libs)
-
-function( ecbuild_pkg_cfg_include INCLUDE INCLUDE_DIRS )
-
-  ### TODO:  MOVE THIS FUNCTION TO ECBUILD
-
-  foreach( _INCDIR ${${INCLUDE_DIRS}} )
-    list( APPEND _INCLUDE "-I${_INCDIR}")
-  endforeach()
-  list( REMOVE_DUPLICATES _INCLUDE)
-  string( REPLACE ";" " " _INCLUDE "${_INCLUDE}")
-
-  set( ${INCLUDE} ${_INCLUDE} PARENT_SCOPE )
-
-endfunction(ecbuild_pkg_cfg_include)
-
-
-############################################################################################
-# pkg-config
-
-ecbuild_library_dependencies( ATLAS_DEPS ATLAS_EXTRA_LIBRARIES )
-list( APPEND ATLAS_PKG_CFG_LIBS ${ATLAS_LIBRARIES} ${ATLAS_DEPS} )
-ecbuild_pkg_cfg_libs( ATLAS_PKG_CFG_LIBS ATLAS_PKG_CFG_LIBS )
-
-ecbuild_pkg_cfg_include( ATLAS_PKG_CFG_CFLAGS ATLAS_EXTRA_INCLUDE_DIRS )
-set( ATLAS_PKG_CFG_CFLAGS "-I${CMAKE_INSTALL_PREFIX}/include ${ATLAS_PKG_CFG_CFLAGS}" )
-set( ATLAS_PKG_CFG_FFLAGS "-I${CMAKE_INSTALL_PREFIX}/include" )
-
-debug_var( ATLAS_PKG_CFG_LIBS   )
-debug_var( ATLAS_PKG_CFG_CFLAGS )
-debug_var( ATLAS_PKG_CFG_FFLAGS )
-
 ############################################################################################
 # sources
 
@@ -286,7 +159,17 @@ include_directories( ${ATLAS_INCLUDE_DIRS} ${ATLAS_EXTRA_INCLUDE_DIRS} )
 
 add_subdirectory( src )
 
+############################################################################################
+# pkg-config
 
+set( PKGCONFIG_REQUIRES "eckit >= 0.8" )
+
+ecbuild_pkgconfig( 
+  FILENAME       atlas.pc
+  URL            "https://software.ecmwf.int/wiki/display/ATLAS" 
+  DESCRIPTION    "Atlas framework for parallel datastructures"
+  IGNORE_LIBRARIES fctest eckit_maths eckit_web
+)
 
 ############################################################################################
 # finalize
