@@ -11,7 +11,7 @@
 
 
 #include <string.h>
-#include "mpi.h"
+#include "mpistubs.h"
 
 #define MPI_INT_SIZE    sizeof(int)
 #define MPI_FLOAT_SIZE  sizeof(float)

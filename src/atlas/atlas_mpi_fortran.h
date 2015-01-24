@@ -14,7 +14,7 @@
 #ifdef HAVE_MPI
 use mpi
 #else
-use atlas_mpistubs_module
+use mpistubs
 #endif
 
 #endif

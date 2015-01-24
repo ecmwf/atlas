@@ -6,16 +6,13 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-### sources
+ecbuild_add_library( TARGET mpistubs
+  AUTO_VERSION
+  INSTALL_HEADERS ALL
+  SOURCES   mpistubs.h
+            mpistubs.c )
 
-add_subdirectory( mpistubs )
-
-add_subdirectory( atlas )
-
-add_subdirectory( apps )
-
-add_subdirectory( tests )
-
-if( HAVE_SANDBOX )
-    add_subdirectory( sandbox )
-endif()
+ecbuild_add_library( TARGET mpistubs_f
+  AUTO_VERSION
+  CONDITION HAVE_FORTRAN AND CMAKE_Fortran_COMPILER_LOADED
+  SOURCES   mpistubs.F90 )

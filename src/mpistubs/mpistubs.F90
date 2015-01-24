@@ -1,5 +1,5 @@
 
-module atlas_mpistubs_module
+module mpistubs
   use, intrinsic :: iso_c_binding, only : c_float, c_double
   implicit none
   public
@@ -2560,4 +2560,4 @@ subroutine timestring ( string )
   return
 end subroutine timestring
 
-end module atlas_mpistubs_module
+end module mpistubs

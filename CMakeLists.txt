@@ -162,8 +162,6 @@ add_subdirectory( src )
 ############################################################################################
 # pkg-config
 
-set( PKGCONFIG_REQUIRES "eckit >= 0.8" )
-
 ecbuild_pkgconfig( 
   FILENAME       atlas.pc
   URL            "https://software.ecmwf.int/wiki/display/ATLAS" 
