@@ -163,9 +163,8 @@ add_subdirectory( src )
 # pkg-config
 
 ecbuild_pkgconfig( 
-  FILENAME       atlas.pc
-  URL            "https://software.ecmwf.int/wiki/display/ATLAS" 
-  DESCRIPTION    "Atlas framework for parallel datastructures"
+  URL              "https://software.ecmwf.int/wiki/display/ATLAS" 
+  DESCRIPTION      "Atlas framework for parallel datastructures"
   IGNORE_LIBRARIES fctest eckit_maths eckit_web
 )
 
