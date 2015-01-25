@@ -9,6 +9,7 @@
 ecbuild_add_library( TARGET mpistubs
   AUTO_VERSION
   INSTALL_HEADERS ALL
+  HEADER_DESTINATION  ${INSTALL_INCLUDE_DIR}/mpistubs
   SOURCES   mpistubs.h
             mpistubs.c )
 
