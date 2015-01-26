@@ -10,6 +10,27 @@
 
 add_subdirectory( mpistubs )
 
+### mpistubs
+
+if( NOT HAVE_MPI )
+
+  set( ATLAS_MPI_C_LIBRARIES mpistubs )
+  set( ATLAS_MPI_Fortran_LIBRARIES mpistubs_f )
+
+else()
+
+  set( ATLAS_MPI_C_INCLUDE_DIRS         ${MPI_CXX_INCLUDE_PATH} )
+  set( ATLAS_MPI_C_LIBRARIES            ${MPI_CXX_LIBRARIES} )
+  set( ATLAS_MPI_Fortran_INCLUDE_DIRS   ${MPI_Fortran_INCLUDE_PATH} )
+  set( ATLAS_MPI_Fortran_LIBRARIES      ${MPI_Fortran_LIBRARIES} )
+
+  ecbuild_include_mpi()
+  
+endif()
+
+include_directories( ${ATLAS_MPI_C_INCLUDE_DIRS} )
+include_directories( ${ATLAS_MPI_Fortran_INCLUDE_DIRS} )
+
 add_subdirectory( atlas )
 
 add_subdirectory( apps )

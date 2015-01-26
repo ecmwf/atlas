@@ -55,6 +55,9 @@ if( HAVE_FORTRAN )
                       DEFAULT ${ENABLE_TESTS}
                       DESCRIPTION "Fortran Unit Test Framework"
                       REQUIRED_PACKAGES "PROJECT fctest VERSION 0.1" )
+
+  set( MPI_Fortran Fortran )
+
 endif()
 
 ### OMP ...
@@ -71,18 +74,9 @@ endif()
 ### MPI ...
 
 ecbuild_add_option( FEATURE MPI
-                    DESCRIPTION "support for MPI distributed parallelism" )
-
-if( ENABLE_MPI )
-
-  ecbuild_enable_mpi()
-
-  if( NOT MPI_CXX_FOUND )
-    set( HAVE_MPI 0 )
-  endif()
-
-endif()
-
+                    DESCRIPTION "Support for MPI distributed parallelism"
+                    REQUIRED_PACKAGES "MPI COMPONENTS CXX ${MPI_Fortran}" )
+debug_var( HAVE_MPI )
 ### trans_api ...
 
 ecbuild_add_option(

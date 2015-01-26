@@ -37,7 +37,8 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../mpi/mpi.h)
 
 
 ### atlas fortran lib
-
+debug_var( ATLAS_MPI_Fortran_LIBRARIES )
+debug_var( ATLAS_MPI_Fortran_INCLUDE_DIRS )
 ecbuild_add_library( TARGET atlas_f
     AUTO_VERSION
     CONDITION CMAKE_Fortran_COMPILER_LOADED
@@ -51,7 +52,8 @@ ecbuild_add_library( TARGET atlas_f
         atlas_logging.cc
         atlas_resource.h
         atlas_resource.cc
-  LIBS atlas ${ATLAS_MPI_FORTRAN_LIBRARIES}
+  INCLUDES ${ATLAS_MPI_Fortran_INCLUDE_DIRS}
+  LIBS atlas ${ATLAS_MPI_Fortran_LIBRARIES}
 )
 
 add_custom_target( atlas_fortran_inc SOURCES

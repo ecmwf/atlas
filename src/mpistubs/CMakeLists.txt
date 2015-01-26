@@ -17,3 +17,8 @@ ecbuild_add_library( TARGET mpistubs_f
   AUTO_VERSION
   CONDITION HAVE_FORTRAN AND CMAKE_Fortran_COMPILER_LOADED
   SOURCES   mpistubs.F90 )
+
+if( HAVE_FORTRAN )
+  install( FILES ${CMAKE_Fortran_MODULE_DIRECTORY}/${CMAKE_CFG_INTDIR}/mpistubs.mod
+                   DESTINATION ${INSTALL_INCLUDE_DIR} )
+endif()
