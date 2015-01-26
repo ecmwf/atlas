@@ -162,10 +162,18 @@ add_subdirectory( src )
 ############################################################################################
 # pkg-config
 
-ecbuild_pkgconfig( 
-  URL              "https://software.ecmwf.int/wiki/display/ATLAS" 
+ecbuild_pkgconfig(
+  URL              "https://software.ecmwf.int/wiki/display/ATLAS"
   DESCRIPTION      "Atlas framework for parallel datastructures"
   IGNORE_LIBRARIES fctest eckit_maths eckit_web
+  VARIABLES        HAVE_MPI HAVE_TRANS HAVE_TESSELATION HAVE_FORTRAN
+)
+
+ecbuild_pkgconfig(
+  NAME             mpistubs
+  URL              "https://software.ecmwf.int/wiki/display/ATLAS"
+  DESCRIPTION      "MPI stubs library"
+  LIBRARIES        mpistubs mpistubs_f
 )
 
 ############################################################################################
