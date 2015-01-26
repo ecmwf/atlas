@@ -41,7 +41,7 @@ contains
   subroutine atlas_mpi_barrier(comm)
     integer, optional :: comm
     integer :: ierr
-    if( .not. present(comm) ) then
+    if( present(comm) ) then
       call MPI_Barrier ( comm, ierr )
     else
       call MPI_Barrier ( atlas_mpi_comm(), ierr )
@@ -52,7 +52,7 @@ contains
     integer, optional :: comm
     integer :: ierr
     integer :: atlas_mpi_rank
-    if( .not. present(comm) ) then
+    if( present(comm) ) then
       call MPI_COMM_RANK( comm, atlas_mpi_rank, ierr )
     else
       call MPI_COMM_RANK( atlas_mpi_comm(), atlas_mpi_rank, ierr )
@@ -63,7 +63,7 @@ contains
     integer, optional :: comm
     integer :: ierr
     integer :: atlas_mpi_size
-    if( .not. present(comm) ) then
+    if( present(comm) ) then
       call MPI_COMM_SIZE( comm, atlas_mpi_size,  ierr )
     else
       call MPI_COMM_SIZE( atlas_mpi_comm(), atlas_mpi_size,  ierr )
