@@ -1,9 +1,9 @@
 /*
  * (C) Copyright 1996-2014 ECMWF.
- * 
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
- * In applying this licence, ECMWF does not waive the privileges and immunities 
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
@@ -58,7 +58,7 @@ int MPI_Allgatherv ( void *sendbuf, int sendcount, MPI_Datatype sendtype,
 }
 
 int MPI_Allreduce ( void *sendbuf, void *recvbuf, int count,
-  MPI_Datatype datatype, MPI_Op op, MPI_Comm comm ) 
+  MPI_Datatype datatype, MPI_Op op, MPI_Comm comm )
 {
   if( sendbuf == MPI_IN_PLACE ) return MPI_SUCCESS;
   memcpy( recvbuf, sendbuf, count*MPI_SIZE(datatype) );
@@ -67,22 +67,22 @@ int MPI_Allreduce ( void *sendbuf, void *recvbuf, int count,
 
 int MPI_Alltoall (void *sendbuf, int sendcount, MPI_Datatype sendtype,
   void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm)
-{ 
+{
   memcpy( recvbuf, sendbuf, sendcount*MPI_SIZE(sendtype) );
-  return MPI_SUCCESS; 
+  return MPI_SUCCESS;
 }
 
 int MPI_Alltoallv (void *sendbuf, int *sendcounts, int *sdispls,
   MPI_Datatype sendtype, void *recvbuf, int *recvcounts,
   int *rdispls, MPI_Datatype recvtype, MPI_Comm comm)
-{ 
+{
   memcpy( recvbuf, sendbuf, sendcounts[0]*MPI_SIZE(sendtype) );
-  return MPI_SUCCESS; 
+  return MPI_SUCCESS;
 }
 
 int MPI_Barrier ( MPI_Comm comm )
-{ 
-  return MPI_SUCCESS; 
+{
+  return MPI_SUCCESS;
 }
 
 int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
@@ -102,16 +102,16 @@ MPI_Comm MPI_Comm_f2c( MPI_Fint f_handle )
   return comm;
 }
 
-int MPI_Comm_rank ( MPI_Comm comm, int *me ) 
-{ 
-  *me=0; 
-  return MPI_SUCCESS; 
+int MPI_Comm_rank ( MPI_Comm comm, int *me )
+{
+  *me=0;
+  return MPI_SUCCESS;
 }
 
-int MPI_Comm_size ( MPI_Comm comm, int *nprocs ) 
-{ 
-  *nprocs=1; 
-  return MPI_SUCCESS; 
+int MPI_Comm_size ( MPI_Comm comm, int *nprocs )
+{
+  *nprocs=1;
+  return MPI_SUCCESS;
 }
 
 int MPI_Error_string ( int errcode, char* errstr, int *errsize )
@@ -120,46 +120,46 @@ int MPI_Error_string ( int errcode, char* errstr, int *errsize )
   return MPI_SUCCESS;
 }
 
-int MPI_Finalize ( void ) 
-{ 
-  return MPI_SUCCESS; 
+int MPI_Finalize ( void )
+{
+  return MPI_SUCCESS;
 }
 
-int MPI_Finalized ( int *flag ) 
-{ 
-  *flag = 1; 
-  return MPI_SUCCESS; 
+int MPI_Finalized ( int *flag )
+{
+  *flag = 1;
+  return MPI_SUCCESS;
 }
 
 int MPI_Gather (void *sendbuf, int sendcount, MPI_Datatype sendtype,
-  void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm) 
-{ 
+  void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm)
+{
   memcpy( recvbuf, sendbuf, sendcount*MPI_SIZE(sendtype) );
-  return MPI_SUCCESS; 
+  return MPI_SUCCESS;
 }
 
 int MPI_Gatherv( void *sendbuf, int count, MPI_Datatype sendtype,
   void *recvbuf, int* recvcounts, int* displs, MPI_Datatype recvtype, int node,
   MPI_Comm comm )
-{ 
+{
   memcpy( recvbuf, sendbuf, count*MPI_SIZE(sendtype) );
-  return MPI_SUCCESS; 
+  return MPI_SUCCESS;
 }
 
 int MPI_Init ( int *argc, char **argv[] )
-{ 
-  return MPI_SUCCESS; 
+{
+  return MPI_SUCCESS;
 }
 
-int MPI_Initialized ( int *flag ) 
-{ 
-  *flag = 1; 
-  return MPI_SUCCESS; 
+int MPI_Initialized ( int *flag )
+{
+  *flag = 1;
+  return MPI_SUCCESS;
 }
 
 int MPI_Irecv ( void *buf, int count, MPI_Datatype datatype,
   int source, int tag, MPI_Comm comm, MPI_Request *request )
-{ 
+{
   MPI_glb_request.recvbuf = buf;
   MPI_glb_request.count = count;
   MPI_glb_request.datatype = datatype;
@@ -169,7 +169,7 @@ int MPI_Irecv ( void *buf, int count, MPI_Datatype datatype,
 
 int MPI_Isend ( void *buf, int count, MPI_Datatype datatype,
   int dest, int tag, MPI_Comm comm, MPI_Request *request )
-{ 
+{
   MPI_glb_request.sendbuf = buf;
   MPI_glb_request.count = count;
   MPI_glb_request.datatype = datatype;
@@ -193,11 +193,11 @@ int MPI_Scatterv(void *sendbuf, int *sendcounts, int *displs,
   return MPI_SUCCESS;
 }
 
-int MPI_Wait ( MPI_Request *request, MPI_Status *status ) 
-{ 
-  memcpy( MPI_glb_request.recvbuf, MPI_glb_request.sendbuf, 
+int MPI_Wait ( MPI_Request *request, MPI_Status *status )
+{
+  memcpy( MPI_glb_request.recvbuf, MPI_glb_request.sendbuf,
           MPI_glb_request.count*MPI_SIZE(MPI_glb_request.datatype) );
   if( status == MPI_STATUS_IGNORE ) return MPI_SUCCESS;
-  *status=MPI_SUCCESS; 
-  return MPI_SUCCESS; 
+  *status=MPI_SUCCESS;
+  return MPI_SUCCESS;
 }

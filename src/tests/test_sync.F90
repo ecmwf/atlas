@@ -3,7 +3,7 @@
 ! ===================================================================
 ! test_sync program
 ! ---------------------
-! This program tests MPI_ALLTOALLV communication, 
+! This program tests MPI_ALLTOALLV communication,
 ! used for synchronisation
 ! ===================================================================
 program test_sync
@@ -22,7 +22,7 @@ program test_sync
   real(kind=jprs), pointer :: vectorfield_ptr(:,:)
   real(kind=jprs), allocatable  :: glb_field(:)
   integer :: bounds(2)
-  integer :: length 
+  integer :: length
   integer :: parallel_bound = 1
   type(Comm_type) :: comm
 
@@ -47,7 +47,7 @@ program test_sync
     allocate( glb_idx(length) )
     allocate( master_glb_idx(length) )
     allocate( field(length) )
-    allocate( vectorfield(2,length) )  
+    allocate( vectorfield(2,length) )
 
     select case (myproc)
       case (0)
@@ -70,26 +70,26 @@ program test_sync
     vectorfield_ptr => vectorfield
     ! Setup a communicator for synchronisation
     call comm%setup(proc,glb_idx)
-    
+
     ! We can setup function_space for halo_exchange
     function_space = new_FunctionSpace("nodes","shape_func",length)
     call function_space%parallelise( proc, glb_idx, master_glb_idx )
-    
+
     ! Or we can setup a custom halo_exchange object
     !call halo_exchange%setup(proc, glb_idx, bounds, parallel_bound)
-    
+
     ! Update the field values whose proc is not myproc
     ! This is the older fortran implementation
     !call comm%synchronise(field)
     !call comm%synchronise(vectorfield)
-   
+
     ! Halo exchange through the function_space (We don't need to know nbvars)
     call function_space%halo_exchange(field)
     call function_space%halo_exchange(vectorfield)
     !call function_space%halo_exchange(vectorfield(:))
 
     !call function_space%halo_exchange(vectorfield(:,2))
- 
+
     ! Halo exchange through the custom halo_exchange object
     !call halo_exchange%execute(field,1)
     !call halo_exchange%execute(vectorfield,2)

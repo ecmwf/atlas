@@ -22,7 +22,7 @@ namespace mpi {
 /// Class that keeps allocation of a MPI buffer including
 /// counts and displacements
 template <typename DATA_TYPE> struct BufferBase;
-  
+
 /// @brief Buffer<DATA_TYPE,SHAPE>
 ///
 /// Class that keeps allocation of a MPI buffer including
@@ -45,24 +45,24 @@ inline int all_to_all( std::vector< std::vector<DATA_TYPE> >& sendvec,
 
 
 template<typename DATA_TYPE>
-void all_gather( const Comm& comm, 
-                 const DATA_TYPE send[], int sendcnt, 
+void all_gather( const Comm& comm,
+                 const DATA_TYPE send[], int sendcnt,
                  BufferBase<DATA_TYPE>& recv );
 
 
 template<typename DATA_TYPE>
-void all_gather( const DATA_TYPE send[], int sendcnt, 
+void all_gather( const DATA_TYPE send[], int sendcnt,
                  BufferBase<DATA_TYPE>& recv );
 
 
 template<typename VECTOR>
-void all_gather( const Comm& comm, 
-                 const VECTOR& send, 
+void all_gather( const Comm& comm,
+                 const VECTOR& send,
                  BufferBase<typename VECTOR::value_type>& recv );
 
 
 template<typename VECTOR>
-void all_gather( const VECTOR& send, 
+void all_gather( const VECTOR& send,
                 BufferBase<typename VECTOR::value_type>& recv );
 
 

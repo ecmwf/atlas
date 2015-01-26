@@ -1,9 +1,9 @@
 /*
  * (C) Copyright 1996-2014 ECMWF.
- * 
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
- * In applying this licence, ECMWF does not waive the privileges and immunities 
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
@@ -17,7 +17,7 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
- 
+
 #define MPI_COMM_WORLD 0
 
 #define MPI_FAILURE 1
@@ -77,7 +77,7 @@ int MPI_Finalized ( int *flag );
 int MPI_Gather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
   void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm);
 int MPI_Gatherv( void *sendbuf, int count, MPI_Datatype senddatatype,
-  void *recvbuf, int* recvcounts, int* displs, MPI_Datatype recvdatatype, 
+  void *recvbuf, int* recvcounts, int* displs, MPI_Datatype recvdatatype,
   int node, MPI_Comm comm );
 int MPI_Init ( int *argc, char **argv[] );
 int MPI_Initialized ( int *flag );
@@ -94,7 +94,7 @@ int MPI_Scatterv(void *sendbuf, int *sendcounts, int *displs,
 int MPI_Wait ( MPI_Request *request, MPI_Status *status );
 
 /* If this is a C++ compiler, end C linkage */
-#if defined(c_plusplus) || defined(__cplusplus) 
+#if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 

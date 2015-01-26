@@ -69,21 +69,21 @@ public:
   Comm();
 
   Comm( MPI_Comm );
-  
+
   static Comm& instance();
 
   operator MPI_Comm() const { return comm_; }
-  
+
   MPI_Fint fortran_handle();
 
   void set_with_fortran_handle( MPI_Fint );
 
   void set_with_C_handle( MPI_Comm );
-  
+
   size_t size() const;
-  
+
   size_t rank() const;
-  
+
   void barrier() const;
 
 private:
