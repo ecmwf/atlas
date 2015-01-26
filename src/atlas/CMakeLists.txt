@@ -203,8 +203,6 @@ grids/rgg/OctahedralRGG.cc
 list( APPEND atlas_srcs
 Field.cc
 Field.h
-FieldGroup.cc
-FieldGroup.h
 FieldSet.cc
 FieldSet.h
 FunctionSpace.cc

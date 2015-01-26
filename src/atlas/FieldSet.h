@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2014 ECMWF.
+ * (C) Copyright 1996-2015 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -10,102 +10,153 @@
 
 /// @author Peter Bispham
 /// @author Tiago Quintino
-/// @date Oct 2013
+/// @author Pedro Maciel
+/// @date Jan 2015
 
 #ifndef atlas_FieldSet_H
 #define atlas_FieldSet_H
 
 #include <vector>
 
-#include <eckit/types/Types.h>
-#include <eckit/memory/Owned.h>
-#include <eckit/memory/SharedPtr.h>
-#include <eckit/memory/ScopedPtr.h>
-
 #include "atlas/atlas_config.h"
 
-#ifdef ECKIT_HAVE_GRIB
-  #include <eckit/grib/GribHandle.h> ///< @todo this is to be removed
-#endif
+#include <eckit/memory/Owned.h>
+#include <eckit/memory/SharedPtr.h>
+#include <eckit/types/Types.h>
 
-#include "atlas/Mesh.h"
 #include "atlas/Field.h"
-#include "atlas/Metadata.h"
 #include "atlas/Grid.h"
+#include "atlas/Mesh.h"
+#include "atlas/Metadata.h"
 
-//------------------------------------------------------------------------------------------------------
 
-namespace eckit
-{
+// forward declarations
+namespace eckit {
   class PathName;
   class DataHandle;
-
   namespace grib { class GribHandle; }
 }
+
 
 namespace atlas {
 
 
-//------------------------------------------------------------------------------------------------------
-
-/// Represents a set of fields
-/// The order of the fields is kept
-
+/**
+ * @brief Represents a set of fields, where order is preserved (no ownership)
+ */
 class FieldSet : public eckit::Owned {
 
-public: // types
+public:
+  // types
 
-    typedef eckit::SharedPtr<FieldSet> Ptr;
+  typedef eckit::SharedPtr< FieldSet > Ptr;
 
-public: // methods
+public:
+  // methods
 
-	/// Constructs a field set from a file (e.g. a GRIB file )
-    FieldSet( const eckit::PathName& );
+  /// Constructs an empty FieldSet
+  FieldSet(const std::string& name="untitled");
 
-    /// @todo Constructor for a FieldSet from a buffer
-    FieldSet( const eckit::Buffer& );
+  /// Constructs from a path (e.g. a GRIB file)
+  FieldSet(const eckit::PathName&);
 
-    /// @todo Constructor for a FieldSet from a DataHandle
-    //  FieldSet( const eckit::DataHandle& );
+  /// Constructs from a buffer
+  FieldSet(const eckit::Buffer&);
 
-    /// Constructs a field set with n fields from a Grid
-    FieldSet( const Grid::Ptr grid, std::vector<std::string> nfields );
+  /// Constructs from a DataHandle
+  FieldSet(const eckit::DataHandle&);
 
-    /// Constructs a FielSet from predefined fields
-    /// Takes ownership of the fields
-	FieldSet( const Field::Vector& fields );
+  /// Constructs from a Grid, only the named fields
+  FieldSet(const Grid::Ptr grid, const std::vector< std::string >& nfields);
 
-	const Field& operator[]( const size_t& i ) const { ASSERT(i<size()); return *fields_[i]; }
-	Field& operator[]( const size_t& i )             { ASSERT(i<size()); return *fields_[i]; }
+  /// Constructs from predefined fields (takes ownership of the fields)
+  FieldSet(const Field::Vector& fields);
 
-	const Field::Vector& fields() const { return fields_; }
-	Field::Vector& fields() { return fields_; }
+  size_t size() const { return  fields_.size(); }
+  bool empty()  const { return !fields_.size(); }
 
-    size_t size() const { return fields_.size(); }
-    bool empty() const { return ! fields_.size(); }
+  const std::string& name() const { return name_; }
+        std::string& name()       { return name_; }
 
-	const Grid& grid() const { ASSERT( !empty() ); return fields_[0]->grid(); }
-	Grid& grid() { ASSERT( !empty() ); return fields_[0]->grid(); }
+  const Field& operator[](const size_t& i) const { ASSERT(i<size()); return *fields_[i]; }
+        Field& operator[](const size_t& i)       { ASSERT(i<size()); return *fields_[i]; }
 
-    std::vector<std::string> field_names() const;
+  const Field::Vector& fields() const { return fields_; }
+        Field::Vector& fields()       { return fields_; }
 
-private: // methods
+  const Grid& grid() const { ASSERT(!empty()); return fields_[0]->grid(); }
+        Grid& grid()       { ASSERT(!empty()); return fields_[0]->grid(); }
 
-  Field::Ptr create_field( eckit::grib::GribHandle& );
+  std::vector< std::string > field_names() const;
 
-	bool checkConsistency() const;
 
-protected: // members
 
-	Field::Vector fields_; ///< field handle storage
+  void add_field(Field& field)
+  {
+    index_[field.name()] = fields_.size();
+    fields_.push_back( Field::Ptr(&field) );
+  }
 
-	Grid::Ptr grid_;
+
+  bool has_field(const std::string& name) const
+  {
+    return index_.count(name);
+  }
+
+
+  Field& field(const std::string& name)
+  {
+    return const_cast< Field& >(field(name));
+  }
+
+
+  const Field& field(const std::string& name) const
+  {
+    if (!has_field(name))
+    {
+      const std::string msg("Could not find field \"" + name + "\" in fieldset \"" + name_ + "\"");
+      throw eckit::OutOfRange(msg,Here());
+    }
+    return *fields_[ index_.at(name) ];
+  }
+
+
+
+private:
+  // internal utilities
+
+  /// @todo to be removed
+  Field::Ptr create_field(eckit::grib::GribHandle&);
+
+  /// Check if all fields share same grid
+  bool haveSameGrid() const;
+
+protected:
+  // data
+
+  Field::Vector                   fields_;  ///< field handle storage
+  Grid::Ptr                       grid_;    ///< grid acquaintace relation (@todo: remove)
+  std::string                     name_;    ///< internal name
+  std::map< std::string, size_t > index_;   ///< name-to-index map, to refer fields by name
 
 };
 
-//------------------------------------------------------------------------------------------------------
+
+// C wrapper interfaces to C++ routines
+extern "C"
+{
+  FieldSet* atlas__FieldSet__new           (char* name);
+  void      atlas__FieldSet__delete        (FieldSet* This);
+  void      atlas__FieldSet__fields        (FieldSet* This, Field** &fields, int& nb_fields);
+  void      atlas__FieldSet__add_field     (FieldSet* This, Field* field);
+  int       atlas__FieldSet__has_field     (FieldSet* This, char* name);
+  int       atlas__FieldSet__size          (FieldSet* This);
+  Field*    atlas__FieldSet__field_by_name (FieldSet* This, char* name);
+  Field*    atlas__FieldSet__field_by_idx  (FieldSet* This, int idx);
+}
 
 
 } // namespace atlas
+
 
 #endif

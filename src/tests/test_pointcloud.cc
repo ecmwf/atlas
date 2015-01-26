@@ -20,7 +20,7 @@
 #include "eckit/exception/Exceptions.h"
 
 #include "atlas/Field.h"
-#include "atlas/FieldGroup.h"
+#include "atlas/FieldSet.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Mesh.h"
 #include "atlas/grids/Unstructured.h"
@@ -377,67 +377,67 @@ BOOST_AUTO_TEST_CASE( write_read_write_field )
 
   // PART 4
   // write to file a Field (the just-read one),
-  // a FieldGroup, and
+  // a FieldSet, and
   // a Grid (should be exactly the same)
 
-  FieldGroup fieldset;
+  FieldSet fieldset;
   fieldset.add_field(const_cast< Field& >(field));
 
-  BOOST_CHECK_NO_THROW( io::PointCloud::write("pointcloud_Field.txt",      field    ) );
-  BOOST_CHECK_NO_THROW( io::PointCloud::write("pointcloud_FieldGroup.txt", fieldset ) );
-  BOOST_CHECK_NO_THROW( io::PointCloud::write("pointcloud_Grid.txt",       *grid    ) );
+  BOOST_CHECK_NO_THROW( io::PointCloud::write("pointcloud_Field.txt",    field    ) );
+  BOOST_CHECK_NO_THROW( io::PointCloud::write("pointcloud_FieldSet.txt", fieldset ) );
+  BOOST_CHECK_NO_THROW( io::PointCloud::write("pointcloud_Grid.txt",     *grid    ) );
 
-  eckit::ScopedPtr< grids::Unstructured > grid_from_Field     ( io::PointCloud::read("pointcloud_Field.txt"   ) );
-  eckit::ScopedPtr< grids::Unstructured > grid_from_FieldGroup( io::PointCloud::read("pointcloud_FieldGroup.txt") );
-  eckit::ScopedPtr< grids::Unstructured > grid_from_Grid      ( io::PointCloud::read("pointcloud_Grid.txt"    ) );
-  BOOST_REQUIRE( grid_from_Field      );
-  BOOST_REQUIRE( grid_from_FieldGroup );
-  BOOST_REQUIRE( grid_from_Grid       );
+  eckit::ScopedPtr< grids::Unstructured > grid_from_Field   ( io::PointCloud::read("pointcloud_Field.txt"   ) );
+  eckit::ScopedPtr< grids::Unstructured > grid_from_FieldSet( io::PointCloud::read("pointcloud_FieldSet.txt") );
+  eckit::ScopedPtr< grids::Unstructured > grid_from_Grid    ( io::PointCloud::read("pointcloud_Grid.txt"    ) );
+  BOOST_REQUIRE( grid_from_Field    );
+  BOOST_REQUIRE( grid_from_FieldSet );
+  BOOST_REQUIRE( grid_from_Grid     );
 
   // (guarantee different grids, to make checks useful)
-  BOOST_REQUIRE_NE( grid.get(), grid_from_Field     .get() );
-  BOOST_REQUIRE_NE( grid.get(), grid_from_FieldGroup.get() );
-  BOOST_REQUIRE_NE( grid.get(), grid_from_Grid      .get() );
+  BOOST_REQUIRE_NE( grid.get(), grid_from_Field   .get() );
+  BOOST_REQUIRE_NE( grid.get(), grid_from_FieldSet.get() );
+  BOOST_REQUIRE_NE( grid.get(), grid_from_Grid    .get() );
 
 
   // PART 5
   // compare reading of reference data to:
   // - grid_from_Field,
-  // - grid_from_FieldGroup, and
+  // - grid_from_FieldSet, and
   // - grid_from_Grid (all different but equivalent writing methods)
 
   // (header section)
-  BOOST_CHECK_EQUAL(grid_from_Field     ->npts(),                                                     test_arrays::nb_pts);
-  BOOST_CHECK_EQUAL(grid_from_Field     ->mesh().has_function_space("nodes"),                         true );
-  BOOST_CHECK_EQUAL(grid_from_Field     ->mesh().function_space(0).has_field("my_super_field"),       true );
-  BOOST_CHECK_EQUAL(grid_from_Field     ->mesh().function_space(0).has_field("_StRaNgE_FiElD_NaMe_"), false);
+  BOOST_CHECK_EQUAL(grid_from_Field   ->npts(),                                                     test_arrays::nb_pts);
+  BOOST_CHECK_EQUAL(grid_from_Field   ->mesh().has_function_space("nodes"),                         true );
+  BOOST_CHECK_EQUAL(grid_from_Field   ->mesh().function_space(0).has_field("my_super_field"),       true );
+  BOOST_CHECK_EQUAL(grid_from_Field   ->mesh().function_space(0).has_field("_StRaNgE_FiElD_NaMe_"), false);
 
-  BOOST_CHECK_EQUAL(grid_from_FieldGroup->npts(),                                                     test_arrays::nb_pts);
-  BOOST_CHECK_EQUAL(grid_from_FieldGroup->mesh().has_function_space("nodes"),                         true );
-  BOOST_CHECK_EQUAL(grid_from_FieldGroup->mesh().function_space(0).has_field("my_super_field"),       true );
-  BOOST_CHECK_EQUAL(grid_from_FieldGroup->mesh().function_space(0).has_field("_StRaNgE_FiElD_NaMe_"), false);
+  BOOST_CHECK_EQUAL(grid_from_FieldSet->npts(),                                                     test_arrays::nb_pts);
+  BOOST_CHECK_EQUAL(grid_from_FieldSet->mesh().has_function_space("nodes"),                         true );
+  BOOST_CHECK_EQUAL(grid_from_FieldSet->mesh().function_space(0).has_field("my_super_field"),       true );
+  BOOST_CHECK_EQUAL(grid_from_FieldSet->mesh().function_space(0).has_field("_StRaNgE_FiElD_NaMe_"), false);
 
-  BOOST_CHECK_EQUAL(grid_from_Grid      ->npts(),                                                     test_arrays::nb_pts);
-  BOOST_CHECK_EQUAL(grid_from_Grid      ->mesh().has_function_space("nodes"),                         true );
-  BOOST_CHECK_EQUAL(grid_from_Grid      ->mesh().function_space(0).has_field("my_super_field"),       true );
-  BOOST_CHECK_EQUAL(grid_from_Grid      ->mesh().function_space(0).has_field("_StRaNgE_FiElD_NaMe_"), false);
+  BOOST_CHECK_EQUAL(grid_from_Grid    ->npts(),                                                     test_arrays::nb_pts);
+  BOOST_CHECK_EQUAL(grid_from_Grid    ->mesh().has_function_space("nodes"),                         true );
+  BOOST_CHECK_EQUAL(grid_from_Grid    ->mesh().function_space(0).has_field("my_super_field"),       true );
+  BOOST_CHECK_EQUAL(grid_from_Grid    ->mesh().function_space(0).has_field("_StRaNgE_FiElD_NaMe_"), false);
 
   // (data section: guarantee data are from different places, to make checks useful)
-  const Field& field_from_Field     (grid_from_Field     ->mesh().function_space(0).field("my_super_field"));
-  const Field& field_from_FieldGroup(grid_from_FieldGroup->mesh().function_space(0).field("my_super_field"));
-  const Field& field_from_Grid      (grid_from_Grid      ->mesh().function_space(0).field("my_super_field"));
-  BOOST_CHECK_NE( field_from_Field.data< double >(), field                .data< double >() );
-  BOOST_CHECK_NE( field_from_Field.data< double >(), field_from_FieldGroup.data< double >() );
-  BOOST_CHECK_NE( field_from_Field.data< double >(), field_from_Grid      .data< double >() );
+  const Field& field_from_Field   (grid_from_Field   ->mesh().function_space(0).field("my_super_field"));
+  const Field& field_from_FieldSet(grid_from_FieldSet->mesh().function_space(0).field("my_super_field"));
+  const Field& field_from_Grid    (grid_from_Grid    ->mesh().function_space(0).field("my_super_field"));
+  BOOST_CHECK_NE( field_from_Field.data< double >(), field              .data< double >() );
+  BOOST_CHECK_NE( field_from_Field.data< double >(), field_from_FieldSet.data< double >() );
+  BOOST_CHECK_NE( field_from_Field.data< double >(), field_from_Grid    .data< double >() );
 
-  ArrayView< double,1 > field_from_Field_data     (field_from_Field     );
-  ArrayView< double,1 > field_from_FieldGroup_data(field_from_FieldGroup);
-  ArrayView< double,1 > field_from_Grid_data      (field_from_Grid      );
+  ArrayView< double,1 > field_from_Field_data   (field_from_Field   );
+  ArrayView< double,1 > field_from_FieldSet_data(field_from_FieldSet);
+  ArrayView< double,1 > field_from_Grid_data    (field_from_Grid    );
   for (size_t i=0; i<test_arrays::nb_pts; ++i)
   {
-    BOOST_CHECK_CLOSE( field_data(i), field_from_Field_data     (i), 0.001);  // 0.001% relative error
-    BOOST_CHECK_CLOSE( field_data(i), field_from_FieldGroup_data(i), 0.001);  // ...
-    BOOST_CHECK_CLOSE( field_data(i), field_from_Grid_data      (i), 0.001);  // ...
+    BOOST_CHECK_CLOSE( field_data(i), field_from_Field_data   (i), 0.001);  // 0.001% relative error
+    BOOST_CHECK_CLOSE( field_data(i), field_from_FieldSet_data(i), 0.001);  // ...
+    BOOST_CHECK_CLOSE( field_data(i), field_from_Grid_data    (i), 0.001);  // ...
   }
 
 

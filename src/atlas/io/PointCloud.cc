@@ -17,7 +17,7 @@
 #include "eckit/log/Log.h"
 
 #include "atlas/Field.h"
-#include "atlas/FieldGroup.h"
+#include "atlas/FieldSet.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/grids/Unstructured.h"
 #include "atlas/util/ArrayView.h"
@@ -150,7 +150,7 @@ grids::Unstructured* PointCloud::read(const eckit::PathName& path)
   grids::Unstructured* grid = new grids::Unstructured(pts);
   ASSERT(grid);
 
-  Mesh& m = grid->mesh();  
+  Mesh& m = grid->mesh();
   for (size_t j=0; j<vfvalues.size(); ++j) {
     Field& field = m.function_space("nodes").create_field< double >(vfnames[j],1);
     ArrayView< double, 1 > fdata(field);
@@ -216,7 +216,7 @@ void PointCloud::write(const eckit::PathName& path, const Grid& grid)
 }
 
 
-void PointCloud::write(const eckit::PathName& path, const FieldGroup& fieldset)
+void PointCloud::write(const eckit::PathName& path, const FieldSet& fieldset)
 {
   const std::string msg("PointCloud::write: ");
 
@@ -224,7 +224,7 @@ void PointCloud::write(const eckit::PathName& path, const FieldGroup& fieldset)
   // @warning: several copy operations here
 
   for (size_t i=1; i<fieldset.size(); ++i)
-    if (!fieldset.field(i).grid().same( fieldset.field(0).grid() ))
+    if (!fieldset[0].grid().same( fieldset[i].grid() ))
       throw eckit::BadParameter(msg+"fields must be described in the same grid (fieldset.field(0).grid() == fieldset.field(*).grid())");
 
   const Mesh& m(fieldset.field(0).grid().mesh());
@@ -238,7 +238,7 @@ void PointCloud::write(const eckit::PathName& path, const FieldGroup& fieldset)
   std::vector< ArrayView< double, 1 > > vfvalues;
   for (size_t i=0; i<fieldset.size(); ++i)
   {
-    const Field& field = fieldset.field(i);
+    const Field& field = fieldset[i];
     if ( field.shape(0)==lonlat.size() &&
          field.shape(1)==1 &&
          field.name()!="glb_idx" )  // FIXME: no support for non-int types!
@@ -294,7 +294,7 @@ void PointCloud::write(
 
 void PointCloud::write(const eckit::PathName& path, const Field& field)
 {
-  FieldGroup fieldset;
+  FieldSet fieldset;
   fieldset.add_field(const_cast< Field& >(field));
   write(path,fieldset);
 }
@@ -399,7 +399,7 @@ grids::Unstructured* atlas__read_pointcloud (char* file_path)
 { return PointCloud::read(file_path); }
 
 
-void atlas__write_pointcloud_fieldset (char* file_path, FieldGroup* fieldset)
+void atlas__write_pointcloud_fieldset (char* file_path, FieldSet* fieldset)
 { PointCloud::write(file_path, *fieldset); }
 
 
