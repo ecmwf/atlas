@@ -6,4 +6,14 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-set( ${PROJECT_NAME}_VERSION_STR  "0.3.2" )
+ecbuild_add_library( TARGET mpistubs
+  AUTO_VERSION
+  INSTALL_HEADERS ALL
+  HEADER_DESTINATION  ${INSTALL_INCLUDE_DIR}/mpistubs
+  SOURCES   mpistubs.h
+            mpistubs.c )
+
+ecbuild_add_library( TARGET mpistubs_f
+  AUTO_VERSION
+  CONDITION HAVE_FORTRAN AND CMAKE_Fortran_COMPILER_LOADED
+  SOURCES   mpistubs.F90 )

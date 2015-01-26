@@ -56,4 +56,4 @@ set( CMAKE_Fortran_LINK_FLAGS    "" )
 # -fstack-arrays     : Allocate automatic arrays on the stack (needs large stacksize!!!)
 # -funroll-all-loops : Unroll all loops
 # -fcheck=bounds     : Bounds checking
-  
+

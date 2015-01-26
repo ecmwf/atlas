@@ -12,7 +12,6 @@
 #include "eckit/runtime/Tool.h"
 #include "eckit/config/Resource.h"
 #include "atlas/atlas.h"
-#include "atlas/atlas_install.h"
 
 //-----------------------------------------------------------------------------
 
@@ -47,18 +46,6 @@ void Version::run()
   {
     Log::info() << atlas_git_sha1_abbrev(12) << std::endl;
     return;
-  }
-  else if( Resource<bool>("--libs",false) )
-  {
-    Log::info() << ATLAS_PKG_CFG_LIBS << std::endl;
-  }
-  else if( Resource<bool>("--cflags",false) )
-  {
-    Log::info() << ATLAS_PKG_CFG_CFLAGS << std::endl;
-  }
-  else if( Resource<bool>("--fflags",false) )
-  {
-    Log::info() << ATLAS_PKG_CFG_FFLAGS << std::endl;
   }
   else if( Resource<bool>("--info",false) )
   {

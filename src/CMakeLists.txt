@@ -8,6 +8,8 @@
 
 ### sources
 
+add_subdirectory( mpistubs )
+
 add_subdirectory( atlas )
 
 add_subdirectory( apps )
