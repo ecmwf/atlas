@@ -29,7 +29,7 @@
 #include "atlas/Mesh.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Field.h"
-#include "atlas/FieldGroup.h"
+#include "atlas/FieldSet.h"
 #include "atlas/Parameters.h"
 
 using namespace eckit;
@@ -948,7 +948,7 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path) const
 
 }
 
-void Gmsh::write(FieldGroup& fieldset, const std::string& file_path, openmode mode) const
+void Gmsh::write(FieldSet& fieldset, const std::string& file_path, openmode mode) const
 {
 	LocalPathName path(file_path);
 	bool is_new_file = (mode != std::ios_base::app || !path.exists() );
@@ -964,7 +964,7 @@ void Gmsh::write(FieldGroup& fieldset, const std::string& file_path, openmode mo
 	// Fields
 	for( int field_idx=0; field_idx<fieldset.size(); ++field_idx )
 	{
-		Field& field = fieldset.field(field_idx);
+    Field& field = fieldset[field_idx];
 		FunctionSpace& function_space = field.function_space();
 
     if( !function_space.metadata().has<int>("type") )
@@ -1192,7 +1192,7 @@ void atlas__write_gmsh_mesh (Mesh* mesh, char* file_path) {
   writer.write( *mesh, std::string(file_path) );
 }
 
-void atlas__write_gmsh_fieldset (FieldGroup* fieldset, char* file_path, int mode) {
+void atlas__write_gmsh_fieldset (FieldSet* fieldset, char* file_path, int mode) {
   Gmsh writer;
 	writer.write( *fieldset, std::string(file_path) );
 }

@@ -194,14 +194,14 @@ grids/rgg/OctahedralRGG.cc
 list( APPEND atlas_srcs
 Field.cc
 Field.h
-FieldGroup.cc
-FieldGroup.h
 FieldSet.cc
 FieldSet.h
 FunctionSpace.cc
 FunctionSpace.h
 Grid.cc
 Grid.h
+GridSet.cc
+GridSet.h
 GridSpec.cc
 GridSpec.h
 GridSpecParams.cc
@@ -214,8 +214,8 @@ MeshCache.cc
 MeshCache.h
 Metadata.cc
 Metadata.h
-Parameters.h
 Parameters.cc
+Parameters.h
 PointIndex3.cc
 PointIndex3.h
 PointSet.cc
