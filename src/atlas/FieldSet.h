@@ -147,7 +147,7 @@ extern "C"
 {
   FieldSet* atlas__FieldSet__new           (char* name);
   void      atlas__FieldSet__delete        (FieldSet* This);
-  void      atlas__FieldSet__fields        (FieldSet* This, Field** &fields, int& nb_fields);
+  void      atlas__FieldSet__fields        (FieldSet* This, Field** fields, int nb_fields);
   void      atlas__FieldSet__add_field     (FieldSet* This, Field* field);
   int       atlas__FieldSet__has_field     (FieldSet* This, char* name);
   int       atlas__FieldSet__size          (FieldSet* This);

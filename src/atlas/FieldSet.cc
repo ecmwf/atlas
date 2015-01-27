@@ -313,7 +313,7 @@ void atlas__FieldSet__delete(FieldSet* This)
 { delete This; }
 
 
-void atlas__FieldSet__fields(FieldSet* This, Field** &fields, int& nb_fields)
+void atlas__FieldSet__fields(FieldSet* This, Field** fields, int nb_fields)
 {
   if (fields!=NULL)
     throw eckit::SeriousBug("provided return pointer is not NULL (memory leak)");
