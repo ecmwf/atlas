@@ -95,31 +95,11 @@ public:
 
   std::vector< std::string > field_names() const;
 
-  void add_field(Field& field)
-  {
-    index_[field.name()] = fields_.size();
-    fields_.push_back( Field::Ptr(&field) );
-  }
+  void add_field(Field& field);
 
-  bool has_field(const std::string& name) const
-  {
-    return index_.count(name);
-  }
+  bool has_field(const std::string& name) const;
 
-  Field& field(const std::string& name)
-  {
-    return const_cast< Field& >(field(name));
-  }
-
-  const Field& field(const std::string& name) const
-  {
-    if (!has_field(name))
-    {
-      const std::string msg("Could not find field \"" + name + "\" in fieldset \"" + name_ + "\"");
-      throw eckit::OutOfRange(msg,Here());
-    }
-    return *fields_[ index_.at(name) ];
-  }
+  Field& field(const std::string& name) const;
 
 private:
   // internal utilities

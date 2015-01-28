@@ -22,6 +22,7 @@
 #include <eckit/log/Log.h>
 #include <eckit/memory/ScopedPtr.h>
 #include <eckit/utils/Translator.h>
+#include "eckit/os/BackTrace.h"
 
 #ifdef ECKIT_HAVE_GRIB
 #include <eckit/grib/GribField.h>
@@ -60,6 +61,28 @@ namespace atlas {
 FieldSet::FieldSet(const std::string &name) :
   name_(name.length()? name : "untitled")
 {}
+
+
+void FieldSet::add_field(Field& field)
+{
+  index_[field.name()] = fields_.size();
+  fields_.push_back( Field::Ptr(&field) );
+}
+
+bool FieldSet::has_field(const std::string& name) const
+{
+  return index_.count(name);
+}
+
+Field& FieldSet::field(const std::string& name) const
+{
+  if (!has_field(name))
+  {
+    const std::string msg("Could not find field \"" + name + "\" in fieldset \"" + name_ + "\"");
+    throw eckit::OutOfRange(msg,Here());
+  }
+  return *fields_[ index_.at(name) ];
+}
 
 
 FieldSet::FieldSet(const PathName& path) :
@@ -108,7 +131,10 @@ FieldSet::FieldSet(const PathName& path) :
     ASSERT(grid_);
     ASSERT(haveSameGrid());
 #else
-    throw eckit::Exception("eckit was built without GRIB support, cannot construct FieldSet from GRIB path", Here());
+    std::stringstream stream;
+    stream << "eckit was built without GRIB support, cannot construct FieldSet from GRIB path " << path << "\n";
+    stream << eckit::BackTrace::dump();
+    throw eckit::Exception(stream.str(), Here());
 #endif
     return;
   }
@@ -138,6 +164,7 @@ FieldSet::FieldSet(const Buffer& buf) :
   ASSERT( grid_ );
   ASSERT( haveSameGrid() );
 #else
+  eckit::Log::error() << eckit::BackTrace::dump() << std::endl;
   throw eckit::Exception("eckit was built without GRIB support, cannot construct FieldSet from GRIB buffer", Here());
 #endif
 }
@@ -311,7 +338,7 @@ std::vector<Field*>& __private_get_raw_fields_ptr (FieldSet* This)
 extern "C"{
 FieldSet* atlas__FieldSet__new (char* name)
 {
-  FieldSet* fset = new FieldSet(Buffer(0));
+  FieldSet* fset = new FieldSet( std::string(name) );
   fset->name() = name;
   return fset;
 }
@@ -331,11 +358,20 @@ void atlas__FieldSet__fields (FieldSet* This, Field** &fields, int &nb_fields)
 }
 
 
-void   atlas__FieldSet__add_field     (FieldSet* This, Field* field) { This->add_field(*field); }
-int    atlas__FieldSet__has_field     (FieldSet* This, char* name)   { return This->has_field( std::string(name) ); }
-int    atlas__FieldSet__size          (FieldSet* This)               { return This->size(); }
-Field* atlas__FieldSet__field_by_name (FieldSet* This, char* name)   { return &This->field( std::string(name) ); }
-Field* atlas__FieldSet__field_by_idx  (FieldSet* This, int idx)      { return &This->operator[](idx); }
+void   atlas__FieldSet__add_field     (FieldSet* This, Field* field) 
+{ ASSERT(This != NULL); This->add_field(*field); }
+
+int    atlas__FieldSet__has_field     (FieldSet* This, char* name)   
+{ ASSERT(This != NULL); return This->has_field( std::string(name) ); }
+
+int    atlas__FieldSet__size          (FieldSet* This)               
+{ ASSERT(This != NULL); return This->size(); }
+
+Field* atlas__FieldSet__field_by_name (FieldSet* This, char* name)   
+{ ASSERT(This != NULL); return &This->field( std::string(name) ); }
+
+Field* atlas__FieldSet__field_by_idx  (FieldSet* This, int idx)      
+{ ASSERT(This != NULL); return &This->operator[](idx); }
 
 }
 //-----------------------------------------------------------------------------
