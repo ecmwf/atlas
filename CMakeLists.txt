@@ -60,23 +60,22 @@ if( HAVE_FORTRAN )
 
 endif()
 
-### OMP ...
-
-ecbuild_add_option(
-	FEATURE OMP
-	DESCRIPTION "support for OpenMP threaded parallelism" )
-if( ENABLE_OMP )
-    ecbuild_enable_omp()
-else()
-    ecbuild_enable_ompstubs()
-endif()
-
 ### MPI ...
 
 ecbuild_add_option( FEATURE MPI
                     DESCRIPTION "Support for MPI distributed parallelism"
                     REQUIRED_PACKAGES "MPI COMPONENTS CXX ${MPI_Fortran}" )
-debug_var( HAVE_MPI )
+
+### OMP ...
+
+ecbuild_add_option(
+	FEATURE OMP
+	DESCRIPTION "support for OpenMP threaded parallelism"
+  REQUIRED_PACKAGES "OMP COMPONENTS CXX Fortran" )
+
+cmake_add_fortran_flags( ${OMP_Fortran_FLAGS} )
+cmake_add_cxx_flags( ${OMP_CXX_FLAGS} )
+
 ### trans_api ...
 
 ecbuild_add_option(

@@ -6,11 +6,8 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-### sources
 
 add_subdirectory( mpistubs )
-
-### mpistubs
 
 if( NOT HAVE_MPI )
 
@@ -19,17 +16,11 @@ if( NOT HAVE_MPI )
 
 else()
 
-  set( ATLAS_MPI_C_INCLUDE_DIRS         ${MPI_CXX_INCLUDE_PATH} )
   set( ATLAS_MPI_C_LIBRARIES            ${MPI_CXX_LIBRARIES} )
-  set( ATLAS_MPI_Fortran_INCLUDE_DIRS   ${MPI_Fortran_INCLUDE_PATH} )
   set( ATLAS_MPI_Fortran_LIBRARIES      ${MPI_Fortran_LIBRARIES} )
-
   ecbuild_include_mpi()
   
 endif()
-
-include_directories( ${ATLAS_MPI_C_INCLUDE_DIRS} )
-include_directories( ${ATLAS_MPI_Fortran_INCLUDE_DIRS} )
 
 add_subdirectory( atlas )
 

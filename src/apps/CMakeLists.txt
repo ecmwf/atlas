@@ -1,10 +1,8 @@
 ecbuild_add_executable(
   TARGET      atlas-main
+  OUTPUT_NAME atlas 
   SOURCES     atlas.cc
-  LIBS        atlas_f mpistubs_f )
-set_target_properties( atlas-main
-  PROPERTIES
-  OUTPUT_NAME atlas)
+  LIBS        atlas )
 
 ecbuild_add_executable(
   TARGET      grib_to_gmsh
