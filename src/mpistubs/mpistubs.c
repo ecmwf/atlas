@@ -98,8 +98,7 @@ MPI_Fint MPI_Comm_c2f( MPI_Comm comm )
 
 MPI_Comm MPI_Comm_f2c( MPI_Fint f_handle )
 {
-  MPI_Comm comm;
-  return comm;
+  return MPI_COMM_WORLD;
 }
 
 int MPI_Comm_rank ( MPI_Comm comm, int *me )

@@ -38,20 +38,6 @@ install( FILES
 
 configure_file( atlas_version.cc.in atlas_version.cc )
 
-### mpistubs
-
-if( NOT HAVE_MPI )
-
-  set( ATLAS_MPI_C_LIBRARIES mpistubs )
-  set( ATLAS_MPI_FORTRAN_LIBRARIES mpistubs_f )
-
-else()
-
-  set( ATLAS_MPI_C_LIBRARIES       ${MPI_CXX_LIBRARIES} )
-  set( ATLAS_MPI_FORTRAN_LIBRARIES ${MPI_Fortran_LIBRARIES} )
-
-endif()
-
 ### sources
 
 list( APPEND atlas_mpl_srcs
