@@ -8,6 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
+/// @author Willem Deconinck
 /// @author Peter Bispham
 /// @author Tiago Quintino
 /// @author Pedro Maciel
@@ -36,7 +37,12 @@ namespace eckit {
   class DataHandle;
   namespace grib { class GribHandle; }
 }
+namespace atlas{
+  class FieldSet;
+  class Field;
+}
 
+extern "C" { void atlas__FieldSet__fields ( atlas::FieldSet* This, atlas::Field** &fields, int &nb_fields ); }
 
 namespace atlas {
 
@@ -120,8 +126,6 @@ public:
     return *fields_[ index_.at(name) ];
   }
 
-
-
 private:
   // internal utilities
 
@@ -139,6 +143,12 @@ protected:
   std::string                     name_;    ///< internal name
   std::map< std::string, size_t > index_;   ///< name-to-index map, to refer fields by name
 
+private:
+
+  // In order to return raw pointers to C interface
+  friend void ::atlas__FieldSet__fields ( FieldSet* This, Field** &fields, int &nb_fields );
+  std::vector<Field*> fields_raw_ptr_;
+
 };
 
 
@@ -147,7 +157,7 @@ extern "C"
 {
   FieldSet* atlas__FieldSet__new           (char* name);
   void      atlas__FieldSet__delete        (FieldSet* This);
-  void      atlas__FieldSet__fields        (FieldSet* This, Field** fields, int nb_fields);
+  void      atlas__FieldSet__fields        (FieldSet* This, Field** &fields, int &nb_fields);
   void      atlas__FieldSet__add_field     (FieldSet* This, Field* field);
   int       atlas__FieldSet__has_field     (FieldSet* This, char* name);
   int       atlas__FieldSet__size          (FieldSet* This);

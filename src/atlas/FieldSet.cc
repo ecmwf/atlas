@@ -314,15 +314,18 @@ void atlas__FieldSet__delete(FieldSet* This)
 { delete This; }
 
 
-void atlas__FieldSet__fields(FieldSet* This, Field** fields, int nb_fields)
+void atlas__FieldSet__fields (FieldSet* This, Field** &fields, int &nb_fields)
 {
   if (fields!=NULL)
     throw eckit::SeriousBug("provided return pointer is not NULL (memory leak)");
 
   nb_fields = This->fields().size();
-  fields = nb_fields? new Field*[nb_fields] : NULL;
-  for (int i=0; i<nb_fields; ++i)
-    fields[i] = (This->fields()[i]).get();
+
+  This->fields_raw_ptr_.resize( nb_fields );
+  for( int f=0; f<nb_fields; ++f )
+    This->fields_raw_ptr_[f] = This->fields()[f].get();
+
+  fields = nb_fields ? This->fields_raw_ptr_.data() : NULL;
 }
 
 
