@@ -63,9 +63,12 @@ ReducedGridMeshGenerator::ReducedGridMeshGenerator()
   // This option creates a point at the pole when true
   options.set("include_pole",false);
 
+  // This option sets the part that will be generated
+  options.set("patch_pole", bool(Resource<bool>("--patch_pole;atlas.meshgen.patch_pole",false ) ) );
+
   // This option creates elements that connect east to west at greenwich meridian
   // when true, instead of creating periodic ghost-points at east boundary when false
-  options.set("three_dimensional",false);
+  options.set("three_dimensional",bool(Resource<bool>("--three_dimensional;atlas.meshgen.three_dimensional",false ) ));
 
   // This option sets number of parts the mesh will be split in
   options.set("nb_parts",1);
@@ -661,6 +664,9 @@ Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
   bool include_north_pole = (mypart == 0       ) && options.get<bool>("include_pole");
   bool include_south_pole = (mypart == nparts-1) && options.get<bool>("include_pole");
   bool three_dimensional  = options.get<bool>("three_dimensional");
+  bool patch_north_pole   = (mypart == 0       ) && options.get<bool>("patch_pole") && three_dimensional;
+  bool patch_south_pole   = (mypart == nparts-1) && options.get<bool>("patch_pole") && three_dimensional;
+
   if( three_dimensional && nparts != 1 )
     throw BadParameter("Cannot generate three_dimensional mesh in parallel",Here());
   int nnodes  = region.nnodes;
@@ -670,9 +676,15 @@ Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
     ++nnodes;
     ntriags += rgg.nlon(0);
   }
+  else if (patch_north_pole) {
+    ntriags += rgg.nlon(0)-2;
+  }
   if (include_south_pole) {
     ++nnodes;
     ntriags += rgg.nlon(rgg.nlat()-1);
+  }
+  else if (patch_south_pole) {
+    ntriags += rgg.nlon(rgg.nlat()-1)-2;
   }
   if (three_dimensional) {
     nnodes -= rgg.nlat();
@@ -784,6 +796,7 @@ Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
     Topology::set(flags(jnode),Topology::NORTH);
     ++jnode;
   }
+
   int jsouth=-1;
   if (include_south_pole)
   {
@@ -895,6 +908,68 @@ Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
       ++jtriag;
     }
   }
+  else if (patch_north_pole)
+  {
+    int jlat = 0;
+    int ilat = 0;
+    int ip1, ip2, ip3;
+    int q1,q2,q3,q4;
+
+    // start with triag:
+    ip1 = 0;
+    ip2 = 1;
+    ip3 = rgg.nlon(0)-1;
+    triag_nodes(jtriag,0) = offset_loc[ilat] + ip1;
+    triag_nodes(jtriag,1) = offset_loc[ilat] + ip2;
+    triag_nodes(jtriag,2) = offset_loc[ilat] + ip3;
+    triag_glb_idx(jtriag) = jquad+jtriag+1;
+    triag_part(jtriag) = mypart;
+    ++jtriag;
+
+    q1 = ip2;
+    q4 = ip3;
+    for ( int k=0; k<(rgg.nlon(jlat)-4)/2; ++k )
+    {
+      q2=q1+1;
+      q3=q4-1;
+
+      // add triag
+      ip1 = q1;
+      ip2 = q3;
+      ip3 = q4;
+      triag_nodes(jtriag,0) = offset_loc[ilat] + ip1;
+      triag_nodes(jtriag,1) = offset_loc[ilat] + ip2;
+      triag_nodes(jtriag,2) = offset_loc[ilat] + ip3;
+      triag_glb_idx(jtriag) = jquad+jtriag+1;
+      triag_part(jtriag) = mypart;
+      ++jtriag;
+
+      // add triag
+      ip1 = q1;
+      ip2 = q2;
+      ip3 = q3;
+      triag_nodes(jtriag,0) = offset_loc[ilat] + ip1;
+      triag_nodes(jtriag,1) = offset_loc[ilat] + ip2;
+      triag_nodes(jtriag,2) = offset_loc[ilat] + ip3;
+      triag_glb_idx(jtriag) = jquad+jtriag+1;
+      triag_part(jtriag) = mypart;
+      ++jtriag;
+
+      q1 = q2;
+      q4 = q3;
+    }
+    // end with triag:
+    ip1 = q1;
+    ip2 = q1+1;
+    ip3 = q4;
+    triag_nodes(jtriag,0) = offset_loc[ilat] + ip1;
+    triag_nodes(jtriag,1) = offset_loc[ilat] + ip2;
+    triag_nodes(jtriag,2) = offset_loc[ilat] + ip3;
+    triag_glb_idx(jtriag) = jquad+jtriag+1;
+    triag_part(jtriag) = mypart;
+    ++jtriag;
+  }
+
 
   if (include_south_pole)
   {
@@ -914,6 +989,67 @@ Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
       triag_part(jtriag) = mypart;
       ++jtriag;
     }
+  }
+  else if (patch_north_pole)
+  {
+    int jlat = rgg.nlat()-1;
+    int ilat = region.south-region.north;
+    int ip1, ip2, ip3;
+    int q1,q2,q3,q4;
+
+    // start with triag:
+    ip1 = 0;
+    ip2 = 1;
+    ip3 = rgg.nlon(0)-1;
+    triag_nodes(jtriag,0) = offset_loc[ilat] + ip1;
+    triag_nodes(jtriag,1) = offset_loc[ilat] + ip2;
+    triag_nodes(jtriag,2) = offset_loc[ilat] + ip3;
+    triag_glb_idx(jtriag) = jquad+jtriag+1;
+    triag_part(jtriag) = mypart;
+    ++jtriag;
+
+    q1 = ip2;
+    q4 = ip3;
+    for ( int k=0; k<(rgg.nlon(jlat)-4)/2; ++k )
+    {
+      q2=q1+1;
+      q3=q4-1;
+
+      // add triag
+      ip1 = q1;
+      ip2 = q3;
+      ip3 = q4;
+      triag_nodes(jtriag,0) = offset_loc[ilat] + ip1;
+      triag_nodes(jtriag,1) = offset_loc[ilat] + ip2;
+      triag_nodes(jtriag,2) = offset_loc[ilat] + ip3;
+      triag_glb_idx(jtriag) = jquad+jtriag+1;
+      triag_part(jtriag) = mypart;
+      ++jtriag;
+
+      // add triag
+      ip1 = q1;
+      ip2 = q2;
+      ip3 = q3;
+      triag_nodes(jtriag,0) = offset_loc[ilat] + ip1;
+      triag_nodes(jtriag,1) = offset_loc[ilat] + ip2;
+      triag_nodes(jtriag,2) = offset_loc[ilat] + ip3;
+      triag_glb_idx(jtriag) = jquad+jtriag+1;
+      triag_part(jtriag) = mypart;
+      ++jtriag;
+
+      q1 = q2;
+      q4 = q3;
+    }
+    // end with triag:
+    ip1 = q1;
+    ip2 = q1+1;
+    ip3 = q4;
+    triag_nodes(jtriag,0) = offset_loc[ilat] + ip1;
+    triag_nodes(jtriag,1) = offset_loc[ilat] + ip2;
+    triag_nodes(jtriag,2) = offset_loc[ilat] + ip3;
+    triag_glb_idx(jtriag) = jquad+jtriag+1;
+    triag_part(jtriag) = mypart;
+    ++jtriag;
   }
 
 
