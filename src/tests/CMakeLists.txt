@@ -115,8 +115,9 @@ ecbuild_add_test( TARGET atlas_test_pointcloud
   LIBS      atlas
 )
 
+if( ECKIT_HAVE_GRIB )
+  add_subdirectory( grid )
+endif()
 
-
-add_subdirectory( grid )
 add_subdirectory( cgal )
 

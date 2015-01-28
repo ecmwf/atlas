@@ -81,8 +81,11 @@ public:
   const std::string& name() const { return name_; }
         std::string& name()       { return name_; }
 
-  const Field& operator[](const size_t& i) const { ASSERT(i<size()); return *fields_[i]; }
-        Field& operator[](const size_t& i)       { ASSERT(i<size()); return *fields_[i]; }
+  const Field& operator[](const size_t& i) const { return field(i); }
+        Field& operator[](const size_t& i)       { return field(i); }
+
+  const Field& field(const size_t& i) const { ASSERT(i<size()); return *fields_[i]; }
+        Field& field(const size_t& i)       { ASSERT(i<size()); return *fields_[i]; }
 
   const Field::Vector& fields() const { return fields_; }
         Field::Vector& fields()       { return fields_; }
@@ -92,26 +95,21 @@ public:
 
   std::vector< std::string > field_names() const;
 
-
-
   void add_field(Field& field)
   {
     index_[field.name()] = fields_.size();
     fields_.push_back( Field::Ptr(&field) );
   }
 
-
   bool has_field(const std::string& name) const
   {
     return index_.count(name);
   }
 
-
   Field& field(const std::string& name)
   {
     return const_cast< Field& >(field(name));
   }
-
 
   const Field& field(const std::string& name) const
   {
