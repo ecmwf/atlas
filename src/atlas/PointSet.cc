@@ -39,9 +39,9 @@ PointSet::PointSet( atlas::Mesh& mesh )
 
     ASSERT( npts_ > 0 );
 
-    ASSERT( nodes.has_field("coordinates") );
+	ASSERT( nodes.has_field("xyz") );
 
-    ArrayView<double,2> coords ( nodes.field("coordinates") );
+	ArrayView<double,2> coords ( nodes.field("xyz") );
 
     std::vector< PointIndex3::Value > pidx;
     pidx.reserve(npts_);

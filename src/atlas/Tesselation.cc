@@ -13,6 +13,7 @@
 #include <memory>
 #include <iostream>
 
+#include "eckit/config/Resource.h"
 #include "eckit/log/Timer.h"
 #include "eckit/memory/ScopedPtr.h"
 
@@ -57,6 +58,10 @@ const Point_3 origin = Point_3(CGAL::ORIGIN);
 #include "atlas/Tesselation.h"
 #include "atlas/MeshCache.h"
 #include "atlas/Grid.h"
+
+#include "atlas/grids/ReducedGrid.h"
+
+#include "atlas/meshgen/ReducedGridMeshGenerator.h"
 
 using namespace eckit;
 using namespace eckit::geometry;
@@ -204,7 +209,21 @@ void Tesselation::tesselate( Grid& g )
 
 	std::cout << "mesh not in cache -- tesselating grid " << uid << std::endl;
 
-    Tesselation::tesselate( mesh );
+	bool atlasTriangulateRGG = eckit::Resource<bool>("atlasTriangulateRGG;$ATLAS_TRIANGULATE_RGG",false);
+
+	grids::ReducedGrid* rg = dynamic_cast<grids::ReducedGrid*>(&g);
+
+	if( atlasTriangulateRGG && rg )
+	{
+		std::cout << "mesh is ReducedGrid " << rg->uid() << std::endl;
+		ASSERT(rg);
+		meshgen::ReducedGridMeshGenerator mg;
+		mg.generate( *rg, mesh );
+	}
+	else
+	{
+		Tesselation::tesselate( mesh );
+	}
 
 	MeshCache::add( uid, mesh );
 }
@@ -269,18 +288,15 @@ void Tesselation::create_mesh_structure( Mesh& mesh, const size_t nb_nodes )
 
     // create / ensure mesh has coordinates
 
-    if( ! nodes.has_field("coordinates") )
-        nodes.create_field<double>("coordinates",3);
+	nodes.create_field<double>("xyz",3,IF_EXISTS_RETURN);
 
     // create / ensure mesh has latlon
 
-    if( ! nodes.has_field("lonlat") )
-        nodes.create_field<double>("lonlat",2);
+	nodes.create_field<double>("lonlat",2,IF_EXISTS_RETURN);
 
     // create / ensure mesh has global indexes
 
-    if( ! nodes.has_field("glb_idx") )
-        nodes.create_field<gidx_t>("glb_idx",1);
+	nodes.create_field<gidx_t>("glb_idx",1,IF_EXISTS_RETURN);
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -297,7 +313,7 @@ void Tesselation::generate_lonlat_points( Mesh& mesh,
 
     ASSERT(  nodes.shape(0) == nb_nodes );
 
-    ArrayView<double,2> coords  ( nodes.field("coordinates") );
+	ArrayView<double,2> coords  ( nodes.field("xyz") );
     ArrayView<double,2> lonlat  ( nodes.field("lonlat") );
     ArrayView<gidx_t,1> glb_idx ( nodes.field("glb_idx") );
 
@@ -356,7 +372,7 @@ void Tesselation::generate_lonlat_grid( Mesh& mesh, const size_t& nlats, const s
 
     ASSERT( nodes.shape(0) == nb_nodes );
 
-    ArrayView<double,2> coords  ( nodes.field("coordinates") );
+	ArrayView<double,2> coords  ( nodes.field("xyz") );
     ArrayView<double,2> lonlat  ( nodes.field("lonlat") );
     ArrayView<gidx_t,1> glb_idx ( nodes.field("glb_idx") );
 
@@ -419,7 +435,7 @@ void Tesselation::create_cell_centres( Mesh& mesh )
     ASSERT( mesh.has_function_space("triags") );
 
     FunctionSpace& nodes     = mesh.function_space( "nodes" );
-    ArrayView<double,2> coords  ( nodes.field("coordinates") );
+	ArrayView<double,2> coords  ( nodes.field("xyz") );
 
     const size_t nb_nodes = nodes.shape(0);
 
@@ -490,7 +506,7 @@ void Tesselation::build_mesh( const Grid& grid, Mesh& mesh )
 
     ASSERT(  nodes.shape(0) == npts );
 
-    ArrayView<double,2> coords  ( nodes.field("coordinates") );
+	ArrayView<double,2> coords  ( nodes.field("xyz") );
     ArrayView<double,2> lonlat  ( nodes.field("lonlat") );
     ArrayView<gidx_t,1> glb_idx ( nodes.field("glb_idx") );
 

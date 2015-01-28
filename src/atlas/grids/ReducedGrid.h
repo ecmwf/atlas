@@ -50,7 +50,7 @@ public:
 
   ReducedGrid( const int nlat, const double lats[], const int npts_per_lat[] );
 
-  virtual std::string uid() const;
+  virtual uid_t uid() const;
 
   virtual std::string hash() const;
 

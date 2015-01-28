@@ -412,14 +412,11 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh )
 
 	FunctionSpace& nodes = mesh.function_space("nodes");
 
-	if( ! nodes.has_field("coordinates") )
-			nodes.create_field<double>("coordinates",3);
-	if( ! nodes.has_field("glb_idx") )
-			nodes.create_field<gidx_t>("glb_idx",1);
-	if( ! nodes.has_field("partition") )
-			nodes.create_field<int>("partition",1);
+	nodes.create_field<double>("xyz",3,IF_EXISTS_RETURN);
+	nodes.create_field<gidx_t>("glb_idx",1,IF_EXISTS_RETURN);
+	nodes.create_field<int>("partition",1,IF_EXISTS_RETURN);
 
-	ArrayView<double,2> coords         ( nodes.field("coordinates")    );
+	ArrayView<double,2> coords         ( nodes.field("xyz")    );
 	ArrayView<gidx_t,1> glb_idx        ( nodes.field("glb_idx")        );
 	ArrayView<int,   1> part           ( nodes.field("partition")      );
 
@@ -1057,7 +1054,7 @@ void Gmsh::write3dsurf(Mesh &mesh, const std::string& file_path)
     // nodes
 
     FunctionSpace& nodes   = mesh.function_space( "nodes" );
-    ArrayView<double,2> coords  ( nodes.field( "coordinates" ) );
+	ArrayView<double,2> coords  ( nodes.field( "xyz" ) );
     ArrayView<gidx_t,   1> glb_idx ( nodes.field( "glb_idx" ) );
 
     nb_nodes = nodes.shape(0);
@@ -1097,7 +1094,7 @@ void Gmsh::write3dsurf(Mesh &mesh, const std::string& file_path)
         {
             file << e << " 2 2 1 1";
             for( int n=0; n<3; ++n )
-                file << " " << triag_nodes(e,n);
+				file << " " << glb_idx(triag_nodes(e,n));
             file << "\n";
         }
     }
@@ -1111,7 +1108,7 @@ void Gmsh::write3dsurf(Mesh &mesh, const std::string& file_path)
         {
           file << e << " 3 2 1 1";
           for( int n=0; n<4; ++n )
-            file << " " << quad_nodes(e,n);
+			file << " " << glb_idx(quad_nodes(e,n));
           file << "\n";
         }
     }
@@ -1125,7 +1122,7 @@ void Gmsh::write3dsurf(Mesh &mesh, const std::string& file_path)
         {
             file << e << " 1 2 2 1";
             for( int n=0; n<2; ++n )
-                file << " " << edge_nodes(e,n);
+				file << " " << glb_idx(edge_nodes(e,n));
             file << "\n";
         }
     }

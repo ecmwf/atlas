@@ -14,6 +14,7 @@
 #include <limits>
 
 #include "eckit/exception/Exceptions.h"
+#include "eckit/types/Types.h"
 
 #include "atlas/atlas.h"
 #include "atlas/FunctionSpace.h"
@@ -98,152 +99,6 @@ void FunctionSpace::resize(const std::vector<int>& shape)
 	}
 }
 
-template <>
-FieldT<double>& FunctionSpace::create_field(const std::string& name, size_t nb_vars)
-{
-	if( has_field(name) )
-	{
-		std::ostringstream msg; msg << "field with name " << name << "already exists" << std::endl;
-		throw eckit::Exception( msg.str(), Here() );
-	}
-
-	FieldT<double>* field = new FieldT<double>(name,nb_vars,*this);
-	fields_.insert( name, Field::Ptr(field) );
-	fields_.sort();
-
-	size_t rank = shape_.size();
-	std::vector< int > field_shape(rank);
-	for (size_t i=0; i<rank; ++i)
-	{
-		if( shape_[i] == Field::UNDEF_VARS )
-			field_shape[i] = field->nb_vars();
-		else
-			field_shape[i] = shape_[i];
-	}
-
-	field->allocate(field_shape);
-	return *field;
-}
-
-template <>
-FieldT<float>& FunctionSpace::create_field(const std::string& name, size_t nb_vars)
-{
-	if( has_field(name) )
-	{
-		std::ostringstream msg; msg << "field with name " << name << "already exists" << std::endl;
-		throw eckit::Exception( msg.str(), Here() );
-	}
-
-	FieldT<float>* field = new FieldT<float>(name,nb_vars,*this);
-	fields_.insert( name, Field::Ptr(field) );
-	fields_.sort();
-
-	size_t rank = shape_.size();
-	std::vector< int > field_shape(rank);
-	for (size_t i=0; i<rank; ++i)
-	{
-		if( shape_[i] == Field::UNDEF_VARS )
-			field_shape[i] = field->nb_vars();
-		else
-			field_shape[i] = shape_[i];
-	}
-
-	field->allocate(field_shape);
-	return *field;
-}
-
-template <>
-FieldT<int>& FunctionSpace::create_field(const std::string& name, size_t nb_vars)
-{
-	if( has_field(name) )
-	{
-		std::ostringstream msg; msg << "field with name " << name << "already exists" << std::endl;
-		throw eckit::Exception( msg.str(), Here() );
-	}
-
-	FieldT<int>* field = new FieldT<int>(name,nb_vars,*this);
-
-	fields_.insert( name, Field::Ptr(field) );
-	fields_.sort();
-
-	size_t rank = shape_.size();
-	std::vector< int > field_shape(rank);
-	for (size_t i=0; i<rank; ++i)
-	{
-		if( shape_[i] == Field::UNDEF_VARS )
-			field_shape[i] = field->nb_vars();
-		else
-			field_shape[i] = shape_[i];
-	}
-
-	field->allocate(field_shape);
-	return *field;
-}
-
-template <>
-FieldT<long>& FunctionSpace::create_field(const std::string& name, size_t nb_vars)
-{
-	if( has_field(name) )
-	{
-		std::ostringstream msg; msg << "field with name " << name << "already exists" << std::endl;
-		throw eckit::Exception( msg.str(), Here() );
-	}
-
-	FieldT<long>* field = new FieldT<long>(name,nb_vars,*this);
-
-	fields_.insert( name, Field::Ptr(field) );
-	fields_.sort();
-
-	size_t rank = shape_.size();
-	std::vector< int > field_shape(rank);
-	for (size_t i=0; i<rank; ++i)
-	{
-		if( shape_[i] == Field::UNDEF_VARS )
-			field_shape[i] = field->nb_vars();
-		else
-			field_shape[i] = shape_[i];
-	}
-
-	field->allocate(field_shape);
-	return *field;
-}
-
-
-void FunctionSpace::remove_field(const std::string& name)
-{
-	NOTIMP; ///< @todo DenseMap needs to have erase() function
-
-//	if( has_field(name) )
-//	{
-//		fields_.erase(name);
-//	}
-//	else
-//	{
-//		std::stringstream msg;
-//		msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
-//		throw eckit::OutOfRange(msg.str(),Here());
-//	}
-}
-
-Field& FunctionSpace::field( size_t idx ) const
-{
-	return *fields_.at( idx );
-}
-
-Field& FunctionSpace::field(const std::string& name) const
-{
-	if( has_field(name) )
-	{
-		return *fields_.get(name);
-	}
-	else
-	{
-		std::stringstream msg;
-		msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
-		throw eckit::OutOfRange(msg.str(),Here());
-	}
-}
-
 template<>
 FieldT<double>& FunctionSpace::field(const std::string& name) const
 {
@@ -295,6 +150,193 @@ FieldT<int>& FunctionSpace::field(const std::string& name) const
 	if( has_field(name) )
 	{
 		return dynamic_cast< FieldT<int>& >( *fields_[ name ] );
+	}
+	else
+	{
+		std::stringstream msg;
+		msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
+		throw eckit::OutOfRange(msg.str(),Here());
+	}
+}
+
+
+namespace {
+
+	template < typename T >
+	FieldT<T>* check_if_exixts( FunctionSpace* fs,
+								const std::string& name,
+								const std::vector<int>&  shape,
+								size_t nb_vars,
+								CreateBehavior b )
+	{
+		using namespace eckit;
+
+		if( fs->has_field(name) )
+		{
+			if( b == IF_EXISTS_FAIL )
+			{
+				std::ostringstream msg; msg << "field with name " << name << " already exists" << std::endl;
+				throw eckit::Exception( msg.str(), Here() );
+			}
+
+			FieldT<T>& f= fs->field<T>(name);
+			if( f.nb_vars() != nb_vars )
+			{
+				std::ostringstream msg; msg << "field exists with name " << name << " has unexpected nb vars " << f.nb_vars() << " instead of " << nb_vars << std::endl;
+				throw eckit::Exception(msg.str(),Here());
+			}
+
+			if( f.shape() != shape )
+			{
+				std::ostringstream msg; msg << "field exists with name " << name << " has unexpected shape ";
+				__print_list(msg, f.shape());
+				msg << " instead of ";
+				__print_list(msg, shape);
+				msg << std::endl;
+				throw eckit::Exception(msg.str(),Here());
+			}
+
+			return &f;
+		}
+
+		return NULL;
+	}
+
+}
+
+template <>
+FieldT<double>& FunctionSpace::create_field(const std::string& name, size_t nb_vars, CreateBehavior b )
+{
+	FieldT<double>* field = NULL;
+
+	size_t rank = shape_.size();
+	std::vector< int > field_shape(rank);
+	for (size_t i=0; i<rank; ++i)
+	{
+		if( shape_[i] == Field::UNDEF_VARS )
+			field_shape[i] = nb_vars;
+		else
+			field_shape[i] = shape_[i];
+	}
+
+	if( field = check_if_exixts<double>(this, name, field_shape, nb_vars, b ) )
+		return *field;
+
+	field = new FieldT<double>(name,nb_vars,*this);
+	fields_.insert( name, Field::Ptr(field) );
+	fields_.sort();
+
+	field->allocate(field_shape);
+	return *field;
+}
+
+template <>
+FieldT<float>& FunctionSpace::create_field(const std::string& name, size_t nb_vars, CreateBehavior b )
+{
+	FieldT<float>* field = NULL;
+
+	size_t rank = shape_.size();
+	std::vector< int > field_shape(rank);
+	for (size_t i=0; i<rank; ++i)
+	{
+		if( shape_[i] == Field::UNDEF_VARS )
+			field_shape[i] = nb_vars;
+		else
+			field_shape[i] = shape_[i];
+	}
+
+	if( field = check_if_exixts<float>(this, name, field_shape, nb_vars, b ) )
+		return *field;
+
+	field = new FieldT<float>(name,nb_vars,*this);
+	fields_.insert( name, Field::Ptr(field) );
+	fields_.sort();
+
+	field->allocate(field_shape);
+	return *field;
+}
+
+template <>
+FieldT<int>& FunctionSpace::create_field(const std::string& name, size_t nb_vars, CreateBehavior b )
+{
+	FieldT<int>* field = NULL;
+
+	size_t rank = shape_.size();
+	std::vector< int > field_shape(rank);
+	for (size_t i=0; i<rank; ++i)
+	{
+		if( shape_[i] == Field::UNDEF_VARS )
+			field_shape[i] = nb_vars;
+		else
+			field_shape[i] = shape_[i];
+	}
+
+	if( field = check_if_exixts<int>(this, name, field_shape, nb_vars, b ) )
+		return *field;
+
+	field = new FieldT<int>(name,nb_vars,*this);
+
+	fields_.insert( name, Field::Ptr(field) );
+	fields_.sort();
+
+	field->allocate(field_shape);
+	return *field;
+}
+
+template <>
+FieldT<long>& FunctionSpace::create_field(const std::string& name, size_t nb_vars, CreateBehavior b )
+{	
+	FieldT<long>* field = NULL;
+
+	size_t rank = shape_.size();
+	std::vector< int > field_shape(rank);
+	for (size_t i=0; i<rank; ++i)
+	{
+		if( shape_[i] == Field::UNDEF_VARS )
+			field_shape[i] = nb_vars;
+		else
+			field_shape[i] = shape_[i];
+	}
+
+	if( field = check_if_exixts<long>(this, name, field_shape, nb_vars, b ) )
+		return *field;
+
+	field = new FieldT<long>(name,nb_vars,*this);
+
+	fields_.insert( name, Field::Ptr(field) );
+	fields_.sort();
+
+	field->allocate(field_shape);
+	return *field;
+}
+
+
+void FunctionSpace::remove_field(const std::string& name)
+{
+	NOTIMP; ///< @todo DenseMap needs to have erase() function
+
+//	if( has_field(name) )
+//	{
+//		fields_.erase(name);
+//	}
+//	else
+//	{
+//		std::stringstream msg;
+//		msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
+//		throw eckit::OutOfRange(msg.str(),Here());
+//	}
+}
+
+Field& FunctionSpace::field( size_t idx ) const
+{
+	return *fields_.at( idx );
+}
+
+Field& FunctionSpace::field(const std::string& name) const
+{
+	if( has_field(name) )
+	{
+		return *fields_.get(name);
 	}
 	else
 	{

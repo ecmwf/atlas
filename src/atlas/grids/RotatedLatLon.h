@@ -62,7 +62,7 @@ public: // methods
 	RotatedLatLon( const eckit::Params& p );
 	virtual ~RotatedLatLon();
 
-	virtual std::string uid() const;
+	virtual uid_t uid() const;
 	virtual std::string hash() const { return hash_;}
 
 	virtual BoundBox bounding_box() const { return bbox_;}

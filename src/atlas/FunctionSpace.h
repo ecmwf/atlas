@@ -36,6 +36,9 @@ template <typename T> class FieldT;
 
 //------------------------------------------------------------------------------------------------------
 
+enum CreateBehavior { IF_EXISTS_FAIL = 0, /* when creating, fail if exists */
+					  IF_EXISTS_RETURN = 1   /* when creating, return if exists */ };
+
 /// @todo
 // Horizontal nodes are always the slowest moving index
 // Then variables
@@ -65,7 +68,7 @@ public: // methods
 	bool has_field(const std::string& name) const { return fields_.has(name); }
 
 	template< typename DATA_TYPE >
-	FieldT<DATA_TYPE>& create_field(const std::string& name, size_t nb_vars);
+	FieldT<DATA_TYPE>& create_field(const std::string& name, size_t nb_vars, CreateBehavior b = IF_EXISTS_FAIL );
 
 	void remove_field(const std::string& name);
 

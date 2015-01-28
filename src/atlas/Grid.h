@@ -59,7 +59,8 @@ public: // types
   typedef eckit::geometry::LLBoundBox2 BoundBox;  ///< bounding box type
   typedef BoundBox Domain; // To become abstract class used to mask a grid
 
-  typedef eckit::SharedPtr<Grid> Ptr;
+	typedef eckit::SharedPtr<Grid> Ptr;
+	typedef std::string uid_t;
 
 public: // methods
 
@@ -77,8 +78,7 @@ public: // methods
 
   Ptr self() { return Ptr(this); }
 
-  virtual std::string uid() const = 0;
-  virtual std::string hash() const = 0;
+  virtual uid_t uid() const = 0;
 
   /**
    * @return bounding box

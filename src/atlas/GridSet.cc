@@ -18,30 +18,37 @@
 
 namespace atlas {
 
-
-const Grid& GridSet::grid(const std::string &uid) const
+bool GridSet::has(const Grid& grid) const
 {
-#if 0
-  for (const_iterator g=begin(); g!=end(); ++g)
-    if (uid==(*g)->uid())
-      return (*(*g));
-  throw eckit::UserError("Gridset::grid: requested grid not found (uid=\""+uid+"\")");
-  return (*(*begin()));
-#else
-  for (std::vector< eckit::SharedPtr< Grid > >::const_iterator g=grids_.begin(); g!=grids_.end(); ++g)
-    if (uid==(*g)->uid())
-      return (*(*g));
-  throw eckit::UserError("Gridset::grid: requested grid not found (uid=\""+uid+"\")");
-  (*(*grids_.begin()));
-#endif
+	return has(grid.uid());
 }
 
-
-Grid& GridSet::grid(const std::string &uid)
+bool GridSet::has(const Grid::uid_t& uid) const
 {
-  return const_cast< Grid& >(grid(uid));
+	for (std::vector< eckit::SharedPtr< Grid > >::const_iterator g = grids_.begin(); g != grids_.end(); ++g )
+	{
+		if ( uid == (*g)->uid() )
+			return true;
+	}
+	return false;
 }
 
+void GridSet::push_back(const eckit::SharedPtr<Grid> grid)
+{
+	if( !has(grid->uid()) )
+		grids_.push_back(grid);
+}
+
+Grid& GridSet::grid(const Grid::uid_t& uid) const
+{
+  for( std::vector< eckit::SharedPtr< Grid > >::const_iterator g = grids_.begin(); g != grids_.end(); ++g )
+  {
+    if( uid == (*g)->uid() )
+      return (*(*g));
+  }
+
+  throw eckit::UserError("Gridset::grid: requested grid not found (uid=\""+uid+"\")");
+}
 
 }  // namespace atlas
 

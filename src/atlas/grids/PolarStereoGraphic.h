@@ -35,7 +35,7 @@ public: // methods
    PolarStereoGraphic( const eckit::Params& p );
    virtual ~PolarStereoGraphic();
 
-   virtual std::string uid() const;
+   virtual uid_t uid() const;
    virtual std::string hash() const { return hash_;}
 
    /// To compute bounding box in spherical co-ordinates we need to:
