@@ -18,6 +18,7 @@
 #include <eckit/exception/Exceptions.h>
 #include <eckit/filesystem/PathName.h>
 #include <eckit/io/DataHandle.h>
+#include <eckit/io/Buffer.h>
 #include <eckit/log/Log.h>
 #include <eckit/memory/ScopedPtr.h>
 #include <eckit/utils/Translator.h>
