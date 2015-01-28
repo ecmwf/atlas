@@ -37,15 +37,12 @@ namespace eckit {
   class DataHandle;
   namespace grib { class GribHandle; }
 }
-namespace atlas{
-  class FieldSet;
-  class Field;
-}
-
-extern "C" { void atlas__FieldSet__fields ( atlas::FieldSet* This, atlas::Field** &fields, int &nb_fields ); }
 
 namespace atlas {
 
+class FieldSet;
+class Field;
+std::vector<Field*>& __private_get_raw_fields_ptr (FieldSet* This);
 
 /**
  * @brief Represents a set of fields, where order is preserved (no ownership)
@@ -146,7 +143,7 @@ protected:
 private:
 
   // In order to return raw pointers to C interface
-  friend void ::atlas__FieldSet__fields ( FieldSet* This, Field** &fields, int &nb_fields );
+  friend std::vector<Field*>& __private_get_raw_fields_ptr (FieldSet* This);
   std::vector<Field*> fields_raw_ptr_;
 
 };

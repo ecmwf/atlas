@@ -297,11 +297,18 @@ bool FieldSet::haveSameGrid() const
   return result;
 }
 
+std::vector<Field*>& __private_get_raw_fields_ptr (FieldSet* This)
+{
+  This->fields_raw_ptr_.resize( This->size() );
+  for( int f=0; f<This->size(); ++f )
+    This->fields_raw_ptr_[f] = This->fields()[f].get();
+  return This->fields_raw_ptr_;
+}
 
 //-----------------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
-
+extern "C"{
 FieldSet* atlas__FieldSet__new (char* name)
 {
   FieldSet* fset = new FieldSet(Buffer(0));
@@ -309,23 +316,18 @@ FieldSet* atlas__FieldSet__new (char* name)
   return fset;
 }
 
-
 void atlas__FieldSet__delete(FieldSet* This)
 { delete This; }
 
 
 void atlas__FieldSet__fields (FieldSet* This, Field** &fields, int &nb_fields)
 {
+  nb_fields = This->fields().size();
+
   if (fields!=NULL)
     throw eckit::SeriousBug("provided return pointer is not NULL (memory leak)");
 
-  nb_fields = This->fields().size();
-
-  This->fields_raw_ptr_.resize( nb_fields );
-  for( int f=0; f<nb_fields; ++f )
-    This->fields_raw_ptr_[f] = This->fields()[f].get();
-
-  fields = nb_fields ? This->fields_raw_ptr_.data() : NULL;
+  fields = nb_fields ? __private_get_raw_fields_ptr(This).data() : NULL;
 }
 
 
@@ -335,9 +337,9 @@ int    atlas__FieldSet__size          (FieldSet* This)               { return Th
 Field* atlas__FieldSet__field_by_name (FieldSet* This, char* name)   { return &This->field( std::string(name) ); }
 Field* atlas__FieldSet__field_by_idx  (FieldSet* This, int idx)      { return &This->operator[](idx); }
 
-
+}
 //-----------------------------------------------------------------------------
 
 
-} // namespace atlas
+}  // namespace atlas
 
