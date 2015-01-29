@@ -63,7 +63,6 @@ public: // methods
 	virtual ~RotatedLatLon();
 
 	virtual uid_t uid() const;
-	virtual std::string hash() const { return hash_;}
 
 	virtual BoundBox bounding_box() const { return bbox_;}
 	virtual size_t npts() const;
@@ -90,14 +89,15 @@ private: // methods
 
 private: // members
 
-	std::string hash_;
 	BoundBox bbox_;
+
 	double south_pole_lat_;
 	double south_pole_lon_;
 	double south_pole_rot_angle_;
 
 	double nsIncrement_;             ///< In degrees
 	double weIncrement_;             ///< In degrees
+
 	long nptsNS_;
 	long nptsWE_;
 };

@@ -36,8 +36,12 @@
 #include "atlas/Parameters.h"
 
 #include "atlas/FieldSet.h"
-#include "atlas/io/Grib.h"
 #include "atlas/GridSpec.h"
+
+#include "atlas/io/Grib.h"
+#include "atlas/io/PointCloud.h"
+
+#include "atlas/grids/Unstructured.h"
 #include "atlas/grids/ReducedGaussianGrid.h"
 #include "atlas/grids/GaussianGrid.h"
 #include "atlas/grids/LonLatGrid.h"
@@ -57,6 +61,49 @@ static std::string match_grid_spec_with_sample_file( const GridSpec& g_spec, lon
 static std::string map_uid_to_grib_sample_file(const std::string& short_name, long edition);
 
 //------------------------------------------------------------------------------------------------------
+
+Grid::Ptr make_grid( const PathName& path )
+{
+  // read start of file (using buffer) to determine file format
+  Buffer buff(64);
+  DataHandle* dh = path.fileHandle();
+  dh->openForRead();
+  size_t len = dh->read(buff,buff.size());
+  ASSERT(len);
+  dh->close();
+
+  if ((len>=4) && (0==strncmp(buff,"GRIB",4)))
+  {
+    FILE* fh = ::fopen( path.asString().c_str(), "r" );
+    if( fh == 0 )
+        throw ReadError( std::string("error opening file ") + path.asString() );
+
+    int err = 0;
+    grib_handle* h;
+
+    h = grib_handle_new_from_file(0,fh,&err);
+
+    if( h == 0 || err != 0 )
+        throw ReadError( std::string("error reading grib file ") + path.asString() );
+
+    if( ::fclose(fh) == -1 )
+        throw ReadError( std::string("error closing file ") + path.asString() );
+
+    GribHandle gh(h);
+    Grid::Ptr g ( Grib::create_grid( gh ) );
+    ASSERT( g );
+
+    return g;
+  }
+
+  // attempt to read PointCloud format
+
+  if ((len>=10) && (0==strncmp(buff,"PointCloud",10)))
+  {
+    grids::Unstructured* grid = io::PointCloud::read(path);
+    return grid->self();
+  }
+}
 
 Grid::Ptr Grib::create_grid(GribHandle& gh)
 {
@@ -350,9 +397,11 @@ void Grib::write(const Field& fh, DataHandle& dh)
 
 GribHandle::Ptr Grib::write(const Field& fh)
 {
-	GribHandle::Ptr gh = Grib::create_handle( fh.grid(), fh.grib().edition() );
+	long edition = fh.grib() ? fh.grib()->edition() : 2;
 
-    if( !gh )
+	GribHandle::Ptr gh = Grib::create_handle( fh.grid(), edition );
+
+	if( !gh )
 		throw SeriousBug("Failed to create GribHandle from Field", Here());
 
 	return GribHandle::Ptr( clone(fh,*gh) );
@@ -423,22 +472,29 @@ GribHandle* Grib::clone(const Field& f, GribHandle& gridsec )
 {
     const size_t npts = f.size();
 
-    int err=0;
-    int what = GRIB_SECTION_GRID;
+    GribHandle* gh = 0;
 
-	GribHandle& meta = f.grib();
+    if( f.grib() )
+    {
+      GribHandle& meta = *(f.grib());
+      int err=0;
+      int what = GRIB_SECTION_GRID;
 
-    grib_handle* h = grib_util_sections_copy( gridsec.raw(), meta.raw(), what, &err);
-    GRIB_CHECK(err,"grib_util_sections_copy()");
-    ASSERT( h );
-
-	GribHandle* gh  = new GribHandle( h );
+      grib_handle* h = grib_util_sections_copy( gridsec.raw(), meta.raw(), what, &err);
+      GRIB_CHECK(err,"grib_util_sections_copy()");
+      ASSERT( h );
+      gh = new GribHandle( h );
+    }
+    else
+    {
+      gh = gridsec.clone();
+    }
 
     ASSERT( gh );
 
     gh->setDataValues(f.data<double>(),npts);
 
-	return gh;
+    return gh;
 }
 
 struct gridspec_to_grib

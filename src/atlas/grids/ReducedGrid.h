@@ -52,8 +52,6 @@ public:
 
   virtual uid_t uid() const;
 
-  virtual std::string hash() const;
-
   virtual BoundBox bounding_box() const;
 
   virtual size_t npts() const;
@@ -110,7 +108,6 @@ protected:
   int                 nlonmax_;
   BoundBox            bounding_box_;   ///<! bounding box for data, only points within are considered part of grid
   std::string         uid_;
-  std::string         hash_;
   std::string         grid_type_;
   int                 N_;
 };

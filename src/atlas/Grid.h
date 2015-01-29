@@ -42,10 +42,10 @@ class GridSpec;
  * Interface to a grid of points in a 2d cartesian space
  * For example a LatLon grid or a Reduced Graussian grid
  *
- *      DECODE                       ATLAS                      ENCODE
- *      NetCDFBuilder ---->|-------|         |----------|------>NetCDFWrite
- *                         | Grid  |<------> | GridSpec |
- *      GribBuilder ------>|-------|         |----------|------>GribWrite
+ *      DECODE                        ATLAS                      ENCODE
+ *      NetCDFBuilder -->  |-------|         |----------|   ------>NetCDFWrite
+ *                         | Grid  | <=====> | GridSpec |
+ *      GribBuilder ---->  |-------|         |----------|   ------>GribWrite
  *
  */
 class Grid : public eckit::Owned {
@@ -70,7 +70,7 @@ public: // methods
 
   static Grid* create( const eckit::Params& );
   static Grid* create( const GridSpec& );
-  static Grid* create( const std::string& uid );
+  static Grid* create( const Grid::uid_t& uid );
 
   Grid();
 

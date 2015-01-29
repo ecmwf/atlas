@@ -55,7 +55,6 @@ public:\
   void construct();\
   void set_typeinfo() { \
     uid_ = "rgg."+std::string(#CLASS); \
-    hash_ = uid_; \
     grid_type_ = ReducedGaussianGrid::grid_type_str(); \
   }\
   static std::string className() { return "atlas.grids.rgg."+std::string(#CLASS); }\

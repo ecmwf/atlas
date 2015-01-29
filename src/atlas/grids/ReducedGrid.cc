@@ -74,7 +74,6 @@ ReducedGrid::ReducedGrid(const Params& params) : N_(0)
 
   grid_type_ = params.get("grid_type").as<std::string>();
   uid_ = params.get("uid").as<std::string>();
-  hash_ = params.get("hash").as<std::string>();
 }
 
 void ReducedGrid::setup(const eckit::Params& params)
@@ -244,7 +243,6 @@ GridSpec ReducedGrid::spec() const
   GridSpec grid_spec(grid_type());
 
   grid_spec.uid( uid() );
-  grid_spec.set("hash", hash());
   grid_spec.set("nlat",nlat());
   grid_spec.set_latitudes(latitudes());
   grid_spec.set_npts_per_lat(npts_per_lat());
@@ -328,12 +326,6 @@ std::string ReducedGrid::uid() const
 {
   ASSERT( !uid_.empty() );
   return uid_;
-}
-
-std::string ReducedGrid::hash() const
-{
-  ASSERT( !hash_.empty() );
-  return hash_;
 }
 
 void ReducedGrid::mask(const Domain& dom)

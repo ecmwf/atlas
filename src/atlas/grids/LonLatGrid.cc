@@ -42,7 +42,6 @@ void LonLatGrid::set_typeinfo()
   std::stringstream stream;
   stream << "ll."<<nlon()<<"x"<<nlat();
   uid_ = stream.str();
-  hash_ = stream.str();
   grid_type_ = grid_type_str();
 }
 
@@ -233,7 +232,6 @@ GridSpec LonLatGrid::spec() const
   GridSpec grid_spec( grid_type_str() );
 
   grid_spec.uid(uid());
-  grid_spec.set("hash", hash() );
 
   grid_spec.set("nlon", nlon() );
   grid_spec.set("nlat", nlat() );

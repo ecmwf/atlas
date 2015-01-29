@@ -40,13 +40,21 @@ namespace io {
  class PointCloud {
  public:
 
-  /**
-   * @brief Read PointCloud file into a Grid
-   * @param path input file path
-   * @param Grid data structure pointer to use
-   * @return Grid data structure pointer
-   */
-  static grids::Unstructured* read(const eckit::PathName& path);
+   /**
+    * @brief Read PointCloud file into a Grid
+    * @param path input file path
+    * @param Grid data structure pointer to use
+    * @return Grid data structure pointer
+    */
+   static grids::Unstructured* read( const eckit::PathName& path );
+
+   /**
+    * @brief Read PointCloud file into a Grid
+    * @param path input file path
+    * @param Grid data structure pointer to use
+    * @return Grid data structure pointer
+    */
+   static grids::Unstructured* read(const eckit::PathName& path, std::vector<std::string>& vfnames );
 
   /**
    * @brief Write Grid to PointCloud file (overwrites possibly existing file)

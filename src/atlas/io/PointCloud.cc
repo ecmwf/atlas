@@ -11,6 +11,8 @@
 
 #include <fstream>
 #include <sstream>
+#include <iomanip>
+#include <limits>
 
 #include "eckit/exception/Exceptions.h"
 #include "eckit/filesystem/PathName.h"
@@ -54,14 +56,15 @@ std::string sanitize_field_name(const std::string& s)
 // ------------------------------------------------------------------
 
 
-grids::Unstructured* PointCloud::read(const eckit::PathName& path)
+grids::Unstructured* PointCloud::read(const eckit::PathName& path, std::vector<std::string>& vfnames )
 {
   const std::string msg("PointCloud::read: ");
 
   // read file into a vector of points and a field matrix
   // @warning: several copy operations here
 
-  std::vector< std::string > vfnames;             // field names (ie. excludes "lon" "lat")
+  vfnames.clear();
+
   std::vector< std::vector< double > > vfvalues;  // field values
   std::vector< Grid::Point >* pts = 0;            // (lon,lat) points, to build unstructured grid
 
@@ -162,6 +165,12 @@ grids::Unstructured* PointCloud::read(const eckit::PathName& path)
 }
 
 
+grids::Unstructured*PointCloud::read(const eckit::PathName& path)
+{
+  std::vector<std::string> vfnames;
+  return read(path,vfnames);
+}
+
 void PointCloud::write(const eckit::PathName& path, const Grid& grid)
 {
   const std::string msg("PointCloud::write: ");
@@ -227,7 +236,7 @@ void PointCloud::write(const eckit::PathName& path, const FieldSet& fieldset)
     if (!fieldset[0].grid().same( fieldset[i].grid() ))
       throw eckit::BadParameter(msg+"fields must be described in the same grid (fieldset.field(0).grid() == fieldset.field(*).grid())");
 
-  const Mesh& m(fieldset.field(0).grid().mesh());
+  const Mesh& m(fieldset[0].grid().mesh());
   ArrayView< double, 2 > lonlat(m.function_space("nodes").field("lonlat"));
   if (!lonlat.size())
     throw eckit::BadParameter(msg+"invalid number of points (failed: nb_pts>0)");
@@ -260,6 +269,8 @@ void PointCloud::write(const eckit::PathName& path, const FieldSet& fieldset)
   for (size_t j=0; j<Nfld; ++j)
     f << '\t' << vfnames[j];
   f << '\n';
+
+  f.precision( std::numeric_limits< double >::digits10 );
 
   // data
   for (size_t i=0; i<Npts; ++i) {

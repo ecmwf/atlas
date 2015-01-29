@@ -36,7 +36,6 @@ public: // methods
    virtual ~PolarStereoGraphic();
 
    virtual uid_t uid() const;
-   virtual std::string hash() const { return hash_;}
 
    /// To compute bounding box in spherical co-ordinates we need to:
    ///   1/ project the first spherical pt, on to the plane.
@@ -59,8 +58,6 @@ public: // methods
    virtual bool same(const Grid&) const;
 
 private: // members
-
-   std::string hash_;
 
    bool iScansPositively_;            // Used to determine correct bounding box
    bool jScansPositively_;            // Used to determine correct bounding box

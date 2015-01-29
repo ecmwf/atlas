@@ -43,7 +43,6 @@ public: // methods
   virtual ~Unstructured();
 
   virtual uid_t uid() const;
-  virtual std::string hash() const;
 
   virtual BoundBox bounding_box() const;
 
@@ -64,6 +63,9 @@ protected:
   eckit::ScopedPtr< std::vector< Point > > points_;  ///< storage of coordinate points
 
   BoundBox bound_box_;                               ///< bounding box for the domain
+
+  mutable eckit::ScopedPtr<GridSpec> cachedGridSpec_;///< cache for the GridSpec since may be quite heavy to compute
+  mutable uid_t              cachedUID_;             ///< cache for the uid since may be quite heavy to compute
 
 };
 

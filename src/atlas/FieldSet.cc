@@ -110,13 +110,15 @@ FieldSet::FieldSet(const PathName& path) :
     return;
   }
 
-
   // attempt to read PointCloud format
+
   if ((len>=10) && (0==strncmp(buff,"PointCloud",10)))
   {
-    ScopedPtr< grids::Unstructured > grid(io::PointCloud::read(path));
-    grid->mesh();
-    NOTIMP;
+    std::vector<std::string> vfnames;
+    grids::Unstructured* grid = io::PointCloud::read(path,vfnames);
+    FunctionSpace& nodes = grid->mesh().function_space( "nodes" );
+    for( size_t i = 0; i < vfnames.size(); ++i )
+      add_field( nodes.field(vfnames[i]) );
     return;
   }
 }

@@ -94,7 +94,7 @@ public: // methods
 
 #ifdef ECKIT_HAVE_GRIB
 	void grib( Grib* g );	 ///< @todo this is to be removed
-	Grib& grib() const;		 ///< @todo this is to be removed
+	Grib* const grib() const;		 ///< @todo this is to be removed
 #endif
 
 	friend std::ostream& operator<<( std::ostream& os, const Field& v);
