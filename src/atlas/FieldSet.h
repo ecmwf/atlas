@@ -94,7 +94,7 @@ public:
 
   bool has_field(const std::string& name) const;
 
-  const Field& field(const std::string& name) const;
+  Field& field(const std::string& name) const;
   
 private: // methods
 

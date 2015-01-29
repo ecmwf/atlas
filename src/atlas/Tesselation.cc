@@ -209,7 +209,7 @@ void Tesselation::tesselate( Grid& g )
 
 	std::cout << "mesh not in cache -- tesselating grid " << uid << std::endl;
 
-	bool atlasTriangulateRGG = eckit::Resource<bool>("atlasTriangulateRGG;$ATLAS_TRIANGULATE_RGG",false);
+	bool atlasTriangulateRGG = eckit::Resource<bool>("atlas.triangulate.RGG;$ATLAS_TRIANGULATE_RGG",false);
 
 	grids::ReducedGrid* rg = dynamic_cast<grids::ReducedGrid*>(&g);
 
