@@ -74,13 +74,13 @@ void write_load_balance_report( const Mesh& mesh, const std::string& filename )
     }
     ATLAS_MPI_CHECK_RESULT( MPI_Gather( &nb_edges, 1, MPI_INT,
                                   nb_total_edges.data(), 1, MPI_INT,
-                                  root, MPI_COMM_WORLD ) );
+                                  root, mpi::Comm::instance() ) );
     ATLAS_MPI_CHECK_RESULT( MPI_Gather( &nowned, 1, MPI_INT,
                                   nb_owned_edges.data(), 1, MPI_INT,
-                                  root, MPI_COMM_WORLD ) );
+                                  root, mpi::Comm::instance() ) );
     ATLAS_MPI_CHECK_RESULT( MPI_Gather( &nghost, 1, MPI_INT,
                                   nb_ghost_edges.data(), 1, MPI_INT,
-                                  root, MPI_COMM_WORLD ) );
+                                  root, mpi::Comm::instance() ) );
   }
 
   if( mpi::rank() == 0 )

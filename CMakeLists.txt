@@ -55,33 +55,26 @@ if( HAVE_FORTRAN )
                       DEFAULT ${ENABLE_TESTS}
                       DESCRIPTION "Fortran Unit Test Framework"
                       REQUIRED_PACKAGES "PROJECT fctest VERSION 0.1" )
-endif()
 
-### OMP ...
+  set( MPI_Fortran Fortran )
 
-ecbuild_add_option(
-	FEATURE OMP
-	DESCRIPTION "support for OpenMP threaded parallelism" )
-if( ENABLE_OMP )
-    ecbuild_enable_omp()
-else()
-    ecbuild_enable_ompstubs()
 endif()
 
 ### MPI ...
 
 ecbuild_add_option( FEATURE MPI
-                    DESCRIPTION "support for MPI distributed parallelism" )
+                    DESCRIPTION "Support for MPI distributed parallelism"
+                    REQUIRED_PACKAGES "MPI COMPONENTS CXX ${MPI_Fortran}" )
 
-if( ENABLE_MPI )
+### OMP ...
 
-  ecbuild_enable_mpi()
+ecbuild_add_option(
+	FEATURE OMP
+	DESCRIPTION "support for OpenMP threaded parallelism"
+  REQUIRED_PACKAGES "OMP COMPONENTS CXX Fortran" )
 
-  if( NOT MPI_CXX_FOUND )
-    set( HAVE_MPI 0 )
-  endif()
-
-endif()
+cmake_add_fortran_flags( "${OMP_Fortran_FLAGS}" )
+cmake_add_cxx_flags( "${OMP_CXX_FLAGS}" )
 
 ### trans_api ...
 

@@ -88,7 +88,7 @@ grids::Unstructured* PointCloud::read(const eckit::PathName& path, std::vector<s
     iss.str(line);
     iss >> line >> nb_pts >> nb_columns;
     if (line!="PointCloud")
-      throw eckit::BadParameter(msg+"beggining of file not found (expected: PointCloud)");
+      throw eckit::BadParameter(msg+"beginning of file not found (expected: PointCloud)");
     if (nb_pts==0)
       throw eckit::BadValue(msg+"invalid number of points (failed: nb_pts>0)");
     if (nb_columns<2)

@@ -99,6 +99,12 @@ namespace {
 
 using namespace atlas;
 
+struct MPIFixture {
+    MPIFixture()  { mpi::init(); }
+    ~MPIFixture() { mpi::finalize(); }
+};
+
+BOOST_GLOBAL_FIXTURE( MPIFixture )
 
 BOOST_AUTO_TEST_SUITE( test_pointcloud )
 
@@ -324,7 +330,8 @@ BOOST_AUTO_TEST_CASE( write_read_write_field )
 
   // PART 1
   // write field vector values as column in file "pointcloud.txt"
-
+  BOOST_TEST_CHECKPOINT("Part 1");
+  
   std::ifstream f;
   std::string signature, str_lon, str_lat, str_f;
   size_t nb_pts, nb_columns;
@@ -349,7 +356,7 @@ BOOST_AUTO_TEST_CASE( write_read_write_field )
 
   // PART 2
   // read field vector from just-created file
-
+  BOOST_TEST_CHECKPOINT("Part 2");
   eckit::ScopedPtr< grids::Unstructured > grid( io::PointCloud::read("pointcloud.txt") );
   BOOST_REQUIRE(grid);
 
@@ -363,6 +370,8 @@ BOOST_AUTO_TEST_CASE( write_read_write_field )
 
   // PART 3
   // check field values to a very small tolerance (relative tol. 0.001%)
+  BOOST_TEST_CHECKPOINT("Part 3");
+
   const Field& field(nodes.field("my_super_field"));
   BOOST_REQUIRE_EQUAL(
         /* data used to write file*/ test_vectors::nb_pts,
@@ -379,9 +388,10 @@ BOOST_AUTO_TEST_CASE( write_read_write_field )
   // write to file a Field (the just-read one),
   // a FieldSet, and
   // a Grid (should be exactly the same)
+  BOOST_TEST_CHECKPOINT("Part 4");
 
   FieldSet fieldset;
-  fieldset.add_field(const_cast< Field& >(field));
+  BOOST_CHECK_NO_THROW( fieldset.add_field(const_cast< Field& >(field)) );
 
   BOOST_CHECK_NO_THROW( io::PointCloud::write("pointcloud_Field.txt",    field    ) );
   BOOST_CHECK_NO_THROW( io::PointCloud::write("pointcloud_FieldSet.txt", fieldset ) );

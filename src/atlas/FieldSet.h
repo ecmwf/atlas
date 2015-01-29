@@ -8,6 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
+/// @author Willem Deconinck
 /// @author Peter Bispham
 /// @author Tiago Quintino
 /// @author Pedro Maciel
@@ -38,9 +39,11 @@ namespace eckit {
   namespace grib { class GribHandle; }
 }
 
-
 namespace atlas {
 
+class FieldSet;
+class Field;
+std::vector<Field*>& __private_get_raw_fields_ptr (FieldSet* This);
 
 /**
  * @brief Represents a set of fields, where order is preserved (no ownership)
@@ -76,52 +79,23 @@ public:
   const std::string& name() const { return name_; }
         std::string& name()       { return name_; }
 
-  const Field& operator[](const size_t& i) const { ASSERT(i<size()); return *fields_[i]; }
-        Field& operator[](const size_t& i)       { ASSERT(i<size()); return *fields_[i]; }
+  const Field& operator[](const size_t& i) const { return field(i); }
+        Field& operator[](const size_t& i)       { return field(i); }
+
+  const Field& field(const size_t& i) const { ASSERT(i<size()); return *fields_[i]; }
+        Field& field(const size_t& i)       { ASSERT(i<size()); return *fields_[i]; }
 
   const Field::Vector& fields() const { return fields_; }
         Field::Vector& fields()       { return fields_; }
 
   std::vector< std::string > field_names() const;
 
-  void add_field(Field::Ptr field)
-  {
-    index_[field->name()] = fields_.size();
-    fields_.push_back( field );
-  }
+  void add_field(Field& field);
 
+  bool has_field(const std::string& name) const;
 
-  void add_field(Field& field)
-  {
-    ASSERT( !has_field(field.name()) );
-
-    index_[field.name()] = fields_.size();
-    fields_.push_back( Field::Ptr(&field) );
-    gridset_.push_back( field.grid().self() );
-  }
-
-  bool has_field(const std::string& name) const
-  {
-    return index_.count(name);
-  }
-
-
-  Field& field(const std::string& name)
-  {
-    return const_cast< Field& >(field(name));
-  }
-
-
-  const Field& field(const std::string& name) const
-  {
-    if (!has_field(name))
-    {
-      const std::string msg("Could not find field \"" + name + "\" in fieldset \"" + name_ + "\"");
-      throw eckit::OutOfRange(msg,Here());
-    }
-    return *fields_[ index_.at(name) ];
-  }
-
+  const Field& field(const std::string& name) const;
+  
 private: // methods
 
   /// @todo to be removed
@@ -138,6 +112,12 @@ protected: // data
   std::string                     name_;    ///< internal name
   std::map< std::string, size_t > index_;   ///< name-to-index map, to refer fields by name
 
+private:
+
+  // In order to return raw pointers to C interface
+  friend std::vector<Field*>& __private_get_raw_fields_ptr (FieldSet* This);
+  std::vector<Field*> fields_raw_ptr_;
+
 };
 
 
@@ -146,7 +126,7 @@ extern "C"
 {
   FieldSet* atlas__FieldSet__new           (char* name);
   void      atlas__FieldSet__delete        (FieldSet* This);
-  void      atlas__FieldSet__fields        (FieldSet* This, Field** &fields, int& nb_fields);
+  void      atlas__FieldSet__fields        (FieldSet* This, Field** &fields, int &nb_fields);
   void      atlas__FieldSet__add_field     (FieldSet* This, Field* field);
   int       atlas__FieldSet__has_field     (FieldSet* This, char* name);
   int       atlas__FieldSet__size          (FieldSet* This);
