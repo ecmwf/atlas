@@ -125,7 +125,7 @@ void LonLatGrid::setup(const Params& p)
       else if (p.has("lon_inc") && p.has("lat_inc"))
       {
         double londeg = p["lon_inc"];
-        double latdeg = p["lat_deg"];
+        double latdeg = p["lat_inc"];
         setup(londeg,latdeg,bbox);
       }
     }
@@ -140,7 +140,7 @@ void LonLatGrid::setup(const Params& p)
       else if (p.has("lon_inc") && p.has("lat_inc"))
       {
         double londeg = p["lon_inc"];
-        double latdeg = p["lat_deg"];
+        double latdeg = p["lat_inc"];
         setup(londeg,latdeg,poles);
       }
       else
