@@ -63,10 +63,10 @@ FieldSet::FieldSet(const std::string &name) :
 {}
 
 
-void FieldSet::add_field(Field& field)
+void FieldSet::add_field(const Field& field)
 {
   index_[field.name()] = fields_.size();
-  fields_.push_back( Field::Ptr(&field) );
+  fields_.push_back( Field::Ptr(const_cast< Field* >(&field)) );
 }
 
 bool FieldSet::has_field(const std::string& name) const

@@ -391,11 +391,11 @@ BOOST_AUTO_TEST_CASE( write_read_write_field )
   BOOST_TEST_CHECKPOINT("Part 4");
 
   FieldSet fieldset;
-  BOOST_CHECK_NO_THROW( fieldset.add_field(const_cast< Field& >(field)) );
+  BOOST_CHECK_NO_THROW( fieldset.add_field(field) );
 
-  BOOST_CHECK_NO_THROW( io::PointCloud::write("pointcloud_Field.txt",    field    ) );
-  BOOST_CHECK_NO_THROW( io::PointCloud::write("pointcloud_FieldSet.txt", fieldset ) );
-  BOOST_CHECK_NO_THROW( io::PointCloud::write("pointcloud_Grid.txt",     *grid    ) );
+  BOOST_REQUIRE_NO_THROW( io::PointCloud::write("pointcloud_Field.txt",    field    ) );
+  BOOST_REQUIRE_NO_THROW( io::PointCloud::write("pointcloud_FieldSet.txt", fieldset ) );
+  BOOST_REQUIRE_NO_THROW( io::PointCloud::write("pointcloud_Grid.txt",     *grid    ) );
 
   eckit::ScopedPtr< grids::Unstructured > grid_from_Field   ( io::PointCloud::read("pointcloud_Field.txt"   ) );
   eckit::ScopedPtr< grids::Unstructured > grid_from_FieldSet( io::PointCloud::read("pointcloud_FieldSet.txt") );
