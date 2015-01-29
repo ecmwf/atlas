@@ -90,7 +90,7 @@ public:
 
   std::vector< std::string > field_names() const;
 
-  void add_field(Field& field);
+  void add_field(const Field& field);
 
   bool has_field(const std::string& name) const;
 
