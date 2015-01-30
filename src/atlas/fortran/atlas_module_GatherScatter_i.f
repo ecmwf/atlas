@@ -41,6 +41,7 @@ contains
   procedure, private :: GatherScatter__scatter_real32_r2_r2
   procedure, private :: GatherScatter__scatter_real64_r1_r1
   procedure, private :: GatherScatter__scatter_real64_r2_r2
+  procedure, private :: GatherScatter__scatter_real64_r3_r3
   generic :: setup => &
       & GatherScatter__setup32, &
       & GatherScatter__setup64
@@ -65,7 +66,8 @@ contains
       & GatherScatter__scatter_real32_r1_r1, &
       & GatherScatter__scatter_real32_r2_r2, &
       & GatherScatter__scatter_real64_r1_r1, &
-      & GatherScatter__scatter_real64_r2_r2
+      & GatherScatter__scatter_real64_r2_r2, &
+      & GatherScatter__scatter_real64_r3_r3
 
 END TYPE GatherScatter_type
 !------------------------------------------------------------------------------
