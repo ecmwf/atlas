@@ -468,6 +468,27 @@ subroutine GatherScatter__scatter_real64_r2_r2(this, glb_field_data, loc_field_d
     &  lview, lstrides, lextents, lrank )
 end subroutine GatherScatter__scatter_real64_r2_r2
 
+subroutine GatherScatter__scatter_real64_r3_r3(this, glb_field_data, loc_field_data)
+  class(GatherScatter_type), intent(in) :: this
+  real(c_double), intent(in)  :: glb_field_data(:,:,:)
+  real(c_double), intent(out) :: loc_field_data(:,:,:)
+  real(c_double), pointer :: lview(:), gview(:)
+  integer :: lstrides(3), lextents(3), lrank=3
+  integer :: gstrides(3), gextents(3), grank=3
+  lstrides = (/ stride(loc_field_data,3), stride(loc_field_data,2), stride(loc_field_data,1) /)
+  lextents = (/ 1,                        size  (loc_field_data,2) , size (loc_field_data,1) /)
+  lview => view1d(loc_field_data)
+  gstrides = (/ stride(glb_field_data,3), stride(glb_field_data,2), stride(glb_field_data,1) /)
+  gextents = (/ 1,                        size  (glb_field_data,2) , size (glb_field_data,1) /)
+  gview => view1d(glb_field_data)
+  if( size(gview) == 0 ) then
+    allocate(gview(0))
+  endif
+  call atlas__GatherScatter__scatter_double( this%private%object, &
+    &  gview, gstrides, gextents, grank, &
+    &  lview, lstrides, lextents, lrank )
+end subroutine GatherScatter__scatter_real64_r3_r3
+
 
 ! -----------------------------------------------------------------------------
 
