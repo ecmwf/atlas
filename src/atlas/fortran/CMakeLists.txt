@@ -79,6 +79,8 @@ add_custom_target( atlas_fortran_inc SOURCES
 install( FILES ${CMAKE_Fortran_MODULE_DIRECTORY}/${CMAKE_CFG_INTDIR}/atlas_module.mod
                  DESTINATION ${INSTALL_INCLUDE_DIR} )
 
+install( FILES ${CMAKE_Fortran_MODULE_DIRECTORY}/${CMAKE_CFG_INTDIR}/atlas_mpi_module.mod
+                 DESTINATION ${INSTALL_INCLUDE_DIR} )
 
 #ecbuild_add_library( TARGET atlas_mpl_fortran
 #    AUTO_VERSION
