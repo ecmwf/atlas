@@ -100,8 +100,8 @@ namespace {
 using namespace atlas;
 
 struct MPIFixture {
-    MPIFixture()  { mpi::init(); }
-    ~MPIFixture() { mpi::finalize(); }
+    MPIFixture()  { eckit::mpi::init(); }
+    ~MPIFixture() { eckit::mpi::finalize(); }
 };
 
 BOOST_GLOBAL_FIXTURE( MPIFixture )

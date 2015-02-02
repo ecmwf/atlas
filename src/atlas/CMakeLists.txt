@@ -43,7 +43,7 @@ configure_file( atlas_version.cc.in atlas_version.cc )
 list( APPEND atlas_mpl_srcs
 mpi/mpi.h
 mpi/mpi.cc
-mpi/collectives.h
+mpi/Collectives.h
 mpl/MPLArrayView.h
 mpl/Checksum.h
 mpl/Checksum.cc
@@ -223,7 +223,6 @@ ecbuild_add_library( TARGET atlas
   SOURCES
   atlas.h
   atlas.cc
-  atlas_mpi.h
   atlas_omp.h
   ${atlas_srcs}
   ${atlas_util_srcs}
@@ -237,7 +236,7 @@ ecbuild_add_library( TARGET atlas
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_config.h
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_defines.h
   INCLUDES "${CGAL_INCLUDE_DIRS}"
-  LIBS eckit "${ATLAS_EXTRA_LIBRARIES}" "${CGAL_LIBRARIES}" "${ATLAS_MPI_C_LIBRARIES}" )
+  LIBS "${ECKIT_MPI_LIBRARIES}" "${ECKIT_GRIB_LIBRARIES}" "${CGAL_LIBRARIES}" )
 
 if( HAVE_FORTRAN )
   add_subdirectory( fortran )

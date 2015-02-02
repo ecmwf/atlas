@@ -239,7 +239,7 @@ struct IsGhost
 	{
 		part_	 = ArrayView<int,1> (nodes.field("partition") );
 		ridx_	 = IndexView<int,1> (nodes.field("remote_idx") );
-		mypart_ = mpi::rank();
+		mypart_ = eckit::mpi::rank();
 	}
 	IsGhost( FunctionSpace& nodes, int mypart )
 	{

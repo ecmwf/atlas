@@ -25,8 +25,8 @@ namespace actions {
 
 void distribute_mesh( Mesh& mesh )
 {
-  EqualAreaPartitioner partitioner( mpi::size() );
-  int mypart = mpi::rank();
+  EqualAreaPartitioner partitioner( eckit::mpi::size() );
+  int mypart = eckit::mpi::rank();
 
   FunctionSpace& nodes = mesh.function_space("nodes");
   int nb_nodes = nodes.shape(0);

@@ -7,7 +7,11 @@
 #ifdef OMP_CXX_FOUND
 #define HAVE_OMP
 #endif
-#cmakedefine HAVE_MPI
+
+#cmakedefine ATLAS_HAVE_MPI
+#ifndef ATLAS_HAVE_MPI
+#define ECKIT_MPISTUBS
+#endif
 
 #cmakedefine HAVE_TESSELATION
 #cmakedefine HAVE_FORTRAN

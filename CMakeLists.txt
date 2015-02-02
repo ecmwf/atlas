@@ -32,8 +32,17 @@ set( PERSISTENT_NAMESPACE "eckit" CACHE INTERNAL "" )
 
 ecbuild_use_package( PROJECT eckit VERSION 0.8 REQUIRED )
 
+foreach( _eckit_feature ${ECKIT_FEATURES} )
+  set( ${_eckit_feature} 1 )
+endforeach()
+
 if( ECKIT_HAVE_GRIB )
    message( STATUS "eckit has GRIB support")
+   set( ECKIT_GRIB_LIBRARIES eckit_grib )
+endif()
+
+if( ECKIT_HAVE_MPI )
+   message( STATUS "eckit has MPI support")
 endif()
 
 ecbuild_declare_project()
@@ -65,6 +74,28 @@ endif()
 ecbuild_add_option( FEATURE MPI
                     DESCRIPTION "Support for MPI distributed parallelism"
                     REQUIRED_PACKAGES "MPI COMPONENTS CXX ${MPI_Fortran}" )
+
+debug_var( HAVE_MPI )
+debug_var( ECKIT_HAVE_ECKIT_MPI )
+debug_var( ECKIT_HAVE_ECKIT_MPISTUBS )
+
+if( HAVE_MPI AND ECKIT_HAVE_ECKIT_MPI )
+  message( STATUS "Using eckit_mpi" )
+  set( ECKIT_MPI_LIBRARIES eckit_mpi )
+elseif( NOT HAVE_MPI AND ECKIT_HAVE_ECKIT_MPISTUBS )
+  message( STATUS "Using eckit_mpistubs" )
+#  add_definitions( ECKIT_MPISTUBS )
+  set( ECKIT_MPI_LIBRARIES eckit_mpistubs )
+  if( HAVE_FORTRAN )
+    ecbuild_use_package( PROJECT mpistubs )
+    set( MPI_Fortran_LIBRARIES mpistubs_f )
+    set( MPI_Fortran_INCLUDE_PATH ${MPISTUBS_INCLUDE_DIRS} )
+    debug_var( MPISTUBS_LIBRARIES )
+  endif()
+else()
+  message( FATAL_ERROR "eckit_mpi or eckit_mpistubs not found" )
+endif()
+
 
 ### OMP ...
 
@@ -115,7 +146,7 @@ ecbuild_add_option( FEATURE SANDBOX
 ############################################################################################
 # export package info
 
-list( APPEND ATLAS_TPLS      eckit )
+list( APPEND ATLAS_TPLS  eckit )
 
 set( ATLAS_INCLUDE_DIRS   ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src )
 
@@ -160,13 +191,6 @@ ecbuild_pkgconfig(
   DESCRIPTION      "Atlas framework for parallel datastructures"
   IGNORE_LIBRARIES fctest eckit_maths eckit_web
   VARIABLES        HAVE_MPI HAVE_TRANS HAVE_TESSELATION HAVE_FORTRAN
-)
-
-ecbuild_pkgconfig(
-  NAME             mpistubs
-  URL              "https://software.ecmwf.int/wiki/display/ATLAS"
-  DESCRIPTION      "MPI stubs library"
-  LIBRARIES        mpistubs mpistubs_f
 )
 
 ############################################################################################

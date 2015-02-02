@@ -47,10 +47,10 @@ void global_bounding_box( FunctionSpace& nodes, double min[2], double max[2] )
     max[XX] = std::max( max[XX], latlon(node,XX) );
     max[YY] = std::max( max[YY], latlon(node,YY) );
   }
-  ATLAS_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &min[XX], 1, MPI_DOUBLE, MPI_MIN, mpi::Comm::instance() ) );
-  ATLAS_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &min[YY], 1, MPI_DOUBLE, MPI_MIN, mpi::Comm::instance() ) );
-  ATLAS_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max[XX], 1, MPI_DOUBLE, MPI_MAX, mpi::Comm::instance() ) );
-  ATLAS_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max[YY], 1, MPI_DOUBLE, MPI_MAX, mpi::Comm::instance() ) );
+  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &min[XX], 1, MPI_DOUBLE, MPI_MIN, eckit::mpi::comm() ) );
+  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &min[YY], 1, MPI_DOUBLE, MPI_MIN, eckit::mpi::comm() ) );
+  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max[XX], 1, MPI_DOUBLE, MPI_MAX, eckit::mpi::comm() ) );
+  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max[YY], 1, MPI_DOUBLE, MPI_MAX, eckit::mpi::comm() ) );
 }
 
 struct Node

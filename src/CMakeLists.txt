@@ -7,19 +7,12 @@
 # does it submit to any jurisdiction.
 
 
-add_subdirectory( mpistubs )
-
-if( NOT HAVE_MPI )
-
-  set( ATLAS_MPI_C_LIBRARIES mpistubs )
-  set( ATLAS_MPI_Fortran_LIBRARIES mpistubs_f )
-
-else()
+if( HAVE_MPI )
 
   set( ATLAS_MPI_C_LIBRARIES            ${MPI_CXX_LIBRARIES} )
   set( ATLAS_MPI_Fortran_LIBRARIES      ${MPI_Fortran_LIBRARIES} )
   ecbuild_include_mpi()
-  
+
 endif()
 
 add_subdirectory( atlas )

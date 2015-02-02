@@ -50,7 +50,8 @@ ecbuild_add_library( TARGET atlas_f
         atlas_logging.cc
         atlas_resource.h
         atlas_resource.cc
-  LIBS atlas ${ATLAS_MPI_Fortran_LIBRARIES}
+  INCLUDES ${MPI_Fortran_INCLUDE_PATH}
+  LIBS atlas ${MPI_Fortran_LIBRARIES}
 )
 
 add_custom_target( atlas_fortran_inc SOURCES

@@ -22,8 +22,8 @@ namespace actions {
 Mesh* generate_mesh (const ReducedGrid& rgg)
 {
   ReducedGridMeshGenerator generate;
-  generate.options.set( "nb_parts", (int) mpi::size() );
-  generate.options.set( "part"    , (int) mpi::rank() );
+  generate.options.set( "nb_parts", (int) eckit::mpi::size() );
+  generate.options.set( "part"    , (int) eckit::mpi::rank() );
   return generate(rgg);
 }
 

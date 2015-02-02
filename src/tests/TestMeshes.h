@@ -36,8 +36,8 @@ TestGrid::TestGrid(int N, int lon[])
 Mesh::Ptr generate_mesh( const ReducedGrid& rgg )
 {
   meshgen::ReducedGridMeshGenerator generator;
-  generator.options.set<int>("nb_parts",mpi::size());
-  generator.options.set<int>("part",mpi::rank());
+  generator.options.set<int>("nb_parts",eckit::mpi::size());
+  generator.options.set<int>("part",eckit::mpi::rank());
   return Mesh::Ptr( generator.generate( rgg ) );
 }
 

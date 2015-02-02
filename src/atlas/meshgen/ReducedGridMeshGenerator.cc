@@ -1073,8 +1073,8 @@ Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
 void ReducedGridMeshGenerator::generate_global_element_numbering( Mesh& mesh )
 {
   int loc_nb_elems = 0;
-  std::vector<int> elem_counts( mpi::size() );
-  std::vector<int> elem_displs( mpi::size() );
+  std::vector<int> elem_counts( eckit::mpi::size() );
+  std::vector<int> elem_displs( eckit::mpi::size() );
   for( int f=0; f<mesh.nb_function_spaces(); ++f )
   {
     FunctionSpace& elements = mesh.function_space(f);
@@ -1083,15 +1083,15 @@ void ReducedGridMeshGenerator::generate_global_element_numbering( Mesh& mesh )
       loc_nb_elems += elements.shape(0);
     }
   }
-  ATLAS_MPI_CHECK_RESULT( MPI_Allgather( &loc_nb_elems, 1, MPI_INT,
-                                   elem_counts.data(), 1, MPI_INT, mpi::Comm::instance()) );
+  ECKIT_MPI_CHECK_RESULT( MPI_Allgather( &loc_nb_elems, 1, MPI_INT,
+                                   elem_counts.data(), 1, MPI_INT, eckit::mpi::comm()) );
   elem_displs[0] = 0;
-  for( int jpart=1; jpart<mpi::size(); ++jpart )
+  for( int jpart=1; jpart<eckit::mpi::size(); ++jpart )
   {
     elem_displs[jpart] = elem_displs[jpart-1] + elem_counts[jpart-1];
   }
 
-  gidx_t gid = 1+elem_displs[ mpi::rank() ];
+  gidx_t gid = 1+elem_displs[ eckit::mpi::rank() ];
 
   for( int f=0; f<mesh.nb_function_spaces(); ++f )
   {

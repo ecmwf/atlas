@@ -55,7 +55,7 @@ double dual_volume(Mesh& mesh)
       area += dual_volumes(node);
     }
   }
-  ATLAS_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &area, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD ) );
+  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &area, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD ) );
   return area;
 }
 
@@ -63,8 +63,8 @@ double dual_volume(Mesh& mesh)
 }
 
 struct MPIFixture {
-    MPIFixture()  { mpi::init(); }
-    ~MPIFixture() { mpi::finalize(); }
+    MPIFixture()  { eckit::mpi::init(); }
+    ~MPIFixture() { eckit::mpi::finalize(); }
 };
 
 BOOST_GLOBAL_FIXTURE( MPIFixture )
@@ -82,12 +82,12 @@ BOOST_AUTO_TEST_CASE( test_small )
   actions::build_halo(*m,2);
 
 
-  if( mpi::size() == 5 )
+  if( eckit::mpi::size() == 5 )
   {
     IndexView<int,1> ridx ( m->function_space("nodes").field("remote_idx") );
     ArrayView<gidx_t,1> gidx ( m->function_space("nodes").field("glb_idx") );
 
-    switch( mpi::rank() ) // with 5 tasks
+    switch( eckit::mpi::rank() ) // with 5 tasks
     {
     case 0:
       BOOST_CHECK_EQUAL( ridx(9),  9  );
@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE( test_small )
   }
   else
   {
-    if( mpi::rank() == 0 )
+    if( eckit::mpi::rank() == 0 )
       std::cout << "skipping tests with 5 mpi tasks!" << std::endl;
   }
 
@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_CASE( test_small )
 
   BOOST_CHECK_CLOSE( test::dual_volume(*m), 2.*M_PI*M_PI, 1e-6 );
 
-  std::stringstream filename; filename << "small_halo_p" << mpi::rank() << ".msh";
+  std::stringstream filename; filename << "small_halo_p" << eckit::mpi::rank() << ".msh";
   Gmsh().write(*m,filename.str());
 }
 #endif

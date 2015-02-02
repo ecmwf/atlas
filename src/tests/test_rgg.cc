@@ -102,7 +102,7 @@ double compute_latlon_area(Mesh& mesh)
 } // end namespace test
 } // end namespace atlas
 
-BOOST_AUTO_TEST_CASE( init ) { mpi::init(); }
+BOOST_AUTO_TEST_CASE( init ) { eckit::mpi::init(); }
 
 BOOST_AUTO_TEST_CASE( test_eq_caps )
 {
@@ -398,4 +398,4 @@ DISABLE{
 
 }
 
-BOOST_AUTO_TEST_CASE( finalize ) { mpi::finalize(); }
+BOOST_AUTO_TEST_CASE( finalize ) { eckit::mpi::finalize(); }
