@@ -11,11 +11,12 @@
 #ifndef atlas_GridSet_H
 #define atlas_GridSet_H
 
-#include "eckit/memory/SharedPtr.h"
 
 #include "atlas/Grid.h"
 
+
 namespace atlas {
+
 
 /**
  * @brief GridSet contains the Grid objects whithin a consistent context (p.e. the execution of MIR)
@@ -24,8 +25,8 @@ class GridSet {
 
 public: // methods
 
-	bool has( const Grid& ) const;
-	bool has( const Grid::uid_t& ) const;
+  bool has( const Grid& ) const;
+  bool has( const Grid::uid_t& ) const;
 
   size_t size() const { return grids_.size(); }
 
@@ -38,22 +39,23 @@ public: // methods
    * @brief insert a grid in the container, if it is unique to it
    * @param grid grid to insert
    */
-  void push_back(const eckit::SharedPtr< Grid > grid);
+  void push_back(Grid::Ptr grid);
 
   /**
    * @return grid based on unique identifier (a string)
    * @param uid grid identifier
    */
-  Grid& grid(const Grid::uid_t& uid) const;
+  Grid::Ptr grid(const Grid::uid_t& uid) const;
 
 private: // data
 
   /// Container for Grid's
-  std::vector< eckit::SharedPtr< Grid > > grids_;
+  std::vector< Grid::Ptr > grids_;
 
 };
 
+
 } // namespace atlas
 
-#endif
 
+#endif
