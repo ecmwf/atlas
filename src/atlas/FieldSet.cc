@@ -33,21 +33,17 @@
 
 #include "atlas/Field.h"
 #include "atlas/FunctionSpace.h"
-#include "atlas/Parameters.h"
-#include "atlas/util/ArrayView.h"
-#include "atlas/io/PointCloud.h"
-
-#include "atlas/Mesh.h"
 #include "atlas/Grid.h"
+#include "atlas/Mesh.h"
+#include "atlas/Parameters.h"
 #include "atlas/grids/Unstructured.h"
+#include "atlas/io/PointCloud.h"
+#include "atlas/util/ArrayView.h"
 
 #include "atlas/FieldSet.h"
 
 
-
 using namespace eckit;
-
-
 
 
 namespace atlas {
@@ -55,34 +51,39 @@ namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
 
+
 FieldSet::FieldSet(const std::string &name) :
   name_(name.length()? name : "untitled")
 {}
 
-void FieldSet::add_field(const Field& field)
+
+void FieldSet::add_field(Field::Ptr field)
 {
-  index_[field.name()] = fields_.size();
+  index_[field->name()] = fields_.size();
 
-  Field* f = const_cast< Field* >(&field);
+  fields_.push_back( field );
 
-  fields_.push_back( f->self() );
-  gridset_.push_back( f->grid().self() );
+  //FIXME there is a memory corruption when activating next line
+//  gridset_.push_back( field->grid().self() );
 }
+
 
 bool FieldSet::has_field(const std::string& name) const
 {
   return index_.count(name);
 }
 
+
 Field& FieldSet::field(const std::string& name) const
 {
   if (!has_field(name))
   {
-    const std::string msg("Could not find field \"" + name + "\" in fieldset \"" + name_ + "\"");
+    const std::string msg("FieldSet" + (name_.length()? " \"" + name_ + "\"" : "") + ": cannot find field \"" + name + "\"");
     throw eckit::OutOfRange(msg,Here());
   }
   return *fields_[ index_.at(name) ];
 }
+
 
 FieldSet::FieldSet(const PathName& path) :
   fields_()
@@ -141,7 +142,7 @@ FieldSet::FieldSet(const PathName& path) :
     grids::Unstructured* grid = io::PointCloud::read(path,vfnames);
     FunctionSpace& nodes = grid->mesh().function_space( "nodes" );
     for( size_t i = 0; i < vfnames.size(); ++i )
-      add_field( nodes.field(vfnames[i]) );
+      add_field( nodes.field(vfnames[i]).self() );
     return;
   }
 }
@@ -168,16 +169,16 @@ FieldSet::FieldSet(const DataHandle&)
   NOTIMP;
 }
 
+
 FieldSet::FieldSet(const Field::Vector& fields) :
-	fields_(fields)
+  fields_(fields)
 {
-	for( Field::Vector::const_iterator itr = fields.begin(); itr != fields.end(); ++itr )
-	{
-		Grid& g = (*itr)->grid();
-		if( !gridset_.has( g ) )
-			gridset_.push_back( g.self() );
-	}
+  for( Field::Vector::const_iterator itr = fields.begin(); itr != fields.end(); ++itr )
+  {
+      gridset_.push_back( (*itr)->grid().self() );
+  }
 }
+
 
 std::vector< std::string > FieldSet::field_names() const
 {
@@ -192,76 +193,33 @@ std::vector< std::string > FieldSet::field_names() const
 }
 
 
-#if 0
-void FieldSet::add_field(Field& field)
-{
-  index_[field.name()] = fields_.size();
-  fields_.push_back( Field::Ptr(&field) );
-}
-#endif
-
-
-#if 0
-Field& FieldSet::field(const std::string& name)
-{
-  if(!has_field(name))
-  {
-    const std::string msg("FieldSet" + (name_.length()? " \"" + name_ + "\"" : "") + ": cannot find field \"" + name + "\"");
-    throw eckit::OutOfRange(msg,Here());
-  }
-  return *fields_[ index_.at(name) ];
-}
-#endif
-
-
-#if 0
-const Field& FieldSet::field(const std::string& name) const
-{
-  if(!has_field(name))
-  {
-    const std::string msg("FieldSet" + (name_.length()? " \"" + name_ + "\"" : "") + ": cannot find field \"" + name + "\"");
-    throw eckit::OutOfRange(msg,Here());
-  }
-  return *fields_[ index_.at(name) ];
-}
-#endif
-
-
 Field::Ptr FieldSet::create_field(grib::GribHandle& gh)
 {
 #ifdef ECKIT_HAVE_GRIB
 
-	grib::GribParams* gp = grib::GribParams::create(gh);
+  // create Grid (pointer) and take its signature (unique ID)
+  grib::GribParams* gp = grib::GribParams::create(gh);
+  ASSERT( gp );
 
-	ASSERT( gp );
+  Grid::Ptr grid( Grid::create( *gp ) );
+  Grid::uid_t uid = grid->uid();
 
-	Grid::Ptr grid( Grid::create( *gp ) );
-
-	Grid::uid_t uid = grid->uid();
-
-	if( ! gridset_.has( uid ) )
-		gridset_.push_back( grid );
-	else
-	{
-		grid.reset( gridset_.grid(uid).self() );
-	}
-
-	Mesh& mesh = grid->mesh();
-
-	FunctionSpace& nodes = mesh.function_space( "nodes" );
+  // store Grid in GridSet, then reassign grid (pointer) in case there one has the same UID
+  gridset_.push_back(grid);
+  grid.reset(gridset_.grid(uid));
 
   // get name for this field
   std::string sname = gh.shortName() + "_" + Translator<size_t,std::string>()( fields_.size() );
 
   // get values
-
   size_t nvalues = gh.getDataValuesSize();
 
-  // create the field
-
+  // get grid's Mesh FunctionSpace
+  FunctionSpace& nodes = grid->mesh().function_space( "nodes" );
   if( nodes.shape(0) != nvalues )
     throw SeriousBug( "Size of field in GRIB does not match Grid", Here() );
 
+  // create the field
   Field& f = nodes.create_field<double>(sname,1);
 
   gh.getDataValues( f.data<double>(), nvalues );
@@ -293,6 +251,7 @@ bool FieldSet::haveSameGrid() const
   return true;
 }
 
+
 std::vector<Field*>& __private_get_raw_fields_ptr (FieldSet* This)
 {
   This->fields_raw_ptr_.resize( This->size() );
@@ -301,16 +260,19 @@ std::vector<Field*>& __private_get_raw_fields_ptr (FieldSet* This)
   return This->fields_raw_ptr_;
 }
 
+
 //-----------------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
-
 extern "C"{
+
+
 FieldSet* atlas__FieldSet__new (char* name)
 {
   FieldSet* fset = new FieldSet( std::string(name) );
   fset->name() = name;
   return fset;
 }
+
 
 void atlas__FieldSet__delete(FieldSet* This)
 { delete This; }
@@ -327,20 +289,21 @@ void atlas__FieldSet__fields (FieldSet* This, Field** &fields, int &nb_fields)
 }
 
 
-void   atlas__FieldSet__add_field     (FieldSet* This, Field* field) 
-{ ASSERT(This != NULL); This->add_field(*field); }
+void   atlas__FieldSet__add_field     (FieldSet* This, Field* field)
+{ ASSERT(This != NULL); This->add_field(field->self()); }
 
-int    atlas__FieldSet__has_field     (FieldSet* This, char* name)   
+int    atlas__FieldSet__has_field     (FieldSet* This, char* name)
 { ASSERT(This != NULL); return This->has_field( std::string(name) ); }
 
-int    atlas__FieldSet__size          (FieldSet* This)               
+int    atlas__FieldSet__size          (FieldSet* This)
 { ASSERT(This != NULL); return This->size(); }
 
-Field* atlas__FieldSet__field_by_name (FieldSet* This, char* name)   
+Field* atlas__FieldSet__field_by_name (FieldSet* This, char* name)
 { ASSERT(This != NULL); return &This->field( std::string(name) ); }
 
-Field* atlas__FieldSet__field_by_idx  (FieldSet* This, int idx)      
+Field* atlas__FieldSet__field_by_idx  (FieldSet* This, int idx)
 { ASSERT(This != NULL); return &This->operator[](idx); }
+
 
 }
 //-----------------------------------------------------------------------------

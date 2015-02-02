@@ -16,7 +16,6 @@
 
 #include "eckit/exception/Exceptions.h"
 #include "eckit/filesystem/PathName.h"
-#include "eckit/log/Log.h"
 
 #include "atlas/Field.h"
 #include "atlas/FieldSet.h"
