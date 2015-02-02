@@ -44,7 +44,10 @@
 #include "atlas/FieldSet.h"
 
 
+
 using namespace eckit;
+
+
 
 
 namespace atlas {
@@ -52,21 +55,18 @@ namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
 
-
-
-
-//-----------------------------------------------------------------------------
-
-
 FieldSet::FieldSet(const std::string &name) :
   name_(name.length()? name : "untitled")
 {}
 
-
 void FieldSet::add_field(const Field& field)
 {
   index_[field.name()] = fields_.size();
-  fields_.push_back( Field::Ptr(const_cast< Field* >(&field)) );
+
+  Field* f = const_cast< Field* >(&field);
+
+  fields_.push_back( f->self() );
+  gridset_.push_back( f->grid().self() );
 }
 
 bool FieldSet::has_field(const std::string& name) const
@@ -84,10 +84,8 @@ Field& FieldSet::field(const std::string& name) const
   return *fields_[ index_.at(name) ];
 }
 
-
 FieldSet::FieldSet(const PathName& path) :
-  fields_(),
-  grid_()
+  fields_()
 {
   // read start of file (using buffer) to determine file format
   Buffer buff(64);
@@ -97,9 +95,7 @@ FieldSet::FieldSet(const PathName& path) :
   ASSERT(len);
   dh->close();
 
-
-  //TODO: make and use a factory
-
+  /// @todo make and use a factory
 
   if ((len>=4) && (0==strncmp(buff,"GRIB",4)))
   {
@@ -122,13 +118,11 @@ FieldSet::FieldSet(const PathName& path) :
       GribHandle* gh = gf->getHandle();
       ASSERT(gh);
 
-      // (grid_ built on first call)
       fields_.push_back( create_field(*gh) );
 
       gf->release();
     }
 
-    ASSERT(grid_);
     ASSERT(haveSameGrid());
 #else
     std::stringstream stream;
@@ -139,30 +133,29 @@ FieldSet::FieldSet(const PathName& path) :
     return;
   }
 
-
   // attempt to read PointCloud format
+
   if ((len>=10) && (0==strncmp(buff,"PointCloud",10)))
   {
-    ScopedPtr< grids::Unstructured > grid(io::PointCloud::read(path));
-    grid->mesh();
-    NOTIMP;
+    std::vector<std::string> vfnames;
+    grids::Unstructured* grid = io::PointCloud::read(path,vfnames);
+    FunctionSpace& nodes = grid->mesh().function_space( "nodes" );
+    for( size_t i = 0; i < vfnames.size(); ++i )
+      add_field( nodes.field(vfnames[i]) );
     return;
   }
 }
 
 
 FieldSet::FieldSet(const Buffer& buf) :
-	fields_(),
-	grid_()
+  fields_()
 {
 #ifdef ECKIT_HAVE_GRIB
+
   grib::GribHandle gh(buf);
 
-  // (grid_ built inside)
   fields_.push_back( create_field(gh) );
 
-  ASSERT( grid_ );
-  ASSERT( haveSameGrid() );
 #else
   eckit::Log::error() << eckit::BackTrace::dump() << std::endl;
   throw eckit::Exception("eckit was built without GRIB support, cannot construct FieldSet from GRIB buffer", Here());
@@ -175,41 +168,16 @@ FieldSet::FieldSet(const DataHandle&)
   NOTIMP;
 }
 
-
-FieldSet::FieldSet(const Grid::Ptr grid, const std::vector<std::string>& nfields) :
-	fields_(),
-	grid_(grid)
-{
-	ASSERT( grid_ );
-
-	Mesh& mesh = grid_->mesh();
-
-	FunctionSpace& nodes = mesh.function_space( "nodes" );
-    fields_.reserve(nfields.size());
-    for( size_t i = 0; i < nfields.size(); ++i )
-    {
-		Field& f = nodes.create_field<double>(nfields[i],1);
-
-		ASSERT( grid->uid() == f.grid().uid() );
-
-		fields_.push_back( Field::Ptr( &f ) );
-    }
-
-  ASSERT( haveSameGrid() );
-}
-
-
 FieldSet::FieldSet(const Field::Vector& fields) :
-	fields_(fields),
-	grid_()
+	fields_(fields)
 {
-	if( !fields_.empty() )
-		grid_.reset( fields_[0]->grid().self() );
-
-	ASSERT( grid_ );
-  ASSERT( haveSameGrid() );
+	for( Field::Vector::const_iterator itr = fields.begin(); itr != fields.end(); ++itr )
+	{
+		Grid& g = (*itr)->grid();
+		if( !gridset_.has( g ) )
+			gridset_.push_back( g.self() );
+	}
 }
-
 
 std::vector< std::string > FieldSet::field_names() const
 {
@@ -262,32 +230,37 @@ const Field& FieldSet::field(const std::string& name) const
 Field::Ptr FieldSet::create_field(grib::GribHandle& gh)
 {
 #ifdef ECKIT_HAVE_GRIB
-  if(!grid_)
-  {
-    grib::GribParams* gp = grib::GribParams::create(gh);
-    ASSERT( gp );
-    grid_.reset( Grid::create( *gp ) );
-  }
-  else // check grid is the same
-  {
-    if( gh.geographyHash() != grid_->hash() )
-      throw eckit::UserError("GRIB fields don't match grid within FieldSet", Here() );
-  }
 
-  Mesh& mesh = grid_->mesh();
-    FunctionSpace&  nodes  = mesh.function_space( "nodes" );
+	grib::GribParams* gp = grib::GribParams::create(gh);
 
-    // get name for this field
+	ASSERT( gp );
+
+	Grid::Ptr grid( Grid::create( *gp ) );
+
+	Grid::uid_t uid = grid->uid();
+
+	if( ! gridset_.has( uid ) )
+		gridset_.push_back( grid );
+	else
+	{
+		grid.reset( gridset_.grid(uid).self() );
+	}
+
+	Mesh& mesh = grid->mesh();
+
+	FunctionSpace& nodes = mesh.function_space( "nodes" );
+
+  // get name for this field
   std::string sname = gh.shortName() + "_" + Translator<size_t,std::string>()( fields_.size() );
 
-    // get values
+  // get values
 
-    size_t nvalues = gh.getDataValuesSize();
+  size_t nvalues = gh.getDataValuesSize();
 
-    // create the field
+  // create the field
 
-    if( nodes.shape(0) != nvalues )
-        throw SeriousBug( "Size of field in GRIB does not match Grid", Here() );
+  if( nodes.shape(0) != nvalues )
+    throw SeriousBug( "Size of field in GRIB does not match Grid", Here() );
 
   Field& f = nodes.create_field<double>(sname,1);
 
@@ -306,22 +279,18 @@ Field::Ptr FieldSet::create_field(grib::GribHandle& gh)
 
 bool FieldSet::haveSameGrid() const
 {
-  if( fields_.empty() ) return true;
+  if( fields_.empty() )
+    return true;
 
-  bool result = true;
+  Grid::uid_t uid = fields_[0]->grid().uid();
 
-  std::string uid = grid_->uid();
-
-  for( size_t i = 0; i < fields_.size(); ++i )
+  for( size_t i = 1; i < fields_.size(); ++i )
   {
     if( fields_[i]->grid().uid() != uid )
-    {
-      Log::error() << "fields_["<< i <<"] (" << fields_[i]->name() << ") doesn't match the same grid as FieldSet @ " << Here() << std::endl;
-      result = false;
-    }
+      return false;
   }
 
-  return result;
+  return true;
 }
 
 std::vector<Field*>& __private_get_raw_fields_ptr (FieldSet* This)

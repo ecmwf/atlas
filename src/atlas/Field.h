@@ -94,7 +94,7 @@ public: // methods
 
 #ifdef ECKIT_HAVE_GRIB
 	void grib( Grib* g );	 ///< @todo this is to be removed
-	Grib& grib() const;		 ///< @todo this is to be removed
+	Grib* const grib() const;		 ///< @todo this is to be removed
 #endif
 
 	friend std::ostream& operator<<( std::ostream& os, const Field& v);
@@ -198,7 +198,6 @@ inline void FieldT<DATA_TYPE>::print(std::ostream& out) const
 
 	ArrayView<DATA_TYPE,1> values( *this );
 
-	// ArrayView<DATA_TYPE,2> coords( nodes.field("coordinates") );
 	ArrayView<DATA_TYPE,2> lonlat( nodes.field("lonlat") );
 
 	ASSERT( values.shape()[0] == lonlat.shape()[0] );

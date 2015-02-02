@@ -42,10 +42,10 @@ class GridSpec;
  * Interface to a grid of points in a 2d cartesian space
  * For example a LatLon grid or a Reduced Graussian grid
  *
- *      DECODE                       ATLAS                      ENCODE
- *      NetCDFBuilder ---->|-------|         |----------|------>NetCDFWrite
- *                         | Grid  |<------> | GridSpec |
- *      GribBuilder ------>|-------|         |----------|------>GribWrite
+ *      DECODE                        ATLAS                      ENCODE
+ *      NetCDFBuilder -->  |-------|         |----------|   ------>NetCDFWrite
+ *                         | Grid  | <=====> | GridSpec |
+ *      GribBuilder ---->  |-------|         |----------|   ------>GribWrite
  *
  */
 class Grid : public eckit::Owned {
@@ -59,7 +59,8 @@ public: // types
   typedef eckit::geometry::LLBoundBox2 BoundBox;  ///< bounding box type
   typedef BoundBox Domain; // To become abstract class used to mask a grid
 
-  typedef eckit::SharedPtr<Grid> Ptr;
+	typedef eckit::SharedPtr<Grid> Ptr;
+	typedef std::string uid_t;
 
 public: // methods
 
@@ -67,9 +68,12 @@ public: // methods
 
   static double degrees_eps();
 
-  static Grid* create( const eckit::Params& );
   static Grid* create( const GridSpec& );
-  static Grid* create( const std::string& uid );
+
+  static Grid* create( const eckit::Params& );
+  static Grid* create( const Grid::uid_t& uid );
+//  static Grid* create( const Grid::HumanName& name );
+//  static Grid* create( const eckit::Buffer& buff );
 
   Grid();
 
@@ -77,8 +81,7 @@ public: // methods
 
   Ptr self() { return Ptr(this); }
 
-  virtual std::string uid() const = 0;
-  virtual std::string hash() const = 0;
+  virtual uid_t uid() const = 0;
 
   /**
    * @return bounding box

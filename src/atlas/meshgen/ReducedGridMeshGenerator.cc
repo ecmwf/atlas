@@ -61,7 +61,7 @@ struct Region
 ReducedGridMeshGenerator::ReducedGridMeshGenerator()
 {
   // This option creates a point at the pole when true
-  options.set("include_pole",false);
+  options.set("include_pole",bool( Resource<bool>("-include_pole;atlas.meshgen.include_pole", false ) ) );
 
   // This option sets the part that will be generated
   options.set("patch_pole", bool(Resource<bool>("--patch_pole;atlas.meshgen.patch_pole",false ) ) );
@@ -89,6 +89,11 @@ ReducedGridMeshGenerator::ReducedGridMeshGenerator()
 
   triangulate_quads_ = Resource< bool > ( "-triangulate;atlas.meshgen.triangulate", false );
   //Log::error() << "triangulate =" << triangulate_quads_ << std::endl;
+
+
+  Log::info() << "three_dimensional" << options.get<bool>("three_dimensional") << std::endl;
+  Log::info() << "triangulate" << triangulate_quads_ << std::endl;
+
 }
 
 Mesh* ReducedGridMeshGenerator::operator()( const ReducedGrid& grid )
@@ -135,7 +140,7 @@ Mesh* ReducedGridMeshGenerator::operator()( const ReducedGrid& grid )
 //  return part;
 //}
 
-Mesh* ReducedGridMeshGenerator::generate(const ReducedGrid& rgg)
+void ReducedGridMeshGenerator::generate(const ReducedGrid& rgg, Mesh& mesh )
 {
   int mypart   = options.get<int>("part");
   int nb_parts = options.get<int>("nb_parts");
@@ -167,9 +172,15 @@ Mesh* ReducedGridMeshGenerator::generate(const ReducedGrid& rgg)
   Region region;
   generate_region(rgg,part,mypart,region);
 
-  Mesh* mesh = generate_mesh(rgg,part,region);
-  mesh->grid(rgg);
-  return mesh;
+  generate_mesh(rgg,part,region,mesh);
+  mesh.grid(rgg);
+}
+
+Mesh* ReducedGridMeshGenerator::generate(const ReducedGrid& rgg)
+{
+	Mesh* mesh = new Mesh();
+	generate(rgg,*mesh);
+	return mesh;
 }
 
 
@@ -651,12 +662,16 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rgg, const std
   }
 }
 
-Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
+void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
                                       const std::vector<int>& parts,
-                                      const Region& region)
+									  const Region& region,
+									Mesh& mesh )
 {
+	DEBUG_VAR( rgg.npts() );
+	DEBUG_VAR( parts.size() );
+	DEBUG_VAR( region.nnodes );
+
   double tol = 1e-3;
-  Mesh* mesh = new Mesh();
   int mypart = options.get<int>("part");
   int nparts = options.get<int>("nb_parts");
   int n, l;
@@ -721,14 +736,17 @@ Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
 
   ArrayShape shape = make_shape(nnodes,Field::UNDEF_VARS);
 
-  FunctionSpace& nodes = mesh->create_function_space( "nodes","LagrangeP1",shape );
+  if( !mesh.has_function_space("nodes") )
+	mesh.create_function_space( "nodes","LagrangeP1",shape );
+
+  FunctionSpace& nodes = mesh.function_space( "nodes" );
 
   nodes.metadata().set("type",static_cast<int>(Entity::NODES));
 
-  ArrayView<double,2> coords        ( nodes.create_field<double>("coordinates",   2) );
-  ArrayView<gidx_t,1> glb_idx       ( nodes.create_field<gidx_t>("glb_idx",       1) );
-  ArrayView<int,   1> part          ( nodes.create_field<int   >("partition",     1) );
-  ArrayView<int,   1> flags         ( nodes.create_field<int   >("flags",         1) );
+  ArrayView<double,2> coords        ( nodes.create_field<double>("coordinates",   2, IF_EXISTS_RETURN) );
+  ArrayView<gidx_t,1> glb_idx       ( nodes.create_field<gidx_t>("glb_idx",       1, IF_EXISTS_RETURN) );
+  ArrayView<int,   1> part          ( nodes.create_field<int   >("partition",     1, IF_EXISTS_RETURN) );
+  ArrayView<int,   1> flags         ( nodes.create_field<int   >("flags",         1, IF_EXISTS_RETURN) );
 
   bool stagger = options.get<bool>("stagger");
 
@@ -812,15 +830,18 @@ Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
     ++jnode;
   }
 
+
+
   shape = make_shape(nquads,Field::UNDEF_VARS);
-  FunctionSpace& quads = mesh->create_function_space( "quads","LagrangeP1",shape );
+
+  FunctionSpace& quads = mesh.create_function_space( "quads","LagrangeP1",shape );
   quads.metadata().set("type",static_cast<int>(Entity::ELEMS));
   IndexView<int,2> quad_nodes( quads.create_field<int>("nodes",4) );
   ArrayView<gidx_t,1> quad_glb_idx( quads.create_field<gidx_t>("glb_idx",1) );
   ArrayView<int,1> quad_part( quads.create_field<int>("partition",1) );
 
   shape = make_shape(ntriags,Field::UNDEF_VARS);
-  FunctionSpace& triags = mesh->create_function_space( "triags","LagrangeP1",shape );
+  FunctionSpace& triags = mesh.create_function_space( "triags","LagrangeP1",shape );
   triags.metadata().set("type",static_cast<int>(Entity::ELEMS));
   IndexView<int,2> triag_nodes( triags.create_field<int>("nodes",3) );
   ArrayView<gidx_t,1> triag_glb_idx( triags.create_field<gidx_t>("glb_idx",1) );
@@ -1065,9 +1086,7 @@ Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
   quads.metadata().set("max_glb_idx", nquads+ntriags);
   triags.metadata().set("max_glb_idx",nquads+ntriags);
 
-  generate_global_element_numbering( *mesh );
-
-  return mesh;
+  generate_global_element_numbering( mesh );
 }
 
 void ReducedGridMeshGenerator::generate_global_element_numbering( Mesh& mesh )

@@ -33,7 +33,6 @@ void GaussianGrid::set_typeinfo()
   std::stringstream stream;
   stream << "gg.N"<<N();
   uid_ = stream.str();
-  hash_ = stream.str();
   grid_type_ = grid_type_str();
 }
 
@@ -100,7 +99,6 @@ GridSpec GaussianGrid::spec() const
   grid_spec.set_latitudes(latitudes());
 
   grid_spec.uid( uid() );
-  grid_spec.set("hash", hash());
   grid_spec.set("nlat",nlat());
 
   grid_spec.set_bounding_box(bounding_box());

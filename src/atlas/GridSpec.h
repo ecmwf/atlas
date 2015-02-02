@@ -48,7 +48,9 @@ public:
   std::string grid_type() const;
 
   void uid(const std::string&);
-  std::string uid() const;
+  Grid::uid_t uid() const;
+
+  std::string hash() const;
 
   void set_latitudes(const std::vector<double>& latitudes_vec);
 

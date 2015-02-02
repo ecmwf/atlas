@@ -21,11 +21,12 @@
 
 #include "atlas/atlas_config.h"
 
-#include <eckit/memory/Owned.h>
-#include <eckit/memory/SharedPtr.h>
-#include <eckit/types/Types.h>
+#include "eckit/memory/Owned.h"
+#include "eckit/memory/SharedPtr.h"
+#include "eckit/types/Types.h"
 
 #include "atlas/Field.h"
+#include "atlas/GridSet.h"
 #include "atlas/Grid.h"
 #include "atlas/Mesh.h"
 #include "atlas/Metadata.h"
@@ -58,7 +59,7 @@ public:
   // methods
 
   /// Constructs an empty FieldSet
-  FieldSet(const std::string& name="untitled");
+  FieldSet(const std::string& name = "untitled");
 
   /// Constructs from a path (e.g. a GRIB file)
   FieldSet(const eckit::PathName&);
@@ -68,9 +69,6 @@ public:
 
   /// Constructs from a DataHandle
   FieldSet(const eckit::DataHandle&);
-
-  /// Constructs from a Grid, only the named fields
-  FieldSet(const Grid::Ptr grid, const std::vector< std::string >& nfields);
 
   /// Constructs from predefined fields (takes ownership of the fields)
   FieldSet(const Field::Vector& fields);
@@ -90,9 +88,6 @@ public:
   const Field::Vector& fields() const { return fields_; }
         Field::Vector& fields()       { return fields_; }
 
-  const Grid& grid() const { ASSERT(!empty()); return fields_[0]->grid(); }
-        Grid& grid()       { ASSERT(!empty()); return fields_[0]->grid(); }
-
   std::vector< std::string > field_names() const;
 
   void add_field(const Field& field);
@@ -100,9 +95,8 @@ public:
   bool has_field(const std::string& name) const;
 
   Field& field(const std::string& name) const;
-
-private:
-  // internal utilities
+  
+private: // methods
 
   /// @todo to be removed
   Field::Ptr create_field(eckit::grib::GribHandle&);
@@ -110,11 +104,11 @@ private:
   /// Check if all fields share same grid
   bool haveSameGrid() const;
 
-protected:
-  // data
+protected: // data
+
+  atlas::GridSet                  gridset_; ///< @todo remove this gridset ownership into the mir::FieldSet
 
   Field::Vector                   fields_;  ///< field handle storage
-  Grid::Ptr                       grid_;    ///< grid acquaintace relation (@todo: remove)
   std::string                     name_;    ///< internal name
   std::map< std::string, size_t > index_;   ///< name-to-index map, to refer fields by name
 
