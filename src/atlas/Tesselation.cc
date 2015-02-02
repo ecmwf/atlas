@@ -217,7 +217,16 @@ void Tesselation::tesselate( Grid& g )
 	{
 		std::cout << "mesh is ReducedGrid " << rg->uid() << std::endl;
 		ASSERT(rg);
+
 		meshgen::ReducedGridMeshGenerator mg;
+
+
+		// force these flags
+		mg.set_three_dimensional(true);
+		mg.set_patch_pole(true);
+//		mg.set_include_pole(true);
+		mg.triangulate_quads_ = true;
+
 		mg.generate( *rg, mesh );
 	}
 	else

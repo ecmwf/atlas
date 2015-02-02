@@ -12,9 +12,9 @@
 
 #ifdef ECKIT_HAVE_GRIB
 
+/// @todo Remove these once we use only eckit::grib
 #include "grib_api_config.h"
-
-#include "grib_api.h" // remove this once we use only eckit::grib
+#include "grib_api.h"
 
 #include "eckit/eckit_config.h"
 #include "eckit/config/Resource.h"
