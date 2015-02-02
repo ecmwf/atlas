@@ -82,13 +82,6 @@ namespace io {
       const std::vector< Grid::Point >& pts );
 
   /**
-   * @brief Write lan/lon and Field to PointCloud file (overwrites possibly existing file)
-   * @param path output file path
-   * @param field Field data structure
-   */
-  static void write(const eckit::PathName& path, const Field& field);
-
-  /**
    * @brief Write lan/lon and fields to PointCloud file (overwrites possibly existing file)
    * @param path output file path
    * @param nb_pts number of points in unstructured grid
