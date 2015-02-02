@@ -91,8 +91,8 @@ ReducedGridMeshGenerator::ReducedGridMeshGenerator()
   //Log::error() << "triangulate =" << triangulate_quads_ << std::endl;
 
 
-  Log::info() << "three_dimensional" << options.get<bool>("three_dimensional") << std::endl;
-  Log::info() << "triangulate" << triangulate_quads_ << std::endl;
+//  Log::info() << "three_dimensional" << options.get<bool>("three_dimensional") << std::endl;
+//  Log::info() << "triangulate" << triangulate_quads_ << std::endl;
 
 }
 
@@ -101,6 +101,20 @@ Mesh* ReducedGridMeshGenerator::operator()( const ReducedGrid& grid )
   return generate(grid);
 }
 
+void ReducedGridMeshGenerator::set_three_dimensional(bool f)
+{
+    options.set("three_dimensional",f);
+}
+
+void ReducedGridMeshGenerator::set_patch_pole(bool f)
+{
+  options.set("patch_pole",f);
+}
+
+void ReducedGridMeshGenerator::set_include_pole(bool f)
+{
+  options.set("include_pole",f);
+}
 
 //std::vector<int> RGGMeshGenerator::partition(const RGG& rgg) const
 //{
@@ -667,11 +681,8 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
 									  const Region& region,
 									Mesh& mesh )
 {
-	DEBUG_VAR( rgg.npts() );
-	DEBUG_VAR( parts.size() );
-	DEBUG_VAR( region.nnodes );
-
   double tol = 1e-3;
+
   int mypart = options.get<int>("part");
   int nparts = options.get<int>("nb_parts");
   int n, l;
