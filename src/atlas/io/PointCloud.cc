@@ -151,10 +151,14 @@ grids::Unstructured* PointCloud::read(const eckit::PathName& path, std::vector<s
   // (copies read-in data section into scalar fields)
 
   grids::Unstructured* grid = new grids::Unstructured(pts);
+
   ASSERT(grid);
 
+  DEBUG_VAR( &grid );
+
   Mesh& m = grid->mesh();
-  for (size_t j=0; j<vfvalues.size(); ++j) {
+  for (size_t j=0; j<vfvalues.size(); ++j)
+  {
     Field& field = m.function_space("nodes").create_field< double >(vfnames[j],1);
     ArrayView< double, 1 > fdata(field);
     for (size_t i=0; i<grid->npts(); ++i)
@@ -165,7 +169,7 @@ grids::Unstructured* PointCloud::read(const eckit::PathName& path, std::vector<s
 }
 
 
-grids::Unstructured*PointCloud::read(const eckit::PathName& path)
+grids::Unstructured* PointCloud::read(const eckit::PathName& path)
 {
   std::vector<std::string> vfnames;
   return read(path,vfnames);
