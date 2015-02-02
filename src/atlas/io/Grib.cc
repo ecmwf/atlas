@@ -12,6 +12,8 @@
 
 #ifdef ECKIT_HAVE_GRIB
 
+#include "grib_api_config.h"
+
 #include "grib_api.h" // remove this once we use only eckit::grib
 
 #include "eckit/eckit_config.h"
@@ -116,46 +118,51 @@ Grid::Ptr Grib::create_grid(GribHandle& gh)
 
 GribHandle::Ptr Grib::create_handle( const Grid& grid, long edition )
 {
-   // determine choice of editionNumber from a resource
-   if( edition == 0 )
-      edition = Resource<unsigned>( "NewGribEditionNumber", 2 );
+  // determine choice of editionNumber from a resource
+  if( edition == 0 )
+    edition = Resource<unsigned>( "NewGribEditionNumber", 2 );
 
 
-   // From the Grid get the Grid Spec
-   GridSpec grid_spec = grid.spec();
+  // From the Grid get the Grid Spec
+  GridSpec grid_spec = grid.spec();
 
+  grib_handle* gh = 0;
 
-   // Try to match grid with samples file *WITHOUT* going to disk
-   // This should succeed most of the time.
-   // Will fail for Polar Stereographic, since the sample for these are not correct
-   std::string sample_file = match_grid_spec_with_sample_file(grid_spec,edition);
+  // Try to match grid with samples file *WITHOUT* going to disk
+  // This should succeed most of the time.
+  // Will fail for Polar Stereographic, since the sample for these are not correct
+  std::string sample_file = match_grid_spec_with_sample_file(grid_spec,edition);
 
-   grib_handle* gh = 0;
-   if( !sample_file.empty() )
-   {
-      gh = grib_handle_new_from_samples(0,sample_file.c_str() );
-      if( !gh )
-         throw SeriousBug( "Failed to create GribHandle from sample: " + sample_file, Here() );
-   }
-   else // if this fails, then try looking on disk
-   {
-      sample_file = Grib::grib_sample_file(grid_spec,edition);
-      if (!sample_file.empty())
-      {
-         gh = grib_handle_new_from_samples(0,sample_file.c_str() );
-         if( !gh )
-            throw SeriousBug( "Failed to create GribHandle from sample: " + sample_file, Here() );
-      }
-   }
+  if( !gh && !sample_file.empty() )
+  {
+    gh = grib_handle_new_from_samples(0,sample_file.c_str() );
 
-   if(!gh)
-      throw SeriousBug( "Failed to create GribHandle from Grib", Here() );
+    if( !gh )
+      throw SeriousBug( "Failed to create GribHandle from sample: " + sample_file, Here() );
+  }
 
-   GribHandle::Ptr gh_ptr( new GribHandle(gh) );
+  /// scan SAMPLE files directories and match to a grib
 
-   write_gridspec_to_grib( grid.spec(), *gh_ptr );
+  if( !gh )
+  {
+    sample_file = Grib::grib_sample_file(grid_spec,edition);
 
-   return gh_ptr;
+    if( sample_file.empty() )
+      throw BadParameter("Could not find GRIB sample for grid " + grid.uid(), Here() );
+
+    gh = grib_handle_new_from_samples(0,sample_file.c_str() );
+
+    if( !gh )
+      throw SeriousBug( "Failed to create GribHandle from sample: " + sample_file, Here() );
+  }
+
+  // finally create handle
+
+  GribHandle::Ptr gh_ptr( new GribHandle(gh) );
+
+  write_gridspec_to_grib( grid.spec(), *gh_ptr );
+
+  return gh_ptr;
 }
 
 
@@ -165,7 +172,8 @@ void Grib::determine_grib_samples_dir(std::vector<std::string>& sample_paths)
    // Also only grib files in these directories that have a '.tmpl' are considered
    //
    char* paths = NULL;
-#ifdef HAVE_GRIB_API_1130
+
+#if ( GRIB_API_VERSION >= 11300 )
    paths = grib_samples_path(NULL);
 #endif
 
@@ -184,7 +192,7 @@ void Grib::determine_grib_samples_dir(std::vector<std::string>& sample_paths)
       samples_dir = getenv("GRIB_API_PATH");
       if (samples_dir) {
          std::string path = samples_dir;
-         path += "/share/samples";
+         path += "/share/grib_api/samples";
          sample_paths.push_back(path);
          return;
       }
@@ -246,9 +254,11 @@ static std::string match_grid_spec_with_sample_file( const GridSpec& g_spec, lon
       return "rotated_ll_pl_grib2";
    }
 
-   // The Grib samples for polar stereographic are in-correct, and we don't handle spherical harmonics yet
-   throw SeriousBug( "Could not match grid to a corresponding GRIB sample file.", Here() );
-   return std::string();
+   // Cases we might fail to match:
+   //  * GRIB samples for polar stereographic are in-correct,
+   //  * Can't handle spherical harmonics yet
+
+   return std::string(); // returning emtpy string when match fails
 }
 
 static std::string map_uid_to_grib_sample_file(const std::string& uid, long edition)
@@ -273,28 +283,34 @@ static std::string map_uid_to_grib_sample_file(const std::string& uid, long edit
     return r;
 }
 
-bool match_grid_spec_with_sample_file( const GridSpec& g_spec,
-									   GribHandle& gh,
-									   long edition,
-									   const std::string& file_path )
+bool check_grid_spec_matches_sample_file( const GridSpec& g_spec,
+																					long edition,
+																					const eckit::PathName& fpath )
 {
-   if ( g_spec.grid_type() != gh.gridType() ) {
+	GribHandle gh( fpath );
+
+   if ( g_spec.grid_type() != gh.gridType() )
+   {
       //Log::info() << "grid_type in GridSpec " << g_spec.grid_type() << " does not match " << grib_grid_type << " in samples file " << file_path << " IGNORING " << std::endl;
       return false;
    }
 
-   if( gh.edition() != edition ) {
+   if( gh.edition() != edition )
+   {
       //Log::info() << "Grib::match_grid_spec_with_sample_file, edition_number passed in " << edition << " does not match grib" << edition << " in samples file " << file_path << " IGNORING " << std::endl;
       return false;
    }
 
-   if (g_spec.grid_type() == grids::ReducedGaussianGrid::grid_type_str() ) {
-      if (g_spec.has("N")) {
+   if (g_spec.grid_type() == grids::ReducedGaussianGrid::grid_type_str() )
+   {
+      if (g_spec.has("N"))
+      {
          long grid_gausn = g_spec.get("N");
          long grib_gausn = GribAccessor<long>("numberOfParallelsBetweenAPoleAndTheEquator")(gh);
-         if (grid_gausn != grib_gausn) {
+
+         if (grid_gausn != grib_gausn)
             return false;
-         }
+
       }
    }
 
@@ -326,8 +342,10 @@ std::string Grib::grib_sample_file( const GridSpec& g_spec, long edition )
         throw SeriousBug("Error no sample paths found",Here()) ;
 
     for(size_t path = 0; path < sample_paths.size(); ++path)
-    {
+    {      
         std::string grib_samples_dir = sample_paths[path];
+
+        DEBUG_VAR( grib_samples_dir );
 
         if (grib_samples_dir.empty())
             throw SeriousBug("Error, empty samples path. Could not create handle from grid",Here()) ;
@@ -343,29 +361,15 @@ std::string Grib::grib_sample_file( const GridSpec& g_spec, long edition )
 
         for(size_t i = 0; i < files.size(); i++)
         {
-           try
-           {
-              GribHandle grib_h( files[i].localPath() );
-
-              std::string fname = files[i].localPath();
-
-			  if( match_grid_spec_with_sample_file(g_spec,grib_h,edition,fname))
-              {
-                 // remove .tmpl extension
-                 eckit::LocalPathName path(fname);
-                 LocalPathName base_name = path.baseName(false);
-                 std::string grib_sample_file = base_name.localPath();
-                 return grib_sample_file;
-              }
-           }
-           catch ( const std::exception & ex )
-           {
-              Log::info() << files[i].localPath() << " " << ex.what() << std::endl;
-           }
+          if( check_grid_spec_matches_sample_file(g_spec, edition, files[i]) )
+          {
+            return files[i].baseName(false).localPath(); // remove .tmpl extension
+          }
         }
     }
 
-    Log::info() << "Could find grib samples match for grid_spec " << g_spec << std::endl;
+//    Log::warning() << "Could *not* find grib samples match for grid_spec " << g_spec << std::endl;
+
     return std::string();
 }
 

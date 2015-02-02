@@ -89,8 +89,7 @@ foreach( file ${grib_api_samples_data} )
     # passing in individual grib samples files as ARGUMENTs
     ecbuild_add_test(
                       TARGET atlas_test_grid_spec_${file}
-                      TYPE SCRIPT
-					  DEPENDS ${tgts}
+                      DEPENDS ${tgts}
                       COMMAND atlas_test_GridSpec
                       ARGS ${file}
                      )
