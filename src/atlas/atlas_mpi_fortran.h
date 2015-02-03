@@ -11,7 +11,7 @@
 
 #include "atlas/atlas_defines_fortran.h"
 
-#ifdef HAVE_MPI
+#ifdef ATLAS_HAVE_MPI
 use mpi
 #else
 use mpistubs

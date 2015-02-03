@@ -15,13 +15,13 @@ namespace mpi {
 
 extern "C"
 {
-  void atlas_mpi_comm_set_with_fortran_handle (int fhandle)
+  void atlas_mpi_comm_attach_fortran_communicator (int fcomm )
   {
-    eckit::mpi::comm().set_with_fortran_handle(fhandle);
+    eckit::mpi::comm().attach_fortran_communicator( fcomm );
   }
-  int atlas_mpi_comm_fortran_handle ()
+  int atlas_mpi_comm_fortran_communicator ()
   {
-    return eckit::mpi::comm().fortran_handle();
+    return eckit::mpi::comm().fortran_communicator();
   }
 }
 

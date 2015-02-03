@@ -14,7 +14,6 @@
 
 #include "atlas/atlas_defines.h"
 #include "eckit/mpi/mpi.h"
-#include "eckit/mpi/Comm.h"
 #include "eckit/mpi/Collectives.h"
 #include "eckit/mpi/Exceptions.h"
 #include "atlas/mpi/Collectives.h"
@@ -29,8 +28,8 @@ namespace mpi {
 // C wrapper interfaces to C++ routines
 extern "C"
 {
-  void atlas_mpi_comm_set_with_fortran_handle (int comm);
-  int atlas_mpi_comm_fortran_handle ();
+  void atlas_mpi_comm_attach_fortran_communicator (int comm);
+  int atlas_mpi_comm_fortran_communicator ();
 }
 // ------------------------------------------------------------------
 
