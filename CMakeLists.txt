@@ -56,7 +56,7 @@ if( HAVE_FORTRAN )
                       DESCRIPTION "Fortran Unit Test Framework"
                       REQUIRED_PACKAGES "PROJECT fctest VERSION 0.1" )
 
-  set( MPI_Fortran Fortran )
+  set( Fortran Fortran )
 
 endif()
 
@@ -64,41 +64,46 @@ endif()
 
 ecbuild_add_option( FEATURE MPI
                     DESCRIPTION "Support for MPI distributed parallelism"
-                    REQUIRED_PACKAGES "MPI COMPONENTS CXX ${MPI_Fortran}" )
+                    REQUIRED_PACKAGES "MPI COMPONENTS CXX ${Fortran}" )
 
 ### OMP ...
 
 ecbuild_add_option(
-	FEATURE OMP
-	DESCRIPTION "support for OpenMP threaded parallelism"
-  REQUIRED_PACKAGES "OMP COMPONENTS CXX Fortran" )
+    FEATURE OMP
+    DESCRIPTION "support for OpenMP threaded parallelism"
+    REQUIRED_PACKAGES "OMP COMPONENTS CXX ${Fortran}" )
 
-cmake_add_fortran_flags( "${OMP_Fortran_FLAGS}" )
+if( HAVE_FORTRAN )
+  cmake_add_fortran_flags( "${OMP_Fortran_FLAGS}" )
+endif()
 cmake_add_cxx_flags( "${OMP_CXX_FLAGS}" )
+
 
 ### trans_api ...
 
 ecbuild_add_option(
-	FEATURE TRANS
-	DESCRIPTION "Support for trasnformations between SH and Grid space"
-	REQUIRED_PACKAGES "PROJECT trans_api VERSION 0.1" )
+    FEATURE TRANS
+    DESCRIPTION "Support for trasnformations between SH and Grid space"
+    REQUIRED_PACKAGES "PROJECT trans_api VERSION 0.1" )
 
 ### tesselation ...
 
 ecbuild_add_option(
-	FEATURE TESSELATION
-	DESCRIPTION "support for unstructured mesh generation"
-	REQUIRED_PACKAGES "CGAL QUIET" )
+    FEATURE TESSELATION
+    DESCRIPTION "support for unstructured mesh generation"
+    REQUIRED_PACKAGES "CGAL QUIET" )
 
 if( HAVE_TESSELATION )
 
-	# CGAL needs boost
+    # CGAL needs boost
 
-	set(Boost_USE_MULTITHREADED      ON )
-	find_package( Boost 1.45.0 REQUIRED )
-	set_package_properties( Boost PROPERTIES TYPE RECOMMENDED PURPOSE "CGAL support" )
-	list( APPEND CGAL_INCLUDE_DIRS ${Boost_INCLUDE_DIRS} )
-	list( APPEND CGAL_LIBRARIES ${CGAL_LIBRARY} ${CGAL_3RD_PARTY_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} )
+    set(Boost_USE_MULTITHREADED      ON )
+    find_package( Boost 1.45.0 REQUIRED )
+    set_package_properties( Boost PROPERTIES TYPE RECOMMENDED PURPOSE "CGAL support" )
+    list( APPEND CGAL_INCLUDE_DIRS ${Boost_INCLUDE_DIRS} )
+    list( APPEND CGAL_LIBRARIES ${CGAL_LIBRARY} ${CGAL_3RD_PARTY_LIBRARIES}
+                                ${GMP_LIBRARIES} ${MPFR_LIBRARIES}
+                                ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} )
 
 endif()
 

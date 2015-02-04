@@ -17,8 +17,8 @@
 #include <omp.h>
 #else
   #include "eckit/log/Log.h"
-  void omp_set_num_threads(int) { eckit::Log::warning() << "\nWARNING: OpenMP not available!\n" << std::endl; }
-  int omp_get_max_threads() { return 0; }
+  inline void omp_set_num_threads(int) { eckit::Log::warning() << "\nWARNING: OpenMP not available!\n" << std::endl; }
+  inline int omp_get_max_threads() { return 0; }
 #endif
 
 #endif
