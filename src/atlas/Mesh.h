@@ -67,7 +67,7 @@ public: // methods
 	/// assign a Grid to this Mesh
 	void grid( Grid& p ) { grid_ = &p; }
 
-  /// assign a Grid to this Mesh
+	/// assign a Grid to this Mesh
 	void grid( const Grid& p ) { grid_ = const_cast<Grid*>(&p); }
 
 	/// accessor of the Grid

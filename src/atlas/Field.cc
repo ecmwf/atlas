@@ -163,10 +163,9 @@ void Field::grib(Field::Grib *g)
 	grib_.reset(g);
 }
 
-Field::Grib& Field::grib() const
+Field::Grib *const Field::grib() const
 {
-	ASSERT( grib_ );
-	return *grib_;
+	return grib_.get();
 }
 
 #endif

@@ -30,6 +30,8 @@ namespace io {
 
 //------------------------------------------------------------------------------------------------------
 
+Grid::Ptr make_grid(const eckit::PathName& path );
+
 class Grib {
 
 public: // methods

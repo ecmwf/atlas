@@ -42,7 +42,6 @@ void ReducedLonLatGrid::set_typeinfo()
   std::stringstream stream;
   stream << "rll.N"<<N();
   uid_ = stream.str();
-  hash_ = stream.str();
   grid_type_ = grid_type_str();
 }
 
@@ -126,7 +125,6 @@ GridSpec ReducedLonLatGrid::spec() const
   GridSpec grid_spec( grid_type_str() );
 
   grid_spec.uid(uid());
-  grid_spec.set("hash", hash() );
 
   grid_spec.set("N", N() );
   grid_spec.set("nlat", nlat() );

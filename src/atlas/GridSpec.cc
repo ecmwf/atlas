@@ -8,8 +8,9 @@
  * does it submit to any jurisdiction.
  */
 
-#include <eckit/exception/Exceptions.h>
-#include <eckit/parser/JSON.h>
+#include "eckit/exception/Exceptions.h"
+#include "eckit/parser/JSON.h"
+#include "eckit/utils/MD5.h"
 
 #include "atlas/GridSpec.h"
 
@@ -44,13 +45,18 @@ void GridSpec::uid(const std::string& uid)
    set("uid",Properties::property_t(uid));
 }
 
-std::string GridSpec::uid() const
+Grid::uid_t GridSpec::uid() const
 {
    Properties::property_t val = get("uid");
    if(val.isNil())
       throw eckit::SeriousBug("GridSpec with no short name specified", Here());
 
    return val.as<std::string>();
+}
+
+std::string GridSpec::hash() const
+{
+   return eckit::MD5( str() );
 }
 
 void GridSpec::print( std::ostream& s) const

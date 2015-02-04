@@ -3,10 +3,7 @@
 
 #cmakedefine CGAL_FOUND
 
-#cmakedefine OMP_CXX_FOUND
-#ifdef OMP_CXX_FOUND
-#define HAVE_OMP
-#endif
+#cmakedefine HAVE_OMP
 
 #cmakedefine ATLAS_HAVE_MPI
 #ifndef ATLAS_HAVE_MPI

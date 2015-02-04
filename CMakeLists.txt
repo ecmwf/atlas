@@ -65,7 +65,7 @@ if( HAVE_FORTRAN )
                       DESCRIPTION "Fortran Unit Test Framework"
                       REQUIRED_PACKAGES "PROJECT fctest VERSION 0.1" )
 
-  set( MPI_Fortran Fortran )
+  set( Fortran Fortran )
 
 endif()
 
@@ -73,24 +73,18 @@ endif()
 
 ecbuild_add_option( FEATURE MPI
                     DESCRIPTION "Support for MPI distributed parallelism"
-                    REQUIRED_PACKAGES "MPI COMPONENTS CXX ${MPI_Fortran}" )
-
-debug_var( HAVE_MPI )
-debug_var( ECKIT_HAVE_ECKIT_MPI )
-debug_var( ECKIT_HAVE_ECKIT_MPISTUBS )
+                    REQUIRED_PACKAGES "MPI COMPONENTS CXX ${Fortran}" )
 
 if( HAVE_MPI AND ECKIT_HAVE_ECKIT_MPI )
   message( STATUS "Using eckit_mpi" )
   set( ECKIT_MPI_LIBRARIES eckit_mpi )
 elseif( NOT HAVE_MPI AND ECKIT_HAVE_ECKIT_MPISTUBS )
   message( STATUS "Using eckit_mpistubs" )
-#  add_definitions( ECKIT_MPISTUBS )
   set( ECKIT_MPI_LIBRARIES eckit_mpistubs )
   if( HAVE_FORTRAN )
     ecbuild_use_package( PROJECT mpistubs )
     set( MPI_Fortran_LIBRARIES mpistubs_f )
     set( MPI_Fortran_INCLUDE_PATH ${MPISTUBS_INCLUDE_DIRS} )
-    debug_var( MPISTUBS_LIBRARIES )
   endif()
 else()
   message( FATAL_ERROR "eckit_mpi or eckit_mpistubs not found" )
@@ -100,36 +94,41 @@ endif()
 ### OMP ...
 
 ecbuild_add_option(
-	FEATURE OMP
-	DESCRIPTION "support for OpenMP threaded parallelism"
-  REQUIRED_PACKAGES "OMP COMPONENTS CXX Fortran" )
+    FEATURE OMP
+    DESCRIPTION "support for OpenMP threaded parallelism"
+    REQUIRED_PACKAGES "OMP COMPONENTS CXX ${Fortran}" )
 
-cmake_add_fortran_flags( "${OMP_Fortran_FLAGS}" )
+if( HAVE_FORTRAN )
+  cmake_add_fortran_flags( "${OMP_Fortran_FLAGS}" )
+endif()
 cmake_add_cxx_flags( "${OMP_CXX_FLAGS}" )
+
 
 ### trans_api ...
 
 ecbuild_add_option(
-	FEATURE TRANS
-	DESCRIPTION "Support for trasnformations between SH and Grid space"
-	REQUIRED_PACKAGES "PROJECT trans_api VERSION 0.1" )
+    FEATURE TRANS
+    DESCRIPTION "Support for trasnformations between SH and Grid space"
+    REQUIRED_PACKAGES "PROJECT trans_api VERSION 0.1" )
 
 ### tesselation ...
 
 ecbuild_add_option(
-	FEATURE TESSELATION
-	DESCRIPTION "support for unstructured mesh generation"
-	REQUIRED_PACKAGES "CGAL QUIET" )
+    FEATURE TESSELATION
+    DESCRIPTION "support for unstructured mesh generation"
+    REQUIRED_PACKAGES "CGAL QUIET" )
 
 if( HAVE_TESSELATION )
 
-	# CGAL needs boost
+    # CGAL needs boost
 
-	set(Boost_USE_MULTITHREADED      ON )
-	find_package( Boost 1.45.0 REQUIRED )
-	set_package_properties( Boost PROPERTIES TYPE RECOMMENDED PURPOSE "CGAL support" )
-	list( APPEND CGAL_INCLUDE_DIRS ${Boost_INCLUDE_DIRS} )
-	list( APPEND CGAL_LIBRARIES ${CGAL_LIBRARY} ${CGAL_3RD_PARTY_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} )
+    set(Boost_USE_MULTITHREADED      ON )
+    find_package( Boost 1.45.0 REQUIRED )
+    set_package_properties( Boost PROPERTIES TYPE RECOMMENDED PURPOSE "CGAL support" )
+    list( APPEND CGAL_INCLUDE_DIRS ${Boost_INCLUDE_DIRS} )
+    list( APPEND CGAL_LIBRARIES ${CGAL_LIBRARY} ${CGAL_3RD_PARTY_LIBRARIES}
+                                ${GMP_LIBRARIES} ${MPFR_LIBRARIES}
+                                ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} )
 
 endif()
 
@@ -187,11 +186,22 @@ add_subdirectory( src )
 # pkg-config
 
 ecbuild_pkgconfig(
+  NAME             atlas
   URL              "https://software.ecmwf.int/wiki/display/ATLAS"
   DESCRIPTION      "Atlas framework for parallel datastructures"
-  IGNORE_LIBRARIES fctest eckit_maths eckit_web
+  LIBRARIES        atlas
   VARIABLES        HAVE_MPI HAVE_TRANS HAVE_TESSELATION HAVE_FORTRAN
 )
+
+if( HAVE_FORTRAN )
+  ecbuild_pkgconfig(
+    NAME             atlas-fortran
+    URL              "https://software.ecmwf.int/wiki/display/ATLAS"
+    DESCRIPTION      "Atlas framework for parallel datastructures"
+    LIBRARIES        atlas_f
+    VARIABLES        HAVE_MPI HAVE_TRANS HAVE_TESSELATION HAVE_FORTRAN
+  )
+endif()
 
 ############################################################################################
 # finalize

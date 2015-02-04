@@ -12,14 +12,8 @@
 #define atlas_GridSet_H
 
 
-#include "eckit/memory/SharedPtr.h"
+#include "atlas/Grid.h"
 
-
-// forward declarations
-namespace atlas {
-  class FieldSet;
-  class Grid;
-}
 
 namespace atlas {
 
@@ -27,68 +21,41 @@ namespace atlas {
 /**
  * @brief GridSet contains the Grid objects whithin a consistent context (p.e. the execution of MIR)
  */
-class GridSet /*: private std::vector< eckit::SharedPtr< Grid > >*/ {
-#if 0
-public:
-  // vector-like functionality (expose some internals)
+class GridSet {
 
-  using vector::iterator;
-  using vector::const_iterator;
-  using vector::reverse_iterator;
-  using vector::const_reverse_iterator;
-  using vector::begin;
-  using vector::end;
+public: // methods
 
-  using vector::size;
-  using vector::clear;
-  using vector::pop_back;
-  using vector::swap;
-
-  using vector::operator[];
-
-  using vector::push_back;
-  void push_back(Grid* grid) { push_back(eckit::SharedPtr< Grid >(grid)); }
-
-#else
-public:
-  // vector-like functionality (mimic syntax)
+  bool has( const Grid& ) const;
+  bool has( const Grid::uid_t& ) const;
 
   size_t size() const { return grids_.size(); }
+
   void clear()              { grids_.clear(); }
-  void pop_back()           { grids_.pop_back(); }
-  void swap(GridSet& other) { grids_.swap(other.grids_); }
 
   const Grid& operator[](size_t i) const { return *(grids_.at(i)); }
-        Grid& operator[](size_t i)       { return *(grids_.at(i)); }
+  Grid&       operator[](size_t i)       { return *(grids_.at(i)); }
 
-  void push_back(const eckit::SharedPtr< Grid > grid) {grids_.push_back(grid); }
-#endif
-
-public:
-  // specific functionality
+  /**
+   * @brief insert a grid in the container, if it is unique to it
+   * @param grid grid to insert
+   */
+  void push_back(Grid::Ptr grid);
 
   /**
    * @return grid based on unique identifier (a string)
    * @param uid grid identifier
    */
-  const Grid& grid(const std::string& uid) const;
+  Grid::Ptr grid(const Grid::uid_t& uid) const;
 
-  /**
-   * @return grid based on unique identifier (a string)
-   * @param uid grid identifier
-   */
-  Grid& grid(const std::string& uid);
-
-private:
-  // data
+private: // data
 
   /// Container for Grid's
-  std::vector< eckit::SharedPtr< Grid > > grids_;
+  std::vector< Grid::Ptr > grids_;
 
 };
 
 
 } // namespace atlas
 
-#endif
 
+#endif
