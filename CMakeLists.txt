@@ -156,18 +156,22 @@ add_subdirectory( src )
 # pkg-config
 
 ecbuild_pkgconfig(
+  NAME             atlas
   URL              "https://software.ecmwf.int/wiki/display/ATLAS"
   DESCRIPTION      "Atlas framework for parallel datastructures"
-  IGNORE_LIBRARIES fctest eckit_maths eckit_web
+  LIBRARIES        atlas
   VARIABLES        HAVE_MPI HAVE_TRANS HAVE_TESSELATION HAVE_FORTRAN
 )
 
-ecbuild_pkgconfig(
-  NAME             mpistubs
-  URL              "https://software.ecmwf.int/wiki/display/ATLAS"
-  DESCRIPTION      "MPI stubs library"
-  LIBRARIES        mpistubs mpistubs_f
-)
+if( HAVE_FORTRAN )
+  ecbuild_pkgconfig(
+    NAME             atlas-fortran
+    URL              "https://software.ecmwf.int/wiki/display/ATLAS"
+    DESCRIPTION      "Atlas framework for parallel datastructures"
+    LIBRARIES        atlas_f
+    VARIABLES        HAVE_MPI HAVE_TRANS HAVE_TESSELATION HAVE_FORTRAN
+  )
+endif()
 
 ############################################################################################
 # finalize
