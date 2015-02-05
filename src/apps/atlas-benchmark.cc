@@ -433,7 +433,7 @@ void AtlasBenchmark::iteration()
   Array<double> avgS_arr(nedges,nlev,2);
   ArrayView<double,3> avgS(avgS_arr);
 
-#ifdef HAVE_OMP
+#ifdef ATLAS_HAVE_OMP
   #pragma omp parallel for
 #endif
   for( int jedge=0; jedge<nedges; ++jedge )
@@ -449,7 +449,7 @@ void AtlasBenchmark::iteration()
     }
   }
 
-#ifdef HAVE_OMP
+#ifdef ATLAS_HAVE_OMP
   #pragma omp parallel for
 #endif
   for( int jnode=0; jnode<nnodes; ++jnode )
@@ -490,7 +490,7 @@ void AtlasBenchmark::iteration()
   double dzi = 1./dz;
   double dzi_2 = 0.5*dzi;
 
-#ifdef HAVE_OMP
+#ifdef ATLAS_HAVE_OMP
   #pragma omp parallel for
 #endif
   for( int jnode=0; jnode<nnodes; ++jnode )

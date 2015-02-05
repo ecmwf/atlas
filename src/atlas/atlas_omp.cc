@@ -16,9 +16,9 @@
 /// APPENDIX B from the OpenMP 3.1 standard
 /// http://www.openmp.org/mp-documents/OpenMP3.1.pdf
 
-#include <omp.h>
+#ifdef ATLAS_HAVE_OMP // We have either openmp or openmp stubs
 
-#ifdef HAVE_OMP // We have either openmp or openmp stubs
+#include <omp.h>
 
 #ifndef _OPENMP // We need openmp stubs
 
