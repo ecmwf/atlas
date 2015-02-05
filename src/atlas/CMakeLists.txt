@@ -237,7 +237,7 @@ ecbuild_add_library( TARGET atlas
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_config.h
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_defines.h
   INCLUDES "${CGAL_INCLUDE_DIRS}"
-  LIBS "${ECKIT_MPI_LIBRARIES}" "${ECKIT_GRIB_LIBRARIES}" "${CGAL_LIBRARIES}" )
+  LIBS eckit_geometry "${ECKIT_MPI_LIBRARIES}" "${ECKIT_GRIB_LIBRARIES}" "${CGAL_LIBRARIES}" )
 
 if( HAVE_FORTRAN )
   add_subdirectory( fortran )
