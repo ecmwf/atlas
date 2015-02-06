@@ -13,7 +13,8 @@
 #ifdef ECKIT_HAVE_GRIB
 
 /// @todo Remove these once we use only eckit::grib
-#include "grib_api_config.h"
+// Do not add following file because not present in grib_api 1.13
+// --> #include "grib_api_config.h"
 #include "grib_api.h"
 
 #include "eckit/eckit_config.h"
