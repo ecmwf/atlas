@@ -106,6 +106,11 @@ Grid::Ptr make_grid( const PathName& path )
     grids::Unstructured* grid = io::PointCloud::read(path);
     return grid->self();
   }
+
+  // Missing return... fail here
+  Grid::Ptr g;
+  ASSERT( g );
+  return g;
 }
 
 Grid::Ptr Grib::create_grid(GribHandle& gh)
