@@ -35,7 +35,7 @@ using namespace atlas::io;
 
 int main()
 {
-	atlas::mpi::init();
+	eckit::mpi::init();
 
     Mesh::Ptr mesh( new Mesh() );
 
@@ -45,7 +45,7 @@ int main()
 
 	Gmsh::write3dsurf(*mesh, std::string("earth.msh") );
 
-	atlas::mpi::finalize();
+	eckit::mpi::finalize();
 
     return 0;
 }
