@@ -185,21 +185,23 @@ add_subdirectory( src )
 ############################################################################################
 # pkg-config
 
+set( ATLAS_URL "https://software.ecmwf.int/wiki/display/ATLAS" )
+set( ATLAS_DESCRIPTION "Atlas framework for parallel mesh datastructures" )
+
+ecbuild_pkgconfig()
+
 ecbuild_pkgconfig(
-  NAME             atlas
-  URL              "https://software.ecmwf.int/wiki/display/ATLAS"
-  DESCRIPTION      "Atlas framework for parallel datastructures"
+  NAME             atlas-c++
+  LANGUAGES        CXX
   LIBRARIES        atlas
-  VARIABLES        HAVE_MPI HAVE_TRANS HAVE_TESSELATION HAVE_FORTRAN
 )
 
 if( HAVE_FORTRAN )
   ecbuild_pkgconfig(
     NAME             atlas-fortran
-    URL              "https://software.ecmwf.int/wiki/display/ATLAS"
-    DESCRIPTION      "Atlas framework for parallel datastructures"
+    LANGUAGES        Fortran
     LIBRARIES        atlas_f
-    VARIABLES        HAVE_MPI HAVE_TRANS HAVE_TESSELATION HAVE_FORTRAN
+    NO_PRIVATE_INCLUDE_DIRS
   )
 endif()
 
