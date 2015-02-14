@@ -66,18 +66,15 @@ Unstructured::~Unstructured()
 }
 
 
-std::string Unstructured::uid() const
+Grid::uid_t Unstructured::uid() const
 {
-  NOTIMP;
+  if( cachedUID_.empty() )
+  {
+    cachedUID_ = "U.";
+    cachedUID_.append( spec().hash() );
+  }
+  return cachedUID_;
 }
-
-
-std::string Unstructured::hash() const
-{
-  NOTIMP;
-  return std::string();
-}
-
 
 Grid::BoundBox Unstructured::bounding_box() const
 {
@@ -108,7 +105,6 @@ void Unstructured::lonlat(std::vector< Grid::Point >& crds) const
           (*points_)[i].lat() );
 }
 
-
 void Unstructured::lonlat(std::vector< double >& v) const
 {
   Grid::lonlat(v);
@@ -117,27 +113,26 @@ void Unstructured::lonlat(std::vector< double >& v) const
 
 GridSpec Unstructured::spec() const
 {
-  NOTIMP;
+  if(cachedGridSpec_)
+    return *cachedGridSpec_;
 
-  GridSpec grid_spec( grid_type() );
+  cachedGridSpec_.reset( new GridSpec(grid_type()) );
 
-  grid_spec.uid("U");
-  //  grid_spec.set("hash",eckit::Value(hash_));
-  grid_spec.set_bounding_box(bound_box_);
-  //  grid_spec.set_points(coordinates());
+  cachedGridSpec_->uid("U");
+  cachedGridSpec_->set_bounding_box(bound_box_);
 
-  return grid_spec;
+  std::vector<double> coords;
+  lonlat(coords);
+
+  cachedGridSpec_->set( "lonlat", eckit::makeVectorValue<double>(coords) );
+
+  return *cachedGridSpec_;
 }
 
 
 bool Unstructured::same(const Grid& grid) const
 {
-  NOTIMP;
-  if (grid_type() != grid.grid_type())                                    return false;
-//if ( static_cast< const Unstructured& >(grid).hash_      != hash_)      return false;
-  if ( static_cast< const Unstructured& >(grid).bound_box_ != bound_box_) return false;
-  if (*static_cast< const Unstructured& >(grid).points_    != *points_)   return false;
-  return true;
+  return uid() == grid.uid();
 }
 
 

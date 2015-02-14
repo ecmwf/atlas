@@ -1,9 +1,9 @@
 /*
  * (C) Copyright 1996-2014 ECMWF.
- * 
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
- * In applying this licence, ECMWF does not waive the privileges and immunities 
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
@@ -28,7 +28,7 @@ void build_parallel_fields( Mesh& mesh );
 /*
  * Build parallel fields for the "nodes" function space if they don't exist.
  * - glb_idx:    create unique indices for non-positive values
- * - partition:  set to mpi::rank() for negative values
+ * - partition:  set to eckit::mpi::rank() for negative values
  * - remote_idx: rebuild from scratch
  */
 void build_nodes_parallel_fields( FunctionSpace& nodes );

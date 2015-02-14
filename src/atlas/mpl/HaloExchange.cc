@@ -30,7 +30,7 @@ struct IsGhostPoint
     part_   = part;
     ridx_   = ridx;
     base_   = base;
-    mypart_ = mpi::rank();
+    mypart_ = eckit::mpi::rank();
   }
 
   bool operator()(int idx)
@@ -49,8 +49,8 @@ struct IsGhostPoint
 HaloExchange::HaloExchange() :
   is_setup_(false)
 {
-  myproc = mpi::rank();
-  nproc  = mpi::size();
+  myproc = eckit::mpi::rank();
+  nproc  = eckit::mpi::size();
 }
 
 void HaloExchange::setup( const int part[],
@@ -81,7 +81,7 @@ void HaloExchange::setup( const int part[],
     Find the amount of nodes this proc has to send to each other proc
   */
 
-  ATLAS_MPI_CHECK_RESULT( MPI_Alltoall( recvcounts_.data(), 1, MPI_INT, sendcounts_.data(), 1, MPI_INT, mpi::Comm::instance() ) );
+  ECKIT_MPI_CHECK_RESULT( MPI_Alltoall( recvcounts_.data(), 1, MPI_INT, sendcounts_.data(), 1, MPI_INT, eckit::mpi::comm() ) );
   sendcnt_ = std::accumulate(sendcounts_.begin(),sendcounts_.end(),0);
 //  std::cout << myproc << ":  sendcnt = " << sendcnt_ << std::endl;
 //  std::cout << myproc << ":  recvcnt = " << recvcnt_ << std::endl;
@@ -119,10 +119,10 @@ void HaloExchange::setup( const int part[],
 
   std::vector<int> recv_requests(sendcnt_);
 
-  ATLAS_MPI_CHECK_RESULT( MPI_Alltoallv(
+  ECKIT_MPI_CHECK_RESULT( MPI_Alltoallv(
                       send_requests.data(), recvcounts_.data(), recvdispls_.data(), MPI_INT,
                       recv_requests.data(), sendcounts_.data(), senddispls_.data(), MPI_INT,
-                      mpi::Comm::instance() ) );
+                      eckit::mpi::comm() ) );
 
   /*
     What needs to be sent to other procs is asked by remote_idx, which is local here

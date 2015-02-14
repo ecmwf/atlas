@@ -71,7 +71,7 @@ struct CreateLogFile
 	FileChannel* operator()()
 	{
 		char s[6];
-		std::sprintf(s, "%05zu",mpi::rank());
+		std::sprintf(s, "%05zu",eckit::mpi::rank());
 		FileChannel* ch = new FileChannel(file_path+".p"+std::string(s)) ;
 		return ch;
 	}
@@ -102,7 +102,7 @@ struct ChannelConfig
 	{
 		int logfile_rank = Resource<int>("atlas.logfile_task;$ATLAS_LOGFILE_TASK;--logfile_task",-1);
 		logfile_path    = Resource<std::string>("atlas.logfile;$ATLAS_LOGFILE;--logfile","");
-		logfile_enabled = !logfile_path.empty() && ( logfile_rank < 0 || logfile_rank == mpi::rank() );
+		logfile_enabled = !logfile_path.empty() && ( logfile_rank < 0 || logfile_rank == eckit::mpi::rank() );
 		console_rank = Resource<int>("atlas.console_task;$ATLAS_CONSOLE_TASK;--console_task",0);
 		console_enabled = true;
 		console_format = new ColorizeFormat();
@@ -130,10 +130,10 @@ struct ChannelConfig
 		if( logfile_enabled && !mc->has("logfile") )
 			mc->add( "logfile", new FormatChannel(logfile(CreateLogFile(logfile_path)),logfile_format) );
 
-		if( console_enabled && !mc->has("console") && (console_rank < 0 || console_rank == mpi::rank()) )
+		if( console_enabled && !mc->has("console") && (console_rank < 0 || console_rank == eckit::mpi::rank()) )
 			mc->add( "console" , new FormatChannel(standard_out(),console_format) );
 
-		if( mc->has("console") && (!console_enabled || (console_rank >= 0 && console_rank != mpi::rank() ) ) )
+		if( mc->has("console") && (!console_enabled || (console_rank >= 0 && console_rank != eckit::mpi::rank() ) ) )
 			mc->remove("console");
 
 		if( !mc->has("callback") )
@@ -168,7 +168,7 @@ public:
 	{
 		// Console format
 		char p[6];
-		std::sprintf(p, "%05zu",mpi::rank());
+		std::sprintf(p, "%05zu",eckit::mpi::rank());
 		debug_ctxt.console_format->prefix("(P"+std::string(p)+" D) -- ");
 		info_ctxt. console_format->prefix("(P"+std::string(p)+" I) -- ");
 		warn_ctxt. console_format->prefix("(P"+std::string(p)+" W) -- ");
@@ -277,7 +277,7 @@ std::string read_config(const LocalPathName& path, const int master_task = 0)
 	std::stringstream stream;
 	char* buf;
 	int buf_len(0);
-	if( mpi::rank() == master_task )
+	if( eckit::mpi::rank() == master_task )
 	{
 		if( path.exists() )
 		{
@@ -290,22 +290,22 @@ std::string read_config(const LocalPathName& path, const int master_task = 0)
 			std::string str = stream.str();
 			buf = const_cast<char*>(str.c_str());
 			buf_len = str.size();
-			MPI_Bcast(&buf_len,1,mpi::datatype<int >(),master_task,mpi::Comm::instance());
+			MPI_Bcast(&buf_len,1,eckit::mpi::datatype<int >(),master_task,eckit::mpi::comm());
 			if (buf_len)
-				MPI_Bcast(buf,buf_len,mpi::datatype<char>(),master_task,mpi::Comm::instance());
+				MPI_Bcast(buf,buf_len,eckit::mpi::datatype<char>(),master_task,eckit::mpi::comm());
 		}
 		else
 		{
-			MPI_Bcast(&buf_len,1,mpi::datatype<int >(),master_task,mpi::Comm::instance());
+			MPI_Bcast(&buf_len,1,eckit::mpi::datatype<int >(),master_task,eckit::mpi::comm());
 		}
 	}
 	else
 	{
-		MPI_Bcast(&buf_len,1,mpi::datatype<int>(),master_task,mpi::Comm::instance());
+		MPI_Bcast(&buf_len,1,eckit::mpi::datatype<int>(),master_task,eckit::mpi::comm());
 		if( buf_len )
 		{
 			buf = new char[buf_len];
-			MPI_Bcast(buf,buf_len,mpi::datatype<char>(),master_task,mpi::Comm::instance());
+			MPI_Bcast(buf,buf_len,eckit::mpi::datatype<char>(),master_task,eckit::mpi::comm());
 			stream.write(buf,buf_len);
 			delete[] buf;
 		}
@@ -344,9 +344,9 @@ void atlas_init(int argc, char** argv)
   if( argc > 0 )
     Context::instance().setup(argc, argv);
 
-  if( mpi::initialized() ) Environment::instance().set_finalize_mpi(false);
+  if( eckit::mpi::initialized() ) Environment::instance().set_finalize_mpi(false);
 
-  mpi::init( Context::instance().argc(), Context::instance().argvs() );
+  eckit::mpi::init( Context::instance().argc(), Context::instance().argvs() );
 
   if( Context::instance().argc() > 0 )
   {
@@ -376,8 +376,8 @@ void atlas_init(int argc, char** argv)
   LocalPathName workdir ( Resource<std::string>("workdir;$ATLAS_WORKDIR;--workdir",rundir()) );
   if( workdir != rundir() )
   {
-    if( mpi::rank() == 0 ) workdir.mkdir();
-    mpi::barrier();
+    if( eckit::mpi::rank() == 0 ) workdir.mkdir();
+    eckit::mpi::barrier();
     Log::debug() << "Changing working directory to " << workdir << std::endl;
     chdir(workdir.c_str());
   }
@@ -413,7 +413,7 @@ void atlas_finalize()
 {
   Log::debug() << "Atlas finalized" << std::endl;
   if( Environment::instance().finalize_mpi() )
-    mpi::finalize();
+    eckit::mpi::finalize();
 }
 
 void atlas__atlas_init(int argc, char* argv[])

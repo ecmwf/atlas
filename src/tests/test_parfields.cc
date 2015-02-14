@@ -39,7 +39,7 @@ using namespace atlas::meshgen;
 #define DISABLE if(0)
 #define ENABLE if(1)
 
-BOOST_AUTO_TEST_CASE( init ) { mpi::init(); }
+BOOST_AUTO_TEST_CASE( init ) { eckit::mpi::init(); }
 
 BOOST_AUTO_TEST_CASE( test1 )
 {
@@ -94,7 +94,7 @@ BOOST_AUTO_TEST_CASE( test1 )
 
   IsGhost is_ghost( m->function_space("nodes") );
 
-  switch ( mpi::rank() )
+  switch ( eckit::mpi::rank() )
   {
   case 0:
     BOOST_CHECK_EQUAL( is_ghost(0), false );
@@ -129,7 +129,7 @@ BOOST_AUTO_TEST_CASE( test1 )
   BOOST_CHECK_EQUAL( part(9), 0 );
   BOOST_CHECK_EQUAL( loc(8), 0 );
   BOOST_CHECK_EQUAL( loc(9), 1 );
-  if( mpi::rank() == 1 )
+  if( eckit::mpi::rank() == 1 )
   {
     BOOST_CHECK_EQUAL( is_ghost(8), true );
     BOOST_CHECK_EQUAL( is_ghost(9), true );
@@ -139,8 +139,8 @@ BOOST_AUTO_TEST_CASE( test1 )
 BOOST_AUTO_TEST_CASE( test2 )
 {
   ReducedGridMeshGenerator generate;
-  generate.options.set<int>("nb_parts",mpi::size());
-  generate.options.set<int>("part",mpi::rank());
+  generate.options.set<int>("nb_parts",eckit::mpi::size());
+  generate.options.set<int>("part",eckit::mpi::rank());
   Mesh* m = generate( grids::rgg::N32() );
   actions::build_parallel_fields(*m);
 
@@ -157,8 +157,8 @@ BOOST_AUTO_TEST_CASE( test2 )
     if( is_ghost(jnode) ) ++nb_ghost;
   }
 
-  if( mpi::rank() == 0 ) BOOST_CHECK_EQUAL( nb_ghost, 129 );
-  if( mpi::rank() == 1 ) BOOST_CHECK_EQUAL( nb_ghost, 0   );
+  if( eckit::mpi::rank() == 0 ) BOOST_CHECK_EQUAL( nb_ghost, 129 );
+  if( eckit::mpi::rank() == 1 ) BOOST_CHECK_EQUAL( nb_ghost, 0   );
 
   actions::build_periodic_boundaries(*m);
 
@@ -168,8 +168,8 @@ BOOST_AUTO_TEST_CASE( test2 )
     if( is_ghost(jnode) ) ++nb_periodic;
   }
 
-  if( mpi::rank() == 0 ) BOOST_CHECK_EQUAL( nb_periodic, 32 );
-  if( mpi::rank() == 1 ) BOOST_CHECK_EQUAL( nb_periodic, 32 );
+  if( eckit::mpi::rank() == 0 ) BOOST_CHECK_EQUAL( nb_periodic, 32 );
+  if( eckit::mpi::rank() == 1 ) BOOST_CHECK_EQUAL( nb_periodic, 32 );
 
   std::stringstream filename; filename << "periodic.msh";
   Gmsh().write(*m,filename.str());
@@ -177,4 +177,4 @@ BOOST_AUTO_TEST_CASE( test2 )
 }
 
 
-BOOST_AUTO_TEST_CASE( finalize ) { mpi::finalize(); }
+BOOST_AUTO_TEST_CASE( finalize ) { eckit::mpi::finalize(); }

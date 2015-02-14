@@ -21,7 +21,7 @@ namespace eckit {
   class PathName;
 }
 namespace atlas {
-  class FieldGroup;
+  class FieldSet;
   class Field;
   class Grid;
   namespace grids { class Unstructured; }
@@ -40,13 +40,21 @@ namespace io {
  class PointCloud {
  public:
 
-  /**
-   * @brief Read PointCloud file into a Grid
-   * @param path input file path
-   * @param Grid data structure pointer to use
-   * @return Grid data structure pointer
-   */
-  static grids::Unstructured* read(const eckit::PathName& path);
+   /**
+    * @brief Read PointCloud file into a Grid
+    * @param path input file path
+    * @param Grid data structure pointer to use
+    * @return Grid data structure pointer
+    */
+   static grids::Unstructured* read( const eckit::PathName& path );
+
+   /**
+    * @brief Read PointCloud file into a Grid
+    * @param path input file path
+    * @param Grid data structure pointer to use
+    * @return Grid data structure pointer
+    */
+   static grids::Unstructured* read(const eckit::PathName& path, std::vector<std::string>& vfnames );
 
   /**
    * @brief Write Grid to PointCloud file (overwrites possibly existing file)
@@ -56,11 +64,11 @@ namespace io {
   static void write(const eckit::PathName& path, const Grid& grid);
 
   /**
-   * @brief Write FieldGroup to PointCloud file (overwrites possibly existing file)
+   * @brief Write FieldSet to PointCloud file (overwrites possibly existing file)
    * @param path output file path
-   * @param fieldset FieldGroup data structure
+   * @param fieldset FieldSet data structure
    */
-  static void write(const eckit::PathName& path, const FieldGroup& fieldset);
+  static void write(const eckit::PathName& path, const FieldSet& fieldset);
 
   /**
    * @brief Write lan/lon to PointCloud file (overwrites possibly existing file)
@@ -72,13 +80,6 @@ namespace io {
   static void write(
       const eckit::PathName& path,
       const std::vector< Grid::Point >& pts );
-
-  /**
-   * @brief Write lan/lon and Field to PointCloud file (overwrites possibly existing file)
-   * @param path output file path
-   * @param field Field data structure
-   */
-  static void write(const eckit::PathName& path, const Field& field);
 
   /**
    * @brief Write lan/lon and fields to PointCloud file (overwrites possibly existing file)
@@ -121,7 +122,7 @@ extern "C"
   void                 atlas__pointcloud__delete        (PointCloud* This);
   grids::Unstructured* atlas__pointcloud__read          (PointCloud* This, char* file_path);
   grids::Unstructured* atlas__read_pointcloud           (char* file_path);
-  void                 atlas__write_pointcloud_fieldset (char* file_path, FieldGroup* fieldset);
+  void                 atlas__write_pointcloud_fieldset (char* file_path, FieldSet* fieldset);
   void                 atlas__write_pointcloud_field    (char* file_path, Field* field);
 }
 

@@ -34,7 +34,7 @@ struct IsGhostPoint
     part_   = part;
     ridx_   = ridx;
     base_   = base;
-    mypart_ = mpi::rank();
+    mypart_ = eckit::mpi::rank();
   }
 
   bool operator()(int idx)
@@ -84,8 +84,8 @@ bool operator < (const gidx_t g, const Node& n)
 GatherScatter::GatherScatter() :
   is_setup_(false)
 {
-  myproc = mpi::rank();
-  nproc  = mpi::size();
+  myproc = eckit::mpi::rank();
+  nproc  = eckit::mpi::size();
   root_   = 0;
 }
 
@@ -117,9 +117,9 @@ void GatherScatter::setup( const int part[],
     }
   }
 
-  ATLAS_MPI_CHECK_RESULT( MPI_Gather( &loccnt_, 1, MPI_INT,
+  ECKIT_MPI_CHECK_RESULT( MPI_Gather( &loccnt_, 1, MPI_INT,
                                 glbcounts_.data(), 1, MPI_INT,
-                                root_, mpi::Comm::instance() ) );
+                                root_, eckit::mpi::comm() ) );
   glbcnt_ = std::accumulate(glbcounts_.begin(),glbcounts_.end(),0);
 
   glbdispls_[0]=0;
@@ -128,9 +128,9 @@ void GatherScatter::setup( const int part[],
     glbdispls_[jproc]=glbcounts_[jproc-1]+glbdispls_[jproc-1];
   }
   std::vector<gidx_t> recvnodes(glbcnt_);
-  ATLAS_MPI_CHECK_RESULT( MPI_Gatherv( sendnodes.data(), loccnt_, mpi::datatype<gidx_t>(),
-                                 recvnodes.data(), glbcounts_.data(), glbdispls_.data(), mpi::datatype<gidx_t>(),
-                                 root_, mpi::Comm::instance()) );
+  ECKIT_MPI_CHECK_RESULT( MPI_Gatherv( sendnodes.data(), loccnt_, eckit::mpi::datatype<gidx_t>(),
+                                 recvnodes.data(), glbcounts_.data(), glbdispls_.data(), eckit::mpi::datatype<gidx_t>(),
+                                 root_, eckit::mpi::comm()) );
 
   // Load recvnodes in sorting structure
   int nb_recv_nodes = glbcnt_/nvar;
@@ -175,15 +175,15 @@ void GatherScatter::setup( const int part[],
   }
 
   // Get loccnt_
-  ATLAS_MPI_CHECK_RESULT( MPI_Scatter( glbcounts_.data(), 1, MPI_INT,
+  ECKIT_MPI_CHECK_RESULT( MPI_Scatter( glbcounts_.data(), 1, MPI_INT,
                                  &loccnt_,          1, MPI_INT,
-                                 root_, mpi::Comm::instance()) );
+                                 root_, eckit::mpi::comm()) );
 
   locmap_.resize(loccnt_);
 
-  ATLAS_MPI_CHECK_RESULT( MPI_Scatterv( needed.data(), glbcounts_.data(), glbdispls_.data(),
+  ECKIT_MPI_CHECK_RESULT( MPI_Scatterv( needed.data(), glbcounts_.data(), glbdispls_.data(),
                                   MPI_INT, locmap_.data(), loccnt_,
-                                  MPI_INT, root_, mpi::Comm::instance() ) );
+                                  MPI_INT, root_, eckit::mpi::comm() ) );
   is_setup_ = true;
 }
 
@@ -214,7 +214,7 @@ void GatherScatter::setup( const int part[],
         maxgid = std::max(maxgid,glb_idx[jj]);
       }
     }
-    ATLAS_MPI_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&maxgid,1,mpi::datatype<gidx_t>(),MPI_MAX,mpi::Comm::instance()) );
+    ECKIT_MPI_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&maxgid,1,eckit::mpi::datatype<gidx_t>(),MPI_MAX,eckit::mpi::comm()) );
   }
 
   Array<int> sendnodes(parsize_,3);
@@ -241,9 +241,9 @@ void GatherScatter::setup( const int part[],
   }
 
   loccnt_ = nodes.total_size();
-  ATLAS_MPI_CHECK_RESULT( MPI_Gather( &loccnt_, 1, MPI_INT,
+  ECKIT_MPI_CHECK_RESULT( MPI_Gather( &loccnt_, 1, MPI_INT,
                      glbcounts_.data(), 1, MPI_INT,
-                     root_, mpi::Comm::instance() ) );
+                     root_, eckit::mpi::comm() ) );
   glbcnt_ = std::accumulate(glbcounts_.begin(),glbcounts_.end(),0);
 
   glbdispls_[0]=0;
@@ -252,9 +252,9 @@ void GatherScatter::setup( const int part[],
     glbdispls_[jproc]=glbcounts_[jproc-1]+glbdispls_[jproc-1];
   }
   std::vector<int> recvnodes(glbcnt_);
-  ATLAS_MPI_CHECK_RESULT( MPI_Gatherv( sendnodes.data(), loccnt_, MPI_INT,
+  ECKIT_MPI_CHECK_RESULT( MPI_Gatherv( sendnodes.data(), loccnt_, MPI_INT,
                                  recvnodes.data(), glbcounts_.data(), glbdispls_.data(), MPI_INT,
-                      root_, mpi::Comm::instance()) );
+                      root_, eckit::mpi::comm()) );
 
   // Load recvnodes in sorting structure
   int nb_recv_nodes = glbcnt_/3;
@@ -345,16 +345,16 @@ void GatherScatter::setup( const int part[],
 //  std::cout << std::endl;
 
   // Get loccnt_
-  ATLAS_MPI_CHECK_RESULT( MPI_Scatter( glbcounts_.data(), 1, MPI_INT,
+  ECKIT_MPI_CHECK_RESULT( MPI_Scatter( glbcounts_.data(), 1, MPI_INT,
                                  &loccnt_,     1, MPI_INT,
-                                 root_, mpi::Comm::instance()) );
+                                 root_, eckit::mpi::comm()) );
 
 //  DEBUG_VAR_SYNC(loccnt_);
   locmap_.resize(loccnt_);
 
-  ATLAS_MPI_CHECK_RESULT( MPI_Scatterv( needed.data(), glbcounts_.data(), glbdispls_.data(),
+  ECKIT_MPI_CHECK_RESULT( MPI_Scatterv( needed.data(), glbcounts_.data(), glbdispls_.data(),
                                   MPI_INT, locmap_.data(), loccnt_,
-                                  MPI_INT, root_, mpi::Comm::instance() ) );
+                                  MPI_INT, root_, eckit::mpi::comm() ) );
 
 
 //   std::cout << myproc << "  :  locmap_  = ";

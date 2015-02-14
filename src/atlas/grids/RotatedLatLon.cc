@@ -37,9 +37,6 @@ RotatedLatLon::RotatedLatLon( const eckit::Params& p )
   nptsNS_(0),
   nptsWE_(0)
 {
-   if( !p.get("hash").isNil() )
-      hash_ = p["hash"].as<std::string>();
-
    bbox_ = make_bounding_box(p);
 
    if( p.has("Nj") )
@@ -167,8 +164,6 @@ GridSpec RotatedLatLon::spec() const
    grid_spec.set("SouthPoleRotAngle",eckit::Value(south_pole_rot_angle_));
    grid_spec.set("lat_inc",eckit::Value(nsIncrement_));
    grid_spec.set("lon_inc",eckit::Value(weIncrement_));
-
-   grid_spec.set("hash",eckit::Value(hash_));
 
    grid_spec.set_bounding_box(bbox_);
 

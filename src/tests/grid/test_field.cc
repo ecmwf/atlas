@@ -108,9 +108,9 @@ void TestField::test_constructor()
 
 void TestField::run()
 {
-    mpi::init();
+    eckit::mpi::init();
     test_constructor();
-    mpi::finalize();
+    eckit::mpi::finalize();
 }
 
 //-----------------------------------------------------------------------------

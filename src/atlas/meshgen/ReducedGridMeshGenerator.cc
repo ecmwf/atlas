@@ -61,11 +61,14 @@ struct Region
 ReducedGridMeshGenerator::ReducedGridMeshGenerator()
 {
   // This option creates a point at the pole when true
-  options.set("include_pole",false);
+  options.set("include_pole",bool( Resource<bool>("-include_pole;atlas.meshgen.include_pole", false ) ) );
+
+  // This option sets the part that will be generated
+  options.set("patch_pole", bool(Resource<bool>("--patch_pole;atlas.meshgen.patch_pole",false ) ) );
 
   // This option creates elements that connect east to west at greenwich meridian
   // when true, instead of creating periodic ghost-points at east boundary when false
-  options.set("three_dimensional",false);
+  options.set("three_dimensional",bool(Resource<bool>("--three_dimensional;atlas.meshgen.three_dimensional",false ) ));
 
   // This option sets number of parts the mesh will be split in
   options.set("nb_parts",1);
@@ -86,6 +89,11 @@ ReducedGridMeshGenerator::ReducedGridMeshGenerator()
 
   triangulate_quads_ = Resource< bool > ( "-triangulate;atlas.meshgen.triangulate", false );
   //Log::error() << "triangulate =" << triangulate_quads_ << std::endl;
+
+
+//  Log::info() << "three_dimensional" << options.get<bool>("three_dimensional") << std::endl;
+//  Log::info() << "triangulate" << triangulate_quads_ << std::endl;
+
 }
 
 Mesh* ReducedGridMeshGenerator::operator()( const ReducedGrid& grid )
@@ -93,6 +101,20 @@ Mesh* ReducedGridMeshGenerator::operator()( const ReducedGrid& grid )
   return generate(grid);
 }
 
+void ReducedGridMeshGenerator::set_three_dimensional(bool f)
+{
+    options.set("three_dimensional",f);
+}
+
+void ReducedGridMeshGenerator::set_patch_pole(bool f)
+{
+  options.set("patch_pole",f);
+}
+
+void ReducedGridMeshGenerator::set_include_pole(bool f)
+{
+  options.set("include_pole",f);
+}
 
 //std::vector<int> RGGMeshGenerator::partition(const RGG& rgg) const
 //{
@@ -132,7 +154,7 @@ Mesh* ReducedGridMeshGenerator::operator()( const ReducedGrid& grid )
 //  return part;
 //}
 
-Mesh* ReducedGridMeshGenerator::generate(const ReducedGrid& rgg)
+void ReducedGridMeshGenerator::generate(const ReducedGrid& rgg, Mesh& mesh )
 {
   int mypart   = options.get<int>("part");
   int nb_parts = options.get<int>("nb_parts");
@@ -164,9 +186,15 @@ Mesh* ReducedGridMeshGenerator::generate(const ReducedGrid& rgg)
   Region region;
   generate_region(rgg,part,mypart,region);
 
-  Mesh* mesh = generate_mesh(rgg,part,region);
-  mesh->grid(rgg);
-  return mesh;
+  generate_mesh(rgg,part,region,mesh);
+  mesh.grid(rgg);
+}
+
+Mesh* ReducedGridMeshGenerator::generate(const ReducedGrid& rgg)
+{
+	Mesh* mesh = new Mesh();
+	generate(rgg,*mesh);
+	return mesh;
 }
 
 
@@ -648,12 +676,13 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rgg, const std
   }
 }
 
-Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
+void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
                                       const std::vector<int>& parts,
-                                      const Region& region)
+									  const Region& region,
+									Mesh& mesh )
 {
   double tol = 1e-3;
-  Mesh* mesh = new Mesh();
+
   int mypart = options.get<int>("part");
   int nparts = options.get<int>("nb_parts");
   int n, l;
@@ -661,6 +690,9 @@ Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
   bool include_north_pole = (mypart == 0       ) && options.get<bool>("include_pole");
   bool include_south_pole = (mypart == nparts-1) && options.get<bool>("include_pole");
   bool three_dimensional  = options.get<bool>("three_dimensional");
+  bool patch_north_pole   = (mypart == 0       ) && options.get<bool>("patch_pole") && three_dimensional;
+  bool patch_south_pole   = (mypart == nparts-1) && options.get<bool>("patch_pole") && three_dimensional;
+
   if( three_dimensional && nparts != 1 )
     throw BadParameter("Cannot generate three_dimensional mesh in parallel",Here());
   int nnodes  = region.nnodes;
@@ -670,9 +702,15 @@ Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
     ++nnodes;
     ntriags += rgg.nlon(0);
   }
+  else if (patch_north_pole) {
+    ntriags += rgg.nlon(0)-2;
+  }
   if (include_south_pole) {
     ++nnodes;
     ntriags += rgg.nlon(rgg.nlat()-1);
+  }
+  else if (patch_south_pole) {
+    ntriags += rgg.nlon(rgg.nlat()-1)-2;
   }
   if (three_dimensional) {
     nnodes -= rgg.nlat();
@@ -709,14 +747,17 @@ Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
 
   ArrayShape shape = make_shape(nnodes,Field::UNDEF_VARS);
 
-  FunctionSpace& nodes = mesh->create_function_space( "nodes","LagrangeP1",shape );
+  if( !mesh.has_function_space("nodes") )
+	mesh.create_function_space( "nodes","LagrangeP1",shape );
+
+  FunctionSpace& nodes = mesh.function_space( "nodes" );
 
   nodes.metadata().set("type",static_cast<int>(Entity::NODES));
 
-  ArrayView<double,2> coords        ( nodes.create_field<double>("coordinates",   2) );
-  ArrayView<gidx_t,1> glb_idx       ( nodes.create_field<gidx_t>("glb_idx",       1) );
-  ArrayView<int,   1> part          ( nodes.create_field<int   >("partition",     1) );
-  ArrayView<int,   1> flags         ( nodes.create_field<int   >("flags",         1) );
+  ArrayView<double,2> coords        ( nodes.create_field<double>("coordinates",   2, IF_EXISTS_RETURN) );
+  ArrayView<gidx_t,1> glb_idx       ( nodes.create_field<gidx_t>("glb_idx",       1, IF_EXISTS_RETURN) );
+  ArrayView<int,   1> part          ( nodes.create_field<int   >("partition",     1, IF_EXISTS_RETURN) );
+  ArrayView<int,   1> flags         ( nodes.create_field<int   >("flags",         1, IF_EXISTS_RETURN) );
 
   bool stagger = options.get<bool>("stagger");
 
@@ -784,6 +825,7 @@ Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
     Topology::set(flags(jnode),Topology::NORTH);
     ++jnode;
   }
+
   int jsouth=-1;
   if (include_south_pole)
   {
@@ -799,15 +841,18 @@ Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
     ++jnode;
   }
 
+
+
   shape = make_shape(nquads,Field::UNDEF_VARS);
-  FunctionSpace& quads = mesh->create_function_space( "quads","LagrangeP1",shape );
+
+  FunctionSpace& quads = mesh.create_function_space( "quads","LagrangeP1",shape );
   quads.metadata().set("type",static_cast<int>(Entity::ELEMS));
   IndexView<int,2> quad_nodes( quads.create_field<int>("nodes",4) );
   ArrayView<gidx_t,1> quad_glb_idx( quads.create_field<gidx_t>("glb_idx",1) );
   ArrayView<int,1> quad_part( quads.create_field<int>("partition",1) );
 
   shape = make_shape(ntriags,Field::UNDEF_VARS);
-  FunctionSpace& triags = mesh->create_function_space( "triags","LagrangeP1",shape );
+  FunctionSpace& triags = mesh.create_function_space( "triags","LagrangeP1",shape );
   triags.metadata().set("type",static_cast<int>(Entity::ELEMS));
   IndexView<int,2> triag_nodes( triags.create_field<int>("nodes",3) );
   ArrayView<gidx_t,1> triag_glb_idx( triags.create_field<gidx_t>("glb_idx",1) );
@@ -895,6 +940,68 @@ Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
       ++jtriag;
     }
   }
+  else if (patch_north_pole)
+  {
+    int jlat = 0;
+    int ilat = 0;
+    int ip1, ip2, ip3;
+    int q1,q2,q3,q4;
+
+    // start with triag:
+    ip1 = 0;
+    ip2 = 1;
+    ip3 = rgg.nlon(0)-1;
+    triag_nodes(jtriag,0) = offset_loc[ilat] + ip1;
+    triag_nodes(jtriag,1) = offset_loc[ilat] + ip2;
+    triag_nodes(jtriag,2) = offset_loc[ilat] + ip3;
+    triag_glb_idx(jtriag) = jquad+jtriag+1;
+    triag_part(jtriag) = mypart;
+    ++jtriag;
+
+    q1 = ip2;
+    q4 = ip3;
+    for ( int k=0; k<(rgg.nlon(jlat)-4)/2; ++k )
+    {
+      q2=q1+1;
+      q3=q4-1;
+
+      // add triag
+      ip1 = q1;
+      ip2 = q3;
+      ip3 = q4;
+      triag_nodes(jtriag,0) = offset_loc[ilat] + ip1;
+      triag_nodes(jtriag,1) = offset_loc[ilat] + ip2;
+      triag_nodes(jtriag,2) = offset_loc[ilat] + ip3;
+      triag_glb_idx(jtriag) = jquad+jtriag+1;
+      triag_part(jtriag) = mypart;
+      ++jtriag;
+
+      // add triag
+      ip1 = q1;
+      ip2 = q2;
+      ip3 = q3;
+      triag_nodes(jtriag,0) = offset_loc[ilat] + ip1;
+      triag_nodes(jtriag,1) = offset_loc[ilat] + ip2;
+      triag_nodes(jtriag,2) = offset_loc[ilat] + ip3;
+      triag_glb_idx(jtriag) = jquad+jtriag+1;
+      triag_part(jtriag) = mypart;
+      ++jtriag;
+
+      q1 = q2;
+      q4 = q3;
+    }
+    // end with triag:
+    ip1 = q1;
+    ip2 = q1+1;
+    ip3 = q4;
+    triag_nodes(jtriag,0) = offset_loc[ilat] + ip1;
+    triag_nodes(jtriag,1) = offset_loc[ilat] + ip2;
+    triag_nodes(jtriag,2) = offset_loc[ilat] + ip3;
+    triag_glb_idx(jtriag) = jquad+jtriag+1;
+    triag_part(jtriag) = mypart;
+    ++jtriag;
+  }
+
 
   if (include_south_pole)
   {
@@ -915,6 +1022,67 @@ Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
       ++jtriag;
     }
   }
+  else if (patch_north_pole)
+  {
+    int jlat = rgg.nlat()-1;
+    int ilat = region.south-region.north;
+    int ip1, ip2, ip3;
+    int q1,q2,q3,q4;
+
+    // start with triag:
+    ip1 = 0;
+    ip2 = 1;
+    ip3 = rgg.nlon(0)-1;
+    triag_nodes(jtriag,0) = offset_loc[ilat] + ip1;
+    triag_nodes(jtriag,1) = offset_loc[ilat] + ip2;
+    triag_nodes(jtriag,2) = offset_loc[ilat] + ip3;
+    triag_glb_idx(jtriag) = jquad+jtriag+1;
+    triag_part(jtriag) = mypart;
+    ++jtriag;
+
+    q1 = ip2;
+    q4 = ip3;
+    for ( int k=0; k<(rgg.nlon(jlat)-4)/2; ++k )
+    {
+      q2=q1+1;
+      q3=q4-1;
+
+      // add triag
+      ip1 = q1;
+      ip2 = q3;
+      ip3 = q4;
+      triag_nodes(jtriag,0) = offset_loc[ilat] + ip1;
+      triag_nodes(jtriag,1) = offset_loc[ilat] + ip2;
+      triag_nodes(jtriag,2) = offset_loc[ilat] + ip3;
+      triag_glb_idx(jtriag) = jquad+jtriag+1;
+      triag_part(jtriag) = mypart;
+      ++jtriag;
+
+      // add triag
+      ip1 = q1;
+      ip2 = q2;
+      ip3 = q3;
+      triag_nodes(jtriag,0) = offset_loc[ilat] + ip1;
+      triag_nodes(jtriag,1) = offset_loc[ilat] + ip2;
+      triag_nodes(jtriag,2) = offset_loc[ilat] + ip3;
+      triag_glb_idx(jtriag) = jquad+jtriag+1;
+      triag_part(jtriag) = mypart;
+      ++jtriag;
+
+      q1 = q2;
+      q4 = q3;
+    }
+    // end with triag:
+    ip1 = q1;
+    ip2 = q1+1;
+    ip3 = q4;
+    triag_nodes(jtriag,0) = offset_loc[ilat] + ip1;
+    triag_nodes(jtriag,1) = offset_loc[ilat] + ip2;
+    triag_nodes(jtriag,2) = offset_loc[ilat] + ip3;
+    triag_glb_idx(jtriag) = jquad+jtriag+1;
+    triag_part(jtriag) = mypart;
+    ++jtriag;
+  }
 
 
   nodes.metadata().set("nb_owned",nnodes);
@@ -929,16 +1097,14 @@ Mesh* ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
   quads.metadata().set("max_glb_idx", nquads+ntriags);
   triags.metadata().set("max_glb_idx",nquads+ntriags);
 
-  generate_global_element_numbering( *mesh );
-
-  return mesh;
+  generate_global_element_numbering( mesh );
 }
 
 void ReducedGridMeshGenerator::generate_global_element_numbering( Mesh& mesh )
 {
   int loc_nb_elems = 0;
-  std::vector<int> elem_counts( mpi::size() );
-  std::vector<int> elem_displs( mpi::size() );
+  std::vector<int> elem_counts( eckit::mpi::size() );
+  std::vector<int> elem_displs( eckit::mpi::size() );
   for( int f=0; f<mesh.nb_function_spaces(); ++f )
   {
     FunctionSpace& elements = mesh.function_space(f);
@@ -947,15 +1113,15 @@ void ReducedGridMeshGenerator::generate_global_element_numbering( Mesh& mesh )
       loc_nb_elems += elements.shape(0);
     }
   }
-  ATLAS_MPI_CHECK_RESULT( MPI_Allgather( &loc_nb_elems, 1, MPI_INT,
-                                   elem_counts.data(), 1, MPI_INT, mpi::Comm::instance()) );
+  ECKIT_MPI_CHECK_RESULT( MPI_Allgather( &loc_nb_elems, 1, MPI_INT,
+                                   elem_counts.data(), 1, MPI_INT, eckit::mpi::comm()) );
   elem_displs[0] = 0;
-  for( int jpart=1; jpart<mpi::size(); ++jpart )
+  for( int jpart=1; jpart<eckit::mpi::size(); ++jpart )
   {
     elem_displs[jpart] = elem_displs[jpart-1] + elem_counts[jpart-1];
   }
 
-  gidx_t gid = 1+elem_displs[ mpi::rank() ];
+  gidx_t gid = 1+elem_displs[ eckit::mpi::rank() ];
 
   for( int f=0; f<mesh.nb_function_spaces(); ++f )
   {

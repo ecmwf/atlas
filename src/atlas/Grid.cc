@@ -37,7 +37,7 @@ Grid* Grid::create( const Params& p )
   return Factory<Grid>::instance().get( p["grid_type"] ).create(p);
 }
 
-Grid* Grid::create(const std::string& uid)
+Grid* Grid::create(const Grid::uid_t& uid)
 {
   return grids::grid_from_uid(uid);
 }

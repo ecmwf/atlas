@@ -42,7 +42,6 @@ void LonLatGrid::set_typeinfo()
   std::stringstream stream;
   stream << "ll."<<nlon()<<"x"<<nlat();
   uid_ = stream.str();
-  hash_ = stream.str();
   grid_type_ = grid_type_str();
 }
 
@@ -125,7 +124,7 @@ void LonLatGrid::setup(const Params& p)
       else if (p.has("lon_inc") && p.has("lat_inc"))
       {
         double londeg = p["lon_inc"];
-        double latdeg = p["lat_deg"];
+        double latdeg = p["lat_inc"];
         setup(londeg,latdeg,bbox);
       }
     }
@@ -140,7 +139,7 @@ void LonLatGrid::setup(const Params& p)
       else if (p.has("lon_inc") && p.has("lat_inc"))
       {
         double londeg = p["lon_inc"];
-        double latdeg = p["lat_deg"];
+        double latdeg = p["lat_inc"];
         setup(londeg,latdeg,poles);
       }
       else
@@ -233,7 +232,6 @@ GridSpec LonLatGrid::spec() const
   GridSpec grid_spec( grid_type_str() );
 
   grid_spec.uid(uid());
-  grid_spec.set("hash", hash() );
 
   grid_spec.set("nlon", nlon() );
   grid_spec.set("nlat", nlat() );

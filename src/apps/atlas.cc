@@ -75,22 +75,22 @@ void Version::run()
     bool feature_Grib(false);
     bool feature_Trans(false);
     bool feature_Tesselation(false);
-#ifdef HAVE_FORTRAN
+#ifdef ATLAS_HAVE_FORTRAN
       feature_fortran = true;
 #endif
-#ifdef HAVE_MPI
+#ifdef ATLAS_HAVE_MPI
       feature_MPI = true;
 #endif
-#ifdef HAVE_OMP
+#ifdef ATLAS_HAVE_OMP
       feature_OpenMP = true;
 #endif
 #ifdef ECKIT_HAVE_GRIB
       feature_Grib = true;
 #endif
-#ifdef HAVE_TRANS
+#ifdef ATLAS_HAVE_TRANS
       feature_Trans = true;
 #endif
-#ifdef HAVE_TESSELATION
+#ifdef ATLAS_HAVE_TESSELATION
       feature_Tesselation = true;
 #endif
       Log::info() << "  Features:" << std::endl;

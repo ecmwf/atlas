@@ -151,7 +151,7 @@ void build_statistics( Mesh& mesh )
   std::ofstream ofs;
   eckit::LocalPathName stats_path("stats.txt");
   int idt = 10;
-  if( mpi::size() == 1 )
+  if( eckit::mpi::size() == 1 )
   {
     ofs.open( stats_path.c_str(), std::ofstream::out );
     ofs << "# STATISTICS rho (min_length/max_length), eta (quality) \n";
@@ -163,7 +163,7 @@ void build_statistics( Mesh& mesh )
 
   if( mesh.has_function_space("triags") )
   {
-    if( mpi::size() == 1 )
+    if( eckit::mpi::size() == 1 )
       ofs.open( stats_path.c_str(), std::ofstream::app );
 
     FunctionSpace& elems = mesh.function_space("triags");
@@ -195,7 +195,7 @@ void build_statistics( Mesh& mesh )
       // see http://www.gidhome.com/component/manual/referencemanual/preprocessing/mesh_menu/mesh_quality
       eta(jelem) = (4*area*std::sqrt(3.))/( std::pow(l12,2)+std::pow(l23,2)+std::pow(l31,2) );
 
-      if( mpi::size() == 1 )
+      if( eckit::mpi::size() == 1 )
       {
         ofs << std::setw(idt) << rho[jelem]
             << std::setw(idt) << eta[jelem]
@@ -203,12 +203,12 @@ void build_statistics( Mesh& mesh )
       }
     }
 
-    if( mpi::size() == 1 )
+    if( eckit::mpi::size() == 1 )
       ofs.close();
   }
   if( mesh.has_function_space("quads") )
   {
-    if( mpi::size() == 1 )
+    if( eckit::mpi::size() == 1 )
       ofs.open( stats_path.c_str(), std::ofstream::app );
 
     FunctionSpace& elems = mesh.function_space("quads");
@@ -240,19 +240,19 @@ void build_statistics( Mesh& mesh )
       double max_length = std::max(std::max(std::max(l12,l23),l34),l41);
       rho(jelem) = min_length/max_length;
 
-      if( mpi::size() == 1 )
+      if( eckit::mpi::size() == 1 )
       {
         ofs << std::setw(idt) << rho[jelem]
             << std::setw(idt) << eta[jelem]
             << "\n";
       }
     }
-    if( mpi::size() == 1 )
+    if( eckit::mpi::size() == 1 )
       ofs.close();
   }
 
   eckit::LocalPathName dual_stats_path("dual_stats.txt");
-  if( mpi::size() == 1 )
+  if( eckit::mpi::size() == 1 )
   {
     ofs.open( dual_stats_path.c_str(), std::ofstream::out );
     ofs << "# STATISTICS dual_area \n";
@@ -273,7 +273,7 @@ void build_statistics( Mesh& mesh )
       dual_delta_sph(jnode) = std::sqrt(dual_volumes(jnode)*hx*hy);
     }
 
-    if( mpi::size() == 1 )
+    if( eckit::mpi::size() == 1 )
     {
       for( int jnode=0; jnode<nodes.shape(0); ++jnode )
       {
@@ -282,7 +282,7 @@ void build_statistics( Mesh& mesh )
       }
     }
   }
-  if( mpi::size() == 1 )
+  if( eckit::mpi::size() == 1 )
     ofs.close();
 
 

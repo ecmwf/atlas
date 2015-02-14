@@ -63,6 +63,7 @@ subroutine FieldSet__fields(this,fields)
   type(c_ptr), pointer :: fields_ptr(:)
   type(c_ptr) :: fields_cptr
   integer :: nb_fields, jfield
+  fields_cptr = c_null_ptr
   call atlas__FieldSet__fields(this%private%object, fields_cptr, nb_fields)
   call c_f_pointer( fields_cptr, fields_ptr, (/nb_fields/) )
   allocate( fields(nb_fields) )

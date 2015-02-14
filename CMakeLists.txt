@@ -32,8 +32,17 @@ set( PERSISTENT_NAMESPACE "eckit" CACHE INTERNAL "" )
 
 ecbuild_use_package( PROJECT eckit VERSION 0.8 REQUIRED )
 
+foreach( _eckit_feature ${ECKIT_FEATURES} )
+  set( ${_eckit_feature} 1 )
+endforeach()
+
 if( ECKIT_HAVE_GRIB )
    message( STATUS "eckit has GRIB support")
+   set( ECKIT_GRIB_LIBRARIES eckit_grib )
+endif()
+
+if( ECKIT_HAVE_MPI )
+   message( STATUS "eckit has MPI support")
 endif()
 
 ecbuild_declare_project()
@@ -55,40 +64,52 @@ if( HAVE_FORTRAN )
                       DEFAULT ${ENABLE_TESTS}
                       DESCRIPTION "Fortran Unit Test Framework"
                       REQUIRED_PACKAGES "PROJECT fctest VERSION 0.1" )
-endif()
 
-### OMP ...
+  set( Fortran Fortran )
 
-ecbuild_add_option(
-	FEATURE OMP
-	DESCRIPTION "support for OpenMP threaded parallelism" )
-if( ENABLE_OMP )
-    ecbuild_enable_omp()
-else()
-    ecbuild_enable_ompstubs()
 endif()
 
 ### MPI ...
 
 ecbuild_add_option( FEATURE MPI
-                    DESCRIPTION "support for MPI distributed parallelism" )
+                    DESCRIPTION "Support for MPI distributed parallelism"
+                    REQUIRED_PACKAGES "MPI COMPONENTS CXX ${Fortran}" )
 
-if( ENABLE_MPI )
-
-  ecbuild_enable_mpi()
-
-  if( NOT MPI_CXX_FOUND )
-    set( HAVE_MPI 0 )
+if( HAVE_MPI AND ECKIT_HAVE_ECKIT_MPI )
+  message( STATUS "Using eckit_mpi" )
+  set( ECKIT_MPI_LIBRARIES eckit_mpi )
+elseif( NOT HAVE_MPI AND ECKIT_HAVE_ECKIT_MPISTUBS )
+  message( STATUS "Using eckit_mpistubs" )
+  set( ECKIT_MPI_LIBRARIES eckit_mpistubs )
+  if( HAVE_FORTRAN )
+    ecbuild_use_package( PROJECT mpistubs )
+    set( MPI_Fortran_LIBRARIES mpistubs_f )
+    set( MPI_Fortran_INCLUDE_PATH ${MPISTUBS_INCLUDE_DIRS} )
   endif()
-
+else()
+  message( FATAL_ERROR "eckit_mpi or eckit_mpistubs not found" )
 endif()
+
+
+### OMP ...
+
+ecbuild_add_option(
+    FEATURE OMP
+    DESCRIPTION "support for OpenMP threaded parallelism"
+    REQUIRED_PACKAGES "OMP COMPONENTS CXX ${Fortran}" )
+
+if( HAVE_FORTRAN )
+  cmake_add_fortran_flags( "${OMP_Fortran_FLAGS}" )
+endif()
+cmake_add_cxx_flags( "${OMP_CXX_FLAGS}" )
+
 
 ### trans_api ...
 
 ecbuild_add_option(
-	FEATURE TRANS
-	DESCRIPTION "Support for trasnformations between SH and Grid space"
-	REQUIRED_PACKAGES "PROJECT trans_api VERSION 0.1" )
+    FEATURE TRANS
+    DESCRIPTION "Support for trasnformations between SH and Grid space"
+    REQUIRED_PACKAGES "PROJECT trans_api VERSION 0.1 QUIET" )
 
 ### tesselation ...
 
@@ -117,7 +138,7 @@ ecbuild_add_option( FEATURE SANDBOX
 ############################################################################################
 # export package info
 
-list( APPEND ATLAS_TPLS      eckit )
+list( APPEND ATLAS_TPLS  eckit )
 
 set( ATLAS_INCLUDE_DIRS   ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src )
 
@@ -157,11 +178,25 @@ add_subdirectory( src )
 ############################################################################################
 # pkg-config
 
-ecbuild_pkgconfig( 
-  URL              "https://software.ecmwf.int/wiki/display/ATLAS" 
-  DESCRIPTION      "Atlas framework for parallel datastructures"
-  IGNORE_LIBRARIES fctest eckit_maths eckit_web
+set( ATLAS_URL "https://software.ecmwf.int/wiki/display/ATLAS" )
+set( ATLAS_DESCRIPTION "Atlas framework for parallel mesh datastructures" )
+
+ecbuild_pkgconfig()
+
+ecbuild_pkgconfig(
+  NAME             atlas-c++
+  LANGUAGES        CXX
+  LIBRARIES        atlas
 )
+
+if( HAVE_FORTRAN )
+  ecbuild_pkgconfig(
+    NAME             atlas-fortran
+    LANGUAGES        Fortran
+    LIBRARIES        atlas_f
+    NO_PRIVATE_INCLUDE_DIRS
+  )
+endif()
 
 ############################################################################################
 # finalize

@@ -15,7 +15,7 @@ endfunction()
 generate_fortran_bindings(FORTRAN_BINDINGS ../grids/grids.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../grids/ReducedGrid.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../Field.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../FieldGroup.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../FieldSet.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../FunctionSpace.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../Mesh.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../Metadata.h)
@@ -37,7 +37,6 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../mpi/mpi.h)
 
 
 ### atlas fortran lib
-
 ecbuild_add_library( TARGET atlas_f
     AUTO_VERSION
     CONDITION CMAKE_Fortran_COMPILER_LOADED
@@ -51,7 +50,8 @@ ecbuild_add_library( TARGET atlas_f
         atlas_logging.cc
         atlas_resource.h
         atlas_resource.cc
-  LIBS atlas ${ATLAS_MPI_FORTRAN_LIBRARIES}
+  INCLUDES ${MPI_Fortran_INCLUDE_PATH}
+  LIBS atlas ${MPI_Fortran_LIBRARIES}
 )
 
 add_custom_target( atlas_fortran_inc SOURCES
@@ -80,6 +80,8 @@ add_custom_target( atlas_fortran_inc SOURCES
 install( FILES ${CMAKE_Fortran_MODULE_DIRECTORY}/${CMAKE_CFG_INTDIR}/atlas_module.mod
                  DESTINATION ${INSTALL_INCLUDE_DIR} )
 
+install( FILES ${CMAKE_Fortran_MODULE_DIRECTORY}/${CMAKE_CFG_INTDIR}/atlas_mpi_module.mod
+                 DESTINATION ${INSTALL_INCLUDE_DIR} )
 
 #ecbuild_add_library( TARGET atlas_mpl_fortran
 #    AUTO_VERSION

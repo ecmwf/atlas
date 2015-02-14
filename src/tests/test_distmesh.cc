@@ -55,7 +55,7 @@ double dual_volume(Mesh& mesh)
       area += dual_volumes(node);
     }
   }
-  ATLAS_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &area, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD ) );
+  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &area, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD ) );
   return area;
 }
 
@@ -83,8 +83,8 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
   grids::rgg::N16 grid;
 
 
-  generator.options.set<int>("nb_parts", mpi::size());
-  generator.options.set<int>("part", mpi::rank());
+  generator.options.set<int>("nb_parts", eckit::mpi::size());
+  generator.options.set<int>("part", eckit::mpi::rank());
 
   Mesh::Ptr m( generator.generate( grid ) );
 

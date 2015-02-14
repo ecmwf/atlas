@@ -3,15 +3,16 @@
 
 #cmakedefine CGAL_FOUND
 
-#cmakedefine OMP_CXX_FOUND
-#ifdef OMP_CXX_FOUND
-#define HAVE_OMP
-#endif
-#cmakedefine HAVE_MPI
+#cmakedefine ATLAS_HAVE_OMP
 
-#cmakedefine HAVE_TESSELATION
-#cmakedefine HAVE_FORTRAN
-#cmakedefine HAVE_TRANS
+#cmakedefine ATLAS_HAVE_MPI
+#ifndef ATLAS_HAVE_MPI
+#define ECKIT_MPISTUBS
+#endif
+
+#cmakedefine ATLAS_HAVE_TESSELATION
+#cmakedefine ATLAS_HAVE_FORTRAN
+#cmakedefine ATLAS_HAVE_TRANS
 
 #cmakedefine ECKIT_HAVE_GRIB
 #cmakedefine HAVE_GRIB_API_1130

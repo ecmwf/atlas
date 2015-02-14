@@ -29,7 +29,7 @@
 #include "atlas/Mesh.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Field.h"
-#include "atlas/FieldGroup.h"
+#include "atlas/FieldSet.h"
 #include "atlas/Parameters.h"
 
 using namespace eckit;
@@ -45,22 +45,22 @@ static double rad = M_PI/180.;
 class GmshFile : public std::ofstream
 {
 public:
-  GmshFile(const std::string& file_path, std::ios_base::openmode mode, int part=mpi::rank())
+  GmshFile(const std::string& file_path, std::ios_base::openmode mode, int part=eckit::mpi::rank())
   {
     LocalPathName par_path(file_path);
     bool is_new_file = (mode != std::ios_base::app || !par_path.exists() );
-    if( mpi::size() == 1 || part == -1)
+    if( eckit::mpi::size() == 1 || part == -1)
     {
       std::ofstream::open(par_path.c_str(), mode );
     }
     else
     {
       Translator<int,std::string> to_str;
-      if( mpi::rank() == 0 )
+      if( eckit::mpi::rank() == 0 )
       {
         LocalPathName par_path(file_path);
         std::ofstream par_file( par_path.c_str(), std::ios_base::out );
-        for (int p=0; p<mpi::size(); ++p)
+        for (int p=0; p<eckit::mpi::size(); ++p)
         {
           LocalPathName loc_path(file_path);
           loc_path = loc_path.baseName(false)+"_p"+to_str(p)+".msh";
@@ -135,7 +135,7 @@ void write_field_nodes(const Gmsh& gmsh, Field& field, std::ostream& out)
 	for (int ilev=0; ilev<lev.size(); ++ilev)
 	{
 		int jlev = lev[ilev];
-		if( ( gather && mpi::rank() == 0 ) || !gather )
+		if( ( gather && eckit::mpi::rank() == 0 ) || !gather )
 		{
 			char field_lev[6];
 			if( field.metadata().has<int>("nb_levels") )
@@ -154,7 +154,7 @@ void write_field_nodes(const Gmsh& gmsh, Field& field, std::ostream& out)
 			if     ( nvars == 1 ) out << nvars << "\n";
 			else if( nvars <= 3 ) out << 3     << "\n";
 			out << ndata << "\n";
-			out << mpi::rank() << "\n";
+			out << eckit::mpi::rank() << "\n";
 
 			if( binary )
 			{
@@ -262,7 +262,7 @@ void write_field_elems(const Gmsh& gmsh, Field& field, std::ostream& out)
 		if     ( nvars == 1 ) out << nvars << "\n";
 		else if( nvars <= 3 ) out << 3     << "\n";
 		out << ndata << "\n";
-		out << mpi::rank() << "\n";
+		out << eckit::mpi::rank() << "\n";
 
 		if( binary )
 		{
@@ -412,14 +412,11 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh )
 
 	FunctionSpace& nodes = mesh.function_space("nodes");
 
-	if( ! nodes.has_field("coordinates") )
-			nodes.create_field<double>("coordinates",3);
-	if( ! nodes.has_field("glb_idx") )
-			nodes.create_field<gidx_t>("glb_idx",1);
-	if( ! nodes.has_field("partition") )
-			nodes.create_field<int>("partition",1);
+	nodes.create_field<double>("xyz",3,IF_EXISTS_RETURN);
+	nodes.create_field<gidx_t>("glb_idx",1,IF_EXISTS_RETURN);
+	nodes.create_field<int>("partition",1,IF_EXISTS_RETURN);
 
-	ArrayView<double,2> coords         ( nodes.field("coordinates")    );
+	ArrayView<double,2> coords         ( nodes.field("xyz")    );
 	ArrayView<gidx_t,1> glb_idx        ( nodes.field("glb_idx")        );
 	ArrayView<int,   1> part           ( nodes.field("partition")      );
 
@@ -653,7 +650,7 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh )
 
 void Gmsh::write(Mesh& mesh, const std::string& file_path) const
 {
-	int part = mesh.metadata().get<int>("part",mpi::rank());
+	int part = mesh.metadata().get<int>("part",eckit::mpi::rank());
 	bool include_ghost_elements = options.get<bool>("ghost");
 	int surfdim = options.get<int>("surfdim");
 
@@ -948,12 +945,12 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path) const
 
 }
 
-void Gmsh::write(FieldGroup& fieldset, const std::string& file_path, openmode mode) const
+void Gmsh::write(FieldSet& fieldset, const std::string& file_path, openmode mode) const
 {
 	LocalPathName path(file_path);
 	bool is_new_file = (mode != std::ios_base::app || !path.exists() );
 	bool gather = options.get<bool>("gather",false);
-	GmshFile file(path,mode,gather?-1:mpi::rank());
+	GmshFile file(path,mode,gather?-1:eckit::mpi::rank());
 
 	Log::info() << "writing fieldset " << fieldset.name() << " to gmsh file " << path << std::endl;
 
@@ -964,7 +961,7 @@ void Gmsh::write(FieldGroup& fieldset, const std::string& file_path, openmode mo
 	// Fields
 	for( int field_idx=0; field_idx<fieldset.size(); ++field_idx )
 	{
-		Field& field = fieldset.field(field_idx);
+    Field& field = fieldset[field_idx];
 		FunctionSpace& function_space = field.function_space();
 
     if( !function_space.metadata().has<int>("type") )
@@ -1000,7 +997,7 @@ void Gmsh::write(Field& field, const std::string& file_path, openmode mode) cons
 	bool binary( !options.get<bool>("ascii") );
 	if ( binary ) mode |= std::ios_base::binary;
 	bool gather = options.get<bool>("gather",false);
-	GmshFile file(path,mode,gather?-1:mpi::rank());
+	GmshFile file(path,mode,gather?-1:eckit::mpi::rank());
 
 	Log::info() << "writing field " << field.name() << " to gmsh file " << path << std::endl;
 
@@ -1057,7 +1054,7 @@ void Gmsh::write3dsurf(Mesh &mesh, const std::string& file_path)
     // nodes
 
     FunctionSpace& nodes   = mesh.function_space( "nodes" );
-    ArrayView<double,2> coords  ( nodes.field( "coordinates" ) );
+	ArrayView<double,2> coords  ( nodes.field( "xyz" ) );
     ArrayView<gidx_t,   1> glb_idx ( nodes.field( "glb_idx" ) );
 
     nb_nodes = nodes.shape(0);
@@ -1097,7 +1094,7 @@ void Gmsh::write3dsurf(Mesh &mesh, const std::string& file_path)
         {
             file << e << " 2 2 1 1";
             for( int n=0; n<3; ++n )
-                file << " " << triag_nodes(e,n);
+				file << " " << glb_idx(triag_nodes(e,n));
             file << "\n";
         }
     }
@@ -1111,7 +1108,7 @@ void Gmsh::write3dsurf(Mesh &mesh, const std::string& file_path)
         {
           file << e << " 3 2 1 1";
           for( int n=0; n<4; ++n )
-            file << " " << quad_nodes(e,n);
+			file << " " << glb_idx(quad_nodes(e,n));
           file << "\n";
         }
     }
@@ -1125,7 +1122,7 @@ void Gmsh::write3dsurf(Mesh &mesh, const std::string& file_path)
         {
             file << e << " 1 2 2 1";
             for( int n=0; n<2; ++n )
-                file << " " << edge_nodes(e,n);
+				file << " " << glb_idx(edge_nodes(e,n));
             file << "\n";
         }
     }
@@ -1192,7 +1189,7 @@ void atlas__write_gmsh_mesh (Mesh* mesh, char* file_path) {
   writer.write( *mesh, std::string(file_path) );
 }
 
-void atlas__write_gmsh_fieldset (FieldGroup* fieldset, char* file_path, int mode) {
+void atlas__write_gmsh_fieldset (FieldSet* fieldset, char* file_path, int mode) {
   Gmsh writer;
 	writer.write( *fieldset, std::string(file_path) );
 }

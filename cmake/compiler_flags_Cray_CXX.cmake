@@ -37,9 +37,9 @@ set( CMAKE_CXX_FLAGS_BIT         "-O2 -hflex_mp=conservative -hadd_paren -hfp1" 
 # LINK FLAGS
 ####################################################################
 
-set( CMAKE_Fortran_LINK_FLAGS    "-Wl,-Map,loadmap" )
-set( CMAKE_CXX_LINK_FLAGS        "-Wl,-Map,loadmap" )
-set( CMAKE_CXX_LINK_EXECUTABLE   "<CMAKE_CXX_COMPILER>  <FLAGS> <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> <OBJECTS>  -o <TARGET> <LINK_LIBRARIES> -Wl,-Bdynamic")
+#set( CMAKE_Fortran_LINK_FLAGS    "-Wl,-Map,loadmap" )
+#set( CMAKE_CXX_LINK_FLAGS        "-Wl,-Map,loadmap" )
+#set( CMAKE_CXX_LINK_EXECUTABLE   "<CMAKE_CXX_COMPILER>  <FLAGS> <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> <OBJECTS>  -o <TARGET> <LINK_LIBRARIES> -Wl,--as-needed,-lmpichf90_cray,--no-as-needed -Wl,-Bdynamic")
 
 ####################################################################
 

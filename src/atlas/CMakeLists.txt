@@ -38,26 +38,12 @@ install( FILES
 
 configure_file( atlas_version.cc.in atlas_version.cc )
 
-### mpistubs
-
-if( NOT HAVE_MPI )
-
-  set( ATLAS_MPI_C_LIBRARIES mpistubs )
-  set( ATLAS_MPI_FORTRAN_LIBRARIES mpistubs_f )
-
-else()
-
-  set( ATLAS_MPI_C_LIBRARIES       ${MPI_CXX_LIBRARIES} )
-  set( ATLAS_MPI_FORTRAN_LIBRARIES ${MPI_Fortran_LIBRARIES} )
-
-endif()
-
 ### sources
 
 list( APPEND atlas_mpl_srcs
 mpi/mpi.h
 mpi/mpi.cc
-mpi/collectives.h
+mpi/Collectives.h
 mpl/MPLArrayView.h
 mpl/Checksum.h
 mpl/Checksum.cc
@@ -194,14 +180,14 @@ grids/rgg/OctahedralRGG.cc
 list( APPEND atlas_srcs
 Field.cc
 Field.h
-FieldGroup.cc
-FieldGroup.h
 FieldSet.cc
 FieldSet.h
 FunctionSpace.cc
 FunctionSpace.h
 Grid.cc
 Grid.h
+GridSet.cc
+GridSet.h
 GridSpec.cc
 GridSpec.h
 GridSpecParams.cc
@@ -214,8 +200,8 @@ MeshCache.cc
 MeshCache.h
 Metadata.cc
 Metadata.h
-Parameters.h
 Parameters.cc
+Parameters.h
 PointIndex3.cc
 PointIndex3.h
 PointSet.cc
@@ -237,8 +223,8 @@ ecbuild_add_library( TARGET atlas
   SOURCES
   atlas.h
   atlas.cc
-  atlas_mpi.h
   atlas_omp.h
+  atlas_omp.cc
   ${atlas_srcs}
   ${atlas_util_srcs}
   ${atlas_io_srcs}
@@ -251,7 +237,7 @@ ecbuild_add_library( TARGET atlas
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_config.h
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_defines.h
   INCLUDES "${CGAL_INCLUDE_DIRS}"
-  LIBS eckit "${ATLAS_EXTRA_LIBRARIES}" "${CGAL_LIBRARIES}" "${ATLAS_MPI_C_LIBRARIES}" )
+  LIBS eckit_geometry "${ECKIT_MPI_LIBRARIES}" "${ECKIT_GRIB_LIBRARIES}" "${CGAL_LIBRARIES}" )
 
 if( HAVE_FORTRAN )
   add_subdirectory( fortran )

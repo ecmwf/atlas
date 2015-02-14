@@ -6,9 +6,14 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-### sources
 
-add_subdirectory( mpistubs )
+if( HAVE_MPI )
+
+  set( ATLAS_MPI_C_LIBRARIES            ${MPI_CXX_LIBRARIES} )
+  set( ATLAS_MPI_Fortran_LIBRARIES      ${MPI_Fortran_LIBRARIES} )
+  ecbuild_include_mpi()
+
+endif()
 
 add_subdirectory( atlas )
 

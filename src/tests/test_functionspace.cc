@@ -545,7 +545,7 @@ using namespace atlas::test;
 BOOST_AUTO_TEST_CASE( test_functionspace )
 {
 
-	atlas::mpi::init();
+	eckit::mpi::init();
 
 	Element::Ptr point( new Point );
 	Element::Ptr quad( new QuadP1 );
@@ -647,5 +647,5 @@ BOOST_AUTO_TEST_CASE( test_functionspace )
 
 
 
-	mpi::finalize();
+	eckit::mpi::finalize();
 }

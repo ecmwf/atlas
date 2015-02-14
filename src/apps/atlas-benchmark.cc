@@ -84,6 +84,7 @@ using namespace atlas;
 using namespace atlas::grids;
 using namespace atlas::actions;
 
+
 //------------------------------------------------------------------------------------------------------
 
 struct TimerStats
@@ -172,12 +173,12 @@ public:
           "ECMWF                        December 2014"
           ;
 
-      mpi::init();
-      if( mpi::rank()==0 )
+      eckit::mpi::init();
+      if( eckit::mpi::rank()==0 )
       {
         std::cout << help_str << endl;
       }
-      mpi::finalize();
+      eckit::mpi::finalize();
       do_run = false;
     }
   }
@@ -253,7 +254,7 @@ void AtlasBenchmark::run()
   Log::info() << "  nlev: " << nlev << endl;
   Log::info() << "  niter: " << niter << endl;
   Log::info() << endl;
-  Log::info() << "  MPI tasks: "<<mpi::size()<<endl;
+  Log::info() << "  MPI tasks: "<<eckit::mpi::size()<<endl;
   Log::info() << "  OpenMP threads per MPI task: " << omp_get_max_threads() << endl;
   Log::info() << endl;
 
@@ -432,7 +433,7 @@ void AtlasBenchmark::iteration()
   Array<double> avgS_arr(nedges,nlev,2);
   ArrayView<double,3> avgS(avgS_arr);
 
-#ifdef HAVE_OMP
+#ifdef ATLAS_HAVE_OMP
   #pragma omp parallel for
 #endif
   for( int jedge=0; jedge<nedges; ++jedge )
@@ -448,7 +449,7 @@ void AtlasBenchmark::iteration()
     }
   }
 
-#ifdef HAVE_OMP
+#ifdef ATLAS_HAVE_OMP
   #pragma omp parallel for
 #endif
   for( int jnode=0; jnode<nnodes; ++jnode )
@@ -489,7 +490,7 @@ void AtlasBenchmark::iteration()
   double dzi = 1./dz;
   double dzi_2 = 0.5*dzi;
 
-#ifdef HAVE_OMP
+#ifdef ATLAS_HAVE_OMP
   #pragma omp parallel for
 #endif
   for( int jnode=0; jnode<nnodes; ++jnode )
@@ -511,10 +512,10 @@ void AtlasBenchmark::iteration()
   }
 
   // halo-exchange
-  mpi::barrier();
+  eckit::mpi::barrier();
   Timer halo("halo-exchange", Log::debug(5));
   mesh->function_space("nodes").halo_exchange().execute(grad);
-  mpi::barrier();
+  eckit::mpi::barrier();
   t.stop();
   halo.stop();
 
@@ -567,9 +568,9 @@ double AtlasBenchmark::result()
     }
   }
 
-  ATLAS_MPI_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&maxval,1,mpi::datatype<double>(),MPI_MAX,mpi::Comm::instance()) );
-  ATLAS_MPI_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&minval,1,mpi::datatype<double>(),MPI_MIN,mpi::Comm::instance()) );
-  ATLAS_MPI_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&norm  ,1,mpi::datatype<double>(),MPI_SUM,mpi::Comm::instance()) );
+  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&maxval,1,eckit::mpi::datatype<double>(),MPI_MAX,eckit::mpi::comm()) );
+  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&minval,1,eckit::mpi::datatype<double>(),MPI_MIN,eckit::mpi::comm()) );
+  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&norm  ,1,eckit::mpi::datatype<double>(),MPI_SUM,eckit::mpi::comm()) );
   norm = std::sqrt(norm);
 
   Log::info() << "  checksum: " << mesh->function_space("nodes").checksum().execute( grad ) << endl;

@@ -27,7 +27,7 @@ BOOST_AUTO_TEST_CASE( test_read_write )
 	using namespace atlas;
 	using namespace atlas::io;
 
-	mpi::init();
+	eckit::mpi::init();
 	int nlat = 5;
 	int lon[5] = {10, 12, 14, 16, 16};
 
@@ -39,5 +39,5 @@ BOOST_AUTO_TEST_CASE( test_read_write )
 	gmsh.write(*mesh,"mesh.msh");
 
 	BOOST_REQUIRE_NO_THROW( mesh = Mesh::Ptr( Gmsh::read( "mesh.msh" ) ) );
-	mpi::finalize();
+	eckit::mpi::finalize();
 }

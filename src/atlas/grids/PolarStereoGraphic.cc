@@ -47,9 +47,6 @@ PolarStereoGraphic::PolarStereoGraphic( const eckit::Params& p )
   semi_minor_(6356752.3),
   e_(0.081819191)
 {
-   if( !p.get("hash").isNil() )
-      hash_ = p["hash"].as<std::string>();
-
    if( p.has("iScansPositively") )
    {
       iScansPositively_ = p["iScansPositively"];
@@ -176,8 +173,6 @@ GridSpec PolarStereoGraphic::spec() const
    grid_spec.set("earthMinorAxis",eckit::Value(semi_minor_));
    grid_spec.set("npts",eckit::Value(npts()));
    grid_spec.set("resolutionAndComponentFlag",eckit::Value(resolutionAndComponentFlag_));
-
-   grid_spec.set("hash",eckit::Value(hash_));
 
    // Bounding box can be computed
    // grid_spec.set_bounding_box(bounding_box());

@@ -38,7 +38,7 @@ use atlas_C_interop
 use atlas_atlas_c_binding
 use atlas_mpi_c_binding
 use atlas_field_c_binding
-use atlas_fieldgroup_c_binding
+use atlas_fieldset_c_binding
 use atlas_functionspace_c_binding
 use atlas_mesh_c_binding
 use atlas_metadata_c_binding

@@ -30,18 +30,18 @@ contains
 
   function atlas_mpi_comm()
     integer :: atlas_mpi_comm
-    atlas_mpi_comm = atlas_mpi_comm_fortran_handle()
+    atlas_mpi_comm = atlas_mpi_comm_fortran_communicator()
   end function atlas_mpi_comm
 
   subroutine atlas_mpi_set_comm(comm)
     integer :: comm
-    call atlas_mpi_comm_set_with_fortran_handle(comm)
+    call atlas_mpi_comm_attach_fortran_communicator(comm)
   end subroutine atlas_mpi_set_comm
-  
+
   subroutine atlas_mpi_barrier(comm)
     integer, optional :: comm
     integer :: ierr
-    if( .not. present(comm) ) then
+    if( present(comm) ) then
       call MPI_Barrier ( comm, ierr )
     else
       call MPI_Barrier ( atlas_mpi_comm(), ierr )
@@ -52,22 +52,22 @@ contains
     integer, optional :: comm
     integer :: ierr
     integer :: atlas_mpi_rank
-    if( .not. present(comm) ) then
+    if( present(comm) ) then
       call MPI_COMM_RANK( comm, atlas_mpi_rank, ierr )
     else
       call MPI_COMM_RANK( atlas_mpi_comm(), atlas_mpi_rank, ierr )
-    endif    
+    endif
   end function atlas_mpi_rank
 
   function atlas_mpi_size(comm)
     integer, optional :: comm
     integer :: ierr
     integer :: atlas_mpi_size
-    if( .not. present(comm) ) then
+    if( present(comm) ) then
       call MPI_COMM_SIZE( comm, atlas_mpi_size,  ierr )
     else
       call MPI_COMM_SIZE( atlas_mpi_comm(), atlas_mpi_size,  ierr )
-    endif 
+    endif
   end function atlas_mpi_size
 
 end module atlas_mpi_module

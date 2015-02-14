@@ -271,10 +271,10 @@ void GatherScatter::gather( mpl::Field<DATA_TYPE const> lfields[],
     pack_send_buffer(lfields[jfield],locmap_,loc_buffer.data());
 
     /// Gather
-    ATLAS_MPI_CHECK_RESULT(
-        MPI_Gatherv( loc_buffer.data(), loc_size, mpi::datatype<DATA_TYPE>(),
-                     glb_buffer.data(), glb_counts.data(), glb_displs.data(), mpi::datatype<DATA_TYPE>(),
-                     root, mpi::Comm::instance() ) );
+    ECKIT_MPI_CHECK_RESULT(
+        MPI_Gatherv( loc_buffer.data(), loc_size, eckit::mpi::datatype<DATA_TYPE>(),
+                     glb_buffer.data(), glb_counts.data(), glb_displs.data(), eckit::mpi::datatype<DATA_TYPE>(),
+                     root, eckit::mpi::comm() ) );
 
     /// Unpack
     unpack_recv_buffer(glbmap_,glb_buffer.data(),gfields[jfield]);
@@ -354,10 +354,10 @@ void GatherScatter::scatter( mpl::Field<DATA_TYPE const> gfields[],
     pack_send_buffer(gfields[jfield],glbmap_,glb_buffer.data());
 
     /// Scatter
-    ATLAS_MPI_CHECK_RESULT(
-        MPI_Scatterv( glb_buffer.data(), glb_counts.data(), glb_displs.data(), mpi::datatype<DATA_TYPE>(),
-                      loc_buffer.data(), loc_size, mpi::datatype<DATA_TYPE>(),
-                      root, mpi::Comm::instance() ) );
+    ECKIT_MPI_CHECK_RESULT(
+        MPI_Scatterv( glb_buffer.data(), glb_counts.data(), glb_displs.data(), eckit::mpi::datatype<DATA_TYPE>(),
+                      loc_buffer.data(), loc_size, eckit::mpi::datatype<DATA_TYPE>(),
+                      root, eckit::mpi::comm() ) );
 
     /// Unpack
     unpack_recv_buffer(locmap_,loc_buffer.data(),lfields[jfield]);

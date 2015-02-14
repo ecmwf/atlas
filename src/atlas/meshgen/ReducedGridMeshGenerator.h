@@ -8,8 +8,6 @@
  * does it submit to any jurisdiction.
  */
 
-
-
 #ifndef ReducedGridMeshGenerator_h
 #define ReducedGridMeshGenerator_h
 
@@ -23,19 +21,29 @@ namespace meshgen {
 
 struct Region;
 
-class ReducedGridMeshGenerator
-{
+//------------------------------------------------------------------------------------------------------
+
+class ReducedGridMeshGenerator {
+
 public:
+
   ReducedGridMeshGenerator();
+
+  void generate( const grids::ReducedGrid&, Mesh& );
 
   Mesh* generate( const grids::ReducedGrid& );
 
   Mesh* operator()( const grids::ReducedGrid& );
 
+  void set_three_dimensional( bool );
+  void set_patch_pole( bool );
+  void set_include_pole( bool );
+
 private:
+
   void generate_region( const grids::ReducedGrid&, const std::vector<int>& parts, int mypart, Region& region );
 
-  Mesh* generate_mesh( const grids::ReducedGrid&,const std::vector<int>& parts, const Region& region );
+  void generate_mesh( const grids::ReducedGrid&,const std::vector<int>& parts, const Region& region, Mesh& m );
 
   void generate_global_element_numbering( Mesh& mesh );
 
@@ -44,7 +52,10 @@ public:
   Metadata options;
   double max_angle_;
   bool triangulate_quads_;
+
 };
+
+//------------------------------------------------------------------------------------------------------
 
 } // namespace meshgen
 } // namespace atlas

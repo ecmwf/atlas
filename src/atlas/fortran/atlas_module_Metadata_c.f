@@ -35,7 +35,7 @@ subroutine Metadata__add_logical(this, name, value)
   character(len=*), intent(in) :: name
   logical, intent(in) :: value
   integer :: value_int
-  if( value ) then 
+  if( value ) then
     value_int = 1
   else
     value_int = 0
@@ -79,7 +79,7 @@ subroutine Metadata__get_logical(this, name, value)
   value_int = atlas__Metadata__get_int(this%private%object,c_str(name) )
   if (value_int > 0) then
     value = .True.
-  else 
+  else
     value = .False.
   end if
 end subroutine Metadata__get_logical
