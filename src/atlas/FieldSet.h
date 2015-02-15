@@ -50,13 +50,11 @@ std::vector<Field*>& __private_get_raw_fields_ptr (FieldSet* This);
  */
 class FieldSet : public eckit::Owned {
 
-public:
-  // types
+public: // types
 
   typedef eckit::SharedPtr< FieldSet > Ptr;
 
-public:
-  // methods
+public: // methods
 
   /// Constructs an empty FieldSet
   FieldSet(const std::string& name = "untitled");
