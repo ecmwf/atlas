@@ -15,25 +15,25 @@ It is known to run on a number of systems, some of which are directly supported
 by ECMWF.
 
 Tested compilers include
-    - GCC 4.8.1
-    - Intel 13.0.1
-    - CCE 8.2.7
+- GCC 4.8.1
+- Intel 13.0.1, 14.0.1
+- CCE 8.2.7, 8.3.1
 
 
 Third Party Requirements
 ------------------------
 
 Requirements to compile atlas:
-    - CMake --- For use and installation see http://www.cmake.org/
-    - ecbuild
-    - eckit
-    - python (only when Fortran bindings are required)
+- CMake --- For use and installation see http://www.cmake.org/
+- ecbuild
+- eckit (with mpi support -- meaning either eckit_mpi or eckit_mpistubs library)
+- python (only when Fortran bindings are required)
 
 Recommended:
-    - MPI --- Distributed memory parallelisation
-    - OpenMP --- Shared memory parallelisation
-    - fctest --- Unit testing for Fortran
-    - boost_unit_test --- Unit testing for C++
+- MPI --- Distributed memory parallelisation
+- OpenMP --- Shared memory parallelisation
+- fctest --- Unit testing for Fortran
+- boost_unit_test --- Unit testing for C++
 
 
 Installation
@@ -62,13 +62,13 @@ make install
 ```
 
 Extra flags maybe added to step 2 to fine-tune configuration.
-    - `-DCMAKE_BUILD_TYPE=DEBUG|RELEASE|BIT` --- Optimisation level
-            * DEBUG:   No optimisation
-            * BIT:     Maximum optimisation while remaning bit-reproducible
-            * RELEASE: Maximum optimisation
-   - `-DENABLE_OMP=OFF` --- Disable OpenMP
-   - `-DENABLE_MPI=OFF` --- Disable MPI
-   - `-DENABLE_FORTRAN=OFF` --- Disable Compilation of Fortran bindings
+- `-DCMAKE_BUILD_TYPE=DEBUG|RELEASE|BIT` --- Optimisation level
+  * DEBUG:   No optimisation
+  * BIT:     Maximum optimisation while remaning bit-reproducible
+  * RELEASE: Maximum optimisation
+- `-DENABLE_OMP=OFF` --- Disable OpenMP
+- `-DENABLE_MPI=OFF` --- Disable MPI
+- `-DENABLE_FORTRAN=OFF` --- Disable Compilation of Fortran bindings
 
 > **Note:**
 > By default compilation is done using shared libraries. Some systems have linking
