@@ -137,6 +137,7 @@ end ENUM
 
 ! Logger singleton
 TYPE(Logger_t) :: logger
+TYPE(Logger_t) :: atlas_log
 
 ! =============================================================================
 CONTAINS

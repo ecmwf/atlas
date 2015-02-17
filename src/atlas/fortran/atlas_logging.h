@@ -3,9 +3,10 @@
 #include <stdio.h>
 extern "C"
 {
-	void atlas__log_debug_set_level (int level);
-	void atlas__log_debug (int lvl, char* msg, int endl, int flush);
-	void atlas__log(int cat, int lvl, char* msg, int endl, int flush);
+  void atlas__log_debug_set_level (int level);
+  void atlas__log_debug (int lvl, char* msg, int endl, int flush);
+  void atlas__log (int cat, int lvl, char* msg, int endl, int flush);
+  void atlas__cat__connect_fortran_unit (int cat, int unit);
 }
 
 #endif
