@@ -20,6 +20,13 @@ if( HAVE_FCTEST )
     LIBS            atlas_f
   )
 
+
+  add_fctest( TARGET atlas_fctest_error
+    LINKER_LANGUAGE Fortran
+    SOURCES         fctest_error.F90
+    LIBS            atlas_f
+  )
+
   add_fctest( TARGET atlas_fctest_resource
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_resource.F90
