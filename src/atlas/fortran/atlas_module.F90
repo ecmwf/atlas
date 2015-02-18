@@ -136,8 +136,8 @@ end ENUM
 !------------------------------------------------------------------------------
 
 ! Logger singleton
-TYPE(Logger_t) :: logger
-TYPE(Logger_t) :: atlas_log
+TYPE(atlas_Logger) :: logger
+TYPE(atlas_Logger) :: atlas_log
 
 ! =============================================================================
 CONTAINS
@@ -190,6 +190,8 @@ subroutine atlas_init()
   call get_c_arguments(argc,argv)
   call atlas__atlas_init(argc,argv)
   !call atlas__atlas_init_noargs()
+  call atlas_log%init()
+  call logger%init()
 end subroutine
 
 subroutine atlas_finalize()

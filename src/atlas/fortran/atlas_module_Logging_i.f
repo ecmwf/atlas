@@ -1,15 +1,34 @@
 ! (C) Copyright 2013-2014 ECMWF.
 
 
-integer, parameter, private :: ATLAS_LOG_CAT_ALL = -1
-integer, parameter, private :: ATLAS_LOG_CAT_ERROR = 0
-integer, parameter, private :: ATLAS_LOG_CAT_WARNING = 1
-integer, parameter, private :: ATLAS_LOG_CAT_INFO = 2
-integer, parameter, private :: ATLAS_LOG_CAT_DEBUG = 3
-integer, parameter, private :: ATLAS_LOG_CAT_STATS = 4
+integer, parameter, public :: ATLAS_LOG_CATEGORY_ALL = -1
+integer, parameter, public :: ATLAS_LOG_CATEGORY_ERROR = 0
+integer, parameter, public :: ATLAS_LOG_CATEGORY_WARNING = 1
+integer, parameter, public :: ATLAS_LOG_CATEGORY_INFO = 2
+integer, parameter, public :: ATLAS_LOG_CATEGORY_DEBUG = 3
+integer, parameter, public :: ATLAS_LOG_CATEGORY_STATS = 4
+
+TYPE, extends(object_type) :: atlas_LogChannel
+  character(len=1024), public :: msg
+  integer, private :: cat
+contains
+  procedure, public :: log => LogChannel__log
+  procedure, public :: connect_stdout          => LogChannel__connect_stdout
+  procedure, public :: connect_stderr          => LogChannel__connect_stderr
+  procedure, public :: connect_fortran_unit    => LogChannel__connect_fortran_unit
+
+  procedure, public :: disconnect_stdout       => LogChannel__disconnect_stdout
+  procedure, public :: disconnect_stderr       => LogChannel__disconnect_stderr
+  procedure, public :: disconnect_fortran_unit => LogChannel__disconnect_fortran_unit
+
+  procedure, public :: set_prefix_stdout       => LogChannel__set_prefix_stdout
+  procedure, public :: set_prefix_stderr       => LogChannel__set_prefix_stderr
+  procedure, public :: set_prefix_fortran_unit => LogChannel__set_prefix_fortran_unit
+
+ENDTYPE
 
 !------------------------------------------------------------------------------
-TYPE, extends(object_type) :: Logger_t
+TYPE, extends(object_type) :: atlas_Logger
 
 ! Purpose :
 ! -------
@@ -33,15 +52,17 @@ TYPE, extends(object_type) :: Logger_t
 
   character(len=1024), public :: msg
 
-  integer :: cat_all      = -1
-  integer :: cat_error    =  0
-  integer :: cat_warning  =  1
-  integer :: cat_info     =  2
-  integer :: cat_debug    =  3
-  integer :: cat_stats    =  4
+  type(ATLAS_LogChannel) :: channel_error
+  type(ATLAS_LogChannel) :: channel_warning
+  type(ATLAS_LogChannel) :: channel_info
+  type(ATLAS_LogChannel) :: channel_debug
+  type(ATLAS_LogChannel) :: channel_stats
 
 contains
 
+  procedure, public :: init => Logger__init
+
+  procedure, public :: channel => Logger__channel
   procedure, public :: set_debug => Logger__set_debug
   procedure, public :: debug => Logger__debug
   procedure, public :: info => Logger__info
@@ -50,7 +71,19 @@ contains
   procedure, public :: panic => Logger__panic
   procedure, public :: stats => Logger__stats
   procedure, public :: cat => Logger__cat
-  procedure, public :: connect_fortran_unit => Logger__connect_fortran_unit
+
+  procedure, public :: connect_stdout          => Logger__connect_stdout
+  procedure, public :: connect_stderr          => Logger__connect_stderr
+  procedure, public :: connect_fortran_unit    => Logger__connect_fortran_unit
+  procedure, public :: disconnect_fortran_unit => Logger__disconnect_fortran_unit
+  procedure, public :: disconnect_stdout       => Logger__disconnect_stdout
+  procedure, public :: disconnect_stderr       => Logger__disconnect_stderr
+  procedure, public :: set_prefix_stdout       => Logger__set_prefix_stdout
+  procedure, public :: set_prefix_stderr       => Logger__set_prefix_stderr
+  procedure, public :: set_prefix_fortran_unit => Logger__set_prefix_fortran_unit
+
 END TYPE
 
 !------------------------------------------------------------------------------
+
+

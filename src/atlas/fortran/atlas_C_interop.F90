@@ -122,6 +122,13 @@ function c_str(f_str)
   c_str = trim(f_str) // c_null_char
 end function c_str
 
+function c_str_no_trim(f_str)
+  use iso_c_binding, only: c_char, c_null_char
+  character(len=*), intent(in) :: f_str
+  character(kind=c_char,len=len(f_str)+1) :: c_str_no_trim
+  c_str_no_trim = f_str // c_null_char
+end function c_str_no_trim
+
 ! ------------------------------------------------------------
 ! view interface
 

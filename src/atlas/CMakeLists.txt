@@ -178,6 +178,10 @@ grids/rgg/OctahedralRGG.cc
 )
 
 list( APPEND atlas_srcs
+Behavior.h
+Behavior.cc
+LogFormat.h
+LogFormat.cc
 Field.cc
 Field.h
 FieldSet.cc
