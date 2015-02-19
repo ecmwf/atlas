@@ -16,13 +16,41 @@ end interface atlas_abort
 interface atlas_throw_exception
   module procedure atlas_throw_exception_msg
   module procedure atlas_throw_exception_msg_loc
+  module procedure atlas_throw_exception_loc
 end interface atlas_throw_exception
 
 interface atlas_throw_notimplemented
   module procedure atlas_throw_notimplemented_msg
-  module procedure atlas_throw_notimplemented_msg_loc
   module procedure atlas_throw_notimplemented_loc
+  module procedure atlas_throw_notimplemented_msg_loc
 end interface atlas_throw_notimplemented
+
+interface atlas_throw_outofrange
+  module procedure atlas_throw_outofrange_msg
+  module procedure atlas_throw_outofrange_loc
+  module procedure atlas_throw_outofrange_msg_loc
+  module procedure atlas_throw_outofrange_range  
+  module procedure atlas_throw_outofrange_range_loc  
+end interface atlas_throw_outofrange
+
+interface atlas_throw_seriousbug
+  module procedure atlas_throw_seriousbug_msg
+  module procedure atlas_throw_seriousbug_loc
+  module procedure atlas_throw_seriousbug_msg_loc
+end interface atlas_throw_seriousbug
+
+interface atlas_throw_usererror
+  module procedure atlas_throw_usererror_msg
+  module procedure atlas_throw_usererror_loc
+  module procedure atlas_throw_usererror_msg_loc
+end interface atlas_throw_usererror
+
+interface atlas_throw_assertionfailed
+  module procedure atlas_throw_assertionfailed_msg
+  module procedure atlas_throw_assertionfailed_loc
+  module procedure atlas_throw_assertionfailed_msg_loc
+end interface atlas_throw_assertionfailed
+
 
 interface code_location
   module procedure code_location_null

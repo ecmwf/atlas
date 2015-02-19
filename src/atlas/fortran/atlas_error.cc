@@ -2,6 +2,7 @@
 #include "eckit/os/Backtrace.h"
 #include "atlas/fortran/atlas_error.h"
 #include "eckit/config/Resource.h"
+#include "atlas/mpi/mpi.h"
 
 namespace {
   const int atlas_err_cleared         = -1 ;
@@ -51,9 +52,15 @@ using eckit::CodeLocation;
 using eckit::Exception;
 using eckit::Log;
 using eckit::BackTrace;
+using eckit::Exception;
+using eckit::NotImplemented;
+using eckit::OutOfRange;
+using eckit::UserError;
+using eckit::AssertionFailed;
+using eckit::SeriousBug;
 
 namespace {
-void handle_exception(eckit::Exception* exception, const int err_code)
+void handle_exception(eckit::Exception& exception, const int err_code)
 {
   std::stringstream msg;
   if( Error::instance().backtrace() || Error::instance().aborts() )
@@ -61,16 +68,21 @@ void handle_exception(eckit::Exception* exception, const int err_code)
     msg << "=========================================\n"
         << "ERROR\n"
         << "-----------------------------------------\n"
-        << exception->what() << "\n";
+        << exception.what() << "\n";
+    if( exception.location() )
+      msg << "-----------------------------------------\n"  
+          << "LOCATION: " << exception.location() << "\n"; 
+  
+    
     msg << "-----------------------------------------\n"
         << "BACKTRACE\n"
         << "-----------------------------------------\n"
-        << exception->callStack() << "\n"
+        << exception.callStack() << "\n"
         << "=========================================";
   }
   else
   {
-    msg << exception->what();
+    msg << exception.what();
   }
   Error::instance().set_code(err_code);
   Error::instance().set_msg(msg.str());
@@ -78,13 +90,12 @@ void handle_exception(eckit::Exception* exception, const int err_code)
   if( Error::instance().aborts() )
   {
     Log::error() << msg.str() << std::endl;
-    ::abort();
+    MPI_Abort(eckit::mpi::comm(), err_code);
   }
   if( Error::instance().throws() )
   {
-    throw *exception;
+    throw exception;
   }
-  delete exception;
 }
 }
 
@@ -124,30 +135,54 @@ char* atlas__Error_msg()
   return const_cast<char*>(Error::instance().msg().c_str());
 }
 
+template< typename EXCEPTION> 
+EXCEPTION create_exception(char* msg, char* file, int line, char* function)
+{
+  if( file && std::string(file).size() && std::string(msg).size() )
+    return EXCEPTION( std::string(msg), CodeLocation(file,line,function) );
+  else if( file && std::string(file).size() )
+    return EXCEPTION( std::string(), CodeLocation(file,line,function) );
+  else if( std::string(msg).size() )
+    return EXCEPTION( std::string(msg), CodeLocation() );
+  else
+    return EXCEPTION( std::string(), CodeLocation() );
+}
+
 void atlas__throw_exception(char* msg, char* file, int line, char* function)
 {
-  eckit::Exception* exception;
-  if( file && std::string(file).size() )
-    exception = new eckit::Exception( std::string(msg), CodeLocation(file,line,function) );
-  else
-    exception = new eckit::Exception( std::string(msg) );
+  Exception exception ( create_exception<Exception>(msg,file,line,function) );
   handle_exception(exception,atlas_err_exception);
 }
 
 void atlas__throw_notimplemented (char* msg, char* file, int line, char* function)
 {
-  eckit::NotImplemented* exception;
-  if( file && std::string(file).size() && std::string(msg).size() )
-    exception = new eckit::NotImplemented( std::string(msg), CodeLocation(file,line,function) );
-  else if( file && std::string(file).size() )
-    exception = new eckit::NotImplemented( std::string(), CodeLocation(file,line,function) );
-  else if( std::string(msg).size() )
-    exception = new eckit::NotImplemented( std::string(msg), CodeLocation() );
-  else
-    exception = new eckit::NotImplemented( std::string(), CodeLocation() );
+  NotImplemented exception ( create_exception<NotImplemented>(msg,file,line,function) );
   handle_exception(exception,atlas_err_notimplemented);
 }
 
+void atlas__throw_outofrange (char* msg, char* file, int line, char* function)
+{
+  OutOfRange exception ( create_exception<OutOfRange>(msg,file,line,function) );
+  handle_exception(exception,atlas_err_outofrange);
+}
+
+void atlas__throw_usererror (char* msg, char* file, int line, char* function)
+{
+  UserError exception ( create_exception<UserError>(msg,file,line,function) );
+  handle_exception(exception,atlas_err_usererror);
+}
+
+void atlas__throw_assertionfailed (char* msg, char* file, int line, char* function)
+{
+  AssertionFailed exception ( create_exception<AssertionFailed>(msg,file,line,function) );
+  handle_exception(exception,atlas_err_assertionfailed);
+}
+
+void atlas__throw_seriousbug (char* msg, char* file, int line, char* function)
+{
+  SeriousBug exception ( create_exception<SeriousBug>(msg,file,line,function) );
+  handle_exception(exception,atlas_err_seriousbug);
+}
 
 void atlas__abort(char* msg, char* file, int line, char* function )
 {
@@ -167,5 +202,5 @@ void atlas__abort(char* msg, char* file, int line, char* function )
                << BackTrace::dump() << "\n"
                << "========================================="
                << std::endl;
-  ::abort();
+  MPI_Abort(eckit::mpi::comm(), -1);
 }

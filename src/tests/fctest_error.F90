@@ -41,22 +41,47 @@ TEST( test_error )
 integer :: err_code
 character(len=:), allocatable :: err_msg
 
-err_code = atlas_err_code()
-err_msg  = atlas_err_msg()
+call atlas_err_set_throws(.False.)
+call atlas_err_set_aborts(.True.)
+call atlas_err_set_backtrace(.True.)
 
-write(0,*) "err_code = ",err_code
-write(0,*) "err_msg = ",err_msg
+CHECK_EQUAL(atlas_err_code(),atlas_err_cleared)
+
+call atlas_err_success()
+CHECK(atlas_noerr())
+CHECK_EQUAL(atlas_err_code(),atlas_err_noerr)
+CHECK_EQUAL(atlas_err_msg(),"")
+
+call atlas_throw_exception("reason",code_location(__FILE__,__LINE__))
+CHECK( atlas_err() )
+CHECK_EQUAL( atlas_err_code(), atlas_err_exception )
+
+call atlas_throw_seriousbug("reason",code_location(__FILE__,__LINE__))
+CHECK_EQUAL( atlas_err_code(), atlas_err_seriousbug )
+
+call atlas_throw_usererror("reason",code_location(__FILE__,__LINE__))
+CHECK_EQUAL( atlas_err_code(), atlas_err_usererror )
+
+call atlas_throw_outofrange("myarray",128,100)
+call atlas_throw_outofrange("myarray",128,100,code_location(__FILE__,__LINE__))
+
+CHECK_EQUAL( atlas_err_code(), atlas_err_outofrange )
+! call atlas_log%warning(atlas_err_msg())
+call atlas_err_clear()
+CHECK_EQUAL(atlas_err_code(),atlas_err_cleared)
 
 ! call atlas_abort("I give up!!!", code_location(__FILE__,__LINE__,"test_error"))
 ! call atlas_abort()
-call atlas_throw_exception("exception from fortran")
+
+! if( atlas_err() ) then
+!   write(0,'(A)') atlas_err_msg()
+!   call atlas_err_clear()
+! endif
+
 ! call atlas_throw_exception("exception from fortran",code_location(__FILE__,__LINE__))
 ! call atlas_throw_notimplemented(code_location(__FILE__,__LINE__))
 
-if( atlas_err() ) then 
-  write(0,'(A)') atlas_err_msg()
-  call atlas_err_clear()
-endif
+
 END_TEST
 
 ! -----------------------------------------------------------------------------

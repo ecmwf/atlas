@@ -52,6 +52,11 @@ extern "C"
   void atlas__abort (char* msg, char* file, int line, char* function);
   void atlas__throw_exception (char* msg, char* file, int line, char* function);
   void atlas__throw_notimplemented (char* msg, char* file, int line, char* function);
+  void atlas__throw_outofrange (char* msg, char* file, int line, char* function);
+  void atlas__throw_seriousbug (char* msg, char* file, int line, char* function);
+  void atlas__throw_usererror (char* msg, char* file, int line, char* function);
+  void atlas__throw_assertionfailed (char* msg, char* file, int line, char* function);
+  void atlas__throw_ (char* msg, char* file, int line, char* function);
   int atlas__Error_code ();
   void atlas__Error_clear ();
   void atlas__Error_success ();
