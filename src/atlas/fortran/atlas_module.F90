@@ -190,8 +190,6 @@ subroutine atlas_init()
   call get_c_arguments(argc,argv)
   call atlas__atlas_init(argc,argv)
   !call atlas__atlas_init_noargs()
-  call atlas_log%init()
-  call logger%init()
 end subroutine
 
 subroutine atlas_finalize()
@@ -301,13 +299,13 @@ end function atlas_workdir
 function atlas_read_gmsh(filename) result(mesh)
   character(len=*), intent(in) :: filename
   type(Mesh_type) :: mesh
-  mesh%private%object = atlas__read_gmsh(c_str(filename))
+  mesh%cpp_object_ptr = atlas__read_gmsh(c_str(filename))
 end function atlas_read_gmsh
 
 subroutine atlas_write_gmsh(mesh,filename)
   type(Mesh_type), intent(in) :: mesh
   character(len=*), intent(in) :: filename
-  call atlas__write_gmsh_mesh(mesh%private%object,c_str(filename))
+  call atlas__write_gmsh_mesh(mesh%cpp_object_ptr,c_str(filename))
 end subroutine atlas_write_gmsh
 
 subroutine atlas_write_gmsh_field(field,filename,mode)
@@ -315,9 +313,9 @@ subroutine atlas_write_gmsh_field(field,filename,mode)
   character(len=*), intent(in) :: filename
   integer(kind(openmode)), optional :: mode
   if( present(mode) ) then
-    call atlas__write_gmsh_field(field%private%object,c_str(filename),mode)
+    call atlas__write_gmsh_field(field%cpp_object_ptr,c_str(filename),mode)
   else
-    call atlas__write_gmsh_field(field%private%object,c_str(filename),out)
+    call atlas__write_gmsh_field(field%cpp_object_ptr,c_str(filename),out)
   endif
 end subroutine atlas_write_gmsh_field
 
@@ -326,78 +324,78 @@ subroutine atlas_write_gmsh_fieldset(fieldset,filename,mode)
   character(len=*), intent(in) :: filename
   integer(kind(openmode)), optional :: mode
   if( present(mode) ) then
-    call atlas__write_gmsh_fieldset(fieldset%private%object,c_str(filename),mode)
+    call atlas__write_gmsh_fieldset(fieldset%cpp_object_ptr,c_str(filename),mode)
   else
-    call atlas__write_gmsh_fieldset(fieldset%private%object,c_str(filename),out)
+    call atlas__write_gmsh_fieldset(fieldset%cpp_object_ptr,c_str(filename),out)
   endif
 end subroutine atlas_write_gmsh_fieldset
 
 subroutine atlas_build_parallel_fields(mesh)
   type(Mesh_type), intent(inout) :: mesh
-  call atlas__build_parallel_fields(mesh%private%object)
+  call atlas__build_parallel_fields(mesh%cpp_object_ptr)
 end subroutine atlas_build_parallel_fields
 
 subroutine atlas_build_nodes_parallel_fields(nodes)
   type(FunctionSpace_type), intent(inout) :: nodes
-  call atlas__build_nodes_parallel_fields(nodes%private%object)
+  call atlas__build_nodes_parallel_fields(nodes%cpp_object_ptr)
 end subroutine atlas_build_nodes_parallel_fields
 
 subroutine atlas_renumber_nodes_glb_idx(nodes)
   type(FunctionSpace_type), intent(inout) :: nodes
-  call atlas__renumber_nodes_glb_idx(nodes%private%object)
+  call atlas__renumber_nodes_glb_idx(nodes%cpp_object_ptr)
 end subroutine atlas_renumber_nodes_glb_idx
 
 subroutine atlas_build_edges_parallel_fields(edges, nodes)
   type(FunctionSpace_type), intent(inout) :: edges, nodes
-  call atlas__build_edges_parallel_fields(edges%private%object,nodes%private%object)
+  call atlas__build_edges_parallel_fields(edges%cpp_object_ptr,nodes%cpp_object_ptr)
 end subroutine atlas_build_edges_parallel_fields
 
 subroutine atlas_build_periodic_boundaries(mesh)
   type(Mesh_type), intent(inout) :: mesh
-  call atlas__build_periodic_boundaries(mesh%private%object)
+  call atlas__build_periodic_boundaries(mesh%cpp_object_ptr)
 end subroutine atlas_build_periodic_boundaries
 
 subroutine atlas_build_halo(mesh,nelems)
   type(Mesh_type), intent(inout) :: mesh
   integer, intent(in) :: nelems
-  call atlas__build_halo(mesh%private%object,nelems)
+  call atlas__build_halo(mesh%cpp_object_ptr,nelems)
 end subroutine atlas_build_halo
 
 subroutine atlas_build_edges(mesh)
   type(Mesh_type), intent(inout) :: mesh
-  call atlas__build_edges(mesh%private%object)
+  call atlas__build_edges(mesh%cpp_object_ptr)
 end subroutine atlas_build_edges
 
 subroutine atlas_build_pole_edges(mesh)
   type(Mesh_type), intent(inout) :: mesh
-  call atlas__build_pole_edges(mesh%private%object)
+  call atlas__build_pole_edges(mesh%cpp_object_ptr)
 end subroutine atlas_build_pole_edges
 
 subroutine atlas_build_node_to_edge_connectivity(mesh)
   type(Mesh_type), intent(inout) :: mesh
-  call atlas__build_node_to_edge_connectivity(mesh%private%object)
+  call atlas__build_node_to_edge_connectivity(mesh%cpp_object_ptr)
 end subroutine atlas_build_node_to_edge_connectivity
 
 subroutine atlas_build_median_dual_mesh(mesh)
   type(Mesh_type), intent(inout) :: mesh
-  call atlas__build_median_dual_mesh(mesh%private%object)
+  call atlas__build_median_dual_mesh(mesh%cpp_object_ptr)
 end subroutine atlas_build_median_dual_mesh
 
 subroutine atlas_build_centroid_dual_mesh(mesh)
   type(Mesh_type), intent(inout) :: mesh
-  call atlas__build_centroid_dual_mesh(mesh%private%object)
+  call atlas__build_centroid_dual_mesh(mesh%cpp_object_ptr)
 end subroutine atlas_build_centroid_dual_mesh
 
 subroutine atlas_write_load_balance_report(mesh,filename)
   type(Mesh_type), intent(in) :: mesh
   character(len=*), intent(in) :: filename
-  call atlas__write_load_balance_report(mesh%private%object,c_str(filename))
+  call atlas__write_load_balance_report(mesh%cpp_object_ptr,c_str(filename))
 end subroutine atlas_write_load_balance_report
 
 function atlas_generate_mesh(grid) result(mesh)
   type(Mesh_type) :: mesh
   type(ReducedGrid_type) :: grid
-  mesh%private%object = atlas__generate_mesh(grid%private%object)
+  mesh%cpp_object_ptr = atlas__generate_mesh(grid%cpp_object_ptr)
 end function atlas_generate_mesh
 
 ! -----------------------------------------------------------------------------

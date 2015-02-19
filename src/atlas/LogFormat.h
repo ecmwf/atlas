@@ -2,6 +2,7 @@
 #define atlas_LogFormat_h
 
 #include <string>
+#include <stack>
 #include "eckit/log/FormatBuffer.h"
 #include "eckit/log/FormatChannel.h"
 
@@ -14,17 +15,26 @@ public:
 
     virtual ~LogFormat(){ pubsync(); }
 
+    const std::string& prefix() const;
+
+    void set_prefix( const std::string& );
+
+    void indent( const std::string& = std::string("  ") );
+
+    void dedent();
+
+    void clear_indentation();
+
+private:
+
+    std::string parsed_prefix() const;
     virtual void beginLine();
     virtual void endLine();
 
-    std::string parsedPrefix() const;
+private:
 
-    const std::string& prefix() const;
-
-    void setPrefix( const std::string& );
-
-protected:
-
+    std::vector<std::string> indent_stack_;
+    std::string indent_;
     std::string prefix_;
 
     mutable std::map<std::string,std::string> subst_;
@@ -40,9 +50,8 @@ public:
 
   virtual ~FormattedChannel();
 
-  void set_prefix( const std::string& prefix );
-
-  const std::string& prefix() const;
+  const LogFormat& format() const { return *format_; };
+        LogFormat& format()       { return *format_; };
 
 private:
   std::ostream* channel_;

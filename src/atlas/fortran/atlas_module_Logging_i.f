@@ -1,15 +1,18 @@
 ! (C) Copyright 2013-2014 ECMWF.
 
 
-integer, parameter, public :: ATLAS_LOG_CATEGORY_ALL = -1
-integer, parameter, public :: ATLAS_LOG_CATEGORY_ERROR = 0
+integer, parameter, public :: ATLAS_LOG_CATEGORY_ALL     = -1
+integer, parameter, public :: ATLAS_LOG_CATEGORY_ERROR   = 0
 integer, parameter, public :: ATLAS_LOG_CATEGORY_WARNING = 1
-integer, parameter, public :: ATLAS_LOG_CATEGORY_INFO = 2
-integer, parameter, public :: ATLAS_LOG_CATEGORY_DEBUG = 3
-integer, parameter, public :: ATLAS_LOG_CATEGORY_STATS = 4
+integer, parameter, public :: ATLAS_LOG_CATEGORY_INFO    = 2
+integer, parameter, public :: ATLAS_LOG_CATEGORY_DEBUG   = 3
+integer, parameter, public :: ATLAS_LOG_CATEGORY_STATS   = 4
+
+character(len=4), parameter, private :: default_indent = "    "
+
 
 TYPE, extends(object_type) :: atlas_LogChannel
-  character(len=1024), public :: msg
+  character(len=1024), public :: msg = ""
   integer, private :: cat
 contains
   procedure, public :: log => LogChannel__log
@@ -21,9 +24,25 @@ contains
   procedure, public :: disconnect_stderr       => LogChannel__disconnect_stderr
   procedure, public :: disconnect_fortran_unit => LogChannel__disconnect_fortran_unit
 
+  procedure, public :: set_prefix              => LogChannel__set_prefix
   procedure, public :: set_prefix_stdout       => LogChannel__set_prefix_stdout
   procedure, public :: set_prefix_stderr       => LogChannel__set_prefix_stderr
   procedure, public :: set_prefix_fortran_unit => LogChannel__set_prefix_fortran_unit
+
+  procedure, public :: indent                  => LogChannel__indent
+  procedure, public :: indent_stdout           => LogChannel__indent_stdout
+  procedure, public :: indent_stderr           => LogChannel__indent_stderr
+  procedure, public :: indent_fortran_unit     => LogChannel__indent_fortran_unit
+
+  procedure, public :: dedent                  => LogChannel__dedent
+  procedure, public :: dedent_stdout           => LogChannel__dedent_stdout
+  procedure, public :: dedent_stderr           => LogChannel__dedent_stderr
+  procedure, public :: dedent_fortran_unit     => LogChannel__dedent_fortran_unit
+
+  procedure, public :: clear_indentation              => LogChannel__clear_indentation
+  procedure, public :: clear_indentation_stdout       => LogChannel__clear_indentation_stdout
+  procedure, public :: clear_indentation_stderr       => LogChannel__clear_indentation_stderr
+  procedure, public :: clear_indentation_fortran_unit => LogChannel__clear_indentation_fortran_unit
 
 ENDTYPE
 
@@ -52,17 +71,15 @@ TYPE, extends(object_type) :: atlas_Logger
 
   character(len=1024), public :: msg
 
-  type(ATLAS_LogChannel) :: channel_error
-  type(ATLAS_LogChannel) :: channel_warning
-  type(ATLAS_LogChannel) :: channel_info
-  type(ATLAS_LogChannel) :: channel_debug
-  type(ATLAS_LogChannel) :: channel_stats
+  type(ATLAS_LogChannel) :: channel_error   = atlas_LogChannel(cat=ATLAS_LOG_CATEGORY_ERROR)
+  type(ATLAS_LogChannel) :: channel_warning = atlas_LogChannel(cat=ATLAS_LOG_CATEGORY_WARNING)
+  type(ATLAS_LogChannel) :: channel_info    = atlas_LogChannel(cat=ATLAS_LOG_CATEGORY_INFO)
+  type(ATLAS_LogChannel) :: channel_debug   = atlas_LogChannel(cat=ATLAS_LOG_CATEGORY_DEBUG)
+  type(ATLAS_LogChannel) :: channel_stats   = atlas_LogChannel(cat=ATLAS_LOG_CATEGORY_STATS)
 
 contains
 
-  procedure, public :: init => Logger__init
-
-  procedure, public :: channel => Logger__channel
+  procedure, public, nopass :: channel => Logger__channel
   procedure, public :: set_debug => Logger__set_debug
   procedure, public :: debug => Logger__debug
   procedure, public :: info => Logger__info
@@ -81,6 +98,10 @@ contains
   procedure, public :: set_prefix_stdout       => Logger__set_prefix_stdout
   procedure, public :: set_prefix_stderr       => Logger__set_prefix_stderr
   procedure, public :: set_prefix_fortran_unit => Logger__set_prefix_fortran_unit
+
+  procedure, public :: indent            => Logger__indent
+  procedure, public :: dedent            => Logger__dedent
+  procedure, public :: clear_indentation => Logger__clear_indentation
 
 END TYPE
 

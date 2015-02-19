@@ -134,18 +134,18 @@ Behavior::Behavior() : ContextBehavior()
   // Console format
   char p[6];
   std::sprintf(p, "%05zu",eckit::mpi::rank());
-  debug_ctxt.console_format->setPrefix("[%p] (%Y-%m-%d T %H:%M:%S) (D) -- ");
-  info_ctxt. console_format->setPrefix("[%p] (%Y-%m-%d T %H:%M:%S) (I) -- ");
-  warn_ctxt. console_format->setPrefix("[%p] (%Y-%m-%d T %H:%M:%S) (W) -- ");
-  error_ctxt.console_format->setPrefix("[%p] (%Y-%m-%d T %H:%M:%S) (E) -- ");
-  stats_ctxt.console_format->setPrefix("[%p] (%Y-%m-%d T %H:%M:%S) (S) -- ");
+  debug_ctxt.console_format->set_prefix("[%p] (%Y-%m-%d T %H:%M:%S) (D) -- ");
+  info_ctxt. console_format->set_prefix("[%p] (%Y-%m-%d T %H:%M:%S) (I) -- ");
+  warn_ctxt. console_format->set_prefix("[%p] (%Y-%m-%d T %H:%M:%S) (W) -- ");
+  error_ctxt.console_format->set_prefix("[%p] (%Y-%m-%d T %H:%M:%S) (E) -- ");
+  stats_ctxt.console_format->set_prefix("[%p] (S) -- ");
 
   // Logfile format
-  debug_ctxt.logfile_format->setPrefix("(%Y-%m-%d T %H:%M:%S) (D) -- ");
-  info_ctxt. logfile_format->setPrefix("(%Y-%m-%d T %H:%M:%S) (I) -- ");
-  warn_ctxt. logfile_format->setPrefix("(%Y-%m-%d T %H:%M:%S) (W) -- ");
-  error_ctxt.logfile_format->setPrefix("(%Y-%m-%d T %H:%M:%S) (E) -- ");
-  stats_ctxt.logfile_format->setPrefix("(%Y-%m-%d T %H:%M:%S) (S) -- ");
+  debug_ctxt.logfile_format->set_prefix("(%Y-%m-%d T %H:%M:%S) (D) -- ");
+  info_ctxt. logfile_format->set_prefix("(%Y-%m-%d T %H:%M:%S) (I) -- ");
+  warn_ctxt. logfile_format->set_prefix("(%Y-%m-%d T %H:%M:%S) (W) -- ");
+  error_ctxt.logfile_format->set_prefix("(%Y-%m-%d T %H:%M:%S) (E) -- ");
+  stats_ctxt.logfile_format->set_prefix("(S) -- ");
 
   // Debug configuration
   debug_ctxt.apply(debugChannel());

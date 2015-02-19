@@ -4,12 +4,8 @@ implicit none
 
 integer, private, parameter :: MAX_STR_LEN = 255
 
-type, private :: private_type
-  type(C_PTR), public :: object = C_NULL_PTR
-end type
-
 type, public :: object_type
-  type(private_type),public :: private
+  type(C_PTR), public :: cpp_object_ptr = C_NULL_PTR
 end type
 
 integer(c_int), target :: zero_length_array_int32(0)
@@ -93,17 +89,17 @@ function c_to_f_string_str(s) result(str)
   use iso_c_binding
   character(kind=c_char,len=1), intent(in) :: s(*)
   character(len=:), allocatable :: str
-  character(len=:), allocatable :: mold
   integer i, nchars
   i = 1
   do
      if (s(i) == c_null_char) exit
      i = i + 1
-  end do
+  enddo
   nchars = i - 1  ! Exclude null character from Fortran string
   allocate(character(len=nchars) :: str)
-  allocate(character(len=nchars) :: mold)
-  str = transfer(s(1:nchars), mold)
+  do i=1,nchars
+    str(i:i) = s(i)
+  enddo
 end function c_to_f_string_str
 
 function c_to_f_string_cptr(cptr) result(str)

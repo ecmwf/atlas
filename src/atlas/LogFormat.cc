@@ -43,9 +43,35 @@ LogFormat::LogFormat(std::size_t size)
 
 }
 
+void LogFormat::indent( const std::string& indentation )
+{
+  indent_stack_.push_back(indentation);
+
+  indent_.clear();
+  std::vector<std::string>::iterator it;
+  for( it=indent_stack_.begin(); it!=indent_stack_.end(); ++it )
+    indent_ += *it;
+}
+
+void LogFormat::dedent()
+{
+  indent_stack_.pop_back();
+
+  indent_.clear();
+  std::vector<std::string>::iterator it;
+  for( it=indent_stack_.begin(); it!=indent_stack_.end(); ++it )
+    indent_ += *it;
+}
+
+void LogFormat::clear_indentation()
+{
+  indent_stack_.clear();
+  indent_.clear();
+}
+
 void LogFormat::beginLine()
 {
-  *target() << parsedPrefix();
+  *target() << parsed_prefix() << indent_ ;
 }
 
 void LogFormat::endLine()
@@ -57,12 +83,12 @@ const std::string& LogFormat::prefix() const
   return prefix_;
 }
 
-void LogFormat::setPrefix( const std::string& p )
+void LogFormat::set_prefix( const std::string& p )
 {
   prefix_ = p;
 }
 
-std::string LogFormat::parsedPrefix() const
+std::string LogFormat::parsed_prefix() const
 {
   subst_["%Y"] = TimeStamp("%Y");
   subst_["%m"] = TimeStamp("%m");
@@ -97,23 +123,6 @@ FormattedChannel::FormattedChannel( std::ostream& channel, LogFormat* format ) :
 FormattedChannel::~FormattedChannel()
 {
 }
-
-void FormattedChannel::set_prefix( const std::string& p )
-{
-  format_->setPrefix(p);
-}
-
-const std::string& FormattedChannel::prefix() const
-{
-  return format_->prefix();
-}
-
-
-
-
-
-
-
 
 } // namespace atlas
 

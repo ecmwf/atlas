@@ -171,9 +171,12 @@ void atlas_init(int argc, char** argv)
 
 void atlas_finalize()
 {
-  Log::debug() << "Atlas finalized" << std::endl;
-  if( Environment::instance().finalize_mpi() )
-    eckit::mpi::finalize();
+  Log::debug() << "Atlas finalized\n" << std::flush;
+  // Log::debug() << "Some more\n";
+  //Log::debug() << std::flush;
+  // << std::endl;
+  //if( Environment::instance().finalize_mpi() )
+  //  eckit::mpi::finalize();
 }
 
 void atlas__atlas_init(int argc, char* argv[])
