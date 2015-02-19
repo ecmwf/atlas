@@ -42,7 +42,7 @@ integer :: err_code
 character(len=:), allocatable :: err_msg
 
 call atlas_err_set_throws(.False.)
-call atlas_err_set_aborts(.True.)
+call atlas_err_set_aborts(.False.)
 call atlas_err_set_backtrace(.True.)
 
 CHECK_EQUAL(atlas_err_code(),atlas_err_cleared)
