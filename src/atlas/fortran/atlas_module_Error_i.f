@@ -1,9 +1,12 @@
 ! (C) Copyright 2013-2014 ECMWF.
 
+integer, parameter :: ATLAS_CODELOCATION_FILE_STRLEN     = 1024
+integer, parameter :: ATLAS_CODELOCATION_FUNCTION_STRLEN = 1024
+
 TYPE :: CodeLocation_type
   integer :: line
-  character(len=:), allocatable :: file
-  character(len=:), allocatable :: function
+  character(len=ATLAS_CODELOCATION_FILE_STRLEN) :: file
+  character(len=ATLAS_CODELOCATION_FILE_STRLEN) :: function
 contains
 ENDTYPE
 
@@ -29,8 +32,8 @@ interface atlas_throw_outofrange
   module procedure atlas_throw_outofrange_msg
   module procedure atlas_throw_outofrange_loc
   module procedure atlas_throw_outofrange_msg_loc
-  module procedure atlas_throw_outofrange_range  
-  module procedure atlas_throw_outofrange_range_loc  
+  module procedure atlas_throw_outofrange_range
+  module procedure atlas_throw_outofrange_range_loc
 end interface atlas_throw_outofrange
 
 interface atlas_throw_seriousbug

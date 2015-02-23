@@ -182,6 +182,10 @@ atlas.h
 atlas.cc
 atlas_omp.h
 atlas_omp.cc
+Behavior.h
+Behavior.cc
+LogFormat.h
+LogFormat.cc
 ErrorHandling.cc
 ErrorHandling.cc
 Field.cc

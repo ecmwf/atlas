@@ -1,5 +1,5 @@
 #include "eckit/log/CodeLocation.h"
-#include "eckit/os/Backtrace.h"
+#include "eckit/os/BackTrace.h"
 #include "atlas/ErrorHandling.h"
 #include "eckit/config/Resource.h"
 #include "atlas/mpi/mpi.h"

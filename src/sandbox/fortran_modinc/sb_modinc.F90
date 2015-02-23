@@ -4,12 +4,8 @@
 
 module sb_mod
 
-type, private :: private_type
-  integer, public :: object
-end type
-
 type, public :: object_type
-  type(private_type),public :: private
+  integer,public :: cpp_object_ptr
 end type
 
 #include "mod1.h"
@@ -25,6 +21,6 @@ use sb_mod
 type(T1) :: v1
 type(T2) :: v2
 integer :: res
-res = v1%private%object + v2%private%object
+res = v1%cpp_object_ptr + v2%cpp_object_ptr
 end program sb_program
 

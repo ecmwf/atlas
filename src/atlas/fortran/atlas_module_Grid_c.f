@@ -7,37 +7,37 @@
 function new_reduced_grid(identifier) result(grid)
   type(ReducedGrid_type) :: grid
   character(len=*) :: identifier
-  grid%private%object = atlas__new_reduced_grid(c_str(identifier))
+  grid%cpp_object_ptr = atlas__new_reduced_grid(c_str(identifier))
 end function new_reduced_grid
 
 function new_gaussian_grid(N) result(grid)
   type(ReducedGrid_type) :: grid
   integer, intent(in) :: N
-  grid%private%object = atlas__new_gaussian_grid(N)
+  grid%cpp_object_ptr = atlas__new_gaussian_grid(N)
 end function new_gaussian_grid
 
 function new_reduced_gaussian_grid(nlon) result(grid)
   type(ReducedGrid_type) :: grid
   integer, intent(in) :: nlon(:)
-  grid%private%object = atlas__new_reduced_gaussian_grid(nlon,size(nlon))
+  grid%cpp_object_ptr = atlas__new_reduced_gaussian_grid(nlon,size(nlon))
 end function new_reduced_gaussian_grid
 
 function new_lonlat_grid(nlon,nlat) result(grid)
   type(ReducedGrid_type) :: grid
   integer, intent(in) :: nlon, nlat
-  grid%private%object = atlas__new_lonlat_grid(nlon,nlat)
+  grid%cpp_object_ptr = atlas__new_lonlat_grid(nlon,nlat)
 end function new_lonlat_grid
 
 function ReducedGrid__npts(this) result(npts)
   class(ReducedGrid_type), intent(in) :: this
   integer :: npts
-  npts = atlas__ReducedGrid__npts(this%private%object)
+  npts = atlas__ReducedGrid__npts(this%cpp_object_ptr)
 end function ReducedGrid__npts
 
 function ReducedGrid__nlat(this) result(nlat)
   class(ReducedGrid_type), intent(in) :: this
   integer :: nlat
-  nlat = atlas__ReducedGrid__nlat(this%private%object)
+  nlat = atlas__ReducedGrid__nlat(this%cpp_object_ptr)
 end function ReducedGrid__nlat
 
 function ReducedGrid__nlon(this) result(nlon)
@@ -45,7 +45,7 @@ function ReducedGrid__nlon(this) result(nlon)
   integer, pointer :: nlon(:)
   type(c_ptr) :: nlon_c_ptr
   integer(c_int) :: nlon_size
-  call atlas__ReducedGrid__nlon(this%private%object, nlon_c_ptr, nlon_size)
+  call atlas__ReducedGrid__nlon(this%cpp_object_ptr, nlon_c_ptr, nlon_size)
   call C_F_POINTER ( nlon_c_ptr , nlon , (/nlon_size/) )
 end function ReducedGrid__nlon
 
@@ -54,7 +54,7 @@ function ReducedGrid__latitudes(this) result(lat)
   real(c_double), pointer :: lat(:)
   type(c_ptr) :: lat_c_ptr
   integer(c_int) :: lat_size
-  call atlas__ReducedGrid__latitudes(this%private%object, lat_c_ptr, lat_size)
+  call atlas__ReducedGrid__latitudes(this%cpp_object_ptr, lat_c_ptr, lat_size)
   call C_F_POINTER (  lat_c_ptr , lat , (/lat_size/) )
 end function ReducedGrid__latitudes
 

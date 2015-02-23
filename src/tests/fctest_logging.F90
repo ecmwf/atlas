@@ -6,7 +6,7 @@
 ! does it submit to any jurisdiction.
 
 ! This File contains Unit Tests for testing the
-! C++ / Fortran Interfaces to the Mesh Datastructure
+! C++ / Fortran Interfaces to the logging facilities
 ! @author Willem Deconinck
 
 #include "fctest/fctest.h"
@@ -38,6 +38,8 @@ END_TESTSUITE_FINALIZE
 ! -----------------------------------------------------------------------------
 
 TEST( test_logging )
+
+
 call atlas_log%info("test_logging begin")
 call atlas_log%debug("hello world",lvl=0)
 call atlas_log%warning("World is ending")
@@ -51,14 +53,38 @@ END_TEST
 
 ! -----------------------------------------------------------------------------
 
+TEST( test_channel )
+type( atlas_logchannel ) :: info, debug, warning, error
+call atlas_log%channel_info%log("atlas_log%channel_info%log() called")
+info    = atlas_log%channel(ATLAS_LOG_CATEGORY_INFO)
+error   = atlas_log%channel(ATLAS_LOG_CATEGORY_ERROR)
+call info%log("info%log() called")
+call error%log("error%log() called")
+
+END_TEST
+
+! -----------------------------------------------------------------------------
+
 TEST( test_log_fortran_unit )
 
 integer :: NULLERR = 0
 integer :: NULLOUT = 9
 OPEN( NULLOUT, FILE='null.out' )
 
-call atlas_log%connect_fortran_unit(atlas_log%cat_error, NULLERR )
-call atlas_log%connect_fortran_unit(atlas_log%cat_all,   NULLOUT )
+call atlas_log%channel_error%connect_fortran_unit(NULLERR)
+call atlas_log%connect_fortran_unit( NULLOUT )
+
+call atlas_log%set_prefix_stdout("[%P] info -- ")
+call atlas_log%set_prefix_fortran_unit(NULLOUT, "[%5P] (%H:%M:%S) -- ")
+
+call atlas_log%set_prefix_stdout("[%P] stdout -- ")
+call atlas_log%set_prefix_stderr("[%P] stdout -- ")
+call atlas_log%set_prefix_fortran_unit(NULLOUT,"[%P] NULLOUT -- ")
+call atlas_log%channel_error%set_prefix_fortran_unit(NULLERR,"[%P] NULLERR -- ")
+
+!call atlas_log%disconnect_stderr()
+!call atlas_log%disconnect_stdout()
+!call atlas_log%disconnect_fortran_unit(NULLOUT )
 
 call atlas_log%error("error to fortran")
 call atlas_log%info("info to fortran")
@@ -68,6 +94,7 @@ call atlas_log%stats("stats to fortran")
 CLOSE( NULLOUT )
 
 END_TEST
+
 
 
 ! -----------------------------------------------------------------------------
