@@ -29,59 +29,59 @@ namespace atlas {
 
 std::string read_config(const LocalPathName& path, const int master_task = 0)
 {
-	std::string config;
+  std::string config;
 
-	/// This function lets only one MPI task read the config file,
-	/// and broadcasts to remaining tasks. This is beneficial at
-	/// large scale.
-	std::stringstream stream;
-	char* buf;
-	int buf_len(0);
-	if( eckit::mpi::rank() == master_task )
-	{
-		if( path.exists() )
-		{
-			std::fstream file( path.c_str(), std::ios_base::in );
-			if ( file )
-			{
-				stream << file.rdbuf();
-				file.close();
-			}
-			std::string str = stream.str();
-			buf = const_cast<char*>(str.c_str());
-			buf_len = str.size();
-			MPI_Bcast(&buf_len,1,eckit::mpi::datatype<int >(),master_task,eckit::mpi::comm());
-			if (buf_len)
-				MPI_Bcast(buf,buf_len,eckit::mpi::datatype<char>(),master_task,eckit::mpi::comm());
-		}
-		else
-		{
-			MPI_Bcast(&buf_len,1,eckit::mpi::datatype<int >(),master_task,eckit::mpi::comm());
-		}
-	}
-	else
-	{
-		MPI_Bcast(&buf_len,1,eckit::mpi::datatype<int>(),master_task,eckit::mpi::comm());
-		if( buf_len )
-		{
-			buf = new char[buf_len];
-			MPI_Bcast(buf,buf_len,eckit::mpi::datatype<char>(),master_task,eckit::mpi::comm());
-			stream.write(buf,buf_len);
-			delete[] buf;
-		}
-	}
-	if (buf_len)
-	{
-		ResourceMgr::instance().appendConfig(stream);
-		config = stream.str();
-	}
-	return config;
+  /// This function lets only one MPI task read the config file,
+  /// and broadcasts to remaining tasks. This is beneficial at
+  /// large scale.
+  std::stringstream stream;
+  char* buf;
+  int buf_len(0);
+  if( eckit::mpi::rank() == master_task )
+  {
+    if( path.exists() )
+    {
+      std::fstream file( path.c_str(), std::ios_base::in );
+      if ( file )
+      {
+        stream << file.rdbuf();
+        file.close();
+      }
+      std::string str = stream.str();
+      buf = const_cast<char*>(str.c_str());
+      buf_len = str.size();
+      MPI_Bcast(&buf_len,1,eckit::mpi::datatype<int >(),master_task,eckit::mpi::comm());
+      if (buf_len)
+        MPI_Bcast(buf,buf_len,eckit::mpi::datatype<char>(),master_task,eckit::mpi::comm());
+    }
+    else
+    {
+      MPI_Bcast(&buf_len,1,eckit::mpi::datatype<int >(),master_task,eckit::mpi::comm());
+    }
+  }
+  else
+  {
+    MPI_Bcast(&buf_len,1,eckit::mpi::datatype<int>(),master_task,eckit::mpi::comm());
+    if( buf_len )
+    {
+      buf = new char[buf_len];
+      MPI_Bcast(buf,buf_len,eckit::mpi::datatype<char>(),master_task,eckit::mpi::comm());
+      stream.write(buf,buf_len);
+      delete[] buf;
+    }
+  }
+  if (buf_len)
+  {
+    ResourceMgr::instance().appendConfig(stream);
+    config = stream.str();
+  }
+  return config;
 }
 
 std::string rundir()
 {
-	static LocalPathName cwd( LocalPathName::cwd() );
-	return cwd;
+  static LocalPathName cwd( LocalPathName::cwd() );
+  return cwd;
 }
 
 class Environment
@@ -153,7 +153,7 @@ void atlas_init(int argc, char** argv)
 
   if( atlas_config.size() ) {
     Log::debug() << "    Read config file " << atlas_config_path.fullName() << std::endl;
-	Log::debug() << atlas_config << std::endl;
+  Log::debug() << atlas_config << std::endl;
   }
 
   if( runname_config.size() ) {
@@ -161,7 +161,7 @@ void atlas_init(int argc, char** argv)
     Log::debug() << runname_config << std::endl;
   }
   if( displayname_config.size() ) {
-  	Log::debug() << "    Read config file " << displayname_config_path.fullName() << std::endl;
+    Log::debug() << "    Read config file " << displayname_config_path.fullName() << std::endl;
     Log::debug() << displayname_config << std::endl;
   }
 
@@ -171,12 +171,9 @@ void atlas_init(int argc, char** argv)
 
 void atlas_finalize()
 {
+  if( Environment::instance().finalize_mpi() )
+    eckit::mpi::finalize();
   Log::debug() << "Atlas finalized\n" << std::flush;
-  // Log::debug() << "Some more\n";
-  //Log::debug() << std::flush;
-  // << std::endl;
-  //if( Environment::instance().finalize_mpi() )
-  //  eckit::mpi::finalize();
 }
 
 void atlas__atlas_init(int argc, char* argv[])
