@@ -178,6 +178,12 @@ grids/rgg/OctahedralRGG.cc
 )
 
 list( APPEND atlas_srcs
+atlas.h
+atlas.cc
+atlas_omp.h
+atlas_omp.cc
+ErrorHandling.cc
+ErrorHandling.cc
 Field.cc
 Field.h
 FieldSet.cc
@@ -221,10 +227,6 @@ ecbuild_add_library( TARGET atlas
   INSTALL_HEADERS ALL
   HEADER_DESTINATION  ${INSTALL_INCLUDE_DIR}/atlas
   SOURCES
-  atlas.h
-  atlas.cc
-  atlas_omp.h
-  atlas_omp.cc
   ${atlas_srcs}
   ${atlas_util_srcs}
   ${atlas_io_srcs}

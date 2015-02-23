@@ -15,6 +15,7 @@
 
 #include "eckit/exception/Exceptions.h"
 #include "eckit/log/Log.h"
+#include "atlas/ErrorHandling.h"
 #include "atlas/Mesh.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Field.h"
@@ -901,17 +902,17 @@ FieldT<gidx_t>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nod
 // C wrapper interfaces to C++ routines
 
 void atlas__build_parallel_fields ( Mesh* mesh) {
-  build_parallel_fields(*mesh);
+  ATLAS_ERROR_HANDLING( build_parallel_fields(*mesh) );
 }
 void atlas__build_nodes_parallel_fields (FunctionSpace* nodes) {
-  build_nodes_parallel_fields(*nodes);
+  ATLAS_ERROR_HANDLING( build_nodes_parallel_fields(*nodes) );
 }
 void atlas__build_edges_parallel_fields (FunctionSpace* edges, FunctionSpace* nodes) {
-  build_edges_parallel_fields(*edges, *nodes);
+  ATLAS_ERROR_HANDLING( build_edges_parallel_fields(*edges, *nodes) );
 }
 void atlas__renumber_nodes_glb_idx (FunctionSpace* nodes)
 {
-  renumber_nodes_glb_idx(*nodes);
+  ATLAS_ERROR_HANDLING( renumber_nodes_glb_idx(*nodes) );
 }
 
 

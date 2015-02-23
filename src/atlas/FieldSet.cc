@@ -15,22 +15,23 @@
 
 #include "atlas/atlas_config.h"
 
-#include <eckit/exception/Exceptions.h>
-#include <eckit/filesystem/PathName.h>
-#include <eckit/io/DataHandle.h>
-#include <eckit/io/Buffer.h>
-#include <eckit/log/Log.h>
-#include <eckit/memory/ScopedPtr.h>
-#include <eckit/utils/Translator.h>
+#include "eckit/exception/Exceptions.h"
+#include "eckit/filesystem/PathName.h"
+#include "eckit/io/DataHandle.h"
+#include "eckit/io/Buffer.h"
+#include "eckit/log/Log.h"
+#include "eckit/memory/ScopedPtr.h"
+#include "eckit/utils/Translator.h"
 #include "eckit/os/BackTrace.h"
 
 #ifdef ECKIT_HAVE_GRIB
-#include <eckit/grib/GribField.h>
-#include <eckit/grib/GribFieldSet.h>
-#include <eckit/grib/GribHandle.h>
-#include <eckit/grib/GribParams.h>
+#include "eckit/grib/GribField.h"
+#include "eckit/grib/GribFieldSet.h"
+#include "eckit/grib/GribHandle.h"
+#include "eckit/grib/GribParams.h"
 #endif
 
+#include "atlas/ErrorHandling.h"
 #include "atlas/Field.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Grid.h"
@@ -268,41 +269,79 @@ extern "C"{
 
 FieldSet* atlas__FieldSet__new (char* name)
 {
-  FieldSet* fset = new FieldSet( std::string(name) );
-  fset->name() = name;
-  return fset;
+  ATLAS_ERROR_HANDLING( 
+    FieldSet* fset = new FieldSet( std::string(name) );
+    fset->name() = name;
+    return fset;
+  );
+  return NULL;
 }
 
 
 void atlas__FieldSet__delete(FieldSet* This)
-{ delete This; }
+{
+  ATLAS_ERROR_HANDLING( 
+    delete This; 
+  );
+}
 
 
 void atlas__FieldSet__fields (FieldSet* This, Field** &fields, int &nb_fields)
 {
-  nb_fields = This->fields().size();
+  ATLAS_ERROR_HANDLING(
+    nb_fields = This->fields().size();
 
-  if (fields!=NULL)
-    throw eckit::SeriousBug("provided return pointer is not NULL (memory leak)");
+    if (fields!=NULL)
+      throw eckit::SeriousBug("provided return pointer is not NULL (memory leak)");
 
-  fields = nb_fields ? __private_get_raw_fields_ptr(This).data() : NULL;
+    fields = nb_fields ? __private_get_raw_fields_ptr(This).data() : NULL;
+  );
 }
 
 
 void   atlas__FieldSet__add_field     (FieldSet* This, Field* field)
-{ ASSERT(This != NULL); This->add_field(field->self()); }
+{ 
+  ATLAS_ERROR_HANDLING( 
+    ASSERT(This != NULL); 
+    This->add_field(field->self());
+  ); 
+}
 
 int    atlas__FieldSet__has_field     (FieldSet* This, char* name)
-{ ASSERT(This != NULL); return This->has_field( std::string(name) ); }
+{ 
+  ATLAS_ERROR_HANDLING( 
+    ASSERT(This != NULL); 
+    return This->has_field( std::string(name) );
+  );
+  return 0;
+}
 
 int    atlas__FieldSet__size          (FieldSet* This)
-{ ASSERT(This != NULL); return This->size(); }
+{ 
+  ATLAS_ERROR_HANDLING( 
+    ASSERT(This != NULL); 
+    return This->size();
+  );
+  return 0;
+}
 
 Field* atlas__FieldSet__field_by_name (FieldSet* This, char* name)
-{ ASSERT(This != NULL); return &This->field( std::string(name) ); }
+{ 
+  ATLAS_ERROR_HANDLING( 
+    ASSERT(This != NULL); 
+    return &This->field( std::string(name) );
+  );
+  return NULL;
+}
 
 Field* atlas__FieldSet__field_by_idx  (FieldSet* This, int idx)
-{ ASSERT(This != NULL); return &This->operator[](idx); }
+{ 
+  ATLAS_ERROR_HANDLING( 
+    ASSERT(This != NULL); 
+    return &This->operator[](idx);
+  );
+  return NULL;
+}
 
 
 }

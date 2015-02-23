@@ -16,6 +16,7 @@
 #include <limits>
 #include <set>
 #include "atlas/atlas.h"
+#include "atlas/ErrorHandling.h"
 #include "atlas/Mesh.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Field.h"
@@ -544,13 +545,13 @@ void build_pole_edges( Mesh& mesh )
 // C wrapper interfaces to C++ routines
 
 void atlas__build_edges ( Mesh* mesh) {
-  build_edges(*mesh);
+  ATLAS_ERROR_HANDLING( build_edges(*mesh) );
 }
 void atlas__build_pole_edges ( Mesh* mesh) {
-  build_pole_edges(*mesh);
+  ATLAS_ERROR_HANDLING( build_pole_edges(*mesh) );
 }
 void atlas__build_node_to_edge_connectivity ( Mesh* mesh) {
-  build_node_to_edge_connectivity(*mesh);
+  ATLAS_ERROR_HANDLING( build_node_to_edge_connectivity(*mesh) );
 }
 
 // ------------------------------------------------------------------

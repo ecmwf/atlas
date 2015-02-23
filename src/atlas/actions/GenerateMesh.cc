@@ -8,6 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
+#include "atlas/ErrorHandling.h"
 #include "atlas/mpi/mpi.h"
 #include "atlas/meshgen/ReducedGridMeshGenerator.h"
 #include "atlas/actions/GenerateMesh.h"
@@ -32,7 +33,8 @@ Mesh* generate_mesh (const ReducedGrid& rgg)
 
 Mesh* atlas__generate_mesh (ReducedGrid* rgg)
 {
-  return generate_mesh(*rgg);
+  ATLAS_ERROR_HANDLING( return generate_mesh(*rgg); );
+  return NULL;
 }
 
 // ------------------------------------------------------------------

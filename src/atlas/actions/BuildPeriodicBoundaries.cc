@@ -13,6 +13,7 @@
 #include <iostream>
 #include <cmath>
 
+#include "atlas/ErrorHandling.h"
 #include "atlas/mpi/mpi.h"
 #include "atlas/Mesh.h"
 #include "atlas/FunctionSpace.h"
@@ -188,7 +189,7 @@ void build_periodic_boundaries( Mesh& mesh )
 // C wrapper interfaces to C++ routines
 
 void atlas__build_periodic_boundaries ( Mesh* mesh) {
-  build_periodic_boundaries(*mesh);
+  ATLAS_ERROR_HANDLING( build_periodic_boundaries(*mesh) );
 }
 // ------------------------------------------------------------------
 

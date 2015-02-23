@@ -17,6 +17,7 @@
 #include "eckit/types/Types.h"
 
 #include "atlas/atlas.h"
+#include "atlas/ErrorHandling.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Field.h"
 #include "atlas/actions/BuildParallelFields.h"
@@ -435,23 +436,23 @@ int atlas__FunctionSpace__glb_dof (FunctionSpace* This) {
 }
 
 void atlas__FunctionSpace__create_field_double (FunctionSpace* This, char* name, int nb_vars) {
-	This->create_field<double>( std::string(name), nb_vars );
+	ATLAS_ERROR_HANDLING( This->create_field<double>( std::string(name), nb_vars ) );
 }
 
 void atlas__FunctionSpace__create_field_float (FunctionSpace* This, char* name, int nb_vars) {
-	This->create_field<float>( std::string(name), nb_vars );
+	ATLAS_ERROR_HANDLING( This->create_field<float>( std::string(name), nb_vars ) );
 }
 
 void atlas__FunctionSpace__create_field_int (FunctionSpace* This, char* name, int nb_vars) {
-	This->create_field<int>( std::string(name), nb_vars );
+	ATLAS_ERROR_HANDLING( This->create_field<int>( std::string(name), nb_vars ) );
 }
 
 void atlas__FunctionSpace__create_field_long (FunctionSpace* This, char* name, int nb_vars) {
-  This->create_field<long>( std::string(name), nb_vars );
+  ATLAS_ERROR_HANDLING( This->create_field<long>( std::string(name), nb_vars ) );
 }
 
 void atlas__FunctionSpace__remove_field (FunctionSpace* This, char* name ) {
-	This->remove_field( std::string(name) );
+	ATLAS_ERROR_HANDLING( This->remove_field( std::string(name) ) );
 }
 
 int atlas__FunctionSpace__has_field (FunctionSpace* This, char* name) {
@@ -463,52 +464,60 @@ const char* atlas__FunctionSpace__name (FunctionSpace* This) {
 }
 
 void atlas__FunctionSpace__shapef (FunctionSpace* This, int* &shape, int &rank) {
-	shape = const_cast<int*>(&(This->shapef()[0]));
-	rank = This->shapef().size();
+  shape = const_cast<int*>(&(This->shapef()[0]));
+  rank = This->shapef().size();
 }
 
 Field* atlas__FunctionSpace__field (FunctionSpace* This, char* name) {
-	return &This->field( std::string(name) );
+	ATLAS_ERROR_HANDLING( return &This->field( std::string(name) ) );
+  return NULL;
 }
 
 void atlas__FunctionSpace__parallelise (FunctionSpace* This) {
-	This->parallelise();
+	ATLAS_ERROR_HANDLING( This->parallelise() );
 }
 
 void atlas__FunctionSpace__halo_exchange_int (FunctionSpace* This, int field_data[], int field_size) {
-	This->halo_exchange(field_data,field_size);
+	ATLAS_ERROR_HANDLING( 
+    This->halo_exchange(field_data,field_size) );
 }
 
 void atlas__FunctionSpace__halo_exchange_float (FunctionSpace* This, float field_data[], int field_size) {
-	This->halo_exchange(field_data,field_size);
+	ATLAS_ERROR_HANDLING( This->halo_exchange(field_data,field_size) );
 }
 
 void atlas__FunctionSpace__halo_exchange_double (FunctionSpace* This, double field_data[], int field_size) {
-	This->halo_exchange(field_data,field_size);
+	ATLAS_ERROR_HANDLING( This->halo_exchange(field_data,field_size) );
 }
 
 void atlas__FunctionSpace__gather_int (FunctionSpace* This, int field_data[], int field_size, int glbfield_data[], int glbfield_size) {
-	This->gather(field_data,field_size, glbfield_data,glbfield_size);
+	ATLAS_ERROR_HANDLING( 
+    This->gather(field_data,field_size, glbfield_data,glbfield_size) );
 }
 
 void atlas__FunctionSpace__gather_float (FunctionSpace* This, float field_data[], int field_size, float glbfield_data[], int glbfield_size) {
-	This->gather(field_data,field_size, glbfield_data,glbfield_size);
+	ATLAS_ERROR_HANDLING( 
+    This->gather(field_data,field_size, glbfield_data,glbfield_size) );
 }
 
 void atlas__FunctionSpace__gather_double (FunctionSpace* This, double field_data[], int field_size, double glbfield_data[], int glbfield_size) {
-	This->gather(field_data,field_size, glbfield_data,glbfield_size);
+	ATLAS_ERROR_HANDLING( 
+    This->gather(field_data,field_size, glbfield_data,glbfield_size) );
 }
 
 mpl::HaloExchange* atlas__FunctionSpace__halo_exchange (FunctionSpace* This) {
-	return &This->halo_exchange();
+	ATLAS_ERROR_HANDLING( return &This->halo_exchange() );
+  return NULL;
 }
 
 mpl::GatherScatter* atlas__FunctionSpace__gather (FunctionSpace* This) {
-	return &This->gather_scatter();
+	ATLAS_ERROR_HANDLING( return &This->gather_scatter() );
+  return NULL;
 }
 
 mpl::Checksum* atlas__FunctionSpace__checksum (FunctionSpace* This) {
-	return &This->checksum();
+	ATLAS_ERROR_HANDLING( return &This->checksum() );
+  return NULL;
 }
 
 void atlas__FunctionSpace__delete (FunctionSpace* This) {

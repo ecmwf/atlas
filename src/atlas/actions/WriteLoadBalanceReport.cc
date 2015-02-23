@@ -11,6 +11,7 @@
 #include <iomanip>
 #include <fstream>
 #include "eckit/filesystem/LocalPathName.h"
+#include "atlas/ErrorHandling.h"
 #include "atlas/mpi/mpi.h"
 #include "atlas/Util.h"
 #include "atlas/Mesh.h"
@@ -160,7 +161,7 @@ void write_load_balance_report( const Mesh& mesh, const std::string& filename )
 // C wrapper interfaces to C++ routines
 void atlas__write_load_balance_report (Mesh* mesh, char* filename)
 {
-  write_load_balance_report( *mesh, std::string(filename) );
+  ATLAS_ERROR_HANDLING( write_load_balance_report( *mesh, std::string(filename) ) );
 }
 
 // ------------------------------------------------------------------

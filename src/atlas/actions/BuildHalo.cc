@@ -18,6 +18,7 @@
 
 #include "atlas/mpi/mpi.h"
 #include "atlas/atlas.h"
+#include "atlas/ErrorHandling.h"
 #include "atlas/Mesh.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Field.h"
@@ -1414,7 +1415,7 @@ void build_halo(Mesh& mesh, int nb_elems )
 // C wrapper interfaces to C++ routines
 
 void atlas__build_halo ( Mesh* mesh, int nb_elems ) {
-  build_halo(*mesh, nb_elems);
+  ATLAS_ERROR_HANDLING( build_halo(*mesh, nb_elems) );
 }
 
 // ------------------------------------------------------------------

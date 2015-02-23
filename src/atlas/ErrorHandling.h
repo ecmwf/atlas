@@ -1,5 +1,5 @@
-#ifndef atlas_fortran_atlas_error_h
-#define atlas_fortran_atlas_error_h
+#ifndef atlas_ErrorHandling_h
+#define atlas_ErrorHandling_h
 
 #include "eckit/exception/Exceptions.h"
 
@@ -34,7 +34,7 @@ catch( eckit::BadParameter& e )    { handle_error(e,atlas_err_badparameter); } \
 catch( eckit::ReadError&  e )      { handle_error(e,atlas_err_readerror);  } \
 catch( eckit::WriteError&  e )     { handle_error(e,atlas_err_writeerror);  } \
 catch( eckit::Exception&  e )      { handle_error(e,atlas_err_exception);  } \
-catch( ... ) { handle_error(Exception("Unknown exception"),atlas_err_exception); } \
+catch( ... ) { handle_error(eckit::Exception("Unknown exception"),atlas_err_exception); } \
 } while( 0 )
   
 

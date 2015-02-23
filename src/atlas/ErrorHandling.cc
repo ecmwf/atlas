@@ -1,6 +1,6 @@
 #include "eckit/log/CodeLocation.h"
 #include "eckit/os/Backtrace.h"
-#include "atlas/fortran/atlas_error.h"
+#include "atlas/ErrorHandling.h"
 #include "eckit/config/Resource.h"
 #include "atlas/mpi/mpi.h"
 
@@ -11,9 +11,9 @@ namespace atlas {
 Error::Error()
 {
   clear();
-  throws_    = eckit::Resource<bool>("atlas.fortran.error.throws;$ATLAS_FORTRAN_ERROR_THROWS",false);
-  aborts_    = eckit::Resource<bool>("atlas.fortran.error.aborts;$ATLAS_FORTRAN_ERROR_ABORTS",false);
-  backtrace_ = eckit::Resource<bool>("atlas.fortran.error.backtrace;$ATLAS_FORTRAN_ERROR_BACKTRACE",true);
+  throws_    = eckit::Resource<bool>("atlas.error.throws;$ATLAS_ERROR_THROWS",false);
+  aborts_    = eckit::Resource<bool>("atlas.error.aborts;$ATLAS_ERROR_ABORTS",true);
+  backtrace_ = eckit::Resource<bool>("atlas.error.backtrace;$ATLAS_ERROR_BACKTRACE",true);
 }
 
 Error& Error::instance()
