@@ -32,6 +32,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../actions/GenerateMesh.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../actions/WriteLoadBalanceReport.h)
 generate_fortran_bindings(FORTRAN_BINDINGS atlas_logging.h)
 generate_fortran_bindings(FORTRAN_BINDINGS atlas_resource.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../ErrorHandling.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../mpi/mpi.h)
 
@@ -75,6 +76,8 @@ add_custom_target( atlas_fortran_inc SOURCES
    atlas_module_Grid_c.f
    atlas_module_HaloExchange_i.f
    atlas_module_HaloExchange_c.f
+   atlas_module_Error_i.f
+   atlas_module_Error_c.f
 )
 
 install( FILES ${CMAKE_Fortran_MODULE_DIRECTORY}/${CMAKE_CFG_INTDIR}/atlas_module.mod

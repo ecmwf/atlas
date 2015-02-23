@@ -19,6 +19,7 @@
 #include "eckit/geometry/Point3.h"
 #include "eckit/filesystem/LocalPathName.h"
 #include "atlas/atlas.h"
+#include "atlas/ErrorHandling.h"
 #include "atlas/mpl/Checksum.h"
 #include "atlas/Mesh.h"
 #include "atlas/FunctionSpace.h"
@@ -292,7 +293,7 @@ void build_statistics( Mesh& mesh )
 // C wrapper interfaces to C++ routines
 
 void atlas__build_statistics ( Mesh* mesh) {
-  build_statistics(*mesh);
+  ATLAS_ERROR_HANDLING( build_statistics(*mesh) );
 }
 
 // ------------------------------------------------------------------

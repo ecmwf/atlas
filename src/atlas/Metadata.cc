@@ -14,6 +14,7 @@
 #include "eckit/exception/Exceptions.h"
 #include "atlas/Metadata.h"
 #include "atlas/Field.h"
+#include "atlas/ErrorHandling.h"
 
 using std::string;
 
@@ -60,7 +61,10 @@ void atlas__Metadata__add_##VALUE_TYPE (Metadata* This, const char* name, VALUE_
 }\
 VALUE_TYPE atlas__Metadata__get_##VALUE_TYPE (Metadata* This, const char* name)\
 {\
-	return This->get<VALUE_TYPE>( std::string(name) );\
+  ATLAS_ERROR_HANDLING(\
+    return This->get<VALUE_TYPE>( std::string(name) );\
+  );\
+  return VALUE_TYPE();\
 }
 
 

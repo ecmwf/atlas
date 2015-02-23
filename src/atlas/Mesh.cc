@@ -14,6 +14,7 @@
 #include "eckit/exception/Exceptions.h"
 #include "eckit/log/Log.h"
 
+#include "atlas/ErrorHandling.h"
 #include "atlas/Mesh.h"
 #include "atlas/FunctionSpace.h"
 
@@ -102,16 +103,27 @@ void atlas__Mesh__delete (Mesh* This) {
 
 void atlas__Mesh__create_function_space(Mesh* This, char* name,char* shape_func,int shape[], int shape_size)
 {
-	std::vector<int> vshape(shape,shape+shape_size);
-	This->create_function_space(std::string(name), std::string(shape_func),vshape);
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This != NULL );
+    std::vector<int> vshape(shape,shape+shape_size);
+    This->create_function_space(std::string(name), std::string(shape_func),vshape);
+  );
 }
 
 FunctionSpace* atlas__Mesh__function_space (Mesh* This, char* name) {
-	return &This->function_space( std::string(name) );
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This != NULL );
+  	return &This->function_space( std::string(name) );
+  );
+  return NULL;
 }
 
 Grid* atlas__Mesh__grid (Mesh* This) {
-	return &This->grid();
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This != NULL );
+    return &This->grid();
+  );
+  return NULL;
 }
 
 //------------------------------------------------------------------------------------------------------

@@ -10,6 +10,7 @@
 
 #include <limits>
 #include "atlas/mpi/mpi.h"
+#include "atlas/ErrorHandling.h"
 #include "atlas/util/Array.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/Util.h"
@@ -188,7 +189,7 @@ void distribute_mesh( Mesh& mesh )
 // C wrapper interfaces to C++ routines
 void atlas__distribute_mesh (Mesh* mesh)
 {
-  distribute_mesh( *mesh );
+  ATLAS_ERROR_HANDLING( distribute_mesh( *mesh ) );
 }
 
 // ------------------------------------------------------------------
