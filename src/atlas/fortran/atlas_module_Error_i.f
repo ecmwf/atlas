@@ -60,17 +60,18 @@ end interface code_location
 
 ! Error codes
 integer, parameter, public ::      &
-  atlas_err_cleared         = -1,  &
-  atlas_err_noerr           = 0,   &
-  atlas_err_exception       = 1,   &
-  atlas_err_usererror       = 2,   &
-  atlas_err_seriousbug      = 3,   &
-  atlas_err_notimplemented  = 4,   &
-  atlas_err_assertionfailed = 5,   &
-  atlas_err_badparameter    = 6,   &
-  atlas_err_outofrange      = 7,   &
-  atlas_err_stop            = 100, &
-  atlas_err_abort           = 101, &
-  atlas_err_cancel          = 102, &
-  atlas_err_readerror       = 200, &
-  atlas_err_writeerror      = 201
+  atlas_err_cleared         =  1,  &
+  atlas_err_noerr           =  0,   &
+  atlas_err_exception       = -1,   &
+  atlas_err_usererror       = -2,   &
+  atlas_err_seriousbug      = -3,   &
+  atlas_err_notimplemented  = -4,   &
+  atlas_err_assertionfailed = -5,   &
+  atlas_err_badparameter    = -6,   &
+  atlas_err_outofrange      = -7,   &
+  atlas_err_stop            = -100, &
+  atlas_err_abort           = -101, &
+  atlas_err_cancel          = -102, &
+  atlas_err_readerror       = -200, &
+  atlas_err_writeerror      = -201, &
+  atlas_err_unknown         = -999

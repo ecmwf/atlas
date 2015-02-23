@@ -263,3 +263,9 @@ function atlas_err()
     atlas_err = .False.
   endif
 end function
+
+
+subroutine atlas_error_example()
+  use atlas_atlas_error_c_binding
+  call atlas__error_example() 
+end subroutine

@@ -85,6 +85,16 @@ CHECK_EQUAL(atlas_err_code(),atlas_err_cleared)
 END_TEST
 
 ! -----------------------------------------------------------------------------
+TEST( test_system )
+integer :: err_code
+character(len=:), allocatable :: err_msg
+
+call atlas_error_example()
+write(0,'(A,I0)') "Error code = ",atlas_err_code()
+
+
+END_TEST
+
 
 END_TESTSUITE
 
