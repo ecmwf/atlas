@@ -41,8 +41,12 @@ if( ECKIT_HAVE_GRIB )
    set( ECKIT_GRIB_LIBRARIES eckit_grib )
 endif()
 
-if( ECKIT_HAVE_MPI )
-   message( STATUS "eckit has MPI support")
+if( ECKIT_HAVE_ECKIT_MPI )
+   message( STATUS "eckit has mpi support")
+endif()
+
+if( ECKIT_HAVE_ECKIT_MPI )
+   message( STATUS "eckit has mpistubs support")
 endif()
 
 ecbuild_declare_project()
