@@ -109,7 +109,7 @@ private:
 }
 
 
-#ifdef HAVE_FORTRAN
+#ifdef ATLAS_HAVE_FORTRAN
 #define INDEX_REF Index
 #define FROM_FORTRAN -1
 #define TO_FORTRAN   +1
@@ -125,38 +125,38 @@ template< typename DATA_TYPE >
 class IndexView < DATA_TYPE, 1 >
 {
 public:
-#ifdef HAVE_FORTRAN
-	typedef detail::FortranIndex<DATA_TYPE> Index;
+#ifdef ATLAS_HAVE_FORTRAN
+  typedef detail::FortranIndex<DATA_TYPE> Index;
 #else
     typedef DATA_TYPE& Index;
 #endif
 
 public:
-	IndexView() {}
-	IndexView( DATA_TYPE* data, const int strides[1], const int shape[1] ) : data_( const_cast<DATA_TYPE*>(data) )
-	{
-		strides_[0]=strides[0];       shape_[0]=shape[0];
-	}
-	IndexView( const Array<DATA_TYPE>& array );
-	IndexView( const Field& field );
+  IndexView() {}
+  IndexView( DATA_TYPE* data, const int strides[1], const int shape[1] ) : data_( const_cast<DATA_TYPE*>(data) )
+  {
+    strides_[0]=strides[0];       shape_[0]=shape[0];
+  }
+  IndexView( const Array<DATA_TYPE>& array );
+  IndexView( const Field& field );
 
-	DATA_TYPE operator()(int i) const { CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i) FROM_FORTRAN; }
-	Index     operator()(int i)       { CHECK_BOUNDS_1(i); return INDEX_REF(data_+strides_[0]*i); }
+  DATA_TYPE operator()(int i) const { CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i) FROM_FORTRAN; }
+  Index     operator()(int i)       { CHECK_BOUNDS_1(i); return INDEX_REF(data_+strides_[0]*i); }
 
-	DATA_TYPE operator[](int i) const { CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i) FROM_FORTRAN; }
-	Index     operator[](int i)       { CHECK_BOUNDS_1(i); return INDEX_REF(data_+strides_[0]*i); }
+  DATA_TYPE operator[](int i) const { CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i) FROM_FORTRAN; }
+  Index     operator[](int i)       { CHECK_BOUNDS_1(i); return INDEX_REF(data_+strides_[0]*i); }
 
-	const int* strides() const   { return strides_; }
-	const int* shape() const   { return shape_; }
-	int shape(const int i) const { return shape_[0]; }
+  const int* strides() const   { return strides_; }
+  const int* shape() const   { return shape_; }
+  int shape(const int i) const { return shape_[0]; }
 
-	std::size_t size() const { return shape_[0]; }
-	std::size_t total_size() const { return shape_[0]; }
-	void operator=(const DATA_TYPE& scalar) { for(int n=0; n<total_size(); ++n) *(data_+n)=scalar TO_FORTRAN; }
+  std::size_t size() const { return shape_[0]; }
+  std::size_t total_size() const { return shape_[0]; }
+  void operator=(const DATA_TYPE& scalar) { for(int n=0; n<total_size(); ++n) *(data_+n)=scalar TO_FORTRAN; }
 private:
-	DATA_TYPE* data_;
-	int strides_[1];
-	int shape_[1];
+  DATA_TYPE* data_;
+  int strides_[1];
+  int shape_[1];
 };
 
 //------------------------------------------------------------------------------------------------------
@@ -165,7 +165,7 @@ template< typename DATA_TYPE >
 class IndexView < DATA_TYPE, 2 >
 {
 public:
-#ifdef HAVE_FORTRAN
+#ifdef ATLAS_HAVE_FORTRAN
     typedef detail::FortranIndex<DATA_TYPE> Index;
 #else
     typedef DATA_TYPE& Index;
@@ -196,7 +196,7 @@ public:
 
   const int* strides() const   { return strides_; }
   const int* shape() const   { return shape_; }
-	int shape(const int i) const { return shape_[i]; }
+  int shape(const int i) const { return shape_[i]; }
 
   std::size_t size() const { return shape_[0]; }
   std::size_t total_size() const { return shape_[0]*shape_[1]; }
@@ -213,7 +213,7 @@ template< typename DATA_TYPE >
 class IndexView < DATA_TYPE, 3 >
 {
 public:
-#ifdef HAVE_FORTRAN
+#ifdef ATLAS_HAVE_FORTRAN
     typedef detail::FortranIndex<DATA_TYPE> Index;
 #else
     typedef DATA_TYPE& Index;
@@ -250,7 +250,7 @@ public:
 
   const int* strides() const   { return strides_; }
   const int* shape() const   { return shape_; }
-	int shape(const int i) const { return shape_[i]; }
+  int shape(const int i) const { return shape_[i]; }
 
   std::size_t size() const { return shape_[0]; }
   std::size_t total_size() const { return shape_[0]*shape_[1]*shape_[2]; }
@@ -267,7 +267,7 @@ template< typename DATA_TYPE >
 class IndexView < DATA_TYPE, 4 >
 {
 public:
-#ifdef HAVE_FORTRAN_NUMBERING
+#ifdef ATLAS_HAVE_FORTRAN
     typedef detail::FortranIndex<DATA_TYPE> Index;
 #else
     typedef DATA_TYPE& Index;
@@ -293,7 +293,7 @@ public:
 
   const int* strides() const   { return strides_; }
   const int* shape() const   { return shape_; }
-	int shape(const int i) const { return shape_[i]; }
+  int shape(const int i) const { return shape_[i]; }
 
   std::size_t size() const { return shape_[0]; }
   std::size_t total_size() const { return shape_[0]*shape_[1]*shape_[2]*shape_[3]; }

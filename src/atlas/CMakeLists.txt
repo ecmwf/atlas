@@ -210,7 +210,6 @@ MeshCache.cc
 MeshCache.h
 Metadata.cc
 Metadata.h
-Parameters.cc
 Parameters.h
 PointIndex3.cc
 PointIndex3.h
@@ -245,7 +244,7 @@ ecbuild_add_library( TARGET atlas
   INCLUDES "${CGAL_INCLUDE_DIRS}"
   LIBS eckit_geometry "${ECKIT_MPI_LIBRARIES}" "${ECKIT_GRIB_LIBRARIES}" "${CGAL_LIBRARIES}" )
 
-if( HAVE_FORTRAN )
+if( ATLAS_HAVE_FORTRAN )
   add_subdirectory( fortran )
 endif()
 

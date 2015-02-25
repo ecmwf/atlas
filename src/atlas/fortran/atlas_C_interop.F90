@@ -58,7 +58,7 @@ subroutine get_c_arguments(argc,argv)
   character(kind=c_char,len=255) :: arg
   integer :: iarg, arglen, pos, ich, argpos
   call get_command(cmd)
-  do ich=1,len_trim(cmd)
+  do ich=1,len(cmd)
     if (cmd(ich:ich) == " ") then
       cmd(ich:ich) = c_null_char
       exit

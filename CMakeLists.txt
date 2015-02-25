@@ -11,8 +11,8 @@
 # ATLAS
 #
 # TODO:
-#	* add renumbering to improve cache performance
-#	* add detection of OpenMP flags (mayeb move to ecbuild)
+#  * add renumbering to improve cache performance
+#  * add detection of OpenMP flags (mayeb move to ecbuild)
 
 cmake_minimum_required( VERSION 2.8.4 FATAL_ERROR )
 
@@ -56,7 +56,7 @@ ecbuild_find_python()
 ecbuild_add_option( FEATURE FORTRAN
                     DESCRIPTION "provide Fortran bindings" )
 
-if( HAVE_FORTRAN )
+if( ATLAS_HAVE_FORTRAN )
 
   ecbuild_enable_fortran( REQUIRED MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/module )
 
@@ -75,13 +75,14 @@ ecbuild_add_option( FEATURE MPI
                     DESCRIPTION "Support for MPI distributed parallelism"
                     REQUIRED_PACKAGES "MPI COMPONENTS CXX ${Fortran}" )
 
-if( HAVE_MPI AND ECKIT_HAVE_ECKIT_MPI )
+if( ATLAS_HAVE_MPI AND ECKIT_HAVE_ECKIT_MPI )
   message( STATUS "Using eckit_mpi" )
   set( ECKIT_MPI_LIBRARIES eckit_mpi )
-elseif( NOT HAVE_MPI AND ECKIT_HAVE_ECKIT_MPISTUBS )
+elseif( NOT ATLAS_HAVE_MPI AND ECKIT_HAVE_ECKIT_MPISTUBS )
   message( STATUS "Using eckit_mpistubs" )
   set( ECKIT_MPI_LIBRARIES eckit_mpistubs )
-  if( HAVE_FORTRAN )
+  add_definitions( ECKIT_USE_MPISTUBS )
+  if( ATLAS_HAVE_FORTRAN )
     ecbuild_use_package( PROJECT mpistubs )
     set( MPI_Fortran_LIBRARIES mpistubs_f )
     set( MPI_Fortran_INCLUDE_PATH ${MPISTUBS_INCLUDE_DIRS} )
@@ -98,7 +99,7 @@ ecbuild_add_option(
     DESCRIPTION "support for OpenMP threaded parallelism"
     REQUIRED_PACKAGES "OMP COMPONENTS CXX ${Fortran}" )
 
-if( HAVE_FORTRAN )
+if( ATLAS_HAVE_FORTRAN )
   cmake_add_fortran_flags( "${OMP_Fortran_FLAGS}" )
 endif()
 cmake_add_cxx_flags( "${OMP_CXX_FLAGS}" )
@@ -116,13 +117,13 @@ ecbuild_add_option(
 set(Boost_USE_MULTITHREADED      ON )
 
 ecbuild_add_option(
-	FEATURE TESSELATION
-	DESCRIPTION "support for unstructured mesh generation"
-	REQUIRED_PACKAGES "CGAL QUIET" "Boost 1.45.0" )
+    FEATURE TESSELATION
+    DESCRIPTION "support for unstructured mesh generation"
+    REQUIRED_PACKAGES "CGAL QUIET" "Boost 1.45.0" )
 
 if( HAVE_TESSELATION )
-	list( APPEND CGAL_INCLUDE_DIRS ${Boost_INCLUDE_DIRS} )
-	list( APPEND CGAL_LIBRARIES ${CGAL_LIBRARY} ${CGAL_3RD_PARTY_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} )
+    list( APPEND CGAL_INCLUDE_DIRS ${Boost_INCLUDE_DIRS} )
+    list( APPEND CGAL_LIBRARIES ${CGAL_LIBRARY} ${CGAL_3RD_PARTY_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} )
 endif()
 
 ### Type for Global indices and unique point id's
@@ -144,13 +145,13 @@ set( ATLAS_INCLUDE_DIRS   ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY
 
 list( APPEND ATLAS_LIBRARIES  atlas )
 
-if( HAVE_FORTRAN )
+if( ATLAS_HAVE_FORTRAN )
   list( APPEND ATLAS_INCLUDE_DIRS ${CMAKE_Fortran_MODULE_DIRECTORY} )
   set( ATLAS_LIBRARIES atlas_f ${ATLAS_LIBRARIES} )
 endif()
 
 if( ATLAS_HAVE_TRANS )
-	list( APPEND ATLAS_TPLS trans_api )
+  list( APPEND ATLAS_TPLS trans_api )
 endif()
 
 if( HAVE_TESSELATION )
@@ -189,7 +190,7 @@ ecbuild_pkgconfig(
   LIBRARIES        atlas
 )
 
-if( HAVE_FORTRAN )
+if( ATLAS_HAVE_FORTRAN )
   ecbuild_pkgconfig(
     NAME             atlas-fortran
     LANGUAGES        Fortran

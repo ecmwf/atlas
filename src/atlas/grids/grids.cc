@@ -87,7 +87,7 @@ void load_grid()
 
 void load()
 {
-  eckit::Log::debug() << "Loading library [atlas::grids]" << std::endl;
+  eckit::Log::debug(2) << "Loading library [atlas::grids]" << std::endl;
 
   // We have to touch all classes we want to register for static linking.
 
