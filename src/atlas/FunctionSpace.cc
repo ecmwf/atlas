@@ -24,7 +24,7 @@
 #include "atlas/util/Debug.h"
 #include "atlas/Util.h"
 
-#ifdef HAVE_FORTRAN
+#ifdef ATLAS_HAVE_FORTRAN
 #define REMOTE_IDX_BASE 1
 #else
 #define REMOTE_IDX_BASE 0
