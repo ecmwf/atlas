@@ -129,7 +129,7 @@ struct CreateWarnChannel  : CreateChannel {};
 struct CreateErrorChannel : CreateChannel {};
 struct CreateStatsChannel : CreateChannel {};
 
-Behavior::Behavior() : ContextBehavior()
+Behavior::Behavior() : ParallelContextBehavior()
 {
   // Console format
   char p[6];

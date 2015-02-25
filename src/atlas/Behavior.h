@@ -1,9 +1,8 @@
 #ifndef atlas_Behavior_h
 #define atlas_Behavior_h
 
+#include "eckit/mpi/ParallelContextBehavior.h"
 #include "eckit/log/Channel.h"
-#include "eckit/runtime/ContextBehavior.h"
-#include "atlas/atlas.h"
 #include "atlas/LogFormat.h"
 
 namespace atlas {
@@ -28,7 +27,7 @@ struct ChannelConfig
   void apply(eckit::Channel& ch);
 };
 
-class Behavior : public eckit::ContextBehavior {
+class Behavior : public eckit::mpi::ParallelContextBehavior {
 
 public:
 

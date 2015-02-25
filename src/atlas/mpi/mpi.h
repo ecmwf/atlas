@@ -11,8 +11,6 @@
 #ifndef ATLAS_MPI_MPI_h
 #define ATLAS_MPI_MPI_h
 
-
-#include "atlas/atlas_defines.h"
 #include "eckit/mpi/mpi.h"
 #include "eckit/mpi/Collectives.h"
 #include "eckit/mpi/Exceptions.h"

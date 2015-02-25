@@ -4,12 +4,7 @@
 #cmakedefine CGAL_FOUND
 
 #cmakedefine ATLAS_HAVE_OMP
-
 #cmakedefine ATLAS_HAVE_MPI
-#ifndef ATLAS_HAVE_MPI
-#define ECKIT_MPISTUBS
-#endif
-
 #cmakedefine ATLAS_HAVE_TESSELATION
 #cmakedefine ATLAS_HAVE_FORTRAN
 #cmakedefine ATLAS_HAVE_TRANS

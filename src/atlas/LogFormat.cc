@@ -1,6 +1,7 @@
 #include <cmath>
 
 #include "eckit/log/TimeStamp.h"
+#include "eckit/log/MultiChannel.h"
 #include "atlas/LogFormat.h"
 #include "atlas/mpi/mpi.h"
 using namespace eckit;
@@ -123,6 +124,44 @@ FormattedChannel::FormattedChannel( std::ostream& channel, LogFormat* format ) :
 FormattedChannel::~FormattedChannel()
 {
 }
+
+std::ostream& operator<< (std::ostream& stream, const indent& s)
+{
+  stream << std::flush;
+  eckit::MultiChannel* ch = dynamic_cast<MultiChannel*>( &stream );
+  if( ch != NULL)
+  {
+    MultiChannel::iterator it;
+    for( it=ch->begin(); it!=ch->end(); ++it )
+    {
+       FormattedChannel* formatted_ch = dynamic_cast<atlas::FormattedChannel*>(it->second.get());
+       if( formatted_ch )
+         formatted_ch->format().indent( s );
+    }
+  }
+  stream << std::flush;
+  return stream;
+}
+
+std::ostream& operator<< (std::ostream& stream, const dedent& _dedent)
+{
+  stream << std::flush;
+  eckit::MultiChannel* ch = dynamic_cast<MultiChannel*>( &stream );
+  if( ch != NULL)
+  {
+    MultiChannel::iterator it;
+    for( it=ch->begin(); it!=ch->end(); ++it )
+    {
+       FormattedChannel* formatted_ch = dynamic_cast<atlas::FormattedChannel*>(it->second.get());
+       if( formatted_ch )
+         formatted_ch->format().dedent();
+    }
+  }
+  stream << std::flush;
+  return stream;
+}
+
+
 
 } // namespace atlas
 
