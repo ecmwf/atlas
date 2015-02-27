@@ -10,5 +10,6 @@ ecbuild_add_test(
 		TARGET      atlas_test_cgal_mesh_gen_from_points
 		SOURCES     test_cgal_mesh_gen_from_points.cc
 		CONDITION   HAVE_TESSELATION
-		LIBS        atlas )
+		LIBS        atlas
+        MPI         1 )
 

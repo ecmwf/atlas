@@ -3,12 +3,17 @@
 integer, parameter :: ATLAS_CODELOCATION_FILE_STRLEN     = 1024
 integer, parameter :: ATLAS_CODELOCATION_FUNCTION_STRLEN = 1024
 
-TYPE :: CodeLocation_type
+TYPE :: atlas_CodeLocation
   integer :: line
   character(len=ATLAS_CODELOCATION_FILE_STRLEN) :: file
   character(len=ATLAS_CODELOCATION_FILE_STRLEN) :: function
 contains
+  procedure :: str => CodeLocation__str
 ENDTYPE
+
+interface atlas_code_location_str
+  module procedure code_location_str_FILE_LINE
+end interface
 
 interface atlas_abort
   module procedure atlas_abort_null
@@ -55,11 +60,11 @@ interface atlas_throw_assertionfailed
 end interface atlas_throw_assertionfailed
 
 
-interface code_location
+interface atlas_code_location
   module procedure code_location_null
   module procedure code_location_file_line
   module procedure code_location_file_line_func
-end interface code_location
+end interface atlas_code_location
 
 ! Error codes
 integer, parameter, public ::      &

@@ -19,7 +19,7 @@
 #include "eckit/memory/SharedPtr.h"
 #include "eckit/memory/Owned.h"
 
-#include "atlas/atlas.h"
+#include "atlas/atlas_config.h"
 #include "atlas/mpi/mpi.h"
 #include "atlas/util/Debug.h"
 #include "atlas/util/ArrayView.h"

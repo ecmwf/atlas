@@ -5,7 +5,6 @@
 #include "eckit/config/ResourceMgr.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/filesystem/LocalPathName.h"
-#include "eckit/mpi/mpi.h"
 #include "atlas/atlas.h"
 #include "atlas/Behavior.h"
 #include "atlas/grids/grids.h"
@@ -58,14 +57,13 @@ void atlas_init(int argc, char** argv)
 
   Log::debug() << "Atlas program [" << Context::instance().displayName() << "]\n";
   Log::debug() << indent();
-  Log::debug() <<     "Atlas version [" << atlas_version() << "]\n";
-  Log::debug() <<     "Atlas git     [" << atlas_git_sha1()<< "]\n";
+  Log::debug() << "Atlas version [" << atlas_version() << "]\n";
+  Log::debug() << "Atlas git     [" << atlas_git_sha1()<< "]\n";
 
   std::vector<PathName>::iterator path_it;
   for( path_it = config_files.begin(); path_it!=config_files.end(); ++path_it )
   {
-    Log::debug() << "\nRead config file " << path_it->fullName() << "\n";
-    Log::debug() << indent() << Context::instance().behavior().readConfig(path_it->fullName()) << dedent();
+    Log::debug() << "Read config file " << path_it->fullName() << "\n";
   }
 
   Log::debug() << "rundir  : " << LocalPathName(rundir()).fullName() << "\n";

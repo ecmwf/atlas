@@ -19,7 +19,7 @@
 #include "eckit/log/Log.h"
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
-#include "atlas.h"
+#include "atlas/atlas_config.h"
 #include "atlas/mpl/HaloExchange.h"
 #include "atlas/mpl/GatherScatter.h"
 #include "atlas/mpl/Checksum.h"

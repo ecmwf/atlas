@@ -76,6 +76,7 @@ add_custom_target( atlas_grib_api_samples DEPENDS ${tgts} )
 
 ecbuild_add_test( TARGET      atlas_test_GridSpec
                   BOOST
+                  MPI         1
                   ARGS        reduced_gg_pl_160_grib1.tmpl
                   SOURCES     test_GridSpec.cc
                   CONDITION   ECKIT_HAVE_GRIB
@@ -92,6 +93,7 @@ foreach( file ${grib_api_samples_data} )
                       DEPENDS ${tgts}
                       COMMAND atlas_test_GridSpec
                       ARGS ${file}
+                      MPI 1
                      )
 endforeach()
 
@@ -115,7 +117,8 @@ ecbuild_add_test(   TARGET      atlas_test_field
 					BOOST
 					SOURCES     test_field.cc
 					CONDITION	ECKIT_HAVE_GRIB
-					LIBS        atlas )
+					LIBS        atlas
+                    MPI         1 )
 
 list( APPEND test_grid_from_grib_data
 CMC_hrdps_east_TMP_TGL_2_ps2.5km_2014081512_P000-00.grib2
@@ -147,4 +150,5 @@ ecbuild_add_test(   TARGET      atlas_test_grid_from_grib
 					SOURCES     test_grid_from_grib.cc
                     DEPENDS     atlas_tests_grid_get_gribs
 					CONDITION	ECKIT_HAVE_GRIB AND OFF
-					LIBS        atlas )
+					LIBS        atlas
+                    MPI         1 )

@@ -16,7 +16,7 @@
 #include "eckit/exception/Exceptions.h"
 #include "eckit/types/Types.h"
 
-#include "atlas/atlas.h"
+#include "atlas/atlas_config.h"
 #include "atlas/ErrorHandling.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Field.h"
@@ -286,7 +286,7 @@ FieldT<int>& FunctionSpace::create_field(const std::string& name, size_t nb_vars
 
 template <>
 FieldT<long>& FunctionSpace::create_field(const std::string& name, size_t nb_vars, CreateBehavior b )
-{	
+{
 	FieldT<long>* field = NULL;
 
 	size_t rank = shape_.size();
@@ -478,7 +478,7 @@ void atlas__FunctionSpace__parallelise (FunctionSpace* This) {
 }
 
 void atlas__FunctionSpace__halo_exchange_int (FunctionSpace* This, int field_data[], int field_size) {
-	ATLAS_ERROR_HANDLING( 
+	ATLAS_ERROR_HANDLING(
     This->halo_exchange(field_data,field_size) );
 }
 
@@ -491,17 +491,17 @@ void atlas__FunctionSpace__halo_exchange_double (FunctionSpace* This, double fie
 }
 
 void atlas__FunctionSpace__gather_int (FunctionSpace* This, int field_data[], int field_size, int glbfield_data[], int glbfield_size) {
-	ATLAS_ERROR_HANDLING( 
+	ATLAS_ERROR_HANDLING(
     This->gather(field_data,field_size, glbfield_data,glbfield_size) );
 }
 
 void atlas__FunctionSpace__gather_float (FunctionSpace* This, float field_data[], int field_size, float glbfield_data[], int glbfield_size) {
-	ATLAS_ERROR_HANDLING( 
+	ATLAS_ERROR_HANDLING(
     This->gather(field_data,field_size, glbfield_data,glbfield_size) );
 }
 
 void atlas__FunctionSpace__gather_double (FunctionSpace* This, double field_data[], int field_size, double glbfield_data[], int glbfield_size) {
-	ATLAS_ERROR_HANDLING( 
+	ATLAS_ERROR_HANDLING(
     This->gather(field_data,field_size, glbfield_data,glbfield_size) );
 }
 

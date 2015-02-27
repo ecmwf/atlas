@@ -47,8 +47,25 @@ subroutine atlas_err_set_backtrace( backtrace )
   endif
 end subroutine
 
+
+function CodeLocation__str(self) result( str )
+  class(atlas_CodeLocation) :: self
+  character(len(self%file)+5) :: str
+  write(str,'(A,A1,I4)') self%file,":",self%line
+end function
+
+function code_location_str_FILE_LINE(file,line) result( str )
+  character(len=*), intent(in) :: file
+  integer, intent(in) :: line
+  character(len(file)+5) :: str
+  type(atlas_CodeLocation) :: code_location
+  code_location = code_location_file_line(file,line)
+  str = code_location%str()
+end function
+
+
 function code_location_null() result( code_location )
-  type(CodeLocation_type) :: code_location
+  type(atlas_CodeLocation) :: code_location
   code_location%file = ""
   code_location%line = 0
   code_location%function = ""
@@ -57,7 +74,7 @@ end function
 function code_location_file_line(file,line) result( code_location )
   character(len=*), intent(in) :: file
   integer, intent(in) :: line
-  type(CodeLocation_type) :: code_location
+  type(atlas_CodeLocation) :: code_location
   code_location%file = file
   code_location%line = line
   code_location%function = ""
@@ -66,7 +83,7 @@ end function
 function code_location_file_line_func(file,line,func) result( code_location )
   character(len=*), intent(in) :: file, func
   integer, intent(in) :: line
-  type(CodeLocation_type) :: code_location
+  type(atlas_CodeLocation) :: code_location
   code_location%file = file
   code_location%line = line
   code_location%function = func
@@ -86,7 +103,7 @@ end subroutine
 subroutine atlas_abort_msg_loc(msg,code_loc)
   use atlas_errorhandling_c_binding
   character(len=*), intent(in) :: msg
-  type(CodeLocation_type), intent(in) :: code_loc
+  type(atlas_CodeLocation), intent(in) :: code_loc
   call atlas__abort(c_str(msg),c_str(code_loc%file),code_loc%line,c_str(code_loc%function))
 end subroutine
 
@@ -100,14 +117,14 @@ end subroutine
 
 subroutine atlas_throw_exception_loc(code_loc)
   use atlas_errorhandling_c_binding
-  type(CodeLocation_type), intent(in) :: code_loc
+  type(atlas_CodeLocation), intent(in) :: code_loc
   call atlas__throw_exception(c_str(""),c_str(code_loc%file),code_loc%line,c_str(code_loc%function))
 end subroutine
 
 subroutine atlas_throw_exception_msg_loc(msg,code_loc)
   use atlas_errorhandling_c_binding
   character(len=*), intent(in) :: msg
-  type(CodeLocation_type), intent(in) :: code_loc
+  type(atlas_CodeLocation), intent(in) :: code_loc
   call atlas__throw_exception(c_str(msg),c_str(code_loc%file),code_loc%line,c_str(code_loc%function))
 end subroutine
 
@@ -115,7 +132,7 @@ end subroutine
 
 subroutine atlas_throw_notimplemented_loc(code_loc)
   use atlas_errorhandling_c_binding
-  type(CodeLocation_type), intent(in) :: code_loc
+  type(atlas_CodeLocation), intent(in) :: code_loc
   call atlas__throw_notimplemented(c_str(""),c_str(code_loc%file),code_loc%line,c_str(code_loc%function))
 end subroutine
 
@@ -128,7 +145,7 @@ end subroutine
 subroutine atlas_throw_notimplemented_msg_loc(msg,code_loc)
   use atlas_errorhandling_c_binding
   character(len=*), intent(in) :: msg
-  type(CodeLocation_type), intent(in) :: code_loc
+  type(atlas_CodeLocation), intent(in) :: code_loc
   call atlas__throw_notimplemented(c_str(msg),c_str(code_loc%file),code_loc%line,c_str(code_loc%function))
 end subroutine
 
@@ -136,7 +153,7 @@ end subroutine
 
 subroutine atlas_throw_outofrange_loc(code_loc)
   use atlas_errorhandling_c_binding
-  type(CodeLocation_type), intent(in) :: code_loc
+  type(atlas_CodeLocation), intent(in) :: code_loc
   call atlas__throw_outofrange(c_str(""),c_str(code_loc%file),code_loc%line,c_str(code_loc%function))
 end subroutine
 
@@ -149,7 +166,7 @@ end subroutine
 subroutine atlas_throw_outofrange_msg_loc(msg,code_loc)
   use atlas_errorhandling_c_binding
   character(len=*), intent(in) :: msg
-  type(CodeLocation_type), intent(in) :: code_loc
+  type(atlas_CodeLocation), intent(in) :: code_loc
   call atlas__throw_outofrange(c_str(msg),c_str(code_loc%file),code_loc%line,c_str(code_loc%function))
 end subroutine
 
@@ -157,7 +174,7 @@ subroutine atlas_throw_outofrange_range_loc(arrayname,idx,max,code_loc)
   use atlas_errorhandling_c_binding
   character(len=*), intent(in) :: arrayname
   integer, intent(in) :: idx, max
-  type(CodeLocation_type), intent(in) :: code_loc
+  type(atlas_CodeLocation), intent(in) :: code_loc
   character(len=80) :: msg
   write(msg,'(A,I0,A,I0,A,A)') "Index ",idx," is greater than maximum ",max," in array ",arrayname
   call atlas__throw_outofrange(c_str(msg),c_str(code_loc%file),code_loc%line,c_str(code_loc%function))
@@ -176,7 +193,7 @@ end subroutine
 
 subroutine atlas_throw_usererror_loc(code_loc)
   use atlas_errorhandling_c_binding
-  type(CodeLocation_type), intent(in) :: code_loc
+  type(atlas_CodeLocation), intent(in) :: code_loc
   call atlas__throw_usererror(c_str(""),c_str(code_loc%file),code_loc%line,c_str(code_loc%function))
 end subroutine
 
@@ -189,7 +206,7 @@ end subroutine
 subroutine atlas_throw_usererror_msg_loc(msg,code_loc)
   use atlas_errorhandling_c_binding
   character(len=*), intent(in) :: msg
-  type(CodeLocation_type), intent(in) :: code_loc
+  type(atlas_CodeLocation), intent(in) :: code_loc
   call atlas__throw_usererror(c_str(msg),c_str(code_loc%file),code_loc%line,c_str(code_loc%function))
 end subroutine
 
@@ -197,7 +214,7 @@ end subroutine
 
 subroutine atlas_throw_assertionfailed_loc(code_loc)
   use atlas_errorhandling_c_binding
-  type(CodeLocation_type), intent(in) :: code_loc
+  type(atlas_CodeLocation), intent(in) :: code_loc
   call atlas__throw_assertionfailed(c_str(""),c_str(code_loc%file),code_loc%line,c_str(code_loc%function))
 end subroutine
 
@@ -210,7 +227,7 @@ end subroutine
 subroutine atlas_throw_assertionfailed_msg_loc(msg,code_loc)
   use atlas_errorhandling_c_binding
   character(len=*), intent(in) :: msg
-  type(CodeLocation_type), intent(in) :: code_loc
+  type(atlas_CodeLocation), intent(in) :: code_loc
   call atlas__throw_assertionfailed(c_str(msg),c_str(code_loc%file),code_loc%line,c_str(code_loc%function))
 end subroutine
 
@@ -218,7 +235,7 @@ end subroutine
 
 subroutine atlas_throw_seriousbug_loc(code_loc)
   use atlas_errorhandling_c_binding
-  type(CodeLocation_type), intent(in) :: code_loc
+  type(atlas_CodeLocation), intent(in) :: code_loc
   call atlas__throw_seriousbug(c_str(""),c_str(code_loc%file),code_loc%line,c_str(code_loc%function))
 end subroutine
 
@@ -231,7 +248,7 @@ end subroutine
 subroutine atlas_throw_seriousbug_msg_loc(msg,code_loc)
   use atlas_errorhandling_c_binding
   character(len=*), intent(in) :: msg
-  type(CodeLocation_type), intent(in) :: code_loc
+  type(atlas_CodeLocation), intent(in) :: code_loc
   call atlas__throw_seriousbug(c_str(msg),c_str(code_loc%file),code_loc%line,c_str(code_loc%function))
 end subroutine
 
