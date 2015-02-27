@@ -9,12 +9,14 @@
 if( HAVE_FCTEST )
 
   add_fctest( TARGET atlas_fctest_mesh
+    MPI             1
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_mesh.F90
     LIBS            atlas_f
   )
 
   add_fctest( TARGET atlas_fctest_logging
+    MPI             1
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_logging.F90
     LIBS            atlas_f
@@ -22,12 +24,14 @@ if( HAVE_FCTEST )
 
 
   add_fctest( TARGET atlas_fctest_error
+    MPI             1
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_error.F90
     LIBS            atlas_f
   )
 
   add_fctest( TARGET atlas_fctest_resource
+    MPI             1
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_resource.F90
     ARGS            -integer 10 -long 5000000000 -float 0.123456 -double 0.1234567890123456789 -string "hello world"
@@ -41,12 +45,14 @@ set( BOOST_UNIT_TEST_FRAMEWORK_LINKED OFF )
 
 ecbuild_add_test( TARGET atlas_test_flags
   BOOST
+  MPI      1
   SOURCES  test_flags.cc
   LIBS     atlas
 )
 
 ecbuild_add_test( TARGET atlas_test_indexview
   BOOST
+  MPI      1
   SOURCES  test_indexview.cc
   LIBS     atlas
 )
@@ -67,25 +73,28 @@ ecbuild_add_test( TARGET atlas_test_gather
 
 ecbuild_add_test( TARGET atlas_test_functionspace
   BOOST
+  MPI      1
   SOURCES  test_functionspace.cc
   LIBS     atlas eckit_maths
 )
 
 ecbuild_add_test( TARGET atlas_test_gmsh
   BOOST
+  MPI      1
   SOURCES  test_gmsh.cc TestMeshes.h
   LIBS     atlas
 )
 
 ecbuild_add_test( TARGET atlas_test_rgg
   BOOST
+  MPI      1
   SOURCES  test_rgg.cc
   LIBS     atlas
 )
 
 ecbuild_add_test( TARGET atlas_test_parfields
   BOOST
-  MPI 2
+  MPI      2
   SOURCES  test_parfields.cc
   LIBS     atlas
 )
@@ -106,18 +115,21 @@ ecbuild_add_test( TARGET atlas_test_distmesh
 
 ecbuild_add_test( TARGET atlas_test_meshgen3d
   BOOST
+  MPI       1
   SOURCES   test_meshgen3d.cc
   LIBS      atlas
 )
 
 ecbuild_add_test( TARGET atlas_test_grids
   BOOST
+  MPI       1
   SOURCES   test_grids.cc
   LIBS      atlas
 )
 
 ecbuild_add_test( TARGET atlas_test_pointcloud
   BOOST
+  MPI       1
   SOURCES   test_pointcloud.cc
   LIBS      atlas
 )

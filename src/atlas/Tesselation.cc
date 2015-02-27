@@ -17,7 +17,7 @@
 #include "eckit/log/Timer.h"
 #include "eckit/memory/ScopedPtr.h"
 
-#include "atlas/atlas.h"
+#include "atlas/atlas_config.h"
 
 //------------------------------------------------------------------------------------------------------
 

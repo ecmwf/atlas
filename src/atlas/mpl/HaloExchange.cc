@@ -17,7 +17,6 @@
 #include <iostream>
 #include <sstream>
 
-#include "atlas/atlas_defines.h"
 #include "atlas/mpl/HaloExchange.h"
 
 namespace atlas {

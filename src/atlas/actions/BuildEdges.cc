@@ -15,7 +15,7 @@
 #include <cmath>
 #include <limits>
 #include <set>
-#include "atlas/atlas.h"
+#include "atlas/atlas_config.h"
 #include "atlas/ErrorHandling.h"
 #include "atlas/Mesh.h"
 #include "atlas/FunctionSpace.h"

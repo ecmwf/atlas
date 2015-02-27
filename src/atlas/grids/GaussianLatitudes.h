@@ -14,8 +14,6 @@
 #ifndef atlas_grids_GaussianLatitudes_h
 #define atlas_grids_GaussianLatitudes_h
 
-#include "eckit/memory/Builder.h"
-
 namespace atlas {
 namespace grids {
 //------------------------------------------------------------------------------------------------------

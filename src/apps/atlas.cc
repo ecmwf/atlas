@@ -124,7 +124,7 @@ void Version::run()
     "           Print short version string 'MAJOR.MINOR.PATCH' \n"
     "\n"
     "       --info\n"
-    "           Print build configuration and features\n"
+    "           Print build configuration anad features\n"
     "\n"
     "AUTHOR\n"
     "       Written by Willem Deconinck.\n"

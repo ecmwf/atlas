@@ -18,7 +18,7 @@
 #include "eckit/geometry/Point2.h"
 #include "eckit/geometry/Point3.h"
 #include "eckit/filesystem/LocalPathName.h"
-#include "atlas/atlas.h"
+#include "atlas/atlas_config.h"
 #include "atlas/ErrorHandling.h"
 #include "atlas/mpl/Checksum.h"
 #include "atlas/Mesh.h"

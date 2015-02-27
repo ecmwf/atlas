@@ -58,6 +58,26 @@ private:
   LogFormat* format_;
 };
 
+class indent
+{
+public:
+  indent(const std::string& s = std::string("  ")) :
+    indent_(s)
+  {}
+  operator std::string() const { return indent_; }
+private:
+  std::string indent_;
+};
+
+class dedent
+{
+public:
+  dedent() {}
+};
+
+std::ostream& operator<< ( std::ostream& stream, const indent& );
+std::ostream& operator<< ( std::ostream& stream, const dedent& );
+
 
 } // namespace atlas
 
