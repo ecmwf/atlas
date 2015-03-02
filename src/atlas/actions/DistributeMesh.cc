@@ -35,25 +35,8 @@ void distribute_mesh( Mesh& mesh )
   ArrayView<int,   1> node_part ( nodes.field("partition")   );
   ArrayView<gidx_t,1> node_gidx ( nodes.field("glb_idx")   );
 
-  /*
-  Create structure which we can partition with multiple keys (lat and lon)
-  */
-  std::vector<NodeInt> nodes_int(nb_nodes);
-
-  int n=0;
-  for( int jnode=0; jnode<nb_nodes; ++jnode )
-  {
-    nodes_int[n].x = microdeg(latlon(jnode,XX));
-    nodes_int[n].y = microdeg(latlon(jnode,YY));
-    nodes_int[n].n = n;
-    ++n;
-  }
-  /*
-  Assign partition to nodes
-  */
-  partitioner.partition(nb_nodes,nodes_int.data(),node_part.data());
-  std::vector<NodeInt>().swap(nodes_int); // Deallocate completely
-
+  Grid& g = mesh.grid();
+  partitioner.partition(g,node_part.data());
 
   int nb_keep_nodes = 0;
   std::vector<int> keep_nodes(nb_nodes,0);

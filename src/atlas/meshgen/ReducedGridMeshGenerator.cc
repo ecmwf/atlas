@@ -162,26 +162,28 @@ void ReducedGridMeshGenerator::generate(const ReducedGrid& rgg, Mesh& mesh )
   int n;
   int ngptot = rgg.npts();
   std::vector<int> part(ngptot);
-  bool stagger = options.get<bool>("stagger");
+//  bool stagger = options.get<bool>("stagger");
 
-  /*
-  Create structure which we can partition with multiple keys (lat and lon)
-  */
-  std::vector<NodeInt> nodes(ngptot);
-  n=0;
-  for( int jlat=0; jlat<rgg.nlat(); ++jlat)
-  {
-    for( int jlon=0; jlon<rgg.nlon(jlat); ++jlon)
-    {
-      nodes[n].x = microdeg(rgg.lon(jlat,jlon));
-      if( stagger ) nodes[n].x += static_cast<int>(1e6*180./static_cast<double>(rgg.nlon(jlat)));
-      nodes[n].y = microdeg(rgg.lat(jlat));
-      nodes[n].n = n;
-      ++n;
-    }
-  }
-  partitioner.partition(ngptot,nodes.data(),part.data());
-  std::vector<NodeInt>().swap(nodes); // Deallocate completely
+//  /*
+//  Create structure which we can partition with multiple keys (lat and lon)
+//  */
+//  std::vector<NodeInt> nodes(ngptot);
+//  n=0;
+//  for( int jlat=0; jlat<rgg.nlat(); ++jlat)
+//  {
+//    for( int jlon=0; jlon<rgg.nlon(jlat); ++jlon)
+//    {
+//      nodes[n].x = microdeg(rgg.lon(jlat,jlon));
+//      if( stagger ) nodes[n].x += static_cast<int>(1e6*180./static_cast<double>(rgg.nlon(jlat)));
+//      nodes[n].y = microdeg(rgg.lat(jlat));
+//      nodes[n].n = n;
+//      ++n;
+//    }
+//  }
+//  partitioner.partition(ngptot,nodes.data(),part.data());
+//  std::vector<NodeInt>().swap(nodes); // Deallocate completely
+
+  partitioner.partition(rgg,part.data());
 
   Region region;
   generate_region(rgg,part,mypart,region);

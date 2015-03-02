@@ -18,7 +18,7 @@
 #include <ctime>
 
 #include "eckit/geometry/Point2.h"
-#include "atlas/Grid.h"
+#include "atlas/grids/ReducedGrid.h"
 #include "atlas/Util.h"
 #include "atlas/meshgen/EqualAreaPartitioner.h"
 
@@ -438,14 +438,14 @@ void EqualAreaPartitioner::area(int partition, int& band, int& sector) const
   }
 }
 
-bool compare_NS_WE(const NodeInt& node1, const NodeInt& node2)
+bool compare_NS_WE(const EqualAreaPartitioner::NodeInt& node1, const EqualAreaPartitioner::NodeInt& node2)
 {
   if( node1.y >  node2.y ) return true;
   if( node1.y == node2.y ) return (node1.x < node2.x);
   return false;
 }
 
-bool compare_WE_NS(const NodeInt& node1, const NodeInt& node2)
+bool compare_WE_NS(const EqualAreaPartitioner::NodeInt& node1, const EqualAreaPartitioner::NodeInt& node2)
 {
   if( node1.x <  node2.x ) return true;
   if( node1.x == node2.x ) return (node1.y > node2.y);
@@ -525,7 +525,7 @@ void EqualAreaPartitioner::partition(int nb_nodes, NodeInt nodes[], int part[]) 
 
 void EqualAreaPartitioner::partition(const Grid& grid, int part[]) const
 {
-  std::vector<meshgen::NodeInt> nodes(grid.npts());
+  std::vector<NodeInt> nodes(grid.npts());
   int n(0);
   std::vector<eckit::geometry::LLPoint2> points;
   grid.lonlat(points);
@@ -539,6 +539,22 @@ void EqualAreaPartitioner::partition(const Grid& grid, int part[]) const
   partition(grid.npts(),nodes.data(),part);
 }
 
+void EqualAreaPartitioner::partition(const grids::ReducedGrid& grid, int part[]) const
+{
+  std::vector<NodeInt> nodes(grid.npts());
+  int n(0);
+  for( int jlat=0; jlat<grid.nlat(); ++jlat)
+  {
+    for( int jlon=0; jlon<grid.nlon(jlat); ++jlon)
+    {
+      nodes[n].x = microdeg(grid.lon(jlat,jlon));
+      nodes[n].y = microdeg(grid.lat(jlat));
+      nodes[n].n = n;
+      ++n;
+    }
+  }
+  partition(grid.npts(),nodes.data(),part);
+}
 
 } // namespace meshgen
 } // namespace atlas
