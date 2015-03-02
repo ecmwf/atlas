@@ -56,7 +56,8 @@ void LogFormat::indent( const std::string& indentation )
 
 void LogFormat::dedent()
 {
-  indent_stack_.pop_back();
+  if( indent_stack_.size() )
+    indent_stack_.pop_back();
 
   indent_.clear();
   std::vector<std::string>::iterator it;
