@@ -65,6 +65,10 @@ void atlas_init(int argc, char** argv)
   {
     Log::debug() << "Read config file " << path_it->fullName() << "\n";
   }
+  Log::debug() << "Configuration read from scripts:\n";
+  Log::debug() << indent();
+  ResourceMgr::instance().printScript( Log::debug() );
+  Log::debug() << dedent();
 
   Log::debug() << "rundir  : " << LocalPathName(rundir()).fullName() << "\n";
   Log::debug() << dedent();
