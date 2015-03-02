@@ -12,16 +12,16 @@
 
 //------------------------------------------------------------------------------------------------------
 
-/*! @example trans_sptogp.c 
+/*! @example trans_sptogp.c
  *
  * Transform spectral to gridpoint
- * 
+ *
  * This is an example of how to setup and
- * transform global spectral data to 
+ * transform global spectral data to
  * global gridpoint data
  */
 
-// Following dummy functions are implementation details 
+// Following dummy functions are implementation details
 // that don't contribute to this example. They could be
 // replaced with grib_api functionality
 void read_grid( Trans* trans );
@@ -29,11 +29,11 @@ void read_rspecg( Trans* trans, double* rspecg[], int* nfrom[], int* nfld );
 void write_rgpg( Trans* trans, double* rgpg[], int nfld );
 
 
-int main ( int arc, char **argv ) 
+int main ( int arc, char **argv )
 {
   int jfld;
   Trans trans;
- 
+
   // Read resolution information
   read_grid(&trans);
 
@@ -67,7 +67,7 @@ int main ( int arc, char **argv )
     invtrans.rgp       = rgp;
   trans_invtrans(&invtrans);
 
-  
+
   // Gather all gridpoint fields
   double* rgpg = NULL;
   if( trans.myproc == 1 )
@@ -149,7 +149,7 @@ void read_rspecg(Trans* trans, double* rspecg[], int* nfrom[], int* nfld )
     {
       (*rspecg)[i*(*nfld) + 0] = (i==0 ? 1. : 0.); // scalar field 1
       (*rspecg)[i*(*nfld) + 1] = (i==0 ? 2. : 0.); // scalar field 2
-    } 
+    }
   }
   *nfrom = (int*) malloc( sizeof(int) * (*nfld) );
   for (jfld=0; jfld<(*nfld); ++jfld)

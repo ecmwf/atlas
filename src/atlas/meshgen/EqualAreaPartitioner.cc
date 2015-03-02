@@ -17,6 +17,9 @@
 #include <algorithm>    // std::sort
 #include <ctime>
 
+#include "eckit/geometry/Point2.h"
+#include "atlas/Grid.h"
+#include "atlas/Util.h"
 #include "atlas/meshgen/EqualAreaPartitioner.h"
 
 namespace atlas {
@@ -519,6 +522,23 @@ void EqualAreaPartitioner::partition(int nb_nodes, NodeInt nodes[], int part[]) 
   final=std::clock()-init;
   // std::cout << "partition stop (took " << (double)final / ((double)CLOCKS_PER_SEC) << "s)" << std::endl;
 }
+
+void EqualAreaPartitioner::partition(const Grid& grid, int part[]) const
+{
+  std::vector<meshgen::NodeInt> nodes(grid.npts());
+  int n(0);
+  std::vector<eckit::geometry::LLPoint2> points;
+  grid.lonlat(points);
+  for( int j=0; j<grid.npts(); ++j)
+  {
+    nodes[n].x = microdeg(points[j].lon());
+    nodes[n].y = microdeg(points[j].lat());
+    nodes[n].n = n;
+    ++n;
+  }
+  partition(grid.npts(),nodes.data(),part);
+}
+
 
 } // namespace meshgen
 } // namespace atlas

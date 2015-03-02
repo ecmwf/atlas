@@ -134,6 +134,15 @@ ecbuild_add_test( TARGET atlas_test_pointcloud
   LIBS      atlas
 )
 
+ecbuild_add_test( TARGET atlas_test_trans
+  BOOST
+  MPI      4
+  SOURCES   test_trans.cc
+  CONDITION HAVE_TRANS
+  LIBS      atlas ${TRANS_API_LIBRARIES}
+  INCLUDES  ${TRANS_API_INCLUDE_DIRS}
+)
+
 if( ECKIT_HAVE_GRIB )
   add_subdirectory( grid )
 endif()

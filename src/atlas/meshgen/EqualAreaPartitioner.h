@@ -63,6 +63,7 @@
 #include <vector>
 
 namespace atlas {
+  class Grid;
 namespace meshgen {
 
 void eq_caps(int N, std::vector<int>& n_regions, std::vector<double>& s_cap);
@@ -101,6 +102,8 @@ public:
   // Doesn't matter if nodes[] is in degrees or radians, as a sorting
   // algorithm is used internally
   void partition(int nb_nodes, NodeInt nodes[], int part[]) const;
+
+  void partition( const Grid&, int part[] ) const;
 
 private:
   int N_;
