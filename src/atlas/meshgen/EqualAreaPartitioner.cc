@@ -388,8 +388,10 @@ void eq_regions(int N, double xmin[], double xmax[], double ymin[], double ymax[
 
 
 EqualAreaPartitioner::EqualAreaPartitioner(int N) :
+  Partitioner(),
   N_(N)
 {
+  set_nb_partition(N_);
   std::vector<double> s_cap;
   eq_caps(N, sectors_, s_cap);
   bands_.resize(s_cap.size());
@@ -527,28 +529,28 @@ void EqualAreaPartitioner::partition(const Grid& grid, int part[]) const
 {
   std::vector<NodeInt> nodes(grid.npts());
   int n(0);
-  std::vector<eckit::geometry::LLPoint2> points;
-  grid.lonlat(points);
-  for( int j=0; j<grid.npts(); ++j)
-  {
-    nodes[n].x = microdeg(points[j].lon());
-    nodes[n].y = microdeg(points[j].lat());
-    nodes[n].n = n;
-    ++n;
-  }
-  partition(grid.npts(),nodes.data(),part);
-}
 
-void EqualAreaPartitioner::partition(const grids::ReducedGrid& grid, int part[]) const
-{
-  std::vector<NodeInt> nodes(grid.npts());
-  int n(0);
-  for( int jlat=0; jlat<grid.nlat(); ++jlat)
+  if( const grids::ReducedGrid* reduced_grid = dynamic_cast<const grids::ReducedGrid*>(&grid) )
   {
-    for( int jlon=0; jlon<grid.nlon(jlat); ++jlon)
+    for( int jlat=0; jlat<reduced_grid->nlat(); ++jlat)
     {
-      nodes[n].x = microdeg(grid.lon(jlat,jlon));
-      nodes[n].y = microdeg(grid.lat(jlat));
+      for( int jlon=0; jlon<reduced_grid->nlon(jlat); ++jlon)
+      {
+        nodes[n].x = microdeg(reduced_grid->lon(jlat,jlon));
+        nodes[n].y = microdeg(reduced_grid->lat(jlat));
+        nodes[n].n = n;
+        ++n;
+      }
+    }
+  }
+  else
+  {
+    std::vector<eckit::geometry::LLPoint2> points;
+    grid.lonlat(points);
+    for( int j=0; j<grid.npts(); ++j)
+    {
+      nodes[n].x = microdeg(points[j].lon());
+      nodes[n].y = microdeg(points[j].lat());
       nodes[n].n = n;
       ++n;
     }

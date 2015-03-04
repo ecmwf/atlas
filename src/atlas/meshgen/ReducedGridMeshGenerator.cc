@@ -31,6 +31,7 @@
 #include "atlas/meshgen/EqualAreaPartitioner.h"
 #include "atlas/grids/ReducedGrid.h"
 #include "atlas/meshgen/ReducedGridMeshGenerator.h"
+#include "atlas/GridDistribution.h"
 
 #define DEBUG_OUTPUT 0
 
@@ -101,6 +102,11 @@ Mesh* ReducedGridMeshGenerator::operator()( const ReducedGrid& grid )
   return generate(grid);
 }
 
+Mesh* ReducedGridMeshGenerator::operator()( const ReducedGrid& grid, const GridDistribution& distribution )
+{
+  return generate(grid,distribution);
+}
+
 void ReducedGridMeshGenerator::set_three_dimensional(bool f)
 {
     options.set("three_dimensional",f);
@@ -156,49 +162,38 @@ void ReducedGridMeshGenerator::set_include_pole(bool f)
 
 void ReducedGridMeshGenerator::generate(const ReducedGrid& rgg, Mesh& mesh )
 {
-  int mypart   = options.get<int>("part");
   int nb_parts = options.get<int>("nb_parts");
   EqualAreaPartitioner partitioner(nb_parts);
-  int n;
-  int ngptot = rgg.npts();
-  std::vector<int> part(ngptot);
-//  bool stagger = options.get<bool>("stagger");
+  GridDistribution distribution(rgg,partitioner);
 
-//  /*
-//  Create structure which we can partition with multiple keys (lat and lon)
-//  */
-//  std::vector<NodeInt> nodes(ngptot);
-//  n=0;
-//  for( int jlat=0; jlat<rgg.nlat(); ++jlat)
-//  {
-//    for( int jlon=0; jlon<rgg.nlon(jlat); ++jlon)
-//    {
-//      nodes[n].x = microdeg(rgg.lon(jlat,jlon));
-//      if( stagger ) nodes[n].x += static_cast<int>(1e6*180./static_cast<double>(rgg.nlon(jlat)));
-//      nodes[n].y = microdeg(rgg.lat(jlat));
-//      nodes[n].n = n;
-//      ++n;
-//    }
-//  }
-//  partitioner.partition(ngptot,nodes.data(),part.data());
-//  std::vector<NodeInt>().swap(nodes); // Deallocate completely
+  generate(rgg,distribution,mesh);
+}
 
-  partitioner.partition(rgg,part.data());
+void ReducedGridMeshGenerator::generate(const ReducedGrid& rgg, const GridDistribution& distribution, Mesh& mesh )
+{
+  int mypart   = options.get<int>("part");
 
   Region region;
-  generate_region(rgg,part,mypart,region);
+  generate_region(rgg,distribution,mypart,region);
 
-  generate_mesh(rgg,part,region,mesh);
+  generate_mesh(rgg,distribution,region,mesh);
   mesh.grid(rgg);
 }
 
+
 Mesh* ReducedGridMeshGenerator::generate(const ReducedGrid& rgg)
 {
-	Mesh* mesh = new Mesh();
-	generate(rgg,*mesh);
-	return mesh;
+  Mesh* mesh = new Mesh();
+  generate(rgg,*mesh);
+  return mesh;
 }
 
+Mesh* ReducedGridMeshGenerator::generate(const ReducedGrid& rgg, const GridDistribution& distribution)
+{
+  Mesh* mesh = new Mesh();
+  generate(rgg,distribution,*mesh);
+  return mesh;
+}
 
 void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rgg, const std::vector<int>& parts, int mypart, Region& region)
 {

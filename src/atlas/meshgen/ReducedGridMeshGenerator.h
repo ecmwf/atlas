@@ -15,6 +15,7 @@
 
 namespace atlas {
 class Mesh;
+class GridDistribution;
 
 namespace grids { class ReducedGrid; }
 namespace meshgen {
@@ -31,9 +32,15 @@ public:
 
   void generate( const grids::ReducedGrid&, Mesh& );
 
+  void generate( const grids::ReducedGrid&, const GridDistribution&, Mesh& );
+
   Mesh* generate( const grids::ReducedGrid& );
 
+  Mesh* generate( const grids::ReducedGrid&, const GridDistribution& );
+
   Mesh* operator()( const grids::ReducedGrid& );
+
+  Mesh* operator()( const grids::ReducedGrid&, const GridDistribution& );
 
   void set_three_dimensional( bool );
   void set_patch_pole( bool );

@@ -196,6 +196,8 @@ FunctionSpace.cc
 FunctionSpace.h
 Grid.cc
 Grid.h
+GridDistribution.cc
+GridDistribution.h
 GridSet.cc
 GridSet.h
 GridSpec.cc
@@ -209,6 +211,8 @@ MeshCache.h
 Metadata.cc
 Metadata.h
 Parameters.h
+Partitioner.cc
+Partitioner.h
 PointIndex3.cc
 PointIndex3.h
 PointSet.cc

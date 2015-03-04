@@ -61,18 +61,16 @@
 #define EqualAreaPartitioner_h
 
 #include <vector>
+#include "atlas/Partitioner.h"
 
 namespace atlas {
   class Grid;
-namespace grids {
-  class ReducedGrid;
-}
 namespace meshgen {
 
 void eq_caps(int N, std::vector<int>& n_regions, std::vector<double>& s_cap);
 void eq_regions(int N, double xmin[], double xmax[], double ymin[], double ymax[]);
 
-class EqualAreaPartitioner
+class EqualAreaPartitioner: public Partitioner
 {
 public:
   EqualAreaPartitioner(int N);
@@ -92,8 +90,7 @@ public:
   int nb_sectors(int band) const { return nb_regions(band); }
   int nb_regions(int band) const { return sectors_[band]; }
 
-  void partition( const grids::ReducedGrid&, int part[] ) const;
-  void partition( const Grid&, int part[] ) const;
+  virtual void partition( const Grid&, int part[] ) const;
 
 public:
 
