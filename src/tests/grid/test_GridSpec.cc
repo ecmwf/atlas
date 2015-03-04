@@ -21,6 +21,7 @@
 #include "eckit/grib/GribAccessor.h"
 #include "eckit/grib/GribMutator.h"
 #include "eckit/types/FloatCompare.h"
+#include "eckit/mpi/mpi.h"
 
 #include "atlas/io/Grib.h"
 #include "atlas/GridSpec.h"
@@ -41,6 +42,12 @@ static void test_grib_file(const std::string& file);
 static bool comparePointList(const std::vector<Grid::Point>& grib_pntlist, const std::vector<Grid::Point>& points, double epsilon, eckit::grib::GribHandle& gh);
 static void align_grib_iterator_to_eckit_defaults( eckit::grib::GribHandle& gh);
 
+struct MPIFixture {
+    MPIFixture()  { eckit::mpi::init(); }
+    ~MPIFixture() { eckit::mpi::finalize(); }
+};
+
+BOOST_GLOBAL_FIXTURE( MPIFixture )
 
 BOOST_AUTO_TEST_SUITE( TestGridSpec )
 
