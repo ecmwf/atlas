@@ -119,7 +119,7 @@ Grid::BoundBox Grid::make_global_bounding_box()
 
 Grid::BoundBox Grid::make_bounding_box(const Params& p)
 {
-  if( p.get("bbox_s").isNil() )
+  if( !p.has("bbox_s") )
     return Grid::make_global_bounding_box();
 
   return BoundBox( p["bbox_n"],

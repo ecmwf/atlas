@@ -46,7 +46,7 @@ GaussianGrid::GaussianGrid(const eckit::Params& params)
 
   if( ! params.has("N") ) throw eckit::BadParameter("N missing in Params",Here());
 
-  int N = params.get("N");
+  int N = params["N"];
 
   N_ = N;
 
@@ -59,7 +59,7 @@ GaussianGrid::GaussianGrid(const eckit::Params& params)
     std::vector<int>    nlons(2*N,4*N);
     std::vector<double> lat;
 
-    list = params.get("latitudes");
+    list = params["latitudes"];
     ASSERT(list.size() == 2*N);
     lat.resize( 2*N );
     for(int j=0; j<2*N; ++j)

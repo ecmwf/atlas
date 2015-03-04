@@ -59,12 +59,12 @@ ReducedGaussianGrid::ReducedGaussianGrid(const eckit::Params& params)
 void ReducedGaussianGrid::setup( const eckit::Params& params )
 {
   if( ! params.has("N") ) throw eckit::BadParameter("N missing in Params",Here());
-  int N = params.get("N");
+  int N = params["N"];
   ReducedGrid::N_ = N;
 
   if( ! params.has("latitudes") )
   {
-    eckit::ValueList list = params.get("npts_per_lat");
+    eckit::ValueList list = params["npts_per_lat"];
     std::vector<int> nlons(list.size());
     for(int j=0; j<nlons.size(); ++j)
       nlons[j] = list[j];
