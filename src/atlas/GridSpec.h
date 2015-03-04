@@ -68,6 +68,8 @@ public:
   friend std::ostream& operator<<( std::ostream& os, const GridSpec& v) { v.print(os); return os;}
 
 private:
+  friend eckit::Params::value_t get( const GridSpec& p, const eckit::Params::key_t& key );
+  friend void print( const GridSpec& p, std::ostream& s );
 
   void print( std::ostream& ) const;
 
