@@ -119,7 +119,7 @@ Grid::Ptr Grib::create_grid(GribHandle& gh)
 
 	ASSERT( gp );
 
-	return Grid::Ptr( Grid::create( *gp ) );
+	return Grid::Ptr( Grid::create( Params(*gp) ) );
 }
 
 GribHandle::Ptr Grib::create_handle( const Grid& grid, long edition )
@@ -348,7 +348,7 @@ std::string Grib::grib_sample_file( const GridSpec& g_spec, long edition )
         throw SeriousBug("Error no sample paths found",Here()) ;
 
     for(size_t path = 0; path < sample_paths.size(); ++path)
-    {      
+    {
         std::string grib_samples_dir = sample_paths[path];
 
         DEBUG_VAR( grib_samples_dir );

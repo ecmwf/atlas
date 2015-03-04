@@ -14,8 +14,8 @@
 
 #include "atlas/Mesh.h"
 #include "atlas/Grid.h"
+#include "atlas/GridSpec.h"
 #include "atlas/Tesselation.h"
-#include "atlas/GridSpecParams.h"
 #include "atlas/grids/grids.h"
 
 using namespace eckit;
@@ -44,7 +44,7 @@ Grid* Grid::create(const Grid::uid_t& uid)
 
 Grid* Grid::create(const GridSpec& g)
 {
-  return Grid::create( GridSpecParams(g) );
+  return Grid::create( Params(g) );
 }
 
 Grid::Grid()

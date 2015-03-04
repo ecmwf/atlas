@@ -19,7 +19,6 @@
 #include "atlas/atlas.h"
 #include "atlas/Grid.h"
 #include "atlas/GridSpec.h"
-#include "atlas/GridSpecParams.h"
 #include "atlas/grids/grids.h"
 
 using namespace eckit;
@@ -67,7 +66,7 @@ BOOST_AUTO_TEST_CASE( test_regular_gg )
   Grid::Ptr gridptr;
 
   // Full Gaussian Grid
-  gridptr = Grid::Ptr( Grid::create(GridSpecParams(spec)) );
+  gridptr = Grid::Ptr( Grid::create(Params(spec)) );
   BOOST_CHECK_EQUAL(gridptr->npts(), 8192);
   BOOST_CHECK_EQUAL(gridptr->grid_type(),"regular_gg");
   gridptr = Grid::create(spec);

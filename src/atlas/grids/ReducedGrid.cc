@@ -15,7 +15,6 @@
 
 #include "atlas/grids/ReducedGrid.h"
 #include "atlas/GridSpec.h"
-#include "atlas/GridSpecParams.h"
 #include "atlas/util/Debug.h"
 
 using eckit::Factory;

@@ -202,7 +202,7 @@ Field::Ptr FieldSet::create_field(grib::GribHandle& gh)
   grib::GribParams* gp = grib::GribParams::create(gh);
   ASSERT( gp );
 
-  Grid::Ptr grid( Grid::create( *gp ) );
+  Grid::Ptr grid( Grid::create( Params(*gp) ) );
   Grid::uid_t uid = grid->uid();
 
   // store Grid in GridSet, then reassign grid (pointer) in case there one has the same UID
