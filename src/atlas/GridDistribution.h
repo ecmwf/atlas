@@ -29,7 +29,7 @@ public:
 
   GridDistribution(const Grid& grid);
 
-  GridDistribution(const Grid& grid, const Partitioner& partitioner);
+  GridDistribution(const Partitioner& partitioner);
 
   virtual ~GridDistribution() {}
 

@@ -26,7 +26,6 @@ namespace actions {
 
 void distribute_mesh( Mesh& mesh )
 {
-  EqualAreaPartitioner partitioner( eckit::mpi::size() );
   int mypart = eckit::mpi::rank();
 
   FunctionSpace& nodes = mesh.function_space("nodes");
@@ -36,7 +35,8 @@ void distribute_mesh( Mesh& mesh )
   ArrayView<gidx_t,1> node_gidx ( nodes.field("glb_idx")   );
 
   Grid& g = mesh.grid();
-  partitioner.partition(g,node_part.data());
+  EqualAreaPartitioner partitioner( g );
+  partitioner.partition(node_part.data());
 
   int nb_keep_nodes = 0;
   std::vector<int> keep_nodes(nb_nodes,0);

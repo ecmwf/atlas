@@ -22,8 +22,10 @@
 #include "atlas/meshgen/ReducedGridMeshGenerator.h"
 #include "atlas/LogFormat.h"
 #include "atlas/GridDistribution.h"
+#include "atlas/io/Gmsh.h"
 
 #include "trans_api/trans_api.h"
+
 
 
 using namespace eckit;
@@ -58,7 +60,7 @@ public:
     ::trans_delete(&trans_);
   }
 
-  operator const Trans_t*() const { return &trans_; }
+  operator Trans_t*() const { return &trans_; }
 
   int        nproc()        const { return trans_.nproc; }
   int        myproc()       const { return trans_.myproc; }
@@ -67,6 +69,10 @@ public:
   int        ngptot()       const { return trans_.ngptot; }
   int        ngptotg()      const { return trans_.ngptotg; }
   int        ngptotmx()     const { return trans_.ngptotmx; }
+  int        nspec()        const { return trans_.nspec; }
+  int        nspec2()       const { return trans_.nspec2; }
+  int        nspec2g()      const { return trans_.nspec2g; }
+  int        nspec2mx()     const { return trans_.nspec2mx; }
   const int* nloen()        const { ASSERT( trans_.nloen     != NULL ); return trans_.nloen; }
   const int* n_regions()    const { ASSERT( trans_.n_regions != NULL ); return trans_.n_regions; }
   int        n_regions_NS() const { return trans_.n_regions_NS; }
@@ -96,44 +102,59 @@ class TransPartitioner: public Partitioner
 {
 public:
 
-  TransPartitioner( Trans& trans ) :
-    Partitioner(),
-    t_(trans)
+  TransPartitioner( const ReducedGrid& grid, const Trans& trans ) :
+    Partitioner(grid),
+    t_( const_cast<Trans*>(&trans)), owned_(false)
   {
-    Partitioner::set_nb_partition( t_.nproc() );
+    ASSERT( t_ != NULL );
+    Partitioner::set_nb_partition( t_->nproc() );
   }
 
-  virtual void partition(const Grid& grid, int part[]) const
+  TransPartitioner( const ReducedGrid& grid ) :
+    Partitioner(grid),
+    t_( new Trans(grid,0) ), owned_(true)
   {
-    if( dynamic_cast<const ReducedGrid*>(&grid) == NULL )
+    ASSERT( t_ != NULL );
+    Partitioner::set_nb_partition( t_->nproc() );
+  }
+
+  virtual ~TransPartitioner()
+  {
+    if( owned_ )
+      delete t_;
+  }
+
+  virtual void partition(int part[]) const
+  {
+    if( dynamic_cast<const ReducedGrid*>(&grid()) == NULL )
       throw BadCast("Grid is not a ReducedGrid type. Cannot partition using IFS trans",Here());
 
-    int nlonmax = dynamic_cast<const ReducedGrid*>(&grid)->nlonmax();
+    int nlonmax = dynamic_cast<const ReducedGrid*>(&grid())->nlonmax();
 
     int i(0);
-    std::vector<int> iglobal(t_.ndgl()*nlonmax);
-    for( int jgl=1; jgl<=t_.ndgl(); ++jgl )
+    std::vector<int> iglobal(t_->ndgl()*nlonmax);
+    for( int jgl=1; jgl<=t_->ndgl(); ++jgl )
     {
-      for( int jl=1; jl<=t_.nloen()[jgl-1]; ++jl )
+      for( int jl=1; jl<=t_->nloen()[jgl-1]; ++jl )
       {
         ++i;
         iglobal[(jgl-1)*nlonmax+(jl-1)] = i;
       }
     }
 
-    const int stride=t_.ndgl()+t_.n_regions_NS()-1;
+    const int stride=t_->ndgl()+t_->n_regions_NS()-1;
 
     int iproc(0);
-    for( int ja=1; ja<=t_.n_regions_NS(); ++ja )
+    for( int ja=1; ja<=t_->n_regions_NS(); ++ja )
     {
-      for( int jb=1; jb<=t_.n_regions()[ja-1]; ++jb )
+      for( int jb=1; jb<=t_->n_regions()[ja-1]; ++jb )
       {
-        for( int jgl=t_.nfrstlat()[ja-1]; jgl<=t_.nlstlat()[ja-1]; ++jgl )
+        for( int jgl=t_->nfrstlat()[ja-1]; jgl<=t_->nlstlat()[ja-1]; ++jgl )
         {
-          int igl = t_.nptrfrstlat()[ja-1] + jgl - t_.nfrstlat()[ja-1];
+          int igl = t_->nptrfrstlat()[ja-1] + jgl - t_->nfrstlat()[ja-1];
 
           int idx = (jb-1)*stride+(igl-1);
-          for( int jl=t_.nsta()[idx]; jl<=t_.nsta()[idx]+t_.nonl()[idx]-1; ++jl )
+          for( int jl=t_->nsta()[idx]; jl<=t_->nsta()[idx]+t_->nonl()[idx]-1; ++jl )
           {
             int ind = iglobal[(jgl-1)*nlonmax+(jl-1)];
             part[ind-1] = iproc;
@@ -146,16 +167,19 @@ public:
 
   int nb_bands() const
   {
-    return t_.n_regions_NS();
+    ASSERT( t_!= NULL );
+    return t_->n_regions_NS();
   }
 
   int nb_regions(int b) const
   {
-    return t_.n_regions()[b];
+    ASSERT( t_!= NULL );
+    return t_->n_regions()[b];
   }
 
 private:
-  Trans& t_;
+  mutable Trans* t_;
+  bool owned_;
 };
 
 }
@@ -175,9 +199,65 @@ struct Fixture   {
 };
 
 
+void read_rspecg(trans::Trans& trans, std::vector<double>& rspecg, std::vector<int>& nfrom, int &nfld )
+{
+  eckit::Log::info() << "read_rspecg ...\n";
+  nfld = 2;
+  if( trans.myproc() == 1 )
+  {
+    rspecg.resize(nfld*trans.nspec2g());
+    for( int i=0; i<trans.nspec2g(); ++i )
+    {
+      rspecg[i*nfld + 0] = (i==0 ? 1. : 0.); // scalar field 1
+      rspecg[i*nfld + 1] = (i==0 ? 2. : 0.); // scalar field 2
+    }
+  }
+  nfrom.resize(nfld);
+  for (int jfld=0; jfld<nfld; ++jfld)
+    nfrom[jfld] = 1;
+
+  eckit::Log::info() << "read_rspecg ... done" << std::endl;
+}
+
+//void write_rgpg(Trans* trans, double* rgpg[], int nfld )
+//{
+//  int jfld;
+//  if( trans->myproc == 1 ) printf("write_rgpg ...\n");
+//  for( jfld=0; jfld<nfld; ++jfld )
+//  {
+//    // output global field rgpg[jfld]
+//  }
+//  if( trans->myproc == 1 ) printf("write_rgpg ... done\n");
+//}
+
+namespace atlas {
+namespace trans {
+class DistSpec
+{
+public:
+  DistSpec(Trans& trans)
+  {
+    distspec_ = new_distspec(trans);
+  }
+
+  DistSpec& nfld(int _nfld) { distspec_.nfld = _nfld; return *this; }
+
+  DistSpec& nfrom (const int*    _nfrom)  { distspec_.nfrom  = const_cast<int*>(_nfrom);     return *this; }
+  DistSpec& rspecg(const double* _rspecg) { distspec_.rspecg = const_cast<double*>(_rspecg); return *this; }
+  DistSpec& rspec (      double* _rspec)  { distspec_.rspec = _rspec;                        return *this; }
+
+  DistSpec& nfrom (const std::vector<int>&    _nfrom)  { return nfrom(_nfrom.size()?_nfrom.data():NULL); }
+  DistSpec& rspecg(const std::vector<double>& _rspecg) { return rspecg(_rspecg.size()?_rspecg.data():NULL); }
+  DistSpec& rspec (      std::vector<double>& _rspec)
+  { ASSERT(_rspec.size()); return rspec(_rspec.data()); }
 
 
-
+  DistSpec& execute() { ::trans_distspec(&distspec_);  return *this; }
+private:
+  struct DistSpec_t distspec_;
+};
+}
+}
 
 BOOST_GLOBAL_FIXTURE( Fixture )
 
@@ -192,8 +272,8 @@ BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
 
   BOOST_CHECK_EQUAL( trans.nsmax() , 159 );
 
-  trans::TransPartitioner partitioner(trans);
-  GridDistribution distribution( *g, partitioner );
+  trans::TransPartitioner partitioner(*g,trans);
+  GridDistribution distribution( partitioner );
 
   // -------------- do checks -------------- //
   BOOST_CHECK_EQUAL( trans.nproc(),  eckit::mpi::size() );
@@ -224,7 +304,40 @@ BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
       BOOST_CHECK_EQUAL( trans.n_regions()[j] , partitioner.nb_regions(j) );
   }
 
+}
 
+BOOST_AUTO_TEST_CASE( test_trans_partitioner )
+{
+  // Create grid and trans object
+  ReducedGrid::Ptr g ( ReducedGrid::create( "rgg.N80" ) );
+
+  trans::Trans trans( *g, 0 );
+
+  BOOST_CHECK_EQUAL( trans.nsmax() , 0 );
+  BOOST_CHECK_EQUAL( trans.ngptotg() , g->npts() );
+
+}
+
+BOOST_AUTO_TEST_CASE( test_distspec )
+{
+  ReducedGrid::Ptr g ( ReducedGrid::create( "rgg4.N16" ) );
+  eckit::ResourceMgr::instance().set("atlas.meshgen.angle","0");
+  meshgen::ReducedGridMeshGenerator generate;
+  trans::Trans trans(*g);
+
+  std::vector<double> rspecg;
+  std::vector<int   > nfrom;
+  int nfld;
+  read_rspecg(trans,rspecg,nfrom,nfld);
+
+  std::vector<double> rspec(nfld*trans.nspec2());
+
+  trans::DistSpec(trans)
+     .nfld(nfld)
+     .nfrom(nfrom)
+     .rspecg(rspecg)
+     .rspec(rspec)
+     .execute();
 }
 
 
@@ -232,9 +345,16 @@ BOOST_AUTO_TEST_CASE( test_generate_mesh )
 {
   ReducedGrid::Ptr g ( ReducedGrid::create( "rgg4.N16" ) );
   eckit::ResourceMgr::instance().set("atlas.meshgen.angle","0");
+  eckit::ResourceMgr::instance().set("atlas.meshgen.triangulate","true");
+
   meshgen::ReducedGridMeshGenerator generate;
   trans::Trans trans(*g);
-  //generate(*g,trans::TransPartitioner(trans));
+
+  //Mesh::Ptr mesh( generate( *g, trans::TransPartitioner().distribution(*g) ) );
+
+  Mesh::Ptr mesh ( generate(*g, meshgen::EqualAreaPartitioner(*g).distribution() ) );
+
+  io::Gmsh().write(*mesh,"N16_trans.msh");
 }
 
 

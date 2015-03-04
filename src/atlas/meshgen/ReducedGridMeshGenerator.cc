@@ -72,10 +72,10 @@ ReducedGridMeshGenerator::ReducedGridMeshGenerator()
   options.set("three_dimensional",bool(Resource<bool>("--three_dimensional;atlas.meshgen.three_dimensional",false ) ));
 
   // This option sets number of parts the mesh will be split in
-  options.set("nb_parts",1);
+  options.set<int>("nb_parts",eckit::mpi::size());
 
   // This option sets the part that will be generated
-  options.set("part",0);
+  options.set<int>("part",eckit::mpi::rank());
 
   // Experimental option. The result is a non-standard Reduced Gaussian Grid, with a ragged Greenwich line
   options.set("stagger", bool( Resource<bool>("-stagger;meshgen.stagger", false ) ) );
@@ -103,6 +103,11 @@ Mesh* ReducedGridMeshGenerator::operator()( const ReducedGrid& grid )
 }
 
 Mesh* ReducedGridMeshGenerator::operator()( const ReducedGrid& grid, const GridDistribution& distribution )
+{
+  return generate(grid,distribution);
+}
+
+Mesh* ReducedGridMeshGenerator::operator()( const ReducedGrid& grid, GridDistribution* distribution )
 {
   return generate(grid,distribution);
 }
@@ -163,10 +168,8 @@ void ReducedGridMeshGenerator::set_include_pole(bool f)
 void ReducedGridMeshGenerator::generate(const ReducedGrid& rgg, Mesh& mesh )
 {
   int nb_parts = options.get<int>("nb_parts");
-  EqualAreaPartitioner partitioner(nb_parts);
-  GridDistribution distribution(rgg,partitioner);
-
-  generate(rgg,distribution,mesh);
+  EqualAreaPartitioner partitioner(rgg,nb_parts);
+  generate(rgg,partitioner.distribution(),mesh);
 }
 
 void ReducedGridMeshGenerator::generate(const ReducedGrid& rgg, const GridDistribution& distribution, Mesh& mesh )
@@ -180,6 +183,12 @@ void ReducedGridMeshGenerator::generate(const ReducedGrid& rgg, const GridDistri
   mesh.grid(rgg);
 }
 
+void ReducedGridMeshGenerator::generate(const ReducedGrid& rgg, GridDistribution* distribution, Mesh& mesh )
+{
+  generate(rgg,*distribution,mesh);
+  delete distribution;
+  distribution = NULL;
+}
 
 Mesh* ReducedGridMeshGenerator::generate(const ReducedGrid& rgg)
 {
@@ -194,6 +203,14 @@ Mesh* ReducedGridMeshGenerator::generate(const ReducedGrid& rgg, const GridDistr
   generate(rgg,distribution,*mesh);
   return mesh;
 }
+
+Mesh* ReducedGridMeshGenerator::generate(const ReducedGrid& rgg, GridDistribution* distribution)
+{
+  Mesh* mesh = new Mesh();
+  generate(rgg,distribution,*mesh);
+  return mesh;
+}
+
 
 void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rgg, const std::vector<int>& parts, int mypart, Region& region)
 {

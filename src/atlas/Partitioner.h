@@ -21,21 +21,23 @@ class GridDistribution;
 class Partitioner {
 public:
 
- Partitioner();
+  Partitioner(const Grid& grid);
   virtual ~Partitioner();
 
-  virtual void partition( const Grid&, int part[] ) const = 0;
+  virtual void partition( int part[] ) const = 0;
 
-  virtual GridDistribution* distribution(const Grid& grid) const;
+  virtual GridDistribution* distribution() const;
 
 public:
 
   size_t nb_partitions() const;
   void set_nb_partition(const size_t n);
+  const Grid& grid() const { return grid_; }
 
 private:
 
   size_t nb_partitions_;
+  const Grid& grid_;
 };
 
 } // namespace atlas

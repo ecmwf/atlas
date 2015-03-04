@@ -8,23 +8,22 @@
  * does it submit to any jurisdiction.
  */
 
-
+#include "eckit/mpi/mpi.h"
 #include "atlas/Grid.h"
 #include "atlas/GridDistribution.h"
 #include "atlas/Partitioner.h"
 
 namespace atlas {
 
-GridDistribution::GridDistribution(const Grid& grid)
-{
-  part_.resize(grid.npts());
-  nb_partitions_ = 1;
-}
+GridDistribution::GridDistribution(const Grid& grid) :
+  part_(grid.npts(),0),
+  nb_partitions_(1)
+{ }
 
-GridDistribution::GridDistribution(const Grid& grid, const Partitioner& partitioner)
+GridDistribution::GridDistribution(const Partitioner& partitioner)
 {
-  part_.resize(grid.npts());
-  partitioner.partition(grid,part_.data());
+  part_.resize(partitioner.grid().npts());
+  partitioner.partition(part_.data());
   nb_partitions_ = partitioner.nb_partitions();
 }
 

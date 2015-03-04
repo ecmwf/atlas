@@ -73,24 +73,16 @@ void eq_regions(int N, double xmin[], double xmax[], double ymin[], double ymax[
 class EqualAreaPartitioner: public Partitioner
 {
 public:
-  EqualAreaPartitioner(int N);
 
-  // x and y in radians
-  int partition(const double& x, const double& y) const;
+  EqualAreaPartitioner(const Grid&);
 
-  // y in radians
+  EqualAreaPartitioner(const Grid&, int N);
 
-  int band(const double& y) const;
-
-  // x in radians
-  int sector(int band, const double& x) const;
-
-  void area(int partition, int& band, int& sector) const;
+  void where(int partition, int& band, int& sector) const;
   int nb_bands() const { return bands_.size(); }
-  int nb_sectors(int band) const { return nb_regions(band); }
   int nb_regions(int band) const { return sectors_[band]; }
 
-  virtual void partition( const Grid&, int part[] ) const;
+  virtual void partition( int part[] ) const;
 
 public:
 
@@ -107,6 +99,18 @@ private:
   // Doesn't matter if nodes[] is in degrees or radians, as a sorting
   // algorithm is used internally
   void partition(int nb_nodes, NodeInt nodes[], int part[]) const;
+
+
+private:
+
+  // x and y in radians
+  int partition(const double& x, const double& y) const;
+
+  // y in radians
+  int band(const double& y) const;
+
+  // x in radians
+  int sector(int band, const double& x) const;
 
 private:
 

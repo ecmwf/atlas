@@ -8,12 +8,13 @@
  * does it submit to any jurisdiction.
  */
 
+#include "eckit/mpi/mpi.h"
 #include "atlas/Partitioner.h"
 #include "atlas/GridDistribution.h"
 
 namespace atlas {
 
-Partitioner::Partitioner(): nb_partitions_(0)
+Partitioner::Partitioner(const Grid& grid): grid_(grid), nb_partitions_(eckit::mpi::size())
 { }
 
 Partitioner::~Partitioner()
@@ -21,7 +22,6 @@ Partitioner::~Partitioner()
 
 size_t Partitioner::nb_partitions() const
 {
-  ASSERT(nb_partitions_!=0);
   return nb_partitions_;
 }
 
@@ -30,9 +30,9 @@ void Partitioner::set_nb_partition(const size_t n)
   nb_partitions_ = n;
 }
 
-GridDistribution* Partitioner::distribution(const Grid& grid) const
+GridDistribution* Partitioner::distribution() const
 {
-  return new GridDistribution(grid,*this);
+  return new GridDistribution(*this);
 }
 
 } // namespace atlas

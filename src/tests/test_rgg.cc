@@ -125,9 +125,11 @@ BOOST_AUTO_TEST_CASE( test_eq_caps )
 
 BOOST_AUTO_TEST_CASE( test_partitioner )
 {
+  grids::ReducedGrid g;
+
   // 12 partitions
   {
-    EqualAreaPartitioner partitioner(12);
+    EqualAreaPartitioner partitioner(g,12);
     BOOST_CHECK_EQUAL( partitioner.nb_bands(),    4 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(0), 1 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(1), 5 );
@@ -137,7 +139,7 @@ BOOST_AUTO_TEST_CASE( test_partitioner )
 
   // 24 partitions
   {
-    EqualAreaPartitioner partitioner(24);
+    EqualAreaPartitioner partitioner(g,24);
     BOOST_CHECK_EQUAL( partitioner.nb_bands(),     5 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(0),  1 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(1),  6 );
@@ -148,7 +150,7 @@ BOOST_AUTO_TEST_CASE( test_partitioner )
 
   // 48 partitions
   {
-    EqualAreaPartitioner partitioner(48);
+    EqualAreaPartitioner partitioner(g,48);
     BOOST_CHECK_EQUAL( partitioner.nb_bands(),     7 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(0),  1 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(1),  6 );
@@ -161,7 +163,7 @@ BOOST_AUTO_TEST_CASE( test_partitioner )
 
   // 96 partitions
   {
-    EqualAreaPartitioner partitioner(96);
+    EqualAreaPartitioner partitioner(g,96);
     BOOST_CHECK_EQUAL( partitioner.nb_bands(),    10 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(0),  1 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(1),  6 );

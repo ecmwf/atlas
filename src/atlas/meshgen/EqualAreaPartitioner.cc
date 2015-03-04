@@ -386,14 +386,26 @@ void eq_regions(int N, double xmin[], double xmax[], double ymin[], double ymax[
   ymax[N-1]=0.5*M_PI-s_cap[s_cap.size()-2];
 }
 
+EqualAreaPartitioner::EqualAreaPartitioner(const Grid& grid) :
+  Partitioner(grid),
+  N_(eckit::mpi::size())
+{
+  set_nb_partition(N_);
+  std::vector<double> s_cap;
+  eq_caps(N_, sectors_, s_cap);
+  bands_.resize(s_cap.size());
+  for (int n=0; n<s_cap.size(); ++n){
+    bands_[n] = 0.5*M_PI-s_cap[n];
+  }
+}
 
-EqualAreaPartitioner::EqualAreaPartitioner(int N) :
-  Partitioner(),
+EqualAreaPartitioner::EqualAreaPartitioner(const Grid& grid, int N) :
+  Partitioner(grid),
   N_(N)
 {
   set_nb_partition(N_);
   std::vector<double> s_cap;
-  eq_caps(N, sectors_, s_cap);
+  eq_caps(N_, sectors_, s_cap);
   bands_.resize(s_cap.size());
   for (int n=0; n<s_cap.size(); ++n){
     bands_[n] = 0.5*M_PI-s_cap[n];
@@ -422,7 +434,7 @@ int EqualAreaPartitioner::sector(int band, const double& x) const
   return std::floor(xreg*sectors_[band]/(2.*M_PI+1e-8));
 }
 
-void EqualAreaPartitioner::area(int partition, int& band, int& sector) const
+void EqualAreaPartitioner::where(int partition, int& band, int& sector) const
 {
   int p=0;
   for( int b=0; b<bands_.size(); ++b)
@@ -490,7 +502,7 @@ void EqualAreaPartitioner::partition(int nb_nodes, NodeInt nodes[], int part[]) 
   p=0;
   for( band=0; band<nb_bands(); ++band )
   {
-    p += nb_sectors(band);
+    p += nb_regions(band);
     end = std::floor(p*chunk_size);
     std::sort( nodes+begin, nodes+end, compare_WE_NS );
     begin = end;
@@ -525,12 +537,12 @@ void EqualAreaPartitioner::partition(int nb_nodes, NodeInt nodes[], int part[]) 
   // std::cout << "partition stop (took " << (double)final / ((double)CLOCKS_PER_SEC) << "s)" << std::endl;
 }
 
-void EqualAreaPartitioner::partition(const Grid& grid, int part[]) const
+void EqualAreaPartitioner::partition(int part[]) const
 {
-  std::vector<NodeInt> nodes(grid.npts());
+  std::vector<NodeInt> nodes(grid().npts());
   int n(0);
 
-  if( const grids::ReducedGrid* reduced_grid = dynamic_cast<const grids::ReducedGrid*>(&grid) )
+  if( const grids::ReducedGrid* reduced_grid = dynamic_cast<const grids::ReducedGrid*>(&grid()) )
   {
     for( int jlat=0; jlat<reduced_grid->nlat(); ++jlat)
     {
@@ -546,8 +558,8 @@ void EqualAreaPartitioner::partition(const Grid& grid, int part[]) const
   else
   {
     std::vector<eckit::geometry::LLPoint2> points;
-    grid.lonlat(points);
-    for( int j=0; j<grid.npts(); ++j)
+    grid().lonlat(points);
+    for( int j=0; j<grid().npts(); ++j)
     {
       nodes[n].x = microdeg(points[j].lon());
       nodes[n].y = microdeg(points[j].lat());
@@ -555,7 +567,7 @@ void EqualAreaPartitioner::partition(const Grid& grid, int part[]) const
       ++n;
     }
   }
-  partition(grid.npts(),nodes.data(),part);
+  partition(grid().npts(),nodes.data(),part);
 }
 
 } // namespace meshgen
