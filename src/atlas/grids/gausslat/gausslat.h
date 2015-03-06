@@ -14,6 +14,7 @@
 #ifndef atlas_grids_gausslat_gausslat_h
 #define atlas_grids_gausslat_gausslat_h
 
+#include "eckit/memory/Owned.h"
 #include "eckit/memory/Builder.h"
 
 namespace atlas {

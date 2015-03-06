@@ -15,7 +15,6 @@
 
 #include "atlas/grids/ReducedGrid.h"
 #include "atlas/GridSpec.h"
-#include "atlas/GridSpecParams.h"
 #include "atlas/util/Debug.h"
 
 using eckit::Factory;
@@ -72,8 +71,8 @@ ReducedGrid::ReducedGrid(const Params& params) : N_(0)
   if( ! params.has("uid") ) throw BadParameter("uid missing in Params",Here());
   if( ! params.has("hash") ) throw BadParameter("hash missing in Params",Here());
 
-  grid_type_ = params.get("grid_type").as<std::string>();
-  uid_ = params.get("uid").as<std::string>();
+  grid_type_ = params["grid_type"].as<std::string>();
+  uid_ = params["uid"].as<std::string>();
 }
 
 void ReducedGrid::setup(const eckit::Params& params)
@@ -86,12 +85,12 @@ void ReducedGrid::setup(const eckit::Params& params)
   if( ! params.has("npts_per_lat") ) throw BadParameter("npts_per_lat missing in Params",Here());
   if( ! params.has("latitudes") ) throw BadParameter("latitudes missing in Params",Here());
 
-  list = params.get("npts_per_lat");
+  list = params["npts_per_lat"];
   npts_per_lat.resize( list.size() );
   for(int j=0; j<npts_per_lat.size(); ++j)
     npts_per_lat[j] = list[j];
 
-  list = params.get("latitudes");
+  list = params["latitudes"];
   latitudes.resize( list.size() );
   for(int j=0; j<latitudes.size(); ++j)
     latitudes[j] = list[j];

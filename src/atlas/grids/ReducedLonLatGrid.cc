@@ -80,7 +80,7 @@ void ReducedLonLatGrid::setup( const Params& params )
   if( params.has("poles") ) poles_ = params["poles"];
 
 
-  eckit::ValueList list = params.get("npts_per_lat");
+  eckit::ValueList list = params["npts_per_lat"];
   std::vector<int> nlons(list.size());
   for(int j=0; j<nlons.size(); ++j)
     nlons[j] = list[j];

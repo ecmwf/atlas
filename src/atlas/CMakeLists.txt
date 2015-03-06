@@ -200,8 +200,6 @@ GridSet.cc
 GridSet.h
 GridSpec.cc
 GridSpec.h
-GridSpecParams.cc
-GridSpecParams.h
 Latitudes.cc
 Latitudes.h
 Mesh.cc

@@ -11,6 +11,7 @@
 #include "eckit/exception/Exceptions.h"
 #include "eckit/parser/JSON.h"
 #include "eckit/utils/MD5.h"
+#include "eckit/value/Params.h"
 
 #include "atlas/GridSpec.h"
 
@@ -126,6 +127,24 @@ std::string GridSpec::str() const
 	std::ostringstream oss;
 	print(oss);
 	return oss.str();
+}
+
+eckit::Params::value_t get( const GridSpec& p, const eckit::Params::key_t& key )
+{
+#ifdef DEBUG_ME
+   Params::value_t v = p.get(key);
+   if (v.isNil()) {
+       std::cout << "GridSpec::get failed for key " << key << "  Opps" << std::endl;
+   }
+   return v;
+#endif
+
+   return p.get(key);
+}
+
+void print( const GridSpec& p, std::ostream& s )
+{
+  p.print(s);
 }
 
 //------------------------------------------------------------------------------------------------------
