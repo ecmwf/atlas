@@ -34,7 +34,9 @@ namespace atlas {
 ///                    | Grid  |<------> | GridSpec |
 ///  GribParams ------>|-------|         |----------|------>GribGridWrite
 ///
-/// Uses default copy constructor, assignment and equality operators
+/// Uses default copy constructor, assignment and equality operators.
+///
+/// This class also implements the Params interface.
 
 
 class GridSpec : public eckit::Properties {
@@ -72,7 +74,6 @@ private:
   friend void print( const GridSpec& p, std::ostream& s );
 
   void print( std::ostream& ) const;
-
 };
 
 //------------------------------------------------------------------------------------------------------
