@@ -20,7 +20,7 @@
 namespace atlas {
 
 Field::Field(const std::string& name, const int nb_vars, FunctionSpace& function_space) :
-	name_(name), nb_vars_(nb_vars), function_space_(function_space)
+  name_(name), nb_vars_(nb_vars), function_space_(function_space)
 {
 }
 
@@ -28,117 +28,31 @@ Field::~Field()
 {
 }
 
-template <>
-int* Field::data<int>()
+namespace {
+template< typename DATA_TYPE >
+DATA_TYPE* get_field_data( const Field& field )
 {
-	try {
-		return dynamic_cast< FieldT<int>& >(*this).data();
-	}
-	catch (std::bad_cast& e) {
-		std::stringstream msg;
-		msg << "Could not cast Field " << name()
-		    << " with data_type " << data_type() << " to int32";
-		throw eckit::BadCast(msg.str(),Here());
-	}
+  const FieldT<DATA_TYPE>* fieldT = dynamic_cast< const FieldT<DATA_TYPE>* >(&field);
+  if( fieldT == NULL )
+  {
+    std::stringstream msg;
+    msg << "Could not cast Field " << field.name()
+        << " with data_type " << field.data_type() << " "
+        << data_type_to_str<DATA_TYPE>();
+    throw eckit::BadCast(msg.str(),Here());
+  }
+  return const_cast<DATA_TYPE*>(fieldT->data());
+}
 }
 
-template <>
-int const* Field::data<int>() const
-{
-	try {
-		return dynamic_cast< const FieldT<int>& >(*this).data();
-	}
-	catch (std::bad_cast& e) {
-		std::stringstream msg;
-		msg << "Could not cast Field " << name()
-		    << " with data_type " << data_type() << " to int32";
-		throw eckit::BadCast(msg.str(),Here());
-	}
-}
-
-template <>
-long* Field::data<long>()
-{
-	try {
-		return dynamic_cast< FieldT<long>& >(*this).data();
-	}
-	catch (std::bad_cast& e) {
-		std::stringstream msg;
-		msg << "Could not cast Field " << name()
-		    << " with data_type " << data_type() << " to real64";
-		throw eckit::BadCast(msg.str(),Here());
-	}
-}
-
-template <>
-long const* Field::data<long>() const
-{
-	try {
-		return dynamic_cast< const FieldT<long>& >(*this).data();
-	}
-	catch (std::bad_cast& e) {
-		std::stringstream msg;
-		msg << "Could not cast Field " << name()
-		    << " with data_type " << data_type() << " to real64";
-		throw eckit::BadCast(msg.str(),Here());
-	}
-}
-
-template <>
-float* Field::data<float>()
-{
-	try {
-		return dynamic_cast< FieldT<float>& >(*this).data();
-	}
-	catch (std::bad_cast& e) {
-		std::stringstream msg;
-		msg << "Could not cast Field " << name()
-		    << " with data_type " << data_type() << " to real32";
-		throw eckit::BadCast(msg.str(),Here());
-	}
-}
-
-template <>
-float const* Field::data<float>() const
-{
-	try {
-		return dynamic_cast< const FieldT<float>& >(*this).data();
-	}
-	catch (std::bad_cast& e) {
-		std::stringstream msg;
-		msg << "Could not cast Field " << name()
-		    << " with data_type " << data_type() << " to real32";
-		throw eckit::BadCast(msg.str(),Here());
-	}
-}
-
-template <>
-double* Field::data<double>()
-{
-	try {
-		return dynamic_cast< FieldT<double>& >(*this).data();
-	}
-	catch (std::bad_cast& e) {
-		std::stringstream msg;
-		msg << "Could not cast Field " << name()
-		    << " with data_type " << data_type() << " to real64";
-		throw eckit::BadCast(msg.str(),Here());
-	}
-}
-
-template <>
-double const* Field::data<double>() const
-{
-	try {
-		return dynamic_cast< const FieldT<double>& >(*this).data();
-	}
-	catch (std::bad_cast& e) {
-		std::stringstream msg;
-		msg << "Could not cast Field " << name()
-		    << " with data_type " << data_type() << " to real64";
-		throw eckit::BadCast(msg.str(),Here());
-	}
-}
+template <> const int*    Field::data<int   >() const { return get_field_data<int   >(*this); }
+template <>       int*    Field::data<int   >()       { return get_field_data<int   >(*this); }
+template <> const long*   Field::data<long  >() const { return get_field_data<long  >(*this); }
+template <>       long*   Field::data<long  >()       { return get_field_data<long  >(*this); }
+template <> const float*  Field::data<float >() const { return get_field_data<float >(*this); }
+template <>       float*  Field::data<float >()       { return get_field_data<float >(*this); }
+template <> const double* Field::data<double>() const { return get_field_data<double>(*this); }
+template <>       double* Field::data<double>()       { return get_field_data<double>(*this); }
 
 
 template<>
@@ -152,20 +66,20 @@ void FieldT<double>::halo_exchange() { function_space().halo_exchange(data_.data
 
 std::ostream& operator<<( std::ostream& os, const Field& f)
 {
-	f.print(os);
-	return os;
+  f.print(os);
+  return os;
 }
 
 #ifdef ECKIT_HAVE_GRIB
 
 void Field::grib(Field::Grib *g)
 {
-	grib_.reset(g);
+  grib_.reset(g);
 }
 
 Field::Grib *const Field::grib() const
 {
-	return grib_.get();
+  return grib_.get();
 }
 
 #endif
@@ -175,61 +89,61 @@ Field::Grib *const Field::grib() const
 
 const char* atlas__Field__name (Field* This)
 {
-	return This->name().c_str();
+  return This->name().c_str();
 }
 
 const char* atlas__Field__data_type (Field* This)
 {
-	return This->data_type().c_str();
+  return This->data_type().c_str();
 }
 
 int atlas__Field__nb_vars (Field* This)
 {
-	return This->nb_vars();
+  return This->nb_vars();
 }
 
 Metadata* atlas__Field__metadata (Field* This)
 {
-	return &This->metadata();
+  return &This->metadata();
 }
 
 FunctionSpace* atlas__Field__function_space (Field* This)
 {
-	return &This->function_space();
+  return &This->function_space();
 }
 
 void atlas__Field__shapef (Field* This, int* &shape, int &rank)
 {
-	shape = const_cast<int*>(&This->shapef().front());
-	rank = This->shapef().size();
+  shape = const_cast<int*>(&This->shapef().front());
+  rank = This->shapef().size();
 }
 
 void atlas__Field__data_shapef_int (Field* This, int* &field_data, int* &field_bounds, int &rank)
 {
-	field_data = &This->data<int>()[0];
-	field_bounds = const_cast<int*>(&(This->shapef()[0]));
-	rank = This->shapef().size();
+  field_data = &This->data<int>()[0];
+  field_bounds = const_cast<int*>(&(This->shapef()[0]));
+  rank = This->shapef().size();
 }
 
 void atlas__Field__data_shapef_long (Field* This, long* &field_data, int* &field_bounds, int &rank)
 {
-	field_data = &This->data<long>()[0];
-	field_bounds = const_cast<int*>(&(This->shapef()[0]));
-	rank = This->shapef().size();
+  field_data = &This->data<long>()[0];
+  field_bounds = const_cast<int*>(&(This->shapef()[0]));
+  rank = This->shapef().size();
 }
 
 void atlas__Field__data_shapef_float (Field* This, float* &field_data, int* &field_bounds, int &rank)
 {
-	field_data = &This->data<float>()[0];
-	field_bounds = const_cast<int*>(&(This->shapef()[0]));
-	rank = This->shapef().size();
+  field_data = &This->data<float>()[0];
+  field_bounds = const_cast<int*>(&(This->shapef()[0]));
+  rank = This->shapef().size();
 }
 
 void atlas__Field__data_shapef_double (Field* This, double* &field_data, int* &field_bounds, int &rank)
 {
-	field_data = &This->data<double>()[0];
-	field_bounds = const_cast<int*>(&(This->shapef()[0]));
-	rank = This->shapef().size();
+  field_data = &This->data<double>()[0];
+  field_bounds = const_cast<int*>(&(This->shapef()[0]));
+  rank = This->shapef().size();
 }
 
 
