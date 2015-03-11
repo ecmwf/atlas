@@ -31,6 +31,8 @@ public:
 
   GridDistribution(const Partitioner& partitioner);
 
+  GridDistribution(int npts, int partition[], int part0=0);
+
   virtual ~GridDistribution() {}
 
   int partition(const gidx_t gidx) const { return part_[gidx]; }
@@ -43,10 +45,23 @@ public:
 
   const int* data() const { return part_.data(); }
 
+  const std::vector<int>& nb_pts() const { return nb_pts_; }
+
+  size_t max_pts() const { return max_pts_; }
+  size_t min_pts() const { return min_pts_; }
+
 private:
   size_t nb_partitions_;
   std::vector<int> part_;
+  std::vector<int> nb_pts_;
+  size_t max_pts_;
+  size_t min_pts_;
 };
+
+extern "C" {
+GridDistribution* atlas__GridDistribution__new(int npts, int part[], int part0);
+void atlas__GridDistribution__delete(GridDistribution* This);
+}
 
 } // namespace atlas
 

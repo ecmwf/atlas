@@ -103,6 +103,15 @@ actions/WriteLoadBalanceReport.h
 actions/WriteLoadBalanceReport.cc
 )
 
+if( ATLAS_HAVE_TRANS )
+  list( APPEND atlas_trans_srcs
+  trans/Trans.h
+  trans/Trans.cc
+  trans/TransPartitioner.h
+  trans/TransPartitioner.cc
+  )
+endif()
+
 list( APPEND atlas_grids_srcs
 grids/grids.h
 grids/grids.cc
@@ -239,12 +248,13 @@ ecbuild_add_library( TARGET atlas
   ${atlas_meshgen_srcs}
   ${atlas_actions_srcs}
   ${atlas_grids_srcs}
+  ${atlas_trans_srcs}
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_version.h
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_version.cc
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_config.h
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_defines.h
-  INCLUDES "${CGAL_INCLUDE_DIRS}"
-  LIBS eckit_geometry "${ECKIT_MPI_LIBRARIES}" "${ECKIT_GRIB_LIBRARIES}" "${CGAL_LIBRARIES}" )
+  INCLUDES "${CGAL_INCLUDE_DIRS}"  ${TRANSI_INCLUDE_DIRS}
+  LIBS eckit_geometry "${ECKIT_MPI_LIBRARIES}" "${ECKIT_GRIB_LIBRARIES}" "${CGAL_LIBRARIES}" ${TRANSI_LIBRARIES} )
 
 if( ATLAS_HAVE_FORTRAN )
   add_subdirectory( fortran )

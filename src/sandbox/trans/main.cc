@@ -8,7 +8,7 @@
 #include <memory>
 #include <stdlib.h> /* malloc, free */
 
-#include "trans_api/trans_api.h"
+#include "transi/trans.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -24,15 +24,15 @@
 // Following dummy functions are implementation details
 // that don't contribute to this example. They could be
 // replaced with grib_api functionality
-void read_grid( Trans* trans );
-void read_rspecg( Trans* trans, double* rspecg[], int* nfrom[], int* nfld );
-void write_rgpg( Trans* trans, double* rgpg[], int nfld );
+void read_grid( struct Trans_t* trans );
+void read_rspecg( struct Trans_t* trans, double* rspecg[], int* nfrom[], int* nfld );
+void write_rgpg( struct Trans_t* trans, double* rgpg[], int nfld );
 
 
 int main ( int arc, char **argv )
 {
   int jfld;
-  Trans trans;
+  struct Trans_t trans = new_trans();
 
   // Read resolution information
   read_grid(&trans);
@@ -50,7 +50,7 @@ int main ( int arc, char **argv )
 
   // Distribute data to all procs
   double* rspec  = (double*) malloc( sizeof(double) * nfld *trans.nspec2  );
-  DistSpec distspec = new_distspec(&trans);
+  struct DistSpec_t distspec = new_distspec(&trans);
     distspec.nfrom  = nfrom;
     distspec.rspecg = rspecg;
     distspec.rspec  = rspec;
@@ -61,7 +61,7 @@ int main ( int arc, char **argv )
   // Transform sp to gp fields
   double* rgp = (double*) malloc( sizeof(double) * nfld*trans.ngptot );
 
-  InvTrans invtrans = new_invtrans(&trans);
+  struct InvTrans_t invtrans = new_invtrans(&trans);
     invtrans.nscalar   = nfld;
     invtrans.rspscalar = rspec;
     invtrans.rgp       = rgp;
@@ -77,7 +77,7 @@ int main ( int arc, char **argv )
   for( jfld=0; jfld<nfld; ++jfld )
     nto[jfld] = 1;
 
-  GathGrid gathgrid = new_gathgrid(&trans);
+  struct GathGrid_t gathgrid = new_gathgrid(&trans);
     gathgrid.rgp  = rgp;
     gathgrid.rgpg = rgpg;
     gathgrid.nfld = nfld;
@@ -106,7 +106,7 @@ int main ( int arc, char **argv )
 //---------------------------------------------------------------------------
 // Dummy functions, used in this example
 
-void read_grid(Trans* trans)
+void read_grid(struct Trans_t* trans)
 {
   int i;
   int T159[] = {
@@ -136,7 +136,7 @@ void read_grid(Trans* trans)
 }
 
 
-void read_rspecg(Trans* trans, double* rspecg[], int* nfrom[], int* nfld )
+void read_rspecg(struct Trans_t* trans, double* rspecg[], int* nfrom[], int* nfld )
 {
   int i;
   int jfld;
@@ -157,7 +157,7 @@ void read_rspecg(Trans* trans, double* rspecg[], int* nfrom[], int* nfld )
   if( trans->myproc == 1 ) printf("read_rspecg ... done\n");
 }
 
-void write_rgpg(Trans* trans, double* rgpg[], int nfld )
+void write_rgpg(struct Trans_t* trans, double* rgpg[], int nfld )
 {
   int jfld;
   if( trans->myproc == 1 ) printf("write_rgpg ...\n");

@@ -14,6 +14,7 @@
 #define BOOST_TEST_MODULE TestRGG
 #include "ecbuild/boost_test_framework.h"
 
+#include "eckit/config/ResourceMgr.h"
 #include "atlas/mpi/mpi.h"
 #include "atlas/atlas_config.h"
 #include "atlas/grids/GaussianLatitudes.h"
@@ -288,6 +289,7 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
 
 BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
 {
+  eckit::ResourceMgr::instance().set("atlas.meshgen.partitioner","eqregion");
   ReducedGridMeshGenerator generate;
   generate.options.set("nb_parts",20);
   generate.options.set("include_pole",false);

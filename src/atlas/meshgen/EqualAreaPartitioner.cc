@@ -491,35 +491,35 @@ void EqualAreaPartitioner::partition(int nb_nodes, NodeInt nodes[], int part[]) 
   For every band, now sort from west to east, and north to south. Inside every band
   we can now easily split nodes in sectors.
   */
-  double chunk_size = static_cast<double>(nb_nodes)/static_cast<double>(nb_parts);
-  // truncate precision
-  chunk_size = std::ceil(1.e12*chunk_size)/1.e12;
-
-  int chunk_size_int = std::floor(chunk_size);
-  int chunk_remainder = nb_nodes - chunk_size_int*nb_parts;
-
-  begin = 0;
-  p=0;
+  int chunk_size = nb_nodes/nb_parts;
+  int chunk_remainder = nb_nodes - chunk_size*nb_parts;
+  int remainder = chunk_remainder;
+  std::vector<int> count; count.reserve(nb_parts);
+  end=0;
   for( band=0; band<nb_bands(); ++band )
   {
-    p += nb_regions(band);
-    end = std::floor(p*chunk_size);
-    std::sort( nodes+begin, nodes+end, compare_WE_NS );
     begin = end;
+    for( p=0; p<nb_regions(band); ++p )
+    {
+      count.push_back( chunk_size + (remainder-->0?1:0) );
+      end += count.back();
+    }
+    std::sort( nodes+begin, nodes+end, compare_WE_NS );
   }
 
   /*
   Create list that tells in original node numbering which part the node belongs to
   */
-  begin = 0;
+  remainder = chunk_remainder;
+  end = 0;
   for( p=0; p<nb_parts; ++p)
   {
-    end = std::floor((p+1)*chunk_size);
+    begin = end;
+    end = begin + count[p];
     for( i=begin; i<end; ++i )
     {
       part[nodes[i].n] = p;
     }
-    begin = end;
   }
 
   /*

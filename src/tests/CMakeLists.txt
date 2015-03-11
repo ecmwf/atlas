@@ -143,6 +143,15 @@ ecbuild_add_test( TARGET atlas_test_trans
   INCLUDES  ${TRANS_API_INCLUDE_DIRS}
 )
 
+ecbuild_add_test( TARGET atlas_test_trans_serial
+  BOOST
+  SOURCES   test_trans.cc
+  CONDITION HAVE_TRANS AND NOT HAVE_MPI
+  LIBS      atlas ${TRANS_API_LIBRARIES}
+  INCLUDES  ${TRANS_API_INCLUDE_DIRS}
+)
+
+
 if( ECKIT_HAVE_GRIB )
   add_subdirectory( grid )
 endif()

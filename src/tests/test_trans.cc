@@ -17,6 +17,8 @@
 #include "eckit/mpi/mpi.h"
 #include "eckit/config/ResourceMgr.h"
 #include "atlas/atlas.h"
+#include "atlas/trans/Trans.h"
+#include "atlas/trans/TransPartitioner.h"
 #include "atlas/grids/grids.h"
 #include "atlas/meshgen/EqualAreaPartitioner.h"
 #include "atlas/meshgen/ReducedGridMeshGenerator.h"
@@ -24,169 +26,7 @@
 #include "atlas/GridDistribution.h"
 #include "atlas/io/Gmsh.h"
 
-#include "trans_api/trans_api.h"
-
-
-
-using namespace eckit;
-using namespace atlas;
-using namespace atlas::grids;
-
-namespace atlas {
-namespace trans {
-
-class Trans {
-private:
-  typedef struct ::Trans_t Trans_t;
-public:
-  Trans(const ReducedGrid& g)
-  {
-    int nsmax = (2*g.nlat()-1)/2;
-    ctor(g.nlat(),g.npts_per_lat().data(), nsmax);
-  }
-
-  Trans(const ReducedGrid& g, const int nsmax )
-  {
-   ctor(g.nlat(),g.npts_per_lat().data(), nsmax);
-  }
-
-  Trans( const std::vector<int>& npts_per_lat, const int nsmax )
-  {
-    ctor(npts_per_lat.size(),npts_per_lat.data(), nsmax);
-  }
-
-  virtual ~Trans()
-  {
-    ::trans_delete(&trans_);
-  }
-
-  operator Trans_t*() const { return &trans_; }
-
-  int        nproc()        const { return trans_.nproc; }
-  int        myproc()       const { return trans_.myproc; }
-  int        ndgl()         const { return trans_.ndgl; }
-  int        nsmax()        const { return trans_.nsmax; }
-  int        ngptot()       const { return trans_.ngptot; }
-  int        ngptotg()      const { return trans_.ngptotg; }
-  int        ngptotmx()     const { return trans_.ngptotmx; }
-  int        nspec()        const { return trans_.nspec; }
-  int        nspec2()       const { return trans_.nspec2; }
-  int        nspec2g()      const { return trans_.nspec2g; }
-  int        nspec2mx()     const { return trans_.nspec2mx; }
-  const int* nloen()        const { ASSERT( trans_.nloen     != NULL ); return trans_.nloen; }
-  const int* n_regions()    const { ASSERT( trans_.n_regions != NULL ); return trans_.n_regions; }
-  int        n_regions_NS() const { return trans_.n_regions_NS; }
-  int        n_regions_EW() const { return trans_.n_regions_EW; }
-  const int* nfrstlat()     const { if( trans_.nfrstlat    == NULL ) ::trans_inquire(&trans_,"nfrstlat");    return trans_.nfrstlat; }
-  const int* nlstlat()      const { if( trans_.nlstlat     == NULL ) ::trans_inquire(&trans_,"nlstlat");     return trans_.nlstlat; }
-  const int* nptrfrstlat()  const { if( trans_.nptrfrstlat == NULL ) ::trans_inquire(&trans_,"nptrfrstlat"); return trans_.nptrfrstlat; }
-  const int* nsta()         const { if( trans_.nsta        == NULL ) ::trans_inquire(&trans_,"nsta");        return trans_.nsta; }
-  const int* nonl()         const { if( trans_.nonl        == NULL ) ::trans_inquire(&trans_,"nonl");        return trans_.nonl; }
-
-private:
-
-  void ctor(const int ndgl, const int nloen[], int nsmax)
-  {
-    trans_.ndgl  = ndgl;
-    trans_.nloen = new int[trans_.ndgl];
-    std::copy(nloen,nloen+ndgl,trans_.nloen);
-    trans_.nsmax = nsmax;
-    trans_setup(&trans_);
-  }
-
-private:
-  mutable Trans_t trans_;
-};
-
-class TransPartitioner: public Partitioner
-{
-public:
-
-  TransPartitioner( const ReducedGrid& grid, const Trans& trans ) :
-    Partitioner(grid),
-    t_( const_cast<Trans*>(&trans)), owned_(false)
-  {
-    ASSERT( t_ != NULL );
-    Partitioner::set_nb_partition( t_->nproc() );
-  }
-
-  TransPartitioner( const ReducedGrid& grid ) :
-    Partitioner(grid),
-    t_( new Trans(grid,0) ), owned_(true)
-  {
-    ASSERT( t_ != NULL );
-    Partitioner::set_nb_partition( t_->nproc() );
-  }
-
-  virtual ~TransPartitioner()
-  {
-    if( owned_ )
-      delete t_;
-  }
-
-  virtual void partition(int part[]) const
-  {
-    if( dynamic_cast<const ReducedGrid*>(&grid()) == NULL )
-      throw BadCast("Grid is not a ReducedGrid type. Cannot partition using IFS trans",Here());
-
-    int nlonmax = dynamic_cast<const ReducedGrid*>(&grid())->nlonmax();
-
-    int i(0);
-    std::vector<int> iglobal(t_->ndgl()*nlonmax);
-    for( int jgl=1; jgl<=t_->ndgl(); ++jgl )
-    {
-      for( int jl=1; jl<=t_->nloen()[jgl-1]; ++jl )
-      {
-        ++i;
-        iglobal[(jgl-1)*nlonmax+(jl-1)] = i;
-      }
-    }
-
-    const int stride=t_->ndgl()+t_->n_regions_NS()-1;
-
-    int iproc(0);
-    for( int ja=1; ja<=t_->n_regions_NS(); ++ja )
-    {
-      for( int jb=1; jb<=t_->n_regions()[ja-1]; ++jb )
-      {
-        for( int jgl=t_->nfrstlat()[ja-1]; jgl<=t_->nlstlat()[ja-1]; ++jgl )
-        {
-          int igl = t_->nptrfrstlat()[ja-1] + jgl - t_->nfrstlat()[ja-1];
-
-          int idx = (jb-1)*stride+(igl-1);
-          for( int jl=t_->nsta()[idx]; jl<=t_->nsta()[idx]+t_->nonl()[idx]-1; ++jl )
-          {
-            int ind = iglobal[(jgl-1)*nlonmax+(jl-1)];
-            part[ind-1] = iproc;
-          }
-        }
-        ++iproc;
-      }
-    }
-  }
-
-  int nb_bands() const
-  {
-    ASSERT( t_!= NULL );
-    return t_->n_regions_NS();
-  }
-
-  int nb_regions(int b) const
-  {
-    ASSERT( t_!= NULL );
-    return t_->n_regions()[b];
-  }
-
-private:
-  mutable Trans* t_;
-  bool owned_;
-};
-
-}
-}
-
-
-
+#include "transi/trans.h"
 
 using namespace eckit;
 using namespace atlas;
@@ -194,8 +34,15 @@ using namespace atlas;
 using namespace atlas::grids;
 
 struct Fixture   {
-       Fixture() { trans_init(); atlas_init();          }
-      ~Fixture() { atlas_finalize(); trans_finalize();  }
+       Fixture() {
+         trans_init();
+         atlas_init(boost::unit_test::framework::master_test_suite().argc,
+                    boost::unit_test::framework::master_test_suite().argv);
+       }
+      ~Fixture() {
+         atlas_finalize();
+         trans_finalize();
+       }
 };
 
 
@@ -251,8 +98,8 @@ public:
   DistSpec& rspec (      std::vector<double>& _rspec)
   { ASSERT(_rspec.size()); return rspec(_rspec.data()); }
 
+  void operator()() { ::trans_distspec(&distspec_); }
 
-  DistSpec& execute() { ::trans_distspec(&distspec_);  return *this; }
 private:
   struct DistSpec_t distspec_;
 };
@@ -320,41 +167,79 @@ BOOST_AUTO_TEST_CASE( test_trans_partitioner )
 
 BOOST_AUTO_TEST_CASE( test_distspec )
 {
-  ReducedGrid::Ptr g ( ReducedGrid::create( "rgg4.N16" ) );
+  ReducedGrid::Ptr g ( ReducedGrid::create( "rgg4.N80" ) );
   eckit::ResourceMgr::instance().set("atlas.meshgen.angle","0");
   meshgen::ReducedGridMeshGenerator generate;
+  BOOST_CHECKPOINT("mesh generator created");
   trans::Trans trans(*g);
-
+  BOOST_CHECKPOINT("Trans initialized");
   std::vector<double> rspecg;
   std::vector<int   > nfrom;
   int nfld;
+  BOOST_CHECKPOINT("Read rspecg");
   read_rspecg(trans,rspecg,nfrom,nfld);
 
   std::vector<double> rspec(nfld*trans.nspec2());
 
-  trans::DistSpec(trans)
-     .nfld(nfld)
-     .nfrom(nfrom)
-     .rspecg(rspecg)
-     .rspec(rspec)
-     .execute();
+  BOOST_CHECKPOINT("distspec");
+
+  trans::DistSpec distspec(trans);
+  distspec.nfld(nfld).nfrom(nfrom).rspecg(rspecg).rspec(rspec)();
+  BOOST_CHECKPOINT("end test_distspec");
+}
+
+BOOST_AUTO_TEST_CASE( test_distribution )
+{
+  ReducedGrid::Ptr g ( ReducedGrid::create( "rgg4.N80" ) );
+
+  BOOST_CHECKPOINT("test_distribution");
+
+  GridDistribution::Ptr d_trans( trans::TransPartitioner(*g).distribution() );
+  BOOST_CHECKPOINT("trans distribution created");
+
+  GridDistribution::Ptr d_eqreg( meshgen::EqualAreaPartitioner(*g).distribution() );
+
+  BOOST_CHECKPOINT("eqregions distribution created");
+
+  if( eckit::mpi::rank() == 0 )
+  {
+    BOOST_CHECK_EQUAL( d_trans->nb_partitions(), d_eqreg->nb_partitions() );
+    BOOST_CHECK_EQUAL( d_trans->max_pts(), d_eqreg->max_pts() );
+    BOOST_CHECK_EQUAL( d_trans->min_pts(), d_eqreg->min_pts() );
+
+    BOOST_CHECK_EQUAL_COLLECTIONS( d_trans->nb_pts().begin(), d_trans->nb_pts().end(),
+                                   d_eqreg->nb_pts().begin(), d_eqreg->nb_pts().end() );
+  }
+
 }
 
 
 BOOST_AUTO_TEST_CASE( test_generate_mesh )
 {
-  ReducedGrid::Ptr g ( ReducedGrid::create( "rgg4.N16" ) );
+  ReducedGrid::Ptr g ( ReducedGrid::create( "rgg4.N80" ) );
   eckit::ResourceMgr::instance().set("atlas.meshgen.angle","0");
   eckit::ResourceMgr::instance().set("atlas.meshgen.triangulate","true");
 
   meshgen::ReducedGridMeshGenerator generate;
   trans::Trans trans(*g);
 
-  //Mesh::Ptr mesh( generate( *g, trans::TransPartitioner().distribution(*g) ) );
+  Mesh::Ptr m_default( generate( *g ) );
+  Mesh::Ptr m_trans( generate( *g, trans::TransPartitioner(*g).distribution() ) );
+  Mesh::Ptr m_eqreg( generate( *g, meshgen::EqualAreaPartitioner(*g).distribution() ) );
 
-  Mesh::Ptr mesh ( generate(*g, meshgen::EqualAreaPartitioner(*g).distribution() ) );
+  ArrayView<int,1> p_default( m_default->function_space("nodes").field("partition") );
+  ArrayView<int,1> p_trans  ( m_trans  ->function_space("nodes").field("partition") );
+  ArrayView<int,1> p_eqreg  ( m_eqreg  ->function_space("nodes").field("partition") );
 
-  io::Gmsh().write(*mesh,"N16_trans.msh");
+  BOOST_CHECK_EQUAL_COLLECTIONS( p_default.begin(), p_default.end(),
+                                 p_trans  .begin(), p_trans  .end() );
+
+  BOOST_CHECK_EQUAL_COLLECTIONS( p_default.begin(), p_default.end(),
+                                 p_eqreg  .begin(), p_eqreg  .end() );
+
+  //Mesh::Ptr mesh ( generate(*g, meshgen::EqualAreaPartitioner(*g).distribution() ) );
+
+  io::Gmsh().write(*m_trans,"N16_trans.msh");
 }
 
 

@@ -111,12 +111,12 @@ endif()
 cmake_add_cxx_flags( "${OMP_CXX_FLAGS}" )
 
 
-### trans_api ...
+### trans ...
 
 ecbuild_add_option(
     FEATURE TRANS
     DESCRIPTION "Support for trasnformations between SH and Grid space"
-    REQUIRED_PACKAGES "PROJECT trans_api VERSION 0.1 QUIET" )
+    REQUIRED_PACKAGES "PROJECT transi VERSION 0.1 QUIET" )
 
 ### tesselation ...
 
@@ -157,7 +157,7 @@ if( ATLAS_HAVE_FORTRAN )
 endif()
 
 if( ATLAS_HAVE_TRANS )
-  list( APPEND ATLAS_TPLS trans_api )
+  list( APPEND ATLAS_TPLS transi )
 endif()
 
 if( HAVE_TESSELATION )

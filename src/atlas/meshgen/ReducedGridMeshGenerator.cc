@@ -20,6 +20,7 @@
 #include <eckit/config/Configurable.h>
 #include <eckit/config/Resource.h>
 
+#include "atlas/atlas_config.h"
 #include "atlas/util/Array.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
@@ -32,6 +33,10 @@
 #include "atlas/grids/ReducedGrid.h"
 #include "atlas/meshgen/ReducedGridMeshGenerator.h"
 #include "atlas/GridDistribution.h"
+
+#ifdef ATLAS_HAVE_TRANS
+#include "atlas/trans/TransPartitioner.h"
+#endif
 
 #define DEBUG_OUTPUT 0
 
@@ -165,11 +170,31 @@ void ReducedGridMeshGenerator::set_include_pole(bool f)
 //  return part;
 //}
 
-void ReducedGridMeshGenerator::generate(const ReducedGrid& rgg, Mesh& mesh )
+void ReducedGridMeshGenerator::generate(const ReducedGrid& grid, Mesh& mesh )
 {
   int nb_parts = options.get<int>("nb_parts");
-  EqualAreaPartitioner partitioner(rgg,nb_parts);
-  generate(rgg,partitioner.distribution(),mesh);
+
+#ifdef ATLAS_HAVE_TRANS
+  std::string partitioner = Resource<std::string>("atlas.meshgen.partitioner",std::string("trans"));
+  eckit::Log::info() << partitioner << std::endl;
+  if( partitioner == "trans" )
+  {
+    if( nb_parts != eckit::mpi::size() )
+    {
+      std::stringstream msg; msg << "The default TransPartitioner is not equiped to handle nb_parts != mpi::size():\n"
+                                 << "( " << nb_parts << " != " << eckit::mpi::size() << " )\n"
+                                 << "Please configure Resource: atlas.meshgen.partitioner=eqreg";
+      throw UserError(msg.str(),Here());
+    }
+    generate( grid, trans::TransPartitioner(grid).distribution(), mesh );
+  }
+  else
+  {
+    generate( grid, EqualAreaPartitioner(grid,nb_parts).distribution(), mesh );
+  }
+#else
+  generate( grid, EqualAreaPartitioner(grid,nb_parts).distribution(), mesh );
+#endif
 }
 
 void ReducedGridMeshGenerator::generate(const ReducedGrid& rgg, const GridDistribution& distribution, Mesh& mesh )
