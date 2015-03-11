@@ -31,6 +31,7 @@ ecbuild_requires_macro_version( 1.6 )
 set( PERSISTENT_NAMESPACE "eckit" CACHE INTERNAL "" )
 
 ecbuild_use_package( PROJECT eckit VERSION 0.9 REQUIRED )
+message( STATUS "   ECKIT_FEATURES : [${ECKIT_FEATURES}]" )
 
 foreach( _eckit_feature ${ECKIT_FEATURES} )
   set( ${_eckit_feature} 1 )
@@ -45,7 +46,7 @@ if( ECKIT_HAVE_ECKIT_MPI )
    message( STATUS "eckit has mpi support")
 endif()
 
-if( ECKIT_HAVE_ECKIT_MPI )
+if( ECKIT_HAVE_ECKIT_MPISTUBS )
    message( STATUS "eckit has mpistubs support")
 endif()
 
