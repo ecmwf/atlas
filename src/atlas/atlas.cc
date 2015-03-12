@@ -57,8 +57,10 @@ void atlas_init(int argc, char** argv)
 
   Log::debug() << "Atlas program [" << Context::instance().displayName() << "]\n";
   Log::debug() << indent();
-  Log::debug() << "Atlas version [" << atlas_version() << "]\n";
-  Log::debug() << "Atlas git     [" << atlas_git_sha1()<< "]\n";
+  Log::debug() << "atlas version [" << atlas_version() << "]\n";
+  Log::debug() << "atlas git     [" << atlas_git_sha1()<< "]\n";
+  Log::debug() << "eckit version [" << eckit_version() << "]\n";
+  Log::debug() << "eckit git     [" << eckit_git_sha1()<< "]\n";
 
   std::vector<PathName>::iterator path_it;
   for( path_it = config_files.begin(); path_it!=config_files.end(); ++path_it )

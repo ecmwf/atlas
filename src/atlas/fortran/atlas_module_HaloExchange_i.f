@@ -1,7 +1,7 @@
 ! (C) Copyright 2013-2014 ECMWF.
 
 !------------------------------------------------------------------------------
-TYPE, extends(object_type) :: HaloExchange_type
+TYPE, extends(object_type) :: atlas_HaloExchange
 
 ! Purpose :
 ! -------
@@ -46,5 +46,5 @@ contains
       & HaloExchange__execute_real64_r2, &
       & HaloExchange__execute_real64_r3, &
       & HaloExchange__execute_real64_r4
-END TYPE HaloExchange_type
+END TYPE atlas_HaloExchange
 !------------------------------------------------------------------------------

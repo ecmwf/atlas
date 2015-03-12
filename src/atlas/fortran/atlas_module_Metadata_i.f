@@ -1,7 +1,7 @@
 ! (C) Copyright 2013-2014 ECMWF.
 
 !------------------------------------------------------------------------------
-TYPE, extends(object_type) :: Metadata_type
+TYPE, extends(object_type) :: atlas_Metadata
 
 ! Purpose :
 ! -------
@@ -34,9 +34,9 @@ contains
   procedure :: get_real64 => Metadata__get_real64
   procedure :: get_string => Metadata__get_string
   generic :: get => get_integer, get_logical, get_real32, get_real64, get_string
-END TYPE Metadata_type
+END TYPE atlas_Metadata
 
-interface new_Metadata
-  module procedure new_Metadata
+interface new_atlas_Metadata
+  module procedure new_atlas_Metadata
 end interface
 !------------------------------------------------------------------------------

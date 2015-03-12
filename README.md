@@ -105,8 +105,8 @@ In following table, the column "variable" can be edited in configuration files.
 | `atlas.gmsh.elements`       |                  |                          | `true`             |
 | `atlas.gmsh.edges`          |                  |                          | `true`             |
 | `atlas.gmsh.levels`         |                  |                          | `[]`               |
-| `atlas.meshgen.angle`       |                  |                          | `29.5`             |
-| `atlas.meshgen.triangulate` |                  |                          | `false`            |
+| `atlas.meshgen.angle`       |                  |                          | `0`                |
+| `atlas.meshgen.triangulate` |                  |                          | `true`             |
 | `AtlasCacheDir`             |                  | `$ATLAS_CACHE_DIR`       | `/tmp/cache/atlas` |
 
 

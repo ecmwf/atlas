@@ -75,7 +75,7 @@ util/IndexView.h
 util/IndexView.cc
 )
 
-list( APPEND atlas_meshgen_srcs
+list( APPEND atlas_Meshgen_srcs
 meshgen/EqualAreaPartitioner.cc
 meshgen/EqualAreaPartitioner.h
 meshgen/ReducedGridMeshGenerator.cc
@@ -102,6 +102,15 @@ actions/GenerateMesh.cc
 actions/WriteLoadBalanceReport.h
 actions/WriteLoadBalanceReport.cc
 )
+
+if( ATLAS_HAVE_TRANS )
+  list( APPEND atlas_trans_srcs
+  trans/Trans.h
+  trans/Trans.cc
+  trans/TransPartitioner.h
+  trans/TransPartitioner.cc
+  )
+endif()
 
 list( APPEND atlas_grids_srcs
 grids/grids.h
@@ -196,6 +205,8 @@ FunctionSpace.cc
 FunctionSpace.h
 Grid.cc
 Grid.h
+GridDistribution.cc
+GridDistribution.h
 GridSet.cc
 GridSet.h
 GridSpec.cc
@@ -209,6 +220,8 @@ MeshCache.h
 Metadata.cc
 Metadata.h
 Parameters.h
+Partitioner.cc
+Partitioner.h
 PointIndex3.cc
 PointIndex3.h
 PointSet.cc
@@ -232,15 +245,16 @@ ecbuild_add_library( TARGET atlas
   ${atlas_util_srcs}
   ${atlas_io_srcs}
   ${atlas_mpl_srcs}
-  ${atlas_meshgen_srcs}
+  ${atlas_Meshgen_srcs}
   ${atlas_actions_srcs}
   ${atlas_grids_srcs}
+  ${atlas_trans_srcs}
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_version.h
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_version.cc
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_config.h
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_defines.h
-  INCLUDES "${CGAL_INCLUDE_DIRS}"
-  LIBS eckit_geometry "${ECKIT_MPI_LIBRARIES}" "${ECKIT_GRIB_LIBRARIES}" "${CGAL_LIBRARIES}" )
+  INCLUDES "${CGAL_INCLUDE_DIRS}"  ${TRANSI_INCLUDE_DIRS}
+  LIBS eckit_geometry "${ECKIT_MPI_LIBRARIES}" "${ECKIT_GRIB_LIBRARIES}" "${CGAL_LIBRARIES}" ${TRANSI_LIBRARIES} )
 
 if( ATLAS_HAVE_FORTRAN )
   add_subdirectory( fortran )

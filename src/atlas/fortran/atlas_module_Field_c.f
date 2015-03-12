@@ -5,7 +5,7 @@
 ! Field routines
 
 function Field__name(this) result(field_name)
-  class(Field_type), intent(in) :: this
+  class(atlas_Field), intent(in) :: this
   character(len=:), allocatable :: field_name
   type(c_ptr) :: field_name_c_str
   field_name_c_str = atlas__Field__name(this%cpp_object_ptr)
@@ -13,7 +13,7 @@ function Field__name(this) result(field_name)
 end function Field__name
 
 function Field__data_type(this) result(field_data_type)
-  class(Field_type), intent(in) :: this
+  class(atlas_Field), intent(in) :: this
   character(len=:), allocatable :: field_data_type
   type(c_ptr) :: field_data_type_c_str
   field_data_type_c_str = atlas__Field__data_type(this%cpp_object_ptr)
@@ -21,26 +21,26 @@ function Field__data_type(this) result(field_data_type)
 end function Field__data_type
 
 function Field__nb_vars(this) result(nb_vars)
-  class(Field_type), intent(in) :: this
+  class(atlas_Field), intent(in) :: this
   integer :: nb_vars
   nb_vars = atlas__Field__nb_vars(this%cpp_object_ptr)
 end function Field__nb_vars
 
 function Field__metadata(this) result(metadata)
-  class(Field_type), intent(in) :: this
-  type(metadata_type) :: Metadata
+  class(atlas_Field), intent(in) :: this
+  type(atlas_Metadata) :: Metadata
   metadata%cpp_object_ptr = atlas__Field__metadata(this%cpp_object_ptr)
 end function Field__metadata
 
 function Field__function_space(this) result(function_space)
-  class(Field_type), intent(in) :: this
-  type(FunctionSpace_type) :: function_space
+  class(atlas_Field), intent(in) :: this
+  type(atlas_FunctionSpace) :: function_space
   function_space%cpp_object_ptr = atlas__Field__function_space(this%cpp_object_ptr)
 end function Field__function_space
 
 
 function Field__shape(this) result(shape)
-  class(Field_type), intent(in) :: this
+  class(atlas_Field), intent(in) :: this
   integer, pointer :: shape(:)
   type(c_ptr) :: shape_c_ptr
   integer(c_int) :: field_rank
@@ -50,7 +50,7 @@ end function Field__shape
 
 
 subroutine Field__access_data1_int32(this, field)
-  class(Field_type), intent(in) :: this
+  class(atlas_Field), intent(in) :: this
   integer, pointer, intent(out) :: field(:)
   integer, pointer :: field_bounds(:)
   type(c_ptr) :: field_c_ptr
@@ -67,7 +67,7 @@ subroutine Field__access_data1_int32(this, field)
 end subroutine Field__access_data1_int32
 
 subroutine Field__access_data2_int32(this, field)
-  class(Field_type), intent(in) :: this
+  class(atlas_Field), intent(in) :: this
   integer, pointer, intent(out) :: field(:,:)
   integer, pointer :: field_bounds(:)
   type(c_ptr) :: field_c_ptr
@@ -79,7 +79,7 @@ subroutine Field__access_data2_int32(this, field)
 end subroutine Field__access_data2_int32
 
 subroutine Field__access_data3_int32(this, field)
-  class(Field_type), intent(in) :: this
+  class(atlas_Field), intent(in) :: this
   integer, pointer, intent(out) :: field(:,:,:)
   integer, pointer :: field_bounds(:)
   type(c_ptr) :: field_c_ptr
@@ -91,7 +91,7 @@ subroutine Field__access_data3_int32(this, field)
 end subroutine Field__access_data3_int32
 
 subroutine Field__access_data1_int64(this, field)
-  class(Field_type), intent(in) :: this
+  class(atlas_Field), intent(in) :: this
   integer(c_long), pointer, intent(out) :: field(:)
   integer, pointer :: field_bounds(:)
   type(c_ptr) :: field_c_ptr
@@ -108,7 +108,7 @@ subroutine Field__access_data1_int64(this, field)
 end subroutine Field__access_data1_int64
 
 subroutine Field__access_data2_int64(this, field)
-  class(Field_type), intent(in) :: this
+  class(atlas_Field), intent(in) :: this
   integer(c_long), pointer, intent(out) :: field(:,:)
   integer, pointer :: field_bounds(:)
   type(c_ptr) :: field_c_ptr
@@ -120,7 +120,7 @@ subroutine Field__access_data2_int64(this, field)
 end subroutine Field__access_data2_int64
 
 subroutine Field__access_data3_int64(this, field)
-  class(Field_type), intent(in) :: this
+  class(atlas_Field), intent(in) :: this
   integer(c_long), pointer, intent(out) :: field(:,:,:)
   integer, pointer :: field_bounds(:)
   type(c_ptr) :: field_c_ptr
@@ -132,7 +132,7 @@ subroutine Field__access_data3_int64(this, field)
 end subroutine Field__access_data3_int64
 
 subroutine Field__access_data1_real32(this, field)
-  class(Field_type), intent(in) :: this
+  class(atlas_Field), intent(in) :: this
   real(c_float), pointer, intent(out) :: field(:)
   integer, pointer :: field_bounds(:)
   type(c_ptr) :: field_c_ptr
@@ -149,7 +149,7 @@ subroutine Field__access_data1_real32(this, field)
 end subroutine Field__access_data1_real32
 
 subroutine Field__access_data2_real32(this, field)
-  class(Field_type), intent(in) :: this
+  class(atlas_Field), intent(in) :: this
   real(c_float), pointer, intent(out) :: field(:,:)
   integer, pointer :: field_bounds(:)
   type(c_ptr) :: field_c_ptr
@@ -161,7 +161,7 @@ subroutine Field__access_data2_real32(this, field)
 end subroutine Field__access_data2_real32
 
 subroutine Field__access_data3_real32(this, field)
-  class(Field_type), intent(in) :: this
+  class(atlas_Field), intent(in) :: this
   real(c_float), pointer, intent(out) :: field(:,:,:)
   integer, pointer :: field_bounds(:)
   type(c_ptr) :: field_c_ptr
@@ -173,7 +173,7 @@ subroutine Field__access_data3_real32(this, field)
 end subroutine Field__access_data3_real32
 
 subroutine Field__access_data1_real64(this, field)
-  class(Field_type), intent(in) :: this
+  class(atlas_Field), intent(in) :: this
   real(c_double), pointer, intent(out) :: field(:)
   integer, pointer :: field_bounds(:)
   type(c_ptr) :: field_c_ptr
@@ -190,7 +190,7 @@ subroutine Field__access_data1_real64(this, field)
 end subroutine Field__access_data1_real64
 
 subroutine Field__access_data2_real64(this, field)
-  class(Field_type), intent(in) :: this
+  class(atlas_Field), intent(in) :: this
   real(c_double), pointer, intent(out) :: field(:,:)
   integer, pointer :: field_bounds(:)
   type(c_ptr) :: field_c_ptr
@@ -202,7 +202,7 @@ subroutine Field__access_data2_real64(this, field)
 end subroutine Field__access_data2_real64
 
 subroutine Field__access_data3_real64(this, field)
-  class(Field_type), intent(in) :: this
+  class(atlas_Field), intent(in) :: this
   real(c_double), pointer, intent(out) :: field(:,:,:)
   integer, pointer :: field_bounds(:)
   type(c_ptr) :: field_c_ptr
@@ -214,7 +214,7 @@ subroutine Field__access_data3_real64(this, field)
 end subroutine Field__access_data3_real64
 
 subroutine Field__access_data2_real64_bounds(this, field, field_bounds)
-  class(Field_type), intent(in) :: this
+  class(atlas_Field), intent(in) :: this
   real(c_double), pointer, intent(out) :: field(:,:)
   integer, intent(in) :: field_bounds(:)
   type(c_ptr) :: field_c_ptr
@@ -225,7 +225,7 @@ subroutine Field__access_data2_real64_bounds(this, field, field_bounds)
 end subroutine Field__access_data2_real64_bounds
 
 subroutine Field__access_data3_real64_bounds(this, field, field_bounds)
-  class(Field_type), intent(in) :: this
+  class(atlas_Field), intent(in) :: this
   real(c_double), pointer, intent(out) :: field(:,:,:)
   integer, intent(in) :: field_bounds(:)
   type(c_ptr) :: field_c_ptr
@@ -236,7 +236,7 @@ subroutine Field__access_data3_real64_bounds(this, field, field_bounds)
 end subroutine Field__access_data3_real64_bounds
 
 subroutine Field__access_data4_real64_bounds(this, field, field_bounds)
-  class(Field_type), intent(in) :: this
+  class(atlas_Field), intent(in) :: this
   real(c_double), pointer, intent(out) :: field(:,:,:,:)
   integer, intent(in) :: field_bounds(:)
   type(c_ptr) :: field_c_ptr
@@ -247,7 +247,7 @@ subroutine Field__access_data4_real64_bounds(this, field, field_bounds)
 end subroutine Field__access_data4_real64_bounds
 
 function Field__data1_wp(this) result(field)
-  class(Field_type), intent(in) :: this
+  class(atlas_Field), intent(in) :: this
   real(wp), pointer :: field(:)
   integer, pointer :: field_bounds(:)
   type(c_ptr) :: field_c_ptr
@@ -268,7 +268,7 @@ function Field__data1_wp(this) result(field)
 end function Field__data1_wp
 
 function Field__data2_wp(this) result(field)
-  class(Field_type), intent(in) :: this
+  class(atlas_Field), intent(in) :: this
   real(wp), pointer :: field(:,:)
   integer, pointer :: field_bounds(:)
   type(c_ptr) :: field_c_ptr
@@ -298,7 +298,7 @@ function Field__data2_wp(this) result(field)
 end function Field__data2_wp
 
 function Field__data3_wp(this) result(field)
-  class(Field_type), intent(in) :: this
+  class(atlas_Field), intent(in) :: this
   real(wp), pointer :: field(:,:,:)
   integer, pointer :: field_bounds(:)
   type(c_ptr) :: field_c_ptr

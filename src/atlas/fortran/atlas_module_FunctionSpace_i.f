@@ -1,7 +1,7 @@
 ! (C) Copyright 2013-2014 ECMWF.
 
 !------------------------------------------------------------------------------
-TYPE, extends(object_type) :: FunctionSpace_type
+TYPE, extends(object_type) :: atlas_FunctionSpace
 
 ! Purpose :
 ! -------
@@ -77,6 +77,6 @@ contains
       & FunctionSpace__gather_real64_r3, &
       & FunctionSpace__gather_int32_r1, &
       & FunctionSpace__gather_int32_r2
-END TYPE FunctionSpace_type
+END TYPE atlas_FunctionSpace
 
 !------------------------------------------------------------------------------

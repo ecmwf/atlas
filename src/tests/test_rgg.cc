@@ -14,6 +14,7 @@
 #define BOOST_TEST_MODULE TestRGG
 #include "ecbuild/boost_test_framework.h"
 
+#include "eckit/config/ResourceMgr.h"
 #include "atlas/mpi/mpi.h"
 #include "atlas/atlas_config.h"
 #include "atlas/grids/GaussianLatitudes.h"
@@ -125,9 +126,11 @@ BOOST_AUTO_TEST_CASE( test_eq_caps )
 
 BOOST_AUTO_TEST_CASE( test_partitioner )
 {
+  grids::ReducedGrid g;
+
   // 12 partitions
   {
-    EqualAreaPartitioner partitioner(12);
+    EqualAreaPartitioner partitioner(g,12);
     BOOST_CHECK_EQUAL( partitioner.nb_bands(),    4 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(0), 1 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(1), 5 );
@@ -137,7 +140,7 @@ BOOST_AUTO_TEST_CASE( test_partitioner )
 
   // 24 partitions
   {
-    EqualAreaPartitioner partitioner(24);
+    EqualAreaPartitioner partitioner(g,24);
     BOOST_CHECK_EQUAL( partitioner.nb_bands(),     5 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(0),  1 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(1),  6 );
@@ -148,7 +151,7 @@ BOOST_AUTO_TEST_CASE( test_partitioner )
 
   // 48 partitions
   {
-    EqualAreaPartitioner partitioner(48);
+    EqualAreaPartitioner partitioner(g,48);
     BOOST_CHECK_EQUAL( partitioner.nb_bands(),     7 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(0),  1 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(1),  6 );
@@ -161,7 +164,7 @@ BOOST_AUTO_TEST_CASE( test_partitioner )
 
   // 96 partitions
   {
-    EqualAreaPartitioner partitioner(96);
+    EqualAreaPartitioner partitioner(g,96);
     BOOST_CHECK_EQUAL( partitioner.nb_bands(),    10 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(0),  1 );
     BOOST_CHECK_EQUAL( partitioner.nb_regions(1),  6 );
@@ -286,6 +289,7 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
 
 BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
 {
+  eckit::ResourceMgr::instance().set("atlas.meshgen.partitioner","eqregion");
   ReducedGridMeshGenerator generate;
   generate.options.set("nb_parts",20);
   generate.options.set("include_pole",false);

@@ -61,48 +61,59 @@
 #define EqualAreaPartitioner_h
 
 #include <vector>
+#include "atlas/Partitioner.h"
 
 namespace atlas {
+  class Grid;
 namespace meshgen {
 
 void eq_caps(int N, std::vector<int>& n_regions, std::vector<double>& s_cap);
 void eq_regions(int N, double xmin[], double xmax[], double ymin[], double ymax[]);
 
-
-// Node struct that holds the longitude and latitude in millidegrees (integers)
-// This structure is used in sorting algorithms, and uses less memory than
-// if x and y were in double precision.
-struct NodeInt
-{
-  int x, y;
-  int n;
-};
-
-class EqualAreaPartitioner
+class EqualAreaPartitioner: public Partitioner
 {
 public:
-  EqualAreaPartitioner(int N);
+
+  EqualAreaPartitioner(const Grid&);
+
+  EqualAreaPartitioner(const Grid&, int N);
+
+  void where(int partition, int& band, int& sector) const;
+  int nb_bands() const { return bands_.size(); }
+  int nb_regions(int band) const { return sectors_[band]; }
+
+  virtual void partition( int part[] ) const;
+
+public:
+
+  // Node struct that holds the longitude and latitude in millidegrees (integers)
+  // This structure is used in sorting algorithms, and uses less memory than
+  // if x and y were in double precision.
+  struct NodeInt
+  {
+    int x, y;
+    int n;
+  };
+
+private:
+  // Doesn't matter if nodes[] is in degrees or radians, as a sorting
+  // algorithm is used internally
+  void partition(int nb_nodes, NodeInt nodes[], int part[]) const;
+
+
+private:
 
   // x and y in radians
   int partition(const double& x, const double& y) const;
 
   // y in radians
-
   int band(const double& y) const;
 
   // x in radians
   int sector(int band, const double& x) const;
 
-  void area(int partition, int& band, int& sector) const;
-  int nb_bands() const { return bands_.size(); }
-  int nb_sectors(int band) const { return nb_regions(band); }
-  int nb_regions(int band) const { return sectors_[band]; }
-
-  // Doesn't matter if nodes[] is in degrees or radians, as a sorting
-  // algorithm is used internally
-  void partition(int nb_nodes, NodeInt nodes[], int part[]) const;
-
 private:
+
   int N_;
   std::vector<double> bands_;
   std::vector<int> sectors_;

@@ -31,6 +31,8 @@ ecbuild_requires_macro_version( 1.6 )
 set( PERSISTENT_NAMESPACE "eckit" CACHE INTERNAL "" )
 
 ecbuild_use_package( PROJECT eckit VERSION 0.9 REQUIRED )
+
+list( REMOVE_DUPLICATES ECKIT_FEATURES )
 message( STATUS "   ECKIT_FEATURES : [${ECKIT_FEATURES}]" )
 
 foreach( _eckit_feature ${ECKIT_FEATURES} )
@@ -92,8 +94,10 @@ elseif( NOT ATLAS_HAVE_MPI AND ECKIT_HAVE_ECKIT_MPISTUBS )
     set( MPI_Fortran_LIBRARIES mpistubs_f )
     set( MPI_Fortran_INCLUDE_PATH ${MPISTUBS_INCLUDE_DIRS} )
   endif()
-else()
-  message( FATAL_ERROR "eckit_mpi or eckit_mpistubs not found" )
+elseif( ATLAS_HAVE_MPI AND ECKIT_HAVE_ECKIT_MPISTUBS )
+  message( FATAL_ERROR "Requested Atlas with ENABLE_MPI=ON, but eckit_mpistubs is not available")
+elseif( NOT ATLAS_HAVE_MPI AND NOT ECKIT_HAVE_ECKIT_MPISTUBS )
+  message( FATAL_ERROR "ATLAS_HAVE_MPI=OFF, but cannot build since eckit_mpistubs not found")
 endif()
 
 
@@ -110,12 +114,12 @@ endif()
 cmake_add_cxx_flags( "${OMP_CXX_FLAGS}" )
 
 
-### trans_api ...
+### trans ...
 
 ecbuild_add_option(
     FEATURE TRANS
     DESCRIPTION "Support for trasnformations between SH and Grid space"
-    REQUIRED_PACKAGES "PROJECT trans_api VERSION 0.1 QUIET" )
+    REQUIRED_PACKAGES "PROJECT transi VERSION 0.1 QUIET" )
 
 ### tesselation ...
 
@@ -156,7 +160,7 @@ if( ATLAS_HAVE_FORTRAN )
 endif()
 
 if( ATLAS_HAVE_TRANS )
-  list( APPEND ATLAS_TPLS trans_api )
+  list( APPEND ATLAS_TPLS transi )
 endif()
 
 if( HAVE_TESSELATION )

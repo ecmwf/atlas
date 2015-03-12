@@ -10,6 +10,7 @@
 
 #include "atlas/ErrorHandling.h"
 #include "atlas/mpi/mpi.h"
+#include "atlas/GridDistribution.h"
 #include "atlas/meshgen/ReducedGridMeshGenerator.h"
 #include "atlas/actions/GenerateMesh.h"
 #include "atlas/util/Debug.h"
@@ -34,6 +35,18 @@ Mesh* generate_mesh (const ReducedGrid& rgg)
 Mesh* atlas__generate_mesh (ReducedGrid* rgg)
 {
   ATLAS_ERROR_HANDLING( return generate_mesh(*rgg); );
+  return NULL;
+}
+
+// ------------------------------------------------------------------
+
+
+Mesh* atlas__generate_mesh_with_distribution (ReducedGrid* rgg, GridDistribution* distribution)
+{
+  ATLAS_ERROR_HANDLING(
+        ReducedGridMeshGenerator generate;
+        return generate(*rgg, *distribution);
+  );
   return NULL;
 }
 

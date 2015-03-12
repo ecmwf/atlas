@@ -1,7 +1,7 @@
 ! (C) Copyright 2013-2014 ECMWF.
 
 !------------------------------------------------------------------------------
-TYPE, extends(object_type) :: Checksum_type
+TYPE, extends(object_type) :: atlas_Checksum
 
 ! Purpose :
 ! -------
@@ -43,5 +43,5 @@ contains
       & Checksum__execute_real64_r2, &
       & Checksum__execute_real64_r3
 
-END TYPE Checksum_type
+END TYPE atlas_Checksum
 !------------------------------------------------------------------------------

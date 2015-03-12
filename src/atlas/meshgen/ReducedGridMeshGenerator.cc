@@ -20,6 +20,7 @@
 #include <eckit/config/Configurable.h>
 #include <eckit/config/Resource.h>
 
+#include "atlas/atlas_config.h"
 #include "atlas/util/Array.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
@@ -31,6 +32,11 @@
 #include "atlas/meshgen/EqualAreaPartitioner.h"
 #include "atlas/grids/ReducedGrid.h"
 #include "atlas/meshgen/ReducedGridMeshGenerator.h"
+#include "atlas/GridDistribution.h"
+
+#ifdef ATLAS_HAVE_TRANS
+#include "atlas/trans/TransPartitioner.h"
+#endif
 
 #define DEBUG_OUTPUT 0
 
@@ -71,10 +77,10 @@ ReducedGridMeshGenerator::ReducedGridMeshGenerator()
   options.set("three_dimensional",bool(Resource<bool>("--three_dimensional;atlas.meshgen.three_dimensional",false ) ));
 
   // This option sets number of parts the mesh will be split in
-  options.set("nb_parts",1);
+  options.set<int>("nb_parts",eckit::mpi::size());
 
   // This option sets the part that will be generated
-  options.set("part",0);
+  options.set<int>("part",eckit::mpi::rank());
 
   // Experimental option. The result is a non-standard Reduced Gaussian Grid, with a ragged Greenwich line
   options.set("stagger", bool( Resource<bool>("-stagger;meshgen.stagger", false ) ) );
@@ -84,10 +90,10 @@ ReducedGridMeshGenerator::ReducedGridMeshGenerator()
   // max_angle = 0   -->  maximises number of triangles
   //Resource<double>( &Context::instance(), "meshgen.angle", 27 ).dump(Log::warning());
   //Log::warning() << "\n\n Getting max_angle_ ... " << std::endl;
-  max_angle_ = Resource< double > ( "atlas.meshgen.angle", 29.5 );
+  max_angle_ = Resource< double > ( "atlas.meshgen.angle", 0. );
   //Log::warning() << "max_angle_ = " << max_angle_ << std::endl;
 
-  triangulate_quads_ = Resource< bool > ( "-triangulate;atlas.meshgen.triangulate", false );
+  triangulate_quads_ = Resource< bool > ( "-triangulate;atlas.meshgen.triangulate", 1. );
   //Log::error() << "triangulate =" << triangulate_quads_ << std::endl;
 
 
@@ -99,6 +105,16 @@ ReducedGridMeshGenerator::ReducedGridMeshGenerator()
 Mesh* ReducedGridMeshGenerator::operator()( const ReducedGrid& grid )
 {
   return generate(grid);
+}
+
+Mesh* ReducedGridMeshGenerator::operator()( const ReducedGrid& grid, const GridDistribution& distribution )
+{
+  return generate(grid,distribution);
+}
+
+Mesh* ReducedGridMeshGenerator::operator()( const ReducedGrid& grid, GridDistribution* distribution )
+{
+  return generate(grid,distribution);
 }
 
 void ReducedGridMeshGenerator::set_three_dimensional(bool f)
@@ -154,47 +170,70 @@ void ReducedGridMeshGenerator::set_include_pole(bool f)
 //  return part;
 //}
 
-void ReducedGridMeshGenerator::generate(const ReducedGrid& rgg, Mesh& mesh )
+void ReducedGridMeshGenerator::generate(const ReducedGrid& grid, Mesh& mesh )
+{
+  int nb_parts = options.get<int>("nb_parts");
+
+#ifdef ATLAS_HAVE_TRANS
+  std::string partitioner = Resource<std::string>("atlas.meshgen.partitioner",std::string("trans"));
+  eckit::Log::info() << partitioner << std::endl;
+  if( partitioner == "trans" )
+  {
+    if( nb_parts != eckit::mpi::size() )
+    {
+      std::stringstream msg; msg << "The default TransPartitioner is not equiped to handle nb_parts != mpi::size():\n"
+                                 << "( " << nb_parts << " != " << eckit::mpi::size() << " )\n"
+                                 << "Please configure Resource: atlas.meshgen.partitioner=eqreg";
+      throw UserError(msg.str(),Here());
+    }
+    generate( grid, trans::TransPartitioner(grid).distribution(), mesh );
+  }
+  else
+  {
+    generate( grid, EqualAreaPartitioner(grid,nb_parts).distribution(), mesh );
+  }
+#else
+  generate( grid, EqualAreaPartitioner(grid,nb_parts).distribution(), mesh );
+#endif
+}
+
+void ReducedGridMeshGenerator::generate(const ReducedGrid& rgg, const GridDistribution& distribution, Mesh& mesh )
 {
   int mypart   = options.get<int>("part");
-  int nb_parts = options.get<int>("nb_parts");
-  EqualAreaPartitioner partitioner(nb_parts);
-  int n;
-  int ngptot = rgg.npts();
-  std::vector<int> part(ngptot);
-  bool stagger = options.get<bool>("stagger");
-
-  /*
-  Create structure which we can partition with multiple keys (lat and lon)
-  */
-  std::vector<NodeInt> nodes(ngptot);
-  n=0;
-  for( int jlat=0; jlat<rgg.nlat(); ++jlat)
-  {
-    for( int jlon=0; jlon<rgg.nlon(jlat); ++jlon)
-    {
-      nodes[n].x = microdeg(rgg.lon(jlat,jlon));
-      if( stagger ) nodes[n].x += static_cast<int>(1e6*180./static_cast<double>(rgg.nlon(jlat)));
-      nodes[n].y = microdeg(rgg.lat(jlat));
-      nodes[n].n = n;
-      ++n;
-    }
-  }
-  partitioner.partition(ngptot,nodes.data(),part.data());
-  std::vector<NodeInt>().swap(nodes); // Deallocate completely
 
   Region region;
-  generate_region(rgg,part,mypart,region);
+  generate_region(rgg,distribution,mypart,region);
 
-  generate_mesh(rgg,part,region,mesh);
+  generate_mesh(rgg,distribution,region,mesh);
   mesh.grid(rgg);
+}
+
+void ReducedGridMeshGenerator::generate(const ReducedGrid& rgg, GridDistribution* distribution, Mesh& mesh )
+{
+  generate(rgg,*distribution,mesh);
+  delete distribution;
+  distribution = NULL;
 }
 
 Mesh* ReducedGridMeshGenerator::generate(const ReducedGrid& rgg)
 {
-	Mesh* mesh = new Mesh();
-	generate(rgg,*mesh);
-	return mesh;
+  Mesh* mesh = new Mesh();
+  generate(rgg,*mesh);
+  return mesh;
+}
+
+Mesh* ReducedGridMeshGenerator::generate(const ReducedGrid& rgg, const GridDistribution& distribution)
+{
+  Mesh* mesh = new Mesh();
+  generate(rgg,distribution,*mesh);
+  return mesh;
+}
+
+Mesh* ReducedGridMeshGenerator::generate(const ReducedGrid& rgg, GridDistribution* distribution)
+{
+  Mesh* mesh = new Mesh();
+  generate(rgg,distribution,*mesh);
+  return mesh;
 }
 
 
