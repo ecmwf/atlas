@@ -14,6 +14,7 @@
 #define BOOST_TEST_MODULE TestBuildParallelFields
 #include "ecbuild/boost_test_framework.h"
 
+#include "eckit/config/ResourceMgr.h"
 #include "atlas/actions/BuildParallelFields.h"
 #include "atlas/actions/BuildPeriodicBoundaries.h"
 #include "atlas/atlas_config.h"
@@ -39,7 +40,12 @@ using namespace atlas::meshgen;
 #define DISABLE if(0)
 #define ENABLE if(1)
 
-BOOST_AUTO_TEST_CASE( init ) { eckit::mpi::init(); }
+BOOST_AUTO_TEST_CASE( init )
+{
+  eckit::mpi::init();
+  eckit::ResourceMgr::instance().set("atlas.meshgen.angle","27.5");
+  eckit::ResourceMgr::instance().set("atlas.meshgen.triangulate","false");
+}
 
 BOOST_AUTO_TEST_CASE( test1 )
 {
