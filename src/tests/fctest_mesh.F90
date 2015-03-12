@@ -254,6 +254,34 @@ TEST( test_meshgen )
   call atlas_write_load_balance_report(mesh,"N24_loadbalance.dat")
 END_TEST
 
+TEST( test_griddistribution )
+  type(ReducedGrid_type) :: grid
+  type(Mesh_type) :: mesh
+  type(atlas_GridDistribution) :: griddistribution
+
+  integer, allocatable :: part(:)
+  integer :: jnode
+
+  grid = new_ReducedGrid("rgg4.N16")
+
+  allocate( part(grid%npts()) )
+  do jnode=1,grid%npts()/3
+    part(jnode) = 1
+  enddo
+  do jnode=grid%npts()/3+1,grid%npts()
+    part(jnode) = 1
+  enddo
+
+  griddistribution = new_atlas_GridDistribution(part, part0=1)
+
+  mesh = atlas_generate_mesh(grid,griddistribution)
+
+  call atlas_write_gmsh(mesh,"testf3.msh")
+
+  deallocate(part)
+END_TEST
+
+
 
 ! -----------------------------------------------------------------------------
 

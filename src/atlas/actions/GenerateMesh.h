@@ -15,6 +15,14 @@
 #include "atlas/grids/ReducedGrid.h"
 
 namespace atlas {
+
+class GridDistribution;
+class Mesh;
+
+namespace grids {
+  class ReducedGrid;
+}
+
 namespace actions {
 
 Mesh* generate_mesh (const grids::ReducedGrid& rgg);
@@ -26,6 +34,8 @@ typedef grids::ReducedGrid __ReducedGrid;
 extern "C"
 {
   Mesh* atlas__generate_mesh (__ReducedGrid* rgg);
+  Mesh* atlas__generate_mesh_with_distribution (__ReducedGrid* rgg, GridDistribution* distribution);
+
 }
 
 // ------------------------------------------------------------------

@@ -46,6 +46,7 @@ use atlas_haloexchange_c_binding
 use atlas_gatherscatter_c_binding
 use atlas_grids_c_binding
 use atlas_reducedgrid_c_binding
+use atlas_griddistribution_c_binding
 use atlas_checksum_c_binding
 use atlas_gmsh_c_binding
 use atlas_BuildPeriodicBoundaries_c_binding
@@ -89,6 +90,7 @@ integer, public, parameter :: gidx_t = c_long
 #include "atlas_module_FieldSet_i.f"
 #include "atlas_module_Metadata_i.f"
 #include "atlas_module_Error_i.f"
+#include "atlas_module_GridDistribution_i.f"
 
 INTERFACE delete
 
@@ -133,6 +135,14 @@ ENUM, bind(c)
   enumerator :: app = 1
   enumerator :: out = 16
 end ENUM
+
+!------------------------------------------------------------------------------
+
+interface atlas_generate_mesh
+  module procedure atlas_generate_mesh
+  module procedure atlas_generate_mesh_with_distribution
+end interface atlas_generate_mesh
+
 
 !------------------------------------------------------------------------------
 
@@ -235,6 +245,7 @@ end function
 #include "atlas_module_FieldSet_c.f"
 #include "atlas_module_Metadata_c.f"
 #include "atlas_module_Error_c.f"
+#include "atlas_module_GridDistribution_c.f"
 
 ! -----------------------------------------------------------------------------
 
@@ -397,6 +408,13 @@ function atlas_generate_mesh(grid) result(mesh)
   type(ReducedGrid_type) :: grid
   mesh%cpp_object_ptr = atlas__generate_mesh(grid%cpp_object_ptr)
 end function atlas_generate_mesh
+
+function atlas_generate_mesh_with_distribution(grid,distribution) result(mesh)
+  type(Mesh_type) :: mesh
+  type(ReducedGrid_type) :: grid
+  type(atlas_GridDistribution) :: distribution
+  mesh%cpp_object_ptr = atlas__generate_mesh_with_distribution(grid%cpp_object_ptr,distribution%cpp_object_ptr)
+end function atlas_generate_mesh_with_distribution
 
 ! -----------------------------------------------------------------------------
 

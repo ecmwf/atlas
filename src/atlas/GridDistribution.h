@@ -19,6 +19,7 @@
 
 namespace atlas {
 
+class Grid;
 class Partitioner;
 
 class GridDistribution: public eckit::Owned

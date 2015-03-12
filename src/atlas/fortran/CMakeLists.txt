@@ -14,6 +14,7 @@ endfunction()
 
 generate_fortran_bindings(FORTRAN_BINDINGS ../grids/grids.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../grids/ReducedGrid.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../GridDistribution.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../Field.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../FieldSet.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../FunctionSpace.h)
@@ -74,6 +75,8 @@ add_custom_target( atlas_fortran_inc SOURCES
    atlas_module_GatherScatter_c.f
    atlas_module_Grid_i.f
    atlas_module_Grid_c.f
+   atlas_module_GridDistribution_i.f
+   atlas_module_GridDistribution_c.f
    atlas_module_HaloExchange_i.f
    atlas_module_HaloExchange_c.f
    atlas_module_Error_i.f
