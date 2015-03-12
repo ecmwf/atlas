@@ -3,28 +3,28 @@
 ! -----------------------------------------------------------------------------
 ! FieldSet routines
 
-function new_FieldSet(name) result(fieldset)
+function new_atlas_FieldSet(name) result(fieldset)
   character(len=*), intent(in) :: name
-  type(FieldSet_type) :: fieldset
+  type(atlas_FieldSet) :: fieldset
   fieldset%cpp_object_ptr = atlas__FieldSet__new( c_str(name) )
-end function new_FieldSet
+end function new_atlas_FieldSet
 
-subroutine FieldSet__delete(this)
-  type(FieldSet_type), intent(inout) :: this
+subroutine atlas_FieldSet__delete(this)
+  type(atlas_FieldSet), intent(inout) :: this
   if ( c_associated(this%cpp_object_ptr) ) then
     call atlas__FieldSet__delete(this%cpp_object_ptr)
   end if
   this%cpp_object_ptr = C_NULL_ptr
-end subroutine FieldSet__delete
+end subroutine atlas_FieldSet__delete
 
 subroutine FieldSet__add_field(this,field)
-  class(FieldSet_type), intent(in) :: this
-  type(Field_type), intent(in) :: field
+  class(atlas_FieldSet), intent(in) :: this
+  type(atlas_Field), intent(in) :: field
   call atlas__FieldSet__add_field(this%cpp_object_ptr, field%cpp_object_ptr)
 end subroutine FieldSet__add_field
 
 function FieldSet__has_field(this,name) result(flag)
-  class(FieldSet_type), intent(in) :: this
+  class(atlas_FieldSet), intent(in) :: this
   character(len=*), intent(in) :: name
   logical :: flag
   integer :: rc
@@ -37,28 +37,28 @@ function FieldSet__has_field(this,name) result(flag)
 end function FieldSet__has_field
 
 function FieldSet__size(this) result(nb_fields)
-  class(FieldSet_type), intent(in) :: this
+  class(atlas_FieldSet), intent(in) :: this
   integer :: nb_fields
   nb_fields = atlas__FieldSet__size(this%cpp_object_ptr)
 end function FieldSet__size
 
 function FieldSet__field_by_name(this,name) result(field)
-  class(FieldSet_type), intent(in) :: this
+  class(atlas_FieldSet), intent(in) :: this
   character(len=*), intent(in) :: name
-  type(Field_type) :: field
+  type(atlas_Field) :: field
   field%cpp_object_ptr = atlas__FieldSet__field_by_name(this%cpp_object_ptr, c_str(name) )
 end function FieldSet__field_by_name
 
 function FieldSet__field_by_idx(this,idx) result(field)
-  class(FieldSet_type), intent(in) :: this
+  class(atlas_FieldSet), intent(in) :: this
   integer, intent(in) :: idx
-  type(Field_type) :: field
+  type(atlas_Field) :: field
   field%cpp_object_ptr = atlas__FieldSet__field_by_idx(this%cpp_object_ptr, idx-1) ! C index
 end function FieldSet__field_by_idx
 
 subroutine FieldSet__fields(this,fields)
-  class(FieldSet_type), intent(in) :: this
-  type(Field_type), allocatable, intent(out) :: fields(:)
+  class(atlas_FieldSet), intent(in) :: this
+  type(atlas_Field), allocatable, intent(out) :: fields(:)
 
   type(c_ptr), pointer :: fields_ptr(:)
   type(c_ptr) :: fields_cptr

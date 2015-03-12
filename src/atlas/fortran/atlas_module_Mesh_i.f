@@ -2,7 +2,7 @@
 
 
 !------------------------------------------------------------------------------
-TYPE, extends(object_type) :: Mesh_type
+TYPE, extends(object_type) :: atlas_Mesh
 
 ! Purpose :
 ! -------
@@ -21,10 +21,10 @@ TYPE, extends(object_type) :: Mesh_type
 contains
   procedure :: create_function_space => Mesh__create_function_space
   procedure :: function_space => Mesh__function_space
-END TYPE Mesh_type
+END TYPE atlas_Mesh
 
-interface new_Mesh
-  module procedure new_Mesh
+interface new_atlas_Mesh
+  module procedure new_atlas_Mesh
 end interface
 !------------------------------------------------------------------------------
 

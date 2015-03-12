@@ -4,12 +4,12 @@
 ! Gather routines
 
 function new_GatherScatter() result(gather)
-  type(GatherScatter_type) :: gather
+  type(atlas_GatherScatter) :: gather
   gather%cpp_object_ptr = atlas__GatherScatter__new()
 end function new_GatherScatter
 
 subroutine GatherScatter__delete(this)
-  type(GatherScatter_type), intent(inout) :: this
+  type(atlas_GatherScatter), intent(inout) :: this
   if ( c_associated(this%cpp_object_ptr) ) then
     call atlas__GatherScatter__delete(this%cpp_object_ptr)
   end if
@@ -17,7 +17,7 @@ subroutine GatherScatter__delete(this)
 end subroutine GatherScatter__delete
 
 subroutine GatherScatter__setup32(this, part, remote_idx, glb_idx, opt_max_glb_idx)
-  class(GatherScatter_type), intent(in) :: this
+  class(atlas_GatherScatter), intent(in) :: this
   integer(c_int), intent(in) :: part(:)
   integer(c_int), intent(in) :: remote_idx(:)
   integer(c_int), intent(in) :: glb_idx(:)
@@ -33,7 +33,7 @@ subroutine GatherScatter__setup32(this, part, remote_idx, glb_idx, opt_max_glb_i
 end subroutine GatherScatter__setup32
 
 subroutine GatherScatter__setup64(this, part, remote_idx, glb_idx, opt_max_glb_idx)
-  class(GatherScatter_type), intent(in) :: this
+  class(atlas_GatherScatter), intent(in) :: this
   integer(c_int), intent(in) :: part(:)
   integer(c_int), intent(in) :: remote_idx(:)
   integer(c_long), intent(in) :: glb_idx(:)
@@ -49,13 +49,13 @@ subroutine GatherScatter__setup64(this, part, remote_idx, glb_idx, opt_max_glb_i
 end subroutine GatherScatter__setup64
 
 function GatherScatter__glb_dof(this) result(glb_dof)
-  class(GatherScatter_type), intent(in) :: this
+  class(atlas_GatherScatter), intent(in) :: this
   integer :: glb_dof
   glb_dof = atlas__GatherScatter__glb_dof(this%cpp_object_ptr)
 end function GatherScatter__glb_dof
 
 subroutine GatherScatter__gather_int32_r1_r1(this, loc_field_data, glb_field_data)
-  class(GatherScatter_type), intent(in) :: this
+  class(atlas_GatherScatter), intent(in) :: this
   integer(c_int), intent(in)  :: loc_field_data(:)
   integer(c_int), intent(out) :: glb_field_data(:)
   integer(c_int), pointer :: lview(:), gview(:)
@@ -77,7 +77,7 @@ end subroutine GatherScatter__gather_int32_r1_r1
 
 
 subroutine GatherScatter__gather_int32_r2_r2(this, loc_field_data, glb_field_data)
-  class(GatherScatter_type), intent(in) :: this
+  class(atlas_GatherScatter), intent(in) :: this
   integer(c_int), intent(in)  :: loc_field_data(:,:)
   integer(c_int), intent(out) :: glb_field_data(:,:)
   integer(c_int), pointer :: lview(:), gview(:)
@@ -99,7 +99,7 @@ end subroutine GatherScatter__gather_int32_r2_r2
 
 
 subroutine GatherScatter__gather_int32_r3_r3(this, loc_field_data, glb_field_data)
-  class(GatherScatter_type), intent(in) :: this
+  class(atlas_GatherScatter), intent(in) :: this
   integer(c_int), intent(in)  :: loc_field_data(:,:,:)
   integer(c_int), intent(out) :: glb_field_data(:,:,:)
   integer(c_int), pointer :: lview(:), gview(:)
@@ -120,7 +120,7 @@ subroutine GatherScatter__gather_int32_r3_r3(this, loc_field_data, glb_field_dat
 end subroutine GatherScatter__gather_int32_r3_r3
 
 subroutine GatherScatter__gather_int64_r1_r1(this, loc_field_data, glb_field_data)
-  class(GatherScatter_type), intent(in) :: this
+  class(atlas_GatherScatter), intent(in) :: this
   integer(c_long), intent(in)  :: loc_field_data(:)
   integer(c_long), intent(out) :: glb_field_data(:)
   integer(c_long), pointer :: lview(:), gview(:)
@@ -142,7 +142,7 @@ end subroutine GatherScatter__gather_int64_r1_r1
 
 
 subroutine GatherScatter__gather_int64_r2_r2(this, loc_field_data, glb_field_data)
-  class(GatherScatter_type), intent(in) :: this
+  class(atlas_GatherScatter), intent(in) :: this
   integer(c_long), intent(in)  :: loc_field_data(:,:)
   integer(c_long), intent(out) :: glb_field_data(:,:)
   integer(c_long), pointer :: lview(:), gview(:)
@@ -164,7 +164,7 @@ end subroutine GatherScatter__gather_int64_r2_r2
 
 
 subroutine GatherScatter__gather_int64_r3_r3(this, loc_field_data, glb_field_data)
-  class(GatherScatter_type), intent(in) :: this
+  class(atlas_GatherScatter), intent(in) :: this
   integer(c_long), intent(in)  :: loc_field_data(:,:,:)
   integer(c_long), intent(out) :: glb_field_data(:,:,:)
   integer(c_long), pointer :: lview(:), gview(:)
@@ -186,7 +186,7 @@ end subroutine GatherScatter__gather_int64_r3_r3
 
 
 subroutine GatherScatter__gather_real32_r1_r1(this, loc_field_data, glb_field_data)
-  class(GatherScatter_type), intent(in) :: this
+  class(atlas_GatherScatter), intent(in) :: this
   real(c_float), intent(in)  :: loc_field_data(:)
   real(c_float), intent(out) :: glb_field_data(:)
   integer :: lstrides(1), lextents(1), lrank=1
@@ -206,7 +206,7 @@ subroutine GatherScatter__gather_real32_r1_r1(this, loc_field_data, glb_field_da
     &  gview, gstrides, gextents, grank )
 end subroutine GatherScatter__gather_real32_r1_r1
 subroutine GatherScatter__gather_real32_r2_r2(this, loc_field_data, glb_field_data)
-  class(GatherScatter_type), intent(in) :: this
+  class(atlas_GatherScatter), intent(in) :: this
   real(c_float), intent(in)  :: loc_field_data(:,:)
   real(c_float), intent(out) :: glb_field_data(:,:)
   real(c_float), pointer :: lview(:), gview(:)
@@ -226,7 +226,7 @@ subroutine GatherScatter__gather_real32_r2_r2(this, loc_field_data, glb_field_da
     &  gview, gstrides, gextents, grank )
 end subroutine GatherScatter__gather_real32_r2_r2
 subroutine GatherScatter__gather_real32_r3_r3(this, loc_field_data, glb_field_data)
-  class(GatherScatter_type), intent(in) :: this
+  class(atlas_GatherScatter), intent(in) :: this
   real(c_float), intent(in)  :: loc_field_data(:,:,:)
   real(c_float), intent(out) :: glb_field_data(:,:,:)
   real(c_float), pointer :: lview(:), gview(:)
@@ -247,7 +247,7 @@ subroutine GatherScatter__gather_real32_r3_r3(this, loc_field_data, glb_field_da
 end subroutine GatherScatter__gather_real32_r3_r3
 
 subroutine GatherScatter__gather_real64_r1_r1(this, loc_field_data, glb_field_data)
-  class(GatherScatter_type), intent(in) :: this
+  class(atlas_GatherScatter), intent(in) :: this
   real(c_double), intent(in)   :: loc_field_data(:)
   real(c_double), intent(out)  :: glb_field_data(:)
   integer :: lstrides(1), lextents(1), lrank=1
@@ -272,7 +272,7 @@ subroutine GatherScatter__gather_real64_r1_r1(this, loc_field_data, glb_field_da
     &  gview, gstrides, gextents, grank )
 end subroutine GatherScatter__gather_real64_r1_r1
 subroutine GatherScatter__gather_real64_r2_r2(this, loc_field_data, glb_field_data)
-  class(GatherScatter_type), intent(in) :: this
+  class(atlas_GatherScatter), intent(in) :: this
   real(c_double), intent(in)  :: loc_field_data(:,:)
   real(c_double), intent(out) :: glb_field_data(:,:)
   real(c_double), pointer :: lview(:), gview(:)
@@ -292,7 +292,7 @@ subroutine GatherScatter__gather_real64_r2_r2(this, loc_field_data, glb_field_da
     &  gview, gstrides, gextents, grank )
 end subroutine GatherScatter__gather_real64_r2_r2
 subroutine GatherScatter__gather_real64_r3_r3(this, loc_field_data, glb_field_data)
-  class(GatherScatter_type), intent(in) :: this
+  class(atlas_GatherScatter), intent(in) :: this
   real(c_double), intent(in)  :: loc_field_data(:,:,:)
   real(c_double), intent(out) :: glb_field_data(:,:,:)
   real(c_double), pointer :: lview(:), gview(:)
@@ -315,7 +315,7 @@ end subroutine GatherScatter__gather_real64_r3_r3
 ! -----------------------------------------------------------------------------
 
 subroutine GatherScatter__scatter_int32_r1_r1(this, glb_field_data, loc_field_data)
-  class(GatherScatter_type), intent(in) :: this
+  class(atlas_GatherScatter), intent(in) :: this
   integer(c_int), intent(in)  :: glb_field_data(:)
   integer(c_int), intent(out) :: loc_field_data(:)
   integer(c_int), pointer :: lview(:), gview(:)
@@ -333,7 +333,7 @@ subroutine GatherScatter__scatter_int32_r1_r1(this, glb_field_data, loc_field_da
 end subroutine GatherScatter__scatter_int32_r1_r1
 
 subroutine GatherScatter__scatter_int32_r2_r2(this, glb_field_data, loc_field_data)
-  class(GatherScatter_type), intent(in) :: this
+  class(atlas_GatherScatter), intent(in) :: this
   integer(c_int), intent(in)  :: glb_field_data(:,:)
   integer(c_int), intent(out) :: loc_field_data(:,:)
   integer(c_int), pointer :: lview(:), gview(:)
@@ -354,7 +354,7 @@ subroutine GatherScatter__scatter_int32_r2_r2(this, glb_field_data, loc_field_da
 end subroutine GatherScatter__scatter_int32_r2_r2
 
 subroutine GatherScatter__scatter_int64_r1_r1(this, glb_field_data, loc_field_data)
-  class(GatherScatter_type), intent(in) :: this
+  class(atlas_GatherScatter), intent(in) :: this
   integer(c_long), intent(in)  :: glb_field_data(:)
   integer(c_long), intent(out) :: loc_field_data(:)
   integer(c_long), pointer :: lview(:), gview(:)
@@ -372,7 +372,7 @@ subroutine GatherScatter__scatter_int64_r1_r1(this, glb_field_data, loc_field_da
 end subroutine GatherScatter__scatter_int64_r1_r1
 
 subroutine GatherScatter__scatter_int64_r2_r2(this, glb_field_data, loc_field_data)
-  class(GatherScatter_type), intent(in) :: this
+  class(atlas_GatherScatter), intent(in) :: this
   integer(c_long), intent(in)  :: glb_field_data(:,:)
   integer(c_long), intent(out) :: loc_field_data(:,:)
   integer(c_long), pointer :: lview(:), gview(:)
@@ -394,7 +394,7 @@ end subroutine GatherScatter__scatter_int64_r2_r2
 
 
 subroutine GatherScatter__scatter_real32_r1_r1(this, glb_field_data, loc_field_data)
-  class(GatherScatter_type), intent(in) :: this
+  class(atlas_GatherScatter), intent(in) :: this
   real(c_float), intent(in)  :: glb_field_data(:)
   real(c_float), intent(out) :: loc_field_data(:)
   real(c_float), pointer :: lview(:), gview(:)
@@ -411,7 +411,7 @@ subroutine GatherScatter__scatter_real32_r1_r1(this, glb_field_data, loc_field_d
     &  lview, lstrides, lextents, lrank )
 end subroutine GatherScatter__scatter_real32_r1_r1
 subroutine GatherScatter__scatter_real32_r2_r2(this, glb_field_data, loc_field_data)
-  class(GatherScatter_type), intent(in) :: this
+  class(atlas_GatherScatter), intent(in) :: this
   real(c_float), intent(in)  :: glb_field_data(:,:)
   real(c_float), intent(out) :: loc_field_data(:,:)
   real(c_float), pointer :: lview(:), gview(:)
@@ -431,7 +431,7 @@ subroutine GatherScatter__scatter_real32_r2_r2(this, glb_field_data, loc_field_d
     &  lview, lstrides, lextents, lrank )
 end subroutine GatherScatter__scatter_real32_r2_r2
 subroutine GatherScatter__scatter_real64_r1_r1(this, glb_field_data, loc_field_data)
-  class(GatherScatter_type), intent(in) :: this
+  class(atlas_GatherScatter), intent(in) :: this
   real(c_double), intent(in)  :: glb_field_data(:)
   real(c_double), intent(out) :: loc_field_data(:)
   real(c_double), pointer :: lview(:), gview(:)
@@ -448,7 +448,7 @@ subroutine GatherScatter__scatter_real64_r1_r1(this, glb_field_data, loc_field_d
     &  lview, lstrides, lextents, lrank )
 end subroutine GatherScatter__scatter_real64_r1_r1
 subroutine GatherScatter__scatter_real64_r2_r2(this, glb_field_data, loc_field_data)
-  class(GatherScatter_type), intent(in) :: this
+  class(atlas_GatherScatter), intent(in) :: this
   real(c_double), intent(in)  :: glb_field_data(:,:)
   real(c_double), intent(out) :: loc_field_data(:,:)
   real(c_double), pointer :: lview(:), gview(:)
@@ -469,7 +469,7 @@ subroutine GatherScatter__scatter_real64_r2_r2(this, glb_field_data, loc_field_d
 end subroutine GatherScatter__scatter_real64_r2_r2
 
 subroutine GatherScatter__scatter_real64_r3_r3(this, glb_field_data, loc_field_data)
-  class(GatherScatter_type), intent(in) :: this
+  class(atlas_GatherScatter), intent(in) :: this
   real(c_double), intent(in)  :: glb_field_data(:,:,:)
   real(c_double), intent(out) :: loc_field_data(:,:,:)
   real(c_double), pointer :: lview(:), gview(:)

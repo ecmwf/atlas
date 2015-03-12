@@ -75,7 +75,7 @@ util/IndexView.h
 util/IndexView.cc
 )
 
-list( APPEND atlas_meshgen_srcs
+list( APPEND atlas_Meshgen_srcs
 meshgen/EqualAreaPartitioner.cc
 meshgen/EqualAreaPartitioner.h
 meshgen/ReducedGridMeshGenerator.cc
@@ -245,7 +245,7 @@ ecbuild_add_library( TARGET atlas
   ${atlas_util_srcs}
   ${atlas_io_srcs}
   ${atlas_mpl_srcs}
-  ${atlas_meshgen_srcs}
+  ${atlas_Meshgen_srcs}
   ${atlas_actions_srcs}
   ${atlas_grids_srcs}
   ${atlas_trans_srcs}

@@ -16,7 +16,7 @@ function new_atlas_GridDistribution( part, part0 ) result(griddistribution)
 end function new_atlas_GridDistribution
 
 
-subroutine delete_atlas_GridDistribution( griddistribution )
+subroutine atlas_GridDistribution__delete( griddistribution )
   type(atlas_GridDistribution) :: griddistribution
   call atlas__GridDistribution__delete(griddistribution%cpp_object_ptr);
 end subroutine

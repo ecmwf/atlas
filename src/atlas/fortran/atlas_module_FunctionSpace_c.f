@@ -5,13 +5,13 @@
 ! FunctionSpace routines
 
 function FunctionSpace__metadata(this) result(metadata)
-  class(FunctionSpace_type), intent(in) :: this
-  type(Metadata_type) :: Metadata
+  class(atlas_FunctionSpace), intent(in) :: this
+  type(atlas_Metadata) :: Metadata
   metadata%cpp_object_ptr = atlas__FunctionSpace__metadata(this%cpp_object_ptr)
 end function FunctionSpace__metadata
 
 subroutine FunctionSpace__create_field(this,name,nvars,kind)
-  class(FunctionSpace_type), intent(inout) :: this
+  class(atlas_FunctionSpace), intent(inout) :: this
   character(len=*), intent(in) :: name
   integer, intent(in) :: nvars
   integer, intent(in), optional :: kind
@@ -37,13 +37,13 @@ end subroutine FunctionSpace__create_field
 
 
 subroutine FunctionSpace__remove_field(this,name)
-  class(FunctionSpace_type), intent(in) :: this
+  class(atlas_FunctionSpace), intent(in) :: this
   character(len=*), intent(in) :: name
   call atlas__FunctionSpace__remove_field(this%cpp_object_ptr,c_str(name))
 end subroutine FunctionSpace__remove_field
 
 function FunctionSpace__name(this) result(name)
-  class(FunctionSpace_type), intent(in) :: this
+  class(atlas_FunctionSpace), intent(in) :: this
   character(len=:), allocatable :: name
   type(c_ptr) :: name_c_str
   name_c_str = atlas__FunctionSpace__name(this%cpp_object_ptr)
@@ -51,19 +51,19 @@ function FunctionSpace__name(this) result(name)
 end function FunctionSpace__name
 
 function FunctionSpace__dof(this) result(dof)
-  class(FunctionSpace_type), intent(in) :: this
+  class(atlas_FunctionSpace), intent(in) :: this
   integer :: dof
   dof = atlas__FunctionSpace__dof(this%cpp_object_ptr)
 end function FunctionSpace__dof
 
 function FunctionSpace__glb_dof(this) result(glb_dof)
-  class(FunctionSpace_type), intent(in) :: this
+  class(atlas_FunctionSpace), intent(in) :: this
   integer :: glb_dof
   glb_dof = atlas__FunctionSpace__glb_dof(this%cpp_object_ptr)
 end function FunctionSpace__glb_dof
 
 function FunctionSpace__shape(this) result(shape)
-  class(FunctionSpace_type), intent(in) :: this
+  class(atlas_FunctionSpace), intent(in) :: this
   integer, pointer :: shape(:)
   type(c_ptr) :: shape_c_ptr
   integer(c_int) :: field_rank
@@ -73,15 +73,15 @@ end function FunctionSpace__shape
 
 
 function FunctionSpace__field(this,name) result(field)
-  class(FunctionSpace_type), intent(in) :: this
+  class(atlas_FunctionSpace), intent(in) :: this
   character(len=*), intent(in) :: name
-  type(Field_type) :: field
+  type(atlas_Field) :: field
   field%cpp_object_ptr = atlas__FunctionSpace__field(this%cpp_object_ptr, c_str(name) )
   if( .not. C_associated(field%cpp_object_ptr) ) write(0,*) 'call abort()'
 end function FunctionSpace__field
 
 function FunctionSpace__has_field(this,name) result(flag)
-  class(FunctionSpace_type), intent(in) :: this
+  class(atlas_FunctionSpace), intent(in) :: this
   character(len=*), intent(in) :: name
   logical :: flag
   integer :: rc
@@ -94,18 +94,18 @@ function FunctionSpace__has_field(this,name) result(flag)
 end function FunctionSpace__has_field
 
 subroutine FunctionSpace__parallelise(this)
-  class(FunctionSpace_type), intent(in) :: this
+  class(atlas_FunctionSpace), intent(in) :: this
   call atlas__FunctionSpace__parallelise(this%cpp_object_ptr)
 end subroutine FunctionSpace__parallelise
 
 function FunctionSpace__get_halo_exchange(this) result(halo_exchange)
-  class(FunctionSpace_type), intent(in) :: this
-  type(HaloExchange_type) :: halo_exchange
+  class(atlas_FunctionSpace), intent(in) :: this
+  type(atlas_HaloExchange) :: halo_exchange
   halo_exchange%cpp_object_ptr = atlas__FunctionSpace__halo_exchange( this%cpp_object_ptr )
 end function FunctionSpace__get_halo_exchange
 
 subroutine FunctionSpace__halo_exchange_int32_r1(this, field_data)
-  class(FunctionSpace_type), intent(in) :: this
+  class(atlas_FunctionSpace), intent(in) :: this
   integer, intent(inout) :: field_data(:)
 #ifndef  __GFORTRAN__
   if (.not. is_contiguous(field_data) ) then
@@ -116,14 +116,14 @@ subroutine FunctionSpace__halo_exchange_int32_r1(this, field_data)
   call atlas__FunctionSpace__halo_exchange_int( this%cpp_object_ptr, field_data, size(field_data) )
 end subroutine FunctionSpace__halo_exchange_int32_r1
 subroutine FunctionSpace__halo_exchange_int32_r2(this, field_data)
-  class(FunctionSpace_type), intent(in) :: this
+  class(atlas_FunctionSpace), intent(in) :: this
   integer, intent(inout) :: field_data(:,:)
   integer, pointer :: view(:)
   view => view1d(field_data)
   call atlas__FunctionSpace__halo_exchange_int( this%cpp_object_ptr, view, size(field_data) )
 end subroutine FunctionSpace__halo_exchange_int32_r2
 subroutine FunctionSpace__halo_exchange_int32_r3(this, field_data)
-  class(FunctionSpace_type), intent(in) :: this
+  class(atlas_FunctionSpace), intent(in) :: this
   integer, intent(inout) :: field_data(:,:,:)
   integer, pointer :: view(:)
   view => view1d(field_data)
@@ -131,7 +131,7 @@ subroutine FunctionSpace__halo_exchange_int32_r3(this, field_data)
 end subroutine FunctionSpace__halo_exchange_int32_r3
 
 subroutine FunctionSpace__halo_exchange_real32_r1(this, field_data)
-  class(FunctionSpace_type), intent(in) :: this
+  class(atlas_FunctionSpace), intent(in) :: this
   real(c_float), intent(inout) :: field_data(:)
 #ifndef  __GFORTRAN__
   if (.not. is_contiguous(field_data) ) then
@@ -142,14 +142,14 @@ subroutine FunctionSpace__halo_exchange_real32_r1(this, field_data)
   call atlas__FunctionSpace__halo_exchange_float( this%cpp_object_ptr, field_data, size(field_data) )
 end subroutine FunctionSpace__halo_exchange_real32_r1
 subroutine FunctionSpace__halo_exchange_real32_r2(this, field_data)
-  class(FunctionSpace_type), intent(in) :: this
+  class(atlas_FunctionSpace), intent(in) :: this
   real(c_float), intent(inout) :: field_data(:,:)
   real(c_float), pointer :: view(:)
   view => view1d(field_data)
   call atlas__FunctionSpace__halo_exchange_float( this%cpp_object_ptr, view, size(field_data) )
 end subroutine FunctionSpace__halo_exchange_real32_r2
 subroutine FunctionSpace__halo_exchange_real32_r3(this, field_data)
-  class(FunctionSpace_type), intent(in) :: this
+  class(atlas_FunctionSpace), intent(in) :: this
   real(c_float), intent(inout) :: field_data(:,:,:)
   real(c_float), pointer :: view(:)
   view => view1d(field_data)
@@ -157,7 +157,7 @@ subroutine FunctionSpace__halo_exchange_real32_r3(this, field_data)
 end subroutine FunctionSpace__halo_exchange_real32_r3
 
 subroutine FunctionSpace__halo_exchange_real64_r1(this, field_data)
-  class(FunctionSpace_type), intent(in) :: this
+  class(atlas_FunctionSpace), intent(in) :: this
   real(c_double), intent(inout) :: field_data(:)
 #ifndef  __GFORTRAN__
   if (.not. is_contiguous(field_data) ) then
@@ -168,21 +168,21 @@ subroutine FunctionSpace__halo_exchange_real64_r1(this, field_data)
   call atlas__FunctionSpace__halo_exchange_double( this%cpp_object_ptr, field_data, size(field_data) )
 end subroutine FunctionSpace__halo_exchange_real64_r1
 subroutine FunctionSpace__halo_exchange_real64_r2(this, field_data)
-  class(FunctionSpace_type), intent(in) :: this
+  class(atlas_FunctionSpace), intent(in) :: this
   real(c_double), intent(inout) :: field_data(:,:)
   real(c_double), pointer :: view(:)
   view => view1d(field_data)
   call atlas__FunctionSpace__halo_exchange_double( this%cpp_object_ptr, view, size(field_data) )
 end subroutine FunctionSpace__halo_exchange_real64_r2
 subroutine FunctionSpace__halo_exchange_real64_r3(this, field_data)
-  class(FunctionSpace_type), intent(in) :: this
+  class(atlas_FunctionSpace), intent(in) :: this
   real(c_double), intent(inout) :: field_data(:,:,:)
   real(c_double), pointer :: view(:)
   view => view1d(field_data)
   call atlas__FunctionSpace__halo_exchange_double( this%cpp_object_ptr, view, size(field_data) )
 end subroutine FunctionSpace__halo_exchange_real64_r3
 subroutine FunctionSpace__halo_exchange_real64_r4(this, field_data)
-  class(FunctionSpace_type), intent(in) :: this
+  class(atlas_FunctionSpace), intent(in) :: this
   real(c_double), intent(inout) :: field_data(:,:,:,:)
   real(c_double), pointer :: view(:)
   view => view1d(field_data)
@@ -191,13 +191,13 @@ end subroutine FunctionSpace__halo_exchange_real64_r4
 
 
 function FunctionSpace__get_gather(this) result(gather)
-  class(FunctionSpace_type), intent(in) :: this
-  type(GatherScatter_type) :: gather
+  class(atlas_FunctionSpace), intent(in) :: this
+  type(atlas_GatherScatter) :: gather
   gather%cpp_object_ptr = atlas__FunctionSpace__gather( this%cpp_object_ptr )
 end function FunctionSpace__get_gather
 
 subroutine FunctionSpace__gather_real32_r1(this, field_data, glbfield_data)
-  class(FunctionSpace_type), intent(in) :: this
+  class(atlas_FunctionSpace), intent(in) :: this
   real(c_float), intent(in) :: field_data(:)
   real(c_float), intent(inout) :: glbfield_data(:)
 #ifndef  __GFORTRAN__
@@ -212,7 +212,7 @@ end subroutine FunctionSpace__gather_real32_r1
 
 
 subroutine FunctionSpace__gather_real32_r2(this, field_data, glbfield_data)
-  class(FunctionSpace_type), intent(in) :: this
+  class(atlas_FunctionSpace), intent(in) :: this
   real(c_float), intent(in) :: field_data(:,:)
   real(c_float), intent(inout) :: glbfield_data(:,:)
   real(c_float), pointer :: view(:), glbview(:)
@@ -227,7 +227,7 @@ end subroutine FunctionSpace__gather_real32_r2
 
 
 subroutine FunctionSpace__gather_real32_r3(this, field_data, glbfield_data)
-  class(FunctionSpace_type), intent(in) :: this
+  class(atlas_FunctionSpace), intent(in) :: this
   real(c_float), intent(in) :: field_data(:,:,:)
   real(c_float), intent(inout) :: glbfield_data(:,:,:)
   real(c_float), pointer :: view(:), glbview(:)
@@ -241,7 +241,7 @@ subroutine FunctionSpace__gather_real32_r3(this, field_data, glbfield_data)
 end subroutine FunctionSpace__gather_real32_r3
 
 subroutine FunctionSpace__gather_real64_r1(this, field_data, glbfield_data)
-  class(FunctionSpace_type), intent(in) :: this
+  class(atlas_FunctionSpace), intent(in) :: this
   real(c_double), intent(in) :: field_data(:)
   real(c_double), intent(inout) :: glbfield_data(:)
 #ifndef  __GFORTRAN__
@@ -256,7 +256,7 @@ end subroutine FunctionSpace__gather_real64_r1
 
 
 subroutine FunctionSpace__gather_real64_r2(this, field_data, glbfield_data)
-  class(FunctionSpace_type), intent(in) :: this
+  class(atlas_FunctionSpace), intent(in) :: this
   real(c_double), intent(in) :: field_data(:,:)
   real(c_double), intent(inout) :: glbfield_data(:,:)
   real(c_double), pointer :: view(:), glbview(:)
@@ -271,7 +271,7 @@ end subroutine FunctionSpace__gather_real64_r2
 
 
 subroutine FunctionSpace__gather_real64_r3(this, field_data, glbfield_data)
-  class(FunctionSpace_type), intent(in) :: this
+  class(atlas_FunctionSpace), intent(in) :: this
   real(c_double), intent(in) :: field_data(:,:,:)
   real(c_double), intent(inout) :: glbfield_data(:,:,:)
   real(c_double), pointer :: view(:), glbview(:)
@@ -285,7 +285,7 @@ subroutine FunctionSpace__gather_real64_r3(this, field_data, glbfield_data)
 end subroutine FunctionSpace__gather_real64_r3
 
 subroutine FunctionSpace__gather_int32_r1(this, field_data, glbfield_data)
-  class(FunctionSpace_type), intent(in) :: this
+  class(atlas_FunctionSpace), intent(in) :: this
   integer, intent(in) :: field_data(:)
   integer, intent(inout) :: glbfield_data(:)
 #ifndef  __GFORTRAN__
@@ -299,7 +299,7 @@ subroutine FunctionSpace__gather_int32_r1(this, field_data, glbfield_data)
 end subroutine FunctionSpace__gather_int32_r1
 
 subroutine FunctionSpace__gather_int32_r2(this, field_data, glbfield_data)
-  class(FunctionSpace_type), intent(in) :: this
+  class(atlas_FunctionSpace), intent(in) :: this
   integer, intent(in) :: field_data(:,:)
   integer, intent(inout) :: glbfield_data(:,:)
   integer, pointer :: view(:), glbview(:)
@@ -313,7 +313,7 @@ subroutine FunctionSpace__gather_int32_r2(this, field_data, glbfield_data)
 end subroutine FunctionSpace__gather_int32_r2
 
 function FunctionSpace__get_checksum(this) result(checksum)
-  class(FunctionSpace_type), intent(in) :: this
-  type(Checksum_type) :: checksum
+  class(atlas_FunctionSpace), intent(in) :: this
+  type(atlas_Checksum) :: checksum
   checksum%cpp_object_ptr = atlas__FunctionSpace__checksum( this%cpp_object_ptr )
 end function FunctionSpace__get_checksum

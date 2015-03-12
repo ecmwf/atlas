@@ -3,21 +3,21 @@
 ! ------------------------------------------------------------------------------
 ! Checksum routines
 
-function new_Checksum() result(Checksum)
-  type(Checksum_type) :: Checksum
+function new_atlas_Checksum() result(Checksum)
+  type(atlas_Checksum) :: Checksum
   Checksum%cpp_object_ptr = atlas__Checksum__new()
-end function new_Checksum
+end function new_atlas_checksum
 
-subroutine Checksum__delete(this)
-  type(Checksum_type), intent(inout) :: this
+subroutine atlas_Checksum__delete(this)
+  type(atlas_Checksum), intent(inout) :: this
   if ( c_associated(this%cpp_object_ptr) ) then
     call atlas__Checksum__delete(this%cpp_object_ptr)
   end if
   this%cpp_object_ptr = C_NULL_ptr
-end subroutine Checksum__delete
+end subroutine atlas_Checksum__delete
 
 subroutine Checksum__setup32(this, part, remote_idx, glb_idx, opt_max_glb_idx)
-  class(Checksum_type), intent(in) :: this
+  class(atlas_Checksum), intent(in) :: this
   integer(c_int), intent(in) :: part(:)
   integer(c_int), intent(in) :: remote_idx(:)
   integer(c_int), intent(in) :: glb_idx(:)
@@ -33,7 +33,7 @@ subroutine Checksum__setup32(this, part, remote_idx, glb_idx, opt_max_glb_idx)
 end subroutine Checksum__setup32
 
 subroutine Checksum__setup64(this, part, remote_idx, glb_idx, opt_max_glb_idx)
-  class(Checksum_type), intent(in) :: this
+  class(atlas_Checksum), intent(in) :: this
   integer(c_int), intent(in) :: part(:)
   integer(c_int), intent(in) :: remote_idx(:)
   integer(c_long), intent(in) :: glb_idx(:)
@@ -49,7 +49,7 @@ subroutine Checksum__setup64(this, part, remote_idx, glb_idx, opt_max_glb_idx)
 end subroutine Checksum__setup64
 
 function Checksum__execute_int32_r1(this, loc_field_data) result(checksum)
-  class(Checksum_type), intent(in) :: this
+  class(atlas_Checksum), intent(in) :: this
   integer, intent(in)  :: loc_field_data(:)
   character(len=:), allocatable :: checksum
   character(kind=c_char) :: checksum_c_str(132)
@@ -62,7 +62,7 @@ function Checksum__execute_int32_r1(this, loc_field_data) result(checksum)
 end function Checksum__execute_int32_r1
 
 function Checksum__execute_int32_r2(this, loc_field_data) result(checksum)
-  class(Checksum_type), intent(in) :: this
+  class(atlas_Checksum), intent(in) :: this
   integer, intent(in)  :: loc_field_data(:,:)
   character(len=:), allocatable :: checksum
   character(kind=c_char) :: checksum_c_str(132)
@@ -78,7 +78,7 @@ end function Checksum__execute_int32_r2
 
 
 function Checksum__execute_int32_r3(this, loc_field_data) result(checksum)
-  class(Checksum_type), intent(in) :: this
+  class(atlas_Checksum), intent(in) :: this
   integer, intent(in)  :: loc_field_data(:,:,:)
   character(len=:), allocatable :: checksum
   character(kind=c_char) :: checksum_c_str(132)
@@ -93,7 +93,7 @@ function Checksum__execute_int32_r3(this, loc_field_data) result(checksum)
 end function Checksum__execute_int32_r3
 
 function Checksum__execute_real32_r1(this, loc_field_data) result(checksum)
-  class(Checksum_type), intent(in) :: this
+  class(atlas_Checksum), intent(in) :: this
   real(c_float), intent(in)   :: loc_field_data(:)
   character(len=:), allocatable :: checksum
   character(kind=c_char) :: checksum_c_str(132)
@@ -105,7 +105,7 @@ function Checksum__execute_real32_r1(this, loc_field_data) result(checksum)
   checksum = c_to_f_string_str(checksum_c_str)
 end function Checksum__execute_real32_r1
 function Checksum__execute_real32_r2(this, loc_field_data) result(checksum)
-  class(Checksum_type), intent(in) :: this
+  class(atlas_Checksum), intent(in) :: this
   real(c_float), intent(in)  :: loc_field_data(:,:)
   character(len=:), allocatable :: checksum
   character(kind=c_char) :: checksum_c_str(132)
@@ -119,7 +119,7 @@ function Checksum__execute_real32_r2(this, loc_field_data) result(checksum)
   checksum = c_to_f_string_str(checksum_c_str)
 end function Checksum__execute_real32_r2
 function Checksum__execute_real32_r3(this, loc_field_data) result(checksum)
-  class(Checksum_type), intent(in) :: this
+  class(atlas_Checksum), intent(in) :: this
   real(c_float), intent(in)  :: loc_field_data(:,:,:)
   character(len=:), allocatable :: checksum
   character(kind=c_char) :: checksum_c_str(132)
@@ -134,7 +134,7 @@ function Checksum__execute_real32_r3(this, loc_field_data) result(checksum)
 end function Checksum__execute_real32_r3
 
 function Checksum__execute_real64_r1(this, loc_field_data) result(checksum)
-  class(Checksum_type), intent(in) :: this
+  class(atlas_Checksum), intent(in) :: this
   real(c_double), intent(in)   :: loc_field_data(:)
   character(len=:), allocatable :: checksum
   character(kind=c_char) :: checksum_c_str(132)
@@ -148,7 +148,7 @@ function Checksum__execute_real64_r1(this, loc_field_data) result(checksum)
   checksum = c_to_f_string_str(checksum_c_str)
 end function Checksum__execute_real64_r1
 function Checksum__execute_real64_r2(this, loc_field_data) result(checksum)
-  class(Checksum_type), intent(in) :: this
+  class(atlas_Checksum), intent(in) :: this
   real(c_double), intent(in)  :: loc_field_data(:,:)
   character(len=:), allocatable :: checksum
   character(kind=c_char) :: checksum_c_str(132)
@@ -162,7 +162,7 @@ function Checksum__execute_real64_r2(this, loc_field_data) result(checksum)
   checksum = c_to_f_string_str(checksum_c_str)
 end function Checksum__execute_real64_r2
 function Checksum__execute_real64_r3(this, loc_field_data) result(checksum)
-  class(Checksum_type), intent(in) :: this
+  class(atlas_Checksum), intent(in) :: this
   real(c_double), intent(in)  :: loc_field_data(:,:,:)
   character(len=:), allocatable :: checksum
   character(kind=c_char) :: checksum_c_str(132)

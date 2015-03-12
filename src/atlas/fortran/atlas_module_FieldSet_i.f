@@ -2,7 +2,7 @@
 
 
 !------------------------------------------------------------------------------
-TYPE, extends(object_type) :: FieldSet_type
+TYPE, extends(object_type) :: atlas_FieldSet
 
 ! Purpose :
 ! -------
@@ -29,5 +29,5 @@ contains
   procedure, private :: field_by_idx => FieldSet__field_by_idx
   generic :: field => field_by_name, field_by_idx
   procedure, public :: get_array => FieldSet__fields
-END TYPE FieldSet_type
+END TYPE atlas_FieldSet
 !------------------------------------------------------------------------------

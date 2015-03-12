@@ -3,7 +3,7 @@
 
 
 !------------------------------------------------------------------------------
-TYPE, extends(object_type) :: ReducedGrid_type
+TYPE, extends(object_type) :: atlas_ReducedGrid
 
 ! Purpose :
 ! -------
@@ -22,13 +22,13 @@ contains
   procedure :: nlat => ReducedGrid__nlat
   procedure :: nlon => ReducedGrid__nlon
   procedure :: lat => ReducedGrid__latitudes
-END TYPE ReducedGrid_type
+END TYPE atlas_ReducedGrid
 
-interface new_ReducedGrid
-  module procedure new_reduced_grid
-  module procedure new_gaussian_grid
-  module procedure new_reduced_gaussian_grid
-  module procedure new_lonlat_grid
+interface new_atlas_ReducedGrid
+  module procedure new_atlas_reduced_grid
+  module procedure new_atlas_gaussian_grid
+  module procedure new_atlas_reduced_gaussian_grid
+  module procedure new_atlas_lonlat_grid
 end interface
 
 !------------------------------------------------------------------------------

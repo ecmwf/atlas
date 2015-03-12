@@ -1,7 +1,7 @@
 ! (C) Copyright 2013-2014 ECMWF.
 
 !------------------------------------------------------------------------------
-TYPE, extends(object_type) :: Field_type
+TYPE, extends(object_type) :: atlas_Field
 
 ! Purpose :
 ! -------
@@ -48,5 +48,5 @@ contains
   procedure :: data1 => Field__data1_wp
   procedure :: data2 => Field__data2_wp
   procedure :: data3 => Field__data3_wp
-END TYPE Field_type
+END TYPE atlas_Field
 !------------------------------------------------------------------------------

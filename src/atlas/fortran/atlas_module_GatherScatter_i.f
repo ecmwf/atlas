@@ -1,7 +1,7 @@
 ! (C) Copyright 2013-2014 ECMWF.
 
 !------------------------------------------------------------------------------
-TYPE, extends(object_type) :: GatherScatter_type
+TYPE, extends(object_type) :: atlas_GatherScatter
 
 ! Purpose :
 ! -------
@@ -69,5 +69,5 @@ contains
       & GatherScatter__scatter_real64_r2_r2, &
       & GatherScatter__scatter_real64_r3_r3
 
-END TYPE GatherScatter_type
+END TYPE atlas_GatherScatter
 !------------------------------------------------------------------------------

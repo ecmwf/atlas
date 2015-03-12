@@ -13,26 +13,26 @@
 
 ! -----------------------------------------------------------------------------
 
-module fctest_atlas_mesh_fixture
+module fctest_atlas_Mesh_fixture
 use atlas_module
 use atlas_grids_module
 use iso_c_binding
 implicit none
-type(Mesh_type) :: mesh
-type(FunctionSpace_type) :: func_space
-type(Field_type) :: field
-end module fctest_atlas_mesh_fixture
+type(atlas_Mesh) :: mesh
+type(atlas_FunctionSpace) :: func_space
+type(atlas_Field) :: field
+end module fctest_atlas_Mesh_fixture
 
 ! -----------------------------------------------------------------------------
 
-TESTSUITE_WITH_FIXTURE(fctest_atlas_mesh,fctest_atlas_mesh_fixture)
+TESTSUITE_WITH_FIXTURE(fctest_atlas_Mesh,fctest_atlas_Mesh_fixture)
 
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_INIT
   call atlas_init()
   call atlas_grids_load()
-  mesh = new_Mesh()
+  mesh = new_atlas_Mesh()
 END_TESTSUITE_INIT
 
 ! -----------------------------------------------------------------------------
@@ -69,7 +69,7 @@ TEST( test_field_metadata )
   real(c_float) :: real32
   real(c_double) :: real64
   character(len=:), allocatable :: string
-  type(MetaData_type) metadata
+  type(atlas_Metadata) metadata
 
   write(*,*) "test_field_metadata starting"
 
@@ -162,12 +162,12 @@ END_TEST
 ! -----------------------------------------------------------------------------
 
 TEST( test_fieldset )
-  type(FieldSet_type) :: fieldset
-  type(Field_type), allocatable :: fields(:)
+  type(atlas_FieldSet) :: fieldset
+  type(atlas_Field), allocatable :: fields(:)
 
   write(*,*) "test_fieldset starting"
 
-  fieldset = new_FieldSet("fieldset")
+  fieldset = new_atlas_FieldSet("fieldset")
   func_space = mesh%function_space("nodes")
 
   call fieldset%add_field( func_space%field("field_0") )
@@ -199,10 +199,10 @@ TEST( test_fieldset )
 END_TEST
 
 TEST( test_meshgen )
-  type(ReducedGrid_type) :: grid
-  type(Mesh_type) :: mesh
-  type(FunctionSpace_type) :: nodes, edges
-  type(Field_type) :: field
+  type(atlas_ReducedGrid) :: grid
+  type(atlas_Mesh) :: mesh
+  type(atlas_FunctionSpace) :: nodes, edges
+  type(atlas_Field) :: field
   integer, pointer :: bounds(:)
   integer(c_int), pointer :: ridx(:)
   real(c_double), pointer :: arr(:,:)
@@ -210,7 +210,7 @@ TEST( test_meshgen )
 
   write(*,*) "test_meshgen starting"
 
-  grid = new_ReducedGrid("rgg.N24")
+  grid = new_atlas_ReducedGrid("rgg.N24")
   mesh = atlas_generate_mesh(grid)
 
 !  call atlas_generate_reduced_gaussian_grid(rgg,"T63")
@@ -255,14 +255,14 @@ TEST( test_meshgen )
 END_TEST
 
 TEST( test_griddistribution )
-  type(ReducedGrid_type) :: grid
-  type(Mesh_type) :: mesh
+  type(atlas_ReducedGrid) :: grid
+  type(atlas_Mesh) :: mesh
   type(atlas_GridDistribution) :: griddistribution
 
   integer, allocatable :: part(:)
   integer :: jnode
 
-  grid = new_ReducedGrid("rgg4.N16")
+  grid = new_atlas_ReducedGrid("rgg4.N16")
 
   allocate( part(grid%npts()) )
   do jnode=1,grid%npts()/3
