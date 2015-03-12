@@ -26,6 +26,7 @@
 #include "atlas/Util.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
+#include "atlas/grids/ReducedGrid.h"
 
 namespace atlas {
 namespace actions {
@@ -598,6 +599,137 @@ void build_skewness( Mesh& mesh )
       skewness(edge) = (r1-2.*rs+r2)/(r2-r1);
       alpha(edge) = 0.5*(skewness(edge)+1.);
     }
+  }
+}
+
+
+
+void add_brick_dual_volume_contribution(
+    Mesh& mesh,
+    ArrayView<double,1>& dual_volumes )
+{
+  FunctionSpace& nodes = mesh.function_space("nodes");
+  FunctionSpace& edges = mesh.function_space("edges");
+  ArrayView<gidx_t,1> node_glb_idx  ( nodes.field("glb_idx"    ) );
+  ArrayView<double,2> edge_centroids( edges.field("centroids"  ) );
+  IndexView<int,   2> edge_nodes    ( edges.field("nodes"      ) );
+  ArrayView<gidx_t,1> edge_glb_idx  ( edges.field("glb_idx"    ) );
+  IndexView<int,   2> edge_to_elem  ( edges.field("to_elem"    ) );
+  ArrayView<double,2> node_coords   ( nodes.field("coordinates") );
+  std::vector< ArrayView<double,2> > elem_centroids(mesh.nb_function_spaces());
+  for( int f=0; f<mesh.nb_function_spaces(); ++f )
+  {
+    FunctionSpace& elements = mesh.function_space(f);
+    if( elements.metadata().get<int>("type") == Entity::ELEMS )
+    {
+      elem_centroids[f] = ArrayView<double,2>( elements.field("centroids") );
+    }
+  }
+  double tol = 1.e-6;
+  double min[2], max[2];
+  global_bounding_box( nodes, min, max );
+
+  int nb_edges = edges.shape(0);
+
+  // special ordering for bit-identical results
+  std::vector<Node> ordering(nb_edges);
+  for (int edge=0; edge<nb_edges; ++edge)
+  {
+    ordering[edge] = Node( LatLonPoint(edge_centroids[edge]).uid(), edge );
+  }
+  std::sort( ordering.data(), ordering.data()+nb_edges );
+
+
+  for(int jedge=0; jedge<nb_edges; ++jedge)
+  {
+    int edge = ordering[jedge].i;
+    if ( edge_to_elem(edge,0) >= 0 && edge_to_elem(edge,2) >= 0 )
+    {
+      double x0 = elem_centroids[edge_to_elem(edge,0)](edge_to_elem(edge,1),XX);
+      double y0 = elem_centroids[edge_to_elem(edge,0)](edge_to_elem(edge,1),YY);
+      double x1 = elem_centroids[edge_to_elem(edge,2)](edge_to_elem(edge,3),XX);
+      double y1 = elem_centroids[edge_to_elem(edge,2)](edge_to_elem(edge,3),YY);
+      for( int jnode=0; jnode<2; ++jnode )
+      {
+        int node = edge_nodes(edge,jnode);
+        double x2 = node_coords( node, XX );
+        double y2 = node_coords( node, YY );
+        double triag_area = std::abs( x0*(y1-y2)+x1*(y2-y0)+x2*(y0-y1) )*0.5;
+        dual_volumes(node) += triag_area;
+      }
+    }
+    else if ( edge_to_elem(edge,0) >= 0 && edge_to_elem(edge,2) < 0  )
+    {
+      // This is a boundary edge
+      double x0 = elem_centroids[edge_to_elem(edge,0)](edge_to_elem(edge,1),XX);
+      double y0 = elem_centroids[edge_to_elem(edge,0)](edge_to_elem(edge,1),YY);
+      double x1 = x0;
+      double y1 = 0;
+      double y_edge = edge_centroids(edge,YY);
+      if ( std::abs(y_edge-max[YY])<tol )
+        y1 = 90.;
+      else if ( std::abs(y_edge-min[YY])<tol )
+        y1 = -90.;
+
+      if( y1 != 0. )
+      {
+        for( int jnode=0; jnode<2; ++jnode )
+        {
+          int node = edge_nodes(edge,jnode);
+          double x2 = node_coords( node, XX );
+          double y2 = node_coords( node, YY );
+          double triag_area = std::abs( x0*(y1-y2)+x1*(y2-y0)+x2*(y0-y1) )*0.5;
+          dual_volumes(node) += triag_area;
+          double x3 = x2;
+          double y3 = y1;
+          triag_area = std::abs( x3*(y1-y2)+x1*(y2-y3)+x2*(y3-y1) )*0.5;
+          dual_volumes(node) += triag_area;
+        }
+      }
+    }
+  }
+}
+
+
+void build_brick_dual_mesh( Mesh& mesh )
+{
+  if( const grids::ReducedGrid* g = dynamic_cast<grids::ReducedGrid*>(&mesh.grid()) )
+  {
+    if( eckit::mpi::size() != 1 )
+      throw eckit::UserError("Cannot build_brick_dual_mesh with more than 1 task",Here());
+
+    FunctionSpace& nodes   = mesh.function_space( "nodes" );
+    ArrayView<double,2> coords        ( nodes.field( "coordinates"    ) );
+    ArrayView<double,1> dual_volumes  ( nodes.create_field<double>( "dual_volumes", 1 ) );
+    ArrayView<gidx_t,1> gidx  ( nodes.field( "glb_idx" ) );
+
+    int c=0;
+    int n=0;
+    for( int jlat=0; jlat<g->nlat(); ++jlat )
+    {
+      double lat = g->lat(jlat);
+      double latN = (jlat==0) ? 90. : 0.5*(lat+g->lat(jlat-1));
+      double latS = (jlat==g->nlat()-1) ? -90. : 0.5*(lat+g->lat(jlat+1));
+      double dlat = (latN-latS);
+      double dlon = 360./static_cast<double>(g->nlon(jlat));
+
+      for( int jlon=0; jlon<g->nlon(jlat); ++jlon )
+      {
+        while( gidx(c) != n+1 ) c++;
+        ASSERT( coords(c,LON) == g->lon(jlat,jlon) );
+        ASSERT( coords(c,LAT) == lat );
+        dual_volumes(c) = dlon*dlat;
+        ++n;
+      }
+
+    }
+
+    nodes.parallelise();
+    nodes.halo_exchange().execute(dual_volumes);
+  }
+  else
+  {
+    throw eckit::BadCast("Cannot build_brick_dual_mesh with mesh provided grid type",Here());
   }
 }
 

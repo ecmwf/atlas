@@ -34,6 +34,24 @@ void build_median_dual_mesh( Mesh& mesh );
  */
 void build_centroid_dual_mesh( Mesh& mesh );
 
+/*
+ * Build brick-dual mesh
+ * - dual_volumes field
+ * @note Only works for reduced grids with 1 MPI task
+ *       This was urgently coded to show the resolution as IFS sees it.
+ *
+ *  #   |   #   |   #   |   #   |
+ *      |       |       |       |
+ *  ----+-+-----+-+-----+-+-----+-+
+ *        |       |       |       |
+ *    #   |   #   |   #   |   #   |
+ *        |       |       |       |
+ *  -+----+--+----+--+----+--+----+
+ *   |       |       |       |
+ *   |   #   |   #   |   #   |   #
+ */
+void build_brick_dual_mesh( Mesh& mesh );
+
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 extern "C"

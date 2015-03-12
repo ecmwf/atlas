@@ -176,7 +176,6 @@ void ReducedGridMeshGenerator::generate(const ReducedGrid& grid, Mesh& mesh )
 
 #ifdef ATLAS_HAVE_TRANS
   std::string partitioner = Resource<std::string>("atlas.meshgen.partitioner",std::string("trans"));
-  eckit::Log::info() << partitioner << std::endl;
   if( partitioner == "trans" )
   {
     if( nb_parts != eckit::mpi::size() )
