@@ -45,7 +45,7 @@ if( ECKIT_HAVE_ECKIT_MPI )
    message( STATUS "eckit has mpi support")
 endif()
 
-if( ECKIT_HAVE_ECKIT_MPI )
+if( ECKIT_HAVE_ECKIT_MPISTUBS )
    message( STATUS "eckit has mpistubs support")
 endif()
 
@@ -82,7 +82,7 @@ ecbuild_add_option( FEATURE MPI
 if( ATLAS_HAVE_MPI AND ECKIT_HAVE_ECKIT_MPI )
   message( STATUS "Using eckit_mpi" )
   set( ECKIT_MPI_LIBRARIES eckit_mpi )
-elseif( NOT ATLAS_HAVE_MPI AND ECKIT_HAVE_ECKIT_MPISTUBS )
+elseif( ECKIT_HAVE_ECKIT_MPISTUBS )
   message( STATUS "Using eckit_mpistubs" )
   set( ECKIT_MPI_LIBRARIES eckit_mpistubs )
   add_definitions( "-DECKIT_USE_MPISTUBS" )
