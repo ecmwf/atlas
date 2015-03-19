@@ -43,6 +43,7 @@ class GridSpec : public eckit::Properties {
 public:
 
   GridSpec(const std::string& grid_type);
+  GridSpec(eckit::Stream& s);
 
   ~GridSpec();
 
@@ -53,6 +54,8 @@ public:
   Grid::uid_t uid() const;
 
   std::string hash() const;
+
+  static const char* className() { return "atlas::GridSpec"; }
 
   void set_latitudes(const std::vector<double>& latitudes_vec);
 
@@ -72,6 +75,7 @@ public:
 private:
   friend eckit::Params::value_t get( const GridSpec& p, const eckit::Params::key_t& key );
   friend void print( const GridSpec& p, std::ostream& s );
+  friend void encode( const GridSpec& p, eckit::Stream& s );
 
   void print( std::ostream& ) const;
 };

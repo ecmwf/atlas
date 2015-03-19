@@ -12,6 +12,7 @@
 
 #include "eckit/memory/Builder.h"
 #include "eckit/memory/Factory.h"
+#include "eckit/value/ValueParams.h"
 
 #include "atlas/grids/ReducedGrid.h"
 #include "atlas/GridSpec.h"
