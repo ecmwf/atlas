@@ -91,6 +91,7 @@ integer, public, parameter :: gidx_t = c_long
 #include "atlas_module_Metadata_i.f"
 #include "atlas_module_Error_i.f"
 #include "atlas_module_GridDistribution_i.f"
+#include "atlas_module_Trans_i.f"
 
 INTERFACE delete
 
@@ -247,6 +248,7 @@ end function
 #include "atlas_module_Metadata_c.f"
 #include "atlas_module_Error_c.f"
 #include "atlas_module_GridDistribution_c.f"
+#include "atlas_module_Trans_c.f"
 
 ! -----------------------------------------------------------------------------
 

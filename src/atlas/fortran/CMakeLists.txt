@@ -36,6 +36,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS atlas_resource.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../ErrorHandling.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../mpi/mpi.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../trans/Trans.h)
 
 
 ### atlas fortran lib
