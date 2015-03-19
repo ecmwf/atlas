@@ -486,7 +486,7 @@ GribHandle* Grib::clone(const Field& f, GribHandle& gridsec )
 
     if( f.grib() )
     {
-      GribHandle& meta = *(f.grib());
+      const GribHandle& meta = *(f.grib());
       int err=0;
       int what = GRIB_SECTION_GRID;
 

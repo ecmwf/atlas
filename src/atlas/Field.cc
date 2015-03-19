@@ -77,7 +77,7 @@ void Field::grib(Field::Grib *g)
   grib_.reset(g);
 }
 
-Field::Grib *const Field::grib() const
+Field::Grib *Field::grib() const
 {
   return grib_.get();
 }

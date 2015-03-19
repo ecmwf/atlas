@@ -116,10 +116,17 @@ ecbuild_add_option(
     DESCRIPTION "support for OpenMP threaded parallelism"
     REQUIRED_PACKAGES "OMP COMPONENTS CXX ${Fortran}" )
 
-if( ATLAS_HAVE_FORTRAN )
-  cmake_add_fortran_flags( "${OMP_Fortran_FLAGS}" )
+if( HAVE_OMP )
+  ecbuild_enable_omp()
+else()
+  ecbuild_enable_ompstubs()
 endif()
-cmake_add_cxx_flags( "${OMP_CXX_FLAGS}" )
+
+
+#if( ATLAS_HAVE_FORTRAN )
+#  cmake_add_fortran_flags( "${OMP_Fortran_FLAGS}" )
+#endif()
+#cmake_add_cxx_flags( "${OMP_CXX_FLAGS}" )
 
 
 ### trans ...
