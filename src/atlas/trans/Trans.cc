@@ -240,14 +240,16 @@ Trans* atlas__Trans__new (grids::ReducedGrid* grid)
   return trans;
 }
 
-void atlas__Trans__delete (Trans* trans)
+void atlas__Trans__delete (Trans* This)
 {
-  ATLAS_ERROR_HANDLING( delete trans );
+  ASSERT( This != NULL );
+  ATLAS_ERROR_HANDLING( delete This );
 }
 
-int atlas__Trans__handle (Trans* trans)
+int atlas__Trans__handle (const Trans* This)
 {
-  ATLAS_ERROR_HANDLING( return trans->handle() );
+  ASSERT( This != NULL );
+  ATLAS_ERROR_HANDLING( return This->handle() );
   return 0;
 }
 
@@ -356,44 +358,205 @@ void Trans::dirtrans( const int nb_fields, const double wind_fields[], double vo
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void atlas__Trans__distspec( Trans* t, const int nb_fields, const int origin[], const double global_spectra[], double spectra[] )
+void atlas__Trans__distspec( const Trans* t, const int nb_fields, const int origin[], const double global_spectra[], double spectra[] )
 {
   return t->distspec(nb_fields,origin,global_spectra,spectra);
 }
 
-void atlas__Trans__gathspec( Trans* t, const int nb_fields, const int destination[], const double spectra[], double global_spectra[] )
+void atlas__Trans__gathspec( const Trans* t, const int nb_fields, const int destination[], const double spectra[], double global_spectra[] )
 {
   return t->gathspec(nb_fields,destination,spectra,global_spectra);
 }
 
-void atlas__Trans__distgrid( Trans* t, const int nb_fields, const int origin[], const double global_fields[], double fields[] )
+void atlas__Trans__distgrid( const Trans* t, const int nb_fields, const int origin[], const double global_fields[], double fields[] )
 {
   return t->distgrid(nb_fields,origin,global_fields,fields);
 }
 
-void atlas__Trans__gathgrid( Trans* t, const int nb_fields, const int destination[], const double fields[], double global_fields[] )
+void atlas__Trans__gathgrid( const Trans* t, const int nb_fields, const int destination[], const double fields[], double global_fields[] )
 {
   return t->gathgrid(nb_fields,destination,fields,global_fields);
 }
 
-void atlas__Trans__invtrans_scalar( Trans* t, const int nb_fields, const double scalar_spectra[], double scalar_fields[] )
+void atlas__Trans__invtrans_scalar( const Trans* t, const int nb_fields, const double scalar_spectra[], double scalar_fields[] )
 {
   return t->invtrans(nb_fields,scalar_spectra,scalar_fields);
 }
 
-void atlas__Trans__invtrans_vordiv2wind( Trans* t, const int nb_fields, const double vorticity_spectra[], const double divergence_spectra[], double wind_fields[] )
+void atlas__Trans__invtrans_vordiv2wind( const Trans* t, const int nb_fields, const double vorticity_spectra[], const double divergence_spectra[], double wind_fields[] )
 {
   return t->invtrans(nb_fields,vorticity_spectra,divergence_spectra,wind_fields);
 }
 
-void atlas__Trans__dirtrans_scalar( Trans* t, const int nb_fields, const double scalar_fields[], double scalar_spectra[] )
+void atlas__Trans__dirtrans_scalar( const Trans* t, const int nb_fields, const double scalar_fields[], double scalar_spectra[] )
 {
   return t->dirtrans(nb_fields,scalar_fields,scalar_spectra);
 }
 
-void atlas__Trans__dirtrans_wind2vordiv( Trans* t, const int nb_fields, const double wind_fields[], double vorticity_spectra[], double divergence_spectra[] )
+void atlas__Trans__dirtrans_wind2vordiv( const Trans* t, const int nb_fields, const double wind_fields[], double vorticity_spectra[], double divergence_spectra[] )
 {
   return t->dirtrans(nb_fields,wind_fields,vorticity_spectra,divergence_spectra);
+}
+
+int atlas__Trans__nproc (const Trans* This)
+{
+  ASSERT( This != NULL );
+  ATLAS_ERROR_HANDLING( return This->nproc() );
+  return 0;
+}
+
+int atlas__Trans__myproc (const Trans* This, int proc0)
+{
+  ASSERT( This != NULL );
+  ATLAS_ERROR_HANDLING( return This->myproc(proc0) );
+  return 0;
+}
+
+int atlas__Trans__ndgl (const Trans* This)
+{
+  ASSERT( This != NULL );
+  ATLAS_ERROR_HANDLING( return This->ndgl() );
+  return 0;
+}
+
+int atlas__Trans__nsmax (const Trans* This)
+{
+  ASSERT( This != NULL );
+  ATLAS_ERROR_HANDLING( return This->nsmax() );
+  return 0;
+}
+
+int atlas__Trans__ngptot (const Trans* This)
+{
+  ASSERT( This != NULL );
+  ATLAS_ERROR_HANDLING( return This->ngptot() );
+  return 0;
+}
+
+int atlas__Trans__ngptotg (const Trans* This)
+{
+  ASSERT( This != NULL );
+  ATLAS_ERROR_HANDLING( return This->ngptotg() );
+  return 0;
+}
+
+int atlas__Trans__ngptotmx (const Trans* This)
+{
+  ASSERT( This != NULL );
+  ATLAS_ERROR_HANDLING( return This->ngptotmx() );
+  return 0;
+}
+
+int atlas__Trans__nspec (const Trans* This)
+{
+  ASSERT( This != NULL );
+  ATLAS_ERROR_HANDLING( return This->nspec() );
+  return 0;
+}
+
+int atlas__Trans__nspec2 (const Trans* This)
+{
+  ASSERT( This != NULL );
+  ATLAS_ERROR_HANDLING( return This->nspec2() );
+  return 0;
+}
+
+int atlas__Trans__nspec2g (const Trans* This)
+{
+  ASSERT( This != NULL );
+  ATLAS_ERROR_HANDLING( return This->nspec2g() );
+  return 0;
+}
+
+int atlas__Trans__nspec2mx (const Trans* This)
+{
+  ASSERT( This != NULL );
+  ATLAS_ERROR_HANDLING( return This->nspec2mx() );
+  return 0;
+}
+
+int atlas__Trans__n_regions_NS (const Trans* This)
+{
+  ASSERT( This != NULL );
+  ATLAS_ERROR_HANDLING( return This->n_regions_NS() );
+  return 0;
+}
+
+int atlas__Trans__n_regions_EW (const Trans* This)
+{
+  ASSERT( This != NULL );
+  ATLAS_ERROR_HANDLING( return This->n_regions_EW() );
+  return 0;
+}
+
+int atlas__Trans__nump (const Trans* This)
+{
+  ASSERT( This != NULL );
+  ATLAS_ERROR_HANDLING( return This->nump() );
+  return 0;
+}
+
+const int* atlas__Trans__nloen(const Trans* This, int& size)
+{
+  ASSERT( This != NULL );
+  ATLAS_ERROR_HANDLING( return This->nloen(size) );
+  return NULL;
+}
+
+const int* atlas__Trans__n_regions (const Trans* This, int& size)
+{
+  ASSERT( This != NULL );
+  ATLAS_ERROR_HANDLING( return This->n_regions(size) );
+  return NULL;
+}
+
+const int* atlas__Trans__nfrstlat(const Trans* This, int& size)
+{
+  ASSERT( This != NULL );
+  ATLAS_ERROR_HANDLING( return This->nfrstlat(size) );
+  return NULL;
+}
+
+const int* atlas__Trans__nlstlat (const Trans* This, int& size)
+{
+  ASSERT( This != NULL );
+  ATLAS_ERROR_HANDLING( return This->nlstlat(size) );
+  return NULL;
+}
+
+const int* atlas__Trans__nptrfrstlat (const Trans* This, int& size)
+{
+  ASSERT( This != NULL );
+  ATLAS_ERROR_HANDLING( return This->nptrfrstlat(size) );
+  return NULL;
+}
+
+const int* atlas__Trans__nsta (const Trans* This, int& sizef2, int& sizef1)
+{
+  ASSERT( This != NULL );
+  ATLAS_ERROR_HANDLING( return This->nsta(sizef2,sizef1) );
+  return NULL;
+}
+
+const int* atlas__Trans__nonl (const Trans* This, int& sizef2, int& sizef1)
+{
+  ASSERT( This != NULL );
+  ATLAS_ERROR_HANDLING( return This->nonl(sizef2,sizef1) );
+  return NULL;
+}
+
+const int* atlas__Trans__nmyms (const Trans* This, int &size)
+{
+  ASSERT( This != NULL );
+  ATLAS_ERROR_HANDLING( return This->nmyms(size) );
+  return NULL;
+}
+
+const int* atlas__Trans__nasm0 (const Trans* This, int &size)
+{
+  ASSERT( This != NULL );
+  ATLAS_ERROR_HANDLING( return This->nasm0(size) );
+  return NULL;
 }
 
 

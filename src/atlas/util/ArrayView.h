@@ -283,6 +283,10 @@ public:
   typedef typename remove_const<DATA_TYPE>::type  value_type;
 public:
   ArrayView() {}
+  ArrayView( DATA_TYPE* data, const int size ) : data_( const_cast<DATA_TYPE*>(data) )
+  {
+    shape_[0]=size; strides_[0]=1;
+  }
   ArrayView( DATA_TYPE* data, const ArrayStrides::value_type strides[1], const ArrayShape::value_type shape[1] ) : data_( const_cast<DATA_TYPE*>(data) )
   {
     strides_[0]=strides[0];       shape_[0]=shape[0];

@@ -46,33 +46,42 @@ void TransPartitioner::partition(int part[]) const
 
   int nlonmax = dynamic_cast<const grids::ReducedGrid*>(&grid())->nlonmax();
 
+  ArrayView<int,1> nloen       = t_->nloen();
+  ArrayView<int,1> n_regions   = t_->n_regions();
+  ArrayView<int,1> nfrstlat    = t_->nfrstlat();
+  ArrayView<int,1> nlstlat     = t_->nlstlat();
+  ArrayView<int,1> nptrfrstlat = t_->nptrfrstlat();
+  ArrayView<int,2> nsta        = t_->nsta();
+  ArrayView<int,2> nonl        = t_->nonl();
+
+
   int i(0);
-  std::vector<int> iglobal(t_->ndgl()*nlonmax);
-  for( int jgl=1; jgl<=t_->ndgl(); ++jgl )
+  int maxind(0);
+  std::vector<int> iglobal(t_->ndgl()*nlonmax,-1);
+
+  for( int jgl=0; jgl<t_->ndgl(); ++jgl )
   {
-    for( int jl=1; jl<=t_->nloen()[jgl-1]; ++jl )
+    for( int jl=0; jl<nloen[jgl]; ++jl )
     {
       ++i;
-      iglobal[(jgl-1)*nlonmax+(jl-1)] = i;
+      iglobal[jgl*nlonmax+jl] = i;
+      maxind = std::max(maxind,jgl*nlonmax+jl);
     }
   }
-
-  const int stride=t_->ndgl()+t_->n_regions_NS()-1;
-
   int iproc(0);
-  for( int ja=1; ja<=t_->n_regions_NS(); ++ja )
+  for( int ja=0; ja<t_->n_regions_NS(); ++ja )
   {
-    for( int jb=1; jb<=t_->n_regions()[ja-1]; ++jb )
+    for( int jb=0; jb<n_regions[ja]; ++jb )
     {
-      for( int jgl=t_->nfrstlat()[ja-1]; jgl<=t_->nlstlat()[ja-1]; ++jgl )
+      for( int jgl=nfrstlat[ja]-1; jgl<nlstlat[ja]; ++jgl )
       {
-        int igl = t_->nptrfrstlat()[ja-1] + jgl - t_->nfrstlat()[ja-1];
-
-        int idx = (jb-1)*stride+(igl-1);
-        for( int jl=t_->nsta()[idx]; jl<=t_->nsta()[idx]+t_->nonl()[idx]-1; ++jl )
+        int igl = nptrfrstlat[ja] + jgl - nfrstlat[ja];
+        for( int jl=nsta(jb,igl)-1; jl<nsta(jb,igl)+nonl(jb,igl)-1; ++jl )
         {
-          int ind = iglobal[(jgl-1)*nlonmax+(jl-1)];
-          part[ind-1] = iproc;
+          int ind = iglobal[jgl*nlonmax+jl] - 1;
+          ASSERT( ind >= 0 );
+          if( ind >= grid().npts() ) throw eckit::OutOfRange(ind,grid().npts(),Here());
+          part[ind] = iproc;
         }
       }
       ++iproc;

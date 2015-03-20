@@ -52,7 +52,7 @@ void read_rspecg(trans::Trans& trans, std::vector<double>& rspecg, std::vector<i
 {
   eckit::Log::info() << "read_rspecg ...\n";
   nfld = 2;
-  if( trans.myproc() == 1 )
+  if( trans.myproc(0) == 0 )
   {
     rspecg.resize(nfld*trans.nspec2g());
     for( int i=0; i<trans.nspec2g(); ++i )
@@ -586,7 +586,8 @@ BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
 
   // -------------- do checks -------------- //
   BOOST_CHECK_EQUAL( trans.nproc(),  eckit::mpi::size() );
-  BOOST_CHECK_EQUAL( trans.myproc(), eckit::mpi::rank()+1 );
+  BOOST_CHECK_EQUAL( trans.myproc(0), eckit::mpi::rank() );
+
 
   if( eckit::mpi::rank() == 0 ) // all tasks do the same, so only one needs to check
   {
@@ -609,14 +610,16 @@ BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
     BOOST_CHECK_EQUAL( trans.ngptot(),  npts[eckit::mpi::rank()] );
     BOOST_CHECK_EQUAL( trans.ngptotmx(), *std::max_element(npts.begin(),npts.end()) );
 
+    ArrayView<int,1> n_regions ( trans.n_regions() ) ;
     for( int j=0; j<partitioner.nb_bands(); ++j )
-      BOOST_CHECK_EQUAL( trans.n_regions()[j] , partitioner.nb_regions(j) );
+      BOOST_CHECK_EQUAL( n_regions[j] , partitioner.nb_regions(j) );
   }
-
 }
+
 
 BOOST_AUTO_TEST_CASE( test_trans_partitioner )
 {
+  BOOST_CHECKPOINT("test_trans_partitioner");
   // Create grid and trans object
   ReducedGrid::Ptr g ( ReducedGrid::create( "rgg.N80" ) );
 
@@ -624,7 +627,6 @@ BOOST_AUTO_TEST_CASE( test_trans_partitioner )
 
   BOOST_CHECK_EQUAL( trans.nsmax() , 0 );
   BOOST_CHECK_EQUAL( trans.ngptotg() , g->npts() );
-
 }
 
 BOOST_AUTO_TEST_CASE( test_trans_options )
