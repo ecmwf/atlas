@@ -192,7 +192,7 @@ subroutine Logger__cat(this,cat,msg,lvl,endl,flush)
   integer, intent(in), optional :: lvl
   logical, intent(in), optional :: endl, flush
   integer :: opt_lvl, opt_endl, opt_flush
-  opt_lvl   = 0 ; if( present(lvl)  ) opt_lvl = lvl
+  opt_lvl   = 1 ; if( present(lvl)  ) opt_lvl = lvl
   opt_endl  = 1 ; if( present(endl) ) then; if( .not. endl )  opt_endl  = 0; endif
   opt_flush = 1 ; if( present(flush)) then; if( .not. flush ) opt_flush = 0; endif
   if (present(msg)) then
@@ -208,7 +208,7 @@ subroutine Logger__error(this,msg,lvl,endl,flush)
   integer, intent(in), optional :: lvl
   logical, intent(in), optional :: endl, flush
   integer :: opt_lvl, opt_endl, opt_flush
-  opt_lvl   = 0 ; if( present(lvl)  ) opt_lvl   = lvl
+  opt_lvl   = 1 ; if( present(lvl)  ) opt_lvl   = lvl
   opt_endl  = 1 ; if( present(endl) ) then; if( .not. endl )  opt_endl  = 0; endif
   opt_flush = 1 ; if( present(flush)) then; if( .not. flush ) opt_flush = 0; endif
   if (present(msg)) then
@@ -224,7 +224,7 @@ subroutine Logger__warning(this,msg,lvl,endl,flush)
   integer, intent(in), optional :: lvl
   logical, intent(in), optional :: endl, flush
   integer :: opt_lvl, opt_endl, opt_flush
-  opt_lvl   = 0      ; if( present(lvl)  ) opt_lvl   = lvl
+  opt_lvl   = 1 ; if( present(lvl)  ) opt_lvl   = lvl
   opt_endl  = 1 ; if( present(endl) ) then; if( .not. endl )  opt_endl  = 0; endif
   opt_flush = 1 ; if( present(flush)) then; if( .not. flush ) opt_flush = 0; endif
   if (present(msg)) then
@@ -240,7 +240,7 @@ subroutine Logger__info(this,msg,lvl,endl,flush)
   integer, intent(in), optional :: lvl
   logical, intent(in), optional :: endl, flush
   integer :: opt_lvl, opt_endl, opt_flush
-  opt_lvl   = 0      ; if( present(lvl)  ) opt_lvl   = lvl
+  opt_lvl   = 1 ; if( present(lvl)  ) opt_lvl   = lvl
   opt_endl  = 1 ; if( present(endl) ) then; if( .not. endl )  opt_endl  = 0; endif
   opt_flush = 1 ; if( present(flush)) then; if( .not. flush ) opt_flush = 0; endif
   if (present(msg)) then
@@ -263,7 +263,7 @@ subroutine Logger__debug(this,msg,lvl,endl,flush)
   integer, intent(in), optional :: lvl
   logical, intent(in), optional :: endl, flush
   integer :: opt_lvl, opt_endl, opt_flush
-  opt_lvl   = 0      ; if( present(lvl)  ) opt_lvl   = lvl
+  opt_lvl   = 1 ; if( present(lvl)  ) opt_lvl   = lvl
   opt_endl  = 1 ; if( present(endl) ) then; if( .not. endl )  opt_endl  = 0; endif
   opt_flush = 1 ; if( present(flush)) then; if( .not. flush ) opt_flush = 0; endif
   if (present(msg)) then
@@ -279,7 +279,7 @@ subroutine Logger__stats(this,msg,lvl,endl,flush)
   integer, intent(in), optional :: lvl
   logical, intent(in), optional :: endl, flush
   integer :: opt_lvl, opt_endl, opt_flush
-  opt_lvl   = 0      ; if( present(lvl)  ) opt_lvl   = lvl
+  opt_lvl   = 1 ; if( present(lvl)  ) opt_lvl   = lvl
   opt_endl  = 1 ; if( present(endl) ) then; if( .not. endl )  opt_endl  = 0; endif
   opt_flush = 1 ; if( present(flush)) then; if( .not. flush ) opt_flush = 0; endif
   if (present(msg)) then
