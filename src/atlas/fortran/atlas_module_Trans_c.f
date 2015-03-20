@@ -336,4 +336,28 @@ function atlas_Trans__nasm0(this) result(nasm0)
 #endif
 end function atlas_Trans__nasm0
 
+subroutine atlas_Trans__dirtrans(this, gpfields, spfields, context)
+  USE_ATLAS_TRANS_C_BINDING
+  class(atlas_Trans), intent(in) :: this
+  class(atlas_FieldSet), intent(in)  :: gpfields
+  class(atlas_FieldSet), intent(out) :: spfields
+  class(atlas_TransContext), intent(in)  :: context
+  call atlas__Trans__dirtrans( this%cpp_object_ptr,     &
+    &                          gpfields%cpp_object_ptr, &
+    &                          spfields%cpp_object_ptr, &
+    &                          context%cpp_object_ptr )
+end subroutine atlas_Trans__dirtrans
+
+subroutine atlas_Trans__invtrans(this, spfields, gpfields, context)
+  USE_ATLAS_TRANS_C_BINDING
+  class(atlas_Trans), intent(in) :: this
+  class(atlas_FieldSet), intent(in)  :: spfields
+  class(atlas_FieldSet), intent(out) :: gpfields
+  class(atlas_TransContext), intent(in)  :: context
+  call atlas__Trans__invtrans( this%cpp_object_ptr,     &
+    &                          spfields%cpp_object_ptr, &
+    &                          gpfields%cpp_object_ptr, &
+    &                          context%cpp_object_ptr )
+end subroutine atlas_Trans__invtrans
+
 

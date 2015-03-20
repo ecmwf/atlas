@@ -14,7 +14,7 @@ TYPE, extends(object_type) :: atlas_Trans
 
 ! Author :
 ! ------
-!   12-Mar-2014 Willem Deconinck     *ECMWF*
+!   12-Mar-2015 Willem Deconinck     *ECMWF*
 
 !------------------------------------------------------------------------------
 contains
@@ -43,6 +43,9 @@ contains
   procedure :: nasm0        => atlas_Trans__nasm0
   procedure :: nump         => atlas_Trans__nump
 
+  procedure :: dirtrans     => atlas_Trans__dirtrans
+  procedure :: invtrans     => atlas_Trans__invtrans
+
 END TYPE atlas_Trans
 
 !------------------------------------------------------------------------------
@@ -50,3 +53,21 @@ END TYPE atlas_Trans
 interface new_atlas_Trans
   module procedure new_atlas_Trans
 end interface
+
+TYPE, extends(object_type) :: atlas_TransContext
+
+! Purpose :
+! -------
+!   *TransContext* : Extra information to pass to dirtrans and invtrans
+
+! Author :
+! ------
+!   20-Mar-2015 Willem Deconinck     *ECMWF*
+
+!------------------------------------------------------------------------------
+contains
+END TYPE atlas_TransContext
+
+
+
+

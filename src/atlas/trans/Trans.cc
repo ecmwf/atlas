@@ -13,6 +13,8 @@
 #include "atlas/grids/LonLatGrid.h"
 #include "atlas/ErrorHandling.h"
 #include "atlas/trans/Trans.h"
+#include "atlas/FieldSet.h"
+#include "atlas/util/Array.h"
 
 namespace atlas {
 namespace trans {
@@ -227,6 +229,243 @@ void print( const Trans::Options& p, std::ostream& s )
 void encode( const Trans::Options& p, eckit::Stream& s )
 {
   s << p;
+}
+
+
+// --------------------------------------------------------------------------------------------
+
+
+
+void Trans::dirtrans(const Field& gpfield, Field& spfield, const TransContext& context) const
+{
+  FieldSet gpfields; gpfields.add_field(Field::Ptr( const_cast<Field*>( &gpfield )) );
+  FieldSet spfields; spfields.add_field(spfield.self());
+  dirtrans(gpfields,spfields,context);
+}
+
+
+// --------------------------------------------------------------------------------------------
+
+
+void Trans::dirtrans(const FieldSet& gpfields, FieldSet& spfields, const TransContext& context) const
+{
+  // Count total number of fields and do sanity checks
+  int nfld(0);
+  FunctionSpace::Ptr gp;
+  for( int jfld=0; jfld<gpfields.size(); ++jfld )
+  {
+    const Field& f = gpfields[jfld];
+    nfld += f.nb_vars();
+
+    if( jfld == 0 ) { gp = FunctionSpace::Ptr( &f.function_space() ); }
+    else {
+      if( &f.function_space() != gp.get() )
+        throw eckit::SeriousBug("dirtrans: fields within gridpoint fieldset don't match");
+    }
+  }
+
+  int trans_spnfld(0);
+  FunctionSpace::Ptr sp;
+  for( int jfld=0; jfld<spfields.size(); ++jfld )
+  {
+    const Field& f = spfields[jfld];
+    trans_spnfld += f.nb_vars();
+    if( jfld == 0 ) { sp = FunctionSpace::Ptr( &f.function_space() ); }
+    else {
+      if( &f.function_space() != sp.get() )
+        throw eckit::SeriousBug("dirtrans: fields within spectral fieldset don't match");
+    }
+  }
+
+  if( nfld != trans_spnfld )
+    throw eckit::SeriousBug("dirtrans: different number of gridpoint fields than spectral fields");
+
+  if( sp->shape(0) != nspec2() )
+    throw eckit::SeriousBug("dirtrans: spectral fields have wrong dimension");
+
+  // Arrays Trans expects
+  Array<double> rgp(nfld,ngptot());
+  Array<double> rspec(nspec2(),nfld);
+
+  ArrayView<double,2> rgpview (rgp);
+  ArrayView<double,2> rspecview (rspec);
+
+
+  // Pack gridpoints
+  {
+    ArrayView<int,1> flags  ( gp->field( "flags" ) );
+
+    int f=0;
+    for( int jfld=0; jfld<gpfields.size(); ++jfld )
+    {
+      const ArrayView<double,2> field ( gpfields[jfld] );
+      const int nvars = field.shape(1);
+
+      for( int jvar=0; jvar<nvars; ++jvar )
+      {
+        int n=0;
+        for( int jnode=0; jnode<gp->shape(0); ++jnode )
+        {
+          bool ghost = Flags::check(flags(jnode),Topology::GHOST);
+          if( !ghost )
+          {
+            rgpview(f,n) = field(jnode,jvar);
+            ++n;
+          }
+        }
+        ASSERT( n == ngptot() );
+        ++f;
+      }
+    }
+  }
+
+  // Do transform
+  {
+    struct ::DirTrans_t transform = ::new_dirtrans(&trans_);
+    transform.nscalar    = nfld;
+    transform.rgp        = rgp.data();
+    transform.rspscalar  = rspec.data();
+
+    ::trans_dirtrans(&transform);
+  }
+
+  // Unpack the spectral fields
+  {
+    int f=0;
+    for( int jfld=0; jfld<spfields.size(); ++jfld )
+    {
+      ArrayView<double,2> field ( spfields[jfld] );
+      const int nvars = field.shape(0);
+
+      for( int jvar=0; jvar<nvars; ++jvar )
+      {
+        for( int jwave=0; jwave<sp->shape(1); ++jwave )
+        {
+          field(jvar,jwave) = rspecview(f,jwave);
+        }
+        ++f;
+      }
+    }
+  }
+
+}
+
+
+// --------------------------------------------------------------------------------------------
+
+
+void Trans::invtrans(const Field& spfield, Field& gpfield, const TransContext& context) const
+{
+  FieldSet spfields; spfields.add_field(Field::Ptr( const_cast<Field*>( &spfield )) );
+  FieldSet gpfields; gpfields.add_field(gpfield.self());
+  invtrans(spfields,gpfields,context);
+}
+
+
+// --------------------------------------------------------------------------------------------
+
+
+void Trans::invtrans(const FieldSet& spfields, FieldSet& gpfields, const TransContext& context) const
+{
+  // Count total number of fields and do sanity checks
+  int nfld(0);
+  FunctionSpace::Ptr gp;
+  for( int jfld=0; jfld<gpfields.size(); ++jfld )
+  {
+    const Field& f = gpfields[jfld];
+    nfld += f.nb_vars();
+
+    if( jfld == 0 ) { gp = FunctionSpace::Ptr( &f.function_space() ); }
+    else {
+      if( &f.function_space() != gp.get() )
+        throw eckit::SeriousBug("invtrans: fields within gridpoint fieldset don't match",Here());
+    }
+  }
+
+  int trans_spnfld(0);
+  FunctionSpace::Ptr sp;
+  for( int jfld=0; jfld<spfields.size(); ++jfld )
+  {
+    const Field& f = spfields[jfld];
+    trans_spnfld += f.nb_vars();
+    if( jfld == 0 ) { sp = FunctionSpace::Ptr( &f.function_space() ); }
+    else {
+      if( &f.function_space() != sp.get() )
+        throw eckit::SeriousBug("invtrans: fields within spectral fieldset don't match",Here());
+    }
+  }
+
+  if( nfld != trans_spnfld )
+    throw eckit::SeriousBug("invtrans: different number of gridpoint fields than spectral fields",Here());
+
+  if( sp->shape(0) != nspec2() )
+    throw eckit::SeriousBug("invtrans: spectral fields have wrong dimension",Here());
+
+  // Arrays Trans expects
+  Array<double> rgp(nfld,ngptot());
+  Array<double> rspec(nspec2(),nfld);
+
+  ArrayView<double,2> rgpview (rgp);
+  ArrayView<double,2> rspecview (rspec);
+
+
+  // Pack spectral fields
+  {
+    int f=0;
+    for( int jfld=0; jfld<spfields.size(); ++jfld )
+    {
+      const ArrayView<double,2> field ( spfields[jfld] );
+      const int nvars = field.shape(0);
+
+      for( int jvar=0; jvar<nvars; ++jvar )
+      {
+        for( int jwave=0; jwave<sp->shape(1); ++jwave )
+        {
+          rspecview(f,jwave) = field(jvar,jwave);
+        }
+        ++f;
+      }
+    }
+  }
+
+  // Do transform
+  {
+    struct ::InvTrans_t transform = ::new_invtrans(&trans_);
+    transform.nscalar    = nfld;
+    transform.rgp        = rgp.data();
+    transform.rspscalar  = rspec.data();
+
+    ::trans_invtrans(&transform);
+  }
+
+  // Unpack the gridpoint fields
+  {
+    ArrayView<int,1> flags  ( gp->field( "flags" ) );
+
+    int f=0;
+    for( int jfld=0; jfld<gpfields.size(); ++jfld )
+    {
+      ArrayView<double,2> field ( gpfields[jfld] );
+      const int nvars = field.shape(1);
+
+      for( int jvar=0; jvar<nvars; ++jvar )
+      {
+        int n=0;
+        for( int jnode=0; jnode<gp->shape(0); ++jnode )
+        {
+          bool ghost = Flags::check(flags(jnode),Topology::GHOST);
+          if( !ghost )
+          {
+            field(jnode,jvar) = rgpview(f,n);
+            ++n;
+          }
+        }
+        ASSERT( n == ngptot() );
+        ++f;
+      }
+    }
+  }
+
 }
 
 
@@ -559,6 +798,15 @@ const int* atlas__Trans__nasm0 (const Trans* This, int &size)
   return NULL;
 }
 
+void atlas__Trans__dirtrans (const Trans* This, const FieldSet* gpfields, FieldSet* spfields, const TransContext* context)
+{
+  This->dirtrans(*gpfields,*spfields,*context);
+}
+
+void atlas__Trans__invtrans (const Trans* This, const FieldSet* spfields, FieldSet* gpfields, const TransContext* context)
+{
+  //This->invtrans(spfields,gpfields,context);
+}
 
 }
 }

@@ -849,8 +849,7 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
       part(jnode)      = part(jnode-1);
       Topology::reset(flags(jnode));
       Topology::set(flags(jnode),Topology::BC|Topology::EAST);
-      if( part(jnode) != mypart )
-        Topology::set(flags(jnode),Topology::GHOST);
+      Topology::set(flags(jnode),Topology::GHOST);
       ++jnode;
     }
   };

@@ -17,6 +17,7 @@
 #include "atlas/util/ArrayView.h"
 
 namespace atlas {
+  class FieldSet;
 namespace grids {
   class ReducedGrid;
 }
@@ -26,6 +27,12 @@ namespace atlas {
 namespace trans {
 
 enum FFT { FFT992=TRANS_FFT992, FFTW=TRANS_FFTW };
+
+class TransContext
+{
+public:
+};
+
 
 class Trans {
 private:
@@ -295,6 +302,13 @@ public:
    */
   void dirtrans(const int nb_fields, const double wind_fields[], double vorticity_spectra[], double divergence_spectra[] ) const;
 
+  void dirtrans(const Field& gpfield,     Field& spfield,     const TransContext& = TransContext()) const;
+  void dirtrans(const FieldSet& gpfields, FieldSet& spfields, const TransContext& = TransContext()) const;
+
+  void invtrans(const Field& spfield,     Field& gpfield,     const TransContext& = TransContext()) const;
+  void invtrans(const FieldSet& spfields, FieldSet& gpfields, const TransContext& = TransContext()) const;
+
+
 private:
 
   void ctor_rgg(const int ndgl, const int nloen[], int nsmax, const Options& );
@@ -350,6 +364,8 @@ extern "C"
   const int* atlas__Trans__nonl (const Trans* This, int &sizef2, int &sizef1);
   const int* atlas__Trans__nmyms (const Trans* This, int &size);
   const int* atlas__Trans__nasm0 (const Trans* This, int &size);
+  void atlas__Trans__dirtrans (const Trans* This, const FieldSet* gpfields, FieldSet* spfields, const TransContext* context);
+  void atlas__Trans__invtrans (const Trans* This, const FieldSet* spfields, FieldSet* gpfields, const TransContext* context);
 }
 // ------------------------------------------------------------------
 

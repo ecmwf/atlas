@@ -25,6 +25,7 @@
 #include "atlas/LogFormat.h"
 #include "atlas/GridDistribution.h"
 #include "atlas/io/Gmsh.h"
+#include "atlas/FieldSet.h"
 
 #include "transi/trans.h"
 
@@ -752,3 +753,45 @@ BOOST_AUTO_TEST_CASE( test_generate_mesh )
   io::Gmsh().write(*m_trans,"N16_trans.msh");
 }
 
+
+BOOST_AUTO_TEST_CASE( test_spectral_fields )
+{
+  ReducedGrid::Ptr g ( ReducedGrid::create( "oct.N4" ) );
+  eckit::ResourceMgr::instance().set("atlas.meshgen.angle","0");
+  eckit::ResourceMgr::instance().set("atlas.meshgen.triangulate","true");
+
+  meshgen::ReducedGridMeshGenerator generate;
+  Mesh::Ptr m( generate( *g ) );
+
+
+  trans::Trans trans(*g);
+
+  FunctionSpace& nodes = m->function_space("nodes");
+  FunctionSpace& spectral = m->create_function_space("spectral","spectral",make_shape(trans.nspec2(),Field::UNDEF_VARS));
+
+
+
+
+  Field& gpf = nodes.create_field<double>("gpf",1);
+  Field& spf = spectral.create_field<double>("spf",1);
+
+  trans.dirtrans(gpf,spf);
+  trans.invtrans(spf,gpf);
+
+
+
+  FieldSet gpfields;
+  FieldSet spfields;
+
+  gpfields.add_field(gpf.self());
+  spfields.add_field(spf.self());
+
+
+  BOOST_CHECK_NO_THROW( trans.dirtrans(gpfields,spfields) );
+  BOOST_CHECK_NO_THROW( trans.invtrans(spfields,gpfields) );
+
+
+  gpfields.add_field(gpf.self());
+  BOOST_CHECK_THROW(trans.dirtrans(gpfields,spfields),eckit::SeriousBug);
+
+}
