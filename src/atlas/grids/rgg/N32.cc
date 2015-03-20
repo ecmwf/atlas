@@ -7,7 +7,6 @@ namespace grids {
 namespace rgg {
 
 eckit::ConcreteBuilderT1<Grid,N32> builder_N32 (N32::grid_type_str());
-eckit::ConcreteBuilderT1<Grid,N32> builder_TL63("rgg.TL63");
 
 void N32::construct()
 {

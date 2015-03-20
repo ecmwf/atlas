@@ -67,7 +67,7 @@ public:
         "DESCRIPTION\n"
         "\n"
         "       GRID: unique identifier for grid \n"
-        "           Example values: rgg.N80, rgg.TL159, gg.N40, ll.128x64\n"
+        "           Example values: rgg.N80, gg.N40, ll.128x64\n"
         "\n"
         "       -o       Output file for mesh\n"
         "\n"

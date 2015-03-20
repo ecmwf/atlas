@@ -7,7 +7,6 @@ namespace grids {
 namespace rgg {
 
 eckit::ConcreteBuilderT1<Grid,N96> builder_N96 (N96::grid_type_str());
-eckit::ConcreteBuilderT1<Grid,N96> builder_TL191("rgg.TL191");
 
 void N96::construct()
 {
