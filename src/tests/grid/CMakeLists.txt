@@ -1,3 +1,8 @@
+set( GRIB_DEFINITION_PATH ${grib_api_BASE_DIR}/share/grib_api/definitions/ )
+set( GRIB_SAMPLES_PATH    ${grib_api_BASE_DIR}/share/grib_api/samples/ )
+
+set( _grib_environment GRIB_DEFINITION_PATH=${GRIB_DEFINITION_PATH} GRIB_SAMPLES_PATH=${GRIB_SAMPLES_PATH} )
+
 list( APPEND grib_api_samples_data
 reduced_gg_pl_160_grib1.tmpl
 reduced_gg_pl_512_grib2.tmpl
@@ -80,6 +85,7 @@ ecbuild_add_test( TARGET      atlas_test_GridSpec
                   ARGS        reduced_gg_pl_160_grib1.tmpl
                   SOURCES     test_GridSpec.cc
                   CONDITION   ECKIT_HAVE_GRIB
+                  ENVIRONMENT "${_grib_environment}"
                   LIBS        atlas
                 )
 
@@ -94,6 +100,7 @@ foreach( file ${grib_api_samples_data} )
                       COMMAND atlas_test_GridSpec
                       ARGS ${file}
                       MPI 1
+                      ENVIRONMENT "${_grib_environment}"
                      )
 endforeach()
 
@@ -150,5 +157,6 @@ ecbuild_add_test(   TARGET      atlas_test_grid_from_grib
 					SOURCES     test_grid_from_grib.cc
                     DEPENDS     atlas_tests_grid_get_gribs
 					CONDITION	ECKIT_HAVE_GRIB AND OFF
+          ENVIRONMENT "${_grib_environment}"
 					LIBS        atlas
                     MPI         1 )
