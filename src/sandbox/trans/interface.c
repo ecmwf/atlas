@@ -7,7 +7,9 @@
 
 /* in  "transi/trans.h" */
 
+/// @returns NULL if not in cache
 typedef void* (*open_proc)(void* ctxt, const char* key, int mode);
+
 typedef size_t (*write_proc)(void* ctxt, const void* buffer, size_t size, void* data);
 typedef size_t (*read_proc) (void* ctxt, void* buffer, size_t size, void* data);
 typedef int (*close_proc)(void* ctxt, void* data);
@@ -31,18 +33,63 @@ void trans_register_cache_handlers(cache_handlers* handlers)
 
 void* trans_cached_open_(const char* key, int* mode/*, fortint* err*/)
 {
+
+}
+size_t trans_cached_read_(const char* key, int* mode/*, fortint* err*/)
+{
+
+}
+
+void compute_()
+{
+	printf("Computing\n");
+}
+
+void trans_compute_or_cache(struct Trans_t* trans)
+{
 	if(global_handlers)
-		return global_handlers->open(global_handlers->context, key, *mode);
+	{
+		void* ctxt = global_handlers->context;
+
+		/* TODO: based on trans handle create the key */
+		char key[256] = "T1279_rgg.N640";
+
+		/* TODO: based on trans handle compute & allocate appropriate size for buffer */
+		char buffer[1024];
+		size_t sz = 1024;
+
+		int mode = 0; // READ
+
+		void* cache_entry = global_handlers->open(ctxt, key, mode);
+
+		if( cache_entry )
+		{			
+			global_handlers->read(ctxt, buffer, sz, cache_entry);
+		}
+		else
+		{
+			compute_(); 
+
+			/* TODO: copy / fill buffers from trans handle */
+
+			mode = 1; // WRITE
+			global_handlers->open(ctxt, key, mode);
+			global_handlers->write(ctxt, buffer, sz, cache_entry);
+		}
+
+
+		// ASSERT( cache_entry )
+
+		global_handlers->close(ctxt, cache_entry);
+	}
 	else
-		return NULL;
+		compute_();
 }
 
 /*---------------------------------------------------------------------------------*/
 
 void* my_open(void* ctxt, const char* key, int mode)
 {
-	int* fd = (int*) ctxt;
-	printf("context is %d\n", *fd);
 	return fopen(key, mode ? "w" : "r");
 }
 
@@ -99,10 +146,6 @@ void read_grid(struct Trans_t* trans)
 
 int main ( int arc, char **argv )
 {
-	int fd = 5;
-	
-	my_handlers.context = (void*) &fd;
-
   	trans_init();
 
   	trans_register_cache_handlers(&my_handlers);
@@ -117,7 +160,11 @@ int main ( int arc, char **argv )
  
 	  	/* called inside trans(i)_setup */
   		int mode = 0;
-	  	trans_cached_open_("FOO",&mode); /* 0 - read, 1 - write */
+	  	void* cache_data = trans_cached_open_("FOO",&mode); /* 0 - read, 1 - write */
+
+
+
+
 
   	trans_finalize();
 }
