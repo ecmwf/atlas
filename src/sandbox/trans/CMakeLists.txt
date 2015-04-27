@@ -7,3 +7,10 @@ ecbuild_add_executable(
   LIBS        ${ATLAS_LIBRARIES} ${TRANSI_LIBRARIES}
   INCLUDES    ${TRANSI_INCLUDE_DIRS}
   CONDITION   ATLAS_HAVE_TRANS )
+
+ecbuild_add_executable(
+  TARGET      atlas-sandbox-interface
+  SOURCES     interface.c
+  LIBS        ${ATLAS_LIBRARIES} ${TRANSI_LIBRARIES}
+  INCLUDES    ${TRANSI_INCLUDE_DIRS}
+  CONDITION   ATLAS_HAVE_TRANS )
