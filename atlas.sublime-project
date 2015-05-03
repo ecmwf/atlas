@@ -1,11 +1,13 @@
 {
-    "folders": [
-        {
-            "path": ".",
-            "follow_symlinks": true
-        }
-    ],
-    "build_systems": [
+	"folders":
+	[
+		{
+            "file_exclude_patterns": [".tags", ".tags_sorted_by_file", ".gemtags","CMakeLists.txt.user*"],
+			"follow_symlinks": true,
+			"path": "."
+		}
+	],
+	"build_systems": [
         {
             "working_dir": "${project_path}/../../build/atlas",
             "cmd": [
@@ -14,5 +16,14 @@
             "file_regex": "([/\\w\\-\\.]+):(\\d+):(\\d+:)?",
             "name": "ecbuild"
         }
-    ]
+    ],
+    "SublimeLinter":
+    {
+        "linters":
+        {
+            "cpplint": {
+                "filter": "-whitespace/line_length,-whitespace/blank_line" // ,-runtime/references
+            },
+        }
+    }
 }
