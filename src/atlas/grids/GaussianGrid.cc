@@ -30,9 +30,9 @@ std::string GaussianGrid::className()
 
 void GaussianGrid::set_typeinfo()
 {
-  std::stringstream stream;
-  stream << "gg.N"<<N();
-  uid_ = stream.str();
+  std::stringstream s;
+  s << "gg.N"<< N();
+  shortName_ = s.str();
   grid_type_ = grid_type_str();
 }
 

@@ -39,9 +39,9 @@ std::string ReducedLonLatGrid::className()
 
 void ReducedLonLatGrid::set_typeinfo()
 {
-  std::stringstream stream;
-  stream << "rll.N"<<N();
-  uid_ = stream.str();
+  std::stringstream s;
+  s << "rll.N" << N();
+  shortName_ = s.str();
   grid_type_ = grid_type_str();
 }
 
