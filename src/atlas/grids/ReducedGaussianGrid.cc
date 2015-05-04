@@ -31,9 +31,9 @@ std::string ReducedGaussianGrid::className()
 
 void ReducedGaussianGrid::set_typeinfo()
 {
-  std::stringstream stream;
-  stream << "rgg.N"<<N();
-  uid_ = stream.str();
+  std::stringstream s;
+  s << "rgg.N"<<N();
+  shortName_ = s.str();
   grid_type_ = grid_type_str();
 }
 

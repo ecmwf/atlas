@@ -29,9 +29,9 @@ namespace atlas {
 //------------------------------------------------------------------------------------------------------
 
 Grid* Grid::create(const Params& p) {
-  if (p.has("uid")) {
-    if (Factory<Grid>::instance().exists(p["uid"])) {
-      return Factory<Grid>::instance().get(p["uid"]).create(p);
+  if (p.has("shortName")) {
+    if (Factory<Grid>::instance().exists(p["shortName"])) {
+      return Factory<Grid>::instance().get(p["shortName"]).create(p);
     }
   }
   return Factory<Grid>::instance().get(p["grid_type"]).create(p);

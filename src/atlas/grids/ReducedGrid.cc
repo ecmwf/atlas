@@ -66,11 +66,11 @@ ReducedGrid::ReducedGrid(const Params& params) : N_(0)
   mask(params);
 
   if( ! params.has("grid_type") ) throw BadParameter("grid_type missing in Params",Here());
-  if( ! params.has("uid") ) throw BadParameter("uid missing in Params",Here());
+  if( ! params.has("shortName") ) throw BadParameter("uid missing in Params",Here());
   if( ! params.has("hash") ) throw BadParameter("hash missing in Params",Here());
 
   grid_type_ = params["grid_type"].as<std::string>();
-  uid_ = params["uid"].as<std::string>();
+  shortName_ = params["shortName"].as<std::string>();
 }
 
 void ReducedGrid::setup(const eckit::Params& params)
@@ -294,13 +294,12 @@ std::string ReducedGrid::shortName() const {
 }
 
 Grid::uid_t ReducedGrid::unique_id() const {
-
   if (uid_.empty()) {
-    eckit::StrStream os;
-    os << shortName() << ".PL" << hash() << eckit::StrStream::ends;
-    uid_ = std::string(os);
+    std::ostringstream s;
+    s << shortName() << ".PL" << hash();
+    uid_ = s.str();
   }
-
+  DEBUG_VAR(uid_);
   return uid_;
 }
 
