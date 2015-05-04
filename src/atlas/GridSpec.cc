@@ -45,20 +45,6 @@ std::string GridSpec::grid_type() const
    return val.as<std::string>();
 }
 
-void GridSpec::uid(const std::string& uid)
-{
-   set("uid",Properties::property_t(uid));
-}
-
-Grid::uid_t GridSpec::uid() const
-{
-   Properties::property_t val = get("uid");
-   if(val.isNil())
-      throw eckit::SeriousBug("GridSpec with no short name specified", Here());
-
-   return val.as<std::string>();
-}
-
 std::string GridSpec::hash() const
 {
    return eckit::MD5( str() );
@@ -91,7 +77,7 @@ void GridSpec::set_npts_per_lat(const std::vector<int>& rgSpec_vec)
    set("npts_per_lat",eckit::Value(rgSpec) );
 }
 
-void GridSpec::set_bounding_box(const Grid::BoundBox& bbox )
+void GridSpec::set_bounding_box(const BoundBox& bbox )
 {
    set("bbox_s", bbox.min().lat());
    set("bbox_w", bbox.min().lon());
@@ -112,7 +98,7 @@ void GridSpec::get_npts_per_lat(std::vector<int> &rgSpec) const
    }
 }
 
-void GridSpec::get_bounding_box(Grid::BoundBox& bbox) const
+void GridSpec::get_bounding_box(BoundBox& bbox) const
 {
    if(has("bbox_s"))
    {

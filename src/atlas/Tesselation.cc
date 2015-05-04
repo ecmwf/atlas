@@ -198,43 +198,43 @@ void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, PointSet& p
 
 //------------------------------------------------------------------------------------------------------
 
-void Tesselation::tesselate( Grid& g )
-{
-	std::string uid = g.uid();
+void Tesselation::tesselate( Grid& g ) {
 
-    Mesh& mesh = g.mesh();
+  std::string uid = g.unique_id();
 
-	if( MeshCache::get( uid, mesh ) )
-        return;
+  Mesh& mesh = g.mesh();
 
-	std::cout << "mesh not in cache -- tesselating grid " << uid << std::endl;
+  if (MeshCache::get(uid, mesh)) return;
 
-	bool atlasTriangulateRGG = eckit::Resource<bool>("atlas.triangulate.RGG;$ATLAS_TRIANGULATE_RGG",false);
+  std::cout << "Mesh not in cache -- tesselating grid " << uid << std::endl;
 
-	grids::ReducedGrid* rg = dynamic_cast<grids::ReducedGrid*>(&g);
+  bool atlasTriangulateRGG = eckit::Resource<bool>("atlas.triangulate.RGG;$ATLAS_TRIANGULATE_RGG", false);
 
-	if( atlasTriangulateRGG && rg )
-	{
-		std::cout << "mesh is ReducedGrid " << rg->uid() << std::endl;
-		ASSERT(rg);
+  grids::ReducedGrid* rg = dynamic_cast<grids::ReducedGrid*>(&g);
 
-		meshgen::ReducedGridMeshGenerator mg;
+  if (atlasTriangulateRGG && rg) {
 
+    std::cout << "Mesh is ReducedGrid " << g.shortName() << std::endl;
 
-		// force these flags
-		mg.set_three_dimensional(true);
-		mg.set_patch_pole(true);
-//		mg.set_include_pole(true);
-		mg.triangulate_quads_ = true;
+    ASSERT(rg);
 
-		mg.generate( *rg, mesh );
-	}
-	else
-	{
-		Tesselation::tesselate( mesh );
-	}
+    meshgen::ReducedGridMeshGenerator mg;
 
-	MeshCache::add( uid, mesh );
+    // force these flags
+    mg.set_three_dimensional(true);
+    mg.set_patch_pole(true);
+    //		mg.set_include_pole(true);
+    mg.triangulate_quads_ = true;
+
+    mg.generate(*rg, mesh);
+
+  } else {
+    // slower, more robust tesselation method, that uses Delaunay triangulation
+    Tesselation::tesselate(mesh);
+  }
+
+  MeshCache::add(uid, mesh);
+
 }
 
 void Tesselation::tesselate( Mesh& mesh )

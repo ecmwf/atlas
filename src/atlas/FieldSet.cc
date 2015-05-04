@@ -203,7 +203,7 @@ Field::Ptr FieldSet::create_field(grib::GribHandle& gh)
   ASSERT( gp );
 
   Grid::Ptr grid( Grid::create( Params(*gp) ) );
-  Grid::uid_t uid = grid->uid();
+  Grid::uid_t uid = grid->unique_id();
 
   // store Grid in GridSet, then reassign grid (pointer) in case there one has the same UID
   gridset_.push_back(grid);
@@ -241,11 +241,11 @@ bool FieldSet::haveSameGrid() const
   if( fields_.empty() )
     return true;
 
-  Grid::uid_t uid = fields_[0]->grid().uid();
+  Grid::uid_t uid = fields_[0]->grid().unique_id();
 
   for( size_t i = 1; i < fields_.size(); ++i )
   {
-    if( fields_[i]->grid().uid() != uid )
+    if( fields_[i]->grid().unique_id() != uid )
       return false;
   }
 

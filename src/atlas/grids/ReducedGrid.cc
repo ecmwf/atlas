@@ -8,7 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-#include <typeinfo> // std::bad_cast
+#include <typeinfo>  // std::bad_cast
+#include <string>
 
 #include "eckit/memory/Builder.h"
 #include "eckit/memory/Factory.h"
@@ -18,6 +19,7 @@
 #include "atlas/util/Debug.h"
 
 using eckit::Factory;
+using eckit::MD5;
 using eckit::Params;
 using eckit::BadParameter;
 
@@ -26,14 +28,14 @@ namespace grids {
 
 //------------------------------------------------------------------------------------------------------
 
-register_BuilderT1(Grid,ReducedGrid,ReducedGrid::grid_type_str());
+register_BuilderT1(Grid, ReducedGrid, ReducedGrid::grid_type_str());
 
-ReducedGrid* ReducedGrid::create( const Params& p )
-{
-  ReducedGrid* grid = dynamic_cast<ReducedGrid*>( Grid::create(p) );
-  if( !grid )
-    throw BadParameter("Grid is not a reduced grid",Here());
+ReducedGrid* ReducedGrid::create(const Params& p) {
+
+  ReducedGrid* grid = dynamic_cast<ReducedGrid*>(Grid::create(p));
+  if (!grid) throw BadParameter("Grid is not a reduced grid", Here());
   return grid;
+
 }
 
 ReducedGrid* ReducedGrid::create(const std::string& uid)
@@ -52,10 +54,7 @@ ReducedGrid* ReducedGrid::create(const GridSpec& g)
   return grid;
 }
 
-std::string ReducedGrid::className()
-{
-  return "atlas.ReducedGrid";
-}
+std::string ReducedGrid::className() { return "atlas.ReducedGrid"; }
 
 ReducedGrid::ReducedGrid() : N_(0)
 {
@@ -119,7 +118,7 @@ ReducedGrid::ReducedGrid( const int nlat, const double lats[], const int nlons[]
 
 void ReducedGrid::setup( const int nlat, const double lats[], const int nlons[], const double lonmin[], const double lonmax[] )
 {
-  ASSERT( nlat > 1 ); // can't have a grid with just one latitude
+  ASSERT(nlat > 1);  // can't have a grid with just one latitude
 
   nlons_.assign(nlons,nlons+nlat);
 
@@ -188,15 +187,12 @@ int ReducedGrid::N() const
   return N_;
 }
 
-Grid::BoundBox ReducedGrid::bounding_box() const
+BoundBox ReducedGrid::bounding_box() const
 {
   return bounding_box_;
 }
 
-size_t ReducedGrid::npts() const
-{
-  return npts_;
-}
+size_t ReducedGrid::npts() const { return npts_; }
 
 void ReducedGrid::lonlat( double crds[] ) const
 {
@@ -240,7 +236,6 @@ GridSpec ReducedGrid::spec() const
 {
   GridSpec grid_spec(grid_type());
 
-  grid_spec.uid( uid() );
   grid_spec.set("nlat",nlat());
   grid_spec.set_latitudes(latitudes());
   grid_spec.set_npts_per_lat(npts_per_lat());
@@ -250,33 +245,6 @@ GridSpec ReducedGrid::spec() const
     grid_spec.set("N", N_ );
 
   return grid_spec;
-}
-
-bool ReducedGrid::same(const Grid& _g) const
-{
-  try
-  {
-    const ReducedGrid& g = *dynamic_cast<const ReducedGrid*>(&_g);
-
-    if( npts() != g.npts() )
-      return false;
-
-    if( nlat() != g.nlat() )
-      return false;
-
-    for( int jlat=0; jlat<nlat(); ++jlat )
-    {
-      if( nlon(jlat) != g.nlon(jlat) )
-        return false;
-    }
-
-    return true;
-  }
-  catch (std::bad_cast& e)
-  {
-    return false;
-  }
-  return false;
 }
 
 int ReducedGrid::nlat() const
@@ -320,10 +288,34 @@ const std::vector<double>& ReducedGrid::latitudes() const
   return lat_;
 }
 
-std::string ReducedGrid::uid() const
-{
-  ASSERT( !uid_.empty() );
+std::string ReducedGrid::shortName() const {
+  ASSERT(!shortName_.empty());
+  return shortName_;
+}
+
+Grid::uid_t ReducedGrid::unique_id() const {
+
+  if (uid_.empty()) {
+    eckit::StrStream os;
+    os << shortName() << ".PL" << hash() << eckit::StrStream::ends;
+    uid_ = std::string(os);
+  }
+
   return uid_;
+}
+
+MD5::digest_t ReducedGrid::hash() const {
+
+  if (hash_.empty()) {
+
+    const std::vector<int>& points_per_latitudes = npts_per_lat();
+    eckit::MD5 md5;
+    md5.add(&points_per_latitudes[0], sizeof(int)*points_per_latitudes.size());
+    md5.add(bounding_box_.digest());
+    hash_ = md5.digest();
+  }
+
+  return hash_;
 }
 
 void ReducedGrid::mask(const Domain& dom)

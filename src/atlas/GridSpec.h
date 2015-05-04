@@ -12,13 +12,12 @@
 #define atlas_GridSpec_H
 
 #include "eckit/value/Properties.h"
+#include "eckit/utils/MD5.h"
 
 #include "atlas/Grid.h"
 
-//------------------------------------------------------------------------------------------------------
 
 namespace atlas {
-
 
 //------------------------------------------------------------------------------------------------------
 
@@ -50,20 +49,17 @@ public:
   /// returns the gridType. currently this matches grid _type found in GRIB
   std::string grid_type() const;
 
-  void uid(const std::string&);
-  Grid::uid_t uid() const;
-
-  std::string hash() const;
+  eckit::MD5::digest_t hash() const;
 
   static const char* className() { return "atlas::GridSpec"; }
 
   void set_latitudes(const std::vector<double>& latitudes_vec);
 
   void set_npts_per_lat(const std::vector<int>& rgSpec);
-  void set_bounding_box(const Grid::BoundBox& bbox );
+  void set_bounding_box(const BoundBox& bbox );
 
   void get_npts_per_lat(std::vector<int>& rgSpec) const;
-  void get_bounding_box(Grid::BoundBox& bbox ) const;
+  void get_bounding_box(BoundBox& bbox ) const;
 
   std::string str() const;
 
@@ -73,6 +69,7 @@ public:
   friend std::ostream& operator<<( std::ostream& os, const GridSpec& v) { v.print(os); return os;}
 
 private:
+
   friend eckit::Params::value_t get( const GridSpec& p, const eckit::Params::key_t& key );
   friend void print( const GridSpec& p, std::ostream& s );
   friend void encode( const GridSpec& p, eckit::Stream& s );

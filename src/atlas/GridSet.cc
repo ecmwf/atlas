@@ -21,7 +21,7 @@ namespace atlas {
 
 bool GridSet::has(const Grid& grid) const
 {
-  return has(grid.uid());
+  return has(grid.shortName());
 }
 
 
@@ -29,7 +29,7 @@ bool GridSet::has(const Grid::uid_t& uid) const
 {
   for (std::vector< Grid::Ptr >::const_iterator g = grids_.begin(); g != grids_.end(); ++g )
   {
-    if ( uid == (*g)->uid() )
+    if ( uid == (*g)->unique_id() )
       return true;
   }
   return false;
@@ -38,7 +38,7 @@ bool GridSet::has(const Grid::uid_t& uid) const
 
 void GridSet::push_back(Grid::Ptr grid)
 {
-  if( !has(grid->uid()) )
+  if( !has(grid->unique_id()) )
     grids_.push_back(grid);
 }
 
@@ -47,7 +47,7 @@ Grid::Ptr GridSet::grid(const Grid::uid_t& uid) const
 {
   for( std::vector< Grid::Ptr >::const_iterator g = grids_.begin(); g != grids_.end(); ++g )
   {
-    if( uid == (*g)->uid() )
+    if( uid == (*g)->unique_id() )
       return (*g);
   }
 

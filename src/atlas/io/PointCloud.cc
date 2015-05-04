@@ -236,7 +236,7 @@ void PointCloud::write(const eckit::PathName& path, const FieldSet& fieldset)
   // @warning: several copy operations here
 
   for (size_t i=1; i<fieldset.size(); ++i)
-    if (fieldset[0].grid().uid()!=fieldset[i].grid().uid())
+    if (fieldset[0].grid().same(fieldset[i].grid()))
       throw eckit::BadParameter(msg+"fields must be described in the same grid (fieldset.field(0).grid() == fieldset.field(*).grid())");
 
   const Mesh& m(fieldset[0].grid().mesh());

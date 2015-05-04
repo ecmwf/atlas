@@ -193,6 +193,8 @@ atlas_omp.h
 atlas_omp.cc
 Behavior.h
 Behavior.cc
+BoundBox.h
+BoundBox.cc
 LogFormat.h
 LogFormat.cc
 ErrorHandling.cc
@@ -228,6 +230,8 @@ PointSet.cc
 PointSet.h
 Tesselation.cc
 Tesselation.h
+QuadIntersection.cc
+QuadIntersection.h
 TriangleIntersection.cc
 TriangleIntersection.h
 Util.cc

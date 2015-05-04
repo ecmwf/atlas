@@ -19,22 +19,22 @@
 #include <cstddef>
 #include <vector>
 #include <cmath>
+#include <string>
 
-#include <eckit/exception/Exceptions.h>
-#include <eckit/memory/Owned.h>
-#include <eckit/memory/SharedPtr.h>
-#include <eckit/value/Params.h>
+#include "eckit/exception/Exceptions.h"
+#include "eckit/geometry/Point2.h"
 #include "eckit/memory/Builder.h"
+#include "eckit/memory/Owned.h"
+#include "eckit/memory/SharedPtr.h"
+#include "eckit/value/Params.h"
+#include "eckit/utils/MD5.h"
 
-#include <eckit/geometry/Point2.h>
-
-//------------------------------------------------------------------------------------------------------
+#include "atlas/BoundBox.h"
 
 namespace atlas {
 
 class Mesh;
 class GridSpec;
-
 
 //------------------------------------------------------------------------------------------------------
 
@@ -50,30 +50,32 @@ class GridSpec;
  */
 class Grid : public eckit::Owned {
 
-public: // types
+  mutable eckit::SharedPtr<Mesh> mesh_;
+
+ public:  // types
 
   typedef eckit::BuilderT1<Grid> builder_t;
-  typedef const eckit::Params&   ARG1;
+  typedef const eckit::Params& ARG1;
 
-  typedef eckit::geometry::LLPoint2    Point;     ///< point type
-  typedef eckit::geometry::LLBoundBox2 BoundBox;  ///< bounding box type
-  typedef BoundBox Domain; // To become abstract class used to mask a grid
+  typedef eckit::geometry::LLPoint2 Point;
 
-	typedef eckit::SharedPtr<Grid> Ptr;
-	typedef std::string uid_t;
+  typedef BoundBox Domain;                        // To become abstract class used to mask a grid
 
-public: // methods
+  typedef eckit::SharedPtr<Grid> Ptr;
+  typedef std::string uid_t;
+
+ public:  // methods
 
   static std::string className() { return "atlas.Grid"; }
 
   static double degrees_eps();
 
-  static Grid* create( const GridSpec& );
+  static Grid* create(const GridSpec&);
 
-  static Grid* create( const eckit::Params& );
-  static Grid* create( const Grid::uid_t& uid );
-//  static Grid* create( const Grid::HumanName& name );
-//  static Grid* create( const eckit::Buffer& buff );
+  static Grid* create(const eckit::Params&);
+  static Grid* create(const Grid::uid_t& shortName);
+  //  static Grid* create( const Grid::HumanName& name );
+  //  static Grid* create( const eckit::Buffer& buff );
 
   Grid();
 
@@ -81,7 +83,14 @@ public: // methods
 
   Ptr self() { return Ptr(this); }
 
-  virtual uid_t uid() const = 0;
+  /// Human readable name (may not be unique)
+  virtual std::string shortName() const = 0;
+
+  /// Unique grid id
+  virtual uid_t unique_id() const = 0;
+
+  /// Hash of the information that makes this Grid unique
+  virtual eckit::MD5::digest_t hash() const = 0;
 
   /**
    * @return bounding box
@@ -100,16 +109,16 @@ public: // methods
   virtual Domain domain() const;
 
   /// Mask with given Domain
-  virtual void mask( const Domain& );
+  virtual void mask(const Domain&);
 
   /// Mask with given Params
-  virtual void mask( const eckit::Params& );
+  virtual void mask(const eckit::Params&);
 
   /// Return a copy of the grid, masked with given Domain
-  virtual Grid* masked( const Domain& ) const;
+  virtual Grid* masked(const Domain&) const;
 
   /// Return a copy of the grid, masked with given Params
-  virtual Grid* masked( const eckit::Params& ) const;
+  virtual Grid* masked(const eckit::Params&) const;
 
   /**
    * @return number of grid points
@@ -123,39 +132,35 @@ public: // methods
    * @note assumes that the input vectors have the correct size.
    * @note assumes we start at NORTH,WEST-->SOUTH,EAST
    */
-  virtual void lonlat( double[] ) const = 0;
-  virtual void lonlat( std::vector< double >& ) const;
-  virtual void lonlat( std::vector< Point >& ) const = 0;
+  virtual void lonlat(double[]) const = 0;
+  virtual void lonlat(std::vector<double>&) const;
+  virtual void lonlat(std::vector<Point>&) const = 0;
 
   virtual std::string grid_type() const = 0;
 
   virtual GridSpec spec() const = 0;
 
-  virtual bool same(const Grid&) const = 0;
+  virtual bool same(const Grid&) const;
 
   Mesh& mesh();
   const Mesh& mesh() const;
 
-protected: // methods
+ protected:  // methods
 
   /// helper function to initialise global grids, with a global area (BoundBox)
   static BoundBox make_global_bounding_box();
 
   /// helper function to create bounding boxes (for non-global grids)
-  static BoundBox make_bounding_box( const eckit::Params& );
+  static BoundBox make_bounding_box(const eckit::Params&);
 
-private: // methods
+ private:  // methods
 
   void build_mesh() const;
-
-private: // members
-
-  mutable eckit::SharedPtr< Mesh > mesh_;
 
 };
 
 //------------------------------------------------------------------------------------------------------
 
-} // namespace atlas
+}  // namespace atlas
 
 #endif

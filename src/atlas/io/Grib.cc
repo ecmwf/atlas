@@ -154,7 +154,7 @@ GribHandle::Ptr Grib::create_handle( const Grid& grid, long edition )
     sample_file = Grib::grib_sample_file(grid_spec,edition);
 
     if( sample_file.empty() )
-      throw BadParameter("Could not find GRIB sample for grid " + grid.uid(), Here() );
+      throw BadParameter("Could not find GRIB sample for grid " + grid.shortName(), Here() );
 
     gh = grib_handle_new_from_samples(0,sample_file.c_str() );
 
@@ -214,11 +214,6 @@ static std::string match_grid_spec_with_sample_file( const GridSpec& g_spec, lon
    // First get the grid_type
    std::string grid_type = g_spec.grid_type();
 
-   // For reduced gaussain, first match GridSpec uid, directly to a samples file
-   if (grid_type == grids::ReducedGaussianGrid::grid_type_str() ) {
-      return map_uid_to_grib_sample_file(g_spec.uid(),edition);
-   }
-
    // For regular gaussian grids
    if (grid_type == grids::GaussianGrid::grid_type_str() ) {
 
@@ -267,31 +262,7 @@ static std::string match_grid_spec_with_sample_file( const GridSpec& g_spec, lon
    return std::string(); // returning emtpy string when match fails
 }
 
-static std::string map_uid_to_grib_sample_file(const std::string& uid, long edition)
-{
-    using std::string;
-
-    long ns[14] = {32,48,80,128,160,200,256,320,400,512,640,1024,1280,2000};
-
-    std::map<std::string,std::string> uid_to_sample;
-
-    for( size_t i = 0; i < sizeof(ns)/sizeof(long); ++i)
-        uid_to_sample[ "reduced_gg_" + Translator<long,string>()(ns[i]) ] = string("reduced_gg_pl_" + Translator<long,string>()(ns[i]) );
-
-    string r;
-
-    std::map<string,string>::const_iterator i = uid_to_sample.find(uid);
-    if (i != uid_to_sample.end())
-    {
-      r = (*i).second + "_grib" + Translator<long,string>()(edition);
-    }
-
-    return r;
-}
-
-bool check_grid_spec_matches_sample_file( const GridSpec& g_spec,
-																					long edition,
-																					const eckit::PathName& fpath )
+bool check_grid_spec_matches_sample_file( const GridSpec& g_spec, long edition,	const eckit::PathName& fpath )
 {
 	GribHandle gh( fpath );
 

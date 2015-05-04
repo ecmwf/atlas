@@ -154,7 +154,7 @@ static void test_grib_file(const std::string& fpath)
       // This can then effect, comparison of the points
       // ----------------------------------------------------------------------------------------
       double guass = GribAccessor<long>("numberOfParallelsBetweenAPoleAndTheEquator")(gh);
-      Grid::BoundBox bbox = grid_created_from_grib->bounding_box();
+      BoundBox bbox = grid_created_from_grib->bounding_box();
 
       double EXPECTED_longitudeOfLastGridPointInDegrees = 360.0 - (90.0/guass);
       std::cout << "   EXPECTED longitudeOfLastGridPointInDegrees     " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << EXPECTED_longitudeOfLastGridPointInDegrees << std::endl;

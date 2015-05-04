@@ -8,136 +8,102 @@
  * does it submit to any jurisdiction.
  */
 
+#include "Grid.h"
+
+#include <vector>
+
 #include "eckit/memory/Factory.h"
 #include "eckit/memory/Builder.h"
 #include "eckit/config/Resource.h"
 
 #include "atlas/Mesh.h"
-#include "atlas/Grid.h"
 #include "atlas/GridSpec.h"
 #include "atlas/Tesselation.h"
 #include "atlas/grids/grids.h"
 
-using namespace eckit;
+using eckit::Params;
+using eckit::Factory;
 
 namespace atlas {
 
-
 //------------------------------------------------------------------------------------------------------
 
-Grid* Grid::create( const Params& p )
-{
-  if( p.has("uid") )
-  {
-    if( Factory<Grid>::instance().exists(p["uid"]) )
-    {
+Grid* Grid::create(const Params& p) {
+  if (p.has("uid")) {
+    if (Factory<Grid>::instance().exists(p["uid"])) {
       return Factory<Grid>::instance().get(p["uid"]).create(p);
     }
   }
-  return Factory<Grid>::instance().get( p["grid_type"] ).create(p);
+  return Factory<Grid>::instance().get(p["grid_type"]).create(p);
 }
 
-Grid* Grid::create(const Grid::uid_t& uid)
-{
-  return grids::grid_from_uid(uid);
-}
+Grid* Grid::create(const Grid::uid_t& uid) { return grids::grid_from_uid(uid); }
 
-Grid* Grid::create(const GridSpec& g)
-{
-  return Grid::create( Params(g) );
-}
+Grid* Grid::create(const GridSpec& g) { return Grid::create(Params(g)); }
 
-Grid::Grid()
-{
-}
+Grid::Grid() {}
 
-Grid::~Grid()
-{
-}
+Grid::~Grid() {}
 
-Grid::Domain Grid::domain() const
-{
-  return bounding_box();
-}
+Grid::Domain Grid::domain() const { return bounding_box(); }
 
-void Grid::mask( const Domain& )
-{
-  NOTIMP;
-}
+void Grid::mask(const Domain&) { NOTIMP; }
 
-void Grid::mask( const eckit::Params& )
-{
-  NOTIMP;
-}
+void Grid::mask(const Params&) { NOTIMP; }
 
-Grid* Grid::masked( const Domain& ) const
-{
+Grid* Grid::masked(const Domain&) const {
   NOTIMP;
   return NULL;
 }
 
-Grid* Grid::masked( const eckit::Params& ) const
-{
+Grid* Grid::masked(const eckit::Params&) const {
   NOTIMP;
   return NULL;
 }
 
-void Grid::lonlat( std::vector<double>& crd ) const
-{
-  crd.resize(npts()*2);
+void Grid::lonlat(std::vector<double>& crd) const {
+  crd.resize(npts() * 2);
   lonlat(crd.data());
 }
 
-void Grid::build_mesh() const
-{
-  if( ! mesh_ )
-  {
-    mesh_.reset( new Mesh() );
-    mesh_->grid( const_cast<Grid&>(*this) );
-    Tesselation::build_mesh( *this, *mesh_ );
+void Grid::build_mesh() const {
+  if (!mesh_) {
+    mesh_.reset(new Mesh());
+    mesh_->grid(const_cast<Grid&>(*this));
+    Tesselation::build_mesh(*this, *mesh_);
   }
 }
 
-Mesh& Grid::mesh()
-{
+Mesh& Grid::mesh() {
   build_mesh();
   return *mesh_;
 }
 
-const Mesh& Grid::mesh() const
-{
+const Mesh& Grid::mesh() const {
   build_mesh();
   return *mesh_;
 }
+
+bool Grid::same(const Grid& g) const { return unique_id() == g.unique_id(); }
 
 //------------------------------------------------------------------------------------------------------
 
-Grid::BoundBox Grid::make_global_bounding_box()
-{
-  return Grid::BoundBox( 90., -90., 360. - degrees_eps(), 0. );
+BoundBox Grid::make_global_bounding_box() { return BoundBox(90., -90., 360. - degrees_eps(), 0.); }
+
+BoundBox Grid::make_bounding_box(const Params& p) {
+  if (!p.has("bbox_s")) return Grid::make_global_bounding_box();
+
+  return BoundBox(p["bbox_n"], p["bbox_s"], p["bbox_e"], p["bbox_w"]);
 }
 
-Grid::BoundBox Grid::make_bounding_box(const Params& p)
-{
-  if( !p.has("bbox_s") )
-    return Grid::make_global_bounding_box();
-
-  return BoundBox( p["bbox_n"],
-                   p["bbox_s"],
-                   p["bbox_e"],
-                   p["bbox_w"] );
-}
-
-double Grid::degrees_eps()
-{
+double Grid::degrees_eps() {
   /// default is 1E-3 because
   /// some bugs in IFS means we need a lower resolution epsilon when decoding from grib2
 
-  static double eps = eckit::Resource<double>( "$ATLAS_DEGREES_EPSILON;atlas.degrees_epsilon", 1E-3 );
+  static double eps = eckit::Resource<double>("$ATLAS_DEGREES_EPSILON;atlas.degrees_epsilon", 1E-3);
   return eps;
 }
 
 //------------------------------------------------------------------------------------------------------
 
-
-} // namespace atlas
+}  // namespace atlas

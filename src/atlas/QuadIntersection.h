@@ -66,22 +66,22 @@ struct Ray {
 
 /// Triangle structure
 
-struct Triag {
+struct Quad {
 
-  Triag(double* x0, double* x1, double* x2) {
+  Quad(double* x0, double* x1, double* x2, double* x3) {
 
     v0 = Eigen::Vector3d::Map(x0);
     v1 = Eigen::Vector3d::Map(x1);
     v2 = Eigen::Vector3d::Map(x2);
+    v3 = Eigen::Vector3d::Map(x3);
 
   }
 
   Eigen::Vector3d v0;
   Eigen::Vector3d v1;
   Eigen::Vector3d v2;
+  Eigen::Vector3d v3;
 
-  /// Implements @link
-  /// http://www.scratchapixel.com/lessons/3d-basic-lessons/lesson-9-ray-triangle-intersection/m-ller-trumbore-algorithm
   bool intersects(const Ray& r, Isect& isect, const double slack = 2 * std::numeric_limits<double>::epsilon());
 
 };

@@ -35,8 +35,6 @@ public: // methods
    PolarStereoGraphic( const eckit::Params& p );
    virtual ~PolarStereoGraphic();
 
-   virtual uid_t uid() const;
-
    /// To compute bounding box in spherical co-ordinates we need to:
    ///   1/ project the first spherical pt, on to the plane.
    ///   2/ From this first x/y we compute the last point on the projected plane
@@ -55,13 +53,21 @@ public: // methods
 
    virtual std::string grid_type() const;
    virtual GridSpec spec() const;
-   virtual bool same(const Grid&) const;
+
+private: // methods
+
+  /// Human readable name, does not contain all possible combinations of PolarStereoGraphic
+  virtual std::string shortName() const;
+
+  virtual uid_t unique_id() const;
+
+  virtual eckit::MD5::digest_t hash() const;
 
 private: // members
 
    bool iScansPositively_;            // Used to determine correct bounding box
    bool jScansPositively_;            // Used to determine correct bounding box
-   Point first_grid_pt_;               // This is in spherical lat long co-ordinate
+   Point first_grid_pt_;              // This is in spherical lat long co-ordinate
    long npts_xaxis_;                  // No of points in x-axes *ON* the projected plane
    long npts_yaxis_;                  // No of points in y-axes *ON* the projected plane
    long x_grid_length_;               // x grid length *ON* the projected plane, in meters
@@ -76,6 +82,11 @@ private: // members
    double semi_major_;                // default 6378137   (a)
    double semi_minor_;                // default 6356752.3 (b)
    double e_;                         // calculated e = sqrt( 1 - b*b/a*a)
+
+   mutable std::string          shortName_;
+   mutable uid_t                uid_;
+   mutable eckit::MD5::digest_t hash_;
+
 };
 
 //-----------------------------------------------------------------------------

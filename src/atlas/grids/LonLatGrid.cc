@@ -231,8 +231,6 @@ GridSpec LonLatGrid::spec() const
 {
   GridSpec grid_spec( grid_type_str() );
 
-  grid_spec.uid(uid());
-
   grid_spec.set("nlon", nlon() );
   grid_spec.set("nlat", nlat() );
 

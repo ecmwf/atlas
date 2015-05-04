@@ -16,10 +16,10 @@
 #include "atlas/grids/Unstructured.h"
 #include "atlas/util/ArrayView.h"
 
+using eckit::MD5;
 
 namespace atlas {
 namespace grids {
-
 
 register_BuilderT1(Grid,Unstructured,Unstructured::grid_type_str());
 
@@ -66,17 +66,43 @@ Unstructured::~Unstructured()
 }
 
 
-Grid::uid_t Unstructured::uid() const
+Grid::uid_t Unstructured::shortName() const
 {
-  if( cachedUID_.empty() )
+  if( shortName_.empty() )
   {
-    cachedUID_ = "U.";
-    cachedUID_.append( spec().hash() );
+    std::ostringstream s;
+    s <<  "Unst." << hash().substr(0, 7) << eckit::StrStream::ends;
+    shortName_ = s.str();
   }
-  return cachedUID_;
+  return shortName_;
 }
 
-Grid::BoundBox Unstructured::bounding_box() const
+Grid::uid_t Unstructured::unique_id() const {
+
+  if (uid_.empty()) {
+    std::ostringstream s;
+    s <<  "Unst." << hash() << eckit::StrStream::ends;
+    uid_ = s.str();
+  }
+
+  return uid_;
+}
+
+MD5::digest_t Unstructured::hash() const {
+
+  if (hash_.empty()) {
+
+    ASSERT(points_);
+    const std::vector< Point >& pts = *points_;
+    eckit::MD5 md5;
+    md5.add(&pts[0], sizeof(Point)*pts.size());
+    hash_ = md5.digest();
+  }
+
+  return hash_;
+}
+
+BoundBox Unstructured::bounding_box() const
 {
   return bound_box_;
 }
@@ -118,7 +144,6 @@ GridSpec Unstructured::spec() const
 
   cachedGridSpec_.reset( new GridSpec(grid_type()) );
 
-  cachedGridSpec_->uid("U");
   cachedGridSpec_->set_bounding_box(bound_box_);
 
   std::vector<double> coords;
@@ -128,13 +153,6 @@ GridSpec Unstructured::spec() const
 
   return *cachedGridSpec_;
 }
-
-
-bool Unstructured::same(const Grid& grid) const
-{
-  return uid() == grid.uid();
-}
-
 
 } // namespace grids
 } // namespace atlas

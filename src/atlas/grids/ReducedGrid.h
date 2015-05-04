@@ -35,7 +35,7 @@ public:
 
   static ReducedGrid* create( const eckit::Params& );
   static ReducedGrid* create( const GridSpec& );
-  static ReducedGrid* create( const std::string& uid );
+  static ReducedGrid* create( const std::string& shortName );
 
 public:
 
@@ -49,8 +49,6 @@ public:
   ReducedGrid( const std::vector<double>& lats, const std::vector<size_t>& nlon );
 
   ReducedGrid( const int nlat, const double lats[], const int npts_per_lat[] );
-
-  virtual uid_t uid() const;
 
   virtual BoundBox bounding_box() const;
 
@@ -66,9 +64,7 @@ public:
 
   virtual GridSpec spec() const;
 
-  virtual bool same( const Grid& ) const;
-
-  // number of latitudes in hemispherecd
+  /// number of latitudes in hemisphere
   virtual int N() const;
 
   int nlat() const;
@@ -91,6 +87,20 @@ public:
   virtual void mask( const Domain& );
   virtual void mask( const eckit::Params& );
 
+private: // methods
+
+  /// Human readable name
+  /// May not be unique, especially when reduced gauss grids have the same N numbers
+  /// but different distribution of latitude points
+  virtual std::string shortName() const;
+
+  /// Unique grid id
+  /// Computed from the shortName and a hash of the latitudes array
+  virtual uid_t unique_id() const;
+
+  /// Hash of the PL array
+  virtual eckit::MD5::digest_t hash() const;
+
 protected:
 
   void setup( const eckit::Params& );
@@ -100,16 +110,24 @@ protected:
 
 protected:
 
+  int                 N_;
+  int                 nlonmax_;
+
+  size_t              npts_;          ///<! Total number of unique points in the grid
+
+  BoundBox            bounding_box_;  ///<! bounding box for data, only points within are considered part of grid
+
+  std::string         grid_type_;
+
+  std::string                   shortName_;
+  mutable uid_t                 uid_;
+  mutable eckit::MD5::digest_t  hash_;
+
   std::vector<double> lat_;    ///<! Latitude values
   std::vector<int>    nlons_;  ///<! Number of points per latitude (int32 type for Fortran interoperability)
   std::vector<double> lonmin_; ///<! Value of minimum longitude per latitude [default=0]
   std::vector<double> lonmax_; ///<! Value of maximum longitude per latitude [default=~360 (one increment smaller)]
-  size_t              npts_;   ///<! Total number of unique points in the grid
-  int                 nlonmax_;
-  BoundBox            bounding_box_;   ///<! bounding box for data, only points within are considered part of grid
-  std::string         uid_;
-  std::string         grid_type_;
-  int                 N_;
+
 };
 
 //------------------------------------------------------------------------------------------------------

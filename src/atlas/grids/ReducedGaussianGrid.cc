@@ -85,13 +85,10 @@ void ReducedGaussianGrid::setup_N_hemisphere( const int N, const int nlons[] )
   ReducedGrid::setup_lat_hemisphere(N,lats.data(),nlons,DEG);
 }
 
-
-
 GridSpec ReducedGaussianGrid::spec() const
 {
   GridSpec grid_spec( grid_type_str() );
 
-  grid_spec.uid( uid() );
   grid_spec.set("nlat",nlat());
   grid_spec.set_npts_per_lat(npts_per_lat());
   grid_spec.set_latitudes(latitudes());

@@ -98,7 +98,6 @@ GridSpec GaussianGrid::spec() const
   grid_spec.set("N", N() );
   grid_spec.set_latitudes(latitudes());
 
-  grid_spec.uid( uid() );
   grid_spec.set("nlat",nlat());
 
   grid_spec.set_bounding_box(bounding_box());

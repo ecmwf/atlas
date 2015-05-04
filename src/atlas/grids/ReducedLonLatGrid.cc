@@ -124,8 +124,6 @@ GridSpec ReducedLonLatGrid::spec() const
 {
   GridSpec grid_spec( grid_type_str() );
 
-  grid_spec.uid(uid());
-
   grid_spec.set("N", N() );
   grid_spec.set("nlat", nlat() );
   grid_spec.set_npts_per_lat(npts_per_lat());

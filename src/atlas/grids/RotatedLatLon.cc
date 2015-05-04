@@ -84,11 +84,50 @@ RotatedLatLon::~RotatedLatLon()
 {
 }
 
-string RotatedLatLon::uid() const
-{
-	std::stringstream ss;
-	ss << grid_type_str() << "_" << nptsNS_;
-	return ss.str();
+std::string RotatedLatLon::shortName() const {
+
+  if( shortName_.empty() )
+  {
+    std::ostringstream s;
+    s <<  grid_type_str()
+      << "." << nptsNS_ << "x" << nptsWE_
+      << ".R" << south_pole_rot_angle_ << eckit::StrStream::ends;
+    shortName_ = s.str();
+  }
+
+  return shortName_;
+}
+
+Grid::uid_t RotatedLatLon::unique_id() const {
+
+  if (uid_.empty()) {
+    std::ostringstream s;
+    s << shortName() << "." << hash() << eckit::StrStream::ends;
+    uid_ = s.str();
+  }
+
+  return uid_;
+}
+
+MD5::digest_t RotatedLatLon::hash() const {
+
+  if (hash_.empty()) {
+
+    eckit::MD5 md5;
+
+    md5.add(nptsWE_);
+    md5.add(nptsNS_);
+    md5.add(south_pole_lat_);
+    md5.add(south_pole_lon_);
+    md5.add(south_pole_rot_angle_);
+    md5.add(nsIncrement_);
+    md5.add(weIncrement_);
+    md5.add(bbox_.digest());
+
+    hash_ = md5.digest();
+  }
+
+  return hash_;
 }
 
 Grid::Point RotatedLatLon::lonlat(size_t jlon, size_t jlat) const
@@ -146,16 +185,12 @@ void RotatedLatLon::lonlat(std::vector<Grid::Point>& points) const
    }
 }
 
-string RotatedLatLon::grid_type() const
-{
-	return RotatedLatLon::grid_type_str();
-}
+string RotatedLatLon::grid_type() const { return RotatedLatLon::grid_type_str(); }
 
 GridSpec RotatedLatLon::spec() const
 {
    GridSpec grid_spec(grid_type());
 
-   grid_spec.uid(uid());
    grid_spec.set("Ni",eckit::Value(nptsWE_));
    grid_spec.set("Nj",eckit::Value(nptsNS_));
 
@@ -168,11 +203,6 @@ GridSpec RotatedLatLon::spec() const
    grid_spec.set_bounding_box(bbox_);
 
    return grid_spec;
-}
-
-bool RotatedLatLon::same(const Grid& grid) const
-{
-	return spec() == grid.spec();
 }
 
 //------------------------------------------------------------------------------------------------------

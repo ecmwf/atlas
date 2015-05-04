@@ -153,7 +153,6 @@ GridSpec PolarStereoGraphic::spec() const
 {
    GridSpec grid_spec(grid_type());
 
-   grid_spec.uid(uid());
    grid_spec.set("Nx",eckit::Value(npts_xaxis_));
    grid_spec.set("Ny",eckit::Value(npts_yaxis_));
 
@@ -171,7 +170,6 @@ GridSpec PolarStereoGraphic::spec() const
    grid_spec.set("radius",eckit::Value(radius_));
    grid_spec.set("earthMajorAxis",eckit::Value(semi_major_));
    grid_spec.set("earthMinorAxis",eckit::Value(semi_minor_));
-   grid_spec.set("npts",eckit::Value(npts()));
    grid_spec.set("resolutionAndComponentFlag",eckit::Value(resolutionAndComponentFlag_));
 
    // Bounding box can be computed
@@ -180,12 +178,62 @@ GridSpec PolarStereoGraphic::spec() const
    return grid_spec;
 }
 
+std::string PolarStereoGraphic::shortName() const {
 
-string PolarStereoGraphic::uid() const
-{
-   std::stringstream ss;
-   ss << grid_type_str() << "_" << npts_xaxis_ << "_" << npts_yaxis_;
-   return ss.str();
+  if( shortName_.empty() )
+  {
+    std::ostringstream s;
+    s <<  grid_type_str()
+      << "." << npts_xaxis_ << "x" << npts_yaxis_
+      << eckit::StrStream::ends;
+    shortName_ = s.str();
+  }
+
+  return shortName_;
+}
+
+Grid::uid_t PolarStereoGraphic::unique_id() const {
+
+  if (uid_.empty()) {
+    eckit::StrStream os;
+    os << shortName() << "." << hash() << eckit::StrStream::ends;
+    uid_ = std::string(os);
+  }
+
+  return uid_;
+}
+
+MD5::digest_t PolarStereoGraphic::hash() const {
+
+  if (hash_.empty()) {
+
+    eckit::MD5 md5;
+
+    md5.add(npts_xaxis_);
+    md5.add(npts_yaxis_);
+
+    md5.add(x_grid_length_);
+    md5.add(y_grid_length_);
+
+    md5.add(first_grid_pt_.lat());
+    md5.add(first_grid_pt_.lon());
+
+
+    md5.add(orientationOfTheGrid_);
+    md5.add(southPoleOnProjectionPlane_);
+
+    md5.add(earth_is_oblate_);
+    md5.add(semi_major_);
+    md5.add(semi_minor_);
+    md5.add(radius_);
+
+    // "LaD" ???
+    // "resolutionAndComponentFlag" ???
+
+    hash_ = md5.digest();
+  }
+
+  return hash_;
 }
 
 size_t PolarStereoGraphic::npts() const
@@ -223,7 +271,7 @@ void PolarStereoGraphic::lonlat(std::vector<Grid::Point>& points) const
 
 #ifndef GRIB_COMPAT
    // Points go from North,West --> South,east
-   Grid::BoundBox bbox = bounding_box();
+   BoundBox bbox = bounding_box();
    const double north = bbox.north();
    const double west  = bbox.west();
 
@@ -261,7 +309,7 @@ void PolarStereoGraphic::lonlat(std::vector<Grid::Point>& points) const
 #endif
 }
 
-Grid::BoundBox PolarStereoGraphic::bounding_box() const
+BoundBox PolarStereoGraphic::bounding_box() const
 {
    // Map first_grid_pt_ to the plane.
    PolarStereoGraphicProj ps(southPoleOnProjectionPlane_,earth_is_oblate_,orientationOfTheGrid_);
@@ -297,11 +345,6 @@ Grid::BoundBox PolarStereoGraphic::bounding_box() const
 string PolarStereoGraphic::grid_type() const
 {
    return PolarStereoGraphic::grid_type_str();
-}
-
-bool PolarStereoGraphic::same(const Grid& grid) const
-{
-   return spec() == grid.spec();
 }
 
 //-----------------------------------------------------------------------------

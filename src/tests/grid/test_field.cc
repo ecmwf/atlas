@@ -47,7 +47,7 @@ void TestField::test_constructor()
 {
     // create a grid
 
-	Grid::BoundBox earth ( Grid::Point(0.,-90.), Grid::Point(359.999999,90.) );
+	BoundBox earth ( Grid::Point(0.,-90.), Grid::Point(359.999999,90.) );
 
 	Grid::Ptr g (new atlas::grids::LonLatGrid( 20, 10, earth ) );
 
@@ -66,7 +66,7 @@ void TestField::test_constructor()
 
 	Mesh& mesh = g->mesh();
 
-	ASSERT( mesh.grid().uid() == g->uid() );
+        ASSERT( mesh.grid().same( *g ) );
 
     ASSERT( mesh.has_function_space("nodes") );
 

@@ -8,8 +8,6 @@
  * does it submit to any jurisdiction.
  */
 
-
-
 #ifndef atlas_Tesselation_h
 #define atlas_Tesselation_h
 
@@ -17,41 +15,39 @@
 
 namespace atlas {
 
-
 class Grid;
 
-//------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 class Tesselation {
 
-public:
+ public:
 
-    /// generate a mesh by triangulating the convex hull of the 3D points
-	static void tesselate( Mesh& mesh );
+  /// generate a mesh by triangulating the convex hull of the 3D points
+  static void tesselate(Mesh& mesh);
 
-    static void tesselate( Grid& g );
+  static void tesselate(Grid& g);
 
-    /// generate regular spaced lat-long points (does not include extremes)
-	static void generate_lonlat_points( Mesh& mesh, const size_t& nlats, const size_t& nlong );
+  /// generate regular spaced lat-long points (does not include extremes)
+  static void generate_lonlat_points(Mesh& mesh, const size_t& nlats, const size_t& nlong);
 
-    /// generate regular lat-long grid points (includes extremes -90,90 and 0,360)
-	static void generate_lonlat_grid( Mesh& mesh, const size_t& nlats, const size_t& nlong );
+  /// generate regular lat-long grid points (includes extremes -90,90 and 0,360)
+  static void generate_lonlat_grid(Mesh& mesh, const size_t& nlats, const size_t& nlong);
 
-    /// generates the cell centres en each cell
-    /// @warning only for triangles ATM
-    /// @warning this function must be checked for the correct INDEX translation to Fortran
-	static void create_cell_centres( Mesh& mesh );
+  /// generates the cell centres en each cell
+  /// @warning only for triangles ATM
+  /// @warning this function must be checked for the correct INDEX translation to Fortran
+  static void create_cell_centres(Mesh& mesh);
 
-	static void build_mesh( const Grid&, Mesh& );
+  static void build_mesh(const Grid&, Mesh&);
 
-    /// Ensures or creates the necessary nodal structure in the mesh object
-	static void create_mesh_structure( Mesh& mesh, const size_t nb_nodes );
+  /// Ensures or creates the necessary nodal structure in the mesh object
+  static void create_mesh_structure(Mesh& mesh, const size_t nb_nodes);
 
 };
 
-//------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
-
-} // namespace atlas
+}  // namespace atlas
 
 #endif

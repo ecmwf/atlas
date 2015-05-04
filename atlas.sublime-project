@@ -22,7 +22,7 @@
         "linters":
         {
             "cpplint": {
-                "filter": "-whitespace/line_length,-whitespace/blank_line" // ,-runtime/references
+                "filter": "-whitespace/line_length,-whitespace/blank_line,-runtime/references"
             },
         }
     }

@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE( test_regular_gg )
   BOOST_CHECK_EQUAL(gridptr->grid_type(),"regular_gg");
 
   // Add bounding box to spec
-  spec.set_bounding_box( Grid::BoundBox( 90., 0., 180., 0.) );
+  spec.set_bounding_box( BoundBox( 90., 0., 180., 0.) );
   gridptr = Grid::Ptr( Grid::create(spec) );
   BOOST_CHECK_EQUAL(gridptr->npts(), 2080);
   BOOST_CHECK_EQUAL(gridptr->grid_type(),"regular_gg");
@@ -172,7 +172,7 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
   // Add bounding box to spec --> This will not create a cropped version of previous (global) one,
   // but rather creates a new (32x16) grid within given bounding box... This is somewhat
   // inconsistent with GaussianGrid behaviour....
-  spec.set_bounding_box( Grid::BoundBox( 90., 0., 180., 0.) );
+  spec.set_bounding_box( BoundBox( 90., 0., 180., 0.) );
   gridptr = Grid::Ptr( Grid::create(spec) );
   BOOST_CHECK_EQUAL(gridptr->npts(), 512);
   BOOST_CHECK_EQUAL(gridptr->grid_type(),"regular_ll");
@@ -197,7 +197,7 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
   BOOST_CHECK_EQUAL( ll_nopoles.nlat(), 2);
   BOOST_CHECK_EQUAL( ll_nopoles.nlon(), 4);
 
-  LonLatGrid ll_lam(45.,45.,Grid::BoundBox(90.,0.,180.,0.));
+  LonLatGrid ll_lam(45.,45.,BoundBox(90.,0.,180.,0.));
   BOOST_CHECK_EQUAL( ll_lam.nlat(), 3);
   BOOST_CHECK_EQUAL( ll_lam.nlon(), 5);
 

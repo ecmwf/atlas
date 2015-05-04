@@ -154,14 +154,18 @@ void AtlasGrids::run()
 
     if( !grid ) return;
 
+    Grid& g = *grid;
+
     if( info )
     {
       double deg, km;
       Log::info() << "Grid " << key << std::endl;
       Log::info() << "   type:                               "
-                  << grid->grid_type() << std::endl;
+                  << g.grid_type() << std::endl;
+      Log::info() << "   name:                                "
+                  << g.shortName() << std::endl;
       Log::info() << "   uid:                                "
-                  << grid->uid() << std::endl;
+                  << g.unique_id() << std::endl;
       if( grid->grid_type() == GaussianGrid::grid_type_str() )
       {
         Log::info() << "   N number:                           "
