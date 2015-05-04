@@ -299,7 +299,6 @@ Grid::uid_t ReducedGrid::unique_id() const {
     s << shortName() << ".PL" << hash();
     uid_ = s.str();
   }
-  DEBUG_VAR(uid_);
   return uid_;
 }
 
