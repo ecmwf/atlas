@@ -131,6 +131,8 @@ grids/ReducedLonLatGrid.cc
 grids/ReducedLonLatGrid.h
 grids/RotatedLatLon.cc
 grids/RotatedLatLon.h
+grids/RotatedGrid.cc
+grids/RotatedGrid.h
 grids/Unstructured.cc
 grids/Unstructured.h
 grids/gausslat/gausslat.h
