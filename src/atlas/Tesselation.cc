@@ -204,11 +204,13 @@ void Tesselation::tesselate( Grid& g ) {
 
   Mesh& mesh = g.mesh();
 
-  if (MeshCache::get(uid, mesh)) return;
+  MeshCache cache;
+
+  if (cache.retrieve(g, mesh)) return;
 
   std::cout << "Mesh not in cache -- tesselating grid " << uid << std::endl;
 
-  bool atlasTriangulateRGG = eckit::Resource<bool>("atlas.triangulate.RGG;$ATLAS_TRIANGULATE_RGG", false);
+  bool atlasTriangulateRGG = eckit::Resource<bool>("atlas.triangulate.RGG;$ATLAS_TRIANGULATE_RGG", true);
 
   grids::ReducedGrid* rg = dynamic_cast<grids::ReducedGrid*>(&g);
 
@@ -230,10 +232,11 @@ void Tesselation::tesselate( Grid& g ) {
 
   } else {
     // slower, more robust tesselation method, that uses Delaunay triangulation
+    std::cout << "Mesh is *NOT* ReducedGrid " << g.shortName() << std::endl;
     Tesselation::tesselate(mesh);
   }
 
-  MeshCache::add(uid, mesh);
+  cache.insert(g, mesh);
 
 }
 

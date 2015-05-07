@@ -21,65 +21,66 @@ namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
 
-LocalPathName MeshCache::filename(const std::string& key)
+MeshCache::MeshCache() : CacheManager("mesh")
 {
-    PathName base_path = Resource<PathName>("$ATLAS_CACHE_DIR;AtlasCacheDir", "/tmp/cache/atlas" );
-
-    PathName f = base_path / "mesh" / PathName( key + ".gmsh" );
-
-    return f.asString();
 }
 
-bool MeshCache::add(const std::string& key, Mesh& mesh)
-{
-    LocalPathName file( filename(key) );
-
-    if( file.exists() )
-    {
-        Log::debug() << "MeshCache entry " << file << " already exists ..." << std::endl;
-        return false;
-    }
-
-    file.dirName().mkdir();  // ensure directory exists
-
-    // unique file name avoids race conditions on the file from multiple processes
-
-    LocalPathName tmpfile ( LocalPathName::unique(file) );
-
-    Log::info() << "inserting mesh in cache (" << file << ")" << std::endl;
-
-	atlas::io::Gmsh::write3dsurf(mesh,tmpfile);
-
-    // now try to rename the file to its file pathname
-
-    try
-    {
-        LocalPathName::rename( tmpfile, file );
-    }
-    catch( FailedSystemCall& e ) // ignore failed system call -- another process nay have created the file meanwhile
-    {
-        Log::debug() << "Failed rename of cache file -- " << e.what() << std::endl;
-    }
-
-    return true;
+PathName MeshCache::entry(const key_t& key) const {
+    PathName base_path = Resource<PathName>("$ATLAS_CACHE_DIR;AtlasCacheDir","/tmp/cache/mir");
+    PathName f = base_path / name() / PathName( key + ".cache" );
+    return f;
 }
 
-bool MeshCache::get(const std::string &key, Mesh& mesh)
-{
-    LocalPathName file( filename(key) );
+std::string MeshCache::compute_key(const Grid& g) const {
+    std::ostringstream s;
+    s << g.unique_id();
+    return s.str();
+}
 
-	Log::info() << "looking for file cache (" << file << ")" << std::endl;
 
-    if( ! file.exists() )
+void MeshCache::insert(const Grid& grid, Mesh& mesh) {
+
+    key_t key = compute_key(grid);
+
+    PathName tmp_path = stage(key);
+
+    Log::info() << "Inserting mesh in cache (" << tmp_path << ")" << std::endl;
+
     {
-        return false;
+//      FileHandle f(tmp_path, true);
+//      f.openForWrite(0); AutoClose closer(f);
+
+      /// @TODO : change Gmsh writer to use FileHandle
+
+      atlas::io::Gmsh::write3dsurf(mesh,tmp_path);
     }
 
-    Log::info() << "found mesh in cache (" << file << ")" << std::endl;
+    commit(key, tmp_path);
+}
 
-	atlas::io::Gmsh::read(file,mesh);
+bool MeshCache::retrieve(const Grid& grid, Mesh& mesh) const
+{
+  key_t key = compute_key(grid);
 
-    return true;
+  PathName path;
+
+  Log::info() << "Looking for cached mesh for grid (" << grid.unique_id() << ")" << std::endl;
+
+  if (!get(key, path))
+    return false;
+
+  Log::info() << "Found mesh in cache (" << path << ")" << std::endl;
+
+  {
+    //      FileHandle f(path, true);
+    //      f.openForWrite(0); AutoClose closer(f);
+
+    /// @TODO : change Gmsh reader to use FileHandle
+
+    atlas::io::Gmsh::read(path,mesh);
+  }
+
+  return true;
 }
 
 //------------------------------------------------------------------------------------------------------

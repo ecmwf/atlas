@@ -14,26 +14,39 @@
 #ifndef atlas_MeshCache_h
 #define atlas_MeshCache_h
 
-#include "eckit/memory/NonCopyable.h"
-#include "eckit/filesystem/LocalPathName.h"
+#include <string>
+
+#include "eckit/container/CacheManager.h"
+#include "eckit/filesystem/PathName.h"
 
 #include "atlas/Mesh.h"
+#include "atlas/Grid.h"
 
 namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
 
-class MeshCache : private eckit::NonCopyable {
+class MeshCache  : public eckit::CacheManager {
+  public: // methods
 
-public: // methods
+  MeshCache();
 
-    /// @returns true if found cache
-    static bool add( const std::string& key, atlas::Mesh& );
+  /// Tries to retrieve a cached Mesh
+  /// @returns true if found cache
+  bool retrieve(const atlas::Grid& g, atlas::Mesh& m) const;
 
-    /// @returns true if addition was succcessful
-    static bool get( const std::string& key, atlas::Mesh& );
+  /// Inserts a cached WeightMatrix, overwritting any existing entry
+  /// @returns true if insertion successful cache
+  void insert(const atlas::Grid& g, atlas::Mesh& m);
 
-    static eckit::LocalPathName filename(const std::string& key);
+ private:
+
+  /// @returns the path of the cache entry given the key
+  virtual eckit::PathName entry(const key_t& key) const;
+
+  std::string compute_key(const atlas::Grid& g) const;
+
+
 
 };
 
