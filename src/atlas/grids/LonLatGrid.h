@@ -30,13 +30,13 @@ namespace grids {
 class LonLatGrid: public ReducedGrid {
 
 public:
-  enum {EXCLUDES_POLES=0, INCLUDES_POLES=1};
+  enum TYPE {EXCLUDES_POLES=0, INCLUDES_POLES=1};
 
 private:
 
   struct defaults {
     // By default LonLat grids have the pole excluded
-    static bool poles() { return EXCLUDES_POLES; }
+    static TYPE poles() { return EXCLUDES_POLES; }
   };
 
 public:
@@ -81,7 +81,7 @@ public:
   ///   dlat = 180/(nlat-1)
   ///   Longitudes: [0  :  dlon :  360-dlon ]
   ///   Latitudes:  [90 : -dlat : -90       ]
-  LonLatGrid( const int nlon, const int nlat, bool poles=defaults::poles() );
+  LonLatGrid( const int nlon, const int nlat, TYPE poles=defaults::poles() );
 
   /// @brief Constructor, global grid
   ///
@@ -91,7 +91,7 @@ public:
   /// Else:
   ///   Longitudes: [0  :  londeg :  360-londeg ]
   ///   Latitudes:  [90 : -latdeg : -90         ]
-  LonLatGrid( const double londeg, const double latdeg, bool poles=defaults::poles() );
+  LonLatGrid( const double londeg, const double latdeg, TYPE poles=defaults::poles() );
 
   /// @brief Constructor, limited area grid
   LonLatGrid( const double londeg, const double latdeg, const BoundBox& );
@@ -99,7 +99,7 @@ public:
   /// @brief Constructor, global grid
   ///
   /// nlon = 2*nlat
-  LonLatGrid( const int nlat, bool poles=defaults::poles() );
+  LonLatGrid( const int nlat, TYPE poles=defaults::poles() );
 
   static std::string className();
 

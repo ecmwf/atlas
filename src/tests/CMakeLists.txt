@@ -92,6 +92,13 @@ ecbuild_add_test( TARGET atlas_test_rgg
   LIBS     atlas
 )
 
+ecbuild_add_test( TARGET atlas_test_ll
+  BOOST
+  MPI      1
+  SOURCES  test_ll.cc
+  LIBS     atlas
+)
+
 ecbuild_add_test( TARGET atlas_test_parfields
   BOOST
   MPI      2

@@ -176,6 +176,12 @@ void ReducedGridMeshGenerator::generate(const ReducedGrid& grid, Mesh& mesh )
 
 #ifdef ATLAS_HAVE_TRANS
   std::string partitioner = Resource<std::string>("atlas.meshgen.partitioner",std::string("trans"));
+  if( grid.nlat()%2 == 1 ) // odd number of latitudes
+    partitioner = "eqreg";
+
+  if( nb_parts == 1 ) // No partitioner required
+    partitioner = "eqreg";
+
   if( partitioner == "trans" )
   {
     if( nb_parts != eckit::mpi::size() )

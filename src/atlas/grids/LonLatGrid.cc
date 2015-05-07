@@ -62,20 +62,20 @@ LonLatGrid::LonLatGrid( const int nlon, const int nlat, const Domain& bbox )
   set_typeinfo();
 }
 
-LonLatGrid::LonLatGrid( const int nlon, const int nlat, bool poles )
+LonLatGrid::LonLatGrid( const int nlon, const int nlat, TYPE poles )
 {
   setup(nlon,nlat,poles);
   set_typeinfo();
 }
 
-LonLatGrid::LonLatGrid( const int nlat, bool poles )
+LonLatGrid::LonLatGrid( const int nlat, TYPE poles )
 {
   int nlon = 2*nlat;
   setup(nlon,nlat,poles);
   set_typeinfo();
 }
 
-LonLatGrid::LonLatGrid( const double londeg, const double latdeg, bool poles )
+LonLatGrid::LonLatGrid( const double londeg, const double latdeg, TYPE poles )
 {
   setup(londeg,latdeg,poles);
   set_typeinfo();
