@@ -26,7 +26,7 @@ MeshCache::MeshCache() : CacheManager("mesh")
 }
 
 PathName MeshCache::entry(const key_t& key) const {
-    PathName base_path = Resource<PathName>("$ATLAS_CACHE_DIR;AtlasCacheDir","/tmp/cache/mir");
+    PathName base_path = Resource<PathName>("$ATLAS_CACHE_DIR;AtlasCacheDir","/tmp/cache/atlas");
     PathName f = base_path / name() / PathName( key + ".cache" );
     return f;
 }
