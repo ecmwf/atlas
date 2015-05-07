@@ -198,6 +198,8 @@ void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, PointSet& p
 
 //------------------------------------------------------------------------------------------------------
 
+/// @ TODO Abstract this method into a MeshGenerator class (with use of MeshCache)
+
 void Tesselation::tesselate( Grid& g ) {
 
   std::string uid = g.unique_id();
@@ -235,7 +237,7 @@ void Tesselation::tesselate( Grid& g ) {
 
     // slower, more robust tesselation method, using Delaunay triangulation
 
-    std::cout << "Using Delauneay triangulation on grid: " << g.shortName() << std::endl;
+    std::cout << "Using Delaunay triangulation on grid: " << g.shortName() << std::endl;
 
     Tesselation::tesselate(mesh);
   }
@@ -278,7 +280,7 @@ void Tesselation::tesselate( Mesh& mesh )
 
 #else
 
-	throw NotImplemented( "CGAL package not found -- triangulation is disabled", Here() );
+        throw NotImplemented( "CGAL package not found -- Delaunay triangulation is disabled", Here() );
 
 #endif
 }
