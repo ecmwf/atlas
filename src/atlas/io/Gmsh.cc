@@ -1038,7 +1038,7 @@ void Gmsh::write(Field& field, const std::string& file_path, openmode mode) cons
 }
 
 
-void Gmsh::write3dsurf(Mesh &mesh, const std::string& file_path)
+void Gmsh::write3dsurf(const Mesh &mesh, const std::string& file_path)
 {
     size_t nb_nodes  = 0;
     size_t nb_triags = 0;

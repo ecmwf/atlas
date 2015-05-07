@@ -59,7 +59,7 @@ public:
   void write(Field& field, const std::string& file_path, openmode mode = std::ios::out) const;
 
   /// @todo to be merged with write()
-  static void write3dsurf( Mesh& mesh, const std::string& file_path );
+  static void write3dsurf(const Mesh& mesh, const std::string& file_path );
 
 public:
 
