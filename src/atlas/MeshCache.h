@@ -42,12 +42,10 @@ class MeshCache  : public eckit::CacheManager {
 
  private:
 
-  /// @returns the path of the cache entry given the key
-  virtual eckit::PathName entry(const key_t& key) const;
+  std::string generate_key(const atlas::Grid& g) const;
 
-  std::string compute_key(const atlas::Grid& g) const;
-
-
+  virtual const char* version() const;
+  virtual const char* extension() const;
 
 };
 

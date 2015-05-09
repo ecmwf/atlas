@@ -26,22 +26,19 @@ namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
 
-MeshCache::MeshCache() : CacheManager("mesh", atlas_version_str()) {}
+MeshCache::MeshCache() : CacheManager("atlas/mesh") {}
 
-PathName MeshCache::entry(const key_t& key) const {
-  PathName base_path = Resource<PathName>("$ATLAS_CACHE_DIR;AtlasCacheDir", "/tmp/cache/atlas");
-  PathName f = base_path / name() / version() / PathName(key + ".cache");
-  return f;
-}
+const char* MeshCache::version() const { return atlas_version_str(); }
+const char* MeshCache::extension() const { return ".msh"; }
 
-std::string MeshCache::compute_key(const Grid& g) const {
+std::string MeshCache::generate_key(const Grid& g) const {
   std::ostringstream s;
   s << g.unique_id();
   return s.str();
 }
 
 void MeshCache::insert(const Grid& grid, const Mesh& mesh) {
-  key_t key = compute_key(grid);
+  key_t key = generate_key(grid);
 
   PathName tmp_path = stage(key);
 
@@ -60,7 +57,7 @@ void MeshCache::insert(const Grid& grid, const Mesh& mesh) {
 }
 
 bool MeshCache::retrieve(const Grid& grid, Mesh& mesh) const {
-  key_t key = compute_key(grid);
+  key_t key = generate_key(grid);
 
   PathName path;
 
