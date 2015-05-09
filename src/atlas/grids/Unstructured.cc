@@ -71,35 +71,19 @@ Grid::uid_t Unstructured::shortName() const
   if( shortName_.empty() )
   {
     std::ostringstream s;
-    s <<  "Unst." << hash().substr(0, 7) << eckit::StrStream::ends;
+    s <<  "Unst." << Grid::hash().substr(0, 7) << eckit::StrStream::ends;
     shortName_ = s.str();
   }
   return shortName_;
 }
 
-Grid::uid_t Unstructured::unique_id() const {
-
-  if (uid_.empty()) {
-    std::ostringstream s;
-    s <<  "Unst." << hash() << eckit::StrStream::ends;
-    uid_ = s.str();
-  }
-
-  return uid_;
-}
-
-MD5::digest_t Unstructured::hash() const {
-
-  if (hash_.empty()) {
+void Unstructured::hash(eckit::MD5& md5) const {
 
     ASSERT(points_);
     const std::vector< Point >& pts = *points_;
-    eckit::MD5 md5;
     md5.add(&pts[0], sizeof(Point)*pts.size());
-    hash_ = md5.digest();
-  }
 
-  return hash_;
+    bound_box_.hash(md5);
 }
 
 BoundBox Unstructured::bounding_box() const

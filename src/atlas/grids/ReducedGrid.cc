@@ -293,27 +293,15 @@ std::string ReducedGrid::shortName() const {
   return shortName_;
 }
 
-Grid::uid_t ReducedGrid::unique_id() const {
-  if (uid_.empty()) {
-    std::ostringstream s;
-    s << shortName() << ".PL" << hash();
-    uid_ = s.str();
-  }
-  return uid_;
-}
+void ReducedGrid::hash(eckit::MD5& md5) const {
 
-MD5::digest_t ReducedGrid::hash() const {
+  const std::vector<int>& points_per_latitudes = npts_per_lat();
 
-  if (hash_.empty()) {
+  md5.add(grid_type_str());
 
-    const std::vector<int>& points_per_latitudes = npts_per_lat();
-    eckit::MD5 md5;
-    md5.add(&points_per_latitudes[0], sizeof(int)*points_per_latitudes.size());
-    md5.add(bounding_box_.digest());
-    hash_ = md5.digest();
-  }
+  md5.add(&points_per_latitudes[0], sizeof(int)*points_per_latitudes.size());
 
-  return hash_;
+  bounding_box_.hash(md5);
 }
 
 void ReducedGrid::mask(const Domain& dom)

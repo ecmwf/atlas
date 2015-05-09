@@ -40,7 +40,7 @@ namespace grids {
 ///          then rotating through (90 + θp) degrees so that
 ///          the southern pole moved along the (previously rotated) Greenwich meridian.
 ///=== end WMO specification ===
-
+///
 /// gribs use the following convention: (from Shahram)
 ///
 /// Horizontally:  Points scan in the +i (+x) direction
@@ -53,71 +53,62 @@ namespace grids {
 /// @todo Do we check the area? Can we assume area is multiple of the grids ?
 
 class RotatedLatLon : public Grid {
+ public:  // methods
+  static std::string className() { return "atlas.grid.RotatedLatLon"; }
+  static std::string grid_type_str() { return "rotated_ll"; }
 
-public: // methods
+  RotatedLatLon(const eckit::Params& p);
+  virtual ~RotatedLatLon();
 
-	static std::string className() { return "atlas.grid.RotatedLatLon"; }
-	static std::string grid_type_str() { return "rotated_ll"; }
+  virtual BoundBox bounding_box() const { return bbox_; }
+  virtual size_t npts() const;
 
-	RotatedLatLon( const eckit::Params& p );
-	virtual ~RotatedLatLon();
+  virtual void lonlat(double[]) const;
+  virtual void lonlat(std::vector<double>& v) const { Grid::lonlat(v); }
+  virtual void lonlat(std::vector<Point>&) const;
 
-	virtual BoundBox bounding_box() const { return bbox_;}
-	virtual size_t npts() const;
+  virtual std::string grid_type() const;
+  virtual GridSpec spec() const;
 
-	virtual void lonlat( double[] ) const;
-        virtual void lonlat( std::vector<double>& v ) const { Grid::lonlat(v); }
-	virtual void lonlat( std::vector<Point>& ) const;
+ private:  // methods
 
-	virtual std::string grid_type() const;
-	virtual GridSpec spec() const;
+  /// Human readable name
+  /// May not be unique, especially when BoundBox is different
+  virtual std::string shortName() const;
 
-private:  // methods
+  /// Hash of the information makes this class unique
+  virtual void hash(eckit::MD5&) const;
 
-        /// Human readable name
-        /// May not be unique, especially when BoundBox is different
-        virtual std::string shortName() const;
+  double rotated_latitude() const { return south_pole_lat_; }
+  double rotated_longitude() const { return south_pole_lon_; }
+  double rotated_angle() const { return south_pole_rot_angle_; }
 
-        /// Unique grid id
-        /// Computed from the shortName and a hash of all the class members
-        virtual uid_t unique_id() const;
+  Point lonlat(size_t jlon, size_t jlat) const;
+  long rows() const { return nptsNS_; }
+  long cols() const { return nptsWE_; }
+  double incLat() const { return nsIncrement_; }
+  double incLon() const { return weIncrement_; }
 
-        /// Hash of what makes this class unique
-        virtual eckit::MD5::digest_t hash() const;
+ private:  // members
 
-        double rotated_latitude() const { return south_pole_lat_; }
-        double rotated_longitude() const { return south_pole_lon_; }
-        double rotated_angle() const { return south_pole_rot_angle_; }
+  double south_pole_lat_;
+  double south_pole_lon_;
+  double south_pole_rot_angle_;
 
-        Point lonlat(size_t jlon, size_t jlat) const;
-        long rows() const { return nptsNS_; }
-        long cols() const { return nptsWE_; }
-        double incLat() const { return nsIncrement_; }
-        double incLon() const { return weIncrement_; }
+  double nsIncrement_;  ///< In degrees
+  double weIncrement_;  ///< In degrees
 
-private: // members
+  long nptsNS_;
+  long nptsWE_;
 
-	BoundBox bbox_;
+  BoundBox bbox_;
 
-	double south_pole_lat_;
-	double south_pole_lon_;
-	double south_pole_rot_angle_;
-
-	double nsIncrement_;             ///< In degrees
-	double weIncrement_;             ///< In degrees
-
-	long nptsNS_;
-	long nptsWE_;
-
-        mutable std::string          shortName_;
-        mutable uid_t                uid_;
-        mutable eckit::MD5::digest_t hash_;
-
+  mutable std::string shortName_;
 };
 
 //------------------------------------------------------------------------------------------------------
 
-} // namespace grids
-} // namespace atlas
+}  // namespace grids
+}  // namespace atlas
 
 #endif

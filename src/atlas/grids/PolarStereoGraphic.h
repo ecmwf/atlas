@@ -56,36 +56,35 @@ public: // methods
 
 private: // methods
 
-  /// Human readable name, does not contain all possible combinations of PolarStereoGraphic
+  /// Human readable name
+  /// does not contain all possible combinations of PolarStereoGraphic
   virtual std::string shortName() const;
 
-  virtual uid_t unique_id() const;
-
-  virtual eckit::MD5::digest_t hash() const;
+  virtual void hash(eckit::MD5&) const;
 
 private: // members
 
-   bool iScansPositively_;            // Used to determine correct bounding box
-   bool jScansPositively_;            // Used to determine correct bounding box
-   Point first_grid_pt_;              // This is in spherical lat long co-ordinate
    long npts_xaxis_;                  // No of points in x-axes *ON* the projected plane
    long npts_yaxis_;                  // No of points in y-axes *ON* the projected plane
    long x_grid_length_;               // x grid length *ON* the projected plane, in meters
    long y_grid_length_;               // y grid length *ON* the projected plane, in meters
    long resolutionAndComponentFlag_;  // is used to determine sphere/oblate, But this is extracted separately,
-                                       // to avoid having to mess with bits. Needed to match geography hash grid_spec -> grid in tests
+                                      // to avoid having to mess with bits. Needed to match geography hash grid_spec -> grid in tests
    double lad_;                       // latitude where points npts_xaxis_ and npts_yaxis_ are specified
    double orientationOfTheGrid_;      // east longitude value, in degrees ( longitude of natural origin)
-   bool southPoleOnProjectionPlane_;
-   bool earth_is_oblate_;             // true 6367470m,false mean oblate spheroid, 6378160m,6356775m, f=1/297.0
    double radius_;                    // default 6371229
    double semi_major_;                // default 6378137   (a)
    double semi_minor_;                // default 6356752.3 (b)
    double e_;                         // calculated e = sqrt( 1 - b*b/a*a)
 
+   Point first_grid_pt_;              // This is in spherical lat long co-ordinate
+
+   bool southPoleOnProjectionPlane_;
+   bool earth_is_oblate_;             // true 6367470m,false mean oblate spheroid, 6378160m,6356775m, f=1/297.0
+   bool iScansPositively_;            // Used to determine correct bounding box
+   bool jScansPositively_;            // Used to determine correct bounding box
+
    mutable std::string          shortName_;
-   mutable uid_t                uid_;
-   mutable eckit::MD5::digest_t hash_;
 
 };
 

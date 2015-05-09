@@ -94,14 +94,10 @@ private: // methods
   /// but different distribution of latitude points
   virtual std::string shortName() const;
 
-  /// Unique grid id
-  /// Computed from the shortName and a hash of the latitudes array
-  virtual uid_t unique_id() const;
+protected:
 
   /// Hash of the PL array
-  virtual eckit::MD5::digest_t hash() const;
-
-protected:
+  virtual void hash(eckit::MD5&) const;
 
   void setup( const eckit::Params& );
   void setup( const int nlat, const double lats[], const int npts_per_lat[] );
@@ -120,8 +116,6 @@ protected:
   std::string         grid_type_;
 
   std::string                   shortName_;
-  mutable uid_t                 uid_;
-  mutable eckit::MD5::digest_t  hash_;
 
   std::vector<double> lat_;    ///<! Latitude values
   std::vector<int>    nlons_;  ///<! Number of points per latitude (int32 type for Fortran interoperability)

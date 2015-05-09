@@ -35,7 +35,7 @@ public: // methods
 
   BoundBox( Point pt, double x_delta, double y_delta );
 
-  eckit::MD5::digest_t digest() const;
+  void hash(eckit::MD5&) const;
 
 };
 

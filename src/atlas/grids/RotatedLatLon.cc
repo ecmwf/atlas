@@ -98,36 +98,19 @@ std::string RotatedLatLon::shortName() const {
   return shortName_;
 }
 
-Grid::uid_t RotatedLatLon::unique_id() const {
+void RotatedLatLon::hash(eckit::MD5& md5) const {
 
-  if (uid_.empty()) {
-    std::ostringstream s;
-    s << shortName() << "." << hash() << eckit::StrStream::ends;
-    uid_ = s.str();
-  }
+  md5.add(grid_type_str());
 
-  return uid_;
-}
+  md5.add(nptsWE_);
+  md5.add(nptsNS_);
+  md5.add(south_pole_lat_);
+  md5.add(south_pole_lon_);
+  md5.add(south_pole_rot_angle_);
+  md5.add(nsIncrement_);
+  md5.add(weIncrement_);
 
-MD5::digest_t RotatedLatLon::hash() const {
-
-  if (hash_.empty()) {
-
-    eckit::MD5 md5;
-
-    md5.add(nptsWE_);
-    md5.add(nptsNS_);
-    md5.add(south_pole_lat_);
-    md5.add(south_pole_lon_);
-    md5.add(south_pole_rot_angle_);
-    md5.add(nsIncrement_);
-    md5.add(weIncrement_);
-    md5.add(bbox_.digest());
-
-    hash_ = md5.digest();
-  }
-
-  return hash_;
+  bbox_.hash(md5);
 }
 
 Grid::Point RotatedLatLon::lonlat(size_t jlon, size_t jlat) const

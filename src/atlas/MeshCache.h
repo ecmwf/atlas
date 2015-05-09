@@ -40,6 +40,10 @@ class MeshCache  : public eckit::CacheManager {
   /// @returns true if insertion successful cache
   void insert(const atlas::Grid& g, const atlas::Mesh& m);
 
+ protected:
+
+  virtual void print(std::ostream& s) const;
+
  private:
 
   std::string generate_key(const atlas::Grid& g) const;

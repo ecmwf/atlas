@@ -51,6 +51,24 @@ void Grid::mask(const Domain&) { NOTIMP; }
 
 void Grid::mask(const Params&) { NOTIMP; }
 
+Grid::uid_t Grid::unique_id() const {
+  if (uid_.empty()) {
+    std::ostringstream s;
+    s << shortName() << "." << hash();
+    uid_ = s.str();
+  }
+  return uid_;
+}
+
+eckit::MD5::digest_t Grid::hash() const {
+  if (hash_.empty()) {
+    eckit::MD5 md5;
+    hash(md5);
+    hash_ = md5.digest();
+  }
+  return hash_;
+}
+
 Grid* Grid::masked(const Domain&) const {
   NOTIMP;
   return NULL;
@@ -94,6 +112,11 @@ BoundBox Grid::make_bounding_box(const Params& p) {
   if (!p.has("bbox_s")) return Grid::make_global_bounding_box();
 
   return BoundBox(p["bbox_n"], p["bbox_s"], p["bbox_e"], p["bbox_w"]);
+}
+
+void Grid::print(std::ostream &) const
+{
+  NOTIMP;
 }
 
 double Grid::degrees_eps() {

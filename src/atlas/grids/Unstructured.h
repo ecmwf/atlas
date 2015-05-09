@@ -59,11 +59,8 @@ private: // methods
   /// Human readable name
   virtual std::string shortName() const;
 
-  /// Unique grid id
-  virtual uid_t unique_id() const;
-
   /// Hash of the latlon array + BoundBox
-  virtual eckit::MD5::digest_t hash() const;
+  virtual void hash(eckit::MD5&) const;
 
 protected:
 
@@ -72,8 +69,6 @@ protected:
   BoundBox bound_box_;                               ///< bounding box for the domain
 
   mutable std::string shortName_;      ///< cache for the shortName
-  mutable uid_t uid_;                  ///< cache for the uid
-  mutable eckit::MD5::digest_t hash_;  ///< cache for the hash
 
   mutable eckit::ScopedPtr<GridSpec> cachedGridSpec_;  ///< cache for the GridSpec since may be quite heavy to compute
 

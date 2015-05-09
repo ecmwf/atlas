@@ -59,9 +59,11 @@ class RotatedGrid : public Grid {
     // static std::string className() { return "atlas.grid.RotatedGrid"; }
     // static std::string grid_type_str() { return "rotated_ll"; }
 
-    RotatedGrid(Grid *grid, double south_pole_latitude,
+    RotatedGrid(Grid *grid,
+                double south_pole_latitude,
                 double south_pole_longitude,
                 double south_pole_rotation_angle);
+
     virtual ~RotatedGrid();
 
     virtual BoundBox bounding_box() const;
@@ -81,42 +83,18 @@ class RotatedGrid : public Grid {
     /// May not be unique, especially when BoundBox is different
     virtual std::string shortName() const;
 
-    /// Unique grid id
-    /// Computed from the shortName and a hash of all the class members
-    virtual uid_t unique_id() const;
-
-    /// Hash of what makes this class unique
-    virtual eckit::MD5::digest_t hash() const;
-
-    // double rotated_latitude() const { return south_pole_lat_; }
-    // double rotated_longitude() const { return south_pole_lon_; }
-    // double rotated_angle() const { return south_pole_rot_angle_; }
-
-    // Point lonlat(size_t jlon, size_t jlat) const;
-    // long rows() const { return nptsNS_; }
-    // long cols() const { return nptsWE_; }
-    // double incLat() const { return nsIncrement_; }
-    // double incLon() const { return weIncrement_; }
+    /// Hash of the information this class unique
+    virtual void hash(eckit::MD5&) const;
 
   private: // members
 
-    // BoundBox bbox_;
-
     std::auto_ptr<Grid> grid_;
+
     double south_pole_latitude_;
     double south_pole_longitude_;
     double south_pole_rotation_angle_;
 
-    // double nsIncrement_;             ///< In degrees
-    // double weIncrement_;             ///< In degrees
-
-    // long nptsNS_;
-    // long nptsWE_;
-
     mutable std::string          shortName_;
-    mutable uid_t                uid_;
-    mutable eckit::MD5::digest_t hash_;
-
 };
 
 //------------------------------------------------------------------------------------------------------

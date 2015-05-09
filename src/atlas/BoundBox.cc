@@ -29,13 +29,9 @@ BoundBox::BoundBox(const Point &min, const Point &max) : LLBoundBox2(min,max)
 BoundBox::BoundBox(Point pt, double x_delta, double y_delta) : LLBoundBox2(pt,x_delta,y_delta)
 {}
 
-eckit::MD5::digest_t BoundBox::digest() const {
-
-  MD5 md5;
+void BoundBox::hash(eckit::MD5& md5) const {
   md5.add(min_.data(), min_.DIMS*sizeof(double));
   md5.add(max_.data(), max_.DIMS*sizeof(double));
-
-  return md5.digest();
 }
 
 //------------------------------------------------------------------------------------------------------

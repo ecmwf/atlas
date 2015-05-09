@@ -37,6 +37,16 @@ std::string MeshCache::generate_key(const Grid& g) const {
   return s.str();
 }
 
+void MeshCache::print(std::ostream &s) const
+{
+  s << "MeshCache[";
+  CacheManager::print(s);
+  s << "name=" << name() << ","
+    << "version=" << version() << ","
+    << "extention=" << extension() << ","
+    << "]";
+}
+
 void MeshCache::insert(const Grid& grid, const Mesh& mesh) {
   key_t key = generate_key(grid);
 

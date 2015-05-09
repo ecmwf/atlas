@@ -31,21 +31,22 @@ namespace grids {
 register_BuilderT1(Grid,PolarStereoGraphic,PolarStereoGraphic::grid_type_str());
 
 PolarStereoGraphic::PolarStereoGraphic( const eckit::Params& p )
-: iScansPositively_(true),
-  jScansPositively_(false),
-  npts_xaxis_(0),
+: npts_xaxis_(0),
   npts_yaxis_(0),
   x_grid_length_(0),
   y_grid_length_(0),
   resolutionAndComponentFlag_(8), // default 8 assumes earth is spherical
-  orientationOfTheGrid_(0),
   lad_(60),
-  southPoleOnProjectionPlane_(false),
-  earth_is_oblate_(false),
+  orientationOfTheGrid_(0),
   radius_(6371229),
   semi_major_(6378137),
   semi_minor_(6356752.3),
-  e_(0.081819191)
+  e_(0.081819191),
+  southPoleOnProjectionPlane_(false),
+  earth_is_oblate_(false),
+  iScansPositively_(true),
+  jScansPositively_(false)
+
 {
    if( p.has("iScansPositively") )
    {
@@ -180,60 +181,39 @@ GridSpec PolarStereoGraphic::spec() const
 
 std::string PolarStereoGraphic::shortName() const {
 
-  if( shortName_.empty() )
-  {
+  if (shortName_.empty()) {
     std::ostringstream s;
-    s <<  grid_type_str()
-      << "." << npts_xaxis_ << "x" << npts_yaxis_
-      << eckit::StrStream::ends;
+    s << grid_type_str() << "." << npts_xaxis_ << "x" << npts_yaxis_ << eckit::StrStream::ends;
     shortName_ = s.str();
   }
 
   return shortName_;
 }
 
-Grid::uid_t PolarStereoGraphic::unique_id() const {
+void PolarStereoGraphic::hash(eckit::MD5& md5) const {
 
-  if (uid_.empty()) {
-    eckit::StrStream os;
-    os << shortName() << "." << hash() << eckit::StrStream::ends;
-    uid_ = std::string(os);
-  }
+  md5.add(grid_type_str());
 
-  return uid_;
-}
+  md5.add(npts_xaxis_);
+  md5.add(npts_yaxis_);
 
-MD5::digest_t PolarStereoGraphic::hash() const {
+  md5.add(x_grid_length_);
+  md5.add(y_grid_length_);
 
-  if (hash_.empty()) {
+  md5.add(first_grid_pt_.lat());
+  md5.add(first_grid_pt_.lon());
 
-    eckit::MD5 md5;
+  md5.add(orientationOfTheGrid_);
+  md5.add(southPoleOnProjectionPlane_);
 
-    md5.add(npts_xaxis_);
-    md5.add(npts_yaxis_);
+  md5.add(earth_is_oblate_);
+  md5.add(semi_major_);
+  md5.add(semi_minor_);
+  md5.add(radius_);
 
-    md5.add(x_grid_length_);
-    md5.add(y_grid_length_);
+  md5.add(lad_);
 
-    md5.add(first_grid_pt_.lat());
-    md5.add(first_grid_pt_.lon());
-
-
-    md5.add(orientationOfTheGrid_);
-    md5.add(southPoleOnProjectionPlane_);
-
-    md5.add(earth_is_oblate_);
-    md5.add(semi_major_);
-    md5.add(semi_minor_);
-    md5.add(radius_);
-
-    // "LaD" ???
-    // "resolutionAndComponentFlag" ???
-
-    hash_ = md5.digest();
-  }
-
-  return hash_;
+  // "resolutionAndComponentFlag" // seems to be redundant
 }
 
 size_t PolarStereoGraphic::npts() const

@@ -46,33 +46,18 @@ std::string RotatedGrid::shortName() const {
     if ( shortName_.empty() ) {
         shortName_ = "rotated." + grid_->shortName();
     }
-
     return shortName_;
 }
 
-Grid::uid_t RotatedGrid::unique_id() const {
+void RotatedGrid::hash(eckit::MD5& md5) const {
 
-    if (uid_.empty()) {
-        std::ostringstream s;
-        s << shortName() << "." << hash() << eckit::StrStream::ends;
-        uid_ = s.str();
-    }
+  md5.add("rotated.");
 
-    return uid_;
-}
+  grid_->hash(md5);
 
-MD5::digest_t RotatedGrid::hash() const {
-
-    if (hash_.empty()) {
-
-        eckit::StrStream os;
-        os << grid_->hash() << ".rotate." << south_pole_longitude_ << "." << south_pole_latitude_
-           << "." << south_pole_rotation_angle_ << eckit::StrStream::ends;
-
-        hash_ = std::string(os);
-    }
-
-    return hash_;
+  md5.add(south_pole_longitude_);
+  md5.add(south_pole_latitude_);
+  md5.add(south_pole_rotation_angle_);
 }
 
 BoundBox RotatedGrid::bounding_box() const {

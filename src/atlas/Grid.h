@@ -50,8 +50,6 @@ class GridSpec;
  */
 class Grid : public eckit::Owned {
 
-  mutable eckit::SharedPtr<Mesh> mesh_;
-
  public:  // types
 
   typedef eckit::BuilderT1<Grid> builder_t;
@@ -87,10 +85,13 @@ class Grid : public eckit::Owned {
   virtual std::string shortName() const = 0;
 
   /// Unique grid id
-  virtual uid_t unique_id() const = 0;
+  /// Computed from the shortName and the hash
+  uid_t unique_id() const;
 
-  /// Hash of the information that makes this Grid unique
-  virtual eckit::MD5::digest_t hash() const = 0;
+  /// Adds to the MD5 the information that makes this Grid unique
+  virtual void hash(eckit::MD5&) const = 0;
+  /// @returns the hash of the information that makes this Grid unique
+  eckit::MD5::digest_t hash() const;
 
   /**
    * @return bounding box
@@ -153,9 +154,22 @@ class Grid : public eckit::Owned {
   /// helper function to create bounding boxes (for non-global grids)
   static BoundBox make_bounding_box(const eckit::Params&);
 
- private:  // methods
+  virtual void print(std::ostream&) const;
+
+private:  // methods
 
   void build_mesh() const;
+
+  friend std::ostream& operator<<(std::ostream& s, const Grid& p) {
+      p.print(s);
+      return s;
+  }
+
+private:  // members
+
+  mutable eckit::SharedPtr<Mesh> mesh_;
+  mutable uid_t                  uid_;
+  mutable eckit::MD5::digest_t   hash_;
 
 };
 
