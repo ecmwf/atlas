@@ -38,7 +38,7 @@ std::string MeshCache::compute_key(const Grid& g) const {
 }
 
 
-void MeshCache::insert(const Grid& grid, const Mesh& mesh) {
+void MeshCache::insert(const Grid& grid, const Mesh& mesh) const {
 
     key_t key = compute_key(grid);
 
