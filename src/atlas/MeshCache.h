@@ -27,7 +27,8 @@ namespace atlas {
 //------------------------------------------------------------------------------------------------------
 
 class MeshCache  : public eckit::CacheManager {
-  public: // methods
+
+ public: // methods
 
   MeshCache();
 
@@ -52,6 +53,6 @@ class MeshCache  : public eckit::CacheManager {
 
 //------------------------------------------------------------------------------------------------------
 
-} // namespace atlas
+}  // namespace atlas
 
 #endif
