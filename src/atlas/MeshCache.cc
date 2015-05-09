@@ -47,7 +47,7 @@ void MeshCache::print(std::ostream &s) const
     << "]";
 }
 
-void MeshCache::insert(const Grid& grid, const Mesh& mesh) {
+void MeshCache::insert(const Grid& grid, const Mesh& mesh) const {
   key_t key = generate_key(grid);
 
   PathName tmp_path = stage(key);

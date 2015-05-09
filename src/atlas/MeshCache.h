@@ -38,7 +38,7 @@ class MeshCache  : public eckit::CacheManager {
 
   /// Inserts a cached WeightMatrix, overwritting any existing entry
   /// @returns true if insertion successful cache
-  void insert(const atlas::Grid& g, const atlas::Mesh& m);
+  void insert(const atlas::Grid& g, const atlas::Mesh& m) const;
 
  protected:
 
