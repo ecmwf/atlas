@@ -15,6 +15,8 @@
 
 #include "eckit/config/Resource.h"
 #include "eckit/log/Timer.h"
+#include "eckit/log/BigNum.h"
+
 #include "eckit/memory/ScopedPtr.h"
 
 #include "atlas/atlas_config.h"
@@ -96,7 +98,7 @@ void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, PointSet& p
 {
     bool ensure_outward_normals = true;
 
-    Timer t ("creating atlas data structure");
+    Timer t ("Creating atlas data structure");
 
     ASSERT( mesh.has_function_space("nodes") );
 
@@ -125,7 +127,7 @@ void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, PointSet& p
     size_t idx[3];
     Polyhedron_3::Vertex_const_handle vts[3];
 
-    std::cout << "inserting triags (" << nb_triags << ")" << std::endl;
+    std::cout << "Inserting triags (" << eckit::BigNum(nb_triags) << ")" << std::endl;
 
 //    boost::progress_display show_triag_progress( nb_triags );
     size_t tidx = 0;
