@@ -77,7 +77,7 @@ namespace atlas {
 
 Polyhedron_3* create_convex_hull_from_points( const std::vector< Point3 >& pts )
 {
-    Timer t("convex hull");
+    Timer t("Convex hull");
 
     Polyhedron_3* poly = new Polyhedron_3();
 
