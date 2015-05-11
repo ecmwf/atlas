@@ -32,7 +32,8 @@ void write_rgpg( struct Trans_t* trans, double* rgpg[], int nfld );
 int main ( int arc, char **argv )
 {
   int jfld;
-  struct Trans_t trans = new_trans();
+  struct Trans_t trans;
+  trans_new(&trans);
 
   // Read resolution information
   read_grid(&trans);

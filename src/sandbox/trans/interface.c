@@ -63,12 +63,12 @@ void trans_compute_or_cache(struct Trans_t* trans)
 		void* cache_entry = global_handlers->open(ctxt, key, mode);
 
 		if( cache_entry )
-		{			
+		{
 			global_handlers->read(ctxt, buffer, sz, cache_entry);
 		}
 		else
 		{
-			compute_(); 
+			compute_();
 
 			/* TODO: copy / fill buffers from trans handle */
 
@@ -150,14 +150,15 @@ int main ( int arc, char **argv )
 
   	trans_register_cache_handlers(&my_handlers);
 
-  	struct Trans_t trans = new_trans();
+  	struct Trans_t trans;
+    trans_new(&trans);
   	read_grid(&trans);
 
   	// setup my parameters in trans handle
   	//
 
   	trans_setup(&trans); // this uses my_reader
- 
+
 	  	/* called inside trans(i)_setup */
   		int mode = 0;
 	  	void* cache_data = trans_cached_open_("FOO",&mode); /* 0 - read, 1 - write */

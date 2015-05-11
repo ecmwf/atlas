@@ -8,27 +8,47 @@
  * does it submit to any jurisdiction.
  */
 
+#include "eckit/parser/JSON.h"
 #include "atlas/grids/ReducedGrid.h"
+#include "atlas/grids/LonLatGrid.h"
 #include "atlas/ErrorHandling.h"
 #include "atlas/trans/Trans.h"
 
 namespace atlas {
 namespace trans {
 
-Trans::Trans(const grids::ReducedGrid& g)
+Trans::Trans(const grids::ReducedGrid& g, const Trans::Options& p)
 {
-  int nsmax = (2*g.nlat()-1)/2;
-  ctor(g.nlat(),g.npts_per_lat().data(), nsmax);
+  int nsmax = 0;
+  ctor_rgg(g.nlat(),g.npts_per_lat().data(), nsmax, p);
 }
 
-Trans::Trans(const grids::ReducedGrid& g, const int nsmax )
+Trans::Trans(const int N, const Trans::Options& p)
 {
-  ctor(g.nlat(),g.npts_per_lat().data(), nsmax);
+  int nsmax = 0;
+  std::vector<int> npts_per_lat(2*N,4*N);
+  ctor_rgg(npts_per_lat.size(),npts_per_lat.data(), nsmax, p);
 }
 
-Trans::Trans( const std::vector<int>& npts_per_lat, const int nsmax )
+Trans::Trans(const grids::ReducedGrid& g, const int nsmax, const Trans::Options& p )
 {
-  ctor(npts_per_lat.size(),npts_per_lat.data(), nsmax);
+  const grids::LonLatGrid* lonlat = dynamic_cast<const grids::LonLatGrid*>(&g);
+  if( lonlat )
+    ctor_lonlat( lonlat->nlon(), lonlat->nlat(), nsmax, p );
+  else
+    ctor_rgg(g.nlat(),g.npts_per_lat().data(), nsmax, p);
+}
+
+
+Trans::Trans(const int N, const int nsmax, const Trans::Options& p)
+{
+  std::vector<int> npts_per_lat(2*N,4*N);
+  ctor_rgg(npts_per_lat.size(),npts_per_lat.data(), nsmax, p);
+}
+
+Trans::Trans( const std::vector<int>& npts_per_lat, const int nsmax, const Trans::Options& p )
+{
+  ctor_rgg(npts_per_lat.size(),npts_per_lat.data(), nsmax, p);
 }
 
 Trans::~Trans()
@@ -36,16 +56,107 @@ Trans::~Trans()
   ::trans_delete(&trans_);
 }
 
-void Trans::ctor(const int ndgl, const int nloen[], int nsmax)
+void Trans::ctor_rgg(const int ndgl, const int nloen[], int nsmax, const Trans::Options& p )
 {
-  trans_ = ::new_trans();
-  trans_.ndgl  = ndgl;
-  trans_.nloen = new int[trans_.ndgl];
-  std::copy(nloen,nloen+ndgl,trans_.nloen);
-  trans_.nsmax = nsmax;
-  if( nsmax == 0 )
-    trans_.lgridonly = true;
-  trans_setup(&trans_);
+  ::trans_new(&trans_);
+  ::trans_set_resol(&trans_,ndgl,nloen);
+  ::trans_set_trunc(&trans_,nsmax);
+
+  trans_.fft = p.fft();
+  trans_.lsplit = p.split_latitudes();
+  trans_.luseflt = p.flt();
+
+  ::trans_setup(&trans_);
+}
+
+void Trans::ctor_lonlat(const int nlon, const int nlat, int nsmax, const Trans::Options& p )
+{
+  ::trans_new(&trans_);
+  ::trans_set_resol_lonlat(&trans_,nlon,nlat);
+  ::trans_set_trunc(&trans_,nsmax);
+
+  trans_.fft = p.fft();
+  trans_.lsplit = p.split_latitudes();
+  trans_.luseflt = p.flt();
+
+  ::trans_setup(&trans_);
+}
+
+Trans::Options::Options() : eckit::Properties()
+{
+  set_split_latitudes(true);
+  set_fft(FFTW);
+  set_flt(false);
+}
+
+void Trans::Options::print( std::ostream& s) const
+{
+  eckit::JSON js(s);
+  js.precision(16);
+  js << *this;
+}
+
+void Trans::Options::set_fft( FFT fft )
+{
+  if( fft == FFTW )
+  {
+    set( "fft", "FFTW" );
+  }
+  else if( fft == FFT992 )
+  {
+    set( "fft", "FFT992" );
+  }
+  else
+  {
+    NOTIMP;
+  }
+}
+
+void Trans::Options::set_split_latitudes( bool split )
+{
+  set("split_latitudes",split);
+}
+
+void Trans::Options::set_flt( bool flt )
+{
+  set("flt",flt);
+}
+
+bool Trans::Options::split_latitudes() const
+{
+  return get("split_latitudes");
+}
+
+FFT Trans::Options::fft() const
+{
+  std::string fftstr = get( "fft" );
+  if( fftstr == "FFTW" )
+    return FFTW;
+  else if( fftstr == "FFT992" )
+    return FFT992;
+  else
+    NOTIMP;
+  return FFTW;
+}
+
+bool Trans::Options::flt() const
+{
+  return get("flt");
+}
+
+eckit::Params::value_t get( const Trans::Options& p, const eckit::Params::key_t& key )
+{
+  return p.get(key);
+}
+
+void print( const Trans::Options& p, std::ostream& s )
+{
+  p.print(s);
+}
+
+void encode( const Trans::Options& p, eckit::Stream& s )
+{
+  s << p;
 }
 
 

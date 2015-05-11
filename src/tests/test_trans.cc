@@ -79,6 +79,422 @@ void read_rspecg(trans::Trans& trans, std::vector<double>& rspecg, std::vector<i
 
 namespace atlas {
 namespace trans {
+
+class SpectralGlobal;
+class SpectralDistributed;
+class SpectralScalar;
+class GridPointScalar;
+class GridPointDistributed;
+class GridPointGlobal;
+
+void distspec( trans::Trans&, const SpectralGlobal&, const SpectralDistributed& );
+void invtrans( trans::Trans&, const SpectralScalar&, const GridPointScalar& );
+void gathgrid( trans::Trans&, const GridPointDistributed&, const GridPointGlobal& );
+
+
+class SpectralGlobal
+{
+  friend void distspec( trans::Trans& , const SpectralGlobal& , const SpectralDistributed& );
+private:
+  virtual int nfld() const = 0;
+  virtual double* rspecg() const = 0;
+  virtual int* procs() const = 0;
+  virtual void transfer() const = 0;
+};
+
+class SpectralDistributed
+{
+  friend void distspec( trans::Trans& , const SpectralGlobal& , const SpectralDistributed& );
+
+private:
+  virtual int nfld() const = 0;
+  virtual double* rspec() const = 0;
+  virtual void transfer() const = 0;
+};
+
+class SpectralScalar
+{
+  friend void invtrans( trans::Trans&, const SpectralScalar&, const GridPointScalar& );
+private:
+  virtual double* rspscalar() const = 0;
+  virtual void transfer() const = 0;
+};
+
+class SpectralVorDiv
+{
+private:
+  virtual double* rspvor() const = 0;
+  virtual double* rspdiv() const = 0;
+  virtual void transfer() const = 0;
+};
+
+class GridPointGlobal
+{
+  friend void gathgrid( trans::Trans&, const GridPointDistributed&, const GridPointGlobal& );
+private:
+  virtual int     nfld() const = 0;
+  virtual double* rgpg() const = 0;
+  virtual int*    procs() const = 0;
+  virtual void transfer() const = 0;
+};
+
+class GridPointDistributed
+{
+  friend void gathgrid( trans::Trans&, const GridPointDistributed&, const GridPointGlobal& );
+private:
+  virtual int     nfld() const = 0;
+  virtual double* rgp() const = 0;
+  virtual void transfer() const = 0;
+  virtual int nproma() const = 0;
+  virtual int ngpblks() const = 0;
+};
+
+class GridPointScalar
+{
+  friend void invtrans( trans::Trans&, const SpectralScalar&, const GridPointScalar& );
+private:
+  virtual double* rgp() const = 0;
+  virtual void transfer() const = 0;
+  virtual int nproma() const = 0;
+  virtual int ngpblks() const = 0;
+};
+
+class GridPointWind
+{
+private:
+  virtual double* rgp() const = 0;
+  virtual void transfer() const = 0;
+};
+
+
+
+// --------------------------------------------------------------------
+
+class SpectralGlobalData: public SpectralGlobal
+{
+public:
+  SpectralGlobalData( int _nfld, double* _rspecg, int* _procs )
+  {
+    nfld_ = _nfld;
+    rspecg_ = _rspecg;
+    procs_ = _procs;
+    procs_owned_ = false;
+  }
+  SpectralGlobalData( int _nfld, double* _rspecg )
+  {
+    nfld_ = _nfld;
+    rspecg_ = _rspecg;
+    procs_ = new int(nfld_);
+    for( int j=0; j<nfld_; ++j )
+      procs_[j] = 1;
+    procs_owned_ = true;
+  }
+  SpectralGlobalData( int _nfld, const std::vector<double>& _rspecg, const std::vector<int>& _procs )
+  {
+    ASSERT(_nfld == _procs.size());
+    nfld_ = _nfld;
+    rspecg_ = const_cast<std::vector<double>&>(_rspecg).data();
+    procs_ = const_cast<std::vector<int>&>(_procs).data();
+    procs_owned_ = false;
+  }
+  SpectralGlobalData( int nfld, const std::vector<double>& _rspecg )
+  {
+    nfld_ = nfld;
+    rspecg_ = const_cast<std::vector<double>&>(_rspecg).data();
+    procs_ = new int(nfld_);
+    for( int j=0; j<nfld_; ++j )
+      procs_[j] = 1;
+    procs_owned_ = true;
+  }
+  virtual ~SpectralGlobalData()
+  {
+    if( procs_owned_ )
+      delete[] procs_;
+  }
+
+private: // methods
+  virtual int nfld() const { return nfld_; }
+  virtual double* rspecg() const { return rspecg_; }
+  virtual int* procs() const { return procs_; }
+  virtual void transfer() const {} // nothing to do
+
+private: // data
+  int nfld_;
+  double* rspecg_;
+  int* procs_;
+  bool procs_owned_;
+};
+
+// --------------------------------------------------------------------
+
+class SpectralDistributedData: public SpectralDistributed
+{
+public:
+  SpectralDistributedData( int _nfld, double* _rspec )
+  {
+    nfld_ = _nfld;
+    rspec_ = _rspec;
+  }
+  SpectralDistributedData( int _nfld, const std::vector<double>& _rspec )
+  {
+    nfld_ = _nfld;
+    rspec_ = const_cast<std::vector<double>&>(_rspec).data();
+  }
+
+
+private: // methods
+  virtual int nfld() const { return nfld_; }
+  virtual double* rspec() const { return rspec_; }
+  virtual void transfer() const {} // nothing to do
+
+private: // data
+  int nfld_;
+  double* rspec_;
+};
+
+// --------------------------------------------------------------------
+
+
+class SpectralScalarData: public SpectralScalar
+{
+public:
+  SpectralScalarData( double* _rspscalar )
+  {
+    rspscalar_ = _rspscalar;
+  }
+  SpectralScalarData( const std::vector<double>& _rspscalar )
+  {
+    rspscalar_ = const_cast<std::vector<double>&>(_rspscalar).data();
+  }
+
+
+private: // methods
+  virtual double* rspscalar() const { return rspscalar_; }
+  virtual void transfer() const {} // nothing to do
+
+private: // data
+  double* rspscalar_;
+};
+
+
+// --------------------------------------------------------------------
+
+
+class GridPointScalarData: public GridPointScalar
+{
+public:
+  GridPointScalarData( double* _rgp )
+  {
+    rgp_ = _rgp;
+  }
+  GridPointScalarData( const std::vector<double>& _rgp )
+  {
+    rgp_ = const_cast<std::vector<double>&>(_rgp).data();
+  }
+
+
+private: // methods
+  virtual double* rgp() const { return rgp_; }
+  virtual void transfer() const {} // nothing to do
+  virtual int nproma() const  { return 0; }
+  virtual int ngpblks() const { return 1; }
+
+private: // data
+  double* rgp_;
+};
+
+
+// --------------------------------------------------------------------
+
+class GridPointGlobalData: public GridPointGlobal
+{
+public:
+  GridPointGlobalData( int _nfld, double* _rgpg, int* _procs )
+  {
+    nfld_ = _nfld;
+    rgpg_ = _rgpg;
+    procs_ = _procs;
+    procs_owned_ = false;
+  }
+  GridPointGlobalData( int _nfld, double* _rgpg )
+  {
+    nfld_ = _nfld;
+    rgpg_ = _rgpg;
+    procs_ = new int(nfld_);
+    for( int j=0; j<nfld_; ++j )
+      procs_[j] = 1;
+    procs_owned_ = true;
+  }
+  GridPointGlobalData( int _nfld, const std::vector<double>& _rgpg, const std::vector<int>& _procs )
+  {
+    ASSERT(_nfld == _procs.size());
+    nfld_ = _nfld;
+    rgpg_ = const_cast<std::vector<double>&>(_rgpg).data();
+    procs_ = const_cast<std::vector<int>&>(_procs).data();
+    procs_owned_ = false;
+  }
+  GridPointGlobalData( int nfld, const std::vector<double>& _rgpg )
+  {
+    nfld_ = nfld;
+    rgpg_ = const_cast<std::vector<double>&>(_rgpg).data();
+    procs_ = new int(nfld_);
+    for( int j=0; j<nfld_; ++j )
+      procs_[j] = 1;
+    procs_owned_ = true;
+  }
+  virtual ~GridPointGlobalData()
+  {
+    if( procs_owned_ )
+      delete[] procs_;
+  }
+
+private: // methods
+  virtual int nfld() const { return nfld_; }
+  virtual double* rgpg() const { return rgpg_; }
+  virtual int* procs() const { return procs_; }
+  virtual void transfer() const {} // nothing to do
+
+private: // data
+  int nfld_;
+  double* rgpg_;
+  int* procs_;
+  bool procs_owned_;
+};
+
+// --------------------------------------------------------------------
+
+class GridPointDistributedData: public GridPointDistributed
+{
+public:
+  GridPointDistributedData( int _nfld, double* _rgp )
+  {
+    nfld_ = _nfld;
+    rgp_ = _rgp;
+  }
+  GridPointDistributedData( int _nfld, const std::vector<double>& _rgp )
+  {
+    nfld_ = _nfld;
+    rgp_ = const_cast<std::vector<double>&>(_rgp).data();
+  }
+
+
+private: // methods
+  virtual int nfld() const { return nfld_; }
+  virtual double* rgp() const { return rgp_; }
+  virtual void transfer() const {} // nothing to do
+  virtual int nproma() const  { return 0; }
+  virtual int ngpblks() const { return 1; }
+
+private: // data
+  int nfld_;
+  double* rgp_;
+};
+
+// --------------------------------------------------------------------
+
+class GridPointDistributedField: public GridPointDistributed
+{
+public:
+  GridPointDistributedField( Field& field )
+  {
+    field_ = &field;
+    nfld_ = field_->nb_vars();
+    ngptot_ = field_->size()/nfld_;
+  }
+
+private: // methods
+  virtual int nfld() const { return nfld_; }
+  virtual double* rgp() const { field_->data<double>();  Log::warning() << "ghost nodes are inside!!!" << std::endl;}
+  virtual void transfer() const {}
+  virtual int nproma() const  { return 1; }
+  virtual int ngpblks() const { return ngptot_; }
+
+private: // data
+  int nfld_;
+  int ngptot_;
+  mutable std::vector<double> rgp_;
+  Field* field_;
+};
+
+// --------------------------------------------------------------------
+
+class GridPointScalarField: public GridPointScalar
+{
+public:
+  GridPointScalarField( Field& field )
+  {
+    field_ = &field;
+    nfld_ = field_->nb_vars();
+    ngptot_ = field_->size()/nfld_;
+  }
+
+private: // methods
+  virtual double* rgp() const { return field_->data<double>(); Log::warning() << "ghost nodes are inside!!!" << std::endl; }
+  virtual void transfer() const {}
+  virtual int nproma() const  { return 1; }
+  virtual int ngpblks() const { return ngptot_; }
+
+private: // data
+  int nfld_;
+  int ngptot_;
+  mutable std::vector<double> rgp_;
+  Field* field_;
+};
+
+// --------------------------------------------------------------------
+
+
+void distspec( trans::Trans& t, const SpectralGlobal& glb, const SpectralDistributed& dist)
+{
+  ASSERT( glb.nfld() == dist.nfld() );
+  struct ::DistSpec_t args = new_distspec(t);
+    args.nfld = glb.nfld();
+    args.rspecg = glb.rspecg();
+    args.nfrom = glb.procs();
+    args.rspec = dist.rspec();
+  ::trans_distspec(&args);
+  dist.transfer();
+}
+
+void invtrans( trans::Trans& t, const SpectralScalar& sp, const GridPointScalar& gp )
+{
+  struct ::InvTrans_t args = new_invtrans(t);
+    args.rspscalar = sp.rspscalar();
+    args.rgp = gp.rgp();
+    args.ngpblks = gp.ngpblks() != 1 ? t.ngptot() : 1;
+    args.nproma = gp.nproma() != 0 ? gp.nproma() : t.ngptot();
+  ::trans_invtrans(&args);
+  gp.transfer();
+}
+
+void gathgrid( trans::Trans& t, const GridPointDistributed& dist, const GridPointGlobal& glb )
+{
+  ASSERT( glb.nfld() == dist.nfld() );
+  struct ::GathGrid_t args = new_gathgrid(t);
+    args.nfld = glb.nfld();
+    args.rgpg = glb.rgpg();
+    args.nto  = glb.procs();
+    args.rgp  = dist.rgp();
+    args.ngpblks = dist.ngpblks() != 1 ? t.ngptot() : 1;
+    args.nproma = dist.nproma() != 0 ? 1 : t.ngptot();
+  ::trans_gathgrid(&args);
+  glb.transfer();
+}
+
+//gathspec( trans, SpectralDistributed(rspec),    SpectralGlobal(rspecg,nto) );
+
+//distgrid( trans, GridPointGlobal(rgpg,nfrom),   GridPointDistributed(rgp) );
+
+//gathgrid( trans, GridPointDistributed(rgp),     GridPointGlobal(rgpg,nto) );
+
+//invtrans( trans, SpectralScalar(rspscalar),     GridPointScalar(rgp) );
+
+//invtrans( trans, SpectralVorDiv(rspvor,rspdiv), GridPointWind(rgp) );
+
+//dirtrans( trans, GridPointScalar(rgp),          SpectralScalar(rspscalar) );
+
+//dirtrans( trans, GridPointWind(rgp),            SpectralVorDiv(rspvor,rspdiv) );
+
 class DistSpec
 {
 public:
@@ -91,14 +507,14 @@ public:
 
   DistSpec& nfrom (const int*    _nfrom)  { distspec_.nfrom  = const_cast<int*>(_nfrom);     return *this; }
   DistSpec& rspecg(const double* _rspecg) { distspec_.rspecg = const_cast<double*>(_rspecg); return *this; }
-  DistSpec& rspec (      double* _rspec)  { distspec_.rspec = _rspec;                        return *this; }
+  DistSpec& rspec (      double* _rspec)  { distspec_.rspec  = _rspec;                        return *this; }
 
   DistSpec& nfrom (const std::vector<int>&    _nfrom)  { return nfrom(_nfrom.size()?_nfrom.data():NULL); }
   DistSpec& rspecg(const std::vector<double>& _rspecg) { return rspecg(_rspecg.size()?_rspecg.data():NULL); }
   DistSpec& rspec (      std::vector<double>& _rspec)
   { ASSERT(_rspec.size()); return rspec(_rspec.data()); }
 
-  void operator()() { ::trans_distspec(&distspec_); }
+  void execute() { ::trans_distspec(&distspec_); }
 
 private:
   struct DistSpec_t distspec_;
@@ -117,7 +533,7 @@ BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
 
   trans::Trans trans( *g );
 
-  BOOST_CHECK_EQUAL( trans.nsmax() , 159 );
+  BOOST_CHECK_EQUAL( trans.nsmax() , 0 );
 
   trans::TransPartitioner partitioner(*g,trans);
   GridDistribution distribution( partitioner );
@@ -165,13 +581,27 @@ BOOST_AUTO_TEST_CASE( test_trans_partitioner )
 
 }
 
+BOOST_AUTO_TEST_CASE( test_trans_options )
+{
+  trans::Trans::Options opts;
+  opts.set_fft(trans::FFTW);
+  opts.set_split_latitudes(false);
+
+  eckit::Log::info() << "trans_opts = " << opts << std::endl;
+}
+
+
 BOOST_AUTO_TEST_CASE( test_distspec )
 {
   ReducedGrid::Ptr g ( ReducedGrid::create( "rgg4.N80" ) );
   eckit::ResourceMgr::instance().set("atlas.meshgen.angle","0");
   meshgen::ReducedGridMeshGenerator generate;
   BOOST_CHECKPOINT("mesh generator created");
-  trans::Trans trans(*g);
+  //trans::Trans trans(*g, 159 );
+
+  trans::Trans::Options p;
+  p.set_flt(false);
+  trans::Trans trans(400, 159, p);
   BOOST_CHECKPOINT("Trans initialized");
   std::vector<double> rspecg;
   std::vector<int   > nfrom;
@@ -179,13 +609,39 @@ BOOST_AUTO_TEST_CASE( test_distspec )
   BOOST_CHECKPOINT("Read rspecg");
   read_rspecg(trans,rspecg,nfrom,nfld);
 
+
   std::vector<double> rspec(nfld*trans.nspec2());
+  std::vector<int> nto(nfld,1);
+  std::vector<double> rgp(nfld*trans.ngptot());
+  std::vector<double> rgpg(nfld*trans.ngptotg());
 
   BOOST_CHECKPOINT("distspec");
 
-  trans::DistSpec distspec(trans);
-  distspec.nfld(nfld).nfrom(nfrom).rspecg(rspecg).rspec(rspec)();
+  BOOST_CHECK_NO_THROW(
+    trans::DistSpec(trans).
+        nfld (nfld).
+        nfrom (nfrom).
+        rspecg (rspecg).
+        rspec (rspec).
+    execute();
+  )
+
+
+  trans::distspec(trans, trans::SpectralGlobalData(nfld,rspecg,nfrom), trans::SpectralDistributedData(nfld,rspec) );
+
+  trans::invtrans(trans, trans::SpectralScalarData(rspec), trans::GridPointScalarData(rgp) );
+
+  trans::gathgrid(trans, trans::GridPointDistributedData(nfld,rgp), trans::GridPointGlobalData(nfld,rgpg,nto) );
+
+  atlas::Mesh* m = generate(*g);
+  Field& f = m->function_space("nodes").create_field<double>("transform_me",nfld);
+
+  trans::invtrans(trans, trans::SpectralScalarData(rspec), trans::GridPointScalarField(f) );
+
+  trans::gathgrid(trans, trans::GridPointDistributedField(f), trans::GridPointGlobalData(nfld,rgpg,nto) );
+
   BOOST_CHECKPOINT("end test_distspec");
+
 }
 
 BOOST_AUTO_TEST_CASE( test_distribution )
@@ -241,5 +697,4 @@ BOOST_AUTO_TEST_CASE( test_generate_mesh )
 
   io::Gmsh().write(*m_trans,"N16_trans.msh");
 }
-
 
