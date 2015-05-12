@@ -178,6 +178,7 @@ void atlas__Trans__delete (Trans* trans)
 int atlas__Trans__handle (Trans* trans)
 {
   ATLAS_ERROR_HANDLING( return trans->handle() );
+  return 0;
 }
 
 }
