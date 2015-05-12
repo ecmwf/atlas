@@ -495,6 +495,105 @@ void gathgrid( trans::Trans& t, const GridPointDistributed& dist, const GridPoin
 
 //dirtrans( trans, GridPointWind(rgp),            SpectralVorDiv(rspvor,rspdiv) );
 
+
+void distspec( trans::Trans& t, const int nb_fields, const int origin[], const double global_spectra[], double spectra[] )
+{
+  struct ::DistSpec_t args = new_distspec(t);
+    args.nfld = nb_fields;
+    args.rspecg = global_spectra;
+    args.nfrom = origin;
+    args.rspec = spectra;
+  if( int errcode = ::trans_distspec(&args) != TRANS_SUCCESS )
+    throw eckit::Exception("distspec failed: "+std::string(::trans_error_msg(errcode)),Here());
+}
+
+void gathspec( trans::Trans& t, const int nb_fields, const int destination[], const double spectra[], double global_spectra[] )
+{
+  struct ::GathSpec_t args = new_gathspec(t);
+    args.nfld = nb_fields;
+    args.rspecg = global_spectra;
+    args.nto = destination;
+    args.rspec = spectra;
+  if( int errcode = ::trans_gathspec(&args) != TRANS_SUCCESS )
+    throw eckit::Exception("gathspec failed: "+std::string(::trans_error_msg(errcode)),Here());
+}
+
+void distgrid( trans::Trans& t, const int nb_fields, const int origin[], const double global_fields[], double fields[] )
+{
+  struct ::DistGrid_t args = new_distgrid(t);
+    args.nfld  = nb_fields;
+    args.nfrom = origin;
+    args.rgpg  = global_fields;
+    args.rgp   = fields;
+  if( int errcode = ::trans_distgrid(&args) != TRANS_SUCCESS )
+    throw eckit::Exception("distgrid failed: "+std::string(::trans_error_msg(errcode)),Here());
+}
+
+void gathgrid( trans::Trans& t, const int nb_fields, const int destination[], const double fields[], double global_fields[] )
+{
+  struct ::GathGrid_t args = new_gathgrid(t);
+    args.nfld = nb_fields;
+    args.nto  = destination;
+    args.rgp  = fields;
+    args.rgpg = global_fields;
+  if( int errcode = ::trans_gathgrid(&args) != TRANS_SUCCESS )
+    throw eckit::Exception("gathgrid failed: "+std::string(::trans_error_msg(errcode)),Here());
+}
+
+void invtrans( trans::Trans& t, const int nb_fields, const double scalar_spectra[], double scalar_fields[] )
+{
+  struct ::InvTrans_t args = new_invtrans(t);
+    args.nscalar = nb_fields;
+    args.rspscalar = scalar_spectra;
+    args.rgp = scalar_fields;
+  if( int errcode = ::trans_invtrans(&args) != TRANS_SUCCESS )
+    throw eckit::Exception("invtrans failed: "+std::string(::trans_error_msg(errcode)),Here());
+}
+
+
+/*!
+ * @brief Inverse transform of vorticity/divergence to wind(U/V)
+ * @param nb_fields [in] Number of fields ( both components of wind count as 1 )
+ */
+void invtrans( trans::Trans& t, const int nb_fields, const double vorticity_spectra[], const double divergence_spectra[], double wind_fields[] )
+{
+  struct ::InvTrans_t args = new_invtrans(t);
+    args.nvordiv = nb_fields;
+    args.rspvor = vorticity_spectra;
+    args.rspdiv = divergence_spectra;
+    args.rgp = wind_fields;
+  if( int errcode = ::trans_invtrans(&args) != TRANS_SUCCESS )
+    throw eckit::Exception("invtrans failed: "+std::string(::trans_error_msg(errcode)),Here());
+}
+
+/*!
+ * @brief Direct transform of scalar fields
+ */
+void dirtrans( trans::Trans& t, const int nb_fields, const double scalar_fields[], double scalar_spectra[] )
+{
+  struct ::DirTrans_t args = new_dirtrans(t);
+    args.nscalar = nb_fields;
+    args.rgp = scalar_fields;
+    args.rspscalar = scalar_spectra;
+  if( int errcode = ::trans_dirtrans(&args) != TRANS_SUCCESS )
+    throw eckit::Exception("dirtrans failed: "+std::string(::trans_error_msg(errcode)),Here());
+}
+
+/*!
+ * @brief Direct transform of wind(U/V) to vorticity/divergence
+ * @param nb_fields [in] Number of fields ( both components of wind count as 1 )
+ */
+void dirtrans( trans::Trans& t, const int nb_fields, const double wind_fields[], double vorticity_spectra[], double divergence_spectra[] )
+{
+  struct ::DirTrans_t args = new_dirtrans(t);
+    args.nvordiv = nb_fields;
+    args.rspvor = vorticity_spectra;
+    args.rspdiv = divergence_spectra;
+    args.rgp    = wind_fields;
+  if( int errcode = ::trans_dirtrans(&args) != TRANS_SUCCESS )
+    throw eckit::Exception("dirtrans failed: "+std::string(::trans_error_msg(errcode)),Here());
+}
+
 class DistSpec
 {
 public:
@@ -626,6 +725,9 @@ BOOST_AUTO_TEST_CASE( test_distspec )
     execute();
   )
 
+  trans::distspec( trans, nfld, nfrom.data(), rspecg.data(), rspec.data() );
+  trans::invtrans( trans, nfld, rspec.data(), rgp.data() );
+  trans::gathgrid( trans, nfld, nto.data(),   rgp.data(),    rgpg.data() );
 
   trans::distspec(trans, trans::SpectralGlobalData(nfld,rspecg,nfrom), trans::SpectralDistributedData(nfld,rspec) );
 

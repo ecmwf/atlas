@@ -101,6 +101,7 @@ public:
 
     edges      = Resource< bool> ( "-edges", false );
     stats      = Resource< bool> ( "-stats", false );
+    info      = Resource< bool> ( "-info", false );
     halo       = Resource< int > ( "-halo", 0 );
     surfdim    = Resource< int > ( "-surfdim", 2 );
 
@@ -120,6 +121,7 @@ private:
   int halo;
   bool edges;
   bool stats;
+  bool info;
   int surfdim;
   std::string identifier;
   std::vector<long> reg_nlon_nlat;
@@ -167,6 +169,7 @@ void Meshgen2Gmsh::run()
     build_statistics(*mesh);
 
   atlas::io::Gmsh gmsh;
+  gmsh.options.set("info",info);
   gmsh.options.set("surfdim",surfdim);
   gmsh.write( *mesh, path_out );
   atlas_finalize();

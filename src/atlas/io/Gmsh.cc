@@ -346,13 +346,25 @@ void swap_bytes(char *array, int size, int n)
 
 Gmsh::Gmsh()
 {
-	options.set<int >("surfdim", Resource<int >("atlas.gmsh.surfdim", 2    ));
-	options.set<bool>("gather",  Resource<bool>("atlas.gmsh.gather",  false));
-	options.set<bool>("ghost",   Resource<bool>("atlas.gmsh.ghost",   false));
-	options.set<bool>("ascii",   Resource<bool>("atlas.gmsh.ascii",   true ));
-	options.set<bool>("elements",Resource<bool>("atlas.gmsh.elements",true ));
-	options.set<bool>("edges",   Resource<bool>("atlas.gmsh.edges",   true ));
-	levels = Resource< std::vector<long> >("atlas.gmsh.levels", std::vector<long>() );
+  // Write mesh in a 3D Cartesian or 2D LonLat framework
+  options.set<int >("surfdim", Resource<int >("atlas.gmsh.surfdim", 2    ));
+
+  // Gather fields to one proc before writing
+  options.set<bool>("gather",  Resource<bool>("atlas.gmsh.gather",  false));
+
+  // Output of ghost nodes / elements
+  options.set<bool>("ghost",   Resource<bool>("atlas.gmsh.ghost",   false));
+
+  // ASCII format (true) or binary (false)
+  options.set<bool>("ascii",   Resource<bool>("atlas.gmsh.ascii",   true ));
+
+  // Output of elements
+  options.set<bool>("elements",Resource<bool>("atlas.gmsh.elements",true ));
+
+  // Output of edges
+  options.set<bool>("edges",   Resource<bool>("atlas.gmsh.edges",   true ));
+
+  levels = Resource< std::vector<long> >("atlas.gmsh.levels", std::vector<long>() );
 }
 
 Gmsh::~Gmsh()
@@ -905,42 +917,48 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path) const
 	file << std::flush;
 	file.close();
 
-	LocalPathName mesh_info(file_path);
-	mesh_info = mesh_info.dirName()+"/"+mesh_info.baseName(false)+"_info.msh";
 
-	if (nodes.has_field("partition"))
-	{
-		write(nodes.field("partition"),mesh_info,std::ios_base::out);
-	}
 
-	if (nodes.has_field("dual_volumes"))
-	{
-		write(nodes.field("dual_volumes"),mesh_info,std::ios_base::app);
-	}
+  // Optional mesh information file
+  if( options.has<bool>("info") && options.get<bool>("info") )
+  {
+    LocalPathName mesh_info(file_path);
+    mesh_info = mesh_info.dirName()+"/"+mesh_info.baseName(false)+"_info.msh";
 
-  if (nodes.has_field("dual_delta_sph"))
-	{
-		write(nodes.field("dual_delta_sph"),mesh_info,std::ios_base::app);
-	}
+    if (nodes.has_field("partition"))
+    {
+      write(nodes.field("partition"),mesh_info,std::ios_base::out);
+    }
 
-	if( mesh.has_function_space("edges") )
-	{
-		FunctionSpace& edges = mesh.function_space( "edges" );
+    if (nodes.has_field("dual_volumes"))
+    {
+      write(nodes.field("dual_volumes"),mesh_info,std::ios_base::app);
+    }
 
-		if (edges.has_field("dual_normals"))
-		{
-			write(edges.field("dual_normals"),mesh_info,std::ios_base::app);
-		}
+    if (nodes.has_field("dual_delta_sph"))
+    {
+      write(nodes.field("dual_delta_sph"),mesh_info,std::ios_base::app);
+    }
 
-		if (edges.has_field("skewness"))
-		{
-			write(edges.field("skewness"),mesh_info,std::ios_base::app);
-		}
+    if( mesh.has_function_space("edges") )
+    {
+      FunctionSpace& edges = mesh.function_space( "edges" );
 
-    if (edges.has_field("arc_length"))
-		{
-			write(edges.field("arc_length"),mesh_info,std::ios_base::app);
-		}
+      if (edges.has_field("dual_normals"))
+      {
+        write(edges.field("dual_normals"),mesh_info,std::ios_base::app);
+      }
+
+      if (edges.has_field("skewness"))
+      {
+        write(edges.field("skewness"),mesh_info,std::ios_base::app);
+      }
+
+      if (edges.has_field("arc_length"))
+      {
+        write(edges.field("arc_length"),mesh_info,std::ios_base::app);
+      }
+    }
   }
 
 }
