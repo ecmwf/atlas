@@ -740,7 +740,7 @@ BOOST_AUTO_TEST_CASE( test_distspec )
 
   trans::invtrans(trans, trans::SpectralScalarData(rspec), trans::GridPointScalarField(f) );
 
-  trans::gathgrid(trans, trans::GridPointDistributedField(f), trans::GridPointGlobalData(nfld,rgpg,nto) );
+  //trans::gathgrid(trans, trans::GridPointDistributedField(f), trans::GridPointGlobalData(nfld,rgpg,nto) );
 
   BOOST_CHECKPOINT("end test_distspec");
 
