@@ -28,303 +28,232 @@ namespace grids {
 
 //------------------------------------------------------------------------------------------------------
 
-register_BuilderT1(Grid,PolarStereoGraphic,PolarStereoGraphic::grid_type_str());
+register_BuilderT1(Grid, PolarStereoGraphic, PolarStereoGraphic::grid_type_str());
 
-PolarStereoGraphic::PolarStereoGraphic( const eckit::Params& p )
-: npts_xaxis_(0),
-  npts_yaxis_(0),
-  x_grid_length_(0),
-  y_grid_length_(0),
-  resolutionAndComponentFlag_(8), // default 8 assumes earth is spherical
-  lad_(60),
-  orientationOfTheGrid_(0),
-  radius_(6371229),
-  semi_major_(6378137),
-  semi_minor_(6356752.3),
-  e_(0.081819191),
-  southPoleOnProjectionPlane_(false),
-  earth_is_oblate_(false),
-  iScansPositively_(true),
-  jScansPositively_(false)
+
+// 66-66 constant gridDefinitionTemplateNumber = 20
+//      66-68 unsigned Nx = 16 [Ni, numberOfPointsAlongXAxis, numberOfColumns]
+//      68-70 unsigned Ny = 31 [Nj, numberOfPointsAlongYAxis, numberOfRows]
+//      70-73 signed latitudeOfFirstGridPoint = 60000 [La1]
+//      73-73 scale latitudeOfFirstGridPointInDegrees = 60 [yFirst]
+//      73-76 signed longitudeOfFirstGridPoint = 0 [Lo1]
+//      76-76 scale longitudeOfFirstGridPointInDegrees = 0 [xFirst]
+//      76-77 codeflag resolutionAndComponentFlags = 128 [10000000:(1=1)  Direction increments given;(2=0)  Earth assumed spherical with radius = 6367.47 km;(5=0)  u and v componen
+//      77-77 bit ijDirectionIncrementGiven = 1 [iDirectionIncrementGiven, jDirectionIncrementGiven, DiGiven, DjGiven]
+//      77-77 bit earthIsOblate = 0
+//      77-77 bit resolutionAndComponentFlags3 = 0
+//      77-77 bit resolutionAndComponentFlags4 = 0
+//      77-77 bit uvRelativeToGrid = 0
+//      77-77 bit resolutionAndComponentFlags6 = 0
+//      77-77 bit resolutionAndComponentFlags7 = 0
+//      77-77 bit resolutionAndComponentFlags8 = 0
+//      77-80 signed orientationOfTheGrid = 0 [LoV]
+//      80-80 scale orientationOfTheGridInDegrees = 0
+//      80-83 unsigned DxInMetres = 0 [xDirectionGridLengthInMetres, Dx, Di]
+//      83-86 unsigned DyInMetres = 0 [yDirectionGridLengthInMetres, Dy, Dj]
+//      86-86 constant latitudeWhereDxAndDyAreSpecifiedInDegrees = 60
+//      86-86 constant LaDInDegrees = 60
+//      86-87 unsigned projectionCentreFlag = 0 [projectionCenterFlag]
+//      87-87 bit southPoleOnProjectionPlane = 0
+//      87-88 codeflag scanningMode = 0 [00000000:(1=0)  Points scan in +i direction;(2=0)  Points scan in -j direction;(3=0)  Adjacent points in i direction are consecutive :grib1
+//      88-88 bit iScansNegatively = 0
+//      88-88 bit jScansPositively = 0
+//      88-88 bit jPointsAreConsecutive = 0
+//      88-88 constant alternativeRowScanning = 0
+//      88-88 transient iScansPositively = 1
+//      88-88 bit scanningMode4 = 0
+//      88-88 bit scanningMode5 = 0
+//      88-88 bit scanningMode6 = 0
+//      88-88 bit scanningMode7 = 0
+//      88-88 bit scanningMode8 = 0
+//      88-88 change_scanning_direction swapScanningX = <error> *** ERR=-4 (Function not yet implemented) [grib_dumper_debug::dump_string] [swapScanningLon]
+//      88-88 change_scanning_direction swapScanningY = <error> *** ERR=-4 (Function not yet implemented) [grib_dumper_debug::dump_string] [swapScanningLat]
+//      88-92 pad padding_grid5_1 = 4 {
+
+// double orientationOfTheGrid_;      // east longitude value, in degrees ( longitude of natural origin)
+//   double radius_;                    // default 6371229
+//   double semi_major_;                // default 6378137   (a)
+//   double semi_minor_;                // default 6356752.3 (b)
+//   double e_;                         // calculated e = sqrt( 1 - b*b/a*a)
+
+//   Point first_grid_pt_;              // This is in spherical lat long co-ordinate
+
+//   bool southPoleOnProjectionPlane_;
+//   bool earth_is_oblate_;
+
+PolarStereoGraphic::PolarStereoGraphic(  size_t Nx, size_t Ny,
+                     size_t Dx, size_t Dy,
+                     double longitudeOfFirstGridPoint,
+                     double latitudeOfFirstGridPoint,
+                     double orientationOfTheGrid,
+                     bool southPoleOnProjectionPlane,
+                     double radius,
+                     bool earth_is_oblate,
+                     double semi_major,
+                     double semi_minor):
+    npts_xaxis_(Nx),
+    npts_yaxis_(Ny),
+    x_grid_length_(Dx),
+    y_grid_length_(Dy),
+    first_grid_pt_(longitudeOfFirstGridPoint, latitudeOfFirstGridPoint),
+    orientationOfTheGrid_(orientationOfTheGrid),
+    radius_(radius),
+    semi_major_(semi_major),
+    semi_minor_(semi_minor),
+    southPoleOnProjectionPlane_(southPoleOnProjectionPlane),
+    earth_is_oblate_(earth_is_oblate)
 
 {
-   if( p.has("iScansPositively") )
-   {
-      iScansPositively_ = p["iScansPositively"];
-   }
 
-   if( p.has("jScansPositively") )
-   {
-      jScansPositively_ = p["jScansPositively"];
-   }
+    ASSERT( npts_xaxis_ > 0);
+    ASSERT( npts_yaxis_ > 0);
+    ASSERT( x_grid_length_ > 0);
+    ASSERT( y_grid_length_ > 0);
+    if (earth_is_oblate_) {
+        ASSERT( semi_major_ > semi_minor_);
+    }
 
-   if( p.has("Nx") )
-   {
-      npts_xaxis_ = p["Nx"];
-   }
-
-   if( p.has("Ny") )
-   {
-      npts_yaxis_ = p["Ny"];
-   }
-
-   if( p.has("Dx") )
-   {
-      x_grid_length_ = p["Dx"];
-   }
-
-   if( p.has("Dy") )
-   {
-      y_grid_length_ = p["Dy"];
-   }
-
-   if( p.has("orientationOfTheGrid") )
-   {
-      orientationOfTheGrid_ = p["orientationOfTheGrid"];
-   }
-
-   if( p.has("LaD") )
-   {
-      lad_ = p["LaD"];
-   }
-
-   // resolutionAndComponentFlag is used to indicate sphere/oblate
-   // But this is extracted separately, to avoid having to mess with bits.
-   // Stored since needed to match geography hash, when gridSpec written to grib
-   if( p.has("resolutionAndComponentFlag") )
-   {
-      resolutionAndComponentFlag_ = p["resolutionAndComponentFlag"];
-   }
-
-   double lat = 0;
-   double lon = 0;
-   if( p.has("latitudeOfFirstGridPoint") )
-   {
-      lat =  p["latitudeOfFirstGridPoint"];
-   }
-   if( p.has("longitudeOfFirstGridPoint") )
-   {
-      lon =  p["longitudeOfFirstGridPoint"];
-   }
-   first_grid_pt_.assign(lon,lat);
-
-
-   if (p.has("southPoleOnProjectionPlane")) {
-      southPoleOnProjectionPlane_ = p["southPoleOnProjectionPlane"];
-   }
-
-   if (p.has("earthIsOblate")) {
-      earth_is_oblate_ = p["earthIsOblate"];
-   }
-
-
-   if (earth_is_oblate_) {
-
-      if (p.has("earthMajorAxis")) {
-         semi_major_ = p["earthMajorAxis"];
-      }
-
-      if (p.has("earthMinorAxis")) {
-         semi_minor_ = p["earthMinorAxis"];
-      }
-
-      e_ = sqrt( 1.0 - ((double) semi_minor_*semi_minor_) / ((double) semi_major_*semi_major_));
-   }
-   else {
-      if (p.has("radius")) {
-         radius_ = p["radius"];
-      }
-   }
-
-   ASSERT( npts_xaxis_ > 0);
-   ASSERT( npts_yaxis_ > 0);
-   ASSERT( x_grid_length_ > 0);
-   ASSERT( y_grid_length_ > 0);
-   ASSERT( semi_major_ > semi_minor_);
-   ASSERT( e_ < 1.0);
-   ASSERT( lad_ > 0);
 }
 
-PolarStereoGraphic::~PolarStereoGraphic()
+PolarStereoGraphic::PolarStereoGraphic( const eckit::Params &p )
+    : npts_xaxis_(0),
+      npts_yaxis_(0),
+      x_grid_length_(0),
+      y_grid_length_(0),
+      orientationOfTheGrid_(0),
+      radius_(6371229),
+      semi_major_(6378137),
+      semi_minor_(6356752.3),
+      southPoleOnProjectionPlane_(false),
+      earth_is_oblate_(false)
+
 {
+
+    NOTIMP;
+}
+
+PolarStereoGraphic::~PolarStereoGraphic() {
 }
 
 
-GridSpec PolarStereoGraphic::spec() const
-{
-   GridSpec grid_spec(grid_type());
-
-   grid_spec.set("Nx",eckit::Value(npts_xaxis_));
-   grid_spec.set("Ny",eckit::Value(npts_yaxis_));
-
-   grid_spec.set("Dx",eckit::Value(x_grid_length_));
-   grid_spec.set("Dy",eckit::Value(y_grid_length_));
-   grid_spec.set("latitudeOfFirstGridPoint",eckit::Value(first_grid_pt_.lat()));
-   grid_spec.set("longitudeOfFirstGridPoint",eckit::Value(first_grid_pt_.lon()));
-   grid_spec.set("iScansPositively",eckit::Value(iScansPositively_));
-   grid_spec.set("jScansPositively",eckit::Value(jScansPositively_));
-
-   grid_spec.set("orientationOfTheGrid",eckit::Value(orientationOfTheGrid_));
-   grid_spec.set("LaD",eckit::Value(lad_));
-   grid_spec.set("southPoleOnProjectionPlane",eckit::Value(southPoleOnProjectionPlane_));
-   grid_spec.set("earthIsOblate",eckit::Value(earth_is_oblate_));
-   grid_spec.set("radius",eckit::Value(radius_));
-   grid_spec.set("earthMajorAxis",eckit::Value(semi_major_));
-   grid_spec.set("earthMinorAxis",eckit::Value(semi_minor_));
-   grid_spec.set("resolutionAndComponentFlag",eckit::Value(resolutionAndComponentFlag_));
-
-   // Bounding box can be computed
-   // grid_spec.set_bounding_box(bounding_box());
-
-   return grid_spec;
+GridSpec PolarStereoGraphic::spec() const {
+    NOTIMP;
 }
 
 std::string PolarStereoGraphic::shortName() const {
 
-  if (shortName_.empty()) {
-    std::ostringstream s;
-    s << grid_type_str() << "." << npts_xaxis_ << "x" << npts_yaxis_ << eckit::StrStream::ends;
-    shortName_ = s.str();
-  }
+    if (shortName_.empty()) {
+        std::ostringstream s;
+        s << grid_type_str() << "." << npts_xaxis_ << "x" << npts_yaxis_ << eckit::StrStream::ends;
+        shortName_ = s.str();
+    }
 
-  return shortName_;
+    return shortName_;
 }
 
-void PolarStereoGraphic::hash(eckit::MD5& md5) const {
+void PolarStereoGraphic::hash(eckit::MD5 &md5) const {
 
-  md5.add(grid_type_str());
+    md5.add(grid_type_str());
 
-  md5.add(npts_xaxis_);
-  md5.add(npts_yaxis_);
+    md5.add(npts_xaxis_);
+    md5.add(npts_yaxis_);
 
-  md5.add(x_grid_length_);
-  md5.add(y_grid_length_);
+    md5.add(x_grid_length_);
+    md5.add(y_grid_length_);
 
-  md5.add(first_grid_pt_.lat());
-  md5.add(first_grid_pt_.lon());
+    md5.add(first_grid_pt_.lat());
+    md5.add(first_grid_pt_.lon());
 
-  md5.add(orientationOfTheGrid_);
-  md5.add(southPoleOnProjectionPlane_);
+    md5.add(orientationOfTheGrid_);
+    md5.add(southPoleOnProjectionPlane_);
 
-  md5.add(earth_is_oblate_);
-  md5.add(semi_major_);
-  md5.add(semi_minor_);
-  md5.add(radius_);
+    md5.add(earth_is_oblate_);
+    md5.add(semi_major_);
+    md5.add(semi_minor_);
+    md5.add(radius_);
 
-  md5.add(lad_);
-
-  // "resolutionAndComponentFlag" // seems to be redundant
 }
 
-size_t PolarStereoGraphic::npts() const
-{
-   return npts_xaxis_ * npts_yaxis_;
+size_t PolarStereoGraphic::npts() const {
+    return npts_xaxis_ * npts_yaxis_;
 }
 
-void PolarStereoGraphic::lonlat( double pts[] ) const
-{
-   std::vector<Grid::Point> gpts;
-   lonlat(gpts);
+void PolarStereoGraphic::lonlat( double pts[] ) const {
+    std::vector<Grid::Point> gpts;
+    lonlat(gpts);
 
-   int c(0);
-   for(size_t i = 0; i < gpts.size(); i++) {
-      pts[c++] = gpts[i].lon();
-      pts[c++] = gpts[i].lat();
-   }
+    int c(0);
+    for (size_t i = 0; i < gpts.size(); i++) {
+        pts[c++] = gpts[i].lon();
+        pts[c++] = gpts[i].lat();
+    }
 }
 
 //Enable to test against grib iterator
 //#define GRIB_COMPAT 1
 
-void PolarStereoGraphic::lonlat(std::vector<Grid::Point>& points) const
-{
-   points.resize(npts());
+void PolarStereoGraphic::lonlat(std::vector<Grid::Point> &points) const {
+    points.resize(npts());
 
-   PolarStereoGraphicProj ps(southPoleOnProjectionPlane_,earth_is_oblate_,orientationOfTheGrid_);
-   if (earth_is_oblate_) {
-      ps.set_radius(semi_major_);
-      ps.set_eccentricity(e_);
-   }
-   else {
-      ps.set_radius(radius_);
-   }
+    PolarStereoGraphicProj ps(southPoleOnProjectionPlane_, earth_is_oblate_, orientationOfTheGrid_);
+    if (earth_is_oblate_) {
+        ps.set_radius(semi_major_);
+        ps.set_eccentricity(sqrt( 1.0 - (semi_minor_ * semi_minor_) / (semi_major_ * semi_major_)));
+    } else {
+        ps.set_radius(radius_);
+    }
 
-#ifndef GRIB_COMPAT
-   // Points go from North,West --> South,east
-   BoundBox bbox = bounding_box();
-   const double north = bbox.north();
-   const double west  = bbox.west();
+    // Points go from North,West --> South,east
+    BoundBox bbox = bounding_box();
+    const double north = bbox.north();
+    const double west  = bbox.west();
 
-   Point2 first_pt_on_plane = ps.map_to_plane(eckit::geometry::LLPoint2(north,west));
-   double x = first_pt_on_plane[0];
-   double y = first_pt_on_plane[1];
-   size_t k = 0;
-   for(size_t j = 0; j < npts_yaxis_; j++) {
-      x = first_pt_on_plane[0];
-      for(size_t i = 0; i < npts_xaxis_; i++) {
+    Point2 first_pt_on_plane = ps.map_to_plane(eckit::geometry::LLPoint2(north, west));
+    double x = first_pt_on_plane[0];
+    double y = first_pt_on_plane[1];
+    size_t k = 0;
+    for (size_t j = 0; j < npts_yaxis_; j++) {
+        x = first_pt_on_plane[0];
+        for (size_t i = 0; i < npts_xaxis_; i++) {
 
-         points[k++] = ps.map_to_spherical(x,y);
-         x += x_grid_length_;
-      }
-      y -= y_grid_length_;
-   }
-#else
+            points[k++] = ps.map_to_spherical(x, y);
+            x += x_grid_length_;
+        }
+        y -= y_grid_length_;
+    }
 
-   long x_grid_length = (iScansPositively_) ? x_grid_length_ : -x_grid_length_;
-   long y_grid_length = (jScansPositively_) ? y_grid_length_ : -y_grid_length_;
-
-   Point2 first_pt_on_plane = ps.map_to_plane(first_grid_pt_);
-   double x = first_pt_on_plane[0];
-   double y = first_pt_on_plane[1];
-   size_t k = 0;
-   for(size_t j = 0; j < npts_yaxis_; j++) {
-      x = first_pt_on_plane[0];
-      for(size_t i = 0; i < npts_xaxis_; i++) {
-
-         points[k++] = ps.map_to_spherical(x,y);
-         x += x_grid_length;
-      }
-      y += y_grid_length;
-   }
-#endif
 }
 
-BoundBox PolarStereoGraphic::bounding_box() const
-{
-   // Map first_grid_pt_ to the plane.
-   PolarStereoGraphicProj ps(southPoleOnProjectionPlane_,earth_is_oblate_,orientationOfTheGrid_);
-   if (earth_is_oblate_) {
-      ps.set_radius(semi_major_);
-      ps.set_eccentricity(e_);
-   }
-   else {
-      ps.set_radius(radius_);
-   }
+BoundBox PolarStereoGraphic::bounding_box() const {
+    // Map first_grid_pt_ to the plane.
+    PolarStereoGraphicProj ps(southPoleOnProjectionPlane_, earth_is_oblate_, orientationOfTheGrid_);
+    if (earth_is_oblate_) {
+        ps.set_radius(semi_major_);
+        ps.set_eccentricity(sqrt( 1.0 - (semi_minor_ * semi_minor_) / (semi_major_ * semi_major_)));
+    } else {
+        ps.set_radius(radius_);
+    }
 
-   Point2 first_pt_on_plane = ps.map_to_plane(first_grid_pt_);
+    Point2 first_pt_on_plane = ps.map_to_plane(first_grid_pt_);
 
-   // *Depending* on the scanning mode, find the last point on the plane
-   // Note: without the scanning mode we can not find the correct bounding box.
-   double last_point_x = first_pt_on_plane[0] + npts_xaxis_ * x_grid_length_;
-   double last_point_y = first_pt_on_plane[1] + npts_yaxis_ * y_grid_length_;
+    // *Depending* on the scanning mode, find the last point on the plane
+    // Note: without the scanning mode we can not find the correct bounding box.
+    double last_point_x = first_pt_on_plane[0] + npts_xaxis_ * x_grid_length_;
+    double last_point_y = first_pt_on_plane[1] + npts_yaxis_ * y_grid_length_;
 
-   last_point_x = (iScansPositively_) ? last_point_x : -last_point_x;
-   last_point_y = (jScansPositively_) ? last_point_y : -last_point_y;
+    // Transform this back into spherical co-ordinates
+    Point last_pt_in_sp = ps.map_to_spherical(last_point_x, last_point_y);
 
-   // Transform this back into spherical co-ordinates
-   Point last_pt_in_sp = ps.map_to_spherical(last_point_x,last_point_y);
+    double top = std::max(first_grid_pt_.lat(), last_pt_in_sp.lat());
+    double bottom = std::min(first_grid_pt_.lat(), last_pt_in_sp.lat());
+    double right = std::max(first_grid_pt_.lon(), last_pt_in_sp.lon());
+    double left = std::min(first_grid_pt_.lon(), last_pt_in_sp.lon());
 
-   double top = std::max(first_grid_pt_.lat(),last_pt_in_sp.lat());
-   double bottom = std::min(first_grid_pt_.lat(),last_pt_in_sp.lat());
-   double right = std::max(first_grid_pt_.lon(),last_pt_in_sp.lon());
-   double left = std::min(first_grid_pt_.lon(),last_pt_in_sp.lon());
-
-   return BoundBox(top,bottom,right,left);
+    return BoundBox(top, bottom, right, left);
 }
 
-string PolarStereoGraphic::grid_type() const
-{
-   return PolarStereoGraphic::grid_type_str();
+string PolarStereoGraphic::grid_type() const {
+    return PolarStereoGraphic::grid_type_str();
 }
 
 //-----------------------------------------------------------------------------

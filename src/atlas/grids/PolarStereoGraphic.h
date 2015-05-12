@@ -27,64 +27,78 @@ namespace grids {
 
 class PolarStereoGraphic : public Grid {
 
-public: // methods
+  public: // methods
 
-   static std::string className() { return "atlas.grid.PolarStereoGraphic"; }
-   static std::string grid_type_str() { return "polar_stereographic"; }
+    static std::string className() {
+        return "atlas.grid.PolarStereoGraphic";
+    }
+    static std::string grid_type_str() {
+        return "polar_stereographic";
+    }
 
-   PolarStereoGraphic( const eckit::Params& p );
-   virtual ~PolarStereoGraphic();
+    PolarStereoGraphic(  size_t Nx, size_t Ny,
+                         size_t Dx, size_t Dy,
+                         double longitudeOfFirstGridPoint,
+                         double latitudeOfFirstGridPoint,
+                         double orientationOfTheGrid,
+                         bool southPoleOnProjectionPlane,
+                         double radius,
+                         bool earth_is_oblate = false,
+                         double semi_major = 0,
+                         double semi_minor = 0);
 
-   /// To compute bounding box in spherical co-ordinates we need to:
-   ///   1/ project the first spherical pt, on to the plane.
-   ///   2/ From this first x/y we compute the last point on the projected plane
-   ///   3/ Convert the last point back into spherical space (lat/long)
-   virtual BoundBox bounding_box() const;
-   virtual size_t npts() const;
+    PolarStereoGraphic( const eckit::Params &p );
+    virtual ~PolarStereoGraphic();
 
-   /// The Points are in spherical (lat/long) co-ordinates
-   /// Hence we need:
-   ///   1/ project the first spherical point on to the plane x/y
-   ///   2/ Add x_grid_length_/y_grid_length_ to this point
-   ///   3/ Convert this back to lat long values, and then repeat.
-   virtual void lonlat( double[] ) const;
-   virtual void lonlat( std::vector<double>& v ) const { Grid::lonlat(v); }
-   virtual void lonlat( std::vector<Point>& ) const;
+    /// To compute bounding box in spherical co-ordinates we need to:
+    ///   1/ project the first spherical pt, on to the plane.
+    ///   2/ From this first x/y we compute the last point on the projected plane
+    ///   3/ Convert the last point back into spherical space (lat/long)
+    virtual BoundBox bounding_box() const;
+    virtual size_t npts() const;
 
-   virtual std::string grid_type() const;
-   virtual GridSpec spec() const;
+    /// The Points are in spherical (lat/long) co-ordinates
+    /// Hence we need:
+    ///   1/ project the first spherical point on to the plane x/y
+    ///   2/ Add x_grid_length_/y_grid_length_ to this point
+    ///   3/ Convert this back to lat long values, and then repeat.
+    virtual void lonlat( double[] ) const;
+    virtual void lonlat( std::vector<double> &v ) const {
+        Grid::lonlat(v);
+    }
+    virtual void lonlat( std::vector<Point> & ) const;
 
-private: // methods
+    virtual std::string grid_type() const;
+    virtual GridSpec spec() const;
 
-  /// Human readable name
-  /// does not contain all possible combinations of PolarStereoGraphic
-  virtual std::string shortName() const;
+  private: // methods
 
-  virtual void hash(eckit::MD5&) const;
+    /// Human readable name
+    /// does not contain all possible combinations of PolarStereoGraphic
+    virtual std::string shortName() const;
 
-private: // members
+    virtual void hash(eckit::MD5 &) const;
 
-   long npts_xaxis_;                  // No of points in x-axes *ON* the projected plane
-   long npts_yaxis_;                  // No of points in y-axes *ON* the projected plane
-   long x_grid_length_;               // x grid length *ON* the projected plane, in meters
-   long y_grid_length_;               // y grid length *ON* the projected plane, in meters
-   long resolutionAndComponentFlag_;  // is used to determine sphere/oblate, But this is extracted separately,
-                                      // to avoid having to mess with bits. Needed to match geography hash grid_spec -> grid in tests
-   double lad_;                       // latitude where points npts_xaxis_ and npts_yaxis_ are specified
-   double orientationOfTheGrid_;      // east longitude value, in degrees ( longitude of natural origin)
-   double radius_;                    // default 6371229
-   double semi_major_;                // default 6378137   (a)
-   double semi_minor_;                // default 6356752.3 (b)
-   double e_;                         // calculated e = sqrt( 1 - b*b/a*a)
+  private: // members
 
-   Point first_grid_pt_;              // This is in spherical lat long co-ordinate
+    long npts_xaxis_;                  // No of points in x-axes *ON* the projected plane
+    long npts_yaxis_;                  // No of points in y-axes *ON* the projected plane
+    long x_grid_length_;               // x grid length *ON* the projected plane, in meters
+    long y_grid_length_;               // y grid length *ON* the projected plane, in meters
 
-   bool southPoleOnProjectionPlane_;
-   bool earth_is_oblate_;             // true 6367470m,false mean oblate spheroid, 6378160m,6356775m, f=1/297.0
-   bool iScansPositively_;            // Used to determine correct bounding box
-   bool jScansPositively_;            // Used to determine correct bounding box
+    // double lad_;                       // latitude where points npts_xaxis_ and npts_yaxis_ are specified
+    double orientationOfTheGrid_;      // east longitude value, in degrees ( longitude of natural origin)
+    double radius_;                    // default 6371229
+    double semi_major_;                // default 6378137   (a)
+    double semi_minor_;                // default 6356752.3 (b)
 
-   mutable std::string          shortName_;
+    Point first_grid_pt_;              // This is in spherical lat long co-ordinate
+
+    bool southPoleOnProjectionPlane_;
+    bool earth_is_oblate_;             // true 6367470m,false mean oblate spheroid, 6378160m,6356775m, f=1/297.0
+
+
+    mutable std::string          shortName_;
 
 };
 
