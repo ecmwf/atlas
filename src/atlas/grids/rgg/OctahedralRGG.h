@@ -29,7 +29,7 @@ public:
 
   static std::string className() { return "atlas.grids.rgg.OctahedralRGG"; }
 
-  static std::string grid_type_str() { return "rgg4"; }
+  static std::string grid_type_str() { return "oct"; }
 
   OctahedralRGG(const int N);
 

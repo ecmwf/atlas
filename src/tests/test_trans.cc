@@ -692,7 +692,7 @@ BOOST_AUTO_TEST_CASE( test_trans_options )
 
 BOOST_AUTO_TEST_CASE( test_distspec )
 {
-  ReducedGrid::Ptr g ( ReducedGrid::create( "rgg4.N80" ) );
+  ReducedGrid::Ptr g ( ReducedGrid::create( "oct.N80" ) );
   eckit::ResourceMgr::instance().set("atlas.meshgen.angle","0");
   meshgen::ReducedGridMeshGenerator generate;
   BOOST_CHECKPOINT("mesh generator created");
@@ -748,7 +748,7 @@ BOOST_AUTO_TEST_CASE( test_distspec )
 
 BOOST_AUTO_TEST_CASE( test_distribution )
 {
-  ReducedGrid::Ptr g ( ReducedGrid::create( "rgg4.N80" ) );
+  ReducedGrid::Ptr g ( ReducedGrid::create( "oct.N80" ) );
 
   BOOST_CHECKPOINT("test_distribution");
 
@@ -774,7 +774,7 @@ BOOST_AUTO_TEST_CASE( test_distribution )
 
 BOOST_AUTO_TEST_CASE( test_generate_mesh )
 {
-  ReducedGrid::Ptr g ( ReducedGrid::create( "rgg4.N80" ) );
+  ReducedGrid::Ptr g ( ReducedGrid::create( "oct.N80" ) );
   eckit::ResourceMgr::instance().set("atlas.meshgen.angle","0");
   eckit::ResourceMgr::instance().set("atlas.meshgen.triangulate","true");
 

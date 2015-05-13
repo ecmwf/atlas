@@ -262,7 +262,7 @@ TEST( test_griddistribution )
   integer, allocatable :: part(:)
   integer :: jnode
 
-  grid = new_atlas_ReducedGrid("rgg4.N16")
+  grid = new_atlas_ReducedGrid("oct.N16")
 
   allocate( part(grid%npts()) )
   do jnode=1,grid%npts()/3
