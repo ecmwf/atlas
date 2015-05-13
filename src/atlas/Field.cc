@@ -70,20 +70,6 @@ std::ostream& operator<<( std::ostream& os, const Field& f)
   return os;
 }
 
-#ifdef ECKIT_HAVE_GRIB
-
-void Field::grib(Field::Grib *g)
-{
-  grib_.reset(g);
-}
-
-Field::Grib *Field::grib() const
-{
-  return grib_.get();
-}
-
-#endif
-
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 

@@ -59,15 +59,6 @@ public: // methods
   /// Constructs an empty FieldSet
   FieldSet(const std::string& name = "untitled");
 
-  /// Constructs from a path (e.g. a GRIB file)
-  FieldSet(const eckit::PathName&);
-
-  /// Constructs from a buffer
-  FieldSet(const eckit::Buffer&);
-
-  /// Constructs from a DataHandle
-  FieldSet(const eckit::DataHandle&);
-
   /// Constructs from predefined fields (takes ownership of the fields)
   FieldSet(const Field::Vector& fields);
 
@@ -93,14 +84,14 @@ public: // methods
   bool has_field(const std::string& name) const;
 
   Field& field(const std::string& name) const;
-  
+
 private: // methods
 
   /// @todo to be removed
   Field::Ptr create_field(eckit::grib::GribHandle&);
 
   /// Check if all fields share same grid
-  bool haveSameGrid() const;
+  bool have_same_grid() const;
 
 protected: // data
 

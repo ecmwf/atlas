@@ -24,11 +24,6 @@
 #include "eckit/memory/ScopedPtr.h"
 
 #include "atlas/atlas_config.h"
-
-#ifdef ECKIT_HAVE_GRIB
-#include "eckit/grib/GribHandle.h"
-#endif
-
 #include "atlas/Grid.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Mesh.h"
@@ -48,10 +43,6 @@ public: // types
 
 	typedef eckit::SharedPtr<Field> Ptr;
 	typedef std::vector< Field::Ptr > Vector;
-
-#ifdef ECKIT_HAVE_GRIB
-	typedef eckit::grib::GribHandle Grib;
-#endif
 
 public: // methods
 
@@ -92,11 +83,6 @@ public: // methods
 	virtual size_t size() const = 0;
 	virtual void halo_exchange() = 0;
 
-#ifdef ECKIT_HAVE_GRIB
-	void grib( Grib* g );	 ///< @todo this is to be removed
-	Grib* grib() const;		 ///< @todo this is to be removed
-#endif
-
 	friend std::ostream& operator<<( std::ostream& os, const Field& v);
 
 private: // members
@@ -115,10 +101,6 @@ protected: // members
 	Metadata metadata_;
 
 	int nb_vars_;
-
-#ifdef ECKIT_HAVE_GRIB
-	eckit::ScopedPtr<Grib> grib_; ///< @todo this is to be removed
-#endif
 
 };
 

@@ -24,13 +24,6 @@
 #include "eckit/utils/Translator.h"
 #include "eckit/os/BackTrace.h"
 
-#ifdef ECKIT_HAVE_GRIB
-#include "eckit/grib/GribField.h"
-#include "eckit/grib/GribFieldSet.h"
-#include "eckit/grib/GribHandle.h"
-#include "eckit/grib/GribParams.h"
-#endif
-
 #include "atlas/ErrorHandling.h"
 #include "atlas/Field.h"
 #include "atlas/FunctionSpace.h"
@@ -86,91 +79,6 @@ Field& FieldSet::field(const std::string& name) const
 }
 
 
-FieldSet::FieldSet(const PathName& path) :
-  fields_()
-{
-  // read start of file (using buffer) to determine file format
-  Buffer buff(64);
-  DataHandle* dh = path.fileHandle();
-  dh->openForRead();
-  size_t len = dh->read(buff,buff.size());
-  ASSERT(len);
-  dh->close();
-
-  /// @todo make and use a factory
-
-  if ((len>=4) && (0==strncmp(buff,"GRIB",4)))
-  {
-#ifdef ECKIT_HAVE_GRIB
-    // attempt to read GRIB format
-    using grib::GribField;
-    using grib::GribFieldSet;
-    using grib::GribHandle;
-
-    GribFieldSet gribfs(path);
-    if (!gribfs.size())
-      return;
-
-    fields_.reserve(gribfs.size());
-    for (size_t fidx=0; fidx<gribfs.size(); ++fidx)
-    {
-      GribField* gf = const_cast< GribField* >( gribfs.get(fidx) );
-      ASSERT(gf);
-
-      GribHandle* gh = gf->getHandle();
-      ASSERT(gh);
-
-      fields_.push_back( create_field(*gh) );
-
-      gf->release();
-    }
-
-    ASSERT(haveSameGrid());
-#else
-    std::stringstream stream;
-    stream << "eckit was built without GRIB support, cannot construct FieldSet from GRIB path " << path << "\n";
-    stream << eckit::BackTrace::dump();
-    throw eckit::Exception(stream.str(), Here());
-#endif
-    return;
-  }
-
-  // attempt to read PointCloud format
-
-  if ((len>=10) && (0==strncmp(buff,"PointCloud",10)))
-  {
-    std::vector<std::string> vfnames;
-    grids::Unstructured* grid = io::PointCloud::read(path,vfnames);
-    FunctionSpace& nodes = grid->mesh().function_space( "nodes" );
-    for( size_t i = 0; i < vfnames.size(); ++i )
-      add_field( nodes.field(vfnames[i]).self() );
-    return;
-  }
-}
-
-
-FieldSet::FieldSet(const Buffer& buf) :
-  fields_()
-{
-#ifdef ECKIT_HAVE_GRIB
-
-  grib::GribHandle gh(buf);
-
-  fields_.push_back( create_field(gh) );
-
-#else
-  eckit::Log::error() << eckit::BackTrace::dump() << std::endl;
-  throw eckit::Exception("eckit was built without GRIB support, cannot construct FieldSet from GRIB buffer", Here());
-#endif
-}
-
-
-FieldSet::FieldSet(const DataHandle&)
-{
-  NOTIMP;
-}
-
-
 FieldSet::FieldSet(const Field::Vector& fields) :
   fields_(fields)
 {
@@ -194,49 +102,7 @@ std::vector< std::string > FieldSet::field_names() const
 }
 
 
-Field::Ptr FieldSet::create_field(grib::GribHandle& gh)
-{
-#ifdef ECKIT_HAVE_GRIB
-
-  // create Grid (pointer) and take its signature (unique ID)
-  grib::GribParams* gp = grib::GribParams::create(gh);
-  ASSERT( gp );
-
-  Grid::Ptr grid( Grid::create( Params(*gp) ) );
-  Grid::uid_t uid = grid->unique_id();
-
-  // store Grid in GridSet, then reassign grid (pointer) in case there one has the same UID
-  gridset_.push_back(grid);
-  grid.reset(gridset_.grid(uid));
-
-  // get name for this field
-  std::string sname = gh.shortName() + "_" + Translator<size_t,std::string>()( fields_.size() );
-
-  // get values
-  size_t nvalues = gh.getDataValuesSize();
-
-  // get grid's Mesh FunctionSpace
-  FunctionSpace& nodes = grid->mesh().function_space( "nodes" );
-  if( nodes.shape(0) != nvalues )
-    throw SeriousBug( "Size of field in GRIB does not match Grid", Here() );
-
-  // create the field
-  Field& f = nodes.create_field<double>(sname,1);
-
-  gh.getDataValues( f.data<double>(), nvalues );
-
-  f.grib( gh.clone() );
-
-  return f.self();
-
-#else
-  throw eckit::Exception("eckit was built without GRIB support\n  --> Cannot create field from GribHandle", Here());
-  return Field::Ptr();
-#endif
-}
-
-
-bool FieldSet::haveSameGrid() const
+bool FieldSet::have_same_grid() const
 {
   if( fields_.empty() )
     return true;
@@ -261,7 +127,6 @@ std::vector<Field*>& __private_get_raw_fields_ptr (FieldSet* This)
   return This->fields_raw_ptr_;
 }
 
-
 //-----------------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 extern "C"{
@@ -269,7 +134,7 @@ extern "C"{
 
 FieldSet* atlas__FieldSet__new (char* name)
 {
-  ATLAS_ERROR_HANDLING( 
+  ATLAS_ERROR_HANDLING(
     FieldSet* fset = new FieldSet( std::string(name) );
     fset->name() = name;
     return fset;
@@ -280,8 +145,8 @@ FieldSet* atlas__FieldSet__new (char* name)
 
 void atlas__FieldSet__delete(FieldSet* This)
 {
-  ATLAS_ERROR_HANDLING( 
-    delete This; 
+  ATLAS_ERROR_HANDLING(
+    delete This;
   );
 }
 
@@ -300,44 +165,44 @@ void atlas__FieldSet__fields (FieldSet* This, Field** &fields, int &nb_fields)
 
 
 void   atlas__FieldSet__add_field     (FieldSet* This, Field* field)
-{ 
-  ATLAS_ERROR_HANDLING( 
-    ASSERT(This != NULL); 
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This != NULL);
     This->add_field(field->self());
-  ); 
+  );
 }
 
 int    atlas__FieldSet__has_field     (FieldSet* This, char* name)
-{ 
-  ATLAS_ERROR_HANDLING( 
-    ASSERT(This != NULL); 
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This != NULL);
     return This->has_field( std::string(name) );
   );
   return 0;
 }
 
 int    atlas__FieldSet__size          (FieldSet* This)
-{ 
-  ATLAS_ERROR_HANDLING( 
-    ASSERT(This != NULL); 
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This != NULL);
     return This->size();
   );
   return 0;
 }
 
 Field* atlas__FieldSet__field_by_name (FieldSet* This, char* name)
-{ 
-  ATLAS_ERROR_HANDLING( 
-    ASSERT(This != NULL); 
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This != NULL);
     return &This->field( std::string(name) );
   );
   return NULL;
 }
 
 Field* atlas__FieldSet__field_by_idx  (FieldSet* This, int idx)
-{ 
-  ATLAS_ERROR_HANDLING( 
-    ASSERT(This != NULL); 
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This != NULL);
     return &This->operator[](idx);
   );
   return NULL;

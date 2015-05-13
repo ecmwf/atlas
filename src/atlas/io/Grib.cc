@@ -378,14 +378,18 @@ void Grib::write(const Field& fh, DataHandle& dh)
 
 GribHandle::Ptr Grib::write(const Field& fh)
 {
-	long edition = fh.grib() ? fh.grib()->edition() : 2;
+  NOTIMP;
+  return GribHandle::Ptr();
 
-	GribHandle::Ptr gh = Grib::create_handle( fh.grid(), edition );
 
-	if( !gh )
-		throw SeriousBug("Failed to create GribHandle from Field", Here());
+//  long edition = fh.grib() ? fh.grib()->edition() : 2;
 
-	return GribHandle::Ptr( clone(fh,*gh) );
+//	GribHandle::Ptr gh = Grib::create_handle( fh.grid(), edition );
+
+//	if( !gh )
+//		throw SeriousBug("Failed to create GribHandle from Field", Here());
+
+//	return GribHandle::Ptr( clone(fh,*gh) );
 }
 
 void Grib::clone( const FieldSet& fields, const PathName& src, const PathName& opath )
@@ -455,27 +459,30 @@ GribHandle* Grib::clone(const Field& f, GribHandle& gridsec )
 
     GribHandle* gh = 0;
 
-    if( f.grib() )
-    {
-      const GribHandle& meta = *(f.grib());
-      int err=0;
-      int what = GRIB_SECTION_GRID;
-
-      grib_handle* h = grib_util_sections_copy( gridsec.raw(), meta.raw(), what, &err);
-      GRIB_CHECK(err,"grib_util_sections_copy()");
-      ASSERT( h );
-      gh = new GribHandle( h );
-    }
-    else
-    {
-      gh = gridsec.clone();
-    }
-
-    ASSERT( gh );
-
-    gh->setDataValues(f.data<double>(),npts);
-
+    NOTIMP;
     return gh;
+
+//    if( f.grib() )
+//    {
+//      const GribHandle& meta = *(f.grib());
+//      int err=0;
+//      int what = GRIB_SECTION_GRID;
+
+//      grib_handle* h = grib_util_sections_copy( gridsec.raw(), meta.raw(), what, &err);
+//      GRIB_CHECK(err,"grib_util_sections_copy()");
+//      ASSERT( h );
+//      gh = new GribHandle( h );
+//    }
+//    else
+//    {
+//      gh = gridsec.clone();
+//    }
+
+//    ASSERT( gh );
+
+//    gh->setDataValues(f.data<double>(),npts);
+
+//    return gh;
 }
 
 struct gridspec_to_grib
