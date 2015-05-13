@@ -29,7 +29,7 @@ cmake_add_cxx_flags( "-O0 -g" BUILD DEBUG )
 # BIT REPRODUCIBLE FLAGS
 ####################################################################
 
-cmake_add_cxx_flags( "-O2" BUILD BIT )
+cmake_add_cxx_flags( "-O2 -g" BUILD BIT )
 
 ####################################################################
 # LINK FLAGS

@@ -21,7 +21,7 @@ cmake_add_fortran_flags( "-O3"             BUILD RELEASE )
 cmake_add_fortran_flags( "-unroll"         BUILD RELEASE )
 cmake_add_fortran_flags( "-inline"         BUILD RELEASE )
 cmake_add_fortran_flags( "-vec-report0"    BUILD RELEASE )
-cmake_add_fortran_flags( "-no-heap-arrays" BUILD RELEASE )
+cmake_add_fortran_flags( "-heap-arrays" BUILD RELEASE )
 
 ####################################################################
 # DEBUG FLAGS
@@ -42,7 +42,7 @@ cmake_add_fortran_flags( "-O2"             BUILD BIT )
 cmake_add_fortran_flags( "-unroll"         BUILD BIT )
 cmake_add_fortran_flags( "-inline"         BUILD BIT )
 cmake_add_fortran_flags( "-vec-report0"    BUILD BIT )
-cmake_add_fortran_flags( "-no-heap-arrays" BUILD BIT )
+cmake_add_fortran_flags( "-heap-arrays" BUILD BIT )
 
 ####################################################################
 # LINK FLAGS

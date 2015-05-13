@@ -22,7 +22,7 @@ cmake_add_fortran_flags( "-ffree-line-length-none" )
 cmake_add_fortran_flags( "-O3"                BUILD RELEASE )
 cmake_add_fortran_flags( "-funroll-all-loops" BUILD RELEASE )
 cmake_add_fortran_flags( "-finline-functions" BUILD RELEASE )
-cmake_add_fortran_flags( "-fstack-arrays"     BUILD RELEASE )
+#cmake_add_fortran_flags( "-fstack-arrays"     BUILD RELEASE )
 
 ####################################################################
 # DEBUG FLAGS
@@ -38,10 +38,10 @@ cmake_add_fortran_flags( "-ffpe-trap=invalid,zero,overflow" BUILD DEBUG )
 # BIT REPRODUCIBLE FLAGS
 ####################################################################
 
-cmake_add_fortran_flags( "-O2"                BUILD BIT )
+cmake_add_fortran_flags( "-O2 -g"             BUILD BIT )
 cmake_add_fortran_flags( "-funroll-all-loops" BUILD BIT )
 cmake_add_fortran_flags( "-finline-functions" BUILD BIT )
-cmake_add_fortran_flags( "-fstack-arrays"     BUILD BIT )
+#cmake_add_fortran_flags( "-fstack-arrays"     BUILD BIT )
 
 ####################################################################
 # LINK FLAGS
