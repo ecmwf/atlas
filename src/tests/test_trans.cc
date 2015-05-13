@@ -404,7 +404,7 @@ public:
 
 private: // methods
   virtual int nfld() const { return nfld_; }
-  virtual double* rgp() const { field_->data<double>();  Log::warning() << "ghost nodes are inside!!!" << std::endl;}
+  virtual double* rgp() const { Log::warning() << "ghost nodes are inside!!!" << std::endl; return field_->data<double>(); }
   virtual void transfer() const {}
   virtual int nproma() const  { return 1; }
   virtual int ngpblks() const { return ngptot_; }
@@ -429,7 +429,7 @@ public:
   }
 
 private: // methods
-  virtual double* rgp() const { return field_->data<double>(); Log::warning() << "ghost nodes are inside!!!" << std::endl; }
+  virtual double* rgp() const { Log::warning() << "ghost nodes are inside!!!" << std::endl; return field_->data<double>();  }
   virtual void transfer() const {}
   virtual int nproma() const  { return 1; }
   virtual int ngpblks() const { return ngptot_; }
