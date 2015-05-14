@@ -14,7 +14,7 @@
 #include <cmath>
 #include <sstream>
 
-#include "atlas/mpi/mpi.h"
+//#include "atlas/mpi/mpi.h"
 #include "atlas/atlas_config.h"
 #include "atlas/Mesh.h"
 #include "atlas/FunctionSpace.h"

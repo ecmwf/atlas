@@ -36,17 +36,24 @@ public:
   public:
 
     Options();
-    Options(eckit::Stream& s) : eckit::Properties(s) {}
+    Options(eckit::Stream& s) : eckit::Properties(s) { set_cache(NULL,0); }
     ~Options() {}
     static const char* className() { return "atlas::trans::Trans::Options"; }
 
     void set_split_latitudes(bool);
     void set_fft( FFT );
     void set_flt(bool);
+    void set_cache(const void* buffer, const size_t size);
+    void set_read(const std::string&);
+    void set_write(const std::string&);
 
     bool split_latitudes() const;
     FFT fft() const;
     bool flt() const;
+    const void* cache()const;
+    size_t cachesize() const;
+    std::string read() const;
+    std::string write() const;
 
     friend std::ostream& operator<<( std::ostream& os, const Options& p) { p.print(os); return os;}
 
@@ -56,6 +63,10 @@ public:
     friend void encode( const Options& p, eckit::Stream& s );
 
     void print( std::ostream& ) const;
+
+  private: // not represented in Property internals
+    const void*  cacheptr_;
+    size_t cachesize_;
   };
 
 public:
@@ -104,6 +115,71 @@ public:
   const int* nsta()         const { if( trans_.nsta        == NULL ) ::trans_inquire(&trans_,"nsta");        return trans_.nsta; }
   const int* nonl()         const { if( trans_.nonl        == NULL ) ::trans_inquire(&trans_,"nonl");        return trans_.nonl; }
 
+
+public:
+
+
+  /*!
+   * @brief distspec
+   * @param nb_fields
+   * @param origin
+   * @param global_spectra
+   * @param spectra
+   */
+  void distspec( const int nb_fields, const int origin[], const double global_spectra[], double spectra[] ) const;
+
+  /*!
+   * @brief gathspec
+   * @param nb_fields
+   * @param destination
+   * @param spectra
+   * @param global_spectra
+   */
+  void gathspec( const int nb_fields, const int destination[], const double spectra[], double global_spectra[] ) const;
+
+  /*!
+   * @brief distgrid
+   * @param nb_fields
+   * @param origin
+   * @param global_fields
+   * @param fields
+   */
+  void distgrid( const int nb_fields, const int origin[], const double global_fields[], double fields[] ) const;
+
+  /*!
+   * @brief gathgrid
+   * @param nb_fields
+   * @param destination
+   * @param fields
+   * @param global_fields
+   */
+  void gathgrid( const int nb_fields, const int destination[], const double fields[], double global_fields[] ) const;
+
+  /*!
+   * @brief invtrans
+   * @param nb_fields
+   * @param scalar_spectra
+   * @param scalar_fields
+   */
+  void invtrans( const int nb_fields, const double scalar_spectra[], double scalar_fields[] ) const;
+
+  /*!
+   * @brief Inverse transform of vorticity/divergence to wind(U/V)
+   * @param nb_fields [in] Number of fields ( both components of wind count as 1 )
+   */
+  void invtrans( const int nb_fields, const double vorticity_spectra[], const double divergence_spectra[], double wind_fields[] ) const;
+
+  /*!
+   * @brief Direct transform of scalar fields
+   */
+  void dirtrans( const int nb_fields, const double scalar_fields[], double scalar_spectra[] ) const;
+
+  /*!
+   * @brief Direct transform of wind(U/V) to vorticity/divergence
+   * @param nb_fields [in] Number of fields ( both components of wind count as 1 )
+   */
+  void dirtrans(const int nb_fields, const double wind_fields[], double vorticity_spectra[], double divergence_spectra[] ) const;
+
 private:
 
   void ctor_rgg(const int ndgl, const int nloen[], int nsmax, const Options& );
@@ -115,6 +191,9 @@ private:
   mutable Trans_t trans_;
 };
 
+
+
+
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
@@ -125,6 +204,14 @@ extern "C"
   Trans* atlas__Trans__new (grids__ReducedGrid* grid);
   void atlas__Trans__delete (Trans* trans);
   int atlas__Trans__handle (Trans* trans);
+  void atlas__Trans__distspec( Trans* t, const int nb_fields, const int origin[], const double global_spectra[], double spectra[] );
+  void atlas__Trans__gathspec( Trans* t, const int nb_fields, const int destination[], const double spectra[], double global_spectra[] );
+  void atlas__Trans__distgrid( Trans* t, const int nb_fields, const int origin[], const double global_fields[], double fields[] );
+  void atlas__Trans__gathgrid( Trans* t, const int nb_fields, const int destination[], const double fields[], double global_fields[] );
+  void atlas__Trans__invtrans_scalar( Trans* t, const int nb_fields, const double scalar_spectra[], double scalar_fields[] );
+  void atlas__Trans__invtrans_vordiv2wind( Trans* t, const int nb_fields, const double vorticity_spectra[], const double divergence_spectra[], double wind_fields[] );
+  void atlas__Trans__dirtrans_scalar( Trans* t, const int nb_fields, const double scalar_fields[], double scalar_spectra[] );
+  void atlas__Trans__dirtrans_wind2vordiv( Trans* t, const int nb_fields, const double wind_fields[], double vorticity_spectra[], double divergence_spectra[] );
 }
 // ------------------------------------------------------------------
 

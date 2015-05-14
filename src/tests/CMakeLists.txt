@@ -146,16 +146,14 @@ ecbuild_add_test( TARGET atlas_test_trans
   MPI      4
   SOURCES   test_trans.cc
   CONDITION HAVE_TRANS
-  LIBS      atlas ${TRANS_API_LIBRARIES}
-  INCLUDES  ${TRANS_API_INCLUDE_DIRS}
+  LIBS      atlas
 )
 
 ecbuild_add_test( TARGET atlas_test_trans_serial
   BOOST
   SOURCES   test_trans.cc
   CONDITION HAVE_TRANS AND NOT HAVE_MPI
-  LIBS      atlas ${TRANS_API_LIBRARIES}
-  INCLUDES  ${TRANS_API_INCLUDE_DIRS}
+  LIBS      atlas
 )
 
 

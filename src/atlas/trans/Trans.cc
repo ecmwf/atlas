@@ -61,6 +61,19 @@ void Trans::ctor_rgg(const int ndgl, const int nloen[], int nsmax, const Trans::
   ::trans_new(&trans_);
   ::trans_set_resol(&trans_,ndgl,nloen);
   ::trans_set_trunc(&trans_,nsmax);
+  ::trans_set_cache(&trans_,p.cache(),p.cachesize());
+
+  if( !p.read().empty() )
+  {
+    if( eckit::PathName(p.read()).exists() )
+    {
+      std::stringstream msg; msg << "File " << p.read() << "doesn't exist";
+      throw eckit::CantOpenFile(msg.str(),Here());
+    }
+    ::trans_set_read(&trans_,p.read().c_str());
+  }
+  if( !p.write().empty() )
+    ::trans_set_write(&trans_,p.write().c_str());
 
   trans_.fft = p.fft();
   trans_.lsplit = p.split_latitudes();
@@ -74,6 +87,19 @@ void Trans::ctor_lonlat(const int nlon, const int nlat, int nsmax, const Trans::
   ::trans_new(&trans_);
   ::trans_set_resol_lonlat(&trans_,nlon,nlat);
   ::trans_set_trunc(&trans_,nsmax);
+  ::trans_set_cache(&trans_,p.cache(),p.cachesize());
+
+  if( ! p.read().empty() )
+  {
+    if( eckit::PathName(p.read()).exists() )
+    {
+      std::stringstream msg; msg << "File " << p.read() << "doesn't exist";
+      throw eckit::CantOpenFile(msg.str(),Here());
+    }
+    ::trans_set_read(&trans_,p.read().c_str());
+  }
+  if( !p.write().empty() )
+    ::trans_set_write(&trans_,p.write().c_str());
 
   trans_.fft = p.fft();
   trans_.lsplit = p.split_latitudes();
@@ -84,9 +110,26 @@ void Trans::ctor_lonlat(const int nlon, const int nlat, int nsmax, const Trans::
 
 Trans::Options::Options() : eckit::Properties()
 {
+  set_cache(NULL,0);
   set_split_latitudes(true);
   set_fft(FFTW);
   set_flt(false);
+}
+
+void Trans::Options::set_cache(const void* buffer, size_t size)
+{
+  cacheptr_=buffer;
+  cachesize_=size;
+}
+
+const void* Trans::Options::cache() const
+{
+  return cacheptr_;
+}
+
+size_t Trans::Options::cachesize() const
+{
+  return cachesize_;
 }
 
 void Trans::Options::print( std::ostream& s) const
@@ -144,6 +187,33 @@ bool Trans::Options::flt() const
   return get("flt");
 }
 
+
+void Trans::Options::set_read(const std::string& file)
+{
+  set("read",file);
+}
+
+std::string Trans::Options::read() const
+{
+  if( has("read") )
+    return get("read");
+  else
+    return std::string();
+}
+
+void Trans::Options::set_write(const std::string& file)
+{
+  set("write",file);
+}
+
+std::string Trans::Options::write() const
+{
+  if( has("write") )
+    return get("write");
+  else
+    return std::string();
+}
+
 eckit::Params::value_t get( const Trans::Options& p, const eckit::Params::key_t& key )
 {
   return p.get(key);
@@ -180,6 +250,152 @@ int atlas__Trans__handle (Trans* trans)
   ATLAS_ERROR_HANDLING( return trans->handle() );
   return 0;
 }
+
+///////////////////////////////////////////////////////////////////////////////
+
+
+void Trans::distspec( const int nb_fields, const int origin[], const double global_spectra[], double spectra[] ) const
+{
+  struct ::DistSpec_t args = new_distspec(&trans_);
+    args.nfld = nb_fields;
+    args.rspecg = global_spectra;
+    args.nfrom = origin;
+    args.rspec = spectra;
+  if( int errcode = ::trans_distspec(&args) != TRANS_SUCCESS )
+    throw eckit::Exception("distspec failed: "+std::string(::trans_error_msg(errcode)),Here());
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+void Trans::gathspec( const int nb_fields, const int destination[], const double spectra[], double global_spectra[] ) const
+{
+  struct ::GathSpec_t args = new_gathspec(&trans_);
+    args.nfld = nb_fields;
+    args.rspecg = global_spectra;
+    args.nto = destination;
+    args.rspec = spectra;
+  if( int errcode = ::trans_gathspec(&args) != TRANS_SUCCESS )
+    throw eckit::Exception("gathspec failed: "+std::string(::trans_error_msg(errcode)),Here());
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+void Trans::distgrid( const int nb_fields, const int origin[], const double global_fields[], double fields[] ) const
+{
+  struct ::DistGrid_t args = new_distgrid(&trans_);
+    args.nfld  = nb_fields;
+    args.nfrom = origin;
+    args.rgpg  = global_fields;
+    args.rgp   = fields;
+  if( int errcode = ::trans_distgrid(&args) != TRANS_SUCCESS )
+    throw eckit::Exception("distgrid failed: "+std::string(::trans_error_msg(errcode)),Here());
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+void Trans::gathgrid( const int nb_fields, const int destination[], const double fields[], double global_fields[] ) const
+{
+  struct ::GathGrid_t args = new_gathgrid(&trans_);
+    args.nfld = nb_fields;
+    args.nto  = destination;
+    args.rgp  = fields;
+    args.rgpg = global_fields;
+  if( int errcode = ::trans_gathgrid(&args) != TRANS_SUCCESS )
+    throw eckit::Exception("gathgrid failed: "+std::string(::trans_error_msg(errcode)),Here());
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+void Trans::invtrans( const int nb_fields, const double scalar_spectra[], double scalar_fields[] ) const
+{
+  struct ::InvTrans_t args = new_invtrans(&trans_);
+    args.nscalar = nb_fields;
+    args.rspscalar = scalar_spectra;
+    args.rgp = scalar_fields;
+  if( int errcode = ::trans_invtrans(&args) != TRANS_SUCCESS )
+    throw eckit::Exception("invtrans failed: "+std::string(::trans_error_msg(errcode)),Here());
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+void Trans::invtrans( const int nb_fields, const double vorticity_spectra[], const double divergence_spectra[], double wind_fields[] ) const
+{
+  struct ::InvTrans_t args = new_invtrans(&trans_);
+    args.nvordiv = nb_fields;
+    args.rspvor = vorticity_spectra;
+    args.rspdiv = divergence_spectra;
+    args.rgp = wind_fields;
+  if( int errcode = ::trans_invtrans(&args) != TRANS_SUCCESS )
+    throw eckit::Exception("invtrans failed: "+std::string(::trans_error_msg(errcode)),Here());
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+void Trans::dirtrans( const int nb_fields, const double scalar_fields[], double scalar_spectra[] ) const
+{
+  struct ::DirTrans_t args = new_dirtrans(&trans_);
+    args.nscalar = nb_fields;
+    args.rgp = scalar_fields;
+    args.rspscalar = scalar_spectra;
+  if( int errcode = ::trans_dirtrans(&args) != TRANS_SUCCESS )
+    throw eckit::Exception("dirtrans failed: "+std::string(::trans_error_msg(errcode)),Here());
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+void Trans::dirtrans( const int nb_fields, const double wind_fields[], double vorticity_spectra[], double divergence_spectra[] ) const
+{
+  struct ::DirTrans_t args = new_dirtrans(&trans_);
+    args.nvordiv = nb_fields;
+    args.rspvor = vorticity_spectra;
+    args.rspdiv = divergence_spectra;
+    args.rgp    = wind_fields;
+  if( int errcode = ::trans_dirtrans(&args) != TRANS_SUCCESS )
+    throw eckit::Exception("dirtrans failed: "+std::string(::trans_error_msg(errcode)),Here());
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+void atlas__Trans__distspec( Trans* t, const int nb_fields, const int origin[], const double global_spectra[], double spectra[] )
+{
+  return t->distspec(nb_fields,origin,global_spectra,spectra);
+}
+
+void atlas__Trans__gathspec( Trans* t, const int nb_fields, const int destination[], const double spectra[], double global_spectra[] )
+{
+  return t->gathspec(nb_fields,destination,spectra,global_spectra);
+}
+
+void atlas__Trans__distgrid( Trans* t, const int nb_fields, const int origin[], const double global_fields[], double fields[] )
+{
+  return t->distgrid(nb_fields,origin,global_fields,fields);
+}
+
+void atlas__Trans__gathgrid( Trans* t, const int nb_fields, const int destination[], const double fields[], double global_fields[] )
+{
+  return t->gathgrid(nb_fields,destination,fields,global_fields);
+}
+
+void atlas__Trans__invtrans_scalar( Trans* t, const int nb_fields, const double scalar_spectra[], double scalar_fields[] )
+{
+  return t->invtrans(nb_fields,scalar_spectra,scalar_fields);
+}
+
+void atlas__Trans__invtrans_vordiv2wind( Trans* t, const int nb_fields, const double vorticity_spectra[], const double divergence_spectra[], double wind_fields[] )
+{
+  return t->invtrans(nb_fields,vorticity_spectra,divergence_spectra,wind_fields);
+}
+
+void atlas__Trans__dirtrans_scalar( Trans* t, const int nb_fields, const double scalar_fields[], double scalar_spectra[] )
+{
+  return t->dirtrans(nb_fields,scalar_fields,scalar_spectra);
+}
+
+void atlas__Trans__dirtrans_wind2vordiv( Trans* t, const int nb_fields, const double wind_fields[], double vorticity_spectra[], double divergence_spectra[] )
+{
+  return t->dirtrans(nb_fields,wind_fields,vorticity_spectra,divergence_spectra);
+}
+
 
 }
 }

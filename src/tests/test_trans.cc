@@ -35,13 +35,15 @@ using namespace atlas::grids;
 
 struct Fixture   {
        Fixture() {
-         trans_init();
+
          atlas_init(boost::unit_test::framework::master_test_suite().argc,
                     boost::unit_test::framework::master_test_suite().argv);
+         trans_init();
+
        }
       ~Fixture() {
-         atlas_finalize();
          trans_finalize();
+         atlas_finalize();
        }
 };
 
@@ -496,61 +498,6 @@ void gathgrid( trans::Trans& t, const GridPointDistributed& dist, const GridPoin
 //dirtrans( trans, GridPointWind(rgp),            SpectralVorDiv(rspvor,rspdiv) );
 
 
-void distspec( trans::Trans& t, const int nb_fields, const int origin[], const double global_spectra[], double spectra[] )
-{
-  struct ::DistSpec_t args = new_distspec(t);
-    args.nfld = nb_fields;
-    args.rspecg = global_spectra;
-    args.nfrom = origin;
-    args.rspec = spectra;
-  if( int errcode = ::trans_distspec(&args) != TRANS_SUCCESS )
-    throw eckit::Exception("distspec failed: "+std::string(::trans_error_msg(errcode)),Here());
-}
-
-void gathspec( trans::Trans& t, const int nb_fields, const int destination[], const double spectra[], double global_spectra[] )
-{
-  struct ::GathSpec_t args = new_gathspec(t);
-    args.nfld = nb_fields;
-    args.rspecg = global_spectra;
-    args.nto = destination;
-    args.rspec = spectra;
-  if( int errcode = ::trans_gathspec(&args) != TRANS_SUCCESS )
-    throw eckit::Exception("gathspec failed: "+std::string(::trans_error_msg(errcode)),Here());
-}
-
-void distgrid( trans::Trans& t, const int nb_fields, const int origin[], const double global_fields[], double fields[] )
-{
-  struct ::DistGrid_t args = new_distgrid(t);
-    args.nfld  = nb_fields;
-    args.nfrom = origin;
-    args.rgpg  = global_fields;
-    args.rgp   = fields;
-  if( int errcode = ::trans_distgrid(&args) != TRANS_SUCCESS )
-    throw eckit::Exception("distgrid failed: "+std::string(::trans_error_msg(errcode)),Here());
-}
-
-void gathgrid( trans::Trans& t, const int nb_fields, const int destination[], const double fields[], double global_fields[] )
-{
-  struct ::GathGrid_t args = new_gathgrid(t);
-    args.nfld = nb_fields;
-    args.nto  = destination;
-    args.rgp  = fields;
-    args.rgpg = global_fields;
-  if( int errcode = ::trans_gathgrid(&args) != TRANS_SUCCESS )
-    throw eckit::Exception("gathgrid failed: "+std::string(::trans_error_msg(errcode)),Here());
-}
-
-void invtrans( trans::Trans& t, const int nb_fields, const double scalar_spectra[], double scalar_fields[] )
-{
-  struct ::InvTrans_t args = new_invtrans(t);
-    args.nscalar = nb_fields;
-    args.rspscalar = scalar_spectra;
-    args.rgp = scalar_fields;
-  if( int errcode = ::trans_invtrans(&args) != TRANS_SUCCESS )
-    throw eckit::Exception("invtrans failed: "+std::string(::trans_error_msg(errcode)),Here());
-}
-
-
 /*!
  * @brief Inverse transform of vorticity/divergence to wind(U/V)
  * @param nb_fields [in] Number of fields ( both components of wind count as 1 )
@@ -685,6 +632,7 @@ BOOST_AUTO_TEST_CASE( test_trans_options )
   trans::Trans::Options opts;
   opts.set_fft(trans::FFTW);
   opts.set_split_latitudes(false);
+  opts.set_read("readfile");
 
   eckit::Log::info() << "trans_opts = " << opts << std::endl;
 }
@@ -699,6 +647,8 @@ BOOST_AUTO_TEST_CASE( test_distspec )
   //trans::Trans trans(*g, 159 );
 
   trans::Trans::Options p;
+  if( eckit::mpi::size() == 1 )
+    p.set_write("cached_legendre_coeffs");
   p.set_flt(false);
   trans::Trans trans(400, 159, p);
   BOOST_CHECKPOINT("Trans initialized");
@@ -725,9 +675,9 @@ BOOST_AUTO_TEST_CASE( test_distspec )
     execute();
   )
 
-  trans::distspec( trans, nfld, nfrom.data(), rspecg.data(), rspec.data() );
-  trans::invtrans( trans, nfld, rspec.data(), rgp.data() );
-  trans::gathgrid( trans, nfld, nto.data(),   rgp.data(),    rgpg.data() );
+  trans.distspec( nfld, nfrom.data(), rspecg.data(), rspec.data() );
+  trans.invtrans( nfld, rspec.data(), rgp.data() );
+  trans.gathgrid( nfld, nto.data(),   rgp.data(),    rgpg.data() );
 
   trans::distspec(trans, trans::SpectralGlobalData(nfld,rspecg,nfrom), trans::SpectralDistributedData(nfld,rspec) );
 
