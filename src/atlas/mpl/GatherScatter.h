@@ -485,7 +485,6 @@ void GatherScatter::unpack_recv_buffer( const std::vector<int>& recvmap,
                                         const mpl::Field<DATA_TYPE>& field ) const
 {
   const int recvcnt = recvmap.size();
-  bool field_changed = false;
   DATA_TYPE tmp;
   int ibuf = 0;
   const int recv_stride = field.var_strides[0]*field.var_shape[0];

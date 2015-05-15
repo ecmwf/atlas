@@ -112,7 +112,6 @@ void HaloExchange::execute(DATA_TYPE field[], const int var_strides[], const int
   }
 
   int tag=1;
-  int ibuf;
   int var_size = std::accumulate(var_shape,var_shape+var_rank,1,std::multiplies<int>());
   int send_size  = sendcnt_ * var_size;
   int recv_size  = recvcnt_ * var_size;
