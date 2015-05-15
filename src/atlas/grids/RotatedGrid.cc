@@ -92,7 +92,7 @@ void RotatedGrid::lonlat( std::vector<Point> &pts) const {
     grid_->lonlat(pts);
 
     for (size_t i = 0; i < pts.size(); i++) {
-        pts[i] = rotgrid.rotate( Grid::Point( pts[i].lon(), pts[i].lat() ) );
+        pts[i] = rotgrid.unrotate( Grid::Point( pts[i].lon(), pts[i].lat() ) );
     }
 }
 
