@@ -30,57 +30,6 @@ namespace grids {
 
 register_BuilderT1(Grid, PolarStereoGraphic, PolarStereoGraphic::grid_type_str());
 
-
-// 66-66 constant gridDefinitionTemplateNumber = 20
-//      66-68 unsigned Nx = 16 [Ni, numberOfPointsAlongXAxis, numberOfColumns]
-//      68-70 unsigned Ny = 31 [Nj, numberOfPointsAlongYAxis, numberOfRows]
-//      70-73 signed latitudeOfFirstGridPoint = 60000 [La1]
-//      73-73 scale latitudeOfFirstGridPointInDegrees = 60 [yFirst]
-//      73-76 signed longitudeOfFirstGridPoint = 0 [Lo1]
-//      76-76 scale longitudeOfFirstGridPointInDegrees = 0 [xFirst]
-//      76-77 codeflag resolutionAndComponentFlags = 128 [10000000:(1=1)  Direction increments given;(2=0)  Earth assumed spherical with radius = 6367.47 km;(5=0)  u and v componen
-//      77-77 bit ijDirectionIncrementGiven = 1 [iDirectionIncrementGiven, jDirectionIncrementGiven, DiGiven, DjGiven]
-//      77-77 bit earthIsOblate = 0
-//      77-77 bit resolutionAndComponentFlags3 = 0
-//      77-77 bit resolutionAndComponentFlags4 = 0
-//      77-77 bit uvRelativeToGrid = 0
-//      77-77 bit resolutionAndComponentFlags6 = 0
-//      77-77 bit resolutionAndComponentFlags7 = 0
-//      77-77 bit resolutionAndComponentFlags8 = 0
-//      77-80 signed orientationOfTheGrid = 0 [LoV]
-//      80-80 scale orientationOfTheGridInDegrees = 0
-//      80-83 unsigned DxInMetres = 0 [xDirectionGridLengthInMetres, Dx, Di]
-//      83-86 unsigned DyInMetres = 0 [yDirectionGridLengthInMetres, Dy, Dj]
-//      86-86 constant latitudeWhereDxAndDyAreSpecifiedInDegrees = 60
-//      86-86 constant LaDInDegrees = 60
-//      86-87 unsigned projectionCentreFlag = 0 [projectionCenterFlag]
-//      87-87 bit southPoleOnProjectionPlane = 0
-//      87-88 codeflag scanningMode = 0 [00000000:(1=0)  Points scan in +i direction;(2=0)  Points scan in -j direction;(3=0)  Adjacent points in i direction are consecutive :grib1
-//      88-88 bit iScansNegatively = 0
-//      88-88 bit jScansPositively = 0
-//      88-88 bit jPointsAreConsecutive = 0
-//      88-88 constant alternativeRowScanning = 0
-//      88-88 transient iScansPositively = 1
-//      88-88 bit scanningMode4 = 0
-//      88-88 bit scanningMode5 = 0
-//      88-88 bit scanningMode6 = 0
-//      88-88 bit scanningMode7 = 0
-//      88-88 bit scanningMode8 = 0
-//      88-88 change_scanning_direction swapScanningX = <error> *** ERR=-4 (Function not yet implemented) [grib_dumper_debug::dump_string] [swapScanningLon]
-//      88-88 change_scanning_direction swapScanningY = <error> *** ERR=-4 (Function not yet implemented) [grib_dumper_debug::dump_string] [swapScanningLat]
-//      88-92 pad padding_grid5_1 = 4 {
-
-// double orientationOfTheGrid_;      // east longitude value, in degrees ( longitude of natural origin)
-//   double radius_;                    // default 6371229
-//   double semi_major_;                // default 6378137   (a)
-//   double semi_minor_;                // default 6356752.3 (b)
-//   double e_;                         // calculated e = sqrt( 1 - b*b/a*a)
-
-//   Point first_grid_pt_;              // This is in spherical lat long co-ordinate
-
-//   bool southPoleOnProjectionPlane_;
-//   bool earth_is_oblate_;
-
 PolarStereoGraphic::PolarStereoGraphic(  size_t Nx, size_t Ny,
                      size_t Dx, size_t Dy,
                      double longitudeOfFirstGridPoint,
