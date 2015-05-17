@@ -162,4 +162,5 @@ if( ECKIT_HAVE_GRIB )
 endif()
 
 add_subdirectory( cgal )
+add_subdirectory( geometry )
 

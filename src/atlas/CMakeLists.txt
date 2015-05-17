@@ -188,6 +188,13 @@ grids/rgg/OctahedralRGG.h
 grids/rgg/OctahedralRGG.cc
 )
 
+list( APPEND atlas_geometry_srcs
+geometry/QuadrilateralIntersection.h
+geometry/QuadrilateralIntersection.cc
+geometry/TriangleIntersection.h
+geometry/TriangleIntersection.cc
+)
+
 list( APPEND atlas_srcs
 atlas.h
 atlas.cc
@@ -232,10 +239,6 @@ PointSet.cc
 PointSet.h
 Tesselation.cc
 Tesselation.h
-QuadIntersection.cc
-QuadIntersection.h
-TriangleIntersection.cc
-TriangleIntersection.h
 Util.cc
 Util.h
 )
@@ -252,6 +255,7 @@ ecbuild_add_library( TARGET atlas
   ${atlas_io_srcs}
   ${atlas_mpl_srcs}
   ${atlas_Meshgen_srcs}
+  ${atlas_geometry_srcs}
   ${atlas_actions_srcs}
   ${atlas_grids_srcs}
   ${atlas_trans_srcs}
