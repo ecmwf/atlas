@@ -63,8 +63,9 @@ void gaussian_latitudes_npole_spole(const int N, double lats[])
 {
   gaussian_latitudes_npole_equator(N,lats);
   int end = 2*N-1;
-  for( int jlat=0; jlat<N; ++jlat )
-    lats[end-jlat] = lats[jlat];
+  for( int jlat=0; jlat<N; ++jlat ) {
+    lats[end--] = -lats[jlat];
+  }
 }
 
 
