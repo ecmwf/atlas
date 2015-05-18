@@ -91,3 +91,26 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_rotatedquad )
   BOOST_CHECK_CLOSE( isect.u, 0.5, relative_error );
   BOOST_CHECK_CLOSE( isect.v, 0.5, relative_error );
 }
+
+BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_slopequad )
+{
+  Point3 v0( 2., 0.,2.);
+  Point3 v1( 2., 0.,0.);
+  Point3 v2( 0., 2.,0.);
+  Point3 v3( 0., 2.,2.);
+
+  QuadrilateralIntersection quad(v0.data(),v1.data(),v2.data(),v3.data());
+
+  Point3 orig(2.,2.,1.);
+  Point3 dir (-1.,-1.,0.);
+
+  QuadrilateralIntersection::Ray ray(orig.data(),dir.data());
+  QuadrilateralIntersection::Intersection isect;
+
+  BOOST_CHECK( quad.intersects(ray,isect) );
+
+  BOOST_TEST_MESSAGE( isect );
+
+  BOOST_CHECK_CLOSE( isect.u, 0.5, relative_error );
+  BOOST_CHECK_CLOSE( isect.v, 0.5, relative_error );
+}
