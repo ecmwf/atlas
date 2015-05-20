@@ -8,48 +8,26 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_QuadIntersection_h
-#define atlas_QuadIntersection_h
-
-#include <limits>
+#include "atlas/geometry/Ray.h"
 
 #include "eckit/eckit_config.h"
 
 #ifdef HAVE_EIGEN
 
 #include "eckit/maths/Eigen.h"
-#include "eckit/types/FloatCompare.h"
 
-#include "atlas/geometry/Ray.h"
+//----------------------------------------------------------------------------------------------------------------------
+
+using Eigen::Vector3d;
 
 namespace atlas {
 namespace geometry {
 
-//----------------------------------------------------------------------------------------------------------------------
+Ray::Ray(double *p) {
+    orig = Eigen::Vector3d::Map(p);
+    dir = -orig;
+}
 
-class QuadrilateralIntersection {
-
-public:
-
-  QuadrilateralIntersection(double* x0, double* x1, double* x2, double* x3) {
-
-    v00 = Eigen::Vector3d::Map(x0);
-    v10 = Eigen::Vector3d::Map(x1);
-    v11 = Eigen::Vector3d::Map(x2);
-    v01 = Eigen::Vector3d::Map(x3);
-
-  }
-
-  Intersect intersects(const Ray& r, double epsilon = 2 * std::numeric_limits<double>::epsilon()) const;
-
-private: // members
-
-  Eigen::Vector3d v00;
-  Eigen::Vector3d v10;
-  Eigen::Vector3d v11;
-  Eigen::Vector3d v01;
-
-};
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -57,5 +35,3 @@ private: // members
 }  // namespace atlas
 
 #endif  // HAVE_EIGEN
-
-#endif

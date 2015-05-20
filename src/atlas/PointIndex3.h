@@ -23,11 +23,9 @@
 
 #include "eckit/geometry/Point3.h"
 
-//------------------------------------------------------------------------------------------------------
-
 namespace atlas {
 
-//------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 template<class Traits>
 class PointKdTree : public eckit::KDTreeMemory<Traits> {
@@ -76,7 +74,7 @@ public:
     PointKdTree(Alloc& alloc): Tree(alloc) {}
 };
 
-//------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 struct PointIndex3TreeTrait
 {
@@ -84,15 +82,38 @@ struct PointIndex3TreeTrait
     typedef size_t                  Payload;
 };
 
-//------------------------------------------------------------------------------------------------------
-
 typedef PointKdTree<PointIndex3TreeTrait>  PointIndex3;
 
-//------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
-PointIndex3* create_cell_centre_index( atlas::Mesh& mesh );
+struct ElemPayload
+{
+    ElemPayload(size_t id, char t) : id_(id), type_(t) {}
 
-//---------------------------------------------------------------------------------------------------------
+    size_t id_;   ///< element id in the function space of 'triags' or 'quads'
+    char   type_; ///< 't' for triangle and 'q' for quad
+
+    void print(std::ostream& s) const { s << "ElemPayload[id=" << id_ << ",type=" << type_ << "]"; }
+
+    friend std::ostream& operator<<(std::ostream& s, const ElemPayload& p) {
+      p.print(s);
+      return s;
+    }
+};
+
+ElemPayload make_elem_payload(size_t id, char t);
+
+struct ElemIndex3TreeTrait
+{
+    typedef eckit::geometry::Point3 Point;
+    typedef ElemPayload             Payload;
+};
+
+typedef PointKdTree<ElemIndex3TreeTrait>  ElemIndex3;
+
+ElemIndex3* create_element_centre_index( const atlas::Mesh& mesh );
+
+//----------------------------------------------------------------------------------------------------------------------
 
 } // namespace atlas
 

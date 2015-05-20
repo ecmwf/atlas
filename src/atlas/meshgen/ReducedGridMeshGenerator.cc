@@ -83,7 +83,7 @@ ReducedGridMeshGenerator::ReducedGridMeshGenerator()
   options.set<int>("part",eckit::mpi::rank());
 
   // Experimental option. The result is a non-standard Reduced Gaussian Grid, with a ragged Greenwich line
-  options.set("stagger", bool( Resource<bool>("-stagger;meshgen.stagger", false ) ) );
+  options.set("stagger", bool( Resource<bool>("--stagger;meshgen.stagger", false ) ) );
 
   // This option sets the maximum angle deviation for a quadrilateral element
   // angle = 30  -->  minimises number of triangles
@@ -107,21 +107,6 @@ Mesh* ReducedGridMeshGenerator::operator()( const ReducedGrid& grid, const GridD
 Mesh* ReducedGridMeshGenerator::operator()( const ReducedGrid& grid, GridDistribution* distribution )
 {
   return generate(grid,distribution);
-}
-
-void ReducedGridMeshGenerator::set_three_dimensional(bool f)
-{
-    options.set("three_dimensional",f);
-}
-
-void ReducedGridMeshGenerator::set_patch_pole(bool f)
-{
-  options.set("patch_pole",f);
-}
-
-void ReducedGridMeshGenerator::set_include_pole(bool f)
-{
-  options.set("include_pole",f);
 }
 
 //std::vector<int> RGGMeshGenerator::partition(const RGG& rgg) const
@@ -393,6 +378,9 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rgg, const std
 // ------------------------------------------------
 // START RULES
 // ------------------------------------------------
+
+      bool triangulate_quads = options.get<bool>("triangulate");
+
       const double dxN = std::abs(xN2-xN1);
       const double dxS = std::abs(xS2-xS1);
       const double dx  = std::min(dxN,dxS);

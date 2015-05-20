@@ -193,6 +193,8 @@ geometry/QuadrilateralIntersection.h
 geometry/QuadrilateralIntersection.cc
 geometry/TriangleIntersection.h
 geometry/TriangleIntersection.cc
+geometry/Ray.h
+geometry/Ray.cc
 )
 
 list( APPEND atlas_srcs

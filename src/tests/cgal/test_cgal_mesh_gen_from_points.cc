@@ -35,17 +35,17 @@ using namespace atlas::io;
 
 int main()
 {
-	eckit::mpi::init();
+    eckit::mpi::init();
 
     Mesh::Ptr mesh( new Mesh() );
 
     Tesselation::generate_lonlat_points( *mesh, NLATS, NLONG );
 
-    Tesselation::tesselate(*mesh);
+    Tesselation::delaunay_triangulation(*mesh);
 
-	Gmsh::write3dsurf(*mesh, std::string("earth.msh") );
+    Gmsh::write3dsurf(*mesh, std::string("earth.msh") );
 
-	eckit::mpi::finalize();
+    eckit::mpi::finalize();
 
     return 0;
 }

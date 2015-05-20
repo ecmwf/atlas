@@ -41,7 +41,9 @@ double sign(const double& x)
 
 /// @note variable names are maintained as in the pseudo-code block in the article
 
-bool QuadrilateralIntersection::intersects(const Ray& r, Intersection& isect, const double epsilon) const {
+Intersect QuadrilateralIntersection::intersects(const Ray& r, double epsilon) const {
+
+  Intersect isect; // intersection is false
 
   const Vector3d& O = r.orig;
   const Vector3d& D = r.dir;
@@ -55,21 +57,21 @@ bool QuadrilateralIntersection::intersects(const Ray& r, Intersection& isect, co
 
   double det = E01.dot(P);
 
-  if(fabs(det) < epsilon) return false;
+  if(fabs(det) < epsilon) return isect.success(false);
 
   Vector3d T = O - v00;
 
   double alpha = T.dot(P) / det;
 
-  if(alpha < 0.) return false;
-  if(alpha > 1.) return false;
+  if(alpha < 0.) return isect.success(false);
+  if(alpha > 1.) return isect.success(false);
 
   Vector3d Q = T.cross(E01);
 
   double beta = D.dot(Q) / det;
 
-  if(beta < 0.) return false;
-  if(beta > 1.) return false;
+  if(beta < 0.) return isect.success(false);
+  if(beta > 1.) return isect.success(false);
 
   // rejects rays using the barycentric coords of intersection point wrt T'
   // we resue the ' (prime) variables
@@ -83,26 +85,26 @@ bool QuadrilateralIntersection::intersects(const Ray& r, Intersection& isect, co
 
     det = E23.dot(P);
 
-    if(fabs(det) < epsilon) return false;
+    if(fabs(det) < epsilon) return isect.success(false);
 
     T = O - v11;
 
     alpha = T.dot(P) / det;
 
-    if(alpha < 0.) return false;
+    if(alpha < 0.) return isect.success(false);
 
     Q = T.cross(E23);
 
     beta = D.dot(Q) / det;
 
-    if(beta < 0.) return false;
+    if(beta < 0.) return isect.success(false);
   }
 
   // compute the ray parameter of the intersection point
 
   isect.t = E03.dot(Q) / det;
 
-  if(isect.t < 0) return false;
+  if(isect.t < 0) return isect.success(false);
 
   // compute the barycentric coordinates of V11
 
@@ -162,7 +164,7 @@ bool QuadrilateralIntersection::intersects(const Ray& r, Intersection& isect, co
       isect.v = beta*(isect.u*(beta11 - 1.) + 1.0);
     }
 
-  return true;
+  return isect.success(true);
 }
 
 //----------------------------------------------------------------------------------------------------------------------

@@ -18,9 +18,9 @@
 #ifdef HAVE_EIGEN
 
 #include "eckit/maths/Eigen.h"
-
 #include "eckit/types/FloatCompare.h"
 
+#include "atlas/geometry/Ray.h"
 
 namespace atlas {
 namespace geometry {
@@ -28,6 +28,8 @@ namespace geometry {
 //----------------------------------------------------------------------------------------------------------------------
 
 /// Triangle structure
+/// Implements @link
+/// http://www.scratchapixel.com/lessons/3d-basic-lessons/lesson-9-ray-triangle-intersection/m-ller-trumbore-algorithm
 
 class TriangleIntersection {
 
@@ -41,58 +43,13 @@ public: // types
 
   }
 
-  /// Intersection data structure
-
-  struct Intersection {
-
-    double u;
-    double v;
-    double t;
-
-    double w() const { return 1.0 - u - v; }
-
-    void print(std::ostream& s) const { s << "Intersect[u=" << u << ",v=" << v << ",w=" << w() << ",t=" << t << "]"; }
-
-    friend std::ostream& operator<<(std::ostream& s, const Intersection& p) {
-      p.print(s);
-      return s;
-    }
-
-  };
-
-  /// Ray trace data structure
-
-  struct Ray {
-
-    Eigen::Vector3d orig;
-    Eigen::Vector3d dir;
-
-    /// initializes ray with origin in point and direction to (0,0,0)
-    explicit Ray(double* p) {
-      orig = Eigen::Vector3d::Map(p);
-      dir = -orig;
-    }
-
-    Ray(double* o, double* d) {
-      orig = Eigen::Vector3d::Map(o);
-      dir = Eigen::Vector3d::Map(d);
-    }
-
-    Eigen::Vector3d operator()(double t) const { return orig + t * dir; }
-  };
-
-  /// Implements @link
-  /// http://www.scratchapixel.com/lessons/3d-basic-lessons/lesson-9-ray-triangle-intersection/m-ller-trumbore-algorithm
-  bool intersects(const Ray& r,
-                  Intersection& isect,
-                  const double epsilon = 2 * std::numeric_limits<double>::epsilon()) const;
+  Intersect intersects(const Ray& r, double epsilon = 2 * std::numeric_limits<double>::epsilon()) const;
 
 private: // members
 
   Eigen::Vector3d v0;
   Eigen::Vector3d v1;
   Eigen::Vector3d v2;
-
 
 };
 

@@ -21,12 +21,12 @@ class Grid;
 
 class Tesselation {
 
- public:
+public:
+
+  static void tesselate(const Grid& g, Mesh& mesh);
 
   /// generate a mesh by triangulating the convex hull of the 3D points
-  static void tesselate(Mesh& mesh);
-
-  static void tesselate(Grid& g);
+  static void delaunay_triangulation(Mesh& mesh);
 
   /// generate regular spaced lat-long points (does not include extremes)
   static void generate_lonlat_points(Mesh& mesh, const size_t& nlats, const size_t& nlong);

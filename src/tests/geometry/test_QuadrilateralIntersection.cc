@@ -18,6 +18,8 @@
 using eckit::geometry::Point3;
 using eckit::geometry::points_equal;
 using atlas::geometry::QuadrilateralIntersection;
+using atlas::geometry::Intersect;
+using atlas::geometry::Ray;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -35,8 +37,8 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_refquad )
   Point3 orig(0.25,0.25,1.);
   Point3 dir (0.,0.,-1.);
 
-  QuadrilateralIntersection::Ray ray(orig.data(),dir.data());
-  QuadrilateralIntersection::Intersection isect;
+  Ray ray(orig.data(),dir.data());
+  Intersect isect;
 
   BOOST_CHECK( quad.intersects(ray,isect) );
 
@@ -58,8 +60,8 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_doublequad )
   Point3 orig(0.5,0.5,1.);
   Point3 dir (0.,0.,-1.);
 
-  QuadrilateralIntersection::Ray ray(orig.data(),dir.data());
-  QuadrilateralIntersection::Intersection isect;
+  Ray ray(orig.data(),dir.data());
+  Intersect isect;
 
   BOOST_CHECK( quad.intersects(ray,isect) );
 
@@ -81,8 +83,8 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_rotatedquad )
   Point3 orig(0.,0.,1.);
   Point3 dir (0.,0.,-1.);
 
-  QuadrilateralIntersection::Ray ray(orig.data(),dir.data());
-  QuadrilateralIntersection::Intersection isect;
+  Ray ray(orig.data(),dir.data());
+  Intersect isect;
 
   BOOST_CHECK( quad.intersects(ray,isect) );
 
@@ -104,8 +106,8 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_slopequad )
   Point3 orig(2.,2.,1.);
   Point3 dir (-1.,-1.,0.);
 
-  QuadrilateralIntersection::Ray ray(orig.data(),dir.data());
-  QuadrilateralIntersection::Intersection isect;
+  Ray ray(orig.data(),dir.data());
+  Intersect isect;
 
   BOOST_CHECK( quad.intersects(ray,isect) );
 

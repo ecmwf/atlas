@@ -42,11 +42,6 @@ public:
   Mesh* operator()( const grids::ReducedGrid&, GridDistribution* );
   Mesh* operator()( const grids::ReducedGrid& );
 
-
-  void set_three_dimensional( bool );
-  void set_patch_pole( bool );
-  void set_include_pole( bool );
-
 private:
 
   void generate_region( const grids::ReducedGrid&, const std::vector<int>& parts, int mypart, Region& region );
