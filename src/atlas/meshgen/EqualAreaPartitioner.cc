@@ -539,35 +539,43 @@ void EqualAreaPartitioner::partition(int nb_nodes, NodeInt nodes[], int part[]) 
 
 void EqualAreaPartitioner::partition(int part[]) const
 {
-  std::vector<NodeInt> nodes(grid().npts());
-  int n(0);
-
-  if( const grids::ReducedGrid* reduced_grid = dynamic_cast<const grids::ReducedGrid*>(&grid()) )
+  if( N_ == 1 ) // trivial solution, so much faster
   {
-    for( int jlat=0; jlat<reduced_grid->nlat(); ++jlat)
+    for( int j=0; j<grid().npts(); ++j )
+      part[j] = 0;
+  }
+  else
+  {
+    std::vector<NodeInt> nodes(grid().npts());
+    int n(0);
+
+    if( const grids::ReducedGrid* reduced_grid = dynamic_cast<const grids::ReducedGrid*>(&grid()) )
     {
-      for( int jlon=0; jlon<reduced_grid->nlon(jlat); ++jlon)
+      for( int jlat=0; jlat<reduced_grid->nlat(); ++jlat)
       {
-        nodes[n].x = microdeg(reduced_grid->lon(jlat,jlon));
-        nodes[n].y = microdeg(reduced_grid->lat(jlat));
+        for( int jlon=0; jlon<reduced_grid->nlon(jlat); ++jlon)
+        {
+          nodes[n].x = microdeg(reduced_grid->lon(jlat,jlon));
+          nodes[n].y = microdeg(reduced_grid->lat(jlat));
+          nodes[n].n = n;
+          ++n;
+        }
+      }
+    }
+    else
+    {
+      std::vector<eckit::geometry::LLPoint2> points;
+      grid().lonlat(points);
+      for( int j=0; j<grid().npts(); ++j)
+      {
+        nodes[n].x = microdeg(points[j].lon());
+        nodes[n].y = microdeg(points[j].lat());
         nodes[n].n = n;
         ++n;
       }
     }
+    partition(grid().npts(),nodes.data(),part);
   }
-  else
-  {
-    std::vector<eckit::geometry::LLPoint2> points;
-    grid().lonlat(points);
-    for( int j=0; j<grid().npts(); ++j)
-    {
-      nodes[n].x = microdeg(points[j].lon());
-      nodes[n].y = microdeg(points[j].lat());
-      nodes[n].n = n;
-      ++n;
-    }
-  }
-  partition(grid().npts(),nodes.data(),part);
 }
 
 } // namespace meshgen
