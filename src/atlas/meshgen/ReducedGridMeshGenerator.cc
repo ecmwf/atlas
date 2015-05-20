@@ -67,7 +67,7 @@ struct Region
 ReducedGridMeshGenerator::ReducedGridMeshGenerator()
 {
   // This option creates a point at the pole when true
-  options.set("include_pole",bool( Resource<bool>("-include_pole;atlas.meshgen.include_pole", false ) ) );
+  options.set("include_pole",bool( Resource<bool>("--include_pole;atlas.meshgen.include_pole", false ) ) );
 
   // This option sets the part that will be generated
   options.set("patch_pole", bool(Resource<bool>("--patch_pole;atlas.meshgen.patch_pole",false ) ) );
@@ -86,19 +86,11 @@ ReducedGridMeshGenerator::ReducedGridMeshGenerator()
   options.set("stagger", bool( Resource<bool>("-stagger;meshgen.stagger", false ) ) );
 
   // This option sets the maximum angle deviation for a quadrilateral element
-  // max_angle = 30  -->  minimises number of triangles
-  // max_angle = 0   -->  maximises number of triangles
-  //Resource<double>( &Context::instance(), "meshgen.angle", 27 ).dump(Log::warning());
-  //Log::warning() << "\n\n Getting max_angle_ ... " << std::endl;
-  max_angle_ = Resource< double > ( "atlas.meshgen.angle", 0. );
-  //Log::warning() << "max_angle_ = " << max_angle_ << std::endl;
+  // angle = 30  -->  minimises number of triangles
+  // angle = 0   -->  maximises number of triangles
+  options.set<double>("angle", Resource< double > ( "atlas.meshgen.angle", 0. ) );
 
-  triangulate_quads_ = Resource< bool > ( "-triangulate;atlas.meshgen.triangulate", 1. );
-  //Log::error() << "triangulate =" << triangulate_quads_ << std::endl;
-
-
-//  Log::info() << "three_dimensional" << options.get<bool>("three_dimensional") << std::endl;
-//  Log::info() << "triangulate" << triangulate_quads_ << std::endl;
+  options.set<bool>("triangulate", Resource< bool > ( "--triangulate;atlas.meshgen.triangulate", 1.) );
 
 }
 
@@ -244,7 +236,8 @@ Mesh* ReducedGridMeshGenerator::generate(const ReducedGrid& rgg, GridDistributio
 
 void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rgg, const std::vector<int>& parts, int mypart, Region& region)
 {
-  double max_angle = max_angle_;
+  double max_angle          = options.get<double>("angle");
+  bool   triangulate_quads  = options.get<bool>("triangulate");
 
   int n;
   /*
@@ -407,7 +400,7 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rgg, const std
       const double alpha2 = ( dx==0. ? 0. : std::atan2((xN2-xS2)/dx,1.) * to_deg );
       if( std::abs(alpha1) <= max_angle && std::abs(alpha2) <= max_angle )
       {
-        if( triangulate_quads_ )
+        if( triangulate_quads )
         {
           if( false ) //std::abs(alpha1) < 1 && std::abs(alpha2) < 1)
           {
@@ -1066,7 +1059,7 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
       ++jtriag;
     }
   }
-  else if (patch_north_pole)
+  else if (patch_south_pole)
   {
     int jlat = rgg.nlat()-1;
     int ilat = region.south-region.north;
@@ -1078,8 +1071,8 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
     ip2 = 1;
     ip3 = rgg.nlon(0)-1;
     triag_nodes(jtriag,0) = offset_loc[ilat] + ip1;
-    triag_nodes(jtriag,1) = offset_loc[ilat] + ip2;
-    triag_nodes(jtriag,2) = offset_loc[ilat] + ip3;
+    triag_nodes(jtriag,2) = offset_loc[ilat] + ip2;
+    triag_nodes(jtriag,1) = offset_loc[ilat] + ip3;
     triag_glb_idx(jtriag) = jquad+jtriag+1;
     triag_part(jtriag) = mypart;
     ++jtriag;
@@ -1096,8 +1089,8 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
       ip2 = q3;
       ip3 = q4;
       triag_nodes(jtriag,0) = offset_loc[ilat] + ip1;
-      triag_nodes(jtriag,1) = offset_loc[ilat] + ip2;
-      triag_nodes(jtriag,2) = offset_loc[ilat] + ip3;
+      triag_nodes(jtriag,2) = offset_loc[ilat] + ip2;
+      triag_nodes(jtriag,1) = offset_loc[ilat] + ip3;
       triag_glb_idx(jtriag) = jquad+jtriag+1;
       triag_part(jtriag) = mypart;
       ++jtriag;
@@ -1107,8 +1100,8 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
       ip2 = q2;
       ip3 = q3;
       triag_nodes(jtriag,0) = offset_loc[ilat] + ip1;
-      triag_nodes(jtriag,1) = offset_loc[ilat] + ip2;
-      triag_nodes(jtriag,2) = offset_loc[ilat] + ip3;
+      triag_nodes(jtriag,2) = offset_loc[ilat] + ip2;
+      triag_nodes(jtriag,1) = offset_loc[ilat] + ip3;
       triag_glb_idx(jtriag) = jquad+jtriag+1;
       triag_part(jtriag) = mypart;
       ++jtriag;
@@ -1121,8 +1114,8 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
     ip2 = q1+1;
     ip3 = q4;
     triag_nodes(jtriag,0) = offset_loc[ilat] + ip1;
-    triag_nodes(jtriag,1) = offset_loc[ilat] + ip2;
-    triag_nodes(jtriag,2) = offset_loc[ilat] + ip3;
+    triag_nodes(jtriag,2) = offset_loc[ilat] + ip2;
+    triag_nodes(jtriag,1) = offset_loc[ilat] + ip3;
     triag_glb_idx(jtriag) = jquad+jtriag+1;
     triag_part(jtriag) = mypart;
     ++jtriag;

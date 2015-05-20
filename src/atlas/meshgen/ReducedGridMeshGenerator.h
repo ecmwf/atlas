@@ -58,8 +58,6 @@ private:
 public:
 
   Metadata options;
-  double max_angle_;
-  bool triangulate_quads_;
 
 };
 

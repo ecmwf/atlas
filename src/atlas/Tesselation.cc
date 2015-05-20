@@ -228,10 +228,10 @@ void Tesselation::tesselate( Grid& g ) {
     meshgen::ReducedGridMeshGenerator mg;
 
     // force these flags
-    mg.set_three_dimensional(true);
-    mg.set_patch_pole(true);
-    //		mg.set_include_pole(true);
-    mg.triangulate_quads_ = true;
+    mg.options.set<bool>("three_dimensional",true);
+    mg.options.set<bool>("patch_pole",true);
+    mg.options.set<bool>("include_pole",false);
+    mg.options.set<bool>("triangulate",true);
 
     mg.generate(*rg, mesh);
 
@@ -333,7 +333,7 @@ void Tesselation::generate_lonlat_points( Mesh& mesh,
 
     ASSERT(  nodes.shape(0) == nb_nodes );
 
-	ArrayView<double,2> coords  ( nodes.field("xyz") );
+    ArrayView<double,2> coords  ( nodes.field("xyz") );
     ArrayView<double,2> lonlat  ( nodes.field("lonlat") );
     ArrayView<gidx_t,1> glb_idx ( nodes.field("glb_idx") );
 
@@ -392,7 +392,7 @@ void Tesselation::generate_lonlat_grid( Mesh& mesh, const size_t& nlats, const s
 
     ASSERT( nodes.shape(0) == nb_nodes );
 
-	ArrayView<double,2> coords  ( nodes.field("xyz") );
+    ArrayView<double,2> coords  ( nodes.field("xyz") );
     ArrayView<double,2> lonlat  ( nodes.field("lonlat") );
     ArrayView<gidx_t,1> glb_idx ( nodes.field("glb_idx") );
 
@@ -455,7 +455,7 @@ void Tesselation::create_cell_centres( Mesh& mesh )
     ASSERT( mesh.has_function_space("triags") );
 
     FunctionSpace& nodes     = mesh.function_space( "nodes" );
-	ArrayView<double,2> coords  ( nodes.field("xyz") );
+    ArrayView<double,2> coords  ( nodes.field("xyz") );
 
     const size_t nb_nodes = nodes.shape(0);
 
@@ -526,7 +526,7 @@ void Tesselation::build_mesh( const Grid& grid, Mesh& mesh )
 
     ASSERT(  nodes.shape(0) == npts );
 
-	ArrayView<double,2> coords  ( nodes.field("xyz") );
+    ArrayView<double,2> coords  ( nodes.field("xyz") );
     ArrayView<double,2> lonlat  ( nodes.field("lonlat") );
     ArrayView<gidx_t,1> glb_idx ( nodes.field("glb_idx") );
 

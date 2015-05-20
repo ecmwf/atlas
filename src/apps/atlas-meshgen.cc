@@ -99,11 +99,11 @@ public:
       }
     }
 
-    edges      = Resource< bool> ( "-edges", false );
-    stats      = Resource< bool> ( "-stats", false );
-    info      = Resource< bool> ( "-info", false );
-    halo       = Resource< int > ( "-halo", 0 );
-    surfdim    = Resource< int > ( "-surfdim", 2 );
+    edges      = Resource< bool> ( "--edges", false );
+    stats      = Resource< bool> ( "--stats", false );
+    info      = Resource< bool> ( "--info", false );
+    halo       = Resource< int > ( "--halo", 0 );
+    surfdim    = Resource< int > ( "--surfdim", 2 );
 
     path_out = Resource<std::string> ( "-o", "" );
     if( path_out.asString().empty() && do_run )
