@@ -72,6 +72,11 @@ ReducedGridMeshGenerator::ReducedGridMeshGenerator()
   // This option sets the part that will be generated
   options.set("patch_pole", bool(Resource<bool>("--patch_pole;atlas.meshgen.patch_pole",false ) ) );
 
+  // This option disregards multiple poles in grid (e.g. lonlat up to poles) and connects elements
+  // to the first node only. Note this option will only be looked at in case other option
+  // "three_dimensional"==true
+  options.set("unique_pole", bool(Resource<bool>("--unique_pole;atlas.meshgen.unique_pole",true ) ) );
+
   // This option creates elements that connect east to west at greenwich meridian
   // when true, instead of creating periodic ghost-points at east boundary when false
   options.set("three_dimensional",bool(Resource<bool>("--three_dimensional;atlas.meshgen.three_dimensional",false ) ));
@@ -108,44 +113,6 @@ Mesh* ReducedGridMeshGenerator::operator()( const ReducedGrid& grid, GridDistrib
 {
   return generate(grid,distribution);
 }
-
-//std::vector<int> RGGMeshGenerator::partition(const RGG& rgg) const
-//{
-//  eckit::Log::info(Here())  << "partition start" << std::endl;
-//  int nb_parts = options.get<int>("nb_parts");
-//  EqualAreaPartitioner partitioner(nb_parts);
-//  int ngptot = rgg.ngptot();
-//  int n;
-//  int p;
-//  int i;
-//  int begin;
-//  int end;
-//  int band;
-
-//  double mem_per_node_in_MB = (32+2*32+32)/8./1024./1024.;
-//  eckit::Log::info(Here())  << "required memory = " << static_cast<double>(ngptot)*mem_per_node_in_MB << " MB" << std::endl;
-//  eckit::Log::info(Here())  << "required memory T8K ~ " << static_cast<double>(16e3*8e3*2./3.)*mem_per_node_in_MB << " MB" << std::endl;
-//  eckit::Log::info(Here())  << "required memory T16K ~ " << static_cast<double>(32e3*16e3*2./3.)*mem_per_node_in_MB << " MB" << std::endl;
-
-//  // Output
-//  std::vector<int> part(ngptot);
-
-//  // Create structure which we can sort with multiple keys (lat and lon)
-//  std::vector<NodeInt> nodes(ngptot);
-//  n=0;
-//  for( int jlat=0; jlat<rgg.nlat(); ++jlat)
-//  {
-//    for( int jlon=0; jlon<rgg.nlon(jlat); ++jlon)
-//    {
-//      nodes[n].x = static_cast<int>(rgg.lon(jlat,jlon)*1e6);
-//      nodes[n].y = static_cast<int>(rgg.lat(jlat)*1e6);
-//      nodes[n].n = n;
-//      ++n;
-//    }
-//  }
-//  partitioner.partition(ngptot,nodes.data(),part.data());
-//  return part;
-//}
 
 void ReducedGridMeshGenerator::generate(const ReducedGrid& grid, Mesh& mesh )
 {
@@ -223,6 +190,7 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rgg, const std
 {
   double max_angle          = options.get<double>("angle");
   bool   triangulate_quads  = options.get<bool>("triangulate");
+  bool   unique_pole        = options.get<bool>("unique_pole") && options.get<bool>("three_dimensional");
 
   int n;
   /*
@@ -310,8 +278,14 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rgg, const std
 
     beginN = 0;
     endN   = rgg.nlon(latN); // include periodic point
+    if( yN == 90 && unique_pole )
+      endN = beginN;
+
+
     beginS = 0;
     endS   = rgg.nlon(latS); // include periodic point
+    if( yS == -90 && unique_pole )
+      endS = beginS;
 
     ipN1 = beginN;
     ipS1 = beginS;

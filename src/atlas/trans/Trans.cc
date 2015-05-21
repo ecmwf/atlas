@@ -77,7 +77,7 @@ void Trans::ctor_rgg(const int ndgl, const int nloen[], int nsmax, const Trans::
 
   trans_.fft = p.fft();
   trans_.lsplit = p.split_latitudes();
-  trans_.luseflt = p.flt();
+  trans_.flt = p.flt();
 
   ::trans_setup(&trans_);
 }
@@ -103,7 +103,7 @@ void Trans::ctor_lonlat(const int nlon, const int nlat, int nsmax, const Trans::
 
   trans_.fft = p.fft();
   trans_.lsplit = p.split_latitudes();
-  trans_.luseflt = p.flt();
+  trans_.flt = p.flt();
 
   ::trans_setup(&trans_);
 }

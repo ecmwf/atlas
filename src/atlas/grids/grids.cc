@@ -66,6 +66,7 @@ Grid* grid_from_uid(const std::string& uid)
           int nlat = to_int(lonlat[1]);
           gridspec.set("nlon",nlon);
           gridspec.set("nlat",nlat);
+          if( nlat%2 == 1 ) gridspec.set("poles",true);
         }
       }
       grid = Grid::create(gridspec);
