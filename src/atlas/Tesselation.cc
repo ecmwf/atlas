@@ -118,10 +118,12 @@ void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, PointSet& p
     extents[0] = nb_triags;
     extents[1] = Field::UNDEF_VARS;
 
-	FunctionSpace& triags  = mesh.create_function_space( "triags", "Lagrange_P1", extents );
+    FunctionSpace& triags  = mesh.create_function_space( "triags", "Lagrange_P1", extents );
     triags.metadata().set("type",static_cast<int>(Entity::ELEMS));
 
-    IndexView<int,2> triag_nodes ( triags.create_field<int>("nodes",3) );
+    IndexView<int,2> triag_nodes   ( triags.create_field<int>("nodes",3) );
+    ArrayView<gidx_t,1> triag_gidx ( triags.create_field<gidx_t>("glb_idx",1) );
+    ArrayView<int,1> triag_part    ( triags.create_field<int>("partition",1) );
 
     Point3 pt;
     size_t idx[3];
@@ -173,6 +175,10 @@ void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, PointSet& p
         triag_nodes(tidx,0) = idx[0];
         triag_nodes(tidx,1) = idx[1];
         triag_nodes(tidx,2) = idx[2];
+
+        triag_gidx(tidx) = tidx+1;
+
+        triag_part(tidx) = 0;
 
         ++tidx;
     }
@@ -227,7 +233,7 @@ void Tesselation::tesselate(const Grid& g, Mesh& mesh) {
     mg.options.set("three_dimensional",true);
     mg.options.set("patch_pole",true);
     mg.options.set("include_pole",false);
-    mg.options.set("triangulate",false);
+    mg.options.set("triangulate",true);
 
     mg.generate(*rg, mesh);
 
@@ -313,134 +319,6 @@ void Tesselation::create_mesh_structure( Mesh& mesh, const size_t nb_nodes )
     // create / ensure mesh has global indexes
 
 	nodes.create_field<gidx_t>("glb_idx",1,IF_EXISTS_RETURN);
-}
-
-//------------------------------------------------------------------------------------------------------
-
-void Tesselation::generate_lonlat_points( Mesh& mesh,
-                                          const size_t& nlats,
-                                          const size_t& nlong )
-{
-    const size_t nb_nodes = nlats * nlong;
-
-    Tesselation::create_mesh_structure(mesh,nb_nodes);
-
-    FunctionSpace& nodes = mesh.function_space( "nodes" );
-
-    ASSERT(  nodes.shape(0) == nb_nodes );
-
-    ArrayView<double,2> coords  ( nodes.field("xyz") );
-    ArrayView<double,2> lonlat  ( nodes.field("lonlat") );
-    ArrayView<gidx_t,1> glb_idx ( nodes.field("glb_idx") );
-
-    // generate lat/long points
-
-//    std::cout << "generating nlats (" << nlats << ") x  (" << nlong << ")" << " = " << nb_nodes << std::endl;
-
-    const double lat_inc = 180. / (double)nlats;
-    const double lat_start = -90 + 0.5*lat_inc;
-//    const double lat_end   = 90. - 0.5*lat_inc;
-
-    const double lon_inc = 360. / (double)nlong;
-    const double lon_start = 0.5*lon_inc;
-//    const double lon_end   = 360. - 0.5*lon_inc;
-
-    double lat = 0;
-    double lon = 0;
-
-    size_t visits = 0;
-
-    lat = lat_start;
-    for( size_t ilat = 0; ilat < nlats; ++ilat, lat += lat_inc )
-    {
-        lon = lon_start;
-        for( size_t jlon = 0 ; jlon < nlong; ++jlon, lon += lon_inc )
-        {
-            const size_t idx = jlon + ( ilat * nlong );
-
-            ASSERT( idx < nb_nodes );
-
-            glb_idx(idx) = idx;
-
-            lonlat(idx,LON) = lon;
-            lonlat(idx,LAT) = lat;
-
-            eckit::geometry::latlon_to_3d( lat, lon, coords[idx].data() );
-
-            //            std::cout << idx << " [ " << lat << " ; " << lon << " ] " << p << std::endl;
-
-            ++visits;
-        }
-    }
-
-    ASSERT( visits == nb_nodes );
-}
-
-//------------------------------------------------------------------------------------------------------
-
-void Tesselation::generate_lonlat_grid( Mesh& mesh, const size_t& nlats, const size_t& nlong )
-{
-    const size_t nb_nodes = (nlats+1) * (nlong+1);
-
-    Tesselation::create_mesh_structure(mesh,nb_nodes);
-
-    FunctionSpace& nodes = mesh.function_space( "nodes" );
-
-    ASSERT( nodes.shape(0) == nb_nodes );
-
-    ArrayView<double,2> coords  ( nodes.field("xyz") );
-    ArrayView<double,2> lonlat  ( nodes.field("lonlat") );
-    ArrayView<gidx_t,1> glb_idx ( nodes.field("glb_idx") );
-
-    const double lat_inc = 180. / nlats;
-    const double lat_start = -90.;
-    const double lat_end   =  90.;
-
-    const double lon_inc = 360. / nlong;
-    const double lon_start = 0.0;
-    const double lon_end   = 360.;
-
-    double lat = 0;
-    double lon = 0;
-
-    size_t visits = 0;
-
-    lat = lat_start;
-    for( size_t ilat = 0; ilat < nlats+1; ++ilat, lat += lat_inc )
-    {
-        lon = lon_start;
-        for( size_t jlon = 0 ; jlon < nlong+1; ++jlon, lon += lon_inc )
-        {
-
-            const size_t idx = jlon + ( ilat * (nlong+1) );
-
-            assert( idx < nb_nodes );
-
-            glb_idx(idx) = idx;
-
-            lonlat(idx,LON) = lon;
-            lonlat(idx,LAT) = lat;
-
-            eckit::geometry::latlon_to_3d( lat, lon, coords[idx].data() );
-
-            ++visits;
-
-//            std::cout << idx << " "
-//                      << lat << " "
-//                      << lon << " "
-//                      << (*pts)[ ilat*(nlats+1) + jlon ](XX) << " "
-//                      << (*pts)[ ilat*(nlats+1) + jlon ](YY) << " "
-//                      << (*pts)[ ilat*(nlats+1) + jlon ](ZZ) << " "
-//                      << std::endl;
-//            std::cout << (*pts)[idx] << std::endl;
-
-            if( jlon == nlong ) lon = lon_end;
-        }
-
-        if( ilat == nlats ) lat = lat_end;
-    }
-
-    ASSERT( visits == nb_nodes );
 }
 
 //------------------------------------------------------------------------------------------------------

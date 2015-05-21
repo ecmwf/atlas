@@ -86,7 +86,8 @@ bool MeshCache::retrieve(const Grid& grid, Mesh& mesh) const {
 
     /// @TODO : change Gmsh reader to use FileHandle
 
-    atlas::io::Gmsh::read(path, mesh);
+    Gmsh gmsh;
+    gmsh.read(path, mesh);
   }
 
   return true;

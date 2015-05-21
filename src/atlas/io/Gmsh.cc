@@ -42,35 +42,29 @@ namespace {
 static double deg = 180. * M_1_PI;
 static double rad = M_PI/180.;
 
-class GmshFile : public std::ofstream
-{
+class GmshFile : public std::ofstream {
 public:
-  GmshFile(const std::string& file_path, std::ios_base::openmode mode, int part=eckit::mpi::rank())
-  {
+  GmshFile(const std::string& file_path, std::ios_base::openmode mode, int part = eckit::mpi::rank()) {
+
     LocalPathName par_path(file_path);
-    bool is_new_file = (mode != std::ios_base::app || !par_path.exists() );
-    if( eckit::mpi::size() == 1 || part == -1)
-    {
-      std::ofstream::open(par_path.c_str(), mode );
-    }
-    else
-    {
-      Translator<int,std::string> to_str;
-      if( eckit::mpi::rank() == 0 )
-      {
+    bool is_new_file = (mode != std::ios_base::app || !par_path.exists());
+    if (eckit::mpi::size() == 1 || part == -1) {
+      std::ofstream::open(par_path.c_str(), mode);
+    } else {
+      Translator<int, std::string> to_str;
+      if (eckit::mpi::rank() == 0) {
         LocalPathName par_path(file_path);
-        std::ofstream par_file( par_path.c_str(), std::ios_base::out );
-        for (int p=0; p<eckit::mpi::size(); ++p)
-        {
+        std::ofstream par_file(par_path.c_str(), std::ios_base::out);
+        for (int p = 0; p < eckit::mpi::size(); ++p) {
           LocalPathName loc_path(file_path);
-          loc_path = loc_path.baseName(false)+"_p"+to_str(p)+".msh";
+          loc_path = loc_path.baseName(false) + "_p" + to_str(p) + ".msh";
           par_file << "Merge \"" << loc_path << "\";" << std::endl;
         }
         par_file.close();
       }
       LocalPathName path(file_path);
-      path = path.dirName()+"/"+path.baseName(false)+"_p"+to_str(part)+".msh";
-      std::ofstream::open(path.c_str(), mode );
+      path = path.dirName() + "/" + path.baseName(false) + "_p" + to_str(part) + ".msh";
+      std::ofstream::open(path.c_str(), mode);
     }
   }
 };
@@ -1068,7 +1062,7 @@ void atlas__Gmsh__write (Gmsh* This, Mesh* mesh, char* file_path) {
 
 Mesh* atlas__read_gmsh (char* file_path)
 {
-  return Gmsh::read(std::string(file_path));
+  return Gmsh().read(std::string(file_path));
 }
 
 void atlas__write_gmsh_mesh (Mesh* mesh, char* file_path) {

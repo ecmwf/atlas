@@ -13,6 +13,7 @@
 
 #include <string>
 #include <iostream>
+#include <vector>
 
 #include "atlas/Metadata.h"
 
@@ -30,18 +31,16 @@ namespace io {
 
 class Gmsh {
 private:
-
   typedef std::ios_base::openmode openmode;
 
 public:
-
   Gmsh();
 
   virtual ~Gmsh();
 
   Mesh* read(const std::string& file_path) const;
 
-  void read(const std::string& file_path, Mesh& mesh ) const;
+  void read(const std::string& file_path, Mesh& mesh) const;
 
   /// Write mesh file
   /// Extra file with available mesh information is written to a different file:
@@ -59,33 +58,29 @@ public:
   void write(Field& field, const std::string& file_path, openmode mode = std::ios::out) const;
 
 public:
-
   Metadata options;
 
-public: // this should really belong in options
-
+public:  // this should really belong in options
   std::vector<long> levels;
-
 };
 
 //------------------------------------------------------------------------------------------------------
 
 // C wrapper interfaces to C++ routines
-extern "C"
-{
-  Gmsh* atlas__Gmsh__new ();
-  void atlas__Gmsh__delete (Gmsh* This);
-  Mesh* atlas__Gmsh__read (Gmsh* This, char* file_path);
-  void atlas__Gmsh__write (Gmsh* This, Mesh* mesh, char* file_path);
-  Mesh* atlas__read_gmsh (char* file_path);
-  void atlas__write_gmsh_mesh (Mesh* mesh, char* file_path);
-  void atlas__write_gmsh_fieldset (FieldSet* fieldset, char* file_path, int mode);
-  void atlas__write_gmsh_field (Field* field, char* file_path, int mode);
+extern "C" {
+Gmsh* atlas__Gmsh__new();
+void atlas__Gmsh__delete(Gmsh* This);
+Mesh* atlas__Gmsh__read(Gmsh* This, char* file_path);
+void atlas__Gmsh__write(Gmsh* This, Mesh* mesh, char* file_path);
+Mesh* atlas__read_gmsh(char* file_path);
+void atlas__write_gmsh_mesh(Mesh* mesh, char* file_path);
+void atlas__write_gmsh_fieldset(FieldSet* fieldset, char* file_path, int mode);
+void atlas__write_gmsh_field(Field* field, char* file_path, int mode);
 }
 
 //------------------------------------------------------------------------------------------------------
 
-} // namespace io
-} // namespace atlas
+}  // namespace io
+}  // namespace atlas
 
-#endif // Gmsh_h
+#endif  // Gmsh_h

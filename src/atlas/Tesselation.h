@@ -28,12 +28,6 @@ public:
   /// generate a mesh by triangulating the convex hull of the 3D points
   static void delaunay_triangulation(Mesh& mesh);
 
-  /// generate regular spaced lat-long points (does not include extremes)
-  static void generate_lonlat_points(Mesh& mesh, const size_t& nlats, const size_t& nlong);
-
-  /// generate regular lat-long grid points (includes extremes -90,90 and 0,360)
-  static void generate_lonlat_grid(Mesh& mesh, const size_t& nlats, const size_t& nlong);
-
   /// generates the cell centres en each cell
   /// @warning only for triangles ATM
   /// @warning this function must be checked for the correct INDEX translation to Fortran

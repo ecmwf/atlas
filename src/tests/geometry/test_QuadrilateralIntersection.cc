@@ -38,9 +38,9 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_refquad )
   Point3 dir (0.,0.,-1.);
 
   Ray ray(orig.data(),dir.data());
-  Intersect isect;
+  Intersect isect = quad.intersects(ray);
 
-  BOOST_CHECK( quad.intersects(ray,isect) );
+  BOOST_CHECK( isect );
 
   BOOST_TEST_MESSAGE( isect );
 
@@ -61,9 +61,9 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_doublequad )
   Point3 dir (0.,0.,-1.);
 
   Ray ray(orig.data(),dir.data());
-  Intersect isect;
+  Intersect isect = quad.intersects(ray);
 
-  BOOST_CHECK( quad.intersects(ray,isect) );
+  BOOST_CHECK( isect );
 
   BOOST_TEST_MESSAGE( isect );
 
@@ -84,9 +84,9 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_rotatedquad )
   Point3 dir (0.,0.,-1.);
 
   Ray ray(orig.data(),dir.data());
-  Intersect isect;
+  Intersect isect = quad.intersects(ray);
 
-  BOOST_CHECK( quad.intersects(ray,isect) );
+  BOOST_CHECK( isect );
 
   BOOST_TEST_MESSAGE( isect );
 
@@ -107,9 +107,9 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_slopequad )
   Point3 dir (-1.,-1.,0.);
 
   Ray ray(orig.data(),dir.data());
-  Intersect isect;
+  Intersect isect = quad.intersects(ray);
 
-  BOOST_CHECK( quad.intersects(ray,isect) );
+  BOOST_CHECK( isect );
 
   BOOST_TEST_MESSAGE( isect );
 
