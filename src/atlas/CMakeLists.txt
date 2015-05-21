@@ -76,6 +76,8 @@ util/IndexView.cc
 )
 
 list( APPEND atlas_Meshgen_srcs
+meshgen/MeshGenerator.cc
+meshgen/MeshGenerator.h
 meshgen/EqualAreaPartitioner.cc
 meshgen/EqualAreaPartitioner.h
 meshgen/ReducedGridMeshGenerator.cc

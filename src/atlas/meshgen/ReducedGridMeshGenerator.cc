@@ -99,22 +99,29 @@ ReducedGridMeshGenerator::ReducedGridMeshGenerator()
 
 }
 
-Mesh* ReducedGridMeshGenerator::operator()( const ReducedGrid& grid )
+void ReducedGridMeshGenerator::tesselate(const Grid &g, Mesh &mesh) const
+{
+    const grids::ReducedGrid* rg = dynamic_cast<const grids::ReducedGrid*>(&g);
+    ASSERT(rg);
+    generate(*rg, mesh);
+}
+
+Mesh* ReducedGridMeshGenerator::operator()( const ReducedGrid& grid ) const
 {
   return generate(grid);
 }
 
-Mesh* ReducedGridMeshGenerator::operator()( const ReducedGrid& grid, const GridDistribution& distribution )
+Mesh* ReducedGridMeshGenerator::operator()( const ReducedGrid& grid, const GridDistribution& distribution ) const
 {
   return generate(grid,distribution);
 }
 
-Mesh* ReducedGridMeshGenerator::operator()( const ReducedGrid& grid, GridDistribution* distribution )
+Mesh* ReducedGridMeshGenerator::operator()( const ReducedGrid& grid, GridDistribution* distribution ) const
 {
   return generate(grid,distribution);
 }
 
-void ReducedGridMeshGenerator::generate(const ReducedGrid& grid, Mesh& mesh )
+void ReducedGridMeshGenerator::generate(const ReducedGrid& grid, Mesh& mesh ) const
 {
   int nb_parts = options.get<int>("nb_parts");
 
@@ -146,7 +153,7 @@ void ReducedGridMeshGenerator::generate(const ReducedGrid& grid, Mesh& mesh )
 #endif
 }
 
-void ReducedGridMeshGenerator::generate(const ReducedGrid& rgg, const GridDistribution& distribution, Mesh& mesh )
+void ReducedGridMeshGenerator::generate(const ReducedGrid& rgg, const GridDistribution& distribution, Mesh& mesh ) const
 {
   int mypart   = options.get<int>("part");
 
@@ -157,28 +164,28 @@ void ReducedGridMeshGenerator::generate(const ReducedGrid& rgg, const GridDistri
   mesh.grid(rgg);
 }
 
-void ReducedGridMeshGenerator::generate(const ReducedGrid& rgg, GridDistribution* distribution, Mesh& mesh )
+void ReducedGridMeshGenerator::generate(const ReducedGrid& rgg, GridDistribution* distribution, Mesh& mesh ) const
 {
   generate(rgg,*distribution,mesh);
   delete distribution;
   distribution = NULL;
 }
 
-Mesh* ReducedGridMeshGenerator::generate(const ReducedGrid& rgg)
+Mesh* ReducedGridMeshGenerator::generate(const ReducedGrid& rgg) const
 {
   Mesh* mesh = new Mesh();
   generate(rgg,*mesh);
   return mesh;
 }
 
-Mesh* ReducedGridMeshGenerator::generate(const ReducedGrid& rgg, const GridDistribution& distribution)
+Mesh* ReducedGridMeshGenerator::generate(const ReducedGrid& rgg, const GridDistribution& distribution) const
 {
   Mesh* mesh = new Mesh();
   generate(rgg,distribution,*mesh);
   return mesh;
 }
 
-Mesh* ReducedGridMeshGenerator::generate(const ReducedGrid& rgg, GridDistribution* distribution)
+Mesh* ReducedGridMeshGenerator::generate(const ReducedGrid& rgg, GridDistribution* distribution) const
 {
   Mesh* mesh = new Mesh();
   generate(rgg,distribution,*mesh);
@@ -186,10 +193,13 @@ Mesh* ReducedGridMeshGenerator::generate(const ReducedGrid& rgg, GridDistributio
 }
 
 
-void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rgg, const std::vector<int>& parts, int mypart, Region& region)
+void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rgg,
+                                               const std::vector<int>& parts,
+                                               int mypart,
+                                               Region& region) const
 {
   double max_angle          = options.get<double>("angle");
-  bool   triangulate_quads  = options.get<bool>("triangulate");
+//  bool   triangulate_quads  = options.get<bool>("triangulate"); // unused
   bool   unique_pole        = options.get<bool>("unique_pole") && options.get<bool>("three_dimensional");
 
   int n;
@@ -676,9 +686,9 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rgg, const std
 }
 
 void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
-                                      const std::vector<int>& parts,
-									  const Region& region,
-									Mesh& mesh )
+                                             const std::vector<int>& parts,
+                                             const Region& region,
+                                             Mesh& mesh ) const
 {
   double tol = 1e-3;
 
@@ -1099,7 +1109,7 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
   generate_global_element_numbering( mesh );
 }
 
-void ReducedGridMeshGenerator::generate_global_element_numbering( Mesh& mesh )
+void ReducedGridMeshGenerator::generate_global_element_numbering( Mesh& mesh ) const
 {
   int loc_nb_elems = 0;
   std::vector<int> elem_counts( eckit::mpi::size() );
@@ -1136,6 +1146,11 @@ void ReducedGridMeshGenerator::generate_global_element_numbering( Mesh& mesh )
     }
   }
 }
+
+namespace {
+static MeshGeneratorBuilder< ReducedGridMeshGenerator > __reducedgrid("ReducedGrid");
+}
+
 
 } // namespace meshgen
 } // namespace atlas

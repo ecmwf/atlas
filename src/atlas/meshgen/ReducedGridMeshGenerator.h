@@ -12,43 +12,50 @@
 #define ReducedGridMeshGenerator_h
 
 #include "atlas/Metadata.h"
+#include "atlas/meshgen/MeshGenerator.h"
 
 namespace atlas {
+
 class Mesh;
 class GridDistribution;
 
 namespace grids { class ReducedGrid; }
-namespace meshgen {
+namespace meshgen { struct Region; }
 
-struct Region;
+}
+
+namespace atlas {
+namespace meshgen {
 
 //------------------------------------------------------------------------------------------------------
 
-class ReducedGridMeshGenerator {
+class ReducedGridMeshGenerator : public MeshGenerator {
 
 public:
 
   ReducedGridMeshGenerator();
 
-  void generate( const grids::ReducedGrid&, const GridDistribution&, Mesh& );
-  void generate( const grids::ReducedGrid&, GridDistribution*, Mesh& );
-  void generate( const grids::ReducedGrid&, Mesh& );
+  virtual void tesselate(const Grid& g, Mesh& mesh) const;
 
-  Mesh* generate( const grids::ReducedGrid&, const GridDistribution& );
-  Mesh* generate( const grids::ReducedGrid&, GridDistribution* );
-  Mesh* generate( const grids::ReducedGrid& );
+  void generate( const grids::ReducedGrid&, const GridDistribution&, Mesh& ) const;
+  void generate( const grids::ReducedGrid&, GridDistribution*, Mesh& ) const;
+  void generate( const grids::ReducedGrid&, Mesh& ) const;
 
-  Mesh* operator()( const grids::ReducedGrid&, const GridDistribution& );
-  Mesh* operator()( const grids::ReducedGrid&, GridDistribution* );
-  Mesh* operator()( const grids::ReducedGrid& );
+  Mesh* generate( const grids::ReducedGrid&, const GridDistribution& ) const;
+  Mesh* generate( const grids::ReducedGrid&, GridDistribution* ) const;
+  Mesh* generate( const grids::ReducedGrid& ) const;
+
+  Mesh* operator()( const grids::ReducedGrid&, const GridDistribution& ) const;
+  Mesh* operator()( const grids::ReducedGrid&, GridDistribution* ) const;
+  Mesh* operator()( const grids::ReducedGrid& ) const;
 
 private:
 
-  void generate_region( const grids::ReducedGrid&, const std::vector<int>& parts, int mypart, Region& region );
+  void generate_region( const grids::ReducedGrid&, const std::vector<int>& parts, int mypart, Region& region ) const;
 
-  void generate_mesh( const grids::ReducedGrid&,const std::vector<int>& parts, const Region& region, Mesh& m );
+  void generate_mesh( const grids::ReducedGrid&,const std::vector<int>& parts, const Region& region, Mesh& m ) const;
 
-  void generate_global_element_numbering( Mesh& mesh );
+  void generate_global_element_numbering( Mesh& mesh ) const;
 
 public:
 
