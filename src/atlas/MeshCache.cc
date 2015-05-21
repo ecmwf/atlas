@@ -84,7 +84,7 @@ bool MeshCache::retrieve(const Grid& grid, Mesh& mesh) const {
 
   if (!get(key, path)) return false;
 
-  Log::info() << "Found mesh in cache : " << path << "" << std::endl;
+  Log::info() << "Found mesh in cache: " << path << "" << std::endl;
 
   {
     //      FileHandle f(path, true);
