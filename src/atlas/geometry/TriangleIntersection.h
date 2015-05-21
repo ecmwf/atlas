@@ -35,7 +35,7 @@ class TriangleIntersection {
 
 public: // types
 
-  TriangleIntersection(double* x0, double* x1, double* x2) {
+  TriangleIntersection(const double* x0, const double* x1, const double* x2) {
 
     v0 = Eigen::Vector3d::Map(x0);
     v1 = Eigen::Vector3d::Map(x1);

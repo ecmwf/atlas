@@ -31,7 +31,7 @@ class QuadrilateralIntersection {
 
 public:
 
-  QuadrilateralIntersection(double* x0, double* x1, double* x2, double* x3) {
+  QuadrilateralIntersection(const double* x0, const double* x1, const double* x2, const double* x3) {
 
     v00 = Eigen::Vector3d::Map(x0);
     v10 = Eigen::Vector3d::Map(x1);
