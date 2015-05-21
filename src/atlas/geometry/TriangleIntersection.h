@@ -45,6 +45,16 @@ public: // types
 
   Intersect intersects(const Ray& r, double epsilon = 5 * std::numeric_limits<double>::epsilon()) const;
 
+  void print(std::ostream& s) const { s << "TriangleIntersection[v0=" << v0
+                                        << ",v1=" << v1
+                                        << ",v2=" << v2
+                                        << "]"; }
+
+  friend std::ostream& operator<<(std::ostream& s, const TriangleIntersection& p) {
+    p.print(s);
+    return s;
+  }
+
 private: // members
 
   Eigen::Vector3d v0;
