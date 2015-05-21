@@ -43,7 +43,7 @@ public: // types
 
   }
 
-  Intersect intersects(const Ray& r, double epsilon = 2 * std::numeric_limits<double>::epsilon()) const;
+  Intersect intersects(const Ray& r, double epsilon = 5 * std::numeric_limits<double>::epsilon()) const;
 
 private: // members
 
