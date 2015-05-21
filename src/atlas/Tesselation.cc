@@ -184,6 +184,21 @@ void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, PointSet& p
     }
 
     ASSERT( tidx == nb_triags );
+
+    /* quads */
+
+    const size_t nb_quads = 0;
+
+    std::vector<int> quads_extents(2);
+    extents[0] = nb_quads;
+    extents[1] = Field::UNDEF_VARS;
+
+    FunctionSpace& quads  = mesh.create_function_space( "quads", "Lagrange_P1", quads_extents );
+    quads.metadata().set("type",static_cast<int>(Entity::ELEMS));
+
+    IndexView<int,2> quads_nodes   ( quads.create_field<int>("nodes",3) );
+    ArrayView<gidx_t,1> quads_gidx ( quads.create_field<gidx_t>("glb_idx",1) );
+    ArrayView<int,1> quads_part    ( quads.create_field<int>("partition",1) );
 }
 
 #else
@@ -326,6 +341,8 @@ void Tesselation::create_mesh_structure( Mesh& mesh, const size_t nb_nodes )
 void Tesselation::create_cell_centres( Mesh& mesh )
 {
     ASSERT( mesh.has_function_space("nodes") );
+    ASSERT( mesh.has_function_space("triags") );
+    ASSERT( mesh.has_function_space("quads") );
 
     FunctionSpace& nodes     = mesh.function_space( "nodes" );
     ArrayView<double,2> coords  ( nodes.field("xyz") );
