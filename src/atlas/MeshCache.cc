@@ -27,7 +27,7 @@ namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
 
-MeshCache::MeshCache() : CacheManager("atlas/mesh") {}
+MeshCache::MeshCache(bool nocache) : CacheManager("atlas/mesh"), nocache_(nocache) {}
 
 const char* MeshCache::version() const { return atlas_version_str(); }
 const char* MeshCache::extension() const { return ".msh"; }
@@ -49,6 +49,9 @@ void MeshCache::print(std::ostream &s) const
 }
 
 void MeshCache::insert(const Grid& grid, const Mesh& mesh) const {
+
+    if(nocache_) return;
+
   key_t key = generate_key(grid);
 
   PathName tmp_path = stage(key);
@@ -70,6 +73,9 @@ void MeshCache::insert(const Grid& grid, const Mesh& mesh) const {
 }
 
 bool MeshCache::retrieve(const Grid& grid, Mesh& mesh) const {
+
+    if(nocache_) return false;
+
   key_t key = generate_key(grid);
 
   PathName path;
