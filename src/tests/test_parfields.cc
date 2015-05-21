@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE( test1 )
 
 	FunctionSpace& nodes = m->create_function_space( "nodes", "shapefunc", make_shape(10,Field::UNDEF_VARS) );
 
-  ArrayView<double,2> latlon ( m->function_space("nodes").create_field<double>("coordinates",2) );
+  ArrayView<double,2> latlon ( m->function_space("nodes").create_field<double>("lonlat",2) );
   ArrayView<gidx_t,1> glb_idx( m->function_space("nodes").create_field<gidx_t>("glb_idx",1) );
   ArrayView<int,1> part ( nodes.create_field<int>("partition",1) );
   ArrayView<int,1> flags ( nodes.create_field<int>("flags",1) );

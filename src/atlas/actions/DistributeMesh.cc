@@ -30,7 +30,7 @@ void distribute_mesh( Mesh& mesh )
 
   FunctionSpace& nodes = mesh.function_space("nodes");
   int nb_nodes = nodes.shape(0);
-  ArrayView<double,2> latlon    ( nodes.field("coordinates") );
+  ArrayView<double,2> latlon    ( nodes.field("lonlat") );
   ArrayView<int,   1> node_part ( nodes.field("partition")   );
   ArrayView<gidx_t,1> node_gidx ( nodes.field("glb_idx")   );
 
@@ -154,7 +154,7 @@ void distribute_mesh( Mesh& mesh )
   nodes.resize(shape);
   node_gidx  = ArrayView<gidx_t,   1> ( nodes.field("glb_idx") );
   node_part  = ArrayView<int,   1> ( nodes.field("partition") );
-  latlon     = ArrayView<double,2> ( nodes.field("coordinates") );
+  latlon     = ArrayView<double,2> ( nodes.field("lonlat") );
   int nb_owned = 0;
   for( int jnode=0; jnode<nb_nodes; ++jnode )
   {

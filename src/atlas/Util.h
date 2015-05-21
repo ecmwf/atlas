@@ -313,7 +313,7 @@ struct ComputeUid
 
   void update()
   {
-    coords = ArrayView<double,2> ( funcspace->field("coordinates") );
+    coords = ArrayView<double,2> ( funcspace->field("lonlat") );
   }
 private:
   const FunctionSpace* funcspace;

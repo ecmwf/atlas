@@ -21,6 +21,7 @@
 using eckit::Log;
 using eckit::PathName;
 using eckit::Resource;
+using atlas::io::Gmsh;
 
 namespace atlas {
 
@@ -60,7 +61,9 @@ void MeshCache::insert(const Grid& grid, const Mesh& mesh) const {
 
     /// @TODO : change Gmsh writer to use FileHandle
 
-    atlas::io::Gmsh::write3dsurf(mesh, tmp_path);
+    Gmsh gmsh;
+    gmsh.options.set<std::string>("nodes","xyz");
+    gmsh.write(mesh, tmp_path.asString());
   }
 
   commit(key, tmp_path);

@@ -779,7 +779,7 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
 
   nodes.metadata().set("type",static_cast<int>(Entity::NODES));
 
-  ArrayView<double,2> coords        ( nodes.create_field<double>("coordinates",   2, IF_EXISTS_RETURN) );
+  ArrayView<double,2> coords        ( nodes.create_field<double>("lonlat",   2, IF_EXISTS_RETURN) );
   ArrayView<gidx_t,1> glb_idx       ( nodes.create_field<gidx_t>("glb_idx",       1, IF_EXISTS_RETURN) );
   ArrayView<int,   1> part          ( nodes.create_field<int   >("partition",     1, IF_EXISTS_RETURN) );
   ArrayView<int,   1> flags         ( nodes.create_field<int   >("flags",         1, IF_EXISTS_RETURN) );

@@ -346,8 +346,8 @@ void swap_bytes(char *array, int size, int n)
 
 Gmsh::Gmsh()
 {
-  // Write mesh in a 3D Cartesian or 2D LonLat framework
-  options.set<int >("surfdim", Resource<int >("atlas.gmsh.surfdim", 2    ));
+  // which field holds the Nodes
+  options.set<std::string>("nodes", Resource<std::string>("atlas.gmsh.nodes", "lonlat"));
 
   // Gather fields to one proc before writing
   options.set<bool>("gather",  Resource<bool>("atlas.gmsh.gather",  false));
@@ -364,6 +364,9 @@ Gmsh::Gmsh()
   // Output of edges
   options.set<bool>("edges",   Resource<bool>("atlas.gmsh.edges",   true ));
 
+  // Radius of the planet
+  options.set<double>("radius",   Resource<bool>("atlas.gmsh.radius", 1.0 ));
+
   levels = Resource< std::vector<long> >("atlas.gmsh.levels", std::vector<long>() );
 }
 
@@ -371,14 +374,14 @@ Gmsh::~Gmsh()
 {
 }
 
-Mesh* Gmsh::read(const std::string& file_path)
+Mesh* Gmsh::read(const std::string& file_path) const
 {
 	Mesh* mesh = new Mesh();
 	Gmsh::read(file_path,*mesh);
 	return mesh;
 }
 
-void Gmsh::read(const std::string& file_path, Mesh& mesh )
+void Gmsh::read(const std::string& file_path, Mesh& mesh ) const
 {
 	std::ifstream file;
 	file.open( file_path.c_str() , std::ios::in | std::ios::binary );
@@ -393,11 +396,6 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh )
 	int binary;
 	int size_of_real;
 	file >> version >> binary >> size_of_real;
-
-//	if( binary )
-//	{
-//		throw NotImplemented("Reading of binary format not implemented",Here());
-//	}
 
 	while(line != "$Nodes")
 		std::getline(file,line);
@@ -660,15 +658,21 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh )
 }
 
 
-void Gmsh::write(Mesh& mesh, const std::string& file_path) const
+void Gmsh::write(const Mesh& mesh, const std::string& file_path) const
 {
 	int part = mesh.metadata().get<int>("part",eckit::mpi::rank());
 	bool include_ghost_elements = options.get<bool>("ghost");
-	int surfdim = options.get<int>("surfdim");
+
+        std::string nodes_field = options.get<std::string>("nodes");
 
 	FunctionSpace& nodes    = mesh.function_space( "nodes" );
-	ArrayView<double,2> coords  ( nodes.field( "coordinates" ) );
-	ArrayView<gidx_t,   1> glb_idx ( nodes.field( "glb_idx" ) );
+        ArrayView<double,2> coords  ( nodes.field( nodes_field ) );
+        ArrayView<gidx_t,   1> glb_idx ( nodes.field( "glb_idx" ) );
+
+        const int surfdim = coords.shape(1); // nb of variables in coords
+
+        ASSERT(surfdim == 2 || surfdim == 3);
+
 	int nb_nodes = nodes.shape(0);
 
 	// Find out number of elements to write
@@ -729,32 +733,20 @@ void Gmsh::write(Mesh& mesh, const std::string& file_path) const
 	double r      = 1.;
 	for( size_t n = 0; n < nb_nodes; ++n )
 	{
-    int g = glb_idx(n);
-		double lon = coords(n,XX);
-		double lat = coords(n,YY);
+            int g = glb_idx(n);
 
-		if(surfdim == 2)
-		{
-			xyz[XX] = lon;
-			xyz[YY] = lat;
-		}
-		if(surfdim == 3)
-		{
-      lon *= rad;
-      lat *= rad;
-			xyz[XX] = r*std::cos(lat)*std::cos(lon);
-			xyz[YY] = r*std::cos(lat)*std::sin(lon);
-			xyz[ZZ] = r*std::sin(lat);
-		}
-		if( binary )
-		{
-      file.write(reinterpret_cast<const char*>(&g), sizeof(int));
-			file.write(reinterpret_cast<const char*>(&xyz), sizeof(double)*3 );
-		}
-		else
-		{
-			file << g << " " << xyz[XX] << " " << xyz[YY] << " " << xyz[ZZ] << "\n";
-		}
+            for(size_t d = 0; d < surfdim; ++d)
+                xyz[d] = coords(n,d);
+
+            if( binary )
+            {
+                file.write(reinterpret_cast<const char*>(&g), sizeof(int));
+                file.write(reinterpret_cast<const char*>(&xyz), sizeof(double)*3 );
+            }
+            else
+            {
+                file << g << " " << xyz[XX] << " " << xyz[YY] << " " << xyz[ZZ] << "\n";
+            }
 	}
 	if( binary ) file << "\n";
 	file << "$EndNodes\n";
@@ -1053,129 +1045,6 @@ void Gmsh::write(Field& field, const std::string& file_path, openmode mode) cons
 	}
 	file << std::flush;
 	file.close();
-}
-
-
-void Gmsh::write3dsurf(const Mesh &mesh, const std::string& file_path)
-{
-    size_t nb_nodes  = 0;
-    size_t nb_triags = 0;
-    size_t nb_quads  = 0;
-    size_t nb_edges  = 0;
-
-    std::ofstream file;
-    file.open( (file_path).c_str(), std::ios::out );
-
-    // header
-    write_header_ascii(file);
-
-    // nodes
-
-    FunctionSpace& nodes   = mesh.function_space( "nodes" );
-	ArrayView<double,2> coords  ( nodes.field( "xyz" ) );
-    ArrayView<gidx_t,   1> glb_idx ( nodes.field( "glb_idx" ) );
-
-    nb_nodes = nodes.shape(0);
-
-    file << "$Nodes\n";
-    file << nb_nodes << "\n";
-
-    for( size_t n = 0; n < nb_nodes; ++n )
-    {
-        const double x = coords(n,XX);
-        const double y = coords(n,YY);
-        const double z = coords(n,ZZ);
-
-        file << glb_idx(n) << " " << x << " " << y << " " << z << "\n";
-
-    }
-
-    file << "$EndNodes\n";
-    file << std::flush;
-
-    file << "$Elements\n";
-
-    if( mesh.has_function_space("triags") ) nb_triags = mesh.function_space( "triags" ).shape(0);
-    if( mesh.has_function_space("quads") )  nb_quads = mesh.function_space( "quads" ).shape(0);
-    if( mesh.has_function_space("edges") )  nb_edges = mesh.function_space( "edges" ).shape(0);
-
-    file << nb_triags + nb_quads + nb_edges << "\n";
-
-    // triags
-
-    if( mesh.has_function_space("triags") )
-    {
-        FunctionSpace& triags      = mesh.function_space( "triags" );
-        IndexView<int,2> triag_nodes ( triags.field( "nodes" ) );
-
-        for( size_t e = 0; e < nb_triags; ++e )
-        {
-            file << e << " 2 2 1 1";
-            for( int n=0; n<3; ++n )
-				file << " " << glb_idx(triag_nodes(e,n));
-            file << "\n";
-        }
-    }
-
-    if( mesh.has_function_space("quads") )
-    {
-        FunctionSpace& quads      = mesh.function_space( "quads" );
-        IndexView<int,2> quad_nodes ( quads.field( "nodes" ) );
-
-        for( int e=0; e<nb_quads; ++e)
-        {
-          file << e << " 3 2 1 1";
-          for( int n=0; n<4; ++n )
-			file << " " << glb_idx(quad_nodes(e,n));
-          file << "\n";
-        }
-    }
-
-    if( mesh.has_function_space("edges") )
-    {
-        FunctionSpace& edges      = mesh.function_space( "edges" );
-        IndexView<int,2> edge_nodes ( edges.field( "nodes" ) );
-
-        for( int e=0; e<nb_edges; ++e)
-        {
-            file << e << " 1 2 2 1";
-            for( int n=0; n<2; ++n )
-				file << " " << glb_idx(edge_nodes(e,n));
-            file << "\n";
-        }
-    }
-
-    file << "$EndElements\n";
-    file << std::flush;
-
-    // nodal data
-    for( size_t fidx = 0; fidx < nodes.nb_fields(); ++fidx )
-    {
-        Field& field = nodes.field(fidx);
-
-        if( field.data_type() == "real64" )
-        {
-            ArrayView<double,2> f ( field );
-
-            for( size_t idx = 0; idx < field.shape(1); ++idx )
-            {
-                file << "$NodeData\n";
-                file << "1\n";
-                file << "\""+field.name() << "[" << idx << "]" << "\"\n";
-                file << "1\n";
-                file << "0.\n";
-                file << "3\n";
-                file << "0\n";
-                file << "1\n";
-                file << nb_nodes << "\n";
-                for( size_t n = 0; n < nb_nodes; ++n )
-                  file << glb_idx(n) << " " << f(n,idx) <<"\n";
-                file << "$EndNodeData\n";
-                file << std::flush;
-            }
-        }
-    }
-    file.close();
 }
 
 // ------------------------------------------------------------------

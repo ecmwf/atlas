@@ -227,7 +227,7 @@ void Tesselation::tesselate(const Grid& g, Mesh& mesh) {
     mg.options.set("three_dimensional",true);
     mg.options.set("patch_pole",true);
     mg.options.set("include_pole",false);
-    mg.options.set("triangulate",true);
+    mg.options.set("triangulate",false);
 
     mg.generate(*rg, mesh);
 

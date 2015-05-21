@@ -44,7 +44,8 @@ public: // methods
 
 	virtual ~Mesh();
 
-	Metadata& metadata() { return metadata_; }
+        Metadata& metadata() { return metadata_; }
+        const Metadata& metadata() const { return metadata_; }
 
 	/// checks if function space exists
 	bool has_function_space(const std::string& name) const;

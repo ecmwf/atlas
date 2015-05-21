@@ -155,7 +155,7 @@ void Meshgen2Gmsh::run()
     renumber_nodes_glb_idx(mesh->function_space("nodes"));
   }
   mesh->function_space("nodes").parallelise();
-  ArrayView<double,2> coords( mesh->function_space("nodes").field("coordinates") );
+  ArrayView<double,2> coords( mesh->function_space("nodes").field("lonlat") );
   Log::info() << "  checksum coordinates : " << mesh->function_space("nodes").checksum().execute( coords ) << std::endl;
   if( edges )
   {

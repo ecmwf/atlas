@@ -72,7 +72,7 @@ double compute_latlon_area(Mesh& mesh)
   FunctionSpace& nodes  = mesh.function_space("nodes");
   FunctionSpace& quads  = mesh.function_space("quads");
   FunctionSpace& triags = mesh.function_space("triags");
-  ArrayView<double,2> latlon  ( nodes.field("coordinates") );
+  ArrayView<double,2> latlon  ( nodes.field("lonlat") );
   IndexView<int,2> quad_nodes ( quads. field("nodes") );
   IndexView<int,2> triag_nodes( triags.field("nodes") );
   double area=0;

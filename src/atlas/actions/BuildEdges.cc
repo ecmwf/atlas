@@ -226,7 +226,7 @@ void build_node_to_edge_connectivity( Mesh& mesh )
 void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& nb_pole_edges )
 {
   FunctionSpace& nodes   = mesh.function_space( "nodes" );
-  ArrayView<double,2> coords    ( nodes.field( "coordinates" ) );
+  ArrayView<double,2> coords    ( nodes.field( "lonlat" ) );
   ArrayView<gidx_t,1> glb_idx   ( nodes.field( "glb_idx"     ) );
   ArrayView<int,   1> part      ( nodes.field( "partition"   ) );
   ArrayView<int,   1> flags     ( nodes.field( "flags"       ) );
@@ -354,7 +354,7 @@ struct ComputeUniquePoleEdgeIndex
 {
   ComputeUniquePoleEdgeIndex( const FunctionSpace& nodes )
   {
-    coords = ArrayView<double,2> ( nodes.field("coordinates") );
+    coords = ArrayView<double,2> ( nodes.field("lonlat") );
   }
 
   gidx_t operator()( const IndexView<int,1>& edge_nodes ) const
@@ -384,7 +384,7 @@ void build_edges( Mesh& mesh )
   FunctionSpace& nodes   = mesh.function_space( "nodes" );
   ArrayView<gidx_t,1> glb_idx(        nodes.field( "glb_idx" ) );
   ArrayView<int,1> part   (        nodes.field( "partition" ) );
-  ArrayView<double,2> latlon (     nodes.field( "coordinates" ) );
+  ArrayView<double,2> latlon (     nodes.field( "lonlat" ) );
   int nb_nodes = nodes.shape(0);
 
   FunctionSpace& quads       = mesh.function_space( "quads" );

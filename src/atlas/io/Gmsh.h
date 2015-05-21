@@ -39,14 +39,14 @@ public:
 
   virtual ~Gmsh();
 
-  static Mesh* read(const std::string& file_path);
+  Mesh* read(const std::string& file_path) const;
 
-  static void read(const std::string& file_path, Mesh& mesh );
+  void read(const std::string& file_path, Mesh& mesh ) const;
 
   /// Write mesh file
   /// Extra file with available mesh information is written to a different file:
   ///  - filename_info.msh
-  void write(Mesh& mesh, const std::string& file_path) const;
+  void write(const Mesh& mesh, const std::string& file_path) const;
 
   /// Write fieldset to file
   ///  Depending on argument "mode", the fields will be appended,
@@ -57,9 +57,6 @@ public:
   ///  Depending on argument "mode", the fields will be appended,
   ///  or existing file will be overwritten
   void write(Field& field, const std::string& file_path, openmode mode = std::ios::out) const;
-
-  /// @todo to be merged with write()
-  static void write3dsurf(const Mesh& mesh, const std::string& file_path );
 
 public:
 

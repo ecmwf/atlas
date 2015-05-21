@@ -128,7 +128,7 @@ void build_statistics( Mesh& mesh )
   const double radius_km = Earth::radius()*1e-3;
 
   FunctionSpace& nodes = mesh.function_space( "nodes" );
-  ArrayView<double,2> coords ( nodes.field( "coordinates"    ) );
+  ArrayView<double,2> coords ( nodes.field( "lonlat"    ) );
 
   if( mesh.has_function_space("edges") )
   {

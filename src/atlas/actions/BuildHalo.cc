@@ -68,7 +68,7 @@ void increase_halo( Mesh& mesh )
 {
   //DEBUG( "\n\n" << "Increase halo!! \n\n");
   FunctionSpace& nodes         = mesh.function_space( "nodes" );
-  ArrayView<double,2> latlon   ( nodes.field( "coordinates"    ) );
+  ArrayView<double,2> latlon   ( nodes.field( "lonlat"    ) );
   ArrayView<gidx_t,1> glb_idx  ( nodes.field( "glb_idx"        ) );
   ArrayView<int   ,1> part     ( nodes.field( "partition"      ) );
   IndexView<int   ,1> ridx     ( nodes.field( "remote_idx"     ) );
@@ -532,7 +532,7 @@ void increase_halo( Mesh& mesh )
   glb_idx = ArrayView<gidx_t,1>( nodes.field("glb_idx") );
   part    = ArrayView<int,   1>( nodes.field("partition") );
   ridx    = IndexView<int,   1>( nodes.field("remote_idx") );
-  latlon  = ArrayView<double,2>( nodes.field("coordinates") );
+  latlon  = ArrayView<double,2>( nodes.field("lonlat") );
 
 
   int new_node=0;
@@ -753,7 +753,7 @@ void build_lookup_uid2node( Mesh& mesh, Uid2Node& uid2node )
 {
   Notification notes;
   FunctionSpace& nodes         = mesh.function_space( "nodes" );
-  ArrayView<double,2> lonlat   ( nodes.field( "coordinates"    ) );
+  ArrayView<double,2> lonlat   ( nodes.field( "lonlat"    ) );
   ArrayView<gidx_t,1> glb_idx  ( nodes.field( "glb_idx"        ) );
   int nb_nodes = nodes.shape(0);
 
@@ -936,7 +936,7 @@ public:
   {
     compute_uid.update();
     FunctionSpace& nodes         = mesh.function_space( "nodes" );
-    lonlat   = ArrayView<double,2> ( nodes.field( "coordinates"    ) );
+    lonlat   = ArrayView<double,2> ( nodes.field( "lonlat"    ) );
     glb_idx  = ArrayView<gidx_t,1> ( nodes.field( "glb_idx"        ) );
     part     = ArrayView<int   ,1> ( nodes.field( "partition"      ) );
     ridx     = IndexView<int   ,1> ( nodes.field( "remote_idx"     ) );
@@ -1131,7 +1131,7 @@ public:
     glb_idx = ArrayView<gidx_t,1>( nodes.field("glb_idx") );
     part    = ArrayView<int,   1>( nodes.field("partition") );
     ridx    = IndexView<int,   1>( nodes.field("remote_idx") );
-    lonlat  = ArrayView<double,2>( nodes.field("coordinates") );
+    lonlat  = ArrayView<double,2>( nodes.field("lonlat") );
 
     compute_uid.update();
 

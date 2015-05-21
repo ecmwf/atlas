@@ -41,7 +41,7 @@ void build_periodic_boundaries( Mesh& mesh )
 
   int nb_nodes = nodes.shape(0);
 
-  ArrayView<double,2> latlon ( nodes.field("coordinates") );
+  ArrayView<double,2> latlon ( nodes.field("lonlat") );
 
   // Identify my master and slave nodes on own partition
   // master nodes are at x=0,  slave nodes are at x=2pi
