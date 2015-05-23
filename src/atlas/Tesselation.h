@@ -23,8 +23,6 @@ class Tesselation {
 
 public:
 
-  static void tesselate(const Grid& g, Mesh& mesh);
-
   /// generate a mesh by triangulating the convex hull of the 3D points
   static void delaunay_triangulation(Mesh& mesh);
 

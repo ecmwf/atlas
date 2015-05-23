@@ -11,7 +11,10 @@
 #ifndef atlas_meshgen_MeshGenerator_h
 #define atlas_meshgen_MeshGenerator_h
 
-#include "atlas/Grid.h"
+#include <iosfwd>
+#include <string>
+
+#include "eckit/memory/NonCopyable.h"
 
 namespace atlas {
 
@@ -22,7 +25,7 @@ namespace meshgen {
 
 //------------------------------------------------------------------------------------------------------
 
-class MeshGenerator {
+class MeshGenerator : private eckit::NonCopyable {
 
 public:
 

@@ -1151,7 +1151,6 @@ namespace {
 static MeshGeneratorBuilder< ReducedGridMeshGenerator > __reducedgrid("ReducedGrid");
 }
 
-
 } // namespace meshgen
 } // namespace atlas
 

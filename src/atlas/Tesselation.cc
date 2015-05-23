@@ -8,6 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
+#include "atlas/Tesselation.h"
+
 #include <cmath>
 #include <vector>
 #include <memory>
@@ -55,21 +57,13 @@ const Point_3 origin = Point_3(CGAL::ORIGIN);
 #include "atlas/FunctionSpace.h"
 #include "atlas/Mesh.h"
 #include "atlas/Parameters.h"
-
 #include "atlas/PointSet.h"
-#include "atlas/Tesselation.h"
-#include "atlas/MeshCache.h"
 #include "atlas/Grid.h"
-
-#include "atlas/grids/ReducedGrid.h"
-
-#include "atlas/meshgen/ReducedGridMeshGenerator.h"
 
 using namespace eckit;
 using namespace eckit::geometry;
 
 namespace atlas {
-
 
 //------------------------------------------------------------------------------------------------------
 
@@ -218,52 +212,6 @@ void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, PointSet& p
 #endif
 
 //------------------------------------------------------------------------------------------------------
-
-/// @ TODO Abstract this method into a MeshGenerator class (with use of MeshCache)
-
-void Tesselation::tesselate(const Grid& g, Mesh& mesh) {
-
-  std::string uid = g.unique_id();
-
-  MeshCache cache;
-
-  if (cache.retrieve(g, mesh)) return;
-
-  std::cout << "Mesh not in cache -- tesselating grid " << uid << std::endl;
-
-  bool atlasTriangulateRG = eckit::Resource<bool>("$ATLAS_TRIANGULATE_RG", false);
-
-  const grids::ReducedGrid* rg = dynamic_cast<const grids::ReducedGrid*>(&g);
-  if (atlasTriangulateRG && rg) {
-
-    // fast tesselation method, specific for ReducedGrid's
-
-    std::cout << "Mesh is ReducedGrid " << g.shortName() << std::endl;
-
-    ASSERT(rg);
-
-    meshgen::ReducedGridMeshGenerator mg;
-
-    // force these flags
-    mg.options.set("three_dimensional",true);
-    mg.options.set("patch_pole",true);
-    mg.options.set("include_pole",false);
-    mg.options.set("triangulate",true);
-
-    mg.generate(*rg, mesh);
-
-  } else {
-
-    // slower, more robust tesselation method, using Delaunay triangulation
-
-    std::cout << "Using Delaunay triangulation on grid: " << g.shortName() << std::endl;
-
-    Tesselation::delaunay_triangulation(mesh);
-  }
-
-  cache.insert(g, mesh);
-
-}
 
 void Tesselation::delaunay_triangulation( Mesh& mesh )
 {
