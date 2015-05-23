@@ -36,8 +36,8 @@ template <typename T> class FieldT;
 
 //------------------------------------------------------------------------------------------------------
 
-enum CreateBehavior { IF_EXISTS_FAIL = 0, /* when creating, fail if exists */
-					  IF_EXISTS_RETURN = 1   /* when creating, return if exists */ };
+enum CreateBehavior { IF_EXISTS_FAIL = 0,    /* when creating, fail if exists */
+                      IF_EXISTS_RETURN = 1   /* when creating, return if exists */ };
 
 /// @todo
 // Horizontal nodes are always the slowest moving index
