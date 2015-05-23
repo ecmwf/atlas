@@ -18,7 +18,11 @@
 #ifdef HAVE_EIGEN
 
 #include "eckit/maths/Eigen.h"
+#include "eckit/log/Log.h"
 
+#include "atlas/geometry/TriangleIntersection.h"
+
+using eckit::Log;
 using Eigen::Vector3d;
 
 namespace atlas {
@@ -165,6 +169,92 @@ Intersect QuadrilateralIntersection::intersects(const Ray& r, double epsilon) co
     }
 
   return isect.success(true);
+}
+
+Intersect QuadrilateralIntersection::intersectsTG(const Ray &r, double epsilon) const
+{
+    Intersect isect; // intersection is false
+
+    isect.u = 0.5;
+    isect.v = 0.5;
+
+    TriangleIntersection T231(v11.data(), v01.data(), v10.data());
+    if( T231.intersects(r,epsilon) )
+        return isect.success(true);
+
+    TriangleIntersection T013(v00.data(), v10.data(), v01.data());
+    if( T013.intersects(r,epsilon) )
+        return isect.success(true);
+
+    return isect.success(false);
+}
+
+bool QuadrilateralIntersection::validateIntersection(const Ray& r) const {
+
+    TriangleIntersection T231(v11.data(), v01.data(), v10.data());
+    if( T231.intersects(r) ) return true;
+
+    TriangleIntersection T013(v00.data(), v10.data(), v01.data());
+    if( T013.intersects(r) ) return true;
+
+    TriangleIntersection T120(v10.data(), v11.data(), v00.data());
+    if( T120.intersects(r) ) return true;
+
+    TriangleIntersection T302(v01.data(), v00.data(), v11.data());
+    if( T302.intersects(r) ) return true;
+
+    return false;
+}
+
+bool QuadrilateralIntersection::validate() const {
+
+    // normal for sub-triangle T231
+
+    Vector3d E23 = v01 - v11;
+    Vector3d E21 = v10 - v11;
+
+    Vector3d N231 = E23.cross(E21);
+
+    // normal for sub-triangle T013
+
+    Vector3d E01 = v10 - v00;
+    Vector3d E03 = v01 - v00;
+
+    Vector3d N013 = E01.cross(E03);
+
+    // normal for sub-triangle T120
+
+    Vector3d E12 = - E21;
+    Vector3d E10 = - E01;
+
+    Vector3d N120 = E12.cross(E10);
+
+    // normal for sub-triangle T302
+
+    Vector3d E30 = - E03;
+    Vector3d E32 = - E23;
+
+    Vector3d N302 = E30.cross(E32);
+
+    // all normals must point same way
+
+    double dot02 = N231.dot(N013);
+    double dot23 = N013.dot(N120);
+    double dot31 = N120.dot(N302);
+    double dot10 = N302.dot(N231);
+
+//    Log::info() << dot02 << " "
+//                << dot23 << " "
+//                << dot31 << " "
+//                << dot10 << std::endl;
+
+    // all normals must point same way
+
+    if (( dot02 >= 0. &&  dot23 >= 0. &&  dot31 >= 0. &&  dot10 >= 0. ) ||
+        ( dot02 <= 0. &&  dot23 <= 0. &&  dot31 <= 0. &&  dot10 <= 0. ))
+        return true;
+    else
+        return false;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
