@@ -22,6 +22,7 @@
 #include "eckit/runtime/Tool.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/parser/Tokenizer.h"
+#include "eckit/geometry/Point3.h"
 #include "atlas/atlas.h"
 #include "atlas/io/Gmsh.h"
 #include "atlas/actions/GenerateMesh.h"
@@ -101,7 +102,7 @@ public:
 
     edges      = Resource< bool> ( "--edges", false );
     stats      = Resource< bool> ( "--stats", false );
-    info      = Resource< bool> ( "--info", false );
+    info       = Resource< bool> ( "--info", false );
     halo       = Resource< int > ( "--halo", 0 );
     surfdim    = Resource< int > ( "--surfdim", 2 );
 
@@ -155,8 +156,14 @@ void Meshgen2Gmsh::run()
     renumber_nodes_glb_idx(mesh->function_space("nodes"));
   }
   mesh->function_space("nodes").parallelise();
-  ArrayView<double,2> coords( mesh->function_space("nodes").field("lonlat") );
-  Log::info() << "  checksum coordinates : " << mesh->function_space("nodes").checksum().execute( coords ) << std::endl;
+  ArrayView<double,2> lonlat( mesh->function_space("nodes").field("lonlat") );
+  ArrayView<double,2> xyz( mesh->function_space("nodes").create_field<double>("xyz",3) );
+  for( int j=0; j<lonlat.shape(0); ++j )
+  {
+    eckit::geometry::lonlat_to_3d( lonlat[j].data(), xyz[j].data() );
+  }
+  
+  Log::info() << "  checksum lonlat : " << mesh->function_space("nodes").checksum().execute( lonlat ) << std::endl;
   if( edges )
   {
     build_edges(*mesh);
@@ -170,7 +177,8 @@ void Meshgen2Gmsh::run()
 
   atlas::io::Gmsh gmsh;
   gmsh.options.set("info",info);
-  gmsh.options.set("surfdim",surfdim);
+  if( surfdim == 3 )
+    gmsh.options.set("nodes",std::string("xyz"));
   gmsh.write( *mesh, path_out );
   atlas_finalize();
 }

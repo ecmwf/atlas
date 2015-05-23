@@ -299,8 +299,8 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rgg,
 
     ipN1 = beginN;
     ipS1 = beginS;
-    ipN2 = ipN1+1;
-    ipS2 = ipS1+1;
+    ipN2 = std::min(ipN1+1,endN);
+    ipS2 = std::min(ipS1+1,endS);
 
     int jelem=0;
 
@@ -664,7 +664,12 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rgg,
     region.nb_lat_elems[jlat] = jelem;
     region.lat_end[latN] = std::min(region.lat_end[latN], rgg.nlon(latN)-1);
     region.lat_end[latS] = std::min(region.lat_end[latS], rgg.nlon(latS)-1);
-  }
+    if( yN == 90 && unique_pole )
+      region.lat_end[latN] = rgg.nlon(latN)-1;
+    if( yS == -90 && unique_pole )
+      region.lat_end[latS] = rgg.nlon(latS)-1;
+    
+  } // for jlat
 
 //  eckit::Log::info(Here())  << "nb_triags = " << region.ntriags << std::endl;
 //  eckit::Log::info(Here())  << "nb_quads = " << region.nquads << std::endl;
@@ -683,6 +688,9 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rgg,
   {
     throw Exception("Trying to generate mesh with too many partitions. Reduce the number of partitions.",Here());
   }
+#if DEBUG_OUTPUT
+  DEBUG("End of generate_region()");
+#endif
 }
 
 void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
@@ -724,6 +732,13 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
   if (three_dimensional) {
     nnodes -= rgg.nlat();
   }
+  
+#if DEBUG_OUTPUT
+  DEBUG_VAR(nnodes);
+  DEBUG_VAR(ntriags);
+  DEBUG_VAR(nquads);
+#endif
+  
 
   std::vector<int> offset_glb(rgg.nlat());
   std::vector<int> offset_loc(region.south-region.north+1,0);
@@ -778,7 +793,6 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
     offset_loc[ilat]=l;
     l+=region.lat_end[jlat]-region.lat_begin[jlat]+1;
     double y = rgg.lat(jlat);
-
     for( int jlon=region.lat_begin[jlat]; jlon<=region.lat_end[jlat]; ++jlon )
     {
       n = offset_glb[jlat] + jlon;
@@ -849,9 +863,7 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
     Topology::set(flags(jnode),Topology::SOUTH);
     ++jnode;
   }
-
-
-
+  
   shape = make_shape(nquads,Field::UNDEF_VARS);
 
   FunctionSpace& quads = mesh.create_function_space( "quads","LagrangeP1",shape );
@@ -1011,7 +1023,6 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
     ++jtriag;
   }
 
-
   if (include_south_pole)
   {
     int jlat = rgg.nlat()-1;
@@ -1092,7 +1103,6 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
     triag_part(jtriag) = mypart;
     ++jtriag;
   }
-
 
   nodes.metadata().set("nb_owned",nnodes);
   quads.metadata().set("nb_owned",nquads);

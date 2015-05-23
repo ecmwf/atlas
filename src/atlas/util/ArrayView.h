@@ -668,9 +668,11 @@ ArrayView_const_iterator<DATA_TYPE,RANK>& ArrayView_const_iterator<DATA_TYPE,RAN
 
 } // namespace atlas
 
+#undef CHECK_RANK
 #undef CHECK_BOUNDS_1
 #undef CHECK_BOUNDS_2
 #undef CHECK_BOUNDS_3
 #undef CHECK_BOUNDS_4
+#undef CHECK_BOUNDS_5
 
 #endif
