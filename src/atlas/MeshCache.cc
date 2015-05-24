@@ -27,7 +27,7 @@ namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
 
-MeshCache::MeshCache(bool nocache) : CacheManager("atlas/mesh"), nocache_(nocache) {}
+MeshCache::MeshCache(bool enabled) : CacheManager("atlas/mesh"), enabled_(enabled) {}
 
 const char* MeshCache::version() const { return atlas_version_str(); }
 const char* MeshCache::extension() const { return ".msh"; }
@@ -38,8 +38,7 @@ std::string MeshCache::generate_key(const Grid& g) const {
   return s.str();
 }
 
-void MeshCache::print(std::ostream &s) const
-{
+void MeshCache::print(std::ostream& s) const {
   s << "MeshCache[";
   CacheManager::print(s);
   s << "name=" << name() << ","
@@ -50,7 +49,7 @@ void MeshCache::print(std::ostream &s) const
 
 void MeshCache::insert(const Grid& grid, const Mesh& mesh) const {
 
-    if(nocache_) return;
+  if (!enabled_) return;
 
   key_t key = generate_key(grid);
 
@@ -65,7 +64,7 @@ void MeshCache::insert(const Grid& grid, const Mesh& mesh) const {
     /// @TODO : change Gmsh writer to use FileHandle
 
     Gmsh gmsh;
-    gmsh.options.set<std::string>("nodes","xyz");
+    gmsh.options.set<std::string>("nodes", "xyz");
     gmsh.write(mesh, tmp_path.asString());
   }
 
@@ -74,7 +73,7 @@ void MeshCache::insert(const Grid& grid, const Mesh& mesh) const {
 
 bool MeshCache::retrieve(const Grid& grid, Mesh& mesh) const {
 
-    if(nocache_) return false;
+  if (!enabled_) return false;
 
   key_t key = generate_key(grid);
 

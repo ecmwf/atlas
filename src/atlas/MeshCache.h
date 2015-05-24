@@ -30,7 +30,7 @@ class MeshCache  : public eckit::CacheManager {
 
  public: // methods
 
-  explicit MeshCache(bool nocache = false);
+  explicit MeshCache( bool enabled = true );
 
   /// Tries to retrieve a cached Mesh
   /// @returns true if found cache
@@ -46,7 +46,7 @@ class MeshCache  : public eckit::CacheManager {
 
  private:
 
-  const bool nocache_;
+  const bool enabled_;
 
   std::string generate_key(const atlas::Grid& g) const;
 
