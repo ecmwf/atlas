@@ -85,21 +85,21 @@ Intersect QuadrilateralIntersection::intersects(const Ray& r, double epsilon) co
     Vector3d E23 = v01 - v11;
     Vector3d E21 = v10 - v11;
 
-    P = r.dir.cross(E21);
+    Vector3d P = r.dir.cross(E21);
 
-    det = E23.dot(P);
+    double det = E23.dot(P);
 
     if(fabs(det) < epsilon) return isect.success(false);
 
-    T = O - v11;
+    Vector3d T = O - v11;
 
-    alpha = T.dot(P) / det;
+    double alpha = T.dot(P) / det;
 
     if(alpha < 0.) return isect.success(false);
 
-    Q = T.cross(E23);
+    Vector3d Q = T.cross(E23);
 
-    beta = D.dot(Q) / det;
+    double beta = D.dot(Q) / det;
 
     if(beta < 0.) return isect.success(false);
   }
@@ -150,12 +150,12 @@ Intersect QuadrilateralIntersection::intersects(const Ray& r, double epsilon) co
   if(fabs(alpha11 - 1.) < epsilon) {
     isect.u = alpha;
     if(fabs(beta11 - 1.) < epsilon) isect.v = beta;
-    else isect.v = beta/(alpha*(beta11-1.)+1.0);
+    else isect.v = beta/(isect.u*(beta11-1.)+1.0);
   }
   else
     if(fabs(beta11 - 1.) < epsilon) {
-      isect.u = alpha/(beta*(alpha11-1.)+1.);
-      isect.v = beta;
+        isect.v = beta;
+        isect.u = alpha/(isect.v*(alpha11-1.)+1.);
     }
     else {
       double A = -(beta11 - 1.);
@@ -165,7 +165,7 @@ Intersect QuadrilateralIntersection::intersects(const Ray& r, double epsilon) co
       double Q = -0.5 * (B + sign(B)*sqrt(Dt));
       isect.u = Q/A;
       if(isect.u < 0. || isect.u > 1.) isect.u = C/Q;
-      isect.v = beta*(isect.u*(beta11 - 1.) + 1.0);
+      isect.v = beta/(isect.u*(beta11 - 1.) + 1.0);
     }
 
   return isect.success(true);
@@ -175,16 +175,19 @@ Intersect QuadrilateralIntersection::intersectsTG(const Ray &r, double epsilon) 
 {
     Intersect isect; // intersection is false
 
-    isect.u = 0.5;
-    isect.v = 0.5;
+    TriangleIntersection T013(v00.data(), v10.data(), v01.data());
+    isect = T013.intersects(r,epsilon);
+    if(isect)
+        return isect;
 
     TriangleIntersection T231(v11.data(), v01.data(), v10.data());
-    if( T231.intersects(r,epsilon) )
-        return isect.success(true);
-
-    TriangleIntersection T013(v00.data(), v10.data(), v01.data());
-    if( T013.intersects(r,epsilon) )
-        return isect.success(true);
+    isect = T231.intersects(r,epsilon);
+    if(isect)
+    {
+        isect.u = 1 - isect.u;
+        isect.v = 1 - isect.v;
+        return isect;
+    }
 
     return isect.success(false);
 }
