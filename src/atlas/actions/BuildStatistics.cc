@@ -125,7 +125,7 @@ double quad_quality( const LLPoint2& p1, const LLPoint2& p2, const LLPoint2& p3,
 
 void build_statistics( Mesh& mesh )
 {
-  const double radius_km = Earth::radius()*1e-3;
+  const double radius_km = Earth::radiusInMeters()*1e-3;
 
   FunctionSpace& nodes = mesh.function_space( "nodes" );
   ArrayView<double,2> coords ( nodes.field( "lonlat"    ) );
