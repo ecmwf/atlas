@@ -41,19 +41,11 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_refquad )
 
   Ray ray(orig.data(),dir.data());
 
-  BOOST_CHECK( quad.validateIntersection(ray) );
-
   Intersect isect = quad.intersects(ray);
 
   BOOST_CHECK( isect );
   BOOST_CHECK_CLOSE( isect.u, 0.25, relative_error );
   BOOST_CHECK_CLOSE( isect.v, 0.25, relative_error );
-
-  Intersect isect2 = quad.intersectsTG(ray);
-
-  BOOST_CHECK( isect2 );
-  BOOST_CHECK_CLOSE( isect2.u, 0.25, relative_error );
-  BOOST_CHECK_CLOSE( isect2.v, 0.25, relative_error );
 }
 
 BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_doublequad )
@@ -72,22 +64,11 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_doublequad )
 
   Ray ray(orig.data(),dir.data());
 
-  BOOST_CHECK( quad.validateIntersection(ray) );
-
   Intersect isect = quad.intersects(ray);
 
   BOOST_CHECK( isect );
-
-  BOOST_TEST_MESSAGE( isect );
-
   BOOST_CHECK_CLOSE( isect.u, 0.25, relative_error );
   BOOST_CHECK_CLOSE( isect.v, 0.25, relative_error );
-
-  Intersect isect2 = quad.intersectsTG(ray);
-
-  BOOST_CHECK( isect2 );
-  BOOST_CHECK_CLOSE( isect2.u, 0.25, relative_error );
-  BOOST_CHECK_CLOSE( isect2.v, 0.25, relative_error );
 }
 
 BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_rotatedquad )
@@ -106,22 +87,11 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_rotatedquad )
 
   Ray ray(orig.data(),dir.data());
 
-  BOOST_CHECK( quad.validateIntersection(ray) );
-
   Intersect isect = quad.intersects(ray);
 
   BOOST_CHECK( isect );
-
-  BOOST_TEST_MESSAGE( isect );
-
   BOOST_CHECK_CLOSE( isect.u, 0.5, relative_error );
   BOOST_CHECK_CLOSE( isect.v, 0.5, relative_error );
-
-  Intersect isect2 = quad.intersectsTG(ray);
-
-  BOOST_CHECK( isect2 );
-  BOOST_CHECK_CLOSE( isect2.u, 0.5, relative_error );
-  BOOST_CHECK_CLOSE( isect2.v, 0.5, relative_error );
 }
 
 BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_slopequad )
@@ -139,22 +109,12 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_slopequad )
   Point3 dir (-1.,-1.,0.);
 
   Ray ray(orig.data(),dir.data());
-  BOOST_CHECK( quad.validateIntersection(ray) );
 
   Intersect isect = quad.intersects(ray);
 
   BOOST_CHECK( isect );
-
-  BOOST_TEST_MESSAGE( isect );
-
   BOOST_CHECK_CLOSE( isect.u, 0.5, relative_error );
   BOOST_CHECK_CLOSE( isect.v, 0.5, relative_error );
-
-  Intersect isect2 = quad.intersectsTG(ray);
-
-  BOOST_CHECK( isect2 );
-  BOOST_CHECK_CLOSE( isect2.u, 0.5, relative_error );
-  BOOST_CHECK_CLOSE( isect2.v, 0.5, relative_error );
 }
 
 BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_nointersect )
@@ -173,13 +133,8 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_nointersect )
 
   Ray ray(orig.data(),dir.data());
 
-  BOOST_CHECK( ! quad.validateIntersection(ray) );
-
   Intersect isect = quad.intersects(ray);
   BOOST_CHECK( ! isect );
-
-  Intersect isect2 = quad.intersectsTG(ray);
-  BOOST_CHECK( ! isect2 );
 }
 
 BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_nointersect_aimoff )
@@ -197,13 +152,9 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_nointersect_aimoff )
   Point3 dir (0.,1.,0.); // aim off
 
   Ray ray(orig.data(),dir.data());
-  BOOST_CHECK( ! quad.validateIntersection(ray) );
 
   Intersect isect = quad.intersects(ray);
   BOOST_CHECK( ! isect );
-
-  Intersect isect2 = quad.intersectsTG(ray);
-  BOOST_CHECK( ! isect2 );
 }
 
 BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_corners )
@@ -236,18 +187,11 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_corners )
 
       Ray ray(orig.data(),dir.data());
 
-      BOOST_CHECK( quad.validateIntersection(ray) );
+      Intersect isect = quad.intersects(ray);
 
-//      Intersect isect = quad.intersects(ray);
-//      BOOST_CHECK( isect );
-//      BOOST_CHECK_CLOSE( isect.u, uvs[i].first , relative_error );
-//      BOOST_CHECK_CLOSE( isect.v, uvs[i].second, relative_error );
-
-      Intersect isect2 = quad.intersectsTG(ray);
-
-      BOOST_CHECK( isect2 );
-      BOOST_CHECK_CLOSE( isect2.u, uvs[i].first , relative_error );
-      BOOST_CHECK_CLOSE( isect2.v, uvs[i].second, relative_error );
+      BOOST_CHECK( isect );
+      BOOST_CHECK_CLOSE( isect.u, uvs[i].first , relative_error );
+      BOOST_CHECK_CLOSE( isect.v, uvs[i].second, relative_error );
   }
 }
 

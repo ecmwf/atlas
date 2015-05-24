@@ -39,11 +39,7 @@ public:
 
   Intersect intersects(const Ray& r, double epsilon = 5 * std::numeric_limits<double>::epsilon()) const;
 
-  Intersect intersectsTG(const Ray& r, double epsilon = 5 * std::numeric_limits<double>::epsilon()) const;
-
   bool validate() const;
-
-  bool validateIntersection(const Ray& r) const;
 
   void print(std::ostream& s) const {
     s << "QuadrilateralIntersection[v00=" << v00 << ",v10=" << v10 << ",v11=" << v11 << ",v01=" << v01 << "]";
