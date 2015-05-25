@@ -232,8 +232,6 @@ Latitudes.cc
 Latitudes.h
 Mesh.cc
 Mesh.h
-MeshCache.cc
-MeshCache.h
 Metadata.cc
 Metadata.h
 Parameters.h
