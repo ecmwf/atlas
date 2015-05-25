@@ -34,11 +34,11 @@ class MeshCache  : public eckit::CacheManager {
 
   /// Tries to retrieve a cached Mesh
   /// @returns true if found cache
-  bool retrieve(const atlas::Grid& g, atlas::Mesh& m) const;
+  bool retrieve(const atlas::Grid& g, atlas::Mesh& m, const std::string& seed) const;
 
   /// Inserts a cached WeightMatrix, overwritting any existing entry
   /// @returns true if insertion successful cache
-  void insert(const atlas::Grid& g, const atlas::Mesh& m) const;
+  void insert(const atlas::Grid& g, const atlas::Mesh& m, const std::string& seed) const;
 
  protected:
 
@@ -48,7 +48,7 @@ class MeshCache  : public eckit::CacheManager {
 
   const bool enabled_;
 
-  std::string generate_key(const atlas::Grid& g) const;
+  std::string generate_key(const atlas::Grid& g, const std::string& seed) const;
 
   virtual const char* version() const;
   virtual const char* extension() const;

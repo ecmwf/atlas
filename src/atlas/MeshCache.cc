@@ -32,9 +32,9 @@ MeshCache::MeshCache(bool enabled) : CacheManager("atlas/mesh"), enabled_(enable
 const char* MeshCache::version() const { return atlas_version_str(); }
 const char* MeshCache::extension() const { return ".msh"; }
 
-std::string MeshCache::generate_key(const Grid& g) const {
+std::string MeshCache::generate_key(const Grid& g, const std::string& seed) const {
   std::ostringstream s;
-  s << g.unique_id();
+  s << seed << "-" << g.unique_id();
   return s.str();
 }
 
@@ -47,11 +47,11 @@ void MeshCache::print(std::ostream& s) const {
     << "]";
 }
 
-void MeshCache::insert(const Grid& grid, const Mesh& mesh) const {
+void MeshCache::insert(const Grid& grid, const Mesh& mesh, const std::string& seed) const {
 
   if (!enabled_) return;
 
-  key_t key = generate_key(grid);
+  key_t key = generate_key(grid, seed);
 
   PathName tmp_path = stage(key);
 
@@ -71,11 +71,11 @@ void MeshCache::insert(const Grid& grid, const Mesh& mesh) const {
   commit(key, tmp_path);
 }
 
-bool MeshCache::retrieve(const Grid& grid, Mesh& mesh) const {
+bool MeshCache::retrieve(const Grid& grid, Mesh& mesh, const std::string& seed) const {
 
   if (!enabled_) return false;
 
-  key_t key = generate_key(grid);
+  key_t key = generate_key(grid, seed);
 
   PathName path;
 
