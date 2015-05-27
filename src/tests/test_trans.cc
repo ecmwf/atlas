@@ -20,7 +20,7 @@
 #include "atlas/trans/Trans.h"
 #include "atlas/trans/TransPartitioner.h"
 #include "atlas/grids/grids.h"
-#include "atlas/meshgen/EqualAreaPartitioner.h"
+#include "atlas/meshgen/EqualRegionsPartitioner.h"
 #include "atlas/meshgen/ReducedGridMeshGenerator.h"
 #include "atlas/LogFormat.h"
 #include "atlas/GridDistribution.h"
@@ -705,7 +705,7 @@ BOOST_AUTO_TEST_CASE( test_distribution )
   GridDistribution::Ptr d_trans( trans::TransPartitioner(*g).distribution() );
   BOOST_CHECKPOINT("trans distribution created");
 
-  GridDistribution::Ptr d_eqreg( meshgen::EqualAreaPartitioner(*g).distribution() );
+  GridDistribution::Ptr d_eqreg( meshgen::EqualRegionsPartitioner(*g).distribution() );
 
   BOOST_CHECKPOINT("eqregions distribution created");
 
@@ -732,8 +732,10 @@ BOOST_AUTO_TEST_CASE( test_generate_mesh )
   trans::Trans trans(*g);
 
   Mesh::Ptr m_default( generate( *g ) );
-  Mesh::Ptr m_trans( generate( *g, trans::TransPartitioner(*g).distribution() ) );
-  Mesh::Ptr m_eqreg( generate( *g, meshgen::EqualAreaPartitioner(*g).distribution() ) );
+  GridDistribution::Ptr trans_distribution( trans::TransPartitioner(*g).distribution() );
+  GridDistribution::Ptr eqreg_distribution( meshgen::EqualRegionsPartitioner(*g).distribution() );
+  Mesh::Ptr m_trans( generate( *g, *trans_distribution ) );
+  Mesh::Ptr m_eqreg( generate( *g, *eqreg_distribution ) );
 
   ArrayView<int,1> p_default( m_default->function_space("nodes").field("partition") );
   ArrayView<int,1> p_trans  ( m_trans  ->function_space("nodes").field("partition") );

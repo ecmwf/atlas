@@ -78,8 +78,8 @@ util/IndexView.cc
 list( APPEND atlas_Meshgen_srcs
 meshgen/Delaunay.cc
 meshgen/Delaunay.h
-meshgen/EqualAreaPartitioner.cc
-meshgen/EqualAreaPartitioner.h
+meshgen/EqualRegionsPartitioner.cc
+meshgen/EqualRegionsPartitioner.h
 meshgen/MeshGenerator.cc
 meshgen/MeshGenerator.h
 meshgen/ReducedGridMeshGenerator.cc

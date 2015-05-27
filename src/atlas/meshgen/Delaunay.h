@@ -30,7 +30,8 @@ public:
 
     virtual ~Delaunay();
 
-    virtual void tesselate(const Grid& g, Mesh& mesh) const;
+    virtual void generate(const Grid& g, const GridDistribution&, Mesh& mesh) const;
+    virtual void generate(const Grid& g, Mesh& mesh) const;
 
 };
 

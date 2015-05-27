@@ -8,9 +8,10 @@
  * does it submit to any jurisdiction.
  */
 
+#include "eckit/log/Log.h"
 #include "atlas/meshgen/Delaunay.h"
-
 #include "atlas/Tesselation.h"
+#include "atlas/GridDistribution.h"
 
 namespace atlas {
 namespace meshgen {
@@ -22,9 +23,26 @@ Delaunay::Delaunay()
 Delaunay::~Delaunay() {
 }
 
-void Delaunay::tesselate(const Grid &g, Mesh &mesh) const
+void Delaunay::generate(const Grid &g, const GridDistribution &d , Mesh &m) const
 {
-    Tesselation::delaunay_triangulation(mesh);
+  if( d.nb_partitions() > 1 )
+  {
+    eckit::Log::warning() << "Delaunay triangulation does not support a GridDistribution"
+                             "with more than 1 partition"
+                          << std::endl;
+    NOTIMP;
+    /// TODO: Read mesh on 1 MPI task, and distribute according to GridDistribution
+    /// HINT: use atlas/actions/DistributeMesh
+  }
+  else
+  {
+    Tesselation::delaunay_triangulation(m);
+  }
+}
+
+void Delaunay::generate(const Grid &g, Mesh &m) const
+{
+  Tesselation::delaunay_triangulation(m);
 }
 
 namespace {

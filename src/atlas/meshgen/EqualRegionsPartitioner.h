@@ -70,13 +70,13 @@ namespace meshgen {
 void eq_caps(int N, std::vector<int>& n_regions, std::vector<double>& s_cap);
 void eq_regions(int N, double xmin[], double xmax[], double ymin[], double ymax[]);
 
-class EqualAreaPartitioner: public Partitioner
+class EqualRegionsPartitioner: public Partitioner
 {
 public:
 
-  EqualAreaPartitioner(const Grid&);
+  EqualRegionsPartitioner(const Grid&);
 
-  EqualAreaPartitioner(const Grid&, int N);
+  EqualRegionsPartitioner(const Grid&, int N);
 
   void where(int partition, int& band, int& sector) const;
   int nb_bands() const { return bands_.size(); }

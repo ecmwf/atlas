@@ -16,6 +16,7 @@
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
 #include "eckit/exception/Exceptions.h"
+#include "atlas/Mesh.h"
 
 namespace atlas {
 namespace meshgen {
@@ -38,6 +39,21 @@ MeshGenerator::MeshGenerator()
 
 MeshGenerator::~MeshGenerator() {
 }
+
+Mesh* MeshGenerator::operator()( const Grid& grid ) const
+{
+  Mesh* mesh = new Mesh;
+  generate(grid,*mesh);
+  return mesh;
+}
+
+Mesh* MeshGenerator::operator()( const Grid& grid, const GridDistribution& distribution ) const
+{
+  Mesh* mesh = new Mesh;
+  generate(grid,distribution,*mesh);
+  return mesh;
+}
+
 
 
 MeshGeneratorFactory::MeshGeneratorFactory(const std::string &name):

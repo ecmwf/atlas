@@ -35,19 +35,8 @@ public:
 
   ReducedGridMeshGenerator();
 
-  virtual void tesselate(const Grid& g, Mesh& mesh) const;
-
-  void generate( const grids::ReducedGrid&, const GridDistribution&, Mesh& ) const;
-  void generate( const grids::ReducedGrid&, GridDistribution*, Mesh& ) const;
-  void generate( const grids::ReducedGrid&, Mesh& ) const;
-
-  Mesh* generate( const grids::ReducedGrid&, const GridDistribution& ) const;
-  Mesh* generate( const grids::ReducedGrid&, GridDistribution* ) const;
-  Mesh* generate( const grids::ReducedGrid& ) const;
-
-  Mesh* operator()( const grids::ReducedGrid&, const GridDistribution& ) const;
-  Mesh* operator()( const grids::ReducedGrid&, GridDistribution* ) const;
-  Mesh* operator()( const grids::ReducedGrid& ) const;
+  virtual void generate( const Grid&, const GridDistribution&, Mesh& ) const;
+  virtual void generate( const Grid&, Mesh& ) const;
 
 private:
 

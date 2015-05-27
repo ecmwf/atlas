@@ -20,6 +20,7 @@ namespace atlas {
 
 class Mesh;
 class Grid;
+class GridDistribution;
 
 namespace meshgen {
 
@@ -33,7 +34,11 @@ public:
 
     virtual ~MeshGenerator();
 
-    virtual void tesselate(const Grid& g, Mesh& mesh) const = 0;
+    virtual void generate( const Grid&, const GridDistribution&, Mesh& ) const =0;
+    virtual void generate( const Grid&, Mesh& ) const =0;
+
+    Mesh* operator()( const Grid&, const GridDistribution& ) const;
+    Mesh* operator()( const Grid& ) const;
 
 };
 

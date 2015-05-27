@@ -25,7 +25,7 @@
 #include "atlas/Metadata.h"
 #include "atlas/Parameters.h"
 #include "atlas/Util.h"
-#include "atlas/meshgen/EqualAreaPartitioner.h"
+#include "atlas/meshgen/EqualRegionsPartitioner.h"
 #include "atlas/grids/grids.h"
 #include "atlas/meshgen/ReducedGridMeshGenerator.h"
 #include "atlas/mpi/mpi.h"

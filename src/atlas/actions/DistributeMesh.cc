@@ -16,7 +16,7 @@
 #include "atlas/Util.h"
 #include "atlas/Mesh.h"
 #include "atlas/FunctionSpace.h"
-#include "atlas/meshgen/EqualAreaPartitioner.h"
+#include "atlas/meshgen/EqualRegionsPartitioner.h"
 
 using namespace atlas::meshgen;
 
@@ -35,7 +35,7 @@ void distribute_mesh( Mesh& mesh )
   ArrayView<gidx_t,1> node_gidx ( nodes.field("glb_idx")   );
 
   Grid& g = mesh.grid();
-  EqualAreaPartitioner partitioner( g );
+  EqualRegionsPartitioner partitioner( g );
   partitioner.partition(node_part.data());
 
   int nb_keep_nodes = 0;
