@@ -66,13 +66,13 @@ public:
         "       GRID: unique identifier for grid \n"
         "           Example values: rgg.N80, gg.N40, ll.128x64\n"
         "\n"
-        "       -a       List all grids. The names are the GRID argument\n"
+        "       -a        List all grids. The names are the GRID argument\n"
         "\n"
-        "       -i       List information about GRID\n"
+        "       -i        List information about GRID\n"
         "\n"
-        "       -json    Export json\n"
+        "       --json    Export json\n"
         "\n"
-        "       -rtable  Export IFS rtable\n"
+        "       --rtable  Export IFS rtable\n"
         "\n"
         "AUTHOR\n"
         "       Written by Willem Deconinck.\n"
@@ -98,10 +98,10 @@ public:
     info = Resource< bool >("-i",false);
     if( info && !key.empty() ) do_run = true;
 
-    json = Resource< bool >("-json",false);
+    json = Resource< bool >("--json",false);
     if( json && !key.empty() ) do_run = true;
 
-    rtable = Resource< bool >("-rtable",false);
+    rtable = Resource< bool >("--rtable",false);
     if( rtable && !key.empty() ) do_run = true;
 
     all = false;
@@ -162,7 +162,7 @@ void AtlasGrids::run()
       Log::info() << "Grid " << key << std::endl;
       Log::info() << "   type:                               "
                   << g.grid_type() << std::endl;
-      Log::info() << "   name:                                "
+      Log::info() << "   name:                               "
                   << g.shortName() << std::endl;
       Log::info() << "   uid:                                "
                   << g.unique_id() << std::endl;
@@ -182,7 +182,7 @@ void AtlasGrids::run()
                   << grid->nlat() << std::endl;
       Log::info() << "   number of longitudes (max):         "
                   << grid->nlonmax() << std::endl;
-      deg = 180./grid->nlat();
+      deg = (grid->lat(0)-grid->lat(grid->nlat()-1))/(grid->nlat()-1);
       km  = deg*40075./360.;
       Log::info() << "   approximate resolution N-S:         "
                   << std::setw(10) << std::fixed << deg << " deg   " << km << " km " << std::endl;
