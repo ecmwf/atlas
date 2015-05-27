@@ -15,6 +15,7 @@
 #include "ecbuild/boost_test_framework.h"
 
 #include "eckit/config/ResourceMgr.h"
+#include "eckit/geometry/Point3.h"
 #include "atlas/mpi/mpi.h"
 #include "atlas/atlas_config.h"
 #include "atlas/grids/GaussianLatitudes.h"
@@ -401,5 +402,60 @@ DISABLE{
   BOOST_CHECK_CLOSE( area, check_area, 1e-10 );
 
 }
+
+
+BOOST_AUTO_TEST_CASE( test_reduced_lonlat )
+{
+  int N=11;
+  int lon[] = {
+    2,  //90
+    6,  //72
+    12, //54
+    18, //36
+    24, //18
+    24, //0
+    26, //-18
+    24, //-36
+    0,
+    0,
+    0
+  };
+  double lat[] ={
+     90,
+     72,
+     54,
+     36,
+     18,
+     0,
+    -18,
+    -36,
+    -54,
+    -72,
+    -90
+  };
+  grids::ReducedGrid grid(N,lat,lon);
+  ReducedGridMeshGenerator generate;
+
+  bool three_dimensional = true;
+
+  generate.options.set("three_dimensional",three_dimensional);
+  generate.options.set("triangulate",false);
+
+  Mesh::Ptr m (generate(grid));
+
+  ArrayView<double,2> lonlat( m->function_space("nodes").field("lonlat") );
+  ArrayView<double,2> xyz( m->function_space("nodes").create_field<double>("xyz",3,IF_EXISTS_RETURN) );
+  for( int jnode=0; jnode<lonlat.shape(0); ++jnode )
+  {
+    eckit::geometry::lonlat_to_3d( lonlat[jnode].data(), xyz[jnode].data() );
+  }
+
+  io::Gmsh gmsh;
+  if(three_dimensional)
+    gmsh.options.set("nodes",std::string("xyz"));
+  gmsh.write(*m,"rll.msh");
+
+}
+
 
 BOOST_AUTO_TEST_CASE( finalize ) { eckit::mpi::finalize(); }
