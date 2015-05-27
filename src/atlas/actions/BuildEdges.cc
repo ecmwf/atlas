@@ -226,7 +226,7 @@ void build_node_to_edge_connectivity( Mesh& mesh )
 void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& nb_pole_edges )
 {
   FunctionSpace& nodes   = mesh.function_space( "nodes" );
-  ArrayView<double,2> coords    ( nodes.field( "lonlat" ) );
+  ArrayView<double,2> lonlat    ( nodes.field( "lonlat" ) );
   ArrayView<gidx_t,1> glb_idx   ( nodes.field( "glb_idx"     ) );
   ArrayView<int,   1> part      ( nodes.field( "partition"   ) );
   ArrayView<int,   1> flags     ( nodes.field( "flags"       ) );
@@ -234,21 +234,21 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
   int nb_nodes = nodes.shape(0);
 
   double min[2], max[2];
-  min[XX] =  std::numeric_limits<double>::max();
-  min[YY] =  std::numeric_limits<double>::max();
-  max[XX] = -std::numeric_limits<double>::max();
-  max[YY] = -std::numeric_limits<double>::max();
+  min[LON] =  std::numeric_limits<double>::max();
+  min[LAT] =  std::numeric_limits<double>::max();
+  max[LON] = -std::numeric_limits<double>::max();
+  max[LAT] = -std::numeric_limits<double>::max();
   for (int node=0; node<nb_nodes; ++node)
   {
-    min[XX] = std::min( min[XX], coords(node,XX) );
-    min[YY] = std::min( min[YY], coords(node,YY) );
-    max[XX] = std::max( max[XX], coords(node,XX) );
-    max[YY] = std::max( max[YY], coords(node,YY) );
+    min[LON] = std::min( min[LON], lonlat(node,LON) );
+    min[LAT] = std::min( min[LAT], lonlat(node,LAT) );
+    max[LON] = std::max( max[LON], lonlat(node,LON) );
+    max[LAT] = std::max( max[LAT], lonlat(node,LAT) );
   }
-  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &min[XX], 1, MPI_DOUBLE, MPI_MIN, eckit::mpi::comm() ) );
-  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &min[YY], 1, MPI_DOUBLE, MPI_MIN, eckit::mpi::comm() ) );
-  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max[XX], 1, MPI_DOUBLE, MPI_MAX, eckit::mpi::comm() ) );
-  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max[YY], 1, MPI_DOUBLE, MPI_MAX, eckit::mpi::comm() ) );
+  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &min[LON], 1, MPI_DOUBLE, MPI_MIN, eckit::mpi::comm() ) );
+  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &min[LAT], 1, MPI_DOUBLE, MPI_MIN, eckit::mpi::comm() ) );
+  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max[LON], 1, MPI_DOUBLE, MPI_MAX, eckit::mpi::comm() ) );
+  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max[LAT], 1, MPI_DOUBLE, MPI_MAX, eckit::mpi::comm() ) );
 
   double tol = 1e-6;
   std::vector<int> north_pole_edges;
@@ -260,16 +260,16 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
 
   for (int node=0; node<nb_nodes; ++node)
   {
-    //std::cout << "node " << node << "   " << std::abs(coords(YY,node)-ymax) << std::endl;
+    //std::cout << "node " << node << "   " << std::abs(lonlat(LAT,node)-ymax) << std::endl;
 
 //    // Only add edges that connect non-ghost nodes
 //    if( ridx(node) == node && part(node) == eckit::mpi::rank() )
 //    {
-      if ( std::abs(coords(node,YY)-max[YY])<tol )
+      if ( std::abs(lonlat(node,LAT)-max[LAT])<tol )
       {
         pole_nodes[NORTH].insert(node);
       }
-      else if ( std::abs(coords(node,YY)-min[YY])<tol )
+      else if ( std::abs(lonlat(node,LAT)-min[LAT])<tol )
       {
         pole_nodes[SOUTH].insert(node);
       }
@@ -304,12 +304,12 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
       int node = *it;
       if( !Topology::check(flags(node),Topology::PERIODIC|Topology::GHOST) )
       {
-        int x1 = microdeg( coords(node,XX) );
-        int x2 = microdeg( coords(node,XX) + 180. );
+        int x1 = microdeg( lonlat(node,LON) );
+        int x2 = microdeg( lonlat(node,LON) + 180. );
         for( std::set<int>::iterator itr=pole_nodes[NS].begin(); itr!=pole_nodes[NS].end(); ++itr)
         {
           int other_node = *itr;
-          if( microdeg( coords(other_node,XX) ) == x2 )
+          if( microdeg( lonlat(other_node,LON) ) == x2 )
           {
             if( !Topology::check(flags(other_node),Topology::PERIODIC) )
             {
@@ -324,9 +324,9 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
   }
 
 // This no longer works as only edges that connect non-ghost nodes are added
-//        if ( std::abs( std::abs(coords(recip_node,XX) - coords(node,XX)) - 180.) > tol )
+//        if ( std::abs( std::abs(lonlat(recip_node,LON) - lonlat(node,LON)) - 180.) > tol )
 //        {
-//          //std::cout << eckit::mpi::rank() << "  :  distance = " << coords(recip_node,XX) - coords(node,XX) << std::endl;
+//          //std::cout << eckit::mpi::rank() << "  :  distance = " << lonlat(recip_node,LON) - lonlat(node,LON) << std::endl;
 //          if( eckit::mpi::rank() == part(node) )
 //          {
 //            throw eckit::SeriousBug("Not implemented yet, when pole-lattitude is split, "
@@ -354,29 +354,29 @@ struct ComputeUniquePoleEdgeIndex
 {
   ComputeUniquePoleEdgeIndex( const FunctionSpace& nodes )
   {
-    coords = ArrayView<double,2> ( nodes.field("lonlat") );
+    lonlat = ArrayView<double,2> ( nodes.field("lonlat") );
   }
 
   gidx_t operator()( const IndexView<int,1>& edge_nodes ) const
   {
     double centroid[2];
-    centroid[XX] = 0.;
-    centroid[YY] = 0.;
+    centroid[LON] = 0.;
+    centroid[LAT] = 0.;
     for( int jnode=0; jnode<2; ++jnode )
     {
-      centroid[XX] += coords( edge_nodes(jnode), XX );
-      centroid[YY] += coords( edge_nodes(jnode), YY );
+      centroid[LON] += lonlat( edge_nodes(jnode), LON );
+      centroid[LAT] += lonlat( edge_nodes(jnode), LAT );
     }
-    centroid[XX] /= 2.;
-    centroid[YY] /= 2.;
-    if( centroid[YY] > 0 )
-      centroid[YY] =  90.;
+    centroid[LON] /= 2.;
+    centroid[LAT] /= 2.;
+    if( centroid[LAT] > 0 )
+      centroid[LAT] =  90.;
     else
-      centroid[YY] = -90.;
-    return LatLonPoint( centroid[XX], centroid[YY] ).uid32();
+      centroid[LAT] = -90.;
+    return LonLatPoint( centroid[LON], centroid[LAT] ).uid32();
   }
 
-  ArrayView<double,2> coords;
+  ArrayView<double,2> lonlat;
 };
 
 void build_edges( Mesh& mesh )
@@ -384,7 +384,7 @@ void build_edges( Mesh& mesh )
   FunctionSpace& nodes   = mesh.function_space( "nodes" );
   ArrayView<gidx_t,1> glb_idx(        nodes.field( "glb_idx" ) );
   ArrayView<int,1> part   (        nodes.field( "partition" ) );
-  ArrayView<double,2> latlon (     nodes.field( "lonlat" ) );
+  ArrayView<double,2> lonlat (     nodes.field( "lonlat" ) );
   int nb_nodes = nodes.shape(0);
 
   FunctionSpace& quads       = mesh.function_space( "quads" );

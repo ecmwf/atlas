@@ -41,7 +41,7 @@ void build_periodic_boundaries( Mesh& mesh )
 
   int nb_nodes = nodes.shape(0);
 
-  ArrayView<double,2> latlon ( nodes.field("lonlat") );
+  ArrayView<double,2> lonlat ( nodes.field("lonlat") );
 
   // Identify my master and slave nodes on own partition
   // master nodes are at x=0,  slave nodes are at x=2pi
@@ -57,7 +57,7 @@ void build_periodic_boundaries( Mesh& mesh )
       if( part(jnode) == mypart )
       {
         Topology::set(flags(jnode),Topology::PERIODIC);
-        LatLonPoint ll(latlon[jnode]);
+        LonLatPoint ll(lonlat[jnode]);
         master_lookup[ ll.uid() ] = jnode;
         master_nodes.push_back( ll.x );
         master_nodes.push_back( ll.y );
@@ -68,7 +68,7 @@ void build_periodic_boundaries( Mesh& mesh )
     {
       Topology::set(flags(jnode),Topology::PERIODIC);
       Topology::set(flags(jnode),Topology::GHOST);
-      LatLonPoint ll(latlon[jnode]);
+      LonLatPoint ll(lonlat[jnode]);
       slave_lookup[ ll.uid() ] = jnode;
       slave_nodes.push_back( ll.x );
       slave_nodes.push_back( ll.y );
@@ -110,7 +110,7 @@ void build_periodic_boundaries( Mesh& mesh )
       ArrayView<int,2> recv_slave(recvbuf.data()+recvdispls[jproc], make_shape(recvcounts[jproc]/3,3).data() );
       for( int jnode=0; jnode<recv_slave.shape(0); ++jnode )
       {
-        LatLonPoint slave( recv_slave(jnode,XX), recv_slave(jnode,YY) );
+        LonLatPoint slave( recv_slave(jnode,LON), recv_slave(jnode,LAT) );
         transform(slave,-1);
         uid_t slave_uid = slave.uid();
         if( master_lookup.count( slave_uid ) )

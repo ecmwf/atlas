@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE( test1 )
 
 	FunctionSpace& nodes = m->create_function_space( "nodes", "shapefunc", make_shape(10,Field::UNDEF_VARS) );
 
-  ArrayView<double,2> latlon ( m->function_space("nodes").create_field<double>("lonlat",2) );
+  ArrayView<double,2> lonlat ( m->function_space("nodes").create_field<double>("lonlat",2) );
   ArrayView<gidx_t,1> glb_idx( m->function_space("nodes").create_field<gidx_t>("glb_idx",1) );
   ArrayView<int,1> part ( nodes.create_field<int>("partition",1) );
   ArrayView<int,1> flags ( nodes.create_field<int>("flags",1) );
@@ -71,16 +71,16 @@ BOOST_AUTO_TEST_CASE( test1 )
   glb_idx(8) = 9;    part(8) = 1;
   glb_idx(9) = 10;   part(9) = 1;
 
-  latlon(0,XX) = 0.;    latlon(0,YY) = 80.;    Topology::set( flags(0), Topology::BC|Topology::WEST );
-  latlon(1,XX) = 0.;    latlon(1,YY) =-80.;    Topology::set( flags(1), Topology::BC|Topology::WEST );
-  latlon(2,XX) = 90.;   latlon(2,YY) = 80.;
-  latlon(3,XX) = 90.;   latlon(3,YY) =-80.;
-  latlon(4,XX) = 180.;  latlon(4,YY) = 80.;
-  latlon(5,XX) = 180.;  latlon(5,YY) =-80.;
-  latlon(6,XX) = 270.;  latlon(6,YY) = 80.;
-  latlon(7,XX) = 270.;  latlon(7,YY) =-80.;
-  latlon(8,XX) = 360.;  latlon(8,YY) = 80.;    Topology::set( flags(8), Topology::BC|Topology::EAST );
-  latlon(9,XX) = 360.;  latlon(9,YY) =-80.;    Topology::set( flags(9), Topology::BC|Topology::EAST );
+  lonlat(0,LON) = 0.;    lonlat(0,LAT) = 80.;    Topology::set( flags(0), Topology::BC|Topology::WEST );
+  lonlat(1,LON) = 0.;    lonlat(1,LAT) =-80.;    Topology::set( flags(1), Topology::BC|Topology::WEST );
+  lonlat(2,LON) = 90.;   lonlat(2,LAT) = 80.;
+  lonlat(3,LON) = 90.;   lonlat(3,LAT) =-80.;
+  lonlat(4,LON) = 180.;  lonlat(4,LAT) = 80.;
+  lonlat(5,LON) = 180.;  lonlat(5,LAT) =-80.;
+  lonlat(6,LON) = 270.;  lonlat(6,LAT) = 80.;
+  lonlat(7,LON) = 270.;  lonlat(7,LAT) =-80.;
+  lonlat(8,LON) = 360.;  lonlat(8,LAT) = 80.;    Topology::set( flags(8), Topology::BC|Topology::EAST );
+  lonlat(9,LON) = 360.;  lonlat(9,LAT) =-80.;    Topology::set( flags(9), Topology::BC|Topology::EAST );
 
   actions::build_parallel_fields(*m);
 

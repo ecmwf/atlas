@@ -68,12 +68,12 @@ MinimalMesh::MinimalMesh(int N, int lon[])
   setup_lat_hemisphere(N,lat.data(),lon,DEG);
 }
 
-double compute_latlon_area(Mesh& mesh)
+double compute_lonlat_area(Mesh& mesh)
 {
   FunctionSpace& nodes  = mesh.function_space("nodes");
   FunctionSpace& quads  = mesh.function_space("quads");
   FunctionSpace& triags = mesh.function_space("triags");
-  ArrayView<double,2> latlon  ( nodes.field("lonlat") );
+  ArrayView<double,2> lonlat  ( nodes.field("lonlat") );
   IndexView<int,2> quad_nodes ( quads. field("nodes") );
   IndexView<int,2> triag_nodes( triags.field("nodes") );
   double area=0;
@@ -83,8 +83,8 @@ double compute_latlon_area(Mesh& mesh)
     int n1 = quad_nodes(e,1);
     int n2 = quad_nodes(e,2);
     int n3 = quad_nodes(e,3);
-    double x0=latlon(n0,XX), x1=latlon(n1,XX), x2=latlon(n2,XX), x3=latlon(n3,XX);
-    double y0=latlon(n0,YY), y1=latlon(n1,YY), y2=latlon(n2,YY), y3=latlon(n3,YY);
+    double x0=lonlat(n0,LON), x1=lonlat(n1,LON), x2=lonlat(n2,LON), x3=lonlat(n3,LON);
+    double y0=lonlat(n0,LAT), y1=lonlat(n1,LAT), y2=lonlat(n2,LAT), y3=lonlat(n3,LAT);
     area += std::abs( x0*(y1-y2)+x1*(y2-y0)+x2*(y0-y1) )*0.5;
     area += std::abs( x2*(y3-y0)+x3*(y0-y2)+x0*(y2-y3) )*0.5;
   }
@@ -93,8 +93,8 @@ double compute_latlon_area(Mesh& mesh)
     int n0 = triag_nodes(e,0);
     int n1 = triag_nodes(e,1);
     int n2 = triag_nodes(e,2);
-    double x0=latlon(n0,XX), x1=latlon(n1,XX), x2=latlon(n2,XX);
-    double y0=latlon(n0,YY), y1=latlon(n1,YY), y2=latlon(n2,YY);
+    double x0=lonlat(n0,LON), x1=lonlat(n1,LON), x2=lonlat(n2,LON);
+    double y0=lonlat(n0,LAT), y1=lonlat(n1,LAT), y2=lonlat(n2,LAT);
     area += std::abs( x0*(y1-y2)+x1*(y2-y0)+x2*(y0-y1) )*0.5;
   }
   return area;
@@ -248,7 +248,7 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     BOOST_CHECK_EQUAL( mesh->function_space("triags").shape(0),  4 );
 
     double max_lat = test::MinimalMesh(nlat,lon).lat(0);
-    BOOST_CHECK_CLOSE( test::compute_latlon_area(*mesh), 2.*M_PI*2.*max_lat, 1e-8 );
+    BOOST_CHECK_CLOSE( test::compute_lonlat_area(*mesh), 2.*M_PI*2.*max_lat, 1e-8 );
     Gmsh().write(*mesh,"minimal2.msh");
     delete mesh;
   }
@@ -323,7 +323,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
     ArrayView<int,1> part( m->function_space("nodes").field("partition") );
     ArrayView<gidx_t,1> gidx( m->function_space("nodes").field("glb_idx") );
 
-    area += test::compute_latlon_area(*m);
+    area += test::compute_lonlat_area(*m);
     DEBUG();
 
     DISABLE {  // This is all valid for meshes generated with MINIMAL NB TRIAGS

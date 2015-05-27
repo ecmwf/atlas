@@ -53,7 +53,7 @@ static void test_grib_file( const LocalPathName& path )
 //	Log::info() << "nb_nodes  : " << grid->nPoints() << std::endl;
 	Log::info() << "spec      : " << spec << std::endl;
 
-	// check the latlon points
+	// check the lonlat points
 
 	vector< Grid::Point > pts;
 	pts.resize( grid->nPoints() );

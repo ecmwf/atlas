@@ -842,7 +842,7 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
 
   nodes.metadata().set("type",static_cast<int>(Entity::NODES));
 
-  ArrayView<double,2> coords        ( nodes.create_field<double>("lonlat",   2, IF_EXISTS_RETURN) );
+  ArrayView<double,2> lonlat        ( nodes.create_field<double>("lonlat",   2, IF_EXISTS_RETURN) );
   ArrayView<gidx_t,1> glb_idx       ( nodes.create_field<gidx_t>("glb_idx",       1, IF_EXISTS_RETURN) );
   ArrayView<int,   1> part          ( nodes.create_field<int   >("partition",     1, IF_EXISTS_RETURN) );
   ArrayView<int,   1> flags         ( nodes.create_field<int   >("flags",         1, IF_EXISTS_RETURN) );
@@ -864,8 +864,8 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
       double x = rgg.lon(jlat,jlon);
       if( stagger && (jlat+1)%2==0 ) x += 180./static_cast<double>(rgg.nlon(jlat));
 
-      coords(jnode,XX) = x;
-      coords(jnode,YY) = y;
+      lonlat(jnode,LON) = x;
+      lonlat(jnode,LAT) = y;
       glb_idx(jnode)   = n+1;
       part(jnode) = parts[n];
       Topology::reset(flags(jnode));
@@ -887,8 +887,8 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
       double x = rgg.lon(jlat,rgg.nlon(jlat));
       if( stagger && (jlat+1)%2==0 ) x += 180./static_cast<double>(rgg.nlon(jlat));
 
-      coords(jnode,XX) = x;
-      coords(jnode,YY) = y;
+      lonlat(jnode,LON) = x;
+      lonlat(jnode,LAT) = y;
       glb_idx(jnode)   = periodic_glb[jlat]+1;
       part(jnode)      = part(jnode-1);
       Topology::reset(flags(jnode));
@@ -905,8 +905,8 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
     jnorth = jnode;
     double y = 90.;
     double x = 180.;
-    coords(jnode,XX) = x;
-    coords(jnode,YY) = y;
+    lonlat(jnode,LON) = x;
+    lonlat(jnode,LAT) = y;
     glb_idx(jnode)   = periodic_glb[rgg.nlat()-1]+2;
     part(jnode)      = mypart;
     Topology::reset(flags(jnode));
@@ -920,8 +920,8 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
     jsouth = jnode;
     double y = -90.;
     double x =  180.;
-    coords(jnode,XX) = x;
-    coords(jnode,YY) = y;
+    lonlat(jnode,LON) = x;
+    lonlat(jnode,LAT) = y;
     glb_idx(jnode)   = periodic_glb[rgg.nlat()-1]+3;
     part(jnode)      = mypart;
     Topology::reset(flags(jnode));
@@ -1187,17 +1187,16 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rgg,
 
 
   ///debug
-  ArrayView<double,2> lonlat( mesh.function_space("nodes").field("lonlat") );
-  ArrayView<double,2> xyz( mesh.function_space("nodes").create_field<double>("xyz",3,IF_EXISTS_RETURN) );
-  for( int jnode=0; jnode<lonlat.shape(0); ++jnode )
-  {
-    eckit::geometry::lonlat_to_3d( lonlat[jnode].data(), xyz[jnode].data() );
-  }
+  //  ArrayView<double,2> xyz( mesh.function_space("nodes").create_field<double>("xyz",3,IF_EXISTS_RETURN) );
+  //  for( int jnode=0; jnode<lonlat.shape(0); ++jnode )
+  //  {
+  //    eckit::geometry::lonlat_to_3d( lonlat[jnode].data(), xyz[jnode].data() );
+  //  }
 
-  io::Gmsh gmsh;
-  if(three_dimensional)
-    gmsh.options.set("nodes",std::string("xyz"));
-  gmsh.write(mesh,"/tmp/debug/mesh.msh");
+  //  io::Gmsh gmsh;
+  //  if(three_dimensional)
+  //    gmsh.options.set("nodes",std::string("xyz"));
+  //  gmsh.write(mesh,"/tmp/debug/mesh.msh");
 }
 
 void ReducedGridMeshGenerator::generate_global_element_numbering( Mesh& mesh ) const

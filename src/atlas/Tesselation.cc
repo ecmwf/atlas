@@ -275,7 +275,7 @@ void Tesselation::create_mesh_structure( Mesh& mesh, const size_t nb_nodes )
 
 	nodes.create_field<double>("xyz",3,IF_EXISTS_RETURN);
 
-    // create / ensure mesh has latlon
+    // create / ensure mesh has lonlat
 
 	nodes.create_field<double>("lonlat",2,IF_EXISTS_RETURN);
 

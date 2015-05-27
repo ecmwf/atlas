@@ -333,7 +333,7 @@ void AtlasBenchmark::setup()
   build_median_dual_mesh(*mesh);
   build_node_to_edge_connectivity(*mesh);
 
-  ArrayView<double,2> coords ( mesh->function_space("nodes").field("lonlat") );
+  ArrayView<double,2> lonlat ( mesh->function_space("nodes").field("lonlat") );
 
   nnodes = mesh->function_space("nodes").shape(0);
   nedges = mesh->function_space("edges").shape(0);
@@ -353,9 +353,9 @@ void AtlasBenchmark::setup()
   double deg2rad = M_PI/180.;
   for( int jnode=0; jnode<nnodes; ++jnode )
   {
-    lonlat(jnode,XX) = coords(jnode,XX) * deg2rad;
-    lonlat(jnode,YY) = coords(jnode,YY) * deg2rad;
-    double y  = lonlat(jnode,YY);
+    lonlat(jnode,LON) = lonlat(jnode,LON) * deg2rad;
+    lonlat(jnode,LAT) = lonlat(jnode,LAT) * deg2rad;
+    double y  = lonlat(jnode,LAT);
     double hx = radius*std::cos(y);
     double hy = radius;
     double G  = hx*hy;
@@ -366,8 +366,8 @@ void AtlasBenchmark::setup()
   }
   for( int jedge=0; jedge<nedges; ++jedge )
   {
-    S(jedge,XX) *= deg2rad;
-    S(jedge,YY) *= deg2rad;
+    S(jedge,LON) *= deg2rad;
+    S(jedge,LAT) *= deg2rad;
   }
   dz = height/static_cast<double>(nlev);
 
@@ -418,7 +418,7 @@ void AtlasBenchmark::setup()
   // ---------------------------------------
   //ArrayView<double,1> V ( mesh->function_space("nodes").field("dual_volumes") );
   //ArrayView<double,2> S ( mesh->function_space("edges").field("dual_normals") );
-  //Log::info() << "  checksum coordinates : " << mesh->function_space("nodes").checksum().execute( coords ) << endl;
+  //Log::info() << "  checksum coordinates : " << mesh->function_space("nodes").checksum().execute( lonlat ) << endl;
   //Log::info() << "  checksum dual_volumes: " << mesh->function_space("nodes").checksum().execute( V ) << endl;
   //Log::info() << "  checksum dual_normals: " << mesh->function_space("edges").checksum().execute( S ) << endl;
   //Log::info() << "  checksum field       : " << mesh->function_space("nodes").checksum().execute( field ) << endl;
@@ -444,8 +444,8 @@ void AtlasBenchmark::iteration()
     for( int jlev=0; jlev<nlev; ++jlev )
     {
       double avg = ( field(ip1,jlev) + field(ip2,jlev) ) * 0.5;
-      avgS(jedge,jlev,XX) = S(jedge,XX)*avg;
-      avgS(jedge,jlev,YY) = S(jedge,YY)*avg;
+      avgS(jedge,jlev,LON) = S(jedge,LON)*avg;
+      avgS(jedge,jlev,LAT) = S(jedge,LAT)*avg;
     }
   }
 
@@ -456,8 +456,8 @@ void AtlasBenchmark::iteration()
   {
     for( int jlev=0; jlev<nlev; ++jlev )
     {
-      grad(jnode,jlev,XX) = 0.;
-      grad(jnode,jlev,YY) = 0.;
+      grad(jnode,jlev,LON) = 0.;
+      grad(jnode,jlev,LAT) = 0.;
     }
     for( int jedge=0; jedge<node2edge_size(jnode); ++jedge )
     {
@@ -465,14 +465,14 @@ void AtlasBenchmark::iteration()
       double add = node2edge_sign(jnode,jedge);
       for( int jlev=0; jlev<nlev; ++jlev )
       {
-        grad(jnode,jlev,XX) += add*avgS(iedge,jlev,XX);
-        grad(jnode,jlev,YY) += add*avgS(iedge,jlev,YY);
+        grad(jnode,jlev,LON) += add*avgS(iedge,jlev,LON);
+        grad(jnode,jlev,LAT) += add*avgS(iedge,jlev,LAT);
       }
     }
     for( int jlev=0; jlev<nlev; ++jlev )
     {
-      grad(jnode,jlev,XX) /= V(jnode);
-      grad(jnode,jlev,YY) /= V(jnode);
+      grad(jnode,jlev,LON) /= V(jnode);
+      grad(jnode,jlev,LAT) /= V(jnode);
     }
   }
   // special treatment for the north & south pole cell faces
@@ -484,7 +484,7 @@ void AtlasBenchmark::iteration()
     int ip2 = edge2node(iedge,1);
     // correct for wrong Y-derivatives in previous loop
     for( int jlev=0; jlev<nlev; ++jlev )
-      grad(ip2,jlev,YY) += 2.*avgS(iedge,jlev,YY)/V(ip2);
+      grad(ip2,jlev,LAT) += 2.*avgS(iedge,jlev,LAT)/V(ip2);
   }
 
   double dzi = 1./dz;
@@ -557,11 +557,11 @@ double AtlasBenchmark::result()
     {
       for( int jlev=0; jlev<nlev; ++jlev )
       {
-        maxval = max(maxval,grad(jnode,jlev,XX));
-        maxval = max(maxval,grad(jnode,jlev,YY));
+        maxval = max(maxval,grad(jnode,jlev,LON));
+        maxval = max(maxval,grad(jnode,jlev,LAT));
         maxval = max(maxval,grad(jnode,jlev,ZZ));
-        minval = min(minval,grad(jnode,jlev,XX));
-        minval = min(minval,grad(jnode,jlev,YY));
+        minval = min(minval,grad(jnode,jlev,LON));
+        minval = min(minval,grad(jnode,jlev,LAT));
         minval = min(minval,grad(jnode,jlev,ZZ));
         norm += std::pow(vecnorm(grad[jnode][jlev].data(),3),2);
       }

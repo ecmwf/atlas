@@ -106,7 +106,7 @@ bool LatLon::compare(const Grid& grid) const
    return true;
 }
 
-REGISTERIMPL(LatLon,"latlon");
+REGISTERIMPL(LatLon,"lonlat");
 
 //-----------------------------------------------------------------------------
 

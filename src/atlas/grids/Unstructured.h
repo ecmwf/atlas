@@ -59,7 +59,7 @@ private: // methods
   /// Human readable name
   virtual std::string shortName() const;
 
-  /// Hash of the latlon array + BoundBox
+  /// Hash of the lonlat array + BoundBox
   virtual void hash(eckit::MD5&) const;
 
 protected:

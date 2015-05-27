@@ -30,7 +30,7 @@ void distribute_mesh( Mesh& mesh )
 
   FunctionSpace& nodes = mesh.function_space("nodes");
   int nb_nodes = nodes.shape(0);
-  ArrayView<double,2> latlon    ( nodes.field("lonlat") );
+  ArrayView<double,2> lonlat    ( nodes.field("lonlat") );
   ArrayView<int,   1> node_part ( nodes.field("partition")   );
   ArrayView<gidx_t,1> node_gidx ( nodes.field("glb_idx")   );
 
@@ -79,7 +79,7 @@ void distribute_mesh( Mesh& mesh )
           int n = elem_nodes(jelem,jnode);
           maxpart = std::max(maxpart, node_part(n));
           minpart = std::min(minpart, node_part(n));
-          y += latlon(n,YY);
+          y += lonlat(n,LAT);
         }
         y /= static_cast<double>(nb_nodes_per_elem);
         if( (y>=0 && maxpart == mypart) || (y<0 && minpart == mypart) ) // keep element
@@ -135,8 +135,8 @@ void distribute_mesh( Mesh& mesh )
   }
   std::vector<int> new_node_gidx(nb_keep_nodes);
   std::vector<int> new_node_part(nb_keep_nodes);
-  Array<double> new_latlon_arr(nb_keep_nodes,2);
-  ArrayView<double,2> new_latlon(new_latlon_arr);
+  Array<double> new_lonlat_arr(nb_keep_nodes,2);
+  ArrayView<double,2> new_lonlat(new_lonlat_arr);
   for( int jnode=0; jnode<nb_nodes; ++jnode )
   {
     if( keep_nodes[jnode] == 1 )
@@ -144,8 +144,8 @@ void distribute_mesh( Mesh& mesh )
       int inode = node_loc[jnode];
       new_node_gidx[inode] = node_gidx(jnode);
       new_node_part[inode] = node_part(jnode);
-      new_latlon(inode,XX) = latlon(jnode,XX);
-      new_latlon(inode,YY) = latlon(jnode,YY);
+      new_lonlat(inode,LON) = lonlat(jnode,LON);
+      new_lonlat(inode,LAT) = lonlat(jnode,LAT);
     }
   }
   nb_nodes = nb_keep_nodes;
@@ -154,14 +154,14 @@ void distribute_mesh( Mesh& mesh )
   nodes.resize(shape);
   node_gidx  = ArrayView<gidx_t,   1> ( nodes.field("glb_idx") );
   node_part  = ArrayView<int,   1> ( nodes.field("partition") );
-  latlon     = ArrayView<double,2> ( nodes.field("lonlat") );
+  lonlat     = ArrayView<double,2> ( nodes.field("lonlat") );
   int nb_owned = 0;
   for( int jnode=0; jnode<nb_nodes; ++jnode )
   {
     node_gidx(jnode) = new_node_gidx[jnode];
     node_part(jnode) = new_node_part[jnode];
-    latlon(jnode,XX) = new_latlon(jnode,XX);
-    latlon(jnode,YY) = new_latlon(jnode,YY);
+    lonlat(jnode,LON) = new_lonlat(jnode,LON);
+    lonlat(jnode,LAT) = new_lonlat(jnode,LAT);
     if( node_part(jnode) == mypart ) ++nb_owned;
   }
   nodes.metadata().set("nb_owned",nb_owned);

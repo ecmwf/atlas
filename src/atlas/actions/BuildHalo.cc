@@ -68,7 +68,7 @@ void increase_halo( Mesh& mesh )
 {
   //DEBUG( "\n\n" << "Increase halo!! \n\n");
   FunctionSpace& nodes         = mesh.function_space( "nodes" );
-  ArrayView<double,2> latlon   ( nodes.field( "lonlat"    ) );
+  ArrayView<double,2> lonlat   ( nodes.field( "lonlat"    ) );
   ArrayView<gidx_t,1> glb_idx  ( nodes.field( "glb_idx"        ) );
   ArrayView<int   ,1> part     ( nodes.field( "partition"      ) );
   IndexView<int   ,1> ridx     ( nodes.field( "remote_idx"     ) );
@@ -167,14 +167,14 @@ void increase_halo( Mesh& mesh )
   std::map<uid_t,int> node_uid_to_loc;
   for( int jnode=0; jnode<nb_nodes; ++jnode )
   {
-    LatLonPoint ll(latlon[jnode]);
+    LonLatPoint ll(lonlat[jnode]);
     if( node_uid_to_loc.count(ll.uid()) > 0 )
     {
       int other = node_uid_to_loc[ll.uid()];
       std::stringstream msg;
       msg << "Node uid: " << ll.uid() << "   " << glb_idx(jnode)
-          << " (" << latlon(jnode,XX) <<","<< latlon(jnode,YY)<<")  has already been added as node "
-          << glb_idx(other) << " (" << latlon(other,XX) <<","<< latlon(other,YY)<<")";
+          << " (" << lonlat(jnode,LON) <<","<< lonlat(jnode,LAT)<<")  has already been added as node "
+          << glb_idx(other) << " (" << lonlat(other,LON) <<","<< lonlat(other,LAT)<<")";
       throw eckit::SeriousBug(msg.str(),Here());
     }
     node_uid_to_loc[ll.uid()] = jnode;
@@ -188,7 +188,7 @@ void increase_halo( Mesh& mesh )
 
   for( int jnode=0; jnode<nb_bdry_nodes; ++jnode )
   {
-    LatLonPoint ll( latlon[bdry_nodes[jnode]] );
+    LonLatPoint ll( lonlat[bdry_nodes[jnode]] );
     bdry_nodes_id(jnode,0) = ll.x;
     bdry_nodes_id(jnode,1) = ll.y;
     bdry_nodes_id(jnode,2) = glb_idx( bdry_nodes[jnode] );
@@ -220,7 +220,7 @@ void increase_halo( Mesh& mesh )
   std::vector< std::vector<int>    > sfn_ridx( eckit::mpi::size() );
   std::vector< std::vector<uid_t> > sfn_glb_idx( eckit::mpi::size() );
   std::vector< std::vector<int>    > sfn_flags ( eckit::mpi::size() );
-  std::vector< std::vector<double> > sfn_latlon ( eckit::mpi::size() );
+  std::vector< std::vector<double> > sfn_lonlat ( eckit::mpi::size() );
   // sfn stands for "send_found_elems"
   std::vector< std::vector< std::vector<uid_t> > >
       sfe_glb_idx ( mesh.nb_function_spaces(), std::vector< std::vector<uid_t> >( eckit::mpi::size() ) );
@@ -252,7 +252,7 @@ void increase_halo( Mesh& mesh )
       uid_t recv_glb_idx = recv_bdry_nodes_id(jrecv,2);
       int recv_flags   = recv_bdry_nodes_id(jrecv,3);
 
-      LatLonPoint ll(recv_x,recv_y);
+      LonLatPoint ll(recv_x,recv_y);
 
       int periodic=0;
       // If the received node is flagged as periodic, look for point following periodic transformation
@@ -321,7 +321,7 @@ void increase_halo( Mesh& mesh )
     }
 
     // Collect all nodes needed to complete the element, and mark if they become periodic on requesting task
-    std::set< std::pair<LatLonPoint,int> > found_bdry_nodes_id_set;
+    std::set< std::pair<LonLatPoint,int> > found_bdry_nodes_id_set;
     {
       for( int f=0; f<mesh.nb_function_spaces(); ++f )
       {
@@ -331,10 +331,10 @@ void increase_halo( Mesh& mesh )
           int nb_elem_nodes = elem_nodes[f].shape(1);
           for( int n=0; n<nb_elem_nodes; ++n )
           {
-            int x = microdeg( latlon( elem_nodes[f](e,n), XX) );
-            int y = microdeg( latlon( elem_nodes[f](e,n), YY) );
+            int x = microdeg( lonlat( elem_nodes[f](e,n), LON) );
+            int y = microdeg( lonlat( elem_nodes[f](e,n), LAT) );
             int periodic = found_bdry_elements_periodic[f][jelem];
-            found_bdry_nodes_id_set.insert( std::make_pair(LatLonPoint(x,y),periodic) );
+            found_bdry_nodes_id_set.insert( std::make_pair(LonLatPoint(x,y),periodic) );
           }
         }
       }
@@ -350,7 +350,7 @@ void increase_halo( Mesh& mesh )
         else if( Topology::check(recv_bdry_nodes_id(jrecv,3),Topology::PERIODIC|Topology::WEST) )
           periodic = 1; // If the node is not ghost (so master), the slave is in positive direction (+360 deg)
 
-        LatLonPoint ll(x,y);
+        LonLatPoint ll(x,y);
         found_bdry_nodes_id_set.erase( std::make_pair(ll,periodic) ) ;
         // DO I HAVE TO ALSO CHECK FOR PERIODICITY HERE?
       }
@@ -360,17 +360,17 @@ void increase_halo( Mesh& mesh )
     sfn_part[jpart].resize(nb_found_bdry_nodes);
     sfn_ridx[jpart].resize(nb_found_bdry_nodes);
     sfn_flags[jpart].resize(nb_found_bdry_nodes,Topology::NONE);
-    sfn_latlon[jpart].resize(2*nb_found_bdry_nodes);
+    sfn_lonlat[jpart].resize(2*nb_found_bdry_nodes);
     //DEBUG_VAR( nb_found_bdry_nodes );
     // Fill buffers to send
     {
       int jnode=0;
-      std::set<std::pair<LatLonPoint,int> >::iterator it;
+      std::set<std::pair<LonLatPoint,int> >::iterator it;
       for( it=found_bdry_nodes_id_set.begin(); it!=found_bdry_nodes_id_set.end(); ++it, ++jnode )
       {
-        LatLonPoint ll = it->first;
+        LonLatPoint ll = it->first;
         int periodic = it->second;
-        //eckit::Log::warning() << "\n" << "Looking for node with coords " << ll.x*1.e-6*180./M_PI << "," << ll.y*1.e-6*180./M_PI << ".  periodic = " << periodic << std::endl;
+        //eckit::Log::warning() << "\n" << "Looking for node with lonlat " << ll.x*1.e-6*180./M_PI << "," << ll.y*1.e-6*180./M_PI << ".  periodic = " << periodic << std::endl;
 
         //DEBUG_VAR( periodic );
         uid_t uid = ll.uid();
@@ -382,8 +382,8 @@ void increase_halo( Mesh& mesh )
           sfn_glb_idx[jpart][jnode]      = glb_idx(loc);
           sfn_part   [jpart][jnode]      = part   (loc);
           sfn_ridx   [jpart][jnode]      = ridx   (loc);
-          sfn_latlon [jpart][jnode*2+XX] = latlon (loc,XX);
-          sfn_latlon [jpart][jnode*2+YY] = latlon (loc,YY);
+          sfn_lonlat [jpart][jnode*2+LON] = lonlat (loc,LON);
+          sfn_lonlat [jpart][jnode*2+LAT] = lonlat (loc,LAT);
           //DEBUG_VAR(glb_idx(loc));
           if( periodic )
           {
@@ -401,9 +401,9 @@ void increase_halo( Mesh& mesh )
             {
               Topology::set(sfn_flags[jpart][jnode],Topology::PERIODIC);
             }
-            transform(&sfn_latlon[jpart][2*jnode],(double) periodic);
+            transform(&sfn_lonlat[jpart][2*jnode],(double) periodic);
             // The glb_idx is based on the destination location
-            sfn_glb_idx[jpart][jnode] = LatLonPoint(sfn_latlon[jpart][jnode*2+XX],sfn_latlon[jpart][jnode*2+YY]).uid();
+            sfn_glb_idx[jpart][jnode] = LonLatPoint(sfn_lonlat[jpart][jnode*2+LON],sfn_lonlat[jpart][jnode*2+LAT]).uid();
           }
           else
           {
@@ -414,13 +414,13 @@ void increase_halo( Mesh& mesh )
         }
         else
         {
-          eckit::Log::warning() << "Node needed by ["<<jpart<<"] with coords " << ll.x*1.e-6 << ","
+          eckit::Log::warning() << "Node needed by ["<<jpart<<"] with lonlat " << ll.x*1.e-6 << ","
                                 << ll.y*1.e-6 << " was not found in ["<<eckit::mpi::rank()<<"]." << std::endl;
           ASSERT(false);
         }
 //        if( periodic != 0 )
 //        {
-//           eckit::Log::warning() << "Node needed by ["<<jpart<<"] with coords " << ll.x*1.e-6 << "," << ll.y*1.e-6 << " was not found in ["<<eckit::mpi::rank()<<"]." << std::endl;
+//           eckit::Log::warning() << "Node needed by ["<<jpart<<"] with lonlat " << ll.x*1.e-6 << "," << ll.y*1.e-6 << " was not found in ["<<eckit::mpi::rank()<<"]." << std::endl;
 //        }
       }
     }
@@ -446,21 +446,21 @@ void increase_halo( Mesh& mesh )
           sfe_part[f][jpart][jelem]    = elem_part[f][e];
 
           double centroid[2];
-          centroid[XX] = 0.;
-          centroid[YY] = 0.;
+          centroid[LON] = 0.;
+          centroid[LAT] = 0.;
           for( int n=0; n<nb_elem_nodes; ++n)
           {
             double crd[2];
-            crd[XX] = latlon(elem_nodes[f](e,n),XX);
-            crd[YY] = latlon(elem_nodes[f](e,n),YY);
+            crd[LON] = lonlat(elem_nodes[f](e,n),LON);
+            crd[LAT] = lonlat(elem_nodes[f](e,n),LAT);
             transform(crd, (double)periodic);
-            centroid[XX] += crd[XX];
-            centroid[YY] += crd[YY];
-            sfe_nodes_id_view(jelem,n) = LatLonPoint( crd ).uid();
+            centroid[LON] += crd[LON];
+            centroid[LAT] += crd[LAT];
+            sfe_nodes_id_view(jelem,n) = LonLatPoint( crd ).uid();
           }
-          centroid[XX] /= static_cast<double>(nb_elem_nodes);
-          centroid[YY] /= static_cast<double>(nb_elem_nodes);
-          sfe_glb_idx[f][jpart][jelem] = LatLonPoint( centroid ).uid() ;
+          centroid[LON] /= static_cast<double>(nb_elem_nodes);
+          centroid[LAT] /= static_cast<double>(nb_elem_nodes);
+          sfe_glb_idx[f][jpart][jelem] = LonLatPoint( centroid ).uid() ;
         }
       }
     }
@@ -473,7 +473,7 @@ void increase_halo( Mesh& mesh )
   std::vector< std::vector<int>    > rfn_part(eckit::mpi::size());
   std::vector< std::vector<int>    > rfn_ridx( eckit::mpi::size() );
   std::vector< std::vector<int>    > rfn_flags( eckit::mpi::size() );
-  std::vector< std::vector<double> > rfn_latlon(eckit::mpi::size());
+  std::vector< std::vector<double> > rfn_lonlat(eckit::mpi::size());
   //    rfe stands for "recv_found_elems"
   std::vector< std::vector< std::vector<uid_t> > >
       rfe_glb_idx ( mesh.nb_function_spaces(), std::vector< std::vector<uid_t> >( eckit::mpi::size() ) );
@@ -486,7 +486,7 @@ void increase_halo( Mesh& mesh )
   eckit::mpi::all_to_all(sfn_part,     rfn_part);
   eckit::mpi::all_to_all(sfn_ridx,     rfn_ridx);
   eckit::mpi::all_to_all(sfn_flags,    rfn_flags);
-  eckit::mpi::all_to_all(sfn_latlon,   rfn_latlon);
+  eckit::mpi::all_to_all(sfn_lonlat,   rfn_lonlat);
   for( int f=0; f<mesh.nb_function_spaces(); ++f )
   {
     eckit::mpi::all_to_all(sfe_glb_idx [f], rfe_glb_idx [f] );
@@ -502,7 +502,7 @@ void increase_halo( Mesh& mesh )
   std::set<uid_t> node_uid;
   for( int jnode=0; jnode<nb_nodes; ++jnode )
   {
-    node_uid.insert( LatLonPoint( latlon[jnode] ).uid() );
+    node_uid.insert( LonLatPoint( lonlat[jnode] ).uid() );
   }
   std::vector< std::vector<int> > rfn_idx(eckit::mpi::size());
   for( int jpart=0; jpart<eckit::mpi::size(); ++jpart )
@@ -515,9 +515,9 @@ void increase_halo( Mesh& mesh )
   {
     for( int n=0; n<rfn_glb_idx[jpart].size(); ++n )
     {
-      double x = rfn_latlon[jpart][n*2+XX];
-      double y = rfn_latlon[jpart][n*2+YY];
-      bool inserted = node_uid.insert( LatLonPoint( x, y ).uid() ).second;
+      double x = rfn_lonlat[jpart][n*2+LON];
+      double y = rfn_lonlat[jpart][n*2+LAT];
+      bool inserted = node_uid.insert( LonLatPoint( x, y ).uid() ).second;
       if( inserted ) {
         rfn_idx[jpart].push_back(n);
       }
@@ -532,7 +532,7 @@ void increase_halo( Mesh& mesh )
   glb_idx = ArrayView<gidx_t,1>( nodes.field("glb_idx") );
   part    = ArrayView<int,   1>( nodes.field("partition") );
   ridx    = IndexView<int,   1>( nodes.field("remote_idx") );
-  latlon  = ArrayView<double,2>( nodes.field("lonlat") );
+  lonlat  = ArrayView<double,2>( nodes.field("lonlat") );
 
 
   int new_node=0;
@@ -545,9 +545,9 @@ void increase_halo( Mesh& mesh )
       glb_idx(loc_idx)    = rfn_glb_idx [jpart][rfn_idx[jpart][n]];
       part   (loc_idx)    = rfn_part    [jpart][rfn_idx[jpart][n]];
       ridx   (loc_idx)    = rfn_ridx    [jpart][rfn_idx[jpart][n]];
-      latlon (loc_idx,XX) = rfn_latlon  [jpart][rfn_idx[jpart][n]*2+XX];
-      latlon (loc_idx,YY) = rfn_latlon  [jpart][rfn_idx[jpart][n]*2+YY];
-      uid_t uid = LatLonPoint( latlon[loc_idx] ).uid();
+      lonlat (loc_idx,LON) = rfn_lonlat  [jpart][rfn_idx[jpart][n]*2+LON];
+      lonlat (loc_idx,LAT) = rfn_lonlat  [jpart][rfn_idx[jpart][n]*2+LAT];
+      uid_t uid = LonLatPoint( lonlat[loc_idx] ).uid();
 
       // make sure new node was not already there
       std::map<uid_t,int>::iterator found = node_uid_to_loc.find(uid);
@@ -556,9 +556,9 @@ void increase_halo( Mesh& mesh )
         int other = found->second;
         std::stringstream msg;
         msg << "New node with uid " << uid << ":\n"  << glb_idx(loc_idx)
-            << "("<<latlon(loc_idx,XX)<<","<<latlon(loc_idx,YY)<<")\n";
+            << "("<<lonlat(loc_idx,LON)<<","<<lonlat(loc_idx,LAT)<<")\n";
         msg << "Existing already loc "<< other << "  :  " << glb_idx(other)
-            << "("<<latlon(other,XX)<<","<<latlon(other,YY)<<")\n";
+            << "("<<lonlat(other,LON)<<","<<lonlat(other,LAT)<<")\n";
         throw eckit::SeriousBug(msg.str(),Here());
       }
       node_uid_to_loc[ uid ] = nb_nodes+new_node;
@@ -769,8 +769,8 @@ void build_lookup_uid2node( Mesh& mesh, Uid2Node& uid2node )
       int other = uid2node[uid];
       std::stringstream msg;
       msg << "Node uid: " << uid << "   " << glb_idx(jnode)
-          << " (" << lonlat(jnode,XX) <<","<< lonlat(jnode,YY)<<")  has already been added as node "
-          << glb_idx(other) << " (" << lonlat(other,XX) <<","<< lonlat(other,YY)<<")";
+          << " (" << lonlat(jnode,LON) <<","<< lonlat(jnode,LAT)<<")  has already been added as node "
+          << glb_idx(other) << " (" << lonlat(other,LON) <<","<< lonlat(other,LAT)<<")";
       notes.add_error(msg.str());
     }
     uid2node[uid] = jnode;
@@ -982,8 +982,8 @@ public:
         buf.node_glb_idx[p][jnode]      = glb_idx(node);
         buf.node_part   [p][jnode]      = part   (node);
         buf.node_ridx   [p][jnode]      = ridx   (node);
-        buf.node_lonlat [p][jnode*2+XX] = lonlat (node,XX);
-        buf.node_lonlat [p][jnode*2+YY] = lonlat (node,YY);
+        buf.node_lonlat [p][jnode*2+LON] = lonlat (node,LON);
+        buf.node_lonlat [p][jnode*2+LAT] = lonlat (node,LAT);
         Topology::set(buf.node_flags[p][jnode],flags(node)|Topology::GHOST);
       }
       else
@@ -1043,8 +1043,8 @@ public:
         int node = found->second;
         buf.node_part   [p][jnode]      = part   (node);
         buf.node_ridx   [p][jnode]      = ridx   (node);
-        buf.node_lonlat [p][jnode*2+XX] = lonlat (node,XX);
-        buf.node_lonlat [p][jnode*2+YY] = lonlat (node,YY);
+        buf.node_lonlat [p][jnode*2+LON] = lonlat (node,LON);
+        buf.node_lonlat [p][jnode*2+LAT] = lonlat (node,LAT);
         transform(&buf.node_lonlat[p][jnode*2],-1);
         // Global index of node is based on UID of destination
         buf.node_glb_idx[p][jnode]      = compute_uid(&buf.node_lonlat [p][jnode*2]);
@@ -1079,11 +1079,11 @@ public:
           std::vector<double> crds(nb_elem_nodes*2);
           for( int n=0; n<nb_elem_nodes; ++n)
           {
-            double crd[] = { lonlat(elem_nodes[f](e,n),XX) , lonlat(elem_nodes[f](e,n),YY) };
+            double crd[] = { lonlat(elem_nodes[f](e,n),LON) , lonlat(elem_nodes[f](e,n),LAT) };
             transform(crd,-1);
             sfe_nodes_id_view(jelem,n) = compute_uid(crd);
-            crds[n*2+XX] = crd[XX];
-            crds[n*2+YY] = crd[YY];
+            crds[n*2+LON] = crd[LON];
+            crds[n*2+LAT] = crd[LAT];
           }
           // Global index of element is based on UID of destination
           buf.elem_glb_idx[f][p][jelem] = compute_uid( crds.data(), nb_elem_nodes );
@@ -1115,7 +1115,7 @@ public:
     {
       for( int n=0; n<buf.node_glb_idx[jpart].size(); ++n )
       {
-        double crd[] = { buf.node_lonlat[jpart][n*2+XX], buf.node_lonlat[jpart][n*2+YY] };
+        double crd[] = { buf.node_lonlat[jpart][n*2+LON], buf.node_lonlat[jpart][n*2+LAT] };
         bool inserted = node_uid.insert( compute_uid(crd) ).second;
         if( inserted ) {
           rfn_idx[jpart].push_back(n);
@@ -1147,8 +1147,8 @@ public:
         glb_idx(loc_idx)    = buf.node_glb_idx [jpart][rfn_idx[jpart][n]];
         part   (loc_idx)    = buf.node_part    [jpart][rfn_idx[jpart][n]];
         ridx   (loc_idx)    = buf.node_ridx    [jpart][rfn_idx[jpart][n]];
-        lonlat (loc_idx,XX) = buf.node_lonlat  [jpart][rfn_idx[jpart][n]*2+XX];
-        lonlat (loc_idx,YY) = buf.node_lonlat  [jpart][rfn_idx[jpart][n]*2+YY];
+        lonlat (loc_idx,LON) = buf.node_lonlat  [jpart][rfn_idx[jpart][n]*2+LON];
+        lonlat (loc_idx,LAT) = buf.node_lonlat  [jpart][rfn_idx[jpart][n]*2+LAT];
         uid_t uid = compute_uid(loc_idx);
 
         // make sure new node was not already there
@@ -1158,9 +1158,9 @@ public:
           int other = found->second;
           std::stringstream msg;
           msg << "New node with uid " << uid << ":\n"  << glb_idx(loc_idx)
-              << "("<<lonlat(loc_idx,XX)<<","<<lonlat(loc_idx,YY)<<")\n";
+              << "("<<lonlat(loc_idx,LON)<<","<<lonlat(loc_idx,LAT)<<")\n";
           msg << "Existing already loc "<< other << "  :  " << glb_idx(other)
-              << "("<<lonlat(other,XX)<<","<<lonlat(other,YY)<<")\n";
+              << "("<<lonlat(other,LON)<<","<<lonlat(other,LAT)<<")\n";
           throw eckit::SeriousBug(msg.str(),Here());
         }
         uid2node[ uid ] = nb_nodes+new_node;
@@ -1343,7 +1343,7 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
   std::vector<uid_t> send_bdry_nodes_uid(bdry_nodes.size());
   for( int jnode=0; jnode<bdry_nodes.size(); ++jnode )
   {
-    double crd[] = { helper.lonlat(bdry_nodes[jnode],XX), helper.lonlat(bdry_nodes[jnode],YY) };
+    double crd[] = { helper.lonlat(bdry_nodes[jnode],LON), helper.lonlat(bdry_nodes[jnode],LAT) };
     transform(crd,+1);
     send_bdry_nodes_uid[jnode] = helper.compute_uid(crd);
   }

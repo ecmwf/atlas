@@ -47,7 +47,7 @@ public: // methods
 
     virtual void coordinates( Grid::Coords & ) const;
 
-    virtual std::string gridType() const { return std::string("latlon") ;}
+    virtual std::string gridType() const { return std::string("lonlat") ;}
 
     virtual GridSpec* spec() const;
 

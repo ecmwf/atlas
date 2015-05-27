@@ -54,7 +54,7 @@ void TestGaussian::test_constructor()
     g = new Gaussian( 48, earth );
 
     ASSERT( g );
-    /// @todo review this: we wrap from 0 to 360 inclusive as we do for latlon
+    /// @todo review this: we wrap from 0 to 360 inclusive as we do for lonlat
     ASSERT( g->nPoints() == (48 * 2 * ( 48 * 4 + 1) ) );
 
     /// @todo substitute these comparisons with proper floating point comparisons
