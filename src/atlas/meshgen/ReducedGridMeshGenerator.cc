@@ -157,7 +157,8 @@ void ReducedGridMeshGenerator::generate(const Grid& grid, Mesh& mesh ) const
     generate( grid, *distribution, mesh );
   }
 #else
-  generate( grid, EqualAreaPartitioner(grid,nb_parts).distribution(), mesh );
+  GridDistribution::Ptr distribution( EqualRegionsPartitioner(grid,nb_parts).distribution() );
+  generate( grid, *distribution, mesh );
 #endif
 }
 
