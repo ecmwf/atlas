@@ -11,6 +11,7 @@
 #include <sstream>
 #include <algorithm>
 #include <iomanip>
+
 #define BOOST_TEST_MODULE TestRGG
 #include "ecbuild/boost_test_framework.h"
 
