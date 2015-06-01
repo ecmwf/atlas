@@ -13,17 +13,22 @@
 
 #include <map>
 
-#include "tests/TestMeshes.h"
+#include "eckit/memory/Owned.h"
+#include "eckit/memory/SharedPtr.h"
+#include "eckit/exception/Exceptions.h"
+
+// #include "tests/TestMeshes.h"
 #include "atlas/mpi/mpi.h"
-#include "atlas/io/Gmsh.h"
+// #include "atlas/io/Gmsh.h"
 #include "atlas/util/Debug.h"
-#include "atlas/Mesh.h"
+// #include "atlas/Mesh.h"
 #include "atlas/util/Array.h"
-#include "atlas/actions/BuildParallelFields.h"
-#include "atlas/actions/BuildPeriodicBoundaries.h"
-#include "atlas/actions/BuildHalo.h"
-#include "atlas/actions/BuildEdges.h"
-#include "atlas/actions/BuildDualMesh.h"
+#include "atlas/util/IndexView.h"
+// #include "atlas/actions/BuildParallelFields.h"
+// #include "atlas/actions/BuildPeriodicBoundaries.h"
+// #include "atlas/actions/BuildHalo.h"
+// #include "atlas/actions/BuildEdges.h"
+// #include "atlas/actions/BuildDualMesh.h"
 
 #include "eckit/maths/Matrix.h"
 
@@ -289,37 +294,52 @@ namespace test {
 		std::vector< monomial_type > mononomials_;
 	};
 
-	class Element : public eckit::Owned
+  class ShapeFunction : public eckit::Owned
+  {
+  public:
+		typedef eckit::SharedPtr<ShapeFunction> Ptr;
+    
+  public:
+    ShapeFunction(){}
+    virtual ~ShapeFunction(){}
+  };
+  
+	class ElementType : public eckit::Owned
 	{
 	public:
-		typedef eckit::SharedPtr<Element      > Ptr;
-		typedef std::vector< Element::Ptr > Vector;
+		typedef eckit::SharedPtr<ElementType> Ptr;
+		typedef std::vector< ElementType::Ptr > Vector;
 
 	public:
 
 		int N() const { return N_; }
 
 		const double* nodes() const { return nodes_.data(); }
+    
+    const ShapeFunction& shape_function() const { return *shape_function_; }
 
 	protected:
 
 		int N_;
 
 		std::vector<double> nodes_;
+    
+    ShapeFunction::Ptr shape_function_;
 
 	};
 
-	class Point : public Element
+	class Point : public ElementType
 	{
 	public:
 		Point()
 		{
 			N_ = 1;
+      shape_function_ = ShapeFunction::Ptr( new ShapeFunction );
 		}
 	};
 
 
-	class QuadP1 : public Element
+	class QuadP1 : public ElementType
 	{
 	public:
 		QuadP1()
@@ -331,10 +351,11 @@ namespace test {
 				 1.,  1.,
 				-1.,  1. };
 			nodes_.assign(nodes_init, nodes_init+N_);
+      shape_function_ = ShapeFunction::Ptr( new ShapeFunction );
 		}
 	};
 
-	class TriagP1 : public Element
+	class TriagP1 : public ElementType
 	{
 	public:
 		TriagP1()
@@ -345,10 +366,11 @@ namespace test {
 				 1., 0.,
 				 0., 1. };
 			nodes_.assign(nodes_init, nodes_init+N_);
+      shape_function_ = ShapeFunction::Ptr( new ShapeFunction );
 		}
 	};
 
-	class LineP0 : public Element
+	class LineP0 : public ElementType
 	{
 	public:
 		LineP0()
@@ -356,10 +378,11 @@ namespace test {
 			N_ = 1;
 			int nodes_init[] = { 0. };
 			nodes_.assign(nodes_init, nodes_init+N_);
+      shape_function_ = ShapeFunction::Ptr( new ShapeFunction );
 		}
 	};
 
-	class LineP1 : public Element
+	class LineP1 : public ElementType
 	{
 	public:
 		LineP1()
@@ -367,10 +390,11 @@ namespace test {
 			N_ = 2;
 			int nodes_init[] = { -1., 1. };
 			nodes_.assign(nodes_init, nodes_init+N_);
+      shape_function_ = ShapeFunction::Ptr( new ShapeFunction );
 		}
 	};
 
-	class LineP2 : public Element
+	class LineP2 : public ElementType
 	{
 	public:
 		LineP2()
@@ -378,97 +402,221 @@ namespace test {
 			N_ = 3;
 			int nodes_init[] = { -1., 1., 0. };
 			nodes_.assign(nodes_init, nodes_init+N_);
+      shape_function_ = ShapeFunction::Ptr( new ShapeFunction );
 		}
 	};
 
-	class Structured1D: public Element
+	class Structured1D: public ElementType
 	{
 	public:
 		Structured1D(int N)
 		{
 			N_ = N;
+      shape_function_ = ShapeFunction::Ptr( new ShapeFunction );
 		}
 	};
-
 
 	class Nodes : public eckit::Owned
 	{
 	public:
 		typedef eckit::SharedPtr<Nodes> Ptr;
 	public:
-		Nodes(int ngp, int nlev)
+		Nodes()
 		{
-			ngp_  = ngp;
-			nlev_ = nlev;
+			npts_ = 0;
+      nlev_ = 0;
+      nlon_ = 0;
+      nlat_ = 0;
+			nlev_ = 0;
+      nproma_ = 0;
+      nblk_ = 0;
 		}
-		std::vector< double > field;
-		int ngp_;
+    int npts()   const { return npts_; }
+    int nlev()   const { return nlev_; }
+    int nproma() const { return nproma_; }
+    int nblk()   const { return nblk_; }
+    int nlon()   const { return nlon_; }
+    int nlat()   const { return nlat_; }
+  private:
+    int npts_;
 		int nlev_;
+    int nproma_;
+    int nblk_;
+    int nlon_;
+    int nlat_;
 	};
+  
 
-	class Elements
+  enum IndexType { IDX_NOTUSED=-100, IDX_NODE=-1, IDX_LEVEL=-2, IDX_BLK=-3, IDX_NPROMA=-4, IDX_VAR=-5 };
+	class NewFunctionSpace
 	{
 	public:
-//		Elements(int nlev)
-//		{
-//			nlev_ = nlev;
-//		}
-//		Elements& allocate_dof(int nnodes)
-//		{
-//			field_.resize(nnodes*nlev_);
-//			return *this;
-//		}
-//		Elements& allocate_dof()
-//		{
-//			int dof=0;
-//			for( int etype=0; etype<elements_.size(); ++etype )
-//				dof += nelem_[etype]*elements_[etype]->N();
-//			dof *= nlev_;
-//			field_.resize(dof);
-//			return *this;
-//		}
-		Elements& add(const std::string& element_type, int nelem)
-		{
-			if( element_type == "QuadP1" )   elements_.push_back( Element::Ptr( new QuadP1 ) );
-			if( element_type == "TriagP1" )  elements_.push_back( Element::Ptr( new TriagP1 ) );
-			if( element_type == "LineP0" )   elements_.push_back( Element::Ptr( new LineP0 ) );
-			if( element_type == "LineP1" )   elements_.push_back( Element::Ptr( new LineP1 ) );
-			if( element_type == "LineP2" )   elements_.push_back( Element::Ptr( new LineP2 ) );
-			index_[element_type] = nelem_.size();
-			nelem_.push_back(nelem);
-			return *this;
-		}
-		Elements& nodes( const Nodes::Ptr& nodes )
-		{
-			nodes_ = nodes;
-			return *this;
-		}
+    
+    /// @brief Number of element types
+    size_t nb_element_types() const { return nelem_per_type_.size(); }
+    
+    /// @brief Element type at index
+    const ElementType& element_type(size_t idx) const { ASSERT(idx<element_types_.size()); return *element_types_[idx]; }
+    
+    /// @brief Number of elements for element type at given index
+    size_t nb_elements_in_element_type(size_t idx) const { ASSERT(idx<nelem_per_type_.size()); return nelem_per_type_[idx]; }
+    
+    /// @brief Number of elements for element type at given index
+    size_t nb_elements() const { return nelem_; }
 
+    /// @brief Number of nodes in this function space
+    size_t nb_nodes() const { return nnodes_; }
+
+    /// @brief Number of levels in this function space
+    size_t nb_levels() const { return nlev_; }
+
+    /// @brief Number of blocks (tiles) in this function space
+    size_t nblk() const { return nblk_; }
+
+    /// @brief Number of nodes within one block in this function space
+    size_t nproma() const { return nproma_; }
+    
+    /// @brief Maximum number of points per element type
+    size_t N_max() const { return N_max_; }
+    
+    /// @brief Minimum number of points per element type
+    size_t N_min() const { return N_min_; }
+
+    /// @brief Set the total number of nodes in FunctionSpace
+		void set_nb_nodes( int nb_nodes ) 
+    { 
+      nnodes_ = nb_nodes;
+      if( nproma_==0 ) nproma_=1;
+      ASSERT(nnodes_%nproma_==0);
+      nblk_ = nnodes_/nproma_;
+    }
+    
+    /// @brief Set the total number of nodes in FunctionSpace
+		void set_nproma( int nproma ) 
+    { 
+      nproma_ = nproma;
+      nblk_=0;
+      if( nnodes_!= 0 )
+      {
+        ASSERT(nnodes_%nproma_==0);
+        nblk_ = nnodes_/nproma_;
+      }
+    }
+
+    /// @brief Set the number of levels in FunctionSpace
+		void set_nb_levels( int nb_levels ) { nlev_ = nb_levels; }
+    
+    /// @brief Add elements
+		const ElementType& add_elements(const std::string& element_type, int nelem)
+		{
+			if( element_type == "QuadP1" )   element_types_.push_back( ElementType::Ptr( new QuadP1 ) );
+			if( element_type == "TriagP1")   element_types_.push_back( ElementType::Ptr( new TriagP1 ) );
+			if( element_type == "LineP0" )   element_types_.push_back( ElementType::Ptr( new LineP0 ) );
+			if( element_type == "LineP1" )   element_types_.push_back( ElementType::Ptr( new LineP1 ) );
+			if( element_type == "LineP2" )   element_types_.push_back( ElementType::Ptr( new LineP2 ) );
+			index_[element_type] = nelem_per_type_.size();
+			nelem_per_type_.push_back(nelem);
+      
+      const ElementType& elem = *element_types_.back();
+
+      if( nelem_per_type_.size() == 1 )
+      {
+        N_max_ = elem.N();
+        N_min_ = elem.N();
+        nelem_ = nelem;
+      }
+      else
+      {
+        N_max_ = std::max(N_max_,elem.N());
+        N_min_ = std::min(N_min_,elem.N());
+        nelem_ += nelem;
+      }
+      return elem;
+		}
+    
+    /// @brief Set the nodes that define the element
+		void set_nodes( const Nodes& nodes )
+		{
+			nodes_ = &nodes;
+		}
+    
+    int range(int idx_type) const
+    {
+      switch( idx_type )
+      {
+        case IDX_NODE:   return nb_nodes();
+        case IDX_LEVEL:  return nb_levels();
+        case IDX_BLK:    return nblk();
+        case IDX_NPROMA: return nproma();
+        default:
+          if( idx_type>=0 ) return idx_type;
+      }
+      throw eckit::SeriousBug("idx_type not recognized");
+      return 0;
+    }
+    
+    template< typename DATA_TYPE>
+    atlas::Array<DATA_TYPE> create_field(int idx1=IDX_NOTUSED, int idx2=IDX_NOTUSED, int idx3=IDX_NOTUSED, int idx4=IDX_NOTUSED, int idx5=IDX_NOTUSED, int idx6=IDX_NOTUSED, int idx7=IDX_NOTUSED)
+    {
+      atlas::ArrayShape shape;
+      if( idx1!=IDX_NOTUSED ) shape.push_back(range(idx1));
+      if( idx2!=IDX_NOTUSED ) shape.push_back(range(idx2));
+      if( idx3!=IDX_NOTUSED ) shape.push_back(range(idx3));
+      if( idx4!=IDX_NOTUSED ) shape.push_back(range(idx4));
+      if( idx5!=IDX_NOTUSED ) shape.push_back(range(idx5));
+      if( idx6!=IDX_NOTUSED ) shape.push_back(range(idx6));
+      if( idx7!=IDX_NOTUSED ) shape.push_back(range(idx7));
+      atlas::Array<DATA_TYPE> field(shape);
+      return field;
+    }
+    
+  private:
+
+    /// @brief Lookup of element_type index by name
 		std::map<std::string,int> index_;
-		Element::Vector elements_;
-		Nodes::Ptr nodes_;
-		std::vector<int> nelem_;
-		std::vector< atlas::Array<double> > P0_fields;
+
+    /// @brief Reference to nodes
+		Nodes const* nodes_;
+    
+    /// @brief Element types
+		ElementType::Vector element_types_;
+
+    /// @brief Number of elements per element type
+		std::vector<int> nelem_per_type_;
+    
+    /// @brief Total number of elements
+    int nelem_;
+
+    /// @brief Maximum number of points per element type
+    int N_max_;
+    
+    /// @brief Minimum number of points per element type
+    int N_min_;
+    
+    /// @brief Total number of nodes
+    int nnodes_;
+		int nlev_;
+    int nproma_;
+    int nblk_;
 	};
 
-	class Column // Really is function space
+
+	class Column : public ElementType // Really is a Elementtype in 3D
 	{
 	public:
-		Column(const Element::Ptr& horizontal, const Element::Ptr& vertical):
+		Column(const ElementType::Ptr& horizontal, const ElementType::Ptr& vertical):
 			horizontal_(horizontal),
 			vertical_(vertical)
 		{
+      shape_function_ = ShapeFunction::Ptr( new ShapeFunction );
 		}
-		int N() const { return ngp()*nlev(); }
-		int ngp() const { return horizontal_->N(); }
+		int N() const { return npts()*nlev(); }
+		int npts() const { return horizontal_->N(); }
 		int nlev() const { return vertical_->N(); }
 	protected:
-		Element::Ptr horizontal_;
-		Element::Ptr vertical_;
+		ElementType::Ptr horizontal_;
+		ElementType::Ptr vertical_;
 	};
-
-
-
 
 	template< int NDIM >
 	std::vector< Polynomial<NDIM> > polynomial_basis(int order, double* points, int npts)
@@ -536,20 +684,46 @@ namespace test {
 		}
 		return basis;
 	}
+  
+  template <typename DATA_TYPE>
+  IndexView<DATA_TYPE,2> make_IndexView(atlas::Array<DATA_TYPE>& array, NewFunctionSpace& elements, int element_type_index)
+  {
+    IndexView<DATA_TYPE,2> view;
+    int offset=0;
+    int strides[2];
+    int shape[2];
+    ASSERT( element_type_index < elements.nb_element_types() );
+    ASSERT( array.shape(1) == elements.N_max() );
+
+    DEBUG_VAR(element_type_index);
+    for( int i=0; i<element_type_index; ++i )
+    {
+      offset += elements.nb_elements_in_element_type(i)*elements.N_max();
+    }
+    DEBUG_VAR(offset);
+    const ElementType& elem_type = elements.element_type(element_type_index);
+    strides[0]=array.shape(1);
+    strides[1]=1;
+    shape[0]=elements.nb_elements_in_element_type(element_type_index);
+    shape[1]=elem_type.N();
+    return IndexView<DATA_TYPE,2>( array.data()+offset, strides, shape);
+  }
 
 } // namespace test
 } // namespace atlas
 
 using namespace atlas::test;
 
+BOOST_AUTO_TEST_CASE( int_mpi )
+{
+	eckit::mpi::init();
+}
+
 BOOST_AUTO_TEST_CASE( test_functionspace )
 {
-
-	eckit::mpi::init();
-
-	Element::Ptr point( new Point );
-	Element::Ptr quad( new QuadP1 );
-	Element::Ptr levels( new Structured1D(100) );
+	ElementType::Ptr point( new Point );
+	ElementType::Ptr quad( new QuadP1 );
+	ElementType::Ptr levels( new Structured1D(100) );
 
 	Column quad_column(quad,levels);
 	Column point_column(point,levels);
@@ -558,22 +732,101 @@ BOOST_AUTO_TEST_CASE( test_functionspace )
 	//std::cout << levels->N() << std::endl;
 	DEBUG_VAR(quad_column.N());
 	DEBUG_VAR(quad_column.nlev());
-	DEBUG_VAR(quad_column.ngp());
+	DEBUG_VAR(quad_column.npts());
 
 	DEBUG_VAR(point_column.N());
 	DEBUG_VAR(point_column.nlev());
-	DEBUG_VAR(point_column.ngp());
+	DEBUG_VAR(point_column.npts());
 
-	Nodes::Ptr nodes( new Nodes(7,10) );
+	Nodes nodes;
 
-	Elements elements;
-	elements.nodes( nodes );
-	elements.add("QuadP1",2).add("TriagP1",1);
+	NewFunctionSpace fs;
+	fs.set_nb_nodes( 8 );
+  fs.set_nproma( 4 );
+  fs.set_nb_levels(100);
+  const ElementType& triags = fs.add_elements("TriagP1",2);
+  BOOST_CHECK_EQUAL( fs.nb_element_types(), 1 );
+  BOOST_CHECK_EQUAL( fs.N_max() , 3 );
+  BOOST_CHECK_EQUAL( fs.N_min() , 3 );
+  BOOST_CHECK_EQUAL( fs.nb_elements() , 2 );
+	const ElementType& quads  = fs.add_elements("QuadP1",2);
+  BOOST_CHECK_EQUAL( fs.nb_element_types(), 2 );
+  BOOST_CHECK_EQUAL( fs.N_max() , 4 );
+  BOOST_CHECK_EQUAL( fs.N_min() , 3 );
+  BOOST_CHECK_EQUAL( fs.nb_elements() , 4 );
+  
+  /// Allocate array for all connectivity across all elements
+  atlas::Array<int> element_node_connectivity(fs.nb_elements(),fs.N_max());
+  
+  /// Access the data across all elements
+  atlas::IndexView<int,2> elem_connectivity(element_node_connectivity);
+  // --- Triangle 1 ---
+  elem_connectivity(0,0) =  1;
+  elem_connectivity(0,1) =  2;
+  elem_connectivity(0,2) =  3;     elem_connectivity(0,3) = -1;
+  // --- Triangle 2---
+  elem_connectivity(1,0) = 11;
+  elem_connectivity(1,1) = 12;
+  elem_connectivity(1,2) = 13;     elem_connectivity(1,3) = -1;
+  // --- Quad 1 ---
+  elem_connectivity(2,0) = 21;
+  elem_connectivity(2,1) = 22;
+  elem_connectivity(2,2) = 23;
+  elem_connectivity(2,3) = 24;
+  // --- Quad 2 ---
+  elem_connectivity(3,0) = 31;
+  elem_connectivity(3,1) = 32;
+  elem_connectivity(3,2) = 33;
+  elem_connectivity(3,3) = 34;
 
-	Elements edges;
-	edges.nodes( nodes );
-	edges.add("LineP0",9);
+  /// Access the data
+  atlas::IndexView<int,2> triag_node_connectivity = make_IndexView(element_node_connectivity,fs,0);
+  BOOST_CHECK_EQUAL( triag_node_connectivity.shape(0), 2 );
+  BOOST_CHECK_EQUAL( triag_node_connectivity.shape(1), 3 );
+  BOOST_CHECK_EQUAL( triag_node_connectivity(0,0), 1 );
+  BOOST_CHECK_EQUAL( triag_node_connectivity(0,1), 2 );
+  BOOST_CHECK_EQUAL( triag_node_connectivity(0,2), 3 );
+  BOOST_CHECK_EQUAL( triag_node_connectivity(1,0), 11 );
+  BOOST_CHECK_EQUAL( triag_node_connectivity(1,1), 12 );
+  BOOST_CHECK_EQUAL( triag_node_connectivity(1,2), 13 );
+  
+  BOOST_CHECK_THROW( triag_node_connectivity(0,3), eckit::OutOfRange ); // should fail (OUT OF RANGE)
 
+  atlas::IndexView<int,2> quad_node_connectivity = make_IndexView(element_node_connectivity,fs,1);
+  BOOST_CHECK_EQUAL( quad_node_connectivity.shape(0), 2 );
+  BOOST_CHECK_EQUAL( quad_node_connectivity.shape(1), 4 );
+  BOOST_CHECK_EQUAL( quad_node_connectivity(0,0), 21 );
+  BOOST_CHECK_EQUAL( quad_node_connectivity(0,1), 22 );
+  BOOST_CHECK_EQUAL( quad_node_connectivity(0,2), 23 );
+  BOOST_CHECK_EQUAL( quad_node_connectivity(0,3), 24 );
+  BOOST_CHECK_EQUAL( quad_node_connectivity(1,0), 31 );
+  BOOST_CHECK_EQUAL( quad_node_connectivity(1,1), 32 );
+  BOOST_CHECK_EQUAL( quad_node_connectivity(1,2), 33 );
+  BOOST_CHECK_EQUAL( quad_node_connectivity(1,3), 34 );
+  
+	NewFunctionSpace edges;
+  // edges.set_nodes( nodes );
+	edges.add_elements("LineP0",11);
+  
+  atlas::Array<double> press_ifs(fs.nproma(),fs.nb_levels(),nodes.nblk());
+  atlas::Array<double> press = fs.create_field<double>(IDX_LEVEL,IDX_NODE);
+  BOOST_CHECK_EQUAL( press.size(), fs.nb_levels()*fs.nb_nodes() );
+
+  atlas::Array<double> wind_uv = fs.create_field<double>(2,IDX_LEVEL,IDX_NODE);
+  BOOST_CHECK_EQUAL( wind_uv.size(), 2*fs.nb_levels()*fs.nb_nodes() );
+  
+  BOOST_CHECK_EQUAL( fs.nproma(), 4);
+  BOOST_CHECK_EQUAL( fs.nblk(), 2);
+  BOOST_CHECK_EQUAL( fs.nb_nodes(), 8);
+  atlas::Array<double> wind_uv_ifs = fs.create_field<double>(IDX_NPROMA,IDX_LEVEL,2,IDX_BLK);
+  BOOST_CHECK_EQUAL( wind_uv_ifs.size(), 2*fs.nb_levels()*fs.nb_nodes() );
+  
+}
+
+
+
+BOOST_AUTO_TEST_CASE( test_polynomial )
+{
 	typedef Polynomial<2> polynomial_type;
 	typedef polynomial_type::monomial_type monomial_type;
 
@@ -645,7 +898,9 @@ BOOST_AUTO_TEST_CASE( test_functionspace )
 
 	std::cout << vr << "\n" << vc << "\n\n" << vr*vc << std::endl;
 
+}
 
-
+BOOST_AUTO_TEST_CASE( finalize_mpi )
+{
 	eckit::mpi::finalize();
 }

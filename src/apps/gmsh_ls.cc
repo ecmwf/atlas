@@ -68,7 +68,7 @@ void GmshLs::run()
     Mesh& mesh = *in_mesh;
 
     FunctionSpace& nodes   = mesh.function_space( "nodes" );
-    FieldT<double>& coords = nodes.field<double>( "coordinates" );
+    FieldT<double>& lonlat = nodes.field<double>( "coordinates" );
     FieldT<int>& glb_idx   = nodes.field<int>( "glb_idx" );
 
     size_t nb_nodes = nodes.shape(0);

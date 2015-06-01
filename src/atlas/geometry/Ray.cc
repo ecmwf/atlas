@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/geometry/TriangleIntersection.h"
+#include "atlas/geometry/Ray.h"
 
 #include "eckit/eckit_config.h"
 
@@ -23,31 +23,11 @@ using Eigen::Vector3d;
 namespace atlas {
 namespace geometry {
 
-Intersect TriangleIntersection::intersects(const Ray& r, double epsilon) const {
-
-  Intersect isect;
-
-  Vector3d edge1 = v1 - v0;
-  Vector3d edge2 = v2 - v0;
-  Vector3d pvec = r.dir.cross(edge2);
-
-  const double det = edge1.dot(pvec);
-
-  if (std::abs(det) < epsilon) return isect.success(false);
-
-  const double invDet = 1. / det;
-  Vector3d tvec = r.orig - v0;
-  isect.u = tvec.dot(pvec) * invDet;
-  if (isect.u + epsilon < 0 || isect.u - epsilon > 1) return isect.success(false);
-
-  Vector3d qvec = tvec.cross(edge1);
-  isect.v = r.dir.dot(qvec) * invDet;
-
-  if (isect.v + epsilon < 0 || isect.u + isect.v - epsilon > 1) return isect.success(false);
-  isect.t = edge2.dot(qvec) * invDet;
-
-  return isect.success(true);;
+Ray::Ray(double *p) {
+    orig = Eigen::Vector3d::Map(p);
+    dir = -orig;
 }
+
 
 //----------------------------------------------------------------------------------------------------------------------
 

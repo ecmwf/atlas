@@ -125,10 +125,10 @@ double quad_quality( const LLPoint2& p1, const LLPoint2& p2, const LLPoint2& p3,
 
 void build_statistics( Mesh& mesh )
 {
-  const double radius_km = Earth::radius()*1e-3;
+  const double radius_km = Earth::radiusInMeters()*1e-3;
 
   FunctionSpace& nodes = mesh.function_space( "nodes" );
-  ArrayView<double,2> coords ( nodes.field( "coordinates"    ) );
+  ArrayView<double,2> lonlat ( nodes.field( "lonlat"    ) );
 
   if( mesh.has_function_space("edges") )
   {
@@ -143,8 +143,8 @@ void build_statistics( Mesh& mesh )
     {
       int ip1 = edge_nodes(jedge,0);
       int ip2 = edge_nodes(jedge,1);
-      LLPoint2 p1(coords(ip1,LON),coords(ip1,LAT));
-      LLPoint2 p2(coords(ip2,LON),coords(ip2,LAT));
+      LLPoint2 p1(lonlat(ip1,LON),lonlat(ip1,LAT));
+      LLPoint2 p2(lonlat(ip2,LON),lonlat(ip2,LAT));
       dist(jedge) = arc_in_rad(p1,p2)*radius_km;
     }
   }
@@ -178,9 +178,9 @@ void build_statistics( Mesh& mesh )
       int ip1 = elem_nodes(jelem,0);
       int ip2 = elem_nodes(jelem,1);
       int ip3 = elem_nodes(jelem,2);
-      LLPoint2 p1(coords(ip1,LON),coords(ip1,LAT));
-      LLPoint2 p2(coords(ip2,LON),coords(ip2,LAT));
-      LLPoint2 p3(coords(ip3,LON),coords(ip3,LAT));
+      LLPoint2 p1(lonlat(ip1,LON),lonlat(ip1,LAT));
+      LLPoint2 p2(lonlat(ip2,LON),lonlat(ip2,LAT));
+      LLPoint2 p3(lonlat(ip3,LON),lonlat(ip3,LAT));
 
       double l12 = arc_in_rad(p1,p2)/DEG_TO_RAD;
       double l23 = arc_in_rad(p2,p3)/DEG_TO_RAD;
@@ -225,10 +225,10 @@ void build_statistics( Mesh& mesh )
       int ip3 = elem_nodes(jelem,2);
       int ip4 = elem_nodes(jelem,3);
 
-      LLPoint2 p1(coords(ip1,LON),coords(ip1,LAT));
-      LLPoint2 p2(coords(ip2,LON),coords(ip2,LAT));
-      LLPoint2 p3(coords(ip3,LON),coords(ip3,LAT));
-      LLPoint2 p4(coords(ip4,LON),coords(ip4,LAT));
+      LLPoint2 p1(lonlat(ip1,LON),lonlat(ip1,LAT));
+      LLPoint2 p2(lonlat(ip2,LON),lonlat(ip2,LAT));
+      LLPoint2 p3(lonlat(ip3,LON),lonlat(ip3,LAT));
+      LLPoint2 p4(lonlat(ip4,LON),lonlat(ip4,LAT));
 
       eta(jelem) = quad_quality(p1,p2,p3,p4);
 
@@ -268,7 +268,7 @@ void build_statistics( Mesh& mesh )
 
     for( int jnode=0; jnode<nodes.shape(0); ++jnode )
     {
-      const double lat = coords(jnode,YY)*DEG_TO_RAD;
+      const double lat = lonlat(jnode,LAT)*DEG_TO_RAD;
       const double hx = radius_km*std::cos(lat)*DEG_TO_RAD;
       const double hy = radius_km*DEG_TO_RAD;
       dual_delta_sph(jnode) = std::sqrt(dual_volumes(jnode)*hx*hy);

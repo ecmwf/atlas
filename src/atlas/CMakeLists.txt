@@ -76,8 +76,12 @@ util/IndexView.cc
 )
 
 list( APPEND atlas_Meshgen_srcs
-meshgen/EqualAreaPartitioner.cc
-meshgen/EqualAreaPartitioner.h
+meshgen/Delaunay.cc
+meshgen/Delaunay.h
+meshgen/EqualRegionsPartitioner.cc
+meshgen/EqualRegionsPartitioner.h
+meshgen/MeshGenerator.cc
+meshgen/MeshGenerator.h
 meshgen/ReducedGridMeshGenerator.cc
 meshgen/ReducedGridMeshGenerator.h
 )
@@ -193,6 +197,8 @@ geometry/QuadrilateralIntersection.h
 geometry/QuadrilateralIntersection.cc
 geometry/TriangleIntersection.h
 geometry/TriangleIntersection.cc
+geometry/Ray.h
+geometry/Ray.cc
 )
 
 list( APPEND atlas_srcs
@@ -226,8 +232,6 @@ Latitudes.cc
 Latitudes.h
 Mesh.cc
 Mesh.h
-MeshCache.cc
-MeshCache.h
 Metadata.cc
 Metadata.h
 Parameters.h

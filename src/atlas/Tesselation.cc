@@ -8,6 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
+#include "atlas/Tesselation.h"
+
 #include <cmath>
 #include <vector>
 #include <memory>
@@ -55,21 +57,13 @@ const Point_3 origin = Point_3(CGAL::ORIGIN);
 #include "atlas/FunctionSpace.h"
 #include "atlas/Mesh.h"
 #include "atlas/Parameters.h"
-
 #include "atlas/PointSet.h"
-#include "atlas/Tesselation.h"
-#include "atlas/MeshCache.h"
 #include "atlas/Grid.h"
-
-#include "atlas/grids/ReducedGrid.h"
-
-#include "atlas/meshgen/ReducedGridMeshGenerator.h"
 
 using namespace eckit;
 using namespace eckit::geometry;
 
 namespace atlas {
-
 
 //------------------------------------------------------------------------------------------------------
 
@@ -118,10 +112,12 @@ void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, PointSet& p
     extents[0] = nb_triags;
     extents[1] = Field::UNDEF_VARS;
 
-	FunctionSpace& triags  = mesh.create_function_space( "triags", "Lagrange_P1", extents );
+    FunctionSpace& triags  = mesh.create_function_space( "triags", "Lagrange_P1", extents );
     triags.metadata().set("type",static_cast<int>(Entity::ELEMS));
 
-    IndexView<int,2> triag_nodes ( triags.create_field<int>("nodes",3) );
+    IndexView<int,2> triag_nodes   ( triags.create_field<int>("nodes",3) );
+    ArrayView<gidx_t,1> triag_gidx ( triags.create_field<gidx_t>("glb_idx",1) );
+    ArrayView<int,1> triag_part    ( triags.create_field<int>("partition",1) );
 
     Point3 pt;
     size_t idx[3];
@@ -129,7 +125,6 @@ void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, PointSet& p
 
     std::cout << "Inserting triags (" << eckit::BigNum(nb_triags) << ")" << std::endl;
 
-//    boost::progress_display show_triag_progress( nb_triags );
     size_t tidx = 0;
     for( Polyhedron_3::Facet_const_iterator f = poly.facets_begin(); f != poly.facets_end(); ++f )
     {
@@ -175,11 +170,29 @@ void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, PointSet& p
         triag_nodes(tidx,1) = idx[1];
         triag_nodes(tidx,2) = idx[2];
 
+        triag_gidx(tidx) = tidx+1;
+
+        triag_part(tidx) = 0;
+
         ++tidx;
-//        ++show_triag_progress;
     }
 
-    assert( tidx == nb_triags );
+    ASSERT( tidx == nb_triags );
+
+    /* quads */
+
+    const size_t nb_quads = 0;
+
+    std::vector<int> quads_extents(2);
+    extents[0] = nb_quads;
+    extents[1] = Field::UNDEF_VARS;
+
+    FunctionSpace& quads  = mesh.create_function_space( "quads", "Lagrange_P1", quads_extents );
+    quads.metadata().set("type",static_cast<int>(Entity::ELEMS));
+
+    IndexView<int,2> quads_nodes   ( quads.create_field<int>("nodes",3) );
+    ArrayView<gidx_t,1> quads_gidx ( quads.create_field<gidx_t>("glb_idx",1) );
+    ArrayView<int,1> quads_part    ( quads.create_field<int>("partition",1) );
 }
 
 #else
@@ -200,55 +213,7 @@ void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, PointSet& p
 
 //------------------------------------------------------------------------------------------------------
 
-/// @ TODO Abstract this method into a MeshGenerator class (with use of MeshCache)
-
-void Tesselation::tesselate( Grid& g ) {
-
-  std::string uid = g.unique_id();
-
-  Mesh& mesh = g.mesh();
-
-  MeshCache cache;
-
-  if (cache.retrieve(g, mesh)) return;
-
-  std::cout << "Mesh not in cache -- tesselating grid " << uid << std::endl;
-
-  bool atlasTriangulateRGG = eckit::Resource<bool>("atlas.triangulate.RGG;$ATLAS_TRIANGULATE_RGG", false);
-
-  grids::ReducedGrid* rg = dynamic_cast<grids::ReducedGrid*>(&g);
-  if (atlasTriangulateRGG && rg) {
-
-    // fast tesselation method, specific for ReducedGrid's
-
-    std::cout << "Mesh is ReducedGrid " << g.shortName() << std::endl;
-
-    ASSERT(rg);
-
-    meshgen::ReducedGridMeshGenerator mg;
-
-    // force these flags
-    mg.set_three_dimensional(true);
-    mg.set_patch_pole(true);
-    //		mg.set_include_pole(true);
-    mg.triangulate_quads_ = true;
-
-    mg.generate(*rg, mesh);
-
-  } else {
-
-    // slower, more robust tesselation method, using Delaunay triangulation
-
-    std::cout << "Using Delaunay triangulation on grid: " << g.shortName() << std::endl;
-
-    Tesselation::tesselate(mesh);
-  }
-
-  cache.insert(g, mesh);
-
-}
-
-void Tesselation::tesselate( Mesh& mesh )
+void Tesselation::delaunay_triangulation( Mesh& mesh )
 {
     // don't tesselate meshes already with triags or quads
     if( mesh.has_function_space("triags") || mesh.has_function_space("quads") )
@@ -310,7 +275,7 @@ void Tesselation::create_mesh_structure( Mesh& mesh, const size_t nb_nodes )
 
 	nodes.create_field<double>("xyz",3,IF_EXISTS_RETURN);
 
-    // create / ensure mesh has latlon
+    // create / ensure mesh has lonlat
 
 	nodes.create_field<double>("lonlat",2,IF_EXISTS_RETURN);
 
@@ -321,197 +286,64 @@ void Tesselation::create_mesh_structure( Mesh& mesh, const size_t nb_nodes )
 
 //------------------------------------------------------------------------------------------------------
 
-void Tesselation::generate_lonlat_points( Mesh& mesh,
-                                          const size_t& nlats,
-                                          const size_t& nlong )
-{
-    const size_t nb_nodes = nlats * nlong;
-
-    Tesselation::create_mesh_structure(mesh,nb_nodes);
-
-    FunctionSpace& nodes = mesh.function_space( "nodes" );
-
-    ASSERT(  nodes.shape(0) == nb_nodes );
-
-	ArrayView<double,2> coords  ( nodes.field("xyz") );
-    ArrayView<double,2> lonlat  ( nodes.field("lonlat") );
-    ArrayView<gidx_t,1> glb_idx ( nodes.field("glb_idx") );
-
-    // generate lat/long points
-
-//    std::cout << "generating nlats (" << nlats << ") x  (" << nlong << ")" << " = " << nb_nodes << std::endl;
-
-    const double lat_inc = 180. / (double)nlats;
-    const double lat_start = -90 + 0.5*lat_inc;
-//    const double lat_end   = 90. - 0.5*lat_inc;
-
-    const double lon_inc = 360. / (double)nlong;
-    const double lon_start = 0.5*lon_inc;
-//    const double lon_end   = 360. - 0.5*lon_inc;
-
-    double lat = 0;
-    double lon = 0;
-
-    size_t visits = 0;
-
-    lat = lat_start;
-    for( size_t ilat = 0; ilat < nlats; ++ilat, lat += lat_inc )
-    {
-        lon = lon_start;
-        for( size_t jlon = 0 ; jlon < nlong; ++jlon, lon += lon_inc )
-        {
-            const size_t idx = jlon + ( ilat * nlong );
-
-            ASSERT( idx < nb_nodes );
-
-            glb_idx(idx) = idx;
-
-            lonlat(idx,LON) = lon;
-            lonlat(idx,LAT) = lat;
-
-            eckit::geometry::latlon_to_3d( lat, lon, coords[idx].data() );
-
-            //            std::cout << idx << " [ " << lat << " ; " << lon << " ] " << p << std::endl;
-
-            ++visits;
-        }
-    }
-
-    ASSERT( visits == nb_nodes );
-}
-
-//------------------------------------------------------------------------------------------------------
-
-void Tesselation::generate_lonlat_grid( Mesh& mesh, const size_t& nlats, const size_t& nlong )
-{
-    const size_t nb_nodes = (nlats+1) * (nlong+1);
-
-    Tesselation::create_mesh_structure(mesh,nb_nodes);
-
-    FunctionSpace& nodes = mesh.function_space( "nodes" );
-
-    ASSERT( nodes.shape(0) == nb_nodes );
-
-	ArrayView<double,2> coords  ( nodes.field("xyz") );
-    ArrayView<double,2> lonlat  ( nodes.field("lonlat") );
-    ArrayView<gidx_t,1> glb_idx ( nodes.field("glb_idx") );
-
-    const double lat_inc = 180. / nlats;
-    const double lat_start = -90.;
-    const double lat_end   =  90.;
-
-    const double lon_inc = 360. / nlong;
-    const double lon_start = 0.0;
-    const double lon_end   = 360.;
-
-    double lat = 0;
-    double lon = 0;
-
-    size_t visits = 0;
-
-    lat = lat_start;
-    for( size_t ilat = 0; ilat < nlats+1; ++ilat, lat += lat_inc )
-    {
-        lon = lon_start;
-        for( size_t jlon = 0 ; jlon < nlong+1; ++jlon, lon += lon_inc )
-        {
-
-            const size_t idx = jlon + ( ilat * (nlong+1) );
-
-            assert( idx < nb_nodes );
-
-            glb_idx(idx) = idx;
-
-            lonlat(idx,LON) = lon;
-            lonlat(idx,LAT) = lat;
-
-            eckit::geometry::latlon_to_3d( lat, lon, coords[idx].data() );
-
-            ++visits;
-
-//            std::cout << idx << " "
-//                      << lat << " "
-//                      << lon << " "
-//                      << (*pts)[ ilat*(nlats+1) + jlon ](XX) << " "
-//                      << (*pts)[ ilat*(nlats+1) + jlon ](YY) << " "
-//                      << (*pts)[ ilat*(nlats+1) + jlon ](ZZ) << " "
-//                      << std::endl;
-//            std::cout << (*pts)[idx] << std::endl;
-
-            if( jlon == nlong ) lon = lon_end;
-        }
-
-        if( ilat == nlats ) lat = lat_end;
-    }
-
-    ASSERT( visits == nb_nodes );
-}
-
-//------------------------------------------------------------------------------------------------------
-
 void Tesselation::create_cell_centres( Mesh& mesh )
 {
     ASSERT( mesh.has_function_space("nodes") );
     ASSERT( mesh.has_function_space("triags") );
+    ASSERT( mesh.has_function_space("quads") );
 
     FunctionSpace& nodes     = mesh.function_space( "nodes" );
-	ArrayView<double,2> coords  ( nodes.field("xyz") );
+    ArrayView<double,2> coords  ( nodes.field("xyz") );
 
     const size_t nb_nodes = nodes.shape(0);
 
-    FunctionSpace& triags      = mesh.function_space( "triags" );
-    IndexView<int,2> triag_nodes ( triags.field( "nodes" ) );
+    if( mesh.has_function_space("triags") ) {
 
-    const size_t nb_triags = triags.shape(0);
+        FunctionSpace& triags      = mesh.function_space( "triags" );
+        IndexView<int,2> triag_nodes ( triags.field( "nodes" ) );
+        const size_t nb_triags = triags.shape(0);
 
-    ArrayView<double,2> triags_centres ( triags.create_field<double>("centre",3) );
+        ArrayView<double,2> triags_centres ( triags.create_field<double>("centre",3) );
 
-    const double third = 1. / 3.;
-    for( int e = 0; e < nb_triags; ++e )
-    {
-        const int i0 =  triag_nodes(e,0);
-        const int i1 =  triag_nodes(e,1);
-        const int i2 =  triag_nodes(e,2);
+        const double third = 1. / 3.;
+        for( int e = 0; e < nb_triags; ++e )
+        {
+            const int i0 =  triag_nodes(e,0);
+            const int i1 =  triag_nodes(e,1);
+            const int i2 =  triag_nodes(e,2);
 
-        assert( i0 < nb_nodes && i1 < nb_nodes && i2 < nb_nodes );
+            assert( i0 < nb_nodes && i1 < nb_nodes && i2 < nb_nodes );
 
-#if 0 /* print triangle connectivity */
-        std::cout << i0 << " " << i1 << " " << i2 << std::endl;
-#endif
-#if 0 /* print triangle idx and coordinates */
-           std::cout << e << " "
-                     << i0 << " " << i1 << " " << i2 << " ";
-           for( int i = 0; i < 3; ++i )
-               std::cout << "("
-                     <<  coords(triag_nodes(e,i),XX) << "; "
-                     <<  coords(triag_nodes(e,i),YY) << "; "
-                     <<  coords(triag_nodes(e,i),ZZ) << ")";
-          std::cout << std::endl;
-#endif
-        triags_centres(e,XX) = third * ( coords(i0,XX) + coords(i1,XX) + coords(i2,XX) );
-        triags_centres(e,YY) = third * ( coords(i0,YY) + coords(i1,YY) + coords(i2,YY) );
-        triags_centres(e,ZZ) = third * ( coords(i0,ZZ) + coords(i1,ZZ) + coords(i2,ZZ) );
+            triags_centres(e,XX) = third * ( coords(i0,XX) + coords(i1,XX) + coords(i2,XX) );
+            triags_centres(e,YY) = third * ( coords(i0,YY) + coords(i1,YY) + coords(i2,YY) );
+            triags_centres(e,ZZ) = third * ( coords(i0,ZZ) + coords(i1,ZZ) + coords(i2,ZZ) );
 
-#if 0 /* print sorted triangle connectivity */
-        std::vector<int> s;
-        s.push_back(i0);
-        s.push_back(i1);
-        s.push_back(i2);
-        std::sort(s.begin(),s.end());
-        std::cout << s[0] << " " << s[1] << " " << s[2] << std::endl;
-#endif
+        }
     }
 
-#if 0 /* print triangle baricentres */
-    for( int e = 0; e < nb_triags; ++e )
-    {
-        std::cout << triags_centres(e,XX) << " "
-                  << triags_centres(e,YY) << " "
-                  << triags_centres(e,ZZ) << " "
-                  << e << " "
-                  << std::endl;
+    if( mesh.has_function_space("quads") ) {
+        FunctionSpace& quads  = mesh.function_space( "quads" );
+        IndexView<int,2> quads_nodes ( quads.field( "nodes" ) );
+        const size_t nb_quads = quads.shape(0);
+
+        ArrayView<double,2> quads_centres ( quads.create_field<double>("centre",3) );
+
+        const double fourth = 1. / 4.;
+        for( int e = 0; e < nb_quads; ++e )
+        {
+            const int i0 =  quads_nodes(e,0);
+            const int i1 =  quads_nodes(e,1);
+            const int i2 =  quads_nodes(e,2);
+            const int i3 =  quads_nodes(e,3);
+
+            assert( i0 < nb_nodes && i1 < nb_nodes && i2 < nb_nodes && i3 < nb_nodes );
+
+            quads_centres(e,XX) = fourth * ( coords(i0,XX) + coords(i1,XX) + coords(i2,XX) + coords(i3,XX) );
+            quads_centres(e,YY) = fourth * ( coords(i0,YY) + coords(i1,YY) + coords(i2,YY) + coords(i3,YY) );
+            quads_centres(e,ZZ) = fourth * ( coords(i0,ZZ) + coords(i1,ZZ) + coords(i2,ZZ) + coords(i3,ZZ) );
+
+        }
     }
-#endif
 }
 
 void Tesselation::build_mesh( const Grid& grid, Mesh& mesh )
@@ -526,7 +358,7 @@ void Tesselation::build_mesh( const Grid& grid, Mesh& mesh )
 
     ASSERT(  nodes.shape(0) == npts );
 
-	ArrayView<double,2> coords  ( nodes.field("xyz") );
+    ArrayView<double,2> coords  ( nodes.field("xyz") );
     ArrayView<double,2> lonlat  ( nodes.field("lonlat") );
     ArrayView<gidx_t,1> glb_idx ( nodes.field("glb_idx") );
 

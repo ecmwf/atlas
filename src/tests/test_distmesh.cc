@@ -72,9 +72,9 @@ BOOST_GLOBAL_FIXTURE( MPIFixture )
 BOOST_AUTO_TEST_CASE( test_distribute_t63 )
 {
   // Every task builds full mesh
-  meshgen::ReducedGridMeshGenerator generator;
-  generator.options.set("nb_parts",1);
-  generator.options.set("part",0);
+  meshgen::ReducedGridMeshGenerator generate;
+  generate.options.set("nb_parts",1);
+  generate.options.set("part",0);
 
       // int lon[] = {4,6,8,8,8};
       // test::TestGrid grid(5,lon);
@@ -83,10 +83,10 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
   grids::rgg::N16 grid;
 
 
-  generator.options.set<int>("nb_parts", eckit::mpi::size());
-  generator.options.set<int>("part", eckit::mpi::rank());
+  generate.options.set<int>("nb_parts", eckit::mpi::size());
+  generate.options.set<int>("part", eckit::mpi::rank());
 
-  Mesh::Ptr m( generator.generate( grid ) );
+  Mesh::Ptr m( generate( grid ) );
 
       //  Mesh::Ptr m( Gmsh::read("unstr.msh") );
 

@@ -18,25 +18,39 @@ namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
 
-PointIndex3* create_cell_centre_index( atlas::Mesh& mesh )
+ElemPayload make_elem_payload(size_t id, char t) { return ElemPayload(id,t); }
+
+ElemIndex3* create_element_centre_index( const atlas::Mesh& mesh )
 {
     atlas::FunctionSpace& triags = mesh.function_space( "triags" );
+    atlas::FunctionSpace& quads  = mesh.function_space( "quads" );
+
     ArrayView<double,2> triags_centres ( triags.field( "centre" ) );
+    ArrayView<double,2> quads_centres  ( quads.field( "centre" ) );
 
-    const std::size_t npts = triags.shape(0);
+    const size_t ntriags = triags.shape(0);
+    const size_t nquads  = quads.shape(0);
 
-    std::vector<PointIndex3::Value> p;
-    p.reserve(npts);
+    std::vector<ElemIndex3::Value> p;
+    p.reserve(ntriags+nquads);
 
-    for( std::size_t ip = 0; ip < npts; ++ip )
+    for( size_t ip = 0; ip < ntriags; ++ip )
     {
-        p.push_back( PointIndex3::Value(
-                         PointIndex3::Point(triags_centres(ip,atlas::XX),
-                                            triags_centres(ip,atlas::YY),
-                                            triags_centres(ip,atlas::ZZ) ), ip ) );
+        p.push_back( ElemIndex3::Value(
+                         ElemIndex3::Point(triags_centres(ip,atlas::XX),
+                                           triags_centres(ip,atlas::YY),
+                                           triags_centres(ip,atlas::ZZ) ), make_elem_payload(ip,'t') ) );
     }
 
-    PointIndex3* tree = new PointIndex3();
+    for( size_t ip = 0; ip < nquads; ++ip )
+    {
+        p.push_back( ElemIndex3::Value(
+                         ElemIndex3::Point(quads_centres(ip,atlas::XX),
+                                           quads_centres(ip,atlas::YY),
+                                           quads_centres(ip,atlas::ZZ) ), make_elem_payload(ip,'q') ) );
+    }
+
+    ElemIndex3* tree = new ElemIndex3();
 
     tree->build(p.begin(), p.end());
 

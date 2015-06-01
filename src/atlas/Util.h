@@ -101,41 +101,41 @@ public:
 };
 
 
-struct LatLonPoint
+struct LonLatPoint
 {
 	// Storage is in microdegrees
 	// This structure is used in sorting algorithms, and uses less memory than
 	// if x and y were in double precision.
-	LatLonPoint() {}
-	LatLonPoint( int x_, int y_ )
+	LonLatPoint() {}
+	LonLatPoint( int x_, int y_ )
 	{
 		x = x_;
 		y = y_;
 	}
-  LatLonPoint( long x_, long y_ )
+  LonLatPoint( long x_, long y_ )
 	{
 		x = x_;
 		y = y_;
 	}
-  LatLonPoint( double x_, double y_ )
+  LonLatPoint( double x_, double y_ )
 	{
 		x = microdeg(x_);
 		y = microdeg(y_);
 	}
-	LatLonPoint( const double coord[2] )
+	LonLatPoint( const double coord[2] )
 	{
-		x = microdeg(coord[XX]);
-		y = microdeg(coord[YY]);
+		x = microdeg(coord[LON]);
+		y = microdeg(coord[LAT]);
 	}
-	LatLonPoint( const ArrayView<int,1>& coord )
+	LonLatPoint( const ArrayView<int,1>& coord )
 	{
-		x = coord[XX];
-		y = coord[YY];
+		x = coord[LON];
+		y = coord[LAT];
 	}
-	LatLonPoint( const ArrayView<double,1>& coord )
+	LonLatPoint( const ArrayView<double,1>& coord )
 	{
-		x = microdeg(coord[XX]);
-		y = microdeg(coord[YY]);
+		x = microdeg(coord[LON]);
+		y = microdeg(coord[LAT]);
 	}
 
   long uid64() const;
@@ -145,7 +145,7 @@ struct LatLonPoint
   gidx_t uid() const;
 
 	mutable int x, y;
-	bool operator < (const LatLonPoint& other) const
+	bool operator < (const LonLatPoint& other) const
 	{
 		if( y > other.y  ) return true;
 		if( y == other.y ) return (x < other.x);
@@ -161,10 +161,10 @@ private:
 	static int SOUTH;
 };
 
-template<> inline gidx_t LatLonPoint::uidT<int >() const { return uid32(); }
-template<> inline gidx_t LatLonPoint::uidT<long>() const { return uid64(); }
+template<> inline gidx_t LonLatPoint::uidT<int >() const { return uid32(); }
+template<> inline gidx_t LonLatPoint::uidT<long>() const { return uid64(); }
 
-inline int LatLonPoint::uid32() const
+inline int LonLatPoint::uid32() const
 {
   // max precision is 0.02 degree
   int iy = static_cast<int>((2*NORTH-y)*5e-5);
@@ -174,7 +174,7 @@ inline int LatLonPoint::uid32() const
   return id;
 }
 
-inline long LatLonPoint::uid64() const
+inline long LonLatPoint::uid64() const
 {
   // max precision is 1 microdegree
   long iy = static_cast<long>((4*NORTH-y));
@@ -184,7 +184,7 @@ inline long LatLonPoint::uid64() const
   return id;
 }
 
-inline gidx_t LatLonPoint::uid() const {
+inline gidx_t LonLatPoint::uid() const {
   return uidT<gidx_t>();
 }
 
@@ -224,7 +224,7 @@ public:
 		inplace[1] = inplace[1];
 	}
 
-	void operator()(LatLonPoint& inplace, int direction) const
+	void operator()(LonLatPoint& inplace, int direction) const
 	{
 		inplace.x = inplace.x + direction*microdeg(x_translation_);
 		inplace.y = inplace.y;
@@ -271,53 +271,53 @@ struct ComputeUid
 
   gidx_t operator()( const double crd[] ) const
 	{
-		return LatLonPoint( crd ).uid();
+		return LonLatPoint( crd ).uid();
 	}
 
 	gidx_t operator()( int node ) const
 	{
-		return LatLonPoint( coords[node] ).uid();
+		return LonLatPoint( lonlat[node] ).uid();
 	}
 
   gidx_t operator()( const IndexView<int,1>& elem_nodes ) const
 	{
 		double centroid[2];
-		centroid[XX] = 0.;
-		centroid[YY] = 0.;
+		centroid[LON] = 0.;
+		centroid[LAT] = 0.;
 		int nb_elem_nodes = elem_nodes.shape(0);
 		for( int jnode=0; jnode<nb_elem_nodes; ++jnode )
 		{
-			centroid[XX] += coords( elem_nodes(jnode), XX );
-			centroid[YY] += coords( elem_nodes(jnode), YY );
+			centroid[LON] += lonlat( elem_nodes(jnode), LON );
+			centroid[LAT] += lonlat( elem_nodes(jnode), LAT );
 		}
-		centroid[XX] /= static_cast<double>(nb_elem_nodes);
-		centroid[YY] /= static_cast<double>(nb_elem_nodes);
-		return LatLonPoint( centroid[XX], centroid[YY] ).uid32();
+		centroid[LON] /= static_cast<double>(nb_elem_nodes);
+		centroid[LAT] /= static_cast<double>(nb_elem_nodes);
+		return LonLatPoint( centroid[LON], centroid[LAT] ).uid32();
 	}
 
   gidx_t operator()( double crds[], int npts ) const
 	{
 		double centroid[2];
-		centroid[XX] = 0.;
-		centroid[YY] = 0.;
+		centroid[LON] = 0.;
+		centroid[LAT] = 0.;
 		for( int jnode=0; jnode<npts; ++jnode )
 		{
-			centroid[XX] += crds[jnode*2+XX];
-			centroid[YY] += crds[jnode*2+YY];
+			centroid[LON] += crds[jnode*2+LON];
+			centroid[LAT] += crds[jnode*2+LAT];
 		}
-		centroid[XX] /= static_cast<double>(npts);
-		centroid[YY] /= static_cast<double>(npts);
-		return LatLonPoint( centroid[XX], centroid[YY] ).uid32();
+		centroid[LON] /= static_cast<double>(npts);
+		centroid[LAT] /= static_cast<double>(npts);
+		return LonLatPoint( centroid[LON], centroid[LAT] ).uid32();
 	}
 
 
   void update()
   {
-    coords = ArrayView<double,2> ( funcspace->field("coordinates") );
+    lonlat = ArrayView<double,2> ( funcspace->field("lonlat") );
   }
 private:
   const FunctionSpace* funcspace;
-  ArrayView<double,2> coords;
+  ArrayView<double,2> lonlat;
 };
 
 

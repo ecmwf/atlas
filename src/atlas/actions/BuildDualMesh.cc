@@ -36,23 +36,23 @@ namespace {
 
 void global_bounding_box( FunctionSpace& nodes, double min[2], double max[2] )
 {
-  ArrayView<double,2> latlon( nodes.field("coordinates") );
+  ArrayView<double,2> lonlat( nodes.field("lonlat") );
   const int nb_nodes = nodes.shape(0);
-  min[XX] =  std::numeric_limits<double>::max();
-  min[YY] =  std::numeric_limits<double>::max();
-  max[XX] = -std::numeric_limits<double>::max();
-  max[YY] = -std::numeric_limits<double>::max();
+  min[LON] =  std::numeric_limits<double>::max();
+  min[LAT] =  std::numeric_limits<double>::max();
+  max[LON] = -std::numeric_limits<double>::max();
+  max[LAT] = -std::numeric_limits<double>::max();
   for (int node=0; node<nb_nodes; ++node)
   {
-    min[XX] = std::min( min[XX], latlon(node,XX) );
-    min[YY] = std::min( min[YY], latlon(node,YY) );
-    max[XX] = std::max( max[XX], latlon(node,XX) );
-    max[YY] = std::max( max[YY], latlon(node,YY) );
+    min[LON] = std::min( min[LON], lonlat(node,LON) );
+    min[LAT] = std::min( min[LAT], lonlat(node,LAT) );
+    max[LON] = std::max( max[LON], lonlat(node,LON) );
+    max[LAT] = std::max( max[LAT], lonlat(node,LAT) );
   }
-  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &min[XX], 1, MPI_DOUBLE, MPI_MIN, eckit::mpi::comm() ) );
-  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &min[YY], 1, MPI_DOUBLE, MPI_MIN, eckit::mpi::comm() ) );
-  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max[XX], 1, MPI_DOUBLE, MPI_MAX, eckit::mpi::comm() ) );
-  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max[YY], 1, MPI_DOUBLE, MPI_MAX, eckit::mpi::comm() ) );
+  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &min[LON], 1, MPI_DOUBLE, MPI_MIN, eckit::mpi::comm() ) );
+  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &min[LAT], 1, MPI_DOUBLE, MPI_MIN, eckit::mpi::comm() ) );
+  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max[LON], 1, MPI_DOUBLE, MPI_MAX, eckit::mpi::comm() ) );
+  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max[LAT], 1, MPI_DOUBLE, MPI_MAX, eckit::mpi::comm() ) );
 }
 
 struct Node
@@ -76,7 +76,7 @@ inline double sqr(double a) { return a*a; }
 
 }
 
-void build_centroids( FunctionSpace& func_space, ArrayView<double,2>& coords);
+void build_centroids( FunctionSpace& func_space, ArrayView<double,2>& lonlat);
 void add_median_dual_volume_contribution(
     FunctionSpace& elements,
     FunctionSpace& edges,
@@ -97,16 +97,16 @@ void make_dual_normals_outward( Mesh& mesh );
 void build_median_dual_mesh( Mesh& mesh )
 {
   FunctionSpace& nodes   = mesh.function_space( "nodes" );
-  ArrayView<double,2> coords        ( nodes.field( "coordinates"    ) );
+  ArrayView<double,2> lonlat        ( nodes.field( "lonlat"    ) );
   ArrayView<double,1> dual_volumes  ( nodes.create_field<double>( "dual_volumes", 1 ) );
 
   FunctionSpace& quads       = mesh.function_space( "quads" );
   FunctionSpace& triags      = mesh.function_space( "triags" );
   FunctionSpace& edges       = mesh.function_space( "edges" );
 
-  build_centroids(quads,  coords);
-  build_centroids(triags, coords);
-  build_centroids(edges,  coords);
+  build_centroids(quads,  lonlat);
+  build_centroids(triags, lonlat);
+  build_centroids(edges,  lonlat);
 
   add_median_dual_volume_contribution( quads,  edges, nodes, dual_volumes );
   add_median_dual_volume_contribution( triags, edges, nodes, dual_volumes );
@@ -133,16 +133,16 @@ void build_median_dual_mesh( Mesh& mesh )
 void build_centroid_dual_mesh( Mesh& mesh )
 {
   FunctionSpace& nodes   = mesh.function_space( "nodes" );
-  ArrayView<double,2> coords        ( nodes.field( "coordinates"    ) );
+  ArrayView<double,2> lonlat        ( nodes.field( "lonlat"    ) );
   ArrayView<double,1> dual_volumes  ( nodes.create_field<double>( "dual_volumes", 1 ) );
 
   FunctionSpace& quads       = mesh.function_space( "quads" );
   FunctionSpace& triags      = mesh.function_space( "triags" );
   FunctionSpace& edges       = mesh.function_space( "edges" );
 
-  build_centroids(quads,  coords);
-  build_centroids(triags, coords);
-  build_centroids(edges,  coords);
+  build_centroids(quads,  lonlat);
+  build_centroids(triags, lonlat);
+  build_centroids(edges,  lonlat);
 
   add_centroid_dual_volume_contribution( mesh, dual_volumes );
 
@@ -160,7 +160,7 @@ void build_centroid_dual_mesh( Mesh& mesh )
 
 
 
-void build_centroids( FunctionSpace& func_space, ArrayView<double,2>& coords)
+void build_centroids( FunctionSpace& func_space, ArrayView<double,2>& lonlat)
 {
   if( !func_space.has_field("centroids") )
   {
@@ -171,15 +171,15 @@ void build_centroids( FunctionSpace& func_space, ArrayView<double,2>& coords)
     ArrayView<double,2> elem_centroids( func_space.create_field<double>( "centroids", 2 ) );
     for (int e=0; e<nb_elems; ++e)
     {
-      elem_centroids(e,XX) = 0.;
-      elem_centroids(e,YY) = 0.;
+      elem_centroids(e,LON) = 0.;
+      elem_centroids(e,LAT) = 0.;
       for (int n=0; n<nb_nodes_per_elem; ++n)
       {
-        elem_centroids(e,XX) += coords( elem_nodes(e,n), XX );
-        elem_centroids(e,YY) += coords( elem_nodes(e,n), YY );
+        elem_centroids(e,LON) += lonlat( elem_nodes(e,n), LON );
+        elem_centroids(e,LAT) += lonlat( elem_nodes(e,n), LAT );
       }
-      elem_centroids(e,XX) /= static_cast<double>(nb_nodes_per_elem);
-      elem_centroids(e,YY) /= static_cast<double>(nb_nodes_per_elem);
+      elem_centroids(e,LON) /= static_cast<double>(nb_nodes_per_elem);
+      elem_centroids(e,LAT) /= static_cast<double>(nb_nodes_per_elem);
     }
   }
 }
@@ -195,7 +195,7 @@ void add_median_dual_volume_contribution(
   IndexView<int,   2> elem_to_edges  ( elements.field("to_edge") );
   ArrayView<double,2> edge_centroids ( edges.field("centroids") );
   IndexView<int,   2> edge_nodes     ( edges.field("nodes") );
-  ArrayView<double,2> node_coords    ( nodes.field("coordinates") );
+  ArrayView<double,2> node_lonlat    ( nodes.field("lonlat") );
   ArrayView<gidx_t,1> elem_glb_idx   ( elements.field("glb_idx") );
   ArrayView<gidx_t,1> edge_glb_idx   ( edges.field("glb_idx") );
   int nb_edges_per_elem = elem_to_edges.shape(1);
@@ -205,7 +205,7 @@ void add_median_dual_volume_contribution(
   std::vector<Node> ordering(nb_elems);
   for (int elem=0; elem<nb_elems; ++elem)
   {
-    ordering[elem] = Node( LatLonPoint(elem_centroids[elem]).uid(), elem );
+    ordering[elem] = Node( LonLatPoint(elem_centroids[elem]).uid(), elem );
   }
   std::sort( ordering.data(), ordering.data()+nb_elems );
 
@@ -213,18 +213,18 @@ void add_median_dual_volume_contribution(
   for (int jelem=0; jelem<nb_elems; ++jelem)
   {
     int elem = ordering[jelem].i;
-    double x0 = elem_centroids(elem,XX);
-    double y0 = elem_centroids(elem,YY);
+    double x0 = elem_centroids(elem,LON);
+    double y0 = elem_centroids(elem,LAT);
     for (int jedge=0; jedge<nb_edges_per_elem; ++jedge)
     {
       int edge = elem_to_edges(elem,jedge);
-      double x1 = edge_centroids(edge,XX);
-      double y1 = edge_centroids(edge,YY);
+      double x1 = edge_centroids(edge,LON);
+      double y1 = edge_centroids(edge,LAT);
       for( int j=0; j<2; ++j )
       {
         int node = edge_nodes(edge,j);
-        double x2 = node_coords(node,XX);
-        double y2 = node_coords(node,YY);
+        double x2 = node_lonlat(node,LON);
+        double y2 = node_lonlat(node,LAT);
         double triag_area = std::abs( x0*(y1-y2)+x1*(y2-y0)+x2*(y0-y1) )*0.5;
         dual_volumes(node) += triag_area;
       }
@@ -242,7 +242,7 @@ void add_median_dual_volume_contribution(
   IndexView<int,   2> edge_nodes    ( edges.field("nodes"      ) );
   ArrayView<gidx_t,1> edge_glb_idx  ( edges.field("glb_idx"    ) );
   IndexView<int,   2> edge_to_elem  ( edges.field("to_elem"    ) );
-  ArrayView<double,2> node_coords   ( nodes.field("coordinates") );
+  ArrayView<double,2> node_lonlat   ( nodes.field("lonlat") );
   int nb_edges = edges.shape(0);
   std::map<int,std::vector<int> > node_to_bdry_edge;
   for(int edge=0; edge<nb_edges; ++edge)
@@ -265,19 +265,19 @@ void add_median_dual_volume_contribution(
   {
     int node = (*it).first;
     std::vector<int>& bdry_edges = (*it).second;
-    double x0 = node_coords(node,XX);
-    double y0 = node_coords(node,YY);
+    double x0 = node_lonlat(node,LON);
+    double y0 = node_lonlat(node,LAT);
     double x1,y1, x2,y2;
     for (int jedge=0; jedge<bdry_edges.size(); ++jedge)
     {
       int edge = bdry_edges[jedge];
-      x1 = edge_centroids(edge,XX);
-      y1 = edge_centroids(edge,YY);
+      x1 = edge_centroids(edge,LON);
+      y1 = edge_centroids(edge,LAT);
       x2 = x1;
       y2 = 0.;
-      if ( std::abs(y1-max[YY])<tol )
+      if ( std::abs(y1-max[LAT])<tol )
         y2 = 90.;
-      else if ( std::abs(y1-min[YY])<tol )
+      else if ( std::abs(y1-min[LAT])<tol )
         y2 = -90.;
 
       if( y2!=0 )
@@ -301,7 +301,7 @@ void add_centroid_dual_volume_contribution(
   IndexView<int,   2> edge_nodes    ( edges.field("nodes"      ) );
   ArrayView<gidx_t,1> edge_glb_idx  ( edges.field("glb_idx"    ) );
   IndexView<int,   2> edge_to_elem  ( edges.field("to_elem"    ) );
-  ArrayView<double,2> node_coords   ( nodes.field("coordinates") );
+  ArrayView<double,2> node_lonlat   ( nodes.field("lonlat") );
   std::vector< ArrayView<double,2> > elem_centroids(mesh.nb_function_spaces());
   for( int f=0; f<mesh.nb_function_spaces(); ++f )
   {
@@ -321,7 +321,7 @@ void add_centroid_dual_volume_contribution(
   std::vector<Node> ordering(nb_edges);
   for (int edge=0; edge<nb_edges; ++edge)
   {
-    ordering[edge] = Node( LatLonPoint(edge_centroids[edge]).uid(), edge );
+    ordering[edge] = Node( LonLatPoint(edge_centroids[edge]).uid(), edge );
   }
   std::sort( ordering.data(), ordering.data()+nb_edges );
 
@@ -331,15 +331,15 @@ void add_centroid_dual_volume_contribution(
     int edge = ordering[jedge].i;
     if ( edge_to_elem(edge,0) >= 0 && edge_to_elem(edge,2) >= 0 )
     {
-      double x0 = elem_centroids[edge_to_elem(edge,0)](edge_to_elem(edge,1),XX);
-      double y0 = elem_centroids[edge_to_elem(edge,0)](edge_to_elem(edge,1),YY);
-      double x1 = elem_centroids[edge_to_elem(edge,2)](edge_to_elem(edge,3),XX);
-      double y1 = elem_centroids[edge_to_elem(edge,2)](edge_to_elem(edge,3),YY);
+      double x0 = elem_centroids[edge_to_elem(edge,0)](edge_to_elem(edge,1),LON);
+      double y0 = elem_centroids[edge_to_elem(edge,0)](edge_to_elem(edge,1),LAT);
+      double x1 = elem_centroids[edge_to_elem(edge,2)](edge_to_elem(edge,3),LON);
+      double y1 = elem_centroids[edge_to_elem(edge,2)](edge_to_elem(edge,3),LAT);
       for( int jnode=0; jnode<2; ++jnode )
       {
         int node = edge_nodes(edge,jnode);
-        double x2 = node_coords( node, XX );
-        double y2 = node_coords( node, YY );
+        double x2 = node_lonlat( node, LON );
+        double y2 = node_lonlat( node, LAT );
         double triag_area = std::abs( x0*(y1-y2)+x1*(y2-y0)+x2*(y0-y1) )*0.5;
         dual_volumes(node) += triag_area;
       }
@@ -347,14 +347,14 @@ void add_centroid_dual_volume_contribution(
     else if ( edge_to_elem(edge,0) >= 0 && edge_to_elem(edge,2) < 0  )
     {
       // This is a boundary edge
-      double x0 = elem_centroids[edge_to_elem(edge,0)](edge_to_elem(edge,1),XX);
-      double y0 = elem_centroids[edge_to_elem(edge,0)](edge_to_elem(edge,1),YY);
+      double x0 = elem_centroids[edge_to_elem(edge,0)](edge_to_elem(edge,1),LON);
+      double y0 = elem_centroids[edge_to_elem(edge,0)](edge_to_elem(edge,1),LAT);
       double x1 = x0;
       double y1 = 0;
-      double y_edge = edge_centroids(edge,YY);
-      if ( std::abs(y_edge-max[YY])<tol )
+      double y_edge = edge_centroids(edge,LAT);
+      if ( std::abs(y_edge-max[LAT])<tol )
         y1 = 90.;
-      else if ( std::abs(y_edge-min[YY])<tol )
+      else if ( std::abs(y_edge-min[LAT])<tol )
         y1 = -90.;
 
       if( y1 != 0. )
@@ -362,8 +362,8 @@ void add_centroid_dual_volume_contribution(
         for( int jnode=0; jnode<2; ++jnode )
         {
           int node = edge_nodes(edge,jnode);
-          double x2 = node_coords( node, XX );
-          double y2 = node_coords( node, YY );
+          double x2 = node_lonlat( node, LON );
+          double y2 = node_lonlat( node, LAT );
           double triag_area = std::abs( x0*(y1-y2)+x1*(y2-y0)+x2*(y0-y1) )*0.5;
           dual_volumes(node) += triag_area;
           double x3 = x2;
@@ -388,7 +388,7 @@ void build_dual_normals( Mesh& mesh )
   }
 
   FunctionSpace&  nodes = mesh.function_space("nodes");
-  ArrayView<double,2> node_coords( nodes.field("coordinates") );
+  ArrayView<double,2> node_lonlat( nodes.field("lonlat") );
   double min[2], max[2];
   global_bounding_box( nodes, min, max );
   double tol = 1.e-6;
@@ -426,28 +426,28 @@ void build_dual_normals( Mesh& mesh )
         for (int jedge=0; jedge<bdry_edges.size(); ++jedge)
         {
           int bdry_edge = bdry_edges[jedge];
-          if ( std::abs(edge_centroids(bdry_edge,YY)-max[YY])<tol )
+          if ( std::abs(edge_centroids(bdry_edge,LAT)-max[LAT])<tol )
           {
-            edge_centroids(edge,YY) = 90.;
-            x[cnt] = edge_centroids(bdry_edge,XX);
+            edge_centroids(edge,LAT) = 90.;
+            x[cnt] = edge_centroids(bdry_edge,LON);
             ++cnt;
           }
-          else if ( std::abs(edge_centroids(bdry_edge,YY)-min[YY])<tol )
+          else if ( std::abs(edge_centroids(bdry_edge,LAT)-min[LAT])<tol )
           {
-            edge_centroids(edge,YY) = -90.;
-            x[cnt] = edge_centroids(bdry_edge,XX);
+            edge_centroids(edge,LAT) = -90.;
+            x[cnt] = edge_centroids(bdry_edge,LON);
             ++cnt;
           }
         }
         if (cnt == 2 )
         {
-          dual_normals(edge,XX) = 0;
-          if (node_coords(node,YY) < 0.)
-            dual_normals(edge,YY) = -std::abs(x[1]-x[0]);
-          else if (node_coords(node,YY) > 0.)
-            dual_normals(edge,YY) = std::abs(x[1]-x[0]);
+          dual_normals(edge,LON) = 0;
+          if (node_lonlat(node,LAT) < 0.)
+            dual_normals(edge,LAT) = -std::abs(x[1]-x[0]);
+          else if (node_lonlat(node,LAT) > 0.)
+            dual_normals(edge,LAT) = std::abs(x[1]-x[0]);
 
-          //std::cout << "pole dual_normal = " << dual_normals(YY,edge) << std::endl;
+          //std::cout << "pole dual_normal = " << dual_normals(LAT,edge) << std::endl;
           break;
         }
       }
@@ -458,25 +458,25 @@ void build_dual_normals( Mesh& mesh )
       int left_elem            = edge_to_elem(edge,1);
       int right_func_space_idx = edge_to_elem(edge,2);
       int right_elem           = edge_to_elem(edge,3);
-      xl = elem_centroids[left_func_space_idx](left_elem,XX);
-      yl = elem_centroids[left_func_space_idx](left_elem,YY);
+      xl = elem_centroids[left_func_space_idx](left_elem,LON);
+      yl = elem_centroids[left_func_space_idx](left_elem,LAT);
       if( right_elem < 0 )
       {
-        xr = edge_centroids(edge,XX);
-        yr = edge_centroids(edge,YY);;
-        if ( std::abs(yr-max[YY])<tol )
+        xr = edge_centroids(edge,LON);
+        yr = edge_centroids(edge,LAT);;
+        if ( std::abs(yr-max[LAT])<tol )
           yr = 90.;
-        else if( std::abs(yr-min[YY])<tol )
+        else if( std::abs(yr-min[LAT])<tol )
           yr = -90.;
       }
       else
       {
-        xr = elem_centroids[right_func_space_idx](right_elem,XX);
-        yr = elem_centroids[right_func_space_idx](right_elem,YY);
+        xr = elem_centroids[right_func_space_idx](right_elem,LON);
+        yr = elem_centroids[right_func_space_idx](right_elem,LAT);
       }
 
-      dual_normals(edge,XX) =  yl-yr;
-      dual_normals(edge,YY) = -xl+xr;
+      dual_normals(edge,LON) =  yl-yr;
+      dual_normals(edge,LAT) = -xl+xr;
     }
   }
 }
@@ -485,7 +485,7 @@ void make_dual_normals_outward( Mesh& mesh )
 {
 
   FunctionSpace&  nodes = mesh.function_space("nodes");
-  ArrayView<double,2> node_coords( nodes.field("coordinates") );
+  ArrayView<double,2> node_lonlat( nodes.field("lonlat") );
 
   FunctionSpace&  edges = mesh.function_space("edges");
   IndexView<int,   2> edge_to_elem  ( edges.field("to_elem"  ) );
@@ -502,12 +502,12 @@ void make_dual_normals_outward( Mesh& mesh )
     else
     {
       // Make normal point from node 1 to node 2
-      double dx = node_coords( edge_nodes(edge,1), XX ) - node_coords( edge_nodes(edge,0), XX );
-      double dy = node_coords( edge_nodes(edge,1), YY ) - node_coords( edge_nodes(edge,0), YY );
-      if( dx*dual_normals(edge,XX) + dy*dual_normals(edge,YY) < 0 )
+      double dx = node_lonlat( edge_nodes(edge,1), LON ) - node_lonlat( edge_nodes(edge,0), LON );
+      double dy = node_lonlat( edge_nodes(edge,1), LAT ) - node_lonlat( edge_nodes(edge,0), LAT );
+      if( dx*dual_normals(edge,LON) + dy*dual_normals(edge,LAT) < 0 )
       {
-        dual_normals(edge,XX) = - dual_normals(edge,XX);
-        dual_normals(edge,YY) = - dual_normals(edge,YY);
+        dual_normals(edge,LON) = - dual_normals(edge,LON);
+        dual_normals(edge,LAT) = - dual_normals(edge,LAT);
       }
     }
   }
@@ -526,7 +526,7 @@ void build_skewness( Mesh& mesh )
   }
 
   FunctionSpace&  nodes = mesh.function_space("nodes");
-  ArrayView<double,2> node_coords( nodes.field<double>("coordinates") );
+  ArrayView<double,2> node_lonlat( nodes.field<double>("lonlat") );
   double min[2], max[2];
   global_bounding_box( nodes, min, max );
   double tol = 1.e-6;
@@ -544,7 +544,7 @@ void build_skewness( Mesh& mesh )
   std::vector<Node> ordering(nb_edges);
   for (int edge=0; edge<nb_edges; ++edge)
   {
-    ordering[edge] = Node( LatLonPoint(edge_centroids[edge]).uid(), edge );
+    ordering[edge] = Node( LonLatPoint(edge_centroids[edge]).uid(), edge );
   }
   std::sort( ordering.data(), ordering.data()+nb_edges );
 
@@ -564,27 +564,27 @@ void build_skewness( Mesh& mesh )
       int left_elem            = edge_to_elem(edge,1);
       int right_func_space_idx = edge_to_elem(edge,2);
       int right_elem           = edge_to_elem(edge,3);
-      xc1 = elem_centroids[left_func_space_idx](left_elem,XX);
-      yc1 = elem_centroids[left_func_space_idx](left_elem,YY);
+      xc1 = elem_centroids[left_func_space_idx](left_elem,LON);
+      yc1 = elem_centroids[left_func_space_idx](left_elem,LAT);
       if( right_elem < 0 )
       {
-        xc2 = edge_centroids(edge,XX);
-        yc2 = edge_centroids(edge,YY);
-        if ( std::abs(yc2-max[YY])<tol )
+        xc2 = edge_centroids(edge,LON);
+        yc2 = edge_centroids(edge,LAT);
+        if ( std::abs(yc2-max[LAT])<tol )
           yc2 = 90.;
-        else if( std::abs(yc2-min[YY])<tol )
+        else if( std::abs(yc2-min[LAT])<tol )
           yc2 = -90.;
       }
       else
       {
-        xc2 = elem_centroids[right_func_space_idx](right_elem,XX);
-        yc2 = elem_centroids[right_func_space_idx](right_elem,YY);
+        xc2 = elem_centroids[right_func_space_idx](right_elem,LON);
+        yc2 = elem_centroids[right_func_space_idx](right_elem,LAT);
       }
 
-      x1 = node_coords(edge_nodes(edge,0),XX);
-      y1 = node_coords(edge_nodes(edge,0),YY);
-      x2 = node_coords(edge_nodes(edge,1),XX);
-      y2 = node_coords(edge_nodes(edge,1),YY);
+      x1 = node_lonlat(edge_nodes(edge,0),LON);
+      y1 = node_lonlat(edge_nodes(edge,0),LAT);
+      x2 = node_lonlat(edge_nodes(edge,1),LON);
+      y2 = node_lonlat(edge_nodes(edge,1),LAT);
 
       xi = ( x1*(xc2*(-y2 + yc1) + xc1*(y2 - yc2))
              + x2*(xc2*(y1 - yc1) + xc1*(-y1 + yc2)) ) /
@@ -613,7 +613,7 @@ void build_brick_dual_mesh( Mesh& mesh )
       throw eckit::UserError("Cannot build_brick_dual_mesh with more than 1 task",Here());
 
     FunctionSpace& nodes   = mesh.function_space( "nodes" );
-    ArrayView<double,2> coords        ( nodes.field( "coordinates"    ) );
+    ArrayView<double,2> lonlat        ( nodes.field( "lonlat"    ) );
     ArrayView<double,1> dual_volumes  ( nodes.create_field<double>( "dual_volumes", 1 ) );
     ArrayView<gidx_t,1> gidx  ( nodes.field( "glb_idx" ) );
 
@@ -630,8 +630,8 @@ void build_brick_dual_mesh( Mesh& mesh )
       for( int jlon=0; jlon<g->nlon(jlat); ++jlon )
       {
         while( gidx(c) != n+1 ) c++;
-        ASSERT( coords(c,LON) == g->lon(jlat,jlon) );
-        ASSERT( coords(c,LAT) == lat );
+        ASSERT( lonlat(c,LON) == g->lon(jlat,jlon) );
+        ASSERT( lonlat(c,LAT) == lat );
         dual_volumes(c) = dlon*dlat;
         ++n;
       }

@@ -62,19 +62,19 @@ implicit none
 
 ! ----------------------------------------------------
 ! ENUM FieldType
-integer, private, parameter :: KIND_INT32  = -4
-integer, private, parameter :: KIND_INT64  = -8
-integer, private, parameter :: KIND_REAL32 =  4
-integer, private, parameter :: KIND_REAL64 =  8
+integer, public, parameter :: ATLAS_KIND_INT32  = -4
+integer, public, parameter :: ATLAS_KIND_INT64  = -8
+integer, public, parameter :: ATLAS_KIND_REAL32 =  4
+integer, public, parameter :: ATLAS_KIND_REAL64 =  8
 ! ----------------------------------------------------
 
 integer, private, parameter :: FIELD_NB_VARS = -1
 integer, private, parameter :: wp = c_double ! working precision
 
 #if ATLAS_BITS_GLOBAL == 32
-integer, public, parameter :: gidx_t = c_int
+integer, public, parameter :: ATLAS_KIND_GIDX = c_int
 #elif ATLAS_BITS_GLOBAL == 64
-integer, public, parameter :: gidx_t = c_long
+integer, public, parameter :: ATLAS_KIND_GIDX = c_long
 #else
 #error ATLAS_BITS_GLOBAL must be either 32 or 64
 #endif
@@ -209,26 +209,26 @@ subroutine atlas_finalize()
   call atlas__atlas_finalize()
 end subroutine
 
-integer function real_kind(kind)
+integer function atlas_real(kind)
   integer :: kind
   if (kind == c_double) then
-    real_kind = KIND_REAL64
+    atlas_real = ATLAS_KIND_REAL64
   else if (kind == c_float) then
-    real_kind = KIND_REAL32
+    atlas_real = ATLAS_KIND_REAL32
   else
     write(0,*) "Unsupported kind"
     write(0,*) 'call abort()'
   end if
 end function
 
-integer function integer_kind(kind)
+integer function atlas_integer(kind)
   integer, optional :: kind
-  integer_kind = KIND_INT32
+  atlas_integer = ATLAS_KIND_INT32
   if ( present(kind) ) then
     if (kind == c_int) then
-      integer_kind = KIND_INT32
+      atlas_integer = ATLAS_KIND_INT32
     else if (kind == c_long) then
-      integer_kind = KIND_INT64
+      atlas_integer = ATLAS_KIND_INT64
     else
       write(0,*) "Unsupported kind"
       write(0,*) 'call abort()'

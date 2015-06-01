@@ -38,6 +38,6 @@ BOOST_AUTO_TEST_CASE( test_read_write )
 	gmsh.options.set("ascii",true);
 	gmsh.write(*mesh,"mesh.msh");
 
-	BOOST_REQUIRE_NO_THROW( mesh = Mesh::Ptr( Gmsh::read( "mesh.msh" ) ) );
+        BOOST_REQUIRE_NO_THROW( mesh = Mesh::Ptr( Gmsh().read( "mesh.msh" ) ) );
 	eckit::mpi::finalize();
 }

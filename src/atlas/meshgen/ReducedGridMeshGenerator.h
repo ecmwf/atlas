@@ -12,54 +12,43 @@
 #define ReducedGridMeshGenerator_h
 
 #include "atlas/Metadata.h"
+#include "atlas/meshgen/MeshGenerator.h"
 
 namespace atlas {
+
 class Mesh;
 class GridDistribution;
 
 namespace grids { class ReducedGrid; }
-namespace meshgen {
+namespace meshgen { struct Region; }
 
-struct Region;
+}
+
+namespace atlas {
+namespace meshgen {
 
 //------------------------------------------------------------------------------------------------------
 
-class ReducedGridMeshGenerator {
+class ReducedGridMeshGenerator : public MeshGenerator {
 
 public:
 
   ReducedGridMeshGenerator();
 
-  void generate( const grids::ReducedGrid&, const GridDistribution&, Mesh& );
-  void generate( const grids::ReducedGrid&, GridDistribution*, Mesh& );
-  void generate( const grids::ReducedGrid&, Mesh& );
-
-  Mesh* generate( const grids::ReducedGrid&, const GridDistribution& );
-  Mesh* generate( const grids::ReducedGrid&, GridDistribution* );
-  Mesh* generate( const grids::ReducedGrid& );
-
-  Mesh* operator()( const grids::ReducedGrid&, const GridDistribution& );
-  Mesh* operator()( const grids::ReducedGrid&, GridDistribution* );
-  Mesh* operator()( const grids::ReducedGrid& );
-
-
-  void set_three_dimensional( bool );
-  void set_patch_pole( bool );
-  void set_include_pole( bool );
+  virtual void generate( const Grid&, const GridDistribution&, Mesh& ) const;
+  virtual void generate( const Grid&, Mesh& ) const;
 
 private:
 
-  void generate_region( const grids::ReducedGrid&, const std::vector<int>& parts, int mypart, Region& region );
+  void generate_region( const grids::ReducedGrid&, const std::vector<int>& parts, int mypart, Region& region ) const;
 
-  void generate_mesh( const grids::ReducedGrid&,const std::vector<int>& parts, const Region& region, Mesh& m );
+  void generate_mesh( const grids::ReducedGrid&,const std::vector<int>& parts, const Region& region, Mesh& m ) const;
 
-  void generate_global_element_numbering( Mesh& mesh );
+  void generate_global_element_numbering( Mesh& mesh ) const;
 
 public:
 
   Metadata options;
-  double max_angle_;
-  bool triangulate_quads_;
 
 };
 

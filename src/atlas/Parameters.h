@@ -11,6 +11,8 @@
 #ifndef atlas_Parameters_h
 #define atlas_Parameters_h
 
+#include <cmath>
+
 #include "atlas/atlas_defines.h"
 
 //------------------------------------------------------------------------------------------------------
@@ -27,34 +29,34 @@ enum { LON = 0, LAT = 1 };
 
 struct Earth
 {
-  static double radius() { return 6371.22e+03; }
+    static double radiusInMeters() { return 6371229; }
+    static double radiusInKm()     { return radiusInMeters() / 1.0E3; }
+
+    static double areaInSqMeters() { return 4 * M_PI * radiusInMeters() * radiusInMeters(); }
+    static double areaInSqKm()     { return 4 * M_PI * radiusInKm() * radiusInKm(); }
+
 };
 
 struct Entity
 {
-		enum { NODES=0, FACES=1, ELEMS=2 };
+    enum { NODES=0, FACES=1, ELEMS=2 };
 };
 
 //------------------------------------------------------------------------------------------------------
 
-struct ElementRef
-{
+struct ElementRef {
+  ElementRef() {}
 
-		ElementRef() {}
+  ElementRef(int func_space_idx, int elem_idx) : f(func_space_idx), e(elem_idx) {}
 
-		ElementRef(int func_space_idx, int elem_idx) :f(func_space_idx),e(elem_idx)
-		{
-		}
+  int f;
+  int e;
 
-		int f;
-		int e;
-
-		bool operator<(const ElementRef& other) const
-		{
-			if( f <  other.f ) return true;
-			if( f == other.f ) return (e < other.e);
-			return false;
-		};
+  bool operator<(const ElementRef& other) const {
+    if (f < other.f) return true;
+    if (f == other.f) return (e < other.e);
+    return false;
+  };
 };
 
 //------------------------------------------------------------------------------------------------------

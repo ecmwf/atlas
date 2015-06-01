@@ -188,7 +188,7 @@ void PointCloud::write(const eckit::PathName& path, const Grid& grid)
     throw eckit::BadParameter(msg+"invalid number of points (failed: nb_pts>0)");
 
   // get the fields (sanitized) names and values
-  // (bypasses fields ("lonlat"|"coordinates") as shape(1)!=1)
+  // (bypasses fields ("lonlat"|"lonlat") as shape(1)!=1)
   std::vector< std::string > vfnames;
   std::vector< ArrayView< double, 1 > > vfvalues;
   for (int i=0; i<nodes.nb_fields(); ++i)
@@ -245,7 +245,7 @@ void PointCloud::write(const eckit::PathName& path, const FieldSet& fieldset)
     throw eckit::BadParameter(msg+"invalid number of points (failed: nb_pts>0)");
 
   // get the fields (sanitized) names and values
-  // (bypasses fields ("lonlat"|"coordinates") as shape(1)!=1)
+  // (bypasses fields ("lonlat"|"lonlat") as shape(1)!=1)
   std::vector< std::string > vfnames;
   std::vector< ArrayView< double, 1 > > vfvalues;
   for (size_t i=0; i<fieldset.size(); ++i)

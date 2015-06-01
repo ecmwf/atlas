@@ -96,7 +96,7 @@ void build_parallel_fields( Mesh& mesh )
 
 void build_nodes_parallel_fields( FunctionSpace& nodes )
 {
-  ASSERT( nodes.has_field("coordinates") );
+  ASSERT( nodes.has_field("lonlat") );
 
   build_nodes_partition ( nodes );
   build_nodes_remote_idx( nodes );
@@ -108,7 +108,7 @@ void build_nodes_parallel_fields( FunctionSpace& nodes )
 
 void build_edges_parallel_fields( FunctionSpace& edges, FunctionSpace& nodes )
 {
-  ASSERT( nodes.has_field("coordinates") );
+  ASSERT( nodes.has_field("lonlat") );
   ASSERT( nodes.has_field("partition") );
   ASSERT( nodes.has_field("remote_idx") );
   ASSERT( nodes.has_field("glb_idx") );
@@ -263,7 +263,7 @@ FieldT<int>& build_nodes_remote_idx( FunctionSpace& nodes )
   if( ! nodes.has_field("remote_idx") ) ( nodes.create_field<int>("remote_idx",1) );
   IndexView<int,   1> ridx   ( nodes.field("remote_idx")  );
   ArrayView<int,   1> part   ( nodes.field("partition")   );
-  ArrayView<double,2> latlon ( nodes.field("coordinates") );
+  ArrayView<double,2> lonlat ( nodes.field("lonlat") );
   int nb_nodes = nodes.shape(0);
 
 
@@ -366,7 +366,7 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
   }
 
   ArrayView<int,1> node_part  ( nodes.field("partition") );
-  ArrayView<double,2> latlon  ( nodes.field("coordinates") );
+  ArrayView<double,2> lonlat  ( nodes.field("lonlat") );
   ArrayView<int,   1> flags   ( nodes.field("flags")       );
 #ifdef DEBUGGING_PARFIELDS
   ArrayView<gidx_t,   1> gidx    ( nodes.field("glb_idx")       );
@@ -495,11 +495,11 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
       int pn1 = node_part( ip1 );
       int pn2 = node_part( ip2 );
 
-      centroid[XX] = 0.5*(latlon( ip1, XX ) + latlon( ip2, XX ) );
-      centroid[YY] = 0.5*(latlon( ip1, YY ) + latlon( ip2, YY ) );
+      centroid[LON] = 0.5*(lonlat( ip1, LON ) + lonlat( ip2, LON ) );
+      centroid[LAT] = 0.5*(lonlat( ip1, LAT ) + lonlat( ip2, LAT ) );
       if( has_pole_edges && is_pole_edge(jedge) )
       {
-        centroid[YY] = centroid[YY] > 0 ? 90. : -90.;
+        centroid[LAT] = centroid[LAT] > 0 ? 90. : -90.;
       }
 
       transform(centroid,periodic[jedge]);
@@ -535,12 +535,12 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
         if( OWNED_UID(uid) )
         {
           double x1,y1, x2,y2, xe,ye;
-          x1 = latlon(ip1,XX);
-          y1 = latlon(ip1,YY);
-          x2 = latlon(ip2,XX);
-          y2 = latlon(ip2,YY);
-          xe = centroid[XX];
-          ye = centroid[YY];
+          x1 = lonlat(ip1,LON);
+          y1 = lonlat(ip1,LAT);
+          x2 = lonlat(ip2,LON);
+          y2 = lonlat(ip2,LAT);
+          xe = centroid[LON];
+          ye = centroid[LAT];
           DEBUG( uid << " --> " << EDGE(jedge) << "   x1,y1 - x2,y2 - xe,ye " << x1<<","<<y1
                  << " - " << x2<<","<<y2<< " - " << xe <<","<<ye<< "     part " << edge_part(jedge));
         }
@@ -641,7 +641,7 @@ FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes 
   IndexView<int,   2> edge_nodes ( edges.field("nodes")       );
   IndexView<int,   1> edge_ridx  ( edges.field("remote_idx")  );
   ArrayView<int,   1> edge_part  ( edges.field("partition")   );
-  ArrayView<double,2> latlon     ( nodes.field("coordinates") );
+  ArrayView<double,2> lonlat     ( nodes.field("lonlat") );
   ArrayView<int,   1> flags      ( nodes.field("flags")       );
 #ifdef DEBUGGING_PARFIELDS
   ArrayView<gidx_t,   1> gidx      ( nodes.field("glb_idx")       );
@@ -671,11 +671,11 @@ FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes 
   {
     int ip1 = edge_nodes(jedge,0);
     int ip2 = edge_nodes(jedge,1);
-    centroid[XX] = 0.5*(latlon( ip1, XX ) + latlon( ip2, XX ) );
-    centroid[YY] = 0.5*(latlon( ip1, YY ) + latlon( ip2, YY ) );
+    centroid[LON] = 0.5*(lonlat( ip1, LON ) + lonlat( ip2, LON ) );
+    centroid[LAT] = 0.5*(lonlat( ip1, LAT ) + lonlat( ip2, LAT ) );
     if( has_pole_edges && is_pole_edge(jedge) )
     {
-      centroid[YY] = centroid[YY] > 0 ? 90. : -90.;
+      centroid[LAT] = centroid[LAT] > 0 ? 90. : -90.;
     }
 
     bool needed(false);
@@ -793,7 +793,7 @@ FieldT<gidx_t>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nod
 
   ArrayView<gidx_t,1> edge_gidx  ( edges.field("glb_idx")     );
   IndexView<int,   2> edge_nodes ( edges.field("nodes")       );
-  ArrayView<double,2> latlon     ( nodes.field("coordinates") );
+  ArrayView<double,2> lonlat     ( nodes.field("lonlat") );
   ArrayView<int,1> is_pole_edge;
   bool has_pole_edges = false;
   if( edges.has_field("is_pole_edge") )
@@ -814,11 +814,11 @@ FieldT<gidx_t>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nod
   {
     if( edge_gidx(jedge) <= 0 )
     {
-      centroid[XX] = 0.5*(latlon( edge_nodes(jedge,0), XX ) + latlon( edge_nodes(jedge,1), XX ) );
-      centroid[YY] = 0.5*(latlon( edge_nodes(jedge,0), YY ) + latlon( edge_nodes(jedge,1), YY ) );
+      centroid[LON] = 0.5*(lonlat( edge_nodes(jedge,0), LON ) + lonlat( edge_nodes(jedge,1), LON ) );
+      centroid[LAT] = 0.5*(lonlat( edge_nodes(jedge,0), LAT ) + lonlat( edge_nodes(jedge,1), LAT ) );
       if( has_pole_edges && is_pole_edge(jedge) )
       {
-        centroid[YY] = centroid[YY] > 0 ? 90. : -90.;
+        centroid[LAT] = centroid[LAT] > 0 ? 90. : -90.;
       }
       edge_gidx(jedge) = compute_uid(centroid);
     }

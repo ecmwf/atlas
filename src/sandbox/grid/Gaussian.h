@@ -47,7 +47,7 @@ public: // methods
 
     virtual size_t nPoints() const { return coordinates_.size(); }
 
-    virtual void coordinates( Grid::Coords & ) const;
+    virtual void coordinates( Grid::lonlat & ) const;
 
     virtual std::string gridType() const { return std::string("gaussian") ;}
 

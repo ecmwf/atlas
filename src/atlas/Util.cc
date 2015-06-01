@@ -12,10 +12,10 @@
 
 namespace atlas {
 
-int LatLonPoint::WEST  = 0;
-int LatLonPoint::EAST  = microdeg( 360. );
-int LatLonPoint::NORTH = microdeg(  90. );
-int LatLonPoint::SOUTH = microdeg( -90. );
+int LonLatPoint::WEST  = 0;
+int LonLatPoint::EAST  = microdeg( 360. );
+int LonLatPoint::NORTH = microdeg(  90. );
+int LonLatPoint::SOUTH = microdeg( -90. );
 
 
 void accumulate_faces(

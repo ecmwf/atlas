@@ -43,28 +43,43 @@
 #define ATLAS_INDEXVIEW_BOUNDS_CHECKING
 
 #ifdef ATLAS_INDEXVIEW_BOUNDS_CHECKING
-#include <stdexcept>
+#include <eckit/exception/Exceptions.h>
+
+
+#define CHECK_RANK(R)\
+  if(rank()!=R) { std::ostringstream msg; msg << "IndexView  rank mismatch: rank()="<<rank()<< " != " << R; throw eckit::OutOfRange(msg.str(),Here()); }
+#define CHECK_BOUNDS(idx) {\
+  for( int d=0; d<rank(); ++d ) { \
+    if(idx[d]>=shape_[d]) {std::ostringstream msg; msg << "index " << d << " out of bounds: " << idx[d] << " >= " << shape_[d]; throw eckit::OutOfRange(msg.str(),Here()); } } }
 #define CHECK_BOUNDS_1(i)\
-  if(i>=shape_[0]) {throw std::range_error("index 'i' out of bounds");}
+	if(i>=shape_[0]) {std::ostringstream msg; msg << "IndexView(i) index out of bounds: i=" << i << " >= " << shape_[0]; throw eckit::OutOfRange(msg.str(),Here()); }
 #define CHECK_BOUNDS_2(i,j)\
-  if(i>=shape_[0]) {throw std::range_error("index 'i' out of bounds");} \
-  if(j>=shape_[1]) {throw std::range_error("index 'j' out of bounds");}
+	if(i>=shape_[0]) {std::ostringstream msg; msg << "IndexView(i,j) index out of bounds: i=" << i << " >= " << shape_[0]; throw eckit::OutOfRange(msg.str(),Here()); }\
+	if(j>=shape_[1]) {std::ostringstream msg; msg << "IndexView(i,j) index out of bounds: j=" << j << " >= " << shape_[1]; throw eckit::OutOfRange(msg.str(),Here()); }
 #define CHECK_BOUNDS_3(i,j,k)\
-  if(i>=shape_[0]) {throw std::range_error("index 'i' out of bounds");} \
-  if(j>=shape_[1]) {throw std::range_error("index 'j' out of bounds");} \
-  if(k>=shape_[2]) {throw std::range_error("index 'k' out of bounds");}
+	if(i>=shape_[0]) {std::ostringstream msg; msg << "IndexView(i,j,k) index out of bounds: i=" << i << " >= " << shape_[0]; throw eckit::OutOfRange(msg.str(),Here()); }\
+	if(j>=shape_[1]) {std::ostringstream msg; msg << "IndexView(i,j,k) index out of bounds: j=" << j << " >= " << shape_[1]; throw eckit::OutOfRange(msg.str(),Here()); }\
+	if(k>=shape_[2]) {std::ostringstream msg; msg << "IndexView(i,j,k) index out of bounds: k=" << k << " >= " << shape_[2]; throw eckit::OutOfRange(msg.str(),Here()); }
 #define CHECK_BOUNDS_4(i,j,k,l)\
-  if(i>=shape_[0]) {throw std::range_error("index 'i' out of bounds");} \
-  if(j>=shape_[1]) {throw std::range_error("index 'j' out of bounds");} \
-  if(k>=shape_[2]) {throw std::range_error("index 'k' out of bounds");} \
-  if(l>=shape_[3]) {throw std::range_error("index 'l' out of bounds");}
+	if(i>=shape_[0]) {std::ostringstream msg; msg << "IndexView(i,j,k,l) index out of bounds: i=" << i << " >= " << shape_[0]; throw eckit::OutOfRange(msg.str(),Here()); }\
+	if(j>=shape_[1]) {std::ostringstream msg; msg << "IndexView(i,j,k,l) index out of bounds: j=" << j << " >= " << shape_[1]; throw eckit::OutOfRange(msg.str(),Here()); }\
+	if(k>=shape_[2]) {std::ostringstream msg; msg << "IndexView(i,j,k,l) index out of bounds: k=" << k << " >= " << shape_[2]; throw eckit::OutOfRange(msg.str(),Here()); }\
+	if(l>=shape_[3]) {std::ostringstream msg; msg << "IndexView(i,j,k,l) index out of bounds: l=" << l << " >= " << shape_[3]; throw eckit::OutOfRange(msg.str(),Here()); }
+#define CHECK_BOUNDS_5(i,j,k,l,m)\
+	if(i>=shape_[0]) {std::ostringstream msg; msg << "IndexView(i,j,k,l,m) index out of bounds: i=" << i << " >= " << shape_[0]; throw eckit::OutOfRange(msg.str(),Here()); }\
+	if(j>=shape_[1]) {std::ostringstream msg; msg << "IndexView(i,j,k,l,m) index out of bounds: j=" << j << " >= " << shape_[1]; throw eckit::OutOfRange(msg.str(),Here()); }\
+	if(k>=shape_[2]) {std::ostringstream msg; msg << "IndexView(i,j,k,l,m) index out of bounds: k=" << k << " >= " << shape_[2]; throw eckit::OutOfRange(msg.str(),Here()); }\
+	if(l>=shape_[3]) {std::ostringstream msg; msg << "IndexView(i,j,k,l,m) index out of bounds: l=" << l << " >= " << shape_[3]; throw eckit::OutOfRange(msg.str(),Here()); }\
+	if(m>=shape_[4]) {std::ostringstream msg; msg << "IndexView(i,j,k,l,m) index out of bounds: m=" << m << " >= " << shape_[4]; throw eckit::OutOfRange(msg.str(),Here()); }
 #else
+#define CHECK_RANK(R)
+#define CHECK_BOUNDS(i,max)
 #define CHECK_BOUNDS_1(i)
 #define CHECK_BOUNDS_2(i,j)
 #define CHECK_BOUNDS_3(i,j,k)
 #define CHECK_BOUNDS_4(i,j,k,l)
+#define CHECK_BOUNDS_5(i,j,k,l,m)
 #endif
-
 
 //------------------------------------------------------------------------------------------------------
 
@@ -309,10 +324,12 @@ private:
 
 } // namespace atlas
 
+#undef CHECK_RANK
 #undef CHECK_BOUNDS_1
 #undef CHECK_BOUNDS_2
 #undef CHECK_BOUNDS_3
 #undef CHECK_BOUNDS_4
+#undef CHECK_BOUNDS_5
 #undef FROM_FORTRAN
 #undef TO_FORTRAN
 #undef INDEX_REF
