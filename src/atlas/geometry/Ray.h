@@ -34,9 +34,9 @@ struct Ray {
   Eigen::Vector3d dir;
 
   /// initializes ray with origin in point and direction to (0,0,0)
-  explicit Ray(double* p);
+  explicit Ray(const double* p);
 
-  Ray(double* o, double* d) {
+  Ray(const double* o, const double* d) {
     orig = Eigen::Vector3d::Map(o);
     dir = Eigen::Vector3d::Map(d);
   }

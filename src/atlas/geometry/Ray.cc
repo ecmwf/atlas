@@ -23,7 +23,7 @@ using Eigen::Vector3d;
 namespace atlas {
 namespace geometry {
 
-Ray::Ray(double *p) {
+Ray::Ray(const double *p) {
     orig = Eigen::Vector3d::Map(p);
     dir = -orig;
 }
