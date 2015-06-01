@@ -16,13 +16,13 @@ subroutine FunctionSpace__create_field(this,name,nvars,kind)
   integer, intent(in) :: nvars
   integer, intent(in), optional :: kind
   if (present(kind)) then
-    if (kind == KIND_REAL64) then
+    if (kind == ATLAS_KIND_REAL64) then
       call atlas__FunctionSpace__create_field_double(this%cpp_object_ptr,c_str(name),nvars)
-    else if (kind == KIND_REAL32) then
+    else if (kind == ATLAS_KIND_REAL32) then
       call atlas__FunctionSpace__create_field_float(this%cpp_object_ptr,c_str(name),nvars)
-    else if (kind == KIND_INT32) then
+    else if (kind == ATLAS_KIND_INT32) then
       call atlas__FunctionSpace__create_field_int(this%cpp_object_ptr,c_str(name),nvars)
-    else if (kind == KIND_INT64) then
+    else if (kind == ATLAS_KIND_INT64) then
       call atlas__FunctionSpace__create_field_long(this%cpp_object_ptr,c_str(name),nvars)
     else
       write(0,*) "Unsupported kind"

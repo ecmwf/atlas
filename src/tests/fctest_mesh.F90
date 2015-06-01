@@ -56,7 +56,7 @@ END_TEST
 ! -----------------------------------------------------------------------------
 
 TEST( test_field_name )
-  call func_space%create_field("field",1,real_kind(c_double))
+  call func_space%create_field("field",1,atlas_real(c_double))
   field = func_space%field("field")
   CHECK_EQUAL( field%name() , "field" )
 END_TEST
@@ -73,7 +73,7 @@ TEST( test_field_metadata )
 
   write(*,*) "test_field_metadata starting"
 
-  call func_space%create_field("field_prop",1,real_kind(c_float))
+  call func_space%create_field("field_prop",1,atlas_real(c_float))
   field = func_space%field("field_prop")
 
   metadata = field%metadata()
@@ -110,19 +110,19 @@ TEST( test_field_size )
 
   write(*,*) "test_field_size starting"
 
-  call func_space%create_field("field_0",0,integer_kind())
+  call func_space%create_field("field_0",0,atlas_integer())
   field = func_space%field("field_0")
   call field%access_data(fdata_int)
   CHECK_EQUAL( field%data_type() , "int32" )
   CHECK_EQUAL( size(fdata_int) , 0 )
 
-  call func_space%create_field("field_1",1,real_kind(c_float))
+  call func_space%create_field("field_1",1,atlas_real(c_float))
   field = func_space%field("field_1")
   call field%access_data(fdata_real32)
   CHECK_EQUAL( field%data_type() , "real32" )
   CHECK_EQUAL( size(fdata_real32) , 10 )
 
-  call func_space%create_field("field_2",2,real_kind(c_double))
+  call func_space%create_field("field_2",2,atlas_real(c_double))
   field = func_space%field("field_2")
   call field%access_data(fdata_real64)
   CHECK_EQUAL( field%name(), "field_2" )
@@ -139,20 +139,20 @@ TEST( test_create_remove )
 
   write(*,*) "test_create_remove starting"
 
-  call func_space%create_field("bla",1,integer_kind())
+  call func_space%create_field("bla",1,atlas_integer())
   field = func_space%field("bla")
   CHECK_EQUAL( field%name(), "bla" )
 
 !  call func_space%remove_field("bla")
 
-  call func_space%create_field("vector_field",3,real_kind(c_float))
+  call func_space%create_field("vector_field",3,atlas_real(c_float))
   field = func_space%field("vector_field")
   call field%access_data(vector)
   CHECK_EQUAL( size(vector),   30 )
   CHECK_EQUAL( size(vector,1), 3   )
   CHECK_EQUAL( size(vector,2), 10   )
 
-  call func_space%create_field("scalar_field",1,real_kind(c_double))
+  call func_space%create_field("scalar_field",1,atlas_real(c_double))
   field = func_space%field("scalar_field")
   scalar => field%data1()
   CHECK_EQUAL( size(scalar),   10 )
