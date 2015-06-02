@@ -18,7 +18,7 @@ namespace geometry {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-const double parametricEpsilon = 1e-5; ///< Epsilon used to compare weights and u,v's
+const double parametricEpsilon = 1e-10; ///< Epsilon used to compare weights and u,v's
 
 /// Intersection data structure
 
