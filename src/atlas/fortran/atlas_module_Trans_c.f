@@ -11,23 +11,43 @@
 #define THROW_ERROR call atlas_throw_usererror("Cannot use atlas_Trans since atlas is compiled without ENABLE_TRANS=ON",atlas_code_location(__FILE__,__LINE__))
 #endif
 
-function new_atlas_Trans( grid ) result(trans)
+function new_atlas_Trans( grid, nsmax ) result(trans)
   USE_ATLAS_TRANS_C_BINDING
   type(atlas_Trans) :: trans
-  type(atlas_ReducedGrid) :: grid
+  type(atlas_ReducedGrid), intent(in) :: grid
+  integer, intent(in) :: nsmax
 #ifdef ATLAS_HAVE_TRANS
-  trans%cpp_object_ptr = atlas__Trans__new( grid%cpp_object_ptr )
+  trans%cpp_object_ptr = atlas__Trans__new( grid%cpp_object_ptr, nsmax )
 #else
   THROW_ERROR
 #endif
 end function new_atlas_Trans
 
+function new_atlas_TransParameters() result(params)
+  USE_ATLAS_TRANS_C_BINDING
+  type(atlas_TransParameters) :: params
+#ifdef ATLAS_HAVE_TRANS
+  params%cpp_object_ptr = atlas__TransParameters__new()
+#else
+  THROW_ERROR
+#endif
+end function new_atlas_TransParameters
 
 subroutine atlas_Trans__delete( trans )
   USE_ATLAS_TRANS_C_BINDING
   type(atlas_Trans) :: trans
 #ifdef ATLAS_HAVE_TRANS
   call atlas__Trans__delete(trans%cpp_object_ptr);
+#else
+  THROW_ERROR
+#endif
+end subroutine
+
+subroutine atlas_TransParameters__delete( parameters )
+  USE_ATLAS_TRANS_C_BINDING
+  type(atlas_TransParameters) :: parameters
+#ifdef ATLAS_HAVE_TRANS
+  call atlas__TransParameters__delete(parameters%cpp_object_ptr);
 #else
   THROW_ERROR
 #endif
@@ -336,28 +356,109 @@ function atlas_Trans__nasm0(this) result(nasm0)
 #endif
 end function atlas_Trans__nasm0
 
-subroutine atlas_Trans__dirtrans(this, gpfields, spfields, context)
+subroutine atlas_Trans__dirtrans_fieldset(this, gpfields, spfields, parameters)
   USE_ATLAS_TRANS_C_BINDING
   class(atlas_Trans), intent(in) :: this
   class(atlas_FieldSet), intent(in)  :: gpfields
-  class(atlas_FieldSet), intent(out) :: spfields
-  class(atlas_TransContext), intent(in)  :: context
-  call atlas__Trans__dirtrans( this%cpp_object_ptr,     &
+  class(atlas_FieldSet), intent(inout) :: spfields
+  class(atlas_TransParameters), intent(in), optional  :: parameters
+
+  type(atlas_TransParameters) :: p
+
+  if( present(parameters) ) then
+    p%cpp_object_ptr = parameters%cpp_object_ptr
+  else
+    p = new_atlas_TransParameters()
+  endif
+
+  call atlas__Trans__dirtrans_fieldset( this%cpp_object_ptr,     &
     &                          gpfields%cpp_object_ptr, &
     &                          spfields%cpp_object_ptr, &
-    &                          context%cpp_object_ptr )
-end subroutine atlas_Trans__dirtrans
+    &                          p%cpp_object_ptr )
 
-subroutine atlas_Trans__invtrans(this, spfields, gpfields, context)
+  if( .not. present(parameters) ) then
+    call atlas_TransParameters__delete(p)
+  endif
+
+end subroutine atlas_Trans__dirtrans_fieldset
+
+subroutine atlas_Trans__invtrans_fieldset(this, spfields, gpfields, parameters)
   USE_ATLAS_TRANS_C_BINDING
   class(atlas_Trans), intent(in) :: this
   class(atlas_FieldSet), intent(in)  :: spfields
-  class(atlas_FieldSet), intent(out) :: gpfields
-  class(atlas_TransContext), intent(in)  :: context
-  call atlas__Trans__invtrans( this%cpp_object_ptr,     &
+  class(atlas_FieldSet), intent(inout) :: gpfields
+  class(atlas_TransParameters), intent(in), optional  :: parameters
+
+  type(atlas_TransParameters) :: p
+
+  if( present(parameters) ) then
+    p%cpp_object_ptr = parameters%cpp_object_ptr
+  else
+    p = new_atlas_TransParameters()
+  endif
+
+  call atlas__Trans__invtrans_fieldset( this%cpp_object_ptr,     &
     &                          spfields%cpp_object_ptr, &
     &                          gpfields%cpp_object_ptr, &
-    &                          context%cpp_object_ptr )
-end subroutine atlas_Trans__invtrans
+    &                          p%cpp_object_ptr )
+
+  if( .not. present(parameters) ) then
+    call atlas_TransParameters__delete(p)
+  endif
+
+end subroutine atlas_Trans__invtrans_fieldset
+
+subroutine atlas_Trans__dirtrans_field(this, gpfield, spfield, parameters)
+  USE_ATLAS_TRANS_C_BINDING
+  class(atlas_Trans), intent(in) :: this
+  class(atlas_Field), intent(in)  :: gpfield
+  class(atlas_Field), intent(inout) :: spfield
+  class(atlas_TransParameters), intent(in), optional  :: parameters
+
+  type(atlas_TransParameters) :: p
+
+  if( present(parameters) ) then
+    p%cpp_object_ptr = parameters%cpp_object_ptr
+  else
+    p = new_atlas_TransParameters()
+  endif
+
+  call atlas__Trans__dirtrans_field( this%cpp_object_ptr, &
+    &                          gpfield%cpp_object_ptr, &
+    &                          spfield%cpp_object_ptr, &
+    &                          p%cpp_object_ptr )
+
+  if( .not. present(parameters) ) then
+    call atlas_TransParameters__delete(p)
+  endif
+
+end subroutine atlas_Trans__dirtrans_field
+
+subroutine atlas_Trans__invtrans_field(this, spfield, gpfield, parameters)
+  USE_ATLAS_TRANS_C_BINDING
+  class(atlas_Trans), intent(in) :: this
+  class(atlas_Field), intent(in)  :: spfield
+  class(atlas_Field), intent(inout) :: gpfield
+  class(atlas_TransParameters), intent(in), optional  :: parameters
+
+  type(atlas_TransParameters) :: p
+
+  if( present(parameters) ) then
+    p%cpp_object_ptr = parameters%cpp_object_ptr
+  else
+    p = new_atlas_TransParameters()
+  endif
+
+  call atlas__Trans__invtrans_field( this%cpp_object_ptr, &
+    &                          spfield%cpp_object_ptr, &
+    &                          gpfield%cpp_object_ptr, &
+    &                          p%cpp_object_ptr )
+
+  if( .not. present(parameters) ) then
+    call atlas_TransParameters__delete(p)
+  endif
+
+end subroutine atlas_Trans__invtrans_field
+
 
 

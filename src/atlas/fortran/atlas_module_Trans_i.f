@@ -43,8 +43,13 @@ contains
   procedure :: nasm0        => atlas_Trans__nasm0
   procedure :: nump         => atlas_Trans__nump
 
-  procedure :: dirtrans     => atlas_Trans__dirtrans
-  procedure :: invtrans     => atlas_Trans__invtrans
+  procedure :: dirtrans_field => atlas_Trans__dirtrans_field
+  procedure :: dirtrans_fieldset => atlas_Trans__dirtrans_fieldset
+  generic :: dirtrans => dirtrans_field, dirtrans_fieldset
+
+  procedure :: invtrans_field => atlas_Trans__invtrans_field
+  procedure :: invtrans_fieldset => atlas_Trans__invtrans_fieldset
+  generic :: invtrans => invtrans_field, invtrans_fieldset
 
 END TYPE atlas_Trans
 
@@ -54,11 +59,15 @@ interface new_atlas_Trans
   module procedure new_atlas_Trans
 end interface
 
-TYPE, extends(object_type) :: atlas_TransContext
+interface new_atlas_TransParameters
+  module procedure new_atlas_TransParameters
+end interface
+
+TYPE, extends(object_type) :: atlas_TransParameters
 
 ! Purpose :
 ! -------
-!   *TransContext* : Extra information to pass to dirtrans and invtrans
+!   *TransParameters* : Extra information to pass to dirtrans and invtrans
 
 ! Author :
 ! ------
@@ -66,7 +75,7 @@ TYPE, extends(object_type) :: atlas_TransContext
 
 !------------------------------------------------------------------------------
 contains
-END TYPE atlas_TransContext
+END TYPE atlas_TransParameters
 
 
 

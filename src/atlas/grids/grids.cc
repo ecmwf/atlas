@@ -181,6 +181,11 @@ void load()
     atlas::grids::load();
   }
 
+  void atlas__ReducedGrid__delete(ReducedGrid* This)
+  {
+    delete This;
+  }
+
 //}
 
 

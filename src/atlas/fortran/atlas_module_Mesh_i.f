@@ -19,7 +19,9 @@ TYPE, extends(object_type) :: atlas_Mesh
 
 !------------------------------------------------------------------------------
 contains
-  procedure :: create_function_space => Mesh__create_function_space
+  procedure, private :: create_function_space_nodes => Mesh__create_function_space_nodes
+  procedure, private :: create_function_space_shape => Mesh__create_function_space_shape
+  generic :: create_function_space => create_function_space_nodes, create_function_space_shape
   procedure :: function_space => Mesh__function_space
 END TYPE atlas_Mesh
 

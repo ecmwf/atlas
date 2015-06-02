@@ -38,6 +38,15 @@ if( HAVE_FCTEST )
     LIBS            atlas_f
   )
 
+  if( ATLAS_HAVE_TRANS )
+    add_fctest( TARGET atlas_fctest_trans
+      MPI             1
+      LINKER_LANGUAGE Fortran
+      SOURCES         fctest_trans.F90
+      LIBS            atlas_f
+    )
+  endif()
+
 endif()
 
 set( BOOST_UNIT_TEST_FRAMEWORK_HEADER_ONLY ON )

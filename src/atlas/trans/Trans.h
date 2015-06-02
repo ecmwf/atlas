@@ -28,9 +28,12 @@ namespace trans {
 
 enum FFT { FFT992=TRANS_FFT992, FFTW=TRANS_FFTW };
 
-class TransContext
-{
+class TransParameters : public eckit::Properties {
 public:
+  TransParameters() {}
+  TransParameters(eckit::Stream& s) : eckit::Properties(s) { }
+  ~TransParameters() {}
+  static const char* className() { return "atlas::trans::TransParameters"; }
 };
 
 
@@ -302,11 +305,11 @@ public:
    */
   void dirtrans(const int nb_fields, const double wind_fields[], double vorticity_spectra[], double divergence_spectra[] ) const;
 
-  void dirtrans(const Field& gpfield,     Field& spfield,     const TransContext& = TransContext()) const;
-  void dirtrans(const FieldSet& gpfields, FieldSet& spfields, const TransContext& = TransContext()) const;
+  void dirtrans(const Field& gpfield,     Field& spfield,     const TransParameters& = TransParameters()) const;
+  void dirtrans(const FieldSet& gpfields, FieldSet& spfields, const TransParameters& = TransParameters()) const;
 
-  void invtrans(const Field& spfield,     Field& gpfield,     const TransContext& = TransContext()) const;
-  void invtrans(const FieldSet& spfields, FieldSet& gpfields, const TransContext& = TransContext()) const;
+  void invtrans(const Field& spfield,     Field& gpfield,     const TransParameters& = TransParameters()) const;
+  void invtrans(const FieldSet& spfields, FieldSet& gpfields, const TransParameters& = TransParameters()) const;
 
 
 private:
@@ -322,7 +325,6 @@ private:
 
 
 
-
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
@@ -330,17 +332,21 @@ typedef grids::ReducedGrid grids__ReducedGrid;
 
 extern "C"
 {
-  Trans* atlas__Trans__new (grids__ReducedGrid* grid);
+  Trans* atlas__Trans__new (const grids__ReducedGrid* grid, int nsmax);
   void atlas__Trans__delete (Trans* trans);
   int atlas__Trans__handle (const Trans* trans);
-  void atlas__Trans__distspec( const Trans* t, const int nb_fields, const int origin[], const double global_spectra[], double spectra[] );
-  void atlas__Trans__gathspec( const Trans* t, const int nb_fields, const int destination[], const double spectra[], double global_spectra[] );
-  void atlas__Trans__distgrid( const Trans* t, const int nb_fields, const int origin[], const double global_fields[], double fields[] );
-  void atlas__Trans__gathgrid( const Trans* t, const int nb_fields, const int destination[], const double fields[], double global_fields[] );
-  void atlas__Trans__invtrans_scalar( const Trans* t, const int nb_fields, const double scalar_spectra[], double scalar_fields[] );
-  void atlas__Trans__invtrans_vordiv2wind( const Trans* t, const int nb_fields, const double vorticity_spectra[], const double divergence_spectra[], double wind_fields[] );
-  void atlas__Trans__dirtrans_scalar( const Trans* t, const int nb_fields, const double scalar_fields[], double scalar_spectra[] );
-  void atlas__Trans__dirtrans_wind2vordiv( const Trans* t, const int nb_fields, const double wind_fields[], double vorticity_spectra[], double divergence_spectra[] );
+  void atlas__Trans__distspec (const Trans* t, int nb_fields, int origin[], double global_spectra[], double spectra[]);
+  void atlas__Trans__gathspec (const Trans* t, int nb_fields, int destination[], double spectra[], double global_spectra[]);
+  void atlas__Trans__distgrid (const Trans* t, int nb_fields, int origin[], double global_fields[], double fields[]);
+  void atlas__Trans__gathgrid (const Trans* t, int nb_fields, int destination[], double fields[], double global_fields[]);
+  void atlas__Trans__invtrans_scalar (const Trans* t, int nb_fields, double scalar_spectra[], double scalar_fields[]);
+  void atlas__Trans__invtrans_vordiv2wind (const Trans* t, int nb_fields, double vorticity_spectra[], double divergence_spectra[], double wind_fields[]);
+  void atlas__Trans__dirtrans_scalar (const Trans* t, int nb_fields, double scalar_fields[], double scalar_spectra[]);
+  void atlas__Trans__dirtrans_wind2vordiv (const Trans* t, int nb_fields, double wind_fields[], double vorticity_spectra[], double divergence_spectra[]);
+  void atlas__Trans__dirtrans_fieldset (const Trans* This, const FieldSet* gpfields, FieldSet* spfields, const TransParameters* parameters);
+  void atlas__Trans__invtrans_fieldset (const Trans* This, const FieldSet* spfields, FieldSet* gpfields, const TransParameters* parameters);
+  void atlas__Trans__dirtrans_field (const Trans* This, const Field* gpfield, Field* spfield, const TransParameters* parameters);
+  void atlas__Trans__invtrans_field (const Trans* This, const Field* spfield, Field* gpfield, const TransParameters* parameters);
   int atlas__Trans__nproc (const Trans* This);
   int atlas__Trans__myproc (const Trans* This, int proc0);
   int atlas__Trans__ndgl (const Trans* This);
@@ -364,8 +370,8 @@ extern "C"
   const int* atlas__Trans__nonl (const Trans* This, int &sizef2, int &sizef1);
   const int* atlas__Trans__nmyms (const Trans* This, int &size);
   const int* atlas__Trans__nasm0 (const Trans* This, int &size);
-  void atlas__Trans__dirtrans (const Trans* This, const FieldSet* gpfields, FieldSet* spfields, const TransContext* context);
-  void atlas__Trans__invtrans (const Trans* This, const FieldSet* spfields, FieldSet* gpfields, const TransContext* context);
+  TransParameters* atlas__TransParameters__new ();
+  void atlas__TransParameters__delete (TransParameters* parameters);
 }
 // ------------------------------------------------------------------
 

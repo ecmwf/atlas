@@ -6,7 +6,7 @@ function new_atlas_Mesh() result(mesh)
   mesh%cpp_object_ptr = atlas__Mesh__new()
 end function new_atlas_Mesh
 
-subroutine Mesh__create_function_space(this,name,shape_func,nb_nodes)
+subroutine Mesh__create_function_space_nodes(this,name,shape_func,nb_nodes)
   class(atlas_Mesh), intent(inout) :: this
   character(len=*), intent(in) :: name
   character(len=*), intent(in) :: shape_func
@@ -15,7 +15,16 @@ subroutine Mesh__create_function_space(this,name,shape_func,nb_nodes)
   extents = (/nb_nodes,FIELD_NB_VARS/)
   call atlas__Mesh__create_function_space(this%cpp_object_ptr,c_str(name),c_str(shape_func), &
   & extents, 2)
-end subroutine Mesh__create_function_space
+end subroutine Mesh__create_function_space_nodes
+
+subroutine Mesh__create_function_space_shape(this,name,shape_func,shape)
+  class(atlas_Mesh), intent(inout) :: this
+  character(len=*), intent(in) :: name
+  character(len=*), intent(in) :: shape_func
+  integer, intent(in) :: shape(:)
+  call atlas__Mesh__create_function_space(this%cpp_object_ptr,c_str(name),c_str(shape_func), &
+  & shape, size(shape) )
+end subroutine Mesh__create_function_space_shape
 
 function Mesh__function_space(this,name) result(function_space)
   class(atlas_Mesh), intent(in) :: this

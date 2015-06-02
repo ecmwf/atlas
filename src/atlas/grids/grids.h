@@ -47,6 +47,7 @@ extern "C"
   ReducedGrid* atlas__new_gaussian_grid(int N);
   ReducedGrid* atlas__new_lonlat_grid(int nlon, int nlat);
   ReducedGrid* atlas__new_reduced_gaussian_grid(int nlon[], int nlat);
+  void atlas__ReducedGrid__delete(ReducedGrid* This);
   void atlas__grids__load();
 }
 

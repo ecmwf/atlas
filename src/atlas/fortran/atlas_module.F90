@@ -105,11 +105,13 @@ INTERFACE delete
 !   20-Nov-2013 Willem Deconinck     *ECMWF*
 
 ! -----------------------------------------------------------------------------
+  module procedure atlas_ReducedGrid__delete
   module procedure atlas_Mesh__delete
   module procedure atlas_FieldSet__delete
   module procedure atlas_HaloExchange__delete
   module procedure atlas_Metadata__delete
   module procedure atlas_GridDistribution__delete
+  module procedure atlas_Trans__delete
 end interface delete
 
 !------------------------------------------------------------------------------
