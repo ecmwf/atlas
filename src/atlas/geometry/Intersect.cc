@@ -8,29 +8,19 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/geometry/Ray.h"
-
-#include "eckit/eckit_config.h"
-
-#ifdef HAVE_EIGEN
-
-#include "eckit/maths/Eigen.h"
-
-//----------------------------------------------------------------------------------------------------------------------
+#include "atlas/geometry/Intersect.h"
 
 using Eigen::Vector3d;
 
 namespace atlas {
 namespace geometry {
 
-Ray::Ray(const double *p) {
-    orig = Eigen::Vector3d::Map(p);
-    dir = -orig;
-}
+Intersect::Intersect() : u(0.), v(0.), t(0.), success_(false) {}
 
-//----------------------------------------------------------------------------------------------------------------------
+void Intersect::print(std::ostream& s) const
+{
+    s << "Intersect[u=" << u << ",v=" << v << ",t=" << t <<",success=" << success_ << "]";
+}
 
 }  // namespace geometry
 }  // namespace atlas
-
-#endif  // HAVE_EIGEN

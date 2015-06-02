@@ -197,6 +197,8 @@ geometry/QuadrilateralIntersection.h
 geometry/QuadrilateralIntersection.cc
 geometry/TriangleIntersection.h
 geometry/TriangleIntersection.cc
+geometry/Intersect.h
+geometry/Intersect.cc
 geometry/Ray.h
 geometry/Ray.cc
 )
