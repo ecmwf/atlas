@@ -56,7 +56,7 @@ Intersect TriangleIntersection::intersects(const Ray& r, double epsilon) const {
   double tmp = isect.u + isect.v;
   if(fabs(tmp) < parametricEpsilon ) tmp = 0;
   if(fabs(1-tmp) < parametricEpsilon ) tmp = 1;
-  isect.u = tmp - isec.v;
+  isect.u = tmp - isect.v;
 
   if (isect.v < 0 || isect.u + isect.v > 1) return isect.success(false);
   isect.t = edge2.dot(qvec) * invDet;
