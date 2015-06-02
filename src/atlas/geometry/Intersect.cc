@@ -10,7 +10,7 @@
 
 #include "atlas/geometry/Intersect.h"
 
-using Eigen::Vector3d;
+#include <iostream>
 
 namespace atlas {
 namespace geometry {

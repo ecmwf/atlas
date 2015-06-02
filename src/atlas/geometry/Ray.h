@@ -26,8 +26,6 @@ namespace geometry {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-const double parametricEpsilon = 1e-12; ///< Epsilon used to compare weights and u,v's
-
 /// Ray trace data structure
 
 struct Ray {
