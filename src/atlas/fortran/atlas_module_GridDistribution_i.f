@@ -22,6 +22,6 @@ END TYPE atlas_GridDistribution
 
 !------------------------------------------------------------------------------
 
-interface new_atlas_GridDistribution
-  module procedure new_atlas_GridDistribution
+interface atlas_GridDistribution
+  module procedure atlas_GridDistribution__ctor
 end interface

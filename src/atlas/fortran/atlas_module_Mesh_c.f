@@ -1,10 +1,10 @@
 ! (C) Copyright 2013-2014 ECMWF.
 
 
-function new_atlas_Mesh() result(mesh)
+function atlas_Mesh__ctor() result(mesh)
   type(atlas_Mesh) :: mesh
   mesh%cpp_object_ptr = atlas__Mesh__new()
-end function new_atlas_Mesh
+end function atlas_Mesh__ctor
 
 subroutine Mesh__create_function_space_nodes(this,name,shape_func,nb_nodes)
   class(atlas_Mesh), intent(inout) :: this

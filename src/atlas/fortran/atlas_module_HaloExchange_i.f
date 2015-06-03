@@ -48,3 +48,10 @@ contains
       & HaloExchange__execute_real64_r4
 END TYPE atlas_HaloExchange
 !------------------------------------------------------------------------------
+
+interface atlas_HaloExchange
+  module procedure atlas_HaloExchange__ctor
+end interface
+
+!------------------------------------------------------------------------------
+

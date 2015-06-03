@@ -4,29 +4,29 @@
 ! -----------------------------------------------------------------------------
 ! ReducedGrid routines
 
-function new_atlas_reduced_grid(identifier) result(grid)
+function atlas_ReducedGrid__ctor_id(identifier) result(grid)
   type(atlas_ReducedGrid) :: grid
   character(len=*) :: identifier
   grid%cpp_object_ptr = atlas__new_reduced_grid(c_str(identifier))
-end function new_atlas_reduced_grid
+end function atlas_ReducedGrid__ctor_id
 
-function new_atlas_gaussian_grid(N) result(grid)
+function atlas_GaussianGrid__ctor(N) result(grid)
   type(atlas_ReducedGrid) :: grid
   integer, intent(in) :: N
   grid%cpp_object_ptr = atlas__new_gaussian_grid(N)
-end function new_atlas_gaussian_grid
+end function atlas_GaussianGrid__ctor
 
-function new_atlas_reduced_gaussian_grid(nlon) result(grid)
+function atlas_ReducedGaussianGrid__ctor(nlon) result(grid)
   type(atlas_ReducedGrid) :: grid
   integer, intent(in) :: nlon(:)
   grid%cpp_object_ptr = atlas__new_reduced_gaussian_grid(nlon,size(nlon))
-end function new_atlas_reduced_gaussian_grid
+end function atlas_ReducedGaussianGrid__ctor
 
-function new_atlas_lonlat_grid(nlon,nlat) result(grid)
+function atlas_LonLatGrid__ctor(nlon,nlat) result(grid)
   type(atlas_ReducedGrid) :: grid
   integer, intent(in) :: nlon, nlat
   grid%cpp_object_ptr = atlas__new_lonlat_grid(nlon,nlat)
-end function new_atlas_lonlat_grid
+end function atlas_LonLatGrid__ctor
 
 function ReducedGrid__npts(this) result(npts)
   class(atlas_ReducedGrid), intent(in) :: this

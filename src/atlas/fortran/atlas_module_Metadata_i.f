@@ -36,7 +36,10 @@ contains
   generic :: get => get_integer, get_logical, get_real32, get_real64, get_string
 END TYPE atlas_Metadata
 
-interface new_atlas_Metadata
-  module procedure new_atlas_Metadata
+!------------------------------------------------------------------------------
+
+interface atlas_Metadata
+  module procedure atlas_Metadata__ctor
 end interface
+
 !------------------------------------------------------------------------------

@@ -58,9 +58,9 @@ TEST( test_trans )
   nlev=100
   nsmax = 21
 
-  grid = new_atlas_ReducedGrid("oct.N24")
+  grid = atlas_ReducedGrid("oct.N24")
   mesh = atlas_generate_mesh(grid)
-  trans = new_atlas_Trans(grid,nsmax)
+  trans = atlas_Trans(grid,nsmax)
 
   !call atlas_write_gmsh(mesh,"testf3.msh")
 
@@ -103,11 +103,11 @@ TEST( test_trans )
   FCTEST_CHECK_CLOSE( spec1(:,1), check, tol )
   deallocate( check )
 
-  scalarfields = new_atlas_FieldSet("scalarfields")
+  scalarfields = atlas_FieldSet("scalarfields")
   call scalarfields%add_field(scalarfield1)
   call scalarfields%add_field(scalarfield2)
 
-  spectralfields = new_atlas_FieldSet("spectralfields")
+  spectralfields = atlas_FieldSet("spectralfields")
   call spectralfields%add_field(spectralfield1)
   call spectralfields%add_field(spectralfield2)
 
@@ -135,11 +135,11 @@ TEST( test_trans )
   deallocate( check )
 
 
-  call delete(scalarfields)
-  call delete(spectralfields)
-  call delete(mesh)
-  call delete(trans)
-  call delete(grid)
+  call atlas_delete(scalarfields)
+  call atlas_delete(spectralfields)
+  call atlas_delete(mesh)
+  call atlas_delete(trans)
+  call atlas_delete(grid)
 END_TEST
 
 

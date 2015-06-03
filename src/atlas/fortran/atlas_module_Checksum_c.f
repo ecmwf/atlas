@@ -3,10 +3,10 @@
 ! ------------------------------------------------------------------------------
 ! Checksum routines
 
-function new_atlas_Checksum() result(Checksum)
+function atlas_Checksum__ctor() result(Checksum)
   type(atlas_Checksum) :: Checksum
   Checksum%cpp_object_ptr = atlas__Checksum__new()
-end function new_atlas_checksum
+end function atlas_checksum__ctor
 
 subroutine atlas_Checksum__delete(this)
   type(atlas_Checksum), intent(inout) :: this

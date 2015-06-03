@@ -25,8 +25,9 @@ contains
   procedure :: function_space => Mesh__function_space
 END TYPE atlas_Mesh
 
-interface new_atlas_Mesh
-  module procedure new_atlas_Mesh
+interface atlas_Mesh
+  module procedure atlas_Mesh__ctor
 end interface
+
 !------------------------------------------------------------------------------
 

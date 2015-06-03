@@ -4,10 +4,10 @@
 ! -----------------------------------------------------------------------------
 ! Metadata routines
 
-function new_atlas_Metadata() result(metadata)
+function atlas_Metadata__ctor() result(metadata)
   type(atlas_Metadata) :: metadata
   metadata%cpp_object_ptr = atlas__Metadata__new()
-end function new_atlas_Metadata
+end function atlas_Metadata__ctor
 
 subroutine atlas_Metadata__delete(this)
   type(atlas_Metadata), intent(inout) :: this

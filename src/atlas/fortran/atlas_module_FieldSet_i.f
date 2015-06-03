@@ -31,3 +31,10 @@ contains
   procedure, public :: get_array => FieldSet__fields
 END TYPE atlas_FieldSet
 !------------------------------------------------------------------------------
+
+interface atlas_FieldSet
+  module procedure atlas_FieldSet__ctor
+end interface
+
+!------------------------------------------------------------------------------
+

@@ -93,7 +93,7 @@ integer, public, parameter :: ATLAS_KIND_GIDX = c_long
 #include "atlas_module_GridDistribution_i.f"
 #include "atlas_module_Trans_i.f"
 
-INTERFACE delete
+INTERFACE atlas_delete
 
 ! Purpose :
 ! -------
@@ -112,7 +112,7 @@ INTERFACE delete
   module procedure atlas_Metadata__delete
   module procedure atlas_GridDistribution__delete
   module procedure atlas_Trans__delete
-end interface delete
+end interface atlas_delete
 
 !------------------------------------------------------------------------------
 

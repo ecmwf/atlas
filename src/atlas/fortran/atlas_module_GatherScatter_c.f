@@ -3,10 +3,10 @@
 ! ------------------------------------------------------------------------------
 ! Gather routines
 
-function new_GatherScatter() result(gather)
+function atlas_GatherScatter__ctor() result(gather)
   type(atlas_GatherScatter) :: gather
   gather%cpp_object_ptr = atlas__GatherScatter__new()
-end function new_GatherScatter
+end function atlas_GatherScatter__ctor
 
 subroutine GatherScatter__delete(this)
   type(atlas_GatherScatter), intent(inout) :: this

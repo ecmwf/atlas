@@ -3,10 +3,10 @@
 ! ------------------------------------------------------------------------------
 ! HaloExchange routines
 
-function new_HaloExchange() result(halo_exchange)
+function atlas_HaloExchange__ctor() result(halo_exchange)
   type(atlas_HaloExchange) :: halo_exchange
   halo_exchange%cpp_object_ptr = atlas__HaloExchange__new()
-end function new_HaloExchange
+end function atlas_HaloExchange__ctor
 
 subroutine atlas_HaloExchange__delete(this)
   type(atlas_HaloExchange), intent(inout) :: this

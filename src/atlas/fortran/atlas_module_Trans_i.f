@@ -55,13 +55,11 @@ END TYPE atlas_Trans
 
 !------------------------------------------------------------------------------
 
-interface new_atlas_Trans
-  module procedure new_atlas_Trans
+interface atlas_Trans
+  module procedure atlas_Trans__ctor
 end interface
 
-interface new_atlas_TransParameters
-  module procedure new_atlas_TransParameters
-end interface
+!------------------------------------------------------------------------------
 
 TYPE, extends(object_type) :: atlas_TransParameters
 
@@ -77,6 +75,10 @@ TYPE, extends(object_type) :: atlas_TransParameters
 contains
 END TYPE atlas_TransParameters
 
+!------------------------------------------------------------------------------
 
+interface atlas_TransParameters
+  module procedure atlas_TransParameters__ctor
+end interface
 
-
+!------------------------------------------------------------------------------

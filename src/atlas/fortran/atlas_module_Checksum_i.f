@@ -44,4 +44,11 @@ contains
       & Checksum__execute_real64_r3
 
 END TYPE atlas_Checksum
+
+!------------------------------------------------------------------------------
+
+interface atlas_Checksum
+  module procedure atlas_Checksum__ctor
+end interface
+
 !------------------------------------------------------------------------------

@@ -71,3 +71,10 @@ contains
 
 END TYPE atlas_GatherScatter
 !------------------------------------------------------------------------------
+
+interface atlas_GatherScatter
+  module procedure atlas_GatherScatter__ctor
+end interface
+
+!------------------------------------------------------------------------------
+

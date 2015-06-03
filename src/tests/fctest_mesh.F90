@@ -32,13 +32,13 @@ TESTSUITE_WITH_FIXTURE(fctest_atlas_Mesh,fctest_atlas_Mesh_fixture)
 TESTSUITE_INIT
   call atlas_init()
   call atlas_grids_load()
-  mesh = new_atlas_Mesh()
+  mesh = atlas_Mesh()
 END_TESTSUITE_INIT
 
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_FINALIZE
-  call delete( mesh )
+  call atlas_delete( mesh )
   call atlas_mpi_finalize()
 END_TESTSUITE_FINALIZE
 
@@ -167,7 +167,7 @@ TEST( test_fieldset )
 
   write(*,*) "test_fieldset starting"
 
-  fieldset = new_atlas_FieldSet("fieldset")
+  fieldset = atlas_FieldSet("fieldset")
   func_space = mesh%function_space("nodes")
 
   call fieldset%add_field( func_space%field("field_0") )
@@ -195,7 +195,7 @@ TEST( test_fieldset )
   CHECK_EQUAL( fields(3)%name(), "field_2" )
   CHECK_EQUAL( fields(4)%name(), "vector_field" )
 
-  call delete(fieldset)
+  call atlas_delete(fieldset)
 END_TEST
 
 TEST( test_meshgen )
@@ -210,7 +210,7 @@ TEST( test_meshgen )
 
   write(*,*) "test_meshgen starting"
 
-  grid = new_atlas_ReducedGrid("rgg.N24")
+  grid = atlas_ReducedGrid("rgg.N24")
   mesh = atlas_generate_mesh(grid)
 
 !  call atlas_generate_reduced_gaussian_grid(rgg,"T63")
@@ -262,7 +262,9 @@ TEST( test_griddistribution )
   integer, allocatable :: part(:)
   integer :: jnode
 
-  grid = new_atlas_ReducedGrid("oct.N16")
+  grid = atlas_ReducedGrid("oct.N16")
+  !grid = atlas_ReducedGrid("ll.128x64")
+  !grid = atlas_LonLatGrid(128,64)
 
   allocate( part(grid%npts()) )
   do jnode=1,grid%npts()/3
@@ -272,7 +274,7 @@ TEST( test_griddistribution )
     part(jnode) = 1
   enddo
 
-  griddistribution = new_atlas_GridDistribution(part, part0=1)
+  griddistribution = atlas_GridDistribution(part, part0=1)
 
   mesh = atlas_generate_mesh(grid,griddistribution)
 

@@ -11,7 +11,7 @@
 #define THROW_ERROR call atlas_throw_usererror("Cannot use atlas_Trans since atlas is compiled without ENABLE_TRANS=ON",atlas_code_location(__FILE__,__LINE__))
 #endif
 
-function new_atlas_Trans( grid, nsmax ) result(trans)
+function atlas_Trans__ctor( grid, nsmax ) result(trans)
   USE_ATLAS_TRANS_C_BINDING
   type(atlas_Trans) :: trans
   type(atlas_ReducedGrid), intent(in) :: grid
@@ -21,9 +21,9 @@ function new_atlas_Trans( grid, nsmax ) result(trans)
 #else
   THROW_ERROR
 #endif
-end function new_atlas_Trans
+end function atlas_Trans__ctor
 
-function new_atlas_TransParameters() result(params)
+function atlas_TransParameters__ctor() result(params)
   USE_ATLAS_TRANS_C_BINDING
   type(atlas_TransParameters) :: params
 #ifdef ATLAS_HAVE_TRANS
@@ -31,7 +31,7 @@ function new_atlas_TransParameters() result(params)
 #else
   THROW_ERROR
 #endif
-end function new_atlas_TransParameters
+end function atlas_TransParameters__ctor
 
 subroutine atlas_Trans__delete( trans )
   USE_ATLAS_TRANS_C_BINDING
@@ -368,7 +368,7 @@ subroutine atlas_Trans__dirtrans_fieldset(this, gpfields, spfields, parameters)
   if( present(parameters) ) then
     p%cpp_object_ptr = parameters%cpp_object_ptr
   else
-    p = new_atlas_TransParameters()
+    p = atlas_TransParameters()
   endif
 
   call atlas__Trans__dirtrans_fieldset( this%cpp_object_ptr,     &
@@ -394,7 +394,7 @@ subroutine atlas_Trans__invtrans_fieldset(this, spfields, gpfields, parameters)
   if( present(parameters) ) then
     p%cpp_object_ptr = parameters%cpp_object_ptr
   else
-    p = new_atlas_TransParameters()
+    p = atlas_TransParameters()
   endif
 
   call atlas__Trans__invtrans_fieldset( this%cpp_object_ptr,     &
@@ -420,7 +420,7 @@ subroutine atlas_Trans__dirtrans_field(this, gpfield, spfield, parameters)
   if( present(parameters) ) then
     p%cpp_object_ptr = parameters%cpp_object_ptr
   else
-    p = new_atlas_TransParameters()
+    p = atlas_TransParameters()
   endif
 
   call atlas__Trans__dirtrans_field( this%cpp_object_ptr, &
@@ -446,7 +446,7 @@ subroutine atlas_Trans__invtrans_field(this, spfield, gpfield, parameters)
   if( present(parameters) ) then
     p%cpp_object_ptr = parameters%cpp_object_ptr
   else
-    p = new_atlas_TransParameters()
+    p = atlas_TransParameters()
   endif
 
   call atlas__Trans__invtrans_field( this%cpp_object_ptr, &

@@ -24,11 +24,20 @@ contains
   procedure :: lat => ReducedGrid__latitudes
 END TYPE atlas_ReducedGrid
 
-interface new_atlas_ReducedGrid
-  module procedure new_atlas_reduced_grid
-  module procedure new_atlas_gaussian_grid
-  module procedure new_atlas_reduced_gaussian_grid
-  module procedure new_atlas_lonlat_grid
+interface atlas_ReducedGrid
+  module procedure atlas_ReducedGrid__ctor_id
+end interface
+
+interface atlas_GaussianGrid
+  module procedure atlas_GaussianGrid__ctor
+end interface
+
+interface atlas_ReducedGaussianGrid
+  module procedure atlas_ReducedGaussianGrid__ctor
+end interface
+
+interface atlas_LonLatGrid
+  module procedure atlas_LonLatGrid__ctor
 end interface
 
 !------------------------------------------------------------------------------
