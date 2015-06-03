@@ -8,47 +8,42 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_geometry_Ray_h
-#define atlas_geometry_Ray_h
+#ifndef atlas_geometry_Intersect_h
+#define atlas_geometry_Intersect_h
 
-#include <limits>
-
-#include "eckit/eckit_config.h"
-
-#ifdef HAVE_EIGEN
-
-#include "eckit/maths/Eigen.h"
-
-#include "eckit/types/FloatCompare.h"
+#include <iosfwd>
 
 namespace atlas {
 namespace geometry {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-/// Ray trace data structure
+const double parametricEpsilon = 1e-10; ///< Epsilon used to compare weights and u,v's
 
-struct Ray {
+/// Intersection data structure
 
-  Eigen::Vector3d orig;
-  Eigen::Vector3d dir;
+struct Intersect {
 
-  /// initializes ray with origin in point and direction to (0,0,0)
-  explicit Ray(const double* p);
+  double u;
+  double v;
+  double t;
 
-  Ray(const double* o, const double* d) {
-    orig = Eigen::Vector3d::Map(o);
-    dir = Eigen::Vector3d::Map(d);
-  }
+  Intersect();
 
-  Eigen::Vector3d operator()(double t) const { return orig + t * dir; }
+  operator bool() const { return success_; }
 
-  void print(std::ostream& s) const { s << "Ray[orig=" << orig << ",dir=" << dir << "]"; }
+  Intersect& success(bool s){ success_ = s; return *this; }
 
-  friend std::ostream& operator<<(std::ostream& s, const Ray& p) {
+  void print(std::ostream& s) const;
+
+  friend std::ostream& operator<<(std::ostream& s, const Intersect& p) {
     p.print(s);
     return s;
   }
+
+private:
+
+  bool success_;
 
 };
 
@@ -56,7 +51,5 @@ struct Ray {
 
 }  // namespace geometry
 }  // namespace atlas
-
-#endif  // HAVE_EIGEN
 
 #endif

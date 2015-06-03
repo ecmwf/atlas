@@ -13,9 +13,9 @@
 
 #include "atlas/atlas_config.h"
 
-#ifdef ECKIT_HAVE_GRIB
+#include "eckit/memory/SharedPtr.h"
 
-#include "eckit/grib/GribHandle.h"
+#ifdef ECKIT_HAVE_GRIB
 
 #include "atlas/FieldSet.h"
 #include "atlas/GridSpec.h"
@@ -24,6 +24,7 @@
 
 namespace eckit { class PathName; }
 namespace eckit { class DataHandle; }
+namespace eckit { namespace grib { class GribHandle; } }
 
 namespace atlas {
 namespace io {
@@ -34,6 +35,8 @@ Grid::Ptr make_grid(const eckit::PathName& path );
 
 class Grib {
 
+	typedef eckit::SharedPtr<eckit::grib::GribHandle> Ptr;
+
 public: // methods
 
 	static Grid::Ptr create_grid( eckit::grib::GribHandle& );
@@ -41,7 +44,7 @@ public: // methods
 	/// Given a Grid, this function will find the closest matching GRIB samples file.
 	/// The cloned/new handle of the GRIB sample file is returned.
 	/// If no match found an exception is thrown
-	static eckit::grib::GribHandle::Ptr create_handle( const Grid&, long edition = 0 );
+	static Ptr create_handle( const Grid&, long edition = 0 );
 
 	/// Given a GridSpec return closest grib samples file.
 	/// If no match found returns an empty string
@@ -51,7 +54,7 @@ public: // methods
 
 	static void write( const atlas::Field& fh, eckit::DataHandle& dh );
 
-	static eckit::grib::GribHandle::Ptr write( const atlas::Field& fh );
+	static Ptr write( const atlas::Field& fh );
 
 	static void clone( const atlas::FieldSet& field, const eckit::PathName& src, const eckit::PathName& opath  );
 

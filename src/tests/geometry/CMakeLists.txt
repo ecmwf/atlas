@@ -9,8 +9,9 @@
 set( BOOST_UNIT_TEST_FRAMEWORK_LINKED OFF )
 
 ecbuild_add_test( TARGET atlas_test_QuadrilateralInterseciton
+  CONDITION ECKIT_HAVE_EIGEN
   BOOST
-  SOURCES  test_QuadrilateralIntersection.cc
-  LIBS     atlas
+  SOURCES   test_QuadrilateralIntersection.cc
+  LIBS      atlas
 )
 
