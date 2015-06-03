@@ -8,6 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
+#include <cmath>
+
 #include "atlas/geometry/TriangleIntersection.h"
 
 #include "eckit/eckit_config.h"
@@ -33,20 +35,33 @@ Intersect TriangleIntersection::intersects(const Ray& r, double epsilon) const {
 
   const double det = edge1.dot(pvec);
 
-  if (std::abs(det) < epsilon) return isect.success(false);
+  // ray is parallel to triangle (check ?)
+  if (fabs(det) < epsilon) return isect.success(false);
 
   const double invDet = 1. / det;
   Vector3d tvec = r.orig - v0;
   isect.u = tvec.dot(pvec) * invDet;
-  if (isect.u + epsilon < 0 || isect.u - epsilon > 1) return isect.success(false);
+
+  if(fabs(isect.u) < parametricEpsilon ) isect.u = 0;
+  if(fabs(1-isect.u) < parametricEpsilon ) isect.u = 1;
+
+  if (isect.u < 0 || isect.u > 1) return isect.success(false);
 
   Vector3d qvec = tvec.cross(edge1);
   isect.v = r.dir.dot(qvec) * invDet;
 
-  if (isect.v + epsilon < 0 || isect.u + isect.v - epsilon > 1) return isect.success(false);
+  if(fabs(isect.v) < parametricEpsilon ) isect.v = 0;
+  if(fabs(1-isect.v) < parametricEpsilon ) isect.v = 1;
+
+  double tmp = isect.u + isect.v;
+  if(fabs(tmp) < parametricEpsilon ) tmp = 0;
+  if(fabs(1-tmp) < parametricEpsilon ) tmp = 1;
+  isect.u = tmp - isect.v;
+
+  if (isect.v < 0 || isect.u + isect.v > 1) return isect.success(false);
   isect.t = edge2.dot(qvec) * invDet;
 
-  return isect.success(true);;
+  return isect.success(true);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
