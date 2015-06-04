@@ -15,7 +15,7 @@
 #include "eckit/eckit_config.h"
 #include "eckit/exception/Exceptions.h"
 
-#ifdef HAVE_EIGEN
+#ifdef ECKIT_HAVE_EIGEN
 
 #include "eckit/maths/Eigen.h"
 #include "eckit/log/Log.h"
@@ -103,4 +103,4 @@ bool QuadrilateralIntersection::validate() const {
 }  // namespace geometry
 }  // namespace atlas
 
-#endif  // HAVE_EIGEN
+#endif  // ECKIT_HAVE_EIGEN

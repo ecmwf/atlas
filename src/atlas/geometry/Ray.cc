@@ -12,7 +12,7 @@
 
 #include "eckit/eckit_config.h"
 
-#ifdef HAVE_EIGEN
+#ifdef ECKIT_HAVE_EIGEN
 
 #include "eckit/maths/Eigen.h"
 
@@ -33,4 +33,4 @@ Ray::Ray(const double *p) {
 }  // namespace geometry
 }  // namespace atlas
 
-#endif  // HAVE_EIGEN
+#endif  // ECKIT_HAVE_EIGEN

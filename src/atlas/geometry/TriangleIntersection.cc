@@ -14,7 +14,7 @@
 
 #include "eckit/eckit_config.h"
 
-#ifdef HAVE_EIGEN
+#ifdef ECKIT_HAVE_EIGEN
 
 #include "eckit/maths/Eigen.h"
 
@@ -69,4 +69,4 @@ Intersect TriangleIntersection::intersects(const Ray& r, double epsilon) const {
 }  // namespace geometry
 }  // namespace atlas
 
-#endif  // HAVE_EIGEN
+#endif  // ECKIT_HAVE_EIGEN

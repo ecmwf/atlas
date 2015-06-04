@@ -32,12 +32,12 @@ set( PERSISTENT_NAMESPACE "eckit" CACHE INTERNAL "" )
 
 ecbuild_use_package( PROJECT eckit VERSION 0.9 REQUIRED )
 
-list( REMOVE_DUPLICATES ECKIT_FEATURES )
+#list( REMOVE_DUPLICATES ECKIT_FEATURES )
 message( STATUS "   ECKIT_FEATURES : [${ECKIT_FEATURES}]" )
 
-foreach( _eckit_feature ${ECKIT_FEATURES} )
-  set( ${_eckit_feature} 1 )
-endforeach()
+# foreach( _eckit_feature ${ECKIT_FEATURES} )
+#   set( ${_eckit_feature} 1 )
+# endforeach()
 
 if( ECKIT_HAVE_GRIB )
    message( STATUS "eckit has GRIB support")
