@@ -15,6 +15,16 @@
 #include "atlas/trans/Trans.h"
 #include "atlas/FieldSet.h"
 #include "atlas/util/Array.h"
+#include "eckit/exception/Exceptions.h"
+
+#define TRANS_CHECK( CALL ) do {\
+  int errcode = CALL;\
+  if( errcode != TRANS_SUCCESS) {\
+    std::stringstream msg; msg << "ERROR: " << #CALL << " failed:\n"\
+                               <<  ::trans_error_msg(errcode);\
+    throw eckit::Exception(msg.str(),Here());\
+  }\
+} while(0)
 
 namespace atlas {
 namespace trans {
@@ -60,10 +70,10 @@ Trans::~Trans()
 
 void Trans::ctor_rgg(const int ndgl, const int nloen[], int nsmax, const Trans::Options& p )
 {
-  ::trans_new(&trans_);
-  ::trans_set_resol(&trans_,ndgl,nloen);
-  ::trans_set_trunc(&trans_,nsmax);
-  ::trans_set_cache(&trans_,p.cache(),p.cachesize());
+  TRANS_CHECK(::trans_new(&trans_));
+  TRANS_CHECK(::trans_set_resol(&trans_,ndgl,nloen));
+  TRANS_CHECK(::trans_set_trunc(&trans_,nsmax));
+  TRANS_CHECK(::trans_set_cache(&trans_,p.cache(),p.cachesize()));
 
   if( !p.read().empty() )
   {
@@ -72,24 +82,24 @@ void Trans::ctor_rgg(const int ndgl, const int nloen[], int nsmax, const Trans::
       std::stringstream msg; msg << "File " << p.read() << "doesn't exist";
       throw eckit::CantOpenFile(msg.str(),Here());
     }
-    ::trans_set_read(&trans_,p.read().c_str());
+    TRANS_CHECK(::trans_set_read(&trans_,p.read().c_str()));
   }
   if( !p.write().empty() )
-    ::trans_set_write(&trans_,p.write().c_str());
+    TRANS_CHECK(::trans_set_write(&trans_,p.write().c_str()));
 
   trans_.fft = p.fft();
   trans_.lsplit = p.split_latitudes();
   trans_.flt = p.flt();
 
-  ::trans_setup(&trans_);
+  TRANS_CHECK(::trans_setup(&trans_));
 }
 
 void Trans::ctor_lonlat(const int nlon, const int nlat, int nsmax, const Trans::Options& p )
 {
-  ::trans_new(&trans_);
-  ::trans_set_resol_lonlat(&trans_,nlon,nlat);
-  ::trans_set_trunc(&trans_,nsmax);
-  ::trans_set_cache(&trans_,p.cache(),p.cachesize());
+  TRANS_CHECK(::trans_new(&trans_));
+  TRANS_CHECK(::trans_set_resol_lonlat(&trans_,nlon,nlat));
+  TRANS_CHECK(::trans_set_trunc(&trans_,nsmax));
+  TRANS_CHECK(::trans_set_cache(&trans_,p.cache(),p.cachesize()));
 
   if( ! p.read().empty() )
   {
@@ -98,16 +108,16 @@ void Trans::ctor_lonlat(const int nlon, const int nlat, int nsmax, const Trans::
       std::stringstream msg; msg << "File " << p.read() << "doesn't exist";
       throw eckit::CantOpenFile(msg.str(),Here());
     }
-    ::trans_set_read(&trans_,p.read().c_str());
+    TRANS_CHECK(::trans_set_read(&trans_,p.read().c_str()));
   }
   if( !p.write().empty() )
-    ::trans_set_write(&trans_,p.write().c_str());
+    TRANS_CHECK(::trans_set_write(&trans_,p.write().c_str()));
 
   trans_.fft = p.fft();
   trans_.lsplit = p.split_latitudes();
   trans_.flt = p.flt();
 
-  ::trans_setup(&trans_);
+  TRANS_CHECK(::trans_setup(&trans_));
 }
 
 Trans::Options::Options() : eckit::Properties()
@@ -326,7 +336,10 @@ void Trans::dirtrans(const FieldSet& gpfields, FieldSet& spfields, const TransPa
     transform.rgp        = rgp.data();
     transform.rspscalar  = rspec.data();
 
-    ::trans_dirtrans(&transform);
+    DEBUG_VAR(transform.nscalar);
+    DEBUG_VAR(nfld);
+    DEBUG_VAR(nspec2());
+    TRANS_CHECK(::trans_dirtrans(&transform));
   }
 
   // Unpack the spectral fields
@@ -436,7 +449,7 @@ void Trans::invtrans(const FieldSet& spfields, FieldSet& gpfields, const TransPa
     transform.rgp        = rgp.data();
     transform.rspscalar  = rspec.data();
 
-    ::trans_invtrans(&transform);
+    TRANS_CHECK(::trans_invtrans(&transform));
   }
 
   // Unpack the gridpoint fields

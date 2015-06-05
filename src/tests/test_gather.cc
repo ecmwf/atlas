@@ -27,17 +27,12 @@ typedef double POD;
 
 namespace atlas {
 namespace test {
+
 template<typename T, size_t N>
 std::vector<T> vec( const T (&list)[N] )
 {
   return std::vector<T>(list,list+N);
 }
-
-}
-}
-
-using namespace atlas;
-using namespace atlas::test;
 
 struct MPIFixture {
     MPIFixture()  { eckit::mpi::init(); }
@@ -655,4 +650,6 @@ BOOST_FIXTURE_TEST_CASE( test_scatter_rank2_ArrayView, Fixture )
   }
 }
 
+} // namespace test
+} // namespace atlas
 

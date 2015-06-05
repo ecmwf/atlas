@@ -17,10 +17,13 @@
 #include "atlas/Mesh.h"
 #include "atlas/grids/LonLatGrid.h"
 
-using namespace atlas;
+
 using namespace atlas::io;
 using namespace atlas::meshgen;
 using namespace atlas::grids;
+
+namespace atlas {
+namespace test {
 
 BOOST_AUTO_TEST_CASE( init ) { eckit::mpi::init(); }
 
@@ -33,3 +36,8 @@ BOOST_AUTO_TEST_CASE( test_ll_meshgen_one_part )
 }
 
 BOOST_AUTO_TEST_CASE( finalize ) { eckit::mpi::finalize(); }
+
+} // namespace test
+} // namespace atlas
+
+

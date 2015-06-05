@@ -33,9 +33,11 @@
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
 
-using namespace atlas;
 using namespace atlas::io;
 using namespace atlas::meshgen;
+
+namespace atlas {
+namespace test {
 
 #define DISABLE if(0)
 #define ENABLE if(1)
@@ -184,3 +186,6 @@ BOOST_AUTO_TEST_CASE( test2 )
 
 
 BOOST_AUTO_TEST_CASE( finalize ) { eckit::mpi::finalize(); }
+
+} // namespace test
+} // namespace atlas

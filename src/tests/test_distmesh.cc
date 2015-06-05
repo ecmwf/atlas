@@ -59,9 +59,6 @@ double dual_volume(Mesh& mesh)
   return area;
 }
 
-}
-}
-
 struct MPIFixture {
      MPIFixture()  { atlas_init(); }
     ~MPIFixture()  { atlas_finalize(); }
@@ -113,4 +110,6 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
   actions::write_load_balance_report(*m,"load_balance.dat");
 }
 
+} // namespace test
+} // namespace atlas
 

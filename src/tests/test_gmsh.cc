@@ -22,6 +22,9 @@
 #include "atlas/actions/BuildEdges.h"
 #include "atlas/actions/BuildDualMesh.h"
 
+namespace atlas {
+namespace test {
+
 BOOST_AUTO_TEST_CASE( test_read_write )
 {
 	using namespace atlas;
@@ -41,3 +44,6 @@ BOOST_AUTO_TEST_CASE( test_read_write )
         BOOST_REQUIRE_NO_THROW( mesh = Mesh::Ptr( Gmsh().read( "mesh.msh" ) ) );
 	eckit::mpi::finalize();
 }
+
+} // namespace test
+} // namespace atlas

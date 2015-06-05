@@ -21,9 +21,12 @@
 #include "atlas/GridSpec.h"
 #include "atlas/grids/grids.h"
 
+
 using namespace eckit;
-using namespace atlas;
 using namespace atlas::grids;
+
+namespace atlas {
+namespace test {
 
 BOOST_AUTO_TEST_CASE( init ) { eckit::mpi::init(); atlas::grids::load(); }
 
@@ -205,3 +208,6 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
 
 
 BOOST_AUTO_TEST_CASE( finalize ) { eckit::mpi::finalize(); }
+
+} // namespace test
+} // namespace atlas

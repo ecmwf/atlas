@@ -32,10 +32,6 @@ std::string pos(Iterator& it)
   return ss.str();
 }
 
-} // namespace test
-} // namespace atlas
-
-using namespace atlas;
 
 BOOST_AUTO_TEST_CASE( test_arrayview_iterator )
 {
@@ -191,3 +187,6 @@ BOOST_AUTO_TEST_CASE( test_indexview_3d )
   val = iview(i,4,k)+1;
   BOOST_CHECK_EQUAL( val, 5 );
 }
+
+} // namespace test
+} // namespace atlas

@@ -39,398 +39,398 @@ namespace test {
 
   template< int NDIM >
   class Mononomial
-	{
-	public:
-		Mononomial() {}
+  {
+  public:
+    Mononomial() {}
 
-		Mononomial(double coeff_, int power_[NDIM] )
-		{
-			coeff=coeff_;
-			std::copy(power_,power_+NDIM,power);
-		}
+    Mononomial(double coeff_, int power_[NDIM] )
+    {
+      coeff=coeff_;
+      std::copy(power_,power_+NDIM,power);
+    }
 
-		Mononomial(double coeff_, int p1_)
-		{
-			coeff=coeff_;
-			power[0]=p1_;
-		}
+    Mononomial(double coeff_, int p1_)
+    {
+      coeff=coeff_;
+      power[0]=p1_;
+    }
 
-		Mononomial(double coeff_, int p1_, int p2_)
-		{
-			coeff=coeff_;
-			power[0]=p1_;
-			power[1]=p2_;
-		}
+    Mononomial(double coeff_, int p1_, int p2_)
+    {
+      coeff=coeff_;
+      power[0]=p1_;
+      power[1]=p2_;
+    }
 
-		Mononomial(double coeff_, int p1_, int p2_, int p3_)
-		{
-			coeff=coeff_;
-			power[0]=p1_;
-			power[1]=p2_;
-			power[2]=p3_;
-		}
+    Mononomial(double coeff_, int p1_, int p2_, int p3_)
+    {
+      coeff=coeff_;
+      power[0]=p1_;
+      power[1]=p2_;
+      power[2]=p3_;
+    }
 
-		double eval( const double point[NDIM] ) const
-		{
-			double val = coeff;
-			for( int d=0; d<NDIM; ++d )
-			{
-				val *= std::pow(point[d], power[d]);
-			}
-			return val;
-		}
+    double eval( const double point[NDIM] ) const
+    {
+      double val = coeff;
+      for( int d=0; d<NDIM; ++d )
+      {
+        val *= std::pow(point[d], power[d]);
+      }
+      return val;
+    }
 
-		double eval( const double& x ) const
-		{
-			return coeff * std::pow(x,power[0]);
-		}
+    double eval( const double& x ) const
+    {
+      return coeff * std::pow(x,power[0]);
+    }
 
-		double eval( const double& x, const double& y ) const
-		{
-			return coeff * std::pow(x,power[0]) * std::pow(y,power[1]);
-		}
+    double eval( const double& x, const double& y ) const
+    {
+      return coeff * std::pow(x,power[0]) * std::pow(y,power[1]);
+    }
 
-		double eval( const double& x, const double& y, const double& z ) const
-		{
-			return coeff * std::pow(x,power[0]) * std::pow(y,power[1]) * std::pow(z,power[2]);
-		}
+    double eval( const double& x, const double& y, const double& z ) const
+    {
+      return coeff * std::pow(x,power[0]) * std::pow(y,power[1]) * std::pow(z,power[2]);
+    }
 
-		Mononomial deriv(int dim) const
-		{
-			double c = coeff*power[dim];
-			int p[NDIM];
-			std::copy(power,power+NDIM,p);
-			p[dim] -= 1;
-			return Mononomial( c, p );
-		}
+    Mononomial deriv(int dim) const
+    {
+      double c = coeff*power[dim];
+      int p[NDIM];
+      std::copy(power,power+NDIM,p);
+      p[dim] -= 1;
+      return Mononomial( c, p );
+    }
 
-		double coeff;
-		int power[NDIM];
-	};
+    double coeff;
+    int power[NDIM];
+  };
 
-	template< int NDIM >
-	class Polynomial
-	{
-	public:
-		typedef Mononomial<NDIM> monomial_type;
-	public:
+  template< int NDIM >
+  class Polynomial
+  {
+  public:
+    typedef Mononomial<NDIM> monomial_type;
+  public:
 
-		Polynomial& add( const monomial_type& mononomial )
-		{
-			if( mononomial.coeff != 0 )
-				mononomials_.push_back(mononomial);
-			return *this;
-		}
+    Polynomial& add( const monomial_type& mononomial )
+    {
+      if( mononomial.coeff != 0 )
+        mononomials_.push_back(mononomial);
+      return *this;
+    }
 
-		double eval( const double point[NDIM] ) const
-		{
-			double val = 0;
-			for( int n=0; n<mononomials_.size(); ++n )
-			{
-				val += mononomials_[n].eval(point);
-			}
-			return val;
-		}
+    double eval( const double point[NDIM] ) const
+    {
+      double val = 0;
+      for( int n=0; n<mononomials_.size(); ++n )
+      {
+        val += mononomials_[n].eval(point);
+      }
+      return val;
+    }
 
-		double eval( const double& x ) const
-		{
-			double val = 0;
-			for( int n=0; n<mononomials_.size(); ++n )
-			{
-				val += mononomials_[n].eval(x);
-			}
-			return val;
-		}
+    double eval( const double& x ) const
+    {
+      double val = 0;
+      for( int n=0; n<mononomials_.size(); ++n )
+      {
+        val += mononomials_[n].eval(x);
+      }
+      return val;
+    }
 
-		double eval( const double& x, const double& y ) const
-		{
-			double val = 0;
-			for( int n=0; n<mononomials_.size(); ++n )
-			{
-				val += mononomials_[n].eval(x,y);
-			}
-			return val;
-		}
+    double eval( const double& x, const double& y ) const
+    {
+      double val = 0;
+      for( int n=0; n<mononomials_.size(); ++n )
+      {
+        val += mononomials_[n].eval(x,y);
+      }
+      return val;
+    }
 
-		double eval( const double& x, const double& y, const double& z ) const
-		{
-			double val = 0;
-			for( int n=0; n<mononomials_.size(); ++n )
-			{
-				val += mononomials_[n].eval(x,y,z);
-			}
-			return val;
-		}
+    double eval( const double& x, const double& y, const double& z ) const
+    {
+      double val = 0;
+      for( int n=0; n<mononomials_.size(); ++n )
+      {
+        val += mononomials_[n].eval(x,y,z);
+      }
+      return val;
+    }
 
-		double operator()( const double point[NDIM] ) const
-		{
-			return eval(point);
-		}
+    double operator()( const double point[NDIM] ) const
+    {
+      return eval(point);
+    }
 
-		double operator()( const double& x ) const
-		{
-			return eval(x);
-		}
+    double operator()( const double& x ) const
+    {
+      return eval(x);
+    }
 
-		double operator()( const double& x, const double& y ) const
-		{
-			return eval(x,y);
-		}
+    double operator()( const double& x, const double& y ) const
+    {
+      return eval(x,y);
+    }
 
-		double operator()( const double& x, const double& y, const double& z ) const
-		{
-			return eval(x,y,z);
-		}
+    double operator()( const double& x, const double& y, const double& z ) const
+    {
+      return eval(x,y,z);
+    }
 
-		Polynomial deriv(int dim) const
-		{
-			Polynomial p;
-			for( int i=0; i<mononomials_.size(); ++i )
-				p.add(mononomials_[i].deriv(dim));
-			return p;
-		}
+    Polynomial deriv(int dim) const
+    {
+      Polynomial p;
+      for( int i=0; i<mononomials_.size(); ++i )
+        p.add(mononomials_[i].deriv(dim));
+      return p;
+    }
 
-		std::vector<Polynomial> grad() const
-		{
-			std::vector<Polynomial> g;
-			for( int d=0; d<NDIM; ++d )
-				g.push_back(deriv(d));
-			return g;
-		}
+    std::vector<Polynomial> grad() const
+    {
+      std::vector<Polynomial> g;
+      for( int d=0; d<NDIM; ++d )
+        g.push_back(deriv(d));
+      return g;
+    }
 
-		static Polynomial div( const std::vector<Polynomial>& pvec )
-		{
-			Polynomial p;
-			for( int d=0; d<NDIM; ++d )
-				p += pvec[d].deriv(d);
-			return p;
-		}
+    static Polynomial div( const std::vector<Polynomial>& pvec )
+    {
+      Polynomial p;
+      for( int d=0; d<NDIM; ++d )
+        p += pvec[d].deriv(d);
+      return p;
+    }
 
-		static Polynomial curl_z( const std::vector<Polynomial>& pvec )
-		{
-			return pvec[1].deriv(0) - pvec[0].deriv(1);
-		}
+    static Polynomial curl_z( const std::vector<Polynomial>& pvec )
+    {
+      return pvec[1].deriv(0) - pvec[0].deriv(1);
+    }
 
-		static std::vector<Polynomial> curl( const std::vector<Polynomial>& pvec )
-		{
-			std::vector<Polynomial> p(3);
-			if( NDIM==2 )
-			{
-				p[2] = pvec[1].deriv(0) - pvec[0].deriv(1);
-			}
-			if( NDIM==3 )
-			{
-				p[0] = pvec[2].deriv(1) - pvec[1].deriv(2);
-				p[1] = pvec[0].deriv(2) - pvec[2].deriv(0);
-				p[2] = pvec[1].deriv(0) - pvec[0].deriv(1);
-			}
-			return p;
-		}
+    static std::vector<Polynomial> curl( const std::vector<Polynomial>& pvec )
+    {
+      std::vector<Polynomial> p(3);
+      if( NDIM==2 )
+      {
+        p[2] = pvec[1].deriv(0) - pvec[0].deriv(1);
+      }
+      if( NDIM==3 )
+      {
+        p[0] = pvec[2].deriv(1) - pvec[1].deriv(2);
+        p[1] = pvec[0].deriv(2) - pvec[2].deriv(0);
+        p[2] = pvec[1].deriv(0) - pvec[0].deriv(1);
+      }
+      return p;
+    }
 
-		Polynomial operator+( const Polynomial& p2 )
-		{
-			Polynomial p = *this;
-			p += p2;
-			return p;
-		}
+    Polynomial operator+( const Polynomial& p2 )
+    {
+      Polynomial p = *this;
+      p += p2;
+      return p;
+    }
 
-		Polynomial operator-( const Polynomial& p2 )
-		{
-			Polynomial p = *this;
-			p -= p2;
-			return p;
-		}
+    Polynomial operator-( const Polynomial& p2 )
+    {
+      Polynomial p = *this;
+      p -= p2;
+      return p;
+    }
 
-		Polynomial& operator+=( const Polynomial& other )
-		{
-			return addition(other,+1.);
-		}
+    Polynomial& operator+=( const Polynomial& other )
+    {
+      return addition(other,+1.);
+    }
 
-		Polynomial& operator-=( const Polynomial& other )
-		{
-			return addition(other,-1.);
-		}
+    Polynomial& operator-=( const Polynomial& other )
+    {
+      return addition(other,-1.);
+    }
 
-	private:
-		Polynomial& addition(const Polynomial& other, double sign = 1. )
-		{
-			std::vector<bool> matched(other.mononomials_.size(),false);
-			for( int i=0; i<mononomials_.size(); ++i )
-			{
-				for( int j=0; j<other.mononomials_.size(); ++j )
-				{
-					if( !matched[j] )
-					{
-						bool match=true;
-						for( int d=0; d<NDIM; ++d )
-						{
-							if( mononomials_[i].power[d] != other.mononomials_[j].power[d] )
-							{
-								match = false;
-								break;
-							}
-						}
-						if( match )
-						{
-							matched[j] = true;
-							mononomials_[i].coeff += sign * other.mononomials_[j].coeff;
-						}
-					}
-				}
-			}
-			for( int j=0; j<other.mononomials_.size(); ++j )
-			{
-				if( !matched[j] )
-				{
-					add(other.mononomials_[j]);
-				}
-			}
-			return *this;
-		}
+  private:
+    Polynomial& addition(const Polynomial& other, double sign = 1. )
+    {
+      std::vector<bool> matched(other.mononomials_.size(),false);
+      for( int i=0; i<mononomials_.size(); ++i )
+      {
+        for( int j=0; j<other.mononomials_.size(); ++j )
+        {
+          if( !matched[j] )
+          {
+            bool match=true;
+            for( int d=0; d<NDIM; ++d )
+            {
+              if( mononomials_[i].power[d] != other.mononomials_[j].power[d] )
+              {
+                match = false;
+                break;
+              }
+            }
+            if( match )
+            {
+              matched[j] = true;
+              mononomials_[i].coeff += sign * other.mononomials_[j].coeff;
+            }
+          }
+        }
+      }
+      for( int j=0; j<other.mononomials_.size(); ++j )
+      {
+        if( !matched[j] )
+        {
+          add(other.mononomials_[j]);
+        }
+      }
+      return *this;
+    }
 
 
 
-	private:
-		std::vector< monomial_type > mononomials_;
-	};
+  private:
+    std::vector< monomial_type > mononomials_;
+  };
 
   class ShapeFunction : public eckit::Owned
   {
   public:
-		typedef eckit::SharedPtr<ShapeFunction> Ptr;
-    
+    typedef eckit::SharedPtr<ShapeFunction> Ptr;
+
   public:
     ShapeFunction(){}
     virtual ~ShapeFunction(){}
   };
-  
-	class ElementType : public eckit::Owned
-	{
-	public:
-		typedef eckit::SharedPtr<ElementType> Ptr;
-		typedef std::vector< ElementType::Ptr > Vector;
 
-	public:
+  class ElementType : public eckit::Owned
+  {
+  public:
+    typedef eckit::SharedPtr<ElementType> Ptr;
+    typedef std::vector< ElementType::Ptr > Vector;
 
-		int N() const { return N_; }
+  public:
 
-		const double* nodes() const { return nodes_.data(); }
-    
+    int N() const { return N_; }
+
+    const double* nodes() const { return nodes_.data(); }
+
     const ShapeFunction& shape_function() const { return *shape_function_; }
 
-	protected:
+  protected:
 
-		int N_;
+    int N_;
 
-		std::vector<double> nodes_;
-    
+    std::vector<double> nodes_;
+
     ShapeFunction::Ptr shape_function_;
 
-	};
+  };
 
-	class Point : public ElementType
-	{
-	public:
-		Point()
-		{
-			N_ = 1;
+  class Point : public ElementType
+  {
+  public:
+    Point()
+    {
+      N_ = 1;
       shape_function_ = ShapeFunction::Ptr( new ShapeFunction );
-		}
-	};
+    }
+  };
 
 
-	class QuadP1 : public ElementType
-	{
-	public:
-		QuadP1()
-		{
-			N_ = 4;
-			int nodes_init[] = {
-				-1., -1.,
-				 1., -1.,
-				 1.,  1.,
-				-1.,  1. };
-			nodes_.assign(nodes_init, nodes_init+N_);
+  class QuadP1 : public ElementType
+  {
+  public:
+    QuadP1()
+    {
+      N_ = 4;
+      int nodes_init[] = {
+        -1., -1.,
+         1., -1.,
+         1.,  1.,
+        -1.,  1. };
+      nodes_.assign(nodes_init, nodes_init+N_);
       shape_function_ = ShapeFunction::Ptr( new ShapeFunction );
-		}
-	};
+    }
+  };
 
-	class TriagP1 : public ElementType
-	{
-	public:
-		TriagP1()
-		{
-			N_ = 3;
-			int nodes_init[] = {
-				 0., 0.,
-				 1., 0.,
-				 0., 1. };
-			nodes_.assign(nodes_init, nodes_init+N_);
+  class TriagP1 : public ElementType
+  {
+  public:
+    TriagP1()
+    {
+      N_ = 3;
+      int nodes_init[] = {
+         0., 0.,
+         1., 0.,
+         0., 1. };
+      nodes_.assign(nodes_init, nodes_init+N_);
       shape_function_ = ShapeFunction::Ptr( new ShapeFunction );
-		}
-	};
+    }
+  };
 
-	class LineP0 : public ElementType
-	{
-	public:
-		LineP0()
-		{
-			N_ = 1;
-			int nodes_init[] = { 0. };
-			nodes_.assign(nodes_init, nodes_init+N_);
+  class LineP0 : public ElementType
+  {
+  public:
+    LineP0()
+    {
+      N_ = 1;
+      int nodes_init[] = { 0. };
+      nodes_.assign(nodes_init, nodes_init+N_);
       shape_function_ = ShapeFunction::Ptr( new ShapeFunction );
-		}
-	};
+    }
+  };
 
-	class LineP1 : public ElementType
-	{
-	public:
-		LineP1()
-		{
-			N_ = 2;
-			int nodes_init[] = { -1., 1. };
-			nodes_.assign(nodes_init, nodes_init+N_);
+  class LineP1 : public ElementType
+  {
+  public:
+    LineP1()
+    {
+      N_ = 2;
+      int nodes_init[] = { -1., 1. };
+      nodes_.assign(nodes_init, nodes_init+N_);
       shape_function_ = ShapeFunction::Ptr( new ShapeFunction );
-		}
-	};
+    }
+  };
 
-	class LineP2 : public ElementType
-	{
-	public:
-		LineP2()
-		{
-			N_ = 3;
-			int nodes_init[] = { -1., 1., 0. };
-			nodes_.assign(nodes_init, nodes_init+N_);
+  class LineP2 : public ElementType
+  {
+  public:
+    LineP2()
+    {
+      N_ = 3;
+      int nodes_init[] = { -1., 1., 0. };
+      nodes_.assign(nodes_init, nodes_init+N_);
       shape_function_ = ShapeFunction::Ptr( new ShapeFunction );
-		}
-	};
+    }
+  };
 
-	class Structured1D: public ElementType
-	{
-	public:
-		Structured1D(int N)
-		{
-			N_ = N;
+  class Structured1D: public ElementType
+  {
+  public:
+    Structured1D(int N)
+    {
+      N_ = N;
       shape_function_ = ShapeFunction::Ptr( new ShapeFunction );
-		}
-	};
+    }
+  };
 
-	class Nodes : public eckit::Owned
-	{
-	public:
-		typedef eckit::SharedPtr<Nodes> Ptr;
-	public:
-		Nodes()
-		{
-			npts_ = 0;
+  class Nodes : public eckit::Owned
+  {
+  public:
+    typedef eckit::SharedPtr<Nodes> Ptr;
+  public:
+    Nodes()
+    {
+      npts_ = 0;
       nlev_ = 0;
       nlon_ = 0;
       nlat_ = 0;
-			nlev_ = 0;
+      nlev_ = 0;
       nproma_ = 0;
       nblk_ = 0;
-		}
+    }
     int npts()   const { return npts_; }
     int nlev()   const { return nlev_; }
     int nproma() const { return nproma_; }
@@ -439,28 +439,30 @@ namespace test {
     int nlat()   const { return nlat_; }
   private:
     int npts_;
-		int nlev_;
+    int nlev_;
     int nproma_;
     int nblk_;
     int nlon_;
     int nlat_;
-	};
-  
+  };
+
 
   enum IndexType { IDX_NOTUSED=-100, IDX_NODE=-1, IDX_LEVEL=-2, IDX_BLK=-3, IDX_NPROMA=-4, IDX_VAR=-5 };
-	class NewFunctionSpace
-	{
-	public:
-    
+  class NewFunctionSpace
+  {
+  public:
+
+    NewFunctionSpace() : nproma_(0), nnodes_(0), nblk_(0) {}
+
     /// @brief Number of element types
     size_t nb_element_types() const { return nelem_per_type_.size(); }
-    
+
     /// @brief Element type at index
     const ElementType& element_type(size_t idx) const { ASSERT(idx<element_types_.size()); return *element_types_[idx]; }
-    
+
     /// @brief Number of elements for element type at given index
     size_t nb_elements_in_element_type(size_t idx) const { ASSERT(idx<nelem_per_type_.size()); return nelem_per_type_[idx]; }
-    
+
     /// @brief Number of elements for element type at given index
     size_t nb_elements() const { return nelem_; }
 
@@ -475,25 +477,25 @@ namespace test {
 
     /// @brief Number of nodes within one block in this function space
     size_t nproma() const { return nproma_; }
-    
+
     /// @brief Maximum number of points per element type
     size_t N_max() const { return N_max_; }
-    
+
     /// @brief Minimum number of points per element type
     size_t N_min() const { return N_min_; }
 
     /// @brief Set the total number of nodes in FunctionSpace
-		void set_nb_nodes( int nb_nodes ) 
-    { 
+    void set_nb_nodes( int nb_nodes )
+    {
       nnodes_ = nb_nodes;
       if( nproma_==0 ) nproma_=1;
       ASSERT(nnodes_%nproma_==0);
       nblk_ = nnodes_/nproma_;
     }
-    
+
     /// @brief Set the total number of nodes in FunctionSpace
-		void set_nproma( int nproma ) 
-    { 
+    void set_nproma( int nproma )
+    {
       nproma_ = nproma;
       nblk_=0;
       if( nnodes_!= 0 )
@@ -504,19 +506,19 @@ namespace test {
     }
 
     /// @brief Set the number of levels in FunctionSpace
-		void set_nb_levels( int nb_levels ) { nlev_ = nb_levels; }
-    
+    void set_nb_levels( int nb_levels ) { nlev_ = nb_levels; }
+
     /// @brief Add elements
-		const ElementType& add_elements(const std::string& element_type, int nelem)
-		{
-			if( element_type == "QuadP1" )   element_types_.push_back( ElementType::Ptr( new QuadP1 ) );
-			if( element_type == "TriagP1")   element_types_.push_back( ElementType::Ptr( new TriagP1 ) );
-			if( element_type == "LineP0" )   element_types_.push_back( ElementType::Ptr( new LineP0 ) );
-			if( element_type == "LineP1" )   element_types_.push_back( ElementType::Ptr( new LineP1 ) );
-			if( element_type == "LineP2" )   element_types_.push_back( ElementType::Ptr( new LineP2 ) );
-			index_[element_type] = nelem_per_type_.size();
-			nelem_per_type_.push_back(nelem);
-      
+    const ElementType& add_elements(const std::string& element_type, int nelem)
+    {
+      if( element_type == "QuadP1" )   element_types_.push_back( ElementType::Ptr( new QuadP1 ) );
+      if( element_type == "TriagP1")   element_types_.push_back( ElementType::Ptr( new TriagP1 ) );
+      if( element_type == "LineP0" )   element_types_.push_back( ElementType::Ptr( new LineP0 ) );
+      if( element_type == "LineP1" )   element_types_.push_back( ElementType::Ptr( new LineP1 ) );
+      if( element_type == "LineP2" )   element_types_.push_back( ElementType::Ptr( new LineP2 ) );
+      index_[element_type] = nelem_per_type_.size();
+      nelem_per_type_.push_back(nelem);
+
       const ElementType& elem = *element_types_.back();
 
       if( nelem_per_type_.size() == 1 )
@@ -532,14 +534,14 @@ namespace test {
         nelem_ += nelem;
       }
       return elem;
-		}
-    
+    }
+
     /// @brief Set the nodes that define the element
-		void set_nodes( const Nodes& nodes )
-		{
-			nodes_ = &nodes;
-		}
-    
+    void set_nodes( const Nodes& nodes )
+    {
+      nodes_ = &nodes;
+    }
+
     int range(int idx_type) const
     {
       switch( idx_type )
@@ -554,7 +556,7 @@ namespace test {
       throw eckit::SeriousBug("idx_type not recognized");
       return 0;
     }
-    
+
     template< typename DATA_TYPE>
     atlas::Array<DATA_TYPE> create_field(int idx1=IDX_NOTUSED, int idx2=IDX_NOTUSED, int idx3=IDX_NOTUSED, int idx4=IDX_NOTUSED, int idx5=IDX_NOTUSED, int idx6=IDX_NOTUSED, int idx7=IDX_NOTUSED)
     {
@@ -569,67 +571,67 @@ namespace test {
       atlas::Array<DATA_TYPE> field(shape);
       return field;
     }
-    
+
   private:
 
     /// @brief Lookup of element_type index by name
-		std::map<std::string,int> index_;
+    std::map<std::string,int> index_;
 
     /// @brief Reference to nodes
-		Nodes const* nodes_;
-    
+    Nodes const* nodes_;
+
     /// @brief Element types
-		ElementType::Vector element_types_;
+    ElementType::Vector element_types_;
 
     /// @brief Number of elements per element type
-		std::vector<int> nelem_per_type_;
-    
+    std::vector<int> nelem_per_type_;
+
     /// @brief Total number of elements
     int nelem_;
 
     /// @brief Maximum number of points per element type
     int N_max_;
-    
+
     /// @brief Minimum number of points per element type
     int N_min_;
-    
+
     /// @brief Total number of nodes
     int nnodes_;
-		int nlev_;
+    int nlev_;
     int nproma_;
     int nblk_;
-	};
+  };
 
 
-	class Column : public ElementType // Really is a Elementtype in 3D
-	{
-	public:
-		Column(const ElementType::Ptr& horizontal, const ElementType::Ptr& vertical):
-			horizontal_(horizontal),
-			vertical_(vertical)
-		{
+  class Column : public ElementType // Really is a Elementtype in 3D
+  {
+  public:
+    Column(const ElementType::Ptr& horizontal, const ElementType::Ptr& vertical):
+      horizontal_(horizontal),
+      vertical_(vertical)
+    {
       shape_function_ = ShapeFunction::Ptr( new ShapeFunction );
-		}
-		int N() const { return npts()*nlev(); }
-		int npts() const { return horizontal_->N(); }
-		int nlev() const { return vertical_->N(); }
-	protected:
-		ElementType::Ptr horizontal_;
-		ElementType::Ptr vertical_;
-	};
+    }
+    int N() const { return npts()*nlev(); }
+    int npts() const { return horizontal_->N(); }
+    int nlev() const { return vertical_->N(); }
+  protected:
+    ElementType::Ptr horizontal_;
+    ElementType::Ptr vertical_;
+  };
 
-	template< int NDIM >
-	std::vector< Polynomial<NDIM> > polynomial_basis(int order, double* points, int npts)
-	{
-		std::vector< Polynomial<NDIM> > basis(npts);
+  template< int NDIM >
+  std::vector< Polynomial<NDIM> > polynomial_basis(int order, double* points, int npts)
+  {
+    std::vector< Polynomial<NDIM> > basis(npts);
 
-		Matrix<double> vandermonde(npts,npts);
-		Matrix<double> coefficients(npts,npts);
-		Matrix<int>    powers(npts,NDIM);
-		Matrix<double>::Proxy pts(points,npts,NDIM);
-		if (NDIM==1)
-		{
-			size_t n(0);
+    Matrix<double> vandermonde(npts,npts);
+    Matrix<double> coefficients(npts,npts);
+    Matrix<int>    powers(npts,NDIM);
+    Matrix<double>::Proxy pts(points,npts,NDIM);
+    if (NDIM==1)
+    {
+      size_t n(0);
       for(size_t k=0; k<=order; ++k)
       {
         powers(n,0) = k;
@@ -645,46 +647,46 @@ namespace test {
         }
       }
     }
-		else if (NDIM==2)
-		{
-			size_t n(0);
-			for(size_t l=0; l<=order; ++l) {
-				for(size_t k=0; k<=order; ++k) {
-					powers(n,0) = k;
-					powers(n,1) = l;
-					++n;
-				}
-			}
-			for (n=0; n<npts; ++n)
-			{
-				double x = pts(n,0);
-				double y = pts(n,1);
-				for (size_t p=0; p<npts; ++p)
-				{
-					double x_p = ( powers(p,0) == 0. ? 1.: std::pow(x,powers(p,0)) );
-					double y_p = ( powers(p,1) == 0. ? 1.: std::pow(y,powers(p,1)) );
-					vandermonde(n,p) = x_p * y_p;
-				}
-			}
-		}
-		std::cout << "pts = \n" << pts << std::endl;
-		std::cout << "powers = \n" << powers << std::endl;
-		std::cout << "vandermonde = \n" << vandermonde << std::endl;
-		coefficients = vandermonde.inverse().transpose();
-		std::cout << "coefficients = \n" << coefficients << std::endl;
-		int pwr[3];
-		for( size_t n=0; n<npts; ++n )
-		{
-			for( size_t i=0; i<npts; ++i )
-			{
-				for( int d=0; d<NDIM; ++d )
-					pwr[d] = powers(i,d);
-				basis[n].add( Mononomial<NDIM>( coefficients(n,i), pwr ) );
-			}
-		}
-		return basis;
-	}
-  
+    else if (NDIM==2)
+    {
+      size_t n(0);
+      for(size_t l=0; l<=order; ++l) {
+        for(size_t k=0; k<=order; ++k) {
+          powers(n,0) = k;
+          powers(n,1) = l;
+          ++n;
+        }
+      }
+      for (n=0; n<npts; ++n)
+      {
+        double x = pts(n,0);
+        double y = pts(n,1);
+        for (size_t p=0; p<npts; ++p)
+        {
+          double x_p = ( powers(p,0) == 0. ? 1.: std::pow(x,powers(p,0)) );
+          double y_p = ( powers(p,1) == 0. ? 1.: std::pow(y,powers(p,1)) );
+          vandermonde(n,p) = x_p * y_p;
+        }
+      }
+    }
+    std::cout << "pts = \n" << pts << std::endl;
+    std::cout << "powers = \n" << powers << std::endl;
+    std::cout << "vandermonde = \n" << vandermonde << std::endl;
+    coefficients = vandermonde.inverse().transpose();
+    std::cout << "coefficients = \n" << coefficients << std::endl;
+    int pwr[3];
+    for( size_t n=0; n<npts; ++n )
+    {
+      for( size_t i=0; i<npts; ++i )
+      {
+        for( int d=0; d<NDIM; ++d )
+          pwr[d] = powers(i,d);
+        basis[n].add( Mononomial<NDIM>( coefficients(n,i), pwr ) );
+      }
+    }
+    return basis;
+  }
+
   template <typename DATA_TYPE>
   IndexView<DATA_TYPE,2> make_IndexView(atlas::Array<DATA_TYPE>& array, NewFunctionSpace& elements, int element_type_index)
   {
@@ -709,39 +711,36 @@ namespace test {
     return IndexView<DATA_TYPE,2>( array.data()+offset, strides, shape);
   }
 
-} // namespace test
-} // namespace atlas
-
-using namespace atlas::test;
+// ====================================================================================
 
 BOOST_AUTO_TEST_CASE( int_mpi )
 {
-	eckit::mpi::init();
+  eckit::mpi::init();
 }
 
 BOOST_AUTO_TEST_CASE( test_functionspace )
 {
-	ElementType::Ptr point( new Point );
-	ElementType::Ptr quad( new QuadP1 );
-	ElementType::Ptr levels( new Structured1D(100) );
+  ElementType::Ptr point( new Point );
+  ElementType::Ptr quad( new QuadP1 );
+  ElementType::Ptr levels( new Structured1D(100) );
 
-	Column quad_column(quad,levels);
-	Column point_column(point,levels);
+  Column quad_column(quad,levels);
+  Column point_column(point,levels);
 
-	//std::cout << quad->N() << std::endl;
-	//std::cout << levels->N() << std::endl;
-	DEBUG_VAR(quad_column.N());
-	DEBUG_VAR(quad_column.nlev());
-	DEBUG_VAR(quad_column.npts());
+  //std::cout << quad->N() << std::endl;
+  //std::cout << levels->N() << std::endl;
+  DEBUG_VAR(quad_column.N());
+  DEBUG_VAR(quad_column.nlev());
+  DEBUG_VAR(quad_column.npts());
 
-	DEBUG_VAR(point_column.N());
-	DEBUG_VAR(point_column.nlev());
-	DEBUG_VAR(point_column.npts());
+  DEBUG_VAR(point_column.N());
+  DEBUG_VAR(point_column.nlev());
+  DEBUG_VAR(point_column.npts());
 
-	Nodes nodes;
+  Nodes nodes;
 
-	NewFunctionSpace fs;
-	fs.set_nb_nodes( 8 );
+  NewFunctionSpace fs;
+  fs.set_nb_nodes( 8 );
   fs.set_nproma( 4 );
   fs.set_nb_levels(100);
   const ElementType& triags = fs.add_elements("TriagP1",2);
@@ -749,15 +748,15 @@ BOOST_AUTO_TEST_CASE( test_functionspace )
   BOOST_CHECK_EQUAL( fs.N_max() , 3 );
   BOOST_CHECK_EQUAL( fs.N_min() , 3 );
   BOOST_CHECK_EQUAL( fs.nb_elements() , 2 );
-	const ElementType& quads  = fs.add_elements("QuadP1",2);
+  const ElementType& quads  = fs.add_elements("QuadP1",2);
   BOOST_CHECK_EQUAL( fs.nb_element_types(), 2 );
   BOOST_CHECK_EQUAL( fs.N_max() , 4 );
   BOOST_CHECK_EQUAL( fs.N_min() , 3 );
   BOOST_CHECK_EQUAL( fs.nb_elements() , 4 );
-  
+
   /// Allocate array for all connectivity across all elements
   atlas::Array<int> element_node_connectivity(fs.nb_elements(),fs.N_max());
-  
+
   /// Access the data across all elements
   atlas::IndexView<int,2> elem_connectivity(element_node_connectivity);
   // --- Triangle 1 ---
@@ -789,7 +788,7 @@ BOOST_AUTO_TEST_CASE( test_functionspace )
   BOOST_CHECK_EQUAL( triag_node_connectivity(1,0), 11 );
   BOOST_CHECK_EQUAL( triag_node_connectivity(1,1), 12 );
   BOOST_CHECK_EQUAL( triag_node_connectivity(1,2), 13 );
-  
+
   BOOST_CHECK_THROW( triag_node_connectivity(0,3), eckit::OutOfRange ); // should fail (OUT OF RANGE)
 
   atlas::IndexView<int,2> quad_node_connectivity = make_IndexView(element_node_connectivity,fs,1);
@@ -803,104 +802,107 @@ BOOST_AUTO_TEST_CASE( test_functionspace )
   BOOST_CHECK_EQUAL( quad_node_connectivity(1,1), 32 );
   BOOST_CHECK_EQUAL( quad_node_connectivity(1,2), 33 );
   BOOST_CHECK_EQUAL( quad_node_connectivity(1,3), 34 );
-  
-	NewFunctionSpace edges;
+
+  NewFunctionSpace edges;
   // edges.set_nodes( nodes );
-	edges.add_elements("LineP0",11);
-  
+  edges.add_elements("LineP0",11);
+
   atlas::Array<double> press_ifs(fs.nproma(),fs.nb_levels(),nodes.nblk());
   atlas::Array<double> press = fs.create_field<double>(IDX_LEVEL,IDX_NODE);
   BOOST_CHECK_EQUAL( press.size(), fs.nb_levels()*fs.nb_nodes() );
 
   atlas::Array<double> wind_uv = fs.create_field<double>(2,IDX_LEVEL,IDX_NODE);
   BOOST_CHECK_EQUAL( wind_uv.size(), 2*fs.nb_levels()*fs.nb_nodes() );
-  
+
   BOOST_CHECK_EQUAL( fs.nproma(), 4);
   BOOST_CHECK_EQUAL( fs.nblk(), 2);
   BOOST_CHECK_EQUAL( fs.nb_nodes(), 8);
   atlas::Array<double> wind_uv_ifs = fs.create_field<double>(IDX_NPROMA,IDX_LEVEL,2,IDX_BLK);
   BOOST_CHECK_EQUAL( wind_uv_ifs.size(), 2*fs.nb_levels()*fs.nb_nodes() );
-  
+
 }
 
 
 
 BOOST_AUTO_TEST_CASE( test_polynomial )
 {
-	typedef Polynomial<2> polynomial_type;
-	typedef polynomial_type::monomial_type monomial_type;
+  typedef Polynomial<2> polynomial_type;
+  typedef polynomial_type::monomial_type monomial_type;
 
 
-	polynomial_type p;
+  polynomial_type p;
 
-	p.add( monomial_type( 3., 0,0 ) );
-	p.add( monomial_type( 1., 1,0 ) );
-	p.add( monomial_type( 1., 2,0 ) );
-	DEBUG_VAR(p(2,2));
+  p.add( monomial_type( 3., 0,0 ) );
+  p.add( monomial_type( 1., 1,0 ) );
+  p.add( monomial_type( 1., 2,0 ) );
+  DEBUG_VAR(p(2,2));
 
-	polynomial_type dpdx = p.deriv(0);
-	DEBUG_VAR(dpdx(2,2));
+  polynomial_type dpdx = p.deriv(0);
+  DEBUG_VAR(dpdx(2,2));
 
-	polynomial_type dpdy = p.deriv(1);
-	DEBUG_VAR(dpdy(2,2));
+  polynomial_type dpdy = p.deriv(1);
+  DEBUG_VAR(dpdy(2,2));
 
-	std::vector<polynomial_type> grad = p.grad();
+  std::vector<polynomial_type> grad = p.grad();
 
-	std::vector<polynomial_type> pvec(2,p);
-	polynomial_type div = polynomial_type::div(pvec);
-	DEBUG_VAR(div(2,2));
+  std::vector<polynomial_type> pvec(2,p);
+  polynomial_type div = polynomial_type::div(pvec);
+  DEBUG_VAR(div(2,2));
 
-	DEBUG_VAR( polynomial_type::curl_z(grad)(2,2) );
+  DEBUG_VAR( polynomial_type::curl_z(grad)(2,2) );
 
-	typedef std::vector< Polynomial<1> > PolynomialBasis1D;
-	typedef std::vector< Polynomial<2> > PolynomialBasis2D;
-
-
-	Matrix<int> m;
-//	BOOST_CHECK( m.data_ == NULL );
-//	BOOST_CHECK( m.nr_ == 0 );
-//	BOOST_CHECK( m.nc_ == 0 );
-	m.resize(2,3);
-
-	BOOST_CHECK_EQUAL(m.size(),6);
-	BOOST_CHECK_EQUAL(m.rows(),2);
-	BOOST_CHECK_EQUAL(m.cols(),3);
-
-	m(0,0) = 0;   m(0,1) = 2;   m(0,2) = 4;
-	m(1,0) = 1;   m(1,1) = 3;   m(1,2) = 5;
-
-	m *= 10;
-
-	Matrix<int> b = m + m;
-
-	std::cout << "m = \n" << b << std::endl;
-
-	double line_pts[] = {-1. , 1.};
-	int line_npts = 2;
-	PolynomialBasis1D line_basis = polynomial_basis<1>(1,line_pts,line_npts);
-	for( int n=0; n<line_npts; ++n)
-		DEBUG( n << ":  " << line_basis[n](-1.) << "  " << line_basis[n](+1.) );
-
-	double quad_pts[] = {-1,   1.,   1.,  -1,
-											 -1., -1.,   1.,   1.};
-	int quad_npts = 4;
-	PolynomialBasis2D quad_basis = polynomial_basis<2>(1,quad_pts,quad_npts);
-
-	for( int n=0; n<quad_npts; ++n)
-		DEBUG( n << ":  " << quad_basis[n](-1.,-1.) << "  " << quad_basis[n](1.,-1.) << " " << quad_basis[n](1.,1.) << " " << quad_basis[n](-1.,1.) );
+  typedef std::vector< Polynomial<1> > PolynomialBasis1D;
+  typedef std::vector< Polynomial<2> > PolynomialBasis2D;
 
 
-	RowVector<int> vr(3);
-	vr(0) = 0; vr(1) = 1; vr(2) = 2;
+  Matrix<int> m;
+//  BOOST_CHECK( m.data_ == NULL );
+//  BOOST_CHECK( m.nr_ == 0 );
+//  BOOST_CHECK( m.nc_ == 0 );
+  m.resize(2,3);
 
-	ColVector<int> vc(3);
-	vc(0) = 0; vc(1) = 1; vc(2) = 2;
+  BOOST_CHECK_EQUAL(m.size(),6);
+  BOOST_CHECK_EQUAL(m.rows(),2);
+  BOOST_CHECK_EQUAL(m.cols(),3);
 
-	std::cout << vr << "\n" << vc << "\n\n" << vr*vc << std::endl;
+  m(0,0) = 0;   m(0,1) = 2;   m(0,2) = 4;
+  m(1,0) = 1;   m(1,1) = 3;   m(1,2) = 5;
+
+  m *= 10;
+
+  Matrix<int> b = m + m;
+
+  std::cout << "m = \n" << b << std::endl;
+
+  double line_pts[] = {-1. , 1.};
+  int line_npts = 2;
+  PolynomialBasis1D line_basis = polynomial_basis<1>(1,line_pts,line_npts);
+  for( int n=0; n<line_npts; ++n)
+    DEBUG( n << ":  " << line_basis[n](-1.) << "  " << line_basis[n](+1.) );
+
+  double quad_pts[] = {-1,   1.,   1.,  -1,
+                       -1., -1.,   1.,   1.};
+  int quad_npts = 4;
+  PolynomialBasis2D quad_basis = polynomial_basis<2>(1,quad_pts,quad_npts);
+
+  for( int n=0; n<quad_npts; ++n)
+    DEBUG( n << ":  " << quad_basis[n](-1.,-1.) << "  " << quad_basis[n](1.,-1.) << " " << quad_basis[n](1.,1.) << " " << quad_basis[n](-1.,1.) );
+
+
+  RowVector<int> vr(3);
+  vr(0) = 0; vr(1) = 1; vr(2) = 2;
+
+  ColVector<int> vc(3);
+  vc(0) = 0; vc(1) = 1; vc(2) = 2;
+
+  std::cout << vr << "\n" << vc << "\n\n" << vr*vc << std::endl;
 
 }
 
 BOOST_AUTO_TEST_CASE( finalize_mpi )
 {
-	eckit::mpi::finalize();
+  eckit::mpi::finalize();
 }
+
+} // namespace test
+} // namespace atlas

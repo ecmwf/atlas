@@ -102,9 +102,6 @@ double compute_lonlat_area(Mesh& mesh)
 }
 
 
-} // end namespace test
-} // end namespace atlas
-
 BOOST_AUTO_TEST_CASE( init ) { eckit::mpi::init(); }
 
 BOOST_AUTO_TEST_CASE( test_eq_caps )
@@ -458,5 +455,7 @@ BOOST_AUTO_TEST_CASE( test_reduced_lonlat )
 
 }
 
-
 BOOST_AUTO_TEST_CASE( finalize ) { eckit::mpi::finalize(); }
+
+} // namespace test
+} // namespace atlas

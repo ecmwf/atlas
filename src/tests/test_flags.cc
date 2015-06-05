@@ -13,7 +13,8 @@
 
 #include "atlas/Util.h"
 
-using namespace atlas;
+namespace atlas {
+namespace test {
 
 BOOST_AUTO_TEST_CASE( test_Flags )
 {
@@ -34,3 +35,6 @@ BOOST_AUTO_TEST_CASE( test_Flags )
 	BOOST_CHECK_EQUAL( Flags::check_any(bits, b1|b3 ) , true );
 	BOOST_CHECK_EQUAL( Flags::check_any(bits, b3|b4 ) , false );
 }
+
+} // namespace test
+} // namespace atlas

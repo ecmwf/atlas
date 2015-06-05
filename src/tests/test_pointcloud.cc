@@ -96,8 +96,8 @@ namespace {
 
 // ------------------------------------------------------------------
 
-
-using namespace atlas;
+namespace atlas {
+namespace test {
 
 struct MPIFixture {
     MPIFixture()  { eckit::mpi::init(); }
@@ -332,7 +332,7 @@ BOOST_AUTO_TEST_CASE( write_read_write_field )
   // PART 1
   // write field vector values as column in file "pointcloud.txt"
   BOOST_TEST_CHECKPOINT("Part 1");
-  
+
   std::ifstream f;
   std::string signature, str_lon, str_lat, str_f;
   size_t nb_pts, nb_columns;
@@ -441,3 +441,6 @@ BOOST_AUTO_TEST_CASE( write_read_write_field )
 
 
 BOOST_AUTO_TEST_SUITE_END()
+
+} // namespace test
+} // namespace atlas

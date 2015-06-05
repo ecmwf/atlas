@@ -33,7 +33,6 @@
 #include "atlas/Parameters.h"
 #include "atlas/Util.h"
 
-using namespace atlas;
 using namespace atlas::io;
 using namespace atlas::meshgen;
 
@@ -59,8 +58,6 @@ double dual_volume(Mesh& mesh)
   return area;
 }
 
-}
-}
 
 struct MPIFixture {
     MPIFixture()  { eckit::mpi::init(); }
@@ -150,4 +147,7 @@ BOOST_AUTO_TEST_CASE( test_t63 )
 
 }
 #endif
+
+} // namespace test
+} // namespace atlas
 

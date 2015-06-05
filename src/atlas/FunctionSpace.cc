@@ -164,7 +164,7 @@ FieldT<int>& FunctionSpace::field(const std::string& name) const
 namespace {
 
 	template < typename T >
-	FieldT<T>* check_if_exixts( FunctionSpace* fs,
+	FieldT<T>* check_if_exists( FunctionSpace* fs,
 								const std::string& name,
 								const std::vector<int>&  shape,
 								size_t nb_vars,
@@ -220,7 +220,7 @@ FieldT<double>& FunctionSpace::create_field(const std::string& name, size_t nb_v
 			field_shape[i] = shape_[i];
 	}
 
-	if( (field = check_if_exixts<double>(this, name, field_shape, nb_vars, b )) )
+	if( (field = check_if_exists<double>(this, name, field_shape, nb_vars, b )) )
 		return *field;
 
 	field = new FieldT<double>(name,nb_vars,*this);
@@ -246,7 +246,7 @@ FieldT<float>& FunctionSpace::create_field(const std::string& name, size_t nb_va
 			field_shape[i] = shape_[i];
 	}
 
-	if( (field = check_if_exixts<float>(this, name, field_shape, nb_vars, b )) )
+	if( (field = check_if_exists<float>(this, name, field_shape, nb_vars, b )) )
 		return *field;
 
 	field = new FieldT<float>(name,nb_vars,*this);
@@ -272,7 +272,7 @@ FieldT<int>& FunctionSpace::create_field(const std::string& name, size_t nb_vars
 			field_shape[i] = shape_[i];
 	}
 
-	if( (field = check_if_exixts<int>(this, name, field_shape, nb_vars, b )) )
+	if( (field = check_if_exists<int>(this, name, field_shape, nb_vars, b )) )
 		return *field;
 
 	field = new FieldT<int>(name,nb_vars,*this);
@@ -299,7 +299,7 @@ FieldT<long>& FunctionSpace::create_field(const std::string& name, size_t nb_var
 			field_shape[i] = shape_[i];
 	}
 
-	if( (field = check_if_exixts<long>(this, name, field_shape, nb_vars, b )) )
+	if( (field = check_if_exists<long>(this, name, field_shape, nb_vars, b )) )
 		return *field;
 
 	field = new FieldT<long>(name,nb_vars,*this);
