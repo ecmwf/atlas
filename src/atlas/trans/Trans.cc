@@ -336,9 +336,6 @@ void Trans::dirtrans(const FieldSet& gpfields, FieldSet& spfields, const TransPa
     transform.rgp        = rgp.data();
     transform.rspscalar  = rspec.data();
 
-    DEBUG_VAR(transform.nscalar);
-    DEBUG_VAR(nfld);
-    DEBUG_VAR(nspec2());
     TRANS_CHECK(::trans_dirtrans(&transform));
   }
 
