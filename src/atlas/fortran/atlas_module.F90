@@ -60,6 +60,25 @@ use atlas_atlas_logging_c_binding
 use atlas_atlas_resource_c_binding
 implicit none
 
+private :: object_type
+private :: view1d
+private :: stride
+private :: get_c_arguments
+private :: c_to_f_string_str
+private :: c_to_f_string_cptr
+private :: c_str
+private :: c_str_no_trim
+private :: resource_get_int32
+private :: resource_get_int64
+private :: resource_get_real32
+private :: resource_get_real64
+private :: resource_get_string
+private :: resource_set_int32
+private :: resource_set_int64
+private :: resource_set_real32
+private :: resource_set_real64
+private :: resource_set_string
+
 ! ----------------------------------------------------
 ! ENUM FieldType
 integer, public, parameter :: ATLAS_KIND_INT32  = -4
@@ -116,7 +135,7 @@ end interface atlas_delete
 
 !------------------------------------------------------------------------------
 
-INTERFACE resource
+INTERFACE atlas_resource
 
 ! Purpose :
 ! -------
@@ -126,13 +145,33 @@ INTERFACE resource
 ! ------
 !   20-dec-2014 Willem Deconinck     *ECMWF*
 ! -----------------------------------------------------------------------------
-  module procedure resource_int32
-  module procedure resource_int64
-  module procedure resource_real32
-  module procedure resource_real64
-  module procedure resource_string
-end interface resource
+  module procedure resource_get_int32
+  module procedure resource_get_int64
+  module procedure resource_get_real32
+  module procedure resource_get_real64
+  module procedure resource_get_string
+end interface atlas_resource
 
+!------------------------------------------------------------------------------
+
+INTERFACE atlas_resource_set
+
+! Purpose :
+! -------
+!   *resource* : Configuration
+!
+! Author :
+! ------
+!   10-june-2015 Willem Deconinck     *ECMWF*
+! -----------------------------------------------------------------------------
+  module procedure resource_set_int32
+  module procedure resource_set_int64
+  module procedure resource_set_real32
+  module procedure resource_set_real64
+  module procedure resource_set_string
+end interface atlas_resource_set
+
+!------------------------------------------------------------------------------
 
 ENUM, bind(c)
   enumerator :: openmode
@@ -159,41 +198,72 @@ CONTAINS
 ! =============================================================================
 
 
-subroutine resource_int32(resource_str,default_value,value)
+subroutine resource_get_int32(resource_str,default_value,value)
   character(len=*), intent(in) :: resource_str
   integer(c_int), intent(in) :: default_value
   integer(c_int), intent(out) :: value
   value = atlas__resource_int( c_str(resource_str), default_value )
 end subroutine
 
-subroutine resource_int64(resource_str,default_value,value)
+subroutine resource_get_int64(resource_str,default_value,value)
   character(len=*), intent(in) :: resource_str
   integer(c_long), intent(in) :: default_value
   integer(c_long), intent(out) :: value
   value = atlas__resource_long( c_str(resource_str), default_value )
 end subroutine
 
-subroutine resource_real32(resource_str,default_value,value)
+subroutine resource_get_real32(resource_str,default_value,value)
   character(len=*), intent(in) :: resource_str
   real(c_float), intent(in) :: default_value
   real(c_float), intent(out) :: value
   value = atlas__resource_float( c_str(resource_str), default_value )
 end subroutine
 
-subroutine resource_real64(resource_str,default_value,value)
+subroutine resource_get_real64(resource_str,default_value,value)
   character(len=*), intent(in) :: resource_str
   real(c_double), intent(in) :: default_value
   real(c_double), intent(out) :: value
   value = atlas__resource_double( c_str(resource_str), default_value )
 end subroutine
 
-subroutine resource_string(resource_str,default_value,value)
+subroutine resource_get_string(resource_str,default_value,value)
   character(len=*), intent(in) :: resource_str
   character(len=*), intent(in) :: default_value
   character(len=*), intent(out) :: value
   type(c_ptr) :: value_c_str
   value_c_str = atlas__resource_string( c_str(resource_str), c_str(default_value) )
   value = c_to_f_string_cptr(value_c_str)
+end subroutine
+
+subroutine resource_set_int32(resource_str,value)
+  character(len=*), intent(in) :: resource_str
+  integer(c_int), intent(in) :: value
+  call atlas__resource_set_int( c_str(resource_str), value )
+end subroutine
+
+subroutine resource_set_int64(resource_str,value)
+  character(len=*), intent(in) :: resource_str
+  integer(c_long), intent(in) ::value
+  call atlas__resource_set_long( c_str(resource_str), value )
+end subroutine
+
+subroutine resource_set_real32(resource_str,value)
+  character(len=*), intent(in) :: resource_str
+  real(c_float), intent(in) :: value
+  call atlas__resource_set_float( c_str(resource_str), value )
+end subroutine
+
+subroutine resource_set_real64(resource_str,value)
+  character(len=*), intent(in) :: resource_str
+  real(c_double), intent(in) :: value
+  call atlas__resource_set_double( c_str(resource_str), value )
+end subroutine
+
+subroutine resource_set_string(resource_str,value)
+  character(len=*), intent(in) :: resource_str
+  character(len=*), intent(in) :: value
+  type(c_ptr) :: value_c_str
+  call atlas__resource_set_string( c_str(resource_str), c_str(value) )
 end subroutine
 
 ! =============================================================================
@@ -218,8 +288,7 @@ integer function atlas_real(kind)
   else if (kind == c_float) then
     atlas_real = ATLAS_KIND_REAL32
   else
-    write(0,*) "Unsupported kind"
-    write(0,*) 'call abort()'
+    call atlas_abort("Unsupported real kind")
   end if
 end function
 
@@ -232,8 +301,7 @@ integer function atlas_integer(kind)
     else if (kind == c_long) then
       atlas_integer = ATLAS_KIND_INT64
     else
-      write(0,*) "Unsupported kind"
-      write(0,*) 'call abort()'
+      call atlas_abort("Unsupported real kind")
     end if
   end if
 end function

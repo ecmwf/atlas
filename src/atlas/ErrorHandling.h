@@ -25,49 +25,49 @@ void handle_error(const eckit::Exception& exception, const int err_code);
 
 #define ATLAS_ERROR_HANDLING(STATEMENTS) \
 do { try{ STATEMENTS; } \
-catch( eckit::SeriousBug& e )      { handle_error(e,atlas_err_seriousbug); } \
-catch( eckit::NotImplemented& e )  { handle_error(e,atlas_err_notimplemented); } \
-catch( eckit::OutOfRange& e )      { handle_error(e,atlas_err_outofrange); } \
-catch( eckit::UserError& e )       { handle_error(e,atlas_err_usererror); } \
-catch( eckit::AssertionFailed& e ) { handle_error(e,atlas_err_assertionfailed); } \
-catch( eckit::BadParameter& e )    { handle_error(e,atlas_err_badparameter); } \
-catch( eckit::ReadError&  e )      { handle_error(e,atlas_err_readerror);  } \
-catch( eckit::WriteError&  e )     { handle_error(e,atlas_err_writeerror);  } \
-catch( eckit::Exception&  e )      { handle_error(e,atlas_err_exception);  } \
-catch( ... ) { handle_error(eckit::Exception("Unknown exception"),atlas_err_exception); } \
+catch( eckit::SeriousBug& e )      { atlas::handle_error(e,atlas::atlas_err_seriousbug); } \
+catch( eckit::NotImplemented& e )  { atlas::handle_error(e,atlas::atlas_err_notimplemented); } \
+catch( eckit::OutOfRange& e )      { atlas::handle_error(e,atlas::atlas_err_outofrange); } \
+catch( eckit::UserError& e )       { atlas::handle_error(e,atlas::atlas_err_usererror); } \
+catch( eckit::AssertionFailed& e ) { atlas::handle_error(e,atlas::atlas_err_assertionfailed); } \
+catch( eckit::BadParameter& e )    { atlas::handle_error(e,atlas::atlas_err_badparameter); } \
+catch( eckit::ReadError&  e )      { atlas::handle_error(e,atlas::atlas_err_readerror);  } \
+catch( eckit::WriteError&  e )     { atlas::handle_error(e,atlas::atlas_err_writeerror);  } \
+catch( eckit::Exception&  e )      { atlas::handle_error(e,atlas::atlas_err_exception);  } \
+catch( ... ) { atlas::handle_error(eckit::Exception("Unknown exception"),atlas::atlas_err_exception); } \
 } while( 0 )
-  
+
 
 class Error
 {
-private: 
+private:
   Error();
-  
+
 public:
   static Error& instance();
-    
+
   int code() const { return code_; }
-  
+
   const std::string& msg() const { return msg_; }
-  
+
   bool throws() const { return throws_; }
-  
+
   bool backtrace() const { return backtrace_; }
 
   bool aborts() const { return aborts_; }
-  
+
   void set_code( int c ) { code_ = c; }
 
   void set_msg( const std::string& m ) { msg_ = m; }
 
   void set_aborts( bool b ) { aborts_ = b; }
-  
+
   void set_throws( bool b ) { throws_ = b; }
 
   void set_backtrace( bool b ) { backtrace_ = b; }
-  
+
   void clear();
-  
+
 private:
   std::string msg_;
   int code_;

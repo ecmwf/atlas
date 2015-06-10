@@ -1,7 +1,7 @@
 ! (C) Copyright 2013-2014 ECMWF.
 
-integer, parameter :: ATLAS_CODELOCATION_FILE_STRLEN     = 1024
-integer, parameter :: ATLAS_CODELOCATION_FUNCTION_STRLEN = 1024
+integer, private, parameter :: ATLAS_CODELOCATION_FILE_STRLEN     = 1024
+integer, private, parameter :: ATLAS_CODELOCATION_FUNCTION_STRLEN = 1024
 
 TYPE :: atlas_CodeLocation
   integer :: line
@@ -83,3 +83,32 @@ integer, parameter, public ::      &
   atlas_err_readerror       = -200, &
   atlas_err_writeerror      = -201, &
   atlas_err_unknown         = -999
+
+private :: code_location_str_FILE_LINE
+private :: atlas_abort_null
+private :: atlas_abort_msg
+private :: atlas_abort_msg_loc
+private :: atlas_throw_exception_msg
+private :: atlas_throw_exception_msg_loc
+private :: atlas_throw_exception_loc
+private :: atlas_throw_notimplemented_msg
+private :: atlas_throw_notimplemented_loc
+private :: atlas_throw_notimplemented_msg_loc
+private :: atlas_throw_outofrange_msg
+private :: atlas_throw_outofrange_loc
+private :: atlas_throw_outofrange_msg_loc
+private :: atlas_throw_outofrange_range
+private :: atlas_throw_outofrange_range_loc
+private :: atlas_throw_seriousbug_msg
+private :: atlas_throw_seriousbug_loc
+private :: atlas_throw_seriousbug_msg_loc
+private :: atlas_throw_usererror_msg
+private :: atlas_throw_usererror_loc
+private :: atlas_throw_usererror_msg_loc
+private :: atlas_throw_assertionfailed_msg
+private :: atlas_throw_assertionfailed_loc
+private :: atlas_throw_assertionfailed_msg_loc
+private :: code_location_null
+private :: code_location_file_line
+private :: code_location_file_line_func
+

@@ -1,13 +1,28 @@
 module atlas_C_interop
 use, intrinsic :: iso_c_binding
 implicit none
+private
 
-integer, private, parameter :: MAX_STR_LEN = 255
 
-type, public :: object_type
+!========================================================================
+! Public interface
+
+public object_type
+public view1d
+public stride
+public get_c_arguments
+public c_to_f_string_str
+public c_to_f_string_cptr
+public c_str
+public c_str_no_trim
+
+!========================================================================
+
+type :: object_type
   type(C_PTR), public :: cpp_object_ptr = C_NULL_PTR
 end type
 
+integer(c_int), parameter :: MAX_STR_LEN = 255
 integer(c_int), target :: zero_length_array_int32(0)
 integer(c_long),target :: zero_length_array_int64(0)
 real(c_float),  target :: zero_length_array_real32(0)
