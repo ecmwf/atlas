@@ -7,6 +7,7 @@ private
 !========================================================================
 ! Public interface
 
+public atlas_free
 public object_type
 public view1d
 public stride
@@ -15,6 +16,7 @@ public c_to_f_string_str
 public c_to_f_string_cptr
 public c_str
 public c_str_no_trim
+public MAX_STR_LEN
 
 !========================================================================
 
@@ -59,6 +61,13 @@ INTERFACE stride
   module procedure stride_real64_r3
   module procedure stride_real64_r4
 end interface stride
+
+interface
+  subroutine atlas_free(ptr) bind(C)
+    use, intrinsic :: iso_c_binding, only: c_ptr
+    type(c_ptr), intent(in) :: ptr
+  end subroutine atlas_free
+end interface
 
 ! =============================================================================
 CONTAINS

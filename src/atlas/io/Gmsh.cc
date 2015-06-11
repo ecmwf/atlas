@@ -94,7 +94,7 @@ void write_field_nodes(const Gmsh& gmsh, Field& field, std::ostream& out)
 	FunctionSpace& function_space = field.function_space();
 	bool gather( gmsh.options.get<bool>("gather") );
 	bool binary( !gmsh.options.get<bool>("ascii") );
-	int nlev = field.metadata().get<int>("nb_levels",1);
+	int nlev  = field.metadata().has("nb_levels") ? field.metadata().get<size_t>("nb_levels") : 1;
 	int ndata = field.shape(0);
 	int nvars = field.shape(1)/nlev;
 	ArrayView<gidx_t,1    > gidx ( function_space.field( "glb_idx" ) );
@@ -132,12 +132,12 @@ void write_field_nodes(const Gmsh& gmsh, Field& field, std::ostream& out)
 		if( ( gather && eckit::mpi::rank() == 0 ) || !gather )
 		{
 			char field_lev[6];
-			if( field.metadata().has<int>("nb_levels") )
+			if( field.metadata().has("nb_levels") )
 				std::sprintf(field_lev, "[%03d]",jlev);
 		  else
 				std::sprintf(field_lev, "");
-			double time   = field.metadata().get<double>("time",0.);
-			int step = field.metadata().get<int>("step",0) ;
+			double time = field.metadata().has("time") ? field.metadata().get<double>("time") : 0.;
+			int step = field.metadata().has("step") ? field.metadata().get<size_t>("step") : 0 ;
 			out << "$NodeData\n";
 			out << "1\n";
 			out << "\"" << field.name() << field_lev << "\"\n";
@@ -213,7 +213,7 @@ void write_field_elems(const Gmsh& gmsh, Field& field, std::ostream& out)
 	FunctionSpace& function_space = field.function_space();
 	bool gather( gmsh.options.get<bool>("gather") );
   bool binary( !gmsh.options.get<bool>("ascii") );
-  int nlev = field.metadata().get<int>("nb_levels",1);
+  int nlev = field.metadata().has("nb_levels") ? field.metadata().get<size_t>("nb_levels") : 1;
   int ndata = field.shape(0);
   int nvars = field.shape(1)/nlev;
   ArrayView<gidx_t,1    > gidx ( function_space.field( "glb_idx" ) );
@@ -234,14 +234,15 @@ void write_field_elems(const Gmsh& gmsh, Field& field, std::ostream& out)
     data = data_glb;
   }
 
-	double time   = field.metadata().get<double>("time",0.);
-	int step = field.metadata().get<int>("step",0) ;
+  double time = field.metadata().has("time") ? field.metadata().get<double>("time") : 0.;
+  size_t step = field.metadata().has("step") ? field.metadata().get<size_t>("step") : 0 ;
+
 	int nnodes = IndexView<int,2>( function_space.field("nodes") ).shape(1);
 
 	for (int jlev=0; jlev<nlev; ++jlev)
 	{
 		char field_lev[6];
-		if( field.metadata().has<int>("nb_levels") )
+		if( field.metadata().has("nb_levels") )
 			std::sprintf(field_lev, "[%03d]",jlev);
 	  else
 			std::sprintf(field_lev, "");
@@ -411,7 +412,7 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh ) const
 	else
 	{
 		mesh.create_function_space( "nodes", "Lagrange_P0", extents )
-			.metadata().set("type",static_cast<int>(Entity::NODES));
+			.metadata().set<long>("type",static_cast<int>(Entity::NODES));
 	}
 
 	FunctionSpace& nodes = mesh.function_space("nodes");
@@ -521,7 +522,7 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh ) const
 
 			FunctionSpace& fs = mesh.create_function_space( name, "Lagrange_P1", extents );
 
-			fs.metadata().set("type",static_cast<int>(Entity::ELEMS));
+			fs.metadata().set<long>("type",static_cast<int>(Entity::ELEMS));
 
 			IndexView<int,2> conn  ( fs.create_field<int>("nodes",         4) );
 			ArrayView<gidx_t,1> egidx ( fs.create_field<int>("glb_idx",       1) );
@@ -559,7 +560,7 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh ) const
 		int nb_quads = nb_etype[QUAD];
 		extents[0] = nb_quads;
 		FunctionSpace& quads      = mesh.create_function_space( "quads", "Lagrange_P1", extents );
-		quads.metadata().set("type",static_cast<int>(Entity::ELEMS));
+		quads.metadata().set<long>("type",static_cast<int>(Entity::ELEMS));
 		IndexView<int,2> quad_nodes          ( quads.create_field<int>("nodes",         4) );
 		ArrayView<gidx_t,1> quad_glb_idx        ( quads.create_field<gidx_t>("glb_idx",       1) );
 		ArrayView<int,1> quad_part           ( quads.create_field<int>("partition",     1) );
@@ -567,7 +568,7 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh ) const
 		int nb_triags = nb_etype[TRIAG];
 		extents[0] = nb_triags;
 		FunctionSpace& triags      = mesh.create_function_space( "triags", "Lagrange_P1", extents );
-		triags.metadata().set("type",static_cast<int>(Entity::ELEMS));
+		triags.metadata().set<long>("type",static_cast<int>(Entity::ELEMS));
 		IndexView<int,2> triag_nodes          ( triags.create_field<int>("nodes",         3) );
 		ArrayView<gidx_t,1> triag_glb_idx        ( triags.create_field<gidx_t>("glb_idx",       1) );
 		ArrayView<int,1> triag_part           ( triags.create_field<int>("partition",     1) );
@@ -581,7 +582,7 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh ) const
 		{
 			extents[0] = nb_edges;
 			FunctionSpace& edges      = mesh.create_function_space( "edges", "Lagrange_P1", extents );
-			edges.metadata().set("type",static_cast<int>(Entity::FACES));
+			edges.metadata().set<long>("type",static_cast<int>(Entity::FACES));
 			edge_nodes   = IndexView<int,2> ( edges.create_field<int>("nodes",         2) );
 			edge_glb_idx = ArrayView<gidx_t,1> ( edges.create_field<gidx_t>("glb_idx",       1) );
 			edge_part    = ArrayView<int,1> ( edges.create_field<int>("partition",     1) );
@@ -654,7 +655,7 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh ) const
 
 void Gmsh::write(const Mesh& mesh, const std::string& file_path) const
 {
-	int part = mesh.metadata().get<int>("part",eckit::mpi::rank());
+	int part = mesh.metadata().has("part") ? mesh.metadata().get<size_t>("part") : eckit::mpi::rank();
 	bool include_ghost_elements = options.get<bool>("ghost");
 
         std::string nodes_field = options.get<std::string>("nodes");
@@ -674,7 +675,7 @@ void Gmsh::write(const Mesh& mesh, const std::string& file_path) const
 	if( mesh.has_function_space("quads") )
 	{
 		FunctionSpace& quads       = mesh.function_space( "quads" );
-		nb_quads = quads.metadata().get<int>("nb_owned", quads.shape(0) );
+		nb_quads = quads.metadata().has("nb_owned") ? quads.metadata().get<size_t>("nb_owned") : quads.shape(0);
 		if( include_ghost_elements == true )
 			nb_quads = quads.shape(0);
 		if( options.get<bool>("elements") == false )
@@ -685,7 +686,7 @@ void Gmsh::write(const Mesh& mesh, const std::string& file_path) const
 	if( mesh.has_function_space("triags") )
 	{
 		FunctionSpace& triags       = mesh.function_space( "triags" );
-		nb_triags = triags.metadata().get<int>("nb_owned",triags.shape(0));
+		nb_triags = triags.metadata().has("nb_owned") ? triags.metadata().get<size_t>("nb_owned") : triags.shape(0);
 		if( include_ghost_elements == true )
 			nb_triags = triags.shape(0);
 		if( options.get<bool>("elements") == false )
@@ -696,7 +697,7 @@ void Gmsh::write(const Mesh& mesh, const std::string& file_path) const
 	if( mesh.has_function_space("edges") )
 	{
 		FunctionSpace& edges       = mesh.function_space( "edges" );
-		nb_edges = edges.metadata().get<int>("nb_owned",edges.shape(0));
+		nb_edges = edges.metadata().has("nb_owned") ? edges.metadata().get<size_t>("nb_owned") :  edges.shape(0);
 		if( include_ghost_elements == true )
 			nb_edges = edges.shape(0);
 		if( options.get<bool>("edges") == false && (nb_triags+nb_quads) > 0 )
@@ -906,7 +907,7 @@ void Gmsh::write(const Mesh& mesh, const std::string& file_path) const
 
 
   // Optional mesh information file
-  if( options.has<bool>("info") && options.get<bool>("info") )
+  if( options.has("info") && options.get<bool>("info") )
   {
     LocalPathName mesh_info(file_path);
     mesh_info = mesh_info.dirName()+"/"+mesh_info.baseName(false)+"_info.msh";
@@ -953,7 +954,7 @@ void Gmsh::write(FieldSet& fieldset, const std::string& file_path, openmode mode
 {
 	LocalPathName path(file_path);
 	bool is_new_file = (mode != std::ios_base::app || !path.exists() );
-	bool gather = options.get<bool>("gather",false);
+	bool gather = options.has("gather") ? options.get<bool>("gather") : false;
 	GmshFile file(path,mode,gather?-1:eckit::mpi::rank());
 
 	Log::info() << "writing fieldset " << fieldset.name() << " to gmsh file " << path << std::endl;
@@ -968,20 +969,20 @@ void Gmsh::write(FieldSet& fieldset, const std::string& file_path, openmode mode
     Field& field = fieldset[field_idx];
 		FunctionSpace& function_space = field.function_space();
 
-    if( !function_space.metadata().has<int>("type") )
+    if( !function_space.metadata().has("type") )
     {
       throw Exception("function_space "+function_space.name()+" has no type.. ?");
     }
 
-    if( function_space.metadata().get<int>("type") == Entity::NODES )
+    if( function_space.metadata().get<long>("type") == Entity::NODES )
 		{
 			if     ( field.data_type() == "int32"  ) {  write_field_nodes<int   >(*this,field,file); }
       else if( field.data_type() == "int64"  ) {  write_field_nodes<long  >(*this,field,file); }
 			else if( field.data_type() == "real32" ) {  write_field_nodes<float >(*this,field,file); }
 			else if( field.data_type() == "real64" ) {  write_field_nodes<double>(*this,field,file); }
 		}
-		else if( function_space.metadata().get<int>("type") == Entity::ELEMS
-					|| function_space.metadata().get<int>("type") == Entity::FACES )
+		else if( function_space.metadata().get<long>("type") == Entity::ELEMS
+					|| function_space.metadata().get<long>("type") == Entity::FACES )
 		{
 			if     ( field.data_type() == "int32"  ) {  write_field_elems<int   >(*this,field,file); }
       else if( field.data_type() == "int64"  ) {  write_field_elems<long  >(*this,field,file); }
@@ -1000,7 +1001,7 @@ void Gmsh::write(Field& field, const std::string& file_path, openmode mode) cons
 	bool is_new_file = (mode != std::ios_base::app || !path.exists() );
 	bool binary( !options.get<bool>("ascii") );
 	if ( binary ) mode |= std::ios_base::binary;
-	bool gather = options.get<bool>("gather",false);
+	bool gather = options.has("gather") ?  options.get<bool>("gather") : false;
 	GmshFile file(path,mode,gather?-1:eckit::mpi::rank());
 
 	Log::info() << "writing field " << field.name() << " to gmsh file " << path << std::endl;
@@ -1017,20 +1018,20 @@ void Gmsh::write(Field& field, const std::string& file_path, openmode mode) cons
 	// Field
 	FunctionSpace& function_space = field.function_space();
 
-	if( !function_space.metadata().has<int>("type") )
+	if( !function_space.metadata().has("type") )
 	{
 		throw Exception("function_space "+function_space.name()+" has no type.. ?");
 	}
 
-	if( function_space.metadata().get<int>("type") == Entity::NODES )
+	if( function_space.metadata().get<long>("type") == Entity::NODES )
 	{
 		if     ( field.data_type() == "int32"  ) {  write_field_nodes<int   >(*this,field,file); }
 		else if( field.data_type() == "int64"  ) {  write_field_nodes<long  >(*this,field,file); }
     else if( field.data_type() == "real32" ) {  write_field_nodes<float >(*this,field,file); }
 		else if( field.data_type() == "real64" ) {  write_field_nodes<double>(*this,field,file); }
 	}
-	else if( function_space.metadata().get<int>("type") == Entity::ELEMS ||
-					 function_space.metadata().get<int>("type") == Entity::FACES )
+	else if( function_space.metadata().get<long>("type") == Entity::ELEMS ||
+					 function_space.metadata().get<long>("type") == Entity::FACES )
 	{
 		if     ( field.data_type() == "int32"  ) {  write_field_elems<int   >(*this,field,file); }
 		else if( field.data_type() == "int64"  ) {  write_field_elems<long  >(*this,field,file); }

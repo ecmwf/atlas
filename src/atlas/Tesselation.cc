@@ -113,7 +113,7 @@ void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, PointSet& p
     extents[1] = Field::UNDEF_VARS;
 
     FunctionSpace& triags  = mesh.create_function_space( "triags", "Lagrange_P1", extents );
-    triags.metadata().set("type",static_cast<int>(Entity::ELEMS));
+    triags.metadata().set<long>("type",Entity::ELEMS);
 
     IndexView<int,2> triag_nodes   ( triags.create_field<int>("nodes",3) );
     ArrayView<gidx_t,1> triag_gidx ( triags.create_field<gidx_t>("glb_idx",1) );
@@ -188,7 +188,7 @@ void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, PointSet& p
     extents[1] = Field::UNDEF_VARS;
 
     FunctionSpace& quads  = mesh.create_function_space( "quads", "Lagrange_P1", quads_extents );
-    quads.metadata().set("type",static_cast<int>(Entity::ELEMS));
+    quads.metadata().set<long>("type",static_cast<int>(Entity::ELEMS));
 
     IndexView<int,2> quads_nodes   ( quads.create_field<int>("nodes",3) );
     ArrayView<gidx_t,1> quads_gidx ( quads.create_field<gidx_t>("glb_idx",1) );
@@ -264,7 +264,7 @@ void Tesselation::create_mesh_structure( Mesh& mesh, const size_t nb_nodes )
         extents[0] = nb_nodes;
         extents[1] = Field::UNDEF_VARS;
 		FunctionSpace& nodes = mesh.create_function_space(  "nodes", "Lagrange_P0", extents );
-        nodes.metadata().set("type",static_cast<int>(Entity::NODES));
+        nodes.metadata().set<long>("type",Entity::NODES);
     }
 
     FunctionSpace& nodes = mesh.function_space( "nodes" );

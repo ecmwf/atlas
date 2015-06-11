@@ -87,10 +87,10 @@ ReducedGridMeshGenerator::ReducedGridMeshGenerator()
   options.set("three_dimensional",bool(Resource<bool>("--three_dimensional;atlas.meshgen.three_dimensional",false ) ));
 
   // This option sets number of parts the mesh will be split in
-  options.set<int>("nb_parts",eckit::mpi::size());
+  options.set("nb_parts",eckit::mpi::size());
 
   // This option sets the part that will be generated
-  options.set<int>("part",eckit::mpi::rank());
+  options.set("part",eckit::mpi::rank());
 
   // Experimental option. The result is a non-standard Reduced Gaussian Grid, with a ragged Greenwich line
   options.set("stagger", bool( Resource<bool>("--stagger;meshgen.stagger", false ) ) );
@@ -124,7 +124,7 @@ void ReducedGridMeshGenerator::generate(const Grid& grid, Mesh& mesh ) const
 //  DEBUG_VAR(grid.nlon(grid.nlat()/2));
 //  DEBUG_VAR(grid.nlon(grid.nlat()/2-1));
 
-  int nb_parts = options.get<int>("nb_parts");
+  int nb_parts = options.get<size_t>("nb_parts");
 
 #ifdef ATLAS_HAVE_TRANS
   const grids::ReducedGrid* rg = dynamic_cast<const grids::ReducedGrid*>(&grid);
@@ -168,7 +168,7 @@ void ReducedGridMeshGenerator::generate(const Grid& grid, const GridDistribution
   if( !rg )
     throw eckit::BadCast("Grid could not be cast to a ReducedGrid",Here());
 
-  int mypart   = options.get<int>("part");
+  int mypart   = options.get<size_t>("part");
 
   Region region;
   generate_region(*rg,distribution,mypart,region);
@@ -703,8 +703,8 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
 {
   double tol = 1e-3;
 
-  int mypart = options.get<int>("part");
-  int nparts = options.get<int>("nb_parts");
+  int mypart = options.get<size_t>("part");
+  int nparts = options.get<size_t>("nb_parts");
   int n, l;
 
   bool has_north_pole = rg.lat(0) == 90 && rg.nlon(0) > 0;
@@ -802,7 +802,7 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
 
   FunctionSpace& nodes = mesh.function_space( "nodes" );
 
-  nodes.metadata().set("type",static_cast<int>(Entity::NODES));
+  nodes.metadata().set<long>("type",static_cast<int>(Entity::NODES));
 
   ArrayView<double,2> lonlat        ( nodes.create_field<double>("lonlat",   2, IF_EXISTS_RETURN) );
   ArrayView<gidx_t,1> glb_idx       ( nodes.create_field<gidx_t>("glb_idx",       1, IF_EXISTS_RETURN) );
@@ -893,14 +893,14 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
   shape = make_shape(nquads,Field::UNDEF_VARS);
 
   FunctionSpace& quads = mesh.create_function_space( "quads","LagrangeP1",shape );
-  quads.metadata().set("type",static_cast<int>(Entity::ELEMS));
+  quads.metadata().set<long>("type",static_cast<int>(Entity::ELEMS));
   IndexView<int,2> quad_nodes( quads.create_field<int>("nodes",4) );
   ArrayView<gidx_t,1> quad_glb_idx( quads.create_field<gidx_t>("glb_idx",1) );
   ArrayView<int,1> quad_part( quads.create_field<int>("partition",1) );
 
   shape = make_shape(ntriags,Field::UNDEF_VARS);
   FunctionSpace& triags = mesh.create_function_space( "triags","LagrangeP1",shape );
-  triags.metadata().set("type",static_cast<int>(Entity::ELEMS));
+  triags.metadata().set<long>("type",static_cast<int>(Entity::ELEMS));
   IndexView<int,2> triag_nodes( triags.create_field<int>("nodes",3) );
   ArrayView<gidx_t,1> triag_glb_idx( triags.create_field<gidx_t>("glb_idx",1) );
   ArrayView<int,1> triag_part( triags.create_field<int>("partition",1) );
@@ -1168,7 +1168,7 @@ void ReducedGridMeshGenerator::generate_global_element_numbering( Mesh& mesh ) c
   for( int f=0; f<mesh.nb_function_spaces(); ++f )
   {
     FunctionSpace& elements = mesh.function_space(f);
-    if( elements.metadata().get<int>("type") == Entity::ELEMS )
+    if( elements.metadata().get<long>("type") == Entity::ELEMS )
     {
       loc_nb_elems += elements.shape(0);
     }
@@ -1186,7 +1186,7 @@ void ReducedGridMeshGenerator::generate_global_element_numbering( Mesh& mesh ) c
   for( int f=0; f<mesh.nb_function_spaces(); ++f )
   {
     FunctionSpace& elements = mesh.function_space(f);
-    if( elements.metadata().get<int>("type") == Entity::ELEMS )
+    if( elements.metadata().get<long>("type") == Entity::ELEMS )
     {
       ArrayView<gidx_t,1> glb_idx( elements.field("glb_idx") );
       int nb_elems = elements.shape(0);

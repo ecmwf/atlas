@@ -378,7 +378,7 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
   for( int func_space_idx=0; func_space_idx<edges.mesh().nb_function_spaces(); ++func_space_idx)
   {
     FunctionSpace& elements = edges.mesh().function_space(func_space_idx);
-    if( elements.metadata().get<int>("type") == Entity::ELEMS )
+    if( elements.metadata().get<long>("type") == Entity::ELEMS )
     {
       elem_nodes  [func_space_idx] = IndexView<int,2>( elements.field("nodes") );
       elem_part   [func_space_idx] = ArrayView<int,1>( elements.field("partition") );

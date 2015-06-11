@@ -49,6 +49,7 @@ ecbuild_add_library( TARGET atlas_f
         atlas_mpi_module.F90
         atlas_grids_module.F90
         atlas_C_interop.F90
+        atlas_C_interop.cc
         atlas_logging.h
         atlas_logging.cc
         atlas_resource.h
@@ -60,18 +61,14 @@ ecbuild_add_library( TARGET atlas_f
 add_custom_target( atlas_fortran_inc SOURCES
    atlas_module_Checksum_i.f
    atlas_module_Checksum_c.f
-   atlas_module_Logging_i.f
-   atlas_module_Logging_c.f
-   atlas_module_Mesh_i.f
-   atlas_module_Mesh_c.f
-   atlas_module_FunctionSpace_i.f
-   atlas_module_FunctionSpace_c.f
+   atlas_module_Error_i.f
+   atlas_module_Error_c.f
    atlas_module_Field_i.f
    atlas_module_Field_c.f
    atlas_module_FieldSet_i.f
    atlas_module_FieldSet_c.f
-   atlas_module_Metadata_i.f
-   atlas_module_Metadata_c.f
+   atlas_module_FunctionSpace_i.f
+   atlas_module_FunctionSpace_c.f
    atlas_module_GatherScatter_i.f
    atlas_module_GatherScatter_c.f
    atlas_module_Grid_i.f
@@ -80,8 +77,12 @@ add_custom_target( atlas_fortran_inc SOURCES
    atlas_module_GridDistribution_c.f
    atlas_module_HaloExchange_i.f
    atlas_module_HaloExchange_c.f
-   atlas_module_Error_i.f
-   atlas_module_Error_c.f
+   atlas_module_Logging_i.f
+   atlas_module_Logging_c.f
+   atlas_module_Mesh_i.f
+   atlas_module_Mesh_c.f
+   atlas_module_Metadata_i.f
+   atlas_module_Metadata_c.f
    atlas_module_Trans_i.f
    atlas_module_Trans_c.f
 )

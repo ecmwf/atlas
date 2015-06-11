@@ -128,10 +128,10 @@ public:
 
   AtlasBenchmark(int argc,char **argv): eckit::Tool(argc,argv), do_run(true)
   {
-    N     = Resource<int>("-N",1280);
-    nlev  = Resource<int>("-nlev",137);
-    niter = Resource<int>("-niter",100);
-    omp_threads = Resource<int>("-omp",-1);
+    N     = Resource<size_t>("-N",1280);
+    nlev  = Resource<size_t>("-nlev",137);
+    niter = Resource<size_t>("-niter",100);
+    omp_threads = Resource<long>("-omp",-1);
     progress = Resource<bool>("-progress",false);
     iteration_timer = TimerStats("iteration");
     haloexchange_timer = TimerStats("halo-exchange");
@@ -211,19 +211,19 @@ private:
   vector<int> pole_edges;
   vector<bool> is_ghost;
 
-  int nnodes;
-  int nedges;
-  int nlev;
-  int N;
-  int niter;
-  int exclude;
+  size_t nnodes;
+  size_t nedges;
+  size_t nlev;
+  size_t N;
+  size_t niter;
+  long exclude;
   bool output;
-  int omp_threads;
+  long omp_threads;
   double dz;
 
   TimerStats iteration_timer;
   TimerStats haloexchange_timer;
-  int iter;
+  size_t iter;
   bool progress;
   bool do_run;
 

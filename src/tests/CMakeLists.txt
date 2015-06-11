@@ -22,7 +22,6 @@ if( HAVE_FCTEST )
     LIBS            atlas_f
   )
 
-
   add_fctest( TARGET atlas_fctest_error
     MPI             1
     LINKER_LANGUAGE Fortran

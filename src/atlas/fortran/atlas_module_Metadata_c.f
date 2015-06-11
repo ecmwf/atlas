@@ -30,7 +30,7 @@ function Metadata__has(this, name) result(value)
   end if
 end function Metadata__has
 
-subroutine Metadata__add_logical(this, name, value)
+subroutine Metadata__set_logical(this, name, value)
   class(atlas_Metadata), intent(inout) :: this
   character(len=*), intent(in) :: name
   logical, intent(in) :: value
@@ -40,36 +40,36 @@ subroutine Metadata__add_logical(this, name, value)
   else
     value_int = 0
   end if
-  call atlas__Metadata__add_int(this%cpp_object_ptr, c_str(name), value_int )
-end subroutine Metadata__add_logical
+  call atlas__Metadata__set_int(this%cpp_object_ptr, c_str(name), value_int )
+end subroutine Metadata__set_logical
 
-subroutine Metadata__add_integer(this, name, value)
+subroutine Metadata__set_int32(this, name, value)
   class(atlas_Metadata), intent(inout) :: this
   character(len=*), intent(in) :: name
   integer, intent(in) :: value
-  call atlas__Metadata__add_int(this%cpp_object_ptr, c_str(name), value)
-end subroutine Metadata__add_integer
+  call atlas__Metadata__set_int(this%cpp_object_ptr, c_str(name), value)
+end subroutine Metadata__set_int32
 
-subroutine Metadata__add_real32(this, name, value)
+subroutine Metadata__set_real32(this, name, value)
   class(atlas_Metadata), intent(inout) :: this
   character(len=*), intent(in) :: name
   real(c_float), intent(in) :: value
-  call atlas__Metadata__add_float(this%cpp_object_ptr, c_str(name) ,value)
-end subroutine Metadata__add_real32
+  call atlas__Metadata__set_float(this%cpp_object_ptr, c_str(name) ,value)
+end subroutine Metadata__set_real32
 
-subroutine Metadata__add_real64(this, name, value)
+subroutine Metadata__set_real64(this, name, value)
   class(atlas_Metadata), intent(inout) :: this
   character(len=*), intent(in) :: name
   real(c_double), intent(in) :: value
-  call atlas__Metadata__add_double(this%cpp_object_ptr, c_str(name) ,value)
-end subroutine Metadata__add_real64
+  call atlas__Metadata__set_double(this%cpp_object_ptr, c_str(name) ,value)
+end subroutine Metadata__set_real64
 
-subroutine Metadata__add_string(this, name, value)
+subroutine Metadata__set_string(this, name, value)
   class(atlas_Metadata), intent(inout) :: this
   character(len=*), intent(in) :: name
   character(len=*), intent(in) :: value
-  call atlas__Metadata__add_string(this%cpp_object_ptr, c_str(name) , c_str(value) )
-end subroutine Metadata__add_string
+  call atlas__Metadata__set_string(this%cpp_object_ptr, c_str(name) , c_str(value) )
+end subroutine Metadata__set_string
 
 subroutine Metadata__get_logical(this, name, value)
   class(atlas_Metadata), intent(in) :: this
@@ -84,12 +84,12 @@ subroutine Metadata__get_logical(this, name, value)
   end if
 end subroutine Metadata__get_logical
 
-subroutine Metadata__get_integer(this, name, value)
+subroutine Metadata__get_int32(this, name, value)
   class(atlas_Metadata), intent(in) :: this
   character(len=*), intent(in) :: name
   integer, intent(out) :: value
   value = atlas__Metadata__get_int(this%cpp_object_ptr, c_str(name) )
-end subroutine Metadata__get_integer
+end subroutine Metadata__get_int32
 
 subroutine Metadata__get_real32(this, name, value)
   class(atlas_Metadata), intent(in) :: this
@@ -109,7 +109,122 @@ subroutine Metadata__get_string(this, name, value)
   class(atlas_Metadata), intent(in) :: this
   character(len=*), intent(in) :: name
   character(len=:), allocatable, intent(out) :: value
-  type(c_ptr) :: value_c_str
-  value_c_str = atlas__Metadata__get_string(this%cpp_object_ptr, c_str(name) )
-  value = c_to_f_string_cptr(value_c_str)
+  character(len=MAX_STR_LEN) :: value_cstr
+  call atlas__Metadata__get_string(this%cpp_object_ptr, c_str(name), value_cstr, MAX_STR_LEN )
+  value = c_to_f_string_str(value_cstr)
 end subroutine Metadata__get_string
+
+subroutine Metadata__set_array_int32(this, name, value)
+  class(atlas_Metadata), intent(in) :: this
+  character(len=*), intent(in) :: name
+  integer(c_int), intent(in) :: value(:)
+  call atlas__Metadata__set_array_int(this%cpp_object_ptr, c_str(name), &
+    & value, size(value) )
+end subroutine Metadata__set_array_int32
+
+subroutine Metadata__set_array_int64(this, name, value)
+  class(atlas_Metadata), intent(in) :: this
+  character(len=*), intent(in) :: name
+  integer(c_long), intent(in) :: value(:)
+  call atlas__Metadata__set_array_long(this%cpp_object_ptr, c_str(name), &
+    & value, size(value) )
+end subroutine Metadata__set_array_int64
+
+subroutine Metadata__set_array_real32(this, name, value)
+  class(atlas_Metadata), intent(in) :: this
+  character(len=*), intent(in) :: name
+  real(c_float), intent(in) :: value(:)
+  call atlas__Metadata__set_array_float(this%cpp_object_ptr, c_str(name), &
+    & value, size(value) )
+end subroutine Metadata__set_array_real32
+
+subroutine Metadata__set_array_real64(this, name, value)
+  class(atlas_Metadata), intent(in) :: this
+  character(len=*), intent(in) :: name
+  real(c_double), intent(in) :: value(:)
+  call atlas__Metadata__set_array_double(this%cpp_object_ptr, c_str(name), &
+    & value, size(value) )
+end subroutine Metadata__set_array_real64
+
+subroutine Metadata__get_array_int32(this, name, value)
+  class(atlas_Metadata), intent(in) :: this
+  character(len=*), intent(in) :: name
+  integer(c_int), allocatable, intent(out) :: value(:)
+  type(c_ptr) :: value_cptr
+  integer(c_int), pointer :: value_fptr(:)
+  integer :: value_size
+  integer :: value_allocated
+  call atlas__Metadata__get_array_int(this%cpp_object_ptr, c_str(name), &
+    & value_cptr, value_size, value_allocated )
+  call c_f_pointer(value_cptr,value_fptr,(/value_size/))
+  allocate(value(value_size))
+  value(:) = value_fptr(:)
+  if( value_allocated == 1 ) call atlas_free(value_cptr)
+end subroutine Metadata__get_array_int32
+
+subroutine Metadata__get_array_int64(this, name, value)
+  class(atlas_Metadata), intent(in) :: this
+  character(len=*), intent(in) :: name
+  integer(c_long), allocatable, intent(out) :: value(:)
+  type(c_ptr) :: value_cptr
+  integer(c_long), pointer :: value_fptr(:)
+  integer :: value_size
+  integer :: value_allocated
+  call atlas__Metadata__get_array_long(this%cpp_object_ptr, c_str(name), &
+    & value_cptr, value_size, value_allocated )
+  call c_f_pointer(value_cptr,value_fptr,(/value_size/))
+  allocate(value(value_size))
+  value(:) = value_fptr(:)
+  if( value_allocated == 1 ) call atlas_free(value_cptr)
+end subroutine Metadata__get_array_int64
+
+subroutine Metadata__get_array_real32(this, name, value)
+  class(atlas_Metadata), intent(in) :: this
+  character(len=*), intent(in) :: name
+  real(c_float), allocatable, intent(out) :: value(:)
+  type(c_ptr) :: value_cptr
+  real(c_float), pointer :: value_fptr(:)
+  integer :: value_size
+  integer :: value_allocated
+  call atlas__Metadata__get_array_float(this%cpp_object_ptr, c_str(name), &
+    & value_cptr, value_size, value_allocated )
+  call c_f_pointer(value_cptr,value_fptr,(/value_size/))
+  allocate(value(value_size))
+  value(:) = value_fptr(:)
+  if( value_allocated == 1 ) call atlas_free(value_cptr)
+end subroutine Metadata__get_array_real32
+
+subroutine Metadata__get_array_real64(this, name, value)
+  class(atlas_Metadata), intent(in) :: this
+  character(len=*), intent(in) :: name
+  real(c_double), allocatable, intent(out) :: value(:)
+  type(c_ptr) :: value_cptr
+  real(c_double), pointer :: value_fptr(:)
+  integer :: value_size
+  integer :: value_allocated
+  call atlas__Metadata__get_array_double(this%cpp_object_ptr, c_str(name), &
+    & value_cptr, value_size, value_allocated )
+  call c_f_pointer(value_cptr,value_fptr,(/value_size/))
+  allocate(value(value_size))
+  value(:) = value_fptr(:)
+  if( value_allocated == 1 ) call atlas_free(value_cptr)
+end subroutine Metadata__get_array_real64
+
+subroutine MetaData__print(this,channel)
+  class(atlas_Metadata), intent(in) :: this
+  class(atlas_LogChannel), intent(inout) :: channel
+  call atlas__Metadata__print(this%cpp_object_ptr,channel%cpp_object_ptr)
+end subroutine Metadata__print
+
+function Metadata__json(this) result(json)
+  character(len=:), allocatable :: json
+  class(atlas_Metadata), intent(in) :: this
+  type(c_ptr) :: json_cptr
+  integer(c_int) :: json_size
+  integer(c_int) :: json_allocated
+  call atlas__Metadata__json(this%cpp_object_ptr,json_cptr,json_size,json_allocated)
+  allocate(character(len=json_size) :: json )
+  json = c_to_f_string_cptr(json_cptr)
+  if( json_allocated == 1 ) call atlas_free(json_cptr)
+end function Metadata__json
+

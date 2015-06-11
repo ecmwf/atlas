@@ -314,11 +314,15 @@ namespace test {
 
     int N() const { return N_; }
 
+    bool parametric() const { return parametric_; }
+
     const double* nodes() const { return nodes_.data(); }
 
     const ShapeFunction& shape_function() const { return *shape_function_; }
 
   protected:
+
+    bool parametric_;
 
     int N_;
 
@@ -334,16 +338,27 @@ namespace test {
     Point()
     {
       N_ = 1;
+      parametric_ = false;
       shape_function_ = ShapeFunction::Ptr( new ShapeFunction );
     }
   };
 
+  class Polygon : public ElementType
+  {
+  public:
+    Polygon( size_t max_nodes=0 )
+    {
+      parametric_ = false;
+      N_ = max_nodes;
+    }
+  };
 
   class QuadP1 : public ElementType
   {
   public:
     QuadP1()
     {
+      parametric_ = true;
       N_ = 4;
       int nodes_init[] = {
         -1., -1.,
@@ -360,6 +375,7 @@ namespace test {
   public:
     TriagP1()
     {
+      parametric_ = true;
       N_ = 3;
       int nodes_init[] = {
          0., 0.,
@@ -375,6 +391,7 @@ namespace test {
   public:
     LineP0()
     {
+      parametric_ = true;
       N_ = 1;
       int nodes_init[] = { 0. };
       nodes_.assign(nodes_init, nodes_init+N_);
@@ -387,6 +404,7 @@ namespace test {
   public:
     LineP1()
     {
+      parametric_ = true;
       N_ = 2;
       int nodes_init[] = { -1., 1. };
       nodes_.assign(nodes_init, nodes_init+N_);
@@ -399,6 +417,7 @@ namespace test {
   public:
     LineP2()
     {
+      parametric_ = true;
       N_ = 3;
       int nodes_init[] = { -1., 1., 0. };
       nodes_.assign(nodes_init, nodes_init+N_);
@@ -411,6 +430,7 @@ namespace test {
   public:
     Structured1D(int N)
     {
+      parametric_ = true;
       N_ = N;
       shape_function_ = ShapeFunction::Ptr( new ShapeFunction );
     }
@@ -446,13 +466,15 @@ namespace test {
     int nlat_;
   };
 
-
   enum IndexType { IDX_NOTUSED=-100, IDX_NODE=-1, IDX_LEVEL=-2, IDX_BLK=-3, IDX_NPROMA=-4, IDX_VAR=-5 };
+
+
+
   class NewFunctionSpace
   {
   public:
 
-    NewFunctionSpace() : nproma_(0), nnodes_(0), nblk_(0) {}
+    NewFunctionSpace() : nproma_(0), nb_nodes_(0), nblk_(0) {}
 
     /// @brief Number of element types
     size_t nb_element_types() const { return nelem_per_type_.size(); }
@@ -464,10 +486,16 @@ namespace test {
     size_t nb_elements_in_element_type(size_t idx) const { ASSERT(idx<nelem_per_type_.size()); return nelem_per_type_[idx]; }
 
     /// @brief Number of elements for element type at given index
-    size_t nb_elements() const { return nelem_; }
+    size_t nb_elements() const { return nb_elements_; }
+
+    /// @brief Number of owned elements for element type at given index
+    size_t nb_owned_elements() const { return nb_owned_elements_; }
 
     /// @brief Number of nodes in this function space
-    size_t nb_nodes() const { return nnodes_; }
+    size_t nb_nodes() const { return nb_nodes_; }
+
+    /// @brief Number of nodes in this function space
+    size_t nb_owned_nodes() const { return nb_owned_nodes_; }
 
     /// @brief Number of levels in this function space
     size_t nb_levels() const { return nlev_; }
@@ -487,10 +515,10 @@ namespace test {
     /// @brief Set the total number of nodes in FunctionSpace
     void set_nb_nodes( int nb_nodes )
     {
-      nnodes_ = nb_nodes;
+      nb_nodes_ = nb_nodes;
       if( nproma_==0 ) nproma_=1;
-      ASSERT(nnodes_%nproma_==0);
-      nblk_ = nnodes_/nproma_;
+      ASSERT(nb_nodes_%nproma_==0);
+      nblk_ = nb_nodes_/nproma_;
     }
 
     /// @brief Set the total number of nodes in FunctionSpace
@@ -498,10 +526,10 @@ namespace test {
     {
       nproma_ = nproma;
       nblk_=0;
-      if( nnodes_!= 0 )
+      if( nb_nodes_!= 0 )
       {
-        ASSERT(nnodes_%nproma_==0);
-        nblk_ = nnodes_/nproma_;
+        ASSERT(nb_nodes_%nproma_==0);
+        nblk_ = nb_nodes_/nproma_;
       }
     }
 
@@ -511,6 +539,7 @@ namespace test {
     /// @brief Add elements
     const ElementType& add_elements(const std::string& element_type, int nelem)
     {
+      if( element_type == "Polygon" )  element_types_.push_back( ElementType::Ptr( new Polygon() ) );
       if( element_type == "QuadP1" )   element_types_.push_back( ElementType::Ptr( new QuadP1 ) );
       if( element_type == "TriagP1")   element_types_.push_back( ElementType::Ptr( new TriagP1 ) );
       if( element_type == "LineP0" )   element_types_.push_back( ElementType::Ptr( new LineP0 ) );
@@ -525,13 +554,13 @@ namespace test {
       {
         N_max_ = elem.N();
         N_min_ = elem.N();
-        nelem_ = nelem;
+        nb_elements_ = nelem;
       }
       else
       {
         N_max_ = std::max(N_max_,elem.N());
         N_min_ = std::min(N_min_,elem.N());
-        nelem_ += nelem;
+        nb_elements_ += nelem;
       }
       return elem;
     }
@@ -541,6 +570,23 @@ namespace test {
     {
       nodes_ = &nodes;
     }
+
+    template< typename DATA_TYPE>
+    atlas::Array<DATA_TYPE> create_field(int idx1=IDX_NOTUSED, int idx2=IDX_NOTUSED, int idx3=IDX_NOTUSED, int idx4=IDX_NOTUSED, int idx5=IDX_NOTUSED, int idx6=IDX_NOTUSED, int idx7=IDX_NOTUSED)
+    {
+      atlas::ArrayShape shape; shape.reserve(7);
+      if( idx1!=IDX_NOTUSED ) shape.push_back(range(idx1));
+      if( idx2!=IDX_NOTUSED ) shape.push_back(range(idx2));
+      if( idx3!=IDX_NOTUSED ) shape.push_back(range(idx3));
+      if( idx4!=IDX_NOTUSED ) shape.push_back(range(idx4));
+      if( idx5!=IDX_NOTUSED ) shape.push_back(range(idx5));
+      if( idx6!=IDX_NOTUSED ) shape.push_back(range(idx6));
+      if( idx7!=IDX_NOTUSED ) shape.push_back(range(idx7));
+      atlas::Array<DATA_TYPE> field(shape);
+      return field;
+    }
+
+  private:
 
     int range(int idx_type) const
     {
@@ -555,21 +601,6 @@ namespace test {
       }
       throw eckit::SeriousBug("idx_type not recognized");
       return 0;
-    }
-
-    template< typename DATA_TYPE>
-    atlas::Array<DATA_TYPE> create_field(int idx1=IDX_NOTUSED, int idx2=IDX_NOTUSED, int idx3=IDX_NOTUSED, int idx4=IDX_NOTUSED, int idx5=IDX_NOTUSED, int idx6=IDX_NOTUSED, int idx7=IDX_NOTUSED)
-    {
-      atlas::ArrayShape shape;
-      if( idx1!=IDX_NOTUSED ) shape.push_back(range(idx1));
-      if( idx2!=IDX_NOTUSED ) shape.push_back(range(idx2));
-      if( idx3!=IDX_NOTUSED ) shape.push_back(range(idx3));
-      if( idx4!=IDX_NOTUSED ) shape.push_back(range(idx4));
-      if( idx5!=IDX_NOTUSED ) shape.push_back(range(idx5));
-      if( idx6!=IDX_NOTUSED ) shape.push_back(range(idx6));
-      if( idx7!=IDX_NOTUSED ) shape.push_back(range(idx7));
-      atlas::Array<DATA_TYPE> field(shape);
-      return field;
     }
 
   private:
@@ -587,7 +618,7 @@ namespace test {
     std::vector<int> nelem_per_type_;
 
     /// @brief Total number of elements
-    int nelem_;
+    int nb_elements_;
 
     /// @brief Maximum number of points per element type
     int N_max_;
@@ -596,10 +627,19 @@ namespace test {
     int N_min_;
 
     /// @brief Total number of nodes
-    int nnodes_;
+    int nb_nodes_;
+
+    /// @brief Number of vertical levels
     int nlev_;
+
+    /// @brief Number of nodes in one blk
     int nproma_;
+
+    /// @brief Number of blocks in domain
     int nblk_;
+
+    int nb_owned_nodes_;
+    int nb_owned_elements_;
   };
 
 
@@ -697,12 +737,11 @@ namespace test {
     ASSERT( element_type_index < elements.nb_element_types() );
     ASSERT( array.shape(1) == elements.N_max() );
 
-    DEBUG_VAR(element_type_index);
     for( int i=0; i<element_type_index; ++i )
     {
       offset += elements.nb_elements_in_element_type(i)*elements.N_max();
     }
-    DEBUG_VAR(offset);
+
     const ElementType& elem_type = elements.element_type(element_type_index);
     strides[0]=array.shape(1);
     strides[1]=1;
@@ -710,6 +749,15 @@ namespace test {
     shape[1]=elem_type.N();
     return IndexView<DATA_TYPE,2>( array.data()+offset, strides, shape);
   }
+
+
+  class Connectivity : public IndexView<int,2>
+  {
+    Connectivity(NewFunctionSpace& elements, int element_type_index)
+    {
+
+    }
+  };
 
 // ====================================================================================
 
@@ -819,6 +867,12 @@ BOOST_AUTO_TEST_CASE( test_functionspace )
   BOOST_CHECK_EQUAL( fs.nb_nodes(), 8);
   atlas::Array<double> wind_uv_ifs = fs.create_field<double>(IDX_NPROMA,IDX_LEVEL,2,IDX_BLK);
   BOOST_CHECK_EQUAL( wind_uv_ifs.size(), 2*fs.nb_levels()*fs.nb_nodes() );
+
+  BOOST_CHECK_EQUAL( wind_uv_ifs.rank(), 4);
+  BOOST_CHECK_EQUAL( wind_uv_ifs.shape(0), fs.nproma() );
+  BOOST_CHECK_EQUAL( wind_uv_ifs.shape(1), fs.nb_levels() );
+  BOOST_CHECK_EQUAL( wind_uv_ifs.shape(2), 2 );
+  BOOST_CHECK_EQUAL( wind_uv_ifs.shape(3), fs.nblk() );
 
 }
 

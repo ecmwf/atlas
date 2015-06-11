@@ -59,7 +59,7 @@ void distribute_mesh( Mesh& mesh )
   for( int f=0; f<mesh.nb_function_spaces(); ++f )
   {
     FunctionSpace& elements = mesh.function_space(f);
-    if( elements.metadata().get<int>("type") == Entity::ELEMS )
+    if( elements.metadata().get<long>("type") == Entity::ELEMS )
     {
       int nb_elems = elements.shape(0);
       ArrayView<gidx_t,1> elem_gidx( elements.field("glb_idx") );

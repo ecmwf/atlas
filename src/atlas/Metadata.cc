@@ -12,112 +12,358 @@
 #include <stdexcept>
 #include <sstream>
 #include "eckit/exception/Exceptions.h"
+#include "eckit/parser/JSON.h"
 #include "atlas/Metadata.h"
 #include "atlas/Field.h"
 #include "atlas/ErrorHandling.h"
 
 using std::string;
 
-#define METADATA( VALUE_TYPE ) \
-template<>\
-bool Metadata::has<VALUE_TYPE>(const std::string& name) const\
-{\
-	return map_##VALUE_TYPE##_.count(name);\
-}\
-template<>\
-Metadata& Metadata::set(const std::string& name, const VALUE_TYPE& value)\
-{\
-	map_##VALUE_TYPE##_[name] = value;\
-	return *this;\
-}\
-template<>\
-const VALUE_TYPE& Metadata::get(const std::string& name) const\
-{\
-	if( has<VALUE_TYPE>(name) ) {\
-		return map_##VALUE_TYPE##_.at(name);\
-	}\
-	else {\
-		std::stringstream msg;\
-		msg << "Could not find metadata \"" << name << "\"";\
-		throw eckit::OutOfRange(msg.str(),Here());\
-	}\
-}\
-template<>\
-const VALUE_TYPE& Metadata::get(const std::string& name, const VALUE_TYPE& deflault_value) const\
-{\
-	if( has<VALUE_TYPE>(name) ) {\
-		return map_##VALUE_TYPE##_.at(name);\
-	}\
-	else {\
-		return deflault_value;\
-	}\
-}
-
-
-#define METADATA_C_BINDING( VALUE_TYPE ) \
-void atlas__Metadata__add_##VALUE_TYPE (Metadata* This, const char* name, VALUE_TYPE value)\
-{\
-	This->set( std::string(name) ,value);\
-}\
-VALUE_TYPE atlas__Metadata__get_##VALUE_TYPE (Metadata* This, const char* name)\
-{\
-  ATLAS_ERROR_HANDLING(\
-    return This->get<VALUE_TYPE>( std::string(name) );\
-  );\
-  return VALUE_TYPE();\
-}
-
-
 namespace atlas {
 
-METADATA(bool)
-METADATA(int)
-METADATA(long)
-METADATA(float)
-METADATA(double)
-METADATA(string)
-//METADATA(void*)
+namespace {
+void throw_exception(const std::string& name)
+{
+  std::stringstream msg;
+  msg << "Could not find metadata \"" << name << "\"";
+  throw eckit::OutOfRange(msg.str(),Here());
+}
+}
+
+template<> Metadata& Metadata::set(const std::string& name, const bool& value)
+{
+  eckit::Properties::set(name,value);
+  return *this;
+}
+
+template<> Metadata& Metadata::set(const std::string& name, const int& value)
+{
+  eckit::Properties::set(name,value);
+  return *this;
+}
+
+template<> Metadata& Metadata::set(const std::string& name, const long& value)
+{
+  eckit::Properties::set(name,value);
+  return *this;
+}
+
+template<> Metadata& Metadata::set(const std::string& name, const double& value)
+{
+  eckit::Properties::set(name,value);
+  return *this;
+}
+
+template<> Metadata& Metadata::set(const std::string& name, const size_t& value)
+{
+  eckit::Properties::set(name,value);
+  return *this;
+}
+
+template<> Metadata& Metadata::set(const std::string& name, const std::string& value)
+{
+  eckit::Properties::set(name,value);
+  return *this;
+}
+
+template<> Metadata& Metadata::set(const std::string& name, const std::vector<int>& value)
+{
+  eckit::Properties::set(name,eckit::makeVectorValue(value));
+  return *this;
+}
+
+template<> Metadata& Metadata::set(const std::string& name, const std::vector<long>& value)
+{
+  eckit::Properties::set(name,eckit::makeVectorValue(value));
+  return *this;
+}
+
+template<> Metadata& Metadata::set(const std::string& name, const std::vector<float>& value)
+{
+  eckit::Properties::set(name,eckit::makeVectorValue(value));
+  return *this;
+}
+
+template<> Metadata& Metadata::set(const std::string& name, const std::vector<double>& value)
+{
+  eckit::Properties::set(name,eckit::makeVectorValue(value));
+  return *this;
+}
+
+template<> bool Metadata::get(const std::string& name) const
+{
+  if( !has(name) ) throw_exception(name);
+  return eckit::Properties::get(name);
+}
+
+template<> int Metadata::get(const std::string& name) const
+{
+  if( !has(name) ) throw_exception(name);
+  return eckit::Properties::get(name);
+}
+
+template<> long Metadata::get(const std::string& name) const
+{
+  if( !has(name) ) throw_exception(name);
+  return eckit::Properties::get(name);
+}
+
+template<> float Metadata::get(const std::string& name) const
+{
+  if( !has(name) ) throw_exception(name);
+  return double(eckit::Properties::get(name));
+}
+
+template<> double Metadata::get(const std::string& name) const
+{
+  if( !has(name) ) throw_exception(name);
+  return eckit::Properties::get(name);
+}
+
+template<> size_t Metadata::get(const std::string& name) const
+{
+  if( !has(name) ) throw_exception(name);
+  return eckit::Properties::get(name);
+}
+
+template<> std::string Metadata::get(const std::string& name) const
+{
+  if( !has(name) ) throw_exception(name);
+  return eckit::Properties::get(name);
+}
+
+template<> std::vector<int> Metadata::get(const std::string& name) const
+{
+  if( !has(name) ) throw_exception(name);
+  std::vector<eckit::Value> v = eckit::Properties::get(name);
+  std::vector<int> value;
+  value.assign(v.begin(),v.end());
+  return value;
+}
+
+template<> std::vector<long> Metadata::get(const std::string& name) const
+{
+  if( !has(name) ) throw_exception(name);
+  std::vector<eckit::Value> v = eckit::Properties::get(name);
+  std::vector<long> value;
+  value.assign(v.begin(),v.end());
+  return value;
+}
+
+template<> std::vector<float> Metadata::get(const std::string& name) const
+{
+  if( !has(name) ) throw_exception(name);
+  std::vector<eckit::Value> v = eckit::Properties::get(name);
+  std::vector<float> value(v.size());
+  for( size_t i=0; i<v.size(); ++i )
+    value[i] = double( v[i] );
+  return value;
+}
+
+template<> std::vector<double> Metadata::get(const std::string& name) const
+{
+  if( !has(name) ) throw_exception(name);
+  std::vector<eckit::Value> v = eckit::Properties::get(name);
+  std::vector<double> value;
+  value.assign(v.begin(),v.end());
+  return value;
+}
+
+template<> bool Metadata::get(const std::string& name, bool& value) const
+{
+  if( !has(name) ) return false;
+  value = eckit::Properties::get(name);
+  return true;
+}
+
+template<> bool Metadata::get(const std::string& name, long& value) const
+{
+  if( !has(name) ) return false;
+  value = eckit::Properties::get(name);
+  return true;
+}
+
+template<> bool Metadata::get(const std::string& name, double& value) const
+{
+  if( !has(name) ) return false;
+  value = eckit::Properties::get(name);
+  return true;
+}
+
+template<> bool Metadata::get(const std::string& name, size_t& value) const
+{
+  if( !has(name) ) return false;
+  value = eckit::Properties::get(name);
+  return true;
+}
+
+template<> bool Metadata::get(const std::string& name, std::string& value) const
+{
+  if( !has(name) ) return false;
+  value = std::string( eckit::Properties::get(name) );
+  return true;
+}
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
 Metadata* atlas__Metadata__new () {
-	return new Metadata();
+  return new Metadata();
 }
 
 void atlas__Metadata__delete (Metadata* This) {
-	delete This;
+  delete This;
 }
 
-METADATA_C_BINDING(int)
-METADATA_C_BINDING(long)
-METADATA_C_BINDING(float)
-METADATA_C_BINDING(double)
+void atlas__Metadata__set_int (Metadata* This, const char* name, int value)
+{
+  ATLAS_ERROR_HANDLING( This->set( std::string(name), long(value) ) );
+}
+void atlas__Metadata__set_long (Metadata* This, const char* name, long value)
+{
+  ATLAS_ERROR_HANDLING( This->set( std::string(name), value ) );
+}
+void atlas__Metadata__set_float (Metadata* This, const char* name, float value)
+{
+  ATLAS_ERROR_HANDLING( This->set( std::string(name), double(value) ) );
+}
+void atlas__Metadata__set_double (Metadata* This, const char* name, double value)
+{
+  ATLAS_ERROR_HANDLING( This->set( std::string(name), value ) );
+}
+void atlas__Metadata__set_string (Metadata* This, const char* name, const char* value)
+{
+  ATLAS_ERROR_HANDLING( This->set( std::string(name), std::string(value) ) );
+}
+void atlas__Metadata__set_array_int (Metadata* This, const char* name, int value[], int size)
+{
+  ATLAS_ERROR_HANDLING(
+    std::vector<int> v;
+    v.assign(value,value+size);
+    This->set( std::string(name), v );
+  );
+}
+void atlas__Metadata__set_array_long (Metadata* This, const char* name, long value[], int size)
+{
+  ATLAS_ERROR_HANDLING(
+    std::vector<long> v;
+    v.assign(value,value+size);
+    This->set( std::string(name), v );
+  );
+}
+void atlas__Metadata__set_array_float (Metadata* This, const char* name, float value[], int size)
+{
+  ATLAS_ERROR_HANDLING(
+    std::vector<float> v;
+    v.assign(value,value+size);
+    This->set( std::string(name), v );
+  );
+}
+void atlas__Metadata__set_array_double (Metadata* This, const char* name, double value[], int size)
+{
+  ATLAS_ERROR_HANDLING(
+    std::vector<double> v;
+    v.assign(value,value+size);
+    This->set( std::string(name), v );
+  );
+}
+int atlas__Metadata__get_int (Metadata* This, const char* name)
+{
+  ATLAS_ERROR_HANDLING( return This->get<long>( std::string(name) ) );
+}
+long atlas__Metadata__get_long (Metadata* This, const char* name)
+{
+  ATLAS_ERROR_HANDLING( return This->get<long>( std::string(name) ) );
+}
+float atlas__Metadata__get_float (Metadata* This, const char* name)
+{
+  ATLAS_ERROR_HANDLING( return This->get<double>( std::string(name) ) );
+}
+double atlas__Metadata__get_double (Metadata* This, const char* name)
+{
+  ATLAS_ERROR_HANDLING( return This->get<double>( std::string(name) ) );
+}
+void atlas__Metadata__get_string( Metadata* This, const char* name, char* output_str, int max_len )
+{
+  ATLAS_ERROR_HANDLING(
+    std::string s = This->get<std::string>( std::string(name) );
+    if( s.size() > max_len )
+    {
+      std::stringstream msg;
+      msg << "Cannot copy string `"<<s<<"` of metadata `"<<name<<"`"
+             "in buffer of length " << max_len;
+      throw eckit::OutOfRange(msg.str(),Here());
+    }
+    strcpy( output_str, s.c_str() );
+  );
+}
+void atlas__Metadata__get_array_int (Metadata* This, const char* name, int* &value, int& size, int& allocated)
+{
+  ATLAS_ERROR_HANDLING(
+    std::vector<int> v = This->get< std::vector<int> >( std::string(name ) );
+    size = v.size();
+    value = new int[size];
+    for( size_t j=0; j<v.size(); ++j ) value[j] = v[j];
+    allocated = true;
+  );
+}
+void atlas__Metadata__get_array_long (Metadata* This, const char* name, long* &value, int& size, int& allocated)
+{
+  ATLAS_ERROR_HANDLING(
+    std::vector<long> v = This->get< std::vector<long> >( std::string(name ) );
+    size = v.size();
+    value = new long[size];
+    for( size_t j=0; j<v.size(); ++j ) value[j] = v[j];
+    allocated = true;
+  );
+}
+void atlas__Metadata__get_array_float (Metadata* This, const char* name, float* &value, int& size, int& allocated)
+{
+  ATLAS_ERROR_HANDLING(
+    std::vector<float> v = This->get< std::vector<float> >( std::string(name ) );
+    size = v.size();
+    value = new float[size];
+    for( size_t j=0; j<v.size(); ++j ) value[j] = v[j];
+    allocated = true;
+  );
+}
+void atlas__Metadata__get_array_double (Metadata* This, const char* name, double* &value, int& size, int& allocated)
+{
+  ATLAS_ERROR_HANDLING(
+    std::vector<double> v = This->get< std::vector<double> >( std::string(name ) );
+    size = v.size();
+    value = new double[size];
+    for( size_t j=0; j<v.size(); ++j ) value[j] = v[j];
+    allocated = true;
+  );
+}
+int atlas__Metadata__has (Metadata* This, const char* name)
+{
+  ATLAS_ERROR_HANDLING( return This->has( std::string(name) ));
+}
 
-void atlas__Metadata__add_string (Metadata* This, const char* name, const char* value)
+void atlas__Metadata__print (Metadata* This, std::ostream* channel)
 {
-	This->set( std::string(name), std::string(value) );
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This != NULL );
+    ASSERT( channel != NULL );
+    *channel << *This;
+  );
 }
-const char* atlas__Metadata__get_string (Metadata* This, const char* name)
+
+void atlas__Metadata__json(Metadata* This, char* &json, int &size, int &allocated)
 {
-	return This->get<std::string>( std::string(name) ).c_str();
-}
-int	atlas__Metadata__has (Metadata* This, const char* name)
-{
-	return (
-		This->has<int>( std::string(name) ) ||
-		This->has<long>( std::string(name) ) ||
-		This->has<float>( std::string(name) ) ||
-		This->has<double>( std::string(name) ) ||
-		This->has<string>( std::string(name) ) );
+  std::stringstream s;
+  eckit::JSON j(s);
+  j.precision(16);
+  j << *This;
+  std::string json_str = s.str();
+  size = json_str.size();
+  json = new char[size+1]; allocated = true;
+  strcpy(json,json_str.c_str());
+  allocated = true;
 }
 
 // ------------------------------------------------------------------
 
-
 } // namespace atlas
-
-#undef METADATA
-#undef METADATA_C_BINDING
-
-

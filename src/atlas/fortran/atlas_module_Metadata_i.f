@@ -6,11 +6,11 @@ TYPE, extends(object_type) :: atlas_Metadata
 ! Purpose :
 ! -------
 !   *Metadata* : Container of Metadata, parameters or attributes
-!       The Metadata are added as key, value pairs
+!       The Metadata are seted as key, value pairs
 
 ! Methods :
 ! -------
-!   add : Add a new property with given key and value
+!   set : set a new property with given key and value
 !   set : Modify a property with given key and value
 !   get : Return a property value for given key
 
@@ -20,20 +20,33 @@ TYPE, extends(object_type) :: atlas_Metadata
 
 !------------------------------------------------------------------------------
 contains
-  procedure, private :: add_logical => Metadata__add_logical
-  procedure, private :: add_integer => Metadata__add_integer
-  procedure, private :: add_real32 => Metadata__add_real32
-  procedure, private :: add_real64 => Metadata__add_real64
-  procedure, private :: add_string => Metadata__add_string
+  procedure, private :: set_logical => Metadata__set_logical
+  procedure, private :: set_int32 => Metadata__set_int32
+  procedure, private :: set_real32 => Metadata__set_real32
+  procedure, private :: set_real64 => Metadata__set_real64
+  procedure, private :: set_string => Metadata__set_string
+  procedure, private :: set_array_int32 => Metadata__set_array_int32
+  procedure, private :: set_array_int64 => Metadata__set_array_int64
+  procedure, private :: set_array_real32 => Metadata__set_array_real32
+  procedure, private :: set_array_real64 => Metadata__set_array_real64
   procedure :: has => Metadata__has
-  generic :: add => add_logical, add_integer, add_real32, add_real64, add_string
-  generic :: set => add_logical, add_integer, add_real32, add_real64, add_string
-  procedure :: get_integer => Metadata__get_integer
+  generic :: set => set_logical, set_int32, set_real32, set_real64, set_string, set_array_int32, &
+    set_array_int64, set_array_real32, set_array_real64
+  procedure :: get_int32 => Metadata__get_int32
   procedure :: get_logical => Metadata__get_logical
   procedure :: get_real32 => Metadata__get_real32
   procedure :: get_real64 => Metadata__get_real64
   procedure :: get_string => Metadata__get_string
-  generic :: get => get_integer, get_logical, get_real32, get_real64, get_string
+  procedure :: get_array_int32 => Metadata__get_array_int32
+  procedure :: get_array_int64 => Metadata__get_array_int64
+  procedure :: get_array_real32 => Metadata__get_array_real32
+  procedure :: get_array_real64 => Metadata__get_array_real64
+  generic :: get => get_int32, get_logical, get_real32, get_real64, get_string, get_array_int32, &
+    get_array_int64, get_array_real32, get_array_real64
+
+  procedure :: print => Metadata__print
+  procedure :: json => Metadata__json
+
 END TYPE atlas_Metadata
 
 !------------------------------------------------------------------------------

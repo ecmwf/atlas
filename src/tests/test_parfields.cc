@@ -147,8 +147,8 @@ BOOST_AUTO_TEST_CASE( test1 )
 BOOST_AUTO_TEST_CASE( test2 )
 {
   ReducedGridMeshGenerator generate;
-  generate.options.set<int>("nb_parts",eckit::mpi::size());
-  generate.options.set<int>("part",eckit::mpi::rank());
+  generate.options.set("nb_parts",eckit::mpi::size());
+  generate.options.set("part",eckit::mpi::rank());
   Mesh* m = generate( grids::rgg::N32() );
   actions::build_parallel_fields(*m);
 

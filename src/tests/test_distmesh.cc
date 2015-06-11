@@ -80,8 +80,8 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
   grids::rgg::N16 grid;
 
 
-  generate.options.set<int>("nb_parts", eckit::mpi::size());
-  generate.options.set<int>("part", eckit::mpi::rank());
+  generate.options.set("nb_parts", eckit::mpi::size());
+  generate.options.set("part", eckit::mpi::rank());
 
   Mesh::Ptr m( generate( grid ) );
 

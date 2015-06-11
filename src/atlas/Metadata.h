@@ -14,62 +14,64 @@
 #include <vector>
 #include <map>
 #include <string>
+#include "eckit/config/Parametrisation.h"
+#include "eckit/value/Properties.h"
 
 namespace atlas {
 class Field;
 
-/// @brief Contains a list of field-pointers, no ownership
-class Metadata {
+class Metadata: public eckit::Properties {
 
 public:
 
-	template<typename ValueT>
-	Metadata& set(const std::string& name, const ValueT& value);
+  template<typename ValueT>
+  Metadata& set(const std::string& name, const ValueT& value);
 
-	template<typename ValueT>
-	const ValueT& get(const std::string& name) const;
+  template<typename ValueT>
+  ValueT get(const std::string& name) const;
 
-	template<typename ValueT>
-	const ValueT& get(const std::string& name, const ValueT& deflault_value) const;
-
-	template<typename ValueT>
-	bool has(const std::string& name) const;
-
-private:
-
-	// std::map< std::string, void* >   dict_;
-	std::map< std::string, bool >        map_bool_;
-	std::map< std::string, int >         map_int_;
-	std::map< std::string, long >        map_long_;
-	std::map< std::string, float >       map_float_;
-	std::map< std::string, double >      map_double_;
-	std::map< std::string, std::string > map_string_;
+  template<typename ValueT>
+  bool get(const std::string& name, ValueT& value) const;
 
 };
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
+
+#define Channel std::ostream
+#define Char char
+
 extern "C"
 {
-	Metadata* atlas__Metadata__new ();
+  Metadata* atlas__Metadata__new ();
 
-	void atlas__Metadata__delete (Metadata* This);
+  void atlas__Metadata__delete (Metadata* This);
+  void atlas__Metadata__print (Metadata* This, Channel* channel);
+  void atlas__Metadata__json (Metadata* This, Char* &json, int &size, int &allocated);
+  int  atlas__Metadata__has        (Metadata* This, const char* name);
+  void atlas__Metadata__set_int   (Metadata* This, const char* name, int value);
+  void atlas__Metadata__set_long  (Metadata* This, const char* name, long value);
+  void atlas__Metadata__set_float (Metadata* This, const char* name, float value);
+  void atlas__Metadata__set_double (Metadata* This, const char* name, double value);
+  void atlas__Metadata__set_string (Metadata* This, const char* name, const char* value);
+  void atlas__Metadata__set_array_int (Metadata* This, const char* name, int value[], int size);
+  void atlas__Metadata__set_array_long (Metadata* This, const char* name, long value[], int size);
+  void atlas__Metadata__set_array_float (Metadata* This, const char* name, float value[], int size);
+  void atlas__Metadata__set_array_double (Metadata* This, const char* name, double value[], int size);
 
-	int	atlas__Metadata__has        (Metadata* This, const char* name);
-
-	void atlas__Metadata__add_int   (Metadata* This, const char* name, int value);
-	void atlas__Metadata__add_long  (Metadata* This, const char* name, long value);
-	void atlas__Metadata__add_float (Metadata* This, const char* name, float value);
-	void atlas__Metadata__add_double (Metadata* This, const char* name, double value);
-	void atlas__Metadata__add_string (Metadata* This, const char* name, const char* value);
-
-	int    atlas__Metadata__get_int    (Metadata* This, const char* name);
-	long   atlas__Metadata__get_long   (Metadata* This, const char* name);
-	float  atlas__Metadata__get_float  (Metadata* This, const char* name);
-	double atlas__Metadata__get_double (Metadata* This, const char* name);
-	const char* atlas__Metadata__get_string (Metadata* This, const char* name);
-
+  int    atlas__Metadata__get_int    (Metadata* This, const char* name);
+  long   atlas__Metadata__get_long   (Metadata* This, const char* name);
+  float  atlas__Metadata__get_float  (Metadata* This, const char* name);
+  double atlas__Metadata__get_double (Metadata* This, const char* name);
+  void   atlas__Metadata__get_string (Metadata* This, const char* name, char* output_str, int max_len);
+  void   atlas__Metadata__get_array_int (Metadata* This, const char* name, int* &value, int &size, int &allocated);
+  void   atlas__Metadata__get_array_long (Metadata* This, const char* name, long* &value, int &size, int &allocated);
+  void   atlas__Metadata__get_array_float (Metadata* This, const char* name, float* &value, int &size, int &allocated);
+  void   atlas__Metadata__get_array_double (Metadata* This, const char* name, double* &value, int &size, int &allocated);
 }
+#undef Channel
+#undef Char
+
 // ------------------------------------------------------------------
 
 } // namespace atlas

@@ -306,7 +306,7 @@ void add_centroid_dual_volume_contribution(
   for( int f=0; f<mesh.nb_function_spaces(); ++f )
   {
     FunctionSpace& elements = mesh.function_space(f);
-    if( elements.metadata().get<int>("type") == Entity::ELEMS )
+    if( elements.metadata().get<long>("type") == Entity::ELEMS )
     {
       elem_centroids[f] = ArrayView<double,2>( elements.field("centroids") );
     }

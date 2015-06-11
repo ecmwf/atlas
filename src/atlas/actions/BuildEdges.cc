@@ -57,7 +57,7 @@ void build_element_to_edge_connectivity( Mesh& mesh )
   for( int func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
   {
     FunctionSpace& func_space = mesh.function_space(func_space_idx);
-	if( func_space.metadata().get<int>("type") == Entity::ELEMS )
+	if( func_space.metadata().get<long>("type") == Entity::ELEMS )
     {
       int nb_edges_per_elem;
       if (func_space.name() == "quads")  nb_edges_per_elem = 4;
@@ -140,7 +140,7 @@ void build_element_to_edge_connectivity( Mesh& mesh )
 	for( int func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
   {
     FunctionSpace& func_space = mesh.function_space(func_space_idx);
-	if( func_space.metadata().get<int>("type") == Entity::ELEMS )
+	if( func_space.metadata().get<long>("type") == Entity::ELEMS )
     {
       int nb_edges_per_elem;
       if (func_space.name() == "quads")  nb_edges_per_elem = 4;
@@ -411,7 +411,7 @@ void build_edges( Mesh& mesh )
     mesh.create_function_space( "edges", "shapefunc", make_shape(nb_edges,Field::UNDEF_VARS) );
   }
   FunctionSpace& edges = mesh.function_space("edges");
-  edges.metadata().set("type",static_cast<int>(Entity::FACES));
+  edges.metadata().set<long>("type",Entity::FACES);
   edges.resize(make_shape(nb_edges,Field::UNDEF_VARS));
 
   if( ! edges.has_field("nodes")      )  edges.create_field<int>("nodes",     2);
@@ -431,7 +431,7 @@ void build_edges( Mesh& mesh )
   for( int func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
   {
     FunctionSpace& func_space = mesh.function_space(func_space_idx);
-	if( func_space.metadata().get<int>("type") == Entity::ELEMS )
+	if( func_space.metadata().get<long>("type") == Entity::ELEMS )
     {
       elem_nodes[func_space_idx] = IndexView<int,2>(func_space.field("nodes"));
     }
@@ -494,7 +494,7 @@ void build_pole_edges( Mesh& mesh )
 	mesh.create_function_space( "edges","shapefunc", make_shape(nb_edges,Field::UNDEF_VARS) );
 
   FunctionSpace& edges = mesh.function_space("edges");
-  edges.metadata().set("type",static_cast<int>(Entity::FACES));
+  edges.metadata().set<long>("type",Entity::FACES);
 
   nb_edges = edges.shape(0);
 

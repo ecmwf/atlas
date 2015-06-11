@@ -192,12 +192,12 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     BOOST_CHECK_EQUAL( m->function_space("nodes" ).shape(0), 156 );
     BOOST_CHECK_EQUAL( m->function_space("quads" ).shape(0), 134 );
     BOOST_CHECK_EQUAL( m->function_space("triags").shape(0),  32 );
-    BOOST_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<int>("max_glb_idx"), 156 );
-    BOOST_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<int>("nb_owned"),    156 );
-    BOOST_CHECK_EQUAL( m->function_space("quads" ).metadata().get<int>("max_glb_idx"), 166 );
-    BOOST_CHECK_EQUAL( m->function_space("quads" ).metadata().get<int>("nb_owned"),    134 );
-    BOOST_CHECK_EQUAL( m->function_space("triags").metadata().get<int>("max_glb_idx"), 166 );
-    BOOST_CHECK_EQUAL( m->function_space("triags").metadata().get<int>("nb_owned"),     32 );
+    BOOST_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<size_t>("max_glb_idx"), 156 );
+    BOOST_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<size_t>("nb_owned"),    156 );
+    BOOST_CHECK_EQUAL( m->function_space("quads" ).metadata().get<size_t>("max_glb_idx"), 166 );
+    BOOST_CHECK_EQUAL( m->function_space("quads" ).metadata().get<size_t>("nb_owned"),    134 );
+    BOOST_CHECK_EQUAL( m->function_space("triags").metadata().get<size_t>("max_glb_idx"), 166 );
+    BOOST_CHECK_EQUAL( m->function_space("triags").metadata().get<size_t>("nb_owned"),     32 );
     delete m;
   }
 
@@ -208,12 +208,12 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     BOOST_CHECK_EQUAL( m->function_space("nodes" ).shape(0), 166 );
     BOOST_CHECK_EQUAL( m->function_space("quads" ).shape(0), 134 );
     BOOST_CHECK_EQUAL( m->function_space("triags").shape(0),  32 );
-    BOOST_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<int>("max_glb_idx"), 166 );
-    BOOST_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<int>("nb_owned"),    166 );
-    BOOST_CHECK_EQUAL( m->function_space("quads" ).metadata().get<int>("max_glb_idx"), 166 );
-    BOOST_CHECK_EQUAL( m->function_space("quads" ).metadata().get<int>("nb_owned"),    134 );
-    BOOST_CHECK_EQUAL( m->function_space("triags").metadata().get<int>("max_glb_idx"), 166 );
-    BOOST_CHECK_EQUAL( m->function_space("triags").metadata().get<int>("nb_owned"),     32 );
+    BOOST_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<size_t>("max_glb_idx"), 166 );
+    BOOST_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<size_t>("nb_owned"),    166 );
+    BOOST_CHECK_EQUAL( m->function_space("quads" ).metadata().get<size_t>("max_glb_idx"), 166 );
+    BOOST_CHECK_EQUAL( m->function_space("quads" ).metadata().get<size_t>("nb_owned"),    134 );
+    BOOST_CHECK_EQUAL( m->function_space("triags").metadata().get<size_t>("max_glb_idx"), 166 );
+    BOOST_CHECK_EQUAL( m->function_space("triags").metadata().get<size_t>("nb_owned"),     32 );
     delete m;
   }
 
@@ -224,12 +224,12 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     BOOST_CHECK_EQUAL( m->function_space("nodes" ).shape(0), 158 );
     BOOST_CHECK_EQUAL( m->function_space("quads" ).shape(0), 134 );
     BOOST_CHECK_EQUAL( m->function_space("triags").shape(0),  44 );
-    BOOST_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<int>("max_glb_idx"), 158 );
-    BOOST_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<int>("nb_owned"),    158 );
-    BOOST_CHECK_EQUAL( m->function_space("quads" ).metadata().get<int>("max_glb_idx"), 178 );
-    BOOST_CHECK_EQUAL( m->function_space("quads" ).metadata().get<int>("nb_owned"),    134 );
-    BOOST_CHECK_EQUAL( m->function_space("triags").metadata().get<int>("max_glb_idx"), 178 );
-    BOOST_CHECK_EQUAL( m->function_space("triags").metadata().get<int>("nb_owned"),     44 );
+    BOOST_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<size_t>("max_glb_idx"), 158 );
+    BOOST_CHECK_EQUAL( m->function_space("nodes" ).metadata().get<size_t>("nb_owned"),    158 );
+    BOOST_CHECK_EQUAL( m->function_space("quads" ).metadata().get<size_t>("max_glb_idx"), 178 );
+    BOOST_CHECK_EQUAL( m->function_space("quads" ).metadata().get<size_t>("nb_owned"),    134 );
+    BOOST_CHECK_EQUAL( m->function_space("triags").metadata().get<size_t>("max_glb_idx"), 178 );
+    BOOST_CHECK_EQUAL( m->function_space("triags").metadata().get<size_t>("nb_owned"),     44 );
     delete m;
   }
 
@@ -310,7 +310,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
 
   std::vector<int> all_owned    ( grid.npts()+grid.nlat()+1, -1 );
 
-  for( int p=0; p<generate.options.get<int>("nb_parts"); ++p)
+  for( int p=0; p<generate.options.get<size_t>("nb_parts"); ++p)
   {
     DEBUG_VAR(p);
     generate.options.set("part",p);
@@ -325,7 +325,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
     DEBUG();
 
     DISABLE {  // This is all valid for meshes generated with MINIMAL NB TRIAGS
-    if( generate.options.get<int>("nb_parts") == 20 )
+    if( generate.options.get<size_t>("nb_parts") == 20 )
     {
       BOOST_CHECK_EQUAL( m->function_space("nodes" ).shape(0), nodes[p]  );
       BOOST_CHECK_EQUAL( m->function_space("quads" ).shape(0), quads[p]  );
@@ -348,7 +348,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
       for( int f=0; f<m->nb_function_spaces(); ++f )
       {
         FunctionSpace& elements = m->function_space(f);
-        if( elements.metadata().get<int>("type") == Entity::ELEMS )
+        if( elements.metadata().get<long>("type") == Entity::ELEMS )
         {
           int nb_elems = elements.shape(0);
           IndexView<int,2> elem_nodes ( elements.field("nodes") );

@@ -87,7 +87,7 @@ void increase_halo( Mesh& mesh )
   for( int func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
   {
     FunctionSpace& elements = mesh.function_space(func_space_idx);
-    if( elements.metadata().get<int>("type") == Entity::ELEMS )
+    if( elements.metadata().get<long>("type") == Entity::ELEMS )
     {
       elem_nodes  [func_space_idx] = IndexView<int,2>( elements.field("nodes") );
       elem_part   [func_space_idx] = ArrayView<int,1>( elements.field("partition") );
@@ -429,7 +429,7 @@ void increase_halo( Mesh& mesh )
     {
       FunctionSpace& elements = mesh.function_space(f);
 
-      if( elements.metadata().get<int>("type") == Entity::ELEMS )
+      if( elements.metadata().get<long>("type") == Entity::ELEMS )
       {
         int nb_elem_nodes(elem_nodes[f].shape(1));
         sfe_glb_idx [f][jpart].resize( nb_found_bdry_elems[f] );
@@ -569,7 +569,7 @@ void increase_halo( Mesh& mesh )
   for( int f=0; f<mesh.nb_function_spaces(); ++f )
   {
     FunctionSpace& elements = mesh.function_space(f);
-    if( elements.metadata().get<int>("type") == Entity::ELEMS )
+    if( elements.metadata().get<long>("type") == Entity::ELEMS )
     {
 
       std::set<uid_t> elem_uid;
@@ -640,7 +640,7 @@ void build_lookup_node2elem( const Mesh& mesh, Node2Elem& node2elem )
   for( int func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
   {
     FunctionSpace& elements = mesh.function_space(func_space_idx);
-    if( elements.metadata().get<int>("type") == Entity::ELEMS )
+    if( elements.metadata().get<long>("type") == Entity::ELEMS )
     {
       elem_nodes  [func_space_idx] = IndexView<int,2>( elements.field("nodes") );
       int nb_elems = elem_nodes[func_space_idx].shape(0);
@@ -793,7 +793,7 @@ void accumulate_elements( const Mesh& mesh,
   for( int func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
   {
     FunctionSpace& elements = mesh.function_space(func_space_idx);
-    if( elements.metadata().get<int>("type") == Entity::ELEMS )
+    if( elements.metadata().get<long>("type") == Entity::ELEMS )
     {
       elem_nodes  [func_space_idx] = IndexView<int,2>( elements.field("nodes") );
       elem_part   [func_space_idx] = ArrayView<int,1>( elements.field("partition") );
@@ -949,7 +949,7 @@ public:
     for( int f=0; f<mesh.nb_function_spaces(); ++f)
     {
       FunctionSpace& elements = mesh.function_space(f);
-      if( elements.metadata().get<int>("type") == Entity::ELEMS )
+      if( elements.metadata().get<long>("type") == Entity::ELEMS )
       {
         elem_nodes  [f] = IndexView<int,   2>( elements.field("nodes") );
         elem_part   [f] = ArrayView<int,   1>( elements.field("partition") );
@@ -997,7 +997,7 @@ public:
     {
       FunctionSpace& elements = mesh.function_space(f);
 
-      if( elements.metadata().get<int>("type") == Entity::ELEMS )
+      if( elements.metadata().get<long>("type") == Entity::ELEMS )
       {
         int nb_elem_nodes(elem_nodes[f].shape(1));
         buf.elem_glb_idx [f][p].resize( elems[f].size() );
@@ -1061,7 +1061,7 @@ public:
     {
       FunctionSpace& elements = mesh.function_space(f);
 
-      if( elements.metadata().get<int>("type") == Entity::ELEMS )
+      if( elements.metadata().get<long>("type") == Entity::ELEMS )
       {
         int nb_elem_nodes(elem_nodes[f].shape(1));
         buf.elem_glb_idx [f][p].resize( elems[f].size() );
@@ -1175,7 +1175,7 @@ public:
     for( int f=0; f<mesh.nb_function_spaces(); ++f )
     {
       FunctionSpace& elements = mesh.function_space(f);
-      if( elements.metadata().get<int>("type") == Entity::ELEMS )
+      if( elements.metadata().get<long>("type") == Entity::ELEMS )
       {
         // Elements might be duplicated from different Tasks. We need to identify unique entries
         std::set<uid_t> elem_uid;

@@ -69,6 +69,8 @@ TEST( test_field_metadata )
   real(c_float) :: real32
   real(c_double) :: real64
   character(len=:), allocatable :: string
+  integer(c_int), allocatable :: arr_int32(:)
+  real(c_float), allocatable :: arr_real32(:)
   type(atlas_Metadata) metadata
 
   write(*,*) "test_field_metadata starting"
@@ -78,12 +80,16 @@ TEST( test_field_metadata )
 
   metadata = field%metadata()
 
-  call metadata%add("true",.True.)
-  call metadata%add("false",.False.)
-  call metadata%add("int",20)
-  call metadata%add("real32", real(0.1,kind=c_float)   )
-  call metadata%add("real64", real(0.2,kind=c_double) )
-  call metadata%add("string", "hello world")
+  call metadata%set("true",.True.)
+  call metadata%set("false",.False.)
+  call metadata%set("int",20)
+  call metadata%set("real32", real(0.1,kind=c_float)   )
+  call metadata%set("real64", real(0.2,kind=c_double) )
+  call metadata%set("string", "hello world")
+  call metadata%set("arr_int32", (/1,2,3/))
+  call metadata%set("arr_int64", (/1_c_long,2_c_long,3_c_long/))
+  call metadata%set("arr_real32", (/1.1_c_float,2.1_c_float,3.7_c_float/))
+  call metadata%set("arr_real64", (/1.1_c_double,2.1_c_double,3.7_c_double/))
 
   call metadata%get("true",true)
   call metadata%get("false",false)
@@ -91,6 +97,14 @@ TEST( test_field_metadata )
   call metadata%get("real32",real32)
   call metadata%get("real64",real64)
   call metadata%get("string",string)
+  call metadata%get("arr_int64",arr_int32)
+  call metadata%get("arr_real64",arr_real32)
+
+  call metadata%print(atlas_log%channel_info)
+
+  write(atlas_log%msg,*) metadata%json()
+  call atlas_log%info()
+  !write(0,*) metadata%json()
 
   CHECK( true  .eqv. .True.  )
   CHECK( false .eqv. .False. )
@@ -99,6 +113,9 @@ TEST( test_field_metadata )
   CHECK_CLOSE( real32, real(0.1,kind=c_float), real(0.,kind=c_float) )
   CHECK_CLOSE( real64, real(0.2,kind=c_double), real(0.,kind=c_double) )
   CHECK_EQUAL( string, "hello world" )
+  CHECK_EQUAL( arr_int32, (/1,2,3/) )
+  CHECK_EQUAL( arr_real32, (/1.1,2.1,3.7/) )
+
 END_TEST
 
 ! -----------------------------------------------------------------------------
@@ -245,9 +262,9 @@ TEST( test_meshgen )
   call field%access_data(arr)
 
 
-  write(0,*) stride(ridx,1)
+  !write(0,*) stride(ridx,1)
 
-  write(0,*) stride(arr,1), stride(arr,2), stride(arr,3)
+  !write(0,*) stride(arr,1), stride(arr,2), stride(arr,3)
 
   call atlas_write_gmsh(mesh,"testf2.msh")
 
