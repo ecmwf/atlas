@@ -46,6 +46,11 @@ contains
 
 ENDTYPE
 
+interface atlas_LogChannel
+  module procedure atlas_LogChannel__ctor
+end interface
+
+
 !------------------------------------------------------------------------------
 TYPE, extends(object_type) :: atlas_Logger
 
@@ -71,11 +76,11 @@ TYPE, extends(object_type) :: atlas_Logger
 
   character(len=1024), public :: msg
 
-  type(ATLAS_LogChannel) :: channel_error   = atlas_LogChannel(cat=ATLAS_LOG_CATEGORY_ERROR)
-  type(ATLAS_LogChannel) :: channel_warning = atlas_LogChannel(cat=ATLAS_LOG_CATEGORY_WARNING)
-  type(ATLAS_LogChannel) :: channel_info    = atlas_LogChannel(cat=ATLAS_LOG_CATEGORY_INFO)
-  type(ATLAS_LogChannel) :: channel_debug   = atlas_LogChannel(cat=ATLAS_LOG_CATEGORY_DEBUG)
-  type(ATLAS_LogChannel) :: channel_stats   = atlas_LogChannel(cat=ATLAS_LOG_CATEGORY_STATS)
+  type(ATLAS_LogChannel) :: channel_error
+  type(ATLAS_LogChannel) :: channel_warning
+  type(ATLAS_LogChannel) :: channel_info
+  type(ATLAS_LogChannel) :: channel_debug
+  type(ATLAS_LogChannel) :: channel_stats
 
 contains
 
@@ -104,6 +109,11 @@ contains
   procedure, public :: clear_indentation => Logger__clear_indentation
 
 END TYPE
+
+interface atlas_Logger
+  module procedure atlas_Logger__ctor
+end interface
+
 
 !------------------------------------------------------------------------------
 

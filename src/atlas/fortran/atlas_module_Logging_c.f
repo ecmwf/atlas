@@ -1,5 +1,22 @@
 ! (C) Copyright 2013-2014 ECMWF.
 
+function atlas_LogChannel__ctor( cat ) result(channel)
+  type(atlas_LogChannel) :: channel
+  integer(c_int) :: cat
+  channel%cpp_object_ptr = atlas__LogChannel_cat(cat)
+  channel%cat = cat
+end function
+
+
+function atlas_Logger__ctor() result(logger)
+  type(atlas_Logger) :: logger
+  logger%channel_error   = atlas_LogChannel(ATLAS_LOG_CATEGORY_ERROR)
+  logger%channel_warning = atlas_LogChannel(ATLAS_LOG_CATEGORY_WARNING)
+  logger%channel_info    = atlas_LogChannel(ATLAS_LOG_CATEGORY_INFO)
+  logger%channel_debug   = atlas_LogChannel(ATLAS_LOG_CATEGORY_DEBUG)
+  logger%channel_stats   = atlas_LogChannel(ATLAS_LOG_CATEGORY_STATS)
+end function
+
 subroutine LogChannel__log(this,msg,lvl,endl,flush)
   CLASS(atlas_LogChannel), intent(in) :: this
   character(kind=c_char,len=*), intent(in), optional :: msg

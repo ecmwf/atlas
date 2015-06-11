@@ -190,7 +190,6 @@ end interface atlas_generate_mesh
 !------------------------------------------------------------------------------
 
 ! Logger singleton
-TYPE(atlas_Logger) :: logger
 TYPE(atlas_Logger) :: atlas_log
 
 ! =============================================================================
@@ -274,6 +273,7 @@ subroutine atlas_init()
   type(c_ptr), save :: argv(15)
   call get_c_arguments(argc,argv)
   call atlas__atlas_init(argc,argv)
+  atlas_log = atlas_Logger()
   !call atlas__atlas_init_noargs()
 end subroutine
 
