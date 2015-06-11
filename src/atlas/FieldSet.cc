@@ -8,40 +8,12 @@
  * does it submit to any jurisdiction.
  */
 
-#include <cstring>
-#include <iostream>
-#include <sstream>
-#include <stdexcept>
-
-#include "atlas/atlas_config.h"
-
-#include "eckit/exception/Exceptions.h"
-#include "eckit/filesystem/PathName.h"
-#include "eckit/io/DataHandle.h"
-#include "eckit/io/Buffer.h"
-#include "eckit/log/Log.h"
-#include "eckit/memory/ScopedPtr.h"
-#include "eckit/utils/Translator.h"
-#include "eckit/os/BackTrace.h"
-
 #include "atlas/ErrorHandling.h"
 #include "atlas/Field.h"
-#include "atlas/FunctionSpace.h"
 #include "atlas/Grid.h"
-#include "atlas/Mesh.h"
-#include "atlas/Parameters.h"
-#include "atlas/grids/Unstructured.h"
-#include "atlas/io/PointCloud.h"
-#include "atlas/util/ArrayView.h"
-
 #include "atlas/FieldSet.h"
 
-
-using namespace eckit;
-
-
 namespace atlas {
-
 
 //------------------------------------------------------------------------------------------------------
 
@@ -54,11 +26,7 @@ FieldSet::FieldSet(const std::string &name) :
 void FieldSet::add_field(Field::Ptr field)
 {
   index_[field->name()] = fields_.size();
-
   fields_.push_back( field );
-
-  //FIXME there is a memory corruption when activating next line
-//  gridset_.push_back( field->grid().self() );
 }
 
 
@@ -82,10 +50,6 @@ Field& FieldSet::field(const std::string& name) const
 FieldSet::FieldSet(const Field::Vector& fields) :
   fields_(fields)
 {
-  for( Field::Vector::const_iterator itr = fields.begin(); itr != fields.end(); ++itr )
-  {
-      gridset_.push_back( (*itr)->grid().self() );
-  }
 }
 
 
@@ -146,6 +110,7 @@ FieldSet* atlas__FieldSet__new (char* name)
 void atlas__FieldSet__delete(FieldSet* This)
 {
   ATLAS_ERROR_HANDLING(
+    ASSERT( This!= NULL );
     delete This;
   );
 }

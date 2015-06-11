@@ -19,25 +19,10 @@
 
 #include <vector>
 
-#include "atlas/atlas_config.h"
-
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
-#include "eckit/types/Types.h"
 
 #include "atlas/Field.h"
-#include "atlas/GridSet.h"
-#include "atlas/Grid.h"
-#include "atlas/Mesh.h"
-#include "atlas/Metadata.h"
-
-
-// forward declarations
-namespace eckit {
-  class PathName;
-  class DataHandle;
-  namespace grib { class GribHandle; }
-}
 
 namespace atlas {
 
@@ -87,15 +72,10 @@ public: // methods
 
 private: // methods
 
-  /// @todo to be removed
-  Field::Ptr create_field(eckit::grib::GribHandle&);
-
   /// Check if all fields share same grid
   bool have_same_grid() const;
 
 protected: // data
-
-  atlas::GridSet                  gridset_; ///< @todo remove this gridset ownership into the mir::FieldSet
 
   Field::Vector                   fields_;  ///< field handle storage
   std::string                     name_;    ///< internal name

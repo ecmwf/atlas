@@ -226,8 +226,6 @@ Grid.cc
 Grid.h
 GridDistribution.cc
 GridDistribution.h
-GridSet.cc
-GridSet.h
 GridSpec.cc
 GridSpec.h
 Latitudes.cc
