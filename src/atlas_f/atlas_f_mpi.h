@@ -6,10 +6,10 @@
 ! granted to it by virtue of its status as an intergovernmental organisation nor
 ! does it submit to any jurisdiction.
 
-#ifndef atlas_mpi_fortran_h
-#define atlas_mpi_fortran_h
+#ifndef atlas_f_mpi_h
+#define atlas_f_mpi_h
 
-#include "atlas/atlas_defines_fortran.h"
+#include "atlas_f/atlas_f_defines.h"
 
 #ifdef ATLAS_HAVE_MPI
 use mpi

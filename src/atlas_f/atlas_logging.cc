@@ -1,4 +1,4 @@
-#include "atlas/fortran/atlas_logging.h"
+#include "atlas_f/atlas_logging.h"
 #include "eckit/log/Log.h"
 #include "eckit/runtime/Context.h"
 #include "eckit/runtime/ContextBehavior.h"

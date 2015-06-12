@@ -1,3 +1,26 @@
+
+### fortranize function
+
+function( fortranize file )
+  unset( result )
+  file( STRINGS "${file}" lines )
+  foreach( i IN LISTS lines )
+  string( REGEX REPLACE "^/\\* (#undef .*) \\*/$" "! \\1" i "${i}" )
+  set( result "${result}${i}\n" )
+  endforeach()
+  file( WRITE "${file}" "${result}" )
+endfunction()
+
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/../atlas/atlas_defines.h.in  atlas_f_defines.h )
+fortranize( ${CMAKE_CURRENT_BINARY_DIR}/atlas_f_defines.h )
+
+install( FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/atlas_f_defines.h
+  ${CMAKE_CURRENT_BINARY_DIR}/atlas_f_mpi.h
+  DESTINATION
+  ${INSTALL_INCLUDE_DIR}/atlas_f )
+
+
 ### fortran bindings
 
 function(generate_fortran_bindings output filename)
@@ -12,31 +35,31 @@ function(generate_fortran_bindings output filename)
     set_source_files_properties(${outfile} PROPERTIES GENERATED TRUE)
 endfunction()
 
-generate_fortran_bindings(FORTRAN_BINDINGS ../grids/grids.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../grids/ReducedGrid.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../GridDistribution.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../Field.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../FieldSet.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../FunctionSpace.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../Mesh.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../Metadata.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../mpl/HaloExchange.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../mpl/GatherScatter.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../mpl/Checksum.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../io/Gmsh.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../actions/BuildParallelFields.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../actions/BuildPeriodicBoundaries.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../actions/BuildHalo.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../actions/BuildEdges.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../actions/BuildDualMesh.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../actions/GenerateMesh.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../actions/WriteLoadBalanceReport.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grids/grids.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grids/ReducedGrid.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/GridDistribution.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/Field.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/FieldSet.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/FunctionSpace.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/Mesh.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/Metadata.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mpl/HaloExchange.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mpl/GatherScatter.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mpl/Checksum.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/io/Gmsh.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/actions/BuildParallelFields.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/actions/BuildPeriodicBoundaries.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/actions/BuildHalo.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/actions/BuildEdges.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/actions/BuildDualMesh.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/actions/GenerateMesh.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/actions/WriteLoadBalanceReport.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/runtime/ErrorHandling.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/atlas.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mpi/mpi.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/trans/Trans.h)
 generate_fortran_bindings(FORTRAN_BINDINGS atlas_logging.h)
 generate_fortran_bindings(FORTRAN_BINDINGS atlas_resource.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../runtime/ErrorHandling.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../mpi/mpi.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../trans/Trans.h)
 
 
 ### atlas fortran lib

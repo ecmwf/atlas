@@ -6,18 +6,6 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-### fortranize function
-
-function( fortranize file )
-  unset( result )
-  file( STRINGS "${file}" lines )
-  foreach( i IN LISTS lines )
-  string( REGEX REPLACE "^/\\* (#undef .*) \\*/$" "! \\1" i "${i}" )
-  set( result "${result}${i}\n" )
-  endforeach()
-  file( WRITE "${file}" "${result}" )
-endfunction()
-
 ### config headers
 
 ecbuild_generate_config_headers( DESTINATION ${INSTALL_INCLUDE_DIR}/atlas )
@@ -25,12 +13,9 @@ ecbuild_generate_config_headers( DESTINATION ${INSTALL_INCLUDE_DIR}/atlas )
 configure_file( atlas_config.h.in   atlas_config.h  )
 configure_file( atlas_version.h.in  atlas_version.h )
 configure_file( atlas_defines.h.in  atlas_defines.h   )
-configure_file( atlas_defines.h.in  atlas_defines_fortran.h )
-fortranize( ${CMAKE_CURRENT_BINARY_DIR}/atlas_defines_fortran.h )
 
 install( FILES
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_defines.h
-  ${CMAKE_CURRENT_BINARY_DIR}/atlas_defines_fortran.h
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_config.h
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_version.h
   DESTINATION
@@ -270,7 +255,4 @@ ecbuild_add_library( TARGET atlas
   INCLUDES "${CGAL_INCLUDE_DIRS}"  ${TRANSI_INCLUDE_DIRS}
   LIBS eckit_geometry "${ECKIT_MPI_LIBRARIES}" "${ECKIT_GRIB_LIBRARIES}" "${CGAL_LIBRARIES}" ${TRANSI_LIBRARIES} )
 
-if( ATLAS_HAVE_FORTRAN )
-  add_subdirectory( fortran )
-endif()
 
