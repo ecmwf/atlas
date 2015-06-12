@@ -14,7 +14,8 @@
 #include <iosfwd>
 #include <string>
 
-#include "eckit/memory/NonCopyable.h"
+#include "eckit/memory/Owned.h"
+#include "eckit/config/Parametrisation.h"
 
 namespace atlas {
 
@@ -26,7 +27,7 @@ namespace meshgen {
 
 //------------------------------------------------------------------------------------------------------
 
-class MeshGenerator : private eckit::NonCopyable {
+class MeshGenerator : public eckit::Owned {
 
 public:
 
@@ -42,30 +43,86 @@ public:
 
 };
 
+
+
 class MeshGeneratorFactory {
+  public:
+    /*!
+     * \brief build MeshGenerator with factory key, and default options
+     * \return mesh generator
+     */
+    static MeshGenerator* build(const std::string&);
+
+    /*!
+     * \brief build MeshGenerator with factory key inside parametrisation,
+     * and options specified in parametrisation as well
+     * \return mesh generator
+     */
+    static MeshGenerator* build(const std::string&, const eckit::Parametrisation&);
+
+    /*!
+     * \brief list all registered mesh generators
+     */
+    static void list(std::ostream &);
+
+  private:
     std::string name_;
-    virtual MeshGenerator *make() = 0;
+    virtual MeshGenerator* make() = 0 ;
+    virtual MeshGenerator* make(const eckit::Parametrisation&) = 0 ;
 
   protected:
 
-    MeshGeneratorFactory(const std::string &);
+    MeshGeneratorFactory(const std::string&);
     virtual ~MeshGeneratorFactory();
 
-  public:
-
-    static void list(std::ostream &);
-    static MeshGenerator *build(const std::string &);
 
 };
 
-template< class T>
+
+template<class T>
 class MeshGeneratorBuilder : public MeshGeneratorFactory {
-    virtual MeshGenerator *make() {
-        return new T();
+  virtual MeshGenerator* make() {
+      return new T();
+  }
+  virtual MeshGenerator* make(const eckit::Parametrisation& param) {
+        return new T(param);
     }
   public:
-    MeshGeneratorBuilder(const std::string &name) : MeshGeneratorFactory(name) {}
+    MeshGeneratorBuilder(const std::string& name) : MeshGeneratorFactory(name) {}
 };
+
+
+
+
+
+
+
+
+
+//class MeshGeneratorFactory {
+//    std::string name_;
+//    virtual MeshGenerator *make() = 0;
+
+//  protected:
+
+//    MeshGeneratorFactory(const std::string &);
+//    virtual ~MeshGeneratorFactory();
+
+//  public:
+
+//    static void list(std::ostream &);
+//    static MeshGenerator *build(const std::string &);
+
+//};
+
+//template< class T>
+//class MeshGeneratorBuilder : public MeshGeneratorFactory {
+//    virtual MeshGenerator *make() {
+//        return new T();
+//    }
+//  public:
+//    MeshGeneratorBuilder(const std::string &name) : MeshGeneratorFactory(name) {}
+//};
 
 //------------------------------------------------------------------------------------------------------
 

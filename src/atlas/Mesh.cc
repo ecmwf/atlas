@@ -17,6 +17,7 @@
 #include "atlas/ErrorHandling.h"
 #include "atlas/Mesh.h"
 #include "atlas/FunctionSpace.h"
+#include "atlas/Field.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -78,6 +79,41 @@ FunctionSpace& Mesh::function_space( size_t idx) const
 	return *function_spaces_[ idx ];
 }
 
+
+FunctionSpace& Mesh::add_nodes(const Grid& g)
+{
+  int nb_nodes = g.npts();
+  FunctionSpace& nodes = add_nodes(nb_nodes);
+  g.lonlat(nodes.field("lonlat").data<double>());
+  return nodes;
+}
+
+
+FunctionSpace& Mesh::add_nodes(size_t nb_nodes)
+{
+  if( has_function_space("nodes") )
+    throw eckit::Exception("Nodes have already been added before", Here());
+
+  ArrayShape shape = make_shape(nb_nodes,Field::UNDEF_VARS);
+
+  FunctionSpace& nodes = create_function_space( "nodes","LagrangeP1",shape );
+  nodes.metadata().set<long>("type",static_cast<int>(Entity::NODES));
+
+  ArrayView<double,2> lonlat  ( nodes.create_field<double>("lonlat",   2, IF_EXISTS_RETURN) );
+  ArrayView<gidx_t,1> glb_idx ( nodes.create_field<gidx_t>("glb_idx",  1, IF_EXISTS_RETURN) );
+  ArrayView<int,   1> part    ( nodes.create_field<int   >("partition",1, IF_EXISTS_RETURN) );
+  ArrayView<int,   1> flags   ( nodes.create_field<int   >("flags",    1, IF_EXISTS_RETURN) );
+
+  for(size_t n=0; n<nb_nodes; ++n)
+  {
+    glb_idx(n) = 1+n;
+    part(n) = eckit::mpi::rank();
+    flags(n) = 0;
+  }
+
+  return nodes;
+}
+
 //------------------------------------------------------------------------------------------------------
 
 std::ostream& operator<<(std::ostream& s,const Mesh& m)
@@ -121,7 +157,7 @@ FunctionSpace* atlas__Mesh__function_space (Mesh* This, char* name) {
 Grid* atlas__Mesh__grid (Mesh* This) {
   ATLAS_ERROR_HANDLING(
     ASSERT( This != NULL );
-    return &This->grid();
+    return const_cast<Grid*>(&This->grid());
   );
   return NULL;
 }

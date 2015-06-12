@@ -63,7 +63,6 @@ public: // methods
 	const std::string& name() const { return name_; }
 
 	const Grid& grid() const { return mesh().grid(); }
-	Grid& grid() { return mesh().grid(); }
 
 	const Mesh& mesh() const { return function_space_.mesh(); }
 	Mesh& mesh() { return function_space_.mesh(); }

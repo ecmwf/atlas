@@ -9,9 +9,11 @@
  */
 
 #include "eckit/log/Log.h"
+#include "eckit/geometry/Point3.h"
 #include "atlas/meshgen/Delaunay.h"
-#include "atlas/Tesselation.h"
+#include "atlas/meshgen/Tesselation.h"
 #include "atlas/GridDistribution.h"
+#include "atlas/actions/BuildXYZField.h"
 
 namespace atlas {
 namespace meshgen {
@@ -19,6 +21,11 @@ namespace meshgen {
 Delaunay::Delaunay()
 {
 }
+
+Delaunay::Delaunay(const eckit::Parametrisation& p)
+{
+}
+
 
 Delaunay::~Delaunay() {
 }
@@ -36,13 +43,17 @@ void Delaunay::generate(const Grid &g, const GridDistribution &d , Mesh &m) cons
   }
   else
   {
-    Tesselation::delaunay_triangulation(m);
+    generate(g,m);
   }
 }
 
 void Delaunay::generate(const Grid &g, Mesh &m) const
 {
+  if (!m.has_function_space("nodes"))
+    m.add_nodes(g);
+  actions::build_xyz_field(m);
   Tesselation::delaunay_triangulation(m);
+  m.set_grid(g);
 }
 
 namespace {

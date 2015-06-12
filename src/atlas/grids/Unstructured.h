@@ -40,6 +40,9 @@ public: // methods
   /// Constructor taking a list of points
   Unstructured(std::vector< Point >* pts);
 
+  /// Constructor taking a mesh
+  Unstructured(const Mesh& m);
+
   virtual ~Unstructured();
 
   virtual BoundBox bounding_box() const;

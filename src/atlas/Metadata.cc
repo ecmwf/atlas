@@ -66,6 +66,12 @@ template<> Metadata& Metadata::set(const std::string& name, const std::string& v
   return *this;
 }
 
+Metadata& Metadata::set(const std::string& name, const char* value)
+{
+  return set(name,std::string(value));
+}
+
+
 template<> Metadata& Metadata::set(const std::string& name, const std::vector<int>& value)
 {
   eckit::Properties::set(name,eckit::makeVectorValue(value));

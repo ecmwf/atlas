@@ -34,7 +34,7 @@ void distribute_mesh( Mesh& mesh )
   ArrayView<int,   1> node_part ( nodes.field("partition")   );
   ArrayView<gidx_t,1> node_gidx ( nodes.field("glb_idx")   );
 
-  Grid& g = mesh.grid();
+  const Grid& g = mesh.grid();
   EqualRegionsPartitioner partitioner( g );
   partitioner.partition(node_part.data());
 

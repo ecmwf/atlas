@@ -27,6 +27,7 @@ class Delaunay : public MeshGenerator {
 public:
 
     Delaunay();
+    Delaunay(const eckit::Parametrisation& p);
 
     virtual ~Delaunay();
 

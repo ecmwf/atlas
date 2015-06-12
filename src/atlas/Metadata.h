@@ -27,6 +27,8 @@ public:
   template<typename ValueT>
   Metadata& set(const std::string& name, const ValueT& value);
 
+  Metadata& set(const std::string& name, const char* value);
+
   template<typename ValueT>
   ValueT get(const std::string& name) const;
 

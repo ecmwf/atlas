@@ -69,7 +69,7 @@ public:
     friend std::ostream& operator<<( std::ostream& os, const Options& p) { p.print(os); return os;}
 
   private:
-    friend eckit::Params::value_t get( const Options& p, const eckit::Params::key_t& key );
+    friend eckit::Params::value_t getValue( const Options& p, const eckit::Params::key_t& key );
     friend void print( const Options& p, std::ostream& s );
     friend void encode( const Options& p, eckit::Stream& s );
 

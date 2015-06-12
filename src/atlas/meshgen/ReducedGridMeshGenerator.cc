@@ -71,6 +71,50 @@ struct Region
 
 ReducedGridMeshGenerator::ReducedGridMeshGenerator()
 {
+  configure_defaults();
+}
+
+
+ReducedGridMeshGenerator::ReducedGridMeshGenerator(const eckit::Parametrisation& p)
+{
+  configure_defaults();
+
+  bool include_pole;
+  if( p.get("include_pole",include_pole) )
+    options.set("include_pole",include_pole);
+
+  bool patch_pole;
+  if( p.get("patch_pole",patch_pole) )
+    options.set("patch_pole",patch_pole);
+
+  bool unique_pole;
+  if( p.get("unique_pole",unique_pole) )
+    options.set("unique_pole",unique_pole);
+
+  bool three_dimensional;
+  if( p.get("three_dimensional",three_dimensional) )
+    options.set("three_dimensional",three_dimensional);
+
+  size_t nb_parts;
+  if( p.get("nb_parts",nb_parts) )
+    options.set("nb_parts",nb_parts);
+
+  size_t part;
+  if( p.get("part",part) )
+    options.set("part",part);
+
+  double angle;
+  if( p.get("angle",angle) )
+    options.set("angle",angle);
+
+  bool triangulate;
+  if( p.get("triangulate",triangulate) )
+    options.set("triangulate",triangulate);
+}
+
+
+void ReducedGridMeshGenerator::configure_defaults()
+{
   // This option creates a point at the pole when true
   options.set("include_pole",bool( Resource<bool>("--include_pole;atlas.meshgen.include_pole", false ) ) );
 
@@ -101,7 +145,6 @@ ReducedGridMeshGenerator::ReducedGridMeshGenerator()
   options.set<double>("angle", Resource< double > ( "atlas.meshgen.angle", 0. ) );
 
   options.set<bool>("triangulate", Resource< bool > ( "--triangulate;atlas.meshgen.triangulate", 1.) );
-
 }
 
 void ReducedGridMeshGenerator::generate(const Grid& grid, Mesh& mesh ) const
@@ -174,7 +217,7 @@ void ReducedGridMeshGenerator::generate(const Grid& grid, const GridDistribution
   generate_region(*rg,distribution,mypart,region);
 
   generate_mesh(*rg,distribution,region,mesh);
-  mesh.grid(*rg);
+  mesh.set_grid(*rg);
 }
 
 

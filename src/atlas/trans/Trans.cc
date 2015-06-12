@@ -226,7 +226,7 @@ std::string Trans::Options::write() const
     return std::string();
 }
 
-eckit::Params::value_t get( const Trans::Options& p, const eckit::Params::key_t& key )
+eckit::Params::value_t getValue( const Trans::Options& p, const eckit::Params::key_t& key )
 {
   return p.get(key);
 }

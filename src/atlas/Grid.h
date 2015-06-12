@@ -143,8 +143,8 @@ class Grid : public eckit::Owned {
 
   virtual bool same(const Grid&) const;
 
-  Mesh& mesh();
-  const Mesh& mesh() const;
+  void set_mesh(const Mesh& mesh);
+  Mesh& mesh() const;
 
  protected:  // methods
 
@@ -158,7 +158,7 @@ class Grid : public eckit::Owned {
 
 private:  // methods
 
-  void build_mesh() const;
+  //void build_mesh() const;
 
   friend std::ostream& operator<<(std::ostream& s, const Grid& p) {
       p.print(s);

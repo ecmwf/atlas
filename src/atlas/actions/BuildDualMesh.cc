@@ -607,7 +607,7 @@ void build_skewness( Mesh& mesh )
 
 void build_brick_dual_mesh( Mesh& mesh )
 {
-  if( const grids::ReducedGrid* g = dynamic_cast<grids::ReducedGrid*>(&mesh.grid()) )
+  if( const grids::ReducedGrid* g = dynamic_cast<const grids::ReducedGrid*>(&mesh.grid()) )
   {
     if( eckit::mpi::size() != 1 )
       throw eckit::UserError("Cannot build_brick_dual_mesh with more than 1 task",Here());

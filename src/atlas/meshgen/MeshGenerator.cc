@@ -107,6 +107,27 @@ MeshGenerator *MeshGeneratorFactory::build(const std::string &name) {
     return (*j).second->make();
 }
 
+MeshGenerator *MeshGeneratorFactory::build(const std::string& name, const eckit::Parametrisation& param) {
+
+    pthread_once(&once, init);
+
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
+
+    std::map<std::string, MeshGeneratorFactory *>::const_iterator j = m->find(name);
+
+    eckit::Log::info() << "Looking for MeshGeneratorFactory [" << name << "]" << std::endl;
+
+    if (j == m->end()) {
+        eckit::Log::error() << "No MeshGeneratorFactory for [" << name << "]" << std::endl;
+        eckit::Log::error() << "MeshGeneratorFactories are:" << std::endl;
+        for (j = m->begin() ; j != m->end() ; ++j)
+            eckit::Log::error() << "   " << (*j).first << std::endl;
+        throw eckit::SeriousBug(std::string("No MeshGeneratorFactory called ") + name);
+    }
+
+    return (*j).second->make(param);
+}
+
 } // namespace meshgen
 } // namespace atlas
 

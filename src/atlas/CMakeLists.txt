@@ -84,6 +84,8 @@ meshgen/MeshGenerator.cc
 meshgen/MeshGenerator.h
 meshgen/ReducedGridMeshGenerator.cc
 meshgen/ReducedGridMeshGenerator.h
+meshgen/Tesselation.cc
+meshgen/Tesselation.h
 )
 
 list( APPEND atlas_actions_srcs
@@ -99,6 +101,8 @@ actions/BuildPeriodicBoundaries.h
 actions/BuildPeriodicBoundaries.cc
 actions/BuildStatistics.h
 actions/BuildStatistics.cc
+actions/BuildXYZField.h
+actions/BuildXYZField.cc
 actions/DistributeMesh.h
 actions/DistributeMesh.cc
 actions/GenerateMesh.h
@@ -241,8 +245,6 @@ PointIndex3.cc
 PointIndex3.h
 PointSet.cc
 PointSet.h
-Tesselation.cc
-Tesselation.h
 Util.cc
 Util.h
 )

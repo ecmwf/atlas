@@ -32,6 +32,7 @@
 #include "atlas/actions/BuildParallelFields.h"
 #include "atlas/actions/BuildDualMesh.h"
 #include "atlas/actions/BuildStatistics.h"
+#include "atlas/actions/BuildXYZField.h"
 #include "atlas/mpi/mpi.h"
 #include "atlas/Mesh.h"
 #include "atlas/grids/grids.h"
@@ -157,12 +158,7 @@ void Meshgen2Gmsh::run()
   }
   mesh->function_space("nodes").parallelise();
   ArrayView<double,2> lonlat( mesh->function_space("nodes").field("lonlat") );
-  ArrayView<double,2> xyz( mesh->function_space("nodes").create_field<double>("xyz",3) );
-  for( int j=0; j<lonlat.shape(0); ++j )
-  {
-    eckit::geometry::lonlat_to_3d( lonlat[j].data(), xyz[j].data() );
-  }
-  
+
   Log::info() << "  checksum lonlat : " << mesh->function_space("nodes").checksum().execute( lonlat ) << std::endl;
   if( edges )
   {
@@ -178,7 +174,10 @@ void Meshgen2Gmsh::run()
   atlas::io::Gmsh gmsh;
   gmsh.options.set("info",info);
   if( surfdim == 3 )
+  {
+    atlas::actions::build_xyz_field(*mesh,"xyz");
     gmsh.options.set("nodes",std::string("xyz"));
+  }
   gmsh.write( *mesh, path_out );
   atlas_finalize();
 }

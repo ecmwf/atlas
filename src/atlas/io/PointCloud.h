@@ -24,6 +24,7 @@ namespace atlas {
   class FieldSet;
   class Field;
   class Grid;
+  class Mesh;
   namespace grids { class Unstructured; }
 }
 
@@ -33,35 +34,35 @@ namespace io {
 
 /**
  * @brief PointCloud supports:
- * - reading atlas::grids::Unstructured
- * - writing of atlas::Grid
+ * - reading Mesh
+ * - writing of Mesh
  * @warning only supports reading/writing doubles scalar fields
  */
  class PointCloud {
  public:
 
    /**
-    * @brief Read PointCloud file into a Grid
+    * @brief Read PointCloud file into a Mesh
     * @param path input file path
     * @param Grid data structure pointer to use
     * @return Grid data structure pointer
     */
-   static grids::Unstructured* read( const eckit::PathName& path );
+   static Mesh* read( const eckit::PathName& path );
 
    /**
-    * @brief Read PointCloud file into a Grid
+    * @brief Read PointCloud file into a Mesh
     * @param path input file path
-    * @param Grid data structure pointer to use
-    * @return Grid data structure pointer
+    * @param vfnames names of fields to read
+    * @return Mesh pointer
     */
-   static grids::Unstructured* read(const eckit::PathName& path, std::vector<std::string>& vfnames );
+   static Mesh* read(const eckit::PathName& path, std::vector<std::string>& vfnames );
 
   /**
    * @brief Write Grid to PointCloud file (overwrites possibly existing file)
    * @param path output file path
    * @param grid Grid data structure
    */
-  static void write(const eckit::PathName& path, const Grid& grid);
+  static void write(const eckit::PathName& path, const Mesh& mesh);
 
   /**
    * @brief Write FieldSet to PointCloud file (overwrites possibly existing file)
@@ -120,8 +121,8 @@ extern "C"
 {
   PointCloud*          atlas__pointcloud__new ();
   void                 atlas__pointcloud__delete        (PointCloud* This);
-  grids::Unstructured* atlas__pointcloud__read          (PointCloud* This, char* file_path);
-  grids::Unstructured* atlas__read_pointcloud           (char* file_path);
+  Mesh* atlas__pointcloud__read          (PointCloud* This, char* file_path);
+  Mesh* atlas__read_pointcloud           (char* file_path);
   void                 atlas__write_pointcloud_fieldset (char* file_path, FieldSet* fieldset);
   void                 atlas__write_pointcloud_field    (char* file_path, Field* field);
 }

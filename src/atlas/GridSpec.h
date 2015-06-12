@@ -70,7 +70,7 @@ public:
 
 private:
 
-  friend eckit::Params::value_t get( const GridSpec& p, const eckit::Params::key_t& key );
+  friend eckit::Params::value_t getValue( const GridSpec& p, const eckit::Params::key_t& key );
   friend void print( const GridSpec& p, std::ostream& s );
   friend void encode( const GridSpec& p, eckit::Stream& s );
 

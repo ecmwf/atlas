@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/Tesselation.h"
+#include "atlas/meshgen/Tesselation.h"
 
 #include <cmath>
 #include <vector>
@@ -64,6 +64,7 @@ using namespace eckit;
 using namespace eckit::geometry;
 
 namespace atlas {
+namespace meshgen {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -380,6 +381,6 @@ void Tesselation::build_mesh( const Grid& grid, Mesh& mesh )
 
 //------------------------------------------------------------------------------------------------------
 
-
+} // namespace meshgen
 } // namespace atlas
 

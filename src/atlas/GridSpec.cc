@@ -119,7 +119,7 @@ std::string GridSpec::str() const
 	return oss.str();
 }
 
-eckit::Params::value_t get( const GridSpec& p, const eckit::Params::key_t& key )
+eckit::Params::value_t getValue( const GridSpec& p, const eckit::Params::key_t& key )
 {
 #ifdef DEBUG_ME
    Params::value_t v = p.get(key);

@@ -47,7 +47,7 @@ public: // methods
         Metadata& metadata() { return metadata_; }
         const Metadata& metadata() const { return metadata_; }
 
-	/// checks if function space exists
+  /// checks if function space exists
 	bool has_function_space(const std::string& name) const;
 
 	/// Takes ownership, and will be deleted automatically
@@ -66,24 +66,22 @@ public: // methods
 	bool has_grid() const { return grid_; }
 
 	/// assign a Grid to this Mesh
-	void grid( Grid& p ) { grid_ = &p; }
-
-	/// assign a Grid to this Mesh
-	void grid( const Grid& p ) { grid_ = const_cast<Grid*>(&p); }
+	void set_grid( const Grid& p ) { grid_ = &p; }
 
 	/// accessor of the Grid
 	const Grid& grid() const {  ASSERT( grid_ ); return *grid_; }
 
-	/// accessor of the Grid
-	Grid& grid() { ASSERT( grid_ ); return *grid_; }
-
 	friend std::ostream& operator<<(std::ostream&, const Mesh&);
+
+  FunctionSpace& add_nodes(const Grid& g);
+
+  FunctionSpace& add_nodes(size_t nb_nodes);
 
 private: // members
 
 	Metadata      metadata_;
 
-	Grid* grid_;
+	const Grid* grid_;
 
 	typedef eckit::DenseMap< std::string, eckit::SharedPtr<FunctionSpace> > StoreFS_t;
 

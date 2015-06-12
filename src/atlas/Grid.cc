@@ -18,7 +18,7 @@
 
 #include "atlas/Mesh.h"
 #include "atlas/GridSpec.h"
-#include "atlas/Tesselation.h"
+//#include "atlas/Tesselation.h"
 #include "atlas/grids/grids.h"
 
 using eckit::Params;
@@ -84,21 +84,17 @@ void Grid::lonlat(std::vector<double>& crd) const {
   lonlat(crd.data());
 }
 
-void Grid::build_mesh() const {
-  if (!mesh_) {
-    mesh_.reset(new Mesh());
-    mesh_->grid(const_cast<Grid&>(*this));
-    Tesselation::build_mesh(*this, *mesh_);
+void Grid::set_mesh(const Mesh& mesh)
+{
+  mesh_ = eckit::SharedPtr<Mesh>( const_cast<Mesh*>(&mesh) );
+}
+
+Mesh& Grid::mesh() const {
+  if( !mesh_ )
+  {
+    mesh_.reset( new Mesh() );
+    mesh_->add_nodes(*this);
   }
-}
-
-Mesh& Grid::mesh() {
-  build_mesh();
-  return *mesh_;
-}
-
-const Mesh& Grid::mesh() const {
-  build_mesh();
   return *mesh_;
 }
 

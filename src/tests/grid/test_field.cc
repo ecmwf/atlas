@@ -14,13 +14,16 @@
 #include "atlas/mpi/mpi.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Grid.h"
-#include "atlas/grids/LonLatGrid.h"
+#include "atlas/grids/grids.h"
 #include "atlas/FieldSet.h"
-#include "atlas/Tesselation.h"
+#include "atlas/meshgen/Tesselation.h"
+#include "atlas/meshgen/Delaunay.h"
+#include "atlas/io/Gmsh.h"
 
 using namespace std;
 using namespace eckit;
 using namespace atlas;
+using namespace atlas::meshgen;
 
 //-----------------------------------------------------------------------------
 
@@ -45,63 +48,70 @@ public:
 
 void TestField::test_constructor()
 {
-    // create a grid
+  // create a grid
 
-	BoundBox earth ( Grid::Point(0.,-90.), Grid::Point(359.999999,90.) );
+  BoundBox earth ( Grid::Point(0.,-90.), Grid::Point(359.999999,90.) );
 
-	Grid::Ptr g (new atlas::grids::LonLatGrid( 20, 10, earth ) );
+  Grid::Ptr g (new atlas::grids::LonLatGrid( 20, 10, earth ) );
+//  Grid::Ptr g (Grid::create("oct.N6"));
 
-    // create some reference data for testing
+  ASSERT( g );
 
-    std::vector<double> ref_data;
-    ref_data.reserve( g->npts() );
-    for(size_t i = 0; i < ref_data.size(); ++i)
-		ref_data.push_back( (double)i );
+  // Build a mesh from grid
+  Mesh::Ptr m(new Mesh());
+  Mesh& mesh = *m;
 
-    // now build a test field handle
+  SharedPtr<const MeshGenerator> meshgen ( MeshGeneratorFactory::build("Delaunay") );
+  meshgen->generate(*g,mesh);
 
-    std::string sname("field_name");
+  io::Gmsh gmsh;
+  gmsh.options.set("nodes","xyz");
+  gmsh.write(mesh,"test_field.msh");
 
-	ASSERT( g );
+  ASSERT( mesh.grid().same( *g ) );
+  ASSERT( mesh.has_function_space("nodes") );
 
-	Mesh& mesh = g->mesh();
+  // create some reference data for testing
 
-        ASSERT( mesh.grid().same( *g ) );
+  std::vector<double> ref_data;
+  ref_data.reserve( g->npts() );
+  for(size_t i = 0; i < ref_data.size(); ++i)
+    ref_data.push_back( (double)i );
 
-    ASSERT( mesh.has_function_space("nodes") );
+  // now build a test field handle
 
-    atlas::FunctionSpace& nodes  = mesh.function_space( "nodes" );
+  std::string sname("field_name");
 
-    FieldT<double>& data = nodes.create_field<double>( sname,1);
+  atlas::FunctionSpace& nodes  = mesh.function_space( "nodes" );
 
-	for(size_t i = 0; i < ref_data.size(); i++)
-        data[i] = ref_data[i];
+  FieldT<double>& data = nodes.create_field<double>( sname,1);
 
-    // create field handle
+  for(size_t i = 0; i < ref_data.size(); i++)
+    data[i] = ref_data[i];
 
-	Field::Ptr f ( &nodes.field( sname ) );
+  Field::Ptr f ( &nodes.field( sname ) );
 
-	ASSERT( f );
+  ASSERT( f );
 
-	std::cout << f.owners() << std::endl;
+  eckit::Log::info() << f.owners() << std::endl;
 
-	ASSERT( f.owners() == 2 );
+  ASSERT( f.owners() == 2 );
 
-	Field::Vector fields;
-    fields.push_back(f);
+  Field::Vector fields;
+  fields.push_back(f);
 
-    atlas::FieldSet fs(fields);
+  atlas::FieldSet fs(fields);
 
-    // iterate over the fields
-	for (Field::Vector::iterator it = fs.fields().begin(); it != fs.fields().end(); ++it)
+  // iterate over the fields
+  for (Field::Vector::iterator it = fs.fields().begin(); it != fs.fields().end(); ++it)
+  {
+    ArrayView<double> vdata( **it );
+
+    for( size_t i = 0; i < ref_data.size(); ++i )
     {
-		ArrayView<double> vdata( **it );
-
-		for( size_t i = 0; i < ref_data.size(); ++i )
-        {
-			ASSERT( ref_data[i] == vdata(i) );
-        }
+      ASSERT( ref_data[i] == vdata(i) );
     }
+  }
 }
 
 //-----------------------------------------------------------------------------

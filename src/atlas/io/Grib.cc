@@ -103,8 +103,9 @@ Grid::Ptr make_grid( const PathName& path )
 
   if ((len>=10) && (0==strncmp(buff,"PointCloud",10)))
   {
-    grids::Unstructured* grid = io::PointCloud::read(path);
-    return grid->self();
+    Mesh::Ptr mesh( io::PointCloud::read(path) );
+    Grid::Ptr g( new grids::Unstructured(*mesh) );
+    return g;
   }
 
   // Missing return... fail here

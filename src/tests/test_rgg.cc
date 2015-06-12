@@ -181,9 +181,12 @@ BOOST_AUTO_TEST_CASE( test_partitioner )
 BOOST_AUTO_TEST_CASE( test_rgg_meshgen_one_part )
 {
   Mesh* m;
-  ReducedGridMeshGenerator generate;
-  generate.options.set("nb_parts",1);
-  generate.options.set("part",    0);
+  eckit::Properties opts;
+  opts.set("nb_parts",1);
+  opts.set("part",0);
+  ReducedGridMeshGenerator generate(opts);
+//  generate.options.set("nb_parts",1);
+//  generate.options.set("part",    0);
 DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
   ENABLE {
     generate.options.set("three_dimensional",true);

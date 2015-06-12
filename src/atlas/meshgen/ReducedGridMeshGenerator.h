@@ -14,6 +14,8 @@
 #include "atlas/Metadata.h"
 #include "atlas/meshgen/MeshGenerator.h"
 
+namespace eckit { class Parametrisation; }
+
 namespace atlas {
 
 class Mesh;
@@ -34,11 +36,14 @@ class ReducedGridMeshGenerator : public MeshGenerator {
 public:
 
   ReducedGridMeshGenerator();
+  ReducedGridMeshGenerator(const eckit::Parametrisation&);
 
   virtual void generate( const Grid&, const GridDistribution&, Mesh& ) const;
   virtual void generate( const Grid&, Mesh& ) const;
 
 private:
+
+  void configure_defaults();
 
   void generate_region( const grids::ReducedGrid&, const std::vector<int>& parts, int mypart, Region& region ) const;
 

@@ -15,6 +15,9 @@
 #include "atlas/GridSpec.h"
 #include "atlas/grids/Unstructured.h"
 #include "atlas/util/ArrayView.h"
+#include "atlas/Mesh.h"
+#include "atlas/FunctionSpace.h"
+#include "atlas/Parameters.h"
 
 using eckit::MD5;
 
@@ -35,6 +38,29 @@ register_BuilderT1(Grid, Unstructured, Unstructured::grid_type_str());
 
 Unstructured::Unstructured(const eckit::Params &p) {
     NOTIMP;
+}
+
+Unstructured::Unstructured(const Mesh& m) :
+  points_ ( new std::vector< Grid::Point > (m.function_space("nodes").shape(0) ) )
+{
+  double lat_min = std::numeric_limits<double>::max();
+  double lat_max = std::numeric_limits<double>::min();
+  double lon_min = lat_min;
+  double lon_max = lat_max;
+
+  ArrayView<double,2> lonlat (m.function_space("nodes").field("lonlat"));
+  std::vector<Point> &p = *points_;
+  const size_t npts = p.size();
+
+  for( size_t n=0; n<npts; ++n) {
+      p[n].assign(lonlat(n,LON),lonlat(n,LAT));
+      lat_min = std::min( lat_min, p[n].lat() );
+      lat_max = std::max( lat_max, p[n].lat() );
+      lon_min = std::min( lon_min, p[n].lon() );
+      lon_max = std::max( lon_max, p[n].lon() );
+  }
+  set_mesh(m);
+  const_cast<Mesh&>(m).set_grid(*this);
 }
 
 

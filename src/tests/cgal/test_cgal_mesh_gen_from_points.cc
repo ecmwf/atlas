@@ -17,7 +17,7 @@
 #include "atlas/atlas_config.h"
 
 #include "atlas/Mesh.h"
-#include "atlas/Tesselation.h"
+#include "atlas/meshgen/Delaunay.h"
 #include "atlas/io/Gmsh.h"
 #include "atlas/mpi/mpi.h"
 
@@ -25,6 +25,7 @@
 
 using namespace atlas;
 using namespace atlas::io;
+using namespace atlas::meshgen;
 
 //------------------------------------------------------------------------------------------------------
 
@@ -39,11 +40,13 @@ int main()
 
     Grid::Ptr grid( Grid::create( "ll.32x11") );
 
-    Tesselation::delaunay_triangulation( grid->mesh() );
+    // Build a mesh from grid
+    Delaunay generate;
+    Mesh::Ptr mesh( generate(*grid) );
 
     Gmsh gmsh;
     gmsh.options.set<std::string>("nodes","xyz");
-    gmsh.write(grid->mesh(), std::string("earth.msh") );
+    gmsh.write(*mesh, std::string("earth.msh") );
 
     eckit::mpi::finalize();
 
