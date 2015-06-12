@@ -6,7 +6,7 @@
 #include "eckit/filesystem/PathName.h"
 #include "eckit/filesystem/LocalPathName.h"
 #include "atlas/atlas.h"
-#include "atlas/Behavior.h"
+#include "atlas/runtime/Behavior.h"
 #include "atlas/grids/grids.h"
 
 using namespace eckit;

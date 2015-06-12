@@ -4,8 +4,8 @@
 #include "eckit/runtime/ContextBehavior.h"
 #include "eckit/log/MultiChannel.h"
 #include "eckit/log/CallbackChannel.h"
-#include "atlas/LogFormat.h"
-#include "atlas/Behavior.h"
+#include "atlas/runtime/LogFormat.h"
+#include "atlas/runtime/Behavior.h"
 
 using namespace eckit;
 using namespace atlas;
@@ -194,7 +194,7 @@ void atlas__LogChannel__set_prefix (MultiChannel* ch, char* prefix)
   MultiChannel::iterator it;
   for( it=ch->begin(); it!=ch->end(); ++it )
   {
-     FormattedChannel* formatted_ch = dynamic_cast<atlas::FormattedChannel*>(it->second.get());   
+     FormattedChannel* formatted_ch = dynamic_cast<atlas::FormattedChannel*>(it->second.get());
      if( formatted_ch )
        formatted_ch->format().set_prefix(std::string(prefix));
   }
@@ -266,7 +266,7 @@ void atlas__LogChannel__indent (MultiChannel* ch, char* indent)
   MultiChannel::iterator it;
   for( it=ch->begin(); it!=ch->end(); ++it )
   {
-     FormattedChannel* formatted_ch = dynamic_cast<atlas::FormattedChannel*>(it->second.get());   
+     FormattedChannel* formatted_ch = dynamic_cast<atlas::FormattedChannel*>(it->second.get());
      if( formatted_ch )
        formatted_ch->format().indent( std::string(indent) );
   }
@@ -329,7 +329,7 @@ void atlas__LogChannel__dedent (MultiChannel* ch)
   MultiChannel::iterator it;
   for( it=ch->begin(); it!=ch->end(); ++it )
   {
-     FormattedChannel* formatted_ch = dynamic_cast<atlas::FormattedChannel*>(it->second.get());   
+     FormattedChannel* formatted_ch = dynamic_cast<atlas::FormattedChannel*>(it->second.get());
      if( formatted_ch )
        formatted_ch->format().dedent();
   }
@@ -391,7 +391,7 @@ void atlas__LogChannel__clear_indentation (MultiChannel* ch)
   MultiChannel::iterator it;
   for( it=ch->begin(); it!=ch->end(); ++it )
   {
-     FormattedChannel* formatted_ch = dynamic_cast<atlas::FormattedChannel*>(it->second.get());   
+     FormattedChannel* formatted_ch = dynamic_cast<atlas::FormattedChannel*>(it->second.get());
      if( formatted_ch )
        formatted_ch->format().clear_indentation();
   }

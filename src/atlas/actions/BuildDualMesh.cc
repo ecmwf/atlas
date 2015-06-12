@@ -16,7 +16,7 @@
 #include <algorithm>    // std::sort
 
 #include "atlas/atlas_config.h"
-#include "atlas/ErrorHandling.h"
+#include "atlas/runtime/ErrorHandling.h"
 #include "atlas/mpl/Checksum.h"
 #include "atlas/Mesh.h"
 #include "atlas/FunctionSpace.h"

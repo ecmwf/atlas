@@ -3,7 +3,7 @@
 
 #include "eckit/mpi/ParallelContextBehavior.h"
 #include "eckit/log/Channel.h"
-#include "atlas/LogFormat.h"
+#include "atlas/runtime/LogFormat.h"
 
 namespace atlas {
 

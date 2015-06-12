@@ -14,9 +14,9 @@
 #include "eckit/thread/Once.h"
 #include "eckit/thread/ThreadSingleton.h"
 
-#include "atlas/Behavior.h"
+#include "atlas/runtime/Behavior.h"
 #include "atlas/mpi/mpi.h"
-#include "atlas/LogFormat.h"
+#include "atlas/runtime/LogFormat.h"
 
 using namespace eckit;
 

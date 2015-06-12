@@ -11,7 +11,7 @@
 #include "eckit/parser/JSON.h"
 #include "atlas/grids/ReducedGrid.h"
 #include "atlas/grids/LonLatGrid.h"
-#include "atlas/ErrorHandling.h"
+#include "atlas/runtime/ErrorHandling.h"
 #include "atlas/trans/Trans.h"
 #include "atlas/FieldSet.h"
 #include "atlas/util/Array.h"

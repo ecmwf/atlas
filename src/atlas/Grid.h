@@ -134,8 +134,8 @@ class Grid : public eckit::Owned {
    * @note assumes we start at NORTH,WEST-->SOUTH,EAST
    */
   virtual void lonlat(double[]) const = 0;
-  virtual void lonlat(std::vector<double>&) const;
   virtual void lonlat(std::vector<Point>&) const = 0;
+  void lonlat(std::vector<double>&) const;
 
   virtual std::string grid_type() const = 0;
 

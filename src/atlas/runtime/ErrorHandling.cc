@@ -1,6 +1,6 @@
 #include "eckit/log/CodeLocation.h"
 #include "eckit/os/BackTrace.h"
-#include "atlas/ErrorHandling.h"
+#include "atlas/runtime/ErrorHandling.h"
 #include "eckit/config/Resource.h"
 #include "atlas/mpi/mpi.h"
 
@@ -38,10 +38,10 @@ void handle_error(const eckit::Exception& exception, const int err_code)
         << "-----------------------------------------\n"
         << exception.what() << "\n";
     if( exception.location() )
-      msg << "-----------------------------------------\n"  
-          << "LOCATION: " << exception.location() << "\n"; 
-  
-    
+      msg << "-----------------------------------------\n"
+          << "LOCATION: " << exception.location() << "\n";
+
+
     msg << "-----------------------------------------\n"
         << "BACKTRACE\n"
         << "-----------------------------------------\n"
@@ -54,7 +54,7 @@ void handle_error(const eckit::Exception& exception, const int err_code)
   }
   Error::instance().set_code(err_code);
   Error::instance().set_msg(msg.str());
-  
+
   if( Error::instance().aborts() )
   {
     eckit::Log::error() << msg.str() << std::endl;
@@ -101,7 +101,7 @@ void atlas__Error_success ()
   Error::instance().set_code(atlas_err_noerr);
   Error::instance().set_msg(std::string());
 }
-  
+
 void atlas__Error_clear ()
 {
   Error::instance().clear();
@@ -117,7 +117,7 @@ char* atlas__Error_msg()
   return const_cast<char*>(Error::instance().msg().c_str());
 }
 
-template< typename EXCEPTION> 
+template< typename EXCEPTION>
 EXCEPTION create_exception(char* msg, char* file, int line, char* function)
 {
   if( file && std::string(file).size() && std::string(msg).size() )
@@ -175,9 +175,9 @@ void atlas__abort(char* msg, char* file, int line, char* function )
                  << msg << "\n";
 
   if( file && std::string(file).size() )
-    Log::error() << "-----------------------------------------\n"  
-                 << "LOCATION: " << CodeLocation(file,line,function) << "\n"; 
-  
+    Log::error() << "-----------------------------------------\n"
+                 << "LOCATION: " << CodeLocation(file,line,function) << "\n";
+
   Log::error() << "-----------------------------------------\n"
                << "BACKTRACE\n"
                << "-----------------------------------------\n"
@@ -189,8 +189,8 @@ void atlas__abort(char* msg, char* file, int line, char* function )
 
 void atlas__error_example()
 {
-  ATLAS_ERROR_HANDLING( 
+  ATLAS_ERROR_HANDLING(
     throw OutOfRange(12,5,Here())
   );
 }
-  
+

@@ -15,7 +15,7 @@
 #include "eckit/parser/JSON.h"
 #include "atlas/Metadata.h"
 #include "atlas/Field.h"
-#include "atlas/ErrorHandling.h"
+#include "atlas/runtime/ErrorHandling.h"
 
 using std::string;
 

@@ -10,7 +10,7 @@
 
 #include <limits>
 #include "atlas/mpi/mpi.h"
-#include "atlas/ErrorHandling.h"
+#include "atlas/runtime/ErrorHandling.h"
 #include "atlas/util/Array.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/Util.h"

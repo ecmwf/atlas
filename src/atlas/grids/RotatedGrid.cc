@@ -81,13 +81,10 @@ void RotatedGrid::lonlat( double pts[] ) const {
     }
 }
 
-void RotatedGrid::lonlat( std::vector<double> &v ) const {
-    NOTIMP;
-}
-
 void RotatedGrid::lonlat( std::vector<Point> &pts) const {
-    RotateGrid rotgrid(Grid::Point(south_pole_longitude_, south_pole_latitude_), south_pole_rotation_angle_);
     pts.resize( npts() );
+
+    RotateGrid rotgrid(Grid::Point(south_pole_longitude_, south_pole_latitude_), south_pole_rotation_angle_);
 
     grid_->lonlat(pts);
 

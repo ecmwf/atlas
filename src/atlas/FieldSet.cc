@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/ErrorHandling.h"
+#include "atlas/runtime/ErrorHandling.h"
 #include "atlas/Field.h"
 #include "atlas/Grid.h"
 #include "atlas/FieldSet.h"

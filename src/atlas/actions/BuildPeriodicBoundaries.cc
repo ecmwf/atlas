@@ -13,7 +13,7 @@
 #include <iostream>
 #include <cmath>
 
-#include "atlas/ErrorHandling.h"
+#include "atlas/runtime/ErrorHandling.h"
 #include "atlas/mpi/mpi.h"
 #include "atlas/Mesh.h"
 #include "atlas/FunctionSpace.h"

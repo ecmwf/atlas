@@ -11,7 +11,7 @@
 #include <iomanip>
 #include <fstream>
 #include "eckit/filesystem/LocalPathName.h"
-#include "atlas/ErrorHandling.h"
+#include "atlas/runtime/ErrorHandling.h"
 #include "atlas/mpi/mpi.h"
 #include "atlas/Util.h"
 #include "atlas/Mesh.h"

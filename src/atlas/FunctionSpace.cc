@@ -17,7 +17,7 @@
 #include "eckit/types/Types.h"
 
 #include "atlas/atlas_config.h"
-#include "atlas/ErrorHandling.h"
+#include "atlas/runtime/ErrorHandling.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Field.h"
 #include "atlas/actions/BuildParallelFields.h"

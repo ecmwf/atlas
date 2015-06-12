@@ -22,7 +22,7 @@
 #include "atlas/grids/grids.h"
 #include "atlas/meshgen/EqualRegionsPartitioner.h"
 #include "atlas/meshgen/ReducedGridMeshGenerator.h"
-#include "atlas/LogFormat.h"
+#include "atlas/runtime/LogFormat.h"
 #include "atlas/GridDistribution.h"
 #include "atlas/io/Gmsh.h"
 #include "atlas/FieldSet.h"

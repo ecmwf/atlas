@@ -152,6 +152,7 @@ void RotatedLatLon::lonlat( double pts[] ) const
 
 void RotatedLatLon::lonlat(std::vector<Grid::Point>& points) const
 {
+   points.resize(npts());
    RotateGrid rotgrid(Grid::Point(south_pole_lon_,south_pole_lat_),south_pole_rot_angle_);
 
    size_t index = 0;

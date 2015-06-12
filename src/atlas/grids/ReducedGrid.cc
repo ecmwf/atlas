@@ -222,11 +222,6 @@ void ReducedGrid::lonlat( std::vector<Point>& pts ) const
   }
 }
 
-void ReducedGrid::lonlat( std::vector<double>& crds ) const
-{
-  Grid::lonlat(crds);
-}
-
 std::string ReducedGrid::grid_type() const
 {
   return grid_type_;

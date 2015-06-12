@@ -137,11 +137,6 @@ void Unstructured::lonlat(std::vector< Grid::Point > &crds) const {
             (*points_)[i].lat() );
 }
 
-void Unstructured::lonlat(std::vector< double > &v) const {
-    Grid::lonlat(v);
-}
-
-
 GridSpec Unstructured::spec() const {
     if (cachedGridSpec_)
         return *cachedGridSpec_;
@@ -151,7 +146,7 @@ GridSpec Unstructured::spec() const {
     cachedGridSpec_->set_bounding_box(bound_box_);
 
     std::vector<double> coords;
-    lonlat(coords);
+    Grid::lonlat(coords);
 
     cachedGridSpec_->set( "lonlat", eckit::makeVectorValue<double>(coords) );
 
