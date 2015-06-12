@@ -82,6 +82,7 @@ FunctionSpace& Mesh::function_space( size_t idx) const
 
 FunctionSpace& Mesh::add_nodes(const Grid& g)
 {
+  set_grid(g);
   int nb_nodes = g.npts();
   FunctionSpace& nodes = add_nodes(nb_nodes);
   g.lonlat(nodes.field("lonlat").data<double>());

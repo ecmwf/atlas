@@ -58,15 +58,8 @@ void TestField::test_constructor()
   ASSERT( g );
 
   // Build a mesh from grid
-  Mesh::Ptr m(new Mesh());
-  Mesh& mesh = *m;
-
-  SharedPtr<const MeshGenerator> meshgen ( MeshGeneratorFactory::build("Delaunay") );
-  meshgen->generate(*g,mesh);
-
-  io::Gmsh gmsh;
-  gmsh.options.set("nodes","xyz");
-  gmsh.write(mesh,"test_field.msh");
+  Mesh mesh;
+  mesh.add_nodes(*g);
 
   ASSERT( mesh.grid().same( *g ) );
   ASSERT( mesh.has_function_space("nodes") );
