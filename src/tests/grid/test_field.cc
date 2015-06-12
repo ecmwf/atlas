@@ -58,8 +58,7 @@ void TestField::test_constructor()
   ASSERT( g );
 
   // Build a mesh from grid
-  Mesh mesh;
-  mesh.add_nodes(*g);
+  Mesh mesh(*g);
 
   ASSERT( mesh.grid().same( *g ) );
   ASSERT( mesh.has_function_space("nodes") );

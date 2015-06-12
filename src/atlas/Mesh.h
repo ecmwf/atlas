@@ -27,6 +27,7 @@
 namespace atlas {
 
 class FunctionSpace;
+class GridDistribution;
 
 //------------------------------------------------------------------------------------------------------
 
@@ -40,9 +41,18 @@ public: // methods
 
 	static Mesh::Ptr create();
 
-	Mesh();
+  /*!
+   * @brief Construct a empty Mesh
+   */
+  Mesh();
 
-	virtual ~Mesh();
+  /*!
+   * @brief Construct mesh from grid.
+   * The mesh is global and only has a "nodes" FunctionSpace
+   */
+  Mesh(const Grid&);
+
+  virtual ~Mesh();
 
         Metadata& metadata() { return metadata_; }
         const Metadata& metadata() const { return metadata_; }

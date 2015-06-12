@@ -27,12 +27,18 @@ namespace atlas {
 
 Mesh::Ptr Mesh::create()
 {
-	return Mesh::Ptr( new Mesh( /* eckit::Params ??? */ ) );
+  return Mesh::Ptr( new Mesh( /* eckit::Params ??? */ ) );
 }
 
 Mesh::Mesh() :
-	grid_(NULL)
+  grid_(NULL)
 {
+}
+
+Mesh::Mesh(const Grid& grid) :
+  grid_(&grid)
+{
+  add_nodes(grid);
 }
 
 Mesh::~Mesh()
