@@ -37,6 +37,7 @@
 #include "atlas/Mesh.h"
 #include "atlas/grids/grids.h"
 #include "atlas/GridSpec.h"
+#include "atlas/FunctionSpace.h"
 
 //------------------------------------------------------------------------------------------------------
 

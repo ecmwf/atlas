@@ -13,8 +13,8 @@
 
 #include "eckit/memory/Builder.h"
 
+#include "atlas/Parameters.h"
 #include "atlas/Grid.h"
-#include "atlas/Util.h"
 
 namespace atlas {
 namespace grids {
@@ -113,7 +113,7 @@ protected:
 
   std::string         grid_type_;
 
-  std::string                   shortName_;
+  std::string         shortName_;
 
   std::vector<double> lat_;    ///<! Latitude values
   std::vector<int>    nlons_;  ///<! Number of points per latitude (int32 type for Fortran interoperability)

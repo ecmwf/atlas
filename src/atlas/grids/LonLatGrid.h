@@ -14,7 +14,6 @@
 #define atlas_grids_LonLatGrid_h
 
 #include "atlas/grids/ReducedGrid.h"
-#include "atlas/Util.h"
 
 namespace atlas {
 namespace grids {

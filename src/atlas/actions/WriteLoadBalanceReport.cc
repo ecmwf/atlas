@@ -13,9 +13,12 @@
 #include "eckit/filesystem/LocalPathName.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/mpi/mpi.h"
-#include "atlas/Util.h"
 #include "atlas/Mesh.h"
 #include "atlas/actions/WriteLoadBalanceReport.h"
+#include "atlas/util/IsGhost.h"
+#include "atlas/util/IndexView.h"
+
+using atlas::util::IsGhost;
 
 namespace atlas {
 namespace actions {

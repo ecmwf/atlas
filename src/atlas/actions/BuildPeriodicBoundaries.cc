@@ -19,10 +19,16 @@
 #include "atlas/FunctionSpace.h"
 #include "atlas/actions/BuildPeriodicBoundaries.h"
 #include "atlas/Parameters.h"
-#include "atlas/Util.h"
 #include "atlas/util/Array.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
+#include "atlas/util/Bitflags.h"
+#include "atlas/util/LonLatPoint.h"
+#include "atlas/util/PeriodicTransform.h"
+
+using atlas::util::Topology;
+using atlas::util::LonLatPoint;
+using atlas::util::PeriodicTransform;
 
 namespace atlas {
 namespace actions {

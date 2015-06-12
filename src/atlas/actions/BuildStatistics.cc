@@ -26,7 +26,6 @@
 #include "atlas/Field.h"
 #include "atlas/actions/BuildDualMesh.h"
 #include "atlas/Parameters.h"
-#include "atlas/Util.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
 

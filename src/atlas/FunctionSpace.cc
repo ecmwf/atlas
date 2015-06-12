@@ -22,7 +22,9 @@
 #include "atlas/Field.h"
 #include "atlas/actions/BuildParallelFields.h"
 #include "atlas/util/Debug.h"
-#include "atlas/Util.h"
+#include "atlas/util/Bitflags.h"
+
+using atlas::util::Topology;
 
 #ifdef ATLAS_HAVE_FORTRAN
 #define REMOTE_IDX_BASE 1
@@ -379,7 +381,7 @@ void FunctionSpace::parallelise()
     std::vector<int> mask(shape(0));
     for( int j=0; j<mask.size(); ++j )
     {
-      mask[j] = Flags::check(flags(j),Topology::GHOST) ? 1 : 0;
+      mask[j] = Topology::check(flags(j),Topology::GHOST) ? 1 : 0;
     }
     halo_exchange_->setup(part.data(),ridx.data(),REMOTE_IDX_BASE,shape(0));
     gather_scatter_->setup(part.data(),ridx.data(),REMOTE_IDX_BASE,gidx.data(),mask.data(),shape(0));

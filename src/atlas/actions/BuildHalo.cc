@@ -27,7 +27,20 @@
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
 #include "atlas/util/Array.h"
-#include "atlas/Util.h"
+#include "atlas/util/AccumulateFaces.h"
+#include "atlas/util/Bitflags.h"
+#include "atlas/util/PeriodicTransform.h"
+#include "atlas/util/ComputeUid.h"
+#include "atlas/util/LonLatPoint.h"
+#include "atlas/util/Functions.h"
+
+using atlas::util::Face;
+using atlas::util::accumulate_faces;
+using atlas::util::Topology;
+using atlas::util::PeriodicTransform;
+using atlas::util::ComputeUid;
+using atlas::util::LonLatPoint;
+using atlas::util::microdeg;
 
 namespace atlas {
 namespace actions {
@@ -1308,7 +1321,7 @@ public:
   bool operator()(int j) const
   {
     if( j>=N_ ) return false;
-    if( Flags::check(flags_(j),flag_) ) return true;
+    if( Topology::check(flags_(j),flag_) ) return true;
     return false;
   }
 private:

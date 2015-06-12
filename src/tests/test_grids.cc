@@ -14,8 +14,9 @@
 #define BOOST_TEST_MODULE TestGrids
 #include "ecbuild/boost_test_framework.h"
 
-#include <eckit/memory/Factory.h>
-#include <eckit/memory/Builder.h>
+#include "eckit/memory/Factory.h"
+#include "eckit/memory/Builder.h"
+#include "eckit/mpi/mpi.h"
 #include "atlas/atlas.h"
 #include "atlas/Grid.h"
 #include "atlas/GridSpec.h"

@@ -11,7 +11,9 @@
 #define BOOST_TEST_MODULE TestFlags
 #include "ecbuild/boost_test_framework.h"
 
-#include "atlas/Util.h"
+#include "atlas/util/Bitflags.h"
+
+using atlas::util::Bitflags;
 
 namespace atlas {
 namespace test {
@@ -24,16 +26,16 @@ BOOST_AUTO_TEST_CASE( test_Flags )
   int b4 = (1<<3);
 
 	int bits = b1 | b2;
-	std::cout << Flags::bitstr(bits) << std::endl;
+	std::cout << Bitflags::bitstr(bits) << std::endl;
 	BOOST_CHECK_EQUAL( bits , 3);
 
-	BOOST_CHECK_EQUAL( Flags::check(bits, b1 ) , true );
-	BOOST_CHECK_EQUAL( Flags::check(bits, b2 ) , true );
-	BOOST_CHECK_EQUAL( Flags::check(bits, b3 ) , false );
-	BOOST_CHECK_EQUAL( Flags::check_all(bits, b1|b2 ) , true );
-	BOOST_CHECK_EQUAL( Flags::check_all(bits, b1|b3 ) , false );
-	BOOST_CHECK_EQUAL( Flags::check_any(bits, b1|b3 ) , true );
-	BOOST_CHECK_EQUAL( Flags::check_any(bits, b3|b4 ) , false );
+	BOOST_CHECK_EQUAL( Bitflags::check(bits, b1 ) , true );
+	BOOST_CHECK_EQUAL( Bitflags::check(bits, b2 ) , true );
+	BOOST_CHECK_EQUAL( Bitflags::check(bits, b3 ) , false );
+	BOOST_CHECK_EQUAL( Bitflags::check_all(bits, b1|b2 ) , true );
+	BOOST_CHECK_EQUAL( Bitflags::check_all(bits, b1|b3 ) , false );
+	BOOST_CHECK_EQUAL( Bitflags::check_any(bits, b1|b3 ) , true );
+	BOOST_CHECK_EQUAL( Bitflags::check_any(bits, b3|b4 ) , false );
 }
 
 } // namespace test

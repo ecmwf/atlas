@@ -15,6 +15,7 @@
 #include "atlas/trans/Trans.h"
 #include "atlas/FieldSet.h"
 #include "atlas/util/Array.h"
+#include "atlas/util/Bitflags.h"
 #include "eckit/exception/Exceptions.h"
 
 #define TRANS_CHECK( CALL ) do {\
@@ -25,6 +26,8 @@
     throw eckit::Exception(msg.str(),Here());\
   }\
 } while(0)
+
+using atlas::util::Topology;
 
 namespace atlas {
 namespace trans {
@@ -316,7 +319,7 @@ void Trans::dirtrans(const FieldSet& gpfields, FieldSet& spfields, const TransPa
         int n=0;
         for( int jnode=0; jnode<gp->shape(0); ++jnode )
         {
-          bool ghost = Flags::check(flags(jnode),Topology::GHOST);
+          bool ghost = Topology::check(flags(jnode),Topology::GHOST);
           if( !ghost )
           {
             rgpview(f,n) = gpfield(jnode,jvar);
@@ -464,7 +467,7 @@ void Trans::invtrans(const FieldSet& spfields, FieldSet& gpfields, const TransPa
         int n=0;
         for( int jnode=0; jnode<gp->shape(0); ++jnode )
         {
-          bool ghost = Flags::check(flags(jnode),Topology::GHOST);
+          bool ghost = Topology::check(flags(jnode),Topology::GHOST);
           if( !ghost )
           {
             field(jnode,jvar) = rgpview(f,n);

@@ -24,7 +24,6 @@
 #include "atlas/Mesh.h"
 #include "atlas/Metadata.h"
 #include "atlas/Parameters.h"
-#include "atlas/Util.h"
 #include "atlas/meshgen/EqualRegionsPartitioner.h"
 #include "atlas/grids/grids.h"
 #include "atlas/meshgen/ReducedGridMeshGenerator.h"
@@ -32,6 +31,11 @@
 #include "atlas/util/Array.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
+#include "atlas/util/Bitflags.h"
+#include "atlas/util/IsGhost.h"
+
+using atlas::util::Topology;
+using atlas::util::IsGhost;
 
 using namespace atlas::io;
 using namespace atlas::meshgen;

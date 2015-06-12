@@ -31,9 +31,11 @@
 #include "atlas/actions/BuildEdges.h"
 #include "atlas/actions/BuildDualMesh.h"
 #include "atlas/Parameters.h"
-#include "atlas/Util.h"
+#include "atlas/util/IsGhost.h"
+
 
 using namespace atlas::io;
+using namespace atlas::util;
 using namespace atlas::meshgen;
 
 namespace atlas {

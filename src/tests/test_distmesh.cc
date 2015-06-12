@@ -30,12 +30,13 @@
 #include "atlas/actions/DistributeMesh.h"
 #include "atlas/actions/WriteLoadBalanceReport.h"
 #include "atlas/Parameters.h"
-#include "atlas/Util.h"
 #include "atlas/grids/rgg/rgg.h"
+#include "atlas/util/IsGhost.h"
 
 using namespace atlas;
 using namespace atlas::io;
 using namespace atlas::meshgen;
+using namespace atlas::util;
 
 namespace atlas {
 namespace test {

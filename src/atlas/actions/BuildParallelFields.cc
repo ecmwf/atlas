@@ -24,7 +24,9 @@
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
 #include "atlas/util/Array.h"
-#include "atlas/Util.h"
+#include "atlas/util/Bitflags.h"
+#include "atlas/util/ComputeUid.h"
+#include "atlas/util/PeriodicTransform.h"
 #include "atlas/mpi/mpi.h"
 #include "atlas/mpl/GatherScatter.h"
 
@@ -48,6 +50,9 @@
 #endif
 
 using eckit::Log;
+using atlas::util::Topology;
+using atlas::util::ComputeUid;
+using atlas::util::PeriodicTransform;
 
 namespace atlas {
 namespace actions {

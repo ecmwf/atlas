@@ -8,15 +8,14 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/Util.h"
+#include "atlas/FunctionSpace.h"
+#include "atlas/util/AccumulateFaces.h"
+#include "atlas/util/IndexView.h"
+
+#include "eckit/exception/Exceptions.h"
 
 namespace atlas {
-
-int LonLatPoint::WEST  = 0;
-int LonLatPoint::EAST  = microdeg( 360. );
-int LonLatPoint::NORTH = microdeg(  90. );
-int LonLatPoint::SOUTH = microdeg( -90. );
-
+namespace util {
 
 void accumulate_faces(
 		FunctionSpace& func_space,
@@ -120,16 +119,5 @@ void accumulate_faces(
 	}
 }
 
-namespace {
-static const double rad_to_deg = 180.*M_1_PI;
-}
-
-void colat_to_lat_hemisphere(const int N, const double colat[], double lats[], const AngleUnit unit)
-{
-  std::copy( colat, colat+N, lats );
-  double pole = (unit == DEG ? 90. : M_PI_2);
-  for (int i=0; i<N; ++i)
-    lats[i]=pole-lats[i];
-}
-
+} // namespace util
 } // namespace atlas

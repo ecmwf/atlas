@@ -26,12 +26,12 @@
 #include "atlas/io/Gmsh.h"
 #include "atlas/Mesh.h"
 #include "atlas/FunctionSpace.h"
+#include "atlas/Field.h"
 #include "atlas/Metadata.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
 #include "atlas/actions/BuildParallelFields.h"
 #include "atlas/Parameters.h"
-#include "atlas/Util.h"
 #include "atlas/grids/rgg/rgg.h"
 
 using namespace atlas;

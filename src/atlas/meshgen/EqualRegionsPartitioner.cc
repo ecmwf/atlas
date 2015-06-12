@@ -18,9 +18,12 @@
 #include <ctime>
 
 #include "eckit/geometry/Point2.h"
+#include "eckit/mpi/mpi.h"
 #include "atlas/grids/ReducedGrid.h"
-#include "atlas/Util.h"
 #include "atlas/meshgen/EqualRegionsPartitioner.h"
+#include "atlas/util/Functions.h"
+
+using atlas::util::microdeg;
 
 namespace atlas {
 namespace meshgen {

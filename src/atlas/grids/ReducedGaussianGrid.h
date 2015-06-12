@@ -12,7 +12,6 @@
 #define atlas_grids_ReducedGaussianGrid_h
 
 #include "atlas/grids/ReducedGrid.h"
-#include "atlas/Util.h"
 
 namespace atlas {
 namespace grids {

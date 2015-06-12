@@ -16,7 +16,7 @@ fortranize( ${CMAKE_CURRENT_BINARY_DIR}/atlas_f_defines.h )
 
 install( FILES
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_f_defines.h
-  ${CMAKE_CURRENT_BINARY_DIR}/atlas_f_mpi.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/atlas_f_mpi.h
   DESTINATION
   ${INSTALL_INCLUDE_DIR}/atlas_f )
 

@@ -63,6 +63,9 @@
 #include "atlas/io/Gmsh.h"
 #include "atlas/atlas_omp.h"
 #include "atlas/mpi/mpi.h"
+#include "atlas/util/Bitflags.h"
+#include "atlas/util/IndexView.h"
+#include "atlas/util/IsGhost.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -78,6 +81,9 @@ using std::fixed;
 using std::cout;
 using std::endl;
 using std::numeric_limits;
+
+using atlas::util::Topology;
+using atlas::util::IsGhost;
 
 using namespace eckit;
 using namespace atlas;
@@ -407,7 +413,7 @@ void AtlasBenchmark::setup()
   is_ghost.reserve(nnodes);
   for( int jnode=0; jnode<nnodes; ++jnode )
   {
-    is_ghost.push_back( Flags::check(flags(jnode),Topology::GHOST) );
+    is_ghost.push_back( Topology::check(flags(jnode),Topology::GHOST) );
   }
 
 

@@ -12,8 +12,8 @@
 /// @date Jan 2014
 
 #include "atlas/atlas_config.h"
+#include "atlas/Parameters.h"
 #include "atlas/grids/gausslat/gausslat.h"
-#include "atlas/Util.h"
 
 #ifdef ECKIT_HAVE_GRIB
   #include "grib_api.h"
@@ -32,6 +32,18 @@ namespace grids {
 void predict_gaussian_colatitudes_hemisphere(const int N, double colat[]);
 
 void predict_gaussian_latitudes_hemisphere(const int N, double lat[]);
+
+namespace {
+  
+void colat_to_lat_hemisphere(const int N, const double colat[], double lats[], const AngleUnit unit)
+{
+  std::copy( colat, colat+N, lats );
+  double pole = (unit == DEG ? 90. : M_PI_2);
+  for (int i=0; i<N; ++i)
+    lats[i]=pole-lats[i];
+}
+
+}
 
 //------------------------------------------------------------------------------------------------------
 
@@ -178,7 +190,7 @@ namespace {
                   140.5871603528E0, 143.7287335737E0, 146.8703076258E0,
                   150.0118824570E0, 153.1534580192E0, 156.2950342685E0 };
 
-      assert(sizeof(zeroes) > 0);
+      ASSERT(sizeof(zeroes) > 0);
 
       const size_t nz = sizeof(zeroes) / sizeof(zeroes[0]);
 
@@ -190,7 +202,7 @@ namespace {
               lats[i] = zeroes[i];
           else
           {
-              assert(i > 0);
+              ASSERT(i > 0);
               lats[i] = lats[i-1] + M_PI;
           }
       }

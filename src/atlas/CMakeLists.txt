@@ -49,15 +49,24 @@ io/Grib.h
 )
 
 list( APPEND atlas_util_srcs
+util/AccumulateFaces.h
+util/AccumulateFaces.cc
 util/Array.h
 util/ArrayUtil.h
 util/ArrayView.h
 util/ArrayView.cc
+util/Bitflags.h
+util/ComputeUid.h
 util/Checksum.h
 util/Checksum.cc
 util/Debug.h
+util/Functions.h
 util/IndexView.h
 util/IndexView.cc
+util/IsGhost.h
+util/LonLatPoint.h
+util/LonLatPoint.cc
+util/PeriodicTransform.h
 )
 
 list( APPEND atlas_Meshgen_srcs
@@ -228,8 +237,6 @@ PointIndex3.cc
 PointIndex3.h
 PointSet.cc
 PointSet.h
-Util.cc
-Util.h
 )
 
 ### atlas c++ library

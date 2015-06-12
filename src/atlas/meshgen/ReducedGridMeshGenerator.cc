@@ -29,14 +29,12 @@
 #include "atlas/Field.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Mesh.h"
-#include "atlas/Util.h"
 #include "atlas/Parameters.h"
 #include "atlas/meshgen/EqualRegionsPartitioner.h"
 #include "atlas/grids/ReducedGrid.h"
 #include "atlas/meshgen/ReducedGridMeshGenerator.h"
 #include "atlas/GridDistribution.h"
-
-
+#include "atlas/util/Bitflags.h"
 #include "atlas/io/Gmsh.h"
 
 #ifdef ATLAS_HAVE_TRANS
@@ -47,6 +45,8 @@
 
 using namespace eckit;
 using namespace atlas::grids;
+
+using atlas::util::Topology;
 
 namespace atlas {
 namespace meshgen {

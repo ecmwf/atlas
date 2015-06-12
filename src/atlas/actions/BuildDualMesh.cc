@@ -23,14 +23,15 @@
 #include "atlas/Field.h"
 #include "atlas/actions/BuildDualMesh.h"
 #include "atlas/Parameters.h"
-#include "atlas/Util.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
+#include "atlas/util/LonLatPoint.h"
 #include "atlas/grids/ReducedGrid.h"
+
+using atlas::util::LonLatPoint;
 
 namespace atlas {
 namespace actions {
-
 
 namespace {
 

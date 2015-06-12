@@ -276,18 +276,22 @@ void atlas__Metadata__set_array_double (Metadata* This, const char* name, double
 int atlas__Metadata__get_int (Metadata* This, const char* name)
 {
   ATLAS_ERROR_HANDLING( return This->get<long>( std::string(name) ) );
+  return 0;
 }
 long atlas__Metadata__get_long (Metadata* This, const char* name)
 {
   ATLAS_ERROR_HANDLING( return This->get<long>( std::string(name) ) );
+  return 0;
 }
 float atlas__Metadata__get_float (Metadata* This, const char* name)
 {
   ATLAS_ERROR_HANDLING( return This->get<double>( std::string(name) ) );
+  return 0;
 }
 double atlas__Metadata__get_double (Metadata* This, const char* name)
 {
   ATLAS_ERROR_HANDLING( return This->get<double>( std::string(name) ) );
+  return 0;
 }
 void atlas__Metadata__get_string( Metadata* This, const char* name, char* output_str, int max_len )
 {
@@ -301,7 +305,9 @@ void atlas__Metadata__get_string( Metadata* This, const char* name, char* output
       throw eckit::OutOfRange(msg.str(),Here());
     }
     strcpy( output_str, s.c_str() );
+    return
   );
+  output_str = NULL;
 }
 void atlas__Metadata__get_array_int (Metadata* This, const char* name, int* &value, int& size, int& allocated)
 {
@@ -346,6 +352,7 @@ void atlas__Metadata__get_array_double (Metadata* This, const char* name, double
 int atlas__Metadata__has (Metadata* This, const char* name)
 {
   ATLAS_ERROR_HANDLING( return This->has( std::string(name) ));
+  return 0;
 }
 
 void atlas__Metadata__print (Metadata* This, std::ostream* channel)

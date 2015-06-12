@@ -13,10 +13,11 @@
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/util/Array.h"
 #include "atlas/util/ArrayView.h"
-#include "atlas/Util.h"
+#include "atlas/util/IndexView.h"
 #include "atlas/Mesh.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/meshgen/EqualRegionsPartitioner.h"
+#include "atlas/Parameters.h"
 
 using namespace atlas::meshgen;
 
