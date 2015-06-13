@@ -25,7 +25,7 @@
 #include "atlas/util/IndexView.h"
 #include "atlas/util/Array.h"
 #include "atlas/util/Bitflags.h"
-#include "atlas/util/ComputeUid.h"
+#include "atlas/util/Unique.h"
 #include "atlas/util/PeriodicTransform.h"
 #include "atlas/mpi/mpi.h"
 #include "atlas/mpl/GatherScatter.h"
@@ -51,7 +51,7 @@
 
 using eckit::Log;
 using atlas::util::Topology;
-using atlas::util::ComputeUid;
+using atlas::util::UniqueLonLat;
 using atlas::util::PeriodicTransform;
 
 namespace atlas {
@@ -140,7 +140,7 @@ FieldT<gidx_t>& build_nodes_global_idx( FunctionSpace& nodes )
 
   ArrayView<gidx_t,1> glb_idx ( nodes.field("glb_idx"    ) );
 
-  ComputeUid compute_uid(nodes);
+  UniqueLonLat compute_uid(nodes);
 
   for( int jnode=0; jnode<glb_idx.shape(0); ++jnode )
   {
@@ -156,7 +156,7 @@ void renumber_nodes_glb_idx( FunctionSpace& nodes )
 // --> Those specific periodic points at the EAST boundary are not checked for uid,
 //     and could receive different gidx for different tasks
 
-  ComputeUid compute_uid(nodes);
+  UniqueLonLat compute_uid(nodes);
 
   int mypart = eckit::mpi::rank();
   int nparts = eckit::mpi::size();
@@ -256,7 +256,7 @@ FieldT<int>& build_nodes_remote_idx( FunctionSpace& nodes )
   int mypart = eckit::mpi::rank();
   int nparts = eckit::mpi::size();
 
-  ComputeUid compute_uid(nodes);
+  UniqueLonLat compute_uid(nodes);
 
   // This piece should be somewhere central ... could be NPROMA ?
   // ---------->
@@ -352,7 +352,7 @@ FieldT<int>& build_nodes_partition( FunctionSpace& nodes )
 
 FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
 {
-  ComputeUid compute_uid(nodes);
+  UniqueLonLat compute_uid(nodes);
 
   int mypart = eckit::mpi::rank();
   int nparts = eckit::mpi::size();
@@ -508,7 +508,7 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
       }
 
       transform(centroid,periodic[jedge]);
-      uid_t uid = compute_uid(centroid);
+      uid_t uid = util::unique_lonlat(centroid);
 
       if( edge_part(jedge)==mypart )
       {
@@ -637,7 +637,7 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
 
 FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes )
 {
-  ComputeUid compute_uid(nodes);
+  UniqueLonLat compute_uid(nodes);
 
   int mypart = eckit::mpi::rank();
   int nparts = eckit::mpi::size();
@@ -699,7 +699,7 @@ FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes 
         transform(centroid,+1);
     }
 
-    uid_t uid = compute_uid(centroid);
+    uid_t uid = util::unique_lonlat(centroid);
     if( edge_part(jedge)==mypart && !needed ) // All interior edges fall here
     {
       lookup[ uid ] = jedge;
@@ -784,7 +784,7 @@ FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes 
 
 FieldT<gidx_t>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nodes )
 {
-  ComputeUid compute_uid(nodes);
+  UniqueLonLat compute_uid(nodes);
 
   int mypart = eckit::mpi::rank();
   int nparts = eckit::mpi::size();
@@ -825,7 +825,7 @@ FieldT<gidx_t>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nod
       {
         centroid[LAT] = centroid[LAT] > 0 ? 90. : -90.;
       }
-      edge_gidx(jedge) = compute_uid(centroid);
+      edge_gidx(jedge) = util::unique_lonlat(centroid);
     }
   }
 

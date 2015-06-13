@@ -56,7 +56,7 @@ util/ArrayUtil.h
 util/ArrayView.h
 util/ArrayView.cc
 util/Bitflags.h
-util/ComputeUid.h
+util/Unique.h
 util/Checksum.h
 util/Checksum.cc
 util/Debug.h
@@ -64,8 +64,7 @@ util/Functions.h
 util/IndexView.h
 util/IndexView.cc
 util/IsGhost.h
-util/LonLatPoint.h
-util/LonLatPoint.cc
+util/LonLatMicroDeg.h
 util/PeriodicTransform.h
 )
 

@@ -30,16 +30,16 @@
 #include "atlas/util/AccumulateFaces.h"
 #include "atlas/util/Bitflags.h"
 #include "atlas/util/PeriodicTransform.h"
-#include "atlas/util/ComputeUid.h"
-#include "atlas/util/LonLatPoint.h"
+#include "atlas/util/Unique.h"
+#include "atlas/util/LonLatMicroDeg.h"
 #include "atlas/util/Functions.h"
 
 using atlas::util::Face;
 using atlas::util::accumulate_faces;
 using atlas::util::Topology;
 using atlas::util::PeriodicTransform;
-using atlas::util::ComputeUid;
-using atlas::util::LonLatPoint;
+using atlas::util::UniqueLonLat;
+using atlas::util::LonLatMicroDeg;
 using atlas::util::microdeg;
 
 namespace atlas {
@@ -118,7 +118,7 @@ void increase_halo( Mesh& mesh )
     }
   }
 
-  ComputeUid compute_uid(nodes);
+  UniqueLonLat compute_uid(nodes);
 
 
   /*
@@ -180,17 +180,17 @@ void increase_halo( Mesh& mesh )
   std::map<uid_t,int> node_uid_to_loc;
   for( int jnode=0; jnode<nb_nodes; ++jnode )
   {
-    LonLatPoint ll(lonlat[jnode]);
-    if( node_uid_to_loc.count(ll.uid()) > 0 )
+    LonLatMicroDeg ll(lonlat[jnode]);
+    if( node_uid_to_loc.count(ll.unique()) > 0 )
     {
-      int other = node_uid_to_loc[ll.uid()];
+      int other = node_uid_to_loc[ll.unique()];
       std::stringstream msg;
-      msg << "Node uid: " << ll.uid() << "   " << glb_idx(jnode)
+      msg << "Node uid: " << ll.unique() << "   " << glb_idx(jnode)
           << " (" << lonlat(jnode,LON) <<","<< lonlat(jnode,LAT)<<")  has already been added as node "
           << glb_idx(other) << " (" << lonlat(other,LON) <<","<< lonlat(other,LAT)<<")";
       throw eckit::SeriousBug(msg.str(),Here());
     }
-    node_uid_to_loc[ll.uid()] = jnode;
+    node_uid_to_loc[ll.unique()] = jnode;
   }
 
   int nb_bdry_nodes = bdry_nodes.size();
@@ -201,9 +201,9 @@ void increase_halo( Mesh& mesh )
 
   for( int jnode=0; jnode<nb_bdry_nodes; ++jnode )
   {
-    LonLatPoint ll( lonlat[bdry_nodes[jnode]] );
-    bdry_nodes_id(jnode,0) = ll.x;
-    bdry_nodes_id(jnode,1) = ll.y;
+    LonLatMicroDeg ll( lonlat[bdry_nodes[jnode]] );
+    bdry_nodes_id(jnode,0) = ll.lon();
+    bdry_nodes_id(jnode,1) = ll.lat();
     bdry_nodes_id(jnode,2) = glb_idx( bdry_nodes[jnode] );
     bdry_nodes_id(jnode,3) = flags( bdry_nodes[jnode] );
   }
@@ -265,7 +265,7 @@ void increase_halo( Mesh& mesh )
       uid_t recv_glb_idx = recv_bdry_nodes_id(jrecv,2);
       int recv_flags   = recv_bdry_nodes_id(jrecv,3);
 
-      LonLatPoint ll(recv_x,recv_y);
+      LonLatMicroDeg ll(recv_x,recv_y);
 
       int periodic=0;
       // If the received node is flagged as periodic, look for point following periodic transformation
@@ -274,10 +274,10 @@ void increase_halo( Mesh& mesh )
         periodic =  1; // If the node is at BC_WEST (so master), the slave is in positive direction (+360 deg)
 
       std::vector<uid_t> recv_uids; recv_uids.reserve(2);
-      recv_uids.push_back( ll.uid() );
+      recv_uids.push_back( ll.unique() );
       if( periodic ) {
         transform( ll, periodic );
-        recv_uids.push_back( ll.uid() );
+        recv_uids.push_back( ll.unique() );
       }
 
       for( int juid = 0; juid < recv_uids.size(); ++juid )
@@ -334,7 +334,7 @@ void increase_halo( Mesh& mesh )
     }
 
     // Collect all nodes needed to complete the element, and mark if they become periodic on requesting task
-    std::set< std::pair<LonLatPoint,int> > found_bdry_nodes_id_set;
+    std::set< std::pair<LonLatMicroDeg,int> > found_bdry_nodes_id_set;
     {
       for( int f=0; f<mesh.nb_function_spaces(); ++f )
       {
@@ -347,7 +347,7 @@ void increase_halo( Mesh& mesh )
             int x = microdeg( lonlat( elem_nodes[f](e,n), LON) );
             int y = microdeg( lonlat( elem_nodes[f](e,n), LAT) );
             int periodic = found_bdry_elements_periodic[f][jelem];
-            found_bdry_nodes_id_set.insert( std::make_pair(LonLatPoint(x,y),periodic) );
+            found_bdry_nodes_id_set.insert( std::make_pair(LonLatMicroDeg(x,y),periodic) );
           }
         }
       }
@@ -363,7 +363,7 @@ void increase_halo( Mesh& mesh )
         else if( Topology::check(recv_bdry_nodes_id(jrecv,3),Topology::PERIODIC|Topology::WEST) )
           periodic = 1; // If the node is not ghost (so master), the slave is in positive direction (+360 deg)
 
-        LonLatPoint ll(x,y);
+        LonLatMicroDeg ll(x,y);
         found_bdry_nodes_id_set.erase( std::make_pair(ll,periodic) ) ;
         // DO I HAVE TO ALSO CHECK FOR PERIODICITY HERE?
       }
@@ -378,15 +378,15 @@ void increase_halo( Mesh& mesh )
     // Fill buffers to send
     {
       int jnode=0;
-      std::set<std::pair<LonLatPoint,int> >::iterator it;
+      std::set<std::pair<LonLatMicroDeg,int> >::iterator it;
       for( it=found_bdry_nodes_id_set.begin(); it!=found_bdry_nodes_id_set.end(); ++it, ++jnode )
       {
-        LonLatPoint ll = it->first;
+        LonLatMicroDeg ll = it->first;
         int periodic = it->second;
         //eckit::Log::warning() << "\n" << "Looking for node with lonlat " << ll.x*1.e-6*180./M_PI << "," << ll.y*1.e-6*180./M_PI << ".  periodic = " << periodic << std::endl;
 
         //DEBUG_VAR( periodic );
-        uid_t uid = ll.uid();
+        uid_t uid = ll.unique();
 
         std::map<uid_t,int>::iterator found = node_uid_to_loc.find( uid );
         if( found != node_uid_to_loc.end() ) // Point exists inside domain
@@ -416,7 +416,7 @@ void increase_halo( Mesh& mesh )
             }
             transform(&sfn_lonlat[jpart][2*jnode],(double) periodic);
             // The glb_idx is based on the destination location
-            sfn_glb_idx[jpart][jnode] = LonLatPoint(sfn_lonlat[jpart][jnode*2+LON],sfn_lonlat[jpart][jnode*2+LAT]).uid();
+            sfn_glb_idx[jpart][jnode] = util::unique_lonlat(sfn_lonlat[jpart][jnode*2+LON],sfn_lonlat[jpart][jnode*2+LAT]);
           }
           else
           {
@@ -427,8 +427,8 @@ void increase_halo( Mesh& mesh )
         }
         else
         {
-          eckit::Log::warning() << "Node needed by ["<<jpart<<"] with lonlat " << ll.x*1.e-6 << ","
-                                << ll.y*1.e-6 << " was not found in ["<<eckit::mpi::rank()<<"]." << std::endl;
+          eckit::Log::warning() << "Node needed by ["<<jpart<<"] with lonlat " << ll.lon()*1.e-6 << ","
+                                << ll.lat()*1.e-6 << " was not found in ["<<eckit::mpi::rank()<<"]." << std::endl;
           ASSERT(false);
         }
 //        if( periodic != 0 )
@@ -469,11 +469,11 @@ void increase_halo( Mesh& mesh )
             transform(crd, (double)periodic);
             centroid[LON] += crd[LON];
             centroid[LAT] += crd[LAT];
-            sfe_nodes_id_view(jelem,n) = LonLatPoint( crd ).uid();
+            sfe_nodes_id_view(jelem,n) = util::unique_lonlat(crd);
           }
           centroid[LON] /= static_cast<double>(nb_elem_nodes);
           centroid[LAT] /= static_cast<double>(nb_elem_nodes);
-          sfe_glb_idx[f][jpart][jelem] = LonLatPoint( centroid ).uid() ;
+          sfe_glb_idx[f][jpart][jelem] = util::unique_lonlat(centroid) ;
         }
       }
     }
@@ -515,7 +515,7 @@ void increase_halo( Mesh& mesh )
   std::set<uid_t> node_uid;
   for( int jnode=0; jnode<nb_nodes; ++jnode )
   {
-    node_uid.insert( LonLatPoint( lonlat[jnode] ).uid() );
+    node_uid.insert( util::unique_lonlat(lonlat[jnode]) );
   }
   std::vector< std::vector<int> > rfn_idx(eckit::mpi::size());
   for( int jpart=0; jpart<eckit::mpi::size(); ++jpart )
@@ -530,7 +530,7 @@ void increase_halo( Mesh& mesh )
     {
       double x = rfn_lonlat[jpart][n*2+LON];
       double y = rfn_lonlat[jpart][n*2+LAT];
-      bool inserted = node_uid.insert( LonLatPoint( x, y ).uid() ).second;
+      bool inserted = node_uid.insert( util::unique_lonlat( x, y ) ).second;
       if( inserted ) {
         rfn_idx[jpart].push_back(n);
       }
@@ -560,7 +560,7 @@ void increase_halo( Mesh& mesh )
       ridx   (loc_idx)    = rfn_ridx    [jpart][rfn_idx[jpart][n]];
       lonlat (loc_idx,LON) = rfn_lonlat  [jpart][rfn_idx[jpart][n]*2+LON];
       lonlat (loc_idx,LAT) = rfn_lonlat  [jpart][rfn_idx[jpart][n]*2+LAT];
-      uid_t uid = LonLatPoint( lonlat[loc_idx] ).uid();
+      uid_t uid = util::unique_lonlat( lonlat[loc_idx] );
 
       // make sure new node was not already there
       std::map<uid_t,int>::iterator found = node_uid_to_loc.find(uid);
@@ -770,7 +770,7 @@ void build_lookup_uid2node( Mesh& mesh, Uid2Node& uid2node )
   ArrayView<gidx_t,1> glb_idx  ( nodes.field( "glb_idx"        ) );
   int nb_nodes = nodes.shape(0);
 
-  ComputeUid compute_uid(nodes);
+  UniqueLonLat compute_uid(nodes);
 
   uid2node.clear();
   for( int jnode=0; jnode<nb_nodes; ++jnode )
@@ -849,7 +849,7 @@ void accumulate_elements( const Mesh& mesh,
     found_elements[f] = std::vector<int>( found_elements_set[f].begin(), found_elements_set[f].end());
   }
 
-  ComputeUid compute_uid(mesh.function_space("nodes"));
+  UniqueLonLat compute_uid(mesh.function_space("nodes"));
 
   // Collect all nodes
   new_nodes_uid.clear();
@@ -935,13 +935,13 @@ public:
   std::vector<int> bdry_nodes;
   Node2Elem node_to_elem;
   Uid2Node uid2node;
-  ComputeUid compute_uid;
+  UniqueLonLat compute_uid;
 
 
 public:
-  BuildHaloHelper( Mesh& _mesh ): mesh(_mesh)
+  BuildHaloHelper( Mesh& _mesh ): mesh(_mesh),
+    compute_uid(mesh.function_space("nodes"))
   {
-    compute_uid = ComputeUid(mesh.function_space("nodes"));
     update();
   }
 
@@ -1060,7 +1060,7 @@ public:
         buf.node_lonlat [p][jnode*2+LAT] = lonlat (node,LAT);
         transform(&buf.node_lonlat[p][jnode*2],-1);
         // Global index of node is based on UID of destination
-        buf.node_glb_idx[p][jnode]      = compute_uid(&buf.node_lonlat [p][jnode*2]);
+        buf.node_glb_idx[p][jnode]      = util::unique_lonlat(&buf.node_lonlat [p][jnode*2]);
         Topology::set(buf.node_flags[p][jnode],newflags);
       }
       else
@@ -1094,12 +1094,12 @@ public:
           {
             double crd[] = { lonlat(elem_nodes[f](e,n),LON) , lonlat(elem_nodes[f](e,n),LAT) };
             transform(crd,-1);
-            sfe_nodes_id_view(jelem,n) = compute_uid(crd);
+            sfe_nodes_id_view(jelem,n) = util::unique_lonlat(crd);
             crds[n*2+LON] = crd[LON];
             crds[n*2+LAT] = crd[LAT];
           }
           // Global index of element is based on UID of destination
-          buf.elem_glb_idx[f][p][jelem] = compute_uid( crds.data(), nb_elem_nodes );
+          buf.elem_glb_idx[f][p][jelem] = util::unique_lonlat( crds.data(), nb_elem_nodes );
         }
       }
     }
@@ -1129,7 +1129,7 @@ public:
       for( int n=0; n<buf.node_glb_idx[jpart].size(); ++n )
       {
         double crd[] = { buf.node_lonlat[jpart][n*2+LON], buf.node_lonlat[jpart][n*2+LAT] };
-        bool inserted = node_uid.insert( compute_uid(crd) ).second;
+        bool inserted = node_uid.insert( util::unique_lonlat(crd) ).second;
         if( inserted ) {
           rfn_idx[jpart].push_back(n);
         }
@@ -1358,7 +1358,7 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
   {
     double crd[] = { helper.lonlat(bdry_nodes[jnode],LON), helper.lonlat(bdry_nodes[jnode],LAT) };
     transform(crd,+1);
-    send_bdry_nodes_uid[jnode] = helper.compute_uid(crd);
+    send_bdry_nodes_uid[jnode] = util::unique_lonlat(crd);
   }
   atlas::mpi::Buffer<uid_t,1> recv_bdry_nodes_uid_from_parts;
   eckit::mpi::all_gather(send_bdry_nodes_uid,recv_bdry_nodes_uid_from_parts);

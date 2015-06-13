@@ -11,7 +11,7 @@
 #ifndef atlas_util_PeriodicTransform_h
 #define atlas_util_PeriodicTransform_h
 
-#include "atlas/util/LonLatPoint.h"
+#include "atlas/util/LonLatMicroDeg.h"
 
 namespace atlas {
 namespace util {
@@ -42,19 +42,19 @@ public:
   void operator()(double inplace[2], double direction, double scale = 1.) const
   {
     inplace[0] = inplace[0] + direction*x_translation_*scale;
-    inplace[1] = inplace[1];
+    // inplace[1] = inplace[1]; null operation
   }
 
   void operator()(int inplace[2], int direction, int scale = 1) const
   {
     inplace[0] = inplace[0] + direction*static_cast<int>(x_translation_*scale);
-    inplace[1] = inplace[1];
+    // inplace[1] = inplace[1]; null operation
   }
 
-  void operator()(LonLatPoint& inplace, int direction) const
+  void operator()(LonLatMicroDeg& inplace, int direction) const
   {
-    inplace.x = inplace.x + direction*microdeg(x_translation_);
-    inplace.y = inplace.y;
+    inplace.set_lon( inplace.lon() + direction*microdeg(x_translation_) );
+    // inplace.set_lat( inplace.lat() ); null operation
   }
 
 };

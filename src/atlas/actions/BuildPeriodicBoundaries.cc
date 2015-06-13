@@ -23,11 +23,11 @@
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
 #include "atlas/util/Bitflags.h"
-#include "atlas/util/LonLatPoint.h"
+#include "atlas/util/LonLatMicroDeg.h"
 #include "atlas/util/PeriodicTransform.h"
 
 using atlas::util::Topology;
-using atlas::util::LonLatPoint;
+using atlas::util::LonLatMicroDeg;
 using atlas::util::PeriodicTransform;
 
 namespace atlas {
@@ -63,10 +63,10 @@ void build_periodic_boundaries( Mesh& mesh )
       if( part(jnode) == mypart )
       {
         Topology::set(flags(jnode),Topology::PERIODIC);
-        LonLatPoint ll(lonlat[jnode]);
-        master_lookup[ ll.uid() ] = jnode;
-        master_nodes.push_back( ll.x );
-        master_nodes.push_back( ll.y );
+        LonLatMicroDeg ll(lonlat[jnode]);
+        master_lookup[ ll.unique() ] = jnode;
+        master_nodes.push_back( ll.lon() );
+        master_nodes.push_back( ll.lat() );
         master_nodes.push_back( jnode );
       }
     }
@@ -74,10 +74,10 @@ void build_periodic_boundaries( Mesh& mesh )
     {
       Topology::set(flags(jnode),Topology::PERIODIC);
       Topology::set(flags(jnode),Topology::GHOST);
-      LonLatPoint ll(lonlat[jnode]);
-      slave_lookup[ ll.uid() ] = jnode;
-      slave_nodes.push_back( ll.x );
-      slave_nodes.push_back( ll.y );
+      LonLatMicroDeg ll(lonlat[jnode]);
+      slave_lookup[ ll.unique() ] = jnode;
+      slave_nodes.push_back( ll.lon() );
+      slave_nodes.push_back( ll.lat() );
       slave_nodes.push_back( jnode );
       ridx( jnode ) = -1;
     }
@@ -116,9 +116,9 @@ void build_periodic_boundaries( Mesh& mesh )
       ArrayView<int,2> recv_slave(recvbuf.data()+recvdispls[jproc], make_shape(recvcounts[jproc]/3,3).data() );
       for( int jnode=0; jnode<recv_slave.shape(0); ++jnode )
       {
-        LonLatPoint slave( recv_slave(jnode,LON), recv_slave(jnode,LAT) );
+        LonLatMicroDeg slave( recv_slave(jnode,LON), recv_slave(jnode,LAT) );
         transform(slave,-1);
-        uid_t slave_uid = slave.uid();
+        uid_t slave_uid = slave.unique();
         if( master_lookup.count( slave_uid ) )
         {
           int master_idx = master_lookup[ slave_uid ];

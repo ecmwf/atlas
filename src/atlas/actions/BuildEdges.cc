@@ -27,15 +27,14 @@
 #include "atlas/util/IndexView.h"
 #include "atlas/util/AccumulateFaces.h"
 #include "atlas/util/Bitflags.h"
-#include "atlas/util/ComputeUid.h"
-#include "atlas/util/LonLatPoint.h"
+#include "atlas/util/Unique.h"
+#include "atlas/util/LonLatMicroDeg.h"
 #include "atlas/util/Functions.h"
 
 using atlas::util::Face;
 using atlas::util::accumulate_faces;
 using atlas::util::Topology;
-using atlas::util::ComputeUid;
-using atlas::util::LonLatPoint;
+using atlas::util::UniqueLonLat;
 using atlas::util::microdeg;
 
 namespace atlas {
@@ -93,7 +92,7 @@ void build_element_to_edge_connectivity( Mesh& mesh )
     is_pole_edge = ArrayView<int,1>( edges.field("is_pole_edge") );
   }
 
-  ComputeUid uid( nodes );
+  UniqueLonLat uid( nodes );
 
   std::vector<Sort> edge_sort(nb_edges);
   for( int edge=0; edge<nb_edges; ++edge )
@@ -209,7 +208,7 @@ void build_node_to_edge_connectivity( Mesh& mesh )
 
   IndexView<int,2> node_to_edge ( nodes.create_field<int>("to_edge",max_edge_cnt) );
 
-  ComputeUid uid( nodes );
+  UniqueLonLat uid( nodes );
   std::vector<Sort> edge_sort(nb_edges);
   for( int edge=0; edge<nb_edges; ++edge )
     edge_sort[edge] = Sort( uid(edge_nodes[edge]), edge );
@@ -384,7 +383,8 @@ struct ComputeUniquePoleEdgeIndex
       centroid[LAT] =  90.;
     else
       centroid[LAT] = -90.;
-    return LonLatPoint( centroid[LON], centroid[LAT] ).uid32();
+    /// FIXME make this into `util::unique_lonlat(centroid)` but this causes weird parallel behavior
+    return util::detail::unique32( util::microdeg(centroid[LON]), util::microdeg(centroid[LON]) );
   }
 
   ArrayView<double,2> lonlat;
@@ -448,7 +448,7 @@ void build_edges( Mesh& mesh )
     }
   }
 
-  ComputeUid compute_uid( nodes );
+  UniqueLonLat compute_uid( nodes );
 
   int cnt=0;
   for( int edge=0; edge<nb_edges; ++edge )

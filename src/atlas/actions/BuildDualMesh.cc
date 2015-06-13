@@ -25,10 +25,8 @@
 #include "atlas/Parameters.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
-#include "atlas/util/LonLatPoint.h"
+#include "atlas/util/Unique.h"
 #include "atlas/grids/ReducedGrid.h"
-
-using atlas::util::LonLatPoint;
 
 namespace atlas {
 namespace actions {
@@ -206,7 +204,7 @@ void add_median_dual_volume_contribution(
   std::vector<Node> ordering(nb_elems);
   for (int elem=0; elem<nb_elems; ++elem)
   {
-    ordering[elem] = Node( LonLatPoint(elem_centroids[elem]).uid(), elem );
+    ordering[elem] = Node( util::unique_lonlat(elem_centroids[elem]), elem );
   }
   std::sort( ordering.data(), ordering.data()+nb_elems );
 
@@ -322,7 +320,7 @@ void add_centroid_dual_volume_contribution(
   std::vector<Node> ordering(nb_edges);
   for (int edge=0; edge<nb_edges; ++edge)
   {
-    ordering[edge] = Node( LonLatPoint(edge_centroids[edge]).uid(), edge );
+    ordering[edge] = Node( util::unique_lonlat(edge_centroids[edge]), edge );
   }
   std::sort( ordering.data(), ordering.data()+nb_edges );
 
@@ -545,7 +543,7 @@ void build_skewness( Mesh& mesh )
   std::vector<Node> ordering(nb_edges);
   for (int edge=0; edge<nb_edges; ++edge)
   {
-    ordering[edge] = Node( LonLatPoint(edge_centroids[edge]).uid(), edge );
+    ordering[edge] = Node( util::unique_lonlat(edge_centroids[edge]), edge );
   }
   std::sort( ordering.data(), ordering.data()+nb_edges );
 
