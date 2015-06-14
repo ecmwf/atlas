@@ -399,7 +399,7 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh ) const
 	int nb_nodes;
 	file >> nb_nodes;
 
-	std::vector<int> extents(2);
+	std::vector<size_t> extents(2);
 
 	extents[0] = nb_nodes;
 	extents[1] = Field::UNDEF_VARS;
@@ -412,7 +412,7 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh ) const
 	else
 	{
 		mesh.create_function_space( "nodes", "Lagrange_P0", extents )
-			.metadata().set<long>("type",static_cast<int>(Entity::NODES));
+			.metadata().set<long>("type",Entity::NODES);
 	}
 
 	FunctionSpace& nodes = mesh.function_space("nodes");

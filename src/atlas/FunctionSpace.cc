@@ -35,7 +35,7 @@ using atlas::util::Topology;
 
 namespace atlas {
 
-FunctionSpace::FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<int>& shape , Mesh& mesh) :
+FunctionSpace::FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<size_t>& shape , Mesh& mesh) :
 	name_(name),
 	shape_(shape),
 	gather_scatter_(new mpl::GatherScatter()),
@@ -61,7 +61,7 @@ FunctionSpace::~FunctionSpace()
 {
 }
 
-void FunctionSpace::resize(const std::vector<int>& shape)
+void FunctionSpace::resize(const std::vector<size_t>& shape)
 {
 	if (shape.size() != shape_.size() )
 		throw eckit::BadParameter("Cannot resize shape: shape sizes don't match.",Here());
@@ -90,7 +90,7 @@ void FunctionSpace::resize(const std::vector<int>& shape)
 
 	for( int f=0; f<fields_.size(); ++f)
 	{
-		std::vector< int > field_shape(extsize);
+		std::vector< size_t > field_shape(extsize);
 		for (size_t i=0; i<extsize; ++i)
 		{
 			if( shape_[i] == Field::UNDEF_VARS )
@@ -168,7 +168,7 @@ namespace {
 	template < typename T >
 	FieldT<T>* check_if_exists( FunctionSpace* fs,
 								const std::string& name,
-								const std::vector<int>&  shape,
+								const std::vector<size_t>&  shape,
 								size_t nb_vars,
 								CreateBehavior b )
 	{
@@ -213,7 +213,7 @@ FieldT<double>& FunctionSpace::create_field(const std::string& name, size_t nb_v
 	FieldT<double>* field = NULL;
 
 	size_t rank = shape_.size();
-	std::vector< int > field_shape(rank);
+	std::vector< size_t > field_shape(rank);
 	for (size_t i=0; i<rank; ++i)
 	{
 		if( shape_[i] == Field::UNDEF_VARS )
@@ -239,7 +239,7 @@ FieldT<float>& FunctionSpace::create_field(const std::string& name, size_t nb_va
 	FieldT<float>* field = NULL;
 
 	size_t rank = shape_.size();
-	std::vector< int > field_shape(rank);
+	std::vector< size_t > field_shape(rank);
 	for (size_t i=0; i<rank; ++i)
 	{
 		if( shape_[i] == Field::UNDEF_VARS )
@@ -265,7 +265,7 @@ FieldT<int>& FunctionSpace::create_field(const std::string& name, size_t nb_vars
 	FieldT<int>* field = NULL;
 
 	size_t rank = shape_.size();
-	std::vector< int > field_shape(rank);
+	std::vector< size_t > field_shape(rank);
 	for (size_t i=0; i<rank; ++i)
 	{
 		if( shape_[i] == Field::UNDEF_VARS )
@@ -292,7 +292,7 @@ FieldT<long>& FunctionSpace::create_field(const std::string& name, size_t nb_var
 	FieldT<long>* field = NULL;
 
 	size_t rank = shape_.size();
-	std::vector< int > field_shape(rank);
+	std::vector< size_t > field_shape(rank);
 	for (size_t i=0; i<rank; ++i)
 	{
 		if( shape_[i] == Field::UNDEF_VARS )
@@ -349,7 +349,7 @@ Field& FunctionSpace::field(const std::string& name) const
 	}
 }
 
-void FunctionSpace::parallelise(const int part[], const int remote_idx[], const gidx_t glb_idx[], int parsize)
+void FunctionSpace::parallelise(const int part[], const int remote_idx[], const gidx_t glb_idx[], size_t parsize)
 {
 	halo_exchange_->setup(part,remote_idx,REMOTE_IDX_BASE,parsize);
 	gather_scatter_->setup(part,remote_idx,REMOTE_IDX_BASE,glb_idx,-1,parsize);

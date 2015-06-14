@@ -75,7 +75,7 @@ struct Fixture {
   std::vector<int> ridx;
   std::vector<POD>   gidx;
 
-  int N;
+  size_t N;
 };
 
 
@@ -83,8 +83,8 @@ BOOST_GLOBAL_FIXTURE( MPIFixture )
 
 BOOST_FIXTURE_TEST_CASE( test_rank0, Fixture )
 {
-  int strides[] = {1};
-  int extents[] = {1};
+  size_t strides[] = {1};
+  size_t extents[] = {1};
   halo_exchange.execute(gidx.data(),strides,extents,1);
 
   switch( eckit::mpi::rank() )
@@ -102,13 +102,13 @@ BOOST_FIXTURE_TEST_CASE( test_rank1, Fixture )
 {
   Array<POD> arr(N,2);
   ArrayView<POD,2> arrv(arr);
-  for( int j=0; j<N; ++j ) {
+  for( size_t j=0; j<N; ++j ) {
     arrv(j,0) = (part[j]!= eckit::mpi::rank() ? 0 : gidx[j]*10 );
     arrv(j,1) = (part[j]!= eckit::mpi::rank() ? 0 : gidx[j]*100);
   }
 
-  int strides[] = {1};
-  int extents[] = {2};
+  size_t strides[] = {1};
+  size_t extents[] = {2};
   halo_exchange.execute(arr.data(),strides,extents,1);
 
   switch( eckit::mpi::rank() )
@@ -126,13 +126,13 @@ BOOST_FIXTURE_TEST_CASE( test_rank1_strided_v1, Fixture )
 {
   Array<POD> arr(N,2);
   ArrayView<POD,2> arrv(arr);
-  for( int j=0; j<N; ++j ) {
+  for( size_t j=0; j<N; ++j ) {
     arrv(j,0) = (part[j]!= eckit::mpi::rank() ? 0 : gidx[j]*10 );
     arrv(j,1) = (part[j]!= eckit::mpi::rank() ? 0 : gidx[j]*100);
   }
 
-  int strides[] = {2};
-  int extents[] = {1};
+  size_t strides[] = {2};
+  size_t extents[] = {1};
   halo_exchange.execute(&arrv(0,0),strides,extents,1);
 
   switch( eckit::mpi::rank() )
@@ -150,13 +150,13 @@ BOOST_FIXTURE_TEST_CASE( test_rank1_strided_v2, Fixture )
 {
   Array<POD> arr(N,2);
   ArrayView<POD,2> arrv(arr);
-  for( int j=0; j<N; ++j ) {
+  for( size_t j=0; j<N; ++j ) {
     arrv(j,0) = (part[j]!= eckit::mpi::rank() ? 0 : gidx[j]*10 );
     arrv(j,1) = (part[j]!= eckit::mpi::rank() ? 0 : gidx[j]*100);
   }
 
-  int strides[] = {2};
-  int extents[] = {1};
+  size_t strides[] = {2};
+  size_t extents[] = {1};
   halo_exchange.execute(&arrv(0,1),strides,extents,1);
 
   switch( eckit::mpi::rank() )
@@ -174,17 +174,17 @@ BOOST_FIXTURE_TEST_CASE( test_rank2, Fixture )
 {
   Array<POD> arr(N,3,2);
   ArrayView<POD,3> arrv(arr);
-  for( int p=0; p<N; ++p )
+  for( size_t p=0; p<N; ++p )
   {
-    for( int i=0; i<3; ++i )
+    for( size_t i=0; i<3; ++i )
     {
       arrv(p,i,0) = (part[p]!= eckit::mpi::rank() ? 0 : -gidx[p]*std::pow(10,i) );
       arrv(p,i,1) = (part[p]!= eckit::mpi::rank() ? 0 :  gidx[p]*std::pow(10,i) );
     }
   }
 
-  int strides[] = {2,1};
-  int extents[] = {3,2};
+  size_t strides[] = {2,1};
+  size_t extents[] = {3,2};
   halo_exchange.execute(arr.data(),strides,extents,2);
 
   switch( eckit::mpi::rank() )
@@ -229,17 +229,17 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_l1, Fixture )
 {
   Array<POD> arr(N,3,2);
   ArrayView<POD,3> arrv(arr);
-  for( int p=0; p<N; ++p )
+  for( size_t p=0; p<N; ++p )
   {
-    for( int i=0; i<3; ++i )
+    for( size_t i=0; i<3; ++i )
     {
       arrv(p,i,0) = (part[p]!= eckit::mpi::rank() ? 0 : -gidx[p]*std::pow(10,i) );
       arrv(p,i,1) = (part[p]!= eckit::mpi::rank() ? 0 :  gidx[p]*std::pow(10,i) );
     }
   }
 
-  int strides[] = {6,1};
-  int extents[] = {1,2};
+  size_t strides[] = {6,1};
+  size_t extents[] = {1,2};
   halo_exchange.execute(arr.data(),strides,extents,2);
 
   switch( eckit::mpi::rank() )
@@ -285,17 +285,17 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_l2_v2, Fixture )
   // Test rank 2 halo-exchange
   Array<POD> arr(N,3,2);
   ArrayView<POD,3> arrv(arr);
-  for( int p=0; p<N; ++p )
+  for( size_t p=0; p<N; ++p )
   {
-    for( int i=0; i<3; ++i )
+    for( size_t i=0; i<3; ++i )
     {
       arrv(p,i,0) = (part[p]!= eckit::mpi::rank() ? 0 : -gidx[p]*std::pow(10,i) );
       arrv(p,i,1) = (part[p]!= eckit::mpi::rank() ? 0 :  gidx[p]*std::pow(10,i) );
     }
   }
 
-  int strides[] = {6,2};
-  int extents[] = {1,1};
+  size_t strides[] = {6,2};
+  size_t extents[] = {1,1};
   halo_exchange.execute(&arrv(0,1,1),strides,extents,2);
 
   switch( eckit::mpi::rank() )
@@ -340,17 +340,17 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_v2, Fixture )
 {
   Array<POD> arr(N,3,2);
   ArrayView<POD,3> arrv(arr);
-  for( int p=0; p<N; ++p )
+  for( size_t p=0; p<N; ++p )
   {
-    for( int i=0; i<3; ++i )
+    for( size_t i=0; i<3; ++i )
     {
       arrv(p,i,0) = (part[p]!= eckit::mpi::rank() ? 0 : -gidx[p]*std::pow(10,i) );
       arrv(p,i,1) = (part[p]!= eckit::mpi::rank() ? 0 :  gidx[p]*std::pow(10,i) );
     }
   }
 
-  int strides[] = {2,2};
-  int extents[] = {3,1};
+  size_t strides[] = {2,2};
+  size_t extents[] = {3,1};
   halo_exchange.execute(&arrv(0,0,1),strides,extents,2);
 
   switch( eckit::mpi::rank() )
@@ -393,8 +393,8 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_v2, Fixture )
 
 BOOST_FIXTURE_TEST_CASE( test_rank0_ArrayView, Fixture )
 {
-  int strides[] = {1};
-  int extents[] = {N};
+  size_t strides[] = {1};
+  size_t extents[] = {N};
   ArrayView<POD,1> arrv(gidx.data(),strides,extents);
 
   halo_exchange.execute(arrv);
@@ -415,12 +415,12 @@ BOOST_FIXTURE_TEST_CASE( test_rank1_ArrayView, Fixture )
 {
   Array<POD> arr(N,2);
   ArrayView<POD,2> arrv(arr);
-  for( int j=0; j<N; ++j ) {
+  for( size_t j=0; j<N; ++j ) {
     arrv(j,0) = (part[j]!= eckit::mpi::rank() ? 0 : gidx[j]*10 );
     arrv(j,1) = (part[j]!= eckit::mpi::rank() ? 0 : gidx[j]*100);
   }
 
-  int strides[] = {1};
+  size_t strides[] = {1};
   BOOST_CHECK_EQUAL_COLLECTIONS( arrv.strides()+1,arrv.strides()+2, strides,strides+1);
 
   halo_exchange.execute(arrv);
@@ -440,16 +440,16 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_ArrayView, Fixture )
 {
   Array<POD> arr(N,3,2);
   ArrayView<POD,3> arrv(arr);
-  for( int p=0; p<N; ++p )
+  for( size_t p=0; p<N; ++p )
   {
-    for( int i=0; i<3; ++i )
+    for( size_t i=0; i<3; ++i )
     {
       arrv(p,i,0) = (part[p]!= eckit::mpi::rank() ? 0 : -gidx[p]*std::pow(10,i) );
       arrv(p,i,1) = (part[p]!= eckit::mpi::rank() ? 0 :  gidx[p]*std::pow(10,i) );
     }
   }
 
-  int strides[] = {2,1};
+  size_t strides[] = {2,1};
   BOOST_CHECK_EQUAL_COLLECTIONS( arrv.strides()+1,arrv.strides()+3, strides,strides+2);
 
   halo_exchange.execute(arrv);

@@ -39,11 +39,11 @@ void distribute_mesh( Mesh& mesh )
   EqualRegionsPartitioner partitioner( g );
   partitioner.partition(node_part.data());
 
-  int nb_keep_nodes = 0;
+  size_t nb_keep_nodes = 0;
   std::vector<int> keep_nodes(nb_nodes,0);
   std::vector<int> node_loc(nb_nodes,-1);
 
-  for( int jnode=0; jnode<nb_nodes; ++jnode )
+  for( size_t jnode=0; jnode<nb_nodes; ++jnode )
   {
     if( node_part(jnode) == mypart )
     {
@@ -57,12 +57,12 @@ void distribute_mesh( Mesh& mesh )
   /*
   Find Elements that belong to mypart, and nodes that belong to that element
   */
-  for( int f=0; f<mesh.nb_function_spaces(); ++f )
+  for( size_t f=0; f<mesh.nb_function_spaces(); ++f )
   {
     FunctionSpace& elements = mesh.function_space(f);
     if( elements.metadata().get<long>("type") == Entity::ELEMS )
     {
-      int nb_elems = elements.shape(0);
+      size_t nb_elems = elements.shape(0);
       ArrayView<gidx_t,1> elem_gidx( elements.field("glb_idx") );
       ArrayView<int,1> elem_part( elements.field("partition") );
       IndexView<int,2> elem_nodes( elements.field("nodes") );
@@ -70,12 +70,12 @@ void distribute_mesh( Mesh& mesh )
       int nb_keep_elems = 0;
       std::vector<int> keep_elems(nb_elems,0);
       std::vector<int> elem_loc(nb_elems,-1);
-      for( int jelem = 0; jelem<nb_elems; ++jelem )
+      for( size_t jelem = 0; jelem<nb_elems; ++jelem )
       {
         int maxpart = -1;
         int minpart = std::numeric_limits<int>::max();
         double y(0.);
-        for( int jnode=0; jnode<nb_nodes_per_elem; ++jnode )
+        for( size_t jnode=0; jnode<nb_nodes_per_elem; ++jnode )
         {
           int n = elem_nodes(jelem,jnode);
           maxpart = std::max(maxpart, node_part(n));
@@ -88,7 +88,7 @@ void distribute_mesh( Mesh& mesh )
           keep_elems[jelem] = 1;
           elem_loc[jelem] = nb_keep_elems;
           ++nb_keep_elems;
-          for( int jnode=0; jnode<nb_nodes_per_elem; ++jnode )
+          for( size_t jnode=0; jnode<nb_nodes_per_elem; ++jnode )
           {
             int p = elem_nodes(jelem,jnode);
             if( keep_nodes[p] == 0 ) // keep node
@@ -103,12 +103,12 @@ void distribute_mesh( Mesh& mesh )
       std::vector<gidx_t> new_elem_gidx(nb_keep_elems);
       Array<int> new_elem_nodes_arr(nb_keep_elems,nb_nodes_per_elem);
       ArrayView<int,2> new_elem_nodes( new_elem_nodes_arr );
-      for( int jelem = 0; jelem<nb_elems; ++jelem )
+      for( size_t jelem = 0; jelem<nb_elems; ++jelem )
       {
         if( keep_elems[jelem] == 1 )
         {
           int e = elem_loc[jelem];
-          for( int jnode=0; jnode<nb_nodes_per_elem; ++jnode )
+          for( size_t jnode=0; jnode<nb_nodes_per_elem; ++jnode )
           {
             new_elem_nodes(e,jnode) = node_loc[elem_nodes(jelem,jnode)];
           }
@@ -116,13 +116,13 @@ void distribute_mesh( Mesh& mesh )
         }
       }
       nb_elems = nb_keep_elems;
-      std::vector<int> shape = elements.shape();
+      std::vector<size_t> shape = elements.shape();
       shape[0] = nb_elems;
       elements.resize(shape);
       elem_gidx  = ArrayView<gidx_t,1> ( elements.field("glb_idx") );
       elem_part  = ArrayView<int,1> ( elements.field("partition") );
       elem_nodes = IndexView<int,2> ( elements.field("nodes") );
-      for( int jelem=0; jelem<nb_elems; ++jelem )
+      for( size_t jelem=0; jelem<nb_elems; ++jelem )
       {
         elem_gidx(jelem) = new_elem_gidx[jelem];
         elem_part(jelem) = mypart;
@@ -138,7 +138,7 @@ void distribute_mesh( Mesh& mesh )
   std::vector<int> new_node_part(nb_keep_nodes);
   Array<double> new_lonlat_arr(nb_keep_nodes,2);
   ArrayView<double,2> new_lonlat(new_lonlat_arr);
-  for( int jnode=0; jnode<nb_nodes; ++jnode )
+  for( size_t jnode=0; jnode<nb_nodes; ++jnode )
   {
     if( keep_nodes[jnode] == 1 )
     {
@@ -150,14 +150,14 @@ void distribute_mesh( Mesh& mesh )
     }
   }
   nb_nodes = nb_keep_nodes;
-  std::vector<int> shape = nodes.shape();
+  std::vector<size_t> shape = nodes.shape();
   shape[0] = nb_nodes;
   nodes.resize(shape);
   node_gidx  = ArrayView<gidx_t,   1> ( nodes.field("glb_idx") );
   node_part  = ArrayView<int,   1> ( nodes.field("partition") );
   lonlat     = ArrayView<double,2> ( nodes.field("lonlat") );
   int nb_owned = 0;
-  for( int jnode=0; jnode<nb_nodes; ++jnode )
+  for( size_t jnode=0; jnode<nb_nodes; ++jnode )
   {
     node_gidx(jnode) = new_node_gidx[jnode];
     node_part(jnode) = new_node_part[jnode];

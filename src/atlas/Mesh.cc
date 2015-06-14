@@ -50,7 +50,7 @@ bool Mesh::has_function_space(const std::string& name) const
 	return function_spaces_.has(name);
 }
 
-FunctionSpace& Mesh::create_function_space(const std::string& name, const std::string& shape_func, const std::vector<int>& shape)
+FunctionSpace& Mesh::create_function_space(const std::string& name, const std::string& shape_func, const std::vector<size_t>& shape)
 {
 	if( has_function_space(name) )
 	{
@@ -148,7 +148,8 @@ void atlas__Mesh__create_function_space(Mesh* This, char* name,char* shape_func,
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This != NULL );
-    std::vector<int> vshape(shape,shape+shape_size);
+    std::vector<size_t> vshape(shape_size);
+    for(size_t n=0; n<shape_size; ++n) vshape[n]=shape[n];
     This->create_function_space(std::string(name), std::string(shape_func),vshape);
   );
 }

@@ -32,7 +32,7 @@ struct IsGhostPoint
     mypart_ = eckit::mpi::rank();
   }
 
-  bool operator()(int idx)
+  bool operator()(size_t idx)
   {
     if( part_[idx] != mypart_  ) return true;
     if( ridx_[idx] != base_+idx ) return true;
@@ -54,7 +54,7 @@ HaloExchange::HaloExchange() :
 
 void HaloExchange::setup( const int part[],
                           const int remote_idx[], const int base,
-                          const int parsize )
+                          const size_t parsize )
 {
   parsize_ = parsize;
   sendcounts_.resize(nproc); sendcounts_.assign(nproc,0);
@@ -68,7 +68,7 @@ void HaloExchange::setup( const int part[],
 
   IsGhostPoint is_ghost(part,remote_idx,base,parsize_);
 
-  for (int jj=0; jj<parsize_; ++jj)
+  for (size_t jj=0; jj<parsize_; ++jj)
   {
     if ( is_ghost(jj) )
       ++recvcounts_[part[jj]];
@@ -87,7 +87,7 @@ void HaloExchange::setup( const int part[],
 
   recvdispls_[0]=0;
   senddispls_[0]=0;
-  for (int jproc=1; jproc<nproc; ++jproc) // start at 1
+  for (size_t jproc=1; jproc<nproc; ++jproc) // start at 1
   {
     recvdispls_[jproc]=recvcounts_[jproc-1]+recvdispls_[jproc-1];
     senddispls_[jproc]=sendcounts_[jproc-1]+senddispls_[jproc-1];
@@ -101,7 +101,7 @@ void HaloExchange::setup( const int part[],
 
   recvmap_.resize(recvcnt_);
   std::vector<int> cnt(nproc,0);
-  for (int jj=0; jj<parsize_; ++jj)
+  for (size_t jj=0; jj<parsize_; ++jj)
   {
     if ( is_ghost(jj) )
     {
@@ -161,19 +161,43 @@ void atlas__HaloExchange__setup (HaloExchange* This, int part[], int remote_idx[
 }
 
 void atlas__HaloExchange__execute_strided_int (HaloExchange* This, int field[], int var_strides[], int var_extents[], int var_rank) {
-  This->execute(field,var_strides,var_extents,var_rank);
+  std::vector<size_t> vstrides(var_rank);
+  std::vector<size_t> vextents(var_rank);
+  for( size_t n=0; n<var_rank; ++n ) {
+    vstrides[n] = var_strides[n];
+    vextents[n] = var_extents[n];
+  }
+  This->execute(field,vstrides.data(),vextents.data(),var_rank);
 }
 
 void atlas__HaloExchange__execute_strided_long (HaloExchange* This, long field[], int var_strides[], int var_extents[], int var_rank) {
-  This->execute(field,var_strides,var_extents,var_rank);
+  std::vector<size_t> vstrides(var_rank);
+  std::vector<size_t> vextents(var_rank);
+  for( size_t n=0; n<var_rank; ++n ) {
+    vstrides[n] = var_strides[n];
+    vextents[n] = var_extents[n];
+  }
+  This->execute(field,vstrides.data(),vextents.data(),var_rank);
 }
 
 void atlas__HaloExchange__execute_strided_float (HaloExchange* This, float field[], int var_strides[], int var_extents[], int var_rank) {
-  This->execute(field,var_strides,var_extents,var_rank);
+  std::vector<size_t> vstrides(var_rank);
+  std::vector<size_t> vextents(var_rank);
+  for( size_t n=0; n<var_rank; ++n ) {
+    vstrides[n] = var_strides[n];
+    vextents[n] = var_extents[n];
+  }
+  This->execute(field,vstrides.data(),vextents.data(),var_rank);
 }
 
 void atlas__HaloExchange__execute_strided_double (HaloExchange* This, double field[], int var_strides[], int var_extents[], int var_rank) {
-  This->execute(field,var_strides,var_extents,var_rank);
+  std::vector<size_t> vstrides(var_rank);
+  std::vector<size_t> vextents(var_rank);
+  for( size_t n=0; n<var_rank; ++n ) {
+    vstrides[n] = var_strides[n];
+    vextents[n] = var_extents[n];
+  }
+  This->execute(field,vstrides.data(),vextents.data(),var_rank);
 }
 
 void atlas__HaloExchange__execute_int (HaloExchange* This, int field[], int nb_vars ) {

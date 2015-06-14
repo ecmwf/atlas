@@ -24,8 +24,8 @@
 /// int[2] strides = { 3, 1 };
 /// int[2] shape = { 3, 3 };
 /// ArrayView<int,2> matrix( array, strides, shape );
-/// for( int i=0; i<matrix.shape(0); ++i ) {
-///   for( int j=0; j<matrix.shape(1); ++j ) {
+/// for( size_t i=0; i<matrix.shape(0); ++i ) {
+///   for( size_t j=0; j<matrix.shape(1); ++j ) {
 ///     matrix(i,j) *= 10;
 ///   }
 /// }
@@ -52,7 +52,7 @@
 #define CHECK_RANK(R)\
   if(rank()!=R) { std::ostringstream msg; msg << "ArrayView  rank mismatch: rank()="<<rank()<< " != " << R; throw eckit::OutOfRange(msg.str(),Here()); }
 #define CHECK_BOUNDS(idx) {\
-  for( int d=0; d<rank(); ++d ) { \
+  for( size_t d=0; d<rank(); ++d ) { \
     if(idx[d]>=shape_[d]) {std::ostringstream msg; msg << "index " << d << " out of bounds: " << idx[d] << " >= " << shape_[d]; throw eckit::OutOfRange(msg.str(),Here()); } } }
 #define CHECK_BOUNDS_1(i)\
 	if(i>=shape_[0]) {std::ostringstream msg; msg << "ArrayView(i) index out of bounds: i=" << i << " >= " << shape_[0]; throw eckit::OutOfRange(msg.str(),Here()); }
@@ -219,7 +219,7 @@ public:
   {
     strides_.assign(strides,strides+rank_);
     shape_.assign(shape,shape+rank_);
-    size_ = std::accumulate(shape_.data(),shape_.data()+rank_,1,std::multiplies<int>());
+    size_ = std::accumulate(shape_.data(),shape_.data()+rank_,1,std::multiplies<size_t>());
   }
 
   ArrayView( const Array<DATA_TYPE>& array );
@@ -228,29 +228,29 @@ public:
   iterator end()   { return iterator(); }
   const_iterator begin() const  { return const_iterator(this); }
   const_iterator end()   const  { return const_iterator(); }
-  const DATA_TYPE& operator()(int i) const { CHECK_RANK(1); CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i); }
-  DATA_TYPE&       operator()(int i)       { CHECK_RANK(1); CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i); }
-  const DATA_TYPE& operator()(int i, int j) const  { CHECK_RANK(2); CHECK_BOUNDS_2(i,j); return *(data_+strides_[0]*i+j*strides_[1]); }
-  DATA_TYPE&       operator()(int i, int j)        { CHECK_RANK(2); CHECK_BOUNDS_2(i,j); return *(data_+strides_[0]*i+j*strides_[1]); }
-  const DATA_TYPE& operator()(int i, int j, int k) const { CHECK_RANK(3); CHECK_BOUNDS_3(i,j,k); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]); }
-  DATA_TYPE&       operator()(int i, int j, int k)       { CHECK_RANK(3); CHECK_BOUNDS_3(i,j,k); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]); }
-  const DATA_TYPE& operator()(int i, int j, int k, int l) const { CHECK_RANK(4); CHECK_BOUNDS_4(i,j,k,l); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]+l*strides_[3]); }
-  DATA_TYPE&       operator()(int i, int j, int k, int l)       { CHECK_RANK(4); CHECK_BOUNDS_4(i,j,k,l); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]+l*strides_[3]); }
-  const DATA_TYPE& operator()(int i, int j, int k, int l, int m) const { CHECK_RANK(5); CHECK_BOUNDS_5(i,j,k,l,m); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]+l*strides_[3]+m*strides_[4]); }
-  DATA_TYPE&       operator()(int i, int j, int k, int l, int m)       { CHECK_RANK(5); CHECK_BOUNDS_5(i,j,k,l,m); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]+l*strides_[3]+m*strides_[4]); }
+  const DATA_TYPE& operator()(size_t i) const { CHECK_RANK(1); CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i); }
+  DATA_TYPE&       operator()(size_t i)       { CHECK_RANK(1); CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i); }
+  const DATA_TYPE& operator()(size_t i, size_t j) const  { CHECK_RANK(2); CHECK_BOUNDS_2(i,j); return *(data_+strides_[0]*i+j*strides_[1]); }
+  DATA_TYPE&       operator()(size_t i, size_t j)        { CHECK_RANK(2); CHECK_BOUNDS_2(i,j); return *(data_+strides_[0]*i+j*strides_[1]); }
+  const DATA_TYPE& operator()(size_t i, size_t j, size_t k) const { CHECK_RANK(3); CHECK_BOUNDS_3(i,j,k); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]); }
+  DATA_TYPE&       operator()(size_t i, size_t j, size_t k)       { CHECK_RANK(3); CHECK_BOUNDS_3(i,j,k); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]); }
+  const DATA_TYPE& operator()(size_t i, size_t j, size_t k, size_t l) const { CHECK_RANK(4); CHECK_BOUNDS_4(i,j,k,l); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]+l*strides_[3]); }
+  DATA_TYPE&       operator()(size_t i, size_t j, size_t k, size_t l)       { CHECK_RANK(4); CHECK_BOUNDS_4(i,j,k,l); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]+l*strides_[3]); }
+  const DATA_TYPE& operator()(size_t i, size_t j, size_t k, size_t l, size_t m) const { CHECK_RANK(5); CHECK_BOUNDS_5(i,j,k,l,m); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]+l*strides_[3]+m*strides_[4]); }
+  DATA_TYPE&       operator()(size_t i, size_t j, size_t k, size_t l, size_t m)       { CHECK_RANK(5); CHECK_BOUNDS_5(i,j,k,l,m); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]+l*strides_[3]+m*strides_[4]); }
   DATA_TYPE& operator()(const ArrayIdx& idx)
   {
     CHECK_RANK(idx.size()); CHECK_BOUNDS(idx);
-    int p=0;
-    for( int d=0; d<rank(); ++d )
+    size_t p=0;
+    for( size_t d=0; d<rank(); ++d )
       p += idx[d]*strides_[d];
     return *(data_+p);
   }
   const DATA_TYPE& operator()(const ArrayIdx& idx) const
   {
     CHECK_RANK(idx.size()); CHECK_BOUNDS(idx);
-    int p=0;
-    for( int d=0; d<rank(); ++d )
+    size_t p=0;
+    for( size_t d=0; d<rank(); ++d )
       p += idx[d]*strides_[d];
     return *(data_+p);
   }
@@ -258,11 +258,11 @@ public:
   const DATA_TYPE* data() const  { return data_; }
   const ArrayStrides::value_type* strides() const  { return strides_.data(); }
   const ArrayShape::value_type* shape() const  { return shape_.data(); }
-  ArrayStrides::value_type stride(int i) const { return strides_[i]; }
-  ArrayShape::value_type shape(int i) const { return shape_[i]; }
+  ArrayStrides::value_type stride(size_t i) const { return strides_[i]; }
+  ArrayShape::value_type shape(size_t i) const { return shape_[i]; }
   size_t rank() const       { return rank_; }
   size_t size() const       { return size_; }
-  void operator=(const DATA_TYPE& scalar) { for(int n=0; n<size_; ++n) *(data_+n)=scalar; }
+  void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<size_; ++n) *(data_+n)=scalar; }
 private:
   DATA_TYPE* data_;
   ArrayStrides strides_;
@@ -283,7 +283,7 @@ public:
   typedef typename remove_const<DATA_TYPE>::type  value_type;
 public:
   ArrayView() {}
-  ArrayView( DATA_TYPE* data, const int size ) : data_( const_cast<DATA_TYPE*>(data) )
+  ArrayView( DATA_TYPE* data, const size_t size ) : data_( const_cast<DATA_TYPE*>(data) )
   {
     shape_[0]=size; strides_[0]=1;
   }
@@ -295,7 +295,7 @@ public:
   {
     shape_[0]=shape[0]; strides_[0]=1;
   }
-  ArrayView( const DATA_TYPE* data, const std::vector<int>& shape ) : data_( const_cast<DATA_TYPE*>(data) )
+  ArrayView( const DATA_TYPE* data, const std::vector<size_t>& shape ) : data_( const_cast<DATA_TYPE*>(data) )
   {
     shape_[0]=shape[0]; strides_[0]=1;
   }
@@ -306,40 +306,40 @@ public:
   iterator end()   { return iterator(); }
   const_iterator begin() const  { return const_iterator(this); }
   const_iterator end()   const  { return const_iterator(); }
-  const DATA_TYPE& operator()(int i) const { CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i); }
-  DATA_TYPE&       operator()(int i)       { CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i); }
+  const DATA_TYPE& operator()(size_t i) const { CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i); }
+  DATA_TYPE&       operator()(size_t i)       { CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i); }
   const DATA_TYPE& operator()(const ArrayIdx& idx) const
   {
     CHECK_RANK(idx.size()); CHECK_BOUNDS(idx);
-    int p=0;
-    for( int d=0; d<rank(); ++d )
+    size_t p=0;
+    for( size_t d=0; d<rank(); ++d )
       p += idx[d]*strides_[d];
     return *(data_+p);
   }
   DATA_TYPE& operator()(const ArrayIdx& idx)
   {
     CHECK_RANK(idx.size()); CHECK_BOUNDS(idx);
-    int p=0;
-    for( int d=0; d<rank(); ++d )
+    size_t p=0;
+    for( size_t d=0; d<rank(); ++d )
       p += idx[d]*strides_[d];
     return *(data_+p);
   }
-  const DATA_TYPE& operator[](int i) const { CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i); }
-  DATA_TYPE&       operator[](int i)       { CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i); }
+  const DATA_TYPE& operator[](size_t i) const { CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i); }
+  DATA_TYPE&       operator[](size_t i)       { CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i); }
   DATA_TYPE*       data()        { return data_; }
   const DATA_TYPE* data() const  { return data_; }
   const ArrayStrides::value_type* strides() const   { return strides_; }
   const ArrayShape::value_type* shape() const   { return shape_; }
-	ArrayShape::value_type shape(const int i) const { return shape_[0]; }
-  ArrayStrides::value_type stride(int i) const { return strides_[0]; }
-  int rank() const { return 1; }
-  std::size_t size() const { return shape_[0]; }
-  std::size_t total_size() const { return shape_[0]; }
-  void operator=(const DATA_TYPE& scalar) { for(int n=0; n<total_size(); ++n) *(data_+n)=scalar; }
+	ArrayShape::value_type shape(const size_t i) const { return shape_[0]; }
+  ArrayStrides::value_type stride(size_t i) const { return strides_[0]; }
+  size_t rank() const { return 1; }
+  size_t size() const { return shape_[0]; }
+  size_t total_size() const { return shape_[0]; }
+  void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<total_size(); ++n) *(data_+n)=scalar; }
 private:
   DATA_TYPE* data_;
   ArrayStrides::value_type strides_[1];
-  ArrayShape::value_type shape_[1];
+  ArrayShape::value_type   shape_[1];
 };
 
 //------------------------------------------------------------------------------------------------------
@@ -364,7 +364,7 @@ public:
     shape_[0]=shape[0]; strides_[0]=shape[1];
     shape_[1]=shape[1]; strides_[1]=1;
   }
-  ArrayView( const DATA_TYPE* data, const std::vector<int>& shape ) : data_( const_cast<DATA_TYPE*>(data) )
+  ArrayView( const DATA_TYPE* data, const std::vector<size_t>& shape ) : data_( const_cast<DATA_TYPE*>(data) )
   {
     shape_[0]=shape[0]; strides_[0]=shape[1];
     shape_[1]=shape[1]; strides_[1]=1;
@@ -376,36 +376,36 @@ public:
   iterator end()   { return iterator(); }
   const_iterator begin() const  { return const_iterator(this); }
   const_iterator end()   const  { return const_iterator(); }
-  const DATA_TYPE& operator()(int i, int j) const  { CHECK_BOUNDS_2(i,j); return *(data_+strides_[0]*i+j*strides_[1]); }
-  DATA_TYPE&       operator()(int i, int j)        { CHECK_BOUNDS_2(i,j); return *(data_+strides_[0]*i+j*strides_[1]); }
+  const DATA_TYPE& operator()(size_t i, size_t j) const  { CHECK_BOUNDS_2(i,j); return *(data_+strides_[0]*i+j*strides_[1]); }
+  DATA_TYPE&       operator()(size_t i, size_t j)        { CHECK_BOUNDS_2(i,j); return *(data_+strides_[0]*i+j*strides_[1]); }
   const DATA_TYPE& operator()(const ArrayIdx& idx) const
   {
     CHECK_RANK(idx.size()); CHECK_BOUNDS(idx);
-    int p=0;
-    for( int d=0; d<rank(); ++d )
+    size_t p=0;
+    for( size_t d=0; d<rank(); ++d )
       p += idx[d]*strides_[d];
     return *(data_+p);
   }
   DATA_TYPE& operator()(const ArrayIdx& idx)
   {
     CHECK_RANK(idx.size()); CHECK_BOUNDS(idx);
-    int p=0;
-    for( int d=0; d<rank(); ++d )
+    size_t p=0;
+    for( size_t d=0; d<rank(); ++d )
       p += idx[d]*strides_[d];
     return *(data_+p);
   }
-  const ArrayView<DATA_TYPE,1> operator[](int i) const { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,1>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
-  ArrayView<DATA_TYPE,1>       operator[](int i)       { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,1>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
+  const ArrayView<DATA_TYPE,1> operator[](size_t i) const { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,1>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
+  ArrayView<DATA_TYPE,1>       operator[](size_t i)       { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,1>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
   DATA_TYPE*       data()            { return data_; }
   const DATA_TYPE* data() const      { return data_; }
-  const int* strides() const   { return strides_; }
-  const int* shape() const   { return shape_; }
-  ArrayStrides::value_type stride(int i) const { return strides_[i]; }
-  ArrayShape::value_type shape(int i) const {return shape_[i]; }
-  int rank() const { return 2; }
-  std::size_t size() const { return shape_[0]; }
-  std::size_t total_size() const { return shape_[0]*shape_[1]; }
-  void operator=(const DATA_TYPE& scalar) { for(int n=0; n<total_size(); ++n) *(data_+n)=scalar; }
+  const ArrayStrides::value_type* strides() const   { return strides_; }
+  const ArrayShape::value_type* shape() const   { return shape_; }
+  ArrayStrides::value_type stride(size_t i) const { return strides_[i]; }
+  ArrayShape::value_type shape(size_t i) const {return shape_[i]; }
+  size_t rank() const { return 2; }
+  size_t size() const { return shape_[0]; }
+  size_t total_size() const { return shape_[0]*shape_[1]; }
+  void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<total_size(); ++n) *(data_+n)=scalar; }
 private:
   DATA_TYPE* data_;
   ArrayStrides::value_type strides_[2];
@@ -435,7 +435,7 @@ public:
     shape_[1]=shape[1]; strides_[1]=shape[2];
     shape_[2]=shape[2]; strides_[2]=1;
   }
-  ArrayView( const DATA_TYPE* data, const std::vector<int>& shape ) : data_( const_cast<DATA_TYPE*>(data) )
+  ArrayView( const DATA_TYPE* data, const std::vector<size_t>& shape ) : data_( const_cast<DATA_TYPE*>(data) )
   {
     shape_[0]=shape[0]; strides_[0]=shape[2]*shape[1];
     shape_[1]=shape[1]; strides_[1]=shape[2];
@@ -448,36 +448,36 @@ public:
   iterator end()   { return iterator(); }
   const_iterator begin() const  { return const_iterator(this); }
   const_iterator end()   const  { return const_iterator(); }
-  const DATA_TYPE& operator()(int i, int j, int k) const { CHECK_BOUNDS_3(i,j,k); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]); }
-  DATA_TYPE&       operator()(int i, int j, int k)       { CHECK_BOUNDS_3(i,j,k); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]); }
+  const DATA_TYPE& operator()(size_t i, size_t j, size_t k) const { CHECK_BOUNDS_3(i,j,k); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]); }
+  DATA_TYPE&       operator()(size_t i, size_t j, size_t k)       { CHECK_BOUNDS_3(i,j,k); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]); }
   const DATA_TYPE& operator()(const ArrayIdx& idx) const
   {
     CHECK_RANK(idx.size()); CHECK_BOUNDS(idx);
-    int p=0;
-    for( int d=0; d<rank(); ++d )
+    size_t p=0;
+    for( size_t d=0; d<rank(); ++d )
       p += idx[d]*strides_[d];
     return *(data_+p);
   }
   DATA_TYPE& operator()(const ArrayIdx& idx)
   {
     CHECK_RANK(idx.size()); CHECK_BOUNDS(idx);
-    int p=0;
-    for( int d=0; d<rank(); ++d )
+    size_t p=0;
+    for( size_t d=0; d<rank(); ++d )
       p += idx[d]*strides_[d];
     return *(data_+p);
   }
-  const ArrayView<DATA_TYPE,2> operator[](int i) const { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,2>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
-  ArrayView<DATA_TYPE,2>       operator[](int i)       { CHECK_BOUNDS_1(i);return ArrayView<DATA_TYPE,2>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
+  const ArrayView<DATA_TYPE,2> operator[](size_t i) const { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,2>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
+  ArrayView<DATA_TYPE,2>       operator[](size_t i)       { CHECK_BOUNDS_1(i);return ArrayView<DATA_TYPE,2>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
   DATA_TYPE*       data()            { return data_; }
   const DATA_TYPE* data() const      { return data_; }
-  const int* strides() const   { return strides_; }
-  const int* shape() const   { return shape_; }
-  ArrayStrides::value_type stride(int i) const { return strides_[i]; }
-  ArrayShape::value_type shape(int i) const { return shape_[i]; }
-  int rank() const { return 3; }
-  std::size_t size() const { return shape_[0]; }
-  std::size_t total_size() const { return shape_[0]*shape_[1]*shape_[2]; }
-  void operator=(const DATA_TYPE& scalar) { for(int n=0; n<total_size(); ++n) *(data_+n)=scalar; }
+  const ArrayStrides::value_type* strides() const   { return strides_; }
+  const ArrayShape::value_type* shape() const   { return shape_; }
+  ArrayStrides::value_type stride(size_t i) const { return strides_[i]; }
+  ArrayShape::value_type shape(size_t i) const { return shape_[i]; }
+  size_t rank() const { return 3; }
+  size_t size() const { return shape_[0]; }
+  size_t total_size() const { return shape_[0]*shape_[1]*shape_[2]; }
+  void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<total_size(); ++n) *(data_+n)=scalar; }
 private:
   DATA_TYPE* data_;
   ArrayStrides::value_type strides_[3];
@@ -502,7 +502,7 @@ public:
     strides_[2]=strides[2];            shape_[2]=shape[2];
     strides_[3]=strides[3];            shape_[3]=shape[3];
   }
-  ArrayView( const DATA_TYPE* data, const std::vector<int>& shape ) : data_( const_cast<DATA_TYPE*>(data) )
+  ArrayView( const DATA_TYPE* data, const std::vector<size_t>& shape ) : data_( const_cast<DATA_TYPE*>(data) )
   {
     shape_[0]=shape[0]; strides_[0]=shape[3]*shape[2]*shape[1];
     shape_[1]=shape[1]; strides_[1]=shape[3]*shape[2];
@@ -523,36 +523,36 @@ public:
   iterator end()   { return iterator(); }
   const_iterator begin() const  { return const_iterator(this); }
   const_iterator end()   const  { return const_iterator(); }
-  const DATA_TYPE& operator()(int i, int j, int k, int l) const { CHECK_BOUNDS_4(i,j,k,l); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]+l*strides_[3]); }
-  DATA_TYPE&       operator()(int i, int j, int k, int l)       { CHECK_BOUNDS_4(i,j,k,l); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]+l*strides_[3]); }
+  const DATA_TYPE& operator()(size_t i, size_t j, size_t k, size_t l) const { CHECK_BOUNDS_4(i,j,k,l); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]+l*strides_[3]); }
+  DATA_TYPE&       operator()(size_t i, size_t j, size_t k, size_t l)       { CHECK_BOUNDS_4(i,j,k,l); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]+l*strides_[3]); }
   const DATA_TYPE& operator()(const ArrayIdx& idx) const
   {
     CHECK_RANK(idx.size()); CHECK_BOUNDS(idx);
-    int p=0;
-    for( int d=0; d<rank(); ++d )
+    size_t p=0;
+    for( size_t d=0; d<rank(); ++d )
       p += idx[d]*strides_[d];
     return *(data_+p);
   }
   DATA_TYPE& operator()(const ArrayIdx& idx)
   {
     CHECK_RANK(idx.size()); CHECK_BOUNDS(idx);
-    int p=0;
-    for( int d=0; d<rank(); ++d )
+    size_t p=0;
+    for( size_t d=0; d<rank(); ++d )
       p += idx[d]*strides_[d];
     return *(data_+p);
   }
-  const ArrayView<DATA_TYPE,3> operator[](int i) const { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,3>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
-  ArrayView<DATA_TYPE,3>       operator[](int i)       { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,3>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
+  const ArrayView<DATA_TYPE,3> operator[](size_t i) const { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,3>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
+  ArrayView<DATA_TYPE,3>       operator[](size_t i)       { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,3>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
   DATA_TYPE*       data()            { return data_; }
   const DATA_TYPE* data() const      { return data_; }
-  const int* strides() const   { return strides_; }
-  const int* shape() const   { return shape_; }
-  ArrayStrides::value_type stride(int i) const { return strides_[i]; }
-  ArrayShape::value_type shape(int i) const { return shape_[i]; }
-  int rank() const { return 4; }
-  std::size_t size() const { return shape_[0]; }
-  std::size_t total_size() const { return shape_[0]*shape_[1]*shape_[2]*shape_[3]; }
-  void operator=(const DATA_TYPE& scalar) { for(int n=0; n<total_size(); ++n) *(data_+n)=scalar; }
+  const ArrayStrides::value_type* strides() const   { return strides_; }
+  const ArrayShape::value_type* shape() const   { return shape_; }
+  ArrayStrides::value_type stride(size_t i) const { return strides_[i]; }
+  ArrayShape::value_type shape(size_t i) const { return shape_[i]; }
+  size_t rank() const { return 4; }
+  size_t size() const { return shape_[0]; }
+  size_t total_size() const { return shape_[0]*shape_[1]*shape_[2]*shape_[3]; }
+  void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<total_size(); ++n) *(data_+n)=scalar; }
 
 private:
   DATA_TYPE* data_;
@@ -673,6 +673,7 @@ ArrayView_const_iterator<DATA_TYPE,RANK>& ArrayView_const_iterator<DATA_TYPE,RAN
 } // namespace atlas
 
 #undef CHECK_RANK
+#undef CHECK_BOUNDS
 #undef CHECK_BOUNDS_1
 #undef CHECK_BOUNDS_2
 #undef CHECK_BOUNDS_3

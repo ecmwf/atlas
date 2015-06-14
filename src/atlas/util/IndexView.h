@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2014 ECMWF.
+ * (C) Copyright 1996-2015 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -25,8 +25,8 @@
 /// int[2] strides = { 3, 1 };
 /// int[2] shape = { 3, 3 };
 /// IndexView<int,2> matrix( array, strides, shape );
-/// for( int i=0; i<matrix.shape(0); ++i ) {
-///   for( int j=0; j<matrix.shape(1); ++j ) {
+/// for( size_t i=0; i<matrix.shape(0); ++i ) {
+///   for( size_t j=0; j<matrix.shape(1); ++j ) {
 ///     matrix(i,j) *= 10;
 ///   }
 /// }
@@ -49,7 +49,7 @@
 #define CHECK_RANK(R)\
   if(rank()!=R) { std::ostringstream msg; msg << "IndexView  rank mismatch: rank()="<<rank()<< " != " << R; throw eckit::OutOfRange(msg.str(),Here()); }
 #define CHECK_BOUNDS(idx) {\
-  for( int d=0; d<rank(); ++d ) { \
+  for( size_t d=0; d<rank(); ++d ) { \
     if(idx[d]>=shape_[d]) {std::ostringstream msg; msg << "index " << d << " out of bounds: " << idx[d] << " >= " << shape_[d]; throw eckit::OutOfRange(msg.str(),Here()); } } }
 #define CHECK_BOUNDS_1(i)\
 	if(i>=shape_[0]) {std::ostringstream msg; msg << "IndexView(i) index out of bounds: i=" << i << " >= " << shape_[0]; throw eckit::OutOfRange(msg.str(),Here()); }
@@ -148,30 +148,30 @@ public:
 
 public:
   IndexView() {}
-  IndexView( DATA_TYPE* data, const int strides[1], const int shape[1] ) : data_( const_cast<DATA_TYPE*>(data) )
+  IndexView( DATA_TYPE* data, const size_t strides[1], const size_t shape[1] ) : data_( const_cast<DATA_TYPE*>(data) )
   {
     strides_[0]=strides[0];       shape_[0]=shape[0];
   }
   IndexView( const Array<DATA_TYPE>& array );
   IndexView( const Field& field );
 
-  DATA_TYPE operator()(int i) const { CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i) FROM_FORTRAN; }
-  Index     operator()(int i)       { CHECK_BOUNDS_1(i); return INDEX_REF(data_+strides_[0]*i); }
+  DATA_TYPE operator()(size_t i) const { CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i) FROM_FORTRAN; }
+  Index     operator()(size_t i)       { CHECK_BOUNDS_1(i); return INDEX_REF(data_+strides_[0]*i); }
 
-  DATA_TYPE operator[](int i) const { CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i) FROM_FORTRAN; }
-  Index     operator[](int i)       { CHECK_BOUNDS_1(i); return INDEX_REF(data_+strides_[0]*i); }
+  DATA_TYPE operator[](size_t i) const { CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i) FROM_FORTRAN; }
+  Index     operator[](size_t i)       { CHECK_BOUNDS_1(i); return INDEX_REF(data_+strides_[0]*i); }
 
-  const int* strides() const   { return strides_; }
-  const int* shape() const   { return shape_; }
-  int shape(const int i) const { return shape_[0]; }
+  const size_t* strides() const   { return strides_; }
+  const size_t* shape() const   { return shape_; }
+  size_t shape(const size_t i) const { return shape_[0]; }
 
-  std::size_t size() const { return shape_[0]; }
-  std::size_t total_size() const { return shape_[0]; }
-  void operator=(const DATA_TYPE& scalar) { for(int n=0; n<total_size(); ++n) *(data_+n)=scalar TO_FORTRAN; }
+  size_t size() const { return shape_[0]; }
+  size_t total_size() const { return shape_[0]; }
+  void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<total_size(); ++n) *(data_+n)=scalar TO_FORTRAN; }
 private:
   DATA_TYPE* data_;
-  int strides_[1];
-  int shape_[1];
+  size_t strides_[1];
+  size_t shape_[1];
 };
 
 //------------------------------------------------------------------------------------------------------
@@ -189,12 +189,12 @@ public:
 public:
 
   IndexView() {}
-  IndexView( const DATA_TYPE* data, const int strides[2], const int shape[2] ) : data_( const_cast<DATA_TYPE*>(data) )
+  IndexView( const DATA_TYPE* data, const size_t strides[2], const size_t shape[2] ) : data_( const_cast<DATA_TYPE*>(data) )
   {
     strides_[0]=strides[0];            shape_[0]=shape[0];
     strides_[1]=strides[1];            shape_[1]=shape[1];
   }
-  IndexView( const DATA_TYPE* data, const int shape[3] ) : data_( const_cast<DATA_TYPE*>(data) )
+  IndexView( const DATA_TYPE* data, const size_t shape[2] ) : data_( const_cast<DATA_TYPE*>(data) )
   {
     shape_[0]=shape[0]; strides_[0]=shape[1];
     shape_[1]=shape[1]; strides_[1]=1;
@@ -202,24 +202,24 @@ public:
   IndexView( const Array<DATA_TYPE>& array );
   IndexView( const Field& field );
 
-  DATA_TYPE operator()(int i, int j) const  { CHECK_BOUNDS_2(i,j); return *(data_+strides_[0]*i+j*strides_[1]) FROM_FORTRAN; }
-  Index     operator()(int i, int j)        { CHECK_BOUNDS_2(i,j); return INDEX_REF(data_+strides_[0]*i+j*strides_[1]); }
+  DATA_TYPE operator()(size_t i, size_t j) const  { CHECK_BOUNDS_2(i,j); return *(data_+strides_[0]*i+j*strides_[1]) FROM_FORTRAN; }
+  Index     operator()(size_t i, size_t j)        { CHECK_BOUNDS_2(i,j); return INDEX_REF(data_+strides_[0]*i+j*strides_[1]); }
 
 
-  const IndexView<DATA_TYPE,1> operator[](int i) const { CHECK_BOUNDS_1(i); return IndexView<DATA_TYPE,1>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
-  IndexView<DATA_TYPE,1>       operator[](int i)       { CHECK_BOUNDS_1(i); return IndexView<DATA_TYPE,1>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
+  const IndexView<DATA_TYPE,1> operator[](size_t i) const { CHECK_BOUNDS_1(i); return IndexView<DATA_TYPE,1>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
+  IndexView<DATA_TYPE,1>       operator[](size_t i)       { CHECK_BOUNDS_1(i); return IndexView<DATA_TYPE,1>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
 
-  const int* strides() const   { return strides_; }
-  const int* shape() const   { return shape_; }
-  int shape(const int i) const { return shape_[i]; }
+  const size_t* strides() const   { return strides_; }
+  const size_t* shape() const   { return shape_; }
+  size_t shape(const size_t i) const { return shape_[i]; }
 
-  std::size_t size() const { return shape_[0]; }
-  std::size_t total_size() const { return shape_[0]*shape_[1]; }
-  void operator=(const DATA_TYPE& scalar) { for(int n=0; n<total_size(); ++n) *(data_+n)=scalar TO_FORTRAN; }
+  size_t size() const { return shape_[0]; }
+  size_t total_size() const { return shape_[0]*shape_[1]; }
+  void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<total_size(); ++n) *(data_+n)=scalar TO_FORTRAN; }
 private:
   DATA_TYPE* data_;
-  int strides_[2];
-  int shape_[2];
+  size_t strides_[2];
+  size_t shape_[2];
 };
 
 //------------------------------------------------------------------------------------------------------
@@ -236,19 +236,19 @@ public:
 
 public:
   IndexView() {}
-  IndexView( const DATA_TYPE* data, const int strides[3], const int shape[3] ) : data_( const_cast<DATA_TYPE*>(data) )
+  IndexView( const DATA_TYPE* data, const size_t strides[3], const size_t shape[3] ) : data_( const_cast<DATA_TYPE*>(data) )
   {
     strides_[0]=strides[0];            shape_[0]=shape[0];
     strides_[1]=strides[1];            shape_[1]=shape[1];
     strides_[2]=strides[2];            shape_[2]=shape[2];
   }
-  IndexView( const DATA_TYPE* data, const int shape[3] ) : data_( const_cast<DATA_TYPE*>(data) )
+  IndexView( const DATA_TYPE* data, const size_t shape[3] ) : data_( const_cast<DATA_TYPE*>(data) )
   {
     shape_[0]=shape[0]; strides_[0]=shape[2]*shape[1];
     shape_[1]=shape[1]; strides_[1]=shape[2];
     shape_[2]=shape[2]; strides_[2]=1;
   }
-  IndexView( const DATA_TYPE* data, const std::vector<int>& shape ) : data_( const_cast<DATA_TYPE*>(data) )
+  IndexView( const DATA_TYPE* data, const std::vector<size_t>& shape ) : data_( const_cast<DATA_TYPE*>(data) )
   {
     shape_[0]=shape[0]; strides_[0]=shape[2]*shape[1];
     shape_[1]=shape[1]; strides_[1]=shape[2];
@@ -257,23 +257,23 @@ public:
   IndexView( const Array<DATA_TYPE>& array );
   IndexView( const Field& field );
 
-  DATA_TYPE operator()(int i, int j, int k) const { CHECK_BOUNDS_3(i,j,k); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]) FROM_FORTRAN; }
-  Index     operator()(int i, int j, int k)       { CHECK_BOUNDS_3(i,j,k); return INDEX_REF(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]); }
+  DATA_TYPE operator()(size_t i, size_t j, size_t k) const { CHECK_BOUNDS_3(i,j,k); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]) FROM_FORTRAN; }
+  Index     operator()(size_t i, size_t j, size_t k)       { CHECK_BOUNDS_3(i,j,k); return INDEX_REF(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]); }
 
-  const IndexView<DATA_TYPE,2> operator[](int i) const { CHECK_BOUNDS_1(i); return IndexView<DATA_TYPE,2>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
-  IndexView<DATA_TYPE,2>       operator[](int i)       { CHECK_BOUNDS_1(i); return IndexView<DATA_TYPE,2>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
+  const IndexView<DATA_TYPE,2> operator[](size_t i) const { CHECK_BOUNDS_1(i); return IndexView<DATA_TYPE,2>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
+  IndexView<DATA_TYPE,2>       operator[](size_t i)       { CHECK_BOUNDS_1(i); return IndexView<DATA_TYPE,2>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
 
-  const int* strides() const   { return strides_; }
-  const int* shape() const   { return shape_; }
-  int shape(const int i) const { return shape_[i]; }
+  const size_t* strides() const   { return strides_; }
+  const size_t* shape() const   { return shape_; }
+  size_t shape(const size_t i) const { return shape_[i]; }
 
-  std::size_t size() const { return shape_[0]; }
-  std::size_t total_size() const { return shape_[0]*shape_[1]*shape_[2]; }
-  void operator=(const DATA_TYPE& scalar) { for(int n=0; n<total_size(); ++n) *(data_+n)=scalar TO_FORTRAN; }
+  size_t size() const { return shape_[0]; }
+  size_t total_size() const { return shape_[0]*shape_[1]*shape_[2]; }
+  void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<total_size(); ++n) *(data_+n)=scalar TO_FORTRAN; }
 private:
   DATA_TYPE* data_;
-  int strides_[3];
-  int shape_[3];
+  size_t strides_[3];
+  size_t shape_[3];
 };
 
 //------------------------------------------------------------------------------------------------------
@@ -290,7 +290,7 @@ public:
 
 public:
   IndexView() {}
-  IndexView( DATA_TYPE* data, const int strides[4], const int shape[4] ) : data_( const_cast<DATA_TYPE*>(data) )
+  IndexView( DATA_TYPE* data, const size_t strides[4], const size_t shape[4] ) : data_( const_cast<DATA_TYPE*>(data) )
   {
     strides_[0]=strides[0];            shape_[0]=shape[0];
     strides_[1]=strides[1];            shape_[1]=shape[1];
@@ -300,24 +300,24 @@ public:
   IndexView( const Array<DATA_TYPE>& array );
   IndexView( const Field& field );
 
-  DATA_TYPE operator()(int i, int j, int k, int l) const { CHECK_BOUNDS_4(i,j,k,l); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]+l*strides_[3]) FROM_FORTRAN; }
-  Index     operator()(int i, int j, int k, int l)       { CHECK_BOUNDS_4(i,j,k,l); return INDEX_REF(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]+l*strides_[3]); }
+  DATA_TYPE operator()(size_t i, size_t j, size_t k, size_t l) const { CHECK_BOUNDS_4(i,j,k,l); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]+l*strides_[3]) FROM_FORTRAN; }
+  Index     operator()(size_t i, size_t j, size_t k, size_t l)       { CHECK_BOUNDS_4(i,j,k,l); return INDEX_REF(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]+l*strides_[3]); }
 
-  const IndexView<DATA_TYPE,3> operator[](int i) const { CHECK_BOUNDS_1(i); return IndexView<DATA_TYPE,3>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
-  IndexView<DATA_TYPE,3>       operator[](int i)       { CHECK_BOUNDS_1(i); return IndexView<DATA_TYPE,3>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
+  const IndexView<DATA_TYPE,3> operator[](size_t i) const { CHECK_BOUNDS_1(i); return IndexView<DATA_TYPE,3>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
+  IndexView<DATA_TYPE,3>       operator[](size_t i)       { CHECK_BOUNDS_1(i); return IndexView<DATA_TYPE,3>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
 
-  const int* strides() const   { return strides_; }
-  const int* shape() const   { return shape_; }
-  int shape(const int i) const { return shape_[i]; }
+  const size_t* strides() const   { return strides_; }
+  const size_t* shape() const   { return shape_; }
+  size_t shape(const size_t i) const { return shape_[i]; }
 
-  std::size_t size() const { return shape_[0]; }
-  std::size_t total_size() const { return shape_[0]*shape_[1]*shape_[2]*shape_[3]; }
-  void operator=(const DATA_TYPE& scalar) { for(int n=0; n<total_size(); ++n) *(data_+n)=scalar TO_FORTRAN; }
+  size_t size() const { return shape_[0]; }
+  size_t total_size() const { return shape_[0]*shape_[1]*shape_[2]*shape_[3]; }
+  void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<total_size(); ++n) *(data_+n)=scalar TO_FORTRAN; }
 
 private:
   DATA_TYPE* data_;
-  int strides_[4];
-  int shape_[4];
+  size_t strides_[4];
+  size_t shape_[4];
 };
 
 //------------------------------------------------------------------------------------------------------
@@ -325,6 +325,7 @@ private:
 } // namespace atlas
 
 #undef CHECK_RANK
+#undef CHECK_BOUNDS
 #undef CHECK_BOUNDS_1
 #undef CHECK_BOUNDS_2
 #undef CHECK_BOUNDS_3

@@ -48,7 +48,7 @@ public: // methods
 
 	enum { UNDEF_VARS = -1 };
 
-	Field(const std::string& name, const int nb_vars, FunctionSpace& function_space);
+	Field(const std::string& name, const size_t nb_vars, FunctionSpace& function_space);
 
 	virtual ~Field();
 
@@ -59,7 +59,7 @@ public: // methods
 
 	const std::string& data_type() const { return data_type_; }
 
-	virtual void allocate(const std::vector<int>& shapef)=0;
+	virtual void allocate(const std::vector<size_t>& shapef)=0;
 	const std::string& name() const { return name_; }
 
 	const Grid& grid() const { return mesh().grid(); }
@@ -73,11 +73,11 @@ public: // methods
 	FunctionSpace& function_space() const { return function_space_; }
 
 	const std::vector<int>& shapef() const	{ return shapef_; }
-	const std::vector<int>& shape() const { return shape_; }
-	const std::vector<int>& strides() const { return strides_; }
-	int stride(int i) const { return strides_[i];}
-	int shape(int i) const { return shape_[i];}
-	int nb_vars() const { return nb_vars_; }
+	const std::vector<size_t>& shape() const { return shape_; }
+	const std::vector<size_t>& strides() const { return strides_; }
+	size_t stride(int i) const { return strides_[i];}
+	size_t shape(int i) const { return shape_[i];}
+	size_t nb_vars() const { return nb_vars_; }
 
 	virtual size_t size() const = 0;
 	virtual void halo_exchange() = 0;
@@ -93,13 +93,13 @@ protected: // members
 	std::string name_;
 	std::string data_type_;
 	std::vector<int> shapef_;
-	std::vector<int> shape_;
-	std::vector<int> strides_;
+	std::vector<size_t> shape_;
+	std::vector<size_t> strides_;
 
 	FunctionSpace& function_space_;
 	Metadata metadata_;
 
-	int nb_vars_;
+	size_t nb_vars_;
 
 };
 
@@ -123,7 +123,7 @@ public: // methods
 
 	virtual size_t size() const { return data_.size(); }
 
-	virtual void allocate(const std::vector<int>& shapef);
+	virtual void allocate(const std::vector<size_t>& shape);
 
 	DATA_TYPE* data() { return data_.data(); }
 	DATA_TYPE const* data() const { return data_.data(); }
@@ -155,7 +155,7 @@ inline FieldT<DATA_TYPE>::~FieldT()
 }
 
 template< typename DATA_TYPE >
-inline void FieldT<DATA_TYPE>::allocate(const std::vector<int>& shape)
+inline void FieldT<DATA_TYPE>::allocate(const std::vector<size_t>& shape)
 {
 	shape_ = shape;
 	size_t tot_size(1); for (int i = 0; i < shape_.size(); ++i) tot_size *= shape_[i];

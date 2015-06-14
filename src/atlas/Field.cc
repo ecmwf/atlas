@@ -19,7 +19,7 @@
 
 namespace atlas {
 
-Field::Field(const std::string& name, const int nb_vars, FunctionSpace& function_space) :
+Field::Field(const std::string& name, const size_t nb_vars, FunctionSpace& function_space) :
   name_(name), nb_vars_(nb_vars), function_space_(function_space)
 {
 }

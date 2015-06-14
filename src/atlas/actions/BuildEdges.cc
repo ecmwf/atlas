@@ -67,7 +67,7 @@ void build_element_to_edge_connectivity( Mesh& mesh )
   for( int func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
   {
     FunctionSpace& func_space = mesh.function_space(func_space_idx);
-	if( func_space.metadata().get<long>("type") == Entity::ELEMS )
+    if( func_space.metadata().get<long>("type") == Entity::ELEMS )
     {
       int nb_edges_per_elem;
       if (func_space.name() == "quads")  nb_edges_per_elem = 4;
@@ -95,7 +95,7 @@ void build_element_to_edge_connectivity( Mesh& mesh )
   UniqueLonLat uid( nodes );
 
   std::vector<Sort> edge_sort(nb_edges);
-  for( int edge=0; edge<nb_edges; ++edge )
+  for( size_t edge=0; edge<nb_edges; ++edge )
     edge_sort[edge] = Sort( uid(edge_nodes[edge]), edge );
   std::sort( edge_sort.data(), edge_sort.data()+nb_edges );
 
@@ -119,10 +119,10 @@ void build_element_to_edge_connectivity( Mesh& mesh )
 //  std::sort( edge_sort.data(), edge_sort.data()+nb_edges );
 
 
-  for( int jedge=0; jedge<nb_edges; ++jedge)
+  for( size_t jedge=0; jedge<nb_edges; ++jedge)
   {
     int edge = edge_sort[jedge].i;
-    for( int j=0; j<2; ++j)
+    for( size_t j=0; j<2; ++j)
     {
       int func_space_idx = edge_to_elem(edge,j,0);
       int elem           = edge_to_elem(edge,j,1);
@@ -147,17 +147,17 @@ void build_element_to_edge_connectivity( Mesh& mesh )
 
 	// Verify that all edges have been found
 	ASSERT( nb_edges > 0 );
-	for( int func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
+	for( size_t func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
   {
     FunctionSpace& func_space = mesh.function_space(func_space_idx);
 	if( func_space.metadata().get<long>("type") == Entity::ELEMS )
     {
-      int nb_edges_per_elem;
+      size_t nb_edges_per_elem;
       if (func_space.name() == "quads")  nb_edges_per_elem = 4;
       if (func_space.name() == "triags") nb_edges_per_elem = 3;
-			for( int jelem=0; jelem< func_space.shape(0); ++jelem )
+			for( size_t jelem=0; jelem< func_space.shape(0); ++jelem )
 			{
-				for( int jedge=0; jedge<nb_edges_per_elem; ++jedge )
+				for( size_t jedge=0; jedge<nb_edges_per_elem; ++jedge )
 				{
 					if( elem_to_edge[func_space_idx](jelem,jedge) < 0 )
 					{
@@ -165,7 +165,7 @@ void build_element_to_edge_connectivity( Mesh& mesh )
 						const ArrayView<gidx_t,1> gidx (nodes.field<gidx_t>("glb_idx"));
 
 						std::stringstream msg; msg << "Could not find edge " << jedge << " for " << func_space.name() << " elem " << jelem << " with nodes ( ";
-						for( int jnode=0; jnode<elem_nodes.shape(1); ++jnode )
+						for( size_t jnode=0; jnode<elem_nodes.shape(1); ++jnode )
 						{
 							msg << gidx(elem_nodes(jelem,jnode)) <<" ";
 						}
@@ -210,7 +210,7 @@ void build_node_to_edge_connectivity( Mesh& mesh )
 
   UniqueLonLat uid( nodes );
   std::vector<Sort> edge_sort(nb_edges);
-  for( int edge=0; edge<nb_edges; ++edge )
+  for( size_t edge=0; edge<nb_edges; ++edge )
     edge_sort[edge] = Sort( uid(edge_nodes[edge]), edge );
   std::stable_sort( edge_sort.data(), edge_sort.data()+nb_edges );
 
@@ -221,10 +221,10 @@ void build_node_to_edge_connectivity( Mesh& mesh )
 //  std::sort( edge_sort.data(), edge_sort.data()+nb_edges );
 
   to_edge_size = 0.;
-  for( int jedge=0; jedge<nb_edges; ++jedge)
+  for( size_t jedge=0; jedge<nb_edges; ++jedge)
   {
     int edge = edge_sort[jedge].i;
-    for( int j=0; j<2; ++j)
+    for( size_t j=0; j<2; ++j)
     {
       int node = edge_nodes(edge,j);
       node_to_edge( node, to_edge_size(node)++ ) = edge;
@@ -241,7 +241,7 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
   ArrayView<int,   1> part      ( nodes.field( "partition"   ) );
   ArrayView<int,   1> flags     ( nodes.field( "flags"       ) );
   IndexView<int,   1> ridx      ( nodes.field( "remote_idx"  ) );
-  int nb_nodes = nodes.shape(0);
+  size_t nb_nodes = nodes.shape(0);
 
   double min[2], max[2];
   min[LON] =  std::numeric_limits<double>::max();
@@ -268,7 +268,7 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
 
   enum { NORTH=0, SOUTH=1 };
 
-  for (int node=0; node<nb_nodes; ++node)
+  for (size_t node=0; node<nb_nodes; ++node)
   {
     //std::cout << "node " << node << "   " << std::abs(lonlat(LAT,node)-ymax) << std::endl;
 
@@ -307,7 +307,7 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
   }
 
   nb_pole_edges = 0;
-  for( int NS = 0; NS<2; ++NS )
+  for( size_t NS = 0; NS<2; ++NS )
   {
     for( std::set<int>::iterator it=pole_nodes[NS].begin(); it!=pole_nodes[NS].end(); ++it)
     {
@@ -372,7 +372,7 @@ struct ComputeUniquePoleEdgeIndex
     double centroid[2];
     centroid[LON] = 0.;
     centroid[LAT] = 0.;
-    for( int jnode=0; jnode<2; ++jnode )
+    for( size_t jnode=0; jnode<2; ++jnode )
     {
       centroid[LON] += lonlat( edge_nodes(jnode), LON );
       centroid[LAT] += lonlat( edge_nodes(jnode), LAT );
@@ -396,7 +396,7 @@ void build_edges( Mesh& mesh )
   ArrayView<gidx_t,1> glb_idx(        nodes.field( "glb_idx" ) );
   ArrayView<int,1> part   (        nodes.field( "partition" ) );
   ArrayView<double,2> lonlat (     nodes.field( "lonlat" ) );
-  int nb_nodes = nodes.shape(0);
+  size_t nb_nodes = nodes.shape(0);
 
   FunctionSpace& quads       = mesh.function_space( "quads" );
   FunctionSpace& triags      = mesh.function_space( "triags" );
@@ -412,7 +412,7 @@ void build_edges( Mesh& mesh )
   accumulate_faces(triags,node_to_face,face_nodes_data,face_to_elem,nb_faces,nb_inner_faces);
 
 
-  int extents[] = {nb_faces,2};
+  size_t extents[] = {nb_faces,2};
   ArrayView<int,2> face_nodes(face_nodes_data.data(),extents);
 
   // Build edges
@@ -439,7 +439,7 @@ void build_edges( Mesh& mesh )
 
   std::vector< IndexView<int,2> > elem_nodes( mesh.nb_function_spaces() );
 
-  for( int func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
+  for( size_t func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
   {
     FunctionSpace& func_space = mesh.function_space(func_space_idx);
 	if( func_space.metadata().get<long>("type") == Entity::ELEMS )
@@ -451,7 +451,7 @@ void build_edges( Mesh& mesh )
   UniqueLonLat compute_uid( nodes );
 
   int cnt=0;
-  for( int edge=0; edge<nb_edges; ++edge )
+  for( size_t edge=0; edge<nb_edges; ++edge )
   {
     const int ip1 = face_nodes(edge,0);
     const int ip2 = face_nodes(edge,1);
@@ -499,7 +499,7 @@ void build_pole_edges( Mesh& mesh )
   FunctionSpace& nodes   = mesh.function_space( "nodes" );
 
   ArrayView<int,1> part   (        nodes.field( "partition" ) );
-  int nb_edges = 0;
+  size_t nb_edges = 0;
 
   if( ! mesh.has_function_space("edges") )
 	mesh.create_function_space( "edges","shapefunc", make_shape(nb_edges,Field::UNDEF_VARS) );
@@ -529,12 +529,12 @@ void build_pole_edges( Mesh& mesh )
   ArrayView<int,1> is_pole_edge ( edges.field( "is_pole_edge" ) );
   IndexView<int,3> edge_to_elem ( edges.field( "to_elem"    ).data<int>(), make_shape(nb_edges+nb_pole_edges,2,2) );
 
-  for(int edge=0; edge<nb_edges; ++edge)
+  for(size_t edge=0; edge<nb_edges; ++edge)
   {
     is_pole_edge(edge) = 0;
   }
 
-  int cnt = 0;
+  size_t cnt = 0;
   ComputeUniquePoleEdgeIndex compute_uid( nodes );
   for(int edge=nb_edges; edge<nb_edges+nb_pole_edges; ++edge)
   {

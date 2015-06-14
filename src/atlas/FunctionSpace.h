@@ -51,7 +51,7 @@ public: // types
 
 public: // methods
 
-	FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<int>& shape, Mesh& mesh );
+	FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<size_t>& shape, Mesh& mesh );
 
 	virtual ~FunctionSpace();
 
@@ -74,17 +74,17 @@ public: // methods
 
 	// This is a Fortran view of the shape (i.e. reverse order)
 	const std::vector<int>& shapef() const { return shapef_; }
-	const std::vector<int>& shape() const { return shape_; }
-	int shape(const int i) const { ASSERT(i<shape_.size()); return shape_[i]; }
-	void resize( const std::vector<int>& shape );
+	const std::vector<size_t>& shape() const { return shape_; }
+	int shape(const size_t i) const { ASSERT(i<shape_.size()); return shape_[i]; }
+	void resize( const std::vector<size_t>& shape );
 
 
 	void parallelise();
-	void parallelise(const int proc[], const int remote_idx[], const gidx_t glb_idx[], int size);
+	void parallelise(const int proc[], const int remote_idx[], const gidx_t glb_idx[], size_t size);
 	void parallelise(FunctionSpace& other_functionspace);
 
 	template< typename DATA_TYPE >
-	void halo_exchange( DATA_TYPE field_data[], int field_size )
+	void halo_exchange( DATA_TYPE field_data[], size_t field_size )
 	{
 		int nb_vars = field_size/dof_;
 		if( dof_*nb_vars != field_size )
@@ -97,7 +97,7 @@ public: // methods
 	}
 
 	template< typename DATA_TYPE >
-	void gather( const DATA_TYPE field_data[], int field_size, DATA_TYPE glbfield_data[], int glbfield_size )
+	void gather( const DATA_TYPE field_data[], size_t field_size, DATA_TYPE glbfield_data[], size_t glbfield_size )
 	{
 		int nb_vars = field_size/dof_;
 		if( dof_*nb_vars != field_size ) eckit::Log::error() << "ERROR in FunctionSpace::gather" << std::endl;
@@ -117,7 +117,7 @@ public: // methods
 
 	mpl::Checksum& checksum() const { return *checksum_; }
 
-	void set_index(int idx) { idx_ = idx; }
+	void set_index(size_t idx) { idx_ = idx; }
 
 
 	const Metadata& metadata() const { return metadata_; }
@@ -136,14 +136,14 @@ public: // methods
 
 protected: // members
 
-	int idx_;
-	int dof_;
-	int glb_dof_;
+	size_t idx_;
+	size_t dof_;
+	size_t glb_dof_;
 
 	std::string name_;
 
-	std::vector<int> shapef_; // deprecated, use shape which is reverse order
-	std::vector<int> shape_;
+	std::vector<int>    shapef_; // deprecated, use shape which is reverse order
+	std::vector<size_t> shape_;
 
 	eckit::DenseMap< std::string, eckit::SharedPtr<Field> > fields_;
 

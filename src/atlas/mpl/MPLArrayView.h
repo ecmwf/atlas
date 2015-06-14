@@ -28,52 +28,52 @@ public:
 public:
   MPL_ArrayView();
 
-  MPL_ArrayView( const DATA_TYPE* data, const int strides[], const int shape[], const int rank,
-                 const int mpl_idxpos[], const int mpl_rank );
+  MPL_ArrayView( const DATA_TYPE* data, const size_t strides[], const size_t shape[], const size_t rank,
+                 const size_t mpl_idxpos[], const size_t mpl_rank );
 
-  MPL_ArrayView( const DATA_TYPE* data, const int strides[], const int shape[], const int rank,
-                 const int mpl_idxpos );
+  MPL_ArrayView( const DATA_TYPE* data, const size_t strides[], const size_t shape[], const size_t rank,
+                 const size_t mpl_idxpos );
 
   template <int R>
     MPL_ArrayView( const ArrayView<MPL_ArrayView::value_type,R>& arrview,
-                   const int mpl_idxpos[], const int mpl_rank );
+                   const size_t mpl_idxpos[], const size_t mpl_rank );
 
   template <int R>
      MPL_ArrayView( const ArrayView<const value_type,R>& arrview,
-                    const int mpl_idxpos[], const int mpl_rank );
+                    const size_t mpl_idxpos[], const size_t mpl_rank );
 
   int mpl_rank() const { return mpl_rank_; }
 
-  const std::vector<int>& mpl_shape() const { return mpl_shape_; }
+  const std::vector<size_t>& mpl_shape() const { return mpl_shape_; }
 
-  const std::vector<int>& mpl_strides() const { return mpl_strides_; }
+  const std::vector<size_t>& mpl_strides() const { return mpl_strides_; }
 
-  int mpl_shape(int idx) const { return mpl_shape_[idx]; }
+  size_t mpl_shape(size_t idx) const { return mpl_shape_[idx]; }
 
-  int mpl_stride(int idx) const { return mpl_strides_[idx]; }
+  size_t mpl_stride(size_t idx) const { return mpl_strides_[idx]; }
 
-  int var_rank() const { return var_rank_; }
+  size_t var_rank() const { return var_rank_; }
 
-  const std::vector<int>& var_shape() const { return var_shape_; }
+  const std::vector<size_t>& var_shape() const { return var_shape_; }
 
-  const std::vector<int>& var_strides() const { return var_strides_; }
+  const std::vector<size_t>& var_strides() const { return var_strides_; }
 
-  int var_shape(int idx) const { return var_shape_[idx]; }
+  size_t var_shape(size_t idx) const { return var_shape_[idx]; }
 
-  int var_stride(int idx) const { return var_strides_[idx]; }
-
-private:
-  void constructor(const int mpl_idxpos[], const int mpl_rank);
+  size_t var_stride(size_t idx) const { return var_strides_[idx]; }
 
 private:
-  std::vector<int> mpl_strides_;
-  std::vector<int> mpl_shape_;
-  int mpl_rank_;
-  int mpl_size_;
-  std::vector<int> var_strides_;
-  std::vector<int> var_shape_;
-  int var_rank_;
-  int var_size_;
+  void constructor(const size_t mpl_idxpos[], const size_t mpl_rank);
+
+private:
+  std::vector<size_t> mpl_strides_;
+  std::vector<size_t> mpl_shape_;
+  size_t mpl_rank_;
+  size_t mpl_size_;
+  std::vector<size_t> var_strides_;
+  std::vector<size_t> var_shape_;
+  size_t var_rank_;
+  size_t var_size_;
 };
 
 ///////////////////////////////////////////////////////////////////////////
@@ -82,16 +82,16 @@ template <typename DATA_TYPE>
 MPL_ArrayView<DATA_TYPE>::MPL_ArrayView() : ArrayView<DATA_TYPE>() {}
 
 template <typename DATA_TYPE>
-MPL_ArrayView<DATA_TYPE>::MPL_ArrayView( const DATA_TYPE* data, const int strides[], const int shape[], const int rank,
-               const int mpl_idxpos[], const int mpl_rank ) :
+MPL_ArrayView<DATA_TYPE>::MPL_ArrayView( const DATA_TYPE* data, const size_t strides[], const size_t shape[], const size_t rank,
+               const size_t mpl_idxpos[], const size_t mpl_rank ) :
   ArrayView<DATA_TYPE>(data,strides,shape,rank)
 {
   constructor(mpl_idxpos,mpl_rank);
 }
 
 template <typename DATA_TYPE>
-MPL_ArrayView<DATA_TYPE>::MPL_ArrayView( const DATA_TYPE* data, const int strides[], const int shape[], const int rank,
-               const int mpl_idxpos ) :
+MPL_ArrayView<DATA_TYPE>::MPL_ArrayView( const DATA_TYPE* data, const size_t strides[], const size_t shape[], const size_t rank,
+               const size_t mpl_idxpos ) :
   ArrayView<DATA_TYPE>(data,strides,shape,rank)
 {
   constructor(&mpl_idxpos,1);
@@ -100,7 +100,7 @@ MPL_ArrayView<DATA_TYPE>::MPL_ArrayView( const DATA_TYPE* data, const int stride
 template <typename DATA_TYPE>
 template <int R>
 MPL_ArrayView<DATA_TYPE>::MPL_ArrayView( const ArrayView<value_type,R>& arrview,
-               const int mpl_idxpos[], const int mpl_rank ) :
+               const size_t mpl_idxpos[], const size_t mpl_rank ) :
   ArrayView<DATA_TYPE>(arrview.data(),arrview.strides(),arrview.shape(),arrview.rank())
 {
   constructor(mpl_idxpos,mpl_rank);
@@ -109,14 +109,14 @@ MPL_ArrayView<DATA_TYPE>::MPL_ArrayView( const ArrayView<value_type,R>& arrview,
 template <typename DATA_TYPE>
 template <int R>
 MPL_ArrayView<DATA_TYPE>::MPL_ArrayView( const ArrayView<const value_type,R>& arrview,
-               const int mpl_idxpos[], const int mpl_rank ) :
+               const size_t mpl_idxpos[], const size_t mpl_rank ) :
   ArrayView<DATA_TYPE>(arrview.data(),arrview.strides(),arrview.shape(),arrview.rank())
 {
   constructor(mpl_idxpos,mpl_rank);
 }
 
 template <typename DATA_TYPE>
-void MPL_ArrayView<DATA_TYPE>::constructor(const int mpl_idxpos[], const int mpl_rank)
+void MPL_ArrayView<DATA_TYPE>::constructor(const size_t mpl_idxpos[], const size_t mpl_rank)
 {
   if( ArrayView<DATA_TYPE>::rank() == 1 )
   {
@@ -137,12 +137,12 @@ void MPL_ArrayView<DATA_TYPE>::constructor(const int mpl_idxpos[], const int mpl
     var_shape_.reserve(var_rank_);
     mpl_size_ = 0;
     var_size_ = 0;
-    int nvar(0);
-    int nmpl(0);
-    for( int jpos=0; jpos<ArrayView<DATA_TYPE>::rank(); ++jpos )
+    size_t nvar(0);
+    size_t nmpl(0);
+    for( size_t jpos=0; jpos<ArrayView<DATA_TYPE>::rank(); ++jpos )
     {
       bool isvar(true);
-      for( int jmpl=0; jmpl<mpl_rank_; ++jmpl )
+      for( size_t jmpl=0; jmpl<mpl_rank_; ++jmpl )
       {
         if( jpos == mpl_idxpos[jmpl] )
         {

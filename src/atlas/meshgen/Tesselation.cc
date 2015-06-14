@@ -259,7 +259,7 @@ void Tesselation::create_mesh_structure( Mesh& mesh, const size_t nb_nodes )
 {
     // create / ensure mesh has coordinates
 
-    std::vector<int> extents (2);
+    std::vector<size_t> extents (2);
     if( ! mesh.has_function_space("nodes") )
     {
         extents[0] = nb_nodes;

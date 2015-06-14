@@ -36,8 +36,8 @@ std::string pos(Iterator& it)
 BOOST_AUTO_TEST_CASE( test_arrayview_iterator )
 {
   Array<int> array(5,4,2);
-  int strides[2] = {8,1};
-  int extents[2] = {5,2};
+  size_t strides[2] = {8,1};
+  size_t extents[2] = {5,2};
   ArrayView<int>       aview(array.data(),strides,extents,2);
   ArrayView<int> const const_aview(array);
 

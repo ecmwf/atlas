@@ -73,7 +73,7 @@ namespace test {
     double eval( const double point[NDIM] ) const
     {
       double val = coeff;
-      for( int d=0; d<NDIM; ++d )
+      for( size_t d=0; d<NDIM; ++d )
       {
         val *= std::pow(point[d], power[d]);
       }
@@ -95,7 +95,7 @@ namespace test {
       return coeff * std::pow(x,power[0]) * std::pow(y,power[1]) * std::pow(z,power[2]);
     }
 
-    Mononomial deriv(int dim) const
+    Mononomial deriv(size_t dim) const
     {
       double c = coeff*power[dim];
       int p[NDIM];
@@ -108,7 +108,7 @@ namespace test {
     int power[NDIM];
   };
 
-  template< int NDIM >
+  template< size_t NDIM >
   class Polynomial
   {
   public:
@@ -125,7 +125,7 @@ namespace test {
     double eval( const double point[NDIM] ) const
     {
       double val = 0;
-      for( int n=0; n<mononomials_.size(); ++n )
+      for( size_t n=0; n<mononomials_.size(); ++n )
       {
         val += mononomials_[n].eval(point);
       }
@@ -135,7 +135,7 @@ namespace test {
     double eval( const double& x ) const
     {
       double val = 0;
-      for( int n=0; n<mononomials_.size(); ++n )
+      for( size_t n=0; n<mononomials_.size(); ++n )
       {
         val += mononomials_[n].eval(x);
       }
@@ -145,7 +145,7 @@ namespace test {
     double eval( const double& x, const double& y ) const
     {
       double val = 0;
-      for( int n=0; n<mononomials_.size(); ++n )
+      for( size_t n=0; n<mononomials_.size(); ++n )
       {
         val += mononomials_[n].eval(x,y);
       }
@@ -155,7 +155,7 @@ namespace test {
     double eval( const double& x, const double& y, const double& z ) const
     {
       double val = 0;
-      for( int n=0; n<mononomials_.size(); ++n )
+      for( size_t n=0; n<mononomials_.size(); ++n )
       {
         val += mononomials_[n].eval(x,y,z);
       }
@@ -182,10 +182,10 @@ namespace test {
       return eval(x,y,z);
     }
 
-    Polynomial deriv(int dim) const
+    Polynomial deriv(size_t dim) const
     {
       Polynomial p;
-      for( int i=0; i<mononomials_.size(); ++i )
+      for( size_t i=0; i<mononomials_.size(); ++i )
         p.add(mononomials_[i].deriv(dim));
       return p;
     }
@@ -193,7 +193,7 @@ namespace test {
     std::vector<Polynomial> grad() const
     {
       std::vector<Polynomial> g;
-      for( int d=0; d<NDIM; ++d )
+      for( size_t d=0; d<NDIM; ++d )
         g.push_back(deriv(d));
       return g;
     }
@@ -201,7 +201,7 @@ namespace test {
     static Polynomial div( const std::vector<Polynomial>& pvec )
     {
       Polynomial p;
-      for( int d=0; d<NDIM; ++d )
+      for( size_t d=0; d<NDIM; ++d )
         p += pvec[d].deriv(d);
       return p;
     }
@@ -255,14 +255,14 @@ namespace test {
     Polynomial& addition(const Polynomial& other, double sign = 1. )
     {
       std::vector<bool> matched(other.mononomials_.size(),false);
-      for( int i=0; i<mononomials_.size(); ++i )
+      for( size_t i=0; i<mononomials_.size(); ++i )
       {
-        for( int j=0; j<other.mononomials_.size(); ++j )
+        for( size_t j=0; j<other.mononomials_.size(); ++j )
         {
           if( !matched[j] )
           {
             bool match=true;
-            for( int d=0; d<NDIM; ++d )
+            for( size_t d=0; d<NDIM; ++d )
             {
               if( mononomials_[i].power[d] != other.mononomials_[j].power[d] )
               {
@@ -278,7 +278,7 @@ namespace test {
           }
         }
       }
-      for( int j=0; j<other.mononomials_.size(); ++j )
+      for( size_t j=0; j<other.mononomials_.size(); ++j )
       {
         if( !matched[j] )
         {
@@ -312,7 +312,7 @@ namespace test {
 
   public:
 
-    int N() const { return N_; }
+    size_t N() const { return N_; }
 
     bool parametric() const { return parametric_; }
 
@@ -324,7 +324,7 @@ namespace test {
 
     bool parametric_;
 
-    int N_;
+    size_t N_;
 
     std::vector<double> nodes_;
 
@@ -393,7 +393,7 @@ namespace test {
     {
       parametric_ = true;
       N_ = 1;
-      int nodes_init[] = { 0. };
+      double nodes_init[] = { 0. };
       nodes_.assign(nodes_init, nodes_init+N_);
       shape_function_ = ShapeFunction::Ptr( new ShapeFunction );
     }
@@ -406,7 +406,7 @@ namespace test {
     {
       parametric_ = true;
       N_ = 2;
-      int nodes_init[] = { -1., 1. };
+      double nodes_init[] = { -1., 1. };
       nodes_.assign(nodes_init, nodes_init+N_);
       shape_function_ = ShapeFunction::Ptr( new ShapeFunction );
     }
@@ -419,7 +419,7 @@ namespace test {
     {
       parametric_ = true;
       N_ = 3;
-      int nodes_init[] = { -1., 1., 0. };
+      double nodes_init[] = { -1., 1., 0. };
       nodes_.assign(nodes_init, nodes_init+N_);
       shape_function_ = ShapeFunction::Ptr( new ShapeFunction );
     }
@@ -451,19 +451,19 @@ namespace test {
       nproma_ = 0;
       nblk_ = 0;
     }
-    int npts()   const { return npts_; }
-    int nlev()   const { return nlev_; }
-    int nproma() const { return nproma_; }
-    int nblk()   const { return nblk_; }
-    int nlon()   const { return nlon_; }
-    int nlat()   const { return nlat_; }
+    size_t npts()   const { return npts_; }
+    size_t nlev()   const { return nlev_; }
+    size_t nproma() const { return nproma_; }
+    size_t nblk()   const { return nblk_; }
+    size_t nlon()   const { return nlon_; }
+    size_t nlat()   const { return nlat_; }
   private:
-    int npts_;
-    int nlev_;
-    int nproma_;
-    int nblk_;
-    int nlon_;
-    int nlat_;
+    size_t npts_;
+    size_t nlev_;
+    size_t nproma_;
+    size_t nblk_;
+    size_t nlon_;
+    size_t nlat_;
   };
 
   enum IndexType { IDX_NOTUSED=-100, IDX_NODE=-1, IDX_LEVEL=-2, IDX_BLK=-3, IDX_NPROMA=-4, IDX_VAR=-5 };
@@ -618,28 +618,28 @@ namespace test {
     std::vector<int> nelem_per_type_;
 
     /// @brief Total number of elements
-    int nb_elements_;
+    size_t nb_elements_;
 
     /// @brief Maximum number of points per element type
-    int N_max_;
+    size_t N_max_;
 
     /// @brief Minimum number of points per element type
-    int N_min_;
+    size_t N_min_;
 
     /// @brief Total number of nodes
-    int nb_nodes_;
+    size_t nb_nodes_;
 
     /// @brief Number of vertical levels
-    int nlev_;
+    size_t nlev_;
 
     /// @brief Number of nodes in one blk
-    int nproma_;
+    size_t nproma_;
 
     /// @brief Number of blocks in domain
-    int nblk_;
+    size_t nblk_;
 
-    int nb_owned_nodes_;
-    int nb_owned_elements_;
+    size_t nb_owned_nodes_;
+    size_t nb_owned_elements_;
   };
 
 
@@ -652,9 +652,9 @@ namespace test {
     {
       shape_function_ = ShapeFunction::Ptr( new ShapeFunction );
     }
-    int N() const { return npts()*nlev(); }
-    int npts() const { return horizontal_->N(); }
-    int nlev() const { return vertical_->N(); }
+    size_t N() const { return npts()*nlev(); }
+    size_t npts() const { return horizontal_->N(); }
+    size_t nlev() const { return vertical_->N(); }
   protected:
     ElementType::Ptr horizontal_;
     ElementType::Ptr vertical_;
@@ -719,7 +719,7 @@ namespace test {
     {
       for( size_t i=0; i<npts; ++i )
       {
-        for( int d=0; d<NDIM; ++d )
+        for( size_t d=0; d<NDIM; ++d )
           pwr[d] = powers(i,d);
         basis[n].add( Mononomial<NDIM>( coefficients(n,i), pwr ) );
       }
@@ -731,9 +731,9 @@ namespace test {
   IndexView<DATA_TYPE,2> make_IndexView(atlas::Array<DATA_TYPE>& array, NewFunctionSpace& elements, int element_type_index)
   {
     IndexView<DATA_TYPE,2> view;
-    int offset=0;
-    int strides[2];
-    int shape[2];
+    size_t offset=0;
+    size_t strides[2];
+    size_t shape[2];
     ASSERT( element_type_index < elements.nb_element_types() );
     ASSERT( array.shape(1) == elements.N_max() );
 
@@ -931,7 +931,7 @@ BOOST_AUTO_TEST_CASE( test_polynomial )
   double line_pts[] = {-1. , 1.};
   int line_npts = 2;
   PolynomialBasis1D line_basis = polynomial_basis<1>(1,line_pts,line_npts);
-  for( int n=0; n<line_npts; ++n)
+  for( size_t n=0; n<line_npts; ++n)
     DEBUG( n << ":  " << line_basis[n](-1.) << "  " << line_basis[n](+1.) );
 
   double quad_pts[] = {-1,   1.,   1.,  -1,
@@ -939,7 +939,7 @@ BOOST_AUTO_TEST_CASE( test_polynomial )
   int quad_npts = 4;
   PolynomialBasis2D quad_basis = polynomial_basis<2>(1,quad_pts,quad_npts);
 
-  for( int n=0; n<quad_npts; ++n)
+  for( size_t n=0; n<quad_npts; ++n)
     DEBUG( n << ":  " << quad_basis[n](-1.,-1.) << "  " << quad_basis[n](1.,-1.) << " " << quad_basis[n](1.,1.) << " " << quad_basis[n](-1.,1.) );
 
 

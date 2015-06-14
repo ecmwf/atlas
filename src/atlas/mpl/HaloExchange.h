@@ -41,47 +41,47 @@ public: // methods
 
   void setup( const int part[],
               const int remote_idx[], const int base,
-              int size );
+              size_t size );
 
   template <typename DATA_TYPE>
-  void execute( DATA_TYPE field[], const int var_strides[], const int var_shape[], int var_rank ) const;
+  void execute( DATA_TYPE field[], const size_t var_strides[], const size_t var_shape[], size_t var_rank ) const;
 
   template <typename DATA_TYPE>
-  void execute( DATA_TYPE field[], int nb_vars ) const;
+  void execute( DATA_TYPE field[], size_t nb_vars ) const;
 
   template <typename DATA_TYPE, int RANK>
   void execute( ArrayView<DATA_TYPE,RANK>& field ) const;
 
 private: // methods
 
-  void create_mappings( std::vector<int>& send_map, std::vector<int>& recv_map, int nb_vars ) const;
+  void create_mappings( std::vector<int>& send_map, std::vector<int>& recv_map, size_t nb_vars ) const;
 
   template<int N, int P>
-  void create_mappings_impl( std::vector<int>& send_map, std::vector<int>& recv_map, int nb_vars ) const;
+  void create_mappings_impl( std::vector<int>& send_map, std::vector<int>& recv_map, size_t nb_vars ) const;
 
-  int index(int i, int j, int k, int ni, int nj, int nk) const { return( i + ni*( j + nj*k) ); }
+  size_t index(size_t i, size_t j, size_t k, size_t ni, size_t nj, size_t nk) const { return( i + ni*( j + nj*k) ); }
 
-  int index(int i, int j, int ni, int nj) const { return( i + ni*j ); }
+  size_t index(size_t i, size_t j, size_t ni, size_t nj) const { return( i + ni*j ); }
 
 
   template< typename DATA_TYPE>
   void pack_send_buffer( const DATA_TYPE field[],
-                         const int var_strides[],
-                         const int var_shape[],
-                         int var_rank,
+                         const size_t var_strides[],
+                         const size_t var_shape[],
+                         size_t var_rank,
                          DATA_TYPE send_buffer[] ) const;
 
   template< typename DATA_TYPE>
   void unpack_recv_buffer(const DATA_TYPE recv_buffer[],
                           DATA_TYPE field[],
-                          const int var_strides[],
-                          const int var_shape[],
-                          int var_rank ) const;
+                          const size_t var_strides[],
+                          const size_t var_shape[],
+                          size_t var_rank ) const;
 
   template<typename DATA_TYPE, int RANK>
   void var_info( const ArrayView<DATA_TYPE,RANK>& arr,
-                 std::vector<int>& varstrides,
-                 std::vector<int>& varshape ) const;
+                 std::vector<size_t>& varstrides,
+                 std::vector<size_t>& varshape ) const;
 
 private: // data
   int               sendcnt_;
@@ -104,7 +104,7 @@ private: // data
 
 
 template<typename DATA_TYPE>
-void HaloExchange::execute(DATA_TYPE field[], const int var_strides[], const int var_shape[], int var_rank ) const
+void HaloExchange::execute(DATA_TYPE field[], const size_t var_strides[], const size_t var_shape[], size_t var_rank ) const
 {
   if( ! is_setup_ )
   {
@@ -112,7 +112,7 @@ void HaloExchange::execute(DATA_TYPE field[], const int var_strides[], const int
   }
 
   int tag=1;
-  int var_size = std::accumulate(var_shape,var_shape+var_rank,1,std::multiplies<int>());
+  size_t var_size = std::accumulate(var_shape,var_shape+var_rank,1,std::multiplies<size_t>());
   int send_size  = sendcnt_ * var_size;
   int recv_size  = recvcnt_ * var_size;
 
@@ -125,7 +125,7 @@ void HaloExchange::execute(DATA_TYPE field[], const int var_strides[], const int
   std::vector<MPI_Request> send_req   (nproc    );
   std::vector<MPI_Request> recv_req   (nproc    );
 
-  for (int jproc=0; jproc<nproc; ++jproc)
+  for (size_t jproc=0; jproc<nproc; ++jproc)
   {
     send_counts[jproc] = sendcounts_[jproc]*var_size;
     recv_counts[jproc] = recvcounts_[jproc]*var_size;
@@ -135,7 +135,7 @@ void HaloExchange::execute(DATA_TYPE field[], const int var_strides[], const int
 
 
   /// Let MPI know what we like to receive
-  for( int jproc=0; jproc<nproc; ++jproc )
+  for( size_t jproc=0; jproc<nproc; ++jproc )
   {
     if(recv_counts[jproc] > 0)
     {
@@ -148,7 +148,7 @@ void HaloExchange::execute(DATA_TYPE field[], const int var_strides[], const int
   pack_send_buffer(field,var_strides,var_shape,var_rank,send_buffer.data());
 
   /// Send
-  for( int jproc=0; jproc<nproc; ++jproc )
+  for( size_t jproc=0; jproc<nproc; ++jproc )
   {
     if(send_counts[jproc] > 0)
     {
@@ -158,7 +158,7 @@ void HaloExchange::execute(DATA_TYPE field[], const int var_strides[], const int
   }
 
   /// Wait for receiving to finish
-  for (int jproc=0; jproc<nproc; ++jproc)
+  for (size_t jproc=0; jproc<nproc; ++jproc)
   {
     if( recvcounts_[jproc] > 0)
     {
@@ -170,7 +170,7 @@ void HaloExchange::execute(DATA_TYPE field[], const int var_strides[], const int
   unpack_recv_buffer(recv_buffer.data(),field,var_strides,var_shape,var_rank);
 
   /// Wait for sending to finish
-  for (int jproc=0; jproc<nproc; ++jproc)
+  for (size_t jproc=0; jproc<nproc; ++jproc)
   {
     if( sendcounts_[jproc] > 0)
     {
@@ -185,31 +185,31 @@ void HaloExchange::execute(DATA_TYPE field[], const int var_strides[], const int
 
 template<typename DATA_TYPE>
 void HaloExchange::pack_send_buffer( const DATA_TYPE field[],
-                                     const int var_strides[],
-                                     const int var_shape[],
-                                     int var_rank,
+                                     const size_t var_strides[],
+                                     const size_t var_shape[],
+                                     size_t var_rank,
                                      DATA_TYPE send_buffer[] ) const
 {
-  int ibuf = 0;
-  int send_stride = var_strides[0]*var_shape[0];
+  size_t ibuf = 0;
+  size_t send_stride = var_strides[0]*var_shape[0];
 
   switch( var_rank )
   {
   case 1:
-    for( int p=0; p<sendcnt_; ++p)
+    for( size_t p=0; p<sendcnt_; ++p)
     {
-      const int pp = send_stride*sendmap_[p];
-      for( int i=0; i<var_shape[0]; ++i )
+      const size_t pp = send_stride*sendmap_[p];
+      for( size_t i=0; i<var_shape[0]; ++i )
         send_buffer[ibuf++] = field[pp+i*var_strides[0]];
     }
     break;
   case 2:
-    for( int p=0; p<sendcnt_; ++p)
+    for( size_t p=0; p<sendcnt_; ++p)
     {
-      const int pp = send_stride*sendmap_[p];
-      for( int i=0; i<var_shape[0]; ++i )
+      const size_t pp = send_stride*sendmap_[p];
+      for( size_t i=0; i<var_shape[0]; ++i )
       {
-        for( int j=0; j<var_shape[1]; ++j )
+        for( size_t j=0; j<var_shape[1]; ++j )
         {
           send_buffer[ibuf++] = field[pp+i*var_strides[0]+j*var_strides[1]];
         }
@@ -217,14 +217,14 @@ void HaloExchange::pack_send_buffer( const DATA_TYPE field[],
     }
     break;
   case 3:
-    for( int p=0; p<sendcnt_; ++p)
+    for( size_t p=0; p<sendcnt_; ++p)
     {
-      const int pp = send_stride*sendmap_[p];
-      for( int i=0; i<var_shape[0]; ++i )
+      const size_t pp = send_stride*sendmap_[p];
+      for( size_t i=0; i<var_shape[0]; ++i )
       {
-        for( int j=0; j<var_shape[1]; ++j )
+        for( size_t j=0; j<var_shape[1]; ++j )
         {
-          for( int k=0; k<var_shape[2]; ++k )
+          for( size_t k=0; k<var_shape[2]; ++k )
           {
             send_buffer[ibuf++] =
               field[ pp+i*var_strides[0]+j*var_strides[1]+k*var_strides[2]];
@@ -234,16 +234,16 @@ void HaloExchange::pack_send_buffer( const DATA_TYPE field[],
     }
     break;
   case 4:
-    for( int p=0; p<sendcnt_; ++p)
+    for( size_t p=0; p<sendcnt_; ++p)
     {
-      const int pp = send_stride*sendmap_[p];
-      for( int i=0; i<var_shape[0]; ++i )
+      const size_t pp = send_stride*sendmap_[p];
+      for( size_t i=0; i<var_shape[0]; ++i )
       {
-        for( int j=0; j<var_shape[1]; ++j )
+        for( size_t j=0; j<var_shape[1]; ++j )
         {
-          for( int k=0; k<var_shape[2]; ++k )
+          for( size_t k=0; k<var_shape[2]; ++k )
           {
-           for( int l=0; l<var_shape[3]; ++l )
+           for( size_t l=0; l<var_shape[3]; ++l )
            {
             send_buffer[ibuf++] =
               field[ pp+i*var_strides[0]+j*var_strides[1]+k*var_strides[2]+l*var_strides[3]];
@@ -261,22 +261,22 @@ void HaloExchange::pack_send_buffer( const DATA_TYPE field[],
 template<typename DATA_TYPE>
 void HaloExchange::unpack_recv_buffer( const DATA_TYPE recv_buffer[],
                                        DATA_TYPE field[],
-                                       const int var_strides[],
-                                       const int var_shape[],
-                                       int var_rank ) const
+                                       const size_t var_strides[],
+                                       const size_t var_shape[],
+                                       size_t var_rank ) const
 {
   bool field_changed = false;
   DATA_TYPE tmp;
-  int ibuf = 0;
-  int recv_stride = var_strides[0]*var_shape[0];
+  size_t ibuf = 0;
+  size_t recv_stride = var_strides[0]*var_shape[0];
 
   switch( var_rank )
   {
   case 1:
-    for( int p=0; p<recvcnt_; ++p)
+    for( size_t p=0; p<recvcnt_; ++p)
     {
-      const int pp = recv_stride*recvmap_[p];
-      for( int i=0; i<var_shape[0]; ++i)
+      const size_t pp = recv_stride*recvmap_[p];
+      for( size_t i=0; i<var_shape[0]; ++i)
       {
         tmp = field[ pp + i*var_strides[0] ];
         field[ pp + i*var_strides[0] ] = recv_buffer[ibuf++];
@@ -286,12 +286,12 @@ void HaloExchange::unpack_recv_buffer( const DATA_TYPE recv_buffer[],
     }
     break;
   case 2:
-    for( int p=0; p<recvcnt_; ++p)
+    for( size_t p=0; p<recvcnt_; ++p)
     {
-      const int pp = recv_stride*recvmap_[p];
-      for( int i=0; i<var_shape[0]; ++i )
+      const size_t pp = recv_stride*recvmap_[p];
+      for( size_t i=0; i<var_shape[0]; ++i )
       {
-        for( int j=0; j<var_shape[1]; ++j )
+        for( size_t j=0; j<var_shape[1]; ++j )
         {
           tmp = field[ pp + i*var_strides[0] + j*var_strides[1] ];
           field[ pp + i*var_strides[0] + j*var_strides[1] ]
@@ -303,14 +303,14 @@ void HaloExchange::unpack_recv_buffer( const DATA_TYPE recv_buffer[],
     }
     break;
   case 3:
-    for( int p=0; p<recvcnt_; ++p)
+    for( size_t p=0; p<recvcnt_; ++p)
     {
-      const int pp = recv_stride*recvmap_[p];
-      for( int i=0; i<var_shape[0]; ++i )
+      const size_t pp = recv_stride*recvmap_[p];
+      for( size_t i=0; i<var_shape[0]; ++i )
       {
-        for( int j=0; j<var_shape[1]; ++j )
+        for( size_t j=0; j<var_shape[1]; ++j )
         {
-          for( int k=0; k<var_shape[2]; ++k )
+          for( size_t k=0; k<var_shape[2]; ++k )
           {
             tmp = field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] ];
             field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] ]
@@ -323,16 +323,16 @@ void HaloExchange::unpack_recv_buffer( const DATA_TYPE recv_buffer[],
     }
     break;
   case 4:
-    for( int p=0; p<recvcnt_; ++p)
+    for( size_t p=0; p<recvcnt_; ++p)
     {
-      const int pp = recv_stride*recvmap_[p];
-      for( int i=0; i<var_shape[0]; ++i )
+      const size_t pp = recv_stride*recvmap_[p];
+      for( size_t i=0; i<var_shape[0]; ++i )
       {
-        for( int j=0; j<var_shape[1]; ++j )
+        for( size_t j=0; j<var_shape[1]; ++j )
         {
-          for( int k=0; k<var_shape[2]; ++k )
+          for( size_t k=0; k<var_shape[2]; ++k )
           {
-           for( int l=0; l<var_shape[3]; ++l )
+           for( size_t l=0; l<var_shape[3]; ++l )
            {
             tmp = field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] +l*var_strides[3] ];
             field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] + l*var_strides[3] ]
@@ -353,20 +353,20 @@ void HaloExchange::unpack_recv_buffer( const DATA_TYPE recv_buffer[],
 }
 
 template<typename DATA_TYPE>
-void HaloExchange::execute( DATA_TYPE field[], int nb_vars ) const
+void HaloExchange::execute( DATA_TYPE field[], size_t nb_vars ) const
 {
-  int strides[] = {1};
-  int shape[] = {nb_vars};
+  size_t strides[] = {1};
+  size_t shape[] = {nb_vars};
   execute( field, strides, shape, 1);
 }
 
 
 template<typename DATA_TYPE, int RANK>
 void HaloExchange::var_info( const ArrayView<DATA_TYPE,RANK>& arr,
-                             std::vector<int>& varstrides,
-                             std::vector<int>& varshape ) const
+                             std::vector<size_t>& varstrides,
+                             std::vector<size_t>& varshape ) const
 {
-  int rank = std::max(1,RANK-1) ;
+  size_t rank = std::max(1,RANK-1) ;
   varstrides.resize(rank);
   varshape.resize(rank);
   if( RANK>1 )
@@ -386,7 +386,7 @@ void HaloExchange::execute( ArrayView<DATA_TYPE,RANK>& field ) const
 {
   if( field.size() == parsize_)
   {
-    std::vector<int> varstrides, varshape;
+    std::vector<size_t> varstrides, varshape;
     var_info( field, varstrides, varshape );
     execute( field.data(), varstrides.data(), varshape.data(), varstrides.size() );
   }
