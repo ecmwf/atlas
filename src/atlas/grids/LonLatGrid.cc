@@ -45,7 +45,7 @@ void LonLatGrid::set_typeinfo()
   grid_type_ = grid_type_str();
 }
 
-LonLatGrid::LonLatGrid() : ReducedGrid()
+LonLatGrid::LonLatGrid() : ReducedLonLatGrid()
 {
 }
 

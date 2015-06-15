@@ -11,7 +11,7 @@
 #ifndef atlas_grids_GaussianGrid_h
 #define atlas_grids_GaussianGrid_h
 
-#include "atlas/grids/ReducedGrid.h"
+#include "atlas/grids/ReducedGaussianGrid.h"
 
 namespace atlas {
 namespace grids {
@@ -52,7 +52,7 @@ namespace grids {
 /// ==================================================================================
 /// Area: Do we check the area.
 /// Area: Can we assume area is multiple of the grids ?
-class GaussianGrid: public ReducedGrid {
+class GaussianGrid: public ReducedGaussianGrid {
 
 public:
 
@@ -68,9 +68,9 @@ public:
 
   virtual GridSpec spec() const;
 
-  int nlon() const { return ReducedGrid::nlon(0); }
+  int nlon() const { return ReducedGaussianGrid::nlon(0); }
 
-  double lon( const int jlon ) const { return ReducedGrid::lon(0,jlon); }
+  double lon( const int jlon ) const { return ReducedGaussianGrid::lon(0,jlon); }
 
 protected:
 

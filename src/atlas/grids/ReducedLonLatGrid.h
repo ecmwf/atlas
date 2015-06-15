@@ -56,9 +56,6 @@ public:
 
 protected:
 
-  /// Hash of the PL array
-  virtual void hash(eckit::MD5&) const;
-
   void setup( const eckit::Params& );
   void setup( const int N, const int npts_per_lat[], bool poles=defaults::poles() );
   void set_typeinfo();

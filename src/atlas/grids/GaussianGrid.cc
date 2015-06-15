@@ -36,7 +36,7 @@ void GaussianGrid::set_typeinfo()
   grid_type_ = grid_type_str();
 }
 
-GaussianGrid::GaussianGrid() : ReducedGrid()
+GaussianGrid::GaussianGrid() : ReducedGaussianGrid()
 {
 }
 

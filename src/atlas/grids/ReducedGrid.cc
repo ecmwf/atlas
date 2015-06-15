@@ -289,13 +289,11 @@ std::string ReducedGrid::shortName() const {
 }
 
 void ReducedGrid::hash(eckit::MD5& md5) const {
+  // Through inheritance the grid_type_str() might differ while still being same grid
+      //md5.add(grid_type_str());
 
-  const std::vector<int>& points_per_latitudes = npts_per_lat();
-
-  md5.add(grid_type_str());
-
-  md5.add(&points_per_latitudes[0], sizeof(int)*points_per_latitudes.size());
-
+  md5.add(latitudes().data(),    sizeof(double)*latitudes().size());
+  md5.add(npts_per_lat().data(), sizeof(int)*npts_per_lat().size());
   bounding_box_.hash(md5);
 }
 

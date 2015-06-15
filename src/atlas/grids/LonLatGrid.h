@@ -13,7 +13,7 @@
 #ifndef atlas_grids_LonLatGrid_h
 #define atlas_grids_LonLatGrid_h
 
-#include "atlas/grids/ReducedGrid.h"
+#include "atlas/grids/ReducedLonLatGrid.h"
 
 namespace atlas {
 namespace grids {
@@ -26,7 +26,7 @@ namespace grids {
 /// equidistant distribution of latitudes and longitudes.
 /// Longitude is the X-direction (first  index in C)
 /// Latitude  is the Y-direction (second index in C)
-class LonLatGrid: public ReducedGrid {
+class LonLatGrid: public ReducedLonLatGrid {
 
 public:
   enum TYPE {EXCLUDES_POLES=0, INCLUDES_POLES=1};

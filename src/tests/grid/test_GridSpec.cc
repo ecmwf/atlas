@@ -123,8 +123,8 @@ static void test_grib_file(const std::string& fpath)
    BOOST_CHECK_MESSAGE(grid_compare,"The grids are different");
    if( !grid_compare )
    {
-     Log::info() << "GRIB: " << g_spec << std::endl;
-     Log::info() << "GRID: " << grid_created_from_spec->spec() << std::endl;
+     Log::info() << "GRIB: " << grid_created_from_grib->unique_id() << "  " << g_spec << std::endl;
+     Log::info() << "GRID: " << grid_created_from_spec->unique_id() << "  " <<grid_created_from_spec->spec() << std::endl;
    }
 
 

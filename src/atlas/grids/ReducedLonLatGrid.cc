@@ -137,12 +137,6 @@ GridSpec ReducedLonLatGrid::spec() const
   return grid_spec;
 }
 
-void ReducedLonLatGrid::hash(eckit::MD5 &md5) const
-{
-  ReducedGrid::hash(md5);
-  md5.add(poles_);
-}
-
 //------------------------------------------------------------------------------------------------------
 
 } // namespace grids
