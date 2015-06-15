@@ -7,12 +7,17 @@
 
 namespace atlas {
 
-// Type for gidx_t (global indices and unique node id's)
+/// @typedef gidx_t
+/// Integer type for global indices
 #if ATLAS_BITS_GLOBAL==32
   typedef int  gidx_t;
 #else
   typedef long gidx_t;
 #endif
+
+/// @typedef uidx_t
+/// Integer type for unique indices
+typedef long uidx_t;
 
 }
 

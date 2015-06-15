@@ -8,8 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_util_LonLatPoint_h
-#define atlas_util_LonLatPoint_h
+#ifndef atlas_util_LonLatMicroDeg_h
+#define atlas_util_LonLatMicroDeg_h
 
 #include "atlas/atlas_config.h"
 #include "atlas/Parameters.h"
@@ -21,10 +21,12 @@ namespace atlas {
 namespace util {
 
 // ------------------------------------------------------------------------------------
- 
+
+//typedef long uidx_t;
+
 // Forward declarations
-class LonLatMicroDeg;  
-gidx_t unique_lonlat( const LonLatMicroDeg& );
+class LonLatMicroDeg;
+uidx_t unique_lonlat( const LonLatMicroDeg& );
 
 // ------------------------------------------------------------------------------------
 
@@ -54,8 +56,8 @@ public:
   void set_lon(int lon) { p[LON]=lon; }
   void set_lat(int lat) { p[LAT]=lat; }
   const int* data() const { return p; }
-  gidx_t unique() { return unique_lonlat(*this); }
-  
+  uidx_t unique() { return unique_lonlat(*this); }
+
 // -- Comparison operator
   bool operator < (const LonLatMicroDeg& other) const;
 
