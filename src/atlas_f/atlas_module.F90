@@ -57,7 +57,6 @@ use atlas_BuildHalo_c_binding
 use atlas_GenerateMesh_c_binding
 use atlas_WriteLoadBalanceReport_c_binding
 use atlas_atlas_logging_c_binding
-use atlas_atlas_resource_c_binding
 implicit none
 
 private :: object_type
@@ -111,6 +110,7 @@ integer, public, parameter :: ATLAS_KIND_GIDX = c_long
 #include "atlas_module_Error_i.f"
 #include "atlas_module_GridDistribution_i.f"
 #include "atlas_module_Trans_i.f"
+#include "atlas_module_Value_i.f"
 
 INTERFACE atlas_delete
 
@@ -131,6 +131,8 @@ INTERFACE atlas_delete
   module procedure atlas_Metadata__delete
   module procedure atlas_GridDistribution__delete
   module procedure atlas_Trans__delete
+  module procedure atlas_Value__delete
+  module procedure atlas_Value__array_delete
 end interface atlas_delete
 
 !------------------------------------------------------------------------------
@@ -198,6 +200,7 @@ CONTAINS
 
 
 subroutine resource_get_int32(resource_str,default_value,value)
+  use atlas_atlas_resource_c_binding
   character(len=*), intent(in) :: resource_str
   integer(c_int), intent(in) :: default_value
   integer(c_int), intent(out) :: value
@@ -205,6 +208,7 @@ subroutine resource_get_int32(resource_str,default_value,value)
 end subroutine
 
 subroutine resource_get_int64(resource_str,default_value,value)
+  use atlas_atlas_resource_c_binding
   character(len=*), intent(in) :: resource_str
   integer(c_long), intent(in) :: default_value
   integer(c_long), intent(out) :: value
@@ -212,6 +216,7 @@ subroutine resource_get_int64(resource_str,default_value,value)
 end subroutine
 
 subroutine resource_get_real32(resource_str,default_value,value)
+  use atlas_atlas_resource_c_binding
   character(len=*), intent(in) :: resource_str
   real(c_float), intent(in) :: default_value
   real(c_float), intent(out) :: value
@@ -219,6 +224,7 @@ subroutine resource_get_real32(resource_str,default_value,value)
 end subroutine
 
 subroutine resource_get_real64(resource_str,default_value,value)
+  use atlas_atlas_resource_c_binding
   character(len=*), intent(in) :: resource_str
   real(c_double), intent(in) :: default_value
   real(c_double), intent(out) :: value
@@ -226,6 +232,7 @@ subroutine resource_get_real64(resource_str,default_value,value)
 end subroutine
 
 subroutine resource_get_string(resource_str,default_value,value)
+  use atlas_atlas_resource_c_binding
   character(len=*), intent(in) :: resource_str
   character(len=*), intent(in) :: default_value
   character(len=*), intent(out) :: value
@@ -235,30 +242,35 @@ subroutine resource_get_string(resource_str,default_value,value)
 end subroutine
 
 subroutine resource_set_int32(resource_str,value)
+  use atlas_atlas_resource_c_binding
   character(len=*), intent(in) :: resource_str
   integer(c_int), intent(in) :: value
   call atlas__resource_set_int( c_str(resource_str), value )
 end subroutine
 
 subroutine resource_set_int64(resource_str,value)
+  use atlas_atlas_resource_c_binding
   character(len=*), intent(in) :: resource_str
   integer(c_long), intent(in) ::value
   call atlas__resource_set_long( c_str(resource_str), value )
 end subroutine
 
 subroutine resource_set_real32(resource_str,value)
+  use atlas_atlas_resource_c_binding
   character(len=*), intent(in) :: resource_str
   real(c_float), intent(in) :: value
   call atlas__resource_set_float( c_str(resource_str), value )
 end subroutine
 
 subroutine resource_set_real64(resource_str,value)
+  use atlas_atlas_resource_c_binding
   character(len=*), intent(in) :: resource_str
   real(c_double), intent(in) :: value
   call atlas__resource_set_double( c_str(resource_str), value )
 end subroutine
 
 subroutine resource_set_string(resource_str,value)
+  use atlas_atlas_resource_c_binding
   character(len=*), intent(in) :: resource_str
   character(len=*), intent(in) :: value
   type(c_ptr) :: value_c_str
@@ -319,6 +331,7 @@ end function
 #include "atlas_module_Error_c.f"
 #include "atlas_module_GridDistribution_c.f"
 #include "atlas_module_Trans_c.f"
+#include "atlas_module_Value_c.f"
 
 ! -----------------------------------------------------------------------------
 

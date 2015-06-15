@@ -1,6 +1,5 @@
-#ifndef atlas_fortran_atlas_logging_h
-#define atlas_fortran_atlas_logging_h
-#include <stdio.h>
+#ifndef atlas_f_atlas_resource_h
+#define atlas_f_atlas_resource_h
 
 namespace atlas{
 

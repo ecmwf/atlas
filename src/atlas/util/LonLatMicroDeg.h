@@ -22,8 +22,6 @@ namespace util {
 
 // ------------------------------------------------------------------------------------
 
-//typedef long uidx_t;
-
 // Forward declarations
 class LonLatMicroDeg;
 uidx_t unique_lonlat( const LonLatMicroDeg& );

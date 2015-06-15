@@ -60,6 +60,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mpi/mpi.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/trans/Trans.h)
 generate_fortran_bindings(FORTRAN_BINDINGS atlas_logging.h)
 generate_fortran_bindings(FORTRAN_BINDINGS atlas_resource.h)
+generate_fortran_bindings(FORTRAN_BINDINGS atlas_value.h)
 
 
 ### atlas fortran lib
@@ -77,6 +78,8 @@ ecbuild_add_library( TARGET atlas_f
         atlas_logging.cc
         atlas_resource.h
         atlas_resource.cc
+        atlas_value.h
+        atlas_value.cc
   INCLUDES ${MPI_Fortran_INCLUDE_PATH}
   LIBS atlas ${MPI_Fortran_LIBRARIES}
 )
@@ -108,6 +111,8 @@ add_custom_target( atlas_fortran_inc SOURCES
    atlas_module_Metadata_c.f
    atlas_module_Trans_i.f
    atlas_module_Trans_c.f
+   atlas_module_Value_i.f
+   atlas_module_Value_c.f
 )
 
 install( FILES ${CMAKE_Fortran_MODULE_DIRECTORY}/${CMAKE_CFG_INTDIR}/atlas_module.mod
