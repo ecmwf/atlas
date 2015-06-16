@@ -86,6 +86,8 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
 
   Mesh::Ptr m( generate( grid ) );
 
+  Mesh::Id meshid = m->id();
+
       //  Mesh::Ptr m( Gmsh::read("unstr.msh") );
 
 //  actions::distribute_mesh(*m);
@@ -109,6 +111,10 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
   Gmsh().write(*m,filename.str());
 
   actions::write_load_balance_report(*m,"load_balance.dat");
+
+  Mesh& mesh1 = Mesh::from_id(meshid);
+  BOOST_CHECK(mesh1.grid().same(grid));
+
 }
 
 } // namespace test

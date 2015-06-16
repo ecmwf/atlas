@@ -65,6 +65,7 @@ util/IndexView.h
 util/IndexView.cc
 util/IsGhost.h
 util/LonLatMicroDeg.h
+util/ObjectRegistry.h
 util/PeriodicTransform.h
 )
 

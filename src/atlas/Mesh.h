@@ -21,6 +21,7 @@
 
 #include "atlas/Metadata.h"
 #include "atlas/Grid.h"
+#include "atlas/util/ObjectRegistry.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -37,9 +38,14 @@ public: // types
 
 	typedef eckit::SharedPtr<Mesh> Ptr;
 
+  typedef util::ObjectRegistry<Mesh> Registry;
+  typedef Registry::Id Id;
+
 public: // methods
 
-	static Mesh::Ptr create();
+  static Mesh& from_id(Id);
+
+  static Mesh::Ptr create();
 
   /*!
    * @brief Construct a empty Mesh
@@ -54,8 +60,8 @@ public: // methods
 
   virtual ~Mesh();
 
-        Metadata& metadata() { return metadata_; }
-        const Metadata& metadata() const { return metadata_; }
+  Metadata& metadata() { return metadata_; }
+  const Metadata& metadata() const { return metadata_; }
 
   /// checks if function space exists
 	bool has_function_space(const std::string& name) const;
@@ -87,15 +93,21 @@ public: // methods
 
   FunctionSpace& add_nodes(size_t nb_nodes);
 
+  Id id() const { return registry_id_; }
+
 private: // members
 
-	Metadata      metadata_;
+  static Registry& registry();
 
-	const Grid* grid_;
+  Id registry_id_;
 
-	typedef eckit::DenseMap< std::string, eckit::SharedPtr<FunctionSpace> > StoreFS_t;
+  Metadata      metadata_;
 
-	StoreFS_t function_spaces_;
+  const Grid* grid_;
+
+  typedef eckit::DenseMap< std::string, eckit::SharedPtr<FunctionSpace> > StoreFS_t;
+
+  StoreFS_t function_spaces_;
 
 };
 

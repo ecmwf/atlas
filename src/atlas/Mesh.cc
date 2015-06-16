@@ -25,6 +25,17 @@ namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
 
+Mesh& Mesh::from_id(Id id)
+{
+  return *registry().get(id);
+}
+
+Mesh::Registry& Mesh::registry()
+{
+  static Registry r;
+  return r;
+}
+
 Mesh::Ptr Mesh::create()
 {
   return Mesh::Ptr( new Mesh( /* eckit::Params ??? */ ) );
@@ -33,16 +44,19 @@ Mesh::Ptr Mesh::create()
 Mesh::Mesh() :
   grid_(NULL)
 {
+  registry_id_ = registry().add(*this);
 }
 
 Mesh::Mesh(const Grid& grid) :
   grid_(&grid)
 {
+  registry_id_ = registry().add(*this);
   add_nodes(grid);
 }
 
 Mesh::~Mesh()
 {
+  registry().remove(registry_id_);
 }
 
 bool Mesh::has_function_space(const std::string& name) const
