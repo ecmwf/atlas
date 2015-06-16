@@ -10,6 +10,7 @@
 
 #include "eckit/log/Log.h"
 #include "eckit/runtime/Tool.h"
+#include "eckit/value/CompositeParams.h"
 
 #include "atlas/mpi/mpi.h"
 #include "atlas/FunctionSpace.h"
@@ -19,6 +20,7 @@
 #include "atlas/meshgen/Tesselation.h"
 #include "atlas/meshgen/Delaunay.h"
 #include "atlas/io/Gmsh.h"
+#include "atlas/util/Debug.h"
 
 using namespace std;
 using namespace eckit;
@@ -42,6 +44,7 @@ public:
     virtual void run();
 
     void test_constructor();
+    void test_fieldcreator();
 };
 
 //-----------------------------------------------------------------------------
@@ -106,12 +109,48 @@ void TestField::test_constructor()
   }
 }
 
+
+
+
+void TestField::test_fieldcreator()
+{
+  typedef atlas::Metadata Parameters;
+
+  Parameters params;
+  params.set("creator","ArraySpec").set("shape",make_shape(10,2)).set("data_type","real64").set("name","myfield");
+
+  Field::Ptr field ( Field::create( params ) );
+
+  ASSERT( field->data_type() == "real64" );
+  ASSERT( field->name() == "myfield" );
+
+  Grid::Ptr g (Grid::create("oct.N6"));
+
+  Field::Ptr fld (Field::create( Parameters()
+                                 .set("creator","ArraySpec")
+                                 .set("shape",make_shape(10,2))
+                                 .set("data_type","real64")
+                                 .set("name","myfield")
+                                 .set("grid",*g)
+                               ));
+
+  ASSERT( fld->grid().npts() == g->npts() );
+
+}
+
+
+
+
+
+
+
 //-----------------------------------------------------------------------------
 
 void TestField::run()
 {
     eckit::mpi::init();
     test_constructor();
+    test_fieldcreator();
     eckit::mpi::finalize();
 }
 

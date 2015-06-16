@@ -30,6 +30,7 @@
 #include "eckit/utils/MD5.h"
 
 #include "atlas/BoundBox.h"
+#include "atlas/util/ObjectRegistry.h"
 
 namespace atlas {
 
@@ -62,7 +63,12 @@ class Grid : public eckit::Owned {
   typedef eckit::SharedPtr<Grid> Ptr;
   typedef std::string uid_t;
 
- public:  // methods
+  typedef util::ObjectRegistry<Grid> Registry;
+  typedef Registry::Id Id;
+
+public: // methods
+
+  static Grid& from_id(Id);
 
   static std::string className() { return "atlas.Grid"; }
 
@@ -146,6 +152,8 @@ class Grid : public eckit::Owned {
   void set_mesh(const Mesh& mesh);
   Mesh& mesh() const;
 
+  Id id() const { return registry_id_; }
+
  protected:  // methods
 
   /// helper function to initialise global grids, with a global area (BoundBox)
@@ -165,8 +173,11 @@ private:  // methods
       return s;
   }
 
-private:  // members
+  static Registry& registry();
 
+private: // members
+
+  Id registry_id_;
   mutable eckit::SharedPtr<Mesh> mesh_;
   mutable uid_t                  uid_;
   mutable eckit::MD5::digest_t   hash_;

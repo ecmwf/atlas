@@ -71,6 +71,13 @@ subroutine Metadata__set_string(this, name, value)
   call atlas__Metadata__set_string(this%cpp_object_ptr, c_str(name) , c_str(value) )
 end subroutine Metadata__set_string
 
+subroutine Metadata__set_mesh(this, name, value)
+  class(atlas_Metadata), intent(inout) :: this
+  character(len=*), intent(in) :: name
+  type(atlas_Mesh), intent(in) :: value
+  call atlas__Metadata__set_mesh(this%cpp_object_ptr, c_str(name), value%cpp_object_ptr)
+end subroutine Metadata__set_mesh
+
 subroutine Metadata__get_logical(this, name, value)
   class(atlas_Metadata), intent(in) :: this
   character(len=*), intent(in) :: name
@@ -209,6 +216,15 @@ subroutine Metadata__get_array_real64(this, name, value)
   value(:) = value_fptr(:)
   if( value_allocated == 1 ) call atlas_free(value_cptr)
 end subroutine Metadata__get_array_real64
+
+
+subroutine Metadata__get_mesh(this, name, value)
+  class(atlas_Metadata), intent(in) :: this
+  character(len=*), intent(in) :: name
+  type(atlas_Mesh), intent(out) :: value
+  value%cpp_object_ptr = atlas__Metadata__get_mesh(this%cpp_object_ptr, c_str(name) )
+end subroutine Metadata__get_mesh
+
 
 subroutine MetaData__print(this,channel)
   class(atlas_Metadata), intent(in) :: this

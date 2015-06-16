@@ -12,12 +12,15 @@
 #define atlas_util_ObjectRegistry_h
 
 #include <vector>
+#include <limits>
 #include "eckit/exception/Exceptions.h"
 
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
 namespace util {
+
+//------------------------------------------------------------------------------------------------------
 
 template< typename T >
 class ObjectRegistry
@@ -37,6 +40,7 @@ private:
 template<typename T>
 typename ObjectRegistry<T>::Id ObjectRegistry<T>::add(const T& object)
 {
+  ASSERT( store_.size() < std::numeric_limits<Id>::max() );
   store_.push_back( const_cast<T*>(&object) );
   return store_.size();   // Id starts at 1
 }

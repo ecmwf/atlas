@@ -35,6 +35,18 @@ using atlas::util::Topology;
 
 namespace atlas {
 
+FunctionSpace& FunctionSpace::from_id(Id id)
+{
+  return *registry().get(id);
+}
+
+FunctionSpace::Registry& FunctionSpace::registry()
+{
+  static Registry r;
+  return r;
+}
+
+
 FunctionSpace::FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<size_t>& shape , Mesh& mesh) :
 	name_(name),
 	shape_(shape),
@@ -55,10 +67,12 @@ FunctionSpace::FunctionSpace(const std::string& name, const std::string& shape_f
 			dof_ *= shape_[i];
 	}
 	glb_dof_ = dof_;
+  registry_id_ = registry().add(*this);
 }
 
 FunctionSpace::~FunctionSpace()
 {
+  registry().remove(registry_id_);
 }
 
 void FunctionSpace::resize(const std::vector<size_t>& shape)
@@ -225,10 +239,11 @@ FieldT<double>& FunctionSpace::create_field(const std::string& name, size_t nb_v
 	if( (field = check_if_exists<double>(this, name, field_shape, nb_vars, b )) )
 		return *field;
 
-	field = new FieldT<double>(name,nb_vars,*this);
+	field = new FieldT<double>(name,nb_vars);
 	fields_.insert( name, Field::Ptr(field) );
 	fields_.sort();
 
+  field->set_function_space(*this);
 	field->allocate(field_shape);
 	return *field;
 }
@@ -251,10 +266,10 @@ FieldT<float>& FunctionSpace::create_field(const std::string& name, size_t nb_va
 	if( (field = check_if_exists<float>(this, name, field_shape, nb_vars, b )) )
 		return *field;
 
-	field = new FieldT<float>(name,nb_vars,*this);
+	field = new FieldT<float>(name,nb_vars);
 	fields_.insert( name, Field::Ptr(field) );
 	fields_.sort();
-
+  field->set_function_space(*this);
 	field->allocate(field_shape);
 	return *field;
 }
@@ -277,11 +292,12 @@ FieldT<int>& FunctionSpace::create_field(const std::string& name, size_t nb_vars
 	if( (field = check_if_exists<int>(this, name, field_shape, nb_vars, b )) )
 		return *field;
 
-	field = new FieldT<int>(name,nb_vars,*this);
+	field = new FieldT<int>(name,nb_vars);
 
 	fields_.insert( name, Field::Ptr(field) );
 	fields_.sort();
 
+  field->set_function_space(*this);
 	field->allocate(field_shape);
 	return *field;
 }
@@ -304,7 +320,7 @@ FieldT<long>& FunctionSpace::create_field(const std::string& name, size_t nb_var
 	if( (field = check_if_exists<long>(this, name, field_shape, nb_vars, b )) )
 		return *field;
 
-	field = new FieldT<long>(name,nb_vars,*this);
+	field = new FieldT<long>(name,nb_vars);
 
 	fields_.insert( name, Field::Ptr(field) );
 	fields_.sort();

@@ -85,7 +85,7 @@ public: // methods
 	void set_grid( const Grid& p ) { grid_ = &p; }
 
 	/// accessor of the Grid
-	const Grid& grid() const {  ASSERT( grid_ ); return *grid_; }
+  const Grid& grid() const {  ASSERT( grid_ ); return *grid_; }
 
 	friend std::ostream& operator<<(std::ostream&, const Mesh&);
 

@@ -35,6 +35,9 @@
 
 namespace atlas {
 
+// Forward declaration
+template< typename DATA_TYPE > class FieldT;
+
 //------------------------------------------------------------------------------------------------------
 
 class Field : public eckit::Owned {
@@ -48,7 +51,9 @@ public: // methods
 
 	enum { UNDEF_VARS = -1 };
 
-	Field(const std::string& name, const size_t nb_vars, FunctionSpace& function_space);
+	Field(const std::string& name, const size_t nb_vars);
+
+	static Field* create(const eckit::Parametrisation&);
 
 	virtual ~Field();
 
@@ -62,15 +67,32 @@ public: // methods
 	virtual void allocate(const std::vector<size_t>& shapef)=0;
 	const std::string& name() const { return name_; }
 
-	const Grid& grid() const { return mesh().grid(); }
+	const Grid& grid() const {
+    if( function_space_ )
+    {
+      DEBUG();
+      if( function_space_->mesh().has_grid() )
+      {
+        DEBUG();
+        return function_space_->mesh().grid();
+      }
+    }
+    if( !grid_ )
+      throw eckit::Exception("Field "+name()+" is not associated to any Grid.");
+    return *grid_;
+  }
 
-	const Mesh& mesh() const { return function_space_.mesh(); }
-	Mesh& mesh() { return function_space_.mesh(); }
+	const Mesh& mesh() const { ASSERT(function_space_); return function_space_->mesh(); }
+	Mesh& mesh() { ASSERT(function_space_); return function_space_->mesh(); }
 
 	const Metadata& metadata() const { return metadata_; }
 	Metadata& metadata() { return metadata_; }
 
-	FunctionSpace& function_space() const { return function_space_; }
+	FunctionSpace& function_space() const {
+    if( !function_space_ )
+      throw eckit::Exception("Field "+name()+" is not associated to any FunctionSpace.");
+    return *function_space_;
+  }
 
 	const std::vector<int>& shapef() const	{ return shapef_; }
 	const std::vector<size_t>& shape() const { return shape_; }
@@ -88,6 +110,23 @@ private: // members
 
 	virtual void print( std::ostream& ) const = 0;
 
+public:
+
+  void set_function_space(const FunctionSpace& function_space)
+  {
+    function_space_ = const_cast<FunctionSpace*>(&function_space);
+  }
+
+  void set_grid(const Grid& grid)
+  {
+    grid_ = &grid;
+  }
+
+  const std::string& set_name(const std::string& name)
+  {
+    name_ = name;
+  }
+
 protected: // members
 
 	std::string name_;
@@ -96,7 +135,8 @@ protected: // members
 	std::vector<size_t> shape_;
 	std::vector<size_t> strides_;
 
-	FunctionSpace& function_space_;
+	const Grid* grid_;
+	FunctionSpace* function_space_;
 	Metadata metadata_;
 
 	size_t nb_vars_;
@@ -117,7 +157,9 @@ class FieldT : public Field {
 
 public: // methods
 
-	FieldT(const std::string& name, const int nb_vars, FunctionSpace& function_space);
+	FieldT(const std::string& name, const int nb_vars);
+
+  FieldT(const std::vector<size_t>& shape);
 
 	virtual ~FieldT();
 
@@ -141,12 +183,21 @@ protected:
 };
 
 template< typename DATA_TYPE >
-inline FieldT<DATA_TYPE>::FieldT(const std::string& name, const int nb_vars, FunctionSpace& function_space) :
-	Field(name,nb_vars,function_space),
+inline FieldT<DATA_TYPE>::FieldT(const std::string& name, const int nb_vars) :
+	Field(name,nb_vars),
 	data_(0)
 {
 	data_type_ = data_type_to_str<DATA_TYPE>() ;
 }
+
+template< typename DATA_TYPE >
+inline FieldT<DATA_TYPE>::FieldT(const std::vector<size_t>& shape) : Field("tmp",1),
+	data_(0)
+{
+	data_type_ = data_type_to_str<DATA_TYPE>() ;
+  allocate(shape);
+}
+
 
 template< typename DATA_TYPE >
 inline FieldT<DATA_TYPE>::~FieldT()
@@ -190,6 +241,72 @@ inline void FieldT<DATA_TYPE>::print(std::ostream& out) const
 }
 
 //------------------------------------------------------------------------------------------------------
+
+
+/*!
+ * \brief Base class for creating new fields based on Parametrisation
+ */
+class FieldCreator : public eckit::Owned {
+
+public:
+
+    FieldCreator();
+    virtual ~FieldCreator();
+
+    virtual Field* create_field( const eckit::Parametrisation& ) const = 0;
+
+protected:
+
+    void filter_params(Field&, const eckit::Parametrisation&) const;
+};
+
+//------------------------------------------------------------------------------------------------------
+
+class FieldCreatorFactory {
+  public:
+    /*!
+     * \brief build FieldCreator with factory key, and default options
+     * \return FieldCreator
+     */
+    static FieldCreator* build(const std::string&);
+
+    /*!
+     * \brief build FieldCreator with options specified in parametrisation
+     * \return mesh generator
+     */
+    static FieldCreator* build(const std::string&, const eckit::Parametrisation&);
+
+    /*!
+     * \brief list all registered field creators
+     */
+    static void list(std::ostream &);
+
+  private:
+    std::string name_;
+    virtual FieldCreator* make() = 0 ;
+    virtual FieldCreator* make(const eckit::Parametrisation&) = 0 ;
+
+  protected:
+
+    FieldCreatorFactory(const std::string&);
+    virtual ~FieldCreatorFactory();
+};
+
+
+template<class T>
+class FieldCreatorBuilder : public FieldCreatorFactory {
+  virtual FieldCreator* make() {
+      return new T();
+  }
+  virtual FieldCreator* make(const eckit::Parametrisation& param) {
+        return new T(param);
+    }
+  public:
+    FieldCreatorBuilder(const std::string& name) : FieldCreatorFactory(name) {}
+};
+
+//------------------------------------------------------------------------------------------------------
+
 
 // C wrapper interfaces to C++ routines
 extern "C"

@@ -24,6 +24,7 @@
 #include "atlas/mpl/GatherScatter.h"
 #include "atlas/mpl/Checksum.h"
 #include "atlas/Metadata.h"
+#include "atlas/util/ObjectRegistry.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -49,7 +50,12 @@ public: // types
 
 	typedef eckit::SharedPtr<FunctionSpace> Ptr;
 
+  typedef util::ObjectRegistry<FunctionSpace> Registry;
+  typedef Registry::Id Id;
+
 public: // methods
+
+  static FunctionSpace& from_id(Id);
 
 	FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<size_t>& shape, Mesh& mesh );
 
@@ -134,8 +140,15 @@ public: // methods
 
 	friend std::ostream& operator<<(std::ostream&, const FunctionSpace&);
 
-protected: // members
+  Id id() const { return registry_id_; }
 
+private: // members
+
+  static Registry& registry();
+
+  Id registry_id_;
+
+protected:
 	size_t idx_;
 	size_t dof_;
 	size_t glb_dof_;

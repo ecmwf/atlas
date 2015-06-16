@@ -72,6 +72,7 @@ TEST( test_field_metadata )
   integer(c_int), allocatable :: arr_int32(:)
   real(c_float), allocatable :: arr_real32(:)
   type(atlas_Metadata) metadata
+  type(atlas_Mesh) meshref
 
   write(*,*) "test_field_metadata starting"
 
@@ -90,6 +91,7 @@ TEST( test_field_metadata )
   call metadata%set("arr_int64", (/1_c_long,2_c_long,3_c_long/))
   call metadata%set("arr_real32", (/1.1_c_float,2.1_c_float,3.7_c_float/))
   call metadata%set("arr_real64", (/1.1_c_double,2.1_c_double,3.7_c_double/))
+  call metadata%set("mesh", mesh )
 
   call metadata%get("true",true)
   call metadata%get("false",false)
@@ -99,6 +101,7 @@ TEST( test_field_metadata )
   call metadata%get("string",string)
   call metadata%get("arr_int64",arr_int32)
   call metadata%get("arr_real64",arr_real32)
+  call metadata%get("mesh",meshref)
 
   call metadata%print(atlas_log%channel_info)
 

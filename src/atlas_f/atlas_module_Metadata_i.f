@@ -29,9 +29,10 @@ contains
   procedure, private :: set_array_int64 => Metadata__set_array_int64
   procedure, private :: set_array_real32 => Metadata__set_array_real32
   procedure, private :: set_array_real64 => Metadata__set_array_real64
+  procedure, private :: set_mesh => Metadata__set_mesh
   procedure :: has => Metadata__has
   generic :: set => set_logical, set_int32, set_real32, set_real64, set_string, set_array_int32, &
-    set_array_int64, set_array_real32, set_array_real64
+    set_array_int64, set_array_real32, set_array_real64, set_mesh
   procedure :: get_int32 => Metadata__get_int32
   procedure :: get_logical => Metadata__get_logical
   procedure :: get_real32 => Metadata__get_real32
@@ -41,8 +42,9 @@ contains
   procedure :: get_array_int64 => Metadata__get_array_int64
   procedure :: get_array_real32 => Metadata__get_array_real32
   procedure :: get_array_real64 => Metadata__get_array_real64
+  procedure :: get_mesh => Metadata__get_mesh
   generic :: get => get_int32, get_logical, get_real32, get_real64, get_string, get_array_int32, &
-    get_array_int64, get_array_real32, get_array_real64
+    get_array_int64, get_array_real32, get_array_real64, get_mesh
 
   procedure :: print => Metadata__print
   procedure :: json => Metadata__json
