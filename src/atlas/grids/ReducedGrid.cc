@@ -56,7 +56,7 @@ ReducedGrid* ReducedGrid::create(const GridSpec& g)
 
 std::string ReducedGrid::className() { return "atlas.ReducedGrid"; }
 
-ReducedGrid::ReducedGrid() : N_(0)
+ReducedGrid::ReducedGrid(const Domain& d) : Grid(d), N_(0)
 {
 }
 
@@ -99,7 +99,8 @@ void ReducedGrid::setup(const eckit::Params& params)
   setup(latitudes.size(),latitudes.data(),npts_per_lat.data());
 }
 
-ReducedGrid::ReducedGrid( const std::vector<double>& _lats, const std::vector<size_t>& _nlons )
+ReducedGrid::ReducedGrid(const std::vector<double>& _lats, const std::vector<size_t>& _nlons, const Domain& d)
+  : Grid(d)
 {
   int nlat = _nlons.size();
   std::vector<int> nlons(nlat);
@@ -110,11 +111,11 @@ ReducedGrid::ReducedGrid( const std::vector<double>& _lats, const std::vector<si
   setup(nlat,_lats.data(),nlons.data());
 }
 
-ReducedGrid::ReducedGrid( const int nlat, const double lats[], const int nlons[] )
+ReducedGrid::ReducedGrid(int nlat, const double lats[], const int nlons[], const Domain& d)
+  : Grid(d)
 {
   setup(nlat,lats,nlons);
 }
-
 
 void ReducedGrid::setup( const int nlat, const double lats[], const int nlons[], const double lonmin[], const double lonmax[] )
 {
@@ -142,7 +143,6 @@ void ReducedGrid::setup( const int nlat, const double lats[], const int nlons[],
     npts_ += nlons_[jlat];
   }
 
-  // Default is global
   bounding_box_ = BoundBox(lat_[0]/*north*/, lat_[nlat-1]/*south*/, lon_max/*east*/, lon_min/*west*/ );
 }
 
@@ -297,7 +297,7 @@ void ReducedGrid::hash(eckit::MD5& md5) const {
   bounding_box_.hash(md5);
 }
 
-void ReducedGrid::mask(const Domain& dom)
+void ReducedGrid::mask(const BoundBox& dom)
 {
   // If the mask is larger or equal to the domain, no need to mask!
   if ( dom.max().lat() >= bounding_box_.max().lat() &&
@@ -390,7 +390,7 @@ void ReducedGrid::mask(const eckit::Params& p)
 {
   if( p.has("domain_s") )
   {
-    Domain dom(p["domain_n"],p["domain_s"],p["domain_e"],p["domain_w"]);
+    BoundBox dom(p["domain_n"],p["domain_s"],p["domain_e"],p["domain_w"]);
     mask( dom );
   }
   else

@@ -30,7 +30,7 @@ namespace grids {
 
 register_BuilderT1(Grid, PolarStereoGraphic, PolarStereoGraphic::grid_type_str());
 
-PolarStereoGraphic::PolarStereoGraphic(  size_t Nx, size_t Ny,
+PolarStereoGraphic::PolarStereoGraphic(size_t Nx, size_t Ny,
                      size_t Dx, size_t Dy,
                      double longitudeOfFirstGridPoint,
                      double latitudeOfFirstGridPoint,

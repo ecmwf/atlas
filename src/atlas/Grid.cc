@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include "Grid.h"
+#include "atlas/Grid.h"
 
 #include <vector>
 
@@ -18,7 +18,6 @@
 
 #include "atlas/Mesh.h"
 #include "atlas/GridSpec.h"
-//#include "atlas/Tesselation.h"
 #include "atlas/grids/grids.h"
 
 using eckit::Params;
@@ -41,11 +40,15 @@ Grid* Grid::create(const Grid::uid_t& uid) { return grids::grid_from_uid(uid); }
 
 Grid* Grid::create(const GridSpec& g) { return Grid::create(Params(g)); }
 
-Grid::Grid() {}
+Grid::Grid() : domain_( Domain::makeGlobal() ) {}
+Grid::Grid(const Domain& domain) : domain_(domain) {}
 
 Grid::~Grid() {}
 
-Grid::Domain Grid::domain() const { return bounding_box(); }
+const atlas::Domain& Grid::domain() const
+{
+  return domain_;
+}
 
 void Grid::mask(const Domain&) { NOTIMP; }
 

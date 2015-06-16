@@ -216,7 +216,7 @@ bool comparePointList(
 {
    BOOST_CHECK_MESSAGE(  points.size() == grib_pntlist.size(),"\n  **GRIB pt list size " << grib_pntlist.size() << " different to GRID " << points.size() );
 
-   RealCompare<double> isEqual(epsilon);
+   FloatApproxCompare<double> isEqual(epsilon);
 
    bool ret = true;
    int print_point_list = 0;

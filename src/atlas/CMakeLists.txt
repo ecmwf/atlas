@@ -207,6 +207,8 @@ atlas_omp.h
 atlas_omp.cc
 BoundBox.h
 BoundBox.cc
+Domain.h
+Domain.cc
 runtime/Behavior.h
 runtime/Behavior.cc
 runtime/LogFormat.h

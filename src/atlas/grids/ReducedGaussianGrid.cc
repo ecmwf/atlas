@@ -37,11 +37,12 @@ void ReducedGaussianGrid::set_typeinfo()
   grid_type_ = grid_type_str();
 }
 
-ReducedGaussianGrid::ReducedGaussianGrid() : ReducedGrid()
+ReducedGaussianGrid::ReducedGaussianGrid()
 {
 }
 
-ReducedGaussianGrid::ReducedGaussianGrid( const int N, const int nlons[] )
+ReducedGaussianGrid::ReducedGaussianGrid( const int N, const int nlons[], const Domain& d)
+  : ReducedGrid(d)
 {
   ReducedGrid::N_ = N;
 

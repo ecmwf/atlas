@@ -56,7 +56,7 @@ LonLatGrid::LonLatGrid(const Params& p)
   set_typeinfo();
 }
 
-LonLatGrid::LonLatGrid( const int nlon, const int nlat, const Domain& bbox )
+LonLatGrid::LonLatGrid( const int nlon, const int nlat, const BoundBox& bbox )
 {
   setup(nlon,nlat,bbox);
   set_typeinfo();

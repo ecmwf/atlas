@@ -30,22 +30,22 @@ namespace grids {
 ///   npts_per_lat[] = number of points on each latitude
 
 class ReducedGaussianGrid: public ReducedGrid {
-
 public:
 
   static std::string grid_type_str() { return "reduced_gg"; }
 
-  ReducedGaussianGrid();
-
   ReducedGaussianGrid( const eckit::Params& );
 
-  ReducedGaussianGrid( const int N, const int npts_per_lat[] );
+  ReducedGaussianGrid( const int N, const int npts_per_lat[], const Domain& d = Domain::makeGlobal() );
 
   static std::string className();
 
   virtual GridSpec spec() const;
 
 protected:
+
+  /// to be used only by derived types
+  ReducedGaussianGrid();
 
   void setup( const eckit::Params& );
   void setup_N_hemisphere( const int N, const int npts_per_lat[] );

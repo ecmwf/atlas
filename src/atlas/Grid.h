@@ -30,6 +30,7 @@
 #include "eckit/utils/MD5.h"
 
 #include "atlas/BoundBox.h"
+#include "atlas/Domain.h"
 
 namespace atlas {
 
@@ -57,8 +58,6 @@ class Grid : public eckit::Owned {
 
   typedef eckit::geometry::LLPoint2 Point;
 
-  typedef BoundBox Domain;                        // To become abstract class used to mask a grid
-
   typedef eckit::SharedPtr<Grid> Ptr;
   typedef std::string uid_t;
 
@@ -75,7 +74,11 @@ class Grid : public eckit::Owned {
   //  static Grid* create( const Grid::HumanName& name );
   //  static Grid* create( const eckit::Buffer& buff );
 
+  /// Default constructor builds a Grid that is Global
   Grid();
+
+  /// Constructor takes a domain for this Grid
+  Grid( const Domain& );
 
   virtual ~Grid();
 
@@ -104,10 +107,9 @@ class Grid : public eckit::Owned {
   virtual BoundBox bounding_box() const = 0;
 
   /**
-   * @return rea to which the original grid is cropped or masked
-   * @todo For now this is alias of bounding_box()
+   * @return area which contains the grid
    */
-  virtual Domain domain() const;
+  virtual const Domain& domain() const;
 
   /// Mask with given Domain
   virtual void mask(const Domain&);
@@ -158,14 +160,14 @@ class Grid : public eckit::Owned {
 
 private:  // methods
 
-  //void build_mesh() const;
-
   friend std::ostream& operator<<(std::ostream& s, const Grid& p) {
       p.print(s);
       return s;
   }
 
 private:  // members
+
+  atlas::Domain domain_;
 
   mutable eckit::SharedPtr<Mesh> mesh_;
   mutable uid_t                  uid_;
