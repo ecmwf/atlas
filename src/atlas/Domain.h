@@ -49,6 +49,9 @@ public:  // methods
     /// checks if the point is contained in the domain
     bool contains( const eckit::geometry::LLPoint2& ) const;
 
+    /// checks if the point is contained in the domain
+    bool contains( double lon, double lat ) const;
+
     void print(std::ostream&) const;
 
     static Domain makeGlobal();

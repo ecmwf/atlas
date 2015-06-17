@@ -51,13 +51,17 @@ void Domain::hash(eckit::MD5& md5) const
 
 bool Domain::contains( const eckit::geometry::LLPoint2& p ) const
 {
-  double lat = p.lat();
-  double lon = normalise(lon);
+    return contains(p.lon(),p.lat());
+}
 
-  return FloatCompare<double>::isGreaterApproxEqual(north_, lat) &&
-         FloatCompare<double>::isGreaterApproxEqual(lat, south_) &&
-         FloatCompare<double>::isGreaterApproxEqual(lon , west_) &&
-         FloatCompare<double>::isGreaterApproxEqual(east_, lon);
+bool Domain::contains(double lon, double lat) const
+{
+    lon = normalise(lon);
+
+    return FloatCompare<double>::isGreaterApproxEqual(north_, lat) &&
+           FloatCompare<double>::isGreaterApproxEqual(lat, south_) &&
+           FloatCompare<double>::isGreaterApproxEqual(lon , west_) &&
+           FloatCompare<double>::isGreaterApproxEqual(east_, lon);
 }
 
 Domain Domain::makeGlobal() { return Domain(90.,0.,-90.,360.); }

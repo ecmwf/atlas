@@ -14,7 +14,9 @@
 #include <cstddef>
 #include <vector>
 
+#include "eckit/memory/ScopedPtr.h"
 #include "eckit/memory/Builder.h"
+
 #include "atlas/Grid.h"
 
 namespace atlas {
@@ -73,6 +75,8 @@ class RotatedGrid : public Grid {
 
   private:  // methods
 
+    virtual void print(std::ostream&) const;
+
     /// Human readable name
     /// May not be unique, especially when BoundBox is different
     virtual std::string shortName() const;
@@ -82,7 +86,7 @@ class RotatedGrid : public Grid {
 
   private: // members
 
-    std::auto_ptr<Grid> grid_;
+    eckit::ScopedPtr<Grid> grid_;
 
     double south_pole_latitude_;
     double south_pole_longitude_;

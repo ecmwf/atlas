@@ -90,6 +90,14 @@ GridSpec RotatedGrid::spec() const {
     NOTIMP;
 }
 
+void RotatedGrid::print(ostream& os) const
+{
+    os << "Rotated("
+       << "south_pole_latitude:" << south_pole_latitude_
+       << ",south_pole_longitude:" << south_pole_longitude_
+       << ",south_pole_rotation_angle:" << south_pole_rotation_angle_
+       << "," << *grid_ << ")";
+}
 
 //------------------------------------------------------------------------------------------------------
 
