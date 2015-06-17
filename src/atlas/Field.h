@@ -123,7 +123,6 @@ public:
   void set_name(const std::string& name)
   {
     name_ = name;
-    return name_;
   }
 
 protected: // members
