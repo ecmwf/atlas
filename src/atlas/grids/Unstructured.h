@@ -45,18 +45,19 @@ public: // methods
 
   virtual ~Unstructured();
 
-  virtual BoundBox bounding_box() const;
+  virtual BoundBox boundingBox() const;
 
   virtual size_t npts() const;
 
-  virtual void lonlat(double[]) const;
   virtual void lonlat(std::vector< Point >&) const;
 
-  virtual std::string grid_type() const { return grid_type_str(); }
+  virtual std::string gridType() const { return grid_type_str(); }
 
   virtual GridSpec spec() const;
 
 private: // methods
+
+  virtual void print(std::ostream&) const;
 
   /// Human readable name
   virtual std::string shortName() const;

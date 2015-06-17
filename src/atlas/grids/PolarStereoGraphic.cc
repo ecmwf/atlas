@@ -89,6 +89,23 @@ GridSpec PolarStereoGraphic::spec() const {
     NOTIMP;
 }
 
+void PolarStereoGraphic::print(ostream& os) const
+{
+    os << "PolarStereoGraphic("
+          << "npts_xaxis:" << npts_xaxis_
+          << "npts_yaxis:" << npts_yaxis_
+          << "x_grid_length:" << x_grid_length_
+          << "y_grid_length:" << y_grid_length_
+          << "first_grid_pt:" << first_grid_pt_
+          << "orientationOfTheGrid:" << orientationOfTheGrid_
+          << "southPoleOnProjectionPlane:" << southPoleOnProjectionPlane_
+          << "earth_is_oblate:" << earth_is_oblate_
+          << "semi_major:" << semi_major_
+          << "semi_minor:" << semi_minor_
+          << "radius:" << radius_
+          << ")";
+}
+
 std::string PolarStereoGraphic::shortName() const {
 
     if (shortName_.empty()) {
@@ -127,17 +144,6 @@ size_t PolarStereoGraphic::npts() const {
     return npts_xaxis_ * npts_yaxis_;
 }
 
-void PolarStereoGraphic::lonlat( double pts[] ) const {
-    std::vector<Grid::Point> gpts;
-    lonlat(gpts);
-
-    int c(0);
-    for (size_t i = 0; i < gpts.size(); i++) {
-        pts[c++] = gpts[i].lon();
-        pts[c++] = gpts[i].lat();
-    }
-}
-
 //Enable to test against grib iterator
 //#define GRIB_COMPAT 1
 
@@ -153,7 +159,7 @@ void PolarStereoGraphic::lonlat(std::vector<Grid::Point> &points) const {
     }
 
     // Points go from North,West --> South,east
-    BoundBox bbox = bounding_box();
+    BoundBox bbox = boundingBox();
     const double north = bbox.north();
     const double west  = bbox.west();
 
@@ -173,7 +179,7 @@ void PolarStereoGraphic::lonlat(std::vector<Grid::Point> &points) const {
 
 }
 
-BoundBox PolarStereoGraphic::bounding_box() const {
+BoundBox PolarStereoGraphic::boundingBox() const {
     // Map first_grid_pt_ to the plane.
     PolarStereoGraphicProj ps(southPoleOnProjectionPlane_, earth_is_oblate_, orientationOfTheGrid_);
     if (earth_is_oblate_) {
@@ -201,7 +207,7 @@ BoundBox PolarStereoGraphic::bounding_box() const {
     return BoundBox(top, bottom, right, left);
 }
 
-string PolarStereoGraphic::grid_type() const {
+string PolarStereoGraphic::gridType() const {
     return PolarStereoGraphic::grid_type_str();
 }
 

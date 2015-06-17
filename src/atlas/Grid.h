@@ -39,16 +39,6 @@ class GridSpec;
 
 //------------------------------------------------------------------------------------------------------
 
-/**
- * Interface to a grid of points in a 2d cartesian space
- * For example a LatLon grid or a Reduced Graussian grid
- *
- *      DECODE                        ATLAS                      ENCODE
- *      NetCDFBuilder -->  |-------|         |----------|   ------>NetCDFWrite
- *                         | Grid  | <=====> | GridSpec |
- *      GribBuilder ---->  |-------|         |----------|   ------>GribWrite
- *
- */
 class Grid : public eckit::Owned {
 
  public:  // types
@@ -56,23 +46,18 @@ class Grid : public eckit::Owned {
   typedef eckit::BuilderT1<Grid> builder_t;
   typedef const eckit::Params& ARG1;
 
-  typedef eckit::geometry::LLPoint2 Point;
-
   typedef eckit::SharedPtr<Grid> Ptr;
+
+  typedef eckit::geometry::LLPoint2 Point; // must be sizeof(double)*2
   typedef std::string uid_t;
 
  public:  // methods
 
   static std::string className() { return "atlas.Grid"; }
 
-  static double degrees_eps();
-
   static Grid* create(const GridSpec&);
-
   static Grid* create(const eckit::Params&);
   static Grid* create(const Grid::uid_t& shortName);
-  //  static Grid* create( const Grid::HumanName& name );
-  //  static Grid* create( const eckit::Buffer& buff );
 
   /// Default constructor builds a Grid that is Global
   Grid();
@@ -89,74 +74,67 @@ class Grid : public eckit::Owned {
 
   /// Unique grid id
   /// Computed from the shortName and the hash
-  uid_t unique_id() const;
+  uid_t uniqueId() const;
 
   /// Adds to the MD5 the information that makes this Grid unique
   virtual void hash(eckit::MD5&) const = 0;
+
   /// @returns the hash of the information that makes this Grid unique
   eckit::MD5::digest_t hash() const;
 
-  /**
-   * @return bounding box
-   * @note when the bounding box is not on the grid, the coordinate values will
-   * be on the enclosing grid points
-   * @note assumes NORTH-->SOUTH, and EAST-->WEST (hence independent of scanning
-   * mode, since that is GRIB specific)
-   * @note assumes range for latitude: [-90,+90] and longitude [-360,+360]
-   */
-  virtual BoundBox bounding_box() const = 0;
+  /// @return bounding box of all lonlat points,
+  /// @note this function will compute brute-force the minmax lonlat values over all the points
+  virtual BoundBox boundingBox() const;
 
-  /**
-   * @return area which contains the grid
-   */
+  /// @return area which contains the grid
   virtual const Domain& domain() const;
 
-  /// Mask with given Domain
-  virtual void mask(const Domain&);
-
-  /// Mask with given Params
-  virtual void mask(const eckit::Params&);
-
-  /// Return a copy of the grid, masked with given Domain
-  virtual Grid* masked(const Domain&) const;
-
-  /// Return a copy of the grid, masked with given Params
-  virtual Grid* masked(const eckit::Params&) const;
-
-  /**
-   * @return number of grid points
-   * @note This methods should have constant access time, if necessary derived
-   * classes should compute it at construction
-   */
+  /// @return number of grid points
+  /// @note This methods should have constant access time, if necessary derived
+  //        classes should compute it at construction
   virtual size_t npts() const = 0;
 
-  /**
-   * @brief fill provided parameter with grid points, as (lon,lat) values
-   * @note assumes that the input vectors have the correct size.
-   * @note assumes we start at NORTH,WEST-->SOUTH,EAST
-   */
-  virtual void lonlat(double[]) const = 0;
+  /// Fill provided parameter with grid points, as (lon,lat) values
+  /// @post resizes the vector
   virtual void lonlat(std::vector<Point>&) const = 0;
-  void lonlat(std::vector<double>&) const;
 
-  virtual std::string grid_type() const = 0;
+  /// Fills the provided vector with the (lon,lat) values
+  /// @post resizes the vector
+  void fillLonLat(std::vector<double>&) const;
 
-  virtual GridSpec spec() const = 0;
+  /// Fills the provided array with the (lon,lat) values
+  /// @note Assumes that the input array has been allocated with correct size
+  /// @param array is an arry already allocated with enough size to store all the latlon values
+  /// @param arraySize is the size of the array
+  void fillLonLat(double array[], size_t arraySize) const;
+
+  virtual std::string gridType() const = 0;
+
+  virtual GridSpec spec() const = 0; /// FIXME: Dont use GridSpec anymore
 
   virtual bool same(const Grid&) const;
+
+  /// @TODO: eventually remove the Mesh from the Grid
 
   void set_mesh(const Mesh& mesh);
   Mesh& mesh() const;
 
- protected:  // methods
+protected:  // methods
 
-  /// helper function to initialise global grids, with a global area (BoundBox)
-  static BoundBox make_global_bounding_box();
+  /// Fill provided memory buffer with the grid points, as (lon,lat) values
+  /// This implementation in the base Grid class is not optimal as it incurs in double copy
+  /// Derived classes should reimplement more optimised versions.
+  ///
+  /// @note Assumes that the input buffer has been allocated with correct size,
+  ///       possibly from calling method npts()
+  ///
+  /// @param array to be filled in with the (lon,lat) values
+  /// @param size number of doubles in array
+  ///
+  /// @return the size of bytes copyied in
+  virtual size_t copyLonLatMemory(double* pts, size_t size) const;
 
-  /// helper function to create bounding boxes (for non-global grids)
-  static BoundBox make_bounding_box(const eckit::Params&);
-
-  virtual void print(std::ostream&) const;
+  virtual void print(std::ostream&) const = 0;
 
 private:  // methods
 
@@ -165,13 +143,16 @@ private:  // methods
       return s;
   }
 
-private:  // members
+protected:  // members
 
   atlas::Domain domain_;
 
-  mutable eckit::SharedPtr<Mesh> mesh_;
-  mutable uid_t                  uid_;
-  mutable eckit::MD5::digest_t   hash_;
+private:  // members
+
+  mutable eckit::SharedPtr<Mesh> mesh_; ///< @todo to be removed
+
+  mutable uid_t                  uid_;  ///< cache the unique ID
+  mutable eckit::MD5::digest_t   hash_; ///< cache the hash
 
 };
 

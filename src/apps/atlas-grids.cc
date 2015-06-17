@@ -161,17 +161,17 @@ void AtlasGrids::run()
       double deg, km;
       Log::info() << "Grid " << key << std::endl;
       Log::info() << "   type:                               "
-                  << g.grid_type() << std::endl;
+                  << g.gridType() << std::endl;
       Log::info() << "   name:                               "
                   << g.shortName() << std::endl;
       Log::info() << "   uid:                                "
-                  << g.unique_id() << std::endl;
-      if( grid->grid_type() == GaussianGrid::grid_type_str() )
+                  << g.uniqueId() << std::endl;
+      if( grid->gridType() == GaussianGrid::grid_type_str() )
       {
         Log::info() << "   N number:                           "
                     << dynamic_cast<GaussianGrid*>(grid.get())->N() << std::endl;
       }
-      if( grid->grid_type() == ReducedGaussianGrid::grid_type_str() )
+      if( grid->gridType() == ReducedGaussianGrid::grid_type_str() )
       {
         Log::info() << "   N number:                           "
                     << dynamic_cast<ReducedGaussianGrid*>(grid.get())->N() << std::endl;
@@ -205,11 +205,11 @@ void AtlasGrids::run()
       Log::info() << "   spectral truncation -- cubic:       "
                   << static_cast<int>(std::floor(0.5*grid->nlat()+0.5))-1 << std::endl;
       Log::info() << "   bounding box -- lat N-S (deg):      "
-                  << std::setw(10) << grid->bounding_box().max().lat() << ",  "
-                  << std::setw(10) << grid->bounding_box().min().lat() << std::endl;
+                  << std::setw(10) << grid->boundingBox().max().lat() << ",  "
+                  << std::setw(10) << grid->boundingBox().min().lat() << std::endl;
       Log::info() << "   bounding box -- lon W-E (deg):      "
-                  << std::setw(10) << grid->bounding_box().min().lon() << ",  "
-                  << std::setw(10) << grid->bounding_box().max().lon() << std::endl;
+                  << std::setw(10) << grid->boundingBox().min().lon() << ",  "
+                  << std::setw(10) << grid->boundingBox().max().lon() << std::endl;
     }
     if( json )
     {

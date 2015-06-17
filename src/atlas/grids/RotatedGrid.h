@@ -56,9 +56,6 @@ class RotatedGrid : public Grid {
 
   public: // methods
 
-    // static std::string className() { return "atlas.grid.RotatedGrid"; }
-    // static std::string grid_type_str() { return "rotated_ll"; }
-
     RotatedGrid(Grid *grid,
                 double south_pole_latitude,
                 double south_pole_longitude,
@@ -66,13 +63,12 @@ class RotatedGrid : public Grid {
 
     virtual ~RotatedGrid();
 
-    virtual BoundBox bounding_box() const;
+    virtual BoundBox boundingBox() const;
     virtual size_t npts() const;
 
-    virtual void lonlat( double[] ) const;
     virtual void lonlat( std::vector<Point>& ) const;
 
-    virtual std::string grid_type() const;
+    virtual std::string gridType() const;
     virtual GridSpec spec() const;
 
   private:  // methods
@@ -92,7 +88,7 @@ class RotatedGrid : public Grid {
     double south_pole_longitude_;
     double south_pole_rotation_angle_;
 
-    mutable std::string          shortName_;
+    mutable std::string  shortName_;
 };
 
 //------------------------------------------------------------------------------------------------------

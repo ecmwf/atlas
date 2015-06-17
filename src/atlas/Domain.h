@@ -27,34 +27,39 @@ namespace eckit {
 
 namespace atlas {
 
+class BoundBox;
+
 //------------------------------------------------------------------------------------------------------
 
 class Domain {
 
 public:  // methods
 
-  /// East and West are reduced to the interval [0,360[
-  Domain(double north, double west, double south, double east, int fake);
+    /// Construct from a BoundBox
+    Domain(const atlas::BoundBox&);
 
-  ~Domain(); // make it virtual once is a virtual base
+    /// East and West are reduced to the interval [0,360[
+    Domain(double north, double west, double south, double east);
 
-  /// Adds to the MD5 the information
-  void hash(eckit::MD5&) const;
+    ~Domain(); // make it virtual once is a virtual base
 
-  /// checks if the point is contained in the domain
-  bool contains( const eckit::geometry::LLPoint2& ) const;
+    /// Adds to the MD5 the information
+    void hash(eckit::MD5&) const;
 
-  void print(std::ostream&) const;
+    /// checks if the point is contained in the domain
+    bool contains( const eckit::geometry::LLPoint2& ) const;
 
-  static Domain makeGlobal();
+    void print(std::ostream&) const;
 
-  double north() const { return north_; }
+    static Domain makeGlobal();
 
-  double west() const { return west_; }
+    double north() const { return north_; }
 
-  double south() const { return south_; }
+    double west() const { return west_; }
 
-  double east() const { return east_; }
+    double south() const { return south_; }
+
+    double east() const { return east_; }
 
 private:  // methods
 

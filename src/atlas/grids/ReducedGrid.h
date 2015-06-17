@@ -59,15 +59,13 @@ public:
                const int npts_per_lat[],
                const Domain& d = Domain::makeGlobal());
 
-  virtual BoundBox bounding_box() const;
+  virtual BoundBox boundingBox() const;
 
   virtual size_t npts() const;
 
-  virtual void lonlat( double[] ) const;
-
   virtual void lonlat( std::vector<Point>& ) const;
 
-  virtual std::string grid_type() const;
+  virtual std::string gridType() const;
 
   virtual GridSpec spec() const;
 
@@ -90,11 +88,11 @@ public:
 
   void lonlat( const int jlon, const int jlat, double crd[] ) const;
 
-  /// @brief Mask the grid according to the domain
-  virtual void mask( const BoundBox& );
-  virtual void mask( const eckit::Params& );
-
 private: // methods
+
+  virtual size_t copyLonLatMemory(double* pts, size_t size) const;
+
+  virtual void print(std::ostream&) const;
 
   /// Human readable name
   /// May not be unique, especially when reduced gauss grids have the same N numbers
@@ -122,8 +120,6 @@ protected:
 
   size_t              npts_;          ///<! Total number of unique points in the grid
 
-  BoundBox            bounding_box_;  ///<! bounding box for data, only points within are considered part of grid
-
   std::string         grid_type_;
 
   std::string         shortName_;
@@ -132,6 +128,8 @@ protected:
   std::vector<int>    nlons_;  ///<! Number of points per latitude (int32 type for Fortran interoperability)
   std::vector<double> lonmin_; ///<! Value of minimum longitude per latitude [default=0]
   std::vector<double> lonmax_; ///<! Value of maximum longitude per latitude [default=~360 (one increment smaller)]
+
+  BoundBox            bounding_box_;  ///<! bounding box cache
 
 };
 

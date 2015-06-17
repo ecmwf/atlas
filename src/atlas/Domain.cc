@@ -13,11 +13,22 @@
 #include "eckit/utils/MD5.h"
 #include "eckit/types/FloatCompare.h"
 
+#include "atlas/BoundBox.h"
+
 using eckit::FloatCompare;
 
 namespace atlas {
 
-Domain::Domain(double north, double west, double south, double east, int) :
+Domain::Domain(const atlas::BoundBox& bbox) :
+    north_(bbox.north()),
+    west_(bbox.west()),
+    south_(bbox.south()),
+    east_(bbox.east())
+{
+    normalise();
+}
+
+Domain::Domain(double north, double west, double south, double east) :
   north_(north),
   west_(west),
   south_(south),
@@ -49,7 +60,7 @@ bool Domain::contains( const eckit::geometry::LLPoint2& p ) const
          FloatCompare<double>::isGreaterApproxEqual(east_, lon);
 }
 
-Domain Domain::makeGlobal() { return Domain(90.,0.,-90.,360.,0); }
+Domain Domain::makeGlobal() { return Domain(90.,0.,-90.,360.); }
 
 void Domain::normalise()
 {

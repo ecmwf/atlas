@@ -49,7 +49,6 @@
 #include "atlas/grids/GaussianGrid.h"
 #include "atlas/grids/LonLatGrid.h"
 #include "atlas/grids/ReducedLonLatGrid.h"
-#include "atlas/grids/RotatedLatLon.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -213,7 +212,7 @@ void Grib::determine_grib_samples_dir(std::vector<std::string>& sample_paths)
 static std::string match_grid_spec_with_sample_file( const GridSpec& g_spec, long edition )
 {
    // First get the grid_type
-   std::string grid_type = g_spec.grid_type();
+   std::string grid_type = g_spec.gridType();
 
    // For regular gaussian grids
    if (grid_type == grids::GaussianGrid::grid_type_str() ) {
@@ -246,7 +245,9 @@ static std::string match_grid_spec_with_sample_file( const GridSpec& g_spec, lon
       return "regular_ll_pl_grib2";;
    }
 
-   if (grid_type == grids::RotatedLatLon::grid_type_str() ) {
+   /// NOTE: rotated_ll doesn't exist anymore in Atlas as a standalone grid
+
+   if (grid_type == "rotated_ll" ) {
 
       // rotated_ll_pl_grib1.tmpl  --> GridSpec[ (Ni,16)(Nj,31)(SouthPoleLat,0)(SouthPoleLon,0)(SouthPoleRotAngle,0)(lat_inc,2)(lon_inc,2)(uid,rotated_ll_31) ]
       // rotated_ll_pl_grib2.tmpl  --> GridSpec[ (Ni,16)(Nj,31)(SouthPoleLat,0)(SouthPoleLon,0)(SouthPoleRotAngle,0)(lat_inc,2)(lon_inc,2)(uid,rotated_ll_31) ]
@@ -267,9 +268,9 @@ bool check_grid_spec_matches_sample_file( const GridSpec& g_spec, long edition,	
 {
 	GribHandle gh( fpath );
 
-   if ( g_spec.grid_type() != gh.gridType() )
+   if ( g_spec.gridType() != gh.gridType() )
    {
-      //Log::info() << "grid_type in GridSpec " << g_spec.grid_type() << " does not match " << grib_grid_type << " in samples file " << file_path << " IGNORING " << std::endl;
+      //Log::info() << "grid_type in GridSpec " << g_spec.gridType() << " does not match " << grib_grid_type << " in samples file " << file_path << " IGNORING " << std::endl;
       return false;
    }
 
@@ -279,7 +280,7 @@ bool check_grid_spec_matches_sample_file( const GridSpec& g_spec, long edition,	
       return false;
    }
 
-   if (g_spec.grid_type() == grids::ReducedGaussianGrid::grid_type_str() )
+   if (g_spec.gridType() == grids::ReducedGaussianGrid::grid_type_str() )
    {
       if (g_spec.has("N"))
       {

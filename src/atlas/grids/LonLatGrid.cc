@@ -52,7 +52,6 @@ LonLatGrid::LonLatGrid() : ReducedLonLatGrid()
 LonLatGrid::LonLatGrid(const Params& p)
 {
   setup(p);
-  mask(p);
   set_typeinfo();
 }
 
@@ -234,7 +233,7 @@ GridSpec LonLatGrid::spec() const
   grid_spec.set("nlon", nlon() );
   grid_spec.set("nlat", nlat() );
 
-  grid_spec.set_bounding_box(bounding_box());
+  grid_spec.set_bounding_box(boundingBox());
 
   return grid_spec;
 }
