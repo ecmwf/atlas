@@ -54,6 +54,7 @@ public:
   Metadata& operator()(const std::string& name, const ValueT& value)
   {
     set(name,value);
+    return *this;
   }
 
 
