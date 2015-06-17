@@ -27,6 +27,8 @@ namespace eckit {
 
 namespace atlas {
 
+class BoundBox;
+
 //------------------------------------------------------------------------------------------------------
 
 /// If is periodic then east() - west() == 360
@@ -37,20 +39,26 @@ class Domain {
 
 public:  // methods
 
-  /// East and West are reduced to the interval [0,360[
-  Domain(double north, double west, double south, double east, int fake);
+    /// Construct from a BoundBox
+    Domain(const atlas::BoundBox&);
 
-  ~Domain(); // make it virtual once is a virtual base
+    /// East and West are reduced to the interval [0,360[
+    Domain(double north, double west, double south, double east);
 
-  /// Adds to the MD5 the information
-  void hash(eckit::MD5&) const;
+    ~Domain(); // make it virtual once is a virtual base
 
-  /// checks if the point is contained in the domain
-  bool contains( const eckit::geometry::LLPoint2& ) const;
+    /// Adds to the MD5 the information
+    void hash(eckit::MD5&) const;
 
-  void print(std::ostream&) const;
+    /// checks if the point is contained in the domain
+    bool contains( const eckit::geometry::LLPoint2& ) const;
 
-  static Domain makeGlobal();
+    /// checks if the point is contained in the domain
+    bool contains( double lon, double lat ) const;
+
+    void print(std::ostream&) const;
+
+    static Domain makeGlobal();
 
   double north() const { return north_; }
   double west() const { return west_; }

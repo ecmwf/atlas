@@ -47,7 +47,7 @@ public:
   ~GridSpec();
 
   /// returns the gridType. currently this matches grid _type found in GRIB
-  std::string grid_type() const;
+  std::string gridType() const;
 
   eckit::MD5::digest_t hash() const;
 

@@ -51,7 +51,7 @@ ReducedLonLatGrid::ReducedLonLatGrid()
 }
 
 ReducedLonLatGrid::ReducedLonLatGrid( const int nlat, const int nlons[], bool poles, const Domain& domain)
- : ReducedGrid(d)
+ : ReducedGrid(domain)
 {
   ReducedGrid::N_ = nlat;
   poles_ = poles;
@@ -62,7 +62,6 @@ ReducedLonLatGrid::ReducedLonLatGrid( const int nlat, const int nlons[], bool po
 ReducedLonLatGrid::ReducedLonLatGrid( const Params& params )
 {
   setup(params);
-  mask(params);
   set_typeinfo();
 }
 
@@ -135,7 +134,7 @@ GridSpec ReducedLonLatGrid::spec() const
     grid_spec.set_latitudes(latitudes());
 
   grid_spec.set("poles",poles_);
-  grid_spec.set_bounding_box(bounding_box());
+  grid_spec.set_bounding_box(boundingBox());
 
   return grid_spec;
 }

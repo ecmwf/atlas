@@ -53,7 +53,6 @@ ReducedGaussianGrid::ReducedGaussianGrid( const int N, const int nlons[], const 
 ReducedGaussianGrid::ReducedGaussianGrid(const eckit::Params& params)
 {
   setup(params);
-  mask(params);
   set_typeinfo();
 }
 
@@ -95,7 +94,7 @@ GridSpec ReducedGaussianGrid::spec() const
   grid_spec.set_latitudes(latitudes());
   grid_spec.set("N", N() );
 
-  grid_spec.set_bounding_box(bounding_box());
+  grid_spec.set_bounding_box(boundingBox());
 
   return grid_spec;
 }

@@ -27,6 +27,18 @@ namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
 
+static void checkSizeOfPoint()
+{
+    // compilen time check support C++11
+    #if __cplusplus >= 201103L
+        static_assert( sizeof(Grid::Point)==2*double, "Grid requires size of Point to be 2*double" );
+    #endif
+
+    // runtime check
+    ASSERT( sizeof(Grid::Point) == 2*sizeof(double) );
+}
+
+
 Grid* Grid::create(const Params& p) {
   if (p.has("shortName")) {
     if (Factory<Grid>::instance().exists(p["shortName"])) {
@@ -40,8 +52,15 @@ Grid* Grid::create(const Grid::uid_t& uid) { return grids::grid_from_uid(uid); }
 
 Grid* Grid::create(const GridSpec& g) { return Grid::create(Params(g)); }
 
-Grid::Grid() : domain_( Domain::makeGlobal() ) {}
-Grid::Grid(const Domain& domain) : domain_(domain) {}
+Grid::Grid() : domain_( Domain::makeGlobal() )
+{
+    checkSizeOfPoint();
+}
+
+Grid::Grid(const Domain& domain) : domain_(domain)
+{
+    checkSizeOfPoint();
+}
 
 Grid::~Grid() {}
 
@@ -50,11 +69,7 @@ const atlas::Domain& Grid::domain() const
   return domain_;
 }
 
-void Grid::mask(const Domain&) { NOTIMP; }
-
-void Grid::mask(const Params&) { NOTIMP; }
-
-Grid::uid_t Grid::unique_id() const {
+Grid::uid_t Grid::uniqueId() const {
   if (uid_.empty()) {
     std::ostringstream s;
     s << shortName() << "." << hash();
@@ -72,19 +87,21 @@ eckit::MD5::digest_t Grid::hash() const {
   return hash_;
 }
 
-Grid* Grid::masked(const Domain&) const {
-  NOTIMP;
-  return NULL;
+BoundBox Grid::boundingBox() const
+{
+
 }
 
-Grid* Grid::masked(const eckit::Params&) const {
-  NOTIMP;
-  return NULL;
+void Grid::fillLonLat(double array[], size_t arraySize) const
+{
+    const size_t size = npts()*2;
+    ASSERT(arraySize >= size);
+    copyLonLatMemory(array, size_t(sizeof(double)*size));
 }
 
-void Grid::lonlat(std::vector<double>& crd) const {
-  crd.resize(npts() * 2);
-  lonlat(crd.data());
+void Grid::fillLonLat(std::vector<double>& v) const {
+    v.resize(npts()*2);
+    copyLonLatMemory(&v[0], size_t(sizeof(double)*v.size()));
 }
 
 void Grid::set_mesh(const Mesh& mesh)
@@ -101,30 +118,24 @@ Mesh& Grid::mesh() const {
   return *mesh_;
 }
 
-bool Grid::same(const Grid& g) const { return unique_id() == g.unique_id(); }
-
-//------------------------------------------------------------------------------------------------------
-
-BoundBox Grid::make_global_bounding_box() { return BoundBox(90., -90., 360. - degrees_eps(), 0.); }
-
-BoundBox Grid::make_bounding_box(const Params& p) {
-  if (!p.has("bbox_s")) return Grid::make_global_bounding_box();
-
-  return BoundBox(p["bbox_n"], p["bbox_s"], p["bbox_e"], p["bbox_w"]);
-}
-
-void Grid::print(std::ostream &) const
+size_t Grid::copyLonLatMemory(double* pts, size_t size) const
 {
-  NOTIMP;
+    std::vector<Grid::Point> gpts;
+    lonlat(gpts);
+
+    size_t sizePts = 2*npts();
+
+    ASSERT(size >= sizePts);
+
+    for(size_t c = 0, i = 0; i < gpts.size(); ++i) {
+        pts[c++] = gpts[i].lon();
+        pts[c++] = gpts[i].lat();
+    }
+
+    return sizePts;
 }
 
-double Grid::degrees_eps() {
-  /// default is 1E-3 because
-  /// some bugs in IFS means we need a lower resolution epsilon when decoding from grib2
-
-  static double eps = eckit::Resource<double>("$ATLAS_DEGREES_EPSILON;atlas.degrees_epsilon", 1E-3);
-  return eps;
-}
+bool Grid::same(const Grid& g) const { return uniqueId() == g.uniqueId(); }
 
 //------------------------------------------------------------------------------------------------------
 

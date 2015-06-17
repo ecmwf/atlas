@@ -28,7 +28,6 @@ OctahedralRGG::OctahedralRGG(Grid::ARG1 params)
 {
   int N = params["N"];
   construct(N);
-  mask(params);
   set_typeinfo();
 }
 

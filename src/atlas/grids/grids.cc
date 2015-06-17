@@ -97,7 +97,6 @@ void load()
   load_grid<ReducedGaussianGrid>();
   load_grid<LonLatGrid>();
   load_grid<ReducedLonLatGrid>();
-  load_grid<RotatedLatLon>();
   load_grid<Unstructured>();
   load_grid<PolarStereoGraphic>();
 

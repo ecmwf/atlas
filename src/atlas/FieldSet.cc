@@ -71,11 +71,11 @@ bool FieldSet::have_same_grid() const
   if( fields_.empty() )
     return true;
 
-  Grid::uid_t uid = fields_[0]->grid().unique_id();
+  Grid::uid_t uid = fields_[0]->grid().uniqueId();
 
   for( size_t i = 1; i < fields_.size(); ++i )
   {
-    if( fields_[i]->grid().unique_id() != uid )
+    if( fields_[i]->grid().uniqueId() != uid )
       return false;
   }
 

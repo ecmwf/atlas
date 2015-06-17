@@ -25,8 +25,6 @@
 
 /// @todo remaining to be reworked
 #include "atlas/grids/PolarStereoGraphic.h"
-#include "atlas/grids/RotatedLatLon.h"
-
 
 namespace atlas {
 namespace grids {
