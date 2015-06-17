@@ -69,30 +69,30 @@ public: // methods
 	virtual void allocate(const std::vector<size_t>& shapef)=0;
 	const std::string& name() const { return name_; }
 
-	const Grid& grid() const {
-    if( function_space_ )
-    {
-      if( function_space_->mesh().has_grid() )
-        return function_space_->mesh().grid();
-    }
-    if( !grid_ )
-      throw eckit::Exception("Field "+name()+" is not associated to any Grid.");
-    return *grid_;
-  }
+        const Grid& grid() const {
+            if( function_space_ )
+            {
+                if( function_space_->mesh().has_grid() )
+                    return function_space_->mesh().grid();
+            }
+            if( !grid_ )
+                throw eckit::Exception("Field "+name()+" is not associated to any Grid.");
+            return *grid_;
+        }
 
-	const Mesh& mesh() const { ASSERT(function_space_); return function_space_->mesh(); }
+        const Mesh& mesh() const { ASSERT(function_space_); return function_space_->mesh(); }
 	Mesh& mesh() { ASSERT(function_space_); return function_space_->mesh(); }
 
 	const Metadata& metadata() const { return metadata_; }
 	Metadata& metadata() { return metadata_; }
 
-	FunctionSpace& function_space() const {
-    if( !function_space_ )
-      throw eckit::Exception("Field "+name()+" is not associated to any FunctionSpace.");
-    return *function_space_;
-  }
+        FunctionSpace& function_space() const {
+            if( !function_space_ )
+                throw eckit::Exception("Field "+name()+" is not associated to any FunctionSpace.");
+            return *function_space_;
+        }
 
-	const std::vector<int>& shapef() const	{ return shapef_; }
+        const std::vector<int>& shapef() const	{ return shapef_; }
 	const std::vector<size_t>& shape() const { return shape_; }
 	const std::vector<size_t>& strides() const { return strides_; }
 	size_t stride(int i) const { return strides_[i];}
@@ -123,6 +123,7 @@ public:
   void set_name(const std::string& name)
   {
     name_ = name;
+    return name_;
   }
 
 protected: // members

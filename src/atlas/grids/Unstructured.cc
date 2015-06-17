@@ -24,22 +24,6 @@ using eckit::MD5;
 namespace atlas {
 namespace grids {
 
-register_BuilderT1(Grid, Unstructured, Unstructured::grid_type_str());
-
-//void Unstructured::constructFrom(const GridSpec& grid_spec)
-//{
-//    if (grid_spec.has("hash")) hash_ = (std::string)grid_spec.get("hash");
-//    grid_spec.get_bounding_box(bound_box_);
-//       std::vector< Grid::Point >* pts = new std::vector< Grid::Point >(0);
-//       grid_spec.get_points(*pts);
-//       points_.reset(pts);
-//}
-
-
-Unstructured::Unstructured(const eckit::Params &p) {
-    NOTIMP;
-}
-
 Unstructured::Unstructured(const Mesh& m) :
   points_ ( new std::vector< Grid::Point > (m.function_space("nodes").shape(0) ) )
 {
@@ -63,6 +47,11 @@ Unstructured::Unstructured(const Mesh& m) :
   const_cast<Mesh&>(m).set_grid(*this);
 }
 
+
+Unstructured::Unstructured(const eckit::Params& p)
+{
+    NOTIMP;
+}
 
 Unstructured::Unstructured( std::vector< Point > *pts ) :
     points_(pts) {
@@ -112,24 +101,18 @@ void Unstructured::hash(eckit::MD5 &md5) const {
     bound_box_.hash(md5);
 }
 
-BoundBox Unstructured::bounding_box() const {
+BoundBox Unstructured::boundingBox() const {
     return bound_box_;
 }
 
 
 size_t Unstructured::npts() const {
+    ASSERT(points_);
     return points_->size();
 }
 
-
-void Unstructured::lonlat(double crds[]) const {
-    for (size_t i = 0, c = 0; i < npts(); ++i) {
-        crds[c++] = (*points_)[i].lon();
-        crds[c++] = (*points_)[i].lat();
-    }
-}
-
-void Unstructured::lonlat(std::vector< Grid::Point > &crds) const {
+void Unstructured::lonlat(std::vector<Grid::Point>& crds) const {
+    ASSERT(points_);
     crds.resize(npts());
     for (size_t i = 0; i < npts(); ++i)
         crds[i].assign(
@@ -141,17 +124,25 @@ GridSpec Unstructured::spec() const {
     if (cachedGridSpec_)
         return *cachedGridSpec_;
 
-    cachedGridSpec_.reset( new GridSpec(grid_type()) );
+    cachedGridSpec_.reset( new GridSpec(gridType()) );
 
     cachedGridSpec_->set_bounding_box(bound_box_);
 
     std::vector<double> coords;
-    Grid::lonlat(coords);
+    coords.resize(2*npts());
+    Grid::copyLonLatMemory(&coords[0],2*npts());
 
     cachedGridSpec_->set( "lonlat", eckit::makeVectorValue<double>(coords) );
 
     return *cachedGridSpec_;
 }
+
+void Unstructured::print(std::ostream& os) const
+{
+    os << "Unstructured(Npts:" << npts() << ")";
+}
+
+register_BuilderT1(Grid, Unstructured, Unstructured::grid_type_str());
 
 } // namespace grids
 } // namespace atlas

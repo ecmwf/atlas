@@ -28,6 +28,7 @@ namespace grids {
 /// in zonal direction.
 /// This means any full grid and reduced grid, both regular, gaussian or other
 /// such distribution can be represented with this class
+
 class ReducedGrid: public Grid {
 public:
 
@@ -42,23 +43,29 @@ public:
   static std::string className();
   static std::string grid_type_str() { return "reduced"; }
 
-  ReducedGrid();
+  /// FIXME: ReducedGrid should not be instantiatable.
+  ///        Only leaf classes should be instantiatable.
+  ///        This constructor should be used only by derived types
+  ReducedGrid(const Domain& d = Domain::makeGlobal());
 
   ReducedGrid( const eckit::Params& );
 
-  ReducedGrid( const std::vector<double>& lats, const std::vector<size_t>& nlon );
+  ReducedGrid( const std::vector<double>& lats,
+               const std::vector<size_t>& nlon,
+               const Domain& d = Domain::makeGlobal());
 
-  ReducedGrid( const int nlat, const double lats[], const int npts_per_lat[] );
+  ReducedGrid( int nlat,
+               const double lats[],
+               const int npts_per_lat[],
+               const Domain& d = Domain::makeGlobal());
 
-  virtual BoundBox bounding_box() const;
+  virtual BoundBox boundingBox() const;
 
   virtual size_t npts() const;
 
-  virtual void lonlat( double[] ) const;
-
   virtual void lonlat( std::vector<Point>& ) const;
 
-  virtual std::string grid_type() const;
+  virtual std::string gridType() const;
 
   virtual GridSpec spec() const;
 
@@ -81,11 +88,11 @@ public:
 
   void lonlat( const int jlon, const int jlat, double crd[] ) const;
 
-  /// @brief Mask the grid according to the domain
-  virtual void mask( const Domain& );
-  virtual void mask( const eckit::Params& );
-
 private: // methods
+
+  virtual size_t copyLonLatMemory(double* pts, size_t size) const;
+
+  virtual void print(std::ostream&) const;
 
   /// Human readable name
   /// May not be unique, especially when reduced gauss grids have the same N numbers
@@ -97,9 +104,13 @@ protected:
   /// Hash of the PL array
   virtual void hash(eckit::MD5&) const;
 
+  /// @note Domain is already set when calling setup()
   void setup( const eckit::Params& );
+  /// @note Domain is already set when calling setup()
   void setup( const int nlat, const double lats[], const int npts_per_lat[] );
+  /// @note Domain is already set when calling setup()
   void setup( const int nlat, const double lats[], const int nlons[], const double lonmin[], const double lonmax[] );
+  /// @note Domain is already set when calling setup()
   void setup_lat_hemisphere( const int N, const double lat[], const int lon[], const AngleUnit );
 
 protected:
@@ -109,8 +120,6 @@ protected:
 
   size_t              npts_;          ///<! Total number of unique points in the grid
 
-  BoundBox            bounding_box_;  ///<! bounding box for data, only points within are considered part of grid
-
   std::string         grid_type_;
 
   std::string         shortName_;
@@ -119,6 +128,8 @@ protected:
   std::vector<int>    nlons_;  ///<! Number of points per latitude (int32 type for Fortran interoperability)
   std::vector<double> lonmin_; ///<! Value of minimum longitude per latitude [default=0]
   std::vector<double> lonmax_; ///<! Value of maximum longitude per latitude [default=~360 (one increment smaller)]
+
+  BoundBox            bounding_box_;  ///<! bounding box cache
 
 };
 

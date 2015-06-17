@@ -36,7 +36,7 @@ GridSpec::~GridSpec()
 {
 }
 
-std::string GridSpec::grid_type() const
+std::string GridSpec::gridType() const
 {
    Properties::property_t val = get("grid_type");
    if( val.isNil() )

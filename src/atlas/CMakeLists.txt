@@ -123,6 +123,8 @@ grids/GaussianLatitudes.h
 grids/GaussianLatitudes.cc
 grids/LonLatGrid.cc
 grids/LonLatGrid.h
+grids/LocalGrid.cc
+grids/LocalGrid.h
 grids/PolarStereoGraphic.cc
 grids/PolarStereoGraphic.h
 grids/ReducedGaussianGrid.cc
@@ -131,8 +133,6 @@ grids/ReducedGrid.h
 grids/ReducedGrid.cc
 grids/ReducedLonLatGrid.cc
 grids/ReducedLonLatGrid.h
-grids/RotatedLatLon.cc
-grids/RotatedLatLon.h
 grids/RotatedGrid.cc
 grids/RotatedGrid.h
 grids/Unstructured.cc
@@ -208,6 +208,8 @@ atlas_omp.h
 atlas_omp.cc
 BoundBox.h
 BoundBox.cc
+Domain.h
+Domain.cc
 runtime/Behavior.h
 runtime/Behavior.cc
 runtime/LogFormat.h
