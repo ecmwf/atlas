@@ -13,70 +13,12 @@
 #include <stdexcept>
 
 #include "eckit/exception/Exceptions.h"
-#include "eckit/thread/AutoLock.h"
-#include "eckit/thread/Mutex.h"
 
 #include "atlas/Field.h"
 #include "atlas/FunctionSpace.h"
-
-
-namespace {
-
-    static eckit::Mutex *local_mutex = 0;
-    static std::map<std::string, atlas::FieldCreatorFactory *> *m = 0;
-    static pthread_once_t once = PTHREAD_ONCE_INIT;
-
-    static void init() {
-        local_mutex = new eckit::Mutex();
-        m = new std::map<std::string, atlas::FieldCreatorFactory *>();
-    }
-}
-
+#include "atlas/field/FieldCreator.h"
 
 namespace atlas {
-
-
-class ArraySpec: public FieldCreator
-{
-public:
-  ArraySpec() {}
-  ArraySpec(const eckit::Parametrisation&) {}
-  virtual Field* create_field( const eckit::Parametrisation& ) const;
-};
-
-Field* ArraySpec::create_field( const eckit::Parametrisation& params ) const
-{
-  Field* field;
-
-  std::vector<long> shape;
-  std::string data_type;
-  if( !params.get("shape",shape) )
-    throw eckit::Exception("Could not find parameter 'shape' in Parametrisation");
-  if( !params.get("data_type",data_type) )
-    throw eckit::Exception("Could not find parameter 'data_type' in Parametrisation");
-  std::vector<size_t> s(shape.begin(),shape.end());
-  if( data_type == "int32" || data_type == "int" )
-    field = new FieldT<int>(s);
-  else if( data_type == "int64" || data_type == "long" )
-    field = new FieldT<long>(s);
-  else if( data_type == "real32" || data_type == "float" )
-    field = new FieldT<float>(s);
-  else if( data_type == "real64" || data_type == "double" )
-    field = new FieldT<double>(s);
-  else
-    throw eckit::Exception("Could not create field. data_type parameter unrecognized: "+data_type);
-
-  filter_params(*field,params);
-
-  return field;
-}
-
-namespace {
-static FieldCreatorBuilder< ArraySpec > __ArraySpec("ArraySpec");
-}
-
-
-
 
 Field::Field(const std::string& name, const size_t nb_vars) :
   name_(name), nb_vars_(nb_vars), function_space_(NULL), grid_(NULL)
@@ -92,7 +34,8 @@ Field* Field::create(const eckit::Parametrisation& params)
   std::string creator_factory;
   if( params.get("creator",creator_factory) )
   {
-    eckit::ScopedPtr<FieldCreator> creator( FieldCreatorFactory::build(creator_factory,params) );
+    eckit::ScopedPtr<field::FieldCreator> creator
+        (field::FieldCreatorFactory::build(creator_factory,params) );
     return creator->create_field(params);
   }
   else
@@ -143,105 +86,6 @@ std::ostream& operator<<( std::ostream& os, const Field& f)
   f.print(os);
   return os;
 }
-
-// ------------------------------------------------------------------
-
-FieldCreator::FieldCreator()
-{
-}
-
-FieldCreator::~FieldCreator()
-{
-}
-
-void FieldCreator::filter_params(Field& field, const eckit::Parametrisation& params) const
-{
-  Grid::Id grid;
-  if( params.get("grid",grid) )
-    field.set_grid(Grid::from_id(grid));
-
-  FunctionSpace::Id function_space;
-  if( params.get("function_space",function_space) )
-    field.set_function_space(FunctionSpace::from_id(function_space));
-
-  std::string name;
-  if( params.get("name",name) )
-    field.set_name(name);
-}
-
-FieldCreatorFactory::FieldCreatorFactory(const std::string &name):
-    name_(name) {
-
-    pthread_once(&once, init);
-
-    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
-
-    ASSERT(m->find(name) == m->end());
-    (*m)[name] = this;
-}
-
-
-FieldCreatorFactory::~FieldCreatorFactory() {
-    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
-    m->erase(name_);
-}
-
-
-void FieldCreatorFactory::list(std::ostream& out) {
-    pthread_once(&once, init);
-
-    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
-
-    const char* sep = "";
-    for (std::map<std::string, FieldCreatorFactory *>::const_iterator j = m->begin() ; j != m->end() ; ++j) {
-        out << sep << (*j).first;
-        sep = ", ";
-    }
-}
-
-
-FieldCreator *FieldCreatorFactory::build(const std::string &name) {
-
-    pthread_once(&once, init);
-
-    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
-    std::map<std::string, FieldCreatorFactory *>::const_iterator j = m->find(name);
-
-    eckit::Log::debug() << "Looking for FieldCreatorFactory [" << name << "]" << std::endl;
-
-    if (j == m->end()) {
-        eckit::Log::error() << "No FieldCreatorFactory for [" << name << "]" << std::endl;
-        eckit::Log::error() << "FieldCreatorFactories are:" << std::endl;
-        for (j = m->begin() ; j != m->end() ; ++j)
-            eckit::Log::error() << "   " << (*j).first << std::endl;
-        throw eckit::SeriousBug(std::string("No FieldCreatorFactory called ") + name);
-    }
-
-    return (*j).second->make();
-}
-
-FieldCreator *FieldCreatorFactory::build(const std::string& name, const eckit::Parametrisation& param) {
-
-    pthread_once(&once, init);
-
-    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
-
-    std::map<std::string, FieldCreatorFactory *>::const_iterator j = m->find(name);
-
-    eckit::Log::debug() << "Looking for FieldCreatorFactory [" << name << "]" << std::endl;
-
-    if (j == m->end()) {
-        eckit::Log::error() << "No FieldCreatorFactory for [" << name << "]" << std::endl;
-        eckit::Log::error() << "FieldCreatorFactories are:" << std::endl;
-        for (j = m->begin() ; j != m->end() ; ++j)
-            eckit::Log::error() << "   " << (*j).first << std::endl;
-        throw eckit::SeriousBug(std::string("No FieldCreatorFactory called ") + name);
-    }
-
-    return (*j).second->make(param);
-}
-
-
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
@@ -304,7 +148,6 @@ void atlas__Field__data_shapef_double (Field* This, double* &field_data, int* &f
   field_bounds = const_cast<int*>(&(This->shapef()[0]));
   rank = This->shapef().size();
 }
-
 
 // ------------------------------------------------------------------
 

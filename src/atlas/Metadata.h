@@ -16,11 +16,15 @@
 #include "eckit/value/Params.h"
 
 namespace atlas {
+class Grid;
 class Mesh;
+class FunctionSpace;
 
 class Metadata: public eckit::Properties {
 
 public:
+
+  Metadata() {}
 
   template<typename ValueT>
   Metadata& set(const std::string& name, const ValueT& value);
@@ -32,6 +36,26 @@ public:
 
   template<typename ValueT>
   bool get(const std::string& name, ValueT& value) const;
+
+  /// @brief Constructor immediately setting a value.
+  template<typename ValueT>
+  Metadata(const std::string& name, const ValueT& value)
+  {
+    set(name,value);
+  }
+
+  /// @brief Operator that sets a key-value pair.
+  /// This is useful for chaining. Together with above constructor:
+  /// Metadata
+  ///   ("key1",value1)
+  ///   ("key2",value2)
+  ///   ("key3",value3);
+  template<typename ValueT>
+  Metadata& operator()(const std::string& name, const ValueT& value)
+  {
+    set(name,value);
+  }
+
 
 };
 
@@ -58,7 +82,9 @@ extern "C"
   void atlas__Metadata__set_array_long   (Metadata* This, const char* name, long value[], int size);
   void atlas__Metadata__set_array_float  (Metadata* This, const char* name, float value[], int size);
   void atlas__Metadata__set_array_double (Metadata* This, const char* name, double value[], int size);
-  void atlas__Metadata__set_mesh (Metadata* This, const char* name, Mesh* mesh);
+  void atlas__Metadata__set_grid (Metadata* This, const char* name, Grid* value);
+  void atlas__Metadata__set_mesh (Metadata* This, const char* name, Mesh* value);
+  void atlas__Metadata__set_functionspace (Metadata* This, const char* name, FunctionSpace* value);
 
   int    atlas__Metadata__get_int    (Metadata* This, const char* name);
   long   atlas__Metadata__get_long   (Metadata* This, const char* name);
@@ -69,7 +95,9 @@ extern "C"
   void   atlas__Metadata__get_array_long   (Metadata* This, const char* name, long* &value, int &size, int &allocated);
   void   atlas__Metadata__get_array_float  (Metadata* This, const char* name, float* &value, int &size, int &allocated);
   void   atlas__Metadata__get_array_double (Metadata* This, const char* name, double* &value, int &size, int &allocated);
+  Grid*  atlas__Metadata__get_grid (Metadata* This, const char* name);
   Mesh*  atlas__Metadata__get_mesh (Metadata* This, const char* name);
+  FunctionSpace*  atlas__Metadata__get_functionspace (Metadata* This, const char* name);
 }
 #undef Channel
 #undef Char

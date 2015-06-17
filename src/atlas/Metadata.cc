@@ -390,14 +390,40 @@ void atlas__Metadata__get_array_double (Metadata* This, const char* name, double
   );
 }
 
-void atlas__Metadata__set_mesh (Metadata* This, const char* name, Mesh* mesh)
+void atlas__Metadata__set_grid (Metadata* This, const char* name, Grid* value)
 {
-  This->set( std::string(name), *mesh );
+  ATLAS_ERROR_HANDLING( This->set( std::string(name), *value ) );
+}
+
+void atlas__Metadata__set_mesh (Metadata* This, const char* name, Mesh* value)
+{
+  ATLAS_ERROR_HANDLING( This->set( std::string(name), *value ) );
+}
+
+void atlas__Metadata__set_functionspace (Metadata* This, const char* name, FunctionSpace* value)
+{
+  ATLAS_ERROR_HANDLING( This->set( std::string(name), *value ) );
+}
+
+Grid* atlas__Metadata__get_grid (Metadata* This, const char* name)
+{
+  Grid* value(NULL);
+  ATLAS_ERROR_HANDLING( value = &This->get<Grid&>( std::string(name) ) );
+  return value;
 }
 
 Mesh* atlas__Metadata__get_mesh (Metadata* This, const char* name)
 {
-  return &This->get<Mesh&>( std::string(name) );
+  Mesh* value(NULL);
+  ATLAS_ERROR_HANDLING( value = &This->get<Mesh&>( std::string(name) ) );
+  return value;
+}
+
+FunctionSpace* atlas__Metadata__get_functionspace (Metadata* This, const char* name)
+{
+  FunctionSpace* value(NULL);
+  ATLAS_ERROR_HANDLING( value = &This->get<FunctionSpace&>( std::string(name) ) );
+  return value;
 }
 
 int atlas__Metadata__has (Metadata* This, const char* name)

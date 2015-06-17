@@ -47,6 +47,8 @@ public: // types
 	typedef eckit::SharedPtr<Field> Ptr;
 	typedef std::vector< Field::Ptr > Vector;
 
+  typedef Metadata Parameters;
+
 public: // methods
 
 	enum { UNDEF_VARS = -1 };
@@ -70,12 +72,8 @@ public: // methods
 	const Grid& grid() const {
     if( function_space_ )
     {
-      DEBUG();
       if( function_space_->mesh().has_grid() )
-      {
-        DEBUG();
         return function_space_->mesh().grid();
-      }
     }
     if( !grid_ )
       throw eckit::Exception("Field "+name()+" is not associated to any Grid.");
@@ -239,71 +237,6 @@ inline void FieldT<DATA_TYPE>::print(std::ostream& out) const
 	for( size_t i = 0; i < lonlat.shape()[0]; ++i )
 		out << lonlat(i,LON) << " " << lonlat(i,LAT) << " " << values(i) << std::endl;
 }
-
-//------------------------------------------------------------------------------------------------------
-
-
-/*!
- * \brief Base class for creating new fields based on Parametrisation
- */
-class FieldCreator : public eckit::Owned {
-
-public:
-
-    FieldCreator();
-    virtual ~FieldCreator();
-
-    virtual Field* create_field( const eckit::Parametrisation& ) const = 0;
-
-protected:
-
-    void filter_params(Field&, const eckit::Parametrisation&) const;
-};
-
-//------------------------------------------------------------------------------------------------------
-
-class FieldCreatorFactory {
-  public:
-    /*!
-     * \brief build FieldCreator with factory key, and default options
-     * \return FieldCreator
-     */
-    static FieldCreator* build(const std::string&);
-
-    /*!
-     * \brief build FieldCreator with options specified in parametrisation
-     * \return mesh generator
-     */
-    static FieldCreator* build(const std::string&, const eckit::Parametrisation&);
-
-    /*!
-     * \brief list all registered field creators
-     */
-    static void list(std::ostream &);
-
-  private:
-    std::string name_;
-    virtual FieldCreator* make() = 0 ;
-    virtual FieldCreator* make(const eckit::Parametrisation&) = 0 ;
-
-  protected:
-
-    FieldCreatorFactory(const std::string&);
-    virtual ~FieldCreatorFactory();
-};
-
-
-template<class T>
-class FieldCreatorBuilder : public FieldCreatorFactory {
-  virtual FieldCreator* make() {
-      return new T();
-  }
-  virtual FieldCreator* make(const eckit::Parametrisation& param) {
-        return new T(param);
-    }
-  public:
-    FieldCreatorBuilder(const std::string& name) : FieldCreatorFactory(name) {}
-};
 
 //------------------------------------------------------------------------------------------------------
 

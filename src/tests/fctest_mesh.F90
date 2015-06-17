@@ -21,6 +21,31 @@ implicit none
 type(atlas_Mesh) :: mesh
 type(atlas_FunctionSpace) :: func_space
 type(atlas_Field) :: field
+
+
+type, extends(atlas_Metadata) :: atlas_IFSParametrisation
+
+endtype
+
+interface atlas_IFSParametrisation
+  module procedure atlas_IFSParametrisation__ctor
+end interface
+
+contains
+
+function atlas_IFSParametrisation__ctor(ngptot,nproma,nlev,nvar) result(params)
+  type(atlas_IFSParametrisation) :: params
+  integer, optional, intent(in) :: ngptot
+  integer, optional, intent(in) :: nproma
+  integer, optional, intent(in) :: nlev
+  integer, optional, intent(in) :: nvar
+  params%cpp_object_ptr = atlas__Metadata__new()
+  if( present(ngptot) ) call params%set("ngptot",ngptot)
+  if( present(nproma) ) call params%set("nproma",nproma)
+  if( present(nlev  ) ) call params%set("nlev"  ,nlev  )
+  if( present(nvar  ) ) call params%set("nvar"  ,nvar  )
+end function
+
 end module fctest_atlas_Mesh_fixture
 
 ! -----------------------------------------------------------------------------
@@ -303,7 +328,10 @@ TEST( test_griddistribution )
   deallocate(part)
 END_TEST
 
-
+TEST( test_ifsparametrisation )
+  type(atlas_IFSParametrisation) params
+  params = atlas_IFSParametrisation(nproma=10,nlev=100,nvar=1,ngptot=3000)
+END_TEST
 
 ! -----------------------------------------------------------------------------
 

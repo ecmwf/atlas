@@ -237,6 +237,12 @@ PointIndex3.cc
 PointIndex3.h
 PointSet.cc
 PointSet.h
+field/FieldCreator.h
+field/FieldCreator.cc
+field/ArraySpec.h
+field/ArraySpec.cc
+field/IFS.h
+field/IFS.cc
 )
 
 ### atlas c++ library

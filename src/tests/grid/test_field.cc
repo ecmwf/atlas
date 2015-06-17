@@ -114,28 +114,46 @@ void TestField::test_constructor()
 
 void TestField::test_fieldcreator()
 {
-  typedef atlas::Metadata Parameters;
+  Field::Ptr field ( Field::create( Field::Parameters
+                                      ("creator","ArraySpec")
+                                      ("shape",make_shape(10,2))
+                                      ("data_type","real32")
+                                      ("name","myfield")
+                                  ));
 
-  Parameters params;
-  params.set("creator","ArraySpec").set("shape",make_shape(10,2)).set("data_type","real64").set("name","myfield");
-
-  Field::Ptr field ( Field::create( params ) );
-
-  ASSERT( field->data_type() == "real64" );
+  ASSERT( field->data_type() == "real32" );
   ASSERT( field->name() == "myfield" );
 
   Grid::Ptr g (Grid::create("oct.N6"));
 
-  Field::Ptr fld (Field::create( Parameters()
-                                 .set("creator","ArraySpec")
-                                 .set("shape",make_shape(10,2))
-                                 .set("data_type","real64")
-                                 .set("name","myfield")
-                                 .set("grid",*g)
+  Field::Ptr arr (Field::create( Field::Parameters
+                                   ("creator","ArraySpec")
+                                   ("shape",make_shape(10,2))
+                                   ("grid",*g)
+                               ));
+  ASSERT( arr->grid().npts() == g->npts() );
+
+
+
+  Field::Parameters ifs_parameters;
+  ifs_parameters
+      ("creator","IFS")
+      ("nlev",137)
+      ("nproma",10)
+      ("grid",*g);
+
+
+  Field::Ptr ifs (Field::create( Field::Parameters
+                                    (ifs_parameters)
+                                    ("name","myfield")
+                                    ("data_type","int32")
+                                    ("nvar",8)
                                ));
 
-  ASSERT( fld->grid().npts() == g->npts() );
+  ASSERT( arr->grid().npts() == g->npts() );
 
+  eckit::Log::debug() << std::flush;
+  eckit::Log::info() << std::flush;
 }
 
 
