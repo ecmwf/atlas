@@ -120,7 +120,7 @@ public:
     grid_ = &grid;
   }
 
-  const std::string& set_name(const std::string& name)
+  void set_name(const std::string& name)
   {
     name_ = name;
   }
