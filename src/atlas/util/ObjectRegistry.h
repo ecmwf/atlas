@@ -14,6 +14,7 @@
 #include <vector>
 #include <limits>
 #include "eckit/exception/Exceptions.h"
+#include "eckit/memory/Owned.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -22,6 +23,10 @@ namespace util {
 
 //------------------------------------------------------------------------------------------------------
 
+/// \brief ObjectRegistry<T>
+/// Lookup table for objects of type T.
+/// Given an Id, the object can then be referenced and passed as argument,
+/// e.g. in a Parametrisation class
 template< typename T >
 class ObjectRegistry
 {
@@ -34,6 +39,54 @@ public:
 private:
   std::vector<T*> store_;
 };
+
+//------------------------------------------------------------------------------------------------------
+
+
+/// \brief Registered<T>
+/// Base class for classes that will automatically be registered and
+/// unregistered in an ObjectRegistry<T> at construction and destruction
+template< typename T >
+class Registered
+{
+public:
+  typedef ObjectRegistry<T> Registry;
+  typedef typename Registry::Id Id;
+  Registered();
+  virtual ~Registered();
+  static T& from_id(const Id&);
+  Id id() const { return registry_id_; }
+private:
+  static Registry& registry();
+  Id registry_id_;
+};
+
+//------------------------------------------------------------------------------------------------------
+
+template< typename T>
+Registered<T>::Registered()
+{
+  registry_id_ = Registered::registry().add(static_cast<T&>(*this));
+}
+
+template< typename T>
+Registered<T>::~Registered()
+{
+  registry().remove(registry_id_);
+}
+
+template< typename T>
+T& Registered<T>::from_id(const Id& id)
+{
+  return *registry().get(id);
+}
+
+template< typename T>
+typename Registered<T>::Registry& Registered<T>::registry()
+{
+  static Registry reg;
+  return reg;
+}
 
 //------------------------------------------------------------------------------------------------------
 

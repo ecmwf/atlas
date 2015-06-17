@@ -35,18 +35,6 @@ using atlas::util::Topology;
 
 namespace atlas {
 
-FunctionSpace& FunctionSpace::from_id(Id id)
-{
-  return *registry().get(id);
-}
-
-FunctionSpace::Registry& FunctionSpace::registry()
-{
-  static Registry r;
-  return r;
-}
-
-
 FunctionSpace::FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<size_t>& shape , Mesh& mesh) :
 	name_(name),
 	shape_(shape),
@@ -67,12 +55,10 @@ FunctionSpace::FunctionSpace(const std::string& name, const std::string& shape_f
 			dof_ *= shape_[i];
 	}
 	glb_dof_ = dof_;
-  registry_id_ = registry().add(*this);
 }
 
 FunctionSpace::~FunctionSpace()
 {
-  registry().remove(registry_id_);
 }
 
 void FunctionSpace::resize(const std::vector<size_t>& shape)

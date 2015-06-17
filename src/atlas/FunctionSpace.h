@@ -44,18 +44,13 @@ enum CreateBehavior { IF_EXISTS_FAIL = 0,    /* when creating, fail if exists */
 // Horizontal nodes are always the slowest moving index
 // Then variables
 // Then levels are fastest moving index
-class FunctionSpace : public eckit::Owned {
+class FunctionSpace : public eckit::Owned, public util::Registered<FunctionSpace> {
 
 public: // types
 
 	typedef eckit::SharedPtr<FunctionSpace> Ptr;
 
-  typedef util::ObjectRegistry<FunctionSpace> Registry;
-  typedef Registry::Id Id;
-
 public: // methods
-
-  static FunctionSpace& from_id(Id);
 
 	FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<size_t>& shape, Mesh& mesh );
 
@@ -139,14 +134,6 @@ public: // methods
 	int glb_dof() const { return glb_dof_; }
 
 	friend std::ostream& operator<<(std::ostream&, const FunctionSpace&);
-
-  Id id() const { return registry_id_; }
-
-private: // members
-
-  static Registry& registry();
-
-  Id registry_id_;
 
 protected:
 	size_t idx_;

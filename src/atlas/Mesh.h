@@ -32,18 +32,13 @@ class GridDistribution;
 
 //------------------------------------------------------------------------------------------------------
 
-class Mesh : public eckit::Owned {
+class Mesh : public eckit::Owned, public util::Registered<Mesh> {
 
 public: // types
 
 	typedef eckit::SharedPtr<Mesh> Ptr;
 
-  typedef util::ObjectRegistry<Mesh> Registry;
-  typedef Registry::Id Id;
-
 public: // methods
-
-  static Mesh& from_id(Id);
 
   static Mesh::Ptr create();
 
@@ -93,13 +88,7 @@ public: // methods
 
   FunctionSpace& add_nodes(size_t nb_nodes);
 
-  Id id() const { return registry_id_; }
-
 private: // members
-
-  static Registry& registry();
-
-  Id registry_id_;
 
   Metadata      metadata_;
 

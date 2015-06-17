@@ -26,17 +26,6 @@ using eckit::Factory;
 
 namespace atlas {
 
-Grid& Grid::from_id(Id id)
-{
-  return *registry().get(id);
-}
-
-Grid::Registry& Grid::registry()
-{
-  static Registry r;
-  return r;
-}
-
 //------------------------------------------------------------------------------------------------------
 
 Grid* Grid::create(const Params& p) {
@@ -52,9 +41,9 @@ Grid* Grid::create(const Grid::uid_t& uid) { return grids::grid_from_uid(uid); }
 
 Grid* Grid::create(const GridSpec& g) { return Grid::create(Params(g)); }
 
-Grid::Grid() { registry_id_ = registry().add(*this); }
+Grid::Grid() {}
 
-Grid::~Grid() { registry().remove(registry_id_); }
+Grid::~Grid() {}
 
 Grid::Domain Grid::domain() const { return bounding_box(); }
 
