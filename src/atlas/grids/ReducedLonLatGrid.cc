@@ -45,11 +45,13 @@ void ReducedLonLatGrid::set_typeinfo()
   grid_type_ = grid_type_str();
 }
 
-ReducedLonLatGrid::ReducedLonLatGrid() : ReducedGrid()
+ReducedLonLatGrid::ReducedLonLatGrid()
+  : ReducedGrid()
 {
 }
 
-ReducedLonLatGrid::ReducedLonLatGrid( const int nlat, const int nlons[], bool poles )
+ReducedLonLatGrid::ReducedLonLatGrid( const int nlat, const int nlons[], bool poles, const Domain& domain)
+ : ReducedGrid(domain)
 {
   ReducedGrid::N_ = nlat;
   poles_ = poles;
@@ -60,7 +62,6 @@ ReducedLonLatGrid::ReducedLonLatGrid( const int nlat, const int nlons[], bool po
 ReducedLonLatGrid::ReducedLonLatGrid( const Params& params )
 {
   setup(params);
-  mask(params);
   set_typeinfo();
 }
 
@@ -99,17 +100,18 @@ void ReducedLonLatGrid::setup( const int nlat, const int nlons[], bool poles )
 {
   std::vector<double> lats (nlat);
 
-  double delta, latmax;
+  double delta = domain_.north() - domain_.south();
+  double latmax;
 
   if( poles )
   {
-    delta = 180./static_cast<double>(nlat-1);
-    latmax = 90.;
+    delta = delta / static_cast<double>(nlat-1);
+    latmax = domain_.north();
   }
   else
   {
-    delta = 180./static_cast<double>(nlat);
-    latmax = 90. - 0.5*delta;
+    delta = delta / static_cast<double>(nlat);
+    latmax = domain_.north() - 0.5*delta;
   }
 
   for( int jlat=0; jlat<nlat; ++jlat )
@@ -132,7 +134,7 @@ GridSpec ReducedLonLatGrid::spec() const
     grid_spec.set_latitudes(latitudes());
 
   grid_spec.set("poles",poles_);
-  grid_spec.set_bounding_box(bounding_box());
+  grid_spec.set_bounding_box(boundingBox());
 
   return grid_spec;
 }

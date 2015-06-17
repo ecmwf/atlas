@@ -54,7 +54,7 @@ class PolarStereoGraphic : public Grid {
     ///   1/ project the first spherical pt, on to the plane.
     ///   2/ From this first x/y we compute the last point on the projected plane
     ///   3/ Convert the last point back into spherical space (lat/long)
-    virtual BoundBox bounding_box() const;
+    virtual BoundBox boundingBox() const;
     virtual size_t npts() const;
 
     /// The Points are in spherical (lat/long) co-ordinates
@@ -62,13 +62,15 @@ class PolarStereoGraphic : public Grid {
     ///   1/ project the first spherical point on to the plane x/y
     ///   2/ Add x_grid_length_/y_grid_length_ to this point
     ///   3/ Convert this back to lat long values, and then repeat.
-    virtual void lonlat( double[] ) const;
-    virtual void lonlat( std::vector<Point> & ) const;
 
-    virtual std::string grid_type() const;
+    virtual void lonlat(std::vector<Point>&) const;
+
+    virtual std::string gridType() const;
     virtual GridSpec spec() const;
 
   private: // methods
+
+    virtual void print(std::ostream&) const;
 
     /// Human readable name
     /// does not contain all possible combinations of PolarStereoGraphic

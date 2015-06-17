@@ -67,7 +67,6 @@ GaussianGrid::GaussianGrid(const eckit::Params& params)
     ReducedGrid::setup(lat.size(),lat.data(),nlons.data());
   }
 
-  mask(params);
   set_typeinfo();
 }
 
@@ -100,7 +99,7 @@ GridSpec GaussianGrid::spec() const
 
   grid_spec.set("nlat",nlat());
 
-  grid_spec.set_bounding_box(bounding_box());
+  grid_spec.set_bounding_box(boundingBox());
 
   return grid_spec;
 }

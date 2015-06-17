@@ -60,7 +60,7 @@ void RotatedGrid::hash(eckit::MD5& md5) const {
   md5.add(south_pole_rotation_angle_);
 }
 
-BoundBox RotatedGrid::bounding_box() const {
+BoundBox RotatedGrid::boundingBox() const {
     NOTIMP;
 }
 
@@ -69,19 +69,8 @@ size_t RotatedGrid::npts() const {
 }
 
 
-void RotatedGrid::lonlat( double pts[] ) const {
-    std::vector<Grid::Point> gpts;
-    gpts.resize( npts() );
-    lonlat(gpts);
+void RotatedGrid::lonlat(std::vector<Point>& pts) const {
 
-    int c(0);
-    for (size_t i = 0; i < gpts.size(); i++) {
-        pts[c++] = gpts[i].lon();
-        pts[c++] = gpts[i].lat();
-    }
-}
-
-void RotatedGrid::lonlat( std::vector<Point> &pts) const {
     pts.resize( npts() );
 
     RotateGrid rotgrid(Grid::Point(south_pole_longitude_, south_pole_latitude_), south_pole_rotation_angle_);
@@ -93,7 +82,7 @@ void RotatedGrid::lonlat( std::vector<Point> &pts) const {
     }
 }
 
-std::string RotatedGrid::grid_type() const {
+std::string RotatedGrid::gridType() const {
     NOTIMP;
 }
 
@@ -101,6 +90,14 @@ GridSpec RotatedGrid::spec() const {
     NOTIMP;
 }
 
+void RotatedGrid::print(ostream& os) const
+{
+    os << "Rotated("
+       << "south_pole_latitude:" << south_pole_latitude_
+       << ",south_pole_longitude:" << south_pole_longitude_
+       << ",south_pole_rotation_angle:" << south_pole_rotation_angle_
+       << "," << *grid_ << ")";
+}
 
 //------------------------------------------------------------------------------------------------------
 

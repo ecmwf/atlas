@@ -155,7 +155,7 @@ void ReducedGridMeshGenerator::generate(const Grid& grid, Mesh& mesh ) const
 //  const_cast<ReducedGridMeshGenerator*>(this)->options.set<bool>("triangulate",false);
 //  const_cast<ReducedGridMeshGenerator*>(this)->options.set<bool>("three_dimensional",true);
 //  DEBUG_VAR(grid.grid_type_str());
-//  DEBUG_VAR(grid.grid_type());
+//  DEBUG_VAR(grid.gridType());
 //  DEBUG_VAR(grid.className());
 //  DEBUG_VAR(grid.N());
 //  DEBUG_VAR(grid.nlat());

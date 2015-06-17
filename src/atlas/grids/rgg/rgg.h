@@ -49,7 +49,6 @@ public:\
   {\
     construct();\
     ReducedGrid::N_ = nlat()/2;\
-    mask(arg1);\
     set_typeinfo();\
   }\
   void construct();\
