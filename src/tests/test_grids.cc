@@ -75,14 +75,15 @@ BOOST_AUTO_TEST_CASE( test_regular_gg )
   BOOST_CHECK_EQUAL(gridptr->npts(), 8192);
   BOOST_CHECK_EQUAL(gridptr->gridType(),"regular_gg");
 
-  // Add bounding box to spec
-  spec.set_bounding_box( BoundBox( 90., 0., 180., 0.) );
-  gridptr = Grid::Ptr( Grid::create(spec) );
-  BOOST_CHECK_EQUAL(gridptr->npts(), 2080);
-  BOOST_CHECK_EQUAL(gridptr->gridType(),"regular_gg");
-  gridptr = Grid::Ptr( Grid::create(spec) );
-  BOOST_CHECK_EQUAL(gridptr->npts(), 2080);
-  BOOST_CHECK_EQUAL(gridptr->gridType(),"regular_gg");
+
+//  // Add bounding box to spec
+//  spec.set_bounding_box( BoundBox( 90., 0., 180., 0.) );
+//  gridptr = Grid::Ptr( Grid::create(spec) );
+//  BOOST_CHECK_EQUAL(gridptr->npts(), 2080);
+//  BOOST_CHECK_EQUAL(gridptr->gridType(),"regular_gg");
+//  gridptr = Grid::Ptr( Grid::create(spec) );
+//  BOOST_CHECK_EQUAL(gridptr->npts(), 2080);
+//  BOOST_CHECK_EQUAL(gridptr->gridType(),"regular_gg");
 
   GridSpec spec2("regular_gg");
   spec2.set("N",16);
