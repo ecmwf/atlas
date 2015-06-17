@@ -29,6 +29,10 @@ namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
 
+/// If is periodic then east() - west() == 360
+/// It has North Pole is north() == 90
+/// It has South Pole is south() == -90
+
 class Domain {
 
 public:  // methods
@@ -49,11 +53,8 @@ public:  // methods
   static Domain makeGlobal();
 
   double north() const { return north_; }
-
   double west() const { return west_; }
-
   double south() const { return south_; }
-
   double east() const { return east_; }
 
 private:  // methods
