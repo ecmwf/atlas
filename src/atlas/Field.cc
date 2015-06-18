@@ -29,6 +29,23 @@ Field::~Field()
 {
 }
 
+Field::Field(const eckit::Parametrisation& params) :
+  name_(), nb_vars_(1), function_space_(NULL), grid_(NULL)
+{
+  Grid::Id grid;
+  if( params.get("grid",grid) )
+    set_grid(Grid::from_id(grid));
+
+  FunctionSpace::Id function_space;
+  if( params.get("function_space",function_space) )
+    set_function_space(FunctionSpace::from_id(function_space));
+
+  std::string name;
+  if( params.get("name",name) )
+    set_name(name);
+
+}
+
 Field* Field::create(const eckit::Parametrisation& params)
 {
   std::string creator_factory;

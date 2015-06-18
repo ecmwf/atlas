@@ -46,21 +46,6 @@ FieldCreator::~FieldCreator()
 {
 }
 
-void FieldCreator::set_field(Field& field, const eckit::Parametrisation& params) const
-{
-  Grid::Id grid;
-  if( params.get("grid",grid) )
-    field.set_grid(Grid::from_id(grid));
-
-  FunctionSpace::Id function_space;
-  if( params.get("function_space",function_space) )
-    field.set_function_space(FunctionSpace::from_id(function_space));
-
-  std::string name;
-  if( params.get("name",name) )
-    field.set_name(name);
-}
-
 FieldCreatorFactory::FieldCreatorFactory(const std::string &name):
     name_(name) {
 

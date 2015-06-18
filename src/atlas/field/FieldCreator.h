@@ -43,13 +43,10 @@ class FieldCreator : public eckit::Owned {
 public:
 
     FieldCreator();
+
     virtual ~FieldCreator();
 
     virtual Field* create_field( const eckit::Parametrisation& ) const = 0;
-
-protected:
-
-    void set_field(Field&, const eckit::Parametrisation&) const;
 };
 
 //------------------------------------------------------------------------------------------------------

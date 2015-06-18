@@ -64,15 +64,13 @@ Field* IFS::create_field( const eckit::Parametrisation& params ) const
   eckit::Log::debug() << "Creating IFS "<<data_type<<" field: "<<name<<"[nblk="<<nblk<<"][nvar="<<nvar<<"][nlev="<<nlev<<"][nproma="<<nproma<<"]\n";
 
   if( data_type == "int32" || data_type == "int" )
-    field = new FieldT<int>(s);
+    field = new FieldT<int>(s,params);
   else if( data_type == "int64" || data_type == "long" )
-    field = new FieldT<long>(s);
+    field = new FieldT<long>(s,params);
   else if( data_type == "real32" || data_type == "float" )
-    field = new FieldT<float>(s);
+    field = new FieldT<float>(s,params);
   else if( data_type == "real64" || data_type == "double" )
     field = new FieldT<double>(s);
-
-  set_field(*field,params);
 
   return field;
 }

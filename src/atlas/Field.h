@@ -22,6 +22,7 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 #include "eckit/memory/ScopedPtr.h"
+#include "eckit/config/Parametrisation.h"
 
 #include "atlas/atlas_config.h"
 #include "atlas/Grid.h"
@@ -44,30 +45,32 @@ class Field : public eckit::Owned {
 
 public: // types
 
-	typedef eckit::SharedPtr<Field> Ptr;
-	typedef std::vector< Field::Ptr > Vector;
+  typedef eckit::SharedPtr<Field> Ptr;
+  typedef std::vector< Field::Ptr > Vector;
 
   typedef Metadata Parameters;
 
 public: // methods
 
-	enum { UNDEF_VARS = -1 };
+  enum { UNDEF_VARS = -1 };
 
-	Field(const std::string& name, const size_t nb_vars);
+  Field(const std::string& name, const size_t nb_vars);
 
-	static Field* create(const eckit::Parametrisation&);
+  Field(const eckit::Parametrisation&);
 
-	virtual ~Field();
+  static Field* create(const eckit::Parametrisation&);
 
-	Ptr self() { return Ptr(this); }
+  virtual ~Field();
 
-	template <typename DATA_TYPE> DATA_TYPE* data();
-	template <typename DATA_TYPE> DATA_TYPE const* data() const;
+  Ptr self() { return Ptr(this); }
 
-	const std::string& data_type() const { return data_type_; }
+  template <typename DATA_TYPE> DATA_TYPE* data();
+  template <typename DATA_TYPE> DATA_TYPE const* data() const;
 
-	virtual void allocate(const std::vector<size_t>& shapef)=0;
-	const std::string& name() const { return name_; }
+  const std::string& data_type() const { return data_type_; }
+
+  virtual void allocate(const std::vector<size_t>& shapef)=0;
+  const std::string& name() const { return name_; }
 
         const Grid& grid() const {
             if( function_space_ )
@@ -81,10 +84,10 @@ public: // methods
         }
 
         const Mesh& mesh() const { ASSERT(function_space_); return function_space_->mesh(); }
-	Mesh& mesh() { ASSERT(function_space_); return function_space_->mesh(); }
+  Mesh& mesh() { ASSERT(function_space_); return function_space_->mesh(); }
 
-	const Metadata& metadata() const { return metadata_; }
-	Metadata& metadata() { return metadata_; }
+  const Metadata& metadata() const { return metadata_; }
+  Metadata& metadata() { return metadata_; }
 
         FunctionSpace& function_space() const {
             if( !function_space_ )
@@ -92,28 +95,26 @@ public: // methods
             return *function_space_;
         }
 
-        const std::vector<int>& shapef() const	{ return shapef_; }
-	const std::vector<size_t>& shape() const { return shape_; }
-	const std::vector<size_t>& strides() const { return strides_; }
-	size_t stride(int i) const { return strides_[i];}
-	size_t shape(int i) const { return shape_[i];}
-	size_t nb_vars() const { return nb_vars_; }
+        const std::vector<int>& shapef() const  { return shapef_; }
+  const std::vector<size_t>& shape() const { return shape_; }
+  const std::vector<size_t>& strides() const { return strides_; }
+  size_t stride(int i) const { return strides_[i];}
+  size_t shape(int i) const { return shape_[i];}
+  size_t nb_vars() const { return nb_vars_; }
 
-	virtual size_t size() const = 0;
-	virtual void halo_exchange() = 0;
+  virtual size_t size() const = 0;
+  virtual void halo_exchange() = 0;
 
-	friend std::ostream& operator<<( std::ostream& os, const Field& v);
-
-private: // members
-
-	virtual void print( std::ostream& ) const = 0;
-
-public:
+  friend std::ostream& operator<<( std::ostream& os, const Field& v);
 
   void set_function_space(const FunctionSpace& function_space)
   {
     function_space_ = const_cast<FunctionSpace*>(&function_space);
   }
+
+private: // members
+
+  virtual void print( std::ostream& ) const = 0;
 
   void set_grid(const Grid& grid)
   {
@@ -127,17 +128,17 @@ public:
 
 protected: // members
 
-	std::string name_;
-	std::string data_type_;
-	std::vector<int> shapef_;
-	std::vector<size_t> shape_;
-	std::vector<size_t> strides_;
+  std::string name_;
+  std::string data_type_;
+  std::vector<int> shapef_;
+  std::vector<size_t> shape_;
+  std::vector<size_t> strides_;
 
-	const Grid* grid_;
-	FunctionSpace* function_space_;
-	Metadata metadata_;
+  const Grid* grid_;
+  FunctionSpace* function_space_;
+  Metadata metadata_;
 
-	size_t nb_vars_;
+  size_t nb_vars_;
 
 };
 
@@ -145,9 +146,9 @@ protected: // members
 
 
 template< typename DATA_TYPE > inline std::string data_type_to_str();
-template<> inline std::string data_type_to_str<int>()		{ return "int32";	}
-template<> inline std::string data_type_to_str<long>()		{ return "int64";	}
-template<> inline std::string data_type_to_str<float>()	{ return "real32"; }
+template<> inline std::string data_type_to_str<int>()    { return "int32";  }
+template<> inline std::string data_type_to_str<long>()    { return "int64";  }
+template<> inline std::string data_type_to_str<float>()  { return "real32"; }
 template<> inline std::string data_type_to_str<double>() { return "real64"; }
 
 template< typename DATA_TYPE >
@@ -155,44 +156,46 @@ class FieldT : public Field {
 
 public: // methods
 
-	FieldT(const std::string& name, const int nb_vars);
+  FieldT(const std::string& name, const int nb_vars);
 
-  FieldT(const std::vector<size_t>& shape);
+  FieldT(const std::vector<size_t>& shape, const eckit::Parametrisation& = eckit::Properties() );
 
-	virtual ~FieldT();
+  virtual ~FieldT();
 
-	virtual size_t size() const { return data_.size(); }
+  virtual size_t size() const { return data_.size(); }
 
-	virtual void allocate(const std::vector<size_t>& shape);
+  virtual void allocate(const std::vector<size_t>& shape); // To be removed
 
-	DATA_TYPE* data() { return data_.data(); }
-	DATA_TYPE const* data() const { return data_.data(); }
+  DATA_TYPE* data() { return data_.data(); }
+  DATA_TYPE const* data() const { return data_.data(); }
 
-	DATA_TYPE& operator[] (const size_t idx) { return data_[idx]; }
+  DATA_TYPE& operator[] (const size_t idx) { return data_[idx]; }
 
-	virtual void halo_exchange();
+  virtual void halo_exchange(); // To be removed
 
-	virtual void print(std::ostream& out) const;
+  virtual void print(std::ostream& out) const;
 
 protected:
 
-	std::vector< DATA_TYPE > data_;
+  std::vector< DATA_TYPE > data_;
 
 };
 
+
 template< typename DATA_TYPE >
 inline FieldT<DATA_TYPE>::FieldT(const std::string& name, const int nb_vars) :
-	Field(name,nb_vars),
-	data_(0)
+  Field(name,nb_vars),
+  data_(0)
 {
-	data_type_ = data_type_to_str<DATA_TYPE>() ;
+  data_type_ = data_type_to_str<DATA_TYPE>() ;
 }
 
 template< typename DATA_TYPE >
-inline FieldT<DATA_TYPE>::FieldT(const std::vector<size_t>& shape) : Field("tmp",1),
-	data_(0)
+inline FieldT<DATA_TYPE>::FieldT(const std::vector<size_t>& shape, const eckit::Parametrisation& params) :
+  Field(params),
+  data_(0)
 {
-	data_type_ = data_type_to_str<DATA_TYPE>() ;
+  data_type_ = data_type_to_str<DATA_TYPE>() ;
   allocate(shape);
 }
 
@@ -200,42 +203,42 @@ inline FieldT<DATA_TYPE>::FieldT(const std::vector<size_t>& shape) : Field("tmp"
 template< typename DATA_TYPE >
 inline FieldT<DATA_TYPE>::~FieldT()
 {
-		data_.clear();
+  data_.clear();
 }
 
 template< typename DATA_TYPE >
 inline void FieldT<DATA_TYPE>::allocate(const std::vector<size_t>& shape)
 {
-	shape_ = shape;
-	size_t tot_size(1); for (int i = 0; i < shape_.size(); ++i) tot_size *= shape_[i];
-	data_.resize(tot_size);
+  shape_ = shape;
+  size_t tot_size(1); for (int i = 0; i < shape_.size(); ++i) tot_size *= shape_[i];
+  data_.resize(tot_size);
 
-	shapef_.resize(shape_.size());
-	std::reverse_copy( shape_.begin(), shape_.end(), shapef_.begin() );
+  shapef_.resize(shape_.size());
+  std::reverse_copy( shape_.begin(), shape_.end(), shapef_.begin() );
 
-	strides_.resize(shape_.size());
-	strides_[shape_.size()-1] = 1;
-	for( int n=shape_.size()-2; n>=0; --n )
-	{
-		strides_[n] = strides_[n+1]*shape_[n+1];
-	}
+  strides_.resize(shape_.size());
+  strides_[shape_.size()-1] = 1;
+  for( int n=shape_.size()-2; n>=0; --n )
+  {
+    strides_[n] = strides_[n+1]*shape_[n+1];
+  }
 }
 
 template< typename DATA_TYPE >
 inline void FieldT<DATA_TYPE>::print(std::ostream& out) const
 {
-	const FunctionSpace& nodes = function_space();
+  const FunctionSpace& nodes = function_space();
 
-	ArrayView<DATA_TYPE,1> values( *this );
+  ArrayView<DATA_TYPE,1> values( *this );
 
-	ArrayView<DATA_TYPE,2> lonlat( nodes.field("lonlat") );
+  ArrayView<DATA_TYPE,2> lonlat( nodes.field("lonlat") );
 
-	ASSERT( values.shape()[0] == lonlat.shape()[0] );
+  ASSERT( values.shape()[0] == lonlat.shape()[0] );
 
-	// Log::info() << "values.shape()[0] " << values.shape()[0] << std::endl;
+  // Log::info() << "values.shape()[0] " << values.shape()[0] << std::endl;
 
-	for( size_t i = 0; i < lonlat.shape()[0]; ++i )
-		out << lonlat(i,LON) << " " << lonlat(i,LAT) << " " << values(i) << std::endl;
+  for( size_t i = 0; i < lonlat.shape()[0]; ++i )
+    out << lonlat(i,LON) << " " << lonlat(i,LAT) << " " << values(i) << std::endl;
 }
 
 //------------------------------------------------------------------------------------------------------

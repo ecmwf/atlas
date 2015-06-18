@@ -88,7 +88,7 @@ void TestField::test_constructor()
 
   ASSERT( f );
 
-  eckit::Log::info() << f.owners() << std::endl;
+  DEBUG_VAR( f.owners() );
 
   ASSERT( f.owners() == 2 );
 
@@ -132,7 +132,6 @@ void TestField::test_fieldcreator()
                                    ("grid",*g)
                                ));
   ASSERT( arr->grid().npts() == g->npts() );
-
 
 
   Field::Parameters ifs_parameters;
