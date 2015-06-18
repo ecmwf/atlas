@@ -23,27 +23,37 @@ type(atlas_FunctionSpace) :: func_space
 type(atlas_Field) :: field
 
 
-type, extends(atlas_Metadata) :: atlas_IFSParametrisation
-
+type, extends(atlas_Metadata) :: atlas_FieldParametrisation
 endtype
 
-interface atlas_IFSParametrisation
-  module procedure atlas_IFSParametrisation__ctor
+interface atlas_FieldParametrisation
+  module procedure atlas_FieldParametrisation__ctor
 end interface
 
 contains
 
-function atlas_IFSParametrisation__ctor(ngptot,nproma,nlev,nvar) result(params)
-  type(atlas_IFSParametrisation) :: params
+function atlas_FieldParametrisation__ctor(creator,ngptot,nproma,nlev,nvar,kind,data_type,shape,grid) result(params)
+  type(atlas_FieldParametrisation) :: params
+  character(len=*), optional, intent(in) :: creator
   integer, optional, intent(in) :: ngptot
   integer, optional, intent(in) :: nproma
   integer, optional, intent(in) :: nlev
   integer, optional, intent(in) :: nvar
+  type(atlas_ReducedGrid), optional, intent(in) :: grid
+  integer, optional, intent(in) :: kind
+  character(len=*), optional, intent(in) :: data_type
+  integer, optional, intent(in) :: shape(:)
   params%cpp_object_ptr = atlas__Metadata__new()
-  if( present(ngptot) ) call params%set("ngptot",ngptot)
-  if( present(nproma) ) call params%set("nproma",nproma)
-  if( present(nlev  ) ) call params%set("nlev"  ,nlev  )
-  if( present(nvar  ) ) call params%set("nvar"  ,nvar  )
+  if( present(creator)   ) call params%set("creator"   ,creator  )
+  if( present(ngptot)    ) call params%set("ngptot"    ,ngptot   )
+  if( present(nproma)    ) call params%set("nproma"    ,nproma   )
+  if( present(nlev)      ) call params%set("nlev"      ,nlev     )
+  if( present(nvar)      ) call params%set("nvar"      ,nvar     )
+  if( present(kind)      ) call params%set("kind"      ,kind     )
+  if( present(data_type) ) call params%set("data_type" ,data_type)
+  if( present(shape)     ) call params%set("shape"     ,shape    )
+  if( present(grid)      ) call params%set("grid"      ,grid     )
+  call params%set("fortran",.True.) ! Let know that parameters have fortran style
 end function
 
 end module fctest_atlas_Mesh_fixture
@@ -64,7 +74,7 @@ END_TESTSUITE_INIT
 
 TESTSUITE_FINALIZE
   call atlas_delete( mesh )
-  call atlas_mpi_finalize()
+  call atlas_finalize()
 END_TESTSUITE_FINALIZE
 
 ! -----------------------------------------------------------------------------
@@ -328,9 +338,31 @@ TEST( test_griddistribution )
   deallocate(part)
 END_TEST
 
-TEST( test_ifsparametrisation )
-  type(atlas_IFSParametrisation) params
-  params = atlas_IFSParametrisation(nproma=10,nlev=100,nvar=1,ngptot=3000)
+TEST( test_fieldcreation )
+  use fctest_atlas_Mesh_fixture , only : FieldParams => atlas_FieldParametrisation
+  type(atlas_ReducedGrid) :: grid
+  type(atlas_Field) :: field
+  type(atlas_FieldParametrisation) :: params
+
+  field = atlas_Field(FieldParams(creator="ArraySpec",shape=[10,137,1,30]))
+  write(0,*) field%name(), field%size()
+  call atlas_delete(field)
+  
+  grid = atlas_ReducedGrid("oct.N80")
+  params = atlas_FieldParametrisation(creator="IFS",nproma=1024,grid=grid,nlev=137,nvar=1,kind=4)
+  field = atlas_Field(params)
+  call atlas_delete(params)
+  
+  write(0,*) field%name(), field%size(), field%shape(), field%data_type(), field%bytes()
+  call atlas_delete(field)
+  
+! Idea:
+!   field = atlas_Field([ &
+!      & atlas_Param("creator","ArraySpec"),&
+!      & atlas_Param("shape",[10,137,1,30]),&
+!      & atlas_Param("kind","real64") ])
+  
+  call atlas_delete(grid)
 END_TEST
 
 ! -----------------------------------------------------------------------------

@@ -95,7 +95,7 @@ public: // methods
             return *function_space_;
         }
 
-        const std::vector<int>& shapef() const  { return shapef_; }
+  const std::vector<int>& shapef() const  { return shapef_; }
   const std::vector<size_t>& shape() const { return shape_; }
   const std::vector<size_t>& strides() const { return strides_; }
   size_t stride(int i) const { return strides_[i];}
@@ -104,6 +104,7 @@ public: // methods
 
   virtual size_t size() const = 0;
   virtual void halo_exchange() = 0;
+  virtual double bytes() const = 0;
 
   friend std::ostream& operator<<( std::ostream& os, const Field& v);
 
@@ -174,6 +175,7 @@ public: // methods
   virtual void halo_exchange(); // To be removed
 
   virtual void print(std::ostream& out) const;
+  virtual double bytes() const { return sizeof(DATA_TYPE)*size(); }
 
 protected:
 
@@ -243,12 +245,16 @@ inline void FieldT<DATA_TYPE>::print(std::ostream& out) const
 
 //------------------------------------------------------------------------------------------------------
 
-
+#define Parametrisation eckit::Parametrisation
 // C wrapper interfaces to C++ routines
 extern "C"
 {
+  Field* atlas__Field__create(Parametrisation* params);
+  void atlas__Field__delete (Field* This);
   const char* atlas__Field__name (Field* This);
   const char* atlas__Field__data_type (Field* This);
+  int atlas__Field__size (Field* This);
+  double atlas__Field__bytes (Field* This);
   int atlas__Field__nb_vars (Field* This);
   void atlas__Field__shapef (Field* This, int* &shape, int &rank);
   void atlas__Field__data_shapef_int (Field* This, int* &field_data, int* &field_shapef, int &rank);
@@ -258,6 +264,7 @@ extern "C"
   Metadata* atlas__Field__metadata (Field* This);
   FunctionSpace* atlas__Field__function_space (Field* This);
 }
+#undef Parametrisation
 
 //------------------------------------------------------------------------------------------------------
 

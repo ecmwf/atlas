@@ -400,7 +400,7 @@ void atlas__Metadata__set_mesh (Metadata* This, const char* name, Mesh* value)
   ATLAS_ERROR_HANDLING( This->set( std::string(name), *value ) );
 }
 
-void atlas__Metadata__set_functionspace (Metadata* This, const char* name, FunctionSpace* value)
+void atlas__Metadata__set_function_space (Metadata* This, const char* name, FunctionSpace* value)
 {
   ATLAS_ERROR_HANDLING( This->set( std::string(name), *value ) );
 }
@@ -419,7 +419,7 @@ Mesh* atlas__Metadata__get_mesh (Metadata* This, const char* name)
   return value;
 }
 
-FunctionSpace* atlas__Metadata__get_functionspace (Metadata* This, const char* name)
+FunctionSpace* atlas__Metadata__get_function_space (Metadata* This, const char* name)
 {
   FunctionSpace* value(NULL);
   ATLAS_ERROR_HANDLING( value = &This->get<FunctionSpace&>( std::string(name) ) );

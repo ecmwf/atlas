@@ -14,6 +14,7 @@
 
 #include "eckit/exception/Exceptions.h"
 
+#include "atlas/runtime/ErrorHandling.h"
 #include "atlas/Field.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/field/FieldCreator.h"
@@ -107,14 +108,48 @@ std::ostream& operator<<( std::ostream& os, const Field& f)
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
+Field* atlas__Field__create(eckit::Parametrisation* params)
+{
+  Field* field;
+  ATLAS_ERROR_HANDLING( field = Field::create(*params) );
+  return field;
+}
+
+void atlas__Field__delete (Field* This)
+{
+  delete This;
+}
+
 const char* atlas__Field__name (Field* This)
 {
-  return This->name().c_str();
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This != NULL );
+    return This->name().c_str();
+  );
+  return NULL;
 }
 
 const char* atlas__Field__data_type (Field* This)
 {
   return This->data_type().c_str();
+}
+
+int atlas__Field__size (Field* This)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This != NULL );
+    return This->size();
+  );
+  return 0;
+}
+
+double atlas__Field__bytes (Field* This)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This != NULL );
+    return This->bytes();
+  );
+  return 0;
 }
 
 int atlas__Field__nb_vars (Field* This)

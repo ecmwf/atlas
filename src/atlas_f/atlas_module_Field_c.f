@@ -4,6 +4,20 @@
 ! -----------------------------------------------------------------------------
 ! Field routines
 
+function atlas_Field__create(params) result(field)
+  type(atlas_Field) :: field
+  class(atlas_Metadata), intent(in) :: params
+  field%cpp_object_ptr = atlas__Field__create(params%cpp_object_ptr)
+end function
+
+subroutine atlas_Field__delete(this)
+  class(atlas_Field), intent(inout) :: this
+  if ( c_associated(this%cpp_object_ptr) ) then
+    call atlas__Field__delete(this%cpp_object_ptr)
+  end if
+  this%cpp_object_ptr = c_null_ptr
+end subroutine
+
 function Field__name(this) result(field_name)
   class(atlas_Field), intent(in) :: this
   character(len=:), allocatable :: field_name
@@ -19,6 +33,18 @@ function Field__data_type(this) result(field_data_type)
   field_data_type_c_str = atlas__Field__data_type(this%cpp_object_ptr)
   field_data_type = c_to_f_string_cptr(field_data_type_c_str)
 end function Field__data_type
+
+function Field__size(this) result(size)
+  class(atlas_Field), intent(in) :: this
+  integer :: size
+  size = atlas__Field__size(this%cpp_object_ptr)
+end function Field__size
+
+function Field__bytes(this) result(bytes)
+  class(atlas_Field), intent(in) :: this
+  real(c_double) :: bytes
+  bytes = atlas__Field__bytes(this%cpp_object_ptr)
+end function Field__bytes
 
 function Field__nb_vars(this) result(nb_vars)
   class(atlas_Field), intent(in) :: this

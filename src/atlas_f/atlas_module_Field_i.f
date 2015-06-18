@@ -25,6 +25,8 @@ contains
   procedure :: metadata => Field__metadata
   procedure :: function_space => Field__function_space
   procedure :: shape => Field__shape
+  procedure :: size => Field__size
+  procedure :: bytes => Field__bytes
   procedure, private :: access_data1_int32 => Field__access_data1_int32
   procedure, private :: access_data2_int32 => Field__access_data2_int32
   procedure, private :: access_data3_int32 => Field__access_data3_int32
@@ -49,5 +51,9 @@ contains
   procedure :: data2 => Field__data2_wp
   procedure :: data3 => Field__data3_wp
 END TYPE atlas_Field
+
+interface atlas_Field
+  module procedure atlas_Field__create
+end interface
 
 !------------------------------------------------------------------------------

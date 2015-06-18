@@ -10,7 +10,7 @@ function atlas_Metadata__ctor() result(metadata)
 end function atlas_Metadata__ctor
 
 subroutine atlas_Metadata__delete(this)
-  type(atlas_Metadata), intent(inout) :: this
+  class(atlas_Metadata), intent(inout) :: this
   if ( c_associated(this%cpp_object_ptr) ) then
     call atlas__Metadata__delete(this%cpp_object_ptr)
   end if
@@ -77,6 +77,20 @@ subroutine Metadata__set_mesh(this, name, value)
   type(atlas_Mesh), intent(in) :: value
   call atlas__Metadata__set_mesh(this%cpp_object_ptr, c_str(name), value%cpp_object_ptr)
 end subroutine Metadata__set_mesh
+
+subroutine Metadata__set_grid(this, name, value)
+  class(atlas_Metadata), intent(inout) :: this
+  character(len=*), intent(in) :: name
+  type(atlas_ReducedGrid), intent(in) :: value
+  call atlas__Metadata__set_grid(this%cpp_object_ptr, c_str(name), value%cpp_object_ptr)
+end subroutine Metadata__set_grid
+
+subroutine Metadata__set_function_space(this, name, value)
+  class(atlas_Metadata), intent(inout) :: this
+  character(len=*), intent(in) :: name
+  type(atlas_FunctionSpace), intent(in) :: value
+  call atlas__Metadata__set_function_space(this%cpp_object_ptr, c_str(name), value%cpp_object_ptr)
+end subroutine Metadata__set_function_space
 
 subroutine Metadata__get_logical(this, name, value)
   class(atlas_Metadata), intent(in) :: this
@@ -225,6 +239,19 @@ subroutine Metadata__get_mesh(this, name, value)
   value%cpp_object_ptr = atlas__Metadata__get_mesh(this%cpp_object_ptr, c_str(name) )
 end subroutine Metadata__get_mesh
 
+subroutine Metadata__get_grid(this, name, value)
+  class(atlas_Metadata), intent(in) :: this
+  character(len=*), intent(in) :: name
+  type(atlas_ReducedGrid), intent(out) :: value
+  value%cpp_object_ptr = atlas__Metadata__get_grid(this%cpp_object_ptr, c_str(name) )
+end subroutine Metadata__get_grid
+
+subroutine Metadata__get_function_space(this, name, value)
+  class(atlas_Metadata), intent(in) :: this
+  character(len=*), intent(in) :: name
+  type(atlas_FunctionSpace), intent(out) :: value
+  value%cpp_object_ptr = atlas__Metadata__get_function_space(this%cpp_object_ptr, c_str(name) )
+end subroutine Metadata__get_function_space
 
 subroutine MetaData__print(this,channel)
   class(atlas_Metadata), intent(in) :: this
