@@ -73,7 +73,7 @@ Field::Field(const eckit::Parametrisation& params) :
   if( params.get("function_space",function_space) )
     function_space_ = &FunctionSpace::from_id(function_space);
 
-  if( params.get("name",name_) );
+  params.get("name",name_);
 }
 
 Field::~Field()
