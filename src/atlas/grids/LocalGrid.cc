@@ -30,6 +30,8 @@ LocalGrid::LocalGrid(Grid* grid, const Domain& domain)
     : Grid(domain),
       grid_(grid),
       localPts_(0) {
+
+	ASSERT(grid);
     ASSERT( !dynamic_cast<LocalGrid*>(grid) ); // FIXME
 
     cropPoints();
