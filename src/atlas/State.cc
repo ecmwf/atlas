@@ -110,7 +110,7 @@ std::vector< std::string > State::field_names() const
 
   for( FieldMap::const_iterator it = fields_.cbegin(); it != fields_.cend(); ++it )
   {
-    ret.push_back( it->key );
+    ret.push_back( it->key() );
   }
   return ret;
 }
