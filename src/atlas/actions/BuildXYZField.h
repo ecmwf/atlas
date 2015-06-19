@@ -8,12 +8,13 @@
  * does it submit to any jurisdiction.
  */
 
+#ifndef atlas_actions_BuildXYZField_h
+#define atlas_actions_BuildXYZField_h
 
-
-#ifndef BuildXYZField_h
-#define BuildXYZField_h
 #include <string>
+
 namespace atlas {
+
 class FunctionSpace;
 class Mesh;
 class Field;
@@ -26,4 +27,4 @@ Field& build_xyz_field( FunctionSpace&, const std::string& name = "xyz" );
 } // namespace actions
 } // namespace atlas
 
-#endif // BuildXYZField_h
+#endif
