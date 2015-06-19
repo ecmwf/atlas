@@ -27,13 +27,12 @@ namespace grids {
 //------------------------------------------------------------------------------------------------------
 
 LocalGrid::LocalGrid(Grid* grid, const Domain& domain)
-  : Grid(domain),
-    grid_(grid),
-    localPts_(0)
-{
+    : Grid(domain),
+      grid_(grid),
+      localPts_(0) {
     ASSERT( !dynamic_cast<LocalGrid*>(grid) ); // FIXME
 
-  cropPoints();
+    cropPoints();
 }
 
 LocalGrid::~LocalGrid() {}
@@ -48,36 +47,32 @@ std::string LocalGrid::shortName() const {
 
 void LocalGrid::hash(eckit::MD5& md5) const {
 
-  md5.add("local.");
+    md5.add("local.");
 
-  grid_->hash(md5);
+    grid_->hash(md5);
 
-  domain().hash(md5);
+    domain().hash(md5);
 }
 
-void LocalGrid::cropPoints()
-{
-  std::vector<Grid::Point> gpts;
-  grid_->lonlat(gpts);
-  for (size_t i = 0; i < gpts.size(); i++)
-  {
-    const Grid::Point& p = gpts[i];
-    if( domain_.contains(p) )
-      localPts_.push_back(p);
-  }
+void LocalGrid::cropPoints() {
+    std::vector<Grid::Point> gpts;
+    grid_->lonlat(gpts);
+    for (size_t i = 0; i < gpts.size(); i++) {
+        const Grid::Point& p = gpts[i];
+        if ( domain_.contains(p) )
+            localPts_.push_back(p);
+    }
 }
 
 size_t LocalGrid::npts() const { return localPts_.size(); }
 
-size_t LocalGrid::copyLonLatMemory(void* buffer, size_t size) const {
-    size_t sizePts = 2*sizeof(double)*localPts_.size();
-    ASSERT( size >= sizePts );
-    ::memcpy(buffer, &localPts_[0], sizePts);
-    return sizePts;
+size_t LocalGrid::copyLonLatMemory(double* buffer, size_t size) const {
+    ASSERT( size >= localPts_.size() );
+    ::memcpy(buffer, &localPts_[0], 2 * sizeof(double)*localPts_.size());
+    return localPts_.size();
 }
 
-void LocalGrid::print(ostream& os) const
-{
+void LocalGrid::print(ostream& os) const {
     os << "LocalGrid("
        << "Domain:" << domain_
        << ",Grid:" << *grid_
