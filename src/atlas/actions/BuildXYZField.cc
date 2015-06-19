@@ -1,3 +1,12 @@
+/*
+ * (C) Copyright 1996-2015 ECMWF.
+ *
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
+ * granted to it by virtue of its status as an intergovernmental organisation nor
+ * does it submit to any jurisdiction.
+ */
 
 #include "atlas/actions/BuildXYZField.h"
 #include "atlas/Field.h"
@@ -9,24 +18,29 @@
 namespace atlas {
 namespace actions {
 
-Field& build_xyz_field( Mesh& mesh,  const std::string& name)
+BuildXYZField::BuildXYZField(const std::string& name)
+    : name_(name)
 {
-  return build_xyz_field( mesh.function_space("nodes"), name );
 }
 
-Field& build_xyz_field( FunctionSpace& nodes, const std::string& name )
+Field& BuildXYZField::operator()(Mesh& mesh) const
 {
-  if( !nodes.has_field(name) )
+  return operator()(mesh.function_space("nodes"));
+}
+
+Field& BuildXYZField::operator()(FunctionSpace& nodes) const
+{
+  if( !nodes.has_field(name_) )
   {
     ArrayView<double,2> lonlat( nodes.field("lonlat") );
-    ArrayView<double,2> xyz   ( nodes.create_field<double>(name,3) );
+    ArrayView<double,2> xyz   ( nodes.create_field<double>(name_,3) );
     size_t npts = nodes.shape(0);
     for( size_t n=0; n<npts; ++n )
     {
       eckit::geometry::lonlat_to_3d(lonlat[n].data(),xyz[n].data());
     }
   }
-  return nodes.field(name);
+  return nodes.field(name_);
 }
 
 }

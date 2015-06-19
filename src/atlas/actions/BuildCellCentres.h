@@ -8,31 +8,21 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_actions_BuildXYZField_h
-#define atlas_actions_BuildXYZField_h
-
-#include <string>
+#ifndef atlas_actions_BuildCellCentres_h
+#define atlas_actions_BuildCellCentres_h
 
 namespace atlas {
 
-class FunctionSpace;
 class Mesh;
-class Field;
 
 namespace actions {
 
-/// Creates a XYZ field from the (lon,lat) field
-class BuildXYZField {
+/// Generates the cell centres on each cell
+class BuildCellCentres {
 public:
 
-    explicit BuildXYZField(const std::string& name = "xyz");
-
-    Field& operator()(Mesh&) const;
-    Field& operator()(FunctionSpace&) const;
-
-private:
-
-    std::string name_;
+    /// @note Correct only for Linear Triangles and Quadrilaterals
+    void operator()(Mesh&) const;
 
 };
 

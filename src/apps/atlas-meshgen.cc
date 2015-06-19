@@ -176,7 +176,7 @@ void Meshgen2Gmsh::run()
   gmsh.options.set("info",info);
   if( surfdim == 3 )
   {
-    atlas::actions::build_xyz_field(*mesh,"xyz");
+    actions::BuildXYZField("xyz")(*mesh);
     gmsh.options.set("nodes",std::string("xyz"));
   }
   gmsh.write( *mesh, path_out );

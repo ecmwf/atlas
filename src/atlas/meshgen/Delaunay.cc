@@ -10,8 +10,10 @@
 
 #include "eckit/log/Log.h"
 #include "eckit/geometry/Point3.h"
+
+#include "atlas/Mesh.h"
 #include "atlas/meshgen/Delaunay.h"
-#include "atlas/meshgen/Tesselation.h"
+#include "atlas/actions/BuildConvexHull3D.h"
 #include "atlas/GridDistribution.h"
 #include "atlas/actions/BuildXYZField.h"
 
@@ -51,8 +53,8 @@ void Delaunay::generate(const Grid &g, Mesh &m) const
 {
   if (!m.has_function_space("nodes"))
     m.add_nodes(g);
-  actions::build_xyz_field(m);
-  Tesselation::delaunay_triangulation(m);
+  actions::BuildXYZField()(m);
+  actions::BuildConvexHull3D()(m);
   m.set_grid(g);
 }
 

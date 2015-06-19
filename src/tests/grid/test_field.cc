@@ -17,7 +17,6 @@
 #include "atlas/Grid.h"
 #include "atlas/grids/grids.h"
 #include "atlas/FieldSet.h"
-#include "atlas/meshgen/Tesselation.h"
 #include "atlas/meshgen/Delaunay.h"
 #include "atlas/io/Gmsh.h"
 #include "atlas/util/Debug.h"

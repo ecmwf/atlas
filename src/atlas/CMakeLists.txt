@@ -78,8 +78,6 @@ meshgen/MeshGenerator.cc
 meshgen/MeshGenerator.h
 meshgen/ReducedGridMeshGenerator.cc
 meshgen/ReducedGridMeshGenerator.h
-meshgen/Tesselation.cc
-meshgen/Tesselation.h
 )
 
 list( APPEND atlas_actions_srcs
@@ -97,6 +95,10 @@ actions/BuildStatistics.h
 actions/BuildStatistics.cc
 actions/BuildXYZField.h
 actions/BuildXYZField.cc
+actions/BuildCellCentres.h
+actions/BuildCellCentres.cc
+actions/BuildConvexHull3D.h
+actions/BuildConvexHull3D.cc
 actions/DistributeMesh.h
 actions/DistributeMesh.cc
 actions/GenerateMesh.h

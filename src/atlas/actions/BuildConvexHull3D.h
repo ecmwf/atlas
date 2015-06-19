@@ -8,31 +8,20 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_actions_BuildXYZField_h
-#define atlas_actions_BuildXYZField_h
-
-#include <string>
+#ifndef atlas_actions_BuildConvexHull3D_h
+#define atlas_actions_BuildConvexHull3D_h
 
 namespace atlas {
 
-class FunctionSpace;
 class Mesh;
-class Field;
 
 namespace actions {
 
-/// Creates a XYZ field from the (lon,lat) field
-class BuildXYZField {
+/// Creates a 3D convex-hull on the mesh points
+class BuildConvexHull3D {
 public:
 
-    explicit BuildXYZField(const std::string& name = "xyz");
-
-    Field& operator()(Mesh&) const;
-    Field& operator()(FunctionSpace&) const;
-
-private:
-
-    std::string name_;
+    void operator()(Mesh&) const;
 
 };
 
@@ -40,3 +29,4 @@ private:
 } // namespace atlas
 
 #endif
+
