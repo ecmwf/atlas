@@ -177,7 +177,7 @@ void TestField::test_state()
   Grid& grid = state.add( Grid::create("rgg.N16") );
   Mesh& mesh = state.add( Mesh::create(grid) );
 
-  state.remove_field("myfield");
+//  state.remove_field("myfield");
 
   eckit::Log::info() << "fields = ";
   for( size_t i=0; i<state.nb_fields(); ++i)
@@ -190,7 +190,7 @@ void TestField::test_state()
     eckit::Log::info() << "name ["<<field.name() << "]  size[" << field.size() << "]" << std::endl;
   }
 
-  state.remove_field("field_00001");
+//  state.remove_field("field_00001");
 
   for( size_t i=0; i<state.nb_fields(); ++i )
   {

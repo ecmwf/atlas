@@ -17,6 +17,7 @@
 #include "atlas/atlas_config.h"
 
 #include "atlas/Mesh.h"
+#include "atlas/Grid.h"
 #include "atlas/meshgen/Delaunay.h"
 #include "atlas/io/Gmsh.h"
 #include "atlas/mpi/mpi.h"

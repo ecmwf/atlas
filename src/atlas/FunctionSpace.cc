@@ -35,14 +35,19 @@ using atlas::util::Topology;
 
 namespace atlas {
 
-FunctionSpace::FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<size_t>& shape , Mesh& mesh) :
-  name_(name),
-  shape_(shape),
-  gather_scatter_(new mpl::GatherScatter()),
-  fullgather_(new mpl::GatherScatter()),
-  halo_exchange_(new mpl::HaloExchange()),
-  checksum_(new mpl::Checksum()),
-  mesh_(mesh)
+//----------------------------------------------------------------------------------------------------------------------
+
+FunctionSpace::FunctionSpace(const std::string& name,
+                             const std::string& shape_func,
+                             const std::vector<size_t>& shape,
+                             Mesh& mesh) :
+	name_(name),
+	shape_(shape),
+	gather_scatter_(new mpl::GatherScatter()),
+	fullgather_(new mpl::GatherScatter()),
+	halo_exchange_(new mpl::HaloExchange()),
+	checksum_(new mpl::Checksum()),
+	mesh_(mesh)
 {
   //std::cout << "C++ : shape Constructor" << std::endl;
   dof_ = 1;
@@ -368,7 +373,7 @@ void FunctionSpace::parallelise(const int part[], const int remote_idx[], const 
 void FunctionSpace::parallelise(FunctionSpace& other_shape)
 {
 	halo_exchange_ = mpl::HaloExchange::Ptr( &other_shape.halo_exchange() );
-	gather_scatter_ = mpl::GatherScatter::Ptr( &other_shape.gather_scatter() );
+    gather_scatter_ = mpl::GatherScatter::Ptr( &other_shape.gather_scatter() );
 }
 
 void FunctionSpace::parallelise()
@@ -411,19 +416,18 @@ void FunctionSpace::parallelise()
   }
 }
 
-//------------------------------------------------------------------------------------------------------
-
-std::ostream& operator<<(std::ostream& s,const FunctionSpace& fs)
+void FunctionSpace::print(std::ostream& os) const
 {
-	s << "FunctionSpace [" << fs.name() << "]" << std::endl;
-	for( size_t i = 0; i < fs.nb_fields() ; ++i )
+    os << "FunctionSpace[name=" << name() << ",";
+    for(size_t i = 0; i < nb_fields(); ++i)
 	{
-		s << "  Field [ " << fs.field(i).name() << " ] <" << fs.field(i).data_type() << ">" << std::endl;
+        os << field(i);
 	}
-	return s;
+    os << "]";
 }
 
-// ------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
+
 // C wrapper interfaces to C++ routines
 
 Metadata* atlas__FunctionSpace__metadata (FunctionSpace* This)

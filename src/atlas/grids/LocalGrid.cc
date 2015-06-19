@@ -68,12 +68,6 @@ void LocalGrid::cropPoints() {
 
 size_t LocalGrid::npts() const { return localPts_.size(); }
 
-size_t LocalGrid::copyLonLatMemory(double* buffer, size_t size) const {
-    ASSERT( size >= localPts_.size() );
-    ::memcpy(buffer, &localPts_[0], 2 * sizeof(double)*localPts_.size());
-    return localPts_.size();
-}
-
 void LocalGrid::print(ostream& os) const {
     os << "LocalGrid("
        << "Domain:" << domain_

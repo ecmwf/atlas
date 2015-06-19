@@ -110,7 +110,7 @@ std::vector< std::string > State::field_names() const
 
   for( FieldMap::const_iterator it = fields_.cbegin(); it != fields_.cend(); ++it )
   {
-    ret.push_back( it->key() );
+    ret.push_back( it->key );
   }
   return ret;
 }
@@ -127,6 +127,8 @@ const Mesh& State::mesh(const std::string& name) const { ASSERT( meshes_.has(nam
 
 const Grid& State::grid(const std::string& name) const { ASSERT( grids_.has(name) ); return *grids_[name]; }
       Grid& State::grid(const std::string& name)       { ASSERT( grids_.has(name) ); return *grids_[name]; }
+
+#if 0 // needs DenseMap to implment erase
 
 void State::remove_field(const std::string& name)
 {
@@ -163,6 +165,8 @@ void State::remove_grid(const std::string& name)
   grids_.erase(name);
   grids_.sort();
 }
+
+#endif
 
 //-----------------------------------------------------------------------------
 // C wrapper interfaces to C++ routines

@@ -133,7 +133,14 @@ public: // methods
 
     size_t glb_dof() const { return glb_dof_; }
 
-	friend std::ostream& operator<<(std::ostream&, const FunctionSpace&);
+    void print(std::ostream&) const;
+
+private:  // methods
+
+    friend std::ostream& operator<<(std::ostream& s, const FunctionSpace& p) {
+        p.print(s);
+        return s;
+    }
 
 protected:
 

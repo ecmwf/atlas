@@ -44,6 +44,12 @@ public: // types
 
 private:
 
+    /// @TODO Please consider **not** using DenseMap anymore
+    ///       This class needs serious (re)considering.
+    ///       ATM cannot safely remove entries from the collecition
+    ///       I have a solution but don't know if it is good one.
+    ///       DenseMap should probably not exist in eckit but in atlas
+
   typedef eckit::DenseMap< std::string, eckit::SharedPtr<Field> >  FieldMap;
   typedef eckit::DenseMap< std::string, eckit::SharedPtr<Grid>  >  GridMap;
   typedef eckit::DenseMap< std::string, eckit::SharedPtr<Mesh>  >  MeshMap;
@@ -89,9 +95,10 @@ public: // methods
   Mesh&  add( Mesh*  ); // Take shared ownership!
   Grid&  add( Grid*  ); // Take shared ownership!
 
-  void remove_field(const std::string& name);
-  void remove_mesh(const std::string& name = "");
-  void remove_grid(const std::string& name = "");
+//  TODO: needs DenseMap to implement erase()
+//  void remove_field(const std::string& name);
+//  void remove_mesh(const std::string& name = "");
+//  void remove_grid(const std::string& name = "");
 
 private:
 

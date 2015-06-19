@@ -8,6 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
+#include "atlas/Mesh.h"
+
 #include <sstream>
 #include <stdexcept>
 
@@ -15,15 +17,14 @@
 #include "eckit/log/Log.h"
 
 #include "atlas/runtime/ErrorHandling.h"
-#include "atlas/Mesh.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Field.h"
+#include "atlas/Grid.h"
 
-//------------------------------------------------------------------------------------------------------
 
 namespace atlas {
 
-//------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 Mesh* Mesh::create( const eckit::Parametrisation& params )
 {
@@ -127,19 +128,26 @@ FunctionSpace& Mesh::add_nodes(size_t nb_nodes)
   return nodes;
 }
 
-//------------------------------------------------------------------------------------------------------
-
-std::ostream& operator<<(std::ostream& s,const Mesh& m)
+void Mesh::prettyPrint(std::ostream& os) const
 {
-	s << "Mesh" << std::endl;
-	for( size_t i = 0; i < m.nb_function_spaces(); ++i )
-	{
-		s << m.function_space(i) << std::endl;
-	}
-	return s;
+    os << "Mesh:" << std::endl;
+    for( size_t i = 0; i < nb_function_spaces(); ++i )
+    {
+        os << function_space(i) << std::endl;
+    }
+}
+void Mesh::print(std::ostream& os) const
+{
+    os << "Mesh[";
+    for( size_t i = 0; i < nb_function_spaces(); ++i )
+    {
+        os << function_space(i);
+    }
+    os << "]";
 }
 
-//------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
+
 // C wrapper interfaces to C++ routines
 
 Mesh* atlas__Mesh__new () {
@@ -176,7 +184,7 @@ Grid* atlas__Mesh__grid (Mesh* This) {
   return NULL;
 }
 
-//------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 } // namespace atlas
 

@@ -8,13 +8,17 @@
  * does it submit to any jurisdiction.
  */
 
+#include "atlas/Metadata.h"
+
 #include <iostream>
 #include <stdexcept>
 #include <sstream>
+
 #include "eckit/exception/Exceptions.h"
 #include "eckit/parser/JSON.h"
-#include "atlas/Metadata.h"
+
 #include "atlas/Mesh.h"
+#include "atlas/Grid.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/runtime/ErrorHandling.h"
 

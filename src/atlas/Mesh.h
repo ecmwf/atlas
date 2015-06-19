@@ -8,8 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_h
-#define atlas_h
+#ifndef atlas_Mesh_h
+#define atlas_Mesh_h
 
 #include <iosfwd>
 #include <string>
@@ -20,89 +20,96 @@
 #include "eckit/memory/SharedPtr.h"
 
 #include "atlas/Metadata.h"
-#include "atlas/Grid.h"
 #include "atlas/util/ObjectRegistry.h"
 
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
 
+class Grid;
 class FunctionSpace;
 class GridDistribution;
 
-//------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 class Mesh : public eckit::Owned, public util::Registered<Mesh> {
 
 public: // types
 
 	typedef eckit::SharedPtr<Mesh> Ptr;
-  typedef Metadata Parameters;
+    typedef Metadata Parameters;
 
 public: // methods
 
-  static Mesh* create( const eckit::Parametrisation& = Parameters() );
-  static Mesh* create( const Grid&, const eckit::Parametrisation& = Parameters() );
+    static Mesh* create( const eckit::Parametrisation& = Parameters() );
+    static Mesh* create( const Grid&, const eckit::Parametrisation& = Parameters() );
 
-  /*!
-   * @brief Construct a empty Mesh
-   */
-  Mesh(const eckit::Parametrisation& = Parameters());
+    /// @brief Construct a empty Mesh
+    explicit Mesh(const eckit::Parametrisation& = Parameters());
 
-  /*!
-   * @brief Construct mesh from grid.
-   * The mesh is global and only has a "nodes" FunctionSpace
-   */
-  Mesh(const Grid&, const eckit::Parametrisation& = Parameters());
+    /// @brief Construct mesh from grid.
+    /// The mesh is global and only has a "nodes" FunctionSpace
+    Mesh(const Grid&, const eckit::Parametrisation& = Parameters());
 
-  virtual ~Mesh();
+    /// Destructor
+    /// @note No need to be virtual since this is not a base class.
+    ~Mesh();
 
-  Metadata& metadata() { return metadata_; }
-  const Metadata& metadata() const { return metadata_; }
+    Metadata& metadata() { return metadata_; }
+    const Metadata& metadata() const { return metadata_; }
 
-  /// checks if function space exists
-	bool has_function_space(const std::string& name) const;
+    /// checks if function space exists
+    bool has_function_space(const std::string& name) const;
 
-	/// Takes ownership, and will be deleted automatically
-	FunctionSpace& create_function_space(const std::string& name, const std::string& shape_func, const std::vector<size_t>& shape);
+    /// Takes ownership, and will be deleted automatically
+    FunctionSpace& create_function_space(const std::string& name, const std::string& shape_func, const std::vector<size_t>& shape);
 
-	/// accessor by name
-	FunctionSpace& function_space(const std::string& name) const;
+    /// accessor by name
+    FunctionSpace& function_space(const std::string& name) const;
 
-	/// accessor by index
-	FunctionSpace& function_space( size_t ) const;
+    /// accessor by index
+    FunctionSpace& function_space( size_t ) const;
 
-	/// number of functional spaces
+    /// number of functional spaces
     size_t nb_function_spaces() const { return function_spaces_.size(); }
 
-	/// checks if has a Grid
-	bool has_grid() const { return grid_; }
+    /// checks if has a Grid
+    bool has_grid() const { return grid_; }
 
-	/// assign a Grid to this Mesh
-	void set_grid( const Grid& p ) { grid_ = &p; }
+    /// assign a Grid to this Mesh
+    void set_grid( const Grid& p ) { grid_ = &p; }
 
-	/// accessor of the Grid
-  const Grid& grid() const {  ASSERT( grid_ ); return *grid_; }
+    /// accessor of the Grid
+    const Grid& grid() const {  ASSERT( grid_ ); return *grid_; }
 
-	friend std::ostream& operator<<(std::ostream&, const Mesh&);
+    FunctionSpace& add_nodes(const Grid& g);
 
-  FunctionSpace& add_nodes(const Grid& g);
+    FunctionSpace& add_nodes(size_t nb_nodes);
 
-  FunctionSpace& add_nodes(size_t nb_nodes);
+    void prettyPrint(std::ostream&) const;
+
+    void print(std::ostream&) const;
+
+private:  // methods
+
+    friend std::ostream& operator<<(std::ostream& s, const Mesh& p) {
+        p.print(s);
+        return s;
+    }
 
 private: // members
 
-  Metadata      metadata_;
+    Metadata      metadata_;
 
-  const Grid* grid_;
+    const Grid* grid_;
 
-  typedef eckit::DenseMap< std::string, eckit::SharedPtr<FunctionSpace> > StoreFS_t;
+    typedef eckit::DenseMap< std::string, eckit::SharedPtr<FunctionSpace> > StoreFS_t;
 
-  StoreFS_t function_spaces_;
+    StoreFS_t function_spaces_;
 
 };
 
-//------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 // C wrapper interfaces to C++ routines
 extern "C"
@@ -114,8 +121,8 @@ extern "C"
 	Grid* atlas__Mesh__grid (Mesh* This);
 }
 
-//------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 } // namespace atlas
 
-#endif // atlas_h
+#endif // atlas_Mesh_h

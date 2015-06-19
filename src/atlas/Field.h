@@ -19,6 +19,8 @@
 #include <vector>
 #include <string>
 
+#include "eckit/types/Types.h"
+
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 #include "eckit/memory/ScopedPtr.h"
@@ -33,14 +35,17 @@
 #include "atlas/State.h"
 #include "atlas/util/ArrayView.h"
 
-//------------------------------------------------------------------------------------------------------
-
 namespace atlas {
 
 // Forward declaration
 template< typename DATA_TYPE > class FieldT;
 
-//------------------------------------------------------------------------------------------------------
+template<class T>
+inline std::ostream &operator<<(std::ostream &s, const std::vector<T> &v) {
+    return eckit::__print_list(s, v);
+}
+
+//----------------------------------------------------------------------------------------------------------------------
 
 class Field : public eckit::Owned {
 
@@ -90,8 +95,20 @@ public: // methods
   friend std::ostream& operator<<( std::ostream& os, const Field& v);
 
 private: // methods
+  
+  virtual void print(std::ostream& os) const
+  {
+      os << "Field[name=" << name()
+         << ",datatype=" << data_type_
+         << ",size=" << size()
+         << ",shape=" << shape_
+         << ",strides=" << strides_
+         << "]";
+  }
 
-  virtual void print( std::ostream& ) const = 0;
+private: // members
+
+  virtual void dump( std::ostream& ) const = 0;
 
   // Allow a State::add() to change the name of the field, only if the field
   // has no name assigned, so it can be used for lookup later.
@@ -165,8 +182,6 @@ public:
 
 };
 
-//------------------------------------------------------------------------------------------------------
-
 
 template< typename DATA_TYPE >
 class FieldT : public Field {
@@ -190,7 +205,8 @@ public: // methods
 
   virtual void halo_exchange(); // To be removed
 
-  virtual void print(std::ostream& out) const;
+  virtual void dump(std::ostream& out) const;
+
   virtual double bytes() const { return sizeof(DATA_TYPE)*size(); }
 
 protected:
@@ -243,7 +259,7 @@ inline void FieldT<DATA_TYPE>::allocate(const std::vector<size_t>& shape)
 }
 
 template< typename DATA_TYPE >
-inline void FieldT<DATA_TYPE>::print(std::ostream& out) const
+inline void FieldT<DATA_TYPE>::dump(std::ostream& out) const
 {
   const FunctionSpace& nodes = function_space();
 
@@ -259,7 +275,7 @@ inline void FieldT<DATA_TYPE>::print(std::ostream& out) const
     out << lonlat(i,LON) << " " << lonlat(i,LAT) << " " << values(i) << std::endl;
 }
 
-//------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 #define Parametrisation eckit::Parametrisation
 // C wrapper interfaces to C++ routines
