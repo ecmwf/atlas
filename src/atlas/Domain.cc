@@ -76,7 +76,7 @@ bool Domain::global() const
 
 void Domain::normalise()
 {
-  while (east_ >= 360) {
+  while (east_ > 360) {
       east_ -= 360;
       west_ -= 360;
   }
