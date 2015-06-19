@@ -163,16 +163,41 @@ void TestField::test_state()
   state.add( Field::create( make_shape(10,2) ) );
   state.add( Field::create( make_shape(10,3) ) );
 
-  Field& field1 = state.field(0);
-  eckit::Log::info() << "name ["<<field1.name() << "]  size[" << field1.size() << "]" << std::endl;
-  Field& field2 = state.field(1);
-  eckit::Log::info() << "name ["<<field2.name() << "]  size[" << field2.size() << "]" << std::endl;
-  Field& field3 = state.field(1);
-  eckit::Log::info() << "name ["<<field3.name() << "]  size[" << field3.size() << "]" << std::endl;
+  for( size_t i=0; i<state.nb_fields(); ++i )
+  {
+    Field& field = state.field(i);
+    eckit::Log::info() << "name ["<<field.name() << "]  size[" << field.size() << "]" << std::endl;
+  }
 
+  eckit::Log::info() << "fields = ";
+  for( size_t i=0; i<state.nb_fields(); ++i)
+    eckit::Log::info() << state.field_names()[i] << " ";
+  eckit::Log::info() << std::endl;
 
   Grid& grid = state.add( Grid::create("rgg.N16") );
   Mesh& mesh = state.add( Mesh::create(grid) );
+
+  state.remove_field("myfield");
+
+  eckit::Log::info() << "fields = ";
+  for( size_t i=0; i<state.nb_fields(); ++i)
+    eckit::Log::info() << state.field_names()[i] << " ";
+  eckit::Log::info() << std::endl;
+
+  for( size_t i=0; i<state.nb_fields(); ++i )
+  {
+    Field& field = state.field(i);
+    eckit::Log::info() << "name ["<<field.name() << "]  size[" << field.size() << "]" << std::endl;
+  }
+
+  state.remove_field("field_00001");
+
+  for( size_t i=0; i<state.nb_fields(); ++i )
+  {
+    Field& field = state.field(i);
+    eckit::Log::info() << "name ["<<field.name() << "]  size[" << field.size() << "]" << std::endl;
+  }
+
 }
 
 

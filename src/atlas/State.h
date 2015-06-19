@@ -32,19 +32,21 @@ namespace atlas {
  * \brief State class as ultimate data holder class
  * Fields are owned by a State,
  * whereas Mesh or Grid can be shared between different States
+ * Multiple meshes or grids can be added for e.g coupling models
+ * or multigrid methods.
  */
 class State : public eckit::Owned {
 
 public: // types
 
   typedef eckit::SharedPtr< State > Ptr;
-  typedef eckit::DenseMap< std::string,eckit::SharedPtr<Field> > FieldMap;
   typedef Metadata Parameters;
 
 private:
 
-  typedef std::vector< eckit::SharedPtr<Grid> >  Grids;
-  typedef std::vector< eckit::SharedPtr<Mesh> >  Meshes;
+  typedef eckit::DenseMap< std::string, eckit::SharedPtr<Field> >  FieldMap;
+  typedef eckit::DenseMap< std::string, eckit::SharedPtr<Grid>  >  GridMap;
+  typedef eckit::DenseMap< std::string, eckit::SharedPtr<Mesh>  >  MeshMap;
 
 public: // methods
 
@@ -59,18 +61,27 @@ public: // methods
   const Field& field(const std::string& name) const;
         Field& field(const std::string& name);
   bool has_field(const std::string& name) const { return fields_.has(name); }
+  std::vector< std::string > field_names() const;
 
   const Field& field(const size_t idx) const;
         Field& field(const size_t idx);
   size_t nb_fields() const { return fields_.size(); }
 
-  const Mesh& mesh(const size_t = 0) const;
-        Mesh& mesh(const size_t = 0);
+  const Mesh& mesh(const std::string& name = "") const;
+        Mesh& mesh(const std::string& name = "");
+  bool has_mesh(const std::string& name) const { return meshes_.has(name); }
+
+  const Mesh& mesh(const size_t idx = 0) const;
+        Mesh& mesh(const size_t idx = 0);
   size_t nb_meshes() const { return meshes_.size(); }
 
-  const Grid& grid(const size_t = 0) const;
-        Grid& grid(const size_t = 0);
-  bool nb_grids() const { return grids_.size(); }
+  const Grid& grid(const std::string& name = "") const;
+        Grid& grid(const std::string& name = "");
+  bool has_grid(const std::string& name) const { return grids_.has(name); }
+
+  const Grid& grid(const size_t idx = 0) const;
+        Grid& grid(const size_t idx = 0);
+  size_t nb_grids() const { return grids_.size(); }
 
 // -- Modifiers
 
@@ -78,11 +89,17 @@ public: // methods
   Mesh&  add( Mesh*  ); // Take shared ownership!
   Grid&  add( Grid*  ); // Take shared ownership!
 
+  void remove_field(const std::string& name);
+  void remove_mesh(const std::string& name = "");
+  void remove_grid(const std::string& name = "");
+
 private:
 
+  void set_name( Field& );
+
   FieldMap fields_;
-  Meshes meshes_;
-  Grids grids_;
+  MeshMap meshes_;
+  GridMap grids_;
 
 };
 

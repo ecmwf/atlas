@@ -30,6 +30,7 @@
 #include "atlas/Mesh.h"
 #include "atlas/Metadata.h"
 #include "atlas/Parameters.h"
+#include "atlas/State.h"
 #include "atlas/util/ArrayView.h"
 
 //------------------------------------------------------------------------------------------------------
@@ -88,10 +89,13 @@ public: // methods
 
   friend std::ostream& operator<<( std::ostream& os, const Field& v);
 
-
 private: // methods
 
   virtual void print( std::ostream& ) const = 0;
+
+  // Allow a State::add() to change the name of the field, only if the field
+  // has no name assigned, so it can be used for lookup later.
+  friend Field& State::add( Field* );
 
 private: // members
 
