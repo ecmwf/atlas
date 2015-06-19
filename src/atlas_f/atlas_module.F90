@@ -86,7 +86,8 @@ integer, public, parameter :: ATLAS_KIND_REAL32 =  4
 integer, public, parameter :: ATLAS_KIND_REAL64 =  8
 ! ----------------------------------------------------
 
-integer, private, parameter :: FIELD_NB_VARS = -1
+integer, private, parameter :: FIELD_NB_VARS = 2147483647 ! maximum integer value
+integer, public, parameter :: ATLAS_FIELD_NB_VARS = FIELD_NB_VARS ! maximum integer value
 integer, private, parameter :: wp = c_double ! working precision
 
 #if ATLAS_BITS_GLOBAL == 32

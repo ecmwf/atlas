@@ -1,0 +1,100 @@
+/*
+ * (C) Copyright 1996-2015 ECMWF.
+ *
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
+ * granted to it by virtue of its status as an intergovernmental organisation nor
+ * does it submit to any jurisdiction.
+ */
+
+/// @author Willem Deconinck
+/// @date June 2015
+
+#ifndef atlas_State_H
+#define atlas_State_H
+
+#include "eckit/memory/Owned.h"
+#include "eckit/memory/SharedPtr.h"
+#include "eckit/memory/ScopedPtr.h"
+#include "eckit/container/DenseMap.h"
+
+namespace eckit { class Parametrisation; }
+namespace atlas { class Field; }
+namespace atlas { class Mesh; }
+namespace atlas { class Grid; }
+namespace atlas { class Metadata; }
+
+
+namespace atlas {
+
+/**
+ * \brief State class as ultimate data holder class
+ * Fields are owned by a State,
+ * whereas Mesh or Grid can be shared between different States
+ */
+class State : public eckit::Owned {
+
+public: // types
+
+  typedef eckit::SharedPtr< State > Ptr;
+  typedef eckit::DenseMap< std::string,eckit::SharedPtr<Field> > FieldMap;
+  typedef Metadata Parameters;
+
+private:
+
+  typedef std::vector< eckit::SharedPtr<Grid> >  Grids;
+  typedef std::vector< eckit::SharedPtr<Mesh> >  Meshes;
+
+public: // methods
+
+//-- Constructors
+
+  State();
+
+  State( const eckit::Parametrisation& );
+
+//-- Accessors
+
+  const Field& field(const std::string& name) const;
+        Field& field(const std::string& name);
+  bool has_field(const std::string& name) const { return fields_.has(name); }
+
+  const Field& field(const size_t idx) const;
+        Field& field(const size_t idx);
+  size_t nb_fields() const { return fields_.size(); }
+
+  const Mesh& mesh(const size_t = 0) const;
+        Mesh& mesh(const size_t = 0);
+  size_t nb_meshes() const { return meshes_.size(); }
+
+  const Grid& grid(const size_t = 0) const;
+        Grid& grid(const size_t = 0);
+  bool nb_grids() const { return grids_.size(); }
+
+// -- Modifiers
+
+  Field& add( Field* ); // Take shared ownership!
+  Mesh&  add( Mesh*  ); // Take shared ownership!
+  Grid&  add( Grid*  ); // Take shared ownership!
+
+private:
+
+  FieldMap fields_;
+  Meshes meshes_;
+  Grids grids_;
+
+};
+
+// ------------------------------------------------------------------------------------
+
+// C wrapper interfaces to C++ routines
+extern "C"
+{
+}
+
+
+} // namespace atlas
+
+
+#endif

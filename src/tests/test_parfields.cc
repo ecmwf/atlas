@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE( init )
 
 BOOST_AUTO_TEST_CASE( test1 )
 {
-	Mesh::Ptr m = Mesh::create();
+	Mesh::Ptr m ( Mesh::create() );
 
 	FunctionSpace& nodes = m->create_function_space( "nodes", "shapefunc", make_shape(10,Field::UNDEF_VARS) );
 

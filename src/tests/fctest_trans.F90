@@ -78,7 +78,7 @@ TEST( test_trans )
   scalarfield2 = nodes%field("scalar2")
 
   ! note this is in C++ ordering for now (TODO fix)
-  call mesh%create_function_space("spectral","spectral",(/trans%nspec2(),-1/))
+  call mesh%create_function_space("spectral","spectral",(/trans%nspec2(),ATLAS_FIELD_NB_VARS/))
   spectral = mesh%function_space("spectral")
   call spectral%create_field("spectral1",nlev)
   spectralfield1 = spectral%field("spectral1")

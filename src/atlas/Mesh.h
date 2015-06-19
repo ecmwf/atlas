@@ -37,21 +37,23 @@ class Mesh : public eckit::Owned, public util::Registered<Mesh> {
 public: // types
 
 	typedef eckit::SharedPtr<Mesh> Ptr;
+  typedef Metadata Parameters;
 
 public: // methods
 
-  static Mesh::Ptr create();
+  static Mesh* create( const eckit::Parametrisation& = Parameters() );
+  static Mesh* create( const Grid&, const eckit::Parametrisation& = Parameters() );
 
   /*!
    * @brief Construct a empty Mesh
    */
-  Mesh();
+  Mesh(const eckit::Parametrisation& = Parameters());
 
   /*!
    * @brief Construct mesh from grid.
    * The mesh is global and only has a "nodes" FunctionSpace
    */
-  Mesh(const Grid&);
+  Mesh(const Grid&, const eckit::Parametrisation& = Parameters());
 
   virtual ~Mesh();
 

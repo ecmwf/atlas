@@ -25,17 +25,22 @@ namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
 
-Mesh::Ptr Mesh::create()
+Mesh* Mesh::create( const eckit::Parametrisation& params )
 {
-  return Mesh::Ptr( new Mesh( /* eckit::Params ??? */ ) );
+  return new Mesh(params);
 }
 
-Mesh::Mesh() :
+Mesh* Mesh::create( const Grid& grid, const eckit::Parametrisation& params )
+{
+  return new Mesh(grid,params);
+}
+
+Mesh::Mesh( const eckit::Parametrisation& ):
   grid_(NULL)
 {
 }
 
-Mesh::Mesh(const Grid& grid) :
+Mesh::Mesh(const Grid& grid, const eckit::Parametrisation& ) :
   grid_(&grid)
 {
   add_nodes(grid);

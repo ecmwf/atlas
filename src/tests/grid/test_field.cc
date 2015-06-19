@@ -20,6 +20,7 @@
 #include "atlas/meshgen/Delaunay.h"
 #include "atlas/io/Gmsh.h"
 #include "atlas/util/Debug.h"
+#include "atlas/State.h"
 
 using namespace std;
 using namespace eckit;
@@ -44,6 +45,7 @@ public:
 
     void test_constructor();
     void test_fieldcreator();
+    void test_state();
 };
 
 //-----------------------------------------------------------------------------
@@ -154,9 +156,24 @@ void TestField::test_fieldcreator()
   eckit::Log::info() << std::flush;
 }
 
+void TestField::test_state()
+{
+  State state;
+  state.add( Field::create( make_shape(10,1) , Field::Parameters("name","myfield") ) );
+  state.add( Field::create( make_shape(10,2) ) );
+  state.add( Field::create( make_shape(10,3) ) );
+
+  Field& field1 = state.field(0);
+  eckit::Log::info() << "name ["<<field1.name() << "]  size[" << field1.size() << "]" << std::endl;
+  Field& field2 = state.field(1);
+  eckit::Log::info() << "name ["<<field2.name() << "]  size[" << field2.size() << "]" << std::endl;
+  Field& field3 = state.field(1);
+  eckit::Log::info() << "name ["<<field3.name() << "]  size[" << field3.size() << "]" << std::endl;
 
 
-
+  Grid& grid = state.add( Grid::create("rgg.N16") );
+  Mesh& mesh = state.add( Mesh::create(grid) );
+}
 
 
 
@@ -167,6 +184,7 @@ void TestField::run()
     eckit::mpi::init();
     test_constructor();
     test_fieldcreator();
+    test_state();
     eckit::mpi::finalize();
 }
 

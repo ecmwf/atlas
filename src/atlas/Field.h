@@ -46,19 +46,21 @@ class Field : public eckit::Owned {
 public: // types
 
   typedef eckit::SharedPtr<Field> Ptr;
-  typedef std::vector< Field::Ptr > Vector;
-
   typedef Metadata Parameters;
+
+public: // Static methods
+
+  static Field* create(const eckit::Parametrisation&);
+  static Field* create(const ArrayShape&, const eckit::Parametrisation& = Parameters() );
+  static Field* create(const Grid&, const eckit::Parametrisation& = Parameters() );
+
+  template<typename T>
+  static Field* create(const Array<T>&, const eckit::Parametrisation& = Parameters() );
+  static Field* create(const Field&, const eckit::Parametrisation& = Parameters() );
 
 public: // methods
 
-  enum { UNDEF_VARS = -1 };
-
-  Field(const std::string& name, const size_t nb_vars);
-
   Field(const eckit::Parametrisation&);
-
-  static Field* create(const eckit::Parametrisation&);
 
   virtual ~Field();
 
@@ -69,31 +71,10 @@ public: // methods
 
   const std::string& data_type() const { return data_type_; }
 
-  virtual void allocate(const std::vector<size_t>& shapef)=0;
   const std::string& name() const { return name_; }
-
-        const Grid& grid() const {
-            if( function_space_ )
-            {
-                if( function_space_->mesh().has_grid() )
-                    return function_space_->mesh().grid();
-            }
-            if( !grid_ )
-                throw eckit::Exception("Field "+name()+" is not associated to any Grid.");
-            return *grid_;
-        }
-
-        const Mesh& mesh() const { ASSERT(function_space_); return function_space_->mesh(); }
-  Mesh& mesh() { ASSERT(function_space_); return function_space_->mesh(); }
 
   const Metadata& metadata() const { return metadata_; }
   Metadata& metadata() { return metadata_; }
-
-        FunctionSpace& function_space() const {
-            if( !function_space_ )
-                throw eckit::Exception("Field "+name()+" is not associated to any FunctionSpace.");
-            return *function_space_;
-        }
 
   const std::vector<int>& shapef() const  { return shapef_; }
   const std::vector<size_t>& shape() const { return shape_; }
@@ -103,53 +84,85 @@ public: // methods
   size_t nb_vars() const { return nb_vars_; }
 
   virtual size_t size() const = 0;
-  virtual void halo_exchange() = 0;
   virtual double bytes() const = 0;
 
   friend std::ostream& operator<<( std::ostream& os, const Field& v);
+
+
+private: // methods
+
+  virtual void print( std::ostream& ) const = 0;
+
+private: // members
+
+  size_t nb_vars_;
+
+  std::string name_;
+
+  const Grid* grid_;
+  FunctionSpace* function_space_;
+  Metadata metadata_;
+
+
+protected: // members
+  std::string data_type_;
+  std::vector<int> shapef_;
+  std::vector<size_t> shape_;
+  std::vector<size_t> strides_;
+
+// End of class Field
+
+//------------------------------------------------------------------------------------------------------
+
+/***************************************************************************/
+/* Public methods to be removed soon                                       */
+/***************************************************************************/
+
+public:
+
+
+  typedef std::vector< Field::Ptr > Vector;
+  enum { UNDEF_VARS = 2147483647 }; // = std::numeric_limits<int>::max() (integer because of fortran)
+
+  Field(const std::string& name, const size_t nb_vars);
+
+  FunctionSpace& function_space() const {
+      if( !function_space_ )
+          throw eckit::Exception("Field "+name()+" is not associated to any FunctionSpace.");
+      return *function_space_;
+  }
+
+  virtual void halo_exchange() = 0;
+
+  virtual void allocate(const std::vector<size_t>& shapef)=0;
+
+  const Grid& grid() const {
+      if( function_space_ )
+      {
+          if( function_space_->mesh().has_grid() )
+              return function_space_->mesh().grid();
+      }
+      if( !grid_ )
+          throw eckit::Exception("Field "+name()+" is not associated to any Grid.");
+      return *grid_;
+  }
+
+  const Mesh& mesh() const { ASSERT(function_space_); return function_space_->mesh(); }
+  Mesh& mesh() { ASSERT(function_space_); return function_space_->mesh(); }
 
   void set_function_space(const FunctionSpace& function_space)
   {
     function_space_ = const_cast<FunctionSpace*>(&function_space);
   }
 
-private: // members
+/***************************************************************************/
+/* End Public methods to be removed soon                                   */
+/***************************************************************************/
 
-  virtual void print( std::ostream& ) const = 0;
-
-  void set_grid(const Grid& grid)
-  {
-    grid_ = &grid;
-  }
-
-  void set_name(const std::string& name)
-  {
-    name_ = name;
-  }
-
-protected: // members
-
-  size_t nb_vars_;
-
-  std::string name_;
-  std::string data_type_;
-  std::vector<int> shapef_;
-  std::vector<size_t> shape_;
-  std::vector<size_t> strides_;
-
-  const Grid* grid_;
-  FunctionSpace* function_space_;
-  Metadata metadata_;
 };
 
 //------------------------------------------------------------------------------------------------------
 
-
-template< typename DATA_TYPE > inline std::string data_type_to_str();
-template<> inline std::string data_type_to_str<int>()    { return "int32";  }
-template<> inline std::string data_type_to_str<long>()    { return "int64";  }
-template<> inline std::string data_type_to_str<float>()  { return "real32"; }
-template<> inline std::string data_type_to_str<double>() { return "real64"; }
 
 template< typename DATA_TYPE >
 class FieldT : public Field {
@@ -158,7 +171,7 @@ public: // methods
 
   FieldT(const std::string& name, const int nb_vars);
 
-  FieldT(const std::vector<size_t>& shape, const eckit::Parametrisation& = eckit::Properties() );
+  FieldT(const ArrayShape& shape, const eckit::Parametrisation& = eckit::Properties() );
 
   virtual ~FieldT();
 

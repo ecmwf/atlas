@@ -36,26 +36,25 @@ using atlas::util::Topology;
 namespace atlas {
 
 FunctionSpace::FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<size_t>& shape , Mesh& mesh) :
-	name_(name),
-	shape_(shape),
-	gather_scatter_(new mpl::GatherScatter()),
-	fullgather_(new mpl::GatherScatter()),
-	halo_exchange_(new mpl::HaloExchange()),
-	checksum_(new mpl::Checksum()),
-	mesh_(mesh)
+  name_(name),
+  shape_(shape),
+  gather_scatter_(new mpl::GatherScatter()),
+  fullgather_(new mpl::GatherScatter()),
+  halo_exchange_(new mpl::HaloExchange()),
+  checksum_(new mpl::Checksum()),
+  mesh_(mesh)
 {
-	//std::cout << "C++ : shape Constructor" << std::endl;
-	dof_ = 1;
-	size_t extsize = shape_.size();
-	shapef_.resize(extsize);
-	for (size_t i=0; i<extsize; ++i)
-	{
-		shapef_[extsize-1-i] = shape_[i];
-#warning "SERIOUS ALERT -- UNDEF_VARS is -1 and we compare to size_t !??"
-        if( shape_[i] != Field::UNDEF_VARS )
-			dof_ *= shape_[i];
-	}
-	glb_dof_ = dof_;
+  //std::cout << "C++ : shape Constructor" << std::endl;
+  dof_ = 1;
+  size_t extsize = shape_.size();
+  shapef_.resize(extsize);
+  for (size_t i=0; i<extsize; ++i)
+  {
+    shapef_[extsize-1-i] = shape_[i];
+    if( shape_[i] != Field::UNDEF_VARS )
+      dof_ *= shape_[i];
+  }
+  glb_dof_ = dof_;
 }
 
 FunctionSpace::~FunctionSpace()

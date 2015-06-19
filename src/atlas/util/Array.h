@@ -59,6 +59,7 @@ public:
   void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<size(); ++n) data_[n]=scalar; }
   template< class InputIt >
   void assign( InputIt first, InputIt last ) { data_.assign(first,last); }
+  std::string data_type() const { return data_type_to_str<DATA_TYPE>(); }
 private:
   size_t rank_;
   ArrayShape shape_;

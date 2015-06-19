@@ -241,6 +241,8 @@ PointIndex3.cc
 PointIndex3.h
 PointSet.cc
 PointSet.h
+State.h
+State.cc
 field/FieldCreator.h
 field/FieldCreator.cc
 field/ArraySpec.h

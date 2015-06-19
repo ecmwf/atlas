@@ -21,32 +21,6 @@
 
 namespace atlas {
 
-Field::Field(const std::string& name, const size_t nb_vars) :
-  nb_vars_(nb_vars), name_(name), grid_(NULL), function_space_(NULL)
-{
-}
-
-Field::~Field()
-{
-}
-
-Field::Field(const eckit::Parametrisation& params) :
-  nb_vars_(1), name_(), grid_(NULL), function_space_(NULL)
-{
-  Grid::Id grid;
-  if( params.get("grid",grid) )
-    set_grid(Grid::from_id(grid));
-
-  FunctionSpace::Id function_space;
-  if( params.get("function_space",function_space) )
-    set_function_space(FunctionSpace::from_id(function_space));
-
-  std::string name;
-  if( params.get("name",name) )
-    set_name(name);
-
-}
-
 Field* Field::create(const eckit::Parametrisation& params)
 {
   std::string creator_factory;
@@ -62,6 +36,49 @@ Field* Field::create(const eckit::Parametrisation& params)
   return NULL;
 }
 
+
+Field* Field::create(const ArrayShape& shape, const eckit::Parametrisation& params)
+{
+  Field* field = 0;
+  std::string data_type = "real64";
+  params.get("data_type",data_type);
+  if( data_type == "int32" || data_type == "int" )
+    field = new FieldT<int>(shape,params);
+  else if( data_type == "int64" || data_type == "long" )
+    field = new FieldT<long>(shape,params);
+  else if( data_type == "real32" || data_type == "float" )
+    field = new FieldT<float>(shape,params);
+  else if( data_type == "real64" || data_type == "double" )
+    field = new FieldT<double>(shape,params);
+  else
+    throw eckit::Exception("Could not create field. data_type parameter unrecognized: "+data_type);
+  return field;
+}
+
+
+
+Field::Field(const std::string& name, const size_t nb_vars) :
+  nb_vars_(nb_vars), name_(name), grid_(NULL), function_space_(NULL)
+{
+}
+
+Field::Field(const eckit::Parametrisation& params) :
+  nb_vars_(1), name_(), grid_(NULL), function_space_(NULL)
+{
+  Grid::Id grid;
+  if( params.get("grid",grid) )
+    grid_ = &Grid::from_id(grid);
+
+  FunctionSpace::Id function_space;
+  if( params.get("function_space",function_space) )
+    function_space_ = &FunctionSpace::from_id(function_space);
+
+  if( params.get("name",name_) );
+}
+
+Field::~Field()
+{
+}
 
 namespace {
 template< typename DATA_TYPE >

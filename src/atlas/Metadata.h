@@ -12,6 +12,7 @@
 #define atlas_Metadata_h
 
 #include <string>
+#include "eckit/memory/SharedPtr.h"
 #include "eckit/value/Properties.h"
 #include "eckit/value/Params.h"
 
@@ -56,7 +57,6 @@ public:
     set(name,value);
     return *this;
   }
-
 
 };
 

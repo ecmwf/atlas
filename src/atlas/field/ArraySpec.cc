@@ -25,8 +25,7 @@ Field* ArraySpec::create_field( const eckit::Parametrisation& params ) const
   std::string data_type = "real64";
   if( !params.get("shape",shape) )
     throw eckit::Exception("Could not find parameter 'shape' in Parametrisation");
-  
-  
+
   std::vector<size_t> s;
   bool fortran=false;
   params.get("fortran",fortran);

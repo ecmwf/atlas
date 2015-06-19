@@ -29,7 +29,7 @@ namespace test {
 BOOST_AUTO_TEST_CASE( test_create_mesh )
 {
 	eckit::mpi::init();
-	Mesh::Ptr m = Mesh::create();
+	Mesh::Ptr m ( Mesh::create() );
 
 	ReducedGridMeshGenerator generate;
 
