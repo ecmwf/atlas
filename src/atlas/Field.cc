@@ -22,7 +22,7 @@
 namespace atlas {
 
 Field::Field(const std::string& name, const size_t nb_vars) :
-  name_(name), nb_vars_(nb_vars), function_space_(NULL), grid_(NULL)
+  nb_vars_(nb_vars), name_(name), grid_(NULL), function_space_(NULL)
 {
 }
 
@@ -31,7 +31,7 @@ Field::~Field()
 }
 
 Field::Field(const eckit::Parametrisation& params) :
-  name_(), nb_vars_(1), function_space_(NULL), grid_(NULL)
+  nb_vars_(1), name_(), grid_(NULL), function_space_(NULL)
 {
   Grid::Id grid;
   if( params.get("grid",grid) )

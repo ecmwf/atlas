@@ -272,7 +272,9 @@ void add_median_dual_volume_contribution(
       int edge = bdry_edges[jedge];
       x1 = edge_centroids(edge,LON);
       y1 = edge_centroids(edge,LAT);
-      x2 = x1;
+
+      x2 = x1; /* unused ?? */
+
       y2 = 0.;
       if ( std::abs(y1-max[LAT])<tol )
         y2 = 90.;
@@ -392,7 +394,7 @@ void build_dual_normals( Mesh& mesh )
   global_bounding_box( nodes, min, max );
   double tol = 1.e-6;
 
-  double xl, yl, xr, yr, dx, dy;
+  double xl, yl, xr, yr;
   FunctionSpace&  edges = mesh.function_space("edges");
   IndexView<int,   2> edge_to_elem  ( edges.field("to_elem"  ) );
   IndexView<int,   2> edge_nodes    ( edges.field("nodes"    ) );

@@ -71,7 +71,7 @@ public: // methods
 	FunctionSpace& function_space( size_t ) const;
 
 	/// number of functional spaces
-	int nb_function_spaces() const { return function_spaces_.size(); }
+    size_t nb_function_spaces() const { return function_spaces_.size(); }
 
 	/// checks if has a Grid
 	bool has_grid() const { return grid_; }

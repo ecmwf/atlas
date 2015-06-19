@@ -127,15 +127,16 @@ public: // methods
 	const Mesh& mesh() const { return mesh_; }
 	Mesh& mesh() { return mesh_; }
 
-	int nb_fields() const { return fields_.size(); }
+    size_t nb_fields() const { return fields_.size(); }
 
-	int dof() const { return dof_; }
+    size_t dof() const { return dof_; }
 
-	int glb_dof() const { return glb_dof_; }
+    size_t glb_dof() const { return glb_dof_; }
 
 	friend std::ostream& operator<<(std::ostream&, const FunctionSpace&);
 
 protected:
+
 	size_t idx_;
 	size_t dof_;
 	size_t glb_dof_;
@@ -147,9 +148,9 @@ protected:
 
 	eckit::DenseMap< std::string, eckit::SharedPtr<Field> > fields_;
 
-	mpl::HaloExchange::Ptr  halo_exchange_;
-	mpl::GatherScatter::Ptr gather_scatter_; // without ghost
-	mpl::GatherScatter::Ptr fullgather_; // includes halo
+    mpl::GatherScatter::Ptr gather_scatter_; // without ghost
+    mpl::GatherScatter::Ptr fullgather_; // includes halo
+    mpl::HaloExchange::Ptr  halo_exchange_;
 	mpl::Checksum::Ptr      checksum_;
 
 	Metadata metadata_;

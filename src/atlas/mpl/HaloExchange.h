@@ -265,8 +265,8 @@ void HaloExchange::unpack_recv_buffer( const DATA_TYPE recv_buffer[],
                                        const size_t var_shape[],
                                        size_t var_rank ) const
 {
-  bool field_changed = false;
-  DATA_TYPE tmp;
+//  bool field_changed = false;
+//  DATA_TYPE tmp;
   size_t ibuf = 0;
   size_t recv_stride = var_strides[0]*var_shape[0];
 
@@ -278,10 +278,10 @@ void HaloExchange::unpack_recv_buffer( const DATA_TYPE recv_buffer[],
       const size_t pp = recv_stride*recvmap_[p];
       for( size_t i=0; i<var_shape[0]; ++i)
       {
-        tmp = field[ pp + i*var_strides[0] ];
+//        tmp = field[ pp + i*var_strides[0] ];
         field[ pp + i*var_strides[0] ] = recv_buffer[ibuf++];
-        if( tmp != field[ pp + i*var_strides[0] ] )
-          field_changed = true;
+//        if( tmp != field[ pp + i*var_strides[0] ] )
+//          field_changed = true;
       }
     }
     break;
@@ -293,11 +293,11 @@ void HaloExchange::unpack_recv_buffer( const DATA_TYPE recv_buffer[],
       {
         for( size_t j=0; j<var_shape[1]; ++j )
         {
-          tmp = field[ pp + i*var_strides[0] + j*var_strides[1] ];
+//          tmp = field[ pp + i*var_strides[0] + j*var_strides[1] ];
           field[ pp + i*var_strides[0] + j*var_strides[1] ]
               = recv_buffer[ibuf++];
-          if( field[ pp + i*var_strides[0] + j*var_strides[1] ] != tmp )
-            field_changed = true;
+//          if( field[ pp + i*var_strides[0] + j*var_strides[1] ] != tmp )
+//            field_changed = true;
         }
       }
     }
@@ -312,11 +312,11 @@ void HaloExchange::unpack_recv_buffer( const DATA_TYPE recv_buffer[],
         {
           for( size_t k=0; k<var_shape[2]; ++k )
           {
-            tmp = field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] ];
+//            tmp = field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] ];
             field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] ]
                 = recv_buffer[ibuf++];
-            if( field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] ] != tmp )
-              field_changed = true;
+//            if( field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] ] != tmp )
+//              field_changed = true;
           }
         }
       }
@@ -334,11 +334,11 @@ void HaloExchange::unpack_recv_buffer( const DATA_TYPE recv_buffer[],
           {
            for( size_t l=0; l<var_shape[3]; ++l )
            {
-            tmp = field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] +l*var_strides[3] ];
+//            tmp = field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] +l*var_strides[3] ];
             field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] + l*var_strides[3] ]
                 = recv_buffer[ibuf++];
-            if( field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] +l*var_strides[3] ] != tmp )
-              field_changed = true;
+//            if( field[ pp + i*var_strides[0] + j*var_strides[1] + k*var_strides[2] +l*var_strides[3] ] != tmp )
+//              field_changed = true;
            }
           }
         }

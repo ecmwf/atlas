@@ -129,6 +129,8 @@ private: // members
 
 protected: // members
 
+  size_t nb_vars_;
+
   std::string name_;
   std::string data_type_;
   std::vector<int> shapef_;
@@ -138,9 +140,6 @@ protected: // members
   const Grid* grid_;
   FunctionSpace* function_space_;
   Metadata metadata_;
-
-  size_t nb_vars_;
-
 };
 
 //------------------------------------------------------------------------------------------------------

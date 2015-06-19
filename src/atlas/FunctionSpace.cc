@@ -51,7 +51,8 @@ FunctionSpace::FunctionSpace(const std::string& name, const std::string& shape_f
 	for (size_t i=0; i<extsize; ++i)
 	{
 		shapef_[extsize-1-i] = shape_[i];
-		if( shape_[i] != Field::UNDEF_VARS )
+#warning "SERIOUS ALERT -- UNDEF_VARS is -1 and we compare to size_t !??"
+        if( shape_[i] != Field::UNDEF_VARS )
 			dof_ *= shape_[i];
 	}
 	glb_dof_ = dof_;
@@ -88,7 +89,7 @@ void FunctionSpace::resize(const std::vector<size_t>& shape)
 			dof_ *= shape_[i];
 	}
 
-	for( int f=0; f<fields_.size(); ++f)
+    for( size_t f=0; f<fields_.size(); ++f)
 	{
 		std::vector< size_t > field_shape(extsize);
 		for (size_t i=0; i<extsize; ++i)
@@ -381,7 +382,7 @@ void FunctionSpace::parallelise()
   {
     ArrayView<int,1> flags ( field<int>("flags") );
     std::vector<int> mask(shape(0));
-    for( int j=0; j<mask.size(); ++j )
+    for( size_t j=0; j<mask.size(); ++j )
     {
       mask[j] = Topology::check(flags(j),Topology::GHOST) ? 1 : 0;
     }
