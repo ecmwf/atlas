@@ -60,10 +60,12 @@ public:  // methods
 
     static Domain makeGlobal();
 
-  double north() const { return north_; }
-  double west() const { return west_; }
-  double south() const { return south_; }
-  double east() const { return east_; }
+    double north() const { return north_; }
+    double west() const { return west_; }
+    double south() const { return south_; }
+    double east() const { return east_; }
+
+    bool global() const;
 
 private:  // methods
 

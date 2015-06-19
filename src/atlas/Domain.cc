@@ -66,6 +66,14 @@ bool Domain::contains(double lon, double lat) const
 
 Domain Domain::makeGlobal() { return Domain(90.,0.,-90.,360.); }
 
+bool Domain::global() const
+{
+    // This logic should not be changed
+    // We should not use increments to test for globalness
+
+    return north_ == 90. && south_ == -90. && (east_ - west_) == 360.;
+}
+
 void Domain::normalise()
 {
   while (east_ >= 360) {

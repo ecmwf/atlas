@@ -39,7 +39,7 @@ class LocalGrid : public Grid {
 
   private:  // methods
 
-    virtual size_t copyLonLatMemory(void* buffer, size_t size) const;
+    virtual size_t copyLonLatMemory(double* buffer, size_t size) const;
 
     virtual void print(std::ostream&) const;
 
