@@ -49,25 +49,25 @@ LonLatGrid::LonLatGrid() : ReducedLonLatGrid()
 {
 }
 
-LonLatGrid::LonLatGrid(const Params& p)
+LonLatGrid::LonLatGrid(const eckit::Parametrisation& p)
 {
   setup(p);
   set_typeinfo();
 }
 
-LonLatGrid::LonLatGrid( const int nlon, const int nlat, const BoundBox& bbox )
+LonLatGrid::LonLatGrid( const size_t nlon, const size_t nlat, const BoundBox& bbox )
 {
   setup(nlon,nlat,bbox);
   set_typeinfo();
 }
 
-LonLatGrid::LonLatGrid( const int nlon, const int nlat, TYPE poles )
+LonLatGrid::LonLatGrid( const size_t nlon, const size_t nlat, TYPE poles )
 {
   setup(nlon,nlat,poles);
   set_typeinfo();
 }
 
-LonLatGrid::LonLatGrid( const int nlat, TYPE poles )
+LonLatGrid::LonLatGrid( const size_t nlat, TYPE poles )
 {
   int nlon = 2*nlat;
   setup(nlon,nlat,poles);
@@ -87,17 +87,15 @@ LonLatGrid::LonLatGrid( const double londeg, const double latdeg, const BoundBox
 }
 
 
-void LonLatGrid::setup(const Params& p)
+void LonLatGrid::setup(const eckit::Parametrisation& p)
 {
-  int nlon, nlat;
+  size_t nlon, nlat;
 
   bool poles(defaults::poles());
-  if( p.has("poles") )
-    poles = p["poles"];
+  p.get("poles",poles);
 
-  if( p.has("N") ) // --> global grid (2*N x N)
+  if( p.get("N",N_ ) ) // --> global grid (2*N x N)
   {
-    N_ = p["N"];
     nlat = N_;
     if( poles )
       nlon = 2*(N_-1);
@@ -113,33 +111,37 @@ void LonLatGrid::setup(const Params& p)
     bool bbox_present = p.has("bbox_n") && p.has("bbox_s") && p.has("bbox_e") && p.has("bbox_w");
     if( bbox_present ) // --> limited area grid
     {
-      BoundBox bbox(p["bbox_n"],p["bbox_s"],p["bbox_e"],p["bbox_w"]);
-      if (p.has("nlon") && p.has("nlat"))
+      double bbox_n, bbox_s, bbox_e, bbox_w;
+      p.get("bbox_n",bbox_n);
+      p.get("bbox_s",bbox_s);
+      p.get("bbox_e",bbox_e);
+      p.get("bbox_w",bbox_w);
+      BoundBox bbox(bbox_n,bbox_s,bbox_e,bbox_w);
+
+      double lon_inc, lat_inc;
+      if (p.get("nlon",nlon) && p.get("nlat",nlat))
       {
-        int nlon = p["nlon"];
-        int nlat = p["nlat"];
         setup(nlon,nlat,bbox);
       }
-      else if (p.has("lon_inc") && p.has("lat_inc"))
+      else if (p.get("lon_inc",lon_inc) && p.get("lat_inc",lat_inc))
       {
-        double londeg = p["lon_inc"];
-        double latdeg = p["lat_inc"];
-        setup(londeg,latdeg,bbox);
+        setup(lon_inc,lat_inc,bbox);
+      }
+      else
+      {
+        throw BadParameter("Bad combination of parameters");
       }
     }
     else // --> global grid (nlon x nlat)
     {
-      if (p.has("nlon") && p.has("nlat"))
+      double lon_inc, lat_inc;
+      if (p.get("nlon",nlon) && p.get("nlat",nlat))
       {
-        int nlon = p["nlon"];
-        int nlat = p["nlat"];
         setup(nlon,nlat,poles);
       }
-      else if (p.has("lon_inc") && p.has("lat_inc"))
+      else if (p.get("lon_inc",lon_inc) && p.get("lat_inc",lat_inc))
       {
-        double londeg = p["lon_inc"];
-        double latdeg = p["lat_inc"];
-        setup(londeg,latdeg,poles);
+        setup(lon_inc,lat_inc,poles);
       }
       else
       {
@@ -149,7 +151,7 @@ void LonLatGrid::setup(const Params& p)
   }
 }
 
-void LonLatGrid::setup( const int nlon, const int nlat, const BoundBox& bbox )
+void LonLatGrid::setup( const size_t nlon, const size_t nlat, const BoundBox& bbox )
 {
   std::vector<double> lats(nlat);
   std::vector<int>    nlons(nlat,nlon);
@@ -161,7 +163,7 @@ void LonLatGrid::setup( const int nlon, const int nlat, const BoundBox& bbox )
 
   double delta = (latmax-latmin)/static_cast<double>(nlat-1);
 
-  for( int jlat=0; jlat<nlat; ++jlat )
+  for( size_t jlat=0; jlat<nlat; ++jlat )
   {
     lats[jlat] = latmax - static_cast<double>(jlat)*delta;
   }
@@ -169,7 +171,7 @@ void LonLatGrid::setup( const int nlon, const int nlat, const BoundBox& bbox )
   ReducedGrid::setup(nlat,lats.data(),nlons.data(),lonmin.data(),lonmax.data());
 }
 
-void LonLatGrid::setup( const int nlon, const int nlat, bool poles )
+void LonLatGrid::setup( const size_t nlon, const size_t nlat, bool poles )
 {
   if( poles )
   {
@@ -208,8 +210,8 @@ void LonLatGrid::setup( const double londeg, const double latdeg, const BoundBox
   double Llat = (bbox.max().lat()-bbox.min().lat());
   double nlon_real = Llon/londeg + 1.;
   double nlat_real = Llat/latdeg + 1.;
-  int nlon = static_cast<int>(nlon_real);
-  int nlat = static_cast<int>(nlat_real);
+  size_t nlon = static_cast<size_t>(nlon_real);
+  size_t nlat = static_cast<size_t>(nlat_real);
   if( nlon_real - nlon > 0. )
   {
     std::stringstream msg;

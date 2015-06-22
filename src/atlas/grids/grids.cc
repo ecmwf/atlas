@@ -28,7 +28,9 @@ Grid* grid_from_uid(const std::string& uid)
   Grid* grid = NULL;
   if( Factory<Grid>::instance().exists(uid) )
   {
-    grid = Grid::create( GridSpec(uid) );
+    Grid::Parameters gridparams;
+    gridparams.set("grid_type",uid);
+    grid = Grid::create(gridparams);
   }
   else
   {
@@ -47,13 +49,13 @@ Grid* grid_from_uid(const std::string& uid)
     }
     else if( tokens.size() > 1)
     {
-      GridSpec gridspec(grid_type);
-
+      Grid::Parameters gridparams;
+      gridparams.set("grid_type",grid_type);
       if( tokens[1][0] == 'N' )
       {
         std::string Nstr(tokens[1],1,tokens[1].size()-1);
         int N = to_int(Nstr);
-        gridspec.set("N",N);
+        gridparams.set("N",N);
       }
       else
       {
@@ -64,12 +66,12 @@ Grid* grid_from_uid(const std::string& uid)
         {
           int nlon = to_int(lonlat[0]);
           int nlat = to_int(lonlat[1]);
-          gridspec.set("nlon",nlon);
-          gridspec.set("nlat",nlat);
-          if( nlat%2 == 1 ) gridspec.set("poles",true);
+          gridparams.set("nlon",nlon);
+          gridparams.set("nlat",nlat);
+          if( nlat%2 == 1 ) gridparams.set("poles",true);
         }
       }
-      grid = Grid::create(gridspec);
+      grid = Grid::create(gridparams);
     }
     else
     {
@@ -144,7 +146,7 @@ void load()
 
   ReducedGrid* new_lonlat_grid( int nlon, int nlat )
   {
-    return new LonLatGrid(nlon,nlat);
+    return new LonLatGrid(static_cast<size_t>(nlon),static_cast<size_t>(nlat));
   }
 
   ReducedGrid* new_gaussian_grid( int N )

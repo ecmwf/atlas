@@ -703,8 +703,8 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rg,
       ipS2 = std::min(endS,ipS1+1);
     }
     region.nb_lat_elems[jlat] = jelem;
-    region.lat_end[latN] = std::min(region.lat_end[latN], rg.nlon(latN)-1);
-    region.lat_end[latS] = std::min(region.lat_end[latS], rg.nlon(latS)-1);
+    region.lat_end[latN] = std::min(region.lat_end[latN], int(rg.nlon(latN)-1));
+    region.lat_end[latS] = std::min(region.lat_end[latS], int(rg.nlon(latS)-1));
     if( yN == 90 && unique_pole )
       region.lat_end[latN] = rg.nlon(latN)-1;
     if( yS == -90 && unique_pole )

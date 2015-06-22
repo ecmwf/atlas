@@ -130,7 +130,11 @@ GribHandle::Ptr Grib::create_handle( const Grid& grid, long edition )
 
 
   // From the Grid get the Grid Spec
-  GridSpec grid_spec = grid.spec();
+  GridSpec grid_spec("dummy");
+  // Deprecated function Grid::spec()
+  //grid_spec = grid.spec();
+  NOTIMP;
+
 
   grib_handle* gh = 0;
 
@@ -166,7 +170,9 @@ GribHandle::Ptr Grib::create_handle( const Grid& grid, long edition )
 
   GribHandle::Ptr gh_ptr( new GribHandle(gh) );
 
-  write_gridspec_to_grib( grid.spec(), *gh_ptr );
+  NOTIMP;
+  // Deprecated function Grid::spec()
+  // write_gridspec_to_grib( grid.spec(), *gh_ptr );
 
   return gh_ptr;
 }

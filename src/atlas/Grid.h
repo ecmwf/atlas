@@ -28,6 +28,7 @@
 #include "eckit/memory/SharedPtr.h"
 #include "eckit/value/Params.h"
 #include "eckit/utils/MD5.h"
+#include "eckit/value/Properties.h"
 
 #include "atlas/BoundBox.h"
 #include "atlas/util/ObjectRegistry.h"
@@ -45,19 +46,21 @@ class Grid : public eckit::Owned, public util::Registered<Grid> {
  public:  // types
 
   typedef eckit::BuilderT1<Grid> builder_t;
-  typedef const eckit::Params& ARG1;
+  typedef const eckit::Parametrisation& ARG1;
 
   typedef eckit::SharedPtr<Grid> Ptr;
 
   typedef eckit::geometry::LLPoint2 Point; // must be sizeof(double)*2
   typedef std::string uid_t;
 
+  typedef eckit::Properties Parameters; // temporarily
+
  public:  // methods
 
   static std::string className() { return "atlas.Grid"; }
 
   static Grid* create(const GridSpec&);
-  static Grid* create(const eckit::Params&);
+  static Grid* create(const eckit::Parametrisation&);
   static Grid* create(const Grid::uid_t& shortName);
 
   /// Default constructor builds a Grid that is Global
@@ -111,7 +114,7 @@ class Grid : public eckit::Owned, public util::Registered<Grid> {
 
   virtual std::string gridType() const = 0;
 
-  virtual GridSpec spec() const = 0; /// FIXME: Dont use GridSpec anymore
+  //virtual GridSpec spec() const = 0; /// FIXME: Dont use GridSpec anymore
 
   virtual bool same(const Grid&) const;
 

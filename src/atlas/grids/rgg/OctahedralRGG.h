@@ -31,13 +31,13 @@ public:
 
   static std::string grid_type_str() { return "oct"; }
 
-  OctahedralRGG(const int N);
+  OctahedralRGG(const size_t N);
 
-  OctahedralRGG(Grid::ARG1 arg1);
+  OctahedralRGG( const eckit::Parametrisation& arg1);
 
 private:
 
-  void construct(const int N);
+  void construct(const size_t N);
 
   void set_typeinfo();
 

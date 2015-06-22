@@ -46,13 +46,13 @@ ReducedGrid* ReducedGrid::create(const std::string& uid)
   return grid;
 }
 
-ReducedGrid* ReducedGrid::create(const GridSpec& g)
-{
-  ReducedGrid* grid = dynamic_cast<ReducedGrid*>( Grid::create(g) );
-  if( !grid )
-    throw BadParameter("Grid is not a reduced grid",Here());
-  return grid;
-}
+//ReducedGrid* ReducedGrid::create(const GridSpec& g)
+//{
+//  ReducedGrid* grid = dynamic_cast<ReducedGrid*>( Grid::create(g) );
+//  if( !grid )
+//    throw BadParameter("Grid is not a reduced grid",Here());
+//  return grid;
+//}
 
 std::string ReducedGrid::className() { return "atlas.ReducedGrid"; }
 
@@ -60,40 +60,26 @@ ReducedGrid::ReducedGrid(const Domain& d) : Grid(d), N_(0)
 {
 }
 
-ReducedGrid::ReducedGrid(const Params& params) : N_(0)
+ReducedGrid::ReducedGrid(const eckit::Parametrisation& params) : N_(0)
 {
   setup(params);
 
-  if( ! params.has("grid_type") ) throw BadParameter("grid_type missing in Params",Here());
-  if( ! params.has("shortName") ) throw BadParameter("uid missing in Params",Here());
-  if( ! params.has("hash") ) throw BadParameter("hash missing in Params",Here());
-
-  grid_type_ = params["grid_type"].as<std::string>();
-  shortName_ = params["shortName"].as<std::string>();
+  if( ! params.get("grid_type",grid_type_) ) throw BadParameter("grid_type missing in Params",Here());
+  if( ! params.get("shortName",shortName_) ) throw BadParameter("shortName missing in Params",Here());
+  //if( ! params.has("hash") ) throw BadParameter("hash missing in Params",Here());
 }
 
-void ReducedGrid::setup(const eckit::Params& params)
+void ReducedGrid::setup(const eckit::Parametrisation& params)
 {
   eckit::ValueList list;
 
   std::vector<int> npts_per_lat;
   std::vector<double> latitudes;
 
-  if( ! params.has("npts_per_lat") ) throw BadParameter("npts_per_lat missing in Params",Here());
-  if( ! params.has("latitudes") ) throw BadParameter("latitudes missing in Params",Here());
+  if( ! params.get("npts_per_lat",npts_per_lat) ) throw BadParameter("npts_per_lat missing in Params",Here());
+  if( ! params.get("latitudes",latitudes) ) throw BadParameter("latitudes missing in Params",Here());
 
-  list = params["npts_per_lat"];
-  npts_per_lat.resize( list.size() );
-  for(int j=0; j<npts_per_lat.size(); ++j)
-    npts_per_lat[j] = list[j];
-
-  list = params["latitudes"];
-  latitudes.resize( list.size() );
-  for(int j=0; j<latitudes.size(); ++j)
-    latitudes[j] = list[j];
-
-  if( params.has("N") )
-    N_ = params["N"];
+  params.get("N",N_);
 
   setup(latitudes.size(),latitudes.data(),npts_per_lat.data());
 }
@@ -101,7 +87,7 @@ void ReducedGrid::setup(const eckit::Params& params)
 ReducedGrid::ReducedGrid(const std::vector<double>& _lats, const std::vector<size_t>& _nlons, const Domain& d)
   : Grid(d)
 {
-  int nlat = _nlons.size();
+  size_t nlat = _nlons.size();
   std::vector<int> nlons(nlat);
   for( int j=0; j<nlat; ++j )
   {
@@ -110,13 +96,13 @@ ReducedGrid::ReducedGrid(const std::vector<double>& _lats, const std::vector<siz
   setup(nlat,_lats.data(),nlons.data());
 }
 
-ReducedGrid::ReducedGrid(int nlat, const double lats[], const int nlons[], const Domain& d)
+ReducedGrid::ReducedGrid(size_t nlat, const double lats[], const int nlons[], const Domain& d)
   : Grid(d)
 {
   setup(nlat,lats,nlons);
 }
 
-void ReducedGrid::setup( const int nlat, const double lats[], const int nlons[], const double lonmin[], const double lonmax[] )
+void ReducedGrid::setup( const size_t nlat, const double lats[], const int nlons[], const double lonmin[], const double lonmax[] )
 {
   ASSERT(nlat > 1);  // can't have a grid with just one latitude
 
@@ -146,7 +132,7 @@ void ReducedGrid::setup( const int nlat, const double lats[], const int nlons[],
 }
 
 
-void ReducedGrid::setup( const int nlat, const double lats[], const int nlons[] )
+void ReducedGrid::setup( const size_t nlat, const double lats[], const int nlons[] )
 {
   std::vector<double> lonmin(nlat,0.);
   std::vector<double> lonmax(nlat);
@@ -160,7 +146,7 @@ void ReducedGrid::setup( const int nlat, const double lats[], const int nlons[] 
   setup(nlat,lats,nlons,lonmin.data(),lonmax.data());
 }
 
-void ReducedGrid::setup_lat_hemisphere(const int N, const double lat[], const int lon[], const AngleUnit unit)
+void ReducedGrid::setup_lat_hemisphere(const size_t N, const double lat[], const int lon[], const AngleUnit unit)
 {
   std::vector<int> nlons(2*N);
   std::copy( lon, lon+N, nlons.begin() );
@@ -176,7 +162,7 @@ void ReducedGrid::setup_lat_hemisphere(const int N, const double lat[], const in
   setup(2*N,lats.data(),nlons.data());
 }
 
-int ReducedGrid::N() const
+size_t ReducedGrid::N() const
 {
   if( N_==0 )
   {
@@ -226,17 +212,17 @@ GridSpec ReducedGrid::spec() const
   return grid_spec;
 }
 
-int ReducedGrid::nlat() const
+size_t ReducedGrid::nlat() const
 {
   return lat_.size();
 }
 
-int ReducedGrid::nlon(int jlat) const
+size_t ReducedGrid::nlon(size_t jlat) const
 {
   return nlons_[jlat];
 }
 
-int ReducedGrid::nlonmax() const
+size_t ReducedGrid::nlonmax() const
 {
   return nlonmax_;
 }
@@ -246,17 +232,17 @@ const std::vector<int>&  ReducedGrid::npts_per_lat() const
   return nlons_;
 }
 
-double ReducedGrid::lon(const int jlat, const int jlon) const
+double ReducedGrid::lon(const size_t jlat, const size_t jlon) const
 {
   return lonmin_[jlat] + (double)jlon * (lonmax_[jlat]-lonmin_[jlat]) / ( (double)nlon(jlat) - 1. );
 }
 
-double ReducedGrid::lat(const int jlat) const
+double ReducedGrid::lat(const size_t jlat) const
 {
   return lat_[jlat];
 }
 
-void ReducedGrid::lonlat( const int jlon, const int jlat, double crd[] ) const
+void ReducedGrid::lonlat( const size_t jlon, const size_t jlat, double crd[] ) const
 {
   crd[0] = lon(jlat,jlon);
   crd[1] = lat(jlat);

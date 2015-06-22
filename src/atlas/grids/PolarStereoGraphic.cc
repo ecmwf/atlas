@@ -64,7 +64,7 @@ PolarStereoGraphic::PolarStereoGraphic(size_t Nx, size_t Ny,
 
 }
 
-PolarStereoGraphic::PolarStereoGraphic( const eckit::Params &p )
+PolarStereoGraphic::PolarStereoGraphic( const eckit::Parametrisation &p )
     : npts_xaxis_(0),
       npts_yaxis_(0),
       x_grid_length_(0),

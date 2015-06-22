@@ -39,18 +39,20 @@ static void checkSizeOfPoint()
 }
 
 
-Grid* Grid::create(const Params& p) {
-  if (p.has("shortName")) {
-    if (Factory<Grid>::instance().exists(p["shortName"])) {
-      return Factory<Grid>::instance().get(p["shortName"]).create(p);
+Grid* Grid::create(const eckit::Parametrisation& p) {
+  std::string shortName;
+  if (p.get("shortName",shortName)) {
+    if (Factory<Grid>::instance().exists(shortName)) {
+      return Factory<Grid>::instance().get(shortName).create(p);
     }
   }
-  return Factory<Grid>::instance().get(p["grid_type"]).create(p);
+  std::string gridType;
+  if( p.get("grid_type",gridType) )
+    return Factory<Grid>::instance().get(gridType).create(p);
+  return NULL;
 }
 
 Grid* Grid::create(const Grid::uid_t& uid) { return grids::grid_from_uid(uid); }
-
-Grid* Grid::create(const GridSpec& g) { return Grid::create(Params(g)); }
 
 Grid::Grid() : domain_( Domain::makeGlobal() )
 {

@@ -51,7 +51,6 @@ BOOST_AUTO_TEST_CASE( test_regular_gg )
 {
   // Constructor for N=32
   GaussianGrid grid(32);
-  GridSpec spec = grid.spec();
 
   BOOST_CHECK_EQUAL(grid.N(), 32);
   BOOST_CHECK_EQUAL(grid.nlat(), 64);
@@ -68,28 +67,22 @@ BOOST_AUTO_TEST_CASE( test_regular_gg )
   Grid::Ptr gridptr;
 
   // Full Gaussian Grid
-  gridptr = Grid::Ptr( Grid::create(Params(spec)) );
+
+  Grid::Parameters spec;
+  spec.set("grid_type","regular_gg");
+  spec.set("N",32);
+  gridptr = Grid::Ptr( Grid::create(spec) );
   BOOST_CHECK_EQUAL(gridptr->npts(), 8192);
   BOOST_CHECK_EQUAL(gridptr->gridType(),"regular_gg");
-  gridptr = Grid::create(spec);
-  BOOST_CHECK_EQUAL(gridptr->npts(), 8192);
-  BOOST_CHECK_EQUAL(gridptr->gridType(),"regular_gg");
 
+  // Add bounding box to spec
+  BoundBox bbox( 90., 0., 180., 0.);
+  spec.set("bbox_s", bbox.min().lat());
+  spec.set("bbox_w", bbox.min().lon());
+  spec.set("bbox_n", bbox.max().lat());
+  spec.set("bbox_e", bbox.max().lon());
+  gridptr = Grid::Ptr( Grid::create(spec) );
 
-//  // Add bounding box to spec
-//  spec.set_bounding_box( BoundBox( 90., 0., 180., 0.) );
-//  gridptr = Grid::Ptr( Grid::create(spec) );
-//  BOOST_CHECK_EQUAL(gridptr->npts(), 2080);
-//  BOOST_CHECK_EQUAL(gridptr->gridType(),"regular_gg");
-//  gridptr = Grid::Ptr( Grid::create(spec) );
-//  BOOST_CHECK_EQUAL(gridptr->npts(), 2080);
-//  BOOST_CHECK_EQUAL(gridptr->gridType(),"regular_gg");
-
-  GridSpec spec2("regular_gg");
-  spec2.set("N",16);
-  Grid::Ptr N16 ( Grid::create(spec2) );
-  BOOST_CHECK_EQUAL(N16->npts(), 2048);
-  BOOST_CHECK_EQUAL(N16->gridType(),"regular_gg");
 }
 
 
@@ -121,10 +114,12 @@ BOOST_AUTO_TEST_CASE( test_reduced_gg_ifs )
 BOOST_AUTO_TEST_CASE( test_regular_ll )
 {
   // Constructor for N=8
-  LonLatGrid grid(32,16,LonLatGrid::EXCLUDES_POLES);
+  size_t nlon = 32;
+  size_t nlat = 16;
+  LonLatGrid grid(nlon,nlat,LonLatGrid::EXCLUDES_POLES);
 
-  BOOST_CHECK_EQUAL(grid.nlon(), 32);
-  BOOST_CHECK_EQUAL(grid.nlat(), 16);
+  BOOST_CHECK_EQUAL(grid.nlon(), nlon);
+  BOOST_CHECK_EQUAL(grid.nlat(), nlat);
   BOOST_CHECK_EQUAL(grid.npts(), 512);
   BOOST_CHECK_EQUAL(grid.gridType(),"regular_ll");
   BOOST_CHECK_EQUAL(grid.lat(0), 90.-0.5*(180./16.));
@@ -133,7 +128,7 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
   BOOST_CHECK_EQUAL(grid.lon(grid.nlon()-1), 360.-360./32.);
 
   // Local grid
-  LocalGrid local( new LonLatGrid(32,16,LonLatGrid::EXCLUDES_POLES), BoundBox( 90., 0., 180., 0.));
+  LocalGrid local( new LonLatGrid(nlon,nlat,LonLatGrid::EXCLUDES_POLES), BoundBox( 90., 0., 180., 0.));
 
 //  BOOST_CHECK_EQUAL(local.lat(0), 90.-0.5*(180./16.));
 //  BOOST_CHECK_EQUAL(local.lat(grid.nlat()-1),+0.5*(180./16.));
@@ -149,7 +144,8 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
   grids::LonLatGrid* ll;
 
   // Global Grid
-  GridSpec spec("regular_ll");
+  Grid::Parameters spec;
+  spec.set("grid_type","regular_ll");
   spec.set("nlon",32);
   spec.set("nlat",16);
   spec.set("poles",LonLatGrid::EXCLUDES_POLES);
@@ -160,7 +156,12 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
   // Add bounding box to spec --> This will not create a cropped version of previous (global) one,
   // but rather creates a new (32x16) grid within given bounding box... This is somewhat
   // inconsistent with GaussianGrid behaviour....
-  spec.set_bounding_box( BoundBox( 90., 0., 180., 0.) );
+  BoundBox bbox( 90., 0., 180., 0.);
+  spec.set("bbox_s", bbox.min().lat());
+  spec.set("bbox_w", bbox.min().lon());
+  spec.set("bbox_n", bbox.max().lat());
+  spec.set("bbox_e", bbox.max().lon());
+
   gridptr = Grid::Ptr( Grid::create(spec) );
   BOOST_CHECK_EQUAL(gridptr->npts(), 512);
   BOOST_CHECK_EQUAL(gridptr->gridType(),"regular_ll");
@@ -170,7 +171,8 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
   BOOST_CHECK_EQUAL(ll->lon(0), 0.);
   BOOST_CHECK_EQUAL(ll->lon(ll->nlon()-1), 180.);
 
-  GridSpec spec2("regular_ll");
+  Grid::Parameters spec2;
+  spec2.set("grid_type","regular_ll");
   spec2.set("N",16);
   spec2.set("poles",LonLatGrid::EXCLUDES_POLES);
   gridptr = Grid::Ptr( Grid::create(spec2) );

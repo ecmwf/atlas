@@ -47,7 +47,7 @@ class PolarStereoGraphic : public Grid {
                          double semi_major = 0,
                          double semi_minor = 0);
 
-    PolarStereoGraphic( const eckit::Params &p );
+    PolarStereoGraphic( const eckit::Parametrisation &p );
     virtual ~PolarStereoGraphic();
 
     /// To compute bounding box in spherical co-ordinates we need to:

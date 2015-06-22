@@ -58,7 +58,7 @@ public:
   /// Else: global grid
   ///   - LonLatGrid(nlon,nlat,poles)
   ///   - LonLatGrid(londeg,latdeg,poles)
-  LonLatGrid( const eckit::Params& );
+  LonLatGrid( const eckit::Parametrisation& );
 
   /// @brief Constructor, limited area grid
   ///
@@ -66,7 +66,7 @@ public:
   /// dlat = (north-south)/(nlat-1)
   /// Longitudes: [west  :  dlon : east ]
   /// Latitudes:  [north : -dlat : south]
-  LonLatGrid( const int nlon, const int nlat, const BoundBox& );
+  LonLatGrid( const size_t nlon, const size_t nlat, const BoundBox& );
 
   /// @brief Constructor, global grid
   ///
@@ -80,7 +80,7 @@ public:
   ///   dlat = 180/(nlat-1)
   ///   Longitudes: [0  :  dlon :  360-dlon ]
   ///   Latitudes:  [90 : -dlat : -90       ]
-  LonLatGrid( const int nlon, const int nlat, TYPE poles=defaults::poles() );
+  LonLatGrid( const size_t nlon, const size_t nlat, TYPE poles=defaults::poles() );
 
   /// @brief Constructor, global grid
   ///
@@ -98,23 +98,23 @@ public:
   /// @brief Constructor, global grid
   ///
   /// nlon = 2*nlat
-  LonLatGrid( const int nlat, TYPE poles=defaults::poles() );
+  LonLatGrid( const size_t nlat, TYPE poles=defaults::poles() );
 
   static std::string className();
 
   virtual GridSpec spec() const;
 
-  int nlon() const { return ReducedGrid::nlon(0); }
+  size_t nlon() const { return ReducedGrid::nlon(0); }
 
-  double lon( const int jlon ) const { return ReducedGrid::lon(0,jlon); }
+  double lon( const size_t jlon ) const { return ReducedGrid::lon(0,jlon); }
 
 protected:
 
-  void setup( const eckit::Params& p);
+  void setup( const eckit::Parametrisation& p);
   void setup( const double londeg, const double latdeg, bool poles );
   void setup( const double londeg, const double latdeg, const BoundBox& );
-  void setup( const int nlon, const int nlat, const BoundBox& );
-  void setup( const int nlon, const int nlat, bool poles );
+  void setup( const size_t nlon, const size_t nlat, const BoundBox& );
+  void setup( const size_t nlon, const size_t nlat, bool poles );
   void set_typeinfo();
 };
 

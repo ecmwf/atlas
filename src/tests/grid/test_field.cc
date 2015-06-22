@@ -56,7 +56,7 @@ void TestField::test_constructor()
 
   BoundBox earth ( Grid::Point(0.,-90.), Grid::Point(359.999999,90.) );
 
-  Grid::Ptr g (new atlas::grids::LonLatGrid( 20, 10, earth ) );
+  Grid::Ptr g (new atlas::grids::LonLatGrid( 20ul, 10ul, earth ) );
 //  Grid::Ptr g (Grid::create("oct.N6"));
 
   ASSERT( g );

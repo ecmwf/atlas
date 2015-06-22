@@ -35,7 +35,7 @@ public: // methods
   static std::string className() { return "atlas.grid.Unstructured"; }
 
   /// Constructor taking a list of parameters
-  Unstructured(const eckit::Params& p);
+  Unstructured(const eckit::Parametrisation& p);
 
   /// Constructor taking a list of points
   Unstructured(std::vector< Point >* pts);

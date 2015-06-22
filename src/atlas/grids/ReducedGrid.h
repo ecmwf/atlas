@@ -12,7 +12,7 @@
 #define ReducedGrid_h
 
 #include "eckit/memory/Builder.h"
-
+#include "eckit/config/Parametrisation.h"
 #include "atlas/Parameters.h"
 #include "atlas/Grid.h"
 
@@ -48,13 +48,13 @@ public:
   ///        This constructor should be used only by derived types
   ReducedGrid(const Domain& d = Domain::makeGlobal());
 
-  ReducedGrid( const eckit::Params& );
+  ReducedGrid( const eckit::Parametrisation& );
 
   ReducedGrid( const std::vector<double>& lats,
                const std::vector<size_t>& nlon,
                const Domain& d = Domain::makeGlobal());
 
-  ReducedGrid( int nlat,
+  ReducedGrid( size_t nlat,
                const double lats[],
                const int npts_per_lat[],
                const Domain& d = Domain::makeGlobal());
@@ -70,23 +70,23 @@ public:
   virtual GridSpec spec() const;
 
   /// number of latitudes in hemisphere
-  virtual int N() const;
+  virtual size_t N() const;
 
-  int nlat() const;
+  size_t nlat() const;
 
-  int nlon( int jlat ) const;
+  size_t nlon( size_t jlat ) const;
 
-  int nlonmax() const;
+  size_t nlonmax() const;
 
   const std::vector<int>& npts_per_lat() const;
 
   const std::vector<double>& latitudes() const;
 
-  double lon( const int jlat, const int jlon ) const;
+  double lon( const size_t jlat, const size_t jlon ) const;
 
-  double lat( const int jlat ) const;
+  double lat( const size_t jlat ) const;
 
-  void lonlat( const int jlon, const int jlat, double crd[] ) const;
+  void lonlat( const size_t jlon, const size_t jlat, double crd[] ) const;
 
 private: // methods
 
@@ -105,18 +105,18 @@ protected:
   virtual void hash(eckit::MD5&) const;
 
   /// @note Domain is already set when calling setup()
-  void setup( const eckit::Params& );
+  void setup(const eckit::Parametrisation& );
   /// @note Domain is already set when calling setup()
-  void setup( const int nlat, const double lats[], const int npts_per_lat[] );
+  void setup( const size_t nlat, const double lats[], const int npts_per_lat[] );
   /// @note Domain is already set when calling setup()
-  void setup( const int nlat, const double lats[], const int nlons[], const double lonmin[], const double lonmax[] );
+  void setup( const size_t nlat, const double lats[], const int nlons[], const double lonmin[], const double lonmax[] );
   /// @note Domain is already set when calling setup()
-  void setup_lat_hemisphere( const int N, const double lat[], const int lon[], const AngleUnit );
+  void setup_lat_hemisphere( const size_t N, const double lat[], const int lon[], const AngleUnit );
 
 protected:
 
-  int                 N_;
-  int                 nlonmax_;
+  size_t              N_;
+  size_t              nlonmax_;
 
   size_t              npts_;          ///<! Total number of unique points in the grid
 

@@ -48,7 +48,7 @@ Unstructured::Unstructured(const Mesh& m) :
 }
 
 
-Unstructured::Unstructured(const eckit::Params& p)
+Unstructured::Unstructured(const eckit::Parametrisation& p)
 {
     NOTIMP;
 }

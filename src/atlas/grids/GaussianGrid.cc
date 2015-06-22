@@ -40,51 +40,42 @@ GaussianGrid::GaussianGrid() : ReducedGaussianGrid()
 {
 }
 
-GaussianGrid::GaussianGrid(const eckit::Params& params)
+GaussianGrid::GaussianGrid(const eckit::Parametrisation& params)
 {
-  eckit::ValueList list;
-
-  if( ! params.has("N") ) throw eckit::BadParameter("N missing in Params",Here());
-
-  int N = params["N"];
-
-  N_ = N;
+  if( ! params.get("N",N_) ) throw eckit::BadParameter("N missing in Params",Here());
 
   if( ! params.has("latitudes") )
   {
-    setup(N);
+    setup(N_);
   }
   else
   {
-    std::vector<int>    nlons(2*N,4*N);
+    std::vector<int>    nlons(2*N_,4*N_);
     std::vector<double> lat;
 
-    list = params["latitudes"];
-    ASSERT(list.size() == 2*N);
-    lat.resize( 2*N );
-    for(int j=0; j<2*N; ++j)
-      lat[j] = list[j];
+    params.get("latitudes",lat);
+    ASSERT(lat.size() == 2*N_);
     ReducedGrid::setup(lat.size(),lat.data(),nlons.data());
   }
 
   set_typeinfo();
 }
 
-GaussianGrid::GaussianGrid( const int N )
+GaussianGrid::GaussianGrid( const size_t N )
 {
   ReducedGrid::N_ = N;
   setup(N);
   set_typeinfo();
 }
 
-void GaussianGrid::setup(const int N)
+void GaussianGrid::setup(const size_t N)
 {
   std::vector<double> lats (N);
   gaussian_latitudes_npole_equator(N,lats.data());
   setup_lat_hemisphere(N,lats.data());
 }
 
-void GaussianGrid::setup_lat_hemisphere(const int N, const double lats[])
+void GaussianGrid::setup_lat_hemisphere(const size_t N, const double lats[])
 {
   std::vector<int> nlons(N,4*N);
   ReducedGrid::setup_lat_hemisphere(N,lats,nlons.data(),DEG);

@@ -50,7 +50,7 @@ ReducedLonLatGrid::ReducedLonLatGrid()
 {
 }
 
-ReducedLonLatGrid::ReducedLonLatGrid( const int nlat, const int nlons[], bool poles, const Domain& domain)
+ReducedLonLatGrid::ReducedLonLatGrid( const size_t nlat, const int nlons[], bool poles, const Domain& domain)
  : ReducedGrid(domain)
 {
   ReducedGrid::N_ = nlat;
@@ -59,32 +59,26 @@ ReducedLonLatGrid::ReducedLonLatGrid( const int nlat, const int nlons[], bool po
   set_typeinfo();
 }
 
-ReducedLonLatGrid::ReducedLonLatGrid( const Params& params )
+ReducedLonLatGrid::ReducedLonLatGrid( const eckit::Parametrisation& params )
 {
   setup(params);
   set_typeinfo();
 }
 
-void ReducedLonLatGrid::setup( const Params& params )
+void ReducedLonLatGrid::setup( const eckit::Parametrisation& params )
 {
   if( ! params.has("nlat") )         throw BadParameter("N missing in Params",Here());
   if( ! params.has("npts_per_lat") ) throw BadParameter("npts_per_lat missing in Params",Here());
 
-  int nlat = params["nlat"];
+  size_t nlat;
+  params.get("nlat",nlat);
 
-  if( params.has("N") )
-    N_ = params["N"];
-  else
-    N_ = nlat;
+  N_ = nlat;
+  params.get("N",N_);
 
   poles_ = defaults::poles();
-  if( params.has("poles") ) poles_ = params["poles"];
+  params.get("poles",poles_);
 
-
-  eckit::ValueList list = params["npts_per_lat"];
-  std::vector<int> nlons(list.size());
-  for(int j=0; j<nlons.size(); ++j)
-    nlons[j] = list[j];
 
   if( params.has("latitudes") )
   {
@@ -92,11 +86,13 @@ void ReducedLonLatGrid::setup( const Params& params )
   }
   else
   {
+    std::vector<int> nlons;
+    params.get("npts_per_lat",nlons);
     setup(nlat,nlons.data(),poles_);
   }
 }
 
-void ReducedLonLatGrid::setup( const int nlat, const int nlons[], bool poles )
+void ReducedLonLatGrid::setup( const size_t nlat, const int nlons[], bool poles )
 {
   std::vector<double> lats (nlat);
 

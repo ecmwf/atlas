@@ -71,39 +71,44 @@ reduced_gg_pl_512_grib1.tmpl
 regular_gg_sfc_grib1.tmpl
 )
 
-foreach( f ${grib_api_samples_data} )
-  set(tgt data_${f})
-  ecbuild_get_test_data( TARGET "${tgt}" NAME "${f}" DIRNAME ${PROJECT_NAME}/grid/grib_api/samples NOCHECK )
-  list(APPEND tgts "${tgt}")
-endforeach()
+set( TEST_GRIDSPEC OFF )
 
-add_custom_target( atlas_grib_api_samples DEPENDS ${tgts} )
+if( TEST_GRIDSPEC )
 
-ecbuild_add_test( TARGET      atlas_test_GridSpec
-                  BOOST
-                  MPI         1
-                  ARGS        reduced_gg_pl_160_grib1.tmpl
-                  SOURCES     test_GridSpec.cc
-                  CONDITION   ECKIT_HAVE_GRIB
-                  ENVIRONMENT "${_grib_environment}"
-                  LIBS        atlas
-                )
+  foreach( f ${grib_api_samples_data} )
+    set(tgt data_${f})
+    ecbuild_get_test_data( TARGET "${tgt}" NAME "${f}" DIRNAME ${PROJECT_NAME}/grid/grib_api/samples NOCHECK )
+    list(APPEND tgts "${tgt}")
+  endforeach()
+
+  add_custom_target( atlas_grib_api_samples DEPENDS ${tgts} )
+
+  ecbuild_add_test( TARGET      atlas_test_GridSpec
+                    BOOST
+                    MPI         1
+                    ARGS        reduced_gg_pl_160_grib1.tmpl
+                    SOURCES     test_GridSpec.cc
+                    CONDITION   ECKIT_HAVE_GRIB
+                    ENVIRONMENT "${_grib_environment}"
+                    LIBS        atlas
+                  )
 
 
-foreach( file ${grib_api_samples_data} )
+  foreach( file ${grib_api_samples_data} )
 
-    # Add the test which depends on the above executable,
-    # passing in individual grib samples files as ARGUMENTs
-    ecbuild_add_test(
-                      TARGET atlas_test_grid_spec_${file}
-                      DEPENDS ${tgts}
-                      COMMAND atlas_test_GridSpec
-                      ARGS ${file}
-                      MPI 1
-                      ENVIRONMENT "${_grib_environment}"
-                     )
-endforeach()
+      # Add the test which depends on the above executable,
+      # passing in individual grib samples files as ARGUMENTs
+      ecbuild_add_test(
+                        TARGET atlas_test_grid_spec_${file}
+                        DEPENDS ${tgts}
+                        COMMAND atlas_test_GridSpec
+                        ARGS ${file}
+                        MPI 1
+                        ENVIRONMENT "${_grib_environment}"
+                       )
+  endforeach()
 
+endif()
 
 # =========================================================================
 

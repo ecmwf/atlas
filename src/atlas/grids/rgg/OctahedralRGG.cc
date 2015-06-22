@@ -18,20 +18,21 @@ namespace rgg {
 
 eckit::ConcreteBuilderT1<Grid,OctahedralRGG> builder_OctahedralRGG (OctahedralRGG::grid_type_str());
 
-OctahedralRGG::OctahedralRGG(const int N)
+OctahedralRGG::OctahedralRGG(const size_t N)
 {
   construct(N);
   set_typeinfo();
 }
 
-OctahedralRGG::OctahedralRGG(Grid::ARG1 params)
+OctahedralRGG::OctahedralRGG( const eckit::Parametrisation& params)
 {
-  int N = params["N"];
+  size_t N;
+  params.get("N",N);
   construct(N);
   set_typeinfo();
 }
 
-void OctahedralRGG::construct(const int N)
+void OctahedralRGG::construct(const size_t N)
 {
   const int start = 20; // number of points at latitude closest to pole
   std::vector<int> nlon(N);

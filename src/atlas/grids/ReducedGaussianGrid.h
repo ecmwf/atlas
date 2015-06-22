@@ -34,9 +34,9 @@ public:
 
   static std::string grid_type_str() { return "reduced_gg"; }
 
-  ReducedGaussianGrid( const eckit::Params& );
+  ReducedGaussianGrid( const eckit::Parametrisation& );
 
-  ReducedGaussianGrid( const int N, const int npts_per_lat[], const Domain& d = Domain::makeGlobal() );
+  ReducedGaussianGrid( const size_t N, const int npts_per_lat[], const Domain& d = Domain::makeGlobal() );
 
   static std::string className();
 
@@ -47,8 +47,8 @@ protected:
   /// to be used only by derived types
   ReducedGaussianGrid();
 
-  void setup( const eckit::Params& );
-  void setup_N_hemisphere( const int N, const int npts_per_lat[] );
+  void setup( const eckit::Parametrisation& );
+  void setup_N_hemisphere( const size_t N, const int npts_per_lat[] );
   void set_typeinfo();
 
 };

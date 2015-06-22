@@ -60,9 +60,9 @@ public:
 
   GaussianGrid();
 
-  GaussianGrid( const eckit::Params& );
+  GaussianGrid( const eckit::Parametrisation& );
 
-  GaussianGrid( const int N );
+  GaussianGrid( const size_t N );
 
   static std::string className();
 
@@ -70,12 +70,12 @@ public:
 
   int nlon() const { return ReducedGaussianGrid::nlon(0); }
 
-  double lon( const int jlon ) const { return ReducedGaussianGrid::lon(0,jlon); }
+  double lon( const size_t jlon ) const { return ReducedGaussianGrid::lon(0,jlon); }
 
 protected:
 
-  void setup(const int N);
-  void setup_lat_hemisphere(const int N, const double lats[]);
+  void setup(const size_t N);
+  void setup_lat_hemisphere(const size_t N, const double lats[]);
   void set_typeinfo();
 };
 

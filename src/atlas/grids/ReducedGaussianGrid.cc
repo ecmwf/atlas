@@ -41,7 +41,7 @@ ReducedGaussianGrid::ReducedGaussianGrid()
 {
 }
 
-ReducedGaussianGrid::ReducedGaussianGrid( const int N, const int nlons[], const Domain& d)
+ReducedGaussianGrid::ReducedGaussianGrid( const size_t N, const int nlons[], const Domain& d)
   : ReducedGrid(d)
 {
   ReducedGrid::N_ = N;
@@ -50,25 +50,23 @@ ReducedGaussianGrid::ReducedGaussianGrid( const int N, const int nlons[], const 
   set_typeinfo();
 }
 
-ReducedGaussianGrid::ReducedGaussianGrid(const eckit::Params& params)
+ReducedGaussianGrid::ReducedGaussianGrid(const eckit::Parametrisation& params)
 {
   setup(params);
   set_typeinfo();
 }
 
-void ReducedGaussianGrid::setup( const eckit::Params& params )
+void ReducedGaussianGrid::setup( const eckit::Parametrisation& params )
 {
   if( ! params.has("N") ) throw eckit::BadParameter("N missing in Params",Here());
-  int N = params["N"];
+  size_t N;
+  params.get("N",N);
   ReducedGrid::N_ = N;
 
   if( ! params.has("latitudes") )
   {
-    eckit::ValueList list = params["npts_per_lat"];
-    std::vector<int> nlons(list.size());
-    for(int j=0; j<nlons.size(); ++j)
-      nlons[j] = list[j];
-
+    std::vector<int> nlons;
+    params.get("npts_per_lat",nlons);
     setup_N_hemisphere(N,nlons.data());
   }
   else
@@ -77,7 +75,7 @@ void ReducedGaussianGrid::setup( const eckit::Params& params )
   }
 }
 
-void ReducedGaussianGrid::setup_N_hemisphere( const int N, const int nlons[] )
+void ReducedGaussianGrid::setup_N_hemisphere( const size_t N, const int nlons[] )
 {
   // hemisphere
   std::vector<double> lats (N);
