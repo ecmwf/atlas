@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE( test_t63 )
 //  Mesh::Ptr m = test::generate_mesh( T63() );
 
   int nlat = 5;
-  int lon[5] = {10, 12, 14, 16, 16};
+  long lon[5] = {10, 12, 14, 16, 16};
   Mesh::Ptr m = test::generate_mesh(nlat, lon);
 
   actions::build_nodes_parallel_fields(m->function_space("nodes"));

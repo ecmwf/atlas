@@ -71,7 +71,7 @@ void ReducedGrid::setup(const eckit::Parametrisation& params)
 {
   eckit::ValueList list;
 
-  std::vector<int> npts_per_lat;
+  std::vector<long> npts_per_lat;
   std::vector<double> latitudes;
 
   if( ! params.get("npts_per_lat",npts_per_lat) ) throw BadParameter("npts_per_lat missing in Params",Here());
@@ -86,21 +86,21 @@ ReducedGrid::ReducedGrid(const std::vector<double>& _lats, const std::vector<siz
   : Grid(d)
 {
   size_t nlat = _nlons.size();
-  std::vector<int> nlons(nlat);
+  std::vector<long> nlons(nlat);
   for( int j=0; j<nlat; ++j )
   {
-    nlons[j] = static_cast<int>(nlons[j]);
+    nlons[j] = static_cast<long>(nlons[j]);
   }
   setup(nlat,_lats.data(),nlons.data());
 }
 
-ReducedGrid::ReducedGrid(size_t nlat, const double lats[], const int nlons[], const Domain& d)
+ReducedGrid::ReducedGrid(size_t nlat, const double lats[], const long nlons[], const Domain& d)
   : Grid(d)
 {
   setup(nlat,lats,nlons);
 }
 
-void ReducedGrid::setup( const size_t nlat, const double lats[], const int nlons[], const double lonmin[], const double lonmax[] )
+void ReducedGrid::setup( const size_t nlat, const double lats[], const long nlons[], const double lonmin[], const double lonmax[] )
 {
   ASSERT(nlat > 1);  // can't have a grid with just one latitude
 
@@ -130,7 +130,7 @@ void ReducedGrid::setup( const size_t nlat, const double lats[], const int nlons
 }
 
 
-void ReducedGrid::setup( const size_t nlat, const double lats[], const int nlons[] )
+void ReducedGrid::setup( const size_t nlat, const double lats[], const long nlons[] )
 {
   std::vector<double> lonmin(nlat,0.);
   std::vector<double> lonmax(nlat);
@@ -144,9 +144,9 @@ void ReducedGrid::setup( const size_t nlat, const double lats[], const int nlons
   setup(nlat,lats,nlons,lonmin.data(),lonmax.data());
 }
 
-void ReducedGrid::setup_lat_hemisphere(const size_t N, const double lat[], const int lon[], const AngleUnit unit)
+void ReducedGrid::setup_lat_hemisphere(const size_t N, const double lat[], const long lon[], const AngleUnit unit)
 {
-  std::vector<int> nlons(2*N);
+  std::vector<long> nlons(2*N);
   std::copy( lon, lon+N, nlons.begin() );
   std::reverse_copy( lon, lon+N, nlons.begin()+N );
   std::vector<double> lats(2*N);

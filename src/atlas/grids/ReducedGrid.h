@@ -58,7 +58,7 @@ public:
 
   ReducedGrid( size_t nlat,
                const double lats[],
-               const int npts_per_lat[],
+               const long npts_per_lat[],
                const Domain& d = Domain::makeGlobal());
 
   virtual BoundBox boundingBox() const;
@@ -109,11 +109,11 @@ protected:
   /// @note Domain is already set when calling setup()
   void setup(const eckit::Parametrisation& );
   /// @note Domain is already set when calling setup()
-  void setup( const size_t nlat, const double lats[], const int npts_per_lat[] );
+  void setup( const size_t nlat, const double lats[], const long npts_per_lat[] );
   /// @note Domain is already set when calling setup()
-  void setup( const size_t nlat, const double lats[], const int nlons[], const double lonmin[], const double lonmax[] );
+  void setup( const size_t nlat, const double lats[], const long nlons[], const double lonmin[], const double lonmax[] );
   /// @note Domain is already set when calling setup()
-  void setup_lat_hemisphere( const size_t N, const double lat[], const int lon[], const AngleUnit );
+  void setup_lat_hemisphere( const size_t N, const double lat[], const long lon[], const AngleUnit );
 
 protected:
 

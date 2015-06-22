@@ -23,10 +23,10 @@ namespace test {
 
 class TestGrid: public ReducedGrid {
 public:
-  TestGrid(int N, int lon[]);
+  TestGrid(int N, long lon[]);
 };
 
-TestGrid::TestGrid(int N, int lon[])
+TestGrid::TestGrid(int N, long lon[])
 {
   std::vector<double> lats(N);
   grids::gaussian_latitudes_npole_equator(N,lats.data());
@@ -41,7 +41,7 @@ Mesh::Ptr generate_mesh( const ReducedGrid& rgg )
   return Mesh::Ptr( generate( rgg ) );
 }
 
-Mesh::Ptr generate_mesh(int nlat, int lon[] )
+Mesh::Ptr generate_mesh(int nlat, long lon[] )
 {
   return generate_mesh( TestGrid(nlat,lon) );
 }

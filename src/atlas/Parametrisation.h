@@ -68,18 +68,17 @@ public:
 
   virtual bool get(const std::string& name, std::string& value) const;
   virtual bool get(const std::string& name, bool& value) const;
-  virtual bool get(const std::string& name, int& value) const;
   virtual bool get(const std::string& name, long& value) const;
   virtual bool get(const std::string& name, size_t& value) const;
-  virtual bool get(const std::string& name, float& value) const;
   virtual bool get(const std::string& name, double& value) const;
 
-  virtual bool get(const std::string& name, std::vector<int>& value) const;
   virtual bool get(const std::string& name, std::vector<long>& value) const;
-  virtual bool get(const std::string& name, std::vector<float>& value) const;
   virtual bool get(const std::string& name, std::vector<double>& value) const;
 
 private:
+
+  template<class T>
+  bool _get(const std::string &name, T &value) const;
 
   const eckit::Parametrisation* inherited_;
   Metadata delegate_;

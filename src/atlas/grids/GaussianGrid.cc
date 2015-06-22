@@ -49,7 +49,7 @@ GaussianGrid::GaussianGrid(const eckit::Parametrisation& params)
   }
   else
   {
-    std::vector<int>    nlons(2*N_,4*N_);
+    std::vector<long>    nlons(2*N_,4*N_);
     std::vector<double> lat;
 
     params.get("latitudes",lat);
@@ -76,7 +76,7 @@ void GaussianGrid::setup(const size_t N)
 
 void GaussianGrid::setup_lat_hemisphere(const size_t N, const double lats[])
 {
-  std::vector<int> nlons(N,4*N);
+  std::vector<long> nlons(N,4*N);
   ReducedGrid::setup_lat_hemisphere(N,lats,nlons.data(),DEG);
 }
 

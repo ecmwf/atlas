@@ -48,7 +48,7 @@ public:
 
   ReducedLonLatGrid( const eckit::Parametrisation& );
 
-  ReducedLonLatGrid( const size_t nlat, const int npts_per_lat[], bool poles = defaults::poles(), const Domain& domain = Domain::makeGlobal() );
+  ReducedLonLatGrid( const size_t nlat, const long npts_per_lat[], bool poles = defaults::poles(), const Domain& domain = Domain::makeGlobal() );
 
   static std::string className();
 
@@ -57,7 +57,7 @@ public:
 protected:
 
   void setup( const eckit::Parametrisation& );
-  void setup( const size_t N, const int npts_per_lat[], bool poles=defaults::poles() );
+  void setup( const size_t N, const long npts_per_lat[], bool poles=defaults::poles() );
   void set_typeinfo();
 
 private:

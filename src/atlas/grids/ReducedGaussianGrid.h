@@ -36,7 +36,7 @@ public:
 
   ReducedGaussianGrid( const eckit::Parametrisation& );
 
-  ReducedGaussianGrid( const size_t N, const int npts_per_lat[], const Domain& d = Domain::makeGlobal() );
+  ReducedGaussianGrid( const size_t N, const long npts_per_lat[], const Domain& d = Domain::makeGlobal() );
 
   static std::string className();
 
@@ -48,7 +48,7 @@ protected:
   ReducedGaussianGrid();
 
   void setup( const eckit::Parametrisation& );
-  void setup_N_hemisphere( const size_t N, const int npts_per_lat[] );
+  void setup_N_hemisphere( const size_t N, const long npts_per_lat[] );
   void set_typeinfo();
 
 };

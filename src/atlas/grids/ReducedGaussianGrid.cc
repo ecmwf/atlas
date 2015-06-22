@@ -40,7 +40,7 @@ ReducedGaussianGrid::ReducedGaussianGrid()
 {
 }
 
-ReducedGaussianGrid::ReducedGaussianGrid( const size_t N, const int nlons[], const Domain& d)
+ReducedGaussianGrid::ReducedGaussianGrid( const size_t N, const long nlons[], const Domain& d)
   : ReducedGrid(d)
 {
   ReducedGrid::N_ = N;
@@ -64,7 +64,7 @@ void ReducedGaussianGrid::setup( const eckit::Parametrisation& params )
 
   if( ! params.has("latitudes") )
   {
-    std::vector<int> nlons;
+    std::vector<long> nlons;
     params.get("npts_per_lat",nlons);
     setup_N_hemisphere(N,nlons.data());
   }
@@ -74,7 +74,7 @@ void ReducedGaussianGrid::setup( const eckit::Parametrisation& params )
   }
 }
 
-void ReducedGaussianGrid::setup_N_hemisphere( const size_t N, const int nlons[] )
+void ReducedGaussianGrid::setup_N_hemisphere( const size_t N, const long nlons[] )
 {
   // hemisphere
   std::vector<double> lats (N);

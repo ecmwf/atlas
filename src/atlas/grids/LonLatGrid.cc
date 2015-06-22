@@ -153,7 +153,7 @@ void LonLatGrid::setup(const eckit::Parametrisation& p)
 void LonLatGrid::setup( const size_t nlon, const size_t nlat, const BoundBox& bbox )
 {
   std::vector<double> lats(nlat);
-  std::vector<int>    nlons(nlat,nlon);
+  std::vector<long>   nlons(nlat,nlon);
   std::vector<double> lonmin(nlat,bbox.min().lon());
   std::vector<double> lonmax(nlat,bbox.max().lon());
 

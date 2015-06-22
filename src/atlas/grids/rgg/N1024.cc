@@ -11,7 +11,7 @@ eckit::ConcreteBuilderT1<Grid,N1024> builder_N1024 (N1024::grid_type_str());
 void N1024::construct()
 {
   int N=1024;
-  int lon[] = {
+  long lon[] = {
       18,
       25,
       32,

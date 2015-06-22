@@ -35,7 +35,7 @@ OctahedralRGG::OctahedralRGG( const eckit::Parametrisation& params)
 void OctahedralRGG::construct(const size_t N)
 {
   const int start = 20; // number of points at latitude closest to pole
-  std::vector<int> nlon(N);
+  std::vector<long> nlon(N);
   for( int jlat=0; jlat<N; ++jlat )
   {
     nlon[jlat] = start + 4*jlat;
@@ -47,7 +47,7 @@ void OctahedralRGG::construct(const size_t N)
 void OctahedralRGG::set_typeinfo()
 {
   std::ostringstream s;
-  s << "oct.N"<< N();
+s << "oct.N"<< N();
   shortName_ = s.str();
   grid_type_ = ReducedGaussianGrid::grid_type_str();
 }

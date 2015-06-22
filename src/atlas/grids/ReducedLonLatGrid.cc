@@ -48,7 +48,7 @@ ReducedLonLatGrid::ReducedLonLatGrid()
 {
 }
 
-ReducedLonLatGrid::ReducedLonLatGrid( const size_t nlat, const int nlons[], bool poles, const Domain& domain)
+ReducedLonLatGrid::ReducedLonLatGrid( const size_t nlat, const long nlons[], bool poles, const Domain& domain)
  : ReducedGrid(domain)
 {
   ReducedGrid::N_ = nlat;
@@ -84,13 +84,13 @@ void ReducedLonLatGrid::setup( const eckit::Parametrisation& params )
   }
   else
   {
-    std::vector<int> nlons;
+    std::vector<long> nlons;
     params.get("npts_per_lat",nlons);
     setup(nlat,nlons.data(),poles_);
   }
 }
 
-void ReducedLonLatGrid::setup( const size_t nlat, const int nlons[], bool poles )
+void ReducedLonLatGrid::setup( const size_t nlat, const long nlons[], bool poles )
 {
   std::vector<double> lats (nlat);
 

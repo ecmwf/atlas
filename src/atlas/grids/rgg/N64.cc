@@ -11,7 +11,7 @@ eckit::ConcreteBuilderT1<Grid,N64> builder_N64 (N64::grid_type_str());
 void N64::construct()
 {
   int N=64;
-  int lon[] = {
+  long lon[] = {
     20,
     25,
     36,

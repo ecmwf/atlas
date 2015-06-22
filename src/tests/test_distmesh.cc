@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
   generate.options.set("nb_parts",1);
   generate.options.set("part",0);
 
-      // int lon[] = {4,6,8,8,8};
+      // long lon[] = {4,6,8,8,8};
       // test::TestGrid grid(5,lon);
 
       //  GG grid(120,60);

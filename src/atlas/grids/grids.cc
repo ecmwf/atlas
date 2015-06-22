@@ -138,7 +138,7 @@ void load()
     return ReducedGrid::create(identifier);
   }
 
-  ReducedGrid* new_reduced_gaussian_grid( const std::vector<int>& nlon )
+  ReducedGrid* new_reduced_gaussian_grid( const std::vector<long>& nlon )
   {
     return new ReducedGaussianGrid(nlon.size(),nlon.data());
   }
@@ -171,7 +171,7 @@ void load()
 
   ReducedGrid* atlas__new_reduced_gaussian_grid(int nlon[], int nlat)
   {
-    std::vector<int> nlon_vector;
+    std::vector<long> nlon_vector;
     nlon_vector.assign(nlon,nlon+nlat);
     return new_reduced_gaussian_grid(nlon_vector);
   }

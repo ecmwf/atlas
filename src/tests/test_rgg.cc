@@ -51,7 +51,7 @@ class DebugMesh:   public grids::ReducedGaussianGrid { public: DebugMesh(); };
 DebugMesh::DebugMesh()
 {
   int N=5;
-  int lon[] = {
+  long lon[] = {
     6,
     10,
     18,
@@ -64,8 +64,8 @@ DebugMesh::DebugMesh()
 }
 
 
-class MinimalMesh:   public grids::ReducedGaussianGrid { public: MinimalMesh(int N, int lon[]); };
-MinimalMesh::MinimalMesh(int N, int lon[])
+class MinimalMesh:   public grids::ReducedGaussianGrid { public: MinimalMesh(int N, long lon[]); };
+MinimalMesh::MinimalMesh(int N, long lon[])
 {
   std::vector<double> lat(N);
   grids::gaussian_latitudes_npole_equator(N,lat.data());
@@ -245,7 +245,7 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     generate.options.set("three_dimensional",false);
     generate.options.set("include_pole",false);
     int nlat=2;
-    int lon[] = { 4, 6 };
+    long lon[] = { 4, 6 };
     mesh = generate( test::MinimalMesh(nlat,lon) );
     BOOST_CHECK_EQUAL( mesh->function_space("nodes" ).shape(0), 24 );
     BOOST_CHECK_EQUAL( mesh->function_space("quads" ).shape(0), 14 );
@@ -259,7 +259,7 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
   // 3 latitudes
   ENABLE {
     int nlat=3;
-    int lon[] = { 4, 6, 8 };
+    long lon[] = { 4, 6, 8 };
     mesh = generate( test::MinimalMesh(nlat,lon) );
     BOOST_CHECK_EQUAL( mesh->function_space("nodes" ).shape(0), 42 );
     BOOST_CHECK_EQUAL( mesh->function_space("quads" ).shape(0), 28 );
@@ -270,7 +270,7 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
   // 4 latitudes
   ENABLE {
     int nlat=4;
-    int lon[] = { 4, 6, 8, 10 };
+    long lon[] = { 4, 6, 8, 10 };
     mesh = generate( test::MinimalMesh(nlat,lon) );
     BOOST_CHECK_EQUAL( mesh->function_space("nodes" ).shape(0), 64 );
     BOOST_CHECK_EQUAL( mesh->function_space("quads" ).shape(0), 46 );
@@ -281,7 +281,7 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
   // 5 latitudes WIP
   ENABLE {
     int nlat=5;
-    int lon[] = { 6, 10, 18, 22, 22 };
+    long lon[] = { 6, 10, 18, 22, 22 };
     mesh = generate( test::MinimalMesh(nlat,lon) );
     BOOST_CHECK_EQUAL( mesh->function_space("nodes" ).shape(0), 166 );
     BOOST_CHECK_EQUAL( mesh->function_space("quads" ).shape(0), 134 );
@@ -302,7 +302,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
 
           //  Alternative grid for debugging
           //  int nlat=10;
-          //  int lon[] = { 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 };
+          //  long lon[] = { 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 };
           //  test::MinimalMesh grid(nlat,lon);
   grids::rgg::N32 grid;
 //  RegularGrid grid(128,64);
@@ -411,7 +411,7 @@ DISABLE{
 BOOST_AUTO_TEST_CASE( test_reduced_lonlat )
 {
   int N=11;
-  int lon[] = {
+  long lon[] = {
     2,  //90
     6,  //72
     12, //54

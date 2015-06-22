@@ -87,7 +87,7 @@ BOOST_AUTO_TEST_CASE( test_regular_gg )
 
 BOOST_AUTO_TEST_CASE( test_reduced_gg )
 {
-  int nlon[] = {4,6,8};
+  long nlon[] = {4,6,8};
   grids::ReducedGaussianGrid grid(3,nlon);
   BOOST_CHECK_EQUAL(grid.N(),3);
   BOOST_CHECK_EQUAL(grid.nlat(),6);
