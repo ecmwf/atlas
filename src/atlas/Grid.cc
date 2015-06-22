@@ -17,7 +17,6 @@
 #include "eckit/config/Resource.h"
 
 #include "atlas/Mesh.h"
-#include "atlas/GridSpec.h"
 #include "atlas/grids/grids.h"
 
 using eckit::Params;

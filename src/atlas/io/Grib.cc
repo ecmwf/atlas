@@ -39,7 +39,6 @@
 #include "atlas/Parameters.h"
 
 #include "atlas/FieldSet.h"
-#include "atlas/GridSpec.h"
 
 #include "atlas/io/Grib.h"
 #include "atlas/io/PointCloud.h"

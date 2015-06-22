@@ -21,7 +21,6 @@
 
 #include "atlas/atlas.h"
 #include "atlas/Grid.h"
-#include "atlas/GridSpec.h"
 
 #include "atlas/grids/grids.h"
 #include "atlas/grids/LocalGrid.h"

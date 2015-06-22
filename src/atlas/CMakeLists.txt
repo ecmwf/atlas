@@ -228,8 +228,6 @@ Grid.cc
 Grid.h
 GridDistribution.cc
 GridDistribution.h
-GridSpec.cc
-GridSpec.h
 Mesh.cc
 Mesh.h
 Metadata.cc

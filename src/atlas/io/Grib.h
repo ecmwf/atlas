@@ -18,7 +18,6 @@
 #ifdef ECKIT_HAVE_GRIB
 
 #include "atlas/FieldSet.h"
-#include "atlas/GridSpec.h"
 
 //------------------------------------------------------------------------------------------------------
 

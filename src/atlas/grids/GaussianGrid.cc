@@ -13,7 +13,6 @@
 
 #include "atlas/grids/GaussianGrid.h"
 #include "atlas/grids/GaussianLatitudes.h"
-#include "atlas/GridSpec.h"
 #include "atlas/util/Debug.h"
 
 namespace atlas {

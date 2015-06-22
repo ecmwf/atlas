@@ -28,7 +28,6 @@
 #include "eckit/parser/Tokenizer.h"
 
 #include "atlas/atlas.h"
-#include "atlas/GridSpec.h"
 #include "atlas/grids/grids.h"
 
 

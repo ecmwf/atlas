@@ -24,7 +24,6 @@
 #include "eckit/mpi/mpi.h"
 
 #include "atlas/io/Grib.h"
-#include "atlas/GridSpec.h"
 #include "atlas/grids/grids.h"
 
 using namespace std;

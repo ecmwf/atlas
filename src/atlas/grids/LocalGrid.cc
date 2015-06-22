@@ -14,7 +14,6 @@
 #include "eckit/value/Value.h"
 #include "eckit/geometry/RotateGrid.h"
 
-#include "atlas/GridSpec.h"
 #include "atlas/grids/LocalGrid.h"
 
 using namespace eckit;

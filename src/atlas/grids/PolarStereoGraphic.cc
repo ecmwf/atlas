@@ -16,7 +16,6 @@
 #include "eckit/geometry/PolarStereoGraphicProj.h"
 #include "eckit/types/FloatCompare.h"
 
-#include "atlas/GridSpec.h"
 #include "atlas/grids/PolarStereoGraphic.h"
 
 using namespace eckit;

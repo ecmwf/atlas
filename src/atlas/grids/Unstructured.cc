@@ -12,7 +12,6 @@
 
 #include "eckit/log/Log.h"
 #include "eckit/memory/Builder.h"
-#include "atlas/GridSpec.h"
 #include "atlas/grids/Unstructured.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/Mesh.h"

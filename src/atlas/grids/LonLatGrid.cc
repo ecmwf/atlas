@@ -14,7 +14,6 @@
 
 #include "atlas/atlas_config.h"
 #include "atlas/grids/LonLatGrid.h"
-#include "atlas/GridSpec.h"
 #include "atlas/util/Debug.h"
 
 using eckit::BadParameter;
