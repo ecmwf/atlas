@@ -233,6 +233,8 @@ Mesh.h
 Metadata.cc
 Metadata.h
 Parameters.h
+Parametrisation.h
+Parametrisation.cc
 Partitioner.cc
 Partitioner.h
 PointIndex3.cc

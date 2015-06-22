@@ -39,20 +39,11 @@ Field* Field::create(const eckit::Parametrisation& params)
 
 Field* Field::create(const ArrayShape& shape, const eckit::Parametrisation& params)
 {
-  Field* field = 0;
-  std::string data_type = "real64";
-  params.get("data_type",data_type);
-  if( data_type == "int32" || data_type == "int" )
-    field = new FieldT<int>(shape,params);
-  else if( data_type == "int64" || data_type == "long" )
-    field = new FieldT<long>(shape,params);
-  else if( data_type == "real32" || data_type == "float" )
-    field = new FieldT<float>(shape,params);
-  else if( data_type == "real64" || data_type == "double" )
-    field = new FieldT<double>(shape,params);
-  else
-    throw eckit::Exception("Could not create field. data_type parameter unrecognized: "+data_type);
-  return field;
+  std::string creator_factory( "ArraySpec" );
+  params.get("creator",creator_factory);
+  eckit::ScopedPtr<field::FieldCreator> creator
+     (field::FieldCreatorFactory::build(creator_factory) );
+  return creator->create_field(Parameters(params)("shape",shape));
 }
 
 

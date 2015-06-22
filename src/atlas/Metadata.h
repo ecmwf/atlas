@@ -21,13 +21,14 @@ class Grid;
 class Mesh;
 class FunctionSpace;
 
-class Metadata: public eckit::Parametrisation, public eckit::Properties {
+class Metadata: public eckit::Properties {
 
 public:
 
   Metadata(): eckit::Properties() {}
 
   Metadata(const eckit::Properties& p): eckit::Properties(p) {}
+  Metadata(const Metadata& p): eckit::Properties(p) {}
 
   template<typename ValueT>
   Metadata& set(const std::string& name, const ValueT& value);
@@ -40,40 +41,9 @@ public:
   template<typename ValueT>
   bool get(const std::string& name, ValueT& value) const;
 
-  /// @brief Constructor immediately setting a value.
-  template<typename ValueT>
-  Metadata(const std::string& name, const ValueT& value)
-  {
-    set(name,value);
-  }
+  bool has( const key_t& ) const;
 
-  /// @brief Operator that sets a key-value pair.
-  /// This is useful for chaining. Together with above constructor:
-  /// Metadata
-  ///   ("key1",value1)
-  ///   ("key2",value2)
-  ///   ("key3",value3);
-  template<typename ValueT>
-  Metadata& operator()(const std::string& name, const ValueT& value)
-  {
-    set(name,value);
-    return *this;
-  }
-
-// -- Overload functions from eckit::Parametrisation
-
-  /// @returns true is a property exists
-  virtual bool has( const key_t& ) const;
-
-  virtual bool get(const std::string& name, std::string& value) const;
-  virtual bool get(const std::string& name, bool& value) const;
-  virtual bool get(const std::string& name, long& value) const;
-  virtual bool get(const std::string& name, size_t& value) const;
-  virtual bool get(const std::string& name, double& value) const;
-
-  virtual bool get(const std::string& name, std::vector<int>& value) const;
-  virtual bool get(const std::string& name, std::vector<long>& value) const;
-  virtual bool get(const std::string& name, std::vector<double>& value) const;
+  friend std::ostream& operator<<(std::ostream& s, const Metadata& v) { v.print(s);  return s; }
 
 };
 

@@ -43,6 +43,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/FieldSet.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/FunctionSpace.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/Mesh.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/Metadata.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/Parametrisation.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mpl/HaloExchange.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mpl/GatherScatter.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mpl/Checksum.h)
@@ -109,6 +110,8 @@ add_custom_target( atlas_fortran_inc SOURCES
    atlas_module_Mesh_c.f
    atlas_module_Metadata_i.f
    atlas_module_Metadata_c.f
+   atlas_module_Parametrisation_i.f
+   atlas_module_Parametrisation_c.f
    atlas_module_Trans_i.f
    atlas_module_Trans_c.f
    atlas_module_Value_i.f

@@ -6,7 +6,7 @@
 
 function atlas_Field__create(params) result(field)
   type(atlas_Field) :: field
-  class(atlas_Metadata), intent(in) :: params
+  class(atlas_Parametrisation), intent(in) :: params
   field%cpp_object_ptr = atlas__Field__create(params%cpp_object_ptr)
 end function
 

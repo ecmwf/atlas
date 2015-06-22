@@ -30,6 +30,7 @@
 #include "atlas/Grid.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Mesh.h"
+#include "atlas/Parametrisation.h"
 #include "atlas/Metadata.h"
 #include "atlas/Parameters.h"
 #include "atlas/State.h"
@@ -52,7 +53,7 @@ class Field : public eckit::Owned {
 public: // types
 
   typedef eckit::SharedPtr<Field> Ptr;
-  typedef Metadata Parameters;
+  typedef atlas::Parametrisation Parameters;
 
 public: // Static methods
 

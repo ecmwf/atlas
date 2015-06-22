@@ -20,6 +20,7 @@
 #include "eckit/memory/SharedPtr.h"
 
 #include "atlas/Metadata.h"
+#include "atlas/Parametrisation.h"
 #include "atlas/util/ObjectRegistry.h"
 
 //------------------------------------------------------------------------------------------------------
@@ -36,8 +37,8 @@ class Mesh : public eckit::Owned, public util::Registered<Mesh> {
 
 public: // types
 
-	typedef eckit::SharedPtr<Mesh> Ptr;
-    typedef Metadata Parameters;
+    typedef eckit::SharedPtr<Mesh> Ptr;
+    typedef atlas::Parametrisation Parameters;
 
 public: // methods
 

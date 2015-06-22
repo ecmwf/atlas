@@ -16,7 +16,7 @@
 
 #include "eckit/memory/Owned.h"
 #include "eckit/config/Parametrisation.h"
-#include "atlas/Metadata.h"
+#include "atlas/Parametrisation.h"
 
 namespace atlas {
 
@@ -32,7 +32,7 @@ class MeshGenerator : public eckit::Owned {
 
 public:
 
-    typedef Metadata Parameters; // temporary until Parameters class exists
+    typedef atlas::Parametrisation Parameters; // temporary until Parameters class exists
 
     MeshGenerator();
 

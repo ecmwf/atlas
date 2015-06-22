@@ -23,7 +23,7 @@ type(atlas_FunctionSpace) :: func_space
 type(atlas_Field) :: field
 
 
-type, extends(atlas_Metadata) :: atlas_FieldParametrisation
+type, extends(atlas_Parametrisation) :: atlas_FieldParametrisation
 endtype
 
 interface atlas_FieldParametrisation
@@ -33,6 +33,7 @@ end interface
 contains
 
 function atlas_FieldParametrisation__ctor(creator,ngptot,nproma,nlev,nvar,kind,data_type,shape,grid) result(params)
+  use atlas_parametrisation_c_binding
   type(atlas_FieldParametrisation) :: params
   character(len=*), optional, intent(in) :: creator
   integer, optional, intent(in) :: ngptot
@@ -43,7 +44,7 @@ function atlas_FieldParametrisation__ctor(creator,ngptot,nproma,nlev,nvar,kind,d
   integer, optional, intent(in) :: kind
   character(len=*), optional, intent(in) :: data_type
   integer, optional, intent(in) :: shape(:)
-  params%cpp_object_ptr = atlas__Metadata__new()
+  params%cpp_object_ptr = atlas__Parametrisation__new()
   if( present(creator)   ) call params%set("creator"   ,creator  )
   if( present(ngptot)    ) call params%set("ngptot"    ,ngptot   )
   if( present(nproma)    ) call params%set("nproma"    ,nproma   )
@@ -52,7 +53,6 @@ function atlas_FieldParametrisation__ctor(creator,ngptot,nproma,nlev,nvar,kind,d
   if( present(kind)      ) call params%set("kind"      ,kind     )
   if( present(data_type) ) call params%set("data_type" ,data_type)
   if( present(shape)     ) call params%set("shape"     ,shape    )
-  if( present(grid)      ) call params%set("grid"      ,grid     )
   call params%set("fortran",.True.) ! Let know that parameters have fortran style
 end function
 
@@ -347,21 +347,21 @@ TEST( test_fieldcreation )
   field = atlas_Field(FieldParams(creator="ArraySpec",shape=[10,137,1,30]))
   write(0,*) field%name(), field%size()
   call atlas_delete(field)
-  
+
   grid = atlas_ReducedGrid("oct.N80")
-  params = atlas_FieldParametrisation(creator="IFS",nproma=1024,grid=grid,nlev=137,nvar=1,kind=4)
+  params = atlas_FieldParametrisation(creator="IFS",nproma=1024,ngptot=grid%npts(),nlev=137,nvar=1,kind=4)
   field = atlas_Field(params)
   call atlas_delete(params)
-  
+
   write(0,*) field%name(), field%size(), field%shape(), field%data_type(), field%bytes()
   call atlas_delete(field)
-  
+
 ! Idea:
 !   field = atlas_Field([ &
 !      & atlas_Param("creator","ArraySpec"),&
 !      & atlas_Param("shape",[10,137,1,30]),&
 !      & atlas_Param("kind","real64") ])
-  
+
   call atlas_delete(grid)
 END_TEST
 
