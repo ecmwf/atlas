@@ -52,10 +52,6 @@ public:
 
   ReducedGrid( const eckit::Parametrisation& );
 
-  ReducedGrid( const std::vector<double>& lats,
-               const std::vector<size_t>& nlon,
-               const Domain& d = Domain::makeGlobal());
-
   ReducedGrid( size_t nlat,
                const double lats[],
                const long npts_per_lat[],
@@ -80,6 +76,9 @@ public:
 
   size_t nlonmax() const;
 
+  // Note that this is not the same type as the constructor
+  // We retrun vector<int> for the fortran
+  const std::vector<long>& points_per_latitude() const;
   const std::vector<int>& npts_per_lat() const;
 
   const std::vector<double>& latitudes() const;
@@ -127,7 +126,9 @@ protected:
   std::string         shortName_;
 
   std::vector<double> lat_;    ///<! Latitude values
-  std::vector<int>    nlons_;  ///<! Number of points per latitude (int32 type for Fortran interoperability)
+  std::vector<long>   nlons_;  ///<! Number of points per latitude
+  mutable std::vector<int>    nlons_int_;  ///<! Number of points per latitude (int32 type for Fortran interoperability)
+
   std::vector<double> lonmin_; ///<! Value of minimum longitude per latitude [default=0]
   std::vector<double> lonmax_; ///<! Value of maximum longitude per latitude [default=~360 (one increment smaller)]
 

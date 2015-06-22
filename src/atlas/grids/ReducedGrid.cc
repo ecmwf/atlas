@@ -82,18 +82,6 @@ void ReducedGrid::setup(const eckit::Parametrisation& params)
   setup(latitudes.size(),latitudes.data(),npts_per_lat.data());
 }
 
-ReducedGrid::ReducedGrid(const std::vector<double>& _lats, const std::vector<size_t>& _nlons, const Domain& d)
-  : Grid(d)
-{
-  size_t nlat = _nlons.size();
-  std::vector<long> nlons(nlat);
-  for( int j=0; j<nlat; ++j )
-  {
-    nlons[j] = static_cast<long>(nlons[j]);
-  }
-  setup(nlat,_lats.data(),nlons.data());
-}
-
 ReducedGrid::ReducedGrid(size_t nlat, const double lats[], const long nlons[], const Domain& d)
   : Grid(d)
 {
@@ -234,9 +222,17 @@ size_t ReducedGrid::nlonmax() const
   return nlonmax_;
 }
 
-const std::vector<int>&  ReducedGrid::npts_per_lat() const
+const std::vector<long>&  ReducedGrid::points_per_latitude() const
 {
   return nlons_;
+}
+
+const std::vector<int>&  ReducedGrid::npts_per_lat() const
+{
+  if(nlons_int_.size() == 0) {
+    nlons_int_.assign(nlons_.begin(), nlons_.end());
+  }
+  return nlons_int_;
 }
 
 double ReducedGrid::lon(const size_t jlat, const size_t jlon) const
