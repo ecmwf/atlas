@@ -15,7 +15,6 @@
 #define atlas_grids_reduced_gg_reduced_gg_h
 
 #include "eckit/memory/Builder.h"
-#include "eckit/value/Params.h"
 #include "atlas/grids/ReducedGaussianGrid.h"
 #include "atlas/grids/GaussianLatitudes.h"
 #include "atlas/grids/rgg/OctahedralRGG.h"
@@ -27,12 +26,6 @@ namespace rgg {
 //------------------------------------------------------------------------------------------------------
 
 inline std::string ns_name() { return "rgg"; };
-
-/// To get the grid:
-///
-///   SharedPtr< Grid > grid( Factory< Grid >::instance().get( "N80" ).create( eckit::Params() ) );
-/// or
-///   SharedPtr< ReducedGrid > grid( Factory< ReducedGrid >::instance().get( "N80" ).create() );
 
 #define DEFINE_GRID(CLASS)\
 class CLASS : public ReducedGaussianGrid { \

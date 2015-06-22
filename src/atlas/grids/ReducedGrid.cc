@@ -19,7 +19,6 @@
 
 using eckit::Factory;
 using eckit::MD5;
-using eckit::Params;
 using eckit::BadParameter;
 
 namespace atlas {
@@ -29,7 +28,7 @@ namespace grids {
 
 register_BuilderT1(Grid, ReducedGrid, ReducedGrid::grid_type_str());
 
-ReducedGrid* ReducedGrid::create(const Params& p) {
+ReducedGrid* ReducedGrid::create(const eckit::Parametrisation& p) {
 
   ReducedGrid* grid = dynamic_cast<ReducedGrid*>(Grid::create(p));
   if (!grid) throw BadParameter("Grid is not a reduced grid", Here());

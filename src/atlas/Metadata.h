@@ -14,18 +14,20 @@
 #include <string>
 #include "eckit/memory/SharedPtr.h"
 #include "eckit/value/Properties.h"
-#include "eckit/value/Params.h"
+#include "eckit/config/Parametrisation.h"
 
 namespace atlas {
 class Grid;
 class Mesh;
 class FunctionSpace;
 
-class Metadata: public eckit::Properties {
+class Metadata: public eckit::Parametrisation, public eckit::Properties {
 
 public:
 
-  Metadata() {}
+  Metadata(): eckit::Properties() {}
+
+  Metadata(const eckit::Properties& p): eckit::Properties(p) {}
 
   template<typename ValueT>
   Metadata& set(const std::string& name, const ValueT& value);
@@ -57,6 +59,21 @@ public:
     set(name,value);
     return *this;
   }
+
+// -- Overload functions from eckit::Parametrisation
+
+  /// @returns true is a property exists
+  virtual bool has( const key_t& ) const;
+
+  virtual bool get(const std::string& name, std::string& value) const;
+  virtual bool get(const std::string& name, bool& value) const;
+  virtual bool get(const std::string& name, long& value) const;
+  virtual bool get(const std::string& name, size_t& value) const;
+  virtual bool get(const std::string& name, double& value) const;
+
+  virtual bool get(const std::string& name, std::vector<int>& value) const;
+  virtual bool get(const std::string& name, std::vector<long>& value) const;
+  virtual bool get(const std::string& name, std::vector<double>& value) const;
 
 };
 

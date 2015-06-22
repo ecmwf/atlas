@@ -34,7 +34,7 @@ public:
 
   typedef eckit::SharedPtr<ReducedGrid> Ptr;
 
-  static ReducedGrid* create( const eckit::Params& );
+  static ReducedGrid* create( const eckit::Parametrisation& );
   static ReducedGrid* create( const eckit::Properties& );
   static ReducedGrid* create( const std::string& shortName );
 
@@ -46,6 +46,8 @@ public:
   /// FIXME: ReducedGrid should not be instantiatable.
   ///        Only leaf classes should be instantiatable.
   ///        This constructor should be used only by derived types
+  ///    nawd: Disagree. Custom grids could be devised this way, especially
+  ///          useful for research.
   ReducedGrid(const Domain& d = Domain::makeGlobal());
 
   ReducedGrid( const eckit::Parametrisation& );

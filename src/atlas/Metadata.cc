@@ -254,6 +254,68 @@ template<> Grid& Metadata::get(const std::string& name) const
   return Grid::from_id(eckit::Properties::get(name));
 }
 
+//=================================================
+// Functions overloading eckit::Parametrisation
+
+bool Metadata::has(const std::string & name) const
+{
+  return Properties::has(name);
+}
+
+bool Metadata::get(const std::string& name, std::string& value) const
+{
+  if(!has(name)) return false;
+  value = std::string(operator[](name));
+  return true;
+}
+bool Metadata::get(const std::string& name, bool& value) const
+{
+  if(!has(name)) return false;
+  value = operator[](name);
+  return true;
+}
+bool Metadata::get(const std::string& name, long& value) const
+{
+  if(!has(name)) return false;
+  value = operator[](name);
+  return true;
+}
+bool Metadata::get(const std::string& name, size_t& value) const
+{
+  if(!has(name)) return false;
+  value = operator[](name);
+  return true;
+}
+bool Metadata::get(const std::string& name, double& value) const
+{
+  if(!has(name)) return false;
+  value = operator[](name);
+  return true;
+}
+bool Metadata::get(const std::string& name, std::vector<int>& value) const
+{
+  if(!has(name)) return false;
+  std::vector<eckit::Value> v = operator[](name);
+  value.assign(v.begin(),v.end());
+  return true;
+}
+bool Metadata::get(const std::string& name, std::vector<long>& value) const
+{
+  if(!has(name)) return false;
+  std::vector<eckit::Value> v = operator[](name);
+  value.assign(v.begin(),v.end());
+  return true;
+}
+bool Metadata::get(const std::string& name, std::vector<double>& value) const
+{
+  if(!has(name)) return false;
+  std::vector<eckit::Value> v = operator[](name);
+  value.assign(v.begin(),v.end());
+  return true;
+}
+
+//==================================================================
+
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 

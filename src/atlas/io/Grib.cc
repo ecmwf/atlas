@@ -114,11 +114,15 @@ Grid::Ptr make_grid( const PathName& path )
 
 Grid::Ptr Grib::create_grid(GribHandle& gh)
 {
-	GribParams* gp = GribParams::create(gh);
+	eckit::Properties* gp = GribParams::create(gh);
 
 	ASSERT( gp );
 
-	return Grid::Ptr( Grid::create( Params(*gp) ) );
+  Grid::Parameters params(*gp);
+	Grid::Ptr grid( Grid::create( params ) );
+
+  delete gp;
+  return grid;
 }
 
 GribHandle::Ptr Grib::create_handle( const Grid& grid, long edition )

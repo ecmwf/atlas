@@ -36,7 +36,7 @@ GridDistribution::GridDistribution(const Partitioner& partitioner)
   min_pts_ = *std::min_element(nb_pts_.begin(),nb_pts_.end());
 }
 
-GridDistribution::GridDistribution(int npts, int part[], int part0)
+GridDistribution::GridDistribution(size_t npts, int part[], int part0)
 {
   part_.assign(part,part+npts);
   std::set<int> partset(part_.begin(),part_.end());

@@ -147,7 +147,7 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
   spec.set("grid_type","regular_ll");
   spec.set("nlon",32);
   spec.set("nlat",16);
-  spec.set("poles",LonLatGrid::EXCLUDES_POLES);
+  spec.set<int>("poles",LonLatGrid::EXCLUDES_POLES);
   gridptr = Grid::Ptr( Grid::create(spec) );
   BOOST_CHECK_EQUAL(gridptr->npts(), 512);
   BOOST_CHECK_EQUAL(gridptr->gridType(),"regular_ll");
@@ -173,7 +173,7 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
   Grid::Parameters spec2;
   spec2.set("grid_type","regular_ll");
   spec2.set("N",16);
-  spec2.set("poles",LonLatGrid::EXCLUDES_POLES);
+  spec2.set<int>("poles",LonLatGrid::EXCLUDES_POLES);
   gridptr = Grid::Ptr( Grid::create(spec2) );
   BOOST_CHECK_EQUAL(gridptr->npts(), 512);
   BOOST_CHECK_EQUAL(gridptr->gridType(),"regular_ll");

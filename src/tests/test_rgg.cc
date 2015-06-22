@@ -44,6 +44,9 @@ using namespace atlas::meshgen;
 namespace atlas {
 namespace test {
 
+
+typedef Metadata Parameters;
+
 class DebugMesh:   public grids::ReducedGaussianGrid { public: DebugMesh(); };
 DebugMesh::DebugMesh()
 {
@@ -181,7 +184,7 @@ BOOST_AUTO_TEST_CASE( test_partitioner )
 BOOST_AUTO_TEST_CASE( test_rgg_meshgen_one_part )
 {
   Mesh* m;
-  eckit::Properties opts;
+  MeshGenerator::Parameters opts;
   opts.set("nb_parts",1);
   opts.set("part",0);
   ReducedGridMeshGenerator generate(opts);

@@ -32,6 +32,7 @@
 #include "atlas/BoundBox.h"
 #include "atlas/util/ObjectRegistry.h"
 #include "atlas/Domain.h"
+#include "atlas/Metadata.h"
 
 namespace atlas {
 
@@ -51,7 +52,7 @@ class Grid : public eckit::Owned, public util::Registered<Grid> {
   typedef eckit::geometry::LLPoint2 Point; // must be sizeof(double)*2
   typedef std::string uid_t;
 
-  typedef eckit::Properties Parameters; // temporarily
+  typedef Metadata Parameters; // temporarily until Parameters class exists
 
  public:  // methods
 

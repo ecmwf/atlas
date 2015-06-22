@@ -16,7 +16,6 @@
 #include "atlas/grids/ReducedLonLatGrid.h"
 #include "atlas/util/Debug.h"
 
-using eckit::Params;
 using eckit::BadParameter;
 
 namespace atlas {

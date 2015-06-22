@@ -32,7 +32,7 @@ public:
 
   GridDistribution(const Partitioner& partitioner);
 
-  GridDistribution(int npts, int partition[], int part0=0);
+  GridDistribution(size_t npts, int partition[], int part0=0);
 
   virtual ~GridDistribution() {}
 

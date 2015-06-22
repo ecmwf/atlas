@@ -95,7 +95,7 @@ public: // methods
   friend std::ostream& operator<<( std::ostream& os, const Field& v);
 
 private: // methods
-  
+
   virtual void print(std::ostream& os) const
   {
       os << "Field[name=" << name()
@@ -190,7 +190,7 @@ public: // methods
 
   FieldT(const std::string& name, const int nb_vars);
 
-  FieldT(const ArrayShape& shape, const eckit::Parametrisation& = eckit::Properties() );
+  FieldT(const ArrayShape& shape, const eckit::Parametrisation& = Parameters() );
 
   virtual ~FieldT();
 

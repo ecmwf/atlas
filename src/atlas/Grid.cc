@@ -19,7 +19,6 @@
 #include "atlas/Mesh.h"
 #include "atlas/grids/grids.h"
 
-using eckit::Params;
 using eckit::Factory;
 
 namespace atlas {
