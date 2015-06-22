@@ -120,21 +120,27 @@ void Unstructured::lonlat(std::vector<Grid::Point>& crds) const {
             (*points_)[i].lat() );
 }
 
-GridSpec Unstructured::spec() const {
-    if (cachedGridSpec_)
-        return *cachedGridSpec_;
+eckit::Properties Unstructured::spec() const {
+    if (cached_spec_)
+        return *cached_spec_;
 
-    cachedGridSpec_.reset( new GridSpec(gridType()) );
+    cached_spec_.reset( new eckit::Properties );
 
-    cachedGridSpec_->set_bounding_box(bound_box_);
+    cached_spec_->set("grid_type",gridType());
+
+    BoundBox bbox = boundingBox();
+    cached_spec_->set("bbox_s", bbox.min().lat());
+    cached_spec_->set("bbox_w", bbox.min().lon());
+    cached_spec_->set("bbox_n", bbox.max().lat());
+    cached_spec_->set("bbox_e", bbox.max().lon());
 
     std::vector<double> coords;
     coords.resize(2*npts());
     Grid::copyLonLatMemory(&coords[0],2*npts());
 
-    cachedGridSpec_->set( "lonlat", eckit::makeVectorValue<double>(coords) );
+    cached_spec_->set( "lonlat", eckit::makeVectorValue<double>(coords) );
 
-    return *cachedGridSpec_;
+    return *cached_spec_;
 }
 
 void Unstructured::print(std::ostream& os) const

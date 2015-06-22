@@ -40,7 +40,7 @@ public:
 
   static std::string className();
 
-  virtual GridSpec spec() const;
+  virtual eckit::Properties spec() const;
 
 protected:
 

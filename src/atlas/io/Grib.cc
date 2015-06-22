@@ -59,7 +59,7 @@ using namespace atlas;
 namespace atlas {
 namespace io {
 
-static std::string match_grid_spec_with_sample_file( const GridSpec& g_spec, long edition );
+static std::string match_grid_spec_with_sample_file( const eckit::Properties& g_spec, long edition );
 static std::string map_uid_to_grib_sample_file(const std::string& short_name, long edition);
 
 //------------------------------------------------------------------------------------------------------
@@ -130,10 +130,7 @@ GribHandle::Ptr Grib::create_handle( const Grid& grid, long edition )
 
 
   // From the Grid get the Grid Spec
-  GridSpec grid_spec("dummy");
-  // Deprecated function Grid::spec()
-  //grid_spec = grid.spec();
-  NOTIMP;
+  eckit::Properties grid_spec = grid.spec();
 
 
   grib_handle* gh = 0;
@@ -170,9 +167,7 @@ GribHandle::Ptr Grib::create_handle( const Grid& grid, long edition )
 
   GribHandle::Ptr gh_ptr( new GribHandle(gh) );
 
-  NOTIMP;
-  // Deprecated function Grid::spec()
-  // write_gridspec_to_grib( grid.spec(), *gh_ptr );
+  write_gridspec_to_grib( grid.spec(), *gh_ptr );
 
   return gh_ptr;
 }
@@ -215,21 +210,21 @@ void Grib::determine_grib_samples_dir(std::vector<std::string>& sample_paths)
 }
 
 
-static std::string match_grid_spec_with_sample_file( const GridSpec& g_spec, long edition )
+static std::string match_grid_spec_with_sample_file( const eckit::Properties& g_spec, long edition )
 {
    // First get the grid_type
-   std::string grid_type = g_spec.gridType();
+   std::string grid_type = g_spec["grid_type"];
 
    // For regular gaussian grids
    if (grid_type == grids::GaussianGrid::grid_type_str() ) {
 
 
-      // regular_gg_ml_grib1.tmpl  --> GridSpec[ (GaussN,32)(Ni,128)(Nj,64)(uid,regular_gg_32) ]
-      // regular_gg_ml_grib2.tmpl  --> GridSpec[ (GaussN,32)(Ni,128)(Nj,64)(uid,regular_gg_32) ]
-      // regular_gg_pl_grib1.tmpl  --> GridSpec[ (GaussN,32)(Ni,128)(Nj,64)(uid,regular_gg_32) ]
-      // regular_gg_pl_grib2.tmpl  --> GridSpec[ (GaussN,32)(Ni,128)(Nj,64)(uid,regular_gg_32) ]
-      // regular_gg_sfc_grib1.tmpl --> GridSpec[ (GaussN,32)(Ni,128)(Nj,64)(uid,regular_gg_32) ]
-      // regular_gg_sfc_grib2.tmpl --> GridSpec[ (GaussN,32)(Ni,128)(Nj,64)(uid,regular_gg_32) ]
+      // regular_gg_ml_grib1.tmpl  --> eckit::Properties[ (GaussN,32)(Ni,128)(Nj,64)(uid,regular_gg_32) ]
+      // regular_gg_ml_grib2.tmpl  --> eckit::Properties[ (GaussN,32)(Ni,128)(Nj,64)(uid,regular_gg_32) ]
+      // regular_gg_pl_grib1.tmpl  --> eckit::Properties[ (GaussN,32)(Ni,128)(Nj,64)(uid,regular_gg_32) ]
+      // regular_gg_pl_grib2.tmpl  --> eckit::Properties[ (GaussN,32)(Ni,128)(Nj,64)(uid,regular_gg_32) ]
+      // regular_gg_sfc_grib1.tmpl --> eckit::Properties[ (GaussN,32)(Ni,128)(Nj,64)(uid,regular_gg_32) ]
+      // regular_gg_sfc_grib2.tmpl --> eckit::Properties[ (GaussN,32)(Ni,128)(Nj,64)(uid,regular_gg_32) ]
       if (edition == 1) return "regular_gg_ml_grib1";
       return "regular_gg_ml_grib2";
    }
@@ -243,10 +238,10 @@ static std::string match_grid_spec_with_sample_file( const GridSpec& g_spec, lon
 
    if (grid_type == grids::LonLatGrid::grid_type_str() ) {
 
-      // regular_ll_pl_grib1.tmpl  --> GridSpec[ (Ni,16)(Nj,31) (lat_inc,2)(lon_inc,2)(uid,regular_ll_31_16) ]
-      // regular_ll_pl_grib2.tmpl  --> GridSpec[ (Ni,16)(Nj,31) (lat_inc,2)(lon_inc,2)(uid,regular_ll_31_16) ]
-      // regular_ll_sfc_grib1.tmpl --> GridSpec[ (Ni,16)(Nj,31) (lat_inc,2)(lon_inc,2)(uid,regular_ll_31_16) ]
-      // regular_ll_sfc_grib2.tmpl --> GridSpec[ (Ni,16)(Nj,31) (lat_inc,2)(lon_inc,2)(uid,regular_ll_31_16) ]
+      // regular_ll_pl_grib1.tmpl  --> eckit::Properties[ (Ni,16)(Nj,31) (lat_inc,2)(lon_inc,2)(uid,regular_ll_31_16) ]
+      // regular_ll_pl_grib2.tmpl  --> eckit::Properties[ (Ni,16)(Nj,31) (lat_inc,2)(lon_inc,2)(uid,regular_ll_31_16) ]
+      // regular_ll_sfc_grib1.tmpl --> eckit::Properties[ (Ni,16)(Nj,31) (lat_inc,2)(lon_inc,2)(uid,regular_ll_31_16) ]
+      // regular_ll_sfc_grib2.tmpl --> eckit::Properties[ (Ni,16)(Nj,31) (lat_inc,2)(lon_inc,2)(uid,regular_ll_31_16) ]
       if (edition == 1) return "regular_ll_pl_grib1";
       return "regular_ll_pl_grib2";;
    }
@@ -255,10 +250,10 @@ static std::string match_grid_spec_with_sample_file( const GridSpec& g_spec, lon
 
    if (grid_type == "rotated_ll" ) {
 
-      // rotated_ll_pl_grib1.tmpl  --> GridSpec[ (Ni,16)(Nj,31)(SouthPoleLat,0)(SouthPoleLon,0)(SouthPoleRotAngle,0)(lat_inc,2)(lon_inc,2)(uid,rotated_ll_31) ]
-      // rotated_ll_pl_grib2.tmpl  --> GridSpec[ (Ni,16)(Nj,31)(SouthPoleLat,0)(SouthPoleLon,0)(SouthPoleRotAngle,0)(lat_inc,2)(lon_inc,2)(uid,rotated_ll_31) ]
-      // rotated_ll_sfc_grib1.tmpl --> GridSpec[ (Ni,16)(Nj,31)(SouthPoleLat,0)(SouthPoleLon,0)(SouthPoleRotAngle,0)(lat_inc,2)(lon_inc,2)(uid,rotated_ll_31) ]
-      // rotated_ll_sfc_grib2.tmpl --> GridSpec[ (Ni,16)(Nj,31)(SouthPoleLat,0)(SouthPoleLon,0)(SouthPoleRotAngle,0)(lat_inc,2)(lon_inc,2)(uid,rotated_ll_31) ]
+      // rotated_ll_pl_grib1.tmpl  --> eckit::Properties[ (Ni,16)(Nj,31)(SouthPoleLat,0)(SouthPoleLon,0)(SouthPoleRotAngle,0)(lat_inc,2)(lon_inc,2)(uid,rotated_ll_31) ]
+      // rotated_ll_pl_grib2.tmpl  --> eckit::Properties[ (Ni,16)(Nj,31)(SouthPoleLat,0)(SouthPoleLon,0)(SouthPoleRotAngle,0)(lat_inc,2)(lon_inc,2)(uid,rotated_ll_31) ]
+      // rotated_ll_sfc_grib1.tmpl --> eckit::Properties[ (Ni,16)(Nj,31)(SouthPoleLat,0)(SouthPoleLon,0)(SouthPoleRotAngle,0)(lat_inc,2)(lon_inc,2)(uid,rotated_ll_31) ]
+      // rotated_ll_sfc_grib2.tmpl --> eckit::Properties[ (Ni,16)(Nj,31)(SouthPoleLat,0)(SouthPoleLon,0)(SouthPoleRotAngle,0)(lat_inc,2)(lon_inc,2)(uid,rotated_ll_31) ]
       if (edition == 1) return "rotated_ll_pl_grib1";
       return "rotated_ll_pl_grib2";
    }
@@ -270,13 +265,13 @@ static std::string match_grid_spec_with_sample_file( const GridSpec& g_spec, lon
    return std::string(); // returning emtpy string when match fails
 }
 
-bool check_grid_spec_matches_sample_file( const GridSpec& g_spec, long edition,	const eckit::PathName& fpath )
+bool check_grid_spec_matches_sample_file( const eckit::Properties& g_spec, long edition,	const eckit::PathName& fpath )
 {
 	GribHandle gh( fpath );
 
-   if ( g_spec.gridType() != gh.gridType() )
+   if ( g_spec["grid_type"] != gh.gridType() )
    {
-      //Log::info() << "grid_type in GridSpec " << g_spec.gridType() << " does not match " << grib_grid_type << " in samples file " << file_path << " IGNORING " << std::endl;
+      //Log::info() << "grid_type in eckit::Properties " << g_spec.gridType() << " does not match " << grib_grid_type << " in samples file " << file_path << " IGNORING " << std::endl;
       return false;
    }
 
@@ -286,7 +281,7 @@ bool check_grid_spec_matches_sample_file( const GridSpec& g_spec, long edition,	
       return false;
    }
 
-   if (g_spec.gridType() == grids::ReducedGaussianGrid::grid_type_str() )
+   if (g_spec["grid_type"] == grids::ReducedGaussianGrid::grid_type_str() )
    {
       if (g_spec.has("N"))
       {
@@ -302,21 +297,21 @@ bool check_grid_spec_matches_sample_file( const GridSpec& g_spec, long edition,	
    return true;
 }
 
-std::string Grib::grib_sample_file( const GridSpec& g_spec, long edition )
+std::string Grib::grib_sample_file( const eckit::Properties& g_spec, long edition )
 {
     // Note: many of the grib samples files are not UNIQUE in their grid specification:
     // i.e
-    //   GRIB2.tmpl                        -> GridSpec[ regular_ll, LL31_16_2, Ni:16, Nj:31, typeOfLevel:surface ]
-    //   regular_ll_pl_grib2.tmpl          -> GridSpec[ regular_ll, LL31_16_2, Ni:16, Nj:31 ]
-    //   regular_ll_sfc_grib2.tmpl         -> GridSpec[ regular_ll, LL31_16_2, Ni:16, Nj:31 ]
+    //   GRIB2.tmpl                        -> eckit::Properties[ regular_ll, LL31_16_2, Ni:16, Nj:31, typeOfLevel:surface ]
+    //   regular_ll_pl_grib2.tmpl          -> eckit::Properties[ regular_ll, LL31_16_2, Ni:16, Nj:31 ]
+    //   regular_ll_sfc_grib2.tmpl         -> eckit::Properties[ regular_ll, LL31_16_2, Ni:16, Nj:31 ]
     //
-    //   reduced_gg_ml_grib1               -> GridSpec[ reduced_gg, QG32_1, Nj:64 ]
-    //   reduced_gg_pl_32_grib1            -> GridSpec[ reduced_gg, QG32_1, Nj:64 ]
-    //   reduced_gg_ml_grib2               -> GridSpec[ reduced_gg, QG32_2, Nj:64 ]
-    //   reduced_gg_pl_32_grib2            -> GridSpec[ reduced_gg, QG32_2, Nj:64 ]
+    //   reduced_gg_ml_grib1               -> eckit::Properties[ reduced_gg, QG32_1, Nj:64 ]
+    //   reduced_gg_pl_32_grib1            -> eckit::Properties[ reduced_gg, QG32_1, Nj:64 ]
+    //   reduced_gg_ml_grib2               -> eckit::Properties[ reduced_gg, QG32_2, Nj:64 ]
+    //   reduced_gg_pl_32_grib2            -> eckit::Properties[ reduced_gg, QG32_2, Nj:64 ]
     //
     // Others are just plain wrong, i.e
-    //   polar_stereographic_pl_grib2.tmpl -> GridSpec[ rotated_ll, RL31_2, Ni:16, Nj:31, editionNumber:2 ]
+    //   polar_stereographic_pl_grib2.tmpl -> eckit::Properties[ rotated_ll, RL31_2, Ni:16, Nj:31, editionNumber:2 ]
     //
     // From the grid spec, we will look at the grid samples, and find the closest match
 
@@ -495,13 +490,13 @@ GribHandle* Grib::clone(const Field& f, GribHandle& gridsec )
 
 struct gridspec_to_grib
 {
-  gridspec_to_grib( const GridSpec& gspec, GribHandle& gh) :
+  gridspec_to_grib( const eckit::Properties& gspec, GribHandle& gh) :
     gspec_(gspec),
     gh_(gh)
   {}
 
   GribHandle& gh_;
-  const GridSpec& gspec_;
+  const eckit::Properties& gspec_;
 
   template <typename T>
   void set( std::string spec, std::string grib )
@@ -513,7 +508,7 @@ struct gridspec_to_grib
   }
 };
 
-void Grib::write_gridspec_to_grib(const GridSpec& gspec, GribHandle& gh)
+void Grib::write_gridspec_to_grib(const eckit::Properties& gspec, GribHandle& gh)
 {
   gridspec_to_grib gspec2grib(gspec,gh);
 

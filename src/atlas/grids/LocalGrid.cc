@@ -83,7 +83,7 @@ std::string LocalGrid::gridType() const {
     return os.str();
 }
 
-GridSpec LocalGrid::spec() const {
+eckit::Properties LocalGrid::spec() const {
     NOTIMP;
 }
 

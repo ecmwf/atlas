@@ -111,9 +111,9 @@ static void test_grib_file(const std::string& fpath)
 
 
    // The Grid produced, has a GRID spec, the grid spec can be used to, make sure the grid types match
-   GridSpec g_spec = grid_created_from_grib->spec();
+   eckit::Properties g_spec = grid_created_from_grib->spec();
    BOOST_CHECK_MESSAGE(grid_created_from_grib->gridType() == gridType,"gridType(" << gridType << ") did not match Grid constructor(" << grid_created_from_grib->gridType() << ") for file " << fpath);
-   BOOST_CHECK_MESSAGE(g_spec.gridType() == gridType,"gridType(" << gridType << ") did not match GridSpec constructor(" << g_spec.gridType() << ") for file " << fpath);
+   BOOST_CHECK_MESSAGE(g_spec["grid_type"] == gridType,"gridType(" << gridType << ") did not match GridSpec constructor(" << g_spec["grid_type"] << ") for file " << fpath);
 
 
    // From the Spec, create another Grid, we should get back the same Grid
@@ -156,10 +156,10 @@ static void test_grib_file(const std::string& fpath)
       // Old Grib samples file have errors in the EXPECTED_longitudeOfLastGridPointInDegrees
       // This can then effect, comparison of the points
       // ----------------------------------------------------------------------------------------
-      double guass = GribAccessor<long>("numberOfParallelsBetweenAPoleAndTheEquator")(gh);
+      double gauss = GribAccessor<long>("numberOfParallelsBetweenAPoleAndTheEquator")(gh);
       BoundBox bbox = grid_created_from_grib->boundingBox();
 
-      double EXPECTED_longitudeOfLastGridPointInDegrees = 360.0 - (90.0/guass);
+      double EXPECTED_longitudeOfLastGridPointInDegrees = 360.0 - (90.0/gauss);
       std::cout << "   EXPECTED longitudeOfLastGridPointInDegrees     " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << EXPECTED_longitudeOfLastGridPointInDegrees << std::endl;
       std::cout << "   east                                           " << std::setprecision(std::numeric_limits<double>::digits10 + 1) << bbox.east() << std::endl;
       BOOST_CHECK_CLOSE(bbox.east(),EXPECTED_longitudeOfLastGridPointInDegrees,epsilon);

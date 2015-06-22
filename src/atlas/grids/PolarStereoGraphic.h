@@ -66,7 +66,7 @@ class PolarStereoGraphic : public Grid {
     virtual void lonlat(std::vector<Point>&) const;
 
     virtual std::string gridType() const;
-    virtual GridSpec spec() const;
+    virtual eckit::Properties spec() const;
 
   private: // methods
 

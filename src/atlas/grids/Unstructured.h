@@ -53,7 +53,7 @@ public: // methods
 
   virtual std::string gridType() const { return grid_type_str(); }
 
-  virtual GridSpec spec() const;
+  virtual eckit::Properties spec() const;
 
 private: // methods
 
@@ -73,7 +73,7 @@ protected:
 
   mutable std::string shortName_;      ///< cache for the shortName
 
-  mutable eckit::ScopedPtr<GridSpec> cachedGridSpec_;  ///< cache for the GridSpec since may be quite heavy to compute
+  mutable eckit::ScopedPtr<eckit::Properties> cached_spec_;  ///< cache for the spec since may be quite heavy to compute
 
 };
 

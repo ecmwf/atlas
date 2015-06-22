@@ -66,7 +66,7 @@ public:
 
   static std::string className();
 
-  virtual GridSpec spec() const;
+  virtual eckit::Properties spec() const;
 
   int nlon() const { return ReducedGaussianGrid::nlon(0); }
 

@@ -35,7 +35,7 @@ public:
   typedef eckit::SharedPtr<ReducedGrid> Ptr;
 
   static ReducedGrid* create( const eckit::Params& );
-  static ReducedGrid* create( const GridSpec& );
+  static ReducedGrid* create( const eckit::Properties& );
   static ReducedGrid* create( const std::string& shortName );
 
 public:
@@ -67,7 +67,7 @@ public:
 
   virtual std::string gridType() const;
 
-  virtual GridSpec spec() const;
+  virtual eckit::Properties spec() const;
 
   /// number of latitudes in hemisphere
   virtual size_t N() const;

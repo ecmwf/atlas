@@ -228,14 +228,20 @@ void LonLatGrid::setup( const double londeg, const double latdeg, const BoundBox
 }
 
 
-GridSpec LonLatGrid::spec() const
+eckit::Properties LonLatGrid::spec() const
 {
-  GridSpec grid_spec( grid_type_str() );
+  eckit::Properties grid_spec;
+
+  grid_spec.set("grid_type",grid_type_str() );
 
   grid_spec.set("nlon", nlon() );
   grid_spec.set("nlat", nlat() );
 
-  grid_spec.set_bounding_box(boundingBox());
+  BoundBox bbox = boundingBox();
+  grid_spec.set("bbox_s", bbox.min().lat());
+  grid_spec.set("bbox_w", bbox.min().lon());
+  grid_spec.set("bbox_n", bbox.max().lat());
+  grid_spec.set("bbox_e", bbox.max().lon());
 
   return grid_spec;
 }

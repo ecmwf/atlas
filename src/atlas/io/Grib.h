@@ -48,7 +48,7 @@ public: // methods
 
 	/// Given a GridSpec return closest grib samples file.
 	/// If no match found returns an empty string
-	static std::string grib_sample_file( const GridSpec&, long edition );
+	static std::string grib_sample_file( const eckit::Properties&, long edition );
 
 	static void write( const atlas::FieldSet& fset, const eckit::PathName& opath  );
 
@@ -74,7 +74,7 @@ private: // methods
 	/// @todo this function is temporary, until we make an abstract interface to output to different formats
 	///       we must learn more about NetCDF, etc...
 	///
-	static void write_gridspec_to_grib( const GridSpec&, eckit::grib::GribHandle& );
+	static void write_gridspec_to_grib( const eckit::Properties&, eckit::grib::GribHandle& );
 
 };
 

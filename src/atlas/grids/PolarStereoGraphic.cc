@@ -85,7 +85,7 @@ PolarStereoGraphic::~PolarStereoGraphic() {
 }
 
 
-GridSpec PolarStereoGraphic::spec() const {
+eckit::Properties PolarStereoGraphic::spec() const {
     NOTIMP;
 }
 

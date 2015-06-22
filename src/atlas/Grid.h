@@ -22,13 +22,12 @@
 #include <string>
 
 #include "eckit/exception/Exceptions.h"
+#include "eckit/value/Properties.h"
 #include "eckit/geometry/Point2.h"
 #include "eckit/memory/Builder.h"
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
-#include "eckit/value/Params.h"
 #include "eckit/utils/MD5.h"
-#include "eckit/value/Properties.h"
 
 #include "atlas/BoundBox.h"
 #include "atlas/util/ObjectRegistry.h"
@@ -37,7 +36,6 @@
 namespace atlas {
 
 class Mesh;
-class GridSpec;
 
 //------------------------------------------------------------------------------------------------------
 
@@ -59,7 +57,6 @@ class Grid : public eckit::Owned, public util::Registered<Grid> {
 
   static std::string className() { return "atlas.Grid"; }
 
-  static Grid* create(const GridSpec&);
   static Grid* create(const eckit::Parametrisation&);
   static Grid* create(const Grid::uid_t& shortName);
 
@@ -114,7 +111,7 @@ class Grid : public eckit::Owned, public util::Registered<Grid> {
 
   virtual std::string gridType() const = 0;
 
-  //virtual GridSpec spec() const = 0; /// FIXME: Dont use GridSpec anymore
+  virtual eckit::Properties spec() const = 0;
 
   virtual bool same(const Grid&) const;
 

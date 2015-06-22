@@ -118,19 +118,26 @@ void ReducedLonLatGrid::setup( const size_t nlat, const int nlons[], bool poles 
 }
 
 
-GridSpec ReducedLonLatGrid::spec() const
+eckit::Properties ReducedLonLatGrid::spec() const
 {
-  GridSpec grid_spec( grid_type_str() );
+  eckit::Properties grid_spec;
+
+  grid_spec.set("grid_type", grid_type_str() );
 
   grid_spec.set("N", N() );
   grid_spec.set("nlat", nlat() );
-  grid_spec.set_npts_per_lat(npts_per_lat());
+
+  grid_spec.set("npts_per_lat",eckit::makeVectorValue(npts_per_lat()));
 
   if( nlat() != N() )
-    grid_spec.set_latitudes(latitudes());
+    grid_spec.set("latitudes",eckit::makeVectorValue(latitudes()));
 
+  BoundBox bbox = boundingBox();
+  grid_spec.set("bbox_s", bbox.min().lat());
+  grid_spec.set("bbox_w", bbox.min().lon());
+  grid_spec.set("bbox_n", bbox.max().lat());
+  grid_spec.set("bbox_e", bbox.max().lon());
   grid_spec.set("poles",poles_);
-  grid_spec.set_bounding_box(boundingBox());
 
   return grid_spec;
 }

@@ -71,7 +71,7 @@ reduced_gg_pl_512_grib1.tmpl
 regular_gg_sfc_grib1.tmpl
 )
 
-set( TEST_GRIDSPEC OFF )
+set( TEST_GRIDSPEC ON )
 
 if( TEST_GRIDSPEC )
 

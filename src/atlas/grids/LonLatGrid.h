@@ -102,7 +102,7 @@ public:
 
   static std::string className();
 
-  virtual GridSpec spec() const;
+  virtual eckit::Properties spec() const;
 
   size_t nlon() const { return ReducedGrid::nlon(0); }
 

@@ -81,16 +81,21 @@ void GaussianGrid::setup_lat_hemisphere(const size_t N, const double lats[])
   ReducedGrid::setup_lat_hemisphere(N,lats,nlons.data(),DEG);
 }
 
-GridSpec GaussianGrid::spec() const
+eckit::Properties GaussianGrid::spec() const
 {
-  GridSpec grid_spec( grid_type_str() );
+  eckit::Properties grid_spec;
+  grid_spec.set("grid_type",grid_type_str());
 
   grid_spec.set("N", N() );
-  grid_spec.set_latitudes(latitudes());
+  grid_spec.set("latitudes",eckit::makeVectorValue(latitudes()));
 
   grid_spec.set("nlat",nlat());
 
-  grid_spec.set_bounding_box(boundingBox());
+  BoundBox bbox = boundingBox();
+  grid_spec.set("bbox_s", bbox.min().lat());
+  grid_spec.set("bbox_w", bbox.min().lon());
+  grid_spec.set("bbox_n", bbox.max().lat());
+  grid_spec.set("bbox_e", bbox.max().lon());
 
   return grid_spec;
 }

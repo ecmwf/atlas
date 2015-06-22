@@ -86,7 +86,7 @@ std::string RotatedGrid::gridType() const {
     NOTIMP;
 }
 
-GridSpec RotatedGrid::spec() const {
+eckit::Properties RotatedGrid::spec() const {
     NOTIMP;
 }
 
