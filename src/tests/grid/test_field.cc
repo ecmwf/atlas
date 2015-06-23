@@ -130,9 +130,10 @@ void TestField::test_fieldcreator()
   Field::Ptr arr (Field::create( Field::Parameters
                                    ("creator","ArraySpec")
                                    ("shape",make_shape(10,2))
-                                   ("grid",*g)
                                ));
-  ASSERT( arr->grid().npts() == g->npts() );
+  ASSERT( arr->shape(0) == 10 );
+  ASSERT( arr->shape(1) == 2 );
+  ASSERT( arr->data_type() == "real64" );
 
 
   Field::Parameters ifs_parameters;
@@ -140,8 +141,7 @@ void TestField::test_fieldcreator()
       ("creator","IFS")
       ("nlev",137)
       ("nproma",10)
-      ("grid",*g);
-
+      ("ngptot",g->npts());
 
   Field::Ptr ifs (Field::create( Field::Parameters
                                     (ifs_parameters)
@@ -150,7 +150,11 @@ void TestField::test_fieldcreator()
                                     ("nvar",8)
                                ));
 
-  ASSERT( arr->grid().npts() == g->npts() );
+  DEBUG_VAR( *ifs );
+  ASSERT( ifs->shape(0) == 36 );
+  ASSERT( ifs->shape(1) == 8 );
+  ASSERT( ifs->shape(2) == 137 );
+  ASSERT( ifs->shape(3) == 10 );
 
   eckit::Log::debug() << std::flush;
   eckit::Log::info() << std::flush;

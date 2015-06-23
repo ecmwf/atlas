@@ -79,53 +79,79 @@ subroutine Parametrisation__set_string(this, name, value)
   call atlas__Parametrisation__set_string(this%cpp_object_ptr, c_str(name) , c_str(value) )
 end subroutine Parametrisation__set_string
 
-subroutine Parametrisation__get_logical(this, name, value)
+function Parametrisation__get_logical(this, name, value) result(found)
   use atlas_parametrisation_c_binding
+  logical :: found
   class(atlas_Parametrisation), intent(in) :: this
   character(len=*), intent(in) :: name
-  logical, intent(out) :: value
+  logical, intent(inout) :: value
   integer :: value_int
-  value_int = atlas__Parametrisation__get_int(this%cpp_object_ptr,c_str(name) )
+  integer :: found_int
+  found_int = atlas__Parametrisation__get_int(this%cpp_object_ptr,c_str(name), value_int )
   if (value_int > 0) then
     value = .True.
   else
     value = .False.
   end if
-end subroutine Parametrisation__get_logical
+  found = .False.
+  if (found_int == 1) found = .True.
+end function Parametrisation__get_logical
 
-subroutine Parametrisation__get_int32(this, name, value)
+function Parametrisation__get_int32(this, name, value) result(found)
   use atlas_parametrisation_c_binding
+  logical :: found
   class(atlas_Parametrisation), intent(in) :: this
   character(len=*), intent(in) :: name
-  integer, intent(out) :: value
-  value = atlas__Parametrisation__get_int(this%cpp_object_ptr, c_str(name) )
-end subroutine Parametrisation__get_int32
+  integer, intent(inout) :: value
+  integer :: found_int
+  found_int = atlas__Parametrisation__get_int(this%cpp_object_ptr, c_str(name), value )
+  found = .False.
+  if (found_int == 1) found = .True.
+end function Parametrisation__get_int32
 
-subroutine Parametrisation__get_real32(this, name, value)
+function Parametrisation__get_real32(this, name, value) result(found)
   use atlas_parametrisation_c_binding
+  logical :: found
   class(atlas_Parametrisation), intent(in) :: this
   character(len=*), intent(in) :: name
-  real(c_float), intent(out) :: value
-  value = atlas__Parametrisation__get_float(this%cpp_object_ptr, c_str(name) )
-end subroutine Parametrisation__get_real32
+  real(c_float), intent(inout) :: value
+  integer :: found_int
+  found_int = atlas__Parametrisation__get_float(this%cpp_object_ptr, c_str(name), value )
+  found = .False.
+  if (found_int == 1) found = .True.
+end function Parametrisation__get_real32
 
-subroutine Parametrisation__get_real64(this, name, value)
+function Parametrisation__get_real64(this, name, value) result(found)
   use atlas_parametrisation_c_binding
+  logical :: found
   class(atlas_Parametrisation), intent(in) :: this
   character(len=*), intent(in) :: name
-  real(c_double), intent(out) :: value
-  value = atlas__Parametrisation__get_double(this%cpp_object_ptr, c_str(name) )
-end subroutine Parametrisation__get_real64
+  real(c_double), intent(inout) :: value
+  integer :: found_int
+  found_int = atlas__Parametrisation__get_double(this%cpp_object_ptr, c_str(name), value )
+  found = .False.
+  if (found_int == 1) found = .True.
+end function Parametrisation__get_real64
 
-subroutine Parametrisation__get_string(this, name, value)
+function Parametrisation__get_string(this, name, value) result(found)
   use atlas_parametrisation_c_binding
+  logical :: found
   class(atlas_Parametrisation), intent(in) :: this
   character(len=*), intent(in) :: name
-  character(len=:), allocatable, intent(out) :: value
-  character(len=MAX_STR_LEN) :: value_cstr
-  call atlas__Parametrisation__get_string(this%cpp_object_ptr, c_str(name), value_cstr, MAX_STR_LEN )
-  value = c_to_f_string_str(value_cstr)
-end subroutine Parametrisation__get_string
+  character(len=:), allocatable, intent(inout) :: value
+  type(c_ptr) :: value_cptr
+  integer :: found_int
+  integer(c_int) :: value_size
+  integer(c_int) :: value_allocated
+  found_int = atlas__Parametrisation__get_string(this%cpp_object_ptr,c_str(name),value_cptr,value_size,value_allocated)
+  if( found_int == 1 ) then
+    allocate(character(len=value_size) :: value )
+    value = c_to_f_string_cptr(value_cptr)
+    if( value_allocated == 1 ) call atlas_free(value_cptr)
+  endif
+  found = .False.
+  if (found_int == 1) found = .True.
+end function Parametrisation__get_string
 
 subroutine Parametrisation__set_array_int32(this, name, value)
   use atlas_parametrisation_c_binding
@@ -163,71 +189,95 @@ subroutine Parametrisation__set_array_real64(this, name, value)
     & value, size(value) )
 end subroutine Parametrisation__set_array_real64
 
-subroutine Parametrisation__get_array_int32(this, name, value)
+function Parametrisation__get_array_int32(this, name, value) result(found)
   use atlas_parametrisation_c_binding
+  logical :: found
   class(atlas_Parametrisation), intent(in) :: this
   character(len=*), intent(in) :: name
-  integer(c_int), allocatable, intent(out) :: value(:)
+  integer(c_int), allocatable, intent(inout) :: value(:)
   type(c_ptr) :: value_cptr
   integer(c_int), pointer :: value_fptr(:)
   integer :: value_size
   integer :: value_allocated
-  call atlas__Parametrisation__get_array_int(this%cpp_object_ptr, c_str(name), &
+  integer :: found_int
+  found_int = atlas__Parametrisation__get_array_int(this%cpp_object_ptr, c_str(name), &
     & value_cptr, value_size, value_allocated )
-  call c_f_pointer(value_cptr,value_fptr,(/value_size/))
-  allocate(value(value_size))
-  value(:) = value_fptr(:)
-  if( value_allocated == 1 ) call atlas_free(value_cptr)
-end subroutine Parametrisation__get_array_int32
+  if (found_int ==1 ) then
+    call c_f_pointer(value_cptr,value_fptr,(/value_size/))
+    allocate(value(value_size))
+    value(:) = value_fptr(:)
+    if( value_allocated == 1 ) call atlas_free(value_cptr)
+  endif
+  found = .False.
+  if (found_int == 1) found = .True.
+end function Parametrisation__get_array_int32
 
-subroutine Parametrisation__get_array_int64(this, name, value)
+function Parametrisation__get_array_int64(this, name, value) result(found)
   use atlas_parametrisation_c_binding
+  logical :: found
   class(atlas_Parametrisation), intent(in) :: this
   character(len=*), intent(in) :: name
-  integer(c_long), allocatable, intent(out) :: value(:)
+  integer(c_long), allocatable, intent(inout) :: value(:)
   type(c_ptr) :: value_cptr
   integer(c_long), pointer :: value_fptr(:)
   integer :: value_size
   integer :: value_allocated
-  call atlas__Parametrisation__get_array_long(this%cpp_object_ptr, c_str(name), &
+  integer :: found_int
+  found_int = atlas__Parametrisation__get_array_long(this%cpp_object_ptr, c_str(name), &
     & value_cptr, value_size, value_allocated )
-  call c_f_pointer(value_cptr,value_fptr,(/value_size/))
-  allocate(value(value_size))
-  value(:) = value_fptr(:)
-  if( value_allocated == 1 ) call atlas_free(value_cptr)
-end subroutine Parametrisation__get_array_int64
+  if (found_int == 1) then
+    call c_f_pointer(value_cptr,value_fptr,(/value_size/))
+    allocate(value(value_size))
+    value(:) = value_fptr(:)
+    if( value_allocated == 1 ) call atlas_free(value_cptr)
+  endif
+  found = .False.
+  if (found_int == 1) found = .True.
+end function Parametrisation__get_array_int64
 
-subroutine Parametrisation__get_array_real32(this, name, value)
+function Parametrisation__get_array_real32(this, name, value) result(found)
   use atlas_parametrisation_c_binding
+  logical :: found
   class(atlas_Parametrisation), intent(in) :: this
   character(len=*), intent(in) :: name
-  real(c_float), allocatable, intent(out) :: value(:)
+  real(c_float), allocatable, intent(inout) :: value(:)
   type(c_ptr) :: value_cptr
   real(c_float), pointer :: value_fptr(:)
   integer :: value_size
   integer :: value_allocated
-  call atlas__Parametrisation__get_array_float(this%cpp_object_ptr, c_str(name), &
+  integer :: found_int
+  found_int = atlas__Parametrisation__get_array_float(this%cpp_object_ptr, c_str(name), &
     & value_cptr, value_size, value_allocated )
-  call c_f_pointer(value_cptr,value_fptr,(/value_size/))
-  allocate(value(value_size))
-  value(:) = value_fptr(:)
-  if( value_allocated == 1 ) call atlas_free(value_cptr)
-end subroutine Parametrisation__get_array_real32
+  if (found_int == 1 ) then
+    call c_f_pointer(value_cptr,value_fptr,(/value_size/))
+    allocate(value(value_size))
+    value(:) = value_fptr(:)
+    if( value_allocated == 1 ) call atlas_free(value_cptr)
+  endif
+  found = .False.
+  if (found_int == 1) found = .True.
+end function Parametrisation__get_array_real32
 
-subroutine Parametrisation__get_array_real64(this, name, value)
+function Parametrisation__get_array_real64(this, name, value) result(found)
   use atlas_parametrisation_c_binding
+  logical :: found
   class(atlas_Parametrisation), intent(in) :: this
   character(len=*), intent(in) :: name
-  real(c_double), allocatable, intent(out) :: value(:)
+  real(c_double), allocatable, intent(inout) :: value(:)
   type(c_ptr) :: value_cptr
   real(c_double), pointer :: value_fptr(:)
   integer :: value_size
   integer :: value_allocated
-  call atlas__Parametrisation__get_array_double(this%cpp_object_ptr, c_str(name), &
+  integer :: found_int
+  found_int = atlas__Parametrisation__get_array_double(this%cpp_object_ptr, c_str(name), &
     & value_cptr, value_size, value_allocated )
-  call c_f_pointer(value_cptr,value_fptr,(/value_size/))
-  allocate(value(value_size))
-  value(:) = value_fptr(:)
-  if( value_allocated == 1 ) call atlas_free(value_cptr)
-end subroutine Parametrisation__get_array_real64
+  if (found_int == 1) then
+    call c_f_pointer(value_cptr,value_fptr,(/value_size/))
+    allocate(value(value_size))
+    value(:) = value_fptr(:)
+    if( value_allocated == 1 ) call atlas_free(value_cptr)
+  endif
+  found = .False.
+  if (found_int == 1) found = .True.
+end function Parametrisation__get_array_real64
 

@@ -8,6 +8,8 @@
 #include "atlas/atlas.h"
 #include "atlas/runtime/Behavior.h"
 #include "atlas/grids/grids.h"
+#include "atlas/field/FieldCreator.h"
+#include "atlas/meshgen/MeshGenerator.h"
 
 using namespace eckit;
 
@@ -75,6 +77,7 @@ void atlas_init(int argc, char** argv)
   Log::debug() << "rundir  : " << LocalPathName(rundir()).fullName() << "\n";
   Log::debug() << dedent();
 
+  // Load factories for static linking
   atlas::grids::load();
 }
 

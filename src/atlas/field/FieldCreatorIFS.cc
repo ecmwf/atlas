@@ -12,16 +12,16 @@
 #include "eckit/exception/Exceptions.h"
 #include "eckit/config/Parametrisation.h"
 #include "atlas/util/ArrayUtil.h"
-#include "atlas/field/IFS.h"
+#include "atlas/field/FieldTCreator.h"
+#include "atlas/field/FieldCreatorIFS.h"
 #include "atlas/Field.h"
 #include "atlas/Grid.h"
 
 namespace atlas {
 namespace field {
 
-Field* IFS::create_field( const eckit::Parametrisation& params ) const
+Field* FieldCreatorIFS::create_field( const eckit::Parametrisation& params ) const
 {
-  Field* field;
   size_t ngptot;
   size_t nblk;
   size_t nvar = 1;
@@ -30,13 +30,7 @@ Field* IFS::create_field( const eckit::Parametrisation& params ) const
   long kind = 8; // 8 bytes = double
 
   if( !params.get("ngptot",ngptot) )
-  {
-    Grid::Id grid;
-    if( params.get("grid",grid ) )
-      ngptot = Grid::from_id(grid).npts();
-    else
-      throw eckit::Exception("Could not find parameter 'ngptot' in Parametrisation");
-  }
+    throw eckit::Exception("Could not find parameter 'ngptot' in Parametrisation");
   params.get("nproma",nproma);
   params.get("nlev",nlev);
   params.get("nvar",nvar);
@@ -57,25 +51,24 @@ Field* IFS::create_field( const eckit::Parametrisation& params ) const
   }
 
   nblk = std::ceil(static_cast<double>(ngptot)/static_cast<double>(nproma));
-  ArrayShape s = make_shape(nblk,nvar,nlev,nproma);
+
+  ArrayShape s;
+  bool fortran (false);
+    params.get("fortran",fortran);
+  if( fortran ) s = make_shape(nproma,nlev,nvar,nblk);
+  else          s = make_shape(nblk,nvar,nlev,nproma);
 
   std::string name;
   params.get("name",name);
   eckit::Log::debug() << "Creating IFS "<<data_type<<" field: "<<name<<"[nblk="<<nblk<<"][nvar="<<nvar<<"][nlev="<<nlev<<"][nproma="<<nproma<<"]\n";
-  if( data_type == "int32" || data_type == "int" )
-    field = new FieldT<int>(s,params);
-  else if( data_type == "int64" || data_type == "long" )
-    field = new FieldT<long>(s,params);
-  else if( data_type == "real32" || data_type == "float" )
-    field = new FieldT<float>(s,params);
-  else if( data_type == "real64" || data_type == "double" )
-    field = new FieldT<double>(s);
 
-  return field;
+  eckit::ScopedPtr<field::FieldTCreator> creator
+     (field::FieldTCreatorFactory::build("FieldT<"+data_type+">") );
+  return creator->create_field(s,params);
 }
 
 namespace {
-static FieldCreatorBuilder< IFS > __IFS("IFS");
+static FieldCreatorBuilder< FieldCreatorIFS > __IFS("IFS");
 }
 
 // ------------------------------------------------------------------

@@ -17,6 +17,8 @@
 #include "eckit/log/Log.h"
 
 #include "atlas/field/FieldCreator.h"
+#include "atlas/field/FieldCreatorArraySpec.h"
+#include "atlas/field/FieldCreatorIFS.h"
 #include "atlas/Field.h"
 #include "atlas/Grid.h"
 #include "atlas/FunctionSpace.h"
@@ -33,8 +35,27 @@ namespace {
     }
 }
 
+
 namespace atlas {
 namespace field {
+
+namespace {
+
+template<typename T> void load_builder() { FieldCreatorBuilder<T>("tmp"); }
+
+struct force_link {
+    force_link()
+    {
+        load_builder< FieldCreatorIFS >();
+        load_builder< FieldCreatorArraySpec >();
+    }
+};
+
+}
+
+
+
+
 
 // ------------------------------------------------------------------
 
@@ -69,6 +90,8 @@ void FieldCreatorFactory::list(std::ostream& out) {
 
     eckit::AutoLock<eckit::Mutex> lock(local_mutex);
 
+    static force_link static_linking;
+
     const char* sep = "";
     for (std::map<std::string, FieldCreatorFactory *>::const_iterator j = m->begin() ; j != m->end() ; ++j) {
         out << sep << (*j).first;
@@ -82,6 +105,9 @@ FieldCreator *FieldCreatorFactory::build(const std::string &name) {
     pthread_once(&once, init);
 
     eckit::AutoLock<eckit::Mutex> lock(local_mutex);
+
+    static force_link static_linking;
+
     std::map<std::string, FieldCreatorFactory *>::const_iterator j = m->find(name);
 
     eckit::Log::debug() << "Looking for FieldCreatorFactory [" << name << "]" << '\n';
@@ -97,11 +123,14 @@ FieldCreator *FieldCreatorFactory::build(const std::string &name) {
     return (*j).second->make();
 }
 
+
 FieldCreator *FieldCreatorFactory::build(const std::string& name, const eckit::Parametrisation& param) {
 
     pthread_once(&once, init);
 
     eckit::AutoLock<eckit::Mutex> lock(local_mutex);
+
+    static force_link static_linking;
 
     std::map<std::string, FieldCreatorFactory *>::const_iterator j = m->find(name);
 
@@ -117,6 +146,8 @@ FieldCreator *FieldCreatorFactory::build(const std::string& name, const eckit::P
 
     return (*j).second->make(param);
 }
+
+
 
 } // namespace field
 } // namespace atlas

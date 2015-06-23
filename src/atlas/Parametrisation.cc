@@ -100,173 +100,165 @@ bool Parametrisation::get(const std::string &name, std::vector<double> &value) c
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
-Parametrisation *atlas__Parametrisation__new () {
-    return new Parametrisation();
+Parametrisation* atlas__Parametrisation__new () {
+  return new Parametrisation();
 }
 
-void atlas__Parametrisation__delete (Parametrisation *This) {
-    delete This;
+void atlas__Parametrisation__delete (Parametrisation* This) {
+  delete This;
 }
 
-void atlas__Parametrisation__set_int (Parametrisation *This, const char *name, int value) {
-    ATLAS_ERROR_HANDLING( This->set( std::string(name), long(value) ) );
+void atlas__Parametrisation__set_int (Parametrisation* This, const char* name, int value)
+{
+  ATLAS_ERROR_HANDLING( This->set( std::string(name), long(value) ) );
 }
-
-void atlas__Parametrisation__set_long (Parametrisation *This, const char *name, long value) {
-    ATLAS_ERROR_HANDLING( This->set( std::string(name), value ) );
+void atlas__Parametrisation__set_long (Parametrisation* This, const char* name, long value)
+{
+  ATLAS_ERROR_HANDLING( This->set( std::string(name), value ) );
 }
-
-void atlas__Parametrisation__set_float (Parametrisation *This, const char *name, float value) {
-    ATLAS_ERROR_HANDLING( This->set( std::string(name), double(value) ) );
+void atlas__Parametrisation__set_float (Parametrisation* This, const char* name, float value)
+{
+  ATLAS_ERROR_HANDLING( This->set( std::string(name), double(value) ) );
 }
-
-void atlas__Parametrisation__set_double (Parametrisation *This, const char *name, double value) {
-    ATLAS_ERROR_HANDLING( This->set( std::string(name), value ) );
+void atlas__Parametrisation__set_double (Parametrisation* This, const char* name, double value)
+{
+  ATLAS_ERROR_HANDLING( This->set( std::string(name), value ) );
 }
-
-void atlas__Parametrisation__set_string (Parametrisation *This, const char *name, const char *value) {
-    ATLAS_ERROR_HANDLING( This->set( std::string(name), std::string(value) ) );
+void atlas__Parametrisation__set_string (Parametrisation* This, const char* name, const char* value)
+{
+  ATLAS_ERROR_HANDLING( This->set( std::string(name), std::string(value) ) );
 }
-
-void atlas__Parametrisation__set_array_int (Parametrisation *This, const char *name, int value[], int size) {
-    ATLAS_ERROR_HANDLING(
-        std::vector<int> v;
-        v.assign(value, value + size);
-        This->set( std::string(name), v );
-    );
+void atlas__Parametrisation__set_array_int (Parametrisation* This, const char* name, int value[], int size)
+{
+  ATLAS_ERROR_HANDLING(
+    std::vector<int> v;
+    v.assign(value,value+size);
+    This->set( std::string(name), v );
+  );
 }
-
-void atlas__Parametrisation__set_array_long (Parametrisation *This, const char *name, long value[], int size) {
-    ATLAS_ERROR_HANDLING(
-        std::vector<long> v;
-        v.assign(value, value + size);
-        This->set( std::string(name), v );
-    );
+void atlas__Parametrisation__set_array_long (Parametrisation* This, const char* name, long value[], int size)
+{
+  ATLAS_ERROR_HANDLING(
+    std::vector<long> v;
+    v.assign(value,value+size);
+    This->set( std::string(name), v );
+  );
 }
-
-void atlas__Parametrisation__set_array_float (Parametrisation *This, const char *name, float value[], int size) {
-    ATLAS_ERROR_HANDLING(
-        std::vector<float> v;
-        v.assign(value, value + size);
-        This->set( std::string(name), v );
-    );
+void atlas__Parametrisation__set_array_float (Parametrisation* This, const char* name, float value[], int size)
+{
+  ATLAS_ERROR_HANDLING(
+    std::vector<float> v;
+    v.assign(value,value+size);
+    This->set( std::string(name), v );
+  );
 }
-
-void atlas__Parametrisation__set_array_double (Parametrisation *This, const char *name, double value[], int size) {
-    ATLAS_ERROR_HANDLING(
-        std::vector<double> v;
-        v.assign(value, value + size);
-        This->set( std::string(name), v );
-    );
+void atlas__Parametrisation__set_array_double (Parametrisation* This, const char* name, double value[], int size)
+{
+  ATLAS_ERROR_HANDLING(
+    std::vector<double> v;
+    v.assign(value,value+size);
+    This->set( std::string(name), v );
+  );
 }
-
-int atlas__Parametrisation__get_int (Parametrisation *This, const char *name) {
-    long value;
-    ATLAS_ERROR_HANDLING (
-        if ( ! This->get(std::string(name), value) )
-        throw eckit::BadParameter("Parameter with name " + std::string(name) + " not found");
-    );
-    ASSERT(int(value) == value);
-    return value;
+int atlas__Parametrisation__get_int (Parametrisation* This, const char* name, int& value)
+{
+  long long_value;
+  ATLAS_ERROR_HANDLING ( if( ! This->get(std::string(name),long_value) )  return false; );
+  ASSERT( int(long_value) == long_value );
+  value = long_value;
+  return true;
 }
+int atlas__Parametrisation__get_long (Parametrisation* This, const char* name, long& value)
+{
+  ATLAS_ERROR_HANDLING ( if( ! This->get(std::string(name),value) )  return false; );
+  return true;
 
-long atlas__Parametrisation__get_long (Parametrisation *This, const char *name) {
-    long value;
-    ATLAS_ERROR_HANDLING (
-        if ( ! This->get(std::string(name), value) )
-        throw eckit::BadParameter("Parameter with name " + std::string(name) + " not found");
-    );
-    return value;
 }
-
-float atlas__Parametrisation__get_float (Parametrisation *This, const char *name) {
-    double value;
-    ATLAS_ERROR_HANDLING (
-        if ( ! This->get(std::string(name), value) )
-        throw eckit::BadParameter("Parameter with name " + std::string(name) + " not found");
-    );
-    ASSERT(float(value) == value);
-    return value;
+int atlas__Parametrisation__get_float (Parametrisation* This, const char* name, float& value)
+{
+  double double_value;
+  ATLAS_ERROR_HANDLING ( if ( ! This->get(std::string(name), double_value) ) return false ; );
+  ASSERT(float(double_value) == double_value);
+  value = double_value;
+  return true;
 }
-
-double atlas__Parametrisation__get_double (Parametrisation *This, const char *name) {
-    double value;
-    ATLAS_ERROR_HANDLING (
-        if ( ! This->get(std::string(name), value) )
-        throw eckit::BadParameter("Parameter with name " + std::string(name) + " not found");
-    );
-    return value;
+int atlas__Parametrisation__get_double (Parametrisation* This, const char* name, double& value)
+{
+  ATLAS_ERROR_HANDLING ( if( ! This->get(std::string(name),value) )  return false; );
+  return true;
 }
-
-void atlas__Parametrisation__get_string( Parametrisation *This, const char *name, char *output_str, int max_len ) {
-    ATLAS_ERROR_HANDLING(
-        std::string s;
-        if ( ! This->get(std::string(name), s) )
-        throw eckit::BadParameter("Parameter with name " + std::string(name) + " not found");
-    if ( s.size() > max_len ) {
-        std::stringstream msg;
-        msg << "Cannot copy string `" << s << "` of Parametrisation `" << name << "`"
-            "in buffer of length " << max_len;
-        throw eckit::OutOfRange(msg.str(), Here());
-        }
-    strcpy( output_str, s.c_str() );
-    return
-    );
-    output_str = NULL;
-}
-
-void atlas__Parametrisation__get_array_int (Parametrisation *This, const char *name, int *&value, int &size, int &allocated) {
-    ATLAS_ERROR_HANDLING(
-        std::vector<long> v;
-        if ( ! This->get(std::string(name), v) )
-        throw eckit::BadParameter("Parameter with name " + std::string(name) + " not found");
-        size = v.size();
-        value = new int[size];
-    for ( size_t j = 0; j < v.size(); ++j ) {
-        ASSERT(int(v[j]) == v[j]);
-            value[j] = v[j];
-        }
+int atlas__Parametrisation__get_string( Parametrisation* This, const char* name, char* &value, int &size, int &allocated )
+{
+  ATLAS_ERROR_HANDLING(
+    std::string s;
+    if( ! This->get(std::string(name),s) )
+    {
+      value = NULL;
+      return false;
+    }
+    value = new char[s.size()+1];
+    strcpy(value,s.c_str());
     allocated = true;
-    );
+  );
+  return true;
 }
-
-void atlas__Parametrisation__get_array_long (Parametrisation *This, const char *name, long *&value, int &size, int &allocated) {
-    ATLAS_ERROR_HANDLING(
-        std::vector<long> v;
-        if ( ! This->get(std::string(name), v) )
-        throw eckit::BadParameter("Parameter with name " + std::string(name) + " not found");
-        size = v.size();
-        value = new long[size];
-        for ( size_t j = 0; j < v.size(); ++j ) value[j] = v[j];
-            allocated = true;
-        );
-}
-
-void atlas__Parametrisation__get_array_float (Parametrisation *This, const char *name, float *&value, int &size, int &allocated) {
-    ATLAS_ERROR_HANDLING(
-        std::vector<double> v;
-        if ( ! This->get(std::string(name), v) )
-        throw eckit::BadParameter("Parameter with name " + std::string(name) + " not found");
-        size = v.size();
-        value = new float[size];
+int atlas__Parametrisation__get_array_int (Parametrisation* This, const char* name, int* &value, int& size, int& allocated)
+{
+  ATLAS_ERROR_HANDLING(
+    std::vector<long> v;
+    if( ! This->get(std::string(name),v) )
+      return false;
+    size = v.size();
+    value = new int[size];
     for ( size_t j = 0; j < v.size(); ++j ) {
-        ASSERT(float(v[j]) == v[j]);
-            value[j] = v[j];
-        }
+      ASSERT(int(v[j]) == v[j]);
+      value[j] = v[j];
+    }
     allocated = true;
-    );
+  );
+  return true;
 }
-
-void atlas__Parametrisation__get_array_double (Parametrisation *This, const char *name, double *&value, int &size, int &allocated) {
-    ATLAS_ERROR_HANDLING(
-        std::vector<double> v;
-        if ( ! This->get(std::string(name), v) )
-        throw eckit::BadParameter("Parameter with name " + std::string(name) + " not found");
-        size = v.size();
-        value = new double[size];
-        for ( size_t j = 0; j < v.size(); ++j ) value[j] = v[j];
-            allocated = true;
-        );
+int atlas__Parametrisation__get_array_long (Parametrisation* This, const char* name, long* &value, int& size, int& allocated)
+{
+  ATLAS_ERROR_HANDLING(
+    std::vector<long> v;
+    if( ! This->get(std::string(name),v) )
+      return false;
+    size = v.size();
+    value = new long[size];
+    for( size_t j=0; j<v.size(); ++j ) value[j] = v[j];
+    allocated = true;
+  );
+  return true;
+}
+int atlas__Parametrisation__get_array_float (Parametrisation* This, const char* name, float* &value, int& size, int& allocated)
+{
+  ATLAS_ERROR_HANDLING(
+    std::vector<double> v;
+    if( ! This->get(std::string(name),v) )
+      return false;
+    size = v.size();
+    value = new float[size];
+    for ( size_t j = 0; j < v.size(); ++j ) {
+      ASSERT(float(v[j]) == v[j]);
+      value[j] = v[j];
+    }
+    allocated = true;
+  );
+    return true;
+}
+int atlas__Parametrisation__get_array_double (Parametrisation* This, const char* name, double* &value, int& size, int& allocated)
+{
+  ATLAS_ERROR_HANDLING(
+    std::vector<double> v;
+    if( ! This->get(std::string(name),v) )
+      return false;
+    size = v.size();
+    value = new double[size];
+    for( size_t j=0; j<v.size(); ++j ) value[j] = v[j];
+    allocated = true;
+  );
+  return true;
 }
 
 int atlas__Parametrisation__has (Parametrisation *This, const char *name) {

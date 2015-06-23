@@ -47,6 +47,7 @@ public:
     virtual ~FieldCreator();
 
     virtual Field* create_field( const eckit::Parametrisation& ) const = 0;
+
 };
 
 //------------------------------------------------------------------------------------------------------

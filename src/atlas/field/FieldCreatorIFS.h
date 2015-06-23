@@ -41,11 +41,11 @@ namespace field {
  *         );
  * \endcode
  */
-class IFS: public FieldCreator
+class FieldCreatorIFS: public FieldCreator
 {
 public:
-  IFS() {}
-  IFS(const eckit::Parametrisation&) {}
+  FieldCreatorIFS() {}
+  FieldCreatorIFS(const eckit::Parametrisation&) {}
   virtual Field* create_field( const eckit::Parametrisation& ) const;
 };
 

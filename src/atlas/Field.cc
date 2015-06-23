@@ -18,6 +18,7 @@
 #include "atlas/Field.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/field/FieldCreator.h"
+#include "atlas/field/FieldTCreator.h"
 
 namespace atlas {
 
@@ -39,11 +40,12 @@ Field* Field::create(const eckit::Parametrisation& params)
 
 Field* Field::create(const ArrayShape& shape, const eckit::Parametrisation& params)
 {
-  std::string creator_factory( "ArraySpec" );
-  params.get("creator",creator_factory);
-  eckit::ScopedPtr<field::FieldCreator> creator
-     (field::FieldCreatorFactory::build(creator_factory) );
-  return creator->create_field(Parameters(params)("shape",shape));
+  std::string data_type = "real64";
+  params.get("data_type",data_type);
+
+  eckit::ScopedPtr<field::FieldTCreator> creator
+     (field::FieldTCreatorFactory::build("FieldT<"+data_type+">") );
+  return creator->create_field(shape,params);
 }
 
 

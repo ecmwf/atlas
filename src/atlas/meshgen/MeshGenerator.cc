@@ -17,6 +17,8 @@
 #include "eckit/thread/Mutex.h"
 #include "eckit/exception/Exceptions.h"
 #include "atlas/Mesh.h"
+#include "atlas/meshgen/ReducedGridMeshGenerator.h"
+#include "atlas/meshgen/Delaunay.h"
 
 namespace atlas {
 namespace meshgen {
@@ -31,7 +33,21 @@ namespace {
         local_mutex = new eckit::Mutex();
         m = new std::map<std::string, MeshGeneratorFactory *>();
     }
+
+    template<typename T> void load_builder() { MeshGeneratorBuilder<T>("tmp"); }
+
+    struct force_link {
+        force_link()
+        {
+            load_builder<ReducedGridMeshGenerator>();
+            load_builder<Delaunay>();
+        }
+    };
+
 }
+
+
+
 
 MeshGenerator::MeshGenerator()
 {
@@ -79,6 +95,8 @@ void MeshGeneratorFactory::list(std::ostream& out) {
 
     eckit::AutoLock<eckit::Mutex> lock(local_mutex);
 
+    static force_link static_linking;
+
     const char* sep = "";
     for (std::map<std::string, MeshGeneratorFactory *>::const_iterator j = m->begin() ; j != m->end() ; ++j) {
         out << sep << (*j).first;
@@ -92,6 +110,9 @@ MeshGenerator *MeshGeneratorFactory::build(const std::string &name) {
     pthread_once(&once, init);
 
     eckit::AutoLock<eckit::Mutex> lock(local_mutex);
+
+    static force_link static_linking;
+
     std::map<std::string, MeshGeneratorFactory *>::const_iterator j = m->find(name);
 
     eckit::Log::info() << "Looking for MeshGeneratorFactory [" << name << "]" << std::endl;
@@ -113,6 +134,8 @@ MeshGenerator *MeshGeneratorFactory::build(const std::string& name, const eckit:
 
     eckit::AutoLock<eckit::Mutex> lock(local_mutex);
 
+    static force_link static_linking;
+
     std::map<std::string, MeshGeneratorFactory *>::const_iterator j = m->find(name);
 
     eckit::Log::info() << "Looking for MeshGeneratorFactory [" << name << "]" << std::endl;
@@ -127,6 +150,7 @@ MeshGenerator *MeshGeneratorFactory::build(const std::string& name, const eckit:
 
     return (*j).second->make(param);
 }
+
 
 } // namespace meshgen
 } // namespace atlas

@@ -338,6 +338,39 @@ TEST( test_griddistribution )
   deallocate(part)
 END_TEST
 
+
+TEST( test_parametrisation )
+  type(atlas_Parametrisation) :: params
+  integer :: value
+  character(len=:), allocatable :: valuestr
+  logical :: found
+  params = atlas_Parametrisation()
+
+  if( .not. params%get("notexisting",value) ) then
+    !call atlas_abort("notexisting not found",atlas_code_location(__FILE__,__LINE__))
+  endif
+
+  call params%set("value3",3)
+  if( params%get("value3",value) ) then
+    write(atlas_log%msg,*) "value = ",value; call atlas_log%info()
+  endif
+
+  found = params%get("value4",value)
+
+  write(atlas_log%msg,*) "value = ",value; call atlas_log%info()
+
+  call params%set("valuesttr","hello world")
+
+  allocate( character(len=30) :: valuestr )
+  valuestr = "goodbye"
+  found = params%get("valuestr",valuestr)
+  write(atlas_log%msg,*) "valuestr = ",valuestr; call atlas_log%info()
+
+  call atlas_delete(params)
+
+END_TEST
+
+
 TEST( test_fieldcreation )
   use fctest_atlas_Mesh_fixture , only : FieldParams => atlas_FieldParametrisation
   type(atlas_ReducedGrid) :: grid

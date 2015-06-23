@@ -106,7 +106,7 @@ class Grid : public eckit::Owned, public util::Registered<Grid> {
 
   /// Fills the provided array with the (lon,lat) values
   /// @note Assumes that the input array has been allocated with correct size
-  /// @param array is an arry already allocated with enough size to store all the latlon values
+  /// @param array is an array already allocated with enough size to store all the latlon values
   /// @param arraySize is the size of the array
   void fillLonLat(double array[], size_t arraySize) const;
 

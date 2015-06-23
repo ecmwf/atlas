@@ -110,6 +110,7 @@ Parametrisation& Parametrisation::set(const std::string& name, const ValueT& val
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
+#define Char char
 extern "C"
 {
   Parametrisation* atlas__Parametrisation__new ();
@@ -126,16 +127,17 @@ extern "C"
   void atlas__Parametrisation__set_array_float  (Parametrisation* This, const char* name, float value[], int size);
   void atlas__Parametrisation__set_array_double (Parametrisation* This, const char* name, double value[], int size);
 
-  int    atlas__Parametrisation__get_int    (Parametrisation* This, const char* name);
-  long   atlas__Parametrisation__get_long   (Parametrisation* This, const char* name);
-  float  atlas__Parametrisation__get_float  (Parametrisation* This, const char* name);
-  double atlas__Parametrisation__get_double (Parametrisation* This, const char* name);
-  void   atlas__Parametrisation__get_string (Parametrisation* This, const char* name, char* output_str, int max_len);
-  void   atlas__Parametrisation__get_array_int    (Parametrisation* This, const char* name, int* &value, int &size, int &allocated);
-  void   atlas__Parametrisation__get_array_long   (Parametrisation* This, const char* name, long* &value, int &size, int &allocated);
-  void   atlas__Parametrisation__get_array_float  (Parametrisation* This, const char* name, float* &value, int &size, int &allocated);
-  void   atlas__Parametrisation__get_array_double (Parametrisation* This, const char* name, double* &value, int &size, int &allocated);
+  int atlas__Parametrisation__get_int    (Parametrisation* This, const char* name, int &value);
+  int atlas__Parametrisation__get_long   (Parametrisation* This, const char* name, long &value);
+  int atlas__Parametrisation__get_float  (Parametrisation* This, const char* name, float &value);
+  int atlas__Parametrisation__get_double (Parametrisation* This, const char* name, double &value);
+  int atlas__Parametrisation__get_string (Parametrisation* This, const char* name, Char* &value, int &size, int &allocated);
+  int atlas__Parametrisation__get_array_int    (Parametrisation* This, const char* name, int* &value, int &size, int &allocated);
+  int atlas__Parametrisation__get_array_long   (Parametrisation* This, const char* name, long* &value, int &size, int &allocated);
+  int atlas__Parametrisation__get_array_float  (Parametrisation* This, const char* name, float* &value, int &size, int &allocated);
+  int atlas__Parametrisation__get_array_double (Parametrisation* This, const char* name, double* &value, int &size, int &allocated);
 }
+#undef Char
 
 // ------------------------------------------------------------------
 

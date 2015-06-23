@@ -231,7 +231,18 @@ inline FieldT<DATA_TYPE>::FieldT(const std::vector<size_t>& shape, const eckit::
   data_(0)
 {
   data_type_ = data_type_to_str<DATA_TYPE>() ;
-  allocate(shape);
+
+  bool fortran(false);
+  params.get("fortran",fortran);
+  if( fortran ) {
+    std::vector<size_t> shapef(shape.size());
+    size_t n=shape.size();
+    for( size_t j=0; j<shape.size(); ++j ) shapef[j] = shape[--n];
+    allocate(shapef);
+  }
+  else {
+    allocate(shape);
+  }
 }
 
 
@@ -245,7 +256,7 @@ template< typename DATA_TYPE >
 inline void FieldT<DATA_TYPE>::allocate(const std::vector<size_t>& shape)
 {
   shape_ = shape;
-  size_t tot_size(1); for (int i = 0; i < shape_.size(); ++i) tot_size *= shape_[i];
+  size_t tot_size(1); for (size_t i = 0; i < shape_.size(); ++i) tot_size *= shape_[i];
   data_.resize(tot_size);
 
   shapef_.resize(shape_.size());

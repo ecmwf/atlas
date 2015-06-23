@@ -245,10 +245,12 @@ State.h
 State.cc
 field/FieldCreator.h
 field/FieldCreator.cc
-field/ArraySpec.h
-field/ArraySpec.cc
-field/IFS.h
-field/IFS.cc
+field/FieldCreatorArraySpec.h
+field/FieldCreatorArraySpec.cc
+field/FieldCreatorIFS.h
+field/FieldCreatorIFS.cc
+field/FieldTCreator.h
+field/FieldTCreator.cc
 )
 
 ### atlas c++ library

@@ -25,24 +25,21 @@ namespace field {
 // ------------------------------------------------------------------
 
 /*!
- * \brief Field creator using IFS parametrisation
- * Ideally this class should belong to IFS.
- * The only reference to IFS in Atlas should be here.
- * Example use:
+ * \brief Field creator using ArrayShape parametrisation
  * \code{.cpp}
  *    Field* field = Field::create(
  *         Field::Parameters
- *           ("creator","ArraySpec")      // ArraySpec FieldCreator
+ *           ("creator","ArraySpec")     // ArraySpec FieldCreator
  *           ("shape",make_shape(100,3))  // Rank 2 field with indexing [100][3]
  *           ("data_type","real64")       // Field internal data type
  *         );
  * \endcode
  */
-class ArraySpec: public FieldCreator
+class FieldCreatorArraySpec: public FieldCreator
 {
 public:
-  ArraySpec() {}
-  ArraySpec(const eckit::Parametrisation&) {}
+  FieldCreatorArraySpec() {}
+  FieldCreatorArraySpec(const eckit::Parametrisation&) {}
   virtual Field* create_field( const eckit::Parametrisation& ) const;
 };
 
