@@ -17,7 +17,6 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 #include "eckit/memory/ScopedPtr.h"
-#include "eckit/container/DenseMap.h"
 
 namespace eckit { class Parametrisation; }
 namespace atlas { class Field; }
@@ -44,15 +43,9 @@ public: // types
 
 private:
 
-    /// @TODO Please consider **not** using DenseMap anymore
-    ///       This class needs serious (re)considering.
-    ///       ATM cannot safely remove entries from the collecition
-    ///       I have a solution but don't know if it is good one.
-    ///       DenseMap should probably not exist in eckit but in atlas
-
-  typedef eckit::DenseMap< std::string, eckit::SharedPtr<Field> >  FieldMap;
-  typedef eckit::DenseMap< std::string, eckit::SharedPtr<Grid>  >  GridMap;
-  typedef eckit::DenseMap< std::string, eckit::SharedPtr<Mesh>  >  MeshMap;
+  typedef std::map< std::string, eckit::SharedPtr<Field> >  FieldMap;
+  typedef std::map< std::string, eckit::SharedPtr<Grid>  >  GridMap;
+  typedef std::map< std::string, eckit::SharedPtr<Mesh>  >  MeshMap;
 
 public: // methods
 
@@ -66,7 +59,7 @@ public: // methods
 
   const Field& field(const std::string& name) const;
         Field& field(const std::string& name);
-  bool has_field(const std::string& name) const { return fields_.has(name); }
+  bool has_field(const std::string& name) const { return (fields_.find(name) != fields_.end()); }
   std::vector< std::string > field_names() const;
 
   const Field& field(const size_t idx) const;
@@ -75,7 +68,7 @@ public: // methods
 
   const Mesh& mesh(const std::string& name = "") const;
         Mesh& mesh(const std::string& name = "");
-  bool has_mesh(const std::string& name) const { return meshes_.has(name); }
+  bool has_mesh(const std::string& name) const { return (meshes_.find(name) != meshes_.end()); }
 
   const Mesh& mesh(const size_t idx = 0) const;
         Mesh& mesh(const size_t idx = 0);
@@ -83,7 +76,7 @@ public: // methods
 
   const Grid& grid(const std::string& name = "") const;
         Grid& grid(const std::string& name = "");
-  bool has_grid(const std::string& name) const { return grids_.has(name); }
+  bool has_grid(const std::string& name) const { return (grids_.find(name) != grids_.end()); }
 
   const Grid& grid(const size_t idx = 0) const;
         Grid& grid(const size_t idx = 0);
@@ -95,14 +88,11 @@ public: // methods
   Mesh&  add( Mesh*  ); // Take shared ownership!
   Grid&  add( Grid*  ); // Take shared ownership!
 
-//  TODO: needs DenseMap to implement erase()
-//  void remove_field(const std::string& name);
-//  void remove_mesh(const std::string& name = "");
-//  void remove_grid(const std::string& name = "");
+  void remove_field(const std::string& name);
+  void remove_mesh(const std::string& name = "");
+  void remove_grid(const std::string& name = "");
 
 private:
-
-  void set_name( Field& );
 
   FieldMap fields_;
   MeshMap meshes_;
