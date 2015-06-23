@@ -57,12 +57,12 @@ using atlas::util::PeriodicTransform;
 namespace atlas {
 namespace actions {
 
-FieldT<int>& build_nodes_partition ( FunctionSpace& nodes );
-FieldT<int>& build_nodes_remote_idx( FunctionSpace& nodes );
-FieldT<gidx_t>& build_nodes_global_idx( FunctionSpace& nodes );
-FieldT<int>& build_edges_partition ( FunctionSpace& edges, FunctionSpace& nodes );
-FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes );
-FieldT<gidx_t>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nodes );
+Field& build_nodes_partition ( FunctionSpace& nodes );
+Field& build_nodes_remote_idx( FunctionSpace& nodes );
+Field& build_nodes_global_idx( FunctionSpace& nodes );
+Field& build_edges_partition ( FunctionSpace& edges, FunctionSpace& nodes );
+Field& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes );
+Field& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nodes );
 
 // ------------------------------------------------------------------
 
@@ -130,7 +130,7 @@ void build_edges_parallel_fields( FunctionSpace& edges, FunctionSpace& nodes )
 
 // ------------------------------------------------------------------
 
-FieldT<gidx_t>& build_nodes_global_idx( FunctionSpace& nodes )
+Field& build_nodes_global_idx( FunctionSpace& nodes )
 {
   if( ! nodes.has_field("glb_idx") )
   {
@@ -147,7 +147,7 @@ FieldT<gidx_t>& build_nodes_global_idx( FunctionSpace& nodes )
     if( glb_idx(jnode) <= 0 )
       glb_idx(jnode) = compute_uid(jnode);
   }
-  return nodes.field<gidx_t>("glb_idx");
+  return nodes.field("glb_idx");
 }
 
 void renumber_nodes_glb_idx( FunctionSpace& nodes )
@@ -251,7 +251,7 @@ void renumber_nodes_glb_idx( FunctionSpace& nodes )
 
 // ------------------------------------------------------------------
 
-FieldT<int>& build_nodes_remote_idx( FunctionSpace& nodes )
+Field& build_nodes_remote_idx( FunctionSpace& nodes )
 {
   int mypart = eckit::mpi::rank();
   int nparts = eckit::mpi::size();
@@ -333,24 +333,24 @@ FieldT<int>& build_nodes_remote_idx( FunctionSpace& nodes )
       ridx( recv_node(jnode,0) ) = recv_node(jnode,1);
     }
   }
-  return nodes.field<int>("remote_idx");
+  return nodes.field("remote_idx");
 }
 
 // ------------------------------------------------------------------
 
-FieldT<int>& build_nodes_partition( FunctionSpace& nodes )
+Field& build_nodes_partition( FunctionSpace& nodes )
 {
   if( ! nodes.has_field("partition") )
   {
     ArrayView<int,1> part ( nodes.create_field<int>("partition",1) );
     part = eckit::mpi::rank();
   }
-  return nodes.field<int>("partition");
+  return nodes.field("partition");
 }
 
 // ------------------------------------------------------------------
 
-FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
+Field& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
 {
   UniqueLonLat compute_uid(nodes);
 
@@ -632,10 +632,10 @@ FieldT<int>& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
   /// Because of this problem, the size of the halo should be set to 2 instead of 1!!!
   /// This will be addressed with JIRA issue  ATLAS-12
 
-  return edges.field<int>("partition");
+  return edges.field("partition");
 }
 
-FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes )
+Field& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes )
 {
   UniqueLonLat compute_uid(nodes);
 
@@ -778,11 +778,11 @@ FieldT<int>& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes 
     }
   }
 
-  return edges.field<int>("remote_idx");
+  return edges.field("remote_idx");
 
 }
 
-FieldT<gidx_t>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nodes )
+Field& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nodes )
 {
   UniqueLonLat compute_uid(nodes);
 
@@ -900,7 +900,7 @@ FieldT<gidx_t>& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nod
     edge_gidx(jedge) = loc_edge_id(jedge);
   }
 
-  return edges.field<gidx_t>("glb_idx");
+  return edges.field("glb_idx");
 }
 
 // ------------------------------------------------------------------

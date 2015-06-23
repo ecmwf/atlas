@@ -13,7 +13,7 @@
 
 #ifndef BuildParallelFields_h
 #define BuildParallelFields_h
-#include <string>
+
 namespace atlas {
   class Mesh;
   class FunctionSpace;

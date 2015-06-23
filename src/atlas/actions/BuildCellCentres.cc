@@ -8,7 +8,10 @@
  * does it submit to any jurisdiction.
  */
 
+#include <cassert>
+
 #include "atlas/actions/BuildCellCentres.h"
+#include "atlas/Parameters.h"
 #include "atlas/Mesh.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Field.h"

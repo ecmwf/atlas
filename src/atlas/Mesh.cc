@@ -20,7 +20,7 @@
 #include "atlas/FunctionSpace.h"
 #include "atlas/Field.h"
 #include "atlas/Grid.h"
-
+#include "atlas/Parameters.h"
 
 namespace atlas {
 

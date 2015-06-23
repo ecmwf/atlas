@@ -14,6 +14,7 @@
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/trans/Trans.h"
 #include "atlas/FieldSet.h"
+#include "atlas/FunctionSpace.h"
 #include "atlas/util/Array.h"
 #include "atlas/util/Bitflags.h"
 #include "eckit/exception/Exceptions.h"

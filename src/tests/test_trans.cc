@@ -26,6 +26,8 @@
 #include "atlas/GridDistribution.h"
 #include "atlas/io/Gmsh.h"
 #include "atlas/FieldSet.h"
+#include "atlas/Mesh.h"
+#include "atlas/FunctionSpace.h"
 
 #include "transi/trans.h"
 

@@ -385,7 +385,7 @@ void build_dual_normals( Mesh& mesh )
   {
     FunctionSpace& func_space = mesh.function_space(func_space_idx);
     if( func_space.has_field("centroids") )
-      elem_centroids[func_space_idx] = ArrayView<double,2>( func_space.field<double>("centroids") );
+      elem_centroids[func_space_idx] = ArrayView<double,2>( func_space.field("centroids") );
   }
 
   FunctionSpace&  nodes = mesh.function_space("nodes");
@@ -523,11 +523,11 @@ void build_skewness( Mesh& mesh )
   {
     FunctionSpace& func_space = mesh.function_space(func_space_idx);
     if( func_space.has_field("centroids") )
-      elem_centroids[func_space_idx] = ArrayView<double,2>( func_space.field<double>("centroids") );
+      elem_centroids[func_space_idx] = ArrayView<double,2>( func_space.field("centroids") );
   }
 
   FunctionSpace&  nodes = mesh.function_space("nodes");
-  ArrayView<double,2> node_lonlat( nodes.field<double>("lonlat") );
+  ArrayView<double,2> node_lonlat( nodes.field("lonlat") );
   double min[2], max[2];
   global_bounding_box( nodes, min, max );
   double tol = 1.e-6;

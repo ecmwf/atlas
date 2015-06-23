@@ -11,6 +11,7 @@
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
 #include "atlas/field/FieldTCreator.h"
+#include "atlas/field/FieldT.h"
 
 
 namespace {
@@ -110,6 +111,16 @@ FieldTCreator *FieldTCreatorFactory::build(const std::string &name) {
 
     return (*j).second->make();
 }
+
+template<> Field* FieldTCreatorT<int>::create_field( const ArrayShape& shape, const eckit::Parametrisation& params) const
+  { return new FieldT<int>(shape,params); }
+template<> Field* FieldTCreatorT<long>::create_field( const ArrayShape& shape, const eckit::Parametrisation& params) const
+  { return new FieldT<long>(shape,params); }
+template<> Field* FieldTCreatorT<float>::create_field( const ArrayShape& shape, const eckit::Parametrisation& params) const
+  { return new FieldT<float>(shape,params); }
+template<> Field* FieldTCreatorT<double>::create_field( const ArrayShape& shape, const eckit::Parametrisation& params) const
+  { return new FieldT<double>(shape,params); }
+
 
 namespace {
 static FieldTCreatorBuilder< FieldTCreatorT<int> >     __FieldT__int("FieldT<int>");

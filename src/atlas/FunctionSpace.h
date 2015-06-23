@@ -33,8 +33,6 @@ namespace atlas {
 class Mesh;
 class Field;
 
-template <typename T> class FieldT;
-
 //------------------------------------------------------------------------------------------------------
 
 enum CreateBehavior { IF_EXISTS_FAIL = 0,    /* when creating, fail if exists */
@@ -63,13 +61,10 @@ public: // methods
 	Field& field( size_t ) const;
 	Field& field(const std::string& name) const;
 
-	template< typename DATA_TYPE>
-	FieldT<DATA_TYPE>& field(const std::string& name) const;
-
 	bool has_field(const std::string& name) const { return fields_.has(name); }
 
 	template< typename DATA_TYPE >
-	FieldT<DATA_TYPE>& create_field(const std::string& name, size_t nb_vars, CreateBehavior b = IF_EXISTS_FAIL );
+	Field& create_field(const std::string& name, size_t nb_vars, CreateBehavior b = IF_EXISTS_FAIL );
 
 	void remove_field(const std::string& name);
 

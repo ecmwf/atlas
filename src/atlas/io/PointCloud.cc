@@ -22,9 +22,9 @@
 #include "atlas/FunctionSpace.h"
 #include "atlas/grids/Unstructured.h"
 #include "atlas/util/ArrayView.h"
-
 #include "atlas/io/PointCloud.h"
-
+#include "atlas/Mesh.h"
+#include "atlas/Parameters.h"
 
 namespace atlas {
 namespace io {

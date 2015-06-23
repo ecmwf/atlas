@@ -23,8 +23,10 @@
 #include "atlas/actions/BuildParallelFields.h"
 #include "atlas/util/Debug.h"
 #include "atlas/util/Bitflags.h"
+#include "atlas/field/FieldT.h"
 
 using atlas::util::Topology;
+using atlas::field::FieldT;
 
 #ifdef ATLAS_HAVE_FORTRAN
 #define REMOTE_IDX_BASE 1
@@ -107,67 +109,6 @@ void FunctionSpace::resize(const std::vector<size_t>& shape)
 	}
 }
 
-template<>
-FieldT<double>& FunctionSpace::field(const std::string& name) const
-{
-	if( has_field(name) )
-	{
-		return dynamic_cast< FieldT<double>& >( *fields_[ name ] );
-	}
-	else
-	{
-		std::stringstream msg;
-		msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
-		throw eckit::OutOfRange(msg.str(),Here());
-	}
-}
-
-template<>
-FieldT<float>& FunctionSpace::field(const std::string& name) const
-{
-	if( has_field(name) )
-	{
-		return dynamic_cast< FieldT<float>& >( *fields_[ name ] );
-	}
-	else
-	{
-		std::stringstream msg;
-		msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
-		throw eckit::OutOfRange(msg.str(),Here());
-	}
-}
-
-template<>
-FieldT<long>& FunctionSpace::field(const std::string& name) const
-{
-	if( has_field(name) )
-	{
-		return dynamic_cast< FieldT<long>& >( *fields_[ name ] );
-	}
-	else
-	{
-		std::stringstream msg;
-		msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
-		throw eckit::OutOfRange(msg.str(),Here());
-	}
-}
-
-template<>
-FieldT<int>& FunctionSpace::field(const std::string& name) const
-{
-	if( has_field(name) )
-	{
-		return dynamic_cast< FieldT<int>& >( *fields_[ name ] );
-	}
-	else
-	{
-		std::stringstream msg;
-		msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
-		throw eckit::OutOfRange(msg.str(),Here());
-	}
-}
-
-
 namespace {
 
 	template < typename T >
@@ -187,7 +128,7 @@ namespace {
 				throw eckit::Exception( msg.str(), Here() );
 			}
 
-			FieldT<T>& f= fs->field<T>(name);
+			Field& f= fs->field(name);
 			if( f.nb_vars() != nb_vars )
 			{
 				std::ostringstream msg; msg << "field exists with name " << name << " has unexpected nb vars " << f.nb_vars() << " instead of " << nb_vars << std::endl;
@@ -203,8 +144,7 @@ namespace {
 				msg << std::endl;
 				throw eckit::Exception(msg.str(),Here());
 			}
-
-			return &f;
+			return dynamic_cast< FieldT<T>* >(&f);
 		}
 
 		return NULL;
@@ -213,7 +153,7 @@ namespace {
 }
 
 template <>
-FieldT<double>& FunctionSpace::create_field(const std::string& name, size_t nb_vars, CreateBehavior b )
+Field& FunctionSpace::create_field<double>(const std::string& name, size_t nb_vars, CreateBehavior b )
 {
 	FieldT<double>* field = NULL;
 
@@ -240,7 +180,7 @@ FieldT<double>& FunctionSpace::create_field(const std::string& name, size_t nb_v
 }
 
 template <>
-FieldT<float>& FunctionSpace::create_field(const std::string& name, size_t nb_vars, CreateBehavior b )
+Field& FunctionSpace::create_field<float>(const std::string& name, size_t nb_vars, CreateBehavior b )
 {
 	FieldT<float>* field = NULL;
 
@@ -266,7 +206,7 @@ FieldT<float>& FunctionSpace::create_field(const std::string& name, size_t nb_va
 }
 
 template <>
-FieldT<int>& FunctionSpace::create_field(const std::string& name, size_t nb_vars, CreateBehavior b )
+Field& FunctionSpace::create_field<int>(const std::string& name, size_t nb_vars, CreateBehavior b )
 {
 	FieldT<int>* field = NULL;
 
@@ -294,7 +234,7 @@ FieldT<int>& FunctionSpace::create_field(const std::string& name, size_t nb_vars
 }
 
 template <>
-FieldT<long>& FunctionSpace::create_field(const std::string& name, size_t nb_vars, CreateBehavior b )
+Field& FunctionSpace::create_field<long>(const std::string& name, size_t nb_vars, CreateBehavior b )
 {
 	FieldT<long>* field = NULL;
 
@@ -378,22 +318,22 @@ void FunctionSpace::parallelise(FunctionSpace& other_shape)
 
 void FunctionSpace::parallelise()
 {
-  FieldT<int>& ridx = field<int>("remote_idx");
-  FieldT<int>& part = field<int>("partition");
-  FieldT<gidx_t>& gidx = field<gidx_t>("glb_idx");
+  Field& ridx = field("remote_idx");
+  Field& part = field("partition");
+  Field& gidx = field("glb_idx");
 
   if( name() == "nodes")
   {
-    ArrayView<int,1> flags ( field<int>("flags") );
+    ArrayView<int,1> flags ( field("flags") );
     std::vector<int> mask(shape(0));
     for( size_t j=0; j<mask.size(); ++j )
     {
       mask[j] = Topology::check(flags(j),Topology::GHOST) ? 1 : 0;
     }
-    halo_exchange_->setup(part.data(),ridx.data(),REMOTE_IDX_BASE,shape(0));
-    gather_scatter_->setup(part.data(),ridx.data(),REMOTE_IDX_BASE,gidx.data(),mask.data(),shape(0));
-    fullgather_->setup(part.data(),ridx.data(),REMOTE_IDX_BASE,gidx.data(),-1,shape(0),true);
-    checksum_->setup(part.data(),ridx.data(),REMOTE_IDX_BASE,gidx.data(),mask.data(),shape(0));
+    halo_exchange_->setup(part.data<int>(),ridx.data<int>(),REMOTE_IDX_BASE,shape(0));
+    gather_scatter_->setup(part.data<int>(),ridx.data<int>(),REMOTE_IDX_BASE,gidx.data<gidx_t>(),mask.data(),shape(0));
+    fullgather_->setup(part.data<int>(),ridx.data<int>(),REMOTE_IDX_BASE,gidx.data<gidx_t>(),-1,shape(0),true);
+    checksum_->setup(part.data<int>(),ridx.data<int>(),REMOTE_IDX_BASE,gidx.data<gidx_t>(),mask.data(),shape(0));
     glb_dof_ = gather_scatter_->glb_dof();
     for( int b=shapef_.size()-2; b>=0; --b)
     {
@@ -403,10 +343,10 @@ void FunctionSpace::parallelise()
   }
   else
   {
-    halo_exchange_->setup(part.data(),ridx.data(),REMOTE_IDX_BASE,shape(0));
-    gather_scatter_->setup(part.data(),ridx.data(),REMOTE_IDX_BASE,gidx.data(),-1,shape(0));
-    fullgather_->setup(part.data(),ridx.data(),REMOTE_IDX_BASE,gidx.data(),-1,shape(0),true);
-    checksum_->setup(part.data(),ridx.data(),REMOTE_IDX_BASE,gidx.data(),-1,shape(0));
+    halo_exchange_->setup(part.data<int>(),ridx.data<int>(),REMOTE_IDX_BASE,shape(0));
+    gather_scatter_->setup(part.data<int>(),ridx.data<int>(),REMOTE_IDX_BASE,gidx.data<gidx_t>(),-1,shape(0));
+    fullgather_->setup(part.data<int>(),ridx.data<int>(),REMOTE_IDX_BASE,gidx.data<gidx_t>(),-1,shape(0),true);
+    checksum_->setup(part.data<int>(),ridx.data<int>(),REMOTE_IDX_BASE,gidx.data<gidx_t>(),-1,shape(0));
   }
   glb_dof_ = gather_scatter_->glb_dof();
   for( int b=shapef_.size()-2; b>=0; --b)

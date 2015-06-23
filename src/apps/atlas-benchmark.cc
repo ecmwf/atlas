@@ -349,8 +349,8 @@ void AtlasBenchmark::setup()
   V      = ArrayView<double,1> ( mesh->function_space("nodes").field("dual_volumes") );
   S      = ArrayView<double,2> ( mesh->function_space("edges").field("dual_normals") );
   field  = ArrayView<double,2> ( mesh->function_space("nodes").create_field<double>("field",nlev)  );
-  FieldT<double>& gradfield = ( mesh->function_space("nodes").create_field<double>("grad",nlev*3) );
-  grad   = ArrayView<double,3> ( gradfield.data(), make_shape(nnodes,nlev,3) );
+  Field& gradfield = ( mesh->function_space("nodes").create_field<double>("grad",nlev*3) );
+  grad   = ArrayView<double,3> ( gradfield.data<double>(), make_shape(nnodes,nlev,3) );
   mesh->function_space("nodes").field("field").metadata().set("nb_levels",nlev);
   mesh->function_space("nodes").field("grad").metadata().set("nb_levels",nlev);
 

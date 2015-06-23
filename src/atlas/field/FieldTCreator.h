@@ -14,10 +14,14 @@
 #ifndef atlas_field_FieldTCreator_h
 #define atlas_field_FieldTCreator_h
 
-#include "eckit/config/Parametrisation.h"
-#include "atlas/Field.h"
-#include "atlas/util/ArrayUtil.h"
+#include <iosfwd>
+#include <string>
+#include "eckit/memory/Owned.h"
 #include "atlas/field/FieldTCreator.h"
+#include "atlas/util/ArrayUtil.h"
+
+namespace eckit { class Parametrisation; }
+namespace atlas { class Field; }
 
 namespace atlas {
 namespace field {
@@ -90,14 +94,6 @@ public:
   virtual ~FieldTCreatorT() {}
   virtual Field* create_field( const ArrayShape&, const eckit::Parametrisation& ) const;
 };
-
-// ------------------------------------------------------------------
-
-template< typename DATA_TYPE >
-Field* FieldTCreatorT<DATA_TYPE>::create_field( const ArrayShape& shape, const eckit::Parametrisation& params) const
-{
-  return new FieldT<DATA_TYPE>(shape,params);
-}
 
 // ------------------------------------------------------------------
 

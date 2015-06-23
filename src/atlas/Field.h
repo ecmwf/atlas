@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2014 ECMWF.
+ * (C) Copyright 1996-2015 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -15,36 +15,19 @@
 #ifndef atlas_Field_h
 #define atlas_Field_h
 
-#include <algorithm>
 #include <vector>
 #include <string>
 
-#include "eckit/types/Types.h"
-
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
-#include "eckit/memory/ScopedPtr.h"
-#include "eckit/config/Parametrisation.h"
 
-#include "atlas/atlas_config.h"
-#include "atlas/Grid.h"
-#include "atlas/FunctionSpace.h"
-#include "atlas/Mesh.h"
 #include "atlas/Parametrisation.h"
 #include "atlas/Metadata.h"
-#include "atlas/Parameters.h"
 #include "atlas/State.h"
-#include "atlas/util/ArrayView.h"
+
+namespace eckit { class Parametrisation; }
 
 namespace atlas {
-
-// Forward declaration
-template< typename DATA_TYPE > class FieldT;
-
-template<class T>
-inline std::ostream &operator<<(std::ostream &s, const std::vector<T> &v) {
-    return eckit::__print_list(s, v);
-}
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -59,57 +42,61 @@ public: // Static methods
 
   static Field* create(const eckit::Parametrisation&);
   static Field* create(const ArrayShape&, const eckit::Parametrisation& = Parameters() );
-  static Field* create(const Grid&, const eckit::Parametrisation& = Parameters() );
-
-  template<typename T>
-  static Field* create(const Array<T>&, const eckit::Parametrisation& = Parameters() );
-  static Field* create(const Field&, const eckit::Parametrisation& = Parameters() );
 
 public: // methods
 
+// -- Constructor / Destructor
   Field(const eckit::Parametrisation&);
 
   virtual ~Field();
 
+// -- Accessors
+
   Ptr self() { return Ptr(this); }
 
-  template <typename DATA_TYPE> DATA_TYPE* data();
-  template <typename DATA_TYPE> DATA_TYPE const* data() const;
+  /// @brief Access to raw data
+  template <typename DATA_TYPE>       DATA_TYPE* data();
+  template <typename DATA_TYPE> const DATA_TYPE* data() const;
 
+  /// @brief Internal data type of field as string
+  /// Any of [ int32 int64 real32 real64 ]
   const std::string& data_type() const { return data_type_; }
 
+  /// @brief Name associated to this field
   const std::string& name() const { return name_; }
 
+  /// @brief Access to metadata associated to this field
   const Metadata& metadata() const { return metadata_; }
-  Metadata& metadata() { return metadata_; }
+        Metadata& metadata()       { return metadata_; }
 
-  const std::vector<int>& shapef() const  { return shapef_; }
-  const std::vector<size_t>& shape() const { return shape_; }
+  /// @brief Shape of this field in Fortran style (reverse order of C style)
+  const std::vector<int>&    shapef()  const { return shapef_; }
+
+  /// @brief Shape of this field (reverse order of Fortran style)
+  const std::vector<size_t>& shape()   const { return shape_; }
+
+  /// @brief Strides of this field
   const std::vector<size_t>& strides() const { return strides_; }
-  size_t stride(int i) const { return strides_[i];}
-  size_t shape(int i) const { return shape_[i];}
-  size_t nb_vars() const { return nb_vars_; }
 
+  /// @brief Shape of this field associated to index 'i'
+  size_t shape (size_t i) const { return shape_[i]; }
+
+  /// @brief Stride of this field associated to index 'i'
+  size_t stride(size_t i) const { return strides_[i]; }
+
+  /// @brief Number of values stored in this field
   virtual size_t size() const = 0;
+
+  /// @brief Number of bytes occupied by the values of this field
   virtual double bytes() const = 0;
 
   friend std::ostream& operator<<( std::ostream& os, const Field& v);
 
 private: // methods
 
-  virtual void print(std::ostream& os) const
-  {
-      os << "Field[name=" << name()
-         << ",datatype=" << data_type_
-         << ",size=" << size()
-         << ",shape=" << shape_
-         << ",strides=" << strides_
-         << "]";
-  }
+  virtual void print(std::ostream& os) const;
 
-private: // members
-
-  virtual void dump( std::ostream& ) const = 0;
+private: // friends
 
   // Allow a State::add() to change the name of the field, only if the field
   // has no name assigned, so it can be used for lookup later.
@@ -117,175 +104,57 @@ private: // members
 
 private: // members
 
-  size_t nb_vars_;
-
   std::string name_;
 
-  const Grid* grid_;
-  FunctionSpace* function_space_;
   Metadata metadata_;
 
-
 protected: // members
-  std::string data_type_;
-  std::vector<int> shapef_;
-  std::vector<size_t> shape_;
-  std::vector<size_t> strides_;
+
+  std::string data_type_;        /// data type
+  std::vector<int> shapef_;      /// shape of array in fortran style (reversed order)
+  std::vector<size_t> shape_;    /// shape of array in C style
+  std::vector<size_t> strides_;  /// strides of array in C style
 
 // End of class Field
 
 //------------------------------------------------------------------------------------------------------
 
 /***************************************************************************/
-/* Public methods to be removed soon                                       */
+/* Public and private members and methods to be removed soon               */
 /***************************************************************************/
+private:
+
+  size_t nb_vars_;
+  const Grid* grid_;
+  FunctionSpace* function_space_;
 
 public:
-
 
   typedef std::vector< Field::Ptr > Vector;
   enum { UNDEF_VARS = 2147483647 }; // = std::numeric_limits<int>::max() (integer because of fortran)
 
   Field(const std::string& name, const size_t nb_vars);
 
-  FunctionSpace& function_space() const {
-      if( !function_space_ )
-          throw eckit::Exception("Field "+name()+" is not associated to any FunctionSpace.");
-      return *function_space_;
-  }
+  size_t nb_vars() const { return nb_vars_; }
+
+  FunctionSpace& function_space() const;
+
+  const Grid& grid() const;
+
+  const Mesh& mesh() const;
+        Mesh& mesh();
+
+  void set_function_space(const FunctionSpace& function_space);
 
   virtual void halo_exchange() = 0;
 
   virtual void allocate(const std::vector<size_t>& shapef)=0;
 
-  const Grid& grid() const {
-      if( function_space_ )
-      {
-          if( function_space_->mesh().has_grid() )
-              return function_space_->mesh().grid();
-      }
-      if( !grid_ )
-          throw eckit::Exception("Field "+name()+" is not associated to any Grid.");
-      return *grid_;
-  }
-
-  const Mesh& mesh() const { ASSERT(function_space_); return function_space_->mesh(); }
-  Mesh& mesh() { ASSERT(function_space_); return function_space_->mesh(); }
-
-  void set_function_space(const FunctionSpace& function_space)
-  {
-    function_space_ = const_cast<FunctionSpace*>(&function_space);
-  }
-
 /***************************************************************************/
-/* End Public methods to be removed soon                                   */
+/* End Public and private members and  methods to be removed soon          */
 /***************************************************************************/
 
 };
-
-
-template< typename DATA_TYPE >
-class FieldT : public Field {
-
-public: // methods
-
-  FieldT(const std::string& name, const int nb_vars);
-
-  FieldT(const ArrayShape& shape, const eckit::Parametrisation& = Parameters() );
-
-  virtual ~FieldT();
-
-  virtual size_t size() const { return data_.size(); }
-
-  virtual void allocate(const std::vector<size_t>& shape); // To be removed
-
-  DATA_TYPE* data() { return data_.data(); }
-  DATA_TYPE const* data() const { return data_.data(); }
-
-  DATA_TYPE& operator[] (const size_t idx) { return data_[idx]; }
-
-  virtual void halo_exchange(); // To be removed
-
-  virtual void dump(std::ostream& out) const;
-
-  virtual double bytes() const { return sizeof(DATA_TYPE)*size(); }
-
-protected:
-
-  std::vector< DATA_TYPE > data_;
-
-};
-
-
-template< typename DATA_TYPE >
-inline FieldT<DATA_TYPE>::FieldT(const std::string& name, const int nb_vars) :
-  Field(name,nb_vars),
-  data_(0)
-{
-  data_type_ = data_type_to_str<DATA_TYPE>() ;
-}
-
-template< typename DATA_TYPE >
-inline FieldT<DATA_TYPE>::FieldT(const std::vector<size_t>& shape, const eckit::Parametrisation& params) :
-  Field(params),
-  data_(0)
-{
-  data_type_ = data_type_to_str<DATA_TYPE>() ;
-
-  bool fortran(false);
-  params.get("fortran",fortran);
-  if( fortran ) {
-    std::vector<size_t> shapef(shape.size());
-    size_t n=shape.size();
-    for( size_t j=0; j<shape.size(); ++j ) shapef[j] = shape[--n];
-    allocate(shapef);
-  }
-  else {
-    allocate(shape);
-  }
-}
-
-
-template< typename DATA_TYPE >
-inline FieldT<DATA_TYPE>::~FieldT()
-{
-  data_.clear();
-}
-
-template< typename DATA_TYPE >
-inline void FieldT<DATA_TYPE>::allocate(const std::vector<size_t>& shape)
-{
-  shape_ = shape;
-  size_t tot_size(1); for (size_t i = 0; i < shape_.size(); ++i) tot_size *= shape_[i];
-  data_.resize(tot_size);
-
-  shapef_.resize(shape_.size());
-  std::reverse_copy( shape_.begin(), shape_.end(), shapef_.begin() );
-
-  strides_.resize(shape_.size());
-  strides_[shape_.size()-1] = 1;
-  for( int n=shape_.size()-2; n>=0; --n )
-  {
-    strides_[n] = strides_[n+1]*shape_[n+1];
-  }
-}
-
-template< typename DATA_TYPE >
-inline void FieldT<DATA_TYPE>::dump(std::ostream& out) const
-{
-  const FunctionSpace& nodes = function_space();
-
-  ArrayView<DATA_TYPE,1> values( *this );
-
-  ArrayView<DATA_TYPE,2> lonlat( nodes.field("lonlat") );
-
-  ASSERT( values.shape()[0] == lonlat.shape()[0] );
-
-  // Log::info() << "values.shape()[0] " << values.shape()[0] << std::endl;
-
-  for( size_t i = 0; i < lonlat.shape()[0]; ++i )
-    out << lonlat(i,LON) << " " << lonlat(i,LAT) << " " << values(i) << std::endl;
-}
 
 //----------------------------------------------------------------------------------------------------------------------
 

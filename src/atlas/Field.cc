@@ -13,14 +13,27 @@
 #include <stdexcept>
 
 #include "eckit/exception/Exceptions.h"
+#include "eckit/types/Types.h"
 
 #include "atlas/runtime/ErrorHandling.h"
-#include "atlas/Field.h"
 #include "atlas/FunctionSpace.h"
+#include "atlas/Field.h"
+#include "atlas/field/FieldT.h"
 #include "atlas/field/FieldCreator.h"
 #include "atlas/field/FieldTCreator.h"
 
+#include "atlas/Grid.h"
+#include "atlas/FunctionSpace.h"
+#include "atlas/Mesh.h"
+
+using atlas::field::FieldT;
+
 namespace atlas {
+
+template<class T>
+inline std::ostream &operator<<(std::ostream &s, const std::vector<T> &v) {
+    return eckit::__print_list(s, v);
+}
 
 Field* Field::create(const eckit::Parametrisation& params)
 {
@@ -51,12 +64,12 @@ Field* Field::create(const ArrayShape& shape, const eckit::Parametrisation& para
 
 
 Field::Field(const std::string& name, const size_t nb_vars) :
-  nb_vars_(nb_vars), name_(name), grid_(NULL), function_space_(NULL)
+  name_(name), nb_vars_(nb_vars), grid_(0), function_space_(0)
 {
 }
 
 Field::Field(const eckit::Parametrisation& params) :
-  nb_vars_(1), name_(), grid_(NULL), function_space_(NULL)
+  name_(), nb_vars_(1), grid_(0), function_space_(0)
 {
   Grid::Id grid;
   if( params.get("grid",grid) )
@@ -100,20 +113,58 @@ template <> const double* Field::data<double>() const { return get_field_data<do
 template <>       double* Field::data<double>()       { return get_field_data<double>(*this); }
 
 
-template<>
-void FieldT<int>::halo_exchange() { function_space().halo_exchange(data_.data(),data_.size()); }
-template<>
-void FieldT<long>::halo_exchange() { function_space().halo_exchange(data_.data(),data_.size()); }
-template<>
-void FieldT<float>::halo_exchange() { function_space().halo_exchange(data_.data(),data_.size()); }
-template<>
-void FieldT<double>::halo_exchange() { function_space().halo_exchange(data_.data(),data_.size()); }
+void Field::print(std::ostream& os) const
+{
+    os << "Field[name=" << name()
+       << ",datatype=" << data_type_
+       << ",size=" << size()
+       << ",shape=" << shape_
+       << ",strides=" << strides_
+       << "]";
+}
 
 std::ostream& operator<<( std::ostream& os, const Field& f)
 {
   f.print(os);
   return os;
 }
+
+
+
+// ===========================================
+// TO BE REMOVED
+
+
+FunctionSpace& Field::function_space() const {
+    if( !function_space_ )
+        throw eckit::Exception("Field "+name()+" is not associated to any FunctionSpace.");
+    return *function_space_;
+}
+
+const Grid& Field::grid() const {
+    if( function_space_ )
+    {
+        if( function_space_->mesh().has_grid() )
+            return function_space_->mesh().grid();
+    }
+    if( !grid_ )
+        throw eckit::Exception("Field "+name()+" is not associated to any Grid.");
+    return *grid_;
+}
+
+const Mesh& Field::mesh() const { ASSERT(function_space_); return function_space_->mesh(); }
+
+Mesh& Field::mesh() { ASSERT(function_space_); return function_space_->mesh(); }
+
+void Field::set_function_space(const FunctionSpace& function_space)
+{
+  function_space_ = const_cast<FunctionSpace*>(&function_space);
+}
+
+
+// END TO BE REMOVED
+// ============================================
+
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines

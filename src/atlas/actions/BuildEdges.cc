@@ -161,8 +161,8 @@ void build_element_to_edge_connectivity( Mesh& mesh )
 				{
 					if( elem_to_edge[func_space_idx](jelem,jedge) < 0 )
 					{
-						const IndexView<int,2> elem_nodes ( func_space.field<int>("nodes") );
-						const ArrayView<gidx_t,1> gidx (nodes.field<gidx_t>("glb_idx"));
+						const IndexView<int,2> elem_nodes ( func_space.field("nodes") );
+						const ArrayView<gidx_t,1> gidx (nodes.field("glb_idx"));
 
 						std::stringstream msg; msg << "Could not find edge " << jedge << " for " << func_space.name() << " elem " << jelem << " with nodes ( ";
 						for( size_t jnode=0; jnode<elem_nodes.shape(1); ++jnode )

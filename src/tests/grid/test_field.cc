@@ -21,6 +21,7 @@
 #include "atlas/io/Gmsh.h"
 #include "atlas/util/Debug.h"
 #include "atlas/State.h"
+#include "atlas/Mesh.h"
 
 using namespace std;
 using namespace eckit;
@@ -80,7 +81,7 @@ void TestField::test_constructor()
 
   atlas::FunctionSpace& nodes  = mesh.function_space( "nodes" );
 
-  FieldT<double>& data = nodes.create_field<double>( sname,1);
+  ArrayView<double,1> data ( nodes.create_field<double>( sname,1) );
 
   for(size_t i = 0; i < ref_data.size(); i++)
     data[i] = ref_data[i];
