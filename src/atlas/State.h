@@ -41,19 +41,15 @@ public: // types
   typedef eckit::SharedPtr< State > Ptr;
   typedef atlas::Parametrisation Parameters;
 
-private:
-
-  typedef std::map< std::string, eckit::SharedPtr<Field> >  FieldMap;
-  typedef std::map< std::string, eckit::SharedPtr<Grid>  >  GridMap;
-  typedef std::map< std::string, eckit::SharedPtr<Mesh>  >  MeshMap;
-
 public: // methods
+
+//-- Static methods
+
+  static State* create(const std::string& factory, const eckit::Parametrisation& = Parameters() );
 
 //-- Constructors
 
   State();
-
-  State( const eckit::Parametrisation& );
 
 //-- Accessors
 
@@ -94,10 +90,57 @@ public: // methods
 
 private:
 
+  typedef std::map< std::string, eckit::SharedPtr<Field> >  FieldMap;
+  typedef std::map< std::string, eckit::SharedPtr<Grid>  >  GridMap;
+  typedef std::map< std::string, eckit::SharedPtr<Mesh>  >  MeshMap;
+
+private:
+
   FieldMap fields_;
   MeshMap meshes_;
   GridMap grids_;
 
+};
+
+//------------------------------------------------------------------------------------------------------
+
+class StateFactory {
+  public:
+
+    /*!
+     * \brief build StateCreator with options specified in parametrisation
+     * \return mesh generator
+     */
+    static State* build(const std::string& state_type);
+    static State* build(const std::string& state_type, const eckit::Parametrisation&);
+
+    /*!
+     * \brief list all registered field creators
+     */
+    static void list(std::ostream &);
+
+  private:
+    std::string name_;
+    virtual State* make() = 0 ;
+    virtual State* make(const eckit::Parametrisation&) = 0 ;
+
+  protected:
+
+    StateFactory(const std::string&);
+    virtual ~StateFactory();
+};
+
+
+template<class T>
+class StateBuilder : public StateFactory {
+  virtual State* make() {
+      return new T();
+  }
+  virtual State* make(const eckit::Parametrisation& param) {
+        return new T(param);
+  }
+  public:
+    StateBuilder(const std::string& name) : StateFactory(name) {}
 };
 
 // ------------------------------------------------------------------------------------

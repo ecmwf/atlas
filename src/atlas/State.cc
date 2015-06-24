@@ -9,6 +9,12 @@
  */
 
 #include <iomanip>
+#include <string>
+#include <map>
+
+#include "eckit/thread/AutoLock.h"
+#include "eckit/thread/Mutex.h"
+
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/Field.h"
 #include "atlas/Grid.h"
@@ -17,13 +23,36 @@
 
 namespace atlas {
 
+namespace {
+
+    static eckit::Mutex *local_mutex = 0;
+    static std::map<std::string, StateFactory *> *m = 0;
+    static pthread_once_t once = PTHREAD_ONCE_INIT;
+
+    static void init() {
+        local_mutex = new eckit::Mutex();
+        m = new std::map<std::string, StateFactory *>();
+    }
+
+    template<typename T> void load_builder() { StateBuilder<T>("tmp"); }
+
+    struct force_link {
+        force_link()
+        {
+            // load_builder< A DERIVED TYPE >();
+            // ...
+        }
+    };
+}
+
+State* State::create( const std::string& state_type, const eckit::Parametrisation& params)
+{
+  return StateFactory::build(state_type,params);
+}
+
 //------------------------------------------------------------------------------------------------------
 
 State::State()
-{
-}
-
-State::State( const eckit::Parametrisation& )
 {
 }
 
@@ -180,6 +209,57 @@ void State::remove_grid(const std::string& name)
   }
   grids_.erase(name);
 }
+
+//-----------------------------------------------------------------------------
+
+
+State* StateFactory::build(const std::string &name) {
+
+    pthread_once(&once, init);
+
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
+
+    static force_link static_linking;
+
+    std::map<std::string, StateFactory *>::const_iterator j = m->find(name);
+
+    eckit::Log::debug() << "Looking for StateFactory [" << name << "]" << std::endl;
+
+    if (j == m->end()) {
+        eckit::Log::error() << "No StateFactory for [" << name << "]" << std::endl;
+        eckit::Log::error() << "StateFactories are:" << std::endl;
+        for (j = m->begin() ; j != m->end() ; ++j)
+            eckit::Log::error() << "   " << (*j).first << std::endl;
+        throw eckit::SeriousBug(std::string("No StateFactory called ") + name);
+    }
+
+    return (*j).second->make();
+}
+
+State* StateFactory::build(const std::string& name, const eckit::Parametrisation& param) {
+
+    pthread_once(&once, init);
+
+    eckit::AutoLock<eckit::Mutex> lock(local_mutex);
+
+    static force_link static_linking;
+
+    std::map<std::string, StateFactory *>::const_iterator j = m->find(name);
+
+    eckit::Log::debug() << "Looking for StateFactory [" << name << "]" << std::endl;
+
+    if (j == m->end()) {
+        eckit::Log::error() << "No StateFactory for [" << name << "]" << std::endl;
+        eckit::Log::error() << "StateFactories are:" << std::endl;
+        for (j = m->begin() ; j != m->end() ; ++j)
+            eckit::Log::error() << "   " << (*j).first << std::endl;
+        throw eckit::SeriousBug(std::string("No StateFactory called ") + name);
+    }
+
+    return (*j).second->make(param);
+}
+
+
 
 
 //-----------------------------------------------------------------------------
