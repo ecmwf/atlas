@@ -95,7 +95,7 @@ DATA_TYPE* get_field_data( const Field& field )
   {
     std::stringstream msg;
     msg << "Could not cast Field " << field.name()
-        << " with data_type " << field.data_type() << " "
+        << " with data_type " << field.data_type() << " to "
         << data_type_to_str<DATA_TYPE>();
     throw eckit::BadCast(msg.str(),Here());
   }

@@ -298,6 +298,14 @@ void atlas__State__remove_field (State* This, const char* name)
   ATLAS_ERROR_HANDLING( This->remove_field(name); );
 }
 
+int atlas__State__has_field (State* This, const char* name)
+{
+  ASSERT( This );
+  int has_field(0);
+  ATLAS_ERROR_HANDLING( has_field = This->has_field(name); );
+  return has_field;
+}
+
 Field* atlas__State__field_by_name (State* This, const char* name)
 {
   ASSERT( This );
@@ -334,6 +342,14 @@ void atlas__State__remove_grid (State* This, const char* name)
   ATLAS_ERROR_HANDLING( This->remove_grid(name); );
 }
 
+int atlas__State__has_grid (State* This, const char* name)
+{
+  ASSERT( This );
+  int has_grid(0);
+  ATLAS_ERROR_HANDLING( has_grid = This->has_grid(name); );
+  return has_grid;
+}
+
 Grid* atlas__State__grid_by_name (State* This, const char* name)
 {
   ASSERT( This );
@@ -368,6 +384,14 @@ void atlas__State__remove_mesh (State* This, const char* name)
 {
   ASSERT( This );
   ATLAS_ERROR_HANDLING( This->remove_mesh(name); );
+}
+
+int atlas__State__has_mesh (State* This, const char* name)
+{
+  ASSERT( This );
+  int has_mesh(0);
+  ATLAS_ERROR_HANDLING( has_mesh = This->has_mesh(name); );
+  return has_mesh;
 }
 
 Mesh* atlas__State__mesh_by_name (State* This, const char* name)

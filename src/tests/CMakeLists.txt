@@ -29,6 +29,13 @@ if( HAVE_FCTEST )
     LIBS            atlas_f
   )
 
+  add_fctest( TARGET atlas_fctest_state
+    MPI             1
+    LINKER_LANGUAGE Fortran
+    SOURCES         fctest_state.F90
+    LIBS            atlas_f
+  )
+
   add_fctest( TARGET atlas_fctest_value
     MPI             1
     LINKER_LANGUAGE Fortran

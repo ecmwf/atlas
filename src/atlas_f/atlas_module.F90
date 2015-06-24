@@ -111,6 +111,7 @@ integer, public, parameter :: ATLAS_KIND_GIDX = c_long
 #include "atlas_module_Parametrisation_i.f"
 #include "atlas_module_Error_i.f"
 #include "atlas_module_GridDistribution_i.f"
+#include "atlas_module_State_i.f"
 #include "atlas_module_Trans_i.f"
 #include "atlas_module_Value_i.f"
 
@@ -137,6 +138,7 @@ INTERFACE atlas_delete
   module procedure atlas_Trans__delete
   module procedure atlas_Value__delete
   module procedure atlas_Value__array_delete
+  module procedure atlas_State__delete
 end interface atlas_delete
 
 !------------------------------------------------------------------------------
@@ -322,6 +324,22 @@ integer function atlas_integer(kind)
   end if
 end function
 
+function atlas_data_type(kind)
+  character(len=6) :: atlas_data_type
+  integer, intent(in) :: kind
+  if( kind == ATLAS_KIND_INT32 ) then
+    atlas_data_type = "int32"
+  else if( kind == ATLAS_KIND_INT64 ) then
+    atlas_data_type = "int64"
+  else if( kind == ATLAS_KIND_REAL32 ) then
+    atlas_data_type = "real32"
+  else if( kind == ATLAS_KIND_REAL64 ) then
+    atlas_data_type = "real64"
+  else
+    call atlas_abort("cannot convert kind to data_type",atlas_code_location(__FILE__,__LINE__))
+  endif
+end function
+
 #include "atlas_module_Logging_c.f"
 #include "atlas_module_HaloExchange_c.f"
 #include "atlas_module_GatherScatter_c.f"
@@ -335,6 +353,7 @@ end function
 #include "atlas_module_Parametrisation_c.f"
 #include "atlas_module_Error_c.f"
 #include "atlas_module_GridDistribution_c.f"
+#include "atlas_module_State_c.f"
 #include "atlas_module_Trans_c.f"
 #include "atlas_module_Value_c.f"
 

@@ -38,6 +38,7 @@ endfunction()
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grids/grids.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grids/ReducedGrid.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/GridDistribution.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/State.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/Field.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/FieldSet.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/FunctionSpace.h)
@@ -112,6 +113,8 @@ add_custom_target( atlas_fortran_inc SOURCES
    atlas_module_Metadata_c.f
    atlas_module_Parametrisation_i.f
    atlas_module_Parametrisation_c.f
+   atlas_module_State_i.f
+   atlas_module_State_c.f
    atlas_module_Trans_i.f
    atlas_module_Trans_c.f
    atlas_module_Value_i.f
