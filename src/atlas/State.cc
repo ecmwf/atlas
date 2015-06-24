@@ -80,7 +80,8 @@ Field& State::add( Field* field )
 Mesh& State::add( Mesh* mesh )
 {
   ASSERT( mesh != NULL );
-  ASSERT( meshes_.size() == 0 ); // Multiple meshes per state not yet supported
+  if( meshes_.size() != 0 )
+    throw eckit::NotImplemented("Multiple meshes per state not yet supported",Here());
   meshes_[""] = eckit::SharedPtr<Mesh>(mesh);
   return *mesh;
 }
@@ -88,7 +89,8 @@ Mesh& State::add( Mesh* mesh )
 Grid& State::add( Grid* grid )
 {
   ASSERT( grid != NULL );
-  ASSERT( grids_.size() == 0 ); // Multiple grids per state not yet supported
+  if( grids_.size() != 0 )
+    throw eckit::NotImplemented("Multiple grids per state not yet supported",Here());
   grids_[""] = eckit::SharedPtr<Grid>(grid);
   return *grid;
 }
