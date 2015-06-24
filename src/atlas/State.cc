@@ -264,7 +264,134 @@ State* StateFactory::build(const std::string& name, const eckit::Parametrisation
 
 //-----------------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
+
 extern "C"{
+
+State* atlas__State__new()
+{
+  return new State;
+}
+
+State* atlas__State__create(const char* factory, const eckit::Parametrisation* params)
+{
+  ASSERT( params );
+  State* state(0);
+  ATLAS_ERROR_HANDLING( state = State::create(std::string(factory),*params) );
+  return state;
+}
+
+void atlas__State__delete (State* This)
+{
+  ASSERT( This );
+  delete This;
+}
+
+void atlas__State__add_field (State* This, Field* field)
+{
+  ASSERT( This );
+  ATLAS_ERROR_HANDLING( This->add(field); );
+}
+
+void atlas__State__remove_field (State* This, const char* name)
+{
+  ASSERT( This );
+  ATLAS_ERROR_HANDLING( This->remove_field(name); );
+}
+
+Field* atlas__State__field_by_name (State* This, const char* name)
+{
+  ASSERT( This );
+  Field* field(0);
+  ATLAS_ERROR_HANDLING ( field = &This->field( std::string(name) ); );
+  return field;
+}
+
+Field* atlas__State__field_by_index (State* This, int index)
+{
+  ASSERT( This );
+  Field* field(0);
+  ATLAS_ERROR_HANDLING( field = &This->field( index ) );
+  return field;
+}
+
+int atlas__State__nb_fields(const State* This)
+{
+  ASSERT( This );
+  int nb_fields(0);
+  ATLAS_ERROR_HANDLING( nb_fields = This->nb_fields(); );
+  return nb_fields;
+}
+
+void atlas__State__add_grid (State* This, Grid* grid)
+{
+  ASSERT( This );
+  ATLAS_ERROR_HANDLING( This->add(grid); );
+}
+
+void atlas__State__remove_grid (State* This, const char* name)
+{
+  ASSERT( This );
+  ATLAS_ERROR_HANDLING( This->remove_grid(name); );
+}
+
+Grid* atlas__State__grid_by_name (State* This, const char* name)
+{
+  ASSERT( This );
+  Grid* grid(0);
+  ATLAS_ERROR_HANDLING( grid = &This->grid( std::string(name) ); );
+  return grid;
+}
+
+Grid* atlas__State__grid_by_index (State* This, int index)
+{
+  ASSERT( This );
+  Grid* grid(0);
+  ATLAS_ERROR_HANDLING( grid = &This->grid( index ); );
+  return grid;
+}
+
+int atlas__State__nb_grids(const State* This)
+{
+  ASSERT( This );
+  int nb_grids(0);
+  ATLAS_ERROR_HANDLING( nb_grids = This->nb_grids(); );
+  return nb_grids;
+}
+
+void atlas__State__add_mesh (State* This, Mesh* mesh)
+{
+  ASSERT( This );
+  ATLAS_ERROR_HANDLING( This->add(mesh); );
+}
+
+void atlas__State__remove_mesh (State* This, const char* name)
+{
+  ASSERT( This );
+  ATLAS_ERROR_HANDLING( This->remove_mesh(name); );
+}
+
+Mesh* atlas__State__mesh_by_name (State* This, const char* name)
+{
+  ASSERT( This );
+  Mesh* mesh(0);
+  ATLAS_ERROR_HANDLING( mesh = &This->mesh( std::string(name) ); );
+  return mesh;
+}
+
+Mesh* atlas__State__mesh_by_index (State* This, int index)
+{
+  ASSERT( This );
+  Mesh* mesh(0);
+  ATLAS_ERROR_HANDLING( mesh = &This->mesh( index ); );
+  return mesh;
+}
+
+int atlas__State__nb_meshes(const State* This)
+{
+  int nb_meshes(0);
+  ATLAS_ERROR_HANDLING( nb_meshes = This->nb_meshes(); );
+  return nb_meshes;
+}
 
 }
 //-----------------------------------------------------------------------------

@@ -146,10 +146,29 @@ class StateBuilder : public StateFactory {
 // ------------------------------------------------------------------------------------
 
 // C wrapper interfaces to C++ routines
+#define Parametrisation eckit::Parametrisation
 extern "C"
 {
+  State* atlas__State__new ();
+  State* atlas__State__create (const char* factory, const Parametrisation* params);
+  void atlas__State__delete (State* This);
+  void atlas__State__add_field (State* This, Field* field);
+  void atlas__State__remove_field (State* This, const char* name);
+  Field* atlas__State__field_by_name (State* This, const char* name);
+  Field* atlas__State__field_by_index (State* This, int index);
+  int atlas__State__nb_fields(const State* This);
+  void atlas__State__add_grid (State* This, Grid* grid);
+  void atlas__State__remove_grid (State* This, const char* name);
+  Grid* atlas__State__grid_by_name (State* This, const char* name);
+  Grid* atlas__State__grid_by_index (State* This, int index);
+  int atlas__State__nb_grids(const State* This);
+  void atlas__State__add_mesh (State* This, Mesh* grid);
+  void atlas__State__remove_mesh (State* This, const char* name);
+  Mesh* atlas__State__mesh_by_name (State* This, const char* name);
+  Mesh* atlas__State__mesh_by_index (State* This, int index);
+  int atlas__State__nb_meshes(const State* This);
 }
-
+#undef Parametrisation
 
 } // namespace atlas
 
