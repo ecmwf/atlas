@@ -33,36 +33,43 @@ using atlas::util::Topology;
 namespace atlas {
 namespace trans {
 
-Trans::Trans(const grids::ReducedGrid& g, const Trans::Options& p)
+Trans::Trans(const Grid& grid, const Trans::Options& p)
 {
-  int nsmax = 0;
-  ctor_rgg(g.nlat(),g.npts_per_lat().data(), nsmax, p);
+  const grids::ReducedGrid* reduced = dynamic_cast<const grids::ReducedGrid*>(&grid);
+  if( !reduced )
+    throw eckit::BadCast("Grid is not a grids::ReducedGrid type. Cannot partition using IFS trans",Here());
+  size_t nsmax = 0;
+  ctor_rgg(reduced->nlat(),reduced->npts_per_lat().data(), nsmax, p);
 }
 
-Trans::Trans(const int N, const Trans::Options& p)
+Trans::Trans(const size_t N, const Trans::Options& p)
 {
-  int nsmax = 0;
+  size_t nsmax = 0;
   std::vector<int> npts_per_lat(2*N,4*N);
   ctor_rgg(npts_per_lat.size(),npts_per_lat.data(), nsmax, p);
 }
 
-Trans::Trans(const grids::ReducedGrid& g, const int nsmax, const Trans::Options& p )
+Trans::Trans(const Grid& grid, const size_t nsmax, const Trans::Options& p )
 {
-  const grids::LonLatGrid* lonlat = dynamic_cast<const grids::LonLatGrid*>(&g);
+  const grids::ReducedGrid* reduced = dynamic_cast<const grids::ReducedGrid*>(&grid);
+  if( !reduced )
+    throw eckit::BadCast("Grid is not a grids::ReducedGrid type. Cannot partition using IFS trans",Here());
+
+  const grids::LonLatGrid* lonlat = dynamic_cast<const grids::LonLatGrid*>(reduced);
   if( lonlat )
     ctor_lonlat( lonlat->nlon(), lonlat->nlat(), nsmax, p );
   else
-    ctor_rgg(g.nlat(),g.npts_per_lat().data(), nsmax, p);
+    ctor_rgg(reduced->nlat(),reduced->npts_per_lat().data(), nsmax, p);
 }
 
 
-Trans::Trans(const int N, const int nsmax, const Trans::Options& p)
+Trans::Trans(const size_t N, const size_t nsmax, const Trans::Options& p)
 {
   std::vector<int> npts_per_lat(2*N,4*N);
   ctor_rgg(npts_per_lat.size(),npts_per_lat.data(), nsmax, p);
 }
 
-Trans::Trans( const std::vector<int>& npts_per_lat, const int nsmax, const Trans::Options& p )
+Trans::Trans( const std::vector<int>& npts_per_lat, const size_t nsmax, const Trans::Options& p )
 {
   ctor_rgg(npts_per_lat.size(),npts_per_lat.data(), nsmax, p);
 }
@@ -72,7 +79,7 @@ Trans::~Trans()
   ::trans_delete(&trans_);
 }
 
-void Trans::ctor_rgg(const int ndgl, const int nloen[], int nsmax, const Trans::Options& p )
+void Trans::ctor_rgg(const size_t ndgl, const int nloen[], size_t nsmax, const Trans::Options& p )
 {
   TRANS_CHECK(::trans_new(&trans_));
   TRANS_CHECK(::trans_set_resol(&trans_,ndgl,nloen));
@@ -98,7 +105,7 @@ void Trans::ctor_rgg(const int ndgl, const int nloen[], int nsmax, const Trans::
   TRANS_CHECK(::trans_setup(&trans_));
 }
 
-void Trans::ctor_lonlat(const int nlon, const int nlat, int nsmax, const Trans::Options& p )
+void Trans::ctor_lonlat(const size_t nlon, const size_t nlat, size_t nsmax, const Trans::Options& p )
 {
   TRANS_CHECK(::trans_new(&trans_));
   TRANS_CHECK(::trans_set_resol_lonlat(&trans_,nlon,nlat));
@@ -484,7 +491,7 @@ void Trans::invtrans(const FieldSet& spfields, FieldSet& gpfields, const TransPa
 }
 
 
-Trans* atlas__Trans__new (const grids::ReducedGrid* grid, int nsmax)
+Trans* atlas__Trans__new (const Grid* grid, int nsmax)
 {
   Trans* trans;
   ATLAS_ERROR_HANDLING(

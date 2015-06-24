@@ -17,20 +17,34 @@
 namespace atlas {
 namespace trans {
 
-TransPartitioner::TransPartitioner( const grids::ReducedGrid& grid, const Trans& trans ) :
-  Partitioner(grid),
+TransPartitioner::TransPartitioner( const Grid& grid, const Trans& trans ) :
+  Partitioner(grid,trans.nproc()),
   t_( const_cast<Trans*>(&trans)), owned_(false)
 {
   ASSERT( t_ != NULL );
-  Partitioner::set_nb_partition( t_->nproc() );
 }
 
-TransPartitioner::TransPartitioner( const grids::ReducedGrid& grid ) :
+TransPartitioner::TransPartitioner( const Grid& grid ) :
   Partitioner(grid),
   t_( new Trans(grid,0) ), owned_(true)
 {
   ASSERT( t_ != NULL );
-  Partitioner::set_nb_partition( t_->nproc() );
+  ASSERT( t_->nproc() == nb_partitions() );
+}
+
+TransPartitioner::TransPartitioner( const Grid& grid, const size_t nb_partitions ) :
+  Partitioner(grid,nb_partitions),
+  t_( new Trans(grid,0) ), owned_(true)
+{
+  ASSERT( t_ != NULL );
+  if( nb_partitions != t_->nproc() )
+  {
+    std::stringstream msg;
+    msg << "Requested to partition grid with TransPartitioner in "<<nb_partitions<<" partitions, but "
+           "the internal Trans library could only be set-up for "<<t_->nproc()<< " partitions "
+           "(equal to number of MPI tasks in communicator).";
+    throw eckit::BadParameter(msg.str(),Here());
+  }
 }
 
 TransPartitioner::~TransPartitioner()
@@ -102,5 +116,9 @@ int TransPartitioner::nb_regions(int b) const
 }
 
 }
+}
+
+namespace {
+  atlas::PartitionerBuilder<atlas::trans::TransPartitioner> __Trans("Trans");
 }
 

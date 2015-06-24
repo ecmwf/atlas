@@ -149,60 +149,23 @@ void ReducedGridMeshGenerator::configure_defaults()
 
 void ReducedGridMeshGenerator::generate(const Grid& grid, Mesh& mesh ) const
 {
-//  const_cast<ReducedGridMeshGenerator*>(this)->options.set<bool>("patch_pole",false);
-//  const_cast<ReducedGridMeshGenerator*>(this)->options.set<bool>("include_pole",false);
-//  const_cast<ReducedGridMeshGenerator*>(this)->options.set<bool>("unique_pole",false);
-//  const_cast<ReducedGridMeshGenerator*>(this)->options.set<bool>("triangulate",false);
-//  const_cast<ReducedGridMeshGenerator*>(this)->options.set<bool>("three_dimensional",true);
-//  DEBUG_VAR(grid.grid_type_str());
-//  DEBUG_VAR(grid.gridType());
-//  DEBUG_VAR(grid.className());
-//  DEBUG_VAR(grid.N());
-//  DEBUG_VAR(grid.nlat());
-//  DEBUG_VAR(grid.nlon(0));
-//  DEBUG_VAR(grid.lat(0));
-//  DEBUG_VAR(grid.lon(0,0));
-//  DEBUG_VAR(grid.lon(0,1));
-//  DEBUG_VAR(grid.nlon(1));
-//  DEBUG_VAR(grid.nlon(grid.nlat()/2));
-//  DEBUG_VAR(grid.nlon(grid.nlat()/2-1));
+  const grids::ReducedGrid* rg = dynamic_cast<const grids::ReducedGrid*>(&grid);
+  if( !rg )
+    throw eckit::BadCast("ReducedGridMeshGenerator can only work with a ReducedGrid",Here());
 
   int nb_parts = options.get<size_t>("nb_parts");
 
-#ifdef ATLAS_HAVE_TRANS
-  const grids::ReducedGrid* rg = dynamic_cast<const grids::ReducedGrid*>(&grid);
-  if( !rg )
-    throw eckit::BadCast("Grid could not be cast to a ReducedGrid",Here());
-
-
-  std::string partitioner = Resource<std::string>("atlas.meshgen.partitioner",std::string("trans"));
-  if( rg->nlat()%2 == 1 ) // odd number of latitudes
-    partitioner = "eqreg";
-
-  if( nb_parts == 1 ) // No partitioner required
-    partitioner = "eqreg";
-
-  if( partitioner == "trans" )
+  std::string partitioner_factory = Resource<std::string>("atlas.meshgen.partitioner",std::string("Trans"));
+  if( PartitionerFactory::has("Trans") == false ||    // No support for Trans
+      rg->nlat()%2 == 1                               // Odd number of latitudes
+      || nb_parts == 1  )                             // Only one part --> Trans is slower
   {
-    if( nb_parts != eckit::mpi::size() )
-    {
-      std::stringstream msg; msg << "The default TransPartitioner is not equiped to handle nb_parts != mpi::size():\n"
-                                 << "( " << nb_parts << " != " << eckit::mpi::size() << " )\n"
-                                 << "Please configure Resource: atlas.meshgen.partitioner=eqreg";
-      throw UserError(msg.str(),Here());
-    }
-    GridDistribution::Ptr distribution( trans::TransPartitioner(*rg).distribution() );
-    generate( grid, *distribution, mesh );
+    partitioner_factory = "EqualRegions";
   }
-  else
-  {
-    GridDistribution::Ptr distribution( EqualRegionsPartitioner(grid,nb_parts).distribution() );
-    generate( grid, *distribution, mesh );
-  }
-#else
-  GridDistribution::Ptr distribution( EqualRegionsPartitioner(grid,nb_parts).distribution() );
+
+  Partitioner::Ptr partitioner( PartitionerFactory::build(partitioner_factory,grid,nb_parts) );
+  GridDistribution::Ptr distribution( partitioner->distribution() );
   generate( grid, *distribution, mesh );
-#endif
 }
 
 void ReducedGridMeshGenerator::generate(const Grid& grid, const GridDistribution& distribution, Mesh& mesh ) const

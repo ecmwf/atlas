@@ -30,12 +30,14 @@ class TransPartitioner: public Partitioner
 public:
 
   /// @brief Constructor
-  TransPartitioner( const grids::ReducedGrid& grid, const Trans& trans );
+  TransPartitioner( const Grid& grid, const Trans& trans );
 
   /// @brief Constructor
   /// This constructor allocates a new Trans, but without the computations
   /// of the spectral coefficients (LDGRIDONLY=TRUE)
-  TransPartitioner( const grids::ReducedGrid& grid );
+  TransPartitioner( const Grid& grid );
+
+  TransPartitioner( const Grid& grid, const size_t nb_partitions );
 
   virtual ~TransPartitioner();
 

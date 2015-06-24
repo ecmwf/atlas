@@ -18,9 +18,7 @@
 
 namespace atlas {
   class FieldSet;
-namespace grids {
-  class ReducedGrid;
-}
+  class Grid;
 }
 
 namespace atlas {
@@ -84,22 +82,22 @@ public:
 
   /// @brief Constructor for grid-only setup
   ///        (e.g. for parallelisation routines)
-  Trans(const grids::ReducedGrid& g, const Options& = Options() );
+  Trans(const Grid& g, const Options& = Options() );
 
   /// @brief Constructor given Gaussian N number for grid-only setup
   ///        This is equivalent to a (regular) Gaussian grid with N number
   ///        (e.g. for parallelisation routines)
-  Trans( const int N, const Options& = Options() );
+  Trans( const size_t N, const Options& = Options() );
 
   /// @brief Constructor given grid and spectral truncation
-  Trans( const grids::ReducedGrid& g, const int nsmax, const Options& = Options() );
+  Trans( const Grid& g, const size_t nsmax, const Options& = Options() );
 
   /// @brief Constructor given npts_per_lat (aka PL array) and spectral truncation
-  Trans( const std::vector<int>& npts_per_lat, const int nsmax, const Options& = Options() );
+  Trans( const std::vector<int>& npts_per_lat, const size_t nsmax, const Options& = Options() );
 
   /// @brief Constructor given Gaussian N number and spectral truncation
   ///        This is equivalent to a (regular) Gaussian grid with N number
-  Trans( const int N, const int nsmax, const Options& = Options() );
+  Trans( const size_t N, const size_t nsmax, const Options& = Options() );
 
   virtual ~Trans();
   operator Trans_t*() const { return &trans_; }
@@ -314,9 +312,9 @@ public:
 
 private:
 
-  void ctor_rgg(const int ndgl, const int nloen[], int nsmax, const Options& );
+  void ctor_rgg(const size_t ndgl, const int nloen[], size_t nsmax, const Options& );
 
-  void ctor_lonlat(const int nlon, const int nlat, int nsmax, const Options& );
+  void ctor_lonlat(const size_t nlon, const size_t nlat, size_t nsmax, const Options& );
 
 
 private:
@@ -328,11 +326,9 @@ private:
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
-typedef grids::ReducedGrid grids__ReducedGrid;
-
 extern "C"
 {
-  Trans* atlas__Trans__new (const grids__ReducedGrid* grid, int nsmax);
+  Trans* atlas__Trans__new (const Grid* grid, int nsmax);
   void atlas__Trans__delete (Trans* trans);
   int atlas__Trans__handle (const Trans* trans);
   void atlas__Trans__distspec (const Trans* t, int nb_fields, int origin[], double global_spectra[], double spectra[]);

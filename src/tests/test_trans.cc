@@ -77,6 +77,9 @@ BOOST_GLOBAL_FIXTURE( Fixture )
 
 BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
 {
+  BOOST_CHECK( PartitionerFactory::has("Trans") );
+
+
   // Create grid and trans object
   ReducedGrid::Ptr g ( ReducedGrid::create( "rgg.N80" ) );
 

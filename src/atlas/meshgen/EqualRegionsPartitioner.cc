@@ -390,10 +390,9 @@ void eq_regions(int N, double xmin[], double xmax[], double ymin[], double ymax[
 }
 
 EqualRegionsPartitioner::EqualRegionsPartitioner(const Grid& grid) :
-  Partitioner(grid),
+  Partitioner(grid,eckit::mpi::size()),
   N_(eckit::mpi::size())
 {
-  set_nb_partition(N_);
   std::vector<double> s_cap;
   eq_caps(N_, sectors_, s_cap);
   bands_.resize(s_cap.size());
@@ -403,10 +402,9 @@ EqualRegionsPartitioner::EqualRegionsPartitioner(const Grid& grid) :
 }
 
 EqualRegionsPartitioner::EqualRegionsPartitioner(const Grid& grid, int N) :
-  Partitioner(grid),
+  Partitioner(grid,N),
   N_(N)
 {
-  set_nb_partition(N_);
   std::vector<double> s_cap;
   eq_caps(N_, sectors_, s_cap);
   bands_.resize(s_cap.size());
@@ -583,3 +581,15 @@ void EqualRegionsPartitioner::partition(int part[]) const
 
 } // namespace meshgen
 } // namespace atlas
+
+
+namespace {
+  atlas::PartitionerBuilder<atlas::meshgen::EqualRegionsPartitioner> __EqualRegions ("EqualRegions");
+}
+
+
+
+
+
+
+
