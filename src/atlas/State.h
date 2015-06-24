@@ -19,10 +19,10 @@
 #include "eckit/memory/ScopedPtr.h"
 
 namespace eckit { class Parametrisation; }
+namespace atlas { class Parametrisation; }
 namespace atlas { class Field; }
 namespace atlas { class Mesh; }
 namespace atlas { class Grid; }
-namespace atlas { class Metadata; }
 
 
 namespace atlas {
@@ -39,7 +39,7 @@ class State : public eckit::Owned {
 public: // types
 
   typedef eckit::SharedPtr< State > Ptr;
-  typedef Metadata Parameters;
+  typedef atlas::Parametrisation Parameters;
 
 private:
 

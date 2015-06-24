@@ -32,6 +32,7 @@
 #include "atlas/util/IndexView.h"
 #include "atlas/actions/BuildParallelFields.h"
 #include "atlas/Parameters.h"
+#include "atlas/Parametrisation.h"
 #include "atlas/grids/rgg/rgg.h"
 
 using namespace atlas;
@@ -45,7 +46,7 @@ namespace atlas {
 namespace test {
 
 
-typedef Metadata Parameters;
+typedef atlas::Parametrisation Parameters;
 
 class DebugMesh:   public grids::ReducedGaussianGrid { public: DebugMesh(); };
 DebugMesh::DebugMesh()

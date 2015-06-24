@@ -41,7 +41,7 @@ public:
   template<typename ValueT>
   bool get(const std::string& name, ValueT& value) const;
 
-  bool has( const key_t& ) const;
+  bool has( const std::string& name) const;
 
   friend std::ostream& operator<<(std::ostream& s, const Metadata& v) { v.print(s);  return s; }
 
