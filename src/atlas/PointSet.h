@@ -49,15 +49,13 @@ public: // methods
     DupStore_t& duplicates() { return duplicates_; }
 
     template < typename POINT_T >
-    void list_unique_points( std::vector< POINT_T >& opts, std::vector< size_t >& idxs )
+    void list_unique_points( std::vector< POINT_T >& opts )
     {
         eckit::Timer t("Finding unique points");
 
         ASSERT( opts.empty() );
-        ASSERT( idxs.empty() );
 
         opts.reserve(npts_);
-        idxs.reserve(npts_);
 
         for( PointIndex3::iterator i = tree_->begin(); i != tree_->end(); ++i )
         {
@@ -68,7 +66,6 @@ public: // methods
             if( ip == uidx )
             {
                 opts.push_back( POINT_T( p.data() ) );
-                idxs.push_back( ip );
 //                std::cout << "----> UNIQ " << ip << std::endl;
             }
             else

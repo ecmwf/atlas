@@ -220,12 +220,11 @@ void BuildConvexHull3D::operator()( Mesh& mesh ) const
 
     // remove duplicate points
 
-    PointSet points( mesh ); /* will remember each point index in readpts */
+    PointSet points( mesh );
 
     std::vector< Point3 > ipts;
-    std::vector< size_t > idxs;
 
-    points.list_unique_points( ipts, idxs );
+    points.list_unique_points( ipts );
 
 //    std::cout << "unique pts " << ipts.size() << std::endl;
 //    std::cout << "duplicates " << points.duplicates().size() << std::endl;
@@ -238,7 +237,7 @@ void BuildConvexHull3D::operator()( Mesh& mesh ) const
 
 //    std::cout << "convex hull " << poly->size_of_vertices() << " vertices" << std::endl;
 
-    assert( poly->size_of_vertices() == ipts.size() );
+    ASSERT( poly->size_of_vertices() == ipts.size() );
 
     cgal_polyhedron_to_atlas_mesh( mesh, *poly, points );
 

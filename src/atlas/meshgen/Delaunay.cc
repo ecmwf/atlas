@@ -32,9 +32,9 @@ Delaunay::Delaunay(const eckit::Parametrisation& p)
 Delaunay::~Delaunay() {
 }
 
-void Delaunay::generate(const Grid &g, const GridDistribution &d , Mesh &m) const
+void Delaunay::generate(const Grid& grid, const GridDistribution& dist, Mesh& mesh) const
 {
-  if( d.nb_partitions() > 1 )
+  if( dist.nb_partitions() > 1 )
   {
     eckit::Log::warning() << "Delaunay triangulation does not support a GridDistribution"
                              "with more than 1 partition"
@@ -45,17 +45,21 @@ void Delaunay::generate(const Grid &g, const GridDistribution &d , Mesh &m) cons
   }
   else
   {
-    generate(g,m);
+    generate(grid, mesh);
   }
 }
 
-void Delaunay::generate(const Grid &g, Mesh &m) const
+void Delaunay::generate(const Grid& g, Mesh& mesh) const
 {
-  if (!m.has_function_space("nodes"))
-    m.add_nodes(g);
-  actions::BuildXYZField()(m);
-  actions::BuildConvexHull3D()(m);
-  m.set_grid(g);
+  if(!mesh.has_function_space("nodes"))
+  {
+    mesh.add_nodes(g);
+  }
+
+  actions::BuildXYZField()(mesh);
+  actions::BuildConvexHull3D()(mesh);
+
+  mesh.set_grid(g);
 }
 
 namespace {
