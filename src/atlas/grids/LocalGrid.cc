@@ -61,9 +61,8 @@ void LocalGrid::cropPoints() {
     std::vector<Grid::Point> gpts;
     grid_->lonlat(gpts);
 
-#if 0
-    eckit::Log::info() << " DOMAIN: " << domain_ << std::endl;
-    eckit::Log::info() << " ----> NESTED GRID: " << gpts.size() << std::endl;
+//    eckit::Log::info() << " DOMAIN: " << domain_ << std::endl;
+//    eckit::Log::info() << " ----> NESTED GRID: " << gpts.size() << std::endl;
 
     size_t accepted = 0;
     size_t discarded = 0;
@@ -72,7 +71,7 @@ void LocalGrid::cropPoints() {
     for (size_t i = 0; i < gpts.size(); ++i) {
         const Grid::Point& p = gpts[i];
         if ( domain_.contains(p) ) {
-            eckit::Log::info() << "  ++ POINT " << p << std::endl;
+//            eckit::Log::info() << "  ++ POINT " << p << std::endl;
             localPts_.push_back(p);
             ++accepted;
         }
@@ -84,7 +83,6 @@ void LocalGrid::cropPoints() {
 
     eckit::Log::info() << "Local Grid contains " << eckit::BigNum(accepted) << std::endl;
     eckit::Log::info() << "Local Grid discards " << eckit::BigNum(discarded) << std::endl;
-#endif
 }
 
 size_t LocalGrid::npts() const { return localPts_.size(); }
