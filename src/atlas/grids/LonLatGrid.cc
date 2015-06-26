@@ -172,19 +172,14 @@ void LonLatGrid::setup( const size_t nlon, const size_t nlat, const BoundBox& bb
 
 void LonLatGrid::setup( const size_t nlon, const size_t nlat, bool poles )
 {
-  if( poles )
-  {
     double londelta = 360./static_cast<double>(nlon);
-    BoundBox bbox( 90.,-90, 360.-londelta, 0. );
-    setup(nlon,nlat,bbox);
-  }
-  else
-  {
     double latdelta = 180./static_cast<double>(nlat);
-    double londelta = 360./static_cast<double>(nlon);
-    BoundBox bbox( 90.-0.5*latdelta, -90+0.5*latdelta, 360.-londelta, 0. );
+
+    BoundBox bbox = poles ?
+                        BoundBox( 90.,-90, 360.-londelta, 0. ) :
+                        BoundBox( 90.-0.5*latdelta, -90+0.5*latdelta, 360.-londelta, 0. );
+
     setup(nlon,nlat,bbox);
-  }
 }
 
 
