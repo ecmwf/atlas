@@ -95,7 +95,7 @@ void predict_gaussian_colatitudes_hemisphere(const size_t N, double colat[])
   for(size_t i=0; i<N; ++i )
   {
     z = (4.*(i+1.)-1.)*M_PI/(4.*2.*N+2.);
-    colat[i] = ( z+1./(tan(z)*(8.*(2.*N)*(2.*N))) ) * Constants::degreesToRadians;
+    colat[i] = ( z+1./(tan(z)*(8.*(2.*N)*(2.*N))) ) * Constants::degreesToRadians();
   }
 }
 
@@ -165,7 +165,7 @@ namespace {
 
       //   Set North and South values using symmetry.
 
-      value = asin(root) * Constants::radianToDegrees;
+      value = asin(root) * Constants::radianToDegrees();
   }
 
 

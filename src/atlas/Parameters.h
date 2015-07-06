@@ -31,10 +31,14 @@ enum AngleUnit{ DEG=0, RAD=1 };
 
 //------------------------------------------------------------------------------------------------------
 
+/// Some usefull constants
+/// @note These could be static const constants, but then the initialization would be in the .cc
+///       which would preclude constant optimization.
+///       With C++11 constexpr the constants can be initialized in the class header.
 struct Constants
 {
-    static const double radianToDegrees  =  180. * M_1_PI;
-    static const double degreesToRadians =  M_PI / 180;
+    static double radianToDegrees() { return 180. * M_1_PI; }
+    static double degreesToRadians() { return M_PI / 180; }
 
 };
 
