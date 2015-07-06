@@ -14,8 +14,11 @@
 #ifndef atlas_grids_GaussianLatitudes_h
 #define atlas_grids_GaussianLatitudes_h
 
+#include <cstddef>
+
 namespace atlas {
 namespace grids {
+
 //------------------------------------------------------------------------------------------------------
 
 void gaussian_latitudes_npole_equator (const size_t N, double[]);
