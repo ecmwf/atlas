@@ -60,7 +60,7 @@ void gaussian_latitudes_npole_equator(const size_t N, double lats[])
   if( Factory<GaussianLatitudes>::instance().exists(Nstr) )
   {
     ScopedPtr<GaussianLatitudes> gl ( Factory<GaussianLatitudes>::instance().get(Nstr).create() );
-    gl->assign(lats);
+    gl->assign(lats,N);
   }
   else
   {
@@ -95,7 +95,7 @@ void predict_gaussian_colatitudes_hemisphere(const size_t N, double colat[])
   for(size_t i=0; i<N; ++i )
   {
     z = (4.*(i+1.)-1.)*M_PI/(4.*2.*N+2.);
-    colat[i] = ( z+1./(tan(z)*(8.*(2.*N)*(2.*N))) ) * Constants::radianToDegrees();
+    colat[i] = ( z+1./(tan(z)*(8.*(2.*N)*(2.*N))) ) * Constants::degreesToRadians;
   }
 }
 
@@ -132,7 +132,6 @@ namespace {
   {
       // NB code only tested on positive (Northern) hemisphere
       //
-      static const double rad2deg = Constants::radianToDegrees();
       static const double convval = 1.0 - ((2.0 / M_PI)*(2.0 / M_PI)) * 0.25;
       static const double convergeance_precision = 1.0e-14;
 
@@ -166,7 +165,7 @@ namespace {
 
       //   Set North and South values using symmetry.
 
-      value = asin(root) * rad2deg;
+      value = asin(root) * Constants::radianToDegrees;
   }
 
 

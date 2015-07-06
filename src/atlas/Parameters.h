@@ -34,7 +34,7 @@ enum AngleUnit{ DEG=0, RAD=1 };
 struct Constants
 {
     static const double radianToDegrees  =  180. * M_1_PI;
-    static const double degreesToRadians =  M_1_PI / 180;
+    static const double degreesToRadians =  M_PI / 180;
 
 };
 
