@@ -63,7 +63,9 @@ public: // methods
     bool has_function_space(const std::string& name) const;
 
     /// Takes ownership, and will be deleted automatically
-    FunctionSpace& create_function_space(const std::string& name, const std::string& shape_func, const std::vector<size_t>& shape);
+    FunctionSpace& create_function_space(const std::string& name,
+                                         const std::string& shape_func,
+                                         const std::vector<size_t>& shape);
 
     /// accessor by name
     FunctionSpace& function_space(const std::string& name) const;

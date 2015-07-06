@@ -55,7 +55,7 @@ public:
       if (eckit::mpi::rank() == 0) {
         LocalPathName par_path(file_path);
         std::ofstream par_file(par_path.c_str(), std::ios_base::out);
-        for (int p = 0; p < eckit::mpi::size(); ++p) {
+        for(size_t p = 0; p < eckit::mpi::size(); ++p) {
           LocalPathName loc_path(file_path);
           loc_path = loc_path.baseName(false) + "_p" + to_str(p) + ".msh";
           par_file << "Merge \"" << loc_path << "\";" << std::endl;
@@ -396,7 +396,7 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh ) const
 		std::getline(file,line);
 
 	// Create nodes
-	int nb_nodes;
+    size_t nb_nodes;
 	file >> nb_nodes;
 
 	std::vector<size_t> extents(2);
@@ -472,9 +472,6 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh ) const
 	nodes.metadata().set("max_glb_idx",max_glb_idx);
 
 	int nb_elements=0;
-	int nb_quads=0;
-	int nb_triags=0;
-	int nb_edges=0;
 
 	while(line != "$Elements")
 		std::getline(file,line);
@@ -483,7 +480,11 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh ) const
 
 	if( binary )
 	{
-		while(file.peek()=='\n') file.get();
+        int nb_quads=0;
+        int nb_triags=0;
+        int nb_edges=0;
+
+        while(file.peek()=='\n') file.get();
 		int accounted_elems = 0;
 		while( accounted_elems < nb_elements )
 		{

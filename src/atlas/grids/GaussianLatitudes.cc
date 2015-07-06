@@ -11,6 +11,10 @@
 /// @author Willem Deconinck
 /// @date Jan 2014
 
+#include "atlas/grids/GaussianLatitudes.h"
+
+#include "eckit/memory/ScopedPtr.h"
+
 #include "atlas/atlas_config.h"
 #include "atlas/Parameters.h"
 #include "atlas/grids/gausslat/gausslat.h"
@@ -21,7 +25,7 @@
 
 using eckit::ConcreteBuilderT0;
 using eckit::Factory;
-using eckit::SharedPtr;
+using eckit::ScopedPtr;
 using eckit::Log;
 
 using atlas::grids::gausslat::GaussianLatitudes;
@@ -29,80 +33,80 @@ using atlas::grids::gausslat::GaussianLatitudes;
 namespace atlas {
 namespace grids {
 
-void predict_gaussian_colatitudes_hemisphere(const int N, double colat[]);
+//----------------------------------------------------------------------------------------------------------------------
 
-void predict_gaussian_latitudes_hemisphere(const int N, double lat[]);
+void predict_gaussian_colatitudes_hemisphere(const size_t N, double colat[]);
+
+void predict_gaussian_latitudes_hemisphere(const size_t N, double lat[]);
 
 namespace {
   
-void colat_to_lat_hemisphere(const int N, const double colat[], double lats[], const AngleUnit unit)
+void colat_to_lat_hemisphere(const size_t N, const double colat[], double lats[], const AngleUnit unit)
 {
   std::copy( colat, colat+N, lats );
   double pole = (unit == DEG ? 90. : M_PI_2);
-  for (int i=0; i<N; ++i)
+  for(size_t i=0; i<N; ++i)
     lats[i]=pole-lats[i];
 }
 
-}
+} //  anonymous namespace
 
-//------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
-void gaussian_latitudes_npole_equator(const int N, double lats[])
+void gaussian_latitudes_npole_equator(const size_t N, double lats[])
 {
   std::stringstream Nstream; Nstream << N;
   std::string Nstr = Nstream.str();
   if( Factory<GaussianLatitudes>::instance().exists(Nstr) )
   {
-    SharedPtr<GaussianLatitudes> gl ( Factory<GaussianLatitudes>::instance().get(Nstr).create() );
+    ScopedPtr<GaussianLatitudes> gl ( Factory<GaussianLatitudes>::instance().get(Nstr).create() );
     gl->assign(lats);
   }
   else
   {
 #ifndef ECKIT_HAVE_GRIB
-    Log::warning() << "Unfortunately, the computations of the gaussian latitudes require for now grib_api dependency,\nand no hard-coded version is provided. Using predicted latitudes instead (accuracy of 2 decimals)" << std::endl;
+    Log::warning() << "Unfortunately, computation of the gaussian latitudes depends at the moment on grib_api.\n"
+                   << "Atlas was built without grib_api support (via eckit)\n"
+                   << "Resorting to use predicted latitudes instead (accuracy of 2 decimals)" << std::endl;
+
     predict_gaussian_latitudes_hemisphere(N,lats);
 #else
     Log::warning() << "Using grib_api to compute gaussian latitudes..." << std::endl;
     std::vector<double> lats2(2*N);
     grib_get_gaussian_latitudes(N, lats2.data());
-    for( int jlat=0; jlat<N; ++jlat )
+    for(size_t jlat=0; jlat<N; ++jlat )
       lats[jlat] = lats2[jlat];
 #endif
   }
 }
 
-void gaussian_latitudes_npole_spole(const int N, double lats[])
+void gaussian_latitudes_npole_spole(const size_t N, double lats[])
 {
-  gaussian_latitudes_npole_equator(N,lats);
-  int end = 2*N-1;
-  for( int jlat=0; jlat<N; ++jlat ) {
-    lats[end--] = -lats[jlat];
-  }
+    gaussian_latitudes_npole_equator(N,lats);
+    size_t end = 2*N-1;
+    for(size_t jlat=0; jlat<N; ++jlat) {
+        lats[end--] = -lats[jlat];
+    }
 }
 
-
-namespace {
-static const double rad_to_deg = 180.*M_1_PI;
-}
-
-void predict_gaussian_colatitudes_hemisphere(const int N, double colat[])
+void predict_gaussian_colatitudes_hemisphere(const size_t N, double colat[])
 {
   double z;
-  for( int i=0; i<N; ++i )
+  for(size_t i=0; i<N; ++i )
   {
     z = (4.*(i+1.)-1.)*M_PI/(4.*2.*N+2.);
-    colat[i] = ( z+1./(tan(z)*(8.*(2.*N)*(2.*N))) ) * rad_to_deg;
+    colat[i] = ( z+1./(tan(z)*(8.*(2.*N)*(2.*N))) ) * Constants::radianToDegrees();
   }
 }
 
-void predict_gaussian_latitudes_hemisphere(const int N, double lats[])
+void predict_gaussian_latitudes_hemisphere(const size_t N, double lats[])
 {
   std::vector<double> colat(N);
   predict_gaussian_colatitudes_hemisphere(N,colat.data());
   colat_to_lat_hemisphere(N,colat.data(),lats,DEG);
 }
-//------------------------------------------------------------------------------------------------------
 
+//----------------------------------------------------------------------------------------------------------------------
 
 // TODO: evaluate this, and possibly use
 namespace {
@@ -120,7 +124,7 @@ namespace {
       initialGaussianLatitudes(resolution, lats);
 
       // refine these values
-      for (size_t i = 0; i < lats.size(); i++)
+      for (size_t i = 0; i < lats.size(); ++i)
           refineGaussianLatitude(resolution, lats[i]);
   }
 
@@ -128,7 +132,7 @@ namespace {
   {
       // NB code only tested on positive (Northern) hemisphere
       //
-      static const double rad2deg = 180.0 / M_PI;
+      static const double rad2deg = Constants::radianToDegrees();
       static const double convval = 1.0 - ((2.0 / M_PI)*(2.0 / M_PI)) * 0.25;
       static const double convergeance_precision = 1.0e-14;
 
@@ -208,7 +212,9 @@ namespace {
       }
   }
 
-}
+} // anonymous namespace
+
+//----------------------------------------------------------------------------------------------------------------------
 
 } // namespace grids
 } // namespace atlas

@@ -26,19 +26,22 @@ namespace rgg {
 class OctahedralRGG : public ReducedGaussianGrid {
 public:
 
-  static std::string className() { return "atlas.grids.rgg.OctahedralRGG"; }
+    static std::string className() { return "atlas.grids.rgg.OctahedralRGG"; }
+    static std::string grid_type_str() { return "oct"; }
 
-  static std::string grid_type_str() { return "oct"; }
+    OctahedralRGG(const size_t N);
 
-  OctahedralRGG(const size_t N);
+    OctahedralRGG( const eckit::Parametrisation& arg1);
 
-  OctahedralRGG( const eckit::Parametrisation& arg1);
+    /// Computes the PL for the Octohedral distribution
+    /// number of points at latitude closest to pole
+    static std::vector<long> computePL(const size_t N, const size_t start = 20);
 
 private:
 
-  void construct(const size_t N);
+    void construct(const size_t N);
 
-  void set_typeinfo();
+    void set_typeinfo();
 
 };
 

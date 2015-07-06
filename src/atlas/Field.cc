@@ -50,7 +50,6 @@ Field* Field::create(const eckit::Parametrisation& params)
   return NULL;
 }
 
-
 Field* Field::create(const ArrayShape& shape, const eckit::Parametrisation& params)
 {
   std::string data_type = "real64";
@@ -60,8 +59,6 @@ Field* Field::create(const ArrayShape& shape, const eckit::Parametrisation& para
      (field::FieldTCreatorFactory::build("FieldT<"+data_type+">") );
   return creator->create_field(shape,params);
 }
-
-
 
 Field::Field(const std::string& name, const size_t nb_vars) :
   name_(name), nb_vars_(nb_vars), grid_(0), function_space_(0)
@@ -171,8 +168,9 @@ void Field::set_function_space(const FunctionSpace& function_space)
 
 Field* atlas__Field__create(eckit::Parametrisation* params)
 {
-  Field* field;
+  Field* field = 0;
   ATLAS_ERROR_HANDLING( field = Field::create(*params) );
+  ASSERT(field);
   return field;
 }
 

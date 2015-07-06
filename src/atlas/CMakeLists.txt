@@ -81,6 +81,8 @@ meshgen/ReducedGridMeshGenerator.h
 )
 
 list( APPEND atlas_actions_srcs
+actions/AddVirtualNodes.cc
+actions/AddVirtualNodes.h
 actions/BuildDualMesh.h
 actions/BuildDualMesh.cc
 actions/BuildEdges.h

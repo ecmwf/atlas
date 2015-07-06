@@ -142,7 +142,7 @@ Field& build_nodes_global_idx( FunctionSpace& nodes )
 
   UniqueLonLat compute_uid(nodes);
 
-  for( int jnode=0; jnode<glb_idx.shape(0); ++jnode )
+  for( size_t jnode=0; jnode<glb_idx.shape(0); ++jnode )
   {
     if( glb_idx(jnode) <= 0 )
       glb_idx(jnode) = compute_uid(jnode);
@@ -158,7 +158,7 @@ void renumber_nodes_glb_idx( FunctionSpace& nodes )
 
   UniqueLonLat compute_uid(nodes);
 
-  int mypart = eckit::mpi::rank();
+  // unused // int mypart = eckit::mpi::rank();
   int nparts = eckit::mpi::size();
   int root = 0;
 
@@ -215,7 +215,7 @@ void renumber_nodes_glb_idx( FunctionSpace& nodes )
 
   // 2) Sort all global indices, and renumber from 1 to glb_nb_edges
   std::vector<Node> node_sort; node_sort.reserve(glb_nb_nodes);
-  for( int jnode=0; jnode<glb_id.shape(0); ++jnode )
+  for( size_t jnode=0; jnode<glb_id.shape(0); ++jnode )
   {
     node_sort.push_back( Node(glb_id(jnode),jnode) );
   }
@@ -223,7 +223,7 @@ void renumber_nodes_glb_idx( FunctionSpace& nodes )
 
   // Assume edge gid start
   uid_t gid=0;
-  for( int jnode=0; jnode<node_sort.size(); ++jnode )
+  for( size_t jnode=0; jnode<node_sort.size(); ++jnode )
   {
     if( jnode == 0 )
     {
@@ -253,15 +253,15 @@ void renumber_nodes_glb_idx( FunctionSpace& nodes )
 
 Field& build_nodes_remote_idx( FunctionSpace& nodes )
 {
-  int mypart = eckit::mpi::rank();
-  int nparts = eckit::mpi::size();
+  size_t mypart = eckit::mpi::rank();
+  size_t nparts = eckit::mpi::size();
 
   UniqueLonLat compute_uid(nodes);
 
   // This piece should be somewhere central ... could be NPROMA ?
   // ---------->
   std::vector< int > proc( nparts );
-  for( int jpart=0; jpart<nparts; ++jpart )
+  for( size_t jpart=0; jpart<nparts; ++jpart )
     proc[jpart] = jpart;
   // <---------
 
@@ -281,7 +281,7 @@ Field& build_nodes_remote_idx( FunctionSpace& nodes )
   for( int jnode=0; jnode<nb_nodes; ++jnode )
   {
     uid_t uid = compute_uid(jnode);
-    if( part(jnode)==mypart )
+    if( part(jnode) == mypart )
     {
       lookup[ uid ] = jnode;
       ridx(jnode) = jnode;
@@ -299,11 +299,11 @@ Field& build_nodes_remote_idx( FunctionSpace& nodes )
   std::vector< std::vector<int> > send_found( eckit::mpi::size() );
   std::vector< std::vector<int> > recv_found( eckit::mpi::size() );
 
-  for( int jpart=0; jpart<nparts; ++jpart )
+  for( size_t jpart=0; jpart<nparts; ++jpart )
   {
     ArrayView<uid_t,2> recv_node( recv_needed[ proc[jpart] ].data(),
         make_shape(recv_needed[ proc[jpart] ].size()/varsize,varsize) );
-    for( int jnode=0; jnode<recv_node.shape(0); ++jnode )
+    for( size_t jnode=0; jnode<recv_node.shape(0); ++jnode )
     {
       uid_t uid = recv_node(jnode,0);
       int inode = recv_node(jnode,1);
@@ -324,11 +324,11 @@ Field& build_nodes_remote_idx( FunctionSpace& nodes )
 
   eckit::mpi::all_to_all( send_found, recv_found );
 
-  for( int jpart=0; jpart<nparts; ++jpart )
+  for( size_t jpart=0; jpart<nparts; ++jpart )
   {
     ArrayView<int,2> recv_node( recv_found[ proc[jpart] ].data(),
         make_shape(recv_found[ proc[jpart] ].size()/2,2) );
-    for( int jnode=0; jnode<recv_node.shape(0); ++jnode )
+    for( size_t jnode=0; jnode<recv_node.shape(0); ++jnode )
     {
       ridx( recv_node(jnode,0) ) = recv_node(jnode,1);
     }
@@ -354,8 +354,8 @@ Field& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
 {
   UniqueLonLat compute_uid(nodes);
 
-  int mypart = eckit::mpi::rank();
-  int nparts = eckit::mpi::size();
+  size_t mypart = eckit::mpi::rank();
+  size_t nparts = eckit::mpi::size();
 
   if( ! edges.has_field("partition") ) edges.create_field<int>("partition",1) ;
   ArrayView<int,1> edge_part  ( edges.field("partition") );
@@ -380,7 +380,7 @@ Field& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
   std::vector< ArrayView<int,1> > elem_part ( edges.mesh().nb_function_spaces() );
   std::vector< ArrayView<gidx_t,1> > elem_glb_idx ( edges.mesh().nb_function_spaces() );
 
-  for( int func_space_idx=0; func_space_idx<edges.mesh().nb_function_spaces(); ++func_space_idx)
+  for( size_t func_space_idx=0; func_space_idx<edges.mesh().nb_function_spaces(); ++func_space_idx)
   {
     FunctionSpace& elements = edges.mesh().function_space(func_space_idx);
     if( elements.metadata().get<long>("type") == Entity::ELEMS )
@@ -510,7 +510,7 @@ Field& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
       transform(centroid,periodic[jedge]);
       uid_t uid = util::unique_lonlat(centroid);
 
-      if( edge_part(jedge)==mypart )
+      if( edge_part(jedge) == mypart )
       {
         lookup[ uid ] = jedge;
       }
@@ -564,11 +564,11 @@ Field& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
     std::vector< std::vector<int> > send_found( eckit::mpi::size() );
     std::vector< std::vector<int> > recv_found( eckit::mpi::size() );
 
-    for( int jpart=0; jpart<nparts; ++jpart )
+    for( size_t jpart=0; jpart<nparts; ++jpart )
     {
       ArrayView<uid_t,2> recv_edge( recv_unknown[ jpart ].data(),
           make_shape(recv_unknown[ jpart ].size()/varsize,varsize) );
-      for( int jedge=0; jedge<recv_edge.shape(0); ++jedge )
+      for( size_t jedge=0; jedge<recv_edge.shape(0); ++jedge )
       {
         uid_t uid      = recv_edge(jedge,0);
         int    recv_idx = recv_edge(jedge,1);
@@ -581,9 +581,9 @@ Field& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
 
     eckit::mpi::all_to_all( send_found, recv_found );
 
-    for( int jpart=0; jpart<nparts; ++jpart )
+    for( size_t jpart=0; jpart<nparts; ++jpart )
     {
-      for( int jedge=0; jedge<recv_found[jpart].size(); ++jedge )
+      for( size_t jedge=0; jedge<recv_found[jpart].size(); ++jedge )
       {
         int iedge = recv_found[jpart][jedge];
 #ifdef DEBUGGING_PARFIELDS
@@ -639,8 +639,8 @@ Field& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes )
 {
   UniqueLonLat compute_uid(nodes);
 
-  int mypart = eckit::mpi::rank();
-  int nparts = eckit::mpi::size();
+  size_t mypart = eckit::mpi::rank();
+  size_t nparts = eckit::mpi::size();
 
   if( ! edges.has_field("remote_idx") ) ( edges.create_field<int>("remote_idx",1) );
   IndexView<int,   2> edge_nodes ( edges.field("nodes")       );
@@ -661,7 +661,7 @@ Field& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes )
     is_pole_edge = ArrayView<int,1>( edges.field("is_pole_edge") );
   }
 
-  const int nb_nodes = nodes.shape(0);
+//  const int nb_nodes = nodes.shape(0);
   const int nb_edges = edges.shape(0);
 
   double centroid[2];
@@ -736,11 +736,11 @@ Field& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes )
   std::vector< std::vector<int> > recv_found( eckit::mpi::size() );
 
   std::map<uid_t,int>::iterator found;
-  for( int jpart=0; jpart<nparts; ++jpart )
+  for( size_t jpart=0; jpart<nparts; ++jpart )
   {
     ArrayView<uid_t,2> recv_edge( recv_needed[ jpart ].data(),
         make_shape(recv_needed[ jpart ].size()/varsize,varsize) );
-    for( int jedge=0; jedge<recv_edge.shape(0); ++jedge )
+    for( size_t jedge=0; jedge<recv_edge.shape(0); ++jedge )
     {
       uid_t recv_uid = recv_edge(jedge,0);
       int recv_idx = recv_edge(jedge,1);
@@ -768,11 +768,11 @@ Field& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes )
 
   eckit::mpi::all_to_all( send_found, recv_found );
 
-  for( int jpart=0; jpart<nparts; ++jpart )
+  for( size_t jpart=0; jpart<nparts; ++jpart )
   {
     ArrayView<int,2> recv_edge( recv_found[ jpart ].data(),
         make_shape(recv_found[ jpart ].size()/2,2) );
-    for( int jedge=0; jedge<recv_edge.shape(0); ++jedge )
+    for( size_t jedge=0; jedge<recv_edge.shape(0); ++jedge )
     {
       edge_ridx( recv_edge(jedge,0) ) = recv_edge(jedge,1);
     }
@@ -786,7 +786,6 @@ Field& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nodes )
 {
   UniqueLonLat compute_uid(nodes);
 
-  int mypart = eckit::mpi::rank();
   int nparts = eckit::mpi::size();
   int root = 0;
 
@@ -832,7 +831,7 @@ Field& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nodes )
   /*
    * REMOTE INDEX BASE = 1
    */
-  const int ridx_base = 1;
+  // unused //  const int ridx_base = 1;
 
   // 1) Gather all global indices, together with location
   Array<uid_t> loc_edge_id_arr(nb_edges);
@@ -865,7 +864,7 @@ Field& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nodes )
 
   // 2) Sort all global indices, and renumber from 1 to glb_nb_edges
   std::vector<Node> edge_sort; edge_sort.reserve(glb_nb_edges);
-  for( int jedge=0; jedge<glb_edge_id.shape(0); ++jedge )
+  for( size_t jedge=0; jedge<glb_edge_id.shape(0); ++jedge )
   {
     edge_sort.push_back( Node(glb_edge_id(jedge),jedge) );
   }
@@ -873,7 +872,7 @@ Field& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nodes )
 
   // Assume edge gid start
   uid_t gid=200000;
-  for( int jedge=0; jedge<edge_sort.size(); ++jedge )
+  for( size_t jedge=0; jedge<edge_sort.size(); ++jedge )
   {
     if( jedge == 0 )
     {

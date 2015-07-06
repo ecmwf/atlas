@@ -161,9 +161,14 @@ void atlas__Mesh__delete (Mesh* This) {
 void atlas__Mesh__create_function_space(Mesh* This, char* name,char* shape_func,int shape[], int shape_size)
 {
   ATLAS_ERROR_HANDLING(
+
     ASSERT( This != NULL );
+    ASSERT( shape_size >= 0 );
+
     std::vector<size_t> vshape(shape_size);
-    for(size_t n=0; n<shape_size; ++n) vshape[n]=shape[n];
+    for(size_t n=0; n<vshape.size(); ++n)
+        vshape[n]=shape[n];
+
     This->create_function_space(std::string(name), std::string(shape_func),vshape);
   );
 }

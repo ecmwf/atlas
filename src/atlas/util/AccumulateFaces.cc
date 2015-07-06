@@ -26,8 +26,9 @@ void accumulate_faces(
 		int& nb_inner_faces )
 {
 	IndexView<int,2> elem_nodes( func_space.field( "nodes" ) );
-	int nb_elems = func_space.shape(0);
-	int nb_nodes_in_face = 2;
+
+    size_t nb_elems = func_space.shape(0);
+    size_t nb_nodes_in_face = 2;
 
 	std::vector< std::vector<int> > face_node_numbering;
 	int nb_faces_in_elem;
@@ -67,11 +68,11 @@ void accumulate_faces(
 			bool found_face = false;
 
 			std::vector<int> face_nodes(nb_nodes_in_face);
-			for (int jnode=0; jnode<nb_nodes_in_face; ++jnode)
+            for(size_t  jnode=0; jnode<nb_nodes_in_face; ++jnode)
 				face_nodes[jnode] = elem_nodes(e,face_node_numbering[f][jnode]);
 
 			int node = face_nodes[0];
-			for( int jface=0; jface< node_to_face[node].size(); ++jface )
+            for(size_t jface=0; jface< node_to_face[node].size(); ++jface )
 			{
 				int face = node_to_face[node][jface];
 				int nb_matched_nodes = 0;
@@ -79,8 +80,8 @@ void accumulate_faces(
 				{
 					for( int jnode=0; jnode<nb_nodes_in_face; ++jnode)
 					{
-						int other_node = face_nodes[jnode];
-						for( int iface=0; iface<node_to_face[other_node].size(); ++iface )
+                        size_t other_node = face_nodes[jnode];
+                        for(size_t iface=0; iface<node_to_face[other_node].size(); ++iface )
 						{
 							if( node_to_face[face_nodes[jnode]][iface] == face )
 							{

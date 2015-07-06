@@ -177,11 +177,11 @@ void build_periodic_boundaries( Mesh& mesh )
                     //  eckit::mpi::all_to_all( send_slave_loc,      recv_slave_ridx    );
 
   // Fill in periodic
-  int nb_recv_master = 0;
-  for( int jproc=0; jproc<eckit::mpi::size(); ++jproc )
+  // unused // int nb_recv_master = 0;
+  for( size_t jproc=0; jproc<eckit::mpi::size(); ++jproc )
   {
-    int nb_recv = recv_slave_idx[jproc].size();
-    for( int jnode=0; jnode<nb_recv; ++jnode )
+    size_t nb_recv = recv_slave_idx[jproc].size();
+    for( size_t jnode=0; jnode<nb_recv; ++jnode )
     {
       int slave_idx     = recv_slave_idx  [jproc][jnode];
       part( slave_idx ) = recv_master_part[jproc][jnode];

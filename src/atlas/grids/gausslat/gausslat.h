@@ -30,14 +30,19 @@ public:
 
   static std::string className() { return "GaussianLatitudes"; }
 
-  void assign(double lats[]) const;
+  /// @pre nlats has enough allocated memory to store the latitudes
+  /// @param size of lats vector
+  void assign(double lats[], const size_t size) const;
 
+  /// @post resizes the vector to the number of latitutes
   void assign(std::vector<double>& lats) const;
 
-  int N() const { return m_lats.size(); }
+  size_t N() const { return lats_.size(); }
 
 protected:
-  std::vector<double> m_lats;
+
+  std::vector<double> lats_;
+
 };
 
 #define DECLARE_GAUSSIAN_LATITUDES(NUMBER) \
@@ -49,9 +54,9 @@ protected:
   \
   N##NUMBER::N##NUMBER()\
   {\
-    int N=NUMBER;\
+    size_t N = NUMBER;\
     double lat[] = {LATS} ;\
-    m_lats.assign(lat,lat+N);\
+    lats_.assign(lat,lat+N);\
   }\
 
 DECLARE_GAUSSIAN_LATITUDES(16);

@@ -16,7 +16,15 @@ namespace rgg {
 
 //------------------------------------------------------------------------------------------------------
 
-eckit::ConcreteBuilderT1<Grid,OctahedralRGG> builder_OctahedralRGG (OctahedralRGG::grid_type_str());
+std::vector<long> OctahedralRGG::computePL(const size_t N, const size_t start)
+{
+  std::vector<long> nlon(N);
+  for(size_t jlat=0; jlat < N; ++jlat)
+  {
+    nlon[jlat] = start + 4*jlat;
+  }
+  return nlon;
+}
 
 OctahedralRGG::OctahedralRGG(const size_t N)
 {
@@ -34,12 +42,7 @@ OctahedralRGG::OctahedralRGG( const eckit::Parametrisation& params)
 
 void OctahedralRGG::construct(const size_t N)
 {
-  const int start = 20; // number of points at latitude closest to pole
-  std::vector<long> nlon(N);
-  for( int jlat=0; jlat<N; ++jlat )
-  {
-    nlon[jlat] = start + 4*jlat;
-  }
+  std::vector<long> nlon = computePL(N);
   setup_N_hemisphere(N,nlon.data());
   ReducedGrid::N_ = nlat()/2;
 }
@@ -52,6 +55,7 @@ s << "oct.N"<< N();
   grid_type_ = ReducedGaussianGrid::grid_type_str();
 }
 
+eckit::ConcreteBuilderT1<Grid,OctahedralRGG> builder_OctahedralRGG (OctahedralRGG::grid_type_str());
 
 //------------------------------------------------------------------------------------------------------
 

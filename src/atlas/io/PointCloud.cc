@@ -167,7 +167,7 @@ void PointCloud::write(const eckit::PathName& path, const Mesh& mesh)
   // (bypasses fields ("lonlat"|"lonlat") as shape(1)!=1)
   std::vector< std::string > vfnames;
   std::vector< ArrayView< double, 1 > > vfvalues;
-  for (int i=0; i<nodes.nb_fields(); ++i)
+  for(size_t i=0; i<nodes.nb_fields(); ++i)
   {
     const Field& field = nodes.field(i);
     if ( field.shape(0)==lonlat.size() &&

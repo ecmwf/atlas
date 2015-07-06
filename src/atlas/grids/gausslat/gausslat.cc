@@ -12,6 +12,7 @@
 /// @date Jan 2015
 
 #include "atlas/atlas_config.h"
+
 #include "atlas/grids/gausslat/gausslat.h"
 
 namespace atlas {
@@ -20,15 +21,16 @@ namespace gausslat {
 
 //------------------------------------------------------------------------------------------------------
 
-void GaussianLatitudes::assign(double lats[]) const
+void GaussianLatitudes::assign(double lats[], const size_t size) const
 {
-  for( int jlat=0; jlat<m_lats.size(); ++jlat )
-    lats[jlat] = m_lats[jlat];
+    ASSERT( size >= lats_.size() );
+    for(size_t jlat=0; jlat < lats_.size(); ++jlat)
+        lats[jlat] = lats_[jlat];
 }
 
 void GaussianLatitudes::assign(std::vector<double>& lats) const
 {
-  lats = m_lats;
+    lats = lats_;
 }
 
 template<typename CONCRETE>

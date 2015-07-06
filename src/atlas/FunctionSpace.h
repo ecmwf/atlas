@@ -70,8 +70,9 @@ public: // methods
 
 	// This is a Fortran view of the shape (i.e. reverse order)
 	const std::vector<int>& shapef() const { return shapef_; }
+
 	const std::vector<size_t>& shape() const { return shape_; }
-	int shape(const size_t i) const { ASSERT(i<shape_.size()); return shape_[i]; }
+    size_t shape(const size_t i) const { ASSERT(i<shape_.size()); return shape_[i]; }
 	void resize( const std::vector<size_t>& shape );
 
 

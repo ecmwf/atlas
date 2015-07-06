@@ -178,7 +178,7 @@ void increase_halo( Mesh& mesh )
   */
 
   std::map<uid_t,int> node_uid_to_loc;
-  for( int jnode=0; jnode<nb_nodes; ++jnode )
+  for( size_t jnode=0; jnode<nb_nodes; ++jnode )
   {
     LonLatMicroDeg ll(lonlat[jnode]);
     if( node_uid_to_loc.count(ll.unique()) > 0 )
@@ -217,7 +217,7 @@ void increase_halo( Mesh& mesh )
 
   recvdispls[0] = 0;
   int recvcnt = recvcounts[0];
-  for( int jpart=1; jpart<eckit::mpi::size(); ++jpart )
+  for( size_t jpart=1; jpart<eckit::mpi::size(); ++jpart )
   {
     recvdispls[jpart] = recvdispls[jpart-1] + recvcounts[jpart-1];
     recvcnt += recvcounts[jpart];
@@ -245,7 +245,7 @@ void increase_halo( Mesh& mesh )
   // 4) Find elements in node_to_elem list that belong to me
   // 5) Make list of all nodes that complete the elements
 
-  for (int jpart=0; jpart<eckit::mpi::size(); ++jpart)
+  for (size_t jpart=0; jpart<eckit::mpi::size(); ++jpart)
   {
     ArrayView<uid_t,2> recv_bdry_nodes_id( recvbuf.data()+recvdispls[jpart],
                                          make_shape( recvcounts[jpart]/4, 4 ).data() );
@@ -280,7 +280,7 @@ void increase_halo( Mesh& mesh )
         recv_uids.push_back( ll.unique() );
       }
 
-      for( int juid = 0; juid < recv_uids.size(); ++juid )
+      for( size_t juid = 0; juid < recv_uids.size(); ++juid )
       {
         uid_t recv_uid = recv_uids[juid];
         int loc = -1;
@@ -296,7 +296,7 @@ void increase_halo( Mesh& mesh )
 
         if( loc != -1 )
         {
-          for( int jelem=0; jelem<node_to_elem[loc].size(); ++jelem )
+          for( size_t jelem=0; jelem<node_to_elem[loc].size(); ++jelem )
           {
             int f = node_to_elem[loc][jelem].f;
             int e = node_to_elem[loc][jelem].e;
@@ -336,7 +336,7 @@ void increase_halo( Mesh& mesh )
     // Collect all nodes needed to complete the element, and mark if they become periodic on requesting task
     std::set< std::pair<LonLatMicroDeg,int> > found_bdry_nodes_id_set;
     {
-      for( int f=0; f<mesh.nb_function_spaces(); ++f )
+      for( size_t f=0; f<mesh.nb_function_spaces(); ++f )
       {
         for( int jelem=0; jelem<nb_found_bdry_elems[f]; ++jelem )
         {
@@ -353,7 +353,7 @@ void increase_halo( Mesh& mesh )
       }
 
       // Remove nodes we already have received, as we won't need to send them
-      for( int jrecv=0; jrecv<recv_nb_bdry_nodes; ++jrecv)
+      for( size_t jrecv=0; jrecv<recv_nb_bdry_nodes; ++jrecv)
       {
         int x = recv_bdry_nodes_id(jrecv,0);
         int y = recv_bdry_nodes_id(jrecv,1);
@@ -438,7 +438,7 @@ void increase_halo( Mesh& mesh )
       }
     }
 
-    for( int f=0; f<mesh.nb_function_spaces(); ++f )
+    for( size_t f=0; f<mesh.nb_function_spaces(); ++f )
     {
       FunctionSpace& elements = mesh.function_space(f);
 
@@ -500,7 +500,7 @@ void increase_halo( Mesh& mesh )
   eckit::mpi::all_to_all(sfn_ridx,     rfn_ridx);
   eckit::mpi::all_to_all(sfn_flags,    rfn_flags);
   eckit::mpi::all_to_all(sfn_lonlat,   rfn_lonlat);
-  for( int f=0; f<mesh.nb_function_spaces(); ++f )
+  for( size_t f=0; f<mesh.nb_function_spaces(); ++f )
   {
     eckit::mpi::all_to_all(sfe_glb_idx [f], rfe_glb_idx [f] );
     eckit::mpi::all_to_all(sfe_nodes_id[f], rfe_nodes_id[f] );
@@ -518,15 +518,15 @@ void increase_halo( Mesh& mesh )
     node_uid.insert( util::unique_lonlat(lonlat[jnode]) );
   }
   std::vector< std::vector<int> > rfn_idx(eckit::mpi::size());
-  for( int jpart=0; jpart<eckit::mpi::size(); ++jpart )
+  for( size_t jpart=0; jpart<eckit::mpi::size(); ++jpart )
   {
     rfn_idx[jpart].reserve(rfn_glb_idx[jpart].size());
   }
 
   int nb_new_nodes=0;
-  for( int jpart=0; jpart<eckit::mpi::size(); ++jpart )
+  for( size_t jpart=0; jpart<eckit::mpi::size(); ++jpart )
   {
-    for( int n=0; n<rfn_glb_idx[jpart].size(); ++n )
+    for( size_t n=0; n<rfn_glb_idx[jpart].size(); ++n )
     {
       double x = rfn_lonlat[jpart][n*2+LON];
       double y = rfn_lonlat[jpart][n*2+LAT];
@@ -541,6 +541,7 @@ void increase_halo( Mesh& mesh )
   //DEBUG_VAR(nb_new_nodes);
 
   nodes.resize( make_shape( nb_nodes+nb_new_nodes, Field::UNDEF_VARS ) );
+
   flags   = ArrayView<int,   1>( nodes.field("flags") );
   glb_idx = ArrayView<gidx_t,1>( nodes.field("glb_idx") );
   part    = ArrayView<int,   1>( nodes.field("partition") );
@@ -549,9 +550,9 @@ void increase_halo( Mesh& mesh )
 
 
   int new_node=0;
-  for( int jpart=0; jpart<eckit::mpi::size(); ++jpart )
+  for( size_t jpart=0; jpart<eckit::mpi::size(); ++jpart )
   {
-    for( int n=0; n<rfn_idx[jpart].size(); ++n )
+    for( size_t n=0; n<rfn_idx[jpart].size(); ++n )
     {
       int loc_idx = nb_nodes+new_node;
       Topology::reset(flags(loc_idx),rfn_flags[jpart][rfn_idx[jpart][n]]);
@@ -579,29 +580,29 @@ void increase_halo( Mesh& mesh )
     }
   }
 
-  for( int f=0; f<mesh.nb_function_spaces(); ++f )
+  for( size_t f=0; f<mesh.nb_function_spaces(); ++f )
   {
     FunctionSpace& elements = mesh.function_space(f);
     if( elements.metadata().get<long>("type") == Entity::ELEMS )
     {
 
       std::set<uid_t> elem_uid;
-      int nb_elems = elements.shape(0);
+      size_t nb_elems = elements.shape(0);
       for( int jelem=0; jelem<nb_elems; ++jelem )
       {
         elem_uid.insert( compute_uid(elem_nodes[f][jelem]) );
       }
 
       std::vector< std::vector<int> > received_new_elems(eckit::mpi::size());
-      for( int jpart=0; jpart<eckit::mpi::size(); ++jpart )
+      for( size_t jpart=0; jpart<eckit::mpi::size(); ++jpart )
       {
         received_new_elems[jpart].reserve(rfe_glb_idx[f][jpart].size());
       }
 
-      int nb_new_elems=0;
-      for( int jpart=0; jpart<eckit::mpi::size(); ++jpart )
+      size_t nb_new_elems=0;
+      for( size_t jpart=0; jpart<eckit::mpi::size(); ++jpart )
       {
-        for( int e=0; e<rfe_glb_idx[f][jpart].size(); ++e )
+        for( size_t e=0; e<rfe_glb_idx[f][jpart].size(); ++e )
         {
           bool inserted = elem_uid.insert( rfe_glb_idx[f][jpart][e] ).second;
           if( inserted )
@@ -620,9 +621,9 @@ void increase_halo( Mesh& mesh )
       elem_nodes[f]   = IndexView<int,2>( elements.field("nodes")   );
       elem_part[f]    = ArrayView<int,1>( elements.field("partition")   );
       int new_elem=0;
-      for( int jpart=0; jpart<eckit::mpi::size(); ++jpart )
+      for( size_t jpart=0; jpart<eckit::mpi::size(); ++jpart )
       {
-        for( int e=0; e<received_new_elems[jpart].size(); ++e )
+        for( size_t e=0; e<received_new_elems[jpart].size(); ++e )
         {
           int jelem = received_new_elems[jpart][e];
           elem_glb_idx[f](nb_elems+new_elem)   = rfe_glb_idx[f][jpart][jelem];
@@ -645,12 +646,12 @@ void build_lookup_node2elem( const Mesh& mesh, Node2Elem& node2elem )
   FunctionSpace& nodes  = mesh.function_space( "nodes" );
 
   node2elem.resize(nodes.shape(0));
-  for( int jnode=0; jnode<node2elem.size(); ++jnode )
+  for( size_t jnode=0; jnode<node2elem.size(); ++jnode )
     node2elem[jnode].clear();
 
   std::vector< IndexView<int,2> > elem_nodes( mesh.nb_function_spaces() );
 
-  for( int func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
+  for( size_t func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
   {
     FunctionSpace& elements = mesh.function_space(func_space_idx);
     if( elements.metadata().get<long>("type") == Entity::ELEMS )

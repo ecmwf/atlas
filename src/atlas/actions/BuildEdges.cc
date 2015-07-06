@@ -8,13 +8,12 @@
  * does it submit to any jurisdiction.
  */
 
-
-
 #include <iostream>
 #include <stdexcept>
 #include <cmath>
 #include <limits>
 #include <set>
+
 #include "atlas/atlas_config.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/Mesh.h"
@@ -22,6 +21,7 @@
 #include "atlas/Field.h"
 #include "atlas/actions/BuildEdges.h"
 #include "atlas/Parameters.h"
+
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/Array.h"
 #include "atlas/util/IndexView.h"
@@ -39,6 +39,8 @@ using atlas::util::microdeg;
 
 namespace atlas {
 namespace actions {
+
+//----------------------------------------------------------------------------------------------------------------------
 
 namespace {
 struct Sort
@@ -64,7 +66,7 @@ void build_element_to_edge_connectivity( Mesh& mesh )
   std::vector< IndexView<int,2> > elem_to_edge( mesh.nb_function_spaces() );
   std::vector< std::vector<int> > edge_cnt( mesh.nb_function_spaces() );
 
-  for( int func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
+  for( size_t func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
   {
     FunctionSpace& func_space = mesh.function_space(func_space_idx);
     if( func_space.metadata().get<long>("type") == Entity::ELEMS )
@@ -81,9 +83,12 @@ void build_element_to_edge_connectivity( Mesh& mesh )
 
   FunctionSpace& nodes = mesh.function_space("nodes");
   FunctionSpace& edges = mesh.function_space("edges");
-  int nb_edges = edges.shape(0);
+
+  size_t nb_edges = edges.shape(0);
+
   IndexView<int,3> edge_to_elem ( edges.field( "to_elem" ).data<int>(), make_shape(nb_edges,2,2) );
   IndexView<int,2> edge_nodes   ( edges.field( "nodes" ) );
+
   bool has_pole_edges(false);
   ArrayView<int,1> is_pole_edge;
   if( edges.has_field("is_pole_edge") )
@@ -97,6 +102,7 @@ void build_element_to_edge_connectivity( Mesh& mesh )
   std::vector<Sort> edge_sort(nb_edges);
   for( size_t edge=0; edge<nb_edges; ++edge )
     edge_sort[edge] = Sort( uid(edge_nodes[edge]), edge );
+
   std::sort( edge_sort.data(), edge_sort.data()+nb_edges );
 
 
@@ -248,7 +254,7 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
   min[LAT] =  std::numeric_limits<double>::max();
   max[LON] = -std::numeric_limits<double>::max();
   max[LAT] = -std::numeric_limits<double>::max();
-  for (int node=0; node<nb_nodes; ++node)
+  for (size_t node=0; node<nb_nodes; ++node)
   {
     min[LON] = std::min( min[LON], lonlat(node,LON) );
     min[LAT] = std::min( min[LAT], lonlat(node,LAT) );
@@ -552,7 +558,7 @@ void build_pole_edges( Mesh& mesh )
 }
 
 
-// ------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
 void atlas__build_edges ( Mesh* mesh) {
@@ -565,7 +571,7 @@ void atlas__build_node_to_edge_connectivity ( Mesh* mesh) {
   ATLAS_ERROR_HANDLING( build_node_to_edge_connectivity(*mesh) );
 }
 
-// ------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 } // namespace actions
 } // namespace atlas

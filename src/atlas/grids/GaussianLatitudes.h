@@ -18,8 +18,8 @@ namespace atlas {
 namespace grids {
 //------------------------------------------------------------------------------------------------------
 
-void gaussian_latitudes_npole_equator ( const int N, double[] );
-void gaussian_latitudes_npole_spole   ( const int N, double[] );
+void gaussian_latitudes_npole_equator (const size_t N, double[]);
+void gaussian_latitudes_npole_spole   (const size_t N, double[]);
 
 //------------------------------------------------------------------------------------------------------
 
