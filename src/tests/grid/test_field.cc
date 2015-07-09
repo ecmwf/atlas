@@ -22,6 +22,7 @@
 #include "atlas/util/Debug.h"
 #include "atlas/State.h"
 #include "atlas/Mesh.h"
+#include "atlas/util/DataType.h"
 
 using namespace std;
 using namespace eckit;
@@ -46,7 +47,6 @@ public:
 
     void test_constructor();
     void test_fieldcreator();
-    void test_state();
 };
 
 //-----------------------------------------------------------------------------
@@ -119,11 +119,11 @@ void TestField::test_fieldcreator()
   Field::Ptr field ( Field::create( Field::Parameters
                                       ("creator","ArraySpec")
                                       ("shape",make_shape(10,2))
-                                      ("data_type","real32")
+                                      ("data_type",DataType::real32())
                                       ("name","myfield")
                                   ));
 
-  ASSERT( field->data_type() == "real32" );
+  ASSERT( field->data_type() == DataType::real32() );
   ASSERT( field->name() == "myfield" );
 
   Grid::Ptr g (Grid::create("oct.N6"));
@@ -134,7 +134,7 @@ void TestField::test_fieldcreator()
                                ));
   ASSERT( arr->shape(0) == 10 );
   ASSERT( arr->shape(1) == 2 );
-  ASSERT( arr->data_type() == "real64" );
+  ASSERT( arr->data_type() == DataType::real64() );
 
 
   Field::Parameters ifs_parameters;
@@ -147,7 +147,7 @@ void TestField::test_fieldcreator()
   Field::Ptr ifs (Field::create( Field::Parameters
                                     (ifs_parameters)
                                     ("name","myfield")
-                                    ("data_type","int32")
+                                    ("data_type",DataType::int32())
                                     ("nvar",8)
                                ));
 
@@ -161,51 +161,6 @@ void TestField::test_fieldcreator()
   eckit::Log::info() << std::flush;
 }
 
-void TestField::test_state()
-{
-  State state;
-  state.add( Field::create( make_shape(10,1) , Field::Parameters("name","myfield") ) );
-  state.add( Field::create( make_shape(10,2) ) );
-  state.add( Field::create( make_shape(10,3) ) );
-
-  for( size_t i=0; i<state.nb_fields(); ++i )
-  {
-    Field& field = state.field(i);
-    eckit::Log::info() << "name ["<<field.name() << "]  size[" << field.size() << "]" << std::endl;
-  }
-
-  eckit::Log::info() << "fields = ";
-  for( size_t i=0; i<state.nb_fields(); ++i)
-    eckit::Log::info() << state.field_names()[i] << " ";
-  eckit::Log::info() << std::endl;
-
-  Grid& grid = state.add( Grid::create("rgg.N16") );
-  Mesh& mesh = state.add( Mesh::create(grid) );
-
-  state.remove_field("myfield");
-
-  eckit::Log::info() << "fields = ";
-  for( size_t i=0; i<state.nb_fields(); ++i)
-    eckit::Log::info() << state.field_names()[i] << " ";
-  eckit::Log::info() << std::endl;
-
-  for( size_t i=0; i<state.nb_fields(); ++i )
-  {
-    Field& field = state.field(i);
-    eckit::Log::info() << "name ["<<field.name() << "]  size[" << field.size() << "]" << std::endl;
-  }
-
-  state.remove_field("field_00001");
-
-  for( size_t i=0; i<state.nb_fields(); ++i )
-  {
-    Field& field = state.field(i);
-    eckit::Log::info() << "name ["<<field.name() << "]  size[" << field.size() << "]" << std::endl;
-  }
-
-}
-
-
 
 //-----------------------------------------------------------------------------
 
@@ -214,7 +169,6 @@ void TestField::run()
     eckit::mpi::init();
     test_constructor();
     test_fieldcreator();
-    test_state();
     eckit::mpi::finalize();
 }
 

@@ -35,6 +35,12 @@ void throw_exception(const std::string& name)
 }
 }
 
+Metadata& Metadata::set( const eckit::Properties& p )
+{ 
+  eckit::Properties::set(p); 
+  return *this;
+}
+
 template<> Metadata& Metadata::set(const std::string& name, const bool& value)
 {
   eckit::Properties::set(name,value);
@@ -300,6 +306,24 @@ template<> Grid& Metadata::get(const std::string& name) const
   if( !has(name) ) throw_exception(name);
   return Grid::from_id(eckit::Properties::get(name));
 }
+
+template<> eckit::Properties Metadata::get(const std::string& name) const
+{
+  if( !has(name) ) throw_exception(name);
+  return eckit::Properties::get(name);
+}
+
+template<> std::vector<eckit::Properties> Metadata::get(const std::string& name) const
+{
+  if( !has(name) ) throw_exception(name);
+  eckit::ValueList v = eckit::Properties::get(name);
+  std::vector<eckit::Properties> values(v.size());
+  for( size_t i=0; i<v.size(); ++i ) {
+    values[i].set(v[i]);
+  }  
+  return values;
+}
+
 
 bool Metadata::has(const std::string & name) const
 {

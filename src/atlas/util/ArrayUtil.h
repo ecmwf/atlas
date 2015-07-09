@@ -14,7 +14,6 @@
 #define atlas_ArrayUtil_h
 
 #include <vector>
-#include <string>
 
 //------------------------------------------------------------------------------------------------------
 
@@ -44,13 +43,6 @@ inline ArrayIdx make_idx(size_t size1) { return std::vector<size_t>(1,size1); }
 inline ArrayIdx make_idx(size_t size1, size_t size2) { std::vector<size_t> v(2); v[0]=size1; v[1]=size2; return v; }
 inline ArrayIdx make_idx(size_t size1, size_t size2, size_t size3) { std::vector<size_t> v(3); v[0]=size1; v[1]=size2; v[2]=size3; return v; }
 inline ArrayIdx make_idx(size_t size1, size_t size2, size_t size3, size_t size4) { std::vector<size_t> v(4); v[0]=size1; v[1]=size2; v[2]=size3; v[3]=size4; return v; }
-
-
-template< typename DATA_TYPE > inline std::string data_type_to_str();
-template<> inline std::string data_type_to_str<int>()    { return "int32";  }
-template<> inline std::string data_type_to_str<long>()   { return "int64";  }
-template<> inline std::string data_type_to_str<float>()  { return "real32"; }
-template<> inline std::string data_type_to_str<double>() { return "real64"; }
 
 //------------------------------------------------------------------------------------------------------
 

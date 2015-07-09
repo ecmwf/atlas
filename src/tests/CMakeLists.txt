@@ -93,6 +93,13 @@ ecbuild_add_test( TARGET atlas_test_gather
   LIBS     atlas
 )
 
+ecbuild_add_test( TARGET atlas_test_state
+  BOOST
+  MPI      1
+  SOURCES  test_state.cc
+  LIBS     atlas
+)
+
 if( 0 )
 ecbuild_add_test( TARGET atlas_test_functionspace
   BOOST

@@ -35,6 +35,8 @@ public:
 
   Metadata& set(const std::string& name, const char* value);
 
+  Metadata& set( const eckit::Properties& p );
+
   template<typename ValueT>
   ValueT get(const std::string& name) const;
 

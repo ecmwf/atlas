@@ -94,39 +94,6 @@ class MeshGeneratorBuilder : public MeshGeneratorFactory {
     MeshGeneratorBuilder(const std::string& name) : MeshGeneratorFactory(name) {}
 };
 
-
-
-
-
-
-
-
-
-//class MeshGeneratorFactory {
-//    std::string name_;
-//    virtual MeshGenerator *make() = 0;
-
-//  protected:
-
-//    MeshGeneratorFactory(const std::string &);
-//    virtual ~MeshGeneratorFactory();
-
-//  public:
-
-//    static void list(std::ostream &);
-//    static MeshGenerator *build(const std::string &);
-
-//};
-
-//template< class T>
-//class MeshGeneratorBuilder : public MeshGeneratorFactory {
-//    virtual MeshGenerator *make() {
-//        return new T();
-//    }
-//  public:
-//    MeshGeneratorBuilder(const std::string &name) : MeshGeneratorFactory(name) {}
-//};
-
 //------------------------------------------------------------------------------------------------------
 
 } // namespace meshgen

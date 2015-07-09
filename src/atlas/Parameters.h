@@ -12,6 +12,7 @@
 #define atlas_Parameters_h
 
 #include <cmath>
+#include <string>
 
 #include "atlas/atlas_defines.h"
 

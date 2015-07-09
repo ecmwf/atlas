@@ -26,23 +26,20 @@ class FunctionSpace;
 class Parametrisation: public eckit::Parametrisation {
 
 public:
-
+  
 // -- Constructors
 
   Parametrisation();
 
-  /// @brief Constructor starting from a Properties
-  Parametrisation(const eckit::Properties&);
+  /// @brief Constructor starting from json stream
+  Parametrisation( std::istream&, const std::string &format = "json" );
 
-  /// @brief Constructor starting from a abstract eckit::Parametrisation
-  /// In case its concrete type is atlas::Parametrisation, the conent is
-  /// copied, else, the eckit::Parametrisation is cached internally, and
-  /// is not allowed to change during the lifetime of this instance!
-  Parametrisation(const eckit::Parametrisation&);
+  /// @brief Constructor starting from a Properties
+  Parametrisation( const eckit::Properties& );
 
   /// @brief Constructor immediately setting a value.
   template<typename ValueT>
-  Parametrisation(const std::string& name, const ValueT& value);
+  Parametrisation( const std::string& name, const ValueT& value );
 
 // -- Mutators
 
@@ -59,11 +56,12 @@ public:
   template<typename ValueT>
   Parametrisation& set(const std::string& name, const ValueT& value);
   Parametrisation& set(const std::string& name, const char* value);
-
+  Parametrisation& set(const eckit::Properties&);
+  Parametrisation& set(const Parametrisation&);
 
 // -- Accessors, overloaded from eckit::Parametrisation
 
-  /// @returns true is a parameter exists
+  /// @returns true if a parameter exists
   virtual bool has( const std::string& name ) const;
 
   virtual bool get(const std::string& name, std::string& value) const;
@@ -75,12 +73,13 @@ public:
   virtual bool get(const std::string& name, std::vector<long>& value) const;
   virtual bool get(const std::string& name, std::vector<double>& value) const;
 
+  bool get(const std::string& name, Parametrisation& value) const;
+  bool get(const std::string& name, std::vector<Parametrisation>& value) const;
+
 private:
 
   template<class T>
   bool _get(const std::string &name, T &value) const;
-
-  const eckit::Parametrisation* inherited_;
   Metadata delegate_;
 
 };
@@ -88,7 +87,7 @@ private:
 // ------------------------------------------------------------------
 
 template<typename ValueT>
-Parametrisation::Parametrisation(const std::string& name, const ValueT& value) : inherited_(NULL)
+Parametrisation::Parametrisation(const std::string& name, const ValueT& value)
 {
   delegate_.set(name,value);
 }

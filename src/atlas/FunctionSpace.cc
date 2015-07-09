@@ -23,6 +23,7 @@
 #include "atlas/actions/BuildParallelFields.h"
 #include "atlas/util/Debug.h"
 #include "atlas/util/Bitflags.h"
+#include "atlas/util/DataType.h"
 #include "atlas/field/FieldT.h"
 
 using atlas::util::Topology;

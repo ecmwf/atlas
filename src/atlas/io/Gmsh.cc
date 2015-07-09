@@ -977,18 +977,18 @@ void Gmsh::write(FieldSet& fieldset, const std::string& file_path, openmode mode
 
     if( function_space.metadata().get<long>("type") == Entity::NODES )
 		{
-			if     ( field.data_type() == "int32"  ) {  write_field_nodes<int   >(*this,field,file); }
-      else if( field.data_type() == "int64"  ) {  write_field_nodes<long  >(*this,field,file); }
-			else if( field.data_type() == "real32" ) {  write_field_nodes<float >(*this,field,file); }
-			else if( field.data_type() == "real64" ) {  write_field_nodes<double>(*this,field,file); }
+			if     ( field.data_type() == DataType::int32()    ) {  write_field_nodes<int   >(*this,field,file); }
+      else if( field.data_type() == DataType::int64()   ) {  write_field_nodes<long  >(*this,field,file); }
+			else if( field.data_type() == DataType::real32()  ) {  write_field_nodes<float >(*this,field,file); }
+			else if( field.data_type() == DataType::real64() ) {  write_field_nodes<double>(*this,field,file); }
 		}
 		else if( function_space.metadata().get<long>("type") == Entity::ELEMS
 					|| function_space.metadata().get<long>("type") == Entity::FACES )
 		{
-			if     ( field.data_type() == "int32"  ) {  write_field_elems<int   >(*this,field,file); }
-      else if( field.data_type() == "int64"  ) {  write_field_elems<long  >(*this,field,file); }
-			else if( field.data_type() == "real32" ) {  write_field_elems<float >(*this,field,file); }
-			else if( field.data_type() == "real64" ) {  write_field_elems<double>(*this,field,file); }
+			if     ( field.data_type() == DataType::int32()    ) {  write_field_elems<int   >(*this,field,file); }
+      else if( field.data_type() == DataType::int64()   ) {  write_field_elems<long  >(*this,field,file); }
+			else if( field.data_type() == DataType::real32()  ) {  write_field_elems<float >(*this,field,file); }
+			else if( field.data_type() == DataType::real64() ) {  write_field_elems<double>(*this,field,file); }
 		}
 		file << std::flush;
 	}
@@ -1026,18 +1026,18 @@ void Gmsh::write(Field& field, const std::string& file_path, openmode mode) cons
 
 	if( function_space.metadata().get<long>("type") == Entity::NODES )
 	{
-		if     ( field.data_type() == "int32"  ) {  write_field_nodes<int   >(*this,field,file); }
-		else if( field.data_type() == "int64"  ) {  write_field_nodes<long  >(*this,field,file); }
-    else if( field.data_type() == "real32" ) {  write_field_nodes<float >(*this,field,file); }
-		else if( field.data_type() == "real64" ) {  write_field_nodes<double>(*this,field,file); }
+		if     ( field.data_type() == DataType::int32()    ) {  write_field_nodes<int   >(*this,field,file); }
+		else if( field.data_type() == DataType::int64()   ) {  write_field_nodes<long  >(*this,field,file); }
+    else if( field.data_type() == DataType::real32()  ) {  write_field_nodes<float >(*this,field,file); }
+		else if( field.data_type() == DataType::real64() ) {  write_field_nodes<double>(*this,field,file); }
 	}
 	else if( function_space.metadata().get<long>("type") == Entity::ELEMS ||
 					 function_space.metadata().get<long>("type") == Entity::FACES )
 	{
-		if     ( field.data_type() == "int32"  ) {  write_field_elems<int   >(*this,field,file); }
-		else if( field.data_type() == "int64"  ) {  write_field_elems<long  >(*this,field,file); }
-    else if( field.data_type() == "real32" ) {  write_field_elems<float >(*this,field,file); }
-		else if( field.data_type() == "real64" ) {  write_field_elems<double>(*this,field,file); }
+		if     ( field.data_type() == DataType::int32()    ) {  write_field_elems<int   >(*this,field,file); }
+		else if( field.data_type() == DataType::int64()   ) {  write_field_elems<long  >(*this,field,file); }
+    else if( field.data_type() == DataType::real32()  ) {  write_field_elems<float >(*this,field,file); }
+		else if( field.data_type() == DataType::real64() ) {  write_field_elems<double>(*this,field,file); }
 	}
 	file << std::flush;
 	file.close();

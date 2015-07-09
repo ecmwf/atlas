@@ -16,6 +16,7 @@
 
 #include "eckit/exception/Exceptions.h"
 #include "eckit/parser/JSON.h"
+#include "eckit/parser/JSONParser.h"
 
 #include "atlas/Mesh.h"
 #include "atlas/Grid.h"
@@ -26,16 +27,31 @@ using std::string;
 
 namespace atlas {
 
-Parametrisation::Parametrisation(): inherited_(0) {}
+Parametrisation::Parametrisation() {}
 
-Parametrisation::Parametrisation(const eckit::Properties &p): inherited_(0), delegate_(p) {}
+Parametrisation::Parametrisation(const eckit::Properties &p): delegate_(p) {}
 
-Parametrisation::Parametrisation(const eckit::Parametrisation &p) : inherited_(0) {
-    if ( const atlas::Parametrisation *params = dynamic_cast<const atlas::Parametrisation *>(&p) ) {
-        delegate_ = params->delegate_;
-    } else {
-        inherited_ = &p;
-    }
+Parametrisation::Parametrisation(std::istream& stream, const std::string &format )
+{
+  if( format != "json" ) {
+    throw eckit::Exception("Not Implemented: Only json format is supported");
+  }
+  
+  eckit::JSONParser parser( stream );
+  set( eckit::Properties( parser.parse() ) ); 
+}
+
+
+Parametrisation& Parametrisation::set(const eckit::Properties &p)
+{
+    delegate_.set(p);
+    return *this;
+}
+
+Parametrisation& Parametrisation::set(const Parametrisation &p)
+{
+  delegate_.set(p.delegate_);
+  return *this;
 }
 
 
@@ -48,23 +64,12 @@ Parametrisation &Parametrisation::set(const std::string &name, const char *value
 // Functions overloading eckit::Parametrisation
 
 bool Parametrisation::has(const std::string &name) const {
-    bool found(false);
-    if ( inherited_ )
-        found = inherited_->has(name);
-    found = found || delegate_.has(name);
-    return found;
+    return delegate_.has(name);
 }
 
 template<class T>
 bool Parametrisation::_get(const std::string &name, T &value) const {
-    bool found(false);
-    if ( inherited_ ) {
-        found = inherited_->get(name, value);
-    }
-
-    found = found || delegate_.get(name, value);
-
-    return found;
+    return delegate_.get(name, value);
 }
 
 bool Parametrisation::get(const std::string &name, std::string &value) const {
@@ -93,6 +98,25 @@ bool Parametrisation::get(const std::string &name, std::vector<long> &value) con
 
 bool Parametrisation::get(const std::string &name, std::vector<double> &value) const {
     return _get(name, value);
+}
+
+bool Parametrisation::get(const std::string& name, Parametrisation& value) const {
+  bool found = has(name);
+  if( found ) {
+    value.set( delegate_.get<eckit::Properties>(name) );
+  }
+  return found;
+}
+bool Parametrisation::get(const std::string& name, std::vector<Parametrisation>& value) const {
+  bool found = has(name);
+  if( found ) {
+    std::vector<eckit::Properties> properties = delegate_.get< std::vector<eckit::Properties> >(name);
+    value.resize(properties.size());
+    for( size_t i=0; i<value.size(); ++i ) {
+      value[i].set( properties[i] );
+    }
+  }
+  return found;
 }
 
 //==================================================================

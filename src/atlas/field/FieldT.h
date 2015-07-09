@@ -35,13 +35,9 @@
 #include "atlas/Metadata.h"
 #include "atlas/Parameters.h"
 #include "atlas/State.h"
-
-#include "eckit/memory/Owned.h"
-#include "eckit/memory/SharedPtr.h"
-#include "eckit/memory/ScopedPtr.h"
-#include "eckit/config/Parametrisation.h"
-
 #include "atlas/Field.h"
+#include "atlas/util/DataType.h"
+
 
 namespace atlas {
 namespace field {
@@ -83,7 +79,7 @@ inline FieldT<DATA_TYPE>::FieldT(const std::string& name, const int nb_vars) :
   Field(name,nb_vars),
   data_(0)
 {
-  data_type_ = data_type_to_str<DATA_TYPE>() ;
+  data_type_ = DataType::datatype<DATA_TYPE>() ;
 }
 
 template< typename DATA_TYPE >
@@ -91,7 +87,7 @@ inline FieldT<DATA_TYPE>::FieldT(const std::vector<size_t>& shape, const eckit::
   Field(params),
   data_(0)
 {
-  data_type_ = data_type_to_str<DATA_TYPE>() ;
+  data_type_ = DataType::datatype<DATA_TYPE>() ;
 
   bool fortran(false);
   params.get("fortran",fortran);

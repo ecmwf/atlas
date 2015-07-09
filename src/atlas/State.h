@@ -17,9 +17,9 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 #include "eckit/memory/ScopedPtr.h"
+#include "atlas/Parametrisation.h"
 
 namespace eckit { class Parametrisation; }
-namespace atlas { class Parametrisation; }
 namespace atlas { class Field; }
 namespace atlas { class Mesh; }
 namespace atlas { class Grid; }
@@ -64,18 +64,18 @@ public: // methods
 
   const Mesh& mesh(const std::string& name = "") const;
         Mesh& mesh(const std::string& name = "");
-  bool has_mesh(const std::string& name) const { return (meshes_.find(name) != meshes_.end()); }
+  bool has_mesh(const std::string& name = "") const { return (meshes_.find(name) != meshes_.end()); }
 
-  const Mesh& mesh(const size_t idx = 0) const;
-        Mesh& mesh(const size_t idx = 0);
+  const Mesh& mesh(const size_t idx) const;
+        Mesh& mesh(const size_t idx);
   size_t nb_meshes() const { return meshes_.size(); }
 
   const Grid& grid(const std::string& name = "") const;
         Grid& grid(const std::string& name = "");
-  bool has_grid(const std::string& name) const { return (grids_.find(name) != grids_.end()); }
+  bool has_grid(const std::string& name = "") const { return (grids_.find(name) != grids_.end()); }
 
-  const Grid& grid(const size_t idx = 0) const;
-        Grid& grid(const size_t idx = 0);
+  const Grid& grid(const size_t idx) const;
+        Grid& grid(const size_t idx);
   size_t nb_grids() const { return grids_.size(); }
 
 // -- Modifiers
@@ -104,43 +104,59 @@ private:
 
 //------------------------------------------------------------------------------------------------------
 
-class StateFactory {
+class StateGenerator : public eckit::Owned {
+
+public:
+
+    typedef atlas::Parametrisation Parameters;
+
+    StateGenerator( const eckit::Parametrisation& = Parameters() );
+
+    virtual ~StateGenerator();
+
+    virtual void generate( State&, const eckit::Parametrisation& = Parameters() ) const = 0;
+
+};
+
+//------------------------------------------------------------------------------------------------------
+
+class StateGeneratorFactory {
   public:
 
     /*!
      * \brief build StateCreator with options specified in parametrisation
      * \return mesh generator
      */
-    static State* build(const std::string& state_type);
-    static State* build(const std::string& state_type, const eckit::Parametrisation&);
+    static StateGenerator* build(const std::string& state_generator,
+                                 const eckit::Parametrisation& = StateGenerator::Parameters() );
 
     /*!
      * \brief list all registered field creators
      */
     static void list(std::ostream &);
+    static bool has(const std::string& name);
 
   private:
-    std::string name_;
-    virtual State* make() = 0 ;
-    virtual State* make(const eckit::Parametrisation&) = 0 ;
 
+    virtual StateGenerator* make(const eckit::Parametrisation& = StateGenerator::Parameters() ) = 0 ;
+    
+    std::string name_;
+    
   protected:
 
-    StateFactory(const std::string&);
-    virtual ~StateFactory();
+    StateGeneratorFactory(const std::string&);
+    virtual ~StateGeneratorFactory();
 };
 
 
 template<class T>
-class StateBuilder : public StateFactory {
-  virtual State* make() {
-      return new T();
-  }
-  virtual State* make(const eckit::Parametrisation& param) {
+class StateGeneratorBuilder : public StateGeneratorFactory {
+  
+  virtual StateGenerator* make(const eckit::Parametrisation& param = StateGenerator::Parameters() ) {
         return new T(param);
   }
   public:
-    StateBuilder(const std::string& name) : StateFactory(name) {}
+    StateGeneratorBuilder(const std::string& name) : StateGeneratorFactory(name) {}
 };
 
 // ------------------------------------------------------------------------------------

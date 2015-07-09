@@ -12,6 +12,7 @@
 #include "eckit/exception/Exceptions.h"
 #include "eckit/config/Parametrisation.h"
 #include "atlas/util/ArrayUtil.h"
+#include "atlas/util/DataType.h"
 #include "atlas/field/FieldTCreator.h"
 #include "atlas/field/FieldCreatorIFS.h"
 #include "atlas/Field.h"
@@ -27,7 +28,7 @@ Field* FieldCreatorIFS::create_field( const eckit::Parametrisation& params ) con
   size_t nvar = 1;
   size_t nproma = 1;
   size_t nlev = 1;
-  long kind = 8; // 8 bytes = double
+  long kind = DataType::kind<double>();
 
   if( !params.get("ngptot",ngptot) )
     throw eckit::Exception("Could not find parameter 'ngptot' in Parametrisation");
@@ -41,13 +42,14 @@ Field* FieldCreatorIFS::create_field( const eckit::Parametrisation& params ) con
   {
     // Assume real
     params.get("kind",kind);
-    if( kind == 4 ) data_type = "real32";
-    else if( kind == 8 ) data_type = "real64";
-    else {
+    if( ! DataType::kind_valid(kind) )
+    {
       std::stringstream msg;
-      msg << "Could not create field. kind parameter unrecognized (expected: 4 or 8; received: " << kind << ") ";
-      throw eckit::Exception(msg.str());
+      msg << "Could not create field. kind parameter unrecognized (expected: " << DataType::kind<float>()
+          << " or " << DataType::kind<double>() << "; received: " << kind << ") ";
+      throw eckit::Exception(msg.str());      
     }
+    data_type = DataType::kind_to_datatype(kind);
   }
 
   nblk = std::ceil(static_cast<double>(ngptot)/static_cast<double>(nproma));

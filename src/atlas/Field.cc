@@ -21,6 +21,7 @@
 #include "atlas/field/FieldT.h"
 #include "atlas/field/FieldCreator.h"
 #include "atlas/field/FieldTCreator.h"
+#include "atlas/util/DataType.h"
 
 #include "atlas/Grid.h"
 #include "atlas/FunctionSpace.h"
@@ -52,7 +53,7 @@ Field* Field::create(const eckit::Parametrisation& params)
 
 Field* Field::create(const ArrayShape& shape, const eckit::Parametrisation& params)
 {
-  std::string data_type = "real64";
+  std::string data_type = DataType::real64();
   params.get("data_type",data_type);
 
   eckit::ScopedPtr<field::FieldTCreator> creator
@@ -68,10 +69,6 @@ Field::Field(const std::string& name, const size_t nb_vars) :
 Field::Field(const eckit::Parametrisation& params) :
   name_(), nb_vars_(1), grid_(0), function_space_(0)
 {
-  Grid::Id grid;
-  if( params.get("grid",grid) )
-    grid_ = &Grid::from_id(grid);
-
   FunctionSpace::Id function_space;
   if( params.get("function_space",function_space) )
     function_space_ = &FunctionSpace::from_id(function_space);
@@ -93,7 +90,7 @@ DATA_TYPE* get_field_data( const Field& field )
     std::stringstream msg;
     msg << "Could not cast Field " << field.name()
         << " with data_type " << field.data_type() << " to "
-        << data_type_to_str<DATA_TYPE>();
+        << DataType::datatype<DATA_TYPE>();
     throw eckit::BadCast(msg.str(),Here());
   }
   return const_cast<DATA_TYPE*>(fieldT->data());
@@ -113,10 +110,12 @@ template <>       double* Field::data<double>()       { return get_field_data<do
 void Field::print(std::ostream& os) const
 {
     os << "Field[name=" << name()
-       << ",datatype=" << data_type_
+       << ",datatype=" << data_type()
        << ",size=" << size()
-       << ",shape=" << shape_
-       << ",strides=" << strides_
+       << ",shape=" << shape()
+       << ",strides=" << strides()
+       << ",bytes=" << bytes()
+       << ",metadata=" << metadata() 
        << "]";
 }
 

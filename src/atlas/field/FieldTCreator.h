@@ -1,4 +1,4 @@
-﻿/*
+/*
  * (C) Copyright 1996-2014 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
@@ -35,7 +35,7 @@ namespace field {
  *         Field::Parameters
  *           ("creator","ArraySpec")     // ArraySpec FieldCreator
  *           ("shape",make_shape(100,3))  // Rank 2 field with indexing [100][3]
- *           ("data_type","real64")       // Field internal data type
+ *           ("datatype",DataType::real64()) // Field internal data type
  *         );
  * \endcode
  */
