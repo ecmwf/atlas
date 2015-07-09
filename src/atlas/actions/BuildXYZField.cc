@@ -9,14 +9,18 @@
  */
 
 #include "atlas/actions/BuildXYZField.h"
+
+#include "eckit/geometry/Point3.h"
+
 #include "atlas/Field.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Mesh.h"
 #include "atlas/util/ArrayView.h"
-#include "eckit/geometry/Point3.h"
 
 namespace atlas {
 namespace actions {
+
+//----------------------------------------------------------------------------------------------------------------------
 
 BuildXYZField::BuildXYZField(const std::string& name)
     : name_(name)
@@ -43,5 +47,7 @@ Field& BuildXYZField::operator()(FunctionSpace& nodes) const
   return nodes.field(name_);
 }
 
-}
-}
+//----------------------------------------------------------------------------------------------------------------------
+
+} // actions
+} // atlas

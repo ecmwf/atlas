@@ -26,33 +26,39 @@ std::vector<long> OctahedralRGG::computePL(const size_t N, const size_t start)
   return nlon;
 }
 
-OctahedralRGG::OctahedralRGG(const size_t N)
+OctahedralRGG::OctahedralRGG(const size_t N, const size_t octahedralPoleStart)
 {
-  construct(N);
+  construct(N,octahedralPoleStart);
   set_typeinfo();
 }
 
 OctahedralRGG::OctahedralRGG( const eckit::Parametrisation& params)
 {
-  size_t N;
-  params.get("N",N);
-  construct(N);
-  set_typeinfo();
+    size_t N;
+    params.get("N",N);
+
+    size_t octahedralPoleStart = 20;
+    if(params.has("OctahedralPoleStart")) {
+        params.get("OctahedralPoleStart",octahedralPoleStart);
+    }
+
+    construct(N,octahedralPoleStart);
+    set_typeinfo();
 }
 
-void OctahedralRGG::construct(const size_t N)
+void OctahedralRGG::construct(const size_t N, const size_t start)
 {
-  std::vector<long> nlon = computePL(N);
+  std::vector<long> nlon = computePL(N,start);
   setup_N_hemisphere(N,nlon.data());
   ReducedGrid::N_ = nlat()/2;
 }
 
 void OctahedralRGG::set_typeinfo()
 {
-  std::ostringstream s;
-s << "oct.N"<< N();
-  shortName_ = s.str();
-  grid_type_ = ReducedGaussianGrid::grid_type_str();
+    std::ostringstream s;
+    s << "oct.N"<< N();
+    shortName_ = s.str();
+    grid_type_ = ReducedGaussianGrid::grid_type_str();
 }
 
 eckit::ConcreteBuilderT1<Grid,OctahedralRGG> builder_OctahedralRGG (OctahedralRGG::grid_type_str());

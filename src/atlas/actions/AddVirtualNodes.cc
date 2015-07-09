@@ -11,8 +11,9 @@
 #include "atlas/actions/AddVirtualNodes.h"
 
 #include "eckit/exception/Exceptions.h"
-
+#include "eckit/types/Types.h"
 #include "eckit/geometry/Point2.h"
+#include "eckit/geometry/Point3.h"
 
 #include "atlas/FunctionSpace.h"
 #include "atlas/Domain.h"
@@ -21,8 +22,10 @@
 
 #include "atlas/grids/rgg/OctahedralRGG.h"
 
+using eckit::Log;
 using eckit::geometry::LLPoint2;
 using atlas::grids::rgg::OctahedralRGG;
+using eckit::operator<<;
 
 namespace atlas {
 namespace actions {
@@ -37,15 +40,70 @@ void AddVirtualNodes::operator()( Mesh& mesh ) const
     const Grid& grid = mesh.grid();
     const Domain& domain = grid.domain();
 
+    if( domain.global() ) return; // don't add virtual points to global domains
+
+    const Grid& octa = OctahedralRGG(16,4);
+
+    std::vector<LLPoint2> allPts;
+    octa.lonlat(allPts);
+
+    ECKIT_DEBUG_VAR(allPts.size());
+
     std::vector<LLPoint2> vPts; // virtual points
 
-    std::vector<long> pl = OctahedralRGG::computePL(16,4); // 16 lines of latitude per hemisphere, 4 points near pole
+    // loop over the point and keep the ones that *don't* fall in the domain
+    for(size_t i = 0; i < allPts.size(); ++i)
+    {
+        const LLPoint2& p = allPts[i];
+        if( !domain.contains(p.lon(),p.lat()) )
+            vPts.push_back(p);
+    }
+
+    ECKIT_DEBUG_VAR(vPts.size());
 
     FunctionSpace& nodes = mesh.function_space( "nodes" );
-    ArrayView<double,2> coords  ( nodes.field("xyz") );
 
-    ArrayView<double,2> lonlat    ( nodes.field( "lonlat" ) );
+    ECKIT_DEBUG_VAR(nodes);
 
+    ECKIT_DEBUG_VAR(nodes.shape());
+
+    const size_t nb_real_pts = nodes.shape()[0];
+    const size_t nb_virtual_pts = vPts.size();
+
+    ECKIT_DEBUG_VAR(nb_real_pts);
+    ECKIT_DEBUG_VAR(nb_virtual_pts);
+
+    std::vector<size_t> new_shape = nodes.shape();
+    new_shape[0] +=  vPts.size();
+
+    ECKIT_DEBUG_VAR(new_shape);
+
+    nodes.resize(new_shape); // resizes the fields
+
+    const size_t nb_total_pts = nodes.shape()[0];
+
+    ASSERT( nb_total_pts == nb_real_pts + nb_virtual_pts );
+
+    nodes.metadata().set<size_t>("NbRealPts",nb_real_pts);
+    nodes.metadata().set<size_t>("NbVirtualPts",nb_virtual_pts);
+
+//    nodes.print(eckit::Log::info(), true);
+
+
+    ArrayView<double,2> coords ( nodes.field("xyz") );
+    ArrayView<double,2> lonlat ( nodes.field( "lonlat" ) );
+    ArrayView<gidx_t,1> gidx   ( nodes.field( "glb_idx" ) );
+
+    for(size_t i = 0; i < nb_virtual_pts; ++i)
+    {
+        const size_t n = nb_real_pts + i;
+        lonlat(n,LON) = vPts[i].lon();
+        lonlat(n,LAT) = vPts[i].lat();
+        eckit::geometry::lonlat_to_3d(lonlat[n].data(),coords[n].data());
+        gidx(n) = n+1;
+    }
+
+//    nodes.print(eckit::Log::info(), true);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
