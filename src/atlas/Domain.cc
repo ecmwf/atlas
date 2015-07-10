@@ -58,10 +58,10 @@ bool Domain::contains(double lon, double lat) const
 {
     lon = normalise(lon);
 
-    return FloatCompare<double>::isGreaterApproxEqual(north_, lat) &&
-           FloatCompare<double>::isGreaterApproxEqual(lat, south_) &&
-           FloatCompare<double>::isGreaterApproxEqual(lon , west_) &&
-           FloatCompare<double>::isGreaterApproxEqual(east_, lon);
+    return FloatCompare<double>::isApproximatelyGreaterOrEqual(north_, lat) &&
+           FloatCompare<double>::isApproximatelyGreaterOrEqual(lat, south_) &&
+           FloatCompare<double>::isApproximatelyGreaterOrEqual(lon , west_) &&
+           FloatCompare<double>::isApproximatelyGreaterOrEqual(east_, lon);
 }
 
 Domain Domain::makeGlobal() { return Domain(90.,0.,-90.,360.); }

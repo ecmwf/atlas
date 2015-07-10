@@ -92,6 +92,8 @@ public: // methods
 
   friend std::ostream& operator<<( std::ostream& os, const Field& v);
 
+  virtual void dump(std::ostream& os) const = 0;
+
 private: // methods
 
   virtual void print(std::ostream& os) const;

@@ -39,8 +39,8 @@ namespace io {
 
 namespace {
 
-static double deg = 180. * M_1_PI;
-static double rad = M_PI/180.;
+static double deg = Constants::radianToDegrees();
+static double rad = Constants::degreesToRadians();
 
 class GmshFile : public std::ofstream {
 public:

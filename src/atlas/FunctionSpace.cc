@@ -175,7 +175,7 @@ Field& FunctionSpace::create_field<double>(const std::string& name, size_t nb_va
 	fields_.insert( name, Field::Ptr(field) );
 	fields_.sort();
 
-  field->set_function_space(*this);
+        field->set_function_space(*this);
 	field->allocate(field_shape);
 	return *field;
 }
@@ -357,13 +357,16 @@ void FunctionSpace::parallelise()
   }
 }
 
-void FunctionSpace::print(std::ostream& os) const
+void FunctionSpace::print(std::ostream& os, bool dump) const
 {
     os << "FunctionSpace[name=" << name() << ",";
     for(size_t i = 0; i < nb_fields(); ++i)
-	{
-        os << field(i);
-	}
+    {
+        if(dump)
+            field(i).dump(os);
+        else
+            os << field(i) << ",";
+    }
     os << "]";
 }
 

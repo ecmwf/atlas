@@ -55,21 +55,36 @@ public: // methods
 
   virtual ~FieldT();
 
-  virtual size_t size() const { return data_.size(); }
-
   const DATA_TYPE* data() const { return data_.data(); }
         DATA_TYPE* data()       { return data_.data(); }
 
   DATA_TYPE& operator[] (const size_t idx) { return data_[idx]; }
 
   virtual void allocate(const std::vector<size_t>& shape); // To be removed
+
+protected:
+
+  virtual size_t size() const { return data_.size(); }
+
   virtual void halo_exchange(); // To be removed
 
   virtual double bytes() const { return sizeof(DATA_TYPE)*size(); }
 
-protected:
+  virtual void dump(std::ostream& os) const
+  {
+      os << *this << std::endl;
+      for(size_t i = 0; i < data_.size(); ++i)
+      {
+          os << data_[i] << " ";
+          if( (i+1)%10 == 0 )
+              os << std::endl;
+      }
+      os << std::endl;
+  }
 
-  std::vector< DATA_TYPE > data_;
+  typedef std::vector< DATA_TYPE > storage_type;
+
+  storage_type data_;
 
 };
 
@@ -112,19 +127,33 @@ inline FieldT<DATA_TYPE>::~FieldT()
 template< typename DATA_TYPE >
 inline void FieldT<DATA_TYPE>::allocate(const std::vector<size_t>& shape)
 {
-  shape_ = shape;
-  size_t tot_size(1); for (size_t i = 0; i < shape_.size(); ++i) tot_size *= shape_[i];
-  data_.resize(tot_size);
+    const size_t old_size = data_.size();
 
-  shapef_.resize(shape_.size());
-  std::reverse_copy( shape_.begin(), shape_.end(), shapef_.begin() );
+    shape_ = shape;
+    size_t tot_size = 1;
+    for(size_t i = 0; i < shape_.size(); ++i)
+        tot_size *= shape_[i];
 
-  strides_.resize(shape_.size());
-  strides_[shape_.size()-1] = 1;
-  for( int n=shape_.size()-2; n>=0; --n )
-  {
-    strides_[n] = strides_[n+1]*shape_[n+1];
-  }
+    if( old_size && tot_size > old_size)
+    {
+        storage_type new_data(tot_size);
+        std::copy(data_.begin(), data_.end(), new_data.begin());
+        data_.swap(new_data);
+    }
+    else
+    {
+        data_.resize(tot_size);
+    }
+
+    shapef_.resize(shape_.size());
+    std::reverse_copy( shape_.begin(), shape_.end(), shapef_.begin() );
+
+    strides_.resize(shape_.size());
+    strides_[shape_.size()-1] = 1;
+    for( int n=shape_.size()-2; n>=0; --n )
+    {
+        strides_[n] = strides_[n+1]*shape_[n+1];
+    }
 }
 
 //------------------------------------------------------------------------------------------------------

@@ -106,7 +106,6 @@ template <>       float*  Field::data<float >()       { return get_field_data<fl
 template <> const double* Field::data<double>() const { return get_field_data<double>(*this); }
 template <>       double* Field::data<double>()       { return get_field_data<double>(*this); }
 
-
 void Field::print(std::ostream& os) const
 {
     os << "Field[name=" << name()

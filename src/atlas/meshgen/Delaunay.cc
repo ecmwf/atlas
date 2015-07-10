@@ -13,9 +13,11 @@
 
 #include "atlas/Mesh.h"
 #include "atlas/meshgen/Delaunay.h"
-#include "atlas/actions/BuildConvexHull3D.h"
 #include "atlas/GridDistribution.h"
+
+#include "atlas/actions/AddVirtualNodes.h"
 #include "atlas/actions/BuildXYZField.h"
+#include "atlas/actions/BuildConvexHull3D.h"
 
 namespace atlas {
 namespace meshgen {
@@ -57,6 +59,7 @@ void Delaunay::generate(const Grid& g, Mesh& mesh) const
   }
 
   actions::BuildXYZField()(mesh);
+  actions::AddVirtualNodes()(mesh);    ///< does nothing if global domain
   actions::BuildConvexHull3D()(mesh);
 
   mesh.set_grid(g);

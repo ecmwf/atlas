@@ -129,7 +129,7 @@ public: // methods
 
     size_t glb_dof() const { return glb_dof_; }
 
-    void print(std::ostream&) const;
+    void print(std::ostream&, bool dump = false) const;
 
 private:  // methods
 
