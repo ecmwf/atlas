@@ -324,8 +324,7 @@ std::string Grib::grib_sample_file( const eckit::Properties& g_spec, long editio
     if ( sample_paths.empty() )
         throw SeriousBug("Error no sample paths found",Here()) ;
 
-    for(size_t path = 0; path < sample_paths.size(); ++path)
-    {
+    for(size_t path = 0; path < sample_paths.size(); ++path) {
         std::string grib_samples_dir = sample_paths[path];
 
         DEBUG_VAR( grib_samples_dir );
@@ -333,21 +332,22 @@ std::string Grib::grib_sample_file( const eckit::Properties& g_spec, long editio
         if (grib_samples_dir.empty())
             throw SeriousBug("Error, empty samples path. Could not create handle from grid",Here()) ;
 
-        PathName dir_path(grib_samples_dir);
+        LocalPathName dir_path(grib_samples_dir);
 
         if( !dir_path.exists() ) continue;
         if( !dir_path.isDir()  ) continue;
 
-        std::vector<PathName> files;
-        std::vector<PathName> directories;
+        std::vector<LocalPathName> files;
+        std::vector<LocalPathName> directories;
         dir_path.children(files,directories);
 
-        for(size_t i = 0; i < files.size(); i++)
-        {
-          if( check_grid_spec_matches_sample_file(g_spec, edition, files[i]) )
-          {
-            return files[i].baseName(false).localPath(); // remove .tmpl extension
-          }
+        for(size_t i = 0; i < files.size(); i++) {
+            // FIXME: we only consider files with .tmpl extension so we don't pick
+            // up non-GRIB files in the build directory (Makefile.am etc.)
+            const std::string& file = files[i].path();
+            if(file.substr(file.find_last_of('.') + 1) == "tmpl" &&
+                    check_grid_spec_matches_sample_file(g_spec, edition, files[i]))
+                return files[i].baseName(false); // remove .tmpl extension
         }
     }
 
