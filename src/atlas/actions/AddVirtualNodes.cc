@@ -47,8 +47,6 @@ void AddVirtualNodes::operator()( Mesh& mesh ) const
     std::vector<LLPoint2> allPts;
     octa.lonlat(allPts);
 
-    ECKIT_DEBUG_VAR(allPts.size());
-
     std::vector<LLPoint2> vPts; // virtual points
 
     // loop over the point and keep the ones that *don't* fall in the domain
@@ -59,24 +57,13 @@ void AddVirtualNodes::operator()( Mesh& mesh ) const
             vPts.push_back(p);
     }
 
-    ECKIT_DEBUG_VAR(vPts.size());
-
     FunctionSpace& nodes = mesh.function_space( "nodes" );
-
-    ECKIT_DEBUG_VAR(nodes);
-
-    ECKIT_DEBUG_VAR(nodes.shape());
 
     const size_t nb_real_pts = nodes.shape()[0];
     const size_t nb_virtual_pts = vPts.size();
 
-    ECKIT_DEBUG_VAR(nb_real_pts);
-    ECKIT_DEBUG_VAR(nb_virtual_pts);
-
     std::vector<size_t> new_shape = nodes.shape();
     new_shape[0] +=  vPts.size();
-
-    ECKIT_DEBUG_VAR(new_shape);
 
     nodes.resize(new_shape); // resizes the fields
 
@@ -86,9 +73,6 @@ void AddVirtualNodes::operator()( Mesh& mesh ) const
 
     nodes.metadata().set<size_t>("NbRealPts",nb_real_pts);
     nodes.metadata().set<size_t>("NbVirtualPts",nb_virtual_pts);
-
-//    nodes.print(eckit::Log::info(), true);
-
 
     ArrayView<double,2> coords ( nodes.field("xyz") );
     ArrayView<double,2> lonlat ( nodes.field( "lonlat" ) );
@@ -102,8 +86,6 @@ void AddVirtualNodes::operator()( Mesh& mesh ) const
         eckit::geometry::lonlat_to_3d(lonlat[n].data(),coords[n].data());
         gidx(n) = n+1;
     }
-
-//    nodes.print(eckit::Log::info(), true);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
