@@ -68,13 +68,14 @@ subroutine Parametrisation__set_parametrisation_list(this, name, value)
   class(atlas_Parametrisation), intent(inout) :: this
   character(len=*), intent(in) :: name
   class(atlas_Parametrisation), intent(in) :: value(:)
-  type(c_ptr) :: value_cptrs(size(value))
+  type(c_ptr), target :: value_cptrs(size(value))
   integer :: j
-  do j=1,size(value)
-    value_cptrs(j) = value(j)%cpp_object_ptr
-  enddo
-
-  call atlas__Parametrisation__set_parametrisation_list(this%cpp_object_ptr, c_str(name), value_cptrs, size(value_cptrs) )
+  if( size(value) > 0 ) then
+    do j=1,size(value)
+      value_cptrs(j) = value(j)%cpp_object_ptr
+    enddo
+    call atlas__Parametrisation__set_parametrisation_list(this%cpp_object_ptr, c_str(name), c_loc(value_cptrs(1)), size(value_cptrs) )
+  endif
 end subroutine Parametrisation__set_parametrisation_list
 
 subroutine Parametrisation__set_logical(this, name, value)

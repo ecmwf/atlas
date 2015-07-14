@@ -85,6 +85,9 @@ TEST( test_parametrisation )
   call params%set("nested",nested)
   call atlas_delete(nested)
 
+  ! --------------------- JSON ------------------
+
+  call atlas_log%info("params = "//params%json())
 
   ! --------------------- GET ------------------
 
@@ -118,10 +121,6 @@ TEST( test_parametrisation )
 
   call atlas_delete(alist)
   call atlas_delete(anested)
-
-  ! --------------------- JSON ------------------
-
-  call atlas_log%info( params%json() )
 
 
   ! ---------------------------------------------
