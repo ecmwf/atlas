@@ -36,8 +36,27 @@ void throw_exception(const std::string& name)
 }
 
 Metadata& Metadata::set( const eckit::Properties& p )
-{ 
-  eckit::Properties::set(p); 
+{
+  eckit::Properties::set(p);
+  return *this;
+}
+
+template<> Metadata& Metadata::set(const std::string& name, const eckit::Properties& value)
+{
+  eckit::Properties::set(name,value);
+  return *this;
+}
+
+template<> Metadata& Metadata::set(const std::string& name, const Metadata& value)
+{
+  eckit::Properties::set(name,value);
+  return *this;
+}
+
+template<> Metadata& Metadata::set(const std::string& name, const std::vector<Metadata>& value)
+{
+  std::vector<eckit::Properties> properties_values(value.begin(),value.end());
+  eckit::Properties::set(name, eckit::makeVectorValue(properties_values) );
   return *this;
 }
 
@@ -320,7 +339,7 @@ template<> std::vector<eckit::Properties> Metadata::get(const std::string& name)
   std::vector<eckit::Properties> values(v.size());
   for( size_t i=0; i<v.size(); ++i ) {
     values[i].set(v[i]);
-  }  
+  }
   return values;
 }
 

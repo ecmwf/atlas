@@ -15,6 +15,7 @@
 #include <sstream>
 
 #include "eckit/exception/Exceptions.h"
+#include "eckit/filesystem/PathName.h"
 #include "eckit/parser/JSON.h"
 #include "eckit/parser/JSONParser.h"
 
@@ -36,10 +37,32 @@ Parametrisation::Parametrisation(std::istream& stream, const std::string &format
   if( format != "json" ) {
     throw eckit::Exception("Not Implemented: Only json format is supported");
   }
-  
+
   eckit::JSONParser parser( stream );
-  set( eckit::Properties( parser.parse() ) ); 
+  set( eckit::Properties( parser.parse() ) );
 }
+
+Parametrisation::Parametrisation( const eckit::PathName& path )
+{
+  if( ! path.exists() ) {
+    throw eckit::Exception("File "+std::string(path)+" does not exist.");
+  }
+  if( path.extension() == ".json" )
+  {
+    std::ifstream file(path.localPath());
+    if (!file.is_open()) {
+      throw eckit::Exception("Unable to open json file "+std::string(path),Here());
+    }
+    eckit::JSONParser parser( file );
+    set( eckit::Properties( parser.parse() ) );
+    file.close();
+  }
+  else
+  {
+    throw eckit::Exception("Only files with \".json\" extension supported for now. Found: "+path.extension());
+  }
+}
+
 
 
 Parametrisation& Parametrisation::set(const eckit::Properties &p)
@@ -59,6 +82,23 @@ Parametrisation &Parametrisation::set(const std::string &name, const char *value
     delegate_.set(name, value);
     return *this;
 }
+
+Parametrisation& Parametrisation::set(const std::string& name, const Parametrisation& value )
+{
+  delegate_.set(name, value.delegate_);
+  return *this;
+}
+
+Parametrisation& Parametrisation::set(const std::string& name, const std::vector<Parametrisation>& values )
+{
+  std::vector<Metadata> metadatavalues(values.size());
+  for( size_t i=0; i<metadatavalues.size(); ++i )
+    metadatavalues[i] = values[i].delegate_;
+  delegate_.set(name, metadatavalues);
+  return *this;
+}
+
+
 
 //=================================================
 // Functions overloading eckit::Parametrisation
@@ -119,6 +159,12 @@ bool Parametrisation::get(const std::string& name, std::vector<Parametrisation>&
   return found;
 }
 
+eckit::JSON& operator<<(eckit::JSON& s, const Parametrisation& p)
+{
+  s << p.delegate_;
+}
+
+
 //==================================================================
 
 // ------------------------------------------------------------------
@@ -128,8 +174,36 @@ Parametrisation* atlas__Parametrisation__new () {
   return new Parametrisation();
 }
 
+Parametrisation* atlas__Parametrisation__new_from_json (const char* json) {
+  std::stringstream s;
+  s << json;
+  return new Parametrisation(s);
+}
+
+
+Parametrisation* atlas__Parametrisation__new_from_file (const char* path)
+{
+  return new Parametrisation( eckit::PathName(path) );
+}
+
 void atlas__Parametrisation__delete (Parametrisation* This) {
+  ASSERT( This != 0 );
   delete This;
+}
+
+void atlas__Parametrisation__set_parametrisation (Parametrisation* This, const char* name, const Parametrisation* value)
+{
+  ATLAS_ERROR_HANDLING( This->set( std::string(name), *value ) );
+}
+
+void atlas__Parametrisation__set_parametrisation_list (Parametrisation* This, const char* name, const Parametrisation* value[], int size)
+{
+  std::vector<Parametrisation> params(size);
+  for( size_t i=0; i<size; ++i )
+  {
+    params[i] = Parametrisation(*value[i]);
+  }
+  ATLAS_ERROR_HANDLING( This->set( std::string(name), params ) );
 }
 
 void atlas__Parametrisation__set_int (Parametrisation* This, const char* name, int value)
@@ -184,6 +258,29 @@ void atlas__Parametrisation__set_array_double (Parametrisation* This, const char
     This->set( std::string(name), v );
   );
 }
+
+int atlas__Parametrisation__get_parametrisation (Parametrisation* This, const char* name, Parametrisation* value)
+{
+  ATLAS_ERROR_HANDLING ( if( ! This->get(std::string(name),*value) )  return false; );
+  return true;
+}
+
+int atlas__Parametrisation__get_parametrisation_list (Parametrisation* This, const char* name, Parametrisation** &value, int &size, int &allocated)
+{
+  value = 0;
+  ATLAS_ERROR_HANDLING (
+    std::vector<Parametrisation> vector;
+    if( ! This->get(std::string(name),vector) )  return false;
+    size = vector.size();
+    value = new Parametrisation*[size];
+    allocated = true;
+    for( size_t i=0; i<size; ++i ) {
+      value[i] = new Parametrisation(vector[i]);
+    }
+  );
+  return true;
+}
+
 int atlas__Parametrisation__get_int (Parametrisation* This, const char* name, int& value)
 {
   long long_value;
@@ -288,6 +385,19 @@ int atlas__Parametrisation__get_array_double (Parametrisation* This, const char*
 int atlas__Parametrisation__has (Parametrisation *This, const char *name) {
     ATLAS_ERROR_HANDLING( return This->has( std::string(name) ));
     return 0;
+}
+
+void atlas__Parametrisation__json(Parametrisation* This, char* &json, int &size, int &allocated)
+{
+  std::stringstream s;
+  eckit::JSON j(s);
+  j.precision(16);
+  j << *This;
+  std::string json_str = s.str();
+  size = json_str.size();
+  json = new char[size+1]; allocated = true;
+  strcpy(json,json_str.c_str());
+  allocated = true;
 }
 
 // ------------------------------------------------------------------

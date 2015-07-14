@@ -48,17 +48,17 @@ public:
 // ---  Implementation (in .cc file)
 void MyStateGenerator::generate( State& state, const eckit::Parametrisation& p ) const
 {
-  const atlas::Parametrisation *params = dynamic_cast<const atlas::Parametrisation*>(&p);
+  const StateGenerator::Parameters *params = dynamic_cast<const StateGenerator::Parameters*>(&p);
   if( !params )
   {
-    throw eckit::Exception("Parametrisation has to be of atlas::Parametrisation type");
+    throw eckit::Exception("Parametrisation has to be of StateGenerator::Parameters type");
   }
 
-  atlas::Parametrisation geometry;
+  StateGenerator::Parameters geometry;
   if( ! params->get("geometry",geometry) ) {
     throw eckit::BadParameter("Could not find 'geometry' in Parametrisation",Here());
   }
-  
+
   std::string grid;
   if( geometry.get("grid",grid) )
   {
@@ -67,35 +67,38 @@ void MyStateGenerator::generate( State& state, const eckit::Parametrisation& p )
       geometry.set("ngptot",state.grid().npts());
     }
   }
-  
+
   if( ! geometry.has("ngptot") ) {
     throw eckit::BadParameter("Could not find 'ngptot' in Parametrisation");
   }
-  
-  std::vector<atlas::Parametrisation> fields;
+
+  std::vector<StateGenerator::Parameters> fields;
   if( params->get("fields",fields) )
   {
     for( size_t i=0; i<fields.size(); ++i )
     {
-      atlas::Parametrisation fieldparams;
+      StateGenerator::Parameters fieldparams;
       // Subsequent "set" calls can overwrite eachother, so that
       // finetuning is possible in e.g. the fields Parametrisation (such as creator, nlev, ngptot)
       fieldparams.set("creator","IFS");
       fieldparams.set(geometry);
       fieldparams.set(fields[i]);
       state.add( Field::create( fieldparams ) );
-    }    
+
+      // debug info
+      std::stringstream s;
+      eckit::JSON json(s);
+      json << fieldparams;
+      eckit::Log::debug(0) << "fieldparams = " << s.str() << std::endl;
+    }
   }
-    //
-  // eckit::ValueList fields = properties.get("fields");
-  //
 }
 
 // Register in factory
 StateGeneratorBuilder<MyStateGenerator> __MyStateGenerator("MyStateGenerator");
 
 // ===================================================================
-//                               BEGIN TESTS 
+//                               BEGIN TESTS
 // ===================================================================
 
 
@@ -114,7 +117,7 @@ BOOST_AUTO_TEST_CASE( state )
   BOOST_CHECK_EQUAL( state.nb_fields() , 0 );
   BOOST_CHECK_EQUAL( state.nb_meshes() , 0 );
   BOOST_CHECK_EQUAL( state.nb_grids()  , 0 );
-  
+
   state.add( Field::create( make_shape(10,1) , Field::Parameters("name","myfield") ) );
   state.add( Field::create( make_shape(10,2) ) );
   state.add( Field::create( make_shape(10,3) ) );
@@ -149,23 +152,22 @@ BOOST_AUTO_TEST_CASE( state_generator )
 BOOST_AUTO_TEST_CASE( state_create )
 {
 
-  //-- Create JSON --------------
-  eckit::Properties p;
-  eckit::Properties geometry;
-  geometry.set("grid","oct.N80");  
+  StateGenerator::Parameters p;
+  StateGenerator::Parameters geometry;
+  geometry.set("grid","oct.N80");
   geometry.set("ngptot",35000);
-  geometry.set("nproma",20);  
+  geometry.set("nproma",20);
   geometry.set("nlev",137);
   p.set("geometry",geometry);
-  
-  std::vector<eckit::Properties> fields(5);
+
+  std::vector<StateGenerator::Parameters> fields(5);
   fields[0].set("name","temperature");
   fields[0].set("data_type",DataType::real32());
-  
+
   fields[1].set("name","wind");
   fields[1].set("nvar",2); // vector field u,v
   fields[1].set("data_type",DataType::real64());
-  
+
   fields[2].set("name","soiltype");
   fields[2].set("data_type",DataType::int32());
   fields[2].set("nlev",1); // We can overwrite nlev from geometry here
@@ -177,30 +179,33 @@ BOOST_AUTO_TEST_CASE( state_create )
   fields[4].set("name","array");
   fields[4].set("data_type",DataType::int64());
   fields[4].set("creator","ArraySpec");
-  fields[4].set("shape",eckit::makeVectorValue( make_shape(10,2) ) );
-  
-  p.set("fields",eckit::makeVectorValue(fields));
+  fields[4].set("shape",make_shape(10,2));
 
-  BOOST_CHECKPOINT("");
-  
+  p.set("fields",fields);
+
+  // We can also translate parameters to a json:
   std::stringstream json;
-  eckit::JSON js(json);
-  js << p;
-  eckit::Log::info() << "JSON = " << json.str() << std::endl;
-  //-- End Create JSON --------------
-    
-  eckit::ScopedPtr<State> state ( State::create("MyStateGenerator",StateGenerator::Parameters(json)) );
-  
+  eckit::JSON js(json); js << p;
+  eckit::Log::info() << "json = " << json.str() << std::endl;
+
+  // And we can create back parameters from json:
+  StateGenerator::Parameters from_json_stream(json);
+
+  // And if we have a json file, we could create Parameters from the file:
+    // StateGenerater::Parameters from_json_file( eckit::PathName("file.json") );
+
+  eckit::ScopedPtr<State> state ( State::create("MyStateGenerator",p) );
+
   BOOST_CHECK( state->has_field("temperature") );
   BOOST_CHECK( state->has_field("wind") );
   BOOST_CHECK( state->has_field("soiltype") );
   BOOST_CHECK( state->has_grid() );
-  
+
   eckit::Log::info() << state->field("temperature") << std::endl;
   eckit::Log::info() << state->field("wind")        << std::endl;
   eckit::Log::info() << state->field("soiltype")    << std::endl;
   eckit::Log::info() << state->field("GFL")         << std::endl;
-  
+
   ArrayView<float,4> temperature( state->field("temperature") );
   temperature(0,0,0,0) = 0;
 

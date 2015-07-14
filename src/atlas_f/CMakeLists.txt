@@ -105,6 +105,8 @@ add_custom_target( atlas_fortran_inc SOURCES
    atlas_module_GridDistribution_c.f
    atlas_module_HaloExchange_i.f
    atlas_module_HaloExchange_c.f
+   atlas_module_JSON_i.f
+   atlas_module_JSON_c.f
    atlas_module_Logging_i.f
    atlas_module_Logging_c.f
    atlas_module_Mesh_i.f
@@ -113,6 +115,8 @@ add_custom_target( atlas_fortran_inc SOURCES
    atlas_module_Metadata_c.f
    atlas_module_Parametrisation_i.f
    atlas_module_Parametrisation_c.f
+   atlas_module_PathName_i.f
+   atlas_module_PathName_c.f
    atlas_module_State_i.f
    atlas_module_State_c.f
    atlas_module_Trans_i.f

@@ -107,8 +107,10 @@ integer, public, parameter :: ATLAS_KIND_GIDX = c_long
 #include "atlas_module_FunctionSpace_i.f"
 #include "atlas_module_Field_i.f"
 #include "atlas_module_FieldSet_i.f"
+#include "atlas_module_JSON_i.f"
 #include "atlas_module_Metadata_i.f"
 #include "atlas_module_Parametrisation_i.f"
+#include "atlas_module_PathName_i.f"
 #include "atlas_module_Error_i.f"
 #include "atlas_module_GridDistribution_i.f"
 #include "atlas_module_State_i.f"
@@ -134,6 +136,7 @@ INTERFACE atlas_delete
   module procedure atlas_HaloExchange__delete
   module procedure atlas_Metadata__delete
   module procedure atlas_Parametrisation__delete
+  module procedure atlas_ParametrisationList__delete
   module procedure atlas_GridDistribution__delete
   module procedure atlas_Trans__delete
   module procedure atlas_Value__delete
@@ -349,8 +352,10 @@ end function
 #include "atlas_module_FunctionSpace_c.f"
 #include "atlas_module_Field_c.f"
 #include "atlas_module_FieldSet_c.f"
+#include "atlas_module_JSON_c.f"
 #include "atlas_module_Metadata_c.f"
 #include "atlas_module_Parametrisation_c.f"
+#include "atlas_module_PathName_c.f"
 #include "atlas_module_Error_c.f"
 #include "atlas_module_GridDistribution_c.f"
 #include "atlas_module_State_c.f"

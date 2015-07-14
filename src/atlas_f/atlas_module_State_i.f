@@ -37,13 +37,13 @@ contains
   generic, public :: field => field_by_name, field_by_index
 
 !-- Grids
-   procedure, private :: add_grid    => atlas_State__add_grid
-   procedure, public :: remove_grid => atlas_State__remove_grid
-   procedure, public :: has_grid    => atlas_State__has_grid
-   procedure, public :: nb_grids    => atlas_State__nb_grids
-   procedure, private :: grid_by_name  => atlas_State__grid_by_name
-   procedure, private :: grid_by_index => atlas_State__grid_by_index
-   generic, public :: grid => grid_by_name, grid_by_index
+  procedure, private :: add_grid    => atlas_State__add_grid
+  procedure, public :: remove_grid => atlas_State__remove_grid
+  procedure, public :: has_grid    => atlas_State__has_grid
+  procedure, public :: nb_grids    => atlas_State__nb_grids
+  procedure, private :: grid_by_name  => atlas_State__grid_by_name
+  procedure, private :: grid_by_index => atlas_State__grid_by_index
+  generic, public :: grid => grid_by_name, grid_by_index
 
 !-- Meshes
   procedure, private :: add_mesh    => atlas_State__add_mesh
@@ -54,7 +54,7 @@ contains
   procedure, private :: mesh_by_index => atlas_State__mesh_by_index
   generic, public :: mesh => mesh_by_name, mesh_by_index
 
-   generic, public :: add => add_field, add_grid, add_mesh
+  generic, public :: add => add_field, add_grid, add_mesh
 
 END TYPE atlas_State
 

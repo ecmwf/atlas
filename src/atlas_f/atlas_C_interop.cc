@@ -1,10 +1,10 @@
 #include <stdlib.h>
-
 extern "C"
 {
-  void atlas_free(void* ptr[])
+  void atlas_free( void* ptr[] )
   {
-    free(*ptr); *ptr=NULL;
+    delete[] ptr;
+    ptr=NULL;
   }
 }
 

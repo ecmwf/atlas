@@ -16,6 +16,11 @@
 #include "atlas/Metadata.h"
 #include "atlas/util/Debug.h"
 
+namespace eckit {
+  class JSON;
+  class PathName;
+}
+
 namespace atlas {
 class Grid;
 class Mesh;
@@ -26,12 +31,15 @@ class FunctionSpace;
 class Parametrisation: public eckit::Parametrisation {
 
 public:
-  
+
 // -- Constructors
 
   Parametrisation();
 
-  /// @brief Constructor starting from json stream
+  /// @brief Constructor starting from a path
+  Parametrisation( const eckit::PathName& );
+
+  /// @brief Constructor starting from a stream
   Parametrisation( std::istream&, const std::string &format = "json" );
 
   /// @brief Constructor starting from a Properties
@@ -56,6 +64,8 @@ public:
   template<typename ValueT>
   Parametrisation& set(const std::string& name, const ValueT& value);
   Parametrisation& set(const std::string& name, const char* value);
+  Parametrisation& set(const std::string& name, const Parametrisation& );
+  Parametrisation& set(const std::string& name, const std::vector<Parametrisation>& );
   Parametrisation& set(const eckit::Properties&);
   Parametrisation& set(const Parametrisation&);
 
@@ -75,6 +85,8 @@ public:
 
   bool get(const std::string& name, Parametrisation& value) const;
   bool get(const std::string& name, std::vector<Parametrisation>& value) const;
+
+  friend eckit::JSON& operator<<(eckit::JSON&, const Parametrisation&);
 
 private:
 
@@ -113,9 +125,12 @@ Parametrisation& Parametrisation::set(const std::string& name, const ValueT& val
 extern "C"
 {
   Parametrisation* atlas__Parametrisation__new ();
-
+  Parametrisation* atlas__Parametrisation__new_from_json (const char* json);
+  Parametrisation* atlas__Parametrisation__new_from_file (const char* path);
   void atlas__Parametrisation__delete (Parametrisation* This);
   int  atlas__Parametrisation__has (Parametrisation* This, const char* name);
+  void atlas__Parametrisation__set_parametrisation (Parametrisation* This, const char* name, const Parametrisation* value);
+  void atlas__Parametrisation__set_parametrisation_list (Parametrisation* This, const char* name, const Parametrisation* value[], int size);
   void atlas__Parametrisation__set_int    (Parametrisation* This, const char* name, int value);
   void atlas__Parametrisation__set_long   (Parametrisation* This, const char* name, long value);
   void atlas__Parametrisation__set_float  (Parametrisation* This, const char* name, float value);
@@ -126,6 +141,8 @@ extern "C"
   void atlas__Parametrisation__set_array_float  (Parametrisation* This, const char* name, float value[], int size);
   void atlas__Parametrisation__set_array_double (Parametrisation* This, const char* name, double value[], int size);
 
+  int atlas__Parametrisation__get_parametrisation (Parametrisation* This, const char* name, Parametrisation* value);
+  int atlas__Parametrisation__get_parametrisation_list (Parametrisation* This, const char* name, Parametrisation** &value, int &size, int &allocated);
   int atlas__Parametrisation__get_int    (Parametrisation* This, const char* name, int &value);
   int atlas__Parametrisation__get_long   (Parametrisation* This, const char* name, long &value);
   int atlas__Parametrisation__get_float  (Parametrisation* This, const char* name, float &value);
@@ -135,6 +152,7 @@ extern "C"
   int atlas__Parametrisation__get_array_long   (Parametrisation* This, const char* name, long* &value, int &size, int &allocated);
   int atlas__Parametrisation__get_array_float  (Parametrisation* This, const char* name, float* &value, int &size, int &allocated);
   int atlas__Parametrisation__get_array_double (Parametrisation* This, const char* name, double* &value, int &size, int &allocated);
+  void atlas__Parametrisation__json (Parametrisation* This, Char* &json, int &size, int &allocated);
 }
 #undef Char
 

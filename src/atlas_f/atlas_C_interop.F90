@@ -65,7 +65,7 @@ end interface stride
 interface
   subroutine atlas_free(ptr) bind(C)
     use, intrinsic :: iso_c_binding, only: c_ptr
-    type(c_ptr), intent(in) :: ptr
+    type(c_ptr), value :: ptr
   end subroutine atlas_free
 end interface
 
