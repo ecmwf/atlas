@@ -162,6 +162,7 @@ bool Parametrisation::get(const std::string& name, std::vector<Parametrisation>&
 eckit::JSON& operator<<(eckit::JSON& s, const Parametrisation& p)
 {
   s << p.delegate_;
+  return s;
 }
 
 

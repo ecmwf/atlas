@@ -187,6 +187,7 @@ struct __omp_lock *lock = (struct __omp_lock *)arg;
  fprintf(stderr, "error: lock not initialized\n");
  exit(1);
  }
+ return -1;
 }
 struct __omp_nest_lock
 {
