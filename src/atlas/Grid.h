@@ -69,7 +69,7 @@ class Grid : public eckit::Owned, public util::Registered<Grid> {
 
   virtual ~Grid();
 
-  Ptr self() { return Ptr(this); }
+  Ptr self() { return Ptr(this); } ///< @todo not necessary?
 
   /// Human readable name (may not be unique)
   virtual std::string shortName() const = 0;
@@ -83,6 +83,8 @@ class Grid : public eckit::Owned, public util::Registered<Grid> {
 
   /// @returns the hash of the information that makes this Grid unique
   eckit::MD5::digest_t hash() const;
+
+  ///< @todo not necessary?
 
   /// @return bounding box of all lonlat points,
   /// @note this function will compute brute-force the minmax lonlat values over all the points
