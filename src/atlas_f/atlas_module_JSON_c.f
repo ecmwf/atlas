@@ -1,6 +1,6 @@
 ! (C) Copyright 2013-2014 ECMWF.
 
-function atlas_JSON_str(str) result(JSON)
+function atlas_JSON__ctor_str(str) result(JSON)
   type(atlas_JSON) :: JSON
   character(len=*), intent(in) :: str
   integer i, nchars

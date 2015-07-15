@@ -9,7 +9,7 @@ contains
 END TYPE atlas_JSON
 
 interface atlas_JSON
-  module procedure atlas_JSON_str
+  module procedure atlas_JSON__ctor_str
 end interface
 
 !------------------------------------------------------------------------------

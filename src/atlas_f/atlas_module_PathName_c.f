@@ -1,6 +1,6 @@
 ! (C) Copyright 2013-2014 ECMWF.
 
-function atlas_PathName_str(str) result(PathName)
+function atlas_PathName__ctor_str(str) result(PathName)
   type(atlas_PathName) :: PathName
   character(len=*), intent(in) :: str
   integer i, nchars

@@ -9,7 +9,7 @@ contains
 END TYPE atlas_PathName
 
 interface atlas_PathName
-  module procedure atlas_PathName_str
+  module procedure atlas_PathName__ctor_str
 end interface
 
 !------------------------------------------------------------------------------
