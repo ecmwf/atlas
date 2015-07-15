@@ -1,8 +1,20 @@
 
+#include "atlas_f/atlas_f_defines.h"
+
 program example_fortran 
 use atlas_module
+#ifdef ATLAS_HAVE_OMP
+use omp_lib
+#endif
 implicit none
 
+integer j
+integer :: var(2000)
+
+!$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(j)
+do j=1,2000
+  var(j) = 1
+enddo
 
 call atlas_log%set_debug(10)
 
@@ -18,6 +30,10 @@ call atlas_log%connect_fortran_unit(6)
 call atlas_log%channel_info %set_prefix("[%P] info  -- ")
 call atlas_log%channel_debug%set_prefix("[%P] debug -- ")
 call atlas_log%channel_stats%set_prefix("(S) -- ")
+
+#ifdef ATLAS_HAVE_OMP
+call atlas_log%info("OpenMP enabled")
+#endif
 
 call atlas_log%debug("Here is some debugging information")
 call atlas_log%stats("value = ...")
@@ -37,7 +53,7 @@ call atlas_log%dedent()
 call atlas_log%info("Subsection")
 call atlas_log%dedent()
 call atlas_log%info("Section")
-!call atlas_finalize()
 call atlas_log%debug("Atlas finalized",lvl=0,flush=.True.)
 write(6,'(A)') "exit"
+call atlas_finalize()
 end program
