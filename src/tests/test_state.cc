@@ -40,21 +40,21 @@ namespace test {
 // ---  Declaration (in .h file)
 class MyStateGenerator : public StateGenerator {
 public:
-  MyStateGenerator( const eckit::Parametrisation& p = Parameters() ) : StateGenerator(p) {}
+  MyStateGenerator( const eckit::Parametrisation& p = Config() ) : StateGenerator(p) {}
   ~MyStateGenerator() {}
-  virtual void generate( State& state, const eckit::Parametrisation& p = Parameters() ) const;
+  virtual void generate( State& state, const eckit::Parametrisation& p = Config() ) const;
 };
 
 // ---  Implementation (in .cc file)
 void MyStateGenerator::generate( State& state, const eckit::Parametrisation& p ) const
 {
-  const StateGenerator::Parameters *params = dynamic_cast<const StateGenerator::Parameters*>(&p);
+  const Config *params = dynamic_cast<const Config*>(&p);
   if( !params )
   {
-    throw eckit::Exception("Parametrisation has to be of StateGenerator::Parameters type");
+    throw eckit::Exception("Parametrisation has to be of atlas::Config type");
   }
 
-  StateGenerator::Parameters geometry;
+  Config geometry;
   if( ! params->get("geometry",geometry) ) {
     throw eckit::BadParameter("Could not find 'geometry' in Parametrisation",Here());
   }
@@ -72,12 +72,12 @@ void MyStateGenerator::generate( State& state, const eckit::Parametrisation& p )
     throw eckit::BadParameter("Could not find 'ngptot' in Parametrisation");
   }
 
-  std::vector<StateGenerator::Parameters> fields;
+  std::vector<Config> fields;
   if( params->get("fields",fields) )
   {
     for( size_t i=0; i<fields.size(); ++i )
     {
-      StateGenerator::Parameters fieldparams;
+      Config fieldparams;
       // Subsequent "set" calls can overwrite eachother, so that
       // finetuning is possible in e.g. the fields Parametrisation (such as creator, nlev, ngptot)
       fieldparams.set("creator","IFS");
@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE( state )
   BOOST_CHECK_EQUAL( state.nb_meshes() , 0 );
   BOOST_CHECK_EQUAL( state.nb_grids()  , 0 );
 
-  state.add( Field::create( make_shape(10,1) , Field::Parameters("name","myfield") ) );
+  state.add( Field::create( make_shape(10,1) , Config("name","myfield") ) );
   state.add( Field::create( make_shape(10,2) ) );
   state.add( Field::create( make_shape(10,3) ) );
 
@@ -152,15 +152,15 @@ BOOST_AUTO_TEST_CASE( state_generator )
 BOOST_AUTO_TEST_CASE( state_create )
 {
 
-  StateGenerator::Parameters p;
-  StateGenerator::Parameters geometry;
+  Config p;
+  Config geometry;
   geometry.set("grid","oct.N80");
   geometry.set("ngptot",35000);
   geometry.set("nproma",20);
   geometry.set("nlev",137);
   p.set("geometry",geometry);
 
-  std::vector<StateGenerator::Parameters> fields(5);
+  std::vector<Config> fields(5);
   fields[0].set("name","temperature");
   fields[0].set("data_type",DataType::real32());
 
@@ -189,7 +189,7 @@ BOOST_AUTO_TEST_CASE( state_create )
   eckit::Log::info() << "json = " << json.str() << std::endl;
 
   // And we can create back parameters from json:
-  StateGenerator::Parameters from_json_stream(json);
+  Config from_json_stream(json);
 
   // And if we have a json file, we could create Parameters from the file:
     // StateGenerater::Parameters from_json_file( eckit::PathName("file.json") );

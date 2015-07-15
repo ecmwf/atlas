@@ -17,7 +17,7 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 #include "eckit/memory/ScopedPtr.h"
-#include "atlas/Parametrisation.h"
+#include "atlas/Config.h"
 #include "atlas/Metadata.h"
 
 namespace eckit { class Parametrisation; }
@@ -40,13 +40,12 @@ class State : public eckit::Owned {
 public: // types
 
   typedef eckit::SharedPtr< State > Ptr;
-  typedef atlas::Parametrisation Parameters;
 
 public: // methods
 
 //-- Static methods
 
-  static State* create(const std::string& factory, const eckit::Parametrisation& = Parameters() );
+  static State* create(const std::string& factory, const eckit::Parametrisation& = Config() );
 
 //-- Constructors
 
@@ -113,13 +112,11 @@ class StateGenerator : public eckit::Owned {
 
 public:
 
-    typedef atlas::Parametrisation Parameters;
-
-    StateGenerator( const eckit::Parametrisation& = Parameters() );
+    StateGenerator( const eckit::Parametrisation& = Config() );
 
     virtual ~StateGenerator();
 
-    virtual void generate( State&, const eckit::Parametrisation& = Parameters() ) const = 0;
+    virtual void generate( State&, const eckit::Parametrisation& = Config() ) const = 0;
 
 };
 
@@ -133,7 +130,7 @@ class StateGeneratorFactory {
      * \return mesh generator
      */
     static StateGenerator* build(const std::string& state_generator,
-                                 const eckit::Parametrisation& = StateGenerator::Parameters() );
+                                 const eckit::Parametrisation& = Config() );
 
     /*!
      * \brief list all registered field creators
@@ -143,7 +140,7 @@ class StateGeneratorFactory {
 
   private:
 
-    virtual StateGenerator* make(const eckit::Parametrisation& = StateGenerator::Parameters() ) = 0 ;
+    virtual StateGenerator* make(const eckit::Parametrisation& = Config() ) = 0 ;
 
     std::string name_;
 
@@ -157,7 +154,7 @@ class StateGeneratorFactory {
 template<class T>
 class StateGeneratorBuilder : public StateGeneratorFactory {
 
-  virtual StateGenerator* make(const eckit::Parametrisation& param = StateGenerator::Parameters() ) {
+  virtual StateGenerator* make(const eckit::Parametrisation& param = Config() ) {
         return new T(param);
   }
   public:
@@ -167,11 +164,11 @@ class StateGeneratorBuilder : public StateGeneratorFactory {
 // ------------------------------------------------------------------------------------
 
 // C wrapper interfaces to C++ routines
-#define Parametrisation eckit::Parametrisation
+#define eckit_Parametrisation eckit::Parametrisation
 extern "C"
 {
   State* atlas__State__new ();
-  State* atlas__State__create (const char* factory, const Parametrisation* params);
+  State* atlas__State__create (const char* factory, const eckit_Parametrisation* params);
   void atlas__State__delete (State* This);
   void atlas__State__add_field (State* This, Field* field);
   void atlas__State__remove_field (State* This, const char* name);
@@ -192,7 +189,7 @@ extern "C"
   Mesh* atlas__State__mesh_by_index (State* This, int index);
   int atlas__State__nb_meshes(const State* This);
 }
-#undef Parametrisation
+#undef eckit_Parametrisation
 
 } // namespace atlas
 

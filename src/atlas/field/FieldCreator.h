@@ -32,7 +32,7 @@ namespace field {
  * Example to create field[100][3] of default type double:
  * \code{.cpp}
  *    Field* field = Field::create(
- *         Field::Parameters
+ *         Config
  *           ("creator","ArraySpec")      // ArraySpec FieldCreator
  *           ("shape",make_shape(100,3))  // Rank 2 field with indexing [100][3]
  *         );

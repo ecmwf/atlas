@@ -10,14 +10,14 @@ function atlas_State__create(state_type, params) result(State)
   use atlas_state_c_binding
   type(atlas_State) :: State
   character(len=*), intent(in) :: state_type
-  class(atlas_Parametrisation), intent(in), optional :: params
+  class(atlas_Config), intent(in), optional :: params
 
-  type(atlas_Parametrisation) :: p
+  type(atlas_Config) :: p
 
   if( present(params) ) then
     State%cpp_object_ptr = atlas__State__create(c_str(state_type),params%cpp_object_ptr)
   else
-    p = atlas_Parametrisation()
+    p = atlas_Config()
     State%cpp_object_ptr = atlas__State__create(c_str(state_type),p%cpp_object_ptr)
     call atlas_delete(p)
   endif

@@ -32,7 +32,7 @@
 #include "atlas/util/IndexView.h"
 #include "atlas/actions/BuildParallelFields.h"
 #include "atlas/Parameters.h"
-#include "atlas/Parametrisation.h"
+#include "atlas/Config.h"
 #include "atlas/grids/rgg/rgg.h"
 
 using namespace atlas;
@@ -44,9 +44,6 @@ using namespace atlas::meshgen;
 
 namespace atlas {
 namespace test {
-
-
-typedef atlas::Parametrisation Parameters;
 
 class DebugMesh:   public grids::ReducedGaussianGrid { public: DebugMesh(); };
 DebugMesh::DebugMesh()
@@ -185,7 +182,7 @@ BOOST_AUTO_TEST_CASE( test_partitioner )
 BOOST_AUTO_TEST_CASE( test_rgg_meshgen_one_part )
 {
   Mesh* m;
-  MeshGenerator::Parameters opts;
+  Config opts;
   opts.set("nb_parts",1);
   opts.set("part",0);
   ReducedGridMeshGenerator generate(opts);

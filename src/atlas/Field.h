@@ -21,7 +21,7 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 
-#include "atlas/Parametrisation.h"
+#include "atlas/Config.h"
 #include "atlas/Metadata.h"
 #include "atlas/State.h"
 
@@ -36,12 +36,11 @@ class Field : public eckit::Owned {
 public: // types
 
   typedef eckit::SharedPtr<Field> Ptr;
-  typedef atlas::Parametrisation Parameters;
 
 public: // Static methods
 
   static Field* create(const eckit::Parametrisation&);
-  static Field* create(const ArrayShape&, const eckit::Parametrisation& = Parameters() );
+  static Field* create(const ArrayShape&, const eckit::Parametrisation& = Config() );
 
 public: // methods
 

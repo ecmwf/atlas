@@ -23,17 +23,17 @@ type(atlas_FunctionSpace) :: func_space
 type(atlas_Field) :: field
 
 
-type, extends(atlas_Parametrisation) :: atlas_FieldParametrisation
+type, extends(atlas_Config) :: atlas_FieldParametrisation
 endtype
 
 interface atlas_FieldParametrisation
-  module procedure atlas_FieldParametrisation__ctor
+  module procedure atlas_FieldConfig__ctor
 end interface
 
 contains
 
-function atlas_FieldParametrisation__ctor(creator,ngptot,nproma,nlev,nvar,kind,data_type,shape,grid) result(params)
-  use atlas_parametrisation_c_binding
+function atlas_FieldConfig__ctor(creator,ngptot,nproma,nlev,nvar,kind,data_type,shape,grid) result(params)
+  use atlas_Config_c_binding
   type(atlas_FieldParametrisation) :: params
   character(len=*), optional, intent(in) :: creator
   integer, optional, intent(in) :: ngptot
@@ -44,7 +44,7 @@ function atlas_FieldParametrisation__ctor(creator,ngptot,nproma,nlev,nvar,kind,d
   integer, optional, intent(in) :: kind
   character(len=*), optional, intent(in) :: data_type
   integer, optional, intent(in) :: shape(:)
-  params%cpp_object_ptr = atlas__Parametrisation__new()
+  params%cpp_object_ptr = atlas__Config__new()
   if( present(creator)   ) call params%set("creator"   ,creator  )
   if( present(ngptot)    ) call params%set("ngptot"    ,ngptot   )
   if( present(nproma)    ) call params%set("nproma"    ,nproma   )
@@ -340,11 +340,11 @@ END_TEST
 
 
 TEST( test_parametrisation )
-  type(atlas_Parametrisation) :: params
+  type(atlas_Config) :: params
   integer :: value
   character(len=:), allocatable :: valuestr
   logical :: found
-  params = atlas_Parametrisation()
+  params = atlas_Config()
 
   if( .not. params%get("notexisting",value) ) then
     !call atlas_abort("notexisting not found",atlas_code_location(__FILE__,__LINE__))

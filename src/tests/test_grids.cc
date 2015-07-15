@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE( test_regular_gg )
 
   // Full Gaussian Grid
 
-  Grid::Parameters spec;
+  Config spec;
   spec.set("grid_type","regular_gg");
   spec.set("N",32);
   gridptr = Grid::Ptr( Grid::create(spec) );
@@ -143,7 +143,7 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
   grids::LonLatGrid* ll;
 
   // Global Grid
-  Grid::Parameters spec;
+  Config spec;
   spec.set("grid_type","regular_ll");
   spec.set("nlon",32);
   spec.set("nlat",16);
@@ -170,7 +170,7 @@ BOOST_AUTO_TEST_CASE( test_regular_ll )
   BOOST_CHECK_EQUAL(ll->lon(0), 0.);
   BOOST_CHECK_EQUAL(ll->lon(ll->nlon()-1), 180.);
 
-  Grid::Parameters spec2;
+  Config spec2;
   spec2.set("grid_type","regular_ll");
   spec2.set("N",16);
   spec2.set<int>("poles",LonLatGrid::EXCLUDES_POLES);

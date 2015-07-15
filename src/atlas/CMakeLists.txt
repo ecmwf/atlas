@@ -212,6 +212,8 @@ atlas_omp.h
 atlas_omp.cc
 BoundBox.h
 BoundBox.cc
+Config.h
+Config.cc
 Domain.h
 Domain.cc
 runtime/Behavior.h
@@ -235,8 +237,6 @@ Mesh.h
 Metadata.cc
 Metadata.h
 Parameters.h
-Parametrisation.h
-Parametrisation.cc
 Partitioner.cc
 Partitioner.h
 PointIndex3.cc

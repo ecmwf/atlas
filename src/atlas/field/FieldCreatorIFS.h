@@ -31,7 +31,7 @@ namespace field {
  * Example use:
  * \code{.cpp}
  *     Field* field = Field::create(
- *         Field::Parameters
+ *         Config
  *           ("creator","IFS")  // IFS FieldCreator
  *           ("ngptot",ngptot)  // Total number of grid points
  *           ("nproma",nproma)  // Grouping of grid points for vectorlength

@@ -6,7 +6,7 @@
 
 function atlas_Field__create(params) result(field)
   type(atlas_Field) :: field
-  class(atlas_Parametrisation), intent(in) :: params
+  class(atlas_Config), intent(in) :: params
   field%cpp_object_ptr = atlas__Field__create(params%cpp_object_ptr)
 end function
 
@@ -16,9 +16,9 @@ function atlas_Field__create_arrayspec(shape,kind,name) result(field)
   integer, intent(in), optional :: kind
   character(len=*), intent(in), optional :: name
 
-  type(atlas_Parametrisation) :: params
+  type(atlas_Config) :: params
 
-  params = atlas_Parametrisation()
+  params = atlas_Config()
   call params%set("creator","ArraySpec")
   call params%set("shape",shape)
   call params%set("fortran",.True.)

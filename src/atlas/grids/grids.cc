@@ -27,9 +27,7 @@ Grid* grid_from_uid(const std::string& uid)
   Grid* grid = NULL;
   if( Factory<Grid>::instance().exists(uid) )
   {
-    Grid::Parameters gridparams;
-    gridparams.set("grid_type",uid);
-    grid = Grid::create(gridparams);
+    grid = Grid::create( Config("grid_type",uid) );
   }
   else
   {
@@ -48,7 +46,7 @@ Grid* grid_from_uid(const std::string& uid)
     }
     else if( tokens.size() > 1)
     {
-      Grid::Parameters gridparams;
+      Config gridparams;
       gridparams.set("grid_type",grid_type);
       if( tokens[1][0] == 'N' )
       {

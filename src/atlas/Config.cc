@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/Parametrisation.h"
+#include "atlas/Config.h"
 
 #include <iostream>
 #include <stdexcept>
@@ -28,11 +28,11 @@ using std::string;
 
 namespace atlas {
 
-Parametrisation::Parametrisation() {}
+Config::Config() {}
 
-Parametrisation::Parametrisation(const eckit::Properties &p): delegate_(p) {}
+Config::Config(const eckit::Properties &p): delegate_(p) {}
 
-Parametrisation::Parametrisation(std::istream& stream, const std::string &format )
+Config::Config(std::istream& stream, const std::string &format )
 {
   if( format != "json" ) {
     throw eckit::Exception("Not Implemented: Only json format is supported");
@@ -42,7 +42,7 @@ Parametrisation::Parametrisation(std::istream& stream, const std::string &format
   set( eckit::Properties( parser.parse() ) );
 }
 
-Parametrisation::Parametrisation( const eckit::PathName& path )
+Config::Config( const eckit::PathName& path )
 {
   if( ! path.exists() ) {
     throw eckit::Exception("File "+std::string(path)+" does not exist.");
@@ -65,31 +65,31 @@ Parametrisation::Parametrisation( const eckit::PathName& path )
 
 
 
-Parametrisation& Parametrisation::set(const eckit::Properties &p)
+Config& Config::set(const eckit::Properties &p)
 {
     delegate_.set(p);
     return *this;
 }
 
-Parametrisation& Parametrisation::set(const Parametrisation &p)
+Config& Config::set(const Config &p)
 {
   delegate_.set(p.delegate_);
   return *this;
 }
 
 
-Parametrisation &Parametrisation::set(const std::string &name, const char *value) {
+Config &Config::set(const std::string &name, const char *value) {
     delegate_.set(name, value);
     return *this;
 }
 
-Parametrisation& Parametrisation::set(const std::string& name, const Parametrisation& value )
+Config& Config::set(const std::string& name, const Config& value )
 {
   delegate_.set(name, value.delegate_);
   return *this;
 }
 
-Parametrisation& Parametrisation::set(const std::string& name, const std::vector<Parametrisation>& values )
+Config& Config::set(const std::string& name, const std::vector<Config>& values )
 {
   std::vector<Metadata> metadatavalues(values.size());
   for( size_t i=0; i<metadatavalues.size(); ++i )
@@ -103,51 +103,51 @@ Parametrisation& Parametrisation::set(const std::string& name, const std::vector
 //=================================================
 // Functions overloading eckit::Parametrisation
 
-bool Parametrisation::has(const std::string &name) const {
+bool Config::has(const std::string &name) const {
     return delegate_.has(name);
 }
 
 template<class T>
-bool Parametrisation::_get(const std::string &name, T &value) const {
+bool Config::_get(const std::string &name, T &value) const {
     return delegate_.get(name, value);
 }
 
-bool Parametrisation::get(const std::string &name, std::string &value) const {
+bool Config::get(const std::string &name, std::string &value) const {
     return _get(name, value);
 }
 
-bool Parametrisation::get(const std::string &name, bool &value) const {
+bool Config::get(const std::string &name, bool &value) const {
     return _get(name, value);
 }
 
-bool Parametrisation::get(const std::string &name, long &value) const {
+bool Config::get(const std::string &name, long &value) const {
     return _get(name, value);
 }
 
-bool Parametrisation::get(const std::string &name, size_t &value) const {
+bool Config::get(const std::string &name, size_t &value) const {
     return _get(name, value);
 }
 
-bool Parametrisation::get(const std::string &name, double &value) const {
+bool Config::get(const std::string &name, double &value) const {
     return _get(name, value);
 }
 
-bool Parametrisation::get(const std::string &name, std::vector<long> &value) const {
+bool Config::get(const std::string &name, std::vector<long> &value) const {
     return _get(name, value);
 }
 
-bool Parametrisation::get(const std::string &name, std::vector<double> &value) const {
+bool Config::get(const std::string &name, std::vector<double> &value) const {
     return _get(name, value);
 }
 
-bool Parametrisation::get(const std::string& name, Parametrisation& value) const {
+bool Config::get(const std::string& name, Config& value) const {
   bool found = has(name);
   if( found ) {
     value.set( delegate_.get<eckit::Properties>(name) );
   }
   return found;
 }
-bool Parametrisation::get(const std::string& name, std::vector<Parametrisation>& value) const {
+bool Config::get(const std::string& name, std::vector<Config>& value) const {
   bool found = has(name);
   if( found ) {
     std::vector<eckit::Properties> properties = delegate_.get< std::vector<eckit::Properties> >(name);
@@ -159,7 +159,7 @@ bool Parametrisation::get(const std::string& name, std::vector<Parametrisation>&
   return found;
 }
 
-eckit::JSON& operator<<(eckit::JSON& s, const Parametrisation& p)
+eckit::JSON& operator<<(eckit::JSON& s, const Config& p)
 {
   s << p.delegate_;
   return s;
@@ -171,63 +171,63 @@ eckit::JSON& operator<<(eckit::JSON& s, const Parametrisation& p)
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
-Parametrisation* atlas__Parametrisation__new () {
-  return new Parametrisation();
+Config* atlas__Config__new () {
+  return new Config();
 }
 
-Parametrisation* atlas__Parametrisation__new_from_json (const char* json) {
+Config* atlas__Config__new_from_json (const char* json) {
   std::stringstream s;
   s << json;
-  return new Parametrisation(s);
+  return new Config(s);
 }
 
 
-Parametrisation* atlas__Parametrisation__new_from_file (const char* path)
+Config* atlas__Config__new_from_file (const char* path)
 {
-  return new Parametrisation( eckit::PathName(path) );
+  return new Config( eckit::PathName(path) );
 }
 
-void atlas__Parametrisation__delete (Parametrisation* This) {
+void atlas__Config__delete (Config* This) {
   ASSERT( This != 0 );
   delete This;
 }
 
-void atlas__Parametrisation__set_parametrisation (Parametrisation* This, const char* name, const Parametrisation* value)
+void atlas__Config__set_config (Config* This, const char* name, const Config* value)
 {
   ATLAS_ERROR_HANDLING( This->set( std::string(name), *value ) );
 }
 
-void atlas__Parametrisation__set_parametrisation_list (Parametrisation* This, const char* name, const Parametrisation* value[], int size)
+void atlas__Config__set_config_list (Config* This, const char* name, const Config* value[], int size)
 {
-  std::vector<Parametrisation> params(size);
+  std::vector<Config> params(size);
   for( size_t i=0; i<size; ++i )
   {
-    params[i] = Parametrisation(*value[i]);
+    params[i] = Config(*value[i]);
   }
   ATLAS_ERROR_HANDLING( This->set( std::string(name), params ) );
 }
 
-void atlas__Parametrisation__set_int (Parametrisation* This, const char* name, int value)
+void atlas__Config__set_int (Config* This, const char* name, int value)
 {
   ATLAS_ERROR_HANDLING( This->set( std::string(name), long(value) ) );
 }
-void atlas__Parametrisation__set_long (Parametrisation* This, const char* name, long value)
+void atlas__Config__set_long (Config* This, const char* name, long value)
 {
   ATLAS_ERROR_HANDLING( This->set( std::string(name), value ) );
 }
-void atlas__Parametrisation__set_float (Parametrisation* This, const char* name, float value)
+void atlas__Config__set_float (Config* This, const char* name, float value)
 {
   ATLAS_ERROR_HANDLING( This->set( std::string(name), double(value) ) );
 }
-void atlas__Parametrisation__set_double (Parametrisation* This, const char* name, double value)
+void atlas__Config__set_double (Config* This, const char* name, double value)
 {
   ATLAS_ERROR_HANDLING( This->set( std::string(name), value ) );
 }
-void atlas__Parametrisation__set_string (Parametrisation* This, const char* name, const char* value)
+void atlas__Config__set_string (Config* This, const char* name, const char* value)
 {
   ATLAS_ERROR_HANDLING( This->set( std::string(name), std::string(value) ) );
 }
-void atlas__Parametrisation__set_array_int (Parametrisation* This, const char* name, int value[], int size)
+void atlas__Config__set_array_int (Config* This, const char* name, int value[], int size)
 {
   ATLAS_ERROR_HANDLING(
     std::vector<int> v;
@@ -235,7 +235,7 @@ void atlas__Parametrisation__set_array_int (Parametrisation* This, const char* n
     This->set( std::string(name), v );
   );
 }
-void atlas__Parametrisation__set_array_long (Parametrisation* This, const char* name, long value[], int size)
+void atlas__Config__set_array_long (Config* This, const char* name, long value[], int size)
 {
   ATLAS_ERROR_HANDLING(
     std::vector<long> v;
@@ -243,7 +243,7 @@ void atlas__Parametrisation__set_array_long (Parametrisation* This, const char* 
     This->set( std::string(name), v );
   );
 }
-void atlas__Parametrisation__set_array_float (Parametrisation* This, const char* name, float value[], int size)
+void atlas__Config__set_array_float (Config* This, const char* name, float value[], int size)
 {
   ATLAS_ERROR_HANDLING(
     std::vector<float> v;
@@ -251,7 +251,7 @@ void atlas__Parametrisation__set_array_float (Parametrisation* This, const char*
     This->set( std::string(name), v );
   );
 }
-void atlas__Parametrisation__set_array_double (Parametrisation* This, const char* name, double value[], int size)
+void atlas__Config__set_array_double (Config* This, const char* name, double value[], int size)
 {
   ATLAS_ERROR_HANDLING(
     std::vector<double> v;
@@ -260,29 +260,29 @@ void atlas__Parametrisation__set_array_double (Parametrisation* This, const char
   );
 }
 
-int atlas__Parametrisation__get_parametrisation (Parametrisation* This, const char* name, Parametrisation* value)
+int atlas__Config__get_config (Config* This, const char* name, Config* value)
 {
   ATLAS_ERROR_HANDLING ( if( ! This->get(std::string(name),*value) )  return false; );
   return true;
 }
 
-int atlas__Parametrisation__get_parametrisation_list (Parametrisation* This, const char* name, Parametrisation** &value, int &size, int &allocated)
+int atlas__Config__get_config_list (Config* This, const char* name, Config** &value, int &size, int &allocated)
 {
   value = 0;
   ATLAS_ERROR_HANDLING (
-    std::vector<Parametrisation> vector;
+    std::vector<Config> vector;
     if( ! This->get(std::string(name),vector) )  return false;
     size = vector.size();
-    value = new Parametrisation*[size];
+    value = new Config*[size];
     allocated = true;
     for( size_t i=0; i<size; ++i ) {
-      value[i] = new Parametrisation(vector[i]);
+      value[i] = new Config(vector[i]);
     }
   );
   return true;
 }
 
-int atlas__Parametrisation__get_int (Parametrisation* This, const char* name, int& value)
+int atlas__Config__get_int (Config* This, const char* name, int& value)
 {
   long long_value;
   ATLAS_ERROR_HANDLING ( if( ! This->get(std::string(name),long_value) )  return false; );
@@ -290,13 +290,13 @@ int atlas__Parametrisation__get_int (Parametrisation* This, const char* name, in
   value = long_value;
   return true;
 }
-int atlas__Parametrisation__get_long (Parametrisation* This, const char* name, long& value)
+int atlas__Config__get_long (Config* This, const char* name, long& value)
 {
   ATLAS_ERROR_HANDLING ( if( ! This->get(std::string(name),value) )  return false; );
   return true;
 
 }
-int atlas__Parametrisation__get_float (Parametrisation* This, const char* name, float& value)
+int atlas__Config__get_float (Config* This, const char* name, float& value)
 {
   double double_value;
   ATLAS_ERROR_HANDLING ( if ( ! This->get(std::string(name), double_value) ) return false ; );
@@ -304,12 +304,12 @@ int atlas__Parametrisation__get_float (Parametrisation* This, const char* name, 
   value = double_value;
   return true;
 }
-int atlas__Parametrisation__get_double (Parametrisation* This, const char* name, double& value)
+int atlas__Config__get_double (Config* This, const char* name, double& value)
 {
   ATLAS_ERROR_HANDLING ( if( ! This->get(std::string(name),value) )  return false; );
   return true;
 }
-int atlas__Parametrisation__get_string( Parametrisation* This, const char* name, char* &value, int &size, int &allocated )
+int atlas__Config__get_string( Config* This, const char* name, char* &value, int &size, int &allocated )
 {
   ATLAS_ERROR_HANDLING(
     std::string s;
@@ -324,7 +324,7 @@ int atlas__Parametrisation__get_string( Parametrisation* This, const char* name,
   );
   return true;
 }
-int atlas__Parametrisation__get_array_int (Parametrisation* This, const char* name, int* &value, int& size, int& allocated)
+int atlas__Config__get_array_int (Config* This, const char* name, int* &value, int& size, int& allocated)
 {
   ATLAS_ERROR_HANDLING(
     std::vector<long> v;
@@ -340,7 +340,7 @@ int atlas__Parametrisation__get_array_int (Parametrisation* This, const char* na
   );
   return true;
 }
-int atlas__Parametrisation__get_array_long (Parametrisation* This, const char* name, long* &value, int& size, int& allocated)
+int atlas__Config__get_array_long (Config* This, const char* name, long* &value, int& size, int& allocated)
 {
   ATLAS_ERROR_HANDLING(
     std::vector<long> v;
@@ -353,7 +353,7 @@ int atlas__Parametrisation__get_array_long (Parametrisation* This, const char* n
   );
   return true;
 }
-int atlas__Parametrisation__get_array_float (Parametrisation* This, const char* name, float* &value, int& size, int& allocated)
+int atlas__Config__get_array_float (Config* This, const char* name, float* &value, int& size, int& allocated)
 {
   ATLAS_ERROR_HANDLING(
     std::vector<double> v;
@@ -369,7 +369,7 @@ int atlas__Parametrisation__get_array_float (Parametrisation* This, const char* 
   );
     return true;
 }
-int atlas__Parametrisation__get_array_double (Parametrisation* This, const char* name, double* &value, int& size, int& allocated)
+int atlas__Config__get_array_double (Config* This, const char* name, double* &value, int& size, int& allocated)
 {
   ATLAS_ERROR_HANDLING(
     std::vector<double> v;
@@ -383,12 +383,12 @@ int atlas__Parametrisation__get_array_double (Parametrisation* This, const char*
   return true;
 }
 
-int atlas__Parametrisation__has (Parametrisation *This, const char *name) {
+int atlas__Config__has (Config *This, const char *name) {
     ATLAS_ERROR_HANDLING( return This->has( std::string(name) ));
     return 0;
 }
 
-void atlas__Parametrisation__json(Parametrisation* This, char* &json, int &size, int &allocated)
+void atlas__Config__json(Config* This, char* &json, int &size, int &allocated)
 {
   std::stringstream s;
   eckit::JSON j(s);

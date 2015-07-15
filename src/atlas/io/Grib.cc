@@ -118,7 +118,7 @@ Grid::Ptr Grib::create_grid(GribHandle& gh)
 
 	ASSERT( gp );
 
-  Grid::Parameters params(*gp);
+  Config params(*gp);
 	Grid::Ptr grid( Grid::create( params ) );
 
   delete gp;

@@ -13,15 +13,15 @@
 
 ! -----------------------------------------------------------------------------
 
-module fctest_atlas_parametrisation_fixture
+module fctest_atlas_Config_fixture
 use atlas_module
 implicit none
 
-end module fctest_atlas_parametrisation_fixture
+end module fctest_atlas_Config_fixture
 
 ! -----------------------------------------------------------------------------
 
-TESTSUITE_WITH_FIXTURE(fctest_atlas_parametrisation,fctest_atlas_parametrisation_fixture)
+TESTSUITE_WITH_FIXTURE(fctest_atlas_Config,fctest_atlas_Config_fixture)
 
 ! -----------------------------------------------------------------------------
 TESTSUITE_INIT
@@ -38,15 +38,15 @@ END_TESTSUITE_FINALIZE
 
 TEST( test_parametrisation )
 
-  type(atlas_Parametrisation) :: params
-  type(atlas_Parametrisation) :: nested
-  type(atlas_Parametrisation) :: list(2)
+  type(atlas_Config) :: params
+  type(atlas_Config) :: nested
+  type(atlas_Config) :: list(2)
   logical :: found
   integer :: intval
   integer :: j
 
-  type(atlas_Parametrisation) :: anested
-  type(atlas_Parametrisation), allocatable :: alist(:)
+  type(atlas_Config) :: anested
+  type(atlas_Config), allocatable :: alist(:)
 
   ! --------------------- SET ------------------
 
@@ -66,16 +66,16 @@ TEST( test_parametrisation )
   !   p2: 2
   ! }
 
-  params = atlas_Parametrisation()
+  params = atlas_Config()
   call params%set("p1",1)
   call params%set("p2",2)
 
-  nested = atlas_Parametrisation()
+  nested = atlas_Config()
   call nested%set("n1",11)
   call nested%set("n2",12)
 
   do j=1,2
-    list(j) = atlas_Parametrisation()
+    list(j) = atlas_Config()
     call list(j)%set("l1",21)
     call list(j)%set("l2",22)
   enddo
@@ -130,8 +130,8 @@ TEST( test_parametrisation )
 END_TEST
 
 TEST(test_parametrisation_json_string)
- type(atlas_Parametrisation) :: params
- type(atlas_Parametrisation), allocatable :: records(:)
+ type(atlas_Config) :: params
+ type(atlas_Config), allocatable :: records(:)
  type(atlas_JSON) :: json
  character (len=:), allocatable :: name
  integer :: age
@@ -141,7 +141,7 @@ TEST(test_parametrisation_json_string)
   &       '{"name":"Alison","age":43}' //&
   &    ']}')
 
- params = atlas_Parametrisation(json)
+ params = atlas_Config(json)
  call atlas_log%info(params%json())
  if( params%get("records",records) ) then
    do jrec=1,size(records)
@@ -155,9 +155,9 @@ TEST(test_parametrisation_json_string)
 END_TEST
 
 TEST(test_parametrisation_json_file)
- type(atlas_Parametrisation) :: params
- type(atlas_Parametrisation), allocatable :: records(:)
- type(atlas_Parametrisation) :: location
+ type(atlas_Config) :: params
+ type(atlas_Config), allocatable :: records(:)
+ type(atlas_Config) :: location
  type(atlas_JSON) :: json
  character (len=:), allocatable :: name, company, street, city
  integer :: age
@@ -169,7 +169,7 @@ TEST(test_parametrisation_json_file)
  &'"records":[{"age":42,"name":"Anne"},{"age":36,"name":"Bob"}]}'
  CLOSE(9)
 
- params = atlas_Parametrisation( atlas_PathName("fctest_parametrisation.json") )
+ params = atlas_Config( atlas_PathName("fctest_parametrisation.json") )
  call atlas_log%info("params = "//params%json())
 
  if( params%get("records",records) ) then

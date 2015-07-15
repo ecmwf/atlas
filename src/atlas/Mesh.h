@@ -20,7 +20,7 @@
 #include "eckit/memory/SharedPtr.h"
 
 #include "atlas/Metadata.h"
-#include "atlas/Parametrisation.h"
+#include "atlas/Config.h"
 #include "atlas/util/ObjectRegistry.h"
 
 //------------------------------------------------------------------------------------------------------
@@ -38,19 +38,18 @@ class Mesh : public eckit::Owned, public util::Registered<Mesh> {
 public: // types
 
     typedef eckit::SharedPtr<Mesh> Ptr;
-    typedef atlas::Parametrisation Parameters;
 
 public: // methods
 
-    static Mesh* create( const eckit::Parametrisation& = Parameters() );
-    static Mesh* create( const Grid&, const eckit::Parametrisation& = Parameters() );
+    static Mesh* create( const eckit::Parametrisation& = Config() );
+    static Mesh* create( const Grid&, const eckit::Parametrisation& = Config() );
 
     /// @brief Construct a empty Mesh
-    explicit Mesh(const eckit::Parametrisation& = Parameters());
+    explicit Mesh(const eckit::Parametrisation& = Config());
 
     /// @brief Construct mesh from grid.
     /// The mesh is global and only has a "nodes" FunctionSpace
-    Mesh(const Grid&, const eckit::Parametrisation& = Parameters());
+    Mesh(const Grid&, const eckit::Parametrisation& = Config());
 
     /// Destructor
     /// @note No need to be virtual since this is not a base class.

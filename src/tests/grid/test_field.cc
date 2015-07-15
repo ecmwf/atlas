@@ -116,7 +116,7 @@ void TestField::test_constructor()
 
 void TestField::test_fieldcreator()
 {
-  Field::Ptr field ( Field::create( Field::Parameters
+  Field::Ptr field ( Field::create( Config
                                       ("creator","ArraySpec")
                                       ("shape",make_shape(10,2))
                                       ("data_type",DataType::real32())
@@ -128,7 +128,7 @@ void TestField::test_fieldcreator()
 
   Grid::Ptr g (Grid::create("oct.N6"));
 
-  Field::Ptr arr (Field::create( Field::Parameters
+  Field::Ptr arr (Field::create( Config
                                    ("creator","ArraySpec")
                                    ("shape",make_shape(10,2))
                                ));
@@ -137,14 +137,14 @@ void TestField::test_fieldcreator()
   ASSERT( arr->data_type() == DataType::real64() );
 
 
-  Field::Parameters ifs_parameters;
+  Config ifs_parameters;
   ifs_parameters
       ("creator","IFS")
       ("nlev",137)
       ("nproma",10)
       ("ngptot",g->npts());
 
-  Field::Ptr ifs (Field::create( Field::Parameters
+  Field::Ptr ifs (Field::create( Config
                                     (ifs_parameters)
                                     ("name","myfield")
                                     ("data_type",DataType::int32())

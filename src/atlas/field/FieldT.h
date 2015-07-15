@@ -31,7 +31,7 @@
 #include "atlas/Grid.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Mesh.h"
-#include "atlas/Parametrisation.h"
+#include "atlas/Config.h"
 #include "atlas/Metadata.h"
 #include "atlas/Parameters.h"
 #include "atlas/State.h"
@@ -51,7 +51,7 @@ public: // methods
 
   FieldT(const std::string& name, const int nb_vars);
 
-  FieldT(const ArrayShape& shape, const eckit::Parametrisation& = Parameters() );
+  FieldT(const ArrayShape& shape, const eckit::Parametrisation& = Config() );
 
   virtual ~FieldT();
 

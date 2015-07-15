@@ -32,7 +32,7 @@ namespace field {
  * \brief FieldT<DATA_TYPE> creator using ArrayShape and parametrisation
  * \code{.cpp}
  *    Field* field = Field::create(
- *         Field::Parameters
+ *         Config
  *           ("creator","ArraySpec")     // ArraySpec FieldCreator
  *           ("shape",make_shape(100,3))  // Rank 2 field with indexing [100][3]
  *           ("datatype",DataType::real64()) // Field internal data type

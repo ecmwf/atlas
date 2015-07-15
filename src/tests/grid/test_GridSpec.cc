@@ -116,7 +116,7 @@ static void test_grib_file(const std::string& fpath)
 
 
    // From the Spec, create another Grid, we should get back the same Grid
-   Grid::Ptr grid_created_from_spec ( Grid::create( Grid::Parameters(g_spec) ) );
+   Grid::Ptr grid_created_from_spec ( Grid::create( Config(g_spec) ) );
    BOOST_CHECK_MESSAGE(grid_created_from_spec,"Failed to create GRID from GridSpec");
    bool grid_compare = grid_created_from_grib->same(*grid_created_from_spec);
    BOOST_CHECK_MESSAGE(grid_compare,"The grids are different");
