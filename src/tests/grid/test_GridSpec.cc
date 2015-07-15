@@ -15,7 +15,7 @@
 #include "ecbuild/boost_test_framework.h"
 
 #include "eckit/filesystem/PathName.h"
-#include "eckit/filesystem/LocalPathName.h"
+#include "eckit/filesystem/PathName.h"
 
 #include "eckit/grib/GribHandle.h"
 #include "eckit/grib/GribAccessor.h"
@@ -87,7 +87,7 @@ static void test_grib_file(const std::string& fpath)
 {
    std::cout << "   Opening GRIB file " << fpath << std::endl;
 
-   LocalPathName path(fpath);
+   PathName path(fpath);
    eckit::grib::GribHandle gh(path);
    std::string gridType = gh.gridType();
    std::cout << "   Create Grid derivatives " << gridType << std::endl;
@@ -198,7 +198,7 @@ static void test_grib_file(const std::string& fpath)
       std::string generated_sample_file_name = Grib::grib_sample_file( g_spec , gh.edition());
       BOOST_CHECK_MESSAGE( !generated_sample_file_name.empty(),"   Could *not* find sample file for grid_spec " << g_spec );
 
-      LocalPathName base_name = path.baseName(false);
+      PathName base_name = path.baseName(false);
       std::string grib_sample_file = base_name.localPath();
       BOOST_WARN_MESSAGE( generated_sample_file_name == grib_sample_file, "\n   Could not match samples expected '"
                           << grib_sample_file << "' but found('"

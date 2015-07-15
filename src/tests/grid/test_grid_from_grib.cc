@@ -17,7 +17,6 @@
 
 #include "eckit/types/FloatCompare.h"
 #include "eckit/filesystem/PathName.h"
-#include "eckit/filesystem/LocalPathName.h"
 #include "eckit/io/FileHandle.h"
 
 #include "eckit/grib/GribHandle.h"
@@ -35,7 +34,7 @@ using namespace atlas::grid;
 BOOST_AUTO_TEST_SUITE( TestGridFromGrib )
 
 
-static void test_grib_file( const LocalPathName& path )
+static void test_grib_file( const PathName& path )
 {
 	Log::info() << "\n>>> testing file " << path << std::endl;
 
@@ -94,7 +93,7 @@ static void test_grib_file( const LocalPathName& path )
 
 	// write a new grib file
 
-	LocalPathName opath(std::string(path) + ".new");
+	PathName opath(std::string(path) + ".new");
 	opath.unlink();
 
 	FileHandle of( opath );
@@ -107,7 +106,7 @@ static void test_grib_file( const LocalPathName& path )
 
 BOOST_AUTO_TEST_CASE( test_grid_creation )
 {
-	std::vector< LocalPathName > gribs;
+	std::vector< PathName > gribs;
 
 	// Polar stereographic grids
    gribs.push_back("CMC_hrdps_east_TMP_TGL_2_ps2.5km_2014081512_P000-00.grib2");

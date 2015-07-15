@@ -25,7 +25,7 @@
 #include "eckit/memory/ScopedPtr.h"
 #include "eckit/io/DataHandle.h"
 #include "eckit/io/FileHandle.h"
-#include "eckit/filesystem/LocalPathName.h"
+#include "eckit/filesystem/PathName.h"
 #include "eckit/parser/StringTools.h"
 
 #include "eckit/grib/GribParams.h"
@@ -332,13 +332,13 @@ std::string Grib::grib_sample_file( const eckit::Properties& g_spec, long editio
         if (grib_samples_dir.empty())
             throw SeriousBug("Error, empty samples path. Could not create handle from grid",Here()) ;
 
-        LocalPathName dir_path(grib_samples_dir);
+        PathName dir_path(grib_samples_dir);
 
         if( !dir_path.exists() ) continue;
         if( !dir_path.isDir()  ) continue;
 
-        std::vector<LocalPathName> files;
-        std::vector<LocalPathName> directories;
+        std::vector<PathName> files;
+        std::vector<PathName> directories;
         dir_path.children(files,directories);
 
         for(size_t i = 0; i < files.size(); i++) {

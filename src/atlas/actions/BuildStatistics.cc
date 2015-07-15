@@ -17,7 +17,7 @@
 
 #include "eckit/geometry/Point2.h"
 #include "eckit/geometry/Point3.h"
-#include "eckit/filesystem/LocalPathName.h"
+#include "eckit/filesystem/PathName.h"
 #include "atlas/atlas_config.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/mpl/Checksum.h"
@@ -149,11 +149,11 @@ void build_statistics( Mesh& mesh )
   }
 
   std::ofstream ofs;
-  eckit::LocalPathName stats_path("stats.txt");
+  eckit::PathName stats_path("stats.txt");
   int idt = 10;
   if( eckit::mpi::size() == 1 )
   {
-    ofs.open( stats_path.c_str(), std::ofstream::out );
+    ofs.open( stats_path.localPath(), std::ofstream::out );
     ofs << "# STATISTICS rho (min_length/max_length), eta (quality) \n";
     ofs << std::setw(idt) << "# rho";
     ofs << std::setw(idt) << "eta";
@@ -164,7 +164,7 @@ void build_statistics( Mesh& mesh )
   if( mesh.has_function_space("triags") )
   {
     if( eckit::mpi::size() == 1 )
-      ofs.open( stats_path.c_str(), std::ofstream::app );
+      ofs.open( stats_path.localPath(), std::ofstream::app );
 
     FunctionSpace& elems = mesh.function_space("triags");
     ArrayView<double,1> rho ( elems.create_field<double>("stats_rho",1) );
@@ -209,7 +209,7 @@ void build_statistics( Mesh& mesh )
   if( mesh.has_function_space("quads") )
   {
     if( eckit::mpi::size() == 1 )
-      ofs.open( stats_path.c_str(), std::ofstream::app );
+      ofs.open( stats_path.localPath(), std::ofstream::app );
 
     FunctionSpace& elems = mesh.function_space("quads");
     ArrayView<double,1> rho ( elems.create_field<double>("stats_rho",1) );
@@ -251,10 +251,10 @@ void build_statistics( Mesh& mesh )
       ofs.close();
   }
 
-  eckit::LocalPathName dual_stats_path("dual_stats.txt");
+  eckit::PathName dual_stats_path("dual_stats.txt");
   if( eckit::mpi::size() == 1 )
   {
-    ofs.open( dual_stats_path.c_str(), std::ofstream::out );
+    ofs.open( dual_stats_path.localPath(), std::ofstream::out );
     ofs << "# STATISTICS dual_area \n";
     ofs << std::setw(idt) << "# area";
     ofs << "\n";

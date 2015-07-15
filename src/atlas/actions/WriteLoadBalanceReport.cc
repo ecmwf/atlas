@@ -10,7 +10,7 @@
 
 #include <iomanip>
 #include <fstream>
-#include "eckit/filesystem/LocalPathName.h"
+#include "eckit/filesystem/PathName.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/mpi/mpi.h"
 #include "atlas/Mesh.h"
@@ -89,10 +89,10 @@ void write_load_balance_report( const Mesh& mesh, const std::string& filename )
 
   if( eckit::mpi::rank() == 0 )
   {
-    eckit::LocalPathName path(filename);
+    eckit::PathName path(filename);
     std::ofstream ofs;
     int idt = 8;
-    ofs.open( path.c_str(), std::ofstream::out );
+    ofs.open( path.localPath(), std::ofstream::out );
     ofs << "# STATISTICS\n";
     ofs << std::setw(1)  << "#" << std::setw(5) << "";
     ofs << std::setw(idt) << "nodes";

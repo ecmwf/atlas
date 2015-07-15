@@ -14,7 +14,6 @@
 
 #define BOOST_TEST_MODULE TestHalo
 #include "ecbuild/boost_test_framework.h"
-#include "eckit/filesystem/LocalPathName.h"
 
 #include "atlas/mpi/mpi.h"
 #include "atlas/atlas_config.h"

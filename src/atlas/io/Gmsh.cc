@@ -16,7 +16,7 @@
 #include <cmath>
 #include <limits>
 
-#include <eckit/filesystem/LocalPathName.h>
+#include <eckit/filesystem/PathName.h>
 #include "eckit/exception/Exceptions.h"
 #include "eckit/log/Log.h"
 #include <eckit/config/Resource.h>
@@ -44,27 +44,27 @@ static double rad = Constants::degreesToRadians();
 
 class GmshFile : public std::ofstream {
 public:
-  GmshFile(const std::string& file_path, std::ios_base::openmode mode, int part = eckit::mpi::rank()) {
+  GmshFile(const PathName& file_path, std::ios_base::openmode mode, int part = eckit::mpi::rank()) {
 
-    LocalPathName par_path(file_path);
+    PathName par_path(file_path);
     bool is_new_file = (mode != std::ios_base::app || !par_path.exists());
     if (eckit::mpi::size() == 1 || part == -1) {
-      std::ofstream::open(par_path.c_str(), mode);
+      std::ofstream::open(par_path.localPath(), mode);
     } else {
       Translator<int, std::string> to_str;
       if (eckit::mpi::rank() == 0) {
-        LocalPathName par_path(file_path);
-        std::ofstream par_file(par_path.c_str(), std::ios_base::out);
+        PathName par_path(file_path);
+        std::ofstream par_file(par_path.localPath(), std::ios_base::out);
         for(size_t p = 0; p < eckit::mpi::size(); ++p) {
-          LocalPathName loc_path(file_path);
+          PathName loc_path(file_path);
           loc_path = loc_path.baseName(false) + "_p" + to_str(p) + ".msh";
           par_file << "Merge \"" << loc_path << "\";" << std::endl;
         }
         par_file.close();
       }
-      LocalPathName path(file_path);
+      PathName path(file_path);
       path = path.dirName() + "/" + path.baseName(false) + "_p" + to_str(part) + ".msh";
-      std::ofstream::open(path.c_str(), mode);
+      std::ofstream::open(path.localPath(), mode);
     }
   }
 };
@@ -369,17 +369,17 @@ Gmsh::~Gmsh()
 {
 }
 
-Mesh* Gmsh::read(const std::string& file_path) const
+Mesh* Gmsh::read(const PathName& file_path) const
 {
 	Mesh* mesh = new Mesh();
 	Gmsh::read(file_path,*mesh);
 	return mesh;
 }
 
-void Gmsh::read(const std::string& file_path, Mesh& mesh ) const
+void Gmsh::read(const PathName& file_path, Mesh& mesh ) const
 {
 	std::ifstream file;
-	file.open( file_path.c_str() , std::ios::in | std::ios::binary );
+	file.open( file_path.localPath() , std::ios::in | std::ios::binary );
 	if( !file.is_open() )
 		throw CantOpenFile(file_path);
 
@@ -654,7 +654,7 @@ void Gmsh::read(const std::string& file_path, Mesh& mesh ) const
 }
 
 
-void Gmsh::write(const Mesh& mesh, const std::string& file_path) const
+void Gmsh::write(const Mesh& mesh, const PathName& file_path) const
 {
 	int part = mesh.metadata().has("part") ? mesh.metadata().get<size_t>("part") : eckit::mpi::rank();
 	bool include_ghost_elements = options.get<bool>("ghost");
@@ -705,16 +705,14 @@ void Gmsh::write(const Mesh& mesh, const std::string& file_path) const
 			nb_edges = 0;
 	}
 
-	LocalPathName path(file_path);
-
-	Log::info() << "writing mesh to gmsh file " << path << std::endl;
+	Log::info() << "writing mesh to gmsh file " << file_path << std::endl;
 
 	bool binary = !options.get<bool>("ascii");
 
 	openmode mode = std::ios::out;
 	if( binary )
 		mode = std::ios::out | std::ios::binary;
-	GmshFile file(path,mode,part);
+	GmshFile file(file_path,mode,part);
 
 	// Header
 	if( binary )
@@ -910,7 +908,7 @@ void Gmsh::write(const Mesh& mesh, const std::string& file_path) const
   // Optional mesh information file
   if( options.has("info") && options.get<bool>("info") )
   {
-    LocalPathName mesh_info(file_path);
+    PathName mesh_info(file_path);
     mesh_info = mesh_info.dirName()+"/"+mesh_info.baseName(false)+"_info.msh";
 
     if (nodes.has_field("partition"))
@@ -951,14 +949,13 @@ void Gmsh::write(const Mesh& mesh, const std::string& file_path) const
 
 }
 
-void Gmsh::write(FieldSet& fieldset, const std::string& file_path, openmode mode) const
+void Gmsh::write(FieldSet& fieldset, const PathName& file_path, openmode mode) const
 {
-	LocalPathName path(file_path);
-	bool is_new_file = (mode != std::ios_base::app || !path.exists() );
+	bool is_new_file = (mode != std::ios_base::app || !file_path.exists() );
 	bool gather = options.has("gather") ? options.get<bool>("gather") : false;
-	GmshFile file(path,mode,gather?-1:eckit::mpi::rank());
+	GmshFile file(file_path,mode,gather?-1:eckit::mpi::rank());
 
-	Log::info() << "writing fieldset " << fieldset.name() << " to gmsh file " << path << std::endl;
+	Log::info() << "writing fieldset " << fieldset.name() << " to gmsh file " << file_path << std::endl;
 
 	// Header
 	if( is_new_file )
@@ -996,16 +993,15 @@ void Gmsh::write(FieldSet& fieldset, const std::string& file_path, openmode mode
 	file.close();
 }
 
-void Gmsh::write(Field& field, const std::string& file_path, openmode mode) const
+void Gmsh::write(Field& field, const PathName& file_path, openmode mode) const
 {
-	LocalPathName path(file_path);
-	bool is_new_file = (mode != std::ios_base::app || !path.exists() );
+	bool is_new_file = (mode != std::ios_base::app || !file_path.exists() );
 	bool binary( !options.get<bool>("ascii") );
 	if ( binary ) mode |= std::ios_base::binary;
 	bool gather = options.has("gather") ?  options.get<bool>("gather") : false;
-	GmshFile file(path,mode,gather?-1:eckit::mpi::rank());
+	GmshFile file(file_path,mode,gather?-1:eckit::mpi::rank());
 
-	Log::info() << "writing field " << field.name() << " to gmsh file " << path << std::endl;
+	Log::info() << "writing field " << field.name() << " to gmsh file " << file_path << std::endl;
 
 	// Header
 	if( is_new_file )
@@ -1055,31 +1051,31 @@ void atlas__Gmsh__delete (Gmsh* This) {
 }
 
 Mesh* atlas__Gmsh__read (Gmsh* This, char* file_path) {
-  return This->read( std::string(file_path) );
+  return This->read( PathName(file_path) );
 }
 
 void atlas__Gmsh__write (Gmsh* This, Mesh* mesh, char* file_path) {
-  This->write( *mesh, std::string(file_path) );
+  This->write( *mesh, PathName(file_path) );
 }
 
 Mesh* atlas__read_gmsh (char* file_path)
 {
-  return Gmsh().read(std::string(file_path));
+  return Gmsh().read(PathName(file_path));
 }
 
 void atlas__write_gmsh_mesh (Mesh* mesh, char* file_path) {
   Gmsh writer;
-  writer.write( *mesh, std::string(file_path) );
+  writer.write( *mesh, PathName(file_path) );
 }
 
 void atlas__write_gmsh_fieldset (FieldSet* fieldset, char* file_path, int mode) {
   Gmsh writer;
-	writer.write( *fieldset, std::string(file_path) );
+	writer.write( *fieldset, PathName(file_path) );
 }
 
 void atlas__write_gmsh_field (Field* field, char* file_path, int mode) {
   Gmsh writer;
-  writer.write( *field, std::string(file_path) );
+  writer.write( *field, PathName(file_path) );
 }
 
 // ------------------------------------------------------------------

@@ -7,6 +7,7 @@
 #include "eckit/log/FileChannel.h"
 #include "eckit/config/Resource.h"
 #include "eckit/config/ResourceMgr.h"
+#include "eckit/filesystem/LocalPathName.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/thread/ThreadSingleton.h"
 #include "eckit/thread/AutoLock.h"
@@ -58,13 +59,13 @@ Channel& standard_error()
 
 struct CreateLogFile
 {
-  LocalPathName file_path;
-  CreateLogFile(const LocalPathName& path) : file_path(path) {}
+  PathName file_path;
+  CreateLogFile(const PathName& path) : file_path(path) {}
   FileChannel* operator()()
   {
     char s[6];
     std::sprintf(s, "%05zu",eckit::mpi::rank());
-    FileChannel* ch = new FileChannel(file_path+".p"+std::string(s)) ;
+    FileChannel* ch = new FileChannel(LocalPathName(file_path+".p"+std::string(s))) ;
     return ch;
   }
 };

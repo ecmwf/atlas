@@ -17,7 +17,7 @@ namespace atlas {
 
 std::string rundir()
 {
-  static LocalPathName cwd( LocalPathName::cwd() );
+  static PathName cwd( LocalPathName::cwd() );
   return cwd;
 }
 
@@ -38,17 +38,17 @@ void atlas_init(int argc, char** argv)
 
   std::vector<PathName> config_files;
 
-  LocalPathName atlas_config_path ( Resource<std::string>("atlas.configfile;$ATLAS_CONFIGFILE;--atlas_conf","atlas.cfg") );
+  PathName atlas_config_path ( Resource<std::string>("atlas.configfile;$ATLAS_CONFIGFILE;--atlas_conf","atlas.cfg") );
   if( ResourceMgr::instance().appendConfig( atlas_config_path ) )
     config_files.push_back( atlas_config_path );
 
-  LocalPathName runname_config_path (
+  PathName runname_config_path (
     Resource<std::string>("$"+StringTools::upper(Context::instance().runName())+"_CONFIGFILE",
                           Context::instance().runName()+".cfg") );
   if( ResourceMgr::instance().appendConfig( runname_config_path ) )
     config_files.push_back( runname_config_path );
 
-  LocalPathName displayname_config_path(
+  PathName displayname_config_path(
     Resource<std::string>(
        "$"+StringTools::upper(Context::instance().displayName())+"_CONFIGFILE;--conf",
        Context::instance().displayName()+".cfg") );
@@ -74,7 +74,7 @@ void atlas_init(int argc, char** argv)
   ResourceMgr::instance().printScript( Log::debug() );
   Log::debug() << dedent();
 
-  Log::debug() << "rundir  : " << LocalPathName(rundir()).fullName() << "\n";
+  Log::debug() << "rundir  : " << PathName(rundir()).fullName() << "\n";
   Log::debug() << dedent();
 
   // Load factories for static linking

@@ -19,7 +19,6 @@
 #include "eckit/runtime/Context.h"
 #include "eckit/config/Configurable.h"
 #include "eckit/config/Resource.h"
-#include "eckit/filesystem/LocalPathName.h"
 #include "eckit/geometry/Point3.h"
 
 #include "atlas/atlas_config.h"

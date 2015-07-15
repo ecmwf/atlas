@@ -22,7 +22,7 @@
 #include "eckit/config/Resource.h"
 #include "eckit/runtime/Context.h"
 #include "eckit/runtime/Tool.h"
-#include "eckit/filesystem/LocalPathName.h"
+#include "eckit/filesystem/PathName.h"
 
 #include "atlas/atlas.h"
 
@@ -148,7 +148,7 @@ void gmsh_extract::run()
 
 	for (int i=0; i<in_files.size(); ++i)
 	{
-		LocalPathName gmsh_file(in_files[i]);
+		PathName gmsh_file(in_files[i]);
 		Log::debug() << "Processing " << gmsh_file << std::endl;
 		std::set<std::string> search_fields;
 		std::set<int> search_levels;
@@ -156,7 +156,7 @@ void gmsh_extract::run()
 		search_levels.insert(levels.begin(),levels.end());
 
 		std::ifstream in_file;
-		in_file.open( gmsh_file.c_str() , std::ios::in | std::ios::binary );
+		in_file.open( gmsh_file.localPath() , std::ios::in | std::ios::binary );
 		if( !in_file.is_open() )
 			throw eckit::CantOpenFile(gmsh_file);
 
