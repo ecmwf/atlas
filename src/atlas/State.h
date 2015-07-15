@@ -18,6 +18,7 @@
 #include "eckit/memory/SharedPtr.h"
 #include "eckit/memory/ScopedPtr.h"
 #include "atlas/Parametrisation.h"
+#include "atlas/Metadata.h"
 
 namespace eckit { class Parametrisation; }
 namespace atlas { class Field; }
@@ -78,6 +79,9 @@ public: // methods
         Grid& grid(const size_t idx);
   size_t nb_grids() const { return grids_.size(); }
 
+  const Metadata& metadata() const;
+        Metadata& metadata();
+
 // -- Modifiers
 
   Field& add( Field* ); // Take shared ownership!
@@ -99,6 +103,7 @@ private:
   FieldMap fields_;
   MeshMap meshes_;
   GridMap grids_;
+  Metadata metadata_;
 
 };
 
@@ -139,9 +144,9 @@ class StateGeneratorFactory {
   private:
 
     virtual StateGenerator* make(const eckit::Parametrisation& = StateGenerator::Parameters() ) = 0 ;
-    
+
     std::string name_;
-    
+
   protected:
 
     StateGeneratorFactory(const std::string&);
@@ -151,7 +156,7 @@ class StateGeneratorFactory {
 
 template<class T>
 class StateGeneratorBuilder : public StateGeneratorFactory {
-  
+
   virtual StateGenerator* make(const eckit::Parametrisation& param = StateGenerator::Parameters() ) {
         return new T(param);
   }

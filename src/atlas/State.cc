@@ -59,6 +59,16 @@ State::State()
 {
 }
 
+const Metadata& State::metadata() const
+{
+  return metadata_;
+}
+
+Metadata& State::metadata()
+{
+  return metadata_;
+}
+
 Field& State::add( Field* field )
 {
   ASSERT( field != NULL );
