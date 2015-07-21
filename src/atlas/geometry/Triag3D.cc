@@ -10,7 +10,7 @@
 
 #include <cmath>
 
-#include "atlas/geometry/TriangleIntersection.h"
+#include "atlas/geometry/Triag3D.h"
 
 #include "eckit/eckit_config.h"
 
@@ -25,7 +25,7 @@ using Eigen::Vector3d;
 namespace atlas {
 namespace geometry {
 
-Intersect TriangleIntersection::intersects(const Ray& r, double epsilon) const {
+Intersect Triag3D::intersects(const Ray& r, double epsilon) const {
 
   Intersect isect;
 
@@ -62,6 +62,16 @@ Intersect TriangleIntersection::intersects(const Ray& r, double epsilon) const {
   isect.t = edge2.dot(qvec) * invDet;
 
   return isect.success(true);
+}
+
+double Triag3D::area() const
+{
+    Vector3d edge1 = v1 - v0;
+    Vector3d edge2 = v2 - v0;
+
+    Vector3d cross = edge1.cross(edge2);
+
+    return 0.5 * cross.norm();
 }
 
 //----------------------------------------------------------------------------------------------------------------------

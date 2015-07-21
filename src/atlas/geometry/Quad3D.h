@@ -8,8 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_TriangleIntersection_h
-#define atlas_TriangleIntersection_h
+#ifndef atlas_geometry_Quad3D_h
+#define atlas_geometry_Quad3D_h
 
 #include <limits>
 
@@ -28,39 +28,36 @@ namespace geometry {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-/// Triangle structure
-/// Implements @link
-/// http://www.scratchapixel.com/lessons/3d-basic-lessons/lesson-9-ray-triangle-intersection/m-ller-trumbore-algorithm
+class Quad3D {
+public:
 
-class TriangleIntersection {
-
-public: // types
-
-  TriangleIntersection(const double* x0, const double* x1, const double* x2) {
-
-    v0 = Eigen::Vector3d::Map(x0);
-    v1 = Eigen::Vector3d::Map(x1);
-    v2 = Eigen::Vector3d::Map(x2);
-
+  Quad3D(const double* x0, const double* x1, const double* x2, const double* x3) {
+    v00 = Eigen::Vector3d::Map(x0);
+    v10 = Eigen::Vector3d::Map(x1);
+    v11 = Eigen::Vector3d::Map(x2);
+    v01 = Eigen::Vector3d::Map(x3);
   }
 
   Intersect intersects(const Ray& r, double epsilon = 5 * std::numeric_limits<double>::epsilon()) const;
 
-  void print(std::ostream& s) const { s << "TriangleIntersection[v0=" << v0
-                                        << ",v1=" << v1
-                                        << ",v2=" << v2
-                                        << "]"; }
+  bool validate() const;
 
-  friend std::ostream& operator<<(std::ostream& s, const TriangleIntersection& p) {
+  double area() const;
+
+  void print(std::ostream& s) const {
+    s << "Quad3D[v00=" << v00 << ",v10=" << v10 << ",v11=" << v11 << ",v01=" << v01 << "]";
+  }
+
+  friend std::ostream& operator<<(std::ostream& s, const Quad3D& p) {
     p.print(s);
     return s;
   }
 
-private: // members
-
-  Eigen::Vector3d v0;
-  Eigen::Vector3d v1;
-  Eigen::Vector3d v2;
+private:  // members
+  Eigen::Vector3d v00; // aka v0
+  Eigen::Vector3d v10; // aka v1
+  Eigen::Vector3d v11; // aka v2
+  Eigen::Vector3d v01; // aka v3
 
 };
 

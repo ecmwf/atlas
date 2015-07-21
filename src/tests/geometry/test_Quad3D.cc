@@ -13,17 +13,46 @@
 #include "ecbuild/boost_test_framework.h"
 
 #include "eckit/geometry/Point3.h"
-#include "atlas/geometry/QuadrilateralIntersection.h"
+#include "atlas/geometry/Quad3D.h"
 
 using eckit::geometry::Point3;
 using eckit::geometry::points_equal;
-using atlas::geometry::QuadrilateralIntersection;
+using atlas::geometry::Quad3D;
 using atlas::geometry::Intersect;
 using atlas::geometry::Ray;
 
 //----------------------------------------------------------------------------------------------------------------------
 
 const double relative_error = 0.0001;
+
+BOOST_AUTO_TEST_CASE( test_quad_area )
+{
+    Point3 v0(0.,0.,0.);
+    Point3 v1(1.,0.,0.);
+    Point3 v2(1.,1.,0.);
+    Point3 v3(0.,1.,0.);
+
+    Quad3D quad1(v0.data(),v1.data(),v2.data(),v3.data());
+
+    BOOST_CHECK( quad1.validate() );
+
+    double area = quad1.area();
+
+    BOOST_CHECK_CLOSE( area, 1.0, relative_error );
+
+    Point3 c0(-2.,-2.,3.); // 4
+    Point3 c1( 3.,-2.,3.); // 6
+    Point3 c2( 3.,0.5,3.); // 1.5
+    Point3 c3(-2.,0.5,3.); // 1
+
+    Quad3D quad2(c0.data(),c1.data(),c2.data(),c3.data());
+
+    BOOST_CHECK( quad2.validate() );
+
+    area = quad2.area();
+
+    BOOST_CHECK_CLOSE( area, 12.5, relative_error );
+}
 
 BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_refquad )
 {
@@ -32,7 +61,7 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_refquad )
   Point3 v2(1.,1.,0.);
   Point3 v3(0.,1.,0.);
 
-  QuadrilateralIntersection quad(v0.data(),v1.data(),v2.data(),v3.data());
+  Quad3D quad(v0.data(),v1.data(),v2.data(),v3.data());
 
   BOOST_CHECK( quad.validate() );
 
@@ -55,7 +84,7 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_doublequad )
   Point3 v2(2.,2.,0.);
   Point3 v3(0.,2.,0.);
 
-  QuadrilateralIntersection quad(v0.data(),v1.data(),v2.data(),v3.data());
+  Quad3D quad(v0.data(),v1.data(),v2.data(),v3.data());
 
   BOOST_CHECK( quad.validate() );
 
@@ -78,7 +107,7 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_rotatedquad )
   Point3 v2( 0., 1.,0.);
   Point3 v3(-1., 0.,0.);
 
-  QuadrilateralIntersection quad(v0.data(),v1.data(),v2.data(),v3.data());
+  Quad3D quad(v0.data(),v1.data(),v2.data(),v3.data());
 
   BOOST_CHECK( quad.validate() );
 
@@ -101,7 +130,7 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_slopequad )
   Point3 v2( 0., 2.,0.);
   Point3 v3( 0., 2.,2.);
 
-  QuadrilateralIntersection quad(v0.data(),v1.data(),v2.data(),v3.data());
+  Quad3D quad(v0.data(),v1.data(),v2.data(),v3.data());
 
   BOOST_CHECK( quad.validate() );
 
@@ -124,7 +153,7 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_nointersect )
   Point3 v2( 0., 1.,0.);
   Point3 v3(-1., 0.,0.);
 
-  QuadrilateralIntersection quad(v0.data(),v1.data(),v2.data(),v3.data());
+  Quad3D quad(v0.data(),v1.data(),v2.data(),v3.data());
 
   BOOST_CHECK( quad.validate() );
 
@@ -144,7 +173,7 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_nointersect_aimoff )
   Point3 v2( 0., 1.,0.);
   Point3 v3(-1., 0.,0.);
 
-  QuadrilateralIntersection quad(v0.data(),v1.data(),v2.data(),v3.data());
+  Quad3D quad(v0.data(),v1.data(),v2.data(),v3.data());
 
   BOOST_CHECK( quad.validate() );
 
@@ -164,7 +193,7 @@ BOOST_AUTO_TEST_CASE( test_quadrilateral_intersection_corners )
   Point3 v2( 0.0, 3.5, 0.);
   Point3 v3(-1.5, 0.0, 0.);
 
-  QuadrilateralIntersection quad(v0.data(),v1.data(),v2.data(),v3.data());
+  Quad3D quad(v0.data(),v1.data(),v2.data(),v3.data());
 
   BOOST_CHECK( quad.validate() );
 

@@ -195,10 +195,10 @@ grids/rgg/OctahedralRGG.cc
 )
 
 list( APPEND atlas_geometry_srcs
-geometry/QuadrilateralIntersection.h
-geometry/QuadrilateralIntersection.cc
-geometry/TriangleIntersection.h
-geometry/TriangleIntersection.cc
+geometry/Quad3D.h
+geometry/Quad3D.cc
+geometry/Triag3D.h
+geometry/Triag3D.cc
 geometry/Intersect.h
 geometry/Intersect.cc
 geometry/Ray.h

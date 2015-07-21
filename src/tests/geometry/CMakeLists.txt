@@ -8,10 +8,10 @@
 
 set( BOOST_UNIT_TEST_FRAMEWORK_LINKED OFF )
 
-ecbuild_add_test( TARGET atlas_test_QuadrilateralInterseciton
+ecbuild_add_test( TARGET atlas_test_Quad3D
   CONDITION ECKIT_HAVE_EIGEN
   BOOST
-  SOURCES   test_QuadrilateralIntersection.cc
+  SOURCES   test_Quad3D.cc
   LIBS      atlas
 )
 

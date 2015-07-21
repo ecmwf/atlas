@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/geometry/QuadrilateralIntersection.h"
+#include "atlas/geometry/Quad3D.h"
 
 #include <cmath>
 
@@ -20,7 +20,7 @@
 #include "eckit/maths/Eigen.h"
 #include "eckit/log/Log.h"
 
-#include "atlas/geometry/TriangleIntersection.h"
+#include "atlas/geometry/Triag3D.h"
 
 using eckit::Log;
 using Eigen::Vector3d;
@@ -31,16 +31,16 @@ namespace geometry {
 //----------------------------------------------------------------------------------------------------------------------
 
 
-Intersect QuadrilateralIntersection::intersects(const Ray &r, double epsilon) const
+Intersect Quad3D::intersects(const Ray &r, double epsilon) const
 {
     Intersect isect; // intersection is false
 
-    TriangleIntersection T013(v00.data(), v10.data(), v01.data());
+    Triag3D T013(v00.data(), v10.data(), v01.data());
     isect = T013.intersects(r,epsilon);
     if(isect)
         return isect;
 
-    TriangleIntersection T231(v11.data(), v01.data(), v10.data());
+    Triag3D T231(v11.data(), v01.data(), v10.data());
     isect = T231.intersects(r,epsilon);
     if(isect)
     {
@@ -52,7 +52,7 @@ Intersect QuadrilateralIntersection::intersects(const Ray &r, double epsilon) co
     return isect.success(false);
 }
 
-bool QuadrilateralIntersection::validate() const {
+bool Quad3D::validate() const {
 
     // normal for sub-triangle T231
 
@@ -96,6 +96,14 @@ bool QuadrilateralIntersection::validate() const {
         return true;
     else
         return false;
+}
+
+double Quad3D::area() const
+{
+    Triag3D T013(v00.data(), v10.data(), v01.data());
+    Triag3D T231(v11.data(), v01.data(), v10.data());
+
+    return T013.area() + T231.area();
 }
 
 //----------------------------------------------------------------------------------------------------------------------
