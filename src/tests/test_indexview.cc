@@ -33,6 +33,33 @@ std::string pos(Iterator& it)
 }
 
 
+BOOST_AUTO_TEST_CASE( test_array )
+{
+  Array<int> array (3,1,4);
+  BOOST_CHECK_EQUAL( array.shape(0) , 3 );
+  BOOST_CHECK_EQUAL( array.shape(1) , 1 );
+  BOOST_CHECK_EQUAL( array.shape(2) , 4 );
+  BOOST_CHECK_EQUAL( array.size(), 12 );
+  BOOST_CHECK_EQUAL( array.stride(0), 4 );
+  BOOST_CHECK_EQUAL( array.stride(1), 4 );
+  BOOST_CHECK_EQUAL( array.stride(2), 1 );
+  for( size_t j=0; j<array.size(); ++j ) {
+    array[j] = j;
+  }
+  BOOST_CHECK_EQUAL( array(0,0,0) , 0 );
+  BOOST_CHECK_EQUAL( array(0,0,1) , 1 );
+  BOOST_CHECK_EQUAL( array(0,0,2) , 2 );
+  BOOST_CHECK_EQUAL( array(0,0,3) , 3 );
+  BOOST_CHECK_EQUAL( array(1,0,0) , 4 );
+  BOOST_CHECK_EQUAL( array(1,0,1) , 5 );
+  BOOST_CHECK_EQUAL( array(1,0,2) , 6 );
+  BOOST_CHECK_EQUAL( array(1,0,3) , 7 );
+
+  BOOST_CHECK_THROW( array(0,1,0) , eckit::OutOfRange );  // j index out of range
+  BOOST_CHECK_THROW( array(1,2,0,3), eckit::OutOfRange ); // rank out of range
+}
+
+
 BOOST_AUTO_TEST_CASE( test_arrayview_iterator )
 {
   Array<int> array(5,4,2);

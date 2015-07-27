@@ -105,8 +105,8 @@ void write_field_nodes(const Gmsh& gmsh, Field& field, std::ostream& out)
   {
     mpl::GatherScatter& fullgather = function_space.fullgather();
     ndata = fullgather.glb_dof();
-    field_glb_arr = Array<DATA_TYPE> (ndata,field.shape(1));
-    gidx_glb_arr  = Array<gidx_t   > (ndata);
+    field_glb_arr.resize(ndata,field.shape(1));
+    gidx_glb_arr.resize(ndata);
     ArrayView<DATA_TYPE> data_glb( field_glb_arr );
     ArrayView<gidx_t,1> gidx_glb( gidx_glb_arr );
     fullgather.gather( gidx, gidx_glb );
@@ -224,8 +224,8 @@ void write_field_elems(const Gmsh& gmsh, Field& field, std::ostream& out)
   {
     mpl::GatherScatter& fullgather = function_space.fullgather();
     ndata = fullgather.glb_dof();
-    field_glb_arr = Array<DATA_TYPE> (ndata,field.shape(1));
-    gidx_glb_arr  = Array<gidx_t   > (ndata);
+    field_glb_arr.resize(ndata,field.shape(1));
+    gidx_glb_arr.resize(ndata);
     ArrayView<DATA_TYPE> data_glb( field_glb_arr );
     ArrayView<gidx_t,1> gidx_glb( gidx_glb_arr );
     fullgather.gather( gidx, gidx_glb );

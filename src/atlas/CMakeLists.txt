@@ -52,7 +52,9 @@ list( APPEND atlas_util_srcs
 util/AccumulateFaces.h
 util/AccumulateFaces.cc
 util/Array.h
+util/Array.cc
 util/ArrayUtil.h
+util/ArrayUtil.cc
 util/ArrayView.h
 util/ArrayView.cc
 util/Bitflags.h

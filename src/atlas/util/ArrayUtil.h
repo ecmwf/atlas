@@ -13,6 +13,7 @@
 #ifndef atlas_ArrayUtil_h
 #define atlas_ArrayUtil_h
 
+#include <stddef.h>
 #include <vector>
 
 //------------------------------------------------------------------------------------------------------
@@ -43,6 +44,21 @@ inline ArrayIdx make_idx(size_t size1) { return std::vector<size_t>(1,size1); }
 inline ArrayIdx make_idx(size_t size1, size_t size2) { std::vector<size_t> v(2); v[0]=size1; v[1]=size2; return v; }
 inline ArrayIdx make_idx(size_t size1, size_t size2, size_t size3) { std::vector<size_t> v(3); v[0]=size1; v[1]=size2; v[2]=size3; return v; }
 inline ArrayIdx make_idx(size_t size1, size_t size2, size_t size3, size_t size4) { std::vector<size_t> v(4); v[0]=size1; v[1]=size2; v[2]=size3; v[3]=size4; return v; }
+
+class ArraySpec {
+private:
+  size_t size_;
+  size_t rank_;
+  ArrayShape shape_;
+  ArrayStrides strides_;
+public:
+  ArraySpec() : rank_(0), size_(0) {}
+  ArraySpec( const ArrayShape& );
+  size_t size() const { return size_; }
+  size_t rank() const { return rank_; }
+  const ArrayShape& shape() const { return shape_; }
+  const ArrayStrides& strides() const { return strides_; }
+};
 
 //------------------------------------------------------------------------------------------------------
 

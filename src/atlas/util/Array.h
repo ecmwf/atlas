@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996-2014 ECMWF.
+ * (C) Copyright 1996-2015 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -14,59 +14,124 @@
 #define atlas_Array_h
 
 #include <vector>
+
+#include "eckit/memory/Owned.h"
+
 #include "atlas/util/ArrayUtil.h"
 #include "atlas/util/DataType.h"
+#include "atlas/util/ArrayView.h"
 
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
 
-template< typename DATA_TYPE >
-class Array {
+class ArrayBase : eckit::Owned {
 public:
+
+  virtual std::string datatype() const = 0;
+
+  void resize(const ArrayShape&);
+
+  void resize(size_t size1);
+
+  void resize(size_t size1, size_t size2);
+
+  void resize(size_t size1, size_t size2, size_t size3);
+
+  void resize(size_t size1, size_t size2, size_t size3, size_t size4);
+
+  size_t size() const { return spec_.size(); }
+
+  size_t rank() const { return spec_.rank(); }
+
+  size_t stride(size_t i) const { return spec_.strides()[i]; }
+
+  size_t shape(size_t i) const { return spec_.shape()[i]; }
+
+  const ArrayStrides& strides() const { return spec_.strides(); }
+
+  const ArrayShape& shape() const { return spec_.shape(); }
+
+  /// @brief Access to raw data
+  template <typename DATATYPE>       DATATYPE* data();
+  template <typename DATATYPE> const DATATYPE* data() const;
+
+private: // methods
+
+  virtual void resize_data( size_t size )=0;
+
+private:
+
+  ArraySpec spec_;
+};
+
+
+template< typename DATA_TYPE >
+class Array : public ArrayBase  {
+public:
+
   typedef typename remove_const<DATA_TYPE>::type  value_type;
   typedef typename add_const<DATA_TYPE>::type     const_value_type;
+
 public:
-  Array(): rank_(0) {}
-  Array(size_t size) { resize( make_shape(size) ); }
-  Array(size_t size1, size_t size2) { resize( make_shape(size1,size2) ); }
-  Array(size_t size1, size_t size2, size_t size3) { resize( make_shape(size1,size2,size3) ); }
-  Array(size_t size1, size_t size2, size_t size3, size_t size4) { resize( make_shape(size1,size2,size3,size4) ); }
+
+  Array() {}
+
   Array(const ArrayShape& shape) { resize(shape); }
 
-  void resize(const ArrayShape& shape)
-  {
-    shape_= shape;
-    strides_.resize(shape_.size());
-    strides_[shape_.size()-1] = 1;
-    for( long n=shape_.size()-2; n>=0; --n )
-    {
-      strides_[n] = strides_[n+1]*shape_[n+1];
-    }
-    size_t size = strides_[0]*shape_[0];
-    data_.resize(size);
-    rank_ = shape_.size();
-  }
+  Array(size_t size)                                            { resize( make_shape(size) ); }
+
+  Array(size_t size1, size_t size2)                             { resize( make_shape(size1,size2) ); }
+
+  Array(size_t size1, size_t size2, size_t size3)               { resize( make_shape(size1,size2,size3) ); }
+
+  Array(size_t size1, size_t size2, size_t size3, size_t size4) { resize( make_shape(size1,size2,size3,size4) ); }
+
+public:
+
+  const DATA_TYPE& operator()(size_t i) const                                         { return view_(i); }
+        DATA_TYPE& operator()(size_t i)                                               { return view_(i); }
+  const DATA_TYPE& operator()(size_t i, size_t j) const                               { return view_(i,j); }
+        DATA_TYPE& operator()(size_t i, size_t j)                                     { return view_(i,j); }
+  const DATA_TYPE& operator()(size_t i, size_t j, size_t k) const                     { return view_(i,j,k); }
+        DATA_TYPE& operator()(size_t i, size_t j, size_t k)                           { return view_(i,j,k); }
+  const DATA_TYPE& operator()(size_t i, size_t j, size_t k, size_t l) const           { return view_(i,j,k,l); }
+        DATA_TYPE& operator()(size_t i, size_t j, size_t k, size_t l)                 { return view_(i,j,k,l); }
+  const DATA_TYPE& operator()(size_t i, size_t j, size_t k, size_t l, size_t m) const { return view_(i,j,k,l,m); }
+        DATA_TYPE& operator()(size_t i, size_t j, size_t k, size_t l, size_t m)       { return view_(i,j,k,l,m); }
+  const DATA_TYPE& operator()(const ArrayIdx& idx) const                              { return view_(idx); }
+        DATA_TYPE& operator()(const ArrayIdx& idx)                                    { return view_(idx); }
+
+  virtual std::string datatype() const { return DataType::datatype<DATA_TYPE>(); }
+
   const DATA_TYPE& operator[](size_t i) const { return *(data()+i); }
-  DATA_TYPE&       operator[](size_t i)       { return *(data()+i); }
-  size_t size() const { return data_.size(); }
-  DATA_TYPE*       data() { return data_.data(); }
+        DATA_TYPE& operator[](size_t i)       { return *(data()+i); }
+
   const DATA_TYPE* data() const { return data_.data(); }
-  size_t rank() const { return rank_; }
-  size_t stride(size_t i) const { return strides_[i]; }
-  size_t shape(size_t i) const { return shape_[i]; }
-  const ArrayStrides& strides() const { return strides_; }
-  const ArrayShape& shape() const { return shape_; }
+        DATA_TYPE* data()       { return data_.data(); }
+
   void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<size(); ++n) data_[n]=scalar; }
+
   template< class InputIt >
   void assign( InputIt first, InputIt last ) { data_.assign(first,last); }
-  std::string data_type() const { return DataType::datatype<DATA_TYPE>(); }
+
 private:
-  size_t rank_;
-  ArrayShape shape_;
-  ArrayStrides strides_;
+
+  virtual void resize_data( size_t size );
+
+private:
+
   std::vector<DATA_TYPE> data_;
+  ArrayView<DATA_TYPE> view_;
 };
+
+
+template< typename DATA_TYPE>
+void Array<DATA_TYPE>::resize_data( size_t size )
+{
+  data_.resize( size );
+  view_ = ArrayView<DATA_TYPE>( *this );
+}
 
 //------------------------------------------------------------------------------------------------------
 
