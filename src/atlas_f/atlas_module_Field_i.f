@@ -20,7 +20,7 @@ TYPE, extends(object_type) :: atlas_Field
 !------------------------------------------------------------------------------
 contains
   procedure :: name => Field__name
-  procedure :: data_type => Field__data_type
+  procedure :: datatype => Field__datatype
   procedure :: nb_vars => Field__nb_vars
   procedure :: metadata => Field__metadata
   procedure :: function_space => Field__function_space

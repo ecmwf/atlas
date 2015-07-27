@@ -72,7 +72,7 @@ write(atlas_log%msg,'(A)') "The state contains the fields:"; call atlas_log%info
 do jfield=1,state%nb_fields()
   field = state%field(jfield)
   write(atlas_log%msg,'(2A)')   "  - ",field%name();                   call atlas_log%info()
-  write(atlas_log%msg,'(2A)')   "        kind = ",field%data_type();   call atlas_log%info()
+  write(atlas_log%msg,'(2A)')   "        kind = ",field%datatype();    call atlas_log%info()
   write(atlas_log%msg,'(A,I0)') "        size = ",field%size();        call atlas_log%info()
   write(atlas_log%msg,*)         "       shape =",field%shape();       call atlas_log%info()
 enddo

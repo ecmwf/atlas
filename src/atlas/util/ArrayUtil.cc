@@ -8,6 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
+#include <algorithm>
 #include <vector>
 #include "atlas/util/ArrayUtil.h"
 
@@ -25,5 +26,15 @@ ArraySpec::ArraySpec( const ArrayShape& _shape )
   rank_ = shape_.size();
   size_ = shape_[0]*strides_[0];
 };
+
+const std::vector<int>& ArraySpec::shapef() const
+{
+  if( shapef_.empty() )
+  {
+    shapef_.resize(shape().size());
+    std::reverse_copy( shape().begin(), shape().end(), shapef_.begin() );
+  }
+  return shapef_;
+}
 
 } // namespace atlas

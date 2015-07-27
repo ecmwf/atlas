@@ -106,7 +106,7 @@ void FunctionSpace::resize(const std::vector<size_t>& shape)
 			else
 				field_shape[i] = shape_[i];
 		}
-		fields_[f]->allocate(field_shape);
+		fields_[f]->resize(field_shape);
 	}
 }
 
@@ -176,7 +176,7 @@ Field& FunctionSpace::create_field<double>(const std::string& name, size_t nb_va
 	fields_.sort();
 
         field->set_function_space(*this);
-	field->allocate(field_shape);
+	field->resize(field_shape);
 	return *field;
 }
 
@@ -202,7 +202,7 @@ Field& FunctionSpace::create_field<float>(const std::string& name, size_t nb_var
 	fields_.insert( name, Field::Ptr(field) );
 	fields_.sort();
   field->set_function_space(*this);
-	field->allocate(field_shape);
+	field->resize(field_shape);
 	return *field;
 }
 
@@ -230,7 +230,7 @@ Field& FunctionSpace::create_field<int>(const std::string& name, size_t nb_vars,
 	fields_.sort();
 
   field->set_function_space(*this);
-	field->allocate(field_shape);
+	field->resize(field_shape);
 	return *field;
 }
 
@@ -257,7 +257,7 @@ Field& FunctionSpace::create_field<long>(const std::string& name, size_t nb_vars
 	fields_.insert( name, Field::Ptr(field) );
 	fields_.sort();
 
-	field->allocate(field_shape);
+	field->resize(field_shape);
 	return *field;
 }
 

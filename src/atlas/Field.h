@@ -24,6 +24,7 @@
 #include "atlas/Config.h"
 #include "atlas/Metadata.h"
 #include "atlas/State.h"
+#include "atlas/util/Array.h"
 
 namespace eckit { class Parametrisation; }
 
@@ -54,12 +55,12 @@ public: // methods
   Ptr self() { return Ptr(this); }
 
   /// @brief Access to raw data
-  template <typename DATA_TYPE>       DATA_TYPE* data();
-  template <typename DATA_TYPE> const DATA_TYPE* data() const;
+  template <typename DATA_TYPE> const DATA_TYPE* data() const  { return array_->data<DATA_TYPE>(); }
+  template <typename DATA_TYPE>       DATA_TYPE* data()        { return array_->data<DATA_TYPE>(); }
 
   /// @brief Internal data type of field as string
   /// Any of [ int32 int64 real32 real64 ]
-  const std::string& data_type() const { return data_type_; }
+  std::string datatype() const { return array_->datatype(); }
 
   /// @brief Name associated to this field
   const std::string& name() const { return name_; }
@@ -68,23 +69,25 @@ public: // methods
   const Metadata& metadata() const { return metadata_; }
         Metadata& metadata()       { return metadata_; }
 
+  void resize(const ArrayShape&);
+
   /// @brief Shape of this field in Fortran style (reverse order of C style)
-  const std::vector<int>&    shapef()  const { return shapef_; }
+  const std::vector<int>&    shapef()  const { return array_->shapef(); }
 
   /// @brief Shape of this field (reverse order of Fortran style)
-  const std::vector<size_t>& shape()   const { return shape_; }
+  const ArrayShape& shape()   const { return array_->shape(); }
 
   /// @brief Strides of this field
-  const std::vector<size_t>& strides() const { return strides_; }
+  const ArrayStrides& strides() const { return array_->strides(); }
 
   /// @brief Shape of this field associated to index 'i'
-  size_t shape (size_t i) const { return shape_[i]; }
+  size_t shape (size_t i) const { return array_->shape(i); }
 
   /// @brief Stride of this field associated to index 'i'
-  size_t stride(size_t i) const { return strides_[i]; }
+  size_t stride(size_t i) const { return array_->stride(i); }
 
   /// @brief Number of values stored in this field
-  virtual size_t size() const = 0;
+  size_t size() const { return array_->size(); }
 
   /// @brief Number of bytes occupied by the values of this field
   virtual double bytes() const = 0;
@@ -111,10 +114,7 @@ private: // members
 
 protected: // members
 
-  std::string data_type_;        /// data type
-  std::vector<int> shapef_;      /// shape of array in fortran style (reversed order)
-  std::vector<size_t> shape_;    /// shape of array in C style
-  std::vector<size_t> strides_;  /// strides of array in C style
+  eckit::SharedPtr<ArrayBase> array_;
 
 // End of class Field
 
@@ -149,8 +149,6 @@ public:
 
   virtual void halo_exchange() = 0;
 
-  virtual void allocate(const std::vector<size_t>& shapef)=0;
-
 /***************************************************************************/
 /* End Public and private members and  methods to be removed soon          */
 /***************************************************************************/
@@ -160,13 +158,14 @@ public:
 //----------------------------------------------------------------------------------------------------------------------
 
 #define Parametrisation eckit::Parametrisation
+#define Char char
 // C wrapper interfaces to C++ routines
 extern "C"
 {
   Field* atlas__Field__create(Parametrisation* params);
   void atlas__Field__delete (Field* This);
   const char* atlas__Field__name (Field* This);
-  const char* atlas__Field__data_type (Field* This);
+  void atlas__Field__datatype (Field* This, Char* &datatype, int &size, int &allocated);
   int atlas__Field__size (Field* This);
   double atlas__Field__bytes (Field* This);
   int atlas__Field__nb_vars (Field* This);
@@ -179,6 +178,7 @@ extern "C"
   FunctionSpace* atlas__Field__function_space (Field* This);
 }
 #undef Parametrisation
+#undef Char
 
 //------------------------------------------------------------------------------------------------------
 

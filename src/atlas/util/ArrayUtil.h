@@ -51,6 +51,7 @@ private:
   size_t rank_;
   ArrayShape shape_;
   ArrayStrides strides_;
+  mutable std::vector<int> shapef_;
 public:
   ArraySpec() : rank_(0), size_(0) {}
   ArraySpec( const ArrayShape& );
@@ -58,6 +59,7 @@ public:
   size_t rank() const { return rank_; }
   const ArrayShape& shape() const { return shape_; }
   const ArrayStrides& strides() const { return strides_; }
+  const std::vector<int>& shapef() const;
 };
 
 //------------------------------------------------------------------------------------------------------

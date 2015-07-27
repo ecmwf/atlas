@@ -80,41 +80,50 @@ Field::~Field()
 {
 }
 
-namespace {
-template< typename DATA_TYPE >
-DATA_TYPE* get_field_data( const Field& field )
-{
-  const FieldT<DATA_TYPE>* fieldT = dynamic_cast< const FieldT<DATA_TYPE>* >(&field);
-  if( fieldT == NULL )
-  {
-    std::stringstream msg;
-    msg << "Could not cast Field " << field.name()
-        << " with data_type " << field.data_type() << " to "
-        << DataType::datatype<DATA_TYPE>();
-    throw eckit::BadCast(msg.str(),Here());
-  }
-  return const_cast<DATA_TYPE*>(fieldT->data());
-}
-}
+//namespace {
+//template< typename DATA_TYPE >
+//DATA_TYPE* get_field_data( const Field& field )
+//{
+//  try
+//  {
+//    return field.array_
+//  }
+//  catch ( eckit::BadCast& exception )
+//  {
 
-template <> const int*    Field::data<int   >() const { return get_field_data<int   >(*this); }
-template <>       int*    Field::data<int   >()       { return get_field_data<int   >(*this); }
-template <> const long*   Field::data<long  >() const { return get_field_data<long  >(*this); }
-template <>       long*   Field::data<long  >()       { return get_field_data<long  >(*this); }
-template <> const float*  Field::data<float >() const { return get_field_data<float >(*this); }
-template <>       float*  Field::data<float >()       { return get_field_data<float >(*this); }
-template <> const double* Field::data<double>() const { return get_field_data<double>(*this); }
-template <>       double* Field::data<double>()       { return get_field_data<double>(*this); }
+//  }
+
+//  const FieldT<DATA_TYPE>* fieldT = dynamic_cast< const FieldT<DATA_TYPE>* >(&field);
+//  if( fieldT == NULL )
+//  {
+//    std::stringstream msg;
+//    msg << "Could not cast Field " << field.name()
+//        << " with data_type " << field.datatype() << " to "
+//        << DataType::datatype<DATA_TYPE>();
+//    throw eckit::BadCast(msg.str(),Here());
+//  }
+//  return const_cast<DATA_TYPE*>(fieldT->data());
+//}
+//}
+
+//template <> const int*    Field::data<int   >() const { return get_field_data<int   >(*this); }
+//template <>       int*    Field::data<int   >()       { return get_field_data<int   >(*this); }
+//template <> const long*   Field::data<long  >() const { return get_field_data<long  >(*this); }
+//template <>       long*   Field::data<long  >()       { return get_field_data<long  >(*this); }
+//template <> const float*  Field::data<float >() const { return get_field_data<float >(*this); }
+//template <>       float*  Field::data<float >()       { return get_field_data<float >(*this); }
+//template <> const double* Field::data<double>() const { return get_field_data<double>(*this); }
+//template <>       double* Field::data<double>()       { return get_field_data<double>(*this); }
 
 void Field::print(std::ostream& os) const
 {
     os << "Field[name=" << name()
-       << ",datatype=" << data_type()
+       << ",datatype=" << datatype()
        << ",size=" << size()
        << ",shape=" << shape()
        << ",strides=" << strides()
        << ",bytes=" << bytes()
-       << ",metadata=" << metadata() 
+       << ",metadata=" << metadata()
        << "]";
 }
 
@@ -122,6 +131,11 @@ std::ostream& operator<<( std::ostream& os, const Field& f)
 {
   f.print(os);
   return os;
+}
+
+void Field::resize(const ArrayShape& shape)
+{
+    array_->resize(shape);
 }
 
 
@@ -186,9 +200,14 @@ const char* atlas__Field__name (Field* This)
   return NULL;
 }
 
-const char* atlas__Field__data_type (Field* This)
+void atlas__Field__datatype (Field* This, char* &datatype, int &size, int &allocated)
 {
-  return This->data_type().c_str();
+  ATLAS_ERROR_HANDLING(
+    std::string s = This->datatype();
+    datatype = new char[s.size()+1];
+    strcpy(datatype,s.c_str());
+    allocated = true;
+  );
 }
 
 int atlas__Field__size (Field* This)

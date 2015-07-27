@@ -24,7 +24,7 @@
 
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
-#include "eckit/memory/ScopedPtr.h"
+#include "eckit/memory/SharedPtr.h"
 #include "eckit/config/Parametrisation.h"
 
 #include "atlas/atlas_config.h"
@@ -55,16 +55,9 @@ public: // methods
 
   virtual ~FieldT();
 
-  const DATA_TYPE* data() const { return data_.data(); }
-        DATA_TYPE* data()       { return data_.data(); }
-
-  DATA_TYPE& operator[] (const size_t idx) { return data_[idx]; }
-
-  virtual void allocate(const std::vector<size_t>& shape); // To be removed
-
 protected:
 
-  virtual size_t size() const { return data_.size(); }
+  virtual size_t size() const { return array_->size(); }
 
   virtual void halo_exchange(); // To be removed
 
@@ -73,47 +66,43 @@ protected:
   virtual void dump(std::ostream& os) const
   {
       os << *this << std::endl;
-      for(size_t i = 0; i < data_.size(); ++i)
+      DATA_TYPE* data = array_->data<DATA_TYPE>();
+      for(size_t i = 0; i < array_->size(); ++i)
       {
-          os << data_[i] << " ";
+          os << data[i] << " ";
           if( (i+1)%10 == 0 )
               os << std::endl;
       }
       os << std::endl;
   }
 
-  typedef std::vector< DATA_TYPE > storage_type;
-
-  storage_type data_;
-
 };
 
 
 template< typename DATA_TYPE >
 inline FieldT<DATA_TYPE>::FieldT(const std::string& name, const int nb_vars) :
-  Field(name,nb_vars),
-  data_(0)
+  Field(name,nb_vars)
 {
-  data_type_ = DataType::datatype<DATA_TYPE>() ;
+  array_.reset( new Array<DATA_TYPE>() );
 }
 
 template< typename DATA_TYPE >
 inline FieldT<DATA_TYPE>::FieldT(const std::vector<size_t>& shape, const eckit::Parametrisation& params) :
-  Field(params),
-  data_(0)
+  Field(params)
 {
-  data_type_ = DataType::datatype<DATA_TYPE>() ;
+  array_.reset( new Array<DATA_TYPE>() );
 
   bool fortran(false);
   params.get("fortran",fortran);
   if( fortran ) {
-    std::vector<size_t> shapef(shape.size());
-    size_t n=shape.size();
-    for( size_t j=0; j<shape.size(); ++j ) shapef[j] = shape[--n];
-    allocate(shapef);
+    const std::vector<size_t>& shape_F = shape;
+    std::vector<size_t> shape_C (shape_F.size());
+    size_t n=shape_F.size();
+    for( size_t j=0; j<shape_F.size(); ++j ) shape_C[j] = shape_F[--n];
+    resize(shape_C);
   }
   else {
-    allocate(shape);
+    resize(shape);
   }
 }
 
@@ -121,39 +110,6 @@ inline FieldT<DATA_TYPE>::FieldT(const std::vector<size_t>& shape, const eckit::
 template< typename DATA_TYPE >
 inline FieldT<DATA_TYPE>::~FieldT()
 {
-  data_.clear();
-}
-
-template< typename DATA_TYPE >
-inline void FieldT<DATA_TYPE>::allocate(const std::vector<size_t>& shape)
-{
-    const size_t old_size = data_.size();
-
-    shape_ = shape;
-    size_t tot_size = 1;
-    for(size_t i = 0; i < shape_.size(); ++i)
-        tot_size *= shape_[i];
-
-    if( old_size && tot_size > old_size)
-    {
-        storage_type new_data(tot_size);
-        std::copy(data_.begin(), data_.end(), new_data.begin());
-        data_.swap(new_data);
-    }
-    else
-    {
-        data_.resize(tot_size);
-    }
-
-    shapef_.resize(shape_.size());
-    std::reverse_copy( shape_.begin(), shape_.end(), shapef_.begin() );
-
-    strides_.resize(shape_.size());
-    strides_[shape_.size()-1] = 1;
-    for( int n=shape_.size()-2; n>=0; --n )
-    {
-        strides_[n] = strides_[n+1]*shape_[n+1];
-    }
 }
 
 //------------------------------------------------------------------------------------------------------

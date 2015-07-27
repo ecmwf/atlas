@@ -46,13 +46,17 @@ function Field__name(this) result(field_name)
   field_name = c_to_f_string_cptr(field_name_c_str)
 end function Field__name
 
-function Field__data_type(this) result(field_data_type)
+function Field__datatype(this) result(datatype)
   class(atlas_Field), intent(in) :: this
-  character(len=:), allocatable :: field_data_type
-  type(c_ptr) :: field_data_type_c_str
-  field_data_type_c_str = atlas__Field__data_type(this%cpp_object_ptr)
-  field_data_type = c_to_f_string_cptr(field_data_type_c_str)
-end function Field__data_type
+  character(len=:), allocatable :: datatype
+  type(c_ptr) :: datatype_cptr
+  integer(c_int) :: datatype_size
+  integer(c_int) :: datatype_allocated
+  call atlas__Field__datatype(this%cpp_object_ptr,datatype_cptr,datatype_size,datatype_allocated)
+  allocate(character(len=datatype_size) :: datatype )
+  datatype= c_to_f_string_cptr(datatype_cptr)
+  if( datatype_allocated == 1 ) call atlas_free(datatype_cptr)
+end function Field__datatype
 
 function Field__size(this) result(size)
   class(atlas_Field), intent(in) :: this

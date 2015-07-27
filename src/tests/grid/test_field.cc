@@ -123,7 +123,7 @@ void TestField::test_fieldcreator()
                                       ("name","myfield")
                                   ));
 
-  ASSERT( field->data_type() == DataType::real32() );
+  ASSERT( field->datatype() == DataType::real32() );
   ASSERT( field->name() == "myfield" );
 
   Grid::Ptr g (Grid::create("oct.N6"));
@@ -134,7 +134,7 @@ void TestField::test_fieldcreator()
                                ));
   ASSERT( arr->shape(0) == 10 );
   ASSERT( arr->shape(1) == 2 );
-  ASSERT( arr->data_type() == DataType::real64() );
+  ASSERT( arr->datatype() == DataType::real64() );
 
 
   Config ifs_parameters;

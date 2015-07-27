@@ -25,7 +25,7 @@
 
 namespace atlas {
 
-class ArrayBase : eckit::Owned {
+class ArrayBase : public eckit::Owned {
 public:
 
   virtual std::string datatype() const = 0;
@@ -51,6 +51,8 @@ public:
   const ArrayStrides& strides() const { return spec_.strides(); }
 
   const ArrayShape& shape() const { return spec_.shape(); }
+
+  const std::vector<int>& shapef() const { return spec_.shapef(); }
 
   /// @brief Access to raw data
   template <typename DATATYPE>       DATATYPE* data();

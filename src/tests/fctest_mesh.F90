@@ -32,7 +32,7 @@ end interface
 
 contains
 
-function atlas_FieldConfig__ctor(creator,ngptot,nproma,nlev,nvar,kind,data_type,shape,grid) result(params)
+function atlas_FieldConfig__ctor(creator,ngptot,nproma,nlev,nvar,kind,datatype,shape,grid) result(params)
   use atlas_Config_c_binding
   type(atlas_FieldParametrisation) :: params
   character(len=*), optional, intent(in) :: creator
@@ -42,7 +42,7 @@ function atlas_FieldConfig__ctor(creator,ngptot,nproma,nlev,nvar,kind,data_type,
   integer, optional, intent(in) :: nvar
   type(atlas_ReducedGrid), optional, intent(in) :: grid
   integer, optional, intent(in) :: kind
-  character(len=*), optional, intent(in) :: data_type
+  character(len=*), optional, intent(in) :: datatype
   integer, optional, intent(in) :: shape(:)
   params%cpp_object_ptr = atlas__Config__new()
   if( present(creator)   ) call params%set("creator"   ,creator  )
@@ -51,7 +51,7 @@ function atlas_FieldConfig__ctor(creator,ngptot,nproma,nlev,nvar,kind,data_type,
   if( present(nlev)      ) call params%set("nlev"      ,nlev     )
   if( present(nvar)      ) call params%set("nvar"      ,nvar     )
   if( present(kind)      ) call params%set("kind"      ,kind     )
-  if( present(data_type) ) call params%set("data_type" ,data_type)
+  if( present(datatype)  ) call params%set("datatype"  ,datatype )
   if( present(shape)     ) call params%set("shape"     ,shape    )
   call params%set("fortran",.True.) ! Let know that parameters have fortran style
 end function
@@ -168,20 +168,20 @@ TEST( test_field_size )
   call func_space%create_field("field_0",0,atlas_integer())
   field = func_space%field("field_0")
   call field%access_data(fdata_int)
-  CHECK_EQUAL( field%data_type() , "int32" )
+  CHECK_EQUAL( field%datatype() , "int32" )
   CHECK_EQUAL( size(fdata_int) , 0 )
 
   call func_space%create_field("field_1",1,atlas_real(c_float))
   field = func_space%field("field_1")
   call field%access_data(fdata_real32)
-  CHECK_EQUAL( field%data_type() , "real32" )
+  CHECK_EQUAL( field%datatype() , "real32" )
   CHECK_EQUAL( size(fdata_real32) , 10 )
 
   call func_space%create_field("field_2",2,atlas_real(c_double))
   field = func_space%field("field_2")
   call field%access_data(fdata_real64)
   CHECK_EQUAL( field%name(), "field_2" )
-  CHECK_EQUAL( field%data_type() , "real64" )
+  CHECK_EQUAL( field%datatype() , "real64" )
   CHECK_EQUAL( size(fdata_real64) , 20 )
 
 END_TEST
@@ -386,7 +386,7 @@ TEST( test_fieldcreation )
   field = atlas_Field(params)
   call atlas_delete(params)
 
-  write(0,*) field%name(), field%size(), field%shape(), field%data_type(), field%bytes()
+  write(0,*) field%name(), field%size(), field%shape(), field%datatype(), field%bytes()
   call atlas_delete(field)
 
 ! Idea:

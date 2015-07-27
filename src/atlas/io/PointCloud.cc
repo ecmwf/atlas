@@ -173,7 +173,7 @@ void PointCloud::write(const eckit::PathName& path, const Mesh& mesh)
     const Field& field = nodes.field(i);
     if ( field.shape(0)==lonlat.size() &&
          field.shape(1)==1 &&
-         field.data_type()==DataType::real64() )  // FIXME: no support for non-double types!
+         field.datatype()==DataType::real64() )  // FIXME: no support for non-double types!
     {
       vfnames.push_back(sanitize_field_name(field.name()));
       vfvalues.push_back(ArrayView< double, 1 >(field));
