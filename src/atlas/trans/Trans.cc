@@ -19,14 +19,21 @@
 #include "atlas/util/Bitflags.h"
 #include "eckit/exception/Exceptions.h"
 
-#define TRANS_CHECK( CALL ) do {\
-  int errcode = CALL;\
-  if( errcode != TRANS_SUCCESS) {\
-    std::stringstream msg; msg << "ERROR: " << #CALL << " failed:\n"\
-                               <<  ::trans_error_msg(errcode);\
-    throw eckit::Exception(msg.str(),Here());\
-  }\
-} while(0)
+// anonymous namespace
+namespace {
+
+void trans_check(const int code, const char* msg, const eckit::CodeLocation& location) {
+  if(code != TRANS_SUCCESS) {
+    std::stringstream errmsg;
+    errmsg << "atlas::trans ERROR: " << msg << " failed: \n";
+    errmsg << ::trans_error_msg(code);
+    throw eckit::Exception(errmsg.str(),location);
+  }
+}
+
+} // end anonymous namespace
+
+#define TRANS_CHECK( CALL ) trans_check(CALL, #CALL, Here() )
 
 using atlas::util::Topology;
 
@@ -347,7 +354,7 @@ void Trans::dirtrans(const FieldSet& gpfields, FieldSet& spfields, const TransPa
     transform.rgp        = rgp.data();
     transform.rspscalar  = rspec.data();
 
-    TRANS_CHECK(::trans_dirtrans(&transform));
+    TRANS_CHECK( ::trans_dirtrans(&transform) );
   }
 
   // Unpack the spectral fields
@@ -524,8 +531,7 @@ void Trans::distspec( const int nb_fields, const int origin[], const double glob
     args.rspecg = global_spectra;
     args.nfrom = origin;
     args.rspec = spectra;
-  if( int errcode = ::trans_distspec(&args) != TRANS_SUCCESS )
-    throw eckit::Exception("distspec failed: "+std::string(::trans_error_msg(errcode)),Here());
+  TRANS_CHECK( ::trans_distspec(&args) );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -537,8 +543,7 @@ void Trans::gathspec( const int nb_fields, const int destination[], const double
     args.rspecg = global_spectra;
     args.nto = destination;
     args.rspec = spectra;
-  if( int errcode = ::trans_gathspec(&args) != TRANS_SUCCESS )
-    throw eckit::Exception("gathspec failed: "+std::string(::trans_error_msg(errcode)),Here());
+  TRANS_CHECK( ::trans_gathspec(&args) );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -550,8 +555,7 @@ void Trans::distgrid( const int nb_fields, const int origin[], const double glob
     args.nfrom = origin;
     args.rgpg  = global_fields;
     args.rgp   = fields;
-  if( int errcode = ::trans_distgrid(&args) != TRANS_SUCCESS )
-    throw eckit::Exception("distgrid failed: "+std::string(::trans_error_msg(errcode)),Here());
+  TRANS_CHECK( ::trans_distgrid(&args) );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -563,8 +567,7 @@ void Trans::gathgrid( const int nb_fields, const int destination[], const double
     args.nto  = destination;
     args.rgp  = fields;
     args.rgpg = global_fields;
-  if( int errcode = ::trans_gathgrid(&args) != TRANS_SUCCESS )
-    throw eckit::Exception("gathgrid failed: "+std::string(::trans_error_msg(errcode)),Here());
+  TRANS_CHECK( ::trans_gathgrid(&args) );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -575,8 +578,7 @@ void Trans::invtrans( const int nb_fields, const double scalar_spectra[], double
     args.nscalar = nb_fields;
     args.rspscalar = scalar_spectra;
     args.rgp = scalar_fields;
-  if( int errcode = ::trans_invtrans(&args) != TRANS_SUCCESS )
-    throw eckit::Exception("invtrans failed: "+std::string(::trans_error_msg(errcode)),Here());
+  TRANS_CHECK( ::trans_invtrans(&args) );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -588,8 +590,7 @@ void Trans::invtrans( const int nb_fields, const double vorticity_spectra[], con
     args.rspvor = vorticity_spectra;
     args.rspdiv = divergence_spectra;
     args.rgp = wind_fields;
-  if( int errcode = ::trans_invtrans(&args) != TRANS_SUCCESS )
-    throw eckit::Exception("invtrans failed: "+std::string(::trans_error_msg(errcode)),Here());
+  TRANS_CHECK( ::trans_invtrans(&args) );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -600,8 +601,7 @@ void Trans::dirtrans( const int nb_fields, const double scalar_fields[], double 
     args.nscalar = nb_fields;
     args.rgp = scalar_fields;
     args.rspscalar = scalar_spectra;
-  if( int errcode = ::trans_dirtrans(&args) != TRANS_SUCCESS )
-    throw eckit::Exception("dirtrans failed: "+std::string(::trans_error_msg(errcode)),Here());
+  TRANS_CHECK( ::trans_dirtrans(&args) );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -613,8 +613,7 @@ void Trans::dirtrans( const int nb_fields, const double wind_fields[], double vo
     args.rspvor = vorticity_spectra;
     args.rspdiv = divergence_spectra;
     args.rgp    = wind_fields;
-  if( int errcode = ::trans_dirtrans(&args) != TRANS_SUCCESS )
-    throw eckit::Exception("dirtrans failed: "+std::string(::trans_error_msg(errcode)),Here());
+  TRANS_CHECK( ::trans_dirtrans(&args) );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
