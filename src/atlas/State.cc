@@ -45,18 +45,21 @@ namespace {
     };
 }
 
-State* State::create( const std::string& _state_generator, const eckit::Parametrisation& params)
+void State::initialize( const std::string& generator, const eckit::Parametrisation& params )
 {
-  eckit::ScopedPtr<StateGenerator> state_generator ( StateGeneratorFactory::build(_state_generator, params) );
-  State* state = new State;
-  state_generator->generate( *state, params );
-  return state;
+  eckit::ScopedPtr<StateGenerator> state_generator ( StateGeneratorFactory::build(generator, params) );
+  state_generator->generate( *this, params );
 }
 
 //------------------------------------------------------------------------------------------------------
 
 State::State()
 {
+}
+
+State::State( const std::string& generator, const eckit::Parametrisation& params )
+{
+  initialize(generator,params);
 }
 
 const Metadata& State::metadata() const
@@ -88,24 +91,6 @@ Field& State::add( Field* field )
   }
   fields_[field->name()] = eckit::SharedPtr<Field>(field);
   return *field;
-}
-
-Mesh& State::add( Mesh* mesh )
-{
-  ASSERT( mesh != NULL );
-  if( meshes_.size() != 0 )
-    throw eckit::NotImplemented("Multiple meshes per state not yet supported",Here());
-  meshes_[""] = eckit::SharedPtr<Mesh>(mesh);
-  return *mesh;
-}
-
-Grid& State::add( Grid* grid )
-{
-  ASSERT( grid != NULL );
-  if( grids_.size() != 0 )
-    throw eckit::NotImplemented("Multiple grids per state not yet supported",Here());
-  grids_[""] = eckit::SharedPtr<Grid>(grid);
-  return *grid;
 }
 
 const Field& State::field(const std::string& name) const
@@ -156,45 +141,6 @@ std::vector< std::string > State::field_names() const
 }
 
 
-const Mesh& State::mesh(const size_t idx) const
-{
-  ASSERT( idx < meshes_.size() );
-  MeshMap::const_iterator it = meshes_.begin();
-  for(size_t i = 0; i < idx; ++i) ++it;
-  return *it->second;
-}
-
-Mesh& State::mesh(const size_t idx)
-{
-  ASSERT( idx < meshes_.size() );
-  MeshMap::const_iterator it = meshes_.begin();
-  for(size_t i = 0; i < idx; ++i) ++it;
-  return *it->second;
-}
-
-const Grid& State::grid(const size_t idx) const
-{
-  ASSERT( idx < grids_.size() );
-  GridMap::const_iterator it = grids_.begin();
-  for(size_t i = 0; i < idx; ++i) ++it;
-  return *it->second;
-}
-
-Grid& State::grid(const size_t idx)
-{
-  ASSERT( idx < grids_.size() );
-  GridMap::const_iterator it = grids_.begin();
-  for(size_t i = 0; i < idx; ++i) ++it;
-  return *it->second;
-}
-
-const Mesh& State::mesh(const std::string& name) const { ASSERT( has_mesh(name) ); return *meshes_.find(name)->second; }
-      Mesh& State::mesh(const std::string& name)       { ASSERT( has_mesh(name) ); return *meshes_[name]; }
-
-const Grid& State::grid(const std::string& name) const { ASSERT( has_grid(name) ); return *grids_.find(name)->second; }
-      Grid& State::grid(const std::string& name)       { ASSERT( has_grid(name) ); return *grids_[name]; }
-
-
 void State::remove_field(const std::string& name)
 {
   if( fields_.find(name)==fields_.end() ) {
@@ -203,26 +149,6 @@ void State::remove_field(const std::string& name)
     throw eckit::Exception(msg.str(),Here());
   }
   fields_.erase(name);
-}
-
-void State::remove_mesh(const std::string& name)
-{
-  if( meshes_.find(name)==meshes_.end() ) {
-    std::stringstream msg;
-    msg << "Trying to remove mesh '"<<name<<"' from State, but it is not present in State.";
-    throw eckit::Exception(msg.str(),Here());
-  }
-  meshes_.erase(name);
-}
-
-void State::remove_grid(const std::string& name)
-{
-  if( grids_.find(name)==grids_.end() ) {
-    std::stringstream msg;
-    msg << "Trying to remove grid '"<<name<<"' from State, but it is not present in State.";
-    throw eckit::Exception(msg.str(),Here());
-  }
-  grids_.erase(name);
 }
 
 //-----------------------------------------------------------------------------
@@ -310,12 +236,11 @@ State* atlas__State__new()
   return new State;
 }
 
-State* atlas__State__create(const char* factory, const eckit::Parametrisation* params)
+void atlas__State__initialize(State* This, const char* generator, const eckit::Parametrisation* params)
 {
+  ASSERT( This );
   ASSERT( params );
-  State* state(0);
-  ATLAS_ERROR_HANDLING( state = State::create(std::string(factory),*params) );
-  return state;
+  ATLAS_ERROR_HANDLING( This->initialize(std::string(generator),*params) );
 }
 
 void atlas__State__delete (State* This)
@@ -368,92 +293,12 @@ int atlas__State__nb_fields(const State* This)
   return nb_fields;
 }
 
-void atlas__State__add_grid (State* This, Grid* grid)
+Metadata* atlas__State__metadata (State* This)
 {
   ASSERT( This );
-  ATLAS_ERROR_HANDLING( This->add(grid); );
+  return &This->metadata();
 }
 
-void atlas__State__remove_grid (State* This, const char* name)
-{
-  ASSERT( This );
-  ATLAS_ERROR_HANDLING( This->remove_grid(name); );
-}
-
-int atlas__State__has_grid (State* This, const char* name)
-{
-  ASSERT( This );
-  int has_grid(0);
-  ATLAS_ERROR_HANDLING( has_grid = This->has_grid(name); );
-  return has_grid;
-}
-
-Grid* atlas__State__grid_by_name (State* This, const char* name)
-{
-  ASSERT( This );
-  Grid* grid(0);
-  ATLAS_ERROR_HANDLING( grid = &This->grid( std::string(name) ); );
-  return grid;
-}
-
-Grid* atlas__State__grid_by_index (State* This, int index)
-{
-  ASSERT( This );
-  Grid* grid(0);
-  ATLAS_ERROR_HANDLING( grid = &This->grid( index ); );
-  return grid;
-}
-
-int atlas__State__nb_grids(const State* This)
-{
-  ASSERT( This );
-  int nb_grids(0);
-  ATLAS_ERROR_HANDLING( nb_grids = This->nb_grids(); );
-  return nb_grids;
-}
-
-void atlas__State__add_mesh (State* This, Mesh* mesh)
-{
-  ASSERT( This );
-  ATLAS_ERROR_HANDLING( This->add(mesh); );
-}
-
-void atlas__State__remove_mesh (State* This, const char* name)
-{
-  ASSERT( This );
-  ATLAS_ERROR_HANDLING( This->remove_mesh(name); );
-}
-
-int atlas__State__has_mesh (State* This, const char* name)
-{
-  ASSERT( This );
-  int has_mesh(0);
-  ATLAS_ERROR_HANDLING( has_mesh = This->has_mesh(name); );
-  return has_mesh;
-}
-
-Mesh* atlas__State__mesh_by_name (State* This, const char* name)
-{
-  ASSERT( This );
-  Mesh* mesh(0);
-  ATLAS_ERROR_HANDLING( mesh = &This->mesh( std::string(name) ); );
-  return mesh;
-}
-
-Mesh* atlas__State__mesh_by_index (State* This, int index)
-{
-  ASSERT( This );
-  Mesh* mesh(0);
-  ATLAS_ERROR_HANDLING( mesh = &This->mesh( index ); );
-  return mesh;
-}
-
-int atlas__State__nb_meshes(const State* This)
-{
-  int nb_meshes(0);
-  ATLAS_ERROR_HANDLING( nb_meshes = This->nb_meshes(); );
-  return nb_meshes;
-}
 
 }
 //-----------------------------------------------------------------------------

@@ -104,60 +104,6 @@ END_TEST
 
 ! -----------------------------------------------------------------------------
 
-TEST( test_state_grids )
-type(atlas_State) :: state
-type(atlas_Field) :: field
-type(atlas_ReducedGrid) :: grid
-
-! Create a new state
-state = atlas_State()
-
-! Create a new grid inside the state
-call state%add( atlas_ReducedGrid("oct.N48") )
-
-! Check how many fields we have
-write(atlas_log%msg,'(A,I0,A)') "The state contains ",state%nb_grids()," grid."; call atlas_log%info()
-
-grid = state%grid()
-
-write(atlas_log%msg,*) "The grid has ",grid%npts()," points"; call atlas_log%info()
-
-! Delete the state
-call atlas_delete(state)
-
-END_TEST
-
-
-! -----------------------------------------------------------------------------
-
-TEST( test_state_meshes )
-type(atlas_State) :: state
-type(atlas_Field) :: field
-type(atlas_mesh) :: mesh
-type(atlas_FunctionSpace) :: nodes
-
-! Create a new state
-state = atlas_State()
-
-! Create a new grid and mesh inside the state
-call state%add( atlas_ReducedGrid("oct.N48") )
-call state%add( atlas_generate_mesh( state%grid() ) )
-
-! Check how many fields we have
-write(atlas_log%msg,'(A,I0,A)') "The state contains ",state%nb_meshes()," mesh."; call atlas_log%info()
-
-mesh = state%mesh()
-nodes = mesh%function_space("nodes")
-
-write(atlas_log%msg,*) "The mesh has ",nodes%dof()," points"; call atlas_log%info()
-
-! Delete the state
-call atlas_delete(state)
-
-END_TEST
-
-! -----------------------------------------------------------------------------
-
 
 TEST( test_state_factory )
 type(atlas_State) :: state
@@ -175,5 +121,23 @@ END_TEST
 
 ! -----------------------------------------------------------------------------
 
+TEST( test_state_metadata )
+type(atlas_State) :: state
+type(atlas_Metadata) :: state_metadata
+
+! Create a new state
+state = atlas_State()
+
+! Access metadata
+state_metadata = state%metadata()
+
+call state_metadata%set("integer",1)
+
+! Delete the state
+call atlas_delete(state)
+
+END_TEST
+
+! -----------------------------------------------------------------------------
 END_TESTSUITE
 

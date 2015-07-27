@@ -59,12 +59,12 @@ void MyStateGenerator::generate( State& state, const eckit::Parametrisation& p )
     throw eckit::BadParameter("Could not find 'geometry' in Parametrisation",Here());
   }
 
-  std::string grid;
-  if( geometry.get("grid",grid) )
+  std::string grid_uid;
+  if( geometry.get("grid",grid_uid) )
   {
-    state.add( Grid::create( grid ) );
+    eckit::ScopedPtr<Grid> grid( Grid::create( grid_uid ) );
     if( !geometry.has("ngptot") ) {
-      geometry.set("ngptot",state.grid().npts());
+      geometry.set("ngptot",grid->npts());
     }
   }
 
@@ -115,8 +115,6 @@ BOOST_AUTO_TEST_CASE( state )
 {
   State state;
   BOOST_CHECK_EQUAL( state.nb_fields() , 0 );
-  BOOST_CHECK_EQUAL( state.nb_meshes() , 0 );
-  BOOST_CHECK_EQUAL( state.nb_grids()  , 0 );
 
   state.add( Field::create( make_shape(10,1) , Config("name","myfield") ) );
   state.add( Field::create( make_shape(10,2) ) );
@@ -139,8 +137,6 @@ BOOST_AUTO_TEST_CASE( state )
   BOOST_CHECK_EQUAL( state.nb_fields() , 1 );
   BOOST_CHECK( ! state.has_field("field_00002") );
 
-  Grid& grid = state.add( Grid::create("rgg.N16") );
-  Mesh& mesh = state.add( Mesh::create(grid) );
 }
 
 BOOST_AUTO_TEST_CASE( state_generator )
@@ -194,28 +190,27 @@ BOOST_AUTO_TEST_CASE( state_create )
   // And if we have a json file, we could create Parameters from the file:
     // StateGenerater::Parameters from_json_file( eckit::PathName("file.json") );
 
-  eckit::ScopedPtr<State> state ( State::create("MyStateGenerator",p) );
+  State state ( "MyStateGenerator",p );
 
-  BOOST_CHECK( state->has_field("temperature") );
-  BOOST_CHECK( state->has_field("wind") );
-  BOOST_CHECK( state->has_field("soiltype") );
-  BOOST_CHECK( state->has_grid() );
+  BOOST_CHECK( state.has_field("temperature") );
+  BOOST_CHECK( state.has_field("wind") );
+  BOOST_CHECK( state.has_field("soiltype") );
 
-  eckit::Log::info() << state->field("temperature") << std::endl;
-  eckit::Log::info() << state->field("wind")        << std::endl;
-  eckit::Log::info() << state->field("soiltype")    << std::endl;
-  eckit::Log::info() << state->field("GFL")         << std::endl;
+  eckit::Log::info() << state.field("temperature") << std::endl;
+  eckit::Log::info() << state.field("wind")        << std::endl;
+  eckit::Log::info() << state.field("soiltype")    << std::endl;
+  eckit::Log::info() << state.field("GFL")         << std::endl;
 
-  ArrayView<float,4> temperature( state->field("temperature") );
+  ArrayView<float,4> temperature( state.field("temperature") );
   temperature(0,0,0,0) = 0;
 
-  ArrayView<double,4> wind( state->field("wind") );
+  ArrayView<double,4> wind( state.field("wind") );
   wind(0,0,0,0) = 0;
 
-  ArrayView<int,4> soiltype( state->field("soiltype") );
+  ArrayView<int,4> soiltype( state.field("soiltype") );
   soiltype(0,0,0,0) = 0;
 
-  ArrayView<long,2> array( state->field("array") );
+  ArrayView<long,2> array( state.field("array") );
   array(0,0) = 0;
 
 }

@@ -28,39 +28,20 @@ TYPE, extends(object_type) :: atlas_State
 contains
 
 !-- Field
-  procedure, private :: add_field    => atlas_State__add_field
+  procedure, public :: add    => atlas_State__add_field
   procedure, public :: remove_field => atlas_State__remove_field
   procedure, public :: has_field    => atlas_State__has_field
   procedure, public :: nb_fields    => atlas_State__nb_fields
   procedure, private :: field_by_name  => atlas_State__field_by_name
   procedure, private :: field_by_index => atlas_State__field_by_index
   generic, public :: field => field_by_name, field_by_index
-
-!-- Grids
-  procedure, private :: add_grid    => atlas_State__add_grid
-  procedure, public :: remove_grid => atlas_State__remove_grid
-  procedure, public :: has_grid    => atlas_State__has_grid
-  procedure, public :: nb_grids    => atlas_State__nb_grids
-  procedure, private :: grid_by_name  => atlas_State__grid_by_name
-  procedure, private :: grid_by_index => atlas_State__grid_by_index
-  generic, public :: grid => grid_by_name, grid_by_index
-
-!-- Meshes
-  procedure, private :: add_mesh    => atlas_State__add_mesh
-  procedure, public :: remove_mesh => atlas_State__remove_mesh
-  procedure, public :: has_mesh    => atlas_State__has_mesh
-  procedure, public :: nb_meshes   => atlas_State__nb_meshes
-  procedure, private :: mesh_by_name  => atlas_State__mesh_by_name
-  procedure, private :: mesh_by_index => atlas_State__mesh_by_index
-  generic, public :: mesh => mesh_by_name, mesh_by_index
-
-  generic, public :: add => add_field, add_grid, add_mesh
+  procedure, public :: metadata => atlas_State__metadata
 
 END TYPE atlas_State
 
 interface atlas_State
   module procedure atlas_State__new
-  module procedure atlas_State__create
+  module procedure atlas_State__generate
 end interface
 
 !------------------------------------------------------------------------------
