@@ -49,8 +49,6 @@ class FieldT : public Field {
 
 public: // methods
 
-  FieldT(const std::string& name, const int nb_vars);
-
   FieldT(const ArrayShape& shape, const eckit::Parametrisation& = Config() );
 
   virtual ~FieldT();
@@ -77,14 +75,6 @@ protected:
   }
 
 };
-
-
-template< typename DATA_TYPE >
-inline FieldT<DATA_TYPE>::FieldT(const std::string& name, const int nb_vars) :
-  Field(name,nb_vars)
-{
-  array_.reset( new Array<DATA_TYPE>() );
-}
 
 template< typename DATA_TYPE >
 inline FieldT<DATA_TYPE>::FieldT(const std::vector<size_t>& shape, const eckit::Parametrisation& params) :

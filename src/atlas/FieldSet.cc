@@ -47,7 +47,7 @@ Field& FieldSet::field(const std::string& name) const
 }
 
 
-FieldSet::FieldSet(const Field::Vector& fields) :
+FieldSet::FieldSet(const std::vector< Field::Ptr >& fields) :
   fields_(fields)
 {
 }

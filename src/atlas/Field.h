@@ -125,18 +125,12 @@ protected: // members
 /***************************************************************************/
 private:
 
-  size_t nb_vars_;
   const Grid* grid_;
   FunctionSpace* function_space_;
 
 public:
 
-  typedef std::vector< Field::Ptr > Vector;
   enum { UNDEF_VARS = 2147483647 }; // = std::numeric_limits<int>::max() (integer because of fortran)
-
-  Field(const std::string& name, const size_t nb_vars);
-
-  size_t nb_vars() const { return nb_vars_; }
 
   FunctionSpace& function_space() const;
 
@@ -168,7 +162,6 @@ extern "C"
   void atlas__Field__datatype (Field* This, Char* &datatype, int &size, int &allocated);
   int atlas__Field__size (Field* This);
   double atlas__Field__bytes (Field* This);
-  int atlas__Field__nb_vars (Field* This);
   void atlas__Field__shapef (Field* This, int* &shape, int &rank);
   void atlas__Field__data_shapef_int (Field* This, int* &field_data, int* &field_shapef, int &rank);
   void atlas__Field__data_shapef_long (Field* This, long* &field_data, int* &field_shapef, int &rank);

@@ -70,12 +70,6 @@ function Field__bytes(this) result(bytes)
   bytes = atlas__Field__bytes(this%cpp_object_ptr)
 end function Field__bytes
 
-function Field__nb_vars(this) result(nb_vars)
-  class(atlas_Field), intent(in) :: this
-  integer :: nb_vars
-  nb_vars = atlas__Field__nb_vars(this%cpp_object_ptr)
-end function Field__nb_vars
-
 function Field__metadata(this) result(metadata)
   class(atlas_Field), intent(in) :: this
   type(atlas_Metadata) :: Metadata

@@ -283,7 +283,11 @@ void Trans::dirtrans(const FieldSet& gpfields, FieldSet& spfields, const TransPa
   for( int jfld=0; jfld<gpfields.size(); ++jfld )
   {
     const Field& f = gpfields[jfld];
-    nfld += f.nb_vars();
+
+    if( f.shape().size() != 2 ) NOTIMP;
+
+    // This is the variables index, assumed is that there are no vertical levels
+    nfld += f.shape(1);
 
     if( jfld == 0 ) { gp = FunctionSpace::Ptr( &f.function_space() ); }
     else {
@@ -297,7 +301,12 @@ void Trans::dirtrans(const FieldSet& gpfields, FieldSet& spfields, const TransPa
   for( int jfld=0; jfld<spfields.size(); ++jfld )
   {
     const Field& f = spfields[jfld];
-    trans_spnfld += f.nb_vars();
+
+    if( f.shape().size() != 2 ) NOTIMP;
+
+    // This is the variables index, assumed is that there are no vertical levels
+    trans_spnfld += f.shape(1);
+
     if( jfld == 0 ) { sp = FunctionSpace::Ptr( &f.function_space() ); }
     else {
       if( &f.function_space() != sp.get() )
@@ -401,7 +410,7 @@ void Trans::invtrans(const FieldSet& spfields, FieldSet& gpfields, const TransPa
   for( int jfld=0; jfld<gpfields.size(); ++jfld )
   {
     const Field& f = gpfields[jfld];
-    nfld += f.nb_vars();
+    nfld += f.shape(1);
 
     if( jfld == 0 ) { gp = FunctionSpace::Ptr( &f.function_space() ); }
     else {
@@ -415,7 +424,7 @@ void Trans::invtrans(const FieldSet& spfields, FieldSet& gpfields, const TransPa
   for( int jfld=0; jfld<spfields.size(); ++jfld )
   {
     const Field& f = spfields[jfld];
-    nb_spectral_fields += f.nb_vars();
+    nb_spectral_fields += f.shape(1);
     if( jfld == 0 ) { sp = FunctionSpace::Ptr( &f.function_space() ); }
     else {
       if( &f.function_space() != sp.get() )

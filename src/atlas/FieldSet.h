@@ -45,7 +45,7 @@ public: // methods
   FieldSet(const std::string& name = "untitled");
 
   /// Constructs from predefined fields (takes ownership of the fields)
-  FieldSet(const Field::Vector& fields);
+  FieldSet(const std::vector< Field::Ptr >& fields);
 
   size_t size() const { return  fields_.size(); }
   bool empty()  const { return !fields_.size(); }
@@ -59,8 +59,8 @@ public: // methods
   const Field& field(const size_t& i) const { ASSERT(i<size()); return *fields_[i]; }
         Field& field(const size_t& i)       { ASSERT(i<size()); return *fields_[i]; }
 
-  const Field::Vector& fields() const { return fields_; }
-        Field::Vector& fields()       { return fields_; }
+  const std::vector< Field::Ptr >& fields() const { return fields_; }
+        std::vector< Field::Ptr >& fields()       { return fields_; }
 
   std::vector< std::string > field_names() const;
 
@@ -77,7 +77,7 @@ private: // methods
 
 protected: // data
 
-  Field::Vector                   fields_;  ///< field handle storage
+  std::vector< Field::Ptr >       fields_;  ///< field handle storage
   std::string                     name_;    ///< internal name
   std::map< std::string, size_t > index_;   ///< name-to-index map, to refer fields by name
 

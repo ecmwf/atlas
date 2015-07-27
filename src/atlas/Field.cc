@@ -61,17 +61,14 @@ Field* Field::create(const ArrayShape& shape, const eckit::Parametrisation& para
   return creator->create_field(shape,params);
 }
 
-Field::Field(const std::string& name, const size_t nb_vars) :
-  name_(name), nb_vars_(nb_vars), grid_(0), function_space_(0)
-{
-}
-
 Field::Field(const eckit::Parametrisation& params) :
-  name_(), nb_vars_(1), grid_(0), function_space_(0)
+  name_(), grid_(0), function_space_(0)
 {
   FunctionSpace::Id function_space;
   if( params.get("function_space",function_space) )
     function_space_ = &FunctionSpace::from_id(function_space);
+
+  //params.get("nb_vars",nb_vars_);
 
   params.get("name",name_);
 }
@@ -226,11 +223,6 @@ double atlas__Field__bytes (Field* This)
     return This->bytes();
   );
   return 0;
-}
-
-int atlas__Field__nb_vars (Field* This)
-{
-  return This->nb_vars();
 }
 
 Metadata* atlas__Field__metadata (Field* This)

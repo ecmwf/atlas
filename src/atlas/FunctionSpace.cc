@@ -102,7 +102,7 @@ void FunctionSpace::resize(const std::vector<size_t>& shape)
 		for (size_t i=0; i<extsize; ++i)
 		{
 			if( shape_[i] == Field::UNDEF_VARS )
-				field_shape[i] = fields_[f]->nb_vars();
+				field_shape[i] = fields_[f]->shape(i);
 			else
 				field_shape[i] = shape_[i];
 		}
@@ -130,11 +130,6 @@ namespace {
 			}
 
 			Field& f= fs->field(name);
-			if( f.nb_vars() != nb_vars )
-			{
-				std::ostringstream msg; msg << "field exists with name " << name << " has unexpected nb vars " << f.nb_vars() << " instead of " << nb_vars << std::endl;
-				throw eckit::Exception(msg.str(),Here());
-			}
 
 			if( f.shape() != shape )
 			{
@@ -171,13 +166,15 @@ Field& FunctionSpace::create_field<double>(const std::string& name, size_t nb_va
 	if( (field = check_if_exists<double>(this, name, field_shape, nb_vars, b )) )
 		return *field;
 
-	field = new FieldT<double>(name,nb_vars);
-	fields_.insert( name, Field::Ptr(field) );
+	field = new FieldT<double>(field_shape,Config("name",name));
+
+  // To be removed
+  field->set_function_space(*this);
+
+  fields_.insert( name, Field::Ptr(field) );
 	fields_.sort();
 
-        field->set_function_space(*this);
-	field->resize(field_shape);
-	return *field;
+  return *field;
 }
 
 template <>
@@ -198,11 +195,14 @@ Field& FunctionSpace::create_field<float>(const std::string& name, size_t nb_var
 	if( (field = check_if_exists<float>(this, name, field_shape, nb_vars, b )) )
 		return *field;
 
-	field = new FieldT<float>(name,nb_vars);
-	fields_.insert( name, Field::Ptr(field) );
-	fields_.sort();
+  field = new FieldT<float>(field_shape,Config("name",name));
+
+  // To be removed
   field->set_function_space(*this);
-	field->resize(field_shape);
+
+  fields_.insert( name, Field::Ptr(field) );
+	fields_.sort();
+
 	return *field;
 }
 
@@ -224,13 +224,14 @@ Field& FunctionSpace::create_field<int>(const std::string& name, size_t nb_vars,
 	if( (field = check_if_exists<int>(this, name, field_shape, nb_vars, b )) )
 		return *field;
 
-	field = new FieldT<int>(name,nb_vars);
+  field = new FieldT<int>(field_shape,Config("name",name));
 
-	fields_.insert( name, Field::Ptr(field) );
+  // To be removed
+  field->set_function_space(*this);
+
+  fields_.insert( name, Field::Ptr(field) );
 	fields_.sort();
 
-  field->set_function_space(*this);
-	field->resize(field_shape);
 	return *field;
 }
 
@@ -252,12 +253,14 @@ Field& FunctionSpace::create_field<long>(const std::string& name, size_t nb_vars
 	if( (field = check_if_exists<long>(this, name, field_shape, nb_vars, b )) )
 		return *field;
 
-	field = new FieldT<long>(name,nb_vars);
+  field = new FieldT<long>(field_shape,Config("name",name));
 
-	fields_.insert( name, Field::Ptr(field) );
+  // To be removed
+  field->set_function_space(*this);
+
+  fields_.insert( name, Field::Ptr(field) );
 	fields_.sort();
 
-	field->resize(field_shape);
 	return *field;
 }
 
