@@ -77,7 +77,7 @@ public:
   size_t nlonmax() const;
 
   // Note that this is not the same type as the constructor
-  // We retrun vector<int> for the fortran
+  // We return vector<int> for the fortran
   const std::vector<long>& points_per_latitude() const;
   const std::vector<int>& npts_per_lat() const;
 
