@@ -425,11 +425,11 @@ void build_edges( Mesh& mesh )
   int nb_edges = nb_faces;
   if( ! mesh.has_function_space("edges") )
   {
-    mesh.create_function_space( "edges", "shapefunc", make_shape(nb_edges,Field::UNDEF_VARS) );
+    mesh.create_function_space( "edges", "shapefunc", make_shape(nb_edges,FunctionSpace::UNDEF_VARS) );
   }
   FunctionSpace& edges = mesh.function_space("edges");
   edges.metadata().set<long>("type",Entity::FACES);
-  edges.resize(make_shape(nb_edges,Field::UNDEF_VARS));
+  edges.resize(make_shape(nb_edges,FunctionSpace::UNDEF_VARS));
 
   if( ! edges.has_field("nodes")      )  edges.create_field<int>("nodes",     2);
   if( ! edges.has_field("glb_idx")    )  edges.create_field<gidx_t>("glb_idx",   1);
@@ -508,7 +508,7 @@ void build_pole_edges( Mesh& mesh )
   size_t nb_edges = 0;
 
   if( ! mesh.has_function_space("edges") )
-	mesh.create_function_space( "edges","shapefunc", make_shape(nb_edges,Field::UNDEF_VARS) );
+	mesh.create_function_space( "edges","shapefunc", make_shape(nb_edges,FunctionSpace::UNDEF_VARS) );
 
   FunctionSpace& edges = mesh.function_space("edges");
   edges.metadata().set<long>("type",Entity::FACES);
@@ -518,7 +518,7 @@ void build_pole_edges( Mesh& mesh )
   int nb_pole_edges;
   std::vector<int> pole_edge_nodes;
   accumulate_pole_edges( mesh, pole_edge_nodes, nb_pole_edges );
-  edges.resize( make_shape(nb_edges+nb_pole_edges, Field::UNDEF_VARS) );
+  edges.resize( make_shape(nb_edges+nb_pole_edges, FunctionSpace::UNDEF_VARS) );
 
 
   if( ! edges.has_field("nodes")      )    edges.create_field<int>("nodes",     2);

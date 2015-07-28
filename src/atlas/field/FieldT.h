@@ -49,15 +49,18 @@ class FieldT : public Field {
 
 public: // methods
 
-  FieldT(const ArrayShape& shape, const eckit::Parametrisation& = Config() );
+  FieldT(const ArrayShape& shape);
+
+  FieldT(const std::string& name, const ArrayShape& shape);
+
+  // Deprecated
+  FieldT(const ArrayShape& shape, const eckit::Parametrisation& );
 
   virtual ~FieldT();
 
 protected:
 
   virtual size_t size() const { return array_->size(); }
-
-  virtual void halo_exchange(); // To be removed
 
   virtual double bytes() const { return sizeof(DATA_TYPE)*size(); }
 
@@ -76,12 +79,30 @@ protected:
 
 };
 
+
+template< typename DATA_TYPE >
+inline FieldT<DATA_TYPE>::FieldT(const ArrayShape& shape) :
+  Field()
+{
+  array_.reset( new Array<DATA_TYPE>() );
+  resize(shape);
+}
+
+
+template< typename DATA_TYPE >
+inline FieldT<DATA_TYPE>::FieldT(const std::string& name, const ArrayShape& shape) :
+  Field(name)
+{
+  array_.reset( new Array<DATA_TYPE>() );
+  resize(shape);
+}
+
+
 template< typename DATA_TYPE >
 inline FieldT<DATA_TYPE>::FieldT(const std::vector<size_t>& shape, const eckit::Parametrisation& params) :
   Field(params)
 {
   array_.reset( new Array<DATA_TYPE>() );
-
   bool fortran(false);
   params.get("fortran",fortran);
   if( fortran ) {
@@ -101,6 +122,7 @@ template< typename DATA_TYPE >
 inline FieldT<DATA_TYPE>::~FieldT()
 {
 }
+
 
 //------------------------------------------------------------------------------------------------------
 

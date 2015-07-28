@@ -402,7 +402,7 @@ void Gmsh::read(const PathName& file_path, Mesh& mesh ) const
   std::vector<size_t> extents(2);
 
   extents[0] = nb_nodes;
-  extents[1] = Field::UNDEF_VARS;
+  extents[1] = FunctionSpace::UNDEF_VARS;
 
   if( mesh.has_function_space("nodes") )
   {

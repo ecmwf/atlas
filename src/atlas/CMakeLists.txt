@@ -257,6 +257,10 @@ field/FieldT.cc
 field/FieldT.h
 field/FieldTCreator.h
 field/FieldTCreator.cc
+functionspace/NodesFunctionSpace.h
+functionspace/NodesFunctionSpace.cc
+functionspace/SpectralFunctionSpace.h
+functionspace/SpectralFunctionSpace.cc
 )
 
 ### atlas c++ library

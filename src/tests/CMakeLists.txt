@@ -107,14 +107,12 @@ ecbuild_add_test( TARGET atlas_test_state
   LIBS     atlas
 )
 
-if( 0 )
 ecbuild_add_test( TARGET atlas_test_functionspace
   BOOST
   MPI      1
   SOURCES  test_functionspace.cc
-  LIBS     atlas eckit_maths
+  LIBS     atlas
 )
-endif()
 
 ecbuild_add_test( TARGET atlas_test_gmsh
   BOOST

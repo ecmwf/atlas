@@ -61,6 +61,16 @@ Field* Field::create(const ArrayShape& shape, const eckit::Parametrisation& para
   return creator->create_field(shape,params);
 }
 
+Field::Field() :
+  name_()
+{
+}
+
+Field::Field(const std::string& name) :
+  name_(name)
+{
+}
+
 Field::Field(const eckit::Parametrisation& params) :
   name_(), grid_(0), function_space_(0)
 {

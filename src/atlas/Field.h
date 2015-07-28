@@ -46,6 +46,10 @@ public: // Static methods
 public: // methods
 
 // -- Constructor / Destructor
+  Field();
+
+  Field(const std::string& name);
+
   Field(const eckit::Parametrisation&);
 
   virtual ~Field();
@@ -89,6 +93,9 @@ public: // methods
   /// @brief Number of values stored in this field
   size_t size() const { return array_->size(); }
 
+  /// @brief Rank of field
+  size_t rank() const { return array_->rank(); }
+
   /// @brief Number of bytes occupied by the values of this field
   virtual double bytes() const = 0;
 
@@ -130,8 +137,6 @@ private:
 
 public:
 
-  enum { UNDEF_VARS = 2147483647 }; // = std::numeric_limits<int>::max() (integer because of fortran)
-
   FunctionSpace& function_space() const;
 
   const Grid& grid() const;
@@ -139,9 +144,9 @@ public:
   const Mesh& mesh() const;
         Mesh& mesh();
 
+private:
+  friend FunctionSpace;
   void set_function_space(const FunctionSpace& function_space);
-
-  virtual void halo_exchange() = 0;
 
 /***************************************************************************/
 /* End Public and private members and  methods to be removed soon          */

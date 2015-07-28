@@ -800,7 +800,7 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
   }
 
 
-  ArrayShape shape = make_shape(nnodes,Field::UNDEF_VARS);
+  ArrayShape shape = make_shape(nnodes,FunctionSpace::UNDEF_VARS);
 
   if( !mesh.has_function_space("nodes") )
   mesh.create_function_space( "nodes","LagrangeP1",shape );
@@ -895,7 +895,7 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
     ++jnode;
   }
 
-  shape = make_shape(nquads,Field::UNDEF_VARS);
+  shape = make_shape(nquads,FunctionSpace::UNDEF_VARS);
 
   FunctionSpace& quads = mesh.create_function_space( "quads","LagrangeP1",shape );
   quads.metadata().set<long>("type",static_cast<int>(Entity::ELEMS));
@@ -903,7 +903,7 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
   ArrayView<gidx_t,1> quad_glb_idx( quads.create_field<gidx_t>("glb_idx",1) );
   ArrayView<int,1> quad_part( quads.create_field<int>("partition",1) );
 
-  shape = make_shape(ntriags,Field::UNDEF_VARS);
+  shape = make_shape(ntriags,FunctionSpace::UNDEF_VARS);
   FunctionSpace& triags = mesh.create_function_space( "triags","LagrangeP1",shape );
   triags.metadata().set<long>("type",static_cast<int>(Entity::ELEMS));
   IndexView<int,2> triag_nodes( triags.create_field<int>("nodes",3) );

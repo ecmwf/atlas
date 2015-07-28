@@ -108,7 +108,7 @@ FunctionSpace& Mesh::add_nodes(size_t nb_nodes)
   if( has_function_space("nodes") )
     throw eckit::Exception("Nodes have already been added before", Here());
 
-  ArrayShape shape = make_shape(nb_nodes,Field::UNDEF_VARS);
+  ArrayShape shape = make_shape(nb_nodes,FunctionSpace::UNDEF_VARS);
 
   FunctionSpace& nodes = create_function_space( "nodes","LagrangeP1",shape );
   nodes.metadata().set<long>("type",static_cast<int>(Entity::NODES));

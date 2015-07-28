@@ -107,7 +107,7 @@ static void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, Poin
 
     std::vector<size_t> extents(2);
     extents[0] = nb_triags;
-    extents[1] = Field::UNDEF_VARS;
+    extents[1] = FunctionSpace::UNDEF_VARS;
 
     FunctionSpace& triags  = mesh.create_function_space( "triags", "Lagrange_P1", extents );
     triags.metadata().set<long>("type",Entity::ELEMS);
@@ -182,7 +182,7 @@ static void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, Poin
 
     std::vector<size_t> quads_extents(2);
     extents[0] = nb_quads;
-    extents[1] = Field::UNDEF_VARS;
+    extents[1] = FunctionSpace::UNDEF_VARS;
 
     FunctionSpace& quads  = mesh.create_function_space( "quads", "Lagrange_P1", quads_extents );
     quads.metadata().set<long>("type",Entity::ELEMS);

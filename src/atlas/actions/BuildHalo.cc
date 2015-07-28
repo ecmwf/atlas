@@ -540,7 +540,7 @@ void increase_halo( Mesh& mesh )
 
   //DEBUG_VAR(nb_new_nodes);
 
-  nodes.resize( make_shape( nb_nodes+nb_new_nodes, Field::UNDEF_VARS ) );
+  nodes.resize( make_shape( nb_nodes+nb_new_nodes, FunctionSpace::UNDEF_VARS ) );
 
   flags   = ArrayView<int,   1>( nodes.field("flags") );
   glb_idx = ArrayView<gidx_t,1>( nodes.field("glb_idx") );
@@ -616,7 +616,7 @@ void increase_halo( Mesh& mesh )
       //DEBUG_VAR( nb_new_elems );
 
       int nb_nodes_per_elem = elem_nodes[f].shape(1);
-      elements.resize( make_shape( nb_elems+nb_new_elems, Field::UNDEF_VARS ) );
+      elements.resize( make_shape( nb_elems+nb_new_elems, FunctionSpace::UNDEF_VARS ) );
       elem_glb_idx[f] = ArrayView<gidx_t,1>( elements.field("glb_idx") );
       elem_nodes[f]   = IndexView<int,2>( elements.field("nodes")   );
       elem_part[f]    = ArrayView<int,1>( elements.field("partition")   );
@@ -1140,7 +1140,7 @@ public:
 
     // Resize nodes
     // ------------
-    nodes.resize( make_shape( nb_nodes+nb_new_nodes, Field::UNDEF_VARS ) );
+    nodes.resize( make_shape( nb_nodes+nb_new_nodes, FunctionSpace::UNDEF_VARS ) );
     flags   = ArrayView<int,   1>( nodes.field("flags") );
     glb_idx = ArrayView<gidx_t,1>( nodes.field("glb_idx") );
     part    = ArrayView<int,   1>( nodes.field("partition") );
@@ -1221,7 +1221,7 @@ public:
 
         // Resize elements
         // ---------------
-        elements.resize( make_shape( nb_elems+nb_new_elems, Field::UNDEF_VARS ) );
+        elements.resize( make_shape( nb_elems+nb_new_elems, FunctionSpace::UNDEF_VARS ) );
         elem_glb_idx[f] = ArrayView<gidx_t,1>( elements.field("glb_idx") );
         elem_nodes[f]   = IndexView<int,2>( elements.field("nodes")   );
         elem_part[f]    = ArrayView<int,1>( elements.field("partition")   );

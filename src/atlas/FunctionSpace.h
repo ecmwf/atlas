@@ -11,6 +11,85 @@
 #ifndef atlas_FunctionSpace_h
 #define atlas_FunctionSpace_h
 
+#include <string>
+#include "eckit/memory/Owned.h"
+#include "eckit/config/Parametrisation.h"
+#include "atlas/Config.h"
+
+namespace atlas {
+namespace next { // Temporary namespace for new design
+
+/// @brief FunctionSpace class helps to interprete Fields.
+/// @note  Abstract base class
+class FunctionSpace : public eckit::Owned
+{
+public:
+  FunctionSpace(const std::string& name) : name_(name) {}
+  virtual ~FunctionSpace() = 0;
+  const std::string& name() const { return name_; }
+private:
+  std::string name_;
+};
+
+inline FunctionSpace::~FunctionSpace() {}
+
+} // namespace next
+} // namespace atlas
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------
+
+
 #include <iosfwd>
 #include <string>
 #include <vector>
@@ -47,6 +126,8 @@ class FunctionSpace : public eckit::Owned, public util::Registered<FunctionSpace
 public: // types
 
 	typedef eckit::SharedPtr<FunctionSpace> Ptr;
+
+  enum { UNDEF_VARS = 2147483647 }; // = std::numeric_limits<int>::max() (integer because of fortran)
 
 public: // methods
 

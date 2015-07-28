@@ -15,16 +15,6 @@
 namespace atlas {
 namespace field {
 
-template<>
-void FieldT<int>::halo_exchange() { function_space().halo_exchange(array_->data<int>(),array_->size()); }
-template<>
-void FieldT<long>::halo_exchange() { function_space().halo_exchange(array_->data<long>(),array_->size()); }
-template<>
-void FieldT<float>::halo_exchange() { function_space().halo_exchange(array_->data<float>(),array_->size()); }
-template<>
-void FieldT<double>::halo_exchange() { function_space().halo_exchange(array_->data<double>(),array_->size()); }
-
-
 // ------------------------------------------------------------------
 
 } // namespace field

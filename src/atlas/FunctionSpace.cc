@@ -59,7 +59,7 @@ FunctionSpace::FunctionSpace(const std::string& name,
   for (size_t i=0; i<extsize; ++i)
   {
     shapef_[extsize-1-i] = shape_[i];
-    if( shape_[i] != Field::UNDEF_VARS )
+    if( shape_[i] != FunctionSpace::UNDEF_VARS )
       dof_ *= shape_[i];
   }
   glb_dof_ = dof_;
@@ -92,7 +92,7 @@ void FunctionSpace::resize(const std::vector<size_t>& shape)
 	dof_ = 1;
 	for (size_t i=0; i<extsize; ++i)
 	{
-		if( shape_[i] != Field::UNDEF_VARS )
+		if( shape_[i] != FunctionSpace::UNDEF_VARS )
 			dof_ *= shape_[i];
 	}
 
@@ -101,7 +101,7 @@ void FunctionSpace::resize(const std::vector<size_t>& shape)
 		std::vector< size_t > field_shape(extsize);
 		for (size_t i=0; i<extsize; ++i)
 		{
-			if( shape_[i] == Field::UNDEF_VARS )
+			if( shape_[i] == FunctionSpace::UNDEF_VARS )
 				field_shape[i] = fields_[f]->shape(i);
 			else
 				field_shape[i] = shape_[i];
@@ -157,7 +157,7 @@ Field& FunctionSpace::create_field<double>(const std::string& name, size_t nb_va
 	std::vector< size_t > field_shape(rank);
 	for (size_t i=0; i<rank; ++i)
 	{
-		if( shape_[i] == Field::UNDEF_VARS )
+		if( shape_[i] == FunctionSpace::UNDEF_VARS )
 			field_shape[i] = nb_vars;
 		else
 			field_shape[i] = shape_[i];
@@ -186,7 +186,7 @@ Field& FunctionSpace::create_field<float>(const std::string& name, size_t nb_var
 	std::vector< size_t > field_shape(rank);
 	for (size_t i=0; i<rank; ++i)
 	{
-		if( shape_[i] == Field::UNDEF_VARS )
+		if( shape_[i] == FunctionSpace::UNDEF_VARS )
 			field_shape[i] = nb_vars;
 		else
 			field_shape[i] = shape_[i];
@@ -215,7 +215,7 @@ Field& FunctionSpace::create_field<int>(const std::string& name, size_t nb_vars,
 	std::vector< size_t > field_shape(rank);
 	for (size_t i=0; i<rank; ++i)
 	{
-		if( shape_[i] == Field::UNDEF_VARS )
+		if( shape_[i] == FunctionSpace::UNDEF_VARS )
 			field_shape[i] = nb_vars;
 		else
 			field_shape[i] = shape_[i];
@@ -244,7 +244,7 @@ Field& FunctionSpace::create_field<long>(const std::string& name, size_t nb_vars
 	std::vector< size_t > field_shape(rank);
 	for (size_t i=0; i<rank; ++i)
 	{
-		if( shape_[i] == Field::UNDEF_VARS )
+		if( shape_[i] == FunctionSpace::UNDEF_VARS )
 			field_shape[i] = nb_vars;
 		else
 			field_shape[i] = shape_[i];
@@ -309,7 +309,7 @@ void FunctionSpace::parallelise(const int part[], const int remote_idx[], const 
 	glb_dof_ = gather_scatter_->glb_dof();
 	for( int b=shapef_.size()-2; b>=0; --b)
 	{
-		if( shapef_[b] != Field::UNDEF_VARS )
+		if( shapef_[b] != FunctionSpace::UNDEF_VARS )
 			glb_dof_ *= shapef_[b];
 	}
 }
@@ -341,7 +341,7 @@ void FunctionSpace::parallelise()
     glb_dof_ = gather_scatter_->glb_dof();
     for( int b=shapef_.size()-2; b>=0; --b)
     {
-      if( shapef_[b] != Field::UNDEF_VARS )
+      if( shapef_[b] != FunctionSpace::UNDEF_VARS )
         glb_dof_ *= shapef_[b];
     }
   }
@@ -355,7 +355,7 @@ void FunctionSpace::parallelise()
   glb_dof_ = gather_scatter_->glb_dof();
   for( int b=shapef_.size()-2; b>=0; --b)
   {
-    if( shapef_[b] != Field::UNDEF_VARS )
+    if( shapef_[b] != FunctionSpace::UNDEF_VARS )
       glb_dof_ *= shapef_[b];
   }
 }
