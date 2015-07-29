@@ -28,7 +28,7 @@ public:
 
   /// @brief Create a spectral field
   template< typename DATATYPE >
-  Field* create_field(const std::string& name);
+  Field* createField(const std::string& name);
 
 private: // methods
 
@@ -42,6 +42,7 @@ private: // data
 
 // -------------------------------------------------------------------
 
+
 class SpectralColumnFunctionSpace : public next::FunctionSpace
 {
 public:
@@ -52,7 +53,7 @@ public:
 
   /// @brief Create a spectral field
   template< typename DATATYPE >
-  Field* create_field(const std::string& name);
+  Field* createField(const std::string& name);
 
 private: // methods
 

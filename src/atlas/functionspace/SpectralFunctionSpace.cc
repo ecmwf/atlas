@@ -29,11 +29,11 @@ size_t SpectralFunctionSpace::nspec2g() const {
   return (truncation_+1)*(truncation_+2);
 }
 
-template<> Field* SpectralFunctionSpace::create_field<float>(const std::string& name) {
+template<> Field* SpectralFunctionSpace::createField<float>(const std::string& name) {
   return new field::FieldT<float>(name, make_shape(nspec2g()) );
 }
 
-template<> Field* SpectralFunctionSpace::create_field<double>(const std::string& name) {
+template<> Field* SpectralFunctionSpace::createField<double>(const std::string& name) {
   return new field::FieldT<double>(name, make_shape(nspec2g()) );
 }
 
@@ -52,11 +52,11 @@ size_t SpectralColumnFunctionSpace::nspec2g() const {
   return (truncation_+1)*(truncation_+2);
 }
 
-template<> Field* SpectralColumnFunctionSpace::create_field<float>(const std::string& name) {
+template<> Field* SpectralColumnFunctionSpace::createField<float>(const std::string& name) {
   return new field::FieldT<float>(name, make_shape(nspec2g(),levels_) );
 }
 
-template<> Field* SpectralColumnFunctionSpace::create_field<double>(const std::string& name) {
+template<> Field* SpectralColumnFunctionSpace::createField<double>(const std::string& name) {
   return new field::FieldT<double>(name, make_shape(nspec2g(),levels_) );
 }
 

@@ -14,6 +14,7 @@
 #include <iosfwd>
 #include <string>
 #include <vector>
+#include <map>
 
 #include "eckit/container/DenseMap.h"
 #include "eckit/memory/Owned.h"
@@ -25,13 +26,48 @@
 
 //------------------------------------------------------------------------------------------------------
 
-namespace atlas {
-
-class Grid;
-class FunctionSpace;
-class GridDistribution;
+// Forward declarations
+namespace atlas { class Grid; }
+namespace atlas { class FunctionSpace; }
+namespace atlas { class GridDistribution; }
+namespace atlas { namespace mpl { class HaloExchange; } }
 
 //----------------------------------------------------------------------------------------------------------------------
+
+
+namespace atlas {
+
+template <typename T>
+class Store {
+public:
+  bool has(const std::string& name) const
+  {
+    return (store_.find(name) != store_.end());
+  }
+  void add( T* item )
+  {
+    ASSERT( !item->name().empty() );
+    store_[item->name()] = eckit::SharedPtr<T>(item);
+  }
+  T& get(const std::string& name)
+  {
+    if( ! has(name) ) throw eckit::OutOfRange(name+" not found in store.",Here());
+    return *store_.find(name)->second;
+  }
+  const T& get(const std::string& name) const
+  {
+    if( ! has(name) ) throw eckit::OutOfRange(name+" not found in store.",Here());
+    return *store_.find(name)->second;
+  }
+  void remove(const std::string& name)
+  {
+    if( ! has(name) ) throw eckit::OutOfRange(name+" not found in store.",Here());
+    store_.erase( store_.find(name) );
+  }
+private:
+  std::map< std::string, eckit::SharedPtr<T> > store_;
+};
+
 
 class Mesh : public eckit::Owned, public util::Registered<Mesh> {
 
@@ -92,6 +128,9 @@ public: // methods
 
     void print(std::ostream&) const;
 
+    const Store<const mpl::HaloExchange>& halo_exchange() const { return halo_exchange_; }
+          Store<const mpl::HaloExchange>& halo_exchange()       { return halo_exchange_; }
+
 private:  // methods
 
     friend std::ostream& operator<<(std::ostream& s, const Mesh& p) {
@@ -108,6 +147,8 @@ private: // members
     typedef eckit::DenseMap< std::string, eckit::SharedPtr<FunctionSpace> > StoreFS_t;
 
     StoreFS_t function_spaces_;
+
+    Store<const mpl::HaloExchange> halo_exchange_;
 
 };
 

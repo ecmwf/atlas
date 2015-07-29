@@ -14,6 +14,7 @@
 #ifndef HaloExchange_h
 #define HaloExchange_h
 
+#include <string>
 #include <vector>
 #include <stdexcept>
 
@@ -35,9 +36,12 @@ public: // types
     typedef eckit::SharedPtr<HaloExchange> Ptr;
 public:
   HaloExchange();
+  HaloExchange(const std::string& name);
   virtual ~HaloExchange() {}
 
 public: // methods
+
+  const std::string& name() const { return name_; }
 
   void setup( const int part[],
               const int remote_idx[], const int base,
@@ -84,6 +88,9 @@ private: // methods
                  std::vector<size_t>& varshape ) const;
 
 private: // data
+  std::string name_;
+  bool is_setup_;
+
   int               sendcnt_;
   int               recvcnt_;
   std::vector<int>  sendcounts_;
@@ -99,7 +106,7 @@ private: // data
 
   std::vector<int> bounds_;
   int par_bound_;
-  bool is_setup_;
+
 };
 
 

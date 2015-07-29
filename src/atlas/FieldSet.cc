@@ -22,6 +22,11 @@ FieldSet::FieldSet(const std::string &name) :
   name_(name.length()? name : "untitled")
 {}
 
+void FieldSet::add(Field& field)
+{
+  index_[field.name()] = fields_.size();
+  fields_.push_back( field.self() );
+}
 
 void FieldSet::add_field(Field::Ptr field)
 {

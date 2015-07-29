@@ -14,8 +14,10 @@
 
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/FunctionSpace.h"
+#include "atlas/FieldSet.h"
 
 namespace atlas { class Mesh; }
+namespace atlas { class FieldSet; }
 
 namespace atlas {
 namespace functionspace {
@@ -27,61 +29,65 @@ class NodesFunctionSpace : public next::FunctionSpace
 {
 public:
 
-  NodesFunctionSpace(const std::string& name, Mesh& mesh);
+  NodesFunctionSpace(const std::string& name, Mesh& mesh, size_t halo=0);
 
   virtual ~NodesFunctionSpace();
 
   /// @brief Create a scalar field
   template< typename DATATYPE >
-  Field* create_field(const std::string& name);
+  Field* createField(const std::string& name);
 
   /// @brief Create a vector field
   template< typename DATATYPE >
-  Field* create_field(const std::string& name, const size_t var1);
+  Field* createField(const std::string& name, size_t var1);
 
   /// @brief Create a tensor field
   template< typename DATATYPE >
-  Field* create_field(const std::string& name, const size_t var1, const size_t var2);
+  Field* createField(const std::string& name, size_t var1, size_t var2);
+
+  void haloExchange( FieldSet& );
+  void haloExchange( Field& );
+
+  size_t nb_nodes() const;
 
 private: // methods
 
-  size_t nb_nodes() const;
+  std::string halo_name() const;
 
 private: // data
 
   Mesh& mesh_; // non-const because functionspace may modify mesh
+  size_t halo_;
+  size_t nb_nodes_;
 };
 
 // -------------------------------------------------------------------
 
-class NodesColumnFunctionSpace : public next::FunctionSpace
+class NodesColumnFunctionSpace : public NodesFunctionSpace
 {
 public:
 
-  NodesColumnFunctionSpace(const std::string& name, Mesh& mesh, const size_t levels);
+  NodesColumnFunctionSpace(const std::string& name, Mesh& mesh, size_t nb_levels, size_t halo=0);
 
   virtual ~NodesColumnFunctionSpace();
 
   /// @brief Create a scalar field
   template< typename DATATYPE >
-  Field* create_field(const std::string& name);
+  Field* createField(const std::string& name);
 
   /// @brief Create a vector field
   template< typename DATATYPE >
-  Field* create_field(const std::string& name, const size_t var1);
+  Field* createField(const std::string& name, size_t var1);
 
   /// @brief Create a tensor field
   template< typename DATATYPE >
-  Field* create_field(const std::string& name, const size_t var1, const size_t var2);
+  Field* createField(const std::string& name, size_t var1, size_t var2);
 
-private: // methods
-
-  size_t nb_nodes() const;
+  size_t nb_levels() const;
 
 private: // data
 
-  Mesh& mesh_; // non-const because functionspace may modify mesh
-  size_t levels_;
+  size_t nb_levels_;
 };
 
 } // namespace functionspace

@@ -101,12 +101,17 @@ void build_parallel_fields( Mesh& mesh )
 
 void build_nodes_parallel_fields( FunctionSpace& nodes )
 {
-  ASSERT( nodes.has_field("lonlat") );
+  bool parallel = false;
+  nodes.metadata().get("parallel",parallel);
+  if( ! parallel )
+  {
+    ASSERT( nodes.has_field("lonlat") );
 
-  build_nodes_partition ( nodes );
-  build_nodes_remote_idx( nodes );
-  build_nodes_global_idx( nodes );
-
+    build_nodes_partition ( nodes );
+    build_nodes_remote_idx( nodes );
+    build_nodes_global_idx( nodes );
+  }
+  nodes.metadata().set("parallel",true);
 }
 
 // ------------------------------------------------------------------

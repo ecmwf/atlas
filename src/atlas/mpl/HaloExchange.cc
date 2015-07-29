@@ -46,6 +46,15 @@ struct IsGhostPoint
 }
 
 HaloExchange::HaloExchange() :
+  name_(),
+  is_setup_(false)
+{
+  myproc = eckit::mpi::rank();
+  nproc  = eckit::mpi::size();
+}
+
+HaloExchange::HaloExchange(const std::string& name) :
+  name_(name),
   is_setup_(false)
 {
   myproc = eckit::mpi::rank();

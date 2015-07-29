@@ -1312,7 +1312,7 @@ void increase_halo_interior( BuildHaloHelper& helper )
 
 class PeriodicPoints {
 public:
-  PeriodicPoints(Mesh& mesh, int flag, int N)
+  PeriodicPoints(Mesh& mesh, int flag, size_t N)
   {
     flag_ = flag;
     N_ = N;
@@ -1400,9 +1400,12 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
 
 void build_halo(Mesh& mesh, int nb_elems )
 {
-  for( int jhalo=0; jhalo<nb_elems; ++jhalo )
+  size_t jhalo = 0;
+  mesh.metadata().get("halo",jhalo);
+
+  for( ; jhalo<nb_elems; ++jhalo )
   {
-    int nb_nodes_before_halo_increase = mesh.function_space("nodes").shape(0);
+    size_t nb_nodes_before_halo_increase = mesh.function_space("nodes").shape(0);
 
     BuildHaloHelper helper(mesh);
 
@@ -1415,7 +1418,13 @@ void build_halo(Mesh& mesh, int nb_elems )
     PeriodicPoints eastpts(mesh,Topology::PERIODIC|Topology::EAST,nb_nodes_before_halo_increase);
 
     increase_halo_periodic( helper, eastpts, EastWest(), Topology::PERIODIC|Topology::EAST|Topology::GHOST );
+
+    std::stringstream ss;
+    ss << "nb_nodes_including_halo["<<jhalo+1<<"]";
+    mesh.metadata().set(ss.str(),mesh.function_space("nodes").shape(0));
   }
+
+  mesh.metadata().set("halo",nb_elems);
 }
 
 

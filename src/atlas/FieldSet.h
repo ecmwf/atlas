@@ -64,6 +64,11 @@ public: // methods
 
   std::vector< std::string > field_names() const;
 
+  // FieldSet does *not* have ownership of fields. It is merely a convenience.
+  // Consider the State class to keep ownership of Fields.
+  void add(Field&);
+
+  // remove
   void add_field(Field::Ptr field);
 
   bool has_field(const std::string& name) const;

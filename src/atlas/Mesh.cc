@@ -124,6 +124,7 @@ FunctionSpace& Mesh::add_nodes(size_t nb_nodes)
     part(n) = eckit::mpi::rank();
     flags(n) = 0;
   }
+  nodes.metadata().set("nb_owned",nb_nodes);
 
   return nodes;
 }
