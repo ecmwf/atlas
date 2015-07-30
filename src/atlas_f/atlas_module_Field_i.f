@@ -23,7 +23,8 @@ contains
   procedure :: datatype => Field__datatype
   procedure :: metadata => Field__metadata
   procedure :: function_space => Field__function_space
-  procedure :: shape => Field__shape
+  procedure, private :: shape_array => Field__shape_array
+  procedure, private :: shape_idx   => Field__shape_idx
   procedure :: size => Field__size
   procedure :: bytes => Field__bytes
   procedure, private :: access_data1_int32 => Field__access_data1_int32
@@ -41,6 +42,7 @@ contains
   procedure, private :: access_data2_real64_bounds => Field__access_data2_real64_bounds
   procedure, private :: access_data3_real64_bounds => Field__access_data3_real64_bounds
   procedure, private :: access_data4_real64_bounds => Field__access_data4_real64_bounds
+  generic :: shape => shape_array, shape_idx
   generic :: access_data => &
     & access_data1_int32, access_data1_int64, access_data1_real32, access_data1_real64, &
     & access_data2_int32, access_data2_int64, access_data2_real32, access_data2_real64, access_data2_real64_bounds, &

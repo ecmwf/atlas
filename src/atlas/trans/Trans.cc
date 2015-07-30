@@ -76,9 +76,11 @@ Trans::Trans(const size_t N, const size_t nsmax, const Trans::Options& p)
   ctor_rgg(npts_per_lat.size(),npts_per_lat.data(), nsmax, p);
 }
 
-Trans::Trans( const std::vector<int>& npts_per_lat, const size_t nsmax, const Trans::Options& p )
+Trans::Trans( const std::vector<size_t>& npts_per_lat, const size_t nsmax, const Trans::Options& p )
 {
-  ctor_rgg(npts_per_lat.size(),npts_per_lat.data(), nsmax, p);
+  std::vector<int> nloen;
+  nloen.assign(npts_per_lat.begin(),npts_per_lat.end());
+  ctor_rgg(nloen.size(),nloen.data(), nsmax, p);
 }
 
 Trans::~Trans()

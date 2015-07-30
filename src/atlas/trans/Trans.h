@@ -93,7 +93,7 @@ public:
   Trans( const Grid& g, const size_t nsmax, const Options& = Options() );
 
   /// @brief Constructor given npts_per_lat (aka PL array) and spectral truncation
-  Trans( const std::vector<int>& npts_per_lat, const size_t nsmax, const Options& = Options() );
+  Trans( const std::vector<size_t>& npts_per_lat, const size_t nsmax, const Options& = Options() );
 
   /// @brief Constructor given Gaussian N number and spectral truncation
   ///        This is equivalent to a (regular) Gaussian grid with N number

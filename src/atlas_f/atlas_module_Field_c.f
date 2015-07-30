@@ -83,15 +83,24 @@ function Field__function_space(this) result(function_space)
 end function Field__function_space
 
 
-function Field__shape(this) result(shape)
+function Field__shape_array(this) result(shape)
   class(atlas_Field), intent(in) :: this
   integer, pointer :: shape(:)
   type(c_ptr) :: shape_c_ptr
   integer(c_int) :: field_rank
   call atlas__Field__shapef(this%cpp_object_ptr, shape_c_ptr, field_rank)
   call C_F_POINTER ( shape_c_ptr , shape , (/field_rank/) )
-end function Field__shape
+end function Field__shape_array
 
+function Field__shape_idx(this,idx) result(shape_val)
+  integer :: shape_val
+  class(atlas_Field), intent(in) :: this
+  integer, intent(in) :: idx
+  integer, pointer :: shape(:)
+  shape => this%shape_array()
+  if( idx > size(shape) ) call atlas_throw_outofrange("shape",idx,size(shape),atlas_code_location(__FILE__,__LINE__))
+  shape_val = shape(idx)
+end function Field__shape_idx
 
 subroutine Field__access_data1_int32(this, field)
   class(atlas_Field), intent(in) :: this

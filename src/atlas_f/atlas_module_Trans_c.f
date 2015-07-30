@@ -15,9 +15,13 @@ function atlas_Trans__ctor( grid, nsmax ) result(trans)
   USE_ATLAS_TRANS_C_BINDING
   type(atlas_Trans) :: trans
   type(atlas_ReducedGrid), intent(in) :: grid
-  integer, intent(in) :: nsmax
+  integer, intent(in), optional :: nsmax
 #ifdef ATLAS_HAVE_TRANS
-  trans%cpp_object_ptr = atlas__Trans__new( grid%cpp_object_ptr, nsmax )
+  if( present(nsmax) ) then
+    trans%cpp_object_ptr = atlas__Trans__new( grid%cpp_object_ptr, nsmax )
+  else
+    trans%cpp_object_ptr = atlas__Trans__new( grid%cpp_object_ptr, 0 )
+  endif
 #else
   THROW_ERROR
 #endif
