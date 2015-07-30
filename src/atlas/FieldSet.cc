@@ -22,10 +22,10 @@ FieldSet::FieldSet(const std::string &name) :
   name_(name.length()? name : "untitled")
 {}
 
-void FieldSet::add(Field& field)
+void FieldSet::add(const Field& field)
 {
   index_[field.name()] = fields_.size();
-  fields_.push_back( field.self() );
+  fields_.push_back( eckit::SharedPtr<Field>( const_cast<Field*>(&field) ) );
 }
 
 void FieldSet::add_field(Field::Ptr field)

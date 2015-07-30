@@ -90,9 +90,12 @@ public: // types
   typedef eckit::SharedPtr<GatherScatter> Ptr;
 public:
   GatherScatter();
+  GatherScatter(const std::string& name);
   virtual ~GatherScatter() {}
 
 public: // methods
+
+  std::string name() const { return name_; }
 
   /// @brief Setup
   /// @param [in] part         List of partitions
@@ -218,6 +221,8 @@ private: // methods
                  std::vector<size_t>& varshape ) const;
 
 private: // data
+
+  std::string name_;
   int               loccnt_;
   int               glbcnt_;
   std::vector<int>  loccounts_;

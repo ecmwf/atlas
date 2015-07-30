@@ -37,8 +37,7 @@ BOOST_GLOBAL_FIXTURE( AtlasFixture )
 
 BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
 {
-  ScopedPtr<Grid> grid( Grid::create("oct.N2") );
-  size_t nb_levels = 10;
+  ScopedPtr<Grid> grid( Grid::create("oct.N4") );
 
   Mesh mesh;
   meshgen::ReducedGridMeshGenerator().generate(*grid,mesh);
@@ -46,6 +45,10 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   NodesFunctionSpace nodes_fs("nodes",mesh,1);
 
   NodesColumnFunctionSpace columns_fs("columns",mesh,10,1);
+
+  BOOST_CHECK_EQUAL( nodes_fs.nb_nodes() , columns_fs.nb_nodes() );
+  BOOST_CHECK_EQUAL( columns_fs.nb_levels() , 10 );
+
 
   size_t nb_nodes = nodes_fs.nb_nodes();
 
@@ -111,19 +114,42 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   BOOST_CHECK_EQUAL_COLLECTIONS(columns_vector.shape(),columns_vector.shape()+3, columns_vector_shape,columns_vector_shape+3);
   BOOST_CHECK_EQUAL_COLLECTIONS(columns_tensor.shape(),columns_tensor.shape()+4, columns_tensor_shape,columns_tensor_shape+4);
 
-  Field::Ptr field( nodes_fs.createField<int>("partition") );
-  ArrayView<int,1> arr(*field);
+  Field::Ptr field( columns_fs.createField<int>("partition") );
+  ArrayView<int,2> arr(*field);
   arr = eckit::mpi::rank();
   field->dump( eckit::Log::info() );
-  nodes_fs.haloExchange(*field);
+  columns_fs.haloExchange(*field);
   field->dump( eckit::Log::info() );
 
-  Field::Ptr field2( nodes_fs.createField<int>("partition2",2) );
-  ArrayView<int,2> arr2(*field2);
+  Field::Ptr field2( columns_fs.createField<int>("partition2",2) );
+  ArrayView<int,3> arr2(*field2);
   arr2 = eckit::mpi::rank();
   field2->dump( eckit::Log::info() );
-  nodes_fs.haloExchange(*field2);
+  columns_fs.haloExchange(*field2);
   field2->dump( eckit::Log::info() );
+
+  Log::info() << nodes_fs.checksum(*field) << std::endl;
+
+  Field::Ptr glb_field( nodes_fs.createGlobalField("partition",*field) );
+  columns_fs.gather(*field,*glb_field);
+
+  Log::info() << "local points = " << nodes_fs.nb_nodes() << std::endl;
+  Log::info() << "grid points = " << grid->npts() << std::endl;
+  Log::info() << "glb_field.shape(0) = " << glb_field->shape(0) << std::endl;
+
+  glb_field->dump( eckit::Log::info() );
+
+  arr = -1;
+  columns_fs.scatter(*glb_field,*field);
+  columns_fs.haloExchange(*field);
+  field->dump( eckit::Log::info() );
+
+  Log::info() << columns_fs.checksum(*field) << std::endl;
+
+  FieldSet fields;
+  fields.add(*field);
+  fields.add(*field2);
+  Log::info() << columns_fs.checksum(fields) << std::endl;
 
 }
 

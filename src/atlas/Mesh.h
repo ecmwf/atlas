@@ -31,6 +31,8 @@ namespace atlas { class Grid; }
 namespace atlas { class FunctionSpace; }
 namespace atlas { class GridDistribution; }
 namespace atlas { namespace mpl { class HaloExchange; } }
+namespace atlas { namespace mpl { class GatherScatter; } }
+namespace atlas { namespace mpl { class Checksum; } }
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -131,6 +133,12 @@ public: // methods
     const Store<const mpl::HaloExchange>& halo_exchange() const { return halo_exchange_; }
           Store<const mpl::HaloExchange>& halo_exchange()       { return halo_exchange_; }
 
+    const Store<const mpl::GatherScatter>& gather_scatter() const { return gather_scatter_; }
+          Store<const mpl::GatherScatter>& gather_scatter()       { return gather_scatter_; }
+
+    const Store<const mpl::Checksum>& checksum() const { return checksum_; }
+          Store<const mpl::Checksum>& checksum()       { return checksum_; }
+
 private:  // methods
 
     friend std::ostream& operator<<(std::ostream& s, const Mesh& p) {
@@ -149,6 +157,8 @@ private: // members
     StoreFS_t function_spaces_;
 
     Store<const mpl::HaloExchange> halo_exchange_;
+    Store<const mpl::GatherScatter> gather_scatter_;
+    Store<const mpl::Checksum> checksum_;
 
 };
 

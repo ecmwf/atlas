@@ -34,9 +34,12 @@ public: // types
 
 public:
   Checksum();
+  Checksum(const std::string& name);
   virtual ~Checksum() {}
 
 public: // methods
+
+  std::string name() const { return name_; }
 
   /// @brief Setup
   /// @param [in] part         List of partitions
@@ -81,6 +84,7 @@ public: // methods
                  std::vector<int>& varextents ) const;
 
 private: // data
+  std::string name_;
   GatherScatter gather_;
   bool is_setup_;
   int parsize_;
