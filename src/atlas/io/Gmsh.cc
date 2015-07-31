@@ -116,7 +116,9 @@ void write_field_nodes(const Gmsh& gmsh, Field& field, std::ostream& out)
   }
 
   std::vector<long> lev;
-  if( gmsh.levels.empty() || nlev == 1 )
+  std::vector<long> gmsh_levels;
+  gmsh.options.get("levels",gmsh_levels);
+  if( gmsh_levels.empty() || nlev == 1 )
   {
     lev.resize(nlev);
     for (int ilev=0; ilev<nlev; ++ilev)
@@ -124,7 +126,7 @@ void write_field_nodes(const Gmsh& gmsh, Field& field, std::ostream& out)
   }
   else
   {
-    lev = gmsh.levels;
+    lev = gmsh_levels;
   }
   for (int ilev=0; ilev<lev.size(); ++ilev)
   {
@@ -362,7 +364,8 @@ Gmsh::Gmsh()
   // Radius of the planet
   options.set<double>("radius",   Resource<bool>("atlas.gmsh.radius", 1.0 ));
 
-  levels = Resource< std::vector<long> >("atlas.gmsh.levels", std::vector<long>() );
+  // Levels of fields to use
+  options.set< std::vector<long> >("levels", Resource< std::vector<long> >("atlas.gmsh.levels", std::vector<long>() ) );
 }
 
 Gmsh::~Gmsh()
