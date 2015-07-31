@@ -29,10 +29,10 @@
 namespace atlas {
 namespace functionspace {
 
-NodesFunctionSpace::NodesFunctionSpace(const std::string& name, Mesh& mesh, size_t halo)
+NodesFunctionSpace::NodesFunctionSpace(const std::string& name, Mesh& mesh, const Halo& halo)
   : next::FunctionSpace(name),
     mesh_(mesh),
-    halo_(halo),
+    halo_(halo.size()),
     nb_nodes_(0),
     nb_nodes_global_(0)
 {
@@ -87,6 +87,9 @@ NodesFunctionSpace::NodesFunctionSpace(const std::string& name, Mesh& mesh, size
     std::vector<int> mask(mesh_.function_space("nodes").shape(0));
     for( size_t j=0; j<mask.size(); ++j ) {
       mask[j] = util::Topology::check(flags(j),util::Topology::GHOST) ? 1 : 0;
+      if( mask[j] == 1 && util::Topology::check(flags(j),util::Topology::BC) ) {
+        mask[j] = 0;
+      }
     }
     gather_scatter->setup(part.data<int>(),ridx.data<int>(),REMOTE_IDX_BASE,gidx.data<gidx_t>(),mask.data(),nb_nodes_);
 
@@ -165,38 +168,6 @@ template<> Field* NodesFunctionSpace::createField<double>(const std::string& nam
   return new field::FieldT<double>(name, make_shape(nb_nodes()) );
 }
 
-template<> Field* NodesFunctionSpace::createField<int>(const std::string& name, size_t var1) const {
-  return new field::FieldT<int>(name, make_shape(nb_nodes(),var1) );
-}
-
-template<> Field* NodesFunctionSpace::createField<long>(const std::string& name, size_t var1) const {
-  return new field::FieldT<long>(name, make_shape(nb_nodes(),var1) );
-}
-
-template<> Field* NodesFunctionSpace::createField<float>(const std::string& name, size_t var1) const {
-  return new field::FieldT<float>(name, make_shape(nb_nodes(),var1) );
-}
-
-template<> Field* NodesFunctionSpace::createField<double>(const std::string& name, size_t var1) const {
-  return new field::FieldT<double>(name, make_shape(nb_nodes(),var1) );
-}
-
-template<> Field* NodesFunctionSpace::createField<int>(const std::string& name, size_t var1, size_t var2) const {
-  return new field::FieldT<int>(name, make_shape(nb_nodes(),var1,var2) );
-}
-
-template<> Field* NodesFunctionSpace::createField<long>(const std::string& name, size_t var1, size_t var2) const {
-  return new field::FieldT<long>(name, make_shape(nb_nodes(),var1,var2) );
-}
-
-template<> Field* NodesFunctionSpace::createField<float>(const std::string& name, size_t var1, size_t var2) const {
-  return new field::FieldT<float>(name, make_shape(nb_nodes(),var1,var2) );
-}
-
-template<> Field* NodesFunctionSpace::createField<double>(const std::string& name, size_t var1, size_t var2) const {
-  return new field::FieldT<double>(name, make_shape(nb_nodes(),var1,var2) );
-}
-
 template<> Field* NodesFunctionSpace::createField<int>(const std::string& name, const std::vector<size_t>& variables) const {
   std::vector<size_t> shape(1,nb_nodes());
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
@@ -251,38 +222,6 @@ template<> Field* NodesFunctionSpace::createGlobalField<float>(const std::string
 
 template<> Field* NodesFunctionSpace::createGlobalField<double>(const std::string& name) const {
   return new field::FieldT<double>(name, make_shape(nb_nodes_global()) );
-}
-
-template<> Field* NodesFunctionSpace::createGlobalField<int>(const std::string& name, size_t var1) const {
-  return new field::FieldT<int>(name, make_shape(nb_nodes_global(),var1) );
-}
-
-template<> Field* NodesFunctionSpace::createGlobalField<long>(const std::string& name, size_t var1) const {
-  return new field::FieldT<long>(name, make_shape(nb_nodes_global(),var1) );
-}
-
-template<> Field* NodesFunctionSpace::createGlobalField<float>(const std::string& name, size_t var1) const {
-  return new field::FieldT<float>(name, make_shape(nb_nodes_global(),var1) );
-}
-
-template<> Field* NodesFunctionSpace::createGlobalField<double>(const std::string& name, size_t var1) const {
-  return new field::FieldT<double>(name, make_shape(nb_nodes_global(),var1) );
-}
-
-template<> Field* NodesFunctionSpace::createGlobalField<int>(const std::string& name, size_t var1, size_t var2) const {
-  return new field::FieldT<int>(name, make_shape(nb_nodes_global(),var1,var2) );
-}
-
-template<> Field* NodesFunctionSpace::createGlobalField<long>(const std::string& name, size_t var1, size_t var2) const {
-  return new field::FieldT<long>(name, make_shape(nb_nodes_global(),var1,var2) );
-}
-
-template<> Field* NodesFunctionSpace::createGlobalField<float>(const std::string& name, size_t var1, size_t var2) const {
-  return new field::FieldT<float>(name, make_shape(nb_nodes_global(),var1,var2) );
-}
-
-template<> Field* NodesFunctionSpace::createGlobalField<double>(const std::string& name, size_t var1, size_t var2) const {
-  return new field::FieldT<double>(name, make_shape(nb_nodes_global(),var1,var2) );
 }
 
 template<> Field* NodesFunctionSpace::createGlobalField<int>(const std::string& name, const std::vector<size_t>& variables) const {
@@ -477,7 +416,7 @@ std::string NodesFunctionSpace::checksum( const Field& field ) const {
 
 // ----------------------------------------------------------------------
 
-NodesColumnFunctionSpace::NodesColumnFunctionSpace(const std::string& name, Mesh& mesh, size_t nb_levels, size_t halo)
+NodesColumnFunctionSpace::NodesColumnFunctionSpace(const std::string& name, Mesh& mesh, size_t nb_levels, const Halo& halo)
   : NodesFunctionSpace(name,mesh,halo),
     nb_levels_(nb_levels)
 {

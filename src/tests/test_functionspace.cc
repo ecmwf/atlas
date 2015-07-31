@@ -37,14 +37,19 @@ BOOST_GLOBAL_FIXTURE( AtlasFixture )
 
 BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
 {
-  ScopedPtr<Grid> grid( Grid::create("oct.N4") );
+  ScopedPtr<Grid> grid( Grid::create("oct.N20") );
 
   Mesh mesh;
-  meshgen::ReducedGridMeshGenerator().generate(*grid,mesh);
+  meshgen::ReducedGridMeshGenerator generator;
+  //generator.options.set("three_dimensional",true);
+  generator.generate(*grid,mesh);
 
-  NodesFunctionSpace nodes_fs("nodes",mesh,1);
+  //grid.reset();
 
-  NodesColumnFunctionSpace columns_fs("columns",mesh,10,1);
+  NodesFunctionSpace nodes_fs("nodes",mesh,Halo(1));
+
+  size_t nb_levels = 10;
+  NodesColumnFunctionSpace columns_fs("columns",mesh,nb_levels,Halo(1));
 
   BOOST_CHECK_EQUAL( nodes_fs.nb_nodes() , columns_fs.nb_nodes() );
   BOOST_CHECK_EQUAL( columns_fs.nb_levels() , 10 );
@@ -53,8 +58,8 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   size_t nb_nodes = nodes_fs.nb_nodes();
 
   ScopedPtr<Field> surface_scalar_field( nodes_fs.createField<double>("scalar") );
-  ScopedPtr<Field> surface_vector_field( nodes_fs.createField<double>("vector",2) );
-  ScopedPtr<Field> surface_tensor_field( nodes_fs.createField<double>("tensor",2,2) );
+  ScopedPtr<Field> surface_vector_field( nodes_fs.createField<double>("vector",make_shape(2)) );
+  ScopedPtr<Field> surface_tensor_field( nodes_fs.createField<double>("tensor",make_shape(2,2)) );
 
   BOOST_CHECK_EQUAL( surface_scalar_field->name() , std::string("scalar") );
   BOOST_CHECK_EQUAL( surface_vector_field->name() , std::string("vector") );
@@ -72,8 +77,6 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   ArrayView<double,2> surface_vector( *surface_vector_field );
   ArrayView<double,3> surface_tensor( *surface_tensor_field );
 
-  BOOST_CHECKPOINT("1");
-
   size_t surface_scalar_shape[] = { nodes_fs.nb_nodes() };
   size_t surface_vector_shape[] = { nodes_fs.nb_nodes(), 2 };
   size_t surface_tensor_shape[] = { nodes_fs.nb_nodes(), 2, 2 };
@@ -81,15 +84,10 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   BOOST_CHECK_EQUAL_COLLECTIONS( surface_vector.shape(),surface_vector.shape()+2, surface_vector_shape,surface_vector_shape+2 );
   BOOST_CHECK_EQUAL_COLLECTIONS( surface_tensor.shape(),surface_tensor.shape()+3, surface_tensor_shape,surface_tensor_shape+3 );
 
-  BOOST_CHECKPOINT("1");
 
   ScopedPtr<Field> columns_scalar_field( columns_fs.createField<double>("scalar") );
-
-  BOOST_CHECKPOINT("1");
-  ScopedPtr<Field> columns_vector_field( columns_fs.createField<double>("vector",2) );
-
-  BOOST_CHECKPOINT("1");
-  ScopedPtr<Field> columns_tensor_field( columns_fs.createField<double>("tensor",2,2) );
+  ScopedPtr<Field> columns_vector_field( columns_fs.createField<double>("vector",make_shape(2)) );
+  ScopedPtr<Field> columns_tensor_field( columns_fs.createField<double>("tensor",make_shape(2,2)) );
 
   BOOST_CHECK_EQUAL( columns_scalar_field->name() , std::string("scalar") );
   BOOST_CHECK_EQUAL( columns_vector_field->name() , std::string("vector") );
@@ -117,16 +115,16 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   Field::Ptr field( columns_fs.createField<int>("partition") );
   ArrayView<int,2> arr(*field);
   arr = eckit::mpi::rank();
-  field->dump( eckit::Log::info() );
+  //field->dump( eckit::Log::info() );
   columns_fs.haloExchange(*field);
-  field->dump( eckit::Log::info() );
+  //field->dump( eckit::Log::info() );
 
   Field::Ptr field2( columns_fs.createField<int>("partition2",2) );
   ArrayView<int,3> arr2(*field2);
   arr2 = eckit::mpi::rank();
-  field2->dump( eckit::Log::info() );
+  //field2->dump( eckit::Log::info() );
   columns_fs.haloExchange(*field2);
-  field2->dump( eckit::Log::info() );
+  //field2->dump( eckit::Log::info() );
 
   Log::info() << nodes_fs.checksum(*field) << std::endl;
 
@@ -137,12 +135,12 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   Log::info() << "grid points = " << grid->npts() << std::endl;
   Log::info() << "glb_field.shape(0) = " << glb_field->shape(0) << std::endl;
 
-  glb_field->dump( eckit::Log::info() );
+  //glb_field->dump( eckit::Log::info() );
 
   arr = -1;
   columns_fs.scatter(*glb_field,*field);
   columns_fs.haloExchange(*field);
-  field->dump( eckit::Log::info() );
+  //field->dump( eckit::Log::info() );
 
   Log::info() << columns_fs.checksum(*field) << std::endl;
 

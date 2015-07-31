@@ -125,7 +125,6 @@ FunctionSpace& Mesh::add_nodes(size_t nb_nodes)
     flags(n) = 0;
   }
   nodes.metadata().set("nb_owned",nb_nodes);
-  nodes.metadata().set("nb_global",nb_nodes);
 
   return nodes;
 }

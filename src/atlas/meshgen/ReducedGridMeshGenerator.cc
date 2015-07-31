@@ -1137,8 +1137,6 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
     ++jtriag;
   }
 
-  size_t nb_nodes_global = rg.npts();
-  nodes.metadata().set("nb_global",nb_nodes_global);
   nodes.metadata().set("nb_owned",nnodes);
   quads.metadata().set("nb_owned",nquads);
   triags.metadata().set("nb_owned",ntriags);
