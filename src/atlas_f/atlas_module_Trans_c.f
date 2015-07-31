@@ -23,7 +23,7 @@ function atlas_Trans__ctor( grid, nsmax ) result(trans)
     trans%cpp_object_ptr = atlas__Trans__new( grid%cpp_object_ptr, 0 )
   endif
 #else
-  THROW_ERROR
+  ! IGNORE
 #endif
 end function atlas_Trans__ctor
 
@@ -33,7 +33,7 @@ function atlas_TransParameters__ctor() result(params)
 #ifdef ATLAS_HAVE_TRANS
   params%cpp_object_ptr = atlas__TransParameters__new()
 #else
-  THROW_ERROR
+  ! IGNORE
 #endif
 end function atlas_TransParameters__ctor
 
@@ -43,7 +43,7 @@ subroutine atlas_Trans__delete( trans )
 #ifdef ATLAS_HAVE_TRANS
   call atlas__Trans__delete(trans%cpp_object_ptr);
 #else
-  THROW_ERROR
+  ! IGNORE
 #endif
 end subroutine
 
@@ -53,7 +53,7 @@ subroutine atlas_TransParameters__delete( parameters )
 #ifdef ATLAS_HAVE_TRANS
   call atlas__TransParameters__delete(parameters%cpp_object_ptr);
 #else
-  THROW_ERROR
+  ! IGNORE
 #endif
 end subroutine
 
