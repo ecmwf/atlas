@@ -366,7 +366,7 @@ subroutine atlas_Trans__dirtrans_fieldset(this, gpfields, spfields, parameters)
   class(atlas_FieldSet), intent(in)  :: gpfields
   class(atlas_FieldSet), intent(inout) :: spfields
   class(atlas_TransParameters), intent(in), optional  :: parameters
-
+#ifdef ATLAS_HAVE_TRANS
   type(atlas_TransParameters) :: p
 
   if( present(parameters) ) then
@@ -383,7 +383,9 @@ subroutine atlas_Trans__dirtrans_fieldset(this, gpfields, spfields, parameters)
   if( .not. present(parameters) ) then
     call atlas_TransParameters__delete(p)
   endif
-
+#else
+  THROW_ERROR
+#endif
 end subroutine atlas_Trans__dirtrans_fieldset
 
 subroutine atlas_Trans__invtrans_fieldset(this, spfields, gpfields, parameters)
@@ -392,7 +394,7 @@ subroutine atlas_Trans__invtrans_fieldset(this, spfields, gpfields, parameters)
   class(atlas_FieldSet), intent(in)  :: spfields
   class(atlas_FieldSet), intent(inout) :: gpfields
   class(atlas_TransParameters), intent(in), optional  :: parameters
-
+#ifdef ATLAS_HAVE_TRANS
   type(atlas_TransParameters) :: p
 
   if( present(parameters) ) then
@@ -409,6 +411,9 @@ subroutine atlas_Trans__invtrans_fieldset(this, spfields, gpfields, parameters)
   if( .not. present(parameters) ) then
     call atlas_TransParameters__delete(p)
   endif
+#else
+  THROW_ERROR
+#endif
 
 end subroutine atlas_Trans__invtrans_fieldset
 
@@ -418,7 +423,7 @@ subroutine atlas_Trans__dirtrans_field(this, gpfield, spfield, parameters)
   class(atlas_Field), intent(in)  :: gpfield
   class(atlas_Field), intent(inout) :: spfield
   class(atlas_TransParameters), intent(in), optional  :: parameters
-
+#ifdef ATLAS_HAVE_TRANS
   type(atlas_TransParameters) :: p
 
   if( present(parameters) ) then
@@ -435,6 +440,9 @@ subroutine atlas_Trans__dirtrans_field(this, gpfield, spfield, parameters)
   if( .not. present(parameters) ) then
     call atlas_TransParameters__delete(p)
   endif
+#else
+  THROW_ERROR
+#endif
 
 end subroutine atlas_Trans__dirtrans_field
 
@@ -444,7 +452,7 @@ subroutine atlas_Trans__invtrans_field(this, spfield, gpfield, parameters)
   class(atlas_Field), intent(in)  :: spfield
   class(atlas_Field), intent(inout) :: gpfield
   class(atlas_TransParameters), intent(in), optional  :: parameters
-
+#ifdef ATLAS_HAVE_TRANS
   type(atlas_TransParameters) :: p
 
   if( present(parameters) ) then
@@ -461,6 +469,9 @@ subroutine atlas_Trans__invtrans_field(this, spfield, gpfield, parameters)
   if( .not. present(parameters) ) then
     call atlas_TransParameters__delete(p)
   endif
+#else
+  THROW_ERROR
+#endif
 
 end subroutine atlas_Trans__invtrans_field
 
