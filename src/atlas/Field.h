@@ -145,7 +145,7 @@ public:
         Mesh& mesh();
 
 private:
-  friend FunctionSpace;
+  friend class FunctionSpace;
   void set_function_space(const FunctionSpace& function_space);
 
 /***************************************************************************/
