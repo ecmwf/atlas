@@ -82,12 +82,25 @@ bool operator < (const gidx_t g, const Node& n)
 }
 
 GatherScatter::GatherScatter() :
+  name_(),
   is_setup_(false)
 {
   myproc = eckit::mpi::rank();
   nproc  = eckit::mpi::size();
   root_   = 0;
 }
+
+GatherScatter::GatherScatter(const std::string& name) :
+  name_(name),
+  is_setup_(false)
+{
+  myproc = eckit::mpi::rank();
+  nproc  = eckit::mpi::size();
+  root_   = 0;
+}
+
+
+
 
 
 

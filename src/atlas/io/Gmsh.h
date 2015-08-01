@@ -59,9 +59,6 @@ public:
 
 public:
   Metadata options;
-
-public:  // this should really belong in options
-  std::vector<long> levels;
 };
 
 //------------------------------------------------------------------------------------------------------

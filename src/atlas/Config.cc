@@ -318,7 +318,8 @@ int atlas__Config__get_string( Config* This, const char* name, char* &value, int
       value = NULL;
       return false;
     }
-    value = new char[s.size()+1];
+    size = s.size()+1;
+    value = new char[size];
     strcpy(value,s.c_str());
     allocated = true;
   );

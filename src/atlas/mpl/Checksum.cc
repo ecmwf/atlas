@@ -14,7 +14,14 @@
 namespace atlas {
 namespace mpl {
 
-Checksum::Checksum()
+Checksum::Checksum() :
+  name_()
+{
+  is_setup_ = false;
+}
+
+Checksum::Checksum(const std::string& name) :
+  name_(name)
 {
   is_setup_ = false;
 }

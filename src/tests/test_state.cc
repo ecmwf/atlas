@@ -151,9 +151,9 @@ BOOST_AUTO_TEST_CASE( state_create )
   Config p;
   Config geometry;
   geometry.set("grid","oct.N80");
-  geometry.set("ngptot",35000);
-  geometry.set("nproma",20);
-  geometry.set("nlev",137);
+  geometry.set("ngptot",350);
+  geometry.set("nproma",3);
+  geometry.set("nlev",5);
   p.set("geometry",geometry);
 
   std::vector<Config> fields(5);
@@ -169,7 +169,7 @@ BOOST_AUTO_TEST_CASE( state_create )
   fields[2].set("nlev",1); // We can overwrite nlev from geometry here
 
   fields[3].set("name","GFL");
-  fields[3].set("nvar",30); // assume 30 variables in GFL array
+  fields[3].set("nvar",12); // assume 12 variables in GFL array
   fields[3].set("data_type",DataType::real64());
 
   fields[4].set("name","array");
