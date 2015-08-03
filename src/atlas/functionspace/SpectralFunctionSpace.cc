@@ -28,7 +28,7 @@ SpectralFunctionSpace::SpectralFunctionSpace(const std::string& name, const size
 {
 }
 
-SpectralFunctionSpace::SpectralFunctionSpace(const std::string& name, const trans::Trans& trans )
+SpectralFunctionSpace::SpectralFunctionSpace(const std::string& name, trans::Trans& trans)
   : next::FunctionSpace(name),
 #ifdef ATLAS_HAVE_TRANS
     truncation_(trans.nsmax()),
@@ -74,7 +74,7 @@ SpectralColumnFunctionSpace::SpectralColumnFunctionSpace(const std::string& name
 {
 }
 
-SpectralColumnFunctionSpace::SpectralColumnFunctionSpace(const std::string& name, const trans::Trans& trans, const size_t nb_levels )
+SpectralColumnFunctionSpace::SpectralColumnFunctionSpace(const std::string& name, trans::Trans& trans, const size_t nb_levels)
   : SpectralFunctionSpace(name,trans),
     nb_levels_(nb_levels)
 {

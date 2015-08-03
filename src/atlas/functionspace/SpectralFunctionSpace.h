@@ -27,7 +27,7 @@ public:
 
   SpectralFunctionSpace(const std::string& name, const size_t truncation);
 
-  SpectralFunctionSpace(const std::string& name, const trans::Trans& );
+  SpectralFunctionSpace(const std::string& name, trans::Trans& );
 
   virtual ~SpectralFunctionSpace();
 
@@ -46,7 +46,7 @@ private: // data
 
   size_t truncation_;
 
-  const trans::Trans* trans_;
+  trans::Trans* trans_;
 
 };
 
@@ -59,7 +59,7 @@ public:
 
   SpectralColumnFunctionSpace(const std::string& name, const size_t truncation, const size_t nb_levels);
 
-  SpectralColumnFunctionSpace(const std::string& name, const trans::Trans&, const size_t nb_levels);
+  SpectralColumnFunctionSpace(const std::string& name, trans::Trans&, const size_t nb_levels);
 
   virtual ~SpectralColumnFunctionSpace();
 
