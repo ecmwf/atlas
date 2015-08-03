@@ -12,6 +12,10 @@
 #include "atlas/functionspace/SpectralFunctionSpace.h"
 #include "atlas/field/FieldT.h"
 
+#ifdef ATLAS_HAVE_TRANS
+#include "atlas/trans/Trans.h"
+#endif
+
 namespace atlas {
 namespace functionspace {
 
@@ -19,47 +23,76 @@ namespace functionspace {
 
 SpectralFunctionSpace::SpectralFunctionSpace(const std::string& name, const size_t truncation)
   : next::FunctionSpace(name),
-    truncation_(truncation)
+    truncation_(truncation),
+    trans_(0)
 {
 }
 
-SpectralFunctionSpace::~SpectralFunctionSpace() {}
+SpectralFunctionSpace::SpectralFunctionSpace(const std::string& name, const trans::Trans& trans )
+  : next::FunctionSpace(name),
+#ifdef ATLAS_HAVE_TRANS
+    truncation_(trans.nsmax()),
+    trans_(&trans)
+#else
+    truncation_(0),
+    trans_(0)
+#endif
+{
+}
 
-size_t SpectralFunctionSpace::nspec2g() const {
+SpectralFunctionSpace::~SpectralFunctionSpace()
+{
+}
+
+size_t SpectralFunctionSpace::nb_spectral_coefficients() const {
+#ifdef ATLAS_HAVE_TRANS
+  if( trans_ ) return trans_->nspec2();
+#endif
   return (truncation_+1)*(truncation_+2);
 }
 
-template<> Field* SpectralFunctionSpace::createField<float>(const std::string& name) {
-  return new field::FieldT<float>(name, make_shape(nspec2g()) );
+size_t SpectralFunctionSpace::nb_spectral_coefficients_global() const {
+#ifdef ATLAS_HAVE_TRANS
+  if( trans_ ) return trans_->nspec2g();
+#endif
+  return (truncation_+1)*(truncation_+2);
 }
 
-template<> Field* SpectralFunctionSpace::createField<double>(const std::string& name) {
-  return new field::FieldT<double>(name, make_shape(nspec2g()) );
+Field* SpectralFunctionSpace::createField(const std::string& name) {
+  return new field::FieldT<double>(name, make_shape(nb_spectral_coefficients()) );
+}
+
+Field* SpectralFunctionSpace::createGlobalField(const std::string& name) {
+  return new field::FieldT<double>(name, make_shape(nb_spectral_coefficients_global()) );
 }
 
 // ----------------------------------------------------------------------
 
-SpectralColumnFunctionSpace::SpectralColumnFunctionSpace(const std::string& name, const size_t truncation, const size_t levels)
-  : next::FunctionSpace(name),
-    truncation_(truncation),
-    levels_(levels)
+SpectralColumnFunctionSpace::SpectralColumnFunctionSpace(const std::string& name, const size_t truncation, const size_t nb_levels)
+  : SpectralFunctionSpace(name,truncation),
+    nb_levels_(nb_levels)
+{
+}
+
+SpectralColumnFunctionSpace::SpectralColumnFunctionSpace(const std::string& name, const trans::Trans& trans, const size_t nb_levels )
+  : SpectralFunctionSpace(name,trans),
+    nb_levels_(nb_levels)
 {
 }
 
 SpectralColumnFunctionSpace::~SpectralColumnFunctionSpace() {}
 
-size_t SpectralColumnFunctionSpace::nspec2g() const {
-  return (truncation_+1)*(truncation_+2);
+size_t SpectralColumnFunctionSpace::nb_levels() const {
+  return nb_levels_;
 }
 
-template<> Field* SpectralColumnFunctionSpace::createField<float>(const std::string& name) {
-  return new field::FieldT<float>(name, make_shape(nspec2g(),levels_) );
+Field* SpectralColumnFunctionSpace::createField(const std::string& name) {
+  return new field::FieldT<double>(name, make_shape(nb_spectral_coefficients(),nb_levels_) );
 }
 
-template<> Field* SpectralColumnFunctionSpace::createField<double>(const std::string& name) {
-  return new field::FieldT<double>(name, make_shape(nspec2g(),levels_) );
+Field* SpectralColumnFunctionSpace::createGlobalField(const std::string& name) {
+  return new field::FieldT<double>(name, make_shape(nb_spectral_coefficients_global(),nb_levels_) );
 }
-
 
 } // namespace functionspace
 } // namespace atlas

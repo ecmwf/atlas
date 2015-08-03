@@ -11,7 +11,10 @@
 #ifndef atlas_functionspace_SpectralFunctionSpace_h
 #define atlas_functionspace_SpectralFunctionSpace_h
 
+#include "atlas/atlas_defines.h"
 #include "atlas/FunctionSpace.h"
+
+namespace atlas { namespace trans { class Trans; } }
 
 namespace atlas {
 namespace functionspace {
@@ -24,45 +27,55 @@ public:
 
   SpectralFunctionSpace(const std::string& name, const size_t truncation);
 
+  SpectralFunctionSpace(const std::string& name, const trans::Trans& );
+
   virtual ~SpectralFunctionSpace();
 
   /// @brief Create a spectral field
-  template< typename DATATYPE >
-  Field* createField(const std::string& name);
+  virtual Field* createField(const std::string& name);
 
-private: // methods
+  /// @brief Create a global spectral field
+  virtual Field* createGlobalField(const std::string& name);
 
-  size_t nspec2g() const;
+public: // methods
+
+  size_t nb_spectral_coefficients() const;
+  size_t nb_spectral_coefficients_global() const;
 
 private: // data
 
   size_t truncation_;
+
+  const trans::Trans* trans_;
 
 };
 
 // -------------------------------------------------------------------
 
 
-class SpectralColumnFunctionSpace : public next::FunctionSpace
+class SpectralColumnFunctionSpace : public SpectralFunctionSpace
 {
 public:
 
-  SpectralColumnFunctionSpace(const std::string& name, const size_t truncation, const size_t levels);
+  SpectralColumnFunctionSpace(const std::string& name, const size_t truncation, const size_t nb_levels);
+
+  SpectralColumnFunctionSpace(const std::string& name, const trans::Trans&, const size_t nb_levels);
 
   virtual ~SpectralColumnFunctionSpace();
 
   /// @brief Create a spectral field
-  template< typename DATATYPE >
-  Field* createField(const std::string& name);
+  virtual Field* createField(const std::string& name);
 
-private: // methods
+  /// @brief Create a global spectral field
+  virtual Field* createGlobalField(const std::string& name);
 
-  size_t nspec2g() const;
+public: // methods
+
+  size_t nb_levels() const;
 
 private: // data
 
-  size_t truncation_;
-  size_t levels_;
+  size_t nb_levels_;
 
 };
 

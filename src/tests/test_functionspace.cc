@@ -21,6 +21,7 @@
 #include "atlas/meshgen/ReducedGridMeshGenerator.h"
 #include "atlas/Grid.h"
 #include "atlas/Field.h"
+#include "atlas/trans/Trans.h"
 
 using namespace eckit;
 using namespace atlas::functionspace;
@@ -160,7 +161,7 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace )
   SpectralFunctionSpace spectral_fs("nodes",truncation);
   SpectralColumnFunctionSpace columns_fs("columns",truncation,nb_levels);
 
-  ScopedPtr<Field> surface_scalar_field( spectral_fs.createField<double>("scalar") );
+  ScopedPtr<Field> surface_scalar_field( spectral_fs.createField("scalar") );
 
   BOOST_CHECK_EQUAL( surface_scalar_field->name() , std::string("scalar") );
 
@@ -173,7 +174,7 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace )
   size_t surface_scalar_shape[] = { nspec2g };
   BOOST_CHECK_EQUAL_COLLECTIONS( surface_scalar.shape(),surface_scalar.shape()+1, surface_scalar_shape,surface_scalar_shape+1 );
 
-  ScopedPtr<Field> columns_scalar_field( columns_fs.createField<double>("scalar") );
+  ScopedPtr<Field> columns_scalar_field( columns_fs.createField("scalar") );
 
   BOOST_CHECK_EQUAL( columns_scalar_field->name() , std::string("scalar") );
 
@@ -185,9 +186,88 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace )
 
   size_t columns_scalar_shape[] = { nspec2g, nb_levels };
   BOOST_CHECK_EQUAL_COLLECTIONS(columns_scalar.shape(),columns_scalar.shape()+2, columns_scalar_shape,columns_scalar_shape+2);
+
 }
 
+#ifdef ATLAS_HAVE_TRANS
 
+BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace_trans_dist )
+{
+  trans::Trans trans(80,159);
+  size_t nb_levels(10);
+
+  size_t nspec2 = trans.nspec2();
+  size_t nspec2g = trans.nspec2g();
+
+  SpectralFunctionSpace spectral_fs("nodes",trans);
+  SpectralColumnFunctionSpace columns_fs("columns",trans,nb_levels);
+
+  ScopedPtr<Field> surface_scalar_field( spectral_fs.createField("scalar") );
+
+  BOOST_CHECK_EQUAL( surface_scalar_field->name() , std::string("scalar") );
+
+  BOOST_CHECK_EQUAL( surface_scalar_field->size() , nspec2 );
+
+  BOOST_CHECK_EQUAL( surface_scalar_field->rank() , 1 );
+
+  ArrayView<double,1> surface_scalar( *surface_scalar_field );
+
+  size_t surface_scalar_shape[] = { nspec2 };
+  BOOST_CHECK_EQUAL_COLLECTIONS( surface_scalar.shape(),surface_scalar.shape()+1, surface_scalar_shape,surface_scalar_shape+1 );
+
+  ScopedPtr<Field> columns_scalar_field( columns_fs.createField("scalar") );
+
+  BOOST_CHECK_EQUAL( columns_scalar_field->name() , std::string("scalar") );
+
+  BOOST_CHECK_EQUAL( columns_scalar_field->size() , nspec2*nb_levels );
+
+  BOOST_CHECK_EQUAL( columns_scalar_field->rank() , 2 );
+
+  ArrayView<double,2> columns_scalar( *columns_scalar_field );
+
+  size_t columns_scalar_shape[] = { nspec2, nb_levels };
+  BOOST_CHECK_EQUAL_COLLECTIONS(columns_scalar.shape(),columns_scalar.shape()+2, columns_scalar_shape,columns_scalar_shape+2);
+
+}
+BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace_trans_global )
+{
+  trans::Trans trans(80,159);
+  size_t nb_levels(10);
+
+  size_t nspec2 = trans.nspec2();
+  size_t nspec2g = trans.nspec2g();
+
+  SpectralFunctionSpace spectral_fs("nodes",trans);
+  SpectralColumnFunctionSpace columns_fs("columns",trans,nb_levels);
+
+  ScopedPtr<Field> surface_scalar_field( spectral_fs.createGlobalField("scalar") );
+
+  BOOST_CHECK_EQUAL( surface_scalar_field->name() , std::string("scalar") );
+
+  BOOST_CHECK_EQUAL( surface_scalar_field->size() , nspec2g );
+
+  BOOST_CHECK_EQUAL( surface_scalar_field->rank() , 1 );
+
+  ArrayView<double,1> surface_scalar( *surface_scalar_field );
+
+  size_t surface_scalar_shape[] = { nspec2g };
+  BOOST_CHECK_EQUAL_COLLECTIONS( surface_scalar.shape(),surface_scalar.shape()+1, surface_scalar_shape,surface_scalar_shape+1 );
+
+  ScopedPtr<Field> columns_scalar_field( columns_fs.createGlobalField("scalar") );
+
+  BOOST_CHECK_EQUAL( columns_scalar_field->name() , std::string("scalar") );
+
+  BOOST_CHECK_EQUAL( columns_scalar_field->size() , nspec2g*nb_levels );
+
+  BOOST_CHECK_EQUAL( columns_scalar_field->rank() , 2 );
+
+  ArrayView<double,2> columns_scalar( *columns_scalar_field );
+
+  size_t columns_scalar_shape[] = { nspec2g, nb_levels };
+  BOOST_CHECK_EQUAL_COLLECTIONS(columns_scalar.shape(),columns_scalar.shape()+2, columns_scalar_shape,columns_scalar_shape+2);
+
+}
+#endif
 
 
 } // namespace test
