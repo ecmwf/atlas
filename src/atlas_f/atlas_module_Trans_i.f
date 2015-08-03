@@ -42,13 +42,16 @@ contains
   procedure :: nmyms        => atlas_Trans__nmyms
   procedure :: nasm0        => atlas_Trans__nasm0
   procedure :: nump         => atlas_Trans__nump
+  procedure :: nvalue       => atlas_Trans__nvalue
 
   procedure :: dirtrans_field => atlas_Trans__dirtrans_field
   procedure :: dirtrans_fieldset => atlas_Trans__dirtrans_fieldset
+  procedure :: dirtrans_wind2vordiv => atlas_Trans__dirtrans_wind2vordiv_field
   generic :: dirtrans => dirtrans_field, dirtrans_fieldset
 
   procedure :: invtrans_field => atlas_Trans__invtrans_field
   procedure :: invtrans_fieldset => atlas_Trans__invtrans_fieldset
+  procedure :: invtrans_vordiv2wind => atlas_Trans__invtrans_vordiv2wind_field
   generic :: invtrans => invtrans_field, invtrans_fieldset
 
 END TYPE atlas_Trans

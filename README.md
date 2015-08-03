@@ -94,7 +94,6 @@ In following table, the column "variable" can be edited in configuration files.
 | `<name>.configfile`         | `--conf`         | `$<name>_CONFIGFILE`     | `<name>.cfg`       |
 | `<app>.configfile`          |                  | `$<app>_CONFIGFILE`      | `<app>.cfg`        |
 | `atlas.configfile`          | `--atlas_conf`   | `$ATLAS_CONFIGFILE`      | `atlas.cfg`        |
-| `atlas.degrees_epsilon`     |                  | `$ATLAS_DEGREES_EPSILON` | `1.e-3`            |
 | `atlas.logfile`             | `--logfile`      | `$ATLAS_LOGFILE`         |                    |
 | `atlas.logfile_task`        | `--logfile_task` | `$ATLAS_LOGFILE_TASK`    | `-1`               |
 | `atlas.console_task`        | `--console_task` | `$ATLAS_CONSOLE_TASK`    | `0`                |
@@ -107,6 +106,5 @@ In following table, the column "variable" can be edited in configuration files.
 | `atlas.gmsh.levels`         |                  |                          | `[]`               |
 | `atlas.meshgen.angle`       |                  |                          | `0`                |
 | `atlas.meshgen.triangulate` |                  |                          | `true`             |
-| `AtlasCacheDir`             |                  | `$ATLAS_CACHE_DIR`       | `/tmp/cache/atlas` |
 
 

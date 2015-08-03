@@ -238,6 +238,18 @@ public:
     return ArrayView<int,1> (trans_.nasm0, trans_.nsmax+1);
   }
 
+  const int* nvalue(int& size) const
+  {
+    size = trans_.nspec2;
+    if( trans_.nvalue == NULL ) ::trans_inquire(&trans_,"nvalue");
+    return trans_.nvalue;
+  }
+
+  ArrayView<int,1> nvalue() const
+  {
+    if( trans_.nvalue == NULL ) ::trans_inquire(&trans_,"nvalue");
+    return ArrayView<int,1> (trans_.nvalue, trans_.nspec2);
+  }
 
 public:
 
@@ -305,9 +317,11 @@ public:
 
   void dirtrans(const Field& gpfield,     Field& spfield,     const TransParameters& = TransParameters()) const;
   void dirtrans(const FieldSet& gpfields, FieldSet& spfields, const TransParameters& = TransParameters()) const;
+  void dirtrans_wind2vordiv(const Field& gpwind, Field& spvor, Field& spdiv, const TransParameters& = TransParameters()) const;
 
   void invtrans(const Field& spfield,     Field& gpfield,     const TransParameters& = TransParameters()) const;
   void invtrans(const FieldSet& spfields, FieldSet& gpfields, const TransParameters& = TransParameters()) const;
+  void invtrans_vordiv2wind(const Field& spvor, const Field& spdiv, Field& gpwind, const TransParameters& = TransParameters()) const;
 
 
 private:
@@ -343,6 +357,8 @@ extern "C"
   void atlas__Trans__invtrans_fieldset (const Trans* This, const FieldSet* spfields, FieldSet* gpfields, const TransParameters* parameters);
   void atlas__Trans__dirtrans_field (const Trans* This, const Field* gpfield, Field* spfield, const TransParameters* parameters);
   void atlas__Trans__invtrans_field (const Trans* This, const Field* spfield, Field* gpfield, const TransParameters* parameters);
+  void atlas__Trans__dirtrans_wind2vordiv_field (const Trans* This, const Field* gpwind, Field* spvor, Field* spdiv, const TransParameters* parameters);
+  void atlas__Trans__invtrans_vordiv2wind_field (const Trans* This, const Field* spvor, const Field* spdiv, Field* gpwind, const TransParameters* parameters);
   int atlas__Trans__nproc (const Trans* This);
   int atlas__Trans__myproc (const Trans* This, int proc0);
   int atlas__Trans__ndgl (const Trans* This);
@@ -366,6 +382,7 @@ extern "C"
   const int* atlas__Trans__nonl (const Trans* This, int &sizef2, int &sizef1);
   const int* atlas__Trans__nmyms (const Trans* This, int &size);
   const int* atlas__Trans__nasm0 (const Trans* This, int &size);
+  const int* atlas__Trans__nvalue (const Trans* This, int &size);
   TransParameters* atlas__TransParameters__new ();
   void atlas__TransParameters__delete (TransParameters* parameters);
 }

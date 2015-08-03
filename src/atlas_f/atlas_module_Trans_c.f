@@ -360,6 +360,20 @@ function atlas_Trans__nasm0(this) result(nasm0)
 #endif
 end function atlas_Trans__nasm0
 
+function atlas_Trans__nvalue(this) result(nvalue)
+  USE_ATLAS_TRANS_C_BINDING
+  integer(c_int), pointer :: nvalue(:)
+  class(atlas_Trans), intent(in) :: this
+  type(c_ptr) :: nvalue_c_ptr
+  integer(c_int) :: size
+#ifdef ATLAS_HAVE_TRANS
+  nvalue_c_ptr =  atlas__Trans__nvalue(this%cpp_object_ptr, size)
+  call C_F_POINTER ( nvalue_c_ptr , nvalue , (/size/) )
+#else
+  THROW_ERROR
+#endif
+end function atlas_Trans__nvalue
+
 subroutine atlas_Trans__dirtrans_fieldset(this, gpfields, spfields, parameters)
   USE_ATLAS_TRANS_C_BINDING
   class(atlas_Trans), intent(in) :: this
@@ -446,6 +460,37 @@ subroutine atlas_Trans__dirtrans_field(this, gpfield, spfield, parameters)
 
 end subroutine atlas_Trans__dirtrans_field
 
+subroutine atlas_Trans__dirtrans_wind2vordiv_field(this, gpwind, spvor, spdiv, parameters)
+  USE_ATLAS_TRANS_C_BINDING
+  class(atlas_Trans), intent(in) :: this
+  class(atlas_Field), intent(in)  :: gpwind
+  class(atlas_Field), intent(inout) :: spvor
+  class(atlas_Field), intent(inout) :: spdiv
+  class(atlas_TransParameters), intent(in), optional  :: parameters
+#ifdef ATLAS_HAVE_TRANS
+  type(atlas_TransParameters) :: p
+
+  if( present(parameters) ) then
+    p%cpp_object_ptr = parameters%cpp_object_ptr
+  else
+    p = atlas_TransParameters()
+  endif
+
+  call atlas__Trans__dirtrans_wind2vordiv_field( this%cpp_object_ptr, &
+    &                          gpwind%cpp_object_ptr, &
+    &                          spvor%cpp_object_ptr, &
+    &                          spdiv%cpp_object_ptr, &
+    &                          p%cpp_object_ptr )
+
+  if( .not. present(parameters) ) then
+    call atlas_TransParameters__delete(p)
+  endif
+#else
+  THROW_ERROR
+#endif
+
+end subroutine atlas_Trans__dirtrans_wind2vordiv_field
+
 subroutine atlas_Trans__invtrans_field(this, spfield, gpfield, parameters)
   USE_ATLAS_TRANS_C_BINDING
   class(atlas_Trans), intent(in) :: this
@@ -475,5 +520,35 @@ subroutine atlas_Trans__invtrans_field(this, spfield, gpfield, parameters)
 
 end subroutine atlas_Trans__invtrans_field
 
+subroutine atlas_Trans__invtrans_vordiv2wind_field(this, spvor, spdiv, gpwind, parameters)
+  USE_ATLAS_TRANS_C_BINDING
+  class(atlas_Trans), intent(in) :: this
+  class(atlas_Field), intent(in)  :: spvor
+  class(atlas_Field), intent(in)  :: spdiv
+  class(atlas_Field), intent(inout) :: gpwind
+  class(atlas_TransParameters), intent(in), optional  :: parameters
+#ifdef ATLAS_HAVE_TRANS
+  type(atlas_TransParameters) :: p
+
+  if( present(parameters) ) then
+    p%cpp_object_ptr = parameters%cpp_object_ptr
+  else
+    p = atlas_TransParameters()
+  endif
+
+  call atlas__Trans__invtrans_vordiv2wind_field( this%cpp_object_ptr, &
+    &                          spvor%cpp_object_ptr, &
+    &                          spdiv%cpp_object_ptr, &
+    &                          gpwind%cpp_object_ptr, &
+    &                          p%cpp_object_ptr )
+
+  if( .not. present(parameters) ) then
+    call atlas_TransParameters__delete(p)
+  endif
+#else
+  THROW_ERROR
+#endif
+
+end subroutine atlas_Trans__invtrans_vordiv2wind_field
 
 

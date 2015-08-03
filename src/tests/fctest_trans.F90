@@ -46,12 +46,16 @@ TEST( test_trans )
   type(atlas_Functionspace) :: nodes
   type(atlas_Functionspace) :: spectral
   type(atlas_Field)         :: scalarfield1, scalarfield2
+  type(atlas_Field)         :: windfield
+  type(atlas_Field)         :: vorfield,divfield
   type(atlas_Field)         :: spectralfield1, spectralfield2
   type(atlas_FieldSet)      :: scalarfields
   type(atlas_FieldSet)      :: spectralfields
-  real(c_double), pointer :: scal1(:,:), scal2(:,:), spec1(:,:), spec2(:,:)
+  real(c_double), pointer :: scal1(:,:), scal2(:,:), spec1(:,:), spec2(:,:), wind(:,:)
   real(c_double), allocatable :: check(:)
   integer :: nlev, nsmax
+  integer, pointer :: nvalue(:)
+
   real(c_double) :: tol
 
   tol = 1.e-12
@@ -61,6 +65,9 @@ TEST( test_trans )
   grid = atlas_ReducedGrid("oct.N24")
   mesh = atlas_generate_mesh(grid)
   trans = atlas_Trans(grid,nsmax)
+
+  nvalue => trans%nvalue()
+  FCTEST_CHECK_EQUAL( size(nvalue), trans%nspec2() )
 
   !call atlas_write_gmsh(mesh,"testf3.msh")
 
@@ -134,6 +141,18 @@ TEST( test_trans )
   FCTEST_CHECK_CLOSE( spec2(:,5), check, tol )
   deallocate( check )
 
+
+  call nodes%create_field("wind",300)
+  windfield = nodes%field("wind")
+
+  call spectral%create_field("vorticity",100)
+  vorfield = spectral%field("vorticity")
+
+  call spectral%create_field("divergence",100)
+  divfield = spectral%field("divergence")
+
+  call trans%dirtrans_wind2vordiv(windfield,vorfield,divfield)
+  call trans%invtrans_vordiv2wind(vorfield,divfield,windfield)
 
   call atlas_delete(scalarfields)
   call atlas_delete(spectralfields)

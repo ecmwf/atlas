@@ -509,6 +509,133 @@ void Trans::invtrans(const FieldSet& spfields, FieldSet& gpfields, const TransPa
 }
 
 
+void Trans::dirtrans_wind2vordiv(const Field& gpwind, Field& spvor, Field&spdiv, const TransParameters& context) const
+{
+  // Count total number of fields and do sanity checks
+  size_t nfld = spvor.shape(1);
+  if( spdiv.shape(0) != spvor.shape(0) ) throw eckit::SeriousBug("invtrans: vorticity not compatible with divergence.",Here());
+  if( spdiv.shape(1) != spvor.shape(1) ) throw eckit::SeriousBug("invtrans: vorticity not compatible with divergence.",Here());
+  size_t nwindfld = gpwind.shape(1);
+  size_t ncomp = 0;
+  if     ( nwindfld == 2*nfld ) ncomp = 2;
+  else if( nwindfld == 3*nfld ) ncomp = 3;
+  else throw eckit::SeriousBug("dirtrans: wind field is not compatible with vorticity, divergence.",Here());
+
+  if( spdiv.shape(0) != nspec2() ) {
+    std::stringstream msg;
+    msg << "dirtrans: Spectral vorticity and divergence have wrong dimension: nspec2 "<<spdiv.shape(0)<<" should be "<<nspec2();
+    throw eckit::SeriousBug(msg.str(),Here());
+  }
+
+  // Arrays Trans expects
+  Array<double> rgp(2*nfld,ngptot());
+  ArrayView<double,2> rgpview (rgp);
+
+  // Pack gridpoints
+  {
+    ArrayView<int,1> flags  ( gpwind.function_space().field( "flags" ) );
+
+    size_t f=0;
+    ArrayView<double,3> wind ( gpwind.data<double>(), make_shape(gpwind.shape(0),nfld,nwindfld/nfld) );
+    for( size_t jcomp=0; jcomp<2; ++jcomp )
+    {
+      for( size_t jfld=0; jfld<nfld; ++jfld )
+      {
+        size_t n=0;
+        for( size_t jnode=0; jnode<gpwind.shape(0); ++jnode )
+        {
+          bool ghost = Topology::check(flags(jnode),Topology::GHOST);
+          if( !ghost )
+          {
+            rgpview(f,n) = wind(jnode,jfld,jcomp);
+            ++n;
+          }
+        }
+        ASSERT( n == ngptot() );
+        ++f;
+      }
+    }
+
+  }
+
+  // Do transform
+  {
+    struct ::DirTrans_t transform = ::new_dirtrans(&trans_);
+    transform.nvordiv = nfld;
+    transform.rgp     = rgp.data();
+    transform.rspvor  = spvor.data<double>();
+    transform.rspdiv  = spdiv.data<double>();
+
+    TRANS_CHECK( ::trans_dirtrans(&transform) );
+  }
+
+}
+
+
+void Trans::invtrans_vordiv2wind(const Field& spvor, const Field& spdiv, Field& gpwind, const TransParameters&) const
+{
+  // Count total number of fields and do sanity checks
+  size_t nfld = spvor.shape(1);
+  if( spdiv.shape(0) != spvor.shape(0) ) throw eckit::SeriousBug("invtrans: vorticity not compatible with divergence.",Here());
+  if( spdiv.shape(1) != spvor.shape(1) ) throw eckit::SeriousBug("invtrans: vorticity not compatible with divergence.",Here());
+  size_t nwindfld = gpwind.shape(1);
+  size_t ncomp = 0;
+  if     ( nwindfld == 2*nfld ) ncomp = 2;
+  else if( nwindfld == 3*nfld ) ncomp = 3;
+  else throw eckit::SeriousBug("invtrans: wind field is not compatible with vorticity, divergence.",Here());
+
+  if( spdiv.shape(0) != nspec2() ) {
+    std::stringstream msg;
+    msg << "invtrans: Spectral vorticity and divergence have wrong dimension: nspec2 "<<spdiv.shape(0)<<" should be "<<nspec2();
+    throw eckit::SeriousBug(msg.str(),Here());
+  }
+
+  // Arrays Trans expects
+  Array<double> rgp(2*nfld,ngptot());
+  ArrayView<double,2> rgpview (rgp);
+
+  // Do transform
+  {
+    struct ::InvTrans_t transform = ::new_invtrans(&trans_);
+    transform.nvordiv = nfld;
+    transform.rgp     = rgp.data();
+    transform.rspvor  = spdiv.data<double>();
+    transform.rspdiv  = spvor.data<double>();
+    TRANS_CHECK(::trans_invtrans(&transform));
+  }
+
+  // Unpack the gridpoint fields
+  {
+    ArrayView<int,1> flags  ( gpwind.function_space().field( "flags" ) );
+
+    size_t f=0;
+    ArrayView<double,3> wind ( gpwind.data<double>(), make_shape(gpwind.shape(0),nfld,nwindfld/nfld) );
+    for( size_t jcomp=0; jcomp<2; ++jcomp )
+    {
+      for( size_t jfld=0; jfld<nfld; ++jfld )
+      {
+        size_t n=0;
+        for( size_t jnode=0; jnode<gpwind.shape(0); ++jnode )
+        {
+          bool ghost = Topology::check(flags(jnode),Topology::GHOST);
+          if( !ghost )
+          {
+            wind(jnode,jfld,jcomp) = rgpview(f,n);
+            ++n;
+          }
+        }
+        ASSERT( n == ngptot() );
+        ++f;
+      }
+    }
+  }
+
+}
+
+
+
+
+
 Trans* atlas__Trans__new (const Grid* grid, int nsmax)
 {
   Trans* trans;
@@ -830,6 +957,14 @@ const int* atlas__Trans__nasm0 (const Trans* This, int &size)
   return NULL;
 }
 
+
+const int* atlas__Trans__nvalue (const Trans* This, int &size)
+{
+  ASSERT( This != NULL );
+  ATLAS_ERROR_HANDLING( return This->nvalue(size) );
+  return NULL;
+}
+
 void atlas__Trans__dirtrans_fieldset (const Trans* This, const FieldSet* gpfields, FieldSet* spfields, const TransParameters* parameters)
 {
   ATLAS_ERROR_HANDLING( This->dirtrans(*gpfields,*spfields,*parameters) );
@@ -857,6 +992,27 @@ void atlas__Trans__invtrans_field (const Trans* This, const Field* spfield, Fiel
   ASSERT( parameters != NULL );
   ATLAS_ERROR_HANDLING( This->invtrans(*spfield,*gpfield,*parameters) );
 }
+
+void atlas__Trans__dirtrans_wind2vordiv_field (const Trans* This, const Field* gpwind, Field* spvor, Field* spdiv, const TransParameters* parameters)
+{
+  ASSERT( This != NULL );
+  ASSERT( spvor != NULL );
+  ASSERT( spdiv != NULL );
+  ASSERT( gpwind != NULL );
+  ASSERT( parameters != NULL );
+  ATLAS_ERROR_HANDLING( This->dirtrans_wind2vordiv(*gpwind,*spvor,*spdiv,*parameters) );
+}
+
+void atlas__Trans__invtrans_vordiv2wind_field (const Trans* This, const Field* spvor, const Field* spdiv, Field* gpwind, const TransParameters* parameters)
+{
+  ASSERT( This != NULL );
+  ASSERT( spvor != NULL );
+  ASSERT( spdiv != NULL );
+  ASSERT( gpwind != NULL );
+  ASSERT( parameters != NULL );
+  ATLAS_ERROR_HANDLING( This->invtrans_vordiv2wind(*spvor,*spdiv,*gpwind,*parameters) );
+}
+
 
 TransParameters* atlas__TransParameters__new ()
 {
