@@ -111,7 +111,7 @@ function atlas_Trans__nsmax( this ) result(nsmax)
 #ifdef ATLAS_HAVE_TRANS
   nsmax = atlas__Trans__nsmax (this%cpp_object_ptr)
 #else
-  THROW_ERROR
+  nsmax = 0
 #endif
 end function
 
@@ -156,7 +156,7 @@ function atlas_Trans__nspec( this ) result(nspec)
 #ifdef ATLAS_HAVE_TRANS
   nspec = atlas__Trans__nspec (this%cpp_object_ptr)
 #else
-  THROW_ERROR
+  nspec = 0
 #endif
 end function
 
@@ -167,7 +167,7 @@ function atlas_Trans__nspec2( this ) result(nspec2)
 #ifdef ATLAS_HAVE_TRANS
   nspec2 = atlas__Trans__nspec2 (this%cpp_object_ptr)
 #else
-  THROW_ERROR
+  nspec2 = 0
 #endif
 end function
 
@@ -178,7 +178,7 @@ function atlas_Trans__nspec2g( this ) result(nspec2g)
 #ifdef ATLAS_HAVE_TRANS
   nspec2g = atlas__Trans__nspec2g (this%cpp_object_ptr)
 #else
-  THROW_ERROR
+  nspec2g = 0
 #endif
 end function
 
@@ -189,7 +189,7 @@ function atlas_Trans__nspec2mx( this ) result(nspec2mx)
 #ifdef ATLAS_HAVE_TRANS
   nspec2mx = atlas__Trans__nspec2mx (this%cpp_object_ptr)
 #else
-  THROW_ERROR
+  nspec2mx = 0
 #endif
 end function
 
