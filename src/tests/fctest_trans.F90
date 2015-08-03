@@ -51,10 +51,11 @@ TEST( test_trans )
   type(atlas_Field)         :: spectralfield1, spectralfield2
   type(atlas_FieldSet)      :: scalarfields
   type(atlas_FieldSet)      :: spectralfields
-  real(c_double), pointer :: scal1(:,:), scal2(:,:), spec1(:,:), spec2(:,:), wind(:,:), vor(:), div(:)
+  real(c_double), pointer :: scal1(:,:), scal2(:,:), spec1(:,:), spec2(:,:), wind(:,:,:), vor(:,:), div(:,:)
   real(c_double), allocatable :: check(:)
-  integer :: nlev, nsmax, jn, in
+  integer :: nlev, nsmax, jn, in, jlev
   integer, pointer :: nvalue(:)
+  real(c_double), allocatable :: vorg(:,:)
 
   real(c_double) :: tol
 
@@ -139,31 +140,36 @@ TEST( test_trans )
   deallocate( check )
 
 
-  call nodes%create_field("wind",3)
+  call nodes%create_field("wind",3*nlev)
   windfield = nodes%field("wind")
-  call windfield%access_data(wind)
+  call windfield%access_data(wind,(/nodes%dof(),nlev,3/))
 
-  call spectral%create_field("vorticity",1)
+  call spectral%create_field("vorticity",nlev)
   vorfield = spectral%field("vorticity")
-  call vorfield%access_data(vor)
+  call vorfield%access_data(vor,(/trans%nspec(),nlev/))
 
-  call spectral%create_field("divergence",1)
+  call spectral%create_field("divergence",nlev)
   divfield = spectral%field("divergence")
-  call vorfield%access_data(div)
+  call vorfield%access_data(div,(/trans%nspec(),nlev/))
 
   call trans%dirtrans_wind2vordiv(windfield,vorfield,divfield)
 
   nvalue => trans%nvalue()
   FCTEST_CHECK_EQUAL( size(nvalue), trans%nspec2() )
 
-  do jn=1,trans%nspec2()
-    in = nvalue(jn)
-    if( in > 20 ) then
-      vor(jn) = 0
-    endif
+  do jlev=1,nlev
+    do jn=1,trans%nspec2()
+      in = nvalue(jn)
+      if( in > 5 ) then
+        vor(jn,jlev) = 0
+      endif
+    enddo
   enddo
 
   call trans%invtrans_vordiv2wind(vorfield,divfield,windfield)
+
+  allocate( vorg( trans%nspec2g(), nlev ) )
+  call trans%gathspec(vor,vorg)
 
   call atlas_delete(scalarfields)
   call atlas_delete(spectralfields)

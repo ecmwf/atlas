@@ -552,3 +552,24 @@ subroutine atlas_Trans__invtrans_vordiv2wind_field(this, spvor, spdiv, gpwind, p
 end subroutine atlas_Trans__invtrans_vordiv2wind_field
 
 
+subroutine atlas_Trans__gathspec_r1(this, local, global)
+  USE_ATLAS_TRANS_C_BINDING
+  class(atlas_Trans), intent(in) :: this
+  real(c_double), intent(in) :: local(:)
+  real(c_double), intent(out) :: global(:)
+#ifdef ATLAS_HAVE_TRANS
+  call atlas__Trans__gathspec(this%cpp_object_ptr, 1, (/1/), local, global )
+#endif
+end subroutine atlas_Trans__gathspec_r1
+
+subroutine atlas_Trans__gathspec_r2(this, local, global)
+  USE_ATLAS_TRANS_C_BINDING
+  class(atlas_Trans), intent(in) :: this
+  real(c_double), intent(in) :: local(:,:)
+  real(c_double), intent(out) :: global(:,:)
+#ifdef ATLAS_HAVE_TRANS
+  integer :: destination(size(local,2))
+  destination(:) = 1
+  call atlas__Trans__gathspec(this%cpp_object_ptr, size(local,2), destination, view1d(local), view1d(global) )
+#endif
+end subroutine atlas_Trans__gathspec_r2

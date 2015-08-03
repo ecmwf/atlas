@@ -54,6 +54,9 @@ contains
   procedure :: invtrans_vordiv2wind => atlas_Trans__invtrans_vordiv2wind_field
   generic :: invtrans => invtrans_field, invtrans_fieldset
 
+  procedure :: gathspec_r1 => atlas_Trans__gathspec_r1
+  procedure :: gathspec_r2 => atlas_Trans__gathspec_r2
+  generic :: gathspec => gathspec_r1, gathspec_r2
 END TYPE atlas_Trans
 
 !------------------------------------------------------------------------------
