@@ -165,6 +165,7 @@ extern "C"
   void atlas__Field__delete (Field* This);
   const char* atlas__Field__name (Field* This);
   void atlas__Field__datatype (Field* This, Char* &datatype, int &size, int &allocated);
+  int atlas__Field__rank (Field* This);
   int atlas__Field__size (Field* This);
   double atlas__Field__bytes (Field* This);
   void atlas__Field__shapef (Field* This, int* &shape, int &rank);

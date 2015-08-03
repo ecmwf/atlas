@@ -226,6 +226,15 @@ int atlas__Field__size (Field* This)
   return 0;
 }
 
+int atlas__Field__rank (Field* This)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This != NULL );
+    return This->rank();
+  );
+  return 0;
+}
+
 double atlas__Field__bytes (Field* This)
 {
   ATLAS_ERROR_HANDLING(

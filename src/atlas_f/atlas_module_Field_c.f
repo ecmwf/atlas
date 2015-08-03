@@ -64,6 +64,12 @@ function Field__size(this) result(size)
   size = atlas__Field__size(this%cpp_object_ptr)
 end function Field__size
 
+function Field__rank(this) result(rank)
+  class(atlas_Field), intent(in) :: this
+  integer :: rank
+  rank = atlas__Field__rank(this%cpp_object_ptr)
+end function Field__rank
+
 function Field__bytes(this) result(bytes)
   class(atlas_Field), intent(in) :: this
   real(c_double) :: bytes

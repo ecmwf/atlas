@@ -26,6 +26,7 @@ contains
   procedure, private :: shape_array => Field__shape_array
   procedure, private :: shape_idx   => Field__shape_idx
   procedure :: size => Field__size
+  procedure :: rank => Field__rank
   procedure :: bytes => Field__bytes
   procedure, private :: access_data1_int32 => Field__access_data1_int32
   procedure, private :: access_data2_int32 => Field__access_data2_int32
