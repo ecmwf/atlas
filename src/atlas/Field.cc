@@ -62,17 +62,17 @@ Field* Field::create(const ArrayShape& shape, const eckit::Parametrisation& para
 }
 
 Field::Field() :
-  name_()
+  name_(), function_space_(0)
 {
 }
 
 Field::Field(const std::string& name) :
-  name_(name)
+  name_(name), function_space_(0)
 {
 }
 
 Field::Field(const eckit::Parametrisation& params) :
-  name_(), grid_(0), function_space_(0)
+  name_(), function_space_(0)
 {
   FunctionSpace::Id function_space;
   if( params.get("function_space",function_space) )
@@ -156,21 +156,6 @@ FunctionSpace& Field::function_space() const {
         throw eckit::Exception("Field "+name()+" is not associated to any FunctionSpace.");
     return *function_space_;
 }
-
-const Grid& Field::grid() const {
-    if( function_space_ )
-    {
-        if( function_space_->mesh().has_grid() )
-            return function_space_->mesh().grid();
-    }
-    if( !grid_ )
-        throw eckit::Exception("Field "+name()+" is not associated to any Grid.");
-    return *grid_;
-}
-
-const Mesh& Field::mesh() const { ASSERT(function_space_); return function_space_->mesh(); }
-
-Mesh& Field::mesh() { ASSERT(function_space_); return function_space_->mesh(); }
 
 void Field::set_function_space(const FunctionSpace& function_space)
 {

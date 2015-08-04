@@ -75,11 +75,6 @@ public: // methods
 
   Field& field(const std::string& name) const;
 
-private: // methods
-
-  /// Check if all fields share same grid
-  bool have_same_grid() const;
-
 protected: // data
 
   std::vector< Field::Ptr >       fields_;  ///< field handle storage

@@ -132,17 +132,11 @@ protected: // members
 /***************************************************************************/
 private:
 
-  const Grid* grid_;
   FunctionSpace* function_space_;
 
 public:
 
   FunctionSpace& function_space() const;
-
-  const Grid& grid() const;
-
-  const Mesh& mesh() const;
-        Mesh& mesh();
 
 private:
   friend class FunctionSpace;

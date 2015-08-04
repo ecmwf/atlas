@@ -212,12 +212,8 @@ void PointCloud::write(const eckit::PathName& path, const FieldSet& fieldset)
   // operate in field sets with same grid and consistent size(s), creating transversing data structures
   // @warning: several copy operations here
 
-  for (size_t i=1; i<fieldset.size(); ++i)
-    if (fieldset[0].grid().same(fieldset[i].grid()))
-      throw eckit::BadParameter(msg+"fields must be described in the same grid (fieldset.field(0).grid() == fieldset.field(*).grid())");
-
-  const Mesh& m(fieldset[0].mesh());
-  ArrayView< double, 2 > lonlat(m.function_space("nodes").field("lonlat"));
+  ASSERT( fieldset.size() );
+  ArrayView< double, 2 > lonlat(fieldset[0].function_space().field("lonlat"));
   if (!lonlat.size())
     throw eckit::BadParameter(msg+"invalid number of points (failed: nb_pts>0)");
 

@@ -71,23 +71,6 @@ std::vector< std::string > FieldSet::field_names() const
 }
 
 
-bool FieldSet::have_same_grid() const
-{
-  if( fields_.empty() )
-    return true;
-
-  Grid::uid_t uid = fields_[0]->grid().uniqueId();
-
-  for( size_t i = 1; i < fields_.size(); ++i )
-  {
-    if( fields_[i]->grid().uniqueId() != uid )
-      return false;
-  }
-
-  return true;
-}
-
-
 std::vector<Field*>& __private_get_raw_fields_ptr (FieldSet* This)
 {
   This->fields_raw_ptr_.resize( This->size() );

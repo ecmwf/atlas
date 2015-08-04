@@ -369,7 +369,9 @@ void Grib::write( const FieldSet& fields, const PathName& opath )
 
 void Grib::write(const Field& fh, DataHandle& dh)
 {
-   GribHandle::Ptr gh = Grib::create_handle( fh.grid() );
+  GribHandle::Ptr gh;
+   NOTIMP; // Can no longer access grid from field directly
+   // ---> gh = Grib::create_handle( fh.grid() );
 
    if( !gh )
       throw SeriousBug("Failed to create GribHandle from Field", Here());
