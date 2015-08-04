@@ -28,6 +28,7 @@
 
 // Forward declarations
 namespace atlas { class Grid; }
+namespace atlas { class Nodes; }
 namespace atlas { class FunctionSpace; }
 namespace atlas { class GridDistribution; }
 namespace atlas { namespace mpl { class HaloExchange; } }
@@ -130,6 +131,13 @@ public: // methods
 
     void print(std::ostream&) const;
 
+
+
+    Nodes& create_nodes( size_t );
+
+    const Nodes& nodes() const { ASSERT(nodes_); return *nodes_; }
+          Nodes& nodes()       { ASSERT(nodes_); return *nodes_; }
+
     const Store<const mpl::HaloExchange>& halo_exchange() const { return halo_exchange_; }
           Store<const mpl::HaloExchange>& halo_exchange()       { return halo_exchange_; }
 
@@ -146,9 +154,7 @@ private:  // methods
         return s;
     }
 
-private: // members
-
-    Metadata      metadata_;
+private: // members to be removed
 
     const Grid* grid_;
 
@@ -156,6 +162,11 @@ private: // members
 
     StoreFS_t function_spaces_;
 
+
+private: // members
+
+    Metadata   metadata_;
+    eckit::SharedPtr<Nodes> nodes_;
     Store<const mpl::HaloExchange> halo_exchange_;
     Store<const mpl::GatherScatter> gather_scatter_;
     Store<const mpl::Checksum> checksum_;

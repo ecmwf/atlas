@@ -1,0 +1,105 @@
+/*
+ * (C) Copyright 1996-2015 ECMWF.
+ *
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
+ * granted to it by virtue of its status as an intergovernmental organisation nor
+ * does it submit to any jurisdiction.
+ */
+
+/// @author Willem Deconinck
+/// @date August 2015
+
+#ifndef atlas_Nodes_H
+#define atlas_Nodes_H
+
+#include <string>
+#include <map>
+#include "eckit/memory/Owned.h"
+#include "eckit/memory/SharedPtr.h"
+#include "atlas/Metadata.h"
+
+namespace atlas { class Field; }
+
+namespace atlas {
+
+/**
+ * \brief Nodes class that owns a collection of fields
+ */
+class Nodes : public eckit::Owned {
+
+public: // methods
+
+//-- Constructors
+
+  Nodes(size_t size);
+
+//-- Accessors
+
+  const Field& field(const std::string& name) const;
+        Field& field(const std::string& name);
+  bool has_field(const std::string& name) const { return (fields_.find(name) != fields_.end()); }
+
+  const Metadata& metadata() const { return metadata_; }
+        Metadata& metadata()       { return metadata_; }
+
+  const Field& global_index() const { return *global_index_; }
+        Field& global_index()       { return *global_index_; }
+
+  const Field& remote_index() const { return *remote_index_; }
+        Field& remote_index()       { return *remote_index_; }
+
+  const Field& partition() const { return *partition_; }
+        Field& partition()       { return *partition_; }
+
+  const Field& ghost() const { return *ghost_; }
+        Field& ghost()       { return *ghost_; }
+
+  const Field& halo() const { return *halo_; }
+        Field& halo()       { return *halo_; }
+
+  const Field& topology() const { return *topology_; }
+        Field& topology()       { return *topology_; }
+
+  const Field& lonlat() const { return *lonlat_; }
+        Field& lonlat()       { return *lonlat_; }
+
+  size_t size() const { return size_; }
+
+// -- Modifiers
+
+  Field& add( Field* ); // Take ownership!
+
+  void resize( size_t );
+
+private:
+
+  void remove_field(const std::string& name);
+
+private:
+
+  typedef std::map< std::string, eckit::SharedPtr<Field> >  FieldMap;
+
+private:
+
+  size_t size_;
+  FieldMap fields_;
+  Metadata metadata_;
+
+  // Cached shortcuts to specific fields in fields_
+  Field* global_index_;
+  Field* remote_index_;
+  Field* partition_;
+  Field* ghost_;
+  Field* halo_;
+  Field* topology_;
+  Field* lonlat_;
+
+};
+
+//------------------------------------------------------------------------------------------------------
+
+} // namespace atlas
+
+#endif

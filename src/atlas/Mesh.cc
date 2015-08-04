@@ -21,6 +21,7 @@
 #include "atlas/Field.h"
 #include "atlas/Grid.h"
 #include "atlas/Parameters.h"
+#include "atlas/Nodes.h"
 
 namespace atlas {
 
@@ -146,6 +147,14 @@ void Mesh::print(std::ostream& os) const
     }
     os << "]";
 }
+
+Nodes& Mesh::create_nodes( size_t size )
+{
+  ASSERT( !nodes_ );
+  nodes_.reset( new Nodes(size) );
+  return *nodes_;
+}
+
 
 //----------------------------------------------------------------------------------------------------------------------
 
