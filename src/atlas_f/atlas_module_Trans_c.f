@@ -568,8 +568,8 @@ subroutine atlas_Trans__gathspec_r2(this, local, global)
   real(c_double), intent(in) :: local(:,:)
   real(c_double), intent(out) :: global(:,:)
 #ifdef ATLAS_HAVE_TRANS
-  integer :: destination(size(local,2))
+  integer :: destination(size(local,1))
   destination(:) = 1
-  call atlas__Trans__gathspec(this%cpp_object_ptr, size(local,2), destination, view1d(local), view1d(global) )
+  call atlas__Trans__gathspec(this%cpp_object_ptr, size(local,1), destination, view1d(local), view1d(global) )
 #endif
 end subroutine atlas_Trans__gathspec_r2

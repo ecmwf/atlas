@@ -169,7 +169,7 @@ extern "C"
 {
 	Mesh* atlas__Mesh__new ();
 	void atlas__Mesh__delete (Mesh* This);
-	void atlas__Mesh__create_function_space (Mesh* This, char* name,char* shape_func,int shape[], int shape_size);
+	void atlas__Mesh__create_function_space (Mesh* This, char* name,char* shape_func,int shape[], int shape_size, int fortran_ordering);
 	FunctionSpace* atlas__Mesh__function_space (Mesh* This, char* name);
 	Grid* atlas__Mesh__grid (Mesh* This);
 }

@@ -11,10 +11,11 @@ subroutine Mesh__create_function_space_nodes(this,name,shape_func,nb_nodes)
   character(len=*), intent(in) :: name
   character(len=*), intent(in) :: shape_func
   integer, intent(in) :: nb_nodes
-  integer :: extents(2)
-  extents = (/nb_nodes,FIELD_NB_VARS/)
+  integer :: shape(2)
+  integer , parameter :: fortran_ordering = 1
+  shape = (/FIELD_NB_VARS,nb_nodes/)
   call atlas__Mesh__create_function_space(this%cpp_object_ptr,c_str(name),c_str(shape_func), &
-  & extents, 2)
+  & shape, size(shape), fortran_ordering )
 end subroutine Mesh__create_function_space_nodes
 
 subroutine Mesh__create_function_space_shape(this,name,shape_func,shape)
@@ -22,8 +23,9 @@ subroutine Mesh__create_function_space_shape(this,name,shape_func,shape)
   character(len=*), intent(in) :: name
   character(len=*), intent(in) :: shape_func
   integer, intent(in) :: shape(:)
+  integer , parameter :: fortran_ordering = 1
   call atlas__Mesh__create_function_space(this%cpp_object_ptr,c_str(name),c_str(shape_func), &
-  & shape, size(shape) )
+  & shape, size(shape), fortran_ordering )
 end subroutine Mesh__create_function_space_shape
 
 function Mesh__function_space(this,name) result(function_space)

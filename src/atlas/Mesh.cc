@@ -159,7 +159,7 @@ void atlas__Mesh__delete (Mesh* This) {
 	delete This;
 }
 
-void atlas__Mesh__create_function_space(Mesh* This, char* name,char* shape_func,int shape[], int shape_size)
+void atlas__Mesh__create_function_space(Mesh* This, char* name,char* shape_func,int shape[], int shape_size, int fortran_ordering)
 {
   ATLAS_ERROR_HANDLING(
 
@@ -167,9 +167,21 @@ void atlas__Mesh__create_function_space(Mesh* This, char* name,char* shape_func,
     ASSERT( shape_size >= 0 );
 
     std::vector<size_t> vshape(shape_size);
-    for(size_t n=0; n<vshape.size(); ++n)
-        vshape[n]=shape[n];
 
+    if( fortran_ordering )
+    {
+      size_t r=vshape.size()-1;
+      for(size_t n=0; n<vshape.size(); ++n)
+      {
+        vshape[n]=shape[r];
+        --r;
+      };
+    }
+    else
+    {
+      for(size_t n=0; n<vshape.size(); ++n)
+          vshape[n]=shape[n];
+    }
     This->create_function_space(std::string(name), std::string(shape_func),vshape);
   );
 }

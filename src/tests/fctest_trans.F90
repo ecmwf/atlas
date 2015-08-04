@@ -83,7 +83,7 @@ TEST( test_trans )
   scalarfield2 = nodes%field("scalar2")
 
   ! note this is in C++ ordering for now (TODO fix)
-  call mesh%create_function_space("spectral","spectral",(/trans%nspec2(),ATLAS_FIELD_NB_VARS/))
+  call mesh%create_function_space("spectral","spectral",(/ATLAS_FIELD_NB_VARS,trans%nspec2()/))
   spectral = mesh%function_space("spectral")
   call spectral%create_field("spectral1",nlev)
   spectralfield1 = spectral%field("spectral1")
@@ -142,15 +142,15 @@ TEST( test_trans )
 
   call nodes%create_field("wind",3*nlev)
   windfield = nodes%field("wind")
-  call windfield%access_data(wind,(/nodes%dof(),nlev,3/))
+  call windfield%access_data(wind,(/3,nlev,nodes%dof()/))
 
   call spectral%create_field("vorticity",nlev)
   vorfield = spectral%field("vorticity")
-  call vorfield%access_data(vor,(/trans%nspec(),nlev/))
+  call vorfield%access_data(vor,(/nlev,trans%nspec2()/))
 
   call spectral%create_field("divergence",nlev)
   divfield = spectral%field("divergence")
-  call vorfield%access_data(div,(/trans%nspec(),nlev/))
+  call vorfield%access_data(div,(/nlev,trans%nspec2()/))
 
   call trans%dirtrans_wind2vordiv(windfield,vorfield,divfield)
 
@@ -161,14 +161,14 @@ TEST( test_trans )
     do jn=1,trans%nspec2()
       in = nvalue(jn)
       if( in > 5 ) then
-        vor(jn,jlev) = 0
+        vor(jlev,jn) = 0
       endif
     enddo
   enddo
 
   call trans%invtrans_vordiv2wind(vorfield,divfield,windfield)
 
-  allocate( vorg( trans%nspec2g(), nlev ) )
+  allocate( vorg( nlev, trans%nspec2g() ) )
   call trans%gathspec(vor,vorg)
 
   call atlas_delete(scalarfields)
