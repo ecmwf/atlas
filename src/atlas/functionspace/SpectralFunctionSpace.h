@@ -15,6 +15,8 @@
 #include "atlas/FunctionSpace.h"
 
 namespace atlas { namespace trans { class Trans; } }
+namespace atlas { class Field; }
+namespace atlas { class FieldSet; }
 
 namespace atlas {
 namespace functionspace {
@@ -36,6 +38,15 @@ public:
 
   /// @brief Create a global spectral field
   virtual Field* createGlobalField(const std::string& name);
+
+  void gather( const FieldSet&, FieldSet& ) const;
+  void gather( const Field&, Field& ) const;
+
+  void scatter( const FieldSet&, FieldSet& ) const;
+  void scatter( const Field&, Field& ) const;
+
+  std::string checksum( const FieldSet& ) const;
+  std::string checksum( const Field& ) const;
 
 public: // methods
 
