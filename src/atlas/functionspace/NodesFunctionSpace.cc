@@ -51,8 +51,8 @@ NodesFunctionSpace::NodesFunctionSpace(const std::string& name, Mesh& mesh, cons
 
     actions::renumber_nodes_glb_idx(mesh_.nodes());
 
-    Field& ridx = mesh_.nodes().field("remote_idx");
-    Field& part = mesh_.nodes().field("partition");
+    Field& ridx = mesh_.nodes().remote_index();
+    Field& part = mesh_.nodes().partition();
 
     std::stringstream ss;
     ss << "nb_nodes_including_halo["<<halo_<<"]";
@@ -80,9 +80,9 @@ NodesFunctionSpace::NodesFunctionSpace(const std::string& name, Mesh& mesh, cons
     if( halo_ == 0 )
       actions::build_nodes_parallel_fields( mesh_.nodes() );
 
-    Field& ridx = mesh_.nodes().field("remote_idx");
-    Field& part = mesh_.nodes().field("partition");
-    Field& gidx = mesh_.nodes().field("glb_idx");
+    Field& ridx = mesh_.nodes().remote_index();
+    Field& part = mesh_.nodes().partition();
+    Field& gidx = mesh_.nodes().global_index();
 
     ArrayView<int,1> flags ( mesh_.nodes().field("flags") );
     std::vector<int> mask(mesh_.nodes().shape(0));
@@ -107,9 +107,9 @@ NodesFunctionSpace::NodesFunctionSpace(const std::string& name, Mesh& mesh, cons
     if( halo_ == 0 )
       actions::build_nodes_parallel_fields( mesh_.nodes() );
 
-    Field& ridx = mesh_.nodes().field("remote_idx");
-    Field& part = mesh_.nodes().field("partition");
-    Field& gidx = mesh_.nodes().field("glb_idx");
+    Field& ridx = mesh_.nodes().remote_index();
+    Field& part = mesh_.nodes().partition();
+    Field& gidx = mesh_.nodes().global_index();
 
     ArrayView<int,1> flags ( mesh_.nodes().field("flags") );
     std::vector<int> mask(mesh_.nodes().shape(0));

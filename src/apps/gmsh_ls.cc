@@ -24,10 +24,10 @@
 
 #include "atlas/atlas.h"
 #include "atlas/io/Gmsh.h"
-#include "atlas/mesh/Mesh.h"
+#include "atlas/Mesh.h"
 #include "atlas/Nodes.h"
-#include "atlas/mesh/Field.h"
-#include "atlas/mesh/FunctionSpace.h"
+#include "atlas/Field.h"
+#include "atlas/FunctionSpace.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -69,10 +69,10 @@ void GmshLs::run()
     Mesh& mesh = *in_mesh;
 
     Nodes& nodes   = mesh.nodes();
-    FieldT<double>& lonlat = nodes.field<double>( "coordinates" );
-    FieldT<int>& glb_idx   = nodes.field<int>( "glb_idx" );
+    FieldT<double>& lonlat  = nodes.lonlat();
+    FieldT<gidx_t>& glb_idx = nodes.global_index();
 
-    size_t nb_nodes = nodes.shape(0);
+    size_t nb_nodes = nodes.size();
 
     Log::info() << "nb_nodes = " << nb_nodes << std::endl;
 

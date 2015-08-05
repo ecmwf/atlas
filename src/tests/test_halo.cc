@@ -47,7 +47,7 @@ double dual_volume(Mesh& mesh)
   IsGhost is_ghost_node(nodes);
   int nb_nodes = nodes.shape(0);
   ArrayView<double,1> dual_volumes ( nodes.field("dual_volumes") );
-  ArrayView<gidx_t,1> glb_idx ( nodes.field("glb_idx") );
+  ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
   double area=0;
   for( int node=0; node<nb_nodes; ++node )
   {
@@ -83,8 +83,8 @@ BOOST_AUTO_TEST_CASE( test_small )
 
   if( eckit::mpi::size() == 5 )
   {
-    IndexView<int,1> ridx ( m->nodes().field("remote_idx") );
-    ArrayView<gidx_t,1> gidx ( m->nodes().field("glb_idx") );
+    IndexView<int,1> ridx ( m->nodes().remote_index() );
+    ArrayView<gidx_t,1> gidx ( m->nodes().global_index() );
 
     switch( eckit::mpi::rank() ) // with 5 tasks
     {

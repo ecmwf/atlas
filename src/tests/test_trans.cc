@@ -228,9 +228,9 @@ BOOST_AUTO_TEST_CASE( test_generate_mesh )
   GridDistribution::Ptr eqreg_distribution( meshgen::EqualRegionsPartitioner(*g).distribution() );
   Mesh::Ptr m_eqreg( generate( *g, *eqreg_distribution ) );
 
-  ArrayView<int,1> p_default( m_default->nodes().field("partition") );
-  ArrayView<int,1> p_trans  ( m_trans  ->nodes().field("partition") );
-  ArrayView<int,1> p_eqreg  ( m_eqreg  ->nodes().field("partition") );
+  ArrayView<int,1> p_default( m_default->nodes().partition() );
+  ArrayView<int,1> p_trans  ( m_trans  ->nodes().partition() );
+  ArrayView<int,1> p_eqreg  ( m_eqreg  ->nodes().partition() );
 
   BOOST_CHECK_EQUAL_COLLECTIONS( p_default.begin(), p_default.end(),
                                  p_trans  .begin(), p_trans  .end() );

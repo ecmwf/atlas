@@ -237,7 +237,7 @@ void add_median_dual_volume_contribution(
     Nodes& nodes,
     ArrayView<double,1>& dual_volumes )
 {
-  ArrayView<gidx_t,1> node_glb_idx  ( nodes.field("glb_idx"    ) );
+  ArrayView<gidx_t,1> node_glb_idx  ( nodes.global_index() );
   ArrayView<double,2> edge_centroids( edges.field("centroids"  ) );
   IndexView<int,   2> edge_nodes    ( edges.field("nodes"      ) );
   ArrayView<gidx_t,1> edge_glb_idx  ( edges.field("glb_idx"    ) );
@@ -617,7 +617,7 @@ void build_brick_dual_mesh( Mesh& mesh )
     Nodes& nodes   = mesh.nodes();
     ArrayView<double,2> lonlat        ( nodes.lonlat() );
     ArrayView<double,1> dual_volumes  ( nodes.create_field<double>( "dual_volumes", 1 ) );
-    ArrayView<gidx_t,1> gidx  ( nodes.field( "glb_idx" ) );
+    ArrayView<gidx_t,1> gidx  ( nodes.global_index() );
 
     int c=0;
     int n=0;

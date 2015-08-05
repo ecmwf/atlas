@@ -12,7 +12,7 @@
 #define atlas_util_IsGhost_h
 
 #include "atlas/mpi/mpi.h"
-#include "atlas/FunctionSpace.h"
+#include "atlas/Nodes.h"
 #include "atlas/Field.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
@@ -22,16 +22,16 @@ namespace util {
 
 struct IsGhost
 {
-  IsGhost( const FunctionSpace& nodes )
+  IsGhost( const Nodes& nodes )
   {
-    part_   = ArrayView<int,1> (nodes.field("partition") );
-    ridx_   = IndexView<int,1> (nodes.field("remote_idx") );
+    part_   = ArrayView<int,1> (nodes.partition() );
+    ridx_   = IndexView<int,1> (nodes.remote_index() );
     mypart_ = eckit::mpi::rank();
   }
-  IsGhost( const FunctionSpace& nodes, int mypart )
+  IsGhost( const Nodes& nodes, int mypart )
   {
-    part_   = ArrayView<int,1> (nodes.field("partition") );
-    ridx_   = IndexView<int,1> (nodes.field("remote_idx") );
+    part_   = ArrayView<int,1> (nodes.partition() );
+    ridx_   = IndexView<int,1> (nodes.remote_index() );
     mypart_ = mypart;
   }
 

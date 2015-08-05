@@ -43,8 +43,8 @@ void build_periodic_boundaries( Mesh& mesh )
   Nodes& nodes = mesh.nodes();
 
   ArrayView<int,1> flags( nodes.field("flags") );
-  IndexView<int,1> ridx ( nodes.field("remote_idx") );
-  ArrayView<int,1> part ( nodes.field("partition") );
+  IndexView<int,1> ridx ( nodes.remote_index() );
+  ArrayView<int,1> part ( nodes.partition() );
 
   int nb_nodes = nodes.shape(0);
 

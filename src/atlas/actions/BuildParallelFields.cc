@@ -141,7 +141,7 @@ Field& build_nodes_global_idx( Nodes& nodes )
     glb_idx = -1;
   }
 
-  ArrayView<gidx_t,1> glb_idx ( nodes.field("glb_idx"    ) );
+  ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
 
   UniqueLonLat compute_uid(nodes);
 
@@ -150,7 +150,7 @@ Field& build_nodes_global_idx( Nodes& nodes )
     if( glb_idx(jnode) <= 0 )
       glb_idx(jnode) = compute_uid(jnode);
   }
-  return nodes.field("glb_idx");
+  return nodes.global_index();
 }
 
 void renumber_nodes_glb_idx( Nodes& nodes )
@@ -171,7 +171,7 @@ void renumber_nodes_glb_idx( Nodes& nodes )
     glb_idx = -1;
   }
 
-  ArrayView<gidx_t,1> glb_idx ( nodes.field("glb_idx"    ) );
+  ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
 
   /*
    * Sorting following gidx will define global order of
@@ -269,8 +269,8 @@ Field& build_nodes_remote_idx( Nodes& nodes )
   // <---------
 
   if( ! nodes.has_field("remote_idx") ) ( nodes.create_field<int>("remote_idx",1) );
-  IndexView<int,   1> ridx   ( nodes.field("remote_idx")  );
-  ArrayView<int,   1> part   ( nodes.field("partition")   );
+  IndexView<int,   1> ridx   ( nodes.remote_index()  );
+  ArrayView<int,   1> part   ( nodes.partition()   );
   ArrayView<double,2> lonlat ( nodes.lonlat() );
   int nb_nodes = nodes.shape(0);
 
@@ -348,7 +348,7 @@ Field& build_nodes_partition( Nodes& nodes )
     ArrayView<int,1> part ( nodes.create_field<int>("partition",1) );
     part = eckit::mpi::rank();
   }
-  return nodes.field("partition");
+  return nodes.partition();
 }
 
 // ------------------------------------------------------------------
@@ -373,11 +373,11 @@ Field& build_edges_partition( FunctionSpace& edges, Nodes& nodes )
     is_pole_edge = ArrayView<int,1>( edges.field("is_pole_edge") );
   }
 
-  ArrayView<int,1> node_part  ( nodes.field("partition") );
+  ArrayView<int,1> node_part  ( nodes.partition() );
   ArrayView<double,2> lonlat  ( nodes.lonlat() );
-  ArrayView<int,   1> flags   ( nodes.field("flags")       );
+  ArrayView<int,   1> flags   ( nodes.field("flags") );
 #ifdef DEBUGGING_PARFIELDS
-  ArrayView<gidx_t,   1> gidx    ( nodes.field("glb_idx")       );
+  ArrayView<gidx_t,   1> gidx    ( nodes.global_index() );
 #endif
   std::vector< IndexView<int,2> > elem_nodes( edges.mesh().nb_function_spaces() );
   std::vector< ArrayView<int,1> > elem_part ( edges.mesh().nb_function_spaces() );
@@ -652,8 +652,8 @@ Field& build_edges_remote_idx( FunctionSpace& edges, Nodes& nodes )
   ArrayView<double,2> lonlat     ( nodes.lonlat() );
   ArrayView<int,   1> flags      ( nodes.field("flags")       );
 #ifdef DEBUGGING_PARFIELDS
-  ArrayView<gidx_t,   1> gidx      ( nodes.field("glb_idx")       );
-  ArrayView<int,   1> node_part      ( nodes.field("partition")       );
+  ArrayView<gidx_t,   1> gidx      ( nodes.global_index()       );
+  ArrayView<int,   1> node_part      ( nodes.partition()       );
 #endif
 
   ArrayView<int,1> is_pole_edge;

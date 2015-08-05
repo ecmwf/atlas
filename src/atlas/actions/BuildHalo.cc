@@ -83,9 +83,9 @@ void increase_halo( Mesh& mesh )
   //DEBUG( "\n\n" << "Increase halo!! \n\n");
   Nodes& nodes         = mesh.nodes();
   ArrayView<double,2> lonlat   ( nodes.lonlat() );
-  ArrayView<gidx_t,1> glb_idx  ( nodes.field( "glb_idx"        ) );
-  ArrayView<int   ,1> part     ( nodes.field( "partition"      ) );
-  IndexView<int   ,1> ridx     ( nodes.field( "remote_idx"     ) );
+  ArrayView<gidx_t,1> glb_idx  ( nodes.global_index() );
+  ArrayView<int   ,1> part     ( nodes.partition() );
+  IndexView<int   ,1> ridx     ( nodes.remote_index() );
   ArrayView<int   ,1> flags    ( nodes.field( "flags"          ) );
 
   int nb_nodes = nodes.shape(0);
@@ -544,9 +544,9 @@ void increase_halo( Mesh& mesh )
   nodes.resize( nb_nodes+nb_new_nodes );
 
   flags   = ArrayView<int,   1>( nodes.field("flags") );
-  glb_idx = ArrayView<gidx_t,1>( nodes.field("glb_idx") );
-  part    = ArrayView<int,   1>( nodes.field("partition") );
-  ridx    = IndexView<int,   1>( nodes.field("remote_idx") );
+  glb_idx = ArrayView<gidx_t,1>( nodes.global_index() );
+  part    = ArrayView<int,   1>( nodes.partition() );
+  ridx    = IndexView<int,   1>( nodes.remote_index() );
   lonlat  = ArrayView<double,2>( nodes.lonlat() );
 
 
@@ -769,7 +769,7 @@ void build_lookup_uid2node( Mesh& mesh, Uid2Node& uid2node )
   Notification notes;
   Nodes& nodes         = mesh.nodes();
   ArrayView<double,2> lonlat   ( nodes.lonlat() );
-  ArrayView<gidx_t,1> glb_idx  ( nodes.field( "glb_idx"        ) );
+  ArrayView<gidx_t,1> glb_idx  ( nodes.global_index() );
   int nb_nodes = nodes.shape(0);
 
   UniqueLonLat compute_uid(nodes);
@@ -952,10 +952,10 @@ public:
     compute_uid.update();
     Nodes& nodes         = mesh.nodes();
     lonlat   = ArrayView<double,2> ( nodes.lonlat() );
-    glb_idx  = ArrayView<gidx_t,1> ( nodes.field( "glb_idx"        ) );
-    part     = ArrayView<int   ,1> ( nodes.field( "partition"      ) );
-    ridx     = IndexView<int   ,1> ( nodes.field( "remote_idx"     ) );
-    flags    = ArrayView<int   ,1> ( nodes.field( "flags"          ) );
+    glb_idx  = ArrayView<gidx_t,1> ( nodes.global_index() );
+    part     = ArrayView<int   ,1> ( nodes.partition() );
+    ridx     = IndexView<int   ,1> ( nodes.remote_index() );
+    flags    = ArrayView<int   ,1> ( nodes.field("flags") );
 
     elem_nodes.  resize( mesh.nb_function_spaces() );
     elem_part.   resize( mesh.nb_function_spaces() );
@@ -1143,9 +1143,9 @@ public:
     // ------------
     nodes.resize( nb_nodes+nb_new_nodes );
     flags   = ArrayView<int,   1>( nodes.field("flags") );
-    glb_idx = ArrayView<gidx_t,1>( nodes.field("glb_idx") );
-    part    = ArrayView<int,   1>( nodes.field("partition") );
-    ridx    = IndexView<int,   1>( nodes.field("remote_idx") );
+    glb_idx = ArrayView<gidx_t,1>( nodes.global_index() );
+    part    = ArrayView<int,   1>( nodes.partition() );
+    ridx    = IndexView<int,   1>( nodes.remote_index() );
     lonlat  = ArrayView<double,2>( nodes.lonlat() );
 
     compute_uid.update();

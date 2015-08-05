@@ -159,9 +159,9 @@ BOOST_AUTO_TEST_CASE( test2 )
   actions::build_parallel_fields(*m);
 
   Nodes& nodes = m->nodes();
-  IndexView<int,1> loc_idx ( nodes.field("remote_idx") );
-  ArrayView<int,1> part    ( nodes.field("partition")      );
-  ArrayView<gidx_t,1> glb_idx ( nodes.field("glb_idx")        );
+  IndexView<int,1> loc_idx ( nodes.remote_index() );
+  ArrayView<int,1> part    ( nodes.partition());
+  ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
 
   IsGhost is_ghost(nodes);
 

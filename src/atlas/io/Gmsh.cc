@@ -424,8 +424,8 @@ void Gmsh::read(const PathName& file_path, Mesh& mesh ) const
   nodes.create_field<int>("partition",1,IF_EXISTS_RETURN);
 
   ArrayView<double,2> coords         ( nodes.field("xyz")    );
-  ArrayView<gidx_t,1> glb_idx        ( nodes.field("glb_idx")        );
-  ArrayView<int,   1> part           ( nodes.field("partition")      );
+  ArrayView<gidx_t,1> glb_idx        ( nodes.global_index()  );
+  ArrayView<int,   1> part           ( nodes.partition()     );
 
   std::map<int,int> glb_to_loc;
   int g;

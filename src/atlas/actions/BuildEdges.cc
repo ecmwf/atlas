@@ -169,7 +169,7 @@ void build_element_to_edge_connectivity( Mesh& mesh )
 					if( elem_to_edge[func_space_idx](jelem,jedge) < 0 )
 					{
 						const IndexView<int,2> elem_nodes ( func_space.field("nodes") );
-						const ArrayView<gidx_t,1> gidx (nodes.field("glb_idx"));
+						const ArrayView<gidx_t,1> gidx (nodes.global_index() );
 
 						std::stringstream msg; msg << "Could not find edge " << jedge << " for " << func_space.name() << " elem " << jelem << " with nodes ( ";
 						for( size_t jnode=0; jnode<elem_nodes.shape(1); ++jnode )
@@ -244,10 +244,10 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
 {
   Nodes& nodes   = mesh.nodes();
   ArrayView<double,2> lonlat    ( nodes.lonlat() );
-  ArrayView<gidx_t,1> glb_idx   ( nodes.field( "glb_idx"     ) );
-  ArrayView<int,   1> part      ( nodes.field( "partition"   ) );
+  ArrayView<gidx_t,1> glb_idx   ( nodes.global_index() );
+  ArrayView<int,   1> part      ( nodes.partition() );
   ArrayView<int,   1> flags     ( nodes.field( "flags"       ) );
-  IndexView<int,   1> ridx      ( nodes.field( "remote_idx"  ) );
+  IndexView<int,   1> ridx      ( nodes.remote_index() );
   size_t nb_nodes = nodes.shape(0);
 
   double min[2], max[2];
@@ -400,9 +400,9 @@ struct ComputeUniquePoleEdgeIndex
 void build_edges( Mesh& mesh )
 {
   Nodes& nodes   = mesh.nodes();
-  ArrayView<gidx_t,1> glb_idx(        nodes.field( "glb_idx" ) );
-  ArrayView<int,1> part   (        nodes.field( "partition" ) );
-  ArrayView<double,2> lonlat (     nodes.lonlat() );
+  ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
+  ArrayView<int,1> part       ( nodes.partition() );
+  ArrayView<double,2> lonlat  ( nodes.lonlat() );
   size_t nb_nodes = nodes.shape(0);
 
   FunctionSpace& quads       = mesh.function_space( "quads" );
@@ -505,7 +505,7 @@ void build_pole_edges( Mesh& mesh )
 {
   Nodes& nodes   = mesh.nodes();
 
-  ArrayView<int,1> part   (        nodes.field( "partition" ) );
+  ArrayView<int,1> part ( nodes.partition() );
   size_t nb_edges = 0;
 
   if( ! mesh.has_function_space("edges") )

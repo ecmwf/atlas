@@ -324,8 +324,8 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
     DEBUG();
     m->metadata().set("part",p);
     BOOST_TEST_CHECKPOINT("generated grid " << p);
-    ArrayView<int,1> part( m->nodes().field("partition") );
-    ArrayView<gidx_t,1> gidx( m->nodes().field("glb_idx") );
+    ArrayView<int,1> part( m->nodes().partition() );
+    ArrayView<gidx_t,1> gidx( m->nodes().global_index() );
 
     area += test::compute_lonlat_area(*m);
     DEBUG();
@@ -379,7 +379,7 @@ DISABLE{
     }
 
     // Test if all nodes are owned
-    ArrayView<gidx_t,1> glb_idx( nodes.field("glb_idx") );
+    ArrayView<gidx_t,1> glb_idx( nodes.global_index() );
     for( int n=0; n<nb_nodes; ++n )
     {
       int owned = (part(n)==p);
