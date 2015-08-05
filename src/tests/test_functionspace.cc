@@ -21,8 +21,9 @@
 #include "atlas/meshgen/ReducedGridMeshGenerator.h"
 #include "atlas/Grid.h"
 #include "atlas/Field.h"
+#ifdef ATLAS_HAVE_TRANS
 #include "atlas/trans/Trans.h"
-
+#endif
 using namespace eckit;
 using namespace atlas::functionspace;
 
