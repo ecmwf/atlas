@@ -33,6 +33,7 @@ namespace functionspace {
 NodesFunctionSpace::NodesFunctionSpace(const std::string& name, Mesh& mesh, const Halo& halo)
   : next::FunctionSpace(name),
     mesh_(mesh),
+    nodes_(mesh_.nodes()),
     halo_(halo.size()),
     nb_nodes_(0),
     nb_nodes_global_(0)

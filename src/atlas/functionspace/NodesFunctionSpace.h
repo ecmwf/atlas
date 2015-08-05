@@ -83,6 +83,9 @@ public:
   const Mesh& mesh() const { return mesh_; }
         Mesh& mesh()       { return mesh_; }
 
+  const Nodes& nodes() const { return nodes_; }
+        Nodes& nodes()       { return nodes_; }
+
 private: // methods
 
   std::string halo_name() const;
@@ -92,6 +95,7 @@ private: // methods
 private: // data
 
   Mesh& mesh_; // non-const because functionspace may modify mesh
+  Nodes& nodes_; // non-const because functionspace may modify mesh
   size_t halo_;
   size_t nb_nodes_;
   size_t nb_nodes_global_;

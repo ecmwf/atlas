@@ -20,6 +20,7 @@
 #include "atlas/Field.h"
 #include "atlas/FieldSet.h"
 #include "atlas/FunctionSpace.h"
+#include "atlas/functionspace/NodesFunctionSpace.h"
 #include "atlas/grids/Unstructured.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/DataType.h"
@@ -206,7 +207,7 @@ void PointCloud::write(const eckit::PathName& path, const Mesh& mesh)
 }
 
 
-void PointCloud::write(const eckit::PathName& path, const FieldSet& fieldset)
+void PointCloud::write(const eckit::PathName& path, const FieldSet& fieldset, const functionspace::NodesFunctionSpace& function_space)
 {
   const std::string msg("PointCloud::write: ");
 
@@ -214,7 +215,8 @@ void PointCloud::write(const eckit::PathName& path, const FieldSet& fieldset)
   // @warning: several copy operations here
 
   ASSERT( fieldset.size() );
-  ArrayView< double, 2 > lonlat(  dynamic_cast<Nodes&>(fieldset[0].function_space()).lonlat() );
+
+  ArrayView< double, 2 > lonlat( function_space.nodes().lonlat() );
   if (!lonlat.size())
     throw eckit::BadParameter(msg+"invalid number of points (failed: nb_pts>0)");
 
@@ -383,8 +385,8 @@ Mesh* atlas__read_pointcloud (char* file_path)
 { return PointCloud::read(file_path); }
 
 
-void atlas__write_pointcloud_fieldset (char* file_path, FieldSet* fieldset)
-{ PointCloud::write(file_path, *fieldset); }
+void atlas__write_pointcloud_fieldset (char* file_path, const FieldSet* fieldset, const functionspace::NodesFunctionSpace* functionspace)
+{ PointCloud::write(file_path, *fieldset, *functionspace); }
 
 
 // ------------------------------------------------------------------

@@ -26,6 +26,7 @@ namespace atlas {
   class Grid;
   class Mesh;
   namespace grids { class Unstructured; }
+  namespace functionspace { class NodesFunctionSpace; }
 }
 
 
@@ -69,7 +70,7 @@ namespace io {
    * @param path output file path
    * @param fieldset FieldSet data structure
    */
-  static void write(const eckit::PathName& path, const FieldSet& fieldset);
+  static void write(const eckit::PathName& path, const FieldSet& fieldset, const functionspace::NodesFunctionSpace &function_space);
 
   /**
    * @brief Write lan/lon to PointCloud file (overwrites possibly existing file)
@@ -123,8 +124,8 @@ extern "C"
   void                 atlas__pointcloud__delete        (PointCloud* This);
   Mesh* atlas__pointcloud__read          (PointCloud* This, char* file_path);
   Mesh* atlas__read_pointcloud           (char* file_path);
-  void                 atlas__write_pointcloud_fieldset (char* file_path, FieldSet* fieldset);
-  void                 atlas__write_pointcloud_field    (char* file_path, Field* field);
+  void                 atlas__write_pointcloud_fieldset (char* file_path, const FieldSet* fieldset, const functionspace::NodesFunctionSpace* functionspace);
+  void                 atlas__write_pointcloud_field    (char* file_path, const Field* field, const functionspace::NodesFunctionSpace* functionspace);
 }
 
 
