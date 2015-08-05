@@ -527,6 +527,11 @@ void Trans::dirtrans_wind2vordiv(const Field& gpwind, Field& spvor, Field&spdiv,
     throw eckit::SeriousBug(msg.str(),Here());
   }
 
+  ASSERT( spvor.rank() == 2 );
+  ASSERT( spdiv.rank() == 2 );
+  if( spvor.size() == 0 ) throw eckit::SeriousBug("dirtrans: spectral vorticity field is empty.");
+  if( spdiv.size() == 0 ) throw eckit::SeriousBug("dirtrans: spectral divergence field is empty.");
+
   // Arrays Trans expects
   Array<double> rgp(2*nfld,ngptot());
   ArrayView<double,2> rgpview (rgp);
@@ -566,6 +571,8 @@ void Trans::dirtrans_wind2vordiv(const Field& gpwind, Field& spvor, Field&spdiv,
     transform.rspvor  = spvor.data<double>();
     transform.rspdiv  = spdiv.data<double>();
 
+    ASSERT( transform.rspvor );
+    ASSERT( transform.rspdiv );
     TRANS_CHECK( ::trans_dirtrans(&transform) );
   }
 
@@ -590,6 +597,11 @@ void Trans::invtrans_vordiv2wind(const Field& spvor, const Field& spdiv, Field& 
     throw eckit::SeriousBug(msg.str(),Here());
   }
 
+  ASSERT( spvor.rank() == 2 );
+  ASSERT( spdiv.rank() == 2 );
+  if( spvor.size() == 0 ) throw eckit::SeriousBug("invtrans: spectral vorticity field is empty.");
+  if( spdiv.size() == 0 ) throw eckit::SeriousBug("invtrans: spectral divergence field is empty.");
+
   // Arrays Trans expects
   Array<double> rgp(2*nfld,ngptot());
   ArrayView<double,2> rgpview (rgp);
@@ -599,8 +611,11 @@ void Trans::invtrans_vordiv2wind(const Field& spvor, const Field& spdiv, Field& 
     struct ::InvTrans_t transform = ::new_invtrans(&trans_);
     transform.nvordiv = nfld;
     transform.rgp     = rgp.data();
-    transform.rspvor  = spdiv.data<double>();
-    transform.rspdiv  = spvor.data<double>();
+    transform.rspvor  = spvor.data<double>();
+    transform.rspdiv  = spdiv.data<double>();
+
+    ASSERT( transform.rspvor );
+    ASSERT( transform.rspdiv );
     TRANS_CHECK(::trans_invtrans(&transform));
   }
 
