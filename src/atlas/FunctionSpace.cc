@@ -44,13 +44,13 @@ FunctionSpace::FunctionSpace(const std::string& name,
                              const std::string& shape_func,
                              const std::vector<size_t>& shape,
                              Mesh& mesh) :
-	name_(name),
-	shape_(shape),
-	gather_scatter_(new mpl::GatherScatter()),
-	fullgather_(new mpl::GatherScatter()),
-	halo_exchange_(new mpl::HaloExchange()),
-	checksum_(new mpl::Checksum()),
-	mesh_(&mesh)
+  name_(name),
+  shape_(shape),
+  gather_scatter_(new mpl::GatherScatter()),
+  fullgather_(new mpl::GatherScatter()),
+  halo_exchange_(new mpl::HaloExchange()),
+  checksum_(new mpl::Checksum()),
+  mesh_(&mesh)
 {
   //std::cout << "C++ : shape Constructor" << std::endl;
   dof_ = 1;
@@ -68,13 +68,13 @@ FunctionSpace::FunctionSpace(const std::string& name,
 /// TEMPORARY CONSTRUCTOR, JUST FOR EVOLUTIONARY STEP TO NEXT DESIGN
 FunctionSpace::FunctionSpace(const std::string& name,
                              const std::vector<size_t>& shape) :
-	name_(name),
-	shape_(shape),
-	gather_scatter_(new mpl::GatherScatter()),
-	fullgather_(new mpl::GatherScatter()),
-	halo_exchange_(new mpl::HaloExchange()),
-	checksum_(new mpl::Checksum()),
-	mesh_(0)
+  name_(name),
+  shape_(shape),
+  gather_scatter_(new mpl::GatherScatter()),
+  fullgather_(new mpl::GatherScatter()),
+  halo_exchange_(new mpl::HaloExchange()),
+  checksum_(new mpl::Checksum()),
+  mesh_(0)
 {
   //std::cout << "C++ : shape Constructor" << std::endl;
   dof_ = 1;
@@ -96,108 +96,108 @@ FunctionSpace::~FunctionSpace()
 
 void FunctionSpace::resize(const std::vector<size_t>& shape)
 {
-	if (shape.size() != shape_.size() )
-		throw eckit::BadParameter("Cannot resize shape: shape sizes don't match.",Here());
+  if (shape.size() != shape_.size() )
+    throw eckit::BadParameter("Cannot resize shape: shape sizes don't match.",Here());
 
-	size_t extsize = shape_.size();
+  size_t extsize = shape_.size();
 
-	for (size_t i=1; i<extsize; ++i)
-	{
-		if (shape[i] != shape_[i])
-			throw eckit::BadParameter("Only the first extent can be resized for now!",Here());
-	}
+  for (size_t i=1; i<extsize; ++i)
+  {
+    if (shape[i] != shape_[i])
+      throw eckit::BadParameter("Only the first extent can be resized for now!",Here());
+  }
 
-	shape_ = shape;
-	shapef_.resize(extsize);
-	for (size_t i=0; i<extsize; ++i)
-	{
-		shapef_[extsize-1-i] = shape_[i];
-	}
+  shape_ = shape;
+  shapef_.resize(extsize);
+  for (size_t i=0; i<extsize; ++i)
+  {
+    shapef_[extsize-1-i] = shape_[i];
+  }
 
-	dof_ = 1;
-	for (size_t i=0; i<extsize; ++i)
-	{
-		if( shape_[i] != FunctionSpace::UNDEF_VARS )
-			dof_ *= shape_[i];
-	}
+  dof_ = 1;
+  for (size_t i=0; i<extsize; ++i)
+  {
+    if( shape_[i] != FunctionSpace::UNDEF_VARS )
+      dof_ *= shape_[i];
+  }
 
   for( size_t f=0; f<nb_fields(); ++f)
-	{
-		std::vector< size_t > field_shape(extsize);
-		for (size_t i=0; i<extsize; ++i)
-		{
-			if( shape_[i] == FunctionSpace::UNDEF_VARS )
-				field_shape[i] = field(f).shape(i);
-			else
-				field_shape[i] = shape_[i];
-		}
-		field(f).resize(field_shape);
-	}
+  {
+    std::vector< size_t > field_shape(extsize);
+    for (size_t i=0; i<extsize; ++i)
+    {
+      if( shape_[i] == FunctionSpace::UNDEF_VARS )
+        field_shape[i] = field(f).shape(i);
+      else
+        field_shape[i] = shape_[i];
+    }
+    field(f).resize(field_shape);
+  }
 }
 
 namespace {
 
-	template < typename T >
-	FieldT<T>* check_if_exists( FunctionSpace* fs,
-								const std::string& name,
-								const std::vector<size_t>&  shape,
-								size_t nb_vars,
-								CreateBehavior b )
-	{
-		using namespace eckit;
+  template < typename T >
+  FieldT<T>* check_if_exists( FunctionSpace* fs,
+                const std::string& name,
+                const std::vector<size_t>&  shape,
+                size_t nb_vars,
+                CreateBehavior b )
+  {
+    using namespace eckit;
 
-		if( fs->has_field(name) )
-		{
-			if( b == IF_EXISTS_FAIL )
-			{
-				std::ostringstream msg; msg << "field with name " << name << " already exists" << std::endl;
-				throw eckit::Exception( msg.str(), Here() );
-			}
+    if( fs->has_field(name) )
+    {
+      if( b == IF_EXISTS_FAIL )
+      {
+        std::ostringstream msg; msg << "field with name " << name << " already exists" << std::endl;
+        throw eckit::Exception( msg.str(), Here() );
+      }
 
-			Field& f= fs->field(name);
+      Field& f= fs->field(name);
 
-			if( f.shape() != shape )
-			{
-				std::ostringstream msg; msg << "field exists with name " << name << " has unexpected shape ";
-				__print_list(msg, f.shape());
-				msg << " instead of ";
-				__print_list(msg, shape);
-				msg << std::endl;
-				throw eckit::Exception(msg.str(),Here());
-			}
-			return dynamic_cast< FieldT<T>* >(&f);
-		}
+      if( f.shape() != shape )
+      {
+        std::ostringstream msg; msg << "field exists with name " << name << " has unexpected shape ";
+        __print_list(msg, f.shape());
+        msg << " instead of ";
+        __print_list(msg, shape);
+        msg << std::endl;
+        throw eckit::Exception(msg.str(),Here());
+      }
+      return dynamic_cast< FieldT<T>* >(&f);
+    }
 
-		return NULL;
-	}
+    return NULL;
+  }
 
 }
 
 Field& FunctionSpace::add( Field* field )
 {
   fields_.insert( field->name(), Field::Ptr(field) );
-	fields_.sort();
+  fields_.sort();
 }
 
 template <>
 Field& FunctionSpace::create_field<double>(const std::string& name, size_t nb_vars, CreateBehavior b )
 {
-	FieldT<double>* field = NULL;
+  FieldT<double>* field = NULL;
 
-	size_t rank = shape_.size();
-	std::vector< size_t > field_shape(rank);
-	for (size_t i=0; i<rank; ++i)
-	{
-		if( shape_[i] == FunctionSpace::UNDEF_VARS )
-			field_shape[i] = nb_vars;
-		else
-			field_shape[i] = shape_[i];
-	}
+  size_t rank = shape_.size();
+  std::vector< size_t > field_shape(rank);
+  for (size_t i=0; i<rank; ++i)
+  {
+    if( shape_[i] == FunctionSpace::UNDEF_VARS )
+      field_shape[i] = nb_vars;
+    else
+      field_shape[i] = shape_[i];
+  }
 
-	if( (field = check_if_exists<double>(this, name, field_shape, nb_vars, b )) )
-		return *field;
+  if( (field = check_if_exists<double>(this, name, field_shape, nb_vars, b )) )
+    return *field;
 
-	field = new FieldT<double>(field_shape,Config("name",name));
+  field = new FieldT<double>(field_shape,Config("name",name));
 
   // To be removed
   field->set_function_space(*this);
@@ -209,20 +209,20 @@ Field& FunctionSpace::create_field<double>(const std::string& name, size_t nb_va
 template <>
 Field& FunctionSpace::create_field<float>(const std::string& name, size_t nb_vars, CreateBehavior b )
 {
-	FieldT<float>* field = NULL;
+  FieldT<float>* field = NULL;
 
-	size_t rank = shape_.size();
-	std::vector< size_t > field_shape(rank);
-	for (size_t i=0; i<rank; ++i)
-	{
-		if( shape_[i] == FunctionSpace::UNDEF_VARS )
-			field_shape[i] = nb_vars;
-		else
-			field_shape[i] = shape_[i];
-	}
+  size_t rank = shape_.size();
+  std::vector< size_t > field_shape(rank);
+  for (size_t i=0; i<rank; ++i)
+  {
+    if( shape_[i] == FunctionSpace::UNDEF_VARS )
+      field_shape[i] = nb_vars;
+    else
+      field_shape[i] = shape_[i];
+  }
 
-	if( (field = check_if_exists<float>(this, name, field_shape, nb_vars, b )) )
-		return *field;
+  if( (field = check_if_exists<float>(this, name, field_shape, nb_vars, b )) )
+    return *field;
 
   field = new FieldT<float>(field_shape,Config("name",name));
 
@@ -231,26 +231,26 @@ Field& FunctionSpace::create_field<float>(const std::string& name, size_t nb_var
 
   add(field);
 
-	return *field;
+  return *field;
 }
 
 template <>
 Field& FunctionSpace::create_field<int>(const std::string& name, size_t nb_vars, CreateBehavior b )
 {
-	FieldT<int>* field = NULL;
+  FieldT<int>* field = NULL;
 
-	size_t rank = shape_.size();
-	std::vector< size_t > field_shape(rank);
-	for (size_t i=0; i<rank; ++i)
-	{
-		if( shape_[i] == FunctionSpace::UNDEF_VARS )
-			field_shape[i] = nb_vars;
-		else
-			field_shape[i] = shape_[i];
-	}
+  size_t rank = shape_.size();
+  std::vector< size_t > field_shape(rank);
+  for (size_t i=0; i<rank; ++i)
+  {
+    if( shape_[i] == FunctionSpace::UNDEF_VARS )
+      field_shape[i] = nb_vars;
+    else
+      field_shape[i] = shape_[i];
+  }
 
-	if( (field = check_if_exists<int>(this, name, field_shape, nb_vars, b )) )
-		return *field;
+  if( (field = check_if_exists<int>(this, name, field_shape, nb_vars, b )) )
+    return *field;
 
   field = new FieldT<int>(field_shape,Config("name",name));
 
@@ -265,20 +265,20 @@ Field& FunctionSpace::create_field<int>(const std::string& name, size_t nb_vars,
 template <>
 Field& FunctionSpace::create_field<long>(const std::string& name, size_t nb_vars, CreateBehavior b )
 {
-	FieldT<long>* field = NULL;
+  FieldT<long>* field = NULL;
 
-	size_t rank = shape_.size();
-	std::vector< size_t > field_shape(rank);
-	for (size_t i=0; i<rank; ++i)
-	{
-		if( shape_[i] == FunctionSpace::UNDEF_VARS )
-			field_shape[i] = nb_vars;
-		else
-			field_shape[i] = shape_[i];
-	}
+  size_t rank = shape_.size();
+  std::vector< size_t > field_shape(rank);
+  for (size_t i=0; i<rank; ++i)
+  {
+    if( shape_[i] == FunctionSpace::UNDEF_VARS )
+      field_shape[i] = nb_vars;
+    else
+      field_shape[i] = shape_[i];
+  }
 
-	if( (field = check_if_exists<long>(this, name, field_shape, nb_vars, b )) )
-		return *field;
+  if( (field = check_if_exists<long>(this, name, field_shape, nb_vars, b )) )
+    return *field;
 
   field = new FieldT<long>(field_shape,Config("name",name));
 
@@ -287,82 +287,82 @@ Field& FunctionSpace::create_field<long>(const std::string& name, size_t nb_vars
 
   add(field);
 
-	return *field;
+  return *field;
 }
 
 
 void FunctionSpace::remove_field(const std::string& name)
 {
-	NOTIMP; ///< @todo DenseMap needs to have erase() function
+  NOTIMP; ///< @todo DenseMap needs to have erase() function
 
-//	if( has_field(name) )
-//	{
-//		fields_.erase(name);
-//	}
-//	else
-//	{
-//		std::stringstream msg;
-//		msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
-//		throw eckit::OutOfRange(msg.str(),Here());
-//	}
+//  if( has_field(name) )
+//  {
+//    fields_.erase(name);
+//  }
+//  else
+//  {
+//    std::stringstream msg;
+//    msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
+//    throw eckit::OutOfRange(msg.str(),Here());
+//  }
 }
 
 const Field& FunctionSpace::field( size_t idx ) const
 {
-	return *fields_.at( idx );
+  return *fields_.at( idx );
 }
 
 Field& FunctionSpace::field( size_t idx )
 {
-	return *fields_.at( idx );
+  return *fields_.at( idx );
 }
 
 
 const Field& FunctionSpace::field(const std::string& name) const
 {
-	if( has_field(name) )
-	{
-		return *fields_.get(name);
-	}
-	else
-	{
-		std::stringstream msg;
-		msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
-		throw eckit::OutOfRange(msg.str(),Here());
-	}
+  if( has_field(name) )
+  {
+    return *fields_.get(name);
+  }
+  else
+  {
+    std::stringstream msg;
+    msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
+    throw eckit::OutOfRange(msg.str(),Here());
+  }
 }
 
 Field& FunctionSpace::field(const std::string& name)
 {
-	if( has_field(name) )
-	{
-		return *fields_.get(name);
-	}
-	else
-	{
-		std::stringstream msg;
-		msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
-		throw eckit::OutOfRange(msg.str(),Here());
-	}
+  if( has_field(name) )
+  {
+    return *fields_.get(name);
+  }
+  else
+  {
+    std::stringstream msg;
+    msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
+    throw eckit::OutOfRange(msg.str(),Here());
+  }
 }
 
 void FunctionSpace::parallelise(const int part[], const int remote_idx[], const gidx_t glb_idx[], size_t parsize)
 {
-	halo_exchange_->setup(part,remote_idx,REMOTE_IDX_BASE,parsize);
-	gather_scatter_->setup(part,remote_idx,REMOTE_IDX_BASE,glb_idx,-1,parsize);
-	fullgather_->setup(part,remote_idx,REMOTE_IDX_BASE,glb_idx,-1,parsize,true);
-	checksum_->setup(part,remote_idx,REMOTE_IDX_BASE,glb_idx,-1,parsize);
-	glb_dof_ = gather_scatter_->glb_dof();
-	for( int b=shapef_.size()-2; b>=0; --b)
-	{
-		if( shapef_[b] != FunctionSpace::UNDEF_VARS )
-			glb_dof_ *= shapef_[b];
-	}
+  halo_exchange_->setup(part,remote_idx,REMOTE_IDX_BASE,parsize);
+  gather_scatter_->setup(part,remote_idx,REMOTE_IDX_BASE,glb_idx,-1,parsize);
+  fullgather_->setup(part,remote_idx,REMOTE_IDX_BASE,glb_idx,-1,parsize,true);
+  checksum_->setup(part,remote_idx,REMOTE_IDX_BASE,glb_idx,-1,parsize);
+  glb_dof_ = gather_scatter_->glb_dof();
+  for( int b=shapef_.size()-2; b>=0; --b)
+  {
+    if( shapef_[b] != FunctionSpace::UNDEF_VARS )
+      glb_dof_ *= shapef_[b];
+  }
 }
 
 void FunctionSpace::parallelise(FunctionSpace& other_shape)
 {
-	halo_exchange_ = mpl::HaloExchange::Ptr( &other_shape.halo_exchange() );
+  halo_exchange_ = mpl::HaloExchange::Ptr( &other_shape.halo_exchange() );
     gather_scatter_ = mpl::GatherScatter::Ptr( &other_shape.gather_scatter() );
 }
 
