@@ -411,7 +411,7 @@ void Gmsh::read(const PathName& file_path, Mesh& mesh ) const
 
   Nodes& nodes = mesh.nodes();
 
-  nodes.create_field<double>("xyz",3,IF_EXISTS_RETURN);
+  nodes.add( Field::create<double>("xyz",make_shape(nb_nodes,3) ) );
 
   ArrayView<double,2> coords         ( nodes.field("xyz")    );
   ArrayView<gidx_t,1> glb_idx        ( nodes.global_index()  );
@@ -662,7 +662,7 @@ void Gmsh::write(const Mesh& mesh, const PathName& file_path) const
 
   ASSERT(surfdim == 2 || surfdim == 3);
 
-  int nb_nodes = nodes.shape(0);
+  int nb_nodes = nodes.size();
 
   // Find out number of elements to write
   int nb_quads(0);

@@ -190,13 +190,13 @@ void build_node_to_edge_connectivity( Mesh& mesh )
 {
   Nodes& nodes = mesh.nodes();
   FunctionSpace& edges = mesh.function_space("edges");
-  int nb_nodes = nodes.shape(0);
+  int nb_nodes = nodes.size();
   int nb_edges = edges.shape(0);
 
   IndexView<int,2> edge_nodes   ( edges.field( "nodes" ) );
 
   // Get max_edge_cnt
-  ArrayView<int,1> to_edge_size ( nodes.create_field<int>("to_edge_size",1) );
+  ArrayView<int,1> to_edge_size ( nodes.add( Field::create<int>( "to_edge_size", make_shape(nodes.size(),1) ) ) );
   to_edge_size = 0.;
   for( int jedge=0; jedge<nb_edges; ++jedge)
   {
@@ -213,7 +213,7 @@ void build_node_to_edge_connectivity( Mesh& mesh )
   }
   ECKIT_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max_edge_cnt, 1, MPI_INT, MPI_MAX, eckit::mpi::comm() ) );
 
-  IndexView<int,2> node_to_edge ( nodes.create_field<int>("to_edge",max_edge_cnt) );
+  IndexView<int,2> node_to_edge ( nodes.add( Field::create<int>("to_edge",make_shape(nodes.size(),max_edge_cnt))) );
 
   UniqueLonLat uid( nodes );
   std::vector<Sort> edge_sort(nb_edges);
@@ -248,7 +248,7 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
   ArrayView<int,   1> part      ( nodes.partition() );
   ArrayView<int,   1> flags     ( nodes.field( "flags"       ) );
   IndexView<int,   1> ridx      ( nodes.remote_index() );
-  size_t nb_nodes = nodes.shape(0);
+  size_t nb_nodes = nodes.size();
 
   double min[2], max[2];
   min[LON] =  std::numeric_limits<double>::max();
@@ -403,7 +403,7 @@ void build_edges( Mesh& mesh )
   ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
   ArrayView<int,1> part       ( nodes.partition() );
   ArrayView<double,2> lonlat  ( nodes.lonlat() );
-  size_t nb_nodes = nodes.shape(0);
+  size_t nb_nodes = nodes.size();
 
   FunctionSpace& quads       = mesh.function_space( "quads" );
   FunctionSpace& triags      = mesh.function_space( "triags" );

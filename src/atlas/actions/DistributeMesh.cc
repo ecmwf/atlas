@@ -31,7 +31,7 @@ void distribute_mesh( Mesh& mesh )
   int mypart = eckit::mpi::rank();
 
   Nodes& nodes = mesh.nodes();
-  int nb_nodes = nodes.shape(0);
+  int nb_nodes = nodes.size();
   ArrayView<double,2> lonlat    ( nodes.lonlat() );
   ArrayView<int,   1> node_part ( nodes.partition()   );
   ArrayView<gidx_t,1> node_gidx ( nodes.global_index()   );

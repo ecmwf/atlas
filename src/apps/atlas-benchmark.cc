@@ -347,8 +347,8 @@ void AtlasBenchmark::setup()
   lonlat = ArrayView<double,2> ( mesh->nodes().lonlat() );
   V      = ArrayView<double,1> ( mesh->nodes().field("dual_volumes") );
   S      = ArrayView<double,2> ( mesh->function_space("edges").field("dual_normals") );
-  field  = ArrayView<double,2> ( mesh->nodes().create_field<double>("field",nlev)  );
-  Field& gradfield = ( mesh->nodes().create_field<double>("grad",nlev*3) );
+  field  = ArrayView<double,2> ( mesh->nodes().add( Field::create<double>( "field", make_shape(nnodes,nlev) ) ) );
+  Field& gradfield = ( mesh->nodes().add( Field::create<double>("grad",make_shape(nnodes,nlev*3) ) ) );
   grad   = ArrayView<double,3> ( gradfield.data<double>(), make_shape(nnodes,nlev,3) );
   mesh->nodes().field("field").metadata().set("nb_levels",nlev);
   mesh->nodes().field("grad").metadata().set("nb_levels",nlev);
@@ -380,8 +380,7 @@ void AtlasBenchmark::setup()
   node2edge      = IndexView<int,2> ( mesh->nodes().field("to_edge") );
   node2edge_size = ArrayView<int,1> ( mesh->nodes().field("to_edge_size") );
 
-  node2edge_sign = ArrayView<double,2> ( mesh->nodes().
-                                         create_field<double>("to_edge_sign",node2edge.shape(1)) );
+  node2edge_sign = ArrayView<double,2> ( mesh->nodes().add( Field::create<double>("to_edge_sign",make_shape(nnodes,node2edge.shape(1)) ) ) );
 
   for( int jnode=0; jnode<nnodes; ++jnode )
   {

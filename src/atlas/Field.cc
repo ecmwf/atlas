@@ -36,6 +36,13 @@ inline std::ostream &operator<<(std::ostream &s, const std::vector<T> &v) {
     return eckit::__print_list(s, v);
 }
 
+Field* Field::create(const std::string& name, const ArrayShape& shape, const std::string& datatype )
+{
+  eckit::ScopedPtr<field::FieldTCreator> creator
+     (field::FieldTCreatorFactory::build("FieldT<"+datatype+">") );
+  return creator->create_field(name,shape);
+}
+
 Field* Field::create(const eckit::Parametrisation& params)
 {
   std::string creator_factory;

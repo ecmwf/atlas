@@ -85,7 +85,7 @@ NodesFunctionSpace::NodesFunctionSpace(const std::string& name, Mesh& mesh, cons
     Field& gidx = mesh_.nodes().global_index();
 
     ArrayView<int,1> flags ( mesh_.nodes().field("flags") );
-    std::vector<int> mask(mesh_.nodes().shape(0));
+    std::vector<int> mask(mesh_.nodes().size());
     for( size_t j=0; j<mask.size(); ++j ) {
       mask[j] = util::Topology::check(flags(j),util::Topology::GHOST) ? 1 : 0;
       if( mask[j] == 1 && util::Topology::check(flags(j),util::Topology::BC) ) {
@@ -112,7 +112,7 @@ NodesFunctionSpace::NodesFunctionSpace(const std::string& name, Mesh& mesh, cons
     Field& gidx = mesh_.nodes().global_index();
 
     ArrayView<int,1> flags ( mesh_.nodes().field("flags") );
-    std::vector<int> mask(mesh_.nodes().shape(0));
+    std::vector<int> mask(mesh_.nodes().size());
     for( size_t j=0; j<mask.size(); ++j ) {
       mask[j] = util::Topology::check(flags(j),util::Topology::GHOST) ? 1 : 0;
     }

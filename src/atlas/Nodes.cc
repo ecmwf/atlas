@@ -57,6 +57,11 @@ Field& Nodes::add( Field* field )
     throw eckit::Exception(msg.str(),Here());
   }
   fields_[field->name()] = eckit::SharedPtr<Field>(field);
+
+
+  field->set_function_space(*this);
+
+
   return *field;
 }
 

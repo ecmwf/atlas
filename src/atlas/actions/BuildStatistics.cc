@@ -264,9 +264,9 @@ void build_statistics( Mesh& mesh )
   if( nodes.has_field("dual_volumes") )
   {
     ArrayView<double,1> dual_volumes ( nodes.field("dual_volumes") );
-    ArrayView<double,1> dual_delta_sph  ( nodes.create_field<double>( "dual_delta_sph", 1 ) );
+    ArrayView<double,1> dual_delta_sph  ( nodes.add( Field::create<double>( "dual_delta_sph", make_shape(nodes.size(),1) ) ) );
 
-    for( int jnode=0; jnode<nodes.shape(0); ++jnode )
+    for( int jnode=0; jnode<nodes.size(); ++jnode )
     {
       const double lat = lonlat(jnode,LAT)*DEG_TO_RAD;
       const double hx = radius_km*std::cos(lat)*DEG_TO_RAD;
@@ -276,7 +276,7 @@ void build_statistics( Mesh& mesh )
 
     if( eckit::mpi::size() == 1 )
     {
-      for( int jnode=0; jnode<nodes.shape(0); ++jnode )
+      for( int jnode=0; jnode<nodes.size(); ++jnode )
       {
         ofs << std::setw(idt) << dual_delta_sph(jnode)
             << "\n";

@@ -261,7 +261,7 @@ BOOST_AUTO_TEST_CASE( test_spectral_fields )
   FunctionSpace& spectral =
     m->create_function_space ("spectral","spectral",make_shape(trans.nspec2(),FunctionSpace::UNDEF_VARS));
 
-  Field& gpf = nodes.create_field<double>("gpf",1);
+  Field& gpf = nodes.add( Field::create<double>("gpf",make_shape(nodes.size(),1)) );
   Field& spf = spectral.create_field<double>("spf",1);
 
   BOOST_CHECK_NO_THROW( trans.dirtrans(gpf,spf) );

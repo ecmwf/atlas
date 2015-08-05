@@ -25,6 +25,8 @@
 #include "atlas/Metadata.h"
 #include "atlas/State.h"
 #include "atlas/util/Array.h"
+#include "atlas/FunctionSpace.h"
+#include "atlas/Nodes.h"
 
 namespace eckit { class Parametrisation; }
 
@@ -42,6 +44,12 @@ public: // Static methods
 
   static Field* create(const eckit::Parametrisation&);
   static Field* create(const ArrayShape&, const eckit::Parametrisation& = Config() );
+  static Field* create(const std::string& name, const ArrayShape&, const std::string& datatype );
+
+  template<typename DATATYPE>
+  static Field* create(const std::string& name, const ArrayShape& shape) {
+    return create(name,shape,DataType::datatype<DATATYPE>());
+  }
 
 public: // methods
 
@@ -140,6 +148,7 @@ public:
 
 private:
   friend class FunctionSpace;
+  friend class Nodes;
   void set_function_space(const FunctionSpace& function_space);
 
 /***************************************************************************/

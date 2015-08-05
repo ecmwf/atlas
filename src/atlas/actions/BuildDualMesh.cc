@@ -37,7 +37,7 @@ namespace {
 void global_bounding_box( Nodes& nodes, double min[2], double max[2] )
 {
   ArrayView<double,2> lonlat( nodes.lonlat() );
-  const int nb_nodes = nodes.shape(0);
+  const int nb_nodes = nodes.size();
   min[LON] =  std::numeric_limits<double>::max();
   min[LAT] =  std::numeric_limits<double>::max();
   max[LON] = -std::numeric_limits<double>::max();
@@ -98,7 +98,7 @@ void build_median_dual_mesh( Mesh& mesh )
 {
   Nodes& nodes   = mesh.nodes();
   ArrayView<double,2> lonlat        ( nodes.lonlat() );
-  ArrayView<double,1> dual_volumes  ( nodes.create_field<double>( "dual_volumes", 1 ) );
+  ArrayView<double,1> dual_volumes  ( nodes.add( Field::create<double>( "dual_volumes", make_shape(nodes.size(),1) ) ) );
 
   FunctionSpace& quads       = mesh.function_space( "quads" );
   FunctionSpace& triags      = mesh.function_space( "triags" );
@@ -134,7 +134,7 @@ void build_centroid_dual_mesh( Mesh& mesh )
 {
   Nodes& nodes   = mesh.nodes();
   ArrayView<double,2> lonlat        ( nodes.lonlat() );
-  ArrayView<double,1> dual_volumes  ( nodes.create_field<double>( "dual_volumes", 1 ) );
+  ArrayView<double,1> dual_volumes  ( nodes.add( Field::create<double>( "dual_volumes", make_shape(nodes.size(),1) ) ) );
 
   FunctionSpace& quads       = mesh.function_space( "quads" );
   FunctionSpace& triags      = mesh.function_space( "triags" );
@@ -616,7 +616,7 @@ void build_brick_dual_mesh( Mesh& mesh )
 
     Nodes& nodes   = mesh.nodes();
     ArrayView<double,2> lonlat        ( nodes.lonlat() );
-    ArrayView<double,1> dual_volumes  ( nodes.create_field<double>( "dual_volumes", 1 ) );
+    ArrayView<double,1> dual_volumes  ( nodes.add( Field::create<double>("dual_volumes",make_shape(nodes.size(),1) ) ) );
     ArrayView<gidx_t,1> gidx  ( nodes.global_index() );
 
     int c=0;

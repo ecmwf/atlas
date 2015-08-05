@@ -187,7 +187,7 @@ inline uidx_t UniqueLonLat::operator()( const IndexView<int,1>& elem_nodes ) con
   double centroid[2];
   centroid[LON] = 0.;
   centroid[LAT] = 0.;
-  size_t npts = elem_nodes.shape(0);
+  size_t npts = elem_nodes.size();
   for( size_t jnode=0; jnode<npts; ++jnode )
   {
     centroid[LON] += lonlat( elem_nodes(jnode), LON );

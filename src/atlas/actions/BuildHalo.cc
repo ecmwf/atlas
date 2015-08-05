@@ -88,7 +88,7 @@ void increase_halo( Mesh& mesh )
   IndexView<int   ,1> ridx     ( nodes.remote_index() );
   ArrayView<int   ,1> flags    ( nodes.field( "flags"          ) );
 
-  int nb_nodes = nodes.shape(0);
+  int nb_nodes = nodes.size();
 
   PeriodicTransform transform;
 
@@ -646,7 +646,7 @@ void build_lookup_node2elem( const Mesh& mesh, Node2Elem& node2elem )
 {
   const Nodes& nodes  = mesh.nodes();
 
-  node2elem.resize(nodes.shape(0));
+  node2elem.resize(nodes.size());
   for( size_t jnode=0; jnode<node2elem.size(); ++jnode )
     node2elem[jnode].clear();
 
@@ -684,7 +684,7 @@ void accumulate_partition_bdry_nodes( Mesh& mesh, std::vector<int>& bdry_nodes )
   FunctionSpace& quads       = mesh.function_space( "quads" );
   FunctionSpace& triags      = mesh.function_space( "triags" );
 
-  int nb_nodes = nodes.shape(0);
+  int nb_nodes = nodes.size();
   std::vector< std::vector<int> > node_to_face(nb_nodes);
   std::vector< int > face_nodes_data; face_nodes_data.reserve(4*nb_nodes);
   std::vector< Face > face_to_elem;
@@ -770,7 +770,7 @@ void build_lookup_uid2node( Mesh& mesh, Uid2Node& uid2node )
   Nodes& nodes         = mesh.nodes();
   ArrayView<double,2> lonlat   ( nodes.lonlat() );
   ArrayView<gidx_t,1> glb_idx  ( nodes.global_index() );
-  int nb_nodes = nodes.shape(0);
+  int nb_nodes = nodes.size();
 
   UniqueLonLat compute_uid(nodes);
 
@@ -1111,7 +1111,7 @@ public:
   void add_nodes(Buffers& buf)
   {
     Nodes& nodes = mesh.nodes();
-    int nb_nodes = nodes.shape(0);
+    int nb_nodes = nodes.size();
 
     // Nodes might be duplicated from different Tasks. We need to identify unique entries
     std::set<uid_t> node_uid;
@@ -1406,7 +1406,7 @@ void build_halo(Mesh& mesh, int nb_elems )
 
   for( ; jhalo<nb_elems; ++jhalo )
   {
-    size_t nb_nodes_before_halo_increase = mesh.nodes().shape(0);
+    size_t nb_nodes_before_halo_increase = mesh.nodes().size();
 
     BuildHaloHelper helper(mesh);
 
@@ -1422,7 +1422,7 @@ void build_halo(Mesh& mesh, int nb_elems )
 
     std::stringstream ss;
     ss << "nb_nodes_including_halo["<<jhalo+1<<"]";
-    mesh.metadata().set(ss.str(),mesh.nodes().shape(0));
+    mesh.metadata().set(ss.str(),mesh.nodes().size());
   }
 
   mesh.metadata().set("halo",nb_elems);

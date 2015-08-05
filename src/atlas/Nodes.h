@@ -47,7 +47,6 @@ public: // methods
   virtual       Field& field(size_t);
   virtual size_t nb_fields() const { return fields_.size(); }
 
-
 //  const Metadata& metadata() const { return metadata_; }
 //        Metadata& metadata()       { return metadata_; }
 
@@ -83,6 +82,20 @@ public: // methods
 private:
 
   void remove_field(const std::string& name);
+
+  template< typename DATA_TYPE >
+  Field& create_field(const std::string& name, size_t nb_vars, CreateBehavior b = IF_EXISTS_FAIL );
+
+  const std::string& name() const { return name_; }
+
+  int index() const { return idx_; }
+
+  // This is a Fortran view of the shape (i.e. reverse order)
+  const std::vector<int>& shapef() const { return shapef_; }
+
+  const std::vector<size_t>& shape() const { return shape_; }
+    size_t shape(const size_t i) const { ASSERT(i<shape_.size()); return shape_[i]; }
+  void resize( const std::vector<size_t>& shape );
 
 private:
 

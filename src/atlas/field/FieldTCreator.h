@@ -46,6 +46,7 @@ public:
   FieldTCreator();
   virtual ~FieldTCreator();
   virtual Field* create_field( const ArrayShape&, const eckit::Parametrisation& ) const = 0;
+  virtual Field* create_field( const std::string& name, const ArrayShape& ) const =0;
 };
 
 // ------------------------------------------------------------------
@@ -93,6 +94,7 @@ public:
   FieldTCreatorT() {}
   virtual ~FieldTCreatorT() {}
   virtual Field* create_field( const ArrayShape&, const eckit::Parametrisation& ) const;
+  virtual Field* create_field( const std::string& name, const ArrayShape& ) const;
 };
 
 // ------------------------------------------------------------------

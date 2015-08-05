@@ -32,6 +32,7 @@
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
 #include "atlas/actions/BuildParallelFields.h"
+#include "atlas/actions/BuildXYZField.h"
 #include "atlas/Parameters.h"
 #include "atlas/Config.h"
 #include "atlas/grids/rgg/rgg.h"
@@ -345,7 +346,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
 
 
     Nodes& nodes = m->nodes();
-    int nb_nodes = nodes.shape(0);
+    int nb_nodes = nodes.size();
 
     // Test if all nodes are connected
     {
@@ -447,12 +448,8 @@ BOOST_AUTO_TEST_CASE( test_reduced_lonlat )
 
   Mesh::Ptr m (generate(grid));
 
-  ArrayView<double,2> lonlat( m->nodes().lonlat() );
-  ArrayView<double,2> xyz( m->nodes().create_field<double>("xyz",3,IF_EXISTS_RETURN) );
-  for( int jnode=0; jnode<lonlat.shape(0); ++jnode )
-  {
-    eckit::geometry::lonlat_to_3d( lonlat[jnode].data(), xyz[jnode].data() );
-  }
+  actions::BuildXYZField build_xyz_field("xyz");
+  build_xyz_field(*m);
 
   io::Gmsh gmsh;
   if(three_dimensional)

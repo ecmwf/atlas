@@ -37,9 +37,9 @@ Field& BuildXYZField::operator()(Nodes& nodes) const
 {
   if( !nodes.has_field(name_) )
   {
+    size_t npts = nodes.size();
     ArrayView<double,2> lonlat( nodes.lonlat() );
-    ArrayView<double,2> xyz   ( nodes.create_field<double>(name_,3) );
-    size_t npts = nodes.shape(0);
+    ArrayView<double,2> xyz   ( nodes.add( Field::create<double>(name_,make_shape(npts,3) ) ) );
     for( size_t n=0; n<npts; ++n )
     {
       eckit::geometry::lonlat_to_3d(lonlat[n].data(),xyz[n].data());

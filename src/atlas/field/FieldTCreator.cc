@@ -121,6 +121,14 @@ template<> Field* FieldTCreatorT<float>::create_field( const ArrayShape& shape, 
 template<> Field* FieldTCreatorT<double>::create_field( const ArrayShape& shape, const eckit::Parametrisation& params) const
   { return new FieldT<double>(shape,params); }
 
+template<> Field* FieldTCreatorT<int>::create_field( const std::string& name, const ArrayShape& shape ) const
+  { return new FieldT<int>(name,shape); }
+template<> Field* FieldTCreatorT<long>::create_field( const std::string& name, const ArrayShape& shape ) const
+  { return new FieldT<long>(name,shape); }
+template<> Field* FieldTCreatorT<float>::create_field( const std::string& name, const ArrayShape& shape ) const
+  { return new FieldT<float>(name,shape); }
+template<> Field* FieldTCreatorT<double>::create_field( const std::string& name, const ArrayShape& shape ) const
+  { return new FieldT<double>(name,shape); }
 
 namespace {
 static FieldTCreatorBuilder< FieldTCreatorT<int> >     __FieldT__int("FieldT<int>");

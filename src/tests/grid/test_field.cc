@@ -81,7 +81,7 @@ void TestField::test_constructor()
 
   atlas::Nodes& nodes  = mesh.nodes();
 
-  ArrayView<double,1> data ( nodes.create_field<double>( sname,1) );
+  ArrayView<double,1> data ( nodes.add( Field::create<double>( sname,make_shape(nodes.size(),1) ) ) );
 
   for(size_t i = 0; i < ref_data.size(); i++)
     data[i] = ref_data[i];

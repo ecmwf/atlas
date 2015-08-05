@@ -133,12 +133,6 @@ void build_edges_parallel_fields( FunctionSpace& edges, Nodes& nodes )
 
 Field& build_nodes_global_idx( Nodes& nodes )
 {
-  if( ! nodes.has_field("glb_idx") )
-  {
-    ArrayView<gidx_t,1> glb_idx ( nodes.create_field<gidx_t>("glb_idx",1) );
-    glb_idx = -1;
-  }
-
   ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
 
   UniqueLonLat compute_uid(nodes);
@@ -162,12 +156,6 @@ void renumber_nodes_glb_idx( Nodes& nodes )
   // unused // int mypart = eckit::mpi::rank();
   int nparts = eckit::mpi::size();
   int root = 0;
-
-  if( ! nodes.has_field("glb_idx") )
-  {
-    ArrayView<gidx_t,1> glb_idx ( nodes.create_field<gidx_t>("glb_idx",1) );
-    glb_idx = -1;
-  }
 
   ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
 
@@ -266,11 +254,10 @@ Field& build_nodes_remote_idx( Nodes& nodes )
     proc[jpart] = jpart;
   // <---------
 
-  if( ! nodes.has_field("remote_idx") ) ( nodes.create_field<int>("remote_idx",1) );
   IndexView<int,   1> ridx   ( nodes.remote_index()  );
   ArrayView<int,   1> part   ( nodes.partition()   );
   ArrayView<double,2> lonlat ( nodes.lonlat() );
-  int nb_nodes = nodes.shape(0);
+  int nb_nodes = nodes.size();
 
 
   int varsize=2;
@@ -341,11 +328,6 @@ Field& build_nodes_remote_idx( Nodes& nodes )
 
 Field& build_nodes_partition( Nodes& nodes )
 {
-  if( ! nodes.has_field("partition") )
-  {
-    ArrayView<int,1> part ( nodes.create_field<int>("partition",1) );
-    part = eckit::mpi::rank();
-  }
   return nodes.partition();
 }
 
@@ -662,7 +644,7 @@ Field& build_edges_remote_idx( FunctionSpace& edges, Nodes& nodes )
     is_pole_edge = ArrayView<int,1>( edges.field("is_pole_edge") );
   }
 
-//  const int nb_nodes = nodes.shape(0);
+//  const int nb_nodes = nodes.size();
   const int nb_edges = edges.shape(0);
 
   double centroid[2];

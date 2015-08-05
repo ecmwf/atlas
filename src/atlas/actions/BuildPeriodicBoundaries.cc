@@ -46,7 +46,7 @@ void build_periodic_boundaries( Mesh& mesh )
   IndexView<int,1> ridx ( nodes.remote_index() );
   ArrayView<int,1> part ( nodes.partition() );
 
-  int nb_nodes = nodes.shape(0);
+  int nb_nodes = nodes.size();
 
   ArrayView<double,2> lonlat ( nodes.lonlat() );
 
@@ -57,7 +57,7 @@ void build_periodic_boundaries( Mesh& mesh )
   std::vector<int> master_nodes; master_nodes.reserve( 3*nb_nodes );
   std::vector<int> slave_nodes;  slave_nodes.reserve( 3*nb_nodes );
 
-  for( int jnode=0; jnode<nodes.shape(0); ++jnode)
+  for( int jnode=0; jnode<nodes.size(); ++jnode)
   {
     if( Topology::check_all(flags(jnode),Topology::BC|Topology::WEST) )
     {
