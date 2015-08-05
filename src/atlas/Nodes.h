@@ -86,16 +86,25 @@ private:
   template< typename DATA_TYPE >
   Field& create_field(const std::string& name, size_t nb_vars, CreateBehavior b = IF_EXISTS_FAIL );
 
-  const std::string& name() const { return name_; }
+  const std::string& name() const;
 
-  int index() const { return idx_; }
+  int index() const;
 
   // This is a Fortran view of the shape (i.e. reverse order)
-  const std::vector<int>& shapef() const { return shapef_; }
+  const std::vector<int>& shapef() const;
 
-  const std::vector<size_t>& shape() const { return shape_; }
-    size_t shape(const size_t i) const { ASSERT(i<shape_.size()); return shape_[i]; }
+  const std::vector<size_t>& shape() const;
+  size_t shape(const size_t i) const;
   void resize( const std::vector<size_t>& shape );
+
+  const Mesh& mesh() const;
+  Mesh& mesh();
+
+  size_t dof() const;
+
+  size_t glb_dof() const;
+
+  void print(std::ostream&, bool dump = false) const;
 
 private:
 

@@ -228,8 +228,11 @@ private:  // methods
 
 protected:
 
+    size_t dof_;
+
+private:
+
 	size_t idx_;
-	size_t dof_;
 	size_t glb_dof_;
 
 	std::string name_;
