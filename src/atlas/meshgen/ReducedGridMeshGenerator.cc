@@ -805,8 +805,6 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
 
   Nodes& nodes = mesh.createNodes(nnodes);
 
-  nodes.metadata().set<long>("type",static_cast<int>(Entity::NODES));
-
   ArrayView<double,2> lonlat        ( nodes.lonlat() );
   ArrayView<gidx_t,1> glb_idx       ( nodes.global_index() );
   ArrayView<int,   1> part          ( nodes.partition() );

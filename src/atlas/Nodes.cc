@@ -42,6 +42,7 @@ Nodes::Nodes(size_t _size) :
     flags(n) = 0;
   }
   metadata().set("nb_owned",size());
+  metadata().set<long>("type",static_cast<int>(Entity::NODES));
 }
 
 

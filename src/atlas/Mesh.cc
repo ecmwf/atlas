@@ -128,13 +128,6 @@ Nodes& Mesh::createNodes( size_t size )
 {
   ASSERT( !nodes_ );
   nodes_.reset( new Nodes(size) );
-
-  ///< @todo REMOVE
-  function_spaces_.insert("nodes", FunctionSpace::Ptr(nodes_.get()));
-  function_spaces_.sort();
-  nodes_->set_index( function_spaces_.size() - 1 );
-  nodes_->metadata().set<long>("type",static_cast<int>(Entity::NODES));
-
   return *nodes_;
 }
 
