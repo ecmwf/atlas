@@ -12,7 +12,7 @@ function( fortranize file )
 endfunction()
 
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/../atlas/atlas_defines.h.in  atlas_f_defines.h )
-fortranize( ${CMAKE_CURRENT_BINARY_DIR}/atlas_f_defines.h )
+  # fortranize( ${CMAKE_CURRENT_BINARY_DIR}/atlas_f_defines.h )
 
 install( FILES
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_f_defines.h

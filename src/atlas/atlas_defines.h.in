@@ -1,15 +1,37 @@
 #ifndef atlas_defines_h
 #define atlas_defines_h
 
-#cmakedefine CGAL_FOUND
+#if 0
+Don't use cmakedefine as this file needs to be included by fortran as well
+#endif
 
-#cmakedefine ATLAS_HAVE_OMP
-#cmakedefine ATLAS_HAVE_MPI
-#cmakedefine ATLAS_HAVE_TESSELATION
-#cmakedefine ATLAS_HAVE_FORTRAN
-#cmakedefine ATLAS_HAVE_TRANS
+#if @CGAL_FOUND@
+#define CGAL_FOUND
+#endif
 
-#cmakedefine ECKIT_HAVE_GRIB
+#if @ATLAS_HAVE_OMP@
+#define ATLAS_HAVE_OMP
+#endif
+
+#if @ATLAS_HAVE_MPI@
+#define ATLAS_HAVE_MPI
+#endif
+
+#if @ATLAS_HAVE_TESSELATION@
+#define ATLAS_HAVE_TESSELATION
+#endif
+
+#if @ATLAS_HAVE_FORTRAN@
+#define ATLAS_HAVE_FORTRAN
+#endif
+
+#if @ATLAS_HAVE_TRANS@
+#define ATLAS_HAVE_TRANS
+#endif
+
+#if @ECKIT_HAVE_GRIB@
+#define ECKIT_HAVE_GRIB
+#endif
 
 #define ATLAS_BITS_GLOBAL @ATLAS_BITS_GLOBAL@
 
