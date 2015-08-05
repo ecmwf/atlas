@@ -243,7 +243,7 @@ void build_node_to_edge_connectivity( Mesh& mesh )
 void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& nb_pole_edges )
 {
   Nodes& nodes   = mesh.nodes();
-  ArrayView<double,2> lonlat    ( nodes.field( "lonlat" ) );
+  ArrayView<double,2> lonlat    ( nodes.lonlat() );
   ArrayView<gidx_t,1> glb_idx   ( nodes.field( "glb_idx"     ) );
   ArrayView<int,   1> part      ( nodes.field( "partition"   ) );
   ArrayView<int,   1> flags     ( nodes.field( "flags"       ) );
@@ -369,9 +369,9 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
 
 struct ComputeUniquePoleEdgeIndex
 {
-  ComputeUniquePoleEdgeIndex( const FunctionSpace& nodes )
+  ComputeUniquePoleEdgeIndex( const Nodes& nodes )
   {
-    lonlat = ArrayView<double,2> ( nodes.field("lonlat") );
+    lonlat = ArrayView<double,2> ( nodes.lonlat() );
   }
 
   gidx_t operator()( const IndexView<int,1>& edge_nodes ) const
@@ -402,7 +402,7 @@ void build_edges( Mesh& mesh )
   Nodes& nodes   = mesh.nodes();
   ArrayView<gidx_t,1> glb_idx(        nodes.field( "glb_idx" ) );
   ArrayView<int,1> part   (        nodes.field( "partition" ) );
-  ArrayView<double,2> lonlat (     nodes.field( "lonlat" ) );
+  ArrayView<double,2> lonlat (     nodes.lonlat() );
   size_t nb_nodes = nodes.shape(0);
 
   FunctionSpace& quads       = mesh.function_space( "quads" );

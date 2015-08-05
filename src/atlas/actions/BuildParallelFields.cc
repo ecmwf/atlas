@@ -58,12 +58,12 @@ using atlas::util::PeriodicTransform;
 namespace atlas {
 namespace actions {
 
-Field& build_nodes_partition ( FunctionSpace& nodes );
-Field& build_nodes_remote_idx( FunctionSpace& nodes );
-Field& build_nodes_global_idx( FunctionSpace& nodes );
-Field& build_edges_partition ( FunctionSpace& edges, FunctionSpace& nodes );
-Field& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes );
-Field& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nodes );
+Field& build_nodes_partition ( Nodes& nodes );
+Field& build_nodes_remote_idx( Nodes& nodes );
+Field& build_nodes_global_idx( Nodes& nodes );
+Field& build_edges_partition ( FunctionSpace& edges, Nodes& nodes );
+Field& build_edges_remote_idx( FunctionSpace& edges, Nodes& nodes );
+Field& build_edges_global_idx( FunctionSpace& edges, Nodes& nodes );
 
 // ------------------------------------------------------------------
 
@@ -100,14 +100,12 @@ void build_parallel_fields( Mesh& mesh )
 
 // ------------------------------------------------------------------
 
-void build_nodes_parallel_fields( FunctionSpace& nodes )
+void build_nodes_parallel_fields( Nodes& nodes )
 {
   bool parallel = false;
   nodes.metadata().get("parallel",parallel);
   if( ! parallel )
   {
-    ASSERT( nodes.has_field("lonlat") );
-
     build_nodes_partition ( nodes );
     build_nodes_remote_idx( nodes );
     build_nodes_global_idx( nodes );
@@ -117,9 +115,8 @@ void build_nodes_parallel_fields( FunctionSpace& nodes )
 
 // ------------------------------------------------------------------
 
-void build_edges_parallel_fields( FunctionSpace& edges, FunctionSpace& nodes )
+void build_edges_parallel_fields( FunctionSpace& edges, Nodes& nodes )
 {
-  ASSERT( nodes.has_field("lonlat") );
   ASSERT( nodes.has_field("partition") );
   ASSERT( nodes.has_field("remote_idx") );
   ASSERT( nodes.has_field("glb_idx") );
@@ -136,7 +133,7 @@ void build_edges_parallel_fields( FunctionSpace& edges, FunctionSpace& nodes )
 
 // ------------------------------------------------------------------
 
-Field& build_nodes_global_idx( FunctionSpace& nodes )
+Field& build_nodes_global_idx( Nodes& nodes )
 {
   if( ! nodes.has_field("glb_idx") )
   {
@@ -156,7 +153,7 @@ Field& build_nodes_global_idx( FunctionSpace& nodes )
   return nodes.field("glb_idx");
 }
 
-void renumber_nodes_glb_idx( FunctionSpace& nodes )
+void renumber_nodes_glb_idx( Nodes& nodes )
 {
 // TODO: ATLAS-14: fix renumbering of EAST periodic boundary points
 // --> Those specific periodic points at the EAST boundary are not checked for uid,
@@ -257,7 +254,7 @@ void renumber_nodes_glb_idx( FunctionSpace& nodes )
 
 // ------------------------------------------------------------------
 
-Field& build_nodes_remote_idx( FunctionSpace& nodes )
+Field& build_nodes_remote_idx( Nodes& nodes )
 {
   size_t mypart = eckit::mpi::rank();
   size_t nparts = eckit::mpi::size();
@@ -274,7 +271,7 @@ Field& build_nodes_remote_idx( FunctionSpace& nodes )
   if( ! nodes.has_field("remote_idx") ) ( nodes.create_field<int>("remote_idx",1) );
   IndexView<int,   1> ridx   ( nodes.field("remote_idx")  );
   ArrayView<int,   1> part   ( nodes.field("partition")   );
-  ArrayView<double,2> lonlat ( nodes.field("lonlat") );
+  ArrayView<double,2> lonlat ( nodes.lonlat() );
   int nb_nodes = nodes.shape(0);
 
 
@@ -344,7 +341,7 @@ Field& build_nodes_remote_idx( FunctionSpace& nodes )
 
 // ------------------------------------------------------------------
 
-Field& build_nodes_partition( FunctionSpace& nodes )
+Field& build_nodes_partition( Nodes& nodes )
 {
   if( ! nodes.has_field("partition") )
   {
@@ -356,7 +353,7 @@ Field& build_nodes_partition( FunctionSpace& nodes )
 
 // ------------------------------------------------------------------
 
-Field& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
+Field& build_edges_partition( FunctionSpace& edges, Nodes& nodes )
 {
   UniqueLonLat compute_uid(nodes);
 
@@ -377,7 +374,7 @@ Field& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
   }
 
   ArrayView<int,1> node_part  ( nodes.field("partition") );
-  ArrayView<double,2> lonlat  ( nodes.field("lonlat") );
+  ArrayView<double,2> lonlat  ( nodes.lonlat() );
   ArrayView<int,   1> flags   ( nodes.field("flags")       );
 #ifdef DEBUGGING_PARFIELDS
   ArrayView<gidx_t,   1> gidx    ( nodes.field("glb_idx")       );
@@ -641,7 +638,7 @@ Field& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
   return edges.field("partition");
 }
 
-Field& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes )
+Field& build_edges_remote_idx( FunctionSpace& edges, Nodes& nodes )
 {
   UniqueLonLat compute_uid(nodes);
 
@@ -652,7 +649,7 @@ Field& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes )
   IndexView<int,   2> edge_nodes ( edges.field("nodes")       );
   IndexView<int,   1> edge_ridx  ( edges.field("remote_idx")  );
   ArrayView<int,   1> edge_part  ( edges.field("partition")   );
-  ArrayView<double,2> lonlat     ( nodes.field("lonlat") );
+  ArrayView<double,2> lonlat     ( nodes.lonlat() );
   ArrayView<int,   1> flags      ( nodes.field("flags")       );
 #ifdef DEBUGGING_PARFIELDS
   ArrayView<gidx_t,   1> gidx      ( nodes.field("glb_idx")       );
@@ -788,7 +785,7 @@ Field& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes )
 
 }
 
-Field& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nodes )
+Field& build_edges_global_idx( FunctionSpace& edges, Nodes& nodes )
 {
   UniqueLonLat compute_uid(nodes);
 
@@ -803,7 +800,7 @@ Field& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nodes )
 
   ArrayView<gidx_t,1> edge_gidx  ( edges.field("glb_idx")     );
   IndexView<int,   2> edge_nodes ( edges.field("nodes")       );
-  ArrayView<double,2> lonlat     ( nodes.field("lonlat") );
+  ArrayView<double,2> lonlat     ( nodes.lonlat() );
   ArrayView<int,1> is_pole_edge;
   bool has_pole_edges = false;
   if( edges.has_field("is_pole_edge") )
@@ -914,13 +911,13 @@ Field& build_edges_global_idx( FunctionSpace& edges, FunctionSpace& nodes )
 void atlas__build_parallel_fields ( Mesh* mesh) {
   ATLAS_ERROR_HANDLING( build_parallel_fields(*mesh) );
 }
-void atlas__build_nodes_parallel_fields (FunctionSpace* nodes) {
+void atlas__build_nodes_parallel_fields (Nodes* nodes) {
   ATLAS_ERROR_HANDLING( build_nodes_parallel_fields(*nodes) );
 }
-void atlas__build_edges_parallel_fields (FunctionSpace* edges, FunctionSpace* nodes) {
+void atlas__build_edges_parallel_fields (FunctionSpace* edges, Nodes* nodes) {
   ATLAS_ERROR_HANDLING( build_edges_parallel_fields(*edges, *nodes) );
 }
-void atlas__renumber_nodes_glb_idx (FunctionSpace* nodes)
+void atlas__renumber_nodes_glb_idx (Nodes* nodes)
 {
   ATLAS_ERROR_HANDLING( renumber_nodes_glb_idx(*nodes) );
 }

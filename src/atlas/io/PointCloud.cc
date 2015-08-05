@@ -95,7 +95,7 @@ Mesh* PointCloud::read(const eckit::PathName& path, std::vector<std::string>& vf
       throw eckit::BadValue(msg+"invalid number of columns (failed: nb_columns>=2)");
 
     Nodes& nodes = mesh->add_nodes(nb_pts);
-    ArrayView< double, 2 > lonlat( nodes.field("lonlat") );
+    ArrayView< double, 2 > lonlat( nodes.lonlat() );
 
     // header, part 2:
     // determine columns' labels
@@ -214,7 +214,7 @@ void PointCloud::write(const eckit::PathName& path, const FieldSet& fieldset)
   // @warning: several copy operations here
 
   ASSERT( fieldset.size() );
-  ArrayView< double, 2 > lonlat(fieldset[0].function_space().field("lonlat"));
+  ArrayView< double, 2 > lonlat(  dynamic_cast<Nodes&>(fieldset[0].function_space()).lonlat() );
   if (!lonlat.size())
     throw eckit::BadParameter(msg+"invalid number of points (failed: nb_pts>0)");
 

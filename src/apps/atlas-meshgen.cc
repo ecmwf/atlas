@@ -158,7 +158,7 @@ void Meshgen2Gmsh::run()
     renumber_nodes_glb_idx(mesh->nodes());
   }
   mesh->nodes().parallelise();
-  ArrayView<double,2> lonlat( mesh->nodes().field("lonlat") );
+  ArrayView<double,2> lonlat( mesh->nodes().lonlat() );
 
   Log::info() << "  checksum lonlat : " << mesh->nodes().checksum().execute( lonlat ) << std::endl;
   if( edges )

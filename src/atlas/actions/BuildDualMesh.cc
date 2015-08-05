@@ -34,9 +34,9 @@ namespace actions {
 
 namespace {
 
-void global_bounding_box( FunctionSpace& nodes, double min[2], double max[2] )
+void global_bounding_box( Nodes& nodes, double min[2], double max[2] )
 {
-  ArrayView<double,2> lonlat( nodes.field("lonlat") );
+  ArrayView<double,2> lonlat( nodes.lonlat() );
   const int nb_nodes = nodes.shape(0);
   min[LON] =  std::numeric_limits<double>::max();
   min[LAT] =  std::numeric_limits<double>::max();
@@ -97,7 +97,7 @@ void make_dual_normals_outward( Mesh& mesh );
 void build_median_dual_mesh( Mesh& mesh )
 {
   Nodes& nodes   = mesh.nodes();
-  ArrayView<double,2> lonlat        ( nodes.field( "lonlat"    ) );
+  ArrayView<double,2> lonlat        ( nodes.lonlat() );
   ArrayView<double,1> dual_volumes  ( nodes.create_field<double>( "dual_volumes", 1 ) );
 
   FunctionSpace& quads       = mesh.function_space( "quads" );
@@ -133,7 +133,7 @@ void build_median_dual_mesh( Mesh& mesh )
 void build_centroid_dual_mesh( Mesh& mesh )
 {
   Nodes& nodes   = mesh.nodes();
-  ArrayView<double,2> lonlat        ( nodes.field( "lonlat"    ) );
+  ArrayView<double,2> lonlat        ( nodes.lonlat() );
   ArrayView<double,1> dual_volumes  ( nodes.create_field<double>( "dual_volumes", 1 ) );
 
   FunctionSpace& quads       = mesh.function_space( "quads" );
@@ -195,7 +195,7 @@ void add_median_dual_volume_contribution(
   IndexView<int,   2> elem_to_edges  ( elements.field("to_edge") );
   ArrayView<double,2> edge_centroids ( edges.field("centroids") );
   IndexView<int,   2> edge_nodes     ( edges.field("nodes") );
-  ArrayView<double,2> node_lonlat    ( nodes.field("lonlat") );
+  ArrayView<double,2> node_lonlat    ( nodes.lonlat() );
   ArrayView<gidx_t,1> elem_glb_idx   ( elements.field("glb_idx") );
   ArrayView<gidx_t,1> edge_glb_idx   ( edges.field("glb_idx") );
   int nb_edges_per_elem = elem_to_edges.shape(1);
@@ -242,7 +242,7 @@ void add_median_dual_volume_contribution(
   IndexView<int,   2> edge_nodes    ( edges.field("nodes"      ) );
   ArrayView<gidx_t,1> edge_glb_idx  ( edges.field("glb_idx"    ) );
   IndexView<int,   2> edge_to_elem  ( edges.field("to_elem"    ) );
-  ArrayView<double,2> node_lonlat   ( nodes.field("lonlat") );
+  ArrayView<double,2> node_lonlat   ( nodes.lonlat() );
   int nb_edges = edges.shape(0);
   std::map<int,std::vector<int> > node_to_bdry_edge;
   for(int edge=0; edge<nb_edges; ++edge)
@@ -303,7 +303,7 @@ void add_centroid_dual_volume_contribution(
   IndexView<int,   2> edge_nodes    ( edges.field("nodes"      ) );
   ArrayView<gidx_t,1> edge_glb_idx  ( edges.field("glb_idx"    ) );
   IndexView<int,   2> edge_to_elem  ( edges.field("to_elem"    ) );
-  ArrayView<double,2> node_lonlat   ( nodes.field("lonlat") );
+  ArrayView<double,2> node_lonlat   ( nodes.lonlat() );
   std::vector< ArrayView<double,2> > elem_centroids(mesh.nb_function_spaces());
   for( int f=0; f<mesh.nb_function_spaces(); ++f )
   {
@@ -389,8 +389,8 @@ void build_dual_normals( Mesh& mesh )
       elem_centroids[func_space_idx] = ArrayView<double,2>( func_space.field("centroids") );
   }
 
-  FunctionSpace&  nodes = mesh.nodes();
-  ArrayView<double,2> node_lonlat( nodes.field("lonlat") );
+  Nodes&  nodes = mesh.nodes();
+  ArrayView<double,2> node_lonlat( nodes.lonlat() );
   double min[2], max[2];
   global_bounding_box( nodes, min, max );
   double tol = 1.e-6;
@@ -487,7 +487,7 @@ void make_dual_normals_outward( Mesh& mesh )
 {
 
   Nodes&  nodes = mesh.nodes();
-  ArrayView<double,2> node_lonlat( nodes.field("lonlat") );
+  ArrayView<double,2> node_lonlat( nodes.lonlat() );
 
   FunctionSpace&  edges = mesh.function_space("edges");
   IndexView<int,   2> edge_to_elem  ( edges.field("to_elem"  ) );
@@ -528,7 +528,7 @@ void build_skewness( Mesh& mesh )
   }
 
   Nodes&  nodes = mesh.nodes();
-  ArrayView<double,2> node_lonlat( nodes.field("lonlat") );
+  ArrayView<double,2> node_lonlat( nodes.lonlat() );
   double min[2], max[2];
   global_bounding_box( nodes, min, max );
   double tol = 1.e-6;

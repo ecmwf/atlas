@@ -340,7 +340,7 @@ void AtlasBenchmark::setup()
   build_median_dual_mesh(*mesh);
   build_node_to_edge_connectivity(*mesh);
 
-  ArrayView<double,2> lonlat ( mesh->nodes().field("lonlat") );
+  ArrayView<double,2> lonlat ( mesh->nodes().lonlat() );
 
   nnodes = mesh->nodes().shape(0);
   nedges = mesh->function_space("edges").shape(0);

@@ -17,6 +17,7 @@
 namespace atlas {
   class Mesh;
   class FunctionSpace;
+  class Nodes;
 namespace actions {
 
 /*
@@ -31,7 +32,7 @@ void build_parallel_fields( Mesh& mesh );
  * - partition:  set to eckit::mpi::rank() for negative values
  * - remote_idx: rebuild from scratch
  */
-void build_nodes_parallel_fields( FunctionSpace& nodes );
+void build_nodes_parallel_fields( Nodes& nodes );
 
 /*
  * Build parallel fields for the "edges" function space if they don't exist.
@@ -43,19 +44,19 @@ void build_nodes_parallel_fields( FunctionSpace& nodes );
  *        neighbouring elements.
  *        Because of this problem, the size of the halo should be set to 2 instead of 1!!!
  */
-void build_edges_parallel_fields( FunctionSpace& edges, FunctionSpace& nodes );
+void build_edges_parallel_fields( FunctionSpace& edges, Nodes& nodes );
 
 
-void renumber_nodes_glb_idx (FunctionSpace& nodes);
+void renumber_nodes_glb_idx (Nodes& nodes);
 
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 extern "C"
 {
   void atlas__build_parallel_fields (Mesh* mesh);
-  void atlas__build_nodes_parallel_fields (FunctionSpace* nodes);
-  void atlas__build_edges_parallel_fields (FunctionSpace* edges, FunctionSpace* nodes);
-  void atlas__renumber_nodes_glb_idx (FunctionSpace* nodes);
+  void atlas__build_nodes_parallel_fields (Nodes* nodes);
+  void atlas__build_edges_parallel_fields (FunctionSpace* edges, Nodes* nodes);
+  void atlas__renumber_nodes_glb_idx (Nodes* nodes);
 }
 // ------------------------------------------------------------------
 
