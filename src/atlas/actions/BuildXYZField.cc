@@ -15,6 +15,7 @@
 #include "atlas/Field.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Mesh.h"
+#include "atlas/Nodes.h"
 #include "atlas/util/ArrayView.h"
 
 namespace atlas {
@@ -29,14 +30,14 @@ BuildXYZField::BuildXYZField(const std::string& name)
 
 Field& BuildXYZField::operator()(Mesh& mesh) const
 {
-  return operator()(mesh.function_space("nodes"));
+  return operator()(mesh.nodes());
 }
 
-Field& BuildXYZField::operator()(FunctionSpace& nodes) const
+Field& BuildXYZField::operator()(Nodes& nodes) const
 {
   if( !nodes.has_field(name_) )
   {
-    ArrayView<double,2> lonlat( nodes.field("lonlat") );
+    ArrayView<double,2> lonlat( nodes.lonlat() );
     ArrayView<double,2> xyz   ( nodes.create_field<double>(name_,3) );
     size_t npts = nodes.shape(0);
     for( size_t n=0; n<npts; ++n )

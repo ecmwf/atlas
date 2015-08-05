@@ -19,6 +19,7 @@
 #include "tests/TestMeshes.h"
 #include "atlas/io/Gmsh.h"
 #include "atlas/Mesh.h"
+#include "atlas/Nodes.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/util/IndexView.h"
 #include "atlas/util/ArrayView.h"
@@ -43,11 +44,11 @@ namespace test {
 
 double dual_volume(Mesh& mesh)
 {
-  FunctionSpace& nodes = mesh.function_space("nodes");
+  Nodes& nodes = mesh.nodes();
   IsGhost is_ghost_node(nodes);
   int nb_nodes = nodes.shape(0);
   ArrayView<double,1> dual_volumes ( nodes.field("dual_volumes") );
-  ArrayView<gidx_t,1> glb_idx ( nodes.field("glb_idx") );
+  ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
   double area=0;
   for( int node=0; node<nb_nodes; ++node )
   {
@@ -95,10 +96,10 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
   actions::build_parallel_fields(*m);
   actions::build_periodic_boundaries(*m);
   actions::build_halo(*m,1);
-  //actions::renumber_nodes_glb_idx(m->function_space("nodes"));
+  //actions::renumber_nodes_glb_idx(m->nodes());
   actions::build_edges(*m);
   actions::build_pole_edges(*m);
-  actions::build_edges_parallel_fields(m->function_space("edges"),m->function_space("nodes"));
+  actions::build_edges_parallel_fields(m->function_space("edges"),m->nodes());
   actions::build_median_dual_mesh(*m);
   BOOST_CHECK_CLOSE( test::dual_volume(*m), 360.*180., 0.0001 );
   double difference = 360.*180. - test::dual_volume(*m);

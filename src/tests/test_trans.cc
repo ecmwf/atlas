@@ -27,6 +27,7 @@
 #include "atlas/io/Gmsh.h"
 #include "atlas/FieldSet.h"
 #include "atlas/Mesh.h"
+#include "atlas/Nodes.h"
 #include "atlas/FunctionSpace.h"
 
 #include "transi/trans.h"
@@ -227,9 +228,9 @@ BOOST_AUTO_TEST_CASE( test_generate_mesh )
   GridDistribution::Ptr eqreg_distribution( meshgen::EqualRegionsPartitioner(*g).distribution() );
   Mesh::Ptr m_eqreg( generate( *g, *eqreg_distribution ) );
 
-  ArrayView<int,1> p_default( m_default->function_space("nodes").field("partition") );
-  ArrayView<int,1> p_trans  ( m_trans  ->function_space("nodes").field("partition") );
-  ArrayView<int,1> p_eqreg  ( m_eqreg  ->function_space("nodes").field("partition") );
+  ArrayView<int,1> p_default( m_default->nodes().field("partition") );
+  ArrayView<int,1> p_trans  ( m_trans  ->nodes().field("partition") );
+  ArrayView<int,1> p_eqreg  ( m_eqreg  ->nodes().field("partition") );
 
   BOOST_CHECK_EQUAL_COLLECTIONS( p_default.begin(), p_default.end(),
                                  p_trans  .begin(), p_trans  .end() );
@@ -256,7 +257,7 @@ BOOST_AUTO_TEST_CASE( test_spectral_fields )
 
   trans::Trans trans(*g,47);
 
-  FunctionSpace& nodes = m->function_space("nodes");
+  Nodes& nodes = m->nodes();
   FunctionSpace& spectral =
     m->create_function_space ("spectral","spectral",make_shape(trans.nspec2(),FunctionSpace::UNDEF_VARS));
 

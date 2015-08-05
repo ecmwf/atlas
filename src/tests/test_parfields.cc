@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE( test1 )
   BOOST_CHECK_EQUAL( loc(8) , 8 );
   BOOST_CHECK_EQUAL( loc(9) , 9 );
 
-  IsGhost is_ghost( m->function_space("nodes") );
+  IsGhost is_ghost( m->nodes() );
 
   switch ( eckit::mpi::rank() )
   {
@@ -158,7 +158,7 @@ BOOST_AUTO_TEST_CASE( test2 )
   Mesh* m = generate( grids::rgg::N32() );
   actions::build_parallel_fields(*m);
 
-  FunctionSpace& nodes = m->function_space("nodes");
+  Nodes& nodes = m->nodes();
   IndexView<int,1> loc_idx ( nodes.field("remote_idx") );
   ArrayView<int,1> part    ( nodes.field("partition")      );
   ArrayView<gidx_t,1> glb_idx ( nodes.field("glb_idx")        );

@@ -18,6 +18,7 @@
 #include "atlas/FunctionSpace.h"
 #include "atlas/Domain.h"
 #include "atlas/Mesh.h"
+#include "atlas/Nodes.h"
 #include "atlas/Grid.h"
 
 #include "atlas/grids/rgg/OctahedralRGG.h"
@@ -57,17 +58,16 @@ void AddVirtualNodes::operator()( Mesh& mesh ) const
             vPts.push_back(p);
     }
 
-    FunctionSpace& nodes = mesh.function_space( "nodes" );
+    Nodes& nodes = mesh.nodes();
 
-    const size_t nb_real_pts = nodes.shape()[0];
+    const size_t nb_real_pts = nodes.size();
     const size_t nb_virtual_pts = vPts.size();
 
-    std::vector<size_t> new_shape = nodes.shape();
-    new_shape[0] +=  vPts.size();
+    size_t new_size = nodes.size() + vPts.size();
 
-    nodes.resize(new_shape); // resizes the fields
+    nodes.resize(new_size); // resizes the fields
 
-    const size_t nb_total_pts = nodes.shape()[0];
+    const size_t nb_total_pts = nodes.size();
 
     ASSERT( nb_total_pts == nb_real_pts + nb_virtual_pts );
 
@@ -75,8 +75,8 @@ void AddVirtualNodes::operator()( Mesh& mesh ) const
     nodes.metadata().set<size_t>("NbVirtualPts",nb_virtual_pts);
 
     ArrayView<double,2> coords ( nodes.field("xyz") );
-    ArrayView<double,2> lonlat ( nodes.field( "lonlat" ) );
-    ArrayView<gidx_t,1> gidx   ( nodes.field( "glb_idx" ) );
+    ArrayView<double,2> lonlat ( nodes.lonlat() );
+    ArrayView<gidx_t,1> gidx   ( nodes.global_index() );
 
     for(size_t i = 0; i < nb_virtual_pts; ++i)
     {

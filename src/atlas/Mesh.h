@@ -123,9 +123,9 @@ public: // methods
     /// accessor of the Grid
     const Grid& grid() const {  ASSERT( grid_ ); return *grid_; }
 
-    FunctionSpace& add_nodes(const Grid& g);
+    Nodes& add_nodes(const Grid& g);
 
-    FunctionSpace& add_nodes(size_t nb_nodes);
+    Nodes& add_nodes(size_t nb_nodes);
 
     void prettyPrint(std::ostream&) const;
 

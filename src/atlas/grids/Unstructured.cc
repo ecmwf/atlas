@@ -15,6 +15,7 @@
 #include "atlas/grids/Unstructured.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/Mesh.h"
+#include "atlas/Nodes.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Parameters.h"
 
@@ -24,14 +25,14 @@ namespace atlas {
 namespace grids {
 
 Unstructured::Unstructured(const Mesh& m) :
-  points_ ( new std::vector< Grid::Point > (m.function_space("nodes").shape(0) ) )
+  points_ ( new std::vector< Grid::Point > (m.nodes().size() ) )
 {
   double lat_min = std::numeric_limits<double>::max();
   double lat_max = std::numeric_limits<double>::min();
   double lon_min = lat_min;
   double lon_max = lat_max;
 
-  ArrayView<double,2> lonlat (m.function_space("nodes").field("lonlat"));
+  ArrayView<double,2> lonlat (m.nodes().lonlat());
   std::vector<Point> &p = *points_;
   const size_t npts = p.size();
 

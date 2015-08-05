@@ -13,6 +13,7 @@
 //------------------------------------------------------------------------------------------------------
 
 #include "atlas/Field.h"
+#include "atlas/Nodes.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Mesh.h"
@@ -33,9 +34,9 @@ PointSet::PointSet( atlas::Mesh& mesh )
 {
     ASSERT( mesh.has_function_space("nodes") );
 
-    FunctionSpace& nodes = mesh.function_space( "nodes" );
+    Nodes& nodes = mesh.nodes();
 
-    npts_ = nodes.shape(0);
+    npts_ = nodes.size();
 
     ASSERT( npts_ > 0 );
 

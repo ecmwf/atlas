@@ -19,6 +19,7 @@
 #include "atlas/Mesh.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Field.h"
+#include "atlas/Nodes.h"
 #include "atlas/actions/BuildParallelFields.h"
 #include "atlas/Parameters.h"
 #include "atlas/util/ArrayView.h"
@@ -94,7 +95,7 @@ void build_parallel_fields( Mesh& mesh )
 {
   ASSERT( mesh.has_function_space("nodes") );
 
-  build_nodes_parallel_fields( mesh.function_space("nodes") );
+  build_nodes_parallel_fields( mesh.nodes() );
 }
 
 // ------------------------------------------------------------------

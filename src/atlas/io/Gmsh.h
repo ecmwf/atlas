@@ -50,12 +50,12 @@ public:
   /// Write fieldset to file
   ///  Depending on argument "mode", the fields will be appended,
   ///  or existing file will be overwritten
-  void write(FieldSet& fieldset, const eckit::PathName& file_path, openmode mode = std::ios::out) const;
+  void write(const FieldSet& fieldset, const eckit::PathName& file_path, openmode mode = std::ios::out) const;
 
   /// Write field to file
   ///  Depending on argument "mode", the fields will be appended,
   ///  or existing file will be overwritten
-  void write(Field& field, const eckit::PathName& file_path, openmode mode = std::ios::out) const;
+  void write(const Field& field, const eckit::PathName& file_path, openmode mode = std::ios::out) const;
 
 public:
   Metadata options;

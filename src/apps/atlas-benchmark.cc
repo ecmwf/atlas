@@ -59,6 +59,7 @@
 #include "atlas/actions/BuildParallelFields.h"
 #include "atlas/actions/BuildDualMesh.h"
 #include "atlas/Mesh.h"
+#include "atlas/Nodes.h"
 #include "atlas/grids/grids.h"
 #include "atlas/io/Gmsh.h"
 #include "atlas/atlas_omp.h"
@@ -329,30 +330,30 @@ void AtlasBenchmark::setup()
   ReducedGrid::Ptr grid( ReducedGrid::create(gridname.str()) );
   mesh = Mesh::Ptr( generate_mesh(*grid) );
   // mesh = Mesh::Ptr( generate_regular_grid( 2*N, N) );
-  build_nodes_parallel_fields(mesh->function_space("nodes"));
+  build_nodes_parallel_fields(mesh->nodes());
   build_periodic_boundaries(*mesh);
   build_halo(*mesh,1);
-  renumber_nodes_glb_idx(mesh->function_space("nodes"));
+  renumber_nodes_glb_idx(mesh->nodes());
   build_edges(*mesh);
   build_pole_edges(*mesh);
-  build_edges_parallel_fields(mesh->function_space("edges"),mesh->function_space("nodes"));
+  build_edges_parallel_fields(mesh->function_space("edges"),mesh->nodes());
   build_median_dual_mesh(*mesh);
   build_node_to_edge_connectivity(*mesh);
 
-  ArrayView<double,2> lonlat ( mesh->function_space("nodes").field("lonlat") );
+  ArrayView<double,2> lonlat ( mesh->nodes().field("lonlat") );
 
-  nnodes = mesh->function_space("nodes").shape(0);
+  nnodes = mesh->nodes().shape(0);
   nedges = mesh->function_space("edges").shape(0);
 
   edge2node  = IndexView<int,   2> ( mesh->function_space("edges").field("nodes") );
-  lonlat = ArrayView<double,2> ( mesh->function_space("nodes").create_field<double>("lonlat",2) );
-  V      = ArrayView<double,1> ( mesh->function_space("nodes").field("dual_volumes") );
+  lonlat = ArrayView<double,2> ( mesh->nodes().create_field<double>("lonlat",2) );
+  V      = ArrayView<double,1> ( mesh->nodes().field("dual_volumes") );
   S      = ArrayView<double,2> ( mesh->function_space("edges").field("dual_normals") );
-  field  = ArrayView<double,2> ( mesh->function_space("nodes").create_field<double>("field",nlev)  );
-  Field& gradfield = ( mesh->function_space("nodes").create_field<double>("grad",nlev*3) );
+  field  = ArrayView<double,2> ( mesh->nodes().create_field<double>("field",nlev)  );
+  Field& gradfield = ( mesh->nodes().create_field<double>("grad",nlev*3) );
   grad   = ArrayView<double,3> ( gradfield.data<double>(), make_shape(nnodes,nlev,3) );
-  mesh->function_space("nodes").field("field").metadata().set("nb_levels",nlev);
-  mesh->function_space("nodes").field("grad").metadata().set("nb_levels",nlev);
+  mesh->nodes().field("field").metadata().set("nb_levels",nlev);
+  mesh->nodes().field("grad").metadata().set("nb_levels",nlev);
 
   double radius = 6371.22e+03; // Earth's radius
   double height = 80.e+03;     // Height of atmosphere
@@ -378,10 +379,10 @@ void AtlasBenchmark::setup()
   dz = height/static_cast<double>(nlev);
 
   edge_is_pole   = ArrayView<int,1> ( mesh->function_space("edges").field("is_pole_edge") );
-  node2edge      = IndexView<int,2> ( mesh->function_space("nodes").field("to_edge") );
-  node2edge_size = ArrayView<int,1> ( mesh->function_space("nodes").field("to_edge_size") );
+  node2edge      = IndexView<int,2> ( mesh->nodes().field("to_edge") );
+  node2edge_size = ArrayView<int,1> ( mesh->nodes().field("to_edge_size") );
 
-  node2edge_sign = ArrayView<double,2> ( mesh->function_space("nodes").
+  node2edge_sign = ArrayView<double,2> ( mesh->nodes().
                                          create_field<double>("to_edge_sign",node2edge.shape(1)) );
 
   for( int jnode=0; jnode<nnodes; ++jnode )
@@ -409,7 +410,7 @@ void AtlasBenchmark::setup()
   for( int jedge=0; jedge<c; ++jedge )
     pole_edges.push_back(tmp[jedge]);
 
-  ArrayView<int,1> flags( mesh->function_space("nodes").field("flags") );
+  ArrayView<int,1> flags( mesh->nodes().field("flags") );
   is_ghost.reserve(nnodes);
   for( int jnode=0; jnode<nnodes; ++jnode )
   {
@@ -422,12 +423,12 @@ void AtlasBenchmark::setup()
 
   // Check bit-reproducibility after setup()
   // ---------------------------------------
-  //ArrayView<double,1> V ( mesh->function_space("nodes").field("dual_volumes") );
+  //ArrayView<double,1> V ( mesh->nodes().field("dual_volumes") );
   //ArrayView<double,2> S ( mesh->function_space("edges").field("dual_normals") );
-  //Log::info() << "  checksum coordinates : " << mesh->function_space("nodes").checksum().execute( lonlat ) << endl;
-  //Log::info() << "  checksum dual_volumes: " << mesh->function_space("nodes").checksum().execute( V ) << endl;
+  //Log::info() << "  checksum coordinates : " << mesh->nodes().checksum().execute( lonlat ) << endl;
+  //Log::info() << "  checksum dual_volumes: " << mesh->nodes().checksum().execute( V ) << endl;
   //Log::info() << "  checksum dual_normals: " << mesh->function_space("edges").checksum().execute( S ) << endl;
-  //Log::info() << "  checksum field       : " << mesh->function_space("nodes").checksum().execute( field ) << endl;
+  //Log::info() << "  checksum field       : " << mesh->nodes().checksum().execute( field ) << endl;
 }
 
 //------------------------------------------------------------------------------------------------------
@@ -520,7 +521,7 @@ void AtlasBenchmark::iteration()
   // halo-exchange
   eckit::mpi::barrier();
   Timer halo("halo-exchange", Log::debug(5));
-  mesh->function_space("nodes").halo_exchange().execute(grad);
+  mesh->nodes().halo_exchange().execute(grad);
   eckit::mpi::barrier();
   t.stop();
   halo.stop();
@@ -579,16 +580,16 @@ double AtlasBenchmark::result()
   ECKIT_MPI_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&norm  ,1,eckit::mpi::datatype<double>(),MPI_SUM,eckit::mpi::comm()) );
   norm = std::sqrt(norm);
 
-  Log::info() << "  checksum: " << mesh->function_space("nodes").checksum().execute( grad ) << endl;
+  Log::info() << "  checksum: " << mesh->nodes().checksum().execute( grad ) << endl;
   Log::info() << "  maxval: " << setw(13) << setprecision(6) << scientific << maxval << endl;
   Log::info() << "  minval: " << setw(13) << setprecision(6) << scientific << minval << endl;
   Log::info() << "  norm:   " << setw(13) << setprecision(6) << scientific << norm << endl;
 
   if( output )
   {
-    //io::Gmsh().write(mesh->function_space("nodes").field("dual_volumes"),"benchmark.gmsh",std::ios_base::app);
-    //io::Gmsh().write(mesh->function_space("nodes").field("field"),"benchmark.gmsh",std::ios_base::out);
-    io::Gmsh().write(mesh->function_space("nodes").field("grad"),"benchmark.gmsh",std::ios_base::app);
+    //io::Gmsh().write(mesh->nodes().field("dual_volumes"),"benchmark.gmsh",std::ios_base::app);
+    //io::Gmsh().write(mesh->nodes().field("field"),"benchmark.gmsh",std::ios_base::out);
+    io::Gmsh().write(mesh->nodes().field("grad"),"benchmark.gmsh",std::ios_base::app);
   }
   return norm;
 }

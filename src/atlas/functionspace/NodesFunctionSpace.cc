@@ -10,6 +10,7 @@
 
 #include "atlas/atlas_config.h"
 #include "atlas/Mesh.h"
+#include "atlas/Nodes.h"
 #include "atlas/mpl/HaloExchange.h"
 #include "atlas/mpl/GatherScatter.h"
 #include "atlas/util/Bitflags.h"
@@ -42,16 +43,16 @@ NodesFunctionSpace::NodesFunctionSpace(const std::string& name, Mesh& mesh, cons
     mpl::HaloExchange* halo_exchange = new mpl::HaloExchange( halo_name() );
 
     // Set it up.
-    actions::build_nodes_parallel_fields( mesh_.function_space("nodes") );
+    actions::build_nodes_parallel_fields( mesh_.nodes() );
 
     actions::build_periodic_boundaries(mesh_);
 
     actions::build_halo(mesh_,halo_);
 
-    actions::renumber_nodes_glb_idx(mesh_.function_space("nodes"));
+    actions::renumber_nodes_glb_idx(mesh_.nodes());
 
-    Field& ridx = mesh_.function_space("nodes").field("remote_idx");
-    Field& part = mesh_.function_space("nodes").field("partition");
+    Field& ridx = mesh_.nodes().field("remote_idx");
+    Field& part = mesh_.nodes().field("partition");
 
     std::stringstream ss;
     ss << "nb_nodes_including_halo["<<halo_<<"]";
@@ -66,7 +67,7 @@ NodesFunctionSpace::NodesFunctionSpace(const std::string& name, Mesh& mesh, cons
     std::stringstream ss;
     ss << "nb_nodes_including_halo["<<halo_<<"]";
     if( ! mesh.metadata().get(ss.str(),nb_nodes_) ) {
-      nb_nodes_ = mesh_.function_space("nodes").metadata().get<size_t>("nb_owned");
+      nb_nodes_ = mesh_.nodes().metadata().get<size_t>("nb_owned");
     }
   }
 
@@ -77,14 +78,14 @@ NodesFunctionSpace::NodesFunctionSpace(const std::string& name, Mesh& mesh, cons
 
     // Set it up.
     if( halo_ == 0 )
-      actions::build_nodes_parallel_fields( mesh_.function_space("nodes") );
+      actions::build_nodes_parallel_fields( mesh_.nodes() );
 
-    Field& ridx = mesh_.function_space("nodes").field("remote_idx");
-    Field& part = mesh_.function_space("nodes").field("partition");
-    Field& gidx = mesh_.function_space("nodes").field("glb_idx");
+    Field& ridx = mesh_.nodes().field("remote_idx");
+    Field& part = mesh_.nodes().field("partition");
+    Field& gidx = mesh_.nodes().field("glb_idx");
 
-    ArrayView<int,1> flags ( mesh_.function_space("nodes").field("flags") );
-    std::vector<int> mask(mesh_.function_space("nodes").shape(0));
+    ArrayView<int,1> flags ( mesh_.nodes().field("flags") );
+    std::vector<int> mask(mesh_.nodes().shape(0));
     for( size_t j=0; j<mask.size(); ++j ) {
       mask[j] = util::Topology::check(flags(j),util::Topology::GHOST) ? 1 : 0;
       if( mask[j] == 1 && util::Topology::check(flags(j),util::Topology::BC) ) {
@@ -104,14 +105,14 @@ NodesFunctionSpace::NodesFunctionSpace(const std::string& name, Mesh& mesh, cons
 
     // Set it up.
     if( halo_ == 0 )
-      actions::build_nodes_parallel_fields( mesh_.function_space("nodes") );
+      actions::build_nodes_parallel_fields( mesh_.nodes() );
 
-    Field& ridx = mesh_.function_space("nodes").field("remote_idx");
-    Field& part = mesh_.function_space("nodes").field("partition");
-    Field& gidx = mesh_.function_space("nodes").field("glb_idx");
+    Field& ridx = mesh_.nodes().field("remote_idx");
+    Field& part = mesh_.nodes().field("partition");
+    Field& gidx = mesh_.nodes().field("glb_idx");
 
-    ArrayView<int,1> flags ( mesh_.function_space("nodes").field("flags") );
-    std::vector<int> mask(mesh_.function_space("nodes").shape(0));
+    ArrayView<int,1> flags ( mesh_.nodes().field("flags") );
+    std::vector<int> mask(mesh_.nodes().shape(0));
     for( size_t j=0; j<mask.size(); ++j ) {
       mask[j] = util::Topology::check(flags(j),util::Topology::GHOST) ? 1 : 0;
     }

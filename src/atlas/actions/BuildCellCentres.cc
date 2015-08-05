@@ -13,6 +13,7 @@
 #include "atlas/actions/BuildCellCentres.h"
 #include "atlas/Parameters.h"
 #include "atlas/Mesh.h"
+#include "atlas/Nodes.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Field.h"
 #include "atlas/util/ArrayView.h"
@@ -27,10 +28,10 @@ void BuildCellCentres::operator()( Mesh& mesh ) const
     ASSERT( mesh.has_function_space("triags") );
     ASSERT( mesh.has_function_space("quads") );
 
-    FunctionSpace& nodes     = mesh.function_space( "nodes" );
+    Nodes& nodes     = mesh.nodes();
     ArrayView<double,2> coords  ( nodes.field("xyz") );
 
-    const size_t nb_nodes = nodes.shape(0);
+    const size_t nb_nodes = nodes.size();
 
     if( mesh.has_function_space("triags") ) {
 

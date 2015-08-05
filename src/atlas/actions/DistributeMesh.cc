@@ -15,6 +15,7 @@
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
 #include "atlas/Mesh.h"
+#include "atlas/Nodes.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/meshgen/EqualRegionsPartitioner.h"
 #include "atlas/Parameters.h"
@@ -29,11 +30,11 @@ void distribute_mesh( Mesh& mesh )
 {
   int mypart = eckit::mpi::rank();
 
-  FunctionSpace& nodes = mesh.function_space("nodes");
+  Nodes& nodes = mesh.nodes();
   int nb_nodes = nodes.shape(0);
-  ArrayView<double,2> lonlat    ( nodes.field("lonlat") );
-  ArrayView<int,   1> node_part ( nodes.field("partition")   );
-  ArrayView<gidx_t,1> node_gidx ( nodes.field("glb_idx")   );
+  ArrayView<double,2> lonlat    ( nodes.lonlat() );
+  ArrayView<int,   1> node_part ( nodes.partition()   );
+  ArrayView<gidx_t,1> node_gidx ( nodes.global_index()   );
 
   const Grid& g = mesh.grid();
   EqualRegionsPartitioner partitioner( g );
@@ -150,12 +151,10 @@ void distribute_mesh( Mesh& mesh )
     }
   }
   nb_nodes = nb_keep_nodes;
-  std::vector<size_t> shape = nodes.shape();
-  shape[0] = nb_nodes;
-  nodes.resize(shape);
-  node_gidx  = ArrayView<gidx_t,   1> ( nodes.field("glb_idx") );
-  node_part  = ArrayView<int,   1> ( nodes.field("partition") );
-  lonlat     = ArrayView<double,2> ( nodes.field("lonlat") );
+  nodes.resize(nb_nodes);
+  node_gidx  = ArrayView<gidx_t,   1> ( nodes.global_index() );
+  node_part  = ArrayView<int,   1> ( nodes.partition() );
+  lonlat     = ArrayView<double,2> ( nodes.lonlat() );
   int nb_owned = 0;
   for( size_t jnode=0; jnode<nb_nodes; ++jnode )
   {

@@ -16,11 +16,11 @@
 #include <cmath>
 #include <limits>
 
-#include <eckit/filesystem/PathName.h>
+#include "eckit/filesystem/PathName.h"
 #include "eckit/exception/Exceptions.h"
 #include "eckit/log/Log.h"
-#include <eckit/config/Resource.h>
-#include <eckit/runtime/Context.h>
+#include "eckit/config/Resource.h"
+#include "eckit/runtime/Context.h"
 #include "atlas/io/Gmsh.h"
 #include "atlas/mpl/GatherScatter.h"
 #include "atlas/util/Array.h"
@@ -31,6 +31,7 @@
 #include "atlas/Field.h"
 #include "atlas/FieldSet.h"
 #include "atlas/Parameters.h"
+#include "atlas/Nodes.h"
 
 using namespace eckit;
 
@@ -87,7 +88,7 @@ void write_header_binary(std::ostream& out)
 }
 
 template< typename DATA_TYPE >
-void write_field_nodes(const Gmsh& gmsh, const FunctionSpace& function_space, Field& field, std::ostream& out)
+void write_field_nodes(const Gmsh& gmsh, const FunctionSpace& function_space, const Field& field, std::ostream& out)
 {
   Log::info() << "writing field " << field.name() << "..." << std::endl;
 
@@ -208,7 +209,7 @@ void write_field_nodes(const Gmsh& gmsh, const FunctionSpace& function_space, Fi
 }
 
 template< typename DATA_TYPE >
-void write_field_elems(const Gmsh& gmsh, const FunctionSpace& function_space, Field& field, std::ostream& out)
+void write_field_elems(const Gmsh& gmsh, const FunctionSpace& function_space, const Field& field, std::ostream& out)
 {
   Log::info() << "writing field " << field.name() << "..." << std::endl;
   bool gather( gmsh.options.get<bool>("gather") );
@@ -407,7 +408,7 @@ void Gmsh::read(const PathName& file_path, Mesh& mesh ) const
 
   if( mesh.has_function_space("nodes") )
   {
-    if( mesh.function_space("nodes").shape(0)!= nb_nodes )
+    if( mesh.nodes().shape(0)!= nb_nodes )
       throw Exception("existing nodes function space has incompatible number of nodes",Here());
   }
   else
@@ -416,7 +417,7 @@ void Gmsh::read(const PathName& file_path, Mesh& mesh ) const
       .metadata().set<long>("type",Entity::NODES);
   }
 
-  FunctionSpace& nodes = mesh.function_space("nodes");
+  Nodes& nodes = mesh.nodes();
 
   nodes.create_field<double>("xyz",3,IF_EXISTS_RETURN);
   nodes.create_field<gidx_t>("glb_idx",1,IF_EXISTS_RETURN);
@@ -663,9 +664,9 @@ void Gmsh::write(const Mesh& mesh, const PathName& file_path) const
 
   std::string nodes_field = options.get<std::string>("nodes");
 
-  FunctionSpace& nodes    = mesh.function_space( "nodes" );
+  const Nodes& nodes    = mesh.nodes();
   ArrayView<double,2> coords  ( nodes.field( nodes_field ) );
-  ArrayView<gidx_t,   1> glb_idx ( nodes.field( "glb_idx" ) );
+  ArrayView<gidx_t,   1> glb_idx ( nodes.global_index() );
 
   const int surfdim = coords.shape(1); // nb of variables in coords
 
@@ -951,7 +952,7 @@ void Gmsh::write(const Mesh& mesh, const PathName& file_path) const
 
 }
 
-void Gmsh::write(FieldSet& fieldset, const PathName& file_path, openmode mode) const
+void Gmsh::write(const FieldSet& fieldset, const PathName& file_path, openmode mode) const
 {
   bool is_new_file = (mode != std::ios_base::app || !file_path.exists() );
   bool gather = options.has("gather") ? options.get<bool>("gather") : false;
@@ -966,8 +967,8 @@ void Gmsh::write(FieldSet& fieldset, const PathName& file_path, openmode mode) c
   // Fields
   for( int field_idx=0; field_idx<fieldset.size(); ++field_idx )
   {
-    Field& field = fieldset[field_idx];
-    FunctionSpace& function_space = field.function_space();
+    const Field& field = fieldset[field_idx];
+    const FunctionSpace& function_space = field.function_space();
 
     if( !function_space.metadata().has("type") )
     {
@@ -995,7 +996,7 @@ void Gmsh::write(FieldSet& fieldset, const PathName& file_path, openmode mode) c
   file.close();
 }
 
-void Gmsh::write(Field& field, const PathName& file_path, openmode mode) const
+void Gmsh::write(const Field& field, const PathName& file_path, openmode mode) const
 {
   bool is_new_file = (mode != std::ios_base::app || !file_path.exists() );
   bool binary( !options.get<bool>("ascii") );

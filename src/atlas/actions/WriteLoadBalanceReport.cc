@@ -14,6 +14,7 @@
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/mpi/mpi.h"
 #include "atlas/Mesh.h"
+#include "atlas/Nodes.h"
 #include "atlas/actions/WriteLoadBalanceReport.h"
 #include "atlas/util/IsGhost.h"
 #include "atlas/util/IndexView.h"
@@ -38,9 +39,9 @@ void write_load_balance_report( const Mesh& mesh, const std::string& filename )
 
   if( mesh.has_function_space("nodes") )
   {
-    FunctionSpace& nodes = mesh.function_space("nodes");
+    const Nodes& nodes = mesh.nodes();
     IsGhost is_ghost(nodes);
-    int nb_nodes = nodes.shape(0);
+    int nb_nodes = nodes.size();
     int nowned(0);
     int nghost(0);
     for( int n=0; n<nb_nodes; ++n )
@@ -62,7 +63,7 @@ void write_load_balance_report( const Mesh& mesh, const std::string& filename )
 
   if( mesh.has_function_space("edges") )
   {
-    FunctionSpace& nodes = mesh.function_space("nodes");
+    const Nodes& nodes = mesh.nodes();
     IsGhost is_ghost(nodes);
     FunctionSpace& edges = mesh.function_space("edges");
     IndexView<int,2> edge_nodes ( edges.field("nodes") );

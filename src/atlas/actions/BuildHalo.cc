@@ -22,6 +22,7 @@
 #include "atlas/Mesh.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Field.h"
+#include "atlas/Nodes.h"
 #include "atlas/actions/BuildHalo.h"
 #include "atlas/Parameters.h"
 #include "atlas/util/ArrayView.h"
@@ -80,7 +81,7 @@ public:
 void increase_halo( Mesh& mesh )
 {
   //DEBUG( "\n\n" << "Increase halo!! \n\n");
-  FunctionSpace& nodes         = mesh.function_space( "nodes" );
+  Nodes& nodes         = mesh.nodes();
   ArrayView<double,2> lonlat   ( nodes.field( "lonlat"    ) );
   ArrayView<gidx_t,1> glb_idx  ( nodes.field( "glb_idx"        ) );
   ArrayView<int   ,1> part     ( nodes.field( "partition"      ) );
@@ -540,7 +541,7 @@ void increase_halo( Mesh& mesh )
 
   //DEBUG_VAR(nb_new_nodes);
 
-  nodes.resize( make_shape( nb_nodes+nb_new_nodes, FunctionSpace::UNDEF_VARS ) );
+  nodes.resize( nb_nodes+nb_new_nodes );
 
   flags   = ArrayView<int,   1>( nodes.field("flags") );
   glb_idx = ArrayView<gidx_t,1>( nodes.field("glb_idx") );
@@ -643,7 +644,7 @@ typedef std::vector< std::vector< ElementRef > > Node2Elem;
 
 void build_lookup_node2elem( const Mesh& mesh, Node2Elem& node2elem )
 {
-  FunctionSpace& nodes  = mesh.function_space( "nodes" );
+  const Nodes& nodes  = mesh.nodes();
 
   node2elem.resize(nodes.shape(0));
   for( size_t jnode=0; jnode<node2elem.size(); ++jnode )
@@ -679,7 +680,7 @@ void accumulate_partition_bdry_nodes( Mesh& mesh, std::vector<int>& bdry_nodes )
 {
   std::set<int> bdry_nodes_set;
 
-  FunctionSpace& nodes       = mesh.function_space( "nodes" );
+  Nodes& nodes       = mesh.nodes();
   FunctionSpace& quads       = mesh.function_space( "quads" );
   FunctionSpace& triags      = mesh.function_space( "triags" );
 
@@ -766,7 +767,7 @@ typedef std::map<uid_t,int> Uid2Node;
 void build_lookup_uid2node( Mesh& mesh, Uid2Node& uid2node )
 {
   Notification notes;
-  FunctionSpace& nodes         = mesh.function_space( "nodes" );
+  Nodes& nodes         = mesh.nodes();
   ArrayView<double,2> lonlat   ( nodes.field( "lonlat"    ) );
   ArrayView<gidx_t,1> glb_idx  ( nodes.field( "glb_idx"        ) );
   int nb_nodes = nodes.shape(0);
@@ -850,7 +851,7 @@ void accumulate_elements( const Mesh& mesh,
     found_elements[f] = std::vector<int>( found_elements_set[f].begin(), found_elements_set[f].end());
   }
 
-  UniqueLonLat compute_uid(mesh.function_space("nodes"));
+  UniqueLonLat compute_uid(mesh.nodes());
 
   // Collect all nodes
   new_nodes_uid.clear();
@@ -941,7 +942,7 @@ public:
 
 public:
   BuildHaloHelper( Mesh& _mesh ): mesh(_mesh),
-    compute_uid(mesh.function_space("nodes"))
+    compute_uid(mesh.nodes())
   {
     update();
   }
@@ -949,7 +950,7 @@ public:
   void update()
   {
     compute_uid.update();
-    FunctionSpace& nodes         = mesh.function_space( "nodes" );
+    Nodes& nodes         = mesh.nodes();
     lonlat   = ArrayView<double,2> ( nodes.field( "lonlat"    ) );
     glb_idx  = ArrayView<gidx_t,1> ( nodes.field( "glb_idx"        ) );
     part     = ArrayView<int   ,1> ( nodes.field( "partition"      ) );
@@ -1109,7 +1110,7 @@ public:
 
   void add_nodes(Buffers& buf)
   {
-    FunctionSpace& nodes = mesh.function_space("nodes");
+    Nodes& nodes = mesh.nodes();
     int nb_nodes = nodes.shape(0);
 
     // Nodes might be duplicated from different Tasks. We need to identify unique entries
@@ -1140,7 +1141,7 @@ public:
 
     // Resize nodes
     // ------------
-    nodes.resize( make_shape( nb_nodes+nb_new_nodes, FunctionSpace::UNDEF_VARS ) );
+    nodes.resize( nb_nodes+nb_new_nodes );
     flags   = ArrayView<int,   1>( nodes.field("flags") );
     glb_idx = ArrayView<gidx_t,1>( nodes.field("glb_idx") );
     part    = ArrayView<int,   1>( nodes.field("partition") );
@@ -1316,7 +1317,7 @@ public:
   {
     flag_ = flag;
     N_ = N;
-    flags_ = ArrayView<int,1> ( mesh.function_space("nodes").field("flags") );
+    flags_ = ArrayView<int,1> ( mesh.nodes().field("flags") );
   }
 
   bool operator()(int j) const
@@ -1405,7 +1406,7 @@ void build_halo(Mesh& mesh, int nb_elems )
 
   for( ; jhalo<nb_elems; ++jhalo )
   {
-    size_t nb_nodes_before_halo_increase = mesh.function_space("nodes").shape(0);
+    size_t nb_nodes_before_halo_increase = mesh.nodes().shape(0);
 
     BuildHaloHelper helper(mesh);
 
@@ -1421,7 +1422,7 @@ void build_halo(Mesh& mesh, int nb_elems )
 
     std::stringstream ss;
     ss << "nb_nodes_including_halo["<<jhalo+1<<"]";
-    mesh.metadata().set(ss.str(),mesh.function_space("nodes").shape(0));
+    mesh.metadata().set(ss.str(),mesh.nodes().shape(0));
   }
 
   mesh.metadata().set("halo",nb_elems);

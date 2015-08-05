@@ -21,6 +21,7 @@
 #include "atlas/Field.h"
 #include "atlas/actions/BuildEdges.h"
 #include "atlas/Parameters.h"
+#include "atlas/Nodes.h"
 
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/Array.h"
@@ -81,7 +82,7 @@ void build_element_to_edge_connectivity( Mesh& mesh )
     }
   }
 
-  FunctionSpace& nodes = mesh.function_space("nodes");
+  Nodes& nodes = mesh.nodes();
   FunctionSpace& edges = mesh.function_space("edges");
 
   size_t nb_edges = edges.shape(0);
@@ -187,7 +188,7 @@ void build_element_to_edge_connectivity( Mesh& mesh )
 
 void build_node_to_edge_connectivity( Mesh& mesh )
 {
-  FunctionSpace& nodes = mesh.function_space("nodes");
+  Nodes& nodes = mesh.nodes();
   FunctionSpace& edges = mesh.function_space("edges");
   int nb_nodes = nodes.shape(0);
   int nb_edges = edges.shape(0);
@@ -241,7 +242,7 @@ void build_node_to_edge_connectivity( Mesh& mesh )
 
 void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& nb_pole_edges )
 {
-  FunctionSpace& nodes   = mesh.function_space( "nodes" );
+  Nodes& nodes   = mesh.nodes();
   ArrayView<double,2> lonlat    ( nodes.field( "lonlat" ) );
   ArrayView<gidx_t,1> glb_idx   ( nodes.field( "glb_idx"     ) );
   ArrayView<int,   1> part      ( nodes.field( "partition"   ) );
@@ -398,7 +399,7 @@ struct ComputeUniquePoleEdgeIndex
 
 void build_edges( Mesh& mesh )
 {
-  FunctionSpace& nodes   = mesh.function_space( "nodes" );
+  Nodes& nodes   = mesh.nodes();
   ArrayView<gidx_t,1> glb_idx(        nodes.field( "glb_idx" ) );
   ArrayView<int,1> part   (        nodes.field( "partition" ) );
   ArrayView<double,2> lonlat (     nodes.field( "lonlat" ) );
@@ -502,7 +503,7 @@ void build_edges( Mesh& mesh )
 
 void build_pole_edges( Mesh& mesh )
 {
-  FunctionSpace& nodes   = mesh.function_space( "nodes" );
+  Nodes& nodes   = mesh.nodes();
 
   ArrayView<int,1> part   (        nodes.field( "partition" ) );
   size_t nb_edges = 0;

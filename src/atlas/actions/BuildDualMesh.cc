@@ -23,6 +23,7 @@
 #include "atlas/Field.h"
 #include "atlas/actions/BuildDualMesh.h"
 #include "atlas/Parameters.h"
+#include "atlas/Nodes.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
 #include "atlas/util/Unique.h"
@@ -79,11 +80,11 @@ void build_centroids( FunctionSpace& func_space, ArrayView<double,2>& lonlat);
 void add_median_dual_volume_contribution(
     FunctionSpace& elements,
     FunctionSpace& edges,
-    FunctionSpace& nodes,
+    Nodes& nodes,
     ArrayView<double,1>& dual_volumes );
 void add_median_dual_volume_contribution(
     FunctionSpace& edges,
-    FunctionSpace& nodes,
+    Nodes& nodes,
     ArrayView<double,1>& dual_volumes );
 void add_centroid_dual_volume_contribution(
     Mesh& mesh,
@@ -95,7 +96,7 @@ void make_dual_normals_outward( Mesh& mesh );
 
 void build_median_dual_mesh( Mesh& mesh )
 {
-  FunctionSpace& nodes   = mesh.function_space( "nodes" );
+  Nodes& nodes   = mesh.nodes();
   ArrayView<double,2> lonlat        ( nodes.field( "lonlat"    ) );
   ArrayView<double,1> dual_volumes  ( nodes.create_field<double>( "dual_volumes", 1 ) );
 
@@ -131,7 +132,7 @@ void build_median_dual_mesh( Mesh& mesh )
 
 void build_centroid_dual_mesh( Mesh& mesh )
 {
-  FunctionSpace& nodes   = mesh.function_space( "nodes" );
+  Nodes& nodes   = mesh.nodes();
   ArrayView<double,2> lonlat        ( nodes.field( "lonlat"    ) );
   ArrayView<double,1> dual_volumes  ( nodes.create_field<double>( "dual_volumes", 1 ) );
 
@@ -186,7 +187,7 @@ void build_centroids( FunctionSpace& func_space, ArrayView<double,2>& lonlat)
 void add_median_dual_volume_contribution(
     FunctionSpace& elements,
     FunctionSpace& edges,
-    FunctionSpace& nodes,
+    Nodes& nodes,
     ArrayView<double,1>& dual_volumes )
 {
   int nb_elems = elements.shape(0);
@@ -233,7 +234,7 @@ void add_median_dual_volume_contribution(
 
 void add_median_dual_volume_contribution(
     FunctionSpace& edges,
-    FunctionSpace& nodes,
+    Nodes& nodes,
     ArrayView<double,1>& dual_volumes )
 {
   ArrayView<gidx_t,1> node_glb_idx  ( nodes.field("glb_idx"    ) );
@@ -295,7 +296,7 @@ void add_centroid_dual_volume_contribution(
     Mesh& mesh,
     ArrayView<double,1>& dual_volumes )
 {
-  FunctionSpace& nodes = mesh.function_space("nodes");
+  Nodes& nodes = mesh.nodes();
   FunctionSpace& edges = mesh.function_space("edges");
   ArrayView<gidx_t,1> node_glb_idx  ( nodes.field("glb_idx"    ) );
   ArrayView<double,2> edge_centroids( edges.field("centroids"  ) );
@@ -388,7 +389,7 @@ void build_dual_normals( Mesh& mesh )
       elem_centroids[func_space_idx] = ArrayView<double,2>( func_space.field("centroids") );
   }
 
-  FunctionSpace&  nodes = mesh.function_space("nodes");
+  FunctionSpace&  nodes = mesh.nodes();
   ArrayView<double,2> node_lonlat( nodes.field("lonlat") );
   double min[2], max[2];
   global_bounding_box( nodes, min, max );
@@ -485,7 +486,7 @@ void build_dual_normals( Mesh& mesh )
 void make_dual_normals_outward( Mesh& mesh )
 {
 
-  FunctionSpace&  nodes = mesh.function_space("nodes");
+  Nodes&  nodes = mesh.nodes();
   ArrayView<double,2> node_lonlat( nodes.field("lonlat") );
 
   FunctionSpace&  edges = mesh.function_space("edges");
@@ -526,7 +527,7 @@ void build_skewness( Mesh& mesh )
       elem_centroids[func_space_idx] = ArrayView<double,2>( func_space.field("centroids") );
   }
 
-  FunctionSpace&  nodes = mesh.function_space("nodes");
+  Nodes&  nodes = mesh.nodes();
   ArrayView<double,2> node_lonlat( nodes.field("lonlat") );
   double min[2], max[2];
   global_bounding_box( nodes, min, max );
@@ -613,8 +614,8 @@ void build_brick_dual_mesh( Mesh& mesh )
     if( eckit::mpi::size() != 1 )
       throw eckit::UserError("Cannot build_brick_dual_mesh with more than 1 task",Here());
 
-    FunctionSpace& nodes   = mesh.function_space( "nodes" );
-    ArrayView<double,2> lonlat        ( nodes.field( "lonlat"    ) );
+    Nodes& nodes   = mesh.nodes();
+    ArrayView<double,2> lonlat        ( nodes.lonlat() );
     ArrayView<double,1> dual_volumes  ( nodes.create_field<double>( "dual_volumes", 1 ) );
     ArrayView<gidx_t,1> gidx  ( nodes.field( "glb_idx" ) );
 

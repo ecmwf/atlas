@@ -20,6 +20,7 @@
 #include "tests/TestMeshes.h"
 #include "atlas/io/Gmsh.h"
 #include "atlas/Mesh.h"
+#include "atlas/Nodes.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/util/IndexView.h"
 #include "atlas/util/ArrayView.h"
@@ -42,7 +43,7 @@ namespace test {
 
 double dual_volume(Mesh& mesh)
 {
-  FunctionSpace& nodes = mesh.function_space("nodes");
+  Nodes& nodes = mesh.nodes();
   IsGhost is_ghost_node(nodes);
   int nb_nodes = nodes.shape(0);
   ArrayView<double,1> dual_volumes ( nodes.field("dual_volumes") );
@@ -82,8 +83,8 @@ BOOST_AUTO_TEST_CASE( test_small )
 
   if( eckit::mpi::size() == 5 )
   {
-    IndexView<int,1> ridx ( m->function_space("nodes").field("remote_idx") );
-    ArrayView<gidx_t,1> gidx ( m->function_space("nodes").field("glb_idx") );
+    IndexView<int,1> ridx ( m->nodes().field("remote_idx") );
+    ArrayView<gidx_t,1> gidx ( m->nodes().field("glb_idx") );
 
     switch( eckit::mpi::rank() ) // with 5 tasks
     {
@@ -120,21 +121,21 @@ BOOST_AUTO_TEST_CASE( test_t63 )
   long lon[5] = {10, 12, 14, 16, 16};
   Mesh::Ptr m = test::generate_mesh(nlat, lon);
 
-  actions::build_nodes_parallel_fields(m->function_space("nodes"));
+  actions::build_nodes_parallel_fields(m->nodes());
   actions::build_periodic_boundaries(*m);
   actions::build_halo(*m,1);
   //actions::build_edges(*m);
   //actions::build_pole_edges(*m);
-  //actions::build_edges_parallel_fields(m->function_space("edges"),m->function_space("nodes"));
+  //actions::build_edges_parallel_fields(m->function_space("edges"),m->nodes());
   //actions::build_centroid_dual_mesh(*m);
-  actions::renumber_nodes_glb_idx(m->function_space("nodes"));
+  actions::renumber_nodes_glb_idx(m->nodes());
 
   std::stringstream filename; filename << "T63_halo.msh";
   Gmsh().write(*m,filename.str());
 
 //  BOOST_CHECK_CLOSE( test::dual_volume(*m), 2.*M_PI*M_PI, 1e-6 );
 
-//  FunctionSpace& nodes = m->function_space("nodes");
+//  Nodes& nodes = m->nodes();
 //  FunctionSpace& edges = m->function_space("edges");
 //  ArrayView<double,1> dual_volumes  ( nodes.field( "dual_volumes" ) );
 //  ArrayView<double,2> dual_normals  ( edges.field( "dual_normals" ) );

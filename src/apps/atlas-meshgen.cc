@@ -35,6 +35,7 @@
 #include "atlas/actions/BuildXYZField.h"
 #include "atlas/mpi/mpi.h"
 #include "atlas/Mesh.h"
+#include "atlas/Nodes.h"
 #include "atlas/grids/grids.h"
 #include "atlas/FunctionSpace.h"
 
@@ -148,23 +149,23 @@ void Meshgen2Gmsh::run()
 
   mesh = Mesh::Ptr( generate_mesh(*grid) );
 
-  build_nodes_parallel_fields(mesh->function_space("nodes"));
+  build_nodes_parallel_fields(mesh->nodes());
   build_periodic_boundaries(*mesh);
 
   if( halo )
   {
     build_halo(*mesh,halo);
-    renumber_nodes_glb_idx(mesh->function_space("nodes"));
+    renumber_nodes_glb_idx(mesh->nodes());
   }
-  mesh->function_space("nodes").parallelise();
-  ArrayView<double,2> lonlat( mesh->function_space("nodes").field("lonlat") );
+  mesh->nodes().parallelise();
+  ArrayView<double,2> lonlat( mesh->nodes().field("lonlat") );
 
-  Log::info() << "  checksum lonlat : " << mesh->function_space("nodes").checksum().execute( lonlat ) << std::endl;
+  Log::info() << "  checksum lonlat : " << mesh->nodes().checksum().execute( lonlat ) << std::endl;
   if( edges )
   {
     build_edges(*mesh);
     build_pole_edges(*mesh);
-    build_edges_parallel_fields(mesh->function_space("edges"),mesh->function_space("nodes"));
+    build_edges_parallel_fields(mesh->function_space("edges"),mesh->nodes());
     build_median_dual_mesh(*mesh);
   }
 

@@ -102,25 +102,25 @@ FunctionSpace& Mesh::function_space( size_t idx) const
 }
 
 
-FunctionSpace& Mesh::add_nodes(const Grid& g)
+Nodes& Mesh::add_nodes(const Grid& g)
 {
   set_grid(g);
   size_t nb_nodes = g.npts();
-  FunctionSpace& nodes = add_nodes(nb_nodes);
+  Nodes& nodes = add_nodes(nb_nodes);
 
-  g.fillLonLat(nodes.field("lonlat").data<double>(), nb_nodes*2);
+  g.fillLonLat(nodes.lonlat().data<double>(), nb_nodes*2);
   return nodes;
 }
 
 
-FunctionSpace& Mesh::add_nodes(size_t nb_nodes)
+Nodes& Mesh::add_nodes(size_t nb_nodes)
 {
   if( has_function_space("nodes") )
     throw eckit::Exception("Nodes have already been added before", Here());
 
   ArrayShape shape = make_shape(nb_nodes,FunctionSpace::UNDEF_VARS);
 
-  FunctionSpace& nodes = create_function_space( "nodes","LagrangeP1",shape );
+  Nodes& nodes = dynamic_cast<Nodes&>(create_function_space( "nodes","LagrangeP1",shape ));
   nodes.metadata().set<long>("type",static_cast<int>(Entity::NODES));
 
   ArrayView<double,2> lonlat  ( nodes.create_field<double>("lonlat",   2, IF_EXISTS_RETURN) );

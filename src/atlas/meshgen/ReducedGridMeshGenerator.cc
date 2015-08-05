@@ -28,6 +28,7 @@
 #include "atlas/Field.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Mesh.h"
+#include "atlas/Nodes.h"
 #include "atlas/Parameters.h"
 #include "atlas/meshgen/EqualRegionsPartitioner.h"
 #include "atlas/grids/ReducedGrid.h"
@@ -805,7 +806,7 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
   if( !mesh.has_function_space("nodes") )
   mesh.create_function_space( "nodes","LagrangeP1",shape );
 
-  FunctionSpace& nodes = mesh.function_space( "nodes" );
+  Nodes& nodes = mesh.nodes();
 
   nodes.metadata().set<long>("type",static_cast<int>(Entity::NODES));
 
@@ -1153,7 +1154,7 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
 
 
   ///debug
-  //  ArrayView<double,2> xyz( mesh.function_space("nodes").create_field<double>("xyz",3,IF_EXISTS_RETURN) );
+  //  ArrayView<double,2> xyz( mesh.nodes().create_field<double>("xyz",3,IF_EXISTS_RETURN) );
   //  for( int jnode=0; jnode<lonlat.shape(0); ++jnode )
   //  {
   //    eckit::geometry::lonlat_to_3d( lonlat[jnode].data(), xyz[jnode].data() );

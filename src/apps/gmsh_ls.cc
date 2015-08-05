@@ -25,6 +25,7 @@
 #include "atlas/atlas.h"
 #include "atlas/io/Gmsh.h"
 #include "atlas/mesh/Mesh.h"
+#include "atlas/Nodes.h"
 #include "atlas/mesh/Field.h"
 #include "atlas/mesh/FunctionSpace.h"
 
@@ -67,7 +68,7 @@ void GmshLs::run()
 
     Mesh& mesh = *in_mesh;
 
-    FunctionSpace& nodes   = mesh.function_space( "nodes" );
+    Nodes& nodes   = mesh.nodes();
     FieldT<double>& lonlat = nodes.field<double>( "coordinates" );
     FieldT<int>& glb_idx   = nodes.field<int>( "glb_idx" );
 
