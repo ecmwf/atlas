@@ -92,8 +92,6 @@ static void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, Poin
 
     Timer t ("Creating atlas data structure");
 
-    ASSERT( mesh.has_function_space("nodes") );
-
     Nodes& nodes = mesh.nodes();
 
     ASSERT( points.size() == nodes.shape(0) );

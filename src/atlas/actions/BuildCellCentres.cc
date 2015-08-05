@@ -24,7 +24,6 @@ namespace actions {
 
 void BuildCellCentres::operator()( Mesh& mesh ) const
 {
-    ASSERT( mesh.has_function_space("nodes") );
     ASSERT( mesh.has_function_space("triags") );
     ASSERT( mesh.has_function_space("quads") );
 

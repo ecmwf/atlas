@@ -45,7 +45,7 @@ Mesh::Mesh( const eckit::Parametrisation& ):
 Mesh::Mesh(const Grid& grid, const eckit::Parametrisation& ) :
   grid_(&grid)
 {
-  add_nodes(grid);
+  createNodes(grid);
 }
 
 Mesh::~Mesh()
@@ -54,26 +54,19 @@ Mesh::~Mesh()
 
 bool Mesh::has_function_space(const std::string& name) const
 {
-	return function_spaces_.has(name);
+  ASSERT( name != "nodes" );
+  return function_spaces_.has(name);
 }
 
 FunctionSpace& Mesh::create_function_space(const std::string& name, const std::string& shape_func, const std::vector<size_t>& shape)
 {
+  ASSERT( name != "nodes" );
 	if( has_function_space(name) )
 	{
 		throw eckit::Exception( "Functionspace '" + name + "' already exists", Here() );
 	}
 
-	FunctionSpace::Ptr fs;
-  if( name == "nodes" )
-  {
-    create_nodes(shape[0]);
-    fs.reset(nodes_.get());
-  }
-  else
-  {
-    fs.reset(new FunctionSpace(name,shape_func,shape,*this) );
-  }
+	FunctionSpace::Ptr fs (new FunctionSpace(name,shape_func,shape,*this) );
 
   function_spaces_.insert(name,fs);
   function_spaces_.sort();
@@ -85,6 +78,7 @@ FunctionSpace& Mesh::create_function_space(const std::string& name, const std::s
 
 FunctionSpace& Mesh::function_space(const std::string& name) const
 {
+  ASSERT( name != "nodes" );
 	if( ! has_function_space(name) )
 	{
 		std::stringstream msg;
@@ -102,40 +96,13 @@ FunctionSpace& Mesh::function_space( size_t idx) const
 }
 
 
-Nodes& Mesh::add_nodes(const Grid& g)
+Nodes& Mesh::createNodes(const Grid& g)
 {
   set_grid(g);
   size_t nb_nodes = g.npts();
-  Nodes& nodes = add_nodes(nb_nodes);
+  Nodes& nodes = createNodes(nb_nodes);
 
   g.fillLonLat(nodes.lonlat().data<double>(), nb_nodes*2);
-  return nodes;
-}
-
-
-Nodes& Mesh::add_nodes(size_t nb_nodes)
-{
-  if( has_function_space("nodes") )
-    throw eckit::Exception("Nodes have already been added before", Here());
-
-  ArrayShape shape = make_shape(nb_nodes,FunctionSpace::UNDEF_VARS);
-
-  Nodes& nodes = dynamic_cast<Nodes&>(create_function_space( "nodes","LagrangeP1",shape ));
-  nodes.metadata().set<long>("type",static_cast<int>(Entity::NODES));
-
-  ArrayView<double,2> lonlat  ( nodes.create_field<double>("lonlat",   2, IF_EXISTS_RETURN) );
-  ArrayView<gidx_t,1> glb_idx ( nodes.create_field<gidx_t>("glb_idx",  1, IF_EXISTS_RETURN) );
-  ArrayView<int,   1> part    ( nodes.create_field<int   >("partition",1, IF_EXISTS_RETURN) );
-  ArrayView<int,   1> flags   ( nodes.create_field<int   >("flags",    1, IF_EXISTS_RETURN) );
-
-  for(size_t n=0; n<nb_nodes; ++n)
-  {
-    glb_idx(n) = 1+n;
-    part(n) = eckit::mpi::rank();
-    flags(n) = 0;
-  }
-  nodes.metadata().set("nb_owned",nb_nodes);
-
   return nodes;
 }
 
@@ -157,10 +124,17 @@ void Mesh::print(std::ostream& os) const
     os << "]";
 }
 
-Nodes& Mesh::create_nodes( size_t size )
+Nodes& Mesh::createNodes( size_t size )
 {
   ASSERT( !nodes_ );
   nodes_.reset( new Nodes(size) );
+
+  ///< @todo REMOVE
+  function_spaces_.insert("nodes", FunctionSpace::Ptr(nodes_.get()));
+  function_spaces_.sort();
+  nodes_->set_index( function_spaces_.size() - 1 );
+  nodes_->metadata().set<long>("type",static_cast<int>(Entity::NODES));
+
   return *nodes_;
 }
 
@@ -206,14 +180,20 @@ void atlas__Mesh__create_function_space(Mesh* This, char* name,char* shape_func,
       for(size_t n=0; n<vshape.size(); ++n)
           vshape[n]=shape[n];
     }
-    This->create_function_space(std::string(name), std::string(shape_func),vshape);
+    if( std::string(name) == "nodes" )
+      This->createNodes(vshape[0]);
+    else
+      This->create_function_space(std::string(name), std::string(shape_func),vshape);
   );
 }
 
 FunctionSpace* atlas__Mesh__function_space (Mesh* This, char* name) {
   ATLAS_ERROR_HANDLING(
     ASSERT( This != NULL );
-  	return &This->function_space( std::string(name) );
+    if( std::string(name) == "nodes" )
+      return &This->nodes();
+    else
+      return &This->function_space( std::string(name) );
   );
   return NULL;
 }

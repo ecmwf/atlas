@@ -67,7 +67,6 @@ void TestField::test_constructor()
   Mesh mesh(*g);
 
   ASSERT( mesh.grid().same( *g ) );
-  ASSERT( mesh.has_function_space("nodes") );
 
   // create some reference data for testing
 

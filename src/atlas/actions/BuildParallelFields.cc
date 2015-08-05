@@ -93,8 +93,6 @@ struct Node
 
 void build_parallel_fields( Mesh& mesh )
 {
-  ASSERT( mesh.has_function_space("nodes") );
-
   build_nodes_parallel_fields( mesh.nodes() );
 }
 

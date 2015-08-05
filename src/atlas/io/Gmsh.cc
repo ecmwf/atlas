@@ -406,22 +406,12 @@ void Gmsh::read(const PathName& file_path, Mesh& mesh ) const
   extents[0] = nb_nodes;
   extents[1] = FunctionSpace::UNDEF_VARS;
 
-  if( mesh.has_function_space("nodes") )
-  {
-    if( mesh.nodes().shape(0)!= nb_nodes )
-      throw Exception("existing nodes function space has incompatible number of nodes",Here());
-  }
-  else
-  {
-    mesh.create_function_space( "nodes", "Lagrange_P0", extents )
-      .metadata().set<long>("type",Entity::NODES);
-  }
+  mesh.createNodes(nb_nodes);
+  mesh.nodes().metadata().set<long>("type",Entity::NODES);
 
   Nodes& nodes = mesh.nodes();
 
   nodes.create_field<double>("xyz",3,IF_EXISTS_RETURN);
-  nodes.create_field<gidx_t>("glb_idx",1,IF_EXISTS_RETURN);
-  nodes.create_field<int>("partition",1,IF_EXISTS_RETURN);
 
   ArrayView<double,2> coords         ( nodes.field("xyz")    );
   ArrayView<gidx_t,1> glb_idx        ( nodes.global_index()  );

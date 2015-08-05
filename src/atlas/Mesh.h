@@ -123,17 +123,15 @@ public: // methods
     /// accessor of the Grid
     const Grid& grid() const {  ASSERT( grid_ ); return *grid_; }
 
-    Nodes& add_nodes(const Grid& g);
-
-    Nodes& add_nodes(size_t nb_nodes);
 
     void prettyPrint(std::ostream&) const;
 
     void print(std::ostream&) const;
 
 
+    Nodes& createNodes(const Grid& g);
 
-    Nodes& create_nodes( size_t );
+    Nodes& createNodes( size_t );
 
     const Nodes& nodes() const { ASSERT(nodes_); return *nodes_; }
           Nodes& nodes()       { ASSERT(nodes_); return *nodes_; }

@@ -142,7 +142,6 @@ BOOST_AUTO_TEST_CASE( read_grid_sample_file )
   BOOST_REQUIRE(grid);
 
   BOOST_CHECK_EQUAL(grid->npts(),test_arrays::nb_pts);
-  BOOST_CHECK_EQUAL(grid->mesh().has_function_space("nodes"),        true);
   BOOST_CHECK_EQUAL(grid->mesh().function_space(0).has_field("f_1"), true);
   BOOST_CHECK_EQUAL(grid->mesh().function_space(0).has_field("f3"),  true);
 }
@@ -373,7 +372,6 @@ BOOST_AUTO_TEST_CASE( write_read_write_field )
   BOOST_REQUIRE(grid);
 
   BOOST_CHECK_EQUAL(grid->npts(),test_vectors::nb_pts);
-  BOOST_CHECK_EQUAL(grid->mesh().has_function_space("nodes"), true);
 
   Nodes& nodes = grid->mesh().nodes();
   BOOST_CHECK_EQUAL(nodes.has_field("my_super_field"),       true);
@@ -429,12 +427,10 @@ BOOST_AUTO_TEST_CASE( write_read_write_field )
 
   // (header section)
   BOOST_CHECK_EQUAL(grid_from_FieldSet->npts(),                                                     test_arrays::nb_pts);
-  BOOST_CHECK_EQUAL(grid_from_FieldSet->mesh().has_function_space("nodes"),                         true );
   BOOST_CHECK_EQUAL(grid_from_FieldSet->mesh().function_space(0).has_field("my_super_field"),       true );
   BOOST_CHECK_EQUAL(grid_from_FieldSet->mesh().function_space(0).has_field("_StRaNgE_FiElD_NaMe_"), false);
 
   BOOST_CHECK_EQUAL(grid_from_Grid    ->npts(),                                                     test_arrays::nb_pts);
-  BOOST_CHECK_EQUAL(grid_from_Grid    ->mesh().has_function_space("nodes"),                         true );
   BOOST_CHECK_EQUAL(grid_from_Grid    ->mesh().function_space(0).has_field("my_super_field"),       true );
   BOOST_CHECK_EQUAL(grid_from_Grid    ->mesh().function_space(0).has_field("_StRaNgE_FiElD_NaMe_"), false);
 

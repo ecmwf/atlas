@@ -32,8 +32,6 @@ PointSet::PointSet( const std::vector< Point >& ipts ) : npts_(ipts.size())
 
 PointSet::PointSet( atlas::Mesh& mesh )
 {
-    ASSERT( mesh.has_function_space("nodes") );
-
     Nodes& nodes = mesh.nodes();
 
     npts_ = nodes.size();

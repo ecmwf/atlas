@@ -340,13 +340,11 @@ void AtlasBenchmark::setup()
   build_median_dual_mesh(*mesh);
   build_node_to_edge_connectivity(*mesh);
 
-  ArrayView<double,2> lonlat ( mesh->nodes().lonlat() );
-
-  nnodes = mesh->nodes().shape(0);
+  nnodes = mesh->nodes().size();
   nedges = mesh->function_space("edges").shape(0);
 
   edge2node  = IndexView<int,   2> ( mesh->function_space("edges").field("nodes") );
-  lonlat = ArrayView<double,2> ( mesh->nodes().create_field<double>("lonlat",2) );
+  lonlat = ArrayView<double,2> ( mesh->nodes().lonlat() );
   V      = ArrayView<double,1> ( mesh->nodes().field("dual_volumes") );
   S      = ArrayView<double,2> ( mesh->function_space("edges").field("dual_normals") );
   field  = ArrayView<double,2> ( mesh->nodes().create_field<double>("field",nlev)  );

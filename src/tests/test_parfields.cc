@@ -58,13 +58,13 @@ BOOST_AUTO_TEST_CASE( test1 )
 {
 	Mesh::Ptr m ( Mesh::create() );
 
-	m->create_function_space( "nodes", "shapefunc", make_shape(10,FunctionSpace::UNDEF_VARS) );
+	m->createNodes(10);
 
   Nodes& nodes = m->nodes();
   ArrayView<double,2> lonlat ( nodes.lonlat());
   ArrayView<gidx_t,1> glb_idx( nodes.global_index());
   ArrayView<int,1> part ( nodes.partition() );
-  ArrayView<int,1> flags ( nodes.create_field<int>("flags",1) );
+  ArrayView<int,1> flags ( nodes.field("flags") );
   flags = Topology::NONE;
 
   // This is typically available

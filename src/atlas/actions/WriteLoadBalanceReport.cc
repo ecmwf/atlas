@@ -37,7 +37,6 @@ void write_load_balance_report( const Mesh& mesh, const std::string& filename )
   std::vector<int> nb_owned_edges(npart,0);
   std::vector<int> nb_ghost_edges(npart,0);
 
-  if( mesh.has_function_space("nodes") )
   {
     const Nodes& nodes = mesh.nodes();
     IsGhost is_ghost(nodes);
@@ -59,7 +58,8 @@ void write_load_balance_report( const Mesh& mesh, const std::string& filename )
                                   root, eckit::mpi::comm() ) );
     ECKIT_MPI_CHECK_RESULT( MPI_Gather( &nghost, 1, MPI_INT,
                                   nb_ghost_nodes.data(), 1, MPI_INT,
-                                  root, eckit::mpi::comm() ) );  }
+                                  root, eckit::mpi::comm() ) );
+  }
 
   if( mesh.has_function_space("edges") )
   {

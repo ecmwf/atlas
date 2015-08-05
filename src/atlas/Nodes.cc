@@ -27,6 +27,21 @@ Nodes::Nodes(size_t _size) :
   halo_         = &add( new FieldT<int   >("halo",      make_shape(size(),1)) );
   topology_     = &add( new FieldT<int   >("topology",  make_shape(size(),1)) );
   lonlat_       = &add( new FieldT<double>("lonlat",    make_shape(size(),2)) );
+
+  add( new FieldT<int>("flags", make_shape(size(),1)) );
+
+
+  ArrayView<gidx_t,1> glb_idx( global_index() );
+  ArrayView<int   ,1> part( partition() );
+  ArrayView<int   ,1> flags( field("flags") );
+
+  for(size_t n=0; n<size(); ++n)
+  {
+    glb_idx(n) = 1+n;
+    part(n) = eckit::mpi::rank();
+    flags(n) = 0;
+  }
+  metadata().set("nb_owned",size());
 }
 
 

@@ -35,7 +35,6 @@ namespace actions {
 
 void AddVirtualNodes::operator()( Mesh& mesh ) const
 {
-    ASSERT( mesh.has_function_space("nodes") );
     ASSERT( mesh.has_grid() );
 
     const Grid& grid = mesh.grid();

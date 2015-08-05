@@ -803,17 +803,14 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
 
   ArrayShape shape = make_shape(nnodes,FunctionSpace::UNDEF_VARS);
 
-  if( !mesh.has_function_space("nodes") )
-  mesh.create_function_space( "nodes","LagrangeP1",shape );
-
-  Nodes& nodes = mesh.nodes();
+  Nodes& nodes = mesh.createNodes(nnodes);
 
   nodes.metadata().set<long>("type",static_cast<int>(Entity::NODES));
 
-  ArrayView<double,2> lonlat        ( nodes.create_field<double>("lonlat",   2, IF_EXISTS_RETURN) );
-  ArrayView<gidx_t,1> glb_idx       ( nodes.create_field<gidx_t>("glb_idx",       1, IF_EXISTS_RETURN) );
-  ArrayView<int,   1> part          ( nodes.create_field<int   >("partition",     1, IF_EXISTS_RETURN) );
-  ArrayView<int,   1> flags         ( nodes.create_field<int   >("flags",         1, IF_EXISTS_RETURN) );
+  ArrayView<double,2> lonlat        ( nodes.lonlat() );
+  ArrayView<gidx_t,1> glb_idx       ( nodes.global_index() );
+  ArrayView<int,   1> part          ( nodes.partition() );
+  ArrayView<int,   1> flags         ( nodes.field("flags") );
 
   bool stagger = options.get<bool>("stagger");
 

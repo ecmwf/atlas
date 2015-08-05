@@ -53,10 +53,7 @@ void Delaunay::generate(const Grid& grid, const GridDistribution& dist, Mesh& me
 
 void Delaunay::generate(const Grid& g, Mesh& mesh) const
 {
-  if(!mesh.has_function_space("nodes"))
-  {
-    mesh.add_nodes(g);
-  }
+  mesh.createNodes(g);
 
   actions::BuildXYZField()(mesh);
   actions::AddVirtualNodes()(mesh);    ///< does nothing if global domain
