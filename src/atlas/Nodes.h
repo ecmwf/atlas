@@ -19,6 +19,7 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/Metadata.h"
+#include "atlas/FunctionSpace.h"
 
 namespace atlas { class Field; }
 
@@ -27,7 +28,8 @@ namespace atlas {
 /**
  * \brief Nodes class that owns a collection of fields
  */
-class Nodes : public eckit::Owned {
+/// TEMPORARILY DERIVE FROM FunctionSpace UNTIL NEXT DESIGN IS COMPLETE
+class Nodes : public FunctionSpace {
 
 public: // methods
 
@@ -37,12 +39,17 @@ public: // methods
 
 //-- Accessors
 
-  const Field& field(const std::string& name) const;
-        Field& field(const std::string& name);
-  bool has_field(const std::string& name) const { return (fields_.find(name) != fields_.end()); }
+  virtual const Field& field(const std::string& name) const;
+  virtual       Field& field(const std::string& name);
+  virtual bool has_field(const std::string& name) const { return (fields_.find(name) != fields_.end()); }
 
-  const Metadata& metadata() const { return metadata_; }
-        Metadata& metadata()       { return metadata_; }
+  virtual const Field& field(size_t) const;
+  virtual       Field& field(size_t);
+  virtual size_t nb_fields() const { return fields_.size(); }
+
+
+//  const Metadata& metadata() const { return metadata_; }
+//        Metadata& metadata()       { return metadata_; }
 
   const Field& global_index() const { return *global_index_; }
         Field& global_index()       { return *global_index_; }
@@ -65,11 +72,11 @@ public: // methods
   const Field& lonlat() const { return *lonlat_; }
         Field& lonlat()       { return *lonlat_; }
 
-  size_t size() const { return size_; }
+  size_t size() const { return dof_; }
 
 // -- Modifiers
 
-  Field& add( Field* ); // Take ownership!
+  virtual Field& add( Field* ); // Take ownership!
 
   void resize( size_t );
 
@@ -83,9 +90,9 @@ private:
 
 private:
 
-  size_t size_;
+  //size_t size_;
   FieldMap fields_;
-  Metadata metadata_;
+  //Metadata metadata_;
 
   // Cached shortcuts to specific fields in fields_
   Field* global_index_;

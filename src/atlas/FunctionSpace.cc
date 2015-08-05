@@ -50,7 +50,7 @@ FunctionSpace::FunctionSpace(const std::string& name,
 	fullgather_(new mpl::GatherScatter()),
 	halo_exchange_(new mpl::HaloExchange()),
 	checksum_(new mpl::Checksum()),
-	mesh_(mesh)
+	mesh_(&mesh)
 {
   //std::cout << "C++ : shape Constructor" << std::endl;
   dof_ = 1;
@@ -64,6 +64,31 @@ FunctionSpace::FunctionSpace(const std::string& name,
   }
   glb_dof_ = dof_;
 }
+
+/// TEMPORARY CONSTRUCTOR, JUST FOR EVOLUTIONARY STEP TO NEXT DESIGN
+FunctionSpace::FunctionSpace(const std::string& name,
+                             const std::vector<size_t>& shape) :
+	name_(name),
+	shape_(shape),
+	gather_scatter_(new mpl::GatherScatter()),
+	fullgather_(new mpl::GatherScatter()),
+	halo_exchange_(new mpl::HaloExchange()),
+	checksum_(new mpl::Checksum()),
+	mesh_(0)
+{
+  //std::cout << "C++ : shape Constructor" << std::endl;
+  dof_ = 1;
+  size_t extsize = shape_.size();
+  shapef_.resize(extsize);
+  for (size_t i=0; i<extsize; ++i)
+  {
+    shapef_[extsize-1-i] = shape_[i];
+    if( shape_[i] != FunctionSpace::UNDEF_VARS )
+      dof_ *= shape_[i];
+  }
+  glb_dof_ = dof_;
+}
+
 
 FunctionSpace::~FunctionSpace()
 {
@@ -96,17 +121,17 @@ void FunctionSpace::resize(const std::vector<size_t>& shape)
 			dof_ *= shape_[i];
 	}
 
-    for( size_t f=0; f<fields_.size(); ++f)
+  for( size_t f=0; f<nb_fields(); ++f)
 	{
 		std::vector< size_t > field_shape(extsize);
 		for (size_t i=0; i<extsize; ++i)
 		{
 			if( shape_[i] == FunctionSpace::UNDEF_VARS )
-				field_shape[i] = fields_[f]->shape(i);
+				field_shape[i] = field(f).shape(i);
 			else
 				field_shape[i] = shape_[i];
 		}
-		fields_[f]->resize(field_shape);
+		field(f).resize(field_shape);
 	}
 }
 
@@ -148,6 +173,12 @@ namespace {
 
 }
 
+Field& FunctionSpace::add( Field* field )
+{
+  fields_.insert( field->name(), Field::Ptr(field) );
+	fields_.sort();
+}
+
 template <>
 Field& FunctionSpace::create_field<double>(const std::string& name, size_t nb_vars, CreateBehavior b )
 {
@@ -171,9 +202,7 @@ Field& FunctionSpace::create_field<double>(const std::string& name, size_t nb_va
   // To be removed
   field->set_function_space(*this);
 
-  fields_.insert( name, Field::Ptr(field) );
-	fields_.sort();
-
+  add(field);
   return *field;
 }
 
@@ -200,8 +229,7 @@ Field& FunctionSpace::create_field<float>(const std::string& name, size_t nb_var
   // To be removed
   field->set_function_space(*this);
 
-  fields_.insert( name, Field::Ptr(field) );
-	fields_.sort();
+  add(field);
 
 	return *field;
 }
@@ -229,10 +257,9 @@ Field& FunctionSpace::create_field<int>(const std::string& name, size_t nb_vars,
   // To be removed
   field->set_function_space(*this);
 
-  fields_.insert( name, Field::Ptr(field) );
-	fields_.sort();
+  add(field);
 
-	return *field;
+  return *field;
 }
 
 template <>
@@ -258,8 +285,7 @@ Field& FunctionSpace::create_field<long>(const std::string& name, size_t nb_vars
   // To be removed
   field->set_function_space(*this);
 
-  fields_.insert( name, Field::Ptr(field) );
-	fields_.sort();
+  add(field);
 
 	return *field;
 }
@@ -281,12 +307,32 @@ void FunctionSpace::remove_field(const std::string& name)
 //	}
 }
 
-Field& FunctionSpace::field( size_t idx ) const
+const Field& FunctionSpace::field( size_t idx ) const
 {
 	return *fields_.at( idx );
 }
 
-Field& FunctionSpace::field(const std::string& name) const
+Field& FunctionSpace::field( size_t idx )
+{
+	return *fields_.at( idx );
+}
+
+
+const Field& FunctionSpace::field(const std::string& name) const
+{
+	if( has_field(name) )
+	{
+		return *fields_.get(name);
+	}
+	else
+	{
+		std::stringstream msg;
+		msg << "Could not find field \"" << name << "\" in FunctionSpace \"" << name_ << "\"";
+		throw eckit::OutOfRange(msg.str(),Here());
+	}
+}
+
+Field& FunctionSpace::field(const std::string& name)
 {
 	if( has_field(name) )
 	{

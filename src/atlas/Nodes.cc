@@ -17,16 +17,16 @@ namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
 
-Nodes::Nodes(size_t size) :
-  size_(size)
+Nodes::Nodes(size_t _size) :
+  FunctionSpace("nodes",make_shape(_size,FunctionSpace::UNDEF_VARS))
 {
-  global_index_ = &add( new FieldT<gidx_t>("glb_idx",   make_shape(size_)) );
-  remote_index_ = &add( new FieldT<int   >("remote_idx",make_shape(size_)) );
-  partition_    = &add( new FieldT<int   >("partition", make_shape(size_)) );
-  ghost_        = &add( new FieldT<int   >("ghost",     make_shape(size_)) );
-  halo_         = &add( new FieldT<int   >("halo",      make_shape(size_)) );
-  topology_     = &add( new FieldT<int   >("topology",  make_shape(size_)) );
-  lonlat_       = &add( new FieldT<double>("lonlat",    make_shape(size_,2)) );
+  global_index_ = &add( new FieldT<gidx_t>("glb_idx",   make_shape(size(),1)) );
+  remote_index_ = &add( new FieldT<int   >("remote_idx",make_shape(size(),1)) );
+  partition_    = &add( new FieldT<int   >("partition", make_shape(size(),1)) );
+  ghost_        = &add( new FieldT<int   >("ghost",     make_shape(size(),1)) );
+  halo_         = &add( new FieldT<int   >("halo",      make_shape(size(),1)) );
+  topology_     = &add( new FieldT<int   >("topology",  make_shape(size(),1)) );
+  lonlat_       = &add( new FieldT<double>("lonlat",    make_shape(size(),2)) );
 }
 
 
@@ -72,15 +72,36 @@ void Nodes::remove_field(const std::string& name)
 
 void Nodes::resize( size_t size )
 {
-  size_ = size;
-  for( FieldMap::iterator it = fields_.begin(); it != fields_.end(); ++it )
+  FunctionSpace::resize(make_shape(size, shape(1)));
+
+//  dof_ = size;
+//  for( FieldMap::iterator it = fields_.begin(); it != fields_.end(); ++it )
+//  {
+//    Field& field = *it->second;
+//    ArrayShape shape = field.shape();
+//    shape[0] = size_;
+//    field.resize(shape);
+//  }
+}
+
+const Field& Nodes::field(size_t idx) const
+{
+  size_t c;
+  for( FieldMap::const_iterator it = fields_.begin(); it != fields_.end(); ++it )
   {
-    Field& field = *it->second;
-    ArrayShape shape = field.shape();
-    shape[0] = size_;
-    field.resize(shape);
+    if( idx == c )
+    {
+      const Field& field = *it->second;
+      return field;
+    }
+    c++;
   }
 }
+Field& Nodes::field(size_t idx)
+{
+  return const_cast<Field&>(static_cast<const Nodes*>(this)->field(idx));
+}
+
 
 //-----------------------------------------------------------------------------
 

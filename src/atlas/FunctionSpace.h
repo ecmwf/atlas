@@ -133,16 +133,21 @@ public: // methods
 
 	FunctionSpace(const std::string& name, const std::string& shape_func, const std::vector<size_t>& shape, Mesh& mesh );
 
+  /// TEMPORARY CONSTRUCTOR, JUST FOR EVOLUTIONARY STEP TO NEXT DESIGN
+  FunctionSpace(const std::string& name, const std::vector<size_t>& shape );
+
 	virtual ~FunctionSpace();
 
 	const std::string& name() const { return name_; }
 
 	int index() const { return idx_; }
 
-	Field& field( size_t ) const;
-	Field& field(const std::string& name) const;
+	virtual const Field& field( size_t ) const;
+  virtual       Field& field( size_t );
+  virtual const Field& field(const std::string& name) const;
+  virtual       Field& field(const std::string& name);
 
-	bool has_field(const std::string& name) const { return fields_.has(name); }
+	virtual bool has_field(const std::string& name) const { return fields_.has(name); }
 
 	template< typename DATA_TYPE >
 	Field& create_field(const std::string& name, size_t nb_vars, CreateBehavior b = IF_EXISTS_FAIL );
@@ -164,12 +169,12 @@ public: // methods
 	template< typename DATA_TYPE >
 	void halo_exchange( DATA_TYPE field_data[], size_t field_size )
 	{
-		int nb_vars = field_size/dof_;
-		if( dof_*nb_vars != field_size )
+		int nb_vars = field_size/dof();
+		if( dof()*nb_vars != field_size )
 		{
 			eckit::Log::error() << "ERROR in FunctionSpace::halo_exchange" << std::endl;
 			eckit::Log::error() << "field_size = " << field_size << std::endl;
-			eckit::Log::error() << "dof_ = " << dof_ << std::endl;
+			eckit::Log::error() << "dof() = " << dof() << std::endl;
 		}
 		halo_exchange_->execute( field_data, nb_vars );
 	}
@@ -177,8 +182,8 @@ public: // methods
 	template< typename DATA_TYPE >
 	void gather( const DATA_TYPE field_data[], size_t field_size, DATA_TYPE glbfield_data[], size_t glbfield_size )
 	{
-		int nb_vars = field_size/dof_;
-		if( dof_*nb_vars != field_size ) eckit::Log::error() << "ERROR in FunctionSpace::gather" << std::endl;
+		int nb_vars = field_size/dof();
+		if( dof()*nb_vars != field_size ) eckit::Log::error() << "ERROR in FunctionSpace::gather" << std::endl;
 		if( glb_dof_*nb_vars != glbfield_size ) eckit::Log::error() << "ERROR in FunctionSpace::gather" << std::endl;
 
 		mpl::Field<DATA_TYPE const> loc_field(field_data,nb_vars);
@@ -201,10 +206,10 @@ public: // methods
 	const Metadata& metadata() const { return metadata_; }
 	Metadata& metadata() { return metadata_; }
 
-	const Mesh& mesh() const { return mesh_; }
-	Mesh& mesh() { return mesh_; }
+	const Mesh& mesh() const { ASSERT(mesh_); return *mesh_; }
+	Mesh& mesh() { ASSERT(mesh_); return *mesh_; }
 
-    size_t nb_fields() const { return fields_.size(); }
+    virtual size_t nb_fields() const { return fields_.size(); }
 
     size_t dof() const { return dof_; }
 
@@ -218,6 +223,8 @@ private:  // methods
         p.print(s);
         return s;
     }
+
+    virtual Field& add( Field* field );
 
 protected:
 
@@ -239,7 +246,7 @@ protected:
 
 	Metadata metadata_;
 
-	Mesh&    mesh_;
+	Mesh*    mesh_;
 };
 
 typedef mpl::HaloExchange HaloExchange_t;

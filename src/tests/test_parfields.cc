@@ -23,6 +23,7 @@
 #include "atlas/FunctionSpace.h"
 #include "atlas/Mesh.h"
 #include "atlas/Metadata.h"
+#include "atlas/Nodes.h"
 #include "atlas/Parameters.h"
 #include "atlas/meshgen/EqualRegionsPartitioner.h"
 #include "atlas/grids/grids.h"
@@ -57,11 +58,12 @@ BOOST_AUTO_TEST_CASE( test1 )
 {
 	Mesh::Ptr m ( Mesh::create() );
 
-	FunctionSpace& nodes = m->create_function_space( "nodes", "shapefunc", make_shape(10,FunctionSpace::UNDEF_VARS) );
+	m->create_function_space( "nodes", "shapefunc", make_shape(10,FunctionSpace::UNDEF_VARS) );
 
-  ArrayView<double,2> lonlat ( m->function_space("nodes").create_field<double>("lonlat",2) );
-  ArrayView<gidx_t,1> glb_idx( m->function_space("nodes").create_field<gidx_t>("glb_idx",1) );
-  ArrayView<int,1> part ( nodes.create_field<int>("partition",1) );
+  Nodes& nodes = m->nodes();
+  ArrayView<double,2> lonlat ( nodes.lonlat());
+  ArrayView<gidx_t,1> glb_idx( nodes.global_index());
+  ArrayView<int,1> part ( nodes.partition() );
   ArrayView<int,1> flags ( nodes.create_field<int>("flags",1) );
   flags = Topology::NONE;
 
@@ -90,9 +92,9 @@ BOOST_AUTO_TEST_CASE( test1 )
 
   actions::build_parallel_fields(*m);
 
-  BOOST_REQUIRE( m->function_space("nodes").has_field("remote_idx") );
+  BOOST_REQUIRE( nodes.has_field("remote_idx") );
 
-  IndexView<int,1> loc( nodes.field("remote_idx") );
+  IndexView<int,1> loc( nodes.remote_index() );
   BOOST_CHECK_EQUAL( loc(0) , 0 );
   BOOST_CHECK_EQUAL( loc(1) , 1 );
   BOOST_CHECK_EQUAL( loc(2) , 2 );

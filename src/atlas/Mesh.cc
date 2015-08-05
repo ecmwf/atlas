@@ -64,12 +64,21 @@ FunctionSpace& Mesh::create_function_space(const std::string& name, const std::s
 		throw eckit::Exception( "Functionspace '" + name + "' already exists", Here() );
 	}
 
-	FunctionSpace::Ptr fs( new FunctionSpace(name,shape_func,shape,*this) );
+	FunctionSpace::Ptr fs;
+  if( name == "nodes" )
+  {
+    create_nodes(shape[0]);
+    fs.reset(nodes_.get());
+  }
+  else
+  {
+    fs.reset(new FunctionSpace(name,shape_func,shape,*this) );
+  }
 
-	function_spaces_.insert(name,fs);
-	function_spaces_.sort();
+  function_spaces_.insert(name,fs);
+  function_spaces_.sort();
 
-	fs->set_index( function_spaces_.size() - 1 ); ///< @todo revisit this once we can remove functionspaces
+  fs->set_index( function_spaces_.size() - 1 ); ///< @todo revisit this once we can remove functionspaces
 
 	return *fs;
 }
@@ -153,6 +162,12 @@ Nodes& Mesh::create_nodes( size_t size )
   ASSERT( !nodes_ );
   nodes_.reset( new Nodes(size) );
   return *nodes_;
+}
+
+
+size_t Mesh::nb_function_spaces() const
+{
+  return function_spaces_.size();
 }
 
 
