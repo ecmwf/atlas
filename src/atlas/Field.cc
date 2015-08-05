@@ -36,12 +36,8 @@ inline std::ostream &operator<<(std::ostream &s, const std::vector<T> &v) {
     return eckit::__print_list(s, v);
 }
 
-Field* Field::create(const std::string& name, const ArrayShape& shape, const std::string& datatype )
-{
-  eckit::ScopedPtr<field::FieldTCreator> creator
-     (field::FieldTCreatorFactory::build("FieldT<"+datatype+">") );
-  return creator->create_field(name,shape);
-}
+// -------------------------------------------------------------------------
+// Static functions
 
 Field* Field::create(const eckit::Parametrisation& params)
 {
@@ -58,15 +54,21 @@ Field* Field::create(const eckit::Parametrisation& params)
   return NULL;
 }
 
-Field* Field::create(const ArrayShape& shape, const eckit::Parametrisation& params)
+Field* Field::create(const std::string& name, const ArrayShape& shape, const std::string& datatype )
 {
-  std::string data_type = DataType::real64();
-  params.get("data_type",data_type);
-
   eckit::ScopedPtr<field::FieldTCreator> creator
-     (field::FieldTCreatorFactory::build("FieldT<"+data_type+">") );
-  return creator->create_field(shape,params);
+     (field::FieldTCreatorFactory::build("FieldT<"+datatype+">") );
+  return creator->create_field(name,shape);
 }
+
+Field* Field::create( const ArrayShape& shape, const std::string& datatype )
+{
+  eckit::ScopedPtr<field::FieldTCreator> creator
+     (field::FieldTCreatorFactory::build("FieldT<"+datatype+">") );
+  return creator->create_field(std::string(),shape);
+}
+
+// -------------------------------------------------------------------------
 
 Field::Field() :
   name_(), function_space_(0)
@@ -84,8 +86,6 @@ Field::Field(const eckit::Parametrisation& params) :
   FunctionSpace::Id function_space;
   if( params.get("function_space",function_space) )
     function_space_ = &FunctionSpace::from_id(function_space);
-
-  //params.get("nb_vars",nb_vars_);
 
   params.get("name",name_);
 }

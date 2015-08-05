@@ -42,13 +42,16 @@ public: // types
 
 public: // Static methods
 
-  static Field* create(const eckit::Parametrisation&);
-  static Field* create(const ArrayShape&, const eckit::Parametrisation& = Config() );
-  static Field* create(const std::string& name, const ArrayShape&, const std::string& datatype );
-
+  static Field* create( const eckit::Parametrisation& );
+  static Field* create( const std::string& name, const ArrayShape&, const std::string& datatype );
   template<typename DATATYPE>
-  static Field* create(const std::string& name, const ArrayShape& shape) {
-    return create(name,shape,DataType::datatype<DATATYPE>());
+  static Field* create( const std::string& name, const ArrayShape& shape ) {
+    return create( name,shape,DataType::datatype<DATATYPE>() );
+  }
+  static Field* create( const ArrayShape&, const std::string& datatype );
+  template<typename DATATYPE>
+  static Field* create( const ArrayShape& shape ) {
+    return create( shape, DataType::datatype<DATATYPE>() );
   }
 
 public: // methods
