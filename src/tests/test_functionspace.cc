@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   columns_fs.haloExchange(*field);
   //field->dump( eckit::Log::info() );
 
-  Field::Ptr field2( columns_fs.createField<int>("partition2",2) );
+  Field::Ptr field2( columns_fs.createField<int>("partition2", make_shape(2) ) );
   ArrayView<int,3> arr2(*field2);
   arr2 = eckit::mpi::rank();
   //field2->dump( eckit::Log::info() );

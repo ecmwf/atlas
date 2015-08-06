@@ -21,8 +21,8 @@
 #include "eckit/grib/GribAccessor.h"
 #include "eckit/grib/GribMutator.h"
 #include "eckit/types/FloatCompare.h"
-#include "eckit/mpi/mpi.h"
 
+#include "atlas/mpi/mpi.h"
 #include "atlas/io/Grib.h"
 #include "atlas/grids/grids.h"
 

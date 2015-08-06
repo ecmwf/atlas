@@ -8,8 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-#include "eckit/mpi/mpi.h"
 #include "eckit/exception/Exceptions.h"
+#include "atlas/mpi/mpi.h"
 #include "atlas/grids/ReducedGrid.h"
 #include "atlas/trans/TransPartitioner.h"
 #include "atlas/trans/Trans.h"

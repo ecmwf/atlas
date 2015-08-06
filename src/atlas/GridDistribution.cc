@@ -9,7 +9,7 @@
  */
 
 #include <algorithm>
-#include "eckit/mpi/mpi.h"
+#include "atlas/mpi/mpi.h"
 #include "atlas/Grid.h"
 #include "atlas/GridDistribution.h"
 #include "atlas/Partitioner.h"

@@ -17,11 +17,10 @@
 
 #include "eckit/memory/Factory.h"
 #include "eckit/memory/Builder.h"
-#include "eckit/mpi/mpi.h"
 
 #include "atlas/atlas.h"
 #include "atlas/Grid.h"
-
+#include "atlas/mpi/mpi.h"
 #include "atlas/grids/grids.h"
 #include "atlas/grids/LocalGrid.h"
 

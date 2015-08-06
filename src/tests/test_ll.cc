@@ -11,7 +11,7 @@
 #define BOOST_TEST_MODULE TestLL
 #include "ecbuild/boost_test_framework.h"
 
-#include "eckit/mpi/mpi.h"
+#include "atlas/mpi/mpi.h"
 #include "atlas/meshgen/ReducedGridMeshGenerator.h"
 #include "atlas/io/Gmsh.h"
 #include "atlas/Mesh.h"

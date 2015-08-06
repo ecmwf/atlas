@@ -16,8 +16,8 @@
 
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
-#include "eckit/mpi/mpi.h"
 
+#include "atlas/mpi/mpi.h"
 #include "atlas/Partitioner.h"
 #include "atlas/GridDistribution.h"
 

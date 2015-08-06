@@ -14,8 +14,8 @@
 
 #include <algorithm>    // std::min_element, std::max_element, std::copy
 
-#include "eckit/mpi/mpi.h"
 #include "eckit/config/ResourceMgr.h"
+#include "atlas/mpi/mpi.h"
 #include "atlas/atlas.h"
 #include "atlas/trans/Trans.h"
 #include "atlas/trans/TransPartitioner.h"

@@ -18,7 +18,7 @@
 #include <ctime>
 
 #include "eckit/geometry/Point2.h"
-#include "eckit/mpi/mpi.h"
+#include "atlas/mpi/mpi.h"
 #include "atlas/grids/ReducedGrid.h"
 #include "atlas/meshgen/EqualRegionsPartitioner.h"
 #include "atlas/util/Functions.h"
