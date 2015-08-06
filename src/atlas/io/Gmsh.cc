@@ -87,8 +87,8 @@ void write_header_binary(std::ostream& out)
   out << "\n$EndMeshFormat\n";
 }
 
-template< typename DATA_TYPE >
-void write_field_nodes(const Gmsh& gmsh, const FunctionSpace& function_space, const Field& field, std::ostream& out)
+template< typename DATATYPE >
+void write_field_nodes(const Gmsh& gmsh, const functionspace::NodesFunctionSpace& function_space, const Field& field, std::ostream& out)
 {
   Log::info() << "writing field " << field.name() << "..." << std::endl;
 
@@ -97,22 +97,19 @@ void write_field_nodes(const Gmsh& gmsh, const FunctionSpace& function_space, co
   int nlev  = field.metadata().has("nb_levels") ? field.metadata().get<size_t>("nb_levels") : 1;
   int ndata = field.shape(0);
   int nvars = field.shape(1)/nlev;
-  ArrayView<gidx_t,1    > gidx ( function_space.field( "glb_idx" ) );
-  ArrayView<DATA_TYPE> data ( field );
-  Array<DATA_TYPE> field_glb_arr;
-  Array<gidx_t>    gidx_glb_arr;
+  ArrayView<gidx_t,1> gidx ( function_space.nodes().global_index() );
+  ArrayView<DATATYPE> data ( field );
+  Field::Ptr gidx_glb;
+  Field::Ptr data_glb;
   if( gather )
   {
-    mpl::GatherScatter& fullgather = function_space.fullgather();
-    ndata = fullgather.glb_dof();
-    field_glb_arr.resize(ndata,field.shape(1));
-    gidx_glb_arr.resize(ndata);
-    ArrayView<DATA_TYPE> data_glb( field_glb_arr );
-    ArrayView<gidx_t,1> gidx_glb( gidx_glb_arr );
-    fullgather.gather( gidx, gidx_glb );
-    fullgather.gather( data, data_glb );
-    gidx = ArrayView<gidx_t,1>( gidx_glb_arr );
-    data = data_glb;
+    gidx_glb.reset( function_space.createGlobalField( function_space.nodes().global_index() ) );
+    function_space.gather(function_space.nodes().global_index(),*gidx_glb);
+    gidx = ArrayView<gidx_t,1>( *gidx_glb );
+
+    data_glb.reset( function_space.createGlobalField( field ) );
+    function_space.gather(field,*data_glb);
+    data = ArrayView<DATATYPE>( *data_glb );
   }
 
   std::vector<long> lev;
@@ -190,7 +187,7 @@ void write_field_nodes(const Gmsh& gmsh, const FunctionSpace& function_space, co
         }
         else if( nvars <= 3 )
         {
-          std::vector<DATA_TYPE> data_vec(3,0.);
+          std::vector<DATATYPE> data_vec(3,0.);
           for( size_t n = 0; n < ndata; ++n )
           {
             out << gidx(n);
@@ -904,51 +901,51 @@ void Gmsh::write(const Mesh& mesh, const PathName& file_path) const
     PathName mesh_info(file_path);
     mesh_info = mesh_info.dirName()+"/"+mesh_info.baseName(false)+"_info.msh";
 
-    if (nodes.has_field("partition"))
-    {
-      write(nodes.field("partition"),mesh_info,std::ios_base::out);
-    }
+    //[next]  make NodesFunctionSpace accept const mesh
+    functionspace::NodesFunctionSpace function_space("nodes",const_cast<Mesh&>(mesh));
+
+    write(nodes.partition(),function_space,mesh_info,std::ios_base::out);
 
     if (nodes.has_field("dual_volumes"))
     {
-      write(nodes.field("dual_volumes"),mesh_info,std::ios_base::app);
+      write(nodes.field("dual_volumes"),function_space,mesh_info,std::ios_base::app);
     }
 
     if (nodes.has_field("dual_delta_sph"))
     {
-      write(nodes.field("dual_delta_sph"),mesh_info,std::ios_base::app);
+      write(nodes.field("dual_delta_sph"),function_space,mesh_info,std::ios_base::app);
     }
 
-    if( mesh.has_function_space("edges") )
-    {
-      FunctionSpace& edges = mesh.function_space( "edges" );
+    //[next] if( mesh.has_function_space("edges") )
+    //[next] {
+    //[next]   FunctionSpace& edges = mesh.function_space( "edges" );
 
-      if (edges.has_field("dual_normals"))
-      {
-        write(edges.field("dual_normals"),mesh_info,std::ios_base::app);
-      }
+    //[next]   if (edges.has_field("dual_normals"))
+    //[next]   {
+    //[next]     write(edges.field("dual_normals"),mesh_info,std::ios_base::app);
+    //[next]   }
 
-      if (edges.has_field("skewness"))
-      {
-        write(edges.field("skewness"),mesh_info,std::ios_base::app);
-      }
+    //[next]   if (edges.has_field("skewness"))
+    //[next]   {
+    //[next]     write(edges.field("skewness"),mesh_info,std::ios_base::app);
+    //[next]   }
 
-      if (edges.has_field("arc_length"))
-      {
-        write(edges.field("arc_length"),mesh_info,std::ios_base::app);
-      }
-    }
+    //[next]   if (edges.has_field("arc_length"))
+    //[next]   {
+    //[next]     write(edges.field("arc_length"),mesh_info,std::ios_base::app);
+    //[next]   }
+    //[next] }
   }
 
 }
 
-void Gmsh::write(const FieldSet& fieldset, const PathName& file_path, openmode mode) const
+void Gmsh::write(const FieldSet& fieldset, const functionspace::NodesFunctionSpace& function_space, const PathName& file_path, openmode mode) const
 {
   bool is_new_file = (mode != std::ios_base::app || !file_path.exists() );
+  bool binary( !options.get<bool>("ascii") );
+  if ( binary ) mode |= std::ios_base::binary;
   bool gather = options.has("gather") ? options.get<bool>("gather") : false;
   GmshFile file(file_path,mode,gather?-1:eckit::mpi::rank());
-
-  Log::info() << "writing fieldset " << fieldset.name() << " to gmsh file " << file_path << std::endl;
 
   // Header
   if( is_new_file )
@@ -958,78 +955,40 @@ void Gmsh::write(const FieldSet& fieldset, const PathName& file_path, openmode m
   for( int field_idx=0; field_idx<fieldset.size(); ++field_idx )
   {
     const Field& field = fieldset[field_idx];
-    const FunctionSpace& function_space = field.function_space();
+    Log::info() << "writing field " << field.name() << " to gmsh file " << file_path << std::endl;
 
-    if( !function_space.metadata().has("type") )
-    {
-      throw Exception("function_space "+function_space.name()+" has no type.. ?");
-    }
+    //[delete] const FunctionSpace& function_space = field.function_space();
 
-    if( function_space.metadata().get<long>("type") == Entity::NODES )
-    {
+    //[delete]if( !function_space.metadata().has("type") )
+    //[delete]{
+    //[delete]  throw Exception("function_space "+function_space.name()+" has no type.. ?");
+    //[delete]}
+
+    //[delete]if( function_space.metadata().get<long>("type") == Entity::NODES )
+    //[delete]{
       if     ( field.datatype() == DataType::int32()  ) {  write_field_nodes<int   >(*this,function_space,field,file); }
       else if( field.datatype() == DataType::int64()  ) {  write_field_nodes<long  >(*this,function_space,field,file); }
       else if( field.datatype() == DataType::real32() ) {  write_field_nodes<float >(*this,function_space,field,file); }
       else if( field.datatype() == DataType::real64() ) {  write_field_nodes<double>(*this,function_space,field,file); }
-    }
-    else if( function_space.metadata().get<long>("type") == Entity::ELEMS
-          || function_space.metadata().get<long>("type") == Entity::FACES )
-    {
-      if     ( field.datatype() == DataType::int32()  ) {  write_field_elems<int   >(*this,function_space,field,file); }
-      else if( field.datatype() == DataType::int64()  ) {  write_field_elems<long  >(*this,function_space,field,file); }
-      else if( field.datatype() == DataType::real32() ) {  write_field_elems<float >(*this,function_space,field,file); }
-      else if( field.datatype() == DataType::real64() ) {  write_field_elems<double>(*this,function_space,field,file); }
-    }
+    //[delete]
+    //[delete]else if( function_space.metadata().get<long>("type") == Entity::ELEMS
+    //[delete]      || function_space.metadata().get<long>("type") == Entity::FACES )
+    //[delete]{
+    //[delete]  if     ( field.datatype() == DataType::int32()  ) {  write_field_elems<int   >(*this,function_space,field,file); }
+    //[delete]  else if( field.datatype() == DataType::int64()  ) {  write_field_elems<long  >(*this,function_space,field,file); }
+    //[delete]  else if( field.datatype() == DataType::real32() ) {  write_field_elems<float >(*this,function_space,field,file); }
+    //[delete]  else if( field.datatype() == DataType::real64() ) {  write_field_elems<double>(*this,function_space,field,file); }
+    //[delete]}
     file << std::flush;
   }
-
   file.close();
 }
 
-void Gmsh::write(const Field& field, const PathName& file_path, openmode mode) const
+void Gmsh::write(const Field& field, const functionspace::NodesFunctionSpace& function_space, const PathName& file_path, openmode mode) const
 {
-  bool is_new_file = (mode != std::ios_base::app || !file_path.exists() );
-  bool binary( !options.get<bool>("ascii") );
-  if ( binary ) mode |= std::ios_base::binary;
-  bool gather = options.has("gather") ?  options.get<bool>("gather") : false;
-  GmshFile file(file_path,mode,gather?-1:eckit::mpi::rank());
-
-  Log::info() << "writing field " << field.name() << " to gmsh file " << file_path << std::endl;
-
-  // Header
-  if( is_new_file )
-  {
-    if( binary )
-      write_header_binary(file);
-    else
-      write_header_ascii(file);
-  }
-
-  // Field
-  FunctionSpace& function_space = field.function_space();
-
-  if( !function_space.metadata().has("type") )
-  {
-    throw Exception("function_space "+function_space.name()+" has no type.. ?");
-  }
-
-  if( function_space.metadata().get<long>("type") == Entity::NODES )
-  {
-    if     ( field.datatype() == DataType::int32()  ) {  write_field_nodes<int   >(*this,function_space,field,file); }
-    else if( field.datatype() == DataType::int64()  ) {  write_field_nodes<long  >(*this,function_space,field,file); }
-    else if( field.datatype() == DataType::real32() ) {  write_field_nodes<float >(*this,function_space,field,file); }
-    else if( field.datatype() == DataType::real64() ) {  write_field_nodes<double>(*this,function_space,field,file); }
-  }
-  else if( function_space.metadata().get<long>("type") == Entity::ELEMS ||
-           function_space.metadata().get<long>("type") == Entity::FACES )
-  {
-    if     ( field.datatype() == DataType::int32()  ) {  write_field_elems<int   >(*this,function_space,field,file); }
-    else if( field.datatype() == DataType::int64()  ) {  write_field_elems<long  >(*this,function_space,field,file); }
-    else if( field.datatype() == DataType::real32() ) {  write_field_elems<float >(*this,function_space,field,file); }
-    else if( field.datatype() == DataType::real64() ) {  write_field_elems<double>(*this,function_space,field,file); }
-  }
-  file << std::flush;
-  file.close();
+  FieldSet fieldset;
+  fieldset.add(field);
+  write(fieldset,function_space,file_path,mode);
 }
 
 // ------------------------------------------------------------------
@@ -1061,14 +1020,14 @@ void atlas__write_gmsh_mesh (Mesh* mesh, char* file_path) {
   writer.write( *mesh, PathName(file_path) );
 }
 
-void atlas__write_gmsh_fieldset (FieldSet* fieldset, char* file_path, int mode) {
+void atlas__write_gmsh_fieldset (FieldSet* fieldset, functionspace::NodesFunctionSpace* function_space, char* file_path, int mode) {
   Gmsh writer;
-  writer.write( *fieldset, PathName(file_path) );
+  writer.write( *fieldset, *function_space, PathName(file_path) );
 }
 
-void atlas__write_gmsh_field (Field* field, char* file_path, int mode) {
+void atlas__write_gmsh_field (Field* field, functionspace::NodesFunctionSpace* function_space, char* file_path, int mode) {
   Gmsh writer;
-  writer.write( *field, PathName(file_path) );
+  writer.write( *field, *function_space, PathName(file_path) );
 }
 
 // ------------------------------------------------------------------

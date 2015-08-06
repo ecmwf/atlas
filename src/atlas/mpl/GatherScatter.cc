@@ -114,7 +114,7 @@ void GatherScatter::setup( const int part[],
   glbcounts_.resize(nproc); glbcounts_.assign(nproc,0);
   locdispls_.resize(nproc); locdispls_.assign(nproc,0);
   glbdispls_.resize(nproc); glbdispls_.assign(nproc,0);
-
+  glbcnt_.resize(nproc);    glbcnt_.assign(nproc,0);
   const size_t nvar = 3;
 
   std::vector<gidx_t> sendnodes(parsize_*nvar);
@@ -133,20 +133,20 @@ void GatherScatter::setup( const int part[],
   ECKIT_MPI_CHECK_RESULT( MPI_Gather( &loccnt_, 1, MPI_INT,
                                 glbcounts_.data(), 1, MPI_INT,
                                 root_, eckit::mpi::comm() ) );
-  glbcnt_ = std::accumulate(glbcounts_.begin(),glbcounts_.end(),0);
+  glbcnt_[myproc] = std::accumulate(glbcounts_.begin(),glbcounts_.end(),0);
 
   glbdispls_[0]=0;
   for (size_t jproc=1; jproc<nproc; ++jproc) // start at 1
   {
     glbdispls_[jproc]=glbcounts_[jproc-1]+glbdispls_[jproc-1];
   }
-  std::vector<gidx_t> recvnodes(glbcnt_);
+  std::vector<gidx_t> recvnodes(glbcnt_[myproc]);
   ECKIT_MPI_CHECK_RESULT( MPI_Gatherv( sendnodes.data(), loccnt_, eckit::mpi::datatype<gidx_t>(),
                                  recvnodes.data(), glbcounts_.data(), glbdispls_.data(), eckit::mpi::datatype<gidx_t>(),
                                  root_, eckit::mpi::comm()) );
 
   // Load recvnodes in sorting structure
-  size_t nb_recv_nodes = glbcnt_/nvar;
+  size_t nb_recv_nodes = glbcnt_[myproc]/nvar;
   std::vector<Node> node_sort(nb_recv_nodes);
   for( size_t n=0; n<nb_recv_nodes; ++n )
   {
@@ -173,11 +173,11 @@ void GatherScatter::setup( const int part[],
   {
     glbdispls_[jproc]=glbcounts_[jproc-1]+glbdispls_[jproc-1];
   }
-  glbcnt_ = std::accumulate(glbcounts_.begin(),glbcounts_.end(),0);
+  glbcnt_[myproc] = std::accumulate(glbcounts_.begin(),glbcounts_.end(),0);
 
 
-  glbmap_.clear(); glbmap_.resize(glbcnt_);
-  std::vector<int> needed(glbcnt_);
+  glbmap_.clear(); glbmap_.resize(glbcnt_[myproc]);
+  std::vector<int> needed(glbcnt_[myproc]);
   std::vector<int> idx(nproc,0);
   for( size_t n=0; n<node_sort.size(); ++n )
   {
@@ -197,6 +197,8 @@ void GatherScatter::setup( const int part[],
   ECKIT_MPI_CHECK_RESULT( MPI_Scatterv( needed.data(), glbcounts_.data(), glbdispls_.data(),
                                   MPI_INT, locmap_.data(), loccnt_,
                                   MPI_INT, root_, eckit::mpi::comm() ) );
+
+  eckit::mpi::broadcast(glbcnt_,root_);
   is_setup_ = true;
 }
 
@@ -213,7 +215,7 @@ void GatherScatter::setup( const int part[],
   glbcounts_.resize(nproc); glbcounts_.assign(nproc,0);
   locdispls_.resize(nproc); locdispls_.assign(nproc,0);
   glbdispls_.resize(nproc); glbdispls_.assign(nproc,0);
-
+  glbcnt_.resize(nproc); glbcnt_.assign(nproc,0);
 
   gidx_t maxgid = max_glb_idx;
   if(max_glb_idx<0)
@@ -257,20 +259,20 @@ void GatherScatter::setup( const int part[],
   ECKIT_MPI_CHECK_RESULT( MPI_Gather( &loccnt_, 1, MPI_INT,
                      glbcounts_.data(), 1, MPI_INT,
                      root_, eckit::mpi::comm() ) );
-  glbcnt_ = std::accumulate(glbcounts_.begin(),glbcounts_.end(),0);
+  glbcnt_[myproc] = std::accumulate(glbcounts_.begin(),glbcounts_.end(),0);
 
   glbdispls_[0]=0;
   for (size_t jproc=1; jproc<nproc; ++jproc) // start at 1
   {
     glbdispls_[jproc]=glbcounts_[jproc-1]+glbdispls_[jproc-1];
   }
-  std::vector<int> recvnodes(glbcnt_);
+  std::vector<int> recvnodes(glbcnt_[myproc]);
   ECKIT_MPI_CHECK_RESULT( MPI_Gatherv( sendnodes.data(), loccnt_, MPI_INT,
                                  recvnodes.data(), glbcounts_.data(), glbdispls_.data(), MPI_INT,
                       root_, eckit::mpi::comm()) );
 
   // Load recvnodes in sorting structure
-  int nb_recv_nodes = glbcnt_/3;
+  int nb_recv_nodes = glbcnt_[myproc]/3;
   std::vector<Node> node_sort(nb_recv_nodes);
   nodes = ArrayView<int,2> (recvnodes.data(),make_shape(nb_recv_nodes,3));
   for( size_t n=0; n<nb_recv_nodes; ++n )
@@ -324,11 +326,11 @@ void GatherScatter::setup( const int part[],
   {
     glbdispls_[jproc]=glbcounts_[jproc-1]+glbdispls_[jproc-1];
   }
-  glbcnt_ = std::accumulate(glbcounts_.begin(),glbcounts_.end(),0);
+  glbcnt_[myproc] = std::accumulate(glbcounts_.begin(),glbcounts_.end(),0);
 
 
-  glbmap_.clear(); glbmap_.resize(glbcnt_);
-  std::vector<int> needed(glbcnt_);
+  glbmap_.clear(); glbmap_.resize(glbcnt_[myproc]);
+  std::vector<int> needed(glbcnt_[myproc]);
   std::vector<int> idx(nproc,0);
   for( size_t n=0; n<node_sort.size(); ++n )
   {
@@ -339,7 +341,7 @@ void GatherScatter::setup( const int part[],
   }
 
 //  if ( myproc == root ) std::cout << "needed = ";
-//  for( int n=0; n<glbcnt_; ++n )
+//  for( int n=0; n<glbcnt_[myproc]; ++n )
 //  {
 //    if( myproc == root ) std::cout << needed[n] << " " ;
 //  }
@@ -376,11 +378,12 @@ void GatherScatter::setup( const int part[],
 //   std::cout << std::endl;
 
 
-//  for( int i=0; i<glbcnt_; ++i )
+//  for( int i=0; i<glbcnt_[myproc]; ++i )
 //  {
 //    ASSERT( node_sort[i].g == i+1 );
 //  }
 
+  eckit::mpi::broadcast(glbcnt_,root_);
 
   is_setup_ = true;
 }

@@ -38,7 +38,8 @@ NodesFunctionSpace::NodesFunctionSpace(const std::string& name, Mesh& mesh, cons
     nodes_(mesh_.nodes()),
     halo_(halo.size()),
     nb_nodes_(0),
-    nb_nodes_global_(0)
+    nb_nodes_global_(0),
+    nb_nodes_global_broadcasted_(0)
 {
   if( ! mesh_.halo_exchange().has(halo_name()) && halo_ > 0)
   {
@@ -128,6 +129,7 @@ NodesFunctionSpace::NodesFunctionSpace(const std::string& name, Mesh& mesh, cons
   }
 
   nb_nodes_global_ = mesh_.gather_scatter().get(gather_scatter_name()).glb_dof();
+  nb_nodes_global_broadcasted_ = mesh_.gather_scatter().get(gather_scatter_name()).glb_dof(0);
 }
 
 NodesFunctionSpace::~NodesFunctionSpace() {}
@@ -369,16 +371,17 @@ std::string NodesFunctionSpace::checksum( const Field& field ) const {
   return checksum(fieldset);
 }
 
-template<> void NodesFunctionSpace::sum( const Field& field, double& result ) const
+template<> void NodesFunctionSpace::sum( const Field& field, double& result, size_t& N ) const
 {
   size_t root = 0;
   Field::Ptr global( createGlobalField(field) );
   gather(field,*global);
   result = std::accumulate(global->data<double>(),global->data<double>()+global->size(),0.);
   eckit::mpi::broadcast(result,root);
+  N = nb_nodes_global_broadcasted_;
 }
 
-template<> void NodesFunctionSpace::sum( const Field& field, std::vector<double>& result ) const
+template<> void NodesFunctionSpace::sum( const Field& field, std::vector<double>& result, size_t& N ) const
 {
   size_t nvar = field.stride(0);
   result.resize(nvar,0);
@@ -394,18 +397,21 @@ template<> void NodesFunctionSpace::sum( const Field& field, std::vector<double>
     }
   }
   eckit::mpi::broadcast(result,root);
+  N = nb_nodes_global_broadcasted_;
 }
 
 namespace { inline double sqr(const double& val) { return val*val; } }
 
-template<> void NodesFunctionSpace::maximum( const Field& field, double& result ) const
+template<> void NodesFunctionSpace::maximum( const Field& field, double& result, gidx_t& glb_idx ) const
 {
+  throw eckit::Exception("Untested and no glb_idx return",Here());
   double local_maximum = *std::max_element(field.data<double>(),field.data<double>()+field.size());
   eckit::mpi::all_reduce(local_maximum,result,eckit::mpi::max());
 }
 
-template<> void NodesFunctionSpace::maximum( const Field& field, std::vector<double>& result ) const
+template<> void NodesFunctionSpace::maximum( const Field& field, std::vector<double>& result, gidx_t& glb_idx ) const
 {
+  throw eckit::Exception("Untested and no glb_idx return",Here());
   size_t nvar = field.stride(0);
   std::vector<double> local_maximum(nvar,std::numeric_limits<double>::min());
   ArrayView<double,2> values( field.data<double>(), make_shape(field.shape(0),nvar) );
@@ -417,14 +423,16 @@ template<> void NodesFunctionSpace::maximum( const Field& field, std::vector<dou
   eckit::mpi::all_reduce(local_maximum,result,eckit::mpi::max());
 }
 
-template<> void NodesFunctionSpace::minimum( const Field& field, double& result ) const
+template<> void NodesFunctionSpace::minimum( const Field& field, double& result, gidx_t& glb_idx ) const
 {
+  throw eckit::Exception("Untested and no glb_idx return",Here());
   double local_minimum = *std::min_element(field.data<double>(),field.data<double>()+field.size());
   eckit::mpi::all_reduce(local_minimum,result,eckit::mpi::min());
 }
 
-template<> void NodesFunctionSpace::minimum( const Field& field, std::vector<double>& result ) const
+template<> void NodesFunctionSpace::minimum( const Field& field, std::vector<double>& result, std::vector<gidx_t>& glb_idx ) const
 {
+  throw eckit::Exception("Untested and no glb_idx return",Here());
   size_t nvar = field.stride(0);
   std::vector<double> local_minimum(nvar,std::numeric_limits<double>::max());
   ArrayView<double,2> values( field.data<double>(), make_shape(field.shape(0),nvar) );
@@ -436,43 +444,53 @@ template<> void NodesFunctionSpace::minimum( const Field& field, std::vector<dou
   eckit::mpi::all_reduce(local_minimum,result,eckit::mpi::min());
 }
 
-template<> void NodesFunctionSpace::mean( const Field& field, const double& sum, double& result ) const
+template<> void NodesFunctionSpace::mean( const Field& field, double& result, size_t& N ) const
 {
-  NOTIMP; // nb_nodes_global() == 0 for rank != 0
-  result = sum/nb_nodes_global();
+  throw eckit::Exception("Untested",Here());
+  sum(field,result,N);
+  result /= static_cast<double>(N);
 }
 
-template<> void NodesFunctionSpace::mean( const Field& field, double& result ) const
+template<> void NodesFunctionSpace::mean( const Field& field, std::vector<double>& result, size_t& N ) const
 {
-  double _sum;
-  sum(field,_sum);
-  mean(field,_sum,result);
+  throw eckit::Exception("Untested",Here());
+  sum(field,result,N);
+  for( size_t j=0; j<result.size(); ++j ) {
+    result[j] /= static_cast<double>(N);
+  }
 }
 
-template<> void NodesFunctionSpace::mean( const Field& field, std::vector<double>& result ) const
-{ NOTIMP; }
-
-template<> void NodesFunctionSpace::standard_deviation( const Field& field, const double& mu, double& result ) const
+template<> void NodesFunctionSpace::mean_and_standard_deviation( const Field& field, double& mu, double& sigma, size_t& N ) const
 {
-  Field::Ptr squared_diff_field( createField("",field) );
+  throw eckit::Exception("Untested",Here());
+  mean(field,mu,N);
+  Field::Ptr squared_diff_field( createField(field) );
   ArrayView<double,1> squared_diff( *squared_diff_field );
   ArrayView<double,1> values( field );
   for( size_t n=0; n<field.size(); ++n )
     squared_diff(n) = sqr( values(n) - mu );
 
-  mean(*squared_diff_field,result);
-  result = std::sqrt(result);
+  mean(*squared_diff_field,sigma,N);
+  sigma = std::sqrt(sigma);
 }
 
-template<> void NodesFunctionSpace::standard_deviation( const Field& field, double& result ) const
+template<> void NodesFunctionSpace::mean_and_standard_deviation( const Field& field, std::vector<double>& mu, std::vector<double>& sigma, size_t& N ) const
 {
-  double mu;
-  mean(field,mu);
-  standard_deviation(field,mu,result);
+  throw eckit::Exception("Untested",Here());
+  mean(field,mu,N);
+  Field::Ptr squared_diff_field( createField(field) );
+  ArrayView<double,2> squared_diff( squared_diff_field->data<double>(), make_shape(squared_diff_field->shape(0),squared_diff_field->stride(0)) );
+  ArrayView<double,2> values( field.data<double>(), make_shape(field.shape(0),field.stride(0)) );
+  for( size_t n=0; n<values.shape(0); ++n ) {
+    for( size_t j=0; j<values.shape(1); ++j ) {
+      squared_diff(n,j) = sqr( values(n,j) - mu[j] );
+    }
+  }
+  mean(*squared_diff_field,sigma,N);
+  for( size_t j=0; j<sigma.size(); ++j ) {
+    sigma[j] = std::sqrt(sigma[j]);
+  }
 }
-
-template<> void NodesFunctionSpace::standard_deviation( const Field& field, std::vector<double>& result ) const
-{ NOTIMP; }
 
 
 // ----------------------------------------------------------------------
@@ -490,98 +508,72 @@ size_t NodesColumnFunctionSpace::nb_levels() const
   return nb_levels_;
 }
 
-template<> Field* NodesColumnFunctionSpace::createField<int>(const std::string& name) const {
-  return Field::create<int>(name,make_shape(nb_nodes(),nb_levels_));
+Field* NodesColumnFunctionSpace::createField(const std::string& datatype) const {
+  return Field::create(make_shape(nb_nodes(),nb_levels()),datatype);
 }
 
-template<> Field* NodesColumnFunctionSpace::createField<long>(const std::string& name) const {
-  return Field::create<long>(name,make_shape(nb_nodes(),nb_levels_));
+Field* NodesColumnFunctionSpace::createField(const std::string& name, const std::string& datatype) const {
+  return Field::create(name,make_shape(nb_nodes(),nb_levels()),datatype);
 }
 
-template<> Field* NodesColumnFunctionSpace::createField<float>(const std::string& name) const {
-  return Field::create<float>(name,make_shape(nb_nodes(),nb_levels_));
-}
-
-template<> Field* NodesColumnFunctionSpace::createField<double>(const std::string& name) const {
-  return Field::create<double>(name,make_shape(nb_nodes(),nb_levels_));
-}
-
-template<> Field* NodesColumnFunctionSpace::createField<int>(const std::string& name, const std::vector<size_t>& variables) const {
-  std::vector<size_t> shape(1,nb_nodes());   shape.push_back(nb_levels_);
+Field* NodesColumnFunctionSpace::createField(const std::vector<size_t>& variables, const std::string& datatype) const {
+  std::vector<size_t> shape(1,nb_nodes()); shape.push_back(nb_levels());
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
-  return Field::create<int>(name,shape);
+  return Field::create(shape,datatype);
 }
 
-template<> Field* NodesColumnFunctionSpace::createField<long>(const std::string& name, const std::vector<size_t>& variables) const {
-  std::vector<size_t> shape(1,nb_nodes());   shape.push_back(nb_levels_);
+Field* NodesColumnFunctionSpace::createField(const std::string& name, const std::vector<size_t>& variables, const std::string& datatype) const {
+  std::vector<size_t> shape(1,nb_nodes()); shape.push_back(nb_levels());
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
-  return Field::create<long>(name,shape);
+  return Field::create(name, shape,datatype);
 }
 
-template<> Field* NodesColumnFunctionSpace::createField<float>(const std::string& name, const std::vector<size_t>& variables) const {
-  std::vector<size_t> shape(1,nb_nodes());   shape.push_back(nb_levels_);
-  for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
-  return Field::create<float>(name,shape);
-}
-
-template<> Field* NodesColumnFunctionSpace::createField<double>(const std::string& name, const std::vector<size_t>& variables) const {
-  std::vector<size_t> shape(1,nb_nodes());   shape.push_back(nb_levels_);
-  for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
-  return Field::create<double>(name,shape);
-}
-
-template<> Field* NodesColumnFunctionSpace::createGlobalField<int>(const std::string& name) const {
-  return Field::create<int>(name, make_shape(nb_nodes_global(),nb_levels_));
-}
-
-template<> Field* NodesColumnFunctionSpace::createGlobalField<long>(const std::string& name) const {
-  return Field::create<long>(name, make_shape(nb_nodes_global(),nb_levels_) );
-}
-
-template<> Field* NodesColumnFunctionSpace::createGlobalField<float>(const std::string& name) const {
-  return Field::create<float>(name, make_shape(nb_nodes_global(),nb_levels_) );
-}
-
-template<> Field* NodesColumnFunctionSpace::createGlobalField<double>(const std::string& name) const {
-  return Field::create<double>(name, make_shape(nb_nodes_global(),nb_levels_) );
-}
-
-template<> Field* NodesColumnFunctionSpace::createGlobalField<int>(const std::string& name, const std::vector<size_t>& variables) const {
-  std::vector<size_t> shape(1,nb_nodes());   shape.push_back(nb_levels_);
-  for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
-  return Field::create<int>(name, shape);
-}
-
-template<> Field* NodesColumnFunctionSpace::createGlobalField<long>(const std::string& name, const std::vector<size_t>& variables) const {
-  std::vector<size_t> shape(1,nb_nodes_global());   shape.push_back(nb_levels_);
-  for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
-  return Field::create<long>(name, shape);
-}
-
-template<> Field* NodesColumnFunctionSpace::createGlobalField<float>(const std::string& name, const std::vector<size_t>& variables) const {
-  std::vector<size_t> shape(1,nb_nodes());   shape.push_back(nb_levels_);
-  for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
-  return Field::create<float>(name, shape);
-}
-
-template<> Field* NodesColumnFunctionSpace::createGlobalField<double>(const std::string& name, const std::vector<size_t>& variables) const {
-  std::vector<size_t> shape(1,nb_nodes());   shape.push_back(nb_levels_);
-  for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
-  return Field::create<double>(name, shape);
-}
-
-Field* NodesColumnFunctionSpace::createGlobalField(const std::string& name, const Field& other) const
-{
+Field* NodesColumnFunctionSpace::createField(const Field& other) const {
   ArrayShape shape = other.shape();
-  shape[0] = nb_nodes_global();
+  shape[0] = nb_nodes();
+  shape[1] = nb_levels();
+  return Field::create(shape,other.datatype());
+}
+
+Field* NodesColumnFunctionSpace::createField(const std::string& name, const Field& other) const {
+  ArrayShape shape = other.shape();
+  shape[0] = nb_nodes();
+  shape[1] = nb_levels();
   return Field::create(name,shape,other.datatype());
 }
 
-Field* NodesColumnFunctionSpace::createGlobalField(const Field& other) const
-{
+Field* NodesColumnFunctionSpace::createGlobalField(const std::string& datatype) const {
+  return Field::create(make_shape(nb_nodes_global(),nb_levels()),datatype);
+}
+
+Field* NodesColumnFunctionSpace::createGlobalField(const std::string& name, const std::string& datatype) const {
+  return Field::create(name,make_shape(nb_nodes_global(),nb_levels()),datatype);
+}
+
+Field* NodesColumnFunctionSpace::createGlobalField(const std::vector<size_t>& variables, const std::string& datatype) const {
+  std::vector<size_t> shape(1,nb_nodes_global()); shape.push_back(nb_levels());
+  for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
+  return Field::create(shape,datatype);
+}
+
+Field* NodesColumnFunctionSpace::createGlobalField(const std::string& name, const std::vector<size_t>& variables, const std::string& datatype) const {
+  std::vector<size_t> shape(1,nb_nodes_global()); shape.push_back(nb_levels());
+  for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
+  return Field::create(name, shape,datatype);
+}
+
+Field* NodesColumnFunctionSpace::createGlobalField(const Field& other) const {
   ArrayShape shape = other.shape();
   shape[0] = nb_nodes_global();
+  shape[1] = nb_levels();
   return Field::create(shape,other.datatype());
+}
+
+Field* NodesColumnFunctionSpace::createGlobalField(const std::string& name, const Field& other) const {
+  ArrayShape shape = other.shape();
+  shape[0] = nb_nodes_global();
+  shape[1] = nb_levels();
+  return Field::create(name,shape,other.datatype());
 }
 
 // ----------------------------------------------------------------------

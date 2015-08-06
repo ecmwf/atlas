@@ -200,9 +200,11 @@ public: // methods
                 ArrayView<DATA_TYPE,LRANK>& ldata,
                 const size_t root = 0 ) const;
 
-  int glb_dof() const { return glbcnt_; }
+  int glb_dof() const { return glbcnt_[myproc]; }
 
   int loc_dof() const { return loccnt_; }
+
+  int glb_dof(size_t proc) const { return glbcnt_[proc]; }
 
 private: // methods
   template< typename DATA_TYPE>
@@ -224,7 +226,7 @@ private: // data
 
   std::string name_;
   int               loccnt_;
-  int               glbcnt_;
+  std::vector<int>  glbcnt_;
   std::vector<int>  loccounts_;
   std::vector<int>  locdispls_;
   std::vector<int>  glbcounts_;
@@ -260,7 +262,7 @@ void GatherScatter::gather( mpl::Field<DATA_TYPE const> lfields[],
     const size_t lvar_size = std::accumulate(lfields[jfield].var_shape.data(),lfields[jfield].var_shape.data()+lfields[jfield].var_rank,1,std::multiplies<size_t>());
     const size_t gvar_size = std::accumulate(gfields[jfield].var_shape.data(),gfields[jfield].var_shape.data()+gfields[jfield].var_rank,1,std::multiplies<size_t>());
     const int loc_size = loccnt_ * lvar_size;
-    const int glb_size = glbcnt_ * gvar_size;
+    const int glb_size = glbcnt_[myproc] * gvar_size;
     std::vector<DATA_TYPE> loc_buffer(loc_size);
     std::vector<DATA_TYPE> glb_buffer(glb_size);
     std::vector<int> glb_displs(nproc);
@@ -343,7 +345,7 @@ void GatherScatter::scatter( mpl::Field<DATA_TYPE const> gfields[],
     const int lvar_size = std::accumulate(lfields[jfield].var_shape.data(),lfields[jfield].var_shape.data()+lfields[jfield].var_rank,1,std::multiplies<int>());
     const int gvar_size = std::accumulate(gfields[jfield].var_shape.data(),gfields[jfield].var_shape.data()+gfields[jfield].var_rank,1,std::multiplies<int>());
     const int loc_size = loccnt_ * lvar_size;
-    const int glb_size = glbcnt_ * gvar_size;
+    const int glb_size = glbcnt_[myproc] * gvar_size;
     std::vector<DATA_TYPE> loc_buffer(loc_size);
     std::vector<DATA_TYPE> glb_buffer(glb_size);
     std::vector<int> glb_displs(nproc);
@@ -581,7 +583,7 @@ void GatherScatter::gather( const ArrayView<DATA_TYPE,LRANK>& ldata,
                             ArrayView<DATA_TYPE,GRANK>& gdata,
                             const size_t root ) const
 {
-  if( ldata.shape(0) == parsize_ && gdata.shape(0) == glbcnt_ )
+  if( ldata.shape(0) == parsize_ && gdata.shape(0) == glbcnt_[myproc] )
   {
     std::vector< mpl::Field<DATA_TYPE const> > lfields(1, mpl::Field<DATA_TYPE const>(ldata) );
     std::vector< mpl::Field<DATA_TYPE> >       gfields(1, mpl::Field<DATA_TYPE>(gdata) );
@@ -591,7 +593,7 @@ void GatherScatter::gather( const ArrayView<DATA_TYPE,LRANK>& ldata,
   {
     DEBUG_VAR(parsize_);
     DEBUG_VAR(ldata.shape(0));
-    DEBUG_VAR(glbcnt_);
+    DEBUG_VAR(glbcnt_[myproc]);
     DEBUG_VAR(gdata.shape(0));
     NOTIMP; // Need to implement with parallel ranks > 1
   }
@@ -602,7 +604,7 @@ void GatherScatter::scatter( const ArrayView<DATA_TYPE,GRANK>& gdata,
                              ArrayView<DATA_TYPE,LRANK>& ldata,
                              const size_t root ) const
 {
-  if( ldata.shape(0) == parsize_ && gdata.shape(0) == glbcnt_ )
+  if( ldata.shape(0) == parsize_ && gdata.shape(0) == glbcnt_[myproc] )
   {
     std::vector< mpl::Field<DATA_TYPE const> > gfields(1, mpl::Field<DATA_TYPE const>(gdata) );
     std::vector< mpl::Field<DATA_TYPE> >       lfields(1, mpl::Field<DATA_TYPE>(ldata) );
@@ -612,7 +614,7 @@ void GatherScatter::scatter( const ArrayView<DATA_TYPE,GRANK>& gdata,
   {
     DEBUG_VAR(parsize_);
     DEBUG_VAR(ldata.shape(0));
-    DEBUG_VAR(glbcnt_);
+    DEBUG_VAR(glbcnt_[myproc]);
     DEBUG_VAR(gdata.shape(0));
     NOTIMP; // Need to implement with parallel ranks > 1
   }

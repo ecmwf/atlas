@@ -39,160 +39,155 @@ class NodesFunctionSpace : public next::FunctionSpace
 {
 public:
 
-  NodesFunctionSpace(const std::string& name, Mesh& mesh, const Halo& = Halo(0) );
+    NodesFunctionSpace(const std::string& name, Mesh& mesh, const Halo& = Halo(0) );
 
-  virtual ~NodesFunctionSpace();
+    virtual ~NodesFunctionSpace();
 
-  size_t nb_nodes() const;
-  size_t nb_nodes_global() const; // Only on MPI rank 0, will this be different 0
+    size_t nb_nodes() const;
+    size_t nb_nodes_global() const; // Only on MPI rank 0, will this be different 0
 
-  const Mesh& mesh() const { return mesh_; }
-        Mesh& mesh()       { return mesh_; }
+    const Mesh& mesh() const { return mesh_; }
+          Mesh& mesh()       { return mesh_; }
 
-  const Nodes& nodes() const { return nodes_; }
-        Nodes& nodes()       { return nodes_; }
+    const Nodes& nodes() const { return nodes_; }
+          Nodes& nodes()       { return nodes_; }
 
 
 
 // -- Local Field creation methods
 
-  /// @brief Create an unnamed scalar field
-  template< typename DATATYPE >
-  Field* createField() const;
+    /// @brief Create an unnamed scalar field
+    template< typename DATATYPE >
+    Field* createField() const;
 
-  /// @brief Create an unnamed scalar field
-  Field* createField(const std::string& datatype) const;
+    /// @brief Create an unnamed scalar field
+    Field* createField(const std::string& datatype) const;
 
-  /// @brief Create a named scalar field
-  template< typename DATATYPE >
-  Field* createField(const std::string& name) const;
+    /// @brief Create a named scalar field
+    template< typename DATATYPE >
+    Field* createField(const std::string& name) const;
 
-  /// @brief Create a named scalar field
-  Field* createField(const std::string& name, const std::string& datatype) const;
+    /// @brief Create a named scalar field
+    Field* createField(const std::string& name, const std::string& datatype) const;
 
-  /// @brief Create an unnamed field with specified dimensions for the variables
-  template< typename DATATYPE >
-  Field* createField(const std::vector<size_t>& variables) const;
+    /// @brief Create an unnamed field with specified dimensions for the variables
+    template< typename DATATYPE >
+    Field* createField(const std::vector<size_t>& variables) const;
 
-  /// @brief Create an unnamed field with specified dimensions for the variables
-  Field* createField(const std::vector<size_t>& variables, const std::string& datatype) const;
+    /// @brief Create an unnamed field with specified dimensions for the variables
+    Field* createField(const std::vector<size_t>& variables, const std::string& datatype) const;
 
-  /// @brief Create a named field with specified dimensions for the variables
-  template< typename DATATYPE >
-  Field* createField(const std::string& name, const std::vector<size_t>& variables) const;
+    /// @brief Create a named field with specified dimensions for the variables
+    template< typename DATATYPE >
+    Field* createField(const std::string& name, const std::vector<size_t>& variables) const;
 
-  /// @brief Create a named field with specified dimensions for the variables
-  Field* createField(const std::string& name, const std::vector<size_t>& variables, const std::string& datatype) const;
+    /// @brief Create a named field with specified dimensions for the variables
+    Field* createField(const std::string& name, const std::vector<size_t>& variables, const std::string& datatype) const;
 
-  /// @brief Create an unnamed field based on other field (datatype and dimensioning)
-  Field* createField(const Field&) const;
+    /// @brief Create an unnamed field based on other field (datatype and dimensioning)
+    Field* createField(const Field&) const;
 
-  /// @brief Create a named field based on other field (datatype and dimensioning)
-  Field* createField(const std::string& name, const Field&) const;
+    /// @brief Create a named field based on other field (datatype and dimensioning)
+    Field* createField(const std::string& name, const Field&) const;
 
 
 
 // -- Global Field creation methods
 
-  /// @brief Create an unnamed global scalar field
-  template< typename DATATYPE >
-  Field* createGlobalField() const;
+    /// @brief Create an unnamed global scalar field
+    template< typename DATATYPE >
+    Field* createGlobalField() const;
 
-  /// @brief Create an unnamed global scalar field
-  Field* createGlobalField(const std::string& datatype) const;
+    /// @brief Create an unnamed global scalar field
+    Field* createGlobalField(const std::string& datatype) const;
 
-  /// @brief Create a named global scalar field
-  template< typename DATATYPE >
-  Field* createGlobalField(const std::string& name) const;
+    /// @brief Create a named global scalar field
+    template< typename DATATYPE >
+    Field* createGlobalField(const std::string& name) const;
 
-  /// @brief Create a named global scalar field
-  Field* createGlobalField(const std::string& name, const std::string& datatype) const;
+    /// @brief Create a named global scalar field
+    Field* createGlobalField(const std::string& name, const std::string& datatype) const;
 
-  /// @brief Create an unnamed global field with specified dimensions for the variables
-  template< typename DATATYPE >
-  Field* createGlobalField(const std::vector<size_t>& variables) const;
+    /// @brief Create an unnamed global field with specified dimensions for the variables
+    template< typename DATATYPE >
+    Field* createGlobalField(const std::vector<size_t>& variables) const;
 
-  /// @brief Create an unnamed global field with specified dimensions for the variables
-  Field* createGlobalField(const std::vector<size_t>& variables, const std::string& datatype) const;
+    /// @brief Create an unnamed global field with specified dimensions for the variables
+    Field* createGlobalField(const std::vector<size_t>& variables, const std::string& datatype) const;
 
-  /// @brief Create a named global field with specified dimensions for the variables
-  template< typename DATATYPE >
-  Field* createGlobalField(const std::string& name, const std::vector<size_t>& variables) const;
+    /// @brief Create a named global field with specified dimensions for the variables
+    template< typename DATATYPE >
+    Field* createGlobalField(const std::string& name, const std::vector<size_t>& variables) const;
 
-  /// @brief Create a named field with specified dimensions for the variables
-  Field* createGlobalField(const std::string& name, const std::vector<size_t>& variables, const std::string& datatype) const;
+    /// @brief Create a named field with specified dimensions for the variables
+    Field* createGlobalField(const std::string& name, const std::vector<size_t>& variables, const std::string& datatype) const;
 
-  /// @brief Create an unnamed global field based on other field (datatype and dimensioning)
-  Field* createGlobalField(const Field&) const;
+    /// @brief Create an unnamed global field based on other field (datatype and dimensioning)
+    Field* createGlobalField(const Field&) const;
 
-  /// @brief Create a named global field based on other field (datatype and dimensioning)
-  Field* createGlobalField(const std::string& name, const Field&) const;
+    /// @brief Create a named global field based on other field (datatype and dimensioning)
+    Field* createGlobalField(const std::string& name, const Field&) const;
 
 
 
 // -- Parallelisation aware methods
 
-  void haloExchange( FieldSet& ) const;
-  void haloExchange( Field& ) const;
+    void haloExchange( FieldSet& ) const;
+    void haloExchange( Field& ) const;
 
-  void gather( const FieldSet&, FieldSet& ) const;
-  void gather( const Field&, Field& ) const;
+    void gather( const FieldSet&, FieldSet& ) const;
+    void gather( const Field&, Field& ) const;
 
-  void scatter( const FieldSet&, FieldSet& ) const;
-  void scatter( const Field&, Field& ) const;
+    void scatter( const FieldSet&, FieldSet& ) const;
+    void scatter( const Field&, Field& ) const;
 
-  std::string checksum( const FieldSet& ) const;
-  std::string checksum( const Field& ) const;
+    std::string checksum( const FieldSet& ) const;
+    std::string checksum( const Field& ) const;
 
-  template< typename DATATYPE >
-  void sum( const Field&, DATATYPE& ) const;
+    template< typename DATATYPE >
+    void sum( const Field&, DATATYPE&, size_t& N ) const;
 
-  template< typename DATATYPE >
-  void sum( const Field&, std::vector<DATATYPE>& ) const;
+    template< typename DATATYPE >
+    void sum( const Field&, std::vector<DATATYPE>&, size_t& N ) const;
 
-  template< typename DATATYPE >
-  void maximum( const Field&, DATATYPE& ) const;
+    template< typename DATATYPE >
+    void maximum( const Field&, DATATYPE&, gidx_t& glb_idx ) const;
 
-  template< typename DATATYPE >
-  void maximum( const Field&, std::vector<DATATYPE>& ) const;
+    template< typename DATATYPE >
+    void maximum( const Field&, std::vector<DATATYPE>&, std::vector<gidx_t>& glb_idx ) const;
 
-  template< typename DATATYPE >
-  void minimum( const Field&, DATATYPE& ) const;
+    template< typename DATATYPE >
+    void minimum( const Field&, DATATYPE&, gidx_t& glb_idx ) const;
 
-  template< typename DATATYPE >
-  void minimum( const Field&, std::vector<DATATYPE>& ) const;
+    template< typename DATATYPE >
+    void minimum( const Field&, std::vector<DATATYPE>&, std::vector<gidx_t>& glb_idx ) const;
 
-  template< typename DATATYPE >
-  void mean( const Field&, DATATYPE& ) const;
+    template< typename DATATYPE >
+    void mean( const Field&, DATATYPE& mean, size_t& N ) const;
 
-  template< typename DATATYPE >
-  void mean( const Field&, std::vector<DATATYPE>& ) const;
+    template< typename DATATYPE >
+    void mean( const Field&, std::vector<DATATYPE>& mean, size_t& N ) const;
 
-  template< typename DATATYPE >
-  void mean( const Field&, const DATATYPE& sum, DATATYPE& ) const;
+    template< typename DATATYPE >
+    void mean_and_standard_deviation( const Field&, DATATYPE& mean, DATATYPE& stddev, size_t& N ) const;
 
-  template< typename DATATYPE >
-  void standard_deviation( const Field&, DATATYPE& ) const;
-
-  template< typename DATATYPE >
-  void standard_deviation( const Field&, std::vector<DATATYPE>& ) const;
-
-  template< typename DATATYPE >
-  void standard_deviation( const Field&, const DATATYPE& mean, DATATYPE& ) const;
+    template< typename DATATYPE >
+    void mean_and_standard_deviation( const Field&, std::vector<DATATYPE>& mean, std::vector<DATATYPE>& stddev, size_t& N ) const;
 
 private: // methods
 
-  std::string halo_name() const;
-  std::string gather_scatter_name() const;
-  std::string checksum_name() const;
+    std::string halo_name() const;
+    std::string gather_scatter_name() const;
+    std::string checksum_name() const;
 
 private: // data
 
-  Mesh& mesh_; // non-const because functionspace may modify mesh
-  Nodes& nodes_; // non-const because functionspace may modify mesh
-  size_t halo_;
-  size_t nb_nodes_;
-  size_t nb_nodes_global_;
+    Mesh& mesh_; // non-const because functionspace may modify mesh
+    Nodes& nodes_; // non-const because functionspace may modify mesh
+    size_t halo_;
+    size_t nb_nodes_;
+    size_t nb_nodes_global_;
+    size_t nb_nodes_global_broadcasted_;
 };
 
 // -------------------------------------------------------------------
@@ -201,37 +196,92 @@ class NodesColumnFunctionSpace : public NodesFunctionSpace
 {
 public:
 
-  NodesColumnFunctionSpace(const std::string& name, Mesh& mesh, size_t nb_levels, const Halo& = Halo(0) );
+    NodesColumnFunctionSpace(const std::string& name, Mesh& mesh, size_t nb_levels, const Halo& = Halo(0) );
 
-  virtual ~NodesColumnFunctionSpace();
+    virtual ~NodesColumnFunctionSpace();
 
-  /// @brief Create a scalar field
-  template< typename DATATYPE >
-  Field* createField(const std::string& name) const;
+    size_t nb_levels() const;
 
-  /// @brief Create a field with specified dimensions for the variables
-  template< typename DATATYPE >
-  Field* createField(const std::string& name, const std::vector<size_t>& variables) const;
 
-  /// @brief Create a global scalar field
-  template< typename DATATYPE >
-  Field* createGlobalField(const std::string& name) const;
+// -- Local Field creation methods
 
-  /// @brief Create a global field with specified dimensions for the variables
-  template< typename DATATYPE >
-  Field* createGlobalField(const std::string& name, const std::vector<size_t>& variables) const;
+    /// @brief Create an unnamed scalar field
+    template< typename DATATYPE >
+    Field* createField() const;
 
-  /// @brief Create a global field based on other field (datatype and dimensioning)
-  Field* createGlobalField(const std::string& name, const Field&) const;
+    /// @brief Create an unnamed scalar field
+    Field* createField(const std::string& datatype) const;
 
-  /// @brief Create a global field based on other field (datatype and dimensioning)
-  Field* createGlobalField(const Field&) const;
+    /// @brief Create a named scalar field
+    template< typename DATATYPE >
+    Field* createField(const std::string& name) const;
 
-  size_t nb_levels() const;
+    /// @brief Create a named scalar field
+    Field* createField(const std::string& name, const std::string& datatype) const;
+
+    /// @brief Create an unnamed field with specified dimensions for the variables
+    template< typename DATATYPE >
+    Field* createField(const std::vector<size_t>& variables) const;
+
+    /// @brief Create an unnamed field with specified dimensions for the variables
+    Field* createField(const std::vector<size_t>& variables, const std::string& datatype) const;
+
+    /// @brief Create a named field with specified dimensions for the variables
+    template< typename DATATYPE >
+    Field* createField(const std::string& name, const std::vector<size_t>& variables) const;
+
+    /// @brief Create a named field with specified dimensions for the variables
+    Field* createField(const std::string& name, const std::vector<size_t>& variables, const std::string& datatype) const;
+
+    /// @brief Create an unnamed field based on other field (datatype and dimensioning)
+    Field* createField(const Field&) const;
+
+    /// @brief Create a named field based on other field (datatype and dimensioning)
+    Field* createField(const std::string& name, const Field&) const;
+
+
+
+// -- Global Field creation methods
+
+    /// @brief Create an unnamed global scalar field
+    template< typename DATATYPE >
+    Field* createGlobalField() const;
+
+    /// @brief Create an unnamed global scalar field
+    Field* createGlobalField(const std::string& datatype) const;
+
+    /// @brief Create a named global scalar field
+    template< typename DATATYPE >
+    Field* createGlobalField(const std::string& name) const;
+
+    /// @brief Create a named global scalar field
+    Field* createGlobalField(const std::string& name, const std::string& datatype) const;
+
+    /// @brief Create an unnamed global field with specified dimensions for the variables
+    template< typename DATATYPE >
+    Field* createGlobalField(const std::vector<size_t>& variables) const;
+
+    /// @brief Create an unnamed global field with specified dimensions for the variables
+    Field* createGlobalField(const std::vector<size_t>& variables, const std::string& datatype) const;
+
+    /// @brief Create a named global field with specified dimensions for the variables
+    template< typename DATATYPE >
+    Field* createGlobalField(const std::string& name, const std::vector<size_t>& variables) const;
+
+    /// @brief Create a named field with specified dimensions for the variables
+    Field* createGlobalField(const std::string& name, const std::vector<size_t>& variables, const std::string& datatype) const;
+
+    /// @brief Create an unnamed global field based on other field (datatype and dimensioning)
+    Field* createGlobalField(const Field&) const;
+
+    /// @brief Create a named global field based on other field (datatype and dimensioning)
+    Field* createGlobalField(const std::string& name, const Field&) const;
+
+
 
 private: // data
 
-  size_t nb_levels_;
+    size_t nb_levels_;
 };
 
 // -------------------------------------------------------------------
@@ -239,51 +289,102 @@ private: // data
 template< typename DATATYPE >
 Field* NodesFunctionSpace::createField() const
 {
-  return createField(DataType::datatype<DATATYPE>());
+    return createField(DataType::datatype<DATATYPE>());
 }
 
 template< typename DATATYPE >
 Field* NodesFunctionSpace::createField(const std::string& name) const
 {
-  return createField(name,DataType::datatype<DATATYPE>());
+    return createField(name,DataType::datatype<DATATYPE>());
 }
 
 template< typename DATATYPE >
 Field* NodesFunctionSpace::createField(const std::vector<size_t>& variables) const
 {
-  return createField(variables,DataType::datatype<DATATYPE>());
+    return createField(variables,DataType::datatype<DATATYPE>());
 }
 
 template< typename DATATYPE >
 Field* NodesFunctionSpace::createField(const std::string& name, const std::vector<size_t>& variables) const
 {
-  return createField(name,variables,DataType::datatype<DATATYPE>());
+    return createField(name,variables,DataType::datatype<DATATYPE>());
 }
 
 
 template< typename DATATYPE >
 Field* NodesFunctionSpace::createGlobalField() const
 {
-  return createGlobalField(DataType::datatype<DATATYPE>());
+    return createGlobalField(DataType::datatype<DATATYPE>());
 }
 
 template< typename DATATYPE >
 Field* NodesFunctionSpace::createGlobalField(const std::string& name) const
 {
-  return createGlobalField(name,DataType::datatype<DATATYPE>());
+    return createGlobalField(name,DataType::datatype<DATATYPE>());
 }
 
 template< typename DATATYPE >
 Field* NodesFunctionSpace::createGlobalField(const std::vector<size_t>& variables) const
 {
-  return createGlobalField(variables,DataType::datatype<DATATYPE>());
+    return createGlobalField(variables,DataType::datatype<DATATYPE>());
 }
 
 template< typename DATATYPE >
 Field* NodesFunctionSpace::createGlobalField(const std::string& name, const std::vector<size_t>& variables) const
 {
-  return createGlobalField(name,variables,DataType::datatype<DATATYPE>());
+    return createGlobalField(name,variables,DataType::datatype<DATATYPE>());
 }
+
+
+template< typename DATATYPE >
+Field* NodesColumnFunctionSpace::createField() const
+{
+    return createField(DataType::datatype<DATATYPE>());
+}
+
+template< typename DATATYPE >
+Field* NodesColumnFunctionSpace::createField(const std::string& name) const
+{
+    return createField(name,DataType::datatype<DATATYPE>());
+}
+
+template< typename DATATYPE >
+Field* NodesColumnFunctionSpace::createField(const std::vector<size_t>& variables) const
+{
+    return createField(variables,DataType::datatype<DATATYPE>());
+}
+
+template< typename DATATYPE >
+Field* NodesColumnFunctionSpace::createField(const std::string& name, const std::vector<size_t>& variables) const
+{
+    return createField(name,variables,DataType::datatype<DATATYPE>());
+}
+
+
+template< typename DATATYPE >
+Field* NodesColumnFunctionSpace::createGlobalField() const
+{
+    return createGlobalField(DataType::datatype<DATATYPE>());
+}
+
+template< typename DATATYPE >
+Field* NodesColumnFunctionSpace::createGlobalField(const std::string& name) const
+{
+  return createGlobalField(name,DataType::datatype<DATATYPE>());
+}
+
+template< typename DATATYPE >
+Field* NodesColumnFunctionSpace::createGlobalField(const std::vector<size_t>& variables) const
+{
+    return createGlobalField(variables,DataType::datatype<DATATYPE>());
+}
+
+template< typename DATATYPE >
+Field* NodesColumnFunctionSpace::createGlobalField(const std::string& name, const std::vector<size_t>& variables) const
+{
+    return createGlobalField(name,variables,DataType::datatype<DATATYPE>());
+}
+
 
 extern "C" {
 NodesFunctionSpace* atlas__NodesFunctionSpace__new (const char* name, Mesh* mesh, int halo);

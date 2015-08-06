@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "atlas/Metadata.h"
+#include "atlas/functionspace/NodesFunctionSpace.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -50,19 +51,19 @@ public:
   /// Write fieldset to file
   ///  Depending on argument "mode", the fields will be appended,
   ///  or existing file will be overwritten
-  void write(const FieldSet& fieldset, const eckit::PathName& file_path, openmode mode = std::ios::out) const;
+  void write(const FieldSet& fieldset, const functionspace::NodesFunctionSpace&, const eckit::PathName& file_path, openmode mode = std::ios::out) const;
 
   /// Write field to file
   ///  Depending on argument "mode", the fields will be appended,
   ///  or existing file will be overwritten
-  void write(const Field& field, const eckit::PathName& file_path, openmode mode = std::ios::out) const;
+  void write(const Field& field, const functionspace::NodesFunctionSpace&, const eckit::PathName& file_path, openmode mode = std::ios::out) const;
 
 public:
   Metadata options;
 };
 
 //------------------------------------------------------------------------------------------------------
-
+#define NODESFUNCTIONSPACE functionspace::NodesFunctionSpace
 // C wrapper interfaces to C++ routines
 extern "C" {
 Gmsh* atlas__Gmsh__new();
@@ -71,10 +72,10 @@ Mesh* atlas__Gmsh__read(Gmsh* This, char* file_path);
 void atlas__Gmsh__write(Gmsh* This, Mesh* mesh, char* file_path);
 Mesh* atlas__read_gmsh(char* file_path);
 void atlas__write_gmsh_mesh(Mesh* mesh, char* file_path);
-void atlas__write_gmsh_fieldset(FieldSet* fieldset, char* file_path, int mode);
-void atlas__write_gmsh_field(Field* field, char* file_path, int mode);
+void atlas__write_gmsh_fieldset(FieldSet* fieldset, NODESFUNCTIONSPACE* function_space, char* file_path, int mode);
+void atlas__write_gmsh_field(Field* field, NODESFUNCTIONSPACE* function_space, char* file_path, int mode);
 }
-
+#undef NODESFUNCTIONSPACE
 //------------------------------------------------------------------------------------------------------
 
 }  // namespace io

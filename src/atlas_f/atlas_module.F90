@@ -110,6 +110,7 @@ integer, public, parameter :: ATLAS_KIND_GIDX = c_long
 #include "atlas_module_FieldSet_i.f"
 #include "atlas_module_JSON_i.f"
 #include "atlas_module_Metadata_i.f"
+#include "atlas_module_NodesFunctionSpace_i.f"
 #include "atlas_module_PathName_i.f"
 #include "atlas_module_Error_i.f"
 #include "atlas_module_GridDistribution_i.f"
@@ -355,6 +356,7 @@ end function
 #include "atlas_module_FieldSet_c.f"
 #include "atlas_module_JSON_c.f"
 #include "atlas_module_Metadata_c.f"
+#include "atlas_module_NodesFunctionSpace_c.f"
 #include "atlas_module_PathName_c.f"
 #include "atlas_module_Error_c.f"
 #include "atlas_module_GridDistribution_c.f"
@@ -434,25 +436,27 @@ subroutine atlas_write_gmsh(mesh,filename)
   call atlas__write_gmsh_mesh(mesh%cpp_object_ptr,c_str(filename))
 end subroutine atlas_write_gmsh
 
-subroutine atlas_write_gmsh_field(field,filename,mode)
+subroutine atlas_write_gmsh_field(field,function_space,filename,mode)
   type(atlas_Field), intent(in) :: field
+  type(atlas_NodesFunctionSpace), intent(in) :: function_space
   character(len=*), intent(in) :: filename
   integer(kind(openmode)), optional :: mode
   if( present(mode) ) then
-    call atlas__write_gmsh_field(field%cpp_object_ptr,c_str(filename),mode)
+    call atlas__write_gmsh_field(field%cpp_object_ptr,function_space%cpp_object_ptr,c_str(filename),mode)
   else
-    call atlas__write_gmsh_field(field%cpp_object_ptr,c_str(filename),out)
+    call atlas__write_gmsh_field(field%cpp_object_ptr,function_space%cpp_object_ptr,c_str(filename),out)
   endif
 end subroutine atlas_write_gmsh_field
 
-subroutine atlas_write_gmsh_fieldset(fieldset,filename,mode)
+subroutine atlas_write_gmsh_fieldset(fieldset,function_space,filename,mode)
   type(atlas_FieldSet), intent(in) :: fieldset
+  type(atlas_NodesFunctionSpace), intent(in) :: function_space
   character(len=*), intent(in) :: filename
   integer(kind(openmode)), optional :: mode
   if( present(mode) ) then
-    call atlas__write_gmsh_fieldset(fieldset%cpp_object_ptr,c_str(filename),mode)
+    call atlas__write_gmsh_fieldset(fieldset%cpp_object_ptr,function_space%cpp_object_ptr,c_str(filename),mode)
   else
-    call atlas__write_gmsh_fieldset(fieldset%cpp_object_ptr,c_str(filename),out)
+    call atlas__write_gmsh_fieldset(fieldset%cpp_object_ptr,function_space%cpp_object_ptr,c_str(filename),out)
   endif
 end subroutine atlas_write_gmsh_fieldset
 

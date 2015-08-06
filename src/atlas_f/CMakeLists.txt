@@ -60,6 +60,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/runtime/ErrorHandling.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/atlas.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mpi/mpi.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/trans/Trans.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/NodesFunctionSpace.h)
 generate_fortran_bindings(FORTRAN_BINDINGS atlas_logging.h)
 generate_fortran_bindings(FORTRAN_BINDINGS atlas_resource.h)
 generate_fortran_bindings(FORTRAN_BINDINGS atlas_value.h)
@@ -89,6 +90,8 @@ ecbuild_add_library( TARGET atlas_f
 add_custom_target( atlas_fortran_inc SOURCES
    atlas_module_Checksum_i.f
    atlas_module_Checksum_c.f
+   atlas_module_Config_i.f
+   atlas_module_Config_c.f
    atlas_module_Error_i.f
    atlas_module_Error_c.f
    atlas_module_Field_i.f
@@ -113,8 +116,8 @@ add_custom_target( atlas_fortran_inc SOURCES
    atlas_module_Mesh_c.f
    atlas_module_Metadata_i.f
    atlas_module_Metadata_c.f
-   atlas_module_Config_i.f
-   atlas_module_Config_c.f
+   atlas_module_NodesFunctionSpace_i.f
+   atlas_module_NodesFunctionSpace_c.f
    atlas_module_PathName_i.f
    atlas_module_PathName_c.f
    atlas_module_State_i.f

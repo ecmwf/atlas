@@ -586,7 +586,9 @@ double AtlasBenchmark::result()
   {
     //io::Gmsh().write(mesh->nodes().field("dual_volumes"),"benchmark.gmsh",std::ios_base::app);
     //io::Gmsh().write(mesh->nodes().field("field"),"benchmark.gmsh",std::ios_base::out);
-    io::Gmsh().write(mesh->nodes().field("grad"),"benchmark.gmsh",std::ios_base::app);
+    io::Gmsh().write( mesh->nodes().field("grad"),
+                      functionspace::NodesColumnFunctionSpace("cols",*mesh,nlev),
+                      "benchmark.gmsh",std::ios_base::app);
   }
   return norm;
 }
