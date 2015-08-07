@@ -151,28 +151,34 @@ public:
     void sum( const Field&, std::vector<DATATYPE>&, size_t& N ) const;
 
     template< typename DATATYPE >
-    void maximum( const Field&, DATATYPE& maximum ) const;
+    void orderIndependentSum( const Field&, DATATYPE&, size_t& N ) const;
 
     template< typename DATATYPE >
-    void maximum_and_global_index( const Field&, DATATYPE& maximum, gidx_t& glb_idx ) const;
-
-    template< typename DATATYPE >
-    void maximum( const Field&, std::vector<DATATYPE>& ) const;
-
-    template< typename DATATYPE >
-    void maximum_and_global_index( const Field&, std::vector<DATATYPE>& maximum, std::vector<gidx_t>& glb_idx ) const;
+    void orderIndependentSum( const Field&, std::vector<DATATYPE>&, size_t& N ) const;
 
     template< typename DATATYPE >
     void minimum( const Field&, DATATYPE& minimum ) const;
 
     template< typename DATATYPE >
-    void minimum_and_global_index( const Field&, DATATYPE& minimum, gidx_t& glb_idx ) const;
+    void maximum( const Field&, DATATYPE& maximum ) const;
 
     template< typename DATATYPE >
     void minimum( const Field&, std::vector<DATATYPE>& ) const;
 
     template< typename DATATYPE >
-    void minimum_and_global_index( const Field&, std::vector<DATATYPE>& minimum, std::vector<gidx_t>& glb_idx ) const;
+    void maximum( const Field&, std::vector<DATATYPE>& ) const;
+
+    template< typename DATATYPE >
+    void minimumAndGlobalIndex( const Field&, DATATYPE& minimum, gidx_t& glb_idx ) const;
+
+    template< typename DATATYPE >
+    void maximumAndGlobalIndex( const Field&, DATATYPE& maximum, gidx_t& glb_idx ) const;
+
+    template< typename DATATYPE >
+    void minimumAndGlobalIndex( const Field&, std::vector<DATATYPE>& minimum, std::vector<gidx_t>& glb_idx ) const;
+
+    template< typename DATATYPE >
+    void maximumAndGlobalIndex( const Field&, std::vector<DATATYPE>& maximum, std::vector<gidx_t>& glb_idx ) const;
 
     template< typename DATATYPE >
     void mean( const Field&, DATATYPE& mean, size_t& N ) const;
@@ -181,10 +187,10 @@ public:
     void mean( const Field&, std::vector<DATATYPE>& mean, size_t& N ) const;
 
     template< typename DATATYPE >
-    void mean_and_standard_deviation( const Field&, DATATYPE& mean, DATATYPE& stddev, size_t& N ) const;
+    void meanAndStandardDeviation( const Field&, DATATYPE& mean, DATATYPE& stddev, size_t& N ) const;
 
     template< typename DATATYPE >
-    void mean_and_standard_deviation( const Field&, std::vector<DATATYPE>& mean, std::vector<DATATYPE>& stddev, size_t& N ) const;
+    void meanAndstandardDeviation( const Field&, std::vector<DATATYPE>& mean, std::vector<DATATYPE>& stddev, size_t& N ) const;
 
 private: // methods
 

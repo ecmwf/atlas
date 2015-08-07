@@ -184,13 +184,17 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   nodes_fs.minimum(*surface_scalar_field,min);
   BOOST_CHECK_EQUAL( min, 1 );
 
-  nodes_fs.maximum_and_global_index(*surface_scalar_field,max,gidx_max);
+  nodes_fs.maximumAndGlobalIndex(*surface_scalar_field,max,gidx_max);
   BOOST_CHECK_EQUAL( max, double(eckit::mpi::size()) );
   Log::info() << "global index for maximum: " << gidx_max << std::endl;
 
-  nodes_fs.minimum_and_global_index(*surface_scalar_field,min,gidx_min);
+  nodes_fs.minimumAndGlobalIndex(*surface_scalar_field,min,gidx_min);
   BOOST_CHECK_EQUAL( min, 1 );
   Log::info() << "global index for minimum: " << gidx_min << std::endl;
+
+  nodes_fs.orderIndependentSum(*surface_scalar_field,sum,N);
+  Log::info() << "sum: " << sum << std::endl;
+  Log::info() << "N: " << N << std::endl;
 
   nodes_fs.sum(*surface_scalar_field,sum,N);
   Log::info() << "sum: " << sum << std::endl;
@@ -200,10 +204,18 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   Log::info() << "mean: " << mean << std::endl;
   Log::info() << "N: " << N << std::endl;
 
-  nodes_fs.mean_and_standard_deviation(*surface_scalar_field,mean,stddev,N);
+  nodes_fs.meanAndStandardDeviation(*surface_scalar_field,mean,stddev,N);
   Log::info() << "mean: " << mean << std::endl;
   Log::info() << "standard deviation: " << stddev << std::endl;
   Log::info() << "N: " << N << std::endl;
+
+  int sumint;
+  nodes_fs.orderIndependentSum(*surface_scalar_field,sumint,N);
+  Log::info() << "sumint: " << sumint << std::endl;
+
+  nodes_fs.sum(*surface_scalar_field,sumint,N);
+  Log::info() << "sumint: " << sumint << std::endl;
+
   }
 
 
@@ -228,15 +240,15 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   std::vector<double> check_min(surface_vector_field->stride(0),1);
   BOOST_CHECK_EQUAL_COLLECTIONS( min.begin(),min.end(), check_min.begin(), check_min.end() );
 
-  nodes_fs.maximum_and_global_index(*surface_vector_field,max,gidx_max);
+  nodes_fs.maximumAndGlobalIndex(*surface_vector_field,max,gidx_max);
   BOOST_CHECK_EQUAL_COLLECTIONS( max.begin(),max.end(), check_max.begin(), check_max.end() );
   Log::info() << "global index for maximum: " << gidx_max << std::endl;
 
-  nodes_fs.minimum_and_global_index(*surface_vector_field,min,gidx_min);
+  nodes_fs.minimumAndGlobalIndex(*surface_vector_field,min,gidx_min);
   BOOST_CHECK_EQUAL_COLLECTIONS( min.begin(),min.end(), check_min.begin(), check_min.end() );
   Log::info() << "global index for minimum: " << gidx_min << std::endl;
 
-  nodes_fs.sum(*surface_vector_field,sum,N);
+  nodes_fs.orderIndependentSum(*surface_vector_field,sum,N);
   Log::info() << "sum: " << sum << std::endl;
   Log::info() << "N: " << N << std::endl;
 
@@ -244,10 +256,18 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   Log::info() << "mean: " << mean << std::endl;
   Log::info() << "N: " << N << std::endl;
 
-  nodes_fs.mean_and_standard_deviation(*surface_vector_field,mean,stddev,N);
+  nodes_fs.meanAndStandardDeviation(*surface_vector_field,mean,stddev,N);
   Log::info() << "mean: " << mean << std::endl;
   Log::info() << "standard deviation: " << stddev << std::endl;
   Log::info() << "N: " << N << std::endl;
+
+  std::vector<int> sumint;
+  nodes_fs.orderIndependentSum(*surface_vector_field,sumint,N);
+  Log::info() << "sumint: " << sumint << std::endl;
+
+  nodes_fs.sum(*surface_vector_field,sumint,N);
+  Log::info() << "sumint: " << sumint << std::endl;
+
   }
 
 

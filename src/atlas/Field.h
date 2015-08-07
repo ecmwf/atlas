@@ -25,6 +25,7 @@
 #include "atlas/Metadata.h"
 #include "atlas/State.h"
 #include "atlas/util/Array.h"
+#include "atlas/util/DataType.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Nodes.h"
 
@@ -76,6 +77,10 @@ public: // methods
   /// @brief Internal data type of field as string
   /// Any of [ int32 int64 real32 real64 ]
   std::string datatype() const { return array_->datatype(); }
+
+  /// @brief Internal data type of field as
+  /// Any of [ int32 int64 real32 real64 ]
+  DataType::kind_t kind() const { return datakind_; }
 
   /// @brief Name associated to this field
   const std::string& name() const { return name_; }
@@ -133,6 +138,8 @@ private: // members
 protected: // members
 
   eckit::SharedPtr<ArrayBase> array_;
+
+  DataType::kind_t datakind_;
 
 // End of class Field
 
