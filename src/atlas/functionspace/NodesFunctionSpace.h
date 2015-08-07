@@ -151,16 +151,28 @@ public:
     void sum( const Field&, std::vector<DATATYPE>&, size_t& N ) const;
 
     template< typename DATATYPE >
-    void maximum( const Field&, DATATYPE&, gidx_t& glb_idx ) const;
+    void maximum( const Field&, DATATYPE& maximum ) const;
 
     template< typename DATATYPE >
-    void maximum( const Field&, std::vector<DATATYPE>&, std::vector<gidx_t>& glb_idx ) const;
+    void maximum_and_global_index( const Field&, DATATYPE& maximum, gidx_t& glb_idx ) const;
 
     template< typename DATATYPE >
-    void minimum( const Field&, DATATYPE&, gidx_t& glb_idx ) const;
+    void maximum( const Field&, std::vector<DATATYPE>& ) const;
 
     template< typename DATATYPE >
-    void minimum( const Field&, std::vector<DATATYPE>&, std::vector<gidx_t>& glb_idx ) const;
+    void maximum_and_global_index( const Field&, std::vector<DATATYPE>& maximum, std::vector<gidx_t>& glb_idx ) const;
+
+    template< typename DATATYPE >
+    void minimum( const Field&, DATATYPE& minimum ) const;
+
+    template< typename DATATYPE >
+    void minimum_and_global_index( const Field&, DATATYPE& minimum, gidx_t& glb_idx ) const;
+
+    template< typename DATATYPE >
+    void minimum( const Field&, std::vector<DATATYPE>& ) const;
+
+    template< typename DATATYPE >
+    void minimum_and_global_index( const Field&, std::vector<DATATYPE>& minimum, std::vector<gidx_t>& glb_idx ) const;
 
     template< typename DATATYPE >
     void mean( const Field&, DATATYPE& mean, size_t& N ) const;
@@ -187,6 +199,8 @@ private: // data
     size_t halo_;
     size_t nb_nodes_;
     size_t nb_nodes_global_;
+
+public:
     size_t nb_nodes_global_broadcasted_;
 };
 

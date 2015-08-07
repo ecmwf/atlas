@@ -371,126 +371,290 @@ std::string NodesFunctionSpace::checksum( const Field& field ) const {
   return checksum(fieldset);
 }
 
-template<> void NodesFunctionSpace::sum( const Field& field, double& result, size_t& N ) const
+namespace { inline double sqr(const double& val) { return val*val; } }
+
+namespace detail { // Collectives implementation
+template< typename DATATYPE >
+void sum( const NodesFunctionSpace& fs , const Field& field, DATATYPE& result, size_t& N )
 {
   size_t root = 0;
-  Field::Ptr global( createGlobalField(field) );
-  gather(field,*global);
-  result = std::accumulate(global->data<double>(),global->data<double>()+global->size(),0.);
+  Field::Ptr global( fs.createGlobalField(field) );
+  fs.gather(field,*global);
+  result = std::accumulate(global->data<DATATYPE>(),global->data<DATATYPE>()+global->size(),0.);
   eckit::mpi::broadcast(result,root);
-  N = nb_nodes_global_broadcasted_;
+  N = fs.nb_nodes_global_broadcasted_;
 }
 
-template<> void NodesFunctionSpace::sum( const Field& field, std::vector<double>& result, size_t& N ) const
+template< typename DATATYPE >
+void sum( const NodesFunctionSpace& fs, const Field& field, std::vector<DATATYPE>& result, size_t& N )
 {
   size_t nvar = field.stride(0);
-  result.resize(nvar,0);
+  result.resize(nvar);
+  for( size_t j=0; j<nvar; ++j ) result[j] = 0.;
   size_t root = 0;
-  Field::Ptr global( createGlobalField(field) );
-  gather(field,*global);
+  Field::Ptr global( fs.createGlobalField(field) );
+  fs.gather(field,*global);
   if( eckit::mpi::rank() == 0 ) {
-    const ArrayView<double,2> glb( global->data<double>(), make_shape(global->shape(0),global->stride(0)) );
-    for( size_t n=0; n<nb_nodes_global(); ++n ) {
+    const ArrayView<DATATYPE,2> glb( global->data<DATATYPE>(), make_shape(global->shape(0),global->stride(0)) );
+    for( size_t n=0; n<fs.nb_nodes_global(); ++n ) {
       for( size_t j=0; j<nvar; ++j ) {
         result[j] += glb(n,j);
       }
     }
   }
   eckit::mpi::broadcast(result,root);
-  N = nb_nodes_global_broadcasted_;
+  N = fs.nb_nodes_global_broadcasted_;
 }
 
-namespace { inline double sqr(const double& val) { return val*val; } }
-
-template<> void NodesFunctionSpace::maximum( const Field& field, double& result, gidx_t& glb_idx ) const
+template< typename DATATYPE >
+void maximum( const NodesFunctionSpace& fs, const Field& field, DATATYPE& max )
 {
-  throw eckit::Exception("Untested and no glb_idx return",Here());
-  double local_maximum = *std::max_element(field.data<double>(),field.data<double>()+field.size());
-  eckit::mpi::all_reduce(local_maximum,result,eckit::mpi::max());
+  DATATYPE local_maximum = *std::max_element(field.data<DATATYPE>(),field.data<DATATYPE>()+field.size());
+  eckit::mpi::all_reduce(local_maximum,max,eckit::mpi::max());
 }
 
-template<> void NodesFunctionSpace::maximum( const Field& field, std::vector<double>& result, gidx_t& glb_idx ) const
+template< typename DATATYPE >
+void maximum_and_global_index( const NodesFunctionSpace& fs, const Field& field, DATATYPE& max, gidx_t& glb_idx )
 {
-  throw eckit::Exception("Untested and no glb_idx return",Here());
+  const DATATYPE *local_maximum = std::max_element(field.data<DATATYPE>(),field.data<DATATYPE>()+field.size());
+  size_t location = std::distance(field.data<DATATYPE>(),local_maximum);
+  glb_idx = fs.nodes().global_index().data<gidx_t>()[location];
+  ASSERT( glb_idx < std::numeric_limits<int>::max() ); // pairs with 64bit integer for second not implemented
+  std::pair<DATATYPE,int> max_and_gidx_loc (*local_maximum,glb_idx);
+  std::pair<DATATYPE,int> max_and_gidx_glb;
+  eckit::mpi::all_reduce(max_and_gidx_loc,max_and_gidx_glb,eckit::mpi::maxloc());
+  max     = max_and_gidx_glb.first;
+  glb_idx = max_and_gidx_glb.second;
+}
+
+template< typename DATATYPE >
+void maximum( const NodesFunctionSpace& fs, const Field& field, std::vector<DATATYPE>& max )
+{
   size_t nvar = field.stride(0);
-  std::vector<double> local_maximum(nvar,std::numeric_limits<double>::min());
-  ArrayView<double,2> values( field.data<double>(), make_shape(field.shape(0),nvar) );
-  for( size_t n=0; n<values.shape(0); ++n ) {
-    for( size_t j=0; j<nvar; ++j ) {
-      local_maximum[j] = std::max(values(n,j),local_maximum[j]);
+  max.resize(nvar);
+  std::vector<DATATYPE> local_maximum(nvar,std::numeric_limits<DATATYPE>::min());
+  ArrayView<DATATYPE,2> arr( field.data<DATATYPE>(), make_shape(field.shape(0),nvar) );
+  for( size_t n=0; n<arr.shape(0); ++n ) {
+    for( size_t j=0; j<arr.shape(1); ++j ) {
+      local_maximum[j] = std::max(arr(n,j),local_maximum[j]);
     }
   }
-  eckit::mpi::all_reduce(local_maximum,result,eckit::mpi::max());
+  eckit::mpi::all_reduce(local_maximum,max,eckit::mpi::max());
 }
 
-template<> void NodesFunctionSpace::minimum( const Field& field, double& result, gidx_t& glb_idx ) const
+template< typename DATATYPE >
+void maximum_and_global_index( const NodesFunctionSpace& fs, const Field& field, std::vector<DATATYPE>& max, std::vector<gidx_t>& glb_idx )
 {
-  throw eckit::Exception("Untested and no glb_idx return",Here());
-  double local_minimum = *std::min_element(field.data<double>(),field.data<double>()+field.size());
-  eckit::mpi::all_reduce(local_minimum,result,eckit::mpi::min());
-}
-
-template<> void NodesFunctionSpace::minimum( const Field& field, std::vector<double>& result, std::vector<gidx_t>& glb_idx ) const
-{
-  throw eckit::Exception("Untested and no glb_idx return",Here());
   size_t nvar = field.stride(0);
-  std::vector<double> local_minimum(nvar,std::numeric_limits<double>::max());
-  ArrayView<double,2> values( field.data<double>(), make_shape(field.shape(0),nvar) );
-  for( size_t n=0; n<values.shape(0); ++n ) {
-    for( size_t j=0; j<nvar; ++j ) {
-      local_minimum[j] = std::min(values(n,j),local_minimum[j]);
+  max.resize(nvar);
+  glb_idx.resize(nvar);
+  std::vector<DATATYPE> local_maximum(nvar,std::numeric_limits<DATATYPE>::min());
+  std::vector<size_t> location(nvar);
+  ArrayView<DATATYPE,2> arr( field.data<DATATYPE>(), make_shape(field.shape(0),nvar) );
+  for( size_t n=0; n<arr.shape(0); ++n ) {
+    for( size_t j=0; j<arr.shape(1); ++j ) {
+      if( arr(n,j) > local_maximum[j] ) {
+        local_maximum[j] = arr(n,j);
+        location[j] = n;
+      }
     }
   }
-  eckit::mpi::all_reduce(local_minimum,result,eckit::mpi::min());
+  std::vector< std::pair<DATATYPE,int> > max_and_gidx_loc(nvar);
+  std::vector< std::pair<DATATYPE,int> > max_and_gidx_glb(nvar);
+  const gidx_t* global_index = fs.nodes().global_index().data<gidx_t>();
+  for( size_t j=0; j<nvar; ++j ) {
+    gidx_t glb_idx = global_index[location[j]];
+    ASSERT( glb_idx < std::numeric_limits<int>::max() ); // pairs with 64bit integer for second not implemented
+    max_and_gidx_loc[j] = std::make_pair(local_maximum[j],glb_idx);
+  }
+  eckit::mpi::all_reduce(max_and_gidx_loc,max_and_gidx_glb,eckit::mpi::maxloc());
+  for( size_t j=0; j<nvar; ++j ) {
+    max[j]     = max_and_gidx_glb[j].first;
+    glb_idx[j] = max_and_gidx_glb[j].second;
+  }
 }
 
-template<> void NodesFunctionSpace::mean( const Field& field, double& result, size_t& N ) const
+template< typename DATATYPE >
+void minimum( const NodesFunctionSpace& fs, const Field& field, DATATYPE& min )
 {
-  throw eckit::Exception("Untested",Here());
-  sum(field,result,N);
-  result /= static_cast<double>(N);
+  DATATYPE local_minimum = *std::min_element(field.data<DATATYPE>(),field.data<DATATYPE>()+field.size());
+  eckit::mpi::all_reduce(local_minimum,min,eckit::mpi::min());
 }
 
-template<> void NodesFunctionSpace::mean( const Field& field, std::vector<double>& result, size_t& N ) const
+template< typename DATATYPE >
+void minimum_and_global_index( const NodesFunctionSpace& fs, const Field& field, DATATYPE& min, gidx_t& glb_idx )
 {
-  throw eckit::Exception("Untested",Here());
-  sum(field,result,N);
+  const DATATYPE *local_minimum = std::min_element(field.data<DATATYPE>(),field.data<DATATYPE>()+field.size());
+  size_t location = std::distance(field.data<DATATYPE>(),local_minimum);
+  glb_idx = fs.nodes().global_index().data<gidx_t>()[location];
+  ASSERT( glb_idx < std::numeric_limits<int>::max() ); // pairs with 64bit integer for second not implemented
+  std::pair<DATATYPE,int> min_and_gidx_loc (*local_minimum,glb_idx);
+  std::pair<DATATYPE,int> min_and_gidx_glb;
+  eckit::mpi::all_reduce(min_and_gidx_loc,min_and_gidx_glb,eckit::mpi::minloc());
+  min     = min_and_gidx_glb.first;
+  glb_idx = min_and_gidx_glb.second;
+}
+
+template< typename DATATYPE >
+void minimum( const NodesFunctionSpace& fs, const Field& field, std::vector<DATATYPE>& min )
+{
+  size_t nvar = field.stride(0);
+  min.resize(nvar);
+  std::vector<DATATYPE> local_minimum(nvar,std::numeric_limits<DATATYPE>::max());
+  ArrayView<DATATYPE,2> arr( field.data<DATATYPE>(), make_shape(field.shape(0),nvar) );
+  for( size_t n=0; n<arr.shape(0); ++n ) {
+    for( size_t j=0; j<arr.shape(1); ++j ) {
+      local_minimum[j] = std::min(arr(n,j),local_minimum[j]);
+    }
+  }
+  eckit::mpi::all_reduce(local_minimum,min,eckit::mpi::min());
+}
+
+template< typename DATATYPE >
+void minimum_and_global_index( const NodesFunctionSpace& fs, const Field& field, std::vector<DATATYPE>& min, std::vector<gidx_t>& glb_idx )
+{
+  size_t nvar = field.stride(0);
+  min.resize(nvar);
+  glb_idx.resize(nvar);
+  std::vector<DATATYPE> local_minimum(nvar,std::numeric_limits<DATATYPE>::max());
+  std::vector<size_t> location(nvar);
+  ArrayView<DATATYPE,2> arr( field.data<DATATYPE>(), make_shape(field.shape(0),nvar) );
+  for( size_t n=0; n<arr.shape(0); ++n ) {
+    for( size_t j=0; j<arr.shape(1); ++j ) {
+      if( arr(n,j) < local_minimum[j] ) {
+        local_minimum[j] = arr(n,j);
+        location[j] = n;
+      }
+    }
+  }
+  std::vector< std::pair<DATATYPE,int> > min_and_gidx_loc(nvar);
+  std::vector< std::pair<DATATYPE,int> > min_and_gidx_glb(nvar);
+  const gidx_t* global_index = fs.nodes().global_index().data<gidx_t>();
+  for( size_t j=0; j<nvar; ++j ) {
+    gidx_t glb_idx = global_index[location[j]];
+    ASSERT( glb_idx < std::numeric_limits<int>::max() ); // pairs with 64bit integer for second not implemented
+    min_and_gidx_loc[j] = std::make_pair(local_minimum[j],glb_idx);
+  }
+  eckit::mpi::all_reduce(min_and_gidx_loc,min_and_gidx_glb,eckit::mpi::minloc());
+  for( size_t j=0; j<nvar; ++j ) {
+    min[j]     = min_and_gidx_glb[j].first;
+    glb_idx[j] = min_and_gidx_glb[j].second;
+  }
+}
+
+template< typename DATATYPE >
+void mean( const NodesFunctionSpace& fs, const Field& field, DATATYPE& result, size_t& N )
+{
+  sum(fs,field,result,N);
+  result /= static_cast<DATATYPE>(N);
+}
+
+template< typename DATATYPE >
+void mean( const NodesFunctionSpace& fs, const Field& field, std::vector<DATATYPE>& result, size_t& N )
+{
+  sum(fs,field,result,N);
   for( size_t j=0; j<result.size(); ++j ) {
-    result[j] /= static_cast<double>(N);
+    result[j] /= static_cast<DATATYPE>(N);
   }
 }
 
-template<> void NodesFunctionSpace::mean_and_standard_deviation( const Field& field, double& mu, double& sigma, size_t& N ) const
+template< typename DATATYPE >
+void mean_and_standard_deviation( const NodesFunctionSpace& fs, const Field& field, DATATYPE& mu, DATATYPE& sigma, size_t& N )
 {
-  throw eckit::Exception("Untested",Here());
-  mean(field,mu,N);
-  Field::Ptr squared_diff_field( createField(field) );
-  ArrayView<double,1> squared_diff( *squared_diff_field );
-  ArrayView<double,1> values( field );
+  mean(fs,field,mu,N);
+  Field::Ptr squared_diff_field( fs.createField(field) );
+  ArrayView<DATATYPE,1> squared_diff( *squared_diff_field );
+  ArrayView<DATATYPE,1> values( field );
   for( size_t n=0; n<field.size(); ++n )
     squared_diff(n) = sqr( values(n) - mu );
 
-  mean(*squared_diff_field,sigma,N);
+  mean(fs,*squared_diff_field,sigma,N);
   sigma = std::sqrt(sigma);
 }
 
-template<> void NodesFunctionSpace::mean_and_standard_deviation( const Field& field, std::vector<double>& mu, std::vector<double>& sigma, size_t& N ) const
+template< typename DATATYPE >
+void mean_and_standard_deviation( const NodesFunctionSpace& fs, const Field& field, std::vector<DATATYPE>& mu, std::vector<DATATYPE>& sigma, size_t& N )
 {
-  throw eckit::Exception("Untested",Here());
-  mean(field,mu,N);
-  Field::Ptr squared_diff_field( createField(field) );
-  ArrayView<double,2> squared_diff( squared_diff_field->data<double>(), make_shape(squared_diff_field->shape(0),squared_diff_field->stride(0)) );
-  ArrayView<double,2> values( field.data<double>(), make_shape(field.shape(0),field.stride(0)) );
+  mean(fs,field,mu,N);
+  Field::Ptr squared_diff_field( fs.createField(field) );
+  ArrayView<DATATYPE,2> squared_diff( squared_diff_field->data<DATATYPE>(), make_shape(squared_diff_field->shape(0),squared_diff_field->stride(0)) );
+  ArrayView<DATATYPE,2> values( field.data<DATATYPE>(), make_shape(field.shape(0),field.stride(0)) );
   for( size_t n=0; n<values.shape(0); ++n ) {
     for( size_t j=0; j<values.shape(1); ++j ) {
       squared_diff(n,j) = sqr( values(n,j) - mu[j] );
     }
   }
-  mean(*squared_diff_field,sigma,N);
+  mean(fs,*squared_diff_field,sigma,N);
   for( size_t j=0; j<sigma.size(); ++j ) {
     sigma[j] = std::sqrt(sigma[j]);
   }
 }
+
+} // end collectives implementation
+
+
+template<> void NodesFunctionSpace::sum( const Field& field, int& result, size_t& N ) const { return detail::sum(*this,field,result,N); }
+template<> void NodesFunctionSpace::sum( const Field& field, long& result, size_t& N ) const { return detail::sum(*this,field,result,N); }
+template<> void NodesFunctionSpace::sum( const Field& field, float& result, size_t& N ) const { return detail::sum(*this,field,result,N); }
+template<> void NodesFunctionSpace::sum( const Field& field, double& result, size_t& N ) const { return detail::sum(*this,field,result,N); }
+
+template<> void NodesFunctionSpace::sum( const Field& field, std::vector<int>& result, size_t& N ) const { return detail::sum(*this,field,result,N); }
+template<> void NodesFunctionSpace::sum( const Field& field, std::vector<long>& result, size_t& N ) const { return detail::sum(*this,field,result,N); }
+template<> void NodesFunctionSpace::sum( const Field& field, std::vector<float>& result, size_t& N ) const { return detail::sum(*this,field,result,N); }
+template<> void NodesFunctionSpace::sum( const Field& field, std::vector<double>& result, size_t& N ) const { return detail::sum(*this,field,result,N); }
+
+template<> void NodesFunctionSpace::maximum( const Field& field, int& max ) const { return detail::maximum(*this,field,max); }
+template<> void NodesFunctionSpace::maximum( const Field& field, long& max ) const { return detail::maximum(*this,field,max); }
+template<> void NodesFunctionSpace::maximum( const Field& field, float& max ) const { return detail::maximum(*this,field,max); }
+template<> void NodesFunctionSpace::maximum( const Field& field, double& max ) const { return detail::maximum(*this,field,max); }
+
+template<> void NodesFunctionSpace::maximum_and_global_index( const Field& field, int& max, gidx_t& glb_idx ) const { return detail::maximum_and_global_index(*this,field,max,glb_idx); }
+template<> void NodesFunctionSpace::maximum_and_global_index( const Field& field, long& max, gidx_t& glb_idx ) const { return detail::maximum_and_global_index(*this,field,max,glb_idx); }
+template<> void NodesFunctionSpace::maximum_and_global_index( const Field& field, float& max, gidx_t& glb_idx ) const { return detail::maximum_and_global_index(*this,field,max,glb_idx); }
+template<> void NodesFunctionSpace::maximum_and_global_index( const Field& field, double& max, gidx_t& glb_idx ) const { return detail::maximum_and_global_index(*this,field,max,glb_idx); }
+
+template<> void NodesFunctionSpace::maximum( const Field& field, std::vector<int>& max ) const { return detail::maximum(*this,field,max); }
+template<> void NodesFunctionSpace::maximum( const Field& field, std::vector<long>& max ) const { return detail::maximum(*this,field,max); }
+template<> void NodesFunctionSpace::maximum( const Field& field, std::vector<float>& max ) const { return detail::maximum(*this,field,max); }
+template<> void NodesFunctionSpace::maximum( const Field& field, std::vector<double>& max ) const { return detail::maximum(*this,field,max); }
+
+template<> void NodesFunctionSpace::maximum_and_global_index( const Field& field, std::vector<int>& max, std::vector<gidx_t>& glb_idx ) const { return detail::maximum_and_global_index(*this,field,max,glb_idx); }
+template<> void NodesFunctionSpace::maximum_and_global_index( const Field& field, std::vector<long>& max, std::vector<gidx_t>& glb_idx ) const { return detail::maximum_and_global_index(*this,field,max,glb_idx); }
+template<> void NodesFunctionSpace::maximum_and_global_index( const Field& field, std::vector<float>& max, std::vector<gidx_t>& glb_idx ) const { return detail::maximum_and_global_index(*this,field,max,glb_idx); }
+template<> void NodesFunctionSpace::maximum_and_global_index( const Field& field, std::vector<double>& max, std::vector<gidx_t>& glb_idx ) const { return detail::maximum_and_global_index(*this,field,max,glb_idx); }
+
+
+template<> void NodesFunctionSpace::minimum( const Field& field, int& min ) const { return detail::minimum(*this,field,min); }
+template<> void NodesFunctionSpace::minimum( const Field& field, long& min ) const { return detail::minimum(*this,field,min); }
+template<> void NodesFunctionSpace::minimum( const Field& field, float& min ) const { return detail::minimum(*this,field,min); }
+template<> void NodesFunctionSpace::minimum( const Field& field, double& min ) const { return detail::minimum(*this,field,min); }
+
+template<> void NodesFunctionSpace::minimum_and_global_index( const Field& field, int& min, gidx_t& glb_idx ) const { return detail::minimum_and_global_index(*this,field,min,glb_idx); }
+template<> void NodesFunctionSpace::minimum_and_global_index( const Field& field, long& min, gidx_t& glb_idx ) const { return detail::minimum_and_global_index(*this,field,min,glb_idx); }
+template<> void NodesFunctionSpace::minimum_and_global_index( const Field& field, float& min, gidx_t& glb_idx ) const { return detail::minimum_and_global_index(*this,field,min,glb_idx); }
+template<> void NodesFunctionSpace::minimum_and_global_index( const Field& field, double& min, gidx_t& glb_idx ) const { return detail::minimum_and_global_index(*this,field,min,glb_idx); }
+
+template<> void NodesFunctionSpace::minimum( const Field& field, std::vector<int>& min ) const { return detail::minimum(*this,field,min); }
+template<> void NodesFunctionSpace::minimum( const Field& field, std::vector<long>& min ) const { return detail::minimum(*this,field,min); }
+template<> void NodesFunctionSpace::minimum( const Field& field, std::vector<float>& min ) const { return detail::minimum(*this,field,min); }
+template<> void NodesFunctionSpace::minimum( const Field& field, std::vector<double>& min ) const { return detail::minimum(*this,field,min); }
+
+template<> void NodesFunctionSpace::minimum_and_global_index( const Field& field, std::vector<int>& min, std::vector<gidx_t>& glb_idx ) const { return detail::minimum_and_global_index(*this,field,min,glb_idx); }
+template<> void NodesFunctionSpace::minimum_and_global_index( const Field& field, std::vector<long>& min, std::vector<gidx_t>& glb_idx ) const { return detail::minimum_and_global_index(*this,field,min,glb_idx); }
+template<> void NodesFunctionSpace::minimum_and_global_index( const Field& field, std::vector<float>& min, std::vector<gidx_t>& glb_idx ) const { return detail::minimum_and_global_index(*this,field,min,glb_idx); }
+template<> void NodesFunctionSpace::minimum_and_global_index( const Field& field, std::vector<double>& min, std::vector<gidx_t>& glb_idx ) const { return detail::minimum_and_global_index(*this,field,min,glb_idx); }
+
+template<> void NodesFunctionSpace::mean( const Field& field, float& result, size_t& N ) const { return detail::mean(*this,field,result,N); }
+template<> void NodesFunctionSpace::mean( const Field& field, double& result, size_t& N ) const { return detail::mean(*this,field,result,N); }
+
+template<> void NodesFunctionSpace::mean( const Field& field, std::vector<float>& result, size_t& N ) const { return detail::mean(*this,field,result,N); }
+template<> void NodesFunctionSpace::mean( const Field& field, std::vector<double>& result, size_t& N ) const { return detail::mean(*this,field,result,N); }
+
+template<> void NodesFunctionSpace::mean_and_standard_deviation( const Field& field, float& mu, float& sigma, size_t& N ) const { return detail::mean_and_standard_deviation(*this,field,mu,sigma,N); }
+template<> void NodesFunctionSpace::mean_and_standard_deviation( const Field& field, double& mu, double& sigma, size_t& N ) const { return detail::mean_and_standard_deviation(*this,field,mu,sigma,N); }
+
+template<> void NodesFunctionSpace::mean_and_standard_deviation( const Field& field, std::vector<float>& mu, std::vector<float>& sigma, size_t& N ) const { return detail::mean_and_standard_deviation(*this,field,mu,sigma,N); }
+template<> void NodesFunctionSpace::mean_and_standard_deviation( const Field& field, std::vector<double>& mu, std::vector<double>& sigma, size_t& N ) const { return detail::mean_and_standard_deviation(*this,field,mu,sigma,N); }
 
 
 // ----------------------------------------------------------------------

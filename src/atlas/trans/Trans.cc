@@ -268,8 +268,8 @@ void encode( const Trans::Options& p, eckit::Stream& s )
 
 void Trans::dirtrans(const Field& gpfield, Field& spfield, const TransParameters& context) const
 {
-  FieldSet gpfields; gpfields.add_field(Field::Ptr( const_cast<Field*>( &gpfield )) );
-  FieldSet spfields; spfields.add_field(spfield.self());
+  FieldSet gpfields; gpfields.add(gpfield);
+  FieldSet spfields; spfields.add(spfield);
   dirtrans(gpfields,spfields,context);
 }
 
@@ -395,8 +395,8 @@ void Trans::dirtrans(const FieldSet& gpfields, FieldSet& spfields, const TransPa
 
 void Trans::invtrans(const Field& spfield, Field& gpfield, const TransParameters& context) const
 {
-  FieldSet spfields; spfields.add_field(Field::Ptr( const_cast<Field*>( &spfield )) );
-  FieldSet gpfields; gpfields.add_field(gpfield.self());
+  FieldSet spfields; spfields.add(spfield);
+  FieldSet gpfields; gpfields.add(gpfield);
   invtrans(spfields,gpfields,context);
 }
 

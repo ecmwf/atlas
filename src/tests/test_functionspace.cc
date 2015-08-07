@@ -11,6 +11,7 @@
 #define BOOST_TEST_MODULE TestFunctionSpace
 #include "ecbuild/boost_test_framework.h"
 
+#include "eckit/types/Types.h"
 #include "eckit/memory/ScopedPtr.h"
 #include "atlas/atlas.h"
 #include "atlas/util/Debug.h"
@@ -21,6 +22,7 @@
 #include "atlas/meshgen/ReducedGridMeshGenerator.h"
 #include "atlas/Grid.h"
 #include "atlas/Field.h"
+#include "atlas/grids/ReducedGaussianGrid.h"
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/trans/Trans.h"
 #endif
@@ -29,6 +31,11 @@ using namespace atlas::functionspace;
 
 namespace atlas {
 namespace test {
+
+template<class T>
+inline std::ostream &operator<<(std::ostream &s, const std::vector<T> &v) {
+    return eckit::__print_list(s, v);
+}
 
 struct AtlasFixture {
     AtlasFixture()  { atlas_init(); }
@@ -39,7 +46,11 @@ BOOST_GLOBAL_FIXTURE( AtlasFixture )
 
 BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
 {
-  ScopedPtr<Grid> grid( Grid::create("oct.N20") );
+  //ScopedPtr<Grid> grid( Grid::create("oct.N2") );
+
+  size_t nlat = 2;
+  long nlon[] = {4,8};
+  ScopedPtr<Grid> grid( new grids::ReducedGaussianGrid( nlat, nlon ) );
 
   Mesh mesh;
   meshgen::ReducedGridMeshGenerator generator;
@@ -150,6 +161,95 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   fields.add(*field);
   fields.add(*field2);
   Log::info() << columns_fs.checksum(fields) << std::endl;
+
+
+
+
+  BOOST_CHECKPOINT("Testing collectives for nodes scalar field");
+  {
+  double max;
+  double min;
+  double sum;
+  double mean;
+  double stddev;
+  size_t N;
+  gidx_t gidx_max;
+  gidx_t gidx_min;
+
+  ArrayView<double,1> sfc_arr( *surface_scalar_field );
+  sfc_arr = eckit::mpi::rank()+1;
+  nodes_fs.maximum(*surface_scalar_field,max);
+  BOOST_CHECK_EQUAL( max, double(eckit::mpi::size()) );
+
+  nodes_fs.minimum(*surface_scalar_field,min);
+  BOOST_CHECK_EQUAL( min, 1 );
+
+  nodes_fs.maximum_and_global_index(*surface_scalar_field,max,gidx_max);
+  BOOST_CHECK_EQUAL( max, double(eckit::mpi::size()) );
+  Log::info() << "global index for maximum: " << gidx_max << std::endl;
+
+  nodes_fs.minimum_and_global_index(*surface_scalar_field,min,gidx_min);
+  BOOST_CHECK_EQUAL( min, 1 );
+  Log::info() << "global index for minimum: " << gidx_min << std::endl;
+
+  nodes_fs.sum(*surface_scalar_field,sum,N);
+  Log::info() << "sum: " << sum << std::endl;
+  Log::info() << "N: " << N << std::endl;
+
+  nodes_fs.mean(*surface_scalar_field,mean,N);
+  Log::info() << "mean: " << mean << std::endl;
+  Log::info() << "N: " << N << std::endl;
+
+  nodes_fs.mean_and_standard_deviation(*surface_scalar_field,mean,stddev,N);
+  Log::info() << "mean: " << mean << std::endl;
+  Log::info() << "standard deviation: " << stddev << std::endl;
+  Log::info() << "N: " << N << std::endl;
+  }
+
+
+  BOOST_CHECKPOINT("Testing collectives for nodes vector field");
+  {
+  std::vector<double> max;
+  std::vector<double> min;
+  std::vector<double> sum;
+  std::vector<double> mean;
+  std::vector<double> stddev;
+  size_t N;
+  std::vector<gidx_t> gidx_max;
+  std::vector<gidx_t> gidx_min;
+
+  ArrayView<double,2> vec_arr( *surface_vector_field );
+  vec_arr = eckit::mpi::rank()+1;
+  nodes_fs.maximum(*surface_vector_field,max);
+  std::vector<double> check_max(surface_vector_field->stride(0),eckit::mpi::size());
+  BOOST_CHECK_EQUAL_COLLECTIONS( max.begin(),max.end(), check_max.begin(), check_max.end() );
+
+  nodes_fs.minimum(*surface_vector_field,min);
+  std::vector<double> check_min(surface_vector_field->stride(0),1);
+  BOOST_CHECK_EQUAL_COLLECTIONS( min.begin(),min.end(), check_min.begin(), check_min.end() );
+
+  nodes_fs.maximum_and_global_index(*surface_vector_field,max,gidx_max);
+  BOOST_CHECK_EQUAL_COLLECTIONS( max.begin(),max.end(), check_max.begin(), check_max.end() );
+  Log::info() << "global index for maximum: " << gidx_max << std::endl;
+
+  nodes_fs.minimum_and_global_index(*surface_vector_field,min,gidx_min);
+  BOOST_CHECK_EQUAL_COLLECTIONS( min.begin(),min.end(), check_min.begin(), check_min.end() );
+  Log::info() << "global index for minimum: " << gidx_min << std::endl;
+
+  nodes_fs.sum(*surface_vector_field,sum,N);
+  Log::info() << "sum: " << sum << std::endl;
+  Log::info() << "N: " << N << std::endl;
+
+  nodes_fs.mean(*surface_vector_field,mean,N);
+  Log::info() << "mean: " << mean << std::endl;
+  Log::info() << "N: " << N << std::endl;
+
+  nodes_fs.mean_and_standard_deviation(*surface_vector_field,mean,stddev,N);
+  Log::info() << "mean: " << mean << std::endl;
+  Log::info() << "standard deviation: " << stddev << std::endl;
+  Log::info() << "N: " << N << std::endl;
+  }
+
 
 }
 

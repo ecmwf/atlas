@@ -25,13 +25,7 @@ FieldSet::FieldSet(const std::string &name) :
 void FieldSet::add(const Field& field)
 {
   index_[field.name()] = fields_.size();
-  fields_.push_back( eckit::SharedPtr<Field>( const_cast<Field*>(&field) ) );
-}
-
-void FieldSet::add_field(Field::Ptr field)
-{
-  index_[field->name()] = fields_.size();
-  fields_.push_back( field );
+  fields_.push_back( const_cast<Field*>(&field) );
 }
 
 
@@ -52,12 +46,6 @@ Field& FieldSet::field(const std::string& name) const
 }
 
 
-FieldSet::FieldSet(const std::vector< Field::Ptr >& fields) :
-  fields_(fields)
-{
-}
-
-
 std::vector< std::string > FieldSet::field_names() const
 {
   std::vector< std::string > ret;
@@ -68,15 +56,6 @@ std::vector< std::string > FieldSet::field_names() const
     ret.push_back(fields_[i]->name());
 
   return ret;
-}
-
-
-std::vector<Field*>& __private_get_raw_fields_ptr (FieldSet* This)
-{
-  This->fields_raw_ptr_.resize( This->size() );
-  for( int f=0; f<This->size(); ++f )
-    This->fields_raw_ptr_[f] = This->fields()[f].get();
-  return This->fields_raw_ptr_;
 }
 
 //-----------------------------------------------------------------------------
@@ -112,7 +91,7 @@ void atlas__FieldSet__fields (FieldSet* This, Field** &fields, int &nb_fields)
     if (fields!=NULL)
       throw eckit::SeriousBug("provided return pointer is not NULL (memory leak)");
 
-    fields = nb_fields ? __private_get_raw_fields_ptr(This).data() : NULL;
+    fields = nb_fields ? This->fields().data() : NULL;
   );
 }
 
@@ -121,7 +100,7 @@ void   atlas__FieldSet__add_field     (FieldSet* This, Field* field)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This != NULL);
-    This->add_field(field->self());
+    This->add(*field);
   );
 }
 

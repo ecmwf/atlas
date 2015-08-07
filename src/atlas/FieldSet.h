@@ -28,7 +28,6 @@ namespace atlas {
 
 class FieldSet;
 class Field;
-std::vector<Field*>& __private_get_raw_fields_ptr (FieldSet* This);
 
 /**
  * @brief Represents a set of fields, where order is preserved (no ownership)
@@ -44,9 +43,6 @@ public: // methods
   /// Constructs an empty FieldSet
   FieldSet(const std::string& name = "untitled");
 
-  /// Constructs from predefined fields (takes ownership of the fields)
-  FieldSet(const std::vector< Field::Ptr >& fields);
-
   size_t size() const { return  fields_.size(); }
   bool empty()  const { return !fields_.size(); }
 
@@ -59,34 +55,23 @@ public: // methods
   const Field& field(const size_t& i) const { ASSERT(i<size()); return *fields_[i]; }
         Field& field(const size_t& i)       { ASSERT(i<size()); return *fields_[i]; }
 
-  const std::vector< Field::Ptr >& fields() const { return fields_; }
-        std::vector< Field::Ptr >& fields()       { return fields_; }
-
   std::vector< std::string > field_names() const;
 
   // FieldSet does *not* have ownership of fields. It is merely a convenience.
   // Consider the State class to keep ownership of Fields.
   void add(const Field&);
 
-  // remove
-  void add_field(Field::Ptr field);
-
   bool has_field(const std::string& name) const;
 
   Field& field(const std::string& name) const;
 
+  std::vector<Field*>& fields() { return fields_; }
+
 protected: // data
 
-  std::vector< Field::Ptr >       fields_;  ///< field handle storage
+  std::vector< Field* >           fields_;  ///< field handle storage
   std::string                     name_;    ///< internal name
   std::map< std::string, size_t > index_;   ///< name-to-index map, to refer fields by name
-
-private:
-
-  // In order to return raw pointers to C interface
-  friend std::vector<Field*>& __private_get_raw_fields_ptr (FieldSet* This);
-  std::vector<Field*> fields_raw_ptr_;
-
 };
 
 

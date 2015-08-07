@@ -267,13 +267,13 @@ BOOST_AUTO_TEST_CASE( test_spectral_fields )
   BOOST_CHECK_NO_THROW( trans.dirtrans(gpf,spf) );
   BOOST_CHECK_NO_THROW( trans.invtrans(spf,gpf) );
 
-  FieldSet gpfields;   gpfields.add_field(gpf.self());
-  FieldSet spfields;   spfields.add_field(spf.self());
+  FieldSet gpfields;   gpfields.add(gpf);
+  FieldSet spfields;   spfields.add(spf);
 
   BOOST_CHECK_NO_THROW( trans.dirtrans(gpfields,spfields) );
   BOOST_CHECK_NO_THROW( trans.invtrans(spfields,gpfields) );
 
-  gpfields.add_field(gpf.self());
+  gpfields.add(gpf);
   BOOST_CHECK_THROW(trans.dirtrans(gpfields,spfields),eckit::SeriousBug);
 
 }

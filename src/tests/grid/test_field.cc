@@ -94,13 +94,11 @@ void TestField::test_constructor()
 
   ASSERT( f.owners() == 2 );
 
-  std::vector< Field::Ptr > fields;
-  fields.push_back(f);
-
-  atlas::FieldSet fs(fields);
+  atlas::FieldSet fs;
+  fs.add(*f);
 
   // iterate over the fields
-  for (std::vector< Field::Ptr >::iterator it = fs.fields().begin(); it != fs.fields().end(); ++it)
+  for (std::vector< Field* >::iterator it = fs.fields().begin(); it != fs.fields().end(); ++it)
   {
     ArrayView<double> vdata( **it );
 
