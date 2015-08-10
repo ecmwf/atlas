@@ -78,9 +78,9 @@ public: // methods
   /// Any of [ int32 int64 real32 real64 ]
   std::string datatype() const { return array_->datatype(); }
 
-  /// @brief Internal data type of field as
+  /// @brief Internal data type of field asa long integer type
   /// Any of [ int32 int64 real32 real64 ]
-  DataType::kind_t kind() const { return datakind_; }
+  DataType::kind_t kind() const { return array_->kind(); }
 
   /// @brief Name associated to this field
   const std::string& name() const { return name_; }
@@ -138,8 +138,6 @@ private: // members
 protected: // members
 
   eckit::SharedPtr<ArrayBase> array_;
-
-  DataType::kind_t datakind_;
 
 // End of class Field
 

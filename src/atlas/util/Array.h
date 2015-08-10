@@ -29,6 +29,7 @@ class ArrayBase : public eckit::Owned {
 public:
 
   virtual std::string datatype() const = 0;
+  virtual DataType::kind_t kind() const = 0;
 
   void resize(const ArrayShape&);
 
@@ -105,6 +106,7 @@ public:
         DATA_TYPE& operator()(const ArrayIdx& idx)                                    { return view_(idx); }
 
   virtual std::string datatype() const { return DataType::datatype<DATA_TYPE>(); }
+  virtual DataType::kind_t kind() const { return DataType::kind<DATA_TYPE>(); }
 
   const DATA_TYPE& operator[](size_t i) const { return *(data()+i); }
         DATA_TYPE& operator[](size_t i)       { return *(data()+i); }

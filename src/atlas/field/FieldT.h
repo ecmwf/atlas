@@ -86,7 +86,6 @@ inline FieldT<DATA_TYPE>::FieldT(const ArrayShape& shape) :
 {
   array_.reset( new Array<DATA_TYPE>() );
   resize(shape);
-  datakind_ = DataType::datatype_to_kind(array_->datatype());
 }
 
 
@@ -96,7 +95,6 @@ inline FieldT<DATA_TYPE>::FieldT(const std::string& name, const ArrayShape& shap
 {
   array_.reset( new Array<DATA_TYPE>() );
   resize(shape);
-  datakind_ = DataType::datatype_to_kind(array_->datatype());
 }
 
 
@@ -117,7 +115,6 @@ inline FieldT<DATA_TYPE>::FieldT(const std::vector<size_t>& shape, const eckit::
   else {
     resize(shape);
   }
-  datakind_ = DataType::datatype_to_kind(array_->datatype());
 }
 
 

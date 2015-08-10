@@ -184,11 +184,11 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   nodes_fs.minimum(*surface_scalar_field,min);
   BOOST_CHECK_EQUAL( min, 1 );
 
-  nodes_fs.maximumAndGlobalIndex(*surface_scalar_field,max,gidx_max);
+  nodes_fs.maximumAndLocation(*surface_scalar_field,max,gidx_max);
   BOOST_CHECK_EQUAL( max, double(eckit::mpi::size()) );
   Log::info() << "global index for maximum: " << gidx_max << std::endl;
 
-  nodes_fs.minimumAndGlobalIndex(*surface_scalar_field,min,gidx_min);
+  nodes_fs.minimumAndLocation(*surface_scalar_field,min,gidx_min);
   BOOST_CHECK_EQUAL( min, 1 );
   Log::info() << "global index for minimum: " << gidx_min << std::endl;
 
@@ -221,54 +221,218 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
 
   BOOST_CHECKPOINT("Testing collectives for nodes vector field");
   {
-  std::vector<double> max;
-  std::vector<double> min;
-  std::vector<double> sum;
-  std::vector<double> mean;
-  std::vector<double> stddev;
-  size_t N;
-  std::vector<gidx_t> gidx_max;
-  std::vector<gidx_t> gidx_min;
+    Field& field = *surface_vector_field;
+    NodesFunctionSpace& fs = nodes_fs;
 
-  ArrayView<double,2> vec_arr( *surface_vector_field );
-  vec_arr = eckit::mpi::rank()+1;
-  nodes_fs.maximum(*surface_vector_field,max);
-  std::vector<double> check_max(surface_vector_field->stride(0),eckit::mpi::size());
-  BOOST_CHECK_EQUAL_COLLECTIONS( max.begin(),max.end(), check_max.begin(), check_max.end() );
+    std::vector<double> max;
+    std::vector<double> min;
+    std::vector<double> sum;
+    std::vector<double> mean;
+    std::vector<double> stddev;
+    size_t N;
+    std::vector<gidx_t> gidx_max;
+    std::vector<gidx_t> gidx_min;
 
-  nodes_fs.minimum(*surface_vector_field,min);
-  std::vector<double> check_min(surface_vector_field->stride(0),1);
-  BOOST_CHECK_EQUAL_COLLECTIONS( min.begin(),min.end(), check_min.begin(), check_min.end() );
+    ArrayView<double,2> vec_arr( field );
+    vec_arr = eckit::mpi::rank()+1;
+    fs.maximum(field,max);
+    std::vector<double> check_max(field.stride(0),eckit::mpi::size());
+    BOOST_CHECK_EQUAL_COLLECTIONS( max.begin(),max.end(), check_max.begin(), check_max.end() );
 
-  nodes_fs.maximumAndGlobalIndex(*surface_vector_field,max,gidx_max);
-  BOOST_CHECK_EQUAL_COLLECTIONS( max.begin(),max.end(), check_max.begin(), check_max.end() );
-  Log::info() << "global index for maximum: " << gidx_max << std::endl;
+    fs.minimum(field,min);
+    std::vector<double> check_min(field.stride(0),1);
+    BOOST_CHECK_EQUAL_COLLECTIONS( min.begin(),min.end(), check_min.begin(), check_min.end() );
 
-  nodes_fs.minimumAndGlobalIndex(*surface_vector_field,min,gidx_min);
-  BOOST_CHECK_EQUAL_COLLECTIONS( min.begin(),min.end(), check_min.begin(), check_min.end() );
-  Log::info() << "global index for minimum: " << gidx_min << std::endl;
+    fs.maximumAndLocation(field,max,gidx_max);
+    BOOST_CHECK_EQUAL_COLLECTIONS( max.begin(),max.end(), check_max.begin(), check_max.end() );
+    Log::info() << "global index for maximum: " << gidx_max << std::endl;
 
-  nodes_fs.orderIndependentSum(*surface_vector_field,sum,N);
-  Log::info() << "sum: " << sum << std::endl;
-  Log::info() << "N: " << N << std::endl;
+    fs.minimumAndLocation(field,min,gidx_min);
+    BOOST_CHECK_EQUAL_COLLECTIONS( min.begin(),min.end(), check_min.begin(), check_min.end() );
+    Log::info() << "global index for minimum: " << gidx_min << std::endl;
 
-  nodes_fs.mean(*surface_vector_field,mean,N);
-  Log::info() << "mean: " << mean << std::endl;
-  Log::info() << "N: " << N << std::endl;
+    fs.orderIndependentSum(field,sum,N);
+    Log::info() << "sum: " << sum << std::endl;
+    Log::info() << "N: " << N << std::endl;
 
-  nodes_fs.meanAndStandardDeviation(*surface_vector_field,mean,stddev,N);
-  Log::info() << "mean: " << mean << std::endl;
-  Log::info() << "standard deviation: " << stddev << std::endl;
-  Log::info() << "N: " << N << std::endl;
+    fs.mean(field,mean,N);
+    Log::info() << "mean: " << mean << std::endl;
+    Log::info() << "N: " << N << std::endl;
 
-  std::vector<int> sumint;
-  nodes_fs.orderIndependentSum(*surface_vector_field,sumint,N);
-  Log::info() << "sumint: " << sumint << std::endl;
+    fs.meanAndStandardDeviation(field,mean,stddev,N);
+    Log::info() << "mean: " << mean << std::endl;
+    Log::info() << "standard deviation: " << stddev << std::endl;
+    Log::info() << "N: " << N << std::endl;
 
-  nodes_fs.sum(*surface_vector_field,sumint,N);
-  Log::info() << "sumint: " << sumint << std::endl;
+    std::vector<int> sumint;
+    fs.orderIndependentSum(field,sumint,N);
+    Log::info() << "sumint: " << sumint << std::endl;
+
+    fs.sum(field,sumint,N);
+    Log::info() << "sumint: " << sumint << std::endl;
 
   }
+
+
+  BOOST_CHECKPOINT("Testing collectives for columns scalar field");
+  {
+    Field& field = *columns_scalar_field;
+    NodesColumnFunctionSpace& fs = columns_fs;
+    double max;
+    double min;
+    double sum;
+    double mean;
+    double stddev;
+    size_t N;
+    gidx_t gidx_max;
+    gidx_t gidx_min;
+    size_t level;
+
+    ArrayView<double,2> arr( field );
+    arr = eckit::mpi::rank()+1;
+    fs.maximum(field,max);
+    BOOST_CHECK_EQUAL( max, double(eckit::mpi::size()) );
+
+    fs.minimum(field,min);
+    BOOST_CHECK_EQUAL( min, 1 );
+
+    fs.maximumAndLocation(field,max,gidx_max,level);
+    BOOST_CHECK_EQUAL( max, double(eckit::mpi::size()) );
+    Log::info() << "global index for maximum: " << gidx_max << std::endl;
+    Log::info() << "level for maximum: " << level << std::endl;
+
+    fs.minimumAndLocation(field,min,gidx_min,level);
+    BOOST_CHECK_EQUAL( min, 1 );
+    Log::info() << "global index for minimum: " << gidx_min << std::endl;
+    Log::info() << "level for minimum: " << level << std::endl;
+
+    fs.orderIndependentSum(field,sum,N);
+    Log::info() << "order independent sum: " << sum << std::endl;
+    Log::info() << "N: " << N << std::endl;
+
+    fs.sum(field,sum,N);
+    Log::info() << "sum: " << sum << std::endl;
+    Log::info() << "N: " << N << std::endl;
+
+    fs.mean(field,mean,N);
+    Log::info() << "mean: " << mean << std::endl;
+    Log::info() << "N: " << N << std::endl;
+
+    fs.meanAndStandardDeviation(field,mean,stddev,N);
+    Log::info() << "mean: " << mean << std::endl;
+    Log::info() << "standard deviation: " << stddev << std::endl;
+    Log::info() << "N: " << N << std::endl;
+
+    int sumint;
+    fs.orderIndependentSum(field,sumint,N);
+    Log::info() << "order independent sum in int: " << sumint << std::endl;
+
+    fs.sum(field,sumint,N);
+    Log::info() << "sum in int: " << sumint << std::endl;
+
+    Field::Ptr max_per_level    ( Field::create<double>("max",    make_shape(fs.nb_levels())) );
+    Field::Ptr min_per_level    ( Field::create<double>("min",    make_shape(fs.nb_levels())) );
+    Field::Ptr sum_per_level    ( Field::create<double>("sum",    make_shape(fs.nb_levels())) );
+    Field::Ptr mean_per_level   ( Field::create<double>("mean",   make_shape(fs.nb_levels())) );
+    Field::Ptr stddev_per_level ( Field::create<double>("stddev", make_shape(fs.nb_levels())) );
+    Field::Ptr gidx_per_level   ( Field::create<gidx_t>("gidx",   make_shape(fs.nb_levels())) );
+
+    fs.maximumPerLevel(field,*max_per_level);
+    max_per_level->dump(Log::info());
+    fs.minimumPerLevel(field,*min_per_level);
+    min_per_level->dump(Log::info());
+    fs.sumPerLevel(field,*sum_per_level,N);
+    sum_per_level->dump(Log::info());
+    fs.meanPerLevel(field,*mean_per_level,N);
+    mean_per_level->dump(Log::info());
+    fs.meanAndStandardDeviationPerLevel(field,*mean_per_level,*stddev_per_level,N);
+    mean_per_level->dump(Log::info());
+    stddev_per_level->dump(Log::info());
+    fs.orderIndependentSumPerLevel(field,*sum_per_level,N);
+    sum_per_level->dump(Log::info());
+
+  }
+
+  BOOST_CHECKPOINT("Testing collectives for columns vector field");
+  {
+    Field& field = *columns_vector_field;
+    NodesColumnFunctionSpace& fs = columns_fs;
+    size_t nvar = field.stride(1);
+    std::vector<double> max;
+    std::vector<double> min;
+    std::vector<double> sum;
+    std::vector<double> mean;
+    std::vector<double> stddev;
+    size_t N;
+    std::vector<gidx_t> gidx_max;
+    std::vector<gidx_t> gidx_min;
+    std::vector<size_t> levels;
+
+    ArrayView<double,3> vec_arr( field );
+    vec_arr = eckit::mpi::rank()+1;
+    fs.maximum(field,max);
+    std::vector<double> check_max(nvar,eckit::mpi::size());
+    BOOST_CHECK_EQUAL_COLLECTIONS( max.begin(),max.end(), check_max.begin(), check_max.end() );
+
+    fs.minimum(field,min);
+    std::vector<double> check_min(nvar,1);
+    BOOST_CHECK_EQUAL_COLLECTIONS( min.begin(),min.end(), check_min.begin(), check_min.end() );
+
+    fs.maximumAndLocation(field,max,gidx_max,levels);
+    BOOST_CHECK_EQUAL_COLLECTIONS( max.begin(),max.end(), check_max.begin(), check_max.end() );
+    Log::info() << "global index for maximum: " << gidx_max << std::endl;
+
+    fs.minimumAndLocation(field,min,gidx_min,levels);
+    BOOST_CHECK_EQUAL_COLLECTIONS( min.begin(),min.end(), check_min.begin(), check_min.end() );
+    Log::info() << "global index for minimum: " << gidx_min << std::endl;
+
+    fs.orderIndependentSum(field,sum,N);
+    Log::info() << "sum: " << sum << std::endl;
+    Log::info() << "N: " << N << std::endl;
+
+    fs.mean(field,mean,N);
+    Log::info() << "mean: " << mean << std::endl;
+    Log::info() << "N: " << N << std::endl;
+
+    fs.meanAndStandardDeviation(field,mean,stddev,N);
+    Log::info() << "mean: " << mean << std::endl;
+    Log::info() << "standard deviation: " << stddev << std::endl;
+    Log::info() << "N: " << N << std::endl;
+
+    std::vector<int> sumint;
+    fs.orderIndependentSum(field,sumint,N);
+    Log::info() << "sumint: " << sumint << std::endl;
+
+    fs.sum(field,sumint,N);
+    Log::info() << "sumint: " << sumint << std::endl;
+
+    Field::Ptr max_per_level    ( Field::create<double>("max",    make_shape(fs.nb_levels(),nvar)) );
+    Field::Ptr min_per_level    ( Field::create<double>("min",    make_shape(fs.nb_levels(),nvar)) );
+    Field::Ptr sum_per_level    ( Field::create<double>("sum",    make_shape(fs.nb_levels(),nvar)) );
+    Field::Ptr mean_per_level   ( Field::create<double>("mean",   make_shape(fs.nb_levels(),nvar)) );
+    Field::Ptr stddev_per_level ( Field::create<double>("stddev", make_shape(fs.nb_levels(),nvar)) );
+    Field::Ptr gidx_per_level   ( Field::create<gidx_t>("gidx",   make_shape(fs.nb_levels(),nvar)) );
+
+    fs.maximumPerLevel(field,*max_per_level);
+    max_per_level->dump(Log::info());
+
+    fs.minimumPerLevel(field,*min_per_level);
+    min_per_level->dump(Log::info());
+
+    fs.sumPerLevel(field,*sum_per_level,N);
+    sum_per_level->dump(Log::info());
+
+    fs.meanPerLevel(field,*mean_per_level,N);
+    mean_per_level->dump(Log::info());
+
+    fs.meanAndStandardDeviationPerLevel(field,*mean_per_level,*stddev_per_level,N);
+    mean_per_level->dump(Log::info());
+    stddev_per_level->dump(Log::info());
+
+    fs.orderIndependentSumPerLevel(field,*sum_per_level,N);
+    sum_per_level->dump(Log::info());
+  }
+
 
 
 }

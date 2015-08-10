@@ -20,8 +20,9 @@
 namespace atlas {
 namespace util {
 
-struct IsGhost
+class IsGhost
 {
+public:
   IsGhost( const Nodes& nodes )
   {
     part_   = ArrayView<int,1> (nodes.partition() );
@@ -35,12 +36,13 @@ struct IsGhost
     mypart_ = mypart;
   }
 
-  bool operator()(int idx)
+  bool operator()(int idx) const
   {
     if( part_[idx] != mypart_ ) return true;
     if( ridx_[idx] != idx     ) return true;
     return false;
   }
+private:
   int mypart_;
   ArrayView<int,1> part_;
   IndexView<int,1> ridx_;
