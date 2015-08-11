@@ -109,7 +109,7 @@ std::string PolarStereoGraphic::shortName() const {
 
     if (shortName_.empty()) {
         std::ostringstream s;
-        s << grid_type_str() << "." << npts_xaxis_ << "x" << npts_yaxis_ << eckit::StrStream::ends;
+        s << grid_type_str() << "." << npts_xaxis_ << "x" << npts_yaxis_;
         shortName_ = s.str();
     }
 
