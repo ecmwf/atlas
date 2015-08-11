@@ -356,7 +356,7 @@ void AtlasBenchmark::setup()
   double radius = 6371.22e+03; // Earth's radius
   double height = 80.e+03;     // Height of atmosphere
   double deg2rad = M_PI/180.;
-  for( int jnode=0; jnode<nnodes; ++jnode )
+  atlas_omp_parallel_for( int jnode=0; jnode<nnodes; ++jnode )
   {
     lonlat(jnode,LON) = lonlat(jnode,LON) * deg2rad;
     lonlat(jnode,LAT) = lonlat(jnode,LAT) * deg2rad;
@@ -369,7 +369,7 @@ void AtlasBenchmark::setup()
     for( int jlev=0; jlev<nlev; ++jlev )
       field(jnode,jlev) = 100.+50.*std::cos(2*y);
   }
-  for( int jedge=0; jedge<nedges; ++jedge )
+  atlas_omp_parallel_for( int jedge=0; jedge<nedges; ++jedge )
   {
     S(jedge,LON) *= deg2rad;
     S(jedge,LAT) *= deg2rad;
@@ -382,7 +382,7 @@ void AtlasBenchmark::setup()
 
   node2edge_sign = ArrayView<double,2> ( mesh->nodes().add( Field::create<double>("to_edge_sign",make_shape(nnodes,node2edge.shape(1)) ) ) );
 
-  for( int jnode=0; jnode<nnodes; ++jnode )
+  atlas_omp_parallel_for( int jnode=0; jnode<nnodes; ++jnode )
   {
     for( int jedge=0; jedge<node2edge_size(jnode); ++jedge )
     {
@@ -437,10 +437,7 @@ void AtlasBenchmark::iteration()
   Array<double> avgS_arr(nedges,nlev,2);
   ArrayView<double,3> avgS(avgS_arr);
 
-#ifdef ATLAS_HAVE_OMP
-  #pragma omp parallel for
-#endif
-  for( int jedge=0; jedge<nedges; ++jedge )
+  atlas_omp_parallel_for( int jedge=0; jedge<nedges; ++jedge )
   {
     int ip1 = edge2node(jedge,0);
     int ip2 = edge2node(jedge,1);
@@ -453,10 +450,7 @@ void AtlasBenchmark::iteration()
     }
   }
 
-#ifdef ATLAS_HAVE_OMP
-  #pragma omp parallel for
-#endif
-  for( int jnode=0; jnode<nnodes; ++jnode )
+  atlas_omp_parallel_for( int jnode=0; jnode<nnodes; ++jnode )
   {
     for( int jlev=0; jlev<nlev; ++jlev )
     {
@@ -494,10 +488,7 @@ void AtlasBenchmark::iteration()
   double dzi = 1./dz;
   double dzi_2 = 0.5*dzi;
 
-#ifdef ATLAS_HAVE_OMP
-  #pragma omp parallel for
-#endif
-  for( int jnode=0; jnode<nnodes; ++jnode )
+  atlas_omp_parallel_for( int jnode=0; jnode<nnodes; ++jnode )
   {
     if( nlev > 2 )
     {

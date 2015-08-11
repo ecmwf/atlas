@@ -11,7 +11,7 @@
 #ifndef atlas_omp_h
 #define atlas_omp_h
 
-#include "atlas/atlas_config.h"
+#include "atlas/atlas_defines.h"
 
 #ifdef ATLAS_HAVE_OMP
 #include <omp.h>
@@ -56,5 +56,22 @@ inline int omp_get_nested(void)
 }
 
 #endif
+
+#define ATLAS_STR(x) #x
+#define ATLAS_STRINGIFY(x) ATLAS_STR(x)
+#define ATLAS_CONCATENATE(X,Y) X Y
+
+#ifdef ATLAS_HAVE_OMP
+#define atlas_omp_pragma(x) \
+  _Pragma( ATLAS_STRINGIFY( x ) )
+#else
+#define atlas_omp_pragma(x)
+#endif
+
+#define atlas_omp_parallel_for atlas_omp_pragma(omp parallel for) for
+#define atlas_omp_for atlas_omp_pragma(omp for) for
+#define atlas_omp_parallel atlas_omp_pragma(omp parallel)
+#define atlas_omp_critical atlas_omp_pragma(omp critical)
+#define atlas_omp_critical_ordered atlas_omp_pragma( omp for ordered schedule(static,1) ) for( size_t _thread=0; _thread<omp_get_num_threads(); ++_thread ) atlas_omp_pragma( omp ordered )
 
 #endif

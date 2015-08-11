@@ -21,6 +21,7 @@
 #include "atlas/actions/BuildParallelFields.h"
 #include "atlas/actions/BuildHalo.h"
 #include "atlas/actions/BuildPeriodicBoundaries.h"
+#include "atlas/atlas_omp.h"
 
 #ifdef ATLAS_HAVE_FORTRAN
 #define REMOTE_IDX_BASE 1
@@ -90,7 +91,7 @@ NodesFunctionSpace::NodesFunctionSpace(const std::string& name, Mesh& mesh, cons
 
     util::IsGhost is_ghost(mesh_.nodes());
     std::vector<int> mask(mesh_.nodes().size());
-    for( size_t n=0; n<mask.size(); ++n ) {
+    atlas_omp_parallel_for( size_t n=0; n<mask.size(); ++n ) {
       mask[n] = is_ghost(n) ? 1 : 0;
 
       // --> This would add periodic west-bc to the gather, but means that global-sums, means, etc are computed wrong
@@ -118,7 +119,7 @@ NodesFunctionSpace::NodesFunctionSpace(const std::string& name, Mesh& mesh, cons
     Field& gidx = mesh_.nodes().global_index();
     util::IsGhost is_ghost(mesh_.nodes());
     std::vector<int> mask(mesh_.nodes().size());
-    for( size_t n=0; n<mask.size(); ++n ) {
+    atlas_omp_parallel_for( size_t n=0; n<mask.size(); ++n ) {
       mask[n] = is_ghost(n) ? 1 : 0;
     }
     checksum->setup(part.data<int>(),ridx.data<int>(),REMOTE_IDX_BASE,gidx.data<gidx_t>(),mask.data(),nb_nodes_);
@@ -380,6 +381,7 @@ void dispatch_sum( const NodesFunctionSpace& fs, const Field& field, DATATYPE& r
   util::IsGhost is_ghost(fs.nodes());
   ArrayView<DATATYPE,1> arr( field );
   DATATYPE local_sum = 0;
+  atlas_omp_pragma( omp parallel for default(shared) reduction(+:local_sum) )
   for( size_t n=0; n<arr.shape(0); ++n ) {
     if( ! is_ghost(n) ) {
       local_sum += arr(n);
@@ -434,12 +436,24 @@ void dispatch_sum( const NodesFunctionSpace& fs, const Field& field, std::vector
 {
   size_t nvar = field.stride(0);
   ArrayView<DATATYPE,2> arr( field.data<DATATYPE>(), make_shape(field.shape(0),nvar) );
-  std::vector<DATATYPE> local_sum(nvar,0);
   util::IsGhost is_ghost(fs.nodes());
-  for( size_t n=0; n<arr.shape(0); ++n ) {
-    if( ! is_ghost(n) ) {
+  std::vector<DATATYPE> local_sum(nvar,0);
+
+  atlas_omp_parallel
+  {
+    std::vector<DATATYPE> local_sum_private(nvar,0);
+    atlas_omp_for( size_t n=0; n<arr.shape(0); ++n )
+    {
+      if( ! is_ghost(n) ) {
+        for( size_t j=0; j<nvar; ++j ) {
+          local_sum_private[j] += arr(n,j);
+        }
+      }
+    }
+    atlas_omp_critical
+    {
       for( size_t j=0; j<nvar; ++j ) {
-        local_sum[j] += arr(n,j);
+        local_sum[j] += local_sum_private[j];
       }
     }
   }
@@ -600,8 +614,12 @@ void order_independent_sum( const NodesFunctionSpace& fs, const Field& field, st
 template< typename DATATYPE >
 void dispatch_minimum( const NodesFunctionSpace& fs, const Field& field, DATATYPE& min )
 {
-  DATATYPE local_minimum = *std::min_element(field.data<DATATYPE>(),field.data<DATATYPE>()+field.size());
-  eckit::mpi::all_reduce(local_minimum,min,eckit::mpi::min());
+  const DATATYPE* values = field.data<DATATYPE>();
+  DATATYPE minimum( std::numeric_limits<DATATYPE>::max() );
+  atlas_omp_pragma( omp parallel for default(shared) reduction(min: minimum) )
+  for( size_t n=0; n<field.size(); ++n )
+    minimum = std::min(values[n],minimum);
+  eckit::mpi::all_reduce(minimum,min,eckit::mpi::min());
 }
 
 template< typename DATATYPE >
@@ -646,8 +664,12 @@ void minimum( const NodesFunctionSpace& fs, const Field& field, DATATYPE& min )
 template< typename DATATYPE >
 void dispatch_maximum( const NodesFunctionSpace& fs, const Field& field, DATATYPE& max )
 {
-  DATATYPE local_maximum = *std::max_element(field.data<DATATYPE>(),field.data<DATATYPE>()+field.size());
-  eckit::mpi::all_reduce(local_maximum,max,eckit::mpi::max());
+  const DATATYPE* values = field.data<DATATYPE>();
+  DATATYPE maximum( -std::numeric_limits<DATATYPE>::max() );
+  atlas_omp_pragma( omp parallel for default(shared) reduction(max: maximum) )
+  for( size_t n=0; n<field.size(); ++n )
+     maximum = std::max(values[n],maximum);
+  eckit::mpi::all_reduce(maximum,max,eckit::mpi::max());
 }
 
 template< typename DATATYPE >
@@ -692,13 +714,23 @@ void maximum( const NodesFunctionSpace& fs, const Field& field, DATATYPE& max )
 template< typename DATATYPE >
 void dispatch_minimum( const NodesFunctionSpace& fs, const Field& field, std::vector<DATATYPE>& min )
 {
-  size_t nvar = field.stride(0);
+  const size_t nvar = field.stride(0);
   min.resize(nvar);
   std::vector<DATATYPE> local_minimum(nvar,std::numeric_limits<DATATYPE>::max());
-  ArrayView<DATATYPE,2> arr( field.data<DATATYPE>(), make_shape(field.shape(0),nvar) );
-  for( size_t n=0; n<arr.shape(0); ++n ) {
-    for( size_t j=0; j<arr.shape(1); ++j ) {
-      local_minimum[j] = std::min(arr(n,j),local_minimum[j]);
+  const ArrayView<DATATYPE,2> arr( field.data<DATATYPE>(), make_shape(field.shape(0),nvar) );
+  atlas_omp_parallel
+  {
+    std::vector<DATATYPE> local_minimum_private(nvar,std::numeric_limits<DATATYPE>::max());
+    atlas_omp_for( size_t n=0; n<arr.shape(0); ++n ) {
+      for( size_t j=0; j<nvar; ++j ) {
+        local_minimum[j] = std::min(arr(n,j),local_minimum[j]);
+      }
+    }
+    atlas_omp_critical
+    {
+      for( size_t j=0; j<nvar; ++j ) {
+        local_minimum[j] = std::min(local_minimum_private[j],local_minimum[j]);
+      }
     }
   }
   eckit::mpi::all_reduce(local_minimum,min,eckit::mpi::min());
@@ -746,13 +778,23 @@ void minimum( const NodesFunctionSpace& fs, const Field& field, std::vector<DATA
 template< typename DATATYPE >
 void dispatch_maximum( const NodesFunctionSpace& fs, const Field& field, std::vector<DATATYPE>& max )
 {
-  size_t nvar = field.stride(0);
+  const size_t nvar = field.stride(0);
   max.resize(nvar);
   std::vector<DATATYPE> local_maximum(nvar,-std::numeric_limits<DATATYPE>::max());
-  ArrayView<DATATYPE,2> arr( field.data<DATATYPE>(), make_shape(field.shape(0),nvar) );
-  for( size_t n=0; n<arr.shape(0); ++n ) {
-    for( size_t j=0; j<arr.shape(1); ++j ) {
-      local_maximum[j] = std::max(arr(n,j),local_maximum[j]);
+  const ArrayView<DATATYPE,2> arr( field.data<DATATYPE>(), make_shape(field.shape(0),nvar) );
+  atlas_omp_parallel
+  {
+    std::vector<DATATYPE> local_maximum_private(nvar,-std::numeric_limits<DATATYPE>::max());
+    atlas_omp_for( size_t n=0; n<arr.shape(0); ++n ) {
+      for( size_t j=0; j<nvar; ++j ) {
+        local_maximum_private[j] = std::max(arr(n,j),local_maximum_private[j]);
+      }
+    }
+    atlas_omp_critical
+    {
+      for( size_t j=0; j<nvar; ++j ) {
+        local_maximum[j] = std::max(local_maximum[j],local_maximum_private[j]);
+      }
     }
   }
   eckit::mpi::all_reduce(local_maximum,max,eckit::mpi::max());
@@ -800,11 +842,35 @@ void maximum( const NodesFunctionSpace& fs, const Field& field, std::vector<DATA
 template< typename DATATYPE >
 void dispatch_minimum_and_location( const NodesFunctionSpace& fs, const Field& field, DATATYPE& min, gidx_t& glb_idx )
 {
-  const DATATYPE *local_minimum = std::min_element(field.data<DATATYPE>(),field.data<DATATYPE>()+field.size());
-  const size_t location = std::distance(field.data<DATATYPE>(),local_minimum);
+  DATATYPE local_minimum ( std::numeric_limits<DATATYPE>::max() );
+  size_t location;
+
+  const DATATYPE* values = field.data<DATATYPE>();
+  const size_t size = field.size();
+  atlas_omp_parallel
+  {
+    DATATYPE local_minimum_private( std::numeric_limits<DATATYPE>::max() );
+    size_t location_private;
+    atlas_omp_for( size_t n=0; n<size; ++n )
+    {
+      if( values[n] < local_minimum_private )
+      {
+        local_minimum_private = values[n];
+        location_private = n;
+      }
+    }
+    atlas_omp_critical_ordered
+    {
+      if( local_minimum_private < local_minimum )
+      {
+        local_minimum = local_minimum_private;
+        location = location_private;
+      }
+    }
+  }
   glb_idx = fs.nodes().global_index().data<gidx_t>()[location];
   ASSERT( glb_idx < std::numeric_limits<int>::max() ); // pairs with 64bit integer for second not implemented
-  const std::pair<DATATYPE,int> min_and_gidx_loc (*local_minimum,glb_idx);
+  const std::pair<DATATYPE,int> min_and_gidx_loc (local_minimum,glb_idx);
   std::pair<DATATYPE,int> min_and_gidx_glb;
   eckit::mpi::all_reduce(min_and_gidx_loc,min_and_gidx_glb,eckit::mpi::minloc());
   min     = min_and_gidx_glb.first;
@@ -853,11 +919,35 @@ void minimum_and_location( const NodesFunctionSpace& fs, const Field& field, DAT
 template< typename DATATYPE >
 void dispatch_maximum_and_location( const NodesFunctionSpace& fs, const Field& field, DATATYPE& max, gidx_t& glb_idx )
 {
-  const DATATYPE *local_maximum = std::max_element(field.data<DATATYPE>(),field.data<DATATYPE>()+field.size());
-  const size_t location = std::distance(field.data<DATATYPE>(),local_maximum);
+  DATATYPE local_maximum ( -std::numeric_limits<DATATYPE>::max() );
+  size_t location;
+
+  const DATATYPE* values = field.data<DATATYPE>();
+  const size_t size = field.size();
+  atlas_omp_parallel
+  {
+    DATATYPE local_maximum_private( -std::numeric_limits<DATATYPE>::max() );
+    size_t location_private;
+    atlas_omp_for( size_t n=0; n<size; ++n )
+    {
+      if( values[n] > local_maximum_private )
+      {
+        local_maximum_private = values[n];
+        location_private = n;
+      }
+    }
+    atlas_omp_critical_ordered
+    {
+      if( local_maximum_private > local_maximum )
+      {
+        local_maximum = local_maximum_private;
+        location = location_private;
+      }
+    }
+  }
   glb_idx = fs.nodes().global_index().data<gidx_t>()[location];
   ASSERT( glb_idx < std::numeric_limits<int>::max() ); // pairs with 64bit integer for second not implemented
-  const std::pair<DATATYPE,int> max_and_gidx_loc (*local_maximum,glb_idx);
+  const std::pair<DATATYPE,int> max_and_gidx_loc (local_maximum,glb_idx);
   std::pair<DATATYPE,int> max_and_gidx_glb;
   eckit::mpi::all_reduce(max_and_gidx_loc,max_and_gidx_glb,eckit::mpi::maxloc());
   max     = max_and_gidx_glb.first;
@@ -912,12 +1002,26 @@ void dispatch_minimum_and_location( const NodesFunctionSpace& fs, const Field& f
   glb_idx.resize(nvar);
   std::vector<DATATYPE> local_minimum(nvar,std::numeric_limits<DATATYPE>::max());
   std::vector<size_t> location(nvar);
-  ArrayView<DATATYPE,2> arr( field.data<DATATYPE>(), make_shape(field.shape(0),nvar) );
-  for( size_t n=0; n<arr.shape(0); ++n ) {
-    for( size_t j=0; j<arr.shape(1); ++j ) {
-      if( arr(n,j) < local_minimum[j] ) {
-        local_minimum[j] = arr(n,j);
-        location[j] = n;
+  const ArrayView<DATATYPE,2> arr( field.data<DATATYPE>(), make_shape(field.shape(0),nvar) );
+  atlas_omp_parallel
+  {
+    std::vector<DATATYPE> local_minimum_private(nvar,std::numeric_limits<DATATYPE>::max());
+    std::vector<size_t> location_private(nvar);
+    atlas_omp_for( size_t n=0; n<arr.shape(0); ++n ) {
+      for( size_t j=0; j<arr.shape(1); ++j ) {
+        if( arr(n,j) < local_minimum_private[j] ) {
+          local_minimum_private[j] = arr(n,j);
+          location_private[j] = n;
+        }
+      }
+    }
+    atlas_omp_critical_ordered
+    {
+      for( size_t j=0; j<arr.shape(1); ++j ) {
+        if( local_minimum_private[j] < local_minimum[j] ) {
+          local_minimum[j] = local_minimum_private[j];
+          location[j] = location_private[j];
+        }
       }
     }
   }
@@ -985,11 +1089,25 @@ void dispatch_maximum_and_location( const NodesFunctionSpace& fs, const Field& f
   std::vector<DATATYPE> local_maximum(nvar,-std::numeric_limits<DATATYPE>::max());
   std::vector<size_t> location(nvar);
   ArrayView<DATATYPE,2> arr( field.data<DATATYPE>(), make_shape(field.shape(0),nvar) );
-  for( size_t n=0; n<arr.shape(0); ++n ) {
-    for( size_t j=0; j<arr.shape(1); ++j ) {
-      if( arr(n,j) > local_maximum[j] ) {
-        local_maximum[j] = arr(n,j);
-        location[j] = n;
+  atlas_omp_parallel
+  {
+    std::vector<DATATYPE> local_maximum_private(nvar,-std::numeric_limits<DATATYPE>::max());
+    std::vector<size_t> location_private(nvar);
+    atlas_omp_for( size_t n=0; n<arr.shape(0); ++n ) {
+      for( size_t j=0; j<arr.shape(1); ++j ) {
+        if( arr(n,j) > local_maximum_private[j] ) {
+          local_maximum_private[j] = arr(n,j);
+          location_private[j] = n;
+        }
+      }
+    }
+    atlas_omp_critical_ordered
+    {
+      for( size_t j=0; j<arr.shape(1); ++j ) {
+        if( local_maximum_private[j] > local_maximum[j] ) {
+          local_maximum[j] = local_maximum_private[j];
+          location[j] = location_private[j];
+        }
       }
     }
   }
@@ -1072,7 +1190,7 @@ void mean_and_standard_deviation( const NodesFunctionSpace& fs, const Field& fie
   Field::Ptr squared_diff_field( fs.createField(field) );
   ArrayView<DATATYPE,1> squared_diff( *squared_diff_field );
   ArrayView<DATATYPE,1> values( field );
-  for( size_t n=0; n<field.size(); ++n )
+  atlas_omp_parallel_for( size_t n=0; n<field.size(); ++n )
     squared_diff(n) = sqr( values(n) - mu );
 
   mean(fs,*squared_diff_field,sigma,N);
@@ -1086,7 +1204,7 @@ void mean_and_standard_deviation( const NodesFunctionSpace& fs, const Field& fie
   Field::Ptr squared_diff_field( fs.createField(field) );
   ArrayView<DATATYPE,2> squared_diff( squared_diff_field->data<DATATYPE>(), make_shape(squared_diff_field->shape(0),squared_diff_field->stride(0)) );
   ArrayView<DATATYPE,2> values( field.data<DATATYPE>(), make_shape(field.shape(0),field.stride(0)) );
-  for( size_t n=0; n<values.shape(0); ++n ) {
+  atlas_omp_parallel_for( size_t n=0; n<values.shape(0); ++n ) {
     for( size_t j=0; j<values.shape(1); ++j ) {
       squared_diff(n,j) = sqr( values(n,j) - mu[j] );
     }
@@ -1273,10 +1391,11 @@ void dispatch_sum( const NodesColumnFunctionSpace& fs, const Field& field, DATAT
   const util::IsGhost is_ghost(fs.nodes());
   const ArrayView<DATATYPE,2> arr( field );
   DATATYPE local_sum = 0;
+  atlas_omp_pragma( omp parallel for default(shared) reduction(+:local_sum) )
   for( size_t n=0; n<arr.shape(0); ++n ) {
     if( ! is_ghost(n) ) {
       for( size_t l=0; l<arr.shape(1); ++l )
-      local_sum += arr(n,l);
+        local_sum += arr(n,l);
     }
   }
   eckit::mpi::all_reduce(local_sum,result,eckit::mpi::sum());
@@ -1330,14 +1449,25 @@ void dispatch_sum( const NodesColumnFunctionSpace& fs, const Field& field, std::
   const size_t nvar = field.stride(1);
   const ArrayView<DATATYPE,3> arr( field.data<DATATYPE>(), make_shape(field.shape(0),field.shape(1),nvar) );
   const util::IsGhost is_ghost(fs.nodes());
-
   std::vector<DATATYPE> local_sum(nvar,0);
-  for( size_t n=0; n<arr.shape(0); ++n ) {
-    if( ! is_ghost(n) ) {
-      for( size_t l=0; l<arr.shape(1); ++l ) {
-        for( size_t j=0; j<nvar; ++j ) {
-          local_sum[j] += arr(n,l,j);
+
+  atlas_omp_parallel
+  {
+    std::vector<DATATYPE> local_sum_private(nvar,0);
+    atlas_omp_for( size_t n=0; n<arr.shape(0); ++n )
+    {
+      if( ! is_ghost(n) ) {
+        for( size_t l=0; l<arr.shape(1); ++l ) {
+          for( size_t j=0; j<nvar; ++j ) {
+            local_sum_private[j] += arr(n,l,j);
+          }
         }
+      }
+    }
+    atlas_omp_critical
+    {
+      for( size_t j=0; j<nvar; ++j ) {
+        local_sum[j] += local_sum_private[j];
       }
     }
   }
@@ -1399,11 +1529,26 @@ void dispatch_sum_per_level( const NodesColumnFunctionSpace& fs, const Field& fi
   ArrayView<DATATYPE,2> sum_per_level( sum.data<DATATYPE>(), make_shape(sum.shape(0),sum.stride(0)) );
   sum_per_level = 0;
   const util::IsGhost is_ghost(fs.nodes());
-  for( size_t n=0; n<arr.shape(0); ++n ) {
-    if( ! is_ghost(n) ) {
-      for( size_t l=0; l<arr.shape(1); ++l ) {
-        for( size_t j=0; j<nvar; ++j ) {
-          sum_per_level(l,j) += arr(n,l,j);
+
+  atlas_omp_parallel
+  {
+    Array<DATATYPE> sum_per_level_private(sum_per_level.shape(0),sum_per_level.shape(1));
+    ArrayView<DATATYPE> sum_per_level_private_view(sum_per_level_private); sum_per_level_private_view = 0.;
+    atlas_omp_for( size_t n=0; n<arr.shape(0); ++n )
+    {
+      if( ! is_ghost(n) ) {
+        for( size_t l=0; l<arr.shape(1); ++l ) {
+          for( size_t j=0; j<nvar; ++j ) {
+            sum_per_level_private(l,j) += arr(n,l,j);
+          }
+        }
+      }
+    }
+    atlas_omp_critical
+    {
+      for( size_t l=0; l<sum_per_level_private.shape(0); ++l ) {
+        for( size_t j=0; j<sum_per_level_private.shape(1); ++j ) {
+          sum_per_level(l,j) += sum_per_level_private(l,j);
         }
       }
     }
@@ -1604,10 +1749,20 @@ void dispatch_minimum( const NodesColumnFunctionSpace& fs, const Field& field, s
   min.resize(nvar);
   std::vector<DATATYPE> local_minimum(nvar,std::numeric_limits<DATATYPE>::max());
   const ArrayView<DATATYPE,3> arr( field.data<DATATYPE>(), make_shape(field.shape(0),field.shape(1),nvar) );
-  for( size_t n=0; n<arr.shape(0); ++n ) {
-    for( size_t l=0; l<arr.shape(1); ++l ) {
+  atlas_omp_parallel
+  {
+    std::vector<DATATYPE> local_minimum_private(nvar,std::numeric_limits<DATATYPE>::max());
+    atlas_omp_for( size_t n=0; n<arr.shape(0); ++n ) {
+      for( size_t l=0; l<arr.shape(1); ++l ) {
+        for( size_t j=0; j<nvar; ++j ) {
+          local_minimum_private[j] = std::min(arr(n,l,j),local_minimum_private[j]);
+        }
+      }
+    }
+    atlas_omp_critical
+    {
       for( size_t j=0; j<nvar; ++j ) {
-        local_minimum[j] = std::min(arr(n,l,j),local_minimum[j]);
+        local_minimum[j] = std::min(local_minimum_private[j],local_minimum[j]);
       }
     }
   }
@@ -1656,17 +1811,24 @@ void minimum( const NodesColumnFunctionSpace& fs, const Field& field, std::vecto
 template< typename DATATYPE >
 void dispatch_maximum( const NodesColumnFunctionSpace& fs, const Field& field, std::vector<DATATYPE>& max )
 {
-  DEBUG();
   const size_t nvar = field.stride(1);
   max.resize(nvar);
   std::vector<DATATYPE> local_maximum(nvar,-std::numeric_limits<DATATYPE>::max());
-  DEBUG();
   const ArrayView<DATATYPE,3> arr( field.data<DATATYPE>(), make_shape(field.shape(0),field.shape(1),nvar) );
-  DEBUG();
-  for( size_t n=0; n<arr.shape(0); ++n ) {
-    for( size_t l=0; l<arr.shape(1); ++l ) {
+  atlas_omp_parallel
+  {
+    std::vector<DATATYPE> local_maximum_private(nvar,-std::numeric_limits<DATATYPE>::max());
+    atlas_omp_for( size_t n=0; n<arr.shape(0); ++n ) {
+      for( size_t l=0; l<arr.shape(1); ++l ) {
+        for( size_t j=0; j<nvar; ++j ) {
+          local_maximum_private[j] = std::max(arr(n,l,j),local_maximum_private[j]);
+        }
+      }
+    }
+    atlas_omp_critical
+    {
       for( size_t j=0; j<nvar; ++j ) {
-        local_maximum[j] = std::max(arr(n,l,j),local_maximum[j]);
+        local_maximum[j] = std::max(local_maximum_private[j],local_maximum[j]);
       }
     }
   }
@@ -1726,10 +1888,23 @@ void dispatch_minimum_per_level( const NodesColumnFunctionSpace& fs, const Field
   ArrayView<DATATYPE,2> min( min_field.data<DATATYPE>(), make_shape(min_field.shape(0),min_field.stride(0)) );
   min = std::numeric_limits<DATATYPE>::max();
   const ArrayView<DATATYPE,3> arr( field.data<DATATYPE>(), make_shape(field.shape(0),field.shape(1),nvar) );
-  for( size_t n=0; n<arr.shape(0); ++n ) {
-    for( size_t l=0; l<arr.shape(1); ++l ) {
-      for( size_t j=0; j<nvar; ++j ) {
-        min(l,j) = std::min(arr(n,l,j),min(l,j));
+  atlas_omp_parallel
+  {
+    Array<DATATYPE> min_private(min.shape(0),min.shape(1));
+    ArrayView<DATATYPE> min_private_view(min_private); min_private_view = std::numeric_limits<DATATYPE>::max();
+    atlas_omp_for( size_t n=0; n<arr.shape(0); ++n ) {
+      for( size_t l=0; l<arr.shape(1); ++l ) {
+        for( size_t j=0; j<nvar; ++j ) {
+          min_private(l,j) = std::min(arr(n,l,j),min_private(l,j));
+        }
+      }
+    }
+    atlas_omp_critical
+    {
+      for( size_t l=0; l<arr.shape(1); ++l ) {
+        for( size_t j=0; j<nvar; ++j ) {
+          min(l,j) = std::min(min_private(l,j),min(l,j));
+        }
       }
     }
   }
@@ -1767,10 +1942,23 @@ void dispatch_maximum_per_level( const NodesColumnFunctionSpace& fs, const Field
   ArrayView<DATATYPE,2> max( max_field.data<DATATYPE>(), make_shape(max_field.shape(0),max_field.stride(0)) );
   max = -std::numeric_limits<DATATYPE>::max();
   const ArrayView<DATATYPE,3> arr( field.data<DATATYPE>(), make_shape(field.shape(0),field.shape(1),nvar) );
-  for( size_t n=0; n<arr.shape(0); ++n ) {
-    for( size_t l=0; l<arr.shape(1); ++l ) {
-      for( size_t j=0; j<nvar; ++j ) {
-        max(l,j) = std::max(arr(n,l,j),max(l,j));
+  atlas_omp_parallel
+  {
+    Array<DATATYPE> max_private(max.shape(0),max.shape(1));
+    ArrayView<DATATYPE> max_private_view(max_private); max_private_view = -std::numeric_limits<DATATYPE>::max();
+    atlas_omp_for( size_t n=0; n<arr.shape(0); ++n ) {
+      for( size_t l=0; l<arr.shape(1); ++l ) {
+        for( size_t j=0; j<nvar; ++j ) {
+          max_private(l,j) = std::max(arr(n,l,j),max_private(l,j));
+        }
+      }
+    }
+    atlas_omp_critical
+    {
+      for( size_t l=0; l<arr.shape(1); ++l ) {
+        for( size_t j=0; j<nvar; ++j ) {
+          max(l,j) = std::max(max_private(l,j),max(l,j));
+        }
       }
     }
   }
@@ -1803,12 +1991,28 @@ void dispatch_minimum_and_location( const NodesColumnFunctionSpace& fs, const Fi
   size_t loc_node;
   size_t loc_level;
   ArrayView<DATATYPE,2> arr( field.data<DATATYPE>(), make_shape(field.shape(0),field.shape(1)) );
-  for( size_t n=0; n<arr.shape(0); ++n ) {
-    for( size_t l=0; l<arr.shape(1); ++l ) {
-      if( arr(n,l) < local_minimum ) {
-        local_minimum = arr(n,l);
-        loc_node = n;
-        loc_level = l;
+  atlas_omp_parallel
+  {
+    DATATYPE local_minimum_private(std::numeric_limits<DATATYPE>::max());
+    size_t loc_node_private;
+    size_t loc_level_private;
+    atlas_omp_for( size_t n=0; n<arr.shape(0); ++n ) {
+      for( size_t l=0; l<arr.shape(1); ++l ) {
+        if( arr(n,l) < local_minimum_private ) {
+          local_minimum_private = arr(n,l);
+          loc_node_private = n;
+          loc_level_private = l;
+        }
+      }
+    }
+    atlas_omp_critical_ordered
+    {
+      for( size_t l=0; l<arr.shape(1); ++l ) {
+        if( local_minimum_private < local_minimum ) {
+          local_minimum = local_minimum_private;
+          loc_node = loc_node_private;
+          loc_level = loc_level_private;
+        }
       }
     }
   }
@@ -1874,13 +2078,30 @@ void dispatch_maximum_and_location( const NodesColumnFunctionSpace& fs, const Fi
   size_t loc_node;
   size_t loc_level;
   ArrayView<DATATYPE,2> arr( field.data<DATATYPE>(), make_shape(field.shape(0),field.shape(1)) );
-  for( size_t n=0; n<arr.shape(0); ++n ) {
-    for( size_t l=0; l<arr.shape(1); ++l ) {
-      if( arr(n,l) > local_maximum ) {
-        local_maximum = arr(n,l);
-        loc_node = n;
-        loc_level = l;
+  atlas_omp_parallel
+  {
+    DATATYPE local_maximum_private(-std::numeric_limits<DATATYPE>::max());
+    size_t loc_node_private;
+    size_t loc_level_private;
+    atlas_omp_for( size_t n=0; n<arr.shape(0); ++n ) {
+      for( size_t l=0; l<arr.shape(1); ++l ) {
+        if( arr(n,l) > local_maximum ) {
+          local_maximum = arr(n,l);
+          loc_node = n;
+          loc_level = l;
+        }
       }
+    }
+    atlas_omp_critical_ordered
+    {
+      for( size_t l=0; l<arr.shape(1); ++l ) {
+        if( local_maximum_private > local_maximum ) {
+          local_maximum = local_maximum_private;
+          loc_node = loc_node_private;
+          loc_level = loc_level_private;
+        }
+      }
+
     }
   }
   std::pair<DATATYPE,int> max_and_gidx_loc;
@@ -1950,13 +2171,31 @@ void dispatch_minimum_and_location( const NodesColumnFunctionSpace& fs, const Fi
   std::vector<size_t> loc_node(nvar);
   std::vector<size_t> loc_level(nvar);
   ArrayView<DATATYPE,3> arr( field.data<DATATYPE>(), make_shape(field.shape(0),field.shape(1),nvar) );
-  for( size_t n=0; n<arr.shape(0); ++n ) {
-    for( size_t l=0; l<arr.shape(1); ++l ) {
-      for( size_t j=0; j<nvar; ++j ) {
-        if( arr(n,l,j) < local_minimum[j] ) {
-          local_minimum[j] = arr(n,l,j);
-          loc_node[j] = n;
-          loc_level[j] = l;
+  atlas_omp_parallel
+  {
+    std::vector<DATATYPE> local_minimum_private(nvar,std::numeric_limits<DATATYPE>::max());
+    std::vector<size_t> loc_node_private(nvar);
+    std::vector<size_t> loc_level_private(nvar);
+    atlas_omp_for( size_t n=0; n<arr.shape(0); ++n ) {
+      for( size_t l=0; l<arr.shape(1); ++l ) {
+        for( size_t j=0; j<nvar; ++j ) {
+          if( arr(n,l,j) < local_minimum_private[j] ) {
+            local_minimum_private[j] = arr(n,l,j);
+            loc_node_private[j] = n;
+            loc_level_private[j] = l;
+          }
+        }
+      }
+    }
+    atlas_omp_critical_ordered
+    {
+      for( size_t l=0; l<arr.shape(1); ++l ) {
+        for( size_t j=0; j<nvar; ++j ) {
+          if( local_minimum_private[j] < local_minimum[j] ) {
+            local_minimum[j] = local_minimum_private[j];
+            loc_node[j] = loc_node_private[j];
+            loc_level[j] = loc_level_private[j];
+          }
         }
       }
     }
@@ -2033,13 +2272,31 @@ void dispatch_maximum_and_location( const NodesColumnFunctionSpace& fs, const Fi
   std::vector<size_t> loc_node(nvar);
   std::vector<size_t> loc_level(nvar);
   ArrayView<DATATYPE,3> arr( field.data<DATATYPE>(), make_shape(field.shape(0),field.shape(1),nvar) );
-  for( size_t n=0; n<arr.shape(0); ++n ) {
-    for( size_t l=0; l<arr.shape(1); ++l ) {
-      for( size_t j=0; j<nvar; ++j ) {
-        if( arr(n,l,j) > local_maximum[j] ) {
-          local_maximum[j] = arr(n,l,j);
-          loc_node[j] = n;
-          loc_level[j] = l;
+  atlas_omp_parallel
+  {
+    std::vector<DATATYPE> local_maximum_private(nvar,-std::numeric_limits<DATATYPE>::max());
+    std::vector<size_t> loc_node_private(nvar);
+    std::vector<size_t> loc_level_private(nvar);
+    atlas_omp_for( size_t n=0; n<arr.shape(0); ++n ) {
+      for( size_t l=0; l<arr.shape(1); ++l ) {
+        for( size_t j=0; j<nvar; ++j ) {
+          if( arr(n,l,j) > local_maximum_private[j] ) {
+            local_maximum_private[j] = arr(n,l,j);
+            loc_node_private[j] = n;
+            loc_level_private[j] = l;
+          }
+        }
+      }
+    }
+    atlas_omp_critical_ordered
+    {
+      for( size_t l=0; l<arr.shape(1); ++l ) {
+        for( size_t j=0; j<nvar; ++j ) {
+          if( local_maximum_private[j] > local_maximum[j] ) {
+            local_maximum[j] = local_maximum_private[j];
+            loc_node[j] = loc_node_private[j];
+            loc_level[j] = loc_level_private[j];
+          }
         }
       }
     }
@@ -2118,22 +2375,38 @@ void dispatch_minimum_and_location_per_level( const NodesColumnFunctionSpace& fs
   ArrayView<gidx_t,2> glb_idx( glb_idx_field.data<gidx_t>(), make_shape(glb_idx_field.shape(0),glb_idx_field.stride(0)) );
 
   const ArrayView<DATATYPE,3> arr( field.data<DATATYPE>(), make_shape(field.shape(0),field.shape(1),nvar) );
-  for( size_t n=0; n<arr.shape(0); ++n ) {
-    for( size_t l=0; l<arr.shape(1); ++l ) {
-      for( size_t j=0; j<nvar; ++j ) {
-        if( arr(n,l,j) < min(l,j) ) {
-          min(l,j) = arr(n,l,j);
-          glb_idx(l,j) = n;
+  atlas_omp_parallel
+  {
+    Array<DATATYPE> min_private(min.shape(0),min.shape(1));
+    ArrayView<DATATYPE> min_private_view(min_private); min_private_view = std::numeric_limits<DATATYPE>::max();
+    Array<gidx_t> glb_idx_private(glb_idx.shape(0),glb_idx.shape(1));
+    atlas_omp_for( size_t n=0; n<arr.shape(0); ++n ) {
+      for( size_t l=0; l<arr.shape(1); ++l ) {
+        for( size_t j=0; j<nvar; ++j ) {
+          if( arr(n,l,j) < min(l,j) ) {
+            min_private(l,j) = arr(n,l,j);
+            glb_idx_private(l,j) = n;
+          }
+        }
+      }
+    }
+    atlas_omp_critical_ordered
+    {
+      for( size_t l=0; l<arr.shape(1); ++l ) {
+        for( size_t j=0; j<nvar; ++j ) {
+          if( min_private(l,j) < min(l,j) ) {
+            min(l,j) = min_private(l,j);
+            glb_idx(l,j) = glb_idx_private(l,j);
+          }
         }
       }
     }
   }
-
   const size_t nlev = field.shape(1);
   std::vector< std::pair<DATATYPE,int> > min_and_gidx_loc(nlev*nvar);
   std::vector< std::pair<DATATYPE,int> > min_and_gidx_glb(nlev*nvar);
   const gidx_t* global_index = fs.nodes().global_index().data<gidx_t>();
-  for( size_t l=0; l<nlev; ++l ) {
+  atlas_omp_parallel_for( size_t l=0; l<nlev; ++l ) {
     for( size_t j=0; j<nvar; ++j ) {
       gidx_t gidx = global_index[glb_idx(l,j)];
       ASSERT( gidx < std::numeric_limits<int>::max() ); // pairs with 64bit integer for second not implemented
@@ -2143,7 +2416,7 @@ void dispatch_minimum_and_location_per_level( const NodesColumnFunctionSpace& fs
 
   eckit::mpi::all_reduce(min_and_gidx_loc,min_and_gidx_glb,eckit::mpi::minloc());
 
-  for( size_t l=0; l<nlev; ++l ) {
+  atlas_omp_parallel_for( size_t l=0; l<nlev; ++l ) {
     for( size_t j=0; j<nvar; ++j ) {
       min(l,j)     = min_and_gidx_glb[j+l*nvar].first;
       glb_idx(l,j) = min_and_gidx_glb[j+l*nvar].second;
@@ -2189,12 +2462,29 @@ void dispatch_maximum_and_location_per_level( const NodesColumnFunctionSpace& fs
   ArrayView<gidx_t,2> glb_idx( glb_idx_field.data<gidx_t>(), make_shape(glb_idx_field.shape(0),glb_idx_field.stride(0)) );
 
   const ArrayView<DATATYPE,3> arr( field.data<DATATYPE>(), make_shape(field.shape(0),field.shape(1),nvar) );
-  for( size_t n=0; n<arr.shape(0); ++n ) {
-    for( size_t l=0; l<arr.shape(1); ++l ) {
-      for( size_t j=0; j<nvar; ++j ) {
-        if( arr(n,l,j) > max(l,j) ) {
-          max(l,j) = arr(n,l,j);
-          glb_idx(l,j) = n;
+  atlas_omp_parallel
+  {
+    Array<DATATYPE> max_private(max.shape(0),max.shape(1));
+    ArrayView<DATATYPE> max_private_view(max_private); max_private_view = -std::numeric_limits<DATATYPE>::max();
+    Array<gidx_t> glb_idx_private(glb_idx.shape(0),glb_idx.shape(1));
+    atlas_omp_for( size_t n=0; n<arr.shape(0); ++n ) {
+      for( size_t l=0; l<arr.shape(1); ++l ) {
+        for( size_t j=0; j<nvar; ++j ) {
+          if( arr(n,l,j) > max(l,j) ) {
+            max_private(l,j) = arr(n,l,j);
+            glb_idx(l,j) = n;
+          }
+        }
+      }
+    }
+    atlas_omp_critical_ordered
+    {
+      for( size_t l=0; l<arr.shape(1); ++l ) {
+        for( size_t j=0; j<nvar; ++j ) {
+          if( max_private(l,j) > max(l,j) ) {
+            max(l,j) = max_private(l,j);
+            glb_idx(l,j) = glb_idx_private(l,j);
+          }
         }
       }
     }
@@ -2204,7 +2494,7 @@ void dispatch_maximum_and_location_per_level( const NodesColumnFunctionSpace& fs
   std::vector< std::pair<DATATYPE,int> > max_and_gidx_loc(nlev*nvar);
   std::vector< std::pair<DATATYPE,int> > max_and_gidx_glb(nlev*nvar);
   const gidx_t* global_index = fs.nodes().global_index().data<gidx_t>();
-  for( size_t l=0; l<nlev; ++l ) {
+  atlas_omp_parallel_for( size_t l=0; l<nlev; ++l ) {
     for( size_t j=0; j<nvar; ++j ) {
       gidx_t gidx = global_index[glb_idx(l,j)];
       ASSERT( gidx < std::numeric_limits<int>::max() ); // pairs with 64bit integer for second not implemented
@@ -2214,7 +2504,7 @@ void dispatch_maximum_and_location_per_level( const NodesColumnFunctionSpace& fs
 
   eckit::mpi::all_reduce(max_and_gidx_loc,max_and_gidx_glb,eckit::mpi::maxloc());
 
-  for( size_t l=0; l<nlev; ++l ) {
+  atlas_omp_parallel_for( size_t l=0; l<nlev; ++l ) {
     for( size_t j=0; j<nvar; ++j ) {
       max(l,j)     = max_and_gidx_glb[j+l*nvar].first;
       glb_idx(l,j) = max_and_gidx_glb[j+l*nvar].second;
@@ -2299,7 +2589,8 @@ void mean_and_standard_deviation( const NodesColumnFunctionSpace& fs, const Fiel
   Field::Ptr squared_diff_field( fs.createField(field) );
   ArrayView<DATATYPE,2> squared_diff( *squared_diff_field );
   ArrayView<DATATYPE,2> values( field );
-  for( size_t n=0; n<field.shape(0); ++n ) {
+
+  atlas_omp_parallel_for( size_t n=0; n<field.shape(0); ++n ) {
     for( size_t l=0; l<field.shape(1); ++l ) {
       squared_diff(n,l) = sqr( values(n,l) - mu );
     }
@@ -2315,7 +2606,8 @@ void mean_and_standard_deviation( const NodesColumnFunctionSpace& fs, const Fiel
   Field::Ptr squared_diff_field( fs.createField(field) );
   ArrayView<DATATYPE,3> squared_diff( squared_diff_field->data<DATATYPE>(), make_shape(squared_diff_field->shape(0),squared_diff_field->shape(1),squared_diff_field->stride(1)) );
   ArrayView<DATATYPE,3> values( field.data<DATATYPE>(), make_shape(field.shape(0),field.shape(1),field.stride(1)) );
-  for( size_t n=0; n<values.shape(0); ++n ) {
+
+  atlas_omp_parallel_for( size_t n=0; n<values.shape(0); ++n ) {
     for( size_t l=0; l<values.shape(1); ++l ) {
       for( size_t j=0; j<values.shape(2); ++j ) {
         squared_diff(n,l,j) = sqr( values(n,l,j) - mu[j] );
@@ -2337,7 +2629,8 @@ void dispatch_mean_and_standard_deviation_per_level( const NodesColumnFunctionSp
   Field::Ptr squared_diff_field( fs.createField(field) );
   ArrayView<DATATYPE,3> squared_diff( squared_diff_field->data<DATATYPE>(), make_shape(squared_diff_field->shape(0),squared_diff_field->shape(1),squared_diff_field->stride(1)) );
   ArrayView<DATATYPE,3> values( field.data<DATATYPE>(), make_shape(field.shape(0),field.shape(1),field.stride(1)) );
-  for( size_t n=0; n<values.shape(0); ++n ) {
+
+  atlas_omp_parallel_for( size_t n=0; n<values.shape(0); ++n ) {
     for( size_t l=0; l<values.shape(1); ++l ) {
       for( size_t j=0; j<nvar; ++j ) {
         squared_diff(n,l,j) = sqr( values(n,l,j) - mu(l,j) );
@@ -2346,7 +2639,7 @@ void dispatch_mean_and_standard_deviation_per_level( const NodesColumnFunctionSp
   }
   dispatch_mean_per_level<DATATYPE>(fs,*squared_diff_field,stddev,N);
   DATATYPE* sigma = stddev.data<DATATYPE>();
-  for( size_t j=0; j<stddev.size(); ++j ) {
+  atlas_omp_parallel_for( size_t j=0; j<stddev.size(); ++j ) {
     sigma[j] = std::sqrt(sigma[j]);
   }
 }
@@ -2410,15 +2703,15 @@ template<> void NodesColumnFunctionSpace::maximum( const Field& field, long&   m
 template<> void NodesColumnFunctionSpace::maximum( const Field& field, float&  max ) const { return detail::maximum(*this,field,max); }
 template<> void NodesColumnFunctionSpace::maximum( const Field& field, double& max ) const { return detail::maximum(*this,field,max); }
 
-template<> void NodesColumnFunctionSpace::minimum( const Field& field, std::vector<int>&    min ) const { DEBUG(); return detail::minimum(*this,field,min); }
-template<> void NodesColumnFunctionSpace::minimum( const Field& field, std::vector<long>&   min ) const { DEBUG(); return detail::minimum(*this,field,min); }
-template<> void NodesColumnFunctionSpace::minimum( const Field& field, std::vector<float>&  min ) const { DEBUG(); return detail::minimum(*this,field,min); }
-template<> void NodesColumnFunctionSpace::minimum( const Field& field, std::vector<double>& min ) const { DEBUG(); return detail::minimum(*this,field,min); }
+template<> void NodesColumnFunctionSpace::minimum( const Field& field, std::vector<int>&    min ) const { return detail::minimum(*this,field,min); }
+template<> void NodesColumnFunctionSpace::minimum( const Field& field, std::vector<long>&   min ) const { return detail::minimum(*this,field,min); }
+template<> void NodesColumnFunctionSpace::minimum( const Field& field, std::vector<float>&  min ) const { return detail::minimum(*this,field,min); }
+template<> void NodesColumnFunctionSpace::minimum( const Field& field, std::vector<double>& min ) const { return detail::minimum(*this,field,min); }
 
-template<> void NodesColumnFunctionSpace::maximum( const Field& field, std::vector<int>&    max ) const { DEBUG(); return detail::maximum(*this,field,max); }
-template<> void NodesColumnFunctionSpace::maximum( const Field& field, std::vector<long>&   max ) const { DEBUG(); return detail::maximum(*this,field,max); }
-template<> void NodesColumnFunctionSpace::maximum( const Field& field, std::vector<float>&  max ) const { DEBUG(); return detail::maximum(*this,field,max); }
-template<> void NodesColumnFunctionSpace::maximum( const Field& field, std::vector<double>& max ) const { DEBUG(); return detail::maximum(*this,field,max); }
+template<> void NodesColumnFunctionSpace::maximum( const Field& field, std::vector<int>&    max ) const { return detail::maximum(*this,field,max); }
+template<> void NodesColumnFunctionSpace::maximum( const Field& field, std::vector<long>&   max ) const { return detail::maximum(*this,field,max); }
+template<> void NodesColumnFunctionSpace::maximum( const Field& field, std::vector<float>&  max ) const { return detail::maximum(*this,field,max); }
+template<> void NodesColumnFunctionSpace::maximum( const Field& field, std::vector<double>& max ) const { return detail::maximum(*this,field,max); }
 
 void NodesColumnFunctionSpace::minimumPerLevel(const Field &field, Field &min) const { return detail::minimum_per_level(*this,field,min); }
 void NodesColumnFunctionSpace::maximumPerLevel(const Field &field, Field &max) const { return detail::maximum_per_level(*this,field,max);}
