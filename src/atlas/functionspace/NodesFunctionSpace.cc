@@ -2771,6 +2771,54 @@ void atlas__NodesFunctionSpace__delete (NodesFunctionSpace* This)
   delete(This);
 }
 
+Field* atlas__NodesFunctionSpace__create_field (const NodesFunctionSpace* This, const char* name, int kind )
+{
+  ASSERT(This);
+  return This->createField(std::string(name),DataType::kind_to_datatype(kind));
+}
+
+Field* atlas__NodesFunctionSpace__create_field_vars (const NodesFunctionSpace* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind)
+{
+  ASSERT(This);
+  ASSERT(variables_size);
+  std::vector<size_t> variables_(variables_size);
+  if( fortran_ordering )
+    variables_.assign(variables,variables+variables_size);
+  else
+    std::reverse_copy( variables, variables+variables_size, variables_.begin() );
+  return This->createField(std::string(name),variables_,DataType::kind_to_datatype(kind));
+}
+
+Field* atlas__NodesFunctionSpace__create_field_template (const NodesFunctionSpace* This, const char* name, const Field* field_template )
+{
+  ASSERT(This);
+  return This->createField(std::string(name),*field_template);
+}
+
+Field* atlas__NodesFunctionSpace__create_global_field (const NodesFunctionSpace* This, const char* name, int kind )
+{
+  ASSERT(This);
+  return This->createGlobalField(std::string(name),DataType::kind_to_datatype(kind));
+}
+
+Field* atlas__NodesFunctionSpace__create_global_field_vars (const NodesFunctionSpace* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind)
+{
+  ASSERT(This);
+  ASSERT(variables_size);
+  std::vector<size_t> variables_(variables_size);
+  if( fortran_ordering )
+    variables_.assign(variables,variables+variables_size);
+  else
+    std::reverse_copy( variables, variables+variables_size, variables_.begin() );
+  return This->createGlobalField(std::string(name),variables_,DataType::kind_to_datatype(kind));
+}
+
+Field* atlas__NodesFunctionSpace__create_global_field_template (const NodesFunctionSpace* This, const char* name, const Field* field_template )
+{
+  ASSERT(This);
+  return This->createField(std::string(name),*field_template);
+}
+
 NodesColumnFunctionSpace* atlas__NodesColumnFunctionSpace__new (const char* name, Mesh* mesh, int nb_levels, int halo)
 {
   ASSERT(mesh);
@@ -2782,6 +2830,59 @@ void atlas__NodesColumnFunctionSpace__delete (NodesColumnFunctionSpace* This)
   ASSERT(This);
   delete(This);
 }
+
+Field* atlas__NodesColumnFunctionSpace__create_field (const NodesColumnFunctionSpace* This, const char* name, int kind )
+{
+  ASSERT(This);
+  return This->createField(std::string(name),DataType::kind_to_datatype(kind));
+}
+
+Field* atlas__NodesColumnFunctionSpace__create_field_vars (const NodesColumnFunctionSpace* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind)
+{
+  ASSERT(This);
+  ASSERT(variables_size);
+  std::vector<size_t> variables_(variables_size);
+  if( fortran_ordering )
+    variables_.assign(variables,variables+variables_size);
+  else
+    std::reverse_copy( variables, variables+variables_size, variables_.begin() );
+  return This->createField(std::string(name),variables_,DataType::kind_to_datatype(kind));
+}
+
+Field* atlas__NodesColumnFunctionSpace__create_field_template (const NodesColumnFunctionSpace* This, const char* name, const Field* field_template )
+{
+  ASSERT(This);
+  return This->createField(std::string(name),*field_template);
+}
+
+Field* atlas__NodesColumnFunctionSpace__create_global_field (const NodesColumnFunctionSpace* This, const char* name, int kind )
+{
+  ASSERT(This);
+  return This->createGlobalField(std::string(name),DataType::kind_to_datatype(kind));
+}
+
+Field* atlas__NodesColumnFunctionSpace__create_global_field_vars (const NodesColumnFunctionSpace* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind)
+{
+  ASSERT(This);
+  ASSERT(variables_size);
+  std::vector<size_t> variables_(variables_size);
+  if( fortran_ordering )
+    variables_.assign(variables,variables+variables_size);
+  else
+    std::reverse_copy( variables, variables+variables_size, variables_.begin() );
+  return This->createGlobalField(std::string(name),variables_,DataType::kind_to_datatype(kind));
+}
+
+Field* atlas__NodesColumnFunctionSpace__create_global_field_template (const NodesColumnFunctionSpace* This, const char* name, const Field* field_template )
+{
+  ASSERT(This);
+  return This->createField(std::string(name),*field_template);
+}
+
+
+
+
+
 }
 
 
