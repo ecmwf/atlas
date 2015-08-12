@@ -516,10 +516,7 @@ void Trans::dirtrans_wind2vordiv(const Field& gpwind, Field& spvor, Field&spdiv,
   if( spdiv.shape(0) != spvor.shape(0) ) throw eckit::SeriousBug("invtrans: vorticity not compatible with divergence.",Here());
   if( spdiv.shape(1) != spvor.shape(1) ) throw eckit::SeriousBug("invtrans: vorticity not compatible with divergence.",Here());
   size_t nwindfld = gpwind.shape(1);
-  size_t ncomp = 0;
-  if     ( nwindfld == 2*nfld ) ncomp = 2;
-  else if( nwindfld == 3*nfld ) ncomp = 3;
-  else throw eckit::SeriousBug("dirtrans: wind field is not compatible with vorticity, divergence.",Here());
+  if (nwindfld != 2*nfld && nwindfld != 3*nfld) throw eckit::SeriousBug("dirtrans: wind field is not compatible with vorticity, divergence.",Here());
 
   if( spdiv.shape(0) != nspec2() ) {
     std::stringstream msg;
@@ -586,10 +583,7 @@ void Trans::invtrans_vordiv2wind(const Field& spvor, const Field& spdiv, Field& 
   if( spdiv.shape(0) != spvor.shape(0) ) throw eckit::SeriousBug("invtrans: vorticity not compatible with divergence.",Here());
   if( spdiv.shape(1) != spvor.shape(1) ) throw eckit::SeriousBug("invtrans: vorticity not compatible with divergence.",Here());
   size_t nwindfld = gpwind.shape(1);
-  size_t ncomp = 0;
-  if     ( nwindfld == 2*nfld ) ncomp = 2;
-  else if( nwindfld == 3*nfld ) ncomp = 3;
-  else throw eckit::SeriousBug("invtrans: wind field is not compatible with vorticity, divergence.",Here());
+  if (nwindfld != 2*nfld && nwindfld == 3*nfld) throw eckit::SeriousBug("invtrans: wind field is not compatible with vorticity, divergence.",Here());
 
   if( spdiv.shape(0) != nspec2() ) {
     std::stringstream msg;
