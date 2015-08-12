@@ -266,14 +266,12 @@ void add_median_dual_volume_contribution(
     std::vector<int>& bdry_edges = (*it).second;
     double x0 = node_lonlat(node,LON);
     double y0 = node_lonlat(node,LAT);
-    double x1,y1, x2,y2;
+    double x1, y1, y2;
     for (int jedge=0; jedge<bdry_edges.size(); ++jedge)
     {
       int edge = bdry_edges[jedge];
       x1 = edge_centroids(edge,LON);
       y1 = edge_centroids(edge,LAT);
-
-      x2 = x1; /* unused ?? */
 
       y2 = 0.;
       if ( std::abs(y1-max[LAT])<tol )
