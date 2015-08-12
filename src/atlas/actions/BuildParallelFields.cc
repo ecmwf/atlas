@@ -286,7 +286,7 @@ Field& build_nodes_remote_idx( FunctionSpace& nodes )
   for( int jnode=0; jnode<nb_nodes; ++jnode )
   {
     uid_t uid = compute_uid(jnode);
-    if( part(jnode) == mypart )
+    if( size_t(part(jnode)) == mypart )
     {
       lookup[ uid ] = jnode;
       ridx(jnode) = jnode;
@@ -515,7 +515,7 @@ Field& build_edges_partition( FunctionSpace& edges, FunctionSpace& nodes )
       transform(centroid,periodic[jedge]);
       uid_t uid = util::unique_lonlat(centroid);
 
-      if( edge_part(jedge) == mypart )
+      if( size_t(edge_part(jedge)) == mypart )
       {
         lookup[ uid ] = jedge;
       }
@@ -705,7 +705,7 @@ Field& build_edges_remote_idx( FunctionSpace& edges, FunctionSpace& nodes )
     }
 
     uid_t uid = util::unique_lonlat(centroid);
-    if( edge_part(jedge)==mypart && !needed ) // All interior edges fall here
+    if( size_t(edge_part(jedge)) == mypart && !needed ) // All interior edges fall here
     {
       lookup[ uid ] = jedge;
       edge_ridx(jedge) = jedge;

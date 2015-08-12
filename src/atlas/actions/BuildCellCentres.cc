@@ -41,11 +41,11 @@ void BuildCellCentres::operator()( Mesh& mesh ) const
         ArrayView<double,2> triags_centres ( triags.create_field<double>("centre",3) );
 
         const double third = 1. / 3.;
-        for( int e = 0; e < nb_triags; ++e )
+        for(size_t e = 0; e < nb_triags; ++e)
         {
-            const int i0 =  triag_nodes(e,0);
-            const int i1 =  triag_nodes(e,1);
-            const int i2 =  triag_nodes(e,2);
+            const size_t i0 =  triag_nodes(e,0);
+            const size_t i1 =  triag_nodes(e,1);
+            const size_t i2 =  triag_nodes(e,2);
 
             assert( i0 < nb_nodes && i1 < nb_nodes && i2 < nb_nodes );
 
@@ -64,12 +64,12 @@ void BuildCellCentres::operator()( Mesh& mesh ) const
         ArrayView<double,2> quads_centres ( quads.create_field<double>("centre",3) );
 
         const double fourth = 1. / 4.;
-        for( int e = 0; e < nb_quads; ++e )
+        for(size_t e = 0; e < nb_quads; ++e)
         {
-            const int i0 =  quads_nodes(e,0);
-            const int i1 =  quads_nodes(e,1);
-            const int i2 =  quads_nodes(e,2);
-            const int i3 =  quads_nodes(e,3);
+            const size_t i0 =  quads_nodes(e,0);
+            const size_t i1 =  quads_nodes(e,1);
+            const size_t i2 =  quads_nodes(e,2);
+            const size_t i3 =  quads_nodes(e,3);
 
             assert( i0 < nb_nodes && i1 < nb_nodes && i2 < nb_nodes && i3 < nb_nodes );
 

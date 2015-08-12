@@ -282,7 +282,7 @@ void Trans::dirtrans(const FieldSet& gpfields, FieldSet& spfields, const TransPa
   // Count total number of fields and do sanity checks
   int nfld(0);
   FunctionSpace::Ptr gp;
-  for( int jfld=0; jfld<gpfields.size(); ++jfld )
+  for(size_t jfld = 0; jfld < gpfields.size(); ++jfld)
   {
     const Field& f = gpfields[jfld];
 
@@ -300,7 +300,7 @@ void Trans::dirtrans(const FieldSet& gpfields, FieldSet& spfields, const TransPa
 
   int trans_spnfld(0);
   FunctionSpace::Ptr sp;
-  for( int jfld=0; jfld<spfields.size(); ++jfld )
+  for(size_t jfld = 0; jfld < spfields.size(); ++jfld)
   {
     const Field& f = spfields[jfld];
 
@@ -319,7 +319,7 @@ void Trans::dirtrans(const FieldSet& gpfields, FieldSet& spfields, const TransPa
   if( nfld != trans_spnfld )
     throw eckit::SeriousBug("dirtrans: different number of gridpoint fields than spectral fields");
 
-  if( sp->shape(0) != nspec2() )
+  if( sp->shape(0) != size_t(nspec2()) )
     throw eckit::SeriousBug("dirtrans: spectral fields have wrong dimension");
 
   // Arrays Trans expects
@@ -335,7 +335,7 @@ void Trans::dirtrans(const FieldSet& gpfields, FieldSet& spfields, const TransPa
     ArrayView<int,1> flags  ( gp->field( "flags" ) );
 
     int f=0;
-    for( int jfld=0; jfld<gpfields.size(); ++jfld )
+    for(size_t jfld = 0; jfld < gpfields.size(); ++jfld)
     {
       const ArrayView<double,2> gpfield ( gpfields[jfld] );
       const int nvars = gpfield.shape(1);
@@ -343,7 +343,7 @@ void Trans::dirtrans(const FieldSet& gpfields, FieldSet& spfields, const TransPa
       for( int jvar=0; jvar<nvars; ++jvar )
       {
         int n=0;
-        for( int jnode=0; jnode<gp->shape(0); ++jnode )
+        for(size_t jnode = 0; jnode < gp->shape(0); ++jnode)
         {
           bool ghost = Topology::check(flags(jnode),Topology::GHOST);
           if( !ghost )
@@ -371,7 +371,7 @@ void Trans::dirtrans(const FieldSet& gpfields, FieldSet& spfields, const TransPa
   // Unpack the spectral fields
   {
     int f=0;
-    for( int jfld=0; jfld<spfields.size(); ++jfld )
+    for(size_t jfld = 0; jfld < spfields.size(); ++jfld)
     {
       ArrayView<double,2> spfield ( spfields[jfld] );
       const int nvars = spfield.shape(1);
@@ -409,7 +409,7 @@ void Trans::invtrans(const FieldSet& spfields, FieldSet& gpfields, const TransPa
   // Count total number of fields and do sanity checks
   int nfld(0);
   FunctionSpace::Ptr gp;
-  for( int jfld=0; jfld<gpfields.size(); ++jfld )
+  for(size_t jfld = 0; jfld < gpfields.size(); ++jfld)
   {
     const Field& f = gpfields[jfld];
     nfld += f.shape(1);
@@ -423,7 +423,7 @@ void Trans::invtrans(const FieldSet& spfields, FieldSet& gpfields, const TransPa
 
   int nb_spectral_fields(0);
   FunctionSpace::Ptr sp;
-  for( int jfld=0; jfld<spfields.size(); ++jfld )
+  for(size_t jfld = 0; jfld < spfields.size(); ++jfld)
   {
     const Field& f = spfields[jfld];
     nb_spectral_fields += f.shape(1);
@@ -437,7 +437,7 @@ void Trans::invtrans(const FieldSet& spfields, FieldSet& gpfields, const TransPa
   if( nfld != nb_spectral_fields )
     throw eckit::SeriousBug("invtrans: different number of gridpoint fields than spectral fields",Here());
 
-  if( sp->shape(0) != nspec2() ) {
+  if( sp->shape(0) != size_t(nspec2()) ) {
     std::stringstream msg;
     msg << "invtrans: spectral fields have wrong dimension: nspec2 "<<sp->shape(0)<<" should be "<<nspec2();
     throw eckit::SeriousBug(msg.str(),Here());
@@ -452,7 +452,7 @@ void Trans::invtrans(const FieldSet& spfields, FieldSet& gpfields, const TransPa
   // Pack spectral fields
   {
     int f=0;
-    for( int jfld=0; jfld<spfields.size(); ++jfld )
+    for(size_t jfld = 0; jfld < spfields.size(); ++jfld)
     {
       const ArrayView<double,2> field ( spfields[jfld] );
       const int nvars = field.shape(1);
@@ -483,7 +483,7 @@ void Trans::invtrans(const FieldSet& spfields, FieldSet& gpfields, const TransPa
     ArrayView<int,1> flags  ( gp->field( "flags" ) );
 
     int f=0;
-    for( int jfld=0; jfld<gpfields.size(); ++jfld )
+    for(size_t jfld = 0; jfld < gpfields.size(); ++jfld)
     {
       ArrayView<double,2> field ( gpfields[jfld] );
       const int nvars = field.shape(1);
@@ -491,7 +491,7 @@ void Trans::invtrans(const FieldSet& spfields, FieldSet& gpfields, const TransPa
       for( int jvar=0; jvar<nvars; ++jvar )
       {
         int n=0;
-        for( int jnode=0; jnode<gp->shape(0); ++jnode )
+        for(size_t jnode = 0; jnode < gp->shape(0); ++jnode)
         {
           bool ghost = Topology::check(flags(jnode),Topology::GHOST);
           if( !ghost )
@@ -518,7 +518,7 @@ void Trans::dirtrans_wind2vordiv(const Field& gpwind, Field& spvor, Field&spdiv,
   size_t nwindfld = gpwind.shape(1);
   if (nwindfld != 2*nfld && nwindfld != 3*nfld) throw eckit::SeriousBug("dirtrans: wind field is not compatible with vorticity, divergence.",Here());
 
-  if( spdiv.shape(0) != nspec2() ) {
+  if( spdiv.shape(0) != size_t(nspec2()) ) {
     std::stringstream msg;
     msg << "dirtrans: Spectral vorticity and divergence have wrong dimension: nspec2 "<<spdiv.shape(0)<<" should be "<<nspec2();
     throw eckit::SeriousBug(msg.str(),Here());
@@ -543,7 +543,7 @@ void Trans::dirtrans_wind2vordiv(const Field& gpwind, Field& spvor, Field&spdiv,
     {
       for( size_t jfld=0; jfld<nfld; ++jfld )
       {
-        size_t n=0;
+        int n = 0;
         for( size_t jnode=0; jnode<gpwind.shape(0); ++jnode )
         {
           bool ghost = Topology::check(flags(jnode),Topology::GHOST);
@@ -585,7 +585,7 @@ void Trans::invtrans_vordiv2wind(const Field& spvor, const Field& spdiv, Field& 
   size_t nwindfld = gpwind.shape(1);
   if (nwindfld != 2*nfld && nwindfld == 3*nfld) throw eckit::SeriousBug("invtrans: wind field is not compatible with vorticity, divergence.",Here());
 
-  if( spdiv.shape(0) != nspec2() ) {
+  if( spdiv.shape(0) != size_t(nspec2()) ) {
     std::stringstream msg;
     msg << "invtrans: Spectral vorticity and divergence have wrong dimension: nspec2 "<<spdiv.shape(0)<<" should be "<<nspec2();
     throw eckit::SeriousBug(msg.str(),Here());
@@ -623,7 +623,7 @@ void Trans::invtrans_vordiv2wind(const Field& spvor, const Field& spdiv, Field& 
     {
       for( size_t jfld=0; jfld<nfld; ++jfld )
       {
-        size_t n=0;
+        int n = 0;
         for( size_t jnode=0; jnode<gpwind.shape(0); ++jnode )
         {
           bool ghost = Topology::check(flags(jnode),Topology::GHOST);

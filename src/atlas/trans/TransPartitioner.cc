@@ -29,7 +29,7 @@ TransPartitioner::TransPartitioner( const Grid& grid ) :
   t_( new Trans(grid,0) ), owned_(true)
 {
   ASSERT( t_ != NULL );
-  ASSERT( t_->nproc() == nb_partitions() );
+  ASSERT( size_t(t_->nproc()) == nb_partitions() );
 }
 
 TransPartitioner::TransPartitioner( const Grid& grid, const size_t nb_partitions ) :
@@ -37,7 +37,7 @@ TransPartitioner::TransPartitioner( const Grid& grid, const size_t nb_partitions
   t_( new Trans(grid,0) ), owned_(true)
 {
   ASSERT( t_ != NULL );
-  if( nb_partitions != t_->nproc() )
+  if( nb_partitions != size_t(t_->nproc()) )
   {
     std::stringstream msg;
     msg << "Requested to partition grid with TransPartitioner in "<<nb_partitions<<" partitions, but "
@@ -92,7 +92,7 @@ void TransPartitioner::partition(int part[]) const
         int igl = nptrfrstlat[ja] + jgl - nfrstlat[ja];
         for( int jl=nsta(jb,igl)-1; jl<nsta(jb,igl)+nonl(jb,igl)-1; ++jl )
         {
-          int ind = iglobal[jgl*nlonmax+jl] - 1;
+          size_t ind = iglobal[jgl*nlonmax+jl] - 1;
           ASSERT( ind >= 0 );
           if( ind >= grid().npts() ) throw eckit::OutOfRange(ind,grid().npts(),Here());
           part[ind] = iproc;

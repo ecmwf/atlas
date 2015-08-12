@@ -91,7 +91,7 @@ bool FieldSet::have_same_grid() const
 std::vector<Field*>& __private_get_raw_fields_ptr (FieldSet* This)
 {
   This->fields_raw_ptr_.resize( This->size() );
-  for( int f=0; f<This->size(); ++f )
+  for(size_t f = 0; f < This->size(); ++f)
     This->fields_raw_ptr_[f] = This->fields()[f].get();
   return This->fields_raw_ptr_;
 }

@@ -396,7 +396,7 @@ EqualRegionsPartitioner::EqualRegionsPartitioner(const Grid& grid) :
   std::vector<double> s_cap;
   eq_caps(N_, sectors_, s_cap);
   bands_.resize(s_cap.size());
-  for (int n=0; n<s_cap.size(); ++n){
+  for (size_t n = 0; n < s_cap.size(); ++n){
     bands_[n] = 0.5*M_PI-s_cap[n];
   }
 }
@@ -408,7 +408,7 @@ EqualRegionsPartitioner::EqualRegionsPartitioner(const Grid& grid, int N) :
   std::vector<double> s_cap;
   eq_caps(N_, sectors_, s_cap);
   bands_.resize(s_cap.size());
-  for (int n=0; n<s_cap.size(); ++n){
+  for (size_t n = 0; n < s_cap.size(); ++n){
     bands_[n] = 0.5*M_PI-s_cap[n];
   }
 }
@@ -438,7 +438,7 @@ int EqualRegionsPartitioner::sector(int band, const double& x) const
 void EqualRegionsPartitioner::where(int partition, int& band, int& sector) const
 {
   int p=0;
-  for( int b=0; b<bands_.size(); ++b)
+  for(size_t b = 0; b < bands_.size(); ++b)
   {
     for( int s=0; s<sectors_[b]; ++s )
     {
@@ -541,7 +541,7 @@ void EqualRegionsPartitioner::partition(int part[]) const
 {
   if( N_ == 1 ) // trivial solution, so much faster
   {
-    for( int j=0; j<grid().npts(); ++j )
+    for(size_t j = 0; j < grid().npts(); ++j)
       part[j] = 0;
   }
   else
@@ -551,9 +551,9 @@ void EqualRegionsPartitioner::partition(int part[]) const
 
     if( const grids::ReducedGrid* reduced_grid = dynamic_cast<const grids::ReducedGrid*>(&grid()) )
     {
-      for( int jlat=0; jlat<reduced_grid->nlat(); ++jlat)
+      for(size_t jlat = 0; jlat < reduced_grid->nlat(); ++jlat)
       {
-        for( int jlon=0; jlon<reduced_grid->nlon(jlat); ++jlon)
+        for(size_t jlon = 0; jlon < reduced_grid->nlon(jlat); ++jlon)
         {
           nodes[n].x = microdeg(reduced_grid->lon(jlat,jlon));
           nodes[n].y = microdeg(reduced_grid->lat(jlat));
@@ -566,7 +566,7 @@ void EqualRegionsPartitioner::partition(int part[]) const
     {
       std::vector<eckit::geometry::LLPoint2> points;
       grid().lonlat(points);
-      for( int j=0; j<grid().npts(); ++j)
+      for(size_t j = 0; j < grid().npts(); ++j)
       {
         nodes[n].x = microdeg(points[j].lon());
         nodes[n].y = microdeg(points[j].lat());

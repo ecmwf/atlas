@@ -460,8 +460,6 @@ void Grib::clone(const Field& field, const PathName& gridsec, DataHandle& out )
 
 GribHandle* Grib::clone(const Field& f, GribHandle& gridsec )
 {
-    const size_t npts = f.size();
-
     GribHandle* gh = 0;
 
     NOTIMP;
@@ -493,8 +491,8 @@ GribHandle* Grib::clone(const Field& f, GribHandle& gridsec )
 struct gridspec_to_grib
 {
   gridspec_to_grib( const eckit::Properties& gspec, GribHandle& gh) :
-    gspec_(gspec),
-    gh_(gh)
+    gh_(gh),
+    gspec_(gspec)
   {}
 
   GribHandle& gh_;

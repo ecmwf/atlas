@@ -654,11 +654,11 @@ void Gmsh::write(const Mesh& mesh, const PathName& file_path) const
   ArrayView<double,2> coords  ( nodes.field( nodes_field ) );
   ArrayView<gidx_t,   1> glb_idx ( nodes.field( "glb_idx" ) );
 
-  const int surfdim = coords.shape(1); // nb of variables in coords
+  const size_t surfdim = coords.shape(1); // nb of variables in coords
 
   ASSERT(surfdim == 2 || surfdim == 3);
 
-  int nb_nodes = nodes.shape(0);
+  size_t nb_nodes = nodes.shape(0);
 
   // Find out number of elements to write
   int nb_quads(0);
@@ -950,7 +950,7 @@ void Gmsh::write(FieldSet& fieldset, const PathName& file_path, openmode mode) c
     write_header_ascii(file);
 
   // Fields
-  for( int field_idx=0; field_idx<fieldset.size(); ++field_idx )
+  for(size_t field_idx = 0; field_idx < fieldset.size(); ++field_idx)
   {
     Field& field = fieldset[field_idx];
     FunctionSpace& function_space = field.function_space();

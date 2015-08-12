@@ -200,7 +200,7 @@ void atlas__Config__set_config (Config* This, const char* name, const Config* va
 void atlas__Config__set_config_list (Config* This, const char* name, const Config* value[], int size)
 {
   std::vector<Config> params(size);
-  for( size_t i=0; i<size; ++i )
+  for(int i = 0; i < size; ++i)
   {
     params[i] = Config(*value[i]);
   }
@@ -275,7 +275,7 @@ int atlas__Config__get_config_list (Config* This, const char* name, Config** &va
     size = vector.size();
     value = new Config*[size];
     allocated = true;
-    for( size_t i=0; i<size; ++i ) {
+    for(int i = 0; i < size; ++i) {
       value[i] = new Config(vector[i]);
     }
   );

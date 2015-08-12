@@ -103,8 +103,8 @@ BOOST_FIXTURE_TEST_CASE( test_rank1, Fixture )
   Array<POD> arr(N,2);
   ArrayView<POD,2> arrv(arr);
   for( size_t j=0; j<N; ++j ) {
-    arrv(j,0) = (part[j]!= eckit::mpi::rank() ? 0 : gidx[j]*10 );
-    arrv(j,1) = (part[j]!= eckit::mpi::rank() ? 0 : gidx[j]*100);
+    arrv(j,0) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*10 );
+    arrv(j,1) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*100);
   }
 
   size_t strides[] = {1};
@@ -127,8 +127,8 @@ BOOST_FIXTURE_TEST_CASE( test_rank1_strided_v1, Fixture )
   Array<POD> arr(N,2);
   ArrayView<POD,2> arrv(arr);
   for( size_t j=0; j<N; ++j ) {
-    arrv(j,0) = (part[j]!= eckit::mpi::rank() ? 0 : gidx[j]*10 );
-    arrv(j,1) = (part[j]!= eckit::mpi::rank() ? 0 : gidx[j]*100);
+    arrv(j,0) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*10 );
+    arrv(j,1) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*100);
   }
 
   size_t strides[] = {2};
@@ -151,8 +151,8 @@ BOOST_FIXTURE_TEST_CASE( test_rank1_strided_v2, Fixture )
   Array<POD> arr(N,2);
   ArrayView<POD,2> arrv(arr);
   for( size_t j=0; j<N; ++j ) {
-    arrv(j,0) = (part[j]!= eckit::mpi::rank() ? 0 : gidx[j]*10 );
-    arrv(j,1) = (part[j]!= eckit::mpi::rank() ? 0 : gidx[j]*100);
+    arrv(j,0) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*10 );
+    arrv(j,1) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*100);
   }
 
   size_t strides[] = {2};
@@ -178,8 +178,8 @@ BOOST_FIXTURE_TEST_CASE( test_rank2, Fixture )
   {
     for( size_t i=0; i<3; ++i )
     {
-      arrv(p,i,0) = (part[p]!= eckit::mpi::rank() ? 0 : -gidx[p]*std::pow(10,i) );
-      arrv(p,i,1) = (part[p]!= eckit::mpi::rank() ? 0 :  gidx[p]*std::pow(10,i) );
+      arrv(p,i,0) = (size_t(part[p]) != eckit::mpi::rank() ? 0 : -gidx[p]*std::pow(10,i) );
+      arrv(p,i,1) = (size_t(part[p]) != eckit::mpi::rank() ? 0 :  gidx[p]*std::pow(10,i) );
     }
   }
 
@@ -233,8 +233,8 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_l1, Fixture )
   {
     for( size_t i=0; i<3; ++i )
     {
-      arrv(p,i,0) = (part[p]!= eckit::mpi::rank() ? 0 : -gidx[p]*std::pow(10,i) );
-      arrv(p,i,1) = (part[p]!= eckit::mpi::rank() ? 0 :  gidx[p]*std::pow(10,i) );
+      arrv(p,i,0) = (size_t(part[p]) != eckit::mpi::rank() ? 0 : -gidx[p]*std::pow(10,i) );
+      arrv(p,i,1) = (size_t(part[p]) != eckit::mpi::rank() ? 0 :  gidx[p]*std::pow(10,i) );
     }
   }
 
@@ -289,8 +289,8 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_l2_v2, Fixture )
   {
     for( size_t i=0; i<3; ++i )
     {
-      arrv(p,i,0) = (part[p]!= eckit::mpi::rank() ? 0 : -gidx[p]*std::pow(10,i) );
-      arrv(p,i,1) = (part[p]!= eckit::mpi::rank() ? 0 :  gidx[p]*std::pow(10,i) );
+      arrv(p,i,0) = (size_t(part[p]) != eckit::mpi::rank() ? 0 : -gidx[p]*std::pow(10,i) );
+      arrv(p,i,1) = (size_t(part[p]) != eckit::mpi::rank() ? 0 :  gidx[p]*std::pow(10,i) );
     }
   }
 
@@ -344,8 +344,8 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_v2, Fixture )
   {
     for( size_t i=0; i<3; ++i )
     {
-      arrv(p,i,0) = (part[p]!= eckit::mpi::rank() ? 0 : -gidx[p]*std::pow(10,i) );
-      arrv(p,i,1) = (part[p]!= eckit::mpi::rank() ? 0 :  gidx[p]*std::pow(10,i) );
+      arrv(p,i,0) = (size_t(part[p]) != eckit::mpi::rank() ? 0 : -gidx[p]*std::pow(10,i) );
+      arrv(p,i,1) = (size_t(part[p]) != eckit::mpi::rank() ? 0 :  gidx[p]*std::pow(10,i) );
     }
   }
 
@@ -416,8 +416,8 @@ BOOST_FIXTURE_TEST_CASE( test_rank1_ArrayView, Fixture )
   Array<POD> arr(N,2);
   ArrayView<POD,2> arrv(arr);
   for( size_t j=0; j<N; ++j ) {
-    arrv(j,0) = (part[j]!= eckit::mpi::rank() ? 0 : gidx[j]*10 );
-    arrv(j,1) = (part[j]!= eckit::mpi::rank() ? 0 : gidx[j]*100);
+    arrv(j,0) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*10 );
+    arrv(j,1) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*100);
   }
 
   size_t strides[] = {1};
@@ -444,8 +444,8 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_ArrayView, Fixture )
   {
     for( size_t i=0; i<3; ++i )
     {
-      arrv(p,i,0) = (part[p]!= eckit::mpi::rank() ? 0 : -gidx[p]*std::pow(10,i) );
-      arrv(p,i,1) = (part[p]!= eckit::mpi::rank() ? 0 :  gidx[p]*std::pow(10,i) );
+      arrv(p,i,0) = (size_t(part[p]) != eckit::mpi::rank() ? 0 : -gidx[p]*std::pow(10,i) );
+      arrv(p,i,1) = (size_t(part[p]) != eckit::mpi::rank() ? 0 :  gidx[p]*std::pow(10,i) );
     }
   }
 

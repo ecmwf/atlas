@@ -139,7 +139,7 @@ void AtlasGrids::run()
     std::vector<std::string> keys = Factory<Grid>::instance().keys();
     Log::info() << "usage: atlas-grids GRID [OPTION]... [--help]\n" << std::endl;
     Log::info() << "Available grids:" << std::endl;
-    for( int i=0; i< keys.size(); ++i )
+    for(size_t i = 0; i < keys.size(); ++i)
     {
       Log::info() << "  -- " << keys[i] << std::endl;
     }
@@ -223,7 +223,7 @@ void AtlasGrids::run()
     {
       std::stringstream stream;
       stream << "&NAMRGRI\n";
-      for( int jlat=0; jlat<grid->nlat(); ++jlat )
+      for(size_t jlat = 0; jlat < grid->nlat(); ++jlat)
         stream << " NRGRI("<< std::setfill('0') << std::setw(5) << 1+jlat <<")="<< std::setfill(' ') << std::setw(5) << grid->nlon(jlat) <<",\n";
       stream << "/" << std::flush;
       std::cout << stream.str() << std::endl;

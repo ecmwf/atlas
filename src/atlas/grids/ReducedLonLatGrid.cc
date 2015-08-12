@@ -108,7 +108,7 @@ void ReducedLonLatGrid::setup( const size_t nlat, const long nlons[], bool poles
     latmax = domain_.north() - 0.5*delta;
   }
 
-  for( int jlat=0; jlat<nlat; ++jlat )
+  for(size_t jlat = 0; jlat < nlat; ++jlat)
   {
     lats[jlat] = latmax - static_cast<double>(jlat)*delta;
   }
