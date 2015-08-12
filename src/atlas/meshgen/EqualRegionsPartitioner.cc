@@ -469,11 +469,10 @@ bool compare_WE_NS(const EqualRegionsPartitioner::NodeInt& node1, const EqualReg
 
 void EqualRegionsPartitioner::partition(int nb_nodes, NodeInt nodes[], int part[]) const
 {
-  std::clock_t init, final;
-  init=std::clock();
+  // std::clock_t init, final;
+  // init=std::clock();
   // std::cout << "partition start (" << nb_nodes << " points)" << std::endl;
   int nb_parts = N_;
-  int n;
   int p;
   int i;
   int begin;
@@ -534,7 +533,7 @@ void EqualRegionsPartitioner::partition(int nb_nodes, NodeInt nodes[], int part[
   //   std::sort( nodes+begin, nodes+end, compare_NS_WE );
   //   begin = end;
   // }
-  final=std::clock()-init;
+  // final=std::clock()-init;
   // std::cout << "partition stop (took " << (double)final / ((double)CLOCKS_PER_SEC) << "s)" << std::endl;
 }
 
