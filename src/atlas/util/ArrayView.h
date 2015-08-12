@@ -563,8 +563,8 @@ private:
 //------------------------------------------------------------------------------------------------------
 
 template <typename DATA_TYPE, int RANK>
-ArrayView_iterator<DATA_TYPE,RANK>::ArrayView_iterator():
- arr_(0),loc_(0),fastest_idx_(0),p_(0)
+ArrayView_iterator<DATA_TYPE,RANK>::ArrayView_iterator()
+    : p_(0), arr_(0), loc_(0), fastest_idx_(0)
 {
 }
 
@@ -585,8 +585,8 @@ ArrayView_iterator<DATA_TYPE,RANK>::ArrayView_iterator(ArrayView<DATA_TYPE,RANK>
 }
 
 template <typename DATA_TYPE, int RANK>
-ArrayView_iterator<DATA_TYPE,RANK>::ArrayView_iterator(const ArrayView_iterator& it) :
-  arr_(it.arr_), loc_(it.loc_), p_(it.p_)
+ArrayView_iterator<DATA_TYPE,RANK>::ArrayView_iterator(const ArrayView_iterator& it)
+    : p_(it.p_), arr_(it.arr_), loc_(it.loc_)
 {}
 
 template <typename DATA_TYPE, int RANK>
@@ -614,8 +614,8 @@ ArrayView_iterator<DATA_TYPE,RANK>& ArrayView_iterator<DATA_TYPE,RANK>::incremen
 //------------------------------------------------------------------------------------------------------
 
 template <typename DATA_TYPE, int RANK>
-ArrayView_const_iterator<DATA_TYPE,RANK>::ArrayView_const_iterator():
- arr_(0),loc_(0),fastest_idx_(0),p_(0)
+ArrayView_const_iterator<DATA_TYPE,RANK>::ArrayView_const_iterator()
+    : p_(0), arr_(0), loc_(0), fastest_idx_(0)
 {
 }
 
@@ -637,13 +637,13 @@ ArrayView_const_iterator<DATA_TYPE,RANK>::ArrayView_const_iterator(const ArrayVi
 }
 
 template <typename DATA_TYPE, int RANK>
-ArrayView_const_iterator<DATA_TYPE,RANK>::ArrayView_const_iterator(const ArrayView_iterator<DATA_TYPE,RANK>& it) :
-  arr_(it.arr_), loc_(it.loc_), p_(it.p_)
+ArrayView_const_iterator<DATA_TYPE,RANK>::ArrayView_const_iterator(const ArrayView_iterator<DATA_TYPE,RANK>& it)
+    : p_(it.p_), arr_(it.arr_), loc_(it.loc_)
 {}
 
 template <typename DATA_TYPE, int RANK>
-ArrayView_const_iterator<DATA_TYPE,RANK>::ArrayView_const_iterator(const ArrayView_const_iterator& it) :
-  arr_(it.arr_), loc_(it.loc_), p_(it.p_)
+ArrayView_const_iterator<DATA_TYPE,RANK>::ArrayView_const_iterator(const ArrayView_const_iterator& it)
+    : p_(it.p_), arr_(it.arr_), loc_(it.loc_)
 {}
 
 template <typename DATA_TYPE, int RANK>
