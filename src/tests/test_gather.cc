@@ -176,12 +176,12 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1, Fixture )
   // Gather complete field
   {
   size_t loc_strides[] = {2,1};
-  size_t loc_extents[] = {Nl,2};
+  size_t loc_extents[] = {size_t(Nl), 2};
   size_t loc_rank = 2;
   size_t loc_mpl_idxpos[] = {0};
   size_t loc_mpl_rank = 1;
   size_t glb_strides[] = {2,1};
-  size_t glb_extents[] = {Ng,2};
+  size_t glb_extents[] = {size_t(Ng), 2};
   size_t glb_rank = 2;
   size_t glb_mpl_idxpos[] = {0};
   size_t glb_mpl_rank = 1;
@@ -217,12 +217,12 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1, Fixture )
   // Gather only first component
   {
     size_t loc_strides[] = {2,2};
-    size_t loc_extents[] = {Nl,1};
+    size_t loc_extents[] = {size_t(Nl), 1};
     size_t loc_rank = 2;
     size_t loc_mpl_idxpos[] = {0};
     size_t loc_mpl_rank = 1;
     size_t glb_strides[] = {1};
-    size_t glb_extents[] = {Ng};
+    size_t glb_extents[] = {size_t(Ng)};
     size_t glb_rank = 1;
     size_t glb_mpl_idxpos[] = {0};
     size_t glb_mpl_rank = 1;
@@ -256,12 +256,12 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1, Fixture )
   // Gather only second component
   {
     size_t loc_strides[] = {2,2};
-    size_t loc_extents[] = {Nl,1};
+    size_t loc_extents[] = {size_t(Nl), 1};
     size_t loc_rank = 2;
     size_t loc_mpl_idxpos[] = {0};
     size_t loc_mpl_rank = 1;
     size_t glb_strides[] = {1};
-    size_t glb_extents[] = {Ng};
+    size_t glb_extents[] = {size_t(Ng)};
     size_t glb_rank = 1;
     size_t glb_mpl_idxpos[] = {0};
     size_t glb_mpl_rank = 1;
@@ -302,12 +302,12 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank2, Fixture )
   // Gather complete field
   {
     size_t loc_strides[] = {6,2,1};
-    size_t loc_extents[] = {Nl,3,2};
+    size_t loc_extents[] = {size_t(Nl), 3, 2};
     size_t loc_rank = 3;
     size_t loc_mpl_idxpos[] = {0};
     size_t loc_mpl_rank = 1;
     size_t glb_strides[] = {6,2,1};
-    size_t glb_extents[] = {Ng,3,2};
+    size_t glb_extents[] = {size_t(Ng), 3, 2};
     size_t glb_rank = 3;
     size_t glb_mpl_idxpos[] = {0};
     size_t glb_mpl_rank = 1;
@@ -333,12 +333,12 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank2, Fixture )
   // Gather var 1
   {
     size_t loc_strides[] = {6,2,2};
-    size_t loc_extents[] = {Nl,3,1};
+    size_t loc_extents[] = {size_t(Nl), 3, 1};
     size_t loc_rank = 3;
     size_t loc_mpl_idxpos[] = {0};
     size_t loc_mpl_rank = 1;
     size_t glb_strides[] = {6,1};
-    size_t glb_extents[] = {Ng,3};
+    size_t glb_extents[] = {size_t(Ng), 3};
     size_t glb_rank = 2;
     size_t glb_mpl_idxpos[] = {0};
     size_t glb_mpl_rank = 1;
@@ -364,12 +364,12 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank2, Fixture )
   // Gather var 2
   {
     size_t loc_strides[] = {6,2,2};
-    size_t loc_extents[] = {Nl,3,1};
+    size_t loc_extents[] = {size_t(Nl), 3, 1};
     size_t loc_rank = 3;
     size_t loc_mpl_idxpos[] = {0};
     size_t loc_mpl_rank = 1;
     size_t glb_strides[] = {6,1};
-    size_t glb_extents[] = {Ng,3};
+    size_t glb_extents[] = {size_t(Ng), 3};
     size_t glb_rank = 2;
     size_t glb_mpl_idxpos[] = {0};
     size_t glb_mpl_rank = 1;
@@ -395,12 +395,12 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank2, Fixture )
   // Gather lev 1
   {
     size_t loc_strides[] = {6,6,1};
-    size_t loc_extents[] = {Nl,1,2};
+    size_t loc_extents[] = {size_t(Nl), 1, 2};
     size_t loc_rank = 3;
     size_t loc_mpl_idxpos[] = {0};
     size_t loc_mpl_rank = 1;
     size_t glb_strides[] = {2,1};
-    size_t glb_extents[] = {Ng,2};
+    size_t glb_extents[] = {size_t(Ng), 2};
     size_t glb_rank = 2;
     size_t glb_mpl_idxpos[] = {0};
     size_t glb_mpl_rank = 1;
@@ -427,12 +427,12 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank2, Fixture )
   // Gather lev 2
   {
     size_t loc_strides[] = {6,6,1};
-    size_t loc_extents[] = {Nl,1,2};
+    size_t loc_extents[] = {size_t(Nl), 1, 2};
     size_t loc_rank = 3;
     size_t loc_mpl_idxpos[] = {0};
     size_t loc_mpl_rank = 1;
     size_t glb_strides[] = {2,1};
-    size_t glb_extents[] = {Ng,2};
+    size_t glb_extents[] = {size_t(Ng), 2};
     size_t glb_rank = 2;
     size_t glb_mpl_idxpos[] = {0};
     size_t glb_mpl_rank = 1;
@@ -458,12 +458,12 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank2, Fixture )
   // Gather lev 3 var 2
   {
     size_t loc_strides[] = {6,6,2};
-    size_t loc_extents[] = {Nl,1,1};
+    size_t loc_extents[] = {size_t(Nl), 1, 1};
     size_t loc_rank = 3;
     size_t loc_mpl_idxpos[] = {0};
     size_t loc_mpl_rank = 1;
     size_t glb_strides[] = {1};
-    size_t glb_extents[] = {Ng};
+    size_t glb_extents[] = {size_t(Ng)};
     size_t glb_rank = 1;
     size_t glb_mpl_idxpos[] = {0};
     size_t glb_mpl_rank = 1;
@@ -612,7 +612,7 @@ BOOST_FIXTURE_TEST_CASE( test_scatter_rank2_ArrayView, Fixture )
     glb.assign(glb_c,glb_c+Ng*6);
   }
 
-  int nan = -1000.;
+  POD nan = -1000.;
   locv = nan;
 
   gather_scatter.scatter( glbv, locv );

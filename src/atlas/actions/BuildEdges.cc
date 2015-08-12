@@ -417,7 +417,7 @@ void build_edges( Mesh& mesh )
   accumulate_faces(triags,node_to_face,face_nodes_data,face_to_elem,nb_faces,nb_inner_faces);
 
 
-  size_t extents[] = {nb_faces,2};
+  size_t extents[] = {size_t(nb_faces), 2};
   ArrayView<int,2> face_nodes(face_nodes_data.data(),extents);
 
   // Build edges

@@ -152,7 +152,7 @@ void increase_halo( Mesh& mesh )
   accumulate_faces(quads, node_to_face,face_nodes_data,face_to_elem,nb_faces,nb_inner_faces);
   accumulate_faces(triags,node_to_face,face_nodes_data,face_to_elem,nb_faces,nb_inner_faces);
 
-  size_t extents[] = {nb_faces,2};
+  size_t extents[] = {size_t(nb_faces), 2};
   ArrayView<int,2> face_nodes(face_nodes_data.data(),extents);
 
 
@@ -694,7 +694,7 @@ void accumulate_partition_bdry_nodes( Mesh& mesh, std::vector<int>& bdry_nodes )
   accumulate_faces(quads, node_to_face,face_nodes_data,face_to_elem,nb_faces,nb_inner_faces);
   accumulate_faces(triags,node_to_face,face_nodes_data,face_to_elem,nb_faces,nb_inner_faces);
 
-  size_t extents[] = {nb_faces,2};
+  size_t extents[] = {size_t(nb_faces), 2};
   ArrayView<int,2> face_nodes(face_nodes_data.data(),extents);
 
   for( int jface=0; jface<nb_faces; ++jface )
