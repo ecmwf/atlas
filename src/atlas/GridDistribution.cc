@@ -17,8 +17,8 @@
 namespace atlas {
 
 GridDistribution::GridDistribution(const Grid& grid) :
-  part_(grid.npts(),0),
   nb_partitions_(1),
+  part_(grid.npts(),0),
   nb_pts_(nb_partitions_,grid.npts()),
   max_pts_(grid.npts()),
   min_pts_(grid.npts())
