@@ -320,7 +320,6 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
       int node = *it;
       if( !Topology::check(flags(node),Topology::PERIODIC|Topology::GHOST) )
       {
-        int x1 = microdeg( lonlat(node,LON) );
         int x2 = microdeg( lonlat(node,LON) + 180. );
         for( std::set<int>::iterator itr=pole_nodes[NS].begin(); itr!=pole_nodes[NS].end(); ++itr)
         {
@@ -456,7 +455,6 @@ void build_edges( Mesh& mesh )
 
   UniqueLonLat compute_uid( nodes );
 
-  int cnt=0;
   for( size_t edge=0; edge<nb_edges; ++edge )
   {
     const int ip1 = face_nodes(edge,0);
