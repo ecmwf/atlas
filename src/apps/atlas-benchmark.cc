@@ -390,7 +390,6 @@ void AtlasBenchmark::setup()
     {
       int iedge = node2edge(jnode,jedge);
       int ip1 = edge2node(iedge,0);
-      int ip2 = edge2node(iedge,1);
       if( jnode == ip1 )
         node2edge_sign(jnode,jedge) = 1.;
       else
@@ -486,7 +485,6 @@ void AtlasBenchmark::iteration()
   for( int jedge=0; jedge<pole_edges.size();++jedge )
   {
     int iedge = pole_edges[jedge];
-    int ip1 = edge2node(iedge,0);
     int ip2 = edge2node(iedge,1);
     // correct for wrong Y-derivatives in previous loop
     for( int jlev=0; jlev<nlev; ++jlev )
