@@ -43,11 +43,11 @@ PolarStereoGraphic::PolarStereoGraphic(size_t Nx, size_t Ny,
     npts_yaxis_(Ny),
     x_grid_length_(Dx),
     y_grid_length_(Dy),
-    first_grid_pt_(longitudeOfFirstGridPoint, latitudeOfFirstGridPoint),
     orientationOfTheGrid_(orientationOfTheGrid),
     radius_(radius),
     semi_major_(semi_major),
     semi_minor_(semi_minor),
+    first_grid_pt_(longitudeOfFirstGridPoint, latitudeOfFirstGridPoint),
     southPoleOnProjectionPlane_(southPoleOnProjectionPlane),
     earth_is_oblate_(earth_is_oblate)
 
