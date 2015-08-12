@@ -267,7 +267,7 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rg,
     int ilat, latN, latS;
     int ipN1, ipN2, ipS1, ipS2;
     double xN1, xN2, yN, xS1, xS2, yS;
-    double dN1S2, dS1N2, dN2S2;
+    double dN1S2, dS1N2;  // dN2S2;
     bool try_make_triangle_up, try_make_triangle_down, try_make_quad;
     bool add_triag, add_quad;
 
@@ -379,7 +379,7 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rg,
           {
             dN1S2 = std::abs(xN1-xS2);
             dS1N2 = std::abs(xS1-xN2);
-            dN2S2 = std::abs(xN2-xS2);
+            // dN2S2 = std::abs(xN2-xS2);
             // eckit::Log::info(Here())  << "  dN1S2 " << dN1S2 << "   dS1N2 " << dS1N2 << "   dN2S2 " << dN2S2 << std::endl;
             if (dN1S2 == dS1N2)
             {
@@ -416,7 +416,7 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rg,
       {
         dN1S2 = std::abs(xN1-xS2);
         dS1N2 = std::abs(xS1-xN2);
-        dN2S2 = std::abs(xN2-xS2);
+        // dN2S2 = std::abs(xN2-xS2);
         // eckit::Log::info(Here())  << "  dN1S2 " << dN1S2 << "   dS1N2 " << dS1N2 << "   dN2S2 " << dN2S2 << std::endl;
         if( (dN1S2 <= dS1N2) && (ipS1 != ipS2) ) { try_make_triangle_up = true;}
         else if( (dN1S2 >= dS1N2) && (ipN1 != ipN2) ) { try_make_triangle_down = true;}
@@ -706,8 +706,6 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
                                              const Region& region,
                                              Mesh& mesh ) const
 {
-  double tol = 1e-3;
-
   int mypart = options.get<size_t>("part");
   int nparts = options.get<size_t>("nb_parts");
   int n, l;
@@ -979,7 +977,6 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
 
   if (include_north_pole)
   {
-    int jlat = 0;
     int ilat = 0;
     int ip1  = 0;
     for (int ip2=0; ip2<rg.nlon(0); ++ip2)
