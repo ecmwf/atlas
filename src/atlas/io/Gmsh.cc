@@ -47,7 +47,6 @@ public:
   GmshFile(const PathName& file_path, std::ios_base::openmode mode, int part = eckit::mpi::rank())
   {
     PathName par_path(file_path);
-    bool is_new_file = (mode != std::ios_base::app || !par_path.exists());
     if (eckit::mpi::size() == 1 || part == -1) {
       std::ofstream::open(par_path.localPath(), mode);
     } else {
@@ -433,7 +432,6 @@ void Gmsh::read(const PathName& file_path, Mesh& mesh ) const
   double xmax = -std::numeric_limits<double>::max();
   double zmax = -std::numeric_limits<double>::max();
   gidx_t max_glb_idx=0;
-  bool swap = true;
   while(binary && file.peek()=='\n') file.get();
   for( size_t n = 0; n < nb_nodes; ++n )
   {
@@ -482,10 +480,6 @@ void Gmsh::read(const PathName& file_path, Mesh& mesh ) const
 
   if( binary )
   {
-        int nb_quads=0;
-        int nb_triags=0;
-        int nb_edges=0;
-
         while(file.peek()=='\n') file.get();
     int accounted_elems = 0;
     while( accounted_elems < nb_elements )
@@ -504,17 +498,14 @@ void Gmsh::read(const PathName& file_path, Mesh& mesh ) const
       case(QUAD):
         nnodes_per_elem = 4;
         name = "quads";
-        nb_quads = netype;
         break;
       case(TRIAG):
         nnodes_per_elem = 3;
         name = "triags";
-        nb_triags=netype;
         break;
       case(LINE):
         nnodes_per_elem = 3;
         name = "edges";
-        nb_edges = netype;
         break;
       default:
         std::cout << "etype " << etype << std::endl;
@@ -593,7 +584,7 @@ void Gmsh::read(const PathName& file_path, Mesh& mesh ) const
 
     // Now read all elements
     file.seekg(position,std::ios::beg);
-    int dummy, gn0, gn1, gn2, gn3;
+    int gn0, gn1, gn2, gn3;
     int quad=0, triag=0, edge=0;
     int ntags, tags[100];
     for (int e=0; e<nb_elements; ++e)
@@ -726,7 +717,6 @@ void Gmsh::write(const Mesh& mesh, const PathName& file_path) const
   file << "$Nodes\n";
   file << nb_nodes << "\n";
   double xyz[3] = {0.,0.,0.};
-  double r      = 1.;
   for( size_t n = 0; n < nb_nodes; ++n )
   {
     int g = glb_idx(n);
