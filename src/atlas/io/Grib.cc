@@ -59,7 +59,6 @@ namespace atlas {
 namespace io {
 
 static std::string match_grid_spec_with_sample_file( const eckit::Properties& g_spec, long edition );
-static std::string map_uid_to_grib_sample_file(const std::string& short_name, long edition);
 
 //------------------------------------------------------------------------------------------------------
 
