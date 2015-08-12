@@ -57,8 +57,6 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   BOOST_CHECK_EQUAL( columns_fs.nb_levels() , 10 );
 
 
-  size_t nb_nodes = nodes_fs.nb_nodes();
-
   ScopedPtr<Field> surface_scalar_field( nodes_fs.createField<double>("scalar") );
   ScopedPtr<Field> surface_vector_field( nodes_fs.createField<double>("vector",make_shape(2)) );
   ScopedPtr<Field> surface_tensor_field( nodes_fs.createField<double>("tensor",make_shape(2,2)) );
@@ -198,7 +196,6 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace_trans_dist )
   size_t nb_levels(10);
 
   size_t nspec2 = trans.nspec2();
-  size_t nspec2g = trans.nspec2g();
 
   SpectralFunctionSpace spectral_fs("nodes",trans);
   SpectralColumnFunctionSpace columns_fs("columns",trans,nb_levels);
@@ -235,7 +232,6 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace_trans_global )
   trans::Trans trans(80,159);
   size_t nb_levels(10);
 
-  size_t nspec2 = trans.nspec2();
   size_t nspec2g = trans.nspec2g();
 
   SpectralFunctionSpace spectral_fs("nodes",trans);
