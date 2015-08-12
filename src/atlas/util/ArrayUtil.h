@@ -53,7 +53,7 @@ private:
   ArrayStrides strides_;
   mutable std::vector<int> shapef_;
 public:
-  ArraySpec() : rank_(0), size_(0) {}
+  ArraySpec() : size_(0), rank_(0) {}
   ArraySpec( const ArrayShape& );
   size_t size() const { return size_; }
   size_t rank() const { return rank_; }
