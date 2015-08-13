@@ -231,6 +231,19 @@ subroutine Field__access_data3_real32(this, field)
   call C_F_POINTER ( field_c_ptr , field , field_bounds(field_rank-2:field_rank) )
 end subroutine Field__access_data3_real32
 
+subroutine Field__access_data4_real32(this, field)
+  class(atlas_Field), intent(in) :: this
+  real(c_float), pointer, intent(out) :: field(:,:,:,:)
+  integer, pointer :: field_bounds(:)
+  type(c_ptr) :: field_c_ptr
+  type(c_ptr) :: field_bounds_c_ptr
+  integer(c_int) :: field_rank
+  call atlas__Field__data_shapef_float(this%cpp_object_ptr, field_c_ptr, field_bounds_c_ptr, field_rank)
+  if( field_rank /= 4 ) call atlas_abort("data is not of rank 4",atlas_code_location(__FILE__,__LINE__))
+  call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
+  call C_F_POINTER ( field_c_ptr , field , field_bounds )
+end subroutine Field__access_data4_real32
+
 subroutine Field__access_data1_real64(this, field)
   class(atlas_Field), intent(in) :: this
   real(c_double), pointer, intent(out) :: field(:)

@@ -56,10 +56,10 @@ nodes = fs%nodes()
 nb_nodes = fs%nb_nodes()
 write(atlas_log%msg,*) "nb_nodes = ",nb_nodes; call atlas_log%info()
 
-field = fs%create_field(atlas_real(c_double))
+field = fs%create_field(atlas_real(c_float))
 FCTEST_CHECK_EQUAL( field%rank() , 1 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
-FCTEST_CHECK_EQUAL( field%datatype() , "real64" )
+FCTEST_CHECK_EQUAL( field%datatype() , "real32" )
 call atlas_delete(field)
 
 field = fs%create_field("field",atlas_real(c_float))
@@ -68,7 +68,7 @@ FCTEST_CHECK_EQUAL( field%name() , "field" )
 FCTEST_CHECK_EQUAL( field%datatype() , "real32" )
 call atlas_delete(field)
 
-field = fs%create_field((/2/),atlas_real(c_double))
+field = fs%create_field((/2/),atlas_real(c_float))
 FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 call atlas_delete(field)
@@ -90,10 +90,10 @@ call atlas_delete(field)
 call atlas_delete(template)
 
 
-field = fs%create_global_field(atlas_real(c_double))
+field = fs%create_global_field(atlas_real(c_float))
 FCTEST_CHECK_EQUAL( field%rank() , 1 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
-FCTEST_CHECK_EQUAL( field%datatype() , "real64" )
+FCTEST_CHECK_EQUAL( field%datatype() , "real32" )
 call atlas_delete(field)
 
 field = fs%create_global_field("field",atlas_real(c_float))
@@ -102,7 +102,7 @@ FCTEST_CHECK_EQUAL( field%name() , "field" )
 FCTEST_CHECK_EQUAL( field%datatype() , "real32" )
 call atlas_delete(field)
 
-field = fs%create_global_field((/2/),atlas_real(c_double))
+field = fs%create_global_field((/2/),atlas_real(c_float))
 FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 call atlas_delete(field)
@@ -148,10 +148,10 @@ fs = atlas_NodesColumnFunctionSpace(mesh,10,halo_size)
 levels = fs%nb_levels()
 write(atlas_log%msg,*) "nb_levels = ",levels; call atlas_log%info()
 
-field = fs%create_field(atlas_real(c_double))
+field = fs%create_field(atlas_real(c_float))
 FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
-FCTEST_CHECK_EQUAL( field%datatype() , "real64" )
+FCTEST_CHECK_EQUAL( field%datatype() , "real32" )
 call atlas_delete(field)
 
 field = fs%create_field("field",atlas_real(c_float))
@@ -160,7 +160,7 @@ FCTEST_CHECK_EQUAL( field%name() , "field" )
 FCTEST_CHECK_EQUAL( field%datatype() , "real32" )
 call atlas_delete(field)
 
-field = fs%create_field((/2/),atlas_real(c_double))
+field = fs%create_field((/2/),atlas_real(c_float))
 FCTEST_CHECK_EQUAL( field%rank() , 3 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 call atlas_delete(field)
@@ -182,10 +182,10 @@ call atlas_delete(field)
 call atlas_delete(template)
 
 
-field = fs%create_global_field(atlas_real(c_double))
+field = fs%create_global_field(atlas_real(c_float))
 FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
-FCTEST_CHECK_EQUAL( field%datatype() , "real64" )
+FCTEST_CHECK_EQUAL( field%datatype() , "real32" )
 call atlas_delete(field)
 
 field = fs%create_global_field("field",atlas_real(c_float))
@@ -194,7 +194,7 @@ FCTEST_CHECK_EQUAL( field%name() , "field" )
 FCTEST_CHECK_EQUAL( field%datatype() , "real32" )
 call atlas_delete(field)
 
-field = fs%create_global_field((/2/),atlas_real(c_double))
+field = fs%create_global_field((/2/),atlas_real(c_float))
 FCTEST_CHECK_EQUAL( field%rank() , 3 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 call atlas_delete(field)
@@ -229,11 +229,11 @@ type(atlas_Mesh) :: mesh
 type(atlas_NodesFunctionSpace) :: fs2d
 type(atlas_NodesColumnFunctionSpace) :: fs3d
 type(atlas_Field) :: field, global, scal
-real(c_double), pointer :: scalvalues(:)
-real(c_double), pointer :: values(:,:)
-real(c_double), pointer :: values3d(:,:,:,:)
-real(c_double) :: minimum, maximum, sum, oisum, mean, stddev
-real(c_double), allocatable :: minimumv(:), maximumv(:), sumv(:), oisumv(:), meanv(:), stddevv(:)
+real(c_float), pointer :: scalvalues(:)
+real(c_float), pointer :: values(:,:)
+real(c_float), pointer :: values3d(:,:,:,:)
+real(c_float) :: minimum, maximum, sum, oisum, mean, stddev
+real(c_float), allocatable :: minimumv(:), maximumv(:), sumv(:), oisumv(:), meanv(:), stddevv(:)
 integer :: halo_size, levels
 integer(ATLAS_KIND_GIDX) :: glb_idx
 integer(ATLAS_KIND_GIDX), allocatable :: glb_idxv (:)
@@ -244,9 +244,9 @@ grid = atlas_ReducedGrid("rgg.N24")
 mesh = atlas_generate_mesh(grid)
 fs2d = atlas_NodesFunctionSpace(mesh,halo_size)
 
-field  = fs2d%create_field((/2/),atlas_real(c_double))
+field  = fs2d%create_field((/2/),atlas_real(c_float))
 global = fs2d%create_global_field(field)
-scal = fs2d%create_field(atlas_real(c_double))
+scal = fs2d%create_field(atlas_real(c_float))
 
 write(atlas_log%msg,*) "field:  rank",field%rank(), " shape [",field%shape(), "] size ", field%size();  call atlas_log%info()
 write(atlas_log%msg,*) "global: rank",global%rank()," shape [",global%shape(),"] size ", global%size(); call atlas_log%info()
@@ -303,7 +303,7 @@ call atlas_delete(global)
 
 fs3d = atlas_NodesColumnFunctionSpace(mesh,levels,halo_size)
 
-field  = fs3d%create_field((/2,3/),atlas_real(c_double))
+field  = fs3d%create_field((/2,3/),atlas_real(c_float))
 global = fs3d%create_global_field(field)
 
 write(atlas_log%msg,*) "field:  rank",field%rank(), " shape [",field%shape(), "] size ", field%size();  call atlas_log%info()

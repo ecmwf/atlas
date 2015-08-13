@@ -240,6 +240,243 @@ function atlas_NodesFunctionSpace__checksum_field(this,field) result(checksum)
 end function
 
 
+subroutine atlas_NodesFunctionSpace__minimum_real32_r0(this,field,minimum)
+use atlas_nodesfunctionspace_c_binding
+  class(atlas_NodesFunctionSpace), intent(in) :: this
+  type(atlas_Field) :: field
+  real(c_float), intent(out) :: minimum
+  call atlas__NodesFunctionSpace__min_float(this%cpp_object_ptr,field%cpp_object_ptr,minimum)
+end subroutine
+
+subroutine atlas_NodesFunctionSpace__minimum_real32_r1(this,field,minimum)
+use atlas_nodesfunctionspace_c_binding
+  class(atlas_NodesFunctionSpace), intent(in) :: this
+  type(atlas_Field) :: field
+  real(c_float), allocatable, intent(out) :: minimum(:)
+  type(c_ptr) :: min_cptr
+  real(c_float), pointer :: min_fptr(:)
+  integer :: min_size
+  call atlas__NodesFunctionSpace__min_arr_float(this%cpp_object_ptr,field%cpp_object_ptr,min_cptr,min_size)
+  call c_f_pointer(min_cptr,min_fptr,(/min_size/))
+  allocate(minimum(min_size))
+  minimum(:) = min_fptr(:)
+  call atlas_free(min_cptr)
+end subroutine
+
+subroutine atlas_NodesFunctionSpace__maximum_real32_r0(this,field,maximum)
+use atlas_nodesfunctionspace_c_binding
+  class(atlas_NodesFunctionSpace), intent(in) :: this
+  type(atlas_Field) :: field
+  real(c_float), intent(out) :: maximum
+  call atlas__NodesFunctionSpace__max_float(this%cpp_object_ptr,field%cpp_object_ptr,maximum)
+end subroutine
+
+subroutine atlas_NodesFunctionSpace__maximum_real32_r1(this,field,maximum)
+use atlas_nodesfunctionspace_c_binding
+  class(atlas_NodesFunctionSpace), intent(in) :: this
+  type(atlas_Field) :: field
+  real(c_float), allocatable, intent(out) :: maximum(:)
+  type(c_ptr) :: max_cptr
+  real(c_float), pointer :: max_fptr(:)
+  integer :: max_size
+  call atlas__NodesFunctionSpace__max_arr_float(this%cpp_object_ptr,field%cpp_object_ptr,max_cptr,max_size)
+  call c_f_pointer(max_cptr,max_fptr,(/max_size/))
+  allocate(maximum(max_size))
+  maximum(:) = max_fptr(:)
+  call atlas_free(max_cptr)
+end subroutine
+
+
+subroutine atlas_NodesFunctionSpace__minloc_real32_r0(this,field,minimum,location)
+use atlas_nodesfunctionspace_c_binding
+  class(atlas_NodesFunctionSpace), intent(in) :: this
+  type(atlas_Field) :: field
+  real(c_float), intent(out) :: minimum
+  integer(ATLAS_KIND_GIDX), intent(out) :: location
+  integer(c_long) :: loc
+  call atlas__NodesFunctionSpace__minloc_float(this%cpp_object_ptr,field%cpp_object_ptr,minimum,loc)
+  location = loc
+end subroutine
+
+subroutine atlas_NodesFunctionSpace__maxloc_real32_r0(this,field,maximum,location)
+use atlas_nodesfunctionspace_c_binding
+  class(atlas_NodesFunctionSpace), intent(in) :: this
+  type(atlas_Field) :: field
+  real(c_float), intent(out) :: maximum
+  integer(ATLAS_KIND_GIDX), intent(out) :: location
+  integer(c_long) :: loc
+  call atlas__NodesFunctionSpace__maxloc_float(this%cpp_object_ptr,field%cpp_object_ptr,maximum,loc)
+  location = loc
+end subroutine
+
+
+subroutine atlas_NodesFunctionSpace__minloc_real32_r1(this,field,minimum,location)
+use atlas_nodesfunctionspace_c_binding
+  class(atlas_NodesFunctionSpace), intent(in) :: this
+  type(atlas_Field) :: field
+  real(c_float), allocatable, intent(out) :: minimum(:)
+  integer(ATLAS_KIND_GIDX), allocatable, intent(out) :: location(:)
+  type(c_ptr) :: min_cptr, loc_cptr
+  real(c_float), pointer :: min_fptr(:)
+  integer(c_long),pointer :: loc_fptr(:)
+  integer :: min_size
+  call atlas__NodesFunctionSpace__minloc_arr_float(this%cpp_object_ptr,field%cpp_object_ptr,min_cptr,loc_cptr,min_size)
+  call c_f_pointer(min_cptr,min_fptr,(/min_size/))
+  call c_f_pointer(loc_cptr,loc_fptr,(/min_size/))
+  allocate(minimum(min_size))
+  allocate(location(min_size))
+  minimum(:) = min_fptr(:)
+  location(:) = loc_fptr(:)
+  call atlas_free(min_cptr)
+  call atlas_free(loc_cptr)
+end subroutine
+
+subroutine atlas_NodesFunctionSpace__maxloc_real32_r1(this,field,maximum,location)
+use atlas_nodesfunctionspace_c_binding
+  class(atlas_NodesFunctionSpace), intent(in) :: this
+  type(atlas_Field) :: field
+  real(c_float), allocatable, intent(out) :: maximum(:)
+  integer(ATLAS_KIND_GIDX), allocatable, intent(out) :: location(:)
+  type(c_ptr) :: max_cptr, loc_cptr
+  real(c_float), pointer :: max_fptr(:)
+  integer(c_long),pointer :: loc_fptr(:)
+  integer :: max_size
+  call atlas__NodesFunctionSpace__maxloc_arr_float(this%cpp_object_ptr,field%cpp_object_ptr,max_cptr,loc_cptr,max_size)
+  call c_f_pointer(max_cptr,max_fptr,(/max_size/))
+  call c_f_pointer(loc_cptr,loc_fptr,(/max_size/))
+  allocate(maximum(max_size))
+  allocate(location(max_size))
+  maximum(:) = max_fptr(:)
+  location(:) = loc_fptr(:)
+  call atlas_free(max_cptr)
+  call atlas_free(loc_cptr)
+end subroutine
+
+
+subroutine atlas_NodesFunctionSpace__sum_real32_r0(this,field,sum,N)
+use atlas_nodesfunctionspace_c_binding
+  class(atlas_NodesFunctionSpace), intent(in) :: this
+  type(atlas_Field) :: field
+  real(c_float), intent(out) :: sum
+  integer(c_int), intent(out), optional :: N
+  integer(c_int) :: opt_N
+  call atlas__NodesFunctionSpace__sum_float(this%cpp_object_ptr,field%cpp_object_ptr,sum,opt_N)
+  if( present(N) ) N = opt_N
+end subroutine
+
+subroutine atlas_NodesFunctionSpace__sum_real32_r1(this,field,sum,N)
+use atlas_nodesfunctionspace_c_binding
+  class(atlas_NodesFunctionSpace), intent(in) :: this
+  type(atlas_Field) :: field
+  real(c_float), allocatable, intent(out) :: sum(:)
+  integer(c_int), intent(out), optional :: N
+  type(c_ptr) :: sum_cptr
+  real(c_float), pointer :: sum_fptr(:)
+  integer :: sum_size
+  integer(c_int) :: opt_N
+  call atlas__NodesFunctionSpace__sum_arr_float(this%cpp_object_ptr,field%cpp_object_ptr,sum_cptr,sum_size,opt_N)
+  call c_f_pointer(sum_cptr,sum_fptr,(/sum_size/))
+  allocate(sum(sum_size))
+  sum(:) = sum_fptr(:)
+  call atlas_free(sum_cptr)
+  if( present(N) ) N = opt_N
+end subroutine
+
+subroutine atlas_NodesFunctionSpace__order_independent_sum_real32_r0(this,field,sum,N)
+use atlas_nodesfunctionspace_c_binding
+  class(atlas_NodesFunctionSpace), intent(in) :: this
+  type(atlas_Field) :: field
+  real(c_float), intent(out) :: sum
+  integer(c_int), intent(out), optional :: N
+  integer(c_int) :: opt_N
+  call atlas__NodesFunctionSpace__oisum_float(this%cpp_object_ptr,field%cpp_object_ptr,sum,opt_N)
+  if( present(N) ) N = opt_N
+end subroutine
+
+subroutine atlas_NodesFunctionSpace__order_independent_sum_real32_r1(this,field,sum,N)
+use atlas_nodesfunctionspace_c_binding
+  class(atlas_NodesFunctionSpace), intent(in) :: this
+  type(atlas_Field) :: field
+  real(c_float), allocatable, intent(out) :: sum(:)
+  integer(c_int), intent(out), optional :: N
+  type(c_ptr) :: sum_cptr
+  real(c_float), pointer :: sum_fptr(:)
+  integer :: sum_size
+  integer(c_int) :: opt_N
+  call atlas__NodesFunctionSpace__oisum_arr_float(this%cpp_object_ptr,field%cpp_object_ptr,sum_cptr,sum_size,opt_N)
+  call c_f_pointer(sum_cptr,sum_fptr,(/sum_size/))
+  allocate(sum(sum_size))
+  sum(:) = sum_fptr(:)
+  call atlas_free(sum_cptr)
+  if( present(N) ) N = opt_N
+end subroutine
+
+subroutine atlas_NodesFunctionSpace__mean_real32_r0(this,field,mean,N)
+use atlas_nodesfunctionspace_c_binding
+  class(atlas_NodesFunctionSpace), intent(in) :: this
+  type(atlas_Field) :: field
+  real(c_float), intent(out) :: mean
+  integer(c_int), intent(out), optional :: N
+  integer(c_int) :: opt_N
+  call atlas__NodesFunctionSpace__mean_float(this%cpp_object_ptr,field%cpp_object_ptr,mean,opt_N)
+  if( present(N) ) N = opt_N
+end subroutine
+
+subroutine atlas_NodesFunctionSpace__mean_real32_r1(this,field,mean,N)
+use atlas_nodesfunctionspace_c_binding
+  class(atlas_NodesFunctionSpace), intent(in) :: this
+  type(atlas_Field) :: field
+  real(c_float), allocatable, intent(out) :: mean(:)
+  integer(c_int), intent(out), optional :: N
+  type(c_ptr) :: mean_cptr
+  real(c_float), pointer :: mean_fptr(:)
+  integer :: mean_size
+  integer(c_int) :: opt_N
+  call atlas__NodesFunctionSpace__mean_arr_float(this%cpp_object_ptr,field%cpp_object_ptr,mean_cptr,mean_size,opt_N)
+  call c_f_pointer(mean_cptr,mean_fptr,(/mean_size/))
+  allocate(mean(mean_size))
+  mean(:) = mean_fptr(:)
+  call atlas_free(mean_cptr)
+  if( present(N) ) N = opt_N
+end subroutine
+
+subroutine atlas_NodesFunctionSpace__mean_and_stddev_real32_r0(this,field,mean,stddev,N)
+use atlas_nodesfunctionspace_c_binding
+  class(atlas_NodesFunctionSpace), intent(in) :: this
+  type(atlas_Field) :: field
+  real(c_float), intent(out) :: mean
+  real(c_float), intent(out) :: stddev
+  integer(c_int), intent(out), optional :: N
+  integer(c_int) :: opt_N
+  call atlas__NodesFunctionSpace__mean_and_stddev_float(this%cpp_object_ptr,field%cpp_object_ptr,mean,stddev,opt_N)
+  if( present(N) ) N = opt_N
+end subroutine
+
+subroutine atlas_NodesFunctionSpace__mean_and_stddev_real32_r1(this,field,mean,stddev,N)
+use atlas_nodesfunctionspace_c_binding
+  class(atlas_NodesFunctionSpace), intent(in) :: this
+  type(atlas_Field) :: field
+  real(c_float), allocatable, intent(out) :: mean(:)
+  real(c_float), allocatable, intent(out) :: stddev(:)
+  integer(c_int), intent(out), optional :: N
+  type(c_ptr) :: mean_cptr, stddev_cptr
+  real(c_float), pointer :: mean_fptr(:), stddev_fptr(:)
+  integer :: varsize
+  integer(c_int) :: opt_N
+  call atlas__NodesFunctionSpace__mean_and_stddev_arr_float(this%cpp_object_ptr,field%cpp_object_ptr,mean_cptr,stddev_cptr,varsize,opt_N)
+  call c_f_pointer(mean_cptr,mean_fptr,(/varsize/))
+  call c_f_pointer(stddev_cptr,stddev_fptr,(/varsize/))
+  allocate(mean(varsize))
+  allocate(stddev(varsize))
+  mean(:) = mean_fptr(:)
+  stddev(:) = stddev_fptr(:)
+  call atlas_free(mean_cptr)
+  call atlas_free(stddev_cptr)
+  if( present(N) ) N = opt_N
+end subroutine
+
+
+
 subroutine atlas_NodesFunctionSpace__minimum_real64_r0(this,field,minimum)
 use atlas_nodesfunctionspace_c_binding
   class(atlas_NodesFunctionSpace), intent(in) :: this
@@ -474,7 +711,6 @@ use atlas_nodesfunctionspace_c_binding
   call atlas_free(stddev_cptr)
   if( present(N) ) N = opt_N
 end subroutine
-
 
 function atlas_NodesColumnFunctionSpace__mesh_levels_halo(mesh,nb_levels,halo) result(function_space)
   use atlas_nodesfunctionspace_c_binding
