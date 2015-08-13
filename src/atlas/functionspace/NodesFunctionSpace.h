@@ -531,6 +531,9 @@ Field* NodesColumnFunctionSpace::createGlobalField(const std::string& name, cons
 extern "C" {
 NodesFunctionSpace* atlas__NodesFunctionSpace__new (const char* name, Mesh* mesh, int halo);
 void atlas__NodesFunctionSpace__delete (NodesFunctionSpace* This);
+int atlas__NodesFunctionSpace__nb_nodes(const NodesFunctionSpace* This);
+Mesh* atlas__NodesFunctionSpace__mesh(NodesFunctionSpace* This);
+Nodes* atlas__NodesFunctionSpace__nodes(NodesFunctionSpace* This);
 Field* atlas__NodesFunctionSpace__create_field (const NodesFunctionSpace* This, const char* name, int kind);
 Field* atlas__NodesFunctionSpace__create_field_vars (const NodesFunctionSpace* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind);
 Field* atlas__NodesFunctionSpace__create_field_template (const NodesFunctionSpace* This, const char* name, const Field* field_template);
@@ -549,8 +552,37 @@ void atlas__NodesFunctionSpace__scatter_field(const NodesFunctionSpace* This, co
 void atlas__NodesFunctionSpace__checksum_fieldset(const NodesFunctionSpace* This, const FieldSet* fieldset, Char* &checksum, int &size, int &allocated);
 void atlas__NodesFunctionSpace__checksum_field(const NodesFunctionSpace* This, const Field* field, Char* &checksum, int &size, int &allocated);
 
+void atlas__NodesFunctionSpace__sum_double(const NodesFunctionSpace* This, const Field* field, double &sum, int &N);
+void atlas__NodesFunctionSpace__sum_arr_double(const NodesFunctionSpace* This, const Field* field, double* &sum, int &size, int &N);
+
+void atlas__NodesFunctionSpace__oisum_double(const NodesFunctionSpace* This, const Field* field, double &sum, int &N);
+void atlas__NodesFunctionSpace__oisum_arr_double(const NodesFunctionSpace* This, const Field* field, double* &sum, int &size, int &N);
+
+void atlas__NodesFunctionSpace__min_double(const NodesFunctionSpace* This, const Field* field, double &minimum);
+
+void atlas__NodesFunctionSpace__max_double(const NodesFunctionSpace* This, const Field* field, double &maximum);
+
+void atlas__NodesFunctionSpace__min_arr_double(const NodesFunctionSpace* This, const Field* field, double* &minimum, int &size);
+
+void atlas__NodesFunctionSpace__max_arr_double(const NodesFunctionSpace* This, const Field* field, double* &maximum, int &size);
+
+void atlas__NodesFunctionSpace__minloc_double(const NodesFunctionSpace* This, const Field* field, double &minimum, long &glb_idx);
+
+void atlas__NodesFunctionSpace__maxloc_double(const NodesFunctionSpace* This, const Field* field, double &maximum, long &glb_idx);
+
+void atlas__NodesFunctionSpace__minloc_arr_double(const NodesFunctionSpace* This, const Field* field, double* &minimum, long* &glb_idx, int &size);
+
+void atlas__NodesFunctionSpace__maxloc_arr_double(const NodesFunctionSpace* This, const Field* field, double* &maximum, long* &glb_idx, int &size);
+
+void atlas__NodesFunctionSpace__mean_double(const NodesFunctionSpace* This, const Field* field, double &mean, int &N);
+void atlas__NodesFunctionSpace__mean_arr_double(const NodesFunctionSpace* This, const Field* field, double* &mean, int &size, int &N);
+
+void atlas__NodesFunctionSpace__mean_and_stddev_double(const NodesFunctionSpace* This, const Field* field, double &mean, double &stddev, int &N);
+void atlas__NodesFunctionSpace__mean_and_stddev_arr_double(const NodesFunctionSpace* This, const Field* field, double* &mean, double* &stddev, int &size, int &N);
+
 NodesColumnFunctionSpace* atlas__NodesColumnFunctionSpace__new (const char* name, Mesh* mesh, int nb_levels, int halo);
 void atlas__NodesColumnFunctionSpace__delete (NodesColumnFunctionSpace* This);
+int atlas__NodesColumnFunctionSpace__nb_levels(const NodesColumnFunctionSpace* This);
 Field* atlas__NodesColumnFunctionSpace__create_field (const NodesColumnFunctionSpace* This, const char* name, int kind);
 Field* atlas__NodesColumnFunctionSpace__create_field_vars (const NodesColumnFunctionSpace* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind);
 Field* atlas__NodesColumnFunctionSpace__create_field_template (const NodesColumnFunctionSpace* This, const char* name, const Field* field_template);

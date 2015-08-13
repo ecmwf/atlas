@@ -17,6 +17,11 @@ TYPE, extends(object_type) :: atlas_NodesFunctionSpace
 
 !------------------------------------------------------------------------------
 contains
+
+  procedure, public :: nb_nodes => atlas_NodesFunctionSpace__nb_nodes
+  procedure, public :: mesh => atlas_NodesFunctionSpace__mesh
+  procedure, public :: nodes => atlas_NodesFunctionSpace__nodes
+
   procedure, private :: create_field_kind => atlas_NodesFunctionSpace__create_field_kind
   procedure, private :: create_field_name_kind => atlas_NodesFunctionSpace__create_field_name_kind
   procedure, private :: create_field_vars_kind => atlas_NodesFunctionSpace__create_field_vars_kind
@@ -61,6 +66,35 @@ contains
   procedure, private :: checksum_field => atlas_NodesFunctionSpace__checksum_field
   generic, public :: checksum => checksum_fieldset, checksum_field
 
+  procedure, private :: sum_real64_r0 => atlas_NodesFunctionSpace__sum_real64_r0
+  procedure, private :: sum_real64_r1 => atlas_NodesFunctionSpace__sum_real64_r1
+  procedure, private :: order_independent_sum_real64_r0 => atlas_NodesFunctionSpace__order_independent_sum_real64_r0
+  procedure, private :: order_independent_sum_real64_r1 => atlas_NodesFunctionSpace__order_independent_sum_real64_r1
+  procedure, private :: minimum_real64_r0 => atlas_NodesFunctionSpace__minimum_real64_r0
+  procedure, private :: minimum_real64_r1 => atlas_NodesFunctionSpace__minimum_real64_r1
+  procedure, private :: maximum_real64_r0 => atlas_NodesFunctionSpace__maximum_real64_r0
+  procedure, private :: maximum_real64_r1 => atlas_NodesFunctionSpace__maximum_real64_r1
+  procedure, private :: minimum_and_location_real64_r0 => atlas_NodesFunctionSpace__minloc_real64_r0
+  procedure, private :: minimum_and_location_real64_r1 => atlas_NodesFunctionSpace__minloc_real64_r1
+  procedure, private :: maximum_and_location_real64_r0 => atlas_NodesFunctionSpace__maxloc_real64_r0
+  procedure, private :: maximum_and_location_real64_r1 => atlas_NodesFunctionSpace__maxloc_real64_r1
+  procedure, private :: mean_real64_r0 => atlas_NodesFunctionSpace__mean_real64_r0
+  procedure, private :: mean_real64_r1 => atlas_NodesFunctionSpace__mean_real64_r1
+  procedure, private :: mean_and_stddev_real64_r0 => atlas_NodesFunctionSpace__mean_and_stddev_real64_r0
+  procedure, private :: mean_and_stddev_real64_r1 => atlas_NodesFunctionSpace__mean_and_stddev_real64_r1
+
+  generic, public :: minimum => minimum_real64_r0, minimum_real64_r1
+  generic, public :: maximum => maximum_real64_r0, maximum_real64_r1
+
+  generic, public :: minimum_and_location => minimum_and_location_real64_r0, minimum_and_location_real64_r1
+  generic, public :: maximum_and_location => maximum_and_location_real64_r0, maximum_and_location_real64_r1
+
+  generic, public :: sum => sum_real64_r0, sum_real64_r1
+  generic, public :: order_independent_sum => order_independent_sum_real64_r0, order_independent_sum_real64_r1
+
+  generic, public :: mean => mean_real64_r0, mean_real64_r1
+  generic, public :: mean_and_standard_deviation => mean_and_stddev_real64_r0, mean_and_stddev_real64_r1
+
 END TYPE atlas_NodesFunctionSpace
 
 interface atlas_NodesFunctionSpace
@@ -85,6 +119,12 @@ TYPE, extends(object_type) :: atlas_NodesColumnFunctionSpace
 !------------------------------------------------------------------------------
 
 contains
+
+  procedure, public :: nb_nodes => atlas_NodesColumnFunctionSpace__nb_nodes
+  procedure, public :: nb_levels => atlas_NodesColumnFunctionSpace__nb_levels
+  procedure, public :: mesh => atlas_NodesColumnFunctionSpace__mesh
+  procedure, public :: nodes => atlas_NodesColumnFunctionSpace__nodes
+
   procedure, private :: create_field_kind => atlas_NCFunctionSpace__create_field_kind
   procedure, private :: create_field_name_kind => atlas_NCFunctionSpace__create_field_name_kind
   procedure, private :: create_field_vars_kind => atlas_NCFunctionSpace__create_field_vars_kind

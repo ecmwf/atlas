@@ -379,8 +379,10 @@ namespace detail { // Collectives implementation
 template< typename DATATYPE >
 void dispatch_sum( const NodesFunctionSpace& fs, const Field& field, DATATYPE& result, size_t& N )
 {
+  if( field.size() != fs.nb_nodes() )
+    throw eckit::SeriousBug("Cannot sum multi-variable-field into a single scalar value");
   util::IsGhost is_ghost(fs.nodes());
-  ArrayView<DATATYPE,1> arr( field );
+  ArrayView<DATATYPE,1> arr( field.data<DATATYPE>(), make_shape(field.size()) );
   DATATYPE local_sum = 0;
   atlas_omp_pragma( omp parallel for default(shared) reduction(+:local_sum) )
   for( size_t n=0; n<arr.shape(0); ++n ) {
@@ -1384,33 +1386,47 @@ Field* NodesColumnFunctionSpace::createGlobalField(const std::string& name, cons
   return Field::create(name,shape,other.datatype());
 }
 
+namespace {
+
+template <typename DATATYPE>
+std::string checksum_3d_field(const mpl::Checksum& checksum, const Field& field )
+{
+  ArrayShape shape(1,field.shape(0));
+  for( size_t j=2; j<field.rank(); ++j )
+    shape.push_back(field.shape(j));
+  Field::Ptr surface_field ( Field::create<DATATYPE>(shape) );
+  ArrayView<DATATYPE,2> surface( surface_field->data<DATATYPE>(), make_shape(surface_field->shape(0), surface_field->stride(0)) );
+  ArrayView<DATATYPE,3> values( field.data<DATATYPE>(), make_shape(field.shape(0),field.shape(1),field.stride(1) ) );
+  for( size_t n=0; n<field.shape(0); ++n ) {
+    for( size_t j=0; j<surface.shape(1); ++j )
+    {
+      surface(n,j) = 0.;
+      for( size_t l=0; l<field.shape(1);++l )
+        surface(n,j) += values(n,l,j);
+    }
+  }
+  return checksum.execute( surface.data(), surface.stride(0) );
+}
+}
+
 std::string NodesColumnFunctionSpace::checksum( const FieldSet& fieldset ) const {
   const mpl::Checksum& checksum = mesh().checksum().get(checksum_name());
-DEBUG();
-  Field::Ptr surface_field;
   eckit::MD5 md5;
   for( size_t f=0; f<fieldset.size(); ++f ) {
     const Field& field=fieldset[f];
-    ArrayShape shape(1,nb_nodes());
-    for( size_t j=2; j<field.rank(); ++j )
-      shape.push_back(field.shape(j));
-    surface_field.reset ( Field::create<double>(shape) );
-    ArrayView<double,2> surface( surface_field->data<double>(), make_shape(surface_field->shape(0), surface_field->stride(0)) );
-    ArrayView<double,3> values( field.data<double>(), make_shape(field.shape(0),field.shape(1),field.stride(1) ) );
-    for( size_t n=0; n<nb_nodes(); ++n ) {
-      for( size_t j=0; j<surface.shape(1); ++j )
-      {
-        surface(n,j) = 0.;
-        for( size_t l=0; l<field.shape(1);++l )
-          surface(n,j) += values(n,l,j);
-      }
-    }
-    md5 << checksum.execute( surface.data(), surface.stride(0) );
+    if     ( field.kind() == DataType::kind<int>() )
+      md5 << checksum_3d_field<int>(checksum,field);
+    else if( field.kind() == DataType::kind<long>() )
+      md5 << checksum_3d_field<long>(checksum,field);
+    else if( field.kind() == DataType::kind<float>() )
+      md5 << checksum_3d_field<float>(checksum,field);
+    else if( field.kind() == DataType::kind<double>() )
+      md5 << checksum_3d_field<double>(checksum,field);
+    else throw eckit::Exception("datatype not supported",Here());
   }
   return md5;
 }
 std::string NodesColumnFunctionSpace::checksum( const Field& field ) const {
-  DEBUG();
   FieldSet fieldset;
   fieldset.add(field);
   return checksum(fieldset);
@@ -2805,6 +2821,24 @@ void atlas__NodesFunctionSpace__delete (NodesFunctionSpace* This)
   delete(This);
 }
 
+int atlas__NodesFunctionSpace__nb_nodes(const NodesFunctionSpace* This)
+{
+  ASSERT(This);
+  return This->nb_nodes();
+}
+
+Mesh* atlas__NodesFunctionSpace__mesh(NodesFunctionSpace* This)
+{
+  ASSERT(This);
+  return &This->mesh();
+}
+
+Nodes* atlas__NodesFunctionSpace__nodes(NodesFunctionSpace* This)
+{
+  ASSERT(This);
+  return &This->nodes();
+}
+
 Field* atlas__NodesFunctionSpace__create_field (const NodesFunctionSpace* This, const char* name, int kind )
 {
   ASSERT(This);
@@ -2924,6 +2958,201 @@ void atlas__NodesFunctionSpace__checksum_field(const NodesFunctionSpace* This, c
   );
 }
 
+void atlas__NodesFunctionSpace__sum_double(const NodesFunctionSpace* This, const Field* field, double &sum, int &N)
+{
+  ASSERT(This);
+  ASSERT(field);
+  size_t size_t_N;
+  ATLAS_ERROR_HANDLING( This->sum(*field,sum,size_t_N) );
+  N = size_t_N;
+}
+
+void atlas__NodesFunctionSpace__sum_arr_double(const NodesFunctionSpace* This, const Field* field, double* &sum, int &size, int &N)
+{
+  ASSERT(This);
+  ASSERT(field);
+  size_t size_t_N;
+  ATLAS_ERROR_HANDLING(
+        std::vector<double> sumvec;
+        This->orderIndependentSum(*field,sumvec,size_t_N);
+        size = sumvec.size();
+        sum = new double[size];
+        for( size_t j=0; j<size; ++j ) sum[j] = sumvec[j];
+  );
+  N = size_t_N;
+}
+
+void atlas__NodesFunctionSpace__oisum_double(const NodesFunctionSpace* This, const Field* field, double &sum, int &N)
+{
+  ASSERT(This);
+  ASSERT(field);
+  size_t size_t_N;
+  ATLAS_ERROR_HANDLING( This->sum(*field,sum,size_t_N) );
+  N = size_t_N;
+}
+
+void atlas__NodesFunctionSpace__oisum_arr_double(const NodesFunctionSpace* This, const Field* field, double* &sum, int &size, int &N)
+{
+  ASSERT(This);
+  ASSERT(field);
+  size_t size_t_N;
+  ATLAS_ERROR_HANDLING(
+        std::vector<double> sumvec;
+        This->orderIndependentSum(*field,sumvec,size_t_N);
+        size = sumvec.size();
+        sum = new double[size];
+        for( size_t j=0; j<size; ++j ) sum[j] = sumvec[j];
+  );
+  N = size_t_N;
+}
+
+void atlas__NodesFunctionSpace__min_double(const NodesFunctionSpace* This, const Field* field, double &minimum)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ATLAS_ERROR_HANDLING( This->minimum(*field,minimum) );
+}
+
+void atlas__NodesFunctionSpace__max_double(const NodesFunctionSpace* This, const Field* field, double &maximum)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ATLAS_ERROR_HANDLING( This->maximum(*field,maximum) );
+}
+
+void atlas__NodesFunctionSpace__min_arr_double(const NodesFunctionSpace* This, const Field* field, double* &minimum, int &size)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ATLAS_ERROR_HANDLING(
+        std::vector<double> minvec;
+        This->minimum(*field,minvec);
+        size = minvec.size();
+        minimum = new double[size];
+        for( size_t j=0; j<size; ++j ) minimum[j] = minvec[j];
+  );
+}
+
+void atlas__NodesFunctionSpace__max_arr_double(const NodesFunctionSpace* This, const Field* field, double* &maximum, int &size)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ATLAS_ERROR_HANDLING(
+        std::vector<double> maxvec;
+        This->maximum(*field,maxvec);
+        size = maxvec.size();
+        maximum = new double[size];
+        for( size_t j=0; j<size; ++j ) maximum[j] = maxvec[j];
+  );
+}
+
+void atlas__NodesFunctionSpace__minloc_double(const NodesFunctionSpace* This, const Field* field, double &minimum, long &glb_idx)
+{
+  ASSERT(This);
+  ASSERT(field);
+  gidx_t gidx;
+  ATLAS_ERROR_HANDLING( This->minimumAndLocation(*field,minimum,gidx) );
+  glb_idx = gidx;
+}
+
+void atlas__NodesFunctionSpace__maxloc_double(const NodesFunctionSpace* This, const Field* field, double &maximum, long &glb_idx)
+{
+  ASSERT(This);
+  ASSERT(field);
+  gidx_t gidx;
+  ATLAS_ERROR_HANDLING( This->maximumAndLocation(*field,maximum,gidx) );
+  glb_idx = gidx;
+}
+
+void atlas__NodesFunctionSpace__minloc_arr_double(const NodesFunctionSpace* This, const Field* field, double* &minimum, long* &glb_idx, int &size)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ATLAS_ERROR_HANDLING(
+        std::vector<double> minvec;
+        std::vector<gidx_t> gidxvec;
+        This->minimumAndLocation(*field,minvec,gidxvec);
+        size = minvec.size();
+        minimum = new double[size];
+        glb_idx = new long[size];
+        for( size_t j=0; j<size; ++j ) {
+          minimum[j] = minvec[j];
+          glb_idx[j] = gidxvec[j];
+        }
+  );
+}
+
+void atlas__NodesFunctionSpace__maxloc_arr_double(const NodesFunctionSpace* This, const Field* field, double* &maximum, long* &glb_idx, int &size)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ATLAS_ERROR_HANDLING(
+        std::vector<double> maxvec;
+        std::vector<gidx_t> gidxvec;
+        This->maximumAndLocation(*field,maxvec,gidxvec);
+        size = maxvec.size();
+        maximum = new double[size];
+        glb_idx = new long[size];
+        for( size_t j=0; j<size; ++j ) {
+          maximum[j] = maxvec[j];
+          glb_idx[j] = gidxvec[j];
+        }
+  );
+}
+
+void atlas__NodesFunctionSpace__mean_double(const NodesFunctionSpace* This, const Field* field, double &mean, int &N)
+{
+  ASSERT(This);
+  ASSERT(field);
+  size_t size_t_N;
+  ATLAS_ERROR_HANDLING( This->mean(*field,mean,size_t_N) );
+  N = size_t_N;
+}
+
+void atlas__NodesFunctionSpace__mean_arr_double(const NodesFunctionSpace* This, const Field* field, double* &mean, int &size, int &N)
+{
+  ASSERT(This);
+  ASSERT(field);
+  size_t size_t_N;
+  ATLAS_ERROR_HANDLING(
+        std::vector<double> meanvec;
+        This->mean(*field,meanvec,size_t_N);
+        size = meanvec.size();
+        mean = new double[size];
+        for( size_t j=0; j<size; ++j ) mean[j] = meanvec[j];
+  );
+  N = size_t_N;
+}
+
+void atlas__NodesFunctionSpace__mean_and_stddev_double(const NodesFunctionSpace* This, const Field* field, double &mean, double &stddev, int &N)
+{
+  ASSERT(This);
+  ASSERT(field);
+  size_t size_t_N;
+  ATLAS_ERROR_HANDLING( This->meanAndStandardDeviation(*field,mean,stddev,size_t_N) );
+  N = size_t_N;
+}
+
+void atlas__NodesFunctionSpace__mean_and_stddev_arr_double(const NodesFunctionSpace* This, const Field* field, double* &mean, double* &stddev, int &size, int &N)
+{
+  ASSERT(This);
+  ASSERT(field);
+  size_t size_t_N;
+  ATLAS_ERROR_HANDLING(
+        std::vector<double> meanvec;
+        std::vector<double> stddevvec;
+        This->meanAndStandardDeviation(*field,meanvec,stddevvec,size_t_N);
+        size = meanvec.size();
+        mean = new double[size];
+        stddev = new double[size];
+        for( size_t j=0; j<size; ++j ) {
+          mean[j] = meanvec[j];
+          stddev[j] = stddevvec[j];
+        }
+  );
+  N = size_t_N;
+}
+
 
 
 
@@ -2938,6 +3167,12 @@ void atlas__NodesColumnFunctionSpace__delete (NodesColumnFunctionSpace* This)
 {
   ASSERT(This);
   delete(This);
+}
+
+int atlas__NodesColumnFunctionSpace__nb_levels(const NodesColumnFunctionSpace* This)
+{
+  ASSERT(This);
+  return This->nb_levels();
 }
 
 Field* atlas__NodesColumnFunctionSpace__create_field (const NodesColumnFunctionSpace* This, const char* name, int kind )

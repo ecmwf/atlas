@@ -80,3 +80,7 @@ contains
 END TYPE atlas_FunctionSpace
 
 !------------------------------------------------------------------------------
+
+TYPE, extends(atlas_FunctionSpace) :: atlas_Nodes
+contains
+END TYPE

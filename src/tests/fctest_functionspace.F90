@@ -45,12 +45,16 @@ type(atlas_ReducedGrid) :: grid
 type(atlas_Mesh) :: mesh
 type(atlas_NodesFunctionSpace) :: fs
 type(atlas_Field) :: field, template
-integer :: halo_size
+type(atlas_Nodes) :: nodes
+integer :: halo_size, nb_nodes
 halo_size = 1
 
 grid = atlas_ReducedGrid("rgg.N24")
 mesh = atlas_generate_mesh(grid)
 fs = atlas_NodesFunctionSpace(mesh,halo_size)
+nodes = fs%nodes()
+nb_nodes = fs%nb_nodes()
+write(atlas_log%msg,*) "nb_nodes = ",nb_nodes; call atlas_log%info()
 
 field = fs%create_field(atlas_real(c_double))
 FCTEST_CHECK_EQUAL( field%rank() , 1 )
@@ -141,6 +145,9 @@ grid = atlas_ReducedGrid("rgg.N24")
 mesh = atlas_generate_mesh(grid)
 fs = atlas_NodesColumnFunctionSpace(mesh,10,halo_size)
 
+levels = fs%nb_levels()
+write(atlas_log%msg,*) "nb_levels = ",levels; call atlas_log%info()
+
 field = fs%create_field(atlas_real(c_double))
 FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
@@ -221,10 +228,15 @@ type(atlas_ReducedGrid) :: grid
 type(atlas_Mesh) :: mesh
 type(atlas_NodesFunctionSpace) :: fs2d
 type(atlas_NodesColumnFunctionSpace) :: fs3d
-type(atlas_Field) :: field, global
-real(c_double), pointer :: values(:,:,:)
+type(atlas_Field) :: field, global, scal
+real(c_double), pointer :: scalvalues(:)
+real(c_double), pointer :: values(:,:)
 real(c_double), pointer :: values3d(:,:,:,:)
+real(c_double) :: minimum, maximum, sum, oisum, mean, stddev
+real(c_double), allocatable :: minimumv(:), maximumv(:), sumv(:), oisumv(:), meanv(:), stddevv(:)
 integer :: halo_size, levels
+integer(ATLAS_KIND_GIDX) :: glb_idx
+integer(ATLAS_KIND_GIDX), allocatable :: glb_idxv (:)
 halo_size = 1
 levels = 10
 
@@ -232,8 +244,9 @@ grid = atlas_ReducedGrid("rgg.N24")
 mesh = atlas_generate_mesh(grid)
 fs2d = atlas_NodesFunctionSpace(mesh,halo_size)
 
-field  = fs2d%create_field((/2,3/),atlas_real(c_double))
+field  = fs2d%create_field((/2/),atlas_real(c_double))
 global = fs2d%create_global_field(field)
+scal = fs2d%create_field(atlas_real(c_double))
 
 write(atlas_log%msg,*) "field:  rank",field%rank(), " shape [",field%shape(), "] size ", field%size();  call atlas_log%info()
 write(atlas_log%msg,*) "global: rank",global%rank()," shape [",global%shape(),"] size ", global%size(); call atlas_log%info()
@@ -243,9 +256,48 @@ call fs2d%halo_exchange(field)
 call fs2d%scatter(global,field)
 
 call field%access_data(values)
+call scal%access_data(scalvalues)
 values = 2.
+scalvalues = 2.
 
 call atlas_log%info(fs2d%checksum(field))
+
+values = atlas_mpi_rank()
+scalvalues = atlas_mpi_rank()
+
+
+call fs2d%minimum(scal,minimum)
+call fs2d%maximum(scal,maximum)
+write(atlas_log%msg,*) "min = ",minimum, " max = ",maximum; call atlas_log%info()
+
+call fs2d%minimum(field,minimumv)
+call fs2d%maximum(field,maximumv)
+write(atlas_log%msg,*) "minv = ",minimumv, " maxv = ",maximumv; call atlas_log%info()
+
+call fs2d%minimum_and_location(scal,minimum,glb_idx)
+write(atlas_log%msg,*) "min = ",minimum, " gidx = ",glb_idx; call atlas_log%info()
+call fs2d%maximum_and_location(scal,maximum,glb_idx)
+write(atlas_log%msg,*) "max = ",maximum, " gidx = ",glb_idx; call atlas_log%info()
+
+call fs2d%minimum_and_location(field,minimumv,glb_idxv)
+write(atlas_log%msg,*) "minv = ",minimumv, " gidxv = ",glb_idxv; call atlas_log%info()
+call fs2d%maximum_and_location(field,maximumv,glb_idxv)
+write(atlas_log%msg,*) "minv = ",maximum, " gidxv = ",glb_idxv; call atlas_log%info()
+
+call fs2d%sum(scal,sum)
+call fs2d%order_independent_sum(scal,oisum)
+write(atlas_log%msg,*) "sum = ",sum, " oisum = ",oisum; call atlas_log%info()
+
+call fs2d%mean(scal,mean)
+call fs2d%mean(field,meanv)
+write(atlas_log%msg,*) "mean = ",mean, "meanv = ", meanv; call atlas_log%info()
+
+call fs2d%mean_and_standard_deviation(scal,mean,stddev)
+call fs2d%mean_and_standard_deviation(field,meanv,stddevv)
+write(atlas_log%msg,*) "mean = ",mean, "meanv = ", meanv; call atlas_log%info()
+write(atlas_log%msg,*) "stddev = ",stddev, "stddevv = ", stddevv; call atlas_log%info()
+
+call atlas_delete(scal)
 call atlas_delete(field)
 call atlas_delete(global)
 
