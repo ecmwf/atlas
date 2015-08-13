@@ -38,7 +38,7 @@ struct DataType {
   template< typename DATATYPE > static std::string datatype();
   template< typename DATATYPE > static std::string datatype(const DATATYPE);
 
-  static const long datatype_to_kind(const std::string&);
+  static long datatype_to_kind(const std::string&);
   static std::string kind_to_datatype(const long&);
   static bool kind_valid(const long&);
 };
@@ -63,7 +63,7 @@ template<> inline long DataType::kind(const long&)   { return KIND_INT64;   }
 template<> inline long DataType::kind(const float&)  { return KIND_REAL32;   }
 template<> inline long DataType::kind(const double&) { return KIND_REAL64;   }
 
-inline const long DataType::datatype_to_kind(const std::string& datatype)
+inline long DataType::datatype_to_kind(const std::string& datatype)
 {
   if      ( datatype == "int32"  ) return KIND_INT32;
   else if ( datatype == "int64"  ) return KIND_INT64;
