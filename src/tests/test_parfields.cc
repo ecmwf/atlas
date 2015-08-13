@@ -164,7 +164,7 @@ BOOST_AUTO_TEST_CASE( test2 )
   IsGhost is_ghost(nodes);
 
   int nb_ghost = 0;
-  for( int jnode=0; jnode<nodes.shape(0); ++jnode )
+  for(size_t jnode = 0; jnode < nodes.shape(0); ++jnode)
   {
     if( is_ghost(jnode) ) ++nb_ghost;
   }
@@ -175,7 +175,7 @@ BOOST_AUTO_TEST_CASE( test2 )
   actions::build_periodic_boundaries(*m);
 
   int nb_periodic = -nb_ghost;
-  for( int jnode=0; jnode<nodes.shape(0); ++jnode )
+  for(size_t jnode = 0; jnode < nodes.shape(0); ++jnode)
   {
     if( is_ghost(jnode) ) ++nb_periodic;
   }

@@ -30,7 +30,7 @@ void distribute_mesh( Mesh& mesh )
   int mypart = eckit::mpi::rank();
 
   FunctionSpace& nodes = mesh.function_space("nodes");
-  int nb_nodes = nodes.shape(0);
+  size_t nb_nodes = nodes.shape(0);
   ArrayView<double,2> lonlat    ( nodes.field("lonlat") );
   ArrayView<int,   1> node_part ( nodes.field("partition")   );
   ArrayView<gidx_t,1> node_gidx ( nodes.field("glb_idx")   );
@@ -66,7 +66,7 @@ void distribute_mesh( Mesh& mesh )
       ArrayView<gidx_t,1> elem_gidx( elements.field("glb_idx") );
       ArrayView<int,1> elem_part( elements.field("partition") );
       IndexView<int,2> elem_nodes( elements.field("nodes") );
-      int nb_nodes_per_elem = elem_nodes.shape(1);
+      size_t nb_nodes_per_elem = elem_nodes.shape(1);
       int nb_keep_elems = 0;
       std::vector<int> keep_elems(nb_elems,0);
       std::vector<int> elem_loc(nb_elems,-1);
@@ -126,7 +126,7 @@ void distribute_mesh( Mesh& mesh )
       {
         elem_gidx(jelem) = new_elem_gidx[jelem];
         elem_part(jelem) = mypart;
-        for( int jnode=0; jnode<nb_nodes_per_elem; ++jnode )
+        for(size_t jnode = 0; jnode < nb_nodes_per_elem; ++jnode)
         {
           elem_nodes(jelem,jnode) = new_elem_nodes(jelem,jnode);
         }

@@ -89,7 +89,7 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank0, Fixture )
   std::vector<POD> glb(Ng);
 
   for( int j=0; j<Nl; ++j ) {
-    loc[j] = (part[j]!= eckit::mpi::rank() ? 0 : gidx[j]*10 );
+    loc[j] = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*10 );
   }
 
   size_t strides[] = {1};
@@ -111,8 +111,8 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1_deprecated, Fixture )
   Array<POD> glb2(Ng,1);
   ArrayView<POD,2> locv(loc);
   for( int j=0; j<Nl; ++j ) {
-    locv(j,0) = (part[j]!= eckit::mpi::rank() ? 0 : gidx[j]*10 );
-    locv(j,1) = (part[j]!= eckit::mpi::rank() ? 0 : gidx[j]*100);
+    locv(j,0) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*10 );
+    locv(j,1) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*100);
   }
 
   // Gather complete field
@@ -169,19 +169,19 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1, Fixture )
   Array<POD> glb2(Ng,1);
   ArrayView<POD,2> locv(loc);
   for( int j=0; j<Nl; ++j ) {
-    locv(j,0) = (part[j]!= eckit::mpi::rank() ? 0 : gidx[j]*10 );
-    locv(j,1) = (part[j]!= eckit::mpi::rank() ? 0 : gidx[j]*100);
+    locv(j,0) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*10 );
+    locv(j,1) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*100);
   }
 
   // Gather complete field
   {
   size_t loc_strides[] = {2,1};
-  size_t loc_extents[] = {Nl,2};
+  size_t loc_extents[] = {size_t(Nl), 2};
   size_t loc_rank = 2;
   size_t loc_mpl_idxpos[] = {0};
   size_t loc_mpl_rank = 1;
   size_t glb_strides[] = {2,1};
-  size_t glb_extents[] = {Ng,2};
+  size_t glb_extents[] = {size_t(Ng), 2};
   size_t glb_rank = 2;
   size_t glb_mpl_idxpos[] = {0};
   size_t glb_mpl_rank = 1;
@@ -217,12 +217,12 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1, Fixture )
   // Gather only first component
   {
     size_t loc_strides[] = {2,2};
-    size_t loc_extents[] = {Nl,1};
+    size_t loc_extents[] = {size_t(Nl), 1};
     size_t loc_rank = 2;
     size_t loc_mpl_idxpos[] = {0};
     size_t loc_mpl_rank = 1;
     size_t glb_strides[] = {1};
-    size_t glb_extents[] = {Ng};
+    size_t glb_extents[] = {size_t(Ng)};
     size_t glb_rank = 1;
     size_t glb_mpl_idxpos[] = {0};
     size_t glb_mpl_rank = 1;
@@ -256,12 +256,12 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1, Fixture )
   // Gather only second component
   {
     size_t loc_strides[] = {2,2};
-    size_t loc_extents[] = {Nl,1};
+    size_t loc_extents[] = {size_t(Nl), 1};
     size_t loc_rank = 2;
     size_t loc_mpl_idxpos[] = {0};
     size_t loc_mpl_rank = 1;
     size_t glb_strides[] = {1};
-    size_t glb_extents[] = {Ng};
+    size_t glb_extents[] = {size_t(Ng)};
     size_t glb_rank = 1;
     size_t glb_mpl_idxpos[] = {0};
     size_t glb_mpl_rank = 1;
@@ -290,24 +290,24 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank2, Fixture )
   Array<POD> glb32(Ng);
 
   ArrayView<POD,3> locv(loc);
-  for( size_t p=0; p<Nl; ++p )
+  for(int p = 0; p < Nl; ++p)
   {
-    for( size_t i=0; i<3; ++i )
+    for(int i = 0; i < 3; ++i)
     {
-      locv(p,i,0) = (part[p]!= eckit::mpi::rank() ? 0 : -gidx[p]*std::pow(10,i) );
-      locv(p,i,1) = (part[p]!= eckit::mpi::rank() ? 0 :  gidx[p]*std::pow(10,i) );
+      locv(p,i,0) = (size_t(part[p]) != eckit::mpi::rank() ? 0 : -gidx[p]*std::pow(10,i) );
+      locv(p,i,1) = (size_t(part[p]) != eckit::mpi::rank() ? 0 :  gidx[p]*std::pow(10,i) );
     }
   }
 
   // Gather complete field
   {
     size_t loc_strides[] = {6,2,1};
-    size_t loc_extents[] = {Nl,3,2};
+    size_t loc_extents[] = {size_t(Nl), 3, 2};
     size_t loc_rank = 3;
     size_t loc_mpl_idxpos[] = {0};
     size_t loc_mpl_rank = 1;
     size_t glb_strides[] = {6,2,1};
-    size_t glb_extents[] = {Ng,3,2};
+    size_t glb_extents[] = {size_t(Ng), 3, 2};
     size_t glb_rank = 3;
     size_t glb_mpl_idxpos[] = {0};
     size_t glb_mpl_rank = 1;
@@ -333,12 +333,12 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank2, Fixture )
   // Gather var 1
   {
     size_t loc_strides[] = {6,2,2};
-    size_t loc_extents[] = {Nl,3,1};
+    size_t loc_extents[] = {size_t(Nl), 3, 1};
     size_t loc_rank = 3;
     size_t loc_mpl_idxpos[] = {0};
     size_t loc_mpl_rank = 1;
     size_t glb_strides[] = {6,1};
-    size_t glb_extents[] = {Ng,3};
+    size_t glb_extents[] = {size_t(Ng), 3};
     size_t glb_rank = 2;
     size_t glb_mpl_idxpos[] = {0};
     size_t glb_mpl_rank = 1;
@@ -364,12 +364,12 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank2, Fixture )
   // Gather var 2
   {
     size_t loc_strides[] = {6,2,2};
-    size_t loc_extents[] = {Nl,3,1};
+    size_t loc_extents[] = {size_t(Nl), 3, 1};
     size_t loc_rank = 3;
     size_t loc_mpl_idxpos[] = {0};
     size_t loc_mpl_rank = 1;
     size_t glb_strides[] = {6,1};
-    size_t glb_extents[] = {Ng,3};
+    size_t glb_extents[] = {size_t(Ng), 3};
     size_t glb_rank = 2;
     size_t glb_mpl_idxpos[] = {0};
     size_t glb_mpl_rank = 1;
@@ -395,12 +395,12 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank2, Fixture )
   // Gather lev 1
   {
     size_t loc_strides[] = {6,6,1};
-    size_t loc_extents[] = {Nl,1,2};
+    size_t loc_extents[] = {size_t(Nl), 1, 2};
     size_t loc_rank = 3;
     size_t loc_mpl_idxpos[] = {0};
     size_t loc_mpl_rank = 1;
     size_t glb_strides[] = {2,1};
-    size_t glb_extents[] = {Ng,2};
+    size_t glb_extents[] = {size_t(Ng), 2};
     size_t glb_rank = 2;
     size_t glb_mpl_idxpos[] = {0};
     size_t glb_mpl_rank = 1;
@@ -427,12 +427,12 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank2, Fixture )
   // Gather lev 2
   {
     size_t loc_strides[] = {6,6,1};
-    size_t loc_extents[] = {Nl,1,2};
+    size_t loc_extents[] = {size_t(Nl), 1, 2};
     size_t loc_rank = 3;
     size_t loc_mpl_idxpos[] = {0};
     size_t loc_mpl_rank = 1;
     size_t glb_strides[] = {2,1};
-    size_t glb_extents[] = {Ng,2};
+    size_t glb_extents[] = {size_t(Ng), 2};
     size_t glb_rank = 2;
     size_t glb_mpl_idxpos[] = {0};
     size_t glb_mpl_rank = 1;
@@ -458,12 +458,12 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank2, Fixture )
   // Gather lev 3 var 2
   {
     size_t loc_strides[] = {6,6,2};
-    size_t loc_extents[] = {Nl,1,1};
+    size_t loc_extents[] = {size_t(Nl), 1, 1};
     size_t loc_rank = 3;
     size_t loc_mpl_idxpos[] = {0};
     size_t loc_mpl_rank = 1;
     size_t glb_strides[] = {1};
-    size_t glb_extents[] = {Ng};
+    size_t glb_extents[] = {size_t(Ng)};
     size_t glb_rank = 1;
     size_t glb_mpl_idxpos[] = {0};
     size_t glb_mpl_rank = 1;
@@ -496,9 +496,9 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank0_ArrayView, Fixture )
 
   ArrayView<POD,1> locv(loc);
   ArrayView<POD,1> glbv(glb);
-  for( size_t p=0; p<Nl; ++p )
+  for(int p = 0; p < Nl; ++p)
   {
-    locv(p) = (part[p]!= eckit::mpi::rank() ? 0 :  gidx[p]*10 );
+    locv(p) = (size_t(part[p]) != eckit::mpi::rank() ? 0 :  gidx[p]*10 );
   }
 
   // Gather complete field
@@ -528,10 +528,10 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1_ArrayView, Fixture )
 
   ArrayView<POD,2> locv(loc);
   ArrayView<POD,2> glbv(glb);
-  for( size_t p=0; p<Nl; ++p )
+  for(int p = 0; p < Nl; ++p)
   {
-    locv(p,0) = (part[p]!= eckit::mpi::rank() ? 0 : -gidx[p]*10 );
-    locv(p,1) = (part[p]!= eckit::mpi::rank() ? 0 :  gidx[p]*10 );
+    locv(p,0) = (size_t(part[p]) != eckit::mpi::rank() ? 0 : -gidx[p]*10 );
+    locv(p,1) = (size_t(part[p]) != eckit::mpi::rank() ? 0 :  gidx[p]*10 );
   }
 
   // Gather complete field
@@ -562,12 +562,12 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank2_ArrayView, Fixture )
 
   ArrayView<POD,3> locv(loc);
   ArrayView<POD,3> glbv(glb);
-  for( size_t p=0; p<Nl; ++p )
+  for(int p = 0; p < Nl; ++p)
   {
-    for( size_t i=0; i<3; ++i )
+    for(int i = 0; i < 3; ++i)
     {
-      locv(p,i,0) = (part[p]!= eckit::mpi::rank() ? 0 : -gidx[p]*std::pow(10,i) );
-      locv(p,i,1) = (part[p]!= eckit::mpi::rank() ? 0 :  gidx[p]*std::pow(10,i) );
+      locv(p,i,0) = (size_t(part[p]) != eckit::mpi::rank() ? 0 : -gidx[p]*std::pow(10,i) );
+      locv(p,i,1) = (size_t(part[p]) != eckit::mpi::rank() ? 0 :  gidx[p]*std::pow(10,i) );
     }
   }
 
@@ -612,7 +612,7 @@ BOOST_FIXTURE_TEST_CASE( test_scatter_rank2_ArrayView, Fixture )
     glb.assign(glb_c,glb_c+Ng*6);
   }
 
-  int nan = -1000.;
+  POD nan = -1000.;
   locv = nan;
 
   gather_scatter.scatter( glbv, locv );

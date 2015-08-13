@@ -43,11 +43,11 @@ PolarStereoGraphic::PolarStereoGraphic(size_t Nx, size_t Ny,
     npts_yaxis_(Ny),
     x_grid_length_(Dx),
     y_grid_length_(Dy),
-    first_grid_pt_(longitudeOfFirstGridPoint, latitudeOfFirstGridPoint),
     orientationOfTheGrid_(orientationOfTheGrid),
     radius_(radius),
     semi_major_(semi_major),
     semi_minor_(semi_minor),
+    first_grid_pt_(longitudeOfFirstGridPoint, latitudeOfFirstGridPoint),
     southPoleOnProjectionPlane_(southPoleOnProjectionPlane),
     earth_is_oblate_(earth_is_oblate)
 
@@ -166,9 +166,9 @@ void PolarStereoGraphic::lonlat(std::vector<Grid::Point> &points) const {
     double x = first_pt_on_plane[0];
     double y = first_pt_on_plane[1];
     size_t k = 0;
-    for (size_t j = 0; j < npts_yaxis_; j++) {
+    for (long j = 0; j < npts_yaxis_; j++) {
         x = first_pt_on_plane[0];
-        for (size_t i = 0; i < npts_xaxis_; i++) {
+        for (long i = 0; i < npts_xaxis_; i++) {
 
             points[k++] = ps.map_to_spherical(x, y);
             x += x_grid_length_;

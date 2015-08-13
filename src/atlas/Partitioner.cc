@@ -43,10 +43,10 @@ namespace {
 
 namespace atlas {
 
-Partitioner::Partitioner(const Grid& grid): grid_(grid), nb_partitions_(eckit::mpi::size())
+Partitioner::Partitioner(const Grid& grid): nb_partitions_(eckit::mpi::size()), grid_(grid)
 { }
 
-Partitioner::Partitioner(const Grid& grid, const size_t nb_partitions): grid_(grid), nb_partitions_(nb_partitions)
+Partitioner::Partitioner(const Grid& grid, const size_t nb_partitions): nb_partitions_(nb_partitions), grid_(grid)
 { }
 
 Partitioner::~Partitioner()

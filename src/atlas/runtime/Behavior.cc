@@ -83,7 +83,7 @@ ChannelConfig::ChannelConfig()
 {
   int logfile_rank = Resource<int>("atlas.logfile_task;$ATLAS_LOGFILE_TASK;--logfile_task",-1);
   logfile_path    = Resource<std::string>("atlas.logfile;$ATLAS_LOGFILE;--logfile","");
-  logfile_enabled = !logfile_path.empty() && ( logfile_rank < 0 || logfile_rank == eckit::mpi::rank() );
+  logfile_enabled = !logfile_path.empty() && ( logfile_rank < 0 || size_t(logfile_rank) == eckit::mpi::rank() );
   console_rank = Resource<int>("atlas.console_task;$ATLAS_CONSOLE_TASK;--console_task",0);
   console_enabled = true;
   console_format = new LogFormat();
@@ -104,10 +104,10 @@ void ChannelConfig::apply(Channel& ch)
   if( logfile_enabled && !mc->has("logfile") )
    mc->add( "logfile", new FormattedChannel(logfile(CreateLogFile(logfile_path)),logfile_format) );
 
-  if( console_enabled && !mc->has("console") && (console_rank < 0 || console_rank == eckit::mpi::rank()) )
+  if( console_enabled && !mc->has("console") && (console_rank < 0 || size_t(console_rank) == eckit::mpi::rank()) )
     mc->add( "console" , new FormattedChannel(standard_out(),console_format) );
 
-  if( mc->has("console") && (!console_enabled || (console_rank >= 0 && console_rank != eckit::mpi::rank() ) ) )
+  if( mc->has("console") && (!console_enabled || (console_rank >= 0 && size_t(console_rank) != eckit::mpi::rank() ) ) )
     mc->remove("console");
 
   if( !mc->has("callback") )

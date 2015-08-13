@@ -266,14 +266,12 @@ void add_median_dual_volume_contribution(
     std::vector<int>& bdry_edges = (*it).second;
     double x0 = node_lonlat(node,LON);
     double y0 = node_lonlat(node,LAT);
-    double x1,y1, x2,y2;
-    for (int jedge=0; jedge<bdry_edges.size(); ++jedge)
+    double x1, y1, y2;
+    for (size_t jedge = 0; jedge < bdry_edges.size(); ++jedge)
     {
       int edge = bdry_edges[jedge];
       x1 = edge_centroids(edge,LON);
       y1 = edge_centroids(edge,LAT);
-
-      x2 = x1; /* unused ?? */
 
       y2 = 0.;
       if ( std::abs(y1-max[LAT])<tol )
@@ -304,7 +302,7 @@ void add_centroid_dual_volume_contribution(
   IndexView<int,   2> edge_to_elem  ( edges.field("to_elem"    ) );
   ArrayView<double,2> node_lonlat   ( nodes.field("lonlat") );
   std::vector< ArrayView<double,2> > elem_centroids(mesh.nb_function_spaces());
-  for( int f=0; f<mesh.nb_function_spaces(); ++f )
+  for(size_t f = 0; f < mesh.nb_function_spaces(); ++f)
   {
     FunctionSpace& elements = mesh.function_space(f);
     if( elements.metadata().get<long>("type") == Entity::ELEMS )
@@ -381,7 +379,7 @@ void add_centroid_dual_volume_contribution(
 void build_dual_normals( Mesh& mesh )
 {
   std::vector< ArrayView<double,2> > elem_centroids( mesh.nb_function_spaces() );
-  for (int func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
+  for (size_t func_space_idx = 0; func_space_idx < mesh.nb_function_spaces(); ++func_space_idx)
   {
     FunctionSpace& func_space = mesh.function_space(func_space_idx);
     if( func_space.has_field("centroids") )
@@ -424,7 +422,7 @@ void build_dual_normals( Mesh& mesh )
         std::vector<int>& bdry_edges = node_to_bdry_edge[node];
         double x[2];
         int cnt=0;
-        for (int jedge=0; jedge<bdry_edges.size(); ++jedge)
+        for (size_t jedge = 0; jedge < bdry_edges.size(); ++jedge)
         {
           int bdry_edge = bdry_edges[jedge];
           if ( std::abs(edge_centroids(bdry_edge,LAT)-max[LAT])<tol )
@@ -519,7 +517,7 @@ void make_dual_normals_outward( Mesh& mesh )
 void build_skewness( Mesh& mesh )
 {
   std::vector< ArrayView<double,2> > elem_centroids( mesh.nb_function_spaces() );
-  for (int func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
+  for (size_t func_space_idx = 0; func_space_idx < mesh.nb_function_spaces(); ++func_space_idx)
   {
     FunctionSpace& func_space = mesh.function_space(func_space_idx);
     if( func_space.has_field("centroids") )
@@ -620,7 +618,7 @@ void build_brick_dual_mesh( Mesh& mesh )
 
     int c=0;
     int n=0;
-    for( int jlat=0; jlat<g->nlat(); ++jlat )
+    for(size_t jlat = 0; jlat < g->nlat(); ++jlat)
     {
       double lat = g->lat(jlat);
       double latN = (jlat==0) ? 90. : 0.5*(lat+g->lat(jlat-1));
@@ -628,7 +626,7 @@ void build_brick_dual_mesh( Mesh& mesh )
       double dlat = (latN-latS);
       double dlon = 360./static_cast<double>(g->nlon(jlat));
 
-      for( int jlon=0; jlon<g->nlon(jlat); ++jlon )
+      for(size_t jlon = 0; jlon < g->nlon(jlat); ++jlon)
       {
         while( gidx(c) != n+1 ) c++;
         ASSERT( lonlat(c,LON) == g->lon(jlat,jlon) );

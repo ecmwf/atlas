@@ -59,7 +59,6 @@ namespace atlas {
 namespace io {
 
 static std::string match_grid_spec_with_sample_file( const eckit::Properties& g_spec, long edition );
-static std::string map_uid_to_grib_sample_file(const std::string& short_name, long edition);
 
 //------------------------------------------------------------------------------------------------------
 
@@ -461,8 +460,6 @@ void Grib::clone(const Field& field, const PathName& gridsec, DataHandle& out )
 
 GribHandle* Grib::clone(const Field& f, GribHandle& gridsec )
 {
-    const size_t npts = f.size();
-
     GribHandle* gh = 0;
 
     NOTIMP;
@@ -494,8 +491,8 @@ GribHandle* Grib::clone(const Field& f, GribHandle& gridsec )
 struct gridspec_to_grib
 {
   gridspec_to_grib( const eckit::Properties& gspec, GribHandle& gh) :
-    gspec_(gspec),
-    gh_(gh)
+    gh_(gh),
+    gspec_(gspec)
   {}
 
   GribHandle& gh_;

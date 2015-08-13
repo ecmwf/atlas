@@ -79,7 +79,7 @@ double compute_lonlat_area(Mesh& mesh)
   IndexView<int,2> quad_nodes ( quads. field("nodes") );
   IndexView<int,2> triag_nodes( triags.field("nodes") );
   double area=0;
-  for( int e=0; e<quads.shape(0); ++e )
+  for(size_t e = 0; e < quads.shape(0); ++e)
   {
     int n0 = quad_nodes(e,0);
     int n1 = quad_nodes(e,1);
@@ -90,7 +90,7 @@ double compute_lonlat_area(Mesh& mesh)
     area += std::abs( x0*(y1-y2)+x1*(y2-y0)+x2*(y0-y1) )*0.5;
     area += std::abs( x2*(y3-y0)+x3*(y0-y2)+x0*(y2-y3) )*0.5;
   }
-  for( int e=0; e<triags.shape(0); ++e )
+  for(size_t e = 0; e < triags.shape(0); ++e)
   {
     int n0 = triag_nodes(e,0);
     int n1 = triag_nodes(e,1);
@@ -315,7 +315,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
 
   std::vector<int> all_owned    ( grid.npts()+grid.nlat()+1, -1 );
 
-  for( int p=0; p<generate.options.get<size_t>("nb_parts"); ++p)
+  for(size_t p = 0; p < generate.options.get<size_t>("nb_parts"); ++p)
   {
     DEBUG_VAR(p);
     generate.options.set("part",p);
@@ -350,7 +350,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
     {
       std::vector<int> node_elem_connections( nb_nodes, 0 );
 
-      for( int f=0; f<m->nb_function_spaces(); ++f )
+      for(size_t f = 0; f < m->nb_function_spaces(); ++f)
       {
         FunctionSpace& elements = m->function_space(f);
         if( elements.metadata().get<long>("type") == Entity::ELEMS )
@@ -381,8 +381,7 @@ DISABLE{
     ArrayView<gidx_t,1> glb_idx( nodes.field("glb_idx") );
     for( int n=0; n<nb_nodes; ++n )
     {
-      int owned = (part(n)==p);
-      if( owned )
+      if( size_t(part(n)) == p )
       {
         ++nb_owned;
         BOOST_CHECK( all_owned[ gidx(n) ] == -1 );
@@ -393,7 +392,7 @@ DISABLE{
     }
   }
 
-  for( int gid=1; gid<all_owned.size(); ++gid )
+  for(size_t gid = 1; gid < all_owned.size(); ++gid)
   {
     if( all_owned[gid] == -1 )
     {
@@ -448,7 +447,7 @@ BOOST_AUTO_TEST_CASE( test_reduced_lonlat )
 
   ArrayView<double,2> lonlat( m->function_space("nodes").field("lonlat") );
   ArrayView<double,2> xyz( m->function_space("nodes").create_field<double>("xyz",3,IF_EXISTS_RETURN) );
-  for( int jnode=0; jnode<lonlat.shape(0); ++jnode )
+  for(size_t jnode = 0; jnode < lonlat.shape(0); ++jnode)
   {
     eckit::geometry::lonlat_to_3d( lonlat[jnode].data(), xyz[jnode].data() );
   }
