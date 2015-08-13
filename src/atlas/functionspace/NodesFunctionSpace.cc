@@ -22,6 +22,7 @@
 #include "atlas/actions/BuildHalo.h"
 #include "atlas/actions/BuildPeriodicBoundaries.h"
 #include "atlas/atlas_omp.h"
+#include "atlas/runtime/ErrorHandling.h"
 
 #ifdef ATLAS_HAVE_FORTRAN
 #define REMOTE_IDX_BASE 1
@@ -1382,6 +1383,39 @@ Field* NodesColumnFunctionSpace::createGlobalField(const std::string& name, cons
   shape[1] = nb_levels();
   return Field::create(name,shape,other.datatype());
 }
+
+std::string NodesColumnFunctionSpace::checksum( const FieldSet& fieldset ) const {
+  const mpl::Checksum& checksum = mesh().checksum().get(checksum_name());
+DEBUG();
+  Field::Ptr surface_field;
+  eckit::MD5 md5;
+  for( size_t f=0; f<fieldset.size(); ++f ) {
+    const Field& field=fieldset[f];
+    ArrayShape shape(1,nb_nodes());
+    for( size_t j=2; j<field.rank(); ++j )
+      shape.push_back(field.shape(j));
+    surface_field.reset ( Field::create<double>(shape) );
+    ArrayView<double,2> surface( surface_field->data<double>(), make_shape(surface_field->shape(0), surface_field->stride(0)) );
+    ArrayView<double,3> values( field.data<double>(), make_shape(field.shape(0),field.shape(1),field.stride(1) ) );
+    for( size_t n=0; n<nb_nodes(); ++n ) {
+      for( size_t j=0; j<surface.shape(1); ++j )
+      {
+        surface(n,j) = 0.;
+        for( size_t l=0; l<field.shape(1);++l )
+          surface(n,j) += values(n,l,j);
+      }
+    }
+    md5 << checksum.execute( surface.data(), surface.stride(0) );
+  }
+  return md5;
+}
+std::string NodesColumnFunctionSpace::checksum( const Field& field ) const {
+  DEBUG();
+  FieldSet fieldset;
+  fieldset.add(field);
+  return checksum(fieldset);
+}
+
 
 namespace detail { // Collectives implementation
 
@@ -2783,9 +2817,9 @@ Field* atlas__NodesFunctionSpace__create_field_vars (const NodesFunctionSpace* T
   ASSERT(variables_size);
   std::vector<size_t> variables_(variables_size);
   if( fortran_ordering )
-    variables_.assign(variables,variables+variables_size);
+    std::reverse_copy( variables, variables+variables_size,variables_.begin() );
   else
-    std::reverse_copy( variables, variables+variables_size, variables_.begin() );
+    variables_.assign(variables,variables+variables_size);
   return This->createField(std::string(name),variables_,DataType::kind_to_datatype(kind));
 }
 
@@ -2807,17 +2841,92 @@ Field* atlas__NodesFunctionSpace__create_global_field_vars (const NodesFunctionS
   ASSERT(variables_size);
   std::vector<size_t> variables_(variables_size);
   if( fortran_ordering )
-    variables_.assign(variables,variables+variables_size);
-  else
     std::reverse_copy( variables, variables+variables_size, variables_.begin() );
+  else
+    variables_.assign(variables,variables+variables_size);
   return This->createGlobalField(std::string(name),variables_,DataType::kind_to_datatype(kind));
 }
 
 Field* atlas__NodesFunctionSpace__create_global_field_template (const NodesFunctionSpace* This, const char* name, const Field* field_template )
 {
   ASSERT(This);
-  return This->createField(std::string(name),*field_template);
+  return This->createGlobalField(std::string(name),*field_template);
 }
+
+
+void atlas__NodesFunctionSpace__halo_exchange_fieldset(const NodesFunctionSpace* This, FieldSet* fieldset)
+{
+  ASSERT(This);
+  ASSERT(fieldset);
+  ATLAS_ERROR_HANDLING( This->haloExchange(*fieldset); );
+}
+
+void atlas__NodesFunctionSpace__halo_exchange_field(const NodesFunctionSpace* This, Field* field)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ATLAS_ERROR_HANDLING( This->haloExchange(*field); );
+}
+
+void atlas__NodesFunctionSpace__gather_fieldset(const NodesFunctionSpace* This, const FieldSet* local, FieldSet* global)
+{
+  ASSERT(This);
+  ASSERT(local);
+  ASSERT(global);
+  ATLAS_ERROR_HANDLING( This->gather(*local,*global); );
+}
+
+void atlas__NodesFunctionSpace__gather_field(const NodesFunctionSpace* This, const Field* local, Field* global)
+{
+  ASSERT(This);
+  ASSERT(local);
+  ASSERT(global);
+  ATLAS_ERROR_HANDLING( This->gather(*local,*global); );
+}
+
+void atlas__NodesFunctionSpace__scatter_fieldset(const NodesFunctionSpace* This, const FieldSet* global, FieldSet* local)
+{
+  ASSERT(This);
+  ASSERT(local);
+  ASSERT(global);
+  ATLAS_ERROR_HANDLING( This->scatter(*global,*local); );
+}
+
+void atlas__NodesFunctionSpace__scatter_field(const NodesFunctionSpace* This, const Field* global, Field* local)
+{
+  ASSERT(This);
+  ASSERT(global);
+  ASSERT(local);
+  ATLAS_ERROR_HANDLING( This->scatter(*global,*local); );
+}
+
+void atlas__NodesFunctionSpace__checksum_fieldset(const NodesFunctionSpace* This, const FieldSet* fieldset, char* &checksum, int &size, int &allocated)
+{
+  ASSERT(This);
+  ASSERT(fieldset);
+  ATLAS_ERROR_HANDLING(
+    std::string checksum_str (This->checksum(*fieldset));
+    size = checksum_str.size();
+    checksum = new char[size+1]; allocated = true;
+    strcpy(checksum,checksum_str.c_str());
+  );
+}
+
+void atlas__NodesFunctionSpace__checksum_field(const NodesFunctionSpace* This, const Field* field, char* &checksum, int &size, int &allocated)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ATLAS_ERROR_HANDLING(
+    std::string checksum_str (This->checksum(*field));
+    size = checksum_str.size();
+    checksum = new char[size+1]; allocated = true;
+    strcpy(checksum,checksum_str.c_str());
+  );
+}
+
+
+
+
 
 NodesColumnFunctionSpace* atlas__NodesColumnFunctionSpace__new (const char* name, Mesh* mesh, int nb_levels, int halo)
 {
@@ -2843,9 +2952,9 @@ Field* atlas__NodesColumnFunctionSpace__create_field_vars (const NodesColumnFunc
   ASSERT(variables_size);
   std::vector<size_t> variables_(variables_size);
   if( fortran_ordering )
-    variables_.assign(variables,variables+variables_size);
-  else
     std::reverse_copy( variables, variables+variables_size, variables_.begin() );
+  else
+    variables_.assign(variables,variables+variables_size);
   return This->createField(std::string(name),variables_,DataType::kind_to_datatype(kind));
 }
 
@@ -2867,16 +2976,41 @@ Field* atlas__NodesColumnFunctionSpace__create_global_field_vars (const NodesCol
   ASSERT(variables_size);
   std::vector<size_t> variables_(variables_size);
   if( fortran_ordering )
-    variables_.assign(variables,variables+variables_size);
-  else
     std::reverse_copy( variables, variables+variables_size, variables_.begin() );
+  else
+    variables_.assign(variables,variables+variables_size);
   return This->createGlobalField(std::string(name),variables_,DataType::kind_to_datatype(kind));
 }
 
 Field* atlas__NodesColumnFunctionSpace__create_global_field_template (const NodesColumnFunctionSpace* This, const char* name, const Field* field_template )
 {
   ASSERT(This);
-  return This->createField(std::string(name),*field_template);
+  return This->createGlobalField(std::string(name),*field_template);
+}
+
+
+void atlas__NodesColumnFunctionSpace__checksum_fieldset(const NodesColumnFunctionSpace* This, const FieldSet* fieldset, char* &checksum, int &size, int &allocated)
+{
+  ASSERT(This);
+  ASSERT(fieldset);
+  ATLAS_ERROR_HANDLING(
+    std::string checksum_str (This->checksum(*fieldset));
+    size = checksum_str.size();
+    checksum = new char[size+1]; allocated = true;
+    strcpy(checksum,checksum_str.c_str());
+  );
+}
+
+void atlas__NodesColumnFunctionSpace__checksum_field(const NodesColumnFunctionSpace* This, const Field* field, char* &checksum, int &size, int &allocated)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ATLAS_ERROR_HANDLING(
+    std::string checksum_str (This->checksum(*field));
+    size = checksum_str.size();
+    checksum = new char[size+1]; allocated = true;
+    strcpy(checksum,checksum_str.c_str());
+  );
 }
 
 

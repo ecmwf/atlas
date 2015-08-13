@@ -45,6 +45,22 @@ contains
     & create_glb_field_template, &
     & create_glb_field_name_template
 
+  procedure, private :: halo_exchange_fieldset => atlas_NodesFunctionSpace__halo_exchange_fieldset
+  procedure, private :: halo_exchange_field => atlas_NodesFunctionSpace__halo_exchange_field
+  generic, public :: halo_exchange => halo_exchange_fieldset, halo_exchange_field
+
+  procedure, private :: gather_fieldset => atlas_NodesFunctionSpace__gather_fieldset
+  procedure, private :: gather_field => atlas_NodesFunctionSpace__gather_field
+  generic, public :: gather => gather_fieldset, gather_field
+
+  procedure, private :: scatter_fieldset => atlas_NodesFunctionSpace__scatter_fieldset
+  procedure, private :: scatter_field => atlas_NodesFunctionSpace__scatter_field
+  generic, public :: scatter => scatter_fieldset, scatter_field
+
+  procedure, private :: checksum_fieldset => atlas_NodesFunctionSpace__checksum_fieldset
+  procedure, private :: checksum_field => atlas_NodesFunctionSpace__checksum_field
+  generic, public :: checksum => checksum_fieldset, checksum_field
+
 END TYPE atlas_NodesFunctionSpace
 
 interface atlas_NodesFunctionSpace
@@ -96,6 +112,23 @@ contains
     & create_glb_field_name_vars_kind, &
     & create_glb_field_template, &
     & create_glb_field_name_template
+
+  procedure, private :: halo_exchange_fieldset => atlas_NCFunctionSpace__halo_exchange_fieldset
+  procedure, private :: halo_exchange_field => atlas_NCFunctionSpace__halo_exchange_field
+  generic, public :: halo_exchange => halo_exchange_fieldset, halo_exchange_field
+
+  procedure, private :: gather_fieldset => atlas_NCFunctionSpace__gather_fieldset
+  procedure, private :: gather_field => atlas_NCFunctionSpace__gather_field
+  generic, public :: gather => gather_fieldset, gather_field
+
+  procedure, private :: scatter_fieldset => atlas_NCFunctionSpace__scatter_fieldset
+  procedure, private :: scatter_field => atlas_NCFunctionSpace__scatter_field
+  generic, public :: scatter => scatter_fieldset, scatter_field
+
+  procedure, private :: checksum_fieldset => atlas_NCFunctionSpace__checksum_fieldset
+  procedure, private :: checksum_field => atlas_NCFunctionSpace__checksum_field
+  generic, public :: checksum => checksum_fieldset, checksum_field
+
 END TYPE atlas_NodesColumnFunctionSpace
 
 interface atlas_NodesColumnFunctionSpace

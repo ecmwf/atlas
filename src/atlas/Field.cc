@@ -143,8 +143,8 @@ void Field::print(std::ostream& os) const
 
 std::ostream& operator<<( std::ostream& os, const Field& f)
 {
-  f.print(os);
-  return os;
+    f.print(os);
+    return os;
 }
 
 void Field::resize(const ArrayShape& shape)

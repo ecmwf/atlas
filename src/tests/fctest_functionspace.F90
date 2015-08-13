@@ -216,5 +216,66 @@ END_TEST
 
 ! -----------------------------------------------------------------------------
 
+TEST( test_collectives )
+type(atlas_ReducedGrid) :: grid
+type(atlas_Mesh) :: mesh
+type(atlas_NodesFunctionSpace) :: fs2d
+type(atlas_NodesColumnFunctionSpace) :: fs3d
+type(atlas_Field) :: field, global
+real(c_double), pointer :: values(:,:,:)
+real(c_double), pointer :: values3d(:,:,:,:)
+integer :: halo_size, levels
+halo_size = 1
+levels = 10
+
+grid = atlas_ReducedGrid("rgg.N24")
+mesh = atlas_generate_mesh(grid)
+fs2d = atlas_NodesFunctionSpace(mesh,halo_size)
+
+field  = fs2d%create_field((/2,3/),atlas_real(c_double))
+global = fs2d%create_global_field(field)
+
+write(atlas_log%msg,*) "field:  rank",field%rank(), " shape [",field%shape(), "] size ", field%size();  call atlas_log%info()
+write(atlas_log%msg,*) "global: rank",global%rank()," shape [",global%shape(),"] size ", global%size(); call atlas_log%info()
+
+call fs2d%gather(field,global)
+call fs2d%halo_exchange(field)
+call fs2d%scatter(global,field)
+
+call field%access_data(values)
+values = 2.
+
+call atlas_log%info(fs2d%checksum(field))
+call atlas_delete(field)
+call atlas_delete(global)
+
+fs3d = atlas_NodesColumnFunctionSpace(mesh,levels,halo_size)
+
+field  = fs3d%create_field((/2,3/),atlas_real(c_double))
+global = fs3d%create_global_field(field)
+
+write(atlas_log%msg,*) "field:  rank",field%rank(), " shape [",field%shape(), "] size ", field%size();  call atlas_log%info()
+write(atlas_log%msg,*) "global: rank",global%rank()," shape [",global%shape(),"] size ", global%size(); call atlas_log%info()
+
+call fs3d%gather(field,global)
+call fs3d%halo_exchange(field)
+call fs3d%scatter(global,field)
+
+call field%access_data(values3d)
+values3d = 2.
+
+call atlas_log%info(fs3d%checksum(field))
+call atlas_delete(field)
+call atlas_delete(global)
+
+
+call atlas_delete(fs2d)
+call atlas_delete(mesh)
+call atlas_delete(grid)
+
+END_TEST
+
+! -----------------------------------------------------------------------------
+
 END_TESTSUITE
 
