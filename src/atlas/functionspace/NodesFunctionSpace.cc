@@ -2976,6 +2976,25 @@ void atlas__NodesFunctionSpace__sum_float(const NodesFunctionSpace* This, const 
   N = size_t_N;
 }
 
+void atlas__NodesFunctionSpace__sum_long(const NodesFunctionSpace* This, const Field* field, long &sum, int &N)
+{
+  ASSERT(This);
+  ASSERT(field);
+  size_t size_t_N;
+  ATLAS_ERROR_HANDLING( This->sum(*field,sum,size_t_N) );
+  N = size_t_N;
+}
+
+void atlas__NodesFunctionSpace__sum_int(const NodesFunctionSpace* This, const Field* field, int &sum, int &N)
+{
+  ASSERT(This);
+  ASSERT(field);
+  size_t size_t_N;
+  ATLAS_ERROR_HANDLING( This->sum(*field,sum,size_t_N) );
+  N = size_t_N;
+}
+
+
 void atlas__NodesFunctionSpace__sum_arr_double(const NodesFunctionSpace* This, const Field* field, double* &sum, int &size, int &N)
 {
   ASSERT(This);
@@ -3001,6 +3020,36 @@ void atlas__NodesFunctionSpace__sum_arr_float(const NodesFunctionSpace* This, co
         This->orderIndependentSum(*field,sumvec,size_t_N);
         size = sumvec.size();
         sum = new float[size];
+        for( size_t j=0; j<size; ++j ) sum[j] = sumvec[j];
+  );
+  N = size_t_N;
+}
+
+void atlas__NodesFunctionSpace__sum_arr_long(const NodesFunctionSpace* This, const Field* field, long* &sum, int &size, int &N)
+{
+  ASSERT(This);
+  ASSERT(field);
+  size_t size_t_N;
+  ATLAS_ERROR_HANDLING(
+        std::vector<long> sumvec;
+        This->orderIndependentSum(*field,sumvec,size_t_N);
+        size = sumvec.size();
+        sum = new long[size];
+        for( size_t j=0; j<size; ++j ) sum[j] = sumvec[j];
+  );
+  N = size_t_N;
+}
+
+void atlas__NodesFunctionSpace__sum_arr_int(const NodesFunctionSpace* This, const Field* field, int* &sum, int &size, int &N)
+{
+  ASSERT(This);
+  ASSERT(field);
+  size_t size_t_N;
+  ATLAS_ERROR_HANDLING(
+        std::vector<int> sumvec;
+        This->orderIndependentSum(*field,sumvec,size_t_N);
+        size = sumvec.size();
+        sum = new int[size];
         for( size_t j=0; j<size; ++j ) sum[j] = sumvec[j];
   );
   N = size_t_N;
@@ -3062,8 +3111,21 @@ void atlas__NodesFunctionSpace__min_double(const NodesFunctionSpace* This, const
   ATLAS_ERROR_HANDLING( This->minimum(*field,minimum) );
 }
 
-
 void atlas__NodesFunctionSpace__min_float(const NodesFunctionSpace* This, const Field* field, float &minimum)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ATLAS_ERROR_HANDLING( This->minimum(*field,minimum) );
+}
+
+void atlas__NodesFunctionSpace__min_long(const NodesFunctionSpace* This, const Field* field, long &minimum)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ATLAS_ERROR_HANDLING( This->minimum(*field,minimum) );
+}
+
+void atlas__NodesFunctionSpace__min_int(const NodesFunctionSpace* This, const Field* field, int &minimum)
 {
   ASSERT(This);
   ASSERT(field);
@@ -3078,6 +3140,20 @@ void atlas__NodesFunctionSpace__max_double(const NodesFunctionSpace* This, const
 }
 
 void atlas__NodesFunctionSpace__max_float(const NodesFunctionSpace* This, const Field* field, float &maximum)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ATLAS_ERROR_HANDLING( This->maximum(*field,maximum) );
+}
+
+void atlas__NodesFunctionSpace__max_long(const NodesFunctionSpace* This, const Field* field, long &maximum)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ATLAS_ERROR_HANDLING( This->maximum(*field,maximum) );
+}
+
+void atlas__NodesFunctionSpace__max_int(const NodesFunctionSpace* This, const Field* field, int &maximum)
 {
   ASSERT(This);
   ASSERT(field);
@@ -3110,6 +3186,33 @@ void atlas__NodesFunctionSpace__min_arr_float(const NodesFunctionSpace* This, co
   );
 }
 
+void atlas__NodesFunctionSpace__min_arr_long(const NodesFunctionSpace* This, const Field* field, long* &minimum, int &size)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ATLAS_ERROR_HANDLING(
+        std::vector<long> minvec;
+        This->minimum(*field,minvec);
+        size = minvec.size();
+        minimum = new long[size];
+        for( size_t j=0; j<size; ++j ) minimum[j] = minvec[j];
+  );
+}
+
+void atlas__NodesFunctionSpace__min_arr_int(const NodesFunctionSpace* This, const Field* field, int* &minimum, int &size)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ATLAS_ERROR_HANDLING(
+        std::vector<int> minvec;
+        This->minimum(*field,minvec);
+        size = minvec.size();
+        minimum = new int[size];
+        for( size_t j=0; j<size; ++j ) minimum[j] = minvec[j];
+  );
+}
+
+
 void atlas__NodesFunctionSpace__max_arr_double(const NodesFunctionSpace* This, const Field* field, double* &maximum, int &size)
 {
   ASSERT(This);
@@ -3136,6 +3239,32 @@ void atlas__NodesFunctionSpace__max_arr_float(const NodesFunctionSpace* This, co
   );
 }
 
+void atlas__NodesFunctionSpace__max_arr_long(const NodesFunctionSpace* This, const Field* field, long* &maximum, int &size)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ATLAS_ERROR_HANDLING(
+        std::vector<long> maxvec;
+        This->maximum(*field,maxvec);
+        size = maxvec.size();
+        maximum = new long[size];
+        for( size_t j=0; j<size; ++j ) maximum[j] = maxvec[j];
+  );
+}
+
+void atlas__NodesFunctionSpace__max_arr_int(const NodesFunctionSpace* This, const Field* field, int* &maximum, int &size)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ATLAS_ERROR_HANDLING(
+        std::vector<int> maxvec;
+        This->maximum(*field,maxvec);
+        size = maxvec.size();
+        maximum = new int[size];
+        for( size_t j=0; j<size; ++j ) maximum[j] = maxvec[j];
+  );
+}
+
 void atlas__NodesFunctionSpace__minloc_double(const NodesFunctionSpace* This, const Field* field, double &minimum, long &glb_idx)
 {
   ASSERT(This);
@@ -3154,6 +3283,24 @@ void atlas__NodesFunctionSpace__minloc_float(const NodesFunctionSpace* This, con
   glb_idx = gidx;
 }
 
+void atlas__NodesFunctionSpace__minloc_long(const NodesFunctionSpace* This, const Field* field, long &minimum, long &glb_idx)
+{
+  ASSERT(This);
+  ASSERT(field);
+  gidx_t gidx;
+  ATLAS_ERROR_HANDLING( This->minimumAndLocation(*field,minimum,gidx) );
+  glb_idx = gidx;
+}
+
+void atlas__NodesFunctionSpace__minloc_int(const NodesFunctionSpace* This, const Field* field, int &minimum, long &glb_idx)
+{
+  ASSERT(This);
+  ASSERT(field);
+  gidx_t gidx;
+  ATLAS_ERROR_HANDLING( This->minimumAndLocation(*field,minimum,gidx) );
+  glb_idx = gidx;
+}
+
 void atlas__NodesFunctionSpace__maxloc_double(const NodesFunctionSpace* This, const Field* field, double &maximum, long &glb_idx)
 {
   ASSERT(This);
@@ -3164,6 +3311,24 @@ void atlas__NodesFunctionSpace__maxloc_double(const NodesFunctionSpace* This, co
 }
 
 void atlas__NodesFunctionSpace__maxloc_float(const NodesFunctionSpace* This, const Field* field, float &maximum, long &glb_idx)
+{
+  ASSERT(This);
+  ASSERT(field);
+  gidx_t gidx;
+  ATLAS_ERROR_HANDLING( This->maximumAndLocation(*field,maximum,gidx) );
+  glb_idx = gidx;
+}
+
+void atlas__NodesFunctionSpace__maxloc_long(const NodesFunctionSpace* This, const Field* field, long &maximum, long &glb_idx)
+{
+  ASSERT(This);
+  ASSERT(field);
+  gidx_t gidx;
+  ATLAS_ERROR_HANDLING( This->maximumAndLocation(*field,maximum,gidx) );
+  glb_idx = gidx;
+}
+
+void atlas__NodesFunctionSpace__maxloc_int(const NodesFunctionSpace* This, const Field* field, int &maximum, long &glb_idx)
 {
   ASSERT(This);
   ASSERT(field);
@@ -3208,6 +3373,42 @@ void atlas__NodesFunctionSpace__minloc_arr_float(const NodesFunctionSpace* This,
   );
 }
 
+void atlas__NodesFunctionSpace__minloc_arr_long(const NodesFunctionSpace* This, const Field* field, long* &minimum, long* &glb_idx, int &size)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ATLAS_ERROR_HANDLING(
+        std::vector<long> minvec;
+        std::vector<gidx_t> gidxvec;
+        This->minimumAndLocation(*field,minvec,gidxvec);
+        size = minvec.size();
+        minimum = new long[size];
+        glb_idx = new long[size];
+        for( size_t j=0; j<size; ++j ) {
+          minimum[j] = minvec[j];
+          glb_idx[j] = gidxvec[j];
+        }
+  );
+}
+
+void atlas__NodesFunctionSpace__minloc_arr_int(const NodesFunctionSpace* This, const Field* field, int* &minimum, long* &glb_idx, int &size)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ATLAS_ERROR_HANDLING(
+        std::vector<int> minvec;
+        std::vector<gidx_t> gidxvec;
+        This->minimumAndLocation(*field,minvec,gidxvec);
+        size = minvec.size();
+        minimum = new int[size];
+        glb_idx = new long[size];
+        for( size_t j=0; j<size; ++j ) {
+          minimum[j] = minvec[j];
+          glb_idx[j] = gidxvec[j];
+        }
+  );
+}
+
 void atlas__NodesFunctionSpace__maxloc_arr_double(const NodesFunctionSpace* This, const Field* field, double* &maximum, long* &glb_idx, int &size)
 {
   ASSERT(This);
@@ -3244,6 +3445,42 @@ void atlas__NodesFunctionSpace__maxloc_arr_float(const NodesFunctionSpace* This,
   );
 }
 
+void atlas__NodesFunctionSpace__maxloc_arr_long(const NodesFunctionSpace* This, const Field* field, long* &maximum, long* &glb_idx, int &size)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ATLAS_ERROR_HANDLING(
+        std::vector<long> maxvec;
+        std::vector<gidx_t> gidxvec;
+        This->maximumAndLocation(*field,maxvec,gidxvec);
+        size = maxvec.size();
+        maximum = new long[size];
+        glb_idx = new long[size];
+        for( size_t j=0; j<size; ++j ) {
+          maximum[j] = maxvec[j];
+          glb_idx[j] = gidxvec[j];
+        }
+  );
+}
+
+void atlas__NodesFunctionSpace__maxloc_arr_int(const NodesFunctionSpace* This, const Field* field, int* &maximum, long* &glb_idx, int &size)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ATLAS_ERROR_HANDLING(
+        std::vector<int> maxvec;
+        std::vector<gidx_t> gidxvec;
+        This->maximumAndLocation(*field,maxvec,gidxvec);
+        size = maxvec.size();
+        maximum = new int[size];
+        glb_idx = new long[size];
+        for( size_t j=0; j<size; ++j ) {
+          maximum[j] = maxvec[j];
+          glb_idx[j] = gidxvec[j];
+        }
+  );
+}
+
 void atlas__NodesFunctionSpace__mean_double(const NodesFunctionSpace* This, const Field* field, double &mean, int &N)
 {
   ASSERT(This);
@@ -3260,6 +3497,16 @@ void atlas__NodesFunctionSpace__mean_float(const NodesFunctionSpace* This, const
   size_t size_t_N;
   ATLAS_ERROR_HANDLING( This->mean(*field,mean,size_t_N) );
   N = size_t_N;
+}
+
+void atlas__NodesFunctionSpace__mean_long(const NodesFunctionSpace* This, const Field* field, long &mean, int &N)
+{
+NOTIMP;
+}
+
+void atlas__NodesFunctionSpace__mean_int(const NodesFunctionSpace* This, const Field* field, int &mean, int &N)
+{
+NOTIMP;
 }
 
 void atlas__NodesFunctionSpace__mean_arr_double(const NodesFunctionSpace* This, const Field* field, double* &mean, int &size, int &N)
@@ -3292,6 +3539,16 @@ void atlas__NodesFunctionSpace__mean_arr_float(const NodesFunctionSpace* This, c
   N = size_t_N;
 }
 
+void atlas__NodesFunctionSpace__mean_arr_long(const NodesFunctionSpace* This, const Field* field, long* &mean, int &size, int &N)
+{
+NOTIMP;
+}
+
+void atlas__NodesFunctionSpace__mean_arr_int(const NodesFunctionSpace* This, const Field* field, int* &mean, int &size, int &N)
+{
+NOTIMP;
+}
+
 void atlas__NodesFunctionSpace__mean_and_stddev_double(const NodesFunctionSpace* This, const Field* field, double &mean, double &stddev, int &N)
 {
   ASSERT(This);
@@ -3308,6 +3565,16 @@ void atlas__NodesFunctionSpace__mean_and_stddev_float(const NodesFunctionSpace* 
   size_t size_t_N;
   ATLAS_ERROR_HANDLING( This->meanAndStandardDeviation(*field,mean,stddev,size_t_N) );
   N = size_t_N;
+}
+
+void atlas__NodesFunctionSpace__mean_and_stddev_long(const NodesFunctionSpace* This, const Field* field, long &mean, long &stddev, int &N)
+{
+NOTIMP;
+}
+
+void atlas__NodesFunctionSpace__mean_and_stddev_int(const NodesFunctionSpace* This, const Field* field, int &mean, int &stddev, int &N)
+{
+NOTIMP;
 }
 
 void atlas__NodesFunctionSpace__mean_and_stddev_arr_double(const NodesFunctionSpace* This, const Field* field, double* &mean, double* &stddev, int &size, int &N)
@@ -3351,6 +3618,15 @@ void atlas__NodesFunctionSpace__mean_and_stddev_arr_float(const NodesFunctionSpa
   N = size_t_N;
 }
 
+void atlas__NodesFunctionSpace__mean_and_stddev_arr_long(const NodesFunctionSpace* This, const Field* field, long* &mean, long* &stddev, int &size, int &N)
+{
+NOTIMP;
+}
+
+void atlas__NodesFunctionSpace__mean_and_stddev_arr_int(const NodesFunctionSpace* This, const Field* field, int* &mean, int* &stddev, int &size, int &N)
+{
+NOTIMP;
+}
 
 
 
