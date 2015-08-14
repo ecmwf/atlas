@@ -68,56 +68,94 @@ contains
 
   procedure, private :: sum_real64_r0 => atlas_NodesFunctionSpace__sum_real64_r0
   procedure, private :: sum_real32_r0 => atlas_NodesFunctionSpace__sum_real32_r0
+  procedure, private :: sum_int64_r0  => atlas_NodesFunctionSpace__sum_int64_r0
+  procedure, private :: sum_int32_r0  => atlas_NodesFunctionSpace__sum_int32_r0
   procedure, private :: sum_real64_r1 => atlas_NodesFunctionSpace__sum_real64_r1
   procedure, private :: sum_real32_r1 => atlas_NodesFunctionSpace__sum_real32_r1
+  procedure, private :: sum_int64_r1  => atlas_NodesFunctionSpace__sum_int64_r1
+  procedure, private :: sum_int32_r1  => atlas_NodesFunctionSpace__sum_int32_r1
   procedure, private :: order_independent_sum_real32_r0 => atlas_NodesFunctionSpace__order_independent_sum_real32_r0
   procedure, private :: order_independent_sum_real64_r0 => atlas_NodesFunctionSpace__order_independent_sum_real64_r0
   procedure, private :: order_independent_sum_real32_r1 => atlas_NodesFunctionSpace__order_independent_sum_real32_r1
   procedure, private :: order_independent_sum_real64_r1 => atlas_NodesFunctionSpace__order_independent_sum_real64_r1
   procedure, private :: minimum_real32_r0 => atlas_NodesFunctionSpace__minimum_real32_r0
   procedure, private :: minimum_real64_r0 => atlas_NodesFunctionSpace__minimum_real64_r0
+  procedure, private :: minimum_int32_r0  => atlas_NodesFunctionSpace__minimum_int32_r0
+  procedure, private :: minimum_int64_r0  => atlas_NodesFunctionSpace__minimum_int64_r0
   procedure, private :: minimum_real32_r1 => atlas_NodesFunctionSpace__minimum_real32_r1
   procedure, private :: minimum_real64_r1 => atlas_NodesFunctionSpace__minimum_real64_r1
+  procedure, private :: minimum_int32_r1  => atlas_NodesFunctionSpace__minimum_int32_r1
+  procedure, private :: minimum_int64_r1  => atlas_NodesFunctionSpace__minimum_int64_r1
   procedure, private :: maximum_real32_r0 => atlas_NodesFunctionSpace__maximum_real32_r0
   procedure, private :: maximum_real64_r0 => atlas_NodesFunctionSpace__maximum_real64_r0
+  procedure, private :: maximum_int32_r0  => atlas_NodesFunctionSpace__maximum_int32_r0
+  procedure, private :: maximum_int64_r0  => atlas_NodesFunctionSpace__maximum_int64_r0
   procedure, private :: maximum_real32_r1 => atlas_NodesFunctionSpace__maximum_real32_r1
   procedure, private :: maximum_real64_r1 => atlas_NodesFunctionSpace__maximum_real64_r1
+  procedure, private :: maximum_int32_r1  => atlas_NodesFunctionSpace__maximum_int32_r1
+  procedure, private :: maximum_int64_r1  => atlas_NodesFunctionSpace__maximum_int64_r1
   procedure, private :: minimum_and_location_real32_r0 => atlas_NodesFunctionSpace__minloc_real32_r0
   procedure, private :: minimum_and_location_real64_r0 => atlas_NodesFunctionSpace__minloc_real64_r0
+  procedure, private :: minimum_and_location_int32_r0  => atlas_NodesFunctionSpace__minloc_int32_r0
+  procedure, private :: minimum_and_location_int64_r0  => atlas_NodesFunctionSpace__minloc_int64_r0
   procedure, private :: minimum_and_location_real32_r1 => atlas_NodesFunctionSpace__minloc_real32_r1
   procedure, private :: minimum_and_location_real64_r1 => atlas_NodesFunctionSpace__minloc_real64_r1
+  procedure, private :: minimum_and_location_int32_r1  => atlas_NodesFunctionSpace__minloc_int32_r1
+  procedure, private :: minimum_and_location_int64_r1  => atlas_NodesFunctionSpace__minloc_int64_r1
   procedure, private :: maximum_and_location_real32_r0 => atlas_NodesFunctionSpace__maxloc_real32_r0
   procedure, private :: maximum_and_location_real64_r0 => atlas_NodesFunctionSpace__maxloc_real64_r0
-  procedure, private :: maximum_and_location_real64_r1 => atlas_NodesFunctionSpace__maxloc_real64_r1
+  procedure, private :: maximum_and_location_int32_r0  => atlas_NodesFunctionSpace__maxloc_int32_r0
+  procedure, private :: maximum_and_location_int64_r0  => atlas_NodesFunctionSpace__maxloc_int64_r0
   procedure, private :: maximum_and_location_real32_r1 => atlas_NodesFunctionSpace__maxloc_real32_r1
+  procedure, private :: maximum_and_location_real64_r1 => atlas_NodesFunctionSpace__maxloc_real64_r1
+  procedure, private :: maximum_and_location_int32_r1  => atlas_NodesFunctionSpace__maxloc_int32_r1
+  procedure, private :: maximum_and_location_int64_r1  => atlas_NodesFunctionSpace__maxloc_int64_r1
   procedure, private :: mean_real32_r0 => atlas_NodesFunctionSpace__mean_real32_r0
   procedure, private :: mean_real64_r0 => atlas_NodesFunctionSpace__mean_real64_r0
+  procedure, private :: mean_int32_r0  => atlas_NodesFunctionSpace__mean_int32_r0
+  procedure, private :: mean_int64_r0  => atlas_NodesFunctionSpace__mean_int64_r0
   procedure, private :: mean_real32_r1 => atlas_NodesFunctionSpace__mean_real32_r1
   procedure, private :: mean_real64_r1 => atlas_NodesFunctionSpace__mean_real64_r1
+  procedure, private :: mean_int32_r1  => atlas_NodesFunctionSpace__mean_int32_r1
+  procedure, private :: mean_int64_r1  => atlas_NodesFunctionSpace__mean_int64_r1
   procedure, private :: mean_and_stddev_real32_r0 => atlas_NodesFunctionSpace__mean_and_stddev_real32_r0
   procedure, private :: mean_and_stddev_real64_r0 => atlas_NodesFunctionSpace__mean_and_stddev_real64_r0
+  procedure, private :: mean_and_stddev_int32_r0  => atlas_NodesFunctionSpace__mean_and_stddev_int32_r0
+  procedure, private :: mean_and_stddev_int64_r0  => atlas_NodesFunctionSpace__mean_and_stddev_int64_r0
   procedure, private :: mean_and_stddev_real32_r1 => atlas_NodesFunctionSpace__mean_and_stddev_real32_r1
   procedure, private :: mean_and_stddev_real64_r1 => atlas_NodesFunctionSpace__mean_and_stddev_real64_r1
+  procedure, private :: mean_and_stddev_int32_r1  => atlas_NodesFunctionSpace__mean_and_stddev_int32_r1
+  procedure, private :: mean_and_stddev_int64_r1  => atlas_NodesFunctionSpace__mean_and_stddev_int64_r1
 
   generic, public :: minimum => &
     & minimum_real32_r0, minimum_real32_r1, &
-    & minimum_real64_r0, minimum_real64_r1
+    & minimum_real64_r0, minimum_real64_r1, &
+    & minimum_int32_r0,  minimum_int32_r1,  &
+    & minimum_int64_r0,  minimum_int64_r1
 
   generic, public :: maximum => &
     & maximum_real32_r0, maximum_real32_r1, &
-    & maximum_real64_r0, maximum_real64_r1
+    & maximum_real64_r0, maximum_real64_r1, &
+    & maximum_int32_r0,  maximum_int32_r1,  &
+    & maximum_int64_r0,  maximum_int64_r1
 
   generic, public :: minimum_and_location => &
     & minimum_and_location_real32_r0, minimum_and_location_real32_r1, &
-    & minimum_and_location_real64_r0, minimum_and_location_real64_r1
+    & minimum_and_location_real64_r0, minimum_and_location_real64_r1, &
+    & minimum_and_location_int32_r0,  minimum_and_location_int32_r1,  &
+    & minimum_and_location_int64_r0,  minimum_and_location_int64_r1
 
   generic, public :: maximum_and_location => &
     & maximum_and_location_real32_r0, maximum_and_location_real32_r1, &
-    & maximum_and_location_real64_r0, maximum_and_location_real64_r1
+    & maximum_and_location_real64_r0, maximum_and_location_real64_r1, &
+    & maximum_and_location_int32_r0,  maximum_and_location_int32_r1,  &
+    & maximum_and_location_int64_r0,  maximum_and_location_int64_r1
 
   generic, public :: sum => &
     & sum_real32_r0, sum_real32_r1, &
-    & sum_real64_r0, sum_real64_r1
+    & sum_real64_r0, sum_real64_r1, &
+    & sum_int32_r0,  sum_int32_r1,  &
+    & sum_int64_r0,  sum_int64_r1
 
   generic, public :: order_independent_sum => &
     & order_independent_sum_real32_r0, order_independent_sum_real32_r1, &
@@ -125,11 +163,16 @@ contains
 
   generic, public :: mean => &
     & mean_real32_r0, mean_real32_r1, &
-    & mean_real64_r0, mean_real64_r1
+    & mean_real64_r0, mean_real64_r1, &
+    & mean_int32_r0,  mean_int32_r1,  &
+    & mean_int64_r0,  mean_int64_r1
 
   generic, public :: mean_and_standard_deviation => &
     & mean_and_stddev_real32_r0, mean_and_stddev_real32_r1, &
-    & mean_and_stddev_real64_r0, mean_and_stddev_real64_r1
+    & mean_and_stddev_real64_r0, mean_and_stddev_real64_r1, &
+    & mean_and_stddev_int32_r0,  mean_and_stddev_int32_r1, &
+    & mean_and_stddev_int64_r0,  mean_and_stddev_int64_r1
+
 
 END TYPE atlas_NodesFunctionSpace
 

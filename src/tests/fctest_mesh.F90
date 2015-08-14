@@ -209,7 +209,7 @@ TEST( test_create_remove )
 
   call func_space%create_field("scalar_field",1,atlas_real(c_double))
   field = func_space%field("scalar_field")
-  scalar => field%data1()
+  call field%access_data(scalar)
   CHECK_EQUAL( size(scalar),   10 )
   CHECK_EQUAL( size(scalar,1), 10  )
 END_TEST
