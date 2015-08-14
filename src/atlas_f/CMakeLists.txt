@@ -26,7 +26,7 @@ install( FILES
 function(generate_fortran_bindings output filename)
     get_filename_component(base ${filename} NAME_WE)
     set(base_abs ${CMAKE_CURRENT_SOURCE_DIR}/${base})
-  set(outfile ${CMAKE_CURRENT_BINARY_DIR}/${base}_c_binding.f90)
+    set(outfile ${CMAKE_CURRENT_BINARY_DIR}/${base}_c_binding.f90)
     set(${output} ${${output}} ${outfile} PARENT_SCOPE)
     add_custom_command(
         OUTPUT ${outfile}
@@ -34,6 +34,19 @@ function(generate_fortran_bindings output filename)
         DEPENDS ${filename} )
     set_source_files_properties(${outfile} PROPERTIES GENERATED TRUE)
 endfunction()
+
+function(generate_fortran_bindings_custom_output output filename outfile)
+    get_filename_component(base ${filename} NAME_WE)
+    set(base_abs ${CMAKE_CURRENT_SOURCE_DIR}/${base})
+    set(outfile ${CMAKE_CURRENT_BINARY_DIR}/${outfile})
+    set(${output} ${${output}} ${outfile} PARENT_SCOPE)
+    add_custom_command(
+        OUTPUT ${outfile}
+        COMMAND ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/c2f.py ${CMAKE_CURRENT_SOURCE_DIR}/${filename} -o ${outfile}
+        DEPENDS ${filename} )
+    set_source_files_properties(${outfile} PROPERTIES GENERATED TRUE)
+endfunction()
+
 
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grids/grids.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grids/ReducedGrid.h)
@@ -60,7 +73,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/runtime/ErrorHandling.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/atlas.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mpi/mpi.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/trans/Trans.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/NodesFunctionSpace.h)
+generate_fortran_bindings_custom_output(FORTRAN_BINDINGS ../atlas/functionspace/NodesFunctionSpaceInterface.h NodesFunctionSpace_c_binding.f90)
 generate_fortran_bindings(FORTRAN_BINDINGS atlas_logging.h)
 generate_fortran_bindings(FORTRAN_BINDINGS atlas_resource.h)
 generate_fortran_bindings(FORTRAN_BINDINGS atlas_value.h)

@@ -261,6 +261,8 @@ field/FieldTCreator.h
 field/FieldTCreator.cc
 functionspace/NodesFunctionSpace.h
 functionspace/NodesFunctionSpace.cc
+functionspace/NodesFunctionSpaceInterface.h
+functionspace/NodesFunctionSpaceInterface.cc
 functionspace/SpectralFunctionSpace.h
 functionspace/SpectralFunctionSpace.cc
 )
