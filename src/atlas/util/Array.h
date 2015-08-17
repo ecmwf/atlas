@@ -14,6 +14,7 @@
 #define atlas_Array_h
 
 #include <vector>
+#include <iosfwd>
 
 #include "eckit/memory/Owned.h"
 
@@ -27,9 +28,15 @@ namespace atlas {
 
 class ArrayBase : public eckit::Owned {
 public:
+  static ArrayBase* create( DataType::kind_t, const ArrayShape& );
+  static ArrayBase* create( const std::string& datatype, const ArrayShape& );
+
+public:
 
   virtual std::string datatype() const = 0;
   virtual DataType::kind_t kind() const = 0;
+  virtual double bytes() const = 0;
+  virtual void dump(std::ostream& os) const = 0;
 
   void resize(const ArrayShape&);
 
@@ -107,6 +114,8 @@ public:
 
   virtual std::string datatype() const { return DataType::datatype<DATA_TYPE>(); }
   virtual DataType::kind_t kind() const { return DataType::kind<DATA_TYPE>(); }
+  virtual double bytes() const { return sizeof(DATA_TYPE)*size(); }
+  virtual void dump(std::ostream& os) const;
 
   const DATA_TYPE& operator[](size_t i) const { return *(data()+i); }
         DATA_TYPE& operator[](size_t i)       { return *(data()+i); }

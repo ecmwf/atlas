@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include <vector>
+#include <iostream>
 #include "atlas/util/Array.h"
 
 namespace atlas {
@@ -43,6 +43,20 @@ DATA_TYPE* get_array_data( const ArrayBase& arraybase )
   }
   return const_cast<DATA_TYPE*>(array->data());
 }
+
+template< typename DATA_TYPE >
+void dump_array_data( const Array<DATA_TYPE>& array, std::ostream& os )
+{
+  const DATA_TYPE* data = array.data();
+  for(size_t i = 0; i < array.size(); ++i)
+  {
+      os << data[i] << " ";
+      if( (i+1)%10 == 0 )
+          os << std::endl;
+  }
+  os << std::endl;
+}
+
 }
 
 template <> const int*    ArrayBase::data<int   >() const { return get_array_data<int   >(*this); }
@@ -53,6 +67,29 @@ template <> const float*  ArrayBase::data<float >() const { return get_array_dat
 template <>       float*  ArrayBase::data<float >()       { return get_array_data<float >(*this); }
 template <> const double* ArrayBase::data<double>() const { return get_array_data<double>(*this); }
 template <>       double* ArrayBase::data<double>()       { return get_array_data<double>(*this); }
+
+template <> void Array<int>::dump(std::ostream& os) const { dump_array_data(*this,os); };
+template <> void Array<long>::dump(std::ostream& os) const { dump_array_data(*this,os); };
+template <> void Array<float>::dump(std::ostream& os) const { dump_array_data(*this,os); };
+template <> void Array<double>::dump(std::ostream& os) const { dump_array_data(*this,os); };
+
+
+ArrayBase* ArrayBase::create( DataType::kind_t kind, const ArrayShape& shape )
+{
+  switch( kind )
+  {
+  case DataType::KIND_REAL64: return new Array<double>(shape);
+  case DataType::KIND_REAL32: return new Array<float>(shape);
+  case DataType::KIND_INT32:  return new Array<int>(shape);
+  case DataType::KIND_INT64:  return new Array<long>(shape);
+  default: throw eckit::BadParameter("data kind not recognised");
+  }
+  return 0;
+}
+ArrayBase* ArrayBase::create( const std::string& datatype, const ArrayShape& shape )
+{
+  return create( DataType::datatype_to_kind(datatype),shape );
+}
 
 
 } // namespace atlas

@@ -50,7 +50,7 @@ Nodes* atlas__NodesFunctionSpace__nodes(NodesFunctionSpace* This)
 Field* atlas__NodesFunctionSpace__create_field (const NodesFunctionSpace* This, const char* name, int kind )
 {
   ASSERT(This);
-  return This->createField(std::string(name),DataType::kind_to_datatype(kind));
+  return This->createField(std::string(name),DataType::kind_t(kind));
 }
 
 Field* atlas__NodesFunctionSpace__create_field_vars (const NodesFunctionSpace* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind)
@@ -62,7 +62,25 @@ Field* atlas__NodesFunctionSpace__create_field_vars (const NodesFunctionSpace* T
     std::reverse_copy( variables, variables+variables_size,variables_.begin() );
   else
     variables_.assign(variables,variables+variables_size);
-  return This->createField(std::string(name),variables_,DataType::kind_to_datatype(kind));
+  return This->createField(std::string(name),DataType::kind_t(kind),variables_);
+}
+
+Field* atlas__NodesFunctionSpace__create_field_lev (const NodesFunctionSpace* This, const char* name, int levels, int kind )
+{
+  ASSERT(This);
+  return This->createField(std::string(name),DataType::kind_t(kind),size_t(levels));
+}
+
+Field* atlas__NodesFunctionSpace__create_field_lev_vars (const NodesFunctionSpace* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind)
+{
+  ASSERT(This);
+  ASSERT(variables_size);
+  std::vector<size_t> variables_(variables_size);
+  if( fortran_ordering )
+    std::reverse_copy( variables, variables+variables_size,variables_.begin() );
+  else
+    variables_.assign(variables,variables+variables_size);
+  return This->createField(std::string(name),DataType::kind_t(kind),size_t(levels),variables_);
 }
 
 Field* atlas__NodesFunctionSpace__create_field_template (const NodesFunctionSpace* This, const char* name, const Field* field_template )
@@ -74,7 +92,7 @@ Field* atlas__NodesFunctionSpace__create_field_template (const NodesFunctionSpac
 Field* atlas__NodesFunctionSpace__create_global_field (const NodesFunctionSpace* This, const char* name, int kind )
 {
   ASSERT(This);
-  return This->createGlobalField(std::string(name),DataType::kind_to_datatype(kind));
+  return This->createGlobalField(std::string(name),DataType::kind_t(kind));
 }
 
 Field* atlas__NodesFunctionSpace__create_global_field_vars (const NodesFunctionSpace* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind)
@@ -86,7 +104,25 @@ Field* atlas__NodesFunctionSpace__create_global_field_vars (const NodesFunctionS
     std::reverse_copy( variables, variables+variables_size, variables_.begin() );
   else
     variables_.assign(variables,variables+variables_size);
-  return This->createGlobalField(std::string(name),variables_,DataType::kind_to_datatype(kind));
+  return This->createGlobalField(std::string(name),DataType::kind_t(kind),variables_);
+}
+
+Field* atlas__NodesFunctionSpace__create_global_field_lev (const NodesFunctionSpace* This, const char* name, int levels, int kind )
+{
+  ASSERT(This);
+  return This->createGlobalField(std::string(name),DataType::kind_t(kind),size_t(levels));
+}
+
+Field* atlas__NodesFunctionSpace__create_global_field_lev_vars (const NodesFunctionSpace* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind)
+{
+  ASSERT(This);
+  ASSERT(variables_size);
+  std::vector<size_t> variables_(variables_size);
+  if( fortran_ordering )
+    std::reverse_copy( variables, variables+variables_size, variables_.begin() );
+  else
+    variables_.assign(variables,variables+variables_size);
+  return This->createGlobalField(std::string(name),DataType::kind_t(kind),size_t(levels),variables_);
 }
 
 Field* atlas__NodesFunctionSpace__create_global_field_template (const NodesFunctionSpace* This, const char* name, const Field* field_template )
@@ -836,97 +872,335 @@ void atlas__NodesFunctionSpace__mean_and_stddev_arr_int(const NodesFunctionSpace
 NOTIMP;
 }
 
-
-
-NodesColumnFunctionSpace* atlas__NodesColumnFunctionSpace__new (const char* name, Mesh* mesh, int nb_levels, int halo)
-{
-  ASSERT(mesh);
-  return new NodesColumnFunctionSpace(std::string(name),*mesh,nb_levels,Halo(halo));
-}
-
-void atlas__NodesColumnFunctionSpace__delete (NodesColumnFunctionSpace* This)
+void atlas__NodesFunctionSpace__minloclev_double(const NodesFunctionSpace* This, const Field* field, double &minimum, long &glb_idx, int &level)
 {
   ASSERT(This);
-  delete(This);
+  ASSERT(field);
+  gidx_t gidx;
+  size_t lev;
+  ATLAS_ERROR_HANDLING( This->minimumAndLocation(*field,minimum,gidx,lev) );
+  glb_idx = gidx;
+  level = lev;
 }
 
-int atlas__NodesColumnFunctionSpace__nb_levels(const NodesColumnFunctionSpace* This)
+void atlas__NodesFunctionSpace__minloclev_float(const NodesFunctionSpace* This, const Field* field, float &minimum, long &glb_idx, int &level)
 {
   ASSERT(This);
-  return This->nb_levels();
+  ASSERT(field);
+  gidx_t gidx;
+  size_t lev;
+  ATLAS_ERROR_HANDLING( This->minimumAndLocation(*field,minimum,gidx,lev) );
+  glb_idx = gidx;
+  level = lev;
 }
 
-Field* atlas__NodesColumnFunctionSpace__create_field (const NodesColumnFunctionSpace* This, const char* name, int kind )
+void atlas__NodesFunctionSpace__minloclev_long(const NodesFunctionSpace* This, const Field* field, long &minimum, long &glb_idx, int &level)
 {
   ASSERT(This);
-  return This->createField(std::string(name),DataType::kind_to_datatype(kind));
+  ASSERT(field);
+  gidx_t gidx;
+  size_t lev;
+  ATLAS_ERROR_HANDLING( This->minimumAndLocation(*field,minimum,gidx,lev) );
+  glb_idx = gidx;
+  level = lev;
 }
 
-Field* atlas__NodesColumnFunctionSpace__create_field_vars (const NodesColumnFunctionSpace* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind)
+void atlas__NodesFunctionSpace__minloclev_int(const NodesFunctionSpace* This, const Field* field, int &minimum, long &glb_idx, int &level)
 {
   ASSERT(This);
-  ASSERT(variables_size);
-  std::vector<size_t> variables_(variables_size);
-  if( fortran_ordering )
-    std::reverse_copy( variables, variables+variables_size, variables_.begin() );
-  else
-    variables_.assign(variables,variables+variables_size);
-  return This->createField(std::string(name),variables_,DataType::kind_to_datatype(kind));
+  ASSERT(field);
+  gidx_t gidx;
+  size_t lev;
+  ATLAS_ERROR_HANDLING( This->minimumAndLocation(*field,minimum,gidx,lev) );
+  glb_idx = gidx;
+  level = lev;
 }
 
-Field* atlas__NodesColumnFunctionSpace__create_field_template (const NodesColumnFunctionSpace* This, const char* name, const Field* field_template )
+void atlas__NodesFunctionSpace__maxloclev_double(const NodesFunctionSpace* This, const Field* field, double &maximum, long &glb_idx, int &level)
 {
   ASSERT(This);
-  return This->createField(std::string(name),*field_template);
+  ASSERT(field);
+  gidx_t gidx;
+  size_t lev;
+  ATLAS_ERROR_HANDLING( This->maximumAndLocation(*field,maximum,gidx,lev) );
+  glb_idx = gidx;
+  level = lev;
 }
 
-Field* atlas__NodesColumnFunctionSpace__create_global_field (const NodesColumnFunctionSpace* This, const char* name, int kind )
+void atlas__NodesFunctionSpace__maxloclev_float(const NodesFunctionSpace* This, const Field* field, float &maximum, long &glb_idx, int &level)
 {
   ASSERT(This);
-  return This->createGlobalField(std::string(name),DataType::kind_to_datatype(kind));
+  ASSERT(field);
+  gidx_t gidx;
+  size_t lev;
+  ATLAS_ERROR_HANDLING( This->maximumAndLocation(*field,maximum,gidx,lev) );
+  glb_idx = gidx;
+  level = lev;
 }
 
-Field* atlas__NodesColumnFunctionSpace__create_global_field_vars (const NodesColumnFunctionSpace* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind)
+void atlas__NodesFunctionSpace__maxloclev_long(const NodesFunctionSpace* This, const Field* field, long &maximum, long &glb_idx, int &level)
 {
   ASSERT(This);
-  ASSERT(variables_size);
-  std::vector<size_t> variables_(variables_size);
-  if( fortran_ordering )
-    std::reverse_copy( variables, variables+variables_size, variables_.begin() );
-  else
-    variables_.assign(variables,variables+variables_size);
-  return This->createGlobalField(std::string(name),variables_,DataType::kind_to_datatype(kind));
+  ASSERT(field);
+  gidx_t gidx;
+  size_t lev;
+  ATLAS_ERROR_HANDLING( This->maximumAndLocation(*field,maximum,gidx,lev) );
+  glb_idx = gidx;
+  level = lev;
 }
 
-Field* atlas__NodesColumnFunctionSpace__create_global_field_template (const NodesColumnFunctionSpace* This, const char* name, const Field* field_template )
+void atlas__NodesFunctionSpace__maxloclev_int(const NodesFunctionSpace* This, const Field* field, int &maximum, long &glb_idx, int &level)
 {
   ASSERT(This);
-  return This->createGlobalField(std::string(name),*field_template);
+  ASSERT(field);
+  gidx_t gidx;
+  size_t lev;
+  ATLAS_ERROR_HANDLING( This->maximumAndLocation(*field,maximum,gidx,lev) );
+  glb_idx = gidx;
+  level = lev;
 }
 
-
-void atlas__NodesColumnFunctionSpace__checksum_fieldset(const NodesColumnFunctionSpace* This, const FieldSet* fieldset, char* &checksum, int &size, int &allocated)
-{
-  ASSERT(This);
-  ASSERT(fieldset);
-  ATLAS_ERROR_HANDLING(
-    std::string checksum_str (This->checksum(*fieldset));
-    size = checksum_str.size();
-    checksum = new char[size+1]; allocated = true;
-    strcpy(checksum,checksum_str.c_str());
-  );
-}
-
-void atlas__NodesColumnFunctionSpace__checksum_field(const NodesColumnFunctionSpace* This, const Field* field, char* &checksum, int &size, int &allocated)
+void atlas__NodesFunctionSpace__minloclev_arr_double(const NodesFunctionSpace* This, const Field* field, double* &minimum, long* &glb_idx, int* &level, int &size)
 {
   ASSERT(This);
   ASSERT(field);
   ATLAS_ERROR_HANDLING(
-    std::string checksum_str (This->checksum(*field));
-    size = checksum_str.size();
-    checksum = new char[size+1]; allocated = true;
-    strcpy(checksum,checksum_str.c_str());
+        std::vector<double> minvec;
+        std::vector<gidx_t> gidxvec;
+        std::vector<size_t>    levvec;
+        This->minimumAndLocation(*field,minvec,gidxvec,levvec);
+        size = minvec.size();
+        minimum = new double[size];
+        glb_idx = new long[size];
+        level   = new int[size];
+        for( size_t j=0; j<size; ++j ) {
+          minimum[j] = minvec[j];
+          glb_idx[j] = gidxvec[j];
+          level[j] = levvec[j];
+        }
   );
+}
+
+void atlas__NodesFunctionSpace__minloclev_arr_float(const NodesFunctionSpace* This, const Field* field, float* &minimum, long* &glb_idx, int* &level, int &size)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ATLAS_ERROR_HANDLING(
+        std::vector<float> minvec;
+        std::vector<gidx_t> gidxvec;
+        std::vector<size_t>    levvec;
+        This->minimumAndLocation(*field,minvec,gidxvec,levvec);
+        size = minvec.size();
+        minimum = new float[size];
+        glb_idx = new long[size];
+        level   = new int[size];
+        for( size_t j=0; j<size; ++j ) {
+          minimum[j] = minvec[j];
+          glb_idx[j] = gidxvec[j];
+          level[j] = levvec[j];
+        }
+  );
+}
+
+void atlas__NodesFunctionSpace__minloclev_arr_long(const NodesFunctionSpace* This, const Field* field, long* &minimum, long* &glb_idx, int* &level, int &size)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ATLAS_ERROR_HANDLING(
+        std::vector<long> minvec;
+        std::vector<gidx_t> gidxvec;
+        std::vector<size_t>    levvec;
+        This->minimumAndLocation(*field,minvec,gidxvec,levvec);
+        size = minvec.size();
+        minimum = new long[size];
+        glb_idx = new long[size];
+        level   = new int[size];
+        for( size_t j=0; j<size; ++j ) {
+          minimum[j] = minvec[j];
+          glb_idx[j] = gidxvec[j];
+          level[j] = levvec[j];
+        }
+  );
+}
+
+void atlas__NodesFunctionSpace__minloclev_arr_int(const NodesFunctionSpace* This, const Field* field, int* &minimum, long* &glb_idx, int* &level, int &size)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ATLAS_ERROR_HANDLING(
+        std::vector<int> minvec;
+        std::vector<gidx_t> gidxvec;
+        std::vector<size_t>    levvec;
+        This->minimumAndLocation(*field,minvec,gidxvec,levvec);
+        size = minvec.size();
+        minimum = new int[size];
+        glb_idx = new long[size];
+        level   = new int[size];
+        for( size_t j=0; j<size; ++j ) {
+          minimum[j] = minvec[j];
+          glb_idx[j] = gidxvec[j];
+          level[j] = levvec[j];
+        }
+  );
+}
+
+void atlas__NodesFunctionSpace__maxloclev_arr_double(const NodesFunctionSpace* This, const Field* field, double* &maximum, long* &glb_idx, int* &level, int &size)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ATLAS_ERROR_HANDLING(
+        std::vector<double> maxvec;
+        std::vector<gidx_t> gidxvec;
+        std::vector<size_t>    levvec;
+        This->maximumAndLocation(*field,maxvec,gidxvec,levvec);
+        size = maxvec.size();
+        maximum = new double[size];
+        glb_idx = new long[size];
+        level   = new int[size];
+        for( size_t j=0; j<size; ++j ) {
+          maximum[j] = maxvec[j];
+          glb_idx[j] = gidxvec[j];
+          level[j] = levvec[j];
+        }
+  );
+}
+
+void atlas__NodesFunctionSpace__maxloclev_arr_float(const NodesFunctionSpace* This, const Field* field, float* &maximum, long* &glb_idx, int* &level, int &size)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ATLAS_ERROR_HANDLING(
+        std::vector<float> maxvec;
+        std::vector<gidx_t> gidxvec;
+        std::vector<size_t>    levvec;
+        This->maximumAndLocation(*field,maxvec,gidxvec,levvec);
+        size = maxvec.size();
+        maximum = new float[size];
+        glb_idx = new long[size];
+        level   = new int[size];
+        for( size_t j=0; j<size; ++j ) {
+          maximum[j] = maxvec[j];
+          glb_idx[j] = gidxvec[j];
+          level[j] = levvec[j];
+        }
+  );
+}
+
+void atlas__NodesFunctionSpace__maxloclev_arr_long(const NodesFunctionSpace* This, const Field* field, long* &maximum, long* &glb_idx, int* &level, int &size)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ATLAS_ERROR_HANDLING(
+        std::vector<long> maxvec;
+        std::vector<gidx_t> gidxvec;
+        std::vector<size_t>    levvec;
+        This->maximumAndLocation(*field,maxvec,gidxvec,levvec);
+        size = maxvec.size();
+        maximum = new long[size];
+        glb_idx = new long[size];
+        level   = new int[size];
+        for( size_t j=0; j<size; ++j ) {
+          maximum[j] = maxvec[j];
+          glb_idx[j] = gidxvec[j];
+          level[j] = levvec[j];
+        }
+  );
+}
+
+void atlas__NodesFunctionSpace__maxloclev_arr_int(const NodesFunctionSpace* This, const Field* field, int* &maximum, long* &glb_idx, int* &level, int &size)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ATLAS_ERROR_HANDLING(
+        std::vector<int> maxvec;
+        std::vector<gidx_t> gidxvec;
+        std::vector<size_t>    levvec;
+        This->maximumAndLocation(*field,maxvec,gidxvec,levvec);
+        size = maxvec.size();
+        maximum = new int[size];
+        glb_idx = new long[size];
+        level   = new int[size];
+        for( size_t j=0; j<size; ++j ) {
+          maximum[j] = maxvec[j];
+          glb_idx[j] = gidxvec[j];
+          level[j] = levvec[j];
+        }
+  );
+}
+
+void atlas__NodesFunctionSpace__sum_per_level(const NodesFunctionSpace* This, const Field* field, Field* sum, int &N)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ASSERT(sum);
+  size_t size_t_N;
+  ATLAS_ERROR_HANDLING( This->sumPerLevel(*field,*sum,size_t_N); );
+  N = size_t_N;
+}
+
+void atlas__NodesFunctionSpace__oisum_per_level(const NodesFunctionSpace* This, const Field* field, Field* sum, int &N)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ASSERT(sum);
+  size_t size_t_N;
+  ATLAS_ERROR_HANDLING( This->orderIndependentSumPerLevel(*field,*sum,size_t_N); );
+  N = size_t_N;
+}
+
+void atlas__NodesFunctionSpace__min_per_level(const NodesFunctionSpace* This, const Field* field, Field* min)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ASSERT(min);
+  ATLAS_ERROR_HANDLING( This->minimumPerLevel(*field,*min); );
+}
+
+void atlas__NodesFunctionSpace__max_per_level(const NodesFunctionSpace* This, const Field* field, Field* max)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ASSERT(max);
+  ATLAS_ERROR_HANDLING( This->maximumPerLevel(*field,*max); );
+}
+
+void atlas__NodesFunctionSpace__minloc_per_level(const NodesFunctionSpace* This, const Field* field, Field* min, Field* glb_idx)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ASSERT(min);
+  ASSERT(glb_idx);
+  ATLAS_ERROR_HANDLING( This->minimumAndLocationPerLevel(*field,*min,*glb_idx); );
+}
+
+void atlas__NodesFunctionSpace__maxloc_per_level(const NodesFunctionSpace* This, const Field* field, Field* max, Field* glb_idx)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ASSERT(max);
+  ASSERT(glb_idx);
+  ATLAS_ERROR_HANDLING( This->maximumAndLocationPerLevel(*field,*max,*glb_idx); );
+}
+
+void atlas__NodesFunctionSpace__mean_per_level(const NodesFunctionSpace* This, const Field* field, Field* mean, int &N)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ASSERT(mean);
+  size_t size_t_N;
+  ATLAS_ERROR_HANDLING( This->meanPerLevel(*field,*mean,size_t_N); );
+  N = size_t_N;
+}
+
+void atlas__NodesFunctionSpace__mean_and_stddev_per_level(const NodesFunctionSpace* This, const Field* field, Field* mean, Field* stddev, int &N)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ASSERT(mean);
+  ASSERT(stddev);
+  size_t size_t_N;
+  ATLAS_ERROR_HANDLING( This->meanAndStandardDeviationPerLevel(*field,*mean,*stddev,size_t_N); );
+  N = size_t_N;
 }
 
 

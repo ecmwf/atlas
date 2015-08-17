@@ -26,9 +26,18 @@ Mesh* atlas__NodesFunctionSpace__mesh(NodesFunctionSpace* This);
 Nodes* atlas__NodesFunctionSpace__nodes(NodesFunctionSpace* This);
 Field* atlas__NodesFunctionSpace__create_field (const NodesFunctionSpace* This, const char* name, int kind);
 Field* atlas__NodesFunctionSpace__create_field_vars (const NodesFunctionSpace* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind);
+
+Field* atlas__NodesFunctionSpace__create_field_lev (const NodesFunctionSpace* This, const char* name, int levels, int kind);
+Field* atlas__NodesFunctionSpace__create_field_lev_vars (const NodesFunctionSpace* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind);
+
+
 Field* atlas__NodesFunctionSpace__create_field_template (const NodesFunctionSpace* This, const char* name, const Field* field_template);
 Field* atlas__NodesFunctionSpace__create_global_field (const NodesFunctionSpace* This, const char* name, int kind);
 Field* atlas__NodesFunctionSpace__create_global_field_vars (const NodesFunctionSpace* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind);
+
+Field* atlas__NodesFunctionSpace__create_global_field_lev (const NodesFunctionSpace* This, const char* name, int levels, int kind);
+Field* atlas__NodesFunctionSpace__create_global_field_lev_vars (const NodesFunctionSpace* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind);
+
 Field* atlas__NodesFunctionSpace__create_global_field_template (const NodesFunctionSpace* This, const char* name, const Field* field_template);
 
 void atlas__NodesFunctionSpace__halo_exchange_fieldset(const NodesFunctionSpace* This, FieldSet* fieldset);
@@ -114,17 +123,37 @@ void atlas__NodesFunctionSpace__mean_and_stddev_arr_float(const NodesFunctionSpa
 void atlas__NodesFunctionSpace__mean_and_stddev_arr_int(const NodesFunctionSpace* This, const Field* field, int* &mean, int* &stddev, int &size, int &N);
 void atlas__NodesFunctionSpace__mean_and_stddev_arr_long(const NodesFunctionSpace* This, const Field* field, long* &mean, long* &stddev, int &size, int &N);
 
-NodesColumnFunctionSpace* atlas__NodesColumnFunctionSpace__new (const char* name, Mesh* mesh, int nb_levels, int halo);
-void atlas__NodesColumnFunctionSpace__delete (NodesColumnFunctionSpace* This);
-int atlas__NodesColumnFunctionSpace__nb_levels(const NodesColumnFunctionSpace* This);
-Field* atlas__NodesColumnFunctionSpace__create_field (const NodesColumnFunctionSpace* This, const char* name, int kind);
-Field* atlas__NodesColumnFunctionSpace__create_field_vars (const NodesColumnFunctionSpace* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind);
-Field* atlas__NodesColumnFunctionSpace__create_field_template (const NodesColumnFunctionSpace* This, const char* name, const Field* field_template);
-Field* atlas__NodesColumnFunctionSpace__create_global_field (const NodesColumnFunctionSpace* This, const char* name, int kind);
-Field* atlas__NodesColumnFunctionSpace__create_global_field_vars (const NodesColumnFunctionSpace* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind);
-Field* atlas__NodesColumnFunctionSpace__create_global_field_template (const NodesColumnFunctionSpace* This, const char* name, const Field* field_template);
-void atlas__NodesColumnFunctionSpace__checksum_fieldset(const NodesColumnFunctionSpace* This, const FieldSet* fieldset, Char* &checksum, int &size, int &allocated);
-void atlas__NodesColumnFunctionSpace__checksum_field(const NodesColumnFunctionSpace* This, const Field* field, Char* &checksum, int &size, int &allocated);
+
+void atlas__NodesFunctionSpace__minloclev_double(const NodesFunctionSpace* This, const Field* field, double &minimum, long &glb_idx, int &level);
+void atlas__NodesFunctionSpace__minloclev_float(const NodesFunctionSpace* This, const Field* field, float &minimum, long &glb_idx, int &level);
+void atlas__NodesFunctionSpace__minloclev_int(const NodesFunctionSpace* This, const Field* field, int &minimum, long &glb_idx, int &level);
+void atlas__NodesFunctionSpace__minloclev_long(const NodesFunctionSpace* This, const Field* field, long &minimum, long &glb_idx, int &level);
+
+void atlas__NodesFunctionSpace__maxloclev_double(const NodesFunctionSpace* This, const Field* field, double &maximum, long &glb_idx, int &level);
+void atlas__NodesFunctionSpace__maxloclev_float(const NodesFunctionSpace* This, const Field* field, float &maximum, long &glb_idx, int &level);
+void atlas__NodesFunctionSpace__maxloclev_int(const NodesFunctionSpace* This, const Field* field, int &maximum, long &glb_idx, int &level);
+void atlas__NodesFunctionSpace__maxloclev_long(const NodesFunctionSpace* This, const Field* field, long &maximum, long &glb_idx, int &level);
+
+void atlas__NodesFunctionSpace__minloclev_arr_double(const NodesFunctionSpace* This, const Field* field, double* &minimum, long* &glb_idx, int* &level, int &size);
+void atlas__NodesFunctionSpace__minloclev_arr_float(const NodesFunctionSpace* This, const Field* field, float* &minimum, long* &glb_idx, int* &level, int &size);
+void atlas__NodesFunctionSpace__minloclev_arr_int(const NodesFunctionSpace* This, const Field* field, int* &minimum, long* &glb_idx, int* &level, int &size);
+void atlas__NodesFunctionSpace__minloclev_arr_long(const NodesFunctionSpace* This, const Field* field, long* &minimum, long* &glb_idx, int* &level, int &size);
+
+void atlas__NodesFunctionSpace__maxloclev_arr_double(const NodesFunctionSpace* This, const Field* field, double* &maximum, long* &glb_idx, int* &level, int &size);
+void atlas__NodesFunctionSpace__maxloclev_arr_float(const NodesFunctionSpace* This, const Field* field, float* &maximum, long* &glb_idx, int* &level, int &size);
+void atlas__NodesFunctionSpace__maxloclev_arr_int(const NodesFunctionSpace* This, const Field* field, int* &maximum, long* &glb_idx, int* &level, int &size);
+void atlas__NodesFunctionSpace__maxloclev_arr_long(const NodesFunctionSpace* This, const Field* field, long* &maximum, long* &glb_idx, int* &level, int &size);
+
+void atlas__NodesFunctionSpace__sum_per_level(const NodesFunctionSpace* This, const Field* field, Field* sum, int &N);
+void atlas__NodesFunctionSpace__oisum_per_level(const NodesFunctionSpace* This, const Field* field, Field* sum, int &N);
+void atlas__NodesFunctionSpace__min_per_level(const NodesFunctionSpace* This, const Field* field, Field* min);
+void atlas__NodesFunctionSpace__max_per_level(const NodesFunctionSpace* This, const Field* field, Field* max);
+void atlas__NodesFunctionSpace__minloc_per_level(const NodesFunctionSpace* This, const Field* field, Field* min, Field* glb_idx);
+void atlas__NodesFunctionSpace__maxloc_per_level(const NodesFunctionSpace* This, const Field* field, Field* max, Field* glb_idx);
+void atlas__NodesFunctionSpace__mean_per_level(const NodesFunctionSpace* This, const Field* field, Field* mean, int &N);
+void atlas__NodesFunctionSpace__mean_and_stddev_per_level(const NodesFunctionSpace* This, const Field* field, Field* mean, Field* stddev, int &N);
+
+
 
 }
 #undef Char

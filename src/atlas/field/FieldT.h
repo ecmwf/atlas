@@ -64,18 +64,18 @@ protected:
 
   virtual double bytes() const { return sizeof(DATA_TYPE)*size(); }
 
-  virtual void dump(std::ostream& os) const
-  {
-      os << *this << std::endl;
-      DATA_TYPE* data = array_->data<DATA_TYPE>();
-      for(size_t i = 0; i < array_->size(); ++i)
-      {
-          os << data[i] << " ";
-          if( (i+1)%10 == 0 )
-              os << std::endl;
-      }
-      os << std::endl;
-  }
+//  virtual void dump(std::ostream& os) const
+//  {
+//      os << *this << std::endl;
+//      DATA_TYPE* data = array_->data<DATA_TYPE>();
+//      for(size_t i = 0; i < array_->size(); ++i)
+//      {
+//          os << data[i] << " ";
+//          if( (i+1)%10 == 0 )
+//              os << std::endl;
+//      }
+//      os << std::endl;
+//  }
 
 };
 

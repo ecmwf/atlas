@@ -81,7 +81,7 @@ Field& State::add( Field* field )
     std::stringstream new_name;
     new_name << "field_" << std::setw(5) << std::setfill('0') << fields_.size();
     ASSERT( !has_field(new_name.str() ) );
-    field->name_ = new_name.str();
+    field->rename(new_name.str());
   }
 
   if( has_field(field->name()) ) {

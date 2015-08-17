@@ -58,6 +58,10 @@ public: // Static methods
 public: // methods
 
 // -- Constructor / Destructor
+
+  Field(DataType::kind_t, const ArrayShape& = ArrayShape());
+  Field(const std::string& name, DataType::kind_t, const ArrayShape& = ArrayShape());
+
   Field();
 
   Field(const std::string& name);
@@ -84,6 +88,9 @@ public: // methods
 
   /// @brief Name associated to this field
   const std::string& name() const { return name_; }
+
+  /// @brief Rename this field
+  void rename(const std::string& name) { name_ = name; }
 
   /// @brief Access to metadata associated to this field
   const Metadata& metadata() const { return metadata_; }
@@ -112,26 +119,27 @@ public: // methods
   /// @brief Rank of field
   size_t rank() const { return array_->rank(); }
 
+  //const Indexing& indexing() const;
+
   /// @brief Number of bytes occupied by the values of this field
-  virtual double bytes() const = 0;
+  double bytes() const { return array_->bytes(); }
 
   friend std::ostream& operator<<( std::ostream& os, const Field& v);
 
-  virtual void dump(std::ostream& os) const = 0;
+  void dump(std::ostream& os) const;
+
+  bool has_levels() const { return nb_levels_!= 0; }
+  void nb_levels(size_t n) { nb_levels_ = n; }
 
 private: // methods
 
-  virtual void print(std::ostream& os) const;
-
-private: // friends
-
-  // Allow a State::add() to change the name of the field, only if the field
-  // has no name assigned, so it can be used for lookup later.
-  friend Field& State::add( Field* );
+  void print(std::ostream& os) const;
 
 private: // members
 
   std::string name_;
+
+  size_t nb_levels_;
 
   Metadata metadata_;
 
@@ -176,8 +184,10 @@ extern "C"
   void atlas__Field__delete (Field* This);
   const char* atlas__Field__name (Field* This);
   void atlas__Field__datatype (Field* This, Char* &datatype, int &size, int &allocated);
+  int atlas__Field__kind (Field* This);
   int atlas__Field__rank (Field* This);
   int atlas__Field__size (Field* This);
+  int atlas__Field__levels (Field* This);
   double atlas__Field__bytes (Field* This);
   void atlas__Field__shapef (Field* This, int* &shape, int &rank);
   void atlas__Field__data_shapef_int (Field* This, int* &field_data, int* &field_shapef, int &rank);

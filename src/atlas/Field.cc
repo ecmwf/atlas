@@ -70,18 +70,36 @@ Field* Field::create( const ArrayShape& shape, const std::string& datatype )
 
 // -------------------------------------------------------------------------
 
+Field::Field(DataType::kind_t kind, const ArrayShape& shape):
+  name_(), nb_levels_(0), function_space_(0)
+{
+  array_.reset( ArrayBase::create(kind,shape) );
+}
+
+Field::Field(const std::string& name, DataType::kind_t kind, const ArrayShape& shape):
+  name_(name), nb_levels_(0), function_space_(0)
+{
+  array_.reset( ArrayBase::create(kind,shape) );
+}
+
+//Field::Field(DataType::kind_t kind, const ArrayShape& shape, const Indexing& index_type, const std::string& name):
+//  name_(name)//, indexing_(index_type)
+//{
+//  array_.reset( ArrayBase::create(kind,shape) );
+//}
+
 Field::Field() :
-  name_(), function_space_(0)
+  name_(), nb_levels_(0), function_space_(0)
 {
 }
 
 Field::Field(const std::string& name) :
-  name_(name), function_space_(0)
+  name_(name), nb_levels_(0), function_space_(0)
 {
 }
 
 Field::Field(const eckit::Parametrisation& params) :
-  name_(), function_space_(0)
+  name_(), nb_levels_(0), function_space_(0)
 {
   FunctionSpace::Id function_space;
   if( params.get("function_space",function_space) )
@@ -93,6 +111,22 @@ Field::Field(const eckit::Parametrisation& params) :
 Field::~Field()
 {
 }
+
+//size_t Field::levels() const
+//{
+//  if( indexing_.level().size() == 1 )
+//    return shape(indexing_.level());
+//  else
+//    return 0;
+//}
+
+//size_t Field::spectral() const
+//{
+//  if( indexing_.spectral().size() == 1 )
+//    return shape(indexing_.spectral());
+//  else
+//    return 0;
+//}
 
 //namespace {
 //template< typename DATA_TYPE >
@@ -128,6 +162,12 @@ Field::~Field()
 //template <>       float*  Field::data<float >()       { return get_field_data<float >(*this); }
 //template <> const double* Field::data<double>() const { return get_field_data<double>(*this); }
 //template <>       double* Field::data<double>()       { return get_field_data<double>(*this); }
+
+void Field::dump(std::ostream& os) const
+{
+  print(os);
+  array_->dump(os);
+}
 
 void Field::print(std::ostream& os) const
 {
@@ -227,11 +267,30 @@ int atlas__Field__rank (Field* This)
   return 0;
 }
 
+int atlas__Field__kind (Field* This)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This != NULL );
+    return This->kind();
+  );
+  return 0;
+}
+
+
 double atlas__Field__bytes (Field* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This != NULL );
     return This->bytes();
+  );
+  return 0;
+}
+
+int atlas__Field__levels (Field* This)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This != NULL );
+    return 0;//This->levels();
   );
   return 0;
 }

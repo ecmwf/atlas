@@ -137,7 +137,6 @@ INTERFACE atlas_delete
   module procedure atlas_HaloExchange__delete
   module procedure atlas_Metadata__delete
   module procedure atlas_NodesFunctionSpace__delete
-  module procedure atlas_NodesColumnFunctionSpace__delete
   module procedure atlas_Config__delete
   module procedure atlas_ConfigList__delete
   module procedure atlas_GridDistribution__delete

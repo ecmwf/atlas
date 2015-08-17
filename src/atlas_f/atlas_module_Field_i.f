@@ -28,6 +28,8 @@ contains
   procedure :: size => Field__size
   procedure :: rank => Field__rank
   procedure :: bytes => Field__bytes
+  procedure :: levels => Field__levels
+  procedure :: kind => Field__kind
   procedure, private :: access_data1_int32 => Field__access_data1_int32
   procedure, private :: access_data2_int32 => Field__access_data2_int32
   procedure, private :: access_data3_int32 => Field__access_data3_int32

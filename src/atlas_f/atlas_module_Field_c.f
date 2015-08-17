@@ -76,6 +76,18 @@ function Field__bytes(this) result(bytes)
   bytes = atlas__Field__bytes(this%cpp_object_ptr)
 end function Field__bytes
 
+function Field__kind(this) result(kind)
+  class(atlas_Field), intent(in) :: this
+  integer :: kind
+  kind = atlas__Field__kind(this%cpp_object_ptr)
+end function Field__kind
+
+function Field__levels(this) result(levels)
+  class(atlas_Field), intent(in) :: this
+  integer :: levels
+  levels = atlas__Field__levels(this%cpp_object_ptr)
+end function Field__levels
+
 function Field__metadata(this) result(metadata)
   class(atlas_Field), intent(in) :: this
   type(atlas_Metadata) :: Metadata

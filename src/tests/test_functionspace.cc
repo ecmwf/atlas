@@ -62,10 +62,10 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   NodesFunctionSpace nodes_fs("nodes",mesh,Halo(1));
 
   size_t nb_levels = 10;
-  NodesColumnFunctionSpace columns_fs("columns",mesh,nb_levels,Halo(1));
+  //NodesColumnFunctionSpace columns_fs("columns",mesh,nb_levels,Halo(1));
 
-  BOOST_CHECK_EQUAL( nodes_fs.nb_nodes() , columns_fs.nb_nodes() );
-  BOOST_CHECK_EQUAL( columns_fs.nb_levels() , 10 );
+  //BOOST_CHECK_EQUAL( nodes_fs.nb_nodes() , columns_fs.nb_nodes() );
+  //BOOST_CHECK_EQUAL( columns_fs.nb_levels() , 10 );
 
 
   size_t nb_nodes = nodes_fs.nb_nodes();
@@ -98,17 +98,17 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   BOOST_CHECK_EQUAL_COLLECTIONS( surface_tensor.shape(),surface_tensor.shape()+3, surface_tensor_shape,surface_tensor_shape+3 );
 
 
-  ScopedPtr<Field> columns_scalar_field( columns_fs.createField<double>("scalar") );
-  ScopedPtr<Field> columns_vector_field( columns_fs.createField<double>("vector",make_shape(2)) );
-  ScopedPtr<Field> columns_tensor_field( columns_fs.createField<double>("tensor",make_shape(2,2)) );
+  ScopedPtr<Field> columns_scalar_field( nodes_fs.createField<double>("scalar",nb_levels) );
+  ScopedPtr<Field> columns_vector_field( nodes_fs.createField<double>("vector",nb_levels,make_shape(2)) );
+  ScopedPtr<Field> columns_tensor_field( nodes_fs.createField<double>("tensor",nb_levels,make_shape(2,2)) );
 
   BOOST_CHECK_EQUAL( columns_scalar_field->name() , std::string("scalar") );
   BOOST_CHECK_EQUAL( columns_vector_field->name() , std::string("vector") );
   BOOST_CHECK_EQUAL( columns_tensor_field->name() , std::string("tensor") );
 
-  BOOST_CHECK_EQUAL( columns_scalar_field->size() , columns_fs.nb_nodes()*columns_fs.nb_levels() );
-  BOOST_CHECK_EQUAL( columns_vector_field->size() , columns_fs.nb_nodes()*columns_fs.nb_levels()*2 );
-  BOOST_CHECK_EQUAL( columns_tensor_field->size() , columns_fs.nb_nodes()*columns_fs.nb_levels()*2*2 );
+  BOOST_CHECK_EQUAL( columns_scalar_field->size() , nodes_fs.nb_nodes()*nb_levels );
+  BOOST_CHECK_EQUAL( columns_vector_field->size() , nodes_fs.nb_nodes()*nb_levels*2 );
+  BOOST_CHECK_EQUAL( columns_tensor_field->size() , nodes_fs.nb_nodes()*nb_levels*2*2 );
 
   BOOST_CHECK_EQUAL( columns_scalar_field->rank() , 2 );
   BOOST_CHECK_EQUAL( columns_vector_field->rank() , 3 );
@@ -118,31 +118,31 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   ArrayView<double,3> columns_vector( *columns_vector_field );
   ArrayView<double,4> columns_tensor( *columns_tensor_field );
 
-  size_t columns_scalar_shape[] = { columns_fs.nb_nodes(), columns_fs.nb_levels() };
-  size_t columns_vector_shape[] = { columns_fs.nb_nodes(), columns_fs.nb_levels(), 2 };
-  size_t columns_tensor_shape[] = { columns_fs.nb_nodes(), columns_fs.nb_levels(), 2, 2 };
+  size_t columns_scalar_shape[] = { nodes_fs.nb_nodes(), nb_levels };
+  size_t columns_vector_shape[] = { nodes_fs.nb_nodes(), nb_levels, 2 };
+  size_t columns_tensor_shape[] = { nodes_fs.nb_nodes(), nb_levels, 2, 2 };
   BOOST_CHECK_EQUAL_COLLECTIONS(columns_scalar.shape(),columns_scalar.shape()+2, columns_scalar_shape,columns_scalar_shape+2);
   BOOST_CHECK_EQUAL_COLLECTIONS(columns_vector.shape(),columns_vector.shape()+3, columns_vector_shape,columns_vector_shape+3);
   BOOST_CHECK_EQUAL_COLLECTIONS(columns_tensor.shape(),columns_tensor.shape()+4, columns_tensor_shape,columns_tensor_shape+4);
 
-  Field::Ptr field( columns_fs.createField<int>("partition") );
+  Field::Ptr field( nodes_fs.createField<int>("partition",nb_levels) );
   ArrayView<int,2> arr(*field);
   arr = eckit::mpi::rank();
   //field->dump( eckit::Log::info() );
-  columns_fs.haloExchange(*field);
+  nodes_fs.haloExchange(*field);
   //field->dump( eckit::Log::info() );
 
-  Field::Ptr field2( columns_fs.createField<int>("partition2", make_shape(2) ) );
+  Field::Ptr field2( nodes_fs.createField<int>("partition2",nb_levels,make_shape(2)) );
   ArrayView<int,3> arr2(*field2);
   arr2 = eckit::mpi::rank();
   //field2->dump( eckit::Log::info() );
-  columns_fs.haloExchange(*field2);
+  nodes_fs.haloExchange(*field2);
   //field2->dump( eckit::Log::info() );
 
   Log::info() << nodes_fs.checksum(*field) << std::endl;
 
   Field::Ptr glb_field( nodes_fs.createGlobalField("partition",*field) );
-  columns_fs.gather(*field,*glb_field);
+  nodes_fs.gather(*field,*glb_field);
 
   Log::info() << "local points = " << nodes_fs.nb_nodes() << std::endl;
   Log::info() << "grid points = " << grid->npts() << std::endl;
@@ -151,22 +151,25 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   //glb_field->dump( eckit::Log::info() );
 
   arr = -1;
-  columns_fs.scatter(*glb_field,*field);
-  columns_fs.haloExchange(*field);
+  nodes_fs.scatter(*glb_field,*field);
+  nodes_fs.haloExchange(*field);
   //field->dump( eckit::Log::info() );
 
-  Log::info() << columns_fs.checksum(*field) << std::endl;
+  Log::info() << nodes_fs.checksum(*field) << std::endl;
 
   FieldSet fields;
   fields.add(*field);
   fields.add(*field2);
-  Log::info() << columns_fs.checksum(fields) << std::endl;
+  Log::info() << nodes_fs.checksum(fields) << std::endl;
 
 
 
-
+  eckit::Log::info() << "Testing collectives for nodes scalar field" << std::endl;
   BOOST_CHECKPOINT("Testing collectives for nodes scalar field");
   {
+    Field& field = *surface_scalar_field;
+    NodesFunctionSpace& fs = nodes_fs;
+
   double max;
   double min;
   double sum;
@@ -176,49 +179,50 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   gidx_t gidx_max;
   gidx_t gidx_min;
 
-  ArrayView<double,1> sfc_arr( *surface_scalar_field );
+  ArrayView<double,1> sfc_arr( field );
   sfc_arr = eckit::mpi::rank()+1;
-  nodes_fs.maximum(*surface_scalar_field,max);
+  fs.maximum(*surface_scalar_field,max);
   BOOST_CHECK_EQUAL( max, double(eckit::mpi::size()) );
 
-  nodes_fs.minimum(*surface_scalar_field,min);
+  fs.minimum(*surface_scalar_field,min);
   BOOST_CHECK_EQUAL( min, 1 );
 
-  nodes_fs.maximumAndLocation(*surface_scalar_field,max,gidx_max);
+  fs.maximumAndLocation(field,max,gidx_max);
   BOOST_CHECK_EQUAL( max, double(eckit::mpi::size()) );
   Log::info() << "global index for maximum: " << gidx_max << std::endl;
 
-  nodes_fs.minimumAndLocation(*surface_scalar_field,min,gidx_min);
+  fs.minimumAndLocation(field,min,gidx_min);
   BOOST_CHECK_EQUAL( min, 1 );
   Log::info() << "global index for minimum: " << gidx_min << std::endl;
 
-  nodes_fs.orderIndependentSum(*surface_scalar_field,sum,N);
+  fs.orderIndependentSum(field,sum,N);
+  Log::info() << "oisum: " << sum << std::endl;
+  Log::info() << "oiN: " << N << std::endl;
+
+  fs.sum(field,sum,N);
   Log::info() << "sum: " << sum << std::endl;
   Log::info() << "N: " << N << std::endl;
 
-  nodes_fs.sum(*surface_scalar_field,sum,N);
-  Log::info() << "sum: " << sum << std::endl;
-  Log::info() << "N: " << N << std::endl;
-
-  nodes_fs.mean(*surface_scalar_field,mean,N);
+  fs.mean(field,mean,N);
   Log::info() << "mean: " << mean << std::endl;
   Log::info() << "N: " << N << std::endl;
 
-  nodes_fs.meanAndStandardDeviation(*surface_scalar_field,mean,stddev,N);
+  fs.meanAndStandardDeviation(field,mean,stddev,N);
   Log::info() << "mean: " << mean << std::endl;
   Log::info() << "standard deviation: " << stddev << std::endl;
   Log::info() << "N: " << N << std::endl;
 
   int sumint;
-  nodes_fs.orderIndependentSum(*surface_scalar_field,sumint,N);
+  fs.orderIndependentSum(field,sumint,N);
   Log::info() << "sumint: " << sumint << std::endl;
 
-  nodes_fs.sum(*surface_scalar_field,sumint,N);
+  fs.sum(field,sumint,N);
   Log::info() << "sumint: " << sumint << std::endl;
 
   }
 
 
+  eckit::Log::info() << "Testing collectives for nodes vector field" << std::endl;
   BOOST_CHECKPOINT("Testing collectives for nodes vector field");
   {
     Field& field = *surface_vector_field;
@@ -252,8 +256,8 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
     Log::info() << "global index for minimum: " << gidx_min << std::endl;
 
     fs.orderIndependentSum(field,sum,N);
-    Log::info() << "sum: " << sum << std::endl;
-    Log::info() << "N: " << N << std::endl;
+    Log::info() << "oisum: " << sum << std::endl;
+    Log::info() << "oiN: " << N << std::endl;
 
     fs.mean(field,mean,N);
     Log::info() << "mean: " << mean << std::endl;
@@ -273,11 +277,11 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
 
   }
 
-
+  eckit::Log::info() << "Testing collectives for columns scalar field" << std::endl;
   BOOST_CHECKPOINT("Testing collectives for columns scalar field");
-  {
+  if(1){
     Field& field = *columns_scalar_field;
-    NodesColumnFunctionSpace& fs = columns_fs;
+    NodesFunctionSpace& fs = nodes_fs;
     double max;
     double min;
     double sum;
@@ -287,6 +291,8 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
     gidx_t gidx_max;
     gidx_t gidx_min;
     size_t level;
+
+    BOOST_CHECK_EQUAL(field.has_levels(),true);
 
     ArrayView<double,2> arr( field );
     arr = eckit::mpi::rank()+1;
@@ -330,12 +336,12 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
     fs.sum(field,sumint,N);
     Log::info() << "sum in int: " << sumint << std::endl;
 
-    Field::Ptr max_per_level    ( Field::create<double>("max",    make_shape(fs.nb_levels())) );
-    Field::Ptr min_per_level    ( Field::create<double>("min",    make_shape(fs.nb_levels())) );
-    Field::Ptr sum_per_level    ( Field::create<double>("sum",    make_shape(fs.nb_levels())) );
-    Field::Ptr mean_per_level   ( Field::create<double>("mean",   make_shape(fs.nb_levels())) );
-    Field::Ptr stddev_per_level ( Field::create<double>("stddev", make_shape(fs.nb_levels())) );
-    Field::Ptr gidx_per_level   ( Field::create<gidx_t>("gidx",   make_shape(fs.nb_levels())) );
+    Field::Ptr max_per_level    ( Field::create<double>("max",    make_shape(nb_levels)) );
+    Field::Ptr min_per_level    ( Field::create<double>("min",    make_shape(nb_levels)) );
+    Field::Ptr sum_per_level    ( Field::create<double>("sum",    make_shape(nb_levels)) );
+    Field::Ptr mean_per_level   ( Field::create<double>("mean",   make_shape(nb_levels)) );
+    Field::Ptr stddev_per_level ( Field::create<double>("stddev", make_shape(nb_levels)) );
+    Field::Ptr gidx_per_level   ( Field::create<gidx_t>("gidx",   make_shape(nb_levels)) );
 
     fs.maximumPerLevel(field,*max_per_level);
     max_per_level->dump(Log::info());
@@ -354,9 +360,9 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   }
 
   BOOST_CHECKPOINT("Testing collectives for columns vector field");
-  {
+  if(1){
     Field& field = *columns_vector_field;
-    NodesColumnFunctionSpace& fs = columns_fs;
+    NodesFunctionSpace& fs = nodes_fs;
     size_t nvar = field.stride(1);
     std::vector<double> max;
     std::vector<double> min;
@@ -406,12 +412,12 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
     fs.sum(field,sumint,N);
     Log::info() << "sumint: " << sumint << std::endl;
 
-    Field::Ptr max_per_level    ( Field::create<double>("max",    make_shape(fs.nb_levels(),nvar)) );
-    Field::Ptr min_per_level    ( Field::create<double>("min",    make_shape(fs.nb_levels(),nvar)) );
-    Field::Ptr sum_per_level    ( Field::create<double>("sum",    make_shape(fs.nb_levels(),nvar)) );
-    Field::Ptr mean_per_level   ( Field::create<double>("mean",   make_shape(fs.nb_levels(),nvar)) );
-    Field::Ptr stddev_per_level ( Field::create<double>("stddev", make_shape(fs.nb_levels(),nvar)) );
-    Field::Ptr gidx_per_level   ( Field::create<gidx_t>("gidx",   make_shape(fs.nb_levels(),nvar)) );
+    Field::Ptr max_per_level    ( new Field("max",DataType::kind<double>(),make_shape(nb_levels,nvar)) );
+    Field::Ptr min_per_level    ( Field::create<double>("min",    make_shape(nb_levels,nvar)) );
+    Field::Ptr sum_per_level    ( Field::create<double>("sum",    make_shape(nb_levels,nvar)) );
+    Field::Ptr mean_per_level   ( Field::create<double>("mean",   make_shape(nb_levels,nvar)) );
+    Field::Ptr stddev_per_level ( Field::create<double>("stddev", make_shape(nb_levels,nvar)) );
+    Field::Ptr gidx_per_level   ( Field::create<gidx_t>("gidx",   make_shape(nb_levels,nvar)) );
 
     fs.maximumPerLevel(field,*max_per_level);
     max_per_level->dump(Log::info());
