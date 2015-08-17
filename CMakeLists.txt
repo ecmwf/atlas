@@ -21,7 +21,7 @@ project( atlas CXX )
 set( CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../ecbuild/cmake")
 set( ECBUILD_DEFAULT_BUILD_TYPE Release )
 
-include( ecbuild_system )
+include( ecbuild_system NO_POLICY_SCOPE )
 
 ecbuild_requires_macro_version( 1.6 )
 
