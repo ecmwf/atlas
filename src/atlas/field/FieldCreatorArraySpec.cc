@@ -39,7 +39,7 @@ Field* FieldCreatorArraySpec::create_field( const eckit::Parametrisation& params
           << " or " << DataType::kind<double>() << "; received: " << kind << ") ";
       throw eckit::Exception(msg.str());      
     }
-    data_type = DataType::kind_to_datatype(kind);
+    data_type = DataType::kind_to_str(kind);
   }
 
   eckit::ScopedPtr<field::FieldTCreator> creator

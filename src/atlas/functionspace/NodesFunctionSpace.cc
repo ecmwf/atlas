@@ -197,36 +197,36 @@ std::string NodesFunctionSpace::checksum_name() const
   return "nodes_checksum";
 }
 
-Field* NodesFunctionSpace::createField(DataType::kind_t datatype) const {
+Field* NodesFunctionSpace::createField(DataType datatype) const {
   Field* field = new Field(datatype,make_shape(nb_nodes()));
   return field;
 }
 
-Field* NodesFunctionSpace::createField(DataType::kind_t datatype, size_t levels) const {
+Field* NodesFunctionSpace::createField(DataType datatype, size_t levels) const {
   Field* field = new Field(datatype,make_shape(nb_nodes(),levels));
   field->nb_levels(levels);
   return field;
 }
 
-Field* NodesFunctionSpace::createField(const std::string& name,DataType::kind_t datatype) const {
+Field* NodesFunctionSpace::createField(const std::string& name,DataType datatype) const {
   Field* field = new Field(name,datatype,make_shape(nb_nodes()));
   return field;
 }
 
-Field* NodesFunctionSpace::createField(const std::string& name,DataType::kind_t datatype, size_t levels) const {
+Field* NodesFunctionSpace::createField(const std::string& name,DataType datatype, size_t levels) const {
   Field* field = new Field(name,datatype,make_shape(nb_nodes(),levels));
   field->nb_levels(levels);
   return field;
 }
 
-Field* NodesFunctionSpace::createField(DataType::kind_t datatype, const std::vector<size_t>& variables) const {
+Field* NodesFunctionSpace::createField(DataType datatype, const std::vector<size_t>& variables) const {
   std::vector<size_t> shape(1,nb_nodes());
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   Field* field = new Field(datatype,shape);
   return field;
 }
 
-Field* NodesFunctionSpace::createField(DataType::kind_t datatype, size_t levels, const std::vector<size_t>& variables) const {
+Field* NodesFunctionSpace::createField(DataType datatype, size_t levels, const std::vector<size_t>& variables) const {
   std::vector<size_t> shape(1,nb_nodes()); shape.push_back(levels);
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   Field* field = new Field(datatype,shape);
@@ -234,14 +234,14 @@ Field* NodesFunctionSpace::createField(DataType::kind_t datatype, size_t levels,
   return field;
 }
 
-Field* NodesFunctionSpace::createField(const std::string& name,DataType::kind_t datatype, const std::vector<size_t>& variables) const {
+Field* NodesFunctionSpace::createField(const std::string& name,DataType datatype, const std::vector<size_t>& variables) const {
   std::vector<size_t> shape(1,nb_nodes());
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   Field* field = new Field(name,datatype,shape);
   return field;
 }
 
-Field* NodesFunctionSpace::createField(const std::string& name, DataType::kind_t datatype, size_t levels, const std::vector<size_t>& variables) const {
+Field* NodesFunctionSpace::createField(const std::string& name, DataType datatype, size_t levels, const std::vector<size_t>& variables) const {
   std::vector<size_t> shape(1,nb_nodes()); shape.push_back(levels);
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   Field* field = new Field(name,datatype,shape);
@@ -252,7 +252,7 @@ Field* NodesFunctionSpace::createField(const std::string& name, DataType::kind_t
 Field* NodesFunctionSpace::createField(const Field& other) const {
   ArrayShape shape = other.shape();
   shape[0] = nb_nodes();
-  Field* field = new Field(other.kind(),shape);
+  Field* field = new Field(other.datatype(),shape);
   if( other.has_levels() )
     field->nb_levels(field->shape(1));
   return field;
@@ -261,42 +261,42 @@ Field* NodesFunctionSpace::createField(const Field& other) const {
 Field* NodesFunctionSpace::createField(const std::string& name, const Field& other) const {
   ArrayShape shape = other.shape();
   shape[0] = nb_nodes();
-  Field* field = new Field(name,other.kind(),shape);
+  Field* field = new Field(name,other.datatype(),shape);
   if( other.has_levels() )
     field->nb_levels(field->shape(1));
   return field;
 }
 
-Field* NodesFunctionSpace::createGlobalField(DataType::kind_t datatype) const {
+Field* NodesFunctionSpace::createGlobalField(DataType datatype) const {
   Field* field = new Field(datatype,make_shape(nb_nodes_global()));
   return field;
 }
 
-Field* NodesFunctionSpace::createGlobalField(DataType::kind_t datatype, size_t levels) const {
+Field* NodesFunctionSpace::createGlobalField(DataType datatype, size_t levels) const {
   Field* field = new Field(datatype,make_shape(nb_nodes_global(),levels));
   field->nb_levels(levels);
   return field;
 }
 
-Field* NodesFunctionSpace::createGlobalField(const std::string& name,DataType::kind_t datatype) const {
+Field* NodesFunctionSpace::createGlobalField(const std::string& name,DataType datatype) const {
   Field* field = new Field(name,datatype,make_shape(nb_nodes_global()));
   return field;
 }
 
-Field* NodesFunctionSpace::createGlobalField(const std::string& name, DataType::kind_t datatype, size_t levels) const {
+Field* NodesFunctionSpace::createGlobalField(const std::string& name, DataType datatype, size_t levels) const {
   Field* field = new Field(name,datatype,make_shape(nb_nodes_global(),levels));
   field->nb_levels(levels);
   return field;
 }
 
-Field* NodesFunctionSpace::createGlobalField(DataType::kind_t datatype, const std::vector<size_t>& variables) const {
+Field* NodesFunctionSpace::createGlobalField(DataType datatype, const std::vector<size_t>& variables) const {
   std::vector<size_t> shape(1,nb_nodes_global());
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   Field* field = new Field(datatype,shape);
   return field;
 }
 
-Field* NodesFunctionSpace::createGlobalField(DataType::kind_t datatype, size_t levels, const std::vector<size_t>& variables) const {
+Field* NodesFunctionSpace::createGlobalField(DataType datatype, size_t levels, const std::vector<size_t>& variables) const {
   std::vector<size_t> shape(1,nb_nodes_global()); shape.push_back(levels);
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   Field* field = new Field(datatype,shape);
@@ -304,14 +304,14 @@ Field* NodesFunctionSpace::createGlobalField(DataType::kind_t datatype, size_t l
   return field;
 }
 
-Field* NodesFunctionSpace::createGlobalField(const std::string& name, DataType::kind_t datatype, const std::vector<size_t>& variables) const {
+Field* NodesFunctionSpace::createGlobalField(const std::string& name, DataType datatype, const std::vector<size_t>& variables) const {
   std::vector<size_t> shape(1,nb_nodes_global());
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   Field* field = new Field(name,datatype,shape);
   return field;
 }
 
-Field* NodesFunctionSpace::createGlobalField(const std::string& name, DataType::kind_t datatype, size_t levels, const std::vector<size_t>& variables) const {
+Field* NodesFunctionSpace::createGlobalField(const std::string& name, DataType datatype, size_t levels, const std::vector<size_t>& variables) const {
   std::vector<size_t> shape(1,nb_nodes_global()); shape.push_back(levels);
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   Field* field = new Field(name,datatype,shape);
@@ -322,7 +322,7 @@ Field* NodesFunctionSpace::createGlobalField(const std::string& name, DataType::
 Field* NodesFunctionSpace::createGlobalField(const Field& other) const {
   ArrayShape shape = other.shape();
   shape[0] = nb_nodes_global();
-  Field* field = new Field(other.kind(),shape);
+  Field* field = new Field(other.datatype(),shape);
   if( other.has_levels() )
     field->nb_levels(field->shape(1));
   return field;
@@ -331,7 +331,7 @@ Field* NodesFunctionSpace::createGlobalField(const Field& other) const {
 Field* NodesFunctionSpace::createGlobalField(const std::string& name,const Field& other) const {
   ArrayShape shape = other.shape();
   shape[0] = nb_nodes_global();
-  Field* field = new Field(name,other.kind(),shape);
+  Field* field = new Field(name,other.datatype(),shape);
   if( other.has_levels() )
     field->nb_levels(field->shape(1));
   return field;
@@ -345,19 +345,19 @@ void NodesFunctionSpace::haloExchange( FieldSet& fieldset ) const
       const Field& field = fieldset[f];
       ArrayStrides strides = make_strides(field.stride(0),1);
       ArrayShape   shape   = make_shape(field.shape(0),field.stride(0));
-      if     ( field.kind() == DataType::kind<int>() ) {
+      if     ( field.datatype() == DataType::kind<int>() ) {
         ArrayView<int,2> view(field.data<int>(),strides.data(),shape.data());
         halo_exchange.execute( view );
       }
-      else if( field.kind() == DataType::kind<long>() ) {
+      else if( field.datatype() == DataType::kind<long>() ) {
         ArrayView<long,2> view(field.data<long>(),strides.data(),shape.data());
         halo_exchange.execute( view );
       }
-      else if( field.kind() == DataType::kind<float>() ) {
+      else if( field.datatype() == DataType::kind<float>() ) {
         ArrayView<float,2> view(field.data<float>(),strides.data(),shape.data());
         halo_exchange.execute( view );
       }
-      else if( field.kind() == DataType::kind<double>() ) {
+      else if( field.datatype() == DataType::kind<double>() ) {
         ArrayView<double,2> view(field.data<double>(),strides.data(),shape.data());
         halo_exchange.execute( view );
       }
@@ -385,22 +385,22 @@ void NodesFunctionSpace::gather( const FieldSet& local_fieldset, FieldSet& globa
     const Field& loc = local_fieldset[f];
     Field& glb = global_fieldset[f];
 
-    if     ( loc.kind() == DataType::kind<int>() ) {
+    if     ( loc.datatype() == DataType::kind<int>() ) {
       mpl::Field<int const> loc_field(loc.data<int>(),loc.stride(0));
       mpl::Field<int      > glb_field(glb.data<int>(),glb.stride(0));
       gather_scatter.gather( &loc_field, &glb_field, 1 );
     }
-    else if( loc.kind() == DataType::kind<long>() ) {
+    else if( loc.datatype() == DataType::kind<long>() ) {
       mpl::Field<long const> loc_field(loc.data<long>(),loc.stride(0));
       mpl::Field<long      > glb_field(glb.data<long>(),glb.stride(0));
       gather_scatter.gather( &loc_field, &glb_field, 1 );
     }
-    else if( loc.kind() == DataType::kind<float>() ) {
+    else if( loc.datatype() == DataType::kind<float>() ) {
       mpl::Field<float const> loc_field(loc.data<float>(),loc.stride(0));
       mpl::Field<float      > glb_field(glb.data<float>(),glb.stride(0));
       gather_scatter.gather( &loc_field, &glb_field, 1 );
     }
-    else if( loc.kind() == DataType::kind<double>() ) {
+    else if( loc.datatype() == DataType::kind<double>() ) {
       mpl::Field<double const> loc_field(loc.data<double>(),loc.stride(0));
       mpl::Field<double      > glb_field(glb.data<double>(),glb.stride(0));
       gather_scatter.gather( &loc_field, &glb_field, 1 );
@@ -428,22 +428,22 @@ void NodesFunctionSpace::scatter( const FieldSet& global_fieldset, FieldSet& loc
     const Field& glb = global_fieldset[f];
     Field& loc = local_fieldset[f];
 
-    if     ( loc.kind() == DataType::kind<int>() ) {
+    if     ( loc.datatype() == DataType::kind<int>() ) {
       mpl::Field<int const> glb_field(glb.data<int>(),glb.stride(0));
       mpl::Field<int      > loc_field(loc.data<int>(),loc.stride(0));
       gather_scatter.scatter( &glb_field, &loc_field, 1 );
     }
-    else if( loc.kind() == DataType::kind<long>() ) {
+    else if( loc.datatype() == DataType::kind<long>() ) {
       mpl::Field<long const> glb_field(glb.data<long>(),glb.stride(0));
       mpl::Field<long      > loc_field(loc.data<long>(),loc.stride(0));
       gather_scatter.scatter( &glb_field, &loc_field, 1 );
     }
-    else if( loc.kind() == DataType::kind<float>() ) {
+    else if( loc.datatype() == DataType::kind<float>() ) {
       mpl::Field<float const> glb_field(glb.data<float>(),glb.stride(0));
       mpl::Field<float      > loc_field(loc.data<float>(),loc.stride(0));
       gather_scatter.scatter( &glb_field, &loc_field, 1 );
     }
-    else if( loc.kind() == DataType::kind<double>() ) {
+    else if( loc.datatype() == DataType::kind<double>() ) {
       mpl::Field<double const> glb_field(glb.data<double>(),glb.stride(0));
       mpl::Field<double      > loc_field(loc.data<double>(),loc.stride(0));
       gather_scatter.scatter( &glb_field, &loc_field, 1 );
@@ -484,13 +484,13 @@ std::string NodesFunctionSpace::checksum( const FieldSet& fieldset ) const {
   eckit::MD5 md5;
   for( size_t f=0; f<fieldset.size(); ++f ) {
     const Field& field=fieldset[f];
-    if     ( field.kind() == DataType::kind<int>() )
+    if     ( field.datatype() == DataType::kind<int>() )
       md5 << checksum_3d_field<int>(checksum,field);
-    else if( field.kind() == DataType::kind<long>() )
+    else if( field.datatype() == DataType::kind<long>() )
       md5 << checksum_3d_field<long>(checksum,field);
-    else if( field.kind() == DataType::kind<float>() )
+    else if( field.datatype() == DataType::kind<float>() )
       md5 << checksum_3d_field<float>(checksum,field);
-    else if( field.kind() == DataType::kind<double>() )
+    else if( field.datatype() == DataType::kind<double>() )
       md5 << checksum_3d_field<double>(checksum,field);
     else throw eckit::Exception("datatype not supported",Here());
   }
@@ -509,13 +509,13 @@ std::string NodesFunctionSpace::checksum( const Field& field ) const {
 //  eckit::MD5 md5;
 //  for( size_t f=0; f<fieldset.size(); ++f ) {
 //    const Field& field=fieldset[f];
-//    if     ( field.kind() == DataType::kind<int>() )
+//    if     ( field.datatype() == DataType::kind<int>() )
 //      md5 << checksum.execute( field.data<int>(), field.stride(0) );
-//    else if( field.kind() == DataType::kind<long>() )
+//    else if( field.datatype() == DataType::kind<long>() )
 //      md5 << checksum.execute( field.data<long>(), field.stride(0) );
-//    else if( field.kind() == DataType::kind<float>() )
+//    else if( field.datatype() == DataType::kind<float>() )
 //      md5 << checksum.execute( field.data<float>(), field.stride(0) );
-//    else if( field.kind() == DataType::kind<double>() )
+//    else if( field.datatype() == DataType::kind<double>() )
 //      md5 << checksum.execute( field.data<double>(), field.stride(0) );
 //    else throw eckit::Exception("datatype not supported",Here());
 //  }
@@ -553,12 +553,12 @@ void dispatch_sum( const NodesFunctionSpace& fs, const Field& field, T& result, 
 template< typename T >
 void sum( const NodesFunctionSpace& fs , const Field& field, T& result, size_t& N )
 {
-  if( field.kind() == DataType::kind<T>() ) {
+  if( field.datatype() == DataType::kind<T>() ) {
     return dispatch_sum(fs,field,result,N);
   }
   else
   {
-    switch( field.kind() )
+    switch( field.datatype().kind() )
     {
       case DataType::KIND_INT32 : {
         int tmp;
@@ -626,12 +626,12 @@ void dispatch_sum( const NodesFunctionSpace& fs, const Field& field, std::vector
 template< typename T >
 void sum( const NodesFunctionSpace& fs , const Field& field, std::vector<T>& result, size_t& N )
 {
-  if( field.kind() == DataType::kind<T>() ) {
+  if( field.datatype() == DataType::kind<T>() ) {
     return dispatch_sum(fs,field,result,N);
   }
   else
   {
-    switch( field.kind() )
+    switch( field.datatype().kind() )
     {
       case DataType::KIND_INT32 : {
         std::vector<int> tmp;
@@ -706,10 +706,10 @@ void dispatch_sum_per_level( const NodesFunctionSpace& fs, const Field& field, F
 
 void sum_per_level( const NodesFunctionSpace& fs, const Field& field, Field& sum, size_t& N )
 {
-  if( field.kind() != sum.kind() ) {
+  if( field.datatype() != sum.datatype() ) {
     throw eckit::Exception("Field and sum are not of same datatype.",Here());
   }
-  switch( field.kind() )
+  switch( field.datatype().kind() )
   {
     case DataType::KIND_INT32 :
       return dispatch_sum_per_level<int>(fs,field,sum,N);
@@ -762,12 +762,12 @@ void dispatch_order_independent_sum( const NodesFunctionSpace& fs , const Field&
 template< typename T >
 void order_independent_sum( const NodesFunctionSpace& fs , const Field& field, T& result, size_t& N )
 {
-  if( field.kind() == DataType::kind<T>() ) {
+  if( field.datatype() == DataType::kind<T>() ) {
     return dispatch_order_independent_sum(fs,field,result,N);
   }
   else
   {
-    switch( field.kind() )
+    switch( field.datatype().kind() )
     {
       case DataType::KIND_INT32 : {
         int tmp;
@@ -850,12 +850,12 @@ void dispatch_order_independent_sum( const NodesFunctionSpace& fs, const Field& 
 template< typename T >
 void order_independent_sum( const NodesFunctionSpace& fs, const Field& field, std::vector<T>& result, size_t& N )
 {
-  if( field.kind() == DataType::kind<T>() ) {
+  if( field.datatype() == DataType::kind<T>() ) {
     return dispatch_order_independent_sum(fs,field,result,N);
   }
   else
   {
-    switch( field.kind() )
+    switch( field.datatype().kind() )
     {
       case DataType::KIND_INT32 : {
           std::vector<int> tmp;
@@ -931,10 +931,10 @@ void dispatch_order_independent_sum_per_level( const NodesFunctionSpace& fs, con
 
 void order_independent_sum_per_level( const NodesFunctionSpace& fs, const Field& field, Field& sum, size_t& N )
 {
-  if( field.kind() != sum.kind() ) {
+  if( field.datatype() != sum.datatype() ) {
     throw eckit::Exception("Field and sum are not of same datatype.",Here());
   }
-  switch( field.kind() )
+  switch( field.datatype().kind() )
   {
     case DataType::KIND_INT32 :
       return dispatch_order_independent_sum_per_level<int>(fs,field,sum,N);
@@ -978,12 +978,12 @@ void dispatch_minimum( const NodesFunctionSpace& fs, const Field& field, std::ve
 template< typename T >
 void minimum( const NodesFunctionSpace& fs, const Field& field, std::vector<T>& min )
 {
-  if( field.kind() == DataType::kind<T>() ) {
+  if( field.datatype() == DataType::kind<T>() ) {
     return dispatch_minimum(fs,field,min);
   }
   else
   {
-    switch( field.kind() )
+    switch( field.datatype().kind() )
     {
       case DataType::KIND_INT32 : {
         std::vector<int> tmp;
@@ -1044,12 +1044,12 @@ void dispatch_maximum( const NodesFunctionSpace& fs, const Field& field, std::ve
 template< typename T >
 void maximum( const NodesFunctionSpace& fs, const Field& field, std::vector<T>& max )
 {
-  if( field.kind() == DataType::kind<T>() ) {
+  if( field.datatype() == DataType::kind<T>() ) {
     return dispatch_maximum(fs,field,max);
   }
   else
   {
-    switch( field.kind() )
+    switch( field.datatype().kind() )
     {
       case DataType::KIND_INT32 : {
         std::vector<int> tmp;
@@ -1133,10 +1133,10 @@ void dispatch_minimum_per_level( const NodesFunctionSpace& fs, const Field& fiel
 
 void minimum_per_level( const NodesFunctionSpace& fs, const Field& field, Field& min )
 {
-  if( field.kind() != min.kind() ) {
+  if( field.datatype() != min.datatype() ) {
     throw eckit::Exception("Field and min are not of same datatype.",Here());
   }
-  switch( field.kind() )
+  switch( field.datatype().kind() )
   {
     case DataType::KIND_INT32 :
       return dispatch_minimum_per_level<int>(fs,field,min);
@@ -1187,10 +1187,10 @@ void dispatch_maximum_per_level( const NodesFunctionSpace& fs, const Field& fiel
 
 void maximum_per_level( const NodesFunctionSpace& fs, const Field& field, Field& max )
 {
-  if( field.kind() != max.kind() ) {
+  if( field.datatype() != max.datatype() ) {
     throw eckit::Exception("Field and max are not of same datatype.",Here());
   }
-  switch( field.kind() )
+  switch( field.datatype().kind() )
   {
     case DataType::KIND_INT32 :
       return dispatch_maximum_per_level<int>(fs,field,max);
@@ -1268,12 +1268,12 @@ void dispatch_minimum_and_location( const NodesFunctionSpace& fs, const Field& f
 template< typename T >
 void minimum_and_location( const NodesFunctionSpace& fs, const Field& field, std::vector<T>& min, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level )
 {
-  if( field.kind() == DataType::kind<T>() ) {
+  if( field.datatype() == DataType::kind<T>() ) {
     return dispatch_minimum_and_location(fs,field,min,glb_idx,level);
   }
   else
   {
-    switch( field.kind() )
+    switch( field.datatype().kind() )
     {
       case DataType::KIND_INT32 : {
         std::vector<int> tmp;
@@ -1368,12 +1368,12 @@ void dispatch_maximum_and_location( const NodesFunctionSpace& fs, const Field& f
 template< typename T >
 void maximum_and_location( const NodesFunctionSpace& fs, const Field& field, std::vector<T>& max, std::vector<gidx_t>& glb_idx, std::vector<size_t>& level )
 {
-  if( field.kind() == DataType::kind<T>() ) {
+  if( field.datatype() == DataType::kind<T>() ) {
     return dispatch_maximum_and_location(fs,field,max,glb_idx,level);
   }
   else
   {
-    switch( field.kind() )
+    switch( field.datatype().kind() )
     {
       case DataType::KIND_INT32 : {
         std::vector<int> tmp;
@@ -1522,13 +1522,13 @@ void dispatch_minimum_and_location_per_level( const NodesFunctionSpace& fs, cons
 
 void minimum_and_location_per_level( const NodesFunctionSpace& fs, const Field& field, Field& min, Field& glb_idx )
 {
-  if( field.kind() != min.kind() ) {
+  if( field.datatype() != min.datatype() ) {
     throw eckit::Exception("Field and min are not of same datatype.",Here());
   }
-  if( glb_idx.kind() != DataType::kind<gidx_t>() ) {
+  if( glb_idx.datatype() != DataType::kind<gidx_t>() ) {
     throw eckit::Exception("glb_idx Field is not of correct datatype",Here());
   }
-  switch( field.kind() )
+  switch( field.datatype().kind() )
   {
     case DataType::KIND_INT32 :
       return dispatch_minimum_and_location_per_level<int>(fs,field,min,glb_idx);
@@ -1610,13 +1610,13 @@ void dispatch_maximum_and_location_per_level( const NodesFunctionSpace& fs, cons
 
 void maximum_and_location_per_level( const NodesFunctionSpace& fs, const Field& field, Field& max, Field& glb_idx )
 {
-  if( field.kind() != max.kind() ) {
+  if( field.datatype() != max.datatype() ) {
     throw eckit::Exception("Field and max are not of same datatype.",Here());
   }
-  if( glb_idx.kind() != DataType::kind<gidx_t>() ) {
+  if( glb_idx.datatype() != DataType::kind<gidx_t>() ) {
     throw eckit::Exception("glb_idx Field is not of correct datatype",Here());
   }
-  switch( field.kind() )
+  switch( field.datatype().kind() )
   {
     case DataType::KIND_INT32 :
       return dispatch_maximum_and_location_per_level<int>(fs,field,max,glb_idx);
@@ -1660,10 +1660,10 @@ void dispatch_mean_per_level( const NodesFunctionSpace& fs, const Field& field, 
 
 void mean_per_level( const NodesFunctionSpace& fs, const Field& field, Field& mean, size_t& N )
 {
-  if( field.kind() != mean.kind() ) {
+  if( field.datatype() != mean.datatype() ) {
     throw eckit::Exception("Field and sum are not of same datatype.",Here());
   }
-  switch( field.kind() )
+  switch( field.datatype().kind() )
   {
     case DataType::KIND_INT32 :
       return dispatch_mean_per_level<int>(fs,field,mean,N);
@@ -1741,13 +1741,13 @@ void dispatch_mean_and_standard_deviation_per_level( const NodesFunctionSpace& f
 
 void mean_and_standard_deviation_per_level( const NodesFunctionSpace& fs, const Field& field, Field& mean, Field& stddev, size_t& N )
 {
-  if( field.kind() != mean.kind() ) {
+  if( field.datatype() != mean.datatype() ) {
     throw eckit::Exception("Field and mean are not of same datatype.",Here());
   }
-  if( field.kind() != stddev.kind() ) {
+  if( field.datatype() != stddev.datatype() ) {
     throw eckit::Exception("Field and stddev are not of same datatype.",Here());
   }
-  switch( field.kind() )
+  switch( field.datatype().kind() )
   {
     case DataType::KIND_INT32 :
       return dispatch_mean_and_standard_deviation_per_level<int>(fs,field,mean,stddev,N);

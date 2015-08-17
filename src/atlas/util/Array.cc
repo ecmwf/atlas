@@ -37,8 +37,8 @@ DATA_TYPE* get_array_data( const ArrayBase& arraybase )
   {
     std::stringstream msg;
     msg << "Could not cast Array "
-        << " with datatype " << array->datatype() << " to "
-        << DataType::datatype<DATA_TYPE>();
+        << " with datatype " << array->datatype().str() << " to "
+        << DataType::str<DATA_TYPE>();
     throw eckit::BadCast(msg.str(),Here());
   }
   return const_cast<DATA_TYPE*>(array->data());
@@ -74,9 +74,9 @@ template <> void Array<float>::dump(std::ostream& os) const { dump_array_data(*t
 template <> void Array<double>::dump(std::ostream& os) const { dump_array_data(*this,os); };
 
 
-ArrayBase* ArrayBase::create( DataType::kind_t kind, const ArrayShape& shape )
+ArrayBase* ArrayBase::create( DataType datatype, const ArrayShape& shape )
 {
-  switch( kind )
+  switch( datatype.kind() )
   {
   case DataType::KIND_REAL64: return new Array<double>(shape);
   case DataType::KIND_REAL32: return new Array<float>(shape);
@@ -85,10 +85,6 @@ ArrayBase* ArrayBase::create( DataType::kind_t kind, const ArrayShape& shape )
   default: throw eckit::BadParameter("data kind not recognised");
   }
   return 0;
-}
-ArrayBase* ArrayBase::create( const std::string& datatype, const ArrayShape& shape )
-{
-  return create( DataType::datatype_to_kind(datatype),shape );
 }
 
 

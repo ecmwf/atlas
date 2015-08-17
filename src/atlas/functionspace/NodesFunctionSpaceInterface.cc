@@ -50,7 +50,7 @@ Nodes* atlas__NodesFunctionSpace__nodes(NodesFunctionSpace* This)
 Field* atlas__NodesFunctionSpace__create_field (const NodesFunctionSpace* This, const char* name, int kind )
 {
   ASSERT(This);
-  return This->createField(std::string(name),DataType::kind_t(kind));
+  return This->createField(std::string(name),DataType(kind));
 }
 
 Field* atlas__NodesFunctionSpace__create_field_vars (const NodesFunctionSpace* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind)
@@ -62,13 +62,13 @@ Field* atlas__NodesFunctionSpace__create_field_vars (const NodesFunctionSpace* T
     std::reverse_copy( variables, variables+variables_size,variables_.begin() );
   else
     variables_.assign(variables,variables+variables_size);
-  return This->createField(std::string(name),DataType::kind_t(kind),variables_);
+  return This->createField(std::string(name),DataType(kind),variables_);
 }
 
 Field* atlas__NodesFunctionSpace__create_field_lev (const NodesFunctionSpace* This, const char* name, int levels, int kind )
 {
   ASSERT(This);
-  return This->createField(std::string(name),DataType::kind_t(kind),size_t(levels));
+  return This->createField(std::string(name),DataType(kind),size_t(levels));
 }
 
 Field* atlas__NodesFunctionSpace__create_field_lev_vars (const NodesFunctionSpace* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind)
@@ -80,7 +80,7 @@ Field* atlas__NodesFunctionSpace__create_field_lev_vars (const NodesFunctionSpac
     std::reverse_copy( variables, variables+variables_size,variables_.begin() );
   else
     variables_.assign(variables,variables+variables_size);
-  return This->createField(std::string(name),DataType::kind_t(kind),size_t(levels),variables_);
+  return This->createField(std::string(name),DataType(kind),size_t(levels),variables_);
 }
 
 Field* atlas__NodesFunctionSpace__create_field_template (const NodesFunctionSpace* This, const char* name, const Field* field_template )
@@ -92,7 +92,7 @@ Field* atlas__NodesFunctionSpace__create_field_template (const NodesFunctionSpac
 Field* atlas__NodesFunctionSpace__create_global_field (const NodesFunctionSpace* This, const char* name, int kind )
 {
   ASSERT(This);
-  return This->createGlobalField(std::string(name),DataType::kind_t(kind));
+  return This->createGlobalField(std::string(name),DataType(kind));
 }
 
 Field* atlas__NodesFunctionSpace__create_global_field_vars (const NodesFunctionSpace* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind)
@@ -104,13 +104,13 @@ Field* atlas__NodesFunctionSpace__create_global_field_vars (const NodesFunctionS
     std::reverse_copy( variables, variables+variables_size, variables_.begin() );
   else
     variables_.assign(variables,variables+variables_size);
-  return This->createGlobalField(std::string(name),DataType::kind_t(kind),variables_);
+  return This->createGlobalField(std::string(name),DataType(kind),variables_);
 }
 
 Field* atlas__NodesFunctionSpace__create_global_field_lev (const NodesFunctionSpace* This, const char* name, int levels, int kind )
 {
   ASSERT(This);
-  return This->createGlobalField(std::string(name),DataType::kind_t(kind),size_t(levels));
+  return This->createGlobalField(std::string(name),DataType(kind),size_t(levels));
 }
 
 Field* atlas__NodesFunctionSpace__create_global_field_lev_vars (const NodesFunctionSpace* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind)
@@ -122,7 +122,7 @@ Field* atlas__NodesFunctionSpace__create_global_field_lev_vars (const NodesFunct
     std::reverse_copy( variables, variables+variables_size, variables_.begin() );
   else
     variables_.assign(variables,variables+variables_size);
-  return This->createGlobalField(std::string(name),DataType::kind_t(kind),size_t(levels),variables_);
+  return This->createGlobalField(std::string(name),DataType(kind),size_t(levels),variables_);
 }
 
 Field* atlas__NodesFunctionSpace__create_global_field_template (const NodesFunctionSpace* This, const char* name, const Field* field_template )

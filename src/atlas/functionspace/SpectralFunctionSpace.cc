@@ -76,11 +76,11 @@ void SpectralFunctionSpace::gather( const FieldSet& local_fieldset, FieldSet& gl
 
     const Field& loc = local_fieldset[f];
     Field& glb = global_fieldset[f];
-    if( loc.datatype() != DataType::datatype<double>() )
+    if( loc.datatype() != DataType::str<double>() )
     {
       std::stringstream err;
-      err << "Cannot gather spectral field " << loc.name() << " of datatype " << loc.datatype() << ".";
-      err << "Only " << DataType::datatype<double>() << " supported.";
+      err << "Cannot gather spectral field " << loc.name() << " of datatype " << loc.datatype().str() << ".";
+      err << "Only " << DataType::str<double>() << " supported.";
       throw eckit::BadValue(err.str());
     }
 
@@ -117,11 +117,11 @@ void SpectralFunctionSpace::scatter( const FieldSet& global_fieldset, FieldSet& 
 
     const Field& glb = global_fieldset[f];
     Field& loc = local_fieldset[f];
-    if( loc.datatype() != DataType::datatype<double>() )
+    if( loc.datatype() != DataType::str<double>() )
     {
       std::stringstream err;
-      err << "Cannot scatter spectral field " << glb.name() << " of datatype " << glb.datatype() << ".";
-      err << "Only " << DataType::datatype<double>() << " supported.";
+      err << "Cannot scatter spectral field " << glb.name() << " of datatype " << glb.datatype().str() << ".";
+      err << "Only " << DataType::str<double>() << " supported.";
       throw eckit::BadValue(err.str());
     }
 

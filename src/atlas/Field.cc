@@ -70,16 +70,16 @@ Field* Field::create( const ArrayShape& shape, const std::string& datatype )
 
 // -------------------------------------------------------------------------
 
-Field::Field(DataType::kind_t kind, const ArrayShape& shape):
+Field::Field(DataType datatype, const ArrayShape& shape):
   name_(), nb_levels_(0), function_space_(0)
 {
-  array_.reset( ArrayBase::create(kind,shape) );
+  array_.reset( ArrayBase::create(datatype,shape) );
 }
 
-Field::Field(const std::string& name, DataType::kind_t kind, const ArrayShape& shape):
+Field::Field(const std::string& name, DataType datatype, const ArrayShape& shape):
   name_(name), nb_levels_(0), function_space_(0)
 {
-  array_.reset( ArrayBase::create(kind,shape) );
+  array_.reset( ArrayBase::create(datatype,shape) );
 }
 
 //Field::Field(DataType::kind_t kind, const ArrayShape& shape, const Indexing& index_type, const std::string& name):
@@ -172,7 +172,7 @@ void Field::dump(std::ostream& os) const
 void Field::print(std::ostream& os) const
 {
     os << "Field[name=" << name()
-       << ",datatype=" << datatype()
+       << ",datatype=" << datatype().str()
        << ",size=" << size()
        << ",shape=" << shape()
        << ",strides=" << strides()
@@ -242,7 +242,7 @@ const char* atlas__Field__name (Field* This)
 void atlas__Field__datatype (Field* This, char* &datatype, int &size, int &allocated)
 {
   ATLAS_ERROR_HANDLING(
-    std::string s = This->datatype();
+    std::string s = This->datatype().str();
     datatype = new char[s.size()+1];
     strcpy(datatype,s.c_str());
     allocated = true;
@@ -271,7 +271,7 @@ int atlas__Field__kind (Field* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This != NULL );
-    return This->kind();
+    return This->datatype().kind();
   );
   return 0;
 }

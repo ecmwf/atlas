@@ -28,13 +28,11 @@ namespace atlas {
 
 class ArrayBase : public eckit::Owned {
 public:
-  static ArrayBase* create( DataType::kind_t, const ArrayShape& );
-  static ArrayBase* create( const std::string& datatype, const ArrayShape& );
+  static ArrayBase* create( DataType, const ArrayShape& );
 
 public:
 
-  virtual std::string datatype() const = 0;
-  virtual DataType::kind_t kind() const = 0;
+  virtual DataType datatype() const = 0;
   virtual double bytes() const = 0;
   virtual void dump(std::ostream& os) const = 0;
 
@@ -112,8 +110,7 @@ public:
   const DATA_TYPE& operator()(const ArrayIdx& idx) const                              { return view_(idx); }
         DATA_TYPE& operator()(const ArrayIdx& idx)                                    { return view_(idx); }
 
-  virtual std::string datatype() const { return DataType::datatype<DATA_TYPE>(); }
-  virtual DataType::kind_t kind() const { return DataType::kind<DATA_TYPE>(); }
+  virtual DataType datatype() const { return DataType::create<DATA_TYPE>(); }
   virtual double bytes() const { return sizeof(DATA_TYPE)*size(); }
   virtual void dump(std::ostream& os) const;
 

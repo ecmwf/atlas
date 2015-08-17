@@ -47,20 +47,20 @@ public: // Static methods
   static Field* create( const std::string& name, const ArrayShape&, const std::string& datatype );
   template<typename DATATYPE>
   static Field* create( const std::string& name, const ArrayShape& shape ) {
-    return create( name,shape,DataType::datatype<DATATYPE>() );
+    return create( name,shape,DataType::str<DATATYPE>() );
   }
   static Field* create( const ArrayShape&, const std::string& datatype );
   template<typename DATATYPE>
   static Field* create( const ArrayShape& shape ) {
-    return create( shape, DataType::datatype<DATATYPE>() );
+    return create( shape, DataType::str<DATATYPE>() );
   }
 
 public: // methods
 
 // -- Constructor / Destructor
 
-  Field(DataType::kind_t, const ArrayShape& = ArrayShape());
-  Field(const std::string& name, DataType::kind_t, const ArrayShape& = ArrayShape());
+  Field(DataType, const ArrayShape& = ArrayShape());
+  Field(const std::string& name, DataType, const ArrayShape& = ArrayShape());
 
   Field();
 
@@ -80,11 +80,7 @@ public: // methods
 
   /// @brief Internal data type of field as string
   /// Any of [ int32 int64 real32 real64 ]
-  std::string datatype() const { return array_->datatype(); }
-
-  /// @brief Internal data type of field asa long integer type
-  /// Any of [ int32 int64 real32 real64 ]
-  DataType::kind_t kind() const { return array_->kind(); }
+  DataType datatype() const { return array_->datatype(); }
 
   /// @brief Name associated to this field
   const std::string& name() const { return name_; }

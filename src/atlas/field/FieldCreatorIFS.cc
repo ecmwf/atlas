@@ -49,7 +49,7 @@ Field* FieldCreatorIFS::create_field( const eckit::Parametrisation& params ) con
           << " or " << DataType::kind<double>() << "; received: " << kind << ") ";
       throw eckit::Exception(msg.str());      
     }
-    data_type = DataType::kind_to_datatype(kind);
+    data_type = DataType::kind_to_str(kind);
   }
 
   nblk = std::ceil(static_cast<double>(ngptot)/static_cast<double>(nproma));
