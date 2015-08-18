@@ -22,7 +22,7 @@ contains
   procedure :: name => Field__name
   procedure :: datatype => Field__datatype
   procedure :: metadata => Field__metadata
-  procedure :: function_space => Field__function_space
+  !procedure :: function_space => Field__function_space
   procedure, private :: shape_array => Field__shape_array
   procedure, private :: shape_idx   => Field__shape_idx
   procedure :: size => Field__size

@@ -200,7 +200,7 @@ Field* NodesFunctionSpace::createField(DataType datatype) const {
 
 Field* NodesFunctionSpace::createField(DataType datatype, size_t levels) const {
   Field* field = new Field(datatype,make_shape(nb_nodes(),levels));
-  field->nb_levels(levels);
+  field->set_levels(levels);
   return field;
 }
 
@@ -211,7 +211,7 @@ Field* NodesFunctionSpace::createField(const std::string& name,DataType datatype
 
 Field* NodesFunctionSpace::createField(const std::string& name,DataType datatype, size_t levels) const {
   Field* field = new Field(name,datatype,make_shape(nb_nodes(),levels));
-  field->nb_levels(levels);
+  field->set_levels(levels);
   return field;
 }
 
@@ -226,7 +226,7 @@ Field* NodesFunctionSpace::createField(DataType datatype, size_t levels, const s
   std::vector<size_t> shape(1,nb_nodes()); shape.push_back(levels);
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   Field* field = new Field(datatype,shape);
-  field->nb_levels(levels);
+  field->set_levels(levels);
   return field;
 }
 
@@ -241,7 +241,7 @@ Field* NodesFunctionSpace::createField(const std::string& name, DataType datatyp
   std::vector<size_t> shape(1,nb_nodes()); shape.push_back(levels);
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   Field* field = new Field(name,datatype,shape);
-  field->nb_levels(levels);
+  field->set_levels(levels);
   return field;
 }
 
@@ -250,7 +250,7 @@ Field* NodesFunctionSpace::createField(const Field& other) const {
   shape[0] = nb_nodes();
   Field* field = new Field(other.datatype(),shape);
   if( other.has_levels() )
-    field->nb_levels(field->shape(1));
+    field->set_levels(field->shape(1));
   return field;
 }
 
@@ -259,7 +259,7 @@ Field* NodesFunctionSpace::createField(const std::string& name, const Field& oth
   shape[0] = nb_nodes();
   Field* field = new Field(name,other.datatype(),shape);
   if( other.has_levels() )
-    field->nb_levels(field->shape(1));
+    field->set_levels(field->shape(1));
   return field;
 }
 
@@ -270,7 +270,7 @@ Field* NodesFunctionSpace::createGlobalField(DataType datatype) const {
 
 Field* NodesFunctionSpace::createGlobalField(DataType datatype, size_t levels) const {
   Field* field = new Field(datatype,make_shape(nb_nodes_global(),levels));
-  field->nb_levels(levels);
+  field->set_levels(levels);
   return field;
 }
 
@@ -281,7 +281,7 @@ Field* NodesFunctionSpace::createGlobalField(const std::string& name,DataType da
 
 Field* NodesFunctionSpace::createGlobalField(const std::string& name, DataType datatype, size_t levels) const {
   Field* field = new Field(name,datatype,make_shape(nb_nodes_global(),levels));
-  field->nb_levels(levels);
+  field->set_levels(levels);
   return field;
 }
 
@@ -296,7 +296,7 @@ Field* NodesFunctionSpace::createGlobalField(DataType datatype, size_t levels, c
   std::vector<size_t> shape(1,nb_nodes_global()); shape.push_back(levels);
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   Field* field = new Field(datatype,shape);
-  field->nb_levels(levels);
+  field->set_levels(levels);
   return field;
 }
 
@@ -311,7 +311,7 @@ Field* NodesFunctionSpace::createGlobalField(const std::string& name, DataType d
   std::vector<size_t> shape(1,nb_nodes_global()); shape.push_back(levels);
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   Field* field = new Field(name,datatype,shape);
-  field->nb_levels(levels);
+  field->set_levels(levels);
   return field;
 }
 
@@ -320,7 +320,7 @@ Field* NodesFunctionSpace::createGlobalField(const Field& other) const {
   shape[0] = nb_nodes_global();
   Field* field = new Field(other.datatype(),shape);
   if( other.has_levels() )
-    field->nb_levels(field->shape(1));
+    field->set_levels(field->shape(1));
   return field;
 }
 
@@ -329,7 +329,7 @@ Field* NodesFunctionSpace::createGlobalField(const std::string& name,const Field
   shape[0] = nb_nodes_global();
   Field* field = new Field(name,other.datatype(),shape);
   if( other.has_levels() )
-    field->nb_levels(field->shape(1));
+    field->set_levels(field->shape(1));
   return field;
 }
 

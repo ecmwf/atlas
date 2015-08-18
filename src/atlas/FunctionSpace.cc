@@ -198,11 +198,8 @@ Field& FunctionSpace::create_field<double>(const std::string& name, size_t nb_va
     return *field;
 
   field = new FieldT<double>(field_shape,Config("name",name));
-
-  // To be removed
-  field->set_function_space(*this);
-
   add(field);
+
   return *field;
 }
 
@@ -225,10 +222,6 @@ Field& FunctionSpace::create_field<float>(const std::string& name, size_t nb_var
     return *field;
 
   field = new FieldT<float>(field_shape,Config("name",name));
-
-  // To be removed
-  field->set_function_space(*this);
-
   add(field);
 
   return *field;
@@ -253,10 +246,6 @@ Field& FunctionSpace::create_field<int>(const std::string& name, size_t nb_vars,
     return *field;
 
   field = new FieldT<int>(field_shape,Config("name",name));
-
-  // To be removed
-  field->set_function_space(*this);
-
   add(field);
 
   return *field;
@@ -281,10 +270,6 @@ Field& FunctionSpace::create_field<long>(const std::string& name, size_t nb_vars
     return *field;
 
   field = new FieldT<long>(field_shape,Config("name",name));
-
-  // To be removed
-  field->set_function_space(*this);
-
   add(field);
 
   return *field;

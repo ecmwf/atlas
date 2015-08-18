@@ -71,13 +71,13 @@ Field* Field::create( const ArrayShape& shape, const std::string& datatype )
 // -------------------------------------------------------------------------
 
 Field::Field(DataType datatype, const ArrayShape& shape):
-  name_(), nb_levels_(0), function_space_(0)
+  name_(), nb_levels_(0)
 {
   array_.reset( ArrayBase::create(datatype,shape) );
 }
 
 Field::Field(const std::string& name, DataType datatype, const ArrayShape& shape):
-  name_(name), nb_levels_(0), function_space_(0)
+  name_(name), nb_levels_(0)
 {
   array_.reset( ArrayBase::create(datatype,shape) );
 }
@@ -89,22 +89,18 @@ Field::Field(const std::string& name, DataType datatype, const ArrayShape& shape
 //}
 
 Field::Field() :
-  name_(), nb_levels_(0), function_space_(0)
+  name_(), nb_levels_(0)
 {
 }
 
 Field::Field(const std::string& name) :
-  name_(name), nb_levels_(0), function_space_(0)
+  name_(name), nb_levels_(0)
 {
 }
 
 Field::Field(const eckit::Parametrisation& params) :
-  name_(), nb_levels_(0), function_space_(0)
+  name_(), nb_levels_(0)
 {
-  FunctionSpace::Id function_space;
-  if( params.get("function_space",function_space) )
-    function_space_ = &FunctionSpace::from_id(function_space);
-
   params.get("name",name_);
 }
 
@@ -192,28 +188,6 @@ void Field::resize(const ArrayShape& shape)
     array_->resize(shape);
 }
 
-
-
-// ===========================================
-// TO BE REMOVED
-
-
-FunctionSpace& Field::function_space() const {
-    if( !function_space_ )
-        throw eckit::Exception("Field "+name()+" is not associated to any FunctionSpace.");
-    return *function_space_;
-}
-
-void Field::set_function_space(const FunctionSpace& function_space)
-{
-  function_space_ = const_cast<FunctionSpace*>(&function_space);
-}
-
-
-// END TO BE REMOVED
-// ============================================
-
-
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
@@ -290,7 +264,7 @@ int atlas__Field__levels (Field* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This != NULL );
-    return 0;//This->levels();
+    return This->levels();
   );
   return 0;
 }
@@ -302,7 +276,8 @@ Metadata* atlas__Field__metadata (Field* This)
 
 FunctionSpace* atlas__Field__function_space (Field* This)
 {
-  return &This->function_space();
+  NOTIMP;
+  return 0;
 }
 
 void atlas__Field__shapef (Field* This, int* &shape, int &rank)

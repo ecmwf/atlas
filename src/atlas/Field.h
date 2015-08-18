@@ -124,8 +124,11 @@ public: // methods
 
   void dump(std::ostream& os) const;
 
+  /// Metadata that is more intrinsic to the Field, and queried often
+  /// --- Should the set_levels() be removed and be placed in a Derived Field class constructor?
   bool has_levels() const { return nb_levels_!= 0; }
-  void nb_levels(size_t n) { nb_levels_ = n; }
+  void set_levels(size_t n) { nb_levels_ = n; }
+  size_t levels() const { return nb_levels_; }
 
 private: // methods
 
@@ -142,30 +145,6 @@ private: // members
 protected: // members
 
   eckit::SharedPtr<ArrayBase> array_;
-
-// End of class Field
-
-//------------------------------------------------------------------------------------------------------
-
-/***************************************************************************/
-/* Public and private members and methods to be removed soon               */
-/***************************************************************************/
-private:
-
-  FunctionSpace* function_space_;
-
-public:
-
-  FunctionSpace& function_space() const;
-
-private:
-  friend class FunctionSpace;
-  friend class Nodes;
-  void set_function_space(const FunctionSpace& function_space);
-
-/***************************************************************************/
-/* End Public and private members and  methods to be removed soon          */
-/***************************************************************************/
 
 };
 
