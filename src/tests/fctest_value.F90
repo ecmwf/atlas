@@ -102,17 +102,6 @@ TEST( test_value_of_array )
 
 END_TEST
 
-TEST( test_value_array )
-  use atlas_module, Param => atlas_Value
-
-  type(atlas_Value) :: values(3)
-
-  values = (/ Param(10), Param(0.2), Param("bla") /)
-
-  call atlas_delete( values )
-
-END_TEST
-
 ! -----------------------------------------------------------------------------
 
 END_TESTSUITE
