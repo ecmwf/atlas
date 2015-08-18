@@ -65,6 +65,18 @@ Field& Nodes::add( Field* field )
   return *field;
 }
 
+void Nodes::remove_field(const std::string& name)
+{
+  if( ! has_field(name) )
+  {
+    std::stringstream msg;
+    msg << "Trying to remove field `"<<name<<"' in Nodes, but no field with this name is present in Nodes.";
+    throw eckit::Exception(msg.str(),Here());
+  }
+  fields_.erase(name);
+}
+
+
 const Field& Nodes::field(const std::string& name) const
 {
   if( ! has_field(name) )
@@ -79,16 +91,6 @@ const Field& Nodes::field(const std::string& name) const
 Field& Nodes::field(const std::string& name)
 {
   return const_cast<Field&>(static_cast<const Nodes*>(this)->field(name));
-}
-
-void Nodes::remove_field(const std::string& name)
-{
-  if( fields_.find(name)==fields_.end() ) {
-    std::stringstream msg;
-    msg << "Trying to remove field '"<<name<<"' from Nodes, but it is not present in Nodes.";
-    throw eckit::Exception(msg.str(),Here());
-  }
-  fields_.erase(name);
 }
 
 void Nodes::resize( size_t size )
@@ -123,8 +125,88 @@ Field& Nodes::field(size_t idx)
   return const_cast<Field&>(static_cast<const Nodes*>(this)->field(idx));
 }
 
+void Nodes::print(std::ostream& os) const
+{
+    os << "Nodes[\n";
+    os << "\t size=" << size() << ",\n";
+    os << "\t fields=\n";
+    for(size_t i = 0; i < nb_fields(); ++i)
+    {
+        os << "\t\t" << field(i);
+        if( i != nb_fields()-1 )
+          os << ",";
+        os << "\n";
+    }
+    os << "]";
+}
 
 //-----------------------------------------------------------------------------
+
+extern "C" {
+int atlas__Nodes__size (Nodes* This)
+{
+  ASSERT(This);
+  return This->size();
+}
+void atlas__Nodes__resize (Nodes* This, int size)
+{
+  ASSERT(This);
+  return This->resize(size);
+}
+int atlas__Nodes__nb_fields (Nodes* This)
+{
+  ASSERT(This);
+  return This->nb_fields();
+}
+
+Field* atlas__Nodes__add (Nodes* This, Field* field)
+{
+  ASSERT(This);
+  ASSERT(field);
+  return &This->add(field);
+}
+
+void atlas__Nodes__remove_field (Nodes* This, char* name)
+{
+  ASSERT(This);
+  This->remove_field(std::string(name));
+}
+
+int atlas__Nodes__has_field (Nodes* This, char* name)
+{
+  ASSERT(This);
+  return This->has_field(std::string(name));
+}
+
+Field* atlas__Nodes__field_by_name (Nodes* This, char* name)
+{
+  ASSERT(This);
+  return &This->field(std::string(name));
+}
+
+Field* atlas__Nodes__field_by_idx (Nodes* This, int idx)
+{
+  ASSERT(This);
+  return &This->field(idx);
+}
+
+Metadata* atlas__Nodes__metadata(Nodes* This)
+{
+  ASSERT(This);
+  return &This->metadata();
+}
+
+void atlas__Nodes__str (Nodes* This, char* &str, int &size)
+{
+  std::stringstream ss;
+  ss << *This;
+  std::string s = ss.str();
+  size = s.size();
+  str = new char[size+1];
+  strcpy(str,s.c_str());
+}
+
+}
 
 
 }  // namespace atlas

@@ -19,7 +19,7 @@ use atlas_grids_module
 use iso_c_binding
 implicit none
 type(atlas_Mesh) :: mesh
-type(atlas_FunctionSpace) :: func_space
+type(atlas_Nodes) :: nodes
 type(atlas_Field) :: field
 
 
@@ -66,7 +66,6 @@ TESTSUITE_WITH_FIXTURE(fctest_atlas_Mesh,fctest_atlas_Mesh_fixture)
 
 TESTSUITE_INIT
   call atlas_init()
-  call atlas_grids_load()
   mesh = atlas_Mesh()
 END_TESTSUITE_INIT
 
@@ -83,17 +82,21 @@ TEST( test_function_space )
 
   write(*,*) "test_function_space starting"
 
-  call mesh%create_function_space( "nodes", "P1-C", 10 )
-  func_space = mesh%function_space("nodes")
-  CHECK_EQUAL( func_space%name() , "nodes"  )
+  nodes = mesh%create_nodes(5)
+  FCTEST_CHECK_EQUAL( nodes%name() , "nodes"  )
+  FCTEST_CHECK_EQUAL( nodes%size() , 5  )
+  FCTEST_CHECK( nodes%has_field("partition") )
+  FCTEST_CHECK( nodes%has_field("remote_idx") )
+  call nodes%resize(10)
+  call atlas_log%info( nodes%str() )
 END_TEST
 
 ! -----------------------------------------------------------------------------
 
 TEST( test_field_name )
-  call func_space%create_field("field",1,atlas_real(c_double))
-  field = func_space%field("field")
-  CHECK_EQUAL( field%name() , "field" )
+  field = nodes%add( atlas_Field("field",atlas_real(c_double),(/nodes%size()/)) )
+  FCTEST_CHECK_EQUAL( field%name() , "field" )
+  call nodes%remove_field("field")
 END_TEST
 
 ! -----------------------------------------------------------------------------
@@ -111,8 +114,8 @@ TEST( test_field_metadata )
 
   write(*,*) "test_field_metadata starting"
 
-  call func_space%create_field("field_prop",1,atlas_real(c_float))
-  field = func_space%field("field_prop")
+  call nodes%create_field("field_prop",1,atlas_real(c_float))
+  field = nodes%field("field_prop")
 
   metadata = field%metadata()
 
@@ -147,12 +150,12 @@ TEST( test_field_metadata )
   CHECK( true  .eqv. .True.  )
   CHECK( false .eqv. .False. )
 
-  CHECK_EQUAL( int, 20 )
-  CHECK_CLOSE( real32, real(0.1,kind=c_float), real(0.,kind=c_float) )
-  CHECK_CLOSE( real64, real(0.2,kind=c_double), real(0.,kind=c_double) )
-  CHECK_EQUAL( string, "hello world" )
-  CHECK_EQUAL( arr_int32, (/1,2,3/) )
-  CHECK_EQUAL( arr_real32, (/1.1,2.1,3.7/) )
+  FCTEST_CHECK_EQUAL( int, 20 )
+  FCTEST_CHECK_CLOSE( real32, real(0.1,kind=c_float), real(0.,kind=c_float) )
+  FCTEST_CHECK_CLOSE( real64, real(0.2,kind=c_double), real(0.,kind=c_double) )
+  FCTEST_CHECK_EQUAL( string, "hello world" )
+  FCTEST_CHECK_EQUAL( arr_int32, (/1,2,3/) )
+  FCTEST_CHECK_EQUAL( arr_real32, (/1.1,2.1,3.7/) )
 
 END_TEST
 
@@ -165,24 +168,24 @@ TEST( test_field_size )
 
   write(*,*) "test_field_size starting"
 
-  call func_space%create_field("field_0",0,atlas_integer())
-  field = func_space%field("field_0")
+  call nodes%create_field("field_0",0,atlas_integer())
+  field = nodes%field("field_0")
   call field%access_data(fdata_int)
-  CHECK_EQUAL( field%datatype() , "int32" )
-  CHECK_EQUAL( size(fdata_int) , 0 )
+  FCTEST_CHECK_EQUAL( field%datatype() , "int32" )
+  FCTEST_CHECK_EQUAL( size(fdata_int) , 0 )
 
-  call func_space%create_field("field_1",1,atlas_real(c_float))
-  field = func_space%field("field_1")
+  call nodes%create_field("field_1",1,atlas_real(c_float))
+  field = nodes%field("field_1")
   call field%access_data(fdata_real32)
-  CHECK_EQUAL( field%datatype() , "real32" )
-  CHECK_EQUAL( size(fdata_real32) , 10 )
+  FCTEST_CHECK_EQUAL( field%datatype() , "real32" )
+  FCTEST_CHECK_EQUAL( size(fdata_real32) , 10 )
 
-  call func_space%create_field("field_2",2,atlas_real(c_double))
-  field = func_space%field("field_2")
+  call nodes%create_field("field_2",2,atlas_real(c_double))
+  field = nodes%field("field_2")
   call field%access_data(fdata_real64)
-  CHECK_EQUAL( field%name(), "field_2" )
-  CHECK_EQUAL( field%datatype() , "real64" )
-  CHECK_EQUAL( size(fdata_real64) , 20 )
+  FCTEST_CHECK_EQUAL( field%name(), "field_2" )
+  FCTEST_CHECK_EQUAL( field%datatype() , "real64" )
+  FCTEST_CHECK_EQUAL( size(fdata_real64) , 20 )
 
 END_TEST
 
@@ -194,24 +197,24 @@ TEST( test_create_remove )
 
   write(*,*) "test_create_remove starting"
 
-  call func_space%create_field("bla",1,atlas_integer())
-  field = func_space%field("bla")
-  CHECK_EQUAL( field%name(), "bla" )
+  call nodes%create_field("bla",1,atlas_integer())
+  field = nodes%field("bla")
+  FCTEST_CHECK_EQUAL( field%name(), "bla" )
 
-!  call func_space%remove_field("bla")
+!  call nodes%remove_field("bla")
 
-  call func_space%create_field("vector_field",3,atlas_real(c_float))
-  field = func_space%field("vector_field")
+  call nodes%create_field("vector_field",3,atlas_real(c_float))
+  field = nodes%field("vector_field")
   call field%access_data(vector)
-  CHECK_EQUAL( size(vector),   30 )
-  CHECK_EQUAL( size(vector,1), 3   )
-  CHECK_EQUAL( size(vector,2), 10   )
+  FCTEST_CHECK_EQUAL( size(vector),   30 )
+  FCTEST_CHECK_EQUAL( size(vector,1), 3   )
+  FCTEST_CHECK_EQUAL( size(vector,2), 10   )
 
-  call func_space%create_field("scalar_field",1,atlas_real(c_double))
-  field = func_space%field("scalar_field")
+  call nodes%create_field("scalar_field",1,atlas_real(c_double))
+  field = nodes%field("scalar_field")
   call field%access_data(scalar)
-  CHECK_EQUAL( size(scalar),   10 )
-  CHECK_EQUAL( size(scalar,1), 10  )
+  FCTEST_CHECK_EQUAL( size(scalar),   10 )
+  FCTEST_CHECK_EQUAL( size(scalar,1), 10  )
 END_TEST
 
 ! -----------------------------------------------------------------------------
@@ -223,32 +226,31 @@ TEST( test_fieldset )
   write(*,*) "test_fieldset starting"
 
   fieldset = atlas_FieldSet("fieldset")
-  func_space = mesh%function_space("nodes")
 
-  call fieldset%add_field( func_space%field("field_0") )
-  call fieldset%add_field( func_space%field("field_1") )
-  call fieldset%add_field( func_space%field("field_2") )
+  call fieldset%add_field( nodes%field("field_0") )
+  call fieldset%add_field( nodes%field("field_1") )
+  call fieldset%add_field( nodes%field("field_2") )
 
-  call fieldset%add_field( func_space%field("vector_field") )
+  call fieldset%add_field( nodes%field("vector_field") )
 
-  CHECK_EQUAL( fieldset%size(), 4 )
+  FCTEST_CHECK_EQUAL( fieldset%size(), 4 )
 
   field = fieldset%field(1)
-  CHECK_EQUAL( field%name(), "field_0" )
+  FCTEST_CHECK_EQUAL( field%name(), "field_0" )
   field = fieldset%field(2)
-  CHECK_EQUAL( field%name(), "field_1" )
+  FCTEST_CHECK_EQUAL( field%name(), "field_1" )
   field = fieldset%field(3)
-  CHECK_EQUAL( field%name(), "field_2" )
+  FCTEST_CHECK_EQUAL( field%name(), "field_2" )
   field = fieldset%field(4)
-  CHECK_EQUAL( field%name(), "vector_field" )
+  FCTEST_CHECK_EQUAL( field%name(), "vector_field" )
 
 
   call fieldset%get_array(fields)
-  CHECK_EQUAL( size(fields), 4 )
-  CHECK_EQUAL( fields(1)%name(), "field_0" )
-  CHECK_EQUAL( fields(2)%name(), "field_1" )
-  CHECK_EQUAL( fields(3)%name(), "field_2" )
-  CHECK_EQUAL( fields(4)%name(), "vector_field" )
+  FCTEST_CHECK_EQUAL( size(fields), 4 )
+  FCTEST_CHECK_EQUAL( fields(1)%name(), "field_0" )
+  FCTEST_CHECK_EQUAL( fields(2)%name(), "field_1" )
+  FCTEST_CHECK_EQUAL( fields(3)%name(), "field_2" )
+  FCTEST_CHECK_EQUAL( fields(4)%name(), "vector_field" )
 
   call atlas_delete(fieldset)
 END_TEST
@@ -256,7 +258,7 @@ END_TEST
 TEST( test_meshgen )
   type(atlas_ReducedGrid) :: grid
   type(atlas_Mesh) :: mesh
-  type(atlas_FunctionSpace) :: nodes, edges
+  type(atlas_FunctionSpace) :: edges
   type(atlas_Field) :: field
   integer, pointer :: bounds(:)
   integer(c_int), pointer :: ridx(:)
@@ -267,6 +269,7 @@ TEST( test_meshgen )
 
   grid = atlas_ReducedGrid("rgg.N24")
   mesh = atlas_generate_mesh(grid)
+  nodes = mesh%nodes()
 
 !  call atlas_generate_reduced_gaussian_grid(rgg,"T63")
   call atlas_build_parallel_fields(mesh)
@@ -276,8 +279,6 @@ TEST( test_meshgen )
   call atlas_build_pole_edges(mesh)
   call atlas_build_median_dual_mesh(mesh)
 
-  nodes = mesh%function_space("nodes")
-  call nodes%parallelise()
   bounds => nodes%shape()
 
   nnodes = bounds(2)
@@ -290,6 +291,11 @@ TEST( test_meshgen )
   enddo
 
   write(0,*) "nghost =",nghost
+
+
+  call atlas_log%info( nodes%str() )
+
+
 
   field = nodes%field("dual_volumes")
   call field%access_data(arr)

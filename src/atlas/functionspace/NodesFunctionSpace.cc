@@ -74,22 +74,20 @@ NodesFunctionSpace::NodesFunctionSpace(const std::string& name, Mesh& mesh, cons
   : next::FunctionSpace(name),
     mesh_(mesh),
     nodes_(mesh_.nodes()),
-    halo_(halo.size()),
+    halo_(halo),
     nb_nodes_(0),
     nb_nodes_global_(0),
-    nb_nodes_global_broadcasted_(0)
+    nb_nodes_global_foreach_rank_()
 {
-  if( ! mesh_.halo_exchange().has(halo_name()) && halo_ > 0)
+  actions::build_nodes_parallel_fields( mesh_.nodes() );
+  actions::build_periodic_boundaries(mesh_);
+
+  if( ! mesh_.halo_exchange().has(halo_name()) && halo_.size() > 0)
   {
     // Create new halo-exchange
     mpl::HaloExchange* halo_exchange = new mpl::HaloExchange( halo_name() );
 
-    // Set it up.
-    actions::build_nodes_parallel_fields( mesh_.nodes() );
-
-    actions::build_periodic_boundaries(mesh_);
-
-    actions::build_halo(mesh_,halo_);
+    actions::build_halo(mesh_,halo_.size());
 
     actions::renumber_nodes_glb_idx(mesh_.nodes());
 
@@ -97,7 +95,7 @@ NodesFunctionSpace::NodesFunctionSpace(const std::string& name, Mesh& mesh, cons
     Field& part = mesh_.nodes().partition();
 
     std::stringstream ss;
-    ss << "nb_nodes_including_halo["<<halo_<<"]";
+    ss << "nb_nodes_including_halo["<<halo_.size()<<"]";
     mesh.metadata().get(ss.str(),nb_nodes_);
 
     halo_exchange->setup(part.data<int>(),ridx.data<int>(),REMOTE_IDX_BASE,nb_nodes_);
@@ -107,7 +105,7 @@ NodesFunctionSpace::NodesFunctionSpace(const std::string& name, Mesh& mesh, cons
   }
   if( !nb_nodes_ ) {
     std::stringstream ss;
-    ss << "nb_nodes_including_halo["<<halo_<<"]";
+    ss << "nb_nodes_including_halo["<<halo_.size()<<"]";
     if( ! mesh.metadata().get(ss.str(),nb_nodes_) ) {
       nb_nodes_ = mesh_.nodes().metadata().get<size_t>("nb_owned");
     }
@@ -117,10 +115,6 @@ NodesFunctionSpace::NodesFunctionSpace(const std::string& name, Mesh& mesh, cons
   {
     // Create new gather_scatter
     mpl::GatherScatter* gather_scatter = new mpl::GatherScatter( gather_scatter_name() );
-
-    // Set it up.
-    if( halo_ == 0 )
-      actions::build_nodes_parallel_fields( mesh_.nodes() );
 
     Field& ridx = mesh_.nodes().remote_index();
     Field& part = mesh_.nodes().partition();
@@ -147,10 +141,6 @@ NodesFunctionSpace::NodesFunctionSpace(const std::string& name, Mesh& mesh, cons
     // Create new checksum
     mpl::Checksum* checksum = new mpl::Checksum( checksum_name() );
 
-    // Set it up.
-    if( halo_ == 0 )
-      actions::build_nodes_parallel_fields( mesh_.nodes() );
-
     Field& ridx = mesh_.nodes().remote_index();
     Field& part = mesh_.nodes().partition();
     Field& gidx = mesh_.nodes().global_index();
@@ -166,9 +156,9 @@ NodesFunctionSpace::NodesFunctionSpace(const std::string& name, Mesh& mesh, cons
   }
 
   nb_nodes_global_ = mesh_.gather_scatter().get(gather_scatter_name()).glb_dof();
-  nb_nodes_global_broadcasted_ = mesh_.gather_scatter().get(gather_scatter_name()).glb_dof(0);
+  const std::vector<int>& glb_dofs = mesh_.gather_scatter().get(gather_scatter_name()).glb_dofs();
+  nb_nodes_global_foreach_rank_.assign( glb_dofs.begin(), glb_dofs.end() );
 }
-
 NodesFunctionSpace::~NodesFunctionSpace() {}
 
 size_t NodesFunctionSpace::nb_nodes() const
@@ -181,9 +171,15 @@ size_t NodesFunctionSpace::nb_nodes_global() const
   return nb_nodes_global_;
 }
 
+
+std::vector<size_t> NodesFunctionSpace::nb_nodes_global_foreach_rank() const
+{
+  return nb_nodes_global_foreach_rank_;
+}
+
 std::string NodesFunctionSpace::halo_name() const
 {
-  std::stringstream ss; ss << "nodes_" << halo_;
+  std::stringstream ss; ss << "nodes_" << halo_.size();
   return ss.str();
 }
 
@@ -339,7 +335,7 @@ Field* NodesFunctionSpace::createGlobalField(const std::string& name,const Field
 
 void NodesFunctionSpace::haloExchange( FieldSet& fieldset ) const
 {
-  if( halo_ ) {
+  if( halo_.size() ) {
     const mpl::HaloExchange& halo_exchange = mesh_.halo_exchange().get(halo_name());
     for( size_t f=0; f<fieldset.size(); ++f ) {
       const Field& field = fieldset[f];
@@ -367,7 +363,7 @@ void NodesFunctionSpace::haloExchange( FieldSet& fieldset ) const
 }
 void NodesFunctionSpace::haloExchange( Field& field ) const
 {
-  if( halo_ ) {
+  if( halo_.size() ) {
     FieldSet fieldset;
     fieldset.add(field);
     haloExchange(fieldset);
@@ -547,7 +543,7 @@ void dispatch_sum( const NodesFunctionSpace& fs, const Field& field, T& result, 
     }
   }
   eckit::mpi::all_reduce(local_sum,result,eckit::mpi::sum());
-  N = fs.nb_nodes_global_broadcasted_ * arr.shape(1);
+  N = fs.nb_nodes_global_foreach_rank()[0] * arr.shape(1);
 }
 
 template< typename T >
@@ -620,7 +616,7 @@ void dispatch_sum( const NodesFunctionSpace& fs, const Field& field, std::vector
     }
   }
   eckit::mpi::all_reduce(local_sum,result,eckit::mpi::sum());
-  N = fs.nb_nodes_global_broadcasted_ * arr.shape(1);
+  N = fs.nb_nodes_global_foreach_rank()[0] * arr.shape(1);
 }
 
 template< typename T >
@@ -701,7 +697,7 @@ void dispatch_sum_per_level( const NodesFunctionSpace& fs, const Field& field, F
     }
   }
   eckit::mpi::all_reduce(sum_per_level.data(),sum.size(),eckit::mpi::sum());
-  N = fs.nb_nodes_global_broadcasted_;
+  N = fs.nb_nodes_global_foreach_rank()[0];
 }
 
 void sum_per_level( const NodesFunctionSpace& fs, const Field& field, Field& sum, size_t& N )
@@ -732,7 +728,7 @@ void dispatch_order_independent_sum_2d( const NodesFunctionSpace& fs , const Fie
   fs.gather(field,*global);
   result = std::accumulate(global->data<DATATYPE>(),global->data<DATATYPE>()+global->size(),0.);
   eckit::mpi::broadcast(result,root);
-  N = fs.nb_nodes_global_broadcasted_;
+  N = fs.nb_nodes_global_foreach_rank()[0];
 }
 
 template< typename T >
@@ -816,7 +812,7 @@ void dispatch_order_independent_sum_2d( const NodesFunctionSpace& fs, const Fiel
     }
   }
   eckit::mpi::broadcast(result,root);
-  N = fs.nb_nodes_global_broadcasted_;
+  N = fs.nb_nodes_global_foreach_rank()[0];
 }
 
 template< typename T >
@@ -926,7 +922,7 @@ void dispatch_order_independent_sum_per_level( const NodesFunctionSpace& fs, con
     }
   }
   eckit::mpi::broadcast(sumfield.data<T>(),sumfield.size(),root);
-  N = fs.nb_nodes_global_broadcasted_;
+  N = fs.nb_nodes_global_foreach_rank()[0];
 }
 
 void order_independent_sum_per_level( const NodesFunctionSpace& fs, const Field& field, Field& sum, size_t& N )

@@ -45,6 +45,7 @@ public:
 
     size_t nb_nodes() const;
     size_t nb_nodes_global() const; // Only on MPI rank 0, will this be different 0
+    std::vector<size_t> nb_nodes_global_foreach_rank() const;
 
     const Mesh& mesh() const { return mesh_; }
           Mesh& mesh()       { return mesh_; }
@@ -285,7 +286,7 @@ public:
     /// @param [out] N         Number of values used to create the means
     void meanAndStandardDeviationPerLevel( const Field&, Field& mean, Field& stddev, size_t& N ) const;
 
-protected: // methods
+private: // methods
 
     std::string halo_name() const;
     std::string gather_scatter_name() const;
@@ -295,12 +296,10 @@ private: // data
 
     Mesh& mesh_; // non-const because functionspace may modify mesh
     Nodes& nodes_; // non-const because functionspace may modify mesh
-    size_t halo_;
+    Halo halo_;
     size_t nb_nodes_;
     size_t nb_nodes_global_;
-
-public:
-    size_t nb_nodes_global_broadcasted_;
+    std::vector<size_t> nb_nodes_global_foreach_rank_;
 };
 
 // -------------------------------------------------------------------

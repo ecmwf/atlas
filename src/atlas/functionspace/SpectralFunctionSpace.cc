@@ -59,12 +59,20 @@ size_t SpectralFunctionSpace::nb_spectral_coefficients_global() const {
   return (truncation_+1)*(truncation_+2);
 }
 
-Field* SpectralFunctionSpace::createField(const std::string& name) {
+Field* SpectralFunctionSpace::createField(const std::string& name) const {
   return new field::FieldT<double>(name, make_shape(nb_spectral_coefficients()) );
 }
 
-Field* SpectralFunctionSpace::createGlobalField(const std::string& name) {
+Field* SpectralFunctionSpace::createField(const std::string& name, size_t levels) const {
+  return new field::FieldT<double>(name, make_shape(nb_spectral_coefficients(),levels) );
+}
+
+Field* SpectralFunctionSpace::createGlobalField(const std::string& name) const {
   return new field::FieldT<double>(name, make_shape(nb_spectral_coefficients_global()) );
+}
+
+Field* SpectralFunctionSpace::createGlobalField(const std::string& name, size_t levels) const {
+  return new field::FieldT<double>(name, make_shape(nb_spectral_coefficients_global(),levels) );
 }
 
 void SpectralFunctionSpace::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset ) const
@@ -160,33 +168,51 @@ std::string SpectralFunctionSpace::checksum( const Field& field ) const {
   return checksum(fieldset);
 }
 
-
 // ----------------------------------------------------------------------
 
-SpectralColumnFunctionSpace::SpectralColumnFunctionSpace(const std::string& name, const size_t truncation, const size_t nb_levels)
-  : SpectralFunctionSpace(name,truncation),
-    nb_levels_(nb_levels)
+
+extern "C"
 {
-}
-
-SpectralColumnFunctionSpace::SpectralColumnFunctionSpace(const std::string& name, trans::Trans& trans, const size_t nb_levels)
-  : SpectralFunctionSpace(name,trans),
-    nb_levels_(nb_levels)
+SpectralFunctionSpace* atlas__SpectralFunctionSpace__new__name_truncation (const char* name, int truncation)
 {
+  return new SpectralFunctionSpace(std::string(name),truncation);
 }
 
-SpectralColumnFunctionSpace::~SpectralColumnFunctionSpace() {}
-
-size_t SpectralColumnFunctionSpace::nb_levels() const {
-  return nb_levels_;
+SpectralFunctionSpace* atlas__SpectralFunctionSpace__new__name_trans (const char* name, trans::Trans* trans)
+{
+  return new SpectralFunctionSpace(std::string(name),*trans);
 }
 
-Field* SpectralColumnFunctionSpace::createField(const std::string& name) {
-  return new field::FieldT<double>(name, make_shape(nb_spectral_coefficients(),nb_levels_) );
+void atlas__SpectralFunctionSpace__delete (SpectralFunctionSpace* This)
+{
+  ASSERT(This);
+  delete This;
 }
 
-Field* SpectralColumnFunctionSpace::createGlobalField(const std::string& name) {
-  return new field::FieldT<double>(name, make_shape(nb_spectral_coefficients_global(),nb_levels_) );
+Field* atlas__SpectralFunctionSpace__create_field (const SpectralFunctionSpace* This, const char* name)
+{
+  ASSERT(This);
+  return This->createField(std::string(name));
+}
+
+Field* atlas__SpectralFunctionSpace__create_field_lev (const SpectralFunctionSpace* This, const char* name, int levels)
+{
+  ASSERT(This);
+  return This->createField(std::string(name),levels);
+}
+
+Field* atlas__SpectralFunctionSpace__create_global_field (const SpectralFunctionSpace* This, const char* name)
+{
+  ASSERT(This);
+  return This->createGlobalField(std::string(name));
+}
+
+Field* atlas__SpectralFunctionSpace__create_global_field_lev (const SpectralFunctionSpace* This, const char* name, int levels)
+{
+  ASSERT(This);
+  return This->createGlobalField(std::string(name),levels);
+}
+
 }
 
 } // namespace functionspace

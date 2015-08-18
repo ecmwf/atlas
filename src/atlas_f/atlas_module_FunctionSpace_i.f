@@ -83,4 +83,14 @@ END TYPE atlas_FunctionSpace
 
 TYPE, extends(atlas_FunctionSpace) :: atlas_Nodes
 contains
+procedure :: size => Nodes__size
+procedure :: resize => Nodes__resize
+procedure :: add => Nodes__add
+procedure :: remove_field => Nodes__remove_field
+procedure :: field_by_idx  => Nodes__field_by_idx
+procedure :: field_by_name => Nodes__field_by_name
+procedure :: nb_fields => Nodes__nb_fields
+procedure, public :: has_field => Nodes__has_field
+procedure :: metadata => Nodes__metadata
+procedure :: str => Nodes__str
 END TYPE

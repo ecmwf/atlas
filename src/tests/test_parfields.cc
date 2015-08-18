@@ -33,16 +33,37 @@
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
 #include "atlas/util/Bitflags.h"
-#include "atlas/util/IsGhost.h"
 
 using atlas::util::Topology;
-using atlas::util::IsGhost;
 
 using namespace atlas::io;
 using namespace atlas::meshgen;
 
 namespace atlas {
 namespace test {
+
+class IsGhost
+{
+public:
+  IsGhost( const Nodes& nodes )
+  {
+    part_   = ArrayView<int,1> (nodes.partition() );
+    ridx_   = IndexView<int,1> (nodes.remote_index() );
+    mypart_ = eckit::mpi::rank();
+  }
+
+  bool operator()(size_t idx) const
+  {
+    if( part_[idx] != mypart_ ) return true;
+    if( ridx_[idx] != idx     ) return true;
+    return false;
+  }
+private:
+  int mypart_;
+  ArrayView<int,1> part_;
+  IndexView<int,1> ridx_;
+};
+
 
 #define DISABLE if(0)
 #define ENABLE if(1)

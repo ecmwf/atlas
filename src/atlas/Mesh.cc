@@ -191,10 +191,19 @@ FunctionSpace* atlas__Mesh__function_space (Mesh* This, char* name) {
   return NULL;
 }
 
-Grid* atlas__Mesh__grid (Mesh* This) {
+Nodes* atlas__Mesh__create_nodes (Mesh* This, int nb_nodes)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This );
+    return &This->createNodes(nb_nodes);
+  );
+  return NULL;
+}
+
+Nodes* atlas__Mesh__nodes (Mesh* This) {
   ATLAS_ERROR_HANDLING(
     ASSERT( This != NULL );
-    return const_cast<Grid*>(&This->grid());
+    return &This->nodes();
   );
   return NULL;
 }

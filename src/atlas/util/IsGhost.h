@@ -16,6 +16,7 @@
 #include "atlas/Field.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
+#include "atlas/util/Bitflags.h"
 
 namespace atlas {
 namespace util {
@@ -25,27 +26,24 @@ class IsGhost
 public:
   IsGhost( const Nodes& nodes )
   {
-    part_   = ArrayView<int,1> (nodes.partition() );
-    ridx_   = IndexView<int,1> (nodes.remote_index() );
-    mypart_ = eckit::mpi::rank();
-  }
-  IsGhost( const Nodes& nodes, int mypart )
-  {
-    part_   = ArrayView<int,1> (nodes.partition() );
-    ridx_   = IndexView<int,1> (nodes.remote_index() );
-    mypart_ = mypart;
+//    part_   = ArrayView<int,1> (nodes.partition() );
+//    ridx_   = IndexView<int,1> (nodes.remote_index() );
+//    mypart_ = eckit::mpi::rank();
+  flags_ = ArrayView<int,1> (nodes.field("flags"));
   }
 
-  bool operator()(int idx) const
+  bool operator()(size_t idx) const
   {
-    if( part_[idx] != mypart_ ) return true;
-    if( ridx_[idx] != idx     ) return true;
-    return false;
+//    if( part_[idx] != mypart_ ) return true;
+//    if( ridx_[idx] != idx     ) return true;
+//    return false;
+    return Topology::check(flags_(idx),Topology::GHOST);
   }
 private:
-  int mypart_;
-  ArrayView<int,1> part_;
-  IndexView<int,1> ridx_;
+//  int mypart_;
+//  ArrayView<int,1> part_;
+//  IndexView<int,1> ridx_;
+  ArrayView<int,1> flags_;
 };
 
 } // namespace util

@@ -23,6 +23,8 @@ contains
   procedure, private :: create_function_space_shape => Mesh__create_function_space_shape
   generic :: create_function_space => create_function_space_nodes, create_function_space_shape
   procedure :: function_space => Mesh__function_space
+  procedure :: create_nodes => Mesh__create_nodes
+  procedure :: nodes => Mesh__nodes
 END TYPE atlas_Mesh
 
 interface atlas_Mesh

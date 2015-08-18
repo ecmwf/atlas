@@ -43,15 +43,16 @@ TEST( test_trans )
   type(atlas_ReducedGrid) :: grid
   type(atlas_Mesh) :: mesh
   type(atlas_Trans) :: trans
-  type(atlas_Functionspace) :: nodes
-  type(atlas_Functionspace) :: spectral
+  type(atlas_Nodes) :: nodes
+  type(atlas_NodesFunctionSpace) :: nodes_fs
+  type(atlas_SpectralFunctionspace) :: spectral_fs
   type(atlas_Field)         :: scalarfield1, scalarfield2
   type(atlas_Field)         :: windfield
   type(atlas_Field)         :: vorfield,divfield
   type(atlas_Field)         :: spectralfield1, spectralfield2
   type(atlas_FieldSet)      :: scalarfields
   type(atlas_FieldSet)      :: spectralfields
-  real(c_double), pointer :: scal1(:,:), scal2(:,:), spec1(:,:), spec2(:,:), wind(:,:,:), vor(:,:), div(:,:)
+  real(c_double), pointer :: scal1(:,:), scal2(:), spec1(:,:), spec2(:), wind(:,:,:), vor(:,:), div(:,:)
   real(c_double), allocatable :: check(:)
   integer :: nlev, nsmax, jn, in, jlev
   integer, pointer :: nvalue(:)
@@ -59,8 +60,8 @@ TEST( test_trans )
 
   real(c_double) :: tol
 
-  tol = 1.e-12
-  nlev=100
+  tol = 1.e-8
+  nlev=10
   nsmax = 21
 
   grid = atlas_ReducedGrid("oct.N24")
@@ -76,32 +77,31 @@ TEST( test_trans )
   FCTEST_CHECK_EQUAL( trans%ngptotg(), grid%npts() )
   FCTEST_CHECK_EQUAL( trans%nsmax(), nsmax )
 
-  nodes = mesh%function_space("nodes")
-  call nodes%create_field("scalar1",nlev)
-  scalarfield1 = nodes%field("scalar1")
-  call nodes%create_field("scalar2",1)
-  scalarfield2 = nodes%field("scalar2")
+  nodes = mesh%nodes()
+  nodes_fs = atlas_NodesFunctionSpace("nodes",mesh,0)
+  scalarfield1 = nodes_fs%create_field("scalar1",atlas_real(c_double),nlev)
+  scalarfield2 = nodes_fs%create_field("scalar2",atlas_real(c_double))
 
-  ! note this is in C++ ordering for now (TODO fix)
-  call mesh%create_function_space("spectral","spectral",(/ATLAS_FIELD_NB_VARS,trans%nspec2()/))
-  spectral = mesh%function_space("spectral")
-  call spectral%create_field("spectral1",nlev)
-  spectralfield1 = spectral%field("spectral1")
-  call spectral%create_field("spectral2",1)
-  spectralfield2 = spectral%field("spectral2")
+  spectral_fs = atlas_SpectralFunctionSpace("spectral",trans)
+  spectralfield1 = spectral_fs%create_field("spectral1",nlev)
+  spectralfield2 = spectral_fs%create_field("spectral2")
 
   call scalarfield1%access_data(scal1)
   call scalarfield2%access_data(scal2)
   call spectralfield1%access_data(spec1)
   call spectralfield2%access_data(spec2)
 
-  spec1(:,:) = 0
-  spec1(:,1) = 3
-  spec2(:,:) = 0
-  spec2(:,1) = 4
+  write(0,*) "shape = ", spectralfield2%shape()
 
-  call trans%invtrans(spectralfield1,scalarfield1)
-  call trans%dirtrans(scalarfield1,spectralfield1)
+  ! All waves to zero except wave 1 to 3
+  spec1(1:nlev,:) = 0
+  spec1(1:nlev,1) = 3
+  ! All waves to zero except wave 1 to 4
+  spec2(:) = 0
+  spec2(1) = 4
+
+  call trans%invtrans(spectral_fs,spectralfield1,nodes_fs,scalarfield1)
+  call trans%dirtrans(nodes_fs,scalarfield1,spectral_fs,spectralfield1)
 
   allocate( check(nlev) )
   check(:) = 3
@@ -116,8 +116,8 @@ TEST( test_trans )
   call spectralfields%add_field(spectralfield1)
   call spectralfields%add_field(spectralfield2)
 
-  call trans%invtrans(spectralfields,scalarfields)
-  call trans%dirtrans(scalarfields,spectralfields)
+  call trans%invtrans(spectral_fs,spectralfields,nodes_fs,scalarfields)
+  call trans%dirtrans(nodes_fs,scalarfields,spectral_fs,spectralfields)
 
   allocate( check(nlev) )
   check(:) = 3
@@ -129,30 +129,22 @@ TEST( test_trans )
   FCTEST_CHECK_CLOSE( spec1(:,5), check, tol )
   deallocate( check )
 
-  allocate( check(1) )
-  check(:) = 4
-  FCTEST_CHECK_CLOSE( spec2(:,1), check, tol )
-  check(:) = 0
-  FCTEST_CHECK_CLOSE( spec2(:,2), check, tol )
-  FCTEST_CHECK_CLOSE( spec2(:,3), check, tol )
-  FCTEST_CHECK_CLOSE( spec2(:,4), check, tol )
-  FCTEST_CHECK_CLOSE( spec2(:,5), check, tol )
-  deallocate( check )
+  FCTEST_CHECK_CLOSE( spec2(1), 4._c_double, tol )
+  FCTEST_CHECK_CLOSE( spec2(2), 0._c_double, tol )
+  FCTEST_CHECK_CLOSE( spec2(3), 0._c_double, tol )
+  FCTEST_CHECK_CLOSE( spec2(4), 0._c_double, tol )
+  FCTEST_CHECK_CLOSE( spec2(5), 0._c_double, tol )
 
+  windfield = nodes_fs%create_field("wind",atlas_real(c_double),nlev,(/3/))
+  call windfield%access_data(wind)
 
-  call nodes%create_field("wind",3*nlev)
-  windfield = nodes%field("wind")
-  call windfield%access_data(wind,(/3,nlev,nodes%dof()/))
+  vorfield = spectral_fs%create_field("vorticity",nlev)
+  call vorfield%access_data(vor)
 
-  call spectral%create_field("vorticity",nlev)
-  vorfield = spectral%field("vorticity")
-  call vorfield%access_data(vor,(/nlev,trans%nspec2()/))
+  divfield =  spectral_fs%create_field("divergence",nlev)
+  call divfield%access_data(div)
 
-  call spectral%create_field("divergence",nlev)
-  divfield = spectral%field("divergence")
-  call vorfield%access_data(div,(/nlev,trans%nspec2()/))
-
-  call trans%dirtrans_wind2vordiv(windfield,vorfield,divfield)
+  call trans%dirtrans_wind2vordiv(nodes_fs,windfield,spectral_fs,vorfield,divfield)
 
   nvalue => trans%nvalue()
   FCTEST_CHECK_EQUAL( size(nvalue), trans%nspec2() )
@@ -166,11 +158,20 @@ TEST( test_trans )
     enddo
   enddo
 
-  call trans%invtrans_vordiv2wind(vorfield,divfield,windfield)
+  call trans%invtrans_vordiv2wind(spectral_fs,vorfield,divfield,nodes_fs,windfield)
 
   allocate( vorg( nlev, trans%nspec2g() ) )
   call trans%gathspec(vor,vorg)
 
+  call atlas_delete(nodes_fs)
+  call atlas_delete(spectral_fs)
+  call atlas_delete(scalarfield1)
+  call atlas_delete(scalarfield2)
+  call atlas_delete(spectralfield1)
+  call atlas_delete(spectralfield2)
+  call atlas_delete(windfield)
+  call atlas_delete(vorfield)
+  call atlas_delete(divfield)
   call atlas_delete(scalarfields)
   call atlas_delete(spectralfields)
   call atlas_delete(mesh)

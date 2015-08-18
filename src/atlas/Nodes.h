@@ -79,9 +79,9 @@ public: // methods
 
   void resize( size_t );
 
-private:
-
   void remove_field(const std::string& name);
+
+private:
 
   template< typename DATA_TYPE >
   Field& create_field(const std::string& name, size_t nb_vars, CreateBehavior b = IF_EXISTS_FAIL );
@@ -104,7 +104,12 @@ private:
 
   size_t glb_dof() const;
 
-  void print(std::ostream&, bool dump = false) const;
+  void print(std::ostream&) const;
+
+  friend std::ostream& operator<<(std::ostream& s, const Nodes& p) {
+      p.print(s);
+      return s;
+  }
 
 private:
 
@@ -126,6 +131,22 @@ private:
   Field* lonlat_;
 
 };
+
+#define Char char
+extern "C"
+{
+int atlas__Nodes__size (Nodes* This);
+void atlas__Nodes__resize (Nodes* This, int size);
+int atlas__Nodes__nb_fields (Nodes* This);
+Field* atlas__Nodes__add (Nodes* This, Field* field);
+void atlas__Nodes__remove_field (Nodes* This, char* name);
+int atlas__Nodes__has_field (Nodes* This, char* name);
+Field* atlas__Nodes__field_by_name (Nodes* This, char* name);
+Field* atlas__Nodes__field_by_idx (Nodes* This, int idx);
+Metadata* atlas__Nodes__metadata(Nodes* This);
+void atlas__Nodes__str (Nodes* This, Char* &str, int &size);
+}
+#undef Char
 
 //------------------------------------------------------------------------------------------------------
 

@@ -29,6 +29,8 @@
 #include "atlas/Mesh.h"
 #include "atlas/Nodes.h"
 #include "atlas/FunctionSpace.h"
+#include "atlas/functionspace/SpectralFunctionSpace.h"
+#include "atlas/functionspace/NodesFunctionSpace.h"
 
 #include "transi/trans.h"
 
@@ -257,24 +259,24 @@ BOOST_AUTO_TEST_CASE( test_spectral_fields )
 
   trans::Trans trans(*g,47);
 
-  Nodes& nodes = m->nodes();
-  FunctionSpace& spectral =
-    m->create_function_space ("spectral","spectral",make_shape(trans.nspec2(),FunctionSpace::UNDEF_VARS));
+  functionspace::NodesFunctionSpace nodal("nodal",*m);
+  functionspace::SpectralFunctionSpace spectral("spectral",trans);
 
-  Field& gpf = nodes.add( Field::create<double>("gpf",make_shape(nodes.size(),1)) );
-  Field& spf = spectral.create_field<double>("spf",1);
+  eckit::ScopedPtr<Field> spf ( spectral.createField("spf") );
+  eckit::ScopedPtr<Field> gpf ( nodal.createField<double>("gpf") );
 
-  BOOST_CHECK_NO_THROW( trans.dirtrans(gpf,spf) );
-  BOOST_CHECK_NO_THROW( trans.invtrans(spf,gpf) );
 
-  FieldSet gpfields;   gpfields.add(gpf);
-  FieldSet spfields;   spfields.add(spf);
+  BOOST_CHECK_NO_THROW( trans.dirtrans(nodal,*gpf,spectral,*spf) );
+  BOOST_CHECK_NO_THROW( trans.invtrans(spectral,*spf,nodal,*gpf) );
 
-  BOOST_CHECK_NO_THROW( trans.dirtrans(gpfields,spfields) );
-  BOOST_CHECK_NO_THROW( trans.invtrans(spfields,gpfields) );
+  FieldSet gpfields;   gpfields.add(*gpf);
+  FieldSet spfields;   spfields.add(*spf);
 
-  gpfields.add(gpf);
-  BOOST_CHECK_THROW(trans.dirtrans(gpfields,spfields),eckit::SeriousBug);
+  BOOST_CHECK_NO_THROW( trans.dirtrans(nodal,gpfields,spectral,spfields) );
+  BOOST_CHECK_NO_THROW( trans.invtrans(spectral,spfields,nodal,gpfields) );
+
+  gpfields.add(*gpf);
+  BOOST_CHECK_THROW(trans.dirtrans(nodal,gpfields,spectral,spfields),eckit::SeriousBug);
 
 }
 

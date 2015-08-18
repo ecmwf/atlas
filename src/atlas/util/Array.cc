@@ -78,11 +78,15 @@ ArrayBase* ArrayBase::create( DataType datatype, const ArrayShape& shape )
 {
   switch( datatype.kind() )
   {
-  case DataType::KIND_REAL64: return new Array<double>(shape);
-  case DataType::KIND_REAL32: return new Array<float>(shape);
-  case DataType::KIND_INT32:  return new Array<int>(shape);
-  case DataType::KIND_INT64:  return new Array<long>(shape);
-  default: throw eckit::BadParameter("data kind not recognised");
+    case DataType::KIND_REAL64: return new Array<double>(shape);
+    case DataType::KIND_REAL32: return new Array<float>(shape);
+    case DataType::KIND_INT32:  return new Array<int>(shape);
+    case DataType::KIND_INT64:  return new Array<long>(shape);
+    default:
+    {
+      std::stringstream err; err << "data kind " << datatype.kind() << " not recognised.";
+      throw eckit::BadParameter(err.str(),Here());
+    }
   }
   return 0;
 }

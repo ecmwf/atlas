@@ -34,10 +34,12 @@ public:
   virtual ~SpectralFunctionSpace();
 
   /// @brief Create a spectral field
-  virtual Field* createField(const std::string& name);
+  Field* createField(const std::string& name) const;
+  Field* createField(const std::string& name, size_t levels) const;
 
   /// @brief Create a global spectral field
-  virtual Field* createGlobalField(const std::string& name);
+  Field* createGlobalField(const std::string& name) const;
+  Field* createGlobalField(const std::string& name, size_t levels) const;
 
   void gather( const FieldSet&, FieldSet& ) const;
   void gather( const Field&, Field& ) const;
@@ -62,34 +64,24 @@ private: // data
 };
 
 // -------------------------------------------------------------------
-
-
-class SpectralColumnFunctionSpace : public SpectralFunctionSpace
+// C wrapper interfaces to C++ routines
+#define Trans trans::Trans
+extern "C"
 {
-public:
+  SpectralFunctionSpace* atlas__SpectralFunctionSpace__new__name_truncation (const char* name, int truncation);
+  SpectralFunctionSpace* atlas__SpectralFunctionSpace__new__name_trans (const char* name, Trans* trans);
+  void atlas__SpectralFunctionSpace__delete (SpectralFunctionSpace* This);
 
-  SpectralColumnFunctionSpace(const std::string& name, const size_t truncation, const size_t nb_levels);
+  Field* atlas__SpectralFunctionSpace__create_field (const SpectralFunctionSpace* This, const char* name);
 
-  SpectralColumnFunctionSpace(const std::string& name, trans::Trans&, const size_t nb_levels);
+  Field* atlas__SpectralFunctionSpace__create_field_lev (const SpectralFunctionSpace* This, const char* name, int levels);
 
-  virtual ~SpectralColumnFunctionSpace();
+  Field* atlas__SpectralFunctionSpace__create_global_field (const SpectralFunctionSpace* This, const char* name);
 
-  /// @brief Create a spectral field
-  virtual Field* createField(const std::string& name);
+  Field* atlas__SpectralFunctionSpace__create_global_field_lev (const SpectralFunctionSpace* This, const char* name, int levels);
 
-  /// @brief Create a global spectral field
-  virtual Field* createGlobalField(const std::string& name);
-
-public: // methods
-
-  size_t nb_levels() const;
-
-private: // data
-
-  size_t nb_levels_;
-
-};
-
+}
+#undef Trans
 
 } // namespace functionspace
 } // namespace atlas

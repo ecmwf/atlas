@@ -57,7 +57,8 @@ END TYPE atlas_Field
 
 interface atlas_Field
   module procedure atlas_Field__create
-  module procedure atlas_Field__create_arrayspec
+  module procedure atlas_Field__create_name_kind_shape
+  module procedure atlas_Field__create_kind_shape
 end interface
 
 !------------------------------------------------------------------------------

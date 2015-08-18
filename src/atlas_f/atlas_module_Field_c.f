@@ -10,11 +10,11 @@ function atlas_Field__create(params) result(field)
   field%cpp_object_ptr = atlas__Field__create(params%cpp_object_ptr)
 end function
 
-function atlas_Field__create_arrayspec(shape,kind,name) result(field)
+function atlas_Field__create_name_kind_shape(name,kind,shape) result(field)
   type(atlas_Field) :: field
+  character(len=*), intent(in) :: name
+  integer, intent(in) :: kind
   integer, intent(in) :: shape(:)
-  integer, intent(in), optional :: kind
-  character(len=*), intent(in), optional :: name
 
   type(atlas_Config) :: params
 
@@ -22,13 +22,32 @@ function atlas_Field__create_arrayspec(shape,kind,name) result(field)
   call params%set("creator","ArraySpec")
   call params%set("shape",shape)
   call params%set("fortran",.True.)
-  if( present(kind) ) call params%set("data_type",atlas_data_type(kind))
-  if( present(name) ) call params%set("name",name)
+  call params%set("data_type",atlas_data_type(kind))
+  call params%set("name",name)
 
   field%cpp_object_ptr = atlas__Field__create(params%cpp_object_ptr)
 
   call atlas_delete(params)
 end function
+
+function atlas_Field__create_kind_shape(kind,shape) result(field)
+  type(atlas_Field) :: field
+  integer, intent(in) :: kind
+  integer, intent(in) :: shape(:)
+
+  type(atlas_Config) :: params
+
+  params = atlas_Config()
+  call params%set("creator","ArraySpec")
+  call params%set("shape",shape)
+  call params%set("fortran",.True.)
+  call params%set("data_type",atlas_data_type(kind))
+
+  field%cpp_object_ptr = atlas__Field__create(params%cpp_object_ptr)
+
+  call atlas_delete(params)
+end function
+
 
 subroutine atlas_Field__delete(this)
   class(atlas_Field), intent(inout) :: this

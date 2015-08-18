@@ -68,12 +68,12 @@ FCTEST_CHECK_EQUAL( field%name() , "field" )
 FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
 call atlas_delete(field)
 
-field = fs%create_field((/2/),atlas_real(c_float))
+field = fs%create_field(atlas_real(c_float),(/2/))
 FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 call atlas_delete(field)
 
-field = fs%create_field("field",(/2,2/),atlas_integer(c_int))
+field = fs%create_field("field",atlas_integer(c_int),(/2,2/))
 FCTEST_CHECK_EQUAL( field%rank() , 3 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 template = field
@@ -102,12 +102,12 @@ FCTEST_CHECK_EQUAL( field%name() , "field" )
 FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
 call atlas_delete(field)
 
-field = fs%create_global_field((/2/),atlas_real(c_float))
+field = fs%create_global_field(atlas_real(c_float),(/2/))
 FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 call atlas_delete(field)
 
-field = fs%create_global_field("field",(/2,2/),atlas_integer(c_int))
+field = fs%create_global_field("field",atlas_integer(c_int),(/2,2/))
 FCTEST_CHECK_EQUAL( field%rank() , 3 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 template = field
@@ -148,24 +148,24 @@ fs = atlas_NodesFunctionSpace(mesh,halo_size)
 !levels = fs%nb_levels()
 write(atlas_log%msg,*) "nb_levels = ",levels; call atlas_log%info()
 
-field = fs%create_field(levels,atlas_real(c_float))
+field = fs%create_field(atlas_real(c_float),levels)
 FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
 call atlas_delete(field)
 
-field = fs%create_field("field",levels,atlas_real(c_float))
+field = fs%create_field("field",atlas_real(c_float),levels)
 FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
 call atlas_delete(field)
 
-field = fs%create_field(levels,(/2/),atlas_real(c_float))
+field = fs%create_field(atlas_real(c_float),levels,(/2/))
 FCTEST_CHECK_EQUAL( field%rank() , 3 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 call atlas_delete(field)
 
-field = fs%create_field("field",levels,(/2,2/),atlas_integer(c_int))
+field = fs%create_field("field",atlas_integer(c_int),levels,(/2,2/))
 FCTEST_CHECK_EQUAL( field%rank() , 4 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 template = field
@@ -182,24 +182,24 @@ call atlas_delete(field)
 call atlas_delete(template)
 
 
-field = fs%create_global_field(levels,atlas_real(c_float))
+field = fs%create_global_field(atlas_real(c_float),levels)
 FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
 call atlas_delete(field)
 
-field = fs%create_global_field("field",levels,atlas_real(c_float))
+field = fs%create_global_field("field",atlas_real(c_float),levels)
 FCTEST_CHECK_EQUAL( field%rank() , 2 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
 call atlas_delete(field)
 
-field = fs%create_global_field(levels,(/2/),atlas_real(c_float))
+field = fs%create_global_field(atlas_real(c_float),levels,(/2/))
 FCTEST_CHECK_EQUAL( field%rank() , 3 )
 FCTEST_CHECK_EQUAL( field%name() , "" )
 call atlas_delete(field)
 
-field = fs%create_global_field("field",levels,(/2,2/),atlas_integer(c_int))
+field = fs%create_global_field("field",atlas_integer(c_int),levels,(/2,2/))
 FCTEST_CHECK_EQUAL( field%rank() , 4 )
 FCTEST_CHECK_EQUAL( field%name() , "field" )
 template = field
@@ -243,7 +243,7 @@ grid = atlas_ReducedGrid("rgg.N24")
 mesh = atlas_generate_mesh(grid)
 fs2d = atlas_NodesFunctionSpace(mesh,halo_size)
 
-field  = fs2d%create_field((/2/),atlas_real(c_float))
+field  = fs2d%create_field(atlas_real(c_float),(/2/))
 global = fs2d%create_global_field(field)
 scal = fs2d%create_field(atlas_real(c_float))
 
@@ -301,7 +301,7 @@ call atlas_delete(field)
 call atlas_delete(global)
 
 
-field  = fs2d%create_field(levels,(/2,3/),atlas_real(c_float))
+field  = fs2d%create_field(atlas_real(c_float),levels,(/2,3/))
 global = fs2d%create_global_field(field)
 
 write(atlas_log%msg,*) "field:  rank",field%rank(), " shape [",field%shape(), "] size ", field%size();  call atlas_log%info()

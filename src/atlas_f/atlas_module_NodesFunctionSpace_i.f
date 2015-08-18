@@ -24,46 +24,46 @@ contains
   procedure, public :: nodes => atlas_NodesFunctionSpace__nodes
 
   procedure, private :: create_field_kind => atlas_NodesFunctionSpace__create_field_kind
-  procedure, private :: create_field_lev_kind => atlas_NodesFunctionSpace__create_field_lev_kind
+  procedure, private :: create_field_kind_lev => atlas_NodesFunctionSpace__create_field_kind_lev
   procedure, private :: create_field_name_kind => atlas_NodesFunctionSpace__create_field_name_kind
-  procedure, private :: create_field_name_lev_kind => atlas_NodesFunctionSpace__create_field_name_lev_kind
-  procedure, private :: create_field_vars_kind => atlas_NodesFunctionSpace__create_field_vars_kind
-  procedure, private :: create_field_lev_vars_kind => atlas_NodesFunctionSpace__create_field_lev_vars_kind
-  procedure, private :: create_field_name_vars_kind => atlas_NodesFunctionSpace__create_field_name_vars_kind
-  procedure, private :: create_field_name_lev_vars_kind => atlas_NodesFunctionSpace__create_field_name_lev_vars_kind
+  procedure, private :: create_field_name_kind_lev => atlas_NodesFunctionSpace__create_field_name_kind_lev
+  procedure, private :: create_field_kind_vars => atlas_NodesFunctionSpace__create_field_kind_vars
+  procedure, private :: create_field_kind_lev_vars => atlas_NodesFunctionSpace__create_field_kind_lev_vars
+  procedure, private :: create_field_name_kind_vars => atlas_NodesFunctionSpace__create_field_name_kind_vars
+  procedure, private :: create_field_name_kind_lev_vars => atlas_NodesFunctionSpace__create_field_name_kind_lev_vars
   procedure, private :: create_field_template => atlas_NodesFunctionSpace__create_field_template
   procedure, private :: create_field_name_template => atlas_NodesFunctionSpace__create_field_name_template
   generic, public :: create_field => &
     & create_field_kind, &
-    & create_field_lev_kind, &
+    & create_field_kind_lev, &
     & create_field_name_kind, &
-    & create_field_name_lev_kind, &
-    & create_field_vars_kind, &
-    & create_field_lev_vars_kind, &
-    & create_field_name_vars_kind, &
-    & create_field_name_lev_vars_kind, &
+    & create_field_name_kind_lev, &
+    & create_field_kind_vars, &
+    & create_field_kind_lev_vars, &
+    & create_field_name_kind_vars, &
+    & create_field_name_kind_lev_vars, &
     & create_field_template, &
     & create_field_name_template
 
   procedure, private :: create_glb_field_kind => atlas_NodesFunctionSpace__create_glb_field_kind
-  procedure, private :: create_glb_field_lev_kind => atlas_NodesFunctionSpace__create_glb_field_lev_kind
+  procedure, private :: create_glb_field_kind_lev => atlas_NodesFunctionSpace__create_glb_field_kind_lev
   procedure, private :: create_glb_field_name_kind => atlas_NodesFunctionSpace__create_glb_field_name_kind
-  procedure, private :: create_glb_field_name_lev_kind => atlas_NodesFunctionSpace__create_glb_field_name_lev_kind
-  procedure, private :: create_glb_field_vars_kind => atlas_NodesFunctionSpace__create_glb_field_vars_kind
-  procedure, private :: create_glb_field_lev_vars_kind => atlas_NodesFunctionSpace__create_glb_field_lev_vars_kind
-  procedure, private :: create_glb_field_name_vars_kind => atlas_NodesFunctionSpace__create_glb_field_name_vars_kind
-  procedure, private :: create_glb_field_name_lev_vars_kind => atlas_NodesFunctionSpace__create_glb_field_name_lev_vars_kind
+  procedure, private :: create_glb_field_name_kind_lev => atlas_NodesFunctionSpace__create_glb_field_name_kind_lev
+  procedure, private :: create_glb_field_kind_vars => atlas_NodesFunctionSpace__create_glb_field_kind_vars
+  procedure, private :: create_glb_field_kind_lev_vars => atlas_NodesFunctionSpace__create_glb_field_kind_lev_vars
+  procedure, private :: create_glb_field_name_kind_vars => atlas_NodesFunctionSpace__create_glb_field_name_kind_vars
+  procedure, private :: create_glb_field_name_kind_lev_vars => atlas_NodesFunctionSpace__create_glb_field_name_kind_lev_vars
   procedure, private :: create_glb_field_template => atlas_NodesFunctionSpace__create_glb_field_template
   procedure, private :: create_glb_field_name_template => atlas_NodesFunctionSpace__create_glb_field_name_template
   generic, public :: create_global_field => &
     & create_glb_field_kind, &
-    & create_glb_field_lev_kind, &
+    & create_glb_field_kind_lev, &
     & create_glb_field_name_kind, &
-    & create_glb_field_name_lev_kind, &
-    & create_glb_field_vars_kind, &
-    & create_glb_field_lev_vars_kind, &
-    & create_glb_field_name_vars_kind, &
-    & create_glb_field_name_lev_vars_kind, &
+    & create_glb_field_name_kind_lev, &
+    & create_glb_field_kind_vars, &
+    & create_glb_field_kind_lev_vars, &
+    & create_glb_field_name_kind_vars, &
+    & create_glb_field_name_kind_lev_vars, &
     & create_glb_field_template, &
     & create_glb_field_name_template
 
@@ -215,6 +215,41 @@ interface atlas_NodesFunctionSpace
   module procedure atlas_NodesFunctionSpace__name_mesh_halo
 end interface
 
+!------------------------------------------------------------------------------
+TYPE, extends(object_type) :: atlas_SpectralFunctionSpace
+
+! Purpose :
+! -------
+!   *atlas_SpectralFunctionSpace* : Interpretes spectral fields
+
+! Methods :
+! -------
+
+! Author :
+! ------
+!   August-2015 Willem Deconinck     *ECMWF*
+
+!------------------------------------------------------------------------------
+contains
+
+  procedure, private :: create_field_name     => SpectralFunctionSpace__create_field_name
+  procedure, private :: create_field_name_lev => SpectralFunctionSpace__create_field_name_lev
+  generic, public :: create_field => &
+    & create_field_name, &
+    & create_field_name_lev
+
+  procedure, private :: create_glb_field_name     => SpectralFunctionSpace__create_glb_field_name
+  procedure, private :: create_glb_field_name_lev => SpectralFunctionSpace__create_glb_field_name_lev
+  generic, public :: create_global_field => &
+    & create_glb_field_name, &
+    & create_glb_field_name_lev
+
+END TYPE atlas_SpectralFunctionSpace
+
+interface atlas_SpectralFunctionSpace
+  module procedure atlas_SpectralFunctionSpace__name_truncation
+  module procedure atlas_SpectralFunctionSpace__name_trans
+end interface
 
 !------------------------------------------------------------------------------
 

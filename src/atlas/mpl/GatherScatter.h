@@ -204,7 +204,7 @@ public: // methods
 
   int loc_dof() const { return loccnt_; }
 
-  int glb_dof(size_t proc) const { return glbcnt_[proc]; }
+  const std::vector<int>& glb_dofs() const { return glbcnt_; }
 
 private: // methods
   template< typename DATA_TYPE>
