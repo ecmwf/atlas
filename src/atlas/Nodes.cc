@@ -20,13 +20,13 @@ namespace atlas {
 Nodes::Nodes(size_t _size) :
   FunctionSpace("nodes",make_shape(_size,FunctionSpace::UNDEF_VARS))
 {
-  global_index_ = &add( new FieldT<gidx_t>("glb_idx",   make_shape(size(),1)) );
-  remote_index_ = &add( new FieldT<int   >("remote_idx",make_shape(size(),1)) );
-  partition_    = &add( new FieldT<int   >("partition", make_shape(size(),1)) );
-  ghost_        = &add( new FieldT<int   >("ghost",     make_shape(size(),1)) );
-  halo_         = &add( new FieldT<int   >("halo",      make_shape(size(),1)) );
-  topology_     = &add( new FieldT<int   >("topology",  make_shape(size(),1)) );
-  lonlat_       = &add( new FieldT<double>("lonlat",    make_shape(size(),2)) );
+  global_index_ = &add( Field::create<gidx_t>("glb_idx",   make_shape(size(),1)) );
+  remote_index_ = &add( Field::create<int   >("remote_idx",make_shape(size(),1)) );
+  partition_    = &add( Field::create<int   >("partition", make_shape(size(),1)) );
+  ghost_        = &add( Field::create<int   >("ghost",     make_shape(size(),1)) );
+  halo_         = &add( Field::create<int   >("halo",      make_shape(size(),1)) );
+  topology_     = &add( Field::create<int   >("topology",  make_shape(size(),1)) );
+  lonlat_       = &add( Field::create<double>("lonlat",    make_shape(size(),2)) );
 
   add( new FieldT<int>("flags", make_shape(size(),1)) );
 
@@ -97,14 +97,15 @@ void Nodes::resize( size_t size )
 //  {
 //    Field& field = *it->second;
 //    ArrayShape shape = field.shape();
-//    shape[0] = size_;
+//    shape[0] = dof_;
 //    field.resize(shape);
 //  }
 }
 
 const Field& Nodes::field(size_t idx) const
 {
-  size_t c;
+  ASSERT(idx < nb_fields());
+  size_t c(0);
   for( FieldMap::const_iterator it = fields_.begin(); it != fields_.end(); ++it )
   {
     if( idx == c )
@@ -114,6 +115,7 @@ const Field& Nodes::field(size_t idx) const
     }
     c++;
   }
+  eckit::SeriousBug("Should not be here!",Here());
 }
 Field& Nodes::field(size_t idx)
 {

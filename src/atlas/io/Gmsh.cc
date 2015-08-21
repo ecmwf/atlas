@@ -94,11 +94,11 @@ void write_field_nodes(const Gmsh& gmsh, const functionspace::NodesFunctionSpace
 
   bool gather( gmsh.options.get<bool>("gather") );
   bool binary( !gmsh.options.get<bool>("ascii") );
-  int nlev  = field.metadata().has("nb_levels") ? field.metadata().get<size_t>("nb_levels") : 1;
+  int nlev  = field.has_levels() ? field.levels() : 1;
   int ndata = field.shape(0);
-  int nvars = field.shape(1)/nlev;
+  int nvars = field.stride(0)/nlev;
   ArrayView<gidx_t,1> gidx ( function_space.nodes().global_index() );
-  ArrayView<DATATYPE> data ( field );
+  ArrayView<DATATYPE,2> data ( field.data<DATATYPE>(), make_shape(field.shape(0),field.stride(0)) );
   Field::Ptr gidx_glb;
   Field::Ptr data_glb;
   if( gather )
@@ -109,7 +109,7 @@ void write_field_nodes(const Gmsh& gmsh, const functionspace::NodesFunctionSpace
 
     data_glb.reset( function_space.createGlobalField( field ) );
     function_space.gather(field,*data_glb);
-    data = ArrayView<DATATYPE>( *data_glb );
+    data = ArrayView<DATATYPE,2>( data_glb->data<DATATYPE>(), make_shape(data_glb->shape(0),data_glb->stride(0)) );
   }
 
   std::vector<long> lev;
@@ -131,7 +131,7 @@ void write_field_nodes(const Gmsh& gmsh, const functionspace::NodesFunctionSpace
     if( ( gather && eckit::mpi::rank() == 0 ) || !gather )
     {
       char field_lev[6];
-      if( field.metadata().has("nb_levels") )
+      if( field.has_levels() )
         std::sprintf(field_lev, "[%03d]",jlev);
       else
         std::sprintf(field_lev, "");

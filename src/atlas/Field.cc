@@ -217,7 +217,8 @@ void atlas__Field__datatype (Field* This, char* &datatype, int &size, int &alloc
 {
   ATLAS_ERROR_HANDLING(
     std::string s = This->datatype().str();
-    datatype = new char[s.size()+1];
+    size = s.size()+1;
+    datatype = new char[size];
     strcpy(datatype,s.c_str());
     allocated = true;
   );
@@ -274,11 +275,24 @@ Metadata* atlas__Field__metadata (Field* This)
   return &This->metadata();
 }
 
-FunctionSpace* atlas__Field__function_space (Field* This)
+int atlas__Field__has_functionspace(Field* This)
 {
-  NOTIMP;
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This != NULL );
+    return This->has_functionspace();
+  );
   return 0;
 }
+
+const char* atlas__Field__functionspace (Field* This)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This != NULL );
+    return This->functionspace().c_str();
+  );
+  return NULL;
+}
+
 
 void atlas__Field__shapef (Field* This, int* &shape, int &rank)
 {

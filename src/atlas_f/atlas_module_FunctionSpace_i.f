@@ -93,4 +93,10 @@ procedure :: nb_fields => Nodes__nb_fields
 procedure, public :: has_field => Nodes__has_field
 procedure :: metadata => Nodes__metadata
 procedure :: str => Nodes__str
+
+procedure :: lonlat => Nodes__lonlat
+procedure :: global_index => Nodes__global_index
+procedure :: remote_index => Nodes__remote_index
+procedure :: partition => Nodes__partition
+
 END TYPE

@@ -453,9 +453,6 @@ void Trans::invtrans(const SpectralFunctionSpace& sp, const FieldSet& spfields,
       ArrayView<double,2> field ( gpfields[jfld].data<double>(), make_shape(gpfields[jfld].shape(0),gpfields[jfld].stride(0)) );
       const int nvars = field.shape(1);
 
-      DEBUG_VAR(field.shape(0));
-      DEBUG_VAR(ngptot());
-
       for( int jvar=0; jvar<nvars; ++jvar )
       {
         int n=0;

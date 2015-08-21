@@ -70,18 +70,22 @@ contains
   procedure, private :: halo_exchange_fieldset => atlas_NodesFunctionSpace__halo_exchange_fieldset
   procedure, private :: halo_exchange_field => atlas_NodesFunctionSpace__halo_exchange_field
   generic, public :: halo_exchange => halo_exchange_fieldset, halo_exchange_field
+  procedure, public :: get_halo_exchange => atlas_NodesFunctionSpace__get_halo_exchange
 
   procedure, private :: gather_fieldset => atlas_NodesFunctionSpace__gather_fieldset
   procedure, private :: gather_field => atlas_NodesFunctionSpace__gather_field
   generic, public :: gather => gather_fieldset, gather_field
+  procedure, public :: get_gather => atlas_NodesFunctionSpace__get_gather
 
   procedure, private :: scatter_fieldset => atlas_NodesFunctionSpace__scatter_fieldset
   procedure, private :: scatter_field => atlas_NodesFunctionSpace__scatter_field
   generic, public :: scatter => scatter_fieldset, scatter_field
+  procedure, public :: get_scatter => atlas_NodesFunctionSpace__get_scatter
 
   procedure, private :: checksum_fieldset => atlas_NodesFunctionSpace__checksum_fieldset
   procedure, private :: checksum_field => atlas_NodesFunctionSpace__checksum_field
   generic, public :: checksum => checksum_fieldset, checksum_field
+  procedure, public :: get_checksum => atlas_NodesFunctionSpace__get_checksum
 
   procedure, private :: sum_real64_r0 => atlas_NodesFunctionSpace__sum_real64_r0
   procedure, private :: sum_real32_r0 => atlas_NodesFunctionSpace__sum_real32_r0

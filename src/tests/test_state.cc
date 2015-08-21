@@ -114,28 +114,28 @@ BOOST_AUTO_TEST_SUITE( test_state )
 BOOST_AUTO_TEST_CASE( state )
 {
   State state;
-  BOOST_CHECK_EQUAL( state.nb_fields() , 0 );
+  BOOST_CHECK_EQUAL( state.size() , 0 );
 
   state.add( Field::create<double>( "myfield", make_shape(10,1) ) );
   state.add( Field::create<double>( make_shape(10,2) ) );
   state.add( Field::create<double>( make_shape(10,3) ) );
 
-  BOOST_CHECK_EQUAL( state.nb_fields() , 3 );
-  BOOST_CHECK( state.has_field("myfield") );
-  BOOST_CHECK( state.has_field("field_00001") );
-  BOOST_CHECK( state.has_field("field_00002") );
+  BOOST_CHECK_EQUAL( state.size() , 3 );
+  BOOST_CHECK( state.has("myfield") );
+  BOOST_CHECK( state.has("field_00001") );
+  BOOST_CHECK( state.has("field_00002") );
 
   BOOST_CHECK_EQUAL( state.field(0).name(), std::string("field_00001") );
   BOOST_CHECK_EQUAL( state.field(1).name(), std::string("field_00002") );
   BOOST_CHECK_EQUAL( state.field(2).name(), std::string("myfield") );
 
-  state.remove_field("myfield");
-  BOOST_CHECK_EQUAL( state.nb_fields() , 2 );
-  BOOST_CHECK( ! state.has_field("myfield") );
+  state.remove("myfield");
+  BOOST_CHECK_EQUAL( state.size() , 2 );
+  BOOST_CHECK( ! state.has("myfield") );
 
-  state.remove_field("field_00002");
-  BOOST_CHECK_EQUAL( state.nb_fields() , 1 );
-  BOOST_CHECK( ! state.has_field("field_00002") );
+  state.remove("field_00002");
+  BOOST_CHECK_EQUAL( state.size() , 1 );
+  BOOST_CHECK( ! state.has("field_00002") );
 
 }
 
@@ -192,9 +192,9 @@ BOOST_AUTO_TEST_CASE( state_create )
 
   State state ( "MyStateGenerator",p );
 
-  BOOST_CHECK( state.has_field("temperature") );
-  BOOST_CHECK( state.has_field("wind") );
-  BOOST_CHECK( state.has_field("soiltype") );
+  BOOST_CHECK( state.has("temperature") );
+  BOOST_CHECK( state.has("wind") );
+  BOOST_CHECK( state.has("soiltype") );
 
   eckit::Log::info() << state.field("temperature") << std::endl;
   eckit::Log::info() << state.field("wind")        << std::endl;
@@ -210,7 +210,7 @@ BOOST_AUTO_TEST_CASE( state_create )
   ArrayView<int,4> soiltype( state.field("soiltype") );
   soiltype(0,0,0,0) = 0;
 
-  ArrayView<long,2> array( state.field("array") );
+  ArrayView<long,2> array( state["array"] );
   array(0,0) = 0;
 
 }

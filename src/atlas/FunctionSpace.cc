@@ -38,6 +38,12 @@ using atlas::field::FieldT;
 
 namespace atlas {
 
+template<class T>
+inline std::ostream& operator<<(std::ostream& s,const std::vector<T>& v)
+{
+	return eckit::__print_list(s,v);
+}
+
 //----------------------------------------------------------------------------------------------------------------------
 
 FunctionSpace::FunctionSpace(const std::string& name,

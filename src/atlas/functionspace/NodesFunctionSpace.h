@@ -143,15 +143,19 @@ public:
 
     void haloExchange( FieldSet& ) const;
     void haloExchange( Field& ) const;
+    const mpl::HaloExchange& halo_exchange() const;
 
     void gather( const FieldSet&, FieldSet& ) const;
     void gather( const Field&, Field& ) const;
+    const mpl::GatherScatter& gather() const;
 
     void scatter( const FieldSet&, FieldSet& ) const;
     void scatter( const Field&, Field& ) const;
+    const mpl::GatherScatter& scatter() const;
 
     std::string checksum( const FieldSet& ) const;
     std::string checksum( const Field& ) const;
+    const mpl::Checksum& checksum() const;
 
     /// @brief Compute sum of scalar field
     /// @param [out] sum    Scalar value containing the sum of the full 3D field

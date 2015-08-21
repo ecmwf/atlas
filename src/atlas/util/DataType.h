@@ -43,7 +43,7 @@ public:
   template< typename DATATYPE > static std::string str();
   template< typename DATATYPE > static std::string str(const DATATYPE);
 
-  static const long str_to_kind(const std::string&);
+  static long str_to_kind(const std::string&);
   static std::string kind_to_str(kind_t);
   static bool kind_valid(kind_t);
 
@@ -88,13 +88,13 @@ template<> inline DataType::kind_t DataType::kind(const long&)   { return KIND_I
 template<> inline DataType::kind_t DataType::kind(const float&)  { return KIND_REAL32;   }
 template<> inline DataType::kind_t DataType::kind(const double&) { return KIND_REAL64;   }
 
-inline const DataType::kind_t DataType::str_to_kind(const std::string& datatype)
+inline DataType::kind_t DataType::str_to_kind(const std::string& datatype)
 {
   if      ( datatype == "int32"  ) return KIND_INT32;
   else if ( datatype == "int64"  ) return KIND_INT64;
   else if ( datatype == "real32" ) return KIND_REAL32;
   else if ( datatype == "real64" ) return KIND_REAL64;
-  else throw eckit::Exception("datatype "+datatype+" not recognised.");
+  else throw eckit::Exception("datatype "+datatype+" not recognised.",Here());
   return 0;
 }
 inline std::string DataType::kind_to_str(kind_t kind)
@@ -108,7 +108,7 @@ inline std::string DataType::kind_to_str(kind_t kind)
     default:
     std::stringstream msg;
     msg << "kind "<<kind<<" not recognised.";
-    throw eckit::Exception(msg.str());
+    throw eckit::Exception(msg.str(),Here());
   }
 }
 inline bool DataType::kind_valid(kind_t kind)

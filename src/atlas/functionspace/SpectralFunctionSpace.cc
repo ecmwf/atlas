@@ -20,6 +20,8 @@
 namespace atlas {
 namespace functionspace {
 
+const std::string& spectral_str() { static std::string str("spectral"); return str; }
+
 // ----------------------------------------------------------------------
 
 SpectralFunctionSpace::SpectralFunctionSpace(const std::string& name, const size_t truncation)
@@ -60,19 +62,29 @@ size_t SpectralFunctionSpace::nb_spectral_coefficients_global() const {
 }
 
 Field* SpectralFunctionSpace::createField(const std::string& name) const {
-  return new field::FieldT<double>(name, make_shape(nb_spectral_coefficients()) );
+  Field* field = new field::FieldT<double>(name, make_shape(nb_spectral_coefficients()) );
+  field->set_functionspace(spectral_str());
+  return field;
 }
 
 Field* SpectralFunctionSpace::createField(const std::string& name, size_t levels) const {
-  return new field::FieldT<double>(name, make_shape(nb_spectral_coefficients(),levels) );
+  Field* field = new field::FieldT<double>(name, make_shape(nb_spectral_coefficients(),levels) );
+  field->set_functionspace(spectral_str());
+  field->set_levels(levels);
+  return field;
 }
 
 Field* SpectralFunctionSpace::createGlobalField(const std::string& name) const {
-  return new field::FieldT<double>(name, make_shape(nb_spectral_coefficients_global()) );
+  Field* field = new field::FieldT<double>(name, make_shape(nb_spectral_coefficients_global()) );
+  field->set_functionspace(spectral_str());
+  return field;
 }
 
 Field* SpectralFunctionSpace::createGlobalField(const std::string& name, size_t levels) const {
-  return new field::FieldT<double>(name, make_shape(nb_spectral_coefficients_global(),levels) );
+  Field* field = new field::FieldT<double>(name, make_shape(nb_spectral_coefficients_global(),levels) );
+  field->set_functionspace(spectral_str());
+  field->set_levels(levels);
+  return field;
 }
 
 void SpectralFunctionSpace::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset ) const

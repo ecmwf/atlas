@@ -86,6 +86,36 @@ function Nodes__str(this) result(str)
   call atlas_free(str_cptr)
 end function
 
+
+function Nodes__lonlat(this) result(field)
+  use atlas_nodes_c_binding
+  type(atlas_Field) :: field
+  class(atlas_Nodes), intent(in) :: this
+  field%cpp_object_ptr = atlas__Nodes__field_by_name(this%cpp_object_ptr,c_str("lonlat"))
+end function
+
+function Nodes__global_index(this) result(field)
+  use atlas_nodes_c_binding
+  type(atlas_Field) :: field
+  class(atlas_Nodes), intent(in) :: this
+  field%cpp_object_ptr = atlas__Nodes__field_by_name(this%cpp_object_ptr,c_str("glb_idx"))
+end function
+
+function Nodes__remote_index(this) result(field)
+  use atlas_nodes_c_binding
+  type(atlas_Field) :: field
+  class(atlas_Nodes), intent(in) :: this
+  field%cpp_object_ptr = atlas__Nodes__field_by_name(this%cpp_object_ptr,c_str("remote_idx"))
+end function
+
+function Nodes__partition(this) result(field)
+  use atlas_nodes_c_binding
+  type(atlas_Field) :: field
+  class(atlas_Nodes), intent(in) :: this
+  field%cpp_object_ptr = atlas__Nodes__field_by_name(this%cpp_object_ptr,c_str("partition"))
+end function
+
+
 ! -----------------------------------------------------------------------------
 ! FunctionSpace routines
 

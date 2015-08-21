@@ -59,8 +59,9 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
 
   //grid.reset();
 
+  DEBUG();
   NodesFunctionSpace nodes_fs("nodes",mesh,Halo(1));
-
+  DEBUG();
   size_t nb_levels = 10;
   //NodesColumnFunctionSpace columns_fs("columns",mesh,nb_levels,Halo(1));
 

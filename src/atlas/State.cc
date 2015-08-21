@@ -80,11 +80,11 @@ Field& State::add( Field* field )
   {
     std::stringstream new_name;
     new_name << "field_" << std::setw(5) << std::setfill('0') << fields_.size();
-    ASSERT( !has_field(new_name.str() ) );
+    ASSERT( !has(new_name.str() ) );
     field->rename(new_name.str());
   }
 
-  if( has_field(field->name()) ) {
+  if( has(field->name()) ) {
     std::stringstream msg;
     msg << "Trying to add field '"<<field->name()<<"' to State, but State already has a field with this name.";
     throw eckit::Exception(msg.str(),Here());
@@ -95,7 +95,7 @@ Field& State::add( Field* field )
 
 const Field& State::field(const std::string& name) const
 {
-  if( ! has_field(name) )
+  if( ! has(name) )
   {
     std::stringstream msg;
     msg << "Trying to access field `"<<name<<"' in State, but no field with this name is present in State.";
@@ -141,7 +141,7 @@ std::vector< std::string > State::field_names() const
 }
 
 
-void State::remove_field(const std::string& name)
+void State::remove(const std::string& name)
 {
   if( fields_.find(name)==fields_.end() ) {
     std::stringstream msg;
@@ -249,23 +249,23 @@ void atlas__State__delete (State* This)
   delete This;
 }
 
-void atlas__State__add_field (State* This, Field* field)
+void atlas__State__add (State* This, Field* field)
 {
   ASSERT( This );
   ATLAS_ERROR_HANDLING( This->add(field); );
 }
 
-void atlas__State__remove_field (State* This, const char* name)
+void atlas__State__remove (State* This, const char* name)
 {
   ASSERT( This );
-  ATLAS_ERROR_HANDLING( This->remove_field(name); );
+  ATLAS_ERROR_HANDLING( This->remove(name); );
 }
 
-int atlas__State__has_field (State* This, const char* name)
+int atlas__State__has (State* This, const char* name)
 {
   ASSERT( This );
   int has_field(0);
-  ATLAS_ERROR_HANDLING( has_field = This->has_field(name); );
+  ATLAS_ERROR_HANDLING( has_field = This->has(name); );
   return has_field;
 }
 
@@ -285,11 +285,11 @@ Field* atlas__State__field_by_index (State* This, int index)
   return field;
 }
 
-int atlas__State__nb_fields(const State* This)
+int atlas__State__size(const State* This)
 {
   ASSERT( This );
   int nb_fields(0);
-  ATLAS_ERROR_HANDLING( nb_fields = This->nb_fields(); );
+  ATLAS_ERROR_HANDLING( nb_fields = This->size(); );
   return nb_fields;
 }
 

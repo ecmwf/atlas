@@ -74,7 +74,7 @@ TYPE, extends(object_type) :: atlas_Logger
 
 !------------------------------------------------------------------------------
 
-  character(len=1024), public :: msg
+  character(len=1024), public :: msg=""
 
   type(ATLAS_LogChannel) :: channel_error
   type(ATLAS_LogChannel) :: channel_warning

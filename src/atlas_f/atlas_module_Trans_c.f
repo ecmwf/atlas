@@ -583,6 +583,8 @@ subroutine atlas_Trans__gathspec_r1(this, local, global)
   real(c_double), intent(out) :: global(:)
 #ifdef ATLAS_HAVE_TRANS
   call atlas__Trans__gathspec(this%cpp_object_ptr, 1, (/1/), local, global )
+#else
+  THROW_ERROR
 #endif
 end subroutine atlas_Trans__gathspec_r1
 
@@ -591,9 +593,14 @@ subroutine atlas_Trans__gathspec_r2(this, local, global)
   class(atlas_Trans), intent(in) :: this
   real(c_double), intent(in) :: local(:,:)
   real(c_double), intent(out) :: global(:,:)
+  real(c_double), pointer :: local_view(:), global_view(:)
 #ifdef ATLAS_HAVE_TRANS
   integer :: destination(size(local,1))
   destination(:) = 1
-  call atlas__Trans__gathspec(this%cpp_object_ptr, size(local,1), destination, view1d(local), view1d(global) )
+  local_view => view1d(local)
+  global_view => view1d(global)
+  call atlas__Trans__gathspec(this%cpp_object_ptr, size(local,1), destination, local_view, global_view )
+#else
+  THROW_ERROR
 #endif
 end subroutine atlas_Trans__gathspec_r2

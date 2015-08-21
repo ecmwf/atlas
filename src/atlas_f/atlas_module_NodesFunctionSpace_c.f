@@ -268,6 +268,20 @@ subroutine atlas_NodesFunctionSpace__halo_exchange_field(this,field)
   call atlas__NodesFunctionSpace__halo_exchange_field(this%cpp_object_ptr,field%cpp_object_ptr)
 end subroutine
 
+function atlas_NodesFunctionSpace__get_gather(this) result(gather)
+  use atlas_nodesfunctionspaceinterface_c_binding
+  type(atlas_GatherScatter) :: gather
+  class(atlas_NodesFunctionSpace), intent(in) :: this
+  gather%cpp_object_ptr = atlas__NodesFunctioNSpace__get_gather(this%cpp_object_ptr)
+end function
+
+function atlas_NodesFunctionSpace__get_scatter(this) result(gather)
+  use atlas_nodesfunctionspaceinterface_c_binding
+  type(atlas_GatherScatter) :: gather
+  class(atlas_NodesFunctionSpace), intent(in) :: this
+  gather%cpp_object_ptr = atlas__NodesFunctioNSpace__get_scatter(this%cpp_object_ptr)
+end function
+
 subroutine atlas_NodesFunctionSpace__gather_fieldset(this,local,global)
   use atlas_nodesfunctionspaceinterface_c_binding
   class(atlas_NodesFunctionSpace), intent(in) :: this
@@ -299,6 +313,20 @@ subroutine atlas_NodesFunctionSpace__scatter_field(this,global,local)
   type(atlas_Field), intent(inout) :: local
   call atlas__NodesFunctionSpace__scatter_field(this%cpp_object_ptr,global%cpp_object_ptr,local%cpp_object_ptr)
 end subroutine
+
+function atlas_NodesFunctionSpace__get_halo_exchange(this) result(halo_exchange)
+  use atlas_nodesfunctionspaceinterface_c_binding
+  type(atlas_HaloExchange) :: halo_exchange
+  class(atlas_NodesFunctionSpace), intent(in) :: this
+  halo_exchange%cpp_object_ptr = atlas__NodesFunctioNSpace__get_halo_exchange(this%cpp_object_ptr)
+end function
+
+function atlas_NodesFunctionSpace__get_checksum(this) result(checksum)
+  use atlas_nodesfunctionspaceinterface_c_binding
+  type(atlas_Checksum) :: checksum
+  class(atlas_NodesFunctionSpace), intent(in) :: this
+  checksum%cpp_object_ptr = atlas__NodesFunctioNSpace__get_checksum(this%cpp_object_ptr)
+end function
 
 function atlas_NodesFunctionSpace__checksum_fieldset(this,fieldset) result(checksum)
   use atlas_nodesfunctionspaceinterface_c_binding

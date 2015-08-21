@@ -130,6 +130,10 @@ public: // methods
   void set_levels(size_t n) { nb_levels_ = n; }
   size_t levels() const { return nb_levels_; }
 
+  bool has_functionspace() const { return functionspace_.size(); }
+  void set_functionspace(const std::string& functionspace) { functionspace_ = functionspace; }
+  std::string functionspace() const { return functionspace_; }
+
 private: // methods
 
   void print(std::ostream& os) const;
@@ -137,6 +141,8 @@ private: // methods
 private: // members
 
   std::string name_;
+
+  std::string functionspace_;
 
   size_t nb_levels_;
 
@@ -170,7 +176,7 @@ extern "C"
   void atlas__Field__data_shapef_float (Field* This, float* &field_data, int* &field_shapef, int &rank);
   void atlas__Field__data_shapef_double (Field* This, double* &field_data, int* &field_shapef, int &rank);
   Metadata* atlas__Field__metadata (Field* This);
-  FunctionSpace* atlas__Field__function_space (Field* This);
+  const char* atlas__Field__functionspace (Field* This);
 }
 #undef Parametrisation
 #undef Char

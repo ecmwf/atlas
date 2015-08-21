@@ -65,6 +65,14 @@ function Field__name(this) result(field_name)
   field_name = c_to_f_string_cptr(field_name_c_str)
 end function Field__name
 
+function Field__functionspace(this) result(field_functionspace)
+  class(atlas_Field), intent(in) :: this
+  character(len=:), allocatable :: field_functionspace
+  type(c_ptr) :: field_functionspace_c_str
+  field_functionspace_c_str = atlas__Field__functionspace(this%cpp_object_ptr)
+  field_functionspace = c_to_f_string_cptr(field_functionspace_c_str)
+end function Field__functionspace
+
 function Field__datatype(this) result(datatype)
   class(atlas_Field), intent(in) :: this
   character(len=:), allocatable :: datatype
@@ -72,15 +80,16 @@ function Field__datatype(this) result(datatype)
   integer(c_int) :: datatype_size
   integer(c_int) :: datatype_allocated
   call atlas__Field__datatype(this%cpp_object_ptr,datatype_cptr,datatype_size,datatype_allocated)
+  write(atlas_log%msg,*) "datatype_size = ",datatype_size; call atlas_log%error()
   allocate(character(len=datatype_size) :: datatype )
   datatype= c_to_f_string_cptr(datatype_cptr)
   if( datatype_allocated == 1 ) call atlas_free(datatype_cptr)
 end function Field__datatype
 
-function Field__size(this) result(size)
+function Field__size(this) result(fieldsize)
   class(atlas_Field), intent(in) :: this
-  integer :: size
-  size = atlas__Field__size(this%cpp_object_ptr)
+  integer :: fieldsize
+  fieldsize = atlas__Field__size(this%cpp_object_ptr)
 end function Field__size
 
 function Field__rank(this) result(rank)
@@ -112,12 +121,6 @@ function Field__metadata(this) result(metadata)
   type(atlas_Metadata) :: Metadata
   metadata%cpp_object_ptr = atlas__Field__metadata(this%cpp_object_ptr)
 end function Field__metadata
-
-function Field__function_space(this) result(function_space)
-  class(atlas_Field), intent(in) :: this
-  type(atlas_FunctionSpace) :: function_space
-  function_space%cpp_object_ptr = atlas__Field__function_space(this%cpp_object_ptr)
-end function Field__function_space
 
 
 function Field__shape_array(this) result(shape)

@@ -60,16 +60,16 @@ call state%add( atlas_Field(shape=[20,10],   kind=atlas_real(c_double), name="te
 call state%add( atlas_Field(shape=[20,10,3], kind=atlas_real(c_float),  name="pressure"   ) )
 
 ! Check how many fields we have
-write(atlas_log%msg,'(A,I0,A)') "The state contains ",state%nb_fields()," fields."; call atlas_log%info()
+write(atlas_log%msg,'(A,I0,A)') "The state contains ",state%size()," fields."; call atlas_log%info()
 
 ! Check if wind field exists
-if( .not. state%has_field("wind") ) then
+if( .not. state%has("wind") ) then
   write(atlas_log%msg,'(A)') "The state does not contain the wind field"; call atlas_log%info()
 endif
 
 ! Print existing fields info
 write(atlas_log%msg,'(A)') "The state contains the fields:"; call atlas_log%info()
-do jfield=1,state%nb_fields()
+do jfield=1,state%size()
   field = state%field(jfield)
   write(atlas_log%msg,'(2A)')   "  - ",field%name();                   call atlas_log%info()
   write(atlas_log%msg,'(2A)')   "        kind = ",field%datatype();    call atlas_log%info()
@@ -94,8 +94,8 @@ call metadata%set("unit","Kelvin")
 call metadata%set("iteration",1)
 call metadata%set("grib_param_id","T")
 
-call state%remove_field("pressure")
-FCTEST_CHECK(state%has_field("pressure") .eqv. .False.)
+call state%remove("pressure")
+FCTEST_CHECK(state%has("pressure") .eqv. .False.)
 
 ! Delete the state
 call atlas_delete(state)

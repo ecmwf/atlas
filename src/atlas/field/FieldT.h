@@ -42,6 +42,10 @@
 namespace atlas {
 namespace field {
 
+template<class T>
+inline std::ostream &operator<<(std::ostream &s, const std::vector<T> &v) {
+    return eckit::__print_list(s, v);
+}
 //----------------------------------------------------------------------------------------------------------------------
 
 template< typename DATA_TYPE >

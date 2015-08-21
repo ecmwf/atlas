@@ -34,36 +34,36 @@ subroutine atlas_State__delete(this)
   this%cpp_object_ptr = c_null_ptr
 end subroutine
 
-subroutine atlas_State__add_field(this,field)
+subroutine atlas_State__add(this,field)
   use atlas_state_c_binding
   class(atlas_State), intent(inout) :: this
   class(atlas_Field), intent(in) :: field
-  call atlas__State__add_field(this%cpp_object_ptr,field%cpp_object_ptr)
+  call atlas__State__add(this%cpp_object_ptr,field%cpp_object_ptr)
 end subroutine
 
-subroutine atlas_State__remove_field(this,name)
+subroutine atlas_State__remove(this,name)
   use atlas_state_c_binding
   class(atlas_State), intent(inout) :: this
   character(len=*), intent(in) :: name
-  call atlas__State__remove_field(this%cpp_object_ptr,c_str(name))
+  call atlas__State__remove(this%cpp_object_ptr,c_str(name))
 end subroutine
 
-function atlas_State__has_field(this,name) result(has_field)
+function atlas_State__has(this,name) result(has)
   use atlas_state_c_binding
-  logical :: has_field
-  class(atlas_State), intent(inout) :: this
+  logical :: has
+  class(atlas_State), intent(in) :: this
   character(len=*), intent(in) :: name
-  integer :: has_field_int
-  has_field_int = atlas__State__has_field(this%cpp_object_ptr,c_str(name))
-  has_field = .False.
-  if( has_field_int == 1 ) has_field = .True.
+  integer :: has_int
+  has_int = atlas__State__has(this%cpp_object_ptr,c_str(name))
+  has = .False.
+  if( has_int == 1 ) has = .True.
 end function
 
-function atlas_State__nb_fields(this) result(nb_fields)
+function atlas_State__size(this) result(size)
   use atlas_state_c_binding
-  integer :: nb_fields
-  class(atlas_State), intent(inout) :: this
-  nb_fields = atlas__State__nb_fields(this%cpp_object_ptr)
+  integer :: size
+  class(atlas_State), intent(in) :: this
+  size = atlas__State__size(this%cpp_object_ptr)
 end function
 
 function atlas_State__field_by_name(this,name) result(field)
@@ -77,7 +77,7 @@ end function
 function atlas_State__field_by_index(this,index) result(field)
   use atlas_state_c_binding
   type(atlas_Field) :: field
-  class(atlas_State), intent(inout) :: this
+  class(atlas_State), intent(in) :: this
   integer, intent(in) :: index
   field%cpp_object_ptr = atlas__State__field_by_index(this%cpp_object_ptr,index-1)
 end function
@@ -85,7 +85,7 @@ end function
 function atlas_State__metadata(this) result(metadata)
   use atlas_state_c_binding
   type(atlas_Metadata) :: metadata
-  class(atlas_State), intent(inout) :: this
+  class(atlas_State), intent(in) :: this
   metadata%cpp_object_ptr = atlas__State__metadata(this%cpp_object_ptr)
 end function
 

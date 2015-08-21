@@ -12,7 +12,6 @@ contains
 
   subroutine atlas_mpi_finalize()
     integer :: ierr
-    logical :: finalized
     if (.not. atlas_mpi_finalized()) call MPI_FINALIZE (ierr)
   end subroutine atlas_mpi_finalize
 

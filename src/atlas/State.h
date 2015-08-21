@@ -46,12 +46,18 @@ public: // methods
 
   const Field& field(const std::string& name) const;
         Field& field(const std::string& name);
-  bool has_field(const std::string& name) const { return (fields_.find(name) != fields_.end()); }
+  bool has(const std::string& name) const { return (fields_.find(name) != fields_.end()); }
   std::vector< std::string > field_names() const;
 
   const Field& field(const size_t idx) const;
         Field& field(const size_t idx);
-  size_t nb_fields() const { return fields_.size(); }
+  size_t size() const { return fields_.size(); }
+
+  const Field& operator[](const size_t idx) const { return field(idx); }
+        Field& operator[](const size_t idx)       { return field(idx); }
+
+  const Field& operator[](const std::string& name) const { return field(name); }
+        Field& operator[](const std::string& name)       { return field(name); }
 
   const Metadata& metadata() const;
         Metadata& metadata();
@@ -62,7 +68,7 @@ public: // methods
 
   Field& add( Field* ); // Take shared ownership!
 
-  void remove_field(const std::string& name);
+  void remove(const std::string& name);
 
 private:
 
@@ -139,12 +145,12 @@ extern "C"
   State* atlas__State__new ();
   void atlas__State__initialize (State* This, const char* generator, const eckit_Parametrisation* params);
   void atlas__State__delete (State* This);
-  void atlas__State__add_field (State* This, Field* field);
-  void atlas__State__remove_field (State* This, const char* name);
-  int atlas__State__has_field (State* This, const char* name);
+  void atlas__State__add (State* This, Field* field);
+  void atlas__State__remove (State* This, const char* name);
+  int atlas__State__has (State* This, const char* name);
   Field* atlas__State__field_by_name (State* This, const char* name);
   Field* atlas__State__field_by_index (State* This, int index);
-  int atlas__State__nb_fields(const State* This);
+  int atlas__State__size(const State* This);
   Metadata* atlas__State__metadata (State* This);
 }
 #undef eckit_Parametrisation

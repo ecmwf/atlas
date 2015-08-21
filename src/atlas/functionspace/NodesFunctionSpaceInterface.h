@@ -18,6 +18,9 @@ namespace atlas {
 namespace functionspace {
 
 #define Char char
+#define GatherScatter mpl::GatherScatter
+#define Checksum mpl::Checksum
+#define HaloExchange mpl::HaloExchange
 extern "C" {
 NodesFunctionSpace* atlas__NodesFunctionSpace__new (const char* name, Mesh* mesh, int halo);
 void atlas__NodesFunctionSpace__delete (NodesFunctionSpace* This);
@@ -42,14 +45,19 @@ Field* atlas__NodesFunctionSpace__create_global_field_template (const NodesFunct
 
 void atlas__NodesFunctionSpace__halo_exchange_fieldset(const NodesFunctionSpace* This, FieldSet* fieldset);
 void atlas__NodesFunctionSpace__halo_exchange_field(const NodesFunctionSpace* This, Field* field);
+const HaloExchange* atlas__NodesFunctionSpace__get_halo_exchange(const NodesFunctionSpace* This);
 
 void atlas__NodesFunctionSpace__gather_fieldset(const NodesFunctionSpace* This, const FieldSet* local, FieldSet* global);
 void atlas__NodesFunctionSpace__gather_field(const NodesFunctionSpace* This, const Field* local, Field* global);
+const GatherScatter* atlas__NodesFunctionSpace__get_gather(const NodesFunctionSpace* This);
 
 void atlas__NodesFunctionSpace__scatter_fieldset(const NodesFunctionSpace* This, const FieldSet* global, FieldSet* local);
 void atlas__NodesFunctionSpace__scatter_field(const NodesFunctionSpace* This, const Field* global, Field* local);
+const GatherScatter* atlas__NodesFunctionSpace__get_scatter(const NodesFunctionSpace* This);
+
 void atlas__NodesFunctionSpace__checksum_fieldset(const NodesFunctionSpace* This, const FieldSet* fieldset, Char* &checksum, int &size, int &allocated);
 void atlas__NodesFunctionSpace__checksum_field(const NodesFunctionSpace* This, const Field* field, Char* &checksum, int &size, int &allocated);
+const Checksum* atlas__NodesFunctionSpace__get_checksum(const NodesFunctionSpace* This);
 
 void atlas__NodesFunctionSpace__sum_double(const NodesFunctionSpace* This, const Field* field, double &sum, int &N);
 void atlas__NodesFunctionSpace__sum_float(const NodesFunctionSpace* This, const Field* field, float &sum, int &N);
@@ -157,6 +165,9 @@ void atlas__NodesFunctionSpace__mean_and_stddev_per_level(const NodesFunctionSpa
 
 }
 #undef Char
+#undef GatherScatter
+#undef Checksum
+#undef HaloExchange
 
 } // namespace functionspace
 } // namespace atlas

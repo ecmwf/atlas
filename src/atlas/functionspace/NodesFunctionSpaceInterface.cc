@@ -146,6 +146,13 @@ void atlas__NodesFunctionSpace__halo_exchange_field(const NodesFunctionSpace* Th
   ATLAS_ERROR_HANDLING( This->haloExchange(*field); );
 }
 
+const mpl::HaloExchange* atlas__NodesFunctionSpace__get_halo_exchange(const NodesFunctionSpace* This)
+{
+  ASSERT(This);
+  ATLAS_ERROR_HANDLING( return &This->halo_exchange(); );
+  return 0;
+}
+
 void atlas__NodesFunctionSpace__gather_fieldset(const NodesFunctionSpace* This, const FieldSet* local, FieldSet* global)
 {
   ASSERT(This);
@@ -162,6 +169,20 @@ void atlas__NodesFunctionSpace__gather_field(const NodesFunctionSpace* This, con
   ATLAS_ERROR_HANDLING( This->gather(*local,*global); );
 }
 
+const mpl::GatherScatter* atlas__NodesFunctionSpace__get_gather(const NodesFunctionSpace* This)
+{
+  ASSERT(This);
+  ATLAS_ERROR_HANDLING( return &This->gather(); );
+  return 0;
+}
+
+const mpl::GatherScatter* atlas__NodesFunctionSpace__get_scatter(const NodesFunctionSpace* This)
+{
+  ASSERT(This);
+  ATLAS_ERROR_HANDLING( return &This->scatter(); );
+  return 0;
+}
+
 void atlas__NodesFunctionSpace__scatter_fieldset(const NodesFunctionSpace* This, const FieldSet* global, FieldSet* local)
 {
   ASSERT(This);
@@ -176,6 +197,13 @@ void atlas__NodesFunctionSpace__scatter_field(const NodesFunctionSpace* This, co
   ASSERT(global);
   ASSERT(local);
   ATLAS_ERROR_HANDLING( This->scatter(*global,*local); );
+}
+
+const mpl::Checksum* atlas__NodesFunctionSpace__get_checksum(const NodesFunctionSpace* This)
+{
+  ASSERT(This);
+  ATLAS_ERROR_HANDLING( return &This->checksum(); );
+  return 0;
 }
 
 void atlas__NodesFunctionSpace__checksum_fieldset(const NodesFunctionSpace* This, const FieldSet* fieldset, char* &checksum, int &size, int &allocated)
