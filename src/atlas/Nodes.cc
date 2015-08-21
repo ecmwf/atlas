@@ -8,6 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
+#include "atlas/runtime/ErrorHandling.h"
 #include "atlas/Nodes.h"
 #include "atlas/field/FieldT.h"
 
@@ -142,65 +143,91 @@ void Nodes::print(std::ostream& os) const
 extern "C" {
 int atlas__Nodes__size (Nodes* This)
 {
-  ASSERT(This);
-  return This->size();
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    return This->size();
+  );
+  return 0;
 }
 void atlas__Nodes__resize (Nodes* This, int size)
 {
-  ASSERT(This);
-  return This->resize(size);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    This->resize(size);
+  );
 }
 int atlas__Nodes__nb_fields (Nodes* This)
 {
-  ASSERT(This);
-  return This->nb_fields();
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    return This->nb_fields();
+  );
+  return 0;
 }
 
-Field* atlas__Nodes__add (Nodes* This, Field* field)
+void atlas__Nodes__add (Nodes* This, Field* field)
 {
-  ASSERT(This);
-  ASSERT(field);
-  return &This->add(field);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    ASSERT(field);
+    This->add(field);
+  );
 }
 
 void atlas__Nodes__remove_field (Nodes* This, char* name)
 {
-  ASSERT(This);
-  This->remove_field(std::string(name));
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    This->remove_field(std::string(name));
+  );
 }
 
 int atlas__Nodes__has_field (Nodes* This, char* name)
 {
-  ASSERT(This);
-  return This->has_field(std::string(name));
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    return This->has_field(std::string(name));
+  );
+  return 0;
 }
 
 Field* atlas__Nodes__field_by_name (Nodes* This, char* name)
 {
-  ASSERT(This);
-  return &This->field(std::string(name));
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    return &This->field(std::string(name));
+  );
+  return 0;
 }
 
 Field* atlas__Nodes__field_by_idx (Nodes* This, int idx)
 {
-  ASSERT(This);
-  return &This->field(idx);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    return &This->field(idx);
+  );
+  return 0;
 }
 
 Metadata* atlas__Nodes__metadata(Nodes* This)
 {
-  ASSERT(This);
-  return &This->metadata();
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    return &This->metadata();
+  );
+  return 0;
 }
 
 void atlas__Nodes__str (Nodes* This, char* &str, int &size)
 {
-  std::stringstream ss;
-  ss << *This;
-  std::string s = ss.str();
-  size = s.size();
-  str = new char[size+1];
-  strcpy(str,s.c_str());
+  ATLAS_ERROR_HANDLING(
+    std::stringstream ss;
+    ss << *This;
+    std::string s = ss.str();
+    size = s.size();
+    str = new char[size+1];
+    strcpy(str,s.c_str());
+  );
 }
 
 }

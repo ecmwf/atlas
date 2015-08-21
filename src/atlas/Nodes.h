@@ -138,7 +138,7 @@ extern "C"
 int atlas__Nodes__size (Nodes* This);
 void atlas__Nodes__resize (Nodes* This, int size);
 int atlas__Nodes__nb_fields (Nodes* This);
-Field* atlas__Nodes__add (Nodes* This, Field* field);
+void atlas__Nodes__add (Nodes* This, Field* field);
 void atlas__Nodes__remove_field (Nodes* This, char* name);
 int atlas__Nodes__has_field (Nodes* This, char* name);
 Field* atlas__Nodes__field_by_name (Nodes* This, char* name);

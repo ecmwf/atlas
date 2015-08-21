@@ -25,13 +25,12 @@ subroutine Nodes__resize(this,size)
   call atlas__Nodes__resize(this%cpp_object_ptr,size)
 end subroutine
 
-function Nodes__add(this,field) result(added_field)
+subroutine Nodes__add(this,field)
   use atlas_nodes_c_binding
-  type(atlas_Field) :: added_field
   class(atlas_Nodes), intent(inout) :: this
   type(atlas_Field), intent(in) :: field
-  added_field%cpp_object_ptr = atlas__Nodes__add(this%cpp_object_ptr,field%cpp_object_ptr)
-end function
+  call atlas__Nodes__add(this%cpp_object_ptr,field%cpp_object_ptr)
+end subroutine
 
 subroutine Nodes__remove_field(this,name)
   use atlas_nodes_c_binding
@@ -63,7 +62,7 @@ function Nodes__field_by_name(this,name) result(field)
   type(atlas_Field) :: field
   class(atlas_Nodes), intent(in) :: this
   character(len=*), intent(in) :: name
-  field%cpp_object_ptr = atlas__Nodes__field_by_name(this%cpp_object_ptr,c_str(name))
+  field = atlas_Field( atlas__Nodes__field_by_name(this%cpp_object_ptr,c_str(name)) )
 end function
 
 function Nodes__field_by_idx(this,idx) result(field)
@@ -71,7 +70,7 @@ function Nodes__field_by_idx(this,idx) result(field)
   type(atlas_Field) :: field
   class(atlas_Nodes), intent(in) :: this
   integer, intent(in) :: idx
-  field%cpp_object_ptr = atlas__Nodes__field_by_idx(this%cpp_object_ptr,idx)
+  field = atlas_Field( atlas__Nodes__field_by_idx(this%cpp_object_ptr,idx) )
 end function
 
 function Nodes__str(this) result(str)
@@ -91,28 +90,28 @@ function Nodes__lonlat(this) result(field)
   use atlas_nodes_c_binding
   type(atlas_Field) :: field
   class(atlas_Nodes), intent(in) :: this
-  field%cpp_object_ptr = atlas__Nodes__field_by_name(this%cpp_object_ptr,c_str("lonlat"))
+  field = atlas_Field( atlas__Nodes__field_by_name(this%cpp_object_ptr,c_str("lonlat")) )
 end function
 
 function Nodes__global_index(this) result(field)
   use atlas_nodes_c_binding
   type(atlas_Field) :: field
   class(atlas_Nodes), intent(in) :: this
-  field%cpp_object_ptr = atlas__Nodes__field_by_name(this%cpp_object_ptr,c_str("glb_idx"))
+  field = atlas_Field( atlas__Nodes__field_by_name(this%cpp_object_ptr,c_str("glb_idx")) )
 end function
 
 function Nodes__remote_index(this) result(field)
   use atlas_nodes_c_binding
   type(atlas_Field) :: field
   class(atlas_Nodes), intent(in) :: this
-  field%cpp_object_ptr = atlas__Nodes__field_by_name(this%cpp_object_ptr,c_str("remote_idx"))
+  field = atlas_Field( atlas__Nodes__field_by_name(this%cpp_object_ptr,c_str("remote_idx")) )
 end function
 
 function Nodes__partition(this) result(field)
   use atlas_nodes_c_binding
   type(atlas_Field) :: field
   class(atlas_Nodes), intent(in) :: this
-  field%cpp_object_ptr = atlas__Nodes__field_by_name(this%cpp_object_ptr,c_str("partition"))
+  field = atlas_Field( atlas__Nodes__field_by_name(this%cpp_object_ptr,c_str("partition")) )
 end function
 
 
@@ -191,7 +190,7 @@ function FunctionSpace__field(this,name) result(field)
   class(atlas_FunctionSpace), intent(in) :: this
   character(len=*), intent(in) :: name
   type(atlas_Field) :: field
-  field%cpp_object_ptr = atlas__FunctionSpace__field(this%cpp_object_ptr, c_str(name) )
+  field = atlas_Field( atlas__FunctionSpace__field(this%cpp_object_ptr, c_str(name) ) )
   if( .not. C_associated(field%cpp_object_ptr) ) write(0,*) 'call abort()'
 end function FunctionSpace__field
 

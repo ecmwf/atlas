@@ -4,10 +4,17 @@
 ! -----------------------------------------------------------------------------
 ! Field routines
 
+function atlas_Field__cptr(cptr) result(field)
+  type(atlas_Field) :: field
+  type(c_ptr), intent(in) :: cptr
+  field%cpp_object_ptr = cptr
+  call field%attach()
+end function
+
 function atlas_Field__create(params) result(field)
   type(atlas_Field) :: field
   class(atlas_Config), intent(in) :: params
-  field%cpp_object_ptr = atlas__Field__create(params%cpp_object_ptr)
+  field = atlas_Field__cptr( atlas__Field__create(params%cpp_object_ptr) )
 end function
 
 function atlas_Field__create_name_kind_shape(name,kind,shape) result(field)
@@ -25,7 +32,7 @@ function atlas_Field__create_name_kind_shape(name,kind,shape) result(field)
   call params%set("data_type",atlas_data_type(kind))
   call params%set("name",name)
 
-  field%cpp_object_ptr = atlas__Field__create(params%cpp_object_ptr)
+  field = atlas_Field__cptr( atlas__Field__create(params%cpp_object_ptr) )
 
   call atlas_delete(params)
 end function
@@ -43,11 +50,31 @@ function atlas_Field__create_kind_shape(kind,shape) result(field)
   call params%set("fortran",.True.)
   call params%set("data_type",atlas_data_type(kind))
 
-  field%cpp_object_ptr = atlas__Field__create(params%cpp_object_ptr)
+  field = atlas_Field__cptr( atlas__Field__create(params%cpp_object_ptr) )
 
   call atlas_delete(params)
 end function
 
+subroutine atlas_Field__finalize(this)
+  class(atlas_Field), intent(inout) :: this
+  if( c_associated(this%cpp_object_ptr) ) then
+    if( this%owners() <= 0 ) then
+      call atlas_abort("Cannot finalize field that has no owners")
+    endif
+    call this%detach()
+    if( this%owners() == 0 ) then
+      call atlas__Field__delete(this%cpp_object_ptr)
+    endif
+    this%cpp_object_ptr = c_null_ptr
+  endif
+end subroutine
+
+#ifdef FORTRAN_SUPPORTS_FINAL
+subroutine atlas_Field__final(this)
+  type(atlas_Field), intent(inout) :: this
+  call this%finalize()
+end subroutine
+#endif
 
 subroutine atlas_Field__delete(this)
   class(atlas_Field), intent(inout) :: this

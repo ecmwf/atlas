@@ -94,9 +94,32 @@ END_TEST
 ! -----------------------------------------------------------------------------
 
 TEST( test_field_name )
-  field = nodes%add( atlas_Field("field",atlas_real(c_double),(/nodes%size()/)) )
+  field = atlas_Field("field",atlas_real(c_double),(/nodes%size()/))
+  call nodes%add( field )
   FCTEST_CHECK_EQUAL( field%name() , "field" )
   call nodes%remove_field("field")
+  call field%finalize() ! memory leak if not finalized!
+END_TEST
+
+! -----------------------------------------------------------------------------
+
+TEST( test_field_owners)
+  type(atlas_Field) :: f
+  type(atlas_State) :: state
+  type(atlas_FieldSet) :: fields
+  f = atlas_Field("field",atlas_real(c_double),(/10/) )
+  FCTEST_CHECK_EQUAL( f%owners() , 1 )
+  state = atlas_State()
+  call state%add(f)
+  FCTEST_CHECK_EQUAL( f%owners() , 2 )
+  call state%remove("field")
+  FCTEST_CHECK_EQUAL( f%owners() , 1 )
+  fields = atlas_FieldSet("fields")
+  call fields%add_field(f)
+  FCTEST_CHECK_EQUAL( f%owners() , 1 )
+  call f%finalize() ! memory leak if not finalized!
+  call atlas_delete(state)
+  call atlas_delete(fields)
 END_TEST
 
 ! -----------------------------------------------------------------------------
@@ -187,6 +210,16 @@ TEST( test_field_size )
   FCTEST_CHECK_EQUAL( field%datatype() , "real64" )
   FCTEST_CHECK_EQUAL( size(fdata_real64) , 20 )
 
+  write(0,*) "Owners = ", field%owners()
+  call field%attach()
+  write(0,*) "Owners = ", field%owners()
+  call field%attach()
+  write(0,*) "Owners = ", field%owners()
+  call field%detach()
+  write(0,*) "Owners = ", field%owners()
+  call field%detach()
+  write(0,*) "Owners = ", field%owners()
+  call field%finalize()
 END_TEST
 
 ! -----------------------------------------------------------------------------
@@ -385,7 +418,7 @@ TEST( test_fieldcreation )
 
   field = atlas_Field(FieldParams(creator="ArraySpec",shape=[10,137,1,30]))
   write(0,*) field%name(), field%size()
-  call atlas_delete(field)
+  call field%finalize()
 
   grid = atlas_ReducedGrid("oct.N80")
   params = atlas_FieldParametrisation(creator="IFS",nproma=1024,ngptot=grid%npts(),nlev=137,nvar=1,kind=4)
@@ -393,7 +426,7 @@ TEST( test_fieldcreation )
   call atlas_delete(params)
 
   write(0,*) field%name(), field%size(), field%shape(), field%datatype(), field%bytes()
-  call atlas_delete(field)
+  call field%finalize()
 
 ! Idea:
 !   field = atlas_Field([ &

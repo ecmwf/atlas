@@ -54,9 +54,15 @@ contains
     & access_data2_int32, access_data2_int64, access_data2_real32, access_data2_real64, access_data2_real64_bounds, &
     & access_data3_int32, access_data3_int64, access_data3_real32, access_data3_real64, access_data3_real64_bounds, &
     &                                         access_data4_real32, access_data4_real64, access_data4_real64_bounds
+
+  procedure :: finalize => atlas_Field__finalize
+#ifdef FORTRAN_SUPPORTS_FINAL
+  final :: atlas_Field__final
+#endif
 END TYPE atlas_Field
 
 interface atlas_Field
+  module procedure atlas_Field__cptr
   module procedure atlas_Field__create
   module procedure atlas_Field__create_name_kind_shape
   module procedure atlas_Field__create_kind_shape

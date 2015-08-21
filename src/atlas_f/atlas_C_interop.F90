@@ -22,6 +22,10 @@ public MAX_STR_LEN
 
 type :: object_type
   type(C_PTR), public :: cpp_object_ptr = C_NULL_PTR
+contains
+  procedure :: owners => object_type__owners
+  procedure :: attach => object_type__attach
+  procedure :: detach => object_type__detach
 end type
 
 integer(c_int), parameter :: MAX_STR_LEN = 255
@@ -67,12 +71,45 @@ interface
     use, intrinsic :: iso_c_binding, only: c_ptr
     type(c_ptr), value :: ptr
   end subroutine atlas_free
+
+  ! int atlas__Owned__owners(const Owned* This);
+  function atlas__Owned__owners(This) bind(c,name="atlas__Owned__owners")
+    use iso_c_binding, only: c_int, c_ptr
+    integer(c_int) :: atlas__Owned__owners
+    type(c_ptr), value :: This
+  end function
+
+  subroutine atlas__Owned__attach(This) bind(c,name="atlas__Owned__attach")
+    use iso_c_binding, only: c_ptr
+    type(c_ptr), value :: This
+  end subroutine
+
+  subroutine atlas__Owned__detach(This) bind(c,name="atlas__Owned__detach")
+    use iso_c_binding, only: c_ptr
+    type(c_ptr), value :: This
+  end subroutine
+
 end interface
 
 ! =============================================================================
 CONTAINS
 ! =============================================================================
 
+function object_type__owners(this) result(owners)
+  integer :: owners
+  class(object_type) :: this
+  owners = atlas__Owned__owners(this%cpp_object_ptr)
+end function
+
+subroutine object_type__attach(this)
+  class(object_type) :: this
+  call atlas__Owned__attach(this%cpp_object_ptr)
+end subroutine
+
+subroutine object_type__detach(this)
+  class(object_type) :: this
+  call atlas__Owned__detach(this%cpp_object_ptr)
+end subroutine
 
 subroutine get_c_arguments(argc,argv)
   integer(c_int), intent(out) :: argc

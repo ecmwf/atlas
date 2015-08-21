@@ -46,14 +46,14 @@ function FieldSet__field_by_name(this,name) result(field)
   class(atlas_FieldSet), intent(in) :: this
   character(len=*), intent(in) :: name
   type(atlas_Field) :: field
-  field%cpp_object_ptr = atlas__FieldSet__field_by_name(this%cpp_object_ptr, c_str(name) )
+  field = atlas_Field__cptr( atlas__FieldSet__field_by_name(this%cpp_object_ptr, c_str(name) ) )
 end function FieldSet__field_by_name
 
 function FieldSet__field_by_idx(this,idx) result(field)
   class(atlas_FieldSet), intent(in) :: this
   integer, intent(in) :: idx
   type(atlas_Field) :: field
-  field%cpp_object_ptr = atlas__FieldSet__field_by_idx(this%cpp_object_ptr, idx-1) ! C index
+  field = atlas_Field__cptr( atlas__FieldSet__field_by_idx(this%cpp_object_ptr, idx-1) ) ! C index
 end function FieldSet__field_by_idx
 
 subroutine FieldSet__fields(this,fields)

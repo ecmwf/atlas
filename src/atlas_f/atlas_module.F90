@@ -132,7 +132,6 @@ INTERFACE atlas_delete
 ! -----------------------------------------------------------------------------
   module procedure atlas_ReducedGrid__delete
   module procedure atlas_Mesh__delete
-  module procedure atlas_Field__delete
   module procedure atlas_FieldSet__delete
   module procedure atlas_HaloExchange__delete
   module procedure atlas_Metadata__delete

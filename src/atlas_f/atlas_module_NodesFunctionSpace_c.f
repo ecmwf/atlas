@@ -59,7 +59,7 @@ function atlas_NodesFunctionSpace__create_field_kind(this,kind) result(field)
   type(atlas_Field) :: field
   class(atlas_NodesFunctionSpace), intent(in) :: this
   integer, intent(in) :: kind
-  field%cpp_object_ptr = atlas__NodesFunctionSpace__create_field(this%cpp_object_ptr,c_str(""),kind)
+  field = atlas_Field( atlas__NodesFunctionSpace__create_field(this%cpp_object_ptr,c_str(""),kind) )
 end function
 
 function atlas_NodesFunctionSpace__create_field_kind_lev(this,kind,levels) result(field)
@@ -68,7 +68,7 @@ function atlas_NodesFunctionSpace__create_field_kind_lev(this,kind,levels) resul
   class(atlas_NodesFunctionSpace), intent(in) :: this
   integer, intent(in) :: kind
   integer, intent(in) :: levels
-  field%cpp_object_ptr = atlas__NodesFunctionSpace__create_field_lev(this%cpp_object_ptr,c_str(""),levels,kind)
+  field = atlas_Field( atlas__NodesFunctionSpace__create_field_lev(this%cpp_object_ptr,c_str(""),levels,kind) )
 end function
 
 function atlas_NodesFunctionSpace__create_field_name_kind(this,name,kind) result(field)
@@ -77,7 +77,7 @@ function atlas_NodesFunctionSpace__create_field_name_kind(this,name,kind) result
   class(atlas_NodesFunctionSpace), intent(in) :: this
   character(len=*), intent(in) :: name
   integer, intent(in) :: kind
-  field%cpp_object_ptr = atlas__NodesFunctionSpace__create_field(this%cpp_object_ptr,c_str(name),kind)
+  field = atlas_Field( atlas__NodesFunctionSpace__create_field(this%cpp_object_ptr,c_str(name),kind) )
 end function
 
 function atlas_NodesFunctionSpace__create_field_name_kind_lev(this,name,kind,levels) result(field)
@@ -87,7 +87,7 @@ function atlas_NodesFunctionSpace__create_field_name_kind_lev(this,name,kind,lev
   character(len=*), intent(in) :: name
   integer, intent(in) :: kind
   integer, intent(in) :: levels
-  field%cpp_object_ptr = atlas__NodesFunctionSpace__create_field_lev(this%cpp_object_ptr,c_str(name),levels,kind)
+  field = atlas_Field( atlas__NodesFunctionSpace__create_field_lev(this%cpp_object_ptr,c_str(name),levels,kind) )
 end function
 
 function atlas_NodesFunctionSpace__create_field_kind_vars(this,kind,vars) result(field)
@@ -97,7 +97,7 @@ function atlas_NodesFunctionSpace__create_field_kind_vars(this,kind,vars) result
   integer, intent(in) :: vars(:)
   integer, intent(in) :: kind
   integer, parameter :: fortran_ordering = 1
-  field%cpp_object_ptr = atlas__NodesFunctionSpace__create_field_vars(this%cpp_object_ptr,c_str(""),vars,size(vars),fortran_ordering,kind)
+  field = atlas_Field( atlas__NodesFunctionSpace__create_field_vars(this%cpp_object_ptr,c_str(""),vars,size(vars),fortran_ordering,kind) )
 end function
 
 function atlas_NodesFunctionSpace__create_field_kind_lev_vars(this,kind,levels,vars) result(field)
@@ -108,7 +108,7 @@ function atlas_NodesFunctionSpace__create_field_kind_lev_vars(this,kind,levels,v
   integer, intent(in) :: vars(:)
   integer, intent(in) :: levels
   integer, parameter :: fortran_ordering = 1
-  field%cpp_object_ptr = atlas__NodesFunctionSpace__create_field_lev_vars(this%cpp_object_ptr,c_str(""),levels,vars,size(vars),fortran_ordering,kind)
+  field = atlas_Field( atlas__NodesFunctionSpace__create_field_lev_vars(this%cpp_object_ptr,c_str(""),levels,vars,size(vars),fortran_ordering,kind) )
 end function
 
 
@@ -120,7 +120,7 @@ function atlas_NodesFunctionSpace__create_field_name_kind_vars(this,name,kind,va
   integer, intent(in) :: vars(:)
   integer, intent(in) :: kind
   integer, parameter :: fortran_ordering = 1
-  field%cpp_object_ptr = atlas__NodesFunctionSpace__create_field_vars(this%cpp_object_ptr,c_str(name),vars,size(vars),fortran_ordering,kind)
+  field = atlas_Field( atlas__NodesFunctionSpace__create_field_vars(this%cpp_object_ptr,c_str(name),vars,size(vars),fortran_ordering,kind) )
 end function
 
 function atlas_NodesFunctionSpace__create_field_name_kind_lev_vars(this,name,kind,levels,vars) result(field)
@@ -132,7 +132,7 @@ function atlas_NodesFunctionSpace__create_field_name_kind_lev_vars(this,name,kin
   integer, intent(in) :: levels
   integer, intent(in) :: vars(:)
   integer, parameter :: fortran_ordering = 1
-  field%cpp_object_ptr = atlas__NodesFunctionSpace__create_field_lev_vars(this%cpp_object_ptr,c_str(name),levels,vars,size(vars),fortran_ordering,kind)
+  field = atlas_Field( atlas__NodesFunctionSpace__create_field_lev_vars(this%cpp_object_ptr,c_str(name),levels,vars,size(vars),fortran_ordering,kind) )
 end function
 
 
@@ -142,7 +142,7 @@ function atlas_NodesFunctionSpace__create_field_template(this,template) result(f
   type(atlas_Field) :: field
   class(atlas_NodesFunctionSpace), intent(in) :: this
   type(atlas_Field) :: template
-  field%cpp_object_ptr = atlas__NodesFunctionSpace__create_field_template(this%cpp_object_ptr,c_str(""),template%cpp_object_ptr)
+  field = atlas_Field( atlas__NodesFunctionSpace__create_field_template(this%cpp_object_ptr,c_str(""),template%cpp_object_ptr) )
 end function
 
 function atlas_NodesFunctionSpace__create_field_name_template(this,name,template) result(field)
@@ -151,7 +151,7 @@ function atlas_NodesFunctionSpace__create_field_name_template(this,name,template
   class(atlas_NodesFunctionSpace), intent(in) :: this
   character(len=*), intent(in) :: name
   type(atlas_Field) :: template
-  field%cpp_object_ptr = atlas__NodesFunctionSpace__create_field_template(this%cpp_object_ptr,c_str(name),template%cpp_object_ptr)
+  field = atlas_Field( atlas__NodesFunctionSpace__create_field_template(this%cpp_object_ptr,c_str(name),template%cpp_object_ptr) )
 end function
 
 
@@ -161,7 +161,7 @@ function atlas_NodesFunctionSpace__create_glb_field_kind(this,kind) result(field
   type(atlas_Field) :: field
   class(atlas_NodesFunctionSpace), intent(in) :: this
   integer, intent(in) :: kind
-  field%cpp_object_ptr = atlas__NodesFunctionSpace__create_global_field(this%cpp_object_ptr,c_str(""),kind)
+  field = atlas_Field( atlas__NodesFunctionSpace__create_global_field(this%cpp_object_ptr,c_str(""),kind) )
 end function
 
 function atlas_NodesFunctionSpace__create_glb_field_kind_lev(this,kind,levels) result(field)
@@ -170,7 +170,7 @@ function atlas_NodesFunctionSpace__create_glb_field_kind_lev(this,kind,levels) r
   class(atlas_NodesFunctionSpace), intent(in) :: this
   integer, intent(in) :: levels
   integer, intent(in) :: kind
-  field%cpp_object_ptr = atlas__NodesFunctionSpace__create_global_field_lev(this%cpp_object_ptr,c_str(""),levels,kind)
+  field = atlas_Field( atlas__NodesFunctionSpace__create_global_field_lev(this%cpp_object_ptr,c_str(""),levels,kind) )
 end function
 
 function atlas_NodesFunctionSpace__create_glb_field_name_kind_lev(this,name,kind) result(field)
@@ -179,7 +179,7 @@ function atlas_NodesFunctionSpace__create_glb_field_name_kind_lev(this,name,kind
   class(atlas_NodesFunctionSpace), intent(in) :: this
   character(len=*), intent(in) :: name
   integer, intent(in) :: kind
-  field%cpp_object_ptr = atlas__NodesFunctionSpace__create_global_field(this%cpp_object_ptr,c_str(name),kind)
+  field = atlas_Field( atlas__NodesFunctionSpace__create_global_field(this%cpp_object_ptr,c_str(name),kind) )
 end function
 
 function atlas_NodesFunctionSpace__create_glb_field_name_kind(this,name,kind,levels) result(field)
@@ -189,7 +189,7 @@ function atlas_NodesFunctionSpace__create_glb_field_name_kind(this,name,kind,lev
   character(len=*), intent(in) :: name
   integer, intent(in) :: levels
   integer, intent(in) :: kind
-  field%cpp_object_ptr = atlas__NodesFunctionSpace__create_global_field_lev(this%cpp_object_ptr,c_str(name),levels,kind)
+  field = atlas_Field( atlas__NodesFunctionSpace__create_global_field_lev(this%cpp_object_ptr,c_str(name),levels,kind) )
 end function
 
 function atlas_NodesFunctionSpace__create_glb_field_kind_vars(this,kind,vars) result(field)
@@ -199,7 +199,7 @@ function atlas_NodesFunctionSpace__create_glb_field_kind_vars(this,kind,vars) re
   integer, intent(in) :: vars(:)
   integer, intent(in) :: kind
   integer, parameter :: fortran_ordering = 1
-  field%cpp_object_ptr = atlas__NodesFunctionSpace__create_global_field_vars(this%cpp_object_ptr,c_str(""),vars,size(vars),fortran_ordering,kind)
+  field = atlas_Field( atlas__NodesFunctionSpace__create_global_field_vars(this%cpp_object_ptr,c_str(""),vars,size(vars),fortran_ordering,kind) )
 end function
 
 function atlas_NodesFunctionSpace__create_glb_field_kind_lev_vars(this,kind,levels,vars) result(field)
@@ -210,7 +210,7 @@ function atlas_NodesFunctionSpace__create_glb_field_kind_lev_vars(this,kind,leve
   integer, intent(in) :: levels
   integer, intent(in) :: kind
   integer, parameter :: fortran_ordering = 1
-  field%cpp_object_ptr = atlas__NodesFunctionSpace__create_global_field_lev_vars(this%cpp_object_ptr,c_str(""),levels,vars,size(vars),fortran_ordering,kind)
+  field = atlas_Field( atlas__NodesFunctionSpace__create_global_field_lev_vars(this%cpp_object_ptr,c_str(""),levels,vars,size(vars),fortran_ordering,kind) )
 end function
 
 
@@ -222,7 +222,7 @@ function atlas_NodesFunctionSpace__create_glb_field_name_kind_vars(this,name,kin
   integer, intent(in) :: vars(:)
   integer, intent(in) :: kind
   integer, parameter :: fortran_ordering = 1
-  field%cpp_object_ptr = atlas__NodesFunctionSpace__create_global_field_vars(this%cpp_object_ptr,c_str(name),vars,size(vars),fortran_ordering,kind)
+  field = atlas_Field( atlas__NodesFunctionSpace__create_global_field_vars(this%cpp_object_ptr,c_str(name),vars,size(vars),fortran_ordering,kind) )
 end function
 
 function atlas_NodesFunctionSpace__create_glb_field_name_kind_lev_vars(this,name,kind,levels,vars) result(field)
@@ -234,7 +234,7 @@ function atlas_NodesFunctionSpace__create_glb_field_name_kind_lev_vars(this,name
   integer, intent(in) :: levels
   integer, intent(in) :: kind
   integer, parameter :: fortran_ordering = 1
-  field%cpp_object_ptr = atlas__NodesFunctionSpace__create_global_field_lev_vars(this%cpp_object_ptr,c_str(name),levels,vars,size(vars),fortran_ordering,kind)
+  field = atlas_Field( atlas__NodesFunctionSpace__create_global_field_lev_vars(this%cpp_object_ptr,c_str(name),levels,vars,size(vars),fortran_ordering,kind) )
 end function
 
 function atlas_NodesFunctionSpace__create_glb_field_template(this,template) result(field)
@@ -242,7 +242,7 @@ function atlas_NodesFunctionSpace__create_glb_field_template(this,template) resu
   type(atlas_Field) :: field
   class(atlas_NodesFunctionSpace), intent(in) :: this
   type(atlas_Field) :: template
-  field%cpp_object_ptr = atlas__NodesFunctionSpace__create_global_field_template(this%cpp_object_ptr,c_str(""),template%cpp_object_ptr)
+  field = atlas_Field( atlas__NodesFunctionSpace__create_global_field_template(this%cpp_object_ptr,c_str(""),template%cpp_object_ptr) )
 end function
 
 function atlas_NodesFunctionSpace__create_glb_field_name_template(this,name,template) result(field)
@@ -251,7 +251,7 @@ function atlas_NodesFunctionSpace__create_glb_field_name_template(this,name,temp
   class(atlas_NodesFunctionSpace), intent(in) :: this
   character(len=*), intent(in) :: name
   type(atlas_Field) :: template
-  field%cpp_object_ptr = atlas__NodesFunctionSpace__create_global_field_template(this%cpp_object_ptr,c_str(name),template%cpp_object_ptr)
+  field = atlas_Field( atlas__NodesFunctionSpace__create_global_field_template(this%cpp_object_ptr,c_str(name),template%cpp_object_ptr) )
 end function
 
 subroutine atlas_NodesFunctionSpace__halo_exchange_fieldset(this,fieldset)
@@ -1692,7 +1692,7 @@ function SpectralFunctionSpace__create_field_name(this,name) result(field)
   type(atlas_Field) :: field
   class(atlas_SpectralFunctionSpace) :: this
   character(len=*), intent(in) :: name
-  field%cpp_object_ptr = atlas__SpectralFunctionSpace__create_field(this%cpp_object_ptr,c_str(name))
+  field = atlas_Field( atlas__SpectralFunctionSpace__create_field(this%cpp_object_ptr,c_str(name)) )
 end function
 
 function SpectralFunctionSpace__create_field_name_lev(this,name,levels) result(field)
@@ -1701,7 +1701,7 @@ function SpectralFunctionSpace__create_field_name_lev(this,name,levels) result(f
   class(atlas_SpectralFunctionSpace), intent(in) :: this
   character(len=*), intent(in) :: name
   integer, intent(in) :: levels
-  field%cpp_object_ptr = atlas__SpectralFunctionSpace__create_field_lev(this%cpp_object_ptr,c_str(name),levels)
+  field = atlas_Field( atlas__SpectralFunctionSpace__create_field_lev(this%cpp_object_ptr,c_str(name),levels) )
 end function
 
 function SpectralFunctionSpace__create_glb_field_name(this,name) result(field)
@@ -1709,7 +1709,7 @@ function SpectralFunctionSpace__create_glb_field_name(this,name) result(field)
   type(atlas_Field) :: field
   class(atlas_SpectralFunctionSpace) :: this
   character(len=*), intent(in) :: name
-  field%cpp_object_ptr = atlas__SpectralFunctionSpace__create_global_field(this%cpp_object_ptr,c_str(name))
+  field = atlas_Field( atlas__SpectralFunctionSpace__create_global_field(this%cpp_object_ptr,c_str(name)) )
 end function
 
 function SpectralFunctionSpace__create_glb_field_name_lev(this,name,levels) result(field)
@@ -1718,6 +1718,6 @@ function SpectralFunctionSpace__create_glb_field_name_lev(this,name,levels) resu
   class(atlas_SpectralFunctionSpace), intent(in) :: this
   character(len=*), intent(in) :: name
   integer, intent(in) :: levels
-  field%cpp_object_ptr = atlas__SpectralFunctionSpace__create_global_field_lev(this%cpp_object_ptr,c_str(name),levels)
+  field = atlas_Field( atlas__SpectralFunctionSpace__create_global_field_lev(this%cpp_object_ptr,c_str(name),levels) )
 end function
 
