@@ -9,6 +9,8 @@
  */
 
 #include <algorithm>
+#include <cmath>
+#include "eckit/utils/MD5.h"
 #include "atlas/atlas_config.h"
 #include "atlas/mpi/Collectives.h"
 #include "atlas/Mesh.h"
@@ -17,7 +19,6 @@
 #include "atlas/mpl/GatherScatter.h"
 #include "atlas/util/IsGhost.h"
 #include "atlas/functionspace/NodesFunctionSpace.h"
-#include "atlas/field/FieldT.h"
 #include "atlas/actions/BuildParallelFields.h"
 #include "atlas/actions/BuildHalo.h"
 #include "atlas/actions/BuildPeriodicBoundaries.h"
@@ -196,26 +197,26 @@ std::string NodesFunctionSpace::checksum_name() const
 }
 
 Field* NodesFunctionSpace::createField(DataType datatype) const {
-  Field* field = new Field(datatype,make_shape(nb_nodes()));
+  Field* field = Field::create(datatype,make_shape(nb_nodes()));
   field->set_functionspace(nodes_str());
   return field;
 }
 
 Field* NodesFunctionSpace::createField(DataType datatype, size_t levels) const {
-  Field* field = new Field(datatype,make_shape(nb_nodes(),levels));
+  Field* field = Field::create(datatype,make_shape(nb_nodes(),levels));
   field->set_levels(levels);
   field->set_functionspace(nodes_str());
   return field;
 }
 
 Field* NodesFunctionSpace::createField(const std::string& name,DataType datatype) const {
-  Field* field = new Field(name,datatype,make_shape(nb_nodes()));
+  Field* field = Field::create(name,datatype,make_shape(nb_nodes()));
   field->set_functionspace(nodes_str());
   return field;
 }
 
 Field* NodesFunctionSpace::createField(const std::string& name,DataType datatype, size_t levels) const {
-  Field* field = new Field(name,datatype,make_shape(nb_nodes(),levels));
+  Field* field = Field::create(name,datatype,make_shape(nb_nodes(),levels));
   field->set_levels(levels);
   field->set_functionspace(nodes_str());
   return field;
@@ -224,7 +225,7 @@ Field* NodesFunctionSpace::createField(const std::string& name,DataType datatype
 Field* NodesFunctionSpace::createField(DataType datatype, const std::vector<size_t>& variables) const {
   std::vector<size_t> shape(1,nb_nodes());
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
-  Field* field = new Field(datatype,shape);
+  Field* field = Field::create(datatype,shape);
   field->set_functionspace(nodes_str());
   return field;
 }
@@ -232,7 +233,7 @@ Field* NodesFunctionSpace::createField(DataType datatype, const std::vector<size
 Field* NodesFunctionSpace::createField(DataType datatype, size_t levels, const std::vector<size_t>& variables) const {
   std::vector<size_t> shape(1,nb_nodes()); shape.push_back(levels);
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
-  Field* field = new Field(datatype,shape);
+  Field* field = Field::create(datatype,shape);
   field->set_levels(levels);
   field->set_functionspace(nodes_str());
   return field;
@@ -241,7 +242,7 @@ Field* NodesFunctionSpace::createField(DataType datatype, size_t levels, const s
 Field* NodesFunctionSpace::createField(const std::string& name,DataType datatype, const std::vector<size_t>& variables) const {
   std::vector<size_t> shape(1,nb_nodes());
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
-  Field* field = new Field(name,datatype,shape);
+  Field* field = Field::create(name,datatype,shape);
   field->set_functionspace(nodes_str());
   return field;
 }
@@ -249,7 +250,7 @@ Field* NodesFunctionSpace::createField(const std::string& name,DataType datatype
 Field* NodesFunctionSpace::createField(const std::string& name, DataType datatype, size_t levels, const std::vector<size_t>& variables) const {
   std::vector<size_t> shape(1,nb_nodes()); shape.push_back(levels);
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
-  Field* field = new Field(name,datatype,shape);
+  Field* field = Field::create(name,datatype,shape);
   field->set_levels(levels);
   field->set_functionspace(nodes_str());
   return field;
@@ -258,7 +259,7 @@ Field* NodesFunctionSpace::createField(const std::string& name, DataType datatyp
 Field* NodesFunctionSpace::createField(const Field& other) const {
   ArrayShape shape = other.shape();
   shape[0] = nb_nodes();
-  Field* field = new Field(other.datatype(),shape);
+  Field* field = Field::create(other.datatype(),shape);
   if( other.has_levels() )
     field->set_levels(field->shape(1));
   field->set_functionspace(nodes_str());
@@ -268,7 +269,7 @@ Field* NodesFunctionSpace::createField(const Field& other) const {
 Field* NodesFunctionSpace::createField(const std::string& name, const Field& other) const {
   ArrayShape shape = other.shape();
   shape[0] = nb_nodes();
-  Field* field = new Field(name,other.datatype(),shape);
+  Field* field = Field::create(name,other.datatype(),shape);
   if( other.has_levels() )
     field->set_levels(field->shape(1));
   field->set_functionspace(nodes_str());
@@ -276,26 +277,26 @@ Field* NodesFunctionSpace::createField(const std::string& name, const Field& oth
 }
 
 Field* NodesFunctionSpace::createGlobalField(DataType datatype) const {
-  Field* field = new Field(datatype,make_shape(nb_nodes_global()));
+  Field* field = Field::create(datatype,make_shape(nb_nodes_global()));
   field->set_functionspace(nodes_str());
   return field;
 }
 
 Field* NodesFunctionSpace::createGlobalField(DataType datatype, size_t levels) const {
-  Field* field = new Field(datatype,make_shape(nb_nodes_global(),levels));
+  Field* field = Field::create(datatype,make_shape(nb_nodes_global(),levels));
   field->set_levels(levels);
   field->set_functionspace(nodes_str());
   return field;
 }
 
 Field* NodesFunctionSpace::createGlobalField(const std::string& name,DataType datatype) const {
-  Field* field = new Field(name,datatype,make_shape(nb_nodes_global()));
+  Field* field = Field::create(name,datatype,make_shape(nb_nodes_global()));
   field->set_functionspace(nodes_str());
   return field;
 }
 
 Field* NodesFunctionSpace::createGlobalField(const std::string& name, DataType datatype, size_t levels) const {
-  Field* field = new Field(name,datatype,make_shape(nb_nodes_global(),levels));
+  Field* field = Field::create(name,datatype,make_shape(nb_nodes_global(),levels));
   field->set_levels(levels);
   field->set_functionspace(nodes_str());
   return field;
@@ -304,7 +305,7 @@ Field* NodesFunctionSpace::createGlobalField(const std::string& name, DataType d
 Field* NodesFunctionSpace::createGlobalField(DataType datatype, const std::vector<size_t>& variables) const {
   std::vector<size_t> shape(1,nb_nodes_global());
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
-  Field* field = new Field(datatype,shape);
+  Field* field = Field::create(datatype,shape);
   field->set_functionspace(nodes_str());
   return field;
 }
@@ -312,7 +313,7 @@ Field* NodesFunctionSpace::createGlobalField(DataType datatype, const std::vecto
 Field* NodesFunctionSpace::createGlobalField(DataType datatype, size_t levels, const std::vector<size_t>& variables) const {
   std::vector<size_t> shape(1,nb_nodes_global()); shape.push_back(levels);
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
-  Field* field = new Field(datatype,shape);
+  Field* field = Field::create(datatype,shape);
   field->set_levels(levels);
   field->set_functionspace(nodes_str());
   return field;
@@ -321,7 +322,7 @@ Field* NodesFunctionSpace::createGlobalField(DataType datatype, size_t levels, c
 Field* NodesFunctionSpace::createGlobalField(const std::string& name, DataType datatype, const std::vector<size_t>& variables) const {
   std::vector<size_t> shape(1,nb_nodes_global());
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
-  Field* field = new Field(name,datatype,shape);
+  Field* field = Field::create(name,datatype,shape);
   field->set_functionspace(nodes_str());
   return field;
 }
@@ -329,7 +330,7 @@ Field* NodesFunctionSpace::createGlobalField(const std::string& name, DataType d
 Field* NodesFunctionSpace::createGlobalField(const std::string& name, DataType datatype, size_t levels, const std::vector<size_t>& variables) const {
   std::vector<size_t> shape(1,nb_nodes_global()); shape.push_back(levels);
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
-  Field* field = new Field(name,datatype,shape);
+  Field* field = Field::create(name,datatype,shape);
   field->set_levels(levels);
   field->set_functionspace(nodes_str());
   return field;
@@ -338,7 +339,7 @@ Field* NodesFunctionSpace::createGlobalField(const std::string& name, DataType d
 Field* NodesFunctionSpace::createGlobalField(const Field& other) const {
   ArrayShape shape = other.shape();
   shape[0] = nb_nodes_global();
-  Field* field = new Field(other.datatype(),shape);
+  Field* field = Field::create(other.datatype(),shape);
   if( other.has_levels() )
     field->set_levels(field->shape(1));
   field->set_functionspace(nodes_str());
@@ -348,7 +349,7 @@ Field* NodesFunctionSpace::createGlobalField(const Field& other) const {
 Field* NodesFunctionSpace::createGlobalField(const std::string& name,const Field& other) const {
   ArrayShape shape = other.shape();
   shape[0] = nb_nodes_global();
-  Field* field = new Field(name,other.datatype(),shape);
+  Field* field = Field::create(name,other.datatype(),shape);
   if( other.has_levels() )
     field->set_levels(field->shape(1));
   field->set_functionspace(nodes_str());

@@ -8,9 +8,9 @@
  * does it submit to any jurisdiction.
  */
 
+#include "eckit/utils/MD5.h"
 #include "atlas/Mesh.h"
 #include "atlas/functionspace/SpectralFunctionSpace.h"
-#include "atlas/field/FieldT.h"
 #include "atlas/FieldSet.h"
 
 #ifdef ATLAS_HAVE_TRANS
@@ -62,26 +62,26 @@ size_t SpectralFunctionSpace::nb_spectral_coefficients_global() const {
 }
 
 Field* SpectralFunctionSpace::createField(const std::string& name) const {
-  Field* field = new field::FieldT<double>(name, make_shape(nb_spectral_coefficients()) );
+  Field* field = Field::create<double>(name, make_shape(nb_spectral_coefficients()) );
   field->set_functionspace(spectral_str());
   return field;
 }
 
 Field* SpectralFunctionSpace::createField(const std::string& name, size_t levels) const {
-  Field* field = new field::FieldT<double>(name, make_shape(nb_spectral_coefficients(),levels) );
+  Field* field = Field::create<double>(name, make_shape(nb_spectral_coefficients(),levels) );
   field->set_functionspace(spectral_str());
   field->set_levels(levels);
   return field;
 }
 
 Field* SpectralFunctionSpace::createGlobalField(const std::string& name) const {
-  Field* field = new field::FieldT<double>(name, make_shape(nb_spectral_coefficients_global()) );
+  Field* field = Field::create<double>(name, make_shape(nb_spectral_coefficients_global()) );
   field->set_functionspace(spectral_str());
   return field;
 }
 
 Field* SpectralFunctionSpace::createGlobalField(const std::string& name, size_t levels) const {
-  Field* field = new field::FieldT<double>(name, make_shape(nb_spectral_coefficients_global(),levels) );
+  Field* field = Field::create<double>(name, make_shape(nb_spectral_coefficients_global(),levels) );
   field->set_functionspace(spectral_str());
   field->set_levels(levels);
   return field;

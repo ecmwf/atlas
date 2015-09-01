@@ -29,7 +29,7 @@ function atlas_Field__create_name_kind_shape(name,kind,shape) result(field)
   call params%set("creator","ArraySpec")
   call params%set("shape",shape)
   call params%set("fortran",.True.)
-  call params%set("data_type",atlas_data_type(kind))
+  call params%set("datatype",atlas_data_type(kind))
   call params%set("name",name)
 
   field = atlas_Field__cptr( atlas__Field__create(params%cpp_object_ptr) )
@@ -48,7 +48,7 @@ function atlas_Field__create_kind_shape(kind,shape) result(field)
   call params%set("creator","ArraySpec")
   call params%set("shape",shape)
   call params%set("fortran",.True.)
-  call params%set("data_type",atlas_data_type(kind))
+  call params%set("datatype",atlas_data_type(kind))
 
   field = atlas_Field__cptr( atlas__Field__create(params%cpp_object_ptr) )
 

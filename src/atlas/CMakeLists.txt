@@ -58,9 +58,9 @@ util/ArrayUtil.cc
 util/ArrayView.h
 util/ArrayView.cc
 util/Bitflags.h
-util/Unique.h
 util/Checksum.h
 util/Checksum.cc
+util/DataType.h
 util/Debug.h
 util/Functions.h
 util/IndexView.h
@@ -69,6 +69,7 @@ util/IsGhost.h
 util/LonLatMicroDeg.h
 util/ObjectRegistry.h
 util/PeriodicTransform.h
+util/Unique.h
 )
 
 list( APPEND atlas_Meshgen_srcs
@@ -255,10 +256,6 @@ field/FieldCreatorArraySpec.h
 field/FieldCreatorArraySpec.cc
 field/FieldCreatorIFS.h
 field/FieldCreatorIFS.cc
-field/FieldT.cc
-field/FieldT.h
-field/FieldTCreator.h
-field/FieldTCreator.cc
 functionspace/NodesFunctionSpace.h
 functionspace/NodesFunctionSpace.cc
 functionspace/NodesFunctionSpaceInterface.h

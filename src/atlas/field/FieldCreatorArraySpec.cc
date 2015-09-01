@@ -13,7 +13,6 @@
 #include "eckit/config/Parametrisation.h"
 #include "atlas/Field.h"
 #include "atlas/field/FieldCreatorArraySpec.h"
-#include "atlas/field/FieldTCreator.h"
 #include "atlas/util/DataType.h"
 
 namespace atlas {
@@ -26,25 +25,28 @@ Field* FieldCreatorArraySpec::create_field( const eckit::Parametrisation& params
     throw eckit::Exception("Could not find parameter 'shape' in Parametrisation");
   std::vector<size_t> s(shape.begin(),shape.end());
 
-  long kind = DataType::kind<double>();
-  std::string data_type;
-  if( !params.get("data_type", data_type) )
+  DataType datatype = DataType::create<double>();
+  std::string datatype_str;
+  if( params.get("datatype", datatype_str) )
   {
-    // Assume real
+    datatype = DataType(datatype_str);
+  }
+  else
+  {
+    DataType::kind_t kind(DataType::kind<double>());
     params.get("kind",kind);
     if( ! DataType::kind_valid(kind) )
     {
       std::stringstream msg;
-      msg << "Could not create field. kind parameter unrecognized (expected: " << DataType::kind<float>()
-          << " or " << DataType::kind<double>() << "; received: " << kind << ") ";
-      throw eckit::Exception(msg.str());      
+      msg << "Could not create field. kind parameter unrecognized";
+      throw eckit::Exception(msg.str());
     }
-    data_type = DataType::kind_to_str(kind);
+    datatype = DataType(kind);
   }
 
-  eckit::ScopedPtr<field::FieldTCreator> creator
-     (field::FieldTCreatorFactory::build("FieldT<"+data_type+">") );
-  return creator->create_field(s,params);
+  std::string name;
+  params.get("name",name);
+  return Field::create(name,datatype,s);
 }
 
 namespace {

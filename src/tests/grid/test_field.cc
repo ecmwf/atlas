@@ -117,7 +117,7 @@ void TestField::test_fieldcreator()
   Field::Ptr field ( Field::create( Config
                                       ("creator","ArraySpec")
                                       ("shape",make_shape(10,2))
-                                      ("data_type",DataType::real32().str())
+                                      ("datatype",DataType::real32().str())
                                       ("name","myfield")
                                   ));
 
@@ -145,7 +145,7 @@ void TestField::test_fieldcreator()
   Field::Ptr ifs (Field::create( Config
                                     (ifs_parameters)
                                     ("name","myfield")
-                                    ("data_type",DataType::int32().str())
+                                    ("datatype",DataType::int32().str())
                                     ("nvar",8)
                                ));
 

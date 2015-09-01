@@ -224,6 +224,7 @@ private:  // methods
         return s;
     }
 
+public:
     virtual Field& add( Field* field );
 
 protected:

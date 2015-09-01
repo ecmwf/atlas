@@ -10,9 +10,8 @@
 
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/Nodes.h"
-#include "atlas/field/FieldT.h"
-
-using atlas::field::FieldT;
+#include "atlas/Field.h"
+#include "atlas/Parameters.h"
 
 namespace atlas {
 
@@ -29,7 +28,7 @@ Nodes::Nodes(size_t _size) :
   topology_     = &add( Field::create<int   >("topology",  make_shape(size(),1)) );
   lonlat_       = &add( Field::create<double>("lonlat",    make_shape(size(),2)) );
 
-  add( new FieldT<int>("flags", make_shape(size(),1)) );
+  add( Field::create<int>("flags", make_shape(size(),1)) );
 
 
   ArrayView<gidx_t,1> glb_idx( global_index() );

@@ -18,16 +18,13 @@
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Field.h"
-#include "atlas/field/FieldT.h"
 #include "atlas/field/FieldCreator.h"
-#include "atlas/field/FieldTCreator.h"
 #include "atlas/util/DataType.h"
 
 #include "atlas/Grid.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Mesh.h"
 
-using atlas::field::FieldT;
 
 namespace atlas {
 
@@ -54,18 +51,14 @@ Field* Field::create(const eckit::Parametrisation& params)
   return NULL;
 }
 
-Field* Field::create(const std::string& name, const ArrayShape& shape, const std::string& datatype )
+Field* Field::create(DataType datatype, const ArrayShape& shape)
 {
-  eckit::ScopedPtr<field::FieldTCreator> creator
-     (field::FieldTCreatorFactory::build("FieldT<"+datatype+">") );
-  return creator->create_field(name,shape);
+  return new Field(datatype,shape);
 }
 
-Field* Field::create( const ArrayShape& shape, const std::string& datatype )
+Field* Field::create(const std::string& name, DataType datatype, const ArrayShape& shape)
 {
-  eckit::ScopedPtr<field::FieldTCreator> creator
-     (field::FieldTCreatorFactory::build("FieldT<"+datatype+">") );
-  return creator->create_field(std::string(),shape);
+  return new Field(name,datatype,shape);
 }
 
 // -------------------------------------------------------------------------
@@ -107,57 +100,6 @@ Field::Field(const eckit::Parametrisation& params) :
 Field::~Field()
 {
 }
-
-//size_t Field::levels() const
-//{
-//  if( indexing_.level().size() == 1 )
-//    return shape(indexing_.level());
-//  else
-//    return 0;
-//}
-
-//size_t Field::spectral() const
-//{
-//  if( indexing_.spectral().size() == 1 )
-//    return shape(indexing_.spectral());
-//  else
-//    return 0;
-//}
-
-//namespace {
-//template< typename DATA_TYPE >
-//DATA_TYPE* get_field_data( const Field& field )
-//{
-//  try
-//  {
-//    return field.array_
-//  }
-//  catch ( eckit::BadCast& exception )
-//  {
-
-//  }
-
-//  const FieldT<DATA_TYPE>* fieldT = dynamic_cast< const FieldT<DATA_TYPE>* >(&field);
-//  if( fieldT == NULL )
-//  {
-//    std::stringstream msg;
-//    msg << "Could not cast Field " << field.name()
-//        << " with data_type " << field.datatype() << " to "
-//        << DataType::datatype<DATA_TYPE>();
-//    throw eckit::BadCast(msg.str(),Here());
-//  }
-//  return const_cast<DATA_TYPE*>(fieldT->data());
-//}
-//}
-
-//template <> const int*    Field::data<int   >() const { return get_field_data<int   >(*this); }
-//template <>       int*    Field::data<int   >()       { return get_field_data<int   >(*this); }
-//template <> const long*   Field::data<long  >() const { return get_field_data<long  >(*this); }
-//template <>       long*   Field::data<long  >()       { return get_field_data<long  >(*this); }
-//template <> const float*  Field::data<float >() const { return get_field_data<float >(*this); }
-//template <>       float*  Field::data<float >()       { return get_field_data<float >(*this); }
-//template <> const double* Field::data<double>() const { return get_field_data<double>(*this); }
-//template <>       double* Field::data<double>()       { return get_field_data<double>(*this); }
 
 void Field::dump(std::ostream& os) const
 {

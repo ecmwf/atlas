@@ -24,10 +24,8 @@
 #include "atlas/util/Debug.h"
 #include "atlas/util/Bitflags.h"
 #include "atlas/util/DataType.h"
-#include "atlas/field/FieldT.h"
 
 using atlas::util::Topology;
-using atlas::field::FieldT;
 
 #ifdef ATLAS_HAVE_FORTRAN
 #define REMOTE_IDX_BASE 1
@@ -143,8 +141,8 @@ void FunctionSpace::resize(const std::vector<size_t>& shape)
 
 namespace {
 
-  template < typename T >
-  FieldT<T>* check_if_exists( FunctionSpace* fs,
+
+  Field* check_if_exists( const FunctionSpace& fs,
                 const std::string& name,
                 const std::vector<size_t>&  shape,
                 size_t nb_vars,
@@ -152,7 +150,7 @@ namespace {
   {
     using namespace eckit;
 
-    if( fs->has_field(name) )
+    if( fs.has_field(name) )
     {
       if( b == IF_EXISTS_FAIL )
       {
@@ -160,7 +158,7 @@ namespace {
         throw eckit::Exception( msg.str(), Here() );
       }
 
-      Field& f= fs->field(name);
+      const Field& f= fs.field(name);
 
       if( f.shape() != shape )
       {
@@ -171,11 +169,37 @@ namespace {
         msg << std::endl;
         throw eckit::Exception(msg.str(),Here());
       }
-      return dynamic_cast< FieldT<T>* >(&f);
+      return const_cast<Field*>(&f);
     }
 
     return NULL;
   }
+
+
+  template <typename T>
+  Field& on_create_field(FunctionSpace& fs, const std::string& name, size_t nb_vars, CreateBehavior b )
+  {
+    Field* field = NULL;
+
+    size_t rank = fs.shape().size();
+    std::vector< size_t > field_shape(rank);
+    for (size_t i=0; i<rank; ++i)
+    {
+      if( fs.shape()[i] == FunctionSpace::UNDEF_VARS )
+        field_shape[i] = nb_vars;
+      else
+        field_shape[i] = fs.shape()[i];
+    }
+
+    if( (field = check_if_exists(fs, name, field_shape, nb_vars, b )) )
+      return *field;
+
+    field = Field::create<T>(name,field_shape);
+    fs.add(field);
+
+    return *field;
+  }
+
 
 }
 
@@ -185,101 +209,26 @@ Field& FunctionSpace::add( Field* field )
   fields_.sort();
 }
 
-template <>
-Field& FunctionSpace::create_field<double>(const std::string& name, size_t nb_vars, CreateBehavior b )
+template<> Field& FunctionSpace::create_field<double>(const std::string& name, size_t nb_vars, CreateBehavior b )
 {
-  FieldT<double>* field = NULL;
-
-  size_t rank = shape_.size();
-  std::vector< size_t > field_shape(rank);
-  for (size_t i=0; i<rank; ++i)
-  {
-    if( shape_[i] == FunctionSpace::UNDEF_VARS )
-      field_shape[i] = nb_vars;
-    else
-      field_shape[i] = shape_[i];
-  }
-
-  if( (field = check_if_exists<double>(this, name, field_shape, nb_vars, b )) )
-    return *field;
-
-  field = new FieldT<double>(field_shape,Config("name",name));
-  add(field);
-
-  return *field;
+  return on_create_field<double>(*this,name,nb_vars,b);
 }
 
-template <>
-Field& FunctionSpace::create_field<float>(const std::string& name, size_t nb_vars, CreateBehavior b )
+template<> Field& FunctionSpace::create_field<float>(const std::string& name, size_t nb_vars, CreateBehavior b )
 {
-  FieldT<float>* field = NULL;
-
-  size_t rank = shape_.size();
-  std::vector< size_t > field_shape(rank);
-  for (size_t i=0; i<rank; ++i)
-  {
-    if( shape_[i] == FunctionSpace::UNDEF_VARS )
-      field_shape[i] = nb_vars;
-    else
-      field_shape[i] = shape_[i];
-  }
-
-  if( (field = check_if_exists<float>(this, name, field_shape, nb_vars, b )) )
-    return *field;
-
-  field = new FieldT<float>(field_shape,Config("name",name));
-  add(field);
-
-  return *field;
+  return on_create_field<float>(*this,name,nb_vars,b);
 }
 
-template <>
-Field& FunctionSpace::create_field<int>(const std::string& name, size_t nb_vars, CreateBehavior b )
+template<> Field& FunctionSpace::create_field<int>(const std::string& name, size_t nb_vars, CreateBehavior b )
 {
-  FieldT<int>* field = NULL;
-
-  size_t rank = shape_.size();
-  std::vector< size_t > field_shape(rank);
-  for (size_t i=0; i<rank; ++i)
-  {
-    if( shape_[i] == FunctionSpace::UNDEF_VARS )
-      field_shape[i] = nb_vars;
-    else
-      field_shape[i] = shape_[i];
-  }
-
-  if( (field = check_if_exists<int>(this, name, field_shape, nb_vars, b )) )
-    return *field;
-
-  field = new FieldT<int>(field_shape,Config("name",name));
-  add(field);
-
-  return *field;
+  return on_create_field<int>(*this,name,nb_vars,b);
 }
 
-template <>
-Field& FunctionSpace::create_field<long>(const std::string& name, size_t nb_vars, CreateBehavior b )
+template<> Field& FunctionSpace::create_field<long>(const std::string& name, size_t nb_vars, CreateBehavior b )
 {
-  FieldT<long>* field = NULL;
-
-  size_t rank = shape_.size();
-  std::vector< size_t > field_shape(rank);
-  for (size_t i=0; i<rank; ++i)
-  {
-    if( shape_[i] == FunctionSpace::UNDEF_VARS )
-      field_shape[i] = nb_vars;
-    else
-      field_shape[i] = shape_[i];
-  }
-
-  if( (field = check_if_exists<long>(this, name, field_shape, nb_vars, b )) )
-    return *field;
-
-  field = new FieldT<long>(field_shape,Config("name",name));
-  add(field);
-
-  return *field;
+  return on_create_field<long>(*this,name,nb_vars,b);
 }
+
 
 
 void FunctionSpace::remove_field(const std::string& name)

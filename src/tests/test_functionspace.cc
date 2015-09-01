@@ -413,7 +413,7 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
     fs.sum(field,sumint,N);
     Log::info() << "sumint: " << sumint << std::endl;
 
-    Field::Ptr max_per_level    ( new Field("max",DataType::kind<double>(),make_shape(nb_levels,nvar)) );
+    Field::Ptr max_per_level    ( Field::create<double>("max",    make_shape(nb_levels,nvar)) );
     Field::Ptr min_per_level    ( Field::create<double>("min",    make_shape(nb_levels,nvar)) );
     Field::Ptr sum_per_level    ( Field::create<double>("sum",    make_shape(nb_levels,nvar)) );
     Field::Ptr mean_per_level   ( Field::create<double>("mean",   make_shape(nb_levels,nvar)) );

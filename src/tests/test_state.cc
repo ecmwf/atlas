@@ -158,22 +158,22 @@ BOOST_AUTO_TEST_CASE( state_create )
 
   std::vector<Config> fields(5);
   fields[0].set("name","temperature");
-  fields[0].set("data_type",DataType::real32().str());
+  fields[0].set("datatype",DataType::real32().str());
 
   fields[1].set("name","wind");
   fields[1].set("nvar",2); // vector field u,v
-  fields[1].set("data_type",DataType::real64().str());
+  fields[1].set("datatype",DataType::real64().str());
 
   fields[2].set("name","soiltype");
-  fields[2].set("data_type",DataType::int32().str());
+  fields[2].set("datatype",DataType::int32().str());
   fields[2].set("nlev",1); // We can overwrite nlev from geometry here
 
   fields[3].set("name","GFL");
   fields[3].set("nvar",12); // assume 12 variables in GFL array
-  fields[3].set("data_type",DataType::real64().str());
+  fields[3].set("datatype",DataType::real64().str());
 
   fields[4].set("name","array");
-  fields[4].set("data_type",DataType::int64().str());
+  fields[4].set("datatype",DataType::int64().str());
   fields[4].set("creator","ArraySpec");
   fields[4].set("shape",make_shape(10,2));
 

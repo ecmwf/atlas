@@ -13,7 +13,6 @@
 #include "eckit/config/Parametrisation.h"
 #include "atlas/util/ArrayUtil.h"
 #include "atlas/util/DataType.h"
-#include "atlas/field/FieldTCreator.h"
 #include "atlas/field/FieldCreatorIFS.h"
 #include "atlas/Field.h"
 #include "atlas/Grid.h"
@@ -35,21 +34,24 @@ Field* FieldCreatorIFS::create_field( const eckit::Parametrisation& params ) con
   params.get("nproma",nproma);
   params.get("nlev",nlev);
   params.get("nvar",nvar);
-  params.get("kind",kind);
 
-  std::string data_type;
-  if( !params.get("data_type", data_type) )
+  DataType datatype = DataType::create<double>();
+  std::string datatype_str;
+  if( params.get("datatype", datatype_str) )
   {
-    // Assume real
+    datatype = DataType(datatype_str);
+  }
+  else
+  {
+    DataType::kind_t kind(DataType::kind<double>());
     params.get("kind",kind);
     if( ! DataType::kind_valid(kind) )
     {
       std::stringstream msg;
-      msg << "Could not create field. kind parameter unrecognized (expected: " << DataType::kind<float>()
-          << " or " << DataType::kind<double>() << "; received: " << kind << ") ";
-      throw eckit::Exception(msg.str());      
+      msg << "Could not create field. kind parameter unrecognized";
+      throw eckit::Exception(msg.str());
     }
-    data_type = DataType::kind_to_str(kind);
+    datatype = DataType(kind);
   }
 
   nblk = std::ceil(static_cast<double>(ngptot)/static_cast<double>(nproma));
@@ -62,11 +64,10 @@ Field* FieldCreatorIFS::create_field( const eckit::Parametrisation& params ) con
 
   std::string name;
   params.get("name",name);
-  eckit::Log::debug() << "Creating IFS "<<data_type<<" field: "<<name<<"[nblk="<<nblk<<"][nvar="<<nvar<<"][nlev="<<nlev<<"][nproma="<<nproma<<"]\n";
+  eckit::Log::debug() << "Creating IFS "<<datatype.str()<<" field: "<<name<<"[nblk="<<nblk<<"][nvar="<<nvar<<"][nlev="<<nlev<<"][nproma="<<nproma<<"]\n";
 
-  eckit::ScopedPtr<field::FieldTCreator> creator
-     (field::FieldTCreatorFactory::build("FieldT<"+data_type+">") );
-  return creator->create_field(s,params);
+  return Field::create(name,datatype,s);
+
 }
 
 namespace {

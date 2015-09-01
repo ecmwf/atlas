@@ -44,15 +44,15 @@ public: // types
 public: // Static methods
 
   static Field* create( const eckit::Parametrisation& );
-  static Field* create( const std::string& name, const ArrayShape&, const std::string& datatype );
-  template<typename DATATYPE>
-  static Field* create( const std::string& name, const ArrayShape& shape ) {
-    return create( name,shape,DataType::str<DATATYPE>() );
-  }
-  static Field* create( const ArrayShape&, const std::string& datatype );
+  static Field* create(DataType, const ArrayShape& = ArrayShape());
+  static Field* create(const std::string& name, DataType, const ArrayShape& = ArrayShape());
   template<typename DATATYPE>
   static Field* create( const ArrayShape& shape ) {
-    return create( shape, DataType::str<DATATYPE>() );
+    return create(DataType::create<DATATYPE>(),shape);
+  }
+  template<typename DATATYPE>
+  static Field* create( const std::string& name, const ArrayShape& shape = ArrayShape() ) {
+    return create(name,DataType::create<DATATYPE>(),shape);
   }
 
 public: // methods
@@ -78,8 +78,7 @@ public: // methods
   template <typename DATA_TYPE> const DATA_TYPE* data() const  { return array_->data<DATA_TYPE>(); }
   template <typename DATA_TYPE>       DATA_TYPE* data()        { return array_->data<DATA_TYPE>(); }
 
-  /// @brief Internal data type of field as string
-  /// Any of [ int32 int64 real32 real64 ]
+  /// @brief Internal data type of field
   DataType datatype() const { return array_->datatype(); }
 
   /// @brief Name associated to this field
@@ -114,8 +113,6 @@ public: // methods
 
   /// @brief Rank of field
   size_t rank() const { return array_->rank(); }
-
-  //const Indexing& indexing() const;
 
   /// @brief Number of bytes occupied by the values of this field
   double bytes() const { return array_->bytes(); }
