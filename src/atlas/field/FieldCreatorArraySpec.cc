@@ -8,6 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
+#include <algorithm>
 #include <sstream>
 #include "eckit/exception/Exceptions.h"
 #include "eckit/config/Parametrisation.h"
@@ -23,7 +24,14 @@ Field* FieldCreatorArraySpec::create_field( const eckit::Parametrisation& params
   std::vector<long> shape;
   if( !params.get("shape",shape) )
     throw eckit::Exception("Could not find parameter 'shape' in Parametrisation");
-  std::vector<size_t> s(shape.begin(),shape.end());
+
+  std::vector<size_t> s(shape.size());
+
+  bool fortran (false);
+  params.get("fortran",fortran);
+  if( fortran ) std::reverse_copy( shape.begin(),shape.end(), s.begin() );
+  else          s.assign(shape.begin(),shape.end());
+
 
   DataType datatype = DataType::create<double>();
   std::string datatype_str;

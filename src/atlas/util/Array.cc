@@ -37,7 +37,7 @@ DATA_TYPE* get_array_data( const ArrayBase& arraybase )
   {
     std::stringstream msg;
     msg << "Could not cast Array "
-        << " with datatype " << array->datatype().str() << " to "
+        << " with datatype " << arraybase.datatype().str() << " to "
         << DataType::str<DATA_TYPE>();
     throw eckit::BadCast(msg.str(),Here());
   }

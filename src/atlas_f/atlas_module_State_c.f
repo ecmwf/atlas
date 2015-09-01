@@ -72,6 +72,7 @@ function atlas_State__field_by_name(this,name) result(field)
   class(atlas_State), intent(inout) :: this
   character(len=*), intent(in) :: name
   field = atlas_Field( atlas__State__field_by_name(this%cpp_object_ptr,c_str(name)) )
+  call atlas_return(field)
 end function
 
 function atlas_State__field_by_index(this,index) result(field)
@@ -80,6 +81,7 @@ function atlas_State__field_by_index(this,index) result(field)
   class(atlas_State), intent(in) :: this
   integer, intent(in) :: index
   field = atlas_Field( atlas__State__field_by_index(this%cpp_object_ptr,index-1) )
+  call atlas_return(field)
 end function
 
 function atlas_State__metadata(this) result(metadata)

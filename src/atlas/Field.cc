@@ -48,7 +48,7 @@ Field* Field::create(const eckit::Parametrisation& params)
   else
     throw eckit::Exception("Could not find parameter 'creator' in Parametrisation for call to Field::create()");
 
-  return NULL;
+  return 0;
 }
 
 Field* Field::create(DataType datatype, const ArrayShape& shape)
@@ -75,28 +75,6 @@ Field::Field(const std::string& name, DataType datatype, const ArrayShape& shape
   array_.reset( ArrayBase::create(datatype,shape) );
 }
 
-//Field::Field(DataType::kind_t kind, const ArrayShape& shape, const Indexing& index_type, const std::string& name):
-//  name_(name)//, indexing_(index_type)
-//{
-//  array_.reset( ArrayBase::create(kind,shape) );
-//}
-
-Field::Field() :
-  name_(), nb_levels_(0)
-{
-}
-
-Field::Field(const std::string& name) :
-  name_(name), nb_levels_(0)
-{
-}
-
-Field::Field(const eckit::Parametrisation& params) :
-  name_(), nb_levels_(0)
-{
-  params.get("name",name_);
-}
-
 Field::~Field()
 {
 }
@@ -109,20 +87,20 @@ void Field::dump(std::ostream& os) const
 
 void Field::print(std::ostream& os) const
 {
-    os << "Field[name=" << name()
-       << ",datatype=" << datatype().str()
-       << ",size=" << size()
-       << ",shape=" << shape()
-       << ",strides=" << strides()
-       << ",bytes=" << bytes()
-       << ",metadata=" << metadata()
-       << "]";
+  os << "Field[name=" << name()
+     << ",datatype=" << datatype().str()
+     << ",size=" << size()
+     << ",shape=" << shape()
+     << ",strides=" << strides()
+     << ",bytes=" << bytes()
+     << ",metadata=" << metadata()
+     << "]";
 }
 
 std::ostream& operator<<( std::ostream& os, const Field& f)
 {
-    f.print(os);
-    return os;
+  f.print(os);
+  return os;
 }
 
 void Field::resize(const ArrayShape& shape)
@@ -130,15 +108,91 @@ void Field::resize(const ArrayShape& shape)
     array_->resize(shape);
 }
 
+template <> const float* Field::data() const
+{
+  try {
+    return array_->data<float>();
+  } catch( const eckit::BadCast& e ) {
+    std::stringstream msg;
+    msg << "Could not cast data for field " << name()
+        << " with datatype " << array_->datatype().str() << " to "
+        << DataType::str<float>();
+    throw eckit::BadCast(msg.str(),Here());
+  }
+  return 0;
+}
+template <> float* Field::data()
+{
+  return const_cast<float*>(const_cast<const Field&>(*this).data<float>());
+}
+
+template <> const double* Field::data() const
+{
+  try {
+    return array_->data<double>();
+  } catch( const eckit::BadCast& e ) {
+    std::stringstream msg;
+    msg << "Could not cast data for field " << name()
+        << " with datatype " << array_->datatype().str() << " to "
+        << DataType::str<double>();
+    throw eckit::BadCast(msg.str(),Here());
+  }
+  return 0;
+}
+template <> double* Field::data()
+{
+  return const_cast<double*>(const_cast<const Field&>(*this).data<double>());
+}
+
+template <> const int* Field::data() const
+{
+  try {
+    return array_->data<int>();
+  } catch( const eckit::BadCast& e ) {
+    std::stringstream msg;
+    msg << "Could not cast data for field " << name()
+        << " with datatype " << array_->datatype().str() << " to "
+        << DataType::str<int>();
+    throw eckit::BadCast(msg.str(),Here());
+  }
+  return 0;
+}
+template <> int* Field::data()
+{
+  return const_cast<int*>(const_cast<const Field&>(*this).data<int>());
+}
+
+template <> const long* Field::data() const
+{
+  try {
+    return array_->data<long>();
+  } catch( const eckit::BadCast& e ) {
+    std::stringstream msg;
+    msg << "Could not cast data for field " << name()
+        << " with datatype " << array_->datatype().str() << " to "
+        << DataType::str<long>();
+    throw eckit::BadCast(msg.str(),Here());
+  }
+  return 0;
+}
+template <> long* Field::data()
+{
+  return const_cast<long*>(const_cast<const Field&>(*this).data<long>());
+}
+
+
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
 Field* atlas__Field__create(eckit::Parametrisation* params)
 {
-  Field* field = 0;
-  ATLAS_ERROR_HANDLING( field = Field::create(*params) );
-  ASSERT(field);
-  return field;
+  ATLAS_ERROR_HANDLING(
+    ASSERT(params);
+    Field* field = Field::create(*params);
+    ASSERT(field);
+    return field;
+  );
+  return 0;
 }
 
 void atlas__Field__delete (Field* This)
@@ -149,15 +203,16 @@ void atlas__Field__delete (Field* This)
 const char* atlas__Field__name (Field* This)
 {
   ATLAS_ERROR_HANDLING(
-    ASSERT( This != NULL );
+    ASSERT(This);
     return This->name().c_str();
   );
-  return NULL;
+  return 0;
 }
 
 void atlas__Field__datatype (Field* This, char* &datatype, int &size, int &allocated)
 {
   ATLAS_ERROR_HANDLING(
+    ASSERT(This);
     std::string s = This->datatype().str();
     size = s.size()+1;
     datatype = new char[size];
@@ -169,7 +224,7 @@ void atlas__Field__datatype (Field* This, char* &datatype, int &size, int &alloc
 int atlas__Field__size (Field* This)
 {
   ATLAS_ERROR_HANDLING(
-    ASSERT( This != NULL );
+    ASSERT(This);
     return This->size();
   );
   return 0;
@@ -178,7 +233,7 @@ int atlas__Field__size (Field* This)
 int atlas__Field__rank (Field* This)
 {
   ATLAS_ERROR_HANDLING(
-    ASSERT( This != NULL );
+    ASSERT(This);
     return This->rank();
   );
   return 0;
@@ -187,7 +242,7 @@ int atlas__Field__rank (Field* This)
 int atlas__Field__kind (Field* This)
 {
   ATLAS_ERROR_HANDLING(
-    ASSERT( This != NULL );
+    ASSERT(This);
     return This->datatype().kind();
   );
   return 0;
@@ -197,7 +252,7 @@ int atlas__Field__kind (Field* This)
 double atlas__Field__bytes (Field* This)
 {
   ATLAS_ERROR_HANDLING(
-    ASSERT( This != NULL );
+    ASSERT(This);
     return This->bytes();
   );
   return 0;
@@ -206,7 +261,7 @@ double atlas__Field__bytes (Field* This)
 int atlas__Field__levels (Field* This)
 {
   ATLAS_ERROR_HANDLING(
-    ASSERT( This != NULL );
+    ASSERT(This);
     return This->levels();
   );
   return 0;
@@ -214,13 +269,17 @@ int atlas__Field__levels (Field* This)
 
 Metadata* atlas__Field__metadata (Field* This)
 {
-  return &This->metadata();
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    return &This->metadata();
+  );
+  return 0;
 }
 
 int atlas__Field__has_functionspace(Field* This)
 {
   ATLAS_ERROR_HANDLING(
-    ASSERT( This != NULL );
+    ASSERT(This);
     return This->has_functionspace();
   );
   return 0;
@@ -229,45 +288,60 @@ int atlas__Field__has_functionspace(Field* This)
 const char* atlas__Field__functionspace (Field* This)
 {
   ATLAS_ERROR_HANDLING(
-    ASSERT( This != NULL );
+    ASSERT(This);
     return This->functionspace().c_str();
   );
-  return NULL;
+  return 0;
 }
 
 
 void atlas__Field__shapef (Field* This, int* &shape, int &rank)
 {
-  shape = const_cast<int*>(&This->shapef().front());
-  rank = This->shapef().size();
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    shape = const_cast<int*>(&This->shapef().front());
+    rank = This->shapef().size();
+  );
 }
 
 void atlas__Field__data_shapef_int (Field* This, int* &field_data, int* &field_bounds, int &rank)
 {
-  field_data = &This->data<int>()[0];
-  field_bounds = const_cast<int*>(&(This->shapef()[0]));
-  rank = This->shapef().size();
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    field_data = &This->data<int>()[0];
+    field_bounds = const_cast<int*>(&(This->shapef()[0]));
+    rank = This->shapef().size();
+  );
 }
 
 void atlas__Field__data_shapef_long (Field* This, long* &field_data, int* &field_bounds, int &rank)
 {
-  field_data = &This->data<long>()[0];
-  field_bounds = const_cast<int*>(&(This->shapef()[0]));
-  rank = This->shapef().size();
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    field_data = &This->data<long>()[0];
+    field_bounds = const_cast<int*>(&(This->shapef()[0]));
+    rank = This->shapef().size();
+  );
 }
 
 void atlas__Field__data_shapef_float (Field* This, float* &field_data, int* &field_bounds, int &rank)
 {
-  field_data = &This->data<float>()[0];
-  field_bounds = const_cast<int*>(&(This->shapef()[0]));
-  rank = This->shapef().size();
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    field_data = &This->data<float>()[0];
+    field_bounds = const_cast<int*>(&(This->shapef()[0]));
+    rank = This->shapef().size();
+  );
 }
 
 void atlas__Field__data_shapef_double (Field* This, double* &field_data, int* &field_bounds, int &rank)
 {
-  field_data = &This->data<double>()[0];
-  field_bounds = const_cast<int*>(&(This->shapef()[0]));
-  rank = This->shapef().size();
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    field_data = &This->data<double>()[0];
+    field_bounds = const_cast<int*>(&(This->shapef()[0]));
+    rank = This->shapef().size();
+  );
 }
 
 // ------------------------------------------------------------------

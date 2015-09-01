@@ -81,22 +81,25 @@ END TYPE atlas_FunctionSpace
 
 !------------------------------------------------------------------------------
 
-TYPE, extends(atlas_FunctionSpace) :: atlas_Nodes
+TYPE, extends(object_type) :: atlas_Nodes
 contains
-procedure :: size => Nodes__size
-procedure :: resize => Nodes__resize
-procedure :: add => Nodes__add
-procedure :: remove_field => Nodes__remove_field
-procedure :: field_by_idx  => Nodes__field_by_idx
-procedure :: field_by_name => Nodes__field_by_name
-procedure :: nb_fields => Nodes__nb_fields
+procedure, public :: size => Nodes__size
+procedure, public :: resize => Nodes__resize
+procedure, public :: add => Nodes__add
+procedure, public :: remove_field => Nodes__remove_field
+procedure, private :: field_by_idx  => Nodes__field_by_idx
+procedure, public :: field_by_name => Nodes__field_by_name
+generic, public :: field => &
+    & field_by_idx, &
+    & field_by_name
+procedure, public :: nb_fields => Nodes__nb_fields
 procedure, public :: has_field => Nodes__has_field
-procedure :: metadata => Nodes__metadata
-procedure :: str => Nodes__str
+procedure, public :: metadata => Nodes__metadata
+procedure, public :: str => Nodes__str
 
-procedure :: lonlat => Nodes__lonlat
-procedure :: global_index => Nodes__global_index
-procedure :: remote_index => Nodes__remote_index
-procedure :: partition => Nodes__partition
+procedure, public :: lonlat => Nodes__lonlat
+procedure, public :: global_index => Nodes__global_index
+procedure, public :: remote_index => Nodes__remote_index
+procedure, public :: partition => Nodes__partition
 
 END TYPE

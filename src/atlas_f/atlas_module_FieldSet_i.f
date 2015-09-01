@@ -28,7 +28,6 @@ contains
   procedure, private :: field_by_name => FieldSet__field_by_name
   procedure, private :: field_by_idx => FieldSet__field_by_idx
   generic :: field => field_by_name, field_by_idx
-  procedure, public :: get_array => FieldSet__fields
 END TYPE atlas_FieldSet
 !------------------------------------------------------------------------------
 

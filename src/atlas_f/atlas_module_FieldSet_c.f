@@ -46,28 +46,14 @@ function FieldSet__field_by_name(this,name) result(field)
   class(atlas_FieldSet), intent(in) :: this
   character(len=*), intent(in) :: name
   type(atlas_Field) :: field
-  field = atlas_Field__cptr( atlas__FieldSet__field_by_name(this%cpp_object_ptr, c_str(name) ) )
+  field = atlas_Field( atlas__FieldSet__field_by_name(this%cpp_object_ptr, c_str(name) ) )
+  call atlas_return(field)
 end function FieldSet__field_by_name
 
 function FieldSet__field_by_idx(this,idx) result(field)
   class(atlas_FieldSet), intent(in) :: this
   integer, intent(in) :: idx
   type(atlas_Field) :: field
-  field = atlas_Field__cptr( atlas__FieldSet__field_by_idx(this%cpp_object_ptr, idx-1) ) ! C index
+  field = atlas_Field( atlas__FieldSet__field_by_idx(this%cpp_object_ptr, idx-1) ) ! C index
+  call atlas_return(field)
 end function FieldSet__field_by_idx
-
-subroutine FieldSet__fields(this,fields)
-  class(atlas_FieldSet), intent(in) :: this
-  type(atlas_Field), allocatable, intent(out) :: fields(:)
-
-  type(c_ptr), pointer :: fields_ptr(:)
-  type(c_ptr) :: fields_cptr
-  integer :: nb_fields, jfield
-  fields_cptr = c_null_ptr
-  call atlas__FieldSet__fields(this%cpp_object_ptr, fields_cptr, nb_fields)
-  call c_f_pointer( fields_cptr, fields_ptr, (/nb_fields/) )
-  allocate( fields(nb_fields) )
-  do jfield=1,nb_fields
-    fields(jfield)%cpp_object_ptr = fields_ptr(jfield)
-  end do
-end subroutine FieldSet__fields

@@ -62,17 +62,9 @@ public: // methods
   Field(DataType, const ArrayShape& = ArrayShape());
   Field(const std::string& name, DataType, const ArrayShape& = ArrayShape());
 
-  Field();
-
-  Field(const std::string& name);
-
-  Field(const eckit::Parametrisation&);
-
   virtual ~Field();
 
 // -- Accessors
-
-  Ptr self() { return Ptr(this); }
 
   /// @brief Access to raw data
   template <typename DATA_TYPE> const DATA_TYPE* data() const  { return array_->data<DATA_TYPE>(); }
@@ -91,13 +83,14 @@ public: // methods
   const Metadata& metadata() const { return metadata_; }
         Metadata& metadata()       { return metadata_; }
 
+  /// @brief Resize field to given shape
   void resize(const ArrayShape&);
 
   /// @brief Shape of this field in Fortran style (reverse order of C style)
-  const std::vector<int>&    shapef()  const { return array_->shapef(); }
+  const std::vector<int>& shapef()  const { return array_->shapef(); }
 
   /// @brief Shape of this field (reverse order of Fortran style)
-  const ArrayShape& shape()   const { return array_->shape(); }
+  const ArrayShape& shape() const { return array_->shape(); }
 
   /// @brief Strides of this field
   const ArrayStrides& strides() const { return array_->strides(); }
@@ -117,8 +110,10 @@ public: // methods
   /// @brief Number of bytes occupied by the values of this field
   double bytes() const { return array_->bytes(); }
 
+  /// @brief Output information of field
   friend std::ostream& operator<<( std::ostream& os, const Field& v);
 
+  /// @brief Output information of field plus raw data
   void dump(std::ostream& os) const;
 
   /// Metadata that is more intrinsic to the Field, and queried often

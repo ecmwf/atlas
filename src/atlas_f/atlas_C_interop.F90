@@ -8,6 +8,7 @@ private
 ! Public interface
 
 public atlas_free
+public atlas_compare_equal
 public object_type
 public view1d
 public stride
@@ -89,11 +90,30 @@ interface
     type(c_ptr), value :: This
   end subroutine
 
+  !int atlas__compare_cptr_equal( void* p1, void* p2 )
+  function atlas__compare_cptr_equal(p1,p2) bind(c,name="atlas__compare_cptr_equal") result(equal)
+    use iso_c_binding, only: c_ptr, c_int
+    integer(c_int) :: equal
+    type(c_ptr), value :: p1
+    type(c_ptr), value :: p2
+  end function
+
 end interface
 
 ! =============================================================================
 CONTAINS
 ! =============================================================================
+
+function atlas_compare_equal(p1,p2) result(equal)
+  use iso_c_binding, only: c_ptr
+  logical :: equal
+  type(c_ptr), intent(in) :: p1, p2
+  if( atlas__compare_cptr_equal(p1,p2) == 1 ) then
+    equal = .True.
+  else
+    equal = .False.
+  endif
+end function
 
 function object_type__owners(this) result(owners)
   integer :: owners

@@ -4,17 +4,26 @@
 ! -----------------------------------------------------------------------------
 ! Field routines
 
+subroutine atlas_return(object)
+  class(object_type), intent(inout) :: object
+#ifndef FORTRAN_SUPPORTS_FINAL
+  call object%detach()
+#endif
+end subroutine
+
 function atlas_Field__cptr(cptr) result(field)
   type(atlas_Field) :: field
   type(c_ptr), intent(in) :: cptr
   field%cpp_object_ptr = cptr
   call field%attach()
+  call atlas_return(field)
 end function
 
 function atlas_Field__create(params) result(field)
   type(atlas_Field) :: field
   class(atlas_Config), intent(in) :: params
   field = atlas_Field__cptr( atlas__Field__create(params%cpp_object_ptr) )
+  call atlas_return(field)
 end function
 
 function atlas_Field__create_name_kind_shape(name,kind,shape) result(field)
@@ -33,8 +42,8 @@ function atlas_Field__create_name_kind_shape(name,kind,shape) result(field)
   call params%set("name",name)
 
   field = atlas_Field__cptr( atlas__Field__create(params%cpp_object_ptr) )
-
   call atlas_delete(params)
+  call atlas_return(field)
 end function
 
 function atlas_Field__create_kind_shape(kind,shape) result(field)
@@ -51,8 +60,8 @@ function atlas_Field__create_kind_shape(kind,shape) result(field)
   call params%set("datatype",atlas_data_type(kind))
 
   field = atlas_Field__cptr( atlas__Field__create(params%cpp_object_ptr) )
-
   call atlas_delete(params)
+  call atlas_return(field)
 end function
 
 subroutine atlas_Field__finalize(this)
@@ -83,6 +92,19 @@ subroutine atlas_Field__delete(this)
   end if
   this%cpp_object_ptr = c_null_ptr
 end subroutine
+
+subroutine atlas_Field__reset(field_out,field_in)
+  type(atlas_Field), intent(inout) :: field_out
+  class(atlas_Field), intent(in) :: field_in
+  if( .not. atlas_compare_equal(field_out%cpp_object_ptr,field_in%cpp_object_ptr) ) then
+#ifndef FORTRAN_SUPPORTS_FINAL
+    call atlas_Field__finalize(field_out)
+#endif
+    field_out%cpp_object_ptr = field_in%cpp_object_ptr
+    if( c_associated(field_out%cpp_object_ptr) ) call field_out%attach()
+  endif
+end subroutine
+
 
 function Field__name(this) result(field_name)
   class(atlas_Field), intent(in) :: this

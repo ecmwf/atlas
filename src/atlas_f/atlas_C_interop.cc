@@ -24,6 +24,11 @@ extern "C"
     return owned->detach();
   }
 
+  int atlas__compare_cptr_equal( void* p1, void* p2 )
+  {
+    return (p1 == p2);
+  }
+
 }
 
 
