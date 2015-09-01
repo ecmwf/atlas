@@ -8,6 +8,7 @@ private
 ! Public interface
 
 public atlas_free
+public atlas_return
 public atlas_compare_equal
 public object_type
 public view1d
@@ -103,6 +104,13 @@ end interface
 ! =============================================================================
 CONTAINS
 ! =============================================================================
+
+subroutine atlas_return(object)
+  class(object_type), intent(inout) :: object
+#ifndef FORTRAN_SUPPORTS_FINAL
+  call object%detach()
+#endif
+end subroutine
 
 function atlas_compare_equal(p1,p2) result(equal)
   use iso_c_binding, only: c_ptr

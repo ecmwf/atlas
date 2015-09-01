@@ -94,11 +94,11 @@ BOOST_AUTO_TEST_CASE( test1 )
   glb_idx(2) = 3;    part(2) = 0;
   glb_idx(3) = 4;    part(3) = 0;
   glb_idx(4) = 5;    part(4) = 0;
-  glb_idx(5) = 6;    part(5) = 1;
-  glb_idx(6) = 7;    part(6) = 1;
-  glb_idx(7) = 8;    part(7) = 1;
-  glb_idx(8) = 9;    part(8) = 1;
-  glb_idx(9) = 10;   part(9) = 1;
+  glb_idx(5) = 6;    part(5) = std::min(1,(int)eckit::mpi::size()-1);
+  glb_idx(6) = 7;    part(6) = std::min(1,(int)eckit::mpi::size()-1);
+  glb_idx(7) = 8;    part(7) = std::min(1,(int)eckit::mpi::size()-1);
+  glb_idx(8) = 9;    part(8) = std::min(1,(int)eckit::mpi::size()-1);
+  glb_idx(9) = 10;   part(9) = std::min(1,(int)eckit::mpi::size()-1);
 
   lonlat(0,LON) = 0.;    lonlat(0,LAT) = 80.;    Topology::set( flags(0), Topology::BC|Topology::WEST );
   lonlat(1,LON) = 0.;    lonlat(1,LAT) =-80.;    Topology::set( flags(1), Topology::BC|Topology::WEST );
@@ -169,6 +169,7 @@ BOOST_AUTO_TEST_CASE( test1 )
     BOOST_CHECK_EQUAL( is_ghost(8), true );
     BOOST_CHECK_EQUAL( is_ghost(9), true );
   }
+
 }
 
 BOOST_AUTO_TEST_CASE( test2 )

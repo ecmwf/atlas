@@ -201,6 +201,7 @@ public:
 private:
 
   Mesh::Ptr mesh;
+  eckit::SharedPtr<functionspace::NodesFunctionSpace> nodes_fs;
   IndexView<int,2> edge2node;
 
 
@@ -339,6 +340,8 @@ void AtlasBenchmark::setup()
   build_edges_parallel_fields(mesh->function_space("edges"),mesh->nodes());
   build_median_dual_mesh(*mesh);
   build_node_to_edge_connectivity(*mesh);
+
+  nodes_fs.reset( new functionspace::NodesFunctionSpace("nodes",*mesh,functionspace::Halo(*mesh)));
 
   nnodes = mesh->nodes().size();
   nedges = mesh->function_space("edges").shape(0);
@@ -509,7 +512,7 @@ void AtlasBenchmark::iteration()
   // halo-exchange
   eckit::mpi::barrier();
   Timer halo("halo-exchange", Log::debug(5));
-  mesh->nodes().halo_exchange().execute(grad);
+  nodes_fs->halo_exchange().execute(grad);
   eckit::mpi::barrier();
   t.stop();
   halo.stop();
@@ -568,7 +571,7 @@ double AtlasBenchmark::result()
   ECKIT_MPI_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&norm  ,1,eckit::mpi::datatype<double>(),MPI_SUM,eckit::mpi::comm()) );
   norm = std::sqrt(norm);
 
-  Log::info() << "  checksum: " << mesh->nodes().checksum().execute( grad ) << endl;
+  Log::info() << "  checksum: " << nodes_fs->checksum().execute( grad ) << endl;
   Log::info() << "  maxval: " << setw(13) << setprecision(6) << scientific << maxval << endl;
   Log::info() << "  minval: " << setw(13) << setprecision(6) << scientific << minval << endl;
   Log::info() << "  norm:   " << setw(13) << setprecision(6) << scientific << norm << endl;

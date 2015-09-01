@@ -17,15 +17,11 @@ namespace atlas {
 
 //------------------------------------------------------------------------------------------------------
 
-Nodes::Nodes(size_t _size) :
-  FunctionSpace("nodes",make_shape(_size,FunctionSpace::UNDEF_VARS))
+Nodes::Nodes(size_t _size): size_(_size)
 {
   global_index_ = &add( Field::create<gidx_t>("glb_idx",   make_shape(size(),1)) );
   remote_index_ = &add( Field::create<int   >("remote_idx",make_shape(size(),1)) );
   partition_    = &add( Field::create<int   >("partition", make_shape(size(),1)) );
-  ghost_        = &add( Field::create<int   >("ghost",     make_shape(size(),1)) );
-  halo_         = &add( Field::create<int   >("halo",      make_shape(size(),1)) );
-  topology_     = &add( Field::create<int   >("topology",  make_shape(size(),1)) );
   lonlat_       = &add( Field::create<double>("lonlat",    make_shape(size(),2)) );
 
   add( Field::create<int>("flags", make_shape(size(),1)) );
@@ -90,16 +86,17 @@ Field& Nodes::field(const std::string& name)
 
 void Nodes::resize( size_t size )
 {
-  FunctionSpace::resize(make_shape(size, FunctionSpace::shape(1)));
+//  FunctionSpace::resize(make_shape(size, FunctionSpace::shape(1)));
 
 //  dof_ = size;
-//  for( FieldMap::iterator it = fields_.begin(); it != fields_.end(); ++it )
-//  {
-//    Field& field = *it->second;
-//    ArrayShape shape = field.shape();
-//    shape[0] = dof_;
-//    field.resize(shape);
-//  }
+  size_ = size;
+  for( FieldMap::iterator it = fields_.begin(); it != fields_.end(); ++it )
+  {
+    Field& field = *it->second;
+    ArrayShape shape = field.shape();
+    shape[0] = size_;
+    field.resize(shape);
+  }
 }
 
 const Field& Nodes::field(size_t idx) const

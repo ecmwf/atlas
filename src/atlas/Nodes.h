@@ -26,15 +26,15 @@ namespace atlas { class Field; }
 namespace atlas {
 
 /**
- * \brief Nodes class that owns a collection of fields
+ * \brief Nodes class that owns a collection of fields defined in nodes of the mesh
  */
-/// TEMPORARILY DERIVE FROM FunctionSpace UNTIL NEXT DESIGN IS COMPLETE
-class Nodes : public FunctionSpace {
+class Nodes : public eckit::Owned {
 
 public: // methods
 
 //-- Constructors
 
+  /// @brief Construct "size" nodes
   Nodes(size_t size);
 
 //-- Accessors
@@ -47,8 +47,8 @@ public: // methods
   virtual       Field& field(size_t);
   virtual size_t nb_fields() const { return fields_.size(); }
 
-//  const Metadata& metadata() const { return metadata_; }
-//        Metadata& metadata()       { return metadata_; }
+  const Metadata& metadata() const { return metadata_; }
+        Metadata& metadata()       { return metadata_; }
 
   const Field& global_index() const { return *global_index_; }
         Field& global_index()       { return *global_index_; }
@@ -59,19 +59,10 @@ public: // methods
   const Field& partition() const { return *partition_; }
         Field& partition()       { return *partition_; }
 
-  const Field& ghost() const { return *ghost_; }
-        Field& ghost()       { return *ghost_; }
-
-  const Field& halo() const { return *halo_; }
-        Field& halo()       { return *halo_; }
-
-  const Field& topology() const { return *topology_; }
-        Field& topology()       { return *topology_; }
-
   const Field& lonlat() const { return *lonlat_; }
         Field& lonlat()       { return *lonlat_; }
 
-  size_t size() const { return dof_; }
+  size_t size() const { return size_; }
 
 // -- Modifiers
 
@@ -83,32 +74,11 @@ public: // methods
 
 private:
 
-  template< typename DATA_TYPE >
-  Field& create_field(const std::string& name, size_t nb_vars, CreateBehavior b = IF_EXISTS_FAIL );
-
-  const std::string& name() const;
-
-  int index() const;
-
-  // This is a Fortran view of the shape (i.e. reverse order)
-  const std::vector<int>& shapef() const;
-
-  const std::vector<size_t>& shape() const;
-  size_t shape(const size_t i) const;
-  void resize( const std::vector<size_t>& shape );
-
-  const Mesh& mesh() const;
-  Mesh& mesh();
-
-  size_t dof() const;
-
-  size_t glb_dof() const;
-
   void print(std::ostream&) const;
 
   friend std::ostream& operator<<(std::ostream& s, const Nodes& p) {
-      p.print(s);
-      return s;
+    p.print(s);
+    return s;
   }
 
 private:
@@ -117,17 +87,14 @@ private:
 
 private:
 
-  //size_t size_;
+  size_t size_;
   FieldMap fields_;
-  //Metadata metadata_;
+  Metadata metadata_;
 
   // Cached shortcuts to specific fields in fields_
   Field* global_index_;
   Field* remote_index_;
   Field* partition_;
-  Field* ghost_;
-  Field* halo_;
-  Field* topology_;
   Field* lonlat_;
 
 };

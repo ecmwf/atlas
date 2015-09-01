@@ -72,6 +72,4 @@ interface assignment(=)
   module procedure atlas_Field__reset
 end interface
 
-public :: atlas_return
-
 !------------------------------------------------------------------------------

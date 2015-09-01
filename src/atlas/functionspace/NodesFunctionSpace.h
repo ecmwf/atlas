@@ -27,6 +27,7 @@ namespace functionspace {
 class Halo
 {
 public:
+  Halo(const Mesh& mesh);
   Halo(const size_t size) : size_(size) {}
   size_t size() const { return size_; }
 private:

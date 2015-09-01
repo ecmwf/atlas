@@ -4,13 +4,6 @@
 ! -----------------------------------------------------------------------------
 ! Field routines
 
-subroutine atlas_return(object)
-  class(object_type), intent(inout) :: object
-#ifndef FORTRAN_SUPPORTS_FINAL
-  call object%detach()
-#endif
-end subroutine
-
 function atlas_Field__cptr(cptr) result(field)
   type(atlas_Field) :: field
   type(c_ptr), intent(in) :: cptr

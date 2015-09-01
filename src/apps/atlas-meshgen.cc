@@ -38,6 +38,7 @@
 #include "atlas/Nodes.h"
 #include "atlas/grids/grids.h"
 #include "atlas/FunctionSpace.h"
+#include "atlas/functionspace/NodesFunctionSpace.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -157,10 +158,11 @@ void Meshgen2Gmsh::run()
     build_halo(*mesh,halo);
     renumber_nodes_glb_idx(mesh->nodes());
   }
-  mesh->nodes().parallelise();
-  ArrayView<double,2> lonlat( mesh->nodes().lonlat() );
 
-  Log::info() << "  checksum lonlat : " << mesh->nodes().checksum().execute( lonlat ) << std::endl;
+  functionspace::NodesFunctionSpace nodes_fs("nodes",*mesh,functionspace::Halo(mesh));
+  nodes_fs.checksum(mesh->nodes().lonlat());
+
+  Log::info() << "  checksum lonlat : " << nodes_fs.checksum(mesh->nodes().lonlat()) << std::endl;
   if( edges )
   {
     build_edges(*mesh);

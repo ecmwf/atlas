@@ -131,6 +131,8 @@ add_custom_target( atlas_fortran_inc SOURCES
    atlas_module_Mesh_c.f
    atlas_module_Metadata_i.f
    atlas_module_Metadata_c.f
+   atlas_module_Nodes_i.f
+   atlas_module_Nodes_c.f
    atlas_module_NodesFunctionSpace_i.f
    atlas_module_NodesFunctionSpace_c.f
    atlas_module_PathName_i.f

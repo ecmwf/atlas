@@ -276,6 +276,9 @@ Field& build_nodes_remote_idx( Nodes& nodes )
     }
     else
     {
+      ASSERT( jnode < part.size() );
+      ASSERT( part(jnode) < proc.size() );
+      ASSERT( proc[part(jnode)] < send_needed.size() );
       send_needed[ proc[part(jnode)] ].push_back( uid  );
       send_needed[ proc[part(jnode)] ].push_back( jnode );
       sendcnt++;

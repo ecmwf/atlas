@@ -35,6 +35,13 @@
 namespace atlas {
 namespace functionspace {
 
+Halo::Halo(const Mesh& mesh)
+{
+  size_=0;
+  mesh.metadata().get("halo",size_);
+}
+
+
 const std::string& nodes_str() { static std::string str("nodes"); return str; }
 
 namespace {

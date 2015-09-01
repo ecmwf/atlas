@@ -184,7 +184,7 @@ FunctionSpace* atlas__Mesh__function_space (Mesh* This, char* name) {
   ATLAS_ERROR_HANDLING(
     ASSERT( This != NULL );
     if( std::string(name) == "nodes" )
-      return &This->nodes();
+      throw eckit::BadParameter("nodes is no longer a *old* FunctionSpace",Here());
     else
       return &This->function_space( std::string(name) );
   );

@@ -28,6 +28,9 @@
 #include "atlas/util/IndexView.h"
 #include "atlas/util/Unique.h"
 #include "atlas/grids/ReducedGrid.h"
+#include "atlas/functionspace/NodesFunctionSpace.h"
+
+using atlas::functionspace::NodesFunctionSpace;
 
 namespace atlas {
 namespace actions {
@@ -119,9 +122,8 @@ void build_median_dual_mesh( Mesh& mesh )
   skewness = 0.;
   alpha = 0.5;
 
-
-  nodes.parallelise();
-  nodes.halo_exchange().execute(dual_volumes);
+  NodesFunctionSpace nodes_fs("nodes",mesh,functionspace::Halo(mesh));
+  nodes_fs.haloExchange(nodes.field("dual_volumes"));
 
   ArrayView<double,2> dual_normals  ( edges.field( "dual_normals" ) );
   edges.parallelise();
@@ -150,8 +152,8 @@ void build_centroid_dual_mesh( Mesh& mesh )
 
   build_skewness( mesh );
 
-  nodes.parallelise();
-  nodes.halo_exchange().execute(dual_volumes);
+  NodesFunctionSpace nodes_fs("nodes",mesh,functionspace::Halo(mesh));
+  nodes_fs.haloExchange(nodes.field("dual_volumes"));
 
   ArrayView<double,2> dual_normals  ( edges.field( "dual_normals" ) );
   edges.parallelise();
@@ -640,8 +642,8 @@ void build_brick_dual_mesh( Mesh& mesh )
 
     }
 
-    nodes.parallelise();
-    nodes.halo_exchange().execute(dual_volumes);
+    NodesFunctionSpace nodes_fs("nodes",mesh,functionspace::Halo(mesh));
+    nodes_fs.haloExchange(nodes.field("dual_volumes"));
   }
   else
   {
