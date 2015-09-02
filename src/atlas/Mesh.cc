@@ -126,7 +126,8 @@ void Mesh::print(std::ostream& os) const
 
 Nodes& Mesh::createNodes( size_t size )
 {
-  ASSERT( !nodes_ );
+  if( nodes_ )
+    throw eckit::SeriousBug("Cannot create nodes in mesh as they already exist.", Here());
   nodes_.reset( new Nodes(size) );
   return *nodes_;
 }

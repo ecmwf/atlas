@@ -114,7 +114,6 @@ Mesh& Grid::mesh() const {
   if( !mesh_ )
   {
     mesh_.reset( new Mesh() );
-    mesh_->createNodes(*this);
   }
   return *mesh_;
 }
