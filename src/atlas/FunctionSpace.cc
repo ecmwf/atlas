@@ -172,14 +172,14 @@ namespace {
       return const_cast<Field*>(&f);
     }
 
-    return NULL;
+    return 0;
   }
 
 
   template <typename T>
   Field& on_create_field(FunctionSpace& fs, const std::string& name, size_t nb_vars, CreateBehavior b )
   {
-    Field* field = NULL;
+    Field* field = 0;
 
     size_t rank = fs.shape().size();
     std::vector< size_t > field_shape(rank);
@@ -207,6 +207,7 @@ Field& FunctionSpace::add( Field* field )
 {
   fields_.insert( field->name(), Field::Ptr(field) );
   fields_.sort();
+  return *field;
 }
 
 template<> Field& FunctionSpace::create_field<double>(const std::string& name, size_t nb_vars, CreateBehavior b )
@@ -365,126 +366,128 @@ void FunctionSpace::print(std::ostream& os, bool dump) const
 
 Metadata* atlas__FunctionSpace__metadata (FunctionSpace* This)
 {
-  ASSERT( This != NULL );
+  ASSERT( This );
   return &This->metadata();
 }
 
 int atlas__FunctionSpace__dof (FunctionSpace* This) {
-  ASSERT( This != NULL );
+  ASSERT( This );
   return This->dof();
 }
 
 int atlas__FunctionSpace__glb_dof (FunctionSpace* This) {
-  ASSERT( This != NULL );
+  ASSERT( This );
   return This->glb_dof();
 }
 
 void atlas__FunctionSpace__create_field_double (FunctionSpace* This, char* name, int nb_vars) {
-  ASSERT( This != NULL );
-  ATLAS_ERROR_HANDLING( This->create_field<double>( std::string(name), nb_vars ) );
+  ATLAS_ERROR_HANDLING(
+      ASSERT( This );
+      This->create_field<double>( std::string(name), nb_vars )
+  );
 }
 
 void atlas__FunctionSpace__create_field_float (FunctionSpace* This, char* name, int nb_vars) {
-  ASSERT( This != NULL );
+  ASSERT( This );
   ATLAS_ERROR_HANDLING( This->create_field<float>( std::string(name), nb_vars ) );
 }
 
 void atlas__FunctionSpace__create_field_int (FunctionSpace* This, char* name, int nb_vars) {
-  ASSERT( This != NULL );
+  ASSERT( This );
   ATLAS_ERROR_HANDLING( This->create_field<int>( std::string(name), nb_vars ) );
 }
 
 void atlas__FunctionSpace__create_field_long (FunctionSpace* This, char* name, int nb_vars) {
-  ASSERT( This != NULL );
+  ASSERT( This );
   ATLAS_ERROR_HANDLING( This->create_field<long>( std::string(name), nb_vars ) );
 }
 
 void atlas__FunctionSpace__remove_field (FunctionSpace* This, char* name ) {
-  ASSERT( This != NULL );
+  ASSERT( This );
   ATLAS_ERROR_HANDLING( This->remove_field( std::string(name) ) );
 }
 
 int atlas__FunctionSpace__has_field (FunctionSpace* This, char* name) {
-  ASSERT( This != NULL );
+  ASSERT( This );
   return This->has_field( std::string(name) );
 }
 
 const char* atlas__FunctionSpace__name (FunctionSpace* This) {
-  ASSERT( This != NULL );
+  ASSERT( This );
   return This->name().c_str();
 }
 
 void atlas__FunctionSpace__shapef (FunctionSpace* This, int* &shape, int &rank) {
-  ASSERT( This != NULL );
+  ASSERT( This );
   shape = const_cast<int*>(&(This->shapef()[0]));
   rank = This->shapef().size();
 }
 
 Field* atlas__FunctionSpace__field (FunctionSpace* This, char* name) {
-  ASSERT( This != NULL );
+  ASSERT( This );
   ATLAS_ERROR_HANDLING( return &This->field( std::string(name) ) );
-  return NULL;
+  return 0;
 }
 
 void atlas__FunctionSpace__parallelise (FunctionSpace* This) {
-  ASSERT( This != NULL );
+  ASSERT( This );
   ATLAS_ERROR_HANDLING( This->parallelise() );
 }
 
 void atlas__FunctionSpace__halo_exchange_int (FunctionSpace* This, int field_data[], int field_size) {
-  ASSERT( This != NULL );
+  ASSERT( This );
   ATLAS_ERROR_HANDLING(
     This->halo_exchange(field_data,field_size) );
 }
 
 void atlas__FunctionSpace__halo_exchange_float (FunctionSpace* This, float field_data[], int field_size) {
-  ASSERT( This != NULL );
+  ASSERT( This );
   ATLAS_ERROR_HANDLING( This->halo_exchange(field_data,field_size) );
 }
 
 void atlas__FunctionSpace__halo_exchange_double (FunctionSpace* This, double field_data[], int field_size) {
-  ASSERT( This != NULL );
+  ASSERT( This );
   ATLAS_ERROR_HANDLING( This->halo_exchange(field_data,field_size) );
 }
 
 void atlas__FunctionSpace__gather_int (FunctionSpace* This, int field_data[], int field_size, int glbfield_data[], int glbfield_size) {
-  ASSERT( This != NULL );
+  ASSERT( This );
   ATLAS_ERROR_HANDLING(
     This->gather(field_data,field_size, glbfield_data,glbfield_size) );
 }
 
 void atlas__FunctionSpace__gather_float (FunctionSpace* This, float field_data[], int field_size, float glbfield_data[], int glbfield_size) {
-  ASSERT( This != NULL );
+  ASSERT( This );
   ATLAS_ERROR_HANDLING(
     This->gather(field_data,field_size, glbfield_data,glbfield_size) );
 }
 
 void atlas__FunctionSpace__gather_double (FunctionSpace* This, double field_data[], int field_size, double glbfield_data[], int glbfield_size) {
-  ASSERT( This != NULL );
+  ASSERT( This );
   ATLAS_ERROR_HANDLING(
     This->gather(field_data,field_size, glbfield_data,glbfield_size) );
 }
 
 mpl::HaloExchange* atlas__FunctionSpace__halo_exchange (FunctionSpace* This) {
-  ASSERT( This != NULL );
+  ASSERT( This );
   ATLAS_ERROR_HANDLING( return &This->halo_exchange() );
-  return NULL;
+  return 0;
 }
 
 mpl::GatherScatter* atlas__FunctionSpace__gather (FunctionSpace* This) {
-  ASSERT( This != NULL );
+  ASSERT( This );
   ATLAS_ERROR_HANDLING( return &This->gather_scatter() );
-  return NULL;
+  return 0;
 }
 
 mpl::Checksum* atlas__FunctionSpace__checksum (FunctionSpace* This) {
-  ASSERT( This != NULL );
+  ASSERT( This );
   ATLAS_ERROR_HANDLING( return &This->checksum() );
-  return NULL;
+  return 0;
 }
 
 void atlas__FunctionSpace__delete (FunctionSpace* This) {
-  ASSERT( This != NULL );
+  ASSERT( This );
   delete This;
 }
 // ------------------------------------------------------------------
