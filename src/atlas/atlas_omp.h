@@ -72,6 +72,25 @@ inline int omp_get_nested(void)
 #define atlas_omp_for atlas_omp_pragma(omp for) for
 #define atlas_omp_parallel atlas_omp_pragma(omp parallel)
 #define atlas_omp_critical atlas_omp_pragma(omp critical)
-#define atlas_omp_critical_ordered atlas_omp_pragma( omp for ordered schedule(static,1) ) for( size_t _thread=0; _thread<omp_get_num_threads(); ++_thread ) atlas_omp_pragma( omp ordered )
+
+template <typename T>
+class atlas_scoped_helper
+{
+public:
+  atlas_scoped_helper(T p): value(p), once_(true) {}
+  bool once() const { return once_; }
+  void done() { once_=false; }
+  T value;
+private:
+  bool once_;
+};
+#define atlas_scoped(T,VAR,VAL) \
+  for( atlas_scoped_helper<T> VAR(VAL); VAR.once(); VAR.done() )
+
+#define atlas_omp_critical_ordered \
+    atlas_scoped(const size_t, _nthreads, omp_get_num_threads()) \
+    atlas_omp_pragma( omp for ordered schedule(static,1) )\
+    for( size_t _thread=0; _thread<_nthreads.value; ++_thread )\
+      atlas_omp_pragma( omp ordered )
 
 #endif

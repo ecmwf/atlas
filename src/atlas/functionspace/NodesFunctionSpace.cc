@@ -132,7 +132,8 @@ NodesFunctionSpace::NodesFunctionSpace(const std::string& name, Mesh& mesh, cons
 
     util::IsGhost is_ghost(mesh_.nodes());
     std::vector<int> mask(mesh_.nodes().size());
-    atlas_omp_parallel_for( size_t n=0; n<mask.size(); ++n ) {
+    const size_t npts = mask.size();
+    atlas_omp_parallel_for( size_t n=0; n<npts; ++n ) {
       mask[n] = is_ghost(n) ? 1 : 0;
 
       // --> This would add periodic west-bc to the gather, but means that global-sums, means, etc are computed wrong
@@ -156,7 +157,8 @@ NodesFunctionSpace::NodesFunctionSpace(const std::string& name, Mesh& mesh, cons
     Field& gidx = mesh_.nodes().global_index();
     util::IsGhost is_ghost(mesh_.nodes());
     std::vector<int> mask(mesh_.nodes().size());
-    atlas_omp_parallel_for( size_t n=0; n<mask.size(); ++n ) {
+    const size_t npts = mask.size();
+    atlas_omp_parallel_for( size_t n=0; n<npts; ++n ) {
       mask[n] = is_ghost(n) ? 1 : 0;
     }
     checksum->setup(part.data<int>(),ridx.data<int>(),REMOTE_IDX_BASE,gidx.data<gidx_t>(),mask.data(),nb_nodes_);
@@ -585,8 +587,9 @@ void dispatch_sum( const NodesFunctionSpace& fs, const Field& field, T& result, 
   const util::IsGhost is_ghost(fs.nodes());
   const ArrayView<T,2> arr = leveled_scalar_view<T>( field );
   T local_sum = 0;
+  const size_t npts = arr.shape(0);
   atlas_omp_pragma( omp parallel for default(shared) reduction(+:local_sum) )
-  for( size_t n=0; n<arr.shape(0); ++n ) {
+  for( size_t n=0; n<npts; ++n ) {
     if( ! is_ghost(n) ) {
       for( size_t l=0; l<arr.shape(1); ++l )
         local_sum += arr(n,l);
@@ -648,7 +651,8 @@ void dispatch_sum( const NodesFunctionSpace& fs, const Field& field, std::vector
   atlas_omp_parallel
   {
     std::vector<T> local_sum_private(nvar,0);
-    atlas_omp_for( size_t n=0; n<arr.shape(0); ++n )
+    const size_t npts = arr.shape(0);
+    atlas_omp_for( size_t n=0; n<npts; ++n )
     {
       if( ! is_ghost(n) ) {
         for( size_t l=0; l<arr.shape(1); ++l ) {
@@ -727,7 +731,8 @@ void dispatch_sum_per_level( const NodesFunctionSpace& fs, const Field& field, F
   {
     Array<T> sum_per_level_private(sum_per_level.shape(0),sum_per_level.shape(1));
     ArrayView<T> sum_per_level_private_view(sum_per_level_private); sum_per_level_private_view = 0.;
-    atlas_omp_for( size_t n=0; n<arr.shape(0); ++n )
+    const size_t npts = arr.shape(0);
+    atlas_omp_for( size_t n=0; n<npts; ++n )
     {
       if( ! is_ghost(n) ) {
         for( size_t l=0; l<arr.shape(1); ++l ) {
@@ -1004,7 +1009,8 @@ void dispatch_minimum( const NodesFunctionSpace& fs, const Field& field, std::ve
   atlas_omp_parallel
   {
     std::vector<T> local_minimum_private(nvar,std::numeric_limits<T>::max());
-    atlas_omp_for( size_t n=0; n<arr.shape(0); ++n ) {
+    const size_t npts = arr.shape(0);
+    atlas_omp_for( size_t n=0; n<npts; ++n ) {
       for( size_t l=0; l<arr.shape(1); ++l ) {
         for( size_t j=0; j<arr.shape(2); ++j ) {
           local_minimum_private[j] = std::min(arr(n,l,j),local_minimum_private[j]);
@@ -1070,7 +1076,8 @@ void dispatch_maximum( const NodesFunctionSpace& fs, const Field& field, std::ve
   atlas_omp_parallel
   {
     std::vector<T> local_maximum_private(nvar,-std::numeric_limits<T>::max());
-    atlas_omp_for( size_t n=0; n<arr.shape(0); ++n ) {
+    const size_t npts = arr.shape(0);
+    atlas_omp_for( size_t n=0; n<npts; ++n ) {
       for( size_t l=0; l<arr.shape(1); ++l ) {
         for( size_t j=0; j<nvar; ++j ) {
           local_maximum_private[j] = std::max(arr(n,l,j),local_maximum_private[j]);
@@ -1158,7 +1165,8 @@ void dispatch_minimum_per_level( const NodesFunctionSpace& fs, const Field& fiel
   {
     Array<T> min_private(min.shape(0),min.shape(1));
     ArrayView<T> min_private_view(min_private); min_private_view = std::numeric_limits<T>::max();
-    atlas_omp_for( size_t n=0; n<arr.shape(0); ++n ) {
+    const size_t npts = arr.shape(0);
+    atlas_omp_for( size_t n=0; n<npts; ++n ) {
       for( size_t l=0; l<arr.shape(1); ++l ) {
         for( size_t j=0; j<nvar; ++j ) {
           min_private(l,j) = std::min(arr(n,l,j),min_private(l,j));
@@ -1212,7 +1220,8 @@ void dispatch_maximum_per_level( const NodesFunctionSpace& fs, const Field& fiel
   {
     Array<T> max_private(max.shape(0),max.shape(1));
     ArrayView<T> max_private_view(max_private); max_private_view = -std::numeric_limits<T>::max();
-    atlas_omp_for( size_t n=0; n<arr.shape(0); ++n ) {
+    const size_t npts = arr.shape(0);
+    atlas_omp_for( size_t n=0; n<npts; ++n ) {
       for( size_t l=0; l<arr.shape(1); ++l ) {
         for( size_t j=0; j<nvar; ++j ) {
           max_private(l,j) = std::max(arr(n,l,j),max_private(l,j));
@@ -1267,7 +1276,8 @@ void dispatch_minimum_and_location( const NodesFunctionSpace& fs, const Field& f
     std::vector<T> local_minimum_private(nvar,std::numeric_limits<T>::max());
     std::vector<size_t> loc_node_private(nvar);
     std::vector<size_t> loc_level_private(nvar);
-    atlas_omp_for( size_t n=0; n<arr.shape(0); ++n ) {
+    const size_t npts = arr.shape(0);
+    atlas_omp_for( size_t n=0; n<npts; ++n ) {
       for( size_t l=0; l<arr.shape(1); ++l ) {
         for( size_t j=0; j<nvar; ++j ) {
           if( arr(n,l,j) < local_minimum_private[j] ) {
@@ -1367,7 +1377,8 @@ void dispatch_maximum_and_location( const NodesFunctionSpace& fs, const Field& f
     std::vector<T> local_maximum_private(nvar,-std::numeric_limits<T>::max());
     std::vector<size_t> loc_node_private(nvar);
     std::vector<size_t> loc_level_private(nvar);
-    atlas_omp_for( size_t n=0; n<arr.shape(0); ++n ) {
+    const size_t npts = arr.shape(0);
+    atlas_omp_for( size_t n=0; n<npts; ++n ) {
       for( size_t l=0; l<arr.shape(1); ++l ) {
         for( size_t j=0; j<nvar; ++j ) {
           if( arr(n,l,j) > local_maximum_private[j] ) {
@@ -1522,7 +1533,8 @@ void dispatch_minimum_and_location_per_level( const NodesFunctionSpace& fs, cons
     Array<T> min_private(min.shape(0),min.shape(1));
     ArrayView<T> min_private_view(min_private); min_private_view = std::numeric_limits<T>::max();
     Array<gidx_t> glb_idx_private(glb_idx.shape(0),glb_idx.shape(1));
-    atlas_omp_for( size_t n=0; n<arr.shape(0); ++n ) {
+    const size_t npts = arr.shape(0);
+    atlas_omp_for( size_t n=0; n<npts; ++n ) {
       for( size_t l=0; l<arr.shape(1); ++l ) {
         for( size_t j=0; j<nvar; ++j ) {
           if( arr(n,l,j) < min(l,j) ) {
@@ -1609,7 +1621,8 @@ void dispatch_maximum_and_location_per_level( const NodesFunctionSpace& fs, cons
     Array<T> max_private(max.shape(0),max.shape(1));
     ArrayView<T> max_private_view(max_private); max_private_view = -std::numeric_limits<T>::max();
     Array<gidx_t> glb_idx_private(glb_idx.shape(0),glb_idx.shape(1));
-    atlas_omp_for( size_t n=0; n<arr.shape(0); ++n ) {
+    const size_t npts = arr.shape(0);
+    atlas_omp_for( size_t n=0; n<npts; ++n ) {
       for( size_t l=0; l<arr.shape(1); ++l ) {
         for( size_t j=0; j<nvar; ++j ) {
           if( arr(n,l,j) > max(l,j) ) {
@@ -1731,7 +1744,8 @@ void mean_and_standard_deviation( const NodesFunctionSpace& fs, const Field& fie
   ArrayView<T,2> squared_diff = leveled_scalar_view<T>( *squared_diff_field );
   ArrayView<T,2> values = leveled_scalar_view<T>( field );
 
-  atlas_omp_parallel_for( size_t n=0; n<values.shape(0); ++n ) {
+  const size_t npts = values.shape(0);
+  atlas_omp_parallel_for( size_t n=0; n<npts; ++n ) {
     for( size_t l=0; l<values.shape(1); ++l ) {
       squared_diff(n,l) = sqr( values(n,l) - mu );
     }
@@ -1748,7 +1762,8 @@ void mean_and_standard_deviation( const NodesFunctionSpace& fs, const Field& fie
   ArrayView<T,3> squared_diff = leveled_view<T>( *squared_diff_field );
   ArrayView<T,3> values = leveled_view<T>( field );
 
-  atlas_omp_parallel_for( size_t n=0; n<values.shape(0); ++n ) {
+  const size_t npts = values.shape(0);
+  atlas_omp_parallel_for( size_t n=0; n<npts; ++n ) {
     for( size_t l=0; l<values.shape(1); ++l ) {
       for( size_t j=0; j<values.shape(2); ++j ) {
         squared_diff(n,l,j) = sqr( values(n,l,j) - mu[j] );
@@ -1770,7 +1785,8 @@ void dispatch_mean_and_standard_deviation_per_level( const NodesFunctionSpace& f
   ArrayView<T,3> values = leveled_view<T>( field );
   ArrayView<T,2> mu( mean.data<T>(), make_shape(values.shape(1),values.shape(2)) );
 
-  atlas_omp_parallel_for( size_t n=0; n<values.shape(0); ++n ) {
+  const size_t npts = values.shape(0);
+  atlas_omp_parallel_for( size_t n=0; n<npts; ++n ) {
     for( size_t l=0; l<values.shape(1); ++l ) {
       for( size_t j=0; j<values.shape(2); ++j ) {
         squared_diff(n,l,j) = sqr( values(n,l,j) - mu(l,j) );
@@ -1779,7 +1795,8 @@ void dispatch_mean_and_standard_deviation_per_level( const NodesFunctionSpace& f
   }
   dispatch_mean_per_level<T>(fs,*squared_diff_field,stddev,N);
   T* sigma = stddev.data<T>();
-  atlas_omp_parallel_for( size_t j=0; j<stddev.size(); ++j ) {
+  const size_t size = stddev.size();
+  atlas_omp_parallel_for( size_t j=0; j<size; ++j ) {
     sigma[j] = std::sqrt(sigma[j]);
   }
 }
