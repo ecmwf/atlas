@@ -68,7 +68,7 @@ void build_periodic_boundaries( Mesh& mesh )
     std::vector<int> master_nodes; master_nodes.reserve( 3*nb_nodes );
     std::vector<int> slave_nodes;  slave_nodes.reserve( 3*nb_nodes );
 
-    for( int jnode=0; jnode<nodes.size(); ++jnode)
+    for( size_t jnode=0; jnode<nodes.size(); ++jnode)
     {
       if( Topology::check_all(flags(jnode),Topology::BC|Topology::WEST) )
       {
@@ -107,7 +107,7 @@ void build_periodic_boundaries( Mesh& mesh )
       std::vector<int> recvdispls( eckit::mpi::size() );
       recvdispls[0] = 0;
       int recvcnt = recvcounts[0];
-      for( int jproc=1; jproc<eckit::mpi::size(); ++jproc )
+      for( size_t jproc=1; jproc<eckit::mpi::size(); ++jproc )
       {
         recvdispls[jproc] = recvdispls[jproc-1] + recvcounts[jproc-1];
         recvcnt += recvcounts[jproc];
@@ -121,12 +121,12 @@ void build_periodic_boundaries( Mesh& mesh )
 
 
       PeriodicTransform transform;
-      for( int jproc=0; jproc<eckit::mpi::size(); ++jproc )
+      for( size_t jproc=0; jproc<eckit::mpi::size(); ++jproc )
       {
         found_master.reserve(master_nodes.size());
         send_slave_idx.reserve(master_nodes.size());
         ArrayView<int,2> recv_slave(recvbuf.data()+recvdispls[jproc], make_shape(recvcounts[jproc]/3,3).data() );
-        for( int jnode=0; jnode<recv_slave.shape(0); ++jnode )
+        for( size_t jnode=0; jnode<recv_slave.shape(0); ++jnode )
         {
           LonLatMicroDeg slave( recv_slave(jnode,LON), recv_slave(jnode,LAT) );
           transform(slave,-1);
@@ -155,7 +155,7 @@ void build_periodic_boundaries( Mesh& mesh )
                         //  std::vector< std::vector<int> > recv_slave_ridx( eckit::mpi::size() );
 
     {
-      for( int jproc=0; jproc<eckit::mpi::size(); ++jproc )
+      for( size_t jproc=0; jproc<eckit::mpi::size(); ++jproc )
       {
         int nb_found_master = found_master[jproc].size();
         send_master_part   [jproc].resize(nb_found_master);

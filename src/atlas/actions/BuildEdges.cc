@@ -191,14 +191,14 @@ void build_node_to_edge_connectivity( Mesh& mesh )
   Nodes& nodes = mesh.nodes();
   FunctionSpace& edges = mesh.function_space("edges");
   int nb_nodes = nodes.size();
-  int nb_edges = edges.shape(0);
+  size_t nb_edges = edges.shape(0);
 
   IndexView<int,2> edge_nodes   ( edges.field( "nodes" ) );
 
   // Get max_edge_cnt
   ArrayView<int,1> to_edge_size ( nodes.add( Field::create<int>( "to_edge_size", make_shape(nodes.size(),1) ) ) );
   to_edge_size = 0.;
-  for( int jedge=0; jedge<nb_edges; ++jedge)
+  for(size_t jedge = 0; jedge < nb_edges; ++jedge)
   {
     for( int j=0; j<2; ++j)
     {
@@ -321,7 +321,6 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
       int node = *it;
       if( !Topology::check(flags(node),Topology::PERIODIC|Topology::GHOST) )
       {
-        int x1 = microdeg( lonlat(node,LON) );
         int x2 = microdeg( lonlat(node,LON) + 180. );
         for( std::set<int>::iterator itr=pole_nodes[NS].begin(); itr!=pole_nodes[NS].end(); ++itr)
         {
@@ -419,11 +418,11 @@ void build_edges( Mesh& mesh )
   accumulate_faces(triags,node_to_face,face_nodes_data,face_to_elem,nb_faces,nb_inner_faces);
 
 
-  size_t extents[] = {nb_faces,2};
+  size_t extents[] = {size_t(nb_faces), 2};
   ArrayView<int,2> face_nodes(face_nodes_data.data(),extents);
 
   // Build edges
-  int nb_edges = nb_faces;
+  size_t nb_edges = nb_faces;
   if( ! mesh.has_function_space("edges") )
   {
     mesh.create_function_space( "edges", "shapefunc", make_shape(nb_edges,FunctionSpace::UNDEF_VARS) );
@@ -457,7 +456,6 @@ void build_edges( Mesh& mesh )
 
   UniqueLonLat compute_uid( nodes );
 
-  int cnt=0;
   for( size_t edge=0; edge<nb_edges; ++edge )
   {
     const int ip1 = face_nodes(edge,0);
@@ -471,8 +469,8 @@ void build_edges( Mesh& mesh )
       edge_nodes(edge,1) = ip1;
     }
 
-    ASSERT( edge_nodes(edge,0) < nb_nodes );
-    ASSERT( edge_nodes(edge,1) < nb_nodes );
+    ASSERT( size_t(edge_nodes(edge,0)) < nb_nodes );
+    ASSERT( size_t(edge_nodes(edge,1)) < nb_nodes );
     edge_glb_idx(edge)   = compute_uid(edge_nodes[edge]);
     edge_part(edge)      = std::min( part(edge_nodes(edge,0)), part(edge_nodes(edge,1) ) );
     edge_ridx(edge)      = edge;
@@ -543,7 +541,7 @@ void build_pole_edges( Mesh& mesh )
 
   size_t cnt = 0;
   ComputeUniquePoleEdgeIndex compute_uid( nodes );
-  for(int edge=nb_edges; edge<nb_edges+nb_pole_edges; ++edge)
+  for(size_t edge = nb_edges; edge < nb_edges + nb_pole_edges; ++edge)
   {
     edge_nodes(edge,0)   = pole_edge_nodes[cnt++];
     edge_nodes(edge,1)   = pole_edge_nodes[cnt++];

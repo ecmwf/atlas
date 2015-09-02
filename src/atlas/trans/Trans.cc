@@ -290,14 +290,14 @@ void Trans::dirtrans(const NodesFunctionSpace& gp,const FieldSet& gpfields,
 {
   // Count total number of fields and do sanity checks
   int nfld(0);
-  for( int jfld=0; jfld<gpfields.size(); ++jfld )
+  for(size_t jfld = 0; jfld < gpfields.size(); ++jfld)
   {
     const Field& f = gpfields[jfld];
     nfld += f.stride(0);
   }
 
   int trans_spnfld(0);
-  for( int jfld=0; jfld<spfields.size(); ++jfld )
+  for(size_t jfld = 0; jfld < spfields.size(); ++jfld)
   {
     const Field& f = spfields[jfld];
     trans_spnfld += f.stride(0);
@@ -392,14 +392,14 @@ void Trans::invtrans(const SpectralFunctionSpace& sp, const FieldSet& spfields,
 {
   // Count total number of fields and do sanity checks
   int nfld(0);
-  for( int jfld=0; jfld<gpfields.size(); ++jfld )
+  for(size_t jfld = 0; jfld < gpfields.size(); ++jfld)
   {
     const Field& f = gpfields[jfld];
     nfld += f.stride(0);
   }
 
   int nb_spectral_fields(0);
-  for( int jfld=0; jfld<spfields.size(); ++jfld )
+  for(size_t jfld = 0; jfld < spfields.size(); ++jfld)
   {
     const Field& f = spfields[jfld];
     nb_spectral_fields += f.stride(0);
@@ -418,7 +418,7 @@ void Trans::invtrans(const SpectralFunctionSpace& sp, const FieldSet& spfields,
   // Pack spectral fields
   {
     int f=0;
-    for( int jfld=0; jfld<spfields.size(); ++jfld )
+    for(size_t jfld = 0; jfld < spfields.size(); ++jfld)
     {
       const ArrayView<double,2> field ( spfields[jfld].data<double>(), make_shape(spfields[jfld].shape(0),spfields[jfld].stride(0)) );
       const int nvars = field.shape(1);
@@ -448,15 +448,15 @@ void Trans::invtrans(const SpectralFunctionSpace& sp, const FieldSet& spfields,
   {
     util::IsGhost is_ghost( gp.nodes());
     int f=0;
-    for( int jfld=0; jfld<gpfields.size(); ++jfld )
+    for(size_t jfld = 0; jfld < gpfields.size(); ++jfld)
     {
       ArrayView<double,2> field ( gpfields[jfld].data<double>(), make_shape(gpfields[jfld].shape(0),gpfields[jfld].stride(0)) );
-      const int nvars = field.shape(1);
+      const size_t nvars = field.shape(1);
 
-      for( int jvar=0; jvar<nvars; ++jvar )
+      for( size_t jvar=0; jvar<nvars; ++jvar )
       {
         int n=0;
-        for( int jnode=0; jnode<field.shape(0); ++jnode )
+        for( size_t jnode=0; jnode<field.shape(0); ++jnode )
         {
           if( !is_ghost(jnode) )
           {
@@ -482,12 +482,9 @@ void Trans::dirtrans_wind2vordiv(const NodesFunctionSpace& gp, const Field& gpwi
   if( spdiv.shape(0) != spvor.shape(0) ) throw eckit::SeriousBug("invtrans: vorticity not compatible with divergence.",Here());
   if( spdiv.shape(1) != spvor.shape(1) ) throw eckit::SeriousBug("invtrans: vorticity not compatible with divergence.",Here());
   size_t nwindfld = gpwind.stride(0);
-  size_t ncomp = 0;
-  if     ( nwindfld == 2*nfld ) ncomp = 2;
-  else if( nwindfld == 3*nfld ) ncomp = 3;
-  else throw eckit::SeriousBug("dirtrans: wind field is not compatible with vorticity, divergence.",Here());
+  if (nwindfld != 2*nfld && nwindfld != 3*nfld) throw eckit::SeriousBug("dirtrans: wind field is not compatible with vorticity, divergence.",Here());
 
-  if( spdiv.shape(0) != nspec2() ) {
+  if( spdiv.shape(0) != size_t(nspec2()) ) {
     std::stringstream msg;
     msg << "dirtrans: Spectral vorticity and divergence have wrong dimension: nspec2 "<<spdiv.shape(0)<<" should be "<<nspec2();
     throw eckit::SeriousBug(msg.str(),Here());
@@ -509,7 +506,7 @@ void Trans::dirtrans_wind2vordiv(const NodesFunctionSpace& gp, const Field& gpwi
     {
       for( size_t jfld=0; jfld<nfld; ++jfld )
       {
-        size_t n=0;
+        int n = 0;
         for( size_t jnode=0; jnode<gpwind.shape(0); ++jnode )
         {
           if( !is_ghost(jnode) )
@@ -549,12 +546,9 @@ void Trans::invtrans_vordiv2wind(const SpectralFunctionSpace& sp, const Field& s
   if( spdiv.shape(0) != spvor.shape(0) ) throw eckit::SeriousBug("invtrans: vorticity not compatible with divergence.",Here());
   if( spdiv.shape(1) != spvor.shape(1) ) throw eckit::SeriousBug("invtrans: vorticity not compatible with divergence.",Here());
   size_t nwindfld = gpwind.stride(0);
-  size_t ncomp = 0;
-  if     ( nwindfld == 2*nfld ) ncomp = 2;
-  else if( nwindfld == 3*nfld ) ncomp = 3;
-  else throw eckit::SeriousBug("invtrans: wind field is not compatible with vorticity, divergence.",Here());
+  if (nwindfld != 2*nfld && nwindfld != 3*nfld) throw eckit::SeriousBug("invtrans: wind field is not compatible with vorticity, divergence.",Here());
 
-  if( spdiv.shape(0) != nspec2() ) {
+  if( spdiv.shape(0) != size_t(nspec2()) ) {
     std::stringstream msg;
     msg << "invtrans: Spectral vorticity and divergence have wrong dimension: nspec2 "<<spdiv.shape(0)<<" should be "<<nspec2();
     throw eckit::SeriousBug(msg.str(),Here());
@@ -592,7 +586,7 @@ void Trans::invtrans_vordiv2wind(const SpectralFunctionSpace& sp, const Field& s
     {
       for( size_t jfld=0; jfld<nfld; ++jfld )
       {
-        size_t n=0;
+        int n = 0;
         for( size_t jnode=0; jnode<gpwind.shape(0); ++jnode )
         {
           if( !is_ghost(jnode) )

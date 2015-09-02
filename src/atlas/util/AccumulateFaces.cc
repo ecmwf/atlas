@@ -61,7 +61,7 @@ void accumulate_faces(
 		throw eckit::BadParameter(func_space.name()+" is not \"quads\" or \"triags\"",Here());
 	}
 
-	for (int e=0; e<nb_elems; ++e)
+  for (size_t e = 0; e < nb_elems; ++e)
 	{
 		for (int f=0; f<nb_faces_in_elem; ++f)
 		{
@@ -75,10 +75,10 @@ void accumulate_faces(
             for(size_t jface=0; jface< node_to_face[node].size(); ++jface )
 			{
 				int face = node_to_face[node][jface];
-				int nb_matched_nodes = 0;
+        size_t nb_matched_nodes = 0;
 				if (nb_nodes_in_face>1) // 2D or 3D
 				{
-					for( int jnode=0; jnode<nb_nodes_in_face; ++jnode)
+          for(size_t jnode = 0; jnode < nb_nodes_in_face; ++jnode)
 					{
                         size_t other_node = face_nodes[jnode];
                         for(size_t iface=0; iface<node_to_face[other_node].size(); ++iface )
@@ -109,7 +109,7 @@ void accumulate_faces(
 				// if 2nd element stays negative, it is a bdry face
 				connectivity_edge_to_elem[nb_faces][1].f = -1;
 				connectivity_edge_to_elem[nb_faces][1].e = -1;
-				for (int n=0; n<nb_nodes_in_face; ++n)
+        for (size_t n = 0; n < nb_nodes_in_face; ++n)
 				{
 					node_to_face[face_nodes[n]].push_back(nb_faces);
 					face_nodes_data.push_back(face_nodes[n]);

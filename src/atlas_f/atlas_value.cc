@@ -61,7 +61,7 @@ void atlas__Value__array_int (Value* This, int* &value, int &size, int &allocate
   std::vector<eckit::Value> tmp = *This;
   size = tmp.size();
   value = new int[size];
-  for( size_t j=0; j<size; ++j ) value[j] = tmp[j];
+  for(int j = 0; j < size; ++j) value[j] = tmp[j];
   allocated = true;
 }
 
@@ -70,7 +70,7 @@ void atlas__Value__array_long (Value* This, long* &value, int &size, int &alloca
   std::vector<eckit::Value> tmp = *This;
   size = tmp.size();
   value = new long[size];
-  for( size_t j=0; j<size; ++j ) value[j] = tmp[j];
+  for(int j = 0; j < size; ++j) value[j] = tmp[j];
   allocated = true;
 }
 
@@ -79,7 +79,7 @@ void atlas__Value__array_float (Value* This, float* &value, int &size, int &allo
   std::vector<eckit::Value> tmp = *This;
   size = tmp.size();
   value = new float[size];
-  for( size_t j=0; j<size; ++j ) value[j] = double(tmp[j]);
+  for(int j = 0; j < size; ++j) value[j] = double(tmp[j]);
   allocated = true;
 }
 
@@ -88,7 +88,7 @@ void atlas__Value__array_double (Value* This, double* &value, int &size, int &al
   std::vector<eckit::Value> tmp = *This;
   size = tmp.size();
   value = new double[size];
-  for( size_t j=0; j<size; ++j ) value[j] = tmp[j];
+  for(int j = 0; j < size; ++j) value[j] = tmp[j];
   allocated = true;
 }
 

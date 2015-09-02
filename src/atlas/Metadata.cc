@@ -437,7 +437,7 @@ void atlas__Metadata__get_string( Metadata* This, const char* name, char* output
 {
   ATLAS_ERROR_HANDLING(
     std::string s = This->get<std::string>( std::string(name) );
-    if( s.size() > max_len )
+    if(s.size() > size_t(max_len))
     {
       std::stringstream msg;
       msg << "Cannot copy string `"<<s<<"` of metadata `"<<name<<"`"

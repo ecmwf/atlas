@@ -81,7 +81,7 @@ Unstructured::~Unstructured() {
 Grid::uid_t Unstructured::shortName() const {
     if ( shortName_.empty() ) {
         std::ostringstream s;
-        s <<  "unstructured." << Grid::hash().substr(0, 7) << eckit::StrStream::ends;
+        s <<  "unstructured." << Grid::hash().substr(0, 7);
         shortName_ = s.str();
     }
     return shortName_;

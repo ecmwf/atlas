@@ -146,7 +146,7 @@ void gmsh_extract::run()
 
 	std::ostream& out = out_filename.empty() ? std::cout : out_file;
 
-	for (int i=0; i<in_files.size(); ++i)
+    for (size_t i = 0; i < in_files.size(); ++i)
 	{
 		PathName gmsh_file(in_files[i]);
 		Log::debug() << "Processing " << gmsh_file << std::endl;

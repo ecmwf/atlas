@@ -17,8 +17,8 @@
 namespace atlas {
 
 GridDistribution::GridDistribution(const Grid& grid) :
-  part_(grid.npts(),0),
   nb_partitions_(1),
+  part_(grid.npts(),0),
   nb_pts_(nb_partitions_,grid.npts()),
   max_pts_(grid.npts()),
   min_pts_(grid.npts())
@@ -30,7 +30,7 @@ GridDistribution::GridDistribution(const Partitioner& partitioner)
   partitioner.partition(part_.data());
   nb_partitions_ = partitioner.nb_partitions();
   nb_pts_.resize(nb_partitions_,0);
-  for( int j=0; j<part_.size(); ++j)
+  for(size_t j = 0; j < part_.size(); ++j)
     ++nb_pts_[part_[j]];
   max_pts_ = *std::max_element(nb_pts_.begin(),nb_pts_.end());
   min_pts_ = *std::min_element(nb_pts_.begin(),nb_pts_.end());
@@ -42,7 +42,7 @@ GridDistribution::GridDistribution(size_t npts, int part[], int part0)
   std::set<int> partset(part_.begin(),part_.end());
   nb_partitions_ = partset.size();
   nb_pts_.resize(nb_partitions_,0);
-  for( int j=0; j<part_.size(); ++j)
+  for(size_t j = 0; j < part_.size(); ++j)
   {
     part_[j] -= part0;
     ++nb_pts_[part_[j]];

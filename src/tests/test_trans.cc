@@ -114,7 +114,7 @@ BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
 
     std::vector<int> npts(distribution.nb_partitions(),0);
 
-    for( int j=0; j<g->npts(); ++j )
+    for(size_t j = 0; j < g->npts(); ++j)
       ++npts[distribution.partition(j)];
 
     BOOST_CHECK_EQUAL( trans.ngptotg(), g->npts() );
