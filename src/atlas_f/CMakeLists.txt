@@ -137,6 +137,8 @@ add_custom_target( atlas_fortran_inc SOURCES
    atlas_module_NodesFunctionSpace_c.f
    atlas_module_PathName_i.f
    atlas_module_PathName_c.f
+   atlas_module_SpectralFunctionSpace_i.f
+   atlas_module_SpectralFunctionSpace_c.f
    atlas_module_State_i.f
    atlas_module_State_c.f
    atlas_module_Trans_i.f
