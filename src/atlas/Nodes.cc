@@ -113,6 +113,8 @@ const Field& Nodes::field(size_t idx) const
     c++;
   }
   eckit::SeriousBug("Should not be here!",Here());
+  static Field* ret;
+  return *ret;
 }
 Field& Nodes::field(size_t idx)
 {
