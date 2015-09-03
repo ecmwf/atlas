@@ -24,7 +24,7 @@ std::string rundir()
 
 void atlas_init(int argc, char** argv)
 {
-  if( argc > 0 )
+//  if( argc > 0 )
     Context::instance().setup(argc, argv);
 
   if( Context::instance().argc() > 0 )
