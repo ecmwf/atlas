@@ -23,7 +23,7 @@ set( ECBUILD_DEFAULT_BUILD_TYPE Release )
 
 include( ecbuild_system NO_POLICY_SCOPE )
 
-ecbuild_requires_macro_version( 1.6 )
+ecbuild_requires_macro_version( 1.9 )
 
 ###############################################################################
 # project
@@ -163,8 +163,6 @@ ecbuild_add_option( FEATURE SANDBOX
 ############################################################################################
 # export package info
 
-list( APPEND ATLAS_TPLS  eckit )
-
 set( ATLAS_INCLUDE_DIRS   ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src )
 
 list( APPEND ATLAS_LIBRARIES  atlas )
@@ -172,14 +170,6 @@ list( APPEND ATLAS_LIBRARIES  atlas )
 if( ATLAS_HAVE_FORTRAN )
   list( APPEND ATLAS_INCLUDE_DIRS ${CMAKE_Fortran_MODULE_DIRECTORY} )
   set( ATLAS_LIBRARIES atlas_f ${ATLAS_LIBRARIES} )
-endif()
-
-if( ATLAS_HAVE_TRANS )
-  list( APPEND ATLAS_TPLS transi )
-endif()
-
-if( HAVE_TESSELATION )
-  list( APPEND ATLAS_TPLS CGAL )
 endif()
 
 get_directory_property( ATLAS_DEFINITIONS COMPILE_DEFINITIONS )
