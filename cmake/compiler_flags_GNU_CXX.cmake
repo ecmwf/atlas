@@ -17,19 +17,19 @@ include( ecbuild_check_cxx_source )
 # RELEASE FLAGS
 ####################################################################
 
-cmake_add_cxx_flags( "-O3"  BUILD RELEASE )
+ecbuild_add_cxx_flags( "-O3"  BUILD RELEASE )
 
 ####################################################################
 # DEBUG FLAGS
 ####################################################################
 
-cmake_add_cxx_flags( "-O0 -g" BUILD DEBUG )
+ecbuild_add_cxx_flags( "-O0 -g" BUILD DEBUG )
 
 ####################################################################
 # BIT REPRODUCIBLE FLAGS
 ####################################################################
 
-cmake_add_cxx_flags( "-O2 -g" BUILD BIT )
+ecbuild_add_cxx_flags( "-O2 -g" BUILD BIT )
 
 ####################################################################
 # LINK FLAGS

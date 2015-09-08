@@ -124,9 +124,9 @@ endif()
 
 
 #if( ATLAS_HAVE_FORTRAN )
-#  cmake_add_fortran_flags( "${OMP_Fortran_FLAGS}" )
+#  ecbuild_add_fortran_flags( "${OMP_Fortran_FLAGS}" )
 #endif()
-#cmake_add_cxx_flags( "${OMP_CXX_FLAGS}" )
+#ecbuild_add_cxx_flags( "${OMP_CXX_FLAGS}" )
 
 
 ### trans ...
