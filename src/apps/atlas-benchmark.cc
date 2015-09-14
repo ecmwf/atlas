@@ -50,7 +50,7 @@
 
 
 #include "atlas/atlas.h"
-#include "atlas/util/Array.h"
+#include "atlas/Array.h"
 #include "atlas/io/Gmsh.h"
 #include "atlas/actions/GenerateMesh.h"
 #include "atlas/actions/BuildEdges.h"
@@ -436,8 +436,8 @@ void AtlasBenchmark::iteration()
 {
   Timer t("iteration", Log::debug(5));
 
-  ArrayT<double> avgS_arr(nedges,nlev,2);
-  ArrayView<double,3> avgS(avgS_arr);
+  eckit::ScopedPtr<Array> avgS_arr( Array::create<double>(nedges,nlev,2) );
+  ArrayView<double,3> avgS(*avgS_arr);
 
   atlas_omp_parallel_for( int jedge=0; jedge<nedges; ++jedge )
   {

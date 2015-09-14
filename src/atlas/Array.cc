@@ -9,7 +9,7 @@
  */
 
 #include <iostream>
-#include "atlas/util/Array.h"
+#include "atlas/Array.h"
 
 namespace atlas {
 

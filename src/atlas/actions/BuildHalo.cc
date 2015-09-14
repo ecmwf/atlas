@@ -27,7 +27,7 @@
 #include "atlas/Parameters.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
-#include "atlas/util/Array.h"
+#include "atlas/Array.h"
 #include "atlas/util/AccumulateFaces.h"
 #include "atlas/util/Bitflags.h"
 #include "atlas/util/PeriodicTransform.h"
@@ -195,8 +195,8 @@ void increase_halo( Mesh& mesh )
   }
 
   size_t nb_bdry_nodes = bdry_nodes.size();
-  ArrayT<uid_t> arr_bdry_nodes_id(nb_bdry_nodes,4);
-  ArrayView<uid_t,2> bdry_nodes_id(arr_bdry_nodes_id);
+  eckit::ScopedPtr<Array> arr_bdry_nodes_id( Array::create<uid_t>(nb_bdry_nodes,4) );
+  ArrayView<uid_t,2> bdry_nodes_id(*arr_bdry_nodes_id);
   ASSERT( bdry_nodes_id.shape(0) == nb_bdry_nodes );
   ASSERT( bdry_nodes_id.shape(1) == 4);
 
@@ -211,7 +211,7 @@ void increase_halo( Mesh& mesh )
 
   std::vector<int> recvcounts( eckit::mpi::size() );
   std::vector<int> recvdispls( eckit::mpi::size() );
-  int sendcnt = bdry_nodes_id.total_size();
+  int sendcnt = bdry_nodes_id.size();
   ASSERT( size_t(sendcnt) == nb_bdry_nodes*4 );
   ECKIT_MPI_CHECK_RESULT( MPI_Allgather( &sendcnt,          1, MPI_INT,
                                    recvcounts.data(), 1, MPI_INT, eckit::mpi::comm() ) );

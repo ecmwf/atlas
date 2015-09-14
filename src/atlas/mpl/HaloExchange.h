@@ -391,7 +391,7 @@ void HaloExchange::var_info( const ArrayView<DATA_TYPE,RANK>& arr,
 template <typename DATA_TYPE, int RANK>
 void HaloExchange::execute( ArrayView<DATA_TYPE,RANK>& field ) const
 {
-  if( field.size() == parsize_)
+  if( field.shape(0) == parsize_)
   {
     std::vector<size_t> varstrides, varshape;
     var_info( field, varstrides, varshape );

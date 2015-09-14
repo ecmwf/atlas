@@ -29,10 +29,11 @@ namespace atlas {
 class Array : public eckit::Owned {
 public:
   static Array* create( DataType, const ArrayShape& );
-  template <typename T> static Array* create(const ArrayShape& s)
-  {
-    return create(DataType::create<T>(),s);
-  }
+  template <typename T> static Array* create(const ArrayShape& s);
+  template <typename T> static Array* create(size_t size);
+  template <typename T> static Array* create(size_t size1, size_t size2);
+  template <typename T> static Array* create(size_t size1, size_t size2, size_t size3);
+  template <typename T> static Array* create(size_t size1, size_t size2, size_t size3, size_t size4);
 
 public:
 
@@ -77,6 +78,22 @@ private:
   ArraySpec spec_;
 };
 
+template <typename T> Array* Array::create(const ArrayShape& s)
+{ return create(DataType::create<T>(),s); }
+
+template <typename T> Array* Array::create(size_t size)
+{ return create(DataType::create<T>(),make_shape(size)); }
+
+template <typename T> Array* Array::create(size_t size1, size_t size2)
+{ return create(DataType::create<T>(),make_shape(size1,size2)); }
+
+template <typename T> Array* Array::create(size_t size1, size_t size2, size_t size3)
+{ return create(DataType::create<T>(),make_shape(size1,size2,size3)); }
+
+template <typename T> Array* Array::create(size_t size1, size_t size2, size_t size3, size_t size4)
+{ return create(DataType::create<T>(),make_shape(size1,size2,size3,size4)); }
+
+//------------------------------------------------------------------------------------------------------
 
 template< typename DATA_TYPE >
 class ArrayT : public Array  {

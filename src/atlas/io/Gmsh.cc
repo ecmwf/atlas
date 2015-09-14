@@ -23,7 +23,7 @@
 #include "eckit/runtime/Context.h"
 #include "atlas/io/Gmsh.h"
 #include "atlas/mpl/GatherScatter.h"
-#include "atlas/util/Array.h"
+#include "atlas/Array.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
 #include "atlas/Mesh.h"

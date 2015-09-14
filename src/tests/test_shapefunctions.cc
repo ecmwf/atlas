@@ -22,7 +22,7 @@
 // #include "atlas/io/Gmsh.h"
 #include "atlas/util/Debug.h"
 // #include "atlas/Mesh.h"
-#include "atlas/util/Array.h"
+#include "atlas/Array.h"
 #include "atlas/util/IndexView.h"
 // #include "atlas/actions/BuildParallelFields.h"
 // #include "atlas/actions/BuildPeriodicBoundaries.h"

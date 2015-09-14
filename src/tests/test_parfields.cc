@@ -29,7 +29,7 @@
 #include "atlas/grids/grids.h"
 #include "atlas/meshgen/ReducedGridMeshGenerator.h"
 #include "atlas/mpi/mpi.h"
-#include "atlas/util/Array.h"
+#include "atlas/Array.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
 #include "atlas/util/Bitflags.h"

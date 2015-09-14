@@ -15,7 +15,7 @@
 #include <sstream>
 
 #include "eckit/log/Log.h"
-#include "atlas/util/Array.h"
+#include "atlas/Array.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/Debug.h"
 #include "atlas/mpl/GatherScatter.h"
@@ -255,7 +255,7 @@ void GatherScatter::setup( const int part[],
 
   }
 
-  loccnt_ = nodes.total_size();
+  loccnt_ = nodes.size();
   ECKIT_MPI_CHECK_RESULT( MPI_Gather( &loccnt_, 1, MPI_INT,
                      glbcounts_.data(), 1, MPI_INT,
                      root_, eckit::mpi::comm() ) );

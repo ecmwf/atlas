@@ -24,7 +24,7 @@
 #include "atlas/Config.h"
 #include "atlas/Metadata.h"
 #include "atlas/State.h"
-#include "atlas/util/Array.h"
+#include "atlas/Array.h"
 #include "atlas/util/DataType.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Nodes.h"

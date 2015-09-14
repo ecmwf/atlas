@@ -22,7 +22,7 @@
 #include "eckit/geometry/Point3.h"
 
 #include "atlas/atlas_config.h"
-#include "atlas/util/Array.h"
+#include "atlas/Array.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
 #include "atlas/Field.h"

@@ -11,7 +11,7 @@
 #include <stdexcept>
 
 #include "atlas/Field.h"
-#include "atlas/util/Array.h"
+#include "atlas/Array.h"
 #include "atlas/util/IndexView.h"
 
 //------------------------------------------------------------------------------------------------------
@@ -36,12 +36,14 @@ IndexView<DATA_TYPE,2>::IndexView( const ArrayT<DATA_TYPE>& array ) : data_( con
 { \
   strides_[0]=array.stride(0);       shape_[0]=array.shape(0); \
   strides_[1]=array.stride(1);       shape_[1]=array.shape(1); \
+  size_ =  size_ = shape_[0]*shape_[1]; \
 } \
 template<> \
 IndexView<DATA_TYPE,2>::IndexView( const Field& field ) : data_( const_cast<DATA_TYPE*>(field.data<DATA_TYPE>()) ) \
 { \
   strides_[0]=field.stride(0);       shape_[0]=field.shape(0); \
   strides_[1]=field.stride(1);       shape_[1]=field.shape(1); \
+  size_ =  size_ = shape_[0]*shape_[1]; \
 } \
 template<> \
 IndexView<DATA_TYPE,3>::IndexView( const ArrayT<DATA_TYPE>& array ) : data_( const_cast<DATA_TYPE*>(array.data()) ) \
@@ -49,6 +51,7 @@ IndexView<DATA_TYPE,3>::IndexView( const ArrayT<DATA_TYPE>& array ) : data_( con
   strides_[0]=array.stride(0);       shape_[0]=array.shape(0); \
   strides_[1]=array.stride(1);       shape_[1]=array.shape(1); \
   strides_[2]=array.stride(2);       shape_[2]=array.shape(2); \
+  size_ =  size_ = shape_[0]*shape_[1]*shape_[2]; \
 } \
 template<> \
 IndexView<DATA_TYPE,3>::IndexView( const Field& field ) : data_( const_cast<DATA_TYPE*>(field.data<DATA_TYPE>()) ) \
@@ -56,6 +59,7 @@ IndexView<DATA_TYPE,3>::IndexView( const Field& field ) : data_( const_cast<DATA
   strides_[0]=field.stride(0);       shape_[0]=field.shape(0); \
   strides_[1]=field.stride(1);       shape_[1]=field.shape(1); \
   strides_[2]=field.stride(2);       shape_[2]=field.shape(2); \
+  size_ =  size_ = shape_[0]*shape_[1]*shape_[2]; \
 } \
 template<> \
 IndexView<DATA_TYPE,4>::IndexView( const ArrayT<DATA_TYPE>& array ) : data_( const_cast<DATA_TYPE*>(array.data()) ) \
@@ -64,6 +68,7 @@ IndexView<DATA_TYPE,4>::IndexView( const ArrayT<DATA_TYPE>& array ) : data_( con
   strides_[1]=array.stride(1);       shape_[1]=array.shape(1); \
   strides_[2]=array.stride(2);       shape_[2]=array.shape(2); \
   strides_[3]=array.stride(3);       shape_[3]=array.shape(3); \
+  size_ =  size_ = shape_[0]*shape_[1]*shape_[2]*shape_[3]; \
 } \
 template<> \
 IndexView<DATA_TYPE,4>::IndexView( const Field& field ) : data_( const_cast<DATA_TYPE*>(field.data<DATA_TYPE>()) ) \
@@ -72,6 +77,7 @@ IndexView<DATA_TYPE,4>::IndexView( const Field& field ) : data_( const_cast<DATA
   strides_[1]=field.stride(1);       shape_[1]=field.shape(1); \
   strides_[2]=field.stride(2);       shape_[2]=field.shape(2); \
   strides_[3]=field.stride(3);       shape_[3]=field.shape(3); \
+  size_ =  size_ = shape_[0]*shape_[1]*shape_[2]*shape_[3]; \
 }
 
 TEMPLATE_SPECIALIZATION(int);

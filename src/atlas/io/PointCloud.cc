@@ -173,7 +173,7 @@ void PointCloud::write(const eckit::PathName& path, const Mesh& mesh)
   for(size_t i=0; i<nodes.nb_fields(); ++i)
   {
     const Field& field = nodes.field(i);
-    if ( field.shape(0)==lonlat.size() &&
+    if ( field.shape(0)==lonlat.shape(0) &&
          field.shape(1)==1 &&
          field.datatype()==DataType::real64() )  // FIXME: no support for non-double types!
     {
@@ -186,7 +186,7 @@ void PointCloud::write(const eckit::PathName& path, const Mesh& mesh)
   if (!f.is_open())
     throw eckit::CantOpenFile(path.asString());
 
-  const size_t Npts = lonlat.size();
+  const size_t Npts = lonlat.shape(0);
   const size_t Nfld = vfvalues.size();
 
   // header
@@ -227,7 +227,7 @@ void PointCloud::write(const eckit::PathName& path, const FieldSet& fieldset, co
   for (size_t i=0; i<fieldset.size(); ++i)
   {
     const Field& field = fieldset[i];
-    if ( field.shape(0)==lonlat.size() &&
+    if ( field.shape(0)==lonlat.shape(0) &&
          field.shape(1)==1 &&
          field.name()!="glb_idx" )  // FIXME: no support for non-int types!
     {
@@ -240,7 +240,7 @@ void PointCloud::write(const eckit::PathName& path, const FieldSet& fieldset, co
   if (!f.is_open())
     throw eckit::CantOpenFile(path.asString());
   const size_t
-      Npts = lonlat.size(),
+      Npts = lonlat.shape(0),
       Nfld = vfvalues.size();
 
   // header

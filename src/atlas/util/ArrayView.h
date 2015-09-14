@@ -224,7 +224,6 @@ public:
     size_ = std::accumulate(shape_.data(),shape_.data()+rank_,1,std::multiplies<size_t>());
   }
 
-  ArrayView( const ArrayT<DATA_TYPE>& );
   ArrayView( const Array& );
   ArrayView( const Field& );
   iterator begin() { return iterator(this); }
@@ -302,7 +301,6 @@ public:
   {
     shape_[0]=shape[0]; strides_[0]=1;
   }
-  ArrayView( const ArrayT<DATA_TYPE>& );
   ArrayView( const Array& );
   ArrayView( const Field& );
 
@@ -338,8 +336,7 @@ public:
   ArrayStrides::value_type stride(size_t i) const { return strides_[0]; }
   size_t rank() const { return 1; }
   size_t size() const { return shape_[0]; }
-  size_t total_size() const { return shape_[0]; }
-  void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<total_size(); ++n) *(data_+n)=scalar; }
+  void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<size(); ++n) *(data_+n)=scalar; }
 private:
   DATA_TYPE* data_;
   ArrayStrides::value_type strides_[1];
@@ -362,18 +359,20 @@ public:
   {
     strides_[0]=strides[0];            shape_[0]=shape[0];
     strides_[1]=strides[1];            shape_[1]=shape[1];
+    size_ = shape_[0]*shape_[1];
   }
   ArrayView( const DATA_TYPE* data, const ArrayShape::value_type shape[2] ) : data_( const_cast<DATA_TYPE*>(data) )
   {
     shape_[0]=shape[0]; strides_[0]=shape[1];
     shape_[1]=shape[1]; strides_[1]=1;
+    size_ = shape_[0]*shape_[1];
   }
   ArrayView( const DATA_TYPE* data, const std::vector<size_t>& shape ) : data_( const_cast<DATA_TYPE*>(data) )
   {
     shape_[0]=shape[0]; strides_[0]=shape[1];
     shape_[1]=shape[1]; strides_[1]=1;
+    size_ = shape_[0]*shape_[1];
   }
-  ArrayView( const ArrayT<DATA_TYPE>& );
   ArrayView( const Array& );
   ArrayView( const Field& );
 
@@ -408,11 +407,11 @@ public:
   ArrayStrides::value_type stride(size_t i) const { return strides_[i]; }
   ArrayShape::value_type shape(size_t i) const {return shape_[i]; }
   size_t rank() const { return 2; }
-  size_t size() const { return shape_[0]; }
-  size_t total_size() const { return shape_[0]*shape_[1]; }
-  void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<total_size(); ++n) *(data_+n)=scalar; }
+  size_t size() const { return size_; }
+  void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<size(); ++n) *(data_+n)=scalar; }
 private:
   DATA_TYPE* data_;
+  size_t size_;
   ArrayStrides::value_type strides_[2];
   ArrayShape::value_type shape_[2];
 };
@@ -433,20 +432,22 @@ public:
     strides_[0]=strides[0];            shape_[0]=shape[0];
     strides_[1]=strides[1];            shape_[1]=shape[1];
     strides_[2]=strides[2];            shape_[2]=shape[2];
+    size_ = shape_[0]*shape_[1]*shape_[2];
   }
   ArrayView( const DATA_TYPE* data, const ArrayShape::value_type shape[3] ) : data_( const_cast<DATA_TYPE*>(data) )
   {
     shape_[0]=shape[0]; strides_[0]=shape[2]*shape[1];
     shape_[1]=shape[1]; strides_[1]=shape[2];
     shape_[2]=shape[2]; strides_[2]=1;
+    size_ = shape_[0]*shape_[1]*shape_[2];
   }
   ArrayView( const DATA_TYPE* data, const std::vector<size_t>& shape ) : data_( const_cast<DATA_TYPE*>(data) )
   {
     shape_[0]=shape[0]; strides_[0]=shape[2]*shape[1];
     shape_[1]=shape[1]; strides_[1]=shape[2];
     shape_[2]=shape[2]; strides_[2]=1;
+    size_ = shape_[0]*shape_[1]*shape_[2];
   }
-  ArrayView( const ArrayT<DATA_TYPE>& );
   ArrayView( const Array& );
   ArrayView( const Field& );
 
@@ -481,11 +482,11 @@ public:
   ArrayStrides::value_type stride(size_t i) const { return strides_[i]; }
   ArrayShape::value_type shape(size_t i) const { return shape_[i]; }
   size_t rank() const { return 3; }
-  size_t size() const { return shape_[0]; }
-  size_t total_size() const { return shape_[0]*shape_[1]*shape_[2]; }
-  void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<total_size(); ++n) *(data_+n)=scalar; }
+  size_t size() const { return shape_[0]*shape_[1]*shape_[2]; }
+  void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<size(); ++n) *(data_+n)=scalar; }
 private:
   DATA_TYPE* data_;
+  size_t size_;
   ArrayStrides::value_type strides_[3];
   ArrayShape::value_type shape_[3];
 };
@@ -507,6 +508,7 @@ public:
     strides_[1]=strides[1];            shape_[1]=shape[1];
     strides_[2]=strides[2];            shape_[2]=shape[2];
     strides_[3]=strides[3];            shape_[3]=shape[3];
+    size_ = shape_[0]*shape_[1]*shape_[2]*shape_[3];
   }
   ArrayView( const DATA_TYPE* data, const std::vector<size_t>& shape ) : data_( const_cast<DATA_TYPE*>(data) )
   {
@@ -514,6 +516,7 @@ public:
     shape_[1]=shape[1]; strides_[1]=shape[3]*shape[2];
     shape_[2]=shape[2]; strides_[2]=shape[3];
     shape_[3]=shape[3]; strides_[3]=1;
+    size_ = shape_[0]*shape_[1]*shape_[2]*shape_[3];
   }
   ArrayView( const DATA_TYPE* data, const ArrayShape::value_type shape[4] ) : data_( const_cast<DATA_TYPE*>(data) )
   {
@@ -521,8 +524,8 @@ public:
     shape_[1]=shape[1]; strides_[1]=shape[3]*shape[2];
     shape_[2]=shape[2]; strides_[2]=shape[3];
     shape_[3]=shape[3]; strides_[3]=1;
+    size_ = shape_[0]*shape_[1]*shape_[2]*shape_[3];
   }
-  ArrayView( const ArrayT<DATA_TYPE>& );
   ArrayView( const Array& );
   ArrayView( const Field& );
 
@@ -557,12 +560,12 @@ public:
   ArrayStrides::value_type stride(size_t i) const { return strides_[i]; }
   ArrayShape::value_type shape(size_t i) const { return shape_[i]; }
   size_t rank() const { return 4; }
-  size_t size() const { return shape_[0]; }
-  size_t total_size() const { return shape_[0]*shape_[1]*shape_[2]*shape_[3]; }
-  void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<total_size(); ++n) *(data_+n)=scalar; }
+  size_t size() const { return shape_[0]*shape_[1]*shape_[2]*shape_[3]; }
+  void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<size(); ++n) *(data_+n)=scalar; }
 
 private:
   DATA_TYPE* data_;
+  size_t size_;
   ArrayStrides::value_type strides_[4];
   ArrayShape::value_type shape_[4];
 };

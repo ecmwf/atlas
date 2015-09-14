@@ -24,7 +24,7 @@
 #include "atlas/Parameters.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
-#include "atlas/util/Array.h"
+#include "atlas/Array.h"
 #include "atlas/util/Bitflags.h"
 #include "atlas/util/Unique.h"
 #include "atlas/util/PeriodicTransform.h"

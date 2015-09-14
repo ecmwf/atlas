@@ -166,8 +166,7 @@ public:
   size_t shape(const size_t i) const { return shape_[0]; }
 
   size_t size() const { return shape_[0]; }
-  size_t total_size() const { return shape_[0]; }
-  void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<total_size(); ++n) *(data_+n)=scalar TO_FORTRAN; }
+  void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<size(); ++n) *(data_+n)=scalar TO_FORTRAN; }
 private:
   DATA_TYPE* data_;
   size_t strides_[1];
@@ -193,11 +192,13 @@ public:
   {
     strides_[0]=strides[0];            shape_[0]=shape[0];
     strides_[1]=strides[1];            shape_[1]=shape[1];
+    size_ = shape_[0]*shape_[1];
   }
   IndexView( const DATA_TYPE* data, const size_t shape[2] ) : data_( const_cast<DATA_TYPE*>(data) )
   {
     shape_[0]=shape[0]; strides_[0]=shape[1];
     shape_[1]=shape[1]; strides_[1]=1;
+    size_ = shape_[0]*shape_[1];
   }
   IndexView( const ArrayT<DATA_TYPE>& array );
   IndexView( const Field& field );
@@ -213,11 +214,11 @@ public:
   const size_t* shape() const   { return shape_; }
   size_t shape(const size_t i) const { return shape_[i]; }
 
-  size_t size() const { return shape_[0]; }
-  size_t total_size() const { return shape_[0]*shape_[1]; }
-  void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<total_size(); ++n) *(data_+n)=scalar TO_FORTRAN; }
+  size_t size() const { return size_; }
+  void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<size(); ++n) *(data_+n)=scalar TO_FORTRAN; }
 private:
   DATA_TYPE* data_;
+  size_t size_;
   size_t strides_[2];
   size_t shape_[2];
 };
@@ -241,18 +242,21 @@ public:
     strides_[0]=strides[0];            shape_[0]=shape[0];
     strides_[1]=strides[1];            shape_[1]=shape[1];
     strides_[2]=strides[2];            shape_[2]=shape[2];
+    size_ = shape_[0]*shape_[1]*shape_[2];
   }
   IndexView( const DATA_TYPE* data, const size_t shape[3] ) : data_( const_cast<DATA_TYPE*>(data) )
   {
     shape_[0]=shape[0]; strides_[0]=shape[2]*shape[1];
     shape_[1]=shape[1]; strides_[1]=shape[2];
     shape_[2]=shape[2]; strides_[2]=1;
+    size_ = shape_[0]*shape_[1]*shape_[2];
   }
   IndexView( const DATA_TYPE* data, const std::vector<size_t>& shape ) : data_( const_cast<DATA_TYPE*>(data) )
   {
     shape_[0]=shape[0]; strides_[0]=shape[2]*shape[1];
     shape_[1]=shape[1]; strides_[1]=shape[2];
     shape_[2]=shape[2]; strides_[2]=1;
+    size_ = shape_[0]*shape_[1]*shape_[2];
   }
   IndexView( const ArrayT<DATA_TYPE>& array );
   IndexView( const Field& field );
@@ -267,11 +271,11 @@ public:
   const size_t* shape() const   { return shape_; }
   size_t shape(const size_t i) const { return shape_[i]; }
 
-  size_t size() const { return shape_[0]; }
-  size_t total_size() const { return shape_[0]*shape_[1]*shape_[2]; }
-  void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<total_size(); ++n) *(data_+n)=scalar TO_FORTRAN; }
+  size_t size() const { return size_; }
+  void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<size(); ++n) *(data_+n)=scalar TO_FORTRAN; }
 private:
   DATA_TYPE* data_;
+  size_t size_;
   size_t strides_[3];
   size_t shape_[3];
 };
@@ -296,6 +300,7 @@ public:
     strides_[1]=strides[1];            shape_[1]=shape[1];
     strides_[2]=strides[2];            shape_[2]=shape[2];
     strides_[3]=strides[3];            shape_[3]=shape[3];
+    size_ =  size_ = shape_[0]*shape_[1]*shape_[2]*shape_[3];
   }
   IndexView( const ArrayT<DATA_TYPE>& array );
   IndexView( const Field& field );
@@ -310,12 +315,12 @@ public:
   const size_t* shape() const   { return shape_; }
   size_t shape(const size_t i) const { return shape_[i]; }
 
-  size_t size() const { return shape_[0]; }
-  size_t total_size() const { return shape_[0]*shape_[1]*shape_[2]*shape_[3]; }
-  void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<total_size(); ++n) *(data_+n)=scalar TO_FORTRAN; }
+  size_t size() const { return size_; }
+  void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<size(); ++n) *(data_+n)=scalar TO_FORTRAN; }
 
 private:
   DATA_TYPE* data_;
+  size_t size_;
   size_t strides_[4];
   size_t shape_[4];
 };

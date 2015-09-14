@@ -51,8 +51,6 @@ io/Grib.h
 list( APPEND atlas_util_srcs
 util/AccumulateFaces.h
 util/AccumulateFaces.cc
-util/Array.h
-util/Array.cc
 util/ArrayUtil.h
 util/ArrayUtil.cc
 util/ArrayView.h
@@ -213,6 +211,8 @@ atlas.h
 atlas.cc
 atlas_omp.h
 atlas_omp.cc
+Array.h
+Array.cc
 BoundBox.h
 BoundBox.cc
 Config.h

@@ -151,7 +151,7 @@ void Checksum::var_info( const ArrayView<DATA_TYPE,RANK>& arr,
 template <typename DATA_TYPE, int LRANK>
 std::string Checksum::execute( const ArrayView<DATA_TYPE,LRANK>& lfield ) const
 {
-  if( lfield.size() == parsize_ )
+  if( lfield.shape(0) == parsize_ )
   {
     std::vector<int> lvarstrides, lvarextents;
     var_info(lfield, lvarstrides, lvarextents);
@@ -159,7 +159,7 @@ std::string Checksum::execute( const ArrayView<DATA_TYPE,LRANK>& lfield ) const
   }
   else
   {
-    DEBUG_VAR(lfield.size());
+    DEBUG_VAR(lfield.shape(0));
     NOTIMP; // Need to implement with parallel ranks > 1
   }
   return std::string("");

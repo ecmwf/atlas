@@ -24,7 +24,7 @@
 #include "atlas/FunctionSpace.h"
 #include "atlas/util/IndexView.h"
 #include "atlas/util/ArrayView.h"
-#include "atlas/util/Array.h"
+#include "atlas/Array.h"
 #include "atlas/actions/BuildHalo.h"
 #include "atlas/actions/BuildParallelFields.h"
 #include "atlas/actions/BuildPeriodicBoundaries.h"
