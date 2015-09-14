@@ -127,7 +127,13 @@ void Mesh::print(std::ostream& os) const
 Nodes& Mesh::createNodes( size_t size )
 {
   if( nodes_ )
-    throw eckit::SeriousBug("Cannot create nodes in mesh as they already exist.", Here());
+  {
+    eckit::Log::error() << "ERROR: Re-creating nodes.\n"
+                        << "This error can be ignored in MIR/prodgen\n"
+                        << "until MIR stops using deprecated atlas::Grid::mesh() function."
+                        << std::endl;
+    //throw eckit::SeriousBug("Cannot create nodes in mesh as they already exist.", Here());
+  }
   nodes_.reset( new Nodes(size) );
   return *nodes_;
 }
