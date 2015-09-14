@@ -436,7 +436,7 @@ void AtlasBenchmark::iteration()
 {
   Timer t("iteration", Log::debug(5));
 
-  Array<double> avgS_arr(nedges,nlev,2);
+  ArrayT<double> avgS_arr(nedges,nlev,2);
   ArrayView<double,3> avgS(avgS_arr);
 
   atlas_omp_parallel_for( int jedge=0; jedge<nedges; ++jedge )

@@ -102,11 +102,11 @@ void write_field_nodes(const Gmsh& gmsh, const functionspace::NodesFunctionSpace
   Field::Ptr data_glb;
   if( gather )
   {
-    gidx_glb.reset( function_space.createGlobalField( function_space.nodes().global_index() ) );
+    gidx_glb.reset( function_space.createGlobalField( "gidx_glb", function_space.nodes().global_index() ) );
     function_space.gather(function_space.nodes().global_index(),*gidx_glb);
     gidx = ArrayView<gidx_t,1>( *gidx_glb );
 
-    data_glb.reset( function_space.createGlobalField( field ) );
+    data_glb.reset( function_space.createGlobalField( "glb_field",field ) );
     function_space.gather(field,*data_glb);
     data = ArrayView<DATATYPE,2>( data_glb->data<DATATYPE>(), make_shape(data_glb->shape(0),data_glb->stride(0)) );
   }
@@ -213,8 +213,8 @@ void write_field_elems(const Gmsh& gmsh, const FunctionSpace& function_space, co
   int nvars = field.shape(1)/nlev;
   ArrayView<gidx_t,1    > gidx ( function_space.field( "glb_idx" ) );
   ArrayView<DATA_TYPE> data ( field );
-  Array<DATA_TYPE> field_glb_arr;
-  Array<gidx_t   > gidx_glb_arr;
+  ArrayT<DATA_TYPE> field_glb_arr;
+  ArrayT<gidx_t   > gidx_glb_arr;
   if( gather )
   {
     mpl::GatherScatter& fullgather = function_space.fullgather();

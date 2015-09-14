@@ -174,7 +174,7 @@ void renumber_nodes_glb_idx( Nodes& nodes )
 
 
   // 1) Gather all global indices, together with location
-  Array<uid_t> loc_id_arr(nb_nodes);
+  ArrayT<uid_t> loc_id_arr(nb_nodes);
   ArrayView<uid_t,1> loc_id(loc_id_arr);
 
   for( int jnode=0; jnode<nb_nodes; ++jnode )
@@ -193,7 +193,7 @@ void renumber_nodes_glb_idx( Nodes& nodes )
   }
   int glb_nb_nodes = std::accumulate(recvcounts.begin(),recvcounts.end(),0);
 
-  Array<uid_t> glb_id_arr(glb_nb_nodes);
+  ArrayT<uid_t> glb_id_arr(glb_nb_nodes);
   ArrayView<uid_t,1> glb_id(glb_id_arr);
 
   ECKIT_MPI_CHECK_RESULT(
@@ -392,7 +392,7 @@ Field& build_edges_partition( FunctionSpace& edges, Nodes& nodes )
 
   int nb_edges = edges.shape(0);
 
-  Array<int> periodic(nb_edges);
+  ArrayT<int> periodic(nb_edges);
 
   for( int jedge=0; jedge<nb_edges; ++jedge )
   {
@@ -820,7 +820,7 @@ Field& build_edges_global_idx( FunctionSpace& edges, Nodes& nodes )
   // unused //  const int ridx_base = 1;
 
   // 1) Gather all global indices, together with location
-  Array<uid_t> loc_edge_id_arr(nb_edges);
+  ArrayT<uid_t> loc_edge_id_arr(nb_edges);
   ArrayView<uid_t,1> loc_edge_id(loc_edge_id_arr);
 
   for( int jedge=0; jedge<nb_edges; ++jedge )
@@ -839,7 +839,7 @@ Field& build_edges_global_idx( FunctionSpace& edges, Nodes& nodes )
   }
   int glb_nb_edges = std::accumulate(recvcounts.begin(),recvcounts.end(),0);
 
-  Array<uid_t> glb_edge_id_arr(glb_nb_edges);
+  ArrayT<uid_t> glb_edge_id_arr(glb_nb_edges);
   ArrayView<uid_t,1> glb_edge_id(glb_edge_id_arr);
 
   ECKIT_MPI_CHECK_RESULT(

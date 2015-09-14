@@ -195,7 +195,7 @@ void increase_halo( Mesh& mesh )
   }
 
   size_t nb_bdry_nodes = bdry_nodes.size();
-  Array<uid_t> arr_bdry_nodes_id(nb_bdry_nodes,4);
+  ArrayT<uid_t> arr_bdry_nodes_id(nb_bdry_nodes,4);
   ArrayView<uid_t,2> bdry_nodes_id(arr_bdry_nodes_id);
   ASSERT( bdry_nodes_id.shape(0) == nb_bdry_nodes );
   ASSERT( bdry_nodes_id.shape(1) == 4);

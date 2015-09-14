@@ -51,11 +51,6 @@ Field* Field::create(const eckit::Parametrisation& params)
   return 0;
 }
 
-Field* Field::create(DataType datatype, const ArrayShape& shape)
-{
-  return new Field(datatype,shape);
-}
-
 Field* Field::create(const std::string& name, DataType datatype, const ArrayShape& shape)
 {
   return new Field(name,datatype,shape);
@@ -63,16 +58,22 @@ Field* Field::create(const std::string& name, DataType datatype, const ArrayShap
 
 // -------------------------------------------------------------------------
 
-Field::Field(DataType datatype, const ArrayShape& shape):
-  name_(), nb_levels_(0)
-{
-  array_.reset( ArrayBase::create(datatype,shape) );
-}
-
 Field::Field(const std::string& name, DataType datatype, const ArrayShape& shape):
   name_(name), nb_levels_(0)
 {
-  array_.reset( ArrayBase::create(datatype,shape) );
+  array_.reset( Array::create(datatype,shape) );
+}
+
+Field::Field(const std::string& name, Array* array):
+  name_(name), nb_levels_(0)
+{
+  array_.reset( array );
+}
+
+Field::Field(const std::string& name, const eckit::SharedPtr<Array>& array):
+  name_(name), nb_levels_(0)
+{
+  array_ = array;
 }
 
 Field::~Field()

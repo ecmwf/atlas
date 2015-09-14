@@ -23,48 +23,28 @@ contains
   procedure, public :: mesh => atlas_NodesFunctionSpace__mesh
   procedure, public :: nodes => atlas_NodesFunctionSpace__nodes
 
-  procedure, private :: create_field_kind => atlas_NodesFunctionSpace__create_field_kind
-  procedure, private :: create_field_kind_lev => atlas_NodesFunctionSpace__create_field_kind_lev
   procedure, private :: create_field_name_kind => atlas_NodesFunctionSpace__create_field_name_kind
   procedure, private :: create_field_name_kind_lev => atlas_NodesFunctionSpace__create_field_name_kind_lev
-  procedure, private :: create_field_kind_vars => atlas_NodesFunctionSpace__create_field_kind_vars
-  procedure, private :: create_field_kind_lev_vars => atlas_NodesFunctionSpace__create_field_kind_lev_vars
   procedure, private :: create_field_name_kind_vars => atlas_NodesFunctionSpace__create_field_name_kind_vars
   procedure, private :: create_field_name_kind_lev_vars => atlas_NodesFunctionSpace__create_field_name_kind_lev_vars
-  procedure, private :: create_field_template => atlas_NodesFunctionSpace__create_field_template
   procedure, private :: create_field_name_template => atlas_NodesFunctionSpace__create_field_name_template
   generic, public :: create_field => &
-    & create_field_kind, &
-    & create_field_kind_lev, &
     & create_field_name_kind, &
     & create_field_name_kind_lev, &
-    & create_field_kind_vars, &
-    & create_field_kind_lev_vars, &
     & create_field_name_kind_vars, &
     & create_field_name_kind_lev_vars, &
-    & create_field_template, &
     & create_field_name_template
 
-  procedure, private :: create_glb_field_kind => atlas_NodesFunctionSpace__create_glb_field_kind
-  procedure, private :: create_glb_field_kind_lev => atlas_NodesFunctionSpace__create_glb_field_kind_lev
   procedure, private :: create_glb_field_name_kind => atlas_NodesFunctionSpace__create_glb_field_name_kind
   procedure, private :: create_glb_field_name_kind_lev => atlas_NodesFunctionSpace__create_glb_field_name_kind_lev
-  procedure, private :: create_glb_field_kind_vars => atlas_NodesFunctionSpace__create_glb_field_kind_vars
-  procedure, private :: create_glb_field_kind_lev_vars => atlas_NodesFunctionSpace__create_glb_field_kind_lev_vars
   procedure, private :: create_glb_field_name_kind_vars => atlas_NodesFunctionSpace__create_glb_field_name_kind_vars
   procedure, private :: create_glb_field_name_kind_lev_vars => atlas_NodesFunctionSpace__create_glb_field_name_kind_lev_vars
-  procedure, private :: create_glb_field_template => atlas_NodesFunctionSpace__create_glb_field_template
   procedure, private :: create_glb_field_name_template => atlas_NodesFunctionSpace__create_glb_field_name_template
   generic, public :: create_global_field => &
-    & create_glb_field_kind, &
-    & create_glb_field_kind_lev, &
     & create_glb_field_name_kind, &
     & create_glb_field_name_kind_lev, &
-    & create_glb_field_kind_vars, &
-    & create_glb_field_kind_lev_vars, &
     & create_glb_field_name_kind_vars, &
     & create_glb_field_name_kind_lev_vars, &
-    & create_glb_field_template, &
     & create_glb_field_name_template
 
   procedure, private :: halo_exchange_fieldset => atlas_NodesFunctionSpace__halo_exchange_fieldset

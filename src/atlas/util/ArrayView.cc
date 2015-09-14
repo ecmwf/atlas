@@ -22,7 +22,15 @@ namespace atlas {
 
 #define TEMPLATE_SPECIALIZATION( DATA_TYPE ) \
 template<>\
-ArrayView <DATA_TYPE, 0 >::ArrayView( const Array<DATA_TYPE>& array ) : data_( const_cast<DATA_TYPE*>(array.data()) ) \
+ArrayView <DATA_TYPE, 0 >::ArrayView( const ArrayT<DATA_TYPE>& array ) : data_( const_cast<DATA_TYPE*>(array.data()) ) \
+{ \
+  rank_ = array.strides().size(); \
+  strides_ = array.strides(); \
+  shape_ = array.shape(); \
+  size_ = std::accumulate(shape_.data(),shape_.data()+rank_,1,std::multiplies<int>()); \
+} \
+template<>\
+ArrayView <DATA_TYPE, 0 >::ArrayView( const Array& array ) : data_( const_cast<DATA_TYPE*>(array.data<DATA_TYPE>()) ) \
 { \
   rank_ = array.strides().size(); \
   strides_ = array.strides(); \
@@ -38,10 +46,17 @@ ArrayView <DATA_TYPE, 0 >::ArrayView( const Field& field ) : data_( const_cast<D
   size_ = std::accumulate(shape_.data(),shape_.data()+rank_,1,std::multiplies<int>()); \
 } \
 template<>\
-ArrayView <DATA_TYPE, 1 >::ArrayView( const Array<DATA_TYPE>& array ) : data_( const_cast<DATA_TYPE*>(array.data()) ) \
+ArrayView <DATA_TYPE, 1 >::ArrayView( const ArrayT<DATA_TYPE>& array ) : data_( const_cast<DATA_TYPE*>(array.data()) ) \
 { \
   ASSERT( array.shape().size() >= 1 ); \
   strides_[0]=array.stride(0);  shape_[0]=array.shape(0);\
+} \
+template<>\
+ArrayView <DATA_TYPE, 1 >::ArrayView( const Array& array ) : data_( const_cast<DATA_TYPE*>(array.data<DATA_TYPE>()) ) \
+{ \
+  ASSERT( array.shape().size() >= 1 ); \
+  strides_[0]=array.stride(0);  shape_[0]=array.shape(0); \
+  ASSERT(total_size() == array.size()); \
 } \
 template<> \
 ArrayView <DATA_TYPE, 1 >::ArrayView( const Field& field ) : data_( const_cast<DATA_TYPE*>(field.data<DATA_TYPE>()) ) \
@@ -51,7 +66,7 @@ ArrayView <DATA_TYPE, 1 >::ArrayView( const Field& field ) : data_( const_cast<D
   ASSERT(total_size() == field.size()); \
 } \
 template<> \
-ArrayView<DATA_TYPE,2>::ArrayView( const Array<DATA_TYPE>& array ) : data_( const_cast<DATA_TYPE*>(array.data()) ) \
+ArrayView<DATA_TYPE,2>::ArrayView( const ArrayT<DATA_TYPE>& array ) : data_( const_cast<DATA_TYPE*>(array.data()) ) \
 { \
   ASSERT( array.shape().size() >= 2 ); \
   strides_[0]=array.stride(0);       shape_[0]=array.shape(0); \
@@ -67,7 +82,16 @@ ArrayView<DATA_TYPE,2>::ArrayView( const Field& field ) : data_( const_cast<DATA
   ASSERT(total_size() == field.size()); \
 } \
 template<> \
-ArrayView<DATA_TYPE,3>::ArrayView( const Array<DATA_TYPE>& array ) : data_( const_cast<DATA_TYPE*>(array.data()) ) \
+ArrayView<DATA_TYPE,3>::ArrayView( const ArrayT<DATA_TYPE>& array ) : data_( const_cast<DATA_TYPE*>(array.data()) ) \
+{ \
+  ASSERT( array.shape().size() >= 3 ); \
+  strides_[0]=array.stride(0);       shape_[0]=array.shape(0); \
+  strides_[1]=array.stride(1);       shape_[1]=array.shape(1); \
+  strides_[2]=array.stride(2);       shape_[2]=array.shape(2); \
+  ASSERT(total_size() == array.size()); \
+} \
+template<> \
+ArrayView<DATA_TYPE,3>::ArrayView( const Array& array ) : data_( const_cast<DATA_TYPE*>(array.data<DATA_TYPE>()) ) \
 { \
   ASSERT( array.shape().size() >= 3 ); \
   strides_[0]=array.stride(0);       shape_[0]=array.shape(0); \
@@ -85,7 +109,7 @@ ArrayView<DATA_TYPE,3>::ArrayView( const Field& field ) : data_( const_cast<DATA
   ASSERT(total_size() == field.size()); \
 } \
 template<> \
-ArrayView<DATA_TYPE,4>::ArrayView( const Array<DATA_TYPE>& array ) : data_( const_cast<DATA_TYPE*>(array.data()) ) \
+ArrayView<DATA_TYPE,4>::ArrayView( const ArrayT<DATA_TYPE>& array ) : data_( const_cast<DATA_TYPE*>(array.data()) ) \
 { \
   ASSERT( array.shape().size() >= 4 ); \
   strides_[0]=array.stride(0);       shape_[0]=array.shape(0); \
@@ -94,6 +118,16 @@ ArrayView<DATA_TYPE,4>::ArrayView( const Array<DATA_TYPE>& array ) : data_( cons
   strides_[3]=array.stride(3);       shape_[3]=array.shape(3); \
   ASSERT(total_size() == array.size()); \
 } \
+template<> \
+ArrayView<DATA_TYPE,4>::ArrayView( const Array& array ) : data_( const_cast<DATA_TYPE*>(array.data<DATA_TYPE>()) ) \
+{ \
+  ASSERT( array.shape().size() >= 4 ); \
+  strides_[0]=array.stride(0);       shape_[0]=array.shape(0); \
+  strides_[1]=array.stride(1);       shape_[1]=array.shape(1); \
+  strides_[2]=array.stride(2);       shape_[2]=array.shape(2); \
+  strides_[3]=array.stride(3);       shape_[3]=array.shape(3); \
+  ASSERT(total_size() == array.size()); \
+}\
 template<> \
 ArrayView<DATA_TYPE,4>::ArrayView( const Field& field ) : data_( const_cast<DATA_TYPE*>(field.data<DATA_TYPE>()) ) \
 { \

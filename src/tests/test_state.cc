@@ -117,8 +117,8 @@ BOOST_AUTO_TEST_CASE( state )
   BOOST_CHECK_EQUAL( state.size() , 0 );
 
   state.add( Field::create<double>( "myfield", make_shape(10,1) ) );
-  state.add( Field::create<double>( make_shape(10,2) ) );
-  state.add( Field::create<double>( make_shape(10,3) ) );
+  state.add( Field::create<double>( "", make_shape(10,2) ) );
+  state.add( Field::create<double>( "", make_shape(10,3) ) );
 
   BOOST_CHECK_EQUAL( state.size() , 3 );
   BOOST_CHECK( state.has("myfield") );

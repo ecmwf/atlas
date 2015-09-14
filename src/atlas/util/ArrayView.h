@@ -26,7 +26,8 @@
 /// ArrayView<int,2> matrix( array, strides, shape );
 /// for( size_t i=0; i<matrix.shape(0); ++i ) {
 ///   for( size_t j=0; j<matrix.shape(1); ++j ) {
-///     matrix(i,j) *= 10;
+///
+///  matrix(i,j) *= 10;
 ///   }
 /// }
 ///
@@ -91,8 +92,9 @@
 
 namespace atlas {
 
+class Array;
 class Field;
-template< typename DATA_TYPE > class Array;
+template< typename DATA_TYPE > class ArrayT;
 
 template <typename DATA_TYPE, int RANK=0> class ArrayView;
 template <typename DATA_TYPE, int RANK=0> class ArrayView_iterator;
@@ -222,8 +224,9 @@ public:
     size_ = std::accumulate(shape_.data(),shape_.data()+rank_,1,std::multiplies<size_t>());
   }
 
-  ArrayView( const Array<DATA_TYPE>& array );
-  ArrayView( const Field& field );
+  ArrayView( const ArrayT<DATA_TYPE>& );
+  ArrayView( const Array& );
+  ArrayView( const Field& );
   iterator begin() { return iterator(this); }
   iterator end()   { return iterator(); }
   const_iterator begin() const  { return const_iterator(this); }
@@ -299,8 +302,9 @@ public:
   {
     shape_[0]=shape[0]; strides_[0]=1;
   }
-  ArrayView( const Array<DATA_TYPE>& array );
-  ArrayView( const Field& field );
+  ArrayView( const ArrayT<DATA_TYPE>& );
+  ArrayView( const Array& );
+  ArrayView( const Field& );
 
   iterator begin() { return iterator(this); }
   iterator end()   { return iterator(); }
@@ -369,8 +373,9 @@ public:
     shape_[0]=shape[0]; strides_[0]=shape[1];
     shape_[1]=shape[1]; strides_[1]=1;
   }
-  ArrayView( const Array<DATA_TYPE>& array );
-  ArrayView( const Field& field );
+  ArrayView( const ArrayT<DATA_TYPE>& );
+  ArrayView( const Array& );
+  ArrayView( const Field& );
 
   iterator begin() { return iterator(this); }
   iterator end()   { return iterator(); }
@@ -441,8 +446,9 @@ public:
     shape_[1]=shape[1]; strides_[1]=shape[2];
     shape_[2]=shape[2]; strides_[2]=1;
   }
-  ArrayView( const Array<DATA_TYPE>& array );
-  ArrayView( const Field& field );
+  ArrayView( const ArrayT<DATA_TYPE>& );
+  ArrayView( const Array& );
+  ArrayView( const Field& );
 
   iterator begin() { return iterator(this); }
   iterator end()   { return iterator(); }
@@ -516,8 +522,9 @@ public:
     shape_[2]=shape[2]; strides_[2]=shape[3];
     shape_[3]=shape[3]; strides_[3]=1;
   }
-  ArrayView( const Array<DATA_TYPE>& array );
-  ArrayView( const Field& field );
+  ArrayView( const ArrayT<DATA_TYPE>& );
+  ArrayView( const Array& );
+  ArrayView( const Field& );
 
   iterator begin() { return iterator(this); }
   iterator end()   { return iterator(); }

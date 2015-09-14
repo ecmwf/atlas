@@ -43,25 +43,34 @@ public: // types
 
 public: // Static methods
 
+  /// @brief Create field from parametrisation
   static Field* create( const eckit::Parametrisation& );
-  static Field* create(DataType, const ArrayShape& = ArrayShape());
+
+  /// @brief Create field with given name, Datatype and ArrayShape
   static Field* create(const std::string& name, DataType, const ArrayShape& = ArrayShape());
+
+  /// @brief Create field with given name, Datatype of template and ArrayShape
   template<typename DATATYPE>
-  static Field* create( const ArrayShape& shape ) {
-    return create(DataType::create<DATATYPE>(),shape);
-  }
-  template<typename DATATYPE>
-  static Field* create( const std::string& name, const ArrayShape& shape = ArrayShape() ) {
-    return create(name,DataType::create<DATATYPE>(),shape);
-  }
+  static Field* create( const std::string& name, const ArrayShape& = ArrayShape() );
 
-public: // methods
+  /// @brief Create field with given name, and take ownership of given Array
+  static Field* create( const std::string& name, Array* );
 
-// -- Constructor / Destructor
+  /// @brief Create field with given name, and share ownership of given Array
+  static Field* create( const std::string& name, const eckit::SharedPtr<Array>& );
 
-  Field(DataType, const ArrayShape& = ArrayShape());
-  Field(const std::string& name, DataType, const ArrayShape& = ArrayShape());
+private: // Private constructors to force use of static create functions
 
+  // Allocate new Array internally
+  Field(const std::string& name, DataType, const ArrayShape&);
+
+  // Transfer ownership of Array
+  Field(const std::string& name, Array* );
+
+  // Share ownership of Array
+  Field(const std::string& name, const eckit::SharedPtr<Array>& );
+
+public: // Destructor
   virtual ~Field();
 
 // -- Accessors
@@ -69,6 +78,9 @@ public: // methods
   /// @brief Access to raw data
   template <typename DATA_TYPE> const DATA_TYPE* data() const  { return array_->data<DATA_TYPE>(); }
   template <typename DATA_TYPE>       DATA_TYPE* data()        { return array_->data<DATA_TYPE>(); }
+
+  const Array* array() const      { return array_.get(); }
+  eckit::SharedPtr<Array> array() { return array_; }
 
   /// @brief Internal data type of field
   DataType datatype() const { return array_->datatype(); }
@@ -126,6 +138,9 @@ public: // methods
   void set_functionspace(const std::string& functionspace) { functionspace_ = functionspace; }
   std::string functionspace() const { return functionspace_; }
 
+//  void functionspace(const next::FunctionSpace *);
+//  const next::FunctionSpace *functionspace() const;
+
 private: // methods
 
   void print(std::ostream& os) const;
@@ -142,9 +157,16 @@ private: // members
 
 protected: // members
 
-  eckit::SharedPtr<ArrayBase> array_;
+  eckit::SharedPtr<Array> array_;
 
 };
+
+//----------------------------------------------------------------------------------------------------------------------
+
+template<typename DATATYPE>
+Field* Field::create( const std::string& name, const ArrayShape& shape ) {
+  return create(name,DataType::create<DATATYPE>(),shape);
+}
 
 //----------------------------------------------------------------------------------------------------------------------
 

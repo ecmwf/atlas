@@ -13,26 +13,26 @@
 
 namespace atlas {
 
-void ArrayBase::resize(const ArrayShape& _shape)
+void Array::resize(const ArrayShape& _shape)
 {
   spec_ = ArraySpec(_shape);
   resize_data(spec_.size());
 }
 
 
-void ArrayBase::resize(size_t size1) { resize( make_shape(size1) ); }
+void Array::resize(size_t size1) { resize( make_shape(size1) ); }
 
-void ArrayBase::resize(size_t size1, size_t size2) { resize( make_shape(size1,size2) ); }
+void Array::resize(size_t size1, size_t size2) { resize( make_shape(size1,size2) ); }
 
-void ArrayBase::resize(size_t size1, size_t size2, size_t size3) { resize( make_shape(size1,size2,size3) ); }
+void Array::resize(size_t size1, size_t size2, size_t size3) { resize( make_shape(size1,size2,size3) ); }
 
-void ArrayBase::resize(size_t size1, size_t size2, size_t size3, size_t size4) { resize( make_shape(size1,size2,size3,size4) ); }
+void Array::resize(size_t size1, size_t size2, size_t size3, size_t size4) { resize( make_shape(size1,size2,size3,size4) ); }
 
 namespace {
 template< typename DATA_TYPE >
-DATA_TYPE* get_array_data( const ArrayBase& arraybase )
+DATA_TYPE* get_array_data( const Array& arraybase )
 {
-  const Array<DATA_TYPE>* array = dynamic_cast< const Array<DATA_TYPE>* >(&arraybase);
+  const ArrayT<DATA_TYPE>* array = dynamic_cast< const ArrayT<DATA_TYPE>* >(&arraybase);
   if( array == NULL )
   {
     std::stringstream msg;
@@ -45,7 +45,7 @@ DATA_TYPE* get_array_data( const ArrayBase& arraybase )
 }
 
 template< typename DATA_TYPE >
-void dump_array_data( const Array<DATA_TYPE>& array, std::ostream& os )
+void dump_array_data( const ArrayT<DATA_TYPE>& array, std::ostream& os )
 {
   const DATA_TYPE* data = array.data();
   for(size_t i = 0; i < array.size(); ++i)
@@ -59,29 +59,29 @@ void dump_array_data( const Array<DATA_TYPE>& array, std::ostream& os )
 
 }
 
-template <> const int*    ArrayBase::data<int   >() const { return get_array_data<int   >(*this); }
-template <>       int*    ArrayBase::data<int   >()       { return get_array_data<int   >(*this); }
-template <> const long*   ArrayBase::data<long  >() const { return get_array_data<long  >(*this); }
-template <>       long*   ArrayBase::data<long  >()       { return get_array_data<long  >(*this); }
-template <> const float*  ArrayBase::data<float >() const { return get_array_data<float >(*this); }
-template <>       float*  ArrayBase::data<float >()       { return get_array_data<float >(*this); }
-template <> const double* ArrayBase::data<double>() const { return get_array_data<double>(*this); }
-template <>       double* ArrayBase::data<double>()       { return get_array_data<double>(*this); }
+template <> const int*    Array::data<int   >() const { return get_array_data<int   >(*this); }
+template <>       int*    Array::data<int   >()       { return get_array_data<int   >(*this); }
+template <> const long*   Array::data<long  >() const { return get_array_data<long  >(*this); }
+template <>       long*   Array::data<long  >()       { return get_array_data<long  >(*this); }
+template <> const float*  Array::data<float >() const { return get_array_data<float >(*this); }
+template <>       float*  Array::data<float >()       { return get_array_data<float >(*this); }
+template <> const double* Array::data<double>() const { return get_array_data<double>(*this); }
+template <>       double* Array::data<double>()       { return get_array_data<double>(*this); }
 
-template <> void Array<int>::dump(std::ostream& os) const { dump_array_data(*this,os); };
-template <> void Array<long>::dump(std::ostream& os) const { dump_array_data(*this,os); };
-template <> void Array<float>::dump(std::ostream& os) const { dump_array_data(*this,os); };
-template <> void Array<double>::dump(std::ostream& os) const { dump_array_data(*this,os); };
+template <> void ArrayT<int>::dump(std::ostream& os) const { dump_array_data(*this,os); };
+template <> void ArrayT<long>::dump(std::ostream& os) const { dump_array_data(*this,os); };
+template <> void ArrayT<float>::dump(std::ostream& os) const { dump_array_data(*this,os); };
+template <> void ArrayT<double>::dump(std::ostream& os) const { dump_array_data(*this,os); };
 
 
-ArrayBase* ArrayBase::create( DataType datatype, const ArrayShape& shape )
+Array* Array::create( DataType datatype, const ArrayShape& shape )
 {
   switch( datatype.kind() )
   {
-    case DataType::KIND_REAL64: return new Array<double>(shape);
-    case DataType::KIND_REAL32: return new Array<float>(shape);
-    case DataType::KIND_INT32:  return new Array<int>(shape);
-    case DataType::KIND_INT64:  return new Array<long>(shape);
+    case DataType::KIND_REAL64: return new ArrayT<double>(shape);
+    case DataType::KIND_REAL32: return new ArrayT<float>(shape);
+    case DataType::KIND_INT32:  return new ArrayT<int>(shape);
+    case DataType::KIND_INT64:  return new ArrayT<long>(shape);
     default:
     {
       std::stringstream err; err << "data kind " << datatype.kind() << " not recognised.";

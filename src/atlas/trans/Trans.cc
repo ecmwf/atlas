@@ -308,8 +308,8 @@ void Trans::dirtrans(const NodesFunctionSpace& gp,const FieldSet& gpfields,
     throw eckit::SeriousBug("dirtrans: different number of gridpoint fields than spectral fields",Here());
   }
   // Arrays Trans expects
-  Array<double> rgp(nfld,ngptot());
-  Array<double> rspec(nspec2(),nfld);
+  ArrayT<double> rgp(nfld,ngptot());
+  ArrayT<double> rspec(nspec2(),nfld);
 
   ArrayView<double,2> rgpview (rgp);
   ArrayView<double,2> rspecview (rspec);
@@ -409,8 +409,8 @@ void Trans::invtrans(const SpectralFunctionSpace& sp, const FieldSet& spfields,
     throw eckit::SeriousBug("invtrans: different number of gridpoint fields than spectral fields",Here());
 
   // Arrays Trans expects
-  Array<double> rgp(nfld,ngptot());
-  Array<double> rspec(nspec2(),nfld);
+  ArrayT<double> rgp(nfld,ngptot());
+  ArrayT<double> rspec(nspec2(),nfld);
 
   ArrayView<double,2> rgpview (rgp);
   ArrayView<double,2> rspecview (rspec);
@@ -494,7 +494,7 @@ void Trans::dirtrans_wind2vordiv(const NodesFunctionSpace& gp, const Field& gpwi
   if( spdiv.size() == 0 ) throw eckit::SeriousBug("dirtrans: spectral divergence field is empty.");
 
   // Arrays Trans expects
-  Array<double> rgp(2*nfld,ngptot());
+  ArrayT<double> rgp(2*nfld,ngptot());
   ArrayView<double,2> rgpview (rgp);
 
   // Pack gridpoints
@@ -560,7 +560,7 @@ void Trans::invtrans_vordiv2wind(const SpectralFunctionSpace& sp, const Field& s
   if( spdiv.size() == 0 ) throw eckit::SeriousBug("invtrans: spectral divergence field is empty.");
 
   // Arrays Trans expects
-  Array<double> rgp(2*nfld,ngptot());
+  ArrayT<double> rgp(2*nfld,ngptot());
   ArrayView<double,2> rgpview (rgp);
 
   // Do transform

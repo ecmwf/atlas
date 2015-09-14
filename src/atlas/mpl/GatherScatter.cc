@@ -232,7 +232,7 @@ void GatherScatter::setup( const int part[],
     ECKIT_MPI_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&maxgid,1,eckit::mpi::datatype<gidx_t>(),MPI_MAX,eckit::mpi::comm()) );
   }
 
-  Array<int> sendnodes(parsize_,3);
+  ArrayT<int> sendnodes(parsize_,3);
   ArrayView<int,2> nodes(sendnodes);
 
   if( include_ghost )

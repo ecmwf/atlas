@@ -26,9 +26,13 @@
 
 namespace atlas {
 
-class ArrayBase : public eckit::Owned {
+class Array : public eckit::Owned {
 public:
-  static ArrayBase* create( DataType, const ArrayShape& );
+  static Array* create( DataType, const ArrayShape& );
+  template <typename T> static Array* create(const ArrayShape& s)
+  {
+    return create(DataType::create<T>(),s);
+  }
 
 public:
 
@@ -75,7 +79,7 @@ private:
 
 
 template< typename DATA_TYPE >
-class Array : public ArrayBase  {
+class ArrayT : public Array  {
 public:
 
   typedef typename remove_const<DATA_TYPE>::type  value_type;
@@ -83,17 +87,17 @@ public:
 
 public:
 
-  Array() {}
+  ArrayT() {}
 
-  Array(const ArrayShape& shape) { resize(shape); }
+  ArrayT(const ArrayShape& shape) { resize(shape); }
 
-  Array(size_t size)                                            { resize( make_shape(size) ); }
+  ArrayT(size_t size)                                            { resize( make_shape(size) ); }
 
-  Array(size_t size1, size_t size2)                             { resize( make_shape(size1,size2) ); }
+  ArrayT(size_t size1, size_t size2)                             { resize( make_shape(size1,size2) ); }
 
-  Array(size_t size1, size_t size2, size_t size3)               { resize( make_shape(size1,size2,size3) ); }
+  ArrayT(size_t size1, size_t size2, size_t size3)               { resize( make_shape(size1,size2,size3) ); }
 
-  Array(size_t size1, size_t size2, size_t size3, size_t size4) { resize( make_shape(size1,size2,size3,size4) ); }
+  ArrayT(size_t size1, size_t size2, size_t size3, size_t size4) { resize( make_shape(size1,size2,size3,size4) ); }
 
 public:
 
@@ -137,7 +141,7 @@ private:
 
 
 template< typename DATA_TYPE>
-void Array<DATA_TYPE>::resize_data( size_t size )
+void ArrayT<DATA_TYPE>::resize_data( size_t size )
 {
   data_.resize( size );
   view_ = ArrayView<DATA_TYPE>( *this );

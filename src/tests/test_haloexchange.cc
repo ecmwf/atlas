@@ -100,7 +100,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank0, Fixture )
 
 BOOST_FIXTURE_TEST_CASE( test_rank1, Fixture )
 {
-  Array<POD> arr(N,2);
+  ArrayT<POD> arr(N,2);
   ArrayView<POD,2> arrv(arr);
   for( size_t j=0; j<N; ++j ) {
     arrv(j,0) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*10 );
@@ -124,7 +124,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank1, Fixture )
 
 BOOST_FIXTURE_TEST_CASE( test_rank1_strided_v1, Fixture )
 {
-  Array<POD> arr(N,2);
+  ArrayT<POD> arr(N,2);
   ArrayView<POD,2> arrv(arr);
   for( size_t j=0; j<N; ++j ) {
     arrv(j,0) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*10 );
@@ -148,7 +148,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank1_strided_v1, Fixture )
 
 BOOST_FIXTURE_TEST_CASE( test_rank1_strided_v2, Fixture )
 {
-  Array<POD> arr(N,2);
+  ArrayT<POD> arr(N,2);
   ArrayView<POD,2> arrv(arr);
   for( size_t j=0; j<N; ++j ) {
     arrv(j,0) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*10 );
@@ -172,7 +172,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank1_strided_v2, Fixture )
 
 BOOST_FIXTURE_TEST_CASE( test_rank2, Fixture )
 {
-  Array<POD> arr(N,3,2);
+  ArrayT<POD> arr(N,3,2);
   ArrayView<POD,3> arrv(arr);
   for( size_t p=0; p<N; ++p )
   {
@@ -227,7 +227,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2, Fixture )
 
 BOOST_FIXTURE_TEST_CASE( test_rank2_l1, Fixture )
 {
-  Array<POD> arr(N,3,2);
+  ArrayT<POD> arr(N,3,2);
   ArrayView<POD,3> arrv(arr);
   for( size_t p=0; p<N; ++p )
   {
@@ -283,7 +283,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_l1, Fixture )
 BOOST_FIXTURE_TEST_CASE( test_rank2_l2_v2, Fixture )
 {
   // Test rank 2 halo-exchange
-  Array<POD> arr(N,3,2);
+  ArrayT<POD> arr(N,3,2);
   ArrayView<POD,3> arrv(arr);
   for( size_t p=0; p<N; ++p )
   {
@@ -338,7 +338,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank2_l2_v2, Fixture )
 
 BOOST_FIXTURE_TEST_CASE( test_rank2_v2, Fixture )
 {
-  Array<POD> arr(N,3,2);
+  ArrayT<POD> arr(N,3,2);
   ArrayView<POD,3> arrv(arr);
   for( size_t p=0; p<N; ++p )
   {
@@ -413,7 +413,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank0_ArrayView, Fixture )
 
 BOOST_FIXTURE_TEST_CASE( test_rank1_ArrayView, Fixture )
 {
-  Array<POD> arr(N,2);
+  ArrayT<POD> arr(N,2);
   ArrayView<POD,2> arrv(arr);
   for( size_t j=0; j<N; ++j ) {
     arrv(j,0) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*10 );
@@ -438,7 +438,7 @@ BOOST_FIXTURE_TEST_CASE( test_rank1_ArrayView, Fixture )
 
 BOOST_FIXTURE_TEST_CASE( test_rank2_ArrayView, Fixture )
 {
-  Array<POD> arr(N,3,2);
+  ArrayT<POD> arr(N,3,2);
   ArrayView<POD,3> arrv(arr);
   for( size_t p=0; p<N; ++p )
   {

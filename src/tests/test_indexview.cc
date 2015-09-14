@@ -35,7 +35,7 @@ std::string pos(Iterator& it)
 
 BOOST_AUTO_TEST_CASE( test_array )
 {
-  Array<int> array (3,1,4);
+  ArrayT<int> array (3,1,4);
   BOOST_CHECK_EQUAL( array.shape(0) , 3 );
   BOOST_CHECK_EQUAL( array.shape(1) , 1 );
   BOOST_CHECK_EQUAL( array.shape(2) , 4 );
@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE( test_array )
 
 BOOST_AUTO_TEST_CASE( test_arrayview_iterator )
 {
-  Array<int> array(5,4,2);
+  ArrayT<int> array(5,4,2);
   size_t strides[2] = {8,1};
   size_t extents[2] = {5,2};
   ArrayView<int>       aview(array.data(),strides,extents,2);
@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE( test_arrayview_iterator )
 
 BOOST_AUTO_TEST_CASE( test_indexview_1d )
 {
-  Array<int> array( 10 );
+  ArrayT<int> array( 10 );
 
   ArrayView<int,1>       aview(array);
   IndexView<int,1>       iview(array);
@@ -130,7 +130,7 @@ BOOST_AUTO_TEST_CASE( test_indexview_1d )
 
 BOOST_AUTO_TEST_CASE( test_indexview_2d )
 {
-  Array<int> array( 5, 10 );
+  ArrayT<int> array( 5, 10 );
 
   ArrayView<int,2>       aview(array);
   IndexView<int,2>       iview(array);
@@ -173,7 +173,7 @@ BOOST_AUTO_TEST_CASE( test_indexview_2d )
 
 BOOST_AUTO_TEST_CASE( test_indexview_3d )
 {
-  Array<int> array( 5, 7, 10 );
+  ArrayT<int> array( 5, 7, 10 );
 
   ArrayView<int,3>       aview(array);
   IndexView<int,3>       iview(array);

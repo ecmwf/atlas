@@ -102,7 +102,7 @@ void distribute_mesh( Mesh& mesh )
         }
       }
       std::vector<gidx_t> new_elem_gidx(nb_keep_elems);
-      Array<int> new_elem_nodes_arr(nb_keep_elems,nb_nodes_per_elem);
+      ArrayT<int> new_elem_nodes_arr(nb_keep_elems,nb_nodes_per_elem);
       ArrayView<int,2> new_elem_nodes( new_elem_nodes_arr );
       for( size_t jelem = 0; jelem<nb_elems; ++jelem )
       {
@@ -137,7 +137,7 @@ void distribute_mesh( Mesh& mesh )
   }
   std::vector<int> new_node_gidx(nb_keep_nodes);
   std::vector<int> new_node_part(nb_keep_nodes);
-  Array<double> new_lonlat_arr(nb_keep_nodes,2);
+  ArrayT<double> new_lonlat_arr(nb_keep_nodes,2);
   ArrayView<double,2> new_lonlat(new_lonlat_arr);
   for( size_t jnode=0; jnode<nb_nodes; ++jnode )
   {

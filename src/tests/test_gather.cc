@@ -105,10 +105,10 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank0, Fixture )
 
 BOOST_FIXTURE_TEST_CASE( test_gather_rank1_deprecated, Fixture )
 {
-  Array<POD> loc(Nl,2);
-  Array<POD> glb(Ng,2);
-  Array<POD> glb1(Ng,1);
-  Array<POD> glb2(Ng,1);
+  ArrayT<POD> loc(Nl,2);
+  ArrayT<POD> glb(Ng,2);
+  ArrayT<POD> glb1(Ng,1);
+  ArrayT<POD> glb2(Ng,1);
   ArrayView<POD,2> locv(loc);
   for( int j=0; j<Nl; ++j ) {
     locv(j,0) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*10 );
@@ -163,10 +163,10 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1_deprecated, Fixture )
 
 BOOST_FIXTURE_TEST_CASE( test_gather_rank1, Fixture )
 {
-  Array<POD> loc(Nl,2);
-  Array<POD> glb(Ng,2);
-  Array<POD> glb1(Ng,1);
-  Array<POD> glb2(Ng,1);
+  ArrayT<POD> loc(Nl,2);
+  ArrayT<POD> glb(Ng,2);
+  ArrayT<POD> glb1(Ng,1);
+  ArrayT<POD> glb2(Ng,1);
   ArrayView<POD,2> locv(loc);
   for( int j=0; j<Nl; ++j ) {
     locv(j,0) = (size_t(part[j]) != eckit::mpi::rank() ? 0 : gidx[j]*10 );
@@ -281,13 +281,13 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1, Fixture )
 
 BOOST_FIXTURE_TEST_CASE( test_gather_rank2, Fixture )
 {
-  Array<POD> loc(Nl,3,2);
-  Array<POD> glb(Ng,3,2);
-  Array<POD> glbx1(Ng,3);
-  Array<POD> glbx2(Ng,3);
-  Array<POD> glb1x(Ng,2);
-  Array<POD> glb2x(Ng,2);
-  Array<POD> glb32(Ng);
+  ArrayT<POD> loc(Nl,3,2);
+  ArrayT<POD> glb(Ng,3,2);
+  ArrayT<POD> glbx1(Ng,3);
+  ArrayT<POD> glbx2(Ng,3);
+  ArrayT<POD> glb1x(Ng,2);
+  ArrayT<POD> glb2x(Ng,2);
+  ArrayT<POD> glb32(Ng);
 
   ArrayView<POD,3> locv(loc);
   for(int p = 0; p < Nl; ++p)
@@ -491,8 +491,8 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank2, Fixture )
 
 BOOST_FIXTURE_TEST_CASE( test_gather_rank0_ArrayView, Fixture )
 {
-  Array<POD> loc(Nl);
-  Array<POD> glb(Ng);
+  ArrayT<POD> loc(Nl);
+  ArrayT<POD> glb(Ng);
 
   ArrayView<POD,1> locv(loc);
   ArrayView<POD,1> glbv(glb);
@@ -523,8 +523,8 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank0_ArrayView, Fixture )
 
 BOOST_FIXTURE_TEST_CASE( test_gather_rank1_ArrayView, Fixture )
 {
-  Array<POD> loc(Nl,2);
-  Array<POD> glb(Ng,2);
+  ArrayT<POD> loc(Nl,2);
+  ArrayT<POD> glb(Ng,2);
 
   ArrayView<POD,2> locv(loc);
   ArrayView<POD,2> glbv(glb);
@@ -557,8 +557,8 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank1_ArrayView, Fixture )
 
 BOOST_FIXTURE_TEST_CASE( test_gather_rank2_ArrayView, Fixture )
 {
-  Array<POD> loc(Nl,3,2);
-  Array<POD> glb(Ng,3,2);
+  ArrayT<POD> loc(Nl,3,2);
+  ArrayT<POD> glb(Ng,3,2);
 
   ArrayView<POD,3> locv(loc);
   ArrayView<POD,3> glbv(glb);
@@ -593,8 +593,8 @@ BOOST_FIXTURE_TEST_CASE( test_gather_rank2_ArrayView, Fixture )
 
 BOOST_FIXTURE_TEST_CASE( test_scatter_rank2_ArrayView, Fixture )
 {
-  Array<POD> loc(Nl,3,2);
-  Array<POD> glb(Ng,3,2);
+  ArrayT<POD> loc(Nl,3,2);
+  ArrayT<POD> glb(Ng,3,2);
 
   ArrayView<POD,3> locv(loc);
   ArrayView<POD,3> glbv(glb);

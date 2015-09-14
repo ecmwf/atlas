@@ -22,7 +22,7 @@ namespace atlas {
 
 #define TEMPLATE_SPECIALIZATION( DATA_TYPE ) \
 template<>\
-IndexView <DATA_TYPE, 1 >::IndexView( const Array<DATA_TYPE>& array ) : data_( const_cast<DATA_TYPE*>(array.data()) ) \
+IndexView <DATA_TYPE, 1 >::IndexView( const ArrayT<DATA_TYPE>& array ) : data_( const_cast<DATA_TYPE*>(array.data()) ) \
 { \
   strides_[0]=array.stride(0);  shape_[0]=array.shape(0);\
 } \
@@ -32,7 +32,7 @@ IndexView <DATA_TYPE, 1 >::IndexView( const Field& field ) : data_( const_cast<D
   strides_[0]=field.stride(0);  shape_[0]=field.shape(0); \
 } \
 template<> \
-IndexView<DATA_TYPE,2>::IndexView( const Array<DATA_TYPE>& array ) : data_( const_cast<DATA_TYPE*>(array.data()) ) \
+IndexView<DATA_TYPE,2>::IndexView( const ArrayT<DATA_TYPE>& array ) : data_( const_cast<DATA_TYPE*>(array.data()) ) \
 { \
   strides_[0]=array.stride(0);       shape_[0]=array.shape(0); \
   strides_[1]=array.stride(1);       shape_[1]=array.shape(1); \
@@ -44,7 +44,7 @@ IndexView<DATA_TYPE,2>::IndexView( const Field& field ) : data_( const_cast<DATA
   strides_[1]=field.stride(1);       shape_[1]=field.shape(1); \
 } \
 template<> \
-IndexView<DATA_TYPE,3>::IndexView( const Array<DATA_TYPE>& array ) : data_( const_cast<DATA_TYPE*>(array.data()) ) \
+IndexView<DATA_TYPE,3>::IndexView( const ArrayT<DATA_TYPE>& array ) : data_( const_cast<DATA_TYPE*>(array.data()) ) \
 { \
   strides_[0]=array.stride(0);       shape_[0]=array.shape(0); \
   strides_[1]=array.stride(1);       shape_[1]=array.shape(1); \
@@ -58,7 +58,7 @@ IndexView<DATA_TYPE,3>::IndexView( const Field& field ) : data_( const_cast<DATA
   strides_[2]=field.stride(2);       shape_[2]=field.shape(2); \
 } \
 template<> \
-IndexView<DATA_TYPE,4>::IndexView( const Array<DATA_TYPE>& array ) : data_( const_cast<DATA_TYPE*>(array.data()) ) \
+IndexView<DATA_TYPE,4>::IndexView( const ArrayT<DATA_TYPE>& array ) : data_( const_cast<DATA_TYPE*>(array.data()) ) \
 { \
   strides_[0]=array.stride(0);       shape_[0]=array.shape(0); \
   strides_[1]=array.stride(1);       shape_[1]=array.shape(1); \

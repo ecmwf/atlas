@@ -60,7 +60,7 @@ struct Region
 {
   int north;
   int south;
-  Array<int> elems;
+  ArrayT<int> elems;
   int ntriags;
   int nquads;
   int nnodes;
