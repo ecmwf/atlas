@@ -149,7 +149,7 @@ void Trans::ctor_lonlat(const size_t nlon, const size_t nlat, size_t nsmax, cons
 
 Trans::Options::Options() : eckit::Properties()
 {
-  set_cache(NULL,0);
+  set_cache(0,0);
   set_split_latitudes(true);
   set_fft(FFTW);
   set_flt(false);
@@ -611,7 +611,7 @@ Trans* atlas__Trans__new (const Grid* grid, int nsmax)
 {
   Trans* trans;
   ATLAS_ERROR_HANDLING(
-    ASSERT( grid != NULL );
+    ASSERT( grid );
     trans = new Trans(*grid,nsmax);
   );
   return trans;
@@ -619,13 +619,13 @@ Trans* atlas__Trans__new (const Grid* grid, int nsmax)
 
 void atlas__Trans__delete (Trans* This)
 {
-  ASSERT( This != NULL );
+  ASSERT( This );
   ATLAS_ERROR_HANDLING( delete This );
 }
 
 int atlas__Trans__handle (const Trans* This)
 {
-  ASSERT( This != NULL );
+  ASSERT( This );
   ATLAS_ERROR_HANDLING( return This->handle() );
   return 0;
 }
@@ -729,259 +729,357 @@ void Trans::dirtrans( const int nb_fields, const double wind_fields[], double vo
 
 void atlas__Trans__distspec( const Trans* t, int nb_fields, int origin[], double global_spectra[], double spectra[] )
 {
-  return t->distspec(nb_fields,origin,global_spectra,spectra);
+  ATLAS_ERROR_HANDLING(
+    ASSERT( t );
+    return t->distspec(nb_fields,origin,global_spectra,spectra);
+  );
 }
 
 void atlas__Trans__gathspec( const Trans* t, int nb_fields, int destination[], double spectra[], double global_spectra[] )
 {
-  return t->gathspec(nb_fields,destination,spectra,global_spectra);
+  ATLAS_ERROR_HANDLING(
+    ASSERT( t );
+    return t->gathspec(nb_fields,destination,spectra,global_spectra);
+  );
 }
 
 void atlas__Trans__distgrid( const Trans* t, int nb_fields, int origin[], double global_fields[], double fields[] )
 {
-  return t->distgrid(nb_fields,origin,global_fields,fields);
+  ATLAS_ERROR_HANDLING(
+    ASSERT( t );
+    return t->distgrid(nb_fields,origin,global_fields,fields);
+  );
 }
 
 void atlas__Trans__gathgrid( const Trans* t, int nb_fields, int destination[], double fields[], double global_fields[] )
 {
-  return t->gathgrid(nb_fields,destination,fields,global_fields);
+  ATLAS_ERROR_HANDLING(
+    ASSERT( t );
+    return t->gathgrid(nb_fields,destination,fields,global_fields);
+  );
 }
 
 void atlas__Trans__invtrans_scalar( const Trans* t, int nb_fields, double scalar_spectra[], double scalar_fields[] )
 {
-  return t->invtrans(nb_fields,scalar_spectra,scalar_fields);
+  ATLAS_ERROR_HANDLING(
+    ASSERT( t );
+    return t->invtrans(nb_fields,scalar_spectra,scalar_fields);
+  );
 }
 
 void atlas__Trans__invtrans_vordiv2wind( const Trans* t, int nb_fields, double vorticity_spectra[], double divergence_spectra[], double wind_fields[] )
 {
-  return t->invtrans(nb_fields,vorticity_spectra,divergence_spectra,wind_fields);
+  ATLAS_ERROR_HANDLING(
+    ASSERT( t );
+    return t->invtrans(nb_fields,vorticity_spectra,divergence_spectra,wind_fields);
+  );
 }
 
 void atlas__Trans__dirtrans_scalar( const Trans* t, int nb_fields, double scalar_fields[], double scalar_spectra[] )
 {
-  return t->dirtrans(nb_fields,scalar_fields,scalar_spectra);
+  ATLAS_ERROR_HANDLING(
+    ASSERT( t );
+    return t->dirtrans(nb_fields,scalar_fields,scalar_spectra);
+  );
 }
 
 void atlas__Trans__dirtrans_wind2vordiv( const Trans* t, int nb_fields, double wind_fields[], double vorticity_spectra[], double divergence_spectra[] )
 {
-  return t->dirtrans(nb_fields,wind_fields,vorticity_spectra,divergence_spectra);
+  ATLAS_ERROR_HANDLING(
+    ASSERT( t );
+    return t->dirtrans(nb_fields,wind_fields,vorticity_spectra,divergence_spectra);
+  );
 }
 
 int atlas__Trans__nproc (const Trans* This)
 {
-  ASSERT( This != NULL );
-  ATLAS_ERROR_HANDLING( return This->nproc() );
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This );
+    return This->nproc();
+  );
   return 0;
 }
 
 int atlas__Trans__myproc (const Trans* This, int proc0)
 {
-  ASSERT( This != NULL );
-  ATLAS_ERROR_HANDLING( return This->myproc(proc0) );
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This );
+    return This->myproc(proc0);
+  );
   return 0;
 }
 
 int atlas__Trans__ndgl (const Trans* This)
 {
-  ASSERT( This != NULL );
-  ATLAS_ERROR_HANDLING( return This->ndgl() );
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This );
+    return This->ndgl();
+  );
   return 0;
 }
 
 int atlas__Trans__nsmax (const Trans* This)
 {
-  ASSERT( This != NULL );
-  ATLAS_ERROR_HANDLING( return This->nsmax() );
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This );
+    return This->nsmax();
+  );
   return 0;
 }
 
 int atlas__Trans__ngptot (const Trans* This)
 {
-  ASSERT( This != NULL );
+  ASSERT( This );
   ATLAS_ERROR_HANDLING( return This->ngptot() );
   return 0;
 }
 
 int atlas__Trans__ngptotg (const Trans* This)
 {
-  ASSERT( This != NULL );
+  ASSERT( This );
   ATLAS_ERROR_HANDLING( return This->ngptotg() );
   return 0;
 }
 
 int atlas__Trans__ngptotmx (const Trans* This)
 {
-  ASSERT( This != NULL );
-  ATLAS_ERROR_HANDLING( return This->ngptotmx() );
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This );
+    return This->ngptotmx();
+  );
   return 0;
 }
 
 int atlas__Trans__nspec (const Trans* This)
 {
-  ASSERT( This != NULL );
-  ATLAS_ERROR_HANDLING( return This->nspec() );
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This );
+    return This->nspec();
+  );
   return 0;
 }
 
 int atlas__Trans__nspec2 (const Trans* This)
 {
-  ASSERT( This != NULL );
-  ATLAS_ERROR_HANDLING( return This->nspec2() );
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This );
+    return This->nspec2();
+  );
   return 0;
 }
 
 int atlas__Trans__nspec2g (const Trans* This)
 {
-  ASSERT( This != NULL );
-  ATLAS_ERROR_HANDLING( return This->nspec2g() );
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This );
+    return This->nspec2g();
+  );
   return 0;
 }
 
 int atlas__Trans__nspec2mx (const Trans* This)
 {
-  ASSERT( This != NULL );
-  ATLAS_ERROR_HANDLING( return This->nspec2mx() );
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This );
+    return This->nspec2mx();
+  );
   return 0;
 }
 
 int atlas__Trans__n_regions_NS (const Trans* This)
 {
-  ASSERT( This != NULL );
-  ATLAS_ERROR_HANDLING( return This->n_regions_NS() );
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This );
+    return This->n_regions_NS();
+  );
   return 0;
 }
 
 int atlas__Trans__n_regions_EW (const Trans* This)
 {
-  ASSERT( This != NULL );
-  ATLAS_ERROR_HANDLING( return This->n_regions_EW() );
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This );
+    return This->n_regions_EW();
+  );
   return 0;
 }
 
 int atlas__Trans__nump (const Trans* This)
 {
-  ASSERT( This != NULL );
-  ATLAS_ERROR_HANDLING( return This->nump() );
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This );
+    return This->nump();
+  );
   return 0;
 }
 
 const int* atlas__Trans__nloen(const Trans* This, int& size)
 {
-  ASSERT( This != NULL );
-  ATLAS_ERROR_HANDLING( return This->nloen(size) );
-  return NULL;
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This );
+    return This->nloen(size);
+  );
+  return 0;
 }
 
 const int* atlas__Trans__n_regions (const Trans* This, int& size)
 {
-  ASSERT( This != NULL );
-  ATLAS_ERROR_HANDLING( return This->n_regions(size) );
-  return NULL;
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This );
+    return This->n_regions(size);
+  );
+  return 0;
 }
 
 const int* atlas__Trans__nfrstlat(const Trans* This, int& size)
 {
-  ASSERT( This != NULL );
-  ATLAS_ERROR_HANDLING( return This->nfrstlat(size) );
-  return NULL;
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This );
+    return This->nfrstlat(size);
+  );
+  return 0;
 }
 
 const int* atlas__Trans__nlstlat (const Trans* This, int& size)
 {
-  ASSERT( This != NULL );
-  ATLAS_ERROR_HANDLING( return This->nlstlat(size) );
-  return NULL;
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This );
+    return This->nlstlat(size);
+  );
+  return 0;
 }
 
 const int* atlas__Trans__nptrfrstlat (const Trans* This, int& size)
 {
-  ASSERT( This != NULL );
-  ATLAS_ERROR_HANDLING( return This->nptrfrstlat(size) );
-  return NULL;
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This );
+    return This->nptrfrstlat(size);
+  );
+  return 0;
 }
 
 const int* atlas__Trans__nsta (const Trans* This, int& sizef2, int& sizef1)
 {
-  ASSERT( This != NULL );
-  ATLAS_ERROR_HANDLING( return This->nsta(sizef2,sizef1) );
-  return NULL;
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This );
+    return This->nsta(sizef2,sizef1);
+  );
+  return 0;
 }
 
 const int* atlas__Trans__nonl (const Trans* This, int& sizef2, int& sizef1)
 {
-  ASSERT( This != NULL );
-  ATLAS_ERROR_HANDLING( return This->nonl(sizef2,sizef1) );
-  return NULL;
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This );
+    return This->nonl(sizef2,sizef1);
+  );
+  return 0;
 }
 
 const int* atlas__Trans__nmyms (const Trans* This, int &size)
 {
-  ASSERT( This != NULL );
-  ATLAS_ERROR_HANDLING( return This->nmyms(size) );
-  return NULL;
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This );
+    return This->nmyms(size);
+  );
+  return 0;
 }
 
 const int* atlas__Trans__nasm0 (const Trans* This, int &size)
 {
-  ASSERT( This != NULL );
-  ATLAS_ERROR_HANDLING( return This->nasm0(size) );
-  return NULL;
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This );
+    return This->nasm0(size);
+  );
+  return 0;
 }
 
 
 const int* atlas__Trans__nvalue (const Trans* This, int &size)
 {
-  ASSERT( This != NULL );
-  ATLAS_ERROR_HANDLING( return This->nvalue(size) );
-  return NULL;
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This );
+    return This->nvalue(size);
+  );
+  return 0;
 }
 
 void atlas__Trans__dirtrans_fieldset (const Trans* This, const NodesFunctionSpace* gp, const FieldSet* gpfields, const SpectralFunctionSpace* sp, FieldSet* spfields, const TransParameters* parameters)
 {
-  ATLAS_ERROR_HANDLING( This->dirtrans(*gp,*gpfields,*sp,*spfields,*parameters) );
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This );
+    ASSERT( gp );
+    ASSERT( gpfields );
+    ASSERT( sp );
+    ASSERT( spfields );
+    ASSERT( parameters );
+    This->dirtrans(*gp,*gpfields,*sp,*spfields,*parameters);
+  );
 }
 
 void atlas__Trans__invtrans_fieldset (const Trans* This, const SpectralFunctionSpace* sp, const FieldSet* spfields, const NodesFunctionSpace* gp, FieldSet* gpfields, const TransParameters* parameters)
 {
-  ATLAS_ERROR_HANDLING( This->invtrans(*sp,*spfields,*gp,*gpfields,*parameters) );
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This );
+    ASSERT( sp );
+    ASSERT( spfields );
+    ASSERT( gp );
+    ASSERT( gpfields );
+    ASSERT( parameters );
+    This->invtrans(*sp,*spfields,*gp,*gpfields,*parameters);
+  );
 }
 
 void atlas__Trans__dirtrans_field (const Trans* This, const NodesFunctionSpace* gp, const Field* gpfield, const SpectralFunctionSpace* sp, Field* spfield, const TransParameters* parameters)
 {
-  ASSERT( This != NULL );
-  ASSERT( spfield != NULL );
-  ASSERT( gpfield != NULL );
-  ASSERT( parameters != NULL );
-  ATLAS_ERROR_HANDLING( This->dirtrans(*gp,*gpfield,*sp,*spfield,*parameters) );
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This );
+    ASSERT( spfield );
+    ASSERT( gpfield );
+    ASSERT( parameters );
+    This->dirtrans(*gp,*gpfield,*sp,*spfield,*parameters);
+  );
 }
 
 void atlas__Trans__invtrans_field (const Trans* This, const SpectralFunctionSpace* sp, const Field* spfield, const NodesFunctionSpace* gp, Field* gpfield, const TransParameters* parameters)
 {
-  ASSERT( This != NULL );
-  ASSERT( spfield != NULL );
-  ASSERT( gpfield != NULL );
-  ASSERT( parameters != NULL );
-  ATLAS_ERROR_HANDLING( This->invtrans(*sp,*spfield,*gp,*gpfield,*parameters) );
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This );
+    ASSERT( sp );
+    ASSERT( spfield );
+    ASSERT( gp );
+    ASSERT( gpfield );
+    ASSERT( parameters );
+    This->invtrans(*sp,*spfield,*gp,*gpfield,*parameters);
+  );
 }
 
 void atlas__Trans__dirtrans_wind2vordiv_field (const Trans* This, const NodesFunctionSpace* gp, const Field* gpwind, const SpectralFunctionSpace* sp, Field* spvor, Field* spdiv, const TransParameters* parameters)
 {
-  ASSERT( This != NULL );
-  ASSERT( spvor != NULL );
-  ASSERT( spdiv != NULL );
-  ASSERT( gpwind != NULL );
-  ASSERT( parameters != NULL );
-  ATLAS_ERROR_HANDLING( This->dirtrans_wind2vordiv(*gp,*gpwind,*sp,*spvor,*spdiv,*parameters) );
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This );
+    ASSERT( gp );
+    ASSERT( gpwind );
+    ASSERT( sp );
+    ASSERT( spvor );
+    ASSERT( spdiv );
+    ASSERT( parameters );
+    This->dirtrans_wind2vordiv(*gp,*gpwind,*sp,*spvor,*spdiv,*parameters);
+  );
 }
 
 void atlas__Trans__invtrans_vordiv2wind_field (const Trans* This, const SpectralFunctionSpace* sp, const Field* spvor, const Field* spdiv, const NodesFunctionSpace* gp, Field* gpwind, const TransParameters* parameters)
 {
-  ASSERT( This != NULL );
-  ASSERT( spvor != NULL );
-  ASSERT( spdiv != NULL );
-  ASSERT( gpwind != NULL );
-  ASSERT( parameters != NULL );
-  ATLAS_ERROR_HANDLING( This->invtrans_vordiv2wind(*sp,*spvor,*spdiv,*gp,*gpwind,*parameters) );
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This );
+    ASSERT( sp );
+    ASSERT( spvor );
+    ASSERT( spdiv );
+    ASSERT( gp );
+    ASSERT( gpwind );
+    ASSERT( parameters );
+    This->invtrans_vordiv2wind(*sp,*spvor,*spdiv,*gp,*gpwind,*parameters);
+  );
 }
 
 
@@ -992,7 +1090,7 @@ TransParameters* atlas__TransParameters__new ()
 
 void atlas__TransParameters__delete (TransParameters* This)
 {
-  ASSERT( This != NULL );
+  ATLAS_ERROR_HANDLING( ASSERT( This ); );
   delete This;
 }
 
