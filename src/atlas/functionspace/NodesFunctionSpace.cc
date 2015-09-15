@@ -294,19 +294,19 @@ void NodesFunctionSpace::haloExchange( FieldSet& fieldset ) const
       ArrayStrides strides = make_strides(field.stride(0),1);
       ArrayShape   shape   = make_shape(field.shape(0),field.stride(0));
       if     ( field.datatype() == DataType::kind<int>() ) {
-        ArrayView<int,2> view(field.data<int>(),strides.data(),shape.data());
+        ArrayView<int,2> view(field);
         halo_exchange.execute( view );
       }
       else if( field.datatype() == DataType::kind<long>() ) {
-        ArrayView<long,2> view(field.data<long>(),strides.data(),shape.data());
+        ArrayView<long,2> view(field);
         halo_exchange.execute( view );
       }
       else if( field.datatype() == DataType::kind<float>() ) {
-        ArrayView<float,2> view(field.data<float>(),strides.data(),shape.data());
+        ArrayView<float,2> view(field);
         halo_exchange.execute( view );
       }
       else if( field.datatype() == DataType::kind<double>() ) {
-        ArrayView<double,2> view(field.data<double>(),strides.data(),shape.data());
+        ArrayView<double,2> view(field);
         halo_exchange.execute( view );
       }
       else throw eckit::Exception("datatype not supported",Here());

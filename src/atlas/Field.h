@@ -72,13 +72,13 @@ private: // Private constructors to force use of static create functions
 public: // Destructor
   virtual ~Field();
 
-// -- Accessors
+// -- Conversion
 
   /// @brief Implicit conversion to Array
   operator const Array&() const { return *array_.get(); }
   operator Array&() { return *array_.get(); }
 
-// ---- Delegate to underlying array
+// -- Accessors
 
   /// @brief Access to raw data
   template <typename DATA_TYPE> const DATA_TYPE* data() const  { return array_->data<DATA_TYPE>(); }

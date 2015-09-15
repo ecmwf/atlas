@@ -251,7 +251,7 @@ void increase_halo( Mesh& mesh )
   for (size_t jpart=0; jpart<eckit::mpi::size(); ++jpart)
   {
     ArrayView<uid_t,2> recv_bdry_nodes_id( recvbuf.data()+recvdispls[jpart],
-                                         make_shape( recvcounts[jpart]/4, 4 ).data() );
+                                           make_shape( recvcounts[jpart]/4, 4 ) );
     size_t recv_nb_bdry_nodes = recv_bdry_nodes_id.shape(0);
 
     // Find elements that have these nodes
@@ -453,7 +453,7 @@ void increase_halo( Mesh& mesh )
         sfe_nodes_id[f][jpart].resize( nb_found_bdry_elems[f]*nb_elem_nodes );
 
         ArrayView<uid_t,2> sfe_nodes_id_view( sfe_nodes_id[f][jpart].data(),
-                                            make_shape(nb_found_bdry_elems[f],nb_elem_nodes).data() );
+                                              make_shape(nb_found_bdry_elems[f],nb_elem_nodes) );
 
         for( int jelem=0; jelem<nb_found_bdry_elems[f]; ++jelem )
         {
@@ -1022,7 +1022,7 @@ public:
         buf.elem_nodes_id[f][p].resize( elems[f].size()*nb_elem_nodes );
 
         ArrayView<uid_t,2> sfe_nodes_id_view( buf.elem_nodes_id[f][p].data(),
-                                              make_shape(elems[f].size(),nb_elem_nodes).data() );
+                                              make_shape(elems[f].size(),nb_elem_nodes) );
 
         for( int jelem=0; jelem<elems[f].size(); ++jelem )
         {
@@ -1086,7 +1086,7 @@ public:
         buf.elem_nodes_id[f][p].resize( elems[f].size()*nb_elem_nodes );
 
         ArrayView<uid_t,2> sfe_nodes_id_view( buf.elem_nodes_id[f][p].data(),
-                                              make_shape(elems[f].size(),nb_elem_nodes).data() );
+                                              make_shape(elems[f].size(),nb_elem_nodes) );
 
         for( int jelem=0; jelem<elems[f].size(); ++jelem )
         {

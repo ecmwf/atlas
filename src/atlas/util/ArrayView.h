@@ -202,7 +202,6 @@ private:
 };
 
 //------------------------------------------------------------------------------------------------------
-
 template< typename DATA_TYPE >
 class ArrayView<DATA_TYPE,0>
 {
@@ -213,8 +212,8 @@ public:
 public:
   ArrayView() {}
   ArrayView( const DATA_TYPE* data,
-             const ArrayStrides::value_type strides[],
              const ArrayShape::value_type shape[],
+             const ArrayStrides::value_type strides[],
              const size_t rank ):
     data_( const_cast<DATA_TYPE*>(data) ), rank_(rank)
   {
@@ -226,6 +225,8 @@ public:
   ArrayView( const Array& );
   iterator begin() { return iterator(this); }
   iterator end()   { return iterator(); }
+  const_iterator cbegin() { return const_iterator(this); }
+  const_iterator cend()   { return const_iterator(); }
   const_iterator begin() const  { return const_iterator(this); }
   const_iterator end()   const  { return const_iterator(); }
   const DATA_TYPE& operator()(size_t i) const { CHECK_RANK(1); CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i); }
@@ -287,7 +288,7 @@ public:
   {
     shape_[0]=size; strides_[0]=1;
   }
-  ArrayView( DATA_TYPE* data, const ArrayStrides::value_type strides[1], const ArrayShape::value_type shape[1] ) : data_( const_cast<DATA_TYPE*>(data) )
+  ArrayView( DATA_TYPE* data, const ArrayShape::value_type shape[1], const ArrayStrides::value_type strides[1] ) : data_( const_cast<DATA_TYPE*>(data) )
   {
     strides_[0]=strides[0];       shape_[0]=shape[0];
   }
@@ -303,6 +304,8 @@ public:
 
   iterator begin() { return iterator(this); }
   iterator end()   { return iterator(); }
+  const_iterator cbegin() { return const_iterator(this); }
+  const_iterator cend()   { return const_iterator(); }
   const_iterator begin() const  { return const_iterator(this); }
   const_iterator end()   const  { return const_iterator(); }
   const DATA_TYPE& operator()(size_t i) const { CHECK_BOUNDS_1(i); return *(data_+strides_[0]*i); }
@@ -352,7 +355,7 @@ public:
 public:
 
   ArrayView() {}
-  ArrayView( const DATA_TYPE* data, const ArrayStrides::value_type strides[2], const ArrayShape::value_type shape[2] ) : data_( const_cast<DATA_TYPE*>(data) )
+  ArrayView( const DATA_TYPE* data, const ArrayShape::value_type shape[2], const ArrayStrides::value_type strides[2] ) : data_( const_cast<DATA_TYPE*>(data) )
   {
     strides_[0]=strides[0];            shape_[0]=shape[0];
     strides_[1]=strides[1];            shape_[1]=shape[1];
@@ -374,6 +377,8 @@ public:
 
   iterator begin() { return iterator(this); }
   iterator end()   { return iterator(); }
+  const_iterator cbegin() { return const_iterator(this); }
+  const_iterator cend()   { return const_iterator(); }
   const_iterator begin() const  { return const_iterator(this); }
   const_iterator end()   const  { return const_iterator(); }
   const DATA_TYPE& operator()(size_t i, size_t j) const  { CHECK_BOUNDS_2(i,j); return *(data_+strides_[0]*i+j*strides_[1]); }
@@ -394,8 +399,8 @@ public:
       p += idx[d]*strides_[d];
     return *(data_+p);
   }
-  const ArrayView<DATA_TYPE,1> operator[](size_t i) const { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,1>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
-  ArrayView<DATA_TYPE,1>       operator[](size_t i)       { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,1>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
+  const ArrayView<DATA_TYPE,1> operator[](size_t i) const { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,1>( data_+strides_[0]*i, shape_+1, strides_+1 ); }
+  ArrayView<DATA_TYPE,1>       operator[](size_t i)       { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,1>( data_+strides_[0]*i, shape_+1, strides_+1 ); }
   DATA_TYPE*       data()            { return data_; }
   const DATA_TYPE* data() const      { return data_; }
   const ArrayStrides::value_type* strides() const   { return strides_; }
@@ -423,7 +428,7 @@ public:
   typedef typename remove_const<DATA_TYPE>::type  value_type;
 public:
   ArrayView() {}
-  ArrayView( const DATA_TYPE* data, const ArrayStrides::value_type strides [3], const ArrayShape::value_type shape[3] ) : data_( const_cast<DATA_TYPE*>(data) )
+  ArrayView( const DATA_TYPE* data, const ArrayShape::value_type shape[3], const ArrayStrides::value_type strides [3] ) : data_( const_cast<DATA_TYPE*>(data) )
   {
     strides_[0]=strides[0];            shape_[0]=shape[0];
     strides_[1]=strides[1];            shape_[1]=shape[1];
@@ -448,6 +453,8 @@ public:
 
   iterator begin() { return iterator(this); }
   iterator end()   { return iterator(); }
+  const_iterator cbegin() { return const_iterator(this); }
+  const_iterator cend()   { return const_iterator(); }
   const_iterator begin() const  { return const_iterator(this); }
   const_iterator end()   const  { return const_iterator(); }
   const DATA_TYPE& operator()(size_t i, size_t j, size_t k) const { CHECK_BOUNDS_3(i,j,k); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]); }
@@ -468,8 +475,8 @@ public:
       p += idx[d]*strides_[d];
     return *(data_+p);
   }
-  const ArrayView<DATA_TYPE,2> operator[](size_t i) const { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,2>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
-  ArrayView<DATA_TYPE,2>       operator[](size_t i)       { CHECK_BOUNDS_1(i);return ArrayView<DATA_TYPE,2>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
+  const ArrayView<DATA_TYPE,2> operator[](size_t i) const { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,2>( data_+strides_[0]*i,shape_+1, strides_+1 ); }
+  ArrayView<DATA_TYPE,2>       operator[](size_t i)       { CHECK_BOUNDS_1(i);return ArrayView<DATA_TYPE,2>( data_+strides_[0]*i, shape_+1, strides_+1 ); }
   DATA_TYPE*       data()            { return data_; }
   const DATA_TYPE* data() const      { return data_; }
   const ArrayStrides::value_type* strides() const   { return strides_; }
@@ -497,7 +504,7 @@ public:
   typedef typename remove_const<DATA_TYPE>::type  value_type;
 public:
   ArrayView() {}
-  ArrayView( DATA_TYPE* data, const ArrayStrides::value_type strides[4], const ArrayShape::value_type shape[4] ) : data_( const_cast<DATA_TYPE*>(data) )
+  ArrayView( DATA_TYPE* data, const ArrayShape::value_type shape[4], const ArrayStrides::value_type strides[4] ) : data_( const_cast<DATA_TYPE*>(data) )
   {
     strides_[0]=strides[0];            shape_[0]=shape[0];
     strides_[1]=strides[1];            shape_[1]=shape[1];
@@ -525,6 +532,8 @@ public:
 
   iterator begin() { return iterator(this); }
   iterator end()   { return iterator(); }
+  const_iterator cbegin() { return const_iterator(this); }
+  const_iterator cend()   { return const_iterator(); }
   const_iterator begin() const  { return const_iterator(this); }
   const_iterator end()   const  { return const_iterator(); }
   const DATA_TYPE& operator()(size_t i, size_t j, size_t k, size_t l) const { CHECK_BOUNDS_4(i,j,k,l); return *(data_+strides_[0]*i+j*strides_[1]+k*strides_[2]+l*strides_[3]); }
@@ -545,8 +554,8 @@ public:
       p += idx[d]*strides_[d];
     return *(data_+p);
   }
-  const ArrayView<DATA_TYPE,3> operator[](size_t i) const { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,3>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
-  ArrayView<DATA_TYPE,3>       operator[](size_t i)       { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,3>( data_+strides_[0]*i, strides_+1, shape_+1 ); }
+  const ArrayView<DATA_TYPE,3> operator[](size_t i) const { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,3>( data_+strides_[0]*i, shape_+1, strides_+1 ); }
+  ArrayView<DATA_TYPE,3>       operator[](size_t i)       { CHECK_BOUNDS_1(i); return ArrayView<DATA_TYPE,3>( data_+strides_[0]*i, shape_+1, strides_+1 ); }
   DATA_TYPE*       data()            { return data_; }
   const DATA_TYPE* data() const      { return data_; }
   const ArrayStrides::value_type* strides() const   { return strides_; }

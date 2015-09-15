@@ -38,7 +38,7 @@ struct Buffer<DATA_TYPE,1> : public eckit::mpi::Buffer<DATA_TYPE>
   ArrayView<DATA_TYPE,1> operator[](int p)
   {
     return ArrayView<DATA_TYPE,1> ( eckit::mpi::Buffer<DATA_TYPE>::buf.data()+eckit::mpi::Buffer<DATA_TYPE>::displs[p],
-                                    make_shape( eckit::mpi::Buffer<DATA_TYPE>::counts[p] ).data() );
+                                    make_shape( eckit::mpi::Buffer<DATA_TYPE>::counts[p] ) );
   }
 };
 
