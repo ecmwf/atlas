@@ -291,8 +291,6 @@ void NodesFunctionSpace::haloExchange( FieldSet& fieldset ) const
     const mpl::HaloExchange& halo_exchange = mesh_.halo_exchange().get(halo_name());
     for( size_t f=0; f<fieldset.size(); ++f ) {
       const Field& field = fieldset[f];
-      ArrayStrides strides = make_strides(field.stride(0),1);
-      ArrayShape   shape   = make_shape(field.shape(0),field.stride(0));
       if     ( field.datatype() == DataType::kind<int>() ) {
         ArrayView<int,2> view(field);
         halo_exchange.execute( view );
@@ -337,26 +335,26 @@ void NodesFunctionSpace::gather( const FieldSet& local_fieldset, FieldSet& globa
 
     const Field& loc = local_fieldset[f];
     Field& glb = global_fieldset[f];
-
+    const size_t nb_fields = 1;
     if     ( loc.datatype() == DataType::kind<int>() ) {
       mpl::Field<int const> loc_field(loc.data<int>(),loc.stride(0));
       mpl::Field<int      > glb_field(glb.data<int>(),glb.stride(0));
-      gather_scatter.gather( &loc_field, &glb_field, 1 );
+      gather_scatter.gather( &loc_field, &glb_field, nb_fields );
     }
     else if( loc.datatype() == DataType::kind<long>() ) {
       mpl::Field<long const> loc_field(loc.data<long>(),loc.stride(0));
       mpl::Field<long      > glb_field(glb.data<long>(),glb.stride(0));
-      gather_scatter.gather( &loc_field, &glb_field, 1 );
+      gather_scatter.gather( &loc_field, &glb_field, nb_fields );
     }
     else if( loc.datatype() == DataType::kind<float>() ) {
       mpl::Field<float const> loc_field(loc.data<float>(),loc.stride(0));
       mpl::Field<float      > glb_field(glb.data<float>(),glb.stride(0));
-      gather_scatter.gather( &loc_field, &glb_field, 1 );
+      gather_scatter.gather( &loc_field, &glb_field, nb_fields );
     }
     else if( loc.datatype() == DataType::kind<double>() ) {
       mpl::Field<double const> loc_field(loc.data<double>(),loc.stride(0));
       mpl::Field<double      > glb_field(glb.data<double>(),glb.stride(0));
-      gather_scatter.gather( &loc_field, &glb_field, 1 );
+      gather_scatter.gather( &loc_field, &glb_field, nb_fields );
     }
     else throw eckit::Exception("datatype not supported",Here());
   }
@@ -389,26 +387,27 @@ void NodesFunctionSpace::scatter( const FieldSet& global_fieldset, FieldSet& loc
 
     const Field& glb = global_fieldset[f];
     Field& loc = local_fieldset[f];
+    const size_t nb_fields = 1;
 
     if     ( loc.datatype() == DataType::kind<int>() ) {
       mpl::Field<int const> glb_field(glb.data<int>(),glb.stride(0));
       mpl::Field<int      > loc_field(loc.data<int>(),loc.stride(0));
-      gather_scatter.scatter( &glb_field, &loc_field, 1 );
+      gather_scatter.scatter( &glb_field, &loc_field, nb_fields );
     }
     else if( loc.datatype() == DataType::kind<long>() ) {
       mpl::Field<long const> glb_field(glb.data<long>(),glb.stride(0));
       mpl::Field<long      > loc_field(loc.data<long>(),loc.stride(0));
-      gather_scatter.scatter( &glb_field, &loc_field, 1 );
+      gather_scatter.scatter( &glb_field, &loc_field, nb_fields );
     }
     else if( loc.datatype() == DataType::kind<float>() ) {
       mpl::Field<float const> glb_field(glb.data<float>(),glb.stride(0));
       mpl::Field<float      > loc_field(loc.data<float>(),loc.stride(0));
-      gather_scatter.scatter( &glb_field, &loc_field, 1 );
+      gather_scatter.scatter( &glb_field, &loc_field, nb_fields );
     }
     else if( loc.datatype() == DataType::kind<double>() ) {
       mpl::Field<double const> glb_field(glb.data<double>(),glb.stride(0));
       mpl::Field<double      > loc_field(loc.data<double>(),loc.stride(0));
-      gather_scatter.scatter( &glb_field, &loc_field, 1 );
+      gather_scatter.scatter( &glb_field, &loc_field, nb_fields );
     }
     else throw eckit::Exception("datatype not supported",Here());
   }

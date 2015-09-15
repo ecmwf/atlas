@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE( test_arrayview_iterator )
   ArrayT<int> array(5,4,2);
   size_t strides[2] = {8,1};
   size_t extents[2] = {5,2};
-  ArrayView<int>       aview(array.data(),strides,extents,2);
+  ArrayView<int>       aview(array.data(),2,extents,strides);
   ArrayView<int> const const_aview(array);
 
   std::cout << "aview.size() = " << aview.size() << std::endl;

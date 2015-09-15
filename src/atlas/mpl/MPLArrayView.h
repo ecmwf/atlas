@@ -84,7 +84,7 @@ MPL_ArrayView<DATA_TYPE>::MPL_ArrayView() : ArrayView<DATA_TYPE>() {}
 template <typename DATA_TYPE>
 MPL_ArrayView<DATA_TYPE>::MPL_ArrayView( const DATA_TYPE* data, const size_t strides[], const size_t shape[], const size_t rank,
                const size_t mpl_idxpos[], const size_t mpl_rank ) :
-  ArrayView<DATA_TYPE>(data,strides,shape,rank)
+  ArrayView<DATA_TYPE>(data,rank,shape,strides)
 {
   constructor(mpl_idxpos,mpl_rank);
 }
@@ -92,7 +92,7 @@ MPL_ArrayView<DATA_TYPE>::MPL_ArrayView( const DATA_TYPE* data, const size_t str
 template <typename DATA_TYPE>
 MPL_ArrayView<DATA_TYPE>::MPL_ArrayView( const DATA_TYPE* data, const size_t strides[], const size_t shape[], const size_t rank,
                const size_t mpl_idxpos ) :
-  ArrayView<DATA_TYPE>(data,strides,shape,rank)
+  ArrayView<DATA_TYPE>(data,rank,shape,strides)
 {
   constructor(&mpl_idxpos,1);
 }
@@ -101,7 +101,7 @@ template <typename DATA_TYPE>
 template <int R>
 MPL_ArrayView<DATA_TYPE>::MPL_ArrayView( const ArrayView<value_type,R>& arrview,
                const size_t mpl_idxpos[], const size_t mpl_rank ) :
-  ArrayView<DATA_TYPE>(arrview.data(),arrview.strides(),arrview.shape(),arrview.rank())
+  ArrayView<DATA_TYPE>(arrview.data(),arrview.rank(),arrview.shape(),arrview.strides())
 {
   constructor(mpl_idxpos,mpl_rank);
 }
@@ -110,7 +110,7 @@ template <typename DATA_TYPE>
 template <int R>
 MPL_ArrayView<DATA_TYPE>::MPL_ArrayView( const ArrayView<const value_type,R>& arrview,
                const size_t mpl_idxpos[], const size_t mpl_rank ) :
-  ArrayView<DATA_TYPE>(arrview.data(),arrview.strides(),arrview.shape(),arrview.rank())
+  ArrayView<DATA_TYPE>(arrview.data(),arrview.rank(),arrview.shape(),arrview.strides())
 {
   constructor(mpl_idxpos,mpl_rank);
 }

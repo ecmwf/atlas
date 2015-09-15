@@ -55,6 +55,8 @@ util/ArrayUtil.h
 util/ArrayUtil.cc
 util/ArrayView.h
 util/ArrayView.cc
+util/ArrayView_iterator.h
+util/ArrayView_impl.h
 util/Bitflags.h
 util/Checksum.h
 util/Checksum.cc
