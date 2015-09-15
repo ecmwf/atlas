@@ -16,7 +16,6 @@
 
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
-#include "eckit/memory/ScopedPtr.h"
 #include "atlas/Config.h"
 #include "atlas/Metadata.h"
 
@@ -66,6 +65,7 @@ public: // methods
 
   void initialize(const std::string& generator, const eckit::Parametrisation& = Config() );
 
+  Field& add( const eckit::SharedPtr<Field>& );
   Field& add( Field* ); // Take shared ownership!
 
   void remove(const std::string& name);

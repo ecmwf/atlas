@@ -59,13 +59,13 @@ Field* Field::create(const std::string& name, DataType datatype, const ArrayShap
 // -------------------------------------------------------------------------
 
 Field::Field(const std::string& name, DataType datatype, const ArrayShape& shape):
-  name_(name), nb_levels_(0)
+  name_(name), nb_levels_(0), shares_functionspace_(true)
 {
   array_.reset( Array::create(datatype,shape) );
 }
 
 Field::Field(const std::string& name, Array* array):
-  name_(name), nb_levels_(0)
+  name_(name), nb_levels_(0), shares_functionspace_(true)
 {
   array_.reset( array );
 }

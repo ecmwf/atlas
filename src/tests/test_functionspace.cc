@@ -69,9 +69,9 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   //BOOST_CHECK_EQUAL( columns_fs.nb_levels() , 10 );
 
 
-  ScopedPtr<Field> surface_scalar_field( nodes_fs->createField<double>("scalar") );
-  ScopedPtr<Field> surface_vector_field( nodes_fs->createField<double>("vector",make_shape(2)) );
-  ScopedPtr<Field> surface_tensor_field( nodes_fs->createField<double>("tensor",make_shape(2,2)) );
+  SharedPtr<Field> surface_scalar_field( nodes_fs->createField<double>("scalar") );
+  SharedPtr<Field> surface_vector_field( nodes_fs->createField<double>("vector",make_shape(2)) );
+  SharedPtr<Field> surface_tensor_field( nodes_fs->createField<double>("tensor",make_shape(2,2)) );
 
   BOOST_CHECK_EQUAL( surface_scalar_field->name() , std::string("scalar") );
   BOOST_CHECK_EQUAL( surface_vector_field->name() , std::string("vector") );
@@ -97,9 +97,9 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   BOOST_CHECK_EQUAL_COLLECTIONS( surface_tensor.shape(),surface_tensor.shape()+3, surface_tensor_shape,surface_tensor_shape+3 );
 
 
-  ScopedPtr<Field> columns_scalar_field( nodes_fs->createField<double>("scalar",nb_levels) );
-  ScopedPtr<Field> columns_vector_field( nodes_fs->createField<double>("vector",nb_levels,make_shape(2)) );
-  ScopedPtr<Field> columns_tensor_field( nodes_fs->createField<double>("tensor",nb_levels,make_shape(2,2)) );
+  SharedPtr<Field> columns_scalar_field( nodes_fs->createField<double>("scalar",nb_levels) );
+  SharedPtr<Field> columns_vector_field( nodes_fs->createField<double>("vector",nb_levels,make_shape(2)) );
+  SharedPtr<Field> columns_tensor_field( nodes_fs->createField<double>("tensor",nb_levels,make_shape(2,2)) );
 
   BOOST_CHECK_EQUAL( columns_scalar_field->name() , std::string("scalar") );
   BOOST_CHECK_EQUAL( columns_vector_field->name() , std::string("vector") );
@@ -450,7 +450,7 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace )
 
   SharedPtr<SpectralFunctionSpace> spectral_fs( new SpectralFunctionSpace("nodes",truncation) );
 
-  ScopedPtr<Field> surface_scalar_field( spectral_fs->createField("scalar") );
+  SharedPtr<Field> surface_scalar_field( spectral_fs->createField("scalar") );
 
   BOOST_CHECK_EQUAL( surface_scalar_field->name() , std::string("scalar") );
 
@@ -463,7 +463,7 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace )
   size_t surface_scalar_shape[] = { nspec2g };
   BOOST_CHECK_EQUAL_COLLECTIONS( surface_scalar.shape(),surface_scalar.shape()+1, surface_scalar_shape,surface_scalar_shape+1 );
 
-  ScopedPtr<Field> columns_scalar_field( spectral_fs->createField("scalar",nb_levels) );
+  SharedPtr<Field> columns_scalar_field( spectral_fs->createField("scalar",nb_levels) );
 
   BOOST_CHECK_EQUAL( columns_scalar_field->name() , std::string("scalar") );
 
@@ -489,7 +489,7 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace_trans_dist )
 
   SharedPtr<SpectralFunctionSpace> spectral_fs( new SpectralFunctionSpace("nodes",trans) );
 
-  ScopedPtr<Field> surface_scalar_field( spectral_fs->createField("scalar") );
+  SharedPtr<Field> surface_scalar_field( spectral_fs->createField("scalar") );
 
   BOOST_CHECK_EQUAL( surface_scalar_field->name() , std::string("scalar") );
 
@@ -502,7 +502,7 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace_trans_dist )
   size_t surface_scalar_shape[] = { nspec2 };
   BOOST_CHECK_EQUAL_COLLECTIONS( surface_scalar.shape(),surface_scalar.shape()+1, surface_scalar_shape,surface_scalar_shape+1 );
 
-  ScopedPtr<Field> columns_scalar_field( spectral_fs->createField("scalar",nb_levels) );
+  SharedPtr<Field> columns_scalar_field( spectral_fs->createField("scalar",nb_levels) );
 
   BOOST_CHECK_EQUAL( columns_scalar_field->name() , std::string("scalar") );
 
@@ -525,7 +525,7 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace_trans_global )
 
   SharedPtr<SpectralFunctionSpace> spectral_fs( new SpectralFunctionSpace("nodes",trans) );
 
-  ScopedPtr<Field> surface_scalar_field( spectral_fs->createGlobalField("scalar") );
+  SharedPtr<Field> surface_scalar_field( spectral_fs->createGlobalField("scalar") );
 
   BOOST_CHECK_EQUAL( surface_scalar_field->name() , std::string("scalar") );
 
@@ -538,7 +538,7 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace_trans_global )
   size_t surface_scalar_shape[] = { nspec2g };
   BOOST_CHECK_EQUAL_COLLECTIONS( surface_scalar.shape(),surface_scalar.shape()+1, surface_scalar_shape,surface_scalar_shape+1 );
 
-  ScopedPtr<Field> columns_scalar_field( spectral_fs->createGlobalField("scalar",nb_levels) );
+  SharedPtr<Field> columns_scalar_field( spectral_fs->createGlobalField("scalar",nb_levels) );
 
   BOOST_CHECK_EQUAL( columns_scalar_field->name() , std::string("scalar") );
 

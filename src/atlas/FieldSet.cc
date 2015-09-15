@@ -22,10 +22,11 @@ FieldSet::FieldSet(const std::string &name) :
   name_(name.length()? name : "untitled")
 {}
 
+
 void FieldSet::add(const Field& field)
 {
   index_[field.name()] = fields_.size();
-  fields_.push_back( const_cast<Field*>(&field) );
+  fields_.push_back( eckit::SharedPtr<Field>(const_cast<Field*>(&field)) );
 }
 
 
@@ -49,11 +50,9 @@ Field& FieldSet::field(const std::string& name) const
 std::vector< std::string > FieldSet::field_names() const
 {
   std::vector< std::string > ret;
-  if (fields_.size())
-    ret.reserve(fields_.size());
 
-  for (size_t i=0; i<fields_.size(); ++i)
-    ret.push_back(fields_[i]->name());
+  for( const_iterator field = cbegin(); field!=cend(); ++field )
+    ret.push_back(field->name());
 
   return ret;
 }
@@ -81,20 +80,6 @@ void atlas__FieldSet__delete(FieldSet* This)
     delete This;
   );
 }
-
-
-void atlas__FieldSet__fields (FieldSet* This, Field** &fields, int &nb_fields)
-{
-  ATLAS_ERROR_HANDLING(
-    nb_fields = This->fields().size();
-
-    if (fields!=NULL)
-      throw eckit::SeriousBug("provided return pointer is not NULL (memory leak)");
-
-    fields = nb_fields ? This->fields().data() : NULL;
-  );
-}
-
 
 void   atlas__FieldSet__add_field     (FieldSet* This, Field* field)
 {

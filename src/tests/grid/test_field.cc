@@ -99,9 +99,9 @@ void TestField::test_constructor()
   fs.add(*f);
 
   // iterate over the fields
-  for (std::vector< Field* >::iterator it = fs.fields().begin(); it != fs.fields().end(); ++it)
+  for (FieldSet::const_iterator it = fs.cbegin(); it != fs.cend(); ++it)
   {
-    ArrayView<double> vdata( **it );
+    ArrayView<double> vdata( *it );
 
     for( size_t i = 0; i < ref_data.size(); ++i )
     {
@@ -176,7 +176,7 @@ public:
 
 void TestField::test_implicit_conversion()
 {
-  ScopedPtr<Field> field( Field::create<double>("tmp",make_shape(10,2)) );
+  SharedPtr<Field> field( Field::create<double>("tmp",make_shape(10,2)) );
   const Array& const_array = *field;
   Array& array = *field;
 

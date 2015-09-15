@@ -264,8 +264,8 @@ BOOST_AUTO_TEST_CASE( test_spectral_fields )
   SharedPtr<NodesFunctionSpace> nodal (new NodesFunctionSpace("nodal",*m));
   SharedPtr<SpectralFunctionSpace> spectral (new SpectralFunctionSpace("spectral",trans));
 
-  ScopedPtr<Field> spf ( spectral->createField("spf") );
-  ScopedPtr<Field> gpf ( nodal->createField<double>("gpf") );
+  SharedPtr<Field> spf ( spectral->createField("spf") );
+  SharedPtr<Field> gpf ( nodal->createField<double>("gpf") );
 
 
   BOOST_CHECK_NO_THROW( trans.dirtrans(*nodal,*gpf,*spectral,*spf) );

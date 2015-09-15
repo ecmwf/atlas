@@ -131,7 +131,6 @@ public: // Destructor
   void dump(std::ostream& os) const;
 
   /// Metadata that is more intrinsic to the Field, and queried often
-  /// --- Should the set_levels() be removed and be placed in a Derived Field class constructor?
   bool has_levels() const { return nb_levels_!= 0; }
   void set_levels(size_t n) { nb_levels_ = n; }
   size_t levels() const { return std::max(1ul,nb_levels_); }
@@ -147,12 +146,11 @@ private: // methods
 private: // members
 
   std::string name_;
-
   size_t nb_levels_;
-
   Metadata metadata_;
   eckit::SharedPtr<Array>               array_;
   eckit::SharedPtr<next::FunctionSpace> functionspace_;
+  bool shares_functionspace_;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

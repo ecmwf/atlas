@@ -14,12 +14,16 @@
 
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
+#include "eckit/memory/ScopedPtr.h"
 
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/Field.h"
 #include "atlas/Grid.h"
 #include "atlas/Mesh.h"
 #include "atlas/State.h"
+
+using eckit::SharedPtr;
+using eckit::ScopedPtr;
 
 namespace atlas {
 
@@ -47,7 +51,7 @@ namespace {
 
 void State::initialize( const std::string& generator, const eckit::Parametrisation& params )
 {
-  eckit::ScopedPtr<StateGenerator> state_generator ( StateGeneratorFactory::build(generator, params) );
+  ScopedPtr<StateGenerator> state_generator ( StateGeneratorFactory::build(generator, params) );
   state_generator->generate( *this, params );
 }
 
@@ -72,9 +76,9 @@ Metadata& State::metadata()
   return metadata_;
 }
 
-Field& State::add( Field* field )
+Field& State::add( const SharedPtr<Field>& field )
 {
-  ASSERT( field != NULL );
+  ASSERT( field );
 
   if( field->name().empty() )
   {
@@ -89,7 +93,14 @@ Field& State::add( Field* field )
     msg << "Trying to add field '"<<field->name()<<"' to State, but State already has a field with this name.";
     throw eckit::Exception(msg.str(),Here());
   }
-  fields_[field->name()] = eckit::SharedPtr<Field>(field);
+  fields_[field->name()] = field;
+  return *field;
+}
+
+Field& State::add( Field* field )
+{
+  ASSERT( field != NULL );
+  add( SharedPtr<Field>(field) );
   return *field;
 }
 
