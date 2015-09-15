@@ -24,6 +24,7 @@
 #include "eckit/geometry/Point3.h"
 
 namespace atlas {
+namespace util {
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -115,6 +116,7 @@ ElemIndex3* create_element_centre_index( const atlas::Mesh& mesh );
 
 //----------------------------------------------------------------------------------------------------------------------
 
+} // namespace util
 } // namespace atlas
 
 #endif

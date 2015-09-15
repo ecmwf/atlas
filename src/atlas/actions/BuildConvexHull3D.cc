@@ -54,11 +54,14 @@ const Point_3 origin = Point_3(CGAL::ORIGIN);
 #include "atlas/Mesh.h"
 #include "atlas/Nodes.h"
 #include "atlas/Parameters.h"
-#include "atlas/PointSet.h"
 #include "atlas/Grid.h"
+#include "atlas/util/PointSet.h"
 
 using namespace eckit;
 using namespace eckit::geometry;
+
+using atlas::util::PointSet;
+using atlas::util::PointIndex3;
 
 namespace atlas {
 namespace actions {

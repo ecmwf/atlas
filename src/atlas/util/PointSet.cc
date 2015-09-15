@@ -8,20 +8,20 @@
  * does it submit to any jurisdiction.
  */
 
-#include "PointSet.h"
-
 //------------------------------------------------------------------------------------------------------
 
 #include "atlas/Field.h"
 #include "atlas/Nodes.h"
-#include "atlas/util/ArrayView.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Mesh.h"
 #include "atlas/Parameters.h"
+#include "atlas/util/PointSet.h"
+#include "atlas/util/ArrayView.h"
 
 using namespace eckit;
 
 namespace atlas {
+namespace util {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -96,5 +96,6 @@ size_t PointSet::search_unique( const Point& p, size_t idx, u_int32_t n  )
 
 //------------------------------------------------------------------------------------------------------
 
+} // namespace util
 } // namespace atlas
 

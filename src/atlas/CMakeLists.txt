@@ -70,6 +70,10 @@ util/LonLatMicroDeg.h
 util/ObjectRegistry.h
 util/PeriodicTransform.h
 util/Unique.h
+util/PointIndex3.cc
+util/PointIndex3.h
+util/PointSet.cc
+util/PointSet.h
 )
 
 list( APPEND atlas_Meshgen_srcs
@@ -246,10 +250,6 @@ Nodes.h
 Parameters.h
 Partitioner.cc
 Partitioner.h
-PointIndex3.cc
-PointIndex3.h
-PointSet.cc
-PointSet.h
 State.h
 State.cc
 field/FieldCreator.h

@@ -10,11 +10,12 @@
  */
 
 #include "atlas/util/ArrayView.h"
-#include "atlas/PointIndex3.h"
+#include "atlas/util/PointIndex3.h"
 
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
+namespace util {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -59,5 +60,6 @@ ElemIndex3* create_element_centre_index( const atlas::Mesh& mesh )
 
 //------------------------------------------------------------------------------------------------------
 
+} // namespace util
 } // namespace atlas
 

@@ -21,12 +21,13 @@
 #include "eckit/log/Timer.h"
 
 #include "atlas/Mesh.h"
-#include "atlas/PointIndex3.h"
+#include "atlas/util/PointIndex3.h"
 #include "eckit/types/FloatCompare.h"
 
 //------------------------------------------------------------------------------------------------------
 
 namespace atlas {
+namespace util {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -133,6 +134,7 @@ private:
 
 //---------------------------------------------------------------------------------------------------------
 
+} // namespace util
 } // namespace atlas
 
 #endif
