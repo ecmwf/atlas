@@ -1,5 +1,12 @@
 ! (C) Copyright 2013-2015 ECMWF.
 
+function atlas_NodesFunctionSpace__cptr(cptr) result(functionspace)
+  type(atlas_NodesFunctionSpace) :: functionspace
+  type(c_ptr), intent(in) :: cptr
+  functionspace%cpp_object_ptr = cptr
+  call functionspace%attach()
+  call atlas_return(functionspace)
+end function
 
 function atlas_NodesFunctionSpace__mesh_halo(mesh,halo) result(function_space)
   use atlas_nodesfunctionspaceinterface_c_binding
@@ -9,7 +16,9 @@ function atlas_NodesFunctionSpace__mesh_halo(mesh,halo) result(function_space)
   integer :: opt_halo
   opt_halo = 0
   if( present(halo) ) opt_halo = halo
-  function_space%cpp_object_ptr = atlas__NodesFunctionSpace__new(c_str(""),mesh%cpp_object_ptr,opt_halo)
+  function_space = atlas_NodesFunctionSpace__cptr( &
+    & atlas__NodesFunctionSpace__new(c_str(""),mesh%cpp_object_ptr,opt_halo) )
+  call atlas_return(function_space)
 end function
 
 function atlas_NodesFunctionSpace__name_mesh_halo(name,mesh,halo) result(function_space)
@@ -21,8 +30,32 @@ function atlas_NodesFunctionSpace__name_mesh_halo(name,mesh,halo) result(functio
   integer :: opt_halo
   opt_halo = 0
   if( present(halo) ) opt_halo = halo
-  function_space%cpp_object_ptr = atlas__NodesFunctionSpace__new(c_str(name),mesh%cpp_object_ptr,opt_halo)
+  function_space = atlas_NodesFunctionSpace__cptr( &
+    & atlas__NodesFunctionSpace__new(c_str(name),mesh%cpp_object_ptr,opt_halo) )
+  call atlas_return(function_space)
 end function
+
+subroutine atlas_NodesFunctionSpace__finalize(this)
+  use atlas_nodesfunctionspaceinterface_c_binding
+  class(atlas_NodesFunctionSpace), intent(inout) :: this
+  if( c_associated(this%cpp_object_ptr) ) then
+    if( this%owners() <= 0 ) then
+      call atlas_abort("Cannot finalize functionspace that has no owners")
+    endif
+    call this%detach()
+    if( this%owners() == 0 ) then
+      call atlas__NodesFunctionSpace__delete(this%cpp_object_ptr)
+    endif
+    this%cpp_object_ptr = c_null_ptr
+  endif
+end subroutine
+
+#ifdef FORTRAN_SUPPORTS_FINAL
+subroutine atlas_NodesFunctionSpace__final(this)
+  type(atlas_NodesFunctionSpace), intent(inout) :: this
+  call this%finalize()
+end subroutine
+#endif
 
 subroutine atlas_NodesFunctionSpace__delete(this)
   use atlas_nodesfunctionspaceinterface_c_binding
@@ -32,6 +65,19 @@ subroutine atlas_NodesFunctionSpace__delete(this)
   end if
   this%cpp_object_ptr = c_null_ptr
 end subroutine atlas_NodesFunctionSpace__delete
+
+subroutine atlas_NodesFunctionSpace__reset(functionspace_out,functionspace_in)
+  type(atlas_NodesFunctionSpace), intent(inout) :: functionspace_out
+  class(atlas_NodesFunctionSpace), intent(in) :: functionspace_in
+  if( .not. atlas_compare_equal(functionspace_out%cpp_object_ptr,functionspace_in%cpp_object_ptr) ) then
+#ifndef FORTRAN_SUPPORTS_FINAL
+    call atlas_NodesFunctionSpace__finalize(functionspace_out)
+#endif
+    functionspace_out%cpp_object_ptr = functionspace_in%cpp_object_ptr
+    if( c_associated(functionspace_out%cpp_object_ptr) ) call functionspace_out%attach()
+  endif
+end subroutine
+
 
 function atlas_NodesFunctionSpace__nb_nodes(this) result (nb_nodes)
   use atlas_nodesfunctionspaceinterface_c_binding

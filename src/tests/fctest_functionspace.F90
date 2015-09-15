@@ -123,7 +123,7 @@ FCTEST_CHECK_EQUAL( field%name() , "field" )
 call field%finalize()
 call template%finalize()
 
-call atlas_delete(fs)
+call fs%finalize()
 call atlas_delete(mesh)
 call atlas_delete(grid)
 
@@ -215,7 +215,7 @@ FCTEST_CHECK_EQUAL( field%name() , "field" )
 call field%finalize()
 call template%finalize()
 
-call atlas_delete(fs)
+call fs%finalize()
 call atlas_delete(mesh)
 call atlas_delete(grid)
 
@@ -317,9 +317,8 @@ values3d = 2.
 call atlas_log%info(fs2d%checksum(field))
 call field%finalize()
 call global%finalize()
+call fs2d%finalize()
 
-
-call atlas_delete(fs2d)
 call atlas_delete(mesh)
 call atlas_delete(grid)
 

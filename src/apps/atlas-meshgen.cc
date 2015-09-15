@@ -159,10 +159,11 @@ void Meshgen2Gmsh::run()
     renumber_nodes_glb_idx(mesh->nodes());
   }
 
-  functionspace::NodesFunctionSpace nodes_fs("nodes",*mesh,functionspace::Halo(mesh));
-  nodes_fs.checksum(mesh->nodes().lonlat());
+  eckit::SharedPtr<functionspace::NodesFunctionSpace> nodes_fs;
+  nodes_fs.reset( new functionspace::NodesFunctionSpace("nodes",*mesh,functionspace::Halo(mesh)) );
+  nodes_fs->checksum(mesh->nodes().lonlat());
 
-  Log::info() << "  checksum lonlat : " << nodes_fs.checksum(mesh->nodes().lonlat()) << std::endl;
+  Log::info() << "  checksum lonlat : " << nodes_fs->checksum(mesh->nodes().lonlat()) << std::endl;
   if( edges )
   {
     build_edges(*mesh);

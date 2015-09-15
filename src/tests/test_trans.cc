@@ -36,6 +36,7 @@
 
 using namespace eckit;
 using namespace atlas::grids;
+using namespace atlas::functionspace;
 
 namespace atlas {
 namespace test {
@@ -259,24 +260,25 @@ BOOST_AUTO_TEST_CASE( test_spectral_fields )
 
   trans::Trans trans(*g,47);
 
-  functionspace::NodesFunctionSpace nodal("nodal",*m);
-  functionspace::SpectralFunctionSpace spectral("spectral",trans);
 
-  eckit::ScopedPtr<Field> spf ( spectral.createField("spf") );
-  eckit::ScopedPtr<Field> gpf ( nodal.createField<double>("gpf") );
+  SharedPtr<NodesFunctionSpace> nodal (new NodesFunctionSpace("nodal",*m));
+  SharedPtr<SpectralFunctionSpace> spectral (new SpectralFunctionSpace("spectral",trans));
+
+  ScopedPtr<Field> spf ( spectral->createField("spf") );
+  ScopedPtr<Field> gpf ( nodal->createField<double>("gpf") );
 
 
-  BOOST_CHECK_NO_THROW( trans.dirtrans(nodal,*gpf,spectral,*spf) );
-  BOOST_CHECK_NO_THROW( trans.invtrans(spectral,*spf,nodal,*gpf) );
+  BOOST_CHECK_NO_THROW( trans.dirtrans(*nodal,*gpf,*spectral,*spf) );
+  BOOST_CHECK_NO_THROW( trans.invtrans(*spectral,*spf,*nodal,*gpf) );
 
   FieldSet gpfields;   gpfields.add(*gpf);
   FieldSet spfields;   spfields.add(*spf);
 
-  BOOST_CHECK_NO_THROW( trans.dirtrans(nodal,gpfields,spectral,spfields) );
-  BOOST_CHECK_NO_THROW( trans.invtrans(spectral,spfields,nodal,gpfields) );
+  BOOST_CHECK_NO_THROW( trans.dirtrans(*nodal,gpfields,*spectral,spfields) );
+  BOOST_CHECK_NO_THROW( trans.invtrans(*spectral,spfields,*nodal,gpfields) );
 
   gpfields.add(*gpf);
-  BOOST_CHECK_THROW(trans.dirtrans(nodal,gpfields,spectral,spfields),eckit::SeriousBug);
+  BOOST_CHECK_THROW(trans.dirtrans(*nodal,gpfields,*spectral,spfields),eckit::SeriousBug);
 
 }
 

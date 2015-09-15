@@ -364,6 +364,24 @@ void FunctionSpace::print(std::ostream& os, bool dump) const
 
 // C wrapper interfaces to C++ routines
 
+void atlas__NextFunctionSpace__delete (next::FunctionSpace* This)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This );
+    delete This;
+    This = 0;
+  );
+}
+
+const char* atlas__NextFunctionSpace__name (next::FunctionSpace* This) {
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This );
+    return This->name().c_str();
+  );
+  return 0;
+}
+
+
 Metadata* atlas__FunctionSpace__metadata (FunctionSpace* This)
 {
   ASSERT( This );

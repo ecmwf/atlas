@@ -107,12 +107,11 @@ function Field__name(this) result(field_name)
   field_name = c_to_f_string_cptr(field_name_c_str)
 end function Field__name
 
-function Field__functionspace(this) result(field_functionspace)
+function Field__functionspace(this) result(functionspace)
+  type(atlas_NextFunctionSpace) :: functionspace
   class(atlas_Field), intent(in) :: this
-  character(len=:), allocatable :: field_functionspace
-  type(c_ptr) :: field_functionspace_c_str
-  field_functionspace_c_str = atlas__Field__functionspace(this%cpp_object_ptr)
-  field_functionspace = c_to_f_string_cptr(field_functionspace_c_str)
+  functionspace = atlas_NextFunctionSpace(atlas__Field__functionspace(this%cpp_object_ptr))
+  call atlas_return(functionspace)
 end function Field__functionspace
 
 function Field__datatype(this) result(datatype)

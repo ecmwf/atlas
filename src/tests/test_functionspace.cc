@@ -60,7 +60,7 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   //grid.reset();
 
   DEBUG();
-  NodesFunctionSpace nodes_fs("nodes",mesh,Halo(1));
+  SharedPtr<NodesFunctionSpace> nodes_fs( new NodesFunctionSpace("nodes",mesh,Halo(1)) );
   DEBUG();
   size_t nb_levels = 10;
   //NodesColumnFunctionSpace columns_fs("columns",mesh,nb_levels,Halo(1));
@@ -69,17 +69,17 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   //BOOST_CHECK_EQUAL( columns_fs.nb_levels() , 10 );
 
 
-  ScopedPtr<Field> surface_scalar_field( nodes_fs.createField<double>("scalar") );
-  ScopedPtr<Field> surface_vector_field( nodes_fs.createField<double>("vector",make_shape(2)) );
-  ScopedPtr<Field> surface_tensor_field( nodes_fs.createField<double>("tensor",make_shape(2,2)) );
+  ScopedPtr<Field> surface_scalar_field( nodes_fs->createField<double>("scalar") );
+  ScopedPtr<Field> surface_vector_field( nodes_fs->createField<double>("vector",make_shape(2)) );
+  ScopedPtr<Field> surface_tensor_field( nodes_fs->createField<double>("tensor",make_shape(2,2)) );
 
   BOOST_CHECK_EQUAL( surface_scalar_field->name() , std::string("scalar") );
   BOOST_CHECK_EQUAL( surface_vector_field->name() , std::string("vector") );
   BOOST_CHECK_EQUAL( surface_tensor_field->name() , std::string("tensor") );
 
-  BOOST_CHECK_EQUAL( surface_scalar_field->size() , nodes_fs.nb_nodes() );
-  BOOST_CHECK_EQUAL( surface_vector_field->size() , nodes_fs.nb_nodes()*2 );
-  BOOST_CHECK_EQUAL( surface_tensor_field->size() , nodes_fs.nb_nodes()*2*2 );
+  BOOST_CHECK_EQUAL( surface_scalar_field->size() , nodes_fs->nb_nodes() );
+  BOOST_CHECK_EQUAL( surface_vector_field->size() , nodes_fs->nb_nodes()*2 );
+  BOOST_CHECK_EQUAL( surface_tensor_field->size() , nodes_fs->nb_nodes()*2*2 );
 
   BOOST_CHECK_EQUAL( surface_scalar_field->rank() , 1 );
   BOOST_CHECK_EQUAL( surface_vector_field->rank() , 2 );
@@ -89,25 +89,25 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   ArrayView<double,2> surface_vector( *surface_vector_field );
   ArrayView<double,3> surface_tensor( *surface_tensor_field );
 
-  size_t surface_scalar_shape[] = { nodes_fs.nb_nodes() };
-  size_t surface_vector_shape[] = { nodes_fs.nb_nodes(), 2 };
-  size_t surface_tensor_shape[] = { nodes_fs.nb_nodes(), 2, 2 };
+  size_t surface_scalar_shape[] = { nodes_fs->nb_nodes() };
+  size_t surface_vector_shape[] = { nodes_fs->nb_nodes(), 2 };
+  size_t surface_tensor_shape[] = { nodes_fs->nb_nodes(), 2, 2 };
   BOOST_CHECK_EQUAL_COLLECTIONS( surface_scalar.shape(),surface_scalar.shape()+1, surface_scalar_shape,surface_scalar_shape+1 );
   BOOST_CHECK_EQUAL_COLLECTIONS( surface_vector.shape(),surface_vector.shape()+2, surface_vector_shape,surface_vector_shape+2 );
   BOOST_CHECK_EQUAL_COLLECTIONS( surface_tensor.shape(),surface_tensor.shape()+3, surface_tensor_shape,surface_tensor_shape+3 );
 
 
-  ScopedPtr<Field> columns_scalar_field( nodes_fs.createField<double>("scalar",nb_levels) );
-  ScopedPtr<Field> columns_vector_field( nodes_fs.createField<double>("vector",nb_levels,make_shape(2)) );
-  ScopedPtr<Field> columns_tensor_field( nodes_fs.createField<double>("tensor",nb_levels,make_shape(2,2)) );
+  ScopedPtr<Field> columns_scalar_field( nodes_fs->createField<double>("scalar",nb_levels) );
+  ScopedPtr<Field> columns_vector_field( nodes_fs->createField<double>("vector",nb_levels,make_shape(2)) );
+  ScopedPtr<Field> columns_tensor_field( nodes_fs->createField<double>("tensor",nb_levels,make_shape(2,2)) );
 
   BOOST_CHECK_EQUAL( columns_scalar_field->name() , std::string("scalar") );
   BOOST_CHECK_EQUAL( columns_vector_field->name() , std::string("vector") );
   BOOST_CHECK_EQUAL( columns_tensor_field->name() , std::string("tensor") );
 
-  BOOST_CHECK_EQUAL( columns_scalar_field->size() , nodes_fs.nb_nodes()*nb_levels );
-  BOOST_CHECK_EQUAL( columns_vector_field->size() , nodes_fs.nb_nodes()*nb_levels*2 );
-  BOOST_CHECK_EQUAL( columns_tensor_field->size() , nodes_fs.nb_nodes()*nb_levels*2*2 );
+  BOOST_CHECK_EQUAL( columns_scalar_field->size() , nodes_fs->nb_nodes()*nb_levels );
+  BOOST_CHECK_EQUAL( columns_vector_field->size() , nodes_fs->nb_nodes()*nb_levels*2 );
+  BOOST_CHECK_EQUAL( columns_tensor_field->size() , nodes_fs->nb_nodes()*nb_levels*2*2 );
 
   BOOST_CHECK_EQUAL( columns_scalar_field->rank() , 2 );
   BOOST_CHECK_EQUAL( columns_vector_field->rank() , 3 );
@@ -117,57 +117,57 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   ArrayView<double,3> columns_vector( *columns_vector_field );
   ArrayView<double,4> columns_tensor( *columns_tensor_field );
 
-  size_t columns_scalar_shape[] = { nodes_fs.nb_nodes(), nb_levels };
-  size_t columns_vector_shape[] = { nodes_fs.nb_nodes(), nb_levels, 2 };
-  size_t columns_tensor_shape[] = { nodes_fs.nb_nodes(), nb_levels, 2, 2 };
+  size_t columns_scalar_shape[] = { nodes_fs->nb_nodes(), nb_levels };
+  size_t columns_vector_shape[] = { nodes_fs->nb_nodes(), nb_levels, 2 };
+  size_t columns_tensor_shape[] = { nodes_fs->nb_nodes(), nb_levels, 2, 2 };
   BOOST_CHECK_EQUAL_COLLECTIONS(columns_scalar.shape(),columns_scalar.shape()+2, columns_scalar_shape,columns_scalar_shape+2);
   BOOST_CHECK_EQUAL_COLLECTIONS(columns_vector.shape(),columns_vector.shape()+3, columns_vector_shape,columns_vector_shape+3);
   BOOST_CHECK_EQUAL_COLLECTIONS(columns_tensor.shape(),columns_tensor.shape()+4, columns_tensor_shape,columns_tensor_shape+4);
 
-  Field::Ptr field( nodes_fs.createField<int>("partition",nb_levels) );
+  Field::Ptr field( nodes_fs->createField<int>("partition",nb_levels) );
   ArrayView<int,2> arr(*field);
   arr = eckit::mpi::rank();
   //field->dump( eckit::Log::info() );
-  nodes_fs.haloExchange(*field);
+  nodes_fs->haloExchange(*field);
   //field->dump( eckit::Log::info() );
 
-  Field::Ptr field2( nodes_fs.createField<int>("partition2",nb_levels,make_shape(2)) );
+  Field::Ptr field2( nodes_fs->createField<int>("partition2",nb_levels,make_shape(2)) );
   ArrayView<int,3> arr2(*field2);
   arr2 = eckit::mpi::rank();
   //field2->dump( eckit::Log::info() );
-  nodes_fs.haloExchange(*field2);
+  nodes_fs->haloExchange(*field2);
   //field2->dump( eckit::Log::info() );
 
-  Log::info() << nodes_fs.checksum(*field) << std::endl;
+  Log::info() << nodes_fs->checksum(*field) << std::endl;
 
-  Field::Ptr glb_field( nodes_fs.createGlobalField("partition",*field) );
-  nodes_fs.gather(*field,*glb_field);
+  Field::Ptr glb_field( nodes_fs->createGlobalField("partition",*field) );
+  nodes_fs->gather(*field,*glb_field);
 
-  Log::info() << "local points = " << nodes_fs.nb_nodes() << std::endl;
+  Log::info() << "local points = " << nodes_fs->nb_nodes() << std::endl;
   Log::info() << "grid points = " << grid->npts() << std::endl;
   Log::info() << "glb_field.shape(0) = " << glb_field->shape(0) << std::endl;
 
   //glb_field->dump( eckit::Log::info() );
 
   arr = -1;
-  nodes_fs.scatter(*glb_field,*field);
-  nodes_fs.haloExchange(*field);
+  nodes_fs->scatter(*glb_field,*field);
+  nodes_fs->haloExchange(*field);
   //field->dump( eckit::Log::info() );
 
-  Log::info() << nodes_fs.checksum(*field) << std::endl;
+  Log::info() << nodes_fs->checksum(*field) << std::endl;
 
   FieldSet fields;
   fields.add(*field);
   fields.add(*field2);
-  Log::info() << nodes_fs.checksum(fields) << std::endl;
+  Log::info() << nodes_fs->checksum(fields) << std::endl;
 
 
 
   eckit::Log::info() << "Testing collectives for nodes scalar field" << std::endl;
   BOOST_CHECKPOINT("Testing collectives for nodes scalar field");
   {
-    Field& field = *surface_scalar_field;
-    NodesFunctionSpace& fs = nodes_fs;
+    const Field& field = *surface_scalar_field;
+    const NodesFunctionSpace& fs = *nodes_fs;
 
   double max;
   double min;
@@ -224,8 +224,8 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   eckit::Log::info() << "Testing collectives for nodes vector field" << std::endl;
   BOOST_CHECKPOINT("Testing collectives for nodes vector field");
   {
-    Field& field = *surface_vector_field;
-    NodesFunctionSpace& fs = nodes_fs;
+    const Field& field = *surface_vector_field;
+    const NodesFunctionSpace& fs = *nodes_fs;
 
     std::vector<double> max;
     std::vector<double> min;
@@ -279,8 +279,8 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   eckit::Log::info() << "Testing collectives for columns scalar field" << std::endl;
   BOOST_CHECKPOINT("Testing collectives for columns scalar field");
   if(1){
-    Field& field = *columns_scalar_field;
-    NodesFunctionSpace& fs = nodes_fs;
+    const Field& field = *columns_scalar_field;
+    const NodesFunctionSpace& fs = *nodes_fs;
     double max;
     double min;
     double sum;
@@ -360,8 +360,8 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
 
   BOOST_CHECKPOINT("Testing collectives for columns vector field");
   if(1){
-    Field& field = *columns_vector_field;
-    NodesFunctionSpace& fs = nodes_fs;
+    const Field& field = *columns_vector_field;
+    const NodesFunctionSpace& fs = *nodes_fs;
     size_t nvar = field.stride(1);
     std::vector<double> max;
     std::vector<double> min;
@@ -448,9 +448,9 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace )
   size_t nb_levels = 10;
   size_t nspec2g = (truncation+1)*(truncation+2);
 
-  SpectralFunctionSpace spectral_fs("nodes",truncation);
+  SharedPtr<SpectralFunctionSpace> spectral_fs( new SpectralFunctionSpace("nodes",truncation) );
 
-  ScopedPtr<Field> surface_scalar_field( spectral_fs.createField("scalar") );
+  ScopedPtr<Field> surface_scalar_field( spectral_fs->createField("scalar") );
 
   BOOST_CHECK_EQUAL( surface_scalar_field->name() , std::string("scalar") );
 
@@ -463,7 +463,7 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace )
   size_t surface_scalar_shape[] = { nspec2g };
   BOOST_CHECK_EQUAL_COLLECTIONS( surface_scalar.shape(),surface_scalar.shape()+1, surface_scalar_shape,surface_scalar_shape+1 );
 
-  ScopedPtr<Field> columns_scalar_field( spectral_fs.createField("scalar",nb_levels) );
+  ScopedPtr<Field> columns_scalar_field( spectral_fs->createField("scalar",nb_levels) );
 
   BOOST_CHECK_EQUAL( columns_scalar_field->name() , std::string("scalar") );
 
@@ -487,9 +487,9 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace_trans_dist )
 
   size_t nspec2 = trans.nspec2();
 
-  SpectralFunctionSpace spectral_fs("nodes",trans);
+  SharedPtr<SpectralFunctionSpace> spectral_fs( new SpectralFunctionSpace("nodes",trans) );
 
-  ScopedPtr<Field> surface_scalar_field( spectral_fs.createField("scalar") );
+  ScopedPtr<Field> surface_scalar_field( spectral_fs->createField("scalar") );
 
   BOOST_CHECK_EQUAL( surface_scalar_field->name() , std::string("scalar") );
 
@@ -502,7 +502,7 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace_trans_dist )
   size_t surface_scalar_shape[] = { nspec2 };
   BOOST_CHECK_EQUAL_COLLECTIONS( surface_scalar.shape(),surface_scalar.shape()+1, surface_scalar_shape,surface_scalar_shape+1 );
 
-  ScopedPtr<Field> columns_scalar_field( spectral_fs.createField("scalar",nb_levels) );
+  ScopedPtr<Field> columns_scalar_field( spectral_fs->createField("scalar",nb_levels) );
 
   BOOST_CHECK_EQUAL( columns_scalar_field->name() , std::string("scalar") );
 
@@ -523,9 +523,9 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace_trans_global )
 
   size_t nspec2g = trans.nspec2g();
 
-  SpectralFunctionSpace spectral_fs("nodes",trans);
+  SharedPtr<SpectralFunctionSpace> spectral_fs( new SpectralFunctionSpace("nodes",trans) );
 
-  ScopedPtr<Field> surface_scalar_field( spectral_fs.createGlobalField("scalar") );
+  ScopedPtr<Field> surface_scalar_field( spectral_fs->createGlobalField("scalar") );
 
   BOOST_CHECK_EQUAL( surface_scalar_field->name() , std::string("scalar") );
 
@@ -538,7 +538,7 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace_trans_global )
   size_t surface_scalar_shape[] = { nspec2g };
   BOOST_CHECK_EQUAL_COLLECTIONS( surface_scalar.shape(),surface_scalar.shape()+1, surface_scalar_shape,surface_scalar_shape+1 );
 
-  ScopedPtr<Field> columns_scalar_field( spectral_fs.createGlobalField("scalar",nb_levels) );
+  ScopedPtr<Field> columns_scalar_field( spectral_fs->createGlobalField("scalar",nb_levels) );
 
   BOOST_CHECK_EQUAL( columns_scalar_field->name() , std::string("scalar") );
 

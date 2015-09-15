@@ -24,6 +24,7 @@ namespace atlas {
 
 class Mesh;
 class Field;
+class Array;
 class FieldSet;
 
 namespace io {

@@ -34,6 +34,7 @@
 #include "atlas/Nodes.h"
 
 using namespace eckit;
+using atlas::functionspace::NodesFunctionSpace;
 
 namespace atlas {
 namespace io {
@@ -87,13 +88,13 @@ void write_header_binary(std::ostream& out)
 }
 
 template< typename DATATYPE >
-void write_field_nodes(const Gmsh& gmsh, const functionspace::NodesFunctionSpace& function_space, const Field& field, std::ostream& out)
+void write_field_nodes(const Gmsh& gmsh, const NodesFunctionSpace& function_space, const Field& field, std::ostream& out)
 {
   Log::info() << "writing field " << field.name() << "..." << std::endl;
 
   bool gather( gmsh.options.get<bool>("gather") );
   bool binary( !gmsh.options.get<bool>("ascii") );
-  int nlev  = field.has_levels() ? field.levels() : 1;
+  int nlev  = field.levels();
   int ndata = field.shape(0);
   int nvars = field.stride(0)/nlev;
   ArrayView<gidx_t,1> gidx ( function_space.nodes().global_index() );
@@ -888,18 +889,18 @@ void Gmsh::write(const Mesh& mesh, const PathName& file_path) const
     mesh_info = mesh_info.dirName()+"/"+mesh_info.baseName(false)+"_info.msh";
 
     //[next]  make NodesFunctionSpace accept const mesh
-    functionspace::NodesFunctionSpace function_space("nodes",const_cast<Mesh&>(mesh));
+    eckit::SharedPtr<NodesFunctionSpace> function_space( new NodesFunctionSpace("nodes",const_cast<Mesh&>(mesh)) );
 
-    write(nodes.partition(),function_space,mesh_info,std::ios_base::out);
+    write(nodes.partition(),*function_space,mesh_info,std::ios_base::out);
 
     if (nodes.has_field("dual_volumes"))
     {
-      write(nodes.field("dual_volumes"),function_space,mesh_info,std::ios_base::app);
+      write(nodes.field("dual_volumes"),*function_space,mesh_info,std::ios_base::app);
     }
 
     if (nodes.has_field("dual_delta_sph"))
     {
-      write(nodes.field("dual_delta_sph"),function_space,mesh_info,std::ios_base::app);
+      write(nodes.field("dual_delta_sph"),*function_space,mesh_info,std::ios_base::app);
     }
 
     //[next] if( mesh.has_function_space("edges") )
@@ -925,7 +926,7 @@ void Gmsh::write(const Mesh& mesh, const PathName& file_path) const
 
 }
 
-void Gmsh::write(const FieldSet& fieldset, const functionspace::NodesFunctionSpace& function_space, const PathName& file_path, openmode mode) const
+void Gmsh::write(const FieldSet& fieldset, const NodesFunctionSpace& function_space, const PathName& file_path, openmode mode) const
 {
   bool is_new_file = (mode != std::ios_base::app || !file_path.exists() );
   bool binary( !options.get<bool>("ascii") );
@@ -970,7 +971,7 @@ void Gmsh::write(const FieldSet& fieldset, const functionspace::NodesFunctionSpa
   file.close();
 }
 
-void Gmsh::write(const Field& field, const functionspace::NodesFunctionSpace& function_space, const PathName& file_path, openmode mode) const
+void Gmsh::write(const Field& field, const NodesFunctionSpace& function_space, const PathName& file_path, openmode mode) const
 {
   FieldSet fieldset;
   fieldset.add(field);
@@ -1006,12 +1007,12 @@ void atlas__write_gmsh_mesh (Mesh* mesh, char* file_path) {
   writer.write( *mesh, PathName(file_path) );
 }
 
-void atlas__write_gmsh_fieldset (FieldSet* fieldset, functionspace::NodesFunctionSpace* function_space, char* file_path, int mode) {
+void atlas__write_gmsh_fieldset (FieldSet* fieldset, NodesFunctionSpace* function_space, char* file_path, int mode) {
   Gmsh writer;
   writer.write( *fieldset, *function_space, PathName(file_path) );
 }
 
-void atlas__write_gmsh_field (Field* field, functionspace::NodesFunctionSpace* function_space, char* file_path, int mode) {
+void atlas__write_gmsh_field (Field* field, NodesFunctionSpace* function_space, char* file_path, int mode) {
   Gmsh writer;
   writer.write( *field, *function_space, PathName(file_path) );
 }

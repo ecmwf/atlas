@@ -22,6 +22,7 @@
 
 #include "atlas/Array.h"
 #include "atlas/Metadata.h"
+#include "atlas/FunctionSpace.h"
 #include "atlas/util/DataType.h"
 #include "atlas/util/ArrayUtil.h"
 
@@ -133,14 +134,11 @@ public: // Destructor
   /// --- Should the set_levels() be removed and be placed in a Derived Field class constructor?
   bool has_levels() const { return nb_levels_!= 0; }
   void set_levels(size_t n) { nb_levels_ = n; }
-  size_t levels() const { return nb_levels_; }
+  size_t levels() const { return std::max(1ul,nb_levels_); }
 
-  bool has_functionspace() const { return functionspace_.size(); }
-  void set_functionspace(const std::string& functionspace) { functionspace_ = functionspace; }
-  std::string functionspace() const { return functionspace_; }
-
-//  void functionspace(const next::FunctionSpace *);
-//  const next::FunctionSpace *functionspace() const;
+  void set_functionspace(const eckit::SharedPtr<next::FunctionSpace>&);
+  void set_functionspace(const next::FunctionSpace*);
+  next::FunctionSpace* functionspace() const { return functionspace_.get(); }
 
 private: // methods
 
@@ -150,16 +148,11 @@ private: // members
 
   std::string name_;
 
-  std::string functionspace_;
-
   size_t nb_levels_;
 
   Metadata metadata_;
-
-protected: // members
-
-  eckit::SharedPtr<Array> array_;
-
+  eckit::SharedPtr<Array>               array_;
+  eckit::SharedPtr<next::FunctionSpace> functionspace_;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -172,6 +165,7 @@ Field* Field::create( const std::string& name, const ArrayShape& shape ) {
 //----------------------------------------------------------------------------------------------------------------------
 
 #define Parametrisation eckit::Parametrisation
+#define FunctionSpace next::FunctionSpace
 #define Char char
 // C wrapper interfaces to C++ routines
 extern "C"
@@ -191,9 +185,10 @@ extern "C"
   void atlas__Field__data_shapef_float (Field* This, float* &field_data, int* &field_shapef, int &rank);
   void atlas__Field__data_shapef_double (Field* This, double* &field_data, int* &field_shapef, int &rank);
   Metadata* atlas__Field__metadata (Field* This);
-  const char* atlas__Field__functionspace (Field* This);
+  FunctionSpace* atlas__Field__functionspace (Field* This);
 }
 #undef Parametrisation
+#undef FunctionSpace
 #undef Char
 
 //------------------------------------------------------------------------------------------------------

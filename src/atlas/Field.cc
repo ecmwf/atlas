@@ -109,6 +109,16 @@ void Field::resize(const ArrayShape& shape)
     array_->resize(shape);
 }
 
+void Field::set_functionspace(const eckit::SharedPtr<next::FunctionSpace>& functionspace)
+{
+  functionspace_ = functionspace;
+}
+void Field::set_functionspace(const next::FunctionSpace* functionspace)
+{
+  functionspace_.reset(const_cast<next::FunctionSpace*>(functionspace));
+}
+
+
 template <> const float* Field::data() const
 {
   try {
@@ -281,16 +291,16 @@ int atlas__Field__has_functionspace(Field* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    return This->has_functionspace();
+    return (This->functionspace() != 0);
   );
   return 0;
 }
 
-const char* atlas__Field__functionspace (Field* This)
+next::FunctionSpace* atlas__Field__functionspace (Field* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    return This->functionspace().c_str();
+    return This->functionspace();
   );
   return 0;
 }

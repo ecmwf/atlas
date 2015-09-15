@@ -217,9 +217,11 @@ typedef mpl::Checksum Checksum_t;
 //------------------------------------------------------------------------------------------------------
 
 // C wrapper interfaces to C++ routines
-
+#define NextFunctionSpace next::FunctionSpace
 extern "C"
 {
+    void atlas__NextFunctionSpace__delete (NextFunctionSpace* This);
+    const char* atlas__NextFunctionSpace__name (NextFunctionSpace* This);
     Metadata* atlas__FunctionSpace__metadata (FunctionSpace* This);
     int atlas__FunctionSpace__dof (FunctionSpace* This);
     int atlas__FunctionSpace__glb_dof (FunctionSpace* This);
@@ -244,7 +246,7 @@ extern "C"
     Checksum_t* atlas__FunctionSpace__checksum (FunctionSpace* This);
 
 }
-
+#undef NextFunctionSpace
 //------------------------------------------------------------------------------------------------------
 
 } // namespace atlas

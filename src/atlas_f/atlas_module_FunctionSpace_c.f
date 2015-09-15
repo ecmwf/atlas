@@ -1,5 +1,63 @@
 ! (C) Copyright 2013-2015 ECMWF.
 
+function atlas_NextFunctionSpace__cptr(cptr) result(functionspace)
+  type(atlas_NextFunctionSpace) :: functionspace
+  type(c_ptr), intent(in) :: cptr
+  functionspace%cpp_object_ptr = cptr
+  call functionspace%attach()
+  call atlas_return(functionspace)
+end function
+
+subroutine atlas_NextFunctionSpace__finalize(this)
+  use atlas_functionspace_c_binding
+  class(atlas_NextFunctionSpace), intent(inout) :: this
+  if( c_associated(this%cpp_object_ptr) ) then
+    if( this%owners() <= 0 ) then
+      call atlas_abort("Cannot finalize functionspace that has no owners")
+    endif
+    call this%detach()
+    if( this%owners() == 0 ) then
+      call atlas__NextFunctionSpace__delete(this%cpp_object_ptr)
+    endif
+    this%cpp_object_ptr = c_null_ptr
+  endif
+end subroutine
+
+#ifdef FORTRAN_SUPPORTS_FINAL
+subroutine atlas_NextFunctionSpace__final(this)
+  type(atlas_NextFunctionSpace), intent(inout) :: this
+  call this%finalize()
+end subroutine
+#endif
+
+subroutine atlas_NextFunctionSpace__delete(this)
+  use atlas_functionspace_c_binding
+  type(atlas_NextFunctionSpace), intent(inout) :: this
+  if ( c_associated(this%cpp_object_ptr) ) then
+    call atlas__NextFunctionSpace__delete(this%cpp_object_ptr)
+  end if
+  this%cpp_object_ptr = c_null_ptr
+end subroutine atlas_NextFunctionSpace__delete
+
+subroutine atlas_NextFunctionSpace__reset(functionspace_out,functionspace_in)
+  type(atlas_NextFunctionSpace), intent(inout) :: functionspace_out
+  class(atlas_NextFunctionSpace), intent(in) :: functionspace_in
+  if( .not. atlas_compare_equal(functionspace_out%cpp_object_ptr,functionspace_in%cpp_object_ptr) ) then
+#ifndef FORTRAN_SUPPORTS_FINAL
+    call atlas_NextFunctionSpace__finalize(functionspace_out)
+#endif
+    functionspace_out%cpp_object_ptr = functionspace_in%cpp_object_ptr
+    if( c_associated(functionspace_out%cpp_object_ptr) ) call functionspace_out%attach()
+  endif
+end subroutine
+
+function atlas_NextFunctionSpace__name(this) result(name)
+  class(atlas_NextFunctionSpace), intent(in) :: this
+  character(len=:), allocatable :: name
+  type(c_ptr) :: name_c_str
+  name_c_str = atlas__NextFunctionSpace__name(this%cpp_object_ptr)
+  name = c_to_f_string_cptr(name_c_str)
+end function
 
 
 ! -----------------------------------------------------------------------------

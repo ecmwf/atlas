@@ -79,12 +79,23 @@ TEST( test_trans )
 
   nodes = mesh%nodes()
   nodes_fs = atlas_NodesFunctionSpace("nodes",mesh,0)
+
+  write(0,*) "nodes_fs%owners()",nodes_fs%owners()
+
   scalarfield1 = nodes_fs%create_field("scalar1",atlas_real(c_double),nlev)
+  write(0,*) "nodes_fs%owners()",nodes_fs%owners()
+
   scalarfield2 = nodes_fs%create_field("scalar2",atlas_real(c_double))
+  write(0,*) "nodes_fs%owners()",nodes_fs%owners()
 
   spectral_fs = atlas_SpectralFunctionSpace("spectral",trans)
+  write(0,*) "spectral_fs%owners()",spectral_fs%owners()
+
   spectralfield1 = spectral_fs%create_field("spectral1",nlev)
+  write(0,*) "spectral_fs%owners()",spectral_fs%owners()
+
   spectralfield2 = spectral_fs%create_field("spectral2")
+  write(0,*) "spectral_fs%owners()",spectral_fs%owners()
 
   call scalarfield1%access_data(scal1)
   call scalarfield2%access_data(scal2)
@@ -137,11 +148,16 @@ TEST( test_trans )
 
   windfield = nodes_fs%create_field("wind",atlas_real(c_double),nlev,(/3/))
   call windfield%access_data(wind)
+  write(0,*) "nodes_fs%owners()",nodes_fs%owners()
 
   vorfield = spectral_fs%create_field("vorticity",nlev)
+  write(0,*) "spectral_fs%owners()",spectral_fs%owners()
+
   call vorfield%access_data(vor)
 
   divfield =  spectral_fs%create_field("divergence",nlev)
+  write(0,*) "spectral_fs%owners()",spectral_fs%owners()
+
   call divfield%access_data(div)
 
   call trans%dirtrans_wind2vordiv(nodes_fs,windfield,spectral_fs,vorfield,divfield)
@@ -163,15 +179,26 @@ TEST( test_trans )
   allocate( vorg( nlev, trans%nspec2g() ) )
   call trans%gathspec(vor,vorg)
 
-  call atlas_delete(nodes_fs)
-  call atlas_delete(spectral_fs)
+  write(0,*) "cleaning up"
+  write(0,*) "nodes_fs%owners()",nodes_fs%owners()
+  write(0,*) "spectral_fs%owners()",spectral_fs%owners()
+
   call scalarfield1%finalize()
   call scalarfield2%finalize()
   call spectralfield1%finalize()
+  write(0,*) "spectral_fs%owners()",spectral_fs%owners()
   call spectralfield2%finalize()
+  write(0,*) "spectral_fs%owners()",spectral_fs%owners()
   call windfield%finalize()
   call vorfield%finalize()
   call divfield%finalize()
+
+  write(0,*) "nodes_fs%owners()",nodes_fs%owners()
+  call nodes_fs%finalize()
+
+  write(0,*) "spectral_fs%owners()",spectral_fs%owners()
+  call spectral_fs%finalize()
+
   call atlas_delete(scalarfields)
   call atlas_delete(spectralfields)
   call atlas_delete(mesh)

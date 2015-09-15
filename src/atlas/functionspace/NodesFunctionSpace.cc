@@ -41,9 +41,6 @@ Halo::Halo(const Mesh& mesh)
   mesh.metadata().get("halo",size_);
 }
 
-
-const std::string& nodes_str() { static std::string str("nodes"); return str; }
-
 namespace {
 
 template <typename T>
@@ -207,14 +204,14 @@ std::string NodesFunctionSpace::checksum_name() const
 
 Field* NodesFunctionSpace::createField(const std::string& name,DataType datatype) const {
   Field* field = Field::create(name,datatype,make_shape(nb_nodes()));
-  field->set_functionspace(nodes_str());
+  field->set_functionspace(this);
   return field;
 }
 
 Field* NodesFunctionSpace::createField(const std::string& name,DataType datatype, size_t levels) const {
   Field* field = Field::create(name,datatype,make_shape(nb_nodes(),levels));
   field->set_levels(levels);
-  field->set_functionspace(nodes_str());
+  field->set_functionspace(this);
   return field;
 }
 
@@ -222,7 +219,7 @@ Field* NodesFunctionSpace::createField(const std::string& name,DataType datatype
   std::vector<size_t> shape(1,nb_nodes());
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   Field* field = Field::create(name,datatype,shape);
-  field->set_functionspace(nodes_str());
+  field->set_functionspace(this);
   return field;
 }
 
@@ -231,7 +228,7 @@ Field* NodesFunctionSpace::createField(const std::string& name, DataType datatyp
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   Field* field = Field::create(name,datatype,shape);
   field->set_levels(levels);
-  field->set_functionspace(nodes_str());
+  field->set_functionspace(this);
   return field;
 }
 
@@ -241,20 +238,20 @@ Field* NodesFunctionSpace::createField(const std::string& name, const Field& oth
   Field* field = Field::create(name,other.datatype(),shape);
   if( other.has_levels() )
     field->set_levels(field->shape(1));
-  field->set_functionspace(nodes_str());
+  field->set_functionspace(this);
   return field;
 }
 
 Field* NodesFunctionSpace::createGlobalField(const std::string& name,DataType datatype) const {
   Field* field = Field::create(name,datatype,make_shape(nb_nodes_global()));
-  field->set_functionspace(nodes_str());
+  field->set_functionspace(this);
   return field;
 }
 
 Field* NodesFunctionSpace::createGlobalField(const std::string& name, DataType datatype, size_t levels) const {
   Field* field = Field::create(name,datatype,make_shape(nb_nodes_global(),levels));
   field->set_levels(levels);
-  field->set_functionspace(nodes_str());
+  field->set_functionspace(this);
   return field;
 }
 
@@ -262,7 +259,7 @@ Field* NodesFunctionSpace::createGlobalField(const std::string& name, DataType d
   std::vector<size_t> shape(1,nb_nodes_global());
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   Field* field = Field::create(name,datatype,shape);
-  field->set_functionspace(nodes_str());
+  field->set_functionspace(this);
   return field;
 }
 
@@ -271,7 +268,7 @@ Field* NodesFunctionSpace::createGlobalField(const std::string& name, DataType d
   for( size_t i=0; i<variables.size(); ++i ) shape.push_back(variables[i]);
   Field* field = Field::create(name,datatype,shape);
   field->set_levels(levels);
-  field->set_functionspace(nodes_str());
+  field->set_functionspace(this);
   return field;
 }
 
@@ -281,7 +278,7 @@ Field* NodesFunctionSpace::createGlobalField(const std::string& name,const Field
   Field* field = Field::create(name,other.datatype(),shape);
   if( other.has_levels() )
     field->set_levels(field->shape(1));
-  field->set_functionspace(nodes_str());
+  field->set_functionspace(this);
   return field;
 }
 
