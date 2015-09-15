@@ -1,4 +1,4 @@
-! (C) Copyright 2013-2014 ECMWF.
+! (C) Copyright 2013-2015 ECMWF.
 
 function atlas_LogChannel__ctor( cat ) result(channel)
   type(atlas_LogChannel) :: channel

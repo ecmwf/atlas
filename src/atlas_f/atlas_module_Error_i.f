@@ -1,4 +1,4 @@
-! (C) Copyright 2013-2014 ECMWF.
+! (C) Copyright 2013-2015 ECMWF.
 
 integer, private, parameter :: ATLAS_CODELOCATION_FILE_STRLEN     = 1024
 integer, private, parameter :: ATLAS_CODELOCATION_FUNCTION_STRLEN = 1024

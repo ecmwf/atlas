@@ -1,4 +1,4 @@
-! (C) Copyright 2013-2014 ECMWF.
+! (C) Copyright 2013-2015 ECMWF.
 
 !------------------------------------------------------------------------------
 TYPE, extends(object_type) :: atlas_Checksum

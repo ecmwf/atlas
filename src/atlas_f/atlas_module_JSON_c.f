@@ -1,4 +1,4 @@
-! (C) Copyright 2013-2014 ECMWF.
+! (C) Copyright 2013-2015 ECMWF.
 
 function atlas_JSON__ctor_str(str) result(JSON)
   type(atlas_JSON) :: JSON

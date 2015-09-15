@@ -1,4 +1,4 @@
-! (C) Copyright 2013-2014 ECMWF.
+! (C) Copyright 2013-2015 ECMWF.
 
 #include "atlas/atlas_defines_fortran.h"
 

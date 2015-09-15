@@ -1,4 +1,4 @@
-! (C) Copyright 2013-2014 ECMWF.
+! (C) Copyright 2013-2015 ECMWF.
 
 
 function atlas_NodesFunctionSpace__mesh_halo(mesh,halo) result(function_space)

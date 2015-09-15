@@ -1,4 +1,4 @@
-! (C) Copyright 2013-2014 ECMWF.
+! (C) Copyright 2013-2015 ECMWF.
 
 function atlas_PathName__ctor_str(str) result(PathName)
   type(atlas_PathName) :: PathName

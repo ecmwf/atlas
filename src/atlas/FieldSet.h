@@ -9,8 +9,6 @@
  */
 
 /// @author Willem Deconinck
-/// @author Peter Bispham
-/// @author Tiago Quintino
 /// @author Pedro Maciel
 /// @date Jan 2015
 

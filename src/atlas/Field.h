@@ -9,7 +9,6 @@
  */
 
 /// @author Willem Deconinck
-/// @author Tiago Quintino
 /// @date Sep 2014
 
 #ifndef atlas_Field_h
