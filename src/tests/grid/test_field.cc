@@ -48,6 +48,7 @@ public:
 
     void test_constructor();
     void test_fieldcreator();
+    void test_implicit_conversion();
 };
 
 //-----------------------------------------------------------------------------
@@ -159,6 +160,43 @@ void TestField::test_fieldcreator()
   eckit::Log::info() << std::flush;
 }
 
+void take_array(const Array& arr)
+{
+  ASSERT( arr.size() == 20 );
+}
+
+class TakeArray
+{
+public:
+  TakeArray(const Array& arr)
+  {
+    ASSERT( arr.size() == 20 );
+  }
+};
+
+void TestField::test_implicit_conversion()
+{
+  ScopedPtr<Field> field( Field::create<double>("tmp",make_shape(10,2)) );
+  const Array& const_array = *field;
+  Array& array = *field;
+
+  ArrayView<double,2> arrv(array);
+  arrv(0,0) = 8.;
+
+  const ArrayView<double,2> carrv(const_array);
+  ASSERT( carrv(0,0) == 8. );
+
+  const ArrayView<double,2> cfieldv(*field);
+  ASSERT( cfieldv(0,0) == 8. );
+
+  take_array(*field);
+  TakeArray ta(*field);
+
+  const Field& f = *field;
+  TakeArray cta(f);
+}
+
+
 
 //-----------------------------------------------------------------------------
 
@@ -167,6 +205,7 @@ void TestField::run()
     eckit::mpi::init();
     test_constructor();
     test_fieldcreator();
+    test_implicit_conversion();
     eckit::mpi::finalize();
 }
 

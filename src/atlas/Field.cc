@@ -14,12 +14,12 @@
 
 #include "eckit/exception/Exceptions.h"
 #include "eckit/types/Types.h"
+#include "eckit/memory/ScopedPtr.h"
 
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Field.h"
 #include "atlas/field/FieldCreator.h"
-#include "atlas/util/DataType.h"
 
 #include "atlas/Grid.h"
 #include "atlas/FunctionSpace.h"
@@ -70,11 +70,11 @@ Field::Field(const std::string& name, Array* array):
   array_.reset( array );
 }
 
-Field::Field(const std::string& name, const eckit::SharedPtr<Array>& array):
-  name_(name), nb_levels_(0)
-{
-  array_ = array;
-}
+//Field::Field(const std::string& name, const eckit::SharedPtr<Array>& array):
+//  name_(name), nb_levels_(0)
+//{
+//  array_ = array;
+//}
 
 Field::~Field()
 {

@@ -21,13 +21,10 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 
-#include "atlas/Config.h"
-#include "atlas/Metadata.h"
-#include "atlas/State.h"
 #include "atlas/Array.h"
+#include "atlas/Metadata.h"
 #include "atlas/util/DataType.h"
-#include "atlas/FunctionSpace.h"
-#include "atlas/Nodes.h"
+#include "atlas/util/ArrayUtil.h"
 
 namespace eckit { class Parametrisation; }
 
@@ -57,30 +54,35 @@ public: // Static methods
   static Field* create( const std::string& name, Array* );
 
   /// @brief Create field with given name, and share ownership of given Array
-  static Field* create( const std::string& name, const eckit::SharedPtr<Array>& );
+  /// @note nawd: Not so sure we should go this route
+  /// static Field* create( const std::string& name, const eckit::SharedPtr<Array>& );
 
 private: // Private constructors to force use of static create functions
 
-  // Allocate new Array internally
+  /// Allocate new Array internally
   Field(const std::string& name, DataType, const ArrayShape&);
 
-  // Transfer ownership of Array
+  /// Transfer ownership of Array
   Field(const std::string& name, Array* );
 
-  // Share ownership of Array
-  Field(const std::string& name, const eckit::SharedPtr<Array>& );
+  /// Share ownership of Array
+  /// @note We could go this route...
+  /// Field(const std::string& name, const eckit::SharedPtr<Array>& );
 
 public: // Destructor
   virtual ~Field();
 
 // -- Accessors
 
+  /// @brief Implicit conversion to Array
+  operator const Array&() const { return *array_.get(); }
+  operator Array&() { return *array_.get(); }
+
+// ---- Delegate to underlying array
+
   /// @brief Access to raw data
   template <typename DATA_TYPE> const DATA_TYPE* data() const  { return array_->data<DATA_TYPE>(); }
   template <typename DATA_TYPE>       DATA_TYPE* data()        { return array_->data<DATA_TYPE>(); }
-
-  const Array* array() const      { return array_.get(); }
-  eckit::SharedPtr<Array> array() { return array_; }
 
   /// @brief Internal data type of field
   DataType datatype() const { return array_->datatype(); }

@@ -11,9 +11,10 @@
 #include <limits>
 #include "atlas/mpi/mpi.h"
 #include "atlas/runtime/ErrorHandling.h"
-#include "atlas/Array.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
+#include "atlas/Array.h"
+#include "atlas/Field.h"
 #include "atlas/Mesh.h"
 #include "atlas/Nodes.h"
 #include "atlas/FunctionSpace.h"

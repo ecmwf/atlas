@@ -93,7 +93,6 @@
 namespace atlas {
 
 class Array;
-class Field;
 template< typename DATA_TYPE > class ArrayT;
 
 template <typename DATA_TYPE, int RANK=0> class ArrayView;
@@ -225,7 +224,6 @@ public:
   }
 
   ArrayView( const Array& );
-  ArrayView( const Field& );
   iterator begin() { return iterator(this); }
   iterator end()   { return iterator(); }
   const_iterator begin() const  { return const_iterator(this); }
@@ -302,7 +300,6 @@ public:
     shape_[0]=shape[0]; strides_[0]=1;
   }
   ArrayView( const Array& );
-  ArrayView( const Field& );
 
   iterator begin() { return iterator(this); }
   iterator end()   { return iterator(); }
@@ -374,7 +371,6 @@ public:
     size_ = shape_[0]*shape_[1];
   }
   ArrayView( const Array& );
-  ArrayView( const Field& );
 
   iterator begin() { return iterator(this); }
   iterator end()   { return iterator(); }
@@ -449,7 +445,6 @@ public:
     size_ = shape_[0]*shape_[1]*shape_[2];
   }
   ArrayView( const Array& );
-  ArrayView( const Field& );
 
   iterator begin() { return iterator(this); }
   iterator end()   { return iterator(); }
@@ -527,7 +522,6 @@ public:
     size_ = shape_[0]*shape_[1]*shape_[2]*shape_[3];
   }
   ArrayView( const Array& );
-  ArrayView( const Field& );
 
   iterator begin() { return iterator(this); }
   iterator end()   { return iterator(); }

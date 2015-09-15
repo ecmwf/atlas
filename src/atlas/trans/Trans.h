@@ -19,6 +19,8 @@
 namespace atlas {
   class FieldSet;
   class Grid;
+  class Field;
+  class Array;
   namespace functionspace {
     class NodesFunctionSpace;
     class SpectralFunctionSpace;

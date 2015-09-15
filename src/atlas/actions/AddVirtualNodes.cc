@@ -20,6 +20,7 @@
 #include "atlas/Mesh.h"
 #include "atlas/Nodes.h"
 #include "atlas/Grid.h"
+#include "atlas/Field.h"
 
 #include "atlas/grids/rgg/OctahedralRGG.h"
 

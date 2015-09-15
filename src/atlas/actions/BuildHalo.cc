@@ -16,6 +16,8 @@
 #include <cmath>
 #include <limits>
 
+#include "eckit/memory/ScopedPtr.h"
+
 #include "atlas/mpi/mpi.h"
 #include "atlas/atlas_config.h"
 #include "atlas/runtime/ErrorHandling.h"

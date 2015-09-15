@@ -20,6 +20,7 @@
 #include "atlas/functionspace/NodesFunctionSpace.h"
 #include "atlas/functionspace/SpectralFunctionSpace.h"
 #include "atlas/Array.h"
+#include "atlas/Field.h"
 #include "atlas/util/Bitflags.h"
 #include "atlas/util/IsGhost.h"
 #include "eckit/exception/Exceptions.h"

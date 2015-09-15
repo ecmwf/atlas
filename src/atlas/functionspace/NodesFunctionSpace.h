@@ -17,6 +17,7 @@
 #include "atlas/FieldSet.h"
 
 namespace atlas { class Mesh; }
+namespace atlas { class Nodes; }
 namespace atlas { class FieldSet; }
 
 namespace atlas {
