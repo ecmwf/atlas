@@ -15,6 +15,7 @@ namespace atlas {
 class Mesh;
 namespace actions {
 
+void write_load_balance_report( const Mesh& mesh, std::ostream& ofs );
 void write_load_balance_report( const Mesh& mesh, const std::string& filename );
 
 // ------------------------------------------------------------------

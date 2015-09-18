@@ -21,6 +21,11 @@ ecbuild_add_executable(
   SOURCES     atlas-meshgen.cc
   LIBS        atlas )
 
+  ecbuild_add_executable(
+    TARGET      atlas-loadbalance
+    SOURCES     atlas-loadbalance.cc
+    LIBS        atlas )
+
 ecbuild_add_executable(
   TARGET      atlas-gmsh-extract
   SOURCES     atlas-gmsh-extract.cc
