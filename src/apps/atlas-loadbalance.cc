@@ -88,6 +88,7 @@ public:
     }
 
     halo       = Resource< int > ( "--halo", 1 );
+    output     = Resource<std::string> ("--output","");
   }
 
 private:
@@ -95,6 +96,7 @@ private:
   bool do_run;
   std::string key;
   int halo;
+  std::string output;
   std::string identifier;
 };
 
@@ -112,13 +114,21 @@ void AtlasLoadbalance::run()
   if( !grid ) return;
   SharedPtr<Mesh> mesh( generate_mesh(*grid) );
   SharedPtr<NodesFunctionSpace> nodes( new NodesFunctionSpace("nodes",*mesh,Halo(halo)) );
-  
-  std::stringstream s;
-  write_load_balance_report(*mesh,s);
-  
-  if( eckit::mpi::rank() == 0 )
+ 
+
+  if( output.size() )
   {
-    std::cout << s.str() << std::endl;
+    write_load_balance_report(*mesh,output);
+  }
+  else
+  { 
+    std::stringstream s;
+    write_load_balance_report(*mesh,s);
+  
+    if( eckit::mpi::rank() == 0 )
+    {
+      std::cout << s.str() << std::endl;
+    }
   }
   atlas_finalize();
 }
