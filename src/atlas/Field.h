@@ -75,8 +75,8 @@ public: // Destructor
 // -- Conversion
 
   /// @brief Implicit conversion to Array
-  operator const Array&() const { return *array_.get(); }
-  operator Array&() { return *array_.get(); }
+  operator const Array&() const { return *array_; }
+  operator Array&() { return *array_; }
 
 // -- Accessors
 
@@ -135,9 +135,8 @@ public: // Destructor
   void set_levels(size_t n) { nb_levels_ = n; }
   size_t levels() const { return std::max(1ul,nb_levels_); }
 
-  void set_functionspace(const eckit::SharedPtr<next::FunctionSpace>&);
   void set_functionspace(const next::FunctionSpace*);
-  next::FunctionSpace* functionspace() const { return functionspace_.get(); }
+  next::FunctionSpace* functionspace() const { return functionspace_; }
 
 private: // methods
 
@@ -148,9 +147,8 @@ private: // members
   std::string name_;
   size_t nb_levels_;
   Metadata metadata_;
-  eckit::SharedPtr<Array>               array_;
-  eckit::SharedPtr<next::FunctionSpace> functionspace_;
-  bool shares_functionspace_;
+  Array* array_;
+  next::FunctionSpace* functionspace_;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

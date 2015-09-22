@@ -59,25 +59,33 @@ Field* Field::create(const std::string& name, DataType datatype, const ArrayShap
 // -------------------------------------------------------------------------
 
 Field::Field(const std::string& name, DataType datatype, const ArrayShape& shape):
-  name_(name), nb_levels_(0), shares_functionspace_(true)
+  name_(name), nb_levels_(0), functionspace_(0)
 {
-  array_.reset( Array::create(datatype,shape) );
+  array_ = Array::create(datatype,shape);
+  array_->attach();
 }
+
 
 Field::Field(const std::string& name, Array* array):
-  name_(name), nb_levels_(0), shares_functionspace_(true)
+  name_(name), nb_levels_(0), functionspace_(0)
 {
-  array_.reset( array );
+  array_ = array;
+  array_->attach();
 }
-
-//Field::Field(const std::string& name, const eckit::SharedPtr<Array>& array):
-//  name_(name), nb_levels_(0)
-//{
-//  array_ = array;
-//}
 
 Field::~Field()
 {
+  if( functionspace_ ) {
+    functionspace_->detach();
+    if( functionspace_->owners() == 0 )
+      delete functionspace_;
+  }
+  if( array_ ) {
+    array_->detach();
+    if( array_->owners() == 0 )
+      delete array_;
+  }
+
 }
 
 void Field::dump(std::ostream& os) const
@@ -109,13 +117,15 @@ void Field::resize(const ArrayShape& shape)
     array_->resize(shape);
 }
 
-void Field::set_functionspace(const eckit::SharedPtr<next::FunctionSpace>& functionspace)
-{
-  functionspace_ = functionspace;
-}
 void Field::set_functionspace(const next::FunctionSpace* functionspace)
 {
-  functionspace_.reset(const_cast<next::FunctionSpace*>(functionspace));
+  functionspace_ = const_cast<next::FunctionSpace*>(functionspace);
+
+  // In case functionspace is not attached, increase owners, so that
+  // this field will not manage its lifetime.
+  if( functionspace_->owners() == 0 ) functionspace_->attach();
+
+  functionspace_->attach();
 }
 
 

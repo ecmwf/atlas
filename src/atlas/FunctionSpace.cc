@@ -25,6 +25,55 @@
 #include "atlas/util/Bitflags.h"
 #include "atlas/util/DataType.h"
 
+namespace atlas {
+namespace next {
+
+namespace {
+
+void assert_shared(const eckit::Owned* owned)
+{
+  if( owned->owners() == 0 )
+  {
+    throw eckit::SeriousBug("Cannot create shared_ptr from stack allocated or scoped_ptr",Here());
+  }
+}
+
+}
+
+eckit::SharedPtr<FunctionSpace const> FunctionSpace::shared_from_this() const
+{
+  assert_shared(this);
+  return eckit::SharedPtr<FunctionSpace const>(this);
+}
+
+eckit::SharedPtr<FunctionSpace> FunctionSpace::shared_from_this()
+{
+  assert_shared(this);
+  return eckit::SharedPtr<FunctionSpace>(this);
+}
+
+eckit::SharedPtr<FunctionSpace const> FunctionSpace::ptr() const
+{
+  assert_shared(this);
+  return eckit::SharedPtr<FunctionSpace const>(this);
+}
+
+eckit::SharedPtr<FunctionSpace const> FunctionSpace::cptr() const
+{
+  ASSERT(owners()!=0);
+  return eckit::SharedPtr<FunctionSpace const>(this);
+}
+
+eckit::SharedPtr<FunctionSpace> FunctionSpace::ptr()
+{
+  ASSERT(owners()!=0);
+  return eckit::SharedPtr<FunctionSpace>(this);
+}
+
+}
+}
+
+
 using atlas::util::Topology;
 
 #ifdef ATLAS_HAVE_FORTRAN
@@ -32,7 +81,6 @@ using atlas::util::Topology;
 #else
 #define REMOTE_IDX_BASE 0
 #endif
-
 
 namespace atlas {
 

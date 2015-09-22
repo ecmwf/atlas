@@ -27,6 +27,11 @@ public:
     FunctionSpace(const std::string& name) : name_(name) {}
     virtual ~FunctionSpace() = 0;
     const std::string& name() const { return name_; }
+    eckit::SharedPtr<FunctionSpace const> shared_from_this() const;
+    eckit::SharedPtr<FunctionSpace> shared_from_this();
+    eckit::SharedPtr<FunctionSpace> ptr();
+    eckit::SharedPtr<FunctionSpace const> ptr() const;
+    eckit::SharedPtr<FunctionSpace const> cptr() const;
 private:
     std::string name_;
 };
