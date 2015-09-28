@@ -121,15 +121,23 @@ function FunctionSpace__glb_dof(this) result(glb_dof)
   glb_dof = atlas__FunctionSpace__glb_dof(this%cpp_object_ptr)
 end function FunctionSpace__glb_dof
 
-function FunctionSpace__shape(this) result(shape)
+function FunctionSpace__shape_arr(this) result(shape)
   class(atlas_FunctionSpace), intent(in) :: this
   integer, pointer :: shape(:)
   type(c_ptr) :: shape_c_ptr
   integer(c_int) :: field_rank
   call atlas__FunctionSpace__shapef(this%cpp_object_ptr, shape_c_ptr, field_rank)
   call C_F_POINTER ( shape_c_ptr , shape , (/field_rank/) )
-end function FunctionSpace__shape
+end function FunctionSpace__shape_arr
 
+function FunctionSpace__shape_idx(this,idx) result(shape_idx)
+  class(atlas_FunctionSpace), intent(in) :: this
+  integer, intent(in) :: idx
+  integer :: shape_idx
+  integer, pointer :: shape(:)
+  shape => this%shape_arr()
+  shape_idx = shape(idx)
+end function FunctionSpace__shape_idx
 
 function FunctionSpace__field(this,name) result(field)
   class(atlas_FunctionSpace), intent(in) :: this

@@ -21,6 +21,7 @@ contains
   procedure :: npts => ReducedGrid__npts
   procedure :: nlat => ReducedGrid__nlat
   procedure :: nlon => ReducedGrid__nlon
+  procedure :: nlonmax => ReducedGrid__nlonmax
   procedure :: lat => ReducedGrid__latitudes
 END TYPE atlas_ReducedGrid
 

@@ -69,7 +69,9 @@ contains
   procedure :: glb_dof => FunctionSpace__glb_dof
   procedure :: create_field => FunctionSpace__create_field
   procedure :: remove_field => FunctionSpace__remove_field
-  procedure :: shape => FunctionSpace__shape
+  procedure :: shape_arr => FunctionSpace__shape_arr
+  procedure :: shape_idx => FunctionSpace__shape_idx
+  generic :: shape => shape_arr, shape_idx
   procedure :: field => FunctionSpace__field
   procedure, public :: has_field => FunctionSpace__has_field
   procedure :: metadata => FunctionSpace__metadata

@@ -142,6 +142,7 @@ extern "C"
 {
   int  atlas__ReducedGrid__nlat(ReducedGrid* This);
   void atlas__ReducedGrid__nlon(ReducedGrid* This, const int* &nlon, int &size);
+  int atlas__ReducedGrid__nlonmax(ReducedGrid* This);
   int atlas__ReducedGrid__npts(ReducedGrid* This);
   double atlas__ReducedGrid__lon(ReducedGrid* This,int jlat,int jlon);
   double atlas__ReducedGrid__lat(ReducedGrid* This,int jlat);

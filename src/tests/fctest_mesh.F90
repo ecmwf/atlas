@@ -387,6 +387,7 @@ TEST( test_griddistribution )
   griddistribution = atlas_GridDistribution(part, part0=1)
 
   mesh = atlas_generate_mesh(grid,griddistribution)
+  call griddistribution%finalize()
 
   call atlas_write_gmsh(mesh,"testf3.msh")
 
@@ -451,6 +452,57 @@ TEST( test_fieldcreation )
 
   call atlas_delete(grid)
 END_TEST
+
+TEST( test_fv )
+      type(atlas_ReducedGrid) :: grid
+      type(atlas_Mesh) :: mesh
+      type(atlas_GridDistribution) :: griddistribution
+      type(atlas_NodesFunctionSpace) :: nodes_fs
+
+      type(atlas_FunctionSpace) :: edges
+      type(atlas_Nodes) :: nodes
+
+      integer, allocatable :: nloen(:)
+      integer, allocatable :: part(:)
+      integer :: halo_size = 1
+
+
+      allocate(nloen(5))
+      nloen=[4,8,12,16,20]
+
+      ! Create a new Reduced Gaussian Grid based on a nloen array
+      grid = atlas_ReducedGaussianGrid( nloen )
+
+      ! Grid distribution: all points belong to partition 1
+      allocate( part(grid%npts()) )
+      part(:) = 1
+      griddistribution = atlas_GridDistribution(part, part0=1)
+
+      ! Generate mesh with given grid and distribution
+      mesh = atlas_generate_mesh(grid,griddistribution)
+      call griddistribution%finalize()
+
+      ! Generate nodes function-space, with a given halo_size
+      nodes_fs = atlas_NodesFunctionSpace("nodes",mesh,halo_size)
+
+      ! Create edge elements from surface elements
+      call atlas_build_edges(mesh)
+      call atlas_build_pole_edges(mesh)
+
+      ! Generate edges function-space (This api will change soon)
+      edges = mesh%function_space("edges")
+      nodes = mesh%nodes()
+      call atlas_build_edges_parallel_fields(edges,nodes)
+
+      ! Build node to edge connectivity
+      call atlas_build_node_to_edge_connectivity(mesh)
+
+      ! Generate median-dual mesh, (dual_normals, dual_volumes)
+      call atlas_build_median_dual_mesh(mesh)
+
+
+  END_TEST
+
 
 ! -----------------------------------------------------------------------------
 

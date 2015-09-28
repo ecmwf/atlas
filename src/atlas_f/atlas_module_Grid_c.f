@@ -49,6 +49,13 @@ function ReducedGrid__nlon(this) result(nlon)
   call C_F_POINTER ( nlon_c_ptr , nlon , (/nlon_size/) )
 end function ReducedGrid__nlon
 
+function ReducedGrid__nlonmax(this) result(nlonmax)
+  class(atlas_ReducedGrid), intent(in) :: this
+  integer :: nlonmax
+  nlonmax = atlas__ReducedGrid__nlonmax(this%cpp_object_ptr)
+end function ReducedGrid__nlonmax
+
+
 function ReducedGrid__latitudes(this) result(lat)
   class(atlas_ReducedGrid), intent(in) :: this
   real(c_double), pointer :: lat(:)

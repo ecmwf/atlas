@@ -144,7 +144,7 @@ void ReducedGridMeshGenerator::configure_defaults()
   // angle = 0   -->  maximises number of triangles
   options.set<double>("angle", Resource< double > ( "atlas.meshgen.angle", 0. ) );
 
-  options.set<bool>("triangulate", Resource< bool > ( "--triangulate;atlas.meshgen.triangulate", 1.) );
+  options.set<bool>("triangulate", Resource< bool > ( "--triangulate;atlas.meshgen.triangulate", 1) );
 }
 
 void ReducedGridMeshGenerator::generate(const Grid& grid, Mesh& mesh ) const

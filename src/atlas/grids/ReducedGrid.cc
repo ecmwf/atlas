@@ -306,6 +306,11 @@ void atlas__ReducedGrid__nlon(ReducedGrid* This, const int* &nlons, int &size)
   size  = This->npts_per_lat().size();
 }
 
+int atlas__ReducedGrid__nlonmax(ReducedGrid* This)
+{
+  return This->nlonmax();
+}
+
 int atlas__ReducedGrid__npts(ReducedGrid* This)
 {
   return This->npts();
