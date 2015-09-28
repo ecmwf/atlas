@@ -277,6 +277,14 @@ Field& build_nodes_remote_idx( Nodes& nodes )
     else
     {
       ASSERT( jnode < part.size() );
+      if( part(jnode) >= proc.size() )
+      {
+        std::stringstream msg;
+        msg << "Assertion [part("<<jnode<<") < proc.size()] failed\n"
+            << "part("<<jnode<<") = " << part(jnode) << "\n"
+            << "proc.size() = " << proc.size();
+        eckit::AssertionFailed(msg.str(),Here());
+      }
       ASSERT( part(jnode) < proc.size() );
       ASSERT( proc[part(jnode)] < send_needed.size() );
       send_needed[ proc[part(jnode)] ].push_back( uid  );

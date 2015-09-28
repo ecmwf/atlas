@@ -23,6 +23,9 @@ contains
   procedure :: nlon => ReducedGrid__nlon
   procedure :: nlonmax => ReducedGrid__nlonmax
   procedure :: lat => ReducedGrid__latitudes
+
+  procedure :: finalize => ReducedGrid__finalize
+
 END TYPE atlas_ReducedGrid
 
 interface atlas_ReducedGrid

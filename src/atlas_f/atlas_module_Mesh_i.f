@@ -25,6 +25,7 @@ contains
   procedure :: function_space => Mesh__function_space
   procedure :: create_nodes => Mesh__create_nodes
   procedure :: nodes => Mesh__nodes
+  procedure :: finalize => atlas_Mesh_finalize
 END TYPE atlas_Mesh
 
 interface atlas_Mesh

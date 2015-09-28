@@ -467,11 +467,12 @@ TEST( test_fv )
       integer :: halo_size = 1
 
 
-      allocate(nloen(5))
-      nloen=[4,8,12,16,20]
+      allocate(nloen(36))
+      nloen(1:32) = 64
 
       ! Create a new Reduced Gaussian Grid based on a nloen array
-      grid = atlas_ReducedGaussianGrid( nloen )
+      call atlas_log%info("Creating grid")
+      grid = atlas_ReducedGaussianGrid( nloen(1:32) )
 
       ! Grid distribution: all points belong to partition 1
       allocate( part(grid%npts()) )
@@ -500,8 +501,11 @@ TEST( test_fv )
       ! Generate median-dual mesh, (dual_normals, dual_volumes)
       call atlas_build_median_dual_mesh(mesh)
 
+      call mesh%finalize()
+      call grid%finalize()
+      call nodes_fs%finalize()
 
-  END_TEST
+END_TEST
 
 
 ! -----------------------------------------------------------------------------

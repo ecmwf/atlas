@@ -16,9 +16,12 @@ function atlas_GridDistribution__ctor( part, part0 ) result(griddistribution)
 end function atlas_GridDistribution__ctor
 
 
-subroutine atlas_GridDistribution_finalize( self )
-  class(atlas_GridDistribution), intent(inout) :: self
-  call atlas__GridDistribution__delete(self%cpp_object_ptr);
+subroutine atlas_GridDistribution_finalize( this )
+  class(atlas_GridDistribution), intent(inout) :: this
+  if ( c_associated(this%cpp_object_ptr) ) then
+    call atlas__GridDistribution__delete(this%cpp_object_ptr);
+  end if
+  this%cpp_object_ptr = c_null_ptr
 end subroutine
 
 

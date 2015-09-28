@@ -73,3 +73,11 @@ subroutine atlas_ReducedGrid__delete(this)
   this%cpp_object_ptr = c_null_ptr
 end subroutine atlas_ReducedGrid__delete
 
+subroutine ReducedGrid__finalize(this)
+  class(atlas_ReducedGrid), intent(inout) :: this
+  if ( c_associated(this%cpp_object_ptr) ) then
+    call atlas__ReducedGrid__delete(this%cpp_object_ptr)
+  end if
+  this%cpp_object_ptr = c_null_ptr
+end subroutine
+

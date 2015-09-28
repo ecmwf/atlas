@@ -58,3 +58,12 @@ subroutine atlas_Mesh__delete(this)
   end if
   this%cpp_object_ptr = c_null_ptr
 end subroutine atlas_Mesh__delete
+
+subroutine atlas_Mesh_finalize( this )
+  class(atlas_Mesh), intent(inout) :: this
+  if ( c_associated(this%cpp_object_ptr) ) then
+    call atlas__Mesh__delete(this%cpp_object_ptr);
+  end if
+  this%cpp_object_ptr = c_null_ptr
+end subroutine
+
