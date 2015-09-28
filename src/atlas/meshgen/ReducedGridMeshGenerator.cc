@@ -174,6 +174,14 @@ void ReducedGridMeshGenerator::generate(const Grid& grid, const GridDistribution
   if( !rg )
     throw eckit::BadCast("Grid could not be cast to a ReducedGrid",Here());
 
+  if( grid.npts() != distribution.partition().size() )
+  {
+    std::stringstream msg;
+    msg << "Number of points in grid ("<<grid.npts()<<") different from"
+           "number of points in grid distribution ("<<distribution.partition().size()<<")";
+    throw eckit::AssertionFailed(msg.str(),Here());
+  }
+
   int mypart   = options.get<size_t>("part");
 
   Region region;
