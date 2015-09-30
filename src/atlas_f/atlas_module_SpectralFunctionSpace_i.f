@@ -2,7 +2,7 @@
 
 
 !------------------------------------------------------------------------------
-TYPE, extends(object_type) :: atlas_SpectralFunctionSpace
+TYPE, extends(atlas_object) :: atlas_SpectralFunctionSpace
 
 ! Purpose :
 ! -------

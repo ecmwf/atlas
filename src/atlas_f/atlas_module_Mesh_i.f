@@ -2,7 +2,7 @@
 
 
 !------------------------------------------------------------------------------
-TYPE, extends(object_type) :: atlas_Mesh
+TYPE, extends(atlas_object) :: atlas_Mesh
 
 ! Purpose :
 ! -------

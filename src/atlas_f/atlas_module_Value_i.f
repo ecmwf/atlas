@@ -1,7 +1,7 @@
 ! (C) Copyright 2013-2015 ECMWF.
 
 !------------------------------------------------------------------------------
-TYPE, extends(object_type) :: atlas_Value
+TYPE, extends(atlas_object) :: atlas_Value
 
 ! Purpose :
 ! -------

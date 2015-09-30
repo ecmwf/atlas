@@ -2,7 +2,7 @@
 
 !------------------------------------------------------------------------------
 
-TYPE, extends(object_type) :: atlas_Config
+TYPE, extends(atlas_object) :: atlas_Config
 
 ! Purpose :
 ! -------

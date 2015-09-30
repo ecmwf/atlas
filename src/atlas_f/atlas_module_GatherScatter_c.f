@@ -5,15 +5,15 @@
 
 function atlas_GatherScatter__ctor() result(gather)
   type(atlas_GatherScatter) :: gather
-  gather%cpp_object_ptr = atlas__GatherScatter__new()
+  call gather%reset_c_ptr( atlas__GatherScatter__new() )
 end function atlas_GatherScatter__ctor
 
 subroutine GatherScatter__delete(this)
   type(atlas_GatherScatter), intent(inout) :: this
-  if ( c_associated(this%cpp_object_ptr) ) then
-    call atlas__GatherScatter__delete(this%cpp_object_ptr)
+  if ( .not. this%is_null() ) then
+    call atlas__GatherScatter__delete(this%c_ptr())
   end if
-  this%cpp_object_ptr = C_NULL_ptr
+  call this%reset_c_ptr()
 end subroutine GatherScatter__delete
 
 subroutine GatherScatter__setup32(this, part, remote_idx, glb_idx, opt_max_glb_idx)
@@ -28,7 +28,7 @@ subroutine GatherScatter__setup32(this, part, remote_idx, glb_idx, opt_max_glb_i
   else
     max_glb_idx = opt_max_glb_idx
   endif
-  call atlas__GatherScatter__setup32( this%cpp_object_ptr, part, remote_idx, 1, &
+  call atlas__GatherScatter__setup32( this%c_ptr(), part, remote_idx, 1, &
     &                        glb_idx, max_glb_idx, size(part) )
 end subroutine GatherScatter__setup32
 
@@ -44,14 +44,14 @@ subroutine GatherScatter__setup64(this, part, remote_idx, glb_idx, opt_max_glb_i
   else
     max_glb_idx = opt_max_glb_idx
   endif
-  call atlas__GatherScatter__setup64( this%cpp_object_ptr, part, remote_idx, 1, &
+  call atlas__GatherScatter__setup64( this%c_ptr(), part, remote_idx, 1, &
     &                        glb_idx, max_glb_idx, size(part) )
 end subroutine GatherScatter__setup64
 
 function GatherScatter__glb_dof(this) result(glb_dof)
   class(atlas_GatherScatter), intent(in) :: this
   integer :: glb_dof
-  glb_dof = atlas__GatherScatter__glb_dof(this%cpp_object_ptr)
+  glb_dof = atlas__GatherScatter__glb_dof(this%c_ptr())
 end function GatherScatter__glb_dof
 
 subroutine GatherScatter__gather_int32_r1_r1(this, loc_field_data, glb_field_data)
@@ -70,7 +70,7 @@ subroutine GatherScatter__gather_int32_r1_r1(this, loc_field_data, glb_field_dat
   if( size(gview) == 0 ) then
     allocate(gview(0))
   endif
-  call atlas__GatherScatter__gather_int( this%cpp_object_ptr, &
+  call atlas__GatherScatter__gather_int( this%c_ptr(), &
     &  lview, lstrides, lextents, lrank, &
     &  gview, gstrides, gextents, grank )
 end subroutine GatherScatter__gather_int32_r1_r1
@@ -92,7 +92,7 @@ subroutine GatherScatter__gather_int32_r2_r2(this, loc_field_data, glb_field_dat
   if( size(gview) == 0 ) then
     allocate(gview(0))
   endif
-  call atlas__GatherScatter__gather_int( this%cpp_object_ptr, &
+  call atlas__GatherScatter__gather_int( this%c_ptr(), &
     &  lview, lstrides, lextents, lrank, &
     &  gview, gstrides, gextents, grank )
 end subroutine GatherScatter__gather_int32_r2_r2
@@ -114,7 +114,7 @@ subroutine GatherScatter__gather_int32_r3_r3(this, loc_field_data, glb_field_dat
   if( size(gview) == 0 ) then
     allocate(gview(0))
   endif
-  call atlas__GatherScatter__gather_int( this%cpp_object_ptr, &
+  call atlas__GatherScatter__gather_int( this%c_ptr(), &
     &  lview, lstrides, lextents, lrank, &
     &  gview, gstrides, gextents, grank )
 end subroutine GatherScatter__gather_int32_r3_r3
@@ -135,7 +135,7 @@ subroutine GatherScatter__gather_int64_r1_r1(this, loc_field_data, glb_field_dat
   if( size(gview) == 0 ) then
     allocate(gview(0))
   endif
-  call atlas__GatherScatter__gather_long( this%cpp_object_ptr, &
+  call atlas__GatherScatter__gather_long( this%c_ptr(), &
     &  lview, lstrides, lextents, lrank, &
     &  gview, gstrides, gextents, grank )
 end subroutine GatherScatter__gather_int64_r1_r1
@@ -157,7 +157,7 @@ subroutine GatherScatter__gather_int64_r2_r2(this, loc_field_data, glb_field_dat
   if( size(gview) == 0 ) then
     allocate(gview(0))
   endif
-  call atlas__GatherScatter__gather_long( this%cpp_object_ptr, &
+  call atlas__GatherScatter__gather_long( this%c_ptr(), &
     &  lview, lstrides, lextents, lrank, &
     &  gview, gstrides, gextents, grank )
 end subroutine GatherScatter__gather_int64_r2_r2
@@ -179,7 +179,7 @@ subroutine GatherScatter__gather_int64_r3_r3(this, loc_field_data, glb_field_dat
   if( size(gview) == 0 ) then
     allocate(gview(0))
   endif
-  call atlas__GatherScatter__gather_long( this%cpp_object_ptr, &
+  call atlas__GatherScatter__gather_long( this%c_ptr(), &
     &  lview, lstrides, lextents, lrank, &
     &  gview, gstrides, gextents, grank )
 end subroutine GatherScatter__gather_int64_r3_r3
@@ -201,7 +201,7 @@ subroutine GatherScatter__gather_real32_r1_r1(this, loc_field_data, glb_field_da
   if( size(gview) == 0 ) then
     allocate(gview(0))
   endif
-  call atlas__GatherScatter__gather_float( this%cpp_object_ptr, &
+  call atlas__GatherScatter__gather_float( this%c_ptr(), &
     &  lview, lstrides, lextents, lrank, &
     &  gview, gstrides, gextents, grank )
 end subroutine GatherScatter__gather_real32_r1_r1
@@ -221,7 +221,7 @@ subroutine GatherScatter__gather_real32_r2_r2(this, loc_field_data, glb_field_da
   if( size(gview) == 0 ) then
     allocate(gview(0))
   endif
-  call atlas__GatherScatter__gather_float( this%cpp_object_ptr, &
+  call atlas__GatherScatter__gather_float( this%c_ptr(), &
     &  lview, lstrides, lextents, lrank, &
     &  gview, gstrides, gextents, grank )
 end subroutine GatherScatter__gather_real32_r2_r2
@@ -241,7 +241,7 @@ subroutine GatherScatter__gather_real32_r3_r3(this, loc_field_data, glb_field_da
   if( size(gview) == 0 ) then
     allocate(gview(0))
   endif
-  call atlas__GatherScatter__gather_float( this%cpp_object_ptr, &
+  call atlas__GatherScatter__gather_float( this%c_ptr(), &
     &  lview, lstrides, lextents, lrank, &
     &  gview, gstrides, gextents, grank )
 end subroutine GatherScatter__gather_real32_r3_r3
@@ -267,7 +267,7 @@ subroutine GatherScatter__gather_real64_r1_r1(this, loc_field_data, glb_field_da
   !write(0,*) "loc address, size = ",loc(loc_field_data(1)),size(loc_field_data), loc(lview(1))
   !write(0,*) "glb address, size = ",loc(gview(1)),size(gview)
 
-  call atlas__GatherScatter__gather_double( this%cpp_object_ptr, &
+  call atlas__GatherScatter__gather_double( this%c_ptr(), &
     &  lview, lstrides, lextents, lrank, &
     &  gview, gstrides, gextents, grank )
 end subroutine GatherScatter__gather_real64_r1_r1
@@ -287,7 +287,7 @@ subroutine GatherScatter__gather_real64_r2_r2(this, loc_field_data, glb_field_da
   if( size(gview) == 0 ) then
     allocate(gview(0))
   endif
-  call atlas__GatherScatter__gather_double( this%cpp_object_ptr, &
+  call atlas__GatherScatter__gather_double( this%c_ptr(), &
     &  lview, lstrides, lextents, lrank, &
     &  gview, gstrides, gextents, grank )
 end subroutine GatherScatter__gather_real64_r2_r2
@@ -307,7 +307,7 @@ subroutine GatherScatter__gather_real64_r3_r3(this, loc_field_data, glb_field_da
   if( size(gview) == 0 ) then
     allocate(gview(0))
   endif
-  call atlas__GatherScatter__gather_double( this%cpp_object_ptr, &
+  call atlas__GatherScatter__gather_double( this%c_ptr(), &
     &  lview, lstrides, lextents, lrank, &
     &  gview, gstrides, gextents, grank )
 end subroutine GatherScatter__gather_real64_r3_r3
@@ -327,7 +327,7 @@ subroutine GatherScatter__scatter_int32_r1_r1(this, glb_field_data, loc_field_da
   gstrides = (/ stride(glb_field_data,1) /)
   gextents = (/ 1                        /)
   gview => view1d(glb_field_data)
-  call atlas__GatherScatter__scatter_int( this%cpp_object_ptr, &
+  call atlas__GatherScatter__scatter_int( this%c_ptr(), &
     &  gview, gstrides, gextents, grank, &
     &  lview, lstrides, lextents, lrank )
 end subroutine GatherScatter__scatter_int32_r1_r1
@@ -348,7 +348,7 @@ subroutine GatherScatter__scatter_int32_r2_r2(this, glb_field_data, loc_field_da
   if( size(gview) == 0 ) then
     allocate(gview(0))
   endif
-  call atlas__GatherScatter__scatter_int( this%cpp_object_ptr, &
+  call atlas__GatherScatter__scatter_int( this%c_ptr(), &
     &  gview, gstrides, gextents, grank, &
     &  lview, lstrides, lextents, lrank )
 end subroutine GatherScatter__scatter_int32_r2_r2
@@ -366,7 +366,7 @@ subroutine GatherScatter__scatter_int64_r1_r1(this, glb_field_data, loc_field_da
   gstrides = (/ stride(glb_field_data,1) /)
   gextents = (/ 1                        /)
   gview => view1d(glb_field_data)
-  call atlas__GatherScatter__scatter_long( this%cpp_object_ptr, &
+  call atlas__GatherScatter__scatter_long( this%c_ptr(), &
     &  gview, gstrides, gextents, grank, &
     &  lview, lstrides, lextents, lrank )
 end subroutine GatherScatter__scatter_int64_r1_r1
@@ -387,7 +387,7 @@ subroutine GatherScatter__scatter_int64_r2_r2(this, glb_field_data, loc_field_da
   if( size(gview) == 0 ) then
     allocate(gview(0))
   endif
-  call atlas__GatherScatter__scatter_long( this%cpp_object_ptr, &
+  call atlas__GatherScatter__scatter_long( this%c_ptr(), &
     &  gview, gstrides, gextents, grank, &
     &  lview, lstrides, lextents, lrank )
 end subroutine GatherScatter__scatter_int64_r2_r2
@@ -406,7 +406,7 @@ subroutine GatherScatter__scatter_real32_r1_r1(this, glb_field_data, loc_field_d
   gstrides = (/ stride(glb_field_data,1) /)
   gextents = (/ 1                        /)
   gview => view1d(glb_field_data)
-  call atlas__GatherScatter__scatter_float( this%cpp_object_ptr, &
+  call atlas__GatherScatter__scatter_float( this%c_ptr(), &
     &  gview, gstrides, gextents, grank, &
     &  lview, lstrides, lextents, lrank )
 end subroutine GatherScatter__scatter_real32_r1_r1
@@ -426,7 +426,7 @@ subroutine GatherScatter__scatter_real32_r2_r2(this, glb_field_data, loc_field_d
   if( size(gview) == 0 ) then
     allocate(gview(0))
   endif
-  call atlas__GatherScatter__scatter_float( this%cpp_object_ptr, &
+  call atlas__GatherScatter__scatter_float( this%c_ptr(), &
     &  gview, gstrides, gextents, grank, &
     &  lview, lstrides, lextents, lrank )
 end subroutine GatherScatter__scatter_real32_r2_r2
@@ -443,7 +443,7 @@ subroutine GatherScatter__scatter_real64_r1_r1(this, glb_field_data, loc_field_d
   gstrides = (/ stride(glb_field_data,1) /)
   gextents = (/ 1                        /)
   gview => view1d(glb_field_data)
-  call atlas__GatherScatter__scatter_double( this%cpp_object_ptr, &
+  call atlas__GatherScatter__scatter_double( this%c_ptr(), &
     &  gview, gstrides, gextents, grank, &
     &  lview, lstrides, lextents, lrank )
 end subroutine GatherScatter__scatter_real64_r1_r1
@@ -463,7 +463,7 @@ subroutine GatherScatter__scatter_real64_r2_r2(this, glb_field_data, loc_field_d
   if( size(gview) == 0 ) then
     allocate(gview(0))
   endif
-  call atlas__GatherScatter__scatter_double( this%cpp_object_ptr, &
+  call atlas__GatherScatter__scatter_double( this%c_ptr(), &
     &  gview, gstrides, gextents, grank, &
     &  lview, lstrides, lextents, lrank )
 end subroutine GatherScatter__scatter_real64_r2_r2
@@ -484,7 +484,7 @@ subroutine GatherScatter__scatter_real64_r3_r3(this, glb_field_data, loc_field_d
   if( size(gview) == 0 ) then
     allocate(gview(0))
   endif
-  call atlas__GatherScatter__scatter_double( this%cpp_object_ptr, &
+  call atlas__GatherScatter__scatter_double( this%c_ptr(), &
     &  gview, gstrides, gextents, grank, &
     &  lview, lstrides, lextents, lrank )
 end subroutine GatherScatter__scatter_real64_r3_r3

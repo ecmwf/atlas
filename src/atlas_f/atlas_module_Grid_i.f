@@ -3,7 +3,7 @@
 
 
 !------------------------------------------------------------------------------
-TYPE, extends(object_type) :: atlas_ReducedGrid
+TYPE, extends(atlas_object) :: atlas_ReducedGrid
 
 ! Purpose :
 ! -------

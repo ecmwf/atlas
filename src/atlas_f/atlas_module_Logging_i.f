@@ -11,7 +11,7 @@ integer, parameter, public :: ATLAS_LOG_CATEGORY_STATS   = 4
 character(len=4), parameter, private :: default_indent = "    "
 
 
-TYPE, extends(object_type) :: atlas_LogChannel
+TYPE, extends(atlas_object) :: atlas_LogChannel
   character(len=1024), public :: msg = ""
   integer, private :: cat
 contains
@@ -52,7 +52,7 @@ end interface
 
 
 !------------------------------------------------------------------------------
-TYPE, extends(object_type) :: atlas_Logger
+TYPE, extends(atlas_object) :: atlas_Logger
 
 ! Purpose :
 ! -------

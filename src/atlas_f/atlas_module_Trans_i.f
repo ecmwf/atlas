@@ -3,7 +3,7 @@
 
 
 !------------------------------------------------------------------------------
-TYPE, extends(object_type) :: atlas_Trans
+TYPE, extends(atlas_object) :: atlas_Trans
 
 ! Purpose :
 ! -------
@@ -67,7 +67,7 @@ end interface
 
 !------------------------------------------------------------------------------
 
-TYPE, extends(object_type) :: atlas_TransParameters
+TYPE, extends(atlas_object) :: atlas_TransParameters
 
 ! Purpose :
 ! -------

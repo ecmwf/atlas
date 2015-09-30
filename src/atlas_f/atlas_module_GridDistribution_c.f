@@ -12,16 +12,16 @@ function atlas_GridDistribution__ctor( part, part0 ) result(griddistribution)
   opt_part0 = 0
   if( present(part0) ) opt_part0 = part0
   npts = size(part)
-  griddistribution%cpp_object_ptr = atlas__GridDistribution__new(npts, part, opt_part0);
+  call griddistribution%reset_c_ptr( atlas__GridDistribution__new(npts, part, opt_part0) );
 end function atlas_GridDistribution__ctor
 
 
 subroutine atlas_GridDistribution_finalize( this )
   class(atlas_GridDistribution), intent(inout) :: this
-  if ( c_associated(this%cpp_object_ptr) ) then
-    call atlas__GridDistribution__delete(this%cpp_object_ptr);
+  if ( .not. this%is_null() ) then
+    call atlas__GridDistribution__delete(this%c_ptr());
   end if
-  this%cpp_object_ptr = c_null_ptr
+  call this%reset_c_ptr()
 end subroutine
 
 

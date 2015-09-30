@@ -59,7 +59,7 @@ use atlas_WriteLoadBalanceReport_c_binding
 use atlas_atlas_logging_c_binding
 implicit none
 
-private :: object_type
+private :: atlas_object
 private :: view1d
 private :: stride
 private :: get_c_arguments
@@ -429,13 +429,13 @@ end function atlas_workdir
 function atlas_read_gmsh(filename) result(mesh)
   character(len=*), intent(in) :: filename
   type(atlas_Mesh) :: mesh
-  mesh%cpp_object_ptr = atlas__read_gmsh(c_str(filename))
+  call mesh%reset_c_ptr( atlas__read_gmsh(c_str(filename)) )
 end function atlas_read_gmsh
 
 subroutine atlas_write_gmsh(mesh,filename)
   type(atlas_Mesh), intent(in) :: mesh
   character(len=*), intent(in) :: filename
-  call atlas__write_gmsh_mesh(mesh%cpp_object_ptr,c_str(filename))
+  call atlas__write_gmsh_mesh(mesh%c_ptr(),c_str(filename))
 end subroutine atlas_write_gmsh
 
 subroutine atlas_write_gmsh_field(field,function_space,filename,mode)
@@ -444,9 +444,9 @@ subroutine atlas_write_gmsh_field(field,function_space,filename,mode)
   character(len=*), intent(in) :: filename
   integer(kind(openmode)), optional :: mode
   if( present(mode) ) then
-    call atlas__write_gmsh_field(field%cpp_object_ptr,function_space%cpp_object_ptr,c_str(filename),mode)
+    call atlas__write_gmsh_field(field%c_ptr(),function_space%c_ptr(),c_str(filename),mode)
   else
-    call atlas__write_gmsh_field(field%cpp_object_ptr,function_space%cpp_object_ptr,c_str(filename),out)
+    call atlas__write_gmsh_field(field%c_ptr(),function_space%c_ptr(),c_str(filename),out)
   endif
 end subroutine atlas_write_gmsh_field
 
@@ -456,86 +456,86 @@ subroutine atlas_write_gmsh_fieldset(fieldset,function_space,filename,mode)
   character(len=*), intent(in) :: filename
   integer(kind(openmode)), optional :: mode
   if( present(mode) ) then
-    call atlas__write_gmsh_fieldset(fieldset%cpp_object_ptr,function_space%cpp_object_ptr,c_str(filename),mode)
+    call atlas__write_gmsh_fieldset(fieldset%c_ptr(),function_space%c_ptr(),c_str(filename),mode)
   else
-    call atlas__write_gmsh_fieldset(fieldset%cpp_object_ptr,function_space%cpp_object_ptr,c_str(filename),out)
+    call atlas__write_gmsh_fieldset(fieldset%c_ptr(),function_space%c_ptr(),c_str(filename),out)
   endif
 end subroutine atlas_write_gmsh_fieldset
 
 subroutine atlas_build_parallel_fields(mesh)
   type(atlas_Mesh), intent(inout) :: mesh
-  call atlas__build_parallel_fields(mesh%cpp_object_ptr)
+  call atlas__build_parallel_fields(mesh%c_ptr())
 end subroutine atlas_build_parallel_fields
 
 subroutine atlas_build_nodes_parallel_fields(nodes)
   type(atlas_Nodes), intent(inout) :: nodes
-  call atlas__build_nodes_parallel_fields(nodes%cpp_object_ptr)
+  call atlas__build_nodes_parallel_fields(nodes%c_ptr())
 end subroutine atlas_build_nodes_parallel_fields
 
 subroutine atlas_renumber_nodes_glb_idx(nodes)
   type(atlas_Nodes), intent(inout) :: nodes
-  call atlas__renumber_nodes_glb_idx(nodes%cpp_object_ptr)
+  call atlas__renumber_nodes_glb_idx(nodes%c_ptr())
 end subroutine atlas_renumber_nodes_glb_idx
 
 subroutine atlas_build_edges_parallel_fields(edges, nodes)
   type(atlas_FunctionSpace), intent(inout) :: edges
   type(atlas_Nodes), intent(inout) :: nodes
-  call atlas__build_edges_parallel_fields(edges%cpp_object_ptr,nodes%cpp_object_ptr)
+  call atlas__build_edges_parallel_fields(edges%c_ptr(),nodes%c_ptr())
 end subroutine atlas_build_edges_parallel_fields
 
 subroutine atlas_build_periodic_boundaries(mesh)
   type(atlas_Mesh), intent(inout) :: mesh
-  call atlas__build_periodic_boundaries(mesh%cpp_object_ptr)
+  call atlas__build_periodic_boundaries(mesh%c_ptr())
 end subroutine atlas_build_periodic_boundaries
 
 subroutine atlas_build_halo(mesh,nelems)
   type(atlas_Mesh), intent(inout) :: mesh
   integer, intent(in) :: nelems
-  call atlas__build_halo(mesh%cpp_object_ptr,nelems)
+  call atlas__build_halo(mesh%c_ptr(),nelems)
 end subroutine atlas_build_halo
 
 subroutine atlas_build_edges(mesh)
   type(atlas_Mesh), intent(inout) :: mesh
-  call atlas__build_edges(mesh%cpp_object_ptr)
+  call atlas__build_edges(mesh%c_ptr())
 end subroutine atlas_build_edges
 
 subroutine atlas_build_pole_edges(mesh)
   type(atlas_Mesh), intent(inout) :: mesh
-  call atlas__build_pole_edges(mesh%cpp_object_ptr)
+  call atlas__build_pole_edges(mesh%c_ptr())
 end subroutine atlas_build_pole_edges
 
 subroutine atlas_build_node_to_edge_connectivity(mesh)
   type(atlas_Mesh), intent(inout) :: mesh
-  call atlas__build_node_to_edge_connectivity(mesh%cpp_object_ptr)
+  call atlas__build_node_to_edge_connectivity(mesh%c_ptr())
 end subroutine atlas_build_node_to_edge_connectivity
 
 subroutine atlas_build_median_dual_mesh(mesh)
   type(atlas_Mesh), intent(inout) :: mesh
-  call atlas__build_median_dual_mesh(mesh%cpp_object_ptr)
+  call atlas__build_median_dual_mesh(mesh%c_ptr())
 end subroutine atlas_build_median_dual_mesh
 
 subroutine atlas_build_centroid_dual_mesh(mesh)
   type(atlas_Mesh), intent(inout) :: mesh
-  call atlas__build_centroid_dual_mesh(mesh%cpp_object_ptr)
+  call atlas__build_centroid_dual_mesh(mesh%c_ptr())
 end subroutine atlas_build_centroid_dual_mesh
 
 subroutine atlas_write_load_balance_report(mesh,filename)
   type(atlas_Mesh), intent(in) :: mesh
   character(len=*), intent(in) :: filename
-  call atlas__write_load_balance_report(mesh%cpp_object_ptr,c_str(filename))
+  call atlas__write_load_balance_report(mesh%c_ptr(),c_str(filename))
 end subroutine atlas_write_load_balance_report
 
 function atlas_generate_mesh(grid) result(mesh)
   type(atlas_Mesh) :: mesh
   type(atlas_ReducedGrid) :: grid
-  mesh%cpp_object_ptr = atlas__generate_mesh(grid%cpp_object_ptr)
+  call mesh%reset_c_ptr( atlas__generate_mesh(grid%c_ptr()) )
 end function atlas_generate_mesh
 
 function atlas_generate_mesh_with_distribution(grid,distribution) result(mesh)
   type(atlas_Mesh) :: mesh
   type(atlas_ReducedGrid) :: grid
   type(atlas_GridDistribution) :: distribution
-  mesh%cpp_object_ptr = atlas__generate_mesh_with_distribution(grid%cpp_object_ptr,distribution%cpp_object_ptr)
+  call mesh%reset_c_ptr( atlas__generate_mesh_with_distribution(grid%c_ptr(),distribution%c_ptr()) )
 end function atlas_generate_mesh_with_distribution
 
 ! -----------------------------------------------------------------------------

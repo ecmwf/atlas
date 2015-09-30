@@ -3,7 +3,7 @@
 function atlas_LogChannel__ctor( cat ) result(channel)
   type(atlas_LogChannel) :: channel
   integer(c_int) :: cat
-  channel%cpp_object_ptr = atlas__LogChannel_cat(cat)
+  call channel%reset_c_ptr( atlas__LogChannel_cat(cat) )
   channel%cat = cat
 end function
 
@@ -35,101 +35,101 @@ end subroutine
 
 subroutine LogChannel__connect_stdout(this)
   CLASS(atlas_LogChannel) :: this
-  if( .not. c_associated(this%cpp_object_ptr) ) this%cpp_object_ptr = atlas__LogChannel_cat(this%cat)
-  call atlas__LogChannel__connect_stdout(this%cpp_object_ptr)
+  if( this%is_null() ) call this%reset_c_ptr( atlas__LogChannel_cat(this%cat) )
+  call atlas__LogChannel__connect_stdout(this%c_ptr())
 end subroutine
 
 subroutine LogChannel__disconnect_stdout(this)
   CLASS(atlas_LogChannel) :: this
-  if( .not. c_associated(this%cpp_object_ptr) ) this%cpp_object_ptr = atlas__LogChannel_cat(this%cat)
-  call atlas__LogChannel__disconnect_stdout(this%cpp_object_ptr)
+  if( this%is_null() ) call this%reset_c_ptr( atlas__LogChannel_cat(this%cat) )
+  call atlas__LogChannel__disconnect_stdout(this%c_ptr())
 end subroutine
 
 subroutine LogChannel__connect_stderr(this)
   CLASS(atlas_LogChannel) :: this
-  if( .not. c_associated(this%cpp_object_ptr) ) this%cpp_object_ptr = atlas__LogChannel_cat(this%cat)
-  call atlas__LogChannel__connect_stderr(this%cpp_object_ptr)
+  if( this%is_null() ) call this%reset_c_ptr( atlas__LogChannel_cat(this%cat) )
+  call atlas__LogChannel__connect_stderr(this%c_ptr())
 end subroutine
 
 subroutine LogChannel__disconnect_stderr(this)
   CLASS(atlas_LogChannel) :: this
-  if( .not. c_associated(this%cpp_object_ptr) ) this%cpp_object_ptr = atlas__LogChannel_cat(this%cat)
-  call atlas__LogChannel__disconnect_stderr(this%cpp_object_ptr)
+  if( this%is_null() ) call this%reset_c_ptr( atlas__LogChannel_cat(this%cat) )
+  call atlas__LogChannel__disconnect_stderr(this%c_ptr())
 end subroutine
 
 subroutine LogChannel__connect_fortran_unit(this,unit)
   CLASS(atlas_LogChannel) :: this
   integer, intent(in) :: unit
-  if( .not. c_associated(this%cpp_object_ptr) ) this%cpp_object_ptr = atlas__LogChannel_cat(this%cat)
-  call atlas__LogChannel__connect_fortran_unit(this%cpp_object_ptr,unit)
+  if( this%is_null() ) call this%reset_c_ptr( atlas__LogChannel_cat(this%cat) )
+  call atlas__LogChannel__connect_fortran_unit(this%c_ptr(),unit)
 end subroutine
 
 subroutine LogChannel__disconnect_fortran_unit(this,unit)
   CLASS(atlas_LogChannel) :: this
   integer, intent(in) :: unit
-  if( .not. c_associated(this%cpp_object_ptr) ) this%cpp_object_ptr = atlas__LogChannel_cat(this%cat)
-  call atlas__LogChannel__disconnect_fortran_unit(this%cpp_object_ptr,unit)
+  if( this%is_null() ) call this%reset_c_ptr( atlas__LogChannel_cat(this%cat) )
+  call atlas__LogChannel__disconnect_fortran_unit(this%c_ptr(),unit)
 end subroutine
 
 subroutine LogChannel__set_prefix(this,prefix)
   CLASS(atlas_LogChannel) :: this
   character(kind=c_char,len=*), intent(in):: prefix
-  if( .not. c_associated(this%cpp_object_ptr) ) this%cpp_object_ptr = atlas__LogChannel_cat(this%cat)
-  call atlas__LogChannel__set_prefix(this%cpp_object_ptr,c_str_no_trim(prefix))
+  if( this%is_null() ) call this%reset_c_ptr( atlas__LogChannel_cat(this%cat) )
+  call atlas__LogChannel__set_prefix(this%c_ptr(),c_str_no_trim(prefix))
 end subroutine
 
 subroutine LogChannel__set_prefix_stdout(this,prefix)
   CLASS(atlas_LogChannel) :: this
   character(kind=c_char,len=*), intent(in):: prefix
-  if( .not. c_associated(this%cpp_object_ptr) ) this%cpp_object_ptr = atlas__LogChannel_cat(this%cat)
-  call atlas__LogChannel__set_prefix_stdout(this%cpp_object_ptr,c_str_no_trim(prefix))
+  if( .not. this%is_null() ) call this%reset_c_ptr( atlas__LogChannel_cat(this%cat) )
+  call atlas__LogChannel__set_prefix_stdout(this%c_ptr(),c_str_no_trim(prefix))
 end subroutine
 
 subroutine LogChannel__set_prefix_stderr(this,prefix)
   CLASS(atlas_LogChannel) :: this
   character(kind=c_char,len=*), intent(in):: prefix
-  if( .not. c_associated(this%cpp_object_ptr) ) this%cpp_object_ptr = atlas__LogChannel_cat(this%cat)
-  call atlas__LogChannel__set_prefix_stderr(this%cpp_object_ptr,c_str_no_trim(prefix))
+  if( this%is_null() ) call this%reset_c_ptr( atlas__LogChannel_cat(this%cat) )
+  call atlas__LogChannel__set_prefix_stderr(this%c_ptr(),c_str_no_trim(prefix))
 end subroutine
 
 subroutine LogChannel__set_prefix_fortran_unit(this,unit,prefix)
   CLASS(atlas_LogChannel) :: this
   integer, intent(in) :: unit
   character(kind=c_char,len=*), intent(in):: prefix
-  if( .not. c_associated(this%cpp_object_ptr) ) this%cpp_object_ptr = atlas__LogChannel_cat(this%cat)
-  call atlas__LogChannel__set_prefix_fortran_unit(this%cpp_object_ptr,unit,c_str_no_trim(prefix))
+  if( this%is_null() ) call this%reset_c_ptr( atlas__LogChannel_cat(this%cat) )
+  call atlas__LogChannel__set_prefix_fortran_unit(this%c_ptr(),unit,c_str_no_trim(prefix))
 end subroutine
 
 subroutine LogChannel__indent(this,indent)
   CLASS(atlas_LogChannel) :: this
   character(kind=c_char,len=*), intent(in), optional :: indent
-  if( .not. c_associated(this%cpp_object_ptr) ) this%cpp_object_ptr = atlas__LogChannel_cat(this%cat)
+  if( this%is_null() ) call this%reset_c_ptr( atlas__LogChannel_cat(this%cat) )
   if( present(indent) ) then
-    call atlas__LogChannel__indent(this%cpp_object_ptr,c_str_no_trim(indent))
+    call atlas__LogChannel__indent(this%c_ptr(),c_str_no_trim(indent))
   else
-    call atlas__LogChannel__indent(this%cpp_object_ptr,c_str_no_trim(default_indent))
+    call atlas__LogChannel__indent(this%c_ptr(),c_str_no_trim(default_indent))
   endif
 end subroutine
 
 subroutine LogChannel__indent_stdout(this,indent)
   CLASS(atlas_LogChannel) :: this
   character(kind=c_char,len=*), intent(in), optional :: indent
-  if( .not. c_associated(this%cpp_object_ptr) ) this%cpp_object_ptr = atlas__LogChannel_cat(this%cat)
+  if( this%is_null() ) call this%reset_c_ptr( atlas__LogChannel_cat(this%cat) )
   if( present(indent) ) then
-    call atlas__LogChannel__indent_stdout(this%cpp_object_ptr,c_str_no_trim(indent))
+    call atlas__LogChannel__indent_stdout(this%c_ptr(),c_str_no_trim(indent))
   else
-    call atlas__LogChannel__indent_stdout(this%cpp_object_ptr,c_str_no_trim(default_indent))
+    call atlas__LogChannel__indent_stdout(this%c_ptr(),c_str_no_trim(default_indent))
   endif
 end subroutine
 
 subroutine LogChannel__indent_stderr(this,indent)
   CLASS(atlas_LogChannel) :: this
   character(kind=c_char,len=*), intent(in), optional :: indent
-  if( .not. c_associated(this%cpp_object_ptr) ) this%cpp_object_ptr = atlas__LogChannel_cat(this%cat)
+  if( this%is_null() ) call this%reset_c_ptr( atlas__LogChannel_cat(this%cat) )
   if( present(indent) ) then
-    call atlas__LogChannel__indent_stderr(this%cpp_object_ptr,c_str_no_trim(indent))
+    call atlas__LogChannel__indent_stderr(this%c_ptr(),c_str_no_trim(indent))
   else
-    call atlas__LogChannel__indent_stderr(this%cpp_object_ptr,c_str_no_trim(default_indent))
+    call atlas__LogChannel__indent_stderr(this%c_ptr(),c_str_no_trim(default_indent))
   endif
 end subroutine
 
@@ -137,68 +137,68 @@ subroutine LogChannel__indent_fortran_unit(this,unit,indent)
   CLASS(atlas_LogChannel) :: this
   integer, intent(in) :: unit
   character(kind=c_char,len=*), intent(in), optional :: indent
-  if( .not. c_associated(this%cpp_object_ptr) ) this%cpp_object_ptr = atlas__LogChannel_cat(this%cat)
+  if( this%is_null() ) call this%reset_c_ptr( atlas__LogChannel_cat(this%cat) )
   if( present(indent) ) then
-    call atlas__LogChannel__indent_fortran_unit(this%cpp_object_ptr,unit,c_str_no_trim(indent))
+    call atlas__LogChannel__indent_fortran_unit(this%c_ptr(),unit,c_str_no_trim(indent))
   else
-    call atlas__LogChannel__indent_fortran_unit(this%cpp_object_ptr,unit,c_str_no_trim(default_indent))
+    call atlas__LogChannel__indent_fortran_unit(this%c_ptr(),unit,c_str_no_trim(default_indent))
   endif
 end subroutine
 
 subroutine LogChannel__dedent(this)
   CLASS(atlas_LogChannel) :: this
-  if( .not. c_associated(this%cpp_object_ptr) ) this%cpp_object_ptr = atlas__LogChannel_cat(this%cat)
-  call atlas__LogChannel__dedent(this%cpp_object_ptr)
+  if( this%is_null() ) call this%reset_c_ptr( atlas__LogChannel_cat(this%cat) )
+  call atlas__LogChannel__dedent(this%c_ptr())
 end subroutine
 
 subroutine LogChannel__dedent_stdout(this)
   CLASS(atlas_LogChannel) :: this
-  if( .not. c_associated(this%cpp_object_ptr) ) this%cpp_object_ptr = atlas__LogChannel_cat(this%cat)
-  call atlas__LogChannel__dedent_stdout(this%cpp_object_ptr)
+  if( this%is_null() ) call this%reset_c_ptr( atlas__LogChannel_cat(this%cat) )
+  call atlas__LogChannel__dedent_stdout(this%c_ptr())
 end subroutine
 
 subroutine LogChannel__dedent_stderr(this)
   CLASS(atlas_LogChannel) :: this
-  if( .not. c_associated(this%cpp_object_ptr) ) this%cpp_object_ptr = atlas__LogChannel_cat(this%cat)
-  call atlas__LogChannel__dedent_stderr(this%cpp_object_ptr)
+  if( this%is_null() ) call this%reset_c_ptr( atlas__LogChannel_cat(this%cat) )
+  call atlas__LogChannel__dedent_stderr(this%c_ptr())
 end subroutine
 
 subroutine LogChannel__dedent_fortran_unit(this,unit)
   CLASS(atlas_LogChannel) :: this
   integer, intent(in) :: unit
-  if( .not. c_associated(this%cpp_object_ptr) ) this%cpp_object_ptr = atlas__LogChannel_cat(this%cat)
-  call atlas__LogChannel__dedent_fortran_unit(this%cpp_object_ptr,unit)
+  if( this%is_null() ) call this%reset_c_ptr( atlas__LogChannel_cat(this%cat) )
+  call atlas__LogChannel__dedent_fortran_unit(this%c_ptr(),unit)
 end subroutine
 
 subroutine LogChannel__clear_indentation(this)
   CLASS(atlas_LogChannel) :: this
-  if( .not. c_associated(this%cpp_object_ptr) ) this%cpp_object_ptr = atlas__LogChannel_cat(this%cat)
-  call atlas__LogChannel__clear_indentation(this%cpp_object_ptr)
+  if( this%is_null() ) call this%reset_c_ptr( atlas__LogChannel_cat(this%cat) )
+  call atlas__LogChannel__clear_indentation(this%c_ptr())
 end subroutine
 
 subroutine LogChannel__clear_indentation_stdout(this)
   CLASS(atlas_LogChannel) :: this
-  if( .not. c_associated(this%cpp_object_ptr) ) this%cpp_object_ptr = atlas__LogChannel_cat(this%cat)
-  call atlas__LogChannel__clear_indentation_stdout(this%cpp_object_ptr)
+  if( this%is_null() ) call this%reset_c_ptr( atlas__LogChannel_cat(this%cat) )
+  call atlas__LogChannel__clear_indentation_stdout(this%c_ptr())
 end subroutine
 
 subroutine LogChannel__clear_indentation_stderr(this)
   CLASS(atlas_LogChannel) :: this
-  if( .not. c_associated(this%cpp_object_ptr) ) this%cpp_object_ptr = atlas__LogChannel_cat(this%cat)
-  call atlas__LogChannel__clear_indentation_stderr(this%cpp_object_ptr)
+  if( this%is_null() ) call this%reset_c_ptr( atlas__LogChannel_cat(this%cat) )
+  call atlas__LogChannel__clear_indentation_stderr(this%c_ptr())
 end subroutine
 
 subroutine LogChannel__clear_indentation_fortran_unit(this,unit)
   CLASS(atlas_LogChannel) :: this
   integer, intent(in) :: unit
-  if( .not. c_associated(this%cpp_object_ptr) ) this%cpp_object_ptr = atlas__LogChannel_cat(this%cat)
-  call atlas__LogChannel__clear_indentation_fortran_unit(this%cpp_object_ptr,unit)
+  if( this%is_null() ) call this%reset_c_ptr( atlas__LogChannel_cat(this%cat) )
+  call atlas__LogChannel__clear_indentation_fortran_unit(this%c_ptr(),unit)
 end subroutine
 
 function Logger__channel(cat)
   type(atlas_LogChannel) :: Logger__channel
   integer, intent(in) :: cat
-  Logger__channel%cpp_object_ptr = atlas__LogChannel_cat(cat)
+  call Logger__channel%reset_c_ptr( atlas__LogChannel_cat(cat) )
   Logger__channel%cat = cat
 end function
 

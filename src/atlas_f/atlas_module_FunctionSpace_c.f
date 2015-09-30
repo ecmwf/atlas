@@ -3,7 +3,7 @@
 function atlas_NextFunctionSpace__cptr(cptr) result(functionspace)
   type(atlas_NextFunctionSpace) :: functionspace
   type(c_ptr), intent(in) :: cptr
-  functionspace%cpp_object_ptr = cptr
+  call functionspace%reset_c_ptr( cptr )
   call functionspace%attach()
   call atlas_return(functionspace)
 end function
@@ -11,15 +11,15 @@ end function
 subroutine atlas_NextFunctionSpace__finalize(this)
   use atlas_functionspace_c_binding
   class(atlas_NextFunctionSpace), intent(inout) :: this
-  if( c_associated(this%cpp_object_ptr) ) then
+  if( .not. this%is_null() ) then
     if( this%owners() <= 0 ) then
       call atlas_abort("Cannot finalize functionspace that has no owners")
     endif
     call this%detach()
     if( this%owners() == 0 ) then
-      call atlas__NextFunctionSpace__delete(this%cpp_object_ptr)
+      call atlas__NextFunctionSpace__delete(this%c_ptr())
     endif
-    this%cpp_object_ptr = c_null_ptr
+    call this%reset_c_ptr()
   endif
 end subroutine
 
@@ -33,21 +33,21 @@ end subroutine
 subroutine atlas_NextFunctionSpace__delete(this)
   use atlas_functionspace_c_binding
   type(atlas_NextFunctionSpace), intent(inout) :: this
-  if ( c_associated(this%cpp_object_ptr) ) then
-    call atlas__NextFunctionSpace__delete(this%cpp_object_ptr)
+  if ( .not. this%is_null() ) then
+    call atlas__NextFunctionSpace__delete(this%c_ptr())
   end if
-  this%cpp_object_ptr = c_null_ptr
+  call this%reset_c_ptr()
 end subroutine atlas_NextFunctionSpace__delete
 
 subroutine atlas_NextFunctionSpace__reset(functionspace_out,functionspace_in)
   type(atlas_NextFunctionSpace), intent(inout) :: functionspace_out
   class(atlas_NextFunctionSpace), intent(in) :: functionspace_in
-  if( .not. atlas_compare_equal(functionspace_out%cpp_object_ptr,functionspace_in%cpp_object_ptr) ) then
+  if( .not. atlas_compare_equal(functionspace_out%c_ptr(),functionspace_in%c_ptr()) ) then
 #ifndef FORTRAN_SUPPORTS_FINAL
     call atlas_NextFunctionSpace__finalize(functionspace_out)
 #endif
-    functionspace_out%cpp_object_ptr = functionspace_in%cpp_object_ptr
-    if( c_associated(functionspace_out%cpp_object_ptr) ) call functionspace_out%attach()
+    call functionspace_out%reset_c_ptr( functionspace_in%c_ptr() )
+    if( .not. functionspace_out%is_null() ) call functionspace_out%attach()
   endif
 end subroutine
 
@@ -55,7 +55,7 @@ function atlas_NextFunctionSpace__name(this) result(name)
   class(atlas_NextFunctionSpace), intent(in) :: this
   character(len=:), allocatable :: name
   type(c_ptr) :: name_c_str
-  name_c_str = atlas__NextFunctionSpace__name(this%cpp_object_ptr)
+  name_c_str = atlas__NextFunctionSpace__name(this%c_ptr())
   name = c_to_f_string_cptr(name_c_str)
 end function
 
@@ -66,7 +66,7 @@ end function
 function FunctionSpace__metadata(this) result(metadata)
   class(atlas_FunctionSpace), intent(in) :: this
   type(atlas_Metadata) :: Metadata
-  metadata%cpp_object_ptr = atlas__FunctionSpace__metadata(this%cpp_object_ptr)
+  call metadata%reset_c_ptr( atlas__FunctionSpace__metadata(this%c_ptr()) )
 end function FunctionSpace__metadata
 
 subroutine FunctionSpace__create_field(this,name,nvars,kind)
@@ -76,21 +76,21 @@ subroutine FunctionSpace__create_field(this,name,nvars,kind)
   integer, intent(in), optional :: kind
   if (present(kind)) then
     if (kind == ATLAS_KIND_REAL64) then
-      call atlas__FunctionSpace__create_field_double(this%cpp_object_ptr,c_str(name),nvars)
+      call atlas__FunctionSpace__create_field_double(this%c_ptr(),c_str(name),nvars)
     else if (kind == ATLAS_KIND_REAL32) then
-      call atlas__FunctionSpace__create_field_float(this%cpp_object_ptr,c_str(name),nvars)
+      call atlas__FunctionSpace__create_field_float(this%c_ptr(),c_str(name),nvars)
     else if (kind == ATLAS_KIND_INT32) then
-      call atlas__FunctionSpace__create_field_int(this%cpp_object_ptr,c_str(name),nvars)
+      call atlas__FunctionSpace__create_field_int(this%c_ptr(),c_str(name),nvars)
     else if (kind == ATLAS_KIND_INT64) then
-      call atlas__FunctionSpace__create_field_long(this%cpp_object_ptr,c_str(name),nvars)
+      call atlas__FunctionSpace__create_field_long(this%c_ptr(),c_str(name),nvars)
     else
       write(0,*) "Unsupported kind"
       write(0,*) 'call abort()'
     endif
   else if (wp == c_double) then
-    call atlas__FunctionSpace__create_field_double(this%cpp_object_ptr,c_str(name),nvars)
+    call atlas__FunctionSpace__create_field_double(this%c_ptr(),c_str(name),nvars)
   else if (wp == c_float) then
-    call atlas__FunctionSpace__create_field_float(this%cpp_object_ptr,c_str(name),nvars)
+    call atlas__FunctionSpace__create_field_float(this%c_ptr(),c_str(name),nvars)
   end if
 end subroutine FunctionSpace__create_field
 
@@ -98,27 +98,27 @@ end subroutine FunctionSpace__create_field
 subroutine FunctionSpace__remove_field(this,name)
   class(atlas_FunctionSpace), intent(in) :: this
   character(len=*), intent(in) :: name
-  call atlas__FunctionSpace__remove_field(this%cpp_object_ptr,c_str(name))
+  call atlas__FunctionSpace__remove_field(this%c_ptr(),c_str(name))
 end subroutine FunctionSpace__remove_field
 
 function FunctionSpace__name(this) result(name)
   class(atlas_FunctionSpace), intent(in) :: this
   character(len=:), allocatable :: name
   type(c_ptr) :: name_c_str
-  name_c_str = atlas__FunctionSpace__name(this%cpp_object_ptr)
+  name_c_str = atlas__FunctionSpace__name(this%c_ptr())
   name = c_to_f_string_cptr(name_c_str)
 end function FunctionSpace__name
 
 function FunctionSpace__dof(this) result(dof)
   class(atlas_FunctionSpace), intent(in) :: this
   integer :: dof
-  dof = atlas__FunctionSpace__dof(this%cpp_object_ptr)
+  dof = atlas__FunctionSpace__dof(this%c_ptr())
 end function FunctionSpace__dof
 
 function FunctionSpace__glb_dof(this) result(glb_dof)
   class(atlas_FunctionSpace), intent(in) :: this
   integer :: glb_dof
-  glb_dof = atlas__FunctionSpace__glb_dof(this%cpp_object_ptr)
+  glb_dof = atlas__FunctionSpace__glb_dof(this%c_ptr())
 end function FunctionSpace__glb_dof
 
 function FunctionSpace__shape_arr(this) result(shape)
@@ -126,7 +126,7 @@ function FunctionSpace__shape_arr(this) result(shape)
   integer, pointer :: shape(:)
   type(c_ptr) :: shape_c_ptr
   integer(c_int) :: field_rank
-  call atlas__FunctionSpace__shapef(this%cpp_object_ptr, shape_c_ptr, field_rank)
+  call atlas__FunctionSpace__shapef(this%c_ptr(), shape_c_ptr, field_rank)
   call C_F_POINTER ( shape_c_ptr , shape , (/field_rank/) )
 end function FunctionSpace__shape_arr
 
@@ -143,8 +143,8 @@ function FunctionSpace__field(this,name) result(field)
   class(atlas_FunctionSpace), intent(in) :: this
   character(len=*), intent(in) :: name
   type(atlas_Field) :: field
-  field = atlas_Field( atlas__FunctionSpace__field(this%cpp_object_ptr, c_str(name) ) )
-  if( .not. C_associated(field%cpp_object_ptr) ) write(0,*) 'call abort()'
+  field = atlas_Field( atlas__FunctionSpace__field(this%c_ptr(), c_str(name) ) )
+  if( field%is_null() ) write(0,*) 'call abort()'
   call atlas_return(field)
 end function FunctionSpace__field
 
@@ -153,7 +153,7 @@ function FunctionSpace__has_field(this,name) result(flag)
   character(len=*), intent(in) :: name
   logical :: flag
   integer :: rc
-  rc = atlas__FunctionSpace__has_field(this%cpp_object_ptr, c_str(name))
+  rc = atlas__FunctionSpace__has_field(this%c_ptr(), c_str(name))
   if( rc == 0 ) then
     flag = .False.
   else
@@ -163,13 +163,13 @@ end function FunctionSpace__has_field
 
 subroutine FunctionSpace__parallelise(this)
   class(atlas_FunctionSpace), intent(in) :: this
-  call atlas__FunctionSpace__parallelise(this%cpp_object_ptr)
+  call atlas__FunctionSpace__parallelise(this%c_ptr())
 end subroutine FunctionSpace__parallelise
 
 function FunctionSpace__get_halo_exchange(this) result(halo_exchange)
   class(atlas_FunctionSpace), intent(in) :: this
   type(atlas_HaloExchange) :: halo_exchange
-  halo_exchange%cpp_object_ptr = atlas__FunctionSpace__halo_exchange( this%cpp_object_ptr )
+  call halo_exchange%reset_c_ptr( atlas__FunctionSpace__halo_exchange( this%c_ptr() ) )
 end function FunctionSpace__get_halo_exchange
 
 subroutine FunctionSpace__halo_exchange_int32_r1(this, field_data)
@@ -181,21 +181,21 @@ subroutine FunctionSpace__halo_exchange_int32_r1(this, field_data)
     write(0,*) 'call abort()'
   end if
 #endif
-  call atlas__FunctionSpace__halo_exchange_int( this%cpp_object_ptr, field_data, size(field_data) )
+  call atlas__FunctionSpace__halo_exchange_int( this%c_ptr(), field_data, size(field_data) )
 end subroutine FunctionSpace__halo_exchange_int32_r1
 subroutine FunctionSpace__halo_exchange_int32_r2(this, field_data)
   class(atlas_FunctionSpace), intent(in) :: this
   integer, intent(inout) :: field_data(:,:)
   integer, pointer :: view(:)
   view => view1d(field_data)
-  call atlas__FunctionSpace__halo_exchange_int( this%cpp_object_ptr, view, size(field_data) )
+  call atlas__FunctionSpace__halo_exchange_int( this%c_ptr(), view, size(field_data) )
 end subroutine FunctionSpace__halo_exchange_int32_r2
 subroutine FunctionSpace__halo_exchange_int32_r3(this, field_data)
   class(atlas_FunctionSpace), intent(in) :: this
   integer, intent(inout) :: field_data(:,:,:)
   integer, pointer :: view(:)
   view => view1d(field_data)
-  call atlas__FunctionSpace__halo_exchange_int( this%cpp_object_ptr, view, size(field_data) )
+  call atlas__FunctionSpace__halo_exchange_int( this%c_ptr(), view, size(field_data) )
 end subroutine FunctionSpace__halo_exchange_int32_r3
 
 subroutine FunctionSpace__halo_exchange_real32_r1(this, field_data)
@@ -207,21 +207,21 @@ subroutine FunctionSpace__halo_exchange_real32_r1(this, field_data)
     write(0,*) 'call abort()'
   end if
 #endif
-  call atlas__FunctionSpace__halo_exchange_float( this%cpp_object_ptr, field_data, size(field_data) )
+  call atlas__FunctionSpace__halo_exchange_float( this%c_ptr(), field_data, size(field_data) )
 end subroutine FunctionSpace__halo_exchange_real32_r1
 subroutine FunctionSpace__halo_exchange_real32_r2(this, field_data)
   class(atlas_FunctionSpace), intent(in) :: this
   real(c_float), intent(inout) :: field_data(:,:)
   real(c_float), pointer :: view(:)
   view => view1d(field_data)
-  call atlas__FunctionSpace__halo_exchange_float( this%cpp_object_ptr, view, size(field_data) )
+  call atlas__FunctionSpace__halo_exchange_float( this%c_ptr(), view, size(field_data) )
 end subroutine FunctionSpace__halo_exchange_real32_r2
 subroutine FunctionSpace__halo_exchange_real32_r3(this, field_data)
   class(atlas_FunctionSpace), intent(in) :: this
   real(c_float), intent(inout) :: field_data(:,:,:)
   real(c_float), pointer :: view(:)
   view => view1d(field_data)
-  call atlas__FunctionSpace__halo_exchange_float( this%cpp_object_ptr, view, size(field_data) )
+  call atlas__FunctionSpace__halo_exchange_float( this%c_ptr(), view, size(field_data) )
 end subroutine FunctionSpace__halo_exchange_real32_r3
 
 subroutine FunctionSpace__halo_exchange_real64_r1(this, field_data)
@@ -233,35 +233,35 @@ subroutine FunctionSpace__halo_exchange_real64_r1(this, field_data)
     write(0,*) 'call abort()'
   end if
 #endif
-  call atlas__FunctionSpace__halo_exchange_double( this%cpp_object_ptr, field_data, size(field_data) )
+  call atlas__FunctionSpace__halo_exchange_double( this%c_ptr(), field_data, size(field_data) )
 end subroutine FunctionSpace__halo_exchange_real64_r1
 subroutine FunctionSpace__halo_exchange_real64_r2(this, field_data)
   class(atlas_FunctionSpace), intent(in) :: this
   real(c_double), intent(inout) :: field_data(:,:)
   real(c_double), pointer :: view(:)
   view => view1d(field_data)
-  call atlas__FunctionSpace__halo_exchange_double( this%cpp_object_ptr, view, size(field_data) )
+  call atlas__FunctionSpace__halo_exchange_double( this%c_ptr(), view, size(field_data) )
 end subroutine FunctionSpace__halo_exchange_real64_r2
 subroutine FunctionSpace__halo_exchange_real64_r3(this, field_data)
   class(atlas_FunctionSpace), intent(in) :: this
   real(c_double), intent(inout) :: field_data(:,:,:)
   real(c_double), pointer :: view(:)
   view => view1d(field_data)
-  call atlas__FunctionSpace__halo_exchange_double( this%cpp_object_ptr, view, size(field_data) )
+  call atlas__FunctionSpace__halo_exchange_double( this%c_ptr(), view, size(field_data) )
 end subroutine FunctionSpace__halo_exchange_real64_r3
 subroutine FunctionSpace__halo_exchange_real64_r4(this, field_data)
   class(atlas_FunctionSpace), intent(in) :: this
   real(c_double), intent(inout) :: field_data(:,:,:,:)
   real(c_double), pointer :: view(:)
   view => view1d(field_data)
-  call atlas__FunctionSpace__halo_exchange_double( this%cpp_object_ptr, view, size(field_data) )
+  call atlas__FunctionSpace__halo_exchange_double( this%c_ptr(), view, size(field_data) )
 end subroutine FunctionSpace__halo_exchange_real64_r4
 
 
 function FunctionSpace__get_gather(this) result(gather)
   class(atlas_FunctionSpace), intent(in) :: this
   type(atlas_GatherScatter) :: gather
-  gather%cpp_object_ptr = atlas__FunctionSpace__gather( this%cpp_object_ptr )
+  call gather%reset_c_ptr( atlas__FunctionSpace__gather( this%c_ptr() ) )
 end function FunctionSpace__get_gather
 
 subroutine FunctionSpace__gather_real32_r1(this, field_data, glbfield_data)
@@ -274,7 +274,7 @@ subroutine FunctionSpace__gather_real32_r1(this, field_data, glbfield_data)
     write(0,*) 'call abort()'
   end if
 #endif
-  call atlas__FunctionSpace__gather_float( this%cpp_object_ptr, field_data, size(field_data), &
+  call atlas__FunctionSpace__gather_float( this%c_ptr(), field_data, size(field_data), &
                                           & glbfield_data, size(glbfield_data) )
 end subroutine FunctionSpace__gather_real32_r1
 
@@ -289,7 +289,7 @@ subroutine FunctionSpace__gather_real32_r2(this, field_data, glbfield_data)
   if( size(glbfield_data) /= 0 ) then
     glbview => view1d(glbfield_data)
   end if
-  call atlas__FunctionSpace__gather_float( this%cpp_object_ptr, view, size(field_data), &
+  call atlas__FunctionSpace__gather_float( this%c_ptr(), view, size(field_data), &
                                           & glbview, size(glbfield_data) )
 end subroutine FunctionSpace__gather_real32_r2
 
@@ -304,7 +304,7 @@ subroutine FunctionSpace__gather_real32_r3(this, field_data, glbfield_data)
   if( size(glbfield_data) /= 0 ) then
     glbview => view1d(glbfield_data)
   end if
-  call atlas__FunctionSpace__gather_float( this%cpp_object_ptr, view, size(field_data), &
+  call atlas__FunctionSpace__gather_float( this%c_ptr(), view, size(field_data), &
                                           & glbview, size(glbfield_data) )
 end subroutine FunctionSpace__gather_real32_r3
 
@@ -318,7 +318,7 @@ subroutine FunctionSpace__gather_real64_r1(this, field_data, glbfield_data)
     write(0,*) 'call abort()'
   end if
 #endif
-  call atlas__FunctionSpace__gather_double( this%cpp_object_ptr, field_data, size(field_data), &
+  call atlas__FunctionSpace__gather_double( this%c_ptr(), field_data, size(field_data), &
                                           & glbfield_data, size(glbfield_data) )
 end subroutine FunctionSpace__gather_real64_r1
 
@@ -333,7 +333,7 @@ subroutine FunctionSpace__gather_real64_r2(this, field_data, glbfield_data)
   if( size(glbfield_data) /= 0 ) then
     glbview => view1d(glbfield_data)
   end if
-  call atlas__FunctionSpace__gather_double( this%cpp_object_ptr, view, size(field_data), &
+  call atlas__FunctionSpace__gather_double( this%c_ptr(), view, size(field_data), &
                                           & glbview, size(glbfield_data) )
 end subroutine FunctionSpace__gather_real64_r2
 
@@ -348,7 +348,7 @@ subroutine FunctionSpace__gather_real64_r3(this, field_data, glbfield_data)
   if( size(glbfield_data) /= 0 ) then
     glbview => view1d(glbfield_data)
   end if
-  call atlas__FunctionSpace__gather_double( this%cpp_object_ptr, view, size(field_data), &
+  call atlas__FunctionSpace__gather_double( this%c_ptr(), view, size(field_data), &
                                           & glbview, size(glbfield_data) )
 end subroutine FunctionSpace__gather_real64_r3
 
@@ -362,7 +362,7 @@ subroutine FunctionSpace__gather_int32_r1(this, field_data, glbfield_data)
     write(0,*) 'call abort()'
   end if
 #endif
-  call atlas__FunctionSpace__gather_int( this%cpp_object_ptr, field_data, size(field_data), &
+  call atlas__FunctionSpace__gather_int( this%c_ptr(), field_data, size(field_data), &
                                        & glbfield_data, size(glbfield_data) )
 end subroutine FunctionSpace__gather_int32_r1
 
@@ -376,12 +376,12 @@ subroutine FunctionSpace__gather_int32_r2(this, field_data, glbfield_data)
   if( size(glbfield_data) /= 0 ) then
     glbview => view1d(glbfield_data)
   end if
-  call atlas__FunctionSpace__gather_int( this%cpp_object_ptr, view, size(field_data), &
+  call atlas__FunctionSpace__gather_int( this%c_ptr(), view, size(field_data), &
                                           & glbview, size(glbfield_data) )
 end subroutine FunctionSpace__gather_int32_r2
 
 function FunctionSpace__get_checksum(this) result(checksum)
   class(atlas_FunctionSpace), intent(in) :: this
   type(atlas_Checksum) :: checksum
-  checksum%cpp_object_ptr = atlas__FunctionSpace__checksum( this%cpp_object_ptr )
+  call checksum%reset_c_ptr( atlas__FunctionSpace__checksum( this%c_ptr() ) )
 end function FunctionSpace__get_checksum

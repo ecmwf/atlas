@@ -2,7 +2,7 @@
 
 
 !------------------------------------------------------------------------------
-TYPE, extends(object_type) :: atlas_NextFunctionSpace
+TYPE, extends(atlas_object) :: atlas_NextFunctionSpace
 
 ! Purpose :
 ! -------
@@ -39,7 +39,7 @@ end interface
 
 
 !------------------------------------------------------------------------------
-TYPE, extends(object_type) :: atlas_FunctionSpace
+TYPE, extends(atlas_object) :: atlas_FunctionSpace
 
 ! Purpose :
 ! -------

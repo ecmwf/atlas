@@ -5,22 +5,22 @@
 
 function atlas_HaloExchange__ctor() result(halo_exchange)
   type(atlas_HaloExchange) :: halo_exchange
-  halo_exchange%cpp_object_ptr = atlas__HaloExchange__new()
+  call halo_exchange%reset_c_ptr( atlas__HaloExchange__new() )
 end function atlas_HaloExchange__ctor
 
 subroutine atlas_HaloExchange__delete(this)
   type(atlas_HaloExchange), intent(inout) :: this
-  if ( c_associated(this%cpp_object_ptr) ) then
-    call atlas__HaloExchange__delete(this%cpp_object_ptr)
+  if ( .not. this%is_null() ) then
+    call atlas__HaloExchange__delete(this%c_ptr())
   end if
-  this%cpp_object_ptr = C_NULL_ptr
+  call this%reset_c_ptr()
 end subroutine atlas_HaloExchange__delete
 
 subroutine HaloExchange__setup(this, part, remote_idx)
   class(atlas_HaloExchange), intent(in) :: this
   integer, intent(in) :: part(:)
   integer, intent(in) :: remote_idx(:)
-  call atlas__HaloExchange__setup( this%cpp_object_ptr, part, remote_idx, 1, size(part) )
+  call atlas__HaloExchange__setup( this%c_ptr(), part, remote_idx, 1, size(part) )
 end subroutine HaloExchange__setup
 
 
@@ -30,7 +30,7 @@ subroutine HaloExchange__execute_int32_r1(this, field_data)
   integer :: strides(1), extents(1)
   strides = (/ stride(field_data,1) /)
   extents = (/ 1                    /)
-  call atlas__HaloExchange__execute_strided_int( this%cpp_object_ptr, field_data, &
+  call atlas__HaloExchange__execute_strided_int( this%c_ptr(), field_data, &
     & strides, extents, 1 )
 end subroutine HaloExchange__execute_int32_r1
 
@@ -42,7 +42,7 @@ subroutine HaloExchange__execute_int32_r2(this, field_data)
   view => view1d(field_data)
   strides = (/ stride(field_data,2) , stride(field_data,1) /)
   extents = (/ 1                    , ubound(field_data,1) /)
-  call atlas__HaloExchange__execute_strided_int( this%cpp_object_ptr, view, &
+  call atlas__HaloExchange__execute_strided_int( this%c_ptr(), view, &
     & strides, extents, 2 )
 end subroutine HaloExchange__execute_int32_r2
 
@@ -54,7 +54,7 @@ subroutine HaloExchange__execute_int32_r3(this, field_data)
   view => view1d(field_data)
   strides = (/ stride(field_data,3), stride(field_data,2) , stride(field_data,1) /)
   extents = (/ 1,                    ubound(field_data,2) , ubound(field_data,1) /)
-  call atlas__HaloExchange__execute_strided_int( this%cpp_object_ptr, view, &
+  call atlas__HaloExchange__execute_strided_int( this%c_ptr(), view, &
     & strides, extents, 3 )
 end subroutine HaloExchange__execute_int32_r3
 
@@ -64,7 +64,7 @@ subroutine HaloExchange__execute_int64_r1(this, field_data)
   integer :: strides(1), extents(1)
   strides = (/ stride(field_data,1) /)
   extents = (/ 1                    /)
-  call atlas__HaloExchange__execute_strided_long( this%cpp_object_ptr, field_data, &
+  call atlas__HaloExchange__execute_strided_long( this%c_ptr(), field_data, &
     & strides, extents, 1 )
 end subroutine HaloExchange__execute_int64_r1
 
@@ -76,7 +76,7 @@ subroutine HaloExchange__execute_int64_r2(this, field_data)
   view => view1d(field_data)
   strides = (/ stride(field_data,2) , stride(field_data,1) /)
   extents = (/ 1                    , ubound(field_data,1) /)
-  call atlas__HaloExchange__execute_strided_long( this%cpp_object_ptr, view, &
+  call atlas__HaloExchange__execute_strided_long( this%c_ptr(), view, &
     & strides, extents, 2 )
 end subroutine HaloExchange__execute_int64_r2
 
@@ -88,7 +88,7 @@ subroutine HaloExchange__execute_int64_r3(this, field_data)
   view => view1d(field_data)
   strides = (/ stride(field_data,3), stride(field_data,2) , stride(field_data,1) /)
   extents = (/ 1,                    ubound(field_data,2) , ubound(field_data,1) /)
-  call atlas__HaloExchange__execute_strided_long( this%cpp_object_ptr, view, &
+  call atlas__HaloExchange__execute_strided_long( this%c_ptr(), view, &
     & strides, extents, 3 )
 end subroutine HaloExchange__execute_int64_r3
 
@@ -98,7 +98,7 @@ subroutine HaloExchange__execute_real32_r1(this, field_data)
   integer :: strides(1), extents(1)
   strides = (/ stride(field_data,1) /)
   extents = (/ 1                    /)
-  call atlas__HaloExchange__execute_strided_float( this%cpp_object_ptr, field_data, &
+  call atlas__HaloExchange__execute_strided_float( this%c_ptr(), field_data, &
     & strides, extents, 1 )
 end subroutine HaloExchange__execute_real32_r1
 subroutine HaloExchange__execute_real32_r2(this, field_data)
@@ -109,7 +109,7 @@ subroutine HaloExchange__execute_real32_r2(this, field_data)
   view => view1d(field_data)
   strides = (/ stride(field_data,2) , stride(field_data,1) /)
   extents = (/ 1                    , ubound(field_data,1) /)
-  call atlas__HaloExchange__execute_strided_float( this%cpp_object_ptr, view, &
+  call atlas__HaloExchange__execute_strided_float( this%c_ptr(), view, &
     & strides, extents, 2 )
 end subroutine HaloExchange__execute_real32_r2
 subroutine HaloExchange__execute_real32_r3(this, field_data)
@@ -120,7 +120,7 @@ subroutine HaloExchange__execute_real32_r3(this, field_data)
   view => view1d(field_data)
   strides = (/ stride(field_data,3), stride(field_data,2) , stride(field_data,1) /)
   extents = (/ 1,                    ubound(field_data,2) , ubound(field_data,1) /)
-  call atlas__HaloExchange__execute_strided_float( this%cpp_object_ptr, view, &
+  call atlas__HaloExchange__execute_strided_float( this%c_ptr(), view, &
     & strides, extents, rank )
 end subroutine HaloExchange__execute_real32_r3
 
@@ -130,7 +130,7 @@ subroutine HaloExchange__execute_real64_r1(this, field_data)
   integer :: strides(1), extents(1)
   strides = (/ stride(field_data,1) /)
   extents = (/ 1                    /)
-  call atlas__HaloExchange__execute_strided_double( this%cpp_object_ptr, field_data, &
+  call atlas__HaloExchange__execute_strided_double( this%c_ptr(), field_data, &
     & strides, extents, 1 )
 end subroutine HaloExchange__execute_real64_r1
 subroutine HaloExchange__execute_real64_r2(this, field_data)
@@ -141,7 +141,7 @@ subroutine HaloExchange__execute_real64_r2(this, field_data)
   view => view1d(field_data)
   strides = (/ stride(field_data,2) , stride(field_data,1) /)
   extents = (/ 1                    , ubound(field_data,1) /)
-  call atlas__HaloExchange__execute_strided_double( this%cpp_object_ptr, view, &
+  call atlas__HaloExchange__execute_strided_double( this%c_ptr(), view, &
     & strides, extents, 2 )
 end subroutine HaloExchange__execute_real64_r2
 subroutine HaloExchange__execute_real64_r3(this, field_data)
@@ -152,7 +152,7 @@ subroutine HaloExchange__execute_real64_r3(this, field_data)
   view => view1d(field_data)
   strides = (/ stride(field_data,3), stride(field_data,2) , stride(field_data,1) /)
   extents = (/ 1,                    ubound(field_data,2) , ubound(field_data,1) /)
-  call atlas__HaloExchange__execute_strided_double( this%cpp_object_ptr, view, &
+  call atlas__HaloExchange__execute_strided_double( this%c_ptr(), view, &
     & strides, extents, rank )
 end subroutine HaloExchange__execute_real64_r3
 subroutine HaloExchange__execute_real64_r4(this, field_data)
@@ -163,7 +163,7 @@ subroutine HaloExchange__execute_real64_r4(this, field_data)
   view => view1d(field_data)
   strides = (/ stride(field_data,4), stride(field_data,3), stride(field_data,2), stride(field_data,1) /)
   extents = (/ 1,                    ubound(field_data,3), ubound(field_data,2), ubound(field_data,1) /)
-  call atlas__HaloExchange__execute_strided_double( this%cpp_object_ptr, view, &
+  call atlas__HaloExchange__execute_strided_double( this%c_ptr(), view, &
     & strides, extents, rank )
 end subroutine HaloExchange__execute_real64_r4
 

@@ -2,7 +2,7 @@
 
 
 !------------------------------------------------------------------------------
-TYPE, extends(object_type) :: atlas_NodesFunctionSpace
+TYPE, extends(atlas_object) :: atlas_NodesFunctionSpace
 
 ! Purpose :
 ! -------

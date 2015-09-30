@@ -3,7 +3,7 @@
 
 
 !------------------------------------------------------------------------------
-TYPE, extends(object_type) :: atlas_GridDistribution
+TYPE, extends(atlas_object) :: atlas_GridDistribution
 
 ! Purpose :
 ! -------

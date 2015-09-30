@@ -2,7 +2,7 @@
 
 !------------------------------------------------------------------------------
 
-TYPE, extends(object_type) :: atlas_JSON
+TYPE, extends(atlas_object) :: atlas_JSON
   character(kind=c_char,len=1), allocatable, private :: string(:)
 contains
   procedure :: str => atlas_JSON__str

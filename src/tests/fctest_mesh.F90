@@ -44,7 +44,7 @@ function atlas_FieldConfig__ctor(creator,ngptot,nproma,nlev,nvar,kind,datatype,s
   integer, optional, intent(in) :: kind
   character(len=*), optional, intent(in) :: datatype
   integer, optional, intent(in) :: shape(:)
-  params%cpp_object_ptr = atlas__Config__new()
+  call params%reset_c_ptr( atlas__Config__new() )
   if( present(creator)   ) call params%set("creator"   ,creator  )
   if( present(ngptot)    ) call params%set("ngptot"    ,ngptot   )
   if( present(nproma)    ) call params%set("nproma"    ,nproma   )

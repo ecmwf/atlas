@@ -1,7 +1,7 @@
 ! (C) Copyright 2013-2015 ECMWF.
 
 
-TYPE, extends(object_type) :: atlas_Nodes
+TYPE, extends(atlas_object) :: atlas_Nodes
 contains
 procedure, public :: size => Nodes__size
 procedure, public :: resize => Nodes__resize

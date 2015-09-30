@@ -8,6 +8,12 @@
 
 if( HAVE_FCTEST )
 
+  add_fctest( TARGET atlas_fctest_refcounting
+    LINKER_LANGUAGE Fortran
+    SOURCES         fctest_refcounting.F90
+    LIBS            atlas_f
+  )
+
   add_fctest( TARGET atlas_fctest_mesh
     MPI             1
     LINKER_LANGUAGE Fortran

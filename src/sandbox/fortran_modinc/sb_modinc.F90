@@ -4,7 +4,7 @@
 
 module sb_mod
 
-type, public :: object_type
+type, public :: atlas_object
   integer,public :: cpp_object_ptr
 end type
 

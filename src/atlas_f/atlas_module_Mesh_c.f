@@ -3,7 +3,7 @@
 
 function atlas_Mesh__ctor() result(mesh)
   type(atlas_Mesh) :: mesh
-  mesh%cpp_object_ptr = atlas__Mesh__new()
+  call mesh%reset_c_ptr( atlas__Mesh__new() )
 end function atlas_Mesh__ctor
 
 subroutine Mesh__create_function_space_nodes(this,name,shape_func,nb_nodes)
@@ -14,7 +14,7 @@ subroutine Mesh__create_function_space_nodes(this,name,shape_func,nb_nodes)
   integer :: shape(2)
   integer , parameter :: fortran_ordering = 1
   shape = (/FIELD_NB_VARS,nb_nodes/)
-  call atlas__Mesh__create_function_space(this%cpp_object_ptr,c_str(name),c_str(shape_func), &
+  call atlas__Mesh__create_function_space(this%c_ptr(),c_str(name),c_str(shape_func), &
   & shape, size(shape), fortran_ordering )
 end subroutine Mesh__create_function_space_nodes
 
@@ -24,7 +24,7 @@ subroutine Mesh__create_function_space_shape(this,name,shape_func,shape)
   character(len=*), intent(in) :: shape_func
   integer, intent(in) :: shape(:)
   integer , parameter :: fortran_ordering = 1
-  call atlas__Mesh__create_function_space(this%cpp_object_ptr,c_str(name),c_str(shape_func), &
+  call atlas__Mesh__create_function_space(this%c_ptr(),c_str(name),c_str(shape_func), &
   & shape, size(shape), fortran_ordering )
 end subroutine Mesh__create_function_space_shape
 
@@ -32,38 +32,38 @@ function Mesh__function_space(this,name) result(function_space)
   class(atlas_Mesh), intent(in) :: this
   character(len=*), intent(in) :: name
   type(atlas_FunctionSpace) :: function_space
-  function_space%cpp_object_ptr = atlas__Mesh__function_space(this%cpp_object_ptr, c_str(name) )
-  if( .not. C_associated(function_space%cpp_object_ptr) ) write(0,*) 'call abort()'
+  call function_space%reset_c_ptr( atlas__Mesh__function_space(this%c_ptr(), c_str(name) ) )
+  if( function_space%is_null() ) write(0,*) 'call abort()'
 end function Mesh__function_space
 
 function Mesh__create_nodes(this,nb_nodes) result(nodes)
   type(atlas_Nodes) :: nodes
   class(atlas_Mesh), intent(in) :: this
   integer, intent(in) :: nb_nodes
-  nodes%cpp_object_ptr = atlas__Mesh__create_nodes(this%cpp_object_ptr,nb_nodes)
-  if( .not. C_associated(nodes%cpp_object_ptr) ) write(0,*) 'call abort()'
+  call nodes%reset_c_ptr( atlas__Mesh__create_nodes(this%c_ptr(),nb_nodes) )
+  if( nodes%is_null() ) write(0,*) 'call abort()'
 end function
 
 function Mesh__nodes(this) result(nodes)
   class(atlas_Mesh), intent(in) :: this
   type(atlas_Nodes) :: nodes
-  nodes%cpp_object_ptr = atlas__Mesh__nodes(this%cpp_object_ptr)
-  if( .not. C_associated(nodes%cpp_object_ptr) ) write(0,*) 'call abort()'
+  call nodes%reset_c_ptr( atlas__Mesh__nodes(this%c_ptr()) )
+  if( nodes%is_null() ) write(0,*) 'call abort()'
 end function
 
 subroutine atlas_Mesh__delete(this)
   type(atlas_Mesh), intent(inout) :: this
-  if ( c_associated(this%cpp_object_ptr) ) then
-    call atlas__Mesh__delete(this%cpp_object_ptr)
+  if ( .not. this%is_null() ) then
+    call atlas__Mesh__delete(this%c_ptr())
   end if
-  this%cpp_object_ptr = c_null_ptr
+  call this%reset_c_ptr()
 end subroutine atlas_Mesh__delete
 
 subroutine atlas_Mesh_finalize( this )
   class(atlas_Mesh), intent(inout) :: this
-  if ( c_associated(this%cpp_object_ptr) ) then
-    call atlas__Mesh__delete(this%cpp_object_ptr);
+  if ( .not. this%is_null() ) then
+    call atlas__Mesh__delete(this%c_ptr());
   end if
-  this%cpp_object_ptr = c_null_ptr
+  call this%reset_c_ptr()
 end subroutine
 

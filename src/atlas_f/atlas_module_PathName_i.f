@@ -2,7 +2,7 @@
 
 !------------------------------------------------------------------------------
 
-TYPE, extends(object_type) :: atlas_PathName
+TYPE, extends(atlas_object) :: atlas_PathName
   character(kind=c_char,len=1), allocatable, private :: string(:)
 contains
   procedure :: str => atlas_PathName__str

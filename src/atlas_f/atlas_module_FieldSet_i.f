@@ -2,7 +2,7 @@
 
 
 !------------------------------------------------------------------------------
-TYPE, extends(object_type) :: atlas_FieldSet
+TYPE, extends(atlas_object) :: atlas_FieldSet
 
 ! Purpose :
 ! -------
