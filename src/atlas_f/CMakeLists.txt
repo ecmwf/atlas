@@ -87,6 +87,8 @@ ecbuild_add_library( TARGET atlas_f
     CONDITION CMAKE_Fortran_COMPILER_LOADED
     SOURCES
         ${FORTRAN_BINDINGS}
+        atlas_object_module.F90
+        atlas_refcounted_module.F90
         atlas_module.F90
         atlas_mpi_module.F90
         atlas_grids_module.F90

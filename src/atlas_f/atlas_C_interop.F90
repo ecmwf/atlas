@@ -8,9 +8,7 @@ private
 ! Public interface
 
 public atlas_free
-public atlas_return
 public atlas_compare_equal
-public atlas_object
 public view1d
 public stride
 public get_c_arguments
@@ -21,22 +19,6 @@ public c_str_no_trim
 public MAX_STR_LEN
 
 !========================================================================
-
-type :: atlas_object
-  type(C_PTR), private :: cpp_object_ptr = C_NULL_PTR
-contains
-  procedure, public :: owners  => atlas_object__owners
-  procedure, public :: attach  => atlas_object__attach
-  procedure, public :: detach  => atlas_object__detach
-  procedure, public :: is_null => atlas_object__is_null
-  procedure, public :: c_ptr   => atlas_object__c_ptr
-  procedure, public :: reset_c_ptr => atlas_object__reset_c_ptr
-
-  procedure, private :: equal => atlas_object__equal
-  procedure, private :: not_equal => atlas_object__not_equal
-  generic, public :: operator(==) => equal
-  generic, public :: operator(/=) => not_equal
-end type
 
 integer(c_int), parameter :: MAX_STR_LEN = 255
 integer(c_int), target :: zero_length_array_int32(0)
@@ -82,23 +64,6 @@ interface
     type(c_ptr), value :: ptr
   end subroutine atlas_free
 
-  ! int atlas__Owned__owners(const Owned* This);
-  function atlas__Owned__owners(This) bind(c,name="atlas__Owned__owners")
-    use iso_c_binding, only: c_int, c_ptr
-    integer(c_int) :: atlas__Owned__owners
-    type(c_ptr), value :: This
-  end function
-
-  subroutine atlas__Owned__attach(This) bind(c,name="atlas__Owned__attach")
-    use iso_c_binding, only: c_ptr
-    type(c_ptr), value :: This
-  end subroutine
-
-  subroutine atlas__Owned__detach(This) bind(c,name="atlas__Owned__detach")
-    use iso_c_binding, only: c_ptr
-    type(c_ptr), value :: This
-  end subroutine
-
   !int atlas__compare_cptr_equal( void* p1, void* p2 )
   function atlas__compare_cptr_equal(p1,p2) bind(c,name="atlas__compare_cptr_equal") result(equal)
     use iso_c_binding, only: c_ptr, c_int
@@ -109,24 +74,9 @@ interface
 
 end interface
 
-!interface operator  ( == )
-!  module procedure atlas_object__equal
-!end interface
-!interface operator  ( /= )
-!  module procedure atlas_object__not_equal
-!end interface
-
-
 ! =============================================================================
 CONTAINS
 ! =============================================================================
-
-subroutine atlas_return(object)
-  class(atlas_object), intent(inout) :: object
-#ifndef FORTRAN_SUPPORTS_FINAL
-  call object%detach()
-#endif
-end subroutine
 
 function atlas_compare_equal(p1,p2) result(equal)
   use iso_c_binding, only: c_ptr
@@ -139,63 +89,6 @@ function atlas_compare_equal(p1,p2) result(equal)
   endif
 end function
 
-function atlas_object__c_ptr(this) result(cptr)
-  type(c_ptr) :: cptr
-  class(atlas_object) :: this
-  cptr = this%cpp_object_ptr
-end function
-
-subroutine atlas_object__reset_c_ptr(this,cptr)
-  class(atlas_object) :: this
-  type(c_ptr), optional :: cptr
-  if( present(cptr) ) then
-    this%cpp_object_ptr = cptr
-  else
-    this%cpp_object_ptr = c_null_ptr
-  endif
-end subroutine
-
-function atlas_object__is_null(this) result(is_null)
-  logical :: is_null
-  class(atlas_object) :: this
-  if( c_associated( this%cpp_object_ptr ) ) then
-    is_null = .False.
-  else
-    is_null = .True.
-  endif
-end function
-
-function atlas_object__owners(this) result(owners)
-  integer :: owners
-  class(atlas_object) :: this
-  owners = atlas__Owned__owners(this%cpp_object_ptr)
-end function
-
-subroutine atlas_object__attach(this)
-  class(atlas_object) :: this
-  call atlas__Owned__attach(this%cpp_object_ptr)
-end subroutine
-
-subroutine atlas_object__detach(this)
-  class(atlas_object) :: this
-  call atlas__Owned__detach(this%cpp_object_ptr)
-end subroutine
-
-logical function atlas_object__equal(obj1,obj2)
-  class(atlas_object), intent(in) :: obj1
-  class(atlas_object), intent(in) :: obj2
-  atlas_object__equal = atlas_compare_equal(obj1%c_ptr(),obj2%c_ptr())
-end function
-
-logical function atlas_object__not_equal(obj1,obj2)
-  class(atlas_object), intent(in) :: obj1
-  class(atlas_object), intent(in) :: obj2
-  if( atlas_compare_equal(obj1%c_ptr(),obj2%c_ptr()) ) then
-    atlas_object__not_equal = .False.
-  else
-    atlas_object__not_equal = .True.
-  endif
-end function
 
 subroutine get_c_arguments(argc,argv)
   integer(c_int), intent(out) :: argc

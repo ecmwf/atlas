@@ -35,6 +35,8 @@ module atlas_module
 use, intrinsic :: iso_c_binding
 use atlas_mpi_module
 use atlas_C_interop
+use atlas_object_module
+use atlas_refcounted_module, only: atlas_refcounted
 use atlas_atlas_c_binding
 use atlas_mpi_c_binding
 use atlas_Field_c_binding
@@ -60,6 +62,8 @@ use atlas_atlas_logging_c_binding
 implicit none
 
 private :: atlas_object
+private :: atlas_refcounted
+private :: atlas_return
 private :: view1d
 private :: stride
 private :: get_c_arguments

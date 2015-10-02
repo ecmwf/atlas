@@ -11,18 +11,14 @@
 ! -----------------------------------------------------------------------------
 
 module fctest_atlas_refcounting_fixture
-use atlas_module
-use iso_c_binding
-use atlas_c_interop
+use atlas_refcounted_module, only: atlas_RefCounted
+use atlas_module, only: atlas__Mesh__delete, atlas__Mesh__new
 use fctest
 implicit none
 
-type, extends(atlas_object) :: RefObj
-  integer :: id
+type, extends(atlas_RefCounted) :: RefObj
 contains
-  procedure :: finalize => RefObj__finalize
-  procedure :: reset => RefObj__reset
-  generic, public :: assignment(=) => reset
+  procedure :: delete => RefObj__delete
 endtype
 
 interface RefObj
@@ -31,11 +27,12 @@ end interface
 
 contains
 
+
 function create_obj(id) result(obj)
   type(RefObj) :: obj
   integer :: id
   obj = RefObj(id)
-  call atlas_return(obj)
+  call obj%return()
 end function
 
 function RefObj__constructor(id) result(obj)
@@ -46,33 +43,13 @@ function RefObj__constructor(id) result(obj)
   obj%id = id
 end function
 
-subroutine RefObj__finalize(obj)
-  class(RefObj) :: obj
-  if( obj%owners() > 0 ) call obj%detach()
-  if( obj%owners() == 0 ) then
-    write(0,*) "deleting obj",obj%id
-    if( .not. obj%is_null() ) call atlas__Mesh__delete(obj%c_ptr())
-    write(0,*) "reset_c_ptr",obj%id
-    call obj%reset_c_ptr()
-    write(0,*) "deleting obj",obj%id, "done"
-  endif
+subroutine RefObj__delete(this)
+  class(RefObj) :: this
+  write(0,*) "deleting obj",this%id
+  if( .not. this%is_null() ) call atlas__Mesh__delete(this%c_ptr())
+  call this%reset_c_ptr()
+  write(0,*) "deleting obj",this%id, "done"
 end subroutine
-
-subroutine RefObj__reset(obj_out,obj_in)
-  use atlas_C_interop
-  class(RefObj), intent(inout) :: obj_out
-  class(RefObj), intent(in) :: obj_in
-  if( obj_out /= obj_in ) then
-    if( .not. obj_out%is_null() ) then
-      write(0,*) "Finalizing obj",obj_out%id
-      call obj_out%finalize()
-    endif
-    call obj_out%reset_c_ptr( obj_in%c_ptr() )
-    if( .not. obj_out%is_null() ) call obj_out%attach()
-    obj_out%id = obj_in%id
-  endif
-end subroutine
-
 
 subroutine consume_new_obj(obj)
   type(RefObj) :: obj
