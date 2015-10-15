@@ -78,6 +78,8 @@ private :: resource_set_real32
 private :: resource_set_real64
 private :: resource_set_string
 
+public
+
 ! ----------------------------------------------------
 ! ENUM FieldType
 integer, public, parameter :: ATLAS_KIND_INT32  = -4

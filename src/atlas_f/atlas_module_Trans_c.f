@@ -580,7 +580,7 @@ subroutine atlas_Trans__gathspec_r1(this, local, global)
   USE_ATLAS_TRANS_C_BINDING
   class(atlas_Trans), intent(in) :: this
   real(c_double), intent(in) :: local(:)
-  real(c_double), intent(out) :: global(:)
+  real(c_double), intent(inout) :: global(:)
 #ifdef ATLAS_HAVE_TRANS
   call atlas__Trans__gathspec(this%c_ptr(), 1, (/1/), local, global )
 #else
@@ -592,7 +592,7 @@ subroutine atlas_Trans__gathspec_r2(this, local, global)
   USE_ATLAS_TRANS_C_BINDING
   class(atlas_Trans), intent(in) :: this
   real(c_double), intent(in) :: local(:,:)
-  real(c_double), intent(out) :: global(:,:)
+  real(c_double), intent(inout) :: global(:,:)
   real(c_double), pointer :: local_view(:), global_view(:)
 #ifdef ATLAS_HAVE_TRANS
   integer :: destination(size(local,1))
