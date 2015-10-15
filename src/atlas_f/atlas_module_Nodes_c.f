@@ -63,7 +63,8 @@ function Nodes__field_by_name(this,name) result(field)
   class(atlas_Nodes), intent(in) :: this
   character(len=*), intent(in) :: name
   field = atlas_Field( atlas__Nodes__field_by_name(this%c_ptr(),c_str(name)) )
-  call atlas_return(field)
+  !call atlas_return(field)
+  write(0,*) "field ",name," owners = ",field%owners()
 end function
 
 function Nodes__field_by_idx(this,idx) result(field)

@@ -1,7 +1,7 @@
 ! (C) Copyright 2013-2015 ECMWF.
 
 !------------------------------------------------------------------------------
-TYPE, extends(atlas_object) :: atlas_Field
+TYPE, extends(atlas_refcounted) :: atlas_Field
 
 ! Purpose :
 ! -------
@@ -58,7 +58,8 @@ contains
     & access_data2_int32, access_data2_int64, access_data2_real32, access_data2_real64, access_data2_real64_bounds, &
     & access_data3_int32, access_data3_int64, access_data3_real32, access_data3_real64, access_data3_real64_bounds, &
     &                                         access_data4_real32, access_data4_real64, access_data4_real64_bounds
-  procedure :: finalize => atlas_Field__finalize
+  !procedure :: finalize => atlas_Field__finalize
+  procedure, private :: delete => atlas_Field__delete
 #ifdef FORTRAN_SUPPORTS_FINAL
   final :: atlas_Field__final
 #endif
@@ -71,8 +72,8 @@ interface atlas_Field
   module procedure atlas_Field__create_kind_shape
 end interface
 
-interface assignment(=)
-  module procedure atlas_Field__reset
-end interface
+!interface assignment(=)
+!  module procedure atlas_Field__reset
+!end interface)
 
 !------------------------------------------------------------------------------

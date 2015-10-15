@@ -20,7 +20,6 @@ use iso_c_binding
 implicit none
 type(atlas_Mesh) :: mesh
 type(atlas_Nodes) :: nodes
-type(atlas_Field) :: field
 
 
 type, extends(atlas_Config) :: atlas_FieldParametrisation
@@ -93,6 +92,8 @@ END_TEST
 ! -----------------------------------------------------------------------------
 
 TEST( test_field_name )
+  type(atlas_Field) :: field
+
   field = atlas_Field("field",atlas_real(c_double),(/nodes%size()/))
   call nodes%add( field )
   FCTEST_CHECK_EQUAL( field%name() , "field" )
@@ -206,21 +207,28 @@ TEST( test_field_size )
   write(*,*) "test_field_size starting"
 
   field = atlas_Field("field_0",atlas_integer(),(/0,nodes%size()/))
+  FCTEST_CHECK_EQUAL( field%owners() , 1 )
   call nodes%add(field)
+  FCTEST_CHECK_EQUAL( field%owners() , 2 )
   call field%access_data(fdata_int)
   FCTEST_CHECK_EQUAL( field%datatype() , "int32" )
   FCTEST_CHECK_EQUAL( size(fdata_int) , 0 )
-  call field%finalize()
+
+  call field%finalize() ! Not necessary, following "=" will handle it
+  write(0,*) "finalized field0"
 
   field = atlas_Field("field_1",atlas_real(c_float),(/1,nodes%size()/))
   call nodes%add(field)
   call field%access_data(fdata_real32)
   FCTEST_CHECK_EQUAL( field%datatype() , "real32" )
   FCTEST_CHECK_EQUAL( size(fdata_real32) , 10 )
-  call field%finalize()
+
+  call field%finalize() !Not necessary, following "=" will handle it
 
   field = atlas_Field("field_2",atlas_real(c_double),(/2,nodes%size()/))
+  FCTEST_CHECK_EQUAL( field%owners() , 1 )
   call nodes%add(field)
+  FCTEST_CHECK_EQUAL( field%owners() , 2 )
   call field%access_data(fdata_real64)
   FCTEST_CHECK_EQUAL( field%name(), "field_2" )
   FCTEST_CHECK_EQUAL( field%datatype() , "real64" )
@@ -245,6 +253,7 @@ END_TEST
 TEST( test_create_remove )
   real(c_double), pointer :: scalar(:)
   real(c_float), pointer :: vector(:,:)
+  type(atlas_Field) :: field
 
   write(*,*) "test_create_remove starting"
 
@@ -261,13 +270,14 @@ TEST( test_create_remove )
   FCTEST_CHECK_EQUAL( size(vector),   30 )
   FCTEST_CHECK_EQUAL( size(vector,1), 3   )
   FCTEST_CHECK_EQUAL( size(vector,2), 10   )
-  call field%finalize()
+!  call field%finalize()
 
   field = atlas_Field("scalar_field",atlas_real(c_double),(/1,nodes%size()/))
   call nodes%add(field)
   call field%access_data(scalar)
   FCTEST_CHECK_EQUAL( size(scalar),   10 )
   FCTEST_CHECK_EQUAL( size(scalar,1), 10  )
+  FCTEST_CHECK_EQUAL( field%owners() , 2 )
   call field%finalize()
 END_TEST
 
@@ -275,12 +285,16 @@ END_TEST
 
 TEST( test_fieldset )
   type(atlas_FieldSet) :: fieldset
-  type(atlas_Field), allocatable :: fields(:)
+  type(atlas_Field) :: afield
+  type(atlas_Field) :: field
 
   write(*,*) "test_fieldset starting"
 
   fieldset = atlas_FieldSet("fieldset")
+  write(*,*) "fieldset%owners() ",fieldset%owners()
 
+  afield = nodes%field("field_0")
+  write(0,*) "field%owners() = ", afield%owners()
   call fieldset%add_field( nodes%field("field_0") )
   call fieldset%add_field( nodes%field("field_1") )
   call fieldset%add_field( nodes%field("field_2") )
@@ -298,6 +312,7 @@ TEST( test_fieldset )
   field = fieldset%field(4)
   FCTEST_CHECK_EQUAL( field%name(), "vector_field" )
   call atlas_delete(fieldset)
+  write(0,*) "test_fieldset end"
 END_TEST
 
 TEST( test_meshgen )

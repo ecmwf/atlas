@@ -44,7 +44,7 @@ function RefObj__constructor(id) result(obj)
 end function
 
 subroutine RefObj__delete(this)
-  class(RefObj) :: this
+  class(RefObj), intent(inout) :: this
   write(0,*) "deleting obj",this%id
   if( .not. this%is_null() ) call atlas__Mesh__delete(this%c_ptr())
   call this%reset_c_ptr()

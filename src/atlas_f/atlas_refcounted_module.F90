@@ -48,15 +48,12 @@ end interface
 contains
 
 subroutine RefCounted__finalize(this)
-  class(atlas_RefCounted) :: this
-  write(0,*) "finalize obj",this%id
-  if( this%owners() > 0 ) call this%detach()
-  if( this%owners() == 0 ) then
-    if( .not. this%is_null() ) call this%delete()
+  class(atlas_RefCounted), intent(inout) :: this
+  if( .not. this%is_null() ) then
+    if( this%owners() >  0 ) call this%detach()
+    if( this%owners() == 0 ) call this%delete()
     call this%reset_c_ptr()
   endif
-  write(0,*) "reset_c_ptr",this%id, "to null"
-  write(0,*) "finalize obj",this%id, "done"
 end subroutine
 
 subroutine RefCounted__reset(obj_out,obj_in)
