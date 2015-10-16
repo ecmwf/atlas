@@ -33,7 +33,7 @@ void write_load_balance_report( const Mesh& mesh, const std::string& filename )
     int idt = 10;
     ofs.open( path.localPath(), std::ofstream::out );
   }
-  
+
   write_load_balance_report( mesh, ofs );
 
   if( eckit::mpi::rank() == 0 )
@@ -80,10 +80,17 @@ void write_load_balance_report( const Mesh& mesh, std::ostream& ofs )
     ECKIT_MPI_CHECK_RESULT( MPI_Gather( &nghost, 1, MPI_INT,
                                   nb_ghost_nodes.data(), 1, MPI_INT,
                                   root, eckit::mpi::comm() ) );
-                                  
+
     for( size_t p=0; p<npart; ++p )
     {
-      ghost_ratio_nodes[p] = static_cast<double>(nb_ghost_nodes[p])/static_cast<double>(nb_owned_nodes[p]);
+      if( nb_owned_nodes[p] )
+      {
+        ghost_ratio_nodes[p] = static_cast<double>(nb_ghost_nodes[p])/static_cast<double>(nb_owned_nodes[p]);
+      }
+      else
+      {
+        ghost_ratio_nodes[p] = -1;
+      }
     }
   }
 
