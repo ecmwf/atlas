@@ -65,19 +65,11 @@ function ReducedGrid__latitudes(this) result(lat)
   call C_F_POINTER (  lat_c_ptr , lat , (/lat_size/) )
 end function ReducedGrid__latitudes
 
-subroutine atlas_ReducedGrid__delete(this)
-  type(atlas_ReducedGrid), intent(inout) :: this
-  if ( .not. this%is_null() ) then
-    call atlas__ReducedGrid__delete(this%c_ptr())
-  end if
-  call this%reset_c_ptr()
-end subroutine atlas_ReducedGrid__delete
-
-subroutine ReducedGrid__finalize(this)
+subroutine ReducedGrid__delete(this)
   class(atlas_ReducedGrid), intent(inout) :: this
   if ( .not. this%is_null() ) then
     call atlas__ReducedGrid__delete(this%c_ptr())
   end if
   call this%reset_c_ptr()
-end subroutine
+end subroutine ReducedGrid__delete
 

@@ -203,7 +203,7 @@ TEST( test_trans )
   call atlas_delete(spectralfields)
   call atlas_delete(mesh)
   call atlas_delete(trans)
-  call atlas_delete(grid)
+  call grid%finalize()
 END_TEST
 
 

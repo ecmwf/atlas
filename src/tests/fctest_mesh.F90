@@ -465,7 +465,7 @@ TEST( test_fieldcreation )
 !      & atlas_Param("shape",[10,137,1,30]),&
 !      & atlas_Param("kind","real64") ])
 
-  call atlas_delete(grid)
+  call grid%finalize()
 END_TEST
 
 TEST( test_fv )

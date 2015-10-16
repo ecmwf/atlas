@@ -3,7 +3,7 @@
 
 
 !------------------------------------------------------------------------------
-TYPE, extends(atlas_object) :: atlas_ReducedGrid
+TYPE, extends(atlas_RefCounted) :: atlas_ReducedGrid
 
 ! Purpose :
 ! -------
@@ -24,7 +24,7 @@ contains
   procedure :: nlonmax => ReducedGrid__nlonmax
   procedure :: lat => ReducedGrid__latitudes
 
-  procedure :: finalize => ReducedGrid__finalize
+  procedure, private :: delete => ReducedGrid__delete
 
 END TYPE atlas_ReducedGrid
 
