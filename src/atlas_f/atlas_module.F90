@@ -137,7 +137,6 @@ INTERFACE atlas_delete
 !   20-Nov-2013 Willem Deconinck     *ECMWF*
 
 ! -----------------------------------------------------------------------------
-  module procedure atlas_FieldSet__delete
   module procedure atlas_HaloExchange__delete
   module procedure atlas_Metadata__delete
   module procedure atlas_Config__delete

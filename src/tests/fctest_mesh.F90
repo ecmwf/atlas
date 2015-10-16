@@ -127,7 +127,7 @@ TEST( test_field_owners)
   call fields%add_field(f)
   FCTEST_CHECK_EQUAL( f%owners() , 2 )
 
-  call atlas_delete(fields)
+  call fields%finalize()
   FCTEST_CHECK_EQUAL( f%owners() , 1 )
 
   call f%finalize() ! memory leak if not finalized!
@@ -310,7 +310,7 @@ TEST( test_fieldset )
   FCTEST_CHECK_EQUAL( field%name(), "field_2" )
   field = fieldset%field(4)
   FCTEST_CHECK_EQUAL( field%name(), "vector_field" )
-  call atlas_delete(fieldset)
+  call fieldset%finalize()
   write(0,*) "test_fieldset end"
 END_TEST
 

@@ -9,13 +9,13 @@ function atlas_FieldSet__ctor(name) result(fieldset)
   call fieldset%reset_c_ptr( atlas__FieldSet__new( c_str(name) ) )
 end function atlas_FieldSet__ctor
 
-subroutine atlas_FieldSet__delete(this)
-  type(atlas_FieldSet), intent(inout) :: this
+subroutine FieldSet__delete(this)
+  class(atlas_FieldSet), intent(inout) :: this
   if ( .not. this%is_null() ) then
     call atlas__FieldSet__delete(this%c_ptr())
   end if
   call this%reset_c_ptr()
-end subroutine atlas_FieldSet__delete
+end subroutine FieldSet__delete
 
 subroutine FieldSet__add_field(this,field)
   class(atlas_FieldSet), intent(in) :: this
