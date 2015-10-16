@@ -126,24 +126,6 @@ integer, public, parameter :: ATLAS_KIND_GIDX = c_long
 #include "atlas_module_Trans_i.f"
 #include "atlas_module_Value_i.f"
 
-INTERFACE atlas_delete
-
-! Purpose :
-! -------
-!   *delete* : Common interface to properly call the destructor
-!              of class objects
-
-! Author :
-! ------
-!   20-Nov-2013 Willem Deconinck     *ECMWF*
-
-! -----------------------------------------------------------------------------
-  module procedure atlas_HaloExchange__delete
-  module procedure atlas_Metadata__delete
-  module procedure atlas_Value__delete
-  module procedure atlas_Value__array_delete
-end interface atlas_delete
-
 !------------------------------------------------------------------------------
 
 INTERFACE atlas_resource

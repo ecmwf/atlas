@@ -9,7 +9,7 @@ function atlas_HaloExchange__ctor() result(halo_exchange)
 end function atlas_HaloExchange__ctor
 
 subroutine atlas_HaloExchange__delete(this)
-  type(atlas_HaloExchange), intent(inout) :: this
+  class(atlas_HaloExchange), intent(inout) :: this
   if ( .not. this%is_null() ) then
     call atlas__HaloExchange__delete(this%c_ptr())
   end if

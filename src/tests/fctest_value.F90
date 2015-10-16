@@ -48,27 +48,27 @@ TEST( test_value )
   value = atlas_Value(10_c_int)
   call value%get(intval)
   FCTEST_CHECK_EQUAL( intval , 10_c_int)
-  call atlas_delete(value)
+  call value%delete()
 
   value = atlas_Value(5000000000_c_long)
   call value%get(longval)
   FCTEST_CHECK_EQUAL(longval, 5000000000_c_long)
-  call atlas_delete(value)
+  call value%delete()
 
   value = atlas_Value(0.123456_c_float)
   call value%get(floatval)
   FCTEST_CHECK_EQUAL(floatval, 0.123456_c_float )
-  call atlas_delete(value)
+  call value%delete()
 
   value = atlas_Value(0.1234567890123456789_c_double)
   call value%get(doubleval)
   FCTEST_CHECK_EQUAL(doubleval, 0.1234567890123456789_c_double )
-  call atlas_delete(value)
+  call value%delete()
 
   value = atlas_Value("hello world")
   call value%get(stringval)
   FCTEST_CHECK_EQUAL(stringval, "hello world")
-  call atlas_delete(value)
+  call value%delete()
 
 END_TEST
 
@@ -83,22 +83,22 @@ TEST( test_value_of_array )
   value = atlas_Value((/10_c_int,11_c_int,12_c_int/))
   call value%get(intval)
   FCTEST_CHECK_EQUAL( intval , (/10_c_int,11_c_int,12_c_int/))
-  call atlas_delete(value)
+  call value%delete()
 
   value = atlas_Value((/5000000000_c_long,5000000001_c_long,5000000002_c_long/))
   call value%get(longval)
   FCTEST_CHECK_EQUAL(longval, (/5000000000_c_long,5000000001_c_long,5000000002_c_long/))
-  call atlas_delete(value)
+  call value%delete()
 
   value = atlas_Value((/0.123456_c_float,1.123456_c_float,2.123456_c_float/))
   call value%get(floatval)
   FCTEST_CHECK_EQUAL(floatval, (/0.123456_c_float,1.123456_c_float,2.123456_c_float/) )
-  call atlas_delete(value)
+  call value%delete()
 
   value = atlas_Value((/0.1234567890123456789_c_double,0.1234567890123456789_c_double,0.1234567890123456789_c_double/))
   call value%get(doubleval)
   FCTEST_CHECK_EQUAL(doubleval, (/0.1234567890123456789_c_double,0.1234567890123456789_c_double,0.1234567890123456789_c_double/) )
-  call atlas_delete(value)
+  call value%delete()
 
 END_TEST
 

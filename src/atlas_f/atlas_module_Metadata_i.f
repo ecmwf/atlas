@@ -53,6 +53,8 @@ contains
   procedure :: print => Metadata__print
   procedure :: json => Metadata__json
 
+  procedure, public :: delete => atlas_Metadata__delete
+
 END TYPE atlas_Metadata
 
 !------------------------------------------------------------------------------

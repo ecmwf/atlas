@@ -356,3 +356,7 @@ function FunctionSpace__get_checksum(this) result(checksum)
   type(atlas_Checksum) :: checksum
   call checksum%reset_c_ptr( atlas__FunctionSpace__checksum( this%c_ptr() ) )
 end function FunctionSpace__get_checksum
+
+subroutine atlas_FunctionSpace__delete(this)
+  class(atlas_FunctionSpace), intent(inout) :: this
+end subroutine

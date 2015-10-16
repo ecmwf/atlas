@@ -14,7 +14,7 @@ public atlas_object
 
 !========================================================================
 
-type :: atlas_object
+type, abstract :: atlas_object
   type(C_PTR), private :: cpp_object_ptr = C_NULL_PTR
 contains
   procedure, public :: is_null => atlas_object__is_null
@@ -25,6 +25,9 @@ contains
   procedure, private :: not_equal => atlas_object__not_equal
   generic, public :: operator(==) => equal
   generic, public :: operator(/=) => not_equal
+
+  procedure, public :: finalize => atlas_object__finalize
+  procedure(atlas_object__finalize), deferred, public :: delete
 
 end type
 
@@ -97,5 +100,10 @@ logical function atlas_object__not_equal(obj1,obj2)
     atlas_object__not_equal = .True.
   endif
 end function
+
+
+subroutine atlas_object__finalize(this)
+  class(atlas_object), intent(inout) :: this
+end subroutine
 
 end module

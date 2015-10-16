@@ -20,7 +20,7 @@ contains
   procedure, public :: finalize => RefCounted__finalize
   procedure, private :: reset => RefCounted__reset
   generic, public :: assignment(=) => reset
-  procedure(RefCounted__finalize), deferred, private :: delete
+  procedure(RefCounted__finalize), deferred, public :: delete
   procedure, public :: owners => RefCounted__owners
   procedure, public :: attach => RefCounted__attach
   procedure, public :: detach => RefCounted__detach
@@ -35,7 +35,7 @@ contains
   procedure, public :: finalize => RefCounted_Fortran__finalize
   procedure, private :: reset => RefCounted_Fortran__reset
   generic, public :: assignment(=) => reset
-  procedure(RefCounted_Fortran__finalize), deferred, private :: delete
+  procedure(RefCounted_Fortran__finalize), deferred, public :: delete
   procedure, public :: owners => RefCounted_Fortran__owners
   procedure, public :: attach => RefCounted_Fortran__attach
   procedure, public :: detach => RefCounted_Fortran__detach

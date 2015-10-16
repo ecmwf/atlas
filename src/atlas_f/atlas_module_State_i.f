@@ -37,7 +37,7 @@ contains
   generic, public :: field => field_by_name, field_by_index
   procedure, public :: metadata => atlas_State__metadata
 
-  procedure, private :: delete => atlas_State__delete
+  procedure, public :: delete => atlas_State__delete
 END TYPE atlas_State
 
 interface atlas_State

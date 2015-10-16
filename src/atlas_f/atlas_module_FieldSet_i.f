@@ -28,7 +28,7 @@ contains
   procedure, private :: field_by_name => FieldSet__field_by_name
   procedure, private :: field_by_idx => FieldSet__field_by_idx
   generic :: field => field_by_name, field_by_idx
-  procedure, private :: delete => Fieldset__delete
+  procedure, public :: delete => Fieldset__delete
 END TYPE atlas_FieldSet
 !------------------------------------------------------------------------------
 

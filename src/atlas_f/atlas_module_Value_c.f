@@ -69,7 +69,7 @@ end function
 
 subroutine atlas_Value__delete(this)
   use atlas_atlas_value_c_binding
-  type(atlas_Value), intent(inout) :: this
+  class(atlas_Value), intent(inout) :: this
   if ( .not. this%is_null() ) then
     call atlas__Value__delete(this%c_ptr())
   endif

@@ -22,7 +22,7 @@ TYPE, extends(atlas_RefCounted) :: atlas_NextFunctionSpace
 contains
   procedure, public :: name => atlas_NextFunctionSpace__name
 
-  procedure, private :: delete => atlas_NextFunctionSpace__delete
+  procedure, public :: delete => atlas_NextFunctionSpace__delete
 #ifdef FORTRAN_SUPPORTS_FINAL
   final :: atlas_NextFunctionSpace__final
 #endif
@@ -113,6 +113,9 @@ contains
       & FunctionSpace__gather_real64_r3, &
       & FunctionSpace__gather_int32_r1, &
       & FunctionSpace__gather_int32_r2
+
+  procedure, public :: delete => atlas_FunctionSpace__delete
+
 END TYPE atlas_FunctionSpace
 
 !------------------------------------------------------------------------------

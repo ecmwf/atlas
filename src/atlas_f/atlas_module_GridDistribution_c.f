@@ -16,7 +16,15 @@ function atlas_GridDistribution__ctor( part, part0 ) result(griddistribution)
 end function atlas_GridDistribution__ctor
 
 
-subroutine atlas_GridDistribution_finalize( this )
+subroutine atlas_GridDistribution__finalize( this )
+  class(atlas_GridDistribution), intent(inout) :: this
+  if ( .not. this%is_null() ) then
+    call atlas__GridDistribution__delete(this%c_ptr());
+  end if
+  call this%reset_c_ptr()
+end subroutine
+
+subroutine atlas_GridDistribution__delete( this )
   class(atlas_GridDistribution), intent(inout) :: this
   if ( .not. this%is_null() ) then
     call atlas__GridDistribution__delete(this%c_ptr());

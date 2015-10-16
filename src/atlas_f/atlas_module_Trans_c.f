@@ -47,11 +47,11 @@ subroutine atlas_Trans__delete( this )
 #endif
 end subroutine
 
-subroutine atlas_TransParameters__delete( parameters )
+subroutine atlas_TransParameters__delete( this )
   USE_ATLAS_TRANS_C_BINDING
-  type(atlas_TransParameters) :: parameters
+  class(atlas_TransParameters), intent(inout) :: this
 #ifdef ATLAS_HAVE_TRANS
-  call atlas__TransParameters__delete(parameters%c_ptr());
+  call atlas__TransParameters__delete(this%c_ptr());
 #else
   ! IGNORE
 #endif

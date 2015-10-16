@@ -9,7 +9,7 @@ function atlas_Checksum__ctor() result(Checksum)
 end function atlas_checksum__ctor
 
 subroutine atlas_Checksum__delete(this)
-  type(atlas_Checksum), intent(inout) :: this
+  class(atlas_Checksum), intent(inout) :: this
   if ( .not. this%is_null() ) then
     call atlas__Checksum__delete(this%c_ptr())
   end if

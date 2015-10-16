@@ -119,3 +119,7 @@ function Nodes__partition(this) result(field)
   field = atlas_Field( atlas__Nodes__field_by_name(this%c_ptr(),c_str("partition")) )
   call field%return()
 end function
+
+subroutine atlas_Nodes__delete(this)
+  class(atlas_Nodes), intent(inout) :: this
+end subroutine

@@ -44,6 +44,9 @@ contains
   procedure, public :: clear_indentation_stderr       => LogChannel__clear_indentation_stderr
   procedure, public :: clear_indentation_fortran_unit => LogChannel__clear_indentation_fortran_unit
 
+  procedure, public :: delete => atlas_LogChannel__delete
+
+
 ENDTYPE
 
 interface atlas_LogChannel
@@ -107,6 +110,8 @@ contains
   procedure, public :: indent            => Logger__indent
   procedure, public :: dedent            => Logger__dedent
   procedure, public :: clear_indentation => Logger__clear_indentation
+
+  procedure, public :: delete => atlas_Logger__delete
 
 END TYPE
 

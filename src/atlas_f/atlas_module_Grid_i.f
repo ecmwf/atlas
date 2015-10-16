@@ -24,7 +24,7 @@ contains
   procedure :: nlonmax => ReducedGrid__nlonmax
   procedure :: lat => ReducedGrid__latitudes
 
-  procedure, private :: delete => ReducedGrid__delete
+  procedure, public :: delete => ReducedGrid__delete
 
 END TYPE atlas_ReducedGrid
 

@@ -46,6 +46,9 @@ contains
       & HaloExchange__execute_real64_r2, &
       & HaloExchange__execute_real64_r3, &
       & HaloExchange__execute_real64_r4
+
+  procedure, public :: delete => atlas_HaloExchange__delete
+
 END TYPE atlas_HaloExchange
 !------------------------------------------------------------------------------
 

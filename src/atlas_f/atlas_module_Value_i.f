@@ -30,6 +30,9 @@ contains
   generic :: get => get_logical, get_int32, get_int64, get_real32, get_real64, get_string, &
                     get_array_int32, get_array_int64, get_array_real32, get_array_real64
 
+
+  procedure, public :: delete => atlas_Value__delete
+
 END TYPE atlas_Value
 
 !------------------------------------------------------------------------------

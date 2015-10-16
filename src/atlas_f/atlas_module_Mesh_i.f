@@ -25,7 +25,7 @@ contains
   procedure :: function_space => Mesh__function_space
   procedure :: create_nodes => Mesh__create_nodes
   procedure :: nodes => Mesh__nodes
-  procedure, private :: delete => Mesh__delete
+  procedure, public :: delete => Mesh__delete
 END TYPE atlas_Mesh
 
 interface atlas_Mesh

@@ -43,6 +43,7 @@ contains
       & Checksum__execute_real64_r2, &
       & Checksum__execute_real64_r3
 
+  procedure, public :: delete => atlas_Checksum__delete
 END TYPE atlas_Checksum
 
 !------------------------------------------------------------------------------

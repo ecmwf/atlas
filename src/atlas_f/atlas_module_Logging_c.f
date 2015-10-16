@@ -195,6 +195,11 @@ subroutine LogChannel__clear_indentation_fortran_unit(this,unit)
   call atlas__LogChannel__clear_indentation_fortran_unit(this%c_ptr(),unit)
 end subroutine
 
+subroutine atlas_LogChannel__delete(this)
+  class(atlas_LogChannel), intent(inout) :: this
+end subroutine
+
+
 function Logger__channel(cat)
   type(atlas_LogChannel) :: Logger__channel
   integer, intent(in) :: cat
@@ -427,6 +432,9 @@ subroutine Logger__clear_indentation(this)
   enddo
 end subroutine
 
+subroutine atlas_Logger__delete(this)
+  class(atlas_Logger), intent(inout) :: this
+end subroutine
 
 subroutine atlas_write_to_fortran_unit(unit,msg_cptr) bind(C)
   use iso_c_binding, only: c_int, c_ptr

@@ -50,7 +50,7 @@ contains
                     get_string, get_array_int32, get_array_int64, get_array_real32, get_array_real64
   procedure :: json => atlas_Config__json
 
-  procedure, private :: delete => atlas_Config__delete
+  procedure, public :: delete => atlas_Config__delete
 
 END TYPE atlas_Config
 

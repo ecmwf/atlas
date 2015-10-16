@@ -22,3 +22,7 @@ function atlas_JSON__str(this) result(str)
   enddo
 end function
 
+subroutine atlas_JSON__delete(this)
+  class(atlas_JSON), intent(inout) :: this
+  if( allocated(this%string) ) deallocate(this%string)
+end subroutine

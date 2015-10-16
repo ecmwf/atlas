@@ -9,7 +9,7 @@ function atlas_GatherScatter__ctor() result(gather)
 end function atlas_GatherScatter__ctor
 
 subroutine GatherScatter__delete(this)
-  type(atlas_GatherScatter), intent(inout) :: this
+  class(atlas_GatherScatter), intent(inout) :: this
   if ( .not. this%is_null() ) then
     call atlas__GatherScatter__delete(this%c_ptr())
   end if
