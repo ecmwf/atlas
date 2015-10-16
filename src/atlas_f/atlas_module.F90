@@ -63,7 +63,6 @@ implicit none
 
 private :: atlas_object
 private :: atlas_refcounted
-private :: atlas_return
 private :: view1d
 private :: stride
 private :: get_c_arguments

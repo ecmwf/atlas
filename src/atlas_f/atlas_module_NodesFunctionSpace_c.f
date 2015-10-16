@@ -4,8 +4,6 @@ function atlas_NodesFunctionSpace__cptr(cptr) result(functionspace)
   type(atlas_NodesFunctionSpace) :: functionspace
   type(c_ptr), intent(in) :: cptr
   call functionspace%reset_c_ptr( cptr )
-  call functionspace%attach()
-  call atlas_return(functionspace)
 end function
 
 function atlas_NodesFunctionSpace__mesh_halo(mesh,halo) result(function_space)
@@ -18,7 +16,7 @@ function atlas_NodesFunctionSpace__mesh_halo(mesh,halo) result(function_space)
   if( present(halo) ) opt_halo = halo
   function_space = atlas_NodesFunctionSpace__cptr( &
     & atlas__NodesFunctionSpace__new(c_str(""),mesh%c_ptr(),opt_halo) )
-  call atlas_return(function_space)
+  call function_space%return()
 end function
 
 function atlas_NodesFunctionSpace__name_mesh_halo(name,mesh,halo) result(function_space)
@@ -32,23 +30,8 @@ function atlas_NodesFunctionSpace__name_mesh_halo(name,mesh,halo) result(functio
   if( present(halo) ) opt_halo = halo
   function_space = atlas_NodesFunctionSpace__cptr( &
     & atlas__NodesFunctionSpace__new(c_str(name),mesh%c_ptr(),opt_halo) )
-  call atlas_return(function_space)
+  call function_space%return()
 end function
-
-subroutine atlas_NodesFunctionSpace__finalize(this)
-  use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(inout) :: this
-  if( .not. this%is_null() ) then
-    if( this%owners() <= 0 ) then
-      call atlas_abort("Cannot finalize functionspace that has no owners")
-    endif
-    call this%detach()
-    if( this%owners() == 0 ) then
-      call atlas__NodesFunctionSpace__delete(this%c_ptr())
-    endif
-    call this%reset_c_ptr()
-  endif
-end subroutine
 
 #ifdef FORTRAN_SUPPORTS_FINAL
 subroutine atlas_NodesFunctionSpace__final(this)
@@ -56,28 +39,6 @@ subroutine atlas_NodesFunctionSpace__final(this)
   call this%finalize()
 end subroutine
 #endif
-
-subroutine atlas_NodesFunctionSpace__delete(this)
-  use atlas_nodesfunctionspaceinterface_c_binding
-  type(atlas_NodesFunctionSpace), intent(inout) :: this
-  if ( .not. this%is_null() ) then
-    call atlas__NodesFunctionSpace__delete(this%c_ptr())
-  end if
-  call this%reset_c_ptr()
-end subroutine atlas_NodesFunctionSpace__delete
-
-subroutine atlas_NodesFunctionSpace__reset(functionspace_out,functionspace_in)
-  type(atlas_NodesFunctionSpace), intent(inout) :: functionspace_out
-  class(atlas_NodesFunctionSpace), intent(in) :: functionspace_in
-  if( .not. atlas_compare_equal(functionspace_out%c_ptr(),functionspace_in%c_ptr()) ) then
-#ifndef FORTRAN_SUPPORTS_FINAL
-    call atlas_NodesFunctionSpace__finalize(functionspace_out)
-#endif
-    call functionspace_out%reset_c_ptr( functionspace_in%c_ptr() )
-    if( .not. functionspace_out%is_null() ) call functionspace_out%attach()
-  endif
-end subroutine
-
 
 function atlas_NodesFunctionSpace__nb_nodes(this) result (nb_nodes)
   use atlas_nodesfunctionspaceinterface_c_binding
@@ -107,7 +68,7 @@ function atlas_NodesFunctionSpace__create_field_name_kind(this,name,kind) result
   character(len=*), intent(in) :: name
   integer, intent(in) :: kind
   field = atlas_Field( atlas__NodesFunctionSpace__create_field(this%c_ptr(),c_str(name),kind) )
-  call atlas_return(field)
+  call field%return()
 end function
 
 function atlas_NodesFunctionSpace__create_field_name_kind_lev(this,name,kind,levels) result(field)
@@ -118,7 +79,7 @@ function atlas_NodesFunctionSpace__create_field_name_kind_lev(this,name,kind,lev
   integer, intent(in) :: kind
   integer, intent(in) :: levels
   field = atlas_Field( atlas__NodesFunctionSpace__create_field_lev(this%c_ptr(),c_str(name),levels,kind) )
-  call atlas_return(field)
+  call field%return()
 end function
 
 function atlas_NodesFunctionSpace__create_field_name_kind_vars(this,name,kind,vars) result(field)
@@ -130,7 +91,7 @@ function atlas_NodesFunctionSpace__create_field_name_kind_vars(this,name,kind,va
   integer, intent(in) :: kind
   integer, parameter :: fortran_ordering = 1
   field = atlas_Field( atlas__NodesFunctionSpace__create_field_vars(this%c_ptr(),c_str(name),vars,size(vars),fortran_ordering,kind) )
-  call atlas_return(field)
+  call field%return()
 end function
 
 function atlas_NodesFunctionSpace__create_field_name_kind_lev_vars(this,name,kind,levels,vars) result(field)
@@ -143,7 +104,7 @@ function atlas_NodesFunctionSpace__create_field_name_kind_lev_vars(this,name,kin
   integer, intent(in) :: vars(:)
   integer, parameter :: fortran_ordering = 1
   field = atlas_Field( atlas__NodesFunctionSpace__create_field_lev_vars(this%c_ptr(),c_str(name),levels,vars,size(vars),fortran_ordering,kind) )
-  call atlas_return(field)
+  call field%return()
 end function
 
 function atlas_NodesFunctionSpace__create_field_name_template(this,name,template) result(field)
@@ -153,7 +114,7 @@ function atlas_NodesFunctionSpace__create_field_name_template(this,name,template
   character(len=*), intent(in) :: name
   type(atlas_Field) :: template
   field = atlas_Field( atlas__NodesFunctionSpace__create_field_template(this%c_ptr(),c_str(name),template%c_ptr()) )
-  call atlas_return(field)
+  call field%return()
 end function
 
 
@@ -164,7 +125,7 @@ function atlas_NodesFunctionSpace__create_glb_field_name_kind_lev(this,name,kind
   character(len=*), intent(in) :: name
   integer, intent(in) :: kind
   field = atlas_Field( atlas__NodesFunctionSpace__create_global_field(this%c_ptr(),c_str(name),kind) )
-  call atlas_return(field)
+  call field%return()
 end function
 
 function atlas_NodesFunctionSpace__create_glb_field_name_kind(this,name,kind,levels) result(field)
@@ -175,7 +136,7 @@ function atlas_NodesFunctionSpace__create_glb_field_name_kind(this,name,kind,lev
   integer, intent(in) :: levels
   integer, intent(in) :: kind
   field = atlas_Field( atlas__NodesFunctionSpace__create_global_field_lev(this%c_ptr(),c_str(name),levels,kind) )
-  call atlas_return(field)
+  call field%return()
 end function
 
 
@@ -188,7 +149,7 @@ function atlas_NodesFunctionSpace__create_glb_field_name_kind_vars(this,name,kin
   integer, intent(in) :: kind
   integer, parameter :: fortran_ordering = 1
   field = atlas_Field( atlas__NodesFunctionSpace__create_global_field_vars(this%c_ptr(),c_str(name),vars,size(vars),fortran_ordering,kind) )
-  call atlas_return(field)
+  call field%return()
 end function
 
 function atlas_NodesFunctionSpace__create_glb_field_name_kind_lev_vars(this,name,kind,levels,vars) result(field)
@@ -201,7 +162,7 @@ function atlas_NodesFunctionSpace__create_glb_field_name_kind_lev_vars(this,name
   integer, intent(in) :: kind
   integer, parameter :: fortran_ordering = 1
   field = atlas_Field( atlas__NodesFunctionSpace__create_global_field_lev_vars(this%c_ptr(),c_str(name),levels,vars,size(vars),fortran_ordering,kind) )
-  call atlas_return(field)
+  call field%return()
 end function
 
 function atlas_NodesFunctionSpace__create_glb_field_name_template(this,name,template) result(field)
@@ -211,7 +172,7 @@ function atlas_NodesFunctionSpace__create_glb_field_name_template(this,name,temp
   character(len=*), intent(in) :: name
   type(atlas_Field) :: template
   field = atlas_Field( atlas__NodesFunctionSpace__create_global_field_template(this%c_ptr(),c_str(name),template%c_ptr()) )
-  call atlas_return(field)
+  call field%return()
 end function
 
 subroutine atlas_NodesFunctionSpace__halo_exchange_fieldset(this,fieldset)

@@ -47,7 +47,7 @@ function FieldSet__field_by_name(this,name) result(field)
   character(len=*), intent(in) :: name
   type(atlas_Field) :: field
   field = atlas_Field( atlas__FieldSet__field_by_name(this%c_ptr(), c_str(name) ) )
-  call atlas_return(field)
+  call field%return()
 end function FieldSet__field_by_name
 
 function FieldSet__field_by_idx(this,idx) result(field)
@@ -55,5 +55,5 @@ function FieldSet__field_by_idx(this,idx) result(field)
   integer, intent(in) :: idx
   type(atlas_Field) :: field
   field = atlas_Field( atlas__FieldSet__field_by_idx(this%c_ptr(), idx-1) ) ! C index
-  call atlas_return(field)
+  call field%return()
 end function FieldSet__field_by_idx

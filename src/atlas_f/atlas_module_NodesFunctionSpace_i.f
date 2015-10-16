@@ -2,7 +2,7 @@
 
 
 !------------------------------------------------------------------------------
-TYPE, extends(atlas_object) :: atlas_NodesFunctionSpace
+TYPE, extends(atlas_NextFunctionSpace) :: atlas_NodesFunctionSpace
 
 ! Purpose :
 ! -------
@@ -191,7 +191,6 @@ contains
 
   procedure, public :: mean_and_standard_deviation_per_level => atlas_NodesFunctionSpace__mean_and_stddev_per_level
 
-  procedure :: finalize => atlas_NodesFunctionSpace__finalize
 #ifdef FORTRAN_SUPPORTS_FINAL
   final :: atlas_NodesFunctionSpace__final
 #endif
@@ -204,11 +203,6 @@ interface atlas_NodesFunctionSpace
   module procedure atlas_NodesFunctionSpace__mesh_halo
   module procedure atlas_NodesFunctionSpace__name_mesh_halo
 end interface
-
-interface assignment(=)
-  module procedure atlas_NodesFunctionSpace__reset
-end interface
-
 
 !------------------------------------------------------------------------------
 

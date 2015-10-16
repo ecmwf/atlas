@@ -2,7 +2,7 @@
 
 
 !------------------------------------------------------------------------------
-TYPE, extends(atlas_object) :: atlas_NextFunctionSpace
+TYPE, extends(atlas_RefCounted) :: atlas_NextFunctionSpace
 
 ! Purpose :
 ! -------
@@ -20,9 +20,9 @@ TYPE, extends(atlas_object) :: atlas_NextFunctionSpace
 
 !------------------------------------------------------------------------------
 contains
-  procedure :: name => atlas_NextFunctionSpace__name
+  procedure, public :: name => atlas_NextFunctionSpace__name
 
-  procedure :: finalize => atlas_NextFunctionSpace__finalize
+  procedure, private :: delete => atlas_NextFunctionSpace__delete
 #ifdef FORTRAN_SUPPORTS_FINAL
   final :: atlas_NextFunctionSpace__final
 #endif
@@ -31,10 +31,6 @@ END TYPE atlas_NextFunctionSpace
 
 interface atlas_NextFunctionSpace
   module procedure atlas_NextFunctionSpace__cptr
-end interface
-
-interface assignment(=)
-  module procedure atlas_NextFunctionSpace__reset
 end interface
 
 

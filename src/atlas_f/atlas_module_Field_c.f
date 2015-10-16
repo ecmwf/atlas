@@ -8,8 +8,6 @@ function atlas_Field__cptr(cptr) result(field)
   type(atlas_Field) :: field
   type(c_ptr), intent(in) :: cptr
   call field%reset_c_ptr( cptr )
-  !call field%attach()
-  !call atlas_return(field)
 end function
 
 function atlas_Field__create(params) result(field)
@@ -57,20 +55,6 @@ function atlas_Field__create_kind_shape(kind,shape) result(field)
   call field%return()
 end function
 
-!subroutine atlas_Field__finalize(this)
-!  class(atlas_Field), intent(inout) :: this
-!  if( .not. this%is_null() ) then
-!    if( this%owners() <= 0 ) then
-!      call atlas_abort("Cannot finalize field that has no owners")
-!    endif
-!    call this%detach()
-!    if( this%owners() == 0 ) then
-!      call atlas__Field__delete(this%c_ptr())
-!    endif
-!    call this%reset_c_ptr()
-!  endif
-!end subroutine
-
 #ifdef FORTRAN_SUPPORTS_FINAL
 subroutine atlas_Field__final(this)
   type(atlas_Field), intent(inout) :: this
@@ -86,18 +70,6 @@ subroutine atlas_Field__delete(this)
   call this%reset_c_ptr()
 end subroutine
 
-!subroutine atlas_Field__reset(field_out,field_in)
-!  type(atlas_Field), intent(inout) :: field_out
-!  class(atlas_Field), intent(in) :: field_in
-!  if( field_out /= field_in ) then
-!#ifndef FORTRAN_SUPPORTS_FINAL
-!    call atlas_Field__finalize(field_out)
-!#endif
-!    call field_out%reset_c_ptr( field_in%c_ptr() )
-!    if( .not. field_out%is_null() ) call field_out%attach()
-!  endif
-!end subroutine
-
 
 function Field__name(this) result(field_name)
   class(atlas_Field), intent(in) :: this
@@ -111,7 +83,7 @@ function Field__functionspace(this) result(functionspace)
   type(atlas_NextFunctionSpace) :: functionspace
   class(atlas_Field), intent(in) :: this
   functionspace = atlas_NextFunctionSpace(atlas__Field__functionspace(this%c_ptr()))
-  call atlas_return(functionspace)
+  call functionspace%return()
 end function Field__functionspace
 
 function Field__datatype(this) result(datatype)

@@ -2,7 +2,7 @@
 
 
 !------------------------------------------------------------------------------
-TYPE, extends(atlas_object) :: atlas_SpectralFunctionSpace
+TYPE, extends(atlas_NextFunctionSpace) :: atlas_SpectralFunctionSpace
 
 ! Purpose :
 ! -------
@@ -30,7 +30,6 @@ contains
     & create_glb_field_name, &
     & create_glb_field_name_lev
 
-  procedure :: finalize => atlas_SpectralFunctionSpace__finalize
 #ifdef FORTRAN_SUPPORTS_FINAL
   final :: atlas_SpectralFunctionSpace__final
 #endif
@@ -43,10 +42,6 @@ interface atlas_SpectralFunctionSpace
   module procedure atlas_SpectralFunctionSpace__name_trans
 end interface
 
-
-interface assignment(=)
-  module procedure atlas_SpectralFunctionSpace__reset
-end interface
 
 !------------------------------------------------------------------------------
 

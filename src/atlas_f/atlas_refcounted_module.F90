@@ -21,6 +21,7 @@ contains
   procedure, private :: reset => RefCounted__reset
   generic, public :: assignment(=) => reset
   procedure(RefCounted__finalize), deferred, private :: delete
+  procedure, public :: owners => RefCounted__owners
   procedure, public :: attach => RefCounted__attach
   procedure, public :: detach => RefCounted__detach
 endtype
@@ -76,6 +77,12 @@ subroutine RefCounted__detach(this)
   class(atlas_RefCounted), intent(inout) :: this
   call atlas__Owned__detach(this%c_ptr())
 end subroutine
+
+function RefCounted__owners(this) result(owners)
+  integer :: owners
+  class(atlas_RefCounted) :: this
+  owners = atlas__Owned__owners(this%c_ptr())
+end function
 
 
 end module

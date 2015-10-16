@@ -72,8 +72,4 @@ interface atlas_Field
   module procedure atlas_Field__create_kind_shape
 end interface
 
-!interface assignment(=)
-!  module procedure atlas_Field__reset
-!end interface)
-
 !------------------------------------------------------------------------------

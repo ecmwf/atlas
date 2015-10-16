@@ -63,8 +63,7 @@ function Nodes__field_by_name(this,name) result(field)
   class(atlas_Nodes), intent(in) :: this
   character(len=*), intent(in) :: name
   field = atlas_Field( atlas__Nodes__field_by_name(this%c_ptr(),c_str(name)) )
-  !call atlas_return(field)
-  write(0,*) "field ",name," owners = ",field%owners()
+  call field%return()
 end function
 
 function Nodes__field_by_idx(this,idx) result(field)
@@ -73,7 +72,7 @@ function Nodes__field_by_idx(this,idx) result(field)
   class(atlas_Nodes), intent(in) :: this
   integer, intent(in) :: idx
   field = atlas_Field( atlas__Nodes__field_by_idx(this%c_ptr(),idx) )
-  call atlas_return(field)
+  call field%return()
 end function
 
 function Nodes__str(this) result(str)
@@ -94,7 +93,7 @@ function Nodes__lonlat(this) result(field)
   type(atlas_Field) :: field
   class(atlas_Nodes), intent(in) :: this
   field = atlas_Field( atlas__Nodes__field_by_name(this%c_ptr(),c_str("lonlat")) )
-  call atlas_return(field)
+  call field%return()
 end function
 
 function Nodes__global_index(this) result(field)
@@ -102,7 +101,7 @@ function Nodes__global_index(this) result(field)
   type(atlas_Field) :: field
   class(atlas_Nodes), intent(in) :: this
   field = atlas_Field( atlas__Nodes__field_by_name(this%c_ptr(),c_str("glb_idx")) )
-  call atlas_return(field)
+  call field%return()
 end function
 
 function Nodes__remote_index(this) result(field)
@@ -110,7 +109,7 @@ function Nodes__remote_index(this) result(field)
   type(atlas_Field) :: field
   class(atlas_Nodes), intent(in) :: this
   field = atlas_Field( atlas__Nodes__field_by_name(this%c_ptr(),c_str("remote_idx")) )
-  call atlas_return(field)
+  call field%return()
 end function
 
 function Nodes__partition(this) result(field)
@@ -118,5 +117,5 @@ function Nodes__partition(this) result(field)
   type(atlas_Field) :: field
   class(atlas_Nodes), intent(in) :: this
   field = atlas_Field( atlas__Nodes__field_by_name(this%c_ptr(),c_str("partition")) )
-  call atlas_return(field)
+  call field%return()
 end function
