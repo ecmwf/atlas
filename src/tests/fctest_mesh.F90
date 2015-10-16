@@ -71,7 +71,7 @@ END_TESTSUITE_INIT
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_FINALIZE
-  call atlas_delete( mesh )
+  call mesh%finalize()
   call atlas_finalize()
 END_TESTSUITE_FINALIZE
 

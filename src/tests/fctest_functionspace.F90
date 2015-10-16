@@ -124,7 +124,7 @@ call field%finalize()
 call template%finalize()
 
 call fs%finalize()
-call atlas_delete(mesh)
+call mesh%finalize()
 call grid%finalize()
 
 END_TEST
@@ -216,7 +216,7 @@ call field%finalize()
 call template%finalize()
 
 call fs%finalize()
-call atlas_delete(mesh)
+call mesh%finalize()
 call grid%finalize()
 
 END_TEST
@@ -319,7 +319,7 @@ call field%finalize()
 call global%finalize()
 call fs2d%finalize()
 
-call atlas_delete(mesh)
+call mesh%finalize()
 call grid%finalize()
 
 END_TEST

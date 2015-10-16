@@ -137,7 +137,6 @@ INTERFACE atlas_delete
 !   20-Nov-2013 Willem Deconinck     *ECMWF*
 
 ! -----------------------------------------------------------------------------
-  module procedure atlas_Mesh__delete
   module procedure atlas_FieldSet__delete
   module procedure atlas_HaloExchange__delete
   module procedure atlas_Metadata__delete
@@ -433,7 +432,8 @@ end function atlas_workdir
 function atlas_read_gmsh(filename) result(mesh)
   character(len=*), intent(in) :: filename
   type(atlas_Mesh) :: mesh
-  call mesh%reset_c_ptr( atlas__read_gmsh(c_str(filename)) )
+  mesh = atlas_Mesh( atlas__read_gmsh(c_str(filename)) )
+  call mesh%return()
 end function atlas_read_gmsh
 
 subroutine atlas_write_gmsh(mesh,filename)
@@ -532,14 +532,16 @@ end subroutine atlas_write_load_balance_report
 function atlas_generate_mesh(grid) result(mesh)
   type(atlas_Mesh) :: mesh
   type(atlas_ReducedGrid) :: grid
-  call mesh%reset_c_ptr( atlas__generate_mesh(grid%c_ptr()) )
+  mesh = atlas_Mesh( atlas__generate_mesh(grid%c_ptr()) )
+  call mesh%return()
 end function atlas_generate_mesh
 
 function atlas_generate_mesh_with_distribution(grid,distribution) result(mesh)
   type(atlas_Mesh) :: mesh
   type(atlas_ReducedGrid) :: grid
   type(atlas_GridDistribution) :: distribution
-  call mesh%reset_c_ptr( atlas__generate_mesh_with_distribution(grid%c_ptr(),distribution%c_ptr()) )
+  mesh = atlas_Mesh( atlas__generate_mesh_with_distribution(grid%c_ptr(),distribution%c_ptr()) )
+  call mesh%return()
 end function atlas_generate_mesh_with_distribution
 
 ! -----------------------------------------------------------------------------

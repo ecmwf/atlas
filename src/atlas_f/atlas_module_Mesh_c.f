@@ -1,5 +1,10 @@
 ! (C) Copyright 2013-2015 ECMWF.
 
+function atlas_Mesh__cptr(cptr) result(mesh)
+  type(atlas_Mesh) :: mesh
+  type(c_ptr), intent(in) :: cptr
+  call mesh%reset_c_ptr( cptr )
+end function atlas_Mesh__cptr
 
 function atlas_Mesh__ctor() result(mesh)
   type(atlas_Mesh) :: mesh
@@ -51,19 +56,11 @@ function Mesh__nodes(this) result(nodes)
   if( nodes%is_null() ) write(0,*) 'call abort()'
 end function
 
-subroutine atlas_Mesh__delete(this)
-  type(atlas_Mesh), intent(inout) :: this
+subroutine Mesh__delete(this)
+  class(atlas_Mesh), intent(inout) :: this
   if ( .not. this%is_null() ) then
     call atlas__Mesh__delete(this%c_ptr())
   end if
   call this%reset_c_ptr()
-end subroutine atlas_Mesh__delete
-
-subroutine atlas_Mesh_finalize( this )
-  class(atlas_Mesh), intent(inout) :: this
-  if ( .not. this%is_null() ) then
-    call atlas__Mesh__delete(this%c_ptr());
-  end if
-  call this%reset_c_ptr()
-end subroutine
+end subroutine Mesh__delete
 
