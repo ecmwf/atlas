@@ -17,9 +17,6 @@ public atlas_object
 type :: atlas_object
   type(C_PTR), private :: cpp_object_ptr = C_NULL_PTR
 contains
-  procedure, public :: owners  => atlas_object__owners
-  procedure, public :: attach  => atlas_object__attach
-  procedure, public :: detach  => atlas_object__detach
   procedure, public :: is_null => atlas_object__is_null
   procedure, public :: c_ptr   => atlas_object__c_ptr
   procedure, public :: reset_c_ptr => atlas_object__reset_c_ptr
@@ -29,26 +26,9 @@ contains
   generic, public :: operator(==) => equal
   generic, public :: operator(/=) => not_equal
 
-  procedure, public :: return => atlas_return
 end type
 
 interface
-  ! int atlas__Owned__owners(const Owned* This);
-  function atlas__Owned__owners(This) bind(c,name="atlas__Owned__owners")
-    use iso_c_binding, only: c_int, c_ptr
-    integer(c_int) :: atlas__Owned__owners
-    type(c_ptr), value :: This
-  end function
-
-  subroutine atlas__Owned__attach(This) bind(c,name="atlas__Owned__attach")
-    use iso_c_binding, only: c_ptr
-    type(c_ptr), value :: This
-  end subroutine
-
-  subroutine atlas__Owned__detach(This) bind(c,name="atlas__Owned__detach")
-    use iso_c_binding, only: c_ptr
-    type(c_ptr), value :: This
-  end subroutine
 
   !int atlas__compare_cptr_equal( void* p1, void* p2 )
   function atlas__compare_cptr_equal(p1,p2) bind(c,name="atlas__compare_cptr_equal") result(equal)
@@ -64,13 +44,6 @@ end interface
 ! =============================================================================
 CONTAINS
 ! =============================================================================
-
-subroutine atlas_return(object)
-  class(atlas_object), intent(inout) :: object
-#ifndef FORTRAN_SUPPORTS_FINAL
-  call object%detach()
-#endif
-end subroutine
 
 function atlas_compare_equal(p1,p2) result(equal)
   use iso_c_binding, only: c_ptr
@@ -108,22 +81,6 @@ function atlas_object__is_null(this) result(is_null)
     is_null = .True.
   endif
 end function
-
-function atlas_object__owners(this) result(owners)
-  integer :: owners
-  class(atlas_object) :: this
-  owners = atlas__Owned__owners(this%cpp_object_ptr)
-end function
-
-subroutine atlas_object__attach(this)
-  class(atlas_object), intent(inout) :: this
-  call atlas__Owned__attach(this%cpp_object_ptr)
-end subroutine
-
-subroutine atlas_object__detach(this)
-  class(atlas_object), intent(inout) :: this
-  call atlas__Owned__detach(this%cpp_object_ptr)
-end subroutine
 
 logical function atlas_object__equal(obj1,obj2)
   class(atlas_object), intent(in) :: obj1

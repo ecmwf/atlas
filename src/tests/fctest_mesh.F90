@@ -291,7 +291,6 @@ TEST( test_fieldset )
   write(*,*) "test_fieldset starting"
 
   fieldset = atlas_FieldSet("fieldset")
-  write(*,*) "fieldset%owners() ",fieldset%owners()
 
   afield = nodes%field("field_0")
   write(0,*) "field%owners() = ", afield%owners()

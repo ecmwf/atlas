@@ -24,6 +24,7 @@ contains
   procedure, public :: owners => RefCounted__owners
   procedure, public :: attach => RefCounted__attach
   procedure, public :: detach => RefCounted__detach
+  procedure, public :: return => atlas_return
 endtype
 
 interface
@@ -83,6 +84,13 @@ function RefCounted__owners(this) result(owners)
   class(atlas_RefCounted) :: this
   owners = atlas__Owned__owners(this%c_ptr())
 end function
+
+subroutine atlas_return(this)
+  class(atlas_RefCounted), intent(inout) :: this
+#ifndef FORTRAN_SUPPORTS_FINAL
+  call this%detach()
+#endif
+end subroutine
 
 
 end module
