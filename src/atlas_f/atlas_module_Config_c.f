@@ -32,15 +32,6 @@ subroutine atlas_Config__delete(this)
   call this%reset_c_ptr()
 end subroutine atlas_Config__delete
 
-subroutine atlas_ConfigList__delete(this)
-  use atlas_Config_c_binding
-  class(atlas_Config), intent(inout) :: this(:)
-  integer :: j
-  do j=1,size(this)
-    call atlas_Config__delete(this(j))
-  enddo
-end subroutine atlas_ConfigList__delete
-
 function atlas_Config__has(this, name) result(value)
   use atlas_Config_c_binding
   class(atlas_Config), intent(inout) :: this

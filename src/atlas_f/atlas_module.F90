@@ -36,7 +36,7 @@ use, intrinsic :: iso_c_binding
 use atlas_mpi_module
 use atlas_C_interop
 use atlas_object_module
-use atlas_refcounted_module, only: atlas_refcounted
+use atlas_refcounted_module, only: atlas_refcounted, atlas_refcounted_fortran
 use atlas_atlas_c_binding
 use atlas_mpi_c_binding
 use atlas_Field_c_binding
@@ -63,6 +63,7 @@ implicit none
 
 private :: atlas_object
 private :: atlas_refcounted
+private :: atlas_refcounted_fortran
 private :: view1d
 private :: stride
 private :: get_c_arguments
@@ -139,8 +140,6 @@ INTERFACE atlas_delete
 ! -----------------------------------------------------------------------------
   module procedure atlas_HaloExchange__delete
   module procedure atlas_Metadata__delete
-  module procedure atlas_Config__delete
-  module procedure atlas_ConfigList__delete
   module procedure atlas_Value__delete
   module procedure atlas_Value__array_delete
 end interface atlas_delete

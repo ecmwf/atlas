@@ -10,12 +10,12 @@ private :: atlas_compare_equal
 !========================================================================
 ! Public interface
 
-public atlas_refcounted
+public atlas_RefCounted
+public atlas_RefCounted_Fortran
 
 !========================================================================
 
 type, abstract, extends(atlas_object) :: atlas_RefCounted
-  integer, public :: id
 contains
   procedure, public :: finalize => RefCounted__finalize
   procedure, private :: reset => RefCounted__reset
@@ -24,8 +24,25 @@ contains
   procedure, public :: owners => RefCounted__owners
   procedure, public :: attach => RefCounted__attach
   procedure, public :: detach => RefCounted__detach
-  procedure, public :: return => atlas_return
+  procedure, public :: return => atlas_RefCounted__return
 endtype
+
+!========================================================================
+
+type, abstract, extends(atlas_object) :: atlas_RefCounted_Fortran
+  integer, private :: count = 0
+contains
+  procedure, public :: finalize => RefCounted_Fortran__finalize
+  procedure, private :: reset => RefCounted_Fortran__reset
+  generic, public :: assignment(=) => reset
+  procedure(RefCounted_Fortran__finalize), deferred, private :: delete
+  procedure, public :: owners => RefCounted_Fortran__owners
+  procedure, public :: attach => RefCounted_Fortran__attach
+  procedure, public :: detach => RefCounted_Fortran__detach
+  procedure, public :: return => atlas_RefCounted_Fortran__return
+endtype
+
+!========================================================================
 
 interface
   ! int atlas__Owned__owners(const Owned* This);
@@ -47,6 +64,7 @@ interface
 
 end interface
 
+!========================================================================
 contains
 
 subroutine RefCounted__finalize(this)
@@ -65,7 +83,6 @@ subroutine RefCounted__reset(obj_out,obj_in)
     if( .not. obj_out%is_null() ) call obj_out%finalize()
     call obj_out%reset_c_ptr( obj_in%c_ptr() )
     if( .not. obj_out%is_null() ) call obj_out%attach()
-    obj_out%id = obj_in%id
   endif
 end subroutine
 
@@ -85,8 +102,53 @@ function RefCounted__owners(this) result(owners)
   owners = atlas__Owned__owners(this%c_ptr())
 end function
 
-subroutine atlas_return(this)
+subroutine atlas_RefCounted__return(this)
   class(atlas_RefCounted), intent(inout) :: this
+#ifndef FORTRAN_SUPPORTS_FINAL
+  call this%detach()
+#endif
+end subroutine
+
+!========================================================================
+
+subroutine RefCounted_Fortran__finalize(this)
+  class(atlas_RefCounted_Fortran), intent(inout) :: this
+  if( .not. this%is_null() ) then
+    if( this%owners() >  0 ) call this%detach()
+    if( this%owners() == 0 ) call this%delete()
+    call this%reset_c_ptr()
+  endif
+end subroutine
+
+subroutine RefCounted_Fortran__reset(obj_out,obj_in)
+  class(atlas_RefCounted_Fortran), intent(inout) :: obj_out
+  class(atlas_RefCounted_Fortran), intent(in) :: obj_in
+  if( obj_out /= obj_in ) then
+    if( .not. obj_out%is_null() ) call obj_out%finalize()
+    call obj_out%reset_c_ptr( obj_in%c_ptr() )
+    obj_out%count = obj_in%count
+    if( .not. obj_out%is_null() ) call obj_out%attach()
+  endif
+end subroutine
+
+subroutine RefCounted_Fortran__attach(this)
+  class(atlas_RefCounted_Fortran), intent(inout) :: this
+  this%count = this%count + 1
+end subroutine
+
+subroutine RefCounted_Fortran__detach(this)
+  class(atlas_RefCounted_Fortran), intent(inout) :: this
+  this%count = this%count + 1
+end subroutine
+
+function RefCounted_Fortran__owners(this) result(owners)
+  integer :: owners
+  class(atlas_RefCounted_Fortran) :: this
+  owners = this%count
+end function
+
+subroutine atlas_RefCounted_Fortran__return(this)
+  class(atlas_RefCounted_Fortran), intent(inout) :: this
 #ifndef FORTRAN_SUPPORTS_FINAL
   call this%detach()
 #endif

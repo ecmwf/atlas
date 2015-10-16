@@ -21,7 +21,7 @@ function atlas_State__generate(generator, params) result(State)
   else
     p = atlas_Config()
     call atlas__State__initialize(State%c_ptr(),c_str(generator),p%c_ptr())
-    call atlas_delete(p)
+    call p%finalize()
   endif
 end function
 

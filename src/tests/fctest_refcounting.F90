@@ -40,15 +40,15 @@ function RefObj__constructor(id) result(obj)
   integer :: id
   write(0,*) "constructing obj ", id
   call obj%reset_c_ptr( atlas__Mesh__new() )
-  obj%id = id
+  !obj%id = id
 end function
 
 subroutine RefObj__delete(this)
   class(RefObj), intent(inout) :: this
-  write(0,*) "deleting obj",this%id
+  write(0,*) "deleting obj"!,this%id
   if( .not. this%is_null() ) call atlas__Mesh__delete(this%c_ptr())
   call this%reset_c_ptr()
-  write(0,*) "deleting obj",this%id, "done"
+  write(0,*) "deleting obj"!,this%id, "done"
 end subroutine
 
 subroutine consume_new_obj(obj)
@@ -66,7 +66,7 @@ end subroutine
 subroutine consume_obj(obj)
   class(RefObj) :: obj
   call obj%attach()
-  write(0,*) "Consume obj",obj%id
+  write(0,*) "Consume obj"!,obj%id
   call obj%finalize()
 end subroutine
 
@@ -92,7 +92,7 @@ TEST( test_ref )
   type(RefObj) :: obj, bjo
   obj = RefObj(1)
   FCTEST_CHECK_EQUAL( obj%owners(), 1 )
-  FCTEST_CHECK_EQUAL( obj%id, 1 )
+  !FCTEST_CHECK_EQUAL( obj%id, 1 )
   call consume_existing_obj(obj)
   call consume_new_obj(RefObj(2))
 

@@ -436,7 +436,7 @@ TEST( test_parametrisation )
   found = params%get("valuestr",valuestr)
   write(atlas_log%msg,*) "valuestr = ",valuestr; call atlas_log%info()
 
-  call atlas_delete(params)
+  call params%finalize()
 END_TEST
 
 
@@ -453,7 +453,7 @@ TEST( test_fieldcreation )
   grid = atlas_ReducedGrid("oct.N80")
   params = atlas_FieldParametrisation(creator="IFS",nproma=1024,ngptot=grid%npts(),nlev=137,nvar=1,kind=4)
   field = atlas_Field(params)
-  call atlas_delete(params)
+  call params%finalize()
 
   write(0,*) field%name(), field%size(), field%shape(), field%datatype(), field%bytes()
   call field%finalize()

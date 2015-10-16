@@ -2,7 +2,7 @@
 
 !------------------------------------------------------------------------------
 
-TYPE, extends(atlas_object) :: atlas_Config
+TYPE, extends(atlas_RefCounted_Fortran) :: atlas_Config
 
 ! Purpose :
 ! -------
@@ -49,6 +49,8 @@ contains
   generic :: get => get_config, get_config_list, get_int32, get_logical, get_real32, get_real64, &
                     get_string, get_array_int32, get_array_int64, get_array_real32, get_array_real64
   procedure :: json => atlas_Config__json
+
+  procedure, private :: delete => atlas_Config__delete
 
 END TYPE atlas_Config
 

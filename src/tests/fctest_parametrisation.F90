@@ -80,10 +80,12 @@ TEST( test_parametrisation )
     call list(j)%set("l2",22)
   enddo
   call nested%set("list",list)
-  call atlas_delete(list)
+  do j=1,2
+    call list(j)%finalize()
+  enddo
 
   call params%set("nested",nested)
-  call atlas_delete(nested)
+  call nested%finalize()
 
   ! --------------------- JSON ------------------
 
@@ -119,13 +121,15 @@ TEST( test_parametrisation )
   FCTEST_CHECK( found )
   FCTEST_CHECK_EQUAL(intval, 22)
 
-  call atlas_delete(alist)
-  call atlas_delete(anested)
+  do j=1,size(alist)
+    call alist(j)%finalize()
+  enddo
+  call anested%finalize()
 
 
   ! ---------------------------------------------
 
-  call atlas_delete(params)
+  call params%finalize()
 
 END_TEST
 
@@ -149,9 +153,12 @@ TEST(test_parametrisation_json_string)
      if( .not. records(jrec)%get("age",age) )   call atlas_abort("age not found")
      write(atlas_log%msg,'(2A,I0,A)') name," is ",age," years old"; call atlas_log%info()
   enddo
-   call atlas_delete(records)
+  do jrec=1,size(records)
+    call records(jrec)%finalize()
+  enddo
  endif
- call atlas_delete(params)
+ FCTEST_CHECK_EQUAL( params%owners() , 1 )
+ call params%finalize()
 END_TEST
 
 TEST(test_parametrisation_json_file)
@@ -178,7 +185,9 @@ TEST(test_parametrisation_json_file)
      if( .not. records(jrec)%get("age",age) )   call atlas_abort("age not found")
      write(atlas_log%msg,'(2A,I0,A)') name," is ",age," years old"; call atlas_log%info()
    enddo
-   call atlas_delete(records)
+   do jrec=1,size(records)
+     call records(jrec)%finalize()
+   enddo
  endif
  if( params%get("location",location) ) then
    call atlas_log%info("location = "//location%json())
@@ -192,9 +201,9 @@ TEST(test_parametrisation_json_file)
    if( location%get("city",city) ) then
      write(0,*) "city = ",city
    endif
-   call atlas_delete(location)
+   call location%finalize()
  endif
- call atlas_delete(params)
+ call params%finalize()
 
 END_TEST
 ! -----------------------------------------------------------------------------

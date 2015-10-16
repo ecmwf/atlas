@@ -33,7 +33,7 @@ function atlas_Field__create_name_kind_shape(name,kind,shape) result(field)
   call params%set("name",name)
 
   field = atlas_Field__cptr( atlas__Field__create(params%c_ptr()) )
-  call atlas_delete(params)
+  call params%finalize()
   call field%return()
 end function
 
@@ -51,7 +51,7 @@ function atlas_Field__create_kind_shape(kind,shape) result(field)
   call params%set("datatype",atlas_data_type(kind))
 
   field = atlas_Field__cptr( atlas__Field__create(params%c_ptr()) )
-  call atlas_delete(params)
+  call params%finalize()
   call field%return()
 end function
 
