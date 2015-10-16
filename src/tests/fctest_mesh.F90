@@ -71,7 +71,7 @@ END_TESTSUITE_INIT
 ! -----------------------------------------------------------------------------
 
 TESTSUITE_FINALIZE
-  call mesh%finalize()
+  call mesh%final()
   call atlas_finalize()
 END_TESTSUITE_FINALIZE
 
@@ -98,7 +98,7 @@ TEST( test_field_name )
   call nodes%add( field )
   FCTEST_CHECK_EQUAL( field%name() , "field" )
   call nodes%remove_field("field")
-  call field%finalize() ! memory leak if not finalized!
+  call field%final() ! memory leak if not finalized!
 END_TEST
 
 ! -----------------------------------------------------------------------------
@@ -117,7 +117,7 @@ TEST( test_field_owners)
 
   f2 = state%field("field_test_owners")
   FCTEST_CHECK_EQUAL( f%owners() , 3 )
-  call f2%finalize()
+  call f2%final()
 
   FCTEST_CHECK_EQUAL( f%owners() , 2 )
 
@@ -127,11 +127,11 @@ TEST( test_field_owners)
   call fields%add_field(f)
   FCTEST_CHECK_EQUAL( f%owners() , 2 )
 
-  call fields%finalize()
+  call fields%final()
   FCTEST_CHECK_EQUAL( f%owners() , 1 )
 
-  call f%finalize() ! memory leak if not finalized!
-  call state%finalize()
+  call f%final() ! memory leak if not finalized!
+  call state%final()
 END_TEST
 
 ! -----------------------------------------------------------------------------
@@ -155,7 +155,7 @@ TEST( test_field_metadata )
   call nodes%add(field)
   FCTEST_CHECK_EQUAL( field%owners() , 2 )
   metadata = field%metadata()
-  call field%finalize()
+  call field%final()
 
   call metadata%set("true",.True.)
   call metadata%set("false",.False.)
@@ -214,7 +214,7 @@ TEST( test_field_size )
   FCTEST_CHECK_EQUAL( field%datatype() , "int32" )
   FCTEST_CHECK_EQUAL( size(fdata_int) , 0 )
 
-  call field%finalize() ! Not necessary, following "=" will handle it
+  call field%final() ! Not necessary, following "=" will handle it
   write(0,*) "finalized field0"
 
   field = atlas_Field("field_1",atlas_real(c_float),(/1,nodes%size()/))
@@ -223,7 +223,7 @@ TEST( test_field_size )
   FCTEST_CHECK_EQUAL( field%datatype() , "real32" )
   FCTEST_CHECK_EQUAL( size(fdata_real32) , 10 )
 
-  call field%finalize() !Not necessary, following "=" will handle it
+  call field%final() !Not necessary, following "=" will handle it
 
   field = atlas_Field("field_2",atlas_real(c_double),(/2,nodes%size()/))
   FCTEST_CHECK_EQUAL( field%owners() , 1 )
@@ -245,7 +245,7 @@ TEST( test_field_size )
   write(0,*) "Owners = ", field%owners()
   field = field
   write(0,*) "Owners = ", field%owners()
-  call field%finalize()
+  call field%final()
 END_TEST
 
 ! -----------------------------------------------------------------------------
@@ -260,7 +260,7 @@ TEST( test_create_remove )
   field = atlas_Field("bla",atlas_integer(),(/1,nodes%size()/))
   call nodes%add(field)
   FCTEST_CHECK_EQUAL( field%name(), "bla" )
-  call field%finalize()
+  call field%final()
 
 !  call nodes%remove_field("bla")
 
@@ -270,7 +270,7 @@ TEST( test_create_remove )
   FCTEST_CHECK_EQUAL( size(vector),   30 )
   FCTEST_CHECK_EQUAL( size(vector,1), 3   )
   FCTEST_CHECK_EQUAL( size(vector,2), 10   )
-!  call field%finalize()
+!  call field%final()
 
   field = atlas_Field("scalar_field",atlas_real(c_double),(/1,nodes%size()/))
   call nodes%add(field)
@@ -278,7 +278,7 @@ TEST( test_create_remove )
   FCTEST_CHECK_EQUAL( size(scalar),   10 )
   FCTEST_CHECK_EQUAL( size(scalar,1), 10  )
   FCTEST_CHECK_EQUAL( field%owners() , 2 )
-  call field%finalize()
+  call field%final()
 END_TEST
 
 ! -----------------------------------------------------------------------------
@@ -310,7 +310,7 @@ TEST( test_fieldset )
   FCTEST_CHECK_EQUAL( field%name(), "field_2" )
   field = fieldset%field(4)
   FCTEST_CHECK_EQUAL( field%name(), "vector_field" )
-  call fieldset%finalize()
+  call fieldset%final()
   write(0,*) "test_fieldset end"
 END_TEST
 
@@ -357,7 +357,7 @@ TEST( test_meshgen )
 
   field = nodes%field("dual_volumes")
   call field%access_data(arr)
-  call field%finalize()
+  call field%final()
 
   functionspace_nodes = atlas_NodesFunctionSpace("nodes",mesh,1)
   halo_exchange = functionspace_nodes%get_halo_exchange()
@@ -366,7 +366,7 @@ TEST( test_meshgen )
   edges = mesh%function_space("edges")
   field = edges%field("dual_normals")
   call field%access_data(arr)
-  call field%finalize()
+  call field%final()
 
 
   !write(0,*) stride(ridx,1)
@@ -401,7 +401,7 @@ TEST( test_griddistribution )
   griddistribution = atlas_GridDistribution(part, part0=1)
 
   mesh = atlas_generate_mesh(grid,griddistribution)
-  call griddistribution%finalize()
+  call griddistribution%final()
 
   call atlas_write_gmsh(mesh,"testf3.msh")
 
@@ -436,7 +436,7 @@ TEST( test_parametrisation )
   found = params%get("valuestr",valuestr)
   write(atlas_log%msg,*) "valuestr = ",valuestr; call atlas_log%info()
 
-  call params%finalize()
+  call params%final()
 END_TEST
 
 
@@ -448,15 +448,15 @@ TEST( test_fieldcreation )
 
   field = atlas_Field(FieldParams(creator="ArraySpec",shape=[10,137,1,30]))
   write(0,*) field%name(), field%size()
-  call field%finalize()
+  call field%final()
 
   grid = atlas_ReducedGrid("oct.N80")
   params = atlas_FieldParametrisation(creator="IFS",nproma=1024,ngptot=grid%npts(),nlev=137,nvar=1,kind=4)
   field = atlas_Field(params)
-  call params%finalize()
+  call params%final()
 
   write(0,*) field%name(), field%size(), field%shape(), field%datatype(), field%bytes()
-  call field%finalize()
+  call field%final()
 
 ! Idea:
 !   field = atlas_Field([ &
@@ -464,7 +464,7 @@ TEST( test_fieldcreation )
 !      & atlas_Param("shape",[10,137,1,30]),&
 !      & atlas_Param("kind","real64") ])
 
-  call grid%finalize()
+  call grid%final()
 END_TEST
 
 TEST( test_fv )
@@ -495,7 +495,7 @@ TEST( test_fv )
 
       ! Generate mesh with given grid and distribution
       mesh = atlas_generate_mesh(grid,griddistribution)
-      call griddistribution%finalize()
+      call griddistribution%final()
 
       ! Generate nodes function-space, with a given halo_size
       nodes_fs = atlas_NodesFunctionSpace("nodes",mesh,halo_size)
@@ -515,9 +515,9 @@ TEST( test_fv )
       ! Generate median-dual mesh, (dual_normals, dual_volumes)
       call atlas_build_median_dual_mesh(mesh)
 
-      call mesh%finalize()
-      call grid%finalize()
-      call nodes_fs%finalize()
+      call mesh%final()
+      call grid%final()
+      call nodes_fs%final()
 
 END_TEST
 

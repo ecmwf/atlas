@@ -33,7 +33,7 @@ function atlas_Field__create_name_kind_shape(name,kind,shape) result(field)
   call params%set("name",name)
 
   field = atlas_Field__cptr( atlas__Field__create(params%c_ptr()) )
-  call params%finalize()
+  call params%final()
   call field%return()
 end function
 
@@ -51,14 +51,14 @@ function atlas_Field__create_kind_shape(kind,shape) result(field)
   call params%set("datatype",atlas_data_type(kind))
 
   field = atlas_Field__cptr( atlas__Field__create(params%c_ptr()) )
-  call params%finalize()
+  call params%final()
   call field%return()
 end function
 
 #ifdef FORTRAN_SUPPORTS_FINAL
 subroutine atlas_Field__final(this)
   type(atlas_Field), intent(inout) :: this
-  call this%finalize()
+  call this%final()
 end subroutine
 #endif
 

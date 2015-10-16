@@ -17,10 +17,10 @@ public atlas_RefCounted_Fortran
 
 type, abstract, extends(atlas_object) :: atlas_RefCounted
 contains
-  procedure, public :: finalize => RefCounted__finalize
+  procedure, public :: final => RefCounted__final
   procedure, private :: reset => RefCounted__reset
   generic, public :: assignment(=) => reset
-  procedure(RefCounted__finalize), deferred, public :: delete
+  procedure(RefCounted__final), deferred, public :: delete
   procedure, public :: owners => RefCounted__owners
   procedure, public :: attach => RefCounted__attach
   procedure, public :: detach => RefCounted__detach
@@ -32,10 +32,10 @@ endtype
 type, abstract, extends(atlas_object) :: atlas_RefCounted_Fortran
   integer, private :: count = 0
 contains
-  procedure, public :: finalize => RefCounted_Fortran__finalize
+  procedure, public :: final => RefCounted_Fortran__final
   procedure, private :: reset => RefCounted_Fortran__reset
   generic, public :: assignment(=) => reset
-  procedure(RefCounted_Fortran__finalize), deferred, public :: delete
+  procedure(RefCounted_Fortran__final), deferred, public :: delete
   procedure, public :: owners => RefCounted_Fortran__owners
   procedure, public :: attach => RefCounted_Fortran__attach
   procedure, public :: detach => RefCounted_Fortran__detach
@@ -67,7 +67,7 @@ end interface
 !========================================================================
 contains
 
-subroutine RefCounted__finalize(this)
+subroutine RefCounted__final(this)
   class(atlas_RefCounted), intent(inout) :: this
   if( .not. this%is_null() ) then
     if( this%owners() >  0 ) call this%detach()
@@ -80,7 +80,7 @@ subroutine RefCounted__reset(obj_out,obj_in)
   class(atlas_RefCounted), intent(inout) :: obj_out
   class(atlas_RefCounted), intent(in) :: obj_in
   if( obj_out /= obj_in ) then
-    if( .not. obj_out%is_null() ) call obj_out%finalize()
+    if( .not. obj_out%is_null() ) call obj_out%final()
     call obj_out%reset_c_ptr( obj_in%c_ptr() )
     if( .not. obj_out%is_null() ) call obj_out%attach()
   endif
@@ -111,7 +111,7 @@ end subroutine
 
 !========================================================================
 
-subroutine RefCounted_Fortran__finalize(this)
+subroutine RefCounted_Fortran__final(this)
   class(atlas_RefCounted_Fortran), intent(inout) :: this
   if( .not. this%is_null() ) then
     if( this%owners() >  0 ) call this%detach()
@@ -124,7 +124,7 @@ subroutine RefCounted_Fortran__reset(obj_out,obj_in)
   class(atlas_RefCounted_Fortran), intent(inout) :: obj_out
   class(atlas_RefCounted_Fortran), intent(in) :: obj_in
   if( obj_out /= obj_in ) then
-    if( .not. obj_out%is_null() ) call obj_out%finalize()
+    if( .not. obj_out%is_null() ) call obj_out%final()
     call obj_out%reset_c_ptr( obj_in%c_ptr() )
     obj_out%count = obj_in%count
     if( .not. obj_out%is_null() ) call obj_out%attach()

@@ -12,7 +12,7 @@ end function
 #ifdef FORTRAN_SUPPORTS_FINAL
 subroutine atlas_SpectralFunctionSpace__final(this)
   type(atlas_SpectralFunctionSpace), intent(inout) :: this
-  call this%finalize()
+  call this%final()
 end subroutine
 #endif
 

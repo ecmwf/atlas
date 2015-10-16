@@ -9,7 +9,7 @@ end function
 #ifdef FORTRAN_SUPPORTS_FINAL
 subroutine atlas_NextFunctionSpace__final(this)
   type(atlas_NextFunctionSpace), intent(inout) :: this
-  call this%finalize()
+  call this%final()
 end subroutine
 #endif
 

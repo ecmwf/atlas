@@ -26,8 +26,8 @@ contains
   generic, public :: operator(==) => equal
   generic, public :: operator(/=) => not_equal
 
-  procedure, public :: finalize => atlas_object__finalize
-  procedure(atlas_object__finalize), deferred, public :: delete
+  procedure, public :: final => atlas_object__final
+  procedure(atlas_object__final), deferred, public :: delete
 
 end type
 
@@ -102,7 +102,7 @@ logical function atlas_object__not_equal(obj1,obj2)
 end function
 
 
-subroutine atlas_object__finalize(this)
+subroutine atlas_object__final(this)
   class(atlas_object), intent(inout) :: this
 end subroutine
 

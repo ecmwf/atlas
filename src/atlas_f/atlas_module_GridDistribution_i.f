@@ -19,7 +19,7 @@ TYPE, extends(atlas_object) :: atlas_GridDistribution
 !------------------------------------------------------------------------------
 contains
 
-  procedure, public :: finalize => atlas_GridDistribution__finalize
+  procedure, public :: final => atlas_GridDistribution__final
 
   procedure, public :: delete => atlas_GridDistribution__delete
 

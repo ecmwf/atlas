@@ -58,7 +58,6 @@ contains
     & access_data2_int32, access_data2_int64, access_data2_real32, access_data2_real64, access_data2_real64_bounds, &
     & access_data3_int32, access_data3_int64, access_data3_real32, access_data3_real64, access_data3_real64_bounds, &
     &                                         access_data4_real32, access_data4_real64, access_data4_real64_bounds
-  !procedure :: finalize => atlas_Field__finalize
   procedure, public :: delete => atlas_Field__delete
 #ifdef FORTRAN_SUPPORTS_FINAL
   final :: atlas_Field__final

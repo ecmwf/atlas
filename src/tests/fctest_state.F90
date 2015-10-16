@@ -98,7 +98,7 @@ call state%remove("pressure")
 FCTEST_CHECK(state%has("pressure") .eqv. .False.)
 
 ! Delete the state
-call state%finalize()
+call state%final()
 
 END_TEST
 
@@ -115,7 +115,7 @@ type(atlas_FunctionSpace) :: nodes
 state = atlas_State()
 
 ! Delete the state
-call state%finalize()
+call state%final()
 
 END_TEST
 
@@ -134,7 +134,7 @@ state_metadata = state%metadata()
 call state_metadata%set("integer",1)
 
 ! Delete the state
-call state%finalize()
+call state%final()
 
 END_TEST
 

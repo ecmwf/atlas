@@ -67,7 +67,7 @@ subroutine consume_obj(obj)
   class(RefObj) :: obj
   call obj%attach()
   write(0,*) "Consume obj"!,obj%id
-  call obj%finalize()
+  call obj%final()
 end subroutine
 
 end module fctest_atlas_refcounting_fixture
@@ -96,16 +96,16 @@ TEST( test_ref )
   call consume_existing_obj(obj)
   call consume_new_obj(RefObj(2))
 
-  !call obj%finalize() will be done in next statement upon assignment(=)
+  !call obj%final() will be done in next statement upon assignment(=)
   obj = create_obj(3)
   FCTEST_CHECK_EQUAL( obj%owners(), 1 )
   bjo = obj
   FCTEST_CHECK_EQUAL( obj%owners(), 2 )
   obj = bjo
   FCTEST_CHECK_EQUAL( obj%owners(), 2 )
-  call obj%finalize()
+  call obj%final()
   call consume_existing_obj(bjo)
-  call bjo%finalize()
+  call bjo%final()
 END_TEST
 
 ! -----------------------------------------------------------------------------

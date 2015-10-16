@@ -81,11 +81,11 @@ TEST( test_parametrisation )
   enddo
   call nested%set("list",list)
   do j=1,2
-    call list(j)%finalize()
+    call list(j)%final()
   enddo
 
   call params%set("nested",nested)
-  call nested%finalize()
+  call nested%final()
 
   ! --------------------- JSON ------------------
 
@@ -122,14 +122,14 @@ TEST( test_parametrisation )
   FCTEST_CHECK_EQUAL(intval, 22)
 
   do j=1,size(alist)
-    call alist(j)%finalize()
+    call alist(j)%final()
   enddo
-  call anested%finalize()
+  call anested%final()
 
 
   ! ---------------------------------------------
 
-  call params%finalize()
+  call params%final()
 
 END_TEST
 
@@ -154,11 +154,11 @@ TEST(test_parametrisation_json_string)
      write(atlas_log%msg,'(2A,I0,A)') name," is ",age," years old"; call atlas_log%info()
   enddo
   do jrec=1,size(records)
-    call records(jrec)%finalize()
+    call records(jrec)%final()
   enddo
  endif
  FCTEST_CHECK_EQUAL( params%owners() , 1 )
- call params%finalize()
+ call params%final()
 END_TEST
 
 TEST(test_parametrisation_json_file)
@@ -186,7 +186,7 @@ TEST(test_parametrisation_json_file)
      write(atlas_log%msg,'(2A,I0,A)') name," is ",age," years old"; call atlas_log%info()
    enddo
    do jrec=1,size(records)
-     call records(jrec)%finalize()
+     call records(jrec)%final()
    enddo
  endif
  if( params%get("location",location) ) then
@@ -201,9 +201,9 @@ TEST(test_parametrisation_json_file)
    if( location%get("city",city) ) then
      write(0,*) "city = ",city
    endif
-   call location%finalize()
+   call location%final()
  endif
- call params%finalize()
+ call params%final()
 
 END_TEST
 ! -----------------------------------------------------------------------------
