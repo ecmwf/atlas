@@ -3,7 +3,7 @@
 
 
 !------------------------------------------------------------------------------
-TYPE, extends(atlas_object) :: atlas_Trans
+TYPE, extends(atlas_RefCounted) :: atlas_Trans
 
 ! Purpose :
 ! -------
@@ -57,6 +57,9 @@ contains
   procedure :: gathspec_r1 => atlas_Trans__gathspec_r1
   procedure :: gathspec_r2 => atlas_Trans__gathspec_r2
   generic :: gathspec => gathspec_r1, gathspec_r2
+
+  procedure, private :: delete => atlas_Trans__delete
+
 END TYPE atlas_Trans
 
 !------------------------------------------------------------------------------

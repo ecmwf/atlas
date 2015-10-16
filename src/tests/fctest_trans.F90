@@ -15,7 +15,6 @@
 
 module fctest_atlas_trans_fixture
 use atlas_module
-use atlas_grids_module
 use iso_c_binding
 implicit none
 end module fctest_atlas_trans_fixture
@@ -28,7 +27,6 @@ TESTSUITE_WITH_FIXTURE(fctest_atlas_trans,fctest_atlas_trans_fixture)
 
 TESTSUITE_INIT
   call atlas_init()
-  call atlas_grids_load()
 END_TESTSUITE_INIT
 
 ! -----------------------------------------------------------------------------
@@ -65,14 +63,24 @@ TEST( test_trans )
   nsmax = 21
 
   grid = atlas_ReducedGrid("oct.N24")
+
+  FCTEST_CHECK_EQUAL( grid%owners(), 1 )
+
   mesh = atlas_generate_mesh(grid)
+
+  FCTEST_CHECK_EQUAL( mesh%owners(), 1 )
+
   trans = atlas_Trans(grid,nsmax)
 
+  FCTEST_CHECK( .not. trans%is_null() )
   !call atlas_write_gmsh(mesh,"testf3.msh")
-
+  !FCTEST_CHECK_EQUAL( trans%owners(), 1 )
+  !FCTEST_CHECK_EQUAL( trans%owners(), 1 )
+!  FCTEST_CHECK_EQUAL( trans%owners(), 1 )
+!  FCTEST_CHECK_EQUAL( trans%owners(), 1 )
   FCTEST_CHECK_EQUAL( trans%nproc(), 1 )
   FCTEST_CHECK_EQUAL( trans%myproc(proc0=1), 1 )
-  FCTEST_CHECK_EQUAL( trans%ndgl(), 24*2 )
+  FCTEST_CHECK_EQUAL( trans%ndgl(), grid%nlat() )
   FCTEST_CHECK_EQUAL( trans%ngptot(), grid%npts() )
   FCTEST_CHECK_EQUAL( trans%ngptotg(), grid%npts() )
   FCTEST_CHECK_EQUAL( trans%nsmax(), nsmax )
@@ -202,7 +210,7 @@ TEST( test_trans )
   call scalarfields%finalize()
   call spectralfields%finalize()
   call mesh%finalize()
-  call atlas_delete(trans)
+  call trans%finalize()
   call grid%finalize()
 END_TEST
 

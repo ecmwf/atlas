@@ -141,7 +141,6 @@ INTERFACE atlas_delete
   module procedure atlas_Metadata__delete
   module procedure atlas_Config__delete
   module procedure atlas_ConfigList__delete
-  module procedure atlas_Trans__delete
   module procedure atlas_Value__delete
   module procedure atlas_Value__array_delete
 end interface atlas_delete

@@ -13,6 +13,7 @@
 
 #include "eckit/value/Properties.h"
 #include "eckit/value/Params.h"
+#include "eckit/memory/Owned.h"
 #include "transi/trans.h"
 #include "atlas/util/ArrayView.h"
 
@@ -41,7 +42,7 @@ public:
 };
 
 
-class Trans {
+class Trans : public eckit::Owned {
 private:
   typedef struct ::Trans_t Trans_t;
 

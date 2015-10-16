@@ -37,11 +37,11 @@ function atlas_TransParameters__ctor() result(params)
 #endif
 end function atlas_TransParameters__ctor
 
-subroutine atlas_Trans__delete( trans )
+subroutine atlas_Trans__delete( this )
   USE_ATLAS_TRANS_C_BINDING
-  type(atlas_Trans) :: trans
+  class(atlas_Trans), intent(inout) :: this
 #ifdef ATLAS_HAVE_TRANS
-  call atlas__Trans__delete(trans%c_ptr());
+  call atlas__Trans__delete(this%c_ptr());
 #else
   ! IGNORE
 #endif
