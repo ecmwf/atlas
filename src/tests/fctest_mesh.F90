@@ -131,7 +131,7 @@ TEST( test_field_owners)
   FCTEST_CHECK_EQUAL( f%owners() , 1 )
 
   call f%finalize() ! memory leak if not finalized!
-  call atlas_delete(state)
+  call state%finalize()
 END_TEST
 
 ! -----------------------------------------------------------------------------
