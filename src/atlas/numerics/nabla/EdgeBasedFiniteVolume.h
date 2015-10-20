@@ -29,7 +29,7 @@ public:
   EdgeBasedFiniteVolume(const next::FunctionSpace &, const eckit::Parametrisation &);
   virtual ~EdgeBasedFiniteVolume();
 
-  void gradient(const Field &field, Field &grad);
+  void gradient(const Field &field, Field &grad) const;
 
 private:
   void setup();

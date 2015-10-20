@@ -78,7 +78,7 @@ void EdgeBasedFiniteVolume::setup()
 }
 
 
-void EdgeBasedFiniteVolume::gradient(const Field& _field, Field& _grad)
+void EdgeBasedFiniteVolume::gradient(const Field& _field, Field& _grad) const
 {
   atlas::FunctionSpace &edges = fvm_->mesh().function_space("edges");
   atlas::Nodes const   &nodes = fvm_->nodes();

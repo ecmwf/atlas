@@ -57,5 +57,49 @@ END_TEST
 
 ! -----------------------------------------------------------------------------
 
+TEST( test_nabla )
+type(atlas_ReducedGrid) :: grid
+type(atlas_Mesh) :: mesh
+type(atlas_functionspace_EdgeBasedFiniteVolume) :: fvm
+type(atlas_Nabla) :: nabla
+type(atlas_Field) :: varfield
+type(atlas_Field) :: gradfield
+
+real(c_double), pointer :: var(:,:)
+real(c_double), pointer :: grad(:,:,:)
+
+integer, parameter :: nlev = 137
+
+! Setup
+grid = atlas_ReducedGrid("rgg.N24")
+mesh = atlas_generate_mesh(grid)
+fvm  = atlas_functionspace_EdgeBasedFiniteVolume(mesh)
+nabla = atlas_Nabla(fvm)
+
+! Create a variable field and a gradient field
+varfield = fvm%create_field("var",atlas_real(c_double),nlev)
+gradfield  = fvm%create_field("grad",atlas_real(c_double),nlev,[2])
+
+! Access to data
+call varfield%data(var)
+call gradfield%data(grad)
+var(:,:) = 0.
+
+! Compute the gradient
+call nabla%gradient(varfield,gradfield)
+
+
+! Cleanup
+call varfield%final()
+call gradfield%final()
+call nabla%final()
+call fvm%final()
+call mesh%final()
+call grid%final()
+
+END_TEST
+
+! -----------------------------------------------------------------------------
+
 END_TESTSUITE
 

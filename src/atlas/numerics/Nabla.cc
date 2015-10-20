@@ -18,6 +18,7 @@
 #include "eckit/thread/Mutex.h"
 #include "eckit/exception/Exceptions.h"
 
+#include "atlas/runtime/ErrorHandling.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/numerics/Nabla.h"
 #include "atlas/numerics/nabla/EdgeBasedFiniteVolume.h"
@@ -139,6 +140,42 @@ Nabla* NablaFactory::build(const next::FunctionSpace& fs, const eckit::Parametri
 
     return (*j).second->make(fs,p);
 }
+
+extern "C" {
+
+void atlas__Nabla__delete(Nabla* This)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    delete This;
+  );
+}
+
+Nabla* atlas__Nabla__create (const next::FunctionSpace* functionspace, const eckit::Parametrisation* params)
+{
+  Nabla* nabla(0);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(functionspace);
+    ASSERT(params);
+    nabla = Nabla::create(*functionspace,*params);
+  );
+  return nabla;
+}
+
+void atlas__Nabla__gradient (const Nabla* This, const Field* field, Field* grad)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    ASSERT(field);
+    ASSERT(grad);
+    This->gradient(*field,*grad);
+  );
+}
+
+
+
+}
+
 
 } // namespace numerics
 } // namespace atlas
