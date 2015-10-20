@@ -38,7 +38,8 @@ inline std::ostream &operator<<(std::ostream &s, const std::vector<T> &v) {
 }
 
 struct AtlasFixture {
-    AtlasFixture()  { atlas_init(); }
+    AtlasFixture()  { atlas_init(boost::unit_test::framework::master_test_suite().argc,
+                                 boost::unit_test::framework::master_test_suite().argv); }
     ~AtlasFixture() { atlas_finalize(); }
 };
 
