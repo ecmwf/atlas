@@ -377,9 +377,9 @@ end function atlas_Trans__nvalue
 subroutine atlas_Trans__dirtrans_fieldset(this, gp, gpfields, sp, spfields, parameters)
   USE_ATLAS_TRANS_C_BINDING
   class(atlas_Trans), intent(in) :: this
-  class(atlas_NodesFunctionSpace), intent(in)  :: gp
+  class(atlas_functionspace_Nodes), intent(in)  :: gp
   class(atlas_FieldSet), intent(in)  :: gpfields
-  class(atlas_SpectralFunctionSpace), intent(in)  :: sp
+  class(atlas_functionspace_Spectral), intent(in)  :: sp
   class(atlas_FieldSet), intent(inout) :: spfields
   class(atlas_TransParameters), intent(in), optional  :: parameters
 #ifdef ATLAS_HAVE_TRANS
@@ -409,9 +409,9 @@ end subroutine atlas_Trans__dirtrans_fieldset
 subroutine atlas_Trans__invtrans_fieldset(this, sp, spfields, gp, gpfields, parameters)
   USE_ATLAS_TRANS_C_BINDING
   class(atlas_Trans), intent(in) :: this
-  class(atlas_SpectralFunctionSpace), intent(in)  :: sp
+  class(atlas_functionspace_Spectral), intent(in)  :: sp
   class(atlas_FieldSet), intent(in)  :: spfields
-  class(atlas_NodesFunctionSpace), intent(in) :: gp
+  class(atlas_functionspace_Nodes), intent(in) :: gp
   class(atlas_FieldSet), intent(inout) :: gpfields
   class(atlas_TransParameters), intent(in), optional  :: parameters
 #ifdef ATLAS_HAVE_TRANS
@@ -442,9 +442,9 @@ end subroutine atlas_Trans__invtrans_fieldset
 subroutine atlas_Trans__dirtrans_field(this, gp, gpfield, sp, spfield, parameters)
   USE_ATLAS_TRANS_C_BINDING
   class(atlas_Trans), intent(in) :: this
-  class(atlas_NodesFunctionSpace), intent(in)  :: gp
+  class(atlas_functionspace_Nodes), intent(in)  :: gp
   class(atlas_Field), intent(in)  :: gpfield
-  class(atlas_SpectralFunctionSpace), intent(in) :: sp
+  class(atlas_functionspace_Spectral), intent(in) :: sp
   class(atlas_Field), intent(inout) :: spfield
   class(atlas_TransParameters), intent(in), optional  :: parameters
 #ifdef ATLAS_HAVE_TRANS
@@ -475,9 +475,9 @@ end subroutine atlas_Trans__dirtrans_field
 subroutine atlas_Trans__dirtrans_wind2vordiv_field(this, gp, gpwind, sp, spvor, spdiv, parameters)
   USE_ATLAS_TRANS_C_BINDING
   class(atlas_Trans), intent(in) :: this
-  type(atlas_NodesFunctionSpace), intent(in)  :: gp
+  type(atlas_functionspace_Nodes), intent(in)  :: gp
   type(atlas_Field), intent(in)  :: gpwind
-  type(atlas_SpectralFunctionSpace), intent(in) :: sp
+  type(atlas_functionspace_Spectral), intent(in) :: sp
   type(atlas_Field), intent(inout) :: spvor
   type(atlas_Field), intent(inout) :: spdiv
   type(atlas_TransParameters), intent(in), optional  :: parameters
@@ -510,9 +510,9 @@ end subroutine atlas_Trans__dirtrans_wind2vordiv_field
 subroutine atlas_Trans__invtrans_field(this, sp, spfield, gp, gpfield, parameters)
   USE_ATLAS_TRANS_C_BINDING
   class(atlas_Trans), intent(in) :: this
-  class(atlas_SpectralFunctionSpace), intent(in)  :: sp
+  class(atlas_functionspace_Spectral), intent(in)  :: sp
   class(atlas_Field), intent(in)  :: spfield
-  class(atlas_NodesFunctionSpace), intent(in)  :: gp
+  class(atlas_functionspace_Nodes), intent(in)  :: gp
   class(atlas_Field), intent(inout) :: gpfield
   class(atlas_TransParameters), intent(in), optional  :: parameters
 #ifdef ATLAS_HAVE_TRANS
@@ -543,10 +543,10 @@ end subroutine atlas_Trans__invtrans_field
 subroutine atlas_Trans__invtrans_vordiv2wind_field(this, sp, spvor, spdiv, gp, gpwind, parameters)
   USE_ATLAS_TRANS_C_BINDING
   class(atlas_Trans), intent(in) :: this
-  class(atlas_SpectralFunctionSpace), intent(in)  :: sp
+  class(atlas_functionspace_Spectral), intent(in)  :: sp
   class(atlas_Field), intent(in)  :: spvor
   class(atlas_Field), intent(in)  :: spdiv
-  class(atlas_NodesFunctionSpace), intent(in)  :: gp
+  class(atlas_functionspace_Nodes), intent(in)  :: gp
   class(atlas_Field), intent(inout) :: gpwind
   class(atlas_TransParameters), intent(in), optional  :: parameters
 #ifdef ATLAS_HAVE_TRANS

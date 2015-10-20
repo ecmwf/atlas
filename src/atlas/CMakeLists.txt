@@ -258,14 +258,14 @@ field/FieldCreatorArraySpec.h
 field/FieldCreatorArraySpec.cc
 field/FieldCreatorIFS.h
 field/FieldCreatorIFS.cc
-functionspace/NodesFunctionSpace.h
-functionspace/NodesFunctionSpace.cc
-functionspace/NodesFunctionSpaceInterface.h
-functionspace/NodesFunctionSpaceInterface.cc
+functionspace/Nodes.h
+functionspace/Nodes.cc
+functionspace/NodesInterface.h
+functionspace/NodesInterface.cc
 functionspace/EdgeBasedFiniteVolume.h
 functionspace/EdgeBasedFiniteVolume.cc
-functionspace/SpectralFunctionSpace.h
-functionspace/SpectralFunctionSpace.cc
+functionspace/Spectral.h
+functionspace/Spectral.cc
 )
 
 list( APPEND atlas_numerics_srcs

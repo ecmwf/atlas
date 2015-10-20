@@ -422,7 +422,7 @@ end subroutine atlas_write_gmsh
 
 subroutine atlas_write_gmsh_field(field,function_space,filename,mode)
   type(atlas_Field), intent(in) :: field
-  type(atlas_NodesFunctionSpace), intent(in) :: function_space
+  type(atlas_functionspace_Nodes), intent(in) :: function_space
   character(len=*), intent(in) :: filename
   integer(kind(openmode)), optional :: mode
   if( present(mode) ) then
@@ -434,7 +434,7 @@ end subroutine atlas_write_gmsh_field
 
 subroutine atlas_write_gmsh_fieldset(fieldset,function_space,filename,mode)
   type(atlas_FieldSet), intent(in) :: fieldset
-  type(atlas_NodesFunctionSpace), intent(in) :: function_space
+  type(atlas_functionspace_Nodes), intent(in) :: function_space
   character(len=*), intent(in) :: filename
   integer(kind(openmode)), optional :: mode
   if( present(mode) ) then

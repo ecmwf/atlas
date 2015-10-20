@@ -23,8 +23,8 @@ namespace atlas {
   class Field;
   class Array;
   namespace functionspace {
-    class NodesFunctionSpace;
-    class SpectralFunctionSpace;
+    class Nodes;
+    class Spectral;
   }
 }
 
@@ -322,24 +322,24 @@ public:
    */
   void dirtrans(const int nb_fields, const double wind_fields[], double vorticity_spectra[], double divergence_spectra[] ) const;
 
-  void dirtrans(const functionspace::NodesFunctionSpace&,    const Field& gpfield,
-                const functionspace::SpectralFunctionSpace&,       Field& spfield,
+  void dirtrans(const functionspace::Nodes&,    const Field& gpfield,
+                const functionspace::Spectral&,       Field& spfield,
                 const TransParameters& = TransParameters()) const;
-  void dirtrans(const functionspace::NodesFunctionSpace&,    const FieldSet& gpfields,
-                const functionspace::SpectralFunctionSpace&,       FieldSet& spfields,
+  void dirtrans(const functionspace::Nodes&,    const FieldSet& gpfields,
+                const functionspace::Spectral&,       FieldSet& spfields,
                 const TransParameters& = TransParameters()) const;
-  void dirtrans_wind2vordiv(const functionspace::NodesFunctionSpace&, const Field& gpwind,
-                            const functionspace::SpectralFunctionSpace&, Field& spvor, Field& spdiv,
+  void dirtrans_wind2vordiv(const functionspace::Nodes&, const Field& gpwind,
+                            const functionspace::Spectral&, Field& spvor, Field& spdiv,
                             const TransParameters& = TransParameters()) const;
 
-  void invtrans(const functionspace::SpectralFunctionSpace&, const Field& spfield,
-                const functionspace::NodesFunctionSpace&,          Field& gpfield,
+  void invtrans(const functionspace::Spectral&, const Field& spfield,
+                const functionspace::Nodes&,          Field& gpfield,
                 const TransParameters& = TransParameters()) const;
-  void invtrans(const functionspace::SpectralFunctionSpace&, const FieldSet& spfields,
-                const functionspace::NodesFunctionSpace&,          FieldSet& gpfields,
+  void invtrans(const functionspace::Spectral&, const FieldSet& spfields,
+                const functionspace::Nodes&,          FieldSet& gpfields,
                 const TransParameters& = TransParameters()) const;
-  void invtrans_vordiv2wind(const functionspace::SpectralFunctionSpace&, const Field& spvor, const Field& spdiv,
-                            const functionspace::NodesFunctionSpace&, Field& gpwind,
+  void invtrans_vordiv2wind(const functionspace::Spectral&, const Field& spvor, const Field& spdiv,
+                            const functionspace::Nodes&, Field& gpwind,
                             const TransParameters& = TransParameters()) const;
 
 
@@ -359,8 +359,8 @@ private:
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
-#define NodesFunctionSpace functionspace::NodesFunctionSpace
-#define SpectralFunctionSpace functionspace::SpectralFunctionSpace
+#define NodesFunctionSpace functionspace::Nodes
+#define SpectralFunctionSpace functionspace::Spectral
 extern "C"
 {
   Trans* atlas__Trans__new (const Grid* grid, int nsmax);

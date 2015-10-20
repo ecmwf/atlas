@@ -19,7 +19,7 @@
 #include "atlas/Mesh.h"
 #include "atlas/Nodes.h"
 #include "atlas/grids/grids.h"
-#include "atlas/functionspace/NodesFunctionSpace.h"
+#include "atlas/functionspace/Nodes.h"
 #include "atlas/actions/GenerateMesh.h"
 #include "atlas/actions/WriteLoadBalanceReport.h"
 
@@ -113,7 +113,7 @@ void AtlasLoadbalance::run()
 
   if( !grid ) return;
   SharedPtr<Mesh> mesh( generate_mesh(*grid) );
-  SharedPtr<NodesFunctionSpace> nodes( new NodesFunctionSpace(*mesh,Halo(halo)) );
+  SharedPtr<functionspace::Nodes> nodes( new functionspace::Nodes(*mesh,Halo(halo)) );
 
 
   if( output.size() )

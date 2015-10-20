@@ -37,13 +37,13 @@ private:
 
 // -------------------------------------------------------------------
 
-class NodesFunctionSpace : public next::FunctionSpace
+class Nodes : public next::FunctionSpace
 {
 public:
 
-    NodesFunctionSpace( Mesh& mesh, const Halo& = Halo(0) );
+    Nodes( Mesh& mesh, const Halo& = Halo(0) );
 
-    virtual ~NodesFunctionSpace();
+    virtual ~Nodes();
 
     virtual std::string name() const { return "Nodes"; }
 
@@ -51,11 +51,11 @@ public:
     size_t nb_nodes_global() const; // Only on MPI rank 0, will this be different from 0
     std::vector<size_t> nb_nodes_global_foreach_rank() const;
 
-    const Mesh& mesh() const { return mesh_; }
-          Mesh& mesh()       { return mesh_; }
+    const atlas::Mesh& mesh() const { return mesh_; }
+          atlas::Mesh& mesh()       { return mesh_; }
 
-    const Nodes& nodes() const { return nodes_; }
-          Nodes& nodes()       { return nodes_; }
+    const atlas::Nodes& nodes() const { return nodes_; }
+          atlas::Nodes& nodes()       { return nodes_; }
 
 
 
@@ -264,8 +264,8 @@ private: // methods
 
 private: // data
 
-    Mesh& mesh_; // non-const because functionspace may modify mesh
-    Nodes& nodes_; // non-const because functionspace may modify mesh
+    atlas::Mesh& mesh_; // non-const because functionspace may modify mesh
+    atlas::Nodes& nodes_; // non-const because functionspace may modify mesh
     Halo halo_;
     size_t nb_nodes_;
     size_t nb_nodes_global_;
@@ -275,49 +275,49 @@ private: // data
 // -------------------------------------------------------------------
 
 template< typename DATATYPE >
-Field* NodesFunctionSpace::createField(const std::string& name) const
+Field* Nodes::createField(const std::string& name) const
 {
     return createField(name,DataType::create<DATATYPE>());
 }
 
 template< typename DATATYPE >
-Field* NodesFunctionSpace::createField(const std::string& name, size_t levels) const
+Field* Nodes::createField(const std::string& name, size_t levels) const
 {
     return createField(name,DataType::create<DATATYPE>(),levels);
 }
 
 template< typename DATATYPE >
-Field* NodesFunctionSpace::createField(const std::string& name,const std::vector<size_t>& variables) const
+Field* Nodes::createField(const std::string& name,const std::vector<size_t>& variables) const
 {
     return createField(name,DataType::create<DATATYPE>(),variables);
 }
 
 template< typename DATATYPE >
-Field* NodesFunctionSpace::createField(const std::string& name, size_t levels, const std::vector<size_t>& variables) const
+Field* Nodes::createField(const std::string& name, size_t levels, const std::vector<size_t>& variables) const
 {
     return createField(name,DataType::create<DATATYPE>(),levels,variables);
 }
 
 template< typename DATATYPE >
-Field* NodesFunctionSpace::createGlobalField(const std::string& name) const
+Field* Nodes::createGlobalField(const std::string& name) const
 {
     return createGlobalField(name,DataType::create<DATATYPE>());
 }
 
 template< typename DATATYPE >
-Field* NodesFunctionSpace::createGlobalField(const std::string& name,size_t levels) const
+Field* Nodes::createGlobalField(const std::string& name,size_t levels) const
 {
     return createGlobalField(name,DataType::create<DATATYPE>(),levels);
 }
 
 template< typename DATATYPE >
-Field* NodesFunctionSpace::createGlobalField(const std::string& name, const std::vector<size_t>& variables) const
+Field* Nodes::createGlobalField(const std::string& name, const std::vector<size_t>& variables) const
 {
     return createGlobalField(name,DataType::create<DATATYPE>(),variables);
 }
 
 template< typename DATATYPE >
-Field* NodesFunctionSpace::createGlobalField(const std::string& name, size_t levels, const std::vector<size_t>& variables) const
+Field* Nodes::createGlobalField(const std::string& name, size_t levels, const std::vector<size_t>& variables) const
 {
     return createGlobalField(name,DataType::create<DATATYPE>(),levels,variables);
 }

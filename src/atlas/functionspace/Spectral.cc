@@ -10,7 +10,7 @@
 
 #include "eckit/utils/MD5.h"
 #include "atlas/Mesh.h"
-#include "atlas/functionspace/SpectralFunctionSpace.h"
+#include "atlas/functionspace/Spectral.h"
 #include "atlas/FieldSet.h"
 
 #ifdef ATLAS_HAVE_TRANS
@@ -22,14 +22,14 @@ namespace functionspace {
 
 // ----------------------------------------------------------------------
 
-SpectralFunctionSpace::SpectralFunctionSpace(const size_t truncation)
+Spectral::Spectral(const size_t truncation)
   : next::FunctionSpace(),
     truncation_(truncation),
     trans_(0)
 {
 }
 
-SpectralFunctionSpace::SpectralFunctionSpace(trans::Trans& trans)
+Spectral::Spectral(trans::Trans& trans)
   : next::FunctionSpace(),
 #ifdef ATLAS_HAVE_TRANS
     truncation_(trans.nsmax()),
@@ -41,51 +41,51 @@ SpectralFunctionSpace::SpectralFunctionSpace(trans::Trans& trans)
 {
 }
 
-SpectralFunctionSpace::~SpectralFunctionSpace()
+Spectral::~Spectral()
 {
 }
 
-size_t SpectralFunctionSpace::nb_spectral_coefficients() const {
+size_t Spectral::nb_spectral_coefficients() const {
 #ifdef ATLAS_HAVE_TRANS
   if( trans_ ) return trans_->nspec2();
 #endif
   return (truncation_+1)*(truncation_+2);
 }
 
-size_t SpectralFunctionSpace::nb_spectral_coefficients_global() const {
+size_t Spectral::nb_spectral_coefficients_global() const {
 #ifdef ATLAS_HAVE_TRANS
   if( trans_ ) return trans_->nspec2g();
 #endif
   return (truncation_+1)*(truncation_+2);
 }
 
-Field* SpectralFunctionSpace::createField(const std::string& name) const {
+Field* Spectral::createField(const std::string& name) const {
   Field* field = Field::create<double>(name, make_shape(nb_spectral_coefficients()) );
   field->set_functionspace(this);
   return field;
 }
 
-Field* SpectralFunctionSpace::createField(const std::string& name, size_t levels) const {
+Field* Spectral::createField(const std::string& name, size_t levels) const {
   Field* field = Field::create<double>(name, make_shape(nb_spectral_coefficients(),levels) );
   field->set_functionspace(this);
   field->set_levels(levels);
   return field;
 }
 
-Field* SpectralFunctionSpace::createGlobalField(const std::string& name) const {
+Field* Spectral::createGlobalField(const std::string& name) const {
   Field* field = Field::create<double>(name, make_shape(nb_spectral_coefficients_global()) );
   field->set_functionspace(this);
   return field;
 }
 
-Field* SpectralFunctionSpace::createGlobalField(const std::string& name, size_t levels) const {
+Field* Spectral::createGlobalField(const std::string& name, size_t levels) const {
   Field* field = Field::create<double>(name, make_shape(nb_spectral_coefficients_global(),levels) );
   field->set_functionspace(this);
   field->set_levels(levels);
   return field;
 }
 
-void SpectralFunctionSpace::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset ) const
+void Spectral::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset ) const
 {
   ASSERT( trans_ );
   ASSERT(local_fieldset.size() == global_fieldset.size());
@@ -117,7 +117,7 @@ void SpectralFunctionSpace::gather( const FieldSet& local_fieldset, FieldSet& gl
 #endif
   }
 }
-void SpectralFunctionSpace::gather( const Field& local, Field& global ) const
+void Spectral::gather( const Field& local, Field& global ) const
 {
   FieldSet local_fields;
   FieldSet global_fields;
@@ -126,7 +126,7 @@ void SpectralFunctionSpace::gather( const Field& local, Field& global ) const
   gather(local_fields,global_fields);
 }
 
-void SpectralFunctionSpace::scatter( const FieldSet& global_fieldset, FieldSet& local_fieldset ) const
+void Spectral::scatter( const FieldSet& global_fieldset, FieldSet& local_fieldset ) const
 {
   ASSERT( trans_ );
   ASSERT(local_fieldset.size() == global_fieldset.size());
@@ -158,7 +158,7 @@ void SpectralFunctionSpace::scatter( const FieldSet& global_fieldset, FieldSet& 
 
   }
 }
-void SpectralFunctionSpace::scatter( const Field& global, Field& local ) const
+void Spectral::scatter( const Field& global, Field& local ) const
 {
   FieldSet global_fields;
   FieldSet local_fields;
@@ -167,12 +167,12 @@ void SpectralFunctionSpace::scatter( const Field& global, Field& local ) const
   scatter(global_fields,local_fields);
 }
 
-std::string SpectralFunctionSpace::checksum( const FieldSet& fieldset ) const {
+std::string Spectral::checksum( const FieldSet& fieldset ) const {
   eckit::MD5 md5;
   NOTIMP;
   return md5;
 }
-std::string SpectralFunctionSpace::checksum( const Field& field ) const {
+std::string Spectral::checksum( const Field& field ) const {
   FieldSet fieldset;
   fieldset.add(field);
   return checksum(fieldset);
@@ -183,41 +183,41 @@ std::string SpectralFunctionSpace::checksum( const Field& field ) const {
 
 extern "C"
 {
-SpectralFunctionSpace* atlas__SpectralFunctionSpace__new__truncation (int truncation)
+Spectral* atlas__SpectralFunctionSpace__new__truncation (int truncation)
 {
-  return new SpectralFunctionSpace(truncation);
+  return new Spectral(truncation);
 }
 
-SpectralFunctionSpace* atlas__SpectralFunctionSpace__new__trans (trans::Trans* trans)
+Spectral* atlas__SpectralFunctionSpace__new__trans (trans::Trans* trans)
 {
-  return new SpectralFunctionSpace(*trans);
+  return new Spectral(*trans);
 }
 
-void atlas__SpectralFunctionSpace__delete (SpectralFunctionSpace* This)
+void atlas__SpectralFunctionSpace__delete (Spectral* This)
 {
   ASSERT(This);
   delete This;
 }
 
-Field* atlas__SpectralFunctionSpace__create_field (const SpectralFunctionSpace* This, const char* name)
+Field* atlas__SpectralFunctionSpace__create_field (const Spectral* This, const char* name)
 {
   ASSERT(This);
   return This->createField(std::string(name));
 }
 
-Field* atlas__SpectralFunctionSpace__create_field_lev (const SpectralFunctionSpace* This, const char* name, int levels)
+Field* atlas__SpectralFunctionSpace__create_field_lev (const Spectral* This, const char* name, int levels)
 {
   ASSERT(This);
   return This->createField(std::string(name),levels);
 }
 
-Field* atlas__SpectralFunctionSpace__create_global_field (const SpectralFunctionSpace* This, const char* name)
+Field* atlas__SpectralFunctionSpace__create_global_field (const Spectral* This, const char* name)
 {
   ASSERT(This);
   return This->createGlobalField(std::string(name));
 }
 
-Field* atlas__SpectralFunctionSpace__create_global_field_lev (const SpectralFunctionSpace* This, const char* name, int levels)
+Field* atlas__SpectralFunctionSpace__create_global_field_lev (const Spectral* This, const char* name, int levels)
 {
   ASSERT(This);
   return This->createGlobalField(std::string(name),levels);

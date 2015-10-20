@@ -20,7 +20,7 @@
 #include "atlas/Field.h"
 #include "atlas/FieldSet.h"
 #include "atlas/FunctionSpace.h"
-#include "atlas/functionspace/NodesFunctionSpace.h"
+#include "atlas/functionspace/Nodes.h"
 #include "atlas/grids/Unstructured.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/DataType.h"
@@ -207,7 +207,7 @@ void PointCloud::write(const eckit::PathName& path, const Mesh& mesh)
 }
 
 
-void PointCloud::write(const eckit::PathName& path, const FieldSet& fieldset, const functionspace::NodesFunctionSpace& function_space)
+void PointCloud::write(const eckit::PathName& path, const FieldSet& fieldset, const functionspace::Nodes& function_space)
 {
   const std::string msg("PointCloud::write: ");
 
@@ -385,7 +385,7 @@ Mesh* atlas__read_pointcloud (char* file_path)
 { return PointCloud::read(file_path); }
 
 
-void atlas__write_pointcloud_fieldset (char* file_path, const FieldSet* fieldset, const functionspace::NodesFunctionSpace* functionspace)
+void atlas__write_pointcloud_fieldset (char* file_path, const FieldSet* fieldset, const functionspace::Nodes* functionspace)
 { PointCloud::write(file_path, *fieldset, *functionspace); }
 
 

@@ -17,8 +17,8 @@
 #include "atlas/Nodes.h"
 #include "atlas/FieldSet.h"
 #include "atlas/FunctionSpace.h"
-#include "atlas/functionspace/NodesFunctionSpace.h"
-#include "atlas/functionspace/SpectralFunctionSpace.h"
+#include "atlas/functionspace/Nodes.h"
+#include "atlas/functionspace/Spectral.h"
 #include "atlas/Array.h"
 #include "atlas/Field.h"
 #include "atlas/util/Bitflags.h"
@@ -42,8 +42,8 @@ void trans_check(const int code, const char* msg, const eckit::CodeLocation& loc
 #define TRANS_CHECK( CALL ) trans_check(CALL, #CALL, Here() )
 
 using atlas::util::Topology;
-using atlas::functionspace::NodesFunctionSpace;
-using atlas::functionspace::SpectralFunctionSpace;
+using atlas::functionspace::Nodes;
+using atlas::functionspace::Spectral;
 
 namespace atlas {
 namespace trans {
@@ -274,8 +274,8 @@ void encode( const Trans::Options& p, eckit::Stream& s )
 
 
 
-void Trans::dirtrans(const NodesFunctionSpace& gp, const Field& gpfield,
-                     const SpectralFunctionSpace& sp, Field& spfield, const TransParameters& context) const
+void Trans::dirtrans(const functionspace::Nodes& gp, const Field& gpfield,
+                     const Spectral& sp, Field& spfield, const TransParameters& context) const
 {
   FieldSet gpfields; gpfields.add(gpfield);
   FieldSet spfields; spfields.add(spfield);
@@ -286,8 +286,8 @@ void Trans::dirtrans(const NodesFunctionSpace& gp, const Field& gpfield,
 // --------------------------------------------------------------------------------------------
 
 
-void Trans::dirtrans(const NodesFunctionSpace& gp,const FieldSet& gpfields,
-                     const SpectralFunctionSpace& sp, FieldSet& spfields, const TransParameters& context) const
+void Trans::dirtrans(const functionspace::Nodes& gp,const FieldSet& gpfields,
+                     const Spectral& sp, FieldSet& spfields, const TransParameters& context) const
 {
   // Count total number of fields and do sanity checks
   int nfld(0);
@@ -376,8 +376,8 @@ void Trans::dirtrans(const NodesFunctionSpace& gp,const FieldSet& gpfields,
 // --------------------------------------------------------------------------------------------
 
 
-void Trans::invtrans(const SpectralFunctionSpace& sp, const Field& spfield,
-                     const NodesFunctionSpace& gp, Field& gpfield, const TransParameters& context) const
+void Trans::invtrans(const Spectral& sp, const Field& spfield,
+                     const functionspace::Nodes& gp, Field& gpfield, const TransParameters& context) const
 {
   FieldSet spfields; spfields.add(spfield);
   FieldSet gpfields; gpfields.add(gpfield);
@@ -388,8 +388,8 @@ void Trans::invtrans(const SpectralFunctionSpace& sp, const Field& spfield,
 // --------------------------------------------------------------------------------------------
 
 
-void Trans::invtrans(const SpectralFunctionSpace& sp, const FieldSet& spfields,
-                     const NodesFunctionSpace& gp, FieldSet& gpfields, const TransParameters& context) const
+void Trans::invtrans(const Spectral& sp, const FieldSet& spfields,
+                     const functionspace::Nodes& gp, FieldSet& gpfields, const TransParameters& context) const
 {
   // Count total number of fields and do sanity checks
   int nfld(0);
@@ -474,8 +474,8 @@ void Trans::invtrans(const SpectralFunctionSpace& sp, const FieldSet& spfields,
 }
 
 
-void Trans::dirtrans_wind2vordiv(const NodesFunctionSpace& gp, const Field& gpwind,
-                                 const SpectralFunctionSpace& sp, Field& spvor, Field&spdiv,
+void Trans::dirtrans_wind2vordiv(const functionspace::Nodes& gp, const Field& gpwind,
+                                 const Spectral& sp, Field& spvor, Field&spdiv,
                                  const TransParameters& context) const
 {
   // Count total number of fields and do sanity checks
@@ -539,8 +539,8 @@ void Trans::dirtrans_wind2vordiv(const NodesFunctionSpace& gp, const Field& gpwi
 }
 
 
-void Trans::invtrans_vordiv2wind(const SpectralFunctionSpace& sp, const Field& spvor, const Field& spdiv,
-                                 const NodesFunctionSpace& gp, Field& gpwind, const TransParameters&) const
+void Trans::invtrans_vordiv2wind(const Spectral& sp, const Field& spvor, const Field& spdiv,
+                                 const functionspace::Nodes& gp, Field& gpwind, const TransParameters&) const
 {
   // Count total number of fields and do sanity checks
   size_t nfld = spvor.stride(0);
@@ -1005,7 +1005,7 @@ const int* atlas__Trans__nvalue (const Trans* This, int &size)
   return 0;
 }
 
-void atlas__Trans__dirtrans_fieldset (const Trans* This, const NodesFunctionSpace* gp, const FieldSet* gpfields, const SpectralFunctionSpace* sp, FieldSet* spfields, const TransParameters* parameters)
+void atlas__Trans__dirtrans_fieldset (const Trans* This, const functionspace::Nodes* gp, const FieldSet* gpfields, const Spectral* sp, FieldSet* spfields, const TransParameters* parameters)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
@@ -1018,7 +1018,7 @@ void atlas__Trans__dirtrans_fieldset (const Trans* This, const NodesFunctionSpac
   );
 }
 
-void atlas__Trans__invtrans_fieldset (const Trans* This, const SpectralFunctionSpace* sp, const FieldSet* spfields, const NodesFunctionSpace* gp, FieldSet* gpfields, const TransParameters* parameters)
+void atlas__Trans__invtrans_fieldset (const Trans* This, const Spectral* sp, const FieldSet* spfields, const functionspace::Nodes* gp, FieldSet* gpfields, const TransParameters* parameters)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
@@ -1031,7 +1031,7 @@ void atlas__Trans__invtrans_fieldset (const Trans* This, const SpectralFunctionS
   );
 }
 
-void atlas__Trans__dirtrans_field (const Trans* This, const NodesFunctionSpace* gp, const Field* gpfield, const SpectralFunctionSpace* sp, Field* spfield, const TransParameters* parameters)
+void atlas__Trans__dirtrans_field (const Trans* This, const functionspace::Nodes* gp, const Field* gpfield, const Spectral* sp, Field* spfield, const TransParameters* parameters)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
@@ -1042,7 +1042,7 @@ void atlas__Trans__dirtrans_field (const Trans* This, const NodesFunctionSpace* 
   );
 }
 
-void atlas__Trans__invtrans_field (const Trans* This, const SpectralFunctionSpace* sp, const Field* spfield, const NodesFunctionSpace* gp, Field* gpfield, const TransParameters* parameters)
+void atlas__Trans__invtrans_field (const Trans* This, const Spectral* sp, const Field* spfield, const functionspace::Nodes* gp, Field* gpfield, const TransParameters* parameters)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
@@ -1055,7 +1055,7 @@ void atlas__Trans__invtrans_field (const Trans* This, const SpectralFunctionSpac
   );
 }
 
-void atlas__Trans__dirtrans_wind2vordiv_field (const Trans* This, const NodesFunctionSpace* gp, const Field* gpwind, const SpectralFunctionSpace* sp, Field* spvor, Field* spdiv, const TransParameters* parameters)
+void atlas__Trans__dirtrans_wind2vordiv_field (const Trans* This, const functionspace::Nodes* gp, const Field* gpwind, const Spectral* sp, Field* spvor, Field* spdiv, const TransParameters* parameters)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
@@ -1069,7 +1069,7 @@ void atlas__Trans__dirtrans_wind2vordiv_field (const Trans* This, const NodesFun
   );
 }
 
-void atlas__Trans__invtrans_vordiv2wind_field (const Trans* This, const SpectralFunctionSpace* sp, const Field* spvor, const Field* spdiv, const NodesFunctionSpace* gp, Field* gpwind, const TransParameters* parameters)
+void atlas__Trans__invtrans_vordiv2wind_field (const Trans* This, const Spectral* sp, const Field* spvor, const Field* spdiv, const functionspace::Nodes* gp, Field* gpwind, const TransParameters* parameters)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );

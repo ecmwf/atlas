@@ -32,7 +32,7 @@ namespace atlas {
 namespace functionspace {
 
 EdgeBasedFiniteVolume::EdgeBasedFiniteVolume(Mesh &_mesh, const Halo &_halo )
- : NodesFunctionSpace(_mesh,_halo)
+ : Nodes(_mesh,_halo)
 {
   if(mesh().has_function_space("edges")) {
     edges_ = &mesh().function_space("edges");

@@ -23,15 +23,15 @@ namespace functionspace {
 
 // -------------------------------------------------------------------
 
-class SpectralFunctionSpace : public next::FunctionSpace
+class Spectral : public next::FunctionSpace
 {
 public:
 
-  SpectralFunctionSpace(const size_t truncation);
+  Spectral(const size_t truncation);
 
-  SpectralFunctionSpace(trans::Trans& );
+  Spectral(trans::Trans& );
 
-  virtual ~SpectralFunctionSpace();
+  virtual ~Spectral();
 
   virtual std::string name() const { return "Spectral"; }
 
@@ -70,17 +70,17 @@ private: // data
 #define Trans trans::Trans
 extern "C"
 {
-  SpectralFunctionSpace* atlas__SpectralFunctionSpace__new__truncation (int truncation);
-  SpectralFunctionSpace* atlas__SpectralFunctionSpace__new__trans (Trans* trans);
-  void atlas__SpectralFunctionSpace__delete (SpectralFunctionSpace* This);
+  Spectral* atlas__SpectralFunctionSpace__new__truncation (int truncation);
+  Spectral* atlas__SpectralFunctionSpace__new__trans (Trans* trans);
+  void atlas__SpectralFunctionSpace__delete (Spectral* This);
 
-  Field* atlas__SpectralFunctionSpace__create_field (const SpectralFunctionSpace* This, const char* name);
+  Field* atlas__SpectralFunctionSpace__create_field (const Spectral* This, const char* name);
 
-  Field* atlas__SpectralFunctionSpace__create_field_lev (const SpectralFunctionSpace* This, const char* name, int levels);
+  Field* atlas__SpectralFunctionSpace__create_field_lev (const Spectral* This, const char* name, int levels);
 
-  Field* atlas__SpectralFunctionSpace__create_global_field (const SpectralFunctionSpace* This, const char* name);
+  Field* atlas__SpectralFunctionSpace__create_global_field (const Spectral* This, const char* name);
 
-  Field* atlas__SpectralFunctionSpace__create_global_field_lev (const SpectralFunctionSpace* This, const char* name, int levels);
+  Field* atlas__SpectralFunctionSpace__create_global_field_lev (const Spectral* This, const char* name, int levels);
 
 }
 #undef Trans

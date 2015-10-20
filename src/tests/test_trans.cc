@@ -29,8 +29,8 @@
 #include "atlas/Mesh.h"
 #include "atlas/Nodes.h"
 #include "atlas/FunctionSpace.h"
-#include "atlas/functionspace/SpectralFunctionSpace.h"
-#include "atlas/functionspace/NodesFunctionSpace.h"
+#include "atlas/functionspace/Spectral.h"
+#include "atlas/functionspace/Nodes.h"
 
 #include "transi/trans.h"
 
@@ -261,8 +261,8 @@ BOOST_AUTO_TEST_CASE( test_spectral_fields )
   trans::Trans trans(*g,47);
 
 
-  SharedPtr<NodesFunctionSpace> nodal (new NodesFunctionSpace(*m));
-  SharedPtr<SpectralFunctionSpace> spectral (new SpectralFunctionSpace(trans));
+  SharedPtr<functionspace::Nodes> nodal (new functionspace::Nodes(*m));
+  SharedPtr<Spectral> spectral (new Spectral(trans));
 
   SharedPtr<Field> spf ( spectral->createField("spf") );
   SharedPtr<Field> gpf ( nodal->createField<double>("gpf") );

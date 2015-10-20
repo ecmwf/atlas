@@ -13,7 +13,7 @@
 #define atlas_functionspace_EdgeBasedFiniteVolume_h
 
 #include <string>
-#include "atlas/functionspace/NodesFunctionSpace.h"
+#include "atlas/functionspace/Nodes.h"
 
 namespace atlas { class Mesh; }
 namespace atlas { class FunctionSpace; }
@@ -21,7 +21,7 @@ namespace atlas { class FunctionSpace; }
 namespace atlas {
 namespace functionspace {
 
-class EdgeBasedFiniteVolume : public NodesFunctionSpace {
+class EdgeBasedFiniteVolume : public Nodes {
 
 public:
 
@@ -29,8 +29,8 @@ public:
 
   virtual std::string name() const { return "EdgeBasedFiniteVolume"; }
 
-  const NodesFunctionSpace& nodes_fs() const { return *this; }
-        NodesFunctionSpace& nodes_fs()       { return *this; }
+  const Nodes& nodes_fs() const { return *this; }
+        Nodes& nodes_fs()       { return *this; }
 
 private: // data
 

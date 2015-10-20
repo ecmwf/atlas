@@ -2,11 +2,11 @@
 
 
 !------------------------------------------------------------------------------
-TYPE, extends(atlas_NextFunctionSpace) :: atlas_SpectralFunctionSpace
+TYPE, extends(atlas_NextFunctionSpace) :: atlas_functionspace_Spectral
 
 ! Purpose :
 ! -------
-!   *atlas_SpectralFunctionSpace* : Interpretes spectral fields
+!   *atlas_functionspace_Spectral* : Interpretes spectral fields
 
 ! Methods :
 ! -------
@@ -31,15 +31,15 @@ contains
     & create_glb_field_name_lev
 
 #ifdef FORTRAN_SUPPORTS_FINAL
-  final :: atlas_SpectralFunctionSpace__final
+  final :: atlas_functionspace_Spectral__final
 #endif
 
-END TYPE atlas_SpectralFunctionSpace
+END TYPE atlas_functionspace_Spectral
 
-interface atlas_SpectralFunctionSpace
-  module procedure atlas_SpectralFunctionSpace__cptr
-  module procedure atlas_SpectralFunctionSpace__truncation
-  module procedure atlas_SpectralFunctionSpace__trans
+interface atlas_functionspace_Spectral
+  module procedure atlas_functionspace_Spectral__cptr
+  module procedure atlas_functionspace_Spectral__truncation
+  module procedure atlas_functionspace_Spectral__trans
 end interface
 
 

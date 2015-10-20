@@ -42,8 +42,8 @@ TEST( test_trans )
   type(atlas_Mesh) :: mesh
   type(atlas_Trans) :: trans
   type(atlas_Nodes) :: nodes
-  type(atlas_NodesFunctionSpace) :: nodes_fs
-  type(atlas_SpectralFunctionspace) :: spectral_fs
+  type(atlas_functionspace_Nodes) :: nodes_fs
+  type(atlas_functionspace_Spectral) :: spectral_fs
   type(atlas_Field)         :: scalarfield1, scalarfield2
   type(atlas_Field)         :: windfield
   type(atlas_Field)         :: vorfield,divfield
@@ -86,7 +86,7 @@ TEST( test_trans )
   FCTEST_CHECK_EQUAL( trans%nsmax(), nsmax )
 
   nodes = mesh%nodes()
-  nodes_fs = atlas_NodesFunctionSpace(mesh,0)
+  nodes_fs = atlas_functionspace_Nodes(mesh,0)
 
   write(0,*) "nodes_fs%owners()",nodes_fs%owners()
 
@@ -96,7 +96,7 @@ TEST( test_trans )
   scalarfield2 = nodes_fs%create_field("scalar2",atlas_real(c_double))
   write(0,*) "nodes_fs%owners()",nodes_fs%owners()
 
-  spectral_fs = atlas_SpectralFunctionSpace(trans)
+  spectral_fs = atlas_functionspace_Spectral(trans)
   write(0,*) "spectral_fs%owners()",spectral_fs%owners()
 
   spectralfield1 = spectral_fs%create_field("spectral1",nlev)

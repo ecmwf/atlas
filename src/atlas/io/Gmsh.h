@@ -16,7 +16,7 @@
 #include <vector>
 
 #include "atlas/Metadata.h"
-#include "atlas/functionspace/NodesFunctionSpace.h"
+#include "atlas/functionspace/Nodes.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -52,12 +52,12 @@ public:
   /// Write fieldset to file
   ///  Depending on argument "mode", the fields will be appended,
   ///  or existing file will be overwritten
-  void write(const FieldSet& fieldset, const functionspace::NodesFunctionSpace&, const eckit::PathName& file_path, openmode mode = std::ios::out) const;
+  void write(const FieldSet& fieldset, const functionspace::Nodes&, const eckit::PathName& file_path, openmode mode = std::ios::out) const;
 
   /// Write field to file
   ///  Depending on argument "mode", the fields will be appended,
   ///  or existing file will be overwritten
-  void write(const Field& field, const functionspace::NodesFunctionSpace&, const eckit::PathName& file_path, openmode mode = std::ios::out) const;
+  void write(const Field& field, const functionspace::Nodes&, const eckit::PathName& file_path, openmode mode = std::ios::out) const;
 
   /// Write field to file
   ///  Depending on argument "mode", the fields will be appended,
@@ -69,7 +69,7 @@ public:
 };
 
 //------------------------------------------------------------------------------------------------------
-#define NODESFUNCTIONSPACE functionspace::NodesFunctionSpace
+#define NODESFUNCTIONSPACE functionspace::Nodes
 // C wrapper interfaces to C++ routines
 extern "C" {
 Gmsh* atlas__Gmsh__new();

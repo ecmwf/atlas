@@ -204,7 +204,7 @@ public:
 private:
 
   Mesh::Ptr mesh;
-  eckit::SharedPtr<functionspace::NodesFunctionSpace> nodes_fs;
+  SharedPtr<functionspace::Nodes> nodes_fs;
   IndexView<int,2> edge2node;
 
 
@@ -345,7 +345,7 @@ void AtlasBenchmark::setup()
   build_median_dual_mesh(*mesh);
   build_node_to_edge_connectivity(*mesh);
 
-  nodes_fs.reset( new NodesFunctionSpace(*mesh,Halo(*mesh)));
+  nodes_fs.reset( new functionspace::Nodes(*mesh,Halo(*mesh)));
 
   nnodes = mesh->nodes().size();
   nedges = mesh->function_space("edges").shape(0);

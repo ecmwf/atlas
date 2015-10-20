@@ -28,9 +28,9 @@
 #include "atlas/util/IndexView.h"
 #include "atlas/util/Unique.h"
 #include "atlas/grids/ReducedGrid.h"
-#include "atlas/functionspace/NodesFunctionSpace.h"
+#include "atlas/functionspace/Nodes.h"
 
-using atlas::functionspace::NodesFunctionSpace;
+using atlas::functionspace::Nodes;
 using atlas::functionspace::Halo;
 
 namespace atlas {
@@ -123,7 +123,7 @@ void build_median_dual_mesh( Mesh& mesh )
   skewness = 0.;
   alpha = 0.5;
 
-  eckit::SharedPtr<NodesFunctionSpace> nodes_fs( new NodesFunctionSpace(mesh,Halo(mesh)) );
+  eckit::SharedPtr<functionspace::Nodes> nodes_fs( new functionspace::Nodes(mesh,Halo(mesh)) );
   nodes_fs->haloExchange(nodes.field("dual_volumes"));
 
   ArrayView<double,2> dual_normals  ( edges.field( "dual_normals" ) );
@@ -153,7 +153,7 @@ void build_centroid_dual_mesh( Mesh& mesh )
 
   build_skewness( mesh );
 
-  eckit::SharedPtr<NodesFunctionSpace> nodes_fs( new NodesFunctionSpace(mesh,Halo(mesh)) );
+  eckit::SharedPtr<functionspace::Nodes> nodes_fs( new functionspace::Nodes(mesh,Halo(mesh)) );
   nodes_fs->haloExchange(nodes.field("dual_volumes"));
 
   ArrayView<double,2> dual_normals  ( edges.field( "dual_normals" ) );
@@ -641,7 +641,7 @@ void build_brick_dual_mesh( Mesh& mesh )
 
     }
 
-    eckit::SharedPtr<NodesFunctionSpace> nodes_fs( new NodesFunctionSpace(mesh,Halo(mesh)) );
+    eckit::SharedPtr<functionspace::Nodes> nodes_fs( new functionspace::Nodes(mesh,Halo(mesh)) );
     nodes_fs->haloExchange(nodes.field("dual_volumes"));
   }
   else

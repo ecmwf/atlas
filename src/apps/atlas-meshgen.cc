@@ -38,7 +38,7 @@
 #include "atlas/Nodes.h"
 #include "atlas/grids/grids.h"
 #include "atlas/FunctionSpace.h"
-#include "atlas/functionspace/NodesFunctionSpace.h"
+#include "atlas/functionspace/Nodes.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -160,8 +160,7 @@ void Meshgen2Gmsh::run()
     renumber_nodes_glb_idx(mesh->nodes());
   }
 
-  eckit::SharedPtr<NodesFunctionSpace> nodes_fs;
-  nodes_fs.reset( new NodesFunctionSpace(*mesh,Halo(mesh)) );
+  SharedPtr<functionspace::Nodes> nodes_fs( new functionspace::Nodes(*mesh,Halo(mesh)) );
   nodes_fs->checksum(mesh->nodes().lonlat());
 
   Log::info() << "  checksum lonlat : " << nodes_fs->checksum(mesh->nodes().lonlat()) << std::endl;

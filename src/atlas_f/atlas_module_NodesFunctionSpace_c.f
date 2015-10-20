@@ -1,66 +1,66 @@
 ! (C) Copyright 2013-2015 ECMWF.
 
-function atlas_NodesFunctionSpace__cptr(cptr) result(functionspace)
-  type(atlas_NodesFunctionSpace) :: functionspace
+function atlas_functionspace_Nodes__cptr(cptr) result(functionspace)
+  type(atlas_functionspace_Nodes) :: functionspace
   type(c_ptr), intent(in) :: cptr
   call functionspace%reset_c_ptr( cptr )
 end function
 
-function atlas_NodesFunctionSpace__mesh_halo(mesh,halo) result(function_space)
-  use atlas_nodesfunctionspaceinterface_c_binding
-  type(atlas_NodesFunctionSpace) :: function_space
+function atlas_functionspace_Nodes__mesh_halo(mesh,halo) result(function_space)
+  use atlas_nodesinterface_c_binding
+  type(atlas_functionspace_Nodes) :: function_space
   type(atlas_Mesh), intent(inout) :: mesh
   integer, intent(in), optional :: halo
   integer :: opt_halo
   opt_halo = 0
   if( present(halo) ) opt_halo = halo
-  function_space = atlas_NodesFunctionSpace__cptr( &
+  function_space = atlas_functionspace_Nodes__cptr( &
     & atlas__NodesFunctionSpace__new(mesh%c_ptr(),opt_halo) )
   call function_space%return()
 end function
 
 #ifdef FORTRAN_SUPPORTS_FINAL
-subroutine atlas_NodesFunctionSpace__final(this)
-  type(atlas_NodesFunctionSpace), intent(inout) :: this
+subroutine atlas_functionspace_Nodes__final(this)
+  type(atlas_functionspace_Nodes), intent(inout) :: this
   call this%final()
 end subroutine
 #endif
 
-function atlas_NodesFunctionSpace__nb_nodes(this) result (nb_nodes)
-  use atlas_nodesfunctionspaceinterface_c_binding
+function atlas_functionspace_Nodes__nb_nodes(this) result (nb_nodes)
+  use atlas_nodesinterface_c_binding
   integer :: nb_nodes
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+  class(atlas_functionspace_Nodes), intent(in) :: this
   nb_nodes = atlas__NodesFunctionSpace__nb_nodes(this%c_ptr())
 end function
 
-function atlas_NodesFunctionSpace__mesh(this) result (mesh)
-  use atlas_nodesfunctionspaceinterface_c_binding
+function atlas_functionspace_Nodes__mesh(this) result (mesh)
+  use atlas_nodesinterface_c_binding
   type(atlas_Mesh) :: mesh
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+  class(atlas_functionspace_Nodes), intent(in) :: this
   call mesh%reset_c_ptr( atlas__NodesFunctionSpace__mesh(this%c_ptr()) )
 end function
 
-function atlas_NodesFunctionSpace__nodes(this) result (nodes)
-  use atlas_nodesfunctionspaceinterface_c_binding
+function atlas_functionspace_Nodes__nodes(this) result (nodes)
+  use atlas_nodesinterface_c_binding
   type(atlas_Nodes) :: nodes
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+  class(atlas_functionspace_Nodes), intent(in) :: this
   call nodes%reset_c_ptr( atlas__NodesFunctionSpace__nodes(this%c_ptr()) )
 end function
 
-function atlas_NodesFunctionSpace__create_field_name_kind(this,name,kind) result(field)
-  use atlas_nodesfunctionspaceinterface_c_binding
+function atlas_functionspace_Nodes__create_field_name_kind(this,name,kind) result(field)
+  use atlas_nodesinterface_c_binding
   type(atlas_Field) :: field
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+  class(atlas_functionspace_Nodes), intent(in) :: this
   character(len=*), intent(in) :: name
   integer, intent(in) :: kind
   field = atlas_Field( atlas__NodesFunctionSpace__create_field(this%c_ptr(),c_str(name),kind) )
   call field%return()
 end function
 
-function atlas_NodesFunctionSpace__create_field_name_kind_lev(this,name,kind,levels) result(field)
-  use atlas_nodesfunctionspaceinterface_c_binding
+function atlas_functionspace_Nodes__create_field_name_kind_lev(this,name,kind,levels) result(field)
+  use atlas_nodesinterface_c_binding
   type(atlas_Field) :: field
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+  class(atlas_functionspace_Nodes), intent(in) :: this
   character(len=*), intent(in) :: name
   integer, intent(in) :: kind
   integer, intent(in) :: levels
@@ -68,10 +68,10 @@ function atlas_NodesFunctionSpace__create_field_name_kind_lev(this,name,kind,lev
   call field%return()
 end function
 
-function atlas_NodesFunctionSpace__create_field_name_kind_vars(this,name,kind,vars) result(field)
-  use atlas_nodesfunctionspaceinterface_c_binding
+function atlas_functionspace_Nodes__create_field_name_kind_vars(this,name,kind,vars) result(field)
+  use atlas_nodesinterface_c_binding
   type(atlas_Field) :: field
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+  class(atlas_functionspace_Nodes), intent(in) :: this
   character(len=*), intent(in) :: name
   integer, intent(in) :: vars(:)
   integer, intent(in) :: kind
@@ -80,10 +80,10 @@ function atlas_NodesFunctionSpace__create_field_name_kind_vars(this,name,kind,va
   call field%return()
 end function
 
-function atlas_NodesFunctionSpace__create_field_name_kind_lev_vars(this,name,kind,levels,vars) result(field)
-  use atlas_nodesfunctionspaceinterface_c_binding
+function atlas_functionspace_Nodes__create_field_name_kind_lev_vars(this,name,kind,levels,vars) result(field)
+  use atlas_nodesinterface_c_binding
   type(atlas_Field) :: field
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+  class(atlas_functionspace_Nodes), intent(in) :: this
   character(len=*), intent(in) :: name
   integer, intent(in) :: kind
   integer, intent(in) :: levels
@@ -93,10 +93,10 @@ function atlas_NodesFunctionSpace__create_field_name_kind_lev_vars(this,name,kin
   call field%return()
 end function
 
-function atlas_NodesFunctionSpace__create_field_name_template(this,name,template) result(field)
-  use atlas_nodesfunctionspaceinterface_c_binding
+function atlas_functionspace_Nodes__create_field_name_template(this,name,template) result(field)
+  use atlas_nodesinterface_c_binding
   type(atlas_Field) :: field
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+  class(atlas_functionspace_Nodes), intent(in) :: this
   character(len=*), intent(in) :: name
   type(atlas_Field) :: template
   field = atlas_Field( atlas__NodesFunctionSpace__create_field_template(this%c_ptr(),c_str(name),template%c_ptr()) )
@@ -104,20 +104,20 @@ function atlas_NodesFunctionSpace__create_field_name_template(this,name,template
 end function
 
 
-function atlas_NodesFunctionSpace__create_glb_field_name_kind_lev(this,name,kind) result(field)
-  use atlas_nodesfunctionspaceinterface_c_binding
+function atlas_functionspace_Nodes__create_glb_field_name_kind_lev(this,name,kind) result(field)
+  use atlas_nodesinterface_c_binding
   type(atlas_Field) :: field
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+  class(atlas_functionspace_Nodes), intent(in) :: this
   character(len=*), intent(in) :: name
   integer, intent(in) :: kind
   field = atlas_Field( atlas__NodesFunctionSpace__create_global_field(this%c_ptr(),c_str(name),kind) )
   call field%return()
 end function
 
-function atlas_NodesFunctionSpace__create_glb_field_name_kind(this,name,kind,levels) result(field)
-  use atlas_nodesfunctionspaceinterface_c_binding
+function atlas_functionspace_Nodes__create_glb_field_name_kind(this,name,kind,levels) result(field)
+  use atlas_nodesinterface_c_binding
   type(atlas_Field) :: field
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+  class(atlas_functionspace_Nodes), intent(in) :: this
   character(len=*), intent(in) :: name
   integer, intent(in) :: levels
   integer, intent(in) :: kind
@@ -126,10 +126,10 @@ function atlas_NodesFunctionSpace__create_glb_field_name_kind(this,name,kind,lev
 end function
 
 
-function atlas_NodesFunctionSpace__create_glb_field_name_kind_vars(this,name,kind,vars) result(field)
-  use atlas_nodesfunctionspaceinterface_c_binding
+function atlas_functionspace_Nodes__create_glb_field_name_kind_vars(this,name,kind,vars) result(field)
+  use atlas_nodesinterface_c_binding
   type(atlas_Field) :: field
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+  class(atlas_functionspace_Nodes), intent(in) :: this
   character(len=*), intent(in) :: name
   integer, intent(in) :: vars(:)
   integer, intent(in) :: kind
@@ -138,10 +138,10 @@ function atlas_NodesFunctionSpace__create_glb_field_name_kind_vars(this,name,kin
   call field%return()
 end function
 
-function atlas_NodesFunctionSpace__create_glb_field_name_kind_lev_vars(this,name,kind,levels,vars) result(field)
-  use atlas_nodesfunctionspaceinterface_c_binding
+function atlas_functionspace_Nodes__create_glb_field_name_kind_lev_vars(this,name,kind,levels,vars) result(field)
+  use atlas_nodesinterface_c_binding
   type(atlas_Field) :: field
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+  class(atlas_functionspace_Nodes), intent(in) :: this
   character(len=*), intent(in) :: name
   integer, intent(in) :: vars(:)
   integer, intent(in) :: levels
@@ -151,94 +151,94 @@ function atlas_NodesFunctionSpace__create_glb_field_name_kind_lev_vars(this,name
   call field%return()
 end function
 
-function atlas_NodesFunctionSpace__create_glb_field_name_template(this,name,template) result(field)
-  use atlas_nodesfunctionspaceinterface_c_binding
+function atlas_functionspace_Nodes__create_glb_field_name_template(this,name,template) result(field)
+  use atlas_nodesinterface_c_binding
   type(atlas_Field) :: field
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+  class(atlas_functionspace_Nodes), intent(in) :: this
   character(len=*), intent(in) :: name
   type(atlas_Field) :: template
   field = atlas_Field( atlas__NodesFunctionSpace__create_global_field_template(this%c_ptr(),c_str(name),template%c_ptr()) )
   call field%return()
 end function
 
-subroutine atlas_NodesFunctionSpace__halo_exchange_fieldset(this,fieldset)
-  use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__halo_exchange_fieldset(this,fieldset)
+  use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_FieldSet), intent(inout) :: fieldset
   call atlas__NodesFunctionSpace__halo_exchange_fieldset(this%c_ptr(),fieldset%c_ptr())
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__halo_exchange_field(this,field)
-  use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__halo_exchange_field(this,field)
+  use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field), intent(inout) :: field
   call atlas__NodesFunctionSpace__halo_exchange_field(this%c_ptr(),field%c_ptr())
 end subroutine
 
-function atlas_NodesFunctionSpace__get_gather(this) result(gather)
-  use atlas_nodesfunctionspaceinterface_c_binding
+function atlas_functionspace_Nodes__get_gather(this) result(gather)
+  use atlas_nodesinterface_c_binding
   type(atlas_GatherScatter) :: gather
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+  class(atlas_functionspace_Nodes), intent(in) :: this
   call gather%reset_c_ptr( atlas__NodesFunctioNSpace__get_gather(this%c_ptr()) )
 end function
 
-function atlas_NodesFunctionSpace__get_scatter(this) result(gather)
-  use atlas_nodesfunctionspaceinterface_c_binding
+function atlas_functionspace_Nodes__get_scatter(this) result(gather)
+  use atlas_nodesinterface_c_binding
   type(atlas_GatherScatter) :: gather
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+  class(atlas_functionspace_Nodes), intent(in) :: this
   call gather%reset_c_ptr( atlas__NodesFunctioNSpace__get_scatter(this%c_ptr()) )
 end function
 
-subroutine atlas_NodesFunctionSpace__gather_fieldset(this,local,global)
-  use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__gather_fieldset(this,local,global)
+  use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_FieldSet), intent(in) :: local
   type(atlas_FieldSet), intent(inout) :: global
   call atlas__NodesFunctionSpace__gather_fieldset(this%c_ptr(),local%c_ptr(),global%c_ptr())
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__gather_field(this,local,global)
-  use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__gather_field(this,local,global)
+  use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field), intent(in) :: local
   type(atlas_Field), intent(inout) :: global
   call atlas__NodesFunctionSpace__gather_field(this%c_ptr(),local%c_ptr(),global%c_ptr())
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__scatter_fieldset(this,global,local)
-  use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__scatter_fieldset(this,global,local)
+  use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_FieldSet), intent(in) :: global
   type(atlas_FieldSet), intent(inout) :: local
   call atlas__NodesFunctionSpace__scatter_fieldset(this%c_ptr(),global%c_ptr(),local%c_ptr())
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__scatter_field(this,global,local)
-  use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__scatter_field(this,global,local)
+  use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field), intent(in) :: global
   type(atlas_Field), intent(inout) :: local
   call atlas__NodesFunctionSpace__scatter_field(this%c_ptr(),global%c_ptr(),local%c_ptr())
 end subroutine
 
-function atlas_NodesFunctionSpace__get_halo_exchange(this) result(halo_exchange)
-  use atlas_nodesfunctionspaceinterface_c_binding
+function atlas_functionspace_Nodes__get_halo_exchange(this) result(halo_exchange)
+  use atlas_nodesinterface_c_binding
   type(atlas_HaloExchange) :: halo_exchange
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+  class(atlas_functionspace_Nodes), intent(in) :: this
   call halo_exchange%reset_c_ptr( atlas__NodesFunctioNSpace__get_halo_exchange(this%c_ptr()) )
 end function
 
-function atlas_NodesFunctionSpace__get_checksum(this) result(checksum)
-  use atlas_nodesfunctionspaceinterface_c_binding
+function atlas_functionspace_Nodes__get_checksum(this) result(checksum)
+  use atlas_nodesinterface_c_binding
   type(atlas_Checksum) :: checksum
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+  class(atlas_functionspace_Nodes), intent(in) :: this
   call checksum%reset_c_ptr( atlas__NodesFunctioNSpace__get_checksum(this%c_ptr()) )
 end function
 
-function atlas_NodesFunctionSpace__checksum_fieldset(this,fieldset) result(checksum)
-  use atlas_nodesfunctionspaceinterface_c_binding
+function atlas_functionspace_Nodes__checksum_fieldset(this,fieldset) result(checksum)
+  use atlas_nodesinterface_c_binding
   character(len=:), allocatable :: checksum
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_FieldSet), intent(in) :: fieldset
   type(c_ptr) :: checksum_cptr
   integer :: checksum_size, checksum_allocated
@@ -249,10 +249,10 @@ function atlas_NodesFunctionSpace__checksum_fieldset(this,fieldset) result(check
 end function
 
 
-function atlas_NodesFunctionSpace__checksum_field(this,field) result(checksum)
-  use atlas_nodesfunctionspaceinterface_c_binding
+function atlas_functionspace_Nodes__checksum_field(this,field) result(checksum)
+  use atlas_nodesinterface_c_binding
   character(len=:), allocatable :: checksum
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field), intent(in) :: field
   type(c_ptr) :: checksum_cptr
   integer :: checksum_size, checksum_allocated
@@ -263,17 +263,17 @@ function atlas_NodesFunctionSpace__checksum_field(this,field) result(checksum)
 end function
 
 
-subroutine atlas_NodesFunctionSpace__minimum_real32_r0(this,field,minimum)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__minimum_real32_r0(this,field,minimum)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), intent(out) :: minimum
   call atlas__NodesFunctionSpace__min_float(this%c_ptr(),field%c_ptr(),minimum)
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__minimum_real32_r1(this,field,minimum)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__minimum_real32_r1(this,field,minimum)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), allocatable, intent(out) :: minimum(:)
   type(c_ptr) :: min_cptr
@@ -286,17 +286,17 @@ use atlas_nodesfunctionspaceinterface_c_binding
   call atlas_free(min_cptr)
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__maximum_real32_r0(this,field,maximum)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__maximum_real32_r0(this,field,maximum)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), intent(out) :: maximum
   call atlas__NodesFunctionSpace__max_float(this%c_ptr(),field%c_ptr(),maximum)
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__maximum_real32_r1(this,field,maximum)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__maximum_real32_r1(this,field,maximum)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), allocatable, intent(out) :: maximum(:)
   type(c_ptr) :: max_cptr
@@ -310,9 +310,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
 end subroutine
 
 
-subroutine atlas_NodesFunctionSpace__minloc_real32_r0(this,field,minimum,location)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__minloc_real32_r0(this,field,minimum,location)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), intent(out) :: minimum
   integer(ATLAS_KIND_GIDX), intent(out) :: location
@@ -321,9 +321,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   location = loc
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__maxloc_real32_r0(this,field,maximum,location)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__maxloc_real32_r0(this,field,maximum,location)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), intent(out) :: maximum
   integer(ATLAS_KIND_GIDX), intent(out) :: location
@@ -333,9 +333,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
 end subroutine
 
 
-subroutine atlas_NodesFunctionSpace__minloc_real32_r1(this,field,minimum,location)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__minloc_real32_r1(this,field,minimum,location)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), allocatable, intent(out) :: minimum(:)
   integer(ATLAS_KIND_GIDX), allocatable, intent(out) :: location(:)
@@ -354,9 +354,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   call atlas_free(loc_cptr)
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__maxloc_real32_r1(this,field,maximum,location)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__maxloc_real32_r1(this,field,maximum,location)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), allocatable, intent(out) :: maximum(:)
   integer(ATLAS_KIND_GIDX), allocatable, intent(out) :: location(:)
@@ -376,9 +376,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
 end subroutine
 
 
-subroutine atlas_NodesFunctionSpace__sum_real32_r0(this,field,sum,N)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__sum_real32_r0(this,field,sum,N)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), intent(out) :: sum
   integer(c_int), intent(out), optional :: N
@@ -387,9 +387,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__sum_real32_r1(this,field,sum,N)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__sum_real32_r1(this,field,sum,N)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), allocatable, intent(out) :: sum(:)
   integer(c_int), intent(out), optional :: N
@@ -405,9 +405,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__order_independent_sum_real32_r0(this,field,sum,N)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__order_independent_sum_real32_r0(this,field,sum,N)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), intent(out) :: sum
   integer(c_int), intent(out), optional :: N
@@ -416,9 +416,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__order_independent_sum_real32_r1(this,field,sum,N)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__order_independent_sum_real32_r1(this,field,sum,N)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), allocatable, intent(out) :: sum(:)
   integer(c_int), intent(out), optional :: N
@@ -434,9 +434,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__mean_real32_r0(this,field,mean,N)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__mean_real32_r0(this,field,mean,N)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), intent(out) :: mean
   integer(c_int), intent(out), optional :: N
@@ -445,9 +445,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__mean_real32_r1(this,field,mean,N)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__mean_real32_r1(this,field,mean,N)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), allocatable, intent(out) :: mean(:)
   integer(c_int), intent(out), optional :: N
@@ -463,9 +463,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__mean_and_stddev_real32_r0(this,field,mean,stddev,N)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__mean_and_stddev_real32_r0(this,field,mean,stddev,N)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), intent(out) :: mean
   real(c_float), intent(out) :: stddev
@@ -475,9 +475,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__mean_and_stddev_real32_r1(this,field,mean,stddev,N)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__mean_and_stddev_real32_r1(this,field,mean,stddev,N)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), allocatable, intent(out) :: mean(:)
   real(c_float), allocatable, intent(out) :: stddev(:)
@@ -500,17 +500,17 @@ end subroutine
 
 
 
-subroutine atlas_NodesFunctionSpace__minimum_real64_r0(this,field,minimum)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__minimum_real64_r0(this,field,minimum)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), intent(out) :: minimum
   call atlas__NodesFunctionSpace__min_double(this%c_ptr(),field%c_ptr(),minimum)
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__minimum_real64_r1(this,field,minimum)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__minimum_real64_r1(this,field,minimum)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), allocatable, intent(out) :: minimum(:)
   type(c_ptr) :: min_cptr
@@ -523,17 +523,17 @@ use atlas_nodesfunctionspaceinterface_c_binding
   call atlas_free(min_cptr)
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__maximum_real64_r0(this,field,maximum)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__maximum_real64_r0(this,field,maximum)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), intent(out) :: maximum
   call atlas__NodesFunctionSpace__max_double(this%c_ptr(),field%c_ptr(),maximum)
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__maximum_real64_r1(this,field,maximum)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__maximum_real64_r1(this,field,maximum)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), allocatable, intent(out) :: maximum(:)
   type(c_ptr) :: max_cptr
@@ -547,9 +547,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
 end subroutine
 
 
-subroutine atlas_NodesFunctionSpace__minloc_real64_r0(this,field,minimum,location)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__minloc_real64_r0(this,field,minimum,location)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), intent(out) :: minimum
   integer(ATLAS_KIND_GIDX), intent(out) :: location
@@ -558,9 +558,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   location = loc
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__maxloc_real64_r0(this,field,maximum,location)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__maxloc_real64_r0(this,field,maximum,location)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), intent(out) :: maximum
   integer(ATLAS_KIND_GIDX), intent(out) :: location
@@ -570,9 +570,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
 end subroutine
 
 
-subroutine atlas_NodesFunctionSpace__minloc_real64_r1(this,field,minimum,location)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__minloc_real64_r1(this,field,minimum,location)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), allocatable, intent(out) :: minimum(:)
   integer(ATLAS_KIND_GIDX), allocatable, intent(out) :: location(:)
@@ -591,9 +591,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   call atlas_free(loc_cptr)
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__maxloc_real64_r1(this,field,maximum,location)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__maxloc_real64_r1(this,field,maximum,location)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), allocatable, intent(out) :: maximum(:)
   integer(ATLAS_KIND_GIDX), allocatable, intent(out) :: location(:)
@@ -614,9 +614,9 @@ end subroutine
 
 
 
-subroutine atlas_NodesFunctionSpace__sum_real64_r0(this,field,sum,N)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__sum_real64_r0(this,field,sum,N)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), intent(out) :: sum
   integer(c_int), intent(out), optional :: N
@@ -625,9 +625,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__sum_real64_r1(this,field,sum,N)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__sum_real64_r1(this,field,sum,N)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), allocatable, intent(out) :: sum(:)
   integer(c_int), intent(out), optional :: N
@@ -643,9 +643,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__order_independent_sum_real64_r0(this,field,sum,N)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__order_independent_sum_real64_r0(this,field,sum,N)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), intent(out) :: sum
   integer(c_int), intent(out), optional :: N
@@ -654,9 +654,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__order_independent_sum_real64_r1(this,field,sum,N)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__order_independent_sum_real64_r1(this,field,sum,N)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), allocatable, intent(out) :: sum(:)
   integer(c_int), intent(out), optional :: N
@@ -672,9 +672,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__mean_real64_r0(this,field,mean,N)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__mean_real64_r0(this,field,mean,N)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), intent(out) :: mean
   integer(c_int), intent(out), optional :: N
@@ -683,9 +683,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__mean_real64_r1(this,field,mean,N)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__mean_real64_r1(this,field,mean,N)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), allocatable, intent(out) :: mean(:)
   integer(c_int), intent(out), optional :: N
@@ -701,9 +701,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__mean_and_stddev_real64_r0(this,field,mean,stddev,N)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__mean_and_stddev_real64_r0(this,field,mean,stddev,N)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), intent(out) :: mean
   real(c_double), intent(out) :: stddev
@@ -713,9 +713,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__mean_and_stddev_real64_r1(this,field,mean,stddev,N)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__mean_and_stddev_real64_r1(this,field,mean,stddev,N)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), allocatable, intent(out) :: mean(:)
   real(c_double), allocatable, intent(out) :: stddev(:)
@@ -736,17 +736,17 @@ use atlas_nodesfunctionspaceinterface_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__minimum_int64_r0(this,field,minimum)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__minimum_int64_r0(this,field,minimum)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), intent(out) :: minimum
   call atlas__NodesFunctionSpace__min_long(this%c_ptr(),field%c_ptr(),minimum)
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__minimum_int64_r1(this,field,minimum)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__minimum_int64_r1(this,field,minimum)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), allocatable, intent(out) :: minimum(:)
   type(c_ptr) :: min_cptr
@@ -759,17 +759,17 @@ use atlas_nodesfunctionspaceinterface_c_binding
   call atlas_free(min_cptr)
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__maximum_int64_r0(this,field,maximum)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__maximum_int64_r0(this,field,maximum)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), intent(out) :: maximum
   call atlas__NodesFunctionSpace__max_long(this%c_ptr(),field%c_ptr(),maximum)
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__maximum_int64_r1(this,field,maximum)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__maximum_int64_r1(this,field,maximum)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), allocatable, intent(out) :: maximum(:)
   type(c_ptr) :: max_cptr
@@ -783,9 +783,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
 end subroutine
 
 
-subroutine atlas_NodesFunctionSpace__minloc_int64_r0(this,field,minimum,location)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__minloc_int64_r0(this,field,minimum,location)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), intent(out) :: minimum
   integer(ATLAS_KIND_GIDX), intent(out) :: location
@@ -794,9 +794,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   location = loc
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__maxloc_int64_r0(this,field,maximum,location)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__maxloc_int64_r0(this,field,maximum,location)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), intent(out) :: maximum
   integer(ATLAS_KIND_GIDX), intent(out) :: location
@@ -806,9 +806,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
 end subroutine
 
 
-subroutine atlas_NodesFunctionSpace__minloc_int64_r1(this,field,minimum,location)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__minloc_int64_r1(this,field,minimum,location)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), allocatable, intent(out) :: minimum(:)
   integer(ATLAS_KIND_GIDX), allocatable, intent(out) :: location(:)
@@ -827,9 +827,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   call atlas_free(loc_cptr)
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__maxloc_int64_r1(this,field,maximum,location)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__maxloc_int64_r1(this,field,maximum,location)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), allocatable, intent(out) :: maximum(:)
   integer(ATLAS_KIND_GIDX), allocatable, intent(out) :: location(:)
@@ -849,9 +849,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
 end subroutine
 
 
-subroutine atlas_NodesFunctionSpace__sum_int64_r0(this,field,sum,N)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__sum_int64_r0(this,field,sum,N)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), intent(out) :: sum
   integer(c_int), intent(out), optional :: N
@@ -860,9 +860,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__sum_int64_r1(this,field,sum,N)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__sum_int64_r1(this,field,sum,N)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), allocatable, intent(out) :: sum(:)
   integer(c_int), intent(out), optional :: N
@@ -878,9 +878,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__mean_int64_r0(this,field,mean,N)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__mean_int64_r0(this,field,mean,N)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), intent(out) :: mean
   integer(c_int), intent(out), optional :: N
@@ -889,9 +889,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__mean_int64_r1(this,field,mean,N)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__mean_int64_r1(this,field,mean,N)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), allocatable, intent(out) :: mean(:)
   integer(c_int), intent(out), optional :: N
@@ -907,9 +907,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__mean_and_stddev_int64_r0(this,field,mean,stddev,N)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__mean_and_stddev_int64_r0(this,field,mean,stddev,N)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), intent(out) :: mean
   integer(c_long), intent(out) :: stddev
@@ -919,9 +919,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__mean_and_stddev_int64_r1(this,field,mean,stddev,N)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__mean_and_stddev_int64_r1(this,field,mean,stddev,N)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), allocatable, intent(out) :: mean(:)
   integer(c_long), allocatable, intent(out) :: stddev(:)
@@ -942,17 +942,17 @@ use atlas_nodesfunctionspaceinterface_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__minimum_int32_r0(this,field,minimum)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__minimum_int32_r0(this,field,minimum)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), intent(out) :: minimum
   call atlas__NodesFunctionSpace__min_int(this%c_ptr(),field%c_ptr(),minimum)
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__minimum_int32_r1(this,field,minimum)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__minimum_int32_r1(this,field,minimum)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), allocatable, intent(out) :: minimum(:)
   type(c_ptr) :: min_cptr
@@ -965,17 +965,17 @@ use atlas_nodesfunctionspaceinterface_c_binding
   call atlas_free(min_cptr)
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__maximum_int32_r0(this,field,maximum)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__maximum_int32_r0(this,field,maximum)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), intent(out) :: maximum
   call atlas__NodesFunctionSpace__max_int(this%c_ptr(),field%c_ptr(),maximum)
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__maximum_int32_r1(this,field,maximum)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__maximum_int32_r1(this,field,maximum)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), allocatable, intent(out) :: maximum(:)
   type(c_ptr) :: max_cptr
@@ -989,9 +989,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
 end subroutine
 
 
-subroutine atlas_NodesFunctionSpace__minloc_int32_r0(this,field,minimum,location)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__minloc_int32_r0(this,field,minimum,location)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), intent(out) :: minimum
   integer(ATLAS_KIND_GIDX), intent(out) :: location
@@ -1000,9 +1000,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   location = loc
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__maxloc_int32_r0(this,field,maximum,location)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__maxloc_int32_r0(this,field,maximum,location)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), intent(out) :: maximum
   integer(ATLAS_KIND_GIDX), intent(out) :: location
@@ -1012,9 +1012,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
 end subroutine
 
 
-subroutine atlas_NodesFunctionSpace__minloc_int32_r1(this,field,minimum,location)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__minloc_int32_r1(this,field,minimum,location)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), allocatable, intent(out) :: minimum(:)
   integer(ATLAS_KIND_GIDX), allocatable, intent(out) :: location(:)
@@ -1033,9 +1033,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   call atlas_free(loc_cptr)
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__maxloc_int32_r1(this,field,maximum,location)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__maxloc_int32_r1(this,field,maximum,location)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), allocatable, intent(out) :: maximum(:)
   integer(ATLAS_KIND_GIDX), allocatable, intent(out) :: location(:)
@@ -1055,9 +1055,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
 end subroutine
 
 
-subroutine atlas_NodesFunctionSpace__sum_int32_r0(this,field,sum,N)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__sum_int32_r0(this,field,sum,N)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), intent(out) :: sum
   integer(c_int), intent(out), optional :: N
@@ -1066,9 +1066,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__sum_int32_r1(this,field,sum,N)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__sum_int32_r1(this,field,sum,N)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), allocatable, intent(out) :: sum(:)
   integer(c_int), intent(out), optional :: N
@@ -1084,9 +1084,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__mean_int32_r0(this,field,mean,N)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__mean_int32_r0(this,field,mean,N)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), intent(out) :: mean
   integer(c_int), intent(out), optional :: N
@@ -1095,9 +1095,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__mean_int32_r1(this,field,mean,N)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__mean_int32_r1(this,field,mean,N)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), allocatable, intent(out) :: mean(:)
   integer(c_int), intent(out), optional :: N
@@ -1113,9 +1113,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__mean_and_stddev_int32_r0(this,field,mean,stddev,N)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__mean_and_stddev_int32_r0(this,field,mean,stddev,N)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), intent(out) :: mean
   integer(c_int), intent(out) :: stddev
@@ -1125,9 +1125,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__mean_and_stddev_int32_r1(this,field,mean,stddev,N)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__mean_and_stddev_int32_r1(this,field,mean,stddev,N)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), allocatable, intent(out) :: mean(:)
   integer(c_int), allocatable, intent(out) :: stddev(:)
@@ -1149,9 +1149,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
 end subroutine
 
 
-subroutine atlas_NodesFunctionSpace__minloclev_real32_r0(this,field,minimum,location,level)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__minloclev_real32_r0(this,field,minimum,location,level)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), intent(out) :: minimum
   integer(ATLAS_KIND_GIDX), intent(out) :: location
@@ -1163,9 +1163,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   if( present(level) ) level = opt_lev
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__maxloclev_real32_r0(this,field,maximum,location,level)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__maxloclev_real32_r0(this,field,maximum,location,level)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), intent(out) :: maximum
   integer(ATLAS_KIND_GIDX), intent(out) :: location
@@ -1178,9 +1178,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
 end subroutine
 
 
-subroutine atlas_NodesFunctionSpace__minloclev_real32_r1(this,field,minimum,location,level)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__minloclev_real32_r1(this,field,minimum,location,level)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), allocatable, intent(out) :: minimum(:)
   integer(ATLAS_KIND_GIDX), allocatable, intent(out) :: location(:)
@@ -1207,9 +1207,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   call atlas_free(lev_cptr)
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__maxloclev_real32_r1(this,field,maximum,location,level)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__maxloclev_real32_r1(this,field,maximum,location,level)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_float), allocatable, intent(out) :: maximum(:)
   integer(ATLAS_KIND_GIDX), allocatable, intent(out) :: location(:)
@@ -1236,9 +1236,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   call atlas_free(lev_cptr)
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__minloclev_real64_r0(this,field,minimum,location,level)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__minloclev_real64_r0(this,field,minimum,location,level)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), intent(out) :: minimum
   integer(ATLAS_KIND_GIDX), intent(out) :: location
@@ -1250,9 +1250,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   if( present(level) ) level = opt_lev
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__maxloclev_real64_r0(this,field,maximum,location,level)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__maxloclev_real64_r0(this,field,maximum,location,level)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), intent(out) :: maximum
   integer(ATLAS_KIND_GIDX), intent(out) :: location
@@ -1265,9 +1265,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
 end subroutine
 
 
-subroutine atlas_NodesFunctionSpace__minloclev_real64_r1(this,field,minimum,location,level)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__minloclev_real64_r1(this,field,minimum,location,level)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), allocatable, intent(out) :: minimum(:)
   integer(ATLAS_KIND_GIDX), allocatable, intent(out) :: location(:)
@@ -1294,9 +1294,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   call atlas_free(lev_cptr)
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__maxloclev_real64_r1(this,field,maximum,location,level)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__maxloclev_real64_r1(this,field,maximum,location,level)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   real(c_double), allocatable, intent(out) :: maximum(:)
   integer(ATLAS_KIND_GIDX), allocatable, intent(out) :: location(:)
@@ -1324,9 +1324,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
 end subroutine
 
 
-subroutine atlas_NodesFunctionSpace__minloclev_int64_r0(this,field,minimum,location,level)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__minloclev_int64_r0(this,field,minimum,location,level)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), intent(out) :: minimum
   integer(ATLAS_KIND_GIDX), intent(out) :: location
@@ -1338,9 +1338,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   if( present(level) ) level = opt_lev
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__maxloclev_int64_r0(this,field,maximum,location,level)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__maxloclev_int64_r0(this,field,maximum,location,level)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), intent(out) :: maximum
   integer(ATLAS_KIND_GIDX), intent(out) :: location
@@ -1353,9 +1353,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
 end subroutine
 
 
-subroutine atlas_NodesFunctionSpace__minloclev_int64_r1(this,field,minimum,location,level)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__minloclev_int64_r1(this,field,minimum,location,level)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), allocatable, intent(out) :: minimum(:)
   integer(ATLAS_KIND_GIDX), allocatable, intent(out) :: location(:)
@@ -1382,9 +1382,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   call atlas_free(lev_cptr)
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__maxloclev_int64_r1(this,field,maximum,location,level)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__maxloclev_int64_r1(this,field,maximum,location,level)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_long), allocatable, intent(out) :: maximum(:)
   integer(ATLAS_KIND_GIDX), allocatable, intent(out) :: location(:)
@@ -1411,9 +1411,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   call atlas_free(lev_cptr)
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__minloclev_int32_r0(this,field,minimum,location,level)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__minloclev_int32_r0(this,field,minimum,location,level)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), intent(out) :: minimum
   integer(ATLAS_KIND_GIDX), intent(out) :: location
@@ -1423,9 +1423,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   location = loc
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__maxloclev_int32_r0(this,field,maximum,location,level)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__maxloclev_int32_r0(this,field,maximum,location,level)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), intent(out) :: maximum
   integer(ATLAS_KIND_GIDX), intent(out) :: location
@@ -1436,9 +1436,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
 end subroutine
 
 
-subroutine atlas_NodesFunctionSpace__minloclev_int32_r1(this,field,minimum,location,level)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__minloclev_int32_r1(this,field,minimum,location,level)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), allocatable, intent(out) :: minimum(:)
   integer(ATLAS_KIND_GIDX), allocatable, intent(out) :: location(:)
@@ -1463,9 +1463,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   call atlas_free(lev_cptr)
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__maxloclev_int32_r1(this,field,maximum,location,level)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__maxloclev_int32_r1(this,field,maximum,location,level)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field) :: field
   integer(c_int), allocatable, intent(out) :: maximum(:)
   integer(ATLAS_KIND_GIDX), allocatable, intent(out) :: location(:)
@@ -1490,44 +1490,44 @@ use atlas_nodesfunctionspaceinterface_c_binding
   call atlas_free(lev_cptr)
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__minloc_per_level(this,field,minimum,location)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__minloc_per_level(this,field,minimum,location)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field), intent(in) :: field
   type(atlas_Field), intent(out) :: minimum
   type(atlas_Field), intent(out) :: location
   call atlas__NodesFunctionSpace__minloc_per_level(this%c_ptr(),field%c_ptr(),minimum%c_ptr(),location%c_ptr())
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__maxloc_per_level(this,field,maximum,location)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__maxloc_per_level(this,field,maximum,location)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field), intent(in) :: field
   type(atlas_Field), intent(out) :: maximum
   type(atlas_Field), intent(out) :: location
   call atlas__NodesFunctionSpace__maxloc_per_level(this%c_ptr(),field%c_ptr(),maximum%c_ptr(),location%c_ptr())
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__minimum_per_level(this,field,minimum)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__minimum_per_level(this,field,minimum)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field), intent(in) :: field
   type(atlas_Field), intent(out) :: minimum
   call atlas__NodesFunctionSpace__min_per_level(this%c_ptr(),field%c_ptr(),minimum%c_ptr())
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__maximum_per_level(this,field,maximum)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__maximum_per_level(this,field,maximum)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field), intent(in) :: field
   type(atlas_Field), intent(out) :: maximum
   call atlas__NodesFunctionSpace__max_per_level(this%c_ptr(),field%c_ptr(),maximum%c_ptr())
 end subroutine
 
 
-subroutine atlas_NodesFunctionSpace__sum_per_level(this,field,sum,N)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__sum_per_level(this,field,sum,N)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field), intent(in) :: field
   type(atlas_Field), intent(out) :: sum
   integer(c_int), intent(out), optional :: N
@@ -1536,9 +1536,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__order_independent_sum_per_level(this,field,sum,N)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__order_independent_sum_per_level(this,field,sum,N)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field), intent(in) :: field
   type(atlas_Field), intent(out) :: sum
   integer(c_int), intent(out), optional :: N
@@ -1547,9 +1547,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__mean_per_level(this,field,mean,N)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__mean_per_level(this,field,mean,N)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field), intent(in) :: field
   type(atlas_Field), intent(out) :: mean
   integer(c_int), intent(out), optional :: N
@@ -1558,9 +1558,9 @@ use atlas_nodesfunctionspaceinterface_c_binding
   if( present(N) ) N = opt_N
 end subroutine
 
-subroutine atlas_NodesFunctionSpace__mean_and_stddev_per_level(this,field,mean,stddev,N)
-use atlas_nodesfunctionspaceinterface_c_binding
-  class(atlas_NodesFunctionSpace), intent(in) :: this
+subroutine atlas_functionspace_Nodes__mean_and_stddev_per_level(this,field,mean,stddev,N)
+use atlas_nodesinterface_c_binding
+  class(atlas_functionspace_Nodes), intent(in) :: this
   type(atlas_Field), intent(in) :: field
   type(atlas_Field), intent(inout) :: mean
   type(atlas_Field), intent(inout) :: stddev

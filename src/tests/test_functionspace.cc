@@ -16,8 +16,8 @@
 #include "atlas/atlas.h"
 #include "atlas/util/Debug.h"
 #include "atlas/util/ArrayView.h"
-#include "atlas/functionspace/NodesFunctionSpace.h"
-#include "atlas/functionspace/SpectralFunctionSpace.h"
+#include "atlas/functionspace/Nodes.h"
+#include "atlas/functionspace/Spectral.h"
 #include "atlas/Mesh.h"
 #include "atlas/meshgen/ReducedGridMeshGenerator.h"
 #include "atlas/Grid.h"
@@ -45,7 +45,7 @@ struct AtlasFixture {
 
 BOOST_GLOBAL_FIXTURE( AtlasFixture )
 
-BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
+BOOST_AUTO_TEST_CASE( test_functionspace_Nodes )
 {
   //ScopedPtr<Grid> grid( Grid::create("oct.N2") );
 
@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   //grid.reset();
 
   DEBUG();
-  SharedPtr<NodesFunctionSpace> nodes_fs( new NodesFunctionSpace(mesh,Halo(1)) );
+  SharedPtr<functionspace::Nodes> nodes_fs( new functionspace::Nodes(mesh,Halo(1)) );
   DEBUG();
   size_t nb_levels = 10;
   //NodesColumnFunctionSpace columns_fs("columns",mesh,nb_levels,Halo(1));
@@ -168,7 +168,7 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   BOOST_CHECKPOINT("Testing collectives for nodes scalar field");
   {
     const Field& field = *surface_scalar_field;
-    const NodesFunctionSpace& fs = *nodes_fs;
+    const functionspace::Nodes& fs = *nodes_fs;
 
   double max;
   double min;
@@ -226,7 +226,7 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   BOOST_CHECKPOINT("Testing collectives for nodes vector field");
   {
     const Field& field = *surface_vector_field;
-    const NodesFunctionSpace& fs = *nodes_fs;
+    const functionspace::Nodes& fs = *nodes_fs;
 
     std::vector<double> max;
     std::vector<double> min;
@@ -281,7 +281,7 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   BOOST_CHECKPOINT("Testing collectives for columns scalar field");
   if(1){
     const Field& field = *columns_scalar_field;
-    const NodesFunctionSpace& fs = *nodes_fs;
+    const functionspace::Nodes& fs = *nodes_fs;
     double max;
     double min;
     double sum;
@@ -362,7 +362,7 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   BOOST_CHECKPOINT("Testing collectives for columns vector field");
   if(1){
     const Field& field = *columns_vector_field;
-    const NodesFunctionSpace& fs = *nodes_fs;
+    const functionspace::Nodes& fs = *nodes_fs;
     size_t nvar = field.stride(1);
     std::vector<double> max;
     std::vector<double> min;
@@ -449,7 +449,7 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace )
   size_t nb_levels = 10;
   size_t nspec2g = (truncation+1)*(truncation+2);
 
-  SharedPtr<SpectralFunctionSpace> spectral_fs( new SpectralFunctionSpace(truncation) );
+  SharedPtr<Spectral> spectral_fs( new Spectral(truncation) );
 
   SharedPtr<Field> surface_scalar_field( spectral_fs->createField("scalar") );
 
@@ -488,7 +488,7 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace_trans_dist )
 
   size_t nspec2 = trans.nspec2();
 
-  SharedPtr<SpectralFunctionSpace> spectral_fs( new SpectralFunctionSpace(trans) );
+  SharedPtr<Spectral> spectral_fs( new Spectral(trans) );
 
   SharedPtr<Field> surface_scalar_field( spectral_fs->createField("scalar") );
 
@@ -524,7 +524,7 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace_trans_global )
 
   size_t nspec2g = trans.nspec2g();
 
-  SharedPtr<SpectralFunctionSpace> spectral_fs( new SpectralFunctionSpace(trans) );
+  SharedPtr<Spectral> spectral_fs( new Spectral(trans) );
 
   SharedPtr<Field> surface_scalar_field( spectral_fs->createGlobalField("scalar") );
 
