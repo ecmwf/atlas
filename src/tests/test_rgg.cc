@@ -17,6 +17,7 @@
 
 #include "eckit/config/ResourceMgr.h"
 #include "eckit/geometry/Point3.h"
+#include "atlas/atlas.h"
 #include "atlas/mpi/mpi.h"
 #include "atlas/atlas_config.h"
 #include "atlas/grids/GaussianLatitudes.h"
@@ -104,8 +105,13 @@ double compute_lonlat_area(Mesh& mesh)
   return area;
 }
 
+struct GlobalFixture {
+    GlobalFixture()  { atlas_init(boost::unit_test::framework::master_test_suite().argc,
+                                  boost::unit_test::framework::master_test_suite().argv); }
+    ~GlobalFixture() { atlas_finalize(); }
+};
 
-BOOST_AUTO_TEST_CASE( init ) { eckit::mpi::init(); }
+BOOST_GLOBAL_FIXTURE( GlobalFixture )
 
 BOOST_AUTO_TEST_CASE( test_eq_caps )
 {
@@ -456,8 +462,6 @@ BOOST_AUTO_TEST_CASE( test_reduced_lonlat )
   gmsh.write(*m,"rll.msh");
 
 }
-
-BOOST_AUTO_TEST_CASE( finalize ) { eckit::mpi::finalize(); }
 
 } // namespace test
 } // namespace atlas
