@@ -46,8 +46,10 @@ namespace {
 
 }
 
-
-
+MeshGenerator* MeshGenerator::create(const std::string &key, const eckit::Parametrisation &params)
+{
+  return MeshGeneratorFactory::build(key,params);
+}
 
 MeshGenerator::MeshGenerator()
 {
@@ -70,6 +72,19 @@ Mesh* MeshGenerator::operator()( const Grid& grid, const GridDistribution& distr
   return mesh;
 }
 
+Mesh* MeshGenerator::generate( const Grid& grid ) const
+{
+  Mesh* mesh = new Mesh;
+  generate(grid,*mesh);
+  return mesh;
+}
+
+Mesh* MeshGenerator::generate( const Grid& grid, const GridDistribution& distribution ) const
+{
+  Mesh* mesh = new Mesh;
+  generate(grid,distribution,*mesh);
+  return mesh;
+}
 
 
 MeshGeneratorFactory::MeshGeneratorFactory(const std::string &name):

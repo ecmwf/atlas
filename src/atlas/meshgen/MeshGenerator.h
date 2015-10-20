@@ -32,7 +32,10 @@ class MeshGenerator : public eckit::Owned {
 
 public:
 
-    typedef atlas::Config Parameters; // temporary until Parameters class exists
+  typedef atlas::Config Parameters;
+  static MeshGenerator* create(const std::string &, const eckit::Parametrisation & = Parameters());
+
+public:
 
     MeshGenerator();
 
@@ -40,6 +43,9 @@ public:
 
     virtual void generate( const Grid&, const GridDistribution&, Mesh& ) const =0;
     virtual void generate( const Grid&, Mesh& ) const =0;
+
+    Mesh* generate( const Grid&, const GridDistribution& ) const;
+    Mesh* generate( const Grid& ) const;
 
     Mesh* operator()( const Grid&, const GridDistribution& ) const;
     Mesh* operator()( const Grid& ) const;
