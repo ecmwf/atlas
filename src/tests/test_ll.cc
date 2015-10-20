@@ -11,6 +11,7 @@
 #define BOOST_TEST_MODULE TestLL
 #include "ecbuild/boost_test_framework.h"
 
+#include "atlas/atlas.h"
 #include "atlas/mpi/mpi.h"
 #include "atlas/meshgen/ReducedGridMeshGenerator.h"
 #include "atlas/io/Gmsh.h"
@@ -25,7 +26,13 @@ using namespace atlas::grids;
 namespace atlas {
 namespace test {
 
-BOOST_AUTO_TEST_CASE( init ) { eckit::mpi::init(); }
+struct GlobalFixture {
+    GlobalFixture()  { atlas_init(boost::unit_test::framework::master_test_suite().argc,
+                                  boost::unit_test::framework::master_test_suite().argv); }
+    ~GlobalFixture() { atlas_finalize(); }
+};
+
+BOOST_GLOBAL_FIXTURE( GlobalFixture )
 
 BOOST_AUTO_TEST_CASE( test_ll_meshgen_one_part )
 {
@@ -34,8 +41,6 @@ BOOST_AUTO_TEST_CASE( test_ll_meshgen_one_part )
   ReducedGridMeshGenerator().generate(g,m);
   Gmsh().write(m,"lonlat11.msh");
 }
-
-BOOST_AUTO_TEST_CASE( finalize ) { eckit::mpi::finalize(); }
 
 } // namespace test
 } // namespace atlas
