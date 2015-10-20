@@ -37,7 +37,16 @@ private: // data
     atlas::FunctionSpace* edges_; // non-const because functionspace may modify mesh
 };
 
+
+// -------------------------------------------------------------------
+// C wrapper interfaces to C++ routines
+extern "C"
+{
+  EdgeBasedFiniteVolume* atlas__functionspace__EdgeBasedFiniteVolume__new (Mesh* mesh, int halo);
+}
+
 } // namespace functionspace
 } // namespace atlas
+
 
 #endif // atlas_numerics_nabla_EdgeBasedFiniteVolume_h

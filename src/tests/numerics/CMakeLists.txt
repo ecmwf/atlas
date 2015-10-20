@@ -14,3 +14,11 @@ ecbuild_add_test( TARGET atlas_test_nabla_EdgeBasedFiniteVolume
   LIBS      atlas
 )
 
+if( HAVE_FCTEST)
+  add_fctest( TARGET atlas_fctest_nabla_EdgeBasedFiniteVolume
+    LINKER_LANGUAGE Fortran
+    SOURCES         fctest_nabla_EdgeBasedFiniteVolume.F90
+    LIBS            atlas_f
+  )
+endif()
+

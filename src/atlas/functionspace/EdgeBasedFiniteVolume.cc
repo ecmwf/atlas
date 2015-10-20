@@ -14,6 +14,7 @@
 #include "atlas/Mesh.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Nodes.h"
+#include "atlas/runtime/ErrorHandling.h"
 
 #include "atlas/functionspace/EdgeBasedFiniteVolume.h"
 #include "atlas/actions/BuildEdges.h"
@@ -95,6 +96,21 @@ EdgeBasedFiniteVolume::EdgeBasedFiniteVolume(Mesh &_mesh, const Halo &_halo )
   }
 }
 
+// ------------------------------------------------------------------------------------------
+extern "C" {
+
+EdgeBasedFiniteVolume* atlas__functionspace__EdgeBasedFiniteVolume__new (Mesh* mesh, int halo)
+{
+  EdgeBasedFiniteVolume* functionspace(0);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(mesh);
+    functionspace = new EdgeBasedFiniteVolume(*mesh,Halo(halo));
+  );
+  return functionspace;
+}
+
+}
+// ------------------------------------------------------------------------------------------
 
 } // namespace functionspace
 } // namespace atlas
