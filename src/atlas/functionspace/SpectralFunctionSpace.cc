@@ -22,15 +22,15 @@ namespace functionspace {
 
 // ----------------------------------------------------------------------
 
-SpectralFunctionSpace::SpectralFunctionSpace(const std::string& name, const size_t truncation)
-  : next::FunctionSpace(name),
+SpectralFunctionSpace::SpectralFunctionSpace(const size_t truncation)
+  : next::FunctionSpace("Spectral"),
     truncation_(truncation),
     trans_(0)
 {
 }
 
-SpectralFunctionSpace::SpectralFunctionSpace(const std::string& name, trans::Trans& trans)
-  : next::FunctionSpace(name),
+SpectralFunctionSpace::SpectralFunctionSpace(trans::Trans& trans)
+  : next::FunctionSpace("Spectral"),
 #ifdef ATLAS_HAVE_TRANS
     truncation_(trans.nsmax()),
     trans_(&trans)
@@ -183,14 +183,14 @@ std::string SpectralFunctionSpace::checksum( const Field& field ) const {
 
 extern "C"
 {
-SpectralFunctionSpace* atlas__SpectralFunctionSpace__new__name_truncation (const char* name, int truncation)
+SpectralFunctionSpace* atlas__SpectralFunctionSpace__new__truncation (int truncation)
 {
-  return new SpectralFunctionSpace(std::string(name),truncation);
+  return new SpectralFunctionSpace(truncation);
 }
 
-SpectralFunctionSpace* atlas__SpectralFunctionSpace__new__name_trans (const char* name, trans::Trans* trans)
+SpectralFunctionSpace* atlas__SpectralFunctionSpace__new__trans (trans::Trans* trans)
 {
-  return new SpectralFunctionSpace(std::string(name),*trans);
+  return new SpectralFunctionSpace(*trans);
 }
 
 void atlas__SpectralFunctionSpace__delete (SpectralFunctionSpace* This)

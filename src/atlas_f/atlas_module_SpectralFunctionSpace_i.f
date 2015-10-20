@@ -38,8 +38,8 @@ END TYPE atlas_SpectralFunctionSpace
 
 interface atlas_SpectralFunctionSpace
   module procedure atlas_SpectralFunctionSpace__cptr
-  module procedure atlas_SpectralFunctionSpace__name_truncation
-  module procedure atlas_SpectralFunctionSpace__name_trans
+  module procedure atlas_SpectralFunctionSpace__truncation
+  module procedure atlas_SpectralFunctionSpace__trans
 end interface
 
 

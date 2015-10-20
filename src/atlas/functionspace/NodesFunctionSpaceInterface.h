@@ -22,7 +22,7 @@ namespace functionspace {
 #define Checksum mpl::Checksum
 #define HaloExchange mpl::HaloExchange
 extern "C" {
-NodesFunctionSpace* atlas__NodesFunctionSpace__new (const char* name, Mesh* mesh, int halo);
+NodesFunctionSpace* atlas__NodesFunctionSpace__new (Mesh* mesh, int halo);
 void atlas__NodesFunctionSpace__delete (NodesFunctionSpace* This);
 int atlas__NodesFunctionSpace__nb_nodes(const NodesFunctionSpace* This);
 Mesh* atlas__NodesFunctionSpace__mesh(NodesFunctionSpace* This);

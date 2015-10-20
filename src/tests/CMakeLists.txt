@@ -212,4 +212,5 @@ endif()
 
 add_subdirectory( cgal )
 add_subdirectory( geometry )
+add_subdirectory( numerics )
 

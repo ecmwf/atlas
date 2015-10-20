@@ -41,7 +41,7 @@ class NodesFunctionSpace : public next::FunctionSpace
 {
 public:
 
-    NodesFunctionSpace(const std::string& name, Mesh& mesh, const Halo& = Halo(0) );
+    NodesFunctionSpace( Mesh& mesh, const Halo& = Halo(0) );
 
     virtual ~NodesFunctionSpace();
 

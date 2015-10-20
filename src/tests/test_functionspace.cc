@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE( test_NodesFunctionSpace )
   //grid.reset();
 
   DEBUG();
-  SharedPtr<NodesFunctionSpace> nodes_fs( new NodesFunctionSpace("nodes",mesh,Halo(1)) );
+  SharedPtr<NodesFunctionSpace> nodes_fs( new NodesFunctionSpace(mesh,Halo(1)) );
   DEBUG();
   size_t nb_levels = 10;
   //NodesColumnFunctionSpace columns_fs("columns",mesh,nb_levels,Halo(1));
@@ -449,7 +449,7 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace )
   size_t nb_levels = 10;
   size_t nspec2g = (truncation+1)*(truncation+2);
 
-  SharedPtr<SpectralFunctionSpace> spectral_fs( new SpectralFunctionSpace("nodes",truncation) );
+  SharedPtr<SpectralFunctionSpace> spectral_fs( new SpectralFunctionSpace(truncation) );
 
   SharedPtr<Field> surface_scalar_field( spectral_fs->createField("scalar") );
 
@@ -488,7 +488,7 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace_trans_dist )
 
   size_t nspec2 = trans.nspec2();
 
-  SharedPtr<SpectralFunctionSpace> spectral_fs( new SpectralFunctionSpace("nodes",trans) );
+  SharedPtr<SpectralFunctionSpace> spectral_fs( new SpectralFunctionSpace(trans) );
 
   SharedPtr<Field> surface_scalar_field( spectral_fs->createField("scalar") );
 
@@ -524,7 +524,7 @@ BOOST_AUTO_TEST_CASE( test_SpectralFunctionSpace_trans_global )
 
   size_t nspec2g = trans.nspec2g();
 
-  SharedPtr<SpectralFunctionSpace> spectral_fs( new SpectralFunctionSpace("nodes",trans) );
+  SharedPtr<SpectralFunctionSpace> spectral_fs( new SpectralFunctionSpace(trans) );
 
   SharedPtr<Field> surface_scalar_field( spectral_fs->createGlobalField("scalar") );
 

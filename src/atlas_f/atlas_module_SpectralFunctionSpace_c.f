@@ -16,23 +16,21 @@ subroutine atlas_SpectralFunctionSpace__final(this)
 end subroutine
 #endif
 
-function atlas_SpectralFunctionSpace__name_truncation(name,truncation) result(functionspace)
+function atlas_SpectralFunctionSpace__truncation(truncation) result(functionspace)
   use atlas_spectralfunctionspace_c_binding
   type(atlas_SpectralFunctionSpace) :: functionspace
-  character(len=*), intent(in) :: name
   integer(c_int), intent(in) :: truncation
   functionspace = atlas_SpectralFunctionSpace__cptr( &
-    & atlas__SpectralFunctionSpace__new__name_truncation(c_str(name),truncation) )
+    & atlas__SpectralFunctionSpace__new__truncation(truncation) )
   call functionspace%return()
 end function
 
-function atlas_SpectralFunctionSpace__name_trans(name,trans) result(functionspace)
+function atlas_SpectralFunctionSpace__trans(trans) result(functionspace)
   use atlas_spectralfunctionspace_c_binding
   type(atlas_SpectralFunctionSpace) :: functionspace
-  character(len=*), intent(in) :: name
   type(atlas_Trans), intent(in) :: trans
   functionspace = atlas_SpectralFunctionSpace__cptr( &
-    & atlas__SpectralFunctionSpace__new__name_trans(c_str(name),trans%c_ptr()) )
+    & atlas__SpectralFunctionSpace__new__trans(trans%c_ptr()) )
   call functionspace%return()
 end function
 

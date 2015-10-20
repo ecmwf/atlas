@@ -404,7 +404,7 @@ BOOST_AUTO_TEST_CASE( write_read_write_field )
   FieldSet fieldset;
   BOOST_CHECK_NO_THROW( fieldset.add(field) );
 
-  functionspace::NodesFunctionSpace functionspace("nodes",*mesh);
+  functionspace::NodesFunctionSpace functionspace(*mesh);
   BOOST_REQUIRE_NO_THROW( io::PointCloud::write("pointcloud_FieldSet.txt", fieldset, functionspace ) );
   BOOST_REQUIRE_NO_THROW( io::PointCloud::write("pointcloud_Grid.txt",     *mesh    ) );
 

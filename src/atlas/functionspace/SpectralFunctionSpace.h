@@ -27,9 +27,9 @@ class SpectralFunctionSpace : public next::FunctionSpace
 {
 public:
 
-  SpectralFunctionSpace(const std::string& name, const size_t truncation);
+  SpectralFunctionSpace(const size_t truncation);
 
-  SpectralFunctionSpace(const std::string& name, trans::Trans& );
+  SpectralFunctionSpace(trans::Trans& );
 
   virtual ~SpectralFunctionSpace();
 
@@ -68,8 +68,8 @@ private: // data
 #define Trans trans::Trans
 extern "C"
 {
-  SpectralFunctionSpace* atlas__SpectralFunctionSpace__new__name_truncation (const char* name, int truncation);
-  SpectralFunctionSpace* atlas__SpectralFunctionSpace__new__name_trans (const char* name, Trans* trans);
+  SpectralFunctionSpace* atlas__SpectralFunctionSpace__new__truncation (int truncation);
+  SpectralFunctionSpace* atlas__SpectralFunctionSpace__new__trans (Trans* trans);
   void atlas__SpectralFunctionSpace__delete (SpectralFunctionSpace* This);
 
   Field* atlas__SpectralFunctionSpace__create_field (const SpectralFunctionSpace* This, const char* name);

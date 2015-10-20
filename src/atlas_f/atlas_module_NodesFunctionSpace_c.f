@@ -15,21 +15,7 @@ function atlas_NodesFunctionSpace__mesh_halo(mesh,halo) result(function_space)
   opt_halo = 0
   if( present(halo) ) opt_halo = halo
   function_space = atlas_NodesFunctionSpace__cptr( &
-    & atlas__NodesFunctionSpace__new(c_str(""),mesh%c_ptr(),opt_halo) )
-  call function_space%return()
-end function
-
-function atlas_NodesFunctionSpace__name_mesh_halo(name,mesh,halo) result(function_space)
-  use atlas_nodesfunctionspaceinterface_c_binding
-  type(atlas_NodesFunctionSpace) :: function_space
-  character(len=*), intent(in) :: name
-  type(atlas_Mesh), intent(inout) :: mesh
-  integer, intent(in), optional :: halo
-  integer :: opt_halo
-  opt_halo = 0
-  if( present(halo) ) opt_halo = halo
-  function_space = atlas_NodesFunctionSpace__cptr( &
-    & atlas__NodesFunctionSpace__new(c_str(name),mesh%c_ptr(),opt_halo) )
+    & atlas__NodesFunctionSpace__new(mesh%c_ptr(),opt_halo) )
   call function_space%return()
 end function
 

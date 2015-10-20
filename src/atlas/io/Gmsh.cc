@@ -889,7 +889,7 @@ void Gmsh::write(const Mesh& mesh, const PathName& file_path) const
     mesh_info = mesh_info.dirName()+"/"+mesh_info.baseName(false)+"_info.msh";
 
     //[next]  make NodesFunctionSpace accept const mesh
-    eckit::SharedPtr<NodesFunctionSpace> function_space( new NodesFunctionSpace("nodes",const_cast<Mesh&>(mesh)) );
+    eckit::SharedPtr<NodesFunctionSpace> function_space( new NodesFunctionSpace(const_cast<Mesh&>(mesh)) );
 
     write(nodes.partition(),*function_space,mesh_info,std::ios_base::out);
 

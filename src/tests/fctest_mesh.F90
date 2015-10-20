@@ -359,7 +359,7 @@ TEST( test_meshgen )
   call field%access_data(arr)
   call field%final()
 
-  functionspace_nodes = atlas_NodesFunctionSpace("nodes",mesh,1)
+  functionspace_nodes = atlas_NodesFunctionSpace(mesh,1)
   halo_exchange = functionspace_nodes%get_halo_exchange()
   call halo_exchange%execute(arr)
 
@@ -498,7 +498,7 @@ TEST( test_fv )
       call griddistribution%final()
 
       ! Generate nodes function-space, with a given halo_size
-      nodes_fs = atlas_NodesFunctionSpace("nodes",mesh,halo_size)
+      nodes_fs = atlas_NodesFunctionSpace(mesh,halo_size)
 
       ! Create edge elements from surface elements
       call atlas_build_edges(mesh)

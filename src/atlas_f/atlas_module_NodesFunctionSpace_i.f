@@ -201,7 +201,6 @@ END TYPE atlas_NodesFunctionSpace
 interface atlas_NodesFunctionSpace
   module procedure atlas_NodesFunctionSpace__cptr
   module procedure atlas_NodesFunctionSpace__mesh_halo
-  module procedure atlas_NodesFunctionSpace__name_mesh_halo
 end interface
 
 !------------------------------------------------------------------------------

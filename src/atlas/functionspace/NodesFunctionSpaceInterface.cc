@@ -17,10 +17,10 @@ namespace functionspace {
 // ----------------------------------------------------------------------
 
 extern "C" {
-NodesFunctionSpace* atlas__NodesFunctionSpace__new (const char* name, Mesh* mesh, int halo)
+NodesFunctionSpace* atlas__NodesFunctionSpace__new ( Mesh* mesh, int halo )
 {
   ASSERT(mesh);
-  return new NodesFunctionSpace(std::string(name),*mesh,Halo(halo));
+  return new NodesFunctionSpace(*mesh,Halo(halo));
 }
 
 void atlas__NodesFunctionSpace__delete (NodesFunctionSpace* This)

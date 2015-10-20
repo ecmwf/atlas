@@ -266,6 +266,14 @@ functionspace/SpectralFunctionSpace.h
 functionspace/SpectralFunctionSpace.cc
 )
 
+list( APPEND atlas_numerics_srcs
+numerics/Nabla.h
+numerics/Nabla.cc
+numerics/nabla/EdgeBasedFiniteVolume.h
+numerics/nabla/EdgeBasedFiniteVolume.cc
+)
+
+
 ### atlas c++ library
 
 ecbuild_add_library( TARGET atlas
@@ -282,6 +290,7 @@ ecbuild_add_library( TARGET atlas
   ${atlas_actions_srcs}
   ${atlas_grids_srcs}
   ${atlas_trans_srcs}
+  ${atlas_numerics_srcs}
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_version.h
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_version.cc
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_config.h
