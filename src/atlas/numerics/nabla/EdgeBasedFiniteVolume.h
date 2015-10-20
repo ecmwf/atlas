@@ -18,7 +18,7 @@
 namespace atlas {
   namespace functionspace {
     class NodesFunctionSpace;
-    class EdgeBasedFiniteVolumeFunctionSpace;
+    class EdgeBasedFiniteVolume;
   }
   class Field;
 }
@@ -40,7 +40,7 @@ private:
 
 private:
 
-  atlas::functionspace::EdgeBasedFiniteVolumeFunctionSpace const *fvm_;
+  atlas::functionspace::EdgeBasedFiniteVolume const *fvm_;
   std::vector<size_t> pole_edges_;
 };
 
@@ -61,21 +61,21 @@ private:
 namespace atlas {
 class Mesh;
 namespace functionspace {
-class EdgeBasedFiniteVolumeFunctionSpace : public next::FunctionSpace {
-  friend class atlas::numerics::nabla::EdgeBasedFiniteVolume;
+
+class EdgeBasedFiniteVolume : public NodesFunctionSpace {
 public:
-  EdgeBasedFiniteVolumeFunctionSpace(Mesh &, const Halo & = Halo(1) );
+  EdgeBasedFiniteVolume(Mesh &, const Halo & = Halo(1) );
+
+  virtual std::string name() const { return "EdgeBasedFiniteVolume"; }
+
+  const NodesFunctionSpace& nodes_fs() const { return *this; }
+        NodesFunctionSpace& nodes_fs()       { return *this; }
 
 private: // data
 
-    Mesh& mesh_; // non-const because functionspace may modify mesh
-    eckit::SharedPtr<atlas::functionspace::NodesColumnFunctionSpace> nodes_; // non-const because functionspace may modify mesh
     atlas::FunctionSpace* edges_; // non-const because functionspace may modify mesh
-    Halo halo_;
-    size_t nb_edges_;
-    size_t nb_edges_global_;
-    std::vector<size_t> nb_edges_global_foreach_rank_;
 };
+
 }
 }
 

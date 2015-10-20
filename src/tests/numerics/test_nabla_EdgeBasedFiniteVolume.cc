@@ -23,14 +23,15 @@
 #include "atlas/meshgen/ReducedGridMeshGenerator.h"
 #include "atlas/functionspace/NodesFunctionSpace.h"
 #include "atlas/Nodes.h"
+#include "atlas/Field.h"
 #include "atlas/Parameters.h"
 #include "atlas/numerics/nabla/EdgeBasedFiniteVolume.h"
 #include "atlas/io/Gmsh.h"
+#include "atlas/FieldSet.h"
 
 using namespace eckit;
 using namespace atlas::numerics;
 using namespace atlas::meshgen;
-using namespace atlas::functionspace;
 
 namespace atlas {
 namespace test {
@@ -49,47 +50,47 @@ BOOST_AUTO_TEST_CASE( test_factory )
 
 BOOST_AUTO_TEST_CASE( test_build )
 {
-  Grid *grid = Grid::create("oct.N24");
-  ReducedGridMeshGenerator meshgenerator;
-  Mesh mesh;
-  meshgenerator.generate(*grid,mesh);
-  EdgeBasedFiniteVolumeFunctionSpace fvm(mesh,Halo(1));
-  Nabla *nabla = NablaFactory::build(fvm,Config());
+  SharedPtr<Grid> grid ( Grid::create("oct.N24") );
+  SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("ReducedGrid") );
+  SharedPtr<Mesh> mesh( meshgenerator->generate(*grid) );
+  functionspace::EdgeBasedFiniteVolume fvm(*mesh);
+  SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 }
 
 
 BOOST_AUTO_TEST_CASE( test_grad )
 {
-  Grid *grid = Grid::create("oct.N24");
-  ReducedGridMeshGenerator meshgenerator;
-  Mesh mesh;
-  meshgenerator.generate(*grid,mesh);
-  EdgeBasedFiniteVolumeFunctionSpace fvm(mesh,Halo(1));
-  Nabla *nabla = NablaFactory::build(fvm,Config());
+  SharedPtr<Grid> grid ( Grid::create("oct.N24") );
+  SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("ReducedGrid") );
+  SharedPtr<Mesh> mesh( meshgenerator->generate(*grid) );
+  functionspace::EdgeBasedFiniteVolume fvm(*mesh);
+  SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
-  ArrayView<double,2> lonlat( mesh.nodes().lonlat() );
-  size_t nnodes = mesh.nodes().size();
+  ArrayView<double,2> lonlat( mesh->nodes().lonlat() );
+  size_t nnodes = mesh->nodes().size();
   size_t nlev = 137;
 
-  NodesFunctionSpace nodes_fs(mesh,Halo(1));
-  eckit::SharedPtr<Field> varfield ( nodes_fs.createField<double>("var",nlev) );
-  eckit::SharedPtr<Field> gradfield( nodes_fs.createField<double>("grad",nlev,make_shape(2)) );
+  FieldSet fields;
+  fields.add( fvm.createField<double>("var",nlev) );
+  fields.add( fvm.createField<double>("grad",nlev,make_shape(2)) );
 
-  double deg2rad = M_PI/180.;
-  ArrayView<double,2> var( *varfield );
+  const double deg2rad = M_PI/180.;
+  ArrayView<double,2> var( fields["var"] );
   for( size_t jnode=0; jnode< nnodes ; ++jnode )
   {
-    double y  = lonlat(jnode,LAT) * deg2rad ;
+    const double y  = lonlat(jnode,LAT) * deg2rad ;
 
     for(size_t jlev = 0; jlev < nlev; ++jlev)
       var(jnode,jlev) = 100.+50.*std::cos(2.*y);
   }
-  nabla->gradient(*varfield,*gradfield);
+  nabla->gradient(fields["var"],fields["grad"]);
 
-  io::Gmsh().write(mesh,grid->shortName()+".msh");
-  io::Gmsh().write(*varfield,nodes_fs,grid->shortName()+"_fields.msh");
-  io::Gmsh().write(*gradfield,nodes_fs,grid->shortName()+"_fields.msh",std::ios::app);
-
+  // output to gmsh
+  {
+    io::Gmsh().write(*mesh,grid->shortName()+".msh");
+    io::Gmsh().write(fields["var"],grid->shortName()+"_fields.msh");
+    io::Gmsh().write(fields["grad"],grid->shortName()+"_fields.msh",std::ios::app);
+  }
 }
 
 

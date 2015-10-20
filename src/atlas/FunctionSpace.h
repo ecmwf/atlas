@@ -24,16 +24,14 @@ namespace next { // Temporary namespace for new design
 class FunctionSpace : public eckit::Owned
 {
 public:
-    FunctionSpace(const std::string& name) : name_(name) {}
+    FunctionSpace() {}
     virtual ~FunctionSpace() = 0;
-    const std::string& name() const { return name_; }
+    virtual std::string name() const = 0;
     eckit::SharedPtr<FunctionSpace const> shared_from_this() const;
     eckit::SharedPtr<FunctionSpace> shared_from_this();
     eckit::SharedPtr<FunctionSpace> ptr();
     eckit::SharedPtr<FunctionSpace const> ptr() const;
     eckit::SharedPtr<FunctionSpace const> cptr() const;
-private:
-    std::string name_;
 };
 
 inline FunctionSpace::~FunctionSpace() {}

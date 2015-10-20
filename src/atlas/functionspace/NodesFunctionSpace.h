@@ -45,8 +45,10 @@ public:
 
     virtual ~NodesFunctionSpace();
 
+    virtual std::string name() const { return "Nodes"; }
+
     size_t nb_nodes() const;
-    size_t nb_nodes_global() const; // Only on MPI rank 0, will this be different 0
+    size_t nb_nodes_global() const; // Only on MPI rank 0, will this be different from 0
     std::vector<size_t> nb_nodes_global_foreach_rank() const;
 
     const Mesh& mesh() const { return mesh_; }
@@ -269,10 +271,6 @@ private: // data
     size_t nb_nodes_global_;
     std::vector<size_t> nb_nodes_global_foreach_rank_;
 };
-
-// -------------------------------------------------------------------
-
-typedef NodesFunctionSpace NodesColumnFunctionSpace;
 
 // -------------------------------------------------------------------
 

@@ -978,6 +978,28 @@ void Gmsh::write(const Field& field, const NodesFunctionSpace& function_space, c
   write(fieldset,function_space,file_path,mode);
 }
 
+
+void Gmsh::write(const Field& field, const PathName& file_path, openmode mode) const
+{
+  if( !field.functionspace() )
+  {
+    std::stringstream msg;
+    msg << "Field ["<<field.name()<<"] has no functionspace";
+    throw eckit::AssertionFailed(msg.str(),Here());
+  }
+  NodesFunctionSpace* functionspace = dynamic_cast<NodesFunctionSpace*>(field.functionspace());
+  if( !functionspace )
+  {
+    std::stringstream msg;
+    msg << "Field ["<<field.name()<<"] has functionspace ["<<functionspace->name()<<"] but requires a [NodesFunctionSpace]";
+    throw eckit::AssertionFailed(msg.str(),Here());
+  }
+  FieldSet fieldset;
+  fieldset.add(field);
+  write(fieldset,*functionspace,file_path,mode);
+}
+
+
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 

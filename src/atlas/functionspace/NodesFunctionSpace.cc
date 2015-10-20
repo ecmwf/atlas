@@ -78,7 +78,7 @@ ArrayView<T,1> surface_scalar_view(const Field &field)
 
 
 NodesFunctionSpace::NodesFunctionSpace(Mesh& mesh, const Halo& halo)
-  : next::FunctionSpace("Nodes"),
+  : next::FunctionSpace(),
     mesh_(mesh),
     nodes_(mesh_.nodes()),
     halo_(halo),

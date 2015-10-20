@@ -46,6 +46,7 @@ using namespace eckit;
 using namespace atlas;
 using namespace atlas::actions;
 using namespace atlas::grids;
+using namespace atlas::functionspace;
 
 //------------------------------------------------------------------------------------------------------
 
@@ -159,8 +160,8 @@ void Meshgen2Gmsh::run()
     renumber_nodes_glb_idx(mesh->nodes());
   }
 
-  eckit::SharedPtr<functionspace::NodesFunctionSpace> nodes_fs;
-  nodes_fs.reset( new functionspace::NodesFunctionSpace("nodes",*mesh,functionspace::Halo(mesh)) );
+  eckit::SharedPtr<NodesFunctionSpace> nodes_fs;
+  nodes_fs.reset( new NodesFunctionSpace(*mesh,Halo(mesh)) );
   nodes_fs->checksum(mesh->nodes().lonlat());
 
   Log::info() << "  checksum lonlat : " << nodes_fs->checksum(mesh->nodes().lonlat()) << std::endl;

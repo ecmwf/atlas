@@ -32,6 +32,7 @@ class MeshGenerator : public eckit::Owned {
 
 public:
 
+  typedef eckit::SharedPtr<MeshGenerator> Ptr;
   typedef atlas::Config Parameters;
   static MeshGenerator* create(const std::string &, const eckit::Parametrisation & = Parameters());
 

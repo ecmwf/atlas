@@ -59,6 +59,7 @@
 #include "atlas/actions/BuildParallelFields.h"
 #include "atlas/actions/BuildDualMesh.h"
 #include "atlas/Mesh.h"
+#include "atlas/meshgen/MeshGenerator.h"
 #include "atlas/Nodes.h"
 #include "atlas/grids/grids.h"
 #include "atlas/io/Gmsh.h"
@@ -90,6 +91,8 @@ using namespace eckit;
 using namespace atlas;
 using namespace atlas::grids;
 using namespace atlas::actions;
+using namespace atlas::functionspace;
+using namespace atlas::meshgen;
 
 
 //------------------------------------------------------------------------------------------------------
@@ -329,8 +332,9 @@ void AtlasBenchmark::setup()
 
   stringstream gridname; gridname << "rgg.N"<<N;
   ReducedGrid::Ptr grid( ReducedGrid::create(gridname.str()) );
-  mesh = Mesh::Ptr( generate_mesh(*grid) );
-  // mesh = Mesh::Ptr( generate_regular_grid( 2*N, N) );
+  MeshGenerator::Ptr meshgenerator ( MeshGenerator::create("ReducedGrid") );
+  mesh = Mesh::Ptr ( meshgenerator->generate(*grid) );
+
   build_nodes_parallel_fields(mesh->nodes());
   build_periodic_boundaries(*mesh);
   build_halo(*mesh,1);
@@ -341,7 +345,7 @@ void AtlasBenchmark::setup()
   build_median_dual_mesh(*mesh);
   build_node_to_edge_connectivity(*mesh);
 
-  nodes_fs.reset( new functionspace::NodesFunctionSpace("nodes",*mesh,functionspace::Halo(*mesh)));
+  nodes_fs.reset( new NodesFunctionSpace(*mesh,Halo(*mesh)));
 
   nnodes = mesh->nodes().size();
   nedges = mesh->function_space("edges").shape(0);
@@ -350,8 +354,8 @@ void AtlasBenchmark::setup()
   lonlat = ArrayView<double,2> ( mesh->nodes().lonlat() );
   V      = ArrayView<double,1> ( mesh->nodes().field("dual_volumes") );
   S      = ArrayView<double,2> ( mesh->function_space("edges").field("dual_normals") );
-  field  = ArrayView<double,2> ( mesh->nodes().add( Field::create<double>( "field", make_shape(nnodes,nlev) ) ) );
-  Field& gradfield = ( mesh->nodes().add( Field::create<double>("grad",make_shape(nnodes,nlev*3) ) ) );
+  field  = ArrayView<double,2> ( mesh->nodes().add( nodes_fs->createField<double>( "field", nlev ) ) );
+  Field& gradfield = ( mesh->nodes().add( nodes_fs->createField<double>("grad",nlev,make_shape(3) ) ) );
   grad   = ArrayView<double,3> ( gradfield.data<double>(), make_shape(nnodes,nlev,3) );
   mesh->nodes().field("field").metadata().set("nb_levels",nlev);
   mesh->nodes().field("grad").metadata().set("nb_levels",nlev);
@@ -579,7 +583,6 @@ double AtlasBenchmark::result()
     //io::Gmsh().write(mesh->nodes().field("dual_volumes"),"benchmark.gmsh",std::ios_base::app);
     //io::Gmsh().write(mesh->nodes().field("field"),"benchmark.gmsh",std::ios_base::out);
     io::Gmsh().write( mesh->nodes().field("grad"),
-                      functionspace::NodesColumnFunctionSpace("cols",*mesh,nlev),
                       "benchmark.gmsh",std::ios_base::app);
   }
   return norm;

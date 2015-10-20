@@ -37,7 +37,7 @@ class SharedPtrVector_iterator : public std::iterator<std::forward_iterator_tag,
 private:
   typedef std::vector< eckit::SharedPtr<T> >  SharedPtrVector;
 
-  SharedPtrVector* arr_;  //!< array to be iterated  
+  SharedPtrVector* arr_;  //!< array to be iterated
   T* p_; //!< raw pointer
 
 public:
@@ -86,7 +86,7 @@ class SharedPtrVector_const_iterator : public std::iterator<std::forward_iterato
 private:
   typedef const std::vector< eckit::SharedPtr<T> >  SharedPtrVector;
 
-  SharedPtrVector* arr_;  //!< array to be iterated  
+  SharedPtrVector* arr_;  //!< array to be iterated
   T* p_; //!< raw pointer
 
 public:
@@ -143,6 +143,7 @@ public: // types
   typedef eckit::SharedPtr< FieldSet > Ptr;
   typedef SharedPtrVector_iterator<Field> iterator;
   typedef SharedPtrVector_const_iterator<Field> const_iterator;
+
 public: // methods
 
   /// Constructs an empty FieldSet
@@ -154,8 +155,11 @@ public: // methods
   const std::string& name() const { return name_; }
         std::string& name()       { return name_; }
 
-  const Field& operator[](const size_t& i) const { return field(i); }
-        Field& operator[](const size_t& i)       { return field(i); }
+  const Field& operator[](const size_t &i) const { return field(i); }
+        Field& operator[](const size_t &i)       { return field(i); }
+
+  const Field& operator[](const std::string &name) const { return field(name); }
+        Field& operator[](const std::string &name)       { return field(name); }
 
   const Field& field(const size_t& i) const { ASSERT(i<size()); return *fields_[i]; }
         Field& field(const size_t& i)       { ASSERT(i<size()); return *fields_[i]; }
@@ -163,6 +167,7 @@ public: // methods
   std::vector< std::string > field_names() const;
 
   void add(const Field&);
+  void add(const Field*);
 
   bool has_field(const std::string& name) const;
 

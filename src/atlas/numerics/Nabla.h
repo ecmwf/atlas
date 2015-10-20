@@ -22,6 +22,10 @@ namespace atlas {
 namespace numerics {
 
 class Nabla : public eckit::Owned {
+public:
+
+  static Nabla* create(const next::FunctionSpace &);
+  static Nabla* create(const next::FunctionSpace &, const eckit::Parametrisation &);
 
 public:
   Nabla(const next::FunctionSpace &, const eckit::Parametrisation &);

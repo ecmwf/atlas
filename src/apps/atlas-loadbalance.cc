@@ -113,18 +113,18 @@ void AtlasLoadbalance::run()
 
   if( !grid ) return;
   SharedPtr<Mesh> mesh( generate_mesh(*grid) );
-  SharedPtr<NodesFunctionSpace> nodes( new NodesFunctionSpace("nodes",*mesh,Halo(halo)) );
- 
+  SharedPtr<NodesFunctionSpace> nodes( new NodesFunctionSpace(*mesh,Halo(halo)) );
+
 
   if( output.size() )
   {
     write_load_balance_report(*mesh,output);
   }
   else
-  { 
+  {
     std::stringstream s;
     write_load_balance_report(*mesh,s);
-  
+
     if( eckit::mpi::rank() == 0 )
     {
       std::cout << s.str() << std::endl;

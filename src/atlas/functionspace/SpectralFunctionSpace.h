@@ -33,6 +33,8 @@ public:
 
   virtual ~SpectralFunctionSpace();
 
+  virtual std::string name() const { return "Spectral"; }
+
   /// @brief Create a spectral field
   Field* createField(const std::string& name) const;
   Field* createField(const std::string& name, size_t levels) const;

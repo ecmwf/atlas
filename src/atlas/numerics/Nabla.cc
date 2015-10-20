@@ -47,6 +47,15 @@ Nabla::~Nabla()
 {
 }
 
+Nabla* Nabla::create(const next::FunctionSpace &fs)
+{
+  return Nabla::create(fs,Config());
+}
+
+Nabla* Nabla::create(const next::FunctionSpace &fs, const eckit::Parametrisation &p)
+{
+  return NablaFactory::build(fs,p);
+}
 
 namespace {
 
