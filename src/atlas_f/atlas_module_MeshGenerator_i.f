@@ -27,4 +27,8 @@ interface atlas_MeshGenerator
   module procedure atlas_MeshGenerator__name_config
 end interface
 
+interface atlas_ReducedGridMeshGenerator
+  module procedure atlas_ReducedGridMeshGenerator__config
+end interface
+
 !------------------------------------------------------------------------------

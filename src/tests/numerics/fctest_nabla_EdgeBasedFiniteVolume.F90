@@ -73,7 +73,7 @@ integer, parameter :: nlev = 137
 
 ! Setup
 grid = atlas_ReducedGrid("rgg.N24")
-meshgenerator = atlas_MeshGenerator("ReducedGrid")
+meshgenerator = atlas_ReducedGridMeshGenerator()
 mesh = meshgenerator%generate(grid) ! second optional argument for atlas_GridDistrubution
 fvm  = atlas_functionspace_EdgeBasedFiniteVolume(mesh)
 nabla = atlas_Nabla(fvm)

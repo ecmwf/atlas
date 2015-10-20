@@ -8,19 +8,35 @@ end function
 
 function atlas_MeshGenerator__name_config(name,config) result(MeshGenerator)
   use atlas_MeshGenerator_c_binding
-  type(atlas_MeshGenerator) :: MeshGenerator
+  type(atlas_MeshGenerator) :: meshgenerator
   character(len=*), intent(in) :: name
   type(atlas_Config), intent(in), optional :: config
   type(atlas_Config) :: opt_config
   if( present(config) ) then
-    MeshGenerator = atlas_MeshGenerator__cptr(atlas__MeshGenerator__create(c_str(name),config%c_ptr()))
+    meshgenerator = atlas_MeshGenerator__cptr(atlas__MeshGenerator__create(c_str(name),config%c_ptr()))
   else
     opt_config = atlas_Config()
-    MeshGenerator = atlas_MeshGenerator__cptr(atlas__MeshGenerator__create(c_str(name),opt_config%c_ptr()))
+    meshgenerator = atlas_MeshGenerator__cptr(atlas__MeshGenerator__create(c_str(name),opt_config%c_ptr()))
     call opt_config%final()
   endif
-  call MeshGenerator%return()
+  call meshgenerator%return()
 end function
+
+function atlas_ReducedGridMeshGenerator__config(config) result(meshgenerator)
+  use atlas_MeshGenerator_c_binding
+  type(atlas_MeshGenerator) :: meshgenerator
+  type(atlas_Config), intent(in), optional :: config
+  type(atlas_Config) :: opt_config
+  if( present(config) ) then
+    meshgenerator = atlas_MeshGenerator__cptr(atlas__MeshGenerator__create(c_str("ReducedGrid"),config%c_ptr()))
+  else
+    opt_config = atlas_Config()
+    meshgenerator = atlas_MeshGenerator__cptr(atlas__MeshGenerator__create(c_str("ReducedGrid"),opt_config%c_ptr()))
+    call opt_config%final()
+  endif
+  call meshgenerator%return()
+end function
+
 
 subroutine atlas_MeshGenerator__delete(this)
   use atlas_MeshGenerator_c_binding
