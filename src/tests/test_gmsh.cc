@@ -12,6 +12,7 @@
 #include "ecbuild/boost_test_framework.h"
 
 #include "tests/TestMeshes.h"
+#include "atlas/atlas.h"
 #include "atlas/mpi/mpi.h"
 #include "atlas/io/Gmsh.h"
 #include "atlas/util/Debug.h"
@@ -25,22 +26,27 @@
 namespace atlas {
 namespace test {
 
+struct AtlasFixture {
+    AtlasFixture()  { atlas_init(boost::unit_test::framework::master_test_suite().argc,
+                                 boost::unit_test::framework::master_test_suite().argv); }
+    ~AtlasFixture() { atlas_finalize(); }
+};
+
+BOOST_GLOBAL_FIXTURE( AtlasFixture )
+
 BOOST_AUTO_TEST_CASE( test_read_write )
 {
-	using namespace atlas;
-	using namespace atlas::io;
+    using namespace atlas;
+    using namespace atlas::io;
 
-	eckit::mpi::init();
+    // Mesh::Ptr mesh = test::generate_mesh(nlat, lon);
+    Mesh::Ptr mesh = test::generate_mesh(grids::rgg::N128());
 
-	//	Mesh::Ptr mesh = test::generate_mesh(nlat, lon);
-	Mesh::Ptr mesh = test::generate_mesh(grids::rgg::N128());
+    Gmsh gmsh;
+    gmsh.options.set("ascii",true);
+    gmsh.write(*mesh,"mesh.msh");
 
-	Gmsh gmsh;
-	gmsh.options.set("ascii",true);
-	gmsh.write(*mesh,"mesh.msh");
-
-        BOOST_REQUIRE_NO_THROW( mesh = Mesh::Ptr( Gmsh().read( "mesh.msh" ) ) );
-	eckit::mpi::finalize();
+    BOOST_REQUIRE_NO_THROW( mesh = Mesh::Ptr( Gmsh().read( "mesh.msh" ) ) );
 }
 
 } // namespace test
