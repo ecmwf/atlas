@@ -12,16 +12,12 @@
 #ifndef atlas_numerics_nabla_EdgeBasedFiniteVolume_h
 #define atlas_numerics_nabla_EdgeBasedFiniteVolume_h
 
+#include <vector>
 #include "atlas/numerics/Nabla.h"
 #include "eckit/memory/SharedPtr.h"
 
-namespace atlas {
-  namespace functionspace {
-    class NodesFunctionSpace;
-    class EdgeBasedFiniteVolume;
-  }
-  class Field;
-}
+namespace atlas {  namespace functionspace {  class EdgeBasedFiniteVolume; } }
+namespace atlas {  class Field; }
 
 namespace atlas {
 namespace numerics {
@@ -49,45 +45,5 @@ private:
 } // namespace nabla
 } // namespace numerics
 } // namespace atlas
-
-
-
-
-
-#include "atlas/FunctionSpace.h"
-#include "atlas/functionspace/NodesFunctionSpace.h"
-
-
-namespace atlas {
-class Mesh;
-namespace functionspace {
-
-class EdgeBasedFiniteVolume : public NodesFunctionSpace {
-public:
-  EdgeBasedFiniteVolume(Mesh &, const Halo & = Halo(1) );
-
-  virtual std::string name() const { return "EdgeBasedFiniteVolume"; }
-
-  const NodesFunctionSpace& nodes_fs() const { return *this; }
-        NodesFunctionSpace& nodes_fs()       { return *this; }
-
-private: // data
-
-    atlas::FunctionSpace* edges_; // non-const because functionspace may modify mesh
-};
-
-}
-}
-
-
-
-
-
-
-
-
-
-
-
 
 #endif // atlas_numerics_nabla_EdgeBasedFiniteVolume_h

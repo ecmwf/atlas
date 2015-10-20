@@ -262,6 +262,8 @@ functionspace/NodesFunctionSpace.h
 functionspace/NodesFunctionSpace.cc
 functionspace/NodesFunctionSpaceInterface.h
 functionspace/NodesFunctionSpaceInterface.cc
+functionspace/EdgeBasedFiniteVolume.h
+functionspace/EdgeBasedFiniteVolume.cc
 functionspace/SpectralFunctionSpace.h
 functionspace/SpectralFunctionSpace.cc
 )

@@ -8,18 +8,14 @@
  * does it submit to any jurisdiction.
  */
 
-#include <cmath>
-
 #include "eckit/exception/Exceptions.h"
-#include "eckit/memory/ScopedPtr.h"
+#include "eckit/config/Parametrisation.h"
 #include "atlas/numerics/nabla/EdgeBasedFiniteVolume.h"
-#include "atlas/functionspace/NodesFunctionSpace.h"
+#include "atlas/functionspace/EdgeBasedFiniteVolume.h"
 #include "atlas/Mesh.h"
 #include "atlas/Nodes.h"
+#include "atlas/Field.h"
 
-#include "atlas/actions/BuildEdges.h"
-#include "atlas/actions/BuildParallelFields.h"
-#include "atlas/actions/BuildDualMesh.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
 #include "atlas/atlas_omp.h"
@@ -29,80 +25,6 @@
 
 
 // =======================================================
-
-using namespace atlas::actions;
-using eckit::SharedPtr;
-
-namespace atlas {
-namespace functionspace {
-
-EdgeBasedFiniteVolume::EdgeBasedFiniteVolume(Mesh &_mesh, const Halo &_halo )
- : NodesFunctionSpace(_mesh,_halo)
-{
-  if(mesh().has_function_space("edges")) {
-    edges_ = &mesh().function_space("edges");
-  } else {
-    build_edges(mesh());
-    build_pole_edges(mesh());
-    edges_ = &mesh().function_space("edges");
-    build_edges_parallel_fields(*edges_,nodes());
-    build_median_dual_mesh(mesh());
-    build_node_to_edge_connectivity(mesh());
-
-    const size_t nnodes = nodes().size();
-
-    // Compute sign
-    {
-      const IndexView<int,2> node2edge      ( nodes().field("to_edge") );
-      const ArrayView<int,1> node2edge_size ( nodes().field("to_edge_size") );
-      const IndexView<int,2> edge2node      ( edges_->field("nodes") );
-
-      nodes().add( Field::create<double>("node2edge_sign",make_shape(nnodes,node2edge.shape(1)) ) );
-      ArrayView<double,2> node2edge_sign( nodes().field("node2edge_sign") );
-
-      atlas_omp_parallel_for( int jnode=0; jnode<nnodes; ++jnode )
-      {
-        for(size_t jedge = 0; jedge < node2edge_size(jnode); ++jedge)
-        {
-          size_t iedge = node2edge(jnode,jedge);
-          size_t ip1 = edge2node(iedge,0);
-          if( jnode == ip1 )
-            node2edge_sign(jnode,jedge) = 1.;
-          else
-            node2edge_sign(jnode,jedge) = -1.;
-        }
-      }
-    }
-
-    // Metrics
-    {
-      const size_t nedges = edges_->shape(0);
-      const ArrayView<double,2> lonlat_deg( nodes().lonlat() );
-      ArrayView<double,1> V ( nodes().field("dual_volumes") );
-      ArrayView<double,2> S ( edges_->field("dual_normals") );
-
-      const double radius = Earth::radiusInMeters();
-      const double deg2rad = M_PI/180.;
-      atlas_omp_parallel_for( size_t jnode=0; jnode<nnodes; ++jnode )
-      {
-        double y  = lonlat_deg(jnode,LAT) * deg2rad;
-        double hx = radius*std::cos(y);
-        double hy = radius;
-        double G  = hx*hy;
-        V(jnode) *= std::pow(deg2rad,2) * G;
-      }
-      atlas_omp_parallel_for( size_t jedge=0; jedge<nedges; ++jedge )
-      {
-        S(jedge,LON) *= deg2rad;
-        S(jedge,LAT) *= deg2rad;
-      }
-    }
-  }
-}
-
-
-}
-}
 
 using atlas::util::Topology;
 
@@ -121,7 +43,7 @@ EdgeBasedFiniteVolume::EdgeBasedFiniteVolume(const next::FunctionSpace &fs, cons
   if( ! fvm_ )
     throw eckit::BadCast("nabla::EdgeBasedFiniteVolume needs a EdgeBasedFiniteVolumeFunctionSpace",Here());
   eckit::Log::info() << "EdgeBasedFiniteVolume constructed for functionspace " << fvm_->name()
-                     << " with " << fvm_->nodes_fs().nb_nodes_global() << " nodes total" << std::endl;
+                     << " with " << fvm_->nb_nodes_global() << " nodes total" << std::endl;
 
   setup();
 

@@ -21,11 +21,10 @@
 #include "atlas/Grid.h"
 #include "atlas/Mesh.h"
 #include "atlas/meshgen/ReducedGridMeshGenerator.h"
-#include "atlas/functionspace/NodesFunctionSpace.h"
+#include "atlas/functionspace/EdgeBasedFiniteVolume.h"
 #include "atlas/Nodes.h"
 #include "atlas/Field.h"
 #include "atlas/Parameters.h"
-#include "atlas/numerics/nabla/EdgeBasedFiniteVolume.h"
 #include "atlas/io/Gmsh.h"
 #include "atlas/FieldSet.h"
 
