@@ -13,6 +13,7 @@
 
 #include "atlas/atlas_config.h"
 
+#include "atlas/atlas.h"
 #include "atlas/Mesh.h"
 #include "atlas/io/Gmsh.h"
 #include "atlas/grids/grids.h"
@@ -26,9 +27,16 @@ using namespace atlas::meshgen;
 namespace atlas {
 namespace test {
 
+struct GlobalFixture {
+    GlobalFixture()  { atlas_init(boost::unit_test::framework::master_test_suite().argc,
+                                  boost::unit_test::framework::master_test_suite().argv); }
+    ~GlobalFixture() { atlas_finalize(); }
+};
+
+BOOST_GLOBAL_FIXTURE( GlobalFixture )
+
 BOOST_AUTO_TEST_CASE( test_create_mesh )
 {
-	eckit::mpi::init();
 	Mesh::Ptr m ( Mesh::create() );
 
 	ReducedGridMeshGenerator generate;
@@ -44,8 +52,6 @@ BOOST_AUTO_TEST_CASE( test_create_mesh )
 	Gmsh().write(*m,"out.msh");
 
 	//    atlas::actions::BuildXYZ(m);
-
-	eckit::mpi::finalize();
 }
 
 } // namespace test
