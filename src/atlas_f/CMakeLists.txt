@@ -107,6 +107,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/EdgeBasedFinit
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/Spectral.h MODULE atlas_functionspace_Spectral_c_binding OUTPUT functionspace_Spectral_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/NodesInterface.h MODULE atlas_functionspace_Nodes_c_binding OUTPUT functionspace_Nodes_c_binding.f90)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/Nabla.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/meshgen/MeshGenerator.h)
 generate_fortran_bindings(FORTRAN_BINDINGS atlas_logging.h)
 generate_fortran_bindings(FORTRAN_BINDINGS atlas_resource.h)
 generate_fortran_bindings(FORTRAN_BINDINGS atlas_value.h)
@@ -168,6 +169,8 @@ add_custom_target( atlas_fortran_inc SOURCES
    atlas_module_Logging_c.f
    atlas_module_Mesh_i.f
    atlas_module_Mesh_c.f
+   atlas_module_MeshGenerator_i.f
+   atlas_module_MeshGenerator_c.f
    atlas_module_Metadata_i.f
    atlas_module_Metadata_c.f
    atlas_module_Nabla_i.f

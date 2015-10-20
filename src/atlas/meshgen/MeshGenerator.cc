@@ -16,6 +16,7 @@
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
 #include "eckit/exception/Exceptions.h"
+#include "atlas/runtime/ErrorHandling.h"
 #include "atlas/Mesh.h"
 #include "atlas/meshgen/ReducedGridMeshGenerator.h"
 #include "atlas/meshgen/Delaunay.h"
@@ -166,6 +167,44 @@ MeshGenerator *MeshGeneratorFactory::build(const std::string& name, const eckit:
     return (*j).second->make(param);
 }
 
+extern "C" {
+
+void atlas__MeshGenerator__delete(MeshGenerator* This)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    delete This;
+  );
+}
+
+MeshGenerator* atlas__MeshGenerator__create(const char* name, const eckit::Parametrisation* params)
+{
+  MeshGenerator* meshgenerator(0);
+  ATLAS_ERROR_HANDLING (
+    ASSERT(params);
+    meshgenerator = MeshGenerator::create(std::string(name),*params);
+  );
+  return meshgenerator;
+}
+
+Mesh* atlas__MeshGenerator__generate__grid_griddist (const MeshGenerator* This, const Grid* grid, const GridDistribution* distribution )
+{
+  ATLAS_ERROR_HANDLING(
+    return This->generate(*grid,*distribution);
+  );
+  return 0;
+}
+
+Mesh* atlas__MeshGenerator__generate__grid (const MeshGenerator* This, const Grid* grid )
+{
+  ATLAS_ERROR_HANDLING(
+    return This->generate(*grid);
+  );
+  return 0;
+}
+
+
+}
 
 } // namespace meshgen
 } // namespace atlas

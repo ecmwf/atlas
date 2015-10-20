@@ -60,6 +60,7 @@ END_TEST
 TEST( test_nabla )
 type(atlas_ReducedGrid) :: grid
 type(atlas_Mesh) :: mesh
+type(atlas_MeshGenerator) :: meshgenerator
 type(atlas_functionspace_EdgeBasedFiniteVolume) :: fvm
 type(atlas_Nabla) :: nabla
 type(atlas_Field) :: varfield
@@ -72,7 +73,8 @@ integer, parameter :: nlev = 137
 
 ! Setup
 grid = atlas_ReducedGrid("rgg.N24")
-mesh = atlas_generate_mesh(grid)
+meshgenerator = atlas_MeshGenerator("ReducedGrid")
+mesh = meshgenerator%generate(grid) ! second optional argument for atlas_GridDistrubution
 fvm  = atlas_functionspace_EdgeBasedFiniteVolume(mesh)
 nabla = atlas_Nabla(fvm)
 
@@ -96,6 +98,7 @@ call nabla%final()
 call fvm%final()
 call mesh%final()
 call grid%final()
+call meshgenerator%final()
 
 END_TEST
 

@@ -85,7 +85,6 @@ class MeshGeneratorFactory {
     MeshGeneratorFactory(const std::string&);
     virtual ~MeshGeneratorFactory();
 
-
 };
 
 
@@ -102,6 +101,17 @@ class MeshGeneratorBuilder : public MeshGeneratorFactory {
 };
 
 //------------------------------------------------------------------------------------------------------
+
+#define Parametrisation eckit::Parametrisation
+extern "C" {
+
+void atlas__MeshGenerator__delete (MeshGenerator* This);
+MeshGenerator* atlas__MeshGenerator__create (const char* name, const Parametrisation* params);
+Mesh* atlas__MeshGenerator__generate__grid_griddist (const MeshGenerator* This, const Grid* grid, const GridDistribution* distribution);
+Mesh* atlas__MeshGenerator__generate__grid (const MeshGenerator* This, const Grid* grid);
+
+}
+#undef Parametrisation
 
 } // namespace meshgen
 } // namespace atlas
