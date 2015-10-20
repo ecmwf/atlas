@@ -23,30 +23,59 @@ install( FILES
 
 ### fortran bindings
 
+#function(generate_fortran_bindings output filename)
+#    get_filename_component(base ${filename} NAME_WE)
+#    set(base_abs ${CMAKE_CURRENT_SOURCE_DIR}/${base})
+#    set(outfile ${CMAKE_CURRENT_BINARY_DIR}/${base}_c_binding.f90)
+#    set(${output} ${${output}} ${outfile} PARENT_SCOPE)
+#    add_custom_command(
+#        OUTPUT ${outfile}
+#        COMMAND ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/c2f.py ${CMAKE_CURRENT_SOURCE_DIR}/${filename} -o ${outfile}
+#        DEPENDS ${filename} )
+#    set_source_files_properties(${outfile} PROPERTIES GENERATED TRUE)
+#endfunction()
+
+#function(generate_fortran_bindings_custom_output output filename outfile)
+#    get_filename_component(base ${filename} NAME_WE)
+#    set(base_abs ${CMAKE_CURRENT_SOURCE_DIR}/${base})
+#    set(outfile ${CMAKE_CURRENT_BINARY_DIR}/${outfile})
+#    set(${output} ${${output}} ${outfile} PARENT_SCOPE)
+#    add_custom_command(
+#        OUTPUT ${outfile}
+#        COMMAND ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/c2f.py ${CMAKE_CURRENT_SOURCE_DIR}/${filename} -o ${outfile}
+#        DEPENDS ${filename} )
+#    set_source_files_properties(${outfile} PROPERTIES GENERATED TRUE)
+#endfunction()
+
 function(generate_fortran_bindings output filename)
-    get_filename_component(base ${filename} NAME_WE)
-    set(base_abs ${CMAKE_CURRENT_SOURCE_DIR}/${base})
-    set(outfile ${CMAKE_CURRENT_BINARY_DIR}/${base}_c_binding.f90)
-    set(${output} ${${output}} ${outfile} PARENT_SCOPE)
+
+  set( options "" )
+  set( single_value_args OUTPUT MODULE )
+  set( multi_value_args "" )
+  cmake_parse_arguments( _PAR "${options}" "${single_value_args}" "${multi_value_args}"  ${_FIRST_ARG} ${ARGN} )
+
+  get_filename_component(base ${filename} NAME_WE)
+  set(base_abs ${CMAKE_CURRENT_SOURCE_DIR}/${base})
+  set(outfile ${CMAKE_CURRENT_BINARY_DIR}/${base}_c_binding.f90)
+
+  if( _PAR_OUTPUT )
+    set(outfile ${_PAR_OUTPUT})
+  endif()
+  set(${output} ${${output}} ${outfile} PARENT_SCOPE)
+
+  if( _PAR_MODULE )
+    add_custom_command(
+        OUTPUT ${outfile}
+        COMMAND ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/c2f.py ${CMAKE_CURRENT_SOURCE_DIR}/${filename} -o ${outfile} -m ${_PAR_MODULE}
+        DEPENDS ${filename} )
+  else()
     add_custom_command(
         OUTPUT ${outfile}
         COMMAND ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/c2f.py ${CMAKE_CURRENT_SOURCE_DIR}/${filename} -o ${outfile}
         DEPENDS ${filename} )
-    set_source_files_properties(${outfile} PROPERTIES GENERATED TRUE)
+  endif()
+  set_source_files_properties(${outfile} PROPERTIES GENERATED TRUE)
 endfunction()
-
-function(generate_fortran_bindings_custom_output output filename outfile)
-    get_filename_component(base ${filename} NAME_WE)
-    set(base_abs ${CMAKE_CURRENT_SOURCE_DIR}/${base})
-    set(outfile ${CMAKE_CURRENT_BINARY_DIR}/${outfile})
-    set(${output} ${${output}} ${outfile} PARENT_SCOPE)
-    add_custom_command(
-        OUTPUT ${outfile}
-        COMMAND ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/c2f.py ${CMAKE_CURRENT_SOURCE_DIR}/${filename} -o ${outfile}
-        DEPENDS ${filename} )
-    set_source_files_properties(${outfile} PROPERTIES GENERATED TRUE)
-endfunction()
-
 
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grids/grids.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/grids/ReducedGrid.h)
@@ -74,8 +103,8 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/runtime/ErrorHandling.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/atlas.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mpi/mpi.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/trans/Trans.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/Spectral.h)
-generate_fortran_bindings_custom_output(FORTRAN_BINDINGS ../atlas/functionspace/NodesInterface.h NodesFunctionSpace_c_binding.f90)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/Spectral.h MODULE atlas_functionspace_Spectral_c_binding OUTPUT functionspace_Spectral_c_binding.f90 )
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/NodesInterface.h MODULE atlas_functionspace_Nodes_c_binding OUTPUT functionspace_Nodes_c_binding.f90)
 generate_fortran_bindings(FORTRAN_BINDINGS atlas_logging.h)
 generate_fortran_bindings(FORTRAN_BINDINGS atlas_resource.h)
 generate_fortran_bindings(FORTRAN_BINDINGS atlas_value.h)
@@ -117,6 +146,10 @@ add_custom_target( atlas_fortran_inc SOURCES
    atlas_module_FieldSet_c.f
    atlas_module_FunctionSpace_i.f
    atlas_module_FunctionSpace_c.f
+   atlas_module_functionspace_Nodes_i.f
+   atlas_module_functionspace_Nodes_c.f
+   atlas_module_functionspace_Spectral_i.f
+   atlas_module_functionspace_Spectral_c.f
    atlas_module_GatherScatter_i.f
    atlas_module_GatherScatter_c.f
    atlas_module_Grid_i.f
@@ -135,12 +168,8 @@ add_custom_target( atlas_fortran_inc SOURCES
    atlas_module_Metadata_c.f
    atlas_module_Nodes_i.f
    atlas_module_Nodes_c.f
-   atlas_module_NodesFunctionSpace_i.f
-   atlas_module_NodesFunctionSpace_c.f
    atlas_module_PathName_i.f
    atlas_module_PathName_c.f
-   atlas_module_SpectralFunctionSpace_i.f
-   atlas_module_SpectralFunctionSpace_c.f
    atlas_module_State_i.f
    atlas_module_State_c.f
    atlas_module_Trans_i.f

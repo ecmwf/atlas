@@ -17,7 +17,7 @@ end subroutine
 #endif
 
 function atlas_functionspace_Spectral__truncation(truncation) result(functionspace)
-  use atlas_spectral_c_binding
+  use atlas_functionspace_spectral_c_binding
   type(atlas_functionspace_Spectral) :: functionspace
   integer(c_int), intent(in) :: truncation
   functionspace = atlas_functionspace_Spectral__cptr( &
@@ -26,7 +26,7 @@ function atlas_functionspace_Spectral__truncation(truncation) result(functionspa
 end function
 
 function atlas_functionspace_Spectral__trans(trans) result(functionspace)
-  use atlas_spectral_c_binding
+  use atlas_functionspace_spectral_c_binding
   type(atlas_functionspace_Spectral) :: functionspace
   type(atlas_Trans), intent(in) :: trans
   functionspace = atlas_functionspace_Spectral__cptr( &
@@ -35,7 +35,7 @@ function atlas_functionspace_Spectral__trans(trans) result(functionspace)
 end function
 
 function SpectralFunctionSpace__create_field_name(this,name) result(field)
-  use atlas_spectral_c_binding
+  use atlas_functionspace_spectral_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_Spectral) :: this
   character(len=*), intent(in) :: name
@@ -44,7 +44,7 @@ function SpectralFunctionSpace__create_field_name(this,name) result(field)
 end function
 
 function SpectralFunctionSpace__create_field_name_lev(this,name,levels) result(field)
-  use atlas_spectral_c_binding
+  use atlas_functionspace_spectral_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_Spectral), intent(in) :: this
   character(len=*), intent(in) :: name
@@ -54,7 +54,7 @@ function SpectralFunctionSpace__create_field_name_lev(this,name,levels) result(f
 end function
 
 function SpectralFunctionSpace__create_glb_field_name(this,name) result(field)
-  use atlas_spectral_c_binding
+  use atlas_functionspace_spectral_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_Spectral) :: this
   character(len=*), intent(in) :: name
@@ -63,7 +63,7 @@ function SpectralFunctionSpace__create_glb_field_name(this,name) result(field)
 end function
 
 function SpectralFunctionSpace__create_glb_field_name_lev(this,name,levels) result(field)
-  use atlas_spectral_c_binding
+  use atlas_functionspace_spectral_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_Spectral), intent(in) :: this
   character(len=*), intent(in) :: name
