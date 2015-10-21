@@ -98,12 +98,10 @@ call nabla%gradient(varfield,gradfield)
 ! get is_ghost
 nodes = mesh%nodes()
 ghostfield = nodes%ghost()
-call ghost%data(is_ghost)
-
-write(0,*) is_ghost
+call ghostfield%data(is_ghost)
 
 ! Cleanup
-call ghost%final()
+call ghostfield%final()
 call varfield%final()
 call gradfield%final()
 call nabla%final()
