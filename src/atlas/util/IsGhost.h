@@ -30,6 +30,7 @@ public:
 //    ridx_   = IndexView<int,1> (nodes.remote_index() );
 //    mypart_ = eckit::mpi::rank();
   flags_ = ArrayView<int,1> (nodes.field("flags"));
+  ghost_ = ArrayView<int,1> (nodes.ghost());
   }
 
   bool operator()(size_t idx) const
@@ -38,12 +39,14 @@ public:
 //    if( ridx_[idx] != idx     ) return true;
 //    return false;
     return Topology::check(flags_(idx),Topology::GHOST);
+//    return ghost_(idx);
   }
 private:
 //  int mypart_;
 //  ArrayView<int,1> part_;
 //  IndexView<int,1> ridx_;
   ArrayView<int,1> flags_;
+  ArrayView<int,1> ghost_;
 };
 
 } // namespace util

@@ -56,6 +56,7 @@ void build_periodic_boundaries( Mesh& mesh )
     ArrayView<int,1> flags( nodes.field("flags") );
     IndexView<int,1> ridx ( nodes.remote_index() );
     ArrayView<int,1> part ( nodes.partition() );
+    ArrayView<int,1> ghost ( nodes.ghost() );
 
     int nb_nodes = nodes.size();
 
@@ -86,6 +87,7 @@ void build_periodic_boundaries( Mesh& mesh )
       {
         Topology::set(flags(jnode),Topology::PERIODIC);
         Topology::set(flags(jnode),Topology::GHOST);
+        ghost(jnode) = 1;
         LonLatMicroDeg ll(lonlat[jnode]);
         slave_lookup[ ll.unique() ] = jnode;
         slave_nodes.push_back( ll.lon() );

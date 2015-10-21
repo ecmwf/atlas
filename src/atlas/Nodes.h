@@ -62,6 +62,9 @@ public: // methods
   const Field& lonlat() const { return *lonlat_; }
         Field& lonlat()       { return *lonlat_; }
 
+  const Field& ghost() const { return *ghost_; }
+        Field& ghost()       { return *ghost_; }
+
   size_t size() const { return size_; }
 
 // -- Modifiers
@@ -96,6 +99,7 @@ private:
   Field* remote_index_;
   Field* partition_;
   Field* lonlat_;
+  Field* ghost_;
 
 };
 

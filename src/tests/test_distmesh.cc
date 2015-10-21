@@ -116,6 +116,34 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
   Mesh& mesh1 = Mesh::from_id(meshid);
   BOOST_CHECK(mesh1.grid().same(grid));
 
+
+
+  const ArrayView<int,1> part( m->nodes().partition() );
+  const ArrayView<int,1> ghost( m->nodes().ghost() );
+  const ArrayView<int,1> flags( m->nodes().field("flags") );
+
+  eckit::Log::info() << "partition = [ ";
+  for( size_t jnode=0; jnode<part.size(); ++jnode )
+  {
+    eckit::Log::info() << part(jnode) << " ";
+  }
+  eckit::Log::info() << "]" << std::endl;
+
+  eckit::Log::info() << "ghost     = [ ";
+  for( size_t jnode=0; jnode<part.size(); ++jnode )
+  {
+    eckit::Log::info() << ghost(jnode) << " ";
+  }
+  eckit::Log::info() << "]" << std::endl;
+
+  eckit::Log::info() << "flags     = [ ";
+  for( size_t jnode=0; jnode<part.size(); ++jnode )
+  {
+    eckit::Log::info() << util::Topology::check(flags(jnode),util::Topology::GHOST) << " ";
+    BOOST_CHECK_EQUAL( util::Topology::check(flags(jnode),util::Topology::GHOST), ghost(jnode) );
+  }
+  eckit::Log::info() << "]" << std::endl;
+
 }
 
 } // namespace test

@@ -807,13 +807,13 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
   }
 
 
-  ArrayShape shape = make_shape(nnodes,FunctionSpace::UNDEF_VARS);
 
   Nodes& nodes = mesh.createNodes(nnodes);
 
   ArrayView<double,2> lonlat        ( nodes.lonlat() );
   ArrayView<gidx_t,1> glb_idx       ( nodes.global_index() );
   ArrayView<int,   1> part          ( nodes.partition() );
+  ArrayView<int,   1> ghost         ( nodes.ghost() );
   ArrayView<int,   1> flags         ( nodes.field("flags") );
 
   bool stagger = options.get<bool>("stagger");
@@ -837,6 +837,7 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
       lonlat(jnode,LAT) = y;
       glb_idx(jnode)   = n+1;
       part(jnode) = parts[n];
+      ghost(jnode) = 0;
       Topology::reset(flags(jnode));
       if( jlat == 0 && !include_north_pole)
         Topology::set(flags(jnode),Topology::BC|Topology::NORTH);
@@ -844,8 +845,10 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
         Topology::set(flags(jnode),Topology::BC|Topology::SOUTH);
       if( jlon == 0 && !three_dimensional)
         Topology::set(flags(jnode),Topology::BC|Topology::WEST);
-      if( part(jnode) != mypart )
+      if( part(jnode) != mypart ) {
         Topology::set(flags(jnode),Topology::GHOST);
+        ghost(jnode) = 1;
+      }
 
       //Log::info() << "meshgen " << std::setw(2) << glb_idx(jnode) << " ghost = " << Topology::check(flags(jnode),Topology::GHOST) << std::endl;
       ++jnode;
@@ -860,6 +863,7 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
       lonlat(jnode,LAT) = y;
       glb_idx(jnode)   = periodic_glb[jlat]+1;
       part(jnode)      = part(jnode-1);
+      ghost(jnode)     = 1;
       Topology::reset(flags(jnode));
       Topology::set(flags(jnode),Topology::BC|Topology::EAST);
       Topology::set(flags(jnode),Topology::GHOST);
@@ -877,6 +881,7 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
     lonlat(jnode,LAT) = y;
     glb_idx(jnode)   = periodic_glb[rg.nlat()-1]+2;
     part(jnode)      = mypart;
+    ghost(jnode)     = 0;
     Topology::reset(flags(jnode));
     Topology::set(flags(jnode),Topology::NORTH);
     ++jnode;
@@ -892,21 +897,19 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
     lonlat(jnode,LAT) = y;
     glb_idx(jnode)   = periodic_glb[rg.nlat()-1]+3;
     part(jnode)      = mypart;
+    ghost(jnode)     = 0;
     Topology::reset(flags(jnode));
     Topology::set(flags(jnode),Topology::SOUTH);
     ++jnode;
   }
 
-  shape = make_shape(nquads,FunctionSpace::UNDEF_VARS);
-
-  FunctionSpace& quads = mesh.create_function_space( "quads","LagrangeP1",shape );
+  FunctionSpace& quads = mesh.create_function_space( "quads","LagrangeP1", make_shape(nquads,FunctionSpace::UNDEF_VARS) );
   quads.metadata().set<long>("type",static_cast<int>(Entity::ELEMS));
   IndexView<int,2> quad_nodes( quads.create_field<int>("nodes",4) );
   ArrayView<gidx_t,1> quad_glb_idx( quads.create_field<gidx_t>("glb_idx",1) );
   ArrayView<int,1> quad_part( quads.create_field<int>("partition",1) );
 
-  shape = make_shape(ntriags,FunctionSpace::UNDEF_VARS);
-  FunctionSpace& triags = mesh.create_function_space( "triags","LagrangeP1",shape );
+  FunctionSpace& triags = mesh.create_function_space( "triags","LagrangeP1", make_shape(ntriags,FunctionSpace::UNDEF_VARS) );
   triags.metadata().set<long>("type",static_cast<int>(Entity::ELEMS));
   IndexView<int,2> triag_nodes( triags.create_field<int>("nodes",3) );
   ArrayView<gidx_t,1> triag_glb_idx( triags.create_field<gidx_t>("glb_idx",1) );

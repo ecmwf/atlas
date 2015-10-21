@@ -96,6 +96,14 @@ function Nodes__lonlat(this) result(field)
   call field%return()
 end function
 
+function Nodes__ghost(this) result(field)
+  use atlas_nodes_c_binding
+  type(atlas_Field) :: field
+  class(atlas_Nodes), intent(in) :: this
+  field = atlas_Field( atlas__Nodes__field_by_name(this%c_ptr(),c_str("ghost")) )
+  call field%return()
+end function
+
 function Nodes__global_index(this) result(field)
   use atlas_nodes_c_binding
   type(atlas_Field) :: field

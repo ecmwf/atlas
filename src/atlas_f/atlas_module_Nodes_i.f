@@ -21,6 +21,7 @@ procedure, public :: lonlat => Nodes__lonlat
 procedure, public :: global_index => Nodes__global_index
 procedure, public :: remote_index => Nodes__remote_index
 procedure, public :: partition => Nodes__partition
+procedure, public :: ghost => Nodes__ghost
 
 procedure, public :: delete => atlas_Nodes__delete
 

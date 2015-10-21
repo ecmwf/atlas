@@ -22,6 +22,7 @@
 #include "atlas/actions/BuildDualMesh.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
+#include "atlas/util/Bitflags.h"
 #include "atlas/atlas_omp.h"
 #include "atlas/Parameters.h"
 
@@ -46,6 +47,12 @@ EdgeBasedFiniteVolume::EdgeBasedFiniteVolume(Mesh &_mesh, const Halo &_halo )
     build_node_to_edge_connectivity(mesh());
 
     const size_t nnodes = nodes().size();
+
+    // TODO: Fix by construction, instead of patch up here:
+    const ArrayView<int,1> flags( nodes().field("flags") );
+    ArrayView<int,1> ghost( nodes().ghost() );
+    for( size_t jnode=0; jnode<nnodes; ++jnode )
+      ghost(jnode) = util::Topology::check(flags(jnode),util::Topology::GHOST);
 
     // Compute sign
     {

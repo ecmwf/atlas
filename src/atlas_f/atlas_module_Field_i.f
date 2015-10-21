@@ -30,6 +30,9 @@ contains
   procedure :: bytes => Field__bytes
   procedure :: levels => Field__levels
   procedure :: kind => Field__kind
+  procedure, private :: access_data1_logical32 => Field__access_data1_logical32
+  procedure, private :: access_data2_logical32 => Field__access_data2_logical32
+  procedure, private :: access_data3_logical32 => Field__access_data3_logical32
   procedure, private :: access_data1_int32 => Field__access_data1_int32
   procedure, private :: access_data2_int32 => Field__access_data2_int32
   procedure, private :: access_data3_int32 => Field__access_data3_int32
@@ -54,10 +57,10 @@ contains
     & access_data3_int32, access_data3_int64, access_data3_real32, access_data3_real64, access_data3_real64_bounds, &
     &                                         access_data4_real32, access_data4_real64, access_data4_real64_bounds
   generic :: data => &
-    & access_data1_int32, access_data1_int64, access_data1_real32, access_data1_real64, &
-    & access_data2_int32, access_data2_int64, access_data2_real32, access_data2_real64, access_data2_real64_bounds, &
-    & access_data3_int32, access_data3_int64, access_data3_real32, access_data3_real64, access_data3_real64_bounds, &
-    &                                         access_data4_real32, access_data4_real64, access_data4_real64_bounds
+    & access_data1_logical32, access_data1_int32, access_data1_int64, access_data1_real32, access_data1_real64, &
+    & access_data2_logical32, access_data2_int32, access_data2_int64, access_data2_real32, access_data2_real64, access_data2_real64_bounds, &
+    & access_data3_logical32, access_data3_int32, access_data3_int64, access_data3_real32, access_data3_real64, access_data3_real64_bounds, &
+    &                                                                 access_data4_real32, access_data4_real64, access_data4_real64_bounds
   procedure, public :: delete => atlas_Field__delete
 #ifdef FORTRAN_SUPPORTS_FINAL
   final :: atlas_Field__final

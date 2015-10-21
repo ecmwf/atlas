@@ -60,14 +60,17 @@ END_TEST
 TEST( test_nabla )
 type(atlas_ReducedGrid) :: grid
 type(atlas_Mesh) :: mesh
+type(atlas_Nodes) :: nodes
 type(atlas_MeshGenerator) :: meshgenerator
 type(atlas_functionspace_EdgeBasedFiniteVolume) :: fvm
 type(atlas_Nabla) :: nabla
+type(atlas_Field) :: ghostfield
 type(atlas_Field) :: varfield
 type(atlas_Field) :: gradfield
 
 real(c_double), pointer :: var(:,:)
 real(c_double), pointer :: grad(:,:,:)
+logical, pointer :: is_ghost(:)
 
 integer, parameter :: nlev = 137
 
@@ -87,15 +90,25 @@ call varfield%data(var)
 call gradfield%data(grad)
 var(:,:) = 0.
 
+call fvm%halo_exchange(varfield)
+
 ! Compute the gradient
 call nabla%gradient(varfield,gradfield)
 
+! get is_ghost
+nodes = mesh%nodes()
+ghostfield = nodes%ghost()
+call ghost%data(is_ghost)
+
+write(0,*) is_ghost
 
 ! Cleanup
+call ghost%final()
 call varfield%final()
 call gradfield%final()
 call nabla%final()
 call fvm%final()
+call nodes%final()
 call mesh%final()
 call grid%final()
 call meshgenerator%final()

@@ -25,6 +25,7 @@
 #include "atlas/meshgen/ReducedGridMeshGenerator.h"
 #include "atlas/meshgen/EqualRegionsPartitioner.h"
 #include "atlas/io/Gmsh.h"
+#include "atlas/Config.h"
 #include "atlas/Mesh.h"
 #include "atlas/Nodes.h"
 #include "atlas/FunctionSpace.h"
@@ -37,7 +38,9 @@
 #include "atlas/Parameters.h"
 #include "atlas/Config.h"
 #include "atlas/grids/rgg/rgg.h"
+#include "atlas/util/Bitflags.h"
 
+using namespace eckit;
 using namespace atlas;
 using namespace atlas::io;
 using namespace atlas::meshgen;
@@ -460,6 +463,43 @@ BOOST_AUTO_TEST_CASE( test_reduced_lonlat )
   if(three_dimensional)
     gmsh.options.set("nodes",std::string("xyz"));
   gmsh.write(*m,"rll.msh");
+
+}
+
+BOOST_AUTO_TEST_CASE( test_meshgen_ghost_at_end )
+{
+  SharedPtr<Grid> grid ( Grid::create("oct.N8") );
+
+  atlas::Config cfg;
+  cfg.set("part",1);
+  cfg.set("nb_parts",8);
+  SharedPtr<MeshGenerator> meshgenerator( new ReducedGridMeshGenerator(cfg) );
+  SharedPtr<Mesh> mesh ( meshgenerator->generate(*grid) );
+  const ArrayView<int,1> part( mesh->nodes().partition() );
+  const ArrayView<int,1> ghost( mesh->nodes().ghost() );
+  const ArrayView<int,1> flags( mesh->nodes().field("flags") );
+
+  eckit::Log::info() << "partition = [ ";
+  for( size_t jnode=0; jnode<part.size(); ++jnode )
+  {
+    eckit::Log::info() << part(jnode) << " ";
+  }
+  eckit::Log::info() << "]" << std::endl;
+
+  eckit::Log::info() << "ghost     = [ ";
+  for( size_t jnode=0; jnode<part.size(); ++jnode )
+  {
+    eckit::Log::info() << ghost(jnode) << " ";
+  }
+  eckit::Log::info() << "]" << std::endl;
+
+  eckit::Log::info() << "flags     = [ ";
+  for( size_t jnode=0; jnode<part.size(); ++jnode )
+  {
+    eckit::Log::info() << util::Topology::check(flags(jnode),util::Topology::GHOST) << " ";
+    BOOST_CHECK_EQUAL( util::Topology::check(flags(jnode),util::Topology::GHOST), ghost(jnode) );
+  }
+  eckit::Log::info() << "]" << std::endl;
 
 }
 

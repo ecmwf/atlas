@@ -23,6 +23,7 @@ Nodes::Nodes(size_t _size): size_(_size)
   remote_index_ = &add( Field::create<int   >("remote_idx",make_shape(size(),1)) );
   partition_    = &add( Field::create<int   >("partition", make_shape(size(),1)) );
   lonlat_       = &add( Field::create<double>("lonlat",    make_shape(size(),2)) );
+  ghost_        = &add( Field::create<int   >("ghost",     make_shape(size(),1)) );
 
   add( Field::create<int>("flags", make_shape(size(),1)) );
 

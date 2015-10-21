@@ -155,6 +155,48 @@ function Field__shape_idx(this,idx) result(shape_val)
   shape_val = shape(idx)
 end function Field__shape_idx
 
+subroutine Field__access_data1_logical32(this, field)
+  class(atlas_Field), intent(in) :: this
+  logical, pointer, intent(out) :: field(:)
+  integer, pointer :: field_bounds(:)
+  type(c_ptr) :: field_c_ptr
+  type(c_ptr) :: field_bounds_c_ptr
+  integer(c_int) :: field_rank
+  integer :: field_size, jbound
+  call atlas__Field__data_shapef_int(this%c_ptr(), field_c_ptr, field_bounds_c_ptr, field_rank)
+  call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
+  field_size = 1
+  do jbound=1,field_rank
+    field_size = field_size * field_bounds(jbound)
+  end do
+  call C_F_POINTER ( field_c_ptr , field , (/field_size/) )
+end subroutine Field__access_data1_logical32
+
+subroutine Field__access_data2_logical32(this, field)
+  class(atlas_Field), intent(in) :: this
+  logical, pointer, intent(out) :: field(:,:)
+  integer, pointer :: field_bounds(:)
+  type(c_ptr) :: field_c_ptr
+  type(c_ptr) :: field_bounds_c_ptr
+  integer(c_int) :: field_rank
+  call atlas__Field__data_shapef_int(this%c_ptr(), field_c_ptr, field_bounds_c_ptr, field_rank)
+  call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
+  call C_F_POINTER ( field_c_ptr , field , field_bounds(field_rank-1:field_rank) )
+end subroutine Field__access_data2_logical32
+
+subroutine Field__access_data3_logical32(this, field)
+  class(atlas_Field), intent(in) :: this
+  logical, pointer, intent(out) :: field(:,:,:)
+  integer, pointer :: field_bounds(:)
+  type(c_ptr) :: field_c_ptr
+  type(c_ptr) :: field_bounds_c_ptr
+  integer(c_int) :: field_rank
+  call atlas__Field__data_shapef_int(this%c_ptr(), field_c_ptr, field_bounds_c_ptr, field_rank)
+  call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
+  call C_F_POINTER ( field_c_ptr , field , field_bounds(field_rank-2:field_rank) )
+end subroutine Field__access_data3_logical32
+
+!--
 subroutine Field__access_data1_int32(this, field)
   class(atlas_Field), intent(in) :: this
   integer, pointer, intent(out) :: field(:)
