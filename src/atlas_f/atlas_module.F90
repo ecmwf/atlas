@@ -312,6 +312,11 @@ integer function atlas_integer(kind)
   end if
 end function
 
+integer function atlas_logical(kind)
+  integer, optional :: kind
+  atlas_logical = ATLAS_KIND_INT32
+end function
+
 function atlas_data_type(kind)
   character(len=6) :: atlas_data_type
   integer, intent(in) :: kind
