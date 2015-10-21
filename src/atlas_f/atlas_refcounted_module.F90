@@ -20,12 +20,20 @@ contains
   procedure, public :: final => RefCounted__final
   procedure, private :: reset => RefCounted__reset
   generic, public :: assignment(=) => reset
-  procedure(RefCounted__final), deferred, public :: delete
+  procedure(atlas_RefCounted__delete), deferred, public :: delete
   procedure, public :: owners => RefCounted__owners
   procedure, public :: attach => RefCounted__attach
   procedure, public :: detach => RefCounted__detach
   procedure, public :: return => atlas_RefCounted__return
 endtype
+
+interface
+  subroutine atlas_RefCounted__delete(this)
+     import atlas_RefCounted
+     class(atlas_RefCounted), intent(inout):: this
+  end subroutine
+end interface
+
 
 !========================================================================
 
@@ -35,12 +43,19 @@ contains
   procedure, public :: final => RefCounted_Fortran__final
   procedure, private :: reset => RefCounted_Fortran__reset
   generic, public :: assignment(=) => reset
-  procedure(RefCounted_Fortran__final), deferred, public :: delete
+  procedure(atlas_RefCounted_Fortran__delete), deferred, public :: delete
   procedure, public :: owners => RefCounted_Fortran__owners
   procedure, public :: attach => RefCounted_Fortran__attach
   procedure, public :: detach => RefCounted_Fortran__detach
   procedure, public :: return => atlas_RefCounted_Fortran__return
 endtype
+
+interface
+  subroutine atlas_RefCounted_Fortran__delete(this)
+     import atlas_RefCounted_Fortran
+     class(atlas_RefCounted_Fortran), intent(inout):: this
+  end subroutine
+end interface
 
 !========================================================================
 
