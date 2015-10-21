@@ -933,6 +933,7 @@ public:
   ArrayView<int   ,1> part;
   IndexView<int   ,1> ridx;
   ArrayView<int   ,1> flags;
+  ArrayView<int   ,1> ghost;
   std::vector< IndexView<int,   2> > elem_nodes;
   std::vector< ArrayView<int,   1> > elem_part;
   std::vector< ArrayView<gidx_t,1> > elem_glb_idx;
@@ -958,6 +959,7 @@ public:
     part     = ArrayView<int   ,1> ( nodes.partition() );
     ridx     = IndexView<int   ,1> ( nodes.remote_index() );
     flags    = ArrayView<int   ,1> ( nodes.field("flags") );
+    ghost    = ArrayView<int   ,1> ( nodes.ghost() );
 
     elem_nodes.  resize( mesh.nb_function_spaces() );
     elem_part.   resize( mesh.nb_function_spaces() );
@@ -1149,6 +1151,7 @@ public:
     part    = ArrayView<int,   1>( nodes.partition() );
     ridx    = IndexView<int,   1>( nodes.remote_index() );
     lonlat  = ArrayView<double,2>( nodes.lonlat() );
+    ghost   = ArrayView<int,   1>( nodes.ghost() );
 
     compute_uid.update();
 
@@ -1161,6 +1164,7 @@ public:
       {
         int loc_idx = nb_nodes+new_node;
         Topology::reset(flags(loc_idx),buf.node_flags[jpart][rfn_idx[jpart][n]]);
+        ghost  (loc_idx)    = Topology::check(flags(loc_idx),Topology::GHOST);
         glb_idx(loc_idx)    = buf.node_glb_idx [jpart][rfn_idx[jpart][n]];
         part   (loc_idx)    = buf.node_part    [jpart][rfn_idx[jpart][n]];
         ridx   (loc_idx)    = buf.node_ridx    [jpart][rfn_idx[jpart][n]];

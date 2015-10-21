@@ -48,12 +48,6 @@ EdgeBasedFiniteVolume::EdgeBasedFiniteVolume(Mesh &_mesh, const Halo &_halo )
 
     const size_t nnodes = nodes().size();
 
-    // TODO: Fix by construction, instead of patch up here:
-    const ArrayView<int,1> flags( nodes().field("flags") );
-    ArrayView<int,1> ghost( nodes().ghost() );
-    for( size_t jnode=0; jnode<nnodes; ++jnode )
-      ghost(jnode) = util::Topology::check(flags(jnode),util::Topology::GHOST);
-
     // Compute sign
     {
       const IndexView<int,2> node2edge      ( nodes().field("to_edge") );
