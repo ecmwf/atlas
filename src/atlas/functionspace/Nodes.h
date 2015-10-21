@@ -41,7 +41,9 @@ class Nodes : public next::FunctionSpace
 {
 public:
 
-    Nodes( Mesh& mesh, const Halo& = Halo(0) );
+    Nodes( Mesh& mesh, const Halo &, const eckit::Parametrisation & );
+    Nodes( Mesh& mesh, const Halo & );
+    Nodes( Mesh& mesh );
 
     virtual ~Nodes();
 
@@ -261,6 +263,7 @@ private: // methods
     std::string halo_name() const;
     std::string gather_scatter_name() const;
     std::string checksum_name() const;
+    void constructor();
 
 private: // data
 

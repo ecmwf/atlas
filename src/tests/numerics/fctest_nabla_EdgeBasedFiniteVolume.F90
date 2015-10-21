@@ -74,11 +74,16 @@ logical, pointer :: is_ghost(:)
 
 integer, parameter :: nlev = 137
 
+type(atlas_Config) :: config
+
+config = atlas_Config()
+call config%set("radius",1.0)
+
 ! Setup
 grid = atlas_ReducedGrid("rgg.N24")
 meshgenerator = atlas_ReducedGridMeshGenerator()
 mesh = meshgenerator%generate(grid) ! second optional argument for atlas_GridDistrubution
-fvm  = atlas_functionspace_EdgeBasedFiniteVolume(mesh)
+fvm  = atlas_functionspace_EdgeBasedFiniteVolume(mesh,config)
 nabla = atlas_Nabla(fvm)
 
 ! Create a variable field and a gradient field
@@ -101,6 +106,7 @@ ghostfield = nodes%ghost()
 call ghostfield%data(is_ghost)
 
 ! Cleanup
+call config%final()
 call ghostfield%final()
 call varfield%final()
 call gradfield%final()

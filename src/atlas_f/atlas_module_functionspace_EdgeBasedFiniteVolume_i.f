@@ -24,7 +24,7 @@ END TYPE atlas_functionspace_EdgeBasedFiniteVolume
 
 interface atlas_functionspace_EdgeBasedFiniteVolume
   module procedure atlas_functionspace_EdgeBasedFiniteVolume__cptr
-  module procedure atlas_functionspace_EdgeBasedFiniteVolume__mesh_halo
+  module procedure atlas_functionspace_EdgeBasedFiniteVolume__mesh_config
 end interface
 
 !------------------------------------------------------------------------------

@@ -33,8 +33,36 @@ using namespace atlas::actions;
 namespace atlas {
 namespace functionspace {
 
-EdgeBasedFiniteVolume::EdgeBasedFiniteVolume(Mesh &_mesh, const Halo &_halo )
- : Nodes(_mesh,_halo)
+namespace {
+  Halo EdgeBasedFiniteVolume_halo(const eckit::Parametrisation &params)
+  {
+    size_t halo_size(1);
+    params.get("halo",halo_size);
+    return Halo(halo_size);
+  }
+}
+
+EdgeBasedFiniteVolume::EdgeBasedFiniteVolume( Mesh &mesh )
+ : Nodes(mesh,Halo(1))
+{
+  setup(Earth::radiusInMeters());
+}
+
+EdgeBasedFiniteVolume::EdgeBasedFiniteVolume( Mesh &mesh, const Halo &halo )
+ : Nodes(mesh,halo)
+{
+  setup(Earth::radiusInMeters());
+}
+
+EdgeBasedFiniteVolume::EdgeBasedFiniteVolume( Mesh &mesh, const eckit::Parametrisation &params )
+  : Nodes(mesh,EdgeBasedFiniteVolume_halo(params),params)
+{
+  double radius = Earth::radiusInMeters();
+  params.get("radius",radius);
+  setup(radius);
+}
+
+void EdgeBasedFiniteVolume::setup(const double &radius)
 {
   if(mesh().has_function_space("edges")) {
     edges_ = &mesh().function_space("edges");
@@ -78,7 +106,6 @@ EdgeBasedFiniteVolume::EdgeBasedFiniteVolume(Mesh &_mesh, const Halo &_halo )
       ArrayView<double,1> V ( nodes().field("dual_volumes") );
       ArrayView<double,2> S ( edges_->field("dual_normals") );
 
-      const double radius = Earth::radiusInMeters();
       const double deg2rad = M_PI/180.;
       atlas_omp_parallel_for( size_t jnode=0; jnode<nnodes; ++jnode )
       {
@@ -100,12 +127,12 @@ EdgeBasedFiniteVolume::EdgeBasedFiniteVolume(Mesh &_mesh, const Halo &_halo )
 // ------------------------------------------------------------------------------------------
 extern "C" {
 
-EdgeBasedFiniteVolume* atlas__functionspace__EdgeBasedFiniteVolume__new (Mesh* mesh, int halo)
+EdgeBasedFiniteVolume* atlas__functionspace__EdgeBasedFiniteVolume__new (Mesh* mesh, const eckit::Parametrisation* params)
 {
   EdgeBasedFiniteVolume* functionspace(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(mesh);
-    functionspace = new EdgeBasedFiniteVolume(*mesh,Halo(halo));
+    functionspace = new EdgeBasedFiniteVolume(*mesh,*params);
   );
   return functionspace;
 }

@@ -25,12 +25,18 @@ class EdgeBasedFiniteVolume : public Nodes {
 
 public:
 
-  EdgeBasedFiniteVolume(Mesh &, const Halo & = Halo(1) );
+  EdgeBasedFiniteVolume(Mesh &, const eckit::Parametrisation &);
+  EdgeBasedFiniteVolume(Mesh &, const Halo &);
+  EdgeBasedFiniteVolume(Mesh &);
 
   virtual std::string name() const { return "EdgeBasedFiniteVolume"; }
 
   const Nodes& nodes_fs() const { return *this; }
         Nodes& nodes_fs()       { return *this; }
+
+private:
+
+  void setup( const double &radius );
 
 private: // data
 
@@ -40,10 +46,12 @@ private: // data
 
 // -------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
+#define Parametrisation eckit::Parametrisation
 extern "C"
 {
-  EdgeBasedFiniteVolume* atlas__functionspace__EdgeBasedFiniteVolume__new (Mesh* mesh, int halo);
+  EdgeBasedFiniteVolume* atlas__functionspace__EdgeBasedFiniteVolume__new (Mesh* mesh, const Parametrisation* params);
 }
+#undef Parametrisation
 
 } // namespace functionspace
 } // namespace atlas

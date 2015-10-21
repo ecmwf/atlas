@@ -76,8 +76,18 @@ ArrayView<T,1> surface_scalar_view(const Field &field)
 
 }
 
+Nodes::Nodes( Mesh& mesh )
+  : mesh_(mesh),
+    nodes_(mesh_.nodes()),
+    halo_(0),
+    nb_nodes_(0),
+    nb_nodes_global_(0),
+    nb_nodes_global_foreach_rank_()
+{
+  constructor();
+}
 
-Nodes::Nodes(Mesh& mesh, const Halo& halo)
+Nodes::Nodes( Mesh& mesh, const Halo &halo, const eckit::Parametrisation &params )
   : next::FunctionSpace(),
     mesh_(mesh),
     nodes_(mesh_.nodes()),
@@ -85,6 +95,24 @@ Nodes::Nodes(Mesh& mesh, const Halo& halo)
     nb_nodes_(0),
     nb_nodes_global_(0),
     nb_nodes_global_foreach_rank_()
+{
+  constructor();
+}
+
+Nodes::Nodes(Mesh& mesh, const Halo &halo)
+  : next::FunctionSpace(),
+    mesh_(mesh),
+    nodes_(mesh_.nodes()),
+    halo_(halo),
+    nb_nodes_(0),
+    nb_nodes_global_(0),
+    nb_nodes_global_foreach_rank_()
+{
+  constructor();
+}
+
+
+void Nodes::constructor()
 {
   actions::build_nodes_parallel_fields( mesh_.nodes() );
   actions::build_periodic_boundaries(mesh_);
@@ -103,7 +131,7 @@ Nodes::Nodes(Mesh& mesh, const Halo& halo)
 
     std::stringstream ss;
     ss << "nb_nodes_including_halo["<<halo_.size()<<"]";
-    mesh.metadata().get(ss.str(),nb_nodes_);
+    mesh_.metadata().get(ss.str(),nb_nodes_);
 
     halo_exchange->setup(part.data<int>(),ridx.data<int>(),REMOTE_IDX_BASE,nb_nodes_);
 
@@ -113,7 +141,7 @@ Nodes::Nodes(Mesh& mesh, const Halo& halo)
   if( !nb_nodes_ ) {
     std::stringstream ss;
     ss << "nb_nodes_including_halo["<<halo_.size()<<"]";
-    if( ! mesh.metadata().get(ss.str(),nb_nodes_) ) {
+    if( ! mesh_.metadata().get(ss.str(),nb_nodes_) ) {
       nb_nodes_ = mesh_.nodes().metadata().get<size_t>("nb_owned");
     }
   }
@@ -168,6 +196,7 @@ Nodes::Nodes(Mesh& mesh, const Halo& halo)
   const std::vector<int>& glb_dofs = mesh_.gather_scatter().get(gather_scatter_name()).glb_dofs();
   nb_nodes_global_foreach_rank_.assign( glb_dofs.begin(), glb_dofs.end() );
 }
+
 Nodes::~Nodes() {}
 
 size_t Nodes::nb_nodes() const
