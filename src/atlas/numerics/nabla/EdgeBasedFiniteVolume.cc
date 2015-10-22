@@ -99,7 +99,7 @@ void EdgeBasedFiniteVolume::gradient(const Field& _field, Field& _grad) const
   const ArrayView<double,2> lonlat_deg     ( nodes.lonlat() );
   const IndexView<int,   2> edge2node      ( edges.field("nodes") );
   const ArrayView<double,1> V              ( nodes.field("dual_volumes") );
-  const ArrayView<double,2> S              ( edges.field("dual_normals") );
+  ArrayView<double,2> S              ( edges.field("dual_normals") );
   const ArrayView<int,   1> edge_is_pole   ( edges.field("is_pole_edge") );
   const IndexView<int,   2> node2edge      ( nodes.field("to_edge") );
   const ArrayView<int,   1> node2edge_size ( nodes.field("to_edge_size") );
@@ -157,7 +157,7 @@ void EdgeBasedFiniteVolume::gradient(const Field& _field, Field& _grad) const
     double hx = radius*std::cos(y);
     // correct for wrong Y-derivatives in previous loop
     for(size_t jlev = 0; jlev < nlev; ++jlev)
-      grad(ip2,jlev,LAT) += 2.*avgS(iedge,jlev,LAT)/V(ip2)*hx;
+      grad(ip2,jlev,LAT) += 2.*avgS(iedge,jlev,LAT)*hx/V(ip2);
   }
 
 

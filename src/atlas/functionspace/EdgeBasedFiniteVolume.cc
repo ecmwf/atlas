@@ -118,18 +118,10 @@ void EdgeBasedFiniteVolume::setup()
         V(jnode) *= std::pow(deg2rad,2) * G;
       }
 
-      const ArrayView<int,1> edge_is_pole ( edges_->field("is_pole_edge") );
-
       atlas_omp_parallel_for( size_t jedge=0; jedge<nedges; ++jedge )
       {
         S(jedge,LON) *= deg2rad;
         S(jedge,LAT) *= deg2rad;
-
-        if( edge_is_pole(jedge) )
-        {
-          S(jedge,LON) = 0.;
-          S(jedge,LAT) = 0.;
-        }
       }
     }
   }
