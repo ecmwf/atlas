@@ -99,7 +99,7 @@ void EdgeBasedFiniteVolume::gradient(const Field& _field, Field& _grad) const
   const ArrayView<double,2> lonlat_deg     ( nodes.lonlat() );
   const IndexView<int,   2> edge2node      ( edges.field("nodes") );
   const ArrayView<double,1> V              ( nodes.field("dual_volumes") );
-  ArrayView<double,2> S              ( edges.field("dual_normals") );
+  const ArrayView<double,2> S              ( edges.field("dual_normals") );
   const ArrayView<int,   1> edge_is_pole   ( edges.field("is_pole_edge") );
   const IndexView<int,   2> node2edge      ( nodes.field("to_edge") );
   const ArrayView<int,   1> node2edge_size ( nodes.field("to_edge_size") );
@@ -147,6 +147,7 @@ void EdgeBasedFiniteVolume::gradient(const Field& _field, Field& _grad) const
       grad(jnode,jlev,LAT) *= hx/V(jnode);
     }
   }
+
   // special treatment for the north & south pole cell faces
   // Sx == 0 at pole, and Sy has same sign at both sides of pole
   for(size_t jedge = 0; jedge < pole_edges_.size(); ++jedge)
@@ -159,11 +160,6 @@ void EdgeBasedFiniteVolume::gradient(const Field& _field, Field& _grad) const
     for(size_t jlev = 0; jlev < nlev; ++jlev)
       grad(ip2,jlev,LAT) += 2.*avgS(iedge,jlev,LAT)*hx/V(ip2);
   }
-
-
-  // halo-exchange
-  fvm_->haloExchange(_grad);
-
 }
 
 
