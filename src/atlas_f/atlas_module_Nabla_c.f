@@ -31,12 +31,20 @@ subroutine atlas_Nabla__delete(this)
   call this%reset_c_ptr()
 end subroutine atlas_Nabla__delete
 
-subroutine atlas_Nabla__gradient(this,field,grad)
+subroutine atlas_Nabla__gradient(this,scalar,grad)
   use atlas_nabla_c_binding
   class(atlas_Nabla), intent(in) :: this
-  class(atlas_Field), intent(in) :: field
+  class(atlas_Field), intent(in) :: scalar
   class(atlas_Field), intent(inout) :: grad
-  call atlas__Nabla__gradient(this%c_ptr(),field%c_ptr(),grad%c_ptr())
+  call atlas__Nabla__gradient(this%c_ptr(),scalar%c_ptr(),grad%c_ptr())
+end subroutine
+
+subroutine atlas_Nabla__divergence(this,vector,div)
+  use atlas_nabla_c_binding
+  class(atlas_Nabla), intent(in) :: this
+  class(atlas_Field), intent(in) :: vector
+  class(atlas_Field), intent(inout) :: div
+  call atlas__Nabla__gradient(this%c_ptr(),vector%c_ptr(),div%c_ptr())
 end subroutine
 
 

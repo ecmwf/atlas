@@ -55,6 +55,8 @@ double dual_volume(Mesh& mesh)
 }
 
 
+/// @brief Compute magnitude of flow with rotation-angle beta
+/// (beta=0 --> zonal, beta=pi/2 --> meridional)
 void rotated_flow(const functionspace::EdgeBasedFiniteVolume& fvm, Field& field, const double& beta)
 {
   const double radius = fvm.radius();
@@ -63,7 +65,7 @@ void rotated_flow(const functionspace::EdgeBasedFiniteVolume& fvm, Field& field,
   const double deg2rad = M_PI/180.;
 
   ArrayView<double,2> lonlat_deg (fvm.nodes().lonlat());
-  ArrayView<double,1> var (field);
+  ArrayView<double,3> var (field);
 
   size_t nnodes = fvm.nodes().size();
   for( size_t jnode=0; jnode<nnodes; ++jnode )
@@ -72,7 +74,35 @@ void rotated_flow(const functionspace::EdgeBasedFiniteVolume& fvm, Field& field,
      double y = lonlat_deg(jnode,LAT) * deg2rad;
      double Ux =  pvel*(std::cos(beta)+std::tan(y)*std::cos(x)*std::sin(beta))*radius*std::cos(y);
      double Uy = -pvel*std::sin(x)*std::sin(beta)*radius;
-     var(jnode) = std::sqrt(Ux*Ux+Uy*Uy);
+     for( size_t jlev=0; jlev<field.levels(); ++jlev)
+     {
+       var(jnode,jlev,LON) = Ux;
+       var(jnode,jlev,LAT) = Uy;
+     }
+  }
+}
+
+/// @brief Compute magnitude of flow with rotation-angle beta
+/// (beta=0 --> zonal, beta=pi/2 --> meridional)
+void rotated_flow_magnitude(const functionspace::EdgeBasedFiniteVolume& fvm, Field& field, const double& beta)
+{
+  const double radius = fvm.radius();
+  const double USCAL = 20.;
+  const double pvel = USCAL/radius;
+  const double deg2rad = M_PI/180.;
+
+  ArrayView<double,2> lonlat_deg (fvm.nodes().lonlat());
+  ArrayView<double,2> var (field);
+
+  size_t nnodes = fvm.nodes().size();
+  for( size_t jnode=0; jnode<nnodes; ++jnode )
+  {
+     double x = lonlat_deg(jnode,LON) * deg2rad;
+     double y = lonlat_deg(jnode,LAT) * deg2rad;
+     double Ux =  pvel*(std::cos(beta)+std::tan(y)*std::cos(x)*std::sin(beta))*radius*std::cos(y);
+     double Uy = -pvel*std::sin(x)*std::sin(beta)*radius;
+     for( size_t jlev=0; jlev<field.levels(); ++jlev )
+       var(jnode,jlev) = std::sqrt(Ux*Ux+Uy*Uy);
   }
 }
 
@@ -108,7 +138,7 @@ BOOST_AUTO_TEST_CASE( test_build )
 BOOST_AUTO_TEST_CASE( test_grad )
 {
   const double radius = Earth::radiusInMeters();
-  SharedPtr<Grid> grid ( Grid::create("oct.N64") );
+  SharedPtr<Grid> grid ( Grid::create("gg.N24") );
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("ReducedGrid") );
   SharedPtr<Mesh> mesh( meshgenerator->generate(*grid) );
   functionspace::EdgeBasedFiniteVolume fvm(*mesh, Config("radius",radius));
@@ -119,8 +149,8 @@ BOOST_AUTO_TEST_CASE( test_grad )
   size_t nlev = 1;
 
   FieldSet fields;
-  fields.add( fvm.createField<double>("var",nlev) );
-  fields.add( fvm.createField<double>("rvar",nlev) );
+  fields.add( fvm.createField<double>("scalar",nlev) );
+  fields.add( fvm.createField<double>("rscalar",nlev) );
   fields.add( fvm.createField<double>("grad",nlev,make_shape(2)) );
   fields.add( fvm.createField<double>("rgrad",nlev,make_shape(2)) );
   fields.add( fvm.createField<double>("xder",nlev) );
@@ -131,7 +161,7 @@ BOOST_AUTO_TEST_CASE( test_grad )
   //  fields.add( fvm.createField<double>("exact_yder",nlev) );
 
 //  const double deg2rad = M_PI/180.;
-//  ArrayView<double,2> var( fields["var"] );
+//  ArrayView<double,2> var( fields["scalar"] );
 ////  ArrayView<double,2> exact_yder( fields["exact_yder"] );
 //  for( size_t jnode=0; jnode< nnodes ; ++jnode )
 //  {
@@ -143,12 +173,11 @@ BOOST_AUTO_TEST_CASE( test_grad )
 //    }
 //  }
 
-  {
-  rotated_flow(fvm,fields["var"],0.);
-  rotated_flow(fvm,fields["rvar"],M_PI_2);
+  rotated_flow_magnitude(fvm,fields["scalar"],0.);
+  rotated_flow_magnitude(fvm,fields["rscalar"],M_PI_2*0.5);
 
-  nabla->gradient(fields["var"],fields["grad"]);
-  nabla->gradient(fields["rvar"],fields["rgrad"]);
+  nabla->gradient(fields["scalar"],fields["grad"]);
+  nabla->gradient(fields["rscalar"],fields["rgrad"]);
   ArrayView<double,2> xder( fields["xder"] );
   ArrayView<double,2> yder( fields["yder"] );
   ArrayView<double,2> rxder( fields["rxder"] );
@@ -167,18 +196,50 @@ BOOST_AUTO_TEST_CASE( test_grad )
 
   // output to gmsh
   {
+    fvm.haloExchange(fields);
     io::Gmsh().write(*mesh,grid->shortName()+".msh");
-    io::Gmsh().write(fields["var"],grid->shortName()+"_fields.msh");
+    io::Gmsh().write(fields["scalar"],grid->shortName()+"_fields.msh");
     io::Gmsh().write(fields["xder"],grid->shortName()+"_fields.msh",std::ios::app);
     io::Gmsh().write(fields["yder"],grid->shortName()+"_fields.msh",std::ios::app);
-    io::Gmsh().write(fields["rvar"],grid->shortName()+"_fields.msh",std::ios::app);
+    io::Gmsh().write(fields["rscalar"],grid->shortName()+"_fields.msh",std::ios::app);
     io::Gmsh().write(fields["rxder"],grid->shortName()+"_fields.msh",std::ios::app);
     io::Gmsh().write(fields["ryder"],grid->shortName()+"_fields.msh",std::ios::app);
 
     //    io::Gmsh().write(fields["exact_yder"],grid->shortName()+"_fields.msh",std::ios::app);
   }
+}
+
+
+BOOST_AUTO_TEST_CASE( test_div )
+{
+  const double radius = Earth::radiusInMeters();
+  SharedPtr<Grid> grid ( Grid::create("gg.N24") );
+  SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("ReducedGrid") );
+  SharedPtr<Mesh> mesh( meshgenerator->generate(*grid) );
+  functionspace::EdgeBasedFiniteVolume fvm(*mesh, Config("radius",radius));
+  SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
+
+  ArrayView<double,2> lonlat( mesh->nodes().lonlat() );
+  size_t nnodes = mesh->nodes().size();
+  size_t nlev = 1;
+
+  FieldSet fields;
+  fields.add( fvm.createField<double>("wind",nlev,make_shape(2)) );
+  fields.add( fvm.createField<double>("div",nlev) );
+
+  rotated_flow(fvm,fields["wind"],M_PI_2*0.5);
+
+  nabla->divergence(fields["wind"],fields["div"]);
+
+  // output to gmsh
+  {
+    fvm.haloExchange(fields);
+    io::Gmsh().write(*mesh,grid->shortName()+".msh");
+    io::Gmsh().write(fields["wind"],grid->shortName()+"_fields.msh",std::ios::app);
+    io::Gmsh().write(fields["div"],grid->shortName()+"_fields.msh",std::ios::app);
   }
 }
+
 
 
 } // namespace test

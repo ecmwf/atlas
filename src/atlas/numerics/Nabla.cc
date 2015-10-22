@@ -162,16 +162,25 @@ Nabla* atlas__Nabla__create (const next::FunctionSpace* functionspace, const eck
   return nabla;
 }
 
-void atlas__Nabla__gradient (const Nabla* This, const Field* field, Field* grad)
+void atlas__Nabla__gradient (const Nabla* This, const Field* scalar, Field* grad)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    ASSERT(field);
+    ASSERT(scalar);
     ASSERT(grad);
-    This->gradient(*field,*grad);
+    This->gradient(*scalar,*grad);
   );
 }
 
+void atlas__Nabla__divergence (const Nabla* This, const Field* vector, Field* div)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    ASSERT(vector);
+    ASSERT(div);
+    This->divergence(*vector,*div);
+  );
+}
 
 
 }

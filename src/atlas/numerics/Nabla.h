@@ -31,7 +31,8 @@ public:
   Nabla(const next::FunctionSpace &, const eckit::Parametrisation &);
   virtual ~Nabla();
 
-  virtual void gradient(const Field &field, Field &grad) const = 0;
+  virtual void gradient(const Field &scalar, Field &grad) const = 0;
+  virtual void divergence(const Field &vector, Field &div) const = 0;
 
 private:
   const next::FunctionSpace& fs_;
@@ -89,6 +90,7 @@ extern "C" {
 void atlas__Nabla__delete (Nabla* This);
 Nabla* atlas__Nabla__create (const NextFunctionSpace* functionspace, const Parametrisation* params);
 void atlas__Nabla__gradient (const Nabla* This, const Field* field, Field* grad);
+void atlas__Nabla__divergence (const Nabla* This, const Field* field, Field* div);
 }
 #undef NextFunctionSpace
 #undef Parametrisation
