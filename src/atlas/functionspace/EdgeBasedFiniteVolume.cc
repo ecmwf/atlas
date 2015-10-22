@@ -45,24 +45,26 @@ namespace {
 EdgeBasedFiniteVolume::EdgeBasedFiniteVolume( Mesh &mesh )
  : Nodes(mesh,Halo(1))
 {
-  setup(Earth::radiusInMeters());
+  radius_ = Earth::radiusInMeters();
+  setup();
 }
 
 EdgeBasedFiniteVolume::EdgeBasedFiniteVolume( Mesh &mesh, const Halo &halo )
  : Nodes(mesh,halo)
 {
-  setup(Earth::radiusInMeters());
+  radius_ = Earth::radiusInMeters();
+  setup();
 }
 
 EdgeBasedFiniteVolume::EdgeBasedFiniteVolume( Mesh &mesh, const eckit::Parametrisation &params )
   : Nodes(mesh,EdgeBasedFiniteVolume_halo(params),params)
 {
-  double radius = Earth::radiusInMeters();
-  params.get("radius",radius);
-  setup(radius);
+  radius_ = Earth::radiusInMeters();
+  params.get("radius",radius_);
+  setup();
 }
 
-void EdgeBasedFiniteVolume::setup(const double &radius)
+void EdgeBasedFiniteVolume::setup()
 {
   if(mesh().has_function_space("edges")) {
     edges_ = &mesh().function_space("edges");
@@ -110,15 +112,24 @@ void EdgeBasedFiniteVolume::setup(const double &radius)
       atlas_omp_parallel_for( size_t jnode=0; jnode<nnodes; ++jnode )
       {
         double y  = lonlat_deg(jnode,LAT) * deg2rad;
-        double hx = radius*std::cos(y);
-        double hy = radius;
+        double hx = radius_*std::cos(y);
+        double hy = radius_;
         double G  = hx*hy;
         V(jnode) *= std::pow(deg2rad,2) * G;
       }
+
+      const ArrayView<int,1> edge_is_pole ( edges_->field("is_pole_edge") );
+
       atlas_omp_parallel_for( size_t jedge=0; jedge<nedges; ++jedge )
       {
         S(jedge,LON) *= deg2rad;
         S(jedge,LAT) *= deg2rad;
+
+        if( edge_is_pole(jedge) )
+        {
+          S(jedge,LON) = 0.;
+          S(jedge,LAT) = 0.;
+        }
       }
     }
   }

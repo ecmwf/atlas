@@ -34,13 +34,16 @@ public:
   const Nodes& nodes_fs() const { return *this; }
         Nodes& nodes_fs()       { return *this; }
 
+  const double& radius() const { return radius_; }
+
 private:
 
-  void setup( const double &radius );
+  void setup();
 
 private: // data
 
     atlas::FunctionSpace* edges_; // non-const because functionspace may modify mesh
+    double radius_;
 };
 
 

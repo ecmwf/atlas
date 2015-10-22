@@ -80,6 +80,9 @@ void EdgeBasedFiniteVolume::setup()
 
 void EdgeBasedFiniteVolume::gradient(const Field& _field, Field& _grad) const
 {
+  const double radius = fvm_->radius();
+  const double deg2rad = M_PI/180.;
+
   atlas::FunctionSpace &edges = fvm_->mesh().function_space("edges");
   atlas::Nodes const   &nodes = fvm_->nodes();
 
@@ -135,10 +138,13 @@ void EdgeBasedFiniteVolume::gradient(const Field& _field, Field& _grad) const
         grad(jnode,jlev,LAT) += add*avgS(iedge,jlev,LAT);
       }
     }
+    double y  = lonlat_deg(jnode,LAT) * deg2rad;
+    double hx = radius*std::cos(y);
+    double hy = radius;
     for(size_t jlev = 0; jlev < nlev; ++jlev)
     {
-      grad(jnode,jlev,LON) /= V(jnode);
-      grad(jnode,jlev,LAT) /= V(jnode);
+      grad(jnode,jlev,LON) *= hy/V(jnode);
+      grad(jnode,jlev,LAT) *= hx/V(jnode);
     }
   }
   // special treatment for the north & south pole cell faces
@@ -147,10 +153,13 @@ void EdgeBasedFiniteVolume::gradient(const Field& _field, Field& _grad) const
   {
     int iedge = pole_edges_[jedge];
     int ip2 = edge2node(iedge,1);
+    double y  = lonlat_deg(ip2,LAT) * deg2rad;
+    double hx = radius*std::cos(y);
     // correct for wrong Y-derivatives in previous loop
     for(size_t jlev = 0; jlev < nlev; ++jlev)
-      grad(ip2,jlev,LAT) += 2.*avgS(iedge,jlev,LAT)/V(ip2);
+      grad(ip2,jlev,LAT) += 2.*avgS(iedge,jlev,LAT)/V(ip2)*hx;
   }
+
 
   // halo-exchange
   fvm_->haloExchange(_grad);
