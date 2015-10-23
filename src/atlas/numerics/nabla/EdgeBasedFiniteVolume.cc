@@ -109,43 +109,46 @@ void EdgeBasedFiniteVolume::gradient(const Field& scalar_field, Field& grad_fiel
   ArrayT<double> avgS_arr( nedges,nlev,2 );
   ArrayView<double,3> avgS(avgS_arr);
 
-  atlas_omp_parallel_for( size_t jedge=0; jedge<nedges; ++jedge )
+  atlas_omp_parallel
   {
-    int ip1 = edge2node(jedge,0);
-    int ip2 = edge2node(jedge,1);
+    atlas_omp_for( size_t jedge=0; jedge<nedges; ++jedge )
+    {
+      int ip1 = edge2node(jedge,0);
+      int ip2 = edge2node(jedge,1);
 
-    for(size_t jlev = 0; jlev < nlev; ++jlev)
-    {
-      double avg = ( scalar(ip1,jlev) + scalar(ip2,jlev) ) * 0.5;
-      avgS(jedge,jlev,LON) = S(jedge,LON)*avg;
-      avgS(jedge,jlev,LAT) = S(jedge,LAT)*avg;
-    }
-  }
-
-  atlas_omp_parallel_for( size_t jnode=0; jnode<nnodes; ++jnode )
-  {
-    for(size_t jlev = 0; jlev < nlev; ++jlev )
-    {
-      grad(jnode,jlev,LON) = 0.;
-      grad(jnode,jlev,LAT) = 0.;
-    }
-    for( size_t jedge=0; jedge<node2edge_size(jnode); ++jedge )
-    {
-      int iedge = node2edge(jnode,jedge);
-      double add = node2edge_sign(jnode,jedge);
       for(size_t jlev = 0; jlev < nlev; ++jlev)
       {
-        grad(jnode,jlev,LON) += add*avgS(iedge,jlev,LON);
-        grad(jnode,jlev,LAT) += add*avgS(iedge,jlev,LAT);
+        double avg = ( scalar(ip1,jlev) + scalar(ip2,jlev) ) * 0.5;
+        avgS(jedge,jlev,LON) = S(jedge,LON)*avg;
+        avgS(jedge,jlev,LAT) = S(jedge,LAT)*avg;
       }
     }
-    double y  = lonlat_deg(jnode,LAT) * deg2rad;
-    double hx = radius*std::cos(y);
-    double hy = radius;
-    for(size_t jlev = 0; jlev < nlev; ++jlev)
+
+    atlas_omp_for( size_t jnode=0; jnode<nnodes; ++jnode )
     {
-      grad(jnode,jlev,LON) *= hy/V(jnode);
-      grad(jnode,jlev,LAT) *= hx/V(jnode);
+      for(size_t jlev = 0; jlev < nlev; ++jlev )
+      {
+        grad(jnode,jlev,LON) = 0.;
+        grad(jnode,jlev,LAT) = 0.;
+      }
+      for( size_t jedge=0; jedge<node2edge_size(jnode); ++jedge )
+      {
+        const int iedge = node2edge(jnode,jedge);
+        const double add = node2edge_sign(jnode,jedge);
+        for(size_t jlev = 0; jlev < nlev; ++jlev)
+        {
+          grad(jnode,jlev,LON) += add*avgS(iedge,jlev,LON);
+          grad(jnode,jlev,LAT) += add*avgS(iedge,jlev,LAT);
+        }
+      }
+      const double y  = lonlat_deg(jnode,LAT) * deg2rad;
+      const double metric_x = radius/V(jnode);
+      const double metric_y = metric_x*std::cos(y);
+      for(size_t jlev = 0; jlev < nlev; ++jlev)
+      {
+        grad(jnode,jlev,LON) *= metric_x;
+        grad(jnode,jlev,LAT) *= metric_y;
+      }
     }
   }
 
@@ -156,10 +159,10 @@ void EdgeBasedFiniteVolume::gradient(const Field& scalar_field, Field& grad_fiel
     int iedge = pole_edges_[jedge];
     int ip2 = edge2node(iedge,1);
     double y  = lonlat_deg(ip2,LAT) * deg2rad;
-    double hx = radius*std::cos(y);
+    double metric_y = radius*std::cos(y)/V(ip2);
     // correct for wrong Y-derivatives in previous loop
     for(size_t jlev = 0; jlev < nlev; ++jlev)
-      grad(ip2,jlev,LAT) += 2.*avgS(iedge,jlev,LAT)*hx/V(ip2);
+      grad(ip2,jlev,LAT) += 2.*avgS(iedge,jlev,LAT)*metric_y;
   }
 }
 
@@ -194,70 +197,54 @@ void EdgeBasedFiniteVolume::divergence(const Field& vector_field, Field& div_fie
   ArrayT<double> avgS_arr( nedges,nlev,2 );
   ArrayView<double,3> avgS(avgS_arr);
 
-  atlas_omp_parallel_for( size_t jedge=0; jedge<nedges; ++jedge )
+  atlas_omp_parallel
   {
-    int ip1 = edge2node(jedge,0);
-    int ip2 = edge2node(jedge,1);
-    double y1  = lonlat_deg(ip1,LAT) * deg2rad;
-    double y2  = lonlat_deg(ip2,LAT) * deg2rad;
-    double cosy1 = std::cos(y1);
-    double cosy2 = std::cos(y2);
-
-    for(size_t jlev = 0; jlev < nlev; ++jlev)
+    atlas_omp_for( size_t jedge=0; jedge<nedges; ++jedge )
     {
-      double avg[2] = {
-        (vector(ip1,jlev,LON) + vector(ip2,jlev,LON) ) * 0.5,
-        (cosy1*vector(ip1,jlev,LAT) + cosy2*vector(ip2,jlev,LAT) ) * 0.5
-      };
-      avgS(jedge,jlev,LON) = S(jedge,LON)*avg[LON];
-      avgS(jedge,jlev,LAT) = S(jedge,LAT)*avg[LAT];
-      // We don't need the cross terms for divergence
-    }
-  }
+      int ip1 = edge2node(jedge,0);
+      int ip2 = edge2node(jedge,1);
+      double y1  = lonlat_deg(ip1,LAT) * deg2rad;
+      double y2  = lonlat_deg(ip2,LAT) * deg2rad;
+      double cosy1 = std::cos(y1);
+      double cosy2 = std::cos(y2);
 
+      double pbc_lon = 1.-2.*edge_is_pole(jedge);
+      double pbc_lat = 1.-edge_is_pole(jedge);
 
-  ArrayT<double> dudx_arr( nedges,nlev );
-  ArrayT<double> dvdy_arr( nedges,nlev );
-  ArrayView<double,2> dudx(dudx_arr);
-  ArrayView<double,2> dvdy(dvdy_arr);
-
-//  eckit::SharedPtr<Field> dudx_field ( fvm_->createField<double>("dudx",nlev) );
-//  eckit::SharedPtr<Field> dvdy_field ( fvm_->createField<double>("dvdy",nlev) );
-//  ArrayView<double,2> dudx(*dudx_field);
-//  ArrayView<double,2> dvdy(*dvdy_field);
-
-  atlas_omp_parallel_for( size_t jnode=0; jnode<nnodes; ++jnode )
-  {
-    for(size_t jlev = 0; jlev < nlev; ++jlev )
-    {
-      dudx(jnode,jlev) = 0.;
-      dvdy(jnode,jlev) = 0.;
-    }
-    for( size_t jedge=0; jedge<node2edge_size(jnode); ++jedge )
-    {
-      int iedge = node2edge(jnode,jedge);
-      double add = node2edge_sign(jnode,jedge);
       for(size_t jlev = 0; jlev < nlev; ++jlev)
       {
-        dudx(jnode,jlev) += add*avgS(iedge,jlev,LON);
-        dvdy(jnode,jlev) += add*avgS(iedge,jlev,LAT);
+        double avg[2] = {
+          (vector(ip1,jlev,LON) + pbc_lon*vector(ip2,jlev,LON) ) * 0.5,
+          (cosy1*vector(ip1,jlev,LAT) + cosy2*vector(ip2,jlev,LAT) ) * 0.5 * pbc_lat
+        };
+        avgS(jedge,jlev,LON) = S(jedge,LON)*avg[LON];
+        avgS(jedge,jlev,LAT) = S(jedge,LAT)*avg[LAT];
+        // We don't need the cross terms for divergence, i.e.  S(jedge,LON)*avg[LAT] / S(jedge,LAT)*avg[LON]
       }
     }
-    double y  = lonlat_deg(jnode,LAT) * deg2rad;
-    double hy = radius;
-    for(size_t jlev = 0; jlev < nlev; ++jlev)
+
+    atlas_omp_for( size_t jnode=0; jnode<nnodes; ++jnode )
     {
-      dudx(jnode,jlev) *= hy/V(jnode);
-      dvdy(jnode,jlev) *= hy/V(jnode);
-      div(jnode,jlev) = dudx(jnode,jlev) + dvdy(jnode,jlev);
+      for(size_t jlev = 0; jlev < nlev; ++jlev )
+      {
+        div(jnode,jlev) = 0.;
+      }
+      for( size_t jedge=0; jedge<node2edge_size(jnode); ++jedge )
+      {
+        int iedge = node2edge(jnode,jedge);
+        double add = node2edge_sign(jnode,jedge);
+        for(size_t jlev = 0; jlev < nlev; ++jlev)
+        {
+          div(jnode,jlev) += add*(avgS(iedge,jlev,LON)+avgS(iedge,jlev,LAT));
+        }
+      }
+      double metric = radius/V(jnode);
+      for(size_t jlev = 0; jlev < nlev; ++jlev)
+      {
+        div(jnode,jlev) *= metric;
+      }
     }
   }
-
-  //io::Gmsh().write(*mesh,grid->shortName()+".msh");
-//  fvm_->haloExchange(*dudx_field);
-//  fvm_->haloExchange(*dvdy_field);
-//  io::Gmsh().write(*dudx_field,"gg.N64_fields.msh",std::ios::app);
-//  io::Gmsh().write(*dvdy_field,"gg.N64_fields.msh",std::ios::app);
 }
 
 

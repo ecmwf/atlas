@@ -138,7 +138,8 @@ BOOST_AUTO_TEST_CASE( test_build )
 BOOST_AUTO_TEST_CASE( test_grad )
 {
   const double radius = Earth::radiusInMeters();
-  SharedPtr<Grid> grid ( Grid::create("gg.N24") );
+//  const double radius = 1.;
+  SharedPtr<Grid> grid ( Grid::create("oct.N24") );
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("ReducedGrid") );
   SharedPtr<Mesh> mesh( meshgenerator->generate(*grid) );
   functionspace::EdgeBasedFiniteVolume fvm(*mesh, Config("radius",radius));
@@ -174,7 +175,7 @@ BOOST_AUTO_TEST_CASE( test_grad )
 //  }
 
   rotated_flow_magnitude(fvm,fields["scalar"],0.);
-  rotated_flow_magnitude(fvm,fields["rscalar"],M_PI_2*0.5);
+  rotated_flow_magnitude(fvm,fields["rscalar"],M_PI_2*0.75);
 
   nabla->gradient(fields["scalar"],fields["grad"]);
   nabla->gradient(fields["rscalar"],fields["rgrad"]);
@@ -213,7 +214,8 @@ BOOST_AUTO_TEST_CASE( test_grad )
 BOOST_AUTO_TEST_CASE( test_div )
 {
   const double radius = Earth::radiusInMeters();
-  SharedPtr<Grid> grid ( Grid::create("gg.N24") );
+//  const double radius = 1.;
+  SharedPtr<Grid> grid ( Grid::create("oct.N24") );
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("ReducedGrid") );
   SharedPtr<Mesh> mesh( meshgenerator->generate(*grid) );
   functionspace::EdgeBasedFiniteVolume fvm(*mesh, Config("radius",radius));
@@ -227,7 +229,7 @@ BOOST_AUTO_TEST_CASE( test_div )
   fields.add( fvm.createField<double>("wind",nlev,make_shape(2)) );
   fields.add( fvm.createField<double>("div",nlev) );
 
-  rotated_flow(fvm,fields["wind"],M_PI_2*0.5);
+  rotated_flow(fvm,fields["wind"],M_PI_2*0.75);
 
   nabla->divergence(fields["wind"],fields["div"]);
 
