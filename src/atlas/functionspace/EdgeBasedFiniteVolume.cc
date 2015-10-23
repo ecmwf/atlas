@@ -83,6 +83,7 @@ void EdgeBasedFiniteVolume::setup()
       const IndexView<int,2> node2edge      ( nodes().field("to_edge") );
       const ArrayView<int,1> node2edge_size ( nodes().field("to_edge_size") );
       const IndexView<int,2> edge2node      ( edges_->field("nodes") );
+      const ArrayView<int,1> is_pole_edge   ( edges_->field("is_pole_edge") );
 
       nodes().add( Field::create<double>("node2edge_sign",make_shape(nnodes,node2edge.shape(1)) ) );
       ArrayView<double,2> node2edge_sign( nodes().field("node2edge_sign") );
@@ -96,7 +97,11 @@ void EdgeBasedFiniteVolume::setup()
           if( jnode == ip1 )
             node2edge_sign(jnode,jedge) = 1.;
           else
+          {
             node2edge_sign(jnode,jedge) = -1.;
+            if( is_pole_edge(iedge) )
+              node2edge_sign(jnode,jedge) = 1.;
+          }
         }
       }
     }

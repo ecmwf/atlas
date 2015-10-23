@@ -31,6 +31,8 @@ public:
 
   void gradient(const Field &scalar, Field &grad) const;
   void divergence(const Field &vector, Field &div) const;
+  void curl(const Field &vector, Field &curl) const;
+  void laplacian(const Field &scalar, Field &laplacian) const;
 
 private:
   void setup();

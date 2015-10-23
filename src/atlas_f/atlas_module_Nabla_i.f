@@ -20,6 +20,8 @@ contains
   procedure, public :: delete => atlas_Nabla__delete
   procedure, public :: gradient => atlas_nabla__gradient
   procedure, public :: divergence => atlas_nabla__divergence
+  procedure, public :: curl => atlas_nabla__curl
+  procedure, public :: laplacian => atlas_nabla__laplacian
 
 END TYPE atlas_Nabla
 

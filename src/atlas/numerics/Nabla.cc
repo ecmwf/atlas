@@ -182,6 +182,26 @@ void atlas__Nabla__divergence (const Nabla* This, const Field* vector, Field* di
   );
 }
 
+void atlas__Nabla__curl (const Nabla* This, const Field* vector, Field* curl)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    ASSERT(vector);
+    ASSERT(curl);
+    This->curl(*vector,*curl);
+  );
+}
+
+void atlas__Nabla__laplacian (const Nabla* This, const Field* scalar, Field* laplacian)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    ASSERT(scalar);
+    ASSERT(laplacian);
+    This->laplacian(*scalar,*laplacian);
+  );
+}
+
 
 }
 

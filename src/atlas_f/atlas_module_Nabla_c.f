@@ -44,9 +44,24 @@ subroutine atlas_Nabla__divergence(this,vector,div)
   class(atlas_Nabla), intent(in) :: this
   class(atlas_Field), intent(in) :: vector
   class(atlas_Field), intent(inout) :: div
-  call atlas__Nabla__gradient(this%c_ptr(),vector%c_ptr(),div%c_ptr())
+  call atlas__Nabla__divergence(this%c_ptr(),vector%c_ptr(),div%c_ptr())
 end subroutine
 
+subroutine atlas_Nabla__curl(this,vector,curl)
+  use atlas_nabla_c_binding
+  class(atlas_Nabla), intent(in) :: this
+  class(atlas_Field), intent(in) :: vector
+  class(atlas_Field), intent(inout) :: curl
+  call atlas__Nabla__curl(this%c_ptr(),vector%c_ptr(),curl%c_ptr())
+end subroutine
+
+subroutine atlas_Nabla__laplacian(this,scalar,lapl)
+  use atlas_nabla_c_binding
+  class(atlas_Nabla), intent(in) :: this
+  class(atlas_Field), intent(in) :: scalar
+  class(atlas_Field), intent(inout) :: lapl
+  call atlas__Nabla__laplacian(this%c_ptr(),scalar%c_ptr(),lapl%c_ptr())
+end subroutine
 
 ! -----------------------------------------------------------------------------
 

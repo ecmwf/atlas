@@ -33,6 +33,8 @@ public:
 
   virtual void gradient(const Field &scalar, Field &grad) const = 0;
   virtual void divergence(const Field &vector, Field &div) const = 0;
+  virtual void curl(const Field &vector, Field &curl) const = 0;
+  virtual void laplacian(const Field &scalar, Field &laplacian) const = 0;
 
 private:
   const next::FunctionSpace& fs_;
@@ -89,8 +91,10 @@ extern "C" {
 
 void atlas__Nabla__delete (Nabla* This);
 Nabla* atlas__Nabla__create (const NextFunctionSpace* functionspace, const Parametrisation* params);
-void atlas__Nabla__gradient (const Nabla* This, const Field* field, Field* grad);
-void atlas__Nabla__divergence (const Nabla* This, const Field* field, Field* div);
+void atlas__Nabla__gradient (const Nabla* This, const Field* scalar, Field* grad);
+void atlas__Nabla__divergence (const Nabla* This, const Field* vector, Field* div);
+void atlas__Nabla__curl (const Nabla* This, const Field* vector, Field* curl);
+void atlas__Nabla__laplacian (const Nabla* This, const Field* scalar, Field* laplacian);
 }
 #undef NextFunctionSpace
 #undef Parametrisation

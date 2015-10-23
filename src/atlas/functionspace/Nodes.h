@@ -109,6 +109,8 @@ public:
 
 // -- Parallelisation aware methods
 
+    const Halo& halo() const { return halo_; }
+
     void haloExchange( FieldSet& ) const;
     void haloExchange( Field& ) const;
     const mpl::HaloExchange& halo_exchange() const;
