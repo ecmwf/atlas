@@ -165,6 +165,13 @@ eckit::JSON& operator<<(eckit::JSON& s, const Config& p)
   return s;
 }
 
+std::ostream& operator<<(std::ostream& s, const Config& p)
+{
+  s << p.delegate_;
+  return s;
+}
+
+
 
 //==================================================================
 

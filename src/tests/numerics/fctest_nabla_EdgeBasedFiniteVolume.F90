@@ -45,7 +45,7 @@ type(atlas_ReducedGrid) :: grid
 type(atlas_Mesh) :: mesh
 type(atlas_functionspace_EdgeBasedFiniteVolume) :: fvm
 
-grid = atlas_ReducedGrid("rgg.N24")
+grid = atlas_ReducedGrid("N24")
 mesh = atlas_generate_mesh(grid)
 fvm  = atlas_functionspace_EdgeBasedFiniteVolume(mesh)
 
@@ -80,7 +80,7 @@ config = atlas_Config()
 call config%set("radius",1.0)
 
 ! Setup
-grid = atlas_ReducedGrid("rgg.N24")
+grid = atlas_ReducedGrid("N24")
 meshgenerator = atlas_ReducedGridMeshGenerator()
 mesh = meshgenerator%generate(grid) ! second optional argument for atlas_GridDistrubution
 fvm  = atlas_functionspace_EdgeBasedFiniteVolume(mesh,config)

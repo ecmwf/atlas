@@ -62,7 +62,7 @@ TEST( test_trans )
   nlev=10
   nsmax = 21
 
-  grid = atlas_ReducedGrid("oct.N24")
+  grid = atlas_ReducedGrid("O24")
 
   FCTEST_CHECK_EQUAL( grid%owners(), 1 )
 

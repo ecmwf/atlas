@@ -327,7 +327,7 @@ TEST( test_meshgen )
 
   write(*,*) "test_meshgen starting"
 
-  grid = atlas_ReducedGrid("rgg.N24")
+  grid = atlas_ReducedGrid("N24")
   mesh = atlas_generate_mesh(grid)
   nodes = mesh%nodes()
 
@@ -386,7 +386,7 @@ TEST( test_griddistribution )
   integer, allocatable :: part(:)
   integer :: jnode
 
-  grid = atlas_ReducedGrid("oct.N16")
+  grid = atlas_ReducedGrid("O16")
   !grid = atlas_ReducedGrid("ll.128x64")
   !grid = atlas_LonLatGrid(128,64)
 
@@ -450,7 +450,7 @@ TEST( test_fieldcreation )
   write(0,*) field%name(), field%size()
   call field%final()
 
-  grid = atlas_ReducedGrid("oct.N80")
+  grid = atlas_ReducedGrid("O80")
   params = atlas_FieldParametrisation(creator="IFS",nproma=1024,ngptot=grid%npts(),nlev=137,nvar=1,kind=4)
   field = atlas_Field(params)
   call params%final()

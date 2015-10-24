@@ -25,13 +25,11 @@ namespace rgg {
 
 //------------------------------------------------------------------------------------------------------
 
-inline std::string ns_name() { return "rgg"; };
-
 #define DEFINE_GRID(CLASS)\
 class CLASS : public ReducedGaussianGrid { \
 public:\
 \
-  static std::string grid_type_str() { return ns_name()+"."+std::string(#CLASS); } \
+  static std::string grid_type_str() { return "rgg."+std::string(#CLASS); } \
   CLASS() \
   {\
     construct();\
@@ -46,7 +44,7 @@ public:\
   }\
   void construct();\
   void set_typeinfo() { \
-    shortName_ = "rgg."+std::string(#CLASS); \
+    shortName_ = std::string(#CLASS); \
     grid_type_ = ReducedGaussianGrid::grid_type_str(); \
   }\
   static std::string className() { return "atlas.grids.rgg."+std::string(#CLASS); }\

@@ -60,7 +60,7 @@ void TestField::test_constructor()
   BoundBox earth ( Grid::Point(0.,-90.), Grid::Point(359.999999,90.) );
 
   Grid::Ptr g (new atlas::grids::LonLatGrid( 20ul, 10ul, earth ) );
-//  Grid::Ptr g (Grid::create("oct.N6"));
+//  Grid::Ptr g (Grid::create("O6"));
 
   ASSERT( g );
 
@@ -125,7 +125,7 @@ void TestField::test_fieldcreator()
   ASSERT( field->datatype() == DataType::real32() );
   ASSERT( field->name() == "myfield" );
 
-  Grid::Ptr g (Grid::create("oct.N6"));
+  Grid::Ptr g (Grid::create("O6"));
 
   Field::Ptr arr (Field::create( Config
                                    ("creator","ArraySpec")

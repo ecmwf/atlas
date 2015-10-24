@@ -14,6 +14,9 @@
 #include "eckit/memory/Builder.h"
 #include "atlas/grids/grids.h"
 
+#include <regex.h>
+
+
 using eckit::Log;
 using eckit::Tokenizer;
 using eckit::Translator;
@@ -21,61 +24,152 @@ using eckit::Factory;
 
 namespace atlas {
 namespace grids {
+  
+size_t regex_count_parens(const std::string& string)
+{
+    size_t out = 0;
+    bool last_was_backslash = 0;
+    for(const char *step=string.c_str(); *step !='\0'; step++){
+        if (*step == '\\' && !last_was_backslash){
+            last_was_backslash = true;
+            continue;
+        }
+        if (*step == ')' && !last_was_backslash)
+            out++;
+        last_was_backslash = false;
+    }
+    return out;
+}
+
+int regex_match_impl( const std::string& string, 
+                      const std::string& regex, 
+                      std::vector<std::string>& substr, 
+                      bool use_substr, 
+                      bool use_case)
+{
+    regex_t re;
+    size_t matchcount = 0;
+    if (use_substr)
+      matchcount = regex_count_parens(regex);
+    regmatch_t result[matchcount+1];
+    int compiled_ok = !regcomp(&re, regex.c_str(), REG_EXTENDED
+                                            + (use_case   ? 0 : REG_ICASE)
+                                            + (use_substr ? 0 : REG_NOSUB) );
+
+    if( !compiled_ok ) 
+      printf("This regular expression didn't compile: \"%s\"", regex.c_str());
+
+    int found = !regexec(&re, string.c_str(), matchcount+1, result, 0);
+    if (found && use_substr){
+        substr.resize(matchcount);
+        //match zero is the whole string; ignore it.
+        for (size_t i=0; i< matchcount; i++){
+            if (result[i+1].rm_eo > 0){ //GNU peculiarity: match-to-empty marked with -1.
+                size_t length_of_match = result[i+1].rm_eo - result[i+1].rm_so;
+                substr[i] = std::string(&string[result[i+1].rm_so],length_of_match);
+            }
+        }
+    }
+    regfree(&re);
+    return found;
+}
+
+class Regex
+{
+public:
+  Regex(const std::string& regex, bool use_case=true) : regex_(regex), use_case_(use_case) {}
+  bool match(const std::string& string)
+  {
+    std::vector<std::string> substr;
+    return regex_match_impl(string,regex_,substr,false,use_case_);
+  }
+  bool match(const std::string& string, std::vector<std::string>& substr)
+  {
+    return regex_match_impl(string,regex_,substr,true,use_case_);
+  }
+private:
+  bool use_case_;
+  std::string regex_;
+};
+
+//=====================================================
 
 Grid* grid_from_uid(const std::string& uid)
 {
-  Grid* grid = NULL;
   if( Factory<Grid>::instance().exists(uid) )
   {
-    grid = Grid::create( Config("grid_type",uid) );
+    return Grid::create( Config("grid_type",uid) );
   }
   else
   {
-    Tokenizer tokenize(".");
-    std::vector<std::string> tokens;
-    tokenize(uid,tokens);
+    Regex classical_reduced_gaussian_grid  ("^N([0-9]+)$");
+    Regex octahedral_reduced_gaussian_grid ("^O([0-9]+)$");
+    Regex regular_gaussian_grid            ("^F([0-9]+)$");
+    
+    Config gridparams;
     Translator<std::string,int> to_int;
-    std::string grid_type = tokens[0];
-    if( grid_type == "ll" ) grid_type = LonLatGrid::grid_type_str();
-    if( grid_type == "gg" ) grid_type = GaussianGrid::grid_type_str();
-    if( grid_type == "rgg") grid_type = ReducedGaussianGrid::grid_type_str();
-
-    if( grid_type == ReducedGaussianGrid::grid_type_str() )
+    std::vector<std::string> matches;
+    if( classical_reduced_gaussian_grid.match(uid) )
     {
       throw eckit::BadParameter("Grid ["+uid+"] does not exist.",Here());
     }
-    else if( tokens.size() > 1)
+    else if( octahedral_reduced_gaussian_grid.match(uid,matches) )
     {
-      Config gridparams;
-      gridparams.set("grid_type",grid_type);
-      if( tokens[1][0] == 'N' )
-      {
-        std::string Nstr(tokens[1],1,tokens[1].size()-1);
-        int N = to_int(Nstr);
-        gridparams.set("N",N);
-      }
-      else
-      {
-        std::vector<std::string> lonlat;
-        Tokenizer tokenize_lonlat("x");
-        tokenize_lonlat(tokens[1],lonlat);
-        if( lonlat.size() > 1 )
-        {
-          int nlon = to_int(lonlat[0]);
-          int nlat = to_int(lonlat[1]);
-          gridparams.set("nlon",nlon);
-          gridparams.set("nlat",nlat);
-          if( nlat%2 == 1 ) gridparams.set("poles",true);
-        }
-      }
-      grid = Grid::create(gridparams);
+      int N = to_int(matches[0]);
+      gridparams.set("grid_type",rgg::OctahedralRGG::grid_type_str());
+      gridparams.set("N",N);
+      return Grid::create( gridparams );
+    }
+    else if( regular_gaussian_grid.match(uid,matches) )
+    {
+      int N = to_int(matches[0]);
+      gridparams.set("grid_type",GaussianGrid::grid_type_str());
+      gridparams.set("N",N);
+      return Grid::create( gridparams );
     }
     else
     {
-      throw eckit::BadParameter("Insufficient information to construct grid "+uid+" or grid does not exist.",Here());
+      Tokenizer tokenize(".");
+      std::vector<std::string> tokens;
+      tokenize(uid,tokens);
+      std::string grid_type = tokens[0];
+      if( grid_type == "ll" ) grid_type = LonLatGrid::grid_type_str();
+      if( grid_type == "gg" ) grid_type = GaussianGrid::grid_type_str();
+      if( grid_type == "rgg") grid_type = ReducedGaussianGrid::grid_type_str();
+
+      if( grid_type == ReducedGaussianGrid::grid_type_str() )
+      {
+        throw eckit::BadParameter("Grid ["+uid+"] does not exist.",Here());
+      }
+      else if( tokens.size() > 1)
+      {
+        gridparams.set("grid_type",grid_type);
+        if( tokens[1][0] == 'N' )
+        {
+          std::string Nstr(tokens[1],1,tokens[1].size()-1);
+          int N = to_int(Nstr);
+          gridparams.set("N",N);
+        }
+        else
+        {
+          std::vector<std::string> lonlat;
+          Tokenizer tokenize_lonlat("x");
+          tokenize_lonlat(tokens[1],lonlat);
+          if( lonlat.size() > 1 )
+          {
+            int nlon = to_int(lonlat[0]);
+            int nlat = to_int(lonlat[1]);
+            gridparams.set("nlon",nlon);
+            gridparams.set("nlat",nlat);
+            if( nlat%2 == 1 ) gridparams.set("poles",true);
+          }
+        }
+      }
+      return Grid::create( gridparams );
     }
   }
-  return grid;
+  throw eckit::BadParameter("Insufficient information to construct grid "+uid+" or grid does not exist.",Here());
+  return 0;
 }
 
 

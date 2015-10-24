@@ -6,7 +6,8 @@ namespace atlas {
 namespace grids {
 namespace rgg {
 
-eckit::ConcreteBuilderT1<Grid,N16> builder_N16 (N16::grid_type_str());
+eckit::ConcreteBuilderT1<Grid,N16> builder_N16_deprecated (N16::grid_type_str());
+eckit::ConcreteBuilderT1<Grid,N16> builder_N16 ("N16");
 
 void N16::construct()
 {

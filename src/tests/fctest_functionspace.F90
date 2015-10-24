@@ -49,7 +49,7 @@ type(atlas_Nodes) :: nodes
 integer :: halo_size, nb_nodes
 halo_size = 1
 
-grid = atlas_ReducedGrid("rgg.N24")
+grid = atlas_ReducedGrid("N24")
 mesh = atlas_generate_mesh(grid)
 fs = atlas_functionspace_Nodes(mesh,halo_size)
 nodes = fs%nodes()
@@ -141,7 +141,7 @@ integer :: halo_size, levels
 halo_size = 1
 levels = 10
 
-grid = atlas_ReducedGrid("rgg.N24")
+grid = atlas_ReducedGrid("N24")
 mesh = atlas_generate_mesh(grid)
 fs = atlas_functionspace_Nodes(mesh,halo_size)
 
@@ -239,7 +239,7 @@ integer(ATLAS_KIND_GIDX), allocatable :: glb_idxv (:)
 halo_size = 1
 levels = 10
 
-grid = atlas_ReducedGrid("rgg.N24")
+grid = atlas_ReducedGrid("N24")
 mesh = atlas_generate_mesh(grid)
 fs2d = atlas_functionspace_Nodes(mesh,halo_size)
 

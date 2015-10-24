@@ -47,7 +47,7 @@ BOOST_GLOBAL_FIXTURE( AtlasFixture )
 
 BOOST_AUTO_TEST_CASE( test_functionspace_Nodes )
 {
-  //ScopedPtr<Grid> grid( Grid::create("oct.N2") );
+  //ScopedPtr<Grid> grid( Grid::create("O2") );
 
   size_t nlat = 2;
   long nlon[] = {4,8};

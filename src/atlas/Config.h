@@ -87,7 +87,7 @@ public:
   bool get(const std::string& name, std::vector<Config>& value) const;
 
   friend eckit::JSON& operator<<(eckit::JSON&, const Config&);
-
+  friend std::ostream& operator<<(std::ostream&, const Config&);
 private:
 
   template<class T>

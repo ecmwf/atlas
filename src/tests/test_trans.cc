@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
 
 
   // Create grid and trans object
-  ReducedGrid::Ptr g ( ReducedGrid::create( "rgg.N80" ) );
+  ReducedGrid::Ptr g ( ReducedGrid::create( "N80" ) );
 
   BOOST_CHECK_EQUAL( g->nlat() , 160 );
 
@@ -133,7 +133,7 @@ BOOST_AUTO_TEST_CASE( test_trans_partitioner )
 {
   BOOST_CHECKPOINT("test_trans_partitioner");
   // Create grid and trans object
-  ReducedGrid::Ptr g ( ReducedGrid::create( "rgg.N80" ) );
+  ReducedGrid::Ptr g ( ReducedGrid::create( "N80" ) );
 
   trans::Trans trans( *g, 0 );
 
@@ -154,7 +154,7 @@ BOOST_AUTO_TEST_CASE( test_trans_options )
 
 BOOST_AUTO_TEST_CASE( test_distspec )
 {
-  ReducedGrid::Ptr g ( ReducedGrid::create( "oct.N80" ) );
+  ReducedGrid::Ptr g ( ReducedGrid::create( "O80" ) );
   eckit::ResourceMgr::instance().set("atlas.meshgen.angle","0");
   meshgen::ReducedGridMeshGenerator generate;
   BOOST_CHECKPOINT("mesh generator created");
@@ -187,7 +187,7 @@ BOOST_AUTO_TEST_CASE( test_distspec )
 
 BOOST_AUTO_TEST_CASE( test_distribution )
 {
-  ReducedGrid::Ptr g ( ReducedGrid::create( "oct.N80" ) );
+  ReducedGrid::Ptr g ( ReducedGrid::create( "O80" ) );
 
   BOOST_CHECKPOINT("test_distribution");
 
@@ -214,7 +214,7 @@ BOOST_AUTO_TEST_CASE( test_distribution )
 BOOST_AUTO_TEST_CASE( test_generate_mesh )
 {
   BOOST_CHECKPOINT("test_generate_mesh");
-  ReducedGrid::Ptr g ( ReducedGrid::create( "oct.N80" ) );
+  ReducedGrid::Ptr g ( ReducedGrid::create( "O80" ) );
   eckit::ResourceMgr::instance().set("atlas.meshgen.angle","0");
   eckit::ResourceMgr::instance().set("atlas.meshgen.triangulate","true");
 
@@ -251,7 +251,7 @@ BOOST_AUTO_TEST_CASE( test_spectral_fields )
 {
   BOOST_CHECKPOINT("test_spectral_fields");
 
-  ReducedGrid::Ptr g ( ReducedGrid::create( "oct.N48" ) );
+  ReducedGrid::Ptr g ( ReducedGrid::create( "O48" ) );
   eckit::ResourceMgr::instance().set("atlas.meshgen.angle","0");
   eckit::ResourceMgr::instance().set("atlas.meshgen.triangulate","false");
 

@@ -122,7 +122,7 @@ BOOST_AUTO_TEST_CASE( test_factory )
 
 BOOST_AUTO_TEST_CASE( test_build )
 {
-  SharedPtr<Grid> grid ( Grid::create("oct.N32") );
+  SharedPtr<Grid> grid ( Grid::create("O32") );
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("ReducedGrid") );
   SharedPtr<Mesh> mesh( meshgenerator->generate(*grid) );
   const double R = Earth::radiusInMeters();
@@ -139,7 +139,7 @@ BOOST_AUTO_TEST_CASE( test_grad )
 {
   const double radius = Earth::radiusInMeters();
 //  const double radius = 1.;
-  SharedPtr<Grid> grid ( Grid::create("oct.N32") );
+  SharedPtr<Grid> grid ( Grid::create("O32") );
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("ReducedGrid") );
   SharedPtr<Mesh> mesh( meshgenerator->generate(*grid) );
   functionspace::EdgeBasedFiniteVolume fvm(*mesh, Config("radius",radius));
@@ -215,7 +215,7 @@ BOOST_AUTO_TEST_CASE( test_div )
 {
   const double radius = Earth::radiusInMeters();
 //  const double radius = 1.;
-  SharedPtr<Grid> grid ( Grid::create("oct.N32") );
+  SharedPtr<Grid> grid ( Grid::create("O32") );
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("ReducedGrid") );
   SharedPtr<Mesh> mesh( meshgenerator->generate(*grid) );
   functionspace::EdgeBasedFiniteVolume fvm(*mesh, Config("radius",radius));
@@ -246,7 +246,7 @@ BOOST_AUTO_TEST_CASE( test_curl )
 {
   const double radius = Earth::radiusInMeters();
 //  const double radius = 1.;
-  SharedPtr<Grid> grid ( Grid::create("oct.N32") );
+  SharedPtr<Grid> grid ( Grid::create("O32") );
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("ReducedGrid") );
   SharedPtr<Mesh> mesh( meshgenerator->generate(*grid) );
   functionspace::EdgeBasedFiniteVolume fvm(*mesh, Config("radius",radius));
@@ -277,7 +277,7 @@ BOOST_AUTO_TEST_CASE( test_lapl )
 {
   const double radius = Earth::radiusInMeters();
 //  const double radius = 1.;
-  SharedPtr<Grid> grid ( Grid::create("oct.N32") );
+  SharedPtr<Grid> grid ( Grid::create("O32") );
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("ReducedGrid") );
   SharedPtr<Mesh> mesh( meshgenerator->generate(*grid) );
   functionspace::EdgeBasedFiniteVolume fvm(*mesh, Config("radius",radius));

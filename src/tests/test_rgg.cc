@@ -468,7 +468,7 @@ BOOST_AUTO_TEST_CASE( test_reduced_lonlat )
 
 BOOST_AUTO_TEST_CASE( test_meshgen_ghost_at_end )
 {
-  SharedPtr<Grid> grid ( Grid::create("oct.N8") );
+  SharedPtr<Grid> grid ( Grid::create("O8") );
 
   atlas::Config cfg;
   cfg.set("part",1);

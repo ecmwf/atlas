@@ -151,7 +151,7 @@ BOOST_AUTO_TEST_CASE( state_create )
 
   Config p;
   Config geometry;
-  geometry.set("grid","oct.N80");
+  geometry.set("grid","O80");
   geometry.set("ngptot",350);
   geometry.set("nproma",3);
   geometry.set("nlev",5);

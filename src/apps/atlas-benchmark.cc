@@ -330,7 +330,7 @@ void AtlasBenchmark::setup()
 
   grids::load();
 
-  stringstream gridname; gridname << "rgg.N"<<N;
+  stringstream gridname; gridname << "N"<<N;
   ReducedGrid::Ptr grid( ReducedGrid::create(gridname.str()) );
   MeshGenerator::Ptr meshgenerator ( MeshGenerator::create("ReducedGrid") );
   mesh = Mesh::Ptr ( meshgenerator->generate(*grid) );

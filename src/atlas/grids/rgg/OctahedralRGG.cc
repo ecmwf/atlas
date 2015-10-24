@@ -56,7 +56,7 @@ void OctahedralRGG::construct(const size_t N, const size_t start)
 void OctahedralRGG::set_typeinfo()
 {
     std::ostringstream s;
-    s << "oct.N"<< N();
+    s << "O"<< N();
     shortName_ = s.str();
     grid_type_ = ReducedGaussianGrid::grid_type_str();
 }
