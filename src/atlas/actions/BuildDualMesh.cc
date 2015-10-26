@@ -23,7 +23,7 @@
 #include "atlas/Field.h"
 #include "atlas/actions/BuildDualMesh.h"
 #include "atlas/Parameters.h"
-#include "atlas/Nodes.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
 #include "atlas/util/Unique.h"
@@ -38,7 +38,7 @@ namespace actions {
 
 namespace {
 
-void global_bounding_box( Nodes& nodes, double min[2], double max[2] )
+void global_bounding_box( mesh::Nodes& nodes, double min[2], double max[2] )
 {
   ArrayView<double,2> lonlat( nodes.lonlat() );
   const int nb_nodes = nodes.size();
@@ -84,11 +84,11 @@ void build_centroids( FunctionSpace& func_space, ArrayView<double,2>& lonlat);
 void add_median_dual_volume_contribution(
     FunctionSpace& elements,
     FunctionSpace& edges,
-    Nodes& nodes,
+    mesh::Nodes& nodes,
     ArrayView<double,1>& dual_volumes );
 void add_median_dual_volume_contribution(
     FunctionSpace& edges,
-    Nodes& nodes,
+    mesh::Nodes& nodes,
     ArrayView<double,1>& dual_volumes );
 void add_centroid_dual_volume_contribution(
     Mesh& mesh,
@@ -100,7 +100,7 @@ void make_dual_normals_outward( Mesh& mesh );
 
 void build_median_dual_mesh( Mesh& mesh )
 {
-  Nodes& nodes   = mesh.nodes();
+  mesh::Nodes& nodes   = mesh.nodes();
   ArrayView<double,2> lonlat        ( nodes.lonlat() );
   ArrayView<double,1> dual_volumes  ( nodes.add( Field::create<double>( "dual_volumes", make_shape(nodes.size(),1) ) ) );
 
@@ -135,7 +135,7 @@ void build_median_dual_mesh( Mesh& mesh )
 
 void build_centroid_dual_mesh( Mesh& mesh )
 {
-  Nodes& nodes   = mesh.nodes();
+  mesh::Nodes& nodes   = mesh.nodes();
   ArrayView<double,2> lonlat        ( nodes.lonlat() );
   ArrayView<double,1> dual_volumes  ( nodes.add( Field::create<double>( "dual_volumes", make_shape(nodes.size(),1) ) ) );
 
@@ -190,7 +190,7 @@ void build_centroids( FunctionSpace& func_space, ArrayView<double,2>& lonlat)
 void add_median_dual_volume_contribution(
     FunctionSpace& elements,
     FunctionSpace& edges,
-    Nodes& nodes,
+    mesh::Nodes& nodes,
     ArrayView<double,1>& dual_volumes )
 {
   int nb_elems = elements.shape(0);
@@ -237,7 +237,7 @@ void add_median_dual_volume_contribution(
 
 void add_median_dual_volume_contribution(
     FunctionSpace& edges,
-    Nodes& nodes,
+    mesh::Nodes& nodes,
     ArrayView<double,1>& dual_volumes )
 {
   ArrayView<gidx_t,1> node_glb_idx  ( nodes.global_index() );
@@ -297,7 +297,7 @@ void add_centroid_dual_volume_contribution(
     Mesh& mesh,
     ArrayView<double,1>& dual_volumes )
 {
-  Nodes& nodes = mesh.nodes();
+  mesh::Nodes& nodes = mesh.nodes();
   FunctionSpace& edges = mesh.function_space("edges");
   ArrayView<gidx_t,1> node_glb_idx  ( nodes.field("glb_idx"    ) );
   ArrayView<double,2> edge_centroids( edges.field("centroids"  ) );
@@ -390,7 +390,7 @@ void build_dual_normals( Mesh& mesh )
       elem_centroids[func_space_idx] = ArrayView<double,2>( func_space.field("centroids") );
   }
 
-  Nodes&  nodes = mesh.nodes();
+  mesh::Nodes&  nodes = mesh.nodes();
   ArrayView<double,2> node_lonlat( nodes.lonlat() );
   double min[2], max[2];
   global_bounding_box( nodes, min, max );
@@ -487,7 +487,7 @@ void build_dual_normals( Mesh& mesh )
 void make_dual_normals_outward( Mesh& mesh )
 {
 
-  Nodes&  nodes = mesh.nodes();
+  mesh::Nodes&  nodes = mesh.nodes();
   ArrayView<double,2> node_lonlat( nodes.lonlat() );
 
   FunctionSpace&  edges = mesh.function_space("edges");
@@ -528,7 +528,7 @@ void build_skewness( Mesh& mesh )
       elem_centroids[func_space_idx] = ArrayView<double,2>( func_space.field("centroids") );
   }
 
-  Nodes&  nodes = mesh.nodes();
+  mesh::Nodes&  nodes = mesh.nodes();
   ArrayView<double,2> node_lonlat( nodes.lonlat() );
   double min[2], max[2];
   global_bounding_box( nodes, min, max );
@@ -615,7 +615,7 @@ void build_brick_dual_mesh( Mesh& mesh )
     if( eckit::mpi::size() != 1 )
       throw eckit::UserError("Cannot build_brick_dual_mesh with more than 1 task",Here());
 
-    Nodes& nodes   = mesh.nodes();
+    mesh::Nodes& nodes   = mesh.nodes();
     ArrayView<double,2> lonlat        ( nodes.lonlat() );
     ArrayView<double,1> dual_volumes  ( nodes.add( Field::create<double>("dual_volumes",make_shape(nodes.size(),1) ) ) );
     ArrayView<gidx_t,1> gidx  ( nodes.global_index() );

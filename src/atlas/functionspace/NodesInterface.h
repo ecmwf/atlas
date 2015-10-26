@@ -21,14 +21,14 @@ namespace functionspace {
 #define GatherScatter mpl::GatherScatter
 #define Checksum mpl::Checksum
 #define HaloExchange mpl::HaloExchange
-#define atlas_Nodes atlas::Nodes
+#define mesh_Nodes mesh::Nodes
 
 extern "C" {
 Nodes* atlas__NodesFunctionSpace__new (Mesh* mesh, int halo);
 void atlas__NodesFunctionSpace__delete (Nodes* This);
 int atlas__NodesFunctionSpace__nb_nodes(const Nodes* This);
 Mesh* atlas__NodesFunctionSpace__mesh(Nodes* This);
-atlas_Nodes* atlas__NodesFunctionSpace__nodes(Nodes* This);
+mesh_Nodes* atlas__NodesFunctionSpace__nodes(Nodes* This);
 Field* atlas__NodesFunctionSpace__create_field (const Nodes* This, const char* name, int kind);
 Field* atlas__NodesFunctionSpace__create_field_vars (const Nodes* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind);
 
@@ -170,7 +170,7 @@ void atlas__NodesFunctionSpace__mean_and_stddev_per_level(const Nodes* This, con
 #undef GatherScatter
 #undef Checksum
 #undef HaloExchange
-#undef atlas_Nodes
+#undef mesh_Nodes
 
 } // namespace functionspace
 } // namespace atlas

@@ -22,7 +22,7 @@
 #include "atlas/Mesh.h"
 #include "atlas/meshgen/ReducedGridMeshGenerator.h"
 #include "atlas/functionspace/EdgeBasedFiniteVolume.h"
-#include "atlas/Nodes.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/Field.h"
 #include "atlas/Parameters.h"
 #include "atlas/io/Gmsh.h"
@@ -37,7 +37,7 @@ namespace test {
 
 double dual_volume(Mesh& mesh)
 {
-  Nodes& nodes = mesh.nodes();
+  mesh::Nodes& nodes = mesh.nodes();
   int nb_nodes = nodes.size();
   const ArrayView<double,1> dual_volumes ( nodes.field("dual_volumes") );
   const ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );

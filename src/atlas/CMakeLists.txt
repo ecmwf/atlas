@@ -245,8 +245,8 @@ Mesh.cc
 Mesh.h
 Metadata.cc
 Metadata.h
-Nodes.cc
-Nodes.h
+mesh/Nodes.cc
+mesh/Nodes.h
 Parameters.h
 Partitioner.cc
 Partitioner.h

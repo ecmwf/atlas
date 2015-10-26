@@ -22,7 +22,7 @@
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/mpl/Checksum.h"
 #include "atlas/Mesh.h"
-#include "atlas/Nodes.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Field.h"
 #include "atlas/actions/BuildDualMesh.h"
@@ -127,7 +127,7 @@ void build_statistics( Mesh& mesh )
 {
   const double radius_km = Earth::radiusInMeters()*1e-3;
 
-  Nodes& nodes = mesh.nodes();
+  mesh::Nodes& nodes = mesh.nodes();
   ArrayView<double,2> lonlat ( nodes.lonlat() );
 
   if( mesh.has_function_space("edges") )

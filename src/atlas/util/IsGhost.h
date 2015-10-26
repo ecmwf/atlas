@@ -12,7 +12,7 @@
 #define atlas_util_IsGhost_h
 
 #include "atlas/mpi/mpi.h"
-#include "atlas/Nodes.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/Field.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
@@ -24,7 +24,7 @@ namespace util {
 class IsGhost
 {
 public:
-  IsGhost( const Nodes& nodes )
+  IsGhost( const mesh::Nodes& nodes )
   {
 //    part_   = ArrayView<int,1> (nodes.partition() );
 //    ridx_   = IndexView<int,1> (nodes.remote_index() );

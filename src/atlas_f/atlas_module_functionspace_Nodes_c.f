@@ -42,7 +42,7 @@ end function
 
 function atlas_functionspace_Nodes__nodes(this) result (nodes)
   use atlas_functionspace_nodes_c_binding
-  type(atlas_Nodes) :: nodes
+  type(atlas_mesh_Nodes) :: nodes
   class(atlas_functionspace_Nodes), intent(in) :: this
   call nodes%reset_c_ptr( atlas__NodesFunctionSpace__nodes(this%c_ptr()) )
 end function

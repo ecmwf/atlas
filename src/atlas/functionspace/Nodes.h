@@ -17,7 +17,7 @@
 #include "atlas/FieldSet.h"
 
 namespace atlas { class Mesh; }
-namespace atlas { class Nodes; }
+namespace atlas { namespace mesh { class Nodes; } }
 namespace atlas { class FieldSet; }
 
 namespace atlas {
@@ -56,8 +56,8 @@ public:
     const atlas::Mesh& mesh() const { return mesh_; }
           atlas::Mesh& mesh()       { return mesh_; }
 
-    const atlas::Nodes& nodes() const { return nodes_; }
-          atlas::Nodes& nodes()       { return nodes_; }
+    const mesh::Nodes& nodes() const { return nodes_; }
+          mesh::Nodes& nodes()       { return nodes_; }
 
 
 
@@ -269,8 +269,8 @@ private: // methods
 
 private: // data
 
-    atlas::Mesh& mesh_; // non-const because functionspace may modify mesh
-    atlas::Nodes& nodes_; // non-const because functionspace may modify mesh
+    Mesh& mesh_; // non-const because functionspace may modify mesh
+    mesh::Nodes& nodes_; // non-const because functionspace may modify mesh
     Halo halo_;
     size_t nb_nodes_;
     size_t nb_nodes_global_;

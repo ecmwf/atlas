@@ -14,7 +14,7 @@
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/trans/Trans.h"
 #include "atlas/Mesh.h"
-#include "atlas/Nodes.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/FieldSet.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/functionspace/Nodes.h"

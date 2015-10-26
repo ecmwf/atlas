@@ -23,7 +23,7 @@
 #include "atlas/FieldSet.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Mesh.h"
-#include "atlas/Nodes.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/grids/Unstructured.h"
 #include "atlas/io/PointCloud.h"
 #include "atlas/functionspace/Nodes.h"
@@ -374,7 +374,7 @@ BOOST_AUTO_TEST_CASE( write_read_write_field )
 
   BOOST_CHECK_EQUAL(grid->npts(),test_vectors::nb_pts);
 
-  Nodes& nodes = grid->mesh().nodes();
+  mesh::Nodes& nodes = grid->mesh().nodes();
   BOOST_CHECK_EQUAL(nodes.has_field("my_super_field"),       true);
   BOOST_CHECK_EQUAL(nodes.has_field("_StRaNgE_FiElD_NaMe_"), false);
 

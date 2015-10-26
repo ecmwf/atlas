@@ -11,7 +11,7 @@
 //------------------------------------------------------------------------------------------------------
 
 #include "atlas/Field.h"
-#include "atlas/Nodes.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Mesh.h"
 #include "atlas/Parameters.h"
@@ -30,9 +30,9 @@ PointSet::PointSet( const std::vector< Point >& ipts ) : npts_(ipts.size())
     build(ipts);
 }
 
-PointSet::PointSet( atlas::Mesh& mesh )
+PointSet::PointSet( Mesh& mesh )
 {
-    Nodes& nodes = mesh.nodes();
+    mesh::Nodes& nodes = mesh.nodes();
 
     npts_ = nodes.size();
 

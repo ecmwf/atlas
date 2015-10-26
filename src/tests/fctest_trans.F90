@@ -41,7 +41,7 @@ TEST( test_trans )
   type(atlas_ReducedGrid) :: grid
   type(atlas_Mesh) :: mesh
   type(atlas_Trans) :: trans
-  type(atlas_Nodes) :: nodes
+  type(atlas_mesh_Nodes) :: nodes
   type(atlas_functionspace_Nodes) :: nodes_fs
   type(atlas_functionspace_Spectral) :: spectral_fs
   type(atlas_Field)         :: scalarfield1, scalarfield2

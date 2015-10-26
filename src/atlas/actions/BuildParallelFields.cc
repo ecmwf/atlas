@@ -19,7 +19,7 @@
 #include "atlas/Mesh.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Field.h"
-#include "atlas/Nodes.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/actions/BuildParallelFields.h"
 #include "atlas/Parameters.h"
 #include "atlas/util/ArrayView.h"
@@ -58,12 +58,12 @@ using atlas::util::PeriodicTransform;
 namespace atlas {
 namespace actions {
 
-Field& build_nodes_partition ( Nodes& nodes );
-Field& build_nodes_remote_idx( Nodes& nodes );
-Field& build_nodes_global_idx( Nodes& nodes );
-Field& build_edges_partition ( FunctionSpace& edges, Nodes& nodes );
-Field& build_edges_remote_idx( FunctionSpace& edges, Nodes& nodes );
-Field& build_edges_global_idx( FunctionSpace& edges, Nodes& nodes );
+Field& build_nodes_partition ( mesh::Nodes& nodes );
+Field& build_nodes_remote_idx( mesh::Nodes& nodes );
+Field& build_nodes_global_idx( mesh::Nodes& nodes );
+Field& build_edges_partition ( FunctionSpace& edges, mesh::Nodes& nodes );
+Field& build_edges_remote_idx( FunctionSpace& edges, mesh::Nodes& nodes );
+Field& build_edges_global_idx( FunctionSpace& edges, mesh::Nodes& nodes );
 
 // ------------------------------------------------------------------
 
@@ -98,7 +98,7 @@ void build_parallel_fields( Mesh& mesh )
 
 // ------------------------------------------------------------------
 
-void build_nodes_parallel_fields( Nodes& nodes )
+void build_nodes_parallel_fields( mesh::Nodes& nodes )
 {
   bool parallel = false;
   nodes.metadata().get("parallel",parallel);
@@ -113,7 +113,7 @@ void build_nodes_parallel_fields( Nodes& nodes )
 
 // ------------------------------------------------------------------
 
-void build_edges_parallel_fields( FunctionSpace& edges, Nodes& nodes )
+void build_edges_parallel_fields( FunctionSpace& edges, mesh::Nodes& nodes )
 {
   ASSERT( nodes.has_field("partition") );
   ASSERT( nodes.has_field("remote_idx") );
@@ -131,7 +131,7 @@ void build_edges_parallel_fields( FunctionSpace& edges, Nodes& nodes )
 
 // ------------------------------------------------------------------
 
-Field& build_nodes_global_idx( Nodes& nodes )
+Field& build_nodes_global_idx( mesh::Nodes& nodes )
 {
   ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
 
@@ -145,7 +145,7 @@ Field& build_nodes_global_idx( Nodes& nodes )
   return nodes.global_index();
 }
 
-void renumber_nodes_glb_idx( Nodes& nodes )
+void renumber_nodes_glb_idx( mesh::Nodes& nodes )
 {
 // TODO: ATLAS-14: fix renumbering of EAST periodic boundary points
 // --> Those specific periodic points at the EAST boundary are not checked for uid,
@@ -240,7 +240,7 @@ void renumber_nodes_glb_idx( Nodes& nodes )
 
 // ------------------------------------------------------------------
 
-Field& build_nodes_remote_idx( Nodes& nodes )
+Field& build_nodes_remote_idx( mesh::Nodes& nodes )
 {
   size_t mypart = eckit::mpi::rank();
   size_t nparts = eckit::mpi::size();
@@ -337,14 +337,14 @@ Field& build_nodes_remote_idx( Nodes& nodes )
 
 // ------------------------------------------------------------------
 
-Field& build_nodes_partition( Nodes& nodes )
+Field& build_nodes_partition( mesh::Nodes& nodes )
 {
   return nodes.partition();
 }
 
 // ------------------------------------------------------------------
 
-Field& build_edges_partition( FunctionSpace& edges, Nodes& nodes )
+Field& build_edges_partition( FunctionSpace& edges, mesh::Nodes& nodes )
 {
   UniqueLonLat compute_uid(nodes);
 
@@ -629,7 +629,7 @@ Field& build_edges_partition( FunctionSpace& edges, Nodes& nodes )
   return edges.field("partition");
 }
 
-Field& build_edges_remote_idx( FunctionSpace& edges, Nodes& nodes )
+Field& build_edges_remote_idx( FunctionSpace& edges, mesh::Nodes& nodes )
 {
   UniqueLonLat compute_uid(nodes);
 
@@ -776,7 +776,7 @@ Field& build_edges_remote_idx( FunctionSpace& edges, Nodes& nodes )
 
 }
 
-Field& build_edges_global_idx( FunctionSpace& edges, Nodes& nodes )
+Field& build_edges_global_idx( FunctionSpace& edges, mesh::Nodes& nodes )
 {
   UniqueLonLat compute_uid(nodes);
 
@@ -902,13 +902,13 @@ Field& build_edges_global_idx( FunctionSpace& edges, Nodes& nodes )
 void atlas__build_parallel_fields ( Mesh* mesh) {
   ATLAS_ERROR_HANDLING( build_parallel_fields(*mesh) );
 }
-void atlas__build_nodes_parallel_fields (Nodes* nodes) {
+void atlas__build_nodes_parallel_fields (mesh::Nodes* nodes) {
   ATLAS_ERROR_HANDLING( build_nodes_parallel_fields(*nodes) );
 }
-void atlas__build_edges_parallel_fields (FunctionSpace* edges, Nodes* nodes) {
+void atlas__build_edges_parallel_fields (FunctionSpace* edges, mesh::Nodes* nodes) {
   ATLAS_ERROR_HANDLING( build_edges_parallel_fields(*edges, *nodes) );
 }
-void atlas__renumber_nodes_glb_idx (Nodes* nodes)
+void atlas__renumber_nodes_glb_idx (mesh::Nodes* nodes)
 {
   ATLAS_ERROR_HANDLING( renumber_nodes_glb_idx(*nodes) );
 }

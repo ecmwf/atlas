@@ -18,7 +18,7 @@
 #include "atlas/FunctionSpace.h"
 #include "atlas/Domain.h"
 #include "atlas/Mesh.h"
-#include "atlas/Nodes.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/Grid.h"
 #include "atlas/Field.h"
 
@@ -58,7 +58,7 @@ void AddVirtualNodes::operator()( Mesh& mesh ) const
             vPts.push_back(p);
     }
 
-    Nodes& nodes = mesh.nodes();
+    mesh::Nodes& nodes = mesh.nodes();
 
     const size_t nb_real_pts = nodes.size();
     const size_t nb_virtual_pts = vPts.size();

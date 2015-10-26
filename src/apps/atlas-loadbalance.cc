@@ -17,7 +17,7 @@
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/atlas.h"
 #include "atlas/Mesh.h"
-#include "atlas/Nodes.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/grids/grids.h"
 #include "atlas/functionspace/Nodes.h"
 #include "atlas/actions/GenerateMesh.h"

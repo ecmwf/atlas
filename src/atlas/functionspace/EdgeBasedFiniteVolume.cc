@@ -13,7 +13,7 @@
 #include "eckit/exception/Exceptions.h"
 #include "atlas/Mesh.h"
 #include "atlas/FunctionSpace.h"
-#include "atlas/Nodes.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/runtime/ErrorHandling.h"
 
 #include "atlas/functionspace/EdgeBasedFiniteVolume.h"

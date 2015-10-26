@@ -31,7 +31,7 @@
 #include "atlas/Field.h"
 #include "atlas/FieldSet.h"
 #include "atlas/Parameters.h"
-#include "atlas/Nodes.h"
+#include "atlas/mesh/Nodes.h"
 
 using namespace eckit;
 using atlas::functionspace::Nodes;
@@ -402,7 +402,7 @@ void Gmsh::read(const PathName& file_path, Mesh& mesh ) const
   mesh.createNodes(nb_nodes);
   mesh.nodes().metadata().set<long>("type",Entity::NODES);
 
-  Nodes& nodes = mesh.nodes();
+  mesh::Nodes& nodes = mesh.nodes();
 
   nodes.add( Field::create<double>("xyz",make_shape(nb_nodes,3) ) );
 
@@ -639,7 +639,7 @@ void Gmsh::write(const Mesh& mesh, const PathName& file_path) const
 
   std::string nodes_field = options.get<std::string>("nodes");
 
-  const Nodes& nodes    = mesh.nodes();
+  const mesh::Nodes& nodes    = mesh.nodes();
   ArrayView<double,2> coords  ( nodes.field( nodes_field ) );
   ArrayView<gidx_t,   1> glb_idx ( nodes.global_index() );
 

@@ -14,7 +14,7 @@
 #include "atlas/atlas_config.h"
 #include "atlas/mpi/Collectives.h"
 #include "atlas/Mesh.h"
-#include "atlas/Nodes.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/mpl/HaloExchange.h"
 #include "atlas/mpl/GatherScatter.h"
 #include "atlas/util/IsGhost.h"

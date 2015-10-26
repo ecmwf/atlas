@@ -42,7 +42,7 @@ function Mesh__function_space(this,name) result(function_space)
 end function Mesh__function_space
 
 function Mesh__create_nodes(this,nb_nodes) result(nodes)
-  type(atlas_Nodes) :: nodes
+  type(atlas_mesh_Nodes) :: nodes
   class(atlas_Mesh), intent(in) :: this
   integer, intent(in) :: nb_nodes
   call nodes%reset_c_ptr( atlas__Mesh__create_nodes(this%c_ptr(),nb_nodes) )
@@ -51,7 +51,7 @@ end function
 
 function Mesh__nodes(this) result(nodes)
   class(atlas_Mesh), intent(in) :: this
-  type(atlas_Nodes) :: nodes
+  type(atlas_mesh_Nodes) :: nodes
   call nodes%reset_c_ptr( atlas__Mesh__nodes(this%c_ptr()) )
   if( nodes%is_null() ) write(0,*) 'call abort()'
 end function

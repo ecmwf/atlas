@@ -1,7 +1,7 @@
 ! (C) Copyright 2013-2015 ECMWF.
 
 
-TYPE, extends(atlas_object) :: atlas_Nodes
+TYPE, extends(atlas_object) :: atlas_mesh_Nodes
 contains
 procedure, public :: size => Nodes__size
 procedure, public :: resize => Nodes__resize
@@ -23,7 +23,7 @@ procedure, public :: remote_index => Nodes__remote_index
 procedure, public :: partition => Nodes__partition
 procedure, public :: ghost => Nodes__ghost
 
-procedure, public :: delete => atlas_Nodes__delete
+procedure, public :: delete => atlas_mesh_Nodes__delete
 
 
 END TYPE

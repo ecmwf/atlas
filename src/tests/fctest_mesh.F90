@@ -19,7 +19,7 @@ use atlas_grids_module
 use iso_c_binding
 implicit none
 type(atlas_Mesh) :: mesh
-type(atlas_Nodes) :: nodes
+type(atlas_mesh_Nodes) :: nodes
 
 
 type, extends(atlas_Config) :: atlas_FieldParametrisation
@@ -474,7 +474,7 @@ TEST( test_fv )
       type(atlas_functionspace_Nodes) :: nodes_fs
 
       type(atlas_FunctionSpace) :: edges
-      type(atlas_Nodes) :: nodes
+      type(atlas_mesh_Nodes) :: nodes
 
       integer, allocatable :: nloen(:)
       integer, allocatable :: part(:)

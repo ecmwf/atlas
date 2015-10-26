@@ -11,8 +11,8 @@
 /// @author Willem Deconinck
 /// @date August 2015
 
-#ifndef atlas_Nodes_H
-#define atlas_Nodes_H
+#ifndef atlas_mesh_Nodes_H
+#define atlas_mesh_Nodes_H
 
 #include <string>
 #include <map>
@@ -24,6 +24,7 @@
 namespace atlas { class Field; }
 
 namespace atlas {
+namespace mesh {
 
 /**
  * \brief Nodes class that owns a collection of fields defined in nodes of the mesh
@@ -106,21 +107,22 @@ private:
 #define Char char
 extern "C"
 {
-int atlas__Nodes__size (Nodes* This);
-void atlas__Nodes__resize (Nodes* This, int size);
-int atlas__Nodes__nb_fields (Nodes* This);
-void atlas__Nodes__add (Nodes* This, Field* field);
-void atlas__Nodes__remove_field (Nodes* This, char* name);
-int atlas__Nodes__has_field (Nodes* This, char* name);
-Field* atlas__Nodes__field_by_name (Nodes* This, char* name);
-Field* atlas__Nodes__field_by_idx (Nodes* This, int idx);
-Metadata* atlas__Nodes__metadata(Nodes* This);
-void atlas__Nodes__str (Nodes* This, Char* &str, int &size);
+int atlas__mesh__Nodes__size (Nodes* This);
+void atlas__mesh__Nodes__resize (Nodes* This, int size);
+int atlas__mesh__Nodes__nb_fields (Nodes* This);
+void atlas__mesh__Nodes__add (Nodes* This, Field* field);
+void atlas__mesh__Nodes__remove_field (Nodes* This, char* name);
+int atlas__mesh__Nodes__has_field (Nodes* This, char* name);
+Field* atlas__mesh__Nodes__field_by_name (Nodes* This, char* name);
+Field* atlas__mesh__Nodes__field_by_idx (Nodes* This, int idx);
+Metadata* atlas__mesh__Nodes__metadata(Nodes* This);
+void atlas__mesh__Nodes__str (Nodes* This, Char* &str, int &size);
 }
 #undef Char
 
 //------------------------------------------------------------------------------------------------------
 
+} // namespace mesh
 } // namespace atlas
 
 #endif

@@ -21,7 +21,7 @@
 #include "atlas/Field.h"
 #include "atlas/Grid.h"
 #include "atlas/Parameters.h"
-#include "atlas/Nodes.h"
+#include "atlas/mesh/Nodes.h"
 
 namespace atlas {
 
@@ -96,11 +96,11 @@ FunctionSpace& Mesh::function_space( size_t idx) const
 }
 
 
-Nodes& Mesh::createNodes(const Grid& g)
+mesh::Nodes& Mesh::createNodes(const Grid& g)
 {
   set_grid(g);
   size_t nb_nodes = g.npts();
-  Nodes& nodes = createNodes(nb_nodes);
+  mesh::Nodes& nodes = createNodes(nb_nodes);
 
   g.fillLonLat(nodes.lonlat().data<double>(), nb_nodes*2);
   return nodes;
@@ -124,7 +124,7 @@ void Mesh::print(std::ostream& os) const
     os << "]";
 }
 
-Nodes& Mesh::createNodes( size_t size )
+mesh::Nodes& Mesh::createNodes( size_t size )
 {
   if( nodes_ )
   {
@@ -134,7 +134,7 @@ Nodes& Mesh::createNodes( size_t size )
                         << std::endl;
     //throw eckit::SeriousBug("Cannot create nodes in mesh as they already exist.", Here());
   }
-  nodes_.reset( new Nodes(size) );
+  nodes_.reset( new mesh::Nodes(size) );
   return *nodes_;
 }
 
@@ -198,7 +198,7 @@ FunctionSpace* atlas__Mesh__function_space (Mesh* This, char* name) {
   return NULL;
 }
 
-Nodes* atlas__Mesh__create_nodes (Mesh* This, int nb_nodes)
+mesh::Nodes* atlas__Mesh__create_nodes (Mesh* This, int nb_nodes)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
@@ -207,7 +207,7 @@ Nodes* atlas__Mesh__create_nodes (Mesh* This, int nb_nodes)
   return NULL;
 }
 
-Nodes* atlas__Mesh__nodes (Mesh* This) {
+mesh::Nodes* atlas__Mesh__nodes (Mesh* This) {
   ATLAS_ERROR_HANDLING(
     ASSERT( This != NULL );
     return &This->nodes();

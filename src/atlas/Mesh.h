@@ -28,7 +28,7 @@
 
 // Forward declarations
 namespace atlas { class Grid; }
-namespace atlas { class Nodes; }
+namespace atlas { namespace mesh { class Nodes; } }
 namespace atlas { class FunctionSpace; }
 namespace atlas { class GridDistribution; }
 namespace atlas { namespace mpl { class HaloExchange; } }
@@ -129,12 +129,12 @@ public: // methods
     void print(std::ostream&) const;
 
 
-    Nodes& createNodes(const Grid& g);
+    mesh::Nodes& createNodes(const Grid& g);
 
-    Nodes& createNodes( size_t );
+    mesh::Nodes& createNodes( size_t );
 
-    const Nodes& nodes() const { ASSERT(nodes_); return *nodes_; }
-          Nodes& nodes()       { ASSERT(nodes_); return *nodes_; }
+    const mesh::Nodes& nodes() const { ASSERT(nodes_); return *nodes_; }
+          mesh::Nodes& nodes()       { ASSERT(nodes_); return *nodes_; }
 
     const Store<const mpl::HaloExchange>& halo_exchange() const { return halo_exchange_; }
           Store<const mpl::HaloExchange>& halo_exchange()       { return halo_exchange_; }
@@ -164,7 +164,7 @@ private: // members to be removed
 private: // members
 
     Metadata   metadata_;
-    eckit::SharedPtr<Nodes> nodes_;
+    eckit::SharedPtr<mesh::Nodes> nodes_;
     Store<const mpl::HaloExchange> halo_exchange_;
     Store<const mpl::GatherScatter> gather_scatter_;
     Store<const mpl::Checksum> checksum_;
@@ -174,15 +174,17 @@ private: // members
 //----------------------------------------------------------------------------------------------------------------------
 
 // C wrapper interfaces to C++ routines
+#define mesh_Nodes mesh::Nodes
 extern "C"
 {
 	Mesh* atlas__Mesh__new ();
 	void atlas__Mesh__delete (Mesh* This);
-  Nodes* atlas__Mesh__create_nodes (Mesh* This, int nb_nodes);
+  mesh_Nodes* atlas__Mesh__create_nodes (Mesh* This, int nb_nodes);
   void atlas__Mesh__create_function_space (Mesh* This, char* name,char* shape_func,int shape[], int shape_size, int fortran_ordering);
 	FunctionSpace* atlas__Mesh__function_space (Mesh* This, char* name);
-  Nodes* atlas__Mesh__nodes (Mesh* This);
+  mesh_Nodes* atlas__Mesh__nodes (Mesh* This);
 }
+#undef mesh_Nodes
 
 //----------------------------------------------------------------------------------------------------------------------
 

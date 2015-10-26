@@ -28,7 +28,7 @@
 #include "atlas/Field.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Mesh.h"
-#include "atlas/Nodes.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/Parameters.h"
 #include "atlas/meshgen/EqualRegionsPartitioner.h"
 #include "atlas/grids/ReducedGrid.h"
@@ -808,7 +808,7 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
 
 
 
-  Nodes& nodes = mesh.createNodes(nnodes);
+  mesh::Nodes& nodes = mesh.createNodes(nnodes);
 
   ArrayView<double,2> lonlat        ( nodes.lonlat() );
   ArrayView<gidx_t,1> glb_idx       ( nodes.global_index() );

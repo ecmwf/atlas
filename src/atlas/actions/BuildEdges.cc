@@ -21,7 +21,7 @@
 #include "atlas/Field.h"
 #include "atlas/actions/BuildEdges.h"
 #include "atlas/Parameters.h"
-#include "atlas/Nodes.h"
+#include "atlas/mesh/Nodes.h"
 
 #include "atlas/util/ArrayView.h"
 #include "atlas/Array.h"
@@ -82,7 +82,7 @@ void build_element_to_edge_connectivity( Mesh& mesh )
     }
   }
 
-  Nodes& nodes = mesh.nodes();
+  mesh::Nodes& nodes = mesh.nodes();
   FunctionSpace& edges = mesh.function_space("edges");
 
   size_t nb_edges = edges.shape(0);
@@ -188,7 +188,7 @@ void build_element_to_edge_connectivity( Mesh& mesh )
 
 void build_node_to_edge_connectivity( Mesh& mesh )
 {
-  Nodes& nodes = mesh.nodes();
+  mesh::Nodes& nodes = mesh.nodes();
   FunctionSpace& edges = mesh.function_space("edges");
   int nb_nodes = nodes.size();
   size_t nb_edges = edges.shape(0);
@@ -242,7 +242,7 @@ void build_node_to_edge_connectivity( Mesh& mesh )
 
 void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& nb_pole_edges )
 {
-  Nodes& nodes   = mesh.nodes();
+  mesh::Nodes& nodes   = mesh.nodes();
   ArrayView<double,2> lonlat    ( nodes.lonlat() );
   ArrayView<gidx_t,1> glb_idx   ( nodes.global_index() );
   ArrayView<int,   1> part      ( nodes.partition() );
@@ -368,7 +368,7 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
 
 struct ComputeUniquePoleEdgeIndex
 {
-  ComputeUniquePoleEdgeIndex( const Nodes& nodes )
+  ComputeUniquePoleEdgeIndex( const mesh::Nodes& nodes )
   {
     lonlat = ArrayView<double,2> ( nodes.lonlat() );
   }
@@ -398,7 +398,7 @@ struct ComputeUniquePoleEdgeIndex
 
 void build_edges( Mesh& mesh )
 {
-  Nodes& nodes   = mesh.nodes();
+  mesh::Nodes& nodes   = mesh.nodes();
   ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
   ArrayView<int,1> part       ( nodes.partition() );
   ArrayView<double,2> lonlat  ( nodes.lonlat() );
@@ -501,7 +501,7 @@ void build_edges( Mesh& mesh )
 
 void build_pole_edges( Mesh& mesh )
 {
-  Nodes& nodes   = mesh.nodes();
+  mesh::Nodes& nodes   = mesh.nodes();
 
   ArrayView<int,1> part ( nodes.partition() );
   size_t nb_edges = 0;

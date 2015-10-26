@@ -23,7 +23,7 @@
 #include "atlas/FunctionSpace.h"
 #include "atlas/Mesh.h"
 #include "atlas/Metadata.h"
-#include "atlas/Nodes.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/Parameters.h"
 #include "atlas/meshgen/EqualRegionsPartitioner.h"
 #include "atlas/grids/grids.h"
@@ -45,7 +45,7 @@ namespace test {
 class IsGhost
 {
 public:
-  IsGhost( const Nodes& nodes )
+  IsGhost( const mesh::Nodes& nodes )
   {
     part_   = ArrayView<int,1> (nodes.partition() );
     ridx_   = IndexView<int,1> (nodes.remote_index() );
@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE( test1 )
 
 	m->createNodes(10);
 
-  Nodes& nodes = m->nodes();
+  mesh::Nodes& nodes = m->nodes();
   ArrayView<double,2> lonlat ( nodes.lonlat());
   ArrayView<gidx_t,1> glb_idx( nodes.global_index());
   ArrayView<int,1> part ( nodes.partition() );
@@ -180,7 +180,7 @@ BOOST_AUTO_TEST_CASE( test2 )
   Mesh* m = generate( grids::rgg::N32() );
   actions::build_parallel_fields(*m);
 
-  Nodes& nodes = m->nodes();
+  mesh::Nodes& nodes = m->nodes();
   IndexView<int,1> loc_idx ( nodes.remote_index() );
   ArrayView<int,1> part    ( nodes.partition());
   ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );

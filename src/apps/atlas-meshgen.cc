@@ -35,7 +35,7 @@
 #include "atlas/actions/BuildXYZField.h"
 #include "atlas/mpi/mpi.h"
 #include "atlas/Mesh.h"
-#include "atlas/Nodes.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/grids/grids.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/functionspace/Nodes.h"

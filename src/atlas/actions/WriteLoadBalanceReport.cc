@@ -14,7 +14,7 @@
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/mpi/mpi.h"
 #include "atlas/Mesh.h"
-#include "atlas/Nodes.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/actions/WriteLoadBalanceReport.h"
 #include "atlas/util/IsGhost.h"
 #include "atlas/util/IndexView.h"
@@ -59,7 +59,7 @@ void write_load_balance_report( const Mesh& mesh, std::ostream& ofs )
   std::vector<double> nb_ghost_ratio_edges(npart,0);
 
   {
-    const Nodes& nodes = mesh.nodes();
+    const mesh::Nodes& nodes = mesh.nodes();
     IsGhost is_ghost(nodes);
     int nb_nodes = nodes.size();
     int nowned(0);
@@ -98,7 +98,7 @@ void write_load_balance_report( const Mesh& mesh, std::ostream& ofs )
 
   if( has_edges )
   {
-    const Nodes& nodes = mesh.nodes();
+    const mesh::Nodes& nodes = mesh.nodes();
     IsGhost is_ghost(nodes);
     FunctionSpace& edges = mesh.function_space("edges");
     IndexView<int,2> edge_nodes ( edges.field("nodes") );

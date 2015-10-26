@@ -27,7 +27,7 @@
 #include "atlas/io/Gmsh.h"
 #include "atlas/Config.h"
 #include "atlas/Mesh.h"
-#include "atlas/Nodes.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Field.h"
 #include "atlas/Metadata.h"
@@ -78,7 +78,7 @@ MinimalMesh::MinimalMesh(int N, long lon[])
 
 double compute_lonlat_area(Mesh& mesh)
 {
-  Nodes& nodes  = mesh.nodes();
+  mesh::Nodes& nodes  = mesh.nodes();
   FunctionSpace& quads  = mesh.function_space("quads");
   FunctionSpace& triags = mesh.function_space("triags");
   ArrayView<double,2> lonlat  ( nodes.lonlat() );
@@ -354,7 +354,7 @@ BOOST_AUTO_TEST_CASE( test_rgg_meshgen_many_parts )
         Gmsh().write(*m,filename.str());
 
 
-    Nodes& nodes = m->nodes();
+    mesh::Nodes& nodes = m->nodes();
     int nb_nodes = nodes.size();
 
     // Test if all nodes are connected

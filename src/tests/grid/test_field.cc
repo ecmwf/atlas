@@ -15,7 +15,7 @@
 #include "atlas/mpi/mpi.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Grid.h"
-#include "atlas/Nodes.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/grids/grids.h"
 #include "atlas/FieldSet.h"
 #include "atlas/meshgen/Delaunay.h"
@@ -80,7 +80,7 @@ void TestField::test_constructor()
 
   std::string sname("field_name");
 
-  atlas::Nodes& nodes  = mesh.nodes();
+  mesh::Nodes& nodes  = mesh.nodes();
 
   ArrayView<double,1> data ( nodes.add( Field::create<double>( sname,make_shape(nodes.size(),1) ) ) );
 

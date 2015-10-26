@@ -19,7 +19,7 @@
 #include "tests/TestMeshes.h"
 #include "atlas/io/Gmsh.h"
 #include "atlas/Mesh.h"
-#include "atlas/Nodes.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/util/IndexView.h"
 #include "atlas/util/ArrayView.h"
@@ -44,7 +44,7 @@ namespace test {
 
 double dual_volume(Mesh& mesh)
 {
-  Nodes& nodes = mesh.nodes();
+  mesh::Nodes& nodes = mesh.nodes();
   IsGhost is_ghost_node(nodes);
   int nb_nodes = nodes.size();
   ArrayView<double,1> dual_volumes ( nodes.field("dual_volumes") );

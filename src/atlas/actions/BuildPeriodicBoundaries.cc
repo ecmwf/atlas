@@ -16,7 +16,7 @@
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/mpi/mpi.h"
 #include "atlas/Mesh.h"
-#include "atlas/Nodes.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/actions/BuildPeriodicBoundaries.h"
 #include "atlas/Parameters.h"
@@ -51,7 +51,7 @@ void build_periodic_boundaries( Mesh& mesh )
 
     int mypart = eckit::mpi::rank();
 
-    Nodes& nodes = mesh.nodes();
+    mesh::Nodes& nodes = mesh.nodes();
 
     ArrayView<int,1> flags( nodes.field("flags") );
     IndexView<int,1> ridx ( nodes.remote_index() );

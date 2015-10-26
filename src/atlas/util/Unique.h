@@ -18,7 +18,7 @@
 #include "atlas/Parameters.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Field.h"
-#include "atlas/Nodes.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/IndexView.h"
 #include "atlas/util/LonLatMicroDeg.h"
@@ -60,7 +60,7 @@ namespace util {
       // UniqueLonLat() {}
 
       /// @brief Constructor, needs nodes functionspace to cache the lonlat field
-      UniqueLonLat( const Nodes& nodes );
+      UniqueLonLat( const mesh::Nodes& nodes );
 
       /// @brief Compute unique positive index of a node defined by node index.
       /// @return uidx_t Return type depends on ATLAS_BITS_GLOBAL [32/64] bits
@@ -81,7 +81,7 @@ namespace util {
       /// @brief update the internally cached lonlat view if the field has changed
       void update();
     private:
-      const Nodes* funcspace;
+      const mesh::Nodes* nodes;
       ArrayView<double,2> lonlat;
   };
 
@@ -171,8 +171,8 @@ inline uidx_t unique_lonlat( const double elem_lonlat[], size_t npts )
 }
 
 
-inline UniqueLonLat::UniqueLonLat( const Nodes& nodes )
-  : funcspace(&nodes)
+inline UniqueLonLat::UniqueLonLat( const mesh::Nodes& _nodes )
+  : nodes(&_nodes)
 {
   update();
 }
@@ -226,7 +226,7 @@ inline uidx_t UniqueLonLat::operator()( const int elem_nodes[], size_t npts ) co
 
 inline void UniqueLonLat::update()
 {
-  lonlat = ArrayView<double,2> ( funcspace->lonlat() );
+  lonlat = ArrayView<double,2> ( nodes->lonlat() );
 }
 
 // ----------------------------------------------------------------------------

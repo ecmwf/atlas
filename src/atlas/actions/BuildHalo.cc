@@ -24,7 +24,7 @@
 #include "atlas/Mesh.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Field.h"
-#include "atlas/Nodes.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/actions/BuildHalo.h"
 #include "atlas/Parameters.h"
 #include "atlas/util/ArrayView.h"
@@ -83,7 +83,7 @@ public:
 void increase_halo( Mesh& mesh )
 {
   //DEBUG( "\n\n" << "Increase halo!! \n\n");
-  Nodes& nodes         = mesh.nodes();
+  mesh::Nodes& nodes         = mesh.nodes();
   ArrayView<double,2> lonlat   ( nodes.lonlat() );
   ArrayView<gidx_t,1> glb_idx  ( nodes.global_index() );
   ArrayView<int   ,1> part     ( nodes.partition() );
@@ -646,7 +646,7 @@ typedef std::vector< std::vector< ElementRef > > Node2Elem;
 
 void build_lookup_node2elem( const Mesh& mesh, Node2Elem& node2elem )
 {
-  const Nodes& nodes  = mesh.nodes();
+  const mesh::Nodes& nodes  = mesh.nodes();
 
   node2elem.resize(nodes.size());
   for( size_t jnode=0; jnode<node2elem.size(); ++jnode )
@@ -682,7 +682,7 @@ void accumulate_partition_bdry_nodes( Mesh& mesh, std::vector<int>& bdry_nodes )
 {
   std::set<int> bdry_nodes_set;
 
-  Nodes& nodes       = mesh.nodes();
+  mesh::Nodes& nodes       = mesh.nodes();
   FunctionSpace& quads       = mesh.function_space( "quads" );
   FunctionSpace& triags      = mesh.function_space( "triags" );
 
@@ -769,7 +769,7 @@ typedef std::map<uid_t,int> Uid2Node;
 void build_lookup_uid2node( Mesh& mesh, Uid2Node& uid2node )
 {
   Notification notes;
-  Nodes& nodes         = mesh.nodes();
+  mesh::Nodes& nodes         = mesh.nodes();
   ArrayView<double,2> lonlat   ( nodes.lonlat() );
   ArrayView<gidx_t,1> glb_idx  ( nodes.global_index() );
   int nb_nodes = nodes.size();
@@ -953,7 +953,7 @@ public:
   void update()
   {
     compute_uid.update();
-    Nodes& nodes         = mesh.nodes();
+    mesh::Nodes& nodes         = mesh.nodes();
     lonlat   = ArrayView<double,2> ( nodes.lonlat() );
     glb_idx  = ArrayView<gidx_t,1> ( nodes.global_index() );
     part     = ArrayView<int   ,1> ( nodes.partition() );
@@ -1114,7 +1114,7 @@ public:
 
   void add_nodes(Buffers& buf)
   {
-    Nodes& nodes = mesh.nodes();
+    mesh::Nodes& nodes = mesh.nodes();
     int nb_nodes = nodes.size();
 
     // Nodes might be duplicated from different Tasks. We need to identify unique entries

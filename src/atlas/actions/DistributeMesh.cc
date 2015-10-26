@@ -16,7 +16,7 @@
 #include "atlas/Array.h"
 #include "atlas/Field.h"
 #include "atlas/Mesh.h"
-#include "atlas/Nodes.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/meshgen/EqualRegionsPartitioner.h"
 #include "atlas/Parameters.h"
@@ -31,7 +31,7 @@ void distribute_mesh( Mesh& mesh )
 {
   int mypart = eckit::mpi::rank();
 
-  Nodes& nodes = mesh.nodes();
+  mesh::Nodes& nodes = mesh.nodes();
   size_t nb_nodes = nodes.size();
   ArrayView<double,2> lonlat    ( nodes.lonlat() );
   ArrayView<int,   1> node_part ( nodes.partition()   );

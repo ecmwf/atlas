@@ -52,7 +52,7 @@ const Point_3 origin = Point_3(CGAL::ORIGIN);
 #include "atlas/util/IndexView.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Mesh.h"
-#include "atlas/Nodes.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/Parameters.h"
 #include "atlas/Grid.h"
 #include "atlas/util/PointSet.h"
@@ -95,7 +95,7 @@ static void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, Poin
 
     Timer t ("Creating atlas data structure");
 
-    Nodes& nodes = mesh.nodes();
+    mesh::Nodes& nodes = mesh.nodes();
 
     ASSERT( points.size() == nodes.size() );
 

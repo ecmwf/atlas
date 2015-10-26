@@ -15,7 +15,7 @@
 #include "atlas/Field.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Mesh.h"
-#include "atlas/Nodes.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/util/ArrayView.h"
 
 namespace atlas {
@@ -33,7 +33,7 @@ Field& BuildXYZField::operator()(Mesh& mesh) const
   return operator()(mesh.nodes());
 }
 
-Field& BuildXYZField::operator()(Nodes& nodes) const
+Field& BuildXYZField::operator()(mesh::Nodes& nodes) const
 {
   if( !nodes.has_field(name_) )
   {

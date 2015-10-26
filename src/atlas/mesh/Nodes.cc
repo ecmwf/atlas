@@ -9,11 +9,12 @@
  */
 
 #include "atlas/runtime/ErrorHandling.h"
-#include "atlas/Nodes.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/Field.h"
 #include "atlas/Parameters.h"
 
 namespace atlas {
+namespace mesh {
 
 //------------------------------------------------------------------------------------------------------
 
@@ -140,7 +141,7 @@ void Nodes::print(std::ostream& os) const
 //-----------------------------------------------------------------------------
 
 extern "C" {
-int atlas__Nodes__size (Nodes* This)
+int atlas__mesh__Nodes__size (Nodes* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -148,14 +149,14 @@ int atlas__Nodes__size (Nodes* This)
   );
   return 0;
 }
-void atlas__Nodes__resize (Nodes* This, int size)
+void atlas__mesh__Nodes__resize (Nodes* This, int size)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     This->resize(size);
   );
 }
-int atlas__Nodes__nb_fields (Nodes* This)
+int atlas__mesh__Nodes__nb_fields (Nodes* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -164,7 +165,7 @@ int atlas__Nodes__nb_fields (Nodes* This)
   return 0;
 }
 
-void atlas__Nodes__add (Nodes* This, Field* field)
+void atlas__mesh__Nodes__add (Nodes* This, Field* field)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -173,7 +174,7 @@ void atlas__Nodes__add (Nodes* This, Field* field)
   );
 }
 
-void atlas__Nodes__remove_field (Nodes* This, char* name)
+void atlas__mesh__Nodes__remove_field (Nodes* This, char* name)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -181,7 +182,7 @@ void atlas__Nodes__remove_field (Nodes* This, char* name)
   );
 }
 
-int atlas__Nodes__has_field (Nodes* This, char* name)
+int atlas__mesh__Nodes__has_field (Nodes* This, char* name)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -190,7 +191,7 @@ int atlas__Nodes__has_field (Nodes* This, char* name)
   return 0;
 }
 
-Field* atlas__Nodes__field_by_name (Nodes* This, char* name)
+Field* atlas__mesh__Nodes__field_by_name (Nodes* This, char* name)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -199,7 +200,7 @@ Field* atlas__Nodes__field_by_name (Nodes* This, char* name)
   return 0;
 }
 
-Field* atlas__Nodes__field_by_idx (Nodes* This, int idx)
+Field* atlas__mesh__Nodes__field_by_idx (Nodes* This, int idx)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -208,7 +209,7 @@ Field* atlas__Nodes__field_by_idx (Nodes* This, int idx)
   return 0;
 }
 
-Metadata* atlas__Nodes__metadata(Nodes* This)
+Metadata* atlas__mesh__Nodes__metadata(Nodes* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -217,7 +218,7 @@ Metadata* atlas__Nodes__metadata(Nodes* This)
   return 0;
 }
 
-void atlas__Nodes__str (Nodes* This, char* &str, int &size)
+void atlas__mesh__Nodes__str (Nodes* This, char* &str, int &size)
 {
   ATLAS_ERROR_HANDLING(
     std::stringstream ss;
@@ -231,6 +232,6 @@ void atlas__Nodes__str (Nodes* This, char* &str, int &size)
 
 }
 
-
+}  // namespace mesh
 }  // namespace atlas
 

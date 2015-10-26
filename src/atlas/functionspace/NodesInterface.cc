@@ -41,7 +41,7 @@ atlas::Mesh* atlas__NodesFunctionSpace__mesh(Nodes* This)
   return &This->mesh();
 }
 
-atlas::Nodes* atlas__NodesFunctionSpace__nodes(Nodes* This)
+mesh::Nodes* atlas__NodesFunctionSpace__nodes(Nodes* This)
 {
   ASSERT(This);
   return &This->nodes();

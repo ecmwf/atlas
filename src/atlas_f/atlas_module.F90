@@ -461,18 +461,18 @@ subroutine atlas_build_parallel_fields(mesh)
 end subroutine atlas_build_parallel_fields
 
 subroutine atlas_build_nodes_parallel_fields(nodes)
-  type(atlas_Nodes), intent(inout) :: nodes
+  type(atlas_mesh_Nodes), intent(inout) :: nodes
   call atlas__build_nodes_parallel_fields(nodes%c_ptr())
 end subroutine atlas_build_nodes_parallel_fields
 
 subroutine atlas_renumber_nodes_glb_idx(nodes)
-  type(atlas_Nodes), intent(inout) :: nodes
+  type(atlas_mesh_Nodes), intent(inout) :: nodes
   call atlas__renumber_nodes_glb_idx(nodes%c_ptr())
 end subroutine atlas_renumber_nodes_glb_idx
 
 subroutine atlas_build_edges_parallel_fields(edges, nodes)
   type(atlas_FunctionSpace), intent(inout) :: edges
-  type(atlas_Nodes), intent(inout) :: nodes
+  type(atlas_mesh_Nodes), intent(inout) :: nodes
   call atlas__build_edges_parallel_fields(edges%c_ptr(),nodes%c_ptr())
 end subroutine atlas_build_edges_parallel_fields
 

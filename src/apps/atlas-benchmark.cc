@@ -60,7 +60,7 @@
 #include "atlas/actions/BuildDualMesh.h"
 #include "atlas/Mesh.h"
 #include "atlas/meshgen/MeshGenerator.h"
-#include "atlas/Nodes.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/grids/grids.h"
 #include "atlas/io/Gmsh.h"
 #include "atlas/atlas_omp.h"

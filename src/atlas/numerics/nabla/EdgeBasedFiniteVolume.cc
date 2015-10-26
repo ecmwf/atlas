@@ -13,7 +13,7 @@
 #include "atlas/numerics/nabla/EdgeBasedFiniteVolume.h"
 #include "atlas/functionspace/EdgeBasedFiniteVolume.h"
 #include "atlas/Mesh.h"
-#include "atlas/Nodes.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/Field.h"
 
 #include "atlas/util/ArrayView.h"
@@ -57,7 +57,7 @@ EdgeBasedFiniteVolume::~EdgeBasedFiniteVolume()
 void EdgeBasedFiniteVolume::setup()
 {
   atlas::FunctionSpace &edges = fvm_->mesh().function_space("edges");
-  atlas::Nodes const   &nodes = fvm_->nodes();
+  mesh::Nodes const   &nodes = fvm_->nodes();
 
   const size_t nnodes = nodes.size();
   const size_t nedges = edges.shape(0);
@@ -85,7 +85,7 @@ void EdgeBasedFiniteVolume::gradient(const Field& scalar_field, Field& grad_fiel
   const double deg2rad = M_PI/180.;
 
   atlas::FunctionSpace &edges = fvm_->mesh().function_space("edges");
-  atlas::Nodes const   &nodes = fvm_->nodes();
+  mesh::Nodes const   &nodes = fvm_->nodes();
 
   const size_t nnodes = nodes.size();
   const size_t nedges = edges.shape(0);
@@ -161,7 +161,7 @@ void EdgeBasedFiniteVolume::divergence(const Field& vector_field, Field& div_fie
   const double deg2rad = M_PI/180.;
 
   atlas::FunctionSpace &edges = fvm_->mesh().function_space("edges");
-  atlas::Nodes const   &nodes = fvm_->nodes();
+  mesh::Nodes const   &nodes = fvm_->nodes();
 
   const size_t nnodes = nodes.size();
   const size_t nedges = edges.shape(0);
@@ -240,7 +240,7 @@ void EdgeBasedFiniteVolume::curl(const Field& vector_field, Field& curl_field) c
   const double deg2rad = M_PI/180.;
 
   atlas::FunctionSpace &edges = fvm_->mesh().function_space("edges");
-  atlas::Nodes const   &nodes = fvm_->nodes();
+  mesh::Nodes const   &nodes = fvm_->nodes();
 
   const size_t nnodes = nodes.size();
   const size_t nedges = edges.shape(0);

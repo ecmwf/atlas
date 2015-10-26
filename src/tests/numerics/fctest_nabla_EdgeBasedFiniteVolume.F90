@@ -60,7 +60,7 @@ END_TEST
 TEST( test_nabla )
 type(atlas_ReducedGrid) :: grid
 type(atlas_Mesh) :: mesh
-type(atlas_Nodes) :: nodes
+type(atlas_mesh_Nodes) :: nodes
 type(atlas_MeshGenerator) :: meshgenerator
 type(atlas_functionspace_EdgeBasedFiniteVolume) :: fvm
 type(atlas_Nabla) :: nabla

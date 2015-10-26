@@ -18,7 +18,9 @@ namespace atlas {
 class FunctionSpace;
 class Mesh;
 class Field;
-class Nodes;
+namespace mesh {
+  class Nodes;
+}
 
 namespace actions {
 
@@ -29,7 +31,7 @@ public:
     explicit BuildXYZField(const std::string& name = "xyz");
 
     Field& operator()(Mesh&) const;
-    Field& operator()(Nodes&) const;
+    Field& operator()(mesh::Nodes&) const;
 
 private:
 

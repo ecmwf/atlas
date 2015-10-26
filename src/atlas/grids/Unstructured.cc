@@ -16,7 +16,7 @@
 #include "atlas/util/ArrayView.h"
 #include "atlas/Mesh.h"
 #include "atlas/Field.h"
-#include "atlas/Nodes.h"
+#include "atlas/mesh/Nodes.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Parameters.h"
 

@@ -27,7 +27,7 @@
 #include "atlas/io/PointCloud.h"
 #include "atlas/Mesh.h"
 #include "atlas/Parameters.h"
-#include "atlas/Nodes.h"
+#include "atlas/mesh/Nodes.h"
 
 namespace atlas {
 namespace io {
@@ -95,7 +95,7 @@ Mesh* PointCloud::read(const eckit::PathName& path, std::vector<std::string>& vf
     if (nb_columns<2)
       throw eckit::BadValue(msg+"invalid number of columns (failed: nb_columns>=2)");
 
-    Nodes& nodes = mesh->createNodes(nb_pts);
+    mesh::Nodes& nodes = mesh->createNodes(nb_pts);
     ArrayView< double, 2 > lonlat( nodes.lonlat() );
 
     // header, part 2:
@@ -160,7 +160,7 @@ void PointCloud::write(const eckit::PathName& path, const Mesh& mesh)
   // operate in mesh function space, creating transversing data structures
   // @warning: several copy operations here
 
-  const Nodes& nodes = mesh.nodes();
+  const mesh::Nodes& nodes = mesh.nodes();
 
   const ArrayView< double, 2 > lonlat(nodes.lonlat());
   if (!lonlat.size())
