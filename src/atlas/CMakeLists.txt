@@ -247,6 +247,10 @@ Metadata.cc
 Metadata.h
 mesh/Nodes.cc
 mesh/Nodes.h
+mesh/Elements.h
+mesh/Elements.cc
+mesh/ElementType.h
+mesh/ElementType.cc
 Parameters.h
 Partitioner.cc
 Partitioner.h
