@@ -36,7 +36,9 @@ public: // methods
 
 //-- Accessors
 
+  virtual const std::string& name() const = 0;
   virtual size_t nb_nodes() const = 0;
+  virtual size_t nb_edges() const = 0;
 
 };
 

@@ -10,6 +10,7 @@
 
 #include <cmath>
 #include <string>
+#include <iterator>     // std::iterator, std::input_iterator_tag
 
 #include "atlas/atlas_config.h"
 
@@ -24,6 +25,7 @@
 #include "atlas/mesh/Elements.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/Field.h"
+#include "atlas/util/IndexView.h"
 
 // ------------------------------------------------------------------
 
@@ -32,11 +34,25 @@ using namespace atlas::mesh;
 namespace atlas {
 namespace test {
 
-class MyElementType : public ElementType
+class Quadrilateral : public ElementType
 {
-  virtual ~MyElementType() {}
-  virtual size_t nb_nodes() const { return 2; }
+public:
+  virtual ~Quadrilateral() {}
+  virtual size_t nb_nodes() const { return 4; }
+  virtual size_t nb_edges() const { return 4; }
+  virtual const std::string& name() const { static std::string s("Quadrilateral"); return s; }
 };
+
+class Triangle : public ElementType
+{
+public:
+  virtual ~Triangle() {}
+  virtual size_t nb_nodes() const { return 3; }
+  virtual size_t nb_edges() const { return 3; }
+  virtual const std::string& name() const { static std::string s("Triangle"); return s; }
+};
+
+
 
 // ===================================================================
 //                               BEGIN TESTS
@@ -54,12 +70,53 @@ BOOST_AUTO_TEST_SUITE( test_elements )
 
 BOOST_AUTO_TEST_CASE( simple )
 {
-  Nodes nodes(4);
+  Nodes nodes(6);
   Elements elements(nodes);
-  elements.add( new MyElementType(), 4 );
 
-  size_t connectivity[] = {0,1,1,2};
-  elements.add( new MyElementType(), 2, connectivity );
+  size_t triags[] = {
+    1,5,3,
+    1,5,2
+  };
+  elements.add( new Triangle(), 2, triags );
+
+  size_t quads[] = {
+    0,1,2,3
+  };
+  elements.add( new Quadrilateral(), 1, quads );
+
+  {
+    const Connectivity& connectivity = elements.node_connectivity();
+    for( size_t e=0; e<elements.size(); ++e ) {
+      eckit::Log::info() << e << std::endl;
+      eckit::Log::info() << "  " << elements.name(e) << std::endl;
+      eckit::Log::info() << "  nb_nodes = " << elements.nb_nodes(e) << std::endl;
+      eckit::Log::info() << "  nb_edges = " << elements.nb_edges(e) << std::endl;
+      eckit::Log::info() << "  nodes = [ ";
+      for( size_t n=0; n<elements.nb_nodes(e); ++n ) {
+        eckit::Log::info() << connectivity[e][n] << " ";
+      }
+      eckit::Log::info() << "]" << std::endl;
+    }
+  }
+
+  eckit::Log::info() << std::endl;
+
+  {
+    for( size_t t=0; t<elements.nb_types(); ++t ) {
+      const ElementTypeElements etype_elements(elements,t);
+      eckit::Log::info() << "name = " << etype_elements.name() << std::endl;
+      eckit::Log::info() << "nb_elements = " << etype_elements.size() << std::endl;
+      const ElementTypeConnectivity& connectivity = etype_elements.node_connectivity();
+      for( size_t e=0; e<elements.nb_elements(t); ++e ) {
+        eckit::Log::info() << "  nodes = [ ";
+        for( size_t n=0; n<etype_elements.nb_nodes(e); ++n ) {
+          eckit::Log::info() << connectivity[e][n] << " ";
+        }
+        eckit::Log::info() << "]" << std::endl;
+      }
+    }
+  }
+
 }
 
 BOOST_AUTO_TEST_SUITE_END()

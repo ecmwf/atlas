@@ -29,7 +29,9 @@ namespace atlas {
 class Array : public eckit::Owned {
 public:
   static Array* create( DataType, const ArrayShape& );
+  static Array* create( DataType );
   template <typename T> static Array* create(const ArrayShape& s);
+  template <typename T> static Array* create();
   template <typename T> static Array* create(size_t size);
   template <typename T> static Array* create(size_t size1, size_t size2);
   template <typename T> static Array* create(size_t size1, size_t size2, size_t size3);
@@ -80,6 +82,9 @@ private:
 
 template <typename T> Array* Array::create(const ArrayShape& s)
 { return create(DataType::create<T>(),s); }
+
+template <typename T> Array* Array::create()
+{ return create(DataType::create<T>()); }
 
 template <typename T> Array* Array::create(size_t size)
 { return create(DataType::create<T>(),make_shape(size)); }

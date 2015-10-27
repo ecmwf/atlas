@@ -91,5 +91,21 @@ Array* Array::create( DataType datatype, const ArrayShape& shape )
   return 0;
 }
 
+Array* Array::create( DataType datatype )
+{
+  switch( datatype.kind() )
+  {
+    case DataType::KIND_REAL64: return new ArrayT<double>();
+    case DataType::KIND_REAL32: return new ArrayT<float>();
+    case DataType::KIND_INT32:  return new ArrayT<int>();
+    case DataType::KIND_INT64:  return new ArrayT<long>();
+    default:
+    {
+      std::stringstream err; err << "data kind " << datatype.kind() << " not recognised.";
+      throw eckit::BadParameter(err.str(),Here());
+    }
+  }
+  return 0;
+}
 
 } // namespace atlas
