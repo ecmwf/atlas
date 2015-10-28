@@ -15,6 +15,10 @@ namespace atlas {
   typedef long gidx_t;
 #endif
 
+/// @typedef idx_t
+/// Integer type for indices in connectivity tables
+typedef int idx_t;
+
 /// @typedef uidx_t
 /// Integer type for unique indices
 typedef long uidx_t;

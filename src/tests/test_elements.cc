@@ -68,32 +68,36 @@ BOOST_GLOBAL_FIXTURE( GlobalFixture )
 
 BOOST_AUTO_TEST_SUITE( test_elements )
 
-BOOST_AUTO_TEST_CASE( simple )
+BOOST_AUTO_TEST_CASE( hybrid_elements )
 {
-  Nodes nodes(6);
-  Elements elements(nodes);
+  HybridElements hybrid_elements;
+  hybrid_elements.attach();
 
-  size_t triags[] = {
+  idx_t triangle_nodes[] = {
     1,5,3,
     1,5,2
   };
-  elements.add( new Triangle(), 2, triags );
+  size_t triags = hybrid_elements.add( new Triangle(), 2, triangle_nodes );
 
-  size_t quads[] = {
+  idx_t quad_nodes[] = {
     0,1,2,3
   };
-  elements.add( new Quadrilateral(), 1, quads );
+  size_t quads = hybrid_elements.add( new Quadrilateral(), 1, quad_nodes );
+
+  idx_t triag1[4] = {9,8,7,6};
+  //elements.set_node_connectivity(0, triag1);
+  //elements.set_node_connectivity(2, triag1);
 
   {
-    const Connectivity& connectivity = elements.node_connectivity();
-    for( size_t e=0; e<elements.size(); ++e ) {
+    const HybridElements::Connectivity& connectivity = hybrid_elements.node_connectivity();
+    for( size_t e=0; e<hybrid_elements.size(); ++e ) {
       eckit::Log::info() << e << std::endl;
-      eckit::Log::info() << "  " << elements.name(e) << std::endl;
-      eckit::Log::info() << "  nb_nodes = " << elements.nb_nodes(e) << std::endl;
-      eckit::Log::info() << "  nb_edges = " << elements.nb_edges(e) << std::endl;
+      eckit::Log::info() << "  " << hybrid_elements.name(e) << std::endl;
+      eckit::Log::info() << "  nb_nodes = " << hybrid_elements.nb_nodes(e) << std::endl;
+      eckit::Log::info() << "  nb_edges = " << hybrid_elements.nb_edges(e) << std::endl;
       eckit::Log::info() << "  nodes = [ ";
-      for( size_t n=0; n<elements.nb_nodes(e); ++n ) {
-        eckit::Log::info() << connectivity[e][n] << " ";
+      for( size_t n=0; n<hybrid_elements.nb_nodes(e); ++n ) {
+        eckit::Log::info() << connectivity(e,n) << " ";
       }
       eckit::Log::info() << "]" << std::endl;
     }
@@ -102,15 +106,16 @@ BOOST_AUTO_TEST_CASE( simple )
   eckit::Log::info() << std::endl;
 
   {
-    for( size_t t=0; t<elements.nb_types(); ++t ) {
-      const ElementTypeElements etype_elements(elements,t);
-      eckit::Log::info() << "name = " << etype_elements.name() << std::endl;
-      eckit::Log::info() << "nb_elements = " << etype_elements.size() << std::endl;
-      const ElementTypeConnectivity& connectivity = etype_elements.node_connectivity();
-      for( size_t e=0; e<elements.nb_elements(t); ++e ) {
+    for( size_t t=0; t<hybrid_elements.nb_types(); ++t ) {
+      Elements elements(&hybrid_elements,t);
+      elements.set_node_connectivity(0,triag1);
+      eckit::Log::info() << "name = " << elements.name() << std::endl;
+      eckit::Log::info() << "nb_elements = " << elements.size() << std::endl;
+      const Elements::Connectivity& connectivity = elements.node_connectivity();
+      for( size_t e=0; e<elements.size(); ++e ) {
         eckit::Log::info() << "  nodes = [ ";
-        for( size_t n=0; n<etype_elements.nb_nodes(e); ++n ) {
-          eckit::Log::info() << connectivity[e][n] << " ";
+        for( size_t n=0; n<elements.nb_nodes(); ++n ) {
+          eckit::Log::info() << connectivity(e,n) << " ";
         }
         eckit::Log::info() << "]" << std::endl;
       }
@@ -118,6 +123,32 @@ BOOST_AUTO_TEST_CASE( simple )
   }
 
 }
+
+BOOST_AUTO_TEST_CASE( elements )
+{
+  eckit::Log::info() << "\nelements" << std::endl;
+
+  idx_t triangle_nodes[] = {
+    1,5,3,
+    1,5,2
+  };
+  idx_t triag1[3] = {9,8,7};
+
+  Elements elements( new Triangle(), 2, triangle_nodes );
+  elements.set_node_connectivity(0,triag1);
+  eckit::Log::info() << "name = " << elements.name() << std::endl;
+  eckit::Log::info() << "nb_elements = " << elements.size() << std::endl;
+  const Elements::Connectivity& connectivity = elements.node_connectivity();
+  for( size_t e=0; e<elements.size(); ++e ) {
+    eckit::Log::info() << "  nodes = [ ";
+    for( size_t n=0; n<elements.nb_nodes(); ++n ) {
+       eckit::Log::info() << connectivity(e,n) << " ";
+    }
+    eckit::Log::info() << "]" << std::endl;
+  }
+
+}
+
 
 BOOST_AUTO_TEST_SUITE_END()
 

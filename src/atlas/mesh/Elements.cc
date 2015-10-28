@@ -10,58 +10,50 @@
 
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/Parameters.h"
-#include "atlas/mesh/Elements.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/Array.h"
 #include "atlas/util/IndexView.h"
+#include "atlas/mesh/Elements.h"
+
+
+#ifdef ATLAS_HAVE_FORTRAN
+#define FORTRAN_BASE 1
+#define TO_FORTRAN +1
+#else
+#define FORTRAN_BASE 0
+#define TO_FORTRAN
+#endif
 
 namespace atlas {
 namespace mesh {
 
 //------------------------------------------------------------------------------------------------------
 
-Connectivity::Connectivity(const Elements &elements, const int *values)
-  : elements_(&elements), values_(values)
-{
-}
-
-Elements::Elements(const Nodes& nodes) :
-  nodes_(nodes),
+HybridElements::HybridElements() :
   size_(0),
   nb_elements_(),
   type_begin_(),
   type_end_(),
-  node_connectivity_( new ArrayT<int>() ),
-  nb_nodes_( new ArrayT<int>() ),
-  nb_edges_( new ArrayT<int>() ),
-  type_idx_( new ArrayT<int>() ),
-  node_connectivity_access_(*this,node_connectivity_->data())
+  node_connectivity_( new ArrayT<idx_t>() ),
+  nb_nodes_(),
+  nb_edges_(),
+  type_idx_(),
+  node_connectivity_access_(node_connectivity_->data(),element_begin_.data())
 {
 }
 
-Elements::~Elements() {}
+HybridElements::~HybridElements()
+{
+  eckit::Log::info() << "destroying HybridElements" << std::endl;
+}
 
-//void Elements::add( ElementType* element_type, size_t nb_elements )
-//{
-//  eckit::SharedPtr<ElementType> etype ( element_type );
+size_t HybridElements::add( ElementType* element_type, size_t nb_elements, const idx_t connectivity[] )
+{
+  return add(element_type,nb_elements,connectivity,false);
+}
 
-//  size_t nb_nodes = etype->nb_nodes();
-
-//  size_t c(connectivity_->size());
-//  connectivity_->resize(c+nb_elements*nb_nodes);
-
-//  size_t n=nb_nodes_->size();
-//  nb_nodes_->resize(n+nb_elements);
-
-//  int* data_nb_nodes = nb_nodes_->data<int>();
-//  for( size_t j=n; j<nb_nodes_->size(); ++j )
-//    data_nb_nodes[j] = nb_nodes;
-
-//  element_types_.push_back( etype );
-//}
-
-void Elements::add( ElementType* element_type, size_t nb_elements, const size_t connectivity[] )
+size_t HybridElements::add( ElementType* element_type, size_t nb_elements, const idx_t connectivity[], bool fortran_array )
 {
   eckit::SharedPtr<ElementType> etype ( element_type );
 
@@ -73,22 +65,20 @@ void Elements::add( ElementType* element_type, size_t nb_elements, const size_t 
 
   size_t n=size();
   size_t new_size = n+nb_elements;
-  nb_nodes_->resize(new_size);
-  nb_edges_->resize(new_size);
-  type_idx_->resize(new_size);
+  nb_nodes_.resize(new_size);
+  nb_edges_.resize(new_size);
+  type_idx_.resize(new_size);
 
-  int* data_nb_nodes = nb_nodes_->data();
-  int* data_nb_edges = nb_edges_->data();
-  int* data_type_idx = type_idx_->data();
   for( size_t j=n; j<new_size; ++j ) {
-    data_nb_nodes[j] = nb_nodes;
-    data_nb_edges[j] = nb_edges;
-    data_type_idx[j] = element_types_.size();
+    nb_nodes_[j] = nb_nodes;
+    nb_edges_[j] = nb_edges;
+    type_idx_[j] = element_types_.size();
   }
 
-  int* conn = node_connectivity_->data();
+  idx_t *conn = node_connectivity_->data();
+  idx_t add_base = fortran_array ? 0 : FORTRAN_BASE;
   for(size_t j=0; c<node_connectivity_->size(); ++c, ++j) {
-    conn[c] = connectivity[j];
+    conn[c] = connectivity[j] + add_base ;
   }
 
   type_begin_.push_back(size_);
@@ -106,26 +96,74 @@ void Elements::add( ElementType* element_type, size_t nb_elements, const size_t 
   element_types_.push_back( etype );
   element_type_connectivity_.resize(element_types_.size());
   for( size_t t=0; t<nb_types(); ++t ) {
-    element_type_connectivity_[t] = ElementTypeConnectivity(*this,t,node_connectivity_->data());
+    element_type_connectivity_[t] = Elements::Connectivity(
+          node_connectivity_->data()+element_begin_[type_begin_[t]],
+          element_types_[t]->nb_nodes()
+        );
   }
-  node_connectivity_access_ = Connectivity(*this,node_connectivity_->data());
+  node_connectivity_access_ = Connectivity(node_connectivity_->data(),element_begin_.data());
+  return element_types_.size()-1;
 }
 
-const std::string& Elements::name(size_t elem_idx) const { return element_type( type_idx_->data()[elem_idx] ).name(); }
-size_t Elements::nb_nodes(size_t elem_idx) const { return nb_nodes_->data()[elem_idx]; }
-size_t Elements::nb_edges(size_t elem_idx) const { return nb_edges_->data()[elem_idx]; }
+const std::string& HybridElements::name(size_t elem_idx) const { return element_types_[type_idx_[elem_idx]]->name(); }
+size_t HybridElements::nb_nodes(size_t elem_idx) const { return nb_nodes_[elem_idx]; }
+size_t HybridElements::nb_edges(size_t elem_idx) const { return nb_edges_[elem_idx]; }
+
+void HybridElements::set_node_connectivity( size_t elem_idx, const idx_t node_connectivity[] )
+{
+  idx_t *element_nodes = node_connectivity_->data()+element_begin_[elem_idx];
+  for( size_t n=0; n<nb_nodes_[elem_idx]; ++n ) {
+    element_nodes[n] = node_connectivity[n] TO_FORTRAN;
+  }
+}
+
+
+void HybridElements::set_node_connectivity( size_t type_idx, size_t elem_idx, const idx_t node_connectivity[] )
+{
+  element_type_connectivity_[type_idx].set(elem_idx,node_connectivity);
+}
+
 
 //-----------------------------------------------------------------------------
 
-ElementTypeElements::ElementTypeElements(const Elements& elements, size_t type_idx)
-  : elements_(&elements), type_idx_(type_idx)
+Elements::Elements(HybridElements *elements, size_t type_idx)
+  : elements_(elements), type_idx_(type_idx)
 {
-  nb_nodes_ = elements.nb_nodes_->data()+elements.type_begin(type_idx_);
-  nb_edges_ = elements.nb_edges_->data()+elements.type_begin(type_idx_);
+  elements_->attach();
+  nb_nodes_ = elements_->element_type(type_idx_).nb_nodes();
+  nb_edges_ = elements_->element_type(type_idx_).nb_edges();
 }
 
-const std::string& ElementTypeElements::name() const { return elements_->element_type(type_idx_).name(); }
+Elements::Elements( ElementType* element_type, size_t nb_elements, const idx_t node_connectivity[], bool fortran_array )
+{
+  elements_ = new HybridElements();
+  elements_->attach();
+  type_idx_ = elements_->add(element_type,nb_elements,node_connectivity,fortran_array);
+  nb_nodes_ = elements_->element_type(type_idx_).nb_nodes();
+  nb_edges_ = elements_->element_type(type_idx_).nb_edges();
+}
 
+
+Elements::~Elements()
+{
+  elements_->detach();
+  if( elements_->owners() == 0 )
+    delete elements_;
+}
+
+const std::string& Elements::name() const { return elements_->element_type(type_idx_).name(); }
+
+void Elements::set_node_connectivity( size_t elem_idx, const idx_t node_connectivity[] )
+{
+  return elements_->set_node_connectivity(type_idx_,elem_idx,node_connectivity);
+}
+
+//-----------------------------------------------------------------------------
+
+Connectivity::Connectivity(idx_t *values, size_t *offset)
+  : values_(values), offset_(offset)
+{
+}
 
 extern "C" {
 

@@ -14,6 +14,7 @@
 #ifndef atlas_mesh_Elements_H
 #define atlas_mesh_Elements_H
 
+#include "atlas/atlas_config.h"
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 
@@ -26,124 +27,178 @@ namespace atlas { namespace mesh { class ElementType; } }
 namespace atlas {
 namespace mesh {
 
+// Classes defined in this file:
+class HybridElements;
 class Elements;
-class ElementTypeElements;
+class Connectivity;
+class ElementsConnectivity;
 
 // --------------------------------------------------------------------------
+
+#ifdef ATLAS_HAVE_FORTRAN
+#define FROM_FORTRAN -1
+#define TO_FORTRAN +1
+#else
+#define FROM_FORTRAN
+#define TO_FORTRAN
+#endif
 
 class Connectivity
 {
 public:
-  Connectivity(const Elements &elements, const int *values);
-  const int* operator[](size_t elem_idx) const;
-  const int* data() const { return values_; }
+  Connectivity(idx_t *values, size_t *offset);
+  idx_t operator()(size_t row, size_t col) const;
 private:
-  const int *values_;
-  const Elements *elements_;
+  idx_t  *values_;
+  size_t *offset_;
 };
 
-class ElementTypeConnectivity
+class ElementsConnectivity
 {
 public:
-  ElementTypeConnectivity() {}
-  ElementTypeConnectivity( const Elements &elements, size_t type_idx, const int *values );
-  const int* operator[](size_t elem_idx) const;
-  const int* data() const { return values_; }
+  ElementsConnectivity() {}
+  ElementsConnectivity( idx_t *values, size_t stride );
+  idx_t operator()(size_t row, size_t col) const;
+  void set(size_t row, const idx_t column_values[]);
 private:
-  const int *values_;
-  size_t nb_nodes_;
-  const Elements *elements_;
+  idx_t *values_;
+  size_t stride_;
 };
 
 // -------------------------------------------------------------------------------
 
 /**
- * \brief Elements class that describes elements in the mesh, which can are grouped
+ * \brief HybridElements class that describes elements in the mesh, which can are grouped
  *        per element type
  */
-class Elements : public eckit::Owned {
-friend class ElementTypeElements;
+class HybridElements : public eckit::Owned {
+friend class Elements;
+public:
+  typedef atlas::mesh::Connectivity Connectivity;
+
 public: // methods
 
 //-- Constructors
 
-  Elements( const Nodes& nodes );
-  virtual ~Elements();
+  HybridElements();
+  virtual ~HybridElements();
 
 //-- Accessors
+
   size_t size() const { return size_; }
   size_t nb_nodes(size_t elem_idx) const;
   size_t nb_edges(size_t elem_idx) const;
   const std::string& name(size_t elem_idx) const;
   size_t nb_types() const { return element_types_.size(); }
-  size_t nb_elements(size_t type_idx) const { return nb_elements_[type_idx]; }
-  size_t type_begin(size_t type_idx) const { return type_begin_[type_idx]; }
-  size_t type_end(size_t type_idx) const { return type_end_[type_idx]; }
-  size_t element_begin(size_t type_idx) const { return element_begin_[type_idx]; }
-  size_t element_end(size_t type_idx) const { return element_end_[type_idx]; }
   const ElementType& element_type(size_t type_idx) const { return *element_types_[type_idx].get(); }
   const Connectivity& node_connectivity() const { return node_connectivity_access_; }
-  const ElementTypeConnectivity& node_connectivity(size_t type_idx) const { return element_type_connectivity_[type_idx]; }
+  const ElementsConnectivity& node_connectivity(size_t type_idx) const { return element_type_connectivity_[type_idx]; }
 
-  // -- Modifiers
+  // Advanced api. to be seen if needed
+  //  size_t nb_elements(size_t type_idx) const { return nb_elements_[type_idx]; }
+  //  size_t type_begin(size_t type_idx) const { return type_begin_[type_idx]; }
+  //  size_t type_end(size_t type_idx) const { return type_end_[type_idx]; }
+  //  size_t element_begin(size_t type_idx) const { return element_begin_[type_idx]; }
+  //  size_t element_end(size_t type_idx) const { return element_end_[type_idx]; }
 
-  void add( ElementType*, size_t nb_elements, const size_t node_connectivity[] );
+// -- Modifiers
+
+  size_t add( ElementType*, size_t nb_elements, const idx_t node_connectivity[] );
+  size_t add( ElementType*, size_t nb_elements, const idx_t node_connectivity[], bool fortran_array );
+
+  void set_node_connectivity( size_t elem_idx, const idx_t node_connectivity[] );
+  void set_node_connectivity( size_t type_idx, size_t elem_idx, const idx_t node_connectivity[] );
 
 private:
+
 // -- Data
-  const Nodes& nodes_;
-  size_t size_;
+  size_t size_;                          //!< total number of elements
+
+// -- Data: one value per type
   std::vector<size_t> nb_elements_;
   std::vector<size_t> type_begin_;
   std::vector<size_t> type_end_;
   std::vector< eckit::SharedPtr<ElementType> > element_types_;
+
+// -- Data: one value per element
   std::vector<size_t> element_begin_;
   std::vector<size_t> element_end_;
-  eckit::SharedPtr< ArrayT<int> > node_connectivity_;
-  eckit::SharedPtr< ArrayT<int> > nb_nodes_;
-  eckit::SharedPtr< ArrayT<int> > nb_edges_;
-  eckit::SharedPtr< ArrayT<int> > type_idx_;
+  std::vector<size_t> nb_nodes_;
+  std::vector<size_t> nb_edges_;
+  std::vector<size_t> type_idx_;
+
+// -- Data: one value per node per element
+  eckit::SharedPtr< ArrayT<idx_t> > node_connectivity_;
+
+// -- Accessor helpers
   Connectivity node_connectivity_access_;
-  std::vector<ElementTypeConnectivity> element_type_connectivity_;
+  std::vector<ElementsConnectivity> element_type_connectivity_;
 };
 
-inline const int* Connectivity::operator[](size_t elem_idx) const { return values_+elements_->element_begin(elem_idx); }
+// -----------------------------------------------------------------------------------------------------
 
-ElementTypeConnectivity::ElementTypeConnectivity(const Elements &elements, size_t type_idx, const int *values)
-  : elements_(&elements),
-    values_(values+elements.element_begin(elements.type_begin(type_idx))),
-    nb_nodes_(elements.nb_nodes(elements.type_begin(type_idx)))
+inline idx_t Connectivity::operator()(size_t row, size_t col) const
+{
+  return (values_+offset_[row])[col] FROM_FORTRAN;
+}
+
+// -----------------------------------------------------------------------------------------------------
+
+ElementsConnectivity::ElementsConnectivity(idx_t *values, size_t stride)
+  : values_(values),
+    stride_(stride)
 {
 }
 
-inline const int* ElementTypeConnectivity::operator[](size_t elem_idx) const {
-  return values_+elem_idx*nb_nodes_;
+inline idx_t ElementsConnectivity::operator()(size_t row, size_t col) const {
+  return (values_+row*stride_)[col] FROM_FORTRAN;
+}
+
+inline void ElementsConnectivity::set(size_t row, const idx_t column_values[]) {
+  idx_t *col = values_+row*stride_;
+  for( size_t n=0; n<stride_; ++n ) {
+    col[n] = column_values[n] TO_FORTRAN;
+  }
 }
 
 
+// -----------------------------------------------------------------------------------------------------
 
-class ElementTypeElements
+class Elements
 {
 public:
-  ElementTypeElements(const Elements& elements, size_t type_idx);
+  typedef ElementsConnectivity Connectivity;
+public:
+  // Constructor that treats elements as sub-elements in HybridElements
+  Elements(HybridElements *elements, size_t type_idx);
 
-  size_t size() const { return elements_->nb_elements(type_idx_); }
+  // Constructor that internally creates a HybridElements
+  Elements(ElementType*, size_t nb_elements, const idx_t node_connectivity[], bool fortran_array=false );
+
+  virtual ~Elements();
+
+  size_t size() const { return elements_->nb_elements_[type_idx_]; }
   const std::string& name() const;
-  size_t nb_nodes(size_t elem_idx) const { return nb_nodes_[elem_idx]; }
-  size_t nb_edges(size_t elem_idx) const { return nb_edges_[elem_idx]; }
-  const ElementTypeConnectivity& node_connectivity() const { return elements_->node_connectivity(type_idx_); }
+  size_t nb_nodes() const { return nb_nodes_; }
+  size_t nb_edges() const { return nb_edges_; }
+  const Connectivity& node_connectivity() const { return elements_->node_connectivity(type_idx_); }
+  void set_node_connectivity( size_t elem_idx, const idx_t node_connectivity[] );
+  const ElementType& element_type() const { return elements_->element_type(type_idx_); }
 
 private:
-  const Elements* elements_;
+  HybridElements* elements_;
   size_t type_idx_;
-  int* nb_nodes_;
-  int* nb_edges_;
+  size_t nb_nodes_;
+  size_t nb_edges_;
 };
 
 
 extern "C"
 {
 }
+
+#undef FROM_FORTRAN
+#undef TO_FORTRAN
 
 //------------------------------------------------------------------------------------------------------
 
