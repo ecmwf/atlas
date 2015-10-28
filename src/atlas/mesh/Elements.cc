@@ -48,14 +48,14 @@ HybridElements::~HybridElements()
   eckit::Log::info() << "destroying HybridElements" << std::endl;
 }
 
-size_t HybridElements::add( ElementType* element_type, size_t nb_elements, const idx_t connectivity[] )
+size_t HybridElements::add( const ElementType* element_type, size_t nb_elements, const idx_t connectivity[] )
 {
   return add(element_type,nb_elements,connectivity,false);
 }
 
-size_t HybridElements::add( ElementType* element_type, size_t nb_elements, const idx_t connectivity[], bool fortran_array )
+size_t HybridElements::add( const ElementType* element_type, size_t nb_elements, const idx_t connectivity[], bool fortran_array )
 {
-  eckit::SharedPtr<ElementType> etype ( element_type );
+  eckit::SharedPtr<const ElementType> etype ( element_type );
 
   size_t nb_nodes = etype->nb_nodes();
   size_t nb_edges = etype->nb_edges();
@@ -95,15 +95,23 @@ size_t HybridElements::add( ElementType* element_type, size_t nb_elements, const
 
   element_types_.push_back( etype );
   element_type_connectivity_.resize(element_types_.size());
+  elements_.resize(element_types_.size());
   for( size_t t=0; t<nb_types(); ++t ) {
     element_type_connectivity_[t] = Elements::Connectivity(
           node_connectivity_->data()+element_begin_[type_begin_[t]],
           element_types_[t]->nb_nodes()
         );
+    elements_[t] = Elements(*this,t);
   }
   node_connectivity_access_ = Connectivity(node_connectivity_->data(),element_begin_.data());
   return element_types_.size()-1;
 }
+
+size_t HybridElements::add( const Elements& elems )
+{
+  add( &elems.element_type(), elems.size(), elems.hybrid_elements().node_connectivity_->data(), true );
+}
+
 
 const std::string& HybridElements::name(size_t elem_idx) const { return element_types_[type_idx_[elem_idx]]->name(); }
 size_t HybridElements::nb_nodes(size_t elem_idx) const { return nb_nodes_[elem_idx]; }
@@ -126,41 +134,40 @@ void HybridElements::set_node_connectivity( size_t type_idx, size_t elem_idx, co
 
 //-----------------------------------------------------------------------------
 
-Elements::Elements(HybridElements *elements, size_t type_idx)
-  : elements_(elements), type_idx_(type_idx)
+Elements::Elements() : hybrid_elements_(0), type_idx_(0), nb_nodes_(0), nb_edges_(0), owns_elements_(false) {}
+
+Elements::Elements(HybridElements &elements, size_t type_idx)
+  : hybrid_elements_(&elements), type_idx_(type_idx), owns_elements_(false)
 {
-  elements_->attach();
-  nb_nodes_ = elements_->element_type(type_idx_).nb_nodes();
-  nb_edges_ = elements_->element_type(type_idx_).nb_edges();
+  nb_nodes_ = hybrid_elements_->element_type(type_idx_).nb_nodes();
+  nb_edges_ = hybrid_elements_->element_type(type_idx_).nb_edges();
 }
 
 Elements::Elements( ElementType* element_type, size_t nb_elements, const idx_t node_connectivity[], bool fortran_array )
+  : owns_elements_(true)
 {
-  elements_ = new HybridElements();
-  elements_->attach();
-  type_idx_ = elements_->add(element_type,nb_elements,node_connectivity,fortran_array);
-  nb_nodes_ = elements_->element_type(type_idx_).nb_nodes();
-  nb_edges_ = elements_->element_type(type_idx_).nb_edges();
+  hybrid_elements_ = new HybridElements();
+  type_idx_ = hybrid_elements_->add(element_type,nb_elements,node_connectivity,fortran_array);
+  nb_nodes_ = hybrid_elements_->element_type(type_idx_).nb_nodes();
+  nb_edges_ = hybrid_elements_->element_type(type_idx_).nb_edges();
 }
 
 
 Elements::~Elements()
 {
-  elements_->detach();
-  if( elements_->owners() == 0 )
-    delete elements_;
+  if( owns_elements_ ) delete hybrid_elements_;
 }
 
-const std::string& Elements::name() const { return elements_->element_type(type_idx_).name(); }
+const std::string& Elements::name() const { return hybrid_elements_->element_type(type_idx_).name(); }
 
 void Elements::set_node_connectivity( size_t elem_idx, const idx_t node_connectivity[] )
 {
-  return elements_->set_node_connectivity(type_idx_,elem_idx,node_connectivity);
+  return hybrid_elements_->set_node_connectivity(type_idx_,elem_idx,node_connectivity);
 }
 
 //-----------------------------------------------------------------------------
 
-Connectivity::Connectivity(idx_t *values, size_t *offset)
+HybridConnectivity::HybridConnectivity(idx_t *values, size_t *offset)
   : values_(values), offset_(offset)
 {
 }

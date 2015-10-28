@@ -71,7 +71,6 @@ BOOST_AUTO_TEST_SUITE( test_elements )
 BOOST_AUTO_TEST_CASE( hybrid_elements )
 {
   HybridElements hybrid_elements;
-  hybrid_elements.attach();
 
   idx_t triangle_nodes[] = {
     1,5,3,
@@ -107,7 +106,7 @@ BOOST_AUTO_TEST_CASE( hybrid_elements )
 
   {
     for( size_t t=0; t<hybrid_elements.nb_types(); ++t ) {
-      Elements elements(&hybrid_elements,t);
+      Elements& elements = hybrid_elements.elements(t);
       elements.set_node_connectivity(0,triag1);
       eckit::Log::info() << "name = " << elements.name() << std::endl;
       eckit::Log::info() << "nb_elements = " << elements.size() << std::endl;
@@ -147,6 +146,25 @@ BOOST_AUTO_TEST_CASE( elements )
     eckit::Log::info() << "]" << std::endl;
   }
 
+  // This will create a new structure with a copy of elements
+  HybridElements hybrid_elements;
+  hybrid_elements.add(elements);
+  {
+    for( size_t t=0; t<hybrid_elements.nb_types(); ++t ) {
+      Elements& elements = hybrid_elements.elements(t);
+      elements.set_node_connectivity(0,triag1);
+      eckit::Log::info() << "name = " << elements.name() << std::endl;
+      eckit::Log::info() << "nb_elements = " << elements.size() << std::endl;
+      const Elements::Connectivity& connectivity = elements.node_connectivity();
+      for( size_t e=0; e<elements.size(); ++e ) {
+        eckit::Log::info() << "  nodes = [ ";
+        for( size_t n=0; n<elements.nb_nodes(); ++n ) {
+          eckit::Log::info() << connectivity(e,n) << " ";
+        }
+        eckit::Log::info() << "]" << std::endl;
+      }
+    }
+  }
 }
 
 
