@@ -78,6 +78,7 @@ public:
   Elements(HybridElements &elements, size_t type_idx);
 
   // Constructor that internally creates a HybridElements
+  Elements(ElementType*, size_t nb_elements, const std::vector<idx_t> &node_connectivity );
   Elements(ElementType*, size_t nb_elements, const idx_t node_connectivity[], bool fortran_array=false );
 
   virtual ~Elements();
@@ -140,6 +141,7 @@ public: // methods
 
 // -- Modifiers
 
+  size_t add( const ElementType*, size_t nb_elements, const std::vector<idx_t> &node_connectivity );
   size_t add( const ElementType*, size_t nb_elements, const idx_t node_connectivity[] );
   size_t add( const ElementType*, size_t nb_elements, const idx_t node_connectivity[], bool fortran_array );
   size_t add( const Elements& );

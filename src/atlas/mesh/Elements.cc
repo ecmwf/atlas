@@ -48,6 +48,11 @@ HybridElements::~HybridElements()
   eckit::Log::info() << "destroying HybridElements" << std::endl;
 }
 
+size_t HybridElements::add( const ElementType* element_type, size_t nb_elements, const std::vector<idx_t> &connectivity )
+{
+  return add(element_type,nb_elements,connectivity.data());
+}
+
 size_t HybridElements::add( const ElementType* element_type, size_t nb_elements, const idx_t connectivity[] )
 {
   return add(element_type,nb_elements,connectivity,false);
@@ -109,7 +114,7 @@ size_t HybridElements::add( const ElementType* element_type, size_t nb_elements,
 
 size_t HybridElements::add( const Elements& elems )
 {
-  add( &elems.element_type(), elems.size(), elems.hybrid_elements().node_connectivity_->data(), true );
+  return add( &elems.element_type(), elems.size(), elems.hybrid_elements().node_connectivity_->data(), true );
 }
 
 
@@ -139,6 +144,15 @@ Elements::Elements() : hybrid_elements_(0), type_idx_(0), nb_nodes_(0), nb_edges
 Elements::Elements(HybridElements &elements, size_t type_idx)
   : hybrid_elements_(&elements), type_idx_(type_idx), owns_elements_(false)
 {
+  nb_nodes_ = hybrid_elements_->element_type(type_idx_).nb_nodes();
+  nb_edges_ = hybrid_elements_->element_type(type_idx_).nb_edges();
+}
+
+Elements::Elements(ElementType* element_type, size_t nb_elements, const std::vector<idx_t> &node_connectivity )
+  : owns_elements_(true)
+{
+  hybrid_elements_ = new HybridElements();
+  type_idx_ = hybrid_elements_->add(element_type,nb_elements,node_connectivity.data());
   nb_nodes_ = hybrid_elements_->element_type(type_idx_).nb_nodes();
   nb_edges_ = hybrid_elements_->element_type(type_idx_).nb_edges();
 }

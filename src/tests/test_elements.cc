@@ -78,9 +78,11 @@ BOOST_AUTO_TEST_CASE( hybrid_elements )
   };
   size_t triags = hybrid_elements.add( new Triangle(), 2, triangle_nodes );
 
-  idx_t quad_nodes[] = {
-    0,1,2,3
-  };
+  std::vector<idx_t> quad_nodes(4);
+  quad_nodes[0] = 0;
+  quad_nodes[1] = 1;
+  quad_nodes[2] = 2;
+  quad_nodes[3] = 3;
   size_t quads = hybrid_elements.add( new Quadrilateral(), 1, quad_nodes );
 
   idx_t triag1[4] = {9,8,7,6};
