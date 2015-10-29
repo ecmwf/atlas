@@ -19,9 +19,6 @@
 #include "eckit/memory/SharedPtr.h"
 
 namespace atlas { template<typename T> class ArrayT; }
-namespace atlas { class Array; }
-namespace atlas { template<typename T, int> class IndexView; }
-namespace atlas { namespace mesh { class Nodes; } }
 namespace atlas { namespace mesh { class ElementType; } }
 
 namespace atlas {
@@ -122,22 +119,22 @@ public: // methods
 //-- Accessors
 
   size_t size() const { return size_; }
-  size_t nb_nodes(size_t elem_idx) const;
-  size_t nb_edges(size_t elem_idx) const;
-  const std::string& name(size_t elem_idx) const;
-  size_t nb_types() const { return element_types_.size(); }
-  const ElementType& element_type(size_t type_idx) const { return *element_types_[type_idx].get(); }
-  const HybridElements::Connectivity& node_connectivity() const { return node_connectivity_access_; }
-  const Elements::Connectivity& node_connectivity(size_t type_idx) const { return element_type_connectivity_[type_idx]; }
-  const Elements& elements(size_t type_idx) const { return elements_[type_idx]; }
-        Elements& elements(size_t type_idx)       { return elements_[type_idx]; }
+  size_t nb_nodes(size_t hybrid_elem_idx) const;
+  size_t nb_edges(size_t hybrid_elem_idx) const;
+  const std::string& name(size_t hybrid_elem_idx) const;
+  size_t nb_types() const;
+  const ElementType& element_type(size_t type_idx) const;
+  const HybridElements::Connectivity& node_connectivity() const;
+  const Elements::Connectivity& node_connectivity(size_t type_idx) const;
+  const Elements& elements(size_t type_idx) const;
+        Elements& elements(size_t type_idx);
 
   // Advanced api. to be seen if needed
-  //  size_t nb_elements(size_t type_idx) const { return nb_elements_[type_idx]; }
-  //  size_t type_begin(size_t type_idx) const { return type_begin_[type_idx]; }
-  //  size_t type_end(size_t type_idx) const { return type_end_[type_idx]; }
-  //  size_t element_begin(size_t type_idx) const { return element_begin_[type_idx]; }
-  //  size_t element_end(size_t type_idx) const { return element_end_[type_idx]; }
+  //  size_t nb_elements(size_t type_idx) const { return elements_size_[type_idx]; }
+  //  size_t type_begin(size_t type_idx) const { return elements_begin_[type_idx]; }
+  //  size_t type_end(size_t type_idx) const { return elements_end_[type_idx]; }
+  //  size_t element_nodes_begin(size_t type_idx) const { return nodes_begin_[type_idx]; }
+  //  size_t element_end(size_t type_idx) const { return nodes_end_[type_idx]; }
 
 // -- Modifiers
 
@@ -155,14 +152,12 @@ private:
   size_t size_;                          //!< total number of elements
 
 // -- Data: one value per type
-  std::vector<size_t> nb_elements_;
-  std::vector<size_t> type_begin_;
-  std::vector<size_t> type_end_;
+  std::vector<size_t> elements_size_;
+  std::vector<size_t> elements_begin_;
   std::vector< eckit::SharedPtr<const ElementType> > element_types_;
 
 // -- Data: one value per element
-  std::vector<size_t> element_begin_;
-  std::vector<size_t> element_end_;
+  std::vector<size_t> nodes_begin_;
   std::vector<size_t> nb_nodes_;
   std::vector<size_t> nb_edges_;
   std::vector<size_t> type_idx_;
@@ -202,15 +197,59 @@ inline void Connectivity::set(size_t row, const idx_t column_values[]) {
   }
 }
 
+// ------------------------------------------------------------------------------------------------------
 
+inline size_t HybridElements::nb_types() const
+{ 
+  return element_types_.size();
+}
 
-inline size_t Elements::size() const { return hybrid_elements_->nb_elements_[type_idx_]; }
-inline size_t Elements::nb_nodes() const { return nb_nodes_; }
-inline size_t Elements::nb_edges() const { return nb_edges_; }
-inline const Elements::Connectivity& Elements::node_connectivity() const { return hybrid_elements_->node_connectivity(type_idx_); }
-inline const ElementType& Elements::element_type() const { return hybrid_elements_->element_type(type_idx_); }
+inline const ElementType& HybridElements::element_type(size_t type_idx) const
+{ 
+  return *element_types_[type_idx].get();
+}
 
+inline const HybridElements::Connectivity& HybridElements::node_connectivity() const
+{ 
+  return node_connectivity_access_;
+}
 
+inline const Elements::Connectivity& HybridElements::node_connectivity(size_t type_idx) const
+{ 
+  return element_type_connectivity_[type_idx];
+}
+
+inline const Elements& HybridElements::elements(size_t type_idx) const
+{ 
+  return elements_[type_idx];
+}
+
+inline Elements& HybridElements::elements(size_t type_idx)
+{ 
+  return elements_[type_idx];
+}
+
+// ------------------------------------------------------------------------------------------------------
+
+inline size_t Elements::size() const
+{ return hybrid_elements_->elements_size_[type_idx_]; }
+
+inline size_t Elements::nb_nodes() const
+{ return nb_nodes_; }
+
+inline size_t Elements::nb_edges() const
+{ return nb_edges_; }
+
+inline const Elements::Connectivity& Elements::node_connectivity() const
+{ 
+  return hybrid_elements_->node_connectivity(type_idx_);
+}
+inline const ElementType& Elements::element_type() const
+{ 
+  return hybrid_elements_->element_type(type_idx_);
+}
+
+// ------------------------------------------------------------------------------------------------------
 
 extern "C"
 {
