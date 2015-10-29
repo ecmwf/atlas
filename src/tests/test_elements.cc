@@ -109,6 +109,10 @@ BOOST_AUTO_TEST_CASE( hybrid_elements )
   {
     for( size_t t=0; t<hybrid_elements.nb_types(); ++t ) {
       Elements& elements = hybrid_elements.elements(t);
+      const Elements::Connectivity& block_connectivity = hybrid_elements.node_connectivity(t);
+      DEBUG_VAR(t);
+      const_cast<Elements::Connectivity&>(block_connectivity).set(0,triag1);
+      DEBUG();
       elements.set_node_connectivity(0,triag1);
       eckit::Log::info() << "name = " << elements.name() << std::endl;
       eckit::Log::info() << "nb_elements = " << elements.size() << std::endl;
@@ -168,6 +172,85 @@ BOOST_AUTO_TEST_CASE( elements )
     }
   }
 }
+
+BOOST_AUTO_TEST_CASE( hybrid_connectivity )
+{
+  eckit::Log::info() << "\nhybrid_connectivity" << std::endl;
+
+  idx_t triangle_nodes[] = {
+    1,5,3,
+    1,5,2
+  };
+  HybridConnectivity hybrid_connectivity;
+  hybrid_connectivity.add(2,3,triangle_nodes);
+  DEBUG_VAR(hybrid_connectivity.rows());
+  for( size_t e=0; e<hybrid_connectivity.rows(); ++e )
+  {
+    DEBUG_VAR(hybrid_connectivity.cols(e));
+    eckit::Log::info() << "  cols = [ ";
+    for( size_t n=0; n<hybrid_connectivity.cols(e); ++n ) {
+      eckit::Log::info() << hybrid_connectivity(e,n) << " ";
+    }
+    eckit::Log::info() << "]" << std::endl;
+  }
+
+
+  idx_t quad_nodes[] = { 0,1,2,3,
+                         4,5,6,7,
+                         8,9,10,11 };
+  hybrid_connectivity.add(3,4, quad_nodes);
+
+
+  DEBUG_VAR(hybrid_connectivity.rows());
+  for( size_t e=0; e<hybrid_connectivity.rows(); ++e )
+  {
+    DEBUG_VAR(hybrid_connectivity.cols(e));
+    eckit::Log::info() << "  cols = [ ";
+    for( size_t n=0; n<hybrid_connectivity.cols(e); ++n ) {
+      eckit::Log::info() << hybrid_connectivity(e,n) << " ";
+    }
+    eckit::Log::info() << "]" << std::endl;
+  }
+
+  for( size_t b=0; b<hybrid_connectivity.blocks(); ++b )
+  {
+    const BlockConnectivity& block = hybrid_connectivity.block_connectivity(b);
+    for( size_t r=0; r<block.rows(); ++r )
+    {
+      eckit::Log::info() << "  cols = [ ";
+      for( size_t c=0; c<block.cols(); ++c ) {
+        eckit::Log::info() << block(r,c) << " ";
+      }
+      eckit::Log::info() << "]" << std::endl;
+    }
+  }
+
+
+}
+
+
+BOOST_AUTO_TEST_CASE( block_connectivity )
+{
+  eckit::Log::info() << "\nblock_connectivity" << std::endl;
+
+  idx_t triangle_nodes[] = {
+    1,5,3,
+    1,5,2
+  };
+  BlockConnectivity block;
+  block.add(2,3,triangle_nodes);
+  block.add(2,3,triangle_nodes);
+  for( size_t r=0; r<block.rows(); ++r )
+  {
+    eckit::Log::info() << "  cols = [ ";
+    for( size_t c=0; c<block.cols(); ++c ) {
+      eckit::Log::info() << block(r,c) << " ";
+    }
+    eckit::Log::info() << "]" << std::endl;
+  }
+
+}
+
 
 
 BOOST_AUTO_TEST_SUITE_END()
