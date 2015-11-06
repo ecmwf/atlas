@@ -56,6 +56,11 @@ Field* Field::create(const std::string& name, DataType datatype, const ArrayShap
   return new Field(name,datatype,shape);
 }
 
+Field* Field::create( const std::string& name, Array* array )
+{
+  return new Field(name,array);
+}
+
 // -------------------------------------------------------------------------
 
 Field::Field(const std::string& name, DataType datatype, const ArrayShape& shape):
