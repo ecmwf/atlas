@@ -237,13 +237,8 @@ inline idx_t BlockConnectivity::operator()(size_t row, size_t col) const {
 }
 
 inline void BlockConnectivity::set(size_t row, const idx_t column_values[]) {
-  DEBUG("set");
   idx_t *col = values_+row*cols_;
-  DEBUG_VAR(row);
-  DEBUG_VAR(row*cols_);
-  DEBUG_VAR(rows_*cols_);
   for( size_t n=0; n<cols_; ++n ) {
-    DEBUG_VAR(n);
     col[n] = column_values[n] TO_FORTRAN;
   }
 }

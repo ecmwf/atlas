@@ -103,6 +103,7 @@ size_t HybridElements::add( const ElementType* element_type, size_t nb_elements,
                                      element_types_.size(),
                                      elements_begin_.data())
                                    );
+  size_ = new_size;
   return element_types_.size()-1;
 }
 

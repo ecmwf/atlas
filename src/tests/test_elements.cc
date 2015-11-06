@@ -85,9 +85,6 @@ BOOST_AUTO_TEST_CASE( hybrid_elements )
   quad_nodes[3] = 3;
   size_t quads = hybrid_elements.add( new Quadrilateral(), 1, quad_nodes );
 
-  idx_t triag1[4] = {9,8,7,6};
-  //elements.set_node_connectivity(0, triag1);
-  //elements.set_node_connectivity(2, triag1);
 
   {
     const HybridElements::Connectivity& connectivity = hybrid_elements.node_connectivity();
@@ -102,18 +99,56 @@ BOOST_AUTO_TEST_CASE( hybrid_elements )
       }
       eckit::Log::info() << "]" << std::endl;
     }
+    BOOST_CHECK_EQUAL( connectivity(0,0) , 1 );
+    BOOST_CHECK_EQUAL( connectivity(0,1) , 5 );
+    BOOST_CHECK_EQUAL( connectivity(0,2) , 3 );
+    BOOST_CHECK_EQUAL( connectivity(1,0) , 1 );
+    BOOST_CHECK_EQUAL( connectivity(1,1) , 5 );
+    BOOST_CHECK_EQUAL( connectivity(1,2) , 2 );
+    BOOST_CHECK_EQUAL( connectivity(2,0) , 0 );
+    BOOST_CHECK_EQUAL( connectivity(2,1) , 1 );
+    BOOST_CHECK_EQUAL( connectivity(2,2) , 2 );
+    BOOST_CHECK_EQUAL( connectivity(2,3) , 3 );
   }
 
   eckit::Log::info() << std::endl;
-
+  idx_t quad0[4] = {9,8,7,6};
   {
     for( size_t t=0; t<hybrid_elements.nb_types(); ++t ) {
       Elements& elements = hybrid_elements.elements(t);
       const Elements::Connectivity& block_connectivity = hybrid_elements.node_connectivity(t);
-      DEBUG_VAR(t);
-      const_cast<Elements::Connectivity&>(block_connectivity).set(0,triag1);
-      DEBUG();
-      elements.set_node_connectivity(0,triag1);
+      if( t==0 ) {
+        BOOST_CHECK_EQUAL( block_connectivity(0,0) , 1 );
+        BOOST_CHECK_EQUAL( block_connectivity(0,1) , 5 );
+        BOOST_CHECK_EQUAL( block_connectivity(0,2) , 3 );
+        BOOST_CHECK_EQUAL( block_connectivity(1,0) , 1 );
+        BOOST_CHECK_EQUAL( block_connectivity(1,1) , 5 );
+        BOOST_CHECK_EQUAL( block_connectivity(1,2) , 2 );
+      }
+      if( t==1 ) {
+        BOOST_CHECK_EQUAL( block_connectivity(0,0) , 0 );
+        BOOST_CHECK_EQUAL( block_connectivity(0,1) , 1 );
+        BOOST_CHECK_EQUAL( block_connectivity(0,2) , 2 );
+        BOOST_CHECK_EQUAL( block_connectivity(0,3) , 3 );
+      }
+      const_cast<Elements::Connectivity&>(block_connectivity).set(0,quad0);
+      elements.set_node_connectivity(0,quad0);
+
+      if( t==0 ) {
+        BOOST_CHECK_EQUAL( block_connectivity(0,0) , 9 );
+        BOOST_CHECK_EQUAL( block_connectivity(0,1) , 8 );
+        BOOST_CHECK_EQUAL( block_connectivity(0,2) , 7 );
+        BOOST_CHECK_EQUAL( block_connectivity(1,0) , 1 );
+        BOOST_CHECK_EQUAL( block_connectivity(1,1) , 5 );
+        BOOST_CHECK_EQUAL( block_connectivity(1,2) , 2 );
+      }
+      if( t==1 ) {
+        BOOST_CHECK_EQUAL( block_connectivity(0,0) , 9 );
+        BOOST_CHECK_EQUAL( block_connectivity(0,1) , 8 );
+        BOOST_CHECK_EQUAL( block_connectivity(0,2) , 7 );
+        BOOST_CHECK_EQUAL( block_connectivity(0,3) , 6 );
+      }
+
       eckit::Log::info() << "name = " << elements.name() << std::endl;
       eckit::Log::info() << "nb_elements = " << elements.size() << std::endl;
       const Elements::Connectivity& connectivity = elements.node_connectivity();
@@ -183,10 +218,8 @@ BOOST_AUTO_TEST_CASE( hybrid_connectivity )
   };
   HybridConnectivity hybrid_connectivity;
   hybrid_connectivity.add(2,3,triangle_nodes);
-  DEBUG_VAR(hybrid_connectivity.rows());
   for( size_t e=0; e<hybrid_connectivity.rows(); ++e )
   {
-    DEBUG_VAR(hybrid_connectivity.cols(e));
     eckit::Log::info() << "  cols = [ ";
     for( size_t n=0; n<hybrid_connectivity.cols(e); ++n ) {
       eckit::Log::info() << hybrid_connectivity(e,n) << " ";
@@ -201,10 +234,8 @@ BOOST_AUTO_TEST_CASE( hybrid_connectivity )
   hybrid_connectivity.add(3,4, quad_nodes);
 
 
-  DEBUG_VAR(hybrid_connectivity.rows());
   for( size_t e=0; e<hybrid_connectivity.rows(); ++e )
   {
-    DEBUG_VAR(hybrid_connectivity.cols(e));
     eckit::Log::info() << "  cols = [ ";
     for( size_t n=0; n<hybrid_connectivity.cols(e); ++n ) {
       eckit::Log::info() << hybrid_connectivity(e,n) << " ";
