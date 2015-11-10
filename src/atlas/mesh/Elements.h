@@ -44,12 +44,11 @@ class BlockConnectivity;
 class HybridConnectivity : public eckit::Owned
 {
 public:
-  HybridConnectivity( idx_t *values, size_t rows, size_t *row_offset, size_t blocks, size_t *block_offset );
+  HybridConnectivity( idx_t *values, size_t rows, size_t *displs, size_t *counts );
   idx_t operator()(size_t row, size_t col) const;
   void set(size_t row, const idx_t column_values[]);
   size_t rows() const { return rows_; }
-  size_t cols(size_t row) const { return row_offset_[row+1]-row_offset_[row]; }
-  size_t blocks() const { return blocks_; }
+  size_t cols(size_t row) const { return counts_[row]; }
 
   HybridConnectivity();
   ~HybridConnectivity();
@@ -57,26 +56,56 @@ public:
   void add( size_t rows, size_t cols, const idx_t values[], bool fortran_array=false );
   void add( const BlockConnectivity& );
 
-  const BlockConnectivity& block_connectivity(size_t block_idx) const { return *block_connectivity_[block_idx].get(); }
-        BlockConnectivity& block_connectivity(size_t block_idx)       { return *block_connectivity_[block_idx].get(); }
+  const idx_t* data() const { return values_; }
+        idx_t* data()       { return values_; }
 
 private:
-  void regenerate_block_connectivity();
+  virtual void on_add() {}
+
+protected:
+  bool owns() { return owns_; }
+  const size_t *displs() const { return displs_; }
+  const size_t *counts() const { return counts_; }
 
 private:
   bool owns_;
   std::vector<idx_t>  owned_values_;
-  std::vector<size_t> owned_row_offset_;
-  std::vector<size_t> owned_block_offset_;
+  std::vector<size_t> owned_displs_;
+  std::vector<size_t> owned_counts_;
 
   idx_t  *values_;
   size_t rows_;
-  size_t *row_offset_;
+  size_t *displs_;
+  size_t *counts_;
+};
+
+class HybridBlockConnectivity : public HybridConnectivity
+{
+public:
+  HybridBlockConnectivity( idx_t *values, size_t rows, size_t *displs, size_t *counts, size_t blocks, size_t *block_offset );
+
+  HybridBlockConnectivity();
+  ~HybridBlockConnectivity();
+
+  size_t blocks() const { return blocks_; }
+
+  const BlockConnectivity& block_connectivity(size_t block_idx) const { return *block_connectivity_[block_idx].get(); }
+        BlockConnectivity& block_connectivity(size_t block_idx)       { return *block_connectivity_[block_idx].get(); }
+
+  using HybridConnectivity::operator();
+  idx_t operator()(size_t block, size_t row, size_t col) const;
+
+private:
+  virtual void on_add();
+  void regenerate_block_connectivity();
+
+private:
+  std::vector<size_t> owned_block_offset_;
   size_t blocks_;
   size_t *block_offset_;
-
   std::vector< eckit::SharedPtr<BlockConnectivity> > block_connectivity_;
 };
+
 
 class BlockConnectivity : public eckit::Owned
 {
@@ -144,7 +173,7 @@ private:
 class HybridElements : public eckit::Owned {
 friend class Elements;
 public:
-  typedef HybridConnectivity Connectivity;
+  typedef HybridBlockConnectivity Connectivity;
 
 public: // methods
 
@@ -212,15 +241,21 @@ private:
 
 inline idx_t HybridConnectivity::operator()(size_t row, size_t col) const
 {
-  return (values_+row_offset_[row])[col] FROM_FORTRAN;
+  return (values_+displs_[row])[col] FROM_FORTRAN;
 }
 
 inline void HybridConnectivity::set(size_t row, const idx_t column_values[]) {
-  idx_t *col = values_+row_offset_[row];
-  size_t N = row_offset_[row+1]-row_offset_[row];
+  idx_t *col = values_+displs_[row];
+  const size_t N = counts_[N];
   for( size_t n=0; n<N; ++n ) {
     col[n] = column_values[n] TO_FORTRAN;
   }
+}
+
+
+inline idx_t HybridBlockConnectivity::operator()(size_t block, size_t row, size_t col) const
+{
+  return block_connectivity(block)(row,col);
 }
 
 // -----------------------------------------------------------------------------------------------------

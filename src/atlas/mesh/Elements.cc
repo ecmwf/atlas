@@ -100,6 +100,7 @@ size_t HybridElements::add( const ElementType* element_type, size_t nb_elements,
                                      node_connectivity_array_->data(),
                                      size_,
                                      nodes_begin_.data(),
+                                     nb_nodes_.data(),
                                      element_types_.size(),
                                      elements_begin_.data())
                                    );
@@ -176,27 +177,41 @@ void Elements::set_node_connectivity( size_t elem_idx, const idx_t node_connecti
 
 //-----------------------------------------------------------------------------
 
-HybridConnectivity::  HybridConnectivity( idx_t *values, size_t rows, size_t *row_offset, size_t blocks, size_t *block_offset )
+
+HybridConnectivity::HybridConnectivity( idx_t *values, size_t rows, size_t *displs, size_t *counts )
   : owns_(false),
     values_(values),
     rows_(rows),
-    row_offset_(row_offset),
+    displs_(displs),
+    counts_(counts)
+{
+}
+
+HybridBlockConnectivity::HybridBlockConnectivity( idx_t *values, size_t rows, size_t *displs, size_t *counts, size_t blocks, size_t *block_offset )
+  : HybridConnectivity(values,rows,displs,counts),
     blocks_(blocks),
     block_offset_(block_offset)
 {
   regenerate_block_connectivity();
 }
 
+HybridBlockConnectivity::HybridBlockConnectivity() :
+  HybridConnectivity(),
+  blocks_(0),
+  block_offset_(0),
+  owned_block_offset_(1,0ul)
+{}
+
+HybridBlockConnectivity::~HybridBlockConnectivity() {}
 
 HybridConnectivity::HybridConnectivity() :
   owns_(true),
   values_(0),
   rows_(0),
-  row_offset_(0),
-  blocks_(0),
-  block_offset_(0),
-  owned_row_offset_(1,0ul),
-  owned_block_offset_(1,0ul)
+  displs_(0),
+  counts_(0),
+  owned_displs_(1,0ul),
+  owned_counts_(1,0ul)
 {}
 
 HybridConnectivity::~HybridConnectivity() {}
@@ -207,9 +222,11 @@ void HybridConnectivity::add(size_t rows, size_t cols, const idx_t values[], boo
   size_t old_size = owned_values_.size();
   size_t new_size = old_size + rows*cols;
   size_t new_rows = rows_+rows;
-  owned_row_offset_.resize(new_rows+1);
+  owned_displs_.resize(new_rows+1);
+  owned_counts_.resize(new_rows+1);
   for(size_t j=0; rows_<new_rows; ++rows_, ++j) {
-    owned_row_offset_[rows_+1] = owned_row_offset_[rows_]+cols;
+    owned_displs_[rows_+1] = owned_displs_[rows_]+cols;
+    owned_counts_[rows_] = cols;
   }
 
   owned_values_.resize(new_size);
@@ -218,14 +235,12 @@ void HybridConnectivity::add(size_t rows, size_t cols, const idx_t values[], boo
     owned_values_[c] = values[j] + add_base;
   }
 
-  owned_block_offset_.push_back(new_rows);
-  blocks_++;
 
   values_ = owned_values_.data();
-  row_offset_ = owned_row_offset_.data();
-  block_offset_ = owned_block_offset_.data();
+  displs_ = owned_displs_.data();
+  counts_ = owned_counts_.data();
 
-  regenerate_block_connectivity();
+  on_add();
 }
 
 void HybridConnectivity::add( const BlockConnectivity& block )
@@ -233,10 +248,20 @@ void HybridConnectivity::add( const BlockConnectivity& block )
   if( !owns_ ) throw eckit::AssertionFailed("HybridConnectivity must be owned to be resized directly");
   bool fortran_array = FORTRAN_BASE;
   add(block.rows(),block.cols(),block.values_,fortran_array);
+  on_add();
 }
 
 
-void HybridConnectivity::regenerate_block_connectivity()
+void HybridBlockConnectivity::on_add()
+{
+  blocks_++;
+  owned_block_offset_.push_back(rows());
+  block_offset_ = owned_block_offset_.data();
+  regenerate_block_connectivity();
+}
+
+
+void HybridBlockConnectivity::regenerate_block_connectivity()
 {
   block_connectivity_.resize(blocks_);
   for( size_t b=0; b<blocks_; ++b )
@@ -244,8 +269,8 @@ void HybridConnectivity::regenerate_block_connectivity()
     block_connectivity_[b].reset(
        new BlockConnectivity(
         block_offset_[b+1]-block_offset_[b], // rows
-        row_offset_[block_offset_[b]+1]-row_offset_[block_offset_[b]],  // cols
-        values_+row_offset_[block_offset_[b]]) );
+        counts()[block_offset_[b]],  // cols
+        data()+displs()[block_offset_[b]]) );
   }
 }
 
