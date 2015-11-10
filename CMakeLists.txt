@@ -30,7 +30,7 @@ ecbuild_requires_macro_version( 1.9 )
 
 set( PERSISTENT_NAMESPACE "eckit" CACHE INTERNAL "" )
 
-ecbuild_use_package( PROJECT eckit VERSION 0.9 REQUIRED )
+ecbuild_use_package( PROJECT eckit VERSION 0.10 REQUIRED )
 
 #list( REMOVE_DUPLICATES ECKIT_FEATURES )
 message( STATUS "   ECKIT_FEATURES : [${ECKIT_FEATURES}]" )
@@ -134,7 +134,7 @@ endif()
 ecbuild_add_option(
     FEATURE TRANS
     DESCRIPTION "Support for trasnformations between SH and Grid space"
-    REQUIRED_PACKAGES "PROJECT transi VERSION 0.1 QUIET" )
+    REQUIRED_PACKAGES "PROJECT transi VERSION 0.3.0 QUIET" )
 
 ### tesselation ...
 
