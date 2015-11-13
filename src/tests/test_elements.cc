@@ -25,7 +25,7 @@
 #include "atlas/mesh/Elements.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/Field.h"
-#include "atlas/util/IndexView.h"
+#include "atlas/Connectivity.h"
 
 // ------------------------------------------------------------------
 
@@ -216,7 +216,7 @@ BOOST_AUTO_TEST_CASE( hybrid_connectivity )
     1,5,3,
     1,5,2
   };
-  HybridBlockConnectivity hybrid_connectivity;
+  MultiBlockConnectivity hybrid_connectivity;
   hybrid_connectivity.add(2,3,triangle_nodes);
   for( size_t e=0; e<hybrid_connectivity.rows(); ++e )
   {

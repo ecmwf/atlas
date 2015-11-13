@@ -14,10 +14,9 @@
 #ifndef atlas_mesh_Elements_H
 #define atlas_mesh_Elements_H
 
-#include "atlas/atlas_config.h"
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
-#include "atlas/util/Debug.h"
+#include "atlas/Connectivity.h"
 
 namespace atlas { template<typename T> class ArrayT; }
 namespace atlas { namespace mesh { class ElementType; } }
@@ -28,112 +27,13 @@ namespace mesh {
 // Classes defined in this file:
 class HybridElements;
 class Elements;
-class HybridConnectivity;
-class BlockConnectivity;
-
-// --------------------------------------------------------------------------
-
-#ifdef ATLAS_HAVE_FORTRAN
-#define FROM_FORTRAN -1
-#define TO_FORTRAN +1
-#else
-#define FROM_FORTRAN
-#define TO_FORTRAN
-#endif
-
-class HybridConnectivity : public eckit::Owned
-{
-public:
-  HybridConnectivity( idx_t *values, size_t rows, size_t *displs, size_t *counts );
-  idx_t operator()(size_t row, size_t col) const;
-  void set(size_t row, const idx_t column_values[]);
-  size_t rows() const { return rows_; }
-  size_t cols(size_t row) const { return counts_[row]; }
-
-  HybridConnectivity();
-  ~HybridConnectivity();
-
-  void add( size_t rows, size_t cols, const idx_t values[], bool fortran_array=false );
-  void add( const BlockConnectivity& );
-
-  const idx_t* data() const { return values_; }
-        idx_t* data()       { return values_; }
-
-private:
-  virtual void on_add() {}
-
-protected:
-  bool owns() { return owns_; }
-  const size_t *displs() const { return displs_; }
-  const size_t *counts() const { return counts_; }
-
-private:
-  bool owns_;
-  std::vector<idx_t>  owned_values_;
-  std::vector<size_t> owned_displs_;
-  std::vector<size_t> owned_counts_;
-
-  idx_t  *values_;
-  size_t rows_;
-  size_t *displs_;
-  size_t *counts_;
-};
-
-class HybridBlockConnectivity : public HybridConnectivity
-{
-public:
-  HybridBlockConnectivity( idx_t *values, size_t rows, size_t *displs, size_t *counts, size_t blocks, size_t *block_offset );
-
-  HybridBlockConnectivity();
-  ~HybridBlockConnectivity();
-
-  size_t blocks() const { return blocks_; }
-
-  const BlockConnectivity& block_connectivity(size_t block_idx) const { return *block_connectivity_[block_idx].get(); }
-        BlockConnectivity& block_connectivity(size_t block_idx)       { return *block_connectivity_[block_idx].get(); }
-
-  using HybridConnectivity::operator();
-  idx_t operator()(size_t block, size_t row, size_t col) const;
-
-private:
-  virtual void on_add();
-  void regenerate_block_connectivity();
-
-private:
-  std::vector<size_t> owned_block_offset_;
-  size_t blocks_;
-  size_t *block_offset_;
-  std::vector< eckit::SharedPtr<BlockConnectivity> > block_connectivity_;
-};
-
-
-class BlockConnectivity : public eckit::Owned
-{
-  friend class HybridConnectivity;
-public:
-  BlockConnectivity();
-  BlockConnectivity( size_t rows, size_t cols, idx_t *values );
-  idx_t operator()( size_t row, size_t col ) const;
-  void set( size_t row, const idx_t column_values[] );
-  void add( size_t rows, size_t cols, const idx_t *values, bool fortran_array=false );
-  size_t rows() const { return rows_; }
-  size_t cols() const { return cols_; }
-private:
-  bool owns_;
-  std::vector<idx_t> owned_values_;
-
-  size_t rows_;
-  size_t cols_;
-  idx_t *values_;
-
-};
 
 // -------------------------------------------------------------------------------
 
 class Elements
 {
 public:
-  typedef atlas::mesh::BlockConnectivity Connectivity;
+  typedef atlas::BlockConnectivity Connectivity;
 public:
   Elements();
 
@@ -173,7 +73,7 @@ private:
 class HybridElements : public eckit::Owned {
 friend class Elements;
 public:
-  typedef HybridBlockConnectivity Connectivity;
+  typedef MultiBlockConnectivity Connectivity;
 
 public: // methods
 
@@ -239,46 +139,6 @@ private:
 
 // -----------------------------------------------------------------------------------------------------
 
-inline idx_t HybridConnectivity::operator()(size_t row, size_t col) const
-{
-  return (values_+displs_[row])[col] FROM_FORTRAN;
-}
-
-inline void HybridConnectivity::set(size_t row, const idx_t column_values[]) {
-  idx_t *col = values_+displs_[row];
-  const size_t N = counts_[N];
-  for( size_t n=0; n<N; ++n ) {
-    col[n] = column_values[n] TO_FORTRAN;
-  }
-}
-
-
-inline idx_t HybridBlockConnectivity::operator()(size_t block, size_t row, size_t col) const
-{
-  return block_connectivity(block)(row,col);
-}
-
-// -----------------------------------------------------------------------------------------------------
-
-BlockConnectivity::BlockConnectivity( size_t rows, size_t cols, idx_t *values )
-  : rows_(rows),
-    cols_(cols),
-    values_(values)
-{
-}
-
-inline idx_t BlockConnectivity::operator()(size_t row, size_t col) const {
-  return (values_+row*cols_)[col] FROM_FORTRAN;
-}
-
-inline void BlockConnectivity::set(size_t row, const idx_t column_values[]) {
-  idx_t *col = values_+row*cols_;
-  for( size_t n=0; n<cols_; ++n ) {
-    col[n] = column_values[n] TO_FORTRAN;
-  }
-}
-
-// ------------------------------------------------------------------------------------------------------
 
 inline size_t HybridElements::nb_types() const
 {

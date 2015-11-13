@@ -221,6 +221,8 @@ Array.h
 Array.cc
 BoundBox.h
 BoundBox.cc
+Connectivity.h
+Connectivity.cc
 Config.h
 Config.cc
 Domain.h
