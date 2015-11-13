@@ -104,6 +104,8 @@ integer, public, parameter :: ATLAS_KIND_GIDX = c_long
 #error ATLAS_BITS_GLOBAL must be either 32 or 64
 #endif
 
+integer, public, parameter :: ATLAS_KIND_IDX = c_int
+
 #include "atlas_module_Config_i.f"
 #include "atlas_module_Logging_i.f"
 #include "atlas_module_HaloExchange_i.f"
