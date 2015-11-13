@@ -77,33 +77,29 @@ public:
   size_t rows() const { return rows_; }
 
   /// @brief Number of columns for specified row in the connectivity table
-  size_t cols(size_t row) const { return counts_[row]; }
+  size_t cols(size_t row_idx) const { return counts_[row_idx]; }
 
   /// @brief Access to connectivity table elements for given row and column
   /// The returned index has base 0 regardless if ATLAS_HAVE_FORTRAN is defined.
-  idx_t operator()(size_t row, size_t col) const;
+  idx_t operator()(size_t row_idx, size_t col_idx) const;
 
   /// @brief Access to raw data.
   /// Note that the connectivity base is 1 in case ATLAS_HAVE_FORTRAN is defined.
   const idx_t* data() const { return values_; }
         idx_t* data()       { return values_; }
 
-///-- Modify
+///-- Modifiers
 
   /// @brief Modify row with given values. Values must be given with base 0
-  void set(size_t row, const idx_t column_values[]);
+  void set(size_t row_idx, const idx_t column_values[]);
 
   /// @brief Resize connectivity, and add given rows
   /// @note Can only be used when data is owned.
-  void add( size_t rows, size_t cols, const idx_t values[], bool fortran_array=false );
+  virtual void add( size_t rows, size_t cols, const idx_t values[], bool fortran_array=false );
 
   /// @brief Resize connectivity, and copy from a BlockConnectivity
   /// @note Can only be used when data is owned.
-  void add( const BlockConnectivity& );
-
-
-private:
-  virtual void on_add() {}
+  virtual void add( const BlockConnectivity& );
 
 protected:
   bool owns() { return owns_; }
@@ -156,28 +152,57 @@ private:
 class MultiBlockConnectivity : public IrregularConnectivity
 {
 public:
-  MultiBlockConnectivity( idx_t values[], size_t rows, size_t displs[], size_t counts[], size_t blocks, size_t block_offset[] );
 
+//-- Constructors
+
+  /// @brief Construct connectivity table that needs resizing a-posteriori
+  /// Data is owned
   MultiBlockConnectivity();
+
+  /// @brief Construct connectivity table wrapping existing raw data.
+  /// No resizing can be performed as data is not owned.
+  MultiBlockConnectivity( idx_t values[], size_t rows, size_t displs[], size_t counts[], size_t blocks, size_t block_displs[] );
+
   ~MultiBlockConnectivity();
 
+//-- Accessors
+
+  /// @brief Number of blocks
   size_t blocks() const { return blocks_; }
 
-  const BlockConnectivity& block_connectivity(size_t block_idx) const { return *block_connectivity_[block_idx].get(); }
-        BlockConnectivity& block_connectivity(size_t block_idx)       { return *block_connectivity_[block_idx].get(); }
+  /// @brief Access to a block connectivity
+  const BlockConnectivity& block(size_t block_idx) const { return *block_[block_idx].get(); }
+        BlockConnectivity& block(size_t block_idx)       { return *block_[block_idx].get(); }
 
-  using IrregularConnectivity::operator();
-  idx_t operator()(size_t block, size_t row, size_t col) const;
+  /// @brief Access to connectivity table elements for given row and column
+  /// The row_idx counts up from 0, from block 0, as in IrregularConnectivity
+  /// The returned index has base 0 regardless if ATLAS_HAVE_FORTRAN is defined.
+  idx_t operator()(size_t row_idx, size_t col_idx) const;
+
+  /// @brief Access to connectivity table elements for given row and column
+  /// The block_row_idx counts up from zero for every block_idx.
+  /// The returned index has base 0 regardless if ATLAS_HAVE_FORTRAN is defined.
+  idx_t operator()(size_t block_idx, size_t block_row_idx, size_t block_col_idx) const;
+
+///-- Modifiers
+
+  /// @brief Resize connectivity, and add given rows as a new block
+  /// @note Can only be used when data is owned.
+  virtual void add( size_t rows, size_t cols, const idx_t values[], bool fortran_array=false );
+
+  /// @brief Resize connectivity, and copy from a BlockConnectivity to a new block
+  /// @note Can only be used when data is owned.
+  virtual void add( const BlockConnectivity& );
 
 private:
-  virtual void on_add();
+
   void regenerate_block_connectivity();
 
 private:
-  std::vector<size_t> owned_block_offset_;
+  std::vector<size_t> owned_block_displs_;
   size_t blocks_;
-  size_t *block_offset_;
-  std::vector< eckit::SharedPtr<BlockConnectivity> > block_connectivity_;
+  size_t *block_displs_;
+  std::vector< eckit::SharedPtr<BlockConnectivity> > block_;
 };
 
 
@@ -187,8 +212,8 @@ class BlockConnectivity : public eckit::Owned
 public:
   BlockConnectivity();
   BlockConnectivity( size_t rows, size_t cols, idx_t values[] );
-  idx_t operator()( size_t row, size_t col ) const;
-  void set( size_t row, const idx_t column_values[] );
+  idx_t operator()( size_t row_idx, size_t col_idx ) const;
+  void set( size_t row_idx, const idx_t column_values[] );
   void add( size_t rows, size_t cols, const idx_t values[], bool fortran_array=false );
   size_t rows() const { return rows_; }
   size_t cols() const { return cols_; }
@@ -204,33 +229,40 @@ private:
 
 // -----------------------------------------------------------------------------------------------------
 
-inline idx_t IrregularConnectivity::operator()(size_t row, size_t col) const
+inline idx_t IrregularConnectivity::operator()(size_t row_idx, size_t col_idx) const
 {
-  return (values_+displs_[row])[col] FROM_FORTRAN;
+  return (values_+displs_[row_idx])[col_idx] FROM_FORTRAN;
 }
 
-inline void IrregularConnectivity::set(size_t row, const idx_t column_values[]) {
-  idx_t *col = values_+displs_[row];
+inline void IrregularConnectivity::set(size_t row_idx, const idx_t column_values[]) {
+  idx_t *col = values_+displs_[row_idx];
   const size_t N = counts_[N];
   for( size_t n=0; n<N; ++n ) {
     col[n] = column_values[n] TO_FORTRAN;
   }
 }
 
+// -----------------------------------------------------------------------------------------------------
 
-inline idx_t MultiBlockConnectivity::operator()(size_t block, size_t row, size_t col) const
+inline idx_t MultiBlockConnectivity::operator()(size_t row_idx, size_t col_idx) const
 {
-  return block_connectivity(block)(row,col);
+  return IrregularConnectivity::operator()(row_idx,col_idx);
+}
+
+
+inline idx_t MultiBlockConnectivity::operator()(size_t block_idx, size_t block_row_idx, size_t block_col_idx) const
+{
+  return block(block_idx)(block_row_idx,block_col_idx);
 }
 
 // -----------------------------------------------------------------------------------------------------
 
-inline idx_t BlockConnectivity::operator()(size_t row, size_t col) const {
-  return (values_+row*cols_)[col] FROM_FORTRAN;
+inline idx_t BlockConnectivity::operator()(size_t row_idx, size_t col_idx) const {
+  return (values_+row_idx*cols_)[col_idx] FROM_FORTRAN;
 }
 
-inline void BlockConnectivity::set(size_t row, const idx_t column_values[]) {
-  idx_t *col = values_+row*cols_;
+inline void BlockConnectivity::set(size_t row_idx, const idx_t column_values[]) {
+  idx_t *col = values_+row_idx*cols_;
   for( size_t n=0; n<cols_; ++n ) {
     col[n] = column_values[n] TO_FORTRAN;
   }

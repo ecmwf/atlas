@@ -34,10 +34,10 @@ IrregularConnectivity::IrregularConnectivity( idx_t values[], size_t rows, size_
 {
 }
 
-MultiBlockConnectivity::MultiBlockConnectivity( idx_t values[], size_t rows, size_t displs[], size_t counts[], size_t blocks, size_t block_offset[] )
+MultiBlockConnectivity::MultiBlockConnectivity( idx_t values[], size_t rows, size_t displs[], size_t counts[], size_t blocks, size_t block_displs[] )
   : IrregularConnectivity(values,rows,displs,counts),
     blocks_(blocks),
-    block_offset_(block_offset)
+    block_displs_(block_displs)
 {
   regenerate_block_connectivity();
 }
@@ -45,8 +45,8 @@ MultiBlockConnectivity::MultiBlockConnectivity( idx_t values[], size_t rows, siz
 MultiBlockConnectivity::MultiBlockConnectivity() :
   IrregularConnectivity(),
   blocks_(0),
-  block_offset_(0),
-  owned_block_offset_(1,0ul)
+  block_displs_(0),
+  owned_block_displs_(1,0ul)
 {}
 
 MultiBlockConnectivity::~MultiBlockConnectivity() {}
@@ -89,12 +89,9 @@ void IrregularConnectivity::add(size_t rows, size_t cols, const idx_t values[], 
     owned_values_[c] = values[j] + add_base;
   }
 
-
   values_ = owned_values_.data();
   displs_ = owned_displs_.data();
   counts_ = owned_counts_.data();
-
-  on_add();
 }
 
 void IrregularConnectivity::add( const BlockConnectivity& block )
@@ -102,29 +99,40 @@ void IrregularConnectivity::add( const BlockConnectivity& block )
   if( !owns_ ) throw eckit::AssertionFailed("HybridConnectivity must be owned to be resized directly");
   bool fortran_array = FORTRAN_BASE;
   add(block.rows(),block.cols(),block.values_,fortran_array);
-  on_add();
 }
 
 
-void MultiBlockConnectivity::on_add()
+void MultiBlockConnectivity::add(size_t rows, size_t cols, const idx_t values[], bool fortran_array )
 {
+  if( !owns() ) throw eckit::AssertionFailed("MultiBlockConnectivity must be owned to be resized directly");
+  IrregularConnectivity::add(rows,cols,values,fortran_array);
   blocks_++;
-  owned_block_offset_.push_back(rows());
-  block_offset_ = owned_block_offset_.data();
+  owned_block_displs_.push_back(this->rows());
+  block_displs_ = owned_block_displs_.data();
+  regenerate_block_connectivity();
+}
+
+void MultiBlockConnectivity::add( const BlockConnectivity& block )
+{
+  if( !owns() ) throw eckit::AssertionFailed("MultiBlockConnectivity must be owned to be resized directly");
+  IrregularConnectivity::add(block);
+  blocks_++;
+  owned_block_displs_.push_back(rows());
+  block_displs_ = owned_block_displs_.data();
   regenerate_block_connectivity();
 }
 
 
 void MultiBlockConnectivity::regenerate_block_connectivity()
 {
-  block_connectivity_.resize(blocks_);
+  block_.resize(blocks_);
   for( size_t b=0; b<blocks_; ++b )
   {
-    block_connectivity_[b].reset(
+    block_[b].reset(
        new BlockConnectivity(
-        block_offset_[b+1]-block_offset_[b], // rows
-        counts()[block_offset_[b]],          // cols
-        data()+displs()[block_offset_[b]]) );
+        block_displs_[b+1]-block_displs_[b], // rows
+        counts()[block_displs_[b]],          // cols
+        data()+displs()[block_displs_[b]]) );
   }
 }
 
