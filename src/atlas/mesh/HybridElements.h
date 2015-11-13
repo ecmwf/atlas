@@ -138,8 +138,6 @@ public:
         Field& field(size_t);
   size_t nb_fields() const { return fields_.size(); }
 
-
-
   const Metadata& metadata() const { return metadata_; }
         Metadata& metadata()       { return metadata_; }
 

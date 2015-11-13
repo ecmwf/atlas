@@ -171,6 +171,10 @@ BOOST_AUTO_TEST_CASE( hybrid_elements )
   BOOST_CHECK_EQUAL( hybrid_elements.partition().size(),      nb_elements);
   BOOST_CHECK_EQUAL( hybrid_elements.remote_index().size(),   nb_elements);
   BOOST_CHECK_EQUAL( hybrid_elements.field("surface").size(), nb_elements);
+  BOOST_CHECK_EQUAL( hybrid_elements.elements(0).begin(), 0);
+  BOOST_CHECK_EQUAL( hybrid_elements.elements(0).end(),   2);
+  BOOST_CHECK_EQUAL( hybrid_elements.elements(1).begin(), 2);
+  BOOST_CHECK_EQUAL( hybrid_elements.elements(1).end(),   3);
 
 }
 
@@ -185,6 +189,10 @@ BOOST_AUTO_TEST_CASE( elements )
   idx_t triag1[3] = {9,8,7};
 
   Elements elements( new Triangle(), 2, triangle_nodes );
+
+  BOOST_CHECK_EQUAL( elements.begin(), 0);
+  BOOST_CHECK_EQUAL( elements.end(),   2);
+
   elements.node_connectivity().set(0,triag1);
   eckit::Log::info() << "name = " << elements.name() << std::endl;
   eckit::Log::info() << "nb_elements = " << elements.size() << std::endl;

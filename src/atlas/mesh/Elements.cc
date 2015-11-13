@@ -19,11 +19,13 @@ namespace mesh {
 //-----------------------------------------------------------------------------
 
 Elements::Elements( HybridElements &elements, size_t type_idx)
-  : hybrid_elements_(&elements), type_idx_(type_idx), owns_(false)
+  : owns_(false), hybrid_elements_(&elements), type_idx_(type_idx)
 {
   size_ = hybrid_elements_->elements_size_[type_idx_];
   nb_nodes_ = hybrid_elements_->element_type(type_idx_).nb_nodes();
   nb_edges_ = hybrid_elements_->element_type(type_idx_).nb_edges();
+  begin_ = hybrid_elements_->elements_begin_[type_idx_];
+  end_ = hybrid_elements_->elements_begin_[type_idx_+1];
 }
 
 Elements::Elements( ElementType* element_type, size_t nb_elements, const std::vector<idx_t> &node_connectivity )
@@ -34,6 +36,8 @@ Elements::Elements( ElementType* element_type, size_t nb_elements, const std::ve
   size_ = hybrid_elements_->elements_size_[type_idx_];
   nb_nodes_ = hybrid_elements_->element_type(type_idx_).nb_nodes();
   nb_edges_ = hybrid_elements_->element_type(type_idx_).nb_edges();
+  begin_ = hybrid_elements_->elements_begin_[type_idx_];
+  end_ = hybrid_elements_->elements_begin_[type_idx_+1];
 }
 
 Elements::Elements( ElementType* element_type, size_t nb_elements, const idx_t node_connectivity[], bool fortran_array )
@@ -44,6 +48,8 @@ Elements::Elements( ElementType* element_type, size_t nb_elements, const idx_t n
   size_ = hybrid_elements_->elements_size_[type_idx_];
   nb_nodes_ = hybrid_elements_->element_type(type_idx_).nb_nodes();
   nb_edges_ = hybrid_elements_->element_type(type_idx_).nb_edges();
+  begin_ = hybrid_elements_->elements_begin_[type_idx_];
+  end_ = hybrid_elements_->elements_begin_[type_idx_+1];
 }
 
 

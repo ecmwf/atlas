@@ -74,10 +74,18 @@ public:
   /// HybridElements can contain more Elements, and holds the data.
   const HybridElements& hybrid_elements() const { return *hybrid_elements_; }
 
+  /// @brief Begin of elements in hybrid_elements
+  size_t begin() const;
+
+  /// @brief End of elements in hybrid_elements
+  size_t end() const;
+
 private:
   bool owns_;
   HybridElements* hybrid_elements_;
   size_t size_;
+  size_t begin_;
+  size_t end_;
   size_t type_idx_;
   size_t nb_nodes_;
   size_t nb_edges_;
@@ -113,6 +121,16 @@ inline Elements::Connectivity& Elements::node_connectivity()
 inline const ElementType& Elements::element_type() const
 {
   return hybrid_elements_->element_type(type_idx_);
+}
+
+inline size_t Elements::begin() const
+{
+  return begin_;
+}
+
+inline size_t Elements::end() const
+{
+  return end_;
 }
 
 // ------------------------------------------------------------------------------------------------------
