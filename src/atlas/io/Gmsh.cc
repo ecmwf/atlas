@@ -130,7 +130,7 @@ void write_field_nodes(const Gmsh& gmsh, const functionspace::Nodes& function_sp
     int jlev = lev[ilev];
     if( ( gather && eckit::mpi::rank() == 0 ) || !gather )
     {
-      char field_lev[6];
+      char field_lev[6] = {0, 0, 0, 0, 0, 0};
       if( field.has_levels() )
         std::sprintf(field_lev, "[%03d]",jlev);
       double time = field.metadata().has("time") ? field.metadata().get<double>("time") : 0.;
@@ -237,7 +237,7 @@ void write_field_elems(const Gmsh& gmsh, const FunctionSpace& function_space, co
 
   for (int jlev=0; jlev<nlev; ++jlev)
   {
-    char field_lev[6];
+    char field_lev[6] = {0, 0, 0, 0, 0, 0};
     if( field.metadata().has("nb_levels") )
       std::sprintf(field_lev, "[%03d]",jlev);
 

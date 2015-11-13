@@ -6,7 +6,7 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-include( ecbuild_check_fortran_source )
+include( ecbuild_add_fortran_flags )
 
 # WARNING!!
 # Following has not been thoroughly tested. Take these flags with grain of salt
