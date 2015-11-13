@@ -88,9 +88,6 @@ Field& Nodes::field(const std::string& name)
 
 void Nodes::resize( size_t size )
 {
-//  FunctionSpace::resize(make_shape(size, FunctionSpace::shape(1)));
-
-//  dof_ = size;
   size_ = size;
   for( FieldMap::iterator it = fields_.begin(); it != fields_.end(); ++it )
   {

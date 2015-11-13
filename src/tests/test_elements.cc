@@ -78,6 +78,8 @@ BOOST_AUTO_TEST_CASE( hybrid_elements )
   };
   size_t triags = hybrid_elements.add( new Triangle(), 2, triangle_nodes );
 
+  hybrid_elements.add(Field::create<double>("surface",make_shape(hybrid_elements.size())));
+
   std::vector<idx_t> quad_nodes(4);
   quad_nodes[0] = 0;
   quad_nodes[1] = 1;
@@ -162,6 +164,13 @@ BOOST_AUTO_TEST_CASE( hybrid_elements )
       }
     }
   }
+
+  size_t nb_elements = 3;
+  BOOST_CHECK_EQUAL( hybrid_elements.size(),                  nb_elements);
+  BOOST_CHECK_EQUAL( hybrid_elements.global_index().size(),   nb_elements);
+  BOOST_CHECK_EQUAL( hybrid_elements.partition().size(),      nb_elements);
+  BOOST_CHECK_EQUAL( hybrid_elements.remote_index().size(),   nb_elements);
+  BOOST_CHECK_EQUAL( hybrid_elements.field("surface").size(), nb_elements);
 
 }
 

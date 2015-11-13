@@ -19,7 +19,6 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/Metadata.h"
-#include "atlas/FunctionSpace.h"
 
 namespace atlas { class Field; }
 
@@ -40,13 +39,13 @@ public: // methods
 
 //-- Accessors
 
-  virtual const Field& field(const std::string& name) const;
-  virtual       Field& field(const std::string& name);
-  virtual bool has_field(const std::string& name) const { return (fields_.find(name) != fields_.end()); }
+  const Field& field(const std::string& name) const;
+        Field& field(const std::string& name);
+  bool has_field(const std::string& name) const { return (fields_.find(name) != fields_.end()); }
 
-  virtual const Field& field(size_t) const;
-  virtual       Field& field(size_t);
-  virtual size_t nb_fields() const { return fields_.size(); }
+  const Field& field(size_t) const;
+        Field& field(size_t);
+  size_t nb_fields() const { return fields_.size(); }
 
   const Metadata& metadata() const { return metadata_; }
         Metadata& metadata()       { return metadata_; }
@@ -70,7 +69,7 @@ public: // methods
 
 // -- Modifiers
 
-  virtual Field& add( Field* ); // Take ownership!
+  Field& add( Field* ); // Take ownership!
 
   void resize( size_t );
 

@@ -12,6 +12,8 @@
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Elements.h"
+#include "atlas/Field.h"
+#include "atlas/atlas_config.h"
 #include "atlas/atlas_defines.h"
 
 #ifdef ATLAS_HAVE_FORTRAN
@@ -36,11 +38,94 @@ HybridElements::HybridElements() :
   nb_edges_(),
   type_idx_()
 {
+  global_index_ = &add( Field::create<gidx_t>("glb_idx",   make_shape(size(),1)) );
+  remote_index_ = &add( Field::create<int   >("remote_idx",make_shape(size(),1)) );
+  partition_    = &add( Field::create<int   >("partition", make_shape(size(),1)) );
+  ghost_        = &add( Field::create<int   >("ghost",     make_shape(size(),1)) );
+
 }
 
 HybridElements::~HybridElements()
 {
 }
+
+Field& HybridElements::add( Field* field )
+{
+  ASSERT( field != NULL );
+  ASSERT( ! field->name().empty() );
+
+  if( has_field(field->name()) ) {
+    std::stringstream msg;
+    msg << "Trying to add field '"<<field->name()<<"' to Nodes, but Nodes already has a field with this name.";
+    throw eckit::Exception(msg.str(),Here());
+  }
+  fields_[field->name()] = eckit::SharedPtr<Field>(field);
+  return *field;
+}
+
+void HybridElements::resize( size_t size )
+{
+  size_ = size;
+  for( FieldMap::iterator it = fields_.begin(); it != fields_.end(); ++it )
+  {
+    Field& field = *it->second;
+    ArrayShape shape = field.shape();
+    shape[0] = size_;
+    field.resize(shape);
+  }
+}
+
+void HybridElements::remove_field(const std::string& name)
+{
+  if( ! has_field(name) )
+  {
+    std::stringstream msg;
+    msg << "Trying to remove field `"<<name<<"' in Nodes, but no field with this name is present in Nodes.";
+    throw eckit::Exception(msg.str(),Here());
+  }
+  fields_.erase(name);
+}
+
+
+const Field& HybridElements::field(const std::string& name) const
+{
+  if( ! has_field(name) )
+  {
+    std::stringstream msg;
+    msg << "Trying to access field `"<<name<<"' in Nodes, but no field with this name is present in Nodes.";
+    throw eckit::Exception(msg.str(),Here());
+  }
+  return *fields_.find(name)->second;
+}
+
+Field& HybridElements::field(const std::string& name)
+{
+  return const_cast<Field&>(static_cast<const HybridElements*>(this)->field(name));
+}
+
+const Field& HybridElements::field(size_t idx) const
+{
+  ASSERT(idx < nb_fields());
+  size_t c(0);
+  for( FieldMap::const_iterator it = fields_.begin(); it != fields_.end(); ++it )
+  {
+    if( idx == c )
+    {
+      const Field& field = *it->second;
+      return field;
+    }
+    c++;
+  }
+  eckit::SeriousBug("Should not be here!",Here());
+  static Field* ret;
+  return *ret;
+}
+
+Field& HybridElements::field(size_t idx)
+{
+  return const_cast<Field&>(static_cast<const HybridElements*>(this)->field(idx));
+}
+
 
 size_t HybridElements::add( const ElementType* element_type, size_t nb_elements, const std::vector<idx_t> &connectivity )
 {
@@ -99,7 +184,7 @@ size_t HybridElements::add( const ElementType* element_type, size_t nb_elements,
                                      element_types_.size(),
                                      elements_begin_.data())
                                    );
-  size_ = new_size;
+  resize( new_size );
   return element_types_.size()-1;
 }
 

@@ -8,8 +8,18 @@
  * does it submit to any jurisdiction.
  */
 
+/// @file Connectivity.h
 /// @author Willem Deconinck
 /// @date October 2015
+/// This file contains Connectivity classes
+///   - IrregularConnectivity
+///   - BlockConnectivity
+///   - MultiBlockConnectivity
+///
+/// It is important to note that connectivity access functions are
+/// inlined for optimal performance. The connectivity itself is internally
+/// stored with base 1, to be compatible with Fortran access.
+/// C++ access operators however convert the resulting connectivity to base 0.
 
 #ifndef atlas_Connectivity_H
 #define atlas_Connectivity_H

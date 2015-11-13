@@ -20,9 +20,11 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/Connectivity.h"
+#include "atlas/Metadata.h"
 
 namespace atlas { namespace mesh { class ElementType; } }
 namespace atlas { namespace mesh { class Elements; } }
+namespace atlas { class Field; }
 
 namespace atlas {
 namespace mesh {
@@ -77,16 +79,20 @@ public: // methods
 // -- Modifiers
 
   /// @brief Add a new element type with given number of elements and node-connectivity
+  /// @return type_idx of the added element type
   size_t add( const ElementType*, size_t nb_elements, const std::vector<idx_t> &node_connectivity );
 
   /// @brief Add a new element type with given number of elements and node-connectivity
+  /// @return type_idx of the added element type
   size_t add( const ElementType*, size_t nb_elements, const idx_t node_connectivity[] );
 
   /// @brief Add a new element type with given number of elements and node-connectivity
+  /// @return type_idx of the added element type
   size_t add( const ElementType*, size_t nb_elements, const idx_t node_connectivity[], bool fortran_array );
 
   /// @brief Add a new element type from existing Elements.
   /// Data will be copied.
+  /// @return type_idx of the added element type
   size_t add( const Elements& );
 
 private:
@@ -111,6 +117,56 @@ private:
 // -- Accessor helpers
   eckit::SharedPtr< HybridElements::Connectivity > node_connectivity_;
   std::vector< eckit::SharedPtr<Elements> > elements_;
+
+// -- New stuff
+
+private:
+
+  typedef std::map< std::string, eckit::SharedPtr<Field> >  FieldMap;
+
+  void resize( size_t size );
+
+public:
+  Field& add( Field* field );
+  void remove_field(const std::string& name);
+
+  const Field& field(const std::string& name) const;
+        Field& field(const std::string& name);
+  bool has_field(const std::string& name) const { return (fields_.find(name) != fields_.end()); }
+
+  const Field& field(size_t) const;
+        Field& field(size_t);
+  size_t nb_fields() const { return fields_.size(); }
+
+
+
+  const Metadata& metadata() const { return metadata_; }
+        Metadata& metadata()       { return metadata_; }
+
+  const Field& global_index() const { return *global_index_; }
+        Field& global_index()       { return *global_index_; }
+
+  const Field& remote_index() const { return *remote_index_; }
+        Field& remote_index()       { return *remote_index_; }
+
+  const Field& partition() const { return *partition_; }
+        Field& partition()       { return *partition_; }
+
+  const Field& ghost() const { return *ghost_; }
+        Field& ghost()       { return *ghost_; }
+
+
+private:
+
+  FieldMap fields_;
+  Metadata metadata_;
+
+  // Cached shortcuts to specific fields in fields_
+  Field* global_index_;
+  Field* remote_index_;
+  Field* partition_;
+  Field* ghost_;
+
 };
 
 // -----------------------------------------------------------------------------------------------------
