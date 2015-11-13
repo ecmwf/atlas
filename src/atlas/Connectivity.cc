@@ -98,7 +98,7 @@ void IrregularConnectivity::add( const BlockConnectivity& block )
 {
   if( !owns_ ) throw eckit::AssertionFailed("HybridConnectivity must be owned to be resized directly");
   bool fortran_array = FORTRAN_BASE;
-  add(block.rows(),block.cols(),block.values_,fortran_array);
+  add(block.rows(),block.cols(),block.data(),fortran_array);
 }
 
 

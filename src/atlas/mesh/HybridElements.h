@@ -48,16 +48,16 @@ public: // methods
   size_t size() const;
 
   /// @brief Number of nodes for given element
-  size_t nb_nodes(size_t elem_idx) const;
+  size_t nb_nodes( size_t elem_idx ) const;
 
   /// @brief Number of edges for given element
-  size_t nb_edges(size_t elem_idx) const;
+  size_t nb_edges( size_t elem_idx ) const;
 
   /// @brief Element type index for given element
-  size_t type_idx(size_t elem_idx) const;
+  size_t type_idx( size_t elem_idx ) const;
 
   /// @brief Element type name for given element
-  const std::string& name(size_t elem_idx) const;
+  const std::string& name( size_t elem_idx ) const;
 
   /// @brief Element to Node connectivity table
   const HybridElements::Connectivity& node_connectivity() const;
@@ -67,12 +67,12 @@ public: // methods
   size_t nb_types() const;
 
   /// @brief The element_type description for given type
-  const ElementType& element_type(size_t type_idx) const;
+  const ElementType& element_type( size_t type_idx ) const;
 
   /// @brief Sub-elements convenience class for given type
   /// This allows optimized access to connectivities and loops.
-  const Elements& elements(size_t type_idx) const;
-        Elements& elements(size_t type_idx);
+  const Elements& elements( size_t type_idx ) const;
+        Elements& elements( size_t type_idx );
 
 // -- Modifiers
 
@@ -125,7 +125,7 @@ inline size_t HybridElements::nb_types() const
   return element_types_.size();
 }
 
-inline const ElementType& HybridElements::element_type(size_t type_idx) const
+inline const ElementType& HybridElements::element_type( size_t type_idx ) const
 {
   return *element_types_[type_idx].get();
 }
@@ -140,27 +140,27 @@ inline HybridElements::Connectivity& HybridElements::node_connectivity()
   return *node_connectivity_.get();
 }
 
-inline const Elements& HybridElements::elements(size_t type_idx) const
+inline const Elements& HybridElements::elements( size_t type_idx ) const
 {
   return *elements_[type_idx].get();
 }
 
-inline Elements& HybridElements::elements(size_t type_idx)
+inline Elements& HybridElements::elements( size_t type_idx )
 {
   return *elements_[type_idx].get();
 }
 
-inline size_t HybridElements::nb_nodes(size_t elem_idx) const
+inline size_t HybridElements::nb_nodes( size_t elem_idx ) const
 {
   return nb_nodes_[elem_idx];
 }
 
-inline size_t HybridElements::nb_edges(size_t elem_idx) const
+inline size_t HybridElements::nb_edges( size_t elem_idx ) const
 {
   return nb_edges_[elem_idx];
 }
 
-inline size_t HybridElements::type_idx(size_t elem_idx) const
+inline size_t HybridElements::type_idx( size_t elem_idx ) const
 {
   return type_idx_[elem_idx];
 }

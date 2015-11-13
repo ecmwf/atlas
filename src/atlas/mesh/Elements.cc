@@ -18,7 +18,7 @@ namespace mesh {
 
 //-----------------------------------------------------------------------------
 
-Elements::Elements(HybridElements &elements, size_t type_idx)
+Elements::Elements( HybridElements &elements, size_t type_idx)
   : hybrid_elements_(&elements), type_idx_(type_idx), owns_(false)
 {
   size_ = hybrid_elements_->elements_size_[type_idx_];
@@ -26,7 +26,7 @@ Elements::Elements(HybridElements &elements, size_t type_idx)
   nb_edges_ = hybrid_elements_->element_type(type_idx_).nb_edges();
 }
 
-Elements::Elements(ElementType* element_type, size_t nb_elements, const std::vector<idx_t> &node_connectivity )
+Elements::Elements( ElementType* element_type, size_t nb_elements, const std::vector<idx_t> &node_connectivity )
   : owns_(true)
 {
   hybrid_elements_ = new HybridElements();
@@ -52,7 +52,10 @@ Elements::~Elements()
   if( owns_ ) delete hybrid_elements_;
 }
 
-const std::string& Elements::name() const { return hybrid_elements_->element_type(type_idx_).name(); }
+const std::string& Elements::name() const
+{
+  return hybrid_elements_->element_type(type_idx_).name();
+}
 
 
 //-----------------------------------------------------------------------------

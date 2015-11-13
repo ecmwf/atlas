@@ -38,13 +38,13 @@ public:
 //-- Constructors
 
   /// @brief Constructor that treats elements as sub-elements in HybridElements
-  Elements(HybridElements &elements, size_t type_idx);
+  Elements( HybridElements &elements, size_t type_idx );
 
   /// @brief Constructor that internally creates a HybridElements that owns the data
-  Elements(ElementType*, size_t nb_elements, const std::vector<idx_t> &node_connectivity );
+  Elements( ElementType*, size_t nb_elements, const std::vector<idx_t> &node_connectivity );
 
   /// @brief Constructor that internally creates a HybridElements that owns the data
-  Elements(ElementType*, size_t nb_elements, const idx_t node_connectivity[], bool fortran_array=false );
+  Elements( ElementType*, size_t nb_elements, const idx_t node_connectivity[], bool fortran_array=false );
 
   /// @brief Destructor
   virtual ~Elements();
