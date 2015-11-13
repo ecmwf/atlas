@@ -253,6 +253,8 @@ mesh/Elements.h
 mesh/Elements.cc
 mesh/ElementType.h
 mesh/ElementType.cc
+mesh/HybridElements.h
+mesh/HybridElements.cc
 Parameters.h
 Partitioner.cc
 Partitioner.h
