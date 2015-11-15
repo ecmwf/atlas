@@ -108,11 +108,11 @@ void increase_halo( Mesh& mesh )
       elem_nodes  [func_space_idx] = IndexView<int,2>( elements.field("nodes") );
       elem_part   [func_space_idx] = ArrayView<int,1>( elements.field("partition") );
       elem_glb_idx[func_space_idx] = ArrayView<gidx_t,1>( elements.field("glb_idx") );
-      int nb_elems = elem_nodes[func_space_idx].shape(0);
-      int nb_nodes_per_elem = elem_nodes[func_space_idx].shape(1);
-      for (int elem=0; elem<nb_elems; ++elem)
+      size_t nb_elems = elem_nodes[func_space_idx].shape(0);
+      size_t nb_nodes_per_elem = elem_nodes[func_space_idx].shape(1);
+      for (size_t elem=0; elem<nb_elems; ++elem)
       {
-        for (int n=0; n<nb_nodes_per_elem; ++n)
+        for (size_t n=0; n<nb_nodes_per_elem; ++n)
         {
           int node = elem_nodes[func_space_idx](elem,n);
           node_to_elem[node].push_back( ElementRef(elements.index(),elem) );
@@ -149,8 +149,8 @@ void increase_halo( Mesh& mesh )
   std::vector< int > face_nodes_data; face_nodes_data.reserve(4*nb_nodes);
   std::vector< Face > face_to_elem;
   face_to_elem.reserve(4*nb_nodes);
-  int nb_faces = 0;
-  int nb_inner_faces = 0;
+  size_t nb_faces = 0;
+  size_t nb_inner_faces = 0;
 
   accumulate_faces(quads, node_to_face,face_nodes_data,face_to_elem,nb_faces,nb_inner_faces);
   accumulate_faces(triags,node_to_face,face_nodes_data,face_to_elem,nb_faces,nb_inner_faces);
@@ -159,11 +159,11 @@ void increase_halo( Mesh& mesh )
   ArrayView<int,2> face_nodes(face_nodes_data.data(),extents);
 
 
-  for( int jface=0; jface<nb_faces; ++jface )
+  for( size_t jface=0; jface<nb_faces; ++jface )
   {
     if( face_to_elem[jface].is_bdry() )
     {
-      for( int jnode=0; jnode<2; ++jnode) // 2 nodes per face
+      for( size_t jnode=0; jnode<2; ++jnode) // 2 nodes per face
       {
         if( face_nodes(jface,jnode) >= 0 )
         {
@@ -326,7 +326,7 @@ void increase_halo( Mesh& mesh )
 
       found_bdry_elements[f].resize(nb_found_bdry_elems[f]);
       found_bdry_elements_periodic[f].resize(nb_found_bdry_elems[f]);
-      int jelem=0;
+      size_t jelem=0;
       std::set< std::pair<int,int> >::iterator it=found_bdry_elements_set[f].begin();
       for( ; it!=found_bdry_elements_set[f].end(); ++it, ++jelem )
       {
@@ -341,7 +341,7 @@ void increase_halo( Mesh& mesh )
     {
       for( size_t f=0; f<mesh.nb_function_spaces(); ++f )
       {
-        for( int jelem=0; jelem<nb_found_bdry_elems[f]; ++jelem )
+        for( size_t jelem=0; jelem<nb_found_bdry_elems[f]; ++jelem )
         {
           int e = found_bdry_elements[f][jelem];
           int nb_elem_nodes = elem_nodes[f].shape(1);
@@ -371,7 +371,7 @@ void increase_halo( Mesh& mesh )
         // DO I HAVE TO ALSO CHECK FOR PERIODICITY HERE?
       }
     }
-    int nb_found_bdry_nodes = found_bdry_nodes_id_set.size();
+    size_t nb_found_bdry_nodes = found_bdry_nodes_id_set.size();
     sfn_glb_idx[jpart].resize(nb_found_bdry_nodes);
     sfn_part[jpart].resize(nb_found_bdry_nodes);
     sfn_ridx[jpart].resize(nb_found_bdry_nodes);
@@ -380,7 +380,7 @@ void increase_halo( Mesh& mesh )
     //DEBUG_VAR( nb_found_bdry_nodes );
     // Fill buffers to send
     {
-      int jnode=0;
+      size_t jnode=0;
       std::set<std::pair<LonLatMicroDeg,int> >::iterator it;
       for( it=found_bdry_nodes_id_set.begin(); it!=found_bdry_nodes_id_set.end(); ++it, ++jnode )
       {
@@ -455,7 +455,7 @@ void increase_halo( Mesh& mesh )
         ArrayView<uid_t,2> sfe_nodes_id_view( sfe_nodes_id[f][jpart].data(),
                                               make_shape(nb_found_bdry_elems[f],nb_elem_nodes) );
 
-        for( int jelem=0; jelem<nb_found_bdry_elems[f]; ++jelem )
+        for( size_t jelem=0; jelem<nb_found_bdry_elems[f]; ++jelem )
         {
           int e = found_bdry_elements[f][jelem];
           int periodic = found_bdry_elements_periodic[f][jelem];
@@ -618,20 +618,20 @@ void increase_halo( Mesh& mesh )
 
       //DEBUG_VAR( nb_new_elems );
 
-      int nb_nodes_per_elem = elem_nodes[f].shape(1);
+      size_t nb_nodes_per_elem = elem_nodes[f].shape(1);
       elements.resize( make_shape( nb_elems+nb_new_elems, FunctionSpace::UNDEF_VARS ) );
       elem_glb_idx[f] = ArrayView<gidx_t,1>( elements.field("glb_idx") );
       elem_nodes[f]   = IndexView<int,2>( elements.field("nodes")   );
       elem_part[f]    = ArrayView<int,1>( elements.field("partition")   );
-      int new_elem=0;
+      size_t new_elem=0;
       for( size_t jpart=0; jpart<eckit::mpi::size(); ++jpart )
       {
         for( size_t e=0; e<received_new_elems[jpart].size(); ++e )
         {
-          int jelem = received_new_elems[jpart][e];
+          size_t jelem = received_new_elems[jpart][e];
           elem_glb_idx[f](nb_elems+new_elem)   = rfe_glb_idx[f][jpart][jelem];
           elem_part   [f](nb_elems+new_elem)   = rfe_part[f][jpart][jelem];
-          for( int n=0; n<nb_nodes_per_elem; ++n )
+          for( size_t n=0; n<nb_nodes_per_elem; ++n )
             elem_nodes[f](nb_elems+new_elem,n) = node_uid_to_loc[ rfe_nodes_id[f][jpart][jelem*nb_nodes_per_elem+n] ];
           ++new_elem;
         }
@@ -660,11 +660,11 @@ void build_lookup_node2elem( const Mesh& mesh, Node2Elem& node2elem )
     if( elements.metadata().get<long>("type") == Entity::ELEMS )
     {
       elem_nodes  [func_space_idx] = IndexView<int,2>( elements.field("nodes") );
-      int nb_elems = elem_nodes[func_space_idx].shape(0);
-      int nb_nodes_per_elem = elem_nodes[func_space_idx].shape(1);
-      for (int elem=0; elem<nb_elems; ++elem)
+      size_t nb_elems = elem_nodes[func_space_idx].shape(0);
+      size_t nb_nodes_per_elem = elem_nodes[func_space_idx].shape(1);
+      for (size_t elem=0; elem<nb_elems; ++elem)
       {
-        for (int n=0; n<nb_nodes_per_elem; ++n)
+        for (size_t n=0; n<nb_nodes_per_elem; ++n)
         {
           int node = elem_nodes[func_space_idx](elem,n);
           node2elem[node].push_back( ElementRef(elements.index(),elem) );
@@ -686,13 +686,13 @@ void accumulate_partition_bdry_nodes( Mesh& mesh, std::vector<int>& bdry_nodes )
   FunctionSpace& quads       = mesh.function_space( "quads" );
   FunctionSpace& triags      = mesh.function_space( "triags" );
 
-  int nb_nodes = nodes.size();
+  size_t nb_nodes = nodes.size();
   std::vector< std::vector<int> > node_to_face(nb_nodes);
   std::vector< int > face_nodes_data; face_nodes_data.reserve(4*nb_nodes);
   std::vector< Face > face_to_elem;
   face_to_elem.reserve(4*nb_nodes);
-  int nb_faces = 0;
-  int nb_inner_faces = 0;
+  size_t nb_faces = 0;
+  size_t nb_inner_faces = 0;
 
   accumulate_faces(quads, node_to_face,face_nodes_data,face_to_elem,nb_faces,nb_inner_faces);
   accumulate_faces(triags,node_to_face,face_nodes_data,face_to_elem,nb_faces,nb_inner_faces);
@@ -700,11 +700,11 @@ void accumulate_partition_bdry_nodes( Mesh& mesh, std::vector<int>& bdry_nodes )
   size_t extents[] = {size_t(nb_faces), 2};
   ArrayView<int,2> face_nodes(face_nodes_data.data(),extents);
 
-  for( int jface=0; jface<nb_faces; ++jface )
+  for( size_t jface=0; jface<nb_faces; ++jface )
   {
     if( face_to_elem[jface].is_bdry() )
     {
-      for( int jnode=0; jnode<2; ++jnode) // 2 nodes per face
+      for( size_t jnode=0; jnode<2; ++jnode) // 2 nodes per face
       {
         if( face_nodes(jface,jnode) >= 0 )
         {
@@ -720,7 +720,7 @@ template< typename Predicate >
 std::vector<int> filter_nodes(std::vector<int> nodes, const Predicate& predicate )
 {
   std::vector<int> filtered; filtered.reserve(nodes.size());
-  for( int jnode=0; jnode<nodes.size(); ++jnode )
+  for( size_t jnode=0; jnode<nodes.size(); ++jnode )
   {
     int inode = nodes[jnode];
     if( predicate(inode) )
@@ -772,12 +772,12 @@ void build_lookup_uid2node( Mesh& mesh, Uid2Node& uid2node )
   mesh::Nodes& nodes         = mesh.nodes();
   ArrayView<double,2> lonlat   ( nodes.lonlat() );
   ArrayView<gidx_t,1> glb_idx  ( nodes.global_index() );
-  int nb_nodes = nodes.size();
+  size_t nb_nodes = nodes.size();
 
   UniqueLonLat compute_uid(nodes);
 
   uid2node.clear();
-  for( int jnode=0; jnode<nb_nodes; ++jnode )
+  for( size_t jnode=0; jnode<nb_nodes; ++jnode )
   {
     uid_t uid = compute_uid(jnode);
 
@@ -817,11 +817,11 @@ void accumulate_elements( const Mesh& mesh,
     }
   }
 
-  int nb_nodes = node_uid.size();
+  size_t nb_nodes = node_uid.size();
 
   std::vector< std::set< int > > found_elements_set( mesh.nb_function_spaces() );
 
-  for( int jnode=0; jnode<nb_nodes; ++jnode )
+  for( size_t jnode=0; jnode<nb_nodes; ++jnode )
   {
     uid_t uid = node_uid(jnode);
 
@@ -861,9 +861,9 @@ void accumulate_elements( const Mesh& mesh,
   {
     for(size_t jelem = 0; jelem < found_elements[f].size(); ++jelem)
     {
-      int e = found_elements[f][jelem];
-      int nb_elem_nodes = elem_nodes[f].shape(1);
-      for( int n=0; n<nb_elem_nodes; ++n )
+      size_t e = found_elements[f][jelem];
+      size_t nb_elem_nodes = elem_nodes[f].shape(1);
+      for( size_t n=0; n<nb_elem_nodes; ++n )
       {
         new_nodes_uid.insert( compute_uid(elem_nodes[f](e,n)));
       }
@@ -871,7 +871,7 @@ void accumulate_elements( const Mesh& mesh,
   }
 
   // Remove nodes we already have
-  for( int jnode=0; jnode<nb_nodes; ++jnode)
+  for( size_t jnode=0; jnode<nb_nodes; ++jnode)
   {
     new_nodes_uid.erase( node_uid(jnode) ) ;
   }

@@ -240,7 +240,7 @@ void build_node_to_edge_connectivity( Mesh& mesh )
 }
 
 
-void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& nb_pole_edges )
+void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, size_t& nb_pole_edges )
 {
   mesh::Nodes& nodes   = mesh.nodes();
   ArrayView<double,2> lonlat    ( nodes.lonlat() );
@@ -295,7 +295,7 @@ void accumulate_pole_edges( Mesh& mesh, std::vector<int>& pole_edge_nodes, int& 
 
   // Sanity check
   {
-    for( int NS = 0; NS<2; ++NS )
+    for( size_t NS = 0; NS<2; ++NS )
     {
       int npart=-1;
       for( std::set<int>::iterator it=pole_nodes[NS].begin(); it!=pole_nodes[NS].end(); ++it)
@@ -411,8 +411,8 @@ void build_edges( Mesh& mesh )
   std::vector< int > face_nodes_data; face_nodes_data.reserve(4*nb_nodes);
   std::vector< Face > face_to_elem;
   face_to_elem.reserve(4*nb_nodes);
-  int nb_faces = 0;
-  int nb_inner_faces = 0;
+  size_t nb_faces = 0;
+  size_t nb_inner_faces = 0;
 
   accumulate_faces(quads, node_to_face,face_nodes_data,face_to_elem,nb_faces,nb_inner_faces);
   accumulate_faces(triags,node_to_face,face_nodes_data,face_to_elem,nb_faces,nb_inner_faces);
@@ -514,7 +514,7 @@ void build_pole_edges( Mesh& mesh )
 
   nb_edges = edges.shape(0);
 
-  int nb_pole_edges;
+  size_t nb_pole_edges;
   std::vector<int> pole_edge_nodes;
   accumulate_pole_edges( mesh, pole_edge_nodes, nb_pole_edges );
   edges.resize( make_shape(nb_edges+nb_pole_edges, FunctionSpace::UNDEF_VARS) );

@@ -22,8 +22,8 @@ void accumulate_faces(
 		std::vector< std::vector<int> >& node_to_face,
 		std::vector<int>& face_nodes_data,
 		std::vector< Face >& connectivity_edge_to_elem,
-		int& nb_faces,
-		int& nb_inner_faces )
+		size_t& nb_faces,
+		size_t& nb_inner_faces )
 {
 	IndexView<int,2> elem_nodes( func_space.field( "nodes" ) );
 
@@ -31,7 +31,7 @@ void accumulate_faces(
     size_t nb_nodes_in_face = 2;
 
 	std::vector< std::vector<int> > face_node_numbering;
-	int nb_faces_in_elem;
+	size_t nb_faces_in_elem;
 	if (func_space.name() == "quads")
 	{
 		nb_faces_in_elem = 4;
@@ -63,7 +63,7 @@ void accumulate_faces(
 
   for (size_t e = 0; e < nb_elems; ++e)
 	{
-		for (int f=0; f<nb_faces_in_elem; ++f)
+		for (size_t f=0; f<nb_faces_in_elem; ++f)
 		{
 			bool found_face = false;
 

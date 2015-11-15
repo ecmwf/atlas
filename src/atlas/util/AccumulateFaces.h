@@ -21,7 +21,7 @@ namespace util {
 
 struct Face
 {
-	ElementRef& operator[](int i) { return elems[i]; }
+	ElementRef& operator[](size_t i) { return elems[i]; }
 	bool is_bdry() const { return (elems[1].f < 0); }
 	ElementRef elems[2];
 };
@@ -31,8 +31,8 @@ void accumulate_faces(
 		std::vector< std::vector<int> >& node_to_face,
 		std::vector<int>& face_nodes_data,
 		std::vector< Face >& connectivity_edge_to_elem,
-		int& nb_faces,
-		int& nb_inner_faces );
+		size_t& nb_faces,
+		size_t& nb_inner_faces );
 
 } // namespace util
 } // namespace atlas
