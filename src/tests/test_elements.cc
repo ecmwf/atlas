@@ -175,7 +175,8 @@ BOOST_AUTO_TEST_CASE( hybrid_elements )
   BOOST_CHECK_EQUAL( hybrid_elements.elements(0).end(),   2);
   BOOST_CHECK_EQUAL( hybrid_elements.elements(1).begin(), 2);
   BOOST_CHECK_EQUAL( hybrid_elements.elements(1).end(),   3);
-
+  BOOST_CHECK_EQUAL( hybrid_elements.elements(0).type_idx(), 0 );
+  BOOST_CHECK_EQUAL( hybrid_elements.elements(1).type_idx(), 1 );
 }
 
 BOOST_AUTO_TEST_CASE( elements )
@@ -192,6 +193,7 @@ BOOST_AUTO_TEST_CASE( elements )
 
   BOOST_CHECK_EQUAL( elements.begin(), 0);
   BOOST_CHECK_EQUAL( elements.end(),   2);
+  BOOST_CHECK_EQUAL( elements.type_idx(), 0);
 
   elements.node_connectivity().set(0,triag1);
   eckit::Log::info() << "name = " << elements.name() << std::endl;

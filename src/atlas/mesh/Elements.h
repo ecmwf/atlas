@@ -72,7 +72,10 @@ public:
 
   /// @brief Access hybrid_elements
   /// HybridElements can contain more Elements, and holds the data.
-  const HybridElements& hybrid_elements() const { return *hybrid_elements_; }
+  const HybridElements& hybrid_elements() const;
+  
+  /// @brief Index of Elements in hybrid_elements
+  size_t type_idx() const;
 
   /// @brief Begin of elements in hybrid_elements
   size_t begin() const;
@@ -106,6 +109,16 @@ inline size_t Elements::nb_nodes() const
 inline size_t Elements::nb_edges() const
 {
   return nb_edges_;
+}
+
+inline size_t Elements::type_idx() const
+{
+  return type_idx_;
+}
+
+inline const HybridElements& Elements::hybrid_elements() const
+{
+  return *hybrid_elements_;
 }
 
 inline const Elements::Connectivity& Elements::node_connectivity() const
