@@ -12,36 +12,36 @@ include( ecbuild_check_fortran_source )
 # FLAGS COMMON TO ALL BUILD TYPES
 ####################################################################
 
-#cmake_add_fortran_flags( "-std=f2008" ) # fortran loc function is non-standard
-cmake_add_fortran_flags( "-ffree-line-length-none" )
+#ecbuild_add_fortran_flags( "-std=f2008" ) # fortran loc function is non-standard
+ecbuild_add_fortran_flags( "-ffree-line-length-none" )
 
 ####################################################################
 # RELEASE FLAGS
 ####################################################################
 
-cmake_add_fortran_flags( "-O3"                BUILD RELEASE )
-cmake_add_fortran_flags( "-funroll-all-loops" BUILD RELEASE )
-cmake_add_fortran_flags( "-finline-functions" BUILD RELEASE )
-cmake_add_fortran_flags( "-fstack-arrays"     BUILD RELEASE )
+ecbuild_add_fortran_flags( "-O3"                BUILD RELEASE )
+ecbuild_add_fortran_flags( "-funroll-all-loops" BUILD RELEASE )
+ecbuild_add_fortran_flags( "-finline-functions" BUILD RELEASE )
+ecbuild_add_fortran_flags( "-fstack-arrays"     BUILD RELEASE )
 
 ####################################################################
 # DEBUG FLAGS
 ####################################################################
 
-cmake_add_fortran_flags( "-O0 -g"         BUILD DEBUG )
-cmake_add_fortran_flags( "-fcheck=bounds" BUILD DEBUG )
-cmake_add_fortran_flags( "-fbacktrace"    BUILD DEBUG )
-cmake_add_fortran_flags( "-finit-real=snan" BUILD DEBUG )
-cmake_add_fortran_flags( "-ffpe-trap=invalid,zero,overflow" BUILD DEBUG )
+ecbuild_add_fortran_flags( "-O0 -g"         BUILD DEBUG )
+ecbuild_add_fortran_flags( "-fcheck=bounds" BUILD DEBUG )
+ecbuild_add_fortran_flags( "-fbacktrace"    BUILD DEBUG )
+ecbuild_add_fortran_flags( "-finit-real=snan" BUILD DEBUG )
+ecbuild_add_fortran_flags( "-ffpe-trap=invalid,zero,overflow" BUILD DEBUG )
 
 ####################################################################
 # BIT REPRODUCIBLE FLAGS
 ####################################################################
 
-cmake_add_fortran_flags( "-O2"                BUILD BIT )
-cmake_add_fortran_flags( "-funroll-all-loops" BUILD BIT )
-cmake_add_fortran_flags( "-finline-functions" BUILD BIT )
-cmake_add_fortran_flags( "-fstack-arrays"     BUILD BIT )
+ecbuild_add_fortran_flags( "-O2"                BUILD BIT )
+ecbuild_add_fortran_flags( "-funroll-all-loops" BUILD BIT )
+ecbuild_add_fortran_flags( "-finline-functions" BUILD BIT )
+ecbuild_add_fortran_flags( "-fstack-arrays"     BUILD BIT )
 
 ####################################################################
 # LINK FLAGS

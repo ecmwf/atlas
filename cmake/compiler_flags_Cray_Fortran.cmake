@@ -12,34 +12,34 @@ include( ecbuild_check_fortran_source )
 # FLAGS COMMON TO ALL BUILD TYPES
 ####################################################################
 
-cmake_add_fortran_flags( "-emf -rmoid" )
-cmake_add_fortran_flags( "-lhugetlbfs" )
+ecbuild_add_fortran_flags( "-emf -rmoid" )
+ecbuild_add_fortran_flags( "-lhugetlbfs" )
 
 ####################################################################
 # RELEASE FLAGS
 ####################################################################
 
-cmake_add_fortran_flags( "-O3"       BUILD RELEASE )
-cmake_add_fortran_flags( "-hfp3"     BUILD RELEASE )
-cmake_add_fortran_flags( "-hscalar3" BUILD RELEASE )
-cmake_add_fortran_flags( "-hvector3" BUILD RELEASE )
+ecbuild_add_fortran_flags( "-O3"       BUILD RELEASE )
+ecbuild_add_fortran_flags( "-hfp3"     BUILD RELEASE )
+ecbuild_add_fortran_flags( "-hscalar3" BUILD RELEASE )
+ecbuild_add_fortran_flags( "-hvector3" BUILD RELEASE )
 
 ####################################################################
 # DEBUG FLAGS
 ####################################################################
 
-cmake_add_fortran_flags( "-O0"       BUILD DEBUG )
-cmake_add_fortran_flags( "-Gfast"    BUILD DEBUG )
-cmake_add_fortran_flags( "-Ktrap=fp" BUILD DEBUG )
+ecbuild_add_fortran_flags( "-O0"       BUILD DEBUG )
+ecbuild_add_fortran_flags( "-Gfast"    BUILD DEBUG )
+ecbuild_add_fortran_flags( "-Ktrap=fp" BUILD DEBUG )
 
 ####################################################################
 # BIT REPRODUCIBLE FLAGS
 ####################################################################
 
-cmake_add_fortran_flags( "-O2"                     BUILD BIT )
-cmake_add_fortran_flags( "-hflex_mp=conservative"  BUILD BIT )
-cmake_add_fortran_flags( "-hadd_paren"             BUILD BIT )
-cmake_add_fortran_flags( "-hfp1"                   BUILD BIT )
+ecbuild_add_fortran_flags( "-O2"                     BUILD BIT )
+ecbuild_add_fortran_flags( "-hflex_mp=conservative"  BUILD BIT )
+ecbuild_add_fortran_flags( "-hadd_paren"             BUILD BIT )
+ecbuild_add_fortran_flags( "-hfp1"                   BUILD BIT )
 
 ####################################################################
 # LINK FLAGS

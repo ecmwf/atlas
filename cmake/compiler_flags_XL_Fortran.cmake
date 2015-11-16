@@ -25,32 +25,32 @@ else( )
   set( CMAKE_Fortran_LINK_FLAGS "${CMAKE_Fortran_LINK_FLAGS} -qsmp=noomp" )
 endif( )
 
-cmake_add_fortran_flags( "-qfree=F90" )
-cmake_add_fortran_flags( "-qsuffix=cpp=F90" )
-cmake_add_fortran_flags( "-qextname" )
-cmake_add_fortran_flags( "-q64=largetype" )
-cmake_add_fortran_flags( "-qarch=pwr5" )
-cmake_add_fortran_flags( "-qsource,list" )
-cmake_add_fortran_flags( "-qsaveopt" )
-cmake_add_fortran_flags( "-NS32648" )
+ecbuild_add_fortran_flags( "-qfree=F90" )
+ecbuild_add_fortran_flags( "-qsuffix=cpp=F90" )
+ecbuild_add_fortran_flags( "-qextname" )
+ecbuild_add_fortran_flags( "-q64=largetype" )
+ecbuild_add_fortran_flags( "-qarch=pwr5" )
+ecbuild_add_fortran_flags( "-qsource,list" )
+ecbuild_add_fortran_flags( "-qsaveopt" )
+ecbuild_add_fortran_flags( "-NS32648" )
 
 ####################################################################
 # RELEASE FLAGS
 ####################################################################
 
-cmake_add_fortran_flags( "-O3 -qstrict" BUILD RELEASE)
+ecbuild_add_fortran_flags( "-O3 -qstrict" BUILD RELEASE)
 
 ####################################################################
 # DEBUG FLAGS
 ####################################################################
 
-cmake_add_fortran_flags( "-O0 -g" BUILD DEBUG)
+ecbuild_add_fortran_flags( "-O0 -g" BUILD DEBUG)
 
 ####################################################################
 # BIT REPRODUCIBLE FLAGS
 ####################################################################
 
-cmake_add_fortran_flags( "-O3 -qstrict" BUILD BIT)
+ecbuild_add_fortran_flags( "-O3 -qstrict" BUILD BIT)
 
 ####################################################################
 # LINK FLAGS
