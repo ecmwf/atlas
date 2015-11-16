@@ -30,6 +30,7 @@ class Array : public eckit::Owned {
 public:
   static Array* create( DataType, const ArrayShape& );
   static Array* create( DataType );
+  static Array* create( const Array& );
   template <typename T> static Array* create(const ArrayShape& s);
   template <typename T> static Array* create();
   template <typename T> static Array* create(size_t size);
@@ -70,6 +71,9 @@ public:
   /// @brief Access to raw data
   template <typename DATATYPE>       DATATYPE* data();
   template <typename DATATYPE> const DATATYPE* data() const;
+  
+  void operator=( const Array &array ) { return assign(array); }
+  virtual void assign( const Array& )=0;
 
 private: // methods
 
@@ -151,6 +155,8 @@ public:
   template< class InputIt >
   void assign( InputIt first, InputIt last ) { data_.assign(first,last); }
 
+  virtual void assign( const Array& );  
+  
 private:
 
   virtual void resize_data( size_t size );
@@ -166,6 +172,15 @@ template< typename DATA_TYPE>
 void ArrayT<DATA_TYPE>::resize_data( size_t size )
 {
   data_.resize( size );
+  view_ = ArrayView<DATA_TYPE>( *this );
+}
+
+template< typename DATA_TYPE>
+void ArrayT<DATA_TYPE>::assign( const Array& other )
+{
+  resize( other.shape() );
+  ASSERT( datatype().kind() == other.datatype().kind() );
+  data_.assign( other.data<DATA_TYPE>(), other.data<DATA_TYPE>()+other.size() );
   view_ = ArrayView<DATA_TYPE>( *this );
 }
 

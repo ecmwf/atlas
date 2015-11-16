@@ -108,4 +108,11 @@ Array* Array::create( DataType datatype )
   return 0;
 }
 
+Array* Array::create( const Array& other )
+{
+  Array* array = Array::create(other.datatype());
+  array->assign(other);
+  return array;
+}
+
 } // namespace atlas

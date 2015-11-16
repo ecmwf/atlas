@@ -77,6 +77,9 @@ public: // Destructor
   /// @brief Implicit conversion to Array
   operator const Array&() const { return *array_; }
   operator Array&() { return *array_; }
+  
+  const Array& array() const { return *array_; }
+        Array& array()       { return *array_; }
 
 // -- Accessors
 
