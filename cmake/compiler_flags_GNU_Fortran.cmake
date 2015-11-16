@@ -6,8 +6,6 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-include( ecbuild_check_fortran_source )
-
 ####################################################################
 # FLAGS COMMON TO ALL BUILD TYPES
 ####################################################################
