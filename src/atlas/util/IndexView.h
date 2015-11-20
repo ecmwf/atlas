@@ -40,8 +40,6 @@
 
 #include "atlas/atlas_defines.h"
 
-#define ATLAS_INDEXVIEW_BOUNDS_CHECKING
-
 #ifdef ATLAS_INDEXVIEW_BOUNDS_CHECKING
 #include <eckit/exception/Exceptions.h>
 
@@ -73,7 +71,7 @@
 	if(m>=shape_[4]) {std::ostringstream msg; msg << "IndexView(i,j,k,l,m) index out of bounds: m=" << m << " >= " << shape_[4]; throw eckit::OutOfRange(msg.str(),Here()); }
 #else
 #define CHECK_RANK(R)
-#define CHECK_BOUNDS(i,max)
+#define CHECK_BOUNDS(idx)
 #define CHECK_BOUNDS_1(i)
 #define CHECK_BOUNDS_2(i,j)
 #define CHECK_BOUNDS_3(i,j,k)

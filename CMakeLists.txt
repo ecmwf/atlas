@@ -61,7 +61,7 @@ ecbuild_find_python()
 ### Fortran ...
 
 ecbuild_add_option( FEATURE FORTRAN
-                    DESCRIPTION "provide Fortran bindings" )
+                    DESCRIPTION "atlas: Provide Fortran bindings" )
 
 if( ATLAS_HAVE_FORTRAN )
 
@@ -69,7 +69,7 @@ if( ATLAS_HAVE_FORTRAN )
 
   ecbuild_add_option( FEATURE FCTEST
                       DEFAULT ${ENABLE_TESTS}
-                      DESCRIPTION "Fortran Unit Test Framework"
+                      DESCRIPTION "atlas: Fortran Unit Test Framework"
                       REQUIRED_PACKAGES "PROJECT fctest VERSION 0.1" )
 
   set( Fortran Fortran )
@@ -79,7 +79,7 @@ endif()
 ### MPI ...
 
 ecbuild_add_option( FEATURE MPI
-                    DESCRIPTION "Support for MPI distributed parallelism"
+                    DESCRIPTION "atlas: Support for MPI distributed parallelism"
                     REQUIRED_PACKAGES "MPI COMPONENTS CXX ${Fortran}" )
 
 if( ATLAS_HAVE_MPI AND ECKIT_HAVE_ECKIT_MPI )
@@ -113,7 +113,7 @@ endif()
 
 ecbuild_add_option(
     FEATURE OMP
-    DESCRIPTION "support for OpenMP threaded parallelism"
+    DESCRIPTION "atlas: Support for OpenMP threaded parallelism"
     REQUIRED_PACKAGES "OMP COMPONENTS CXX ${Fortran}" )
 
 if( HAVE_OMP )
@@ -133,7 +133,7 @@ endif()
 
 ecbuild_add_option(
     FEATURE TRANS
-    DESCRIPTION "Support for trasnformations between SH and Grid space"
+    DESCRIPTION "atlas: Support for spectral transforms"
     REQUIRED_PACKAGES "PROJECT transi VERSION 0.3.0 QUIET" )
 
 ### tesselation ...
@@ -142,7 +142,7 @@ set(Boost_USE_MULTITHREADED      ON )
 
 ecbuild_add_option(
     FEATURE TESSELATION
-    DESCRIPTION "support for unstructured mesh generation"
+    DESCRIPTION "atlas: Support for unstructured mesh generation"
     REQUIRED_PACKAGES "CGAL QUIET" "Boost 1.45.0" )
 
 if( HAVE_TESSELATION )
@@ -154,11 +154,25 @@ endif()
 
 set( ATLAS_BITS_GLOBAL 64 )
 
+### Bounds checking
+if( ${CMAKE_BUILD_TYPE} MATCHES "Debug" )
+  set( DEFAULT_BOUNDSCHECKING ON )
+else()
+  set( DEFAULT_BOUNDSCHECKING OFF )
+endif()
+ecbuild_add_option( FEATURE BOUNDSCHECKING
+                    DEFAULT ${DEFAULT_BOUNDSCHECKING}
+                    DESCRIPTION "atlas: Bounds checking for atlas::ArrayView and atlas::IndexView" )
+if( ${CMAKE_BUILD_TYPE} MATCHES "Debug" AND NOT ATLAS_HAVE_BOUNDSCHECKING )
+  ecbuild_info( "Turning BOUNDSCHECKING ON for Debug build" )
+  set( ATLAS_HAVE_BOUNDSCHECKING 1 )
+endif()
+
 ### sandbox
 
 ecbuild_add_option( FEATURE SANDBOX
                     DEFAULT OFF
-                    DESCRIPTION "build the sandbox stuff" )
+                    DESCRIPTION "Build the sandbox stuff" )
 
 ############################################################################################
 # export package info
