@@ -30,6 +30,8 @@ implicit none
   real(c_double), pointer :: grad(:,:,:)
 
   integer :: nlev
+  integer :: niter
+  integer :: startcount
 
   type(atlas_Config) :: config
 
@@ -226,6 +228,8 @@ subroutine init()
 
   call atlas_resource("--grid","N24",grid_uid)
   call atlas_resource("--levels",137,nlev)
+  call atlas_resource("--iterations",100,niter)
+  call atlas_resource("--startcount",5,startcount)
 
   config = atlas_Config()
   call config%set("radius",1.0)
@@ -271,30 +275,43 @@ end subroutine
 
 subroutine run()
 type(Timer_type) :: timer
-integer :: jiter, niter
+integer :: jiter, av
 real(c_double) :: timing_cpp, timing_f90
 
 call fvm%halo_exchange(varfield)
 
-niter = 5
-
 ! Compute the gradient
-call timer%start()
+timing_cpp = 0.
+av = 0
 do jiter = 1,niter
-call nabla%gradient(varfield,gradfield)
+	call timer%start()
+	call nabla%gradient(varfield,gradfield)
+	if( jiter >= startcount ) then
+	  timing_cpp = timing_cpp+timer%elapsed()
+	  av = av+1
+	endif
 enddo
-timing_cpp = timer%elapsed()
-write(0,*) "timing_cpp = ", timing_cpp
+timing_cpp = timing_cpp / real(av,c_double)
+write(atlas_log%msg,*) "timing_cpp = ", timing_cpp
+call atlas_log%info()
 
 ! Compute the gradient with Fortran routine above
-call timer%start()
+timing_f90 = 0.
+av = 0
 do jiter = 1,niter
-CALL FV_GRADIENT(var,grad)
+	call timer%start()
+	call FV_GRADIENT(var,grad)
+	if( jiter >= startcount ) then
+	  timing_f90 = timing_f90+timer%elapsed()
+	  av = av+1
+	endif
 enddo
 timing_f90 = timer%elapsed()
-write(0,*) "timing_f90 = ", timing_f90
+write(atlas_log%msg,*) "timing_f90 = ", timing_f90
+call atlas_log%info()
 
-write(0,*) "|timing_f90-timing_cpp| / timing_f90 = ", abs(timing_f90-timing_cpp)/timing_f90 *100 , "%"
+write(atlas_log%msg,*) "|timing_f90-timing_cpp| / timing_f90 = ", abs(timing_f90-timing_cpp)/timing_f90 *100 , "%"
+call atlas_log%info()
 
 end subroutine
 
