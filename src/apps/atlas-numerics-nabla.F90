@@ -10,13 +10,11 @@
 ! A comparison between C++ built-in and a fortran version is done here
 ! @author Willem Deconinck
 
-#include "fctest/fctest.h"
-
 ! -----------------------------------------------------------------------------
 
-module fctest_atlas_nabla_EdgeBasedFiniteVolume_Fixture
+module atlas_numerics_nabla_module
 use atlas_module
-use iso_c_binding
+use iso_c_binding, only: c_double, c_int
 implicit none
 
   type(atlas_ReducedGrid) :: grid
@@ -31,7 +29,7 @@ implicit none
   real(c_double), pointer :: var(:,:)
   real(c_double), pointer :: grad(:,:,:)
 
-  integer, parameter :: nlev = 137
+  integer :: nlev
 
   type(atlas_Config) :: config
 
@@ -40,10 +38,6 @@ implicit none
   real(JPRB), parameter :: RPI = 2.0_JPRB*asin(1.0_JPRB)
   real(JPRB) :: RA
   type(atlas_FunctionSpace) :: edges
-
-
-
-
 
   type :: Timer_type
   private
@@ -56,10 +50,6 @@ implicit none
     procedure, public :: resume  => Timer_resume
     procedure, public :: elapsed => Timer_elapsed
   end type Timer_type
-
-
-
-
 
 contains
 
@@ -96,7 +86,6 @@ contains
         call system_clock ( self%clck_counts_start, self%clck_rate )
         self%paused = .False.
     end subroutine Timer_resume
-
 
 SUBROUTINE FV_GRADIENT(PVAR,PGRAD)
 
@@ -230,25 +219,19 @@ END SUBROUTINE FV_GRADIENT
 
 
 
+subroutine init()
+  character(len=1024) :: grid_uid
 
-
-
-end module fctest_atlas_nabla_EdgeBasedFiniteVolume_Fixture
-
-! -----------------------------------------------------------------------------
-
-TESTSUITE_WITH_FIXTURE(fctest_atlas_nabla_EdgeBasedFiniteVolume,fctest_atlas_nabla_EdgeBasedFiniteVolume_Fixture)
-
-! -----------------------------------------------------------------------------
-
-TESTSUITE_INIT
   call atlas_init()
+
+  call atlas_resource("--grid","N24",grid_uid)
+  call atlas_resource("--levels",137,nlev)
 
   config = atlas_Config()
   call config%set("radius",1.0)
 
   ! Setup
-  grid = atlas_ReducedGrid("N24")
+  grid = atlas_ReducedGrid(grid_uid)
   meshgenerator = atlas_ReducedGridMeshGenerator()
   mesh = meshgenerator%generate(grid) ! second optional argument for atlas_GridDistrubution
   fvm  = atlas_functionspace_EdgeBasedFiniteVolume(mesh,config)
@@ -263,14 +246,14 @@ TESTSUITE_INIT
   call gradfield%data(grad)
   var(:,:) = 0.
 
-  RA = 1.0
+  if( .not.config%get("radius",RA) ) RA = 1.0
   edges = mesh%function_space("edges")
 
-END_TESTSUITE_INIT
+end subroutine
 
 ! -----------------------------------------------------------------------------
 
-TESTSUITE_FINALIZE
+subroutine finalize()
   ! Cleanup
   call config%final()
   call varfield%final()
@@ -282,30 +265,14 @@ TESTSUITE_FINALIZE
   call grid%final()
   call meshgenerator%final()
   call atlas_finalize()
-END_TESTSUITE_FINALIZE
+end subroutine
 
 ! -----------------------------------------------------------------------------
 
-TEST( test_fvm )
-type(atlas_ReducedGrid) :: grid
-type(atlas_Mesh) :: mesh
-type(atlas_functionspace_EdgeBasedFiniteVolume) :: fvm
-
-grid = atlas_ReducedGrid("N24")
-mesh = atlas_generate_mesh(grid)
-fvm  = atlas_functionspace_EdgeBasedFiniteVolume(mesh)
-
-call fvm%final()
-call mesh%final()
-call grid%final()
-
-END_TEST
-
-! -----------------------------------------------------------------------------
-
-TEST( test_nabla )
+subroutine run()
 type(Timer_type) :: timer
 integer :: jiter, niter
+real(c_double) :: timing_cpp, timing_f90
 
 call fvm%halo_exchange(varfield)
 
@@ -316,17 +283,28 @@ call timer%start()
 do jiter = 1,niter
 call nabla%gradient(varfield,gradfield)
 enddo
-write(0,*) timer%elapsed()
+timing_cpp = timer%elapsed()
+write(0,*) "timing_cpp = ", timing_cpp
 
 ! Compute the gradient with Fortran routine above
 call timer%start()
 do jiter = 1,niter
 CALL FV_GRADIENT(var,grad)
 enddo
-write(0,*) timer%elapsed()
-END_TEST
+timing_f90 = timer%elapsed()
+write(0,*) "timing_f90 = ", timing_f90
+
+write(0,*) "|timing_f90-timing_cpp| / timing_f90 = ", abs(timing_f90-timing_cpp)/timing_f90 *100 , "%"
+
+end subroutine
+
+end module atlas_numerics_nabla_module
 
 ! -----------------------------------------------------------------------------
 
-END_TESTSUITE
-
+program atlas_numerics_nabla
+use atlas_numerics_nabla_module
+  call init()
+  call run()
+  call finalize()
+end program
