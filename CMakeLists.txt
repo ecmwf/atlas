@@ -16,10 +16,14 @@
 
 cmake_minimum_required( VERSION 2.8.4 FATAL_ERROR )
 
-project( atlas CXX )
-
 set( CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../ecbuild/cmake")
-set( ECBUILD_DEFAULT_BUILD_TYPE Release )
+
+set( ENABLE_OS_TYPES_TEST       OFF   CACHE BOOL " " )
+set( ENABLE_OS_FUNCTIONS_TEST   OFF   CACHE BOOL " " )
+set( ENABLE_LARGE_FILE_SUPPORT  OFF   CACHE BOOL " " )
+set( ENABLE_OS_ENDINESS_TEST    OFF   CACHE BOOL " " )
+
+project( atlas CXX )
 
 include( ecbuild_system NO_POLICY_SCOPE )
 
@@ -33,23 +37,23 @@ set( PERSISTENT_NAMESPACE "eckit" CACHE INTERNAL "" )
 ecbuild_use_package( PROJECT eckit VERSION 0.10 REQUIRED )
 
 #list( REMOVE_DUPLICATES ECKIT_FEATURES )
-message( STATUS "   ECKIT_FEATURES : [${ECKIT_FEATURES}]" )
+ecbuild_debug("   ECKIT_FEATURES : [${ECKIT_FEATURES}]" )
 
 # foreach( _eckit_feature ${ECKIT_FEATURES} )
 #   set( ${_eckit_feature} 1 )
 # endforeach()
 
 if( ECKIT_HAVE_GRIB )
-   message( STATUS "eckit has GRIB support")
+   ecbuild_debug( "eckit has GRIB support" )
    set( ECKIT_GRIB_LIBRARIES eckit_grib )
 endif()
 
 if( ECKIT_HAVE_ECKIT_MPI )
-   message( STATUS "eckit has mpi support")
+   ecbuild_debug( "eckit has mpi support" )
 endif()
 
 if( ECKIT_HAVE_ECKIT_MPISTUBS )
-   message( STATUS "eckit has mpistubs support")
+   ecbuild_debug( "eckit has mpistubs support" )
 endif()
 
 ecbuild_declare_project()
@@ -97,15 +101,14 @@ elseif( NOT ATLAS_HAVE_MPI AND ECKIT_HAVE_ECKIT_MPISTUBS )
 elseif( NOT ATLAS_HAVE_MPI AND NOT ECKIT_HAVE_ECKIT_MPISTUBS )
   message( FATAL_ERROR "ATLAS_HAVE_MPI=OFF, but cannot build since eckit_mpistubs not found")
 else()
-  debug_var( ATLAS_HAVE_MPI )
-  debug_var( ECKIT_HAVE_ECKIT_MPI )
-  debug_var( ECKIT_HAVE_ECKIT_MPISTUBS )
-  debug_var( ATLAS_HAVE_FORTRAN )
+  ecbuild_info( "ATLAS_HAVE_MPI            : ${ATLAS_HAVE_MPI}" )
+  ecbuild_info( "ECKIT_HAVE_ECKIT_MPI      : ${ECKIT_HAVE_ECKIT_MPI} " )
+  ecbuild_info( "ECKIT_HAVE_ECKIT_MPISTUBS : ${ECKIT_HAVE_ECKIT_MPISTUBS} " )
   message( FATAL_ERROR "Invalid combination of above variables" )
 endif()
 if( ATLAS_HAVE_FORTRAN )
-  debug_var( MPI_Fortran_INCLUDE_PATH )
-  debug_var( MPI_Fortran_LIBRARIES )
+  ecbuild_debug( "MPI_Fortran_INCLUDE_PATH : ${MPI_Fortran_INCLUDE_PATH}" )
+  ecbuild_debug( "MPI_Fortran_LIBRARIES    : ${MPI_Fortran_LIBRARIES}" )
 endif()
 
 

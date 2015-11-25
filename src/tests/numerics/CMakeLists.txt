@@ -6,7 +6,6 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-set( BOOST_UNIT_TEST_FRAMEWORK_LINKED OFF )
 
 ecbuild_add_test( TARGET atlas_test_nabla_EdgeBasedFiniteVolume
   BOOST
