@@ -193,7 +193,7 @@ TEST( test_field_metadata )
   FCTEST_CHECK_CLOSE( real64, real(0.2,kind=c_double), real(0.,kind=c_double) )
   FCTEST_CHECK_EQUAL( string, "hello world" )
   FCTEST_CHECK_EQUAL( arr_int32, (/1,2,3/) )
-  FCTEST_CHECK_EQUAL( arr_real32, (/1.1,2.1,3.7/) )
+  FCTEST_CHECK_EQUAL( arr_real32, (/1.1_c_float,2.1_c_float,3.7_c_float/) )
 END_TEST
 
 ! -----------------------------------------------------------------------------

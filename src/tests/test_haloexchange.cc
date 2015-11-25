@@ -10,6 +10,7 @@
 
 #include <sstream>
 #include <algorithm>
+#include <cmath>
 
 #define BOOST_TEST_MODULE TestHaloExchange
 #include "ecbuild/boost_test_framework.h"
