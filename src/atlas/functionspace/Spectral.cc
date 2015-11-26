@@ -12,6 +12,7 @@
 #include "atlas/Mesh.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/FieldSet.h"
+#include "atlas/runtime/ErrorHandling.h"
 
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/trans/Trans.h"
@@ -185,42 +186,81 @@ extern "C"
 {
 Spectral* atlas__SpectralFunctionSpace__new__truncation (int truncation)
 {
-  return new Spectral(truncation);
+  ATLAS_ERROR_HANDLING(
+    return new Spectral(truncation);
+  );
+  return 0;
 }
 
 Spectral* atlas__SpectralFunctionSpace__new__trans (trans::Trans* trans)
 {
-  return new Spectral(*trans);
+  ATLAS_ERROR_HANDLING(
+    return new Spectral(*trans);
+  );
+  return 0;
 }
 
 void atlas__SpectralFunctionSpace__delete (Spectral* This)
 {
-  ASSERT(This);
-  delete This;
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    delete This;
+  );
 }
 
 Field* atlas__SpectralFunctionSpace__create_field (const Spectral* This, const char* name)
 {
-  ASSERT(This);
-  return This->createField(std::string(name));
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    return This->createField(std::string(name));
+  );
 }
 
 Field* atlas__SpectralFunctionSpace__create_field_lev (const Spectral* This, const char* name, int levels)
 {
-  ASSERT(This);
-  return This->createField(std::string(name),levels);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    return This->createField(std::string(name),levels);
+  );
+  return 0;
 }
 
 Field* atlas__SpectralFunctionSpace__create_global_field (const Spectral* This, const char* name)
 {
-  ASSERT(This);
-  return This->createGlobalField(std::string(name));
+  ATLAS_ERROR_HANDLING (
+    ASSERT(This);
+    return This->createGlobalField(std::string(name));
+  );
+  return 0;
 }
 
 Field* atlas__SpectralFunctionSpace__create_global_field_lev (const Spectral* This, const char* name, int levels)
 {
-  ASSERT(This);
-  return This->createGlobalField(std::string(name),levels);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    return This->createGlobalField(std::string(name),levels);
+  );
+  return 0;
+}
+
+void atlas__SpectralFunctionSpace__gather (const Spectral* This, const Field* local, Field* global)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    ASSERT(global);
+    ASSERT(local);
+    This->gather(*local,*global);
+  );
+}
+
+void atlas__SpectralFunctionSpace__scatter (const Spectral* This, const Field* global, Field* local)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    ASSERT(global);
+    ASSERT(local);
+    This->scatter(*global,*local);
+  );
 }
 
 }

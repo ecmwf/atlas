@@ -82,6 +82,11 @@ extern "C"
 
   Field* atlas__SpectralFunctionSpace__create_global_field_lev (const Spectral* This, const char* name, int levels);
 
+  void atlas__SpectralFunctionSpace__gather (const Spectral* This, const Field* local, Field* global);
+
+  void atlas__SpectralFunctionSpace__scatter (const Spectral* This, const Field* global, Field* local);
+
+
 }
 #undef Trans
 

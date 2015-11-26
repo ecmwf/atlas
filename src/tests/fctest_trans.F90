@@ -54,7 +54,7 @@ TEST( test_trans )
   real(c_double), allocatable :: check(:)
   integer :: nlev, nsmax, jn, in, jlev
   integer, pointer :: nvalue(:)
-  real(c_double), allocatable :: vorg(:,:)
+  type(atlas_Field) :: glb_vorfield
 
   real(c_double) :: tol
 
@@ -184,8 +184,9 @@ TEST( test_trans )
 
   call trans%invtrans_vordiv2wind(spectral_fs,vorfield,divfield,nodes_fs,windfield)
 
-  allocate( vorg( nlev, trans%nspec2g() ) )
-  call trans%gathspec(vor,vorg)
+  glb_vorfield = spectral_fs%create_global_field("vorticity",nlev)
+  call spectral_fs%gather(vorfield,glb_vorfield)
+  call spectral_fs%scatter(glb_vorfield,vorfield)
 
   write(0,*) "cleaning up"
   write(0,*) "nodes_fs%owners()",nodes_fs%owners()
@@ -200,6 +201,7 @@ TEST( test_trans )
   call windfield%final()
   call vorfield%final()
   call divfield%final()
+  call glb_vorfield%final()
 
   write(0,*) "nodes_fs%owners()",nodes_fs%owners()
   call nodes_fs%final()

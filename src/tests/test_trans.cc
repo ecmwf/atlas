@@ -295,8 +295,20 @@ BOOST_AUTO_TEST_CASE( test_nomesh )
   SharedPtr<Field> spf ( spectral->createField("spf") );
   SharedPtr<Field> gpf ( Field::create<double>("gpf",make_shape(trans->ngptot())) );
 
-  BOOST_CHECK_NO_THROW( trans->dirtrans(*gpf,*spf) );
+  ArrayView<double,1> sp (*spf);
+  sp = 0.;
+  sp(0) = 4.;
+
   BOOST_CHECK_NO_THROW( trans->invtrans(*spf,*gpf) );
+  BOOST_CHECK_NO_THROW( trans->dirtrans(*gpf,*spf) );
+
+  SharedPtr<Field> glb_spf ( spectral->createGlobalField("gpf") );
+  spectral->gather(*spf,*glb_spf);
+
+  ArrayView<double,1> glb_sp (*glb_spf);
+
+  if( eckit::mpi::rank() == 0 )
+    BOOST_CHECK_CLOSE( glb_sp(0), 4., 0.001 );
 
 }
 
