@@ -60,26 +60,30 @@ size_t Spectral::nb_spectral_coefficients_global() const {
   return (truncation_+1)*(truncation_+2);
 }
 
-Field* Spectral::createField(const std::string& name) const {
+template <>
+Field* Spectral::createField<double>(const std::string& name) const {
   Field* field = Field::create<double>(name, make_shape(nb_spectral_coefficients()) );
   field->set_functionspace(this);
   return field;
 }
 
-Field* Spectral::createField(const std::string& name, size_t levels) const {
+template <>
+Field* Spectral::createField<double>(const std::string& name, size_t levels) const {
   Field* field = Field::create<double>(name, make_shape(nb_spectral_coefficients(),levels) );
   field->set_functionspace(this);
   field->set_levels(levels);
   return field;
 }
 
-Field* Spectral::createGlobalField(const std::string& name) const {
+template <>
+Field* Spectral::createGlobalField<double>(const std::string& name) const {
   Field* field = Field::create<double>(name, make_shape(nb_spectral_coefficients_global()) );
   field->set_functionspace(this);
   return field;
 }
 
-Field* Spectral::createGlobalField(const std::string& name, size_t levels) const {
+template <>
+Field* Spectral::createGlobalField<double>(const std::string& name, size_t levels) const {
   Field* field = Field::create<double>(name, make_shape(nb_spectral_coefficients_global(),levels) );
   field->set_functionspace(this);
   field->set_levels(levels);
@@ -212,15 +216,16 @@ Field* atlas__SpectralFunctionSpace__create_field (const Spectral* This, const c
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    return This->createField(std::string(name));
+    return This->createField<double>(std::string(name));
   );
+  return 0;
 }
 
 Field* atlas__SpectralFunctionSpace__create_field_lev (const Spectral* This, const char* name, int levels)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    return This->createField(std::string(name),levels);
+    return This->createField<double>(std::string(name),levels);
   );
   return 0;
 }
@@ -229,7 +234,7 @@ Field* atlas__SpectralFunctionSpace__create_global_field (const Spectral* This, 
 {
   ATLAS_ERROR_HANDLING (
     ASSERT(This);
-    return This->createGlobalField(std::string(name));
+    return This->createGlobalField<double>(std::string(name));
   );
   return 0;
 }
@@ -238,7 +243,7 @@ Field* atlas__SpectralFunctionSpace__create_global_field_lev (const Spectral* Th
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
-    return This->createGlobalField(std::string(name),levels);
+    return This->createGlobalField<double>(std::string(name),levels);
   );
   return 0;
 }

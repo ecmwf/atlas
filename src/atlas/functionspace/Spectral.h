@@ -36,12 +36,12 @@ public:
   virtual std::string name() const { return "Spectral"; }
 
   /// @brief Create a spectral field
-  Field* createField(const std::string& name) const;
-  Field* createField(const std::string& name, size_t levels) const;
+  template <typename DATATYPE> Field* createField(const std::string& name) const;
+  template <typename DATATYPE> Field* createField(const std::string& name, size_t levels) const;
 
   /// @brief Create a global spectral field
-  Field* createGlobalField(const std::string& name) const;
-  Field* createGlobalField(const std::string& name, size_t levels) const;
+  template <typename DATATYPE> Field* createGlobalField(const std::string& name) const;
+  template <typename DATATYPE> Field* createGlobalField(const std::string& name, size_t levels) const;
 
   void gather( const FieldSet&, FieldSet& ) const;
   void gather( const Field&, Field& ) const;

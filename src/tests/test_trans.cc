@@ -264,7 +264,7 @@ BOOST_AUTO_TEST_CASE( test_spectral_fields )
   SharedPtr<functionspace::Nodes> nodal (new functionspace::Nodes(*m));
   SharedPtr<functionspace::Spectral> spectral (new functionspace::Spectral(trans));
 
-  SharedPtr<Field> spf ( spectral->createField("spf") );
+  SharedPtr<Field> spf ( spectral->createField<double>("spf") );
   SharedPtr<Field> gpf ( nodal->createField<double>("gpf") );
 
 
@@ -293,8 +293,8 @@ BOOST_AUTO_TEST_CASE( test_nomesh )
   SharedPtr<functionspace::Spectral>    spectral    (new functionspace::Spectral(*trans));
   SharedPtr<functionspace::ReducedGridPoints> gridpoints (new functionspace::ReducedGridPoints(*g));
 
-  SharedPtr<Field> spfg ( spectral->createGlobalField("spf") );
-  SharedPtr<Field> spf  ( spectral->createField("spf") );
+  SharedPtr<Field> spfg ( spectral->createGlobalField<double>("spf") );
+  SharedPtr<Field> spf  ( spectral->createField<double>("spf") );
   SharedPtr<Field> gpf  ( gridpoints->createField<double>("gpf") );
   SharedPtr<Field> gpfg ( gridpoints->createGlobalField<double>("gpf") );
 
