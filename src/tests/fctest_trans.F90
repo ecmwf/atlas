@@ -221,6 +221,7 @@ END_TEST
 TEST( test_trans_nomesh )
   type(atlas_ReducedGrid) :: grid
   type(atlas_Trans) :: trans
+  type(atlas_functionspace_ReducedGridPoints) :: gridpoints_fs
   type(atlas_functionspace_Spectral) :: spectral_fs
   type(atlas_Field)         :: scalarfield1, scalarfield2
   type(atlas_Field)         :: spectralfield1, spectralfield2
@@ -230,8 +231,6 @@ TEST( test_trans_nomesh )
   real(c_double), allocatable :: check(:)
   integer :: nlev, nsmax, jn, in, jlev
   integer, pointer :: nvalue(:)
-  real(c_double), allocatable :: vorg(:,:)
-
   real(c_double) :: tol
 
   tol = 1.e-8
@@ -241,16 +240,9 @@ TEST( test_trans_nomesh )
   grid = atlas_ReducedGrid("O24")
   trans = atlas_Trans(grid,nsmax)
 
-  FCTEST_CHECK( .not. trans%is_null() )
-  FCTEST_CHECK_EQUAL( trans%nproc(), 1 )
-  FCTEST_CHECK_EQUAL( trans%myproc(proc0=1), 1 )
-  FCTEST_CHECK_EQUAL( trans%ndgl(), grid%nlat() )
-  FCTEST_CHECK_EQUAL( trans%ngptot(), grid%npts() )
-  FCTEST_CHECK_EQUAL( trans%ngptotg(), grid%npts() )
-  FCTEST_CHECK_EQUAL( trans%nsmax(), nsmax )
-
-  scalarfield1 = atlas_Field("scalar1",atlas_real(c_double),[nlev,trans%ngptot()])
-  scalarfield2 = atlas_Field("scalar2",atlas_real(c_double),[trans%ngptot()])
+  gridpoints_fs = atlas_functionspace_ReducedGridPoints(grid)
+  scalarfield1 = gridpoints_fs%create_field("scalar1",nlev)
+  scalarfield2 = gridpoints_fs%create_field("scalar2")
 
   spectral_fs = atlas_functionspace_Spectral(trans)
   spectralfield1 = spectral_fs%create_field("spectral1",nlev)
@@ -305,7 +297,6 @@ TEST( test_trans_nomesh )
   FCTEST_CHECK_CLOSE( spec2(4), 0._c_double, tol )
   FCTEST_CHECK_CLOSE( spec2(5), 0._c_double, tol )
 
-
   write(0,*) "cleaning up"
 
   call scalarfield1%final()
@@ -313,6 +304,7 @@ TEST( test_trans_nomesh )
   call spectralfield1%final()
   call spectralfield2%final()
   call spectral_fs%final()
+  call gridpoints_fs%final()
   call scalarfields%final()
   call spectralfields%final()
   call trans%final()

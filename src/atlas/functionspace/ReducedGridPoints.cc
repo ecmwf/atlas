@@ -150,7 +150,7 @@ std::string ReducedGridPoints::checksum( const Field& field ) const {
 extern "C"
 {
 
-ReducedGridPoints* atlas__ReducedGridFunctionSpace__new__trans (const Grid* grid)
+ReducedGridPoints* atlas__functionspace__ReducedGridPoints__new__grid (const Grid* grid)
 {
   ATLAS_ERROR_HANDLING(
     return new ReducedGridPoints(*grid);
@@ -158,7 +158,7 @@ ReducedGridPoints* atlas__ReducedGridFunctionSpace__new__trans (const Grid* grid
   return 0;
 }
 
-void atlas__ReducedGridFunctionSpace__delete (ReducedGridPoints* This)
+void atlas__functionspace__ReducedGridPoints__delete (ReducedGridPoints* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -166,15 +166,16 @@ void atlas__ReducedGridFunctionSpace__delete (ReducedGridPoints* This)
   );
 }
 
-Field* atlas__ReducedGridFunctionSpace__create_field (const ReducedGridPoints* This, const char* name)
+Field* atlas__functionspace__ReducedGridPoints__create_field (const ReducedGridPoints* This, const char* name)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     return This->createField<double>(std::string(name));
   );
+  return 0;
 }
 
-Field* atlas__ReducedGridFunctionSpace__create_field_lev (const ReducedGridPoints* This, const char* name, int levels)
+Field* atlas__functionspace__ReducedGridPoints__create_field_lev (const ReducedGridPoints* This, const char* name, int levels)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -183,7 +184,7 @@ Field* atlas__ReducedGridFunctionSpace__create_field_lev (const ReducedGridPoint
   return 0;
 }
 
-Field* atlas__ReducedGridFunctionSpace__create_global_field (const ReducedGridPoints* This, const char* name)
+Field* atlas__functionspace__ReducedGridPoints__create_gfield (const ReducedGridPoints* This, const char* name)
 {
   ATLAS_ERROR_HANDLING (
     ASSERT(This);
@@ -192,7 +193,7 @@ Field* atlas__ReducedGridFunctionSpace__create_global_field (const ReducedGridPo
   return 0;
 }
 
-Field* atlas__ReducedGridFunctionSpace__create_global_field_lev (const ReducedGridPoints* This, const char* name, int levels)
+Field* atlas__functionspace__ReducedGridPoints__create_gfield_lev (const ReducedGridPoints* This, const char* name, int levels)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -201,7 +202,7 @@ Field* atlas__ReducedGridFunctionSpace__create_global_field_lev (const ReducedGr
   return 0;
 }
 
-void atlas__ReducedGridFunctionSpace__gather (const ReducedGridPoints* This, const Field* local, Field* global)
+void atlas__functionspace__ReducedGridPoints__gather (const ReducedGridPoints* This, const Field* local, Field* global)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -211,7 +212,7 @@ void atlas__ReducedGridFunctionSpace__gather (const ReducedGridPoints* This, con
   );
 }
 
-void atlas__ReducedGridFunctionSpace__scatter (const ReducedGridPoints* This, const Field* global, Field* local)
+void atlas__functionspace__ReducedGridPoints__scatter (const ReducedGridPoints* This, const Field* global, Field* local)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);

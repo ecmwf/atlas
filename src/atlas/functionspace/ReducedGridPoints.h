@@ -8,8 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_functionspace_ReducedGridFunctionSpace_h
-#define atlas_functionspace_ReducedGridFunctionSpace_h
+#ifndef atlas_functionspace_functionspace__ReducedGridPoints_h
+#define atlas_functionspace_functionspace__ReducedGridPoints_h
 
 #include "atlas/atlas_defines.h"
 #include "atlas/FunctionSpace.h"
@@ -61,20 +61,20 @@ private: // data
 // C wrapper interfaces to C++ routines
 extern "C"
 {
-  ReducedGridPoints* atlas__ReducedGridFunctionSpace__new__grid (Grid* grid);
-  void atlas__ReducedGridFunctionSpace__delete (ReducedGridPoints* This);
+  ReducedGridPoints* atlas__functionspace__ReducedGridPoints__new__grid (const Grid* grid);
+  void atlas__functionspace__ReducedGridPoints__delete (ReducedGridPoints* This);
 
-  Field* atlas__ReducedGridFunctionSpace__create_field (const ReducedGridPoints* This, const char* name);
+  Field* atlas__functionspace__ReducedGridPoints__create_field (const ReducedGridPoints* This, const char* name);
 
-  Field* atlas__ReducedGridFunctionSpace__create_field_lev (const ReducedGridPoints* This, const char* name, int levels);
+  Field* atlas__functionspace__ReducedGridPoints__create_field_lev (const ReducedGridPoints* This, const char* name, int levels);
 
-  Field* atlas__ReducedGridFunctionSpace__create_global_field (const ReducedGridPoints* This, const char* name);
+  Field* atlas__functionspace__ReducedGridPoints__create_gfield (const ReducedGridPoints* This, const char* name);
 
-  Field* atlas__ReducedGridFunctionSpace__create_global_field_lev (const ReducedGridPoints* This, const char* name, int levels);
+  Field* atlas__functionspace__ReducedGridPoints__create_gfield_lev (const ReducedGridPoints* This, const char* name, int levels);
 
-  void atlas__ReducedGridFunctionSpace__gather (const ReducedGridPoints* This, const Field* local, Field* global);
+  void atlas__functionspace__ReducedGridPoints__gather (const ReducedGridPoints* This, const Field* local, Field* global);
 
-  void atlas__ReducedGridFunctionSpace__scatter (const ReducedGridPoints* This, const Field* global, Field* local);
+  void atlas__functionspace__ReducedGridPoints__scatter (const ReducedGridPoints* This, const Field* global, Field* local);
 
 }
 #undef Trans
@@ -82,4 +82,4 @@ extern "C"
 } // namespace functionspace
 } // namespace atlas
 
-#endif // atlas_functionspace_ReducedGridFunctionSpace_h
+#endif // atlas_functionspace_functionspace__ReducedGridPoints_h
