@@ -31,12 +31,12 @@
 #include "atlas/FunctionSpace.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/functionspace/Nodes.h"
+#include "atlas/functionspace/ReducedGridPoints.h"
 
 #include "transi/trans.h"
 
 using namespace eckit;
 using namespace atlas::grids;
-using namespace atlas::functionspace;
 
 namespace atlas {
 namespace test {
@@ -262,7 +262,7 @@ BOOST_AUTO_TEST_CASE( test_spectral_fields )
 
 
   SharedPtr<functionspace::Nodes> nodal (new functionspace::Nodes(*m));
-  SharedPtr<Spectral> spectral (new Spectral(trans));
+  SharedPtr<functionspace::Spectral> spectral (new functionspace::Spectral(trans));
 
   SharedPtr<Field> spf ( spectral->createField("spf") );
   SharedPtr<Field> gpf ( nodal->createField<double>("gpf") );
@@ -290,26 +290,49 @@ BOOST_AUTO_TEST_CASE( test_nomesh )
   SharedPtr<ReducedGrid> g ( ReducedGrid::create( "O48" ) );
   SharedPtr<trans::Trans> trans ( new trans::Trans(*g,47) );
 
-  SharedPtr<Spectral> spectral (new Spectral(*trans));
+  SharedPtr<functionspace::Spectral>    spectral    (new functionspace::Spectral(*trans));
+  SharedPtr<functionspace::ReducedGridPoints> gridpoints (new functionspace::ReducedGridPoints(*g));
 
-  SharedPtr<Field> spf ( spectral->createField("spf") );
-  SharedPtr<Field> gpf ( Field::create<double>("gpf",make_shape(trans->ngptot())) );
+  SharedPtr<Field> spfg ( spectral->createGlobalField("spf") );
+  SharedPtr<Field> spf  ( spectral->createField("spf") );
+  SharedPtr<Field> gpf  ( gridpoints->createField<double>("gpf") );
+  SharedPtr<Field> gpfg ( gridpoints->createGlobalField<double>("gpf") );
 
-  ArrayView<double,1> sp (*spf);
-  sp = 0.;
-  sp(0) = 4.;
+  ArrayView<double,1> spg (*spfg);
+  spg = 0.;
+  spg(0) = 4.;
+
+  BOOST_CHECK_NO_THROW( spectral->scatter(*spfg,*spf) );
+
+  if( eckit::mpi::rank() == 0 ) {
+    ArrayView<double,1> sp (*spf);
+    BOOST_CHECK_CLOSE( sp(0), 4., 0.001 );
+    for( size_t jp=0; jp<sp.size(); ++jp ) {
+      eckit::Log::debug(2) << "sp("<< jp << ")   :   " << sp(jp) << std::endl;
+    }
+  }
 
   BOOST_CHECK_NO_THROW( trans->invtrans(*spf,*gpf) );
+
+  BOOST_CHECK_NO_THROW( gridpoints->gather(*gpf,*gpfg) );
+
+  if( eckit::mpi::rank() == 0 ) {
+    ArrayView<double,1> gpg (*gpfg);
+    for( size_t jp=0; jp<gpg.size(); ++jp ) {
+      BOOST_CHECK_CLOSE( gpg(jp), 4., 0.001 );
+      eckit::Log::debug(3) << "gpg("<<jp << ")   :   " << gpg(jp) << std::endl;
+    }
+  }
+
+  BOOST_CHECK_NO_THROW( gridpoints->scatter(*gpfg,*gpf) );
+
   BOOST_CHECK_NO_THROW( trans->dirtrans(*gpf,*spf) );
 
-  SharedPtr<Field> glb_spf ( spectral->createGlobalField("gpf") );
-  spectral->gather(*spf,*glb_spf);
+  BOOST_CHECK_NO_THROW( spectral->gather(*spf,*spfg) );
 
-  ArrayView<double,1> glb_sp (*glb_spf);
-
-  if( eckit::mpi::rank() == 0 )
-    BOOST_CHECK_CLOSE( glb_sp(0), 4., 0.001 );
-
+  if( eckit::mpi::rank() == 0 ) {
+    BOOST_CHECK_CLOSE( spg(0), 4., 0.001 );
+  }
 }
 
 

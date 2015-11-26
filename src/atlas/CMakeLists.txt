@@ -264,6 +264,8 @@ functionspace/NodesInterface.h
 functionspace/NodesInterface.cc
 functionspace/EdgeBasedFiniteVolume.h
 functionspace/EdgeBasedFiniteVolume.cc
+functionspace/ReducedGridPoints.h
+functionspace/ReducedGridPoints.cc
 functionspace/Spectral.h
 functionspace/Spectral.cc
 )
