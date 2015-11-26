@@ -14,7 +14,7 @@
 function atlas_Trans__ctor( grid, nsmax ) result(trans)
   USE_ATLAS_TRANS_C_BINDING
   type(atlas_Trans) :: trans
-  type(atlas_ReducedGrid), intent(in) :: grid
+  class(atlas_Grid), intent(in) :: grid
   integer, intent(in), optional :: nsmax
 #ifdef ATLAS_HAVE_TRANS
   if( present(nsmax) ) then

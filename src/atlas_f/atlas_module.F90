@@ -520,14 +520,14 @@ end subroutine atlas_write_load_balance_report
 
 function atlas_generate_mesh(grid) result(mesh)
   type(atlas_Mesh) :: mesh
-  type(atlas_ReducedGrid) :: grid
+  class(atlas_Grid) :: grid
   mesh = atlas_Mesh( atlas__generate_mesh(grid%c_ptr()) )
   call mesh%return()
 end function atlas_generate_mesh
 
 function atlas_generate_mesh_with_distribution(grid,distribution) result(mesh)
   type(atlas_Mesh) :: mesh
-  type(atlas_ReducedGrid) :: grid
+  class(atlas_Grid) :: grid
   type(atlas_GridDistribution) :: distribution
   mesh = atlas_Mesh( atlas__generate_mesh_with_distribution(grid%c_ptr(),distribution%c_ptr()) )
   call mesh%return()
