@@ -214,8 +214,108 @@ TEST( test_trans )
   call grid%final()
 END_TEST
 
-
 ! -----------------------------------------------------------------------------
+
+TEST( test_trans_nomesh )
+  type(atlas_ReducedGrid) :: grid
+  type(atlas_Trans) :: trans
+  type(atlas_functionspace_Spectral) :: spectral_fs
+  type(atlas_Field)         :: scalarfield1, scalarfield2
+  type(atlas_Field)         :: spectralfield1, spectralfield2
+  type(atlas_FieldSet)      :: scalarfields
+  type(atlas_FieldSet)      :: spectralfields
+  real(c_double), pointer :: scal1(:,:), scal2(:), spec1(:,:), spec2(:)
+  real(c_double), allocatable :: check(:)
+  integer :: nlev, nsmax, jn, in, jlev
+  integer, pointer :: nvalue(:)
+  real(c_double), allocatable :: vorg(:,:)
+
+  real(c_double) :: tol
+
+  tol = 1.e-8
+  nlev=10
+  nsmax = 21
+
+  grid = atlas_ReducedGrid("O24")
+  trans = atlas_Trans(grid,nsmax)
+
+  FCTEST_CHECK( .not. trans%is_null() )
+  FCTEST_CHECK_EQUAL( trans%nproc(), 1 )
+  FCTEST_CHECK_EQUAL( trans%myproc(proc0=1), 1 )
+  FCTEST_CHECK_EQUAL( trans%ndgl(), grid%nlat() )
+  FCTEST_CHECK_EQUAL( trans%ngptot(), grid%npts() )
+  FCTEST_CHECK_EQUAL( trans%ngptotg(), grid%npts() )
+  FCTEST_CHECK_EQUAL( trans%nsmax(), nsmax )
+
+  scalarfield1 = atlas_Field("scalar1",atlas_real(c_double),[nlev,trans%ngptot()])
+  scalarfield2 = atlas_Field("scalar2",atlas_real(c_double),[trans%ngptot()])
+
+  spectral_fs = atlas_functionspace_Spectral(trans)
+  spectralfield1 = spectral_fs%create_field("spectral1",nlev)
+  spectralfield2 = spectral_fs%create_field("spectral2")
+
+  call scalarfield1%access_data(scal1)
+  call scalarfield2%access_data(scal2)
+  call spectralfield1%access_data(spec1)
+  call spectralfield2%access_data(spec2)
+
+  ! All waves to zero except wave 1 to 3
+  spec1(1:nlev,:) = 0
+  spec1(1:nlev,1) = 3
+  ! All waves to zero except wave 1 to 4
+  spec2(:) = 0
+  spec2(1) = 4
+
+  call atlas_log%debug("invtrans")
+  call trans%invtrans(spectralfield1,scalarfield1)
+  call atlas_log%debug("dirtrans")
+  call trans%dirtrans(scalarfield1,spectralfield1)
+
+  allocate( check(nlev) )
+  check(:) = 3
+  FCTEST_CHECK_CLOSE( spec1(:,1), check, tol )
+  deallocate( check )
+
+  scalarfields = atlas_FieldSet("scalarfields")
+  call scalarfields%add_field(scalarfield1)
+  call scalarfields%add_field(scalarfield2)
+
+  spectralfields = atlas_FieldSet("spectralfields")
+  call spectralfields%add_field(spectralfield1)
+  call spectralfields%add_field(spectralfield2)
+
+  call trans%invtrans(spectralfields,scalarfields)
+  call trans%dirtrans(scalarfields,spectralfields)
+
+  allocate( check(nlev) )
+  check(:) = 3
+  FCTEST_CHECK_CLOSE( spec1(:,1), check, tol )
+  check(:) = 0
+  FCTEST_CHECK_CLOSE( spec1(:,2), check, tol )
+  FCTEST_CHECK_CLOSE( spec1(:,3), check, tol )
+  FCTEST_CHECK_CLOSE( spec1(:,4), check, tol )
+  FCTEST_CHECK_CLOSE( spec1(:,5), check, tol )
+  deallocate( check )
+
+  FCTEST_CHECK_CLOSE( spec2(1), 4._c_double, tol )
+  FCTEST_CHECK_CLOSE( spec2(2), 0._c_double, tol )
+  FCTEST_CHECK_CLOSE( spec2(3), 0._c_double, tol )
+  FCTEST_CHECK_CLOSE( spec2(4), 0._c_double, tol )
+  FCTEST_CHECK_CLOSE( spec2(5), 0._c_double, tol )
+
+
+  write(0,*) "cleaning up"
+
+  call scalarfield1%final()
+  call scalarfield2%final()
+  call spectralfield1%final()
+  call spectralfield2%final()
+  call spectral_fs%final()
+  call scalarfields%final()
+  call spectralfields%final()
+  call trans%final()
+  call grid%final()
+END_TEST
 
 END_TESTSUITE
 

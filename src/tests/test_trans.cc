@@ -282,5 +282,24 @@ BOOST_AUTO_TEST_CASE( test_spectral_fields )
 
 }
 
+
+BOOST_AUTO_TEST_CASE( test_nomesh )
+{
+  BOOST_CHECKPOINT("test_spectral_fields");
+
+  SharedPtr<ReducedGrid> g ( ReducedGrid::create( "O48" ) );
+  SharedPtr<trans::Trans> trans ( new trans::Trans(*g,47) );
+
+  SharedPtr<Spectral> spectral (new Spectral(*trans));
+
+  SharedPtr<Field> spf ( spectral->createField("spf") );
+  SharedPtr<Field> gpf ( Field::create<double>("gpf",make_shape(trans->ngptot())) );
+
+  BOOST_CHECK_NO_THROW( trans->dirtrans(*gpf,*spf) );
+  BOOST_CHECK_NO_THROW( trans->invtrans(*spf,*gpf) );
+
+}
+
+
 } // namespace test
 } // namespace atlas
