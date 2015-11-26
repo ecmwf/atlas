@@ -158,10 +158,10 @@ endforeach()
 add_custom_target( atlas_tests_grid_get_gribs DEPENDS ${tgts} )
 
 ecbuild_add_test(   TARGET      atlas_test_grid_from_grib
-					BOOST
-					SOURCES     test_grid_from_grib.cc
+                    BOOST
+                    SOURCES     test_grid_from_grib.cc
                     DEPENDS     atlas_tests_grid_get_gribs
-					CONDITION	ECKIT_HAVE_GRIB AND OFF
-          ENVIRONMENT "${_grib_environment}"
-					LIBS        atlas
+                    CONDITION   ECKIT_HAVE_GRIB AND OFF
+                    ENVIRONMENT "${_grib_environment}"
+                    LIBS        atlas
                     MPI         1 )

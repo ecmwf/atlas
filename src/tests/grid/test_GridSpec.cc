@@ -55,8 +55,8 @@ BOOST_AUTO_TEST_SUITE( TestGridSpec )
 
 // Allow access to the argc/argv inside of boost test
 struct ArgsFixture {
-   ArgsFixture(): argc(boost::framework::master_test_suite().argc),
-                   argv(boost::framework::master_test_suite().argv){}
+   ArgsFixture(): argc(boost::unit_test::framework::master_test_suite().argc),
+                  argv(boost::unit_test::framework::master_test_suite().argv){}
    int argc;
    char **argv;
 };
