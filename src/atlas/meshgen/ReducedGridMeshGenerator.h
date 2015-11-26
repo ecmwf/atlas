@@ -40,6 +40,7 @@ public:
 
   virtual void generate( const Grid&, const GridDistribution&, Mesh& ) const;
   virtual void generate( const Grid&, Mesh& ) const;
+  using MeshGenerator::generate;
 
 private:
 

@@ -63,7 +63,7 @@ struct Earth
 
 struct Entity
 {
-    enum { NODES=0, FACES=1, ELEMS=2 };
+    enum Type { NODES=0, FACES=1, ELEMS=2 };
 };
 
 struct ElementRef {

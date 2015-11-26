@@ -27,31 +27,18 @@
 #include "atlas/Field.h"
 #include "atlas/Connectivity.h"
 
+#include "atlas/Mesh.h"
+#include "atlas/meshgen/ReducedGridMeshGenerator.h"
+#include "atlas/Grid.h"
+#include "atlas/functionspace/EdgeBasedFiniteVolume.h"
+
 // ------------------------------------------------------------------
 
 using namespace atlas::mesh;
+using namespace atlas::mesh::temporary;
 
 namespace atlas {
 namespace test {
-
-class Quadrilateral : public ElementType
-{
-public:
-  virtual ~Quadrilateral() {}
-  virtual size_t nb_nodes() const { return 4; }
-  virtual size_t nb_edges() const { return 4; }
-  virtual const std::string& name() const { static std::string s("Quadrilateral"); return s; }
-};
-
-class Triangle : public ElementType
-{
-public:
-  virtual ~Triangle() {}
-  virtual size_t nb_nodes() const { return 3; }
-  virtual size_t nb_edges() const { return 3; }
-  virtual const std::string& name() const { static std::string s("Triangle"); return s; }
-};
-
 
 
 // ===================================================================
@@ -300,6 +287,108 @@ BOOST_AUTO_TEST_CASE( block_connectivity )
     eckit::Log::info() << "]" << std::endl;
   }
 
+}
+
+BOOST_AUTO_TEST_CASE( zero_elements )
+{
+  HybridElements hybrid_elements;
+  idx_t *nodes = 0;
+  hybrid_elements.add(new Triangle(), 0, nodes );
+  hybrid_elements.add(new Quadrilateral(), 0, nodes );
+  BOOST_CHECK_EQUAL( hybrid_elements.size(), 0 );
+  BOOST_CHECK_EQUAL( hybrid_elements.nb_types(), 2 );
+  BOOST_CHECK_EQUAL( hybrid_elements.elements(0).size(), 0 );
+  BOOST_CHECK_EQUAL( hybrid_elements.elements(1).size(), 0 );
+}
+
+BOOST_AUTO_TEST_CASE( conversion )
+{
+  long nlon[] = {4,8};
+  Grid* grid = Grid::create("N16");
+  meshgen::ReducedGridMeshGenerator generator;
+  generator.options.set("angle",29.0);
+  generator.options.set("triangulate",false);
+  Mesh* mesh = generator.generate(*grid);
+  
+  next::FunctionSpace* functionspace = new functionspace::EdgeBasedFiniteVolume(*mesh);
+  
+  HybridElements* cells = temporary::Convert::createCells( *mesh );
+  HybridElements* edges = temporary::Convert::createFaces( *mesh );
+  
+  DEBUG_VAR( mesh->nodes().size() );
+  DEBUG_VAR( cells->size() );
+  DEBUG_VAR( cells->elements(0).size() );
+  DEBUG_VAR( cells->elements(1).size() );
+  DEBUG_VAR( edges->size() );
+  
+  eckit::Log::info() << "edges\n";
+  for( size_t f=0; f<edges->size(); ++f )
+  {
+    eckit::Log::info() << f << " : ";
+    // for( size_t n=0; n<edges->nb_nodes(f); ++n )
+    // {
+    //   eckit::Log::info() << edges->node_connectivity()(f,n) << " ";
+    // }
+    for( size_t e=0; e<edges->cell_connectivity().cols(f); ++e )
+    {
+      eckit::Log::info() << edges->cell_connectivity()(f,e) << " ";
+    }
+    eckit::Log::info() << "\n";
+  }
+  eckit::Log::info() << std::flush;
+  //
+  //
+  // eckit::Log::info() << "cells\n";
+  // for( size_t e=0; e<cells->size(); ++e )
+  // {
+  //   eckit::Log::info() << e << " : ";
+  //   for( size_t n=0; n<cells->nb_nodes(e); ++n )
+  //   {
+  //     eckit::Log::info() << cells->node_connectivity()(e,n) << " ";
+  //   }
+  //   eckit::Log::info() << "\n";
+  // }
+  // eckit::Log::info() << std::flush;
+
+  // BOOST_CHECKPOINT("start edge_connectivity");
+  // eckit::Log::info() << "cells\n";
+  // for( size_t e=0; e<cells->edge_connectivity().rows(); ++e )
+  // {
+  //   eckit::Log::info() << e << " : ";
+  //   for( size_t n=0; n<cells->edge_connectivity().cols(e); ++n )
+  //   {
+  //     eckit::Log::info() << cells->edge_connectivity()(e,n) << " ";
+  //   }
+  //   eckit::Log::info() << "\n";
+  // }
+  // eckit::Log::info() << std::flush;
+  
+  ArrayView<double,2> centroids( cells->field("centroids") );
+  for( size_t e=cells->elements(1).begin(); e<cells->elements(1).end(); ++e )
+  {
+    // DEBUG_VAR( centroids(e,XX) );
+    // DEBUG_VAR( centroids(e,YY) );
+    std::set<idx_t> cell_nodes;
+    std::set<idx_t> edge_nodes;
+    cell_nodes.insert(cells->node_connectivity()(e,0));
+    cell_nodes.insert(cells->node_connectivity()(e,1));
+    cell_nodes.insert(cells->node_connectivity()(e,2));
+  
+    edge_nodes.insert( edges->node_connectivity()( cells->edge_connectivity()(e,0), 0) );
+    edge_nodes.insert( edges->node_connectivity()( cells->edge_connectivity()(e,0), 1) );
+    edge_nodes.insert( edges->node_connectivity()( cells->edge_connectivity()(e,1), 0) );
+    edge_nodes.insert( edges->node_connectivity()( cells->edge_connectivity()(e,1), 1) );
+    edge_nodes.insert( edges->node_connectivity()( cells->edge_connectivity()(e,2), 0) );
+    edge_nodes.insert( edges->node_connectivity()( cells->edge_connectivity()(e,2), 1) );
+    BOOST_CHECK_EQUAL_COLLECTIONS( cell_nodes.begin(),cell_nodes.end(), edge_nodes.begin(), edge_nodes.end() );
+  }
+  
+  
+  delete functionspace;
+  delete cells;
+  delete edges;
+  delete mesh;
+  delete grid;
 }
 
 

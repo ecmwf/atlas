@@ -65,6 +65,14 @@ public: // methods
   const HybridElements::Connectivity& node_connectivity() const;
         HybridElements::Connectivity& node_connectivity();
 
+  /// @brief Element to Edge connectivity table
+  const HybridElements::Connectivity& edge_connectivity() const;
+        HybridElements::Connectivity& edge_connectivity();
+
+  /// @brief Element to Cell connectivity table
+  const HybridElements::Connectivity& cell_connectivity() const;
+        HybridElements::Connectivity& cell_connectivity();
+
   /// @brief Number of types present in HybridElements
   size_t nb_types() const;
 
@@ -106,23 +114,22 @@ private:
   std::vector< eckit::SharedPtr<const ElementType> > element_types_;
 
 // -- Data: one value per element
-  std::vector<size_t> nodes_begin_;
-  std::vector<size_t> nb_nodes_;
-  std::vector<size_t> nb_edges_;
   std::vector<size_t> type_idx_;
 
-// -- Data: one value per node per element
-  std::vector<idx_t> node_connectivity_array_;
-
-// -- Accessor helpers
-  eckit::SharedPtr< HybridElements::Connectivity > node_connectivity_;
+// -- Connectivity tables
+  Connectivity* node_connectivity_;
+  Connectivity* edge_connectivity_;
+  Connectivity* cell_connectivity_;
+  
+// -- Sub elements
   std::vector< eckit::SharedPtr<Elements> > elements_;
 
 // -- New stuff
 
 private:
 
-  typedef std::map< std::string, eckit::SharedPtr<Field> >  FieldMap;
+  typedef std::map< std::string, eckit::SharedPtr<Field>        >  FieldMap;
+  typedef std::map< std::string, eckit::SharedPtr<Connectivity> >  ConnectivityMap;
 
   void resize( size_t size );
 
@@ -154,9 +161,13 @@ public:
         Field& ghost()       { return *ghost_; }
 
 
+
 private:
 
+  Connectivity& add( const std::string& name, Connectivity* );
+
   FieldMap fields_;
+  ConnectivityMap connectivities_;
   Metadata metadata_;
 
   // Cached shortcuts to specific fields in fields_
@@ -186,13 +197,34 @@ inline const ElementType& HybridElements::element_type( size_t type_idx ) const
 
 inline const HybridElements::Connectivity& HybridElements::node_connectivity() const
 {
-  return *node_connectivity_.get();
+  return *node_connectivity_;
 }
 
 inline HybridElements::Connectivity& HybridElements::node_connectivity()
 {
-  return *node_connectivity_.get();
+  return *node_connectivity_;
 }
+
+inline const HybridElements::Connectivity& HybridElements::edge_connectivity() const
+{
+  return *edge_connectivity_;
+}
+
+inline HybridElements::Connectivity& HybridElements::edge_connectivity()
+{
+  return *edge_connectivity_;
+}
+
+inline const HybridElements::Connectivity& HybridElements::cell_connectivity() const
+{
+  return *cell_connectivity_;
+}
+
+inline HybridElements::Connectivity& HybridElements::cell_connectivity()
+{
+  return *cell_connectivity_;
+}
+
 
 inline const Elements& HybridElements::elements( size_t type_idx ) const
 {
@@ -206,12 +238,12 @@ inline Elements& HybridElements::elements( size_t type_idx )
 
 inline size_t HybridElements::nb_nodes( size_t elem_idx ) const
 {
-  return nb_nodes_[elem_idx];
+  return node_connectivity_->rows() ? node_connectivity_->cols(elem_idx) : element_type( type_idx(elem_idx) ).nb_nodes();
 }
 
 inline size_t HybridElements::nb_edges( size_t elem_idx ) const
 {
-  return nb_edges_[elem_idx];
+  return edge_connectivity_->rows() ? edge_connectivity_->cols(elem_idx) : element_type( type_idx(elem_idx) ).nb_edges();
 }
 
 inline size_t HybridElements::type_idx( size_t elem_idx ) const
@@ -225,7 +257,26 @@ extern "C"
 {
 }
 
+} // namespace mesh
+} // namespace atlas
+
 //------------------------------------------------------------------------------------------------------
+
+#include "atlas/Parameters.h"
+
+namespace atlas {
+namespace mesh {
+namespace temporary {
+  
+  class Convert
+  {
+  public:
+    static HybridElements* createCells( const Mesh& );
+    static HybridElements* createFaces( const Mesh& );
+    static HybridElements* createElements( const Mesh&, Entity::Type );
+  };
+  
+}
 
 } // namespace mesh
 } // namespace atlas

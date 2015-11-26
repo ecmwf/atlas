@@ -8,6 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
+#include <limits>
+
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/Array.h"
 #include "atlas/Connectivity.h"
@@ -25,9 +27,10 @@ namespace atlas {
 //------------------------------------------------------------------------------------------------------
 
 
-IrregularConnectivity::IrregularConnectivity( idx_t values[], size_t rows, size_t displs[], size_t *counts )
+IrregularConnectivity::IrregularConnectivity( idx_t values[], size_t rows, size_t displs[], size_t counts[] )
   : owns_(false),
     values_(values),
+    missing_value_( std::numeric_limits<idx_t>::is_signed ? std::numeric_limits<idx_t>::max() :  -1 ),
     rows_(rows),
     displs_(displs),
     counts_(counts)
@@ -54,13 +57,15 @@ MultiBlockConnectivity::~MultiBlockConnectivity() {}
 BlockConnectivity::BlockConnectivity( size_t rows, size_t cols, idx_t values[] )
   : rows_(rows),
     cols_(cols),
-    values_(values)
+    values_(values),
+    missing_value_(-1)
 {
 }
 
 IrregularConnectivity::IrregularConnectivity() :
   owns_(true),
   values_(0),
+  missing_value_(-1),
   rows_(0),
   displs_(0),
   counts_(0),
@@ -70,7 +75,7 @@ IrregularConnectivity::IrregularConnectivity() :
 
 IrregularConnectivity::~IrregularConnectivity() {}
 
-void IrregularConnectivity::add(size_t rows, size_t cols, const idx_t values[], bool fortran_array )
+void IrregularConnectivity::add( size_t rows, size_t cols, const idx_t values[], bool fortran_array )
 {
   if( !owns_ ) throw eckit::AssertionFailed("HybridConnectivity must be owned to be resized directly");
   size_t old_size = owned_values_.size();
@@ -137,7 +142,8 @@ void MultiBlockConnectivity::regenerate_block_connectivity()
 }
 
 BlockConnectivity::BlockConnectivity() :
-  owns_(true), values_(0), rows_(0), cols_(0)
+  owns_(true), values_(0), rows_(0), cols_(0), missing_value_(-1)
+
 {
 }
 

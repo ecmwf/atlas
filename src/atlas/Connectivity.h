@@ -97,6 +97,8 @@ public:
   /// Note that the connectivity base is 1 in case ATLAS_HAVE_FORTRAN is defined.
   const idx_t* data() const { return values_; }
         idx_t* data()       { return values_; }
+        
+  idx_t missing_value() const { return missing_value_; }
 
 ///-- Modifiers
 
@@ -123,6 +125,7 @@ private:
   std::vector<size_t> owned_counts_;
 
   idx_t  *values_;
+  idx_t  missing_value_;
   size_t rows_;
   size_t *displs_;
   size_t *counts_;
@@ -261,6 +264,8 @@ public:
   /// Note that the connectivity base is 1 in case ATLAS_HAVE_FORTRAN is defined.
   const idx_t* data() const { return values_; }
         idx_t* data()       { return values_; }
+        
+  idx_t missing_value() const { return missing_value_; }
 
 //-- Modifiers
 
@@ -278,6 +283,7 @@ private:
   size_t rows_;
   size_t cols_;
   idx_t *values_;
+  idx_t missing_value_;
 
 };
 

@@ -37,10 +37,106 @@ public: // methods
 //-- Accessors
 
   virtual const std::string& name() const = 0;
-  virtual size_t nb_nodes() const = 0;
-  virtual size_t nb_edges() const = 0;
+  // virtual size_t dimensionality() const = 0;
 
+  // virtual size_t nb_vertices() const = 0;
+  virtual size_t nb_edges() const = 0;
+  // virtual size_t nb_faces() const = 0;
+
+  virtual size_t nb_nodes() const = 0;
+  
+  virtual bool parametric() const = 0;
 };
+
+namespace temporary {
+  
+  class Volume : public ElementType
+  {
+  public:
+    enum { DIMENSIONALITY=3 };
+  };
+
+  class Face : public ElementType
+  {
+  public:
+    enum { DIMENSIONALITY=2 };
+    enum { FACES=1 };
+    virtual size_t nb_faces() { return FACES; }
+  };
+  
+  class Edge: public ElementType
+  {
+  public:
+    enum { DIMENSIONALITY=1 };
+    enum { FACES=0 };
+    enum { EDGES=1 };
+    virtual size_t nb_faces()   { return FACES; }
+    virtual size_t nb_edges()   { return EDGES; }
+  };
+  
+  class Vertex: public ElementType
+  {
+  public:
+    enum { DIMENSIONALITY=0 };
+    enum { FACES=0 };
+    enum { EDGES=0 };
+    enum { VERTICES=1 };
+    virtual size_t nb_faces()    { return FACES;    }
+    virtual size_t nb_edges()    { return EDGES;    }
+    virtual size_t nb_vertices() { return VERTICES; }
+  };
+
+class Quadrilateral : public Face
+{
+public:
+  enum { EDGES=4 };
+  enum { VERTICES=4 };
+  enum { FACETS=EDGES };
+  enum { RIDGES=VERTICES };
+  virtual ~Quadrilateral() {}
+  virtual bool parametric() const { return true; }
+  virtual size_t nb_vertices() const { return VERTICES; }
+  virtual size_t nb_edges()    const { return EDGES;    }
+  virtual size_t nb_nodes()    const { return VERTICES; }
+  virtual size_t nb_facets()   const { return FACETS;   }
+  virtual size_t nb_ridges()   const { return RIDGES;   }
+  virtual const std::string& name() const { static std::string s("Quadrilateral"); return s; }
+};
+
+class Triangle : public Face
+{
+public:
+  enum { EDGES=3 };
+  enum { VERTICES=3 };
+  enum { FACETS=EDGES };
+  enum { RIDGES=VERTICES };
+  virtual ~Triangle() {}
+  virtual bool parametric() const { return true; }
+  virtual size_t nb_vertices() const { return VERTICES; }
+  virtual size_t nb_edges()    const { return EDGES;    }
+  virtual size_t nb_nodes()    const { return VERTICES; }
+  virtual size_t nb_facets()   const { return FACETS;   }
+  virtual size_t nb_ridges()   const { return RIDGES;   }
+  virtual const std::string& name() const { static std::string s("Triangle"); return s; }
+};
+
+class Line : public Edge
+{
+public:
+  enum { VERTICES = 2 };
+  enum { FACETS   = VERTICES };
+  enum { RIDGES   = 0 };
+  virtual ~Line() {}
+  virtual bool parametric() const { return true; }
+  virtual size_t nb_vertices() const { return VERTICES; }
+  virtual size_t nb_edges()    const { return EDGES;    }
+  virtual size_t nb_nodes()    const { return VERTICES; }
+  virtual size_t nb_facets()   const { return FACETS;   }
+  virtual const std::string& name() const { static std::string s("Line"); return s; }
+};
+}
+
+
 
 extern "C"
 {
