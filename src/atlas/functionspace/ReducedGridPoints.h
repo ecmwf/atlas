@@ -15,6 +15,8 @@
 #include "atlas/FunctionSpace.h"
 
 namespace atlas { namespace trans { class Trans; } }
+namespace atlas { namespace mpl { class GatherScatter; } }
+namespace atlas { namespace mpl { class Checksum; } }
 namespace atlas { class Field; }
 namespace atlas { class FieldSet; }
 
@@ -54,6 +56,8 @@ private: // data
 
   trans::Trans* trans_;
   const Grid& grid_;
+  mpl::GatherScatter* gather_scatter_;
+  mpl::Checksum* checksum_;
 
 };
 
