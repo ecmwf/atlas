@@ -105,10 +105,10 @@ TEST( test_trans )
   spectralfield2 = spectral_fs%create_field("spectral2")
   write(0,*) "spectral_fs%owners()",spectral_fs%owners()
 
-  call scalarfield1%access_data(scal1)
-  call scalarfield2%access_data(scal2)
-  call spectralfield1%access_data(spec1)
-  call spectralfield2%access_data(spec2)
+  call scalarfield1%data(scal1)
+  call scalarfield2%data(scal2)
+  call spectralfield1%data(spec1)
+  call spectralfield2%data(spec2)
 
   write(0,*) "shape = ", spectralfield2%shape()
 
@@ -128,12 +128,12 @@ TEST( test_trans )
   deallocate( check )
 
   scalarfields = atlas_FieldSet("scalarfields")
-  call scalarfields%add_field(scalarfield1)
-  call scalarfields%add_field(scalarfield2)
+  call scalarfields%add(scalarfield1)
+  call scalarfields%add(scalarfield2)
 
   spectralfields = atlas_FieldSet("spectralfields")
-  call spectralfields%add_field(spectralfield1)
-  call spectralfields%add_field(spectralfield2)
+  call spectralfields%add(spectralfield1)
+  call spectralfields%add(spectralfield2)
 
   call trans%invtrans(spectral_fs,spectralfields,nodes_fs,scalarfields)
   call trans%dirtrans(nodes_fs,scalarfields,spectral_fs,spectralfields)
@@ -155,18 +155,18 @@ TEST( test_trans )
   FCTEST_CHECK_CLOSE( spec2(5), 0._c_double, tol )
 
   windfield = nodes_fs%create_field("wind",atlas_real(c_double),nlev,(/3/))
-  call windfield%access_data(wind)
+  call windfield%data(wind)
   write(0,*) "nodes_fs%owners()",nodes_fs%owners()
 
   vorfield = spectral_fs%create_field("vorticity",nlev)
   write(0,*) "spectral_fs%owners()",spectral_fs%owners()
 
-  call vorfield%access_data(vor)
+  call vorfield%data(vor)
 
   divfield =  spectral_fs%create_field("divergence",nlev)
   write(0,*) "spectral_fs%owners()",spectral_fs%owners()
 
-  call divfield%access_data(div)
+  call divfield%data(div)
 
   call trans%dirtrans_wind2vordiv(nodes_fs,windfield,spectral_fs,vorfield,divfield)
 
@@ -248,10 +248,10 @@ TEST( test_trans_nomesh )
   spectralfield1 = spectral_fs%create_field("spectral1",nlev)
   spectralfield2 = spectral_fs%create_field("spectral2")
 
-  call scalarfield1%access_data(scal1)
-  call scalarfield2%access_data(scal2)
-  call spectralfield1%access_data(spec1)
-  call spectralfield2%access_data(spec2)
+  call scalarfield1%data(scal1)
+  call scalarfield2%data(scal2)
+  call spectralfield1%data(spec1)
+  call spectralfield2%data(spec2)
 
   ! All waves to zero except wave 1 to 3
   spec1(1:nlev,:) = 0
@@ -271,12 +271,12 @@ TEST( test_trans_nomesh )
   deallocate( check )
 
   scalarfields = atlas_FieldSet("scalarfields")
-  call scalarfields%add_field(scalarfield1)
-  call scalarfields%add_field(scalarfield2)
+  call scalarfields%add(scalarfield1)
+  call scalarfields%add(scalarfield2)
 
   spectralfields = atlas_FieldSet("spectralfields")
-  call spectralfields%add_field(spectralfield1)
-  call spectralfields%add_field(spectralfield2)
+  call spectralfields%add(spectralfield1)
+  call spectralfields%add(spectralfield2)
 
   call trans%invtrans(spectralfields,scalarfields)
   call trans%dirtrans(scalarfields,spectralfields)
@@ -338,12 +338,12 @@ do jfld=1,nfld
 
   ! Read global field data
   ! ...
-  
+
   call gridpoints%scatter(fieldg,field)
-  
+
   call gpfields%add( field )
   call spfields%add( spectral%create_field(fieldname) )
-  
+
   FCTEST_CHECK_EQUAL( field%owners(), 2 )
 enddo
 

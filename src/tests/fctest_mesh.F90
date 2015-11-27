@@ -124,7 +124,7 @@ TEST( test_field_owners)
   call state%remove("field_test_owners")
   FCTEST_CHECK_EQUAL( f%owners() , 1 )
   fields = atlas_FieldSet("fields")
-  call fields%add_field(f)
+  call fields%add(f)
   FCTEST_CHECK_EQUAL( f%owners() , 2 )
 
   call fields%final()
@@ -210,7 +210,7 @@ TEST( test_field_size )
   FCTEST_CHECK_EQUAL( field%owners() , 1 )
   call nodes%add(field)
   FCTEST_CHECK_EQUAL( field%owners() , 2 )
-  call field%access_data(fdata_int)
+  call field%data(fdata_int)
   FCTEST_CHECK_EQUAL( field%datatype() , "int32" )
   FCTEST_CHECK_EQUAL( size(fdata_int) , 0 )
 
@@ -219,7 +219,7 @@ TEST( test_field_size )
 
   field = atlas_Field("field_1",atlas_real(c_float),(/1,nodes%size()/))
   call nodes%add(field)
-  call field%access_data(fdata_real32)
+  call field%data(fdata_real32)
   FCTEST_CHECK_EQUAL( field%datatype() , "real32" )
   FCTEST_CHECK_EQUAL( size(fdata_real32) , 10 )
 
@@ -229,7 +229,7 @@ TEST( test_field_size )
   FCTEST_CHECK_EQUAL( field%owners() , 1 )
   call nodes%add(field)
   FCTEST_CHECK_EQUAL( field%owners() , 2 )
-  call field%access_data(fdata_real64)
+  call field%data(fdata_real64)
   FCTEST_CHECK_EQUAL( field%name(), "field_2" )
   FCTEST_CHECK_EQUAL( field%datatype() , "real64" )
   FCTEST_CHECK_EQUAL( size(fdata_real64) , 20 )
@@ -266,7 +266,7 @@ TEST( test_create_remove )
 
   field = atlas_Field("vector_field",atlas_real(c_float),(/3,nodes%size()/))
   call nodes%add(field)
-  call field%access_data(vector)
+  call field%data(vector)
   FCTEST_CHECK_EQUAL( size(vector),   30 )
   FCTEST_CHECK_EQUAL( size(vector,1), 3   )
   FCTEST_CHECK_EQUAL( size(vector,2), 10   )
@@ -274,7 +274,7 @@ TEST( test_create_remove )
 
   field = atlas_Field("scalar_field",atlas_real(c_double),(/1,nodes%size()/))
   call nodes%add(field)
-  call field%access_data(scalar)
+  call field%data(scalar)
   FCTEST_CHECK_EQUAL( size(scalar),   10 )
   FCTEST_CHECK_EQUAL( size(scalar,1), 10  )
   FCTEST_CHECK_EQUAL( field%owners() , 2 )
@@ -294,11 +294,11 @@ TEST( test_fieldset )
 
   afield = nodes%field("field_0")
   write(0,*) "field%owners() = ", afield%owners()
-  call fieldset%add_field( nodes%field("field_0") )
-  call fieldset%add_field( nodes%field("field_1") )
-  call fieldset%add_field( nodes%field("field_2") )
+  call fieldset%add( nodes%field("field_0") )
+  call fieldset%add( nodes%field("field_1") )
+  call fieldset%add( nodes%field("field_2") )
 
-  call fieldset%add_field( nodes%field("vector_field") )
+  call fieldset%add( nodes%field("vector_field") )
 
   FCTEST_CHECK_EQUAL( fieldset%size(), 4 )
 
@@ -342,7 +342,7 @@ TEST( test_meshgen )
   nnodes = nodes%size()
 
   field = nodes%field("remote_idx")
-  call field%access_data(ridx)
+  call field%data(ridx)
   nghost = 0
   do i=1,nnodes
     if( ridx(i) /= i ) nghost = nghost + 1
@@ -356,7 +356,7 @@ TEST( test_meshgen )
 
 
   field = nodes%field("dual_volumes")
-  call field%access_data(arr)
+  call field%data(arr)
   call field%final()
 
   functionspace_nodes = atlas_functionspace_Nodes(mesh,1)
@@ -365,7 +365,7 @@ TEST( test_meshgen )
 
   edges = mesh%function_space("edges")
   field = edges%field("dual_normals")
-  call field%access_data(arr)
+  call field%data(arr)
   call field%final()
 
 

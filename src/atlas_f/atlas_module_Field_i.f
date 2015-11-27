@@ -51,11 +51,6 @@ contains
   procedure, private :: access_data3_real64_bounds => Field__access_data3_real64_bounds
   procedure, private :: access_data4_real64_bounds => Field__access_data4_real64_bounds
   generic :: shape => shape_array, shape_idx
-  generic :: access_data => &
-    & access_data1_int32, access_data1_int64, access_data1_real32, access_data1_real64, &
-    & access_data2_int32, access_data2_int64, access_data2_real32, access_data2_real64, access_data2_real64_bounds, &
-    & access_data3_int32, access_data3_int64, access_data3_real32, access_data3_real64, access_data3_real64_bounds, &
-    &                                         access_data4_real32, access_data4_real64, access_data4_real64_bounds
   generic :: data => &
     & access_data1_logical32, access_data1_int32, access_data1_int64, access_data1_real32, access_data1_real64, &
     & access_data2_logical32, access_data2_int32, access_data2_int64, access_data2_real32, access_data2_real64, access_data2_real64_bounds, &
