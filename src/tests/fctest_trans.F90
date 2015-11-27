@@ -311,5 +311,60 @@ TEST( test_trans_nomesh )
   call grid%final()
 END_TEST
 
+TEST( test_transdwarf )
+type(atlas_ReducedGrid) :: grid
+type(atlas_Trans) :: trans
+type(atlas_functionspace_ReducedGridPoints) :: gridpoints
+type(atlas_functionspace_Spectral) :: spectral
+type(atlas_Field) :: fieldg, field
+type(atlas_FieldSet) :: gpfields, spfields
+integer :: jfld, nfld
+character(len=10) :: fieldname
+
+grid = atlas_ReducedGrid("O24")
+trans = atlas_Trans(grid,23)
+gridpoints = atlas_functionspace_ReducedGridPoints(grid)
+spectral = atlas_functionspace_Spectral(trans)
+
+gpfields = atlas_FieldSet("gridpoint")
+spfields = atlas_FieldSet("spectral")
+
+nfld=10
+do jfld=1,nfld
+  write(fieldname,'(I0)') jfld
+
+  fieldg = gridpoints%create_global_field(fieldname)
+  field  = gridpoints%create_field(fieldname)
+
+  ! Read global field data
+  ! ...
+  
+  call gridpoints%scatter(fieldg,field)
+  
+  call gpfields%add( field )
+  call spfields%add( spectral%create_field(fieldname) )
+  
+  FCTEST_CHECK_EQUAL( field%owners(), 2 )
+enddo
+
+call trans%dirtrans(gpfields,spfields)
+call trans%invtrans(spfields,gpfields)
+
+do jfld=1,spfields%size()
+  field = spfields%field(jfld)
+  write(atlas_log%msg,*) "spectral field ",field%name(); call atlas_log%info()
+enddo
+
+call field%final()
+call fieldg%final()
+call gpfields%final()
+call spfields%final()
+call gridpoints%final()
+call spectral%final()
+call trans%final()
+call grid%final()
+END_TEST
+
+
 END_TESTSUITE
 
