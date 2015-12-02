@@ -71,9 +71,9 @@ reduced_gg_pl_512_grib1.tmpl
 regular_gg_sfc_grib1.tmpl
 )
 
-set( TEST_GRIDSPEC ON )
+ecbuild_add_option( FEATURE ATLAS_TEST_GRIDSPEC DEFAULT OFF )
 
-if( TEST_GRIDSPEC )
+if( ENABLE_ATLAS_TEST_GRIDSPEC )
 
   foreach( f ${grib_api_samples_data} )
     set(tgt data_${f})
@@ -132,36 +132,40 @@ ecbuild_add_test(   TARGET      atlas_test_field
 					LIBS        atlas
                     MPI         1 )
 
-list( APPEND test_grid_from_grib_data
-CMC_hrdps_east_TMP_TGL_2_ps2.5km_2014081512_P000-00.grib2
-ll005005.grib
-ll0101.grib
-ll11.grib
-ll55.grib
-n1024.grib
-#n1280.grib
-n160.grib
-n256.grib
-n320.grib
-n40.grib
-n400.grib
-n512.grib
-n60.grib
-rgg_n640.grib )
+ecbuild_add_option( FEATURE ATLAS_TEST_GRID_FROM_GRIB DEFAULT OFF )
 
-foreach( f ${test_grid_from_grib_data} )
-  set(tgt data_${f})
-  ecbuild_get_test_data( TARGET "${tgt}" NAME "${f}" DIRNAME ${PROJECT_NAME}/grid NOCHECK )
-  list(APPEND tgts "${tgt}")
-endforeach()
+if( ENABLE_ATLAS_TEST_GRID_FROM_GRIB )
+  list( APPEND test_grid_from_grib_data
+  CMC_hrdps_east_TMP_TGL_2_ps2.5km_2014081512_P000-00.grib2
+  ll005005.grib
+  ll0101.grib
+  ll11.grib
+  ll55.grib
+  n1024.grib
+  #n1280.grib
+  n160.grib
+  n256.grib
+  n320.grib
+  n40.grib
+  n400.grib
+  n512.grib
+  n60.grib
+  rgg_n640.grib )
 
-add_custom_target( atlas_tests_grid_get_gribs DEPENDS ${tgts} )
+  foreach( f ${test_grid_from_grib_data} )
+    set(tgt data_${f})
+    ecbuild_get_test_data( TARGET "${tgt}" NAME "${f}" DIRNAME ${PROJECT_NAME}/grid NOCHECK )
+    list(APPEND tgts "${tgt}")
+  endforeach()
 
-ecbuild_add_test(   TARGET      atlas_test_grid_from_grib
-                    BOOST
-                    SOURCES     test_grid_from_grib.cc
-                    DEPENDS     atlas_tests_grid_get_gribs
-                    CONDITION   ECKIT_HAVE_GRIB AND OFF
-                    ENVIRONMENT "${_grib_environment}"
-                    LIBS        atlas
-                    MPI         1 )
+  add_custom_target( atlas_tests_grid_get_gribs DEPENDS ${tgts} )
+
+  ecbuild_add_test(   TARGET      atlas_test_grid_from_grib
+                      BOOST
+                      SOURCES     test_grid_from_grib.cc
+                      DEPENDS     atlas_tests_grid_get_gribs
+                      CONDITION   ECKIT_HAVE_GRIB
+                      ENVIRONMENT "${_grib_environment}"
+                      LIBS        atlas
+                      MPI         1 )
+endif()

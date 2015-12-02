@@ -27,7 +27,7 @@ project( atlas CXX )
 
 include( ecbuild_system NO_POLICY_SCOPE )
 
-ecbuild_requires_macro_version( 1.9 )
+ecbuild_requires_macro_version( 2.0 )
 
 ###############################################################################
 # project
@@ -36,12 +36,7 @@ set( PERSISTENT_NAMESPACE "eckit" CACHE INTERNAL "" )
 
 ecbuild_use_package( PROJECT eckit VERSION 0.10 REQUIRED )
 
-#list( REMOVE_DUPLICATES ECKIT_FEATURES )
 ecbuild_debug("   ECKIT_FEATURES : [${ECKIT_FEATURES}]" )
-
-# foreach( _eckit_feature ${ECKIT_FEATURES} )
-#   set( ${_eckit_feature} 1 )
-# endforeach()
 
 if( ECKIT_HAVE_GRIB )
    ecbuild_debug( "eckit has GRIB support" )
@@ -87,10 +82,10 @@ ecbuild_add_option( FEATURE MPI
                     REQUIRED_PACKAGES "MPI COMPONENTS CXX ${Fortran}" )
 
 if( ATLAS_HAVE_MPI AND ECKIT_HAVE_ECKIT_MPI )
-  message( STATUS "Using eckit_mpi" )
+  ecbuild_debug( "Using eckit_mpi" )
   set( ECKIT_MPI_LIBRARIES eckit_mpi )
 elseif( NOT ATLAS_HAVE_MPI AND ECKIT_HAVE_ECKIT_MPISTUBS )
-  message( STATUS "Using eckit_mpistubs" )
+  ecbuild_debug( "Using eckit_mpistubs" )
   set( ECKIT_MPI_LIBRARIES eckit_mpistubs )
   add_definitions( "-DECKIT_USE_MPISTUBS" )
   if( ATLAS_HAVE_FORTRAN )
@@ -99,12 +94,12 @@ elseif( NOT ATLAS_HAVE_MPI AND ECKIT_HAVE_ECKIT_MPISTUBS )
     set( MPI_Fortran_INCLUDE_PATH ${MPISTUBS_INCLUDE_DIRS} )
   endif()
 elseif( NOT ATLAS_HAVE_MPI AND NOT ECKIT_HAVE_ECKIT_MPISTUBS )
-  message( FATAL_ERROR "ATLAS_HAVE_MPI=OFF, but cannot build since eckit_mpistubs not found")
+  ecbuild_error("ATLAS_HAVE_MPI=OFF, but cannot build since eckit_mpistubs not found")
 else()
   ecbuild_info( "ATLAS_HAVE_MPI            : ${ATLAS_HAVE_MPI}" )
   ecbuild_info( "ECKIT_HAVE_ECKIT_MPI      : ${ECKIT_HAVE_ECKIT_MPI} " )
   ecbuild_info( "ECKIT_HAVE_ECKIT_MPISTUBS : ${ECKIT_HAVE_ECKIT_MPISTUBS} " )
-  message( FATAL_ERROR "Invalid combination of above variables" )
+  ecbuild_error( "Invalid combination of above variables" )
 endif()
 if( ATLAS_HAVE_FORTRAN )
   ecbuild_debug( "MPI_Fortran_INCLUDE_PATH : ${MPI_Fortran_INCLUDE_PATH}" )

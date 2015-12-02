@@ -12,42 +12,53 @@ include( ecbuild_add_fortran_flags )
 # FLAGS COMMON TO ALL BUILD TYPES
 ####################################################################
 
-#ecbuild_add_fortran_flags( "-std=f2008" ) # fortran loc function is non-standard
-ecbuild_add_fortran_flags( "-ffree-line-length-none" )
+if( NOT ECBUILD_Fortran_FLAGS )
+  # Next line disabled as fortran loc function is non-standard
+  #ecbuild_add_fortran_flags( "-std=f2008" ) 
+  ecbuild_add_fortran_flags( "-ffree-line-length-none" )
+endif()
 
 ####################################################################
 # RELEASE FLAGS
 ####################################################################
 
-ecbuild_add_fortran_flags( "-O3"                BUILD RELEASE )
-ecbuild_add_fortran_flags( "-funroll-all-loops" BUILD RELEASE )
-ecbuild_add_fortran_flags( "-finline-functions" BUILD RELEASE )
-#ecbuild_add_fortran_flags( "-fstack-arrays"     BUILD RELEASE )
-
-####################################################################
-# DEBUG FLAGS
-####################################################################
-
-ecbuild_add_fortran_flags( "-O0 -g"         BUILD DEBUG )
-ecbuild_add_fortran_flags( "-fcheck=bounds" BUILD DEBUG )
-ecbuild_add_fortran_flags( "-fbacktrace"    BUILD DEBUG )
-ecbuild_add_fortran_flags( "-finit-real=snan" BUILD DEBUG )
-ecbuild_add_fortran_flags( "-ffpe-trap=invalid,zero,overflow" BUILD DEBUG )
+if( NOT ECBUILD_Fortran_FLAGS )
+  ecbuild_add_fortran_flags( "-O3"                BUILD RELEASE )
+  ecbuild_add_fortran_flags( "-funroll-all-loops" BUILD RELEASE )
+  ecbuild_add_fortran_flags( "-finline-functions" BUILD RELEASE )
+  #ecbuild_add_fortran_flags( "-fstack-arrays"     BUILD RELEASE )
+endif()
 
 ####################################################################
 # BIT REPRODUCIBLE FLAGS
 ####################################################################
 
-ecbuild_add_fortran_flags( "-O2 -g"             BUILD BIT )
-ecbuild_add_fortran_flags( "-funroll-all-loops" BUILD BIT )
-ecbuild_add_fortran_flags( "-finline-functions" BUILD BIT )
-#ecbuild_add_fortran_flags( "-fstack-arrays"     BUILD BIT )
+if( NOT ECBUILD_Fortran_FLAGS )
+  ecbuild_add_fortran_flags( "-O2 -g"             BUILD BIT )
+  ecbuild_add_fortran_flags( "-funroll-all-loops" BUILD BIT )
+  ecbuild_add_fortran_flags( "-finline-functions" BUILD BIT )
+  #ecbuild_add_fortran_flags( "-fstack-arrays"     BUILD BIT )
+endif()
+
+####################################################################
+# DEBUG FLAGS
+####################################################################
+
+if( NOT ECBUILD_Fortran_FLAGS )
+  ecbuild_add_fortran_flags( "-O0 -g"                            BUILD DEBUG )
+  ecbuild_add_fortran_flags( "-fcheck=bounds"                    BUILD DEBUG )
+  ecbuild_add_fortran_flags( "-fbacktrace"                       BUILD DEBUG )
+  ecbuild_add_fortran_flags( "-finit-real=snan"                  BUILD DEBUG )
+  ecbuild_add_fortran_flags( "-ffpe-trap=invalid,zero,overflow"  BUILD DEBUG )
+endif()
 
 ####################################################################
 # LINK FLAGS
 ####################################################################
 
-set( CMAKE_Fortran_LINK_FLAGS    "" )
+if( NOT ECBUILD_Fortran_LINK_FLAGS )
+  # nothing to add
+endif()
 
 ####################################################################
 

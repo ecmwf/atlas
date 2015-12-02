@@ -6,6 +6,7 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
+ecbuild_error("Compile flags not tested")
 
 ####################################################################
 # FLAGS COMMON TO ALL BUILD TYPES

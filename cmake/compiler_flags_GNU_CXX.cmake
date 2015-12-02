@@ -12,30 +12,41 @@ include( ecbuild_add_cxx_flags )
 # FLAGS COMMON TO ALL BUILD TYPES
 ####################################################################
 
+if( NOT ECBUILD_CXX_FLAGS )
+  # nothing to add
+endif()
 
 ####################################################################
 # RELEASE FLAGS
 ####################################################################
 
-ecbuild_add_cxx_flags( "-O3"  BUILD RELEASE )
-
-####################################################################
-# DEBUG FLAGS
-####################################################################
-
-ecbuild_add_cxx_flags( "-O0 -g" BUILD DEBUG )
+if( NOT ECBUILD_CXX_FLAGS )
+    ecbuild_add_cxx_flags( "-O3 -DNDEBUG"  BUILD RELEASE )
+endif()
 
 ####################################################################
 # BIT REPRODUCIBLE FLAGS
 ####################################################################
 
-ecbuild_add_cxx_flags( "-O2 -g" BUILD BIT )
+if( NOT ECBUILD_CXX_FLAGS )
+    ecbuild_add_cxx_flags("-O2 -DNDEBUG" BUILD BIT)
+endif()
+
+####################################################################
+# DEBUG FLAGS
+####################################################################
+
+if( NOT ECBUILD_CXX_FLAGS )
+    ecbuild_add_cxx_flags("-O0 -g -ftrapv" BUILD DEBUG)
+endif()
 
 ####################################################################
 # LINK FLAGS
 ####################################################################
 
-set( CMAKE_CXX_LINK_FLAGS        "" )
+if( NOT ECBUILD_CXX_LINK_FLAGS )
+    # nothing to add
+endif()
 
 ####################################################################
 
