@@ -8,47 +8,44 @@ namespace atlas {
 
 int atlas__resource_int (const char* resource, int default_value)
 {
-  int val;
   ATLAS_ERROR_HANDLING(
-    val = eckit::Resource<int>( std::string(resource), default_value )
+    return eckit::Resource<int>( std::string(resource), default_value )
   );
-  return val;
+  return int(0);
 }
 
 long atlas__resource_long (const char* resource, long default_value)
 {
-  long val;
   ATLAS_ERROR_HANDLING(
-    val = eckit::Resource<long>( std::string(resource), default_value )
+    return eckit::Resource<long>( std::string(resource), default_value )
   );
-  return val;
+  return long(0);
 }
 
 float atlas__resource_float (const char* resource, float default_value)
 {
-  double val;
   ATLAS_ERROR_HANDLING(
-    val = eckit::Resource<double>( std::string(resource), static_cast<double>(default_value) )
+    return static_cast<float>( eckit::Resource<double>( std::string(resource), static_cast<double>(default_value) ) );
   );
-  return static_cast<float>(val);
+  return float(0);
 }
 
 double atlas__resource_double (const char* resource, double default_value)
 {
-  double val;
   ATLAS_ERROR_HANDLING(
-    val = eckit::Resource<double>( std::string(resource), default_value )
+    return eckit::Resource<double>( std::string(resource), default_value )
   );
-  return val;
+  return double(0);
 }
 
 const char* atlas__resource_string (const char* resource, const char* default_value)
 {
   static std::string val;
   ATLAS_ERROR_HANDLING(
-    val = eckit::Resource<std::string>( std::string(resource), std::string(default_value) )
+    val = eckit::Resource<std::string>( std::string(resource), std::string(default_value) );
+    return val.c_str();
   );
-  return val.c_str();
+  return NULL;
 }
 
 void atlas__resource_set_int (const char* resource, int value)
