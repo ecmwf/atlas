@@ -57,9 +57,7 @@ EdgeBasedFiniteVolume::~EdgeBasedFiniteVolume()
 void EdgeBasedFiniteVolume::setup()
 {
   atlas::FunctionSpace &edges = fvm_->mesh().function_space("edges");
-  mesh::Nodes const   &nodes = fvm_->nodes();
 
-  const size_t nnodes = nodes.size();
   const size_t nedges = edges.shape(0);
 
   const ArrayView<int,1> edge_is_pole ( edges.field("is_pole_edge") );

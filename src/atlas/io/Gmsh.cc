@@ -318,17 +318,20 @@ void write_field_elems(const Gmsh& gmsh, const FunctionSpace& function_space, co
   }
 }
 
+// Unused private function, in case for big-endian
+#if 0
 void swap_bytes(char *array, int size, int n)
-  {
-    char *x = new char[size];
-    for(int i = 0; i < n; i++) {
-      char *a = &array[i * size];
-      memcpy(x, a, size);
-      for(int c = 0; c < size; c++)
-        a[size - 1 - c] = x[c];
-    }
-    delete [] x;
+{
+  char *x = new char[size];
+  for(int i = 0; i < n; i++) {
+    char *a = &array[i * size];
+    memcpy(x, a, size);
+    for(int c = 0; c < size; c++)
+      a[size - 1 - c] = x[c];
   }
+  delete [] x;
+}
+#endif
 
 
 } // end anonymous namespace

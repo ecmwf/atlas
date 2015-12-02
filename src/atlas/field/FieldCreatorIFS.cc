@@ -27,7 +27,6 @@ Field* FieldCreatorIFS::create_field( const eckit::Parametrisation& params ) con
   size_t nvar = 1;
   size_t nproma = 1;
   size_t nlev = 1;
-  long kind = DataType::kind<double>();
 
   if( !params.get("ngptot",ngptot) )
     throw eckit::Exception("Could not find parameter 'ngptot' in Parametrisation");

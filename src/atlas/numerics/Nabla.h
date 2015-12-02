@@ -37,8 +37,8 @@ public:
   virtual void laplacian(const Field &scalar, Field &laplacian) const = 0;
 
 private:
-  const next::FunctionSpace& fs_;
-  const eckit::Parametrisation& config_;
+  // const next::FunctionSpace& fs_;
+  // const eckit::Parametrisation& config_;
 
 };
 

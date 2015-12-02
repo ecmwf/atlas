@@ -110,14 +110,14 @@ std::string LogFormat::parsed_prefix() const
 
 FormattedChannel::FormattedChannel( std::ostream* channel, LogFormat* format ) :
   FormatChannel( channel, format ),
-  channel_(channel),
+  // channel_(channel),
   format_(format)
 {
 }
 
 FormattedChannel::FormattedChannel( std::ostream& channel, LogFormat* format ) :
   FormatChannel( channel, format ),
-  channel_(&channel),
+  // channel_(&channel),
   format_(format)
 {
 }

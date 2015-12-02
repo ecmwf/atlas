@@ -30,8 +30,6 @@ void BuildCellCentres::operator()( Mesh& mesh ) const
     mesh::Nodes& nodes     = mesh.nodes();
     ArrayView<double,2> coords  ( nodes.field("xyz") );
 
-    const size_t nb_nodes = nodes.size();
-
     if( mesh.has_function_space("triags") ) {
 
         FunctionSpace& triags      = mesh.function_space( "triags" );

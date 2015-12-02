@@ -88,8 +88,8 @@ public:
     return regex_match_impl(string,regex_,substr,true,use_case_);
   }
 private:
-  bool use_case_;
   std::string regex_;
+  bool use_case_;
 };
 
 //=====================================================

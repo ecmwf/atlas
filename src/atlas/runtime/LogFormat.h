@@ -54,7 +54,7 @@ public:
         LogFormat& format()       { return *format_; };
 
 private:
-  std::ostream* channel_;
+  // std::ostream* channel_;
   LogFormat* format_;
 };
 

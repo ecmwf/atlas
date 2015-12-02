@@ -11,6 +11,8 @@ typedef unsigned int   uint32_t;
 typedef unsigned short uint16_t;
 
 
+// Unused private function
+#if 0
 uint32_t fletcher32( uint16_t const *data, size_t words )
 {
   uint32_t sum1 = 0xffff, sum2 = 0xffff;
@@ -29,6 +31,7 @@ uint32_t fletcher32( uint16_t const *data, size_t words )
   sum2 = (sum2 & 0xffff) + (sum2 >> 16);
   return sum2 << 16 | sum1;
 }
+#endif
 
 
 inline uint64_t fletcher64( const uint32_t* data, size_t count )

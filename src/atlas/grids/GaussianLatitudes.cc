@@ -109,6 +109,7 @@ void predict_gaussian_latitudes_hemisphere(const size_t N, double lats[])
 //----------------------------------------------------------------------------------------------------------------------
 
 // TODO: evaluate this, and possibly use
+#if 0
 namespace {
 
   void initialGaussianLatitudes(size_t resolution, std::vector<double>& lats);
@@ -212,6 +213,7 @@ namespace {
   }
 
 } // anonymous namespace
+#endif
 
 //----------------------------------------------------------------------------------------------------------------------
 

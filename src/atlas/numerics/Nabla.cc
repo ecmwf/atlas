@@ -39,8 +39,8 @@ namespace {
 namespace atlas {
 namespace numerics {
 
-Nabla::Nabla(const next::FunctionSpace &fs, const eckit::Parametrisation &p) :
-  fs_(fs), config_(p)
+Nabla::Nabla(const next::FunctionSpace &fs, const eckit::Parametrisation &p)
+  // : fs_(fs), config_(p)
 {
 }
 
