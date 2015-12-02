@@ -20,7 +20,7 @@ endif()
 # RELEASE FLAGS
 ####################################################################
 
-if( NOT ECBUILD_Fortran_FLAGS_RELEASE )
+if( NOT ECBUILD_Fortran_FLAGS )
   ecbuild_add_fortran_flags( "-O3"             BUILD RELEASE )
   ecbuild_add_fortran_flags( "-unroll"         BUILD RELEASE )
   ecbuild_add_fortran_flags( "-inline"         BUILD RELEASE )
@@ -32,7 +32,7 @@ endif()
 # DEBUG FLAGS
 ####################################################################
 
-if( NOT ECBUILD_Fortran_FLAGS_DEBUG )
+if( NOT ECBUILD_Fortran_FLAGS )
   ecbuild_add_fortran_flags( "-O0 -g"                       BUILD DEBUG )
   ecbuild_add_fortran_flags( "-check bounds"                BUILD DEBUG )
   ecbuild_add_fortran_flags( "-traceback"                   BUILD DEBUG )
@@ -45,7 +45,7 @@ endif()
 # BIT REPRODUCIBLE FLAGS
 ####################################################################
 
-if( NOT ECBUILD_Fortran_FLAGS_BIT )
+if( NOT ECBUILD_Fortran_FLAGS )
   ecbuild_add_fortran_flags( "-O2"             BUILD BIT )
   ecbuild_add_fortran_flags( "-unroll"         BUILD BIT )
   ecbuild_add_fortran_flags( "-inline"         BUILD BIT )

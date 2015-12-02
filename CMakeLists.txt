@@ -182,7 +182,7 @@ endforeach()
 ############################################################################################
 # sources
 
-include( atlas_compiler_flags )
+include( compiler_flags )
 
 include_directories( ${ATLAS_INCLUDE_DIRS} ${ATLAS_EXTRA_INCLUDE_DIRS} )
 
