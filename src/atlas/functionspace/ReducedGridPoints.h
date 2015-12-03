@@ -63,6 +63,7 @@ private: // data
 
 // -------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
+#define Char char
 extern "C"
 {
   ReducedGridPoints* atlas__functionspace__ReducedGridPoints__new__grid (const Grid* grid);
@@ -79,9 +80,14 @@ extern "C"
   void atlas__functionspace__ReducedGridPoints__gather (const ReducedGridPoints* This, const Field* local, Field* global);
 
   void atlas__functionspace__ReducedGridPoints__scatter (const ReducedGridPoints* This, const Field* global, Field* local);
+  
+  void atlas__fs__ReducedGridPoints__checksum_fieldset(const ReducedGridPoints* This, const FieldSet* fieldset, Char* &checksum, int &size, int &allocated);
+
+  void atlas__fs__ReducedGridPoints__checksum_field(const ReducedGridPoints* This, const Field* field, Char* &checksum, int &size, int &allocated);
+  
 
 }
-#undef Trans
+#undef Char
 
 } // namespace functionspace
 } // namespace atlas

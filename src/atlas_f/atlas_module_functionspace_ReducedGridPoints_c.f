@@ -79,3 +79,30 @@ subroutine ReducedGridPoints__scatter(this,global,local)
   call atlas__functionspace__ReducedGridPoints__scatter(this%c_ptr(),global%c_ptr(),local%c_ptr())
 end subroutine
 
+function ReducedGridPoints__checksum_fieldset(this,fieldset) result(checksum)
+  use atlas_functionspace_reducedgridpoints_c_binding
+  character(len=:), allocatable :: checksum
+  class(atlas_functionspace_ReducedGridPoints), intent(in) :: this
+  type(atlas_FieldSet), intent(in) :: fieldset
+  type(c_ptr) :: checksum_cptr
+  integer :: checksum_size, checksum_allocated
+  call atlas__fs__ReducedGridPoints__checksum_fieldset(this%c_ptr(),fieldset%c_ptr(),checksum_cptr,checksum_size,checksum_allocated)
+  allocate(character(len=checksum_size) :: checksum )
+  checksum = c_to_f_string_cptr(checksum_cptr)
+  if( checksum_allocated == 1 ) call atlas_free(checksum_cptr)
+end function
+
+
+function ReducedGridPoints__checksum_field(this,field) result(checksum)
+  use atlas_functionspace_reducedgridpoints_c_binding
+  character(len=:), allocatable :: checksum
+  class(atlas_functionspace_ReducedGridPoints), intent(in) :: this
+  type(atlas_Field), intent(in) :: field
+  type(c_ptr) :: checksum_cptr
+  integer :: checksum_size, checksum_allocated
+  call atlas__fs__ReducedGridPoints__checksum_field(this%c_ptr(),field%c_ptr(),checksum_cptr,checksum_size,checksum_allocated)
+  allocate(character(len=checksum_size) :: checksum )
+  checksum = c_to_f_string_cptr(checksum_cptr)
+  if( checksum_allocated == 1 ) call atlas_free(checksum_cptr)
+end function
+

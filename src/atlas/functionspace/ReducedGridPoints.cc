@@ -14,6 +14,7 @@
 #include "atlas/functionspace/ReducedGridPoints.h"
 #include "atlas/FieldSet.h"
 #include "atlas/runtime/ErrorHandling.h"
+#include "atlas/util/Checksum.h"
 
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/trans/Trans.h"
@@ -187,9 +188,13 @@ std::string ReducedGridPoints::checksum( const FieldSet& fieldset ) const {
   return md5;
 }
 std::string ReducedGridPoints::checksum( const Field& field ) const {
-  FieldSet fieldset;
-  fieldset.add(field);
-  return checksum(fieldset);
+  // FieldSet fieldset;
+  // fieldset.add(field);  
+  // return checksum(fieldset);
+  eckit::Log::warning() << "Only local checksum implemented" << std::endl;
+  std::stringstream resultss;
+  resultss << atlas::checksum(field.data<double>(),field.size());
+  return resultss.str();
 }
 
 // ----------------------------------------------------------------------
@@ -267,6 +272,30 @@ void atlas__functionspace__ReducedGridPoints__scatter (const ReducedGridPoints* 
     ASSERT(global);
     ASSERT(local);
     This->scatter(*global,*local);
+  );
+}
+
+void atlas__fs__ReducedGridPoints__checksum_fieldset(const ReducedGridPoints* This, const FieldSet* fieldset, char* &checksum, int &size, int &allocated)
+{
+  ASSERT(This);
+  ASSERT(fieldset);
+  ATLAS_ERROR_HANDLING(
+    std::string checksum_str (This->checksum(*fieldset));
+    size = checksum_str.size();
+    checksum = new char[size+1]; allocated = true;
+    strcpy(checksum,checksum_str.c_str());
+  );
+}
+
+void atlas__fs__ReducedGridPoints__checksum_field(const ReducedGridPoints* This, const Field* field, char* &checksum, int &size, int &allocated)
+{
+  ASSERT(This);
+  ASSERT(field);
+  ATLAS_ERROR_HANDLING(
+    std::string checksum_str (This->checksum(*field));
+    size = checksum_str.size();
+    checksum = new char[size+1]; allocated = true;
+    strcpy(checksum,checksum_str.c_str());
   );
 }
 
