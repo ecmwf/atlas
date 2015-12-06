@@ -43,7 +43,7 @@ struct AtlasFixture {
     ~AtlasFixture() { atlas_finalize(); }
 };
 
-BOOST_GLOBAL_FIXTURE( AtlasFixture )
+BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test_functionspace_Nodes )
 {
@@ -165,7 +165,7 @@ BOOST_AUTO_TEST_CASE( test_functionspace_Nodes )
 
 
   eckit::Log::info() << "Testing collectives for nodes scalar field" << std::endl;
-  BOOST_CHECKPOINT("Testing collectives for nodes scalar field");
+  BOOST_TEST_CHECKPOINT("Testing collectives for nodes scalar field");
   {
     const Field& field = *surface_scalar_field;
     const functionspace::Nodes& fs = *nodes_fs;
@@ -223,7 +223,7 @@ BOOST_AUTO_TEST_CASE( test_functionspace_Nodes )
 
 
   eckit::Log::info() << "Testing collectives for nodes vector field" << std::endl;
-  BOOST_CHECKPOINT("Testing collectives for nodes vector field");
+  BOOST_TEST_CHECKPOINT("Testing collectives for nodes vector field");
   {
     const Field& field = *surface_vector_field;
     const functionspace::Nodes& fs = *nodes_fs;
@@ -278,7 +278,7 @@ BOOST_AUTO_TEST_CASE( test_functionspace_Nodes )
   }
 
   eckit::Log::info() << "Testing collectives for columns scalar field" << std::endl;
-  BOOST_CHECKPOINT("Testing collectives for columns scalar field");
+  BOOST_TEST_CHECKPOINT("Testing collectives for columns scalar field");
   if(1){
     const Field& field = *columns_scalar_field;
     const functionspace::Nodes& fs = *nodes_fs;
@@ -359,7 +359,7 @@ BOOST_AUTO_TEST_CASE( test_functionspace_Nodes )
 
   }
 
-  BOOST_CHECKPOINT("Testing collectives for columns vector field");
+  BOOST_TEST_CHECKPOINT("Testing collectives for columns vector field");
   if(1){
     const Field& field = *columns_vector_field;
     const functionspace::Nodes& fs = *nodes_fs;

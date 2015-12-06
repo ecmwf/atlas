@@ -108,7 +108,7 @@ struct GlobalFixture {
     ~GlobalFixture() { atlas_finalize(); }
 };
 
-BOOST_GLOBAL_FIXTURE( GlobalFixture )
+BOOST_GLOBAL_FIXTURE( GlobalFixture );
 
 BOOST_AUTO_TEST_SUITE( test_state )
 

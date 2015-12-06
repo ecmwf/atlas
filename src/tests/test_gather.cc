@@ -82,7 +82,7 @@ struct Fixture {
 };
 
 
-BOOST_GLOBAL_FIXTURE( MPIFixture )
+BOOST_GLOBAL_FIXTURE( MPIFixture );
 
 BOOST_FIXTURE_TEST_CASE( test_gather_rank0, Fixture )
 {
