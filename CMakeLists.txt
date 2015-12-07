@@ -182,10 +182,7 @@ endforeach()
 ############################################################################################
 # sources
 
-include( atlas_compiler_flags )
-
 include_directories( ${ATLAS_INCLUDE_DIRS} ${ATLAS_EXTRA_INCLUDE_DIRS} )
-
 add_subdirectory( src )
 
 ############################################################################################
@@ -218,3 +215,4 @@ add_custom_target( atlas-readme SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/README.md )
 ecbuild_install_project( NAME Atlas )
 
 ecbuild_print_summary()
+

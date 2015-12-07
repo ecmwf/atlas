@@ -282,6 +282,7 @@ numerics/nabla/EdgeBasedFiniteVolume.cc
 
 ecbuild_add_library( TARGET atlas
   AUTO_VERSION
+  LINKER_LANGUAGE CXX
   INSTALL_HEADERS ALL
   HEADER_DESTINATION  ${INSTALL_INCLUDE_DIR}/atlas
   SOURCES
@@ -301,5 +302,3 @@ ecbuild_add_library( TARGET atlas
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_defines.h
   INCLUDES "${CGAL_INCLUDE_DIRS}"  ${TRANSI_INCLUDE_DIRS}
   LIBS eckit_geometry "${ECKIT_MPI_LIBRARIES}" "${ECKIT_GRIB_LIBRARIES}" "${CGAL_LIBRARIES}" ${TRANSI_LIBRARIES} )
-
-
