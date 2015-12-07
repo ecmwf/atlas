@@ -113,7 +113,7 @@ struct AtlasFixture {
     ~AtlasFixture() { atlas_finalize(); }
 };
 
-BOOST_GLOBAL_FIXTURE( AtlasFixture )
+BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test_factory )
 {

@@ -106,7 +106,7 @@ struct MPIFixture {
     ~MPIFixture() { eckit::mpi::finalize(); }
 };
 
-BOOST_GLOBAL_FIXTURE( MPIFixture )
+BOOST_GLOBAL_FIXTURE( MPIFixture );
 
 BOOST_AUTO_TEST_SUITE( test_pointcloud )
 
@@ -138,7 +138,7 @@ BOOST_AUTO_TEST_CASE( read_grid_sample_file )
                   test_arrays::nb_columns ));
 
   eckit::SharedPtr< Mesh > mesh (io::PointCloud::read("pointcloud.txt"));
-  BOOST_CHECKPOINT( "Mesh created" );
+  BOOST_TEST_CHECKPOINT( "Mesh created" );
   eckit::ScopedPtr< grids::Unstructured > grid( new grids::Unstructured(*mesh) );
   BOOST_REQUIRE(grid);
 
@@ -150,16 +150,16 @@ BOOST_AUTO_TEST_CASE( read_grid_sample_file )
 
 BOOST_AUTO_TEST_CASE( read_grid_sample_file_header_less_rows )
 {
-  BOOST_CHECKPOINT( "Creating Mesh..." );
+  BOOST_TEST_CHECKPOINT( "Creating Mesh..." );
   // test sample file with (wrong) header with less rows
   BOOST_REQUIRE(test_write_file(
                   "pointcloud.txt",
                   test_arrays::nb_pts-2,
                   test_arrays::nb_columns ));
 
-  BOOST_CHECKPOINT( "Creating Mesh..." );
+  BOOST_TEST_CHECKPOINT( "Creating Mesh..." );
   eckit::SharedPtr< Mesh > mesh (io::PointCloud::read("pointcloud.txt"));
-  BOOST_CHECKPOINT( "Creating Mesh...done" );
+  BOOST_TEST_CHECKPOINT( "Creating Mesh...done" );
   eckit::ScopedPtr< grids::Unstructured > grid( new grids::Unstructured(*mesh) );
   BOOST_REQUIRE(grid);
 

@@ -66,7 +66,7 @@ struct MPIFixture {
     ~MPIFixture() { eckit::mpi::finalize(); }
 };
 
-BOOST_GLOBAL_FIXTURE( MPIFixture )
+BOOST_GLOBAL_FIXTURE( MPIFixture );
 
 #if 0
 BOOST_AUTO_TEST_CASE( test_small )

@@ -77,7 +77,7 @@ void read_rspecg(trans::Trans& trans, std::vector<double>& rspecg, std::vector<i
 }
 
 
-BOOST_GLOBAL_FIXTURE( Fixture )
+BOOST_GLOBAL_FIXTURE( Fixture );
 
 BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
 {
@@ -131,7 +131,7 @@ BOOST_AUTO_TEST_CASE( test_trans_distribution_matches_atlas )
 
 BOOST_AUTO_TEST_CASE( test_trans_partitioner )
 {
-  BOOST_CHECKPOINT("test_trans_partitioner");
+  BOOST_TEST_CHECKPOINT("test_trans_partitioner");
   // Create grid and trans object
   ReducedGrid::Ptr g ( ReducedGrid::create( "N80" ) );
 
@@ -157,7 +157,7 @@ BOOST_AUTO_TEST_CASE( test_distspec )
   ReducedGrid::Ptr g ( ReducedGrid::create( "O80" ) );
   eckit::ResourceMgr::instance().set("atlas.meshgen.angle","0");
   meshgen::ReducedGridMeshGenerator generate;
-  BOOST_CHECKPOINT("mesh generator created");
+  BOOST_TEST_CHECKPOINT("mesh generator created");
   //trans::Trans trans(*g, 159 );
 
   trans::Trans::Options p;
@@ -165,11 +165,11 @@ BOOST_AUTO_TEST_CASE( test_distspec )
     p.set_write("cached_legendre_coeffs");
   p.set_flt(false);
   trans::Trans trans(400, 159, p);
-  BOOST_CHECKPOINT("Trans initialized");
+  BOOST_TEST_CHECKPOINT("Trans initialized");
   std::vector<double> rspecg;
   std::vector<int   > nfrom;
   int nfld;
-  BOOST_CHECKPOINT("Read rspecg");
+  BOOST_TEST_CHECKPOINT("Read rspecg");
   read_rspecg(trans,rspecg,nfrom,nfld);
 
 
@@ -182,21 +182,21 @@ BOOST_AUTO_TEST_CASE( test_distspec )
   trans.invtrans( nfld, rspec.data(), rgp.data() );
   trans.gathgrid( nfld, nto.data(),   rgp.data(),    rgpg.data() );
 
-  BOOST_CHECKPOINT("end test_distspec");
+  BOOST_TEST_CHECKPOINT("end test_distspec");
 }
 
 BOOST_AUTO_TEST_CASE( test_distribution )
 {
   ReducedGrid::Ptr g ( ReducedGrid::create( "O80" ) );
 
-  BOOST_CHECKPOINT("test_distribution");
+  BOOST_TEST_CHECKPOINT("test_distribution");
 
   GridDistribution::Ptr d_trans( trans::TransPartitioner(*g).distribution() );
-  BOOST_CHECKPOINT("trans distribution created");
+  BOOST_TEST_CHECKPOINT("trans distribution created");
 
   GridDistribution::Ptr d_eqreg( meshgen::EqualRegionsPartitioner(*g).distribution() );
 
-  BOOST_CHECKPOINT("eqregions distribution created");
+  BOOST_TEST_CHECKPOINT("eqregions distribution created");
 
   if( eckit::mpi::rank() == 0 )
   {
@@ -213,7 +213,7 @@ BOOST_AUTO_TEST_CASE( test_distribution )
 
 BOOST_AUTO_TEST_CASE( test_generate_mesh )
 {
-  BOOST_CHECKPOINT("test_generate_mesh");
+  BOOST_TEST_CHECKPOINT("test_generate_mesh");
   ReducedGrid::Ptr g ( ReducedGrid::create( "O80" ) );
   eckit::ResourceMgr::instance().set("atlas.meshgen.angle","0");
   eckit::ResourceMgr::instance().set("atlas.meshgen.triangulate","true");
@@ -223,11 +223,11 @@ BOOST_AUTO_TEST_CASE( test_generate_mesh )
 
   Mesh::Ptr m_default( generate( *g ) );
 
-  BOOST_CHECKPOINT("trans_distribution");
+  BOOST_TEST_CHECKPOINT("trans_distribution");
   GridDistribution::Ptr trans_distribution( trans::TransPartitioner(*g).distribution() );
   Mesh::Ptr m_trans( generate( *g, *trans_distribution ) );
 
-  BOOST_CHECKPOINT("eqreg_distribution");
+  BOOST_TEST_CHECKPOINT("eqreg_distribution");
   GridDistribution::Ptr eqreg_distribution( meshgen::EqualRegionsPartitioner(*g).distribution() );
   Mesh::Ptr m_eqreg( generate( *g, *eqreg_distribution ) );
 
@@ -249,7 +249,7 @@ BOOST_AUTO_TEST_CASE( test_generate_mesh )
 
 BOOST_AUTO_TEST_CASE( test_spectral_fields )
 {
-  BOOST_CHECKPOINT("test_spectral_fields");
+  BOOST_TEST_CHECKPOINT("test_spectral_fields");
 
   ReducedGrid::Ptr g ( ReducedGrid::create( "O48" ) );
   eckit::ResourceMgr::instance().set("atlas.meshgen.angle","0");
@@ -285,7 +285,7 @@ BOOST_AUTO_TEST_CASE( test_spectral_fields )
 
 BOOST_AUTO_TEST_CASE( test_nomesh )
 {
-  BOOST_CHECKPOINT("test_spectral_fields");
+  BOOST_TEST_CHECKPOINT("test_spectral_fields");
 
   SharedPtr<ReducedGrid> g ( ReducedGrid::create( "O48" ) );
   SharedPtr<trans::Trans> trans ( new trans::Trans(*g,47) );

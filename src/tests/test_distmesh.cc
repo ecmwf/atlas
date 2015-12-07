@@ -66,7 +66,7 @@ struct MPIFixture {
     ~MPIFixture()  { atlas_finalize(); }
 };
 
-BOOST_GLOBAL_FIXTURE( MPIFixture )
+BOOST_GLOBAL_FIXTURE( MPIFixture );
 
 BOOST_AUTO_TEST_CASE( test_distribute_t63 )
 {
