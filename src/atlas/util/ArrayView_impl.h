@@ -15,9 +15,7 @@
 #ifndef atlas_ArrayView_impl_h
 #define atlas_ArrayView_impl_h
 
-#ifndef ATLAS_ARRAYVIEW_BOUNDS_CHECKING
-#include "atlas/atlas_config.h"
-#endif
+#include "atlas/atlas_defines.h"
 
 #ifdef ATLAS_ARRAYVIEW_BOUNDS_CHECKING
 #include <sstream>
@@ -50,7 +48,7 @@
 	if(m>=shape_[4]) {std::ostringstream msg; msg << "ArrayView(i,j,k,l,m) index out of bounds: m=" << m << " >= " << shape_[4]; throw eckit::OutOfRange(msg.str(),Here()); }
 #else
 #define CHECK_RANK(R)
-#define CHECK_BOUNDS(i,max)
+#define CHECK_BOUNDS(idx)
 #define CHECK_BOUNDS_1(i)
 #define CHECK_BOUNDS_2(i,j)
 #define CHECK_BOUNDS_3(i,j,k)

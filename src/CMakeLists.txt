@@ -48,6 +48,11 @@ else()
   set( ECKIT_HAVE_GRIB 0 )
 endif()
 
+if( ATLAS_HAVE_BOUNDSCHECKING )
+  set( ATLAS_HAVE_BOUNDSCHECKING 1 )
+else()
+  set( ATLAS_HAVE_BOUNDSCHECKING 0 )
+endif()
 
 if( ATLAS_HAVE_MPI )
 
