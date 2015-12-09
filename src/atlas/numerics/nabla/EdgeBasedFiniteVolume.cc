@@ -114,6 +114,7 @@ void EdgeBasedFiniteVolume::gradient(const Field& scalar_field, Field& grad_fiel
       int ip1 = edge2node(jedge,0);
       int ip2 = edge2node(jedge,1);
 
+      #pragma ivdep
       for(size_t jlev = 0; jlev < nlev; ++jlev)
       {
         double avg = ( scalar(ip1,jlev) + scalar(ip2,jlev) ) * 0.5;
@@ -124,6 +125,7 @@ void EdgeBasedFiniteVolume::gradient(const Field& scalar_field, Field& grad_fiel
 
     atlas_omp_for( size_t jnode=0; jnode<nnodes; ++jnode )
     {
+      #pragma ivdep
       for(size_t jlev = 0; jlev < nlev; ++jlev )
       {
         grad(jnode,jlev,LON) = 0.;
@@ -133,6 +135,7 @@ void EdgeBasedFiniteVolume::gradient(const Field& scalar_field, Field& grad_fiel
       {
         const int iedge = node2edge(jnode,jedge);
         const double add = node2edge_sign(jnode,jedge);
+        #pragma ivdep
         for(size_t jlev = 0; jlev < nlev; ++jlev)
         {
           grad(jnode,jlev,LON) += add*avgS(iedge,jlev,LON);
@@ -142,6 +145,7 @@ void EdgeBasedFiniteVolume::gradient(const Field& scalar_field, Field& grad_fiel
       const double y  = lonlat_deg(jnode,LAT) * deg2rad;
       const double metric_x = radius/V(jnode);
       const double metric_y = metric_x*std::cos(y);
+      #pragma ivdep
       for(size_t jlev = 0; jlev < nlev; ++jlev)
       {
         grad(jnode,jlev,LON) *= metric_x;
