@@ -1200,7 +1200,7 @@ use atlas_functionspace_nodes_c_binding
   if( present(level) ) then
     call c_f_pointer(lev_cptr,lev_fptr,(/min_size/))
     allocate(level(min_size))
-    level(:) = loc_fptr(:)
+    level(:) = lev_fptr(:)
   endif
   call atlas_free(min_cptr)
   call atlas_free(loc_cptr)
@@ -1229,7 +1229,7 @@ use atlas_functionspace_nodes_c_binding
   if( present(level) ) then
     call c_f_pointer(lev_cptr,lev_fptr,(/max_size/))
     allocate(level(max_size))
-    level(:) = loc_fptr(:)
+    level(:) = lev_fptr(:)
   endif
   call atlas_free(max_cptr)
   call atlas_free(loc_cptr)
@@ -1287,7 +1287,7 @@ use atlas_functionspace_nodes_c_binding
   if( present(level) ) then
     call c_f_pointer(lev_cptr,lev_fptr,(/min_size/))
     allocate(level(min_size))
-    level(:) = loc_fptr(:)
+    level(:) = lev_fptr(:)
   endif
   call atlas_free(min_cptr)
   call atlas_free(loc_cptr)
@@ -1316,7 +1316,7 @@ use atlas_functionspace_nodes_c_binding
   if( present(level) ) then
     call c_f_pointer(lev_cptr,lev_fptr,(/max_size/))
     allocate(level(max_size))
-    level(:) = loc_fptr(:)
+    level(:) = lev_fptr(:)
   endif
   call atlas_free(loc_cptr)
   call atlas_free(max_cptr)
@@ -1375,7 +1375,7 @@ use atlas_functionspace_nodes_c_binding
   if( present(level) ) then
     call c_f_pointer(lev_cptr,lev_fptr,(/min_size/))
     allocate(level(min_size))
-    level(:) = loc_fptr(:)
+    level(:) = lev_fptr(:)
   endif
   call atlas_free(min_cptr)
   call atlas_free(loc_cptr)
@@ -1404,7 +1404,7 @@ use atlas_functionspace_nodes_c_binding
   if( present(level) ) then
     call c_f_pointer(lev_cptr,lev_fptr,(/max_size/))
     allocate(level(max_size))
-    level(:) = loc_fptr(:)
+    level(:) = lev_fptr(:)
   endif
   call atlas_free(max_cptr)
   call atlas_free(loc_cptr)
@@ -1451,7 +1451,7 @@ use atlas_functionspace_nodes_c_binding
   call atlas__NodesFunctionSpace__minloclev_arr_int(this%c_ptr(),field%c_ptr(),min_cptr,loc_cptr,lev_cptr,min_size)
   call c_f_pointer(min_cptr,min_fptr,(/min_size/))
   call c_f_pointer(loc_cptr,loc_fptr,(/min_size/))
-  call c_f_pointer(lev_cptr,loc_fptr,(/min_size/))
+  call c_f_pointer(lev_cptr,lev_fptr,(/min_size/))
   allocate(minimum(min_size))
   allocate(location(min_size))
   allocate(level(min_size))
@@ -1478,7 +1478,7 @@ use atlas_functionspace_nodes_c_binding
   call atlas__NodesFunctionSpace__maxloclev_arr_int(this%c_ptr(),field%c_ptr(),max_cptr,loc_cptr,lev_cptr,max_size)
   call c_f_pointer(max_cptr,max_fptr,(/max_size/))
   call c_f_pointer(loc_cptr,loc_fptr,(/max_size/))
-  call c_f_pointer(lev_cptr,loc_fptr,(/max_size/))
+  call c_f_pointer(lev_cptr,lev_fptr,(/max_size/))
   allocate(maximum(max_size))
   allocate(location(max_size))
   allocate(level(max_size))

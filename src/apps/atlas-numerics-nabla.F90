@@ -14,6 +14,7 @@
 
 module atlas_numerics_nabla_module
 use atlas_module
+use atlas_mpi_module
 use iso_c_binding, only: c_double, c_int
 implicit none
 
@@ -30,6 +31,9 @@ implicit none
   real(c_double), pointer :: grad(:,:,:)
 
   integer :: nlev
+  integer :: niter
+  integer :: nouter
+  integer :: startcount
 
   type(atlas_Config) :: config
 
@@ -221,11 +225,15 @@ END SUBROUTINE FV_GRADIENT
 
 subroutine init()
   character(len=1024) :: grid_uid
+  type(atlas_mesh_Nodes) :: mesh_nodes
 
   call atlas_init()
 
   call atlas_resource("--grid","N24",grid_uid)
   call atlas_resource("--levels",137,nlev)
+  call atlas_resource("--iterations",100,niter)
+  call atlas_resource("--startcount",5,startcount)
+  call atlas_resource("--outer",1,nouter)
 
   config = atlas_Config()
   call config%set("radius",1.0)
@@ -249,6 +257,11 @@ subroutine init()
   if( .not.config%get("radius",RA) ) RA = 1.0
   edges = mesh%function_space("edges")
 
+  mesh_nodes = mesh%nodes()
+  write(atlas_log%msg,*) "Mesh has locally ",mesh_nodes%size(), " nodes"
+  call atlas_log%info()
+  call mesh_nodes%final()
+
 end subroutine
 
 ! -----------------------------------------------------------------------------
@@ -271,30 +284,58 @@ end subroutine
 
 subroutine run()
 type(Timer_type) :: timer
-integer :: jiter, niter
-real(c_double) :: timing_cpp, timing_f90
+
+integer :: jiter, jouter
+real(c_double) :: timing_cpp, timing_f90, timing
+real(c_double) :: min_timing_cpp, min_timing_f90
 
 call fvm%halo_exchange(varfield)
+call atlas_mpi_barrier()
+timing_cpp = 1.e10
+timing_f90 = 1.e10
+min_timing_cpp = 1.e10
+min_timing_f90 = 1.e10
 
-niter = 5
-
+do jouter=1,nouter
 ! Compute the gradient
-call timer%start()
+timing = 1.e10
 do jiter = 1,niter
-call nabla%gradient(varfield,gradfield)
+	call timer%start()
+	call nabla%gradient(varfield,gradfield)
+    timing = min(timing,timer%elapsed())
 enddo
-timing_cpp = timer%elapsed()
-write(0,*) "timing_cpp = ", timing_cpp
+timing_cpp = timing
+write(atlas_log%msg,*) "timing_cpp = ", timing_cpp
+call atlas_log%info()
+if( nouter == 1 .or. jouter < nouter ) then
+  min_timing_cpp = min(timing_cpp,min_timing_cpp)
+endif
 
 ! Compute the gradient with Fortran routine above
-call timer%start()
+timing = 1.e10
 do jiter = 1,niter
-CALL FV_GRADIENT(var,grad)
+	call timer%start()
+	call FV_GRADIENT(var,grad)
+    timing = min(timing,timer%elapsed())
 enddo
-timing_f90 = timer%elapsed()
-write(0,*) "timing_f90 = ", timing_f90
+timing_f90 = timing
+write(atlas_log%msg,*) "timing_f90 = ", timing_f90
+call atlas_log%info()
+if( nouter == 1 .or. jouter < nouter ) then
+  min_timing_f90 = min(timing_f90,min_timing_f90)
+endif
+write(atlas_log%msg,*) "|timing_f90-timing_cpp| / timing_f90 = ", abs(timing_f90-timing_cpp)/timing_f90 *100 , "%"
+call atlas_log%info()
 
-write(0,*) "|timing_f90-timing_cpp| / timing_f90 = ", abs(timing_f90-timing_cpp)/timing_f90 *100 , "%"
+enddo
+
+call atlas_log%info("==================")
+write(atlas_log%msg,*) "min_timing_cpp = ", min_timing_cpp
+call atlas_log%info()
+write(atlas_log%msg,*) "min_timing_f90 = ", min_timing_f90
+call atlas_log%info()
+write(atlas_log%msg,*) "|min_timing_f90-min_timing_cpp| / min_timing_f90 = ", abs(min_timing_f90-min_timing_cpp)/min_timing_f90 *100 , "%"
+call atlas_log%info()
 
 end subroutine
 
