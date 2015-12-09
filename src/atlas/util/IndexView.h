@@ -162,9 +162,14 @@ public:
   const size_t* strides() const   { return strides_; }
   const size_t* shape() const   { return shape_; }
   size_t shape(const size_t i) const { return shape_[0]; }
+  size_t stride(const size_t i) const { return strides_[0]; }
 
   size_t size() const { return shape_[0]; }
   void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<size(); ++n) *(data_+n)=scalar TO_FORTRAN; }
+
+  const DATA_TYPE* data() const { return data_; }
+        DATA_TYPE* data()       { return data_; }
+
 private:
   DATA_TYPE* data_;
   size_t strides_[1];
@@ -211,9 +216,14 @@ public:
   const size_t* strides() const   { return strides_; }
   const size_t* shape() const   { return shape_; }
   size_t shape(const size_t i) const { return shape_[i]; }
+  size_t stride(const size_t i) const { return strides_[i]; }
 
   size_t size() const { return size_; }
   void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<size(); ++n) *(data_+n)=scalar TO_FORTRAN; }
+
+  const DATA_TYPE* data() const { return data_; }
+        DATA_TYPE* data()       { return data_; }
+
 private:
   DATA_TYPE* data_;
   size_t size_;
@@ -268,9 +278,14 @@ public:
   const size_t* strides() const   { return strides_; }
   const size_t* shape() const   { return shape_; }
   size_t shape(const size_t i) const { return shape_[i]; }
+  size_t stride(const size_t i) const { return strides_[i]; }
 
   size_t size() const { return size_; }
   void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<size(); ++n) *(data_+n)=scalar TO_FORTRAN; }
+
+  const DATA_TYPE* data() const { return data_; }
+        DATA_TYPE* data()       { return data_; }
+
 private:
   DATA_TYPE* data_;
   size_t size_;
@@ -312,9 +327,14 @@ public:
   const size_t* strides() const   { return strides_; }
   const size_t* shape() const   { return shape_; }
   size_t shape(const size_t i) const { return shape_[i]; }
+  size_t stride(const size_t i) const { return strides_[i]; }
 
   size_t size() const { return size_; }
   void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<size(); ++n) *(data_+n)=scalar TO_FORTRAN; }
+
+  const DATA_TYPE* data() const { return data_; }
+        DATA_TYPE* data()       { return data_; }
+
 
 private:
   DATA_TYPE* data_;
