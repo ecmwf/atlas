@@ -1,5 +1,5 @@
 #include "atlas_f/atlas_logging.h"
-#include "eckit/log/Log.h"
+#include "atlas/runtime/Log.h"
 #include "eckit/runtime/Context.h"
 #include "eckit/runtime/ContextBehavior.h"
 #include "eckit/log/MultiChannel.h"
@@ -64,27 +64,27 @@ void atlas__log_set_debug (int level)
 
 void atlas__log_debug(int lvl, char *msg, int endl, int flush)
 {
-  eckit::Log::debug(lvl) << msg;
+  Log::debug(lvl) << msg;
   if( endl )
-    eckit::Log::debug(lvl) << std::endl;
+    Log::debug(lvl) << std::endl;
   else if ( flush )
-    eckit::Log::debug(lvl) << std::flush;
+    Log::debug(lvl) << std::flush;
 }
 
 void atlas__log_cat(int cat, int lvl, char *msg, int endl, int flush)
 {
-  eckit::Log::channel(cat,lvl) << msg;
+  Log::channel(cat,lvl) << msg;
   if( endl )
-    eckit::Log::channel(cat,lvl) << std::endl;
+    Log::channel(cat,lvl) << std::endl;
   else if ( flush )
-  eckit::Log::channel(cat,lvl) << std::flush;
+  Log::channel(cat,lvl) << std::flush;
 }
 
 // ----------------------------------------------------------------------------
 
 MultiChannel& atlas__get_log_channel(int cat)
 {
-  Channel& ch = eckit::Log::channel(cat);
+  Channel& ch = Log::channel(cat);
   MultiChannel* mc = dynamic_cast< MultiChannel* > (&ch);
   if( !mc )
     throw BadCast("Channel is not a MultiChannel,"

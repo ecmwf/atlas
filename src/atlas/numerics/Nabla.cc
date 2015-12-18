@@ -128,13 +128,13 @@ Nabla* NablaFactory::build(const next::FunctionSpace& fs, const eckit::Parametri
 
     std::map<std::string, NablaFactory *>::const_iterator j = m->find(fs.name());
 
-    eckit::Log::debug() << "Looking for NablaFactory [" << fs.name() << "]" << '\n';
+    Log::debug() << "Looking for NablaFactory [" << fs.name() << "]" << '\n';
 
     if (j == m->end()) {
-        eckit::Log::error() << "No NablaFactory for [" << fs.name() << "]" << '\n';
-        eckit::Log::error() << "NablaFactories are:" << '\n';
+        Log::error() << "No NablaFactory for [" << fs.name() << "]" << '\n';
+        Log::error() << "NablaFactories are:" << '\n';
         for (j = m->begin() ; j != m->end() ; ++j)
-            eckit::Log::error() << "   " << (*j).first << '\n';
+            Log::error() << "   " << (*j).first << '\n';
         throw eckit::SeriousBug(std::string("No NablaFactory called ") + fs.name());
     }
 

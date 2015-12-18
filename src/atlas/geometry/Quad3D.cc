@@ -18,11 +18,10 @@
 #ifdef ECKIT_HAVE_EIGEN
 
 #include "eckit/maths/Eigen.h"
-#include "eckit/log/Log.h"
+#include "atlas/runtime/Log.h"
 
 #include "atlas/geometry/Triag3D.h"
 
-using eckit::Log;
 using Eigen::Vector3d;
 
 namespace atlas {

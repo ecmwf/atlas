@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include "eckit/log/Log.h"
+#include "atlas/runtime/Log.h"
 #include "eckit/runtime/Tool.h"
 #include "eckit/value/CompositeParams.h"
 
@@ -157,8 +157,8 @@ void TestField::test_fieldcreator()
   ASSERT( ifs->shape(2) == 137 );
   ASSERT( ifs->shape(3) == 10 );
 
-  eckit::Log::debug() << std::flush;
-  eckit::Log::info() << std::flush;
+  Log::debug() << std::flush;
+  Log::info() << std::flush;
 }
 
 void take_array(const Array& arr)

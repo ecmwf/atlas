@@ -10,7 +10,7 @@
 
 #include <sstream>
 
-#include "eckit/log/Log.h"
+#include "atlas/runtime/Log.h"
 #include "eckit/mpi/Comm.h"
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"

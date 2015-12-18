@@ -3,6 +3,7 @@
 #include "atlas/runtime/ErrorHandling.h"
 #include "eckit/config/Resource.h"
 #include "atlas/mpi/mpi.h"
+#include "atlas/runtime/Log.h"
 
 using namespace atlas;
 
@@ -57,7 +58,7 @@ void handle_error(const eckit::Exception& exception, const int err_code)
 
   if( Error::instance().aborts() )
   {
-    eckit::Log::error() << msg.str() << std::endl;
+    Log::error() << msg.str() << std::endl;
     MPI_Abort(eckit::mpi::comm(), err_code);
   }
   if( Error::instance().throws() )
@@ -71,7 +72,6 @@ void handle_error(const eckit::Exception& exception, const int err_code)
 
 using eckit::CodeLocation;
 using eckit::Exception;
-using eckit::Log;
 using eckit::BackTrace;
 using eckit::Exception;
 using eckit::NotImplemented;

@@ -14,14 +14,12 @@
 #include <iostream>
 #include <sstream>
 
-#include "eckit/log/Log.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/Array.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/Debug.h"
 #include "atlas/mpl/GatherScatter.h"
 #include "atlas/util/Checksum.h"
-
-using eckit::Log;
 
 namespace atlas {
 namespace mpl {
@@ -302,7 +300,7 @@ void GatherScatter::setup( const int part[],
 ////        ASSERT( gnodes[i] == i+1 );
 ////        }
 //      }
-//      //eckit::Log::info() << "checksum glb_idx[0:"<<node_sort.size()<<"] = " << checksum(gnodes.data(),gnodes.size()) << std::endl;
+//      //Log::info() << "checksum glb_idx[0:"<<node_sort.size()<<"] = " << checksum(gnodes.data(),gnodes.size()) << std::endl;
 //    }
 
 //  if ( myproc == root )

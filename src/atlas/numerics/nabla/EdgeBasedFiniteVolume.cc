@@ -43,7 +43,7 @@ EdgeBasedFiniteVolume::EdgeBasedFiniteVolume(const next::FunctionSpace &fs, cons
   fvm_ = dynamic_cast<const functionspace::EdgeBasedFiniteVolume *>(&fs);
   if( ! fvm_ )
     throw eckit::BadCast("nabla::EdgeBasedFiniteVolume needs a EdgeBasedFiniteVolumeFunctionSpace",Here());
-  eckit::Log::info() << "EdgeBasedFiniteVolume constructed for functionspace " << fvm_->name()
+  Log::info() << "EdgeBasedFiniteVolume constructed for functionspace " << fvm_->name()
                      << " with " << fvm_->nb_nodes_global() << " nodes total" << std::endl;
 
   setup();

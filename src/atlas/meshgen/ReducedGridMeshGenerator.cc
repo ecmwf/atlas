@@ -257,7 +257,7 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rg,
   region.south = lat_south;
 
   ArrayShape shape = make_shape(region.south-region.north, 4*rg.nlonmax(), 4);
-  // eckit::Log::info(Here())  << "allocating elems" <<  "(" << extents[0] << "," << extents[1] << "," << extents[2] << ")" << std::endl;
+  // Log::info(Here())  << "allocating elems" <<  "(" << extents[0] << "," << extents[1] << "," << extents[2] << ")" << std::endl;
   region.elems.resize(shape);
   region.elems = -1;
 
@@ -310,7 +310,7 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rg,
     int jelem=0;
 
 #if DEBUG_OUTPUT
-    eckit::Log::info(Here())  << "=================\n";
+    Log::info(Here())  << "=================\n";
     //debug_file  << "=================\n";
 #endif
 
@@ -340,8 +340,8 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rg,
       else
         pS2 = parts[offset[latS]+ipS2];
 
-      //eckit::Log::info(Here())  << ipN1 << "("<<pN1<<") " << ipN2 <<"("<<pN2<<")" <<  std::endl;
-      //eckit::Log::info(Here())  << ipS1 << "("<<pS2<<") " << ipS2 <<"("<<pS2<<")" <<  std::endl;
+      //Log::info(Here())  << ipN1 << "("<<pN1<<") " << ipN2 <<"("<<pN2<<")" <<  std::endl;
+      //Log::info(Here())  << ipS1 << "("<<pS2<<") " << ipS2 <<"("<<pS2<<")" <<  std::endl;
 
 
       xN1 = rg.lon(latN,ipN1) * to_rad;
@@ -355,12 +355,12 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rg,
       if( stagger && (latS+1)%2==0 ) xS2 += M_PI/static_cast<double>(rg.nlon(latS));
 
 #if DEBUG_OUTPUT
-      eckit::Log::info(Here())  << "-------\n";
+      Log::info(Here())  << "-------\n";
       //debug_file << "-------\n";
 #endif
-      // eckit::Log::info(Here())  << "  access  " << region.elems.stride(0)*(jlat-region.north) + region.elems.stride(1)*jelem + 5 << std::endl;
-//      eckit::Log::info(Here())  << ipN1 << "("<< xN1 << ")  " << ipN2 <<  "("<< xN2 << ")  " << std::endl;
-//      eckit::Log::info(Here())  << ipS1 << "("<< xS1 << ")  " << ipS2 <<  "("<< xS2 << ")  " << std::endl;
+      // Log::info(Here())  << "  access  " << region.elems.stride(0)*(jlat-region.north) + region.elems.stride(1)*jelem + 5 << std::endl;
+//      Log::info(Here())  << ipN1 << "("<< xN1 << ")  " << ipN2 <<  "("<< xN2 << ")  " << std::endl;
+//      Log::info(Here())  << ipS1 << "("<< xS1 << ")  " << ipS2 <<  "("<< xS2 << ")  " << std::endl;
       try_make_triangle_up   = false;
       try_make_triangle_down = false;
       try_make_quad = false;
@@ -389,7 +389,7 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rg,
             dN1S2 = std::abs(xN1-xS2);
             dS1N2 = std::abs(xS1-xN2);
             // dN2S2 = std::abs(xN2-xS2);
-            // eckit::Log::info(Here())  << "  dN1S2 " << dN1S2 << "   dS1N2 " << dS1N2 << "   dN2S2 " << dN2S2 << std::endl;
+            // Log::info(Here())  << "  dN1S2 " << dN1S2 << "   dS1N2 " << dS1N2 << "   dN2S2 " << dN2S2 << std::endl;
             if (dN1S2 == dS1N2)
             {
               try_make_triangle_up   = (jlat+ipN1) % 2;
@@ -426,7 +426,7 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rg,
         dN1S2 = std::abs(xN1-xS2);
         dS1N2 = std::abs(xS1-xN2);
         // dN2S2 = std::abs(xN2-xS2);
-        // eckit::Log::info(Here())  << "  dN1S2 " << dN1S2 << "   dS1N2 " << dS1N2 << "   dN2S2 " << dN2S2 << std::endl;
+        // Log::info(Here())  << "  dN1S2 " << dN1S2 << "   dS1N2 " << dS1N2 << "   dN2S2 " << dN2S2 << std::endl;
         if( (dN1S2 <= dS1N2) && (ipS1 != ipS2) ) { try_make_triangle_up = true;}
         else if( (dN1S2 >= dS1N2) && (ipN1 != ipN2) ) { try_make_triangle_down = true;}
         else Exception("Should not try to make a quadrilateral!",Here());
@@ -447,8 +447,8 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rg,
       {
         // add quadrilateral
 #if DEBUG_OUTPUT
-        eckit::Log::info(Here())  << "          " << ipN1 << "  " << ipN2 << '\n';
-        eckit::Log::info(Here())  << "          " << ipS1 << "  " << ipS2 << '\n';
+        Log::info(Here())  << "          " << ipN1 << "  " << ipN2 << '\n';
+        Log::info(Here())  << "          " << ipS1 << "  " << ipS2 << '\n';
         //debug_file << "          " << ipN1 << "  " << ipN2 << '\n';
         //debug_file << "          " << ipS1 << "  " << ipS2 << '\n';
 #endif
@@ -516,8 +516,8 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rg,
       {
         // triangle without ip3
 #if DEBUG_OUTPUT
-        eckit::Log::info(Here())  << "          " << ipN1 << "  " << ipN2 << '\n';
-        eckit::Log::info(Here())  << "          " << ipS1 << '\n';
+        Log::info(Here())  << "          " << ipN1 << "  " << ipN2 << '\n';
+        Log::info(Here())  << "          " << ipS1 << '\n';
         //debug_file  << "          " << ipN1 << "  " << ipN2 << '\n';
         //debug_file  << "          " << ipS1 << '\n';
 #endif
@@ -592,8 +592,8 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rg,
       {
         // triangle without ip4
 #if DEBUG_OUTPUT
-        eckit::Log::info(Here())  << "          " << ipN1 << '\n';
-        eckit::Log::info(Here())  << "          " << ipS1 << "  " << ipS2 << '\n';
+        Log::info(Here())  << "          " << ipN1 << '\n';
+        Log::info(Here())  << "          " << ipS1 << "  " << ipS2 << '\n';
         //debug_file  << "          " << ipN1 << '\n';
         //debug_file  << "          " << ipS1 << "  " << ipS2 << '\n';
 #endif
@@ -685,9 +685,9 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rg,
 
   } // for jlat
 
-//  eckit::Log::info(Here())  << "nb_triags = " << region.ntriags << std::endl;
-//  eckit::Log::info(Here())  << "nb_quads = " << region.nquads << std::endl;
-//  eckit::Log::info(Here())  << "nb_elems = " << nelems << std::endl;
+//  Log::info(Here())  << "nb_triags = " << region.ntriags << std::endl;
+//  Log::info(Here())  << "nb_quads = " << region.nquads << std::endl;
+//  Log::info(Here())  << "nb_elems = " << nelems << std::endl;
 
   int nb_region_nodes = 0;
 
@@ -946,7 +946,7 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
           if (size_t(elem[3]) == rg.nlon(jlatN)) quad_nodes(jquad,3) = offset_loc[ilatN];
         }
 
-        // eckit::Log::info(Here())  << quad_nodes(0,jquad) << " " << quad_nodes(1,jquad) << " " << quad_nodes(2,jquad) << " " << quad_nodes(3,jquad) << std::endl;
+        // Log::info(Here())  << quad_nodes(0,jquad) << " " << quad_nodes(1,jquad) << " " << quad_nodes(2,jquad) << " " << quad_nodes(3,jquad) << std::endl;
         quad_glb_idx(jquad) = jquad+jtriag+1;
         quad_part(jquad) = mypart;
         ++jquad;

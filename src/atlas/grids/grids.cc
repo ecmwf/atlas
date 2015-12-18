@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include "eckit/log/Log.h"
+#include "atlas/runtime/Log.h"
 #include "eckit/parser/Tokenizer.h"
 #include "eckit/utils/Translator.h"
 #include "eckit/memory/Builder.h"
@@ -17,7 +17,6 @@
 #include <regex.h>
 
 
-using eckit::Log;
 using eckit::Tokenizer;
 using eckit::Translator;
 using eckit::Factory;
@@ -181,7 +180,7 @@ void load_grid()
 
 void load()
 {
-  eckit::Log::debug(2) << "Loading library [atlas::grids]" << std::endl;
+  Log::debug(2) << "Loading library [atlas::grids]" << std::endl;
 
   // We have to touch all classes we want to register for static linking.
 
