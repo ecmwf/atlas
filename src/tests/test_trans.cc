@@ -31,7 +31,7 @@
 #include "atlas/FunctionSpace.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/functionspace/Nodes.h"
-#include "atlas/functionspace/ReducedGridPoints.h"
+#include "atlas/functionspace/ReducedGridPoint.h"
 
 #include "transi/trans.h"
 
@@ -291,7 +291,7 @@ BOOST_AUTO_TEST_CASE( test_nomesh )
   SharedPtr<trans::Trans> trans ( new trans::Trans(*g,47) );
 
   SharedPtr<functionspace::Spectral>    spectral    (new functionspace::Spectral(*trans));
-  SharedPtr<functionspace::ReducedGridPoints> gridpoints (new functionspace::ReducedGridPoints(*g));
+  SharedPtr<functionspace::ReducedGridPoint> gridpoints (new functionspace::ReducedGridPoint(*g));
 
   SharedPtr<Field> spfg ( spectral->createGlobalField<double>("spf") );
   SharedPtr<Field> spf  ( spectral->createField<double>("spf") );
