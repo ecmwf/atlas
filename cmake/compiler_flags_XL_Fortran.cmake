@@ -8,9 +8,10 @@
 
 include( ecbuild_add_fortran_flags )
 
+ecbuild_error("Compile flags not tested")
+
 # WARNING!!
 # Following has not been thoroughly tested. Take these flags with grain of salt
-
 
 # Without following line, compile flags are appended to link flags
 set( CMAKE_Fortran_LINK_EXECUTABLE "<CMAKE_Fortran_COMPILER> <CMAKE_Fortran_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")

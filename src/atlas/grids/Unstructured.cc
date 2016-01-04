@@ -10,7 +10,7 @@
 
 #include <limits>
 
-#include "eckit/log/Log.h"
+#include "atlas/runtime/Log.h"
 #include "eckit/memory/Builder.h"
 #include "atlas/grids/Unstructured.h"
 #include "atlas/util/ArrayView.h"

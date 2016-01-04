@@ -16,6 +16,7 @@
 #include "eckit/memory/ScopedPtr.h"
 
 #include "atlas/atlas_config.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/Parameters.h"
 #include "atlas/grids/gausslat/gausslat.h"
 
@@ -26,7 +27,6 @@
 using eckit::ConcreteBuilderT0;
 using eckit::Factory;
 using eckit::ScopedPtr;
-using eckit::Log;
 
 using atlas::grids::gausslat::GaussianLatitudes;
 
@@ -109,6 +109,7 @@ void predict_gaussian_latitudes_hemisphere(const size_t N, double lats[])
 //----------------------------------------------------------------------------------------------------------------------
 
 // TODO: evaluate this, and possibly use
+#if 0
 namespace {
 
   void initialGaussianLatitudes(size_t resolution, std::vector<double>& lats);
@@ -212,6 +213,7 @@ namespace {
   }
 
 } // anonymous namespace
+#endif
 
 //----------------------------------------------------------------------------------------------------------------------
 

@@ -9,6 +9,9 @@
  */
 
 #define BOOST_TEST_MODULE TestFlags
+
+#include <iostream>
+
 #include "ecbuild/boost_test_framework.h"
 
 #include "atlas/util/Bitflags.h"

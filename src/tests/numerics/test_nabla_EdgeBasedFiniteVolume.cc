@@ -113,7 +113,7 @@ struct AtlasFixture {
     ~AtlasFixture() { atlas_finalize(); }
 };
 
-BOOST_GLOBAL_FIXTURE( AtlasFixture )
+BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test_factory )
 {
@@ -222,7 +222,6 @@ BOOST_AUTO_TEST_CASE( test_div )
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
   ArrayView<double,2> lonlat( mesh->nodes().lonlat() );
-  size_t nnodes = mesh->nodes().size();
   size_t nlev = 1;
 
   FieldSet fields;
@@ -253,7 +252,6 @@ BOOST_AUTO_TEST_CASE( test_curl )
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
   ArrayView<double,2> lonlat( mesh->nodes().lonlat() );
-  size_t nnodes = mesh->nodes().size();
   size_t nlev = 1;
 
   FieldSet fields;
@@ -284,7 +282,6 @@ BOOST_AUTO_TEST_CASE( test_lapl )
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
   ArrayView<double,2> lonlat( mesh->nodes().lonlat() );
-  size_t nnodes = mesh->nodes().size();
   size_t nlev = 1;
 
   FieldSet fields;

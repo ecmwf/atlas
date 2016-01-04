@@ -23,10 +23,10 @@ TYPE, extends(atlas_RefCounted) :: atlas_FieldSet
 !------------------------------------------------------------------------------
 contains
   procedure, public :: size => FieldSet__size
-  procedure, public :: add_field => FieldSet__add_field
   procedure, public :: has_field => FieldSet__has_field
   procedure, private :: field_by_name => FieldSet__field_by_name
   procedure, private :: field_by_idx => FieldSet__field_by_idx
+  procedure, public :: add => FieldSet__add_field
   generic :: field => field_by_name, field_by_idx
   procedure, public :: delete => Fieldset__delete
 END TYPE atlas_FieldSet

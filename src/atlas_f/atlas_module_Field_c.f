@@ -138,21 +138,27 @@ end function Field__metadata
 
 function Field__shape_array(this) result(shape)
   class(atlas_Field), intent(in) :: this
-  integer, pointer :: shape(:)
+  integer, allocatable :: shape(:)
   type(c_ptr) :: shape_c_ptr
+  integer, pointer :: shape_f_ptr(:)
   integer(c_int) :: field_rank
   call atlas__Field__shapef(this%c_ptr(), shape_c_ptr, field_rank)
-  call C_F_POINTER ( shape_c_ptr , shape , (/field_rank/) )
+  call C_F_POINTER ( shape_c_ptr , shape_f_ptr , (/field_rank/) )
+  allocate( shape(field_rank) )
+  shape(:) = shape_f_ptr(:)
 end function Field__shape_array
 
 function Field__shape_idx(this,idx) result(shape_val)
   integer :: shape_val
   class(atlas_Field), intent(in) :: this
   integer, intent(in) :: idx
-  integer, pointer :: shape(:)
-  shape => this%shape_array()
-  if( idx > size(shape) ) call atlas_throw_outofrange("shape",idx,size(shape),atlas_code_location(__FILE__,__LINE__))
-  shape_val = shape(idx)
+  type(c_ptr) :: shape_c_ptr
+  integer, pointer :: shape_f_ptr(:)
+  integer(c_int) :: field_rank
+  call atlas__Field__shapef(this%c_ptr(), shape_c_ptr, field_rank)
+  call C_F_POINTER ( shape_c_ptr , shape_f_ptr , (/field_rank/) )
+  if( idx > field_rank ) call atlas_throw_outofrange("shape",idx,field_rank,atlas_code_location(__FILE__,__LINE__))
+  shape_val = shape_f_ptr(idx)
 end function Field__shape_idx
 
 subroutine Field__access_data1_logical32(this, field)

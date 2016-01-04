@@ -58,9 +58,8 @@ Field* Field::create(const std::string& name, DataType datatype, const ArrayShap
 
 Field* Field::create( const std::string& name, Array* array )
 {
-  return new Field(name, array);
+  return new Field(name,array);
 }
-
 
 // -------------------------------------------------------------------------
 

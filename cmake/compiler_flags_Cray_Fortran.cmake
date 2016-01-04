@@ -12,40 +12,50 @@ include( ecbuild_add_fortran_flags )
 # FLAGS COMMON TO ALL BUILD TYPES
 ####################################################################
 
-ecbuild_add_fortran_flags( "-emf -rmoid" )
-ecbuild_add_fortran_flags( "-lhugetlbfs" )
+if( NOT ECBUILD_Fortran_FLAGS )
+  ecbuild_add_fortran_flags( "-emf -rmoid" )
+  ecbuild_add_fortran_flags( "-lhugetlbfs" )
+endif()
 
 ####################################################################
 # RELEASE FLAGS
 ####################################################################
 
-ecbuild_add_fortran_flags( "-O3"       BUILD RELEASE )
-ecbuild_add_fortran_flags( "-hfp3"     BUILD RELEASE )
-ecbuild_add_fortran_flags( "-hscalar3" BUILD RELEASE )
-ecbuild_add_fortran_flags( "-hvector3" BUILD RELEASE )
-
-####################################################################
-# DEBUG FLAGS
-####################################################################
-
-ecbuild_add_fortran_flags( "-O0"       BUILD DEBUG )
-ecbuild_add_fortran_flags( "-Gfast"    BUILD DEBUG )
-ecbuild_add_fortran_flags( "-Ktrap=fp" BUILD DEBUG )
+if( NOT ECBUILD_Fortran_FLAGS )
+  ecbuild_add_fortran_flags( "-O3"       BUILD RELEASE )
+  ecbuild_add_fortran_flags( "-hfp3"     BUILD RELEASE )
+  ecbuild_add_fortran_flags( "-hscalar3" BUILD RELEASE )
+  ecbuild_add_fortran_flags( "-hvector3" BUILD RELEASE )
+endif()
 
 ####################################################################
 # BIT REPRODUCIBLE FLAGS
 ####################################################################
 
-ecbuild_add_fortran_flags( "-O2"                     BUILD BIT )
-ecbuild_add_fortran_flags( "-hflex_mp=conservative"  BUILD BIT )
-ecbuild_add_fortran_flags( "-hadd_paren"             BUILD BIT )
-ecbuild_add_fortran_flags( "-hfp1"                   BUILD BIT )
+if( NOT ECBUILD_Fortran_FLAGS )
+  ecbuild_add_fortran_flags( "-O2"                     BUILD BIT )
+  ecbuild_add_fortran_flags( "-hflex_mp=conservative"  BUILD BIT )
+  ecbuild_add_fortran_flags( "-hadd_paren"             BUILD BIT )
+  ecbuild_add_fortran_flags( "-hfp1"                   BUILD BIT )
+endif()
+
+####################################################################
+# DEBUG FLAGS
+####################################################################
+
+if( NOT ECBUILD_Fortran_FLAGS )
+  ecbuild_add_fortran_flags( "-O0"       BUILD DEBUG )
+  ecbuild_add_fortran_flags( "-Gfast"    BUILD DEBUG )
+  ecbuild_add_fortran_flags( "-Ktrap=fp" BUILD DEBUG )
+endif()
 
 ####################################################################
 # LINK FLAGS
 ####################################################################
 
-set( CMAKE_Fortran_LINK_FLAGS    "-Wl,-Map,loadmap" )
+if( NOT ECBUILD_Fortran_LINK_FLAGS )
+  set( CMAKE_Fortran_LINK_FLAGS    "${CMAKE_Fortran_LINK_FLAGS} -Wl,-Map,loadmap" )
+endif()
 
 ####################################################################
 

@@ -131,13 +131,13 @@ MeshGenerator *MeshGeneratorFactory::build(const std::string &name) {
 
     std::map<std::string, MeshGeneratorFactory *>::const_iterator j = m->find(name);
 
-    eckit::Log::info() << "Looking for MeshGeneratorFactory [" << name << "]" << std::endl;
+    Log::info() << "Looking for MeshGeneratorFactory [" << name << "]" << std::endl;
 
     if (j == m->end()) {
-        eckit::Log::error() << "No MeshGeneratorFactory for [" << name << "]" << std::endl;
-        eckit::Log::error() << "MeshGeneratorFactories are:" << std::endl;
+        Log::error() << "No MeshGeneratorFactory for [" << name << "]" << std::endl;
+        Log::error() << "MeshGeneratorFactories are:" << std::endl;
         for (j = m->begin() ; j != m->end() ; ++j)
-            eckit::Log::error() << "   " << (*j).first << std::endl;
+            Log::error() << "   " << (*j).first << std::endl;
         throw eckit::SeriousBug(std::string("No MeshGeneratorFactory called ") + name);
     }
 
@@ -154,13 +154,13 @@ MeshGenerator *MeshGeneratorFactory::build(const std::string& name, const eckit:
 
     std::map<std::string, MeshGeneratorFactory *>::const_iterator j = m->find(name);
 
-    eckit::Log::info() << "Looking for MeshGeneratorFactory [" << name << "]" << std::endl;
+    Log::info() << "Looking for MeshGeneratorFactory [" << name << "]" << std::endl;
 
     if (j == m->end()) {
-        eckit::Log::error() << "No MeshGeneratorFactory for [" << name << "]" << std::endl;
-        eckit::Log::error() << "MeshGeneratorFactories are:" << std::endl;
+        Log::error() << "No MeshGeneratorFactory for [" << name << "]" << std::endl;
+        Log::error() << "MeshGeneratorFactories are:" << std::endl;
         for (j = m->begin() ; j != m->end() ; ++j)
-            eckit::Log::error() << "   " << (*j).first << std::endl;
+            Log::error() << "   " << (*j).first << std::endl;
         throw eckit::SeriousBug(std::string("No MeshGeneratorFactory called ") + name);
     }
 

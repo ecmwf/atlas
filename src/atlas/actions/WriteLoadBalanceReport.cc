@@ -30,7 +30,6 @@ void write_load_balance_report( const Mesh& mesh, const std::string& filename )
   if( eckit::mpi::rank() == 0 )
   {
     eckit::PathName path(filename);
-    int idt = 10;
     ofs.open( path.localPath(), std::ofstream::out );
   }
 

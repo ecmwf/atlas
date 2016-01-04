@@ -117,6 +117,7 @@ integer, public, parameter :: ATLAS_KIND_IDX = c_int
 #include "atlas_module_FunctionSpace_i.f"
 #include "atlas_module_functionspace_Nodes_i.f"
 #include "atlas_module_functionspace_EdgeBasedFiniteVolume_i.f"
+#include "atlas_module_functionspace_ReducedGridPoint_i.f"
 #include "atlas_module_functionspace_Spectral_i.f"
 #include "atlas_module_Field_i.f"
 #include "atlas_module_FieldSet_i.f"
@@ -346,6 +347,7 @@ end function
 #include "atlas_module_FunctionSpace_c.f"
 #include "atlas_module_functionspace_Nodes_c.f"
 #include "atlas_module_functionspace_EdgeBasedFiniteVolume_c.f"
+#include "atlas_module_functionspace_ReducedGridPoint_c.f"
 #include "atlas_module_functionspace_Spectral_c.f"
 #include "atlas_module_Field_c.f"
 #include "atlas_module_FieldSet_c.f"
@@ -522,14 +524,14 @@ end subroutine atlas_write_load_balance_report
 
 function atlas_generate_mesh(grid) result(mesh)
   type(atlas_Mesh) :: mesh
-  type(atlas_ReducedGrid) :: grid
+  class(atlas_Grid) :: grid
   mesh = atlas_Mesh( atlas__generate_mesh(grid%c_ptr()) )
   call mesh%return()
 end function atlas_generate_mesh
 
 function atlas_generate_mesh_with_distribution(grid,distribution) result(mesh)
   type(atlas_Mesh) :: mesh
-  type(atlas_ReducedGrid) :: grid
+  class(atlas_Grid) :: grid
   type(atlas_GridDistribution) :: distribution
   mesh = atlas_Mesh( atlas__generate_mesh_with_distribution(grid%c_ptr(),distribution%c_ptr()) )
   call mesh%return()

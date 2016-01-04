@@ -386,7 +386,7 @@ void increase_halo( Mesh& mesh )
       {
         LonLatMicroDeg ll = it->first;
         int periodic = it->second;
-        //eckit::Log::warning() << "\n" << "Looking for node with lonlat " << ll.x*1.e-6*180./M_PI << "," << ll.y*1.e-6*180./M_PI << ".  periodic = " << periodic << std::endl;
+        //Log::warning() << "\n" << "Looking for node with lonlat " << ll.x*1.e-6*180./M_PI << "," << ll.y*1.e-6*180./M_PI << ".  periodic = " << periodic << std::endl;
 
         //DEBUG_VAR( periodic );
         uid_t uid = ll.unique();
@@ -430,13 +430,13 @@ void increase_halo( Mesh& mesh )
         }
         else
         {
-          eckit::Log::warning() << "Node needed by ["<<jpart<<"] with lonlat " << ll.lon()*1.e-6 << ","
+          Log::warning() << "Node needed by ["<<jpart<<"] with lonlat " << ll.lon()*1.e-6 << ","
                                 << ll.lat()*1.e-6 << " was not found in ["<<eckit::mpi::rank()<<"]." << std::endl;
           ASSERT(false);
         }
 //        if( periodic != 0 )
 //        {
-//           eckit::Log::warning() << "Node needed by ["<<jpart<<"] with lonlat " << ll.x*1.e-6 << "," << ll.y*1.e-6 << " was not found in ["<<eckit::mpi::rank()<<"]." << std::endl;
+//           Log::warning() << "Node needed by ["<<jpart<<"] with lonlat " << ll.x*1.e-6 << "," << ll.y*1.e-6 << " was not found in ["<<eckit::mpi::rank()<<"]." << std::endl;
 //        }
       }
     }
@@ -1007,7 +1007,7 @@ public:
       }
       else
       {
-        eckit::Log::warning() << "Node with uid " << uid << " needed by ["<<p<<"] was not found in ["<<eckit::mpi::rank()<<"]." << std::endl;
+        Log::warning() << "Node with uid " << uid << " needed by ["<<p<<"] was not found in ["<<eckit::mpi::rank()<<"]." << std::endl;
         ASSERT(false);
       }
     }
@@ -1071,7 +1071,7 @@ public:
       }
       else
       {
-        eckit::Log::warning() << "Node with uid " << uid << " needed by ["<<p<<"] was not found in ["<<eckit::mpi::rank()<<"]." << std::endl;
+        Log::warning() << "Node with uid " << uid << " needed by ["<<p<<"] was not found in ["<<eckit::mpi::rank()<<"]." << std::endl;
         ASSERT(false);
       }
     }

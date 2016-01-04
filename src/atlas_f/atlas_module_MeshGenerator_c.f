@@ -51,7 +51,7 @@ function atlas_MeshGenerator__generate(this,grid,distribution) result(mesh)
    use atlas_MeshGenerator_c_binding
    type(atlas_Mesh) :: mesh
    class(atlas_MeshGenerator), intent(in) :: this
-   class(atlas_ReducedGrid), intent(in) :: grid
+   class(atlas_Grid), intent(in) :: grid
    class(atlas_GridDistribution), intent(in), optional :: distribution
 
    if( present(distribution) ) then

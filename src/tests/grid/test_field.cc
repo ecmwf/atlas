@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include "eckit/log/Log.h"
+#include "atlas/runtime/Log.h"
 #include "eckit/runtime/Tool.h"
 #include "eckit/value/CompositeParams.h"
 
@@ -49,6 +49,7 @@ public:
     void test_constructor();
     void test_fieldcreator();
     void test_implicit_conversion();
+    void test_wrap_rawdata();
 };
 
 //-----------------------------------------------------------------------------
@@ -156,8 +157,8 @@ void TestField::test_fieldcreator()
   ASSERT( ifs->shape(2) == 137 );
   ASSERT( ifs->shape(3) == 10 );
 
-  eckit::Log::debug() << std::flush;
-  eckit::Log::info() << std::flush;
+  Log::debug() << std::flush;
+  Log::info() << std::flush;
 }
 
 void take_array(const Array& arr)
@@ -197,6 +198,17 @@ void TestField::test_implicit_conversion()
 }
 
 
+void TestField::test_wrap_rawdata()
+{
+  std::vector<double> rawdata(20,8.);
+  SharedPtr<Array> array( Array::wrap(rawdata.data(),make_shape(10,2)) );
+  SharedPtr<Field> field( Field::create("wrapped",array.get()) );
+  
+  ASSERT( array->owners() == 2 );
+  const ArrayView<double,2> cfieldv(*field);
+  ASSERT( cfieldv(9,1) == 8. );
+}
+
 
 //-----------------------------------------------------------------------------
 
@@ -206,6 +218,7 @@ void TestField::run()
     test_constructor();
     test_fieldcreator();
     test_implicit_conversion();
+    test_wrap_rawdata();
     eckit::mpi::finalize();
 }
 

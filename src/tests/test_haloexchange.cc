@@ -10,6 +10,7 @@
 
 #include <sstream>
 #include <algorithm>
+#include <cmath>
 
 #define BOOST_TEST_MODULE TestHaloExchange
 #include "ecbuild/boost_test_framework.h"
@@ -79,7 +80,7 @@ struct Fixture {
 };
 
 
-BOOST_GLOBAL_FIXTURE( MPIFixture )
+BOOST_GLOBAL_FIXTURE( MPIFixture );
 
 BOOST_FIXTURE_TEST_CASE( test_rank0, Fixture )
 {

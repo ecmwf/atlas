@@ -82,8 +82,8 @@ temperature_field = state%field("temperature")
 pressure_field = state%field("pressure")
 
 ! If you want to edit the field, access the data
-call temperature_field%access_data(temperature)
-call pressure_field%access_data(pressure)
+call temperature_field%data(temperature)
+call pressure_field%data(pressure)
 
 temperature(:,:) = 273.15_c_double
 pressure(:,:,:) = 10000._c_double

@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include "eckit/log/Log.h"
+#include "atlas/runtime/Log.h"
 #include "eckit/geometry/Point3.h"
 
 #include "atlas/Mesh.h"
@@ -38,7 +38,7 @@ void Delaunay::generate(const Grid& grid, const GridDistribution& dist, Mesh& me
 {
   if( dist.nb_partitions() > 1 )
   {
-    eckit::Log::warning() << "Delaunay triangulation does not support a GridDistribution"
+    Log::warning() << "Delaunay triangulation does not support a GridDistribution"
                              "with more than 1 partition"
                           << std::endl;
     NOTIMP;

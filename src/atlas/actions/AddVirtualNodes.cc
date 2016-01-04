@@ -24,7 +24,6 @@
 
 #include "atlas/grids/rgg/OctahedralRGG.h"
 
-using eckit::Log;
 using eckit::geometry::LLPoint2;
 using atlas::grids::rgg::OctahedralRGG;
 using eckit::operator<<;

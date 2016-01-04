@@ -14,7 +14,7 @@
 #include <stdexcept>
 
 #include "eckit/exception/Exceptions.h"
-#include "eckit/log/Log.h"
+#include "atlas/runtime/Log.h"
 
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/FunctionSpace.h"
@@ -128,7 +128,7 @@ mesh::Nodes& Mesh::createNodes( size_t size )
 {
   if( nodes_ )
   {
-    eckit::Log::error() << "ERROR: Re-creating nodes.\n"
+    Log::error() << "ERROR: Re-creating nodes.\n"
                         << "This error can be ignored in MIR/prodgen\n"
                         << "until MIR stops using deprecated atlas::Grid::mesh() function."
                         << std::endl;

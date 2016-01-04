@@ -54,7 +54,7 @@ TEST( test_trans )
   real(c_double), allocatable :: check(:)
   integer :: nlev, nsmax, jn, in, jlev
   integer, pointer :: nvalue(:)
-  real(c_double), allocatable :: vorg(:,:)
+  type(atlas_Field) :: glb_vorfield
 
   real(c_double) :: tol
 
@@ -105,10 +105,10 @@ TEST( test_trans )
   spectralfield2 = spectral_fs%create_field("spectral2")
   write(0,*) "spectral_fs%owners()",spectral_fs%owners()
 
-  call scalarfield1%access_data(scal1)
-  call scalarfield2%access_data(scal2)
-  call spectralfield1%access_data(spec1)
-  call spectralfield2%access_data(spec2)
+  call scalarfield1%data(scal1)
+  call scalarfield2%data(scal2)
+  call spectralfield1%data(spec1)
+  call spectralfield2%data(spec2)
 
   write(0,*) "shape = ", spectralfield2%shape()
 
@@ -128,12 +128,12 @@ TEST( test_trans )
   deallocate( check )
 
   scalarfields = atlas_FieldSet("scalarfields")
-  call scalarfields%add_field(scalarfield1)
-  call scalarfields%add_field(scalarfield2)
+  call scalarfields%add(scalarfield1)
+  call scalarfields%add(scalarfield2)
 
   spectralfields = atlas_FieldSet("spectralfields")
-  call spectralfields%add_field(spectralfield1)
-  call spectralfields%add_field(spectralfield2)
+  call spectralfields%add(spectralfield1)
+  call spectralfields%add(spectralfield2)
 
   call trans%invtrans(spectral_fs,spectralfields,nodes_fs,scalarfields)
   call trans%dirtrans(nodes_fs,scalarfields,spectral_fs,spectralfields)
@@ -155,18 +155,18 @@ TEST( test_trans )
   FCTEST_CHECK_CLOSE( spec2(5), 0._c_double, tol )
 
   windfield = nodes_fs%create_field("wind",atlas_real(c_double),nlev,(/3/))
-  call windfield%access_data(wind)
+  call windfield%data(wind)
   write(0,*) "nodes_fs%owners()",nodes_fs%owners()
 
   vorfield = spectral_fs%create_field("vorticity",nlev)
   write(0,*) "spectral_fs%owners()",spectral_fs%owners()
 
-  call vorfield%access_data(vor)
+  call vorfield%data(vor)
 
   divfield =  spectral_fs%create_field("divergence",nlev)
   write(0,*) "spectral_fs%owners()",spectral_fs%owners()
 
-  call divfield%access_data(div)
+  call divfield%data(div)
 
   call trans%dirtrans_wind2vordiv(nodes_fs,windfield,spectral_fs,vorfield,divfield)
 
@@ -184,8 +184,9 @@ TEST( test_trans )
 
   call trans%invtrans_vordiv2wind(spectral_fs,vorfield,divfield,nodes_fs,windfield)
 
-  allocate( vorg( nlev, trans%nspec2g() ) )
-  call trans%gathspec(vor,vorg)
+  glb_vorfield = spectral_fs%create_global_field("vorticity",nlev)
+  call spectral_fs%gather(vorfield,glb_vorfield)
+  call spectral_fs%scatter(glb_vorfield,vorfield)
 
   write(0,*) "cleaning up"
   write(0,*) "nodes_fs%owners()",nodes_fs%owners()
@@ -200,6 +201,7 @@ TEST( test_trans )
   call windfield%final()
   call vorfield%final()
   call divfield%final()
+  call glb_vorfield%final()
 
   write(0,*) "nodes_fs%owners()",nodes_fs%owners()
   call nodes_fs%final()
@@ -214,8 +216,155 @@ TEST( test_trans )
   call grid%final()
 END_TEST
 
-
 ! -----------------------------------------------------------------------------
+
+TEST( test_trans_nomesh )
+  type(atlas_ReducedGrid) :: grid
+  type(atlas_Trans) :: trans
+  type(atlas_functionspace_ReducedGridPoint) :: gridpoints_fs
+  type(atlas_functionspace_Spectral) :: spectral_fs
+  type(atlas_Field)         :: scalarfield1, scalarfield2
+  type(atlas_Field)         :: spectralfield1, spectralfield2
+  type(atlas_FieldSet)      :: scalarfields
+  type(atlas_FieldSet)      :: spectralfields
+  real(c_double), pointer :: scal1(:,:), scal2(:), spec1(:,:), spec2(:)
+  real(c_double), allocatable :: check(:)
+  integer :: nlev, nsmax, jn, in, jlev
+  integer, pointer :: nvalue(:)
+  real(c_double) :: tol
+
+  tol = 1.e-8
+  nlev=10
+  nsmax = 21
+
+  grid = atlas_ReducedGrid("O24")
+  trans = atlas_Trans(grid,nsmax)
+
+  gridpoints_fs = atlas_functionspace_ReducedGridPoint(grid)
+  scalarfield1 = gridpoints_fs%create_field("scalar1",nlev)
+  scalarfield2 = gridpoints_fs%create_field("scalar2")
+
+  spectral_fs = atlas_functionspace_Spectral(trans)
+  spectralfield1 = spectral_fs%create_field("spectral1",nlev)
+  spectralfield2 = spectral_fs%create_field("spectral2")
+
+  call scalarfield1%data(scal1)
+  call scalarfield2%data(scal2)
+  call spectralfield1%data(spec1)
+  call spectralfield2%data(spec2)
+
+  ! All waves to zero except wave 1 to 3
+  spec1(1:nlev,:) = 0
+  spec1(1:nlev,1) = 3
+  ! All waves to zero except wave 1 to 4
+  spec2(:) = 0
+  spec2(1) = 4
+
+  call atlas_log%debug("invtrans")
+  call trans%invtrans(spectralfield1,scalarfield1)
+  call atlas_log%debug("dirtrans")
+  call trans%dirtrans(scalarfield1,spectralfield1)
+
+  allocate( check(nlev) )
+  check(:) = 3
+  FCTEST_CHECK_CLOSE( spec1(:,1), check, tol )
+  deallocate( check )
+
+  scalarfields = atlas_FieldSet("scalarfields")
+  call scalarfields%add(scalarfield1)
+  call scalarfields%add(scalarfield2)
+
+  spectralfields = atlas_FieldSet("spectralfields")
+  call spectralfields%add(spectralfield1)
+  call spectralfields%add(spectralfield2)
+
+  call trans%invtrans(spectralfields,scalarfields)
+  call trans%dirtrans(scalarfields,spectralfields)
+
+  allocate( check(nlev) )
+  check(:) = 3
+  FCTEST_CHECK_CLOSE( spec1(:,1), check, tol )
+  check(:) = 0
+  FCTEST_CHECK_CLOSE( spec1(:,2), check, tol )
+  FCTEST_CHECK_CLOSE( spec1(:,3), check, tol )
+  FCTEST_CHECK_CLOSE( spec1(:,4), check, tol )
+  FCTEST_CHECK_CLOSE( spec1(:,5), check, tol )
+  deallocate( check )
+
+  FCTEST_CHECK_CLOSE( spec2(1), 4._c_double, tol )
+  FCTEST_CHECK_CLOSE( spec2(2), 0._c_double, tol )
+  FCTEST_CHECK_CLOSE( spec2(3), 0._c_double, tol )
+  FCTEST_CHECK_CLOSE( spec2(4), 0._c_double, tol )
+  FCTEST_CHECK_CLOSE( spec2(5), 0._c_double, tol )
+
+  write(0,*) "cleaning up"
+
+  call scalarfield1%final()
+  call scalarfield2%final()
+  call spectralfield1%final()
+  call spectralfield2%final()
+  call spectral_fs%final()
+  call gridpoints_fs%final()
+  call scalarfields%final()
+  call spectralfields%final()
+  call trans%final()
+  call grid%final()
+END_TEST
+
+TEST( test_transdwarf )
+type(atlas_ReducedGrid) :: grid
+type(atlas_Trans) :: trans
+type(atlas_functionspace_ReducedGridPoint) :: gridpoints
+type(atlas_functionspace_Spectral) :: spectral
+type(atlas_Field) :: fieldg, field
+type(atlas_FieldSet) :: gpfields, spfields
+integer :: jfld, nfld
+character(len=10) :: fieldname
+
+grid = atlas_ReducedGrid("O24")
+trans = atlas_Trans(grid,23)
+gridpoints = atlas_functionspace_ReducedGridPoint(grid)
+spectral = atlas_functionspace_Spectral(trans)
+
+gpfields = atlas_FieldSet("gridpoint")
+spfields = atlas_FieldSet("spectral")
+
+nfld=10
+do jfld=1,nfld
+  write(fieldname,'(I0)') jfld
+
+  fieldg = gridpoints%create_global_field(fieldname)
+  field  = gridpoints%create_field(fieldname)
+
+  ! Read global field data
+  ! ...
+
+  call gridpoints%scatter(fieldg,field)
+
+  call gpfields%add( field )
+  call spfields%add( spectral%create_field(fieldname) )
+
+  FCTEST_CHECK_EQUAL( field%owners(), 2 )
+enddo
+
+call trans%dirtrans(gpfields,spfields)
+call trans%invtrans(spfields,gpfields)
+
+do jfld=1,spfields%size()
+  field = spfields%field(jfld)
+  write(atlas_log%msg,*) "spectral field ",field%name(); call atlas_log%info()
+enddo
+
+call field%final()
+call fieldg%final()
+call gpfields%final()
+call spfields%final()
+call gridpoints%final()
+call spectral%final()
+call trans%final()
+call grid%final()
+END_TEST
+
 
 END_TESTSUITE
 

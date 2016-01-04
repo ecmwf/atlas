@@ -11,28 +11,34 @@ function atlas_ReducedGrid__ctor_id(identifier) result(grid)
 end function atlas_ReducedGrid__ctor_id
 
 function atlas_GaussianGrid__ctor(N) result(grid)
-  type(atlas_ReducedGrid) :: grid
+  type(atlas_GaussianGrid) :: grid
   integer, intent(in) :: N
   call grid%reset_c_ptr( atlas__new_gaussian_grid(N) )
 end function atlas_GaussianGrid__ctor
 
 function atlas_ReducedGaussianGrid__ctor(nlon) result(grid)
-  type(atlas_ReducedGrid) :: grid
+  type(atlas_ReducedGaussianGrid) :: grid
   integer, intent(in) :: nlon(:)
   call grid%reset_c_ptr( atlas__new_reduced_gaussian_grid(nlon,size(nlon)) )
 end function atlas_ReducedGaussianGrid__ctor
 
 function atlas_LonLatGrid__ctor(nlon,nlat) result(grid)
-  type(atlas_ReducedGrid) :: grid
+  type(atlas_LonLatGrid) :: grid
   integer, intent(in) :: nlon, nlat
   call grid%reset_c_ptr( atlas__new_lonlat_grid(nlon,nlat) )
 end function atlas_LonLatGrid__ctor
 
-function ReducedGrid__npts(this) result(npts)
-  class(atlas_ReducedGrid), intent(in) :: this
+function Grid__npts(this) result(npts)
+  class(atlas_Grid), intent(in) :: this
   integer :: npts
   npts = atlas__ReducedGrid__npts(this%c_ptr())
-end function ReducedGrid__npts
+end function Grid__npts
+
+function ReducedGrid__N(this) result(N)
+  class(atlas_ReducedGrid), intent(in) :: this
+  integer :: N
+  N = atlas__ReducedGrid__nlat(this%c_ptr())/2
+end function ReducedGrid__N
 
 function ReducedGrid__nlat(this) result(nlat)
   class(atlas_ReducedGrid), intent(in) :: this
@@ -65,11 +71,11 @@ function ReducedGrid__latitudes(this) result(lat)
   call C_F_POINTER (  lat_c_ptr , lat , (/lat_size/) )
 end function ReducedGrid__latitudes
 
-subroutine ReducedGrid__delete(this)
-  class(atlas_ReducedGrid), intent(inout) :: this
+subroutine Grid__delete(this)
+  class(atlas_Grid), intent(inout) :: this
   if ( .not. this%is_null() ) then
     call atlas__ReducedGrid__delete(this%c_ptr())
   end if
   call this%reset_c_ptr()
-end subroutine ReducedGrid__delete
+end subroutine Grid__delete
 

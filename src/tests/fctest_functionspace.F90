@@ -254,8 +254,8 @@ call fs2d%gather(field,global)
 call fs2d%halo_exchange(field)
 call fs2d%scatter(global,field)
 
-call field%access_data(values)
-call scal%access_data(scalvalues)
+call field%data(values)
+call scal%data(scalvalues)
 values = 2.
 scalvalues = 2.
 
@@ -311,7 +311,7 @@ call fs2d%gather(field,global)
 call fs2d%halo_exchange(field)
 call fs2d%scatter(global,field)
 
-call field%access_data(values3d)
+call field%data(values3d)
 values3d = 2.
 
 call atlas_log%info(fs2d%checksum(field))

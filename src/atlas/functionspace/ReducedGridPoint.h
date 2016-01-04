@@ -8,13 +8,15 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef atlas_functionspace_SpectralFunctionSpace_h
-#define atlas_functionspace_SpectralFunctionSpace_h
+#ifndef atlas_functionspace_functionspace__ReducedGridPoint_h
+#define atlas_functionspace_functionspace__ReducedGridPoint_h
 
 #include "atlas/atlas_defines.h"
 #include "atlas/FunctionSpace.h"
 
 namespace atlas { namespace trans { class Trans; } }
+namespace atlas { namespace mpl { class GatherScatter; } }
+namespace atlas { namespace mpl { class Checksum; } }
 namespace atlas { class Field; }
 namespace atlas { class FieldSet; }
 
@@ -23,23 +25,21 @@ namespace functionspace {
 
 // -------------------------------------------------------------------
 
-class Spectral : public next::FunctionSpace
+class ReducedGridPoint : public next::FunctionSpace
 {
 public:
 
-  Spectral(const size_t truncation);
+  ReducedGridPoint( const Grid& );
 
-  Spectral(trans::Trans& );
+  virtual ~ReducedGridPoint();
 
-  virtual ~Spectral();
+  virtual std::string name() const { return "ReducedGrid"; }
 
-  virtual std::string name() const { return "Spectral"; }
-
-  /// @brief Create a spectral field
+  /// @brief Create a ReducedGrid field
   template <typename DATATYPE> Field* createField(const std::string& name) const;
   template <typename DATATYPE> Field* createField(const std::string& name, size_t levels) const;
 
-  /// @brief Create a global spectral field
+  /// @brief Create a global ReducedGrid field
   template <typename DATATYPE> Field* createGlobalField(const std::string& name) const;
   template <typename DATATYPE> Field* createGlobalField(const std::string& name, size_t levels) const;
 
@@ -52,40 +52,33 @@ public:
   std::string checksum( const FieldSet& ) const;
   std::string checksum( const Field& ) const;
 
-public: // methods
-
-  size_t nb_spectral_coefficients() const;
-  size_t nb_spectral_coefficients_global() const;
-
 private: // data
 
-  size_t truncation_;
-
   trans::Trans* trans_;
+  const Grid& grid_;
+  mpl::GatherScatter* gather_scatter_;
+  mpl::Checksum* checksum_;
 
 };
 
 // -------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
-#define Trans trans::Trans
 extern "C"
 {
-  Spectral* atlas__SpectralFunctionSpace__new__truncation (int truncation);
-  Spectral* atlas__SpectralFunctionSpace__new__trans (Trans* trans);
-  void atlas__SpectralFunctionSpace__delete (Spectral* This);
+  ReducedGridPoint* atlas__functionspace__ReducedGridPoint__new__grid (const Grid* grid);
+  void atlas__functionspace__ReducedGridPoint__delete (ReducedGridPoint* This);
 
-  Field* atlas__SpectralFunctionSpace__create_field (const Spectral* This, const char* name);
+  Field* atlas__functionspace__ReducedGridPoint__create_field (const ReducedGridPoint* This, const char* name);
 
-  Field* atlas__SpectralFunctionSpace__create_field_lev (const Spectral* This, const char* name, int levels);
+  Field* atlas__functionspace__ReducedGridPoint__create_field_lev (const ReducedGridPoint* This, const char* name, int levels);
 
-  Field* atlas__SpectralFunctionSpace__create_global_field (const Spectral* This, const char* name);
+  Field* atlas__functionspace__ReducedGridPoint__create_gfield (const ReducedGridPoint* This, const char* name);
 
-  Field* atlas__SpectralFunctionSpace__create_global_field_lev (const Spectral* This, const char* name, int levels);
+  Field* atlas__functionspace__ReducedGridPoint__create_gfield_lev (const ReducedGridPoint* This, const char* name, int levels);
 
-  void atlas__SpectralFunctionSpace__gather (const Spectral* This, const Field* local, Field* global);
+  void atlas__functionspace__ReducedGridPoint__gather (const ReducedGridPoint* This, const Field* local, Field* global);
 
-  void atlas__SpectralFunctionSpace__scatter (const Spectral* This, const Field* global, Field* local);
-
+  void atlas__functionspace__ReducedGridPoint__scatter (const ReducedGridPoint* This, const Field* global, Field* local);
 
 }
 #undef Trans
@@ -93,4 +86,4 @@ extern "C"
 } // namespace functionspace
 } // namespace atlas
 
-#endif // atlas_functionspace_SpectralFunctionSpace_h
+#endif // atlas_functionspace_functionspace__ReducedGridPoint_h

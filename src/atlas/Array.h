@@ -15,6 +15,7 @@
 
 #include <vector>
 #include <iosfwd>
+#include <iterator> // for std::distance
 
 #include "eckit/memory/Owned.h"
 
@@ -38,7 +39,12 @@ public:
   template <typename T> static Array* create(size_t size1, size_t size2, size_t size3);
   template <typename T> static Array* create(size_t size1, size_t size2, size_t size3, size_t size4);
 
+  template <typename T> static Array* wrap(T data[], const ArrayShape& s);
+
 public:
+  
+  Array(){}
+  Array(const ArraySpec& s) : spec_(s) {}
 
   virtual DataType datatype() const = 0;
   virtual double bytes() const = 0;
@@ -113,17 +119,22 @@ public:
 
 public:
 
-  ArrayT() {}
+  ArrayT(): owned_(true) {}
 
-  ArrayT(const ArrayShape& shape) { resize(shape); }
+  ArrayT(const ArrayShape& shape): owned_(true)                                { resize(shape); }
 
-  ArrayT(size_t size)                                            { resize( make_shape(size) ); }
+  ArrayT(size_t size): owned_(true)                                            { resize( make_shape(size) ); }
 
-  ArrayT(size_t size1, size_t size2)                             { resize( make_shape(size1,size2) ); }
+  ArrayT(size_t size1, size_t size2): owned_(true)                             { resize( make_shape(size1,size2) ); }
 
-  ArrayT(size_t size1, size_t size2, size_t size3)               { resize( make_shape(size1,size2,size3) ); }
+  ArrayT(size_t size1, size_t size2, size_t size3): owned_(true)               { resize( make_shape(size1,size2,size3) ); }
 
-  ArrayT(size_t size1, size_t size2, size_t size3, size_t size4) { resize( make_shape(size1,size2,size3,size4) ); }
+  ArrayT(size_t size1, size_t size2, size_t size3, size_t size4): owned_(true) { resize( make_shape(size1,size2,size3,size4) ); }
+  
+  ArrayT(DATA_TYPE data[], const ArrayShape& shape): 
+    Array(ArraySpec(shape)), 
+    owned_(false)
+  { wrap(data); }
 
 public:
 
@@ -147,23 +158,26 @@ public:
   const DATA_TYPE& operator[](size_t i) const { return *(data()+i); }
         DATA_TYPE& operator[](size_t i)       { return *(data()+i); }
 
-  const DATA_TYPE* data() const { return data_.data(); }
-        DATA_TYPE* data()       { return data_.data(); }
+  const DATA_TYPE* data() const { return data_; }
+        DATA_TYPE* data()       { return data_; }
 
   void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<size(); ++n) data_[n]=scalar; }
 
-  template< class InputIt >
-  void assign( InputIt first, InputIt last ) { data_.assign(first,last); }
+  virtual void assign( const Array& );
 
-  virtual void assign( const Array& );  
+  template< typename RandomAccessIterator >
+  void assign( RandomAccessIterator begin, RandomAccessIterator end );
+  
   
 private:
 
   virtual void resize_data( size_t size );
+  void wrap(DATA_TYPE data[]);
 
 private:
-
-  std::vector<DATA_TYPE> data_;
+  bool owned_;
+  std::vector<DATA_TYPE> owned_data_;
+  DATA_TYPE* data_;
   ArrayView<DATA_TYPE> view_;
 };
 
@@ -171,8 +185,30 @@ private:
 template< typename DATA_TYPE>
 void ArrayT<DATA_TYPE>::resize_data( size_t size )
 {
-  data_.resize( size );
+  if( !owned_ ) throw eckit::SeriousBug("Cannot resize data that is not owned");
+  owned_data_.resize( size );
+  data_ = owned_data_.data();
   view_ = ArrayView<DATA_TYPE>( *this );
+}
+
+template <typename DATA_TYPE>
+void ArrayT<DATA_TYPE>::wrap(DATA_TYPE data[])
+{
+  data_ = data;
+  view_ = ArrayView<DATA_TYPE>( *this );
+}
+
+template< typename DATA_TYPE>
+template< typename RandomAccessIterator >
+void ArrayT<DATA_TYPE>::assign( RandomAccessIterator begin, RandomAccessIterator end )
+{
+  if( std::distance(begin,end) != size() ) {
+    throw eckit::SeriousBug("Size doesn't match");
+  }
+  RandomAccessIterator it = begin;
+  for( size_t j=0; j<size(); ++j, ++it ) {
+    data_[j] = *it;
+  }
 }
 
 template< typename DATA_TYPE>
@@ -180,7 +216,9 @@ void ArrayT<DATA_TYPE>::assign( const Array& other )
 {
   resize( other.shape() );
   ASSERT( datatype().kind() == other.datatype().kind() );
-  data_.assign( other.data<DATA_TYPE>(), other.data<DATA_TYPE>()+other.size() );
+  const DATA_TYPE* other_data = other.data<DATA_TYPE>();
+  for( size_t j=0; j<size(); ++j )
+    data_[j] = other_data[j];
   view_ = ArrayView<DATA_TYPE>( *this );
 }
 

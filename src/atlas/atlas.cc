@@ -1,5 +1,5 @@
 #include "eckit/runtime/Context.h"
-#include "eckit/log/Log.h"
+#include "atlas/runtime/Log.h"
 #include "eckit/parser/StringTools.h"
 #include "eckit/config/Resource.h"
 #include "eckit/config/ResourceMgr.h"

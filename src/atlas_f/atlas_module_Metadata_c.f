@@ -81,7 +81,7 @@ end subroutine Metadata__set_mesh
 subroutine Metadata__set_grid(this, name, value)
   class(atlas_Metadata), intent(inout) :: this
   character(len=*), intent(in) :: name
-  type(atlas_ReducedGrid), intent(in) :: value
+  class(atlas_Grid), intent(in) :: value
   call atlas__Metadata__set_grid(this%c_ptr(), c_str(name), value%c_ptr())
 end subroutine Metadata__set_grid
 
@@ -242,7 +242,7 @@ end subroutine Metadata__get_mesh
 subroutine Metadata__get_grid(this, name, value)
   class(atlas_Metadata), intent(in) :: this
   character(len=*), intent(in) :: name
-  type(atlas_ReducedGrid), intent(out) :: value
+  class(atlas_Grid), intent(out) :: value
   call value%reset_c_ptr( atlas__Metadata__get_grid(this%c_ptr(), c_str(name) ) )
 end subroutine Metadata__get_grid
 

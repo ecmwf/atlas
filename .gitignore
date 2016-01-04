@@ -4,3 +4,4 @@ CMakeLists.txt.user*
 doc/html
 doc/latex
 *.sublime-workspace
+.nfs*

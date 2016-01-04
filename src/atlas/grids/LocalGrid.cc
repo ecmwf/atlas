@@ -10,7 +10,7 @@
 
 #include <cmath>
 
-#include "eckit/log/Log.h"
+#include "atlas/runtime/Log.h"
 #include "eckit/log/BigNum.h"
 #include "eckit/value/Value.h"
 #include "eckit/geometry/RotateGrid.h"
@@ -61,8 +61,8 @@ void LocalGrid::cropPoints() {
     std::vector<Grid::Point> gpts;
     grid_->lonlat(gpts);
 
-//    eckit::Log::info() << " DOMAIN: " << domain_ << std::endl;
-//    eckit::Log::info() << " ----> NESTED GRID: " << gpts.size() << std::endl;
+//    Log::info() << " DOMAIN: " << domain_ << std::endl;
+//    Log::info() << " ----> NESTED GRID: " << gpts.size() << std::endl;
 
     size_t accepted = 0;
     size_t discarded = 0;
@@ -71,18 +71,18 @@ void LocalGrid::cropPoints() {
     for (size_t i = 0; i < gpts.size(); ++i) {
         const Grid::Point& p = gpts[i];
         if ( domain_.contains(p) ) {
-//            eckit::Log::info() << "  ++ POINT " << p << std::endl;
+//            Log::info() << "  ++ POINT " << p << std::endl;
             localPts_.push_back(p);
             ++accepted;
         }
         else {
-//            eckit::Log::info() << " DISCARDED POINT " << p << std::endl;
+//            Log::info() << " DISCARDED POINT " << p << std::endl;
             ++discarded;
         }
     }
 
-    eckit::Log::info() << "Local Grid contains " << eckit::BigNum(accepted) << std::endl;
-    eckit::Log::info() << "Local Grid discards " << eckit::BigNum(discarded) << std::endl;
+    Log::info() << "Local Grid contains " << eckit::BigNum(accepted) << std::endl;
+    Log::info() << "Local Grid discards " << eckit::BigNum(discarded) << std::endl;
 }
 
 size_t LocalGrid::npts() const { return localPts_.size(); }

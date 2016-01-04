@@ -8,8 +8,6 @@
  * does it submit to any jurisdiction.
  */
 
-#include <cassert>
-
 #include "atlas/actions/BuildCellCentres.h"
 #include "atlas/Parameters.h"
 #include "atlas/Mesh.h"
@@ -30,8 +28,6 @@ void BuildCellCentres::operator()( Mesh& mesh ) const
     mesh::Nodes& nodes     = mesh.nodes();
     ArrayView<double,2> coords  ( nodes.field("xyz") );
 
-    const size_t nb_nodes = nodes.size();
-
     if( mesh.has_function_space("triags") ) {
 
         FunctionSpace& triags      = mesh.function_space( "triags" );
@@ -46,8 +42,6 @@ void BuildCellCentres::operator()( Mesh& mesh ) const
             const size_t i0 =  triag_nodes(e,0);
             const size_t i1 =  triag_nodes(e,1);
             const size_t i2 =  triag_nodes(e,2);
-
-            assert( i0 < nb_nodes && i1 < nb_nodes && i2 < nb_nodes );
 
             triags_centres(e,XX) = third * ( coords(i0,XX) + coords(i1,XX) + coords(i2,XX) );
             triags_centres(e,YY) = third * ( coords(i0,YY) + coords(i1,YY) + coords(i2,YY) );
@@ -70,8 +64,6 @@ void BuildCellCentres::operator()( Mesh& mesh ) const
             const size_t i1 =  quads_nodes(e,1);
             const size_t i2 =  quads_nodes(e,2);
             const size_t i3 =  quads_nodes(e,3);
-
-            assert( i0 < nb_nodes && i1 < nb_nodes && i2 < nb_nodes && i3 < nb_nodes );
 
             quads_centres(e,XX) = fourth * ( coords(i0,XX) + coords(i1,XX) + coords(i2,XX) + coords(i3,XX) );
             quads_centres(e,YY) = fourth * ( coords(i0,YY) + coords(i1,YY) + coords(i2,YY) + coords(i3,YY) );

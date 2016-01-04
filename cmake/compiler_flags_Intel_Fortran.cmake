@@ -12,43 +12,54 @@ include( ecbuild_add_fortran_flags )
 # FLAGS COMMON TO ALL BUILD TYPES
 ####################################################################
 
+if( NOT ECBUILD_Fortran_FLAGS )
+  # Nothing to add
+endif()
 
 ####################################################################
 # RELEASE FLAGS
 ####################################################################
 
-ecbuild_add_fortran_flags( "-O3"             BUILD RELEASE )
-ecbuild_add_fortran_flags( "-unroll"         BUILD RELEASE )
-ecbuild_add_fortran_flags( "-inline"         BUILD RELEASE )
-ecbuild_add_fortran_flags( "-vec-report0"    BUILD RELEASE )
-ecbuild_add_fortran_flags( "-heap-arrays" BUILD RELEASE )
+if( NOT ECBUILD_Fortran_FLAGS_RELEASE )
+  ecbuild_add_fortran_flags( "-O3"             BUILD RELEASE )
+  ecbuild_add_fortran_flags( "-unroll"         BUILD RELEASE )
+  ecbuild_add_fortran_flags( "-inline"         BUILD RELEASE )
+  ecbuild_add_fortran_flags( "-vec-report0"    BUILD RELEASE )
+  ecbuild_add_fortran_flags( "-heap-arrays"    BUILD RELEASE )
+endif()
 
 ####################################################################
 # DEBUG FLAGS
 ####################################################################
 
-ecbuild_add_fortran_flags( "-O0 -g"                       BUILD DEBUG )
-ecbuild_add_fortran_flags( "-check bounds"                BUILD DEBUG )
-ecbuild_add_fortran_flags( "-traceback"                   BUILD DEBUG )
-ecbuild_add_fortran_flags( "-warn all"                    BUILD DEBUG )
-ecbuild_add_fortran_flags( "-heap-arrays"                 BUILD DEBUG )
-ecbuild_add_fortran_flags( "-fpe-all=0 -fpe:0 -check all" BUILD DEBUG )
+if( NOT ECBUILD_Fortran_FLAGS_DEBUG )
+  ecbuild_add_fortran_flags( "-O0 -g"                       BUILD DEBUG )
+  ecbuild_add_fortran_flags( "-check bounds"                BUILD DEBUG )
+  ecbuild_add_fortran_flags( "-traceback"                   BUILD DEBUG )
+  ecbuild_add_fortran_flags( "-warn all"                    BUILD DEBUG )
+  ecbuild_add_fortran_flags( "-heap-arrays"                 BUILD DEBUG )
+  ecbuild_add_fortran_flags( "-fpe-all=0 -fpe:0 -check all" BUILD DEBUG )
+endif()
 
 ####################################################################
 # BIT REPRODUCIBLE FLAGS
 ####################################################################
 
-ecbuild_add_fortran_flags( "-O2"             BUILD BIT )
-ecbuild_add_fortran_flags( "-unroll"         BUILD BIT )
-ecbuild_add_fortran_flags( "-inline"         BUILD BIT )
-ecbuild_add_fortran_flags( "-vec-report0"    BUILD BIT )
-ecbuild_add_fortran_flags( "-heap-arrays" BUILD BIT )
+if( NOT ECBUILD_Fortran_FLAGS_BIT )
+  ecbuild_add_fortran_flags( "-O2"             BUILD BIT )
+  ecbuild_add_fortran_flags( "-unroll"         BUILD BIT )
+  ecbuild_add_fortran_flags( "-inline"         BUILD BIT )
+  ecbuild_add_fortran_flags( "-vec-report0"    BUILD BIT )
+  ecbuild_add_fortran_flags( "-heap-arrays"    BUILD BIT )
+endif()
 
 ####################################################################
 # LINK FLAGS
 ####################################################################
 
-set( CMAKE_Fortran_LINK_FLAGS    "" )
+if( NOT ECBUILD_Fortran_LINK_FLAGS )
+  # nothing to add
+endif()
 
 ####################################################################
 

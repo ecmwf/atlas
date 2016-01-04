@@ -89,7 +89,7 @@ void MyStateGenerator::generate( State& state, const eckit::Parametrisation& p )
       std::stringstream s;
       eckit::JSON json(s);
       json << fieldparams;
-      eckit::Log::debug(0) << "fieldparams = " << s.str() << std::endl;
+      Log::debug(0) << "fieldparams = " << s.str() << std::endl;
     }
   }
 }
@@ -108,7 +108,7 @@ struct GlobalFixture {
     ~GlobalFixture() { atlas_finalize(); }
 };
 
-BOOST_GLOBAL_FIXTURE( GlobalFixture )
+BOOST_GLOBAL_FIXTURE( GlobalFixture );
 
 BOOST_AUTO_TEST_SUITE( test_state )
 
@@ -183,7 +183,7 @@ BOOST_AUTO_TEST_CASE( state_create )
   // We can also translate parameters to a json:
   std::stringstream json;
   eckit::JSON js(json); js << p;
-  eckit::Log::info() << "json = " << json.str() << std::endl;
+  Log::info() << "json = " << json.str() << std::endl;
 
   // And we can create back parameters from json:
   Config from_json_stream(json);
@@ -197,10 +197,10 @@ BOOST_AUTO_TEST_CASE( state_create )
   BOOST_CHECK( state.has("wind") );
   BOOST_CHECK( state.has("soiltype") );
 
-  eckit::Log::info() << state.field("temperature") << std::endl;
-  eckit::Log::info() << state.field("wind")        << std::endl;
-  eckit::Log::info() << state.field("soiltype")    << std::endl;
-  eckit::Log::info() << state.field("GFL")         << std::endl;
+  Log::info() << state.field("temperature") << std::endl;
+  Log::info() << state.field("wind")        << std::endl;
+  Log::info() << state.field("soiltype")    << std::endl;
+  Log::info() << state.field("GFL")         << std::endl;
 
   ArrayView<float,4> temperature( state.field("temperature") );
   temperature(0,0,0,0) = 0;

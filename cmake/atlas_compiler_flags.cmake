@@ -1,4 +1,4 @@
-# (C) Copyright 1996-2014 ECMWF.
+# (C) Copyright 1996-2015 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -6,53 +6,38 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
+if( NOT CMAKE_TOOLCHAIN_FILE )
+  
+  ecbuild_debug("No toolchain file present, attempt with built-in compiler flags")
 
-if( NOT CMAKE_BUILD_TYPE MATCHES "Debug" )
-  add_definitions( -DNDEBUG )
-endif( )
-
-#######################################################################################
-# Fortran
-#######################################################################################
-
-if( CMAKE_Fortran_COMPILER_ID MATCHES "GNU" )
-  include( compiler_flags_GNU_Fortran )
-elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Intel" )
-  include( compiler_flags_Intel_Fortran )
-elseif( CMAKE_Fortran_COMPILER_ID MATCHES "XL" )
-  include( compiler_flags_XL_Fortran )
-elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )
-  if( NOT CMAKE_TOOLCHAIN_FILE )
-    message( FATAL_ERROR "Need toolchain file" )
+  #######################################################################################
+  # Fortran
+  #######################################################################################
+  
+  include( compiler_flags_${CMAKE_Fortran_COMPILER_ID}_Fortran OPTIONAL 
+           RESULT_VARIABLE INCLUDED_Fortran_FLAGS )
+  if( NOT INCLUDED_Fortran_FLAGS )
+      ecbuild_info("Fortran compiler with ID ${CMAKE_Fortran_COMPILER_ID} will be used with CMake default options")
   endif()
-  #include( compiler_flags_Cray_Fortran )
-else()
-  message( STATUS "Fortran compiler with ID ${CMAKE_Fortran_COMPILER_ID} will be used with CMake default options")
-endif()
 
-#######################################################################################
-# C
-#######################################################################################
+  #######################################################################################
+  # C
+  #######################################################################################
 
-# todo
+  # todo
 
-#######################################################################################
-# C++
-#######################################################################################
+  #######################################################################################
+  # C++
+  #######################################################################################
 
-if( CMAKE_CXX_COMPILER_ID MATCHES "GNU" )
-  include( compiler_flags_GNU_CXX )
-elseif( CMAKE_CXX_COMPILER_ID MATCHES "Intel" )
-  include( compiler_flags_Intel_CXX )
-elseif( CMAKE_CXX_COMPILER_ID MATCHES "XL" )
-  include( compiler_flags_XL_CXX )
-elseif( CMAKE_CXX_COMPILER_ID MATCHES "Cray" )
-  if( NOT CMAKE_TOOLCHAIN_FILE )
-    message( FATAL_ERROR "Need toolchain file" )
+  include( compiler_flags_${CMAKE_CXX_COMPILER_ID}_CXX OPTIONAL 
+           RESULT_VARIABLE INCLUDED_CXX_FLAGS )
+  if( NOT INCLUDED_CXX_FLAGS )
+      ecbuild_info("C++ compiler with ID ${CMAKE_CXX_COMPILER_ID} will be used with CMake default options")
   endif()
-  #include( compiler_flags_Cray_CXX )
-elseif( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
-  include( compiler_flags_Clang_CXX )
+
 else()
-  message( STATUS "C++ compiler with ID ${CMAKE_CXX_COMPILER_ID} will be used with CMake default options")
+  
+  ecbuild_debug("Toolchain file present, all compiler flags should already be present")
+  
 endif()

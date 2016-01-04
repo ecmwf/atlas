@@ -58,6 +58,19 @@ contains
     endif
   end function atlas_mpi_rank
 
+  function atlas_mpi_proc(comm)
+    integer, optional :: comm
+    integer :: ierr
+    integer :: irank
+    integer :: atlas_mpi_proc
+    if( present(comm) ) then
+      call MPI_COMM_RANK( comm, irank, ierr )
+    else
+      call MPI_COMM_RANK( atlas_mpi_comm(), irank, ierr )
+    endif
+    atlas_mpi_proc = irank + 1
+  end function atlas_mpi_proc
+
   function atlas_mpi_size(comm)
     integer, optional :: comm
     integer :: ierr

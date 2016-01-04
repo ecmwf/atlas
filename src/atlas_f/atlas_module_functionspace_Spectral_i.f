@@ -30,6 +30,9 @@ contains
     & create_glb_field_name, &
     & create_glb_field_name_lev
 
+  procedure, public :: gather => SpectralFunctionspace__gather
+  procedure, public :: scatter => SpectralFunctionspace__scatter
+
 #ifdef FORTRAN_SUPPORTS_FINAL
   final :: atlas_functionspace_Spectral__final
 #endif
