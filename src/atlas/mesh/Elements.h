@@ -82,7 +82,28 @@ public:
 
   /// @brief End of elements in hybrid_elements
   size_t end() const;
+  
+  
+  const Field& field(const std::string& name) const { return hybrid_elements_->field(name); }
+        Field& field(const std::string& name)   { return hybrid_elements_->field(name); }
+  bool has_field(const std::string& name) const { return hybrid_elements_->has_field(name); }
 
+  const Field& field(size_t idx) const { return hybrid_elements_->field(idx); }
+        Field& field(size_t idx) { return hybrid_elements_->field(idx); }
+  size_t nb_fields() const { return hybrid_elements_->nb_fields(); }
+
+  const Field& global_index() const { return hybrid_elements_->global_index(); }
+        Field& global_index()       { return hybrid_elements_->global_index(); }
+
+  const Field& remote_index() const { return hybrid_elements_->remote_index(); }
+        Field& remote_index()       { return hybrid_elements_->remote_index(); }
+
+  const Field& partition() const { return hybrid_elements_->partition(); }
+        Field& partition()       { return hybrid_elements_->partition(); }
+
+  const Field& halo() const { return hybrid_elements_->halo(); }
+        Field& halo()       { return hybrid_elements_->halo(); }
+  
 private:
   bool owns_;
   HybridElements* hybrid_elements_;

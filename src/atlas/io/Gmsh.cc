@@ -32,6 +32,9 @@
 #include "atlas/FieldSet.h"
 #include "atlas/Parameters.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/mesh/HybridElements.h"
+#include "atlas/mesh/ElementType.h"
+#include "atlas/mesh/Elements.h"
 
 using namespace eckit;
 using atlas::functionspace::Nodes;
@@ -636,9 +639,11 @@ void Gmsh::read(const PathName& file_path, Mesh& mesh ) const
 
 
 void Gmsh::write(const Mesh& mesh, const PathName& file_path) const
-{
+{  
+  mesh::temporary::Convert::convertMesh(const_cast<Mesh&>(mesh));
+  
   int part = mesh.metadata().has("part") ? mesh.metadata().get<size_t>("part") : eckit::mpi::rank();
-  bool include_ghost_elements = options.get<bool>("ghost");
+  bool include_ghost = options.get<bool>("ghost") && options.get<bool>("elements");
 
   std::string nodes_field = options.get<std::string>("nodes");
 
@@ -649,42 +654,6 @@ void Gmsh::write(const Mesh& mesh, const PathName& file_path) const
   const size_t surfdim = coords.shape(1); // nb of variables in coords
 
   ASSERT(surfdim == 2 || surfdim == 3);
-
-  size_t nb_nodes = nodes.size();
-
-  // Find out number of elements to write
-  int nb_quads(0);
-  if( mesh.has_function_space("quads") )
-  {
-    FunctionSpace& quads       = mesh.function_space( "quads" );
-    nb_quads = quads.metadata().has("nb_owned") ? quads.metadata().get<size_t>("nb_owned") : quads.shape(0);
-    if( include_ghost_elements == true )
-      nb_quads = quads.shape(0);
-    if( options.get<bool>("elements") == false )
-      nb_quads = 0;
-  }
-
-  int nb_triags(0);
-  if( mesh.has_function_space("triags") )
-  {
-    FunctionSpace& triags       = mesh.function_space( "triags" );
-    nb_triags = triags.metadata().has("nb_owned") ? triags.metadata().get<size_t>("nb_owned") : triags.shape(0);
-    if( include_ghost_elements == true )
-      nb_triags = triags.shape(0);
-    if( options.get<bool>("elements") == false )
-      nb_triags = 0;
-  }
-
-  int nb_edges(0);
-  if( mesh.has_function_space("edges") )
-  {
-    FunctionSpace& edges       = mesh.function_space( "edges" );
-    nb_edges = edges.metadata().has("nb_owned") ? edges.metadata().get<size_t>("nb_owned") :  edges.shape(0);
-    if( include_ghost_elements == true )
-      nb_edges = edges.shape(0);
-    if( options.get<bool>("edges") == false && (nb_triags+nb_quads) > 0 )
-      nb_edges = 0;
-  }
 
   Log::info() << "writing mesh to gmsh file " << file_path << std::endl;
 
@@ -702,6 +671,7 @@ void Gmsh::write(const Mesh& mesh, const PathName& file_path) const
     write_header_ascii(file);
 
   // Nodes
+  const size_t nb_nodes = nodes.size();
   file << "$Nodes\n";
   file << nb_nodes << "\n";
   double xyz[3] = {0.,0.,0.};
@@ -727,163 +697,108 @@ void Gmsh::write(const Mesh& mesh, const PathName& file_path) const
 
   // Elements
   file << "$Elements\n";
-
-  if( binary)
   {
-    file << nb_quads+nb_triags+nb_edges << "\n";
-    int header[3];
-    int data[9];
-    if( nb_quads )
+    std::vector<const mesh::HybridElements*> grouped_elements;
+    if( options.get<bool>("elements") )
+      grouped_elements.push_back(&mesh.cells());
+    if( options.get<bool>("edges") )
+      grouped_elements.push_back(&mesh.edges());
+
+    size_t nb_elements(0);
+    for( size_t jgroup=0; jgroup<grouped_elements.size(); ++jgroup )
     {
-      FunctionSpace& quads       = mesh.function_space( "quads" );
-      IndexView<int,2> quad_nodes   ( quads.field( "nodes" ) );
-      ArrayView<gidx_t,1> quad_glb_idx ( quads.field( "glb_idx" ) );
-      ArrayView<int,1> quad_part    ( quads.field( "partition" ) );
-      header[0] = 3;         // elm_type = QUAD
-      header[1] = nb_quads;  // nb_elems
-      header[2] = 4;         // nb_tags
-      file.write(reinterpret_cast<const char*>(&header), sizeof(int)*3 );
-      data[1]=1;
-      data[2]=1;
-      data[3]=1;
-      for( int e=0; e<nb_quads; ++e)
+      const mesh::HybridElements& hybrid = *grouped_elements[jgroup];
+      nb_elements += hybrid.size();
+      if( !include_ghost )
       {
-        data[0] = quad_glb_idx(e);
-        data[4] = quad_part(e);
-        for( int n=0; n<4; ++n )
-          data[5+n] = glb_idx( quad_nodes(e,n) );
-        file.write(reinterpret_cast<const char*>(&data), sizeof(int)*9 );
-      }
-    }
-    if( nb_triags )
-    {
-      FunctionSpace& triags      = mesh.function_space( "triags" );
-      IndexView<int,2> triag_nodes   ( triags.field( "nodes" ) );
-      ArrayView<gidx_t,1> triag_glb_idx ( triags.field( "glb_idx" ) );
-      ArrayView<int,1> triag_part    ( triags.field( "partition" ) );
-      header[0] = 2;         // elm_type = TRIAG
-      header[1] = nb_triags; // nb_elems
-      header[2] = 4;         // nb_tags
-      file.write(reinterpret_cast<const char*>(&header), sizeof(int)*3 );
-      data[1]=1;
-      data[2]=1;
-      data[3]=1;
-      for( int e=0; e<nb_triags; ++e)
-      {
-        data[0] = triag_glb_idx(e);
-        data[4] = triag_part(e);
-        for( int n=0; n<3; ++n )
-          data[5+n] = glb_idx( triag_nodes(e,n) );
-        file.write(reinterpret_cast<const char*>(&data), sizeof(int)*8 );
-      }
-    }
-    if( nb_edges )
-    {
-      FunctionSpace& edges       = mesh.function_space( "edges" );
-      IndexView<int,2> edge_nodes   ( edges.field( "nodes" ) );
-      ArrayView<gidx_t,1> edge_glb_idx ( edges.field( "glb_idx" ) );
-      header[0] = 1;         // elm_type = LINE
-      header[1] = nb_edges;  // nb_elems
-      if( edges.has_field("partition") )
-      {
-        header[2] = 4;         // nb_tags
-        data[1]=1;
-        data[2]=1;
-        data[3]=1;
-        ArrayView<int,1> edge_part ( edges.field( "partition" ) );
-        for( int e=0; e<nb_edges; ++e)
+        const ArrayView<int,1> hybrid_halo( hybrid.halo() );
+        for( size_t e=0; e<hybrid.size(); ++e )
         {
-          data[0] = edge_glb_idx(e);
-          data[4] = edge_part(e);
-          for( int n=0; n<2; ++n )
-            data[5+n] = glb_idx(edge_nodes(e,n) );
-          file.write(reinterpret_cast<const char*>(&data), sizeof(int)*7 );
-        }
-      }
-      else
-      {
-        header[2] = 2;         // nb_tags
-        data[1]=1;
-        data[2]=1;
-        for( int e=0; e<nb_edges; ++e)
-        {
-          data[0] = edge_glb_idx(e);
-          file << edge_glb_idx(e) << " 1 2 1 1";
-          for( int n=0; n<2; ++n )
-            data[3+n] = glb_idx(edge_nodes(e,n) );
-          file.write(reinterpret_cast<const char*>(&data), sizeof(int)*5 );
+          if( hybrid_halo(e) ) --nb_elements;
         }
       }
     }
-
-    file << "\n";
-  }
-  else
-  {
-    file << nb_quads+nb_triags+nb_edges << "\n";
-    if( nb_quads )
+    
+    file << nb_elements << "\n";
+    
+    for( size_t jgroup=0; jgroup<grouped_elements.size(); ++jgroup )
     {
-      FunctionSpace& quads       = mesh.function_space( "quads" );
-      IndexView<int,2> quad_nodes   ( quads.field( "nodes" ) );
-      ArrayView<gidx_t,1> quad_glb_idx ( quads.field( "glb_idx" ) );
-      ArrayView<int,1> quad_part    ( quads.field( "partition" ) );
+      const mesh::HybridElements& hybrid = *grouped_elements[jgroup];
+      for( size_t etype=0; etype<hybrid.nb_types(); ++etype )
+      {
+        const mesh::Elements& elements = hybrid.elements(etype);
+        const mesh::ElementType& element_type = elements.element_type();
+        int gmsh_elem_type;
+        if( element_type.name() == "Line" )
+          gmsh_elem_type = 1;
+        else if( element_type.name() == "Triangle" )
+          gmsh_elem_type = 2;
+        else if( element_type.name() == "Quadrilateral" )
+          gmsh_elem_type = 3;
+        else
+          NOTIMP;
 
-      for( int e=0; e<nb_quads; ++e)
-      {
-        file << quad_glb_idx(e) << " 3 4 1 1 1 " << quad_part(e);
-        for( int n=0; n<4; ++n )
-          file << " " << glb_idx( quad_nodes(e,n) );
-        file << "\n";
-      }
-    }
-    if( nb_triags )
-    {
-      FunctionSpace& triags      = mesh.function_space( "triags" );
-      IndexView<int,2> triag_nodes   ( triags.field( "nodes" ) );
-      ArrayView<gidx_t,1> triag_glb_idx ( triags.field( "glb_idx" ) );
-      ArrayView<int,1> triag_part    ( triags.field( "partition" ) );
-
-      for( int e=0; e<nb_triags; ++e)
-      {
-        file << triag_glb_idx(e) << " 2 4 1 1 1 " << triag_part(e);
-        for( int n=0; n<3; ++n )
-          file << " " << glb_idx( triag_nodes(e,n) );
-        file << "\n";
-      }
-    }
-    if( nb_edges )
-    {
-      FunctionSpace& edges       = mesh.function_space( "edges" );
-      IndexView<int,2> edge_nodes   ( edges.field( "nodes" ) );
-      ArrayView<gidx_t,1> edge_glb_idx ( edges.field( "glb_idx" ) );
-      if( edges.has_field("partition") )
-      {
-        ArrayView<int,1> edge_part ( edges.field( "partition" ) );
-        for( int e=0; e<nb_edges; ++e)
+        const mesh::Elements::Connectivity& node_connectivity = elements.node_connectivity();
+        const ArrayView<gidx_t,1> elems_glb_idx( elements.global_index() );
+        const ArrayView<int,1> elems_partition( elements.partition() );
+        const ArrayView<int,1> elems_halo( elements.halo() );
+        
+        if( binary )
         {
-          file << edge_glb_idx(e) << " 1 4 1 1 1 " << edge_part(e);
-          for( int n=0; n<2; ++n )
-            file << " " << glb_idx( edge_nodes(e,n) );
-          file << "\n";
+          size_t nb_elems=elements.size();
+          if( !include_ghost )
+          {
+            for(size_t elem=0; elem<elements.size(); ++elem )
+            {
+              if( elems_halo(elements.begin()+elem) ) --nb_elems;
+            }
+          }
+          
+          int header[3];
+          int data[9];
+          header[0] = gmsh_elem_type;
+          header[1] = nb_elems;
+          header[2] = 4; // nb_tags
+          file.write(reinterpret_cast<const char*>(&header), sizeof(int)*3 );
+          data[1]=1;
+          data[2]=1;
+          data[3]=1;
+          size_t datasize = sizeof(int)*(5+node_connectivity.cols());
+          for(size_t elem=0; elem<elements.size(); ++elem )
+          {
+            if( include_ghost || !elems_halo(elements.begin()+elem) )
+            {
+              data[0] = elems_glb_idx(elements.begin()+elem);
+              data[4] = elems_partition(elements.begin()+elem);
+              for( int n=0; n<node_connectivity.cols(); ++n )
+                data[5+n] = glb_idx(node_connectivity(elem,n));
+              file.write(reinterpret_cast<const char*>(&data), datasize );
+            }
+          }
         }
-      }
-      else
-      {
-        for( int e=0; e<nb_edges; ++e)
+        else
         {
-          file << edge_glb_idx(e) << " 1 2 1 1";
-          for( int n=0; n<2; ++n )
-            file << " " << glb_idx( edge_nodes(e,n) );
-          file << "\n";
+          std::stringstream ss_elem_info; ss_elem_info << " " << gmsh_elem_type << " 4 1 1 1 ";
+          std::string elem_info = ss_elem_info.str();
+          for(size_t elem=0; elem<elements.size(); ++elem )
+          {
+            if( include_ghost || !elems_halo(elements.begin()+elem) )
+            {
+              file << elems_glb_idx(elements.begin()+elem) << elem_info << elems_partition(elements.begin()+elem);
+              for( int n=0; n<node_connectivity.cols(); ++n ) {
+                file << " " << glb_idx(node_connectivity(elem,n));
+              }
+              file << "\n";
+            }
+          }
         }
       }
     }
   }
+  if( binary ) file << "\n";
   file << "$EndElements\n";
   file << std::flush;
   file.close();
-
-
 
   // Optional mesh information file
   if( options.has("info") && options.get<bool>("info") )

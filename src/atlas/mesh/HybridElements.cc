@@ -37,7 +37,7 @@ HybridElements::HybridElements() :
   global_index_ = &add( Field::create<gidx_t>("glb_idx",   make_shape(size(),1)) );
   remote_index_ = &add( Field::create<int   >("remote_idx",make_shape(size(),1)) );
   partition_    = &add( Field::create<int   >("partition", make_shape(size(),1)) );
-  ghost_        = &add( Field::create<int   >("ghost",     make_shape(size(),1)) );
+  halo_         = &add( Field::create<int   >("halo",     make_shape(size(),1)) );
   
   node_connectivity_ = &add( "node", new Connectivity() );  
   edge_connectivity_ = &add( "edge", new Connectivity() );  
@@ -168,7 +168,7 @@ size_t HybridElements::add( const ElementType* element_type, size_t nb_elements,
     elements_[t].reset( new Elements(*this,t) );
   }
   
-  node_connectivity_->add(nb_elements,nb_nodes,connectivity);
+  node_connectivity_->add(nb_elements,nb_nodes,connectivity,fortran_array);
   resize( new_size );
   return element_types_.size()-1;
 }
@@ -204,176 +204,6 @@ extern "C" {
 }  // namespace atlas
 
 #undef FORTRAN_BASE
-
-
-#include "atlas/Mesh.h"
-#include "atlas/FunctionSpace.h"
-#include "atlas/util/IndexView.h"
-#include "atlas/util/Debug.h"
-#include "atlas/Parameters.h"
-
-namespace atlas {
-namespace mesh {
-namespace temporary {
-
-void Convert::convertMesh( Mesh& mesh )
-{
-  createElements(mesh,Entity::ELEMS,mesh.cells());
-  createElements(mesh,Entity::FACES,mesh.facets());
-}
-  
-void Convert::createElements( const Mesh& mesh, Entity::Type type, HybridElements& elements )
-{
-  HybridElements* hybrid_elements = &elements;
-  
-  std::set<std::string> fields;
-  for(size_t func_space_idx = 0; func_space_idx < mesh.nb_function_spaces(); ++func_space_idx)
-  {
-    FunctionSpace& functionspace = mesh.function_space(func_space_idx);
-    if( functionspace.metadata().get<long>("type") == type )
-    {
-      size_t nb_elems = functionspace.field("nodes").shape(0);
-      size_t nb_nodes_per_elem = functionspace.field("nodes").shape(1);
-      ElementType* element_type(0);
-      if( nb_nodes_per_elem==2 ) element_type = new Line();
-      if( nb_nodes_per_elem==3 ) element_type = new Triangle();
-      if( nb_nodes_per_elem==4 ) element_type = new Quadrilateral();
-      if(!element_type) throw eckit::SeriousBug("element_type not supported",Here());
-    
-      bool fortran_array = true;
-      size_t t = hybrid_elements->add(element_type,nb_elems,functionspace.field("nodes").data<idx_t>(),fortran_array);
-      Elements& elements = hybrid_elements->elements(t);
-      
-      if( functionspace.has_field("to_edge") )
-      {
-        size_t nb_edges_per_elem = functionspace.field("to_edge").shape(1);
-        hybrid_elements->edge_connectivity().add(nb_elems,nb_edges_per_elem,functionspace.field("to_edge").data<idx_t>(),fortran_array);
-        ASSERT( nb_elems == functionspace.field("to_edge").shape(0) );
-      }
-      
-      if( functionspace.has_field("to_elem") )
-      {
-        size_t nb_connected_cells = 2;
-        std::vector<idx_t> to_elem(nb_elems*2);
-        const IndexView<int,3> to_elem_field ( functionspace.field( "to_elem" ).data<int>(), make_shape(nb_elems,2,2) );
-        for( size_t e=0; e<nb_elems; ++e )
-        {
-          for( size_t j=0; j<2; ++j )
-          {
-            int fs = to_elem_field(e,j,0);
-            if( fs == -1 )
-              to_elem[e*2+j] = hybrid_elements->cell_connectivity().missing_value();
-            else if( fs == 0 )
-              to_elem[e*2+j] = to_elem_field(e,j,1) + 0;
-            else if( fs == 1 )
-              to_elem[e*2+j] = to_elem_field(e,j,1) + mesh.function_space("quads").shape(0);
-          }
-        }
-        hybrid_elements->cell_connectivity().add(nb_elems,nb_connected_cells,to_elem.data(),false);
-        ASSERT( nb_elems == functionspace.field("to_elem").shape(0) );
-      }
-      
-      std::map<std::string,std::string> rename;
-      std::set<std::string> ignore_connectivities;
-      rename["glb_idx"]    = hybrid_elements->global_index().name();
-      rename["remote_idx"] = hybrid_elements->remote_index().name();
-      rename["partition"]  = hybrid_elements->partition().name();
-      ignore_connectivities.insert("nodes");
-      ignore_connectivities.insert("to_edge");
-      ignore_connectivities.insert("to_elem");
-      
-      for( size_t f=0; f<functionspace.nb_fields(); ++f )
-      {
-        const Field& field = functionspace.field(f);
-        std::string fname = field.name();
-        if( ignore_connectivities.find(fname) == ignore_connectivities.end() )
-        {
-          if( rename.find(fname) != rename.end() )
-            fname = rename[fname];
-          fields.insert(fname);
-          
-          eckit::Log::info() << fname << "<"<< field.datatype().str() << ">" << std::endl;
-          
-          if( !hybrid_elements->has_field(fname) )
-          {
-            hybrid_elements->add( Field::create(fname, Array::create(field.array())) );
-          }
-          else
-          {
-            if( field.rank() == 1 )
-            {
-              if( field.datatype().kind() == DataType::KIND_REAL64 ) {
-                ArrayView<double,1> old_data ( field );
-                ArrayView<double,1> new_data ( hybrid_elements->field(fname) );
-                for( size_t e=0; e<nb_elems; ++e ) new_data(e + elements.begin()) = old_data(e);
-              }
-              if( field.datatype().kind() == DataType::KIND_REAL32 ) {
-                ArrayView<float,1> old_data ( field );
-                ArrayView<float,1> new_data ( hybrid_elements->field(fname) );
-                for( size_t e=0; e<nb_elems; ++e ) new_data(e + elements.begin()) = old_data(e);
-              }
-              if( field.datatype().kind() == DataType::KIND_INT64 ) {
-                ArrayView<long,1> old_data ( field );
-                ArrayView<long,1> new_data ( hybrid_elements->field(fname) );
-                for( size_t e=0; e<nb_elems; ++e ) new_data(e + elements.begin()) = old_data(e);
-              }
-              if( field.datatype().kind() == DataType::KIND_INT32 ) {
-                ArrayView<int,1> old_data ( field );
-                ArrayView<int,1> new_data ( hybrid_elements->field(fname) );
-                for( size_t e=0; e<nb_elems; ++e ) new_data(e + elements.begin()) = old_data(e);
-              }
-            }
-            if( field.rank() == 2 )
-            {
-              if( field.datatype().kind() == DataType::KIND_REAL64 ) {
-                ArrayView<double,2> old_data ( field );
-                ArrayView<double,2> new_data ( hybrid_elements->field(fname) );
-                for( size_t e=0; e<nb_elems; ++e ) {
-                  for( size_t v=0; v<field.shape(1); ++v ) {
-                    new_data(e + elements.begin(),v) = old_data(e,v);
-                  }
-                }
-              }
-              if( field.datatype().kind() == DataType::KIND_REAL32 ) {
-                ArrayView<float,2> old_data ( field );
-                ArrayView<float,2> new_data ( hybrid_elements->field(fname) );
-                for( size_t e=0; e<nb_elems; ++e ) {
-                  for( size_t v=0; v<field.shape(1); ++v ) {
-                    new_data(e + elements.begin(),v) = old_data(e,v);
-                  }
-                }
-              }
-              if( field.datatype().kind() == DataType::KIND_INT64 ) {
-                ArrayView<long,2> old_data ( field );
-                ArrayView<long,2> new_data ( hybrid_elements->field(fname) );
-                for( size_t e=0; e<nb_elems; ++e ) {
-                  for( size_t v=0; v<field.shape(1); ++v ) {
-                    new_data(e + elements.begin(),v) = old_data(e,v);
-                  }
-                }
-              }
-              if( field.datatype().kind() == DataType::KIND_INT32 ) {
-                ArrayView<int,2> old_data ( field );
-                ArrayView<int,2> new_data ( hybrid_elements->field(fname) );
-                for( size_t e=0; e<nb_elems; ++e ) {
-                  for( size_t v=0; v<field.shape(1); ++v ) {
-                    new_data(e + elements.begin(),v) = old_data(e,v);
-                  }
-                }
-              }
-            }
-          }
-        }
-      
-      }
-    }
-  }
-}
-
-
-}
-}
-}
 
 
 

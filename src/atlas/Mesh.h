@@ -73,7 +73,11 @@ private:
 };
 
 
+namespace mesh { namespace temporary { class Convert; } }
+
 class Mesh : public eckit::Owned, public util::Registered<Mesh> {
+
+  friend class mesh::temporary::Convert;
 
 public: // types
 
@@ -217,5 +221,26 @@ extern "C"
 //----------------------------------------------------------------------------------------------------------------------
 
 } // namespace atlas
+
+//------------------------------------------------------------------------------------------------------
+
+#include "atlas/Parameters.h"
+
+namespace atlas {
+namespace mesh {
+namespace temporary {
+  
+  class Convert
+  {
+  public:
+    static void convertMesh( Mesh& );
+    static void createElements( const Mesh&, Entity::Type, HybridElements& );
+  };
+  
+}
+
+} // namespace mesh
+} // namespace atlas
+
 
 #endif // atlas_Mesh_h

@@ -157,8 +157,8 @@ public:
   const Field& partition() const { return *partition_; }
         Field& partition()       { return *partition_; }
 
-  const Field& ghost() const { return *ghost_; }
-        Field& ghost()       { return *ghost_; }
+  const Field& halo() const { return *halo_; }
+        Field& halo()       { return *halo_; }
 
 
 
@@ -177,7 +177,7 @@ private:
   Field* global_index_;
   Field* remote_index_;
   Field* partition_;
-  Field* ghost_;
+  Field* halo_;
 
 };
 
@@ -258,26 +258,6 @@ inline size_t HybridElements::type_idx( size_t elem_idx ) const
 
 extern "C"
 {
-}
-
-} // namespace mesh
-} // namespace atlas
-
-//------------------------------------------------------------------------------------------------------
-
-#include "atlas/Parameters.h"
-
-namespace atlas {
-namespace mesh {
-namespace temporary {
-  
-  class Convert
-  {
-  public:
-    static void convertMesh( Mesh& );
-    static void createElements( const Mesh&, Entity::Type, HybridElements& );
-  };
-  
 }
 
 } // namespace mesh
