@@ -22,6 +22,7 @@
 #include "atlas/Grid.h"
 #include "atlas/Parameters.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/mesh/HybridElements.h"
 
 namespace atlas {
 
@@ -38,14 +39,16 @@ Mesh* Mesh::create( const Grid& grid, const eckit::Parametrisation& params )
 }
 
 Mesh::Mesh( const eckit::Parametrisation& ):
-  grid_(NULL)
+  grid_(NULL), dimensionality_(2)
 {
+  createElements();
 }
 
 Mesh::Mesh(const Grid& grid, const eckit::Parametrisation& ) :
-  grid_(&grid)
+  grid_(&grid), dimensionality_(2)
 {
   createNodes(grid);
+  createElements();
 }
 
 Mesh::~Mesh()
@@ -122,6 +125,20 @@ void Mesh::print(std::ostream& os) const
         os << function_space(i);
     }
     os << "]";
+}
+
+void Mesh::createElements()
+{
+  cells_.reset( new mesh::HybridElements() );
+  facets_.reset( new mesh::HybridElements() );
+  ridges_.reset( new mesh::HybridElements() );
+  peaks_.reset( new mesh::HybridElements() );
+  if( dimensionality_ == 2 )
+    edges_ = facets_;
+  else if( dimensionality_ == 3)
+    edges_ = ridges_;
+  else
+    throw eckit::Exception("Invalid Mesh dimensionality",Here());
 }
 
 mesh::Nodes& Mesh::createNodes( size_t size )

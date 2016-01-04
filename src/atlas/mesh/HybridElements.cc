@@ -182,6 +182,16 @@ size_t HybridElements::add( const Elements& elems )
 
 const std::string& HybridElements::name(size_t elem_idx) const { return element_types_[type_idx_[elem_idx]]->name(); }
 
+size_t HybridElements::elemtype_nb_nodes(size_t elem_idx) const
+{
+  return element_type( type_idx(elem_idx) ).nb_nodes();
+}
+
+size_t HybridElements::elemtype_nb_edges(size_t elem_idx) const
+{
+  return element_type( type_idx(elem_idx) ).nb_edges();
+}
+
 //-----------------------------------------------------------------------------
 
 extern "C" {
@@ -206,17 +216,15 @@ namespace atlas {
 namespace mesh {
 namespace temporary {
 
-HybridElements* Convert::createCells( const Mesh& mesh )
+void Convert::convertMesh( Mesh& mesh )
 {
-  return createElements(mesh,Entity::ELEMS);
+  createElements(mesh,Entity::ELEMS,mesh.cells());
+  createElements(mesh,Entity::FACES,mesh.facets());
 }
-HybridElements* Convert::createFaces( const Mesh& mesh )
+  
+void Convert::createElements( const Mesh& mesh, Entity::Type type, HybridElements& elements )
 {
-  return createElements(mesh,Entity::FACES);
-}
-HybridElements* Convert::createElements( const Mesh& mesh, Entity::Type type )
-{
-  HybridElements* hybrid_elements = new HybridElements();
+  HybridElements* hybrid_elements = &elements;
   
   std::set<std::string> fields;
   for(size_t func_space_idx = 0; func_space_idx < mesh.nb_function_spaces(); ++func_space_idx)
@@ -360,7 +368,6 @@ HybridElements* Convert::createElements( const Mesh& mesh, Entity::Type type )
       }
     }
   }
-  return hybrid_elements;
 }
 
 

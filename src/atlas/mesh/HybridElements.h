@@ -163,6 +163,9 @@ public:
 
 
 private:
+  
+  size_t elemtype_nb_nodes(size_t elem_idx) const ;
+  size_t elemtype_nb_edges(size_t elem_idx) const ;
 
   Connectivity& add( const std::string& name, Connectivity* );
 
@@ -238,12 +241,12 @@ inline Elements& HybridElements::elements( size_t type_idx )
 
 inline size_t HybridElements::nb_nodes( size_t elem_idx ) const
 {
-  return node_connectivity_->rows() ? node_connectivity_->cols(elem_idx) : element_type( type_idx(elem_idx) ).nb_nodes();
+  return node_connectivity_->rows() ? node_connectivity_->cols(elem_idx) :  elemtype_nb_nodes(elem_idx);
 }
 
 inline size_t HybridElements::nb_edges( size_t elem_idx ) const
 {
-  return edge_connectivity_->rows() ? edge_connectivity_->cols(elem_idx) : element_type( type_idx(elem_idx) ).nb_edges();
+  return edge_connectivity_->rows() ? edge_connectivity_->cols(elem_idx) : elemtype_nb_edges(elem_idx);
 }
 
 inline size_t HybridElements::type_idx( size_t elem_idx ) const
@@ -271,9 +274,8 @@ namespace temporary {
   class Convert
   {
   public:
-    static HybridElements* createCells( const Mesh& );
-    static HybridElements* createFaces( const Mesh& );
-    static HybridElements* createElements( const Mesh&, Entity::Type );
+    static void convertMesh( Mesh& );
+    static void createElements( const Mesh&, Entity::Type, HybridElements& );
   };
   
 }

@@ -29,6 +29,7 @@
 // Forward declarations
 namespace atlas { class Grid; }
 namespace atlas { namespace mesh { class Nodes; } }
+namespace atlas { namespace mesh { class HybridElements; } }
 namespace atlas { class FunctionSpace; }
 namespace atlas { class GridDistribution; }
 namespace atlas { namespace mpl { class HaloExchange; } }
@@ -136,6 +137,21 @@ public: // methods
     const mesh::Nodes& nodes() const { ASSERT(nodes_); return *nodes_; }
           mesh::Nodes& nodes()       { ASSERT(nodes_); return *nodes_; }
 
+    const mesh::HybridElements& cells() const { return *cells_; }
+          mesh::HybridElements& cells()       { return *cells_; }
+
+    const mesh::HybridElements& facets() const { return *facets_; }
+          mesh::HybridElements& facets()       { return *facets_; }
+
+    const mesh::HybridElements& ridges() const { return *ridges_; }
+          mesh::HybridElements& ridges()       { return *ridges_; }
+
+    const mesh::HybridElements& peaks() const { return *peaks_; }
+          mesh::HybridElements& peaks()       { return *peaks_; }
+
+    const mesh::HybridElements& edges() const { return *edges_; }
+          mesh::HybridElements& edges()       { return *edges_; }
+
     const Store<const mpl::HaloExchange>& halo_exchange() const { return halo_exchange_; }
           Store<const mpl::HaloExchange>& halo_exchange()       { return halo_exchange_; }
 
@@ -151,6 +167,8 @@ private:  // methods
         p.print(s);
         return s;
     }
+    
+    void createElements();
 
 private: // members to be removed
 
@@ -164,10 +182,20 @@ private: // members to be removed
 private: // members
 
     Metadata   metadata_;
-    eckit::SharedPtr<mesh::Nodes> nodes_;
-    Store<const mpl::HaloExchange> halo_exchange_;
+    eckit::SharedPtr<mesh::Nodes> nodes_;           
+                                                      // dimensionality : 2D    3D
+    eckit::SharedPtr<mesh::HybridElements> cells_;    //                  2D    3D
+    eckit::SharedPtr<mesh::HybridElements> facets_;   //                  1D    2D
+    eckit::SharedPtr<mesh::HybridElements> ridges_;   //                  0D    1D
+    eckit::SharedPtr<mesh::HybridElements> peaks_;    //                  NA    0D
+
+    eckit::SharedPtr<mesh::HybridElements> edges_;  // alias to facets of 2D mesh, ridges of 3D mesh
+
+    Store<const mpl::HaloExchange>  halo_exchange_;
     Store<const mpl::GatherScatter> gather_scatter_;
     Store<const mpl::Checksum> checksum_;
+    
+    size_t dimensionality_;
 
 };
 
