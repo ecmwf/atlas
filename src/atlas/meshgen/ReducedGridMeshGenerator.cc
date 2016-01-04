@@ -1145,14 +1145,6 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
   quads.metadata().set("nb_owned",nquads);
   triags.metadata().set("nb_owned",ntriags);
 
-  gidx_t max_glb_idx = rg.npts()+rg.nlat();
-  if( three_dimensional ) max_glb_idx -= rg.nlat();
-  if( include_north_pole ) max_glb_idx += 1;
-  if( include_south_pole ) max_glb_idx += 1;
-  nodes.metadata().set("max_glb_idx",max_glb_idx);
-  quads.metadata().set("max_glb_idx", nquads+ntriags);
-  triags.metadata().set("max_glb_idx",nquads+ntriags);
-
   generate_global_element_numbering( mesh );
 
 

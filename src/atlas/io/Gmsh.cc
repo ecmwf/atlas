@@ -460,7 +460,6 @@ void Gmsh::read(const PathName& file_path, Mesh& mesh ) const
     std::getline(file,line);
 
   nodes.metadata().set("nb_owned",nb_nodes);
-  nodes.metadata().set("max_glb_idx",max_glb_idx);
 
   int nb_elements=0;
 
@@ -623,13 +622,10 @@ void Gmsh::read(const PathName& file_path, Mesh& mesh ) const
     }
     quads.metadata().set("nb_owned",nb_etype[QUAD]);
     triags.metadata().set("nb_owned",nb_etype[TRIAG]);
-    quads.metadata().set("max_glb_idx",elements_max_glb_idx);
-    triags.metadata().set("max_glb_idx",elements_max_glb_idx);
 
     if( nb_edges > 0 )
     {
       mesh.function_space("edges").metadata().set("nb_owned",nb_etype[LINE]);
-      mesh.function_space("edges").metadata().set("max_glb_idx",elements_max_glb_idx);
     }
 
   }
