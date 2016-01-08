@@ -191,5 +191,5 @@ void Meshgen2Gmsh::run()
 int main( int argc, char **argv )
 {
   Meshgen2Gmsh tool(argc,argv);
-  return tool.execute();
+  return tool.start();
 }

@@ -146,6 +146,6 @@ using namespace atlas;
 int main(int argc,char **argv)
 {
     Version tool(argc,argv);
-    return tool.execute();
+    return tool.start();
 }
 

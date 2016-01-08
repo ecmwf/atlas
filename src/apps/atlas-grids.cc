@@ -237,5 +237,5 @@ void AtlasGrids::run()
 int main( int argc, char **argv )
 {
   AtlasGrids tool(argc,argv);
-  return tool.execute();
+  return tool.start();
 }

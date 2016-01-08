@@ -234,6 +234,6 @@ void gmsh_extract::run()
 int main( int argc, char **argv )
 {
   gmsh_extract tool(argc,argv);
-  return tool.execute();
+  return tool.start();
 }
 

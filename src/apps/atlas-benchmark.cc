@@ -641,5 +641,5 @@ int AtlasBenchmark::verify(const double& norm)
 int main( int argc, char **argv )
 {
   AtlasBenchmark tool(argc,argv);
-  return tool.execute();
+  return tool.start();
 }
