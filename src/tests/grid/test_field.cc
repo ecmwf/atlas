@@ -231,8 +231,6 @@ void TestField::run()
 
 int main(int argc,char **argv)
 {
-	atlas::test::TestField mytest(argc,argv);
-    mytest.start();
-    return 0;
+    atlas::test::TestField t(argc,argv);
+    return t.execute();
 }
-

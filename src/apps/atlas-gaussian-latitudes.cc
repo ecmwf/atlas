@@ -142,6 +142,5 @@ void AtlasGaussianLatitudes::run()
 int main( int argc, char **argv )
 {
   AtlasGaussianLatitudes tool(argc,argv);
-  tool.start();
-  return 0;
+  return tool.execute();
 }
