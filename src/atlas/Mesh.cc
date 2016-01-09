@@ -55,50 +55,6 @@ Mesh::~Mesh()
 {
 }
 
-bool Mesh::has_function_space(const std::string& name) const
-{
-  ASSERT( name != "nodes" );
-  return function_spaces_.has(name);
-}
-
-FunctionSpace& Mesh::create_function_space(const std::string& name, const std::string& shape_func, const std::vector<size_t>& shape)
-{
-  ASSERT( name != "nodes" );
-	if( has_function_space(name) )
-	{
-		throw eckit::Exception( "Functionspace '" + name + "' already exists", Here() );
-	}
-
-	FunctionSpace::Ptr fs (new FunctionSpace(name,shape_func,shape,*this) );
-
-  function_spaces_.insert(name,fs);
-  function_spaces_.sort();
-
-  fs->set_index( function_spaces_.size() - 1 ); ///< @todo revisit this once we can remove functionspaces
-
-	return *fs;
-}
-
-FunctionSpace& Mesh::function_space(const std::string& name) const
-{
-  ASSERT( name != "nodes" );
-	if( ! has_function_space(name) )
-	{
-		std::stringstream msg;
-		msg << "Could not find FunctionSpace '" << name << "' in mesh";
-		throw eckit::OutOfRange(msg.str(),Here());
-	}
-	return *( function_spaces_[ name ] );
-}
-
-FunctionSpace& Mesh::function_space( size_t idx) const
-{
-	if( idx >= function_spaces_.size() )
-		throw eckit::OutOfRange(idx,function_spaces_.size(),Here());
-	return *function_spaces_[ idx ];
-}
-
-
 mesh::Nodes& Mesh::createNodes(const Grid& g)
 {
   set_grid(g);
@@ -155,10 +111,54 @@ mesh::Nodes& Mesh::createNodes( size_t size )
   return *nodes_;
 }
 
+//----------------------------------------------------------------------------------------------------------------------
 
-size_t Mesh::nb_function_spaces() const
+bool deprecated::FunctionSpaceContainer::has_function_space(const std::string& name) const
+{
+  ASSERT( name != "nodes" );
+  return function_spaces_.has(name);
+}
+
+size_t deprecated::FunctionSpaceContainer::nb_function_spaces() const
 {
   return function_spaces_.size();
+}
+
+FunctionSpace& deprecated::FunctionSpaceContainer::create_function_space(const std::string& name, const std::string& shape_func, const std::vector<size_t>& shape)
+{
+  ASSERT( name != "nodes" );
+	if( has_function_space(name) )
+	{
+		throw eckit::Exception( "Functionspace '" + name + "' already exists", Here() );
+	}
+
+	FunctionSpace::Ptr fs (new FunctionSpace(name,shape_func,shape, *(Mesh*)(this) ) );
+
+  function_spaces_.insert(name,fs);
+  function_spaces_.sort();
+
+  fs->set_index( function_spaces_.size() - 1 ); ///< @todo revisit this once we can remove functionspaces
+
+	return *fs;
+}
+
+FunctionSpace& deprecated::FunctionSpaceContainer::function_space(const std::string& name) const
+{
+  ASSERT( name != "nodes" );
+	if( ! has_function_space(name) )
+	{
+		std::stringstream msg;
+		msg << "Could not find FunctionSpace '" << name << "' in mesh";
+		throw eckit::OutOfRange(msg.str(),Here());
+	}
+	return *( function_spaces_[ name ] );
+}
+
+FunctionSpace& deprecated::FunctionSpaceContainer::function_space( size_t idx) const
+{
+	if( idx >= function_spaces_.size() )
+		throw eckit::OutOfRange(idx,function_spaces_.size(),Here());
+	return *function_spaces_[ idx ];
 }
 
 

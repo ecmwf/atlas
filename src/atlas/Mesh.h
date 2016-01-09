@@ -75,7 +75,39 @@ private:
 
 namespace mesh { namespace temporary { class Convert; } }
 
-class Mesh : public eckit::Owned, public util::Registered<Mesh> {
+namespace deprecated { 
+  class FunctionSpaceContainer: public eckit::Owned {
+  public:
+    /// checks if function space exists
+    bool has_function_space(const std::string& name) const;
+
+    /// Takes ownership, and will be deleted automatically
+    FunctionSpace& create_function_space(const std::string& name,
+                                         const std::string& shape_func,
+                                         const std::vector<size_t>& shape);
+
+    /// accessor by name
+    FunctionSpace& function_space(const std::string& name) const;
+
+    /// accessor by index
+    FunctionSpace& function_space( size_t ) const;
+
+    /// number of functional spaces
+    size_t nb_function_spaces() const;
+    
+  protected:
+    typedef eckit::DenseMap< std::string, eckit::SharedPtr<FunctionSpace> > StoreFS_t;
+
+    StoreFS_t function_spaces_;
+
+  };
+  
+  
+  
+}
+
+class Mesh : public deprecated::FunctionSpaceContainer, 
+             public util::Registered<Mesh> {
 
   friend class mesh::temporary::Convert;
 
@@ -101,23 +133,6 @@ public: // methods
 
     Metadata& metadata() { return metadata_; }
     const Metadata& metadata() const { return metadata_; }
-
-    /// checks if function space exists
-    bool has_function_space(const std::string& name) const;
-
-    /// Takes ownership, and will be deleted automatically
-    FunctionSpace& create_function_space(const std::string& name,
-                                         const std::string& shape_func,
-                                         const std::vector<size_t>& shape);
-
-    /// accessor by name
-    FunctionSpace& function_space(const std::string& name) const;
-
-    /// accessor by index
-    FunctionSpace& function_space( size_t ) const;
-
-    /// number of functional spaces
-    size_t nb_function_spaces() const;
 
     /// checks if has a Grid
     bool has_grid() const { return grid_; }
@@ -177,11 +192,6 @@ private:  // methods
 private: // members to be removed
 
     const Grid* grid_;
-
-    typedef eckit::DenseMap< std::string, eckit::SharedPtr<FunctionSpace> > StoreFS_t;
-
-    StoreFS_t function_spaces_;
-
 
 private: // members
 
