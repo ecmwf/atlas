@@ -20,6 +20,7 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/Connectivity.h"
+#include "atlas/util/ArrayView.h"
 #include "atlas/mesh/HybridElements.h"
 
 namespace atlas { namespace mesh { class ElementType; } }
@@ -103,6 +104,9 @@ public:
 
   const Field& halo() const { return hybrid_elements_->halo(); }
         Field& halo()       { return hybrid_elements_->halo(); }
+        
+  template <typename DATATYPE, int RANK>
+  ArrayView<DATATYPE,RANK> view( const Field& ) const;
   
 private:
   bool owns_;

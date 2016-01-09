@@ -12,6 +12,7 @@
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/Elements.h"
 #include "atlas/atlas_defines.h"
+#include "atlas/Field.h"
 
 namespace atlas {
 namespace mesh {
@@ -61,6 +62,21 @@ Elements::~Elements()
 const std::string& Elements::name() const
 {
   return hybrid_elements_->element_type(type_idx_).name();
+}
+
+template<> ArrayView<double,1> Elements::view( const Field& field ) const
+{ 
+  return ArrayView<double,1>( field.data<double>()+begin(), make_shape(size()) );
+}
+
+template<> ArrayView<int,1> Elements::view( const Field& field ) const
+{ 
+  return ArrayView<int,1>( field.data<int>()+begin(), make_shape(size()) );
+}
+
+template<> ArrayView<long,1> Elements::view( const Field& field ) const
+{ 
+  return ArrayView<long,1>( field.data<long>()+begin(), make_shape(size()) );
 }
 
 

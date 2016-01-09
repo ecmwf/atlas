@@ -735,9 +735,9 @@ void Gmsh::write(const Mesh& mesh, const PathName& file_path) const
           NOTIMP;
 
         const mesh::Elements::Connectivity& node_connectivity = elements.node_connectivity();
-        const ArrayView<gidx_t,1> elems_glb_idx( elements.global_index() );
-        const ArrayView<int,1> elems_partition( elements.partition() );
-        const ArrayView<int,1> elems_halo( elements.halo() );
+        const ArrayView<gidx_t,1> elems_glb_idx = elements.view<gidx_t,1>( elements.global_index() );
+        const ArrayView<int,1> elems_partition = elements.view<int,1>( elements.partition() );
+        const ArrayView<int,1> elems_halo = elements.view<int,1>( elements.halo() );
         
         if( binary )
         {
@@ -746,7 +746,7 @@ void Gmsh::write(const Mesh& mesh, const PathName& file_path) const
           {
             for(size_t elem=0; elem<elements.size(); ++elem )
             {
-              if( elems_halo(elements.begin()+elem) ) --nb_elems;
+              if( elems_halo(elem) ) --nb_elems;
             }
           }
           
@@ -762,10 +762,10 @@ void Gmsh::write(const Mesh& mesh, const PathName& file_path) const
           size_t datasize = sizeof(int)*(5+node_connectivity.cols());
           for(size_t elem=0; elem<elements.size(); ++elem )
           {
-            if( include_ghost || !elems_halo(elements.begin()+elem) )
+            if( include_ghost || !elems_halo(elem) )
             {
-              data[0] = elems_glb_idx(elements.begin()+elem);
-              data[4] = elems_partition(elements.begin()+elem);
+              data[0] = elems_glb_idx(elem);
+              data[4] = elems_partition(elem);
               for( int n=0; n<node_connectivity.cols(); ++n )
                 data[5+n] = glb_idx(node_connectivity(elem,n));
               file.write(reinterpret_cast<const char*>(&data), datasize );
@@ -778,9 +778,9 @@ void Gmsh::write(const Mesh& mesh, const PathName& file_path) const
           std::string elem_info = ss_elem_info.str();
           for(size_t elem=0; elem<elements.size(); ++elem )
           {
-            if( include_ghost || !elems_halo(elements.begin()+elem) )
+            if( include_ghost || !elems_halo(elem) )
             {
-              file << elems_glb_idx(elements.begin()+elem) << elem_info << elems_partition(elements.begin()+elem);
+              file << elems_glb_idx(elem) << elem_info << elems_partition(+elem);
               for( int n=0; n<node_connectivity.cols(); ++n ) {
                 file << " " << glb_idx(node_connectivity(elem,n));
               }
