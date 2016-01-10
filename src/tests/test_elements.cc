@@ -311,9 +311,9 @@ BOOST_AUTO_TEST_CASE( conversion )
   Mesh* mesh = generator.generate(*grid);
   
   next::FunctionSpace* functionspace = new functionspace::EdgeBasedFiniteVolume(*mesh);
-  
-  temporary::Convert::convertMesh( *mesh );
-  
+  mesh->edges().rebuild_from_fs();
+  mesh->cells().rebuild_from_fs();
+
   const HybridElements& edges = mesh->edges();
   const HybridElements& cells = mesh->cells();
   const Nodes& nodes          = mesh->nodes();

@@ -30,13 +30,13 @@ Mesh* generate_mesh (const grids::ReducedGrid& rgg);
 // ------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
 
-typedef grids::ReducedGrid __ReducedGrid;
+#define REDUCEDGRID grids::ReducedGrid
 extern "C"
 {
-  Mesh* atlas__generate_mesh (__ReducedGrid* rgg);
-  Mesh* atlas__generate_mesh_with_distribution (__ReducedGrid* rgg, GridDistribution* distribution);
-
+  Mesh* atlas__generate_mesh (REDUCEDGRID* rgg);
+  Mesh* atlas__generate_mesh_with_distribution (REDUCEDGRID* rgg, GridDistribution* distribution);
 }
+#undef REDUCEDGRID
 
 // ------------------------------------------------------------------
 

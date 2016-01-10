@@ -635,9 +635,9 @@ void Gmsh::read(const PathName& file_path, Mesh& mesh ) const
 
 
 void Gmsh::write(const Mesh& mesh, const PathName& file_path) const
-{  
-  mesh::temporary::Convert::convertMesh(const_cast<Mesh&>(mesh));
-  
+{
+  const_cast<Mesh&>(mesh).cells().rebuild_from_fs();
+  const_cast<Mesh&>(mesh).edges().rebuild_from_fs();
   int part = mesh.metadata().has("part") ? mesh.metadata().get<size_t>("part") : eckit::mpi::rank();
   bool include_ghost = options.get<bool>("ghost") && options.get<bool>("elements");
 

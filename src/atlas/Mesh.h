@@ -211,6 +211,9 @@ private: // members
     
     size_t dimensionality_;
 
+public:
+    void convert_old_to_new();
+
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -231,26 +234,5 @@ extern "C"
 //----------------------------------------------------------------------------------------------------------------------
 
 } // namespace atlas
-
-//------------------------------------------------------------------------------------------------------
-
-#include "atlas/Parameters.h"
-
-namespace atlas {
-namespace mesh {
-namespace temporary {
-  
-  class Convert
-  {
-  public:
-    static void convertMesh( Mesh& );
-    static void createElements( const Mesh&, Entity::Type, HybridElements& );
-  };
-  
-}
-
-} // namespace mesh
-} // namespace atlas
-
 
 #endif // atlas_Mesh_h

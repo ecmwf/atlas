@@ -21,11 +21,12 @@
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/Connectivity.h"
 #include "atlas/Metadata.h"
+#include "atlas/FunctionSpace.h"
 
 namespace atlas { namespace mesh { class ElementType; } }
 namespace atlas { namespace mesh { class Elements; } }
 namespace atlas { class Field; }
-
+namespace atlas { class Mesh; }
 namespace atlas {
 namespace mesh {
 
@@ -178,6 +179,23 @@ private:
   Field* remote_index_;
   Field* partition_;
   Field* halo_;
+
+
+// -- Transitional method
+private:
+  friend class atlas::Mesh;
+  Mesh* mesh_;
+  long type_;
+public:
+  void rebuild_from_fs();
+
+  const FunctionSpace& deprecated_edges() const;
+        FunctionSpace& deprecated_edges();
+  const FunctionSpace& deprecated_quads() const;
+        FunctionSpace& deprecated_quads();
+  const FunctionSpace& deprecated_triags() const;
+        FunctionSpace& deprecated_triags();
+
 
 };
 
