@@ -895,13 +895,13 @@ void dispatch_order_independent_sum_per_level( const Nodes& fs, const Field& fie
   ArrayView<T,2> sum ( sumfield.data<T>(), make_shape(sumfield.shape(0),sumfield.stride(0)) );
   sum = 0.;
 
-  eckit::Log::info() << field << std::endl;
-  eckit::Log::info() << sumfield << std::endl;
+  Log::info() << field << std::endl;
+  Log::info() << sumfield << std::endl;
 
   size_t root = 0;
   Field::Ptr global( fs.createGlobalField("global",field) );
 
-  eckit::Log::info() << *global << std::endl;
+  Log::info() << *global << std::endl;
 
   fs.gather(field,*global);
   if( eckit::mpi::rank() == 0 ) {

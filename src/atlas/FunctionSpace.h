@@ -55,10 +55,10 @@ inline FunctionSpace::~FunctionSpace() {}
 #include <vector>
 
 #include "eckit/container/DenseMap.h"
-#include "eckit/log/Log.h"
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/atlas_config.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/mpl/HaloExchange.h"
 #include "atlas/mpl/GatherScatter.h"
 #include "atlas/mpl/Checksum.h"
@@ -132,9 +132,9 @@ public: // methods
         int nb_vars = field_size/dof();
         if( dof()*nb_vars != field_size )
         {
-            eckit::Log::error() << "ERROR in FunctionSpace::halo_exchange" << std::endl;
-            eckit::Log::error() << "field_size = " << field_size << std::endl;
-            eckit::Log::error() << "dof() = " << dof() << std::endl;
+            Log::error() << "ERROR in FunctionSpace::halo_exchange" << std::endl;
+            Log::error() << "field_size = " << field_size << std::endl;
+            Log::error() << "dof() = " << dof() << std::endl;
         }
         halo_exchange_->execute( field_data, nb_vars );
     }
@@ -143,8 +143,8 @@ public: // methods
     void gather( const DATA_TYPE field_data[], size_t field_size, DATA_TYPE glbfield_data[], size_t glbfield_size )
     {
         int nb_vars = field_size/dof();
-        if( dof()*nb_vars != field_size ) eckit::Log::error() << "ERROR in FunctionSpace::gather" << std::endl;
-        if( glb_dof_*nb_vars != glbfield_size ) eckit::Log::error() << "ERROR in FunctionSpace::gather" << std::endl;
+        if( dof()*nb_vars != field_size ) Log::error() << "ERROR in FunctionSpace::gather" << std::endl;
+        if( glb_dof_*nb_vars != glbfield_size ) Log::error() << "ERROR in FunctionSpace::gather" << std::endl;
 
         mpl::Field<DATA_TYPE const> loc_field(field_data,nb_vars);
         mpl::Field<DATA_TYPE      > glb_field(glbfield_data,nb_vars);

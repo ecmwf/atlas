@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include "eckit/log/Log.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/grid/GridSpec.h"
 
 #include "atlas/grid/LatLon.h"

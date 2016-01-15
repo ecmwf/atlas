@@ -105,7 +105,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mpi/mpi.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/trans/Trans.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/EdgeBasedFiniteVolume.h MODULE atlas_functionspace_EdgeBasedFiniteVolume_c_binding OUTPUT functionspace_EdgeBasedFiniteVolume_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/Spectral.h MODULE atlas_functionspace_Spectral_c_binding OUTPUT functionspace_Spectral_c_binding.f90 )
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/ReducedGridPoints.h MODULE atlas_functionspace_ReducedGridPoints_c_binding OUTPUT functionspace_ReducedGridPoints_c_binding.f90 )
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/ReducedGridPoint.h MODULE atlas_functionspace_ReducedGridPoint_c_binding OUTPUT functionspace_ReducedGridPoint_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/NodesInterface.h MODULE atlas_functionspace_Nodes_c_binding OUTPUT functionspace_Nodes_c_binding.f90)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/Nabla.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/meshgen/MeshGenerator.h)
@@ -154,8 +154,8 @@ add_custom_target( atlas_fortran_inc SOURCES
    atlas_module_functionspace_EdgeBasedFiniteVolume_c.f
    atlas_module_functionspace_Nodes_i.f
    atlas_module_functionspace_Nodes_c.f
-   atlas_module_functionspace_ReducedGridPoints_c.f
-   atlas_module_functionspace_ReducedGridPoints_i.f
+   atlas_module_functionspace_ReducedGridPoint_c.f
+   atlas_module_functionspace_ReducedGridPoint_i.f
    atlas_module_functionspace_Spectral_i.f
    atlas_module_functionspace_Spectral_c.f
    atlas_module_GatherScatter_i.f
@@ -189,17 +189,3 @@ add_custom_target( atlas_fortran_inc SOURCES
    atlas_module_Value_i.f
    atlas_module_Value_c.f
 )
-
-install( FILES ${CMAKE_Fortran_MODULE_DIRECTORY}/${CMAKE_CFG_INTDIR}/atlas_module.mod
-                 DESTINATION ${INSTALL_INCLUDE_DIR} )
-
-install( FILES ${CMAKE_Fortran_MODULE_DIRECTORY}/${CMAKE_CFG_INTDIR}/atlas_mpi_module.mod
-                 DESTINATION ${INSTALL_INCLUDE_DIR} )
-
-#ecbuild_add_library( TARGET atlas_mpl_fortran
-#    AUTO_VERSION
-#    CONDITION CMAKE_Fortran_COMPILER_LOADED
-#    SOURCES
-#        atlas_mpi_module.F90
-#    LIBS ${ATLAS_MPI_FORTRAN_LIBRARIES}
-#)

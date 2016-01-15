@@ -128,16 +128,16 @@ BOOST_AUTO_TEST_CASE( test_functionspace_Nodes )
   Field::Ptr field( nodes_fs->createField<int>("partition",nb_levels) );
   ArrayView<int,2> arr(*field);
   arr = eckit::mpi::rank();
-  //field->dump( eckit::Log::info() );
+  //field->dump( Log::info() );
   nodes_fs->haloExchange(*field);
-  //field->dump( eckit::Log::info() );
+  //field->dump( Log::info() );
 
   Field::Ptr field2( nodes_fs->createField<int>("partition2",nb_levels,make_shape(2)) );
   ArrayView<int,3> arr2(*field2);
   arr2 = eckit::mpi::rank();
-  //field2->dump( eckit::Log::info() );
+  //field2->dump( Log::info() );
   nodes_fs->haloExchange(*field2);
-  //field2->dump( eckit::Log::info() );
+  //field2->dump( Log::info() );
 
   Log::info() << nodes_fs->checksum(*field) << std::endl;
 
@@ -148,12 +148,12 @@ BOOST_AUTO_TEST_CASE( test_functionspace_Nodes )
   Log::info() << "grid points = " << grid->npts() << std::endl;
   Log::info() << "glb_field.shape(0) = " << glb_field->shape(0) << std::endl;
 
-  //glb_field->dump( eckit::Log::info() );
+  //glb_field->dump( Log::info() );
 
   arr = -1;
   nodes_fs->scatter(*glb_field,*field);
   nodes_fs->haloExchange(*field);
-  //field->dump( eckit::Log::info() );
+  //field->dump( Log::info() );
 
   Log::info() << nodes_fs->checksum(*field) << std::endl;
 
@@ -164,7 +164,7 @@ BOOST_AUTO_TEST_CASE( test_functionspace_Nodes )
 
 
 
-  eckit::Log::info() << "Testing collectives for nodes scalar field" << std::endl;
+  Log::info() << "Testing collectives for nodes scalar field" << std::endl;
   BOOST_TEST_CHECKPOINT("Testing collectives for nodes scalar field");
   {
     const Field& field = *surface_scalar_field;
@@ -222,7 +222,7 @@ BOOST_AUTO_TEST_CASE( test_functionspace_Nodes )
   }
 
 
-  eckit::Log::info() << "Testing collectives for nodes vector field" << std::endl;
+  Log::info() << "Testing collectives for nodes vector field" << std::endl;
   BOOST_TEST_CHECKPOINT("Testing collectives for nodes vector field");
   {
     const Field& field = *surface_vector_field;
@@ -277,7 +277,7 @@ BOOST_AUTO_TEST_CASE( test_functionspace_Nodes )
 
   }
 
-  eckit::Log::info() << "Testing collectives for columns scalar field" << std::endl;
+  Log::info() << "Testing collectives for columns scalar field" << std::endl;
   BOOST_TEST_CHECKPOINT("Testing collectives for columns scalar field");
   if(1){
     const Field& field = *columns_scalar_field;

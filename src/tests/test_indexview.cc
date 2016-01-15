@@ -55,8 +55,10 @@ BOOST_AUTO_TEST_CASE( test_array )
   BOOST_CHECK_EQUAL( array(1,0,2) , 6 );
   BOOST_CHECK_EQUAL( array(1,0,3) , 7 );
 
+#ifdef ATLAS_INDEXVIEW_BOUNDS_CHECKING
   BOOST_CHECK_THROW( array(0,1,0) , eckit::OutOfRange );  // j index out of range
   BOOST_CHECK_THROW( array(1,2,0,3), eckit::OutOfRange ); // rank out of range
+#endif
 }
 
 

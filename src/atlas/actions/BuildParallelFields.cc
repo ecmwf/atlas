@@ -14,7 +14,7 @@
 #include <cmath>
 
 #include "eckit/exception/Exceptions.h"
-#include "eckit/log/Log.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/Mesh.h"
 #include "atlas/FunctionSpace.h"
@@ -50,7 +50,6 @@
 #define OWNED_UID(UID) (UID == ownuid)
 #endif
 
-using eckit::Log;
 using atlas::util::Topology;
 using atlas::util::UniqueLonLat;
 using atlas::util::PeriodicTransform;
@@ -755,7 +754,7 @@ Field& build_edges_remote_idx( FunctionSpace& edges, mesh::Nodes& nodes )
         msg << " requested by rank ["<<jpart<<"]";
         msg << " that should be owned is not found. This could be because no halo was built.";
         //throw eckit::SeriousBug(msg.str(),Here());
-        eckit::Log::warning() << msg.str() << " @ " << Here() << std::endl;
+        Log::warning() << msg.str() << " @ " << Here() << std::endl;
       }
     }
   }

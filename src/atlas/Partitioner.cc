@@ -20,6 +20,7 @@
 #include "atlas/mpi/mpi.h"
 #include "atlas/Partitioner.h"
 #include "atlas/GridDistribution.h"
+#include "atlas/runtime/Log.h"
 
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/trans/TransPartitioner.h"
@@ -136,13 +137,13 @@ Partitioner* PartitionerFactory::build(const std::string& name, const Grid& grid
 
     std::map<std::string, PartitionerFactory *>::const_iterator j = m->find(name);
 
-    eckit::Log::debug() << "Looking for PartitionerFactory [" << name << "]" << '\n';
+    Log::debug() << "Looking for PartitionerFactory [" << name << "]" << '\n';
 
     if (j == m->end()) {
-        eckit::Log::error() << "No PartitionerFactory for [" << name << "]" << '\n';
-        eckit::Log::error() << "PartitionerFactories are:" << '\n';
+        Log::error() << "No PartitionerFactory for [" << name << "]" << '\n';
+        Log::error() << "PartitionerFactories are:" << '\n';
         for (j = m->begin() ; j != m->end() ; ++j)
-            eckit::Log::error() << "   " << (*j).first << '\n';
+            Log::error() << "   " << (*j).first << '\n';
         throw eckit::SeriousBug(std::string("No PartitionerFactory called ") + name);
     }
 
@@ -159,13 +160,13 @@ Partitioner* PartitionerFactory::build(const std::string& name, const Grid& grid
 
     std::map<std::string, PartitionerFactory *>::const_iterator j = m->find(name);
 
-    eckit::Log::debug() << "Looking for PartitionerFactory [" << name << "]" << '\n';
+    Log::debug() << "Looking for PartitionerFactory [" << name << "]" << '\n';
 
     if (j == m->end()) {
-        eckit::Log::error() << "No PartitionerFactory for [" << name << "]" << '\n';
-        eckit::Log::error() << "PartitionerFactories are:" << '\n';
+        Log::error() << "No PartitionerFactory for [" << name << "]" << '\n';
+        Log::error() << "PartitionerFactories are:" << '\n';
         for (j = m->begin() ; j != m->end() ; ++j)
-            eckit::Log::error() << "   " << (*j).first << '\n';
+            Log::error() << "   " << (*j).first << '\n';
         throw eckit::SeriousBug(std::string("No PartitionerFactory called ") + name);
     }
 

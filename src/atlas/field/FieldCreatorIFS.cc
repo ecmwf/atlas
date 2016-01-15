@@ -63,7 +63,7 @@ Field* FieldCreatorIFS::create_field( const eckit::Parametrisation& params ) con
 
   std::string name;
   params.get("name",name);
-  eckit::Log::debug() << "Creating IFS "<<datatype.str()<<" field: "<<name<<"[nblk="<<nblk<<"][nvar="<<nvar<<"][nlev="<<nlev<<"][nproma="<<nproma<<"]\n";
+  Log::debug() << "Creating IFS "<<datatype.str()<<" field: "<<name<<"[nblk="<<nblk<<"][nvar="<<nvar<<"][nlev="<<nlev<<"][nproma="<<nproma<<"]\n";
 
   return Field::create(name,datatype,s);
 

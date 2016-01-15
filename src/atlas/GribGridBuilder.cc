@@ -19,7 +19,7 @@
 #include "atlas/grid/GribWrite.h"
 #endif
 
-#include "eckit/log/Log.h"
+#include "atlas/runtime/Log.h"
 #include "eckit/geometry/Point3.h"
 #include "eckit/types/FloatCompare.h"
 #include "eckit/thread/Mutex.h"

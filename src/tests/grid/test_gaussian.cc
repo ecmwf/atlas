@@ -10,7 +10,7 @@
 
 #include <cmath>
 
-#include "eckit/log/Log.h"
+#include "atlas/runtime/Log.h"
 #include "eckit/runtime/Tool.h"
 
 #include "atlas/grid/Grid.h"

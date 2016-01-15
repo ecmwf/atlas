@@ -14,7 +14,7 @@
 #include "eckit/exception/Exceptions.h"
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
-#include "eckit/log/Log.h"
+#include "atlas/runtime/Log.h"
 
 #include "atlas/field/FieldCreator.h"
 #include "atlas/field/FieldCreatorArraySpec.h"
@@ -110,13 +110,13 @@ FieldCreator *FieldCreatorFactory::build(const std::string &name) {
 
     std::map<std::string, FieldCreatorFactory *>::const_iterator j = m->find(name);
 
-    eckit::Log::debug() << "Looking for FieldCreatorFactory [" << name << "]" << '\n';
+    Log::debug() << "Looking for FieldCreatorFactory [" << name << "]" << '\n';
 
     if (j == m->end()) {
-        eckit::Log::error() << "No FieldCreatorFactory for [" << name << "]" << '\n';
-        eckit::Log::error() << "FieldCreatorFactories are:" << '\n';
+        Log::error() << "No FieldCreatorFactory for [" << name << "]" << '\n';
+        Log::error() << "FieldCreatorFactories are:" << '\n';
         for (j = m->begin() ; j != m->end() ; ++j)
-            eckit::Log::error() << "   " << (*j).first << '\n';
+            Log::error() << "   " << (*j).first << '\n';
         throw eckit::SeriousBug(std::string("No FieldCreatorFactory called ") + name);
     }
 
@@ -134,13 +134,13 @@ FieldCreator *FieldCreatorFactory::build(const std::string& name, const eckit::P
 
     std::map<std::string, FieldCreatorFactory *>::const_iterator j = m->find(name);
 
-    eckit::Log::debug() << "Looking for FieldCreatorFactory [" << name << "]" << '\n';
+    Log::debug() << "Looking for FieldCreatorFactory [" << name << "]" << '\n';
 
     if (j == m->end()) {
-        eckit::Log::error() << "No FieldCreatorFactory for [" << name << "]" << '\n';
-        eckit::Log::error() << "FieldCreatorFactories are:" << '\n';
+        Log::error() << "No FieldCreatorFactory for [" << name << "]" << '\n';
+        Log::error() << "FieldCreatorFactories are:" << '\n';
         for (j = m->begin() ; j != m->end() ; ++j)
-            eckit::Log::error() << "   " << (*j).first << '\n';
+            Log::error() << "   " << (*j).first << '\n';
         throw eckit::SeriousBug(std::string("No FieldCreatorFactory called ") + name);
     }
 

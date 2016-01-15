@@ -21,10 +21,10 @@ ecbuild_add_executable(
   SOURCES     atlas-meshgen.cc
   LIBS        atlas )
 
-  ecbuild_add_executable(
-    TARGET      atlas-loadbalance
-    SOURCES     atlas-loadbalance.cc
-    LIBS        atlas )
+ecbuild_add_executable(
+  TARGET      atlas-loadbalance
+  SOURCES     atlas-loadbalance.cc
+  LIBS        atlas )
 
 ecbuild_add_executable(
   TARGET      atlas-gmsh-extract
@@ -49,5 +49,6 @@ ecbuild_add_executable(
 ecbuild_add_executable(
   TARGET      atlas-numerics-nabla
   SOURCES     atlas-numerics-nabla.F90
-  LIBS        atlas_f )
+  LIBS        atlas_f
+  CONDITION   HAVE_FORTRAN )
 

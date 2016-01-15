@@ -11,7 +11,7 @@
 #include "eckit/utils/MD5.h"
 #include "atlas/Grid.h"
 #include "atlas/Mesh.h"
-#include "atlas/functionspace/ReducedGridPoints.h"
+#include "atlas/functionspace/ReducedGridPoint.h"
 #include "atlas/FieldSet.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/util/Checksum.h"
@@ -25,7 +25,7 @@ namespace functionspace {
 
 // ----------------------------------------------------------------------
 
-ReducedGridPoints::ReducedGridPoints(const Grid& grid)
+ReducedGridPoint::ReducedGridPoint(const Grid& grid)
   : next::FunctionSpace(),
     grid_(grid)
 {
@@ -34,7 +34,7 @@ ReducedGridPoints::ReducedGridPoints(const Grid& grid)
 #endif
 }
 
-ReducedGridPoints::~ReducedGridPoints()
+ReducedGridPoint::~ReducedGridPoint()
 {
 #ifdef ATLAS_HAVE_TRANS
   delete trans_;
@@ -42,13 +42,13 @@ ReducedGridPoints::~ReducedGridPoints()
 }
 
 template <>
-Field* ReducedGridPoints::createField<double>(const std::string& name) const {
+Field* ReducedGridPoint::createField<double>(const std::string& name) const {
 #ifdef ATLAS_HAVE_TRANS
   Field* field = Field::create<double>(name, make_shape(trans_->ngptot()) );
   field->set_functionspace(this);
   return field;
 #else
-  eckit::NotImplemented("ReducedGridPoints::createField currently relies on ATLAS_HAVE_TRANS",Here());
+  eckit::NotImplemented("ReducedGridPoint::createField currently relies on ATLAS_HAVE_TRANS",Here());
   Field* field = Field::create<double>(name, make_shape(grid_.npts()) );
   field->set_functionspace(this);
   return field;
@@ -56,14 +56,14 @@ Field* ReducedGridPoints::createField<double>(const std::string& name) const {
 }
 
 template <>
-Field* ReducedGridPoints::createField<double>(const std::string& name, size_t levels) const {
+Field* ReducedGridPoint::createField<double>(const std::string& name, size_t levels) const {
 #ifdef ATLAS_HAVE_TRANS
   Field* field = Field::create<double>(name, make_shape(trans_->ngptot(),levels) );
   field->set_functionspace(this);
   field->set_levels(levels);
   return field;
 #else
-  eckit::NotImplemented("ReducedGridPoints::createField currently relies on ATLAS_HAVE_TRANS",Here());
+  eckit::NotImplemented("ReducedGridPoint::createField currently relies on ATLAS_HAVE_TRANS",Here());
   Field* field = Field::create<double>(name, make_shape(grid_.npts(),levels) );
   field->set_functionspace(this);
   return field;
@@ -71,13 +71,13 @@ Field* ReducedGridPoints::createField<double>(const std::string& name, size_t le
 }
 
 template <>
-Field* ReducedGridPoints::createGlobalField<double>(const std::string& name) const {
+Field* ReducedGridPoint::createGlobalField<double>(const std::string& name) const {
 #ifdef ATLAS_HAVE_TRANS
   Field* field = Field::create<double>(name, make_shape(trans_->ngptotg()) );
   field->set_functionspace(this);
   return field;
 #else
-  eckit::NotImplemented("ReducedGridPoints::createGlobalField currently relies on ATLAS_HAVE_TRANS",Here());
+  eckit::NotImplemented("ReducedGridPoint::createGlobalField currently relies on ATLAS_HAVE_TRANS",Here());
   Field* field = Field::create<double>(name, make_shape(grid_.npts()) );
   field->set_functionspace(this);
   return field;
@@ -85,21 +85,21 @@ Field* ReducedGridPoints::createGlobalField<double>(const std::string& name) con
 }
 
 template <>
-Field* ReducedGridPoints::createGlobalField<double>(const std::string& name, size_t levels) const {
+Field* ReducedGridPoint::createGlobalField<double>(const std::string& name, size_t levels) const {
 #ifdef ATLAS_HAVE_TRANS
   Field* field = Field::create<double>(name, make_shape(trans_->ngptotg(),levels) );
   field->set_functionspace(this);
   field->set_levels(levels);
   return field;
 #else
-  eckit::NotImplemented("ReducedGridPoints::createGlobalField currently relies on ATLAS_HAVE_TRANS",Here());
+  eckit::NotImplemented("ReducedGridPoint::createGlobalField currently relies on ATLAS_HAVE_TRANS",Here());
   Field* field = Field::create<double>(name, make_shape(grid_.npts(),levels) );
   field->set_functionspace(this);
   return field;
 #endif
 }
 
-void ReducedGridPoints::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset ) const
+void ReducedGridPoint::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset ) const
 {
 #ifdef ATLAS_HAVE_TRANS
   ASSERT(local_fieldset.size() == global_fieldset.size());
@@ -124,10 +124,10 @@ void ReducedGridPoints::gather( const FieldSet& local_fieldset, FieldSet& global
     trans_->gathgrid(nto.size(),nto.data(),loc.data<double>(),glb.data<double>());
   }
 #else
-  eckit::NotImplemented("ReducedGridPoints::gather currently relies on ATLAS_HAVE_TRANS",Here());
+  eckit::NotImplemented("ReducedGridPoint::gather currently relies on ATLAS_HAVE_TRANS",Here());
 #endif
 }
-void ReducedGridPoints::gather( const Field& local, Field& global ) const
+void ReducedGridPoint::gather( const Field& local, Field& global ) const
 {
 #ifdef ATLAS_HAVE_TRANS
   FieldSet local_fields;
@@ -136,11 +136,11 @@ void ReducedGridPoints::gather( const Field& local, Field& global ) const
   global_fields.add(global);
   gather(local_fields,global_fields);
 #else
-  eckit::NotImplemented("ReducedGridPoints::gather currently relies on ATLAS_HAVE_TRANS",Here());
+  eckit::NotImplemented("ReducedGridPoint::gather currently relies on ATLAS_HAVE_TRANS",Here());
 #endif
 }
 
-void ReducedGridPoints::scatter( const FieldSet& global_fieldset, FieldSet& local_fieldset ) const
+void ReducedGridPoint::scatter( const FieldSet& global_fieldset, FieldSet& local_fieldset ) const
 {
 #ifdef ATLAS_HAVE_TRANS
   ASSERT(local_fieldset.size() == global_fieldset.size());
@@ -165,11 +165,11 @@ void ReducedGridPoints::scatter( const FieldSet& global_fieldset, FieldSet& loca
     trans_->distgrid(nfrom.size(),nfrom.data(),glb.data<double>(),loc.data<double>());
   }
 #else
-  eckit::NotImplemented("ReducedGridPoints::scatter currently relies on ATLAS_HAVE_TRANS",Here());
+  eckit::NotImplemented("ReducedGridPoint::scatter currently relies on ATLAS_HAVE_TRANS",Here());
 #endif
 }
 
-void ReducedGridPoints::scatter( const Field& global, Field& local ) const
+void ReducedGridPoint::scatter( const Field& global, Field& local ) const
 {
 #ifdef ATLAS_HAVE_TRANS
   FieldSet global_fields;
@@ -178,16 +178,16 @@ void ReducedGridPoints::scatter( const Field& global, Field& local ) const
   local_fields.add(local);
   scatter(global_fields,local_fields);
 #else
-  eckit::NotImplemented("ReducedGridPoints::scatter currently relies on ATLAS_HAVE_TRANS",Here());
+  eckit::NotImplemented("ReducedGridPoint::scatter currently relies on ATLAS_HAVE_TRANS",Here());
 #endif
 }
 
-std::string ReducedGridPoints::checksum( const FieldSet& fieldset ) const {
+std::string ReducedGridPoint::checksum( const FieldSet& fieldset ) const {
   eckit::MD5 md5;
   NOTIMP;
   return md5;
 }
-std::string ReducedGridPoints::checksum( const Field& field ) const {
+std::string ReducedGridPoint::checksum( const Field& field ) const {
   // FieldSet fieldset;
   // fieldset.add(field);  
   // return checksum(fieldset);
@@ -203,15 +203,15 @@ std::string ReducedGridPoints::checksum( const Field& field ) const {
 extern "C"
 {
 
-ReducedGridPoints* atlas__functionspace__ReducedGridPoints__new__grid (const Grid* grid)
+ReducedGridPoint* atlas__functionspace__ReducedGridPoint__new__grid (const Grid* grid)
 {
   ATLAS_ERROR_HANDLING(
-    return new ReducedGridPoints(*grid);
+    return new ReducedGridPoint(*grid);
   );
   return 0;
 }
 
-void atlas__functionspace__ReducedGridPoints__delete (ReducedGridPoints* This)
+void atlas__functionspace__ReducedGridPoint__delete (ReducedGridPoint* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -219,7 +219,7 @@ void atlas__functionspace__ReducedGridPoints__delete (ReducedGridPoints* This)
   );
 }
 
-Field* atlas__functionspace__ReducedGridPoints__create_field (const ReducedGridPoints* This, const char* name)
+Field* atlas__functionspace__ReducedGridPoint__create_field (const ReducedGridPoint* This, const char* name)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -228,7 +228,7 @@ Field* atlas__functionspace__ReducedGridPoints__create_field (const ReducedGridP
   return 0;
 }
 
-Field* atlas__functionspace__ReducedGridPoints__create_field_lev (const ReducedGridPoints* This, const char* name, int levels)
+Field* atlas__functionspace__ReducedGridPoint__create_field_lev (const ReducedGridPoint* This, const char* name, int levels)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -237,7 +237,7 @@ Field* atlas__functionspace__ReducedGridPoints__create_field_lev (const ReducedG
   return 0;
 }
 
-Field* atlas__functionspace__ReducedGridPoints__create_gfield (const ReducedGridPoints* This, const char* name)
+Field* atlas__functionspace__ReducedGridPoint__create_gfield (const ReducedGridPoint* This, const char* name)
 {
   ATLAS_ERROR_HANDLING (
     ASSERT(This);
@@ -246,7 +246,7 @@ Field* atlas__functionspace__ReducedGridPoints__create_gfield (const ReducedGrid
   return 0;
 }
 
-Field* atlas__functionspace__ReducedGridPoints__create_gfield_lev (const ReducedGridPoints* This, const char* name, int levels)
+Field* atlas__functionspace__ReducedGridPoint__create_gfield_lev (const ReducedGridPoint* This, const char* name, int levels)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -255,7 +255,7 @@ Field* atlas__functionspace__ReducedGridPoints__create_gfield_lev (const Reduced
   return 0;
 }
 
-void atlas__functionspace__ReducedGridPoints__gather (const ReducedGridPoints* This, const Field* local, Field* global)
+void atlas__functionspace__ReducedGridPoint__gather (const ReducedGridPoint* This, const Field* local, Field* global)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -265,7 +265,7 @@ void atlas__functionspace__ReducedGridPoints__gather (const ReducedGridPoints* T
   );
 }
 
-void atlas__functionspace__ReducedGridPoints__scatter (const ReducedGridPoints* This, const Field* global, Field* local)
+void atlas__functionspace__ReducedGridPoint__scatter (const ReducedGridPoint* This, const Field* global, Field* local)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -275,7 +275,7 @@ void atlas__functionspace__ReducedGridPoints__scatter (const ReducedGridPoints* 
   );
 }
 
-void atlas__fs__ReducedGridPoints__checksum_fieldset(const ReducedGridPoints* This, const FieldSet* fieldset, char* &checksum, int &size, int &allocated)
+void atlas__fs__ReducedGridPoint__checksum_fieldset(const ReducedGridPoint* This, const FieldSet* fieldset, char* &checksum, int &size, int &allocated)
 {
   ASSERT(This);
   ASSERT(fieldset);
@@ -287,7 +287,7 @@ void atlas__fs__ReducedGridPoints__checksum_fieldset(const ReducedGridPoints* Th
   );
 }
 
-void atlas__fs__ReducedGridPoints__checksum_field(const ReducedGridPoints* This, const Field* field, char* &checksum, int &size, int &allocated)
+void atlas__fs__ReducedGridPoint__checksum_field(const ReducedGridPoint* This, const Field* field, char* &checksum, int &size, int &allocated)
 {
   ASSERT(This);
   ASSERT(field);

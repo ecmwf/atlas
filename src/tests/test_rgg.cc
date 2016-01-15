@@ -479,27 +479,27 @@ BOOST_AUTO_TEST_CASE( test_meshgen_ghost_at_end )
   const ArrayView<int,1> ghost( mesh->nodes().ghost() );
   const ArrayView<int,1> flags( mesh->nodes().field("flags") );
 
-  eckit::Log::info() << "partition = [ ";
+  Log::info() << "partition = [ ";
   for( size_t jnode=0; jnode<part.size(); ++jnode )
   {
-    eckit::Log::info() << part(jnode) << " ";
+    Log::info() << part(jnode) << " ";
   }
-  eckit::Log::info() << "]" << std::endl;
+  Log::info() << "]" << std::endl;
 
-  eckit::Log::info() << "ghost     = [ ";
+  Log::info() << "ghost     = [ ";
   for( size_t jnode=0; jnode<part.size(); ++jnode )
   {
-    eckit::Log::info() << ghost(jnode) << " ";
+    Log::info() << ghost(jnode) << " ";
   }
-  eckit::Log::info() << "]" << std::endl;
+  Log::info() << "]" << std::endl;
 
-  eckit::Log::info() << "flags     = [ ";
+  Log::info() << "flags     = [ ";
   for( size_t jnode=0; jnode<part.size(); ++jnode )
   {
-    eckit::Log::info() << util::Topology::check(flags(jnode),util::Topology::GHOST) << " ";
+    Log::info() << util::Topology::check(flags(jnode),util::Topology::GHOST) << " ";
     BOOST_CHECK_EQUAL( util::Topology::check(flags(jnode),util::Topology::GHOST), ghost(jnode) );
   }
-  eckit::Log::info() << "]" << std::endl;
+  Log::info() << "]" << std::endl;
 
 }
 

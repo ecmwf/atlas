@@ -10,7 +10,7 @@
 
 #include <cmath>
 
-#include "eckit/log/Log.h"
+#include "atlas/runtime/Log.h"
 #include "eckit/value/Value.h"
 #include "eckit/geometry/RotateGrid.h"
 

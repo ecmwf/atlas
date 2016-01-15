@@ -180,13 +180,13 @@ StateGenerator* StateGeneratorFactory::build(const std::string& name, const ecki
 
     std::map<std::string, StateGeneratorFactory *>::const_iterator j = m->find(name);
 
-    eckit::Log::debug() << "Looking for StateGeneratorFactory [" << name << "]" << std::endl;
+    Log::debug() << "Looking for StateGeneratorFactory [" << name << "]" << std::endl;
 
     if (j == m->end()) {
-        eckit::Log::error() << "No StateGeneratorFactory for [" << name << "]" << std::endl;
-        eckit::Log::error() << "StateFactories are:" << std::endl;
+        Log::error() << "No StateGeneratorFactory for [" << name << "]" << std::endl;
+        Log::error() << "StateFactories are:" << std::endl;
         for (j = m->begin() ; j != m->end() ; ++j)
-            eckit::Log::error() << "   " << (*j).first << std::endl;
+            Log::error() << "   " << (*j).first << std::endl;
         throw eckit::SeriousBug(std::string("No StateGeneratorFactory called ") + name);
     }
 

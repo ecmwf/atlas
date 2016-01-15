@@ -1,0 +1,577 @@
+%%% DOCUMENTCLASS 
+%%%-------------------------------------------------------------------------------
+\documentclass[
+a4paper,     % Stock and paper size.
+11pt,        % Type size.
+% article,
+% oneside, 
+onecolumn,   % Only one column of text on a page.
+% openright, % Each chapter will start on a recto page.
+% openleft,  % Each chapter will start on a verso page.
+openany,     % A chapter may start on either a recto or verso page.
+]{memoir}
+
+
+
+%%% PACKAGES 
+%%%------------------------------------------------------------------------------
+% If utf8 encoding
+\usepackage[utf8]{inputenc} 
+
+% If not utf8 encoding, then this is probably the way to go
+%\usepackage[latin1]{inputenc} 
+\usepackage[T1]{fontenc}    
+\usepackage{lmodern}
+
+% English please
+\usepackage[english]{babel}
+
+% Less badboxes
+\usepackage[final]{microtype} 
+
+% Font
+%\usepackage{kpfonts}
+
+% Math
+\usepackage{amsmath,amssymb,mathtools}
+
+% http://ctan.org/pkg/pifont
+\usepackage{pifont}
+\newcommand{\cmark}{\ding{51}}
+\newcommand{\xmark}{\ding{55}}
+
+% Include figures
+\usepackage{graphicx}
+\usepackage{makeidx}
+\usepackage{import}
+
+
+
+%%% PAGE LAYOUT 
+%%%-----------------------------------------------------------------------------
+% Left and right margin
+\setlrmarginsandblock{0.15\paperwidth}{*}{1} 
+% Upper and lower margin
+\setulmarginsandblock{0.2\paperwidth}{*}{1}  
+\checkandfixthelayout
+
+\newlength\forceindent
+\setlength{\forceindent}{\parindent}
+\setlength{\parindent}{0cm}
+\renewcommand{\indent}{\hspace*{\forceindent}}
+\setlength{\parskip}{1em}
+
+
+%%% SECTIONAL DIVISIONS
+%%%------------------------------------------------------------------------------
+% Subsections (and higher) are numbered
+\maxsecnumdepth{paragraph} 
+\setsecnumdepth{paragraph}
+
+\makeatletter 
+\makechapterstyle{standard}{
+  \setlength{\beforechapskip}{0\baselineskip}
+  \setlength{\midchapskip}{1\baselineskip}
+  \setlength{\afterchapskip}{8\baselineskip}
+  \renewcommand{\chapterheadstart}{\vspace*{\beforechapskip}}
+  \renewcommand{\chapnamefont}{\centering\normalfont\Large}
+  \renewcommand{\printchaptername}{\chapnamefont \@chapapp}
+  \renewcommand{\chapternamenum}{\space}
+  \renewcommand{\chapnumfont}{\normalfont\Large}
+  \renewcommand{\printchapternum}{\chapnumfont \thechapter}
+  \renewcommand{\afterchapternum}{\par\nobreak\vskip \midchapskip}
+  \renewcommand{\printchapternonum}{\vspace*{\midchapskip}\vspace*{5mm}}
+  \renewcommand{\chaptitlefont}{\centering\bfseries\LARGE}
+%\renewcommand{\printchaptertitle}[1]{\chaptitlefont ##1}
+  \renewcommand{\afterchaptertitle}{\par\nobreak\vskip \afterchapskip}
+}
+\makeatother
+
+%\chapterstyle{standard}
+\chapterstyle{madsen}
+
+\setsecheadstyle{\normalfont\large\bfseries}
+\setsubsecheadstyle{\normalfont\normalsize\bfseries}
+\setparaheadstyle{\normalfont\normalsize\bfseries}
+\setparaindent{0pt}\setafterparaskip{0pt}
+
+%%% FLOATS AND CAPTIONS
+%%%------------------------------------------------------------------------------
+% You do not need to write [htpb] all the time
+\makeatletter                  
+\renewcommand\fps@figure{htbp} 
+\renewcommand\fps@table{htbp}  
+\makeatother                   
+
+% A space between caption name and text
+\captiondelim{\space}
+% Font of the caption name
+\captionnamefont{\small\bfseries}
+% Font of the caption text
+\captiontitlefont{\small\normalfont}
+
+% Change the width of the caption
+\changecaptionwidth        
+\captionwidth{1\textwidth} 
+
+\usepackage{tabularx}
+%\usepackage{float}
+
+
+%%% ABSTRACT
+%%%------------------------------------------------------------------------------
+% Font of abstract title
+\renewcommand{\abstractnamefont}{\normalfont\small\bfseries}
+% Width of abstract 
+\setlength{\absleftindent}{0.1\textwidth} 
+\setlength{\absrightindent}{\absleftindent}
+
+
+
+%%% HEADER AND FOOTER 
+%%%------------------------------------------------------------------------------
+% Make standard pagestyle
+\makepagestyle{standard}
+
+% Define standard pagestyle
+\makeatletter
+\makeevenfoot{standard}{}{}{}
+\makeoddfoot{standard}{}{}{}
+\makeevenhead{standard}{\bfseries\thepage\normalfont\qquad\small\leftmark}{}{}
+\makeoddhead{standard}{}{}{\small\rightmark\qquad\bfseries\thepage}
+%\makeheadrule{standard}{\textwidth}{\normalrulethickness}
+\makeatother
+
+\makeatletter
+\makepsmarks{standard}{
+\createmark{chapter}{both}{shownumber}{\@chapapp\ }{ \quad }
+\createmark{section}{right}{shownumber}{}{ \quad }
+\createplainmark{toc}{both}{\contentsname}
+\createplainmark{lof}{both}{\listfigurename}
+\createplainmark{lot}{both}{\listtablename}
+\createplainmark{bib}{both}{\bibname}
+\createplainmark{index}{both}{\indexname}
+\createplainmark{glossary}{both}{\glossaryname}
+}
+\makeatother
+
+% Make new chapter pagestyle
+\makepagestyle{chap}
+
+\makeatletter
+% Define new chapter pagestyle
+\makeevenfoot{chap}{}{\small\bfseries\thepage}{}
+\makeoddfoot{chap}{}{\small\bfseries\thepage}{}
+\makeevenhead{chap}{}{}{}
+\makeoddhead{chap}{}{}{}
+%\makeheadrule{chap}{\textwidth}{\normalrulethickness}
+\makeatother
+
+\nouppercaseheads
+% Choosing pagestyle and chapter pagestyle
+\pagestyle{standard}
+\aliaspagestyle{chapter}{chap} 
+
+
+
+%%% NEW COMMANDS
+%%%-----------------------------------------------------------------------------
+
+% Nektar++ version
+\usepackage{xspace}
+\newcommand{\atlasver}{\input{../../VERSION}\unskip}
+\addto\captionsenglish{\renewcommand{\chaptername}{Chapter}}
+
+% Partial
+\newcommand{\p}{\partial}
+
+
+
+%%% CODE SNIPPETS, COMMANDS, ETC
+%%%-----------------------------------------------------------------------------
+\usepackage{xcolor}
+\usepackage{tikz}
+\definecolor{gray}{rgb}{0.4,0.4,0.4}
+\definecolor{lightgray}{rgb}{0.9,0.9,0.9}
+\definecolor{darkblue}{rgb}{0.0,0.0,0.6}
+\definecolor{cyan}{rgb}{0.0,0.6,0.6}
+\definecolor{maroon}{rgb}{0.5,0.0,0.0}
+\definecolor{darkgreen}{rgb}{0.0,0.5,0.0}
+
+% Display code / shell commands
+\usepackage{listings}
+\usepackage{lstautogobble}
+
+
+% Bash input style
+\lstdefinestyle{BashStyle}
+{
+  language=bash,
+  basicstyle=\footnotesize\ttfamily,
+%numbers=left,
+%numberstyle=\tiny,
+%numbersep=3pt,
+  frame=single,
+  columns=fullflexible,
+  backgroundcolor=\color{yellow!10},
+  linewidth=\linewidth,
+  xleftmargin=0.05\linewidth,
+  keepspaces=true,
+  framesep=5pt,
+  rulecolor=\color{black!30},
+  aboveskip=10pt,
+  autogobble=true
+}
+
+
+% XML input style definition
+\lstdefinelanguage{XML}
+{
+  basicstyle=\ttfamily\footnotesize,
+  morestring=[b]",
+  moredelim=[s][\bfseries\color{maroon}]{<}{\ },
+  moredelim=[s][\bfseries\color{maroon}]{</}{>},
+  moredelim=[l][\bfseries\color{maroon}]{/>},
+  moredelim=[l][\bfseries\color{maroon}]{>},
+  morecomment=[s]{<?}{?>},
+  morecomment=[s]{<!--}{-->},
+  commentstyle=\color{gray},
+  stringstyle=\color{orange},
+  identifierstyle=\color{darkblue},
+  showstringspaces=false
+}
+
+
+% XML input style
+\lstdefinestyle{XMLStyle}
+{
+  language=XML,
+  basicstyle=\ttfamily\footnotesize,
+  numbers=left,
+  numberstyle=\tiny,
+  numbersep=3pt,
+  frame=,
+  columns=fullflexible,
+  backgroundcolor=\color{black!05},
+  linewidth=\linewidth,
+  xleftmargin=0.05\linewidth,
+  keepspaces=true
+}
+\lstset{
+    escapeinside={(*}{*)},
+}
+
+
+\lstdefinestyle{CStyle}{
+  belowcaptionskip=1\baselineskip,
+  breaklines=true,
+  frame=single,
+  escapeinside={\%*}{*)},
+  xleftmargin=\parindent,
+  language=C,
+  captionpos=b,
+  keepspaces=true,
+  backgroundcolor=\color{black!05},
+  basicstyle=\footnotesize,
+  showstringspaces=false,
+  numbers=left,
+  numbersep=5pt,
+  numberstyle=\tiny\color{black},
+  basicstyle=\footnotesize\ttfamily,
+  keywordstyle=\bfseries\color{green!40!black},
+  commentstyle=\itshape\color{purple!40!black},
+  identifierstyle=\color{blue},
+  stringstyle=\color{orange},
+  tabsize=4
+}
+
+\lstdefinestyle{CStyleNoLine}{
+  belowcaptionskip=1\baselineskip,
+  breaklines=true,
+  frame=single,
+  escapeinside={\%*}{*)},
+  xleftmargin=\parindent,
+  language=C,
+  captionpos=b,
+  keepspaces=true,
+  backgroundcolor=\color{black!05},
+  basicstyle=\footnotesize,
+  showstringspaces=false,
+  basicstyle=\footnotesize\ttfamily,
+  keywordstyle=\bfseries\color{green!40!black},
+  commentstyle=\itshape\color{purple!40!black},
+  identifierstyle=\color{blue},
+  stringstyle=\color{orange},
+  tabsize=4
+}
+
+
+\lstdefinestyle{FStyle}{
+  belowcaptionskip=1\baselineskip,
+  breaklines=true,
+  frame=single,
+  escapeinside={\%*}{*)},
+  xleftmargin=\parindent,
+  language=[90]Fortran,
+  captionpos=b,
+  keepspaces=true,
+  backgroundcolor=\color{red!05},
+  basicstyle=\footnotesize,
+  showstringspaces=false,
+  numbers=left,
+  numbersep=5pt,
+  numberstyle=\tiny\color{black},
+  basicstyle=\footnotesize\ttfamily,
+  keywordstyle=\bfseries\color{red!40!black},
+  commentstyle=\itshape\color{green!40!black},
+  identifierstyle=\color{blue},
+  stringstyle=\color{orange},
+  tabsize=4
+}
+
+\lstdefinestyle{FStyleNoLine}{
+  belowcaptionskip=1\baselineskip,
+  breaklines=true,
+  frame=single,
+  escapeinside={\%*}{*)},
+  xleftmargin=\parindent,
+  language=[90]Fortran,
+  captionpos=b,
+  keepspaces=true,
+  backgroundcolor=\color{red!05},
+  basicstyle=\footnotesize,
+  showstringspaces=false,
+  basicstyle=\footnotesize\ttfamily,
+  keywordstyle=\bfseries\color{red!40!black},
+  commentstyle=\itshape\color{green!40!black},
+  identifierstyle=\color{blue},
+  stringstyle=\color{orange},
+  tabsize=4
+}
+
+% Inline commands for C++ and Fortran
+\ifdefined\HCode
+\newcommand{\inltc}[1]{\texttt{#1}}
+\newcommand{\inltf}[1]{\texttt{#1}}
+\else
+\newcommand{\inltc}[1]{\tikz[anchor=base,baseline]\node[inner sep=2pt,
+outer sep=0,fill=black!05,text=black]{\small\texttt{#1}};}
+\newcommand{\inltf}[1]{\tikz[anchor=base,baseline]\node[inner sep=2pt,
+outer sep=0,fill=red!05,text=black]{\small\texttt{#1}};}
+\fi
+
+
+% Inline commands for general words
+\ifdefined\HCode
+\newcommand{\inlsh}[1]{\texttt{#1}}
+\else
+\newcommand{\inlsh}[1]{\tikz[anchor=base,baseline]\node[inner sep=2pt,
+outer sep=0,draw=yellow!10,fill=yellow!10]{\texttt{#1}};}
+\fi
+
+% Atlas
+\newcommand{\Atlas}{{\em Atlas}\xspace}
+
+
+
+% Highlight box
+\usepackage{environ}
+\usepackage[tikz]{bclogo}
+\usetikzlibrary{calc}
+
+% Only use fancy boxes for PDF
+\ifdefined\HCode
+\NewEnviron{notebox}{\textbf{Note:} \BODY}
+\NewEnviron{warningbox}{\textbf{Warning:} \BODY}
+\NewEnviron{tipbox}{\textbf{Tip:} \BODY}
+\NewEnviron{custombox}[3]{\textbf{#1} \BODY}
+\else
+\NewEnviron{notebox}
+  {\par\medskip\noindent
+  \begin{tikzpicture}
+    \node[inner sep=5pt,fill=black!10,draw=black!30] (box)
+    {\parbox[t]{.99\linewidth}{%
+      \begin{minipage}{.1\linewidth}
+      \centering\tikz[scale=1]\node[scale=1.5]{\bcinfo};
+      \end{minipage}%
+      \begin{minipage}{.9\linewidth}
+      \textbf{Note}\par\smallskip
+      \BODY
+      \end{minipage}\hfill}%
+    };
+   \end{tikzpicture}\par\medskip%
+}
+\NewEnviron{warningbox}
+  {\par\medskip\noindent
+  \begin{tikzpicture}
+    \node[inner sep=5pt,fill=red!10,draw=black!30] (box)
+    {\parbox[t]{.99\linewidth}{%
+      \begin{minipage}{.1\linewidth}
+      \centering\tikz[scale=1]\node[scale=1.5]{\bcdanger};
+      \end{minipage}%
+      \begin{minipage}{.9\linewidth}
+      \textbf{Warning}\par\smallskip
+      \BODY
+      \end{minipage}\hfill}%
+    };
+   \end{tikzpicture}\par\medskip%
+}
+\NewEnviron{tipbox}
+  {\par\medskip\noindent
+  \begin{tikzpicture}
+    \node[inner sep=5pt,fill=green!10,draw=black!30] (box)
+    {\parbox[t]{.99\linewidth}{%
+      \begin{minipage}{.1\linewidth}
+      \centering\tikz[scale=1]\node[scale=1.5]{\bclampe};
+      \end{minipage}%
+      \begin{minipage}{.9\linewidth}
+      \textbf{Tip}\par\smallskip
+      \BODY
+      \end{minipage}\hfill}%
+    };
+   \end{tikzpicture}\par\medskip%
+}
+\NewEnviron{custombox}[3]
+  {\par\medskip\noindent
+  \begin{tikzpicture}
+    \node[inner sep=5pt,fill=#3!10,draw=black!30] (box)
+    {\parbox[t]{.99\linewidth}{%
+      \begin{minipage}{.1\linewidth}
+      \centering\tikz[scale=1]\node[scale=1.5]{#2};
+      \end{minipage}%
+      \begin{minipage}{.9\linewidth}
+      \textbf{#1}\par\smallskip
+      \BODY
+      \end{minipage}\hfill}%
+    };
+   \end{tikzpicture}\par\medskip%
+}
+\fi
+
+
+
+%%% TABLE OF CONTENTS AND INDEX
+%%%-----------------------------------------------------------------------------
+
+% Only parts, chapters and sections in the table of contents
+\maxtocdepth{subsection}
+\settocdepth{subsection}
+
+\makeindex
+
+
+%%% INTERNAL HYPERLINKS
+%%%-----------------------------------------------------------------------------
+% Internal hyperlinks
+\usepackage[linktoc=all,hyperfootnotes=false]{hyperref}
+\hypersetup{
+colorlinks,
+citecolor=darkblue,
+filecolor=darkblue,
+linkcolor=darkblue,
+urlcolor=darkblue,
+% No borders around internal hyperlinks
+pdfborder={0 0 0},
+% Author
+pdfauthor={I am the Author}
+}
+\usepackage{memhfixc}
+
+
+%%% PRETTY TITLE PAGE FOR PDF DOC
+%%%-----------------------------------------------------------------------------
+\ifdefined\HCode
+\else
+\makeatletter
+\newlength\drop
+\newcommand{\br}{\hfill\break}
+\newcommand*{\titlepage}{
+    \thispagestyle{empty}
+    % Gentle Madness
+    \begingroup
+    \drop = 0.1\textheight
+    \vspace*{\baselineskip}
+    \vfill
+    \hbox{
+      \hspace*{0.1\textwidth}
+      \rule{1pt}{\dimexpr\textheight-28pt\relax}
+      \hspace*{0.05\textwidth}
+      \parbox[b]{0.85\textwidth}{
+        \vbox{
+          \vspace{\drop}
+          {\Huge\bfseries\raggedright\@title\par}
+          \vskip2.37\baselineskip
+          {\huge\bfseries Version \atlasver\par}
+          \vskip4\baselineskip
+          {\huge\bfseries \textcolor{darkgreen}{User-Guide}\par}
+          \vskip1.0\baselineskip
+          {\large\bfseries\@date\par}
+          \vspace{0.3\textheight}
+          {\small\noindent\@author}\\[\baselineskip]
+        }% end of vbox
+      }% end of parbox
+    }% end of hbox
+    \vfill
+    \null
+\endgroup}
+\makeatother
+\fi
+
+%%% THE DOCUMENT
+%%% Where all the important stuff is included!
+%%%-------------------------------------------------------------------------------
+
+\author{ECMWF, Shinfield Park, Reading, UK\newline}
+\title{Atlas: A framework for highly efficient parallel data structures}
+\date{\today}
+
+
+\begin{document}
+
+\frontmatter
+
+% Render pretty title page if not building HTML
+\ifdefined\HCode
+\maketitle
+\begin{center}
+    \huge{User-Guide - Version \atlasver}
+\end{center}
+\else
+\titlepage
+\fi
+
+\clearpage
+
+\ifx\HCode\undefined
+\tableofcontents*
+\fi
+
+\clearpage
+
+\import{introduction}{introduction.tex}
+
+\mainmatter
+
+
+
+\part{Getting Started}
+\label{p:start}
+\chapter{Installation}
+\chapter{Structure}
+\import{section1/}{section1.tex}
+
+
+
+\part{Core functionalities}
+\label{p:applications}
+\import{section2/}{section2.tex}
+
+
+\part{Dwarfs}
+
+%\appendix
+
+
+\backmatter
+
+\end{document}

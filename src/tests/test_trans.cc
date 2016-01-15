@@ -31,7 +31,7 @@
 #include "atlas/FunctionSpace.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/functionspace/Nodes.h"
-#include "atlas/functionspace/ReducedGridPoints.h"
+#include "atlas/functionspace/ReducedGridPoint.h"
 
 #include "transi/trans.h"
 
@@ -58,7 +58,7 @@ struct Fixture   {
 
 void read_rspecg(trans::Trans& trans, std::vector<double>& rspecg, std::vector<int>& nfrom, int &nfld )
 {
-  eckit::Log::info() << "read_rspecg ...\n";
+  Log::info() << "read_rspecg ...\n";
   nfld = 2;
   if( trans.myproc(0) == 0 )
   {
@@ -73,7 +73,7 @@ void read_rspecg(trans::Trans& trans, std::vector<double>& rspecg, std::vector<i
   for (int jfld=0; jfld<nfld; ++jfld)
     nfrom[jfld] = 1;
 
-  eckit::Log::info() << "read_rspecg ... done" << std::endl;
+  Log::info() << "read_rspecg ... done" << std::endl;
 }
 
 
@@ -148,7 +148,7 @@ BOOST_AUTO_TEST_CASE( test_trans_options )
   opts.set_split_latitudes(false);
   opts.set_read("readfile");
 
-  eckit::Log::info() << "trans_opts = " << opts << std::endl;
+  Log::info() << "trans_opts = " << opts << std::endl;
 }
 
 
@@ -291,7 +291,7 @@ BOOST_AUTO_TEST_CASE( test_nomesh )
   SharedPtr<trans::Trans> trans ( new trans::Trans(*g,47) );
 
   SharedPtr<functionspace::Spectral>    spectral    (new functionspace::Spectral(*trans));
-  SharedPtr<functionspace::ReducedGridPoints> gridpoints (new functionspace::ReducedGridPoints(*g));
+  SharedPtr<functionspace::ReducedGridPoint> gridpoints (new functionspace::ReducedGridPoint(*g));
 
   SharedPtr<Field> spfg ( spectral->createGlobalField<double>("spf") );
   SharedPtr<Field> spf  ( spectral->createField<double>("spf") );
@@ -308,7 +308,7 @@ BOOST_AUTO_TEST_CASE( test_nomesh )
     ArrayView<double,1> sp (*spf);
     BOOST_CHECK_CLOSE( sp(0), 4., 0.001 );
     for( size_t jp=0; jp<sp.size(); ++jp ) {
-      eckit::Log::debug(2) << "sp("<< jp << ")   :   " << sp(jp) << std::endl;
+      Log::debug(2) << "sp("<< jp << ")   :   " << sp(jp) << std::endl;
     }
   }
 
@@ -320,7 +320,7 @@ BOOST_AUTO_TEST_CASE( test_nomesh )
     ArrayView<double,1> gpg (*gpfg);
     for( size_t jp=0; jp<gpg.size(); ++jp ) {
       BOOST_CHECK_CLOSE( gpg(jp), 4., 0.001 );
-      eckit::Log::debug(3) << "gpg("<<jp << ")   :   " << gpg(jp) << std::endl;
+      Log::debug(3) << "gpg("<<jp << ")   :   " << gpg(jp) << std::endl;
     }
   }
 

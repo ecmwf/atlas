@@ -1,6 +1,6 @@
 #include <typeinfo>  // std::bad_cast
 #include <unistd.h>
-#include "eckit/log/Log.h"
+#include "atlas/runtime/Log.h"
 #include "eckit/log/ChannelBuffer.h"
 #include "eckit/log/CallbackChannel.h"
 #include "eckit/log/MultiChannel.h"
