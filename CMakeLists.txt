@@ -12,11 +12,11 @@
 #
 # TODO:
 #  * add renumbering to improve cache performance
-#  * add detection of OpenMP flags (mayeb move to ecbuild)
+#  * add detection of OpenMP flags (maybe move to ecbuild)
 
 cmake_minimum_required( VERSION 2.8.4 FATAL_ERROR )
 
-set( CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../ecbuild/cmake")
+set( CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../ecbuild/cmake" )
 
 set( ENABLE_OS_TYPES_TEST       OFF   CACHE BOOL " " )
 set( ENABLE_OS_FUNCTIONS_TEST   OFF   CACHE BOOL " " )
@@ -24,6 +24,9 @@ set( ENABLE_LARGE_FILE_SUPPORT  OFF   CACHE BOOL " " )
 set( ENABLE_OS_ENDINESS_TEST    OFF   CACHE BOOL " " )
 
 project( atlas CXX )
+
+file  ( STRINGS "VERSION" ATLASVER )
+set   ( ${PROJECT_NAME}_VERSION_STR  ${ATLASVER} )
 
 include( ecbuild_system NO_POLICY_SCOPE )
 
@@ -36,7 +39,7 @@ set( PERSISTENT_NAMESPACE "eckit" CACHE INTERNAL "" )
 
 ecbuild_use_package( PROJECT eckit VERSION 0.10 REQUIRED )
 
-ecbuild_debug("   ECKIT_FEATURES : [${ECKIT_FEATURES}]" )
+ecbuild_debug( "   ECKIT_FEATURES : [${ECKIT_FEATURES}]" )
 
 if( ECKIT_HAVE_GRIB )
    ecbuild_debug( "eckit has GRIB support" )
@@ -223,6 +226,17 @@ if( ATLAS_HAVE_FORTRAN )
     LIBRARIES        atlas_f
     NO_PRIVATE_INCLUDE_DIRS
   )
+endif()
+
+############################################################################################
+# documentation
+ecbuild_add_option( FEATURE DOCUMENTATION
+                    DESCRIPTION "Atlas documentation"
+                    DEFAULT OFF
+                    REQUIRED_PACKAGES "Latex" )
+
+if( ATLAS_HAVE_DOCUMENTATION)
+    add_subdirectory( docs )
 endif()
 
 ############################################################################################
