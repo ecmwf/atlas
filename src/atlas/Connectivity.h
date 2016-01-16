@@ -118,6 +118,10 @@ public:
 
   /// @brief Resize connectivity, and add given rows with missing values
   /// @note Can only be used when data is owned.
+  virtual void add( size_t rows, size_t cols );
+
+  /// @brief Resize connectivity, and add given rows with missing values
+  /// @note Can only be used when data is owned.
   virtual void add( size_t rows, const size_t cols[] );
 
   /// @brief Resize connectivity, and copy from a BlockConnectivity

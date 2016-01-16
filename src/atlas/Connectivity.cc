@@ -161,6 +161,30 @@ void IrregularConnectivity::add( size_t rows, const size_t cols[] )
   }
 
   owned_values_.resize(new_size);
+  for( size_t j=old_size; j<new_size; ++j )
+    owned_values_[j] = missing_value() TO_FORTRAN;
+
+  values_ = owned_values_.data();
+  displs_ = owned_displs_.data();
+  counts_ = owned_counts_.data();
+}
+
+void IrregularConnectivity::add( size_t rows, size_t cols )
+{
+  if( !owns_ ) throw eckit::AssertionFailed("HybridConnectivity must be owned to be resized directly");
+  size_t old_size = owned_values_.size();
+  size_t new_size = old_size + rows*cols;
+  size_t new_rows = rows_+rows;
+  owned_displs_.resize(new_rows+1);
+  owned_counts_.resize(new_rows+1);
+  for(size_t j=0; rows_<new_rows; ++rows_, ++j) {
+    owned_displs_[rows_+1] = owned_displs_[rows_]+cols;
+    owned_counts_[rows_] = cols;
+  }
+
+  owned_values_.resize(new_size);
+  for( size_t j=old_size; j<new_size; ++j )
+    owned_values_[j] = missing_value() TO_FORTRAN;
 
   values_ = owned_values_.data();
   displs_ = owned_displs_.data();
