@@ -127,6 +127,14 @@ ecbuild_add_test( TARGET atlas_test_elements
   LIBS     atlas
 )
 
+
+ecbuild_add_test( TARGET atlas_test_accumulate_facets
+  BOOST
+  MPI      1
+  SOURCES  test_accumulate_facets.cc
+  LIBS     atlas
+)
+
 ecbuild_add_test( TARGET atlas_test_functionspace
   BOOST
   MPI      1

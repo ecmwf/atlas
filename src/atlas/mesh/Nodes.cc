@@ -26,6 +26,10 @@ Nodes::Nodes(size_t _size): size_(_size)
   lonlat_       = &add( Field::create<double>("lonlat",    make_shape(size(),2)) );
   ghost_        = &add( Field::create<int   >("ghost",     make_shape(size(),1)) );
 
+  edge_connectivity_ = &add( "edge", new Connectivity() );
+  cell_connectivity_ = &add( "cell", new Connectivity() );
+
+
   add( Field::create<int>("flags", make_shape(size(),1)) );
 
 
@@ -43,6 +47,11 @@ Nodes::Nodes(size_t _size): size_(_size)
   metadata().set<long>("type",static_cast<int>(Entity::NODES));
 }
 
+Nodes::Connectivity& Nodes::add( const std::string& name, Connectivity *connectivity )
+{
+  connectivities_[name] = connectivity;
+  return *connectivity;
+}
 
 Field& Nodes::add( Field* field )
 {

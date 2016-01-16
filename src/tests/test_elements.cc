@@ -309,15 +309,16 @@ BOOST_AUTO_TEST_CASE( conversion )
   generator.options.set("angle",29.0);
   generator.options.set("triangulate",false);
   Mesh* mesh = generator.generate(*grid);
-  
+  DEBUG();
   next::FunctionSpace* functionspace = new functionspace::EdgeBasedFiniteVolume(*mesh);
+  DEBUG();
   mesh->edges().rebuild_from_fs();
+  DEBUG();
   mesh->cells().rebuild_from_fs();
-
+  DEBUG();
   const HybridElements& edges = mesh->edges();
   const HybridElements& cells = mesh->cells();
   const Nodes& nodes          = mesh->nodes();
-  
   DEBUG_VAR( nodes.size() );
   DEBUG_VAR( cells.size() );
   DEBUG_VAR( cells.elements(0).size() );

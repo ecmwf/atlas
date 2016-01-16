@@ -104,6 +104,8 @@ public: // methods
   /// @return type_idx of the added element type
   size_t add( const Elements& );
 
+  void clear();
+
 private:
 
 // -- Data

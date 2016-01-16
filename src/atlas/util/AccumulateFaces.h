@@ -15,6 +15,8 @@
 #include "atlas/Parameters.h"
 
 namespace atlas { class FunctionSpace; };
+namespace atlas { namespace mesh { class HybridElements; } }
+namespace atlas { namespace mesh { class Nodes; } }
 
 namespace atlas {
 namespace util {
@@ -33,6 +35,15 @@ void accumulate_faces(
 		std::vector< Face >& connectivity_edge_to_elem,
 		size_t& nb_faces,
 		size_t& nb_inner_faces );
+
+// currently only supports 2D meshes. Little work needed for 3D.
+void accumulate_facets(
+    const mesh::HybridElements &cells,
+    const mesh::Nodes &nodes,
+    std::vector< idx_t > &facet_nodes_data, // shape(nb_facets,nb_nodes_per_facet)
+    std::vector< idx_t > &connectivity_facet_to_elem,
+    size_t &nb_facets,
+    size_t &nb_inner_facets );
 
 } // namespace util
 } // namespace atlas

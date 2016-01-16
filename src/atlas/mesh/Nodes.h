@@ -19,6 +19,7 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/Metadata.h"
+#include "atlas/Connectivity.h"
 
 namespace atlas { class Field; }
 
@@ -29,6 +30,8 @@ namespace mesh {
  * \brief Nodes class that owns a collection of fields defined in nodes of the mesh
  */
 class Nodes : public eckit::Owned {
+public:
+  typedef IrregularConnectivity Connectivity;
 
 public: // methods
 
@@ -65,6 +68,15 @@ public: // methods
   const Field& ghost() const { return *ghost_; }
         Field& ghost()       { return *ghost_; }
 
+  /// @brief Node to Edge connectivity table
+  const Connectivity& edge_connectivity() const;
+        Connectivity& edge_connectivity();
+
+  /// @brief Node to Cell connectivity table
+  const Connectivity& cell_connectivity() const;
+        Connectivity& cell_connectivity();
+
+
   size_t size() const { return size_; }
 
 // -- Modifiers
@@ -74,6 +86,8 @@ public: // methods
   void resize( size_t );
 
   void remove_field(const std::string& name);
+
+  Connectivity& add( const std::string& name, Connectivity* );
 
 private:
 
@@ -87,11 +101,14 @@ private:
 private:
 
   typedef std::map< std::string, eckit::SharedPtr<Field> >  FieldMap;
+  typedef std::map< std::string, eckit::SharedPtr<Connectivity> >  ConnectivityMap;
 
 private:
 
   size_t size_;
   FieldMap fields_;
+  ConnectivityMap connectivities_;
+
   Metadata metadata_;
 
   // Cached shortcuts to specific fields in fields_
@@ -101,7 +118,33 @@ private:
   Field* lonlat_;
   Field* ghost_;
 
+
+  Connectivity* edge_connectivity_;
+  Connectivity* cell_connectivity_;
+
 };
+
+inline const Nodes::Connectivity& Nodes::edge_connectivity() const
+{
+  return *edge_connectivity_;
+}
+
+inline Nodes::Connectivity& Nodes::edge_connectivity()
+{
+  return *edge_connectivity_;
+}
+
+inline const Nodes::Connectivity& Nodes::cell_connectivity() const
+{
+  return *cell_connectivity_;
+}
+
+inline Nodes::Connectivity& Nodes::cell_connectivity()
+{
+  return *cell_connectivity_;
+}
+
+
 
 #define Char char
 extern "C"

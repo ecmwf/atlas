@@ -41,7 +41,7 @@ HybridElements::HybridElements() :
   global_index_ = &add( Field::create<gidx_t>("glb_idx",   make_shape(size(),1)) );
   remote_index_ = &add( Field::create<int   >("remote_idx",make_shape(size(),1)) );
   partition_    = &add( Field::create<int   >("partition", make_shape(size(),1)) );
-  halo_         = &add( Field::create<int   >("halo",     make_shape(size(),1)) );
+  halo_         = &add( Field::create<int   >("halo",      make_shape(size(),1)) );
   
   node_connectivity_ = &add( "node", new Connectivity() );  
   edge_connectivity_ = &add( "edge", new Connectivity() );  
@@ -207,9 +207,25 @@ const FunctionSpace& HybridElements::deprecated_quads() const { return mesh_->fu
 const FunctionSpace& HybridElements::deprecated_triags() const { return mesh_->function_space("triags"); }
       FunctionSpace& HybridElements::deprecated_triags() { return mesh_->function_space("triags"); }
 
+void HybridElements::clear()
+{
+  resize(0);
+  for( ConnectivityMap::iterator it = connectivities_.begin(); it!=connectivities_.end(); ++it )
+  {
+    it->second->clear();
+  }
+  size_=0;
+  elements_size_.clear();
+  elements_begin_.resize(1);
+  elements_begin_[0]=0;
+  element_types_.clear();
+  type_idx_.clear();
+  elements_.clear();
+}
+
 void HybridElements::rebuild_from_fs()
 {
-  ASSERT( size() == 0 );
+  clear();
   {
     for(size_t func_space_idx = 0; func_space_idx < mesh_->nb_function_spaces(); ++func_space_idx)
     {

@@ -146,6 +146,10 @@ public:
 
 public:
   IndexView() {}
+  IndexView( DATA_TYPE* data, const size_t shape[1] ) : data_( const_cast<DATA_TYPE*>(data) )
+  {
+    strides_[0]=1;       shape_[0]=shape[0];
+  }
   IndexView( DATA_TYPE* data, const size_t strides[1], const size_t shape[1] ) : data_( const_cast<DATA_TYPE*>(data) )
   {
     strides_[0]=strides[0];       shape_[0]=shape[0];

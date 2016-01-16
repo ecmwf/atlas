@@ -36,6 +36,7 @@
 #include "atlas/GridDistribution.h"
 #include "atlas/util/Bitflags.h"
 #include "atlas/io/Gmsh.h"
+#include "atlas/mesh/HybridElements.h"
 
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/trans/TransPartitioner.h"
@@ -1148,6 +1149,7 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
   generate_global_element_numbering( mesh );
 
 
+  mesh.cells().rebuild_from_fs();
   ///debug
   //  ArrayView<double,2> xyz( mesh.nodes().create_field<double>("xyz",3,IF_EXISTS_RETURN) );
   //  for( int jnode=0; jnode<lonlat.shape(0); ++jnode )

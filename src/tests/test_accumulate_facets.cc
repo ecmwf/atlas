@@ -1,0 +1,889 @@
+/*
+ * (C) Copyright 1996-2015 ECMWF.
+ *
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
+ * granted to it by virtue of its status as an intergovernmental organisation nor
+ * does it submit to any jurisdiction.
+ */
+
+#include "atlas/atlas_config.h"
+
+#define BOOST_TEST_MODULE test_accumulate_facets
+#include "ecbuild/boost_test_framework.h"
+
+#include "atlas/atlas.h"
+#include "atlas/util/AccumulateFaces.h"
+
+#include "atlas/Mesh.h"
+#include "atlas/meshgen/ReducedGridMeshGenerator.h"
+#include "atlas/Grid.h"
+#include "atlas/mesh/HybridElements.h"
+#include "atlas/actions/BuildEdges.h"
+#include "atlas/util/Unique.h"
+
+// ------------------------------------------------------------------
+
+using namespace atlas::mesh;
+using namespace atlas::util;
+
+namespace atlas {
+namespace test {
+
+
+// ===================================================================
+//                               BEGIN TESTS
+// ===================================================================
+
+struct GlobalFixture {
+    GlobalFixture()  { atlas_init(boost::unit_test::framework::master_test_suite().argc,
+                                  boost::unit_test::framework::master_test_suite().argv); }
+    ~GlobalFixture() { atlas_finalize(); }
+};
+
+BOOST_GLOBAL_FIXTURE( GlobalFixture )
+
+BOOST_AUTO_TEST_SUITE( test_edges )
+
+BOOST_AUTO_TEST_CASE( test_accumulate_facets )
+{
+  Grid* grid = Grid::create("O2");
+  meshgen::ReducedGridMeshGenerator generator;
+  generator.options.set("angle",29.0);
+  generator.options.set("triangulate",false);
+  Mesh* mesh = generator.generate(*grid);
+
+  // storage for edge-to-node-connectivity shape=(nb_edges,2)
+  std::vector< idx_t > edge_nodes_data;
+
+  // storage for edge-to-cell-connectivity shape=(nb_edges,2)
+  std::vector< idx_t > edge_to_cell_data;
+
+  size_t nb_edges;
+  size_t nb_inner_edges;
+
+  // Accumulate facets of cells ( edges in 2D )
+  accumulate_facets(mesh->cells(),mesh->nodes(),edge_nodes_data,edge_to_cell_data,nb_edges,nb_inner_edges);
+
+  idx_t edge_nodes_check[] = {
+  0, 21,
+  21, 22,
+  22, 1,
+  1, 0,
+  22, 23,
+  23, 2,
+  2, 1,
+  3, 25,
+  25, 26,
+  26, 4,
+  4, 3,
+  26, 27,
+  27, 5,
+  5, 4,
+  27, 28,
+  28, 6,
+  6, 5,
+  28, 29,
+  29, 7,
+  7, 6,
+  8, 31,
+  31, 32,
+  32, 9,
+  9, 8,
+  32, 33,
+  33, 10,
+  10, 9,
+  33, 34,
+  34, 11,
+  11, 10,
+  34, 35,
+  35, 12,
+  12, 11,
+  13, 37,
+  37, 38,
+  38, 14,
+  14, 13,
+  38, 39,
+  39, 15,
+  15, 14,
+  39, 40,
+  40, 16,
+  16, 15,
+  40, 41,
+  41, 17,
+  17, 16,
+  18, 43,
+  43, 44,
+  44, 19,
+  19, 18,
+  44, 45,
+  45, 20,
+  20, 19,
+  21, 46,
+  46, 47,
+  47, 22,
+  47, 48,
+  48, 23,
+  48, 49,
+  49, 24,
+  24, 23,
+  49, 50,
+  50, 25,
+  25, 24,
+  50, 51,
+  51, 26,
+  51, 52,
+  52, 27,
+  52, 53,
+  53, 28,
+  53, 54,
+  54, 29,
+  54, 55,
+  55, 30,
+  30, 29,
+  55, 56,
+  56, 31,
+  31, 30,
+  56, 57,
+  57, 32,
+  57, 58,
+  58, 33,
+  58, 59,
+  59, 34,
+  59, 60,
+  60, 35,
+  60, 61,
+  61, 36,
+  36, 35,
+  61, 62,
+  62, 37,
+  37, 36,
+  62, 63,
+  63, 38,
+  63, 64,
+  64, 39,
+  64, 65,
+  65, 40,
+  65, 66,
+  66, 41,
+  66, 67,
+  67, 42,
+  42, 41,
+  67, 68,
+  68, 43,
+  43, 42,
+  68, 69,
+  69, 44,
+  69, 70,
+  70, 45,
+  46, 71,
+  71, 72,
+  72, 47,
+  72, 73,
+  73, 48,
+  50, 74,
+  74, 75,
+  75, 51,
+  75, 76,
+  76, 52,
+  76, 77,
+  77, 53,
+  77, 78,
+  78, 54,
+  56, 79,
+  79, 80,
+  80, 57,
+  80, 81,
+  81, 58,
+  81, 82,
+  82, 59,
+  82, 83,
+  83, 60,
+  62, 84,
+  84, 85,
+  85, 63,
+  85, 86,
+  86, 64,
+  86, 87,
+  87, 65,
+  87, 88,
+  88, 66,
+  68, 89,
+  89, 90,
+  90, 69,
+  90, 91,
+  91, 70,
+  24, 2,
+  24, 3,
+  3, 2,
+  30, 7,
+  30, 8,
+  8, 7,
+  36, 12,
+  36, 13,
+  13, 12,
+  42, 17,
+  42, 18,
+  18, 17,
+  73, 49,
+  73, 74,
+  74, 49,
+  78, 55,
+  78, 79,
+  79, 55,
+  83, 61,
+  83, 84,
+  84, 61,
+  88, 67,
+  88, 89,
+  89, 67
+  };
+  BOOST_CHECK_EQUAL_COLLECTIONS( edge_nodes_data.begin(), edge_nodes_data.end(), edge_nodes_check, edge_nodes_check+2*nb_edges );
+
+  idx_t edge_to_cell_check[] = {
+  0, -1,
+  0, 16,
+  0, 1,
+  0, -1,
+  1, 17,
+  1, 56,
+  1, -1,
+  2, 58,
+  2, 20,
+  2, 3,
+  2, -1,
+  3, 21,
+  3, 4,
+  3, -1,
+  4, 22,
+  4, 5,
+  4, -1,
+  5, 23,
+  5, 59,
+  5, -1,
+  6, 61,
+  6, 26,
+  6, 7,
+  6, -1,
+  7, 27,
+  7, 8,
+  7, -1,
+  8, 28,
+  8, 9,
+  8, -1,
+  9, 29,
+  9, 62,
+  9, -1,
+  10, 64,
+  10, 32,
+  10, 11,
+  10, -1,
+  11, 33,
+  11, 12,
+  11, -1,
+  12, 34,
+  12, 13,
+  12, -1,
+  13, 35,
+  13, 65,
+  13, -1,
+  14, 67,
+  14, 38,
+  14, 15,
+  14, -1,
+  15, 39,
+  15, -1,
+  15, -1,
+  16, -1,
+  16, 40,
+  16, 17,
+  17, 41,
+  17, 18,
+  18, 68,
+  18, 19,
+  18, 56,
+  19, 70,
+  19, 20,
+  19, 58,
+  20, 42,
+  20, 21,
+  21, 43,
+  21, 22,
+  22, 44,
+  22, 23,
+  23, 45,
+  23, 24,
+  24, 71,
+  24, 25,
+  24, 59,
+  25, 73,
+  25, 26,
+  25, 61,
+  26, 46,
+  26, 27,
+  27, 47,
+  27, 28,
+  28, 48,
+  28, 29,
+  29, 49,
+  29, 30,
+  30, 74,
+  30, 31,
+  30, 62,
+  31, 76,
+  31, 32,
+  31, 64,
+  32, 50,
+  32, 33,
+  33, 51,
+  33, 34,
+  34, 52,
+  34, 35,
+  35, 53,
+  35, 36,
+  36, 77,
+  36, 37,
+  36, 65,
+  37, 79,
+  37, 38,
+  37, 67,
+  38, 54,
+  38, 39,
+  39, 55,
+  39, -1,
+  40, -1,
+  40, -1,
+  40, 41,
+  41, -1,
+  41, 68,
+  42, 70,
+  42, -1,
+  42, 43,
+  43, -1,
+  43, 44,
+  44, -1,
+  44, 45,
+  45, -1,
+  45, 71,
+  46, 73,
+  46, -1,
+  46, 47,
+  47, -1,
+  47, 48,
+  48, -1,
+  48, 49,
+  49, -1,
+  49, 74,
+  50, 76,
+  50, -1,
+  50, 51,
+  51, -1,
+  51, 52,
+  52, -1,
+  52, 53,
+  53, -1,
+  53, 77,
+  54, 79,
+  54, -1,
+  54, 55,
+  55, -1,
+  55, -1,
+  56, 57,
+  57, 58,
+  57, -1,
+  59, 60,
+  60, 61,
+  60, -1,
+  62, 63,
+  63, 64,
+  63, -1,
+  65, 66,
+  66, 67,
+  66, -1,
+  68, 69,
+  69, -1,
+  69, 70,
+  71, 72,
+  72, -1,
+  72, 73,
+  74, 75,
+  75, -1,
+  75, 76,
+  77, 78,
+  78, -1,
+  78, 79
+  };
+  BOOST_CHECK_EQUAL_COLLECTIONS( edge_to_cell_data.begin(), edge_to_cell_data.end(), edge_to_cell_check, edge_to_cell_check+2*nb_edges );
+
+}
+
+BOOST_AUTO_TEST_CASE( test_build_edges )
+{
+  Grid* grid = Grid::create("O2");
+  meshgen::ReducedGridMeshGenerator generator;
+  generator.options.set("angle",29.0);
+  generator.options.set("triangulate",false);
+  Mesh* mesh = generator.generate(*grid);
+
+  // Accumulate facets of cells ( edges in 2D )
+  actions::build_edges(*mesh);
+
+  idx_t edge_nodes_check[] = {
+  0, 21,
+  21, 22,
+  22, 1,
+  1, 0,
+  22, 23,
+  23, 2,
+  2, 1,
+  3, 25,
+  25, 26,
+  26, 4,
+  4, 3,
+  26, 27,
+  27, 5,
+  5, 4,
+  27, 28,
+  28, 6,
+  6, 5,
+  28, 29,
+  29, 7,
+  7, 6,
+  8, 31,
+  31, 32,
+  32, 9,
+  9, 8,
+  32, 33,
+  33, 10,
+  10, 9,
+  33, 34,
+  34, 11,
+  11, 10,
+  34, 35,
+  35, 12,
+  12, 11,
+  13, 37,
+  37, 38,
+  38, 14,
+  14, 13,
+  38, 39,
+  39, 15,
+  15, 14,
+  39, 40,
+  40, 16,
+  16, 15,
+  40, 41,
+  41, 17,
+  17, 16,
+  18, 43,
+  43, 44,
+  44, 19,
+  19, 18,
+  44, 45,
+  45, 20,
+  20, 19,
+  21, 46,
+  46, 47,
+  47, 22,
+  47, 48,
+  48, 23,
+  48, 49,
+  49, 24,
+  24, 23,
+  49, 50,
+  50, 25,
+  25, 24,
+  50, 51,
+  51, 26,
+  51, 52,
+  52, 27,
+  52, 53,
+  53, 28,
+  53, 54,
+  54, 29,
+  54, 55,
+  55, 30,
+  30, 29,
+  55, 56,
+  56, 31,
+  31, 30,
+  56, 57,
+  57, 32,
+  57, 58,
+  58, 33,
+  58, 59,
+  59, 34,
+  59, 60,
+  60, 35,
+  60, 61,
+  61, 36,
+  36, 35,
+  61, 62,
+  62, 37,
+  37, 36,
+  62, 63,
+  63, 38,
+  63, 64,
+  64, 39,
+  64, 65,
+  65, 40,
+  65, 66,
+  66, 41,
+  66, 67,
+  67, 42,
+  42, 41,
+  67, 68,
+  68, 43,
+  43, 42,
+  68, 69,
+  69, 44,
+  69, 70,
+  70, 45,
+  46, 71,
+  71, 72,
+  72, 47,
+  72, 73,
+  73, 48,
+  50, 74,
+  74, 75,
+  75, 51,
+  75, 76,
+  76, 52,
+  76, 77,
+  77, 53,
+  77, 78,
+  78, 54,
+  56, 79,
+  79, 80,
+  80, 57,
+  80, 81,
+  81, 58,
+  81, 82,
+  82, 59,
+  82, 83,
+  83, 60,
+  62, 84,
+  84, 85,
+  85, 63,
+  85, 86,
+  86, 64,
+  86, 87,
+  87, 65,
+  87, 88,
+  88, 66,
+  68, 89,
+  89, 90,
+  90, 69,
+  90, 91,
+  91, 70,
+  24, 2,
+  24, 3,
+  3, 2,
+  30, 7,
+  30, 8,
+  8, 7,
+  36, 12,
+  36, 13,
+  13, 12,
+  42, 17,
+  42, 18,
+  18, 17,
+  73, 49,
+  73, 74,
+  74, 49,
+  78, 55,
+  78, 79,
+  79, 55,
+  83, 61,
+  83, 84,
+  84, 61,
+  88, 67,
+  88, 89,
+  89, 67
+  };
+
+  {
+  const mesh::HybridElements::Connectivity& edge_node_connectivity = mesh->edges().node_connectivity();
+  const util::UniqueLonLat compute_uid( mesh->nodes() );
+  for( size_t jedge=0; jedge<mesh->edges().size(); ++jedge )
+  {
+    if( compute_uid(edge_nodes_check[2*jedge+0]) < compute_uid(edge_nodes_check[2*jedge+1]) )
+    {
+      BOOST_CHECK_EQUAL( edge_nodes_check[2*jedge+0] , edge_node_connectivity(jedge,0) );
+      BOOST_CHECK_EQUAL( edge_nodes_check[2*jedge+1] , edge_node_connectivity(jedge,1) );
+    }
+    else
+    {
+      BOOST_CHECK_EQUAL( edge_nodes_check[2*jedge+0] , edge_node_connectivity(jedge,1) );
+      BOOST_CHECK_EQUAL( edge_nodes_check[2*jedge+1] , edge_node_connectivity(jedge,0) );
+    }
+  }
+  }
+
+
+  idx_t edge_to_cell_check[] = {
+  0, -1,
+  0, 16,
+  0, 1,
+  0, -1,
+  1, 17,
+  1, 56,
+  1, -1,
+  2, 58,
+  2, 20,
+  2, 3,
+  2, -1,
+  3, 21,
+  3, 4,
+  3, -1,
+  4, 22,
+  4, 5,
+  4, -1,
+  5, 23,
+  5, 59,
+  5, -1,
+  6, 61,
+  6, 26,
+  6, 7,
+  6, -1,
+  7, 27,
+  7, 8,
+  7, -1,
+  8, 28,
+  8, 9,
+  8, -1,
+  9, 29,
+  9, 62,
+  9, -1,
+  10, 64,
+  10, 32,
+  10, 11,
+  10, -1,
+  11, 33,
+  11, 12,
+  11, -1,
+  12, 34,
+  12, 13,
+  12, -1,
+  13, 35,
+  13, 65,
+  13, -1,
+  14, 67,
+  14, 38,
+  14, 15,
+  14, -1,
+  15, 39,
+  15, -1,
+  15, -1,
+  16, -1,
+  16, 40,
+  16, 17,
+  17, 41,
+  17, 18,
+  18, 68,
+  18, 19,
+  18, 56,
+  19, 70,
+  19, 20,
+  19, 58,
+  20, 42,
+  20, 21,
+  21, 43,
+  21, 22,
+  22, 44,
+  22, 23,
+  23, 45,
+  23, 24,
+  24, 71,
+  24, 25,
+  24, 59,
+  25, 73,
+  25, 26,
+  25, 61,
+  26, 46,
+  26, 27,
+  27, 47,
+  27, 28,
+  28, 48,
+  28, 29,
+  29, 49,
+  29, 30,
+  30, 74,
+  30, 31,
+  30, 62,
+  31, 76,
+  31, 32,
+  31, 64,
+  32, 50,
+  32, 33,
+  33, 51,
+  33, 34,
+  34, 52,
+  34, 35,
+  35, 53,
+  35, 36,
+  36, 77,
+  36, 37,
+  36, 65,
+  37, 79,
+  37, 38,
+  37, 67,
+  38, 54,
+  38, 39,
+  39, 55,
+  39, -1,
+  40, -1,
+  40, -1,
+  40, 41,
+  41, -1,
+  41, 68,
+  42, 70,
+  42, -1,
+  42, 43,
+  43, -1,
+  43, 44,
+  44, -1,
+  44, 45,
+  45, -1,
+  45, 71,
+  46, 73,
+  46, -1,
+  46, 47,
+  47, -1,
+  47, 48,
+  48, -1,
+  48, 49,
+  49, -1,
+  49, 74,
+  50, 76,
+  50, -1,
+  50, 51,
+  51, -1,
+  51, 52,
+  52, -1,
+  52, 53,
+  53, -1,
+  53, 77,
+  54, 79,
+  54, -1,
+  54, 55,
+  55, -1,
+  55, -1,
+  56, 57,
+  57, 58,
+  57, -1,
+  59, 60,
+  60, 61,
+  60, -1,
+  62, 63,
+  63, 64,
+  63, -1,
+  65, 66,
+  66, 67,
+  66, -1,
+  68, 69,
+  69, -1,
+  69, 70,
+  71, 72,
+  72, -1,
+  72, 73,
+  74, 75,
+  75, -1,
+  75, 76,
+  77, 78,
+  78, -1,
+  78, 79
+  };
+
+  {
+    const mesh::HybridElements::Connectivity& cell_node_connectivity = mesh->cells().node_connectivity();
+    const mesh::HybridElements::Connectivity& edge_cell_connectivity = mesh->edges().cell_connectivity();
+    const util::UniqueLonLat compute_uid( mesh->nodes() );
+    for( size_t jedge=0; jedge<mesh->edges().size(); ++jedge )
+    {
+      idx_t e1 = edge_to_cell_check[2*jedge+0];
+      idx_t e2 = edge_to_cell_check[2*jedge+1];
+      if( e2 == edge_cell_connectivity.missing_value() ||
+          compute_uid(cell_node_connectivity.row(e1)) < compute_uid(cell_node_connectivity.row(e2)) )
+      {
+        BOOST_CHECK_EQUAL( edge_to_cell_check[2*jedge+0] , edge_cell_connectivity(jedge,0) );
+        BOOST_CHECK_EQUAL( edge_to_cell_check[2*jedge+1] , edge_cell_connectivity(jedge,1) );
+      }
+      else
+      {
+        BOOST_CHECK_EQUAL( edge_to_cell_check[2*jedge+0] , edge_cell_connectivity(jedge,1) );
+        BOOST_CHECK_EQUAL( edge_to_cell_check[2*jedge+1] , edge_cell_connectivity(jedge,0) );
+      }
+    }
+  }
+
+
+  {
+    const IrregularConnectivity& elem_edge_connectivity = mesh->cells().edge_connectivity();
+    for( size_t jelem=0; jelem<mesh->cells().size(); ++jelem )
+    {
+      std::cout << jelem << " : " ;
+      for( size_t jedge=0; jedge<elem_edge_connectivity.cols(jelem); ++jedge )
+      {
+         std::cout << elem_edge_connectivity(jelem,jedge) << "  ";
+      }
+      std::cout << std::endl;
+    }
+  }
+
+}
+
+
+BOOST_AUTO_TEST_CASE( test_build_edges_triangles_only )
+{
+  Grid* grid = Grid::create("O2");
+  meshgen::ReducedGridMeshGenerator generator;
+  generator.options.set("angle",29.0);
+  generator.options.set("triangulate",false);
+  Mesh* mesh = generator.generate(*grid);
+
+  // Accumulate facets of cells ( edges in 2D )
+  actions::build_edges(*mesh);
+
+  {
+    const IrregularConnectivity& elem_edge_connectivity = mesh->cells().edge_connectivity();
+    for( size_t jelem=0; jelem<mesh->cells().size(); ++jelem )
+    {
+      std::cout << jelem << " : " ;
+      for( size_t jedge=0; jedge<elem_edge_connectivity.cols(jelem); ++jedge )
+      {
+         std::cout << elem_edge_connectivity(jelem,jedge) << "  ";
+      }
+      std::cout << std::endl;
+    }
+  }
+
+
+  for( size_t f=0; f<mesh->nb_function_spaces(); ++f )
+  {
+    const FunctionSpace& fs = mesh->function_space(f);
+    if( fs.metadata().get<long>("type") == Entity::ELEMS )
+    {
+      IndexView<int,2> elem_edge_connectivity( fs.field("to_edge") );
+      for( size_t jelem=0; jelem<elem_edge_connectivity.shape(0); ++jelem )
+      {
+        std::cout << jelem << " : " ;
+        for( size_t jedge=0; jedge<elem_edge_connectivity.shape(1); ++jedge )
+        {
+           std::cout << elem_edge_connectivity(jelem,jedge) << "  ";
+        }
+        std::cout << std::endl;
+      }
+
+    }
+  }
+}
+
+
+
+
+BOOST_AUTO_TEST_SUITE_END()
+
+} // namespace test
+} // namespace atlas

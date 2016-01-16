@@ -18,6 +18,7 @@
 #include "atlas/actions/AddVirtualNodes.h"
 #include "atlas/actions/BuildXYZField.h"
 #include "atlas/actions/BuildConvexHull3D.h"
+#include "atlas/mesh/HybridElements.h"
 
 namespace atlas {
 namespace meshgen {
@@ -60,6 +61,7 @@ void Delaunay::generate(const Grid& g, Mesh& mesh) const
   actions::BuildConvexHull3D()(mesh);
 
   mesh.set_grid(g);
+  mesh.cells().rebuild_from_fs();
 }
 
 namespace {
