@@ -270,6 +270,8 @@ functionspace/Nodes.h
 functionspace/Nodes.cc
 functionspace/NodesInterface.h
 functionspace/NodesInterface.cc
+functionspace/Edges.h
+functionspace/Edges.cc
 functionspace/EdgeBasedFiniteVolume.h
 functionspace/EdgeBasedFiniteVolume.cc
 functionspace/ReducedGridPoint.h
