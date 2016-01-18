@@ -159,41 +159,6 @@ void build_median_dual_mesh( Mesh& mesh )
 {
   build_median_dual_mesh_new( mesh );
   build_median_dual_mesh_convert_to_old( mesh );
-#if 0
-  mesh::Nodes& nodes   = mesh.nodes();
-  ArrayView<double,2> lonlat        ( nodes.lonlat() );
-  ArrayView<double,1> dual_volumes  ( nodes.add( Field::create<double>( "dual_volumes", make_shape(nodes.size(),1) ) ) );
-
-  FunctionSpace& quads       = mesh.function_space( "quads" );
-  FunctionSpace& triags      = mesh.function_space( "triags" );
-  FunctionSpace& edges       = mesh.function_space( "edges" );
-
-  build_centroids(quads,  lonlat);
-  build_centroids(triags, lonlat);
-  build_centroids(edges,  lonlat);
-
-  add_median_dual_volume_contribution( quads,  edges, nodes, dual_volumes );
-  add_median_dual_volume_contribution( triags, edges, nodes, dual_volumes );
-  add_median_dual_volume_contribution( edges,  nodes, dual_volumes );
-
-  build_dual_normals( mesh );
-
-  ArrayView<double,1> skewness      ( edges.create_field<double>("skewness",1) );
-  ArrayView<double,1> alpha         ( edges.create_field<double>("alpha",1) );
-  skewness = 0.;
-  alpha = 0.5;
-
-  eckit::SharedPtr<functionspace::Nodes> nodes_fs( new functionspace::Nodes(mesh,Halo(mesh)) );
-  nodes_fs->haloExchange(nodes.field("dual_volumes"));
-
-  ArrayView<double,2> dual_normals  ( edges.field( "dual_normals" ) );
-
-
-  edges.halo_exchange().execute(dual_normals);
-  make_dual_normals_outward(mesh);
-
-#endif
-
 }
 
 void build_centroid_dual_mesh( Mesh& mesh )
@@ -372,113 +337,6 @@ void add_median_dual_volume_contribution_poles(
     }
   }
 
-}
-
-
-void add_median_dual_volume_contribution(
-    FunctionSpace& elements,
-    FunctionSpace& edges,
-    mesh::Nodes& nodes,
-    ArrayView<double,1>& dual_volumes )
-{
-  int nb_elems = elements.shape(0);
-  ArrayView<double,2> elem_centroids ( elements.field("centroids") );
-  IndexView<int,   2> elem_to_edges  ( elements.field("to_edge") );
-  ArrayView<double,2> edge_centroids ( edges.field("centroids") );
-  IndexView<int,   2> edge_nodes     ( edges.field("nodes") );
-  ArrayView<double,2> node_lonlat    ( nodes.lonlat() );
-  ArrayView<gidx_t,1> elem_glb_idx   ( elements.field("glb_idx") );
-  ArrayView<gidx_t,1> edge_glb_idx   ( edges.field("glb_idx") );
-  int nb_edges_per_elem = elem_to_edges.shape(1);
-
-
-  // special ordering for bit-identical results
-  std::vector<Node> ordering(nb_elems);
-  for (int elem=0; elem<nb_elems; ++elem)
-  {
-    ordering[elem] = Node( util::unique_lonlat(elem_centroids[elem]), elem );
-  }
-  std::sort( ordering.data(), ordering.data()+nb_elems );
-
-
-  for (int jelem=0; jelem<nb_elems; ++jelem)
-  {
-    int elem = ordering[jelem].i;
-    double x0 = elem_centroids(elem,LON);
-    double y0 = elem_centroids(elem,LAT);
-    for (int jedge=0; jedge<nb_edges_per_elem; ++jedge)
-    {
-      int edge = elem_to_edges(elem,jedge);
-      double x1 = edge_centroids(edge,LON);
-      double y1 = edge_centroids(edge,LAT);
-      for( int j=0; j<2; ++j )
-      {
-        int node = edge_nodes(edge,j);
-        double x2 = node_lonlat(node,LON);
-        double y2 = node_lonlat(node,LAT);
-        double triag_area = std::abs( x0*(y1-y2)+x1*(y2-y0)+x2*(y0-y1) )*0.5;
-        dual_volumes(node) += triag_area;
-      }
-    }
-  }
-}
-
-void add_median_dual_volume_contribution(
-    FunctionSpace& edges,
-    mesh::Nodes& nodes,
-    ArrayView<double,1>& dual_volumes )
-{
-  ArrayView<gidx_t,1> node_glb_idx  ( nodes.global_index() );
-  ArrayView<double,2> edge_centroids( edges.field("centroids"  ) );
-  IndexView<int,   2> edge_nodes    ( edges.field("nodes"      ) );
-  ArrayView<gidx_t,1> edge_glb_idx  ( edges.field("glb_idx"    ) );
-  IndexView<int,   2> edge_to_elem  ( edges.field("to_elem"    ) );
-  ArrayView<double,2> node_lonlat   ( nodes.lonlat() );
-  int nb_edges = edges.shape(0);
-  std::map<int,std::vector<int> > node_to_bdry_edge;
-  for(int edge=0; edge<nb_edges; ++edge)
-  {
-    if ( edge_to_elem(edge,0) >= 0 && edge_to_elem(edge,3) < 0)
-    {
-      node_to_bdry_edge[ edge_nodes(edge,0) ].push_back(edge);
-      node_to_bdry_edge[ edge_nodes(edge,1) ].push_back(edge);
-    }
-  }
-
-  double tol = 1.e-6;
-  double min[2], max[2];
-  global_bounding_box( nodes, min, max );
-
-  std::set<int> visited_nodes;
-
-  std::map<int,std::vector<int> >::iterator it;
-  for( it=node_to_bdry_edge.begin(); it!=node_to_bdry_edge.end(); ++it)
-  {
-    int node = (*it).first;
-    std::vector<int>& bdry_edges = (*it).second;
-    double x0 = node_lonlat(node,LON);
-    double y0 = node_lonlat(node,LAT);
-    double x1, y1, y2;
-    for (size_t jedge = 0; jedge < bdry_edges.size(); ++jedge)
-    {
-      int edge = bdry_edges[jedge];
-      x1 = edge_centroids(edge,LON);
-      y1 = edge_centroids(edge,LAT);
-
-      y2 = 0.;
-      if ( std::abs(y1-max[LAT])<tol )
-        y2 = 90.;
-      else if ( std::abs(y1-min[LAT])<tol )
-        y2 = -90.;
-
-      if( y2!=0 )
-      {
-        //std::cout << "edge " << edge_glb_idx(edge) << " adding contribution for node " << node_glb_idx(node) << std::endl;
-        double quad_area = std::abs( (x1-x0)*(y2-y0) );
-        dual_volumes(node) += quad_area;
-      }
-    }
-  }
 }
 
 void add_centroid_dual_volume_contribution(
@@ -667,24 +525,9 @@ void build_dual_normals_new( Mesh& mesh )
   }
 }
 
-void build_dual_normals_convert_to_old( Mesh& mesh )
-{
-  FunctionSpace&  edges = mesh.function_space("edges");
-  ArrayView<double,2> dual_normals  ( edges.create_field<double>("dual_normals",2) );
-  const ArrayView<double,2> new_dual_normals( mesh.edges().field( "dual_normals") );
-  for( size_t jedge=0; jedge<mesh.edges().size(); ++jedge )
-  {
-    dual_normals(jedge,LON) = new_dual_normals(jedge,LON);
-    dual_normals(jedge,LAT) = new_dual_normals(jedge,LAT);
-  }
-}
-
 
 void build_dual_normals( Mesh& mesh )
 {
-  build_dual_normals_new(mesh);
-  build_dual_normals_convert_to_old(mesh);
-#if 0
   std::vector< ArrayView<double,2> > elem_centroids( mesh.nb_function_spaces() );
   for (size_t func_space_idx = 0; func_space_idx < mesh.nb_function_spaces(); ++func_space_idx)
   {
@@ -785,7 +628,6 @@ void build_dual_normals( Mesh& mesh )
       dual_normals(edge,LAT) = -xl+xr;
     }
   }
-#endif
 }
 
 

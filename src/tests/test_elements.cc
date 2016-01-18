@@ -367,7 +367,7 @@ BOOST_AUTO_TEST_CASE( conversion )
   // }
   // eckit::Log::info() << std::flush;
   
-  ArrayView<double,2> centroids( cells.field("centroids") );
+  ArrayView<double,2> centroids( cells.field("centroids_lonlat") );
   for( size_t e=cells.elements(1).begin(); e<cells.elements(1).end(); ++e )
   {
     // DEBUG_VAR( centroids(e,XX) );

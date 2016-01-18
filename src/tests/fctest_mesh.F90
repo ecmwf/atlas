@@ -322,7 +322,7 @@ TEST( test_meshgen )
   type(atlas_functionspace_Nodes) :: functionspace_nodes
   type(atlas_HaloExchange) :: halo_exchange
   integer(c_int), pointer :: ridx(:)
-  real(c_double), pointer :: arr(:,:)
+  real(c_double), pointer :: arr1d(:), arr2d(:,:)
   integer :: i, nnodes, nghost
 
   write(*,*) "test_meshgen starting"
@@ -353,25 +353,18 @@ TEST( test_meshgen )
 
   call atlas_log%info( nodes%str() )
 
-
-
   field = nodes%field("dual_volumes")
-  call field%data(arr)
+  call field%data(arr1d)
   call field%final()
 
   functionspace_nodes = atlas_functionspace_Nodes(mesh,1)
   halo_exchange = functionspace_nodes%get_halo_exchange()
-  call halo_exchange%execute(arr)
+  call halo_exchange%execute(arr1d)
 
   edges = mesh%function_space("edges")
   field = edges%field("dual_normals")
-  call field%data(arr)
+  call field%data(arr2d)
   call field%final()
-
-
-  !write(0,*) stride(ridx,1)
-
-  !write(0,*) stride(arr,1), stride(arr,2), stride(arr,3)
 
   call atlas_write_gmsh(mesh,"testf2.msh")
 

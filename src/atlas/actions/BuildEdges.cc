@@ -189,154 +189,8 @@ void build_element_to_edge_connectivity_new( Mesh& mesh )
 
 void build_element_to_edge_connectivity( Mesh& mesh )
 {
-#if 1
   build_element_to_edge_connectivity_new(mesh);
   build_element_to_edge_connectivity_convert_to_old(mesh);
-#else
-  std::vector< IndexView<int,2> > elem_to_edge( mesh.nb_function_spaces() );
-  std::vector< std::vector<int> > edge_cnt( mesh.nb_function_spaces() );
-
-  for( size_t func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
-  {
-    FunctionSpace& func_space = mesh.function_space(func_space_idx);
-    if( func_space.metadata().get<long>("type") == Entity::ELEMS )
-    {
-      int nb_edges_per_elem;
-      if (func_space.name() == "quads")  nb_edges_per_elem = 4;
-      if (func_space.name() == "triags") nb_edges_per_elem = 3;
-      elem_to_edge[func_space_idx] =
-          IndexView<int,2>(func_space.create_field<int>("to_edge",nb_edges_per_elem));
-      elem_to_edge[func_space_idx] = -1;
-      edge_cnt[func_space_idx].resize( func_space.shape(0), 0);
-    }
-  }
-
-  mesh::Nodes& nodes = mesh.nodes();
-  FunctionSpace& edges = mesh.function_space("edges");
-
-  size_t nb_edges = edges.shape(0);
-
-  IndexView<int,3> edge_to_elem ( edges.field( "to_elem" ).data<int>(), make_shape(nb_edges,2,2) );
-  IndexView<int,2> edge_nodes   ( edges.field( "nodes" ) );
-
-  bool has_pole_edges(false);
-  ArrayView<int,1> is_pole_edge;
-  if( edges.has_field("is_pole_edge") )
-  {
-    has_pole_edges = true;
-    is_pole_edge = ArrayView<int,1>( edges.field("is_pole_edge") );
-  }
-
-  UniqueLonLat uid( nodes );
-
-  std::vector<Sort> edge_sort(nb_edges);
-  for( size_t edge=0; edge<nb_edges; ++edge )
-    edge_sort[edge] = Sort( uid(edge_nodes[edge]), edge );
-
-  std::sort( edge_sort.data(), edge_sort.data()+nb_edges );
-
-
-//  FunctionSpace& edges = mesh.function_space("edges");
-//  int nb_edges = edges.shape(0);
-//  IndexView<int,3> edge_to_elem ( edges.field( "to_elem" ).data<int>(), Extents(nb_edges,2,2) );
-//  ArrayView<gidx_t,1> edge_gidx    ( edges.field( "glb_idx" ) );
-//  bool has_pole_edges(false);
-//  ArrayView<int,1> is_pole_edge;
-//  if( edges.has_field("is_pole_edge") )
-//  {
-//    has_pole_edges = true;
-//    is_pole_edge = ArrayView<int,1>( edges.field("is_pole_edge") );
-//  }
-
-
-//  std::vector<Sort> edge_sort(nb_edges);
-//  for( int edge=0; edge<nb_edges; ++edge )
-//    edge_sort[edge] = Sort(edge_gidx(edge),edge);
-//  std::sort( edge_sort.data(), edge_sort.data()+nb_edges );
-
-
-  for( size_t jedge=0; jedge<nb_edges; ++jedge)
-  {
-    int edge = edge_sort[jedge].i;
-    for( size_t j=0; j<2; ++j)
-    {
-      int func_space_idx = edge_to_elem(edge,j,0);
-      int elem           = edge_to_elem(edge,j,1);
-
-      if ( elem >= 0 )
-      {
-        elem_to_edge[func_space_idx](elem,edge_cnt[func_space_idx][elem]++) = edge;
-      }
-      else
-      {
-        if( !( has_pole_edges && is_pole_edge(edge) ) )
-        {
-          if( func_space_idx >= 0)
-            throw eckit::SeriousBug("func_space_idx not negative",Here());
-          if( j==0 )
-            throw eckit::SeriousBug("edge has no element connected",Here());
-        }
-      }
-    }
-  }
-
-
-	// Verify that all edges have been found
-	ASSERT( nb_edges > 0 );
-	for( size_t func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
-  {
-    FunctionSpace& func_space = mesh.function_space(func_space_idx);
-	if( func_space.metadata().get<long>("type") == Entity::ELEMS )
-    {
-      size_t nb_edges_per_elem;
-      if (func_space.name() == "quads")  nb_edges_per_elem = 4;
-      if (func_space.name() == "triags") nb_edges_per_elem = 3;
-			for( size_t jelem=0; jelem< func_space.shape(0); ++jelem )
-			{
-				for( size_t jedge=0; jedge<nb_edges_per_elem; ++jedge )
-				{
-					if( elem_to_edge[func_space_idx](jelem,jedge) < 0 )
-					{
-						const IndexView<int,2> elem_nodes ( func_space.field("nodes") );
-						const ArrayView<gidx_t,1> gidx (nodes.global_index() );
-
-						std::stringstream msg; msg << "Could not find edge " << jedge << " for " << func_space.name() << " elem " << jelem << " with nodes ( ";
-						for( size_t jnode=0; jnode<elem_nodes.shape(1); ++jnode )
-						{
-							msg << gidx(elem_nodes(jelem,jnode)) <<" ";
-						}
-						msg << ")";
-						throw eckit::SeriousBug(msg.str(),Here());
-					}
-				}
-			}
-    }
-  }
-#endif
-
-#ifdef CHECK_SANITY
-  const mesh::HybridElements& cells = mesh.cells();
-  const mesh::HybridElements::Connectivity& cell_edge_connectivity = cells.edge_connectivity();
-
-  size_t etype=0;
-  for( size_t func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
-  {
-    FunctionSpace& func_space = mesh.function_space(func_space_idx);
-    if( func_space.metadata().get<long>("type") == Entity::ELEMS )
-    {
-      const mesh::Elements& elements = cells.elements(etype);
-      IndexView<int,2> elem_to_edge (func_space.field("to_edge"));
-      ASSERT( elements.size() == func_space.shape(0) );
-      for( size_t jelem=0; jelem<func_space.shape(0); ++jelem )
-      {
-        ASSERT( elem_to_edge(jelem,0) == cell_edge_connectivity(etype,jelem,0) );
-        ASSERT( elem_to_edge(jelem,1) == cell_edge_connectivity(etype,jelem,1) );
-      }
-      ++etype;
-    }
-  }
-#endif
-
 }
 
 
@@ -409,63 +263,8 @@ void build_node_to_edge_connectivity_convert_to_old( Mesh& mesh )
 
 void build_node_to_edge_connectivity( Mesh& mesh )
 {
-  mesh.edges().rebuild_from_fs();
-
-#if 1
   build_node_to_edge_connectivity_new( mesh );
   build_node_to_edge_connectivity_convert_to_old( mesh );
-
-#else
-  mesh::Nodes& nodes = mesh.nodes();
-  FunctionSpace& edges = mesh.function_space("edges");
-  int nb_nodes = nodes.size();
-  size_t nb_edges = edges.shape(0);
-
-  IndexView<int,2> edge_nodes   ( edges.field( "nodes" ) );
-
-  // Get max_edge_cnt
-  ArrayView<int,1> to_edge_size ( nodes.add( Field::create<int>( "to_edge_size", make_shape(nodes.size(),1) ) ) );
-  to_edge_size = 0.;
-  for(size_t jedge = 0; jedge < nb_edges; ++jedge)
-  {
-    for( int j=0; j<2; ++j)
-    {
-      ++to_edge_size( edge_nodes(jedge,j) );
-    }
-  }
-
-  int max_edge_cnt(0);
-  for( int jnode=0; jnode<nb_nodes; ++jnode )
-  {
-    max_edge_cnt = std::max(max_edge_cnt,to_edge_size(jnode));
-  }
-  ECKIT_MPI_CHECK_RESULT( MPI_Allreduce( MPI_IN_PLACE, &max_edge_cnt, 1, MPI_INT, MPI_MAX, eckit::mpi::comm() ) );
-
-  IndexView<int,2> node_to_edge ( nodes.add( Field::create<int>("to_edge",make_shape(nodes.size(),max_edge_cnt))) );
-
-  UniqueLonLat uid( nodes );
-  std::vector<Sort> edge_sort(nb_edges);
-  for( size_t edge=0; edge<nb_edges; ++edge )
-    edge_sort[edge] = Sort( uid(edge_nodes[edge]), edge );
-  std::stable_sort( edge_sort.data(), edge_sort.data()+nb_edges );
-
-//  ArrayView<gidx_t,1> edge_gidx    ( edges.field( "glb_idx" ) );
-//  std::vector<Sort> edge_sort(nb_edges);
-//  for( int edge=0; edge<nb_edges; ++edge )
-//    edge_sort[edge] = Sort(edge_gidx(edge),edge);
-//  std::sort( edge_sort.data(), edge_sort.data()+nb_edges );
-
-  to_edge_size = 0.;
-  for( size_t jedge=0; jedge<nb_edges; ++jedge)
-  {
-    int edge = edge_sort[jedge].i;
-    for( size_t j=0; j<2; ++j)
-    {
-      int node = edge_nodes(edge,j);
-      node_to_edge( node, to_edge_size(node)++ ) = edge;
-    }
-  }
-#endif
 }
 
 
@@ -711,113 +510,11 @@ void build_edges_convert_to_old( Mesh& mesh )
 
 void build_edges( Mesh& mesh )
 {
-
-#if 1
+  // temporarily necessary to rebuild cells from old in case halo was updated etc.
   mesh.cells().rebuild_from_fs();
+
   build_edges_new(mesh);
   build_edges_convert_to_old(mesh);
-#else
-  mesh::Nodes& nodes   = mesh.nodes();
-  ArrayView<gidx_t,1> glb_idx ( nodes.global_index() );
-  ArrayView<int,1> part       ( nodes.partition() );
-  ArrayView<double,2> lonlat  ( nodes.lonlat() );
-  size_t nb_nodes = nodes.size();
-
-  FunctionSpace& quads       = mesh.function_space( "quads" );
-  FunctionSpace& triags      = mesh.function_space( "triags" );
-
-  std::vector< std::vector<int> > node_to_face(nb_nodes);
-  std::vector< int > face_nodes_data; face_nodes_data.reserve(4*nb_nodes);
-  std::vector< Face > face_to_elem;
-  face_to_elem.reserve(4*nb_nodes);
-  size_t nb_faces = 0;
-  size_t nb_inner_faces = 0;
-
-  DEBUG_VAR(quads.shape(0)+triags.shape(0));
-  accumulate_faces(quads, node_to_face,face_nodes_data,face_to_elem,nb_faces,nb_inner_faces);
-  accumulate_faces(triags,node_to_face,face_nodes_data,face_to_elem,nb_faces,nb_inner_faces);
-
-  size_t extents[] = {size_t(nb_faces), 2};
-  ArrayView<int,2> face_nodes(face_nodes_data.data(),extents);
-
-  // Build edges
-  size_t nb_edges = nb_faces;
-  DEBUG_VAR(nb_edges);
-  if( ! mesh.has_function_space("edges") )
-  {
-    DEBUG();
-    mesh.create_function_space( "edges", "shapefunc", make_shape(nb_edges,FunctionSpace::UNDEF_VARS) );
-  }
-  FunctionSpace& edges = mesh.function_space("edges");
-  edges.metadata().set<long>("type",Entity::FACES);
-  edges.resize(make_shape(nb_edges,FunctionSpace::UNDEF_VARS));
-
-  if( ! edges.has_field("nodes")      )  edges.create_field<int>("nodes",     2);
-  if( ! edges.has_field("glb_idx")    )  edges.create_field<gidx_t>("glb_idx",   1);
-  if( ! edges.has_field("partition")  )  edges.create_field<int>("partition", 1);
-  if( ! edges.has_field("to_elem")    )  edges.create_field<int>("to_elem",   4);
-  if( ! edges.has_field("remote_idx") )  edges.create_field<int>("remote_idx",1);
-
-  IndexView<int,2> edge_nodes   ( edges.field( "nodes"      ) );
-  ArrayView<gidx_t,1> edge_glb_idx ( edges.field( "glb_idx"    ) );
-  ArrayView<int,1> edge_part    ( edges.field( "partition"  ) );
-  IndexView<int,1> edge_ridx    ( edges.field( "remote_idx" ) );
-  IndexView<int,3> edge_to_elem ( edges.field( "to_elem"    ).data<int>(), make_shape(nb_edges,2,2) );
-
-  std::vector< IndexView<int,2> > elem_nodes( mesh.nb_function_spaces() );
-
-  for( size_t func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
-  {
-    FunctionSpace& func_space = mesh.function_space(func_space_idx);
-	if( func_space.metadata().get<long>("type") == Entity::ELEMS )
-    {
-      elem_nodes[func_space_idx] = IndexView<int,2>(func_space.field("nodes"));
-    }
-  }
-
-  UniqueLonLat compute_uid( nodes );
-
-  for( size_t edge=0; edge<nb_edges; ++edge )
-  {
-    const int ip1 = face_nodes(edge,0);
-    const int ip2 = face_nodes(edge,1);
-    edge_nodes(edge,0) = ip1;
-    edge_nodes(edge,1) = ip2;
-    //if( glb_idx(ip1) > glb_idx(ip2) )
-    if( compute_uid(ip1) > compute_uid(ip2) )
-    {
-      edge_nodes(edge,0) = ip2;
-      edge_nodes(edge,1) = ip1;
-    }
-
-    ASSERT( size_t(edge_nodes(edge,0)) < nb_nodes );
-    ASSERT( size_t(edge_nodes(edge,1)) < nb_nodes );
-    edge_glb_idx(edge)   = compute_uid(edge_nodes[edge]);
-    edge_part(edge)      = std::min( part(edge_nodes(edge,0)), part(edge_nodes(edge,1) ) );
-    edge_ridx(edge)      = edge;
-
-    const int f1 = face_to_elem[edge][0].f;
-    const int f2 = face_to_elem[edge][1].f;
-    const int e1 = face_to_elem[edge][0].e;
-    const int e2 = face_to_elem[edge][1].e;
-
-    edge_to_elem(edge,0,0) = f1;
-    edge_to_elem(edge,0,1) = e1;
-    edge_to_elem(edge,1,0) = f2;
-    edge_to_elem(edge,1,1) = e2;
-
-    if( f2 >= 0 )
-    {
-      if( compute_uid(elem_nodes[f1][e1]) > compute_uid(elem_nodes[f2][e2]) )
-      {
-        edge_to_elem(edge,0,0) = f2;
-        edge_to_elem(edge,0,1) = e2;
-        edge_to_elem(edge,1,0) = f1;
-        edge_to_elem(edge,1,1) = e1;
-      }
-    }
-  }
-#endif
 
   build_element_to_edge_connectivity(mesh);
 
@@ -870,7 +567,7 @@ void build_pole_edges_new( Mesh& mesh )
   }
 }
 
-void build_pole_edges_convert_old( Mesh& mesh )
+void build_pole_edges_convert_to_old( Mesh& mesh )
 {
   mesh::Nodes& nodes   = mesh.nodes();
   FunctionSpace& edges = mesh.function_space("edges");
@@ -918,62 +615,7 @@ void build_pole_edges_convert_old( Mesh& mesh )
 void build_pole_edges( Mesh& mesh )
 {
   build_pole_edges_new( mesh );
-  build_pole_edges_convert_old( mesh );
-
-#if 0
-  mesh::Nodes& nodes   = mesh.nodes();
-
-  ArrayView<int,1> part ( nodes.partition() );
-  size_t nb_edges = 0;
-
-  if( ! mesh.has_function_space("edges") )
-	mesh.create_function_space( "edges","shapefunc", make_shape(nb_edges,FunctionSpace::UNDEF_VARS) );
-
-  FunctionSpace& edges = mesh.function_space("edges");
-  edges.metadata().set<long>("type",Entity::FACES);
-
-  nb_edges = edges.shape(0);
-
-  size_t nb_pole_edges;
-  std::vector<idx_t> pole_edge_nodes;
-  accumulate_pole_edges( nodes, pole_edge_nodes, nb_pole_edges );
-  edges.resize( make_shape(nb_edges+nb_pole_edges, FunctionSpace::UNDEF_VARS) );
-
-  if( ! edges.has_field("nodes")      )    edges.create_field<int>("nodes",     2);
-  if( ! edges.has_field("glb_idx")    )    edges.create_field<gidx_t>("glb_idx",   1);
-  if( ! edges.has_field("partition")  )    edges.create_field<int>("partition", 1);
-  if( ! edges.has_field("to_elem")    )    edges.create_field<int>("to_elem",   4);
-  if( ! edges.has_field("remote_idx") )    edges.create_field<int>("remote_idx",1);
-  if( ! edges.has_field("is_pole_edge") )  edges.create_field<int>("is_pole_edge",1);
-
-  IndexView<int,2> edge_nodes   ( edges.field( "nodes"      ) );
-  ArrayView<gidx_t,1> edge_glb_idx ( edges.field( "glb_idx"    ) );
-  ArrayView<int,1> edge_part    ( edges.field( "partition"  ) );
-  IndexView<int,1> edge_ridx    ( edges.field( "remote_idx" ) );
-  ArrayView<int,1> is_pole_edge ( edges.field( "is_pole_edge" ) );
-  IndexView<int,3> edge_to_elem ( edges.field( "to_elem"    ).data<int>(), make_shape(nb_edges+nb_pole_edges,2,2) );
-
-  for(size_t edge=0; edge<nb_edges; ++edge)
-  {
-    is_pole_edge(edge) = 0;
-  }
-
-  size_t cnt = 0;
-  ComputeUniquePoleEdgeIndex compute_uid( nodes );
-  for(size_t edge = nb_edges; edge < nb_edges + nb_pole_edges; ++edge)
-  {
-    edge_nodes(edge,0)   = pole_edge_nodes[cnt++];
-    edge_nodes(edge,1)   = pole_edge_nodes[cnt++];
-    edge_glb_idx(edge)   = compute_uid( edge_nodes[edge] );
-    edge_part(edge)      = std::min( part(edge_nodes(edge,0)), part(edge_nodes(edge,1) ) );
-    edge_ridx(edge)      = edge;
-    edge_to_elem(edge,0,0) = -1;
-    edge_to_elem(edge,0,1) = -1;
-    edge_to_elem(edge,1,0) = -1;
-    edge_to_elem(edge,1,1) = -1;
-    is_pole_edge(edge) = 1;
-  }
-#endif
+  build_pole_edges_convert_to_old( mesh );
 }
 
 
