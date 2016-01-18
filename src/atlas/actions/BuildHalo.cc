@@ -36,6 +36,7 @@
 #include "atlas/util/Unique.h"
 #include "atlas/util/LonLatMicroDeg.h"
 #include "atlas/util/Functions.h"
+#include "atlas/mesh/HybridElements.h"
 
 using atlas::util::Face;
 using atlas::util::accumulate_faces;
@@ -1410,6 +1411,7 @@ void build_halo(Mesh& mesh, int nb_elems )
   int jhalo = 0;
   mesh.metadata().get("halo",jhalo);
 
+  bool halo_changed = false;
   for( ; jhalo<nb_elems; ++jhalo )
   {
     size_t nb_nodes_before_halo_increase = mesh.nodes().size();
@@ -1429,9 +1431,13 @@ void build_halo(Mesh& mesh, int nb_elems )
     std::stringstream ss;
     ss << "nb_nodes_including_halo["<<jhalo+1<<"]";
     mesh.metadata().set(ss.str(),mesh.nodes().size());
+
+    halo_changed = true;
   }
 
   mesh.metadata().set("halo",nb_elems);
+
+  if( halo_changed ) mesh.cells().rebuild_from_fs();
 }
 
 

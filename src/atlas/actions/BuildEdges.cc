@@ -510,9 +510,6 @@ void build_edges_convert_to_old( Mesh& mesh )
 
 void build_edges( Mesh& mesh )
 {
-  // temporarily necessary to rebuild cells from old in case halo was updated etc.
-  mesh.cells().rebuild_from_fs();
-
   build_edges_new(mesh);
   build_edges_convert_to_old(mesh);
 
