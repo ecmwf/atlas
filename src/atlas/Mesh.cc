@@ -41,12 +41,14 @@ Mesh* Mesh::create( const Grid& grid, const eckit::Parametrisation& params )
 Mesh::Mesh( const eckit::Parametrisation& ):
   grid_(NULL), dimensionality_(2)
 {
+  nodes_.reset( new mesh::Nodes() );
   createElements();
 }
 
 Mesh::Mesh(const Grid& grid, const eckit::Parametrisation& ) :
   grid_(&grid), dimensionality_(2)
 {
+  nodes_.reset( new mesh::Nodes() );
   createNodes(grid);
   createElements();
 }
@@ -59,10 +61,9 @@ mesh::Nodes& Mesh::createNodes(const Grid& g)
 {
   set_grid(g);
   size_t nb_nodes = g.npts();
-  mesh::Nodes& nodes = createNodes(nb_nodes);
-
-  g.fillLonLat(nodes.lonlat().data<double>(), nb_nodes*2);
-  return nodes;
+  nodes().resize(nb_nodes);
+  g.fillLonLat(nodes().lonlat().data<double>(), nb_nodes*2);
+  return nodes();
 }
 
 void Mesh::prettyPrint(std::ostream& os) const
@@ -101,20 +102,6 @@ void Mesh::createElements()
   edges_->type_ = Entity::FACES;
   cells_->mesh_ = this;
   cells_->type_ = Entity::ELEMS;
-}
-
-mesh::Nodes& Mesh::createNodes( size_t size )
-{
-  if( nodes_ )
-  {
-    Log::error() << "ERROR: Re-creating nodes.\n"
-                        << "This error can be ignored in MIR/prodgen\n"
-                        << "until MIR stops using deprecated atlas::Grid::mesh() function."
-                        << std::endl;
-    //throw eckit::SeriousBug("Cannot create nodes in mesh as they already exist.", Here());
-  }
-  nodes_.reset( new mesh::Nodes(size) );
-  return *nodes_;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -205,7 +192,7 @@ void atlas__Mesh__create_function_space(Mesh* This, char* name,char* shape_func,
           vshape[n]=shape[n];
     }
     if( std::string(name) == "nodes" )
-      This->createNodes(vshape[0]);
+      This->nodes().resize(vshape[0]);
     else
       This->create_function_space(std::string(name), std::string(shape_func),vshape);
   );
@@ -226,7 +213,8 @@ mesh::Nodes* atlas__Mesh__create_nodes (Mesh* This, int nb_nodes)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
-    return &This->createNodes(nb_nodes);
+    This->nodes().resize(nb_nodes);
+    return &This->nodes();
   );
   return NULL;
 }

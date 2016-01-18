@@ -38,7 +38,8 @@ public: // methods
 //-- Constructors
 
   /// @brief Construct "size" nodes
-  Nodes(size_t size);
+  Nodes();
+//  Nodes(size_t size);
 
 //-- Accessors
 

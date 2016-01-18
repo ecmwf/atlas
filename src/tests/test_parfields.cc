@@ -79,9 +79,8 @@ BOOST_AUTO_TEST_CASE( test1 )
 {
 	Mesh::Ptr m ( Mesh::create() );
 
-	m->createNodes(10);
-
   mesh::Nodes& nodes = m->nodes();
+  nodes.resize(10);
   ArrayView<double,2> lonlat ( nodes.lonlat());
   ArrayView<gidx_t,1> glb_idx( nodes.global_index());
   ArrayView<int,1> part ( nodes.partition() );

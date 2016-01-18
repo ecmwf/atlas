@@ -18,7 +18,7 @@ namespace mesh {
 
 //------------------------------------------------------------------------------------------------------
 
-Nodes::Nodes(size_t _size): size_(_size)
+Nodes::Nodes(): size_(0)
 {
   global_index_ = &add( Field::create<gidx_t>("glb_idx",   make_shape(size(),1)) );
   remote_index_ = &add( Field::create<int   >("remote_idx",make_shape(size(),1)) );
@@ -44,7 +44,6 @@ Nodes::Nodes(size_t _size): size_(_size)
     flags(n) = 0;
   }
   metadata().set("nb_owned",size());
-  metadata().set<long>("type",static_cast<int>(Entity::NODES));
 }
 
 Nodes::Connectivity& Nodes::add( const std::string& name, Connectivity *connectivity )

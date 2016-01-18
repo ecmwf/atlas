@@ -405,7 +405,7 @@ void Gmsh::read(const PathName& file_path, Mesh& mesh ) const
   extents[0] = nb_nodes;
   extents[1] = FunctionSpace::UNDEF_VARS;
 
-  mesh.createNodes(nb_nodes);
+  mesh.nodes().resize(nb_nodes);
   mesh.nodes().metadata().set<long>("type",Entity::NODES);
 
   mesh::Nodes& nodes = mesh.nodes();

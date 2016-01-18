@@ -41,41 +41,15 @@ namespace atlas { namespace mpl { class Checksum; } }
 
 namespace atlas {
 
-template <typename T>
-class Store {
-public:
-  bool has(const std::string& name) const
-  {
-    return (store_.find(name) != store_.end());
-  }
-  void add( T* item )
-  {
-    ASSERT( !item->name().empty() );
-    store_[item->name()] = eckit::SharedPtr<T>(item);
-  }
-  T& get(const std::string& name)
-  {
-    if( ! has(name) ) throw eckit::OutOfRange(name+" not found in store.",Here());
-    return *store_.find(name)->second;
-  }
-  const T& get(const std::string& name) const
-  {
-    if( ! has(name) ) throw eckit::OutOfRange(name+" not found in store.",Here());
-    return *store_.find(name)->second;
-  }
-  void remove(const std::string& name)
-  {
-    if( ! has(name) ) throw eckit::OutOfRange(name+" not found in store.",Here());
-    store_.erase( store_.find(name) );
-  }
-private:
-  std::map< std::string, eckit::SharedPtr<T> > store_;
-};
+namespace deprecated {
 
 
-namespace mesh { namespace temporary { class Convert; } }
-
-namespace deprecated { 
+  /**
+   * @brief The FunctionSpaceContainer class
+   * This class is a simple base class that will be removed soon, as
+   * part of the new design.
+   * Don't use any of these functions.
+   */
   class FunctionSpaceContainer: public eckit::Owned {
   public:
     /// checks if function space exists
@@ -101,15 +75,10 @@ namespace deprecated {
     StoreFS_t function_spaces_;
 
   };
-  
-  
-  
 }
 
 class Mesh : public deprecated::FunctionSpaceContainer, 
              public util::Registered<Mesh> {
-
-  friend class mesh::temporary::Convert;
 
 public: // types
 
@@ -134,27 +103,14 @@ public: // methods
     Metadata& metadata() { return metadata_; }
     const Metadata& metadata() const { return metadata_; }
 
-    /// checks if has a Grid
-    bool has_grid() const { return grid_; }
-
-    /// assign a Grid to this Mesh
-    void set_grid( const Grid& p ) { grid_ = &p; }
-
-    /// accessor of the Grid
-    const Grid& grid() const {  ASSERT( grid_ ); return *grid_; }
-
-
     void prettyPrint(std::ostream&) const;
 
     void print(std::ostream&) const;
 
-
     mesh::Nodes& createNodes(const Grid& g);
 
-    mesh::Nodes& createNodes( size_t );
-
-    const mesh::Nodes& nodes() const { ASSERT(nodes_); return *nodes_; }
-          mesh::Nodes& nodes()       { ASSERT(nodes_); return *nodes_; }
+    const mesh::Nodes& nodes() const { return *nodes_; }
+          mesh::Nodes& nodes()       { return *nodes_; }
 
     const mesh::HybridElements& cells() const { return *cells_; }
           mesh::HybridElements& cells()       { return *cells_; }
@@ -171,15 +127,6 @@ public: // methods
     const mesh::HybridElements& edges() const { return *edges_; }
           mesh::HybridElements& edges()       { return *edges_; }
 
-    const Store<const mpl::HaloExchange>& halo_exchange() const { return halo_exchange_; }
-          Store<const mpl::HaloExchange>& halo_exchange()       { return halo_exchange_; }
-
-    const Store<const mpl::GatherScatter>& gather_scatter() const { return gather_scatter_; }
-          Store<const mpl::GatherScatter>& gather_scatter()       { return gather_scatter_; }
-
-    const Store<const mpl::Checksum>& checksum() const { return checksum_; }
-          Store<const mpl::Checksum>& checksum()       { return checksum_; }
-
 private:  // methods
 
     friend std::ostream& operator<<(std::ostream& s, const Mesh& p) {
@@ -188,10 +135,6 @@ private:  // methods
     }
     
     void createElements();
-
-private: // members to be removed
-
-    const Grid* grid_;
 
 private: // members
 
@@ -204,15 +147,16 @@ private: // members
     eckit::SharedPtr<mesh::HybridElements> peaks_;    //                  NA    0D
 
     eckit::SharedPtr<mesh::HybridElements> edges_;  // alias to facets of 2D mesh, ridges of 3D mesh
-
-    Store<const mpl::HaloExchange>  halo_exchange_;
-    Store<const mpl::GatherScatter> gather_scatter_;
-    Store<const mpl::Checksum> checksum_;
     
     size_t dimensionality_;
 
-public:
+public: // members to be removed
     void convert_old_to_new();
+    bool has_grid() const { return grid_; }
+    void set_grid( const Grid& p ) { grid_ = &p; }
+    const Grid& grid() const {  ASSERT( grid_ ); return *grid_; }
+private: // members to be removed
+    const Grid* grid_;
 
 };
 
