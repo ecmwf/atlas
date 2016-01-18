@@ -28,7 +28,6 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/util/IndexView.h"
-#include "atlas/util/Debug.h"
 
 namespace atlas {
 
@@ -147,6 +146,8 @@ private:
   size_t *displs_;
   size_t *counts_;
 };
+
+typedef IrregularConnectivity Connectivity;
 
 // ----------------------------------------------------------------------------------------------
 
