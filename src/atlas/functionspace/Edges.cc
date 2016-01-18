@@ -112,9 +112,9 @@ void Edges::constructor()
   halo_exchange_.reset(new mpl::HaloExchange());
   checksum_.reset(new mpl::Checksum());
 
-  const Field& partition    = edges().deprecated_edges().field("partition");
-  const Field& remote_index = edges().deprecated_edges().field("remote_idx");
-  const Field& global_index = edges().deprecated_edges().field("glb_idx");
+  const Field& partition    = edges().partition();
+  const Field& remote_index = edges().remote_index();
+  const Field& global_index = edges().global_index();
 
   halo_exchange_->setup(
         partition.data<int>(),
