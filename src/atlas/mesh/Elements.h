@@ -68,6 +68,14 @@ public:
   const Connectivity& node_connectivity() const;
         Connectivity& node_connectivity();
 
+  /// @brief Element to Edge connectivity table
+  const Connectivity& edge_connectivity() const;
+        Connectivity& edge_connectivity();
+
+  /// @brief Element to Cell connectivity table
+  const Connectivity& cell_connectivity() const;
+        Connectivity& cell_connectivity();
+
   /// @brief Element type of these Elements
   const ElementType& element_type() const;
 
@@ -155,6 +163,28 @@ inline Elements::Connectivity& Elements::node_connectivity()
 {
   return hybrid_elements_->node_connectivity().block(type_idx_);
 }
+
+inline const Elements::Connectivity& Elements::edge_connectivity() const
+{
+  return hybrid_elements_->edge_connectivity().block(type_idx_);
+}
+
+inline Elements::Connectivity& Elements::edge_connectivity()
+{
+  return hybrid_elements_->edge_connectivity().block(type_idx_);
+}
+
+
+inline const Elements::Connectivity& Elements::cell_connectivity() const
+{
+  return hybrid_elements_->cell_connectivity().block(type_idx_);
+}
+
+inline Elements::Connectivity& Elements::cell_connectivity()
+{
+  return hybrid_elements_->cell_connectivity().block(type_idx_);
+}
+
 
 inline const ElementType& Elements::element_type() const
 {

@@ -202,6 +202,16 @@ void MultiBlockConnectivity::add( const BlockConnectivity& block )
   regenerate_block_connectivity();
 }
 
+void MultiBlockConnectivity::add( size_t rows, size_t cols )
+{
+  if( !owns() ) throw eckit::AssertionFailed("MultiBlockConnectivity must be owned to be resized directly");
+  IrregularConnectivity::add(rows,cols);
+  blocks_++;
+  owned_block_displs_.push_back(this->rows());
+  block_displs_ = owned_block_displs_.data();
+  regenerate_block_connectivity();
+}
+
 
 void MultiBlockConnectivity::regenerate_block_connectivity()
 {

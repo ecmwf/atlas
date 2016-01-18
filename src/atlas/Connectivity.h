@@ -224,6 +224,10 @@ public:
   /// @note Can only be used when data is owned.
   virtual void add( const BlockConnectivity& );
 
+  /// @brief Resize connectivity, and add given rows with missing values
+  /// @note Can only be used when data is owned.
+  virtual void add( size_t rows, size_t cols );
+
   virtual void clear();
 
 private:

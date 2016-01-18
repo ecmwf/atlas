@@ -87,6 +87,10 @@ public: // methods
 
 // -- Modifiers
 
+  /// @brief Add a new element type with given number of elements
+  /// @return type_idx of the added element type
+  size_t add( const ElementType*, size_t nb_elements );
+
   /// @brief Add a new element type with given number of elements and node-connectivity
   /// @return type_idx of the added element type
   size_t add( const ElementType*, size_t nb_elements, const std::vector<idx_t> &node_connectivity );

@@ -155,7 +155,6 @@ size_t HybridElements::add( const ElementType* element_type, size_t nb_elements,
   size_t new_size = old_size+nb_elements;
 
   size_t nb_nodes = etype->nb_nodes();
-  size_t nb_edges = etype->nb_edges();
 
   type_idx_.resize(new_size);
 
@@ -173,6 +172,35 @@ size_t HybridElements::add( const ElementType* element_type, size_t nb_elements,
   }
   
   node_connectivity_->add(nb_elements,nb_nodes,connectivity,fortran_array);
+  resize( new_size );
+  return element_types_.size()-1;
+}
+
+size_t HybridElements::add( const ElementType* element_type, size_t nb_elements )
+{
+  eckit::SharedPtr<const ElementType> etype ( element_type );
+
+  size_t old_size=size();
+  size_t new_size = old_size+nb_elements;
+
+  size_t nb_nodes = etype->nb_nodes();
+
+  type_idx_.resize(new_size);
+
+  for( size_t e=old_size; e<new_size; ++e ) {
+    type_idx_[e] = element_types_.size();
+  }
+
+  elements_begin_.push_back(new_size);
+  elements_size_.push_back(nb_elements);
+
+  element_types_.push_back( etype );
+  elements_.resize(element_types_.size());
+  for( size_t t=0; t<nb_types(); ++t ) {
+    elements_[t].reset( new Elements(*this,t) );
+  }
+
+  node_connectivity_->add(nb_elements,nb_nodes);
   resize( new_size );
   return element_types_.size()-1;
 }

@@ -48,6 +48,10 @@ private:
 
   void generate_region( const grids::ReducedGrid&, const std::vector<int>& parts, int mypart, Region& region ) const;
 
+  void generate_mesh_new( const grids::ReducedGrid&,const std::vector<int>& parts, const Region& region, Mesh& m ) const;
+
+  void generate_mesh_convert_to_old( const grids::ReducedGrid&,const std::vector<int>& parts, const Region& region, Mesh& m ) const;
+
   void generate_mesh( const grids::ReducedGrid&,const std::vector<int>& parts, const Region& region, Mesh& m ) const;
 
   void generate_global_element_numbering( Mesh& mesh ) const;
