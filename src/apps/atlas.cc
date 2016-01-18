@@ -145,8 +145,7 @@ using namespace atlas;
 
 int main(int argc,char **argv)
 {
-    Version app(argc,argv);
-    app.start();
-    return 0;
+    Version tool(argc,argv);
+    return tool.start();
 }
 

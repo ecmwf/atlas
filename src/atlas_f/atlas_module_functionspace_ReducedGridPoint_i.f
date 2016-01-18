@@ -32,6 +32,11 @@ contains
 
   procedure, public :: gather => ReducedGridPoint__gather
   procedure, public :: scatter => ReducedGridPoint__scatter
+  
+  procedure, private :: checksum_fieldset => ReducedGridPoint__checksum_fieldset
+  procedure, private :: checksum_field => ReducedGridPoint__checksum_field
+  generic, public :: checksum => checksum_fieldset, checksum_field
+  
 
 #ifdef FORTRAN_SUPPORTS_FINAL
   final :: atlas_functionspace_ReducedGridPoint__final
