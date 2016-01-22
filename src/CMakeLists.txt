@@ -42,12 +42,6 @@ else()
   set( ATLAS_HAVE_TRANS 0 )
 endif()
 
-if( ECKIT_HAVE_GRIB )
-  set( ECKIT_HAVE_GRIB 1 )
-else()
-  set( ECKIT_HAVE_GRIB 0 )
-endif()
-
 if( ATLAS_HAVE_BOUNDSCHECKING )
   set( ATLAS_HAVE_BOUNDSCHECKING 1 )
 else()

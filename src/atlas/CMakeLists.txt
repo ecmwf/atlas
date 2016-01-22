@@ -43,9 +43,6 @@ io/Gmsh.h
 io/Gmsh.cc
 io/PointCloud.h
 io/PointCloud.cc
-# to be abstracted into a plugin
-io/Grib.cc
-io/Grib.h
 )
 
 list( APPEND atlas_util_srcs
@@ -301,4 +298,4 @@ ecbuild_add_library( TARGET atlas
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_config.h
   ${CMAKE_CURRENT_BINARY_DIR}/atlas_defines.h
   INCLUDES "${CGAL_INCLUDE_DIRS}"  ${TRANSI_INCLUDE_DIRS}
-  LIBS eckit_geometry "${ECKIT_MPI_LIBRARIES}" "${ECKIT_GRIB_LIBRARIES}" "${CGAL_LIBRARIES}" ${TRANSI_LIBRARIES} )
+  LIBS eckit_geometry "${ECKIT_MPI_LIBRARIES}" "${CGAL_LIBRARIES}" ${TRANSI_LIBRARIES} )

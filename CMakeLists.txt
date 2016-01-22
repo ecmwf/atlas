@@ -40,11 +40,6 @@ ecbuild_use_package( PROJECT eckit VERSION 0.10 REQUIRED )
 
 ecbuild_debug( "   ECKIT_FEATURES : [${ECKIT_FEATURES}]" )
 
-if( ECKIT_HAVE_GRIB )
-   ecbuild_debug( "eckit has GRIB support" )
-   set( ECKIT_GRIB_LIBRARIES eckit_grib )
-endif()
-
 if( ECKIT_HAVE_ECKIT_MPI )
    ecbuild_debug( "eckit has mpi support" )
 endif()

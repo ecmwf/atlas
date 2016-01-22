@@ -20,10 +20,6 @@
 #include "atlas/Parameters.h"
 #include "atlas/grids/gausslat/gausslat.h"
 
-#ifdef ECKIT_HAVE_GRIB
-  #include "grib_api.h"
-#endif
-
 using eckit::ConcreteBuilderT0;
 using eckit::Factory;
 using eckit::ScopedPtr;
@@ -64,12 +60,14 @@ void gaussian_latitudes_npole_equator(const size_t N, double lats[])
   }
   else
   {
-#ifndef ECKIT_HAVE_GRIB
+#if 1
+
     Log::warning() << "Unfortunately, computation of the gaussian latitudes depends at the moment on grib_api.\n"
                    << "Atlas was built without grib_api support (via eckit)\n"
                    << "Resorting to use predicted latitudes instead (accuracy of 2 decimals)" << std::endl;
 
     predict_gaussian_latitudes_hemisphere(N,lats);
+
 #else
     Log::warning() << "Using grib_api to compute gaussian latitudes..." << std::endl;
     std::vector<double> lats2(2*N);

@@ -205,11 +205,6 @@ ecbuild_add_test( TARGET atlas_test_trans_serial
   LIBS      atlas
 )
 
-
-if( ECKIT_HAVE_GRIB )
-  add_subdirectory( grid )
-endif()
-
 add_subdirectory( cgal )
 add_subdirectory( geometry )
 add_subdirectory( numerics )
