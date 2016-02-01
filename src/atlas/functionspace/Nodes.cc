@@ -894,12 +894,6 @@ void dispatch_order_independent_sum_per_level( const Nodes& fs, const Field& fie
   if( eckit::mpi::rank() == 0 ) {
     const ArrayView<T,3> glb = leveled_view<T>(*global);
 
-    DEBUG_VAR(glb.shape(0));
-    DEBUG_VAR(glb.shape(1));
-    DEBUG_VAR(glb.shape(2));
-    DEBUG_VAR(sum.shape(0));
-    DEBUG_VAR(sum.shape(1));
-
     for( size_t n=0; n<glb.shape(0); ++n ) {
       for( size_t l=0; l<glb.shape(1); ++l ) {
         for( size_t j=0; j<glb.shape(2); ++j ) {
