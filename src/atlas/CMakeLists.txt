@@ -108,8 +108,6 @@ actions/BuildCellCentres.h
 actions/BuildCellCentres.cc
 actions/BuildConvexHull3D.h
 actions/BuildConvexHull3D.cc
-actions/DistributeMesh.h
-actions/DistributeMesh.cc
 actions/GenerateMesh.h
 actions/GenerateMesh.cc
 actions/WriteLoadBalanceReport.h

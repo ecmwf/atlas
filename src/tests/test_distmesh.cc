@@ -28,7 +28,6 @@
 #include "atlas/actions/BuildPeriodicBoundaries.h"
 #include "atlas/actions/BuildEdges.h"
 #include "atlas/actions/BuildDualMesh.h"
-#include "atlas/actions/DistributeMesh.h"
 #include "atlas/actions/WriteLoadBalanceReport.h"
 #include "atlas/Parameters.h"
 #include "atlas/grids/rgg/rgg.h"

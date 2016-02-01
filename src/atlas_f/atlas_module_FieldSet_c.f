@@ -3,11 +3,16 @@
 ! -----------------------------------------------------------------------------
 ! FieldSet routines
 
-function atlas_FieldSet__ctor(name) result(fieldset)
+function atlas_FieldSet__ctor() result(fieldset)
+  type(atlas_FieldSet) :: fieldset
+  call fieldset%reset_c_ptr( atlas__FieldSet__new( c_str("untitled") ) )
+end function atlas_FieldSet__ctor
+
+function atlas_FieldSet__ctor_name(name) result(fieldset)
   character(len=*), intent(in) :: name
   type(atlas_FieldSet) :: fieldset
   call fieldset%reset_c_ptr( atlas__FieldSet__new( c_str(name) ) )
-end function atlas_FieldSet__ctor
+end function atlas_FieldSet__ctor_name
 
 subroutine FieldSet__delete(this)
   class(atlas_FieldSet), intent(inout) :: this

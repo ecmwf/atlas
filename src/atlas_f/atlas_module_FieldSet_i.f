@@ -34,6 +34,7 @@ END TYPE atlas_FieldSet
 
 interface atlas_FieldSet
   module procedure atlas_FieldSet__ctor
+  module procedure atlas_FieldSet__ctor_name
 end interface
 
 !------------------------------------------------------------------------------
