@@ -8,6 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
+#include <algorithm>
+
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/HybridElements.h"
@@ -168,8 +170,17 @@ size_t HybridElements::add( const ElementType* element_type, size_t nb_elements,
   element_types_.push_back( etype );
   elements_.resize(element_types_.size());
   for( size_t t=0; t<nb_types(); ++t ) {
-    elements_[t].reset( new Elements(*this,t) );
+    if( elements_[t] ) elements_[t]->rebuild();
+    else               elements_[t].reset( new Elements(*this,t) );
   }
+
+//  for( size_t t=0; t<nb_types()-1; ++t )
+//  {
+//    elements_[t]->rebuild();
+//  }
+//  element_types_.push_back( etype );
+//  elements_.push_back( eckit::SharedPtr<Elements>(new Elements(*this,type_idx_.back())) );
+
   
   node_connectivity_->add(nb_elements,nb_nodes,connectivity,fortran_array);
   resize( new_size );
@@ -223,6 +234,21 @@ size_t HybridElements::elemtype_nb_edges(size_t elem_idx) const
 {
   return element_type( type_idx(elem_idx) ).nb_edges();
 }
+
+void HybridElements::insert( size_t position, size_t nb_elements )
+{
+  size_t type_idx = type_idx_[std::max(0ul,position-1ul)];
+  type_idx_.insert(type_idx_.begin()+position,nb_elements,type_idx);
+  elements_size_[type_idx] += nb_elements;
+  for( size_t jtype=type_idx+1; jtype<nb_types()+1; ++jtype )
+    elements_begin_[jtype] += nb_elements;
+  for( size_t t=0; t<nb_types(); ++t ) {
+    elements_[t]->rebuild();
+  }
+  node_connectivity_->insert(position,nb_elements,element_types_[type_idx]->nb_nodes());
+  resize(size()+nb_elements);
+}
+
 
 //-----------------------------------------------------------------------------
 

@@ -115,7 +115,14 @@ public:
         
   template <typename DATATYPE, int RANK>
   ArrayView<DATATYPE,RANK> view( const Field& ) const;
-  
+
+  size_t add(const size_t nb_elements);
+
+private:
+
+  friend class HybridElements;
+  void rebuild();
+
 private:
   bool owns_;
   HybridElements* hybrid_elements_;

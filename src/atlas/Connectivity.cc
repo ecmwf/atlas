@@ -9,7 +9,6 @@
  */
 
 #include <limits>
-
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/Array.h"
 #include "atlas/Connectivity.h"
@@ -56,7 +55,7 @@ MultiBlockConnectivity::MultiBlockConnectivity( idx_t values[], size_t rows, siz
     blocks_(blocks),
     block_displs_(block_displs)
 {
-  regenerate_block_connectivity();
+  rebuild_block_connectivity();
 }
 
 MultiBlockConnectivity::MultiBlockConnectivity() :
@@ -81,6 +80,12 @@ void MultiBlockConnectivity::clear()
   block_.clear();
 }
 
+void BlockConnectivity::rebuild( size_t rows, size_t cols, idx_t values[] )
+{
+  rows_ = rows;
+  cols_ = cols;
+  values_ = values;
+}
 
 BlockConnectivity::BlockConnectivity( size_t rows, size_t cols, idx_t values[] )
   : rows_(rows),
@@ -142,7 +147,7 @@ void MultiBlockConnectivity::add(size_t rows, size_t cols, const idx_t values[],
   blocks_++;
   owned_block_displs_.push_back(this->rows());
   block_displs_ = owned_block_displs_.data();
-  regenerate_block_connectivity();
+  rebuild_block_connectivity();
 }
 
 void IrregularConnectivity::add( size_t rows, const size_t cols[] )
@@ -199,7 +204,7 @@ void MultiBlockConnectivity::add( const BlockConnectivity& block )
   blocks_++;
   owned_block_displs_.push_back(rows());
   block_displs_ = owned_block_displs_.data();
-  regenerate_block_connectivity();
+  rebuild_block_connectivity();
 }
 
 void MultiBlockConnectivity::add( size_t rows, size_t cols )
@@ -209,20 +214,28 @@ void MultiBlockConnectivity::add( size_t rows, size_t cols )
   blocks_++;
   owned_block_displs_.push_back(this->rows());
   block_displs_ = owned_block_displs_.data();
-  regenerate_block_connectivity();
+  rebuild_block_connectivity();
 }
 
 
-void MultiBlockConnectivity::regenerate_block_connectivity()
+void MultiBlockConnectivity::rebuild_block_connectivity()
 {
   block_.resize(blocks_);
   for( size_t b=0; b<blocks_; ++b )
   {
-    block_[b].reset(
-       new BlockConnectivity(
-        block_displs_[b+1]-block_displs_[b], // rows
-        counts()[block_displs_[b]],          // cols
-        data()+displs()[block_displs_[b]]) );
+    if( block_[b] ) {
+      block_[b]->rebuild(
+          block_displs_[b+1]-block_displs_[b], // rows
+          counts()[block_displs_[b]],          // cols
+          data()+displs()[block_displs_[b]]);
+    }
+    else {
+      block_[b].reset(
+         new BlockConnectivity(
+          block_displs_[b+1]-block_displs_[b], // rows
+          counts()[block_displs_[b]],          // cols
+          data()+displs()[block_displs_[b]]) );
+    }
   }
 }
 
@@ -250,6 +263,96 @@ void BlockConnectivity::add(size_t rows, size_t cols, const idx_t values[], bool
   values_=owned_values_.data();
   rows_+=rows;
   cols_=cols;
+}
+
+
+void IrregularConnectivity::insert( size_t position, size_t rows, size_t cols, const idx_t values[], bool fortran_array )
+{
+  if( !owns_ ) throw eckit::AssertionFailed("HybridConnectivity must be owned to be resized directly");
+  size_t position_displs = owned_displs_[position];
+  owned_displs_.insert( owned_displs_.begin()+position, rows, position_displs );
+  owned_counts_.insert( owned_counts_.begin()+position, rows, cols );
+  for( size_t jrow=position; jrow<owned_displs_.size()-1; ++jrow ) {
+    owned_displs_[jrow+1] = owned_displs_[jrow] + owned_counts_[jrow];
+  }
+  owned_values_.insert( owned_values_.begin()+position_displs, values,values+rows*cols );
+  if( ! fortran_array )
+  {
+    for(size_t c=owned_displs_[position+rows+1]; c<owned_displs_[position+rows+1]; ++c) {
+      owned_values_[c] += FORTRAN_BASE;
+    }
+  }
+  rows_ += rows;
+  values_ = owned_values_.data();
+  displs_ = owned_displs_.data();
+  counts_ = owned_counts_.data();
+}
+
+void IrregularConnectivity::insert( size_t position, size_t rows, size_t cols )
+{
+  if( !owns_ ) throw eckit::AssertionFailed("HybridConnectivity must be owned to be resized directly");
+  size_t position_displs = owned_displs_[position];
+  owned_displs_.insert( owned_displs_.begin()+position, rows, position_displs );
+  owned_counts_.insert( owned_counts_.begin()+position, rows, cols );
+  for( size_t jrow=position; jrow<owned_displs_.size()-1; ++jrow ) {
+    owned_displs_[jrow+1] = owned_displs_[jrow] + owned_counts_[jrow];
+  }
+  owned_values_.insert( owned_values_.begin()+position_displs, rows*cols, missing_value() TO_FORTRAN );
+  rows_ += rows;
+  values_ = owned_values_.data();
+  displs_ = owned_displs_.data();
+  counts_ = owned_counts_.data();
+}
+
+void IrregularConnectivity::insert( size_t position, size_t rows, const size_t cols[] )
+{
+  if( !owns_ ) throw eckit::AssertionFailed("HybridConnectivity must be owned to be resized directly");
+  size_t position_displs = owned_displs_[position];
+  owned_displs_.insert( owned_displs_.begin()+position, rows, position_displs );
+  owned_counts_.insert( owned_counts_.begin()+position, cols, cols+rows );
+  for( size_t jrow=position; jrow<owned_displs_.size()-1; ++jrow ) {
+    owned_displs_[jrow+1] = owned_displs_[jrow] + owned_counts_[jrow];
+  }
+  size_t insert_size(0);
+  for( size_t j=0; j<rows; ++j )
+    insert_size += cols[j];
+  owned_values_.insert( owned_values_.begin()+position_displs, insert_size, missing_value() TO_FORTRAN );
+  rows_ += rows;
+  values_ = owned_values_.data();
+  displs_ = owned_displs_.data();
+  counts_ = owned_counts_.data();
+}
+
+
+void MultiBlockConnectivity::insert( size_t position, size_t rows, size_t cols, const idx_t values[], bool fortran_array )
+{
+  if( !owns() ) throw eckit::AssertionFailed("MultiBlockConnectivity must be owned to be resized directly");
+  ASSERT( counts()[std::max(position-1ul,0ul)] == cols );
+
+  size_t blk_idx = blocks_;
+  do{ blk_idx--; } while( owned_block_displs_[blk_idx] >= position );
+  IrregularConnectivity::insert(position,rows,cols,values,fortran_array);
+
+  for( size_t jblk=blk_idx; jblk<blocks_; ++jblk)
+    owned_block_displs_[jblk+1] += rows;
+  block_displs_ = owned_block_displs_.data();
+  rebuild_block_connectivity();
+}
+
+void MultiBlockConnectivity::insert( size_t position, size_t rows, size_t cols )
+{
+  if( !owns() ) throw eckit::AssertionFailed("MultiBlockConnectivity must be owned to be resized directly");
+  ASSERT( counts()[std::max(position-1ul,0ul)] == cols );
+
+  size_t blk_idx = blocks_;
+  do{ blk_idx--; } while( owned_block_displs_[blk_idx] >= position );
+
+  IrregularConnectivity::insert(position,rows,cols);
+
+  for( size_t jblk=blk_idx; jblk<blocks_; ++jblk)
+    owned_block_displs_[jblk+1] += rows;
+  block_displs_ = owned_block_displs_.data();
+  rebuild_block_connectivity();
 }
 
 

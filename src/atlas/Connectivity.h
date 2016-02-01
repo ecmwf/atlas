@@ -124,8 +124,19 @@ public:
   virtual void add( size_t rows, const size_t cols[] );
 
   /// @brief Resize connectivity, and copy from a BlockConnectivity
+  virtual void add( const BlockConnectivity& block );
+
+  /// @brief Resize connectivity, and insert given rows
   /// @note Can only be used when data is owned.
-  virtual void add( const BlockConnectivity& );
+  virtual void insert( size_t position, size_t rows, size_t cols, const idx_t values[], bool fortran_array=false );
+
+  /// @brief Resize connectivity, and insert given rows with missing values
+  /// @note Can only be used when data is owned.
+  virtual void insert( size_t position, size_t rows, size_t cols );
+
+  /// @brief Resize connectivity, and insert given rows with missing values
+  /// @note Can only be used when data is owned.
+  virtual void insert( size_t position, size_t rows, const size_t cols[] );
 
   virtual void clear();
 
@@ -229,11 +240,19 @@ public:
   /// @note Can only be used when data is owned.
   virtual void add( size_t rows, size_t cols );
 
+  /// @brief Resize connectivity, and insert given rows
+  /// @note Can only be used when data is owned.
+  virtual void insert( size_t position, size_t rows, size_t cols, const idx_t values[], bool fortran_array=false );
+
+  /// @brief Resize connectivity, and insert given rows with missing values
+  /// @note Can only be used when data is owned.
+  virtual void insert( size_t position, size_t rows, size_t cols );
+
   virtual void clear();
 
 private:
 
-  void regenerate_block_connectivity();
+  void rebuild_block_connectivity();
 
 private:
   std::vector<size_t> owned_block_displs_;
@@ -271,6 +290,8 @@ public:
   /// @brief Construct connectivity table wrapping existing raw data.
   /// No resizing can be performed as data is not owned.
   BlockConnectivity( size_t rows, size_t cols, idx_t values[] );
+
+  void rebuild( size_t rows, size_t cols, idx_t values[] );
 
 //-- Accessors
 

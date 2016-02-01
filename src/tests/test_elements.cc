@@ -394,6 +394,158 @@ BOOST_AUTO_TEST_CASE( conversion )
 }
 
 
+BOOST_AUTO_TEST_CASE( irregularconnectivity_insert )
+{
+  IrregularConnectivity connectivity;
+  idx_t c[] = {1, 2, 3, 4,
+               5, 6, 7, 8,
+               9,10,11,12};
+  connectivity.add(3,4,c);
+  idx_t c2[] = {13,14,15,
+                16,17,18};
+  connectivity.insert(1,2,3,c2);
+  connectivity.insert(2,1,5);
+
+  size_t iregular_c[] = {2, 3, 4, 1};
+  connectivity.insert(5,4,iregular_c);
+
+  for( size_t jrow=0; jrow<connectivity.rows(); ++jrow )
+  {
+    for( size_t jcol=0; jcol<connectivity.cols(jrow); ++jcol )
+    {
+      std::cout << connectivity(jrow,jcol) << " ";
+    }
+    std::cout << std::endl;
+  }
+  idx_t values[]={ 1, 2, 3, 4, 12, 13, 14, -1, -1, -1, -1, -1, 15, 16, 17, 5, 6, 7, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 9, 10, 11, 12 };
+  idx_t counts[]={ 4, 3, 5, 3, 4, 2, 3, 4, 1, 4 };
+
+  size_t n(0);
+  size_t r(0);
+  for( size_t jrow=0; jrow<connectivity.rows(); ++jrow )
+  {
+    BOOST_CHECK_EQUAL(connectivity.cols(jrow), counts[r++]);
+    for( size_t jcol=0; jcol<connectivity.cols(jrow); ++jcol )
+    {
+      BOOST_CHECK_EQUAL(connectivity(jrow,jcol), values[n++]);
+    }
+  }
+}
+
+BOOST_AUTO_TEST_CASE( multiblockconnectivity_insert )
+{
+  MultiBlockConnectivity connectivity;
+  idx_t c1[] = {1, 2, 3, 4,
+                5, 6, 7, 8,
+                9,10,11,12};
+  connectivity.add(3,4,c1);
+  idx_t c2[] = {13, 14, 15,
+                16, 17, 18};
+  connectivity.add(2,3,c2);
+
+  idx_t c1i[] = {19,20,21,22};
+  idx_t c2i[] = {23,24,25,
+                 26,27,28};
+
+  BOOST_CHECK_EQUAL( connectivity.block(0).rows() , 3 );
+  BOOST_CHECK_EQUAL( connectivity.block(1).rows() , 2 );
+  BOOST_CHECK_EQUAL( connectivity.block(0).cols() , 4 );
+  BOOST_CHECK_EQUAL( connectivity.block(1).cols() , 3 );
+
+  std::cout << "block 0" << std::endl;
+  for( size_t jrow=0; jrow<connectivity.block(0).rows(); ++jrow )
+  {
+    for( size_t jcol=0; jcol<connectivity.block(0).cols(); ++jcol )
+    {
+      std::cout << connectivity.block(0)(jrow,jcol) << " ";
+    }
+    std::cout << std::endl;
+  }
+
+  connectivity.insert(1,1,4,c1i);
+  connectivity.insert(5,2,3,c2i);
+
+  BOOST_CHECK_EQUAL( connectivity.block(0).rows() , 4 );
+  BOOST_CHECK_EQUAL( connectivity.block(1).rows() , 4 );
+
+  std::cout << "\nfull\n";
+  for( size_t jrow=0; jrow<connectivity.rows(); ++jrow )
+  {
+    for( size_t jcol=0; jcol<connectivity.cols(jrow); ++jcol )
+    {
+      std::cout << connectivity(jrow,jcol) << " ";
+    }
+    std::cout << std::endl;
+  }
+  idx_t values[]={ 1, 2, 3, 4, 18, 19, 20, 21, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 22, 23, 24, 25, 26, 27, 16, 17, 18 };
+  idx_t counts[]={ 4, 4, 4, 4, 3, 3, 3, 3 };
+
+  size_t n(0);
+  size_t r(0);
+  for( size_t jrow=0; jrow<connectivity.rows(); ++jrow )
+  {
+    BOOST_CHECK_EQUAL(connectivity.cols(jrow), counts[r++]);
+    for( size_t jcol=0; jcol<connectivity.cols(jrow); ++jcol )
+    {
+      BOOST_CHECK_EQUAL(connectivity(jrow,jcol), values[n++]);
+    }
+  }
+}
+
+BOOST_AUTO_TEST_CASE( cells_insert )
+{
+  HybridElements cells;
+  idx_t c1[] = {1, 2, 3, 4,
+                5, 6, 7, 8,
+                9,10,11,12};
+  cells.add(new Quadrilateral(), 3, c1);
+  idx_t c2[] = {13, 14, 15,
+                16, 17, 18};
+  cells.add(new Triangle(), 2, c2);
+
+  BlockConnectivity& conn1 = cells.elements(0).node_connectivity();
+  BlockConnectivity& conn2 = cells.elements(1).node_connectivity();
+
+  BOOST_CHECK_EQUAL( cells.elements(0).size() , 3 );
+  BOOST_CHECK_EQUAL( cells.elements(1).size() , 2 );
+  BOOST_CHECK_EQUAL( cells.size(), 5 );
+  BOOST_CHECK_EQUAL( conn1.rows(), 3 );
+  BOOST_CHECK_EQUAL( conn2.rows(), 2 );
+
+  size_t pos0 = cells.elements(0).add(3);
+  size_t pos1 = cells.elements(1).add(2);
+
+  BOOST_CHECK_EQUAL( pos0, 3 );
+  BOOST_CHECK_EQUAL( pos1, 2 );
+  BOOST_CHECK_EQUAL( cells.elements(0).size() , 6 );
+  BOOST_CHECK_EQUAL( cells.elements(1).size() , 4 );
+  BOOST_CHECK_EQUAL( cells.size(), 10 );
+  BOOST_CHECK_EQUAL( conn1.rows(), 6 );
+  BOOST_CHECK_EQUAL( conn2.rows(), 4 );
+
+  std::cout << "\nconn1\n";
+  for( size_t jrow=0; jrow<conn1.rows(); ++jrow )
+  {
+    for( size_t jcol=0; jcol<conn1.cols(); ++jcol )
+    {
+      std::cout << conn1(jrow,jcol) << " ";
+    }
+    std::cout << std::endl;
+  }
+
+  std::cout << "\nconn2\n";
+  for( size_t jrow=0; jrow<conn2.rows(); ++jrow )
+  {
+    for( size_t jcol=0; jcol<conn2.cols(); ++jcol )
+    {
+      std::cout << conn2(jrow,jcol) << " ";
+    }
+    std::cout << std::endl;
+  }
+}
+
+
+
 
 BOOST_AUTO_TEST_SUITE_END()
 

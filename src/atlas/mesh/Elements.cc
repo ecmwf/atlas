@@ -19,14 +19,19 @@ namespace mesh {
 
 //-----------------------------------------------------------------------------
 
-Elements::Elements( HybridElements &elements, size_t type_idx)
-  : owns_(false), hybrid_elements_(&elements), type_idx_(type_idx)
+void Elements::rebuild()
 {
   size_ = hybrid_elements_->elements_size_[type_idx_];
   nb_nodes_ = hybrid_elements_->element_type(type_idx_).nb_nodes();
   nb_edges_ = hybrid_elements_->element_type(type_idx_).nb_edges();
   begin_ = hybrid_elements_->elements_begin_[type_idx_];
   end_ = hybrid_elements_->elements_begin_[type_idx_+1];
+}
+
+Elements::Elements( HybridElements &elements, size_t type_idx )
+  : owns_(false), hybrid_elements_(&elements), type_idx_(type_idx)
+{
+  rebuild();
 }
 
 Elements::Elements( ElementType* element_type, size_t nb_elements, const std::vector<idx_t> &node_connectivity )
@@ -34,11 +39,7 @@ Elements::Elements( ElementType* element_type, size_t nb_elements, const std::ve
 {
   hybrid_elements_ = new HybridElements();
   type_idx_ = hybrid_elements_->add(element_type,nb_elements,node_connectivity.data());
-  size_ = hybrid_elements_->elements_size_[type_idx_];
-  nb_nodes_ = hybrid_elements_->element_type(type_idx_).nb_nodes();
-  nb_edges_ = hybrid_elements_->element_type(type_idx_).nb_edges();
-  begin_ = hybrid_elements_->elements_begin_[type_idx_];
-  end_ = hybrid_elements_->elements_begin_[type_idx_+1];
+  rebuild();
 }
 
 Elements::Elements( ElementType* element_type, size_t nb_elements, const idx_t node_connectivity[], bool fortran_array )
@@ -46,11 +47,7 @@ Elements::Elements( ElementType* element_type, size_t nb_elements, const idx_t n
 {
   hybrid_elements_ = new HybridElements();
   type_idx_ = hybrid_elements_->add(element_type,nb_elements,node_connectivity,fortran_array);
-  size_ = hybrid_elements_->elements_size_[type_idx_];
-  nb_nodes_ = hybrid_elements_->element_type(type_idx_).nb_nodes();
-  nb_edges_ = hybrid_elements_->element_type(type_idx_).nb_edges();
-  begin_ = hybrid_elements_->elements_begin_[type_idx_];
-  end_ = hybrid_elements_->elements_begin_[type_idx_+1];
+  rebuild();
 }
 
 
@@ -79,6 +76,13 @@ template<> ArrayView<long,1> Elements::view( const Field& field ) const
   return ArrayView<long,1>( field.data<long>()+begin(), make_shape(size()) );
 }
 
+
+size_t Elements::add(const size_t nb_elements)
+{
+  size_t position = size();
+  hybrid_elements_->insert(end(),nb_elements);
+  return position;
+}
 
 //-----------------------------------------------------------------------------
 
