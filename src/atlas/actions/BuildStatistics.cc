@@ -23,12 +23,14 @@
 #include "atlas/mpl/Checksum.h"
 #include "atlas/Mesh.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/mesh/HybridElements.h"
+#include "atlas/mesh/Elements.h"
+#include "atlas/mesh/ElementType.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Field.h"
 #include "atlas/actions/BuildDualMesh.h"
 #include "atlas/Parameters.h"
 #include "atlas/util/ArrayView.h"
-#include "atlas/util/IndexView.h"
 
 using eckit::geometry::LLPoint2;
 using eckit::geometry::lonlat_to_3d;
@@ -130,15 +132,14 @@ void build_statistics( Mesh& mesh )
   mesh::Nodes& nodes = mesh.nodes();
   ArrayView<double,2> lonlat ( nodes.lonlat() );
 
-  if( mesh.has_function_space("edges") )
+  if( mesh.edges().size() )
   {
-    FunctionSpace& edges = mesh.function_space( "edges" );
-    if( !edges.has_field("arc_length") )
-      edges.create_field<double>("arc_length",1);
-    ArrayView<double,1> dist ( edges.field("arc_length") );
+    if( ! mesh.edges().has_field("arc_length") )
+      mesh.edges().add( Field::create<double>("arc_length",make_shape(mesh.edges().size())) );
+    ArrayView<double,1> dist ( mesh.edges().field("arc_length") );
+    const mesh::HybridElements::Connectivity &edge_nodes = mesh.edges().node_connectivity();
 
-    IndexView<int,2> edge_nodes ( edges.field("nodes") );
-    const int nb_edges = edges.shape(0);
+    const int nb_edges = mesh.edges().size();
     for( int jedge=0; jedge<nb_edges; ++jedge )
     {
       int ip1 = edge_nodes(jedge,0);
@@ -162,90 +163,88 @@ void build_statistics( Mesh& mesh )
     ofs.close();
   }
 
-  if( mesh.has_function_space("triags") )
+  // Cell statistics
   {
     if( eckit::mpi::size() == 1 )
       ofs.open( stats_path.localPath(), std::ofstream::app );
 
-    FunctionSpace& elems = mesh.function_space("triags");
-    ArrayView<double,1> rho ( elems.create_field<double>("stats_rho",1) );
-    ArrayView<double,1> eta ( elems.create_field<double>("stats_eta",1) );
+    ArrayView<double,1> rho ( mesh.cells().add( Field::create<double>("stats_rho",make_shape(mesh.cells().size()) ) ) );
+    ArrayView<double,1> eta ( mesh.cells().add( Field::create<double>("stats_eta",make_shape(mesh.cells().size()) ) ) );
 
-    IndexView<int,2> elem_nodes ( elems.field("nodes") );
-    const int nb_elems = elems.shape(0);
-    for( int jelem=0; jelem<nb_elems; ++jelem )
+    for( size_t jtype=0; jtype<mesh.cells().nb_types(); ++jtype )
     {
-      int ip1 = elem_nodes(jelem,0);
-      int ip2 = elem_nodes(jelem,1);
-      int ip3 = elem_nodes(jelem,2);
-      LLPoint2 p1(lonlat(ip1,LON),lonlat(ip1,LAT));
-      LLPoint2 p2(lonlat(ip2,LON),lonlat(ip2,LAT));
-      LLPoint2 p3(lonlat(ip3,LON),lonlat(ip3,LAT));
+      const mesh::Elements& elements = mesh.cells().elements(jtype);
+      const mesh::Elements::Connectivity& elem_nodes = elements.node_connectivity();
+      const size_t nb_elems = elements.size();
 
-      double l12 = arc_in_rad(p1,p2)/DEG_TO_RAD;
-      double l23 = arc_in_rad(p2,p3)/DEG_TO_RAD;
-      double l31 = arc_in_rad(p3,p1)/DEG_TO_RAD;
-
-      double min_length = std::min(std::min(l12,l23),l31);
-      double max_length = std::max(std::max(l12,l23),l31);
-      rho(jelem) = min_length/max_length;
-
-      double s = 0.5*(l12 + l23 + l31);
-      double area = std::sqrt(s * (s - l12) * (s - l23) * (s - l31));
-
-      // see http://www.gidhome.com/component/manual/referencemanual/preprocessing/mesh_menu/mesh_quality
-      eta(jelem) = (4*area*std::sqrt(3.))/( std::pow(l12,2)+std::pow(l23,2)+std::pow(l31,2) );
-
-      if( eckit::mpi::size() == 1 )
+      if( elements.element_type().name() == "Triangle" )
       {
-        ofs << std::setw(idt) << rho[jelem]
-            << std::setw(idt) << eta[jelem]
-            << "\n";
+        for( size_t jelem=0; jelem<nb_elems; ++jelem )
+        {
+          size_t ielem = elements.begin() + jelem;
+          size_t ip1 = elem_nodes(jelem,0);
+          size_t ip2 = elem_nodes(jelem,1);
+          size_t ip3 = elem_nodes(jelem,2);
+          LLPoint2 p1(lonlat(ip1,LON),lonlat(ip1,LAT));
+          LLPoint2 p2(lonlat(ip2,LON),lonlat(ip2,LAT));
+          LLPoint2 p3(lonlat(ip3,LON),lonlat(ip3,LAT));
+
+          double l12 = arc_in_rad(p1,p2)/DEG_TO_RAD;
+          double l23 = arc_in_rad(p2,p3)/DEG_TO_RAD;
+          double l31 = arc_in_rad(p3,p1)/DEG_TO_RAD;
+
+          double min_length = std::min(std::min(l12,l23),l31);
+          double max_length = std::max(std::max(l12,l23),l31);
+          rho(ielem) = min_length/max_length;
+
+          double s = 0.5*(l12 + l23 + l31);
+          double area = std::sqrt(s * (s - l12) * (s - l23) * (s - l31));
+
+          // see http://www.gidhome.com/component/manual/referencemanual/preprocessing/mesh_menu/mesh_quality
+          eta(ielem) = (4*area*std::sqrt(3.))/( std::pow(l12,2)+std::pow(l23,2)+std::pow(l31,2) );
+
+          if( eckit::mpi::size() == 1 )
+          {
+            ofs << std::setw(idt) << rho[ielem]
+                << std::setw(idt) << eta[ielem]
+                << "\n";
+          }
+        }
       }
-    }
-
-    if( eckit::mpi::size() == 1 )
-      ofs.close();
-  }
-  if( mesh.has_function_space("quads") )
-  {
-    if( eckit::mpi::size() == 1 )
-      ofs.open( stats_path.localPath(), std::ofstream::app );
-
-    FunctionSpace& elems = mesh.function_space("quads");
-    ArrayView<double,1> rho ( elems.create_field<double>("stats_rho",1) );
-    ArrayView<double,1> eta ( elems.create_field<double>("stats_eta",1) );
-
-    IndexView<int,2> elem_nodes ( elems.field("nodes") );
-    const int nb_elems = elems.shape(0);
-    for( int jelem=0; jelem<nb_elems; ++jelem )
-    {
-      int ip1 = elem_nodes(jelem,0);
-      int ip2 = elem_nodes(jelem,1);
-      int ip3 = elem_nodes(jelem,2);
-      int ip4 = elem_nodes(jelem,3);
-
-      LLPoint2 p1(lonlat(ip1,LON),lonlat(ip1,LAT));
-      LLPoint2 p2(lonlat(ip2,LON),lonlat(ip2,LAT));
-      LLPoint2 p3(lonlat(ip3,LON),lonlat(ip3,LAT));
-      LLPoint2 p4(lonlat(ip4,LON),lonlat(ip4,LAT));
-
-      eta(jelem) = quad_quality(p1,p2,p3,p4);
-
-      double l12 = arc_in_rad(p1,p2);
-      double l23 = arc_in_rad(p2,p3);
-      double l34 = arc_in_rad(p3,p4);
-      double l41 = arc_in_rad(p4,p1);
-
-      double min_length = std::min(std::min(std::min(l12,l23),l34),l41);
-      double max_length = std::max(std::max(std::max(l12,l23),l34),l41);
-      rho(jelem) = min_length/max_length;
-
-      if( eckit::mpi::size() == 1 )
+      if( elements.element_type().name() == "Quadrilateral" )
       {
-        ofs << std::setw(idt) << rho[jelem]
-            << std::setw(idt) << eta[jelem]
-            << "\n";
+        for( size_t jelem=0; jelem<nb_elems; ++jelem )
+        {
+          size_t ielem = elements.begin() + jelem;
+          size_t ip1 = elem_nodes(jelem,0);
+          size_t ip2 = elem_nodes(jelem,1);
+          size_t ip3 = elem_nodes(jelem,2);
+          size_t ip4 = elem_nodes(jelem,3);
+
+          LLPoint2 p1(lonlat(ip1,LON),lonlat(ip1,LAT));
+          LLPoint2 p2(lonlat(ip2,LON),lonlat(ip2,LAT));
+          LLPoint2 p3(lonlat(ip3,LON),lonlat(ip3,LAT));
+          LLPoint2 p4(lonlat(ip4,LON),lonlat(ip4,LAT));
+
+          eta(ielem) = quad_quality(p1,p2,p3,p4);
+
+          double l12 = arc_in_rad(p1,p2);
+          double l23 = arc_in_rad(p2,p3);
+          double l34 = arc_in_rad(p3,p4);
+          double l41 = arc_in_rad(p4,p1);
+
+          double min_length = std::min(std::min(std::min(l12,l23),l34),l41);
+          double max_length = std::max(std::max(std::max(l12,l23),l34),l41);
+          rho(ielem) = min_length/max_length;
+
+          if( eckit::mpi::size() == 1 )
+          {
+            ofs << std::setw(idt) << rho[ielem]
+                << std::setw(idt) << eta[ielem]
+                << "\n";
+          }
+        }
+
       }
     }
     if( eckit::mpi::size() == 1 )

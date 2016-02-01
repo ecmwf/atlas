@@ -12,6 +12,7 @@
 #include "atlas/Parameters.h"
 #include "atlas/Mesh.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/mesh/HybridElements.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Field.h"
 #include "atlas/util/ArrayView.h"
@@ -19,8 +20,40 @@
 
 namespace atlas {
 namespace actions {
+void build_cell_centres_convert_to_old(Mesh& mesh);
 
 void BuildCellCentres::operator()( Mesh& mesh ) const
+{
+  mesh::Nodes& nodes     = mesh.nodes();
+  ArrayView<double,2> coords  ( nodes.field("xyz") );
+
+  size_t nb_cells = mesh.cells().size();
+  ArrayView<double,2> centroids ( nodes.add( Field::create<double>("centre", make_shape(nb_cells,3))) );
+  const mesh::HybridElements::Connectivity& cell_node_connectivity = mesh.cells().node_connectivity();
+
+  for (size_t e=0; e<nb_cells; ++e)
+  {
+    centroids(e,XX) = 0.;
+    centroids(e,YY) = 0.;
+    centroids(e,ZZ) = 0.;
+    const size_t nb_nodes_per_elem = cell_node_connectivity.cols(e);
+    const double average_coefficient = 1./static_cast<double>(nb_nodes_per_elem);
+    for (size_t n=0; n<nb_nodes_per_elem; ++n)
+    {
+      centroids(e,XX) += coords( cell_node_connectivity(e,n), XX );
+      centroids(e,YY) += coords( cell_node_connectivity(e,n), YY );
+      centroids(e,ZZ) += coords( cell_node_connectivity(e,n), ZZ );
+    }
+    centroids(e,XX) *= average_coefficient;
+    centroids(e,YY) *= average_coefficient;
+    centroids(e,ZZ) *= average_coefficient;
+  }
+
+
+  build_cell_centres_convert_to_old(mesh);
+}
+
+void build_cell_centres_convert_to_old(Mesh& mesh)
 {
     ASSERT( mesh.has_function_space("triags") );
     ASSERT( mesh.has_function_space("quads") );

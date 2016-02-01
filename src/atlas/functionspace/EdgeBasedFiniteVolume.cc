@@ -111,7 +111,7 @@ void EdgeBasedFiniteVolume::setup()
       const size_t nedges = edges_->shape(0);
       const ArrayView<double,2> lonlat_deg( nodes().lonlat() );
       ArrayView<double,1> V ( nodes().field("dual_volumes") );
-      ArrayView<double,2> S ( edges_->field("dual_normals") );
+      ArrayView<double,2> dual_normals ( edges_->field("dual_normals") );
 
       const double deg2rad = M_PI/180.;
       atlas_omp_parallel_for( size_t jnode=0; jnode<nnodes; ++jnode )
@@ -125,8 +125,8 @@ void EdgeBasedFiniteVolume::setup()
 
       atlas_omp_parallel_for( size_t jedge=0; jedge<nedges; ++jedge )
       {
-        S(jedge,LON) *= deg2rad;
-        S(jedge,LAT) *= deg2rad;
+        dual_normals(jedge,LON) *= deg2rad;
+        dual_normals(jedge,LAT) *= deg2rad;
       }
     }
   }

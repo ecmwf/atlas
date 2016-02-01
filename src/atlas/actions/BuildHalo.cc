@@ -37,6 +37,7 @@
 #include "atlas/util/LonLatMicroDeg.h"
 #include "atlas/util/Functions.h"
 #include "atlas/mesh/HybridElements.h"
+#include "atlas/mesh/Elements.h"
 
 using atlas::util::Face;
 using atlas::util::accumulate_faces;

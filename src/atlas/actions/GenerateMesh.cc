@@ -23,6 +23,10 @@ namespace actions {
 
 Mesh* generate_mesh (const ReducedGrid& rgg)
 {
+  Log::info() << "Deprecated function [generate_mesh] used.\n"
+              << "Consider using ReducedGridMeshGenerator directly."
+              << std::endl;
+
   ReducedGridMeshGenerator generate;
   generate.options.set( "nb_parts", eckit::mpi::size() );
   generate.options.set( "part"    , eckit::mpi::rank() );
