@@ -133,7 +133,7 @@ ecbuild_add_library( TARGET atlas_f
         atlas_resource.cc
         atlas_value.h
         atlas_value.cc
-  INCLUDES ${MPI_Fortran_INCLUDE_PATH}
+  PRIVATE_INCLUDES ${MPI_Fortran_INCLUDE_PATH}
   LIBS atlas ${MPI_Fortran_LIBRARIES}
 )
 
