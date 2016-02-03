@@ -91,6 +91,8 @@ public:
 
 private: // methods
 
+  virtual std::string getOptimalMeshGenerator() const;
+
   virtual size_t copyLonLatMemory(double* pts, size_t size) const;
 
   virtual void print(std::ostream&) const;

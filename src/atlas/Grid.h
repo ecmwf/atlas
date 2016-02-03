@@ -112,6 +112,8 @@ class Grid : public eckit::Owned, public util::Registered<Grid> {
 
   virtual std::string gridType() const = 0;
 
+  virtual std::string getOptimalMeshGenerator() const;
+
   virtual eckit::Properties spec() const = 0;
 
   virtual bool same(const Grid&) const;
