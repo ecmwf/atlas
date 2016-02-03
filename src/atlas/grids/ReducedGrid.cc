@@ -251,6 +251,11 @@ void ReducedGrid::lonlat( const size_t jlon, const size_t jlat, double crd[] ) c
   crd[1] = lat(jlat);
 }
 
+std::string ReducedGrid::getOptimalMeshGenerator() const
+{
+    return "ReducedGrid";
+}
+
 size_t ReducedGrid::copyLonLatMemory(double* pts, size_t size) const
 {
     size_t sizePts = 2*npts();
