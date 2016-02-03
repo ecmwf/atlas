@@ -73,9 +73,9 @@ void build_periodic_boundaries( Mesh& mesh )
     {
       if( Topology::check_all(flags(jnode),Topology::BC|Topology::WEST) )
       {
+        Topology::set(flags(jnode),Topology::PERIODIC);
         if( part(jnode) == mypart )
         {
-          Topology::set(flags(jnode),Topology::PERIODIC);
           LonLatMicroDeg ll(lonlat[jnode]);
           master_lookup[ ll.unique() ] = jnode;
           master_nodes.push_back( ll.lon() );
