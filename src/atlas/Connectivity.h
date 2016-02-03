@@ -317,6 +317,9 @@ public:
   /// @brief Modify row with given values. Values must be given with base 0
   void set( size_t row_idx, const idx_t column_values[] );
 
+  /// @brief Modify (row,col) with given value. Value must be given with base 0
+  void set( size_t row_idx, size_t col_idx, const idx_t value );
+
   /// @brief Resize connectivity, and add given rows
   /// @note Can only be used when data is owned.
   void add( size_t rows, size_t cols, const idx_t values[], bool fortran_array=false );
@@ -384,6 +387,12 @@ inline void BlockConnectivity::set( size_t row_idx, const idx_t column_values[] 
     col[n] = column_values[n] TO_FORTRAN;
   }
 }
+
+inline void BlockConnectivity::set( size_t row_idx, size_t col_idx, const idx_t value ) {
+  idx_t *col = values_+row_idx*cols_;
+  col[col_idx] = value TO_FORTRAN;
+}
+
 
 // ------------------------------------------------------------------------------------------------------
 
