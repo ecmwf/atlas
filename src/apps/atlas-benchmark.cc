@@ -255,30 +255,30 @@ void AtlasBenchmark::run()
   if( omp_threads > 0 )
     omp_set_num_threads(omp_threads);
 
-  Log::info() << "atlas-benchmark\n" << endl;
-  Log::info() << "Atlas:" << endl;
-  Log::info() << "  version:  ["<< atlas_version() << "]" << endl;
-  Log::info() << "  git:      ["<< atlas_git_sha1() << "]" << endl;
-  Log::info() << endl;
-  Log::info() << "Configuration:" << endl;
-  Log::info() << "  N: " << N << endl;
-  Log::info() << "  nlev: " << nlev << endl;
-  Log::info() << "  niter: " << niter << endl;
-  Log::info() << endl;
-  Log::info() << "  MPI tasks: "<<eckit::mpi::size()<<endl;
-  Log::info() << "  OpenMP threads per MPI task: " << omp_get_max_threads() << endl;
-  Log::info() << endl;
+  eckit::Log::info() << "atlas-benchmark\n" << endl;
+  eckit::Log::info() << "Atlas:" << endl;
+  eckit::Log::info() << "  version:  ["<< atlas_version() << "]" << endl;
+  eckit::Log::info() << "  git:      ["<< atlas_git_sha1() << "]" << endl;
+  eckit::Log::info() << endl;
+  eckit::Log::info() << "Configuration:" << endl;
+  eckit::Log::info() << "  N: " << N << endl;
+  eckit::Log::info() << "  nlev: " << nlev << endl;
+  eckit::Log::info() << "  niter: " << niter << endl;
+  eckit::Log::info() << endl;
+  eckit::Log::info() << "  MPI tasks: "<<eckit::mpi::size()<<endl;
+  eckit::Log::info() << "  OpenMP threads per MPI task: " << omp_get_max_threads() << endl;
+  eckit::Log::info() << endl;
 
-  Log::info() << "Timings:" << endl;
+  eckit::Log::info() << "Timings:" << endl;
 
   setup();
 
-  Log::info() << "  Executing " << niter << " iterations: \n";
+  eckit::Log::info() << "  Executing " << niter << " iterations: \n";
   if( progress )
   {
-    Log::info() << "      0%   10   20   30   40   50   60   70   80   90   100%\n";
-    Log::info() << "      |----|----|----|----|----|----|----|----|----|----|\n";
-    Log::info() << "      " << std::flush;
+    eckit::Log::info() << "      0%   10   20   30   40   50   60   70   80   90   100%\n";
+    eckit::Log::info() << "      |----|----|----|----|----|----|----|----|----|----|\n";
+    eckit::Log::info() << "      " << std::flush;
   }
   unsigned int tic=0;
   for( iter=0; iter<niter; ++iter )
@@ -288,35 +288,35 @@ void AtlasBenchmark::run()
       unsigned int tics_needed = static_cast<unsigned int>(static_cast<double>(iter)/static_cast<double>(niter-1)*50.0);
       while( tic <= tics_needed )
       {
-        Log::info() << '*' << std::flush;
+        eckit::Log::info() << '*' << std::flush;
         ++tic;
       }
       if ( iter == niter-1 )
       {
-        if ( tic < 51 ) Log::info() << '*';
-          Log::info() << endl;
+        if ( tic < 51 ) eckit::Log::info() << '*';
+          eckit::Log::info() << endl;
       }
     }
     iteration();
   }
 
 
-  Log::info() << "Iteration timer Statistics:\n"
+  eckit::Log::info() << "Iteration timer Statistics:\n"
               << "  min: " << setprecision(5) << fixed << iteration_timer.min
               << "  max: " << setprecision(5) << fixed << iteration_timer.max
               << "  avg: " << setprecision(5) << fixed << iteration_timer.avg << endl;
-  Log::info() << "Communication timer Statistics:\n"
+  eckit::Log::info() << "Communication timer Statistics:\n"
               << "  min: " << setprecision(5) << fixed << haloexchange_timer.min
               << "  max: " << setprecision(5) << fixed << haloexchange_timer.max
               << "  avg: " << setprecision(5) << fixed << haloexchange_timer.avg
               << " ( "<< setprecision(2) << haloexchange_timer.avg/iteration_timer.avg*100. << "% )" << endl;
 
-  Log::info() << endl;
-  Log::info() << "Results:" << endl;
+  eckit::Log::info() << endl;
+  eckit::Log::info() << "Results:" << endl;
 
   double res = result();
 
-  Log::info() << endl;
+  eckit::Log::info() << endl;
   exit_code = verify( res );
 
   atlas_finalize();
@@ -326,7 +326,7 @@ void AtlasBenchmark::run()
 
 void AtlasBenchmark::setup()
 {
-  Timer timer( "setup", Log::debug());
+  Timer timer( "setup", eckit::Log::debug());
 
   grids::load();
 
@@ -421,24 +421,24 @@ void AtlasBenchmark::setup()
   }
 
 
-  Log::info() << "  setup: " << timer.elapsed() << endl;
+  eckit::Log::info() << "  setup: " << timer.elapsed() << endl;
 
 
   // Check bit-reproducibility after setup()
   // ---------------------------------------
   //ArrayView<double,1> V ( mesh->nodes().field("dual_volumes") );
   //ArrayView<double,2> S ( mesh->function_space("edges").field("dual_normals") );
-  //Log::info() << "  checksum coordinates : " << mesh->nodes().checksum().execute( lonlat ) << endl;
-  //Log::info() << "  checksum dual_volumes: " << mesh->nodes().checksum().execute( V ) << endl;
-  //Log::info() << "  checksum dual_normals: " << mesh->function_space("edges").checksum().execute( S ) << endl;
-  //Log::info() << "  checksum field       : " << mesh->nodes().checksum().execute( field ) << endl;
+  //eckit::Log::info() << "  checksum coordinates : " << mesh->nodes().checksum().execute( lonlat ) << endl;
+  //eckit::Log::info() << "  checksum dual_volumes: " << mesh->nodes().checksum().execute( V ) << endl;
+  //eckit::Log::info() << "  checksum dual_normals: " << mesh->function_space("edges").checksum().execute( S ) << endl;
+  //eckit::Log::info() << "  checksum field       : " << mesh->nodes().checksum().execute( field ) << endl;
 }
 
 //------------------------------------------------------------------------------------------------------
 
 void AtlasBenchmark::iteration()
 {
-  Timer t("iteration", Log::debug(5));
+  Timer t("iteration", eckit::Log::debug(5));
 
   eckit::ScopedPtr<Array> avgS_arr( Array::create<double>(nedges,nlev,2) );
   ArrayView<double,3> avgS(*avgS_arr);
@@ -513,7 +513,7 @@ void AtlasBenchmark::iteration()
 
   // halo-exchange
   eckit::mpi::barrier();
-  Timer halo("halo-exchange", Log::debug(5));
+  Timer halo("halo-exchange", eckit::Log::debug(5));
   nodes_fs->halo_exchange().execute(grad);
   eckit::mpi::barrier();
   t.stop();
@@ -527,7 +527,7 @@ void AtlasBenchmark::iteration()
 
   if( !progress )
   {
-    Log::info() << setw(6) << iter+1
+    eckit::Log::info() << setw(6) << iter+1
                 << "    total: " << fixed << setprecision(5) << t.elapsed()
                 << "    communication: " << setprecision(5) << halo.elapsed()
                 << " ( "<< setprecision(2) << fixed << setw(3)
@@ -573,10 +573,10 @@ double AtlasBenchmark::result()
   ECKIT_MPI_CHECK_RESULT( MPI_Allreduce(MPI_IN_PLACE,&norm  ,1,eckit::mpi::datatype<double>(),MPI_SUM,eckit::mpi::comm()) );
   norm = std::sqrt(norm);
 
-  Log::info() << "  checksum: " << nodes_fs->checksum().execute( grad ) << endl;
-  Log::info() << "  maxval: " << setw(13) << setprecision(6) << scientific << maxval << endl;
-  Log::info() << "  minval: " << setw(13) << setprecision(6) << scientific << minval << endl;
-  Log::info() << "  norm:   " << setw(13) << setprecision(6) << scientific << norm << endl;
+  eckit::Log::info() << "  checksum: " << nodes_fs->checksum().execute( grad ) << endl;
+  eckit::Log::info() << "  maxval: " << setw(13) << setprecision(6) << scientific << maxval << endl;
+  eckit::Log::info() << "  minval: " << setw(13) << setprecision(6) << scientific << minval << endl;
+  eckit::Log::info() << "  norm:   " << setw(13) << setprecision(6) << scientific << norm << endl;
 
   if( output )
   {
@@ -592,7 +592,7 @@ int AtlasBenchmark::verify(const double& norm)
 {
   if( nlev != 137 )
   {
-    Log::warning() << "Results cannot be verified with nlev != 137" << endl;
+    eckit::Log::warning() << "Results cannot be verified with nlev != 137" << endl;
     return 1;
   }
   std::map<int,double> norms;
@@ -621,18 +621,18 @@ int AtlasBenchmark::verify(const double& norm)
 
   if( norms.count(N) == 0 )
   {
-    Log::warning() << "Results cannot be verified with resolution N="<< N << endl;
+    eckit::Log::warning() << "Results cannot be verified with resolution N="<< N << endl;
     return 1;
   }
 
   double diff = (norm-norms[N])/norms[N];
   if( diff < 0.01 )
   {
-    Log::info() << "Results are verified and correct.\n  difference = " << setprecision(6) << fixed << diff*100 << "%" << endl;
+    eckit::Log::info() << "Results are verified and correct.\n  difference = " << setprecision(6) << fixed << diff*100 << "%" << endl;
     return 0;
   }
 
-  Log::info() << "Results are wrong.\n  difference = " << setprecision(6) << fixed << diff*100 << "%" << endl;
+  eckit::Log::info() << "Results are wrong.\n  difference = " << setprecision(6) << fixed << diff*100 << "%" << endl;
   return 1;
 }
 
