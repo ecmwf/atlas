@@ -43,7 +43,8 @@ void accumulate_facets(
     std::vector< idx_t > &facet_nodes_data, // shape(nb_facets,nb_nodes_per_facet)
     std::vector< idx_t > &connectivity_facet_to_elem,
     size_t &nb_facets,
-    size_t &nb_inner_facets );
+    size_t &nb_inner_facets,
+    idx_t  &missing_value );
 
 } // namespace util
 } // namespace atlas

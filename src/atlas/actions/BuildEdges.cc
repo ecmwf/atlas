@@ -404,8 +404,9 @@ void build_edges_new( Mesh& mesh )
   std::vector< idx_t > edge_to_elem_data;
   size_t nb_edges;
   size_t nb_inner_edges;
+  idx_t missing_value;
 
-  accumulate_facets(mesh.cells(),mesh.nodes(),edge_nodes_data,edge_to_elem_data,nb_edges,nb_inner_edges);
+  accumulate_facets(mesh.cells(),mesh.nodes(),edge_nodes_data,edge_to_elem_data,nb_edges,nb_inner_edges,missing_value);
   // Build edges
   mesh.edges().add( new mesh::temporary::Line(), nb_edges, edge_nodes_data.data() );
   mesh::HybridElements::Connectivity& edge_nodes = mesh.edges().node_connectivity();

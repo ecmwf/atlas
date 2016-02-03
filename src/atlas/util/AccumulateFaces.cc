@@ -123,19 +123,16 @@ void accumulate_faces(
   }
 }
 
-
-namespace {
-  idx_t missing_value() { return -1; }
-}
-
 void accumulate_facets(
     const mesh::HybridElements &cells,
     const mesh::Nodes &nodes,
     std::vector< idx_t > &facet_nodes_data, // shape(nb_facets,nb_nodes_per_facet)
     std::vector< idx_t > &connectivity_facet_to_elem,
     size_t &nb_facets,
-    size_t &nb_inner_facets )
+    size_t &nb_inner_facets,
+    idx_t &missing_value )
 {
+  missing_value = -1;
   std::vector< std::vector<idx_t> > node_to_facet(nodes.size());
   nb_facets=0;
   nb_inner_facets=0;
@@ -223,7 +220,7 @@ void accumulate_facets(
         {
           connectivity_facet_to_elem.push_back( elements.begin()+e     );
           // if 2nd element stays missing_value, it is a bdry face
-          connectivity_facet_to_elem.push_back( missing_value() );
+          connectivity_facet_to_elem.push_back( missing_value );
           for (size_t n = 0; n < nb_nodes_in_facet; ++n)
           {
             node_to_facet[facet_nodes[n]].push_back(nb_facets);
