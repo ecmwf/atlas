@@ -60,6 +60,8 @@ public:
 
   void resize(size_t size1, size_t size2, size_t size3, size_t size4);
 
+  void insert(size_t idx1, size_t size1);
+
   size_t size() const { return spec_.size(); }
 
   size_t rank() const { return spec_.rank(); }
@@ -84,6 +86,7 @@ public:
 private: // methods
 
   virtual void resize_data( size_t size )=0;
+  virtual void insert_data(size_t idx1, size_t size1)=0;
 
 private:
 
@@ -168,7 +171,8 @@ public:
   template< typename RandomAccessIterator >
   void assign( RandomAccessIterator begin, RandomAccessIterator end );
   
-  
+  virtual void insert_data(size_t idx1, size_t size1);
+
 private:
 
   virtual void resize_data( size_t size );
@@ -190,6 +194,16 @@ void ArrayT<DATA_TYPE>::resize_data( size_t size )
   data_ = owned_data_.data();
   view_ = ArrayView<DATA_TYPE>( *this );
 }
+
+template< typename DATA_TYPE>
+void ArrayT<DATA_TYPE>::insert_data(size_t pos, size_t size)
+{
+  if( !owned_ ) throw eckit::SeriousBug("Cannot resize data that is not owned");
+  owned_data_.insert(owned_data_.begin()+pos,size,0);
+  data_ = owned_data_.data();
+  view_ = ArrayView<DATA_TYPE>( *this );
+}
+
 
 template <typename DATA_TYPE>
 void ArrayT<DATA_TYPE>::wrap(DATA_TYPE data[])

@@ -122,6 +122,12 @@ void Field::resize(const ArrayShape& shape)
     array_->resize(shape);
 }
 
+void Field::insert(size_t idx1, size_t size1 )
+{
+    array_->insert(idx1,size1);
+}
+
+
 void Field::set_functionspace(const next::FunctionSpace* functionspace)
 {
   functionspace_ = const_cast<next::FunctionSpace*>(functionspace);

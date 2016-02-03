@@ -246,7 +246,14 @@ void HybridElements::insert( size_t position, size_t nb_elements )
     elements_[t]->rebuild();
   }
   node_connectivity_->insert(position,nb_elements,element_types_[type_idx]->nb_nodes());
-  resize(size()+nb_elements);
+
+  size_+=nb_elements;
+  for( FieldMap::iterator it = fields_.begin(); it != fields_.end(); ++it )
+  {
+    Field& field = *it->second;
+    field.insert(position,nb_elements);
+  }
+
 }
 
 

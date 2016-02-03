@@ -103,6 +103,8 @@ public: // Destructor
   /// @brief Resize field to given shape
   void resize(const ArrayShape&);
 
+  void insert(size_t idx1, size_t size1 );
+
   /// @brief Shape of this field in Fortran style (reverse order of C style)
   const std::vector<int>& shapef()  const { return array_->shapef(); }
 

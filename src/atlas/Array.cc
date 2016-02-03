@@ -19,6 +19,20 @@ void Array::resize(const ArrayShape& _shape)
   resize_data(spec_.size());
 }
 
+void Array::insert(size_t idx1, size_t size1)
+{
+  size_t old_size = shape(0);
+  ArrayShape _shape = shape();
+  _shape[0] += size1;
+  spec_ = ArraySpec(_shape);
+  if( idx1 == old_size ) {
+    resize_data(spec_.size());
+  }
+  else {
+    insert_data(idx1*stride(0),size1*stride(0));
+  }
+}
+
 
 void Array::resize(size_t size1) { resize( make_shape(size1) ); }
 
