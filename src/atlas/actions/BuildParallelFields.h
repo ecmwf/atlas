@@ -47,7 +47,7 @@ void build_nodes_parallel_fields( mesh::Nodes& nodes );
  *        Because of this problem, the size of the halo should be set to 2 instead of 1!!!
  */
 void build_edges_parallel_fields( FunctionSpace& edges, mesh::Nodes& nodes );
-
+void build_edges_parallel_fields( Mesh& mesh );
 
 void renumber_nodes_glb_idx (mesh::Nodes& nodes);
 
@@ -59,6 +59,7 @@ extern "C"
   void atlas__build_parallel_fields (Mesh* mesh);
   void atlas__build_nodes_parallel_fields (mesh_Nodes* nodes);
   void atlas__build_edges_parallel_fields (FunctionSpace* edges, mesh_Nodes* nodes);
+  void atlas__build_edges_parallel_fields_mesh (Mesh* mesh);
   void atlas__renumber_nodes_glb_idx (mesh_Nodes* nodes);
 }
 #undef mesh_Nodes

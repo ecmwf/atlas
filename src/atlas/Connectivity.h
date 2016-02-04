@@ -90,6 +90,9 @@ public:
   /// @brief Number of columns for specified row in the connectivity table
   size_t cols( size_t row_idx ) const { return counts_[row_idx]; }
 
+  /// @brief Maximum value for number of columns over all rows
+  size_t maxcols() const { return maxcols_; }
+
   /// @brief Access to connectivity table elements for given row and column
   /// The returned index has base 0 regardless if ATLAS_HAVE_FORTRAN is defined.
   idx_t operator()( size_t row_idx, size_t col_idx ) const;
@@ -98,7 +101,7 @@ public:
   /// Note that the connectivity base is 1 in case ATLAS_HAVE_FORTRAN is defined.
   const idx_t* data() const { return values_; }
         idx_t* data()       { return values_; }
-        
+
   idx_t missing_value() const { return missing_value_; }
 
   IndexView<idx_t,1> row( size_t row_idx ) const;
@@ -156,6 +159,7 @@ private:
   size_t rows_;
   size_t *displs_;
   size_t *counts_;
+  size_t maxcols_;
 };
 
 typedef IrregularConnectivity Connectivity;
@@ -309,7 +313,7 @@ public:
   /// Note that the connectivity base is 1 in case ATLAS_HAVE_FORTRAN is defined.
   const idx_t* data() const { return values_; }
         idx_t* data()       { return values_; }
-        
+
   idx_t missing_value() const { return missing_value_; }
 
 //-- Modifiers

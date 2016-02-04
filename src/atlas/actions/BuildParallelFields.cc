@@ -61,9 +61,9 @@ namespace actions {
 Field& build_nodes_partition ( mesh::Nodes& nodes );
 Field& build_nodes_remote_idx( mesh::Nodes& nodes );
 Field& build_nodes_global_idx( mesh::Nodes& nodes );
-Field& build_edges_partition ( FunctionSpace& edges, mesh::Nodes& nodes );
-Field& build_edges_remote_idx( FunctionSpace& edges, mesh::Nodes& nodes );
-Field& build_edges_global_idx( FunctionSpace& edges, mesh::Nodes& nodes );
+Field& build_edges_partition ( Mesh& mesh );
+Field& build_edges_remote_idx( Mesh& mesh );
+Field& build_edges_global_idx( Mesh& mesh );
 
 // ------------------------------------------------------------------
 
@@ -113,20 +113,16 @@ void build_nodes_parallel_fields( mesh::Nodes& nodes )
 
 // ------------------------------------------------------------------
 
+void build_edges_parallel_fields( Mesh& mesh )
+{
+  build_edges_partition ( mesh );
+  build_edges_remote_idx( mesh );
+  build_edges_global_idx( mesh );
+}
+
 void build_edges_parallel_fields( FunctionSpace& edges, mesh::Nodes& nodes )
 {
-  ASSERT( nodes.has_field("partition") );
-  ASSERT( nodes.has_field("remote_idx") );
-  ASSERT( nodes.has_field("glb_idx") );
-
-  build_edges_partition ( edges, nodes );
-  build_edges_remote_idx( edges, nodes );
-  build_edges_global_idx( edges, nodes );
-
-  ASSERT( edges.has_field("partition") );
-  ASSERT( edges.has_field("remote_idx") );
-  ASSERT( edges.has_field("glb_idx") );
-
+  build_edges_parallel_fields( edges.mesh() );
 }
 
 // ------------------------------------------------------------------
@@ -344,8 +340,9 @@ Field& build_nodes_partition( mesh::Nodes& nodes )
 
 // ------------------------------------------------------------------
 
-Field& build_edges_partition_new( Mesh& mesh, mesh::Nodes& nodes )
+Field& build_edges_partition_new( Mesh& mesh )
 {
+  const mesh::Nodes& nodes = mesh.nodes();
   UniqueLonLat compute_uid(nodes);
 
   size_t mypart = eckit::mpi::rank();
@@ -624,14 +621,15 @@ Field& build_edges_partition_convert_to_old( FunctionSpace& edges, mesh::Nodes& 
 
 
 
-Field& build_edges_partition( FunctionSpace& edges, mesh::Nodes& nodes )
+Field& build_edges_partition( Mesh& mesh )
 {
-  build_edges_partition_new( edges.mesh(), nodes );
-  return build_edges_partition_convert_to_old( edges, nodes );
+  build_edges_partition_new( mesh );
+  return build_edges_partition_convert_to_old( mesh.function_space("edges"), mesh.nodes() );
 }
 
-Field& build_edges_remote_idx_new( Mesh& mesh, mesh::Nodes& nodes )
+Field& build_edges_remote_idx_new( Mesh& mesh  )
 {
+  const mesh::Nodes& nodes = mesh.nodes();
   UniqueLonLat compute_uid(nodes);
 
   size_t mypart = eckit::mpi::rank();
@@ -789,14 +787,15 @@ Field& build_edges_remote_idx_convert_to_old( FunctionSpace& edges, mesh::Nodes&
   return edges.field("remote_idx");
 }
 
-Field& build_edges_remote_idx( FunctionSpace& edges, mesh::Nodes& nodes )
+Field& build_edges_remote_idx( Mesh& mesh )
 {
-  build_edges_remote_idx_new(edges.mesh(),nodes);
-  return build_edges_remote_idx_convert_to_old(edges,nodes);
+  build_edges_remote_idx_new( mesh );
+  return build_edges_remote_idx_convert_to_old(mesh.function_space("edges"), mesh.nodes() );
 }
 
-Field& build_edges_global_idx_new( Mesh& mesh, mesh::Nodes& nodes )
+Field& build_edges_global_idx_new( Mesh& mesh )
 {
+  const mesh::Nodes& nodes = mesh.nodes();
   UniqueLonLat compute_uid(nodes);
 
   int nparts = eckit::mpi::size();
@@ -926,10 +925,10 @@ Field& build_edges_global_idx_convert_to_old( FunctionSpace& edges, mesh::Nodes&
 
 }
 
-Field& build_edges_global_idx( FunctionSpace& edges, mesh::Nodes& nodes )
+Field& build_edges_global_idx( Mesh& mesh )
 {
-  build_edges_global_idx_new(edges.mesh(),nodes);
-  return build_edges_global_idx_convert_to_old(edges,nodes);
+  build_edges_global_idx_new( mesh );
+  return build_edges_global_idx_convert_to_old( mesh.function_space("edges"), mesh.nodes() );
 }
 
 // ------------------------------------------------------------------
