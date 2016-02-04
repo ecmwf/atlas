@@ -882,7 +882,7 @@ void build_halo(Mesh& mesh, int nb_elems )
   mesh.metadata().set("halo",nb_elems);
 
   if( halo_changed ) build_halo_convert_to_old(mesh);
-//  if( halo_changed ) mesh.cells().rebuild_from_fs();
+//  if( halo_changed ) mesh.convert_new_to_old();
 }
 
 

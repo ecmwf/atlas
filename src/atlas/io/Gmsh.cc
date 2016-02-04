@@ -459,8 +459,6 @@ void Gmsh::read(const PathName& file_path, Mesh& mesh ) const
   for (int i=0; i<3; ++i)
     std::getline(file,line);
 
-  nodes.metadata().set("nb_owned",nb_nodes);
-
   int nb_elements=0;
 
   while(line != "$Elements")
@@ -620,14 +618,6 @@ void Gmsh::read(const PathName& file_path, Mesh& mesh ) const
           throw Exception("ERROR: element type not supported",Here());
       }
     }
-    quads.metadata().set("nb_owned",nb_etype[QUAD]);
-    triags.metadata().set("nb_owned",nb_etype[TRIAG]);
-
-    if( nb_edges > 0 )
-    {
-      mesh.function_space("edges").metadata().set("nb_owned",nb_etype[LINE]);
-    }
-
   }
 
   file.close();

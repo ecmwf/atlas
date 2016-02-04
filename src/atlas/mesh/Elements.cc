@@ -66,6 +66,11 @@ template<> ArrayView<double,1> Elements::view( const Field& field ) const
   return ArrayView<double,1>( field.data<double>()+begin(), make_shape(size()) );
 }
 
+template<> ArrayView<float,1> Elements::view( const Field& field ) const
+{
+  return ArrayView<float,1>( field.data<float>()+begin(), make_shape(size()) );
+}
+
 template<> ArrayView<int,1> Elements::view( const Field& field ) const
 { 
   return ArrayView<int,1>( field.data<int>()+begin(), make_shape(size()) );
@@ -75,6 +80,30 @@ template<> ArrayView<long,1> Elements::view( const Field& field ) const
 { 
   return ArrayView<long,1>( field.data<long>()+begin(), make_shape(size()) );
 }
+
+
+
+template<> ArrayView<double,2> Elements::view( const Field& field ) const
+{
+  return ArrayView<double,2>( field.data<double>()+begin(), make_shape(size(),field.shape(1)) );
+}
+
+template<> ArrayView<float,2> Elements::view( const Field& field ) const
+{
+  return ArrayView<float,2>( field.data<float>()+begin(), make_shape(size(),field.shape(1)) );
+}
+
+template<> ArrayView<int,2> Elements::view( const Field& field ) const
+{
+  return ArrayView<int,2>( field.data<int>()+begin(), make_shape(size(),field.shape(1)) );
+}
+
+template<> ArrayView<long,2> Elements::view( const Field& field ) const
+{
+  return ArrayView<long,2>( field.data<long>()+begin(), make_shape(size(),field.shape(1)) );
+}
+
+
 
 
 size_t Elements::add(const size_t nb_elements)

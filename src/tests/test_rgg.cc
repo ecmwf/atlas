@@ -207,9 +207,9 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     BOOST_CHECK_EQUAL( m->nodes().size(), 156 );
     BOOST_CHECK_EQUAL( m->function_space("quads" ).shape(0), 134 );
     BOOST_CHECK_EQUAL( m->function_space("triags").shape(0),  32 );
-    BOOST_CHECK_EQUAL( m->nodes().metadata().get<size_t>("nb_owned"),    156 );
-    BOOST_CHECK_EQUAL( m->function_space("quads" ).metadata().get<size_t>("nb_owned"),    134 );
-    BOOST_CHECK_EQUAL( m->function_space("triags").metadata().get<size_t>("nb_owned"),     32 );
+//    BOOST_CHECK_EQUAL( m->nodes().metadata().get<size_t>("nb_owned"),    156 );
+//    BOOST_CHECK_EQUAL( m->function_space("quads" ).metadata().get<size_t>("nb_owned"),    134 );
+//    BOOST_CHECK_EQUAL( m->function_space("triags").metadata().get<size_t>("nb_owned"),     32 );
     delete m;
   }
 
@@ -220,9 +220,9 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     BOOST_CHECK_EQUAL( m->nodes().size(), 166 );
     BOOST_CHECK_EQUAL( m->function_space("quads" ).shape(0), 134 );
     BOOST_CHECK_EQUAL( m->function_space("triags").shape(0),  32 );
-    BOOST_CHECK_EQUAL( m->nodes().metadata().get<size_t>("nb_owned"),    166 );
-    BOOST_CHECK_EQUAL( m->function_space("quads" ).metadata().get<size_t>("nb_owned"),    134 );
-    BOOST_CHECK_EQUAL( m->function_space("triags").metadata().get<size_t>("nb_owned"),     32 );
+//    BOOST_CHECK_EQUAL( m->nodes().metadata().get<size_t>("nb_owned"),    166 );
+//    BOOST_CHECK_EQUAL( m->function_space("quads" ).metadata().get<size_t>("nb_owned"),    134 );
+//    BOOST_CHECK_EQUAL( m->function_space("triags").metadata().get<size_t>("nb_owned"),     32 );
     delete m;
   }
 
@@ -233,9 +233,9 @@ DISABLE{  // This is all valid for meshes generated with MINIMAL NB TRIAGS
     BOOST_CHECK_EQUAL( m->nodes().size(), 158 );
     BOOST_CHECK_EQUAL( m->function_space("quads" ).shape(0), 134 );
     BOOST_CHECK_EQUAL( m->function_space("triags").shape(0),  44 );
-    BOOST_CHECK_EQUAL( m->nodes().metadata().get<size_t>("nb_owned"),    158 );
-    BOOST_CHECK_EQUAL( m->function_space("quads" ).metadata().get<size_t>("nb_owned"),    134 );
-    BOOST_CHECK_EQUAL( m->function_space("triags").metadata().get<size_t>("nb_owned"),     44 );
+//    BOOST_CHECK_EQUAL( m->nodes().metadata().get<size_t>("nb_owned"),    158 );
+//    BOOST_CHECK_EQUAL( m->function_space("quads" ).metadata().get<size_t>("nb_owned"),    134 );
+//    BOOST_CHECK_EQUAL( m->function_space("triags").metadata().get<size_t>("nb_owned"),     44 );
     delete m;
   }
 

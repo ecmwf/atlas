@@ -235,9 +235,7 @@ void build_node_to_edge_connectivity_new( Mesh& mesh )
 void build_node_to_edge_connectivity_convert_to_old( Mesh& mesh )
 {
   mesh::Nodes& nodes = mesh.nodes();
-  mesh::Nodes::Connectivity& node_edge_connectivity = mesh.nodes().edge_connectivity();
-
-  FunctionSpace& edges = mesh.function_space("edges");
+  const mesh::Nodes::Connectivity& node_edge_connectivity = mesh.nodes().edge_connectivity();
 
   // Get max_edge_cnt
   ArrayView<int,1> to_edge_size ( nodes.add( Field::create<int>( "to_edge_size", make_shape(nodes.size(),1) ) ) );

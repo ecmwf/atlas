@@ -43,7 +43,6 @@ Nodes::Nodes(): size_(0)
     part(n) = eckit::mpi::rank();
     flags(n) = 0;
   }
-  metadata().set("nb_owned",size());
 }
 
 Nodes::Connectivity& Nodes::add( const std::string& name, Connectivity *connectivity )

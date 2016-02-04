@@ -163,33 +163,75 @@ inline const HybridElements& Elements::hybrid_elements() const
 
 inline const Elements::Connectivity& Elements::node_connectivity() const
 {
-  return hybrid_elements_->node_connectivity().block(type_idx_);
+  if( hybrid_elements_->node_connectivity().blocks() ) {
+    return hybrid_elements_->node_connectivity().block(type_idx_);
+  }
+  else
+  {
+    static Elements::Connectivity dummy;
+    return dummy;
+  }
 }
 
 inline Elements::Connectivity& Elements::node_connectivity()
 {
-  return hybrid_elements_->node_connectivity().block(type_idx_);
+  if( hybrid_elements_->node_connectivity().blocks() ) {
+    return hybrid_elements_->node_connectivity().block(type_idx_);
+  }
+  else
+  {
+    static Elements::Connectivity dummy;
+    return dummy;
+  }
 }
 
 inline const Elements::Connectivity& Elements::edge_connectivity() const
 {
-  return hybrid_elements_->edge_connectivity().block(type_idx_);
+  if( hybrid_elements_->edge_connectivity().blocks() ) {
+    return hybrid_elements_->edge_connectivity().block(type_idx_);
+  }
+  else
+  {
+    static Elements::Connectivity dummy;
+    return dummy;
+  }
 }
 
 inline Elements::Connectivity& Elements::edge_connectivity()
 {
-  return hybrid_elements_->edge_connectivity().block(type_idx_);
+  if( hybrid_elements_->edge_connectivity().blocks() ) {
+    return hybrid_elements_->edge_connectivity().block(type_idx_);
+  }
+  else
+  {
+    static Elements::Connectivity dummy;
+    return dummy;
+  }
 }
 
 
 inline const Elements::Connectivity& Elements::cell_connectivity() const
 {
-  return hybrid_elements_->cell_connectivity().block(type_idx_);
+  if( hybrid_elements_->cell_connectivity().blocks() ) {
+    return hybrid_elements_->cell_connectivity().block(type_idx_);
+  }
+  else
+  {
+    static Elements::Connectivity dummy;
+    return dummy;
+  }
 }
 
 inline Elements::Connectivity& Elements::cell_connectivity()
 {
-  return hybrid_elements_->cell_connectivity().block(type_idx_);
+  if( hybrid_elements_->cell_connectivity().blocks() ) {
+    return hybrid_elements_->cell_connectivity().block(type_idx_);
+  }
+  else
+  {
+    static Elements::Connectivity dummy;
+    return dummy;
+  }
 }
 
 

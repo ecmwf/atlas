@@ -183,6 +183,7 @@ size_t HybridElements::add( const ElementType* element_type, size_t nb_elements,
 
   
   node_connectivity_->add(nb_elements,nb_nodes,connectivity,fortran_array);
+
   resize( new_size );
   return element_types_.size()-1;
 }
@@ -293,7 +294,7 @@ void HybridElements::rebuild_from_fs()
       FunctionSpace& functionspace = mesh_->function_space(func_space_idx);
       if( functionspace.metadata().get<long>("type") == type_ )
       {
-      size_t nb_elems = functionspace.field("nodes").shape(0);
+        size_t nb_elems = functionspace.field("nodes").shape(0);
         size_t nb_nodes_per_elem = functionspace.field("nodes").shape(1);
         ElementType* element_type(0);
         if( nb_nodes_per_elem==2 ) element_type = new temporary::Line();

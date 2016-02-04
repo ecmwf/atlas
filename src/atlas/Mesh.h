@@ -140,18 +140,19 @@ private: // members
 
     Metadata   metadata_;
     eckit::SharedPtr<mesh::Nodes> nodes_;           
-                                                      // dimensionality : 2D    3D
-    eckit::SharedPtr<mesh::HybridElements> cells_;    //                  2D    3D
-    eckit::SharedPtr<mesh::HybridElements> facets_;   //                  1D    2D
-    eckit::SharedPtr<mesh::HybridElements> ridges_;   //                  0D    1D
-    eckit::SharedPtr<mesh::HybridElements> peaks_;    //                  NA    0D
+                                                      // dimensionality : 2D | 3D
+                                                      //                  --------
+    eckit::SharedPtr<mesh::HybridElements> cells_;    //                  2D | 3D
+    eckit::SharedPtr<mesh::HybridElements> facets_;   //                  1D | 2D
+    eckit::SharedPtr<mesh::HybridElements> ridges_;   //                  0D | 1D
+    eckit::SharedPtr<mesh::HybridElements> peaks_;    //                  NA | 0D
 
     eckit::SharedPtr<mesh::HybridElements> edges_;  // alias to facets of 2D mesh, ridges of 3D mesh
     
     size_t dimensionality_;
 
 public: // members to be removed
-    void convert_old_to_new();
+    void convert_new_to_old();
     bool has_grid() const { return grid_; }
     void set_grid( const Grid& p ) { grid_ = &p; }
     const Grid& grid() const {  ASSERT( grid_ ); return *grid_; }

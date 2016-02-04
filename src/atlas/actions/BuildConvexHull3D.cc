@@ -193,10 +193,6 @@ static void cgal_polyhedron_to_atlas_mesh_convert_to_old(  Mesh& mesh )
     ArrayView<gidx_t,1> triag_glb_idx( triags.create_field<gidx_t>("glb_idx",1) );
     ArrayView<int,1> triag_part( triags.create_field<int>("partition",1) );
 
-    mesh.nodes().metadata().set("nb_owned",mesh.nodes().size());
-    quads.metadata().set("nb_owned",nquads);
-    triags.metadata().set("nb_owned",ntriags);
-
     const mesh::HybridElements::Connectivity& node_connectivity = mesh.cells().node_connectivity();
     const ArrayView<gidx_t,1> cells_glb_idx( mesh.cells().global_index() );
     const ArrayView<int,1>    cells_part(    mesh.cells().partition() );

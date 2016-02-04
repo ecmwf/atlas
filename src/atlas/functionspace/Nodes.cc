@@ -143,7 +143,7 @@ void Nodes::constructor()
     std::stringstream ss;
     ss << "nb_nodes_including_halo["<<halo_.size()<<"]";
     if( ! mesh_.metadata().get(ss.str(),nb_nodes_) ) {
-      nb_nodes_ = mesh_.nodes().metadata().get<size_t>("nb_owned");
+      nb_nodes_ = mesh_.nodes().size();
     }
   }
 
