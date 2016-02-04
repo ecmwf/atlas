@@ -1,56 +1,43 @@
 \chapter{Initialize and finalize}
-In this very brief first chapter we show how to initialize 
-and finalize the Atlas library in both C++ (section 
-\ref{s:atlas-section1-C}) and Fortran (section 
-\ref{s:atlas-section1-F}). 
+In this very brief chapter we show how to 
+initialize and finalize the Atlas library 
+in both C++ (\sect{s:atlas-section1-C}) 
+and Fortran (\sect{s:atlas-section1-F}). 
 
 
 
 \section{C++ version}
 \label{s:atlas-section1-C}
 The C++ version of the \Atlas initialization and finalization 
-calls is depicted in Listing \ref{code-1-C}.
+calls is depicted in \lista{code1-C}.
 %
 \lstinputlisting[caption=Initialization and finalization of 
-\Atlas using C++, style=CStyle, label=code-1-C]{section1.cc}
+\Atlas using C++, style=CStyle, label=code1-C]{section1.cc}
 %
-In line 1, we include the \Atlas header file :
-%
-\begin{lstlisting}[style=CStyleNoLine]
-#include "atlas/atlas.h"
-\end{lstlisting}
-%
-We successively specify a simple main function, in which 
-we call the initialization of the \Atlas library at line 5:
-%
-\begin{lstlisting}[style=CStyleNoLine]
-atlas::atlas_initialize(argc, argv)
-\end{lstlisting}
-%
+
+In line 1, we include the \Atlas header file, we successively 
+specify a simple main function, in which we call the initialization 
+of the \Atlas library at line 5.
 Note that we passed the two arguments of the main function 
 \inltc{argc} and \inltc{argv} to the \inltc{atlas\_initialize} 
 function.
 
 We finally call the \Atlas \inltc{atlas\_finalize()} function 
-at line 6 without passing any argument to it:
-%
-\begin{lstlisting}[style=CStyleNoLine]
-atlas::atlas_finalize()
-\end{lstlisting}
-%
+at line 6 without passing any argument to it.
 
 The function \inltc{atlas\_initialize()} is responsible for 
 the login and for the initialization of MPI (Message Passage 
 Interface), while the function \inltc{atlas\_finalize()} is 
 responsible for finalizing MPI and closing the program.
 
-The code in Listing 1, once compiled, generates an executable 
+The code in \lista{code1-C}, once compiled, generates an executable 
 called \inlsh{atlas\_c-section1} which can be found in:
 %
 \begin{lstlisting}[style=BashStyle]
 atlas/docs/user-guide/section1/
 \end{lstlisting}
 % 
+
 \begin{notebox}
 If you have compiled the documentation, you automatically have 
 the executable file just mentioned without the need of doing 
@@ -96,41 +83,18 @@ running, the identifier of the commit and the path of the executable.
 \section{Fortran version}
 \label{s:atlas-section1-F}
 The Fortran version of the \Atlas initialization and finalization 
-calls is depicted in Listing \ref{code-1-F}.
+calls is depicted in \lista{code1-F}.
 %
-\lstinputlisting[caption=Initialization and finalization of \Atlas using Fortran, 
-style=FStyle, label=code-1-F]{section1.F90}
+\lstinputlisting[caption=Initialization and finalization of 
+\Atlas using Fortran, style=FStyle, label=code1-F]{section1.F90}
 %
-In line 1, we define the program:
-%
-\begin{lstlisting}[style=FStyleNoLine]
-program section1
-\end{lstlisting}
-%
-We successively include the required \Atlas libraries using the 
-keyword \inltf{use} (note that we include only the two functions 
-required for this example using the keyword \inltf{only} after 
-the inclusion of the library)
-%
-\begin{lstlisting}[style=FStyleNoLine]
-use atlas_module , only : atlas_init , atlas_finalize
-\end{lstlisting}
-%
- 
-We finally call the \Atlas \inltf{atlas\_init()} and \inltf{atlas\_finalize()} 
-functions at lines 5 and 6:
-%
-\begin{lstlisting}[style=FStyleNoLine]
-call atlas_init()
-call atlas_finalize ()
-\end{lstlisting}
-%
-and we close the program at line 8:
-%
-\begin{lstlisting}[style=FStyleNoLine]
-end program
-\end{lstlisting}
-%
+
+On line 1, we define the program, called \inltf{section1}.
+On line 3, we include the required \Atlas libraries
+(note that we include only the two functions required 
+for this example - i.e. \inltf{atlas\_init} and \inltf{atlas\_finalize}).
+We finally call the two functions \inltf{atlas\_init()} 
+on lines 5 and 6 and we close the program on line 8.
 
 The function \inltf{atlas\_init()} is responsible for the login 
 and for the initialization of MPI (Message Passage Interface), 
@@ -190,9 +154,11 @@ The outputs obtained for the Fortran and C++ version should be identical
 since they call exactly the same routines. 
 \end{tipbox}
 
+
+
 \section{Summary}
-From these very brief examples you should now be familiar with the following 
-concepts: 
+From these very brief examples you should now be familiar 
+with the following concepts: 
 \begin{itemize}
 \item how to initialize \Atlas in both C++ and Fortran,
 \item how to finalize \Atlas,

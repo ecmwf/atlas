@@ -245,7 +245,7 @@ double ReducedGrid::lat(const size_t jlat) const
   return lat_[jlat];
 }
 
-void ReducedGrid::lonlat( const size_t jlon, const size_t jlat, double crd[] ) const
+void ReducedGrid::lonlat( const size_t jlat, const size_t jlon, double crd[] ) const
 {
   crd[0] = lon(jlat,jlon);
   crd[1] = lat(jlat);
@@ -300,12 +300,18 @@ void ReducedGrid::hash(eckit::MD5& md5) const {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-int  atlas__ReducedGrid__nlat(ReducedGrid* This)
+int atlas__ReducedGrid__nlat(ReducedGrid* This)
 {
   return This->nlat();
 }
 
-void atlas__ReducedGrid__nlon(ReducedGrid* This, const int* &nlons, int &size)
+
+int atlas__ReducedGrid__nlon(ReducedGrid* This, int &jlat)
+{
+  return This->nlon(jlat);
+}
+
+void atlas__ReducedGrid__nlon__all(ReducedGrid* This, const int* &nlons, int &size)
 {
   nlons = This->npts_per_lat().data();
   size  = This->npts_per_lat().size();
@@ -321,17 +327,22 @@ int atlas__ReducedGrid__npts(ReducedGrid* This)
   return This->npts();
 }
 
-double atlas__ReducedGrid__lon(ReducedGrid* This,int jlat,int jlon)
-{
-  return This->lon(jlat,jlon);
-}
-
 double atlas__ReducedGrid__lat(ReducedGrid* This,int jlat)
 {
   return This->lat(jlat);
 }
 
-void atlas__ReducedGrid__latitudes(ReducedGrid* This, const double* &lat, int &size)
+double atlas__ReducedGrid__lon(ReducedGrid* This,int jlat,int jlon)
+{
+  return This->lon(jlat, jlon);
+}
+
+void atlas__ReducedGrid__lonlat(ReducedGrid* This, int jlat, int jlon, double crd[])
+{
+  This->lonlat(jlat, jlon, crd);
+}
+
+void atlas__ReducedGrid__lat__all(ReducedGrid* This, const double* &lat, int &size)
 {
   lat  = This->latitudes().data();
   size = This->latitudes().size();

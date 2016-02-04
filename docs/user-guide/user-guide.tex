@@ -97,11 +97,12 @@ openany,     % A chapter may start on either a recto or verso page.
 
 %%% FLOATS AND CAPTIONS
 %%%------------------------------------------------------------------------------
-% You do not need to write [htpb] all the time
-\makeatletter                  
-\renewcommand\fps@figure{htbp} 
-\renewcommand\fps@table{htbp}  
-\makeatother                   
+\newcommand{\fig}[1]{figure~{\ref{#1}}\xspace}
+\newcommand{\tab}[1]{table~{\ref{#1}}\xspace}
+\newcommand{\lista}[1]{listing~{\ref{#1}}\xspace}
+\newcommand{\parte}[1]{part~{\ref{#1}}\xspace}
+\newcommand{\chap}[1]{chapter~{\ref{#1}}\xspace}
+\newcommand{\sect}[1]{section~{\ref{#1}}\xspace}
 
 % A space between caption name and text
 \captiondelim{\space}
@@ -179,7 +180,11 @@ openany,     % A chapter may start on either a recto or verso page.
 
 % Nektar++ version
 \usepackage{xspace}
-\newcommand{\atlasver}{\input{../../VERSION}\unskip}
+\ifdefined\HCode
+\newcommand{\atlasver}{0.5.0\unskip}
+\else
+\newcommand{\atlasver}{\input{../../VERSION.tex}\unskip}
+\fi
 \addto\captionsenglish{\renewcommand{\chaptername}{Chapter}}
 
 % Partial
@@ -556,18 +561,21 @@ pdfauthor={I am the Author}
 
 \part{Getting Started}
 \label{p:start}
-\chapter{Installation}
-\chapter{Structure}
-\import{section1/}{section1.tex}
+\import{getting-started/installation/}{installation.tex}
+\import{getting-started/structure/}{structure.tex}	
 
 
 
 \part{Core functionalities}
+\label{p:core-functionalities}
+\import{core-functionalities/section1/}{section1.tex}
+\import{core-functionalities/section2/}{section2.tex}
+
+
+\part{Applications}
 \label{p:applications}
-\import{section2/}{section2.tex}
 
 
-\part{Dwarfs}
 
 %\appendix
 

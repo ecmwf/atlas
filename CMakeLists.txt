@@ -24,7 +24,7 @@ set( ENABLE_OS_ENDINESS_TEST    OFF   CACHE BOOL " " )
 
 project( atlas CXX )
 
-file  ( STRINGS "VERSION" ATLASVER )
+file  ( STRINGS "VERSION.tex" ATLASVER )
 set   ( ${PROJECT_NAME}_VERSION_STR  ${ATLASVER} )
 
 include( ecbuild_system NO_POLICY_SCOPE )

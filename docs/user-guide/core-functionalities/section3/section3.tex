@@ -1,21 +1,31 @@
-\chapter{Create a Grid and visualise the associated Mesh}
-In this section, we show how to create a grid with \Atlas 
-and successively how to generate a mesh from the grid, in 
-order to visualise it in Gmsh.
+\chapter{Create a Grid}
+In this section, we show how to create a grid with \Atlas.
 % 
 \begin{notebox}
-With the term \textit{grid} we intend a list of points without 
-any specific connectivity rule, while with the \textit{mesh} 
-we intend an object composed by elements and specific connectivity 
-rules.
+With the term \textit{grid} we intend a list of points 
+without any specific connectivity rule.
 \end{notebox}
 %
-There can be different types of grids depending on the requirements 
-and constraints one might have. 
-
-In this section we will focus on two types of grids, Gaussian 
-and reduced Gaussian grids, and we will show how to create them 
-for both C++ and Fortran.
+As explained in \chap{chap:structure}, \Atlas supports 
+the following types of grids:
+%
+\begin{itemize}
+\item IcosahedralGrid,
+\item ReducedGrid,
+\begin{itemize}
+\item ReducedGaussianGrid
+\begin{itemize}
+\item GaussianGrid
+\item OctahedralReducedGaussianGrid
+\end{itemize}
+\item LonLatGrid
+\item StaggeredLonLatGrid
+\end{itemize}
+\item UnstructuredGrid.
+\end{itemize} 
+%
+In this section we will focus on reduced and unstructured,
+and we will show how to create them both in C++ and Fortran.
 
 
 

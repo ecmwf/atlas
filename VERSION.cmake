@@ -5,5 +5,5 @@
 # In applying this licence, ECMWF does not waive the privileges and immunities
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
-file ( STRINGS "VERSION" ATLASVER )
+file ( STRINGS "VERSION.tex" ATLASVER )
 set  ( ${PROJECT_NAME}_VERSION_STR  ${ATLASVER} )

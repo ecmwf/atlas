@@ -1,0 +1,138 @@
+\chapter{Download and installation}
+\label{chap:installation}
+
+\section{Download and requirements}
+For download information please go to: \\
+\url{https://software.ecmwf.int/wiki/display/ATLAS/Atlas}
+ 
+\Atlas additionally requires the following third party libraries
+to be successfully compiled:
+%
+\begin{itemize}
+\item CMake: For use and installation see http://www.cmake.org/
+\item ecbuild:
+\item eckit: (with mpi support - meaning either eckit\_mpi 
+or eckit\_mpistubs library)
+\item python (only when Fortran bindings are required)
+\end{itemize}
+%
+Also, the following recommended packages might be considered:
+%
+\begin{itemize}
+\item MPI: Distributed memory parallelisation;
+\item OpenMP: Shared memory parallelisation;
+\item fctest: Unit testing for Fortran;
+\item boost\_unit\_test: Unit testing for C++;
+\end{itemize}
+%
+\Atlas has been tested and is known to work with the following compilers
+%
+\begin{itemize}
+\item GCC 4.8.1
+\item Intel 13.0.1, 14.0.1
+\item CCE 8.2.7, 8.3.1
+\end{itemize}
+%
+
+
+
+
+\section{Installation}
+Once you have downloaded the library you can install it by using 
+an out-of-source build/install based on CMake. In particular you 
+can follow the steps below:
+%
+\begin{lstlisting}[style=BashStyle]
+# Environment --- Edit as needed
+ATLAS_SRC=$(pwd)
+ATLAS_BUILD=build
+ATLAS_INSTALL=$HOME/local
+export CC=mpicc
+export CXX=mpicxx
+
+# 1. Create the build directory:
+mkdir $ATLAS_BUILD
+cd $ATLAS_BUILD
+
+# 2. Run CMake
+ecbuild $ATLAS_SRC -DCMAKE_INSTALL_PREFIX=$ATLAS_INSTALL
+
+# 3. Compile / Install
+make -j10
+make install
+\end{lstlisting}
+%
+The following extra flags may be added to step 2 to fine-tune 
+configuration.
+%
+\begin{lstlisting}[style=BashStyle]
+-DCMAKE_BUILD_TYPE=DEBUG|RELEASE|BIT --- Optimisation level
+    DEBUG:   No optimisation
+    BIT:     Maximum optimisation while remaning bit-reproducible
+    RELEASE: Maximum optimisation
+-DENABLE_OMP=OFF --- Disable OpenMP
+-DENABLE_MPI=OFF --- Disable MPI
+-DENABLE_FORTRAN=OFF --- Disable Compilation of Fortran bindings
+\end{lstlisting}
+%
+%
+\begin{notebox}
+By default compilation is done using shared libraries. Some systems have 
+linking problems with static libraries that have not been compiled with 
+the flag \inltc{-fPIC}. In this case, also compile atlas using static 
+linking, by adding to step 2 the flag: \inltc{-DBUILD\_SHARED\_LIBS=OFF}
+\end{notebox}
+%
+
+\section{Runtime Configuration}
+
+\Atlas behaviour can be configured through variables defined at the command-line, 
+in the environment, or in configuration files. In the following table, the column 
+'variable' can be edited in configuration files.
+
+\begin{table}[htb!]
+\begin{center}
+\begin{tabular}{l|c|c|r}
+\toprule
+variable & command line & environment & default \\ 
+\midrule
+  \inltc{debug} 					& \inltc{--debug} 
+& \inltc{\$DEBUG} 					& \inltc{0}   			\\  
+									& \inltc{--name}  	
+&                   				& \inltc{<app>} 		\\
+  \inltc{<name>.configfile} 		& \inltc{--conf} 
+& \inltc{<name>\_CONFIGFILE} 		& \inltc{<name>.cfg}	\\ 
+  \inltc{<app>.configfile} 			& 
+& \inltc{<app>\_CONFIGFILE} 		& \inltc{<app>.cfg}		\\ 
+  \inltc{atlas.configfile} 			& \inltc{--atlas\_conf} 
+& \inltc{atlas\_CONFIGFILE} 		& \inltc{atlas.cfg}   	\\ 
+  \inltc{atlas.logfile} 			& \inltc{--logfile} 
+& \inltc{atlas\_LOGFILE} 			&    					\\
+  \inltc{atlas.logfile\_task}  		& \inltc{--logfile\_task} 
+& \inltc{\$ATLAS\_LOGFILE\_TASK} 	& \inltc{-1} 			\\
+  \inltc{atlas.console\_task}    	& \inltc{--console\_task} 
+& \inltc{\$ATLAS\_CONSOLE\_TASK}  	& \inltc{0}				\\
+  \inltc{atlas.gmsh.surfdim}    	&                  
+&                            		& \inltc{2}           	\\
+  \inltc{atlas.gmsh.gather}    		&                  	
+&                          			& \inltc{false}        	\\
+  \inltc{atlas.gmsh.ghost}     		&                  
+&                          			& \inltc{false}         \\
+  \inltc{atlas.gmsh.ascii}      	&                        
+&  									& \inltc{true}         	\\
+  \inltc{atlas.gmsh.elements}   	&    
+&									& \inltc{true}         	\\
+  \inltc{atlas.gmsh.edges}      	&                   
+&                          			& \inltc{true}        	\\
+  \inltc{atlas.gmsh.levels}     	&                
+&                          			& \inltc{[]}        	\\
+  \inltc{atlas.meshgen.angle}   	&                  
+&                          			& \inltc{0}             \\
+  \inltc{atlas.meshgen.triangulate}	& 
+&                          			& \inltc{true}      	\\       
+\bottomrule
+\end{tabular}
+\label{tab:runtime}
+\caption{Runtime configuration variables}
+\end{center}
+\end{table}
