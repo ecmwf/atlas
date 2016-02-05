@@ -80,18 +80,8 @@ inline double sqr(double a) { return a*a; }
 
 }
 
-void build_centroids( FunctionSpace& func_space, ArrayView<double,2>& lonlat);
 Array* build_centroids_lonlat( const mesh::HybridElements& , const Field& lonlat);
 
-void add_median_dual_volume_contribution(
-    FunctionSpace& elements,
-    FunctionSpace& edges,
-    mesh::Nodes& nodes,
-    ArrayView<double,1>& dual_volumes );
-void add_median_dual_volume_contribution(
-    FunctionSpace& edges,
-    mesh::Nodes& nodes,
-    ArrayView<double,1>& dual_volumes );
 void add_centroid_dual_volume_contribution(
     Mesh& mesh,
     ArrayView<double,1>& dual_volumes );
@@ -141,6 +131,7 @@ void build_median_dual_mesh_new( Mesh& mesh )
   make_dual_normals_outward_new(mesh);
 }
 
+#if !DEPRECATE_OLD_FUNCTIONSPACE
 void build_median_dual_mesh_convert_to_old( Mesh& mesh )
 {
   FunctionSpace&  edges = mesh.function_space("edges");
@@ -152,14 +143,21 @@ void build_median_dual_mesh_convert_to_old( Mesh& mesh )
     dual_normals(jedge,LAT) = new_dual_normals(jedge,LAT);
   }
 }
-
+#endif
 
 
 void build_median_dual_mesh( Mesh& mesh )
 {
   build_median_dual_mesh_new( mesh );
+#if !DEPRECATE_OLD_FUNCTIONSPACE
   build_median_dual_mesh_convert_to_old( mesh );
+#endif
 }
+
+
+#if !DEPRECATE_OLD_FUNCTIONSPACE
+
+void build_centroids( FunctionSpace& func_space, ArrayView<double,2>& lonlat);
 
 void build_centroid_dual_mesh( Mesh& mesh )
 {
@@ -213,6 +211,12 @@ void build_centroids( FunctionSpace& func_space, ArrayView<double,2>& lonlat)
     }
   }
 }
+#else
+void build_centroid_dual_mesh( Mesh& mesh )
+{
+  NOTIMP;
+}
+#endif
 
 Array* build_centroids_lonlat( const mesh::HybridElements& elements, const Field& field_lonlat )
 {
@@ -339,6 +343,7 @@ void add_median_dual_volume_contribution_poles(
 
 }
 
+#if !DEPRECATE_OLD_FUNCTIONSPACE
 void add_centroid_dual_volume_contribution(
     Mesh& mesh,
     ArrayView<double,1>& dual_volumes )
@@ -424,7 +429,7 @@ void add_centroid_dual_volume_contribution(
     }
   }
 }
-
+#endif
 
 void build_dual_normals_new( Mesh& mesh )
 {
@@ -525,9 +530,11 @@ void build_dual_normals_new( Mesh& mesh )
   }
 }
 
+#if !DEPRECATE_OLD_FUNCTIONSPACE
 
 void build_dual_normals( Mesh& mesh )
 {
+
   std::vector< ArrayView<double,2> > elem_centroids( mesh.nb_function_spaces() );
   for (size_t func_space_idx = 0; func_space_idx < mesh.nb_function_spaces(); ++func_space_idx)
   {
@@ -629,7 +636,7 @@ void build_dual_normals( Mesh& mesh )
     }
   }
 }
-
+#endif
 
 void make_dual_normals_outward_new( Mesh& mesh )
 {
@@ -660,6 +667,7 @@ void make_dual_normals_outward_new( Mesh& mesh )
   }
 }
 
+#if !DEPRECATE_OLD_FUNCTIONSPACE
 void make_dual_normals_outward( Mesh& mesh )
 {
 
@@ -691,9 +699,9 @@ void make_dual_normals_outward( Mesh& mesh )
     }
   }
 }
+#endif
 
-
-
+#if !DEPRECATE_OLD_FUNCTIONSPACE
 void build_skewness( Mesh& mesh )
 {
   std::vector< ArrayView<double,2> > elem_centroids( mesh.nb_function_spaces() );
@@ -780,7 +788,7 @@ void build_skewness( Mesh& mesh )
     }
   }
 }
-
+#endif
 
 
 
@@ -833,10 +841,12 @@ void build_brick_dual_mesh( Mesh& mesh )
 void atlas__build_median_dual_mesh ( Mesh* mesh) {
   ATLAS_ERROR_HANDLING( build_median_dual_mesh(*mesh) );
 }
+
+#if !DEPRECATE_OLD_FUNCTIONSPACE
 void atlas__build_centroid_dual_mesh ( Mesh* mesh) {
   ATLAS_ERROR_HANDLING( build_centroid_dual_mesh(*mesh) );
 }
-
+#endif
 // ------------------------------------------------------------------
 
 } // namespace actions

@@ -85,13 +85,6 @@ subroutine Metadata__set_grid(this, name, value)
   call atlas__Metadata__set_grid(this%c_ptr(), c_str(name), value%c_ptr())
 end subroutine Metadata__set_grid
 
-subroutine Metadata__set_function_space(this, name, value)
-  class(atlas_Metadata), intent(inout) :: this
-  character(len=*), intent(in) :: name
-  type(atlas_FunctionSpace), intent(in) :: value
-  call atlas__Metadata__set_function_space(this%c_ptr(), c_str(name), value%c_ptr())
-end subroutine Metadata__set_function_space
-
 subroutine Metadata__get_logical(this, name, value)
   class(atlas_Metadata), intent(in) :: this
   character(len=*), intent(in) :: name
@@ -245,13 +238,6 @@ subroutine Metadata__get_grid(this, name, value)
   class(atlas_Grid), intent(out) :: value
   call value%reset_c_ptr( atlas__Metadata__get_grid(this%c_ptr(), c_str(name) ) )
 end subroutine Metadata__get_grid
-
-subroutine Metadata__get_function_space(this, name, value)
-  class(atlas_Metadata), intent(in) :: this
-  character(len=*), intent(in) :: name
-  type(atlas_FunctionSpace), intent(out) :: value
-  call value%reset_c_ptr( atlas__Metadata__get_function_space(this%c_ptr(), c_str(name) ) )
-end subroutine Metadata__get_function_space
 
 subroutine MetaData__print(this,channel)
   class(atlas_Metadata), intent(in) :: this

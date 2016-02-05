@@ -1158,6 +1158,7 @@ void ReducedGridMeshGenerator::generate_mesh_new( const ReducedGrid& rg,
   generate_global_element_numbering( mesh );
 }
 
+#if !DEPRECATE_OLD_FUNCTIONSPACE
 void ReducedGridMeshGenerator::generate_mesh_convert_to_old(
     const ReducedGrid& rg,
     const std::vector<int>& parts,
@@ -1204,6 +1205,7 @@ void ReducedGridMeshGenerator::generate_mesh_convert_to_old(
   }
 
 }
+#endif
 
 
 
@@ -1213,7 +1215,9 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
                                              Mesh& mesh ) const
 {
   generate_mesh_new(rg,parts,region,mesh);
+#if !DEPRECATE_OLD_FUNCTIONSPACE
   generate_mesh_convert_to_old(rg,parts,region,mesh);
+#endif
 }
 
 void ReducedGridMeshGenerator::generate_global_element_numbering( Mesh& mesh ) const

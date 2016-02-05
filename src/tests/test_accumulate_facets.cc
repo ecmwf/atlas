@@ -861,7 +861,7 @@ BOOST_AUTO_TEST_CASE( test_build_edges_triangles_only )
     }
   }
 
-
+#if !DEPRECATE_OLD_FUNCTIONSPACE
   for( size_t f=0; f<mesh->nb_function_spaces(); ++f )
   {
     const FunctionSpace& fs = mesh->function_space(f);
@@ -877,9 +877,9 @@ BOOST_AUTO_TEST_CASE( test_build_edges_triangles_only )
         }
         std::cout << std::endl;
       }
-
     }
   }
+#endif
 }
 
 

@@ -17,7 +17,9 @@
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/Mesh.h"
+#if !DEPRECATE_OLD_FUNCTIONSPACE
 #include "atlas/FunctionSpace.h"
+#endif
 #include "atlas/Field.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/actions/BuildParallelFields.h"
@@ -118,11 +120,6 @@ void build_edges_parallel_fields( Mesh& mesh )
   build_edges_partition ( mesh );
   build_edges_remote_idx( mesh );
   build_edges_global_idx( mesh );
-}
-
-void build_edges_parallel_fields( FunctionSpace& edges, mesh::Nodes& nodes )
-{
-  build_edges_parallel_fields( edges.mesh() );
 }
 
 // ------------------------------------------------------------------
@@ -607,6 +604,7 @@ Field& build_edges_partition_new( Mesh& mesh )
   return edges.partition();
 }
 
+#if !DEPRECATE_OLD_FUNCTIONSPACE
 Field& build_edges_partition_convert_to_old( FunctionSpace& edges, mesh::Nodes& nodes )
 {
   if( ! edges.has_field("partition") ) edges.create_field<int>("partition",1) ;
@@ -618,13 +616,16 @@ Field& build_edges_partition_convert_to_old( FunctionSpace& edges, mesh::Nodes& 
 
   return edges.field("partition");
 }
-
+#endif
 
 
 Field& build_edges_partition( Mesh& mesh )
 {
-  build_edges_partition_new( mesh );
-  return build_edges_partition_convert_to_old( mesh.function_space("edges"), mesh.nodes() );
+  Field& f = build_edges_partition_new( mesh );
+#if !DEPRECATE_OLD_FUNCTIONSPACE
+  build_edges_partition_convert_to_old( mesh.function_space("edges"), mesh.nodes() );
+#endif
+  return f;
 }
 
 Field& build_edges_remote_idx_new( Mesh& mesh  )
@@ -775,6 +776,7 @@ Field& build_edges_remote_idx_new( Mesh& mesh  )
   return edges.remote_index();
 }
 
+#if !DEPRECATE_OLD_FUNCTIONSPACE
 Field& build_edges_remote_idx_convert_to_old( FunctionSpace& edges, mesh::Nodes& nodes )
 {
   if( ! edges.has_field("remote_idx") ) edges.create_field<int>("remote_idx",1) ;
@@ -786,11 +788,17 @@ Field& build_edges_remote_idx_convert_to_old( FunctionSpace& edges, mesh::Nodes&
 
   return edges.field("remote_idx");
 }
+#endif
 
 Field& build_edges_remote_idx( Mesh& mesh )
 {
-  build_edges_remote_idx_new( mesh );
-  return build_edges_remote_idx_convert_to_old(mesh.function_space("edges"), mesh.nodes() );
+  Field& f = build_edges_remote_idx_new( mesh );
+
+#if !DEPRECATE_OLD_FUNCTIONSPACE
+  build_edges_remote_idx_convert_to_old(mesh.function_space("edges"), mesh.nodes() );
+#endif
+
+  return f;
 }
 
 Field& build_edges_global_idx_new( Mesh& mesh )
@@ -912,6 +920,7 @@ Field& build_edges_global_idx_new( Mesh& mesh )
   return edges.global_index();
 }
 
+#if !DEPRECATE_OLD_FUNCTIONSPACE
 Field& build_edges_global_idx_convert_to_old( FunctionSpace& edges, mesh::Nodes& nodes )
 {
   if( ! edges.has_field("glb_idx") ) edges.create_field<gidx_t>("glb_idx",1) ;
@@ -922,13 +931,16 @@ Field& build_edges_global_idx_convert_to_old( FunctionSpace& edges, mesh::Nodes&
     edge_gidx(jedge) = new_edge_gidx(jedge);
 
   return edges.field("glb_idx");
-
 }
+#endif
 
 Field& build_edges_global_idx( Mesh& mesh )
 {
-  build_edges_global_idx_new( mesh );
-  return build_edges_global_idx_convert_to_old( mesh.function_space("edges"), mesh.nodes() );
+  Field& f = build_edges_global_idx_new( mesh );
+
+#if !DEPRECATE_OLD_FUNCTIONSPACE
+  build_edges_global_idx_convert_to_old( mesh.function_space("edges"), mesh.nodes() );
+#endif
 }
 
 // ------------------------------------------------------------------
@@ -940,9 +952,11 @@ void atlas__build_parallel_fields ( Mesh* mesh) {
 void atlas__build_nodes_parallel_fields (mesh::Nodes* nodes) {
   ATLAS_ERROR_HANDLING( build_nodes_parallel_fields(*nodes) );
 }
-void atlas__build_edges_parallel_fields (FunctionSpace* edges, mesh::Nodes* nodes) {
-  ATLAS_ERROR_HANDLING( build_edges_parallel_fields(*edges, *nodes) );
+
+void atlas__build_edges_parallel_fields ( Mesh* mesh ) {
+  ATLAS_ERROR_HANDLING( build_edges_parallel_fields(*mesh) );
 }
+
 void atlas__renumber_nodes_glb_idx (mesh::Nodes* nodes)
 {
   ATLAS_ERROR_HANDLING( renumber_nodes_glb_idx(*nodes) );

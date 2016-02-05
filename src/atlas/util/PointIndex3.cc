@@ -11,6 +11,8 @@
 
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/PointIndex3.h"
+#include "atlas/mesh/HybridElements.h"
+#include "atlas/mesh/ElementType.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -19,37 +21,34 @@ namespace util {
 
 //------------------------------------------------------------------------------------------------------
 
-ElemPayload make_elem_payload(size_t id, char t) { return ElemPayload(id,t); }
+ElemPayload make_elem_payload(size_t id, ElemPayload::ElementTypeEnum type) { return ElemPayload(id,type); }
 
 ElemIndex3* create_element_centre_index( const atlas::Mesh& mesh )
 {
-    atlas::FunctionSpace& triags = mesh.function_space( "triags" );
-    atlas::FunctionSpace& quads  = mesh.function_space( "quads" );
 
-    ArrayView<double,2> triags_centres ( triags.field( "centre" ) );
-    ArrayView<double,2> quads_centres  ( quads.field( "centre" ) );
-
-    const size_t ntriags = triags.shape(0);
-    const size_t nquads  = quads.shape(0);
+    const ArrayView<double,2> centres ( mesh.cells().field( "centre" ) );
+    const size_t ncells = mesh.cells().size();
 
     std::vector<ElemIndex3::Value> p;
-    p.reserve(ntriags+nquads);
+    p.reserve(ncells);
 
-    for( size_t ip = 0; ip < ntriags; ++ip )
+    std::vector<ElemPayload::ElementTypeEnum> types;
+    for( size_t jtype=0; jtype< mesh.cells().nb_types(); ++jtype )
+      types.push_back(
+            mesh.cells().element_type(jtype).name() == "Quadrilateral" ? ElemPayload::QUAD :
+            mesh.cells().element_type(jtype).name() == "Triangle"      ? ElemPayload::TRIAG :
+            ElemPayload::UNDEFINED
+            );
+
+    for( size_t jcell = 0; jcell < ncells; ++jcell )
     {
         p.push_back( ElemIndex3::Value(
-                         ElemIndex3::Point(triags_centres(ip,atlas::XX),
-                                           triags_centres(ip,atlas::YY),
-                                           triags_centres(ip,atlas::ZZ) ), make_elem_payload(ip,'t') ) );
+                         ElemIndex3::Point(centres(jcell,atlas::XX),
+                                           centres(jcell,atlas::YY),
+                                           centres(jcell,atlas::ZZ) ),
+                         make_elem_payload(jcell,types[mesh.cells().type_idx(jcell)] ) ) );
     }
 
-    for( size_t ip = 0; ip < nquads; ++ip )
-    {
-        p.push_back( ElemIndex3::Value(
-                         ElemIndex3::Point(quads_centres(ip,atlas::XX),
-                                           quads_centres(ip,atlas::YY),
-                                           quads_centres(ip,atlas::ZZ) ), make_elem_payload(ip,'q') ) );
-    }
 
     ElemIndex3* tree = new ElemIndex3();
 

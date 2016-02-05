@@ -11,30 +11,15 @@
 #ifndef atlas_util_AccumulateFaces_h
 #define atlas_util_AccumulateFaces_h
 
-#include "atlas/FunctionSpace.h"
+#include <vector>
+#include "atlas/atlas_config.h"
 #include "atlas/Parameters.h"
 
-namespace atlas { class FunctionSpace; };
 namespace atlas { namespace mesh { class HybridElements; } }
 namespace atlas { namespace mesh { class Nodes; } }
 
 namespace atlas {
 namespace util {
-
-struct Face
-{
-	ElementRef& operator[](size_t i) { return elems[i]; }
-	bool is_bdry() const { return (elems[1].f < 0); }
-	ElementRef elems[2];
-};
-
-void accumulate_faces(
-		FunctionSpace& func_space,
-		std::vector< std::vector<int> >& node_to_face,
-		std::vector<int>& face_nodes_data,
-		std::vector< Face >& connectivity_edge_to_elem,
-		size_t& nb_faces,
-		size_t& nb_inner_faces );
 
 // currently only supports 2D meshes. Little work needed for 3D.
 void accumulate_facets(

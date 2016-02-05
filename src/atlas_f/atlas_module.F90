@@ -474,10 +474,9 @@ subroutine atlas_renumber_nodes_glb_idx(nodes)
   call atlas__renumber_nodes_glb_idx(nodes%c_ptr())
 end subroutine atlas_renumber_nodes_glb_idx
 
-subroutine atlas_build_edges_parallel_fields(edges, nodes)
-  type(atlas_FunctionSpace), intent(inout) :: edges
-  type(atlas_mesh_Nodes), intent(inout) :: nodes
-  call atlas__build_edges_parallel_fields(edges%c_ptr(),nodes%c_ptr())
+subroutine atlas_build_edges_parallel_fields(mesh)
+  type(atlas_Mesh), intent(inout) :: mesh
+  call atlas__build_edges_parallel_fields(mesh%c_ptr())
 end subroutine atlas_build_edges_parallel_fields
 
 subroutine atlas_build_periodic_boundaries(mesh)
@@ -511,10 +510,12 @@ subroutine atlas_build_median_dual_mesh(mesh)
   call atlas__build_median_dual_mesh(mesh%c_ptr())
 end subroutine atlas_build_median_dual_mesh
 
+#if !DEPRECATE_OLD_FUNCTIONSPACE
 subroutine atlas_build_centroid_dual_mesh(mesh)
   type(atlas_Mesh), intent(inout) :: mesh
   call atlas__build_centroid_dual_mesh(mesh%c_ptr())
 end subroutine atlas_build_centroid_dual_mesh
+#endif
 
 subroutine atlas_write_load_balance_report(mesh,filename)
   type(atlas_Mesh), intent(in) :: mesh

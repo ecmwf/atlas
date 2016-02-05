@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE( test_distribute_t63 )
   //actions::renumber_nodes_glb_idx(m->nodes());
   actions::build_edges(*m);
   actions::build_pole_edges(*m);
-  actions::build_edges_parallel_fields(m->function_space("edges"),m->nodes());
+  actions::build_edges_parallel_fields(*m);
   actions::build_median_dual_mesh(*m);
   BOOST_CHECK_CLOSE( test::dual_volume(*m), 360.*180., 0.0001 );
   double difference = 360.*180. - test::dual_volume(*m);

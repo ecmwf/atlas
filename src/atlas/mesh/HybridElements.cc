@@ -44,10 +44,10 @@ HybridElements::HybridElements() :
   remote_index_ = &add( Field::create<int   >("remote_idx",make_shape(size(),1)) );
   partition_    = &add( Field::create<int   >("partition", make_shape(size(),1)) );
   halo_         = &add( Field::create<int   >("halo",      make_shape(size(),1)) );
-  
-  node_connectivity_ = &add( "node", new Connectivity() );  
-  edge_connectivity_ = &add( "edge", new Connectivity() );  
-  cell_connectivity_ = &add( "cell", new Connectivity() );  
+
+  node_connectivity_ = &add( "node", new Connectivity() );
+  edge_connectivity_ = &add( "edge", new Connectivity() );
+  cell_connectivity_ = &add( "cell", new Connectivity() );
 }
 
 HybridElements::~HybridElements()
@@ -181,7 +181,7 @@ size_t HybridElements::add( const ElementType* element_type, size_t nb_elements,
 //  element_types_.push_back( etype );
 //  elements_.push_back( eckit::SharedPtr<Elements>(new Elements(*this,type_idx_.back())) );
 
-  
+
   node_connectivity_->add(nb_elements,nb_nodes,connectivity,fortran_array);
 
   resize( new_size );
@@ -260,15 +260,6 @@ void HybridElements::insert( size_t position, size_t nb_elements )
 
 //-----------------------------------------------------------------------------
 
-const FunctionSpace& HybridElements::deprecated_edges() const { return mesh_->function_space("edges"); }
-      FunctionSpace& HybridElements::deprecated_edges() { return mesh_->function_space("edges"); }
-
-const FunctionSpace& HybridElements::deprecated_quads() const { return mesh_->function_space("quads"); }
-      FunctionSpace& HybridElements::deprecated_quads() { return mesh_->function_space("quads"); }
-
-const FunctionSpace& HybridElements::deprecated_triags() const { return mesh_->function_space("triags"); }
-      FunctionSpace& HybridElements::deprecated_triags() { return mesh_->function_space("triags"); }
-
 void HybridElements::clear()
 {
   resize(0);
@@ -284,6 +275,8 @@ void HybridElements::clear()
   type_idx_.clear();
   elements_.clear();
 }
+
+#if ! DEPRECATE_OLD_FUNCTIONSPACE
 
 void HybridElements::rebuild_from_fs()
 {
@@ -447,7 +440,7 @@ void HybridElements::rebuild_from_fs()
     }
   }
 }
-
+#endif
 
 //-----------------------------------------------------------------------------
 

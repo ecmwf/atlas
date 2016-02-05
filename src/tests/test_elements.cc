@@ -301,7 +301,7 @@ BOOST_AUTO_TEST_CASE( zero_elements )
   BOOST_CHECK_EQUAL( hybrid_elements.elements(1).size(), 0 );
 }
 
-//#if !DEPRECATE_OLD_FUNCTIONSPACE
+#if !DEPRECATE_OLD_FUNCTIONSPACE
 
 BOOST_AUTO_TEST_CASE( conversion )
 {
@@ -394,7 +394,7 @@ BOOST_AUTO_TEST_CASE( conversion )
   delete mesh;
   delete grid;
 }
-//#endif
+#endif
 
 BOOST_AUTO_TEST_CASE( irregularconnectivity_insert )
 {

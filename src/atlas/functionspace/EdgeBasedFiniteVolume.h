@@ -17,7 +17,6 @@
 #include "atlas/functionspace/Edges.h"
 
 namespace atlas { class Mesh; }
-namespace atlas { class FunctionSpace; }
 namespace atlas { namespace mesh { class HybridElements; } }
 
 namespace atlas {

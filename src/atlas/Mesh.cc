@@ -70,20 +70,24 @@ mesh::Nodes& Mesh::createNodes(const Grid& g)
 
 void Mesh::prettyPrint(std::ostream& os) const
 {
+#if !DEPRECATE_OLD_FUNCTIONSPACE
     os << "Mesh:" << std::endl;
     for( size_t i = 0; i < nb_function_spaces(); ++i )
     {
         os << function_space(i) << std::endl;
     }
+#endif
 }
 void Mesh::print(std::ostream& os) const
 {
+#if !DEPRECATE_OLD_FUNCTIONSPACE
     os << "Mesh[";
     for( size_t i = 0; i < nb_function_spaces(); ++i )
     {
         os << function_space(i);
     }
     os << "]";
+#endif
 }
 
 void Mesh::createElements()
@@ -99,14 +103,18 @@ void Mesh::createElements()
   else
     throw eckit::Exception("Invalid Mesh dimensionality",Here());
 
+#if !DEPRECATE_OLD_FUNCTIONSPACE
   // transitional
   edges_->mesh_ = this;
   edges_->type_ = Entity::FACES;
   cells_->mesh_ = this;
   cells_->type_ = Entity::ELEMS;
+#endif
 }
 
 //----------------------------------------------------------------------------------------------------------------------
+
+#if ! DEPRECATE_OLD_FUNCTIONSPACE
 
 bool deprecated::FunctionSpaceContainer::has_function_space(const std::string& name) const
 {
@@ -156,7 +164,9 @@ FunctionSpace& deprecated::FunctionSpaceContainer::function_space( size_t idx) c
 		throw eckit::OutOfRange(idx,function_spaces_.size(),Here());
 	return *function_spaces_[ idx ];
 }
+#endif
 
+#if ! DEPRECATE_OLD_FUNCTIONSPACE
 void Mesh::convert_new_to_old()
 {
   std::vector<std::string> functionspace_names;
@@ -336,6 +346,7 @@ void Mesh::convert_new_to_old()
 
 
 }
+#endif
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -349,6 +360,7 @@ void atlas__Mesh__delete (Mesh* This) {
 	delete This;
 }
 
+#if ! DEPRECATE_OLD_FUNCTIONSPACE
 void atlas__Mesh__create_function_space(Mesh* This, char* name,char* shape_func,int shape[], int shape_size, int fortran_ordering)
 {
   ATLAS_ERROR_HANDLING(
@@ -389,6 +401,7 @@ FunctionSpace* atlas__Mesh__function_space (Mesh* This, char* name) {
   );
   return NULL;
 }
+#endif
 
 mesh::Nodes* atlas__Mesh__create_nodes (Mesh* This, int nb_nodes)
 {

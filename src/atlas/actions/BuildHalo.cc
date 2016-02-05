@@ -38,8 +38,6 @@
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Elements.h"
 
-using atlas::util::Face;
-using atlas::util::accumulate_faces;
 using atlas::util::accumulate_facets;
 using atlas::util::Topology;
 using atlas::util::PeriodicTransform;
@@ -847,8 +845,9 @@ void increase_halo_periodic( BuildHaloHelper& helper, const PeriodicPoints& peri
 
 }
 
-
+#if !DEPRECATE_OLD_FUNCTIONSPACE
 void build_halo_convert_to_old( Mesh& mesh );
+#endif
 
 void build_halo(Mesh& mesh, int nb_elems )
 {
@@ -881,13 +880,15 @@ void build_halo(Mesh& mesh, int nb_elems )
 
   mesh.metadata().set("halo",nb_elems);
 
+#if !DEPRECATE_OLD_FUNCTIONSPACE
   if( halo_changed ) build_halo_convert_to_old(mesh);
 //  if( halo_changed ) mesh.convert_new_to_old();
+#endif
 }
 
 
 
-
+#if !DEPRECATE_OLD_FUNCTIONSPACE
 void build_halo_convert_to_old( Mesh& mesh )
 {
   std::vector<FunctionSpace*> get_functionspace;
@@ -921,7 +922,7 @@ void build_halo_convert_to_old( Mesh& mesh )
     }
   }
 }
-
+#endif
 
 
 

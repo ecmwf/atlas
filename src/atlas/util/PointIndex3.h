@@ -89,12 +89,16 @@ typedef PointKdTree<PointIndex3TreeTrait>  PointIndex3;
 
 struct ElemPayload
 {
-    ElemPayload(size_t id, char t) : id_(id), type_(t) {}
+    enum ElementTypeEnum { UNDEFINED=-1, QUAD=0, TRIAG=1 };
+    ElemPayload(size_t id, ElementTypeEnum t) : id_(id), type_(t) {}
 
-    size_t id_;   ///< element id in the function space of 'triags' or 'quads'
-    char   type_; ///< 't' for triangle and 'q' for quad
+    size_t id_;
+    ElementTypeEnum type_;
 
-    void print(std::ostream& s) const { s << "ElemPayload[id=" << id_ << ",type=" << type_ << "]"; }
+    void print(std::ostream& s) const { s << "ElemPayload[id=" << id_ << "]"; }
+
+    bool triangle()      { return type_ == TRIAG; }
+    bool quadrilateral() { return type_ == QUAD;  }
 
     friend std::ostream& operator<<(std::ostream& s, const ElemPayload& p) {
       p.print(s);
@@ -102,7 +106,7 @@ struct ElemPayload
     }
 };
 
-ElemPayload make_elem_payload(size_t id, char t);
+ElemPayload make_elem_payload(size_t id);
 
 struct ElemIndex3TreeTrait
 {

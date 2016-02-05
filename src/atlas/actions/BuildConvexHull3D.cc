@@ -91,7 +91,11 @@ static Polyhedron_3* create_convex_hull_from_points( const std::vector< Point3 >
     return poly;
 }
 
+#if !DEPRECATE_OLD_FUNCTIONSPACE
+
 static void cgal_polyhedron_to_atlas_mesh_convert_to_old(  Mesh& mesh );
+
+#endif
 
 static void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, PointSet& points )
 {
@@ -173,9 +177,14 @@ static void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, Poin
 
     ASSERT( tidx == nb_triags );
 
+#if !DEPRECATE_OLD_FUNCTIONSPACE
+
     cgal_polyhedron_to_atlas_mesh_convert_to_old(mesh);
+
+#endif
 }
 
+#if !DEPRECATE_OLD_FUNCTIONSPACE
 static void cgal_polyhedron_to_atlas_mesh_convert_to_old(  Mesh& mesh )
 {
     int nquads  = 0;
@@ -208,7 +217,7 @@ static void cgal_polyhedron_to_atlas_mesh_convert_to_old(  Mesh& mesh )
       triag_part(jtriag)    = cells_part(cell_begin+jtriag);
     }
 }
-
+#endif
 
 #else
 
@@ -231,7 +240,7 @@ static void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, Poin
 void BuildConvexHull3D::operator()( Mesh& mesh ) const
 {
     // don't tesselate meshes already with triags or quads
-    if( mesh.has_function_space("triags") || mesh.has_function_space("quads") )
+    if( mesh.cells().size() )
         return;
 
     Timer t ("grid tesselation");

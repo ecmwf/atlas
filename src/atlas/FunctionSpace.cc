@@ -92,6 +92,7 @@ inline std::ostream& operator<<(std::ostream& s,const std::vector<T>& v)
 
 //----------------------------------------------------------------------------------------------------------------------
 
+#if !DEPRECATE_OLD_FUNCTIONSPACE
 FunctionSpace::FunctionSpace(const std::string& name,
                              const std::string& shape_func,
                              const std::vector<size_t>& shape,
@@ -407,6 +408,7 @@ void FunctionSpace::print(std::ostream& os, bool dump) const
     }
     os << "]";
 }
+#endif
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -429,6 +431,7 @@ const char* atlas__NextFunctionSpace__name (next::FunctionSpace* This) {
   return 0;
 }
 
+#if !DEPRECATE_OLD_FUNCTIONSPACE
 
 Metadata* atlas__FunctionSpace__metadata (FunctionSpace* This)
 {
@@ -556,6 +559,7 @@ void atlas__FunctionSpace__delete (FunctionSpace* This) {
   ASSERT( This );
   delete This;
 }
+#endif
 // ------------------------------------------------------------------
 
 } // namespace atlas

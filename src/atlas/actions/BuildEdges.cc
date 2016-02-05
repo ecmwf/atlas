@@ -35,8 +35,6 @@
 #include "atlas/util/LonLatMicroDeg.h"
 #include "atlas/util/Functions.h"
 
-using atlas::util::Face;
-using atlas::util::accumulate_faces;
 using atlas::util::accumulate_facets;
 using atlas::util::Topology;
 using atlas::util::UniqueLonLat;
@@ -45,7 +43,9 @@ using atlas::util::microdeg;
 namespace atlas {
 namespace actions {
 
+#if !DEPRECATE_OLD_FUNCTIONSPACE
 void build_edges_convert_to_old( Mesh& mesh );
+#endif
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -67,6 +67,7 @@ struct Sort
 };
 }
 
+#if !DEPRECATE_OLD_FUNCTIONSPACE
 void build_element_to_edge_connectivity_convert_to_old( Mesh& mesh )
 {
   std::vector< IndexView<int,2> > elem_to_edge( mesh.nb_function_spaces() );
@@ -101,8 +102,8 @@ void build_element_to_edge_connectivity_convert_to_old( Mesh& mesh )
     }
   }
 
-
 }
+#endif
 
 void build_element_to_edge_connectivity_new( Mesh& mesh )
 {
@@ -190,7 +191,9 @@ void build_element_to_edge_connectivity_new( Mesh& mesh )
 void build_element_to_edge_connectivity( Mesh& mesh )
 {
   build_element_to_edge_connectivity_new(mesh);
+#if !DEPRECATE_OLD_FUNCTIONSPACE
   build_element_to_edge_connectivity_convert_to_old(mesh);
+#endif
 }
 
 
@@ -232,6 +235,7 @@ void build_node_to_edge_connectivity_new( Mesh& mesh )
   }
 }
 
+#if !DEPRECATE_OLD_FUNCTIONSPACE
 void build_node_to_edge_connectivity_convert_to_old( Mesh& mesh )
 {
   mesh::Nodes& nodes = mesh.nodes();
@@ -258,11 +262,14 @@ void build_node_to_edge_connectivity_convert_to_old( Mesh& mesh )
     }
   }
 }
+#endif
 
 void build_node_to_edge_connectivity( Mesh& mesh )
 {
   build_node_to_edge_connectivity_new( mesh );
+#if !DEPRECATE_OLD_FUNCTIONSPACE
   build_node_to_edge_connectivity_convert_to_old( mesh );
+#endif
 }
 
 
@@ -449,6 +456,7 @@ void build_edges_new( Mesh& mesh )
   mesh.edges().cell_connectivity().add( nb_edges, 2, edge_to_elem_data.data() );
 }
 
+#if !DEPRECATE_OLD_FUNCTIONSPACE
 void build_edges_convert_to_old( Mesh& mesh )
 {
   FunctionSpace& quads       = mesh.function_space( "quads" );
@@ -505,12 +513,16 @@ void build_edges_convert_to_old( Mesh& mesh )
     }
   }
 }
+#endif
 
 
 void build_edges( Mesh& mesh )
 {
   build_edges_new(mesh);
+
+#if !DEPRECATE_OLD_FUNCTIONSPACE
   build_edges_convert_to_old(mesh);
+#endif
 
   build_element_to_edge_connectivity(mesh);
 
@@ -563,6 +575,7 @@ void build_pole_edges_new( Mesh& mesh )
   }
 }
 
+#if !DEPRECATE_OLD_FUNCTIONSPACE
 void build_pole_edges_convert_to_old( Mesh& mesh )
 {
   mesh::Nodes& nodes   = mesh.nodes();
@@ -607,11 +620,15 @@ void build_pole_edges_convert_to_old( Mesh& mesh )
     is_pole_edge(edge) = new_is_pole_edge(edge);
   }
 }
+#endif
 
 void build_pole_edges( Mesh& mesh )
 {
   build_pole_edges_new( mesh );
+
+#if !DEPRECATE_OLD_FUNCTIONSPACE
   build_pole_edges_convert_to_old( mesh );
+#endif
 }
 
 

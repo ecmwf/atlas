@@ -74,6 +74,8 @@ class Field;
 
 //------------------------------------------------------------------------------------------------------
 
+#if !DEPRECATE_OLD_FUNCTIONSPACE
+
 enum CreateBehavior { IF_EXISTS_FAIL = 0,    /* when creating, fail if exists */
                       IF_EXISTS_RETURN = 1   /* when creating, return if exists */ };
 
@@ -212,7 +214,7 @@ private:
 
     Mesh*    mesh_;
 };
-
+#endif
 typedef mpl::HaloExchange HaloExchange_t;
 typedef mpl::GatherScatter GatherScatter_t;
 typedef mpl::Checksum Checksum_t;
@@ -221,35 +223,41 @@ typedef mpl::Checksum Checksum_t;
 
 // C wrapper interfaces to C++ routines
 #define NextFunctionSpace next::FunctionSpace
+#if !DEPRECATE_OLD_FUNCTIONSPACE
+#define OldFunctionSpace FunctionSpace
+#else
+#define OldFunctionSpace void
+#endif
 extern "C"
 {
     void atlas__NextFunctionSpace__delete (NextFunctionSpace* This);
     const char* atlas__NextFunctionSpace__name (NextFunctionSpace* This);
-    Metadata* atlas__FunctionSpace__metadata (FunctionSpace* This);
-    int atlas__FunctionSpace__dof (FunctionSpace* This);
-    int atlas__FunctionSpace__glb_dof (FunctionSpace* This);
-    void atlas__FunctionSpace__create_field_int (FunctionSpace* This, char* name, int nb_vars);
-    void atlas__FunctionSpace__create_field_long (FunctionSpace* This, char* name, int nb_vars);
-    void atlas__FunctionSpace__create_field_float (FunctionSpace* This, char* name, int nb_vars);
-    void atlas__FunctionSpace__create_field_double (FunctionSpace* This, char* name, int nb_vars);
-    void atlas__FunctionSpace__remove_field (FunctionSpace* This, char* name);
-    int atlas__FunctionSpace__has_field (FunctionSpace* This, char* name);
-    const char* atlas__FunctionSpace__name (FunctionSpace* This);
-    void atlas__FunctionSpace__shapef (FunctionSpace* This, int* &shape, int &rank);
-    Field* atlas__FunctionSpace__field (FunctionSpace* This, char* name);
-    void atlas__FunctionSpace__parallelise (FunctionSpace* This);
-    void atlas__FunctionSpace__halo_exchange_int (FunctionSpace* This, int field_data[], int field_size);
-    void atlas__FunctionSpace__halo_exchange_float (FunctionSpace* This, float field_data[], int field_size);
-    void atlas__FunctionSpace__halo_exchange_double (FunctionSpace* This, double field_data[], int field_size);
-    void atlas__FunctionSpace__gather_int (FunctionSpace* This, int field_data[], int field_size, int glbfield_data[], int glbfield_size);
-    void atlas__FunctionSpace__gather_float (FunctionSpace* This, float field_data[], int field_size, float glbfield_data[], int glbfield_size);
-    void atlas__FunctionSpace__gather_double (FunctionSpace* This, double field_data[], int field_size, double glbfield_data[], int glbfield_size);
-    HaloExchange_t* atlas__FunctionSpace__halo_exchange (FunctionSpace* This);
-    GatherScatter_t* atlas__FunctionSpace__gather (FunctionSpace* This);
-    Checksum_t* atlas__FunctionSpace__checksum (FunctionSpace* This);
+    Metadata* atlas__FunctionSpace__metadata (OldFunctionSpace* This);
+    int atlas__FunctionSpace__dof (OldFunctionSpace* This);
+    int atlas__FunctionSpace__glb_dof (OldFunctionSpace* This);
+    void atlas__FunctionSpace__create_field_int (OldFunctionSpace* This, char* name, int nb_vars);
+    void atlas__FunctionSpace__create_field_long (OldFunctionSpace* This, char* name, int nb_vars);
+    void atlas__FunctionSpace__create_field_float (OldFunctionSpace* This, char* name, int nb_vars);
+    void atlas__FunctionSpace__create_field_double (OldFunctionSpace* This, char* name, int nb_vars);
+    void atlas__FunctionSpace__remove_field (OldFunctionSpace* This, char* name);
+    int atlas__FunctionSpace__has_field (OldFunctionSpace* This, char* name);
+    const char* atlas__FunctionSpace__name (OldFunctionSpace* This);
+    void atlas__FunctionSpace__shapef (OldFunctionSpace* This, int* &shape, int &rank);
+    Field* atlas__FunctionSpace__field (OldFunctionSpace* This, char* name);
+    void atlas__FunctionSpace__parallelise (OldFunctionSpace* This);
+    void atlas__FunctionSpace__halo_exchange_int (OldFunctionSpace* This, int field_data[], int field_size);
+    void atlas__FunctionSpace__halo_exchange_float (OldFunctionSpace* This, float field_data[], int field_size);
+    void atlas__FunctionSpace__halo_exchange_double (OldFunctionSpace* This, double field_data[], int field_size);
+    void atlas__FunctionSpace__gather_int (OldFunctionSpace* This, int field_data[], int field_size, int glbfield_data[], int glbfield_size);
+    void atlas__FunctionSpace__gather_float (OldFunctionSpace* This, float field_data[], int field_size, float glbfield_data[], int glbfield_size);
+    void atlas__FunctionSpace__gather_double (OldFunctionSpace* This, double field_data[], int field_size, double glbfield_data[], int glbfield_size);
+    HaloExchange_t* atlas__FunctionSpace__halo_exchange (OldFunctionSpace* This);
+    GatherScatter_t* atlas__FunctionSpace__gather (OldFunctionSpace* This);
+    Checksum_t* atlas__FunctionSpace__checksum (OldFunctionSpace* This);
 
 }
 #undef NextFunctionSpace
+#undef OldFunctionSpace
 //------------------------------------------------------------------------------------------------------
 
 } // namespace atlas

@@ -170,7 +170,7 @@ void Meshgen2Gmsh::run()
   {
     build_edges(*mesh);
     build_pole_edges(*mesh);
-    build_edges_parallel_fields(mesh->function_space("edges"),mesh->nodes());
+    build_edges_parallel_fields(*mesh);
     if( brick )
       build_brick_dual_mesh(*mesh);
     else

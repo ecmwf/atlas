@@ -500,7 +500,7 @@ TEST( test_fv )
       ! Generate edges function-space (This api will change soon)
       edges = mesh%function_space("edges")
       nodes = mesh%nodes()
-      call atlas_build_edges_parallel_fields(edges,nodes)
+      call atlas_build_edges_parallel_fields(mesh)
 
       ! Build node to edge connectivity
       call atlas_build_node_to_edge_connectivity(mesh)

@@ -20,7 +20,10 @@
 
 namespace atlas {
 namespace actions {
+
+#if !DEPRECATE_OLD_FUNCTIONSPACE
 void build_cell_centres_convert_to_old(Mesh& mesh);
+#endif
 
 void BuildCellCentres::operator()( Mesh& mesh ) const
 {
@@ -48,11 +51,12 @@ void BuildCellCentres::operator()( Mesh& mesh ) const
     centroids(e,YY) *= average_coefficient;
     centroids(e,ZZ) *= average_coefficient;
   }
-
-
+#if !DEPRECATE_OLD_FUNCTIONSPACE
   build_cell_centres_convert_to_old(mesh);
+#endif
 }
 
+#if !DEPRECATE_OLD_FUNCTIONSPACE
 void build_cell_centres_convert_to_old(Mesh& mesh)
 {
     ASSERT( mesh.has_function_space("triags") );
@@ -105,6 +109,7 @@ void build_cell_centres_convert_to_old(Mesh& mesh)
         }
     }
 }
+#endif
 
 } // actions
 } // atlas

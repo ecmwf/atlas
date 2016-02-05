@@ -129,7 +129,7 @@ private:
   Connectivity* node_connectivity_;
   Connectivity* edge_connectivity_;
   Connectivity* cell_connectivity_;
-  
+
 // -- Sub elements
   std::vector< eckit::SharedPtr<Elements> > elements_;
 
@@ -172,7 +172,7 @@ public:
 
 
 private:
-  
+
   size_t elemtype_nb_nodes(size_t elem_idx) const ;
   size_t elemtype_nb_edges(size_t elem_idx) const ;
 
@@ -189,6 +189,8 @@ private:
   Field* halo_;
 
 
+#if ! DEPRECATE_OLD_FUNCTIONSPACE
+
 // -- Transitional method
 private:
   friend class atlas::Mesh;
@@ -196,15 +198,7 @@ private:
   long type_;
 public:
   void rebuild_from_fs();
-
-  const FunctionSpace& deprecated_edges() const;
-        FunctionSpace& deprecated_edges();
-  const FunctionSpace& deprecated_quads() const;
-        FunctionSpace& deprecated_quads();
-  const FunctionSpace& deprecated_triags() const;
-        FunctionSpace& deprecated_triags();
-
-
+#endif
 };
 
 // -----------------------------------------------------------------------------------------------------

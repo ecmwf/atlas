@@ -206,6 +206,7 @@ void write_field_nodes(const Gmsh& gmsh, const functionspace::Nodes& function_sp
   }
 }
 
+#if 0
 template< typename DATA_TYPE >
 void write_field_elems(const Gmsh& gmsh, const FunctionSpace& function_space, const Field& field, std::ostream& out)
 {
@@ -320,6 +321,7 @@ void write_field_elems(const Gmsh& gmsh, const FunctionSpace& function_space, co
     out << "$EndElementNodeData\n";
   }
 }
+#endif
 
 // Unused private function, in case for big-endian
 #if 0
@@ -377,6 +379,17 @@ Mesh* Gmsh::read(const PathName& file_path) const
   return mesh;
 }
 
+namespace {
+mesh::ElementType* make_element_type(int type)
+{
+  if( type == QUAD  ) return new mesh::temporary::Quadrilateral();
+  if( type == TRIAG ) return new mesh::temporary::Triangle();
+  if( type == LINE  ) return new mesh::temporary::Line();
+  throw eckit::SeriousBug("Element type not supported", Here());
+  return 0;
+}
+}
+
 void Gmsh::read(const PathName& file_path, Mesh& mesh ) const
 {
   std::ifstream file;
@@ -400,13 +413,7 @@ void Gmsh::read(const PathName& file_path, Mesh& mesh ) const
     size_t nb_nodes;
   file >> nb_nodes;
 
-  std::vector<size_t> extents(2);
-
-  extents[0] = nb_nodes;
-  extents[1] = FunctionSpace::UNDEF_VARS;
-
   mesh.nodes().resize(nb_nodes);
-  mesh.nodes().metadata().set<long>("type",Entity::NODES);
 
   mesh::Nodes& nodes = mesh.nodes();
 
@@ -468,7 +475,7 @@ void Gmsh::read(const PathName& file_path, Mesh& mesh ) const
 
   if( binary )
   {
-        while(file.peek()=='\n') file.get();
+    while(file.peek()=='\n') file.get();
     int accounted_elems = 0;
     while( accounted_elems < nb_elements )
     {
@@ -477,49 +484,33 @@ void Gmsh::read(const PathName& file_path, Mesh& mesh ) const
       file.read(reinterpret_cast<char*>(&header),sizeof(int)*3);
 
       int etype = header[0];
-      int netype = header[1];
-      int ntags = header[2];
+      size_t netype = header[1];
+      size_t ntags = header[2];
       accounted_elems += netype;
-      std::string name;
-      int nnodes_per_elem;
-      switch( etype ) {
-      case(QUAD):
-        nnodes_per_elem = 4;
-        name = "quads";
-        break;
-      case(TRIAG):
-        nnodes_per_elem = 3;
-        name = "triags";
-        break;
-      case(LINE):
-        nnodes_per_elem = 3;
-        name = "edges";
-        break;
-      default:
-        std::cout << "etype " << etype << std::endl;
-        throw Exception("ERROR: element type not supported",Here());
+      mesh::Elements* elements;
+      if( etype == LINE ) {
+        size_t jtype = mesh.edges().add(make_element_type(etype),netype);
+        elements = &mesh.edges().elements(jtype);
+      } else {
+        size_t jtype = mesh.cells().add(make_element_type(etype),netype);
+        elements = &mesh.edges().elements(jtype);
       }
 
-      extents[0] = netype;
+      size_t nnodes_per_elem = elements->element_type().nb_nodes();
+      mesh::Elements::Connectivity& conn = elements->node_connectivity();
+      ArrayView<gidx_t,1> egidx ( elements->global_index() );
+      ArrayView<int,1> epart    ( elements->partition() );
 
-      FunctionSpace& fs = mesh.create_function_space( name, "Lagrange_P1", extents );
-
-      fs.metadata().set<long>("type",static_cast<int>(Entity::ELEMS));
-
-      IndexView<int,2> conn  ( fs.create_field<int>("nodes",         4) );
-      ArrayView<gidx_t,1> egidx ( fs.create_field<int>("glb_idx",       1) );
-      ArrayView<int,1> epart ( fs.create_field<int>("partition",     1) );
-
-      int dsize = 1+ntags+nnodes_per_elem;
+      size_t dsize = 1+ntags+nnodes_per_elem;
       int part;
-      for (int e=0; e<netype; ++e)
+      for (size_t e=0; e<netype; ++e)
       {
         file.read(reinterpret_cast<char*>(&data),sizeof(int)*dsize);
         part = 0;
         egidx(e) = data[0];
         epart(e) = part;
-        for(int n=0; n<nnodes_per_elem; ++n)
-          conn(e,n) = glb_to_loc[data[1+ntags+n]];
+        for(size_t n=0; n<nnodes_per_elem; ++n)
+          conn.set(e,n,glb_to_loc[data[1+ntags+n]]);
       }
     }
   }
@@ -539,36 +530,27 @@ void Gmsh::read(const PathName& file_path, Mesh& mesh ) const
 
     // Allocate data structures for quads, triags, edges
 
-    int nb_quads = nb_etype[QUAD];
-    extents[0] = nb_quads;
-    FunctionSpace& quads      = mesh.create_function_space( "quads", "Lagrange_P1", extents );
-    quads.metadata().set<long>("type",static_cast<int>(Entity::ELEMS));
-    IndexView<int,2> quad_nodes          ( quads.create_field<int>("nodes",         4) );
-    ArrayView<gidx_t,1> quad_glb_idx        ( quads.create_field<gidx_t>("glb_idx",       1) );
-    ArrayView<int,1> quad_part           ( quads.create_field<int>("partition",     1) );
-
+    int nb_quads  = nb_etype[QUAD];
     int nb_triags = nb_etype[TRIAG];
-    extents[0] = nb_triags;
-    FunctionSpace& triags      = mesh.create_function_space( "triags", "Lagrange_P1", extents );
-    triags.metadata().set<long>("type",static_cast<int>(Entity::ELEMS));
-    IndexView<int,2> triag_nodes          ( triags.create_field<int>("nodes",         3) );
-    ArrayView<gidx_t,1> triag_glb_idx        ( triags.create_field<gidx_t>("glb_idx",       1) );
-    ArrayView<int,1> triag_part           ( triags.create_field<int>("partition",     1) );
-
     int nb_edges = nb_etype[LINE];
-    IndexView<int,2> edge_nodes;
-    ArrayView<gidx_t,1> edge_glb_idx;
-    ArrayView<int,1> edge_part;
 
-    if( nb_edges > 0 )
-    {
-      extents[0] = nb_edges;
-      FunctionSpace& edges      = mesh.create_function_space( "edges", "Lagrange_P1", extents );
-      edges.metadata().set<long>("type",static_cast<int>(Entity::FACES));
-      edge_nodes   = IndexView<int,2> ( edges.create_field<int>("nodes",         2) );
-      edge_glb_idx = ArrayView<gidx_t,1> ( edges.create_field<gidx_t>("glb_idx",       1) );
-      edge_part    = ArrayView<int,1> ( edges.create_field<int>("partition",     1) );
-    }
+
+    mesh::Elements& quads  = mesh.cells().elements( mesh.cells().add( make_element_type(QUAD),  nb_quads  ) );
+    mesh::Elements& triags = mesh.cells().elements( mesh.cells().add( make_element_type(TRIAG), nb_triags ) );
+    mesh::Elements& edges  = mesh.edges().elements( mesh.edges().add( make_element_type(LINE),  nb_edges ) );
+
+    mesh::Elements::Connectivity& quad_nodes  = quads.node_connectivity();
+    mesh::Elements::Connectivity& triag_nodes = triags.node_connectivity();
+    mesh::Elements::Connectivity& edge_nodes  = edges.node_connectivity();
+
+    ArrayView<gidx_t,1> quad_glb_idx   ( quads.global_index() );
+    ArrayView<int,1> quad_part         ( quads.partition()    );
+
+    ArrayView<gidx_t,1> triag_glb_idx  ( triags.global_index() );
+    ArrayView<int,1> triag_part        ( triags.partition()    );
+
+    ArrayView<gidx_t,1> edge_glb_idx   ( edges.global_index() );
+    ArrayView<int,1> edge_part         ( edges.partition()    );
 
     // Now read all elements
     file.seekg(position,std::ios::beg);
@@ -581,33 +563,39 @@ void Gmsh::read(const PathName& file_path, Mesh& mesh ) const
       for( int t=0; t<ntags; ++t ) file >> tags[t];
       int part=0;
       if( ntags > 3 ) part = std::max( part, *std::max_element(tags+3,tags+ntags-1) ); // one positive, others negative
+
+      int enodes[4];
+
       switch( etype )
       {
         case(QUAD):
           file >> gn0 >> gn1 >> gn2 >> gn3;
           quad_glb_idx(quad) = g;
           quad_part(quad) = part;
-          quad_nodes(quad,0) = glb_to_loc[gn0];
-          quad_nodes(quad,1) = glb_to_loc[gn1];
-          quad_nodes(quad,2) = glb_to_loc[gn2];
-          quad_nodes(quad,3) = glb_to_loc[gn3];
+          enodes[0] = glb_to_loc[gn0];
+          enodes[1] = glb_to_loc[gn1];
+          enodes[2] = glb_to_loc[gn2];
+          enodes[3] = glb_to_loc[gn3];
+          quad_nodes.set(quad,enodes);
           ++quad;
           break;
         case(TRIAG):
           file >> gn0 >> gn1 >> gn2;
           triag_glb_idx(triag) = g;
           triag_part(triag) = part;
-          triag_nodes(triag,0) = glb_to_loc[gn0];
-          triag_nodes(triag,1) = glb_to_loc[gn1];
-          triag_nodes(triag,2) = glb_to_loc[gn2];
+          enodes[0] = glb_to_loc[gn0];
+          enodes[1] = glb_to_loc[gn1];
+          enodes[2] = glb_to_loc[gn2];
+          triag_nodes.set(triag,enodes);
           ++triag;
           break;
         case(LINE):
           file >> gn0 >> gn1;
           edge_glb_idx(edge) = g;
           edge_part(edge) = part;
-          edge_nodes(edge,0) = glb_to_loc[gn0];
-          edge_nodes(edge,1) = glb_to_loc[gn1];
+          enodes[0] = glb_to_loc[gn0];
+          enodes[1] = glb_to_loc[gn1];
+          edge_nodes.set(edge,enodes);
           ++edge;
           break;
         case(POINT):
@@ -702,9 +690,9 @@ void Gmsh::write(const Mesh& mesh, const PathName& file_path) const
         }
       }
     }
-    
+
     file << nb_elements << "\n";
-    
+
     for( size_t jgroup=0; jgroup<grouped_elements.size(); ++jgroup )
     {
       const mesh::HybridElements& hybrid = *grouped_elements[jgroup];
@@ -726,7 +714,7 @@ void Gmsh::write(const Mesh& mesh, const PathName& file_path) const
         const ArrayView<gidx_t,1> elems_glb_idx = elements.view<gidx_t,1>( elements.global_index() );
         const ArrayView<int,1> elems_partition = elements.view<int,1>( elements.partition() );
         const ArrayView<int,1> elems_halo = elements.view<int,1>( elements.halo() );
-        
+
         if( binary )
         {
           size_t nb_elems=elements.size();
@@ -737,7 +725,7 @@ void Gmsh::write(const Mesh& mesh, const PathName& file_path) const
               if( elems_halo(elem) ) --nb_elems;
             }
           }
-          
+
           int header[3];
           int data[9];
           header[0] = gmsh_elem_type;

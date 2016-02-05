@@ -20,6 +20,7 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 
+#include "atlas/atlas_config.h"
 #include "atlas/Metadata.h"
 #include "atlas/Config.h"
 #include "atlas/util/ObjectRegistry.h"
@@ -41,6 +42,7 @@ namespace atlas { namespace mpl { class Checksum; } }
 
 namespace atlas {
 
+#if !DEPRECATE_OLD_FUNCTIONSPACE
 namespace deprecated {
 
 
@@ -68,7 +70,7 @@ namespace deprecated {
 
     /// number of functional spaces
     size_t nb_function_spaces() const;
-    
+
   protected:
     typedef eckit::DenseMap< std::string, eckit::SharedPtr<FunctionSpace> > StoreFS_t;
 
@@ -77,8 +79,12 @@ namespace deprecated {
   };
 }
 
-class Mesh : public deprecated::FunctionSpaceContainer, 
+class Mesh : public deprecated::FunctionSpaceContainer,
              public util::Registered<Mesh> {
+#else
+class Mesh : public eckit::Owned,
+             public util::Registered<Mesh> {
+#endif
 
 public: // types
 
@@ -133,13 +139,13 @@ private:  // methods
         p.print(s);
         return s;
     }
-    
+
     void createElements();
 
 private: // members
 
     Metadata   metadata_;
-    eckit::SharedPtr<mesh::Nodes> nodes_;           
+    eckit::SharedPtr<mesh::Nodes> nodes_;
                                                       // dimensionality : 2D | 3D
                                                       //                  --------
     eckit::SharedPtr<mesh::HybridElements> cells_;    //                  2D | 3D
@@ -148,11 +154,13 @@ private: // members
     eckit::SharedPtr<mesh::HybridElements> peaks_;    //                  NA | 0D
 
     eckit::SharedPtr<mesh::HybridElements> edges_;  // alias to facets of 2D mesh, ridges of 3D mesh
-    
+
     size_t dimensionality_;
 
 public: // members to be removed
+#if ! DEPRECATE_OLD_FUNCTIONSPACE
     void convert_new_to_old();
+#endif
     bool has_grid() const { return grid_; }
     void set_grid( const Grid& p ) { grid_ = &p; }
     const Grid& grid() const {  ASSERT( grid_ ); return *grid_; }

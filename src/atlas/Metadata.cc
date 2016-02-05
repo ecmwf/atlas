@@ -137,11 +137,6 @@ template<> Metadata& Metadata::set(const std::string& name, const Mesh& value)
   return set(name,value.id());
 }
 
-template<> Metadata& Metadata::set(const std::string& name, const FunctionSpace& value)
-{
-  return set(name,value.id());
-}
-
 template<> Metadata& Metadata::set(const std::string& name, const Grid& value)
 {
   return set(name,value.id());
@@ -312,12 +307,6 @@ template<> Mesh& Metadata::get(const std::string& name) const
 {
   if( !has(name) ) throw_exception(name);
   return Mesh::from_id(eckit::Properties::get(name));
-}
-
-template<> FunctionSpace& Metadata::get(const std::string& name) const
-{
-  if( !has(name) ) throw_exception(name);
-  return FunctionSpace::from_id(eckit::Properties::get(name));
 }
 
 template<> Grid& Metadata::get(const std::string& name) const
@@ -500,11 +489,6 @@ void atlas__Metadata__set_mesh (Metadata* This, const char* name, Mesh* value)
   ATLAS_ERROR_HANDLING( This->set( std::string(name), *value ) );
 }
 
-void atlas__Metadata__set_function_space (Metadata* This, const char* name, FunctionSpace* value)
-{
-  ATLAS_ERROR_HANDLING( This->set( std::string(name), *value ) );
-}
-
 Grid* atlas__Metadata__get_grid (Metadata* This, const char* name)
 {
   Grid* value(NULL);
@@ -516,13 +500,6 @@ Mesh* atlas__Metadata__get_mesh (Metadata* This, const char* name)
 {
   Mesh* value(NULL);
   ATLAS_ERROR_HANDLING( value = &This->get<Mesh&>( std::string(name) ) );
-  return value;
-}
-
-FunctionSpace* atlas__Metadata__get_function_space (Metadata* This, const char* name)
-{
-  FunctionSpace* value(NULL);
-  ATLAS_ERROR_HANDLING( value = &This->get<FunctionSpace&>( std::string(name) ) );
   return value;
 }
 

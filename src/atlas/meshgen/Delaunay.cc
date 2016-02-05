@@ -61,7 +61,6 @@ void Delaunay::generate(const Grid& g, Mesh& mesh) const
   actions::BuildConvexHull3D()(mesh);
 
   mesh.set_grid(g);
-  mesh.cells().rebuild_from_fs();
 }
 
 namespace {
