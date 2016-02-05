@@ -1,4 +1,4 @@
-/*
+﻿/*
  * (C) Copyright 1996-2015 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
@@ -285,9 +285,10 @@ void IrregularConnectivity::insert( size_t position, size_t rows, size_t cols, c
   maxcols_ = std::max(maxcols_,cols);
 
   owned_values_.insert( owned_values_.begin()+position_displs, values,values+rows*cols );
+
   if( ! fortran_array )
   {
-    for(size_t c=owned_displs_[position+rows+1]; c<owned_displs_[position+rows+1]; ++c) {
+    for(size_t c=position_displs; c<position_displs+rows*cols; ++c) {
       owned_values_[c] += FORTRAN_BASE;
     }
   }

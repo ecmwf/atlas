@@ -301,6 +301,8 @@ BOOST_AUTO_TEST_CASE( zero_elements )
   BOOST_CHECK_EQUAL( hybrid_elements.elements(1).size(), 0 );
 }
 
+//#if !DEPRECATE_OLD_FUNCTIONSPACE
+
 BOOST_AUTO_TEST_CASE( conversion )
 {
   long nlon[] = {4,8};
@@ -324,7 +326,7 @@ BOOST_AUTO_TEST_CASE( conversion )
   DEBUG_VAR( cells.elements(0).size() );
   DEBUG_VAR( cells.elements(1).size() );
   DEBUG_VAR( edges.size() );
-  
+
   eckit::Log::info() << "edges\n";
   for( size_t f=0; f<edges.size(); ++f )
   {
@@ -366,7 +368,7 @@ BOOST_AUTO_TEST_CASE( conversion )
   //   eckit::Log::info() << "\n";
   // }
   // eckit::Log::info() << std::flush;
-  
+
   ArrayView<double,2> centroids( cells.field("centroids_lonlat") );
   for( size_t e=cells.elements(1).begin(); e<cells.elements(1).end(); ++e )
   {
@@ -377,7 +379,7 @@ BOOST_AUTO_TEST_CASE( conversion )
     cell_nodes.insert(cells.node_connectivity()(e,0));
     cell_nodes.insert(cells.node_connectivity()(e,1));
     cell_nodes.insert(cells.node_connectivity()(e,2));
-  
+
     edge_nodes.insert( edges.node_connectivity()( cells.edge_connectivity()(e,0), 0) );
     edge_nodes.insert( edges.node_connectivity()( cells.edge_connectivity()(e,0), 1) );
     edge_nodes.insert( edges.node_connectivity()( cells.edge_connectivity()(e,1), 0) );
@@ -386,13 +388,13 @@ BOOST_AUTO_TEST_CASE( conversion )
     edge_nodes.insert( edges.node_connectivity()( cells.edge_connectivity()(e,2), 1) );
     BOOST_CHECK_EQUAL_COLLECTIONS( cell_nodes.begin(),cell_nodes.end(), edge_nodes.begin(), edge_nodes.end() );
   }
-  
-  
+
+
   delete functionspace;
   delete mesh;
   delete grid;
 }
-
+//#endif
 
 BOOST_AUTO_TEST_CASE( irregularconnectivity_insert )
 {
@@ -417,7 +419,7 @@ BOOST_AUTO_TEST_CASE( irregularconnectivity_insert )
     }
     std::cout << std::endl;
   }
-  idx_t values[]={ 1, 2, 3, 4, 12, 13, 14, -1, -1, -1, -1, -1, 15, 16, 17, 5, 6, 7, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 9, 10, 11, 12 };
+  idx_t values[]={ 1, 2, 3, 4, 13, 14, 15, -1, -1, -1, -1, -1, 16, 17, 18, 5, 6, 7, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 9, 10, 11, 12 };
   idx_t counts[]={ 4, 3, 5, 3, 4, 2, 3, 4, 1, 4 };
 
   size_t n(0);
@@ -477,7 +479,7 @@ BOOST_AUTO_TEST_CASE( multiblockconnectivity_insert )
     }
     std::cout << std::endl;
   }
-  idx_t values[]={ 1, 2, 3, 4, 18, 19, 20, 21, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 22, 23, 24, 25, 26, 27, 16, 17, 18 };
+  idx_t values[]={ 1, 2, 3, 4, 19, 20, 21, 22, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 23, 24, 25, 26, 27, 28, 16, 17, 18 };
   idx_t counts[]={ 4, 4, 4, 4, 3, 3, 3, 3 };
 
   size_t n(0);
