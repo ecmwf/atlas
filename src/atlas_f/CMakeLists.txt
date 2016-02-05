@@ -125,6 +125,7 @@ ecbuild_add_library( TARGET atlas_f
         atlas_module.F90
         atlas_mpi_module.F90
         atlas_grids_module.F90
+        atlas_Connectivity_module.F90
         atlas_C_interop.F90
         atlas_C_interop.cc
         atlas_logging.h
