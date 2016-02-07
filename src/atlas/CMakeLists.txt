@@ -277,25 +277,41 @@ numerics/nabla/EdgeBasedFiniteVolume.cc
 
 ### atlas c++ library
 
+ecbuild_debug_var(CGAL_LIBRARIES)
+ecbuild_debug_var(CGAL_INCLUDE_DIRS)
+
 ecbuild_add_library( TARGET atlas
+
   AUTO_VERSION
+
   LINKER_LANGUAGE CXX
+
   INSTALL_HEADERS ALL
+
   HEADER_DESTINATION  ${INSTALL_INCLUDE_DIR}/atlas
+
   SOURCES
-  ${atlas_srcs}
-  ${atlas_util_srcs}
-  ${atlas_io_srcs}
-  ${atlas_mpl_srcs}
-  ${atlas_Meshgen_srcs}
-  ${atlas_geometry_srcs}
-  ${atlas_actions_srcs}
-  ${atlas_grids_srcs}
-  ${atlas_trans_srcs}
-  ${atlas_numerics_srcs}
-  ${CMAKE_CURRENT_BINARY_DIR}/atlas_version.h
-  ${CMAKE_CURRENT_BINARY_DIR}/atlas_version.cc
-  ${CMAKE_CURRENT_BINARY_DIR}/atlas_config.h
-  ${CMAKE_CURRENT_BINARY_DIR}/atlas_defines.h
-  PRIVATE_INCLUDES "${CGAL_INCLUDE_DIRS}"  ${TRANSI_INCLUDE_DIRS}
-  LIBS eckit_geometry "${ECKIT_MPI_LIBRARIES}" "${CGAL_LIBRARIES}" ${TRANSI_LIBRARIES} )
+    ${atlas_srcs}
+    ${atlas_util_srcs}
+    ${atlas_io_srcs}
+    ${atlas_mpl_srcs}
+    ${atlas_Meshgen_srcs}
+    ${atlas_geometry_srcs}
+    ${atlas_actions_srcs}
+    ${atlas_grids_srcs}
+    ${atlas_trans_srcs}
+    ${atlas_numerics_srcs}
+    ${CMAKE_CURRENT_BINARY_DIR}/atlas_version.h
+    ${CMAKE_CURRENT_BINARY_DIR}/atlas_version.cc
+    ${CMAKE_CURRENT_BINARY_DIR}/atlas_config.h
+    ${CMAKE_CURRENT_BINARY_DIR}/atlas_defines.h
+
+  PRIVATE_INCLUDES
+    "${CGAL_INCLUDE_DIRS}"
+    "${TRANSI_INCLUDE_DIRS}"
+
+  LIBS
+    eckit_geometry
+    "${ECKIT_MPI_LIBRARIES}"
+    "${CGAL_LIBRARIES}"
+    "${TRANSI_LIBRARIES}" )
