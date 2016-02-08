@@ -35,8 +35,11 @@ IrregularConnectivity::IrregularConnectivity( idx_t values[], size_t rows, size_
     counts_(counts)
 {
   maxcols_ = 0;
-  for( size_t j=0; j<rows; ++j )
+  mincols_ = std::numeric_limits<size_t>::max();
+  for( size_t j=0; j<rows; ++j ) {
     maxcols_ = std::max(maxcols_,counts[j]);
+    mincols_ = std::min(mincols_,counts[j]);
+  }
 }
 
 void IrregularConnectivity::clear()
@@ -51,6 +54,8 @@ void IrregularConnectivity::clear()
   rows_ = 0;
   displs_ = 0;
   counts_ = 0;
+  maxcols_ = 0;
+  mincols_ = std::numeric_limits<size_t>::max();
 }
 
 MultiBlockConnectivity::MultiBlockConnectivity( idx_t values[], size_t rows, size_t displs[], size_t counts[], size_t blocks, size_t block_displs[] )
@@ -107,7 +112,8 @@ IrregularConnectivity::IrregularConnectivity() :
   counts_(0),
   owned_displs_(1,0ul),
   owned_counts_(1,0ul),
-  maxcols_(0)
+  maxcols_(0),
+  mincols_(std::numeric_limits<size_t>::max())
 {}
 
 IrregularConnectivity::~IrregularConnectivity() {}
@@ -125,6 +131,7 @@ void IrregularConnectivity::add( size_t rows, size_t cols, const idx_t values[],
     owned_counts_[rows_] = cols;
   }
   maxcols_ = std::max(maxcols_,cols);
+  mincols_ = std::min(mincols_,cols);
 
   owned_values_.resize(new_size);
   idx_t add_base = fortran_array ? 0 : FORTRAN_BASE;
@@ -169,6 +176,7 @@ void IrregularConnectivity::add( size_t rows, const size_t cols[] )
     owned_displs_[rows_+1] = owned_displs_[rows_]+cols[j];
     owned_counts_[rows_] = cols[j];
     maxcols_ = std::max(maxcols_,cols[j]);
+    mincols_ = std::min(mincols_,cols[j]);
   }
 
   owned_values_.resize(new_size);
@@ -193,6 +201,7 @@ void IrregularConnectivity::add( size_t rows, size_t cols )
     owned_counts_[rows_] = cols;
   }
   maxcols_ = std::max(maxcols_,cols);
+  mincols_ = std::min(mincols_,cols);
 
   owned_values_.resize(new_size);
   for( size_t j=old_size; j<new_size; ++j )
@@ -283,6 +292,7 @@ void IrregularConnectivity::insert( size_t position, size_t rows, size_t cols, c
     owned_displs_[jrow+1] = owned_displs_[jrow] + owned_counts_[jrow];
   }
   maxcols_ = std::max(maxcols_,cols);
+  mincols_ = std::min(mincols_,cols);
 
   owned_values_.insert( owned_values_.begin()+position_displs, values,values+rows*cols );
 
@@ -308,6 +318,7 @@ void IrregularConnectivity::insert( size_t position, size_t rows, size_t cols )
     owned_displs_[jrow+1] = owned_displs_[jrow] + owned_counts_[jrow];
   }
   maxcols_ = std::max(maxcols_,cols);
+  mincols_ = std::min(mincols_,cols);
 
   owned_values_.insert( owned_values_.begin()+position_displs, rows*cols, missing_value() TO_FORTRAN );
   rows_ += rows;
@@ -325,6 +336,7 @@ void IrregularConnectivity::insert( size_t position, size_t rows, const size_t c
   for( size_t jrow=position; jrow<owned_displs_.size()-1; ++jrow ) {
     owned_displs_[jrow+1] = owned_displs_[jrow] + owned_counts_[jrow];
     maxcols_ = std::max(maxcols_,owned_counts_[jrow]);
+    mincols_ = std::min(mincols_,owned_counts_[jrow]);
   }
   size_t insert_size(0);
   for( size_t j=0; j<rows; ++j )

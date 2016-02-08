@@ -93,6 +93,9 @@ public:
   /// @brief Maximum value for number of columns over all rows
   size_t maxcols() const { return maxcols_; }
 
+  /// @brief Minimum value for number of columns over all rows
+  size_t mincols() const { return mincols_; }
+
   /// @brief Access to connectivity table elements for given row and column
   /// The returned index has base 0 regardless if ATLAS_HAVE_FORTRAN is defined.
   idx_t operator()( size_t row_idx, size_t col_idx ) const;
@@ -160,6 +163,7 @@ private:
   size_t *displs_;
   size_t *counts_;
   size_t maxcols_;
+  size_t mincols_;
 };
 
 typedef IrregularConnectivity Connectivity;
