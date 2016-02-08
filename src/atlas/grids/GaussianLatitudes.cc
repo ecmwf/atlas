@@ -36,13 +36,15 @@ void predict_gaussian_colatitudes_hemisphere(const size_t N, double colat[]);
 void predict_gaussian_latitudes_hemisphere(const size_t N, double lat[]);
 
 namespace {
-  
+
 void colat_to_lat_hemisphere(const size_t N, const double colat[], double lats[], const AngleUnit unit)
 {
   std::copy( colat, colat+N, lats );
   double pole = (unit == DEG ? 90. : M_PI_2);
-  for(size_t i=0; i<N; ++i)
+
+  for(size_t i=0; i<N; ++i) {
     lats[i]=pole-lats[i];
+  }
 }
 
 } //  anonymous namespace
@@ -78,6 +80,9 @@ void gaussian_latitudes_npole_equator(const size_t N, double lats[])
   }
 }
 
+
+
+
 void gaussian_latitudes_npole_spole(const size_t N, double lats[])
 {
     gaussian_latitudes_npole_equator(N,lats);
@@ -93,7 +98,7 @@ void predict_gaussian_colatitudes_hemisphere(const size_t N, double colat[])
   for(size_t i=0; i<N; ++i )
   {
     z = (4.*(i+1.)-1.)*M_PI/(4.*2.*N+2.);
-    colat[i] = ( z+1./(tan(z)*(8.*(2.*N)*(2.*N))) ) * Constants::degreesToRadians();
+    colat[i] = ( z+1./(tan(z)*(8.*(2.*N)*(2.*N))) ) * Constants::radiansToDegrees();
   }
 }
 

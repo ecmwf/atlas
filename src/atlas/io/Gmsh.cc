@@ -41,7 +41,7 @@ namespace io {
 
 namespace {
 
-static double deg = Constants::radianToDegrees();
+static double deg = Constants::radiansToDegrees();
 static double rad = Constants::degreesToRadians();
 
 class GmshFile : public std::ofstream {
