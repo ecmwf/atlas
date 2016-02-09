@@ -12,5 +12,7 @@ add_dependencies ( docs
                    atlas_f-meshes-Reduced
                    atlas_c-fields
                    atlas_f-fields
+                   atlas_c-fields-on-grid
+                   atlas_f-fields-on-grid
                    atlas_c-functionspace
                    atlas_f-functionspace )

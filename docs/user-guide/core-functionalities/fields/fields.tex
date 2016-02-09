@@ -1,148 +1,172 @@
-\chapter{Create a Mesh from a Grid}
-In this chapter, we show how to create a mesh with \Atlas 
-starting from a grid. We assume that the reader already 
-knows how to create a grid (see \chap{chap:global-grids}). 
-% 
-\begin{notebox}
-With the term \textit{grid} we intend a list of points 
-without any specific connectivity rule, while with the 
-term mesh we intend a list of points with well-specified 
-connectivity rules.
-\end{notebox}
-%
-As before, we show both the C++ and Fortran version 
-for this example.
+\chapter{Create Fields and Field Sets}
+In this chapter, we show how to create fields and field sets
+using \Atlas. Specifically, we outline how to create two simple 
+fields and how to include them into a field set. These two fields
+are standalone, thus not related to any grid - i.e. they are just 
+defined as generic multidimensional arrays containing some values 
+and a short description of what is stored inside them.
+Successively, we introduce how to create two fields on a given 
+grid and again how to add them to a field set.
+As done for the other examples, we show both the C++ and Fortran 
+versions.
 
 
-\section{C++ version}
-The \lista{code-meshes-C} shows how to construct a mesh 
-starting from a grid that can be specified as a command 
-line argument. In particular, we use the third-party 
-\textit{eckit} object called \inltc{Resource} to define 
-the command-line behaviour as done in the previous chapter. 
-We have also added an additional command line argument 
-called \inlsh{-\,-visualize}. This will allow us to 
-visualize the mesh either in 2D or 3D. 
-%
-\lstinputlisting[caption=Generating a mesh starting from a grid 
-in \Atlas using C++, style=CStyle, label=code-meshes-C]{meshes-Reduced.cc}
-%
-Once defined the command-line behaviour, we first create 
-a global reduced-grid object (see line 24). For more 
-details on how to create a grid see \chap{chap:global-grids}.
+\section{Standalone Fields and Field Sets}
+\label{sect:standalone-fields}
 
-We successively create a mesh object, \inltc{meshPtr} 
-that is a \inltc{Mesh::Ptr} type. We then create a 
-\inltc{ReducedGridMeshGenerator} object called \inltc{generate\_mesh}
-that will allow us to generate the mesh starting from
-a reduced grid. We finally create the mesh on line 28.
-
-In this simple example we took the freedom to add a few 
-lines to show how to visualize the mesh in Gmsh. In particular, 
-on line 30 we define a Gmsh object called \inltc{gmsh} that 
-will be used to generate a Gmsh output. On line 31 we specify 
-that we want to have some information regarding the mesh - this 
-is achieved by defining as \inltc{true} the tag \inltc{"info"}.
-Between line 32 and 36, we add two additional lines to visualize 
-the mesh in 3D if required on the command-line.
-Finally, on line 37 we write the mesh and save it into \inltc{mesh.msh}.
-Note that the file containing the information on the mesh 
-just created is called \inltc{mesh\_info.msh}.
-
-It is now possible to run this simple program by using 
-two command-line arguments representing the keyword that 
-identifies an \Atlas predefined grid and the visualization 
-type we want (either 2D or 3D), respectively. For instance, 
-we can execute the following command line
-%
-\begin{lstlisting}[style=BashStyle]
-./atlas_c-meshes-Reduced --grid O32 --visualize 3D
-\end{lstlisting}
-% 
-This will produce an octahedral reduced Gaussian mesh 
-(stored in mesh.msh) with 32 latitudes on one emisphere 
-(i.e. 64 latitudes in total). It will also produce an 
-additional file, called \inltc{mesh\_info.msh}, containing
-some information regarding the mesh.
-Note that we used the additional command-line argument 
-\inlsh{--visualize 3D}. This will produce a 3D representation 
-of the mesh, such as the one depicted in left side of 
-\fig{fig:meshes}.
-
-We can re-run the executable file in order to obtain 
-a 2D representation as follows:
-%
-\begin{lstlisting}[style=BashStyle]
-./atlas_c-meshes-Reduced --grid O32 --visualize 2D
-\end{lstlisting}
-% 
-This will produce a representation of the mesh like 
-the one depicted on the right side of \fig{fig:meshes}.
-%
-\begin{figure}%
-\centering
-\subfloat{\includegraphics[width=5cm]{imgs/O32-3D.png}}\qquad\qquad\qquad
-\subfloat{\includegraphics[width=5cm]{imgs/O32-2D.png}}
-\caption{Meshes visualised in Gmsh}%
-\label{fig:meshes}%
-\end{figure}
-%
-You can now play with the command-line argument to generate 
-different types of global reduced meshes using the keys 
-introduced in \chap{chap:global-grids}!
-
-
-
+\subsection{C++ version}
 
 \section{Fortran version}
-The \lista{code-meshes-C} shows how to construct a mesh 
-starting from a grid that can be specified as a command 
-line argument. In particular, we use the third-party 
-\textit{eckit} object called \inltc{Resource} to define 
-the command-line behaviour as done in the previous chapter. 
- 
+The \lista{code-fields-F} shows how to construct two standalone 
+fields and encapsulate them into a field set. 
 %
-\lstinputlisting[caption=Generating a mesh starting from a grid 
-in \Atlas using Fortran, style=FStyle, label=code-meshes-F]{meshes-Reduced.F90}
+\lstinputlisting[caption=Generating two fields and encapsulating 
+them into a FieldSet using Fortran, style=FStyle, label=code-fields-F]{fields.F90}
 %
-Once defined the command-line behaviour, we first create 
-a global reduced-grid object (see line 13). For more 
-details on how to create a grid see \chap{chap:global-grids}.
+On the first few lines of the code, we define the variables
+needed for this program. In particular, the \Atlas specific 
+variables needed for this example are the \inltc{atlas\_Field}, 
+\inltc{atlas\_FieldSet} and \inltc{atlas\_metadata} objects.
 
-We successively create the mesh object on line 15 and 16.
-In particular, we first define a \inltc{reducedgridmeshgenerator} 
-object that is then used to effectively generate the mesh object 
-\inltc{mesh} that is an \inltc{atlas\_mesh} type.
+After having defined all the data needed for this example, 
+we initialize the \Atlas library as usual and we define 
+two fields, one called \inltc{pressureField} that, for 
+instance, will contain the pressure and the other one 
+called \inltc{windField} that will for example contain 
+the velocity of the wind in two orthogonal directions.
 
-In this simple example we took the freedom to add just one line 
-line to visualize the mesh in Gmsh. In particular, on line 17 
-we call \inltc{atlas\_write\_gmsh} to write a Gmsh file called 
-\inlsh{mesh.msh}. Note that at the end of the program we also 
-need to destroy the local object created in this program (see 
-lines 19 to 21).
+How does the creation of a field work?\\
+On lines 16 and 17 we can see the construction of the two fields.
+We first need to specify the name of the field (in our case 'pressure' 
+and 'wind'), then we need to specify the type of the data stored 
+into the fields (in our case double precision numbers) and finally 
+we need to provide the dimension of the field.
+Note that we allow multidimensional fields up to 6 dimensions 
+(this number can be extended if required)!
+%
+\begin{tipbox}
+In a field we can only store numbers - no strings or characters!
+In particular, we support integers, float types and double types.
+\end{tipbox}
+%
+Once the fields are defined we need to initialize them 
+and give them some values. This task can be achieved 
+by using the code on lines 20 and 21, where we set 
+initializes the two fields to the two pointers \inltc{pressure}
+and \inltc{wind}, respectively. 
+We successively prescribe some values to these two pointers 
+(see lines 25 to 27). This step automatically updates what 
+is stored in the two field objects, \inltc{pressureField} 
+and \inltc{windField}.
 
-It is now possible to run this simple program by using 
-a command-line arguments representing the keyword that 
-identifies an \Atlas predefined grid. For instance, 
-we can execute the following command line
+The work for defining the two fields is almost completed.
+We can add just one more little feature - one or more 
+descriptors. This task is performed on lines 31 to 36, 
+where we use the \inltc{metadata} object to set the units 
+of our fields and retrieve them through the functions, 
+\inltc{set} and \inltc{get}, respectively.
+
+These two fields are fully functional and can be used 
+for our specific application. However, we may want to 
+encapsulate several fields into one object. This task 
+can be achieved by using the object \inltc{atlas\_FieldSet}, 
+as show on lines 39 to 41, where we define the field 
+set and we add the two fields into it.
+
+Any field can also be retrieved from a field set by 
+using the code on lines 44 and 45, where we ask for 
+the field 'pressure' and the field 'wind' to be retrieved.
+%
+\begin{notebox}
+It is possible to retrieve a field from a field set 
+either by using the name of the field or by using 
+the number identifying it. In our example, \inltc{pressureField} 
+assumes id=1 (since stored first), while \inltc{windField}
+assumes id=2 (since stored second).
+\end{notebox}
+%
+After having defined the field set we finally print some 
+useful information regarding the fields (for the sake of 
+brevity we print just some information regarding the \inltc{windField}
+- the information regarding the \inltc{pressureField} can 
+be obtained in an identical way).
+In particular, we print the name, the size and the \inltc{metadata}
+associated to the \inltc{windField} (see lines 48 to 50).
+We then extract its rank, shape and dimensions in bytes
+(see lines 51 to 54). We finally print type of the data
+stored in the field (see lines 55 and 56).
+
+On lines 59 to 61 we also print the values of one element 
+per each field and we destroy the field objects on lines 
+64 and 65 (thus releasing the memory).
+
+Note that destroying the \inltc{atlas\_Field} objects 
+is enough to also destroy \inltc{atlas\_FieldSet} object;
+we need to explicitly destroy it as well to completely 
+free the memory associated to all the objects defined 
+in this example (see line 66).
+
+It is now possible to run this simple program typing
+the following text on the terminal
 %
 \begin{lstlisting}[style=BashStyle]
-./atlas_c-meshes-Reduced --grid O32
+./atlas_f-fields
 \end{lstlisting}
 % 
-This will produce an octahedral reduced Gaussian mesh 
-(stored in mesh.msh) with 32 latitudes on one emisphere 
-(i.e. 64 latitudes in total).
-If we visualize it in Gmsh, we will obtain something similar
-to \fig{fig:meshes}.
+This will produce the two fields described and a field 
+set and will destroy them. It will also print to the 
+screen some useful information regarding the fields.
+
+You can now play with the code in \lista{code-fields-F} 
+to generate as many fields/field sets as you want! 
+
+
+
+
+\section{Fields on a given Grid}
+\label{sect:grid-fields}
+\subsection{C++ version}
+
+
+\subsection{Fortran version}
+The \lista{code-fields-F} shows how to construct one field
+on a given grid. To see how to create a generic field and 
+a field set, please refer to \sect{sect:standalone-fields}
+above. 
 %
-\begin{figure}%
-\centering
-\includegraphics[width=0.5\textwidth]{imgs/O32-2D.png}
-\caption{Mesh visualised in Gmsh}%
-\label{fig:meshes}%
-\end{figure}
+\lstinputlisting[caption=Generating a field on a given grid 
+using Fortran, style=FStyle, label=code-fields-F]{fields-on-grid.F90}
 %
-You can now play with the command-line argument to generate 
-different types of global reduced meshes using the keys 
-introduced in \chap{chap:global-grids}!
+On the first few lines of the code, we define the variables
+needed for this program. In particular, we define some constants 
+needed for the function we are going to implement later in the 
+code and we declare an \inltc{Atlas\_reducedGrid} object and 
+an \inltc{atlas\_Field} object.
+
+On line 23 we define the grid using a command-line key 
+that can be specified by the user (see \chap{chap:grids}), 
+while on lines 25 and 26, we initialize the pressure field.
+From line 28 to line 45, we specify the a Gaussian-type 
+(e.g. a hill) function on our grid (specifically, the 
+field is defined on line 41).
+We finally close the program outputting on the screen 
+the memory footprint of the field just created and the 
+values of the pressure field on 7 grid points (see lines 
+47 to 52).
+As usual we also need to free the memory calling the 
+function \inltc{final} on the grid and field objects.
+
+It is now possible to run this simple program typing
+the following text on the terminal
+%
+\begin{lstlisting}[style=BashStyle]
+./atlas_f-fields-on-grid --grid O1024
+\end{lstlisting}
+% 
+This will produce a field (called pressure) defined 
+on an octahedral grid that has the shape of a hill 
+or Gaussian-type function.
+
+You can now play with the command-line argument and 
+generate different grids and see the impact on the 
+memory footprint of the pressure field.

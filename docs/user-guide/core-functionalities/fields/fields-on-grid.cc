@@ -15,27 +15,56 @@ int main(int argc, char *argv[])
 {
     atlas_init(argc, argv);
 
-    string gridID, visualize;
-    gridID    = eckit::Resource<string>("--grid"     ,
-                                        string("N32"));
-    visualize = eckit::Resource<string>("--visualize",
-                                        string("2D"));
+    int jnode = 0;
+    const double rpi = 2.0 * asin(1.0);
+    const double deg2rad = rpi / 180.;
+    const double zlatc = 0.0 * rpi;
+    const double zlonc = 1.0 * rpi;
+    const double zrad  = 2.0 * rpi / 9.0;
+    double  zdist, zlon, zlat;
+    DataType& datatype();
 
+    string gridID;
+    gridID = eckit::Resource<string>("--grid", string("N32"));
     ReducedGrid::Ptr reducedGrid(ReducedGrid::create(gridID));
 
-    Mesh::Ptr meshPtr;
-    ReducedGridMeshGenerator generate_mesh;
-    meshPtr = Mesh::Ptr(generate_mesh(*reducedGrid));
- 
-    io::Gmsh gmsh;
-    gmsh.options.set("info", true);
-    if (visualize == "3D")
+    /*
+    Field pressureField("pressure", DataTypeT<double>(),
+                        make_shape(reducedGrid->npts()));
+
+    ArrayView <double,1> pressure(pressureField);
+    for (int jlat =0; jlat < reducedGrid->nlat(); ++jlat)
     {
-        actions::BuildXYZField("xyz")(*meshPtr);
-        gmsh.options.set("nodes", std::string("xyz"));
+        zlat = reducedGrid->lat(jlat);
+        zlat = zlat * deg2rad;
+        for (int jlon =0; jlon < reducedGrid->nlon(jlat); ++jlon)
+        {
+            zlon = reducedGrid->lon(jlat, jlon);
+            zlon = zlon * deg2rad;
+            zdist = 2.0 * sqrt((cos(zlat) * sin((zlon-zlonc)/2)) *
+                              (cos(zlat) * sin((zlon-zlonc)/2)) +
+                              sin((zlat-zlatc)/2) * sin((zlat-zlatc)/2));
+
+            pressure(jnode) = 0.0;
+            if (zdist < zrad)
+            {
+                pressure(jnode) = 0.5 * (1. + cos(rpi*zdist/zrad));
+            }
+            jnode = jnode+1;
+        }
     }
-    gmsh.write(*meshPtr, "mesh.msh");
-    
+
+    cout << "========================================================" << endl;
+    cout << "memory pressureField = "
+         << pressureField.bytes()/1000000000  << "GB" << endl;
+    cout << "========================================================" << endl;
+
+    for (int jnode = 12; jnode <= 18; ++jnode)
+    {
+        cout << "node = "       << jnode
+             << "\tpressure = " << pressure(jnode) << endl;
+    }
+*/
     atlas_finalize();
 
     return 0;
