@@ -93,7 +93,6 @@ function Field__datatype(this) result(datatype)
   integer(c_int) :: datatype_size
   integer(c_int) :: datatype_allocated
   call atlas__Field__datatype(this%c_ptr(),datatype_cptr,datatype_size,datatype_allocated)
-  write(atlas_log%msg,*) "datatype_size = ",datatype_size; call atlas_log%error()
   allocate(character(len=datatype_size) :: datatype )
   datatype= c_to_f_string_cptr(datatype_cptr)
   if( datatype_allocated == 1 ) call atlas_free(datatype_cptr)

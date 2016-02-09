@@ -4,9 +4,13 @@
 ! FieldSet routines
 
 function atlas_FieldSet__ctor(name) result(fieldset)
-  character(len=*), intent(in) :: name
+  character(len=*), intent(in), optional :: name
   type(atlas_FieldSet) :: fieldset
-  call fieldset%reset_c_ptr( atlas__FieldSet__new( c_str(name) ) )
+  if( present(name) ) then
+    call fieldset%reset_c_ptr( atlas__FieldSet__new( c_str(name) ) )
+  else
+    call  fieldset%reset_c_ptr( atlas__FieldSet__new( c_str("") ) )
+  endif
 end function atlas_FieldSet__ctor
 
 subroutine FieldSet__delete(this)
