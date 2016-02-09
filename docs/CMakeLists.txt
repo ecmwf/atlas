@@ -4,7 +4,13 @@ add_custom_target( docs )
 add_dependencies ( docs 
                    atlas-user-guide-pdf
                    atlas-user-guide-html
-                   atlas_c-section1
-                   atlas_f-section1 
-                   atlas_c-section2-Reduced
-                   atlas_f-section2-Reduced )
+                   atlas_c-usage-example
+                   atlas_f-usage-example
+                   atlas_c-global-grids-Reduced
+                   atlas_f-global-grids-Reduced
+                   atlas_c-meshes-Reduced
+                   atlas_f-meshes-Reduced
+                   atlas_c-fields
+                   atlas_f-fields
+                   atlas_c-functionspace
+                   atlas_f-functionspace )

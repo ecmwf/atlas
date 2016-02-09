@@ -1,4 +1,5 @@
 \chapter{Create a Global Grid}
+\label{chap:global-grids}
 In this section, we show how to create a global grid with \Atlas.
 We remind the reader that global grid refers to a grid covering 
 the entire sphere (e.g. the entire earth for instance).
@@ -94,7 +95,7 @@ argument we intend to pass - in this case a string.
 
 %
 \lstinputlisting[caption=Generating a Gaussian grid with 
-\Atlas using C++, style=CStyle, label=Reduced-C]{section2-Reduced.cc}
+\Atlas using C++, style=CStyle, label=Reduced-C]{global-grids-Reduced.cc}
 %
 Once defined the command-line behaviour, we create the global 
 reduced-grid object (see line 16). In particular, we call the 
@@ -117,7 +118,7 @@ an \Atlas predefined grid. For instance, we can execute the
 following command line
 %
 \begin{lstlisting}[style=BashStyle]
-./atlas_c-section2-Reduced --grid O32
+./atlas_c-global-grids-Reduced --grid O32
 \end{lstlisting}
 % 
 This will generate an octahedral reduced Gaussian grid with 
@@ -169,7 +170,7 @@ listing below).
 
 %
 \lstinputlisting[caption=Generating a Gaussian grid with \Atlas 
-using Fortran, style=FStyle, label=Reduced-F]{section2-Reduced.F90}
+using Fortran, style=FStyle, label=Reduced-F]{global-grids-Reduced.F90}
 %
 
 Once defined the command-line behaviour, we create the global 
@@ -193,7 +194,7 @@ identifies an \Atlas predefined grid. For instance, we
 can execute the following command line 
 %
 \begin{lstlisting}[style=BashStyle]
-./atlas_f-section2-Reduced "O32"
+./atlas_f-global-grids-Reduced "O32"
 \end{lstlisting}
 % 
 This will generate an octahedral reduced Gaussian grid 
@@ -211,6 +212,7 @@ In particular, the first three numbers represent the
 number of latitudes, longitudes and points of the reduced
 grid, respectively. Note that we can directly access them 
 through the \inltc{reducedGrid} object (see lines 14, 15, 16).
+%
 \begin{tipbox}
 For the number of latitudes and points we do not need to provide
 any argument to the function retrieving the information. On the 
@@ -219,7 +221,7 @@ provide the index of a specific latitude, since the number of
 longitudes may depend on the latitude (see \chap{chap:structure} 
 for more details on how a reduced grid is constructed). 
 \end{tipbox}
-
+%
 The last two numbers represent the coordinates of a given 
 latitude and longitude, respectively. Note again how these 
 information can be directly accessed through the object 
@@ -238,3 +240,4 @@ at the beginning of this section!
 
 
 \section{Unstructured Grids}
+Coming soon ...

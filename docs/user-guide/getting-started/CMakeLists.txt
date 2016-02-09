@@ -1,2 +1,1 @@
 add_subdirectory(installation)
-add_subdirectory(structure)

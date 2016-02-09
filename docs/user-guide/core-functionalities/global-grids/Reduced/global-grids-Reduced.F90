@@ -1,4 +1,4 @@
-program run
+program main
 
 use atlas_module
 
@@ -26,4 +26,4 @@ write(unit=6, fmt = "(A,F8.4,1x)") "lon  = ", crdLon
 
 call atlas_finalize()
 
-end program run
+end program main

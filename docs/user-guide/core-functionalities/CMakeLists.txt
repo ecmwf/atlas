@@ -1,3 +1,4 @@
-add_subdirectory(section1)
-add_subdirectory(section2)
-#add_subdirectory(section3)
+add_subdirectory(global-grids)
+add_subdirectory(meshes)
+add_subdirectory(fields)
+add_subdirectory(functionspace)

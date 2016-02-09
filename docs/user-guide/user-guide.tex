@@ -2,7 +2,7 @@
 %%%-------------------------------------------------------------------------------
 \documentclass[
 a4paper,     % Stock and paper size.
-11pt,        % Type size.
+12pt,        % Type size.
 % article,
 % oneside, 
 onecolumn,   % Only one column of text on a page.
@@ -165,7 +165,6 @@ openany,     % A chapter may start on either a recto or verso page.
 \makeoddfoot{chap}{}{\small\bfseries\thepage}{}
 \makeevenhead{chap}{}{}{}
 \makeoddhead{chap}{}{}{}
-%\makeheadrule{chap}{\textwidth}{\normalrulethickness}
 \makeatother
 
 \nouppercaseheads
@@ -250,7 +249,7 @@ openany,     % A chapter may start on either a recto or verso page.
 % XML input style
 \lstdefinestyle{XMLStyle}
 {
-  language=XML,
+  language=make,
   basicstyle=\ttfamily\footnotesize,
   numbers=left,
   numberstyle=\tiny,
@@ -511,7 +510,7 @@ pdfauthor={I am the Author}
           {\huge\bfseries \textcolor{darkgreen}{User-Guide}\par}
           \vskip1.0\baselineskip
           {\large\bfseries\@date\par}
-          \vspace{0.3\textheight}
+          \vspace{0.2\textheight}
           {\small\noindent\@author}\\[\baselineskip]
         }% end of vbox
       }% end of parbox
@@ -527,7 +526,7 @@ pdfauthor={I am the Author}
 %%%-------------------------------------------------------------------------------
 
 \author{ECMWF, Shinfield Park, Reading, UK\newline}
-\title{Atlas: A framework for highly efficient parallel data structures}
+\title{Atlas: A flexible parallel framework for structured grids and unstructured meshes}
 \date{\today}
 
 
@@ -568,8 +567,11 @@ pdfauthor={I am the Author}
 
 \part{Core functionalities}
 \label{p:core-functionalities}
-\import{core-functionalities/section1/}{section1.tex}
-\import{core-functionalities/section2/}{section2.tex}
+\import{core-functionalities/global-grids/}{global-grids.tex}
+\import{core-functionalities/meshes/}{meshes.tex}
+\import{core-functionalities/fields/}{fields.tex}
+\import{core-functionalities/functionspace/}{functionspace.tex}
+
 
 
 \part{Applications}

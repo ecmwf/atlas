@@ -1,3 +1,4 @@
+add_subdirectory(getting-started)
 add_subdirectory(core-functionalities)
 
 set(USERGUIDESRC ${CMAKE_CURRENT_SOURCE_DIR})
