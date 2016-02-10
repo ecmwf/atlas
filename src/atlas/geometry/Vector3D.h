@@ -25,8 +25,9 @@ namespace geometry {
 
 
 #ifdef ECKIT_HAVE_EIGEN
+
 typedef  Eigen::Vector3d Vector3D;
-typedef  Eigen::Vector3d Vector3D;
+
 #else
 
 
