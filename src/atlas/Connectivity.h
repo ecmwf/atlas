@@ -152,6 +152,11 @@ protected:
   const size_t *counts() const { return counts_; }
 
 private:
+
+  void on_delete();
+  void on_update();
+
+private:
   bool owns_;
   std::vector<idx_t>  owned_values_;
   std::vector<size_t> owned_displs_;
@@ -164,6 +169,18 @@ private:
   size_t *counts_;
   size_t maxcols_;
   size_t mincols_;
+
+public:
+  typedef void* ctxt_t;
+  typedef void (*callback_t)(ctxt_t);
+private:
+  friend class ConnectivityPrivateAccess;
+  ctxt_t     ctxt_update_;
+  ctxt_t     ctxt_set_;
+  ctxt_t     ctxt_delete_;
+  callback_t callback_update_;
+  callback_t callback_set_;
+  callback_t callback_delete_;
 };
 
 typedef IrregularConnectivity Connectivity;
@@ -406,6 +423,11 @@ inline void BlockConnectivity::set( size_t row_idx, size_t col_idx, const idx_t 
 
 extern "C"
 {
+Connectivity* atlas__Connectivity__create();
+void atlas__Connectivity__delete(Connectivity* This);
+void atlas__Connectivity__displs(Connectivity* This, size_t* &displs, size_t &size);
+void atlas__Connectivity__counts(Connectivity* This, size_t* &counts, size_t &size);
+void atlas__Connectivity__values(Connectivity* This, int* &values, size_t &size);
 }
 
 #undef FROM_FORTRAN

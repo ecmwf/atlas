@@ -26,83 +26,6 @@ namespace atlas {
 //------------------------------------------------------------------------------------------------------
 
 
-IrregularConnectivity::IrregularConnectivity( idx_t values[], size_t rows, size_t displs[], size_t counts[] )
-  : owns_(false),
-    values_(values),
-    missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ),
-    rows_(rows),
-    displs_(displs),
-    counts_(counts)
-{
-  maxcols_ = 0;
-  mincols_ = std::numeric_limits<size_t>::max();
-  for( size_t j=0; j<rows; ++j ) {
-    maxcols_ = std::max(maxcols_,counts[j]);
-    mincols_ = std::min(mincols_,counts[j]);
-  }
-}
-
-void IrregularConnectivity::clear()
-{
-  if( owns() )
-  {
-    owned_values_.clear();
-    owned_displs_.resize(1); owned_displs_[0]=0ul;
-    owned_counts_.resize(1); owned_counts_[0]=0ul;
-  }
-  values_ = 0;
-  rows_ = 0;
-  displs_ = 0;
-  counts_ = 0;
-  maxcols_ = 0;
-  mincols_ = std::numeric_limits<size_t>::max();
-}
-
-MultiBlockConnectivity::MultiBlockConnectivity( idx_t values[], size_t rows, size_t displs[], size_t counts[], size_t blocks, size_t block_displs[] )
-  : IrregularConnectivity(values,rows,displs,counts),
-    blocks_(blocks),
-    block_displs_(block_displs)
-{
-  rebuild_block_connectivity();
-}
-
-MultiBlockConnectivity::MultiBlockConnectivity() :
-  IrregularConnectivity(),
-  blocks_(0),
-  block_displs_(0),
-  owned_block_displs_(1,0ul)
-{}
-
-MultiBlockConnectivity::~MultiBlockConnectivity() {}
-
-void MultiBlockConnectivity::clear()
-{
-  IrregularConnectivity::clear();
-  if( owns() )
-  {
-    owned_block_displs_.resize(1);
-    owned_block_displs_[0]=0ul;
-  }
-  blocks_ = 0;
-  block_displs_ = 0;
-  block_.clear();
-}
-
-void BlockConnectivity::rebuild( size_t rows, size_t cols, idx_t values[] )
-{
-  rows_ = rows;
-  cols_ = cols;
-  values_ = values;
-}
-
-BlockConnectivity::BlockConnectivity( size_t rows, size_t cols, idx_t values[] )
-  : rows_(rows),
-    cols_(cols),
-    values_(values),
-    missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() )
-{
-}
-
 IrregularConnectivity::IrregularConnectivity() :
   owns_(true),
   values_(0),
@@ -113,10 +36,80 @@ IrregularConnectivity::IrregularConnectivity() :
   owned_displs_(1,0ul),
   owned_counts_(1,0ul),
   maxcols_(0),
-  mincols_(std::numeric_limits<size_t>::max())
+  mincols_(std::numeric_limits<size_t>::max()),
+  ctxt_update_(0),
+  ctxt_set_(0),
+  ctxt_delete_(0),
+  callback_update_(0),
+  callback_set_(0),
+  callback_delete_(0)
 {}
 
-IrregularConnectivity::~IrregularConnectivity() {}
+//------------------------------------------------------------------------------------------------------
+
+IrregularConnectivity::IrregularConnectivity( idx_t values[], size_t rows, size_t displs[], size_t counts[] )
+  : owns_(false),
+    values_(values),
+    missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() ),
+    rows_(rows),
+    displs_(displs),
+    counts_(counts),
+    ctxt_update_(0),
+    ctxt_set_(0),
+    ctxt_delete_(0),
+    callback_update_(0),
+    callback_set_(0),
+    callback_delete_(0)
+{
+  maxcols_ = 0;
+  mincols_ = std::numeric_limits<size_t>::max();
+  for( size_t j=0; j<rows; ++j ) {
+    maxcols_ = std::max(maxcols_,counts[j]);
+    mincols_ = std::min(mincols_,counts[j]);
+  }
+}
+
+//------------------------------------------------------------------------------------------------------
+
+IrregularConnectivity::~IrregularConnectivity()
+{
+  on_delete();
+}
+
+//------------------------------------------------------------------------------------------------------
+
+void IrregularConnectivity::clear()
+{
+  if( owns() )
+  {
+    owned_values_.clear();
+    owned_displs_.resize(1); owned_displs_[0]=0ul;
+    owned_counts_.resize(1); owned_counts_[0]=0ul;
+  }
+  values_ = 0;
+  rows_   = 0;
+  displs_ = 0;
+  counts_ = 0;
+  maxcols_ = 0;
+  mincols_ = std::numeric_limits<size_t>::max();
+  on_update();
+}
+
+//------------------------------------------------------------------------------------------------------
+
+void IrregularConnectivity::on_delete()
+{
+  if( ctxt_delete_ && callback_delete_ ) callback_delete_(ctxt_delete_);
+}
+
+//------------------------------------------------------------------------------------------------------
+
+void IrregularConnectivity::on_update()
+{
+  if( ctxt_update_ && callback_update_ ) callback_update_(ctxt_update_);
+}
+
+//------------------------------------------------------------------------------------------------------
 
 void IrregularConnectivity::add( size_t rows, size_t cols, const idx_t values[], bool fortran_array )
 {
@@ -142,7 +135,11 @@ void IrregularConnectivity::add( size_t rows, size_t cols, const idx_t values[],
   values_ = owned_values_.data();
   displs_ = owned_displs_.data();
   counts_ = owned_counts_.data();
+
+  on_update();
 }
+
+//------------------------------------------------------------------------------------------------------
 
 void IrregularConnectivity::add( const BlockConnectivity& block )
 {
@@ -151,16 +148,7 @@ void IrregularConnectivity::add( const BlockConnectivity& block )
   add(block.rows(),block.cols(),block.data(),fortran_array);
 }
 
-
-void MultiBlockConnectivity::add(size_t rows, size_t cols, const idx_t values[], bool fortran_array )
-{
-  if( !owns() ) throw eckit::AssertionFailed("MultiBlockConnectivity must be owned to be resized directly");
-  IrregularConnectivity::add(rows,cols,values,fortran_array);
-  blocks_++;
-  owned_block_displs_.push_back(this->rows());
-  block_displs_ = owned_block_displs_.data();
-  rebuild_block_connectivity();
-}
+//------------------------------------------------------------------------------------------------------
 
 void IrregularConnectivity::add( size_t rows, const size_t cols[] )
 {
@@ -186,7 +174,11 @@ void IrregularConnectivity::add( size_t rows, const size_t cols[] )
   values_ = owned_values_.data();
   displs_ = owned_displs_.data();
   counts_ = owned_counts_.data();
+
+  on_update();
 }
+
+//------------------------------------------------------------------------------------------------------
 
 void IrregularConnectivity::add( size_t rows, size_t cols )
 {
@@ -210,77 +202,11 @@ void IrregularConnectivity::add( size_t rows, size_t cols )
   values_ = owned_values_.data();
   displs_ = owned_displs_.data();
   counts_ = owned_counts_.data();
+
+  on_update();
 }
 
-
-void MultiBlockConnectivity::add( const BlockConnectivity& block )
-{
-  if( !owns() ) throw eckit::AssertionFailed("MultiBlockConnectivity must be owned to be resized directly");
-  IrregularConnectivity::add(block);
-  blocks_++;
-  owned_block_displs_.push_back(rows());
-  block_displs_ = owned_block_displs_.data();
-  rebuild_block_connectivity();
-}
-
-void MultiBlockConnectivity::add( size_t rows, size_t cols )
-{
-  if( !owns() ) throw eckit::AssertionFailed("MultiBlockConnectivity must be owned to be resized directly");
-  IrregularConnectivity::add(rows,cols);
-  blocks_++;
-  owned_block_displs_.push_back(this->rows());
-  block_displs_ = owned_block_displs_.data();
-  rebuild_block_connectivity();
-}
-
-
-void MultiBlockConnectivity::rebuild_block_connectivity()
-{
-  block_.resize(blocks_);
-  for( size_t b=0; b<blocks_; ++b )
-  {
-    if( block_[b] ) {
-      block_[b]->rebuild(
-          block_displs_[b+1]-block_displs_[b], // rows
-          counts()[block_displs_[b]],          // cols
-          data()+displs()[block_displs_[b]]);
-    }
-    else {
-      block_[b].reset(
-         new BlockConnectivity(
-          block_displs_[b+1]-block_displs_[b], // rows
-          counts()[block_displs_[b]],          // cols
-          data()+displs()[block_displs_[b]]) );
-    }
-  }
-}
-
-BlockConnectivity::BlockConnectivity() :
-  owns_(true), values_(0), rows_(0), cols_(0),
-  missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() )
-{
-}
-
-void BlockConnectivity::add(size_t rows, size_t cols, const idx_t values[], bool fortran_array)
-{
-  if( !owns_ )
-    throw eckit::AssertionFailed("BlockConnectivity must be owned to be resized directly");
-  if( cols_!=0 && cols_!=cols)
-    throw eckit::AssertionFailed("Cannot add values with different cols than already existing in BlockConnectivity");
-
-  size_t old_size = rows_*cols_;
-  size_t new_size = old_size+rows*cols;
-  owned_values_.resize(new_size);
-  idx_t add_base = fortran_array ? 0 : FORTRAN_BASE;
-  for( size_t j=0, c=old_size; c<new_size; ++c, ++j ) {
-    owned_values_[c] = values[j] + add_base;
-  }
-
-  values_=owned_values_.data();
-  rows_+=rows;
-  cols_=cols;
-}
-
+//------------------------------------------------------------------------------------------------------
 
 void IrregularConnectivity::insert( size_t position, size_t rows, size_t cols, const idx_t values[], bool fortran_array )
 {
@@ -306,7 +232,11 @@ void IrregularConnectivity::insert( size_t position, size_t rows, size_t cols, c
   values_ = owned_values_.data();
   displs_ = owned_displs_.data();
   counts_ = owned_counts_.data();
+
+  on_update();
 }
+
+//------------------------------------------------------------------------------------------------------
 
 void IrregularConnectivity::insert( size_t position, size_t rows, size_t cols )
 {
@@ -325,7 +255,11 @@ void IrregularConnectivity::insert( size_t position, size_t rows, size_t cols )
   values_ = owned_values_.data();
   displs_ = owned_displs_.data();
   counts_ = owned_counts_.data();
+
+  on_update();
 }
+
+//------------------------------------------------------------------------------------------------------
 
 void IrregularConnectivity::insert( size_t position, size_t rows, const size_t cols[] )
 {
@@ -346,8 +280,85 @@ void IrregularConnectivity::insert( size_t position, size_t rows, const size_t c
   values_ = owned_values_.data();
   displs_ = owned_displs_.data();
   counts_ = owned_counts_.data();
+
+  on_update();
 }
 
+//------------------------------------------------------------------------------------------------------
+
+MultiBlockConnectivity::MultiBlockConnectivity( idx_t values[], size_t rows, size_t displs[], size_t counts[], size_t blocks, size_t block_displs[] )
+  : IrregularConnectivity(values,rows,displs,counts),
+    blocks_(blocks),
+    block_displs_(block_displs)
+{
+  rebuild_block_connectivity();
+}
+
+//------------------------------------------------------------------------------------------------------
+
+MultiBlockConnectivity::MultiBlockConnectivity() :
+  IrregularConnectivity(),
+  blocks_(0),
+  block_displs_(0),
+  owned_block_displs_(1,0ul)
+{}
+
+//------------------------------------------------------------------------------------------------------
+
+MultiBlockConnectivity::~MultiBlockConnectivity() {}
+
+//------------------------------------------------------------------------------------------------------
+
+void MultiBlockConnectivity::clear()
+{
+  IrregularConnectivity::clear();
+  if( owns() )
+  {
+    owned_block_displs_.resize(1);
+    owned_block_displs_[0]=0ul;
+  }
+  blocks_ = 0;
+  block_displs_ = 0;
+  block_.clear();
+}
+
+//------------------------------------------------------------------------------------------------------
+
+void MultiBlockConnectivity::add(size_t rows, size_t cols, const idx_t values[], bool fortran_array )
+{
+  if( !owns() ) throw eckit::AssertionFailed("MultiBlockConnectivity must be owned to be resized directly");
+  IrregularConnectivity::add(rows,cols,values,fortran_array);
+  blocks_++;
+  owned_block_displs_.push_back(this->rows());
+  block_displs_ = owned_block_displs_.data();
+  rebuild_block_connectivity();
+}
+
+//------------------------------------------------------------------------------------------------------
+
+void MultiBlockConnectivity::add( const BlockConnectivity& block )
+{
+  if( !owns() ) throw eckit::AssertionFailed("MultiBlockConnectivity must be owned to be resized directly");
+  IrregularConnectivity::add(block);
+  blocks_++;
+  owned_block_displs_.push_back(rows());
+  block_displs_ = owned_block_displs_.data();
+  rebuild_block_connectivity();
+}
+
+//------------------------------------------------------------------------------------------------------
+
+void MultiBlockConnectivity::add( size_t rows, size_t cols )
+{
+  if( !owns() ) throw eckit::AssertionFailed("MultiBlockConnectivity must be owned to be resized directly");
+  IrregularConnectivity::add(rows,cols);
+  blocks_++;
+  owned_block_displs_.push_back(this->rows());
+  block_displs_ = owned_block_displs_.data();
+  rebuild_block_connectivity();
+}
+
+//------------------------------------------------------------------------------------------------------
 
 void MultiBlockConnectivity::insert( size_t position, size_t rows, size_t cols, const idx_t values[], bool fortran_array )
 {
@@ -363,6 +374,8 @@ void MultiBlockConnectivity::insert( size_t position, size_t rows, size_t cols, 
   block_displs_ = owned_block_displs_.data();
   rebuild_block_connectivity();
 }
+
+//------------------------------------------------------------------------------------------------------
 
 void MultiBlockConnectivity::insert( size_t position, size_t rows, size_t cols )
 {
@@ -380,8 +393,170 @@ void MultiBlockConnectivity::insert( size_t position, size_t rows, size_t cols )
   rebuild_block_connectivity();
 }
 
+//------------------------------------------------------------------------------------------------------
 
-extern "C" {
+void MultiBlockConnectivity::rebuild_block_connectivity()
+{
+  block_.resize(blocks_);
+  for( size_t b=0; b<blocks_; ++b )
+  {
+    if( block_[b] ) {
+      block_[b]->rebuild(
+          block_displs_[b+1]-block_displs_[b], // rows
+          counts()[block_displs_[b]],          // cols
+          data()+displs()[block_displs_[b]]);
+    }
+    else {
+      block_[b].reset(
+         new BlockConnectivity(
+          block_displs_[b+1]-block_displs_[b], // rows
+          counts()[block_displs_[b]],          // cols
+          data()+displs()[block_displs_[b]]) );
+    }
+  }
+}
+
+//------------------------------------------------------------------------------------------------------
+
+
+BlockConnectivity::BlockConnectivity() :
+  owns_(true), values_(0), rows_(0), cols_(0),
+  missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() )
+{
+}
+
+//------------------------------------------------------------------------------------------------------
+
+BlockConnectivity::BlockConnectivity( size_t rows, size_t cols, idx_t values[] )
+  : rows_(rows),
+    cols_(cols),
+    values_(values),
+    missing_value_( std::numeric_limits<idx_t>::is_signed ? -1 : std::numeric_limits<idx_t>::max() )
+{
+}
+
+//------------------------------------------------------------------------------------------------------
+
+void BlockConnectivity::rebuild( size_t rows, size_t cols, idx_t values[] )
+{
+  rows_ = rows;
+  cols_ = cols;
+  values_ = values;
+}
+
+//------------------------------------------------------------------------------------------------------
+
+void BlockConnectivity::add(size_t rows, size_t cols, const idx_t values[], bool fortran_array)
+{
+  if( !owns_ )
+    throw eckit::AssertionFailed("BlockConnectivity must be owned to be resized directly");
+  if( cols_!=0 && cols_!=cols)
+    throw eckit::AssertionFailed("Cannot add values with different cols than already existing in BlockConnectivity");
+
+  size_t old_size = rows_*cols_;
+  size_t new_size = old_size+rows*cols;
+  owned_values_.resize(new_size);
+  idx_t add_base = fortran_array ? 0 : FORTRAN_BASE;
+  for( size_t j=0, c=old_size; c<new_size; ++c, ++j ) {
+    owned_values_[c] = values[j] + add_base;
+  }
+
+  values_=owned_values_.data();
+  rows_+=rows;
+  cols_=cols;
+}
+
+//------------------------------------------------------------------------------------------------------
+
+class ConnectivityPrivateAccess
+{
+private:
+  typedef Connectivity::ctxt_t     ctxt_t;
+  typedef Connectivity::callback_t callback_t;
+public:
+  ConnectivityPrivateAccess(Connectivity& connectivity) : connectivity_(connectivity)
+  {
+  }
+  ctxt_t      &ctxt_update()     { return connectivity_.ctxt_update_; }
+  ctxt_t      &ctxt_set()        { return connectivity_.ctxt_set_; }
+  ctxt_t      &ctxt_delete()     { return connectivity_.ctxt_delete_; }
+  callback_t  &callback_update() { return connectivity_.callback_update_; }
+  callback_t  &callback_set()    { return connectivity_.callback_set_; }
+  callback_t  &callback_delete() { return connectivity_.callback_delete_; }
+  idx_t       *values()   { return connectivity_.values_; }
+  size_t      *displs()   { return connectivity_.displs_; }
+  size_t      *counts()   { return connectivity_.counts_; }
+
+private:
+  Connectivity& connectivity_;
+};
+
+//------------------------------------------------------------------------------------------------------
+
+extern "C"
+{
+Connectivity* atlas__Connectivity__create()
+{
+  Connectivity* connectivity = 0;
+  ATLAS_ERROR_HANDLING(
+    connectivity = new Connectivity();
+  );
+  return connectivity;
+}
+void atlas__Connectivity__delete(Connectivity* This)
+{
+  ATLAS_ERROR_HANDLING(delete This);
+}
+
+void atlas__connectivity__register_update(Connectivity* This, Connectivity::callback_t callback, Connectivity::ctxt_t ctxt )
+{
+  ConnectivityPrivateAccess access(*This);
+  access.ctxt_update() = ctxt;
+  access.callback_update() = callback;
+}
+
+int atlas__connectivity__ctxt_update(Connectivity* This, Connectivity::ctxt_t* ctxt)
+{
+  ConnectivityPrivateAccess access(*This);
+  *ctxt = access.ctxt_update();
+  return bool( access.ctxt_update() );
+}
+
+void atlas__connectivity__register_delete(Connectivity* This, Connectivity::callback_t callback, Connectivity::ctxt_t ctxt )
+{
+  ConnectivityPrivateAccess access(*This);
+  access.ctxt_delete() = ctxt;
+  access.callback_delete() = callback;
+}
+
+int atlas__connectivity__ctxt_delete(Connectivity* This, Connectivity::ctxt_t* ctxt)
+{
+  ConnectivityPrivateAccess access(*This);
+  *ctxt = access.ctxt_delete();
+  return bool( access.ctxt_delete() );
+}
+
+void atlas__Connectivity__displs(Connectivity* This, size_t* &displs, size_t &size)
+{
+  ConnectivityPrivateAccess access(*This);
+  displs = access.displs();
+  size = This->rows()+1;
+}
+
+void atlas__Connectivity__counts(Connectivity* This, size_t* &counts, size_t &size)
+{
+  ConnectivityPrivateAccess access(*This);
+  counts = access.counts();
+  size = This->rows();
+}
+
+void atlas__Connectivity__values(Connectivity* This, int* &values, size_t &size)
+{
+  ConnectivityPrivateAccess access(*This);
+  values = access.values();
+  size = This->rows();
+}
+
 
 }
 
