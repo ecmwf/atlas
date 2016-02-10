@@ -1,21 +1,37 @@
-\chapter{Create a Mesh from a Grid}
-In this chapter, we show how to create a mesh with \Atlas 
-starting from a grid. We assume that the reader already 
-knows how to create a grid (see \chap{chap:global-grids}). 
-% 
-\begin{notebox}
-With the term \textit{grid} we intend a list of points 
-without any specific connectivity rule, while with the 
-term mesh we intend a list of points with well-specified 
-connectivity rules.
-\end{notebox}
+\chapter{Using the functionspace objects}
+In this chapter, we show how to use the functionspace 
+objects. These objects are intended to interpret a 
+given field. In particular, by using them on a given 
+field, we equip the field with the communication pattern 
+(thus the Field knows about parallelism), and it allows 
+some simple operations on the field. The functionspace 
+objects that will be presented in this chapter are the 
+following three:
 %
-As before, we show both the C++ and Fortran version 
-for this example.
+\begin{itemize}
+\item \inltc{Nodes}: It relates a given field to the underlying 
+mesh, thus enabling the field to parallel communication. 
+It also allows some simple operations on the Field, such 
+as calculating minimum and maximum values, going from a 
+local (to a parallel partition) to a global indexing and 
+viceversa, etc.
+\item \inltc{ReducedGridPoint}: It relates 
+a given field to the underlying reduced grid, thus enabling 
+the field to parallel communication. It also allows similar 
+operations as the \inltc{Nodes} functionspace, such as going 
+from a local to a global indexing and viceversa.
+\item \inltc{Spectral}: It allows the spectral representation 
+of a Field (no relation to a grid or a mesh here!). The parallelisation 
+in this case is achieved through the \inlsh{Trans} 
+library.
+\end{itemize}
+%
+For each of the functionspaces presented in the following, 
+we show both the C++ and Fortran version.
 
-
-\section{C++ version}
-The \lista{code-meshes-C} shows how to construct a mesh 
+\section{Nodes}
+\subsection{C++ version}
+The \lista{code-nodes-C} shows how to construct a mesh 
 starting from a grid that can be specified as a command 
 line argument. In particular, we use the third-party 
 \textit{eckit} object called \inltc{Resource} to define 
@@ -24,8 +40,8 @@ We have also added an additional command line argument
 called \inlsh{-\,-visualize}. This will allow us to 
 visualize the mesh either in 2D or 3D. 
 %
-\lstinputlisting[caption=Generating a mesh starting from a grid 
-in \Atlas using C++, style=CStyle, label=code-meshes-C]{meshes-Reduced.cc}
+\lstinputlisting[caption=Functionspace nodes usage using C++, 
+style=CStyle, label=code-fields-C]{nodes.cc}
 %
 Once defined the command-line behaviour, we first create 
 a global reduced-grid object (see line 24). For more 
@@ -78,15 +94,6 @@ a 2D representation as follows:
 % 
 This will produce a representation of the mesh like 
 the one depicted on the right side of \fig{fig:meshes}.
-%
-\begin{figure}%
-\centering
-\subfloat{\includegraphics[width=5cm]{imgs/O32-3D.png}}\qquad\qquad\qquad
-\subfloat{\includegraphics[width=5cm]{imgs/O32-2D.png}}
-\caption{Meshes visualised in Gmsh}%
-\label{fig:meshes}%
-\end{figure}
-%
 You can now play with the command-line argument to generate 
 different types of global reduced meshes using the keys 
 introduced in \chap{chap:global-grids}!
@@ -94,17 +101,13 @@ introduced in \chap{chap:global-grids}!
 
 
 
-\section{Fortran version}
-The \lista{code-meshes-C} shows how to construct a mesh 
+\subsection{Fortran version}
+The \lista{code-nodes-F} shows how to construct a mesh 
 starting from a grid that can be specified as a command 
 line argument. In particular, we use the third-party 
 \textit{eckit} object called \inltc{Resource} to define 
 the command-line behaviour as done in the previous chapter. 
- 
-%
-\lstinputlisting[caption=Generating a mesh starting from a grid 
-in \Atlas using Fortran, style=FStyle, label=code-meshes-F]{meshes-Reduced.F90}
-%
+
 Once defined the command-line behaviour, we first create 
 a global reduced-grid object (see line 13). For more 
 details on how to create a grid see \chap{chap:global-grids}.
@@ -135,14 +138,10 @@ This will produce an octahedral reduced Gaussian mesh
 (i.e. 64 latitudes in total).
 If we visualize it in Gmsh, we will obtain something similar
 to \fig{fig:meshes}.
-%
-\begin{figure}%
-\centering
-\includegraphics[width=0.5\textwidth]{imgs/O32-2D.png}
-\caption{Mesh visualised in Gmsh}%
-\label{fig:meshes}%
-\end{figure}
-%
+
 You can now play with the command-line argument to generate 
 different types of global reduced meshes using the keys 
 introduced in \chap{chap:global-grids}!
+\section{ReducedGridPoint}
+\section{Spectral}
+

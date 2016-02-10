@@ -1,41 +1,66 @@
 #include "atlas/atlas.h"
-#include "atlas/grids/grids.h"
-#include "atlas/meshgen/ReducedGridMeshGenerator.h"
-#include "atlas/actions/GenerateMesh.h"
-#include "atlas/actions/BuildXYZField.h"
-#include "atlas/io/Gmsh.h"
-#include "eckit/config/Resource.h"
+#include "atlas/Field.h"
+#include "atlas/FieldSet.h"
+#include "atlas/Metadata.h"
 
 using namespace std;
 using namespace atlas;
-using namespace atlas::grids;
-using namespace atlas::meshgen;
 
 int main(int argc, char *argv[])
 {
     atlas_init(argc, argv);
 
-    string gridID, visualize;
-    gridID    = eckit::Resource<string>("--grid"     ,
-                                        string("N32"));
-    visualize = eckit::Resource<string>("--visualize",
-                                        string("2D"));
+    // Define fields
+    Field::Ptr pressureField(Field::create<double>
+                             ("pressure", make_shape(100)));
+    Field::Ptr windField(Field::create<double>
+                        ("wind", make_shape(2, 100)));
 
-    ReducedGrid::Ptr reducedGrid(ReducedGrid::create(gridID));
+    // Initialize fields
+    ArrayView <double,1> pressure(*pressureField);
+    ArrayView <double,2> wind    (*windField);
 
-    Mesh::Ptr meshPtr;
-    ReducedGridMeshGenerator generate_mesh;
-    meshPtr = Mesh::Ptr(generate_mesh(*reducedGrid));
- 
-    io::Gmsh gmsh;
-    gmsh.options.set("info", true);
-    if (visualize == "3D")
+    // Assign values to fields
+    for (int jnode = 0; jnode < 100; ++jnode)
     {
-        actions::BuildXYZField("xyz")(*meshPtr);
-        gmsh.options.set("nodes", std::string("xyz"));
+        pressure(jnode) = 101325.0;
+        wind(0,jnode)   = 0.01 + double(jnode);
+        wind(1,jnode)   = 0.02 + double(jnode);
     }
-    gmsh.write(*meshPtr, "mesh.msh");
-    
+
+    // Add info to fields
+    string unitsP, unitsW;
+    pressureField->metadata().set("units", "[Pa]");
+    pressureField->metadata().get("units", unitsP);
+    windField    ->metadata().set("units", "[m/s]");
+    windField    ->metadata().get("units", unitsW);
+
+    // Define fieldSet
+    FieldSet fields;
+    fields.add(*pressureField); // Add pressureField to fieldSet
+    fields.add(*windField);     // Add windField to fieldSet
+
+    // Retrieve field from fieldSet
+    Field& pressureField2 = fields.field("pressure");
+    Field& windField2     = fields.field("wind");
+
+    // Print some useful info
+    cout << "name   = " << windField->name()     << endl;
+    cout << "size   = " << windField->size()     << endl;
+    cout << "units  = " << unitsW                << endl;
+    cout << "rank   = " << windField->rank()     << endl;
+    cout << "shape  = " << windField->shape(1)   << "    "
+                        << windField->shape(2)   << endl;
+    cout << "memory = " << windField->bytes()
+                        << " bytes"              << endl;
+    cout << "type   = " << windField->datatype().str()  << endl;
+    cout << "kind   = " << windField->datatype().kind() << endl;
+
+    // Print some values
+    cout << "pressure(9) = " << pressure(9) << endl;
+    cout << "wind(0, 9)  = " << wind(0,9)   << endl;
+    cout << "wind(1, 9)  = " << wind(1,9)   << endl;
+
     atlas_finalize();
 
     return 0;

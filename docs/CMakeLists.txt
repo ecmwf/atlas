@@ -14,5 +14,5 @@ add_dependencies ( docs
                    atlas_f-fields
                    atlas_c-fields-on-grid
                    atlas_f-fields-on-grid
-                   atlas_c-functionspace
+                   atlas_c-nodes
                    atlas_f-functionspace )

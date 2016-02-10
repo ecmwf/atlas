@@ -2,9 +2,7 @@ program main
 
 use atlas_module
 
-! IC parameters
 integer, parameter              :: wp = 8
-! pi and commonly used divisions
 real(wp), parameter             :: rpi = 2.0_wp * asin(1.0_wp)
 real(wp), parameter             :: deg2rad = rpi / 180.
 real(wp)                        :: zlatc = 0._wp * rpi
@@ -23,7 +21,8 @@ call atlas_init()
 call atlas_resource("--grid", "N32", gridID)
 reducedGrid = atlas_ReducedGrid(gridID)
 
-pressureField = atlas_Field("pressure", atlas_real(wp), [reducedGrid%npts()])
+pressureField = atlas_Field("pressure", atlas_real(wp), &
+                            & [reducedGrid%npts()])
 call pressureField%data(pressure)
 
 jnode = 1
@@ -45,12 +44,10 @@ do jlat=1,reducedGrid%nlat()
   enddo
 enddo
 
-write(6, *) "================================================================="
-write(6, *) "memory pressureField = ", pressureField%bytes()/1000000000., "GB"
-write(6, *) "================================================================="
-do jnode=12,18
-  write(6, *) "node = ", jnode, "pressure = ", pressure(jnode)
-enddo
+write(6, *) "============================================="
+write(6, *) "memory pressureField = ", &
+            & pressureField%bytes()/1000000000., "GB"
+write(6, *) "============================================="
 
 call reducedGrid  %final()
 call pressureField%final()

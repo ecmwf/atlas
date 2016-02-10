@@ -1,15 +1,11 @@
 #include "atlas/atlas.h"
 #include "atlas/grids/grids.h"
-#include "atlas/meshgen/ReducedGridMeshGenerator.h"
-#include "atlas/actions/GenerateMesh.h"
-#include "atlas/actions/BuildXYZField.h"
-#include "atlas/io/Gmsh.h"
+#include "atlas/Field.h"
 #include "eckit/config/Resource.h"
 
 using namespace std;
 using namespace atlas;
 using namespace atlas::grids;
-using namespace atlas::meshgen;
 
 int main(int argc, char *argv[])
 {
@@ -22,17 +18,16 @@ int main(int argc, char *argv[])
     const double zlonc = 1.0 * rpi;
     const double zrad  = 2.0 * rpi / 9.0;
     double  zdist, zlon, zlat;
-    DataType& datatype();
 
     string gridID;
     gridID = eckit::Resource<string>("--grid", string("N32"));
     ReducedGrid::Ptr reducedGrid(ReducedGrid::create(gridID));
+    int const nb_nodes = reducedGrid->npts();
 
-    /*
-    Field pressureField("pressure", DataTypeT<double>(),
-                        make_shape(reducedGrid->npts()));
+    Field::Ptr pressureField(Field::create<double>
+                             ("pressure", make_shape(nb_nodes)));
 
-    ArrayView <double,1> pressure(pressureField);
+    ArrayView <double,1> pressure(*pressureField);
     for (int jlat =0; jlat < reducedGrid->nlat(); ++jlat)
     {
         zlat = reducedGrid->lat(jlat);
@@ -54,17 +49,11 @@ int main(int argc, char *argv[])
         }
     }
 
-    cout << "========================================================" << endl;
+    cout << "=========================================="  << endl;
     cout << "memory pressureField = "
-         << pressureField.bytes()/1000000000  << "GB" << endl;
-    cout << "========================================================" << endl;
+         << (*pressureField).bytes()/1000000000  << " GB" << endl;
+    cout << "=========================================="  << endl;
 
-    for (int jnode = 12; jnode <= 18; ++jnode)
-    {
-        cout << "node = "       << jnode
-             << "\tpressure = " << pressure(jnode) << endl;
-    }
-*/
     atlas_finalize();
 
     return 0;

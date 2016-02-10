@@ -6,7 +6,8 @@ implicit none
 integer, parameter            :: wp = 8
 integer                       :: jnode
 character(len=:), allocatable :: unitsW, unitsP
-type(atlas_Field)             :: pressureField, windField
+type(atlas_Field)             :: pressureField , windField
+type(atlas_Field)             :: pressureField2, windField2
 real(wp), pointer             :: pressure(:), wind    (:,:)
 type(atlas_FieldSet)          :: fields
 type(atlas_metadata)          :: metadata
@@ -41,19 +42,19 @@ call fields%add(pressureField) ! Add pressureField to fieldSet
 call fields%add(windField)     ! Add windField to fieldSet
 
 ! Retrieve field from fieldSet
-pressureField = fields%field("pressure")
-windField     = fields%field("wind")
+pressureField2 = fields%field("pressure")
+windField2     = fields%field("wind")
 
 ! Print some useful info
-write(6, *) "name   = ", windfield%name()
-write(6, *) "size   = ", windfield%size()
+write(6, *) "name   = ", windField%name()
+write(6, *) "size   = ", windField%size()
 write(6, *) "units  = ", unitsW
-write(6, *) "rank   = ", windfield%rank()
-write(6, *) "shape  = ", windfield%shape(1), windfield%shape(2)
-write(6, *) "shape  = ", windfield%shape()
-write(6, *) "memory = ", windfield%bytes()/10.**9, "GB"
-write(6, *) "type   = ", windfield%datatype()
-write(6, *) "kind   = ", windfield%kind()
+write(6, *) "rank   = ", windField%rank()
+write(6, *) "shape  = ", windField%shape(1), windField%shape(2)
+write(6, *) "shape  = ", windField%shape()
+write(6, *) "memory = ", windField%bytes(), "bytes"
+write(6, *) "type   = ", windField%datatype()
+write(6, *) "kind   = ", windField%kind()
 
 ! Print some values
 write(6, *) "pressure(10) = ", pressure(10)
