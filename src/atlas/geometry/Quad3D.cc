@@ -8,6 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
+
 #include "atlas/geometry/Quad3D.h"
 
 #include <cmath>

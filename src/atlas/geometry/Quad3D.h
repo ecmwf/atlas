@@ -11,6 +11,7 @@
 #ifndef atlas_geometry_Quad3D_h
 #define atlas_geometry_Quad3D_h
 
+#include <limits>
 
 #include "atlas/geometry/Ray.h"
 #include "atlas/geometry/Intersect.h"

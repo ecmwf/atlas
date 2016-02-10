@@ -11,6 +11,7 @@
 #ifndef atlas_geometry_Triag3D_h
 #define atlas_geometry_Triag3D_h
 
+#include <limits>
 
 
 #include "atlas/geometry/Ray.h"
