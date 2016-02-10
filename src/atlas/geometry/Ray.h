@@ -12,7 +12,7 @@
 #define atlas_geometry_Ray_h
 
 #include <iostream>
-#include "atlas/geometry/Vector3d.h"
+#include "atlas/geometry/Vector3D.h"
 
 
 namespace atlas {
