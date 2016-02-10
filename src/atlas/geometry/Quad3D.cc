@@ -15,14 +15,10 @@
 #include "eckit/eckit_config.h"
 #include "eckit/exception/Exceptions.h"
 
-#ifdef ECKIT_HAVE_EIGEN
-
-#include "eckit/maths/Eigen.h"
 #include "atlas/runtime/Log.h"
-
+#include "atlas/geometry/Quad3D.h"
 #include "atlas/geometry/Triag3D.h"
 
-using Eigen::Vector3d;
 
 namespace atlas {
 namespace geometry {
@@ -34,12 +30,12 @@ Intersect Quad3D::intersects(const Ray &r, double epsilon) const
 {
     Intersect isect; // intersection is false
 
-    Triag3D T013(v00.data(), v10.data(), v01.data());
+    Triag3D T013(v00, v10, v01);
     isect = T013.intersects(r,epsilon);
     if(isect)
         return isect;
 
-    Triag3D T231(v11.data(), v01.data(), v10.data());
+    Triag3D T231(v11, v01, v10);
     isect = T231.intersects(r,epsilon);
     if(isect)
     {
@@ -55,31 +51,31 @@ bool Quad3D::validate() const {
 
     // normal for sub-triangle T231
 
-    Vector3d E23 = v01 - v11;
-    Vector3d E21 = v10 - v11;
+    Vector3D E23 = v01 - v11;
+    Vector3D E21 = v10 - v11;
 
-    Vector3d N231 = E23.cross(E21);
+    Vector3D N231 = E23.cross(E21);
 
     // normal for sub-triangle T013
 
-    Vector3d E01 = v10 - v00;
-    Vector3d E03 = v01 - v00;
+    Vector3D E01 = v10 - v00;
+    Vector3D E03 = v01 - v00;
 
-    Vector3d N013 = E01.cross(E03);
+    Vector3D N013 = E01.cross(E03);
 
     // normal for sub-triangle T120
 
-    Vector3d E12 = - E21;
-    Vector3d E10 = - E01;
+    Vector3D E12 = - E21;
+    Vector3D E10 = - E01;
 
-    Vector3d N120 = E12.cross(E10);
+    Vector3D N120 = E12.cross(E10);
 
     // normal for sub-triangle T302
 
-    Vector3d E30 = - E03;
-    Vector3d E32 = - E23;
+    Vector3D E30 = - E03;
+    Vector3D E32 = - E23;
 
-    Vector3d N302 = E30.cross(E32);
+    Vector3D N302 = E30.cross(E32);
 
     // all normals must point same way
 
@@ -99,8 +95,8 @@ bool Quad3D::validate() const {
 
 double Quad3D::area() const
 {
-    Triag3D T013(v00.data(), v10.data(), v01.data());
-    Triag3D T231(v11.data(), v01.data(), v10.data());
+    Triag3D T013(v00, v10, v01);
+    Triag3D T231(v11, v01, v10);
 
     return T013.area() + T231.area();
 }
@@ -110,4 +106,3 @@ double Quad3D::area() const
 }  // namespace geometry
 }  // namespace atlas
 
-#endif  // ECKIT_HAVE_EIGEN

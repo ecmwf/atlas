@@ -207,6 +207,7 @@ geometry/Intersect.h
 geometry/Intersect.cc
 geometry/Ray.h
 geometry/Ray.cc
+geometry/Vector3D.h
 )
 
 list( APPEND atlas_srcs

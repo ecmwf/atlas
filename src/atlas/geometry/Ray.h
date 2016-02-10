@@ -11,15 +11,9 @@
 #ifndef atlas_geometry_Ray_h
 #define atlas_geometry_Ray_h
 
-#include <limits>
+#include <iostream>
+#include "atlas/geometry/Vector3d.h"
 
-#include "eckit/eckit_config.h"
-
-#ifdef ECKIT_HAVE_EIGEN
-
-#include "eckit/maths/Eigen.h"
-
-#include "eckit/types/FloatCompare.h"
 
 namespace atlas {
 namespace geometry {
@@ -30,18 +24,18 @@ namespace geometry {
 
 struct Ray {
 
-  Eigen::Vector3d orig;
-  Eigen::Vector3d dir;
+  Vector3D orig;
+  Vector3D dir;
 
   /// initializes ray with origin in point and direction to (0,0,0)
   explicit Ray(const double* p);
 
   Ray(const double* o, const double* d) {
-    orig = Eigen::Vector3d::Map(o);
-    dir = Eigen::Vector3d::Map(d);
+    orig = Vector3D::Map(o);
+    dir = Vector3D::Map(d);
   }
 
-  Eigen::Vector3d operator()(double t) const { return orig + t * dir; }
+  Vector3D operator()(double t) const { return orig + t * dir; }
 
   void print(std::ostream& s) const { s << "Ray[orig=" << orig << ",dir=" << dir << "]"; }
 
@@ -57,6 +51,5 @@ struct Ray {
 }  // namespace geometry
 }  // namespace atlas
 
-#endif  // ECKIT_HAVE_EIGEN
 
 #endif

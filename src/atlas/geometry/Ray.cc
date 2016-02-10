@@ -10,21 +10,14 @@
 
 #include "atlas/geometry/Ray.h"
 
-#include "eckit/eckit_config.h"
-
-#ifdef ECKIT_HAVE_EIGEN
-
-#include "eckit/maths/Eigen.h"
 
 //----------------------------------------------------------------------------------------------------------------------
-
-using Eigen::Vector3d;
 
 namespace atlas {
 namespace geometry {
 
 Ray::Ray(const double *p) {
-    orig = Eigen::Vector3d::Map(p);
+    orig = Vector3D::Map(p);
     dir = -orig;
 }
 
@@ -33,4 +26,3 @@ Ray::Ray(const double *p) {
 }  // namespace geometry
 }  // namespace atlas
 
-#endif  // ECKIT_HAVE_EIGEN
