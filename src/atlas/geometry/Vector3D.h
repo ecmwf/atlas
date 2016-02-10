@@ -14,23 +14,29 @@
 #include <iostream>
 #include <cmath>
 
-#include "eckit/eckit_config.h"
+#include "atlas/atlas_config.h"
 
-#ifdef ECKIT_HAVE_EIGEN
-#include "eckit/maths/Eigen.h"
-#endif  // ECKIT_HAVE_EIGEN
+#ifdef ATLAS_HAVE_EIGEN
+
+#define EIGEN_NO_AUTOMATIC_RESIZING
+//#define EIGEN_DONT_ALIGN
+//#define EIGEN_DONT_VECTORIZE
+
+#include <Eigen/Core>
+#include <Eigen/Dense>
+
+#endif
 
 namespace atlas {
 namespace geometry {
 
+//----------------------------------------------------------------------------------------------------------------------
 
-#ifdef ECKIT_HAVE_EIGEN
+#ifdef ATLAS_HAVE_EIGEN
 
 typedef  Eigen::Vector3d Vector3D;
 
 #else
-
-
 
 class Vector3D {
   private:
@@ -105,6 +111,5 @@ Vector3D operator*(double, const Vector3D &);
 
 }  // namespace geometry
 }  // namespace atlas
-
 
 #endif

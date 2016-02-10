@@ -8,8 +8,9 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/geometry/Ray.h"
+#include <iostream>
 
+#include "atlas/geometry/Ray.h"
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -19,6 +20,18 @@ namespace geometry {
 Ray::Ray(const double *p) {
     orig = Vector3D::Map(p);
     dir = -orig;
+}
+
+Ray::Ray(const double* o, const double* d) {
+    orig = Vector3D::Map(o);
+    dir = Vector3D::Map(d);
+}
+
+void Ray::print(std::ostream& s) const { s << "Ray[orig=" << orig << ",dir=" << dir << "]"; }
+
+std::ostream& operator<<(std::ostream& s, const Ray& p) {
+    p.print(s);
+    return s;
 }
 
 //----------------------------------------------------------------------------------------------------------------------

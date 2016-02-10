@@ -8,18 +8,14 @@
  * does it submit to any jurisdiction.
  */
 
-
-#include "atlas/geometry/Quad3D.h"
-
 #include <cmath>
 
-#include "eckit/eckit_config.h"
 #include "eckit/exception/Exceptions.h"
 
 #include "atlas/runtime/Log.h"
+#include "atlas/geometry/Ray.h"
 #include "atlas/geometry/Quad3D.h"
 #include "atlas/geometry/Triag3D.h"
-
 
 namespace atlas {
 namespace geometry {

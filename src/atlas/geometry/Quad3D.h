@@ -13,11 +13,13 @@
 
 #include <limits>
 
-#include "atlas/geometry/Ray.h"
+#include "atlas/geometry/Vector3D.h"
 #include "atlas/geometry/Intersect.h"
 
 namespace atlas {
 namespace geometry {
+
+class Ray;
 
 //----------------------------------------------------------------------------------------------------------------------
 

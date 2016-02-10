@@ -149,6 +149,14 @@ if( HAVE_TESSELATION )
     endif()
 endif()
 
+### Eigen
+
+ecbuild_add_option( FEATURE EIGEN
+                    DESCRIPTION "Eigen support"
+                    TYPE RECOMMENDED
+                    PURPOSE "Eigen backend: accelerated small matrix-vector operations"
+                    REQUIRED_PACKAGES Eigen3 )
+
 ### Type for Global indices and unique point id's
 
 set( ATLAS_BITS_GLOBAL 64 )

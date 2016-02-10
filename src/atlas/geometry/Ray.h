@@ -11,9 +11,9 @@
 #ifndef atlas_geometry_Ray_h
 #define atlas_geometry_Ray_h
 
-#include <iostream>
-#include "atlas/geometry/Vector3D.h"
+#include <iosfwd>
 
+#include "atlas/geometry/Vector3D.h"
 
 namespace atlas {
 namespace geometry {
@@ -30,19 +30,13 @@ struct Ray {
   /// initializes ray with origin in point and direction to (0,0,0)
   explicit Ray(const double* p);
 
-  Ray(const double* o, const double* d) {
-    orig = Vector3D::Map(o);
-    dir = Vector3D::Map(d);
-  }
+  Ray(const double* o, const double* d);
 
   Vector3D operator()(double t) const { return orig + t * dir; }
 
-  void print(std::ostream& s) const { s << "Ray[orig=" << orig << ",dir=" << dir << "]"; }
+  void print(std::ostream& s) const;
 
-  friend std::ostream& operator<<(std::ostream& s, const Ray& p) {
-    p.print(s);
-    return s;
-  }
+  friend std::ostream& operator<<(std::ostream& s, const Ray& p);
 
 };
 
