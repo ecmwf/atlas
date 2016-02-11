@@ -155,5 +155,78 @@ END_TEST
 
 ! -----------------------------------------------------------------------------
 
+TEST( test_multiblockconnectivity )
+  use atlas_connectivity_module
+  use iso_c_binding
+
+  implicit none
+  type(atlas_MultiBlockConnectivity) :: multiblock
+  type(atlas_BlockConnectivity) :: block
+  integer(c_int), pointer :: row(:), data(:,:)
+  integer(c_size_t), pointer :: cols(:)
+  integer(c_int) :: ncols, nblocks
+
+  write(*,*) "test_multiblockconnectivity starting"
+
+  multiblock = atlas_MultiBlockConnectivity()
+
+  FCTEST_CHECK_EQUAL(multiblock%rows(),0_c_size_t)
+  FCTEST_CHECK_EQUAL(multiblock%blocks(),0_c_size_t)
+
+  call multiblock%add(2,4, &
+    & [ 1, 2, 3, 4,  &
+    &   5, 6, 7, 8 ] )
+
+  FCTEST_CHECK_EQUAL(multiblock%mincols(),4_c_size_t)
+  FCTEST_CHECK_EQUAL(multiblock%maxcols(),4_c_size_t)
+  FCTEST_CHECK_EQUAL(multiblock%rows(),   2_c_size_t)
+  FCTEST_CHECK_EQUAL(multiblock%blocks(), 1_c_size_t)
+
+  call multiblock%add(2,3, &
+    & [ 9,  10, 11,  &
+    &   12, 13, 14 ] )
+
+  FCTEST_CHECK_EQUAL(multiblock%mincols(),3_c_size_t)
+  FCTEST_CHECK_EQUAL(multiblock%maxcols(),4_c_size_t)
+  FCTEST_CHECK_EQUAL(multiblock%blocks(), 2_c_size_t)
+
+  block = multiblock%block(1_c_size_t)
+
+  FCTEST_CHECK_EQUAL( block%owners(), 2 )
+  FCTEST_CHECK_EQUAL( block%rows(), 2_c_size_t )
+  FCTEST_CHECK_EQUAL( block%cols(), 4_c_size_t )
+
+  call block%data(data)
+  FCTEST_CHECK_EQUAL(data(1,1), 1)
+  FCTEST_CHECK_EQUAL(data(2,1), 2)
+  FCTEST_CHECK_EQUAL(data(3,1), 3)
+  FCTEST_CHECK_EQUAL(data(4,1), 4)
+  FCTEST_CHECK_EQUAL(data(1,2), 5)
+  FCTEST_CHECK_EQUAL(data(2,2), 6)
+  FCTEST_CHECK_EQUAL(data(3,2), 7)
+  FCTEST_CHECK_EQUAL(data(4,2), 8)
+
+  block = multiblock%block(2_c_size_t)
+
+  FCTEST_CHECK_EQUAL( block%owners(), 2 )
+  FCTEST_CHECK_EQUAL( block%rows(), 2_c_size_t )
+  FCTEST_CHECK_EQUAL( block%cols(), 3_c_size_t )
+
+  call block%data(data)
+  FCTEST_CHECK_EQUAL(data(1,1), 9)
+  FCTEST_CHECK_EQUAL(data(2,1), 10)
+  FCTEST_CHECK_EQUAL(data(3,1), 11)
+  FCTEST_CHECK_EQUAL(data(1,2), 12)
+  FCTEST_CHECK_EQUAL(data(2,2), 13)
+  FCTEST_CHECK_EQUAL(data(3,2), 14)
+
+  call block%final()
+  call multiblock%final()
+
+END_TEST
+
+! -----------------------------------------------------------------------------
+
+
 END_TESTSUITE
 

@@ -577,6 +577,52 @@ int atlas__Connectivity__missing_value(const Connectivity* This)
   return This->missing_value() TO_FORTRAN;
 }
 
+MultiBlockConnectivity* atlas__MultiBlockConnectivity__create()
+{
+  MultiBlockConnectivity* connectivity = 0;
+  ATLAS_ERROR_HANDLING(
+    connectivity = new MultiBlockConnectivity();
+  );
+  return connectivity;
+}
+
+size_t atlas__MultiBlockConnectivity__blocks(const MultiBlockConnectivity* This)
+{
+  return This->blocks();
+}
+
+BlockConnectivity* atlas__MultiBlockConnectivity__block(MultiBlockConnectivity* This, size_t block_idx)
+{
+  ATLAS_ERROR_HANDLING( ASSERT(This != 0 ) );
+  BlockConnectivity* block = &This->block(block_idx);
+  ASSERT( block != 0 );
+  return block;
+}
+
+void atlas__BlockConnectivity__delete(BlockConnectivity* This)
+{
+  ATLAS_ERROR_HANDLING( delete This );
+}
+
+size_t atlas__BlockConnectivity__rows(const BlockConnectivity* This)
+{
+  ATLAS_ERROR_HANDLING( ASSERT(This != 0 ) );
+  return This->rows();
+}
+
+size_t atlas__BlockConnectivity__cols(const BlockConnectivity* This)
+{
+  ATLAS_ERROR_HANDLING( ASSERT(This != 0 ) );
+  return This->cols();
+}
+
+void atlas__BlockConnectivity__data(BlockConnectivity* This, int* &data, size_t &rows, size_t &cols)
+{
+  ATLAS_ERROR_HANDLING( ASSERT(This != 0 ) );
+  data = This->data();
+  rows = This->rows();
+  cols = This->cols();
+}
 
 }
 

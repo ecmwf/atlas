@@ -941,6 +941,8 @@ Field& build_edges_global_idx( Mesh& mesh )
 #if !DEPRECATE_OLD_FUNCTIONSPACE
   build_edges_global_idx_convert_to_old( mesh.function_space("edges"), mesh.nodes() );
 #endif
+
+  return f;
 }
 
 // ------------------------------------------------------------------

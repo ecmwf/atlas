@@ -423,6 +423,7 @@ inline void BlockConnectivity::set( size_t row_idx, size_t col_idx, const idx_t 
 extern "C"
 {
 Connectivity* atlas__Connectivity__create();
+MultiBlockConnectivity* atlas__MultiBlockConnectivity__create();
 void atlas__Connectivity__delete(Connectivity* This);
 void atlas__Connectivity__displs(Connectivity* This, size_t* &displs, size_t &size);
 void atlas__Connectivity__counts(Connectivity* This, size_t* &counts, size_t &size);
@@ -431,6 +432,14 @@ size_t atlas__Connectivity__rows(const Connectivity* This);
 void atlas__Connectivity__add_values(Connectivity* This, size_t rows, size_t cols, int values[]);
 void atlas__Connectivity__add_missing(Connectivity* This, size_t rows, size_t cols);
 int atlas__Connectivity__missing_value(const Connectivity* This);
+
+size_t atlas__MultiBlockConnectivity__blocks(const MultiBlockConnectivity* This);
+BlockConnectivity* atlas__MultiBlockConnectivity__block(MultiBlockConnectivity* This, size_t block_idx);
+
+size_t atlas__BlockConnectivity__rows(const BlockConnectivity* This);
+size_t atlas__BlockConnectivity__cols(const BlockConnectivity* This);
+void atlas__BlockConnectivity__data(BlockConnectivity* This, int* &data, size_t &rows, size_t &cols);
+void atlas__BlockConnectivity__delete(BlockConnectivity* This);
 }
 
 #undef FROM_FORTRAN

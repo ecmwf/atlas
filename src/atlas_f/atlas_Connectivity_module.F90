@@ -45,23 +45,50 @@ contains
   procedure, private :: add_missing_args_int => atlas_Connectivity__add_missing_args_int
   procedure, private :: add_missing_args_size_t => atlas_Connectivity__add_missing_args_size_t
   generic, public :: add => add_values_args_int, add_values_args_size_t, add_missing_args_int, add_missing_args_size_t
+end type
 
+!---------------------------------------
+! atlas_MultiBlockConnectivity         !
+!---------------------------------------
+
+type, extends(atlas_Connectivity), public :: atlas_MultiBlockConnectivity
+contains
+! Public methods
+  procedure, public :: blocks   => atlas_MultiBlockConnectivity__blocks
+  procedure, public :: block    => atlas_MultiBlockConnectivity__block
+end type
+
+!----------------------------!
+! atlas_BlockConnectivity    !
+!----------------------------!
+
+type, extends(atlas_refcounted), public :: atlas_BlockConnectivity
+contains
+  procedure, public :: copy     => atlas_BlockConnectivity__copy
+  procedure, public :: delete   => atlas_BlockConnectivity__delete
+  procedure, public :: rows     => atlas_BlockConnectivity__rows
+  procedure, public :: cols     => atlas_BlockConnectivity__cols
+  procedure, public :: data     => atlas_BlockConnectivity__data
 end type
 
 interface atlas_Connectivity
   module procedure Connectivity_ctr
 end interface
 
+interface atlas_MultiBlockConnectivity
+  module procedure MultiBlockConnectivity_ctr
+end interface
+
 !-------------------------------
 ! Helper types                 !
 !-------------------------------
 
-type, public :: atlas_ConnectivityAccessRow
+type, private :: atlas_ConnectivityAccessRow
   integer, pointer :: col(:)
 contains
 end type
 
-type, public :: atlas_ConnectivityAccess
+type, private :: atlas_ConnectivityAccess
   integer(c_int),    private, pointer :: values_(:) => null()
   integer(c_size_t), private, pointer :: displs_(:) => null()
   integer(c_size_t), public,  pointer :: cols(:)    => null()
@@ -117,25 +144,8 @@ contains
 function Connectivity_ctr() result(connectivity)
   use atlas_connectivity_c_binding
   type(atlas_Connectivity) :: connectivity
-  type(c_ptr) :: ctxt_update
-  type(c_ptr) :: ctxt_delete
-  integer(c_int) :: have_ctxt_update
-  integer(c_int) :: have_ctxt_delete
   call connectivity%reset_c_ptr( atlas__Connectivity__create() )
-  have_ctxt_update = atlas__connectivity__ctxt_update(connectivity%c_ptr(),ctxt_update)
-  if( have_ctxt_update == 1 ) then
-    call c_f_pointer(ctxt_update,connectivity%access)
-  else
-    allocate( connectivity%access )
-    call atlas__connectivity__register_update( connectivity%c_ptr(), c_funloc(update_access_c), c_loc(connectivity%access) )
-    connectivity%access%connectivity_ptr = connectivity%c_ptr()
-    call update_access(connectivity%access)
-  endif
-
-  have_ctxt_delete = atlas__connectivity__ctxt_delete(connectivity%c_ptr(),ctxt_delete)
-  if( have_ctxt_update /= 1 ) then
-    call atlas__connectivity__register_delete( connectivity%c_ptr(), c_funloc(delete_access_c), c_loc(connectivity%access) )
-  endif
+  call setup_access(connectivity)
   call connectivity%return()
 end function
 
@@ -154,6 +164,9 @@ subroutine atlas_Connectivity__copy(this,obj_in)
   class(atlas_Connectivity), pointer :: obj_in_cast
   select type (ptr => obj_in)
     type is (atlas_Connectivity)
+      obj_in_cast => ptr
+      if( associated( obj_in_cast%access ) ) this%access => obj_in_cast%access
+    type is (atlas_MultiBlockConnectivity)
       obj_in_cast => ptr
       if( associated( obj_in_cast%access ) ) this%access => obj_in_cast%access
   end select
@@ -289,6 +302,94 @@ subroutine atlas_Connectivity__add_missing_args_int(this,rows,cols)
   call atlas__connectivity__add_missing(this%c_ptr(),int(rows,c_size_t),int(cols,c_size_t))
 end subroutine
 
+!========================================================
+
+function MultiBlockConnectivity_ctr() result(connectivity)
+  use atlas_connectivity_c_binding
+  type(atlas_MultiBlockConnectivity) :: connectivity
+  call connectivity%reset_c_ptr( atlas__MultiBlockConnectivity__create() )
+  call setup_access(connectivity)
+  call connectivity%return()
+end function
+
+function atlas_MultiBlockConnectivity__blocks(this) result(val)
+  use atlas_connectivity_c_binding
+  integer(c_size_t) :: val
+  class(atlas_MultiBlockConnectivity), intent(in) :: this
+  val = atlas__MultiBlockConnectivity__blocks(this%c_ptr())
+end function
+
+function atlas_MultiBlockConnectivity__block(this,block_idx) result(block)
+  use atlas_connectivity_c_binding
+  type(atlas_BlockConnectivity) :: block
+  class(atlas_MultiBlockConnectivity), intent(in) :: this
+  integer(c_size_t) :: block_idx
+  call block%reset_c_ptr( atlas__MultiBlockConnectivity__block(this%c_ptr(),block_idx-1) )
+end function
+
+!========================================================
+
+subroutine atlas_BlockConnectivity__delete(this)
+  use atlas_connectivity_c_binding
+  class(atlas_BlockConnectivity), intent(inout) :: this
+  if ( .not. this%is_null() ) then
+    call atlas__BlockConnectivity__delete(this%c_ptr())
+  end if
+  call this%reset_c_ptr()
+end subroutine
+
+subroutine atlas_BlockConnectivity__copy(this,obj_in)
+  class(atlas_BlockConnectivity), intent(inout) :: this
+  class(atlas_RefCounted),   target, intent(in) :: obj_in
+end subroutine
+
+subroutine atlas_BlockConnectivity__data(this,data)
+  use atlas_connectivity_c_binding
+  class(atlas_BlockConnectivity), intent(in) :: this
+  integer(c_int), pointer, intent(out) :: data(:,:)
+  type(c_ptr) :: data_cptr
+  integer(c_size_t) :: rows
+  integer(c_size_t) :: cols
+  call atlas__BlockConnectivity__data(this%c_ptr(),data_cptr,rows,cols)
+  call c_f_pointer (data_cptr, data, [cols,rows])
+end subroutine
+
+function atlas_BlockConnectivity__rows(this) result(val)
+  use atlas_connectivity_c_binding
+  integer(c_size_t) :: val
+  class(atlas_BlockConnectivity), intent(in) :: this
+  val = atlas__BlockConnectivity__rows(this%c_ptr())
+end function
+
+function atlas_BlockConnectivity__cols(this) result(val)
+  use atlas_connectivity_c_binding
+  integer(c_size_t) :: val
+  class(atlas_BlockConnectivity), intent(in) :: this
+  val = atlas__BlockConnectivity__cols(this%c_ptr())
+end function
+
+!========================================================
+
+subroutine setup_access(connectivity)
+  class(atlas_Connectivity), intent(inout) :: connectivity
+  type(c_ptr) :: ctxt_update
+  type(c_ptr) :: ctxt_delete
+  integer(c_int) :: have_ctxt_update
+  integer(c_int) :: have_ctxt_delete
+  have_ctxt_update = atlas__connectivity__ctxt_update(connectivity%c_ptr(),ctxt_update)
+  if( have_ctxt_update == 1 ) then
+    call c_f_pointer(ctxt_update,connectivity%access)
+  else
+    allocate( connectivity%access )
+    call atlas__connectivity__register_update( connectivity%c_ptr(), c_funloc(update_access_c), c_loc(connectivity%access) )
+    connectivity%access%connectivity_ptr = connectivity%c_ptr()
+    call update_access(connectivity%access)
+  endif
+  have_ctxt_delete = atlas__connectivity__ctxt_delete(connectivity%c_ptr(),ctxt_delete)
+  if( have_ctxt_update /= 1 ) then
+    call atlas__connectivity__register_delete( connectivity%c_ptr(), c_funloc(delete_access_c), c_loc(connectivity%access) )
+  endif
+end subroutine
 
 subroutine update_access_c(this_ptr) bind(c)
  type(c_ptr), value :: this_ptr
@@ -357,6 +458,7 @@ subroutine delete_access(this)
   if( associated( this%row ) )    deallocate(this%row)
   if( associated( this%padded_) ) deallocate(this%padded_)
 end subroutine
+
 
 end module atlas_connectivity_module
 
