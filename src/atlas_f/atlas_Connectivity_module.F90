@@ -39,6 +39,7 @@ contains
   procedure, public :: row      => atlas_Connectivity__row
   procedure, public :: copy     => atlas_Connectivity__copy
   procedure, public :: delete   => atlas_Connectivity__delete
+  procedure, public :: missing_value  => atlas_Connectivity__missing_value
   procedure, private :: add_values_args_int => atlas_Connectivity__add_values_args_int
   procedure, private :: add_values_args_size_t => atlas_Connectivity__add_values_args_size_t
   procedure, private :: add_missing_args_int => atlas_Connectivity__add_missing_args_int
@@ -61,13 +62,14 @@ contains
 end type
 
 type, public :: atlas_ConnectivityAccess
-  integer(c_int), private, pointer :: values_(:) => null()
+  integer(c_int),    private, pointer :: values_(:) => null()
   integer(c_size_t), private, pointer :: displs_(:) => null()
   integer(c_size_t), public,  pointer :: cols(:)    => null()
   type(atlas_ConnectivityAccessRow), public, pointer :: row(:) => null()
   integer(c_size_t), private :: rows_
   integer, private, pointer :: padded_(:,:) => null()
   integer(c_size_t), private :: maxcols_, mincols_
+  integer(c_int), private :: missing_value_
   type(c_ptr), private :: connectivity_ptr
 contains
   procedure, public :: rows  => access_rows
@@ -190,6 +192,13 @@ pure function atlas_Connectivity__rows(this) result(val)
   val = this%access%rows_
 end function
 
+function atlas_Connectivity__missing_value(this) result(val)
+  use atlas_connectivity_c_binding
+  integer(c_int) :: val
+  class(atlas_Connectivity), intent(in) :: this
+  val = atlas__Connectivity__missing_value(this%c_ptr())
+end function
+
 pure function atlas_Connectivity__cols(this,r) result(val)
   integer(c_size_t) :: val
   class(atlas_Connectivity), intent(in) :: this
@@ -225,8 +234,12 @@ subroutine atlas_Connectivity__data(this, data, ncols)
   integer(c_int) :: maxcols
   maxcols = this%maxcols()
   if( maxcols == this%mincols() ) then
-    call c_f_pointer (c_loc(this%access%values_(1)), data, [maxcols,int(this%access%rows_,c_int)])
-    if( present(ncols) ) ncols = maxcols
+    if( size(this%access%values_) > 0 ) then
+      call c_f_pointer (c_loc(this%access%values_(1)), data, [maxcols,int(this%access%rows_,c_int)])
+      if( present(ncols) ) then
+        ncols = maxcols
+      endif
+    endif
   else
     write(0,*) "ERROR: Cannot point connectivity pointer data(:,:) to irregular table"
   endif
@@ -296,6 +309,7 @@ subroutine update_access(this)
   integer(c_size_t) :: displs_size
   integer(c_size_t) :: counts_size
 
+  this%missing_value_ = atlas__Connectivity__missing_value(this%connectivity_ptr)
   call atlas__Connectivity__values(this%connectivity_ptr,values_cptr,values_size)
   call atlas__Connectivity__displs(this%connectivity_ptr,displs_cptr,displs_size)
   call atlas__Connectivity__counts(this%connectivity_ptr,counts_cptr,counts_size)
@@ -321,6 +335,7 @@ subroutine update_padded(this)
   integer(c_size_t) :: jrow, jcol
   if( associated(this%padded_) ) deallocate(this%padded_)
   allocate(this%padded_(this%maxcols_,this%rows()))
+  this%padded_(:,:) = this%missing_value_
   do jrow=1,this%rows()
     do jcol=1,this%cols(jrow)
       this%padded_(jcol,jrow) = this%value(jcol,jrow)

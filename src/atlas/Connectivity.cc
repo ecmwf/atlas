@@ -572,6 +572,11 @@ size_t atlas__Connectivity__rows(const Connectivity* This)
   return This->rows();
 }
 
+int atlas__Connectivity__missing_value(const Connectivity* This)
+{
+  return This->missing_value() TO_FORTRAN;
+}
+
 
 }
 

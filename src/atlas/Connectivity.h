@@ -430,6 +430,7 @@ void atlas__Connectivity__values(Connectivity* This, int* &values, size_t &size)
 size_t atlas__Connectivity__rows(const Connectivity* This);
 void atlas__Connectivity__add_values(Connectivity* This, size_t rows, size_t cols, int values[]);
 void atlas__Connectivity__add_missing(Connectivity* This, size_t rows, size_t cols);
+int atlas__Connectivity__missing_value(const Connectivity* This);
 }
 
 #undef FROM_FORTRAN

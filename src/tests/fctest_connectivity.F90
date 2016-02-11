@@ -24,14 +24,16 @@ TEST( test_connectivity )
 
   implicit none
   type(atlas_Connectivity) :: connectivity
-  integer(c_int), pointer :: padded(:,:), row(:), ncols, data(:,:)
+  integer(c_int), pointer :: padded(:,:), row(:), data(:,:)
   integer(c_size_t), pointer :: cols(:)
+  integer(c_int) :: ncols
 
   write(*,*) "test_connectivity starting"
 
   connectivity = atlas_Connectivity()
 
   FCTEST_CHECK_EQUAL(connectivity%rows(),0_c_size_t)
+  FCTEST_CHECK_EQUAL(connectivity%missing_value(),0)
 
   call connectivity%add(2,4, &
     & [ 1, 2, 3, 4,  &
