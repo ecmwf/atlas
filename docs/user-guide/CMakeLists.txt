@@ -57,7 +57,7 @@ ENDFOREACH()
 
 
 # PDF GENERATION ==============================================================
-add_custom_target( atlas-user-guide-pdf
+add_custom_target(atlas-user-guide-pdf
     export TEXINPUTS=${CMAKE_SOURCE_DIR}//: &&
     ${PDFLATEX} --output-directory ${USERGUIDE} ${USERGUIDESRC}/user-guide.tex
     COMMAND export TEXINPUTS=${CMAKE_SOURCE_DIR}//: &&
