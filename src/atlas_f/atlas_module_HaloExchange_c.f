@@ -16,6 +16,11 @@ subroutine atlas_HaloExchange__delete(this)
   call this%reset_c_ptr()
 end subroutine atlas_HaloExchange__delete
 
+subroutine atlas_HaloExchange__copy(this,obj_in)
+  class(atlas_HaloExchange), intent(inout) :: this
+  class(atlas_RefCounted), target, intent(in) :: obj_in
+end subroutine
+
 subroutine HaloExchange__setup(this, part, remote_idx)
   class(atlas_HaloExchange), intent(in) :: this
   integer, intent(in) :: part(:)

@@ -31,6 +31,12 @@ subroutine atlas_Nabla__delete(this)
   call this%reset_c_ptr()
 end subroutine atlas_Nabla__delete
 
+subroutine atlas_Nabla__copy(this,obj_in)
+  class(atlas_Nabla), intent(inout) :: this
+  class(atlas_RefCounted), target, intent(in) :: obj_in
+end subroutine
+
+
 subroutine atlas_Nabla__gradient(this,scalar,grad)
   use atlas_nabla_c_binding
   class(atlas_Nabla), intent(in) :: this

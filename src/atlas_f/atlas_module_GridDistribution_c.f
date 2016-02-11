@@ -32,4 +32,9 @@ subroutine atlas_GridDistribution__delete( this )
   call this%reset_c_ptr()
 end subroutine
 
+subroutine atlas_GridDistribution__copy(this,obj_in)
+  class(atlas_GridDistribution), intent(inout) :: this
+  class(atlas_RefCounted), target, intent(in) :: obj_in
+end subroutine
+
 

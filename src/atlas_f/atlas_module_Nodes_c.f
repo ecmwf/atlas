@@ -131,3 +131,8 @@ end function
 subroutine atlas_mesh_Nodes__delete(this)
   class(atlas_mesh_Nodes), intent(inout) :: this
 end subroutine
+
+subroutine atlas_mesh_Nodes__copy(this,obj_in)
+  class(atlas_mesh_Nodes), intent(inout) :: this
+  class(atlas_RefCounted), target, intent(in) :: obj_in
+end subroutine

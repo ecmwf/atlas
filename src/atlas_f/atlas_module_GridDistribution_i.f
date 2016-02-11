@@ -22,6 +22,7 @@ contains
   procedure, public :: final => atlas_GridDistribution__final
 
   procedure, public :: delete => atlas_GridDistribution__delete
+  procedure, public :: copy => atlas_GridDistribution__copy
 
 END TYPE atlas_GridDistribution
 

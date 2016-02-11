@@ -48,6 +48,7 @@ contains
       & HaloExchange__execute_real64_r4
 
   procedure, public :: delete => atlas_HaloExchange__delete
+  procedure, public :: copy => atlas_HaloExchange__copy
 
 END TYPE atlas_HaloExchange
 !------------------------------------------------------------------------------

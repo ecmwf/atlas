@@ -257,3 +257,8 @@ function Metadata__json(this) result(json)
   if( json_allocated == 1 ) call atlas_free(json_cptr)
 end function Metadata__json
 
+subroutine atlas_Metadata__copy(this,obj_in)
+  class(atlas_Metadata), intent(inout) :: this
+  class(atlas_RefCounted), target, intent(in) :: obj_in
+end subroutine
+

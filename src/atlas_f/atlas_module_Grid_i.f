@@ -17,8 +17,9 @@ TYPE, extends(atlas_RefCounted) :: atlas_Grid
 
 !------------------------------------------------------------------------------
 contains
-  procedure :: npts => Grid__npts
-  procedure, public :: delete => Grid__delete
+  procedure :: npts => atlas_Grid__npts
+  procedure, public :: delete => atlas_Grid__delete
+  procedure, public :: copy => atlas_Grid__copy
 END TYPE atlas_Grid
 
 !------------------------------------------------------------------------------

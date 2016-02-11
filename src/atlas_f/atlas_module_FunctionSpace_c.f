@@ -22,6 +22,13 @@ subroutine atlas_NextFunctionSpace__delete(this)
   call this%reset_c_ptr()
 end subroutine atlas_NextFunctionSpace__delete
 
+
+subroutine atlas_NextFunctionSpace__copy(this,obj_in)
+  class(atlas_NextFunctionSpace), intent(inout) :: this
+  class(atlas_RefCounted), target, intent(in) :: obj_in
+end subroutine
+
+
 function atlas_NextFunctionSpace__name(this) result(name)
   class(atlas_NextFunctionSpace), intent(in) :: this
   character(len=:), allocatable :: name
@@ -359,4 +366,10 @@ end function FunctionSpace__get_checksum
 
 subroutine atlas_FunctionSpace__delete(this)
   class(atlas_FunctionSpace), intent(inout) :: this
+end subroutine
+
+
+subroutine atlas_FunctionSpace__copy(this,obj_in)
+  class(atlas_FunctionSpace), intent(inout) :: this
+  class(atlas_RefCounted), target, intent(in) :: obj_in
 end subroutine

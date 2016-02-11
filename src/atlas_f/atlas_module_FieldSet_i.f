@@ -29,6 +29,7 @@ contains
   procedure, public :: add => FieldSet__add_field
   generic :: field => field_by_name, field_by_idx
   procedure, public :: delete => Fieldset__delete
+  procedure, public :: copy => atlas_Fieldset__copy
 END TYPE atlas_FieldSet
 !------------------------------------------------------------------------------
 

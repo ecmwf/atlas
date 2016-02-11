@@ -18,6 +18,7 @@ TYPE, extends(atlas_RefCounted) :: atlas_MeshGenerator
 !------------------------------------------------------------------------------
 contains
   procedure, public :: delete => atlas_MeshGenerator__delete
+  procedure, public :: copy => atlas_MeshGenerator__copy
   procedure, public :: generate => atlas_MeshGenerator__generate
 
 END TYPE atlas_MeshGenerator

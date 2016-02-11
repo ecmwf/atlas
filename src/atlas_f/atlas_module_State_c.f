@@ -34,6 +34,13 @@ subroutine atlas_State__delete(this)
   call this%reset_c_ptr()
 end subroutine
 
+
+subroutine atlas_State__copy(this,obj_in)
+  class(atlas_State), intent(inout) :: this
+  class(atlas_RefCounted), target, intent(in) :: obj_in
+end subroutine
+
+
 subroutine atlas_State__add(this,field)
   use atlas_state_c_binding
   class(atlas_State), intent(inout) :: this

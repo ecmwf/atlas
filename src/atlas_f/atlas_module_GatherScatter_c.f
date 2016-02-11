@@ -8,13 +8,19 @@ function atlas_GatherScatter__ctor() result(gather)
   call gather%reset_c_ptr( atlas__GatherScatter__new() )
 end function atlas_GatherScatter__ctor
 
-subroutine GatherScatter__delete(this)
+subroutine atlas_GatherScatter__delete(this)
   class(atlas_GatherScatter), intent(inout) :: this
   if ( .not. this%is_null() ) then
     call atlas__GatherScatter__delete(this%c_ptr())
   end if
   call this%reset_c_ptr()
-end subroutine GatherScatter__delete
+end subroutine atlas_GatherScatter__delete
+
+
+subroutine atlas_GatherScatter__copy(this,obj_in)
+  class(atlas_GatherScatter), intent(inout) :: this
+  class(atlas_RefCounted), target, intent(in) :: obj_in
+end subroutine
 
 subroutine GatherScatter__setup32(this, part, remote_idx, glb_idx, opt_max_glb_idx)
   class(atlas_GatherScatter), intent(in) :: this

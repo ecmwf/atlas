@@ -1,0 +1,157 @@
+! (C) Copyright 1996-2015 ECMWF.
+! This software is licensed under the terms of the Apache Licence Version 2.0
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+! In applying this licence, ECMWF does not waive the privileges and immunities
+! granted to it by virtue of its status as an intergovernmental organisation nor
+! does it submit to any jurisdiction.
+
+! This File contains Unit Tests for testing the
+! C++ / Fortran Interfaces to the Connectivity
+! @author Willem Deconinck
+
+#include "fctest/fctest.h"
+
+
+! -----------------------------------------------------------------------------
+
+TESTSUITE(fctest_atlas_Connectivity)
+
+! -----------------------------------------------------------------------------
+
+TEST( test_connectivity )
+  use atlas_connectivity_module
+  use iso_c_binding
+
+  implicit none
+  type(atlas_Connectivity) :: connectivity
+  integer(c_int), pointer :: padded(:,:), row(:), ncols, data(:,:)
+  integer(c_size_t), pointer :: cols(:)
+
+  write(*,*) "test_connectivity starting"
+
+  connectivity = atlas_Connectivity()
+
+  FCTEST_CHECK_EQUAL(connectivity%rows(),0_c_size_t)
+
+  call connectivity%add(2,4, &
+    & [ 1, 2, 3, 4,  &
+    &   5, 6, 7, 8 ] )
+
+  FCTEST_CHECK_EQUAL(connectivity%mincols(),4_c_size_t)
+  FCTEST_CHECK_EQUAL(connectivity%maxcols(),4_c_size_t)
+  FCTEST_CHECK_EQUAL(connectivity%rows(),   2_c_size_t)
+
+
+  call connectivity%data(data,ncols)
+  FCTEST_CHECK_EQUAL(ncols,4)
+  FCTEST_CHECK_EQUAL(data(1,1), 1)
+  FCTEST_CHECK_EQUAL(data(2,1), 2)
+  FCTEST_CHECK_EQUAL(data(3,1), 3)
+  FCTEST_CHECK_EQUAL(data(4,1), 4)
+  FCTEST_CHECK_EQUAL(data(1,2), 5)
+  FCTEST_CHECK_EQUAL(data(2,2), 6)
+  FCTEST_CHECK_EQUAL(data(3,2), 7)
+  FCTEST_CHECK_EQUAL(data(4,2), 8)
+
+  call connectivity%add(2,3, &
+    & [ 9,  10, 11,  &
+    &   12, 13, 14 ] )
+
+  FCTEST_CHECK_EQUAL(connectivity%mincols(),3_c_size_t)
+  FCTEST_CHECK_EQUAL(connectivity%maxcols(),4_c_size_t)
+  FCTEST_CHECK_EQUAL(connectivity%rows(),   4_c_size_t)
+
+  call connectivity%add(2,4)
+  call connectivity%add(2,3)
+
+  !============= Functional access =============!
+
+  FCTEST_CHECK_EQUAL(connectivity%value(1,1), 1)
+  FCTEST_CHECK_EQUAL(connectivity%value(2,1), 2)
+  FCTEST_CHECK_EQUAL(connectivity%value(3,1), 3)
+  FCTEST_CHECK_EQUAL(connectivity%value(4,1), 4)
+  FCTEST_CHECK_EQUAL(connectivity%value(1,2), 5)
+  FCTEST_CHECK_EQUAL(connectivity%value(2,2), 6)
+  FCTEST_CHECK_EQUAL(connectivity%value(3,2), 7)
+  FCTEST_CHECK_EQUAL(connectivity%value(4,2), 8)
+
+  FCTEST_CHECK_EQUAL(connectivity%value(1,3), 9)
+  FCTEST_CHECK_EQUAL(connectivity%value(2,3), 10)
+  FCTEST_CHECK_EQUAL(connectivity%value(3,3), 11)
+  FCTEST_CHECK_EQUAL(connectivity%value(1,4), 12)
+  FCTEST_CHECK_EQUAL(connectivity%value(2,4), 13)
+  FCTEST_CHECK_EQUAL(connectivity%value(3,4), 14)
+
+  !============= Padded Data pointer access =============!
+
+  call connectivity%data(data,ncols)
+
+
+  call connectivity%padded_data(padded,cols)
+  FCTEST_CHECK_EQUAL(padded(1,1), 1)
+  FCTEST_CHECK_EQUAL(padded(2,1), 2)
+  FCTEST_CHECK_EQUAL(padded(3,1), 3)
+  FCTEST_CHECK_EQUAL(padded(4,1), 4)
+  FCTEST_CHECK_EQUAL(padded(1,2), 5)
+  FCTEST_CHECK_EQUAL(padded(2,2), 6)
+  FCTEST_CHECK_EQUAL(padded(3,2), 7)
+  FCTEST_CHECK_EQUAL(padded(4,2), 8)
+
+  FCTEST_CHECK_EQUAL(padded(1,3), 9)
+  FCTEST_CHECK_EQUAL(padded(2,3), 10)
+  FCTEST_CHECK_EQUAL(padded(3,3), 11)
+  FCTEST_CHECK_EQUAL(padded(1,4), 12)
+  FCTEST_CHECK_EQUAL(padded(2,4), 13)
+  FCTEST_CHECK_EQUAL(padded(3,4), 14)
+
+  !============= Structural access =============!
+
+  FCTEST_CHECK_EQUAL(connectivity%access%row(1)%col(1), 1)
+  FCTEST_CHECK_EQUAL(connectivity%access%row(1)%col(2), 2)
+  FCTEST_CHECK_EQUAL(connectivity%access%row(1)%col(3), 3)
+  FCTEST_CHECK_EQUAL(connectivity%access%row(1)%col(4), 4)
+  FCTEST_CHECK_EQUAL(connectivity%access%row(2)%col(1), 5)
+  FCTEST_CHECK_EQUAL(connectivity%access%row(2)%col(2), 6)
+  FCTEST_CHECK_EQUAL(connectivity%access%row(2)%col(3), 7)
+  FCTEST_CHECK_EQUAL(connectivity%access%row(2)%col(4), 8)
+
+  FCTEST_CHECK_EQUAL(connectivity%access%row(3)%col(1), 9)
+  FCTEST_CHECK_EQUAL(connectivity%access%row(3)%col(2), 10)
+  FCTEST_CHECK_EQUAL(connectivity%access%row(3)%col(3), 11)
+  FCTEST_CHECK_EQUAL(connectivity%access%row(4)%col(1), 12)
+  FCTEST_CHECK_EQUAL(connectivity%access%row(4)%col(2), 13)
+  FCTEST_CHECK_EQUAL(connectivity%access%row(4)%col(3), 14)
+
+  !============= Row access =============!
+
+  call connectivity%row(1, row,ncols)
+  FCTEST_CHECK_EQUAL(ncols,4)
+  FCTEST_CHECK_EQUAL(row(1),1)
+  FCTEST_CHECK_EQUAL(row(2),2)
+  FCTEST_CHECK_EQUAL(row(3),3)
+  FCTEST_CHECK_EQUAL(row(4),4)
+  call connectivity%row(2, row,ncols)
+  FCTEST_CHECK_EQUAL(ncols,4)
+  FCTEST_CHECK_EQUAL(row(1),5)
+  FCTEST_CHECK_EQUAL(row(2),6)
+  FCTEST_CHECK_EQUAL(row(3),7)
+  FCTEST_CHECK_EQUAL(row(4),8)
+  call connectivity%row(3, row,ncols)
+  FCTEST_CHECK_EQUAL(ncols,3)
+  FCTEST_CHECK_EQUAL(row(1),9)
+  FCTEST_CHECK_EQUAL(row(2),10)
+  FCTEST_CHECK_EQUAL(row(3),11)
+  call connectivity%row(4, row,ncols)
+  FCTEST_CHECK_EQUAL(ncols,3)
+  FCTEST_CHECK_EQUAL(row(1),12)
+  FCTEST_CHECK_EQUAL(row(2),13)
+  FCTEST_CHECK_EQUAL(row(3),14)
+
+  call connectivity%final()
+
+END_TEST
+
+! -----------------------------------------------------------------------------
+
+END_TESTSUITE
+

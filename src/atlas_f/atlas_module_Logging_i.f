@@ -45,6 +45,7 @@ contains
   procedure, public :: clear_indentation_fortran_unit => LogChannel__clear_indentation_fortran_unit
 
   procedure, public :: delete => atlas_LogChannel__delete
+  procedure, public :: copy => atlas_LogChannel__copy
 
 
 ENDTYPE

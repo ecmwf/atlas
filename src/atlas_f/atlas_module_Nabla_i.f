@@ -18,6 +18,7 @@ TYPE, extends(atlas_RefCounted) :: atlas_Nabla
 !------------------------------------------------------------------------------
 contains
   procedure, public :: delete => atlas_Nabla__delete
+  procedure, public :: copy => atlas_Nabla__copy
   procedure, public :: gradient => atlas_nabla__gradient
   procedure, public :: divergence => atlas_nabla__divergence
   procedure, public :: curl => atlas_nabla__curl

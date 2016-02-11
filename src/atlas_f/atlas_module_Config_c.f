@@ -32,6 +32,12 @@ subroutine atlas_Config__delete(this)
   call this%reset_c_ptr()
 end subroutine atlas_Config__delete
 
+
+subroutine atlas_Config__copy(this,obj_in)
+  class(atlas_Config), intent(inout) :: this
+  class(atlas_RefCounted), target, intent(in) :: obj_in
+end subroutine
+
 function atlas_Config__has(this, name) result(value)
   use atlas_Config_c_binding
   class(atlas_Config), intent(inout) :: this

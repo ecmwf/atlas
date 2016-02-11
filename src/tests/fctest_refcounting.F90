@@ -19,6 +19,7 @@ implicit none
 type, extends(atlas_RefCounted) :: RefObj
 contains
   procedure :: delete => RefObj__delete
+  procedure :: copy => RefObj__copy
 endtype
 
 interface RefObj
@@ -49,6 +50,13 @@ subroutine RefObj__delete(this)
   if( .not. this%is_null() ) call atlas__Mesh__delete(this%c_ptr())
   call this%reset_c_ptr()
   write(0,*) "deleting obj"!,this%id, "done"
+end subroutine
+
+
+subroutine RefObj__copy(this,obj_in)
+  class(RefObj), intent(inout) :: this
+  class(atlas_RefCounted), target, intent(in) :: obj_in
+  write(0,*) "copy obj"
 end subroutine
 
 subroutine consume_new_obj(obj)

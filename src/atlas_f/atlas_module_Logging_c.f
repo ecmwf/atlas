@@ -200,6 +200,12 @@ subroutine atlas_LogChannel__delete(this)
 end subroutine
 
 
+subroutine atlas_LogChannel__copy(this,obj_in)
+  class(atlas_LogChannel), intent(inout) :: this
+  class(atlas_RefCounted), target, intent(in) :: obj_in
+end subroutine
+
+
 function Logger__channel(cat)
   type(atlas_LogChannel) :: Logger__channel
   integer, intent(in) :: cat

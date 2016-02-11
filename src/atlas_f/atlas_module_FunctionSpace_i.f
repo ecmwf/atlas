@@ -23,6 +23,7 @@ contains
   procedure, public :: name => atlas_NextFunctionSpace__name
 
   procedure, public :: delete => atlas_NextFunctionSpace__delete
+  procedure, public :: copy => atlas_NextFunctionSpace__copy
 #ifdef FORTRAN_SUPPORTS_FINAL
   final :: atlas_NextFunctionSpace__final
 #endif
@@ -115,6 +116,7 @@ contains
       & FunctionSpace__gather_int32_r2
 
   procedure, public :: delete => atlas_FunctionSpace__delete
+  procedure, public :: copy => atlas_FunctionSpace__copy
 
 END TYPE atlas_FunctionSpace
 

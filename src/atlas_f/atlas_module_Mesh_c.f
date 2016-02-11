@@ -56,11 +56,15 @@ function Mesh__nodes(this) result(nodes)
   if( nodes%is_null() ) write(0,*) 'call abort()'
 end function
 
-subroutine Mesh__delete(this)
+subroutine atlas_Mesh__delete(this)
   class(atlas_Mesh), intent(inout) :: this
   if ( .not. this%is_null() ) then
     call atlas__Mesh__delete(this%c_ptr())
   end if
   call this%reset_c_ptr()
-end subroutine Mesh__delete
+end subroutine atlas_Mesh__delete
 
+subroutine atlas_Mesh__copy(this,obj_in)
+  class(atlas_Mesh), intent(inout) :: this
+  class(atlas_RefCounted), target, intent(in) :: obj_in
+end subroutine

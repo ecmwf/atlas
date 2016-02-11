@@ -69,7 +69,8 @@ contains
       & GatherScatter__scatter_real64_r2_r2, &
       & GatherScatter__scatter_real64_r3_r3
 
-  procedure, public :: delete => GatherScatter__delete
+  procedure, public :: delete => atlas_GatherScatter__delete
+  procedure, public :: copy => atlas_GatherScatter__copy
 
 END TYPE atlas_GatherScatter
 !------------------------------------------------------------------------------

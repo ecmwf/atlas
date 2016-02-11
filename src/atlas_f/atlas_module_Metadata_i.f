@@ -52,6 +52,7 @@ contains
   procedure :: json => Metadata__json
 
   procedure, public :: delete => atlas_Metadata__delete
+  procedure, public :: copy => atlas_Metadata__copy
 
 END TYPE atlas_Metadata
 

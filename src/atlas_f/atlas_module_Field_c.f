@@ -70,6 +70,10 @@ subroutine atlas_Field__delete(this)
   call this%reset_c_ptr()
 end subroutine
 
+subroutine atlas_Field__copy(this,obj_in)
+  class(atlas_Field), intent(inout) :: this
+  class(atlas_RefCounted), target, intent(in) :: obj_in
+end subroutine
 
 function Field__name(this) result(field_name)
   class(atlas_Field), intent(in) :: this

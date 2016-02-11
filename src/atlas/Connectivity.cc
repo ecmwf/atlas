@@ -554,7 +554,22 @@ void atlas__Connectivity__values(Connectivity* This, int* &values, size_t &size)
 {
   ConnectivityPrivateAccess access(*This);
   values = access.values();
-  size = This->rows();
+  size = This->rows() ? access.displs()[This->rows()]+1 : 0 ;
+}
+
+void atlas__Connectivity__add_values(Connectivity* This, size_t rows, size_t cols, int values[])
+{
+  This->add(rows,cols,values,true);
+}
+
+void atlas__Connectivity__add_missing(Connectivity* This, size_t rows, size_t cols)
+{
+  This->add(rows,cols);
+}
+
+size_t atlas__Connectivity__rows(const Connectivity* This)
+{
+  return This->rows();
 }
 
 

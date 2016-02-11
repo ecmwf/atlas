@@ -47,6 +47,12 @@ subroutine atlas_MeshGenerator__delete(this)
   call this%reset_c_ptr()
 end subroutine atlas_MeshGenerator__delete
 
+
+subroutine atlas_MeshGenerator__copy(this,obj_in)
+  class(atlas_MeshGenerator), intent(inout) :: this
+  class(atlas_RefCounted), target, intent(in) :: obj_in
+end subroutine
+
 function atlas_MeshGenerator__generate(this,grid,distribution) result(mesh)
    use atlas_MeshGenerator_c_binding
    type(atlas_Mesh) :: mesh

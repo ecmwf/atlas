@@ -22,6 +22,11 @@ subroutine FieldSet__delete(this)
   call this%reset_c_ptr()
 end subroutine FieldSet__delete
 
+subroutine atlas_FieldSet__copy(this,obj_in)
+  class(atlas_FieldSet), intent(inout) :: this
+  class(atlas_RefCounted), target, intent(in) :: obj_in
+end subroutine
+
 subroutine FieldSet__add_field(this,field)
   class(atlas_FieldSet), intent(in) :: this
   type(atlas_Field), intent(in) :: field

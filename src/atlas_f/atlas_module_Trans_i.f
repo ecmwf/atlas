@@ -63,6 +63,7 @@ contains
   generic, public :: gathspec => gathspec_r1, gathspec_r2
 
   procedure, public :: delete => atlas_Trans__delete
+  procedure, public :: copy => atlas_Trans__copy
 
 END TYPE atlas_Trans
 
@@ -88,6 +89,7 @@ TYPE, extends(atlas_object) :: atlas_TransParameters
 contains
 
   procedure, public :: delete => atlas_TransParameters__delete
+  procedure, public :: copy => atlas_TransParameters__copy
 
 END TYPE atlas_TransParameters
 

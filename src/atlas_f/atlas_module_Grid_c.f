@@ -28,11 +28,11 @@ function atlas_LonLatGrid__ctor(nlon,nlat) result(grid)
   call grid%reset_c_ptr( atlas__new_lonlat_grid(nlon,nlat) )
 end function atlas_LonLatGrid__ctor
 
-function Grid__npts(this) result(npts)
+function atlas_Grid__npts(this) result(npts)
   class(atlas_Grid), intent(in) :: this
   integer :: npts
   npts = atlas__ReducedGrid__npts(this%c_ptr())
-end function Grid__npts
+end function atlas_Grid__npts
 
 function ReducedGrid__N(this) result(N)
   class(atlas_ReducedGrid), intent(in) :: this
@@ -71,11 +71,18 @@ function ReducedGrid__latitudes(this) result(lat)
   call C_F_POINTER (  lat_c_ptr , lat , (/lat_size/) )
 end function ReducedGrid__latitudes
 
-subroutine Grid__delete(this)
+subroutine atlas_Grid__delete(this)
   class(atlas_Grid), intent(inout) :: this
   if ( .not. this%is_null() ) then
     call atlas__ReducedGrid__delete(this%c_ptr())
   end if
   call this%reset_c_ptr()
-end subroutine Grid__delete
+end subroutine atlas_Grid__delete
+
+
+
+subroutine atlas_Grid__copy(this,obj_in)
+  class(atlas_Grid), intent(inout) :: this
+  class(atlas_RefCounted), target, intent(in) :: obj_in
+end subroutine
 

@@ -418,7 +418,6 @@ inline void BlockConnectivity::set( size_t row_idx, size_t col_idx, const idx_t 
   col[col_idx] = value TO_FORTRAN;
 }
 
-
 // ------------------------------------------------------------------------------------------------------
 
 extern "C"
@@ -428,6 +427,9 @@ void atlas__Connectivity__delete(Connectivity* This);
 void atlas__Connectivity__displs(Connectivity* This, size_t* &displs, size_t &size);
 void atlas__Connectivity__counts(Connectivity* This, size_t* &counts, size_t &size);
 void atlas__Connectivity__values(Connectivity* This, int* &values, size_t &size);
+size_t atlas__Connectivity__rows(const Connectivity* This);
+void atlas__Connectivity__add_values(Connectivity* This, size_t rows, size_t cols, int values[]);
+void atlas__Connectivity__add_missing(Connectivity* This, size_t rows, size_t cols);
 }
 
 #undef FROM_FORTRAN

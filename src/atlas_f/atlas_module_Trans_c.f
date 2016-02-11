@@ -47,6 +47,14 @@ subroutine atlas_Trans__delete( this )
 #endif
 end subroutine
 
+
+subroutine atlas_Trans__copy(this,obj_in)
+  class(atlas_Trans), intent(inout) :: this
+  class(atlas_RefCounted), target, intent(in) :: obj_in
+end subroutine
+
+
+
 subroutine atlas_TransParameters__delete( this )
   USE_ATLAS_TRANS_C_BINDING
   class(atlas_TransParameters), intent(inout) :: this
@@ -55,6 +63,12 @@ subroutine atlas_TransParameters__delete( this )
 #else
   ! IGNORE
 #endif
+end subroutine
+
+
+subroutine atlas_TransParameters__copy(this,obj_in)
+  class(atlas_TransParameters), intent(inout) :: this
+  class(atlas_RefCounted), target, intent(in) :: obj_in
 end subroutine
 
 function atlas_Trans__handle( this ) result(handle)

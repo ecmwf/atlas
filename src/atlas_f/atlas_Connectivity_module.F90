@@ -22,19 +22,28 @@ private
 type, extends(atlas_refcounted), public :: atlas_Connectivity
 
 ! Public members
-  type( atlas_ConnectivityAccess ), public, pointer :: access
+  type( atlas_ConnectivityAccess ), public, pointer :: access => null()
 
 contains
 
 ! Public methods
-  procedure, public :: value    => atlas_Connectivity__value
+  procedure, private :: value_args_int       => atlas_Connectivity__value_args_int
+  procedure, private :: value_args_size_t    => atlas_Connectivity__value_args_size_t
+  generic, public :: value => value_args_int, value_args_size_t
   procedure, public :: rows     => atlas_Connectivity__rows
   procedure, public :: cols     => atlas_Connectivity__cols
   procedure, public :: maxcols  => atlas_Connectivity__maxcols
   procedure, public :: mincols  => atlas_Connectivity__mincols
+  procedure, public :: padded_data     => atlas_Connectivity__padded_data
   procedure, public :: data     => atlas_Connectivity__data
-
-  procedure, public :: delete => atlas_Connectivity__delete
+  procedure, public :: row      => atlas_Connectivity__row
+  procedure, public :: copy     => atlas_Connectivity__copy
+  procedure, public :: delete   => atlas_Connectivity__delete
+  procedure, private :: add_values_args_int => atlas_Connectivity__add_values_args_int
+  procedure, private :: add_values_args_size_t => atlas_Connectivity__add_values_args_size_t
+  procedure, private :: add_missing_args_int => atlas_Connectivity__add_missing_args_int
+  procedure, private :: add_missing_args_size_t => atlas_Connectivity__add_missing_args_size_t
+  generic, public :: add => add_values_args_int, add_values_args_size_t, add_missing_args_int, add_missing_args_size_t
 
 end type
 
@@ -103,12 +112,6 @@ end interface
 
 contains
 
-function atlas_Connectivity__cptr(cptr) result(connectivity)
-  type(atlas_Connectivity) :: connectivity
-  type(c_ptr), intent(in) :: cptr
-  call connectivity%reset_c_ptr( cptr )
-end function
-
 function Connectivity_ctr() result(connectivity)
   use atlas_connectivity_c_binding
   type(atlas_Connectivity) :: connectivity
@@ -116,8 +119,7 @@ function Connectivity_ctr() result(connectivity)
   type(c_ptr) :: ctxt_delete
   integer(c_int) :: have_ctxt_update
   integer(c_int) :: have_ctxt_delete
-  connectivity = atlas_Connectivity__cptr( atlas__Connectivity__create() )
-
+  call connectivity%reset_c_ptr( atlas__Connectivity__create() )
   have_ctxt_update = atlas__connectivity__ctxt_update(connectivity%c_ptr(),ctxt_update)
   if( have_ctxt_update == 1 ) then
     call c_f_pointer(ctxt_update,connectivity%access)
@@ -132,8 +134,6 @@ function Connectivity_ctr() result(connectivity)
   if( have_ctxt_update /= 1 ) then
     call atlas__connectivity__register_delete( connectivity%c_ptr(), c_funloc(delete_access_c), c_loc(connectivity%access) )
   endif
-
-
   call connectivity%return()
 end function
 
@@ -146,6 +146,16 @@ subroutine atlas_Connectivity__delete(this)
   call this%reset_c_ptr()
 end subroutine
 
+subroutine atlas_Connectivity__copy(this,obj_in)
+  class(atlas_Connectivity), intent(inout) :: this
+  class(atlas_RefCounted),   target, intent(in) :: obj_in
+  class(atlas_Connectivity), pointer :: obj_in_cast
+  select type (ptr => obj_in)
+    type is (atlas_Connectivity)
+      obj_in_cast => ptr
+      if( associated( obj_in_cast%access ) ) this%access => obj_in_cast%access
+  end select
+end subroutine
 
 pure function access_value(this,c,r) result(val)
   integer(c_int) :: val
@@ -160,10 +170,17 @@ pure function access_rows(this) result(val)
   val = this%rows_
 end function
 
-pure function atlas_Connectivity__value(this,c,r) result(val)
+pure function atlas_Connectivity__value_args_size_t(this,c,r) result(val)
   integer(c_int) :: val
   class(atlas_Connectivity), intent(in) :: this
   integer(c_size_t), intent(in) :: r,c
+  val = this%access%values_(c+this%access%displs_(r))
+end function
+
+pure function atlas_Connectivity__value_args_int(this,c,r) result(val)
+  integer(c_int) :: val
+  class(atlas_Connectivity), intent(in) :: this
+  integer(c_int), intent(in) :: r,c
   val = this%access%values_(c+this%access%displs_(r))
 end function
 
@@ -192,7 +209,7 @@ pure function atlas_Connectivity__maxcols(this) result(val)
   val = this%access%maxcols_
 end function
 
-subroutine atlas_Connectivity__data(this, padded, cols)
+subroutine atlas_Connectivity__padded_data(this, padded, cols)
   class(atlas_Connectivity), intent(in) :: this
   integer(c_int), pointer, intent(out) :: padded(:,:)
   integer(c_size_t), pointer, intent(out), optional :: cols(:)
@@ -200,6 +217,65 @@ subroutine atlas_Connectivity__data(this, padded, cols)
   padded => this%access%padded_
   if( present(cols) ) cols => this%access%cols
 end subroutine
+
+subroutine atlas_Connectivity__data(this, data, ncols)
+  class(atlas_Connectivity), intent(in) :: this
+  integer(c_int), pointer, intent(out) :: data(:,:)
+  integer(c_int), intent(out), optional :: ncols
+  integer(c_int) :: maxcols
+  maxcols = this%maxcols()
+  if( maxcols == this%mincols() ) then
+    call c_f_pointer (c_loc(this%access%values_(1)), data, [maxcols,int(this%access%rows_,c_int)])
+    if( present(ncols) ) ncols = maxcols
+  else
+    write(0,*) "ERROR: Cannot point connectivity pointer data(:,:) to irregular table"
+  endif
+end subroutine
+
+
+subroutine atlas_Connectivity__row(this, row_idx, row, cols)
+  class(atlas_Connectivity), intent(in) :: this
+  integer(c_int), intent(in) :: row_idx
+  integer(c_int), pointer, intent(out) :: row(:)
+  integer(c_int), intent(out) ::  cols
+  row  => this%access%values_(this%access%displs_(row_idx)+1:this%access%displs_(row_idx+1)+1)
+  cols =  this%access%cols(row_idx)
+end subroutine
+
+subroutine atlas_Connectivity__add_values_args_size_t(this,rows,cols,values)
+  use atlas_connectivity_c_binding
+  class(atlas_Connectivity), intent(in) :: this
+  integer(c_size_t) :: rows
+  integer(c_size_t) :: cols
+  integer(c_int) :: values(:)
+  call atlas__connectivity__add_values(this%c_ptr(),rows,cols,values)
+end subroutine
+
+subroutine atlas_Connectivity__add_values_args_int(this,rows,cols,values)
+  use atlas_connectivity_c_binding
+  class(atlas_Connectivity), intent(in) :: this
+  integer(c_int) :: rows
+  integer(c_int) :: cols
+  integer(c_int) :: values(:)
+  call atlas__connectivity__add_values(this%c_ptr(),int(rows,c_size_t),int(cols,c_size_t),values)
+end subroutine
+
+subroutine atlas_Connectivity__add_missing_args_size_t(this,rows,cols)
+  use atlas_connectivity_c_binding
+  class(atlas_Connectivity), intent(in) :: this
+  integer(c_size_t) :: rows
+  integer(c_size_t) :: cols
+  call atlas__connectivity__add_missing(this%c_ptr(),rows,cols)
+end subroutine
+
+subroutine atlas_Connectivity__add_missing_args_int(this,rows,cols)
+  use atlas_connectivity_c_binding
+  class(atlas_Connectivity), intent(in) :: this
+  integer(c_int) :: rows
+  integer(c_int) :: cols
+  call atlas__connectivity__add_missing(this%c_ptr(),int(rows,c_size_t),int(cols,c_size_t))
+end subroutine
+
 
 subroutine update_access_c(this_ptr) bind(c)
  type(c_ptr), value :: this_ptr
@@ -227,13 +303,12 @@ subroutine update_access(this)
   call c_f_pointer(values_cptr, this%values_, (/values_size/))
   call c_f_pointer(displs_cptr, this%displs_, (/displs_size/))
   call c_f_pointer(counts_cptr, this%cols,    (/counts_size/))
-  this%rows_   = counts_size
-
+  this%rows_   = atlas__Connectivity__rows(this%connectivity_ptr)
   if( associated( this%row ) ) deallocate(this%row)
-  allocate( this%row(this%rows()) )
+  allocate( this%row(this%rows_) )
   this%maxcols_ = 0
   this%mincols_ = huge(this%maxcols_)
-  do jrow=1,this%rows()
+  do jrow=1,this%rows_
     this%row(jrow)%col => this%values_(this%displs_(jrow)+1:this%displs_(jrow+1)+1)
     this%maxcols_ = max(this%maxcols_, this%cols(jrow) )
     this%mincols_ = min(this%mincols_, this%cols(jrow) )
@@ -253,7 +328,6 @@ subroutine update_padded(this)
   enddo
 end subroutine
 
-
 subroutine delete_access_c(this_ptr) bind(c)
  type(c_ptr), value :: this_ptr
  type(atlas_ConnectivityAccess), pointer :: this
@@ -268,8 +342,6 @@ subroutine delete_access(this)
   if( associated( this%row ) )    deallocate(this%row)
   if( associated( this%padded_) ) deallocate(this%padded_)
 end subroutine
-
-
 
 end module atlas_connectivity_module
 

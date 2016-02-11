@@ -16,6 +16,11 @@ subroutine atlas_Checksum__delete(this)
   call this%reset_c_ptr()
 end subroutine atlas_Checksum__delete
 
+subroutine atlas_Checksum__copy(this,obj_in)
+  class(atlas_Checksum), intent(inout) :: this
+  class(atlas_RefCounted), target, intent(in) :: obj_in
+end subroutine
+
 subroutine Checksum__setup32(this, part, remote_idx, glb_idx, opt_max_glb_idx)
   class(atlas_Checksum), intent(in) :: this
   integer(c_int), intent(in) :: part(:)

@@ -51,6 +51,7 @@ contains
   procedure :: json => atlas_Config__json
 
   procedure, public :: delete => atlas_Config__delete
+  procedure, public :: copy => atlas_Config__copy
 
 END TYPE atlas_Config
 
