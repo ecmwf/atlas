@@ -1,43 +1,5 @@
 ! (C) Copyright 2013-2015 ECMWF.
 
-function atlas_NextFunctionSpace__cptr(cptr) result(functionspace)
-  type(atlas_NextFunctionSpace) :: functionspace
-  type(c_ptr), intent(in) :: cptr
-  call functionspace%reset_c_ptr( cptr )
-end function
-
-#ifdef FORTRAN_SUPPORTS_FINAL
-subroutine atlas_NextFunctionSpace__final(this)
-  type(atlas_NextFunctionSpace), intent(inout) :: this
-  call this%final()
-end subroutine
-#endif
-
-subroutine atlas_NextFunctionSpace__delete(this)
-  use atlas_functionspace_c_binding
-  class(atlas_NextFunctionSpace), intent(inout) :: this
-  if ( .not. this%is_null() ) then
-    call atlas__NextFunctionSpace__delete(this%c_ptr())
-  end if
-  call this%reset_c_ptr()
-end subroutine atlas_NextFunctionSpace__delete
-
-
-subroutine atlas_NextFunctionSpace__copy(this,obj_in)
-  class(atlas_NextFunctionSpace), intent(inout) :: this
-  class(atlas_RefCounted), target, intent(in) :: obj_in
-end subroutine
-
-
-function atlas_NextFunctionSpace__name(this) result(name)
-  class(atlas_NextFunctionSpace), intent(in) :: this
-  character(len=:), allocatable :: name
-  type(c_ptr) :: name_c_str
-  name_c_str = atlas__NextFunctionSpace__name(this%c_ptr())
-  name = c_to_f_string_cptr(name_c_str)
-end function
-
-
 ! -----------------------------------------------------------------------------
 ! FunctionSpace routines
 
@@ -52,6 +14,16 @@ subroutine FunctionSpace__create_field(this,name,nvars,kind)
   character(len=*), intent(in) :: name
   integer, intent(in) :: nvars
   integer, intent(in), optional :: kind
+
+  ! ----------------------------------------------------
+  ! ENUM DataType
+  integer, parameter :: ATLAS_KIND_INT32  = -4
+  integer, parameter :: ATLAS_KIND_INT64  = -8
+  integer, parameter :: ATLAS_KIND_REAL32 =  4
+  integer, parameter :: ATLAS_KIND_REAL64 =  8
+  ! ----------------------------------------------------
+
+
   if (present(kind)) then
     if (kind == ATLAS_KIND_REAL64) then
       call atlas__FunctionSpace__create_field_double(this%c_ptr(),c_str(name),nvars)

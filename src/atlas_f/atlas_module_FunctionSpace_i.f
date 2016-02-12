@@ -1,40 +1,5 @@
 ! (C) Copyright 2013-2015 ECMWF.
 
-
-!------------------------------------------------------------------------------
-TYPE, extends(atlas_RefCounted) :: atlas_NextFunctionSpace
-
-! Purpose :
-! -------
-!   *FunctionSpace* :
-!       Describes how nodes are ordered
-!       Describes how parallelisation for fields is done
-
-! Methods :
-! -------
-!   name : The name or tag this function space was created with
-
-! Author :
-! ------
-!   20-Nov-2013 Willem Deconinck     *ECMWF*
-
-!------------------------------------------------------------------------------
-contains
-  procedure, public :: name => atlas_NextFunctionSpace__name
-
-  procedure, public :: delete => atlas_NextFunctionSpace__delete
-  procedure, public :: copy => atlas_NextFunctionSpace__copy
-#ifdef FORTRAN_SUPPORTS_FINAL
-  final :: atlas_NextFunctionSpace__final
-#endif
-
-END TYPE atlas_NextFunctionSpace
-
-interface atlas_NextFunctionSpace
-  module procedure atlas_NextFunctionSpace__cptr
-end interface
-
-
 !------------------------------------------------------------------------------
 TYPE, extends(atlas_object) :: atlas_FunctionSpace
 

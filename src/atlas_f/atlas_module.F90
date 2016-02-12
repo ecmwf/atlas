@@ -33,17 +33,77 @@ module atlas_module
 
 !------------------------------------------------------------------------------
 use, intrinsic :: iso_c_binding
+
 use atlas_mpi_module
 use atlas_C_interop
 use atlas_object_module
-use atlas_refcounted_module, only: atlas_refcounted, atlas_refcounted_fortran
+use atlas_refcounted_module, only: &
+    & atlas_refcounted, &
+    & atlas_refcounted_fortran
+use atlas_functionspace_module, only: &
+    & atlas_NextFunctionSpace
+use atlas_field_module, only: &
+    & atlas_field, &
+    & atlas_real, &
+    & atlas_integer, &
+    & atlas_logical
+use atlas_config_module, only: &
+    & atlas_config
+use atlas_JSON_module, only: &
+    & atlas_JSON, &
+    & atlas_PathName
+use atlas_Metadata_module, only: &
+    & atlas_Metadata
+use atlas_Logging_module, only: &
+    & atlas_log, &
+    & atlas_Logger, &
+    & atlas_LogChannel, &
+    & ATLAS_LOG_CATEGORY_ERROR, &
+    & ATLAS_LOG_CATEGORY_WARNING, &
+    & ATLAS_LOG_CATEGORY_INFO, &
+    & ATLAS_LOG_CATEGORY_DEBUG, &
+    & ATLAS_LOG_CATEGORY_STATS
+use atlas_Error_module, only: &
+    & atlas_CodeLocation, &
+    & atlas_code_location_str, &
+    & atlas_code_location, &
+    & atlas_abort, &
+    & atlas_throw_exception, &
+    & atlas_throw_notimplemented, &
+    & atlas_throw_outofrange, &
+    & atlas_throw_seriousbug, &
+    & atlas_throw_usererror, &
+    & atlas_throw_assertionfailed, &
+    & atlas_err, &
+    & atlas_noerr, &
+    & atlas_err_clear, &
+    & atlas_err_success, &
+    & atlas_err_code, &         
+    & atlas_err_msg, &          
+    & atlas_err_set_aborts, &   
+    & atlas_err_set_throws, &   
+    & atlas_err_set_backtrace, &
+    & atlas_err_cleared, &
+    & atlas_err_noerr, &
+    & atlas_err_exception, &
+    & atlas_err_usererror, &
+    & atlas_err_seriousbug, &
+    & atlas_err_notimplemented, &
+    & atlas_err_assertionfailed, &
+    & atlas_err_badparameter, &
+    & atlas_err_outofrange, &
+    & atlas_err_stop, &
+    & atlas_err_abort, &
+    & atlas_err_cancel, &
+    & atlas_err_readerror, &
+    & atlas_err_writeerror, &
+    & atlas_err_unknown
+
 use atlas_atlas_c_binding
 use atlas_mpi_c_binding
-use atlas_Field_c_binding
 use atlas_Fieldset_c_binding
 use atlas_FunctionSpace_c_binding
 use atlas_Mesh_c_binding
-use atlas_Metadata_c_binding
 use atlas_haloexchange_c_binding
 use atlas_gatherscatter_c_binding
 use atlas_grids_c_binding
@@ -58,7 +118,6 @@ use atlas_BuildParallelFields_c_binding
 use atlas_BuildHalo_c_binding
 use atlas_GenerateMesh_c_binding
 use atlas_WriteLoadBalanceReport_c_binding
-use atlas_atlas_logging_c_binding
 implicit none
 
 private :: atlas_object
@@ -84,14 +143,6 @@ private :: resource_set_string
 
 public
 
-! ----------------------------------------------------
-! ENUM FieldType
-integer, public, parameter :: ATLAS_KIND_INT32  = -4
-integer, public, parameter :: ATLAS_KIND_INT64  = -8
-integer, public, parameter :: ATLAS_KIND_REAL32 =  4
-integer, public, parameter :: ATLAS_KIND_REAL64 =  8
-! ----------------------------------------------------
-
 integer, private, parameter :: FIELD_NB_VARS = 2147483647 ! maximum integer value
 integer, public, parameter :: ATLAS_FIELD_NB_VARS = FIELD_NB_VARS ! maximum integer value
 integer, private, parameter :: wp = c_double ! working precision
@@ -106,8 +157,6 @@ integer, public, parameter :: ATLAS_KIND_GIDX = c_long
 
 integer, public, parameter :: ATLAS_KIND_IDX = c_int
 
-#include "atlas_module_Config_i.f"
-#include "atlas_module_Logging_i.f"
 #include "atlas_module_HaloExchange_i.f"
 #include "atlas_module_GatherScatter_i.f"
 #include "atlas_module_Grid_i.f"
@@ -119,14 +168,9 @@ integer, public, parameter :: ATLAS_KIND_IDX = c_int
 #include "atlas_module_functionspace_EdgeBasedFiniteVolume_i.f"
 #include "atlas_module_functionspace_ReducedGridPoint_i.f"
 #include "atlas_module_functionspace_Spectral_i.f"
-#include "atlas_module_Field_i.f"
 #include "atlas_module_FieldSet_i.f"
-#include "atlas_module_JSON_i.f"
-#include "atlas_module_Metadata_i.f"
 #include "atlas_module_Nodes_i.f"
-#include "atlas_module_PathName_i.f"
 #include "atlas_module_Nabla_i.f"
-#include "atlas_module_Error_i.f"
 #include "atlas_module_GridDistribution_i.f"
 #include "atlas_module_State_i.f"
 #include "atlas_module_Trans_i.f"
@@ -184,12 +228,6 @@ interface atlas_generate_mesh
   module procedure atlas_generate_mesh
   module procedure atlas_generate_mesh_with_distribution
 end interface atlas_generate_mesh
-
-
-!------------------------------------------------------------------------------
-
-! Logger singleton
-TYPE(atlas_Logger) :: atlas_log
 
 ! =============================================================================
 CONTAINS
@@ -290,54 +328,6 @@ subroutine atlas_finalize()
   call atlas__atlas_finalize()
 end subroutine
 
-integer function atlas_real(kind)
-  integer :: kind
-  if (kind == c_double) then
-    atlas_real = ATLAS_KIND_REAL64
-  else if (kind == c_float) then
-    atlas_real = ATLAS_KIND_REAL32
-  else
-    call atlas_abort("Unsupported real kind")
-  end if
-end function
-
-integer function atlas_integer(kind)
-  integer, optional :: kind
-  atlas_integer = ATLAS_KIND_INT32
-  if ( present(kind) ) then
-    if (kind == c_int) then
-      atlas_integer = ATLAS_KIND_INT32
-    else if (kind == c_long) then
-      atlas_integer = ATLAS_KIND_INT64
-    else
-      call atlas_abort("Unsupported real kind")
-    end if
-  end if
-end function
-
-integer function atlas_logical(kind)
-  integer, optional :: kind
-  atlas_logical = ATLAS_KIND_INT32
-end function
-
-function atlas_data_type(kind)
-  character(len=6) :: atlas_data_type
-  integer, intent(in) :: kind
-  if( kind == ATLAS_KIND_INT32 ) then
-    atlas_data_type = "int32"
-  else if( kind == ATLAS_KIND_INT64 ) then
-    atlas_data_type = "int64"
-  else if( kind == ATLAS_KIND_REAL32 ) then
-    atlas_data_type = "real32"
-  else if( kind == ATLAS_KIND_REAL64 ) then
-    atlas_data_type = "real64"
-  else
-    call atlas_abort("cannot convert kind to data_type",atlas_code_location(__FILE__,__LINE__))
-  endif
-end function
-
-#include "atlas_module_Config_c.f"
-#include "atlas_module_Logging_c.f"
 #include "atlas_module_HaloExchange_c.f"
 #include "atlas_module_GatherScatter_c.f"
 #include "atlas_module_Grid_c.f"
@@ -349,14 +339,9 @@ end function
 #include "atlas_module_functionspace_EdgeBasedFiniteVolume_c.f"
 #include "atlas_module_functionspace_ReducedGridPoint_c.f"
 #include "atlas_module_functionspace_Spectral_c.f"
-#include "atlas_module_Field_c.f"
 #include "atlas_module_FieldSet_c.f"
-#include "atlas_module_JSON_c.f"
-#include "atlas_module_Metadata_c.f"
 #include "atlas_module_Nabla_c.f"
 #include "atlas_module_Nodes_c.f"
-#include "atlas_module_PathName_c.f"
-#include "atlas_module_Error_c.f"
 #include "atlas_module_GridDistribution_c.f"
 #include "atlas_module_State_c.f"
 #include "atlas_module_Trans_c.f"

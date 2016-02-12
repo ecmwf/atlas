@@ -124,6 +124,13 @@ ecbuild_add_library( TARGET atlas_f
         ${FORTRAN_BINDINGS}
         atlas_object_module.F90
         atlas_refcounted_module.F90
+        atlas_JSON_module.F90
+        atlas_Config_module.F90
+        atlas_Metadata_module.F90
+        atlas_FunctionSpace_module.F90
+        atlas_Logging_module.F90
+        atlas_Error_module.F90
+        atlas_Field_module.F90
         atlas_module.F90
         atlas_mpi_module.F90
         atlas_grids_module.F90
@@ -144,12 +151,6 @@ ecbuild_add_library( TARGET atlas_f
 add_custom_target( atlas_fortran_inc SOURCES
    atlas_module_Checksum_i.f
    atlas_module_Checksum_c.f
-   atlas_module_Config_i.f
-   atlas_module_Config_c.f
-   atlas_module_Error_i.f
-   atlas_module_Error_c.f
-   atlas_module_Field_i.f
-   atlas_module_Field_c.f
    atlas_module_FieldSet_i.f
    atlas_module_FieldSet_c.f
    atlas_module_FunctionSpace_i.f
@@ -170,22 +171,14 @@ add_custom_target( atlas_fortran_inc SOURCES
    atlas_module_GridDistribution_c.f
    atlas_module_HaloExchange_i.f
    atlas_module_HaloExchange_c.f
-   atlas_module_JSON_i.f
-   atlas_module_JSON_c.f
-   atlas_module_Logging_i.f
-   atlas_module_Logging_c.f
    atlas_module_Mesh_i.f
    atlas_module_Mesh_c.f
    atlas_module_MeshGenerator_i.f
    atlas_module_MeshGenerator_c.f
-   atlas_module_Metadata_i.f
-   atlas_module_Metadata_c.f
    atlas_module_Nabla_i.f
    atlas_module_Nabla_c.f
    atlas_module_Nodes_i.f
    atlas_module_Nodes_c.f
-   atlas_module_PathName_i.f
-   atlas_module_PathName_c.f
    atlas_module_State_i.f
    atlas_module_State_c.f
    atlas_module_Trans_i.f
