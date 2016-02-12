@@ -4,10 +4,10 @@ The flowchart presented in the introduction of this document
 represents the macro objects of the library and reflects 
 closely the capabilities of \Atlas. We subdivide this 
 chapter in various sections, each of them representing one 
-of the objects in \fig{fig:intro-schematics}. The order these 
-objects will be presented starts from the grid and closes 
-with the numerics. Note that some simple examples are provided 
-as part of this user-guide in \parte{p:core-functionalities}.
+of the objects in \fig{fig:intro-schematics}. The order in 
+which these objects will be presented starts from the grid 
+and closes with the numerics. Note that some simple examples 
+are provided as part of this user-guide in \parte{p:core-functionalities}.
 
 
 
@@ -30,10 +30,10 @@ capabilities.
 \caption{Grid object derived classes and capabilities}
 \end{figure}
 %
-In particular, a Global grid has the three main derived 
-types: IcosahedralGrid, ReducedGrid and UnstructuredGrid.
-The ReducedGrid has three additional derived types: 
-ReducedGaussianGrid, LonLatGrid and StaggeredLonLatGrid.
+In particular, a Global grid has several possible implementations, 
+such as the following derived types: IcosahedralGrid, ReducedGrid 
+and UnstructuredGrid. The ReducedGrid has three additional derived 
+types: ReducedGaussianGrid, LonLatGrid and StaggeredLonLatGrid.
 The ReducedGaussianGrid, in turn, can be either a GaussianGrid 
 or an OctahedralReducedGaussianGrid.
 
@@ -47,6 +47,12 @@ interest without disrupting the existing grid workflow.
 The Mesh object is responsible for generating a distributed 
 mesh starting from a given grid. The associated workflow is 
 depicted in \fig{fig:mesh1}.
+
+The mesh is constructed using the class MeshGenerator that 
+takes as an input the grid (optionally a grid distribution 
+that is defined as ...).
+The MeshGenerator object is, in turn, composed by a ReducedGridMeshGenerator 
+and a Delaunay object. The first ..., while the second ...
 %
 \begin{figure}
 \centering
@@ -54,12 +60,7 @@ depicted in \fig{fig:mesh1}.
 \label{fig:mesh1}
 \caption{Mesh workflow}
 \end{figure}
-%
-The mesh is constructed using the class MeshGenerator that 
-takes as an input the grid (optionally a grid distribution 
-that is defined as ...).
-The MeshGenerator object is, in turn, composed by a ReducedGridMeshGenerator 
-and a Delaunay object. The first ..., while the second ... 
+% 
 In \fig{fig:mesh2} we show the composition of the mesh object.
 %
 \begin{figure}
@@ -72,13 +73,18 @@ In \fig{fig:mesh2} we show the composition of the mesh object.
 In particular, the nodes and elements define node connectivities 
 and the mesh is constructed to be generically unstructured - i.e. 
 there are no specific requirements for the mesh to be structured.
-
-
+%
+\begin{warningbox}
+Note that a mesh is not equal to a grid. The grid is a list of points 
+without connectivity, while a mesh is a list of nodes with specific 
+connectivity rules. Note also that, in \Atlas, the number of points 
+of a grid is generally different from the number of nodes of a mesh.
+\end{warningbox}
+%
 
 \section{Field and FieldSet}
-The Field object generates a given field, such as the wind speed 
-or the pressure, and it can be successively encapsulated into a 
-FieldSet that is a set of fields grouped together.
+Field objects encapsulate given fields, such as the wind speed 
+or the pressure, and they can be grouped into FieldSets. 
 The structure of the field object is depicted in \fig{fig:field}.
 %
 \begin{figure}
@@ -88,13 +94,14 @@ The structure of the field object is depicted in \fig{fig:field}.
 \caption{Field and FieldSet object composition}
 \end{figure}
 %
-In particular the Field object is formed by three elements:
-the Array object, the MetaData object and the FunctionSpace 
+In particular the Field object is composed of three elements:
+the Array object, the Metadata object and the FunctionSpace 
 object. The Array object contains the actual memory where the 
-data is stored, while the MetaData object is instead responsible 
+data is stored, while the Metadata object is instead responsible 
 for the description of a given field. Finally the FunctionSpace
 object allows one to define a field on a particular function 
-space (such as a spectral space or a spectral element space).
+space (such as a spectral space, grid point space, or a spectral 
+element space).
 
 
  
@@ -102,7 +109,7 @@ space (such as a spectral space or a spectral element space).
 The FunctionSpace object allows a concrete representation 
 of the fields defined through the object Field. In 
 \fig{fig:functionspace} we show the diagram of the 
-object FunctionSpace.
+FunctionSpace object.
 %
 \begin{figure}
 \centering
@@ -111,12 +118,12 @@ object FunctionSpace.
 \caption{FunctionSpace object diagram}
 \end{figure}
 %
-There exist a variety of possible function spaces, defined 
-as the space where the functions describing a given quantity 
-or field lie. Examples include the spectral function space,
-where a spectral representation of a field is employed, 
-the spectral element space, where elemental spectral 
-functions are used to describe a field, etc.
+There exist a variety of possible function spaces. Functionspaces 
+have knowledge of how a field is discretised in the domain and 
+can be used to interpret related fields. Examples include the 
+spectral function space, where a spectral representation of a 
+field is employed, the spectral element space, where elemental 
+spectral functions are used to describe a field, etc.
 
 
 
@@ -124,8 +131,11 @@ functions are used to describe a field, etc.
 The numerics in Atlas is strictly related to the FunctionSpace 
 object. In particular, the FunctionSpace object dictates the 
 construction of the numerical operators.
-In \fig{fig:numerics}, we show an example of diagram for the 
-edge based finite volume FunctionSpace.
+A concrete implementation of a numerical operator is the Nabla 
+implementation for edge-based finite volume methods. This operator 
+uses the functionspace edge-based finite volume to define the 
+the implementation of operators for the gradient, curl, divergence
+and Laplacian. This structure is depicted in \fig{fig:numerics}.
 %
 \begin{figure}
 \centering
@@ -134,11 +144,6 @@ edge based finite volume FunctionSpace.
 \caption{Numerics object composition}
 \end{figure}
 %
-Specifically, the operators implemented for this function space 
-are the gradient, the divergence, the curl and the Laplacian 
-operators, and they are encapsulated within the object Nabla, 
-since they are all composed by nabla operations.
-
 
 
 \section{Utilities}

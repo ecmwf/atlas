@@ -5,13 +5,13 @@ ecbuild_add_executable(
   NOINSTALL )
 
 ecbuild_add_executable(
-  TARGET      atlas_f-functionspace
-  SOURCES     functionspace.F90
+  TARGET      atlas_f-nodes
+  SOURCES     nodes.F90
   LIBS        atlas_f
   NOINSTALL )
 
 set_target_properties(atlas_c-nodes
-                      atlas_f-functionspace
+                      atlas_f-nodes
                       PROPERTIES EXCLUDE_FROM_ALL true )
 
 

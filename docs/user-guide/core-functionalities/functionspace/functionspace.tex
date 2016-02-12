@@ -41,13 +41,13 @@ different functionalities of the function space.
 \item \underline{Construction of Fields}\\[0.5em]
 %
 The \lista{code-nodes-C-1} shows how to construct the function space 
-\inltc{nodes} starting from a mesh. In particular, we first define 
-a global reduced grid (see lines 24 and 25). Using this grid, we
-then construct the mesh (see lines 28 and 29) and we get the number 
-of nodes of the mesh (see line 33). On line 36, we define another 
-integer that is used to construct three-dimensional fields if necessary. 
-Specifically, this integer is intended to constitute the number of 
-vertical levels required. 
+\inltc{nodes} starting from a mesh. In particular, we first initialize 
+the \Atlas library and we define a global reduced grid (see lines 
+21, 24 and 25). Using this grid, we then construct the mesh (see 
+lines 28 and 29) and we get the number of nodes of the mesh (see line 
+33). On line 36, we define another integer that is used to construct 
+three-dimensional fields if necessary. Specifically, this integer 
+is intended to constitute the number of vertical levels required. 
 Finally, on lines 39 and 40, we define the function space \inltc{nodes}.
 Note that we pass two arguments here: the first is the mesh, while the 
 second is the halo. An halo is defined as an extra-layer of ghost elements
@@ -99,7 +99,7 @@ while the second, 1, represents the latitudes).
 From line 14 to 28, we define the function, a Gaussian-type (hill) 
 function - note that the function is now defined on the number of 
 nodes of the mesh (not on the number of points of the grid as in 
-\sect{sect:field-on-grid}!)
+\sect{sect:grid-fields}!)
 %
 \begin{warningbox}
 Note that the number of points of a grid is different from the number 
@@ -117,20 +117,24 @@ style=CStyle, label=code-nodes-C-2, firstline=55,lastline=89]{nodes.cc}
 %
 In \lista{code-nodes-C-3}, we show some operations related to the 
 parallel behaviour of the function space. One of the most important
-operations from this perspective is \inltc{HaloExchange}. This 
-operation allows the correct exchange of information across different 
+operations from this perspective is \inltc{HaloExchange} (see line 3). 
+This operation allows the correct exchange of information across different 
 parallel partitions, when, for instance, calculating derivatives.
 A useful command to verify that this operation (or other operations) 
 has not corrupted the data is the one reported on line 4, \inltc{checksum}.
 This prints a unique identifier for the object that is being passed 
 as an argument. If anything in the object changes, this identifier 
-will also change, permitting the identification of possible unwanted 
+will also change, permitting the identification of a possible unwanted 
 data corruption. Note also that when printing to the screen this identifier,
 we access the MPI rank through \inltc{eckit}.
 
 On line 8, we define a global field, \inltc{globalField}. 
 This, even if the job we are running is parallel, is defined on one task 
 only. A global field can be particularly useful for input/output purposes!
+Note also that the construction of the global field is based on the existing 
+scalar field - i.e. the global field assumes the same characteristics of 
+the scalar field, with the only exception that it is defined on one task
+only.
 
 On line 11, we apply the \inltc{gather} operation to the global field.
 Note that the first argument is the input (in our case \inltc{scalarField1}),
@@ -184,6 +188,7 @@ approach than \inltc{cout} to print the values of the quantities
 just calculated to the screen. In particular, we used the 
 \inltc{Log::Info()} utility of \Atlas, that will be better 
 explained in \parte{p:utilities}, of this user-guide.
+On line 42, we finalize the library as usual.
 %
 \lstinputlisting[caption=Functionspace nodes usage (4) using C++, 
 style=CStyle, label=code-nodes-C-4, firstline=125,lastline=166]{nodes.cc}
@@ -206,13 +211,13 @@ in total), that is then used to generate the mesh and the
 to construct our Gaussian-type (hill) scalar field.
 The mesh and the field are then written into two \inlsh{.msh}
 files. These can be easily opened using Gmsh and they should 
-look like \fig{fig:fs_nodes}.
+look like \fig{fig:fs_nodes-C}.
 %
 \begin{figure}%
 \centering
 \includegraphics[width=0.75\textwidth]{imgs/O128-field.png}
 \caption{Gaussian-type field visualised in Gmsh}%
-\label{fig:fs_nodes}%
+\label{fig:fs_nodes-C}%
 \end{figure}
 %
 It will also print to the screen the following output:
@@ -242,17 +247,17 @@ de6c4b5f15bde3b75e3fe927a0e4904c
 std_deviation: 0.1496,  nb_nodes: 70144
 \end{lstlisting}
 %
-In the first few lines, we note that the code informs us that it is writing
-the mesh into gmsh format as well as the field in gmsh format.
+In the first few lines, we note that the code informs us that it is 
+writing the mesh into gmsh format as well as the field in gmsh format.
 Successively, we print the first \inltc{checksum}, that is a string, 
-the number of local (to partition) nodes, the total number of grid points 
-and the number of entries present in \inltc{globalField}. Note how, for 
-this non-parallel example the number of mesh points differs from the number
-of grid points as mentioned earlier. We then print the other two \inltc{checksum},
-the first of them is identical to the one printed previously - i.e. 
-\inltc{scalarField1} has not been corrupted! - while the second is 
-different since it refers to a different object - i.e. it refer to 
-\inltc{FieldSet}.
+the number of local (to partition) nodes, the total number of grid 
+points and the number of entries present in \inltc{globalField}. 
+Note how, for this non-parallel example the number of mesh points 
+differs from the number of grid points as mentioned earlier. We 
+then print the other two \inltc{checksum}, the first of them is 
+identical to the one printed previously - i.e. \inltc{scalarField1} 
+has not been corrupted! - while the second is different since it 
+refers to a different object - i.e. it refer to \inltc{FieldSet}.
 Finally, on the last few lines we plot the various minimum, maximum, 
 summation, average and standard deviation calculated using the \inltc{nodes}
 function space operations.
@@ -260,8 +265,248 @@ Note the additional verbosity of the \inltc{Log::Info()} \Atlas utility!
 
 You can now try to generate different meshes and run it in parallel!
 
-\subsection{Fortran version}
 
+
+\subsection{Fortran version}
+%
+\begin{description}
+%
+\item \underline{Construction of Fields}\\[0.5em]
+%
+The \lista{code-nodes-F-1} shows how to construct the function space 
+\inltc{nodes} starting from a mesh. In the first few lines, we define 
+the variables needed for this example - note in particular the definition 
+of \inltf{atlas\_functionspace\_nodes} and \inltf{atlas\_mesh\_nodes}.
+We then create a reduced grid (see lines 48 and 49) and the associated 
+mesh (see lines 52 and 53).
+On line 45 we initialize the library as usual, while, on line 56, 
+we define the \inltf{nodes} function space - note that we pass two 
+arguments here: the first is the mesh, while the second is the halo. 
+An halo is defined as an extra-layer of ghost elements that is required, 
+for instance, to calculate derivatives when a larger stencil is needed. 
+In this case, we just asked for one extra-layer of ghost elements (i.e. 
+\inltf{halo\_size = 1}). 
+
+Using the function space \inltf{nodes} just generated, we create 
+various fields to highlight the different existing possibilities.
+
+From line 59 to 62, we define two scalar fields (e.g. pressure, 
+wind velocity magnitude, etc.). The first field is two-dimensional 
+since it does not specify any vertical level. In addition, its 
+dimensions automatically correspond to the number of nodes present 
+in the mesh (i.e. we do not have to specify its dimensions!), because 
+the field is constructed using the function space. Also, by using the 
+function space, we automatically enable the field to parallel computation.
+
+From line 63 to 66,  we define two vector fields (e.g. wind 
+velocity, etc.). Again, the first field is purely two-dimensional, 
+while the second contains the vertical direction through the parameter 
+\inltf{nb\_levels}, that represents the number of vertical levels. 
+
+Finally, from line 67 to 70, we show an example on how to construct 
+two tensor fields, the first two-dimensional and the second three-dimensional. 
+The same observations done before for scalar and vector fields hold 
+also in this case.
+%
+\lstinputlisting[caption=Functionspace nodes usage (1) using Fortran, 
+style=FStyle, label=code-nodes-F-1, firstline=1,lastline=71]{nodes.F90}
+%
+%
+\item \underline{Definition/visualization of a scalar Field}\\[0.5em]
+%
+%
+In \lista{code-nodes-F-2}, we show the effective construction 
+of a scalar field. We use the same function adopted in \sect{sect:grid-fields}, 
+however, in this case, the function is not defined on a grid but 
+the mesh through the function space \inltc{nodes}. This also allows 
+us to visualize the function in gmsh.
+
+On lines 4 and 5, we define the number of nodes of the mesh using 
+the \inltf{nodes} function space object.
+
+On line 8, we initialize the pointer \inltf{scalar1} associated
+to the two-dimensional \inltf{scalarField1} object defined in 
+\lista{code-nodes-C-1}.
+On lines 9 and 10, we extract the implicitly defined \inltc{lonlat} 
+object - this step is particularly important since allows us 
+to have access to all the coordinates of the nodes in our mesh, 
+ordered in a 'lonlat fashion' (where the first dimension, 1, 
+represents the longitudes, while the second, 2, represents 
+the latitudes).	From line 12 to 24, we define the function, 
+a Gaussian-type (hill) function - note that the function 
+is now defined on the number of nodes of the mesh (not on 
+the number of points of the grid as in \sect{sect:grid-fields}!)
+%
+\begin{warningbox}
+Note that the number of points of a grid is different from 
+the number of nodes of a mesh!
+\end{warningbox}
+%
+On lines 27 and 28, we finally write the mesh and the field 
+in a gmsh format, so that we can visualize it!
+%
+\lstinputlisting[caption=Functionspace nodes usage (2) using Fortran, 
+style=FStyle, label=code-nodes-F-2, firstline=71,lastline=99]{nodes.F90}
+%
+%
+\item \underline{Parallel management}\\[0.5em]
+%
+In \lista{code-nodes-F-3}, we show some operations related to the 
+parallel behaviour of the function space. One of the most important
+operations from this perspective is \inltf{halo\_exchange} (see line 3). 
+This operation allows the correct exchange of information across different 
+parallel partitions, when, for instance, calculating derivatives.
+A useful command to verify that this operation (or other operations) 
+has not corrupted the data is the one reported on line 5, \inltc{checksum}.
+This prints a unique identifier for the object that is being passed 
+as an argument. If anything in the object changes, this identifier 
+will also change, permitting the identification of a possible unwanted 
+data corruption. Note also that when printing to the screen this identifier,
+we access the MPI rank through the \inltf{atlas\_mpi\_rank()} function.
+
+On line 11, we define a global field, \inltf{globalField}. 
+This, even if the job we are running is parallel, is defined on one task 
+only. A global field can be particularly useful for input/output purposes!
+Note also that the construction of the global field is based on the existing 
+scalar field - i.e. the global field assumes the same characteristics of 
+the scalar field, with the only exception that it is defined on one task
+only.
+
+On line 14, we apply the \inltf{gather} operation to the global field.
+Note that the first argument is the input (in our case \inltf{scalarField1}),
+while the second argument is the output (in our case \inltf{globalField}).
+
+We successively print to the screen the number of local mesh nodes 
+per parallel partition, the number of points of the grid and the 
+number of nodes of the global field.
+
+On line 22, we perform the opposite of the gather operation, 
+\inltf{scatter}. As for the \inltf{gather} operation, the 
+first argument is the input and the second is the output.
+
+On lines 25 and 26, we perform an additional \inltf{halo\_exchange}, 
+and check the integrity of our \inltf{scalarField1} after 
+all the operations performed using it! 
+Finally, from line 33 to 35, we show how \inltf{checksum} 
+can be applied also to an \inltf{atlas\_FieldSet} object.
+
+%
+\lstinputlisting[caption=Functionspace nodes usage (3) using Fortran, 
+style=FStyle, label=code-nodes-F-3, firstline=99,lastline=137]{nodes.F90}
+%
+%
+\item \underline{Simple operations}\\[0.5em]
+%
+In \lista{code-nodes-F-4}, we show some simple operations that 
+can be performed using the \inltf{nodes} function space. Specifically, 
+on lines 5 and 6 we compute the minimum and maximum values of our 
+\inltf{scalarField1} - note that the function space knows about 
+the parallelisation, therefore there is no need to do anything 
+else to obtain the correct minimum and maximum values. This will
+also be true for the other operations described below.
+
+On lines 12 and 15, we again calculate the minimum and the maximum 
+values of our field but, in this case, we also retrieve the position 
+of these values through the global index of the mesh nodes.
+
+On lines 20 and 21, we calculate the sum of all the values of our 
+field present in the mesh. The two approaches should return the 
+same number except for possible round-off errors related to the 
+mesh partitioning.
+
+Finally, on lines 26 and 31, we compute the mean value of our
+field and its standard deviation. Note that the mean and the 
+standard deviation are normalised with respect to the total 
+number of nodes present in the mesh.
+
+It is also important to observe that we have used a different 
+approach than the standard \inltc{write} to print the values 
+of the quantities just calculated to the screen. In particular, 
+we used the \inltf{atlas\_log} utility of \Atlas, that will 
+be better explained in \parte{p:utilities}, of this user-guide.
+
+Note also that from line 38 to line 48, we destroy all the objects
+of created in the program in order to release the memory and on 
+line 50 we finalize the \Atlas library.
+%
+\lstinputlisting[caption=Functionspace nodes usage (4) using Fortran, 
+style=FStyle, label=code-nodes-F-4, firstline=137,lastline=188]{nodes.F90}
+%
+\end{description}
+%
+It is now possible to run this simple program by using 
+a command-line argument representing the keyword that 
+identifies an \Atlas predefined grid.  For instance, 
+we can execute the following command line
+%
+\begin{lstlisting}[style=BashStyle]
+./atlas_f-nodes --grid O128
+\end{lstlisting}
+% 
+This will produce an octahedral reduced Gaussian grid 
+with 128 latitudes on one hemisphere (i.e. 256 latitudes 
+in total), that is then used to generate the mesh and the 
+\inltc{nodes} function space. These two will then be used 
+to construct our Gaussian-type (hill) scalar field.
+The mesh and the field are then written into two \inlsh{.msh}
+files. These can be easily opened using Gmsh and they should 
+look like \fig{fig:fs_nodes-F}.
+%
+\begin{figure}%
+\centering
+\includegraphics[width=0.75\textwidth]{imgs/O128-field.png}
+\caption{Gaussian-type field visualised in Gmsh}%
+\label{fig:fs_nodes-F}%
+\end{figure}
+%
+It will also print to the screen the following output:
+%
+\begin{lstlisting}[style=BashStyle]
+[0] (2016-02-12 T 15:41:33) (I) -- Looking for \ 
+MeshGeneratorFactory [ReducedGrid]
+[0] (2016-02-12 T 15:41:34) (I) -- writing mesh \ 
+to gmsh file mesh.msh
+[0] (2016-02-12 T 15:41:34) (I) -- writing field \ 
+scalarField1 to gmsh file scalar1.msh
+[0] (2016-02-12 T 15:41:34) (I) -- writing field \
+scalarField1...
+de6c4b5f15bde3b75e3fe927a0e4904c                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+local nodes          =        70912
+grid points          =        70144
+globalField.shape(1) =        70144
+de6c4b5f15bde3b75e3fe927a0e4904c                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+9d3b18735c8f114cf4f033204db73e78                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+[0] (2016-02-12 T 15:41:34) (I) --  min =    0.0000000000000000 \      
+max =   0.99981015482709013
+[0] (2016-02-12 T 15:41:34) (I) --  min =    0.0000000000000000 \ 
+gidx =                     1
+[0] (2016-02-12 T 15:41:34) (I) --  max =   0.99981015482709013 \
+gidx =                 34809
+[0] (2016-02-12 T 15:41:34) (I) --  sum =    2872.2433544940809 \      
+oisum =    2872.2433544940809
+[0] (2016-02-12 T 15:41:34) (I) --  mean =    4.0947812421505490E-002
+[0] (2016-02-12 T 15:41:34) (I) --  mean =    4.0947812421505490E-002
+[0] (2016-02-12 T 15:41:34) (I) --  stddev =   0.14959959397019881
+
+\end{lstlisting}
+%
+In the first few lines, we note that the code informs us that it is 
+writing the mesh into gmsh format as well as the field in gmsh format.
+Successively, we print the first \inltf{checksum}, that is a string, 
+the number of local (to partition) nodes, the total number of grid 
+points and the number of entries present in \inltf{globalField}. 
+Note how, for this non-parallel example the number of mesh points 
+differs from the number of grid points as mentioned earlier. We 
+then print the other two \inltf{checksum}, the first of them is 
+identical to the one printed previously - i.e. \inltf{scalarField1} 
+has not been corrupted! - while the second is different since it 
+refers to a different object - i.e. it refer to \inltf{atlas\_FieldSet}.
+Finally, on the last few lines we plot the various minimum, maximum, 
+summation, average and standard deviation calculated using the \inltf{nodes}
+function space operations.
+Note the additional verbosity of the \inltf{atlas\_log} \Atlas utility!
+
+You can now try to generate different meshes and run it in parallel!
 
 
 \section{ReducedGridPoint}

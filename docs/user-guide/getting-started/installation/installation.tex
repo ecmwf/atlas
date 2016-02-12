@@ -2,12 +2,12 @@
 \label{chap:installation}
 This chapter is intended to be a general introduction 
 on how to download, install and use \Atlas. In particular, 
-in \sect{s:sect:requirements} we will present the general 
+in \sect{s:requirements} we will present the general 
 requirements of the library. In \sect{s:installation} we 
 will first describe how to install the third-party packages 
 required by \Atlas (if supported by ECMWF) and successively 
 we will outline how to install \Atlas. Finally, in \sect{s:using}
-we show how to use \Atlas by creating a simple example the 
+we show how to use \Atlas by creating a simple example 
 initializes and finalizes the library.
 
 
@@ -115,10 +115,10 @@ excessively relying on Boost. For further information, please
 visit: \url{https://software.ecmwf.int/wiki/display/ECKIT/ecKit}
 \item \textbf{fckit} (optional): It implements some useful 
 Fortran functionalities. For further information, please 
-visit: \url{https://software.ecmwf.int/wiki/display/ECKIT/ecKit}
+visit: \url{https://software.ecmwf.int/stash/projects/ECSDK/repos/fckit/browse}
 \item \textbf{transi} (optional): It implements the spectral 
 transform. For further information, please visit:
-\url{https://software.ecmwf.int/wiki/display/ECKIT/ecKit}
+\url{https://software.ecmwf.int/stash/projects/ATLAS/repos/transi/browse}
 \end{itemize}
 %
 In the following we will outline how to install each of the 
@@ -457,7 +457,7 @@ the source code above. These are detailed below.
 %
 \begin{description}
 %
-\item \underline{C compiler - gcc}\\
+\item \underline{C compiler - gcc}\\[0.5em]
 %
 The first possibility is to 
 avoid using cmake and ecbuild and directly run a C compiler, 
@@ -495,7 +495,7 @@ This will compile our usage-example.cc file and it will automatically
 link all the static and dynamic libraries required by the program. 
 The executable, as mentioned, is generated into the folder bin.
 %
-\item \underline{Cmake/ecbuild}\\
+\item \underline{Cmake/ecbuild}\\[0.5em]
 %
 The second possibility is to use a cmake file that uses some 
 ecbuild macros. In particular, we need to create the following 
@@ -639,7 +639,7 @@ the source code above. These are detailed below.
 %
 \begin{description}
 %
-\item \underline{Fortran compiler - gfortran}\\
+\item \underline{Fortran compiler - gfortran}\\[0.5em]
 %
 The first possibility is to 
 avoid using cmake and ecbuild and directly run a Fortran compiler, 
@@ -677,7 +677,7 @@ This will compile our usage-example.F90 file and it will automatically
 link all the static and dynamic libraries required by the program. 
 The executable, as mentioned, is generated into the folder bin.
 %
-\item \underline{Cmake/ecbuild}\\
+\item \underline{Cmake/ecbuild}\\[0.5em]
 %
 The second possibility is to use a cmake file that uses some 
 ecbuild macros. In particular, we need to create the following 

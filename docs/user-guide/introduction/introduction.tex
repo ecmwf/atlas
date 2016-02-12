@@ -1,10 +1,12 @@
 \chapter{Introduction}
-\Atlas is a ECMWF framework for parallel flexible data-structures 
-supporting structured/unstructured grids, structured/unstructured 
-meshes, function spaces and utilities with the aim to investigate 
-more scalable dynamical core options for numerical weather prediction 
-(NWP). \Atlas is also intended to create modern interpolation and 
-product generation software.
+\Atlas is an ECMWF software framework for parallel flexible 
+data-structures supporting structured/unstructured grids, 
+structured/unstructured meshes, various function spaces 
+and utilities.  
+The main aim of \Atlas is to investigate and develop more 
+scalable dynamical core options for numerical weather prediction 
+(NWP). \Atlas is also intended to create modern interpolation 
+and product generation software.
 
 \Atlas is predominantly written in C++, with the main features 
 available to Fortran through an F2003 interface. To be used 
@@ -35,15 +37,15 @@ contains a description of a given Field (e.g. units, etc.).
 We also note that the Mesh object is formed by the Nodes 
 and HybridElements objects, with the last being composed 
 by Elements. These additional items represents the bricks 
-to ultimately builds the mesh object.
+to ultimately build the mesh object.
  
 The structure in Fig. \ref{fig:intro-schematics} will be 
 further explained in chapter \ref{chap:structure}.
 %
 \begin{figure}[htb!]
-  \centering
-    \includegraphics[width=0.95\textwidth]{imgs/schematics.png}
-    \caption{Schematics of the \Atlas library.}
-    \label{fig:intro-schematics}
+\centering
+\includegraphics[width=0.95\textwidth]{imgs/schematics.png}
+\caption{Schematics of the \Atlas library.}
+\label{fig:intro-schematics}
 \end{figure}
 %
