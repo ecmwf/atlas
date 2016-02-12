@@ -21,6 +21,7 @@
 
 #include "atlas/mesh/ElementType.h"
 #include "atlas/util/IndexView.h"
+#include "atlas/runtime/ErrorHandling.h"
 
 #ifdef ATLAS_HAVE_FORTRAN
 #define FORTRAN_BASE 1
@@ -445,6 +446,63 @@ void HybridElements::rebuild_from_fs()
 //-----------------------------------------------------------------------------
 
 extern "C" {
+HybridElements* atlas__mesh__HybridElements__create()
+{
+  HybridElements* This = 0;
+  ATLAS_ERROR_HANDLING( This = new HybridElements() );
+  return This;
+}
+
+void atlas__mesh__HybridElements__delete(HybridElements* This)
+{
+  ATLAS_ERROR_HANDLING( delete This );
+}
+
+MultiBlockConnectivity* atlas__mesh__HybridElements__node_connectivity(HybridElements* This)
+{
+  MultiBlockConnectivity* connectivity(0);
+  ATLAS_ERROR_HANDLING( connectivity = &This->node_connectivity() );
+  return connectivity;
+}
+
+MultiBlockConnectivity* atlas__mesh__HybridElements__edge_connectivity(HybridElements* This)
+{
+  MultiBlockConnectivity* connectivity(0);
+  ATLAS_ERROR_HANDLING( connectivity = &This->edge_connectivity() );
+  return connectivity;
+}
+
+MultiBlockConnectivity* atlas__mesh__HybridElements__cell_connectivity(HybridElements* This)
+{
+  MultiBlockConnectivity* connectivity(0);
+  ATLAS_ERROR_HANDLING( connectivity = &This->cell_connectivity() );
+  return connectivity;
+}
+
+size_t atlas__mesh__HybridElements__size(const HybridElements* This)
+{
+  return This->size();
+}
+
+void atlas__mesh__HybridElements__add_elements(HybridElements* This, ElementType* elementtype, size_t nb_elements)
+{
+  This->add(elementtype,nb_elements);
+}
+
+void atlas__mesh__HybridElements__add_elements_with_nodes(HybridElements*This, ElementType* elementtype, size_t nb_elements, int node_connectivity[], int fortran_array)
+{
+  This->add(elementtype,nb_elements,node_connectivity,fortran_array);
+}
+
+
+void atlas__mesh__ElementType__delete(ElementType* This)
+{
+  ATLAS_ERROR_HANDLING( delete This );
+}
+ElementType* atlas__mesh__Triangle__create() { return new temporary::Triangle(); }
+ElementType* atlas__mesh__Quadrilateral__create() { return new temporary::Quadrilateral(); }
+ElementType* atlas__mesh__Line__create() { return new temporary::Line(); }
+
 
 }
 

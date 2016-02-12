@@ -278,6 +278,21 @@ inline size_t HybridElements::type_idx( size_t elem_idx ) const
 
 extern "C"
 {
+HybridElements* atlas__mesh__HybridElements__create();
+void atlas__mesh__HybridElements__delete(HybridElements* This);
+MultiBlockConnectivity* atlas__mesh__HybridElements__node_connectivity(HybridElements* This);
+MultiBlockConnectivity* atlas__mesh__HybridElements__edge_connectivity(HybridElements* This);
+MultiBlockConnectivity* atlas__mesh__HybridElements__cell_connectivity(HybridElements* This);
+
+size_t atlas__mesh__HybridElements__size(const HybridElements* This);
+void atlas__mesh__HybridElements__add_elements(HybridElements* This, ElementType* elementtype, size_t nb_elements);
+void atlas__mesh__HybridElements__add_elements_with_nodes(HybridElements*This, ElementType* elementtype, size_t nb_elements, int node_connectivity[], int fortran_array);
+
+void atlas__mesh__ElementType__delete(ElementType* This);
+ElementType* atlas__mesh__Triangle__create();
+ElementType* atlas__mesh__Quadrilateral__create();
+ElementType* atlas__mesh__Line__create();
+
 }
 
 } // namespace mesh

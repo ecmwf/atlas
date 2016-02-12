@@ -31,6 +31,7 @@ TEST( test_connectivity )
   write(*,*) "test_connectivity starting"
 
   connectivity = atlas_Connectivity()
+  FCTEST_CHECK_EQUAL( connectivity%owners(), 1 )
 
   FCTEST_CHECK_EQUAL(connectivity%rows(),0_c_size_t)
   FCTEST_CHECK_EQUAL(connectivity%missing_value(),0)
@@ -162,13 +163,16 @@ TEST( test_multiblockconnectivity )
   implicit none
   type(atlas_MultiBlockConnectivity) :: multiblock
   type(atlas_BlockConnectivity) :: block
-  integer(c_int), pointer :: row(:), data(:,:)
+  integer(c_int), pointer :: row(:), data(:,:), padded(:,:)
   integer(c_size_t), pointer :: cols(:)
   integer(c_int) :: ncols, nblocks
+
+  type(atlas_Connectivity) :: base
 
   write(*,*) "test_multiblockconnectivity starting"
 
   multiblock = atlas_MultiBlockConnectivity()
+  FCTEST_CHECK_EQUAL( multiblock%owners(), 1 )
 
   FCTEST_CHECK_EQUAL(multiblock%rows(),0_c_size_t)
   FCTEST_CHECK_EQUAL(multiblock%blocks(),0_c_size_t)
@@ -191,8 +195,8 @@ TEST( test_multiblockconnectivity )
   FCTEST_CHECK_EQUAL(multiblock%blocks(), 2_c_size_t)
 
   block = multiblock%block(1_c_size_t)
-
   FCTEST_CHECK_EQUAL( block%owners(), 2 )
+
   FCTEST_CHECK_EQUAL( block%rows(), 2_c_size_t )
   FCTEST_CHECK_EQUAL( block%cols(), 4_c_size_t )
 
@@ -207,8 +211,8 @@ TEST( test_multiblockconnectivity )
   FCTEST_CHECK_EQUAL(data(4,2), 8)
 
   block = multiblock%block(2_c_size_t)
-
   FCTEST_CHECK_EQUAL( block%owners(), 2 )
+
   FCTEST_CHECK_EQUAL( block%rows(), 2_c_size_t )
   FCTEST_CHECK_EQUAL( block%cols(), 3_c_size_t )
 
@@ -221,7 +225,34 @@ TEST( test_multiblockconnectivity )
   FCTEST_CHECK_EQUAL(data(3,2), 14)
 
   call block%final()
+
+  FCTEST_CHECK_EQUAL( multiblock%owners(), 1 )
+  base = multiblock
+  FCTEST_CHECK_EQUAL( base%owners(), 2 )
+  FCTEST_CHECK_EQUAL( multiblock%owners(), 2 )
+
+  call base%padded_data(padded,cols)
+  FCTEST_CHECK_EQUAL(padded(1,1), 1)
+  FCTEST_CHECK_EQUAL(padded(2,1), 2)
+  FCTEST_CHECK_EQUAL(padded(3,1), 3)
+  FCTEST_CHECK_EQUAL(padded(4,1), 4)
+  FCTEST_CHECK_EQUAL(padded(1,2), 5)
+  FCTEST_CHECK_EQUAL(padded(2,2), 6)
+  FCTEST_CHECK_EQUAL(padded(3,2), 7)
+  FCTEST_CHECK_EQUAL(padded(4,2), 8)
+
+  FCTEST_CHECK_EQUAL(padded(1,3), 9)
+  FCTEST_CHECK_EQUAL(padded(2,3), 10)
+  FCTEST_CHECK_EQUAL(padded(3,3), 11)
+  FCTEST_CHECK_EQUAL(padded(1,4), 12)
+  FCTEST_CHECK_EQUAL(padded(2,4), 13)
+  FCTEST_CHECK_EQUAL(padded(3,4), 14)
+
   call multiblock%final()
+
+  FCTEST_CHECK_EQUAL( base%owners(), 1 )
+
+  call base%final()
 
 END_TEST
 

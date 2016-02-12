@@ -31,6 +31,8 @@
 namespace atlas { class Grid; }
 namespace atlas { namespace mesh { class Nodes; } }
 namespace atlas { namespace mesh { class HybridElements; } }
+namespace atlas { namespace mesh { typedef HybridElements Edges; } }
+namespace atlas { namespace mesh { typedef HybridElements Cells; } }
 namespace atlas { class FunctionSpace; }
 namespace atlas { class GridDistribution; }
 namespace atlas { namespace mpl { class HaloExchange; } }
@@ -118,8 +120,11 @@ public: // methods
     const mesh::Nodes& nodes() const { return *nodes_; }
           mesh::Nodes& nodes()       { return *nodes_; }
 
-    const mesh::HybridElements& cells() const { return *cells_; }
-          mesh::HybridElements& cells()       { return *cells_; }
+    const mesh::Cells& cells() const { return *cells_; }
+          mesh::Cells& cells()       { return *cells_; }
+
+    const mesh::Edges& edges() const { return *edges_; }
+          mesh::Edges& edges()       { return *edges_; }
 
     const mesh::HybridElements& facets() const { return *facets_; }
           mesh::HybridElements& facets()       { return *facets_; }
@@ -130,8 +135,6 @@ public: // methods
     const mesh::HybridElements& peaks() const { return *peaks_; }
           mesh::HybridElements& peaks()       { return *peaks_; }
 
-    const mesh::HybridElements& edges() const { return *edges_; }
-          mesh::HybridElements& edges()       { return *edges_; }
 
 private:  // methods
 

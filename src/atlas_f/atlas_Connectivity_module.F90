@@ -13,6 +13,11 @@ private :: c_funloc
 private :: c_int
 private :: c_size_t
 
+public :: atlas_Connectivity
+public :: atlas_MultiBlockConnectivity
+public :: atlas_BlockConnectivity
+
+
 private
 
 !-----------------------------
@@ -72,11 +77,13 @@ contains
 end type
 
 interface atlas_Connectivity
-  module procedure Connectivity_ctr
+  module procedure Connectivity_cptr
+  module procedure Connectivity_constructor
 end interface
 
 interface atlas_MultiBlockConnectivity
-  module procedure MultiBlockConnectivity_ctr
+  module procedure MultiBlockConnectivity_cptr
+  module procedure MultiBlockConnectivity_constructor
 end interface
 
 !-------------------------------
@@ -141,12 +148,19 @@ end interface
 
 contains
 
-function Connectivity_ctr() result(connectivity)
+function Connectivity_cptr(cptr) result(this)
   use atlas_connectivity_c_binding
-  type(atlas_Connectivity) :: connectivity
-  call connectivity%reset_c_ptr( atlas__Connectivity__create() )
-  call setup_access(connectivity)
-  call connectivity%return()
+  type(atlas_Connectivity) :: this
+  type(c_ptr) :: cptr
+  call this%reset_c_ptr( cptr )
+  call setup_access(this)
+end function
+
+function Connectivity_constructor() result(this)
+  use atlas_connectivity_c_binding
+  type(atlas_Connectivity) :: this
+  this = Connectivity_cptr( atlas__Connectivity__create() )
+  call this%return()
 end function
 
 subroutine atlas_Connectivity__delete(this)
@@ -304,12 +318,19 @@ end subroutine
 
 !========================================================
 
-function MultiBlockConnectivity_ctr() result(connectivity)
+function MultiBlockConnectivity_cptr(cptr) result(this)
   use atlas_connectivity_c_binding
-  type(atlas_MultiBlockConnectivity) :: connectivity
-  call connectivity%reset_c_ptr( atlas__MultiBlockConnectivity__create() )
-  call setup_access(connectivity)
-  call connectivity%return()
+  type(atlas_MultiBlockConnectivity) :: this
+  type(c_ptr) :: cptr
+  call this%reset_c_ptr( cptr )
+  call setup_access(this)
+end function
+
+function MultiBlockConnectivity_constructor() result(this)
+  use atlas_connectivity_c_binding
+  type(atlas_MultiBlockConnectivity) :: this
+  this = MultiBlockConnectivity_cptr( atlas__MultiBlockConnectivity__create() )
+  call this%return()
 end function
 
 function atlas_MultiBlockConnectivity__blocks(this) result(val)
