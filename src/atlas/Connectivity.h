@@ -438,6 +438,7 @@ BlockConnectivity* atlas__MultiBlockConnectivity__block(MultiBlockConnectivity* 
 
 size_t atlas__BlockConnectivity__rows(const BlockConnectivity* This);
 size_t atlas__BlockConnectivity__cols(const BlockConnectivity* This);
+int atlas__BlockConnectivity__missing_value(const BlockConnectivity* This);
 void atlas__BlockConnectivity__data(BlockConnectivity* This, int* &data, size_t &rows, size_t &cols);
 void atlas__BlockConnectivity__delete(BlockConnectivity* This);
 }

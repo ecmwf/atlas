@@ -81,10 +81,10 @@ public:
 
   /// @brief Access hybrid_elements
   /// HybridElements can contain more Elements, and holds the data.
-  const HybridElements& hybrid_elements() const;
+//  const HybridElements& hybrid_elements() const;
   
   /// @brief Index of Elements in hybrid_elements
-  size_t type_idx() const;
+//  size_t type_idx() const;
 
   /// @brief Begin of elements in hybrid_elements
   size_t begin() const;
@@ -151,15 +151,15 @@ inline size_t Elements::nb_edges() const
   return nb_edges_;
 }
 
-inline size_t Elements::type_idx() const
-{
-  return type_idx_;
-}
+//inline size_t Elements::type_idx() const
+//{
+//  return type_idx_;
+//}
 
-inline const HybridElements& Elements::hybrid_elements() const
-{
-  return *hybrid_elements_;
-}
+//inline const HybridElements& Elements::hybrid_elements() const
+//{
+//  return *hybrid_elements_;
+//}
 
 inline const Elements::Connectivity& Elements::node_connectivity() const
 {
@@ -254,6 +254,23 @@ inline size_t Elements::end() const
 
 extern "C"
 {
+void atlas__mesh__Elements__delete(Elements* This);
+size_t atlas__mesh__Elements__size(const Elements* This);
+size_t atlas__mesh__Elements__begin(const Elements* This);
+size_t atlas__mesh__Elements__end(const Elements* This);
+BlockConnectivity* atlas__mesh__Elements__node_connectivity(Elements* This);
+BlockConnectivity* atlas__mesh__Elements__edge_connectivity(Elements* This);
+BlockConnectivity* atlas__mesh__Elements__cell_connectivity(Elements* This);
+int atlas__mesh__Elements__has_field(const Elements* This, char* name);
+int atlas__mesh__Elements__nb_fields(const Elements* This);
+Field* atlas__mesh__Elements__field_by_idx(Elements* This, size_t idx);
+Field* atlas__mesh__Elements__field_by_name(Elements* This, char* name);
+Field* atlas__mesh__Elements__global_index(Elements* This);
+Field* atlas__mesh__Elements__remote_index(Elements* This);
+Field* atlas__mesh__Elements__partition(Elements* This);
+Field* atlas__mesh__Elements__halo(Elements* This);
+const ElementType* atlas__mesh__Elements__element_type(const Elements* This);
+void atlas__mesh__Elements__add(Elements* This, size_t nb_elements);
 }
 
 //------------------------------------------------------------------------------------------------------

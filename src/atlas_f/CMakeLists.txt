@@ -111,6 +111,8 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/Nabla.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/meshgen/MeshGenerator.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/Connectivity.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/HybridElements.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/Elements.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/ElementType.h)
 generate_fortran_bindings(FORTRAN_BINDINGS atlas_logging.h)
 generate_fortran_bindings(FORTRAN_BINDINGS atlas_resource.h)
 generate_fortran_bindings(FORTRAN_BINDINGS atlas_value.h)
@@ -136,6 +138,8 @@ ecbuild_add_library( TARGET atlas_f
         atlas_grids_module.F90
         atlas_Connectivity_module.F90
         atlas_mesh_HybridElements_module.F90
+        atlas_mesh_Elements_module.F90
+        atlas_mesh_ElementType_module.F90
         atlas_C_interop.F90
         atlas_C_interop.cc
         atlas_logging.h

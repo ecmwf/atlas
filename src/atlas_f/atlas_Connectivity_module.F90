@@ -2,7 +2,7 @@
 module atlas_connectivity_module
 
 use iso_c_binding, only : c_funptr, c_ptr, c_loc, c_f_pointer, c_f_procpointer, c_funloc, c_int, c_size_t
-use atlas_refcounted_module
+use atlas_refcounted_module, only : atlas_refcounted
 implicit none
 
 private :: c_funptr
@@ -12,6 +12,7 @@ private :: c_f_pointer
 private :: c_funloc
 private :: c_int
 private :: c_size_t
+private :: atlas_refcounted
 
 public :: atlas_Connectivity
 public :: atlas_MultiBlockConnectivity
@@ -74,6 +75,7 @@ contains
   procedure, public :: rows     => atlas_BlockConnectivity__rows
   procedure, public :: cols     => atlas_BlockConnectivity__cols
   procedure, public :: data     => atlas_BlockConnectivity__data
+  procedure, public :: missing_value  => atlas_BlockConnectivity__missing_value
 end type
 
 interface atlas_Connectivity
@@ -85,6 +87,11 @@ interface atlas_MultiBlockConnectivity
   module procedure MultiBlockConnectivity_cptr
   module procedure MultiBlockConnectivity_constructor
 end interface
+
+interface atlas_BlockConnectivity
+  module procedure BlockConnectivity_cptr
+end interface
+
 
 !-------------------------------
 ! Helper types                 !
@@ -350,6 +357,13 @@ end function
 
 !========================================================
 
+function BlockConnectivity_cptr(cptr) result(this)
+  use atlas_connectivity_c_binding
+  type(atlas_BlockConnectivity) :: this
+  type(c_ptr) :: cptr
+  call this%reset_c_ptr( cptr )
+end function
+
 subroutine atlas_BlockConnectivity__delete(this)
   use atlas_connectivity_c_binding
   class(atlas_BlockConnectivity), intent(inout) :: this
@@ -387,6 +401,13 @@ function atlas_BlockConnectivity__cols(this) result(val)
   integer(c_size_t) :: val
   class(atlas_BlockConnectivity), intent(in) :: this
   val = atlas__BlockConnectivity__cols(this%c_ptr())
+end function
+
+function atlas_BlockConnectivity__missing_value(this) result(val)
+  use atlas_connectivity_c_binding
+  integer(c_int) :: val
+  class(atlas_BlockConnectivity), intent(in) :: this
+  val = atlas__BlockConnectivity__missing_value(this%c_ptr()) + 1
 end function
 
 !========================================================

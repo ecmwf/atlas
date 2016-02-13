@@ -494,14 +494,102 @@ void atlas__mesh__HybridElements__add_elements_with_nodes(HybridElements*This, E
   This->add(elementtype,nb_elements,node_connectivity,fortran_array);
 }
 
-
-void atlas__mesh__ElementType__delete(ElementType* This)
+int atlas__mesh__HybridElements__has_field(const HybridElements* This, char* name)
 {
-  ATLAS_ERROR_HANDLING( delete This );
+  ATLAS_ERROR_HANDLING( ASSERT(This!=0) );
+  return This->has_field(std::string(name));
 }
-ElementType* atlas__mesh__Triangle__create() { return new temporary::Triangle(); }
-ElementType* atlas__mesh__Quadrilateral__create() { return new temporary::Quadrilateral(); }
-ElementType* atlas__mesh__Line__create() { return new temporary::Line(); }
+
+int atlas__mesh__HybridElements__nb_fields(const HybridElements* This)
+{
+  ATLAS_ERROR_HANDLING( ASSERT(This!=0) );
+  return This->nb_fields();
+}
+
+int atlas__mesh__HybridElements__nb_types(const HybridElements* This)
+{
+  ATLAS_ERROR_HANDLING( ASSERT(This!=0) );
+  return This->nb_types();
+}
+
+Field* atlas__mesh__HybridElements__field_by_idx(HybridElements* This, size_t idx)
+{
+  Field* field(0);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This!=0);
+    field = &This->field(idx);
+  );
+  return field;
+}
+
+Field* atlas__mesh__HybridElements__field_by_name(HybridElements* This, char* name)
+{
+  Field* field(0);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This!=0);
+    field = &This->field(std::string(name));
+  );
+  return field;
+}
+
+Field* atlas__mesh__HybridElements__global_index(HybridElements* This)
+{
+  Field* field(0);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This!=0);
+    field = &This->global_index();
+  );
+  return field;
+
+}
+
+Field* atlas__mesh__HybridElements__remote_index(HybridElements* This)
+{
+  Field* field(0);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This!=0);
+    field = &This->remote_index();
+  );
+  return field;
+}
+
+Field* atlas__mesh__HybridElements__partition(HybridElements* This)
+{
+  Field* field(0);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This!=0);
+    field = &This->partition();
+  );
+  return field;
+}
+
+Field* atlas__mesh__HybridElements__halo(HybridElements* This)
+{
+  Field* field(0);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This!=0);
+    field = &This->halo();
+  );
+  return field;
+}
+
+Elements* atlas__mesh__HybridElements__elements(HybridElements* This, size_t idx)
+{
+  Elements* elements(0);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This!=0);
+    elements = &This->elements(idx);
+  );
+  return elements;
+}
+
+void atlas__mesh__HybridElements__add_field(HybridElements*This, Field* field)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    This->add(field);
+  );
+}
 
 
 }

@@ -117,6 +117,142 @@ size_t Elements::add(const size_t nb_elements)
 
 extern "C" {
 
+void atlas__mesh__Elements__delete(Elements* This)
+{
+  ATLAS_ERROR_HANDLING( delete This );
+}
+
+size_t atlas__mesh__Elements__size(const Elements* This)
+{
+  ATLAS_ERROR_HANDLING( ASSERT( This != 0 ) );
+  return This->size();
+}
+
+size_t atlas__mesh__Elements__begin(const Elements* This)
+{
+  ATLAS_ERROR_HANDLING( ASSERT( This != 0 ) );
+  return This->begin();
+}
+
+size_t atlas__mesh__Elements__end(const Elements* This)
+{
+  ATLAS_ERROR_HANDLING( ASSERT( This != 0 ) );
+  return This->end();
+}
+
+BlockConnectivity* atlas__mesh__Elements__node_connectivity(Elements* This)
+{
+  BlockConnectivity* connectivity(0);
+  ATLAS_ERROR_HANDLING( connectivity = &This->node_connectivity() );
+  return connectivity;
+}
+
+BlockConnectivity* atlas__mesh__Elements__edge_connectivity(Elements* This)
+{
+  BlockConnectivity* connectivity(0);
+  ATLAS_ERROR_HANDLING( connectivity = &This->edge_connectivity() );
+  return connectivity;
+}
+
+BlockConnectivity* atlas__mesh__Elements__cell_connectivity(Elements* This)
+{
+  BlockConnectivity* connectivity(0);
+  ATLAS_ERROR_HANDLING( connectivity = &This->cell_connectivity() );
+  return connectivity;
+}
+
+
+int atlas__mesh__Elements__has_field(const Elements* This, char* name)
+{
+  ATLAS_ERROR_HANDLING( ASSERT(This!=0) );
+  return This->has_field(std::string(name));
+}
+
+int atlas__mesh__Elements__nb_fields(const Elements* This)
+{
+  ATLAS_ERROR_HANDLING( ASSERT(This!=0) );
+  return This->nb_fields();
+}
+
+Field* atlas__mesh__Elements__field_by_idx(Elements* This, size_t idx)
+{
+  Field* field(0);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This!=0);
+    field = &This->field(idx);
+  );
+  return field;
+}
+
+Field* atlas__mesh__Elements__field_by_name(Elements* This, char* name)
+{
+  Field* field(0);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This!=0);
+    field = &This->field(std::string(name));
+  );
+  return field;
+}
+
+Field* atlas__mesh__Elements__global_index(Elements* This)
+{
+  Field* field(0);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This!=0);
+    field = &This->global_index();
+  );
+  return field;
+
+}
+
+Field* atlas__mesh__Elements__remote_index(Elements* This)
+{
+  Field* field(0);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This!=0);
+    field = &This->remote_index();
+  );
+  return field;
+}
+
+Field* atlas__mesh__Elements__partition(Elements* This)
+{
+  Field* field(0);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This!=0);
+    field = &This->partition();
+  );
+  return field;
+}
+
+Field* atlas__mesh__Elements__halo(Elements* This)
+{
+  Field* field(0);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This!=0);
+    field = &This->halo();
+  );
+  return field;
+}
+
+const ElementType* atlas__mesh__Elements__element_type(const Elements* This)
+{
+  const ElementType* element_type(0);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This!=0);
+    element_type = &This->element_type();
+  );
+  return element_type;
+}
+
+void atlas__mesh__Elements__add(Elements* This, size_t nb_elements)
+{
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This!=0);
+    This->add(nb_elements);
+  );
+}
+
 }
 
 //-----------------------------------------------------------------------------

@@ -140,6 +140,16 @@ public:
 
 extern "C"
 {
+ElementType* atlas__mesh__Triangle__create();
+ElementType* atlas__mesh__Quadrilateral__create();
+ElementType* atlas__mesh__Line__create();
+
+void atlas__mesh__ElementType__delete(ElementType* This);
+size_t atlas__mesh__ElementType__nb_nodes(const ElementType* This);
+size_t atlas__mesh__ElementType__nb_edges(const ElementType* This);
+int atlas__mesh__ElementType__parametric(const ElementType* This);
+const char* atlas__mesh__ElementType__name (const ElementType* This);
+
 }
 
 //------------------------------------------------------------------------------------------------------

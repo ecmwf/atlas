@@ -616,6 +616,12 @@ size_t atlas__BlockConnectivity__cols(const BlockConnectivity* This)
   return This->cols();
 }
 
+int atlas__BlockConnectivity__missing_value(const BlockConnectivity* This)
+{
+  ATLAS_ERROR_HANDLING( ASSERT(This != 0 ) );
+  return This->missing_value();
+}
+
 void atlas__BlockConnectivity__data(BlockConnectivity* This, int* &data, size_t &rows, size_t &cols)
 {
   ATLAS_ERROR_HANDLING( ASSERT(This != 0 ) );
