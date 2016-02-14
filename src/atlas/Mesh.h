@@ -176,6 +176,8 @@ private: // members to be removed
 
 // C wrapper interfaces to C++ routines
 #define mesh_Nodes mesh::Nodes
+#define mesh_Edges mesh::Edges
+#define mesh_Cells mesh::Cells
 extern "C"
 {
 	Mesh* atlas__Mesh__new ();
@@ -184,8 +186,12 @@ extern "C"
   void atlas__Mesh__create_function_space (Mesh* This, char* name,char* shape_func,int shape[], int shape_size, int fortran_ordering);
 	FunctionSpace* atlas__Mesh__function_space (Mesh* This, char* name);
   mesh_Nodes* atlas__Mesh__nodes (Mesh* This);
+  mesh_Edges* atlas__Mesh__edges (Mesh* This);
+  mesh_Cells* atlas__Mesh__cells (Mesh* This);
 }
 #undef mesh_Nodes
+#undef mesh_Edges
+#undef mesh_Cells
 
 //----------------------------------------------------------------------------------------------------------------------
 

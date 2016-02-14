@@ -56,6 +56,20 @@ function Mesh__nodes(this) result(nodes)
   if( nodes%is_null() ) write(0,*) 'call abort()'
 end function
 
+function Mesh__cells(this) result(cells)
+  class(atlas_Mesh), intent(in) :: this
+  type(atlas_mesh_Cells) :: cells
+  call cells%reset_c_ptr( atlas__Mesh__cells(this%c_ptr()) )
+  if( cells%is_null() ) write(0,*) 'call abort()'
+end function
+
+function Mesh__edges(this) result(cells)
+  class(atlas_Mesh), intent(in) :: this
+  type(atlas_mesh_Edges) :: cells
+  call cells%reset_c_ptr( atlas__Mesh__edges(this%c_ptr()) )
+  if( cells%is_null() ) write(0,*) 'call abort()'
+end function
+
 subroutine atlas_Mesh__delete(this)
   class(atlas_Mesh), intent(inout) :: this
   if ( .not. this%is_null() ) then

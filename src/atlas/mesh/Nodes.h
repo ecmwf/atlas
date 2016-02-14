@@ -160,6 +160,9 @@ Field* atlas__mesh__Nodes__field_by_name (Nodes* This, char* name);
 Field* atlas__mesh__Nodes__field_by_idx (Nodes* This, int idx);
 Metadata* atlas__mesh__Nodes__metadata(Nodes* This);
 void atlas__mesh__Nodes__str (Nodes* This, Char* &str, int &size);
+IrregularConnectivity* atlas__mesh__Nodes__edge_connectivity(Nodes* This);
+IrregularConnectivity* atlas__mesh__Nodes__cell_connectivity(Nodes* This);
+
 }
 #undef Char
 

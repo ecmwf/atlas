@@ -70,6 +70,7 @@ contains
 end type
 
 interface atlas_mesh_HybridElements
+  module procedure atlas_mesh_HybridElements__cptr
   module procedure atlas_mesh_HybridElements__constructor
 end interface
 
@@ -78,6 +79,7 @@ contains
 end type
 
 interface atlas_mesh_Edges
+  module procedure atlas_mesh_HybridElements__cptr
   module procedure atlas_mesh_HybridElements__constructor
 end interface
 
@@ -86,12 +88,20 @@ contains
 end type
 
 interface atlas_mesh_Cells
+  module procedure atlas_mesh_HybridElements__cptr
   module procedure atlas_mesh_HybridElements__constructor
 end interface
 
 !========================================================
 contains
 !========================================================
+
+function atlas_mesh_HybridElements__cptr(cptr) result(this)
+  use atlas_hybridelements_c_binding
+  type(atlas_mesh_HybridElements) :: this
+  type(c_ptr), intent(in) :: cptr
+  call this%reset_c_ptr( cptr )
+end function
 
 function atlas_mesh_HybridElements__constructor() result(this)
   use atlas_hybridelements_c_binding

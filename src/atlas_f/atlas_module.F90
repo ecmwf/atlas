@@ -98,6 +98,21 @@ use atlas_Error_module, only: &
     & atlas_err_readerror, &
     & atlas_err_writeerror, &
     & atlas_err_unknown
+use atlas_mesh_HybridElements_module, only: &
+    & atlas_mesh_HybridElements, &
+    & atlas_mesh_Cells, &
+    & atlas_mesh_Edges
+use atlas_mesh_Elements_module, only: &
+    & atlas_mesh_Elements
+use atlas_mesh_ElementType_module, only: &
+    & atlas_mesh_ElementType, &
+    & atlas_mesh_Triangle, &
+    & atlas_mesh_Quadrilateral, &
+    & atlas_mesh_Line
+use atlas_Connectivity_module, only: &
+    & atlas_Connectivity, &
+    & atlas_MultiBlockConnectivity, &
+    & atlas_BlockConnectivity
 
 use atlas_atlas_c_binding
 use atlas_mpi_c_binding

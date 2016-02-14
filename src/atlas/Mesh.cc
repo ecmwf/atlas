@@ -421,6 +421,23 @@ mesh::Nodes* atlas__Mesh__nodes (Mesh* This) {
   return NULL;
 }
 
+mesh::Edges* atlas__Mesh__edges (Mesh* This) {
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This != NULL );
+    return &This->edges();
+  );
+  return NULL;
+}
+
+mesh::Cells* atlas__Mesh__cells (Mesh* This) {
+  ATLAS_ERROR_HANDLING(
+    ASSERT( This != NULL );
+    return &This->cells();
+  );
+  return NULL;
+}
+
+
 //----------------------------------------------------------------------------------------------------------------------
 
 } // namespace atlas

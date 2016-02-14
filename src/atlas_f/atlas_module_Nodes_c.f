@@ -128,6 +128,25 @@ function Nodes__partition(this) result(field)
   call field%return()
 end function
 
+function Nodes__edge_connectivity(this) result(connectivity)
+  use atlas_nodes_c_binding
+  class(atlas_mesh_Nodes), intent(in) :: this
+  type(atlas_Connectivity) :: connectivity
+  connectivity = atlas_Connectivity( &
+      atlas__mesh__Nodes__edge_connectivity(this%c_ptr()) )
+  call connectivity%return()
+end function
+
+function Nodes__cell_connectivity(this) result(connectivity)
+  use atlas_nodes_c_binding
+  class(atlas_mesh_Nodes), intent(in) :: this
+  type(atlas_Connectivity) :: connectivity
+  connectivity = atlas_Connectivity( &
+      atlas__mesh__Nodes__cell_connectivity(this%c_ptr()) )
+  call connectivity%return()
+end function
+
+
 subroutine atlas_mesh_Nodes__delete(this)
   class(atlas_mesh_Nodes), intent(inout) :: this
 end subroutine

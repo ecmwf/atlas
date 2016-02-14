@@ -314,7 +314,7 @@ END_TEST
 TEST( test_meshgen )
   type(atlas_ReducedGrid) :: grid
   type(atlas_Mesh) :: mesh
-  type(atlas_FunctionSpace) :: edges
+  type(atlas_mesh_Edges) :: edges
   type(atlas_Field) :: field
   type(atlas_functionspace_Nodes) :: functionspace_nodes
   type(atlas_HaloExchange) :: halo_exchange
@@ -358,7 +358,7 @@ TEST( test_meshgen )
   halo_exchange = functionspace_nodes%get_halo_exchange()
   call halo_exchange%execute(arr1d)
 
-  edges = mesh%function_space("edges")
+  edges = mesh%edges()
   field = edges%field("dual_normals")
   call field%data(arr2d)
   call field%final()
@@ -463,7 +463,7 @@ TEST( test_fv )
       type(atlas_GridDistribution) :: griddistribution
       type(atlas_functionspace_Nodes) :: nodes_fs
 
-      type(atlas_FunctionSpace) :: edges
+      type(atlas_mesh_Edges) :: edges
       type(atlas_mesh_Nodes) :: nodes
 
       integer, allocatable :: nloen(:)
@@ -495,7 +495,7 @@ TEST( test_fv )
       call atlas_build_pole_edges(mesh)
 
       ! Generate edges function-space (This api will change soon)
-      edges = mesh%function_space("edges")
+      edges = mesh%edges()
       nodes = mesh%nodes()
       call atlas_build_edges_parallel_fields(mesh)
 

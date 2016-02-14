@@ -27,6 +27,8 @@ contains
 #endif
   procedure :: create_nodes => Mesh__create_nodes
   procedure :: nodes => Mesh__nodes
+  procedure :: cells => Mesh__cells
+  procedure :: edges => Mesh__edges
   procedure, public :: delete => atlas_Mesh__delete
   procedure, public :: copy => atlas_Mesh__copy
 END TYPE atlas_Mesh

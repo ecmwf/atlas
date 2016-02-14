@@ -234,6 +234,20 @@ void atlas__mesh__Nodes__str (Nodes* This, char* &str, int &size)
   );
 }
 
+IrregularConnectivity* atlas__mesh__Nodes__edge_connectivity(Nodes* This)
+{
+  IrregularConnectivity* connectivity(0);
+  ATLAS_ERROR_HANDLING( connectivity = &This->edge_connectivity() );
+  return connectivity;
+}
+
+IrregularConnectivity* atlas__mesh__Nodes__cell_connectivity(Nodes* This)
+{
+  IrregularConnectivity* connectivity(0);
+  ATLAS_ERROR_HANDLING( connectivity = &This->cell_connectivity() );
+  return connectivity;
+}
+
 }
 
 }  // namespace mesh

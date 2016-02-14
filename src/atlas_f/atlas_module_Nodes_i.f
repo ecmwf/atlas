@@ -23,6 +23,9 @@ procedure, public :: remote_index => Nodes__remote_index
 procedure, public :: partition => Nodes__partition
 procedure, public :: ghost => Nodes__ghost
 
+procedure, public :: edge_connectivity => Nodes__edge_connectivity
+procedure, public :: cell_connectivity => Nodes__cell_connectivity
+
 procedure, public :: delete => atlas_mesh_Nodes__delete
 procedure, public :: copy => atlas_mesh_Nodes__copy
 
