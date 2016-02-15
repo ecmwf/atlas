@@ -25,7 +25,7 @@ private
 ! atlas_Connectivity         !
 !-----------------------------
 
-type, extends(atlas_refcounted), public :: atlas_Connectivity
+type, extends(atlas_refcounted) :: atlas_Connectivity
 
 ! Public members
   type( atlas_ConnectivityAccess ), public, pointer :: access => null()
@@ -57,7 +57,7 @@ end type
 ! atlas_MultiBlockConnectivity         !
 !---------------------------------------
 
-type, extends(atlas_Connectivity), public :: atlas_MultiBlockConnectivity
+type, extends(atlas_Connectivity) :: atlas_MultiBlockConnectivity
 contains
 ! Public methods
   procedure, public :: blocks   => atlas_MultiBlockConnectivity__blocks
@@ -68,7 +68,7 @@ end type
 ! atlas_BlockConnectivity    !
 !----------------------------!
 
-type, extends(atlas_refcounted), public :: atlas_BlockConnectivity
+type, extends(atlas_refcounted) :: atlas_BlockConnectivity
 contains
   procedure, public :: copy     => atlas_BlockConnectivity__copy
   procedure, public :: delete   => atlas_BlockConnectivity__delete
@@ -97,12 +97,12 @@ end interface
 ! Helper types                 !
 !-------------------------------
 
-type, private :: atlas_ConnectivityAccessRow
+type :: atlas_ConnectivityAccessRow
   integer, pointer :: col(:)
 contains
 end type
 
-type, private :: atlas_ConnectivityAccess
+type :: atlas_ConnectivityAccess
   integer(c_int),    private, pointer :: values_(:) => null()
   integer(c_size_t), private, pointer :: displs_(:) => null()
   integer(c_size_t), public,  pointer :: cols(:)    => null()
@@ -253,8 +253,8 @@ pure function atlas_Connectivity__maxcols(this) result(val)
 end function
 
 subroutine atlas_Connectivity__padded_data(this, padded, cols)
-  class(atlas_Connectivity), intent(in) :: this
-  integer(c_int), pointer, intent(out) :: padded(:,:)
+  class(atlas_Connectivity), intent(inout) :: this
+  integer(c_int), pointer, intent(inout) :: padded(:,:)
   integer(c_size_t), pointer, intent(out), optional :: cols(:)
   if( .not. associated(this%access%padded_) ) call update_padded(this%access)
   padded => this%access%padded_

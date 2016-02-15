@@ -41,9 +41,7 @@ struct GlobalFixture {
     ~GlobalFixture() { atlas_finalize(); }
 };
 
-BOOST_GLOBAL_FIXTURE( GlobalFixture )
-
-BOOST_AUTO_TEST_SUITE( test_edges )
+BOOST_GLOBAL_FIXTURE( GlobalFixture );
 
 BOOST_AUTO_TEST_CASE( test_accumulate_facets )
 {
@@ -880,11 +878,6 @@ BOOST_AUTO_TEST_CASE( test_build_edges_triangles_only )
   }
 #endif
 }
-
-
-
-
-BOOST_AUTO_TEST_SUITE_END()
 
 } // namespace test
 } // namespace atlas

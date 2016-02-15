@@ -61,8 +61,9 @@ end function
 function Mesh__cells(this) result(cells)
   class(atlas_Mesh), intent(in) :: this
   type(atlas_mesh_Cells) :: cells
-  call cells%reset_c_ptr( atlas__Mesh__cells(this%c_ptr()) )
+  cells = atlas_mesh_Cells(atlas__Mesh__cells(this%c_ptr()))
   if( cells%is_null() ) write(0,*) 'call abort()'
+  call cells%return()
 end function
 
 function Mesh__edges(this) result(cells)

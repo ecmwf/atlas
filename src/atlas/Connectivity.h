@@ -265,6 +265,10 @@ public:
   /// @note Can only be used when data is owned.
   virtual void add( size_t rows, size_t cols );
 
+  /// @brief Resize connectivity, and add given rows with missing values
+  /// @note Can only be used when data is owned.
+  virtual void add( size_t rows, const size_t cols[] );
+
   /// @brief Resize connectivity, and insert given rows
   /// @note Can only be used when data is owned.
   virtual void insert( size_t position, size_t rows, size_t cols, const idx_t values[], bool fortran_array=false );
@@ -272,6 +276,10 @@ public:
   /// @brief Resize connectivity, and insert given rows with missing values
   /// @note Can only be used when data is owned.
   virtual void insert( size_t position, size_t rows, size_t cols );
+
+  /// @brief Resize connectivity, and insert given rows with missing values
+  /// @note Can only be used when data is owned.
+  virtual void insert( size_t position, size_t rows, const size_t cols[] );
 
   virtual void clear();
 

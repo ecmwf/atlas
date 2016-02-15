@@ -23,7 +23,7 @@ private
 ! atlas_mesh_ElementType     !
 !-----------------------------
 
-type, extends(atlas_refcounted), public :: atlas_mesh_ElementType
+type, extends(atlas_refcounted) :: atlas_mesh_ElementType
 contains
 ! Public methods
   procedure, public :: copy     => atlas_mesh_ElementType__copy

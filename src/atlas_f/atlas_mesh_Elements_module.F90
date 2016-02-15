@@ -26,7 +26,7 @@ private
 ! atlas_mesh_Elements        !
 !-----------------------------
 
-type, extends(atlas_refcounted), public :: atlas_mesh_Elements
+type, extends(atlas_refcounted) :: atlas_mesh_Elements
 contains
 ! Public methods
   procedure, public :: copy     => atlas_mesh_Elements__copy

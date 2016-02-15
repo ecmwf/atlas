@@ -1,4 +1,4 @@
-﻿/*
+/*
  * (C) Copyright 1996-2015 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
@@ -360,6 +360,26 @@ void MultiBlockConnectivity::add( size_t rows, size_t cols )
 
 //------------------------------------------------------------------------------------------------------
 
+void MultiBlockConnectivity::add( size_t rows, const size_t cols[] )
+{
+  if( !owns() ) throw eckit::AssertionFailed("MultiBlockConnectivity must be owned to be resized directly");
+  size_t min=std::numeric_limits<size_t>::max();
+  size_t max=0;
+  for( size_t j=0; j<rows; ++j )
+  {
+  	min = std::min(min,cols[j]);
+  	max = std::min(max,cols[j]);
+  }
+  if( min != max ) throw eckit::AssertionFailed("MultiBlockConnectivity::add(rows,cols[]): all elements of cls[] must be identical");
+  IrregularConnectivity::add(rows,cols);
+  blocks_++;
+  owned_block_displs_.push_back(this->rows());
+  block_displs_ = owned_block_displs_.data();
+  rebuild_block_connectivity();
+}
+
+//------------------------------------------------------------------------------------------------------
+
 void MultiBlockConnectivity::insert( size_t position, size_t rows, size_t cols, const idx_t values[], bool fortran_array )
 {
   if( !owns() ) throw eckit::AssertionFailed("MultiBlockConnectivity must be owned to be resized directly");
@@ -381,6 +401,32 @@ void MultiBlockConnectivity::insert( size_t position, size_t rows, size_t cols )
 {
   if( !owns() ) throw eckit::AssertionFailed("MultiBlockConnectivity must be owned to be resized directly");
   ASSERT( counts()[std::max(position-1ul,0ul)] == cols );
+
+  size_t blk_idx = blocks_;
+  do{ blk_idx--; } while( owned_block_displs_[blk_idx] >= position );
+
+  IrregularConnectivity::insert(position,rows,cols);
+
+  for( size_t jblk=blk_idx; jblk<blocks_; ++jblk)
+    owned_block_displs_[jblk+1] += rows;
+  block_displs_ = owned_block_displs_.data();
+  rebuild_block_connectivity();
+}
+
+//------------------------------------------------------------------------------------------------------
+
+void MultiBlockConnectivity::insert( size_t position, size_t rows, const size_t cols[] )
+{
+  if( !owns() ) throw eckit::AssertionFailed("MultiBlockConnectivity must be owned to be resized directly");
+  size_t min=std::numeric_limits<size_t>::max();
+  size_t max=0;
+  for( size_t j=0; j<rows; ++j )
+  {
+  	min = std::min(min,cols[j]);
+  	max = std::min(max,cols[j]);
+  }
+  if( min != max ) throw eckit::AssertionFailed("MultiBlockConnectivity::add(rows,cols[]): all elements of cls[] must be identical");
+  ASSERT( counts()[std::max(position-1ul,0ul)] == max );
 
   size_t blk_idx = blocks_;
   do{ blk_idx--; } while( owned_block_displs_[blk_idx] >= position );

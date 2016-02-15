@@ -51,9 +51,7 @@ struct GlobalFixture {
     ~GlobalFixture() { atlas_finalize(); }
 };
 
-BOOST_GLOBAL_FIXTURE( GlobalFixture )
-
-BOOST_AUTO_TEST_SUITE( test_elements )
+BOOST_GLOBAL_FIXTURE( GlobalFixture );
 
 BOOST_AUTO_TEST_CASE( hybrid_elements )
 {
@@ -546,10 +544,6 @@ BOOST_AUTO_TEST_CASE( cells_insert )
   }
 }
 
-
-
-
-BOOST_AUTO_TEST_SUITE_END()
 
 } // namespace test
 } // namespace atlas
