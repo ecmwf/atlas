@@ -65,7 +65,7 @@ subroutine atlas_FunctionSpace__delete(this)
   use atlas_functionspace_c_binding
   class(atlas_FunctionSpace), intent(inout) :: this
   if ( .not. this%is_null() ) then
-    call atlas__NextFunctionSpace__delete(this%c_ptr())
+    call atlas__FunctionSpace__delete(this%c_ptr())
   end if
   call this%reset_c_ptr()
 end subroutine atlas_FunctionSpace__delete
@@ -84,7 +84,7 @@ function atlas_FunctionSpace__name(this) result(name)
   class(atlas_FunctionSpace), intent(in) :: this
   character(len=:), allocatable :: name
   type(c_ptr) :: name_c_str
-  name_c_str = atlas__NextFunctionSpace__name(this%c_ptr())
+  name_c_str = atlas__FunctionSpace__name(this%c_ptr())
   name = c_to_f_string_cptr(name_c_str)
 end function
 

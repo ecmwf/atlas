@@ -17,6 +17,7 @@
 #include "eckit/thread/Mutex.h"
 #include "eckit/exception/Exceptions.h"
 #include "atlas/runtime/ErrorHandling.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/Mesh.h"
 #include "atlas/meshgen/ReducedGridMeshGenerator.h"
 #include "atlas/meshgen/Delaunay.h"

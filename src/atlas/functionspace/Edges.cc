@@ -80,7 +80,7 @@ Edges::Edges( Mesh& mesh )
 }
 
 Edges::Edges( Mesh& mesh, const Halo &halo, const eckit::Parametrisation &params )
-  : next::FunctionSpace(),
+  : FunctionSpace(),
     mesh_(mesh),
     edges_(mesh_.edges()),
     nb_edges_(0),
@@ -92,7 +92,7 @@ Edges::Edges( Mesh& mesh, const Halo &halo, const eckit::Parametrisation &params
 }
 
 Edges::Edges(Mesh& mesh, const Halo &halo)
-  : next::FunctionSpace(),
+  : FunctionSpace(),
     mesh_(mesh),
     edges_(mesh_.edges()),
     nb_edges_(0),

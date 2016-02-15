@@ -23,7 +23,7 @@ namespace functionspace {
 
 // -------------------------------------------------------------------
 
-class Spectral : public next::FunctionSpace
+class Spectral : public FunctionSpace
 {
 public:
 

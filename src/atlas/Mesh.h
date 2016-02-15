@@ -33,7 +33,7 @@ namespace atlas { namespace mesh { class Nodes; } }
 namespace atlas { namespace mesh { class HybridElements; } }
 namespace atlas { namespace mesh { typedef HybridElements Edges; } }
 namespace atlas { namespace mesh { typedef HybridElements Cells; } }
-namespace atlas { class FunctionSpace; }
+namespace atlas { namespace deprecated { class FunctionSpace; } }
 namespace atlas { class GridDistribution; }
 namespace atlas { namespace mpl { class HaloExchange; } }
 namespace atlas { namespace mpl { class GatherScatter; } }
@@ -60,21 +60,21 @@ namespace deprecated {
     bool has_function_space(const std::string& name) const;
 
     /// Takes ownership, and will be deleted automatically
-    FunctionSpace& create_function_space(const std::string& name,
+    deprecated::FunctionSpace& create_function_space(const std::string& name,
                                          const std::string& shape_func,
                                          const std::vector<size_t>& shape);
 
     /// accessor by name
-    FunctionSpace& function_space(const std::string& name) const;
+    deprecated::FunctionSpace& function_space(const std::string& name) const;
 
     /// accessor by index
-    FunctionSpace& function_space( size_t ) const;
+    deprecated::FunctionSpace& function_space( size_t ) const;
 
     /// number of functional spaces
     size_t nb_function_spaces() const;
 
   protected:
-    typedef eckit::DenseMap< std::string, eckit::SharedPtr<FunctionSpace> > StoreFS_t;
+    typedef eckit::DenseMap< std::string, eckit::SharedPtr<deprecated::FunctionSpace> > StoreFS_t;
 
     StoreFS_t function_spaces_;
 
@@ -178,17 +178,19 @@ private: // members to be removed
 #define mesh_Nodes mesh::Nodes
 #define mesh_Edges mesh::Edges
 #define mesh_Cells mesh::Cells
+#define deprecated_FunctionSpace deprecated::FunctionSpace
 extern "C"
 {
 	Mesh* atlas__Mesh__new ();
 	void atlas__Mesh__delete (Mesh* This);
   mesh_Nodes* atlas__Mesh__create_nodes (Mesh* This, int nb_nodes);
   void atlas__Mesh__create_function_space (Mesh* This, char* name,char* shape_func,int shape[], int shape_size, int fortran_ordering);
-	FunctionSpace* atlas__Mesh__function_space (Mesh* This, char* name);
+  deprecated_FunctionSpace* atlas__Mesh__function_space (Mesh* This, char* name);
   mesh_Nodes* atlas__Mesh__nodes (Mesh* This);
   mesh_Edges* atlas__Mesh__edges (Mesh* This);
   mesh_Cells* atlas__Mesh__cells (Mesh* This);
 }
+#undef deprecated_FunctionSpace
 #undef mesh_Nodes
 #undef mesh_Edges
 #undef mesh_Cells

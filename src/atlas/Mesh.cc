@@ -127,7 +127,7 @@ size_t deprecated::FunctionSpaceContainer::nb_function_spaces() const
   return function_spaces_.size();
 }
 
-FunctionSpace& deprecated::FunctionSpaceContainer::create_function_space(const std::string& name, const std::string& shape_func, const std::vector<size_t>& shape)
+deprecated::FunctionSpace& deprecated::FunctionSpaceContainer::create_function_space(const std::string& name, const std::string& shape_func, const std::vector<size_t>& shape)
 {
   ASSERT( name != "nodes" );
 
@@ -136,7 +136,7 @@ FunctionSpace& deprecated::FunctionSpaceContainer::create_function_space(const s
     throw eckit::Exception( "Functionspace '" + name + "' already exists", Here() );
 	}
 
-	FunctionSpace::Ptr fs (new FunctionSpace(name,shape_func,shape, *(Mesh*)(this) ) );
+  deprecated::FunctionSpace::Ptr fs (new deprecated::FunctionSpace(name,shape_func,shape, *(Mesh*)(this) ) );
 
   function_spaces_.insert(name,fs);
   function_spaces_.sort();
@@ -146,7 +146,7 @@ FunctionSpace& deprecated::FunctionSpaceContainer::create_function_space(const s
 	return *fs;
 }
 
-FunctionSpace& deprecated::FunctionSpaceContainer::function_space(const std::string& name) const
+deprecated::FunctionSpace& deprecated::FunctionSpaceContainer::function_space(const std::string& name) const
 {
   ASSERT( name != "nodes" );
 	if( ! has_function_space(name) )
@@ -158,7 +158,7 @@ FunctionSpace& deprecated::FunctionSpaceContainer::function_space(const std::str
 	return *( function_spaces_[ name ] );
 }
 
-FunctionSpace& deprecated::FunctionSpaceContainer::function_space( size_t idx) const
+deprecated::FunctionSpace& deprecated::FunctionSpaceContainer::function_space( size_t idx) const
 {
 	if( idx >= function_spaces_.size() )
 		throw eckit::OutOfRange(idx,function_spaces_.size(),Here());
@@ -188,13 +188,13 @@ void Mesh::convert_new_to_old()
     const mesh::Elements &elements = *elements_vec[jtype];
     const std::string& name = functionspace_names[jtype];
     size_t nb_elems = elements.size();
-    std::vector<size_t> shape = make_shape(nb_elems,FunctionSpace::UNDEF_VARS);
+    std::vector<size_t> shape = make_shape(nb_elems,deprecated::FunctionSpace::UNDEF_VARS);
 
     if( ! has_function_space(name) )
       create_function_space("name","bla",shape);
     else
       function_space(name).resize(shape);
-    FunctionSpace& fs = function_space(name);
+    deprecated::FunctionSpace& fs = function_space(name);
 
 
     for( size_t f=0; f<elements.nb_fields(); ++f )
@@ -391,7 +391,7 @@ void atlas__Mesh__create_function_space(Mesh* This, char* name,char* shape_func,
   );
 }
 
-FunctionSpace* atlas__Mesh__function_space (Mesh* This, char* name) {
+deprecated::FunctionSpace* atlas__Mesh__function_space (Mesh* This, char* name) {
   ATLAS_ERROR_HANDLING(
     ASSERT( This != NULL );
     if( std::string(name) == "nodes" )

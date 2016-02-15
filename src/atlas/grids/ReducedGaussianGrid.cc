@@ -14,7 +14,6 @@
 
 #include "atlas/grids/ReducedGaussianGrid.h"
 #include "atlas/grids/GaussianLatitudes.h"
-#include "atlas/util/Debug.h"
 
 namespace atlas {
 namespace grids {

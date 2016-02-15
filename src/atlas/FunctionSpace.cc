@@ -21,12 +21,10 @@
 #include "atlas/FunctionSpace.h"
 #include "atlas/Field.h"
 #include "atlas/actions/BuildParallelFields.h"
-#include "atlas/util/Debug.h"
 #include "atlas/util/Bitflags.h"
 #include "atlas/util/DataType.h"
 
 namespace atlas {
-namespace next {
 
 namespace {
 
@@ -71,7 +69,6 @@ eckit::SharedPtr<FunctionSpace> FunctionSpace::ptr()
 }
 
 }
-}
 
 
 using atlas::util::Topology;
@@ -83,6 +80,8 @@ using atlas::util::Topology;
 #endif
 
 namespace atlas {
+
+namespace deprecated {
 
 template<class T>
 inline std::ostream& operator<<(std::ostream& s,const std::vector<T>& v)
@@ -410,11 +409,13 @@ void FunctionSpace::print(std::ostream& os, bool dump) const
 }
 #endif
 
+} // namespace deprecated
+
 //----------------------------------------------------------------------------------------------------------------------
 
 // C wrapper interfaces to C++ routines
-
-void atlas__NextFunctionSpace__delete (next::FunctionSpace* This)
+extern "C" {
+ void atlas__FunctionSpace__delete (FunctionSpace* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
@@ -423,144 +424,150 @@ void atlas__NextFunctionSpace__delete (next::FunctionSpace* This)
   );
 }
 
-const char* atlas__NextFunctionSpace__name (next::FunctionSpace* This) {
+const char* atlas__FunctionSpace__name (FunctionSpace* This) {
   ATLAS_ERROR_HANDLING(
     ASSERT( This );
     return This->name().c_str();
   );
   return 0;
 }
+}
 
+namespace deprecated {
 #if !DEPRECATE_OLD_FUNCTIONSPACE
 
-Metadata* atlas__FunctionSpace__metadata (FunctionSpace* This)
+extern "C" {
+Metadata* atlas__deprecated__FunctionSpace__metadata (FunctionSpace* This)
 {
   ASSERT( This );
   return &This->metadata();
 }
 
-int atlas__FunctionSpace__dof (FunctionSpace* This) {
+int atlas__deprecated__FunctionSpace__dof (FunctionSpace* This) {
   ASSERT( This );
   return This->dof();
 }
 
-int atlas__FunctionSpace__glb_dof (FunctionSpace* This) {
+int atlas__deprecated__FunctionSpace__glb_dof (FunctionSpace* This) {
   ASSERT( This );
   return This->glb_dof();
 }
 
-void atlas__FunctionSpace__create_field_double (FunctionSpace* This, char* name, int nb_vars) {
+void atlas__deprecated__FunctionSpace__create_field_double (FunctionSpace* This, char* name, int nb_vars) {
   ATLAS_ERROR_HANDLING(
       ASSERT( This );
       This->create_field<double>( std::string(name), nb_vars )
   );
 }
 
-void atlas__FunctionSpace__create_field_float (FunctionSpace* This, char* name, int nb_vars) {
+void atlas__deprecated__FunctionSpace__create_field_float (FunctionSpace* This, char* name, int nb_vars) {
   ASSERT( This );
   ATLAS_ERROR_HANDLING( This->create_field<float>( std::string(name), nb_vars ) );
 }
 
-void atlas__FunctionSpace__create_field_int (FunctionSpace* This, char* name, int nb_vars) {
+void atlas__deprecated__FunctionSpace__create_field_int (FunctionSpace* This, char* name, int nb_vars) {
   ASSERT( This );
   ATLAS_ERROR_HANDLING( This->create_field<int>( std::string(name), nb_vars ) );
 }
 
-void atlas__FunctionSpace__create_field_long (FunctionSpace* This, char* name, int nb_vars) {
+void atlas__deprecated__FunctionSpace__create_field_long (FunctionSpace* This, char* name, int nb_vars) {
   ASSERT( This );
   ATLAS_ERROR_HANDLING( This->create_field<long>( std::string(name), nb_vars ) );
 }
 
-void atlas__FunctionSpace__remove_field (FunctionSpace* This, char* name ) {
+void atlas__deprecated__FunctionSpace__remove_field (FunctionSpace* This, char* name ) {
   ASSERT( This );
   ATLAS_ERROR_HANDLING( This->remove_field( std::string(name) ) );
 }
 
-int atlas__FunctionSpace__has_field (FunctionSpace* This, char* name) {
+int atlas__deprecated__FunctionSpace__has_field (FunctionSpace* This, char* name) {
   ASSERT( This );
   return This->has_field( std::string(name) );
 }
 
-const char* atlas__FunctionSpace__name (FunctionSpace* This) {
+const char* atlas__deprecated__FunctionSpace__name (FunctionSpace* This) {
   ASSERT( This );
   return This->name().c_str();
 }
 
-void atlas__FunctionSpace__shapef (FunctionSpace* This, int* &shape, int &rank) {
+void atlas__deprecated__FunctionSpace__shapef (FunctionSpace* This, int* &shape, int &rank) {
   ASSERT( This );
   shape = const_cast<int*>(&(This->shapef()[0]));
   rank = This->shapef().size();
 }
 
-Field* atlas__FunctionSpace__field (FunctionSpace* This, char* name) {
+Field* atlas__deprecated__FunctionSpace__field (FunctionSpace* This, char* name) {
   ASSERT( This );
   ATLAS_ERROR_HANDLING( return &This->field( std::string(name) ) );
   return 0;
 }
 
-void atlas__FunctionSpace__parallelise (FunctionSpace* This) {
+void atlas__deprecated__FunctionSpace__parallelise (FunctionSpace* This) {
   ASSERT( This );
   ATLAS_ERROR_HANDLING( This->parallelise() );
 }
 
-void atlas__FunctionSpace__halo_exchange_int (FunctionSpace* This, int field_data[], int field_size) {
+void atlas__deprecated__FunctionSpace__halo_exchange_int (FunctionSpace* This, int field_data[], int field_size) {
   ASSERT( This );
   ATLAS_ERROR_HANDLING(
     This->halo_exchange(field_data,field_size) );
 }
 
-void atlas__FunctionSpace__halo_exchange_float (FunctionSpace* This, float field_data[], int field_size) {
+void atlas__deprecated__FunctionSpace__halo_exchange_float (FunctionSpace* This, float field_data[], int field_size) {
   ASSERT( This );
   ATLAS_ERROR_HANDLING( This->halo_exchange(field_data,field_size) );
 }
 
-void atlas__FunctionSpace__halo_exchange_double (FunctionSpace* This, double field_data[], int field_size) {
+void atlas__deprecated__FunctionSpace__halo_exchange_double (FunctionSpace* This, double field_data[], int field_size) {
   ASSERT( This );
   ATLAS_ERROR_HANDLING( This->halo_exchange(field_data,field_size) );
 }
 
-void atlas__FunctionSpace__gather_int (FunctionSpace* This, int field_data[], int field_size, int glbfield_data[], int glbfield_size) {
+void atlas__deprecated__FunctionSpace__gather_int (FunctionSpace* This, int field_data[], int field_size, int glbfield_data[], int glbfield_size) {
   ASSERT( This );
   ATLAS_ERROR_HANDLING(
     This->gather(field_data,field_size, glbfield_data,glbfield_size) );
 }
 
-void atlas__FunctionSpace__gather_float (FunctionSpace* This, float field_data[], int field_size, float glbfield_data[], int glbfield_size) {
+void atlas__deprecated__FunctionSpace__gather_float (FunctionSpace* This, float field_data[], int field_size, float glbfield_data[], int glbfield_size) {
   ASSERT( This );
   ATLAS_ERROR_HANDLING(
     This->gather(field_data,field_size, glbfield_data,glbfield_size) );
 }
 
-void atlas__FunctionSpace__gather_double (FunctionSpace* This, double field_data[], int field_size, double glbfield_data[], int glbfield_size) {
+void atlas__deprecated__FunctionSpace__gather_double (FunctionSpace* This, double field_data[], int field_size, double glbfield_data[], int glbfield_size) {
   ASSERT( This );
   ATLAS_ERROR_HANDLING(
     This->gather(field_data,field_size, glbfield_data,glbfield_size) );
 }
 
-mpl::HaloExchange* atlas__FunctionSpace__halo_exchange (FunctionSpace* This) {
+mpl::HaloExchange* atlas__deprecated__FunctionSpace__halo_exchange (FunctionSpace* This) {
   ASSERT( This );
   ATLAS_ERROR_HANDLING( return &This->halo_exchange() );
   return 0;
 }
 
-mpl::GatherScatter* atlas__FunctionSpace__gather (FunctionSpace* This) {
+mpl::GatherScatter* atlas__deprecated__FunctionSpace__gather (FunctionSpace* This) {
   ASSERT( This );
   ATLAS_ERROR_HANDLING( return &This->gather_scatter() );
   return 0;
 }
 
-mpl::Checksum* atlas__FunctionSpace__checksum (FunctionSpace* This) {
+mpl::Checksum* atlas__deprecated__FunctionSpace__checksum (FunctionSpace* This) {
   ASSERT( This );
   ATLAS_ERROR_HANDLING( return &This->checksum() );
   return 0;
 }
 
-void atlas__FunctionSpace__delete (FunctionSpace* This) {
+void atlas__deprecated__FunctionSpace__delete (FunctionSpace* This) {
   ASSERT( This );
   delete This;
 }
+}
+
 #endif
 // ------------------------------------------------------------------
 
+} // namespace deprecated
 } // namespace atlas
 

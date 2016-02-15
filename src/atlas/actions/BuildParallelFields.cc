@@ -605,7 +605,7 @@ Field& build_edges_partition_new( Mesh& mesh )
 }
 
 #if !DEPRECATE_OLD_FUNCTIONSPACE
-Field& build_edges_partition_convert_to_old( FunctionSpace& edges, mesh::Nodes& nodes )
+Field& build_edges_partition_convert_to_old( deprecated::FunctionSpace& edges, mesh::Nodes& nodes )
 {
   if( ! edges.has_field("partition") ) edges.create_field<int>("partition",1) ;
   ArrayView<int,1> edge_part     ( edges.field("partition") );
@@ -777,7 +777,7 @@ Field& build_edges_remote_idx_new( Mesh& mesh  )
 }
 
 #if !DEPRECATE_OLD_FUNCTIONSPACE
-Field& build_edges_remote_idx_convert_to_old( FunctionSpace& edges, mesh::Nodes& nodes )
+Field& build_edges_remote_idx_convert_to_old( deprecated::FunctionSpace& edges, mesh::Nodes& nodes )
 {
   if( ! edges.has_field("remote_idx") ) edges.create_field<int>("remote_idx",1) ;
   IndexView<int,1> edge_ridx     ( edges.field("remote_idx") );
@@ -921,7 +921,7 @@ Field& build_edges_global_idx_new( Mesh& mesh )
 }
 
 #if !DEPRECATE_OLD_FUNCTIONSPACE
-Field& build_edges_global_idx_convert_to_old( FunctionSpace& edges, mesh::Nodes& nodes )
+Field& build_edges_global_idx_convert_to_old( deprecated::FunctionSpace& edges, mesh::Nodes& nodes )
 {
   if( ! edges.has_field("glb_idx") ) edges.create_field<gidx_t>("glb_idx",1) ;
   ArrayView<gidx_t,1> edge_gidx     ( edges.field("glb_idx") );

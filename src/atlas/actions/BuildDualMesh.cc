@@ -134,7 +134,7 @@ void build_median_dual_mesh_new( Mesh& mesh )
 #if !DEPRECATE_OLD_FUNCTIONSPACE
 void build_median_dual_mesh_convert_to_old( Mesh& mesh )
 {
-  FunctionSpace&  edges = mesh.function_space("edges");
+  deprecated::FunctionSpace&  edges = mesh.function_space("edges");
   ArrayView<double,2> dual_normals  ( edges.create_field<double>("dual_normals",2) );
   const ArrayView<double,2> new_dual_normals( mesh.edges().field( "dual_normals") );
   for( size_t jedge=0; jedge<mesh.edges().size(); ++jedge )
@@ -157,7 +157,7 @@ void build_median_dual_mesh( Mesh& mesh )
 
 #if !DEPRECATE_OLD_FUNCTIONSPACE
 
-void build_centroids( FunctionSpace& func_space, ArrayView<double,2>& lonlat);
+void build_centroids( deprecated::FunctionSpace& func_space, ArrayView<double,2>& lonlat);
 
 void build_centroid_dual_mesh( Mesh& mesh )
 {
@@ -165,9 +165,9 @@ void build_centroid_dual_mesh( Mesh& mesh )
   ArrayView<double,2> lonlat        ( nodes.lonlat() );
   ArrayView<double,1> dual_volumes  ( nodes.add( Field::create<double>( "dual_volumes", make_shape(nodes.size(),1) ) ) );
 
-  FunctionSpace& quads       = mesh.function_space( "quads" );
-  FunctionSpace& triags      = mesh.function_space( "triags" );
-  FunctionSpace& edges       = mesh.function_space( "edges" );
+  deprecated::FunctionSpace& quads       = mesh.function_space( "quads" );
+  deprecated::FunctionSpace& triags      = mesh.function_space( "triags" );
+  deprecated::FunctionSpace& edges       = mesh.function_space( "edges" );
 
   build_centroids(quads,  lonlat);
   build_centroids(triags, lonlat);
@@ -189,7 +189,7 @@ void build_centroid_dual_mesh( Mesh& mesh )
 
 
 
-void build_centroids( FunctionSpace& func_space, ArrayView<double,2>& lonlat)
+void build_centroids( deprecated::FunctionSpace& func_space, ArrayView<double,2>& lonlat)
 {
   if( !func_space.has_field("centroids") )
   {
@@ -349,7 +349,7 @@ void add_centroid_dual_volume_contribution(
     ArrayView<double,1>& dual_volumes )
 {
   mesh::Nodes& nodes = mesh.nodes();
-  FunctionSpace& edges = mesh.function_space("edges");
+  deprecated::FunctionSpace& edges = mesh.function_space("edges");
   ArrayView<gidx_t,1> node_glb_idx  ( nodes.field("glb_idx"    ) );
   ArrayView<double,2> edge_centroids( edges.field("centroids"  ) );
   IndexView<int,   2> edge_nodes    ( edges.field("nodes"      ) );
@@ -359,7 +359,7 @@ void add_centroid_dual_volume_contribution(
   std::vector< ArrayView<double,2> > elem_centroids(mesh.nb_function_spaces());
   for(size_t f = 0; f < mesh.nb_function_spaces(); ++f)
   {
-    FunctionSpace& elements = mesh.function_space(f);
+    deprecated::FunctionSpace& elements = mesh.function_space(f);
     if( elements.metadata().get<long>("type") == Entity::ELEMS )
     {
       elem_centroids[f] = ArrayView<double,2>( elements.field("centroids") );
@@ -538,7 +538,7 @@ void build_dual_normals( Mesh& mesh )
   std::vector< ArrayView<double,2> > elem_centroids( mesh.nb_function_spaces() );
   for (size_t func_space_idx = 0; func_space_idx < mesh.nb_function_spaces(); ++func_space_idx)
   {
-    FunctionSpace& func_space = mesh.function_space(func_space_idx);
+    deprecated::FunctionSpace& func_space = mesh.function_space(func_space_idx);
     if( func_space.has_field("centroids") )
       elem_centroids[func_space_idx] = ArrayView<double,2>( func_space.field("centroids") );
   }
@@ -550,7 +550,7 @@ void build_dual_normals( Mesh& mesh )
   double tol = 1.e-6;
 
   double xl, yl, xr, yr;
-  FunctionSpace&  edges = mesh.function_space("edges");
+  deprecated::FunctionSpace&  edges = mesh.function_space("edges");
   IndexView<int,   2> edge_to_elem  ( edges.field("to_elem"  ) );
   IndexView<int,   2> edge_nodes    ( edges.field("nodes"    ) );
   ArrayView<double,2> edge_centroids( edges.field("centroids") );
@@ -674,7 +674,7 @@ void make_dual_normals_outward( Mesh& mesh )
   mesh::Nodes&  nodes = mesh.nodes();
   ArrayView<double,2> node_lonlat( nodes.lonlat() );
 
-  FunctionSpace&  edges = mesh.function_space("edges");
+  deprecated::FunctionSpace&  edges = mesh.function_space("edges");
   IndexView<int,   2> edge_to_elem  ( edges.field("to_elem"  ) );
   IndexView<int,   2> edge_nodes    ( edges.field("nodes"    ) );
   ArrayView<double,2> dual_normals  ( edges.field("dual_normals") );
@@ -707,7 +707,7 @@ void build_skewness( Mesh& mesh )
   std::vector< ArrayView<double,2> > elem_centroids( mesh.nb_function_spaces() );
   for (size_t func_space_idx = 0; func_space_idx < mesh.nb_function_spaces(); ++func_space_idx)
   {
-    FunctionSpace& func_space = mesh.function_space(func_space_idx);
+    deprecated::FunctionSpace& func_space = mesh.function_space(func_space_idx);
     if( func_space.has_field("centroids") )
       elem_centroids[func_space_idx] = ArrayView<double,2>( func_space.field("centroids") );
   }
@@ -719,7 +719,7 @@ void build_skewness( Mesh& mesh )
   double tol = 1.e-6;
 
   double x1, y1, x2, y2, xc1, yc1, xc2, yc2, xi, yi;
-  FunctionSpace&  edges = mesh.function_space("edges");
+  deprecated::FunctionSpace&  edges = mesh.function_space("edges");
   IndexView<int   ,2> edge_to_elem  ( edges.field("to_elem"  ) );
   IndexView<int   ,2> edge_nodes    ( edges.field("nodes"    ) );
   ArrayView<double,2> edge_centroids( edges.field("centroids") );

@@ -67,7 +67,7 @@ void build_cell_centres_convert_to_old(Mesh& mesh)
 
     if( mesh.has_function_space("triags") ) {
 
-        FunctionSpace& triags      = mesh.function_space( "triags" );
+        deprecated::FunctionSpace& triags = mesh.function_space( "triags" );
         IndexView<int,2> triag_nodes ( triags.field( "nodes" ) );
         const size_t nb_triags = triags.shape(0);
 
@@ -88,7 +88,7 @@ void build_cell_centres_convert_to_old(Mesh& mesh)
     }
 
     if( mesh.has_function_space("quads") ) {
-        FunctionSpace& quads  = mesh.function_space( "quads" );
+        deprecated::FunctionSpace& quads  = mesh.function_space( "quads" );
         IndexView<int,2> quads_nodes ( quads.field( "nodes" ) );
         const size_t nb_quads = quads.shape(0);
 

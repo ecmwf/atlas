@@ -74,7 +74,7 @@ void build_element_to_edge_connectivity_convert_to_old( Mesh& mesh )
   size_t etype=0;
   for( size_t func_space_idx=0; func_space_idx<mesh.nb_function_spaces(); ++func_space_idx)
   {
-    FunctionSpace& func_space = mesh.function_space(func_space_idx);
+    deprecated::FunctionSpace& func_space = mesh.function_space(func_space_idx);
     if( func_space.metadata().get<long>("type") == Entity::ELEMS )
     {
       int nb_edges_per_elem;
@@ -87,7 +87,7 @@ void build_element_to_edge_connectivity_convert_to_old( Mesh& mesh )
   const MultiBlockConnectivity& cell_edge_connectivity = mesh.cells().edge_connectivity();
   for( size_t t=0; t<mesh.cells().nb_types(); ++t)
   {
-    FunctionSpace& func_space = mesh.function_space(t);
+    deprecated::FunctionSpace& func_space = mesh.function_space(t);
     size_t nb_edges_per_elem = mesh.cells().element_type(t).nb_edges();
 
     ASSERT(elem_to_edge[t].shape(0) == mesh.cells().elements(t).size());
@@ -459,16 +459,16 @@ void build_edges_new( Mesh& mesh )
 #if !DEPRECATE_OLD_FUNCTIONSPACE
 void build_edges_convert_to_old( Mesh& mesh )
 {
-  FunctionSpace& quads       = mesh.function_space( "quads" );
-  FunctionSpace& triags      = mesh.function_space( "triags" );
+  deprecated::FunctionSpace& quads       = mesh.function_space( "quads" );
+  deprecated::FunctionSpace& triags      = mesh.function_space( "triags" );
   const size_t nb_edges = mesh.edges().size();
   if( ! mesh.has_function_space("edges") )
   {
-    mesh.create_function_space( "edges", "shapefunc", make_shape(nb_edges,FunctionSpace::UNDEF_VARS) );
+    mesh.create_function_space( "edges", "shapefunc", make_shape(nb_edges,deprecated::FunctionSpace::UNDEF_VARS) );
   }
-  FunctionSpace& edges = mesh.function_space("edges");
+  deprecated::FunctionSpace& edges = mesh.function_space("edges");
   edges.metadata().set<long>("type",Entity::FACES);
-  edges.resize(make_shape(nb_edges,FunctionSpace::UNDEF_VARS));
+  edges.resize(make_shape(nb_edges,deprecated::FunctionSpace::UNDEF_VARS));
 
   if( ! edges.has_field("nodes")      )  edges.create_field<int>("nodes",     2);
   if( ! edges.has_field("glb_idx")    )  edges.create_field<gidx_t>("glb_idx",   1);
@@ -579,10 +579,10 @@ void build_pole_edges_new( Mesh& mesh )
 void build_pole_edges_convert_to_old( Mesh& mesh )
 {
   mesh::Nodes& nodes   = mesh.nodes();
-  FunctionSpace& edges = mesh.function_space("edges");
+  deprecated::FunctionSpace& edges = mesh.function_space("edges");
 
   size_t nb_edges = edges.shape(0);
-  edges.resize( make_shape(mesh.edges().size(), FunctionSpace::UNDEF_VARS) );
+  edges.resize( make_shape(mesh.edges().size(), deprecated::FunctionSpace::UNDEF_VARS) );
 
   if( ! edges.has_field("is_pole_edge") )  edges.create_field<int>("is_pole_edge",1);
 

@@ -26,7 +26,7 @@ namespace functionspace {
 // ----------------------------------------------------------------------
 
 ReducedGridPoint::ReducedGridPoint(const Grid& grid)
-  : next::FunctionSpace(),
+  : FunctionSpace(),
     grid_(grid)
 {
 #ifdef ATLAS_HAVE_TRANS

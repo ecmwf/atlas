@@ -891,7 +891,7 @@ void build_halo(Mesh& mesh, int nb_elems )
 #if !DEPRECATE_OLD_FUNCTIONSPACE
 void build_halo_convert_to_old( Mesh& mesh )
 {
-  std::vector<FunctionSpace*> get_functionspace;
+  std::vector<deprecated::FunctionSpace*> get_functionspace;
   get_functionspace.push_back(&mesh.function_space( "quads"  ));
   get_functionspace.push_back(&mesh.function_space( "triags" ));
 
@@ -899,7 +899,7 @@ void build_halo_convert_to_old( Mesh& mesh )
   {
     const mesh::Elements &elements = mesh.cells().elements(jtype);
     int nelem = elements.size();
-    FunctionSpace& fs = *get_functionspace[jtype];
+    deprecated::FunctionSpace& fs = *get_functionspace[jtype];
     ArrayShape shape = fs.shape();
     shape[0] = nelem;
     fs.resize(shape);

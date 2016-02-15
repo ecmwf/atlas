@@ -37,7 +37,7 @@ private:
 
 // -------------------------------------------------------------------
 
-class Nodes : public next::FunctionSpace
+class Nodes : public FunctionSpace
 {
 public:
 

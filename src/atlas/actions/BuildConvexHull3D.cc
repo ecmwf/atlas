@@ -190,13 +190,13 @@ static void cgal_polyhedron_to_atlas_mesh_convert_to_old(  Mesh& mesh )
     int nquads  = 0;
     int ntriags = mesh.cells().size();
 
-    FunctionSpace& quads = mesh.create_function_space( "quads","LagrangeP1", make_shape(nquads,FunctionSpace::UNDEF_VARS) );
+    deprecated::FunctionSpace& quads = mesh.create_function_space( "quads","LagrangeP1", make_shape(nquads,deprecated::FunctionSpace::UNDEF_VARS) );
     quads.metadata().set<long>("type",static_cast<int>(Entity::ELEMS));
     IndexView<int,2> quad_nodes( quads.create_field<int>("nodes",4) );
     ArrayView<gidx_t,1> quad_glb_idx( quads.create_field<gidx_t>("glb_idx",1) );
     ArrayView<int,1> quad_part( quads.create_field<int>("partition",1) );
 
-    FunctionSpace& triags = mesh.create_function_space( "triags","LagrangeP1", make_shape(ntriags,FunctionSpace::UNDEF_VARS) );
+    deprecated::FunctionSpace& triags = mesh.create_function_space( "triags","LagrangeP1", make_shape(ntriags,deprecated::FunctionSpace::UNDEF_VARS) );
     triags.metadata().set<long>("type",static_cast<int>(Entity::ELEMS));
     IndexView<int,2> triag_nodes( triags.create_field<int>("nodes",3) );
     ArrayView<gidx_t,1> triag_glb_idx( triags.create_field<gidx_t>("glb_idx",1) );

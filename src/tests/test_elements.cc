@@ -312,7 +312,7 @@ BOOST_AUTO_TEST_CASE( conversion )
   generator.options.set("triangulate",false);
   Mesh* mesh = generator.generate(*grid);
   DEBUG();
-  next::FunctionSpace* functionspace = new functionspace::EdgeBasedFiniteVolume(*mesh);
+  FunctionSpace* functionspace = new functionspace::EdgeBasedFiniteVolume(*mesh);
   DEBUG();
   mesh->edges().rebuild_from_fs();
   DEBUG();

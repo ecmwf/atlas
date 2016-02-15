@@ -25,7 +25,7 @@ namespace functionspace {
 
 // -------------------------------------------------------------------
 
-class ReducedGridPoint : public next::FunctionSpace
+class ReducedGridPoint : public FunctionSpace
 {
 public:
 

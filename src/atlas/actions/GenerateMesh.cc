@@ -13,7 +13,8 @@
 #include "atlas/GridDistribution.h"
 #include "atlas/meshgen/ReducedGridMeshGenerator.h"
 #include "atlas/actions/GenerateMesh.h"
-#include "atlas/util/Debug.h"
+#include "atlas/runtime/Log.h"
+
 using namespace atlas::meshgen;
 using namespace atlas::grids;
 namespace atlas {

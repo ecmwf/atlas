@@ -31,7 +31,6 @@ using namespace atlas::util;
 namespace atlas {
 namespace test {
 
-
 // ===================================================================
 //                               BEGIN TESTS
 // ===================================================================
@@ -864,7 +863,7 @@ BOOST_AUTO_TEST_CASE( test_build_edges_triangles_only )
 #if !DEPRECATE_OLD_FUNCTIONSPACE
   for( size_t f=0; f<mesh->nb_function_spaces(); ++f )
   {
-    const FunctionSpace& fs = mesh->function_space(f);
+    const deprecated::FunctionSpace& fs = mesh->function_space(f);
     if( fs.metadata().get<long>("type") == Entity::ELEMS )
     {
       IndexView<int,2> elem_edge_connectivity( fs.field("to_edge") );

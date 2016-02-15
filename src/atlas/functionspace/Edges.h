@@ -26,7 +26,7 @@ namespace functionspace {
 
 // -------------------------------------------------------------------
 
-class Edges : public next::FunctionSpace
+class Edges : public FunctionSpace
 {
 public:
 

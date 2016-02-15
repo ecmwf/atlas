@@ -13,7 +13,6 @@
 
 #include <vector>
 #include "atlas/mpi/mpi.h"
-#include "atlas/util/Debug.h"
 #include "atlas/util/ArrayView.h"
 
 namespace atlas {

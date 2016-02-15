@@ -26,7 +26,7 @@ namespace nabla {
 class EdgeBasedFiniteVolume : public Nabla {
 
 public:
-  EdgeBasedFiniteVolume(const next::FunctionSpace &, const eckit::Parametrisation &);
+  EdgeBasedFiniteVolume(const FunctionSpace &, const eckit::Parametrisation &);
   virtual ~EdgeBasedFiniteVolume();
 
   void gradient(const Field &scalar, Field &grad) const;

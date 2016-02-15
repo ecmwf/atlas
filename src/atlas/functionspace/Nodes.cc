@@ -88,7 +88,7 @@ Nodes::Nodes( Mesh& mesh )
 }
 
 Nodes::Nodes( Mesh& mesh, const Halo &halo, const eckit::Parametrisation &params )
-  : next::FunctionSpace(),
+  : FunctionSpace(),
     mesh_(mesh),
     nodes_(mesh_.nodes()),
     halo_(halo),
@@ -100,7 +100,7 @@ Nodes::Nodes( Mesh& mesh, const Halo &halo, const eckit::Parametrisation &params
 }
 
 Nodes::Nodes(Mesh& mesh, const Halo &halo)
-  : next::FunctionSpace(),
+  : FunctionSpace(),
     mesh_(mesh),
     nodes_(mesh_.nodes()),
     halo_(halo),

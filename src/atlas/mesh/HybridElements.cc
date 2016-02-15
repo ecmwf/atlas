@@ -285,7 +285,7 @@ void HybridElements::rebuild_from_fs()
   {
     for(size_t func_space_idx = 0; func_space_idx < mesh_->nb_function_spaces(); ++func_space_idx)
     {
-      FunctionSpace& functionspace = mesh_->function_space(func_space_idx);
+      deprecated::FunctionSpace& functionspace = mesh_->function_space(func_space_idx);
       if( functionspace.metadata().get<long>("type") == type_ )
       {
         size_t nb_elems = functionspace.field("nodes").shape(0);

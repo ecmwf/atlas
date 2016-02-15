@@ -14,7 +14,6 @@
 #include <string>
 #include "eckit/config/Parametrisation.h"
 #include "atlas/Metadata.h"
-#include "atlas/util/Debug.h"
 
 namespace eckit {
   class JSON;

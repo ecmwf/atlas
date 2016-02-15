@@ -38,7 +38,7 @@ namespace {
 static NablaBuilder< EdgeBasedFiniteVolume > __edgebasedfinitevolume("EdgeBasedFiniteVolume");
 }
 
-EdgeBasedFiniteVolume::EdgeBasedFiniteVolume(const next::FunctionSpace &fs, const eckit::Parametrisation &p) :
+EdgeBasedFiniteVolume::EdgeBasedFiniteVolume(const FunctionSpace &fs, const eckit::Parametrisation &p) :
   Nabla(fs,p)
 {
   fvm_ = dynamic_cast<const functionspace::EdgeBasedFiniteVolume *>(&fs);

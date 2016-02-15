@@ -39,7 +39,7 @@ namespace {
 namespace atlas {
 namespace numerics {
 
-Nabla::Nabla(const next::FunctionSpace &fs, const eckit::Parametrisation &p)
+Nabla::Nabla(const FunctionSpace &fs, const eckit::Parametrisation &p)
   // : fs_(fs), config_(p)
 {
 }
@@ -48,12 +48,12 @@ Nabla::~Nabla()
 {
 }
 
-Nabla* Nabla::create(const next::FunctionSpace &fs)
+Nabla* Nabla::create(const FunctionSpace &fs)
 {
   return Nabla::create(fs,Config());
 }
 
-Nabla* Nabla::create(const next::FunctionSpace &fs, const eckit::Parametrisation &p)
+Nabla* Nabla::create(const FunctionSpace &fs, const eckit::Parametrisation &p)
 {
   return NablaFactory::build(fs,p);
 }
@@ -118,7 +118,7 @@ bool NablaFactory::has(const std::string& name)
 
 
 
-Nabla* NablaFactory::build(const next::FunctionSpace& fs, const eckit::Parametrisation& p) {
+Nabla* NablaFactory::build(const FunctionSpace& fs, const eckit::Parametrisation& p) {
 
     pthread_once(&once, init);
 
@@ -151,7 +151,7 @@ void atlas__Nabla__delete(Nabla* This)
   );
 }
 
-Nabla* atlas__Nabla__create (const next::FunctionSpace* functionspace, const eckit::Parametrisation* params)
+Nabla* atlas__Nabla__create (const FunctionSpace* functionspace, const eckit::Parametrisation* params)
 {
   Nabla* nabla(0);
   ATLAS_ERROR_HANDLING(

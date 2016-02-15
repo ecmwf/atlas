@@ -20,10 +20,10 @@
 
 #include "atlas/mpi/mpi.h"
 #include "atlas/mpl/GatherScatter.h"
-#include "atlas/util/Debug.h"
 #include "atlas/util/ArrayView.h"
 #include "atlas/util/Checksum.h"
 #include "eckit/utils/Translator.h"
+#include "atlas/runtime/Log.h"
 
 namespace atlas {
 namespace mpl {
@@ -159,7 +159,7 @@ std::string Checksum::execute( const ArrayView<DATA_TYPE,LRANK>& lfield ) const
   }
   else
   {
-    DEBUG_VAR(lfield.shape(0));
+    Log::error() << "lfield.shape(0) = " << lfield.shape(0);
     NOTIMP; // Need to implement with parallel ranks > 1
   }
   return std::string("");
