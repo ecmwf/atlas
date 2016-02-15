@@ -117,6 +117,9 @@ generate_fortran_bindings(FORTRAN_BINDINGS atlas_logging.h)
 generate_fortran_bindings(FORTRAN_BINDINGS atlas_resource.h)
 generate_fortran_bindings(FORTRAN_BINDINGS atlas_value.h)
 
+if( ATLAS_HAVE_DEPRECATED_FUNCTIONSPACE )
+set( DEPRECATED_FUNCTIONSPACE_SRC atlas_deprecated_functionspace_module.F90 )
+endif()
 
 ### atlas fortran lib
 ecbuild_add_library( TARGET atlas_f
@@ -140,7 +143,6 @@ ecbuild_add_library( TARGET atlas_f
         atlas_mesh_HybridElements_module.F90
         atlas_mesh_Elements_module.F90
         atlas_mesh_ElementType_module.F90
-        atlas_deprecated_functionspace_module.F90
         atlas_GatherScatter_module.F90
         atlas_Checksum_module.F90
         atlas_HaloExchange_module.F90
@@ -152,6 +154,7 @@ ecbuild_add_library( TARGET atlas_f
         atlas_resource.cc
         atlas_value.h
         atlas_value.cc
+        ${DEPRECATED_FUNCTIONSPACE_SRC}
   INCLUDES ${MPI_Fortran_INCLUDE_PATH}
   LIBS atlas ${MPI_Fortran_LIBRARIES}
 )

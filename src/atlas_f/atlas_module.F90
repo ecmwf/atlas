@@ -121,7 +121,9 @@ use atlas_GatherScatter_module, only: &
 use atlas_Checksum_module, only: &
     & atlas_Checksum
 
+#if !DEPRECATE_OLD_FUNCTIONSPACE
 use atlas_deprecated_functionspace_module, only: atlas_deprecated_FunctionSpace
+#endif
 
 use atlas_atlas_c_binding
 use atlas_mpi_c_binding

@@ -11,6 +11,7 @@ function atlas_Mesh__ctor() result(mesh)
   call mesh%reset_c_ptr( atlas__Mesh__new() )
 end function atlas_Mesh__ctor
 
+#if !DEPRECATE_OLD_FUNCTIONSPACE
 subroutine Mesh__create_function_space_nodes(this,name,shape_func,nb_nodes)
   class(atlas_Mesh), intent(inout) :: this
   character(len=*), intent(in) :: name
@@ -40,6 +41,7 @@ function Mesh__function_space(this,name) result(function_space)
   call function_space%reset_c_ptr( atlas__Mesh__function_space(this%c_ptr(), c_str(name) ) )
   if( function_space%is_null() ) write(0,*) 'call abort()'
 end function Mesh__function_space
+#endif
 
 function Mesh__create_nodes(this,nb_nodes) result(nodes)
   type(atlas_mesh_Nodes) :: nodes

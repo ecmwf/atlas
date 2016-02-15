@@ -226,7 +226,7 @@ typedef mpl::Checksum Checksum_t;
 #if !DEPRECATE_OLD_FUNCTIONSPACE
 #define DeprecatedFunctionSpace deprecated::FunctionSpace
 #else
-#define OldFunctionSpace void
+#define DeprecatedFunctionSpace void
 #endif
 extern "C"
 {
