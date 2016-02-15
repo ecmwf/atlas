@@ -247,9 +247,9 @@ end function Field__name
 function Field__functionspace(this) result(functionspace)
   use atlas_field_c_binding
   use atlas_functionspace_module
-  type(atlas_NextFunctionSpace) :: functionspace
+  type(atlas_FunctionSpace) :: functionspace
   class(atlas_Field), intent(in) :: this
-  functionspace = atlas_NextFunctionSpace(atlas__Field__functionspace(this%c_ptr()))
+  functionspace = atlas_FunctionSpace(atlas__Field__functionspace(this%c_ptr()))
   call functionspace%return()
 end function Field__functionspace
 

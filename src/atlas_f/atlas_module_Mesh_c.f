@@ -36,7 +36,7 @@ end subroutine Mesh__create_function_space_shape
 function Mesh__function_space(this,name) result(function_space)
   class(atlas_Mesh), intent(in) :: this
   character(len=*), intent(in) :: name
-  type(atlas_FunctionSpace) :: function_space
+  type(atlas_deprecated_FunctionSpace) :: function_space
   call function_space%reset_c_ptr( atlas__Mesh__function_space(this%c_ptr(), c_str(name) ) )
   if( function_space%is_null() ) write(0,*) 'call abort()'
 end function Mesh__function_space

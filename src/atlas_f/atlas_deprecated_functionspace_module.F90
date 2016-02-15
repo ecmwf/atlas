@@ -20,13 +20,13 @@ private :: atlas_GatherScatter
 private :: atlas_Checksum
 private :: atlas_HaloExchange
 
-public :: atlas_FunctionSpace
+public :: atlas_deprecated_FunctionSpace
 
 private
 
 
 !------------------------------------------------------------------------------
-TYPE, extends(atlas_object) :: atlas_FunctionSpace
+TYPE, extends(atlas_object) :: atlas_deprecated_FunctionSpace
 
 ! Purpose :
 ! -------
@@ -105,9 +105,9 @@ contains
       & FunctionSpace__gather_int32_r1, &
       & FunctionSpace__gather_int32_r2
 
-  procedure, public :: delete => atlas_FunctionSpace__delete
+  procedure, public :: delete => atlas_deprecated_FunctionSpace__delete
 
-END TYPE atlas_FunctionSpace
+END TYPE atlas_deprecated_FunctionSpace
 
 
 !------------------------------------------------------------------------------
@@ -121,14 +121,14 @@ contains
 
 function FunctionSpace__metadata(this) result(metadata)
   use atlas_FunctionSpace_c_binding
-  class(atlas_FunctionSpace), intent(in) :: this
+  class(atlas_deprecated_FunctionSpace), intent(in) :: this
   type(atlas_Metadata) :: Metadata
   call metadata%reset_c_ptr( atlas__FunctionSpace__metadata(this%c_ptr()) )
 end function FunctionSpace__metadata
 
 subroutine FunctionSpace__create_field(this,name,nvars,kind)
   use atlas_FunctionSpace_c_binding
-  class(atlas_FunctionSpace), intent(inout) :: this
+  class(atlas_deprecated_FunctionSpace), intent(inout) :: this
   character(len=*), intent(in) :: name
   integer, intent(in) :: nvars
   integer, intent(in), optional :: kind
@@ -163,14 +163,14 @@ end subroutine FunctionSpace__create_field
 
 subroutine FunctionSpace__remove_field(this,name)
   use atlas_FunctionSpace_c_binding
-  class(atlas_FunctionSpace), intent(in) :: this
+  class(atlas_deprecated_FunctionSpace), intent(in) :: this
   character(len=*), intent(in) :: name
   call atlas__FunctionSpace__remove_field(this%c_ptr(),c_str(name))
 end subroutine FunctionSpace__remove_field
 
 function FunctionSpace__name(this) result(name)
   use atlas_FunctionSpace_c_binding
-  class(atlas_FunctionSpace), intent(in) :: this
+  class(atlas_deprecated_FunctionSpace), intent(in) :: this
   character(len=:), allocatable :: name
   type(c_ptr) :: name_c_str
   name_c_str = atlas__FunctionSpace__name(this%c_ptr())
@@ -179,21 +179,21 @@ end function FunctionSpace__name
 
 function FunctionSpace__dof(this) result(dof)
   use atlas_FunctionSpace_c_binding
-  class(atlas_FunctionSpace), intent(in) :: this
+  class(atlas_deprecated_FunctionSpace), intent(in) :: this
   integer :: dof
   dof = atlas__FunctionSpace__dof(this%c_ptr())
 end function FunctionSpace__dof
 
 function FunctionSpace__glb_dof(this) result(glb_dof)
   use atlas_FunctionSpace_c_binding
-  class(atlas_FunctionSpace), intent(in) :: this
+  class(atlas_deprecated_FunctionSpace), intent(in) :: this
   integer :: glb_dof
   glb_dof = atlas__FunctionSpace__glb_dof(this%c_ptr())
 end function FunctionSpace__glb_dof
 
 function FunctionSpace__shape_arr(this) result(shape)
   use atlas_FunctionSpace_c_binding
-  class(atlas_FunctionSpace), intent(in) :: this
+  class(atlas_deprecated_FunctionSpace), intent(in) :: this
   integer, pointer :: shape(:)
   type(c_ptr) :: shape_c_ptr
   integer(c_int) :: field_rank
@@ -203,7 +203,7 @@ end function FunctionSpace__shape_arr
 
 function FunctionSpace__shape_idx(this,idx) result(shape_idx)
   use atlas_FunctionSpace_c_binding
-  class(atlas_FunctionSpace), intent(in) :: this
+  class(atlas_deprecated_FunctionSpace), intent(in) :: this
   integer, intent(in) :: idx
   integer :: shape_idx
   integer, pointer :: shape(:)
@@ -213,7 +213,7 @@ end function FunctionSpace__shape_idx
 
 function FunctionSpace__field(this,name) result(field)
   use atlas_FunctionSpace_c_binding
-  class(atlas_FunctionSpace), intent(in) :: this
+  class(atlas_deprecated_FunctionSpace), intent(in) :: this
   character(len=*), intent(in) :: name
   type(atlas_Field) :: field
   field = atlas_Field( atlas__FunctionSpace__field(this%c_ptr(), c_str(name) ) )
@@ -223,7 +223,7 @@ end function FunctionSpace__field
 
 function FunctionSpace__has_field(this,name) result(flag)
   use atlas_FunctionSpace_c_binding
-  class(atlas_FunctionSpace), intent(in) :: this
+  class(atlas_deprecated_FunctionSpace), intent(in) :: this
   character(len=*), intent(in) :: name
   logical :: flag
   integer :: rc
@@ -237,20 +237,20 @@ end function FunctionSpace__has_field
 
 subroutine FunctionSpace__parallelise(this)
   use atlas_FunctionSpace_c_binding
-  class(atlas_FunctionSpace), intent(in) :: this
+  class(atlas_deprecated_FunctionSpace), intent(in) :: this
   call atlas__FunctionSpace__parallelise(this%c_ptr())
 end subroutine FunctionSpace__parallelise
 
 function FunctionSpace__get_halo_exchange(this) result(halo_exchange)
   use atlas_FunctionSpace_c_binding
-  class(atlas_FunctionSpace), intent(in) :: this
+  class(atlas_deprecated_FunctionSpace), intent(in) :: this
   type(atlas_HaloExchange) :: halo_exchange
   call halo_exchange%reset_c_ptr( atlas__FunctionSpace__halo_exchange( this%c_ptr() ) )
 end function FunctionSpace__get_halo_exchange
 
 subroutine FunctionSpace__halo_exchange_int32_r1(this, field_data)
   use atlas_FunctionSpace_c_binding
-  class(atlas_FunctionSpace), intent(in) :: this
+  class(atlas_deprecated_FunctionSpace), intent(in) :: this
   integer, intent(inout) :: field_data(:)
 #ifndef  __GFORTRAN__
   if (.not. is_contiguous(field_data) ) then
@@ -262,7 +262,7 @@ subroutine FunctionSpace__halo_exchange_int32_r1(this, field_data)
 end subroutine FunctionSpace__halo_exchange_int32_r1
 subroutine FunctionSpace__halo_exchange_int32_r2(this, field_data)
   use atlas_FunctionSpace_c_binding
-  class(atlas_FunctionSpace), intent(in) :: this
+  class(atlas_deprecated_FunctionSpace), intent(in) :: this
   integer, intent(inout) :: field_data(:,:)
   integer, pointer :: view(:)
   view => view1d(field_data)
@@ -270,7 +270,7 @@ subroutine FunctionSpace__halo_exchange_int32_r2(this, field_data)
 end subroutine FunctionSpace__halo_exchange_int32_r2
 subroutine FunctionSpace__halo_exchange_int32_r3(this, field_data)
   use atlas_FunctionSpace_c_binding
-  class(atlas_FunctionSpace), intent(in) :: this
+  class(atlas_deprecated_FunctionSpace), intent(in) :: this
   integer, intent(inout) :: field_data(:,:,:)
   integer, pointer :: view(:)
   view => view1d(field_data)
@@ -279,7 +279,7 @@ end subroutine FunctionSpace__halo_exchange_int32_r3
 
 subroutine FunctionSpace__halo_exchange_real32_r1(this, field_data)
   use atlas_FunctionSpace_c_binding
-  class(atlas_FunctionSpace), intent(in) :: this
+  class(atlas_deprecated_FunctionSpace), intent(in) :: this
   real(c_float), intent(inout) :: field_data(:)
 #ifndef  __GFORTRAN__
   if (.not. is_contiguous(field_data) ) then
@@ -291,7 +291,7 @@ subroutine FunctionSpace__halo_exchange_real32_r1(this, field_data)
 end subroutine FunctionSpace__halo_exchange_real32_r1
 subroutine FunctionSpace__halo_exchange_real32_r2(this, field_data)
   use atlas_FunctionSpace_c_binding
-  class(atlas_FunctionSpace), intent(in) :: this
+  class(atlas_deprecated_FunctionSpace), intent(in) :: this
   real(c_float), intent(inout) :: field_data(:,:)
   real(c_float), pointer :: view(:)
   view => view1d(field_data)
@@ -299,7 +299,7 @@ subroutine FunctionSpace__halo_exchange_real32_r2(this, field_data)
 end subroutine FunctionSpace__halo_exchange_real32_r2
 subroutine FunctionSpace__halo_exchange_real32_r3(this, field_data)
   use atlas_FunctionSpace_c_binding
-  class(atlas_FunctionSpace), intent(in) :: this
+  class(atlas_deprecated_FunctionSpace), intent(in) :: this
   real(c_float), intent(inout) :: field_data(:,:,:)
   real(c_float), pointer :: view(:)
   view => view1d(field_data)
@@ -308,7 +308,7 @@ end subroutine FunctionSpace__halo_exchange_real32_r3
 
 subroutine FunctionSpace__halo_exchange_real64_r1(this, field_data)
   use atlas_FunctionSpace_c_binding
-  class(atlas_FunctionSpace), intent(in) :: this
+  class(atlas_deprecated_FunctionSpace), intent(in) :: this
   real(c_double), intent(inout) :: field_data(:)
 #ifndef  __GFORTRAN__
   if (.not. is_contiguous(field_data) ) then
@@ -320,7 +320,7 @@ subroutine FunctionSpace__halo_exchange_real64_r1(this, field_data)
 end subroutine FunctionSpace__halo_exchange_real64_r1
 subroutine FunctionSpace__halo_exchange_real64_r2(this, field_data)
   use atlas_FunctionSpace_c_binding
-  class(atlas_FunctionSpace), intent(in) :: this
+  class(atlas_deprecated_FunctionSpace), intent(in) :: this
   real(c_double), intent(inout) :: field_data(:,:)
   real(c_double), pointer :: view(:)
   view => view1d(field_data)
@@ -328,7 +328,7 @@ subroutine FunctionSpace__halo_exchange_real64_r2(this, field_data)
 end subroutine FunctionSpace__halo_exchange_real64_r2
 subroutine FunctionSpace__halo_exchange_real64_r3(this, field_data)
   use atlas_FunctionSpace_c_binding
-  class(atlas_FunctionSpace), intent(in) :: this
+  class(atlas_deprecated_FunctionSpace), intent(in) :: this
   real(c_double), intent(inout) :: field_data(:,:,:)
   real(c_double), pointer :: view(:)
   view => view1d(field_data)
@@ -336,7 +336,7 @@ subroutine FunctionSpace__halo_exchange_real64_r3(this, field_data)
 end subroutine FunctionSpace__halo_exchange_real64_r3
 subroutine FunctionSpace__halo_exchange_real64_r4(this, field_data)
   use atlas_FunctionSpace_c_binding
-  class(atlas_FunctionSpace), intent(in) :: this
+  class(atlas_deprecated_FunctionSpace), intent(in) :: this
   real(c_double), intent(inout) :: field_data(:,:,:,:)
   real(c_double), pointer :: view(:)
   view => view1d(field_data)
@@ -346,14 +346,14 @@ end subroutine FunctionSpace__halo_exchange_real64_r4
 
 function FunctionSpace__get_gather(this) result(gather)
   use atlas_FunctionSpace_c_binding
-  class(atlas_FunctionSpace), intent(in) :: this
+  class(atlas_deprecated_FunctionSpace), intent(in) :: this
   type(atlas_GatherScatter) :: gather
   call gather%reset_c_ptr( atlas__FunctionSpace__gather( this%c_ptr() ) )
 end function FunctionSpace__get_gather
 
 subroutine FunctionSpace__gather_real32_r1(this, field_data, glbfield_data)
   use atlas_FunctionSpace_c_binding
-  class(atlas_FunctionSpace), intent(in) :: this
+  class(atlas_deprecated_FunctionSpace), intent(in) :: this
   real(c_float), intent(in) :: field_data(:)
   real(c_float), intent(inout) :: glbfield_data(:)
 #ifndef  __GFORTRAN__
@@ -369,7 +369,7 @@ end subroutine FunctionSpace__gather_real32_r1
 
 subroutine FunctionSpace__gather_real32_r2(this, field_data, glbfield_data)
   use atlas_FunctionSpace_c_binding
-  class(atlas_FunctionSpace), intent(in) :: this
+  class(atlas_deprecated_FunctionSpace), intent(in) :: this
   real(c_float), intent(in) :: field_data(:,:)
   real(c_float), intent(inout) :: glbfield_data(:,:)
   real(c_float), pointer :: view(:), glbview(:)
@@ -385,7 +385,7 @@ end subroutine FunctionSpace__gather_real32_r2
 
 subroutine FunctionSpace__gather_real32_r3(this, field_data, glbfield_data)
   use atlas_FunctionSpace_c_binding
-  class(atlas_FunctionSpace), intent(in) :: this
+  class(atlas_deprecated_FunctionSpace), intent(in) :: this
   real(c_float), intent(in) :: field_data(:,:,:)
   real(c_float), intent(inout) :: glbfield_data(:,:,:)
   real(c_float), pointer :: view(:), glbview(:)
@@ -400,7 +400,7 @@ end subroutine FunctionSpace__gather_real32_r3
 
 subroutine FunctionSpace__gather_real64_r1(this, field_data, glbfield_data)
   use atlas_FunctionSpace_c_binding
-  class(atlas_FunctionSpace), intent(in) :: this
+  class(atlas_deprecated_FunctionSpace), intent(in) :: this
   real(c_double), intent(in) :: field_data(:)
   real(c_double), intent(inout) :: glbfield_data(:)
 #ifndef  __GFORTRAN__
@@ -416,7 +416,7 @@ end subroutine FunctionSpace__gather_real64_r1
 
 subroutine FunctionSpace__gather_real64_r2(this, field_data, glbfield_data)
   use atlas_FunctionSpace_c_binding
-  class(atlas_FunctionSpace), intent(in) :: this
+  class(atlas_deprecated_FunctionSpace), intent(in) :: this
   real(c_double), intent(in) :: field_data(:,:)
   real(c_double), intent(inout) :: glbfield_data(:,:)
   real(c_double), pointer :: view(:), glbview(:)
@@ -432,7 +432,7 @@ end subroutine FunctionSpace__gather_real64_r2
 
 subroutine FunctionSpace__gather_real64_r3(this, field_data, glbfield_data)
   use atlas_FunctionSpace_c_binding
-  class(atlas_FunctionSpace), intent(in) :: this
+  class(atlas_deprecated_FunctionSpace), intent(in) :: this
   real(c_double), intent(in) :: field_data(:,:,:)
   real(c_double), intent(inout) :: glbfield_data(:,:,:)
   real(c_double), pointer :: view(:), glbview(:)
@@ -447,7 +447,7 @@ end subroutine FunctionSpace__gather_real64_r3
 
 subroutine FunctionSpace__gather_int32_r1(this, field_data, glbfield_data)
   use atlas_FunctionSpace_c_binding
-  class(atlas_FunctionSpace), intent(in) :: this
+  class(atlas_deprecated_FunctionSpace), intent(in) :: this
   integer, intent(in) :: field_data(:)
   integer, intent(inout) :: glbfield_data(:)
 #ifndef  __GFORTRAN__
@@ -462,7 +462,7 @@ end subroutine FunctionSpace__gather_int32_r1
 
 subroutine FunctionSpace__gather_int32_r2(this, field_data, glbfield_data)
   use atlas_FunctionSpace_c_binding
-  class(atlas_FunctionSpace), intent(in) :: this
+  class(atlas_deprecated_FunctionSpace), intent(in) :: this
   integer, intent(in) :: field_data(:,:)
   integer, intent(inout) :: glbfield_data(:,:)
   integer, pointer :: view(:), glbview(:)
@@ -477,13 +477,13 @@ end subroutine FunctionSpace__gather_int32_r2
 
 function FunctionSpace__get_checksum(this) result(checksum)
   use atlas_FunctionSpace_c_binding
-  class(atlas_FunctionSpace), intent(in) :: this
+  class(atlas_deprecated_FunctionSpace), intent(in) :: this
   type(atlas_Checksum) :: checksum
   call checksum%reset_c_ptr( atlas__FunctionSpace__checksum( this%c_ptr() ) )
 end function FunctionSpace__get_checksum
 
-subroutine atlas_FunctionSpace__delete(this)
-  class(atlas_FunctionSpace), intent(inout) :: this
+subroutine atlas_deprecated_FunctionSpace__delete(this)
+  class(atlas_deprecated_FunctionSpace), intent(inout) :: this
 end subroutine
 
 end module atlas_deprecated_functionspace_module

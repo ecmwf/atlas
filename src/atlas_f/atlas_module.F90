@@ -41,7 +41,7 @@ use atlas_refcounted_module, only: &
     & atlas_refcounted, &
     & atlas_refcounted_fortran
 use atlas_functionspace_module, only: &
-    & atlas_NextFunctionSpace
+    & atlas_FunctionSpace
 use atlas_field_module, only: &
     & atlas_field, &
     & atlas_real, &
@@ -121,7 +121,7 @@ use atlas_GatherScatter_module, only: &
 use atlas_Checksum_module, only: &
     & atlas_Checksum
 
-use atlas_deprecated_functionspace_module, only: atlas_FunctionSpace
+use atlas_deprecated_functionspace_module, only: atlas_deprecated_FunctionSpace
 
 use atlas_atlas_c_binding
 use atlas_mpi_c_binding

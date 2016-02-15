@@ -9,7 +9,7 @@ end function
 function atlas_Nabla__functionspace_config(functionspace,config) result(nabla)
   use atlas_nabla_c_binding
   type(atlas_Nabla) :: nabla
-  class(atlas_NextFunctionSpace), intent(in) :: functionspace
+  class(atlas_FunctionSpace), intent(in) :: functionspace
   type(atlas_Config), intent(in), optional :: config
   type(atlas_Config) :: opt_config
   if( present(config) ) then

@@ -41,7 +41,7 @@ implicit none
   integer, parameter :: JPIM = c_int
   real(JPRB), parameter :: RPI = 2.0_JPRB*asin(1.0_JPRB)
   real(JPRB) :: RA
-  type(atlas_FunctionSpace) :: edges
+  type(atlas_deprecated_FunctionSpace) :: edges
 
   type :: Timer_type
   private
