@@ -1,14 +1,89 @@
-! (C) Copyright 2013-2015 ECMWF.
+
+module atlas_checksum_module
+
+use iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_char
+use atlas_c_interop, only : stride, view1d, c_to_f_string_str
+use atlas_object_module, only : atlas_object
+
+implicit none
+
+private :: c_ptr, c_int, c_long, c_float, c_double, c_char
+private :: stride, view1d, c_to_f_string_str
+private :: atlas_object
+
+public :: atlas_Checksum
+
+private
+
+!------------------------------------------------------------------------------
+TYPE, extends(atlas_object) :: atlas_Checksum
+
+! Purpose :
+! -------
+!   *Checksum* :
+
+! Methods :
+! -------
+!   setup : Setup using arrays detailing proc, glb_idx, remote_idx, max_glb_idx
+!   execute : Do the Checksum
+
+! Author :
+! ------
+!   27-Jun-2014 Willem Deconinck     *ECMWF*
+
+!------------------------------------------------------------------------------
+contains
+  procedure, private :: Checksum__setup32
+  procedure, private :: Checksum__setup64
+  procedure, private :: Checksum__execute_int32_r1
+  procedure, private :: Checksum__execute_int32_r2
+  procedure, private :: Checksum__execute_int32_r3
+  procedure, private :: Checksum__execute_real32_r1
+  procedure, private :: Checksum__execute_real32_r2
+  procedure, private :: Checksum__execute_real32_r3
+  procedure, private :: Checksum__execute_real64_r1
+  procedure, private :: Checksum__execute_real64_r3
+  procedure, private :: Checksum__execute_real64_r2
+  generic :: setup => &
+      & Checksum__setup32, &
+      & Checksum__setup64
+  generic :: execute => &
+      & Checksum__execute_int32_r1, &
+      & Checksum__execute_int32_r2, &
+      & Checksum__execute_int32_r3, &
+      & Checksum__execute_real32_r1, &
+      & Checksum__execute_real32_r2, &
+      & Checksum__execute_real32_r3, &
+      & Checksum__execute_real64_r1, &
+      & Checksum__execute_real64_r2, &
+      & Checksum__execute_real64_r3
+
+  procedure, public :: delete => atlas_Checksum__delete
+
+END TYPE atlas_Checksum
+
+!------------------------------------------------------------------------------
+
+interface atlas_Checksum
+  module procedure atlas_Checksum__ctor
+end interface
+
+!------------------------------------------------------------------------------
+!========================================================
+contains
+!========================================================
 
 ! ------------------------------------------------------------------------------
 ! Checksum routines
 
 function atlas_Checksum__ctor() result(Checksum)
+  use atlas_checksum_c_binding
   type(atlas_Checksum) :: Checksum
   call Checksum%reset_c_ptr( atlas__Checksum__new() )
 end function atlas_checksum__ctor
 
 subroutine atlas_Checksum__delete(this)
+  use atlas_checksum_c_binding
   class(atlas_Checksum), intent(inout) :: this
   if ( .not. this%is_null() ) then
     call atlas__Checksum__delete(this%c_ptr())
@@ -16,12 +91,8 @@ subroutine atlas_Checksum__delete(this)
   call this%reset_c_ptr()
 end subroutine atlas_Checksum__delete
 
-subroutine atlas_Checksum__copy(this,obj_in)
-  class(atlas_Checksum), intent(inout) :: this
-  class(atlas_RefCounted), target, intent(in) :: obj_in
-end subroutine
-
 subroutine Checksum__setup32(this, part, remote_idx, glb_idx, opt_max_glb_idx)
+  use atlas_checksum_c_binding
   class(atlas_Checksum), intent(in) :: this
   integer(c_int), intent(in) :: part(:)
   integer(c_int), intent(in) :: remote_idx(:)
@@ -38,6 +109,7 @@ subroutine Checksum__setup32(this, part, remote_idx, glb_idx, opt_max_glb_idx)
 end subroutine Checksum__setup32
 
 subroutine Checksum__setup64(this, part, remote_idx, glb_idx, opt_max_glb_idx)
+  use atlas_checksum_c_binding
   class(atlas_Checksum), intent(in) :: this
   integer(c_int), intent(in) :: part(:)
   integer(c_int), intent(in) :: remote_idx(:)
@@ -54,6 +126,7 @@ subroutine Checksum__setup64(this, part, remote_idx, glb_idx, opt_max_glb_idx)
 end subroutine Checksum__setup64
 
 function Checksum__execute_int32_r1(this, loc_field_data) result(checksum)
+  use atlas_checksum_c_binding
   class(atlas_Checksum), intent(in) :: this
   integer, intent(in)  :: loc_field_data(:)
   character(len=:), allocatable :: checksum
@@ -67,6 +140,7 @@ function Checksum__execute_int32_r1(this, loc_field_data) result(checksum)
 end function Checksum__execute_int32_r1
 
 function Checksum__execute_int32_r2(this, loc_field_data) result(checksum)
+  use atlas_checksum_c_binding
   class(atlas_Checksum), intent(in) :: this
   integer, intent(in)  :: loc_field_data(:,:)
   character(len=:), allocatable :: checksum
@@ -83,6 +157,7 @@ end function Checksum__execute_int32_r2
 
 
 function Checksum__execute_int32_r3(this, loc_field_data) result(checksum)
+  use atlas_checksum_c_binding
   class(atlas_Checksum), intent(in) :: this
   integer, intent(in)  :: loc_field_data(:,:,:)
   character(len=:), allocatable :: checksum
@@ -98,6 +173,7 @@ function Checksum__execute_int32_r3(this, loc_field_data) result(checksum)
 end function Checksum__execute_int32_r3
 
 function Checksum__execute_real32_r1(this, loc_field_data) result(checksum)
+  use atlas_checksum_c_binding
   class(atlas_Checksum), intent(in) :: this
   real(c_float), intent(in)   :: loc_field_data(:)
   character(len=:), allocatable :: checksum
@@ -110,6 +186,7 @@ function Checksum__execute_real32_r1(this, loc_field_data) result(checksum)
   checksum = c_to_f_string_str(checksum_c_str)
 end function Checksum__execute_real32_r1
 function Checksum__execute_real32_r2(this, loc_field_data) result(checksum)
+  use atlas_checksum_c_binding
   class(atlas_Checksum), intent(in) :: this
   real(c_float), intent(in)  :: loc_field_data(:,:)
   character(len=:), allocatable :: checksum
@@ -124,6 +201,7 @@ function Checksum__execute_real32_r2(this, loc_field_data) result(checksum)
   checksum = c_to_f_string_str(checksum_c_str)
 end function Checksum__execute_real32_r2
 function Checksum__execute_real32_r3(this, loc_field_data) result(checksum)
+  use atlas_checksum_c_binding
   class(atlas_Checksum), intent(in) :: this
   real(c_float), intent(in)  :: loc_field_data(:,:,:)
   character(len=:), allocatable :: checksum
@@ -139,6 +217,7 @@ function Checksum__execute_real32_r3(this, loc_field_data) result(checksum)
 end function Checksum__execute_real32_r3
 
 function Checksum__execute_real64_r1(this, loc_field_data) result(checksum)
+  use atlas_checksum_c_binding
   class(atlas_Checksum), intent(in) :: this
   real(c_double), intent(in)   :: loc_field_data(:)
   character(len=:), allocatable :: checksum
@@ -153,6 +232,7 @@ function Checksum__execute_real64_r1(this, loc_field_data) result(checksum)
   checksum = c_to_f_string_str(checksum_c_str)
 end function Checksum__execute_real64_r1
 function Checksum__execute_real64_r2(this, loc_field_data) result(checksum)
+  use atlas_checksum_c_binding
   class(atlas_Checksum), intent(in) :: this
   real(c_double), intent(in)  :: loc_field_data(:,:)
   character(len=:), allocatable :: checksum
@@ -167,6 +247,7 @@ function Checksum__execute_real64_r2(this, loc_field_data) result(checksum)
   checksum = c_to_f_string_str(checksum_c_str)
 end function Checksum__execute_real64_r2
 function Checksum__execute_real64_r3(this, loc_field_data) result(checksum)
+  use atlas_checksum_c_binding
   class(atlas_Checksum), intent(in) :: this
   real(c_double), intent(in)  :: loc_field_data(:,:,:)
   character(len=:), allocatable :: checksum
@@ -182,3 +263,6 @@ function Checksum__execute_real64_r3(this, loc_field_data) result(checksum)
 end function Checksum__execute_real64_r3
 
 ! -----------------------------------------------------------------------------
+
+end module atlas_checksum_module
+

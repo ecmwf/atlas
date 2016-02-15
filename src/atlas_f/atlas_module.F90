@@ -114,17 +114,22 @@ use atlas_Connectivity_module, only: &
     & atlas_MultiBlockConnectivity, &
     & atlas_BlockConnectivity
 
+use atlas_HaloExchange_module, only: &
+    & atlas_HaloExchange
+use atlas_GatherScatter_module, only: &
+    & atlas_GatherScatter
+use atlas_Checksum_module, only: &
+    & atlas_Checksum
+
+use atlas_deprecated_functionspace_module, only: atlas_FunctionSpace
+
 use atlas_atlas_c_binding
 use atlas_mpi_c_binding
 use atlas_Fieldset_c_binding
-use atlas_FunctionSpace_c_binding
 use atlas_Mesh_c_binding
-use atlas_haloexchange_c_binding
-use atlas_gatherscatter_c_binding
 use atlas_grids_c_binding
 use atlas_reducedgrid_c_binding
 use atlas_griddistribution_c_binding
-use atlas_checksum_c_binding
 use atlas_gmsh_c_binding
 use atlas_BuildPeriodicBoundaries_c_binding
 use atlas_BuildEdges_c_binding
@@ -172,13 +177,9 @@ integer, public, parameter :: ATLAS_KIND_GIDX = c_long
 
 integer, public, parameter :: ATLAS_KIND_IDX = c_int
 
-#include "atlas_module_HaloExchange_i.f"
-#include "atlas_module_GatherScatter_i.f"
 #include "atlas_module_Grid_i.f"
-#include "atlas_module_Checksum_i.f"
 #include "atlas_module_Mesh_i.f"
 #include "atlas_module_MeshGenerator_i.f"
-#include "atlas_module_FunctionSpace_i.f"
 #include "atlas_module_functionspace_Nodes_i.f"
 #include "atlas_module_functionspace_EdgeBasedFiniteVolume_i.f"
 #include "atlas_module_functionspace_ReducedGridPoint_i.f"
@@ -343,13 +344,9 @@ subroutine atlas_finalize()
   call atlas__atlas_finalize()
 end subroutine
 
-#include "atlas_module_HaloExchange_c.f"
-#include "atlas_module_GatherScatter_c.f"
 #include "atlas_module_Grid_c.f"
-#include "atlas_module_Checksum_c.f"
 #include "atlas_module_Mesh_c.f"
 #include "atlas_module_MeshGenerator_c.f"
-#include "atlas_module_FunctionSpace_c.f"
 #include "atlas_module_functionspace_Nodes_c.f"
 #include "atlas_module_functionspace_EdgeBasedFiniteVolume_c.f"
 #include "atlas_module_functionspace_ReducedGridPoint_c.f"

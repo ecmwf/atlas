@@ -140,6 +140,10 @@ ecbuild_add_library( TARGET atlas_f
         atlas_mesh_HybridElements_module.F90
         atlas_mesh_Elements_module.F90
         atlas_mesh_ElementType_module.F90
+        atlas_deprecated_functionspace_module.F90
+        atlas_GatherScatter_module.F90
+        atlas_Checksum_module.F90
+        atlas_HaloExchange_module.F90
         atlas_C_interop.F90
         atlas_C_interop.cc
         atlas_logging.h
@@ -153,12 +157,8 @@ ecbuild_add_library( TARGET atlas_f
 )
 
 add_custom_target( atlas_fortran_inc SOURCES
-   atlas_module_Checksum_i.f
-   atlas_module_Checksum_c.f
    atlas_module_FieldSet_i.f
    atlas_module_FieldSet_c.f
-   atlas_module_FunctionSpace_i.f
-   atlas_module_FunctionSpace_c.f
    atlas_module_functionspace_EdgeBasedFiniteVolume_i.f
    atlas_module_functionspace_EdgeBasedFiniteVolume_c.f
    atlas_module_functionspace_Nodes_i.f
@@ -167,14 +167,10 @@ add_custom_target( atlas_fortran_inc SOURCES
    atlas_module_functionspace_ReducedGridPoint_i.f
    atlas_module_functionspace_Spectral_i.f
    atlas_module_functionspace_Spectral_c.f
-   atlas_module_GatherScatter_i.f
-   atlas_module_GatherScatter_c.f
    atlas_module_Grid_i.f
    atlas_module_Grid_c.f
    atlas_module_GridDistribution_i.f
    atlas_module_GridDistribution_c.f
-   atlas_module_HaloExchange_i.f
-   atlas_module_HaloExchange_c.f
    atlas_module_Mesh_i.f
    atlas_module_Mesh_c.f
    atlas_module_MeshGenerator_i.f

@@ -1,14 +1,116 @@
-! (C) Copyright 2013-2015 ECMWF.
+
+module atlas_gatherscatter_module
+
+use iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
+use atlas_c_interop, only : stride, view1d
+use atlas_object_module, only : atlas_object
+
+implicit none
+
+private :: c_ptr, c_int, c_long, c_float, c_double
+private :: stride, view1d
+private :: atlas_object
+
+public :: atlas_GatherScatter
+
+private
+
+!------------------------------------------------------------------------------
+TYPE, extends(atlas_object) :: atlas_GatherScatter
+
+! Purpose :
+! -------
+!   *Gather* :
+
+! Methods :
+! -------
+!   setup : Setup using arrays detailing proc, glb_idx, remote_idx, max_glb_idx
+!   execute : Do the gather
+
+! Author :
+! ------
+!   17-Dec-2013 Willem Deconinck     *ECMWF*
+
+!------------------------------------------------------------------------------
+contains
+  procedure :: glb_dof => GatherScatter__glb_dof
+  procedure, private :: GatherScatter__setup32
+  procedure, private :: GatherScatter__setup64
+  procedure, private :: GatherScatter__gather_int32_r1_r1
+  procedure, private :: GatherScatter__gather_int32_r2_r2
+  procedure, private :: GatherScatter__gather_int32_r3_r3
+  procedure, private :: GatherScatter__gather_int64_r1_r1
+  procedure, private :: GatherScatter__gather_int64_r2_r2
+  procedure, private :: GatherScatter__gather_int64_r3_r3
+  procedure, private :: GatherScatter__gather_real32_r1_r1
+  procedure, private :: GatherScatter__gather_real32_r2_r2
+  procedure, private :: GatherScatter__gather_real32_r3_r3
+  procedure, private :: GatherScatter__gather_real64_r1_r1
+  procedure, private :: GatherScatter__gather_real64_r2_r2
+  procedure, private :: GatherScatter__gather_real64_r3_r3
+  procedure, private :: GatherScatter__scatter_int32_r1_r1
+  procedure, private :: GatherScatter__scatter_int32_r2_r2
+  procedure, private :: GatherScatter__scatter_int64_r1_r1
+  procedure, private :: GatherScatter__scatter_int64_r2_r2
+  procedure, private :: GatherScatter__scatter_real32_r1_r1
+  procedure, private :: GatherScatter__scatter_real32_r2_r2
+  procedure, private :: GatherScatter__scatter_real64_r1_r1
+  procedure, private :: GatherScatter__scatter_real64_r2_r2
+  procedure, private :: GatherScatter__scatter_real64_r3_r3
+  generic :: setup => &
+      & GatherScatter__setup32, &
+      & GatherScatter__setup64
+  generic :: gather => &
+      & GatherScatter__gather_int32_r1_r1, &
+      & GatherScatter__gather_int32_r2_r2, &
+      & GatherScatter__gather_int32_r3_r3, &
+      & GatherScatter__gather_int64_r1_r1, &
+      & GatherScatter__gather_int64_r2_r2, &
+      & GatherScatter__gather_int64_r3_r3, &
+      & GatherScatter__gather_real32_r1_r1, &
+      & GatherScatter__gather_real32_r2_r2, &
+      & GatherScatter__gather_real32_r3_r3, &
+      & GatherScatter__gather_real64_r1_r1, &
+      & GatherScatter__gather_real64_r2_r2, &
+      & GatherScatter__gather_real64_r3_r3
+  generic :: scatter => &
+      & GatherScatter__scatter_int32_r1_r1, &
+      & GatherScatter__scatter_int32_r2_r2, &
+      & GatherScatter__scatter_int64_r1_r1, &
+      & GatherScatter__scatter_int64_r2_r2, &
+      & GatherScatter__scatter_real32_r1_r1, &
+      & GatherScatter__scatter_real32_r2_r2, &
+      & GatherScatter__scatter_real64_r1_r1, &
+      & GatherScatter__scatter_real64_r2_r2, &
+      & GatherScatter__scatter_real64_r3_r3
+
+  procedure, public :: delete => atlas_GatherScatter__delete
+
+END TYPE atlas_GatherScatter
+!------------------------------------------------------------------------------
+
+interface atlas_GatherScatter
+  module procedure atlas_GatherScatter__ctor
+end interface
+
+!------------------------------------------------------------------------------
+
+
+!========================================================
+contains
+!========================================================
 
 ! ------------------------------------------------------------------------------
 ! Gather routines
 
 function atlas_GatherScatter__ctor() result(gather)
+  use atlas_gatherscatter_c_binding
   type(atlas_GatherScatter) :: gather
   call gather%reset_c_ptr( atlas__GatherScatter__new() )
 end function atlas_GatherScatter__ctor
 
 subroutine atlas_GatherScatter__delete(this)
+  use atlas_gatherscatter_c_binding
   class(atlas_GatherScatter), intent(inout) :: this
   if ( .not. this%is_null() ) then
     call atlas__GatherScatter__delete(this%c_ptr())
@@ -17,12 +119,8 @@ subroutine atlas_GatherScatter__delete(this)
 end subroutine atlas_GatherScatter__delete
 
 
-subroutine atlas_GatherScatter__copy(this,obj_in)
-  class(atlas_GatherScatter), intent(inout) :: this
-  class(atlas_RefCounted), target, intent(in) :: obj_in
-end subroutine
-
 subroutine GatherScatter__setup32(this, part, remote_idx, glb_idx, opt_max_glb_idx)
+  use atlas_gatherscatter_c_binding
   class(atlas_GatherScatter), intent(in) :: this
   integer(c_int), intent(in) :: part(:)
   integer(c_int), intent(in) :: remote_idx(:)
@@ -39,6 +137,7 @@ subroutine GatherScatter__setup32(this, part, remote_idx, glb_idx, opt_max_glb_i
 end subroutine GatherScatter__setup32
 
 subroutine GatherScatter__setup64(this, part, remote_idx, glb_idx, opt_max_glb_idx)
+  use atlas_gatherscatter_c_binding
   class(atlas_GatherScatter), intent(in) :: this
   integer(c_int), intent(in) :: part(:)
   integer(c_int), intent(in) :: remote_idx(:)
@@ -55,12 +154,14 @@ subroutine GatherScatter__setup64(this, part, remote_idx, glb_idx, opt_max_glb_i
 end subroutine GatherScatter__setup64
 
 function GatherScatter__glb_dof(this) result(glb_dof)
+  use atlas_gatherscatter_c_binding
   class(atlas_GatherScatter), intent(in) :: this
   integer :: glb_dof
   glb_dof = atlas__GatherScatter__glb_dof(this%c_ptr())
 end function GatherScatter__glb_dof
 
 subroutine GatherScatter__gather_int32_r1_r1(this, loc_field_data, glb_field_data)
+  use atlas_gatherscatter_c_binding
   class(atlas_GatherScatter), intent(in) :: this
   integer(c_int), intent(in)  :: loc_field_data(:)
   integer(c_int), intent(out) :: glb_field_data(:)
@@ -83,6 +184,7 @@ end subroutine GatherScatter__gather_int32_r1_r1
 
 
 subroutine GatherScatter__gather_int32_r2_r2(this, loc_field_data, glb_field_data)
+  use atlas_gatherscatter_c_binding
   class(atlas_GatherScatter), intent(in) :: this
   integer(c_int), intent(in)  :: loc_field_data(:,:)
   integer(c_int), intent(out) :: glb_field_data(:,:)
@@ -105,6 +207,7 @@ end subroutine GatherScatter__gather_int32_r2_r2
 
 
 subroutine GatherScatter__gather_int32_r3_r3(this, loc_field_data, glb_field_data)
+  use atlas_gatherscatter_c_binding
   class(atlas_GatherScatter), intent(in) :: this
   integer(c_int), intent(in)  :: loc_field_data(:,:,:)
   integer(c_int), intent(out) :: glb_field_data(:,:,:)
@@ -126,6 +229,7 @@ subroutine GatherScatter__gather_int32_r3_r3(this, loc_field_data, glb_field_dat
 end subroutine GatherScatter__gather_int32_r3_r3
 
 subroutine GatherScatter__gather_int64_r1_r1(this, loc_field_data, glb_field_data)
+  use atlas_gatherscatter_c_binding
   class(atlas_GatherScatter), intent(in) :: this
   integer(c_long), intent(in)  :: loc_field_data(:)
   integer(c_long), intent(out) :: glb_field_data(:)
@@ -148,6 +252,7 @@ end subroutine GatherScatter__gather_int64_r1_r1
 
 
 subroutine GatherScatter__gather_int64_r2_r2(this, loc_field_data, glb_field_data)
+  use atlas_gatherscatter_c_binding
   class(atlas_GatherScatter), intent(in) :: this
   integer(c_long), intent(in)  :: loc_field_data(:,:)
   integer(c_long), intent(out) :: glb_field_data(:,:)
@@ -170,6 +275,7 @@ end subroutine GatherScatter__gather_int64_r2_r2
 
 
 subroutine GatherScatter__gather_int64_r3_r3(this, loc_field_data, glb_field_data)
+  use atlas_gatherscatter_c_binding
   class(atlas_GatherScatter), intent(in) :: this
   integer(c_long), intent(in)  :: loc_field_data(:,:,:)
   integer(c_long), intent(out) :: glb_field_data(:,:,:)
@@ -192,6 +298,7 @@ end subroutine GatherScatter__gather_int64_r3_r3
 
 
 subroutine GatherScatter__gather_real32_r1_r1(this, loc_field_data, glb_field_data)
+  use atlas_gatherscatter_c_binding
   class(atlas_GatherScatter), intent(in) :: this
   real(c_float), intent(in)  :: loc_field_data(:)
   real(c_float), intent(out) :: glb_field_data(:)
@@ -212,6 +319,7 @@ subroutine GatherScatter__gather_real32_r1_r1(this, loc_field_data, glb_field_da
     &  gview, gstrides, gextents, grank )
 end subroutine GatherScatter__gather_real32_r1_r1
 subroutine GatherScatter__gather_real32_r2_r2(this, loc_field_data, glb_field_data)
+  use atlas_gatherscatter_c_binding
   class(atlas_GatherScatter), intent(in) :: this
   real(c_float), intent(in)  :: loc_field_data(:,:)
   real(c_float), intent(out) :: glb_field_data(:,:)
@@ -232,6 +340,7 @@ subroutine GatherScatter__gather_real32_r2_r2(this, loc_field_data, glb_field_da
     &  gview, gstrides, gextents, grank )
 end subroutine GatherScatter__gather_real32_r2_r2
 subroutine GatherScatter__gather_real32_r3_r3(this, loc_field_data, glb_field_data)
+  use atlas_gatherscatter_c_binding
   class(atlas_GatherScatter), intent(in) :: this
   real(c_float), intent(in)  :: loc_field_data(:,:,:)
   real(c_float), intent(out) :: glb_field_data(:,:,:)
@@ -253,6 +362,7 @@ subroutine GatherScatter__gather_real32_r3_r3(this, loc_field_data, glb_field_da
 end subroutine GatherScatter__gather_real32_r3_r3
 
 subroutine GatherScatter__gather_real64_r1_r1(this, loc_field_data, glb_field_data)
+  use atlas_gatherscatter_c_binding
   class(atlas_GatherScatter), intent(in) :: this
   real(c_double), intent(in)   :: loc_field_data(:)
   real(c_double), intent(out)  :: glb_field_data(:)
@@ -278,6 +388,7 @@ subroutine GatherScatter__gather_real64_r1_r1(this, loc_field_data, glb_field_da
     &  gview, gstrides, gextents, grank )
 end subroutine GatherScatter__gather_real64_r1_r1
 subroutine GatherScatter__gather_real64_r2_r2(this, loc_field_data, glb_field_data)
+  use atlas_gatherscatter_c_binding
   class(atlas_GatherScatter), intent(in) :: this
   real(c_double), intent(in)  :: loc_field_data(:,:)
   real(c_double), intent(out) :: glb_field_data(:,:)
@@ -298,6 +409,7 @@ subroutine GatherScatter__gather_real64_r2_r2(this, loc_field_data, glb_field_da
     &  gview, gstrides, gextents, grank )
 end subroutine GatherScatter__gather_real64_r2_r2
 subroutine GatherScatter__gather_real64_r3_r3(this, loc_field_data, glb_field_data)
+  use atlas_gatherscatter_c_binding
   class(atlas_GatherScatter), intent(in) :: this
   real(c_double), intent(in)  :: loc_field_data(:,:,:)
   real(c_double), intent(out) :: glb_field_data(:,:,:)
@@ -321,6 +433,7 @@ end subroutine GatherScatter__gather_real64_r3_r3
 ! -----------------------------------------------------------------------------
 
 subroutine GatherScatter__scatter_int32_r1_r1(this, glb_field_data, loc_field_data)
+  use atlas_gatherscatter_c_binding
   class(atlas_GatherScatter), intent(in) :: this
   integer(c_int), intent(in)  :: glb_field_data(:)
   integer(c_int), intent(out) :: loc_field_data(:)
@@ -339,6 +452,7 @@ subroutine GatherScatter__scatter_int32_r1_r1(this, glb_field_data, loc_field_da
 end subroutine GatherScatter__scatter_int32_r1_r1
 
 subroutine GatherScatter__scatter_int32_r2_r2(this, glb_field_data, loc_field_data)
+  use atlas_gatherscatter_c_binding
   class(atlas_GatherScatter), intent(in) :: this
   integer(c_int), intent(in)  :: glb_field_data(:,:)
   integer(c_int), intent(out) :: loc_field_data(:,:)
@@ -360,6 +474,7 @@ subroutine GatherScatter__scatter_int32_r2_r2(this, glb_field_data, loc_field_da
 end subroutine GatherScatter__scatter_int32_r2_r2
 
 subroutine GatherScatter__scatter_int64_r1_r1(this, glb_field_data, loc_field_data)
+  use atlas_gatherscatter_c_binding
   class(atlas_GatherScatter), intent(in) :: this
   integer(c_long), intent(in)  :: glb_field_data(:)
   integer(c_long), intent(out) :: loc_field_data(:)
@@ -378,6 +493,7 @@ subroutine GatherScatter__scatter_int64_r1_r1(this, glb_field_data, loc_field_da
 end subroutine GatherScatter__scatter_int64_r1_r1
 
 subroutine GatherScatter__scatter_int64_r2_r2(this, glb_field_data, loc_field_data)
+  use atlas_gatherscatter_c_binding
   class(atlas_GatherScatter), intent(in) :: this
   integer(c_long), intent(in)  :: glb_field_data(:,:)
   integer(c_long), intent(out) :: loc_field_data(:,:)
@@ -400,6 +516,7 @@ end subroutine GatherScatter__scatter_int64_r2_r2
 
 
 subroutine GatherScatter__scatter_real32_r1_r1(this, glb_field_data, loc_field_data)
+  use atlas_gatherscatter_c_binding
   class(atlas_GatherScatter), intent(in) :: this
   real(c_float), intent(in)  :: glb_field_data(:)
   real(c_float), intent(out) :: loc_field_data(:)
@@ -417,6 +534,7 @@ subroutine GatherScatter__scatter_real32_r1_r1(this, glb_field_data, loc_field_d
     &  lview, lstrides, lextents, lrank )
 end subroutine GatherScatter__scatter_real32_r1_r1
 subroutine GatherScatter__scatter_real32_r2_r2(this, glb_field_data, loc_field_data)
+  use atlas_gatherscatter_c_binding
   class(atlas_GatherScatter), intent(in) :: this
   real(c_float), intent(in)  :: glb_field_data(:,:)
   real(c_float), intent(out) :: loc_field_data(:,:)
@@ -437,6 +555,7 @@ subroutine GatherScatter__scatter_real32_r2_r2(this, glb_field_data, loc_field_d
     &  lview, lstrides, lextents, lrank )
 end subroutine GatherScatter__scatter_real32_r2_r2
 subroutine GatherScatter__scatter_real64_r1_r1(this, glb_field_data, loc_field_data)
+  use atlas_gatherscatter_c_binding
   class(atlas_GatherScatter), intent(in) :: this
   real(c_double), intent(in)  :: glb_field_data(:)
   real(c_double), intent(out) :: loc_field_data(:)
@@ -454,6 +573,7 @@ subroutine GatherScatter__scatter_real64_r1_r1(this, glb_field_data, loc_field_d
     &  lview, lstrides, lextents, lrank )
 end subroutine GatherScatter__scatter_real64_r1_r1
 subroutine GatherScatter__scatter_real64_r2_r2(this, glb_field_data, loc_field_data)
+  use atlas_gatherscatter_c_binding
   class(atlas_GatherScatter), intent(in) :: this
   real(c_double), intent(in)  :: glb_field_data(:,:)
   real(c_double), intent(out) :: loc_field_data(:,:)
@@ -475,6 +595,7 @@ subroutine GatherScatter__scatter_real64_r2_r2(this, glb_field_data, loc_field_d
 end subroutine GatherScatter__scatter_real64_r2_r2
 
 subroutine GatherScatter__scatter_real64_r3_r3(this, glb_field_data, loc_field_data)
+  use atlas_gatherscatter_c_binding
   class(atlas_GatherScatter), intent(in) :: this
   real(c_double), intent(in)  :: glb_field_data(:,:,:)
   real(c_double), intent(out) :: loc_field_data(:,:,:)
@@ -498,4 +619,5 @@ end subroutine GatherScatter__scatter_real64_r3_r3
 
 ! -----------------------------------------------------------------------------
 
+end module atlas_gatherscatter_module
 
