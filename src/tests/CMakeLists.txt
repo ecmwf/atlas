@@ -1,4 +1,4 @@
-# (C) Copyright 1996-2014 ECMWF.
+# (C) Copyright 1996-2016 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -231,11 +231,6 @@ ecbuild_add_test( TARGET atlas_test_trans_serial
   CONDITION HAVE_TRANS AND NOT HAVE_MPI
   LIBS      atlas
 )
-
-
-if( ECKIT_HAVE_GRIB )
-  add_subdirectory( grid )
-endif()
 
 add_subdirectory( cgal )
 add_subdirectory( geometry )

@@ -100,6 +100,11 @@ void Grid::fillLonLat(double array[], size_t arraySize) const
     copyLonLatMemory(array, size_t(sizeof(double)*size));
 }
 
+std::string Grid::getOptimalMeshGenerator() const
+{
+    return "Delaunay";
+}
+
 void Grid::fillLonLat(std::vector<double>& v) const {
     v.resize(npts()*2);
     copyLonLatMemory(&v[0], size_t(sizeof(double)*v.size()));

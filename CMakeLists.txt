@@ -1,5 +1,4 @@
-
-# (C) Copyright 1996-2014 ECMWF.
+# (C) Copyright 1996-2016 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -25,7 +24,7 @@ set( ENABLE_OS_ENDINESS_TEST    OFF   CACHE BOOL " " )
 
 project( atlas CXX )
 
-file  ( STRINGS "VERSION" ATLASVER )
+file  ( STRINGS "VERSION.tex" ATLASVER )
 set   ( ${PROJECT_NAME}_VERSION_STR  ${ATLASVER} )
 
 include( ecbuild_system NO_POLICY_SCOPE )
@@ -40,11 +39,6 @@ set( PERSISTENT_NAMESPACE "eckit" CACHE INTERNAL "" )
 ecbuild_use_package( PROJECT eckit VERSION 0.10 REQUIRED )
 
 ecbuild_debug( "   ECKIT_FEATURES : [${ECKIT_FEATURES}]" )
-
-if( ECKIT_HAVE_GRIB )
-   ecbuild_debug( "eckit has GRIB support" )
-   set( ECKIT_GRIB_LIBRARIES eckit_grib )
-endif()
 
 if( ECKIT_HAVE_ECKIT_MPI )
    ecbuild_debug( "eckit has mpi support" )
@@ -148,8 +142,20 @@ ecbuild_add_option(
 
 if( HAVE_TESSELATION )
     list( APPEND CGAL_INCLUDE_DIRS ${Boost_INCLUDE_DIRS} )
-    list( APPEND CGAL_LIBRARIES ${CGAL_LIBRARY} ${CGAL_3RD_PARTY_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} )
+    if ( TARGET CGAL::CGAL )
+      list( APPEND CGAL_LIBRARIES CGAL::CGAL ${CGAL_3RD_PARTY_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} )
+    else()
+      list( APPEND CGAL_LIBRARIES ${CGAL_LIBRARY} ${CGAL_3RD_PARTY_LIBRARIES} ${GMP_LIBRARIES} ${MPFR_LIBRARIES} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} )
+    endif()
 endif()
+
+### Eigen
+
+ecbuild_add_option( FEATURE EIGEN
+                    DESCRIPTION "Eigen support"
+                    TYPE RECOMMENDED
+                    PURPOSE "Eigen backend: accelerated small matrix-vector operations"
+                    REQUIRED_PACKAGES Eigen3 )
 
 ### Type for Global indices and unique point id's
 

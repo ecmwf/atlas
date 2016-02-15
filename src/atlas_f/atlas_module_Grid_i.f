@@ -39,11 +39,17 @@ TYPE, extends(atlas_Grid) :: atlas_ReducedGrid
 
 !------------------------------------------------------------------------------
 contains
-  procedure :: N    => ReducedGrid__N
-  procedure :: nlat => ReducedGrid__nlat
-  procedure :: nlon => ReducedGrid__nlon
-  procedure :: nlonmax => ReducedGrid__nlonmax
-  procedure :: lat => ReducedGrid__latitudes
+  procedure :: N        => ReducedGrid__N
+  procedure :: nlat     => ReducedGrid__nlat
+  procedure :: nlon_idx => ReducedGrid__nlon
+  procedure :: nlon_all => ReducedGrid__nlon__all
+  generic   :: nlon     => nlon_idx, nlon_all
+  procedure :: nlonmax  => ReducedGrid__nlonmax
+  procedure :: lat_idx  => ReducedGrid__lat
+  procedure :: lat_all  => ReducedGrid__lat__all
+  generic   :: lat      => lat_idx, lat_all
+  procedure :: lon      => ReducedGrid__lon
+  procedure :: lonlat   => ReducedGrid__lonlat
 END TYPE atlas_ReducedGrid
 
 !------------------------------------------------------------------------------

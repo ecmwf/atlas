@@ -8,24 +8,30 @@
  * does it submit to any jurisdiction.
  */
 
+#include <iostream>
+
 #include "atlas/geometry/Ray.h"
 
-#include "eckit/eckit_config.h"
-
-#ifdef ECKIT_HAVE_EIGEN
-
-#include "eckit/maths/Eigen.h"
-
 //----------------------------------------------------------------------------------------------------------------------
-
-using Eigen::Vector3d;
 
 namespace atlas {
 namespace geometry {
 
 Ray::Ray(const double *p) {
-    orig = Eigen::Vector3d::Map(p);
+    orig = Vector3D::Map(p);
     dir = -orig;
+}
+
+Ray::Ray(const double* o, const double* d) {
+    orig = Vector3D::Map(o);
+    dir = Vector3D::Map(d);
+}
+
+void Ray::print(std::ostream& s) const { s << "Ray[orig=" << orig << ",dir=" << dir << "]"; }
+
+std::ostream& operator<<(std::ostream& s, const Ray& p) {
+    p.print(s);
+    return s;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -33,4 +39,3 @@ Ray::Ray(const double *p) {
 }  // namespace geometry
 }  // namespace atlas
 
-#endif  // ECKIT_HAVE_EIGEN

@@ -38,7 +38,7 @@ enum AngleUnit{ DEG=0, RAD=1 };
 ///       With C++11 constexpr the constants can be initialized in the class header.
 struct Constants
 {
-    static double radianToDegrees() { return 180. * M_1_PI; }
+    static double radiansToDegrees() { return 180. * M_1_PI; }
     static double degreesToRadians() { return M_PI / 180; }
 
 };

@@ -1,0 +1,389 @@
+\chapter{Create Fields and Field Sets}
+In this chapter, we show how to create fields and field sets
+using \Atlas. Specifically, we outline how to create two simple 
+fields and how to include them into a field set. These two fields
+are standalone, thus not related to any grid - i.e. they are just 
+defined as generic multidimensional arrays containing some values 
+and a short description of what is stored inside them.
+Successively, we introduce how to create two fields on a given 
+grid and again how to add them to a field set.
+As done for the other examples, we show both the C++ and Fortran 
+versions.
+
+
+\section{Standalone Fields and Field Sets}
+\label{sect:standalone-fields}
+
+\subsection{C++ version}
+The \lista{code-fields-C} shows how to construct two standalone 
+fields and encapsulate them into a field set. 
+%
+\lstinputlisting[caption=Generating two fields and encapsulating 
+them into a FieldSet using C++, style=CStyle, label=code-fields-C]{fields.cc}
+%
+On the first few lines of the code, we include the necessary 
+\Atlas header files needed for this example. Note in particular 
+the inclusion of \inltc{Field.h}, \inltc{FieldSet.h} and 
+\inltc{Metadata.h}. The first is necessary to define fields, 
+the second to define field set and the third to add a description 
+to the fields.
+
+We then define two fields, one called \inltc{pressureField} that, 
+for instance, will contain the pressure, and the other one called 
+\inltc{windField} that will for example contain the velocity of 
+the wind in two orthogonal directions.
+
+How does the creation of a field work?\\
+On lines 14 and 16, we can see the construction of the two fields.
+We first need to declare a pointer of type \inltc{Field} and we 
+successively call the constructor for this field. This is composed 
+by three elements: the type of data contained within the field 
+(in our case double), the name of the field as a string (in our 
+case 'pressure') and its dimensions.
+Note that we allow multidimensional fields up to 6 dimensions 
+(this number can be extended if required)!
+%
+\begin{tipbox}
+In a field we can only store numbers - no strings or characters!
+In particular, we support integers, float types and double types.
+\end{tipbox}
+%
+Once the fields are defined we need to initialize them 
+and give them some values. This task can be achieved 
+by using the code on lines 20 and 21, where we initializes 
+the two fields to the two \inltc{ArrayView} objects, \inltc{pressure}
+and \inltc{wind}, necessary to access and manipulate the fields. 
+We successively prescribe some values to these two objects 
+(see lines 24 to 29). This step automatically updates what 
+is stored in the two field objects, \inltc{pressureField} 
+and \inltc{windField}.
+
+The work for defining the two fields is almost completed.
+We can add just one more little feature - one or more 
+descriptors. This task is performed on lines 32 to 36, 
+where we use the \inltc{metadata} object to set the 
+units of our fields and retrieve them through the 
+functions, \inltc{set} and \inltc{get}, respectively.
+
+These two fields are fully functional and can be used 
+for our specific application. However, we may want to 
+encapsulate several fields into one object. This task 
+can be achieved by using the object \inltc{FieldSet}, 
+as show on lines 39 to 41, where we define the field 
+set and we add the two fields into it.
+
+Any field can also be retrieved from a field set by 
+using the code on lines 44 and 45, where we ask for 
+the field 'pressure' and the field 'wind' to be retrieved
+by two new empty fields.
+%
+\begin{notebox}
+It is possible to retrieve a field from a field set 
+either by using the name of the field or by using 
+the number identifying it. In our example, \inltc{pressureField} 
+assumes id=1 (since stored first), while \inltc{windField}
+assumes id=2 (since stored second).
+\end{notebox}
+%
+After having defined the field set, we print some 
+useful information regarding the fields (for the 
+sake of brevity we print just some information 
+regarding the \inltc{windField} - the information 
+regarding the \inltc{pressureField} can be obtained 
+in an identical way).
+In particular, we print the name, the size and the \inltc{metadata}
+associated to the \inltc{windField} (see lines 48 to 50).
+We then extract its rank, shape and dimensions in bytes
+(see lines 51 to 55). We finally print type of the data
+stored in the field (see lines 56 and 57).
+
+On lines 60 to 62 we also print the values of one element 
+per each field. Note that the memory of the objects defined 
+in this example is automatically released when the execution 
+ends. So, there is no need to manually destroy the objects.
+This aspect is different in the Fortran example below, where 
+we will need to explicitly destroy all the objects created!
+
+
+It is now possible to run this simple program typing
+the following text on the terminal
+%
+\begin{lstlisting}[style=BashStyle]
+./atlas_c-fields
+\end{lstlisting}
+% 
+This will produce the two fields described and a field 
+set and will destroy them at the end of the routine, 
+thus automatically releasing the memory. 
+It will also print to the screen some useful information 
+regarding the fields - specifically you should obtain 
+a screen output similar to the one below:
+%
+\begin{lstlisting}[style=BashStyle]
+name   = wind
+size   = 200
+units  = [m/s]
+rank   = 2
+shape  = 100    32
+memory = 1600 bytes
+type   = real64
+kind   = 8
+pressure(9) = 101325
+wind(0, 9)  = 9.01
+wind(1, 9)  = 9.02
+\end{lstlisting}
+% 
+You can now play with the code in \lista{code-fields-C} 
+to generate as many fields/field sets as you want! 
+
+
+
+\section{Fortran version}
+The \lista{code-fields-F} shows how to construct two standalone 
+fields and encapsulate them into a field set. 
+%
+\lstinputlisting[caption=Generating two fields and encapsulating 
+them into a FieldSet using Fortran, style=FStyle, label=code-fields-F]{fields.F90}
+%
+On the first few lines of the code, we define the variables
+needed for this program. In particular, the \Atlas specific 
+variables needed for this example are the \inltf{atlas\_Field}, 
+\inltf{atlas\_FieldSet} and \inltf{atlas\_metadata} objects.
+
+After having defined all the data needed for this example, 
+we initialize the \Atlas library as usual and we define 
+two fields, one called \inltf{pressureField} that, for 
+instance, will contain the pressure and the other one 
+called \inltf{windField} that will for example contain 
+the velocity of the wind in two orthogonal directions.
+
+How does the creation of a field work?\\
+On lines 17 and 18 we can see the construction of the two fields.
+We first need to specify the name of the field (in our case 'pressure' 
+and 'wind'), then we need to specify the type of the data stored 
+into the fields (in our case double precision numbers) and finally 
+we need to provide the dimension of the field.
+Note that we allow multidimensional fields up to 6 dimensions 
+(this number can be extended if required)!
+%
+\begin{tipbox}
+In a field we can only store numbers - no strings or characters!
+In particular, we support integers, float types and double types.
+\end{tipbox}
+%
+Once the fields are defined we need to initialize them 
+and give them some values. This task can be achieved 
+by using the code on lines 21 and 22, where we initializes 
+the two fields to the two pointers \inltf{pressure} and 
+\inltf{wind}, respectively. 
+We successively prescribe some values to these two pointers 
+(see lines 25 to 29). This step automatically updates what 
+is stored in the two field objects, \inltf{pressureField} 
+and \inltf{windField}.
+
+The work for defining the two fields is almost completed.
+We can add just one more little feature - one or more 
+descriptors. This task is performed on lines 32 to 37, 
+where we use the \inltf{metadata} object to set the units 
+of our fields and retrieve them through the functions, 
+\inltf{set} and \inltf{get}, respectively.
+
+These two fields are fully functional and can be used 
+for our specific application. However, we may want to 
+encapsulate several fields into one object. This task 
+can be achieved by using the object \inltf{atlas\_FieldSet}, 
+as show on lines 40 to 42, where we define the field 
+set and we add the two fields into it.
+
+Any field can also be retrieved from a field set by 
+using the code on lines 45 and 46, where we ask for 
+the field 'pressure' and the field 'wind' to be retrieved 
+by two new \inltf{atlas\_Field} objects.
+%
+\begin{notebox}
+It is possible to retrieve a field from a field set 
+either by using the name of the field or by using 
+the number identifying it. In our example, \inltf{pressureField} 
+assumes id=1 (since stored first), while \inltf{windField}
+assumes id=2 (since stored second).
+\end{notebox}
+%
+After having defined the field set, we print some 
+useful information regarding the fields (for the sake of 
+brevity we print just some information regarding the \inltf{windField}
+- the information regarding the \inltf{pressureField} can 
+be obtained in an identical way).
+In particular, we print the name, the size and the \inltf{metadata}
+associated to the \inltf{windField} (see lines 49 to 51).
+We then extract its rank, shape and dimensions in bytes
+(see lines 52 to 55). We finally print type of the data
+stored in the field (see lines 55 and 56).
+
+On lines 60 to 62 we also print the values of one element 
+per each field and we destroy the field objects on lines 
+65 and 67 (thus releasing the memory).
+
+Note that destroying the \inltf{atlas\_Field} objects 
+is enough to also destroy \inltf{atlas\_FieldSet} object;
+we need to explicitly destroy it as well to completely 
+free the memory associated to all the objects defined 
+in this example (see line 66).
+
+It is now possible to run this simple program typing
+the following text on the terminal
+%
+\begin{lstlisting}[style=BashStyle]
+./atlas_f-fields
+\end{lstlisting}
+% 
+This will produce the two fields described and a field 
+set and will destroy them at the end of the routine 
+(thus releasing the memory). It will also print to 
+the screen some useful information regarding the fields.
+In particular, you should obtain an output similar to 
+the one below:
+%
+\begin{lstlisting}[style=BashStyle]
+ name   = wind
+ size   = 200
+ units  = [m/s]
+ rank   = 2
+ shape  = 2         100
+ shape  = 2         100
+ memory = 1600.0000000000000 bytes
+ type   = real64
+ kind   = 8
+ pressure(10) =    101325.00000000000     
+ wind(1, 10)  =    10.010000000000000     
+ wind(2, 10)  =    10.020000000000000
+\end{lstlisting}
+% 
+You can now play with the code in \lista{code-fields-F} 
+to generate as many fields/field sets as you want! 
+
+
+
+
+\section{Fields on a given Grid}
+\label{sect:grid-fields}
+
+\subsection{C++ version}
+The \lista{code-fields-C} shows how to construct one field
+on a given grid. To see how to create a generic field and 
+a field set and how to use some additional functionalities 
+related to fields, please refer to \sect{sect:standalone-fields}
+above. 
+%
+\lstinputlisting[caption=Generating a field on a given grid 
+using C++, style=CStyle, label=code-fields-C]{fields-on-grid.cc}
+%
+On the first few lines of the code, we include the necessary 
+header files for this example. In particular, we include 
+\inltc{grids.h}, \inltc{Field.h} and the eckit header file 
+\inltc{Resource.h}. We then initialize the \Atlas library 
+and define some constants needed to define the function 
+we are going to implement later in the code. 
+
+We then create 
+a \inltc{reducedGrid} object and a \inltc{Field} object.
+Note that we used a command-line argument to decide 
+what grid to use (see \chap{chap:global-grids} for 
+more details on how to create global grids).
+
+On line 24, we define the grid using a command-line key 
+that can be specified by the user (see \chap{chap:global-grids}
+for more details on how to create global grids).
+On lines 27 and 28, we define the pressure field, while, 
+on line, 30 we initialize the associated \inltc{ArrayView} 
+object, needed to manipulate and access the data inside the 
+\inltc{Field} object.
+From line 31 to line 50, we specify the a Gaussian-type 
+(e.g. a hill) function on our grid (specifically, the 
+field is defined between line 43 and 47).
+We finally close the program outputting on the screen 
+the memory footprint of the field just created.
+Note that we do not need to free the memory of the grid 
+and field objects, since it is automatically released 
+at the end of the execution (in contrast to Fortran, 
+where we explicitly need to destroy the objects created).
+
+It is now possible to run this simple program typing
+the following text on the terminal
+%
+\begin{lstlisting}[style=BashStyle]
+./atlas_c-fields-on-grid --grid O1024
+\end{lstlisting}
+% 
+This will produce a field (called pressure) defined 
+on an octahedral grid that has the shape of a hill 
+or Gaussian-type function.
+The output on the screen should be the memory footprint 
+of the field created on the grid and it should be similar 
+to the one below:
+%
+\begin{lstlisting}[style=BashStyle]
+==========================================
+memory pressureField = 0.0338493 GB
+==========================================
+\end{lstlisting}
+% 
+Not a big deal for this grid!
+
+You can now play with the command-line argument and 
+generate different grids and see the impact on the 
+memory footprint of the pressure field.
+
+
+
+\subsection{Fortran version}
+The \lista{code-fields-F} shows how to construct one field
+on a given grid. To see how to create a generic field and 
+a field set and how to use some additional functionalities 
+related to fields, please refer to \sect{sect:standalone-fields}
+above. 
+%
+\lstinputlisting[caption=Generating a field on a given grid 
+using Fortran, style=FStyle, label=code-fields-F]{fields-on-grid.F90}
+%
+On the first few lines of the code, we define the variables
+needed for this program. In particular, we define some constants 
+needed for the function we are going to implement later in the 
+code and we declare an \inltf{Atlas\_reducedGrid} object and 
+an \inltf{atlas\_Field} object.
+
+On lines 21 and 22 we define the grid using a command-line key 
+that can be specified by the user (see \chap{chap:global-grids}), 
+while on lines 24 and 25, we initialize the pressure field.
+From line 28 to line 45, we specify the a Gaussian-type 
+(e.g. a hill) function on our grid (specifically, the 
+field is defined on lines 39 to 42).
+We finally close the program outputting on the screen 
+the memory footprint of the field just created. As usual,
+we also explicitly need to free the memory calling the 
+function \inltf{final} on the grid and field objects.
+
+It is now possible to run this simple program typing
+the following text on the terminal
+%
+\begin{lstlisting}[style=BashStyle]
+./atlas_f-fields-on-grid --grid O1024
+\end{lstlisting}
+% 
+This will produce a field (called pressure) defined 
+on an octahedral grid that has the shape of a hill 
+or Gaussian-type function.
+The output on the screen should be the memory footprint 
+of the field created on the grid and it should be similar 
+to the one below:
+%
+\begin{lstlisting}[style=BashStyle]
+=============================================
+memory pressureField = 3.3849344000000003E-002 GB
+=============================================
+\end{lstlisting}
+% 
+Not a big deal for this grid!
+
+You can now play with the command-line argument and 
+generate different grids and see the impact on the 
+memory footprint of the pressure field.

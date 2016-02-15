@@ -13,18 +13,13 @@
 
 #include <limits>
 
-#include "eckit/eckit_config.h"
-
-#ifdef ECKIT_HAVE_EIGEN
-
-#include "eckit/maths/Eigen.h"
-#include "eckit/types/FloatCompare.h"
-
-#include "atlas/geometry/Ray.h"
+#include "atlas/geometry/Vector3D.h"
 #include "atlas/geometry/Intersect.h"
 
 namespace atlas {
 namespace geometry {
+
+class Ray;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -32,10 +27,10 @@ class Quad3D {
 public:
 
   Quad3D(const double* x0, const double* x1, const double* x2, const double* x3) {
-    v00 = Eigen::Vector3d::Map(x0);
-    v10 = Eigen::Vector3d::Map(x1);
-    v11 = Eigen::Vector3d::Map(x2);
-    v01 = Eigen::Vector3d::Map(x3);
+    v00 = Vector3D::Map(x0);
+    v10 = Vector3D::Map(x1);
+    v11 = Vector3D::Map(x2);
+    v01 = Vector3D::Map(x3);
   }
 
   Intersect intersects(const Ray& r, double epsilon = 5 * std::numeric_limits<double>::epsilon()) const;
@@ -54,10 +49,10 @@ public:
   }
 
 private:  // members
-  Eigen::Vector3d v00; // aka v0
-  Eigen::Vector3d v10; // aka v1
-  Eigen::Vector3d v11; // aka v2
-  Eigen::Vector3d v01; // aka v3
+  Vector3D v00; // aka v0
+  Vector3D v10; // aka v1
+  Vector3D v11; // aka v2
+  Vector3D v01; // aka v3
 
 };
 
@@ -66,6 +61,5 @@ private:  // members
 }  // namespace geometry
 }  // namespace atlas
 
-#endif  // ECKIT_HAVE_EIGEN
 
 #endif

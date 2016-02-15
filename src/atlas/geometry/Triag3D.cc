@@ -10,17 +10,11 @@
 
 #include <cmath>
 
+#include "atlas/geometry/Ray.h"
 #include "atlas/geometry/Triag3D.h"
-
-#include "eckit/eckit_config.h"
-
-#ifdef ECKIT_HAVE_EIGEN
-
-#include "eckit/maths/Eigen.h"
 
 //----------------------------------------------------------------------------------------------------------------------
 
-using Eigen::Vector3d;
 
 namespace atlas {
 namespace geometry {
@@ -29,9 +23,9 @@ Intersect Triag3D::intersects(const Ray& r, double epsilon) const {
 
   Intersect isect;
 
-  Vector3d edge1 = v1 - v0;
-  Vector3d edge2 = v2 - v0;
-  Vector3d pvec = r.dir.cross(edge2);
+  Vector3D edge1 = v1 - v0;
+  Vector3D edge2 = v2 - v0;
+  Vector3D pvec = r.dir.cross(edge2);
 
   const double det = edge1.dot(pvec);
 
@@ -39,7 +33,7 @@ Intersect Triag3D::intersects(const Ray& r, double epsilon) const {
   if (fabs(det) < epsilon) return isect.success(false);
 
   const double invDet = 1. / det;
-  Vector3d tvec = r.orig - v0;
+  Vector3D tvec = r.orig - v0;
   isect.u = tvec.dot(pvec) * invDet;
 
   if(fabs(isect.u) < parametricEpsilon ) isect.u = 0;
@@ -47,7 +41,7 @@ Intersect Triag3D::intersects(const Ray& r, double epsilon) const {
 
   if (isect.u < 0 || isect.u > 1) return isect.success(false);
 
-  Vector3d qvec = tvec.cross(edge1);
+  Vector3D qvec = tvec.cross(edge1);
   isect.v = r.dir.dot(qvec) * invDet;
 
   if(fabs(isect.v) < parametricEpsilon ) isect.v = 0;
@@ -66,10 +60,10 @@ Intersect Triag3D::intersects(const Ray& r, double epsilon) const {
 
 double Triag3D::area() const
 {
-    Vector3d edge1 = v1 - v0;
-    Vector3d edge2 = v2 - v0;
+    Vector3D edge1 = v1 - v0;
+    Vector3D edge2 = v2 - v0;
 
-    Vector3d cross = edge1.cross(edge2);
+    Vector3D cross = edge1.cross(edge2);
 
     return 0.5 * cross.norm();
 }
@@ -79,4 +73,3 @@ double Triag3D::area() const
 }  // namespace geometry
 }  // namespace atlas
 
-#endif  // ECKIT_HAVE_EIGEN

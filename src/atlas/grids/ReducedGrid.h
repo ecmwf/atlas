@@ -87,9 +87,11 @@ public:
 
   double lat( const size_t jlat ) const;
 
-  void lonlat( const size_t jlon, const size_t jlat, double crd[] ) const;
+  void lonlat( const size_t jlat, const size_t jlon, double crd[] ) const;
 
 private: // methods
+
+  virtual std::string getOptimalMeshGenerator() const;
 
   virtual size_t copyLonLatMemory(double* pts, size_t size) const;
 
@@ -140,13 +142,15 @@ protected:
 
 extern "C"
 {
-  int  atlas__ReducedGrid__nlat(ReducedGrid* This);
-  void atlas__ReducedGrid__nlon(ReducedGrid* This, const int* &nlon, int &size);
-  int atlas__ReducedGrid__nlonmax(ReducedGrid* This);
-  int atlas__ReducedGrid__npts(ReducedGrid* This);
-  double atlas__ReducedGrid__lon(ReducedGrid* This,int jlat,int jlon);
-  double atlas__ReducedGrid__lat(ReducedGrid* This,int jlat);
-  void atlas__ReducedGrid__latitudes(ReducedGrid* This, const double* &lats, int &size);
+  int    atlas__ReducedGrid__nlat     (ReducedGrid* This);
+  int    atlas__ReducedGrid__nlon     (ReducedGrid* This, int &jlat);
+  void   atlas__ReducedGrid__nlon__all(ReducedGrid* This, const int* &nlon, int &size);
+  int    atlas__ReducedGrid__nlonmax  (ReducedGrid* This);
+  int    atlas__ReducedGrid__npts     (ReducedGrid* This);
+  double atlas__ReducedGrid__lat      (ReducedGrid* This, int jlat);
+  double atlas__ReducedGrid__lon      (ReducedGrid* This, int jlat, int jlon);
+  void   atlas__ReducedGrid__lonlat   (ReducedGrid* This, int jlat, int jlon, double crd[]);
+  void   atlas__ReducedGrid__lat__all (ReducedGrid* This, const double* &lats, int &size);
 }
 
 //------------------------------------------------------------------------------------------------------

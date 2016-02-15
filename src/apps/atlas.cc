@@ -72,7 +72,6 @@ void Version::run()
     bool feature_fortran(false);
     bool feature_MPI(false);
     bool feature_OpenMP(false);
-    bool feature_Grib(false);
     bool feature_Trans(false);
     bool feature_Tesselation(false);
 #ifdef ATLAS_HAVE_FORTRAN
@@ -84,9 +83,6 @@ void Version::run()
 #ifdef ATLAS_HAVE_OMP
       feature_OpenMP = true;
 #endif
-#ifdef ECKIT_HAVE_GRIB
-      feature_Grib = true;
-#endif
 #ifdef ATLAS_HAVE_TRANS
       feature_Trans = true;
 #endif
@@ -97,7 +93,6 @@ void Version::run()
     Log::info() << "    Fortran     : " << print(feature_fortran) << std::endl
                 << "    MPI         : " << print(feature_MPI) << std::endl
                 << "    OpenMP      : " << print(feature_OpenMP) << std::endl
-                << "    Grib        : " << print(feature_Grib) << std::endl
                 << "    Trans       : " << print(feature_Trans) << std::endl
                 << "    Tesselation : " << print(feature_Tesselation) << std::endl
                 << "    gidx_t      : " << ATLAS_BITS_GLOBAL << " bit integer" << std::endl

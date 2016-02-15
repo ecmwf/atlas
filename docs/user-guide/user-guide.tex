@@ -2,7 +2,7 @@
 %%%-------------------------------------------------------------------------------
 \documentclass[
 a4paper,     % Stock and paper size.
-11pt,        % Type size.
+12pt,        % Type size.
 % article,
 % oneside, 
 onecolumn,   % Only one column of text on a page.
@@ -97,11 +97,12 @@ openany,     % A chapter may start on either a recto or verso page.
 
 %%% FLOATS AND CAPTIONS
 %%%------------------------------------------------------------------------------
-% You do not need to write [htpb] all the time
-\makeatletter                  
-\renewcommand\fps@figure{htbp} 
-\renewcommand\fps@table{htbp}  
-\makeatother                   
+\newcommand{\fig}[1]{figure~{\ref{#1}}\xspace}
+\newcommand{\tab}[1]{table~{\ref{#1}}\xspace}
+\newcommand{\lista}[1]{listing~{\ref{#1}}\xspace}
+\newcommand{\parte}[1]{part~{\ref{#1}}\xspace}
+\newcommand{\chap}[1]{chapter~{\ref{#1}}\xspace}
+\newcommand{\sect}[1]{section~{\ref{#1}}\xspace}
 
 % A space between caption name and text
 \captiondelim{\space}
@@ -164,7 +165,6 @@ openany,     % A chapter may start on either a recto or verso page.
 \makeoddfoot{chap}{}{\small\bfseries\thepage}{}
 \makeevenhead{chap}{}{}{}
 \makeoddhead{chap}{}{}{}
-%\makeheadrule{chap}{\textwidth}{\normalrulethickness}
 \makeatother
 
 \nouppercaseheads
@@ -179,7 +179,11 @@ openany,     % A chapter may start on either a recto or verso page.
 
 % Nektar++ version
 \usepackage{xspace}
-\newcommand{\atlasver}{\input{../../VERSION}\unskip}
+\ifdefined\HCode
+\newcommand{\atlasver}{0.5.0\unskip}
+\else
+\newcommand{\atlasver}{\input{../../VERSION.tex}\unskip}
+\fi
 \addto\captionsenglish{\renewcommand{\chaptername}{Chapter}}
 
 % Partial
@@ -245,7 +249,7 @@ openany,     % A chapter may start on either a recto or verso page.
 % XML input style
 \lstdefinestyle{XMLStyle}
 {
-  language=XML,
+  language=make,
   basicstyle=\ttfamily\footnotesize,
   numbers=left,
   numberstyle=\tiny,
@@ -272,12 +276,11 @@ openany,     % A chapter may start on either a recto or verso page.
   captionpos=b,
   keepspaces=true,
   backgroundcolor=\color{black!05},
-  basicstyle=\footnotesize,
   showstringspaces=false,
   numbers=left,
   numbersep=5pt,
   numberstyle=\tiny\color{black},
-  basicstyle=\footnotesize\ttfamily,
+  basicstyle=\scriptsize\ttfamily,
   keywordstyle=\bfseries\color{green!40!black},
   commentstyle=\itshape\color{purple!40!black},
   identifierstyle=\color{blue},
@@ -295,9 +298,8 @@ openany,     % A chapter may start on either a recto or verso page.
   captionpos=b,
   keepspaces=true,
   backgroundcolor=\color{black!05},
-  basicstyle=\footnotesize,
   showstringspaces=false,
-  basicstyle=\footnotesize\ttfamily,
+  basicstyle=\scriptsize\ttfamily,
   keywordstyle=\bfseries\color{green!40!black},
   commentstyle=\itshape\color{purple!40!black},
   identifierstyle=\color{blue},
@@ -316,12 +318,11 @@ openany,     % A chapter may start on either a recto or verso page.
   captionpos=b,
   keepspaces=true,
   backgroundcolor=\color{red!05},
-  basicstyle=\footnotesize,
   showstringspaces=false,
   numbers=left,
   numbersep=5pt,
   numberstyle=\tiny\color{black},
-  basicstyle=\footnotesize\ttfamily,
+  basicstyle=\scriptsize\ttfamily,
   keywordstyle=\bfseries\color{red!40!black},
   commentstyle=\itshape\color{green!40!black},
   identifierstyle=\color{blue},
@@ -339,9 +340,8 @@ openany,     % A chapter may start on either a recto or verso page.
   captionpos=b,
   keepspaces=true,
   backgroundcolor=\color{red!05},
-  basicstyle=\footnotesize,
   showstringspaces=false,
-  basicstyle=\footnotesize\ttfamily,
+  basicstyle=\scriptsize\ttfamily,
   keywordstyle=\bfseries\color{red!40!black},
   commentstyle=\itshape\color{green!40!black},
   identifierstyle=\color{blue},
@@ -394,7 +394,7 @@ outer sep=0,draw=yellow!10,fill=yellow!10]{\texttt{#1}};}
       \begin{minipage}{.1\linewidth}
       \centering\tikz[scale=1]\node[scale=1.5]{\bcinfo};
       \end{minipage}%
-      \begin{minipage}{.9\linewidth}
+      \begin{minipage}{.85\linewidth}
       \textbf{Note}\par\smallskip
       \BODY
       \end{minipage}\hfill}%
@@ -409,7 +409,7 @@ outer sep=0,draw=yellow!10,fill=yellow!10]{\texttt{#1}};}
       \begin{minipage}{.1\linewidth}
       \centering\tikz[scale=1]\node[scale=1.5]{\bcdanger};
       \end{minipage}%
-      \begin{minipage}{.9\linewidth}
+      \begin{minipage}{.85\linewidth}
       \textbf{Warning}\par\smallskip
       \BODY
       \end{minipage}\hfill}%
@@ -424,7 +424,7 @@ outer sep=0,draw=yellow!10,fill=yellow!10]{\texttt{#1}};}
       \begin{minipage}{.1\linewidth}
       \centering\tikz[scale=1]\node[scale=1.5]{\bclampe};
       \end{minipage}%
-      \begin{minipage}{.9\linewidth}
+      \begin{minipage}{.85\linewidth}
       \textbf{Tip}\par\smallskip
       \BODY
       \end{minipage}\hfill}%
@@ -439,7 +439,7 @@ outer sep=0,draw=yellow!10,fill=yellow!10]{\texttt{#1}};}
       \begin{minipage}{.1\linewidth}
       \centering\tikz[scale=1]\node[scale=1.5]{#2};
       \end{minipage}%
-      \begin{minipage}{.9\linewidth}
+      \begin{minipage}{.85\linewidth}
       \textbf{#1}\par\smallskip
       \BODY
       \end{minipage}\hfill}%
@@ -506,7 +506,7 @@ pdfauthor={I am the Author}
           {\huge\bfseries \textcolor{darkgreen}{User-Guide}\par}
           \vskip1.0\baselineskip
           {\large\bfseries\@date\par}
-          \vspace{0.3\textheight}
+          \vspace{0.2\textheight}
           {\small\noindent\@author}\\[\baselineskip]
         }% end of vbox
       }% end of parbox
@@ -522,7 +522,7 @@ pdfauthor={I am the Author}
 %%%-------------------------------------------------------------------------------
 
 \author{ECMWF, Shinfield Park, Reading, UK\newline}
-\title{Atlas: A framework for highly efficient parallel data structures}
+\title{Atlas: A flexible parallel software framework for NWP data-structures}
 \date{\today}
 
 
@@ -556,18 +556,24 @@ pdfauthor={I am the Author}
 
 \part{Getting Started}
 \label{p:start}
-\chapter{Installation}
-\chapter{Structure}
-\import{section1/}{section1.tex}
+\import{getting-started/installation/}{installation.tex}
+\import{getting-started/structure/}{structure.tex}	
 
 
 
 \part{Core functionalities}
-\label{p:applications}
-\import{section2/}{section2.tex}
+\label{p:core-functionalities}
+\import{core-functionalities/global-grids/}{global-grids.tex}
+\import{core-functionalities/meshes/}{meshes.tex}
+\import{core-functionalities/fields/}{fields.tex}
+\import{core-functionalities/functionspace/}{functionspace.tex}
 
 
-\part{Dwarfs}
+
+\part{Utilities}
+\label{p:utilities}
+
+
 
 %\appendix
 

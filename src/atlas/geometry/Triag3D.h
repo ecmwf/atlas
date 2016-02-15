@@ -13,18 +13,13 @@
 
 #include <limits>
 
-#include "eckit/eckit_config.h"
-
-#ifdef ECKIT_HAVE_EIGEN
-
-#include "eckit/maths/Eigen.h"
-#include "eckit/types/FloatCompare.h"
-
-#include "atlas/geometry/Ray.h"
+#include "atlas/geometry/Vector3D.h"
 #include "atlas/geometry/Intersect.h"
 
 namespace atlas {
 namespace geometry {
+
+class Ray;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -36,11 +31,17 @@ class Triag3D {
 
 public: // types
 
+  Triag3D(const Vector3D& x0, const Vector3D& x1, const Vector3D& x2):
+    v0(x0),
+    v1(x1),
+    v2(x2) {
+  }
+
   Triag3D(const double* x0, const double* x1, const double* x2) {
 
-    v0 = Eigen::Vector3d::Map(x0);
-    v1 = Eigen::Vector3d::Map(x1);
-    v2 = Eigen::Vector3d::Map(x2);
+    v0 = Vector3D::Map(x0);
+    v1 = Vector3D::Map(x1);
+    v2 = Vector3D::Map(x2);
 
   }
 
@@ -61,9 +62,9 @@ public: // types
 
 private: // members
 
-  Eigen::Vector3d v0;
-  Eigen::Vector3d v1;
-  Eigen::Vector3d v2;
+  Vector3D v0;
+  Vector3D v1;
+  Vector3D v2;
 
 };
 
@@ -72,6 +73,5 @@ private: // members
 }  // namespace geometry
 }  // namespace atlas
 
-#endif  // ECKIT_HAVE_EIGEN
 
 #endif

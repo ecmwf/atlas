@@ -1,4 +1,4 @@
-# (C) Copyright 1996-2014 ECMWF.
+# (C) Copyright 1996-2016 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -40,12 +40,6 @@ if( ATLAS_HAVE_TRANS )
   set( ATLAS_HAVE_TRANS 1 )
 else()
   set( ATLAS_HAVE_TRANS 0 )
-endif()
-
-if( ECKIT_HAVE_GRIB )
-  set( ECKIT_HAVE_GRIB 1 )
-else()
-  set( ECKIT_HAVE_GRIB 0 )
 endif()
 
 if( ATLAS_HAVE_BOUNDSCHECKING )

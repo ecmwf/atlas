@@ -1,4 +1,4 @@
-# (C) Copyright 1996-2014 ECMWF.
+# (C) Copyright 1996-2016 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -43,9 +43,6 @@ io/Gmsh.h
 io/Gmsh.cc
 io/PointCloud.h
 io/PointCloud.cc
-# to be abstracted into a plugin
-io/Grib.cc
-io/Grib.h
 )
 
 list( APPEND atlas_util_srcs
@@ -208,6 +205,7 @@ geometry/Intersect.h
 geometry/Intersect.cc
 geometry/Ray.h
 geometry/Ray.cc
+geometry/Vector3D.h
 )
 
 list( APPEND atlas_srcs
@@ -288,25 +286,41 @@ numerics/nabla/EdgeBasedFiniteVolume.cc
 
 ### atlas c++ library
 
+ecbuild_debug_var(CGAL_LIBRARIES)
+ecbuild_debug_var(CGAL_INCLUDE_DIRS)
+
 ecbuild_add_library( TARGET atlas
+
   AUTO_VERSION
+
   LINKER_LANGUAGE CXX
+
   INSTALL_HEADERS ALL
+
   HEADER_DESTINATION  ${INSTALL_INCLUDE_DIR}/atlas
+
   SOURCES
-  ${atlas_srcs}
-  ${atlas_util_srcs}
-  ${atlas_io_srcs}
-  ${atlas_mpl_srcs}
-  ${atlas_Meshgen_srcs}
-  ${atlas_geometry_srcs}
-  ${atlas_actions_srcs}
-  ${atlas_grids_srcs}
-  ${atlas_trans_srcs}
-  ${atlas_numerics_srcs}
-  ${CMAKE_CURRENT_BINARY_DIR}/atlas_version.h
-  ${CMAKE_CURRENT_BINARY_DIR}/atlas_version.cc
-  ${CMAKE_CURRENT_BINARY_DIR}/atlas_config.h
-  ${CMAKE_CURRENT_BINARY_DIR}/atlas_defines.h
-  INCLUDES "${CGAL_INCLUDE_DIRS}"  ${TRANSI_INCLUDE_DIRS}
-  LIBS eckit_geometry "${ECKIT_MPI_LIBRARIES}" "${ECKIT_GRIB_LIBRARIES}" "${CGAL_LIBRARIES}" ${TRANSI_LIBRARIES} )
+    ${atlas_srcs}
+    ${atlas_util_srcs}
+    ${atlas_io_srcs}
+    ${atlas_mpl_srcs}
+    ${atlas_Meshgen_srcs}
+    ${atlas_geometry_srcs}
+    ${atlas_actions_srcs}
+    ${atlas_grids_srcs}
+    ${atlas_trans_srcs}
+    ${atlas_numerics_srcs}
+    ${CMAKE_CURRENT_BINARY_DIR}/atlas_version.h
+    ${CMAKE_CURRENT_BINARY_DIR}/atlas_version.cc
+    ${CMAKE_CURRENT_BINARY_DIR}/atlas_config.h
+    ${CMAKE_CURRENT_BINARY_DIR}/atlas_defines.h
+
+  PRIVATE_INCLUDES
+    "${CGAL_INCLUDE_DIRS}"
+    "${TRANSI_INCLUDE_DIRS}"
+
+  LIBS
+    eckit_geometry
+    "${ECKIT_MPI_LIBRARIES}"
+    "${CGAL_LIBRARIES}"
+    "${TRANSI_LIBRARIES}" )

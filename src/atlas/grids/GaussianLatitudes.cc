@@ -20,10 +20,6 @@
 #include "atlas/Parameters.h"
 #include "atlas/grids/gausslat/gausslat.h"
 
-#ifdef ECKIT_HAVE_GRIB
-  #include "grib_api.h"
-#endif
-
 using eckit::ConcreteBuilderT0;
 using eckit::Factory;
 using eckit::ScopedPtr;
@@ -40,13 +36,15 @@ void predict_gaussian_colatitudes_hemisphere(const size_t N, double colat[]);
 void predict_gaussian_latitudes_hemisphere(const size_t N, double lat[]);
 
 namespace {
-  
+
 void colat_to_lat_hemisphere(const size_t N, const double colat[], double lats[], const AngleUnit unit)
 {
   std::copy( colat, colat+N, lats );
   double pole = (unit == DEG ? 90. : M_PI_2);
-  for(size_t i=0; i<N; ++i)
+
+  for(size_t i=0; i<N; ++i) {
     lats[i]=pole-lats[i];
+  }
 }
 
 } //  anonymous namespace
@@ -64,12 +62,14 @@ void gaussian_latitudes_npole_equator(const size_t N, double lats[])
   }
   else
   {
-#ifndef ECKIT_HAVE_GRIB
+#if 1
+
     Log::warning() << "Unfortunately, computation of the gaussian latitudes depends at the moment on grib_api.\n"
                    << "Atlas was built without grib_api support (via eckit)\n"
                    << "Resorting to use predicted latitudes instead (accuracy of 2 decimals)" << std::endl;
 
     predict_gaussian_latitudes_hemisphere(N,lats);
+
 #else
     Log::warning() << "Using grib_api to compute gaussian latitudes..." << std::endl;
     std::vector<double> lats2(2*N);
@@ -79,6 +79,9 @@ void gaussian_latitudes_npole_equator(const size_t N, double lats[])
 #endif
   }
 }
+
+
+
 
 void gaussian_latitudes_npole_spole(const size_t N, double lats[])
 {
@@ -95,7 +98,7 @@ void predict_gaussian_colatitudes_hemisphere(const size_t N, double colat[])
   for(size_t i=0; i<N; ++i )
   {
     z = (4.*(i+1.)-1.)*M_PI/(4.*2.*N+2.);
-    colat[i] = ( z+1./(tan(z)*(8.*(2.*N)*(2.*N))) ) * Constants::degreesToRadians();
+    colat[i] = ( z+1./(tan(z)*(8.*(2.*N)*(2.*N))) ) * Constants::radiansToDegrees();
   }
 }
 
