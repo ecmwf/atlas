@@ -133,8 +133,6 @@ grids/LonLatGrid.cc
 grids/LonLatGrid.h
 grids/LocalGrid.cc
 grids/LocalGrid.h
-grids/PolarStereoGraphic.cc
-grids/PolarStereoGraphic.h
 grids/ReducedGaussianGrid.cc
 grids/ReducedGaussianGrid.h
 grids/ReducedGrid.h
