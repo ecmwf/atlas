@@ -17,6 +17,7 @@
 
 #include "atlas/Metadata.h"
 #include "atlas/functionspace/Nodes.h"
+#include "atlas/functionspace/ReducedGridPoint.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -29,7 +30,7 @@ class FieldSet;
 
 namespace io {
 
-//------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 class Gmsh {
 private:
@@ -45,30 +46,55 @@ public:
   void read(const eckit::PathName& file_path, Mesh& mesh) const;
 
   /// Write mesh file
-  /// Extra file with available mesh information is written to a different file:
+  /// Extra file with available mesh information is written to:
   ///  - filename_info.msh
-  void write(const Mesh& mesh, const eckit::PathName& file_path) const;
+  void write(const Mesh& mesh,
+             const eckit::PathName& file_path) const;
 
-  /// Write fieldset to file
+  /// Write fieldset to file using Nodes functionspace
   ///  Depending on argument "mode", the fields will be appended,
   ///  or existing file will be overwritten
-  void write(const FieldSet& fieldset, const functionspace::Nodes&, const eckit::PathName& file_path, openmode mode = std::ios::out) const;
+  void write(const FieldSet& fieldset,
+             const functionspace::Nodes&,
+             const eckit::PathName& file_path,
+             openmode mode = std::ios::out) const;
+
+  /// Write fieldset to file using ReducedGridPoint functionspace
+  ///  Depending on argument "mode", the fields will be appended,
+  ///  or existing file will be overwritten
+  void write(const FieldSet& fieldset,
+             const functionspace::ReducedGridPoint&,
+             const eckit::PathName& file_path,
+             openmode mode = std::ios::out) const;
+
+  /// Write field to file using Nodes functionspace
+  ///  Depending on argument "mode", the fields will be appended,
+  ///  or existing file will be overwritten
+  void write(const Field& field,
+             const functionspace::Nodes&,
+             const eckit::PathName& file_path,
+             openmode mode = std::ios::out) const;
+
+  /// Write field to file using ReducedGridPoint functionspace
+  ///  Depending on argument "mode", the fields will be appended,
+  ///  or existing file will be overwritten
+  void write(const Field& field,
+             const functionspace::ReducedGridPoint&,
+             const eckit::PathName& file_path,
+             openmode mode = std::ios::out) const;
 
   /// Write field to file
   ///  Depending on argument "mode", the fields will be appended,
   ///  or existing file will be overwritten
-  void write(const Field& field, const functionspace::Nodes&, const eckit::PathName& file_path, openmode mode = std::ios::out) const;
-
-  /// Write field to file
-  ///  Depending on argument "mode", the fields will be appended,
-  ///  or existing file will be overwritten
-  void write(const Field& field, const eckit::PathName& file_path, openmode mode = std::ios::out) const;
+  void write(const Field& field,
+             const eckit::PathName& file_path,
+             openmode mode = std::ios::out) const;
 
 public:
   Metadata options;
 };
 
-//------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 #define NODESFUNCTIONSPACE functionspace::Nodes
 // C wrapper interfaces to C++ routines
 extern "C" {
