@@ -23,9 +23,6 @@
 #include "atlas/grids/Unstructured.h"
 #include "atlas/grids/rgg/rgg.h"
 
-/// @todo remaining to be reworked
-#include "atlas/grids/PolarStereoGraphic.h"
-
 namespace atlas {
 namespace grids {
 
