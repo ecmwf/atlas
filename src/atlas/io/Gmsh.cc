@@ -1122,7 +1122,7 @@ void Gmsh::write(
         throw eckit::AssertionFailed(msg.str(), Here());
     }
 
-    if (field.functionspace()->name() == "Nodes")
+    if (dynamic_cast<functionspace::Nodes*>(field.functionspace()))
     {
         functionspace::Nodes* functionspace =
             dynamic_cast<functionspace
@@ -1132,7 +1132,8 @@ void Gmsh::write(
         fieldset.add(field);
         write(fieldset, *functionspace, file_path, mode);
     }
-    else if (field.functionspace()->name() == "ReducedGridPoint")
+    else if (dynamic_cast<functionspace
+             ::ReducedGridPoint*>(field.functionspace()))
     {
         functionspace::ReducedGridPoint* functionspace =
             dynamic_cast<functionspace
