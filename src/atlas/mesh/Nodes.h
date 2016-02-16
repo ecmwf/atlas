@@ -146,23 +146,28 @@ inline Nodes::Connectivity& Nodes::cell_connectivity()
 }
 
 
-
 #define Char char
 extern "C"
 {
-int atlas__mesh__Nodes__size (Nodes* This);
-void atlas__mesh__Nodes__resize (Nodes* This, int size);
-int atlas__mesh__Nodes__nb_fields (Nodes* This);
+Nodes* atlas__mesh__Nodes__create();
+void atlas__mesh__Nodes__delete (Nodes* This);
+size_t atlas__mesh__Nodes__size (Nodes* This);
+void atlas__mesh__Nodes__resize (Nodes* This, size_t size);
+size_t atlas__mesh__Nodes__nb_fields (Nodes* This);
 void atlas__mesh__Nodes__add (Nodes* This, Field* field);
 void atlas__mesh__Nodes__remove_field (Nodes* This, char* name);
 int atlas__mesh__Nodes__has_field (Nodes* This, char* name);
 Field* atlas__mesh__Nodes__field_by_name (Nodes* This, char* name);
-Field* atlas__mesh__Nodes__field_by_idx (Nodes* This, int idx);
+Field* atlas__mesh__Nodes__field_by_idx (Nodes* This, size_t idx);
 Metadata* atlas__mesh__Nodes__metadata(Nodes* This);
 void atlas__mesh__Nodes__str (Nodes* This, Char* &str, int &size);
 IrregularConnectivity* atlas__mesh__Nodes__edge_connectivity(Nodes* This);
 IrregularConnectivity* atlas__mesh__Nodes__cell_connectivity(Nodes* This);
-
+Field* atlas__mesh__Nodes__lonlat(Nodes* This);
+Field* atlas__mesh__Nodes__global_index(Nodes* This);
+Field* atlas__mesh__Nodes__remote_index(Nodes* This);
+Field* atlas__mesh__Nodes__partition(Nodes* This);
+Field* atlas__mesh__Nodes__ghost(Nodes* This);
 }
 #undef Char
 

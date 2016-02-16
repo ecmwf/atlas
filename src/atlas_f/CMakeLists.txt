@@ -107,6 +107,7 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/EdgeBasedFinit
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/Spectral.h MODULE atlas_functionspace_Spectral_c_binding OUTPUT functionspace_Spectral_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/ReducedGridPoint.h MODULE atlas_functionspace_ReducedGridPoint_c_binding OUTPUT functionspace_ReducedGridPoint_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/NodesInterface.h MODULE atlas_functionspace_Nodes_c_binding OUTPUT functionspace_Nodes_c_binding.f90)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/Edges.h MODULE atlas_functionspace_Edges_c_binding OUTPUT functionspace_Edges_c_binding.f90)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/Nabla.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/meshgen/MeshGenerator.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/Connectivity.h)
@@ -133,13 +134,16 @@ ecbuild_add_library( TARGET atlas_f
         atlas_Config_module.F90
         atlas_Metadata_module.F90
         atlas_FunctionSpace_module.F90
+        atlas_functionspace_Edges_module.F90
         atlas_Logging_module.F90
         atlas_Error_module.F90
         atlas_Field_module.F90
+        atlas_Mesh_module.F90
         atlas_module.F90
         atlas_mpi_module.F90
         atlas_grids_module.F90
         atlas_Connectivity_module.F90
+        atlas_mesh_Nodes_module.F90
         atlas_mesh_HybridElements_module.F90
         atlas_mesh_Elements_module.F90
         atlas_mesh_ElementType_module.F90
@@ -174,14 +178,10 @@ add_custom_target( atlas_fortran_inc SOURCES
    atlas_module_Grid_c.f
    atlas_module_GridDistribution_i.f
    atlas_module_GridDistribution_c.f
-   atlas_module_Mesh_i.f
-   atlas_module_Mesh_c.f
    atlas_module_MeshGenerator_i.f
    atlas_module_MeshGenerator_c.f
    atlas_module_Nabla_i.f
    atlas_module_Nabla_c.f
-   atlas_module_Nodes_i.f
-   atlas_module_Nodes_c.f
    atlas_module_State_i.f
    atlas_module_State_c.f
    atlas_module_Trans_i.f

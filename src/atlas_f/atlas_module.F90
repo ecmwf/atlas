@@ -78,10 +78,10 @@ use atlas_Error_module, only: &
     & atlas_noerr, &
     & atlas_err_clear, &
     & atlas_err_success, &
-    & atlas_err_code, &         
-    & atlas_err_msg, &          
-    & atlas_err_set_aborts, &   
-    & atlas_err_set_throws, &   
+    & atlas_err_code, &
+    & atlas_err_msg, &
+    & atlas_err_set_aborts, &
+    & atlas_err_set_throws, &
     & atlas_err_set_backtrace, &
     & atlas_err_cleared, &
     & atlas_err_noerr, &
@@ -113,13 +113,18 @@ use atlas_Connectivity_module, only: &
     & atlas_Connectivity, &
     & atlas_MultiBlockConnectivity, &
     & atlas_BlockConnectivity
-
+use atlas_mesh_Nodes_module, only: &
+    & atlas_mesh_Nodes
 use atlas_HaloExchange_module, only: &
     & atlas_HaloExchange
 use atlas_GatherScatter_module, only: &
     & atlas_GatherScatter
 use atlas_Checksum_module, only: &
     & atlas_Checksum
+use atlas_Mesh_module, only: &
+    & atlas_Mesh
+use atlas_functionspace_Edges_module, only: &
+    & atlas_functionspace_Edges
 
 #if !DEPRECATE_OLD_FUNCTIONSPACE
 use atlas_deprecated_functionspace_module, only: atlas_deprecated_FunctionSpace
@@ -180,14 +185,12 @@ integer, public, parameter :: ATLAS_KIND_GIDX = c_long
 integer, public, parameter :: ATLAS_KIND_IDX = c_int
 
 #include "atlas_module_Grid_i.f"
-#include "atlas_module_Mesh_i.f"
 #include "atlas_module_MeshGenerator_i.f"
 #include "atlas_module_functionspace_Nodes_i.f"
 #include "atlas_module_functionspace_EdgeBasedFiniteVolume_i.f"
 #include "atlas_module_functionspace_ReducedGridPoint_i.f"
 #include "atlas_module_functionspace_Spectral_i.f"
 #include "atlas_module_FieldSet_i.f"
-#include "atlas_module_Nodes_i.f"
 #include "atlas_module_Nabla_i.f"
 #include "atlas_module_GridDistribution_i.f"
 #include "atlas_module_State_i.f"
@@ -347,7 +350,6 @@ subroutine atlas_finalize()
 end subroutine
 
 #include "atlas_module_Grid_c.f"
-#include "atlas_module_Mesh_c.f"
 #include "atlas_module_MeshGenerator_c.f"
 #include "atlas_module_functionspace_Nodes_c.f"
 #include "atlas_module_functionspace_EdgeBasedFiniteVolume_c.f"
@@ -355,7 +357,6 @@ end subroutine
 #include "atlas_module_functionspace_Spectral_c.f"
 #include "atlas_module_FieldSet_c.f"
 #include "atlas_module_Nabla_c.f"
-#include "atlas_module_Nodes_c.f"
 #include "atlas_module_GridDistribution_c.f"
 #include "atlas_module_State_c.f"
 #include "atlas_module_Trans_c.f"

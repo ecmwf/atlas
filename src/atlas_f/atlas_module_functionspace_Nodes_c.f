@@ -11,11 +11,13 @@ function atlas_functionspace_Nodes__mesh_halo(mesh,halo) result(function_space)
   type(atlas_functionspace_Nodes) :: function_space
   type(atlas_Mesh), intent(inout) :: mesh
   integer, intent(in), optional :: halo
-  integer :: opt_halo
-  opt_halo = 0
-  if( present(halo) ) opt_halo = halo
-  function_space = atlas_functionspace_Nodes__cptr( &
-    & atlas__NodesFunctionSpace__new(mesh%c_ptr(),opt_halo) )
+  if( present(halo) ) then
+    function_space = atlas_functionspace_Nodes__cptr( &
+      & atlas__NodesFunctionSpace__new(mesh%c_ptr(),halo) )
+  else
+    function_space = atlas_functionspace_Nodes__cptr( &
+      & atlas__NodesFunctionSpace__new_mesh(mesh%c_ptr()) )
+  endif
   call function_space%return()
 end function
 

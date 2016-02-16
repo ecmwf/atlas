@@ -42,8 +42,8 @@ public:
     size_t nb_edges_global() const; // Only on MPI rank 0, will this be different from 0
     std::vector<size_t> nb_edges_global_foreach_rank() const;
 
-    const atlas::Mesh& mesh() const { return mesh_; }
-          atlas::Mesh& mesh()       { return mesh_; }
+    const atlas::Mesh& mesh() const { return *mesh_.get(); }
+          atlas::Mesh& mesh()       { return *mesh_.get(); }
 
     const mesh::HybridElements& edges() const { return edges_; }
           mesh::HybridElements& edges()       { return edges_; }
@@ -122,7 +122,7 @@ private: // methods
 
 private: // data
 
-    Mesh& mesh_; // non-const because functionspace may modify mesh
+    eckit::SharedPtr<Mesh> mesh_; // non-const because functionspace may modify mesh
     mesh::HybridElements& edges_; // non-const because functionspace may modify mesh
     size_t nb_edges_;
     size_t nb_edges_global_;
@@ -181,6 +181,60 @@ Field* Edges::createGlobalField(const std::string& name, size_t levels, const st
 {
     return createGlobalField(name,DataType::create<DATATYPE>(),levels,variables);
 }
+
+// -------------------------------------------------------------------------------
+#define mesh_Edges mesh::HybridElements
+#define Char char
+#define GatherScatter mpl::GatherScatter
+#define Checksum mpl::Checksum
+#define HaloExchange mpl::HaloExchange
+
+extern "C" {
+
+Edges* atlas__functionspace__Edges__new (Mesh* mesh, int halo);
+Edges* atlas__functionspace__Edges__new_mesh (Mesh* mesh);
+void atlas__functionspace__Edges__delete (Edges* This);
+int atlas__functionspace__Edges__nb_edges(const Edges* This);
+Mesh* atlas__functionspace__Edges__mesh(Edges* This);
+mesh_Edges* atlas__functionspace__Edges__edges(Edges* This);
+Field* atlas__functionspace__Edges__create_field (const Edges* This, const char* name, int kind);
+Field* atlas__functionspace__Edges__create_field_vars (const Edges* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind);
+
+Field* atlas__functionspace__Edges__create_field_lev (const Edges* This, const char* name, int levels, int kind);
+Field* atlas__functionspace__Edges__create_field_lev_vars (const Edges* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind);
+
+
+Field* atlas__functionspace__Edges__create_field_template (const Edges* This, const char* name, const Field* field_template);
+Field* atlas__functionspace__Edges__create_global_field (const Edges* This, const char* name, int kind);
+Field* atlas__functionspace__Edges__create_global_field_vars (const Edges* This, const char* name, int variables[], int variables_size, int fortran_ordering, int kind);
+
+Field* atlas__functionspace__Edges__create_global_field_lev (const Edges* This, const char* name, int levels, int kind);
+Field* atlas__functionspace__Edges__create_global_field_lev_vars (const Edges* This, const char* name, int levels, int variables[], int variables_size, int fortran_ordering, int kind);
+
+Field* atlas__functionspace__Edges__create_global_field_template (const Edges* This, const char* name, const Field* field_template);
+
+void atlas__functionspace__Edges__halo_exchange_fieldset(const Edges* This, FieldSet* fieldset);
+void atlas__functionspace__Edges__halo_exchange_field(const Edges* This, Field* field);
+const HaloExchange* atlas__functionspace__Edges__get_halo_exchange(const Edges* This);
+
+void atlas__functionspace__Edges__gather_fieldset(const Edges* This, const FieldSet* local, FieldSet* global);
+void atlas__functionspace__Edges__gather_field(const Edges* This, const Field* local, Field* global);
+const GatherScatter* atlas__functionspace__Edges__get_gather(const Edges* This);
+
+void atlas__functionspace__Edges__scatter_fieldset(const Edges* This, const FieldSet* global, FieldSet* local);
+void atlas__functionspace__Edges__scatter_field(const Edges* This, const Field* global, Field* local);
+const GatherScatter* atlas__functionspace__Edges__get_scatter(const Edges* This);
+
+void atlas__functionspace__Edges__checksum_fieldset(const Edges* This, const FieldSet* fieldset, Char* &checksum, int &size, int &allocated);
+void atlas__functionspace__Edges__checksum_field(const Edges* This, const Field* field, Char* &checksum, int &size, int &allocated);
+const Checksum* atlas__functionspace__Edges__get_checksum(const Edges* This);
+}
+
+#undef mesh_Edges
+#undef Char
+#undef GatherScatter
+#undef Checksum
+#undef HaloExchange
 
 } // namespace functionspace
 } // namespace atlas

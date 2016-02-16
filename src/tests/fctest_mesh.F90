@@ -78,14 +78,16 @@ END_TESTSUITE_FINALIZE
 ! -----------------------------------------------------------------------------
 
 TEST( test_function_space )
+  integer(c_int) :: nb_nodes
 
   write(*,*) "test_function_space starting"
-
   nodes = mesh%create_nodes(5)
-  FCTEST_CHECK_EQUAL( nodes%size() , 5  )
+  nb_nodes = nodes%size()
+  FCTEST_CHECK_EQUAL( nb_nodes, 5 )
+  FCTEST_CHECK_EQUAL( nodes%size() , 5_c_size_t  )
   FCTEST_CHECK( nodes%has_field("partition") )
   FCTEST_CHECK( nodes%has_field("remote_idx") )
-  call nodes%resize(10)
+  call nodes%resize(10_c_size_t)
   call atlas_log%info( nodes%str() )
 END_TEST
 
@@ -94,7 +96,7 @@ END_TEST
 TEST( test_field_name )
   type(atlas_Field) :: field
 
-  field = atlas_Field("field",atlas_real(c_double),(/nodes%size()/))
+  field = atlas_Field("field",atlas_real(c_double),(/int(nodes%size())/))
   call nodes%add( field )
   FCTEST_CHECK_EQUAL( field%name() , "field" )
   call nodes%remove_field("field")
@@ -137,7 +139,7 @@ END_TEST
 ! -----------------------------------------------------------------------------
 
 TEST( test_field_metadata )
-  integer :: int
+  integer(c_int) :: intval
   logical :: true, false
   real(c_float) :: real32
   real(c_double) :: real64
@@ -149,7 +151,7 @@ TEST( test_field_metadata )
 
   write(*,*) "test_field_metadata starting"
 
-  field = atlas_Field("field_prop",atlas_real(c_float),(/1,nodes%size()/))
+  field = atlas_Field("field_prop",atlas_real(c_float),(/1,int(nodes%size())/))
   FCTEST_CHECK_EQUAL( field%owners() , 1 )
   call nodes%add(field)
   FCTEST_CHECK_EQUAL( field%owners() , 2 )
@@ -169,7 +171,7 @@ TEST( test_field_metadata )
 
   call metadata%get("true",true)
   call metadata%get("false",false)
-  call metadata%get("int",int)
+  call metadata%get("int",intval)
   call metadata%get("real32",real32)
   call metadata%get("real64",real64)
   call metadata%get("string",string)
@@ -185,7 +187,7 @@ TEST( test_field_metadata )
   CHECK( true  .eqv. .True.  )
   CHECK( false .eqv. .False. )
 
-  FCTEST_CHECK_EQUAL( int, 20 )
+  FCTEST_CHECK_EQUAL( intval, 20 )
   FCTEST_CHECK_CLOSE( real32, real(0.1,kind=c_float), real(0.,kind=c_float) )
   FCTEST_CHECK_CLOSE( real64, real(0.2,kind=c_double), real(0.,kind=c_double) )
   FCTEST_CHECK_EQUAL( string, "hello world" )
@@ -203,7 +205,7 @@ TEST( test_field_size )
 
   write(*,*) "test_field_size starting"
 
-  field = atlas_Field("field_0",atlas_integer(),(/0,nodes%size()/))
+  field = atlas_Field("field_0",atlas_integer(),(/0,int(nodes%size())/))
   FCTEST_CHECK_EQUAL( field%owners() , 1 )
   call nodes%add(field)
   FCTEST_CHECK_EQUAL( field%owners() , 2 )
@@ -214,7 +216,7 @@ TEST( test_field_size )
   call field%final() ! Not necessary, following "=" will handle it
   write(0,*) "finalized field0"
 
-  field = atlas_Field("field_1",atlas_real(c_float),(/1,nodes%size()/))
+  field = atlas_Field("field_1",atlas_real(c_float),(/1,int(nodes%size())/))
   call nodes%add(field)
   call field%data(fdata_real32)
   FCTEST_CHECK_EQUAL( field%datatype() , "real32" )
@@ -222,7 +224,7 @@ TEST( test_field_size )
 
   call field%final() !Not necessary, following "=" will handle it
 
-  field = atlas_Field("field_2",atlas_real(c_double),(/2,nodes%size()/))
+  field = atlas_Field("field_2",atlas_real(c_double),(/2,int(nodes%size())/))
   FCTEST_CHECK_EQUAL( field%owners() , 1 )
   call nodes%add(field)
   FCTEST_CHECK_EQUAL( field%owners() , 2 )
@@ -254,14 +256,14 @@ TEST( test_create_remove )
 
   write(*,*) "test_create_remove starting"
 
-  field = atlas_Field("bla",atlas_integer(),(/1,nodes%size()/))
+  field = atlas_Field("bla",atlas_integer(),(/1,int(nodes%size())/))
   call nodes%add(field)
   FCTEST_CHECK_EQUAL( field%name(), "bla" )
   call field%final()
 
 !  call nodes%remove_field("bla")
 
-  field = atlas_Field("vector_field",atlas_real(c_float),(/3,nodes%size()/))
+  field = atlas_Field("vector_field",atlas_real(c_float),(/3,int(nodes%size())/))
   call nodes%add(field)
   call field%data(vector)
   FCTEST_CHECK_EQUAL( size(vector),   30 )
@@ -269,7 +271,7 @@ TEST( test_create_remove )
   FCTEST_CHECK_EQUAL( size(vector,2), 10   )
 !  call field%final()
 
-  field = atlas_Field("scalar_field",atlas_real(c_double),(/1,nodes%size()/))
+  field = atlas_Field("scalar_field",atlas_real(c_double),(/1,int(nodes%size())/))
   call nodes%add(field)
   call field%data(scalar)
   FCTEST_CHECK_EQUAL( size(scalar),   10 )
