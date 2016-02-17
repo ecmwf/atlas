@@ -1,7 +1,7 @@
 
 module atlas_connectivity_module
 
-use iso_c_binding, only : c_funptr, c_ptr, c_loc, c_f_pointer, c_f_procpointer, c_funloc, c_int, c_size_t
+use, intrinsic :: iso_c_binding, only : c_funptr, c_ptr, c_loc, c_f_pointer, c_f_procpointer, c_funloc, c_int, c_size_t
 use atlas_refcounted_module, only : atlas_refcounted
 implicit none
 

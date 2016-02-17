@@ -3,7 +3,7 @@ module atlas_metadata_module
 
 use atlas_object_module, only : atlas_object
 use atlas_c_interop, only : c_str, MAX_STR_LEN, c_to_f_string_cptr, c_to_f_string_str, atlas_free
-use iso_c_binding, only : c_int, c_long, c_float, c_double, c_ptr, c_f_pointer
+use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double, c_ptr, c_f_pointer
 implicit none
 
 private :: atlas_object

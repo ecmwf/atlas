@@ -1,7 +1,7 @@
 
 module atlas_Logging_module
 
-use iso_c_binding, only : c_char, c_int
+use, intrinsic :: iso_c_binding, only : c_char, c_int
 use atlas_object_module, only: atlas_object
 use atlas_refcounted_module, only: atlas_refcounted
 use atlas_c_interop, only: c_to_f_string_cptr, c_str_no_trim, c_str
@@ -640,7 +640,7 @@ subroutine atlas_Logger__delete(this)
 end subroutine
 
 subroutine atlas_write_to_fortran_unit(unit,msg_cptr) bind(C)
-  use iso_c_binding, only: c_int, c_ptr
+  use, intrinsic :: iso_c_binding, only: c_int, c_ptr
   integer(c_int), value, intent(in) :: unit
   type(c_ptr), value, intent(in) :: msg_cptr
   character(len=:), allocatable :: msg

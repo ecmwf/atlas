@@ -16,7 +16,7 @@
 module fctest_atlas_Mesh_fixture
 use atlas_module
 use atlas_grids_module
-use iso_c_binding
+use, intrinsic :: iso_c_binding
 implicit none
 type(atlas_Mesh) :: mesh
 type(atlas_mesh_Nodes) :: nodes
@@ -299,7 +299,7 @@ TEST( test_fieldset )
 
   call fieldset%add( nodes%field("vector_field") )
 
-  FCTEST_CHECK_EQUAL( fieldset%size(), 4 )
+  FCTEST_CHECK_EQUAL( fieldset%size(), 4_c_size_t )
 
   field = fieldset%field(1)
   FCTEST_CHECK_EQUAL( field%name(), "field_0" )

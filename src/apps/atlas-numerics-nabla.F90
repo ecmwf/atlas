@@ -15,7 +15,7 @@
 module atlas_numerics_nabla_module
 use atlas_module
 use atlas_mpi_module
-use iso_c_binding, only: c_double, c_int
+use, intrinsic :: iso_c_binding, only: c_double, c_int
 implicit none
 
   type(atlas_ReducedGrid) :: grid
@@ -57,7 +57,7 @@ implicit none
 contains
 
     function Timer_elapsed(self) result(time)
-        use iso_c_binding, only : c_double
+        use, intrinsic :: iso_c_binding, only : c_double
         class(Timer_type), intent(inout) :: self
         real(c_double) :: time
         if (.not. self%paused) then

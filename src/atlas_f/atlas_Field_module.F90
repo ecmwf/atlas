@@ -1,7 +1,7 @@
 
 module atlas_field_module
 
-use iso_c_binding, only : c_ptr, c_int, c_long, c_double, c_float, c_f_pointer
+use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_double, c_float, c_f_pointer
 use atlas_c_interop, only: c_to_f_string_cptr, atlas_free
 use atlas_refcounted_module, only : atlas_RefCounted
 use atlas_Config_module, only : atlas_Config

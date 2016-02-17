@@ -16,7 +16,7 @@
 
 module fctest_atlas_nabla_EdgeBasedFiniteVolume_Fixture
 use atlas_module
-use iso_c_binding
+use, intrinsic :: iso_c_binding
 implicit none
 
   type(atlas_ReducedGrid) :: grid
@@ -61,7 +61,7 @@ implicit none
 contains
 
     function Timer_elapsed(self) result(time)
-        use iso_c_binding, only : c_double
+        use, intrinsic :: iso_c_binding, only : c_double
         class(Timer_type), intent(inout) :: self
         real(c_double) :: time
         if (.not. self%paused) then

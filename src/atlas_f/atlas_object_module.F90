@@ -1,5 +1,5 @@
 module atlas_object_module
-use iso_c_binding, only: c_ptr, c_null_ptr, c_associated
+use, intrinsic :: iso_c_binding, only: c_ptr, c_null_ptr, c_associated
 implicit none
 private
 
@@ -35,7 +35,7 @@ interface
 
   !int atlas__compare_cptr_equal( void* p1, void* p2 )
   function atlas__compare_cptr_equal(p1,p2) bind(c,name="atlas__compare_cptr_equal") result(equal)
-    use iso_c_binding, only: c_ptr, c_int
+    use, intrinsic :: iso_c_binding, only: c_ptr, c_int
     integer(c_int) :: equal
     type(c_ptr), value :: p1
     type(c_ptr), value :: p2
@@ -49,7 +49,7 @@ CONTAINS
 ! =============================================================================
 
 function atlas_compare_equal(p1,p2) result(equal)
-  use iso_c_binding, only: c_ptr
+  use, intrinsic :: iso_c_binding, only: c_ptr
   logical :: equal
   type(c_ptr), intent(in) :: p1, p2
   if( atlas__compare_cptr_equal(p1,p2) == 1 ) then

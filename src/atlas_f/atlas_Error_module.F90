@@ -119,14 +119,14 @@ contains
 
 function atlas_err_code()
   use atlas_errorhandling_c_binding
-  use iso_c_binding, only: c_ptr
+  use, intrinsic :: iso_c_binding, only: c_ptr
   integer :: atlas_err_code
   atlas_err_code = atlas__Error_code()
 end function
 
 function atlas_err_msg()
   use atlas_errorhandling_c_binding
-  use iso_c_binding, only: c_ptr
+  use, intrinsic :: iso_c_binding, only: c_ptr
   type(c_ptr) :: msg_cptr
   character(len=:), allocatable :: atlas_err_msg
   msg_cptr = atlas__Error_msg()

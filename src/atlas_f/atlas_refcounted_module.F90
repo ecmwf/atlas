@@ -69,18 +69,18 @@ end interface
 interface
   ! int atlas__Owned__owners(const Owned* This);
   function atlas__Owned__owners(This) bind(c,name="atlas__Owned__owners")
-    use iso_c_binding, only: c_int, c_ptr
+    use, intrinsic :: iso_c_binding, only: c_int, c_ptr
     integer(c_int) :: atlas__Owned__owners
     type(c_ptr), value :: This
   end function
 
   subroutine atlas__Owned__attach(This) bind(c,name="atlas__Owned__attach")
-    use iso_c_binding, only: c_ptr
+    use, intrinsic :: iso_c_binding, only: c_ptr
     type(c_ptr), value :: This
   end subroutine
 
   subroutine atlas__Owned__detach(This) bind(c,name="atlas__Owned__detach")
-    use iso_c_binding, only: c_ptr
+    use, intrinsic :: iso_c_binding, only: c_ptr
     type(c_ptr), value :: This
   end subroutine
 

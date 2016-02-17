@@ -20,7 +20,7 @@ TESTSUITE(fctest_atlas_Connectivity)
 
 TEST( test_connectivity )
   use atlas_connectivity_module
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
 
   implicit none
   type(atlas_Connectivity) :: connectivity
@@ -158,7 +158,7 @@ END_TEST
 
 TEST( test_multiblockconnectivity )
   use atlas_connectivity_module
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
 
   implicit none
   type(atlas_MultiBlockConnectivity) :: multiblock

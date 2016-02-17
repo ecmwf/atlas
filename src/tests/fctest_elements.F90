@@ -41,7 +41,7 @@ TEST( test_hybridelements )
   use atlas_mesh_Elements_module
   use atlas_connectivity_module
   use atlas_field_module
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
 
   implicit none
   type(atlas_mesh_Cells) :: cells
@@ -178,7 +178,7 @@ TEST( test_elements )
   use atlas_mesh_Elements_module
   use atlas_connectivity_module
   use atlas_field_module
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
 
   implicit none
   type(atlas_mesh_Cells) :: cells

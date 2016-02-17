@@ -1,10 +1,11 @@
 
 module atlas_functionspace_Edges_module
 
-use iso_c_binding, only : c_ptr
+use, intrinsic :: iso_c_binding, only : c_ptr
 use atlas_c_interop, only : c_str, c_to_f_string_cptr, atlas_free
 use atlas_functionspace_module, only : atlas_FunctionSpace
 use atlas_Field_module, only: atlas_Field
+use atlas_FieldSet_module, only: atlas_FieldSet
 use atlas_Mesh_module, only: atlas_Mesh
 use atlas_mesh_HybridElements_module, only: atlas_mesh_Edges
 use atlas_GatherScatter_module, only: atlas_GatherScatter
@@ -17,6 +18,7 @@ private :: c_ptr
 private :: c_str, c_to_f_string_cptr, atlas_free
 private :: atlas_FunctionSpace
 private :: atlas_Field
+private :: atlas_FieldSet
 private :: atlas_mesh_Edges
 private :: atlas_GatherScatter
 private :: atlas_HaloExchange
@@ -73,24 +75,24 @@ contains
     & create_glb_field_name_kind_lev_vars, &
     & create_glb_field_name_template
 
-  !procedure, private :: halo_exchange_fieldset
+  procedure, private :: halo_exchange_fieldset
   procedure, private :: halo_exchange_field
-  generic, public :: halo_exchange => halo_exchange_field !,halo_exchange_fieldset
+  generic, public :: halo_exchange => halo_exchange_field, halo_exchange_fieldset
   procedure, public :: get_halo_exchange
 
-  !procedure, private :: gather_fieldset
+  procedure, private :: gather_fieldset
   procedure, private :: gather_field
-  generic, public :: gather => gather_field !,gather_fieldset
+  generic, public :: gather => gather_field, gather_fieldset
   procedure, public :: get_gather
 
-  !procedure, private :: scatter_fieldset
+  procedure, private :: scatter_fieldset
   procedure, private :: scatter_field
-  generic, public :: scatter => scatter_field !,  scatter_fieldset
+  generic, public :: scatter => scatter_field, scatter_fieldset
   procedure, public :: get_scatter
 
-  !procedure, private :: checksum_fieldset
+  procedure, private :: checksum_fieldset
   procedure, private :: checksum_field
-  generic, public :: checksum => checksum_field !,checksum_fieldset
+  generic, public :: checksum => checksum_field, checksum_fieldset
   procedure, public :: get_checksum
 
 #ifdef FORTRAN_SUPPORTS_FINAL
@@ -275,14 +277,12 @@ function create_glb_field_name_template(this,name,template) result(field)
   call field%return()
 end function
 
-#if 0
 subroutine halo_exchange_fieldset(this,fieldset)
   use atlas_functionspace_Edges_c_binding
   class(atlas_functionspace_Edges), intent(in) :: this
   type(atlas_FieldSet), intent(inout) :: fieldset
   call atlas__functionspace__Edges__halo_exchange_fieldset(this%c_ptr(),fieldset%c_ptr())
 end subroutine
-#endif
 
 subroutine halo_exchange_field(this,field)
   use atlas_functionspace_Edges_c_binding
@@ -305,7 +305,6 @@ function get_scatter(this) result(gather)
   call gather%reset_c_ptr( atlas__functionspace__Edges__get_scatter(this%c_ptr()) )
 end function
 
-#if 0
 subroutine gather_fieldset(this,local,global)
   use atlas_functionspace_Edges_c_binding
   class(atlas_functionspace_Edges), intent(in) :: this
@@ -313,7 +312,6 @@ subroutine gather_fieldset(this,local,global)
   type(atlas_FieldSet), intent(inout) :: global
   call atlas__functionspace__Edges__gather_fieldset(this%c_ptr(),local%c_ptr(),global%c_ptr())
 end subroutine
-#endif
 
 subroutine gather_field(this,local,global)
   use atlas_functionspace_Edges_c_binding
@@ -323,7 +321,7 @@ subroutine gather_field(this,local,global)
   call atlas__functionspace__Edges__gather_field(this%c_ptr(),local%c_ptr(),global%c_ptr())
 end subroutine
 
-#if 0
+
 subroutine scatter_fieldset(this,global,local)
   use atlas_functionspace_Edges_c_binding
   class(atlas_functionspace_Edges), intent(in) :: this
@@ -331,7 +329,7 @@ subroutine scatter_fieldset(this,global,local)
   type(atlas_FieldSet), intent(inout) :: local
   call atlas__functionspace__Edges__scatter_fieldset(this%c_ptr(),global%c_ptr(),local%c_ptr())
 end subroutine
-#endif
+
 
 subroutine scatter_field(this,global,local)
   use atlas_functionspace_Edges_c_binding
@@ -355,7 +353,7 @@ function get_checksum(this) result(checksum)
   call checksum%reset_c_ptr( atlas__functionspace__Edges__get_checksum(this%c_ptr()) )
 end function
 
-#if 0
+
 function checksum_fieldset(this,fieldset) result(checksum)
   use atlas_functionspace_Edges_c_binding
   character(len=:), allocatable :: checksum
@@ -368,7 +366,7 @@ function checksum_fieldset(this,fieldset) result(checksum)
   checksum = c_to_f_string_cptr(checksum_cptr)
   if( checksum_allocated == 1 ) call atlas_free(checksum_cptr)
 end function
-#endif
+
 
 function checksum_field(this,field) result(checksum)
   use atlas_functionspace_Edges_c_binding

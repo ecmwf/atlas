@@ -12,7 +12,6 @@
 
 module fctest_atlas_refcounting_fixture
 use atlas_refcounted_module, only: atlas_RefCounted
-use atlas_module, only: atlas__Mesh__delete, atlas__Mesh__new
 use fctest
 implicit none
 
@@ -37,6 +36,7 @@ function create_obj(id) result(obj)
 end function
 
 function RefObj__constructor(id) result(obj)
+  use atlas_mesh_c_binding
   type(RefObj) :: obj
   integer :: id
   write(0,*) "constructing obj ", id
@@ -45,6 +45,7 @@ function RefObj__constructor(id) result(obj)
 end function
 
 subroutine RefObj__delete(this)
+  use atlas_mesh_c_binding
   class(RefObj), intent(inout) :: this
   write(0,*) "deleting obj"!,this%id
   if( .not. this%is_null() ) call atlas__Mesh__delete(this%c_ptr())

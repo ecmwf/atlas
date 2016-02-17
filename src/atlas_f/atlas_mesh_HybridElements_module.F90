@@ -1,13 +1,13 @@
 
 module atlas_mesh_hybridelements_module
 
-!use iso_c_binding, only : c_funptr, c_ptr, c_loc, c_f_pointer, c_f_procpointer, c_funloc, c_int, c_size_t
+!use, intrinsic :: iso_c_binding, only : c_funptr, c_ptr, c_loc, c_f_pointer, c_f_procpointer, c_funloc, c_int, c_size_t
 use atlas_refcounted_module, only: atlas_refcounted
 use atlas_Connectivity_module, only: atlas_MultiBlockConnectivity
 use atlas_Field_module, only: atlas_Field
 use atlas_mesh_ElementType_module, only: atlas_mesh_ElementType
 use atlas_mesh_Elements_module, only: atlas_mesh_Elements
-use iso_c_binding, only: c_size_t, c_int, c_ptr
+use, intrinsic :: iso_c_binding, only: c_size_t, c_int, c_ptr
 use atlas_c_interop, only: c_str
 
 implicit none

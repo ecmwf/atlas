@@ -130,14 +130,17 @@ ecbuild_add_library( TARGET atlas_f
         ${FORTRAN_BINDINGS}
         atlas_object_module.F90
         atlas_refcounted_module.F90
+        atlas_kinds_module.F90
         atlas_JSON_module.F90
         atlas_Config_module.F90
         atlas_Metadata_module.F90
         atlas_FunctionSpace_module.F90
         atlas_functionspace_Edges_module.F90
+        atlas_functionspace_Nodes_module.F90
         atlas_Logging_module.F90
         atlas_Error_module.F90
         atlas_Field_module.F90
+        atlas_FieldSet_module.F90
         atlas_Mesh_module.F90
         atlas_module.F90
         atlas_mpi_module.F90
@@ -164,12 +167,8 @@ ecbuild_add_library( TARGET atlas_f
 )
 
 add_custom_target( atlas_fortran_inc SOURCES
-   atlas_module_FieldSet_i.f
-   atlas_module_FieldSet_c.f
    atlas_module_functionspace_EdgeBasedFiniteVolume_i.f
    atlas_module_functionspace_EdgeBasedFiniteVolume_c.f
-   atlas_module_functionspace_Nodes_i.f
-   atlas_module_functionspace_Nodes_c.f
    atlas_module_functionspace_ReducedGridPoint_c.f
    atlas_module_functionspace_ReducedGridPoint_i.f
    atlas_module_functionspace_Spectral_i.f

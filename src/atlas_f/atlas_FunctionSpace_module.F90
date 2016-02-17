@@ -48,7 +48,7 @@ contains
 !========================================================
 
 function atlas_FunctionSpace__cptr(cptr) result(functionspace)
-  use iso_c_binding, only : c_ptr
+  use, intrinsic :: iso_c_binding, only : c_ptr
   type(atlas_FunctionSpace) :: functionspace
   type(c_ptr), intent(in) :: cptr
   call functionspace%reset_c_ptr( cptr )
@@ -80,7 +80,7 @@ end subroutine
 function atlas_FunctionSpace__name(this) result(name)
   use atlas_functionspace_c_binding
   use atlas_c_interop, only : c_to_f_string_cptr
-  use iso_c_binding, only : c_ptr
+  use, intrinsic :: iso_c_binding, only : c_ptr
   class(atlas_FunctionSpace), intent(in) :: this
   character(len=:), allocatable :: name
   type(c_ptr) :: name_c_str

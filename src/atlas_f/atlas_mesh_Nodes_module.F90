@@ -2,7 +2,7 @@
 module atlas_mesh_nodes_module
 
 
-use iso_c_binding, only: c_size_t, c_int, c_ptr
+use, intrinsic :: iso_c_binding, only: c_size_t, c_int, c_ptr
 use atlas_c_interop, only: c_str, c_to_f_string_cptr, atlas_free
 use atlas_refcounted_module, only: atlas_refcounted
 use atlas_Connectivity_module, only: atlas_Connectivity

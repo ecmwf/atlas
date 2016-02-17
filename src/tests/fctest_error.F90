@@ -15,7 +15,7 @@
 
 module fctest_atlas_error_fixture
 use atlas_module
-use iso_c_binding
+use, intrinsic :: iso_c_binding
 implicit none
 
 end module fctest_atlas_error_fixture

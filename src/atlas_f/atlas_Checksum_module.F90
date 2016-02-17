@@ -1,7 +1,7 @@
 
 module atlas_checksum_module
 
-use iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_char
+use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_char
 use atlas_c_interop, only : stride, view1d, c_to_f_string_str
 use atlas_object_module, only : atlas_object
 

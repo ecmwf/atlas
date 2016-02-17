@@ -13,7 +13,7 @@
 
 function atlas_Trans__ctor( grid, nsmax ) result(trans)
   USE_ATLAS_TRANS_C_BINDING
-  use iso_c_binding, only: c_null_ptr
+  use, intrinsic :: iso_c_binding, only: c_null_ptr
   type(atlas_Trans) :: trans
   class(atlas_Grid), intent(in) :: grid
   integer, intent(in), optional :: nsmax
@@ -31,7 +31,7 @@ end function atlas_Trans__ctor
 
 function atlas_TransParameters__ctor() result(params)
   USE_ATLAS_TRANS_C_BINDING
-  use iso_c_binding, only: c_null_ptr
+  use, intrinsic :: iso_c_binding, only: c_null_ptr
   type(atlas_TransParameters) :: params
 #ifdef ATLAS_HAVE_TRANS
   call params%reset_c_ptr( atlas__TransParameters__new() )
@@ -43,7 +43,7 @@ end function atlas_TransParameters__ctor
 
 subroutine atlas_Trans__delete( this )
   USE_ATLAS_TRANS_C_BINDING
-  use iso_c_binding, only: c_null_ptr
+  use, intrinsic :: iso_c_binding, only: c_null_ptr
   class(atlas_Trans), intent(inout) :: this
 #ifdef ATLAS_HAVE_TRANS
   call atlas__Trans__delete(this%c_ptr());

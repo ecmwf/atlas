@@ -1,7 +1,7 @@
 
 module atlas_JSON_module
 
-use iso_c_binding, only : c_char
+use, intrinsic :: iso_c_binding, only : c_char
 
 implicit none
 

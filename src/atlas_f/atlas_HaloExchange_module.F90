@@ -1,7 +1,7 @@
 
 module atlas_haloexchange_module
 
-use iso_c_binding, only : c_ptr, c_long, c_float, c_double
+use, intrinsic :: iso_c_binding, only : c_ptr, c_long, c_float, c_double
 use atlas_c_interop, only : stride, view1d
 use atlas_object_module, only : atlas_object
 

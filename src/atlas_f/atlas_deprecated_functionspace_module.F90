@@ -1,7 +1,7 @@
 
 module atlas_deprecated_functionspace_module
 
-use iso_c_binding, only : c_ptr, c_int, c_long, c_double, c_float, c_f_pointer
+use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_double, c_float, c_f_pointer
 use atlas_c_interop, only: c_str, c_to_f_string_cptr, view1d
 use atlas_object_module, only : atlas_object
 use atlas_metadata_module, only : atlas_Metadata
@@ -21,9 +21,11 @@ private :: atlas_Checksum
 private :: atlas_HaloExchange
 
 public :: atlas_deprecated_FunctionSpace
+public :: ATLAS_FIELD_NB_VARS
 
 private
 
+integer, parameter :: ATLAS_FIELD_NB_VARS = 2147483647 ! maximum integer value
 
 !------------------------------------------------------------------------------
 TYPE, extends(atlas_object) :: atlas_deprecated_FunctionSpace

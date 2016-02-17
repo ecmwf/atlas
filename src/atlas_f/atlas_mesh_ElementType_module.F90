@@ -1,7 +1,7 @@
 
 module atlas_mesh_ElementType_module
 
-use iso_c_binding, only : c_ptr, c_size_t, c_int
+use, intrinsic :: iso_c_binding, only : c_ptr, c_size_t, c_int
 use atlas_c_interop, only : c_to_f_string_cptr
 use atlas_refcounted_module, only : atlas_refcounted
 

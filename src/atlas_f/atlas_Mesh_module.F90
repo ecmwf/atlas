@@ -4,14 +4,15 @@
 module atlas_Mesh_module
 
 
-use iso_c_binding, only: c_ptr
+use, intrinsic :: iso_c_binding, only: c_ptr
 use atlas_c_interop, only: c_str
 use atlas_refcounted_module, only: atlas_refcounted
 use atlas_mesh_HybridElements_module, only: atlas_mesh_Cells, atlas_mesh_Edges
 use atlas_mesh_Nodes_module, only: atlas_mesh_Nodes
 
 #if ! DEPRECATE_OLD_FUNCTIONSPACE
-use atlas_deprecated_FunctionSpace_module, only : atlas_deprecated_FunctionSpace
+use atlas_deprecated_FunctionSpace_module, only : atlas_deprecated_FunctionSpace, &
+    & ATLAS_FIELD_NB_VARS
 #endif
 
 implicit none
@@ -92,7 +93,7 @@ subroutine Mesh__create_function_space_nodes(this,name,shape_func,nb_nodes)
   integer, intent(in) :: nb_nodes
   integer :: shape(2)
   integer , parameter :: fortran_ordering = 1
-  shape = (/FIELD_NB_VARS,nb_nodes/)
+  shape = (/ATLAS_FIELD_NB_VARS,nb_nodes/)
   call atlas__Mesh__create_function_space(this%c_ptr(),c_str(name),c_str(shape_func), &
   & shape, size(shape), fortran_ordering )
 end subroutine Mesh__create_function_space_nodes
