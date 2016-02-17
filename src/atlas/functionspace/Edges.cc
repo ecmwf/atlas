@@ -416,8 +416,12 @@ extern "C" {
 
 Edges* atlas__functionspace__Edges__new ( Mesh* mesh, int halo )
 {
-  ASSERT(mesh);
-  return new Edges(*mesh,Halo(halo));
+  Edges* edges;
+  ATLAS_ERROR_HANDLING(
+      ASSERT(mesh);
+      edges = new Edges(*mesh,Halo(halo));
+  );
+  return edges;
 }
 
 // -----------------------------------------------------------------------------------
@@ -425,48 +429,66 @@ Edges* atlas__functionspace__Edges__new ( Mesh* mesh, int halo )
 
 Edges* atlas__functionspace__Edges__new_mesh ( Mesh* mesh )
 {
-  ASSERT(mesh);
-  return new Edges(*mesh);
+  Edges* edges;
+  ATLAS_ERROR_HANDLING(
+      ASSERT(mesh);
+      edges = new Edges(*mesh);
+  );
+  return edges;
 }
 
 // -----------------------------------------------------------------------------------
 
 void atlas__functionspace__Edges__delete (Edges* This)
 {
-  ASSERT(This);
-  delete(This);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    delete(This);
+  );
 }
 
 // -----------------------------------------------------------------------------------
 
 int atlas__functionspace__Edges__nb_edges(const Edges* This)
 {
-  ASSERT(This);
-  return This->nb_edges();
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    return This->nb_edges();
+  );
+  return 0;
 }
 
 // -----------------------------------------------------------------------------------
 
 atlas::Mesh* atlas__functionspace__Edges__mesh(Edges* This)
 {
-  ASSERT(This);
-  return &This->mesh();
+  ATLAS_ERROR_HANDLING(
+        ASSERT(This);
+        return &This->mesh();
+  );
+  return 0;
 }
 
 // -----------------------------------------------------------------------------------
 
 mesh::Edges* atlas__functionspace__Edges__edges(Edges* This)
 {
-  ASSERT(This);
-  return &This->edges();
+  ATLAS_ERROR_HANDLING(
+      ASSERT(This);
+      return &This->edges();
+  );
+  return 0;
 }
 
 // -----------------------------------------------------------------------------------
 
 Field* atlas__functionspace__Edges__create_field (const Edges* This, const char* name, int kind )
 {
-  ASSERT(This);
-  return This->createField(std::string(name),DataType(kind));
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    return This->createField(std::string(name),DataType(kind));
+  );
+  return 0;
 }
 
 // -----------------------------------------------------------------------------------
@@ -479,22 +501,28 @@ Field* atlas__functionspace__Edges__create_field_vars (
     int fortran_ordering,
     int kind)
 {
-  ASSERT(This);
-  ASSERT(variables_size);
-  std::vector<size_t> variables_(variables_size);
-  if( fortran_ordering )
-    std::reverse_copy( variables, variables+variables_size,variables_.begin() );
-  else
-    variables_.assign(variables,variables+variables_size);
-  return This->createField(std::string(name),DataType(kind),variables_);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    ASSERT(variables_size);
+    std::vector<size_t> variables_(variables_size);
+    if( fortran_ordering )
+      std::reverse_copy( variables, variables+variables_size,variables_.begin() );
+    else
+      variables_.assign(variables,variables+variables_size);
+    return This->createField(std::string(name),DataType(kind),variables_);
+  );
+  return 0;
 }
 
 // -----------------------------------------------------------------------------------
 
 Field* atlas__functionspace__Edges__create_field_lev (const Edges* This, const char* name, int levels, int kind )
 {
-  ASSERT(This);
-  return This->createField(std::string(name),DataType(kind),size_t(levels));
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    return This->createField(std::string(name),DataType(kind),size_t(levels));
+  );
+  return 0;
 }
 
 // -----------------------------------------------------------------------------------
@@ -508,30 +536,38 @@ Field* atlas__functionspace__Edges__create_field_lev_vars (
     int fortran_ordering,
     int kind)
 {
-  ASSERT(This);
-  ASSERT(variables_size);
-  std::vector<size_t> variables_(variables_size);
-  if( fortran_ordering )
-    std::reverse_copy( variables, variables+variables_size,variables_.begin() );
-  else
-    variables_.assign(variables,variables+variables_size);
-  return This->createField(std::string(name),DataType(kind),size_t(levels),variables_);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    ASSERT(variables_size);
+    std::vector<size_t> variables_(variables_size);
+    if( fortran_ordering )
+      std::reverse_copy( variables, variables+variables_size,variables_.begin() );
+    else
+      variables_.assign(variables,variables+variables_size);
+    return This->createField(std::string(name),DataType(kind),size_t(levels),variables_);
+  );
+  return 0;
 }
 
 // -----------------------------------------------------------------------------------
 
 Field* atlas__functionspace__Edges__create_field_template (const Edges* This, const char* name, const Field* field_template )
 {
-  ASSERT(This);
-  return This->createField(std::string(name),*field_template);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    return This->createField(std::string(name),*field_template);
+  );
+  return 0;
 }
 
 // -----------------------------------------------------------------------------------
 
 Field* atlas__functionspace__Edges__create_global_field (const Edges* This, const char* name, int kind )
 {
-  ASSERT(This);
-  return This->createGlobalField(std::string(name),DataType(kind));
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    return This->createGlobalField(std::string(name),DataType(kind));
+  );
 }
 
 // -----------------------------------------------------------------------------------
@@ -544,14 +580,17 @@ Field* atlas__functionspace__Edges__create_global_field_vars (
     int fortran_ordering,
     int kind)
 {
-  ASSERT(This);
-  ASSERT(variables_size);
-  std::vector<size_t> variables_(variables_size);
-  if( fortran_ordering )
-    std::reverse_copy( variables, variables+variables_size, variables_.begin() );
-  else
-    variables_.assign(variables,variables+variables_size);
-  return This->createGlobalField(std::string(name),DataType(kind),variables_);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    ASSERT(variables_size);
+    std::vector<size_t> variables_(variables_size);
+    if( fortran_ordering )
+      std::reverse_copy( variables, variables+variables_size, variables_.begin() );
+    else
+      variables_.assign(variables,variables+variables_size);
+    return This->createGlobalField(std::string(name),DataType(kind),variables_);
+  );
+    return 0;
 }
 
 // -----------------------------------------------------------------------------------
@@ -562,8 +601,11 @@ Field* atlas__functionspace__Edges__create_global_field_lev (
     int levels,
     int kind )
 {
-  ASSERT(This);
-  return This->createGlobalField(std::string(name),DataType(kind),size_t(levels));
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    return This->createGlobalField(std::string(name),DataType(kind),size_t(levels));
+  );
+  return 0;
 }
 
 // -----------------------------------------------------------------------------------
@@ -577,14 +619,17 @@ Field* atlas__functionspace__Edges__create_global_field_lev_vars (
     int fortran_ordering,
     int kind)
 {
-  ASSERT(This);
-  ASSERT(variables_size);
-  std::vector<size_t> variables_(variables_size);
-  if( fortran_ordering )
-    std::reverse_copy( variables, variables+variables_size, variables_.begin() );
-  else
-    variables_.assign(variables,variables+variables_size);
-  return This->createGlobalField(std::string(name),DataType(kind),size_t(levels),variables_);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    ASSERT(variables_size);
+    std::vector<size_t> variables_(variables_size);
+    if( fortran_ordering )
+      std::reverse_copy( variables, variables+variables_size, variables_.begin() );
+    else
+      variables_.assign(variables,variables+variables_size);
+    return This->createGlobalField(std::string(name),DataType(kind),size_t(levels),variables_);
+  );
+  return 0;
 }
 
 // -----------------------------------------------------------------------------------
@@ -594,8 +639,11 @@ Field* atlas__functionspace__Edges__create_global_field_template (
     const char* name,
     const Field* field_template )
 {
-  ASSERT(This);
-  return This->createGlobalField(std::string(name),*field_template);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    return This->createGlobalField(std::string(name),*field_template);
+  );
+  return 0;
 }
 
 // -----------------------------------------------------------------------------------
@@ -604,26 +652,32 @@ void atlas__functionspace__Edges__halo_exchange_fieldset(
     const Edges* This,
     FieldSet* fieldset)
 {
-  ASSERT(This);
-  ASSERT(fieldset);
-  ATLAS_ERROR_HANDLING( This->haloExchange(*fieldset); );
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    ASSERT(fieldset);
+    This->haloExchange(*fieldset);
+  );
 }
 
 // -----------------------------------------------------------------------------------
 
 void atlas__functionspace__Edges__halo_exchange_field(const Edges* This, Field* field)
 {
-  ASSERT(This);
-  ASSERT(field);
-  ATLAS_ERROR_HANDLING( This->haloExchange(*field); );
+  ATLAS_ERROR_HANDLING(
+        ASSERT(This);
+        ASSERT(field);
+        This->haloExchange(*field);
+   );
 }
 
 // -----------------------------------------------------------------------------------
 
 const mpl::HaloExchange* atlas__functionspace__Edges__get_halo_exchange(const Edges* This)
 {
-  ASSERT(This);
-  ATLAS_ERROR_HANDLING( return &This->halo_exchange(); );
+  ATLAS_ERROR_HANDLING(
+        ASSERT(This);
+        return &This->halo_exchange();
+  );
   return 0;
 }
 
@@ -634,10 +688,11 @@ void atlas__functionspace__Edges__gather_fieldset(
     const FieldSet* local,
     FieldSet* global)
 {
-  ASSERT(This);
-  ASSERT(local);
-  ASSERT(global);
-  ATLAS_ERROR_HANDLING( This->gather(*local,*global); );
+  ATLAS_ERROR_HANDLING(
+        ASSERT(This);
+        ASSERT(local);
+        ASSERT(global);
+        This->gather(*local,*global); );
 }
 
 // -----------------------------------------------------------------------------------
@@ -647,18 +702,20 @@ void atlas__functionspace__Edges__gather_field(
     const Field* local,
     Field* global)
 {
-  ASSERT(This);
-  ASSERT(local);
-  ASSERT(global);
-  ATLAS_ERROR_HANDLING( This->gather(*local,*global); );
+  ATLAS_ERROR_HANDLING(
+        ASSERT(This);
+        ASSERT(local);
+        ASSERT(global);
+        This->gather(*local,*global); );
 }
 
 // -----------------------------------------------------------------------------------
 
 const mpl::GatherScatter* atlas__functionspace__Edges__get_gather(const Edges* This)
 {
-  ASSERT(This);
-  ATLAS_ERROR_HANDLING( return &This->gather(); );
+  ATLAS_ERROR_HANDLING(
+        ASSERT(This);
+        return &This->gather(); );
   return 0;
 }
 
@@ -666,8 +723,9 @@ const mpl::GatherScatter* atlas__functionspace__Edges__get_gather(const Edges* T
 
 const mpl::GatherScatter* atlas__functionspace__Edges__get_scatter(const Edges* This)
 {
-  ASSERT(This);
-  ATLAS_ERROR_HANDLING( return &This->scatter(); );
+  ATLAS_ERROR_HANDLING(
+        ASSERT(This);
+        return &This->scatter(); );
   return 0;
 }
 
@@ -675,28 +733,32 @@ const mpl::GatherScatter* atlas__functionspace__Edges__get_scatter(const Edges* 
 
 void atlas__functionspace__Edges__scatter_fieldset(const Edges* This, const FieldSet* global, FieldSet* local)
 {
-  ASSERT(This);
-  ASSERT(local);
-  ASSERT(global);
-  ATLAS_ERROR_HANDLING( This->scatter(*global,*local); );
+  ATLAS_ERROR_HANDLING(
+        ASSERT(This);
+        ASSERT(local);
+        ASSERT(global);
+        This->scatter(*global,*local); );
 }
 
 // -----------------------------------------------------------------------------------
 
 void atlas__functionspace__Edges__scatter_field(const Edges* This, const Field* global, Field* local)
 {
-  ASSERT(This);
-  ASSERT(global);
-  ASSERT(local);
-  ATLAS_ERROR_HANDLING( This->scatter(*global,*local); );
+  ATLAS_ERROR_HANDLING(
+        ASSERT(This);
+        ASSERT(global);
+        ASSERT(local);
+        This->scatter(*global,*local); );
 }
 
 // -----------------------------------------------------------------------------------
 
 const mpl::Checksum* atlas__functionspace__Edges__get_checksum(const Edges* This)
 {
-  ASSERT(This);
-  ATLAS_ERROR_HANDLING( return &This->checksum(); );
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    return &This->checksum();
+  );
   return 0;
 }
 
@@ -710,9 +772,9 @@ void atlas__functionspace__Edges__checksum_fieldset(
     int &size,
     int &allocated)
 {
-  ASSERT(This);
-  ASSERT(fieldset);
   ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    ASSERT(fieldset);
     std::string checksum_str (This->checksum(*fieldset));
     size = checksum_str.size();
     checksum = new char[size+1]; allocated = true;
@@ -729,9 +791,9 @@ void atlas__functionspace__Edges__checksum_field(
     int &size,
     int &allocated)
 {
-  ASSERT(This);
-  ASSERT(field);
   ATLAS_ERROR_HANDLING(
+    ASSERT(This);
+    ASSERT(field);
     std::string checksum_str (This->checksum(*field));
     size = checksum_str.size();
     checksum = new char[size+1]; allocated = true;
