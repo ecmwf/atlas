@@ -140,6 +140,9 @@ use atlas_kinds_module, only: &
     & ATLAS_KIND_IDX
 use atlas_GridDistribution_module, only: &
     & atlas_GridDistribution
+use atlas_MeshGenerator_module, only: &
+    & atlas_MeshGenerator, &
+    & atlas_ReducedGridMeshGenerator
 use atlas_actions_module
 
 #if !DEPRECATE_OLD_FUNCTIONSPACE
@@ -172,7 +175,6 @@ private :: resource_set_string
 
 public
 
-#include "atlas_module_MeshGenerator_i.f"
 #include "atlas_module_functionspace_EdgeBasedFiniteVolume_i.f"
 #include "atlas_module_functionspace_ReducedGridPoint_i.f"
 #include "atlas_module_functionspace_Spectral_i.f"
@@ -318,7 +320,6 @@ subroutine atlas_finalize()
   call atlas__atlas_finalize()
 end subroutine
 
-#include "atlas_module_MeshGenerator_c.f"
 #include "atlas_module_functionspace_EdgeBasedFiniteVolume_c.f"
 #include "atlas_module_functionspace_ReducedGridPoint_c.f"
 #include "atlas_module_functionspace_Spectral_c.f"
