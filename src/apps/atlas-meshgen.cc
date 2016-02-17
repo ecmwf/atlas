@@ -109,6 +109,7 @@ public:
     info       = Resource< bool> ( "--info", false );
     halo       = Resource< int > ( "--halo", 0 );
     surfdim    = Resource< int > ( "--surfdim", 2 );
+    brick      = Resource< int > ( "--brick", false );
 
     path_out = Resource<std::string> ( "-o", "" );
     if( path_out.asString().empty() && do_run )
@@ -125,6 +126,7 @@ private:
   std::string key;
   int halo;
   bool edges;
+  bool brick;
   bool stats;
   bool info;
   int surfdim;
@@ -168,8 +170,11 @@ void Meshgen2Gmsh::run()
   {
     build_edges(*mesh);
     build_pole_edges(*mesh);
-    build_edges_parallel_fields(mesh->function_space("edges"),mesh->nodes());
-    build_median_dual_mesh(*mesh);
+    build_edges_parallel_fields(*mesh);
+    if( brick )
+      build_brick_dual_mesh(*mesh);
+    else
+      build_median_dual_mesh(*mesh);
   }
 
   if( stats )

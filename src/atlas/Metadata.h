@@ -19,7 +19,6 @@
 namespace atlas {
 class Grid;
 class Mesh;
-class FunctionSpace;
 
 class Metadata: public eckit::Properties {
 
@@ -74,7 +73,6 @@ extern "C"
   void atlas__Metadata__set_array_double (Metadata* This, const char* name, double value[], int size);
   void atlas__Metadata__set_grid (Metadata* This, const char* name, Grid* value);
   void atlas__Metadata__set_mesh (Metadata* This, const char* name, Mesh* value);
-  void atlas__Metadata__set_function_space (Metadata* This, const char* name, FunctionSpace* value);
 
   int    atlas__Metadata__get_int    (Metadata* This, const char* name);
   long   atlas__Metadata__get_long   (Metadata* This, const char* name);
@@ -87,7 +85,6 @@ extern "C"
   void   atlas__Metadata__get_array_double (Metadata* This, const char* name, double* &value, int &size, int &allocated);
   Grid*  atlas__Metadata__get_grid (Metadata* This, const char* name);
   Mesh*  atlas__Metadata__get_mesh (Metadata* This, const char* name);
-  FunctionSpace*  atlas__Metadata__get_function_space (Metadata* This, const char* name);
 }
 #undef Channel
 #undef Char

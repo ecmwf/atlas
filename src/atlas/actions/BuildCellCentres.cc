@@ -12,6 +12,7 @@
 #include "atlas/Parameters.h"
 #include "atlas/Mesh.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/mesh/HybridElements.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/Field.h"
 #include "atlas/util/ArrayView.h"
@@ -20,7 +21,43 @@
 namespace atlas {
 namespace actions {
 
+#if !DEPRECATE_OLD_FUNCTIONSPACE
+void build_cell_centres_convert_to_old(Mesh& mesh);
+#endif
+
 void BuildCellCentres::operator()( Mesh& mesh ) const
+{
+  mesh::Nodes& nodes     = mesh.nodes();
+  ArrayView<double,2> coords  ( nodes.field("xyz") );
+
+  size_t nb_cells = mesh.cells().size();
+  ArrayView<double,2> centroids ( mesh.cells().add( Field::create<double>("centre", make_shape(nb_cells,3))) );
+  const mesh::HybridElements::Connectivity& cell_node_connectivity = mesh.cells().node_connectivity();
+
+  for (size_t e=0; e<nb_cells; ++e)
+  {
+    centroids(e,XX) = 0.;
+    centroids(e,YY) = 0.;
+    centroids(e,ZZ) = 0.;
+    const size_t nb_nodes_per_elem = cell_node_connectivity.cols(e);
+    const double average_coefficient = 1./static_cast<double>(nb_nodes_per_elem);
+    for (size_t n=0; n<nb_nodes_per_elem; ++n)
+    {
+      centroids(e,XX) += coords( cell_node_connectivity(e,n), XX );
+      centroids(e,YY) += coords( cell_node_connectivity(e,n), YY );
+      centroids(e,ZZ) += coords( cell_node_connectivity(e,n), ZZ );
+    }
+    centroids(e,XX) *= average_coefficient;
+    centroids(e,YY) *= average_coefficient;
+    centroids(e,ZZ) *= average_coefficient;
+  }
+#if !DEPRECATE_OLD_FUNCTIONSPACE
+  build_cell_centres_convert_to_old(mesh);
+#endif
+}
+
+#if !DEPRECATE_OLD_FUNCTIONSPACE
+void build_cell_centres_convert_to_old(Mesh& mesh)
 {
     ASSERT( mesh.has_function_space("triags") );
     ASSERT( mesh.has_function_space("quads") );
@@ -30,7 +67,7 @@ void BuildCellCentres::operator()( Mesh& mesh ) const
 
     if( mesh.has_function_space("triags") ) {
 
-        FunctionSpace& triags      = mesh.function_space( "triags" );
+        deprecated::FunctionSpace& triags = mesh.function_space( "triags" );
         IndexView<int,2> triag_nodes ( triags.field( "nodes" ) );
         const size_t nb_triags = triags.shape(0);
 
@@ -51,7 +88,7 @@ void BuildCellCentres::operator()( Mesh& mesh ) const
     }
 
     if( mesh.has_function_space("quads") ) {
-        FunctionSpace& quads  = mesh.function_space( "quads" );
+        deprecated::FunctionSpace& quads  = mesh.function_space( "quads" );
         IndexView<int,2> quads_nodes ( quads.field( "nodes" ) );
         const size_t nb_quads = quads.shape(0);
 
@@ -72,6 +109,7 @@ void BuildCellCentres::operator()( Mesh& mesh ) const
         }
     }
 }
+#endif
 
 } // actions
 } // atlas

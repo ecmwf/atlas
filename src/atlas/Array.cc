@@ -19,6 +19,20 @@ void Array::resize(const ArrayShape& _shape)
   resize_data(spec_.size());
 }
 
+void Array::insert(size_t idx1, size_t size1)
+{
+  size_t old_size = shape(0);
+  ArrayShape _shape = shape();
+  _shape[0] += size1;
+  spec_ = ArraySpec(_shape);
+  if( idx1 == old_size ) {
+    resize_data(spec_.size());
+  }
+  else {
+    insert_data(idx1*stride(0),size1*stride(0));
+  }
+}
+
 
 void Array::resize(size_t size1) { resize( make_shape(size1) ); }
 
@@ -91,6 +105,29 @@ Array* Array::create( DataType datatype, const ArrayShape& shape )
   return 0;
 }
 
+Array* Array::create( DataType datatype )
+{
+  switch( datatype.kind() )
+  {
+    case DataType::KIND_REAL64: return new ArrayT<double>();
+    case DataType::KIND_REAL32: return new ArrayT<float>();
+    case DataType::KIND_INT32:  return new ArrayT<int>();
+    case DataType::KIND_INT64:  return new ArrayT<long>();
+    default:
+    {
+      std::stringstream err; err << "data kind " << datatype.kind() << " not recognised.";
+      throw eckit::BadParameter(err.str(),Here());
+    }
+  }
+  return 0;
+}
+
+Array* Array::create( const Array& other )
+{
+  Array* array = Array::create(other.datatype());
+  array->assign(other);
+  return array;
+}
 
 template <> Array* Array::wrap(int data[], const ArrayShape& s) { return new ArrayT<int>(data,s); }
 template <> Array* Array::wrap(long data[], const ArrayShape& s) { return new ArrayT<long>(data,s); }

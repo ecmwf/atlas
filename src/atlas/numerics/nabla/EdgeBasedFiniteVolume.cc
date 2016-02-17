@@ -14,6 +14,7 @@
 #include "atlas/functionspace/EdgeBasedFiniteVolume.h"
 #include "atlas/Mesh.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/mesh/HybridElements.h"
 #include "atlas/Field.h"
 
 #include "atlas/util/ArrayView.h"
@@ -37,7 +38,7 @@ namespace {
 static NablaBuilder< EdgeBasedFiniteVolume > __edgebasedfinitevolume("EdgeBasedFiniteVolume");
 }
 
-EdgeBasedFiniteVolume::EdgeBasedFiniteVolume(const next::FunctionSpace &fs, const eckit::Parametrisation &p) :
+EdgeBasedFiniteVolume::EdgeBasedFiniteVolume(const FunctionSpace &fs, const eckit::Parametrisation &p) :
   Nabla(fs,p)
 {
   fvm_ = dynamic_cast<const functionspace::EdgeBasedFiniteVolume *>(&fs);
@@ -56,9 +57,9 @@ EdgeBasedFiniteVolume::~EdgeBasedFiniteVolume()
 
 void EdgeBasedFiniteVolume::setup()
 {
-  atlas::FunctionSpace &edges = fvm_->mesh().function_space("edges");
+  const mesh::HybridElements &edges = fvm_->edges();
 
-  const size_t nedges = edges.shape(0);
+  const size_t nedges = edges.size();
 
   const ArrayView<int,1> edge_is_pole ( edges.field("is_pole_edge") );
 
@@ -82,11 +83,11 @@ void EdgeBasedFiniteVolume::gradient(const Field& scalar_field, Field& grad_fiel
   const double radius = fvm_->radius();
   const double deg2rad = M_PI/180.;
 
-  atlas::FunctionSpace &edges = fvm_->mesh().function_space("edges");
-  mesh::Nodes const   &nodes = fvm_->nodes();
+  mesh::HybridElements const &edges = fvm_->edges();
+  mesh::Nodes const          &nodes = fvm_->nodes();
 
   const size_t nnodes = nodes.size();
-  const size_t nedges = edges.shape(0);
+  const size_t nedges = edges.size();
   const size_t nlev = scalar_field.levels();
   if( grad_field.levels() != nlev )
     throw eckit::AssertionFailed("gradient field should have same number of levels",Here());
@@ -96,13 +97,13 @@ void EdgeBasedFiniteVolume::gradient(const Field& scalar_field, Field& grad_fiel
         ArrayView<double,3> grad   ( grad_field.  data<double>(), make_shape(nnodes,nlev,2) );
 
   const ArrayView<double,2> lonlat_deg     ( nodes.lonlat() );
-  const IndexView<int,   2> edge2node      ( edges.field("nodes") );
   const ArrayView<double,1> V              ( nodes.field("dual_volumes") );
   const ArrayView<double,2> S              ( edges.field("dual_normals") );
   const ArrayView<int,   1> edge_is_pole   ( edges.field("is_pole_edge") );
-  const IndexView<int,   2> node2edge      ( nodes.field("to_edge") );
-  const ArrayView<int,   1> node2edge_size ( nodes.field("to_edge_size") );
   const ArrayView<double,2> node2edge_sign ( nodes.field("node2edge_sign") );
+
+  const Connectivity& node2edge = nodes.edge_connectivity();
+  const Connectivity& edge2node = edges.node_connectivity();
 
   ArrayT<double> avgS_arr( nedges,nlev,2 );
   ArrayView<double,3> avgS(avgS_arr);
@@ -131,7 +132,7 @@ void EdgeBasedFiniteVolume::gradient(const Field& scalar_field, Field& grad_fiel
         grad(jnode,jlev,LON) = 0.;
         grad(jnode,jlev,LAT) = 0.;
       }
-      for( size_t jedge=0; jedge<node2edge_size(jnode); ++jedge )
+      for( size_t jedge=0; jedge<node2edge.cols(jnode); ++jedge )
       {
         const int iedge = node2edge(jnode,jedge);
         const double add = node2edge_sign(jnode,jedge);
@@ -162,11 +163,11 @@ void EdgeBasedFiniteVolume::divergence(const Field& vector_field, Field& div_fie
   const double radius = fvm_->radius();
   const double deg2rad = M_PI/180.;
 
-  atlas::FunctionSpace &edges = fvm_->mesh().function_space("edges");
-  mesh::Nodes const   &nodes = fvm_->nodes();
+  mesh::HybridElements const &edges = fvm_->edges();
+  mesh::Nodes const          &nodes = fvm_->nodes();
 
   const size_t nnodes = nodes.size();
-  const size_t nedges = edges.shape(0);
+  const size_t nedges = edges.size();
   const size_t nlev = vector_field.levels();
   if( div_field.levels() != nlev )
     throw eckit::AssertionFailed("divergence field should have same number of levels",Here());
@@ -175,13 +176,12 @@ void EdgeBasedFiniteVolume::divergence(const Field& vector_field, Field& div_fie
         ArrayView<double,2> div    ( div_field   .data<double>(), make_shape(nnodes,nlev)  );
 
   const ArrayView<double,2> lonlat_deg     ( nodes.lonlat() );
-  const IndexView<int,   2> edge2node      ( edges.field("nodes") );
   const ArrayView<double,1> V              ( nodes.field("dual_volumes") );
   const ArrayView<double,2> S              ( edges.field("dual_normals") );
   const ArrayView<int,   1> edge_is_pole   ( edges.field("is_pole_edge") );
-  const IndexView<int,   2> node2edge      ( nodes.field("to_edge") );
-  const ArrayView<int,   1> node2edge_size ( nodes.field("to_edge_size") );
   const ArrayView<double,2> node2edge_sign ( nodes.field("node2edge_sign") );
+  const Connectivity& node2edge = nodes.edge_connectivity();
+  const Connectivity& edge2node = edges.node_connectivity();
 
   ArrayT<double> avgS_arr( nedges,nlev,2 );
   ArrayView<double,3> avgS(avgS_arr);
@@ -217,7 +217,7 @@ void EdgeBasedFiniteVolume::divergence(const Field& vector_field, Field& div_fie
       {
         div(jnode,jlev) = 0.;
       }
-      for( size_t jedge=0; jedge<node2edge_size(jnode); ++jedge )
+      for( size_t jedge=0; jedge<node2edge.cols(jnode); ++jedge )
       {
         int iedge = node2edge(jnode,jedge);
         double add = node2edge_sign(jnode,jedge);
@@ -241,11 +241,11 @@ void EdgeBasedFiniteVolume::curl(const Field& vector_field, Field& curl_field) c
   const double radius = fvm_->radius();
   const double deg2rad = M_PI/180.;
 
-  atlas::FunctionSpace &edges = fvm_->mesh().function_space("edges");
-  mesh::Nodes const   &nodes = fvm_->nodes();
+  mesh::HybridElements const &edges = fvm_->edges();
+  mesh::Nodes const          &nodes = fvm_->nodes();
 
   const size_t nnodes = nodes.size();
-  const size_t nedges = edges.shape(0);
+  const size_t nedges = edges.size();
   const size_t nlev = vector_field.levels();
   if( curl_field.levels() != nlev )
     throw eckit::AssertionFailed("curl field should have same number of levels",Here());
@@ -254,13 +254,13 @@ void EdgeBasedFiniteVolume::curl(const Field& vector_field, Field& curl_field) c
         ArrayView<double,2> curl   ( curl_field  .data<double>(), make_shape(nnodes,nlev)  );
 
   const ArrayView<double,2> lonlat_deg     ( nodes.lonlat() );
-  const IndexView<int,   2> edge2node      ( edges.field("nodes") );
   const ArrayView<double,1> V              ( nodes.field("dual_volumes") );
   const ArrayView<double,2> S              ( edges.field("dual_normals") );
   const ArrayView<int,   1> edge_is_pole   ( edges.field("is_pole_edge") );
-  const IndexView<int,   2> node2edge      ( nodes.field("to_edge") );
-  const ArrayView<int,   1> node2edge_size ( nodes.field("to_edge_size") );
   const ArrayView<double,2> node2edge_sign ( nodes.field("node2edge_sign") );
+
+  const Connectivity& node2edge = nodes.edge_connectivity();
+  const Connectivity& edge2node = edges.node_connectivity();
 
   ArrayT<double> avgS_arr( nedges,nlev,2 );
   ArrayView<double,3> avgS(avgS_arr);
@@ -296,7 +296,7 @@ void EdgeBasedFiniteVolume::curl(const Field& vector_field, Field& curl_field) c
       {
         curl(jnode,jlev) = 0.;
       }
-      for( size_t jedge=0; jedge<node2edge_size(jnode); ++jedge )
+      for( size_t jedge=0; jedge<node2edge.cols(jnode); ++jedge )
       {
         int iedge = node2edge(jnode,jedge);
         double add = node2edge_sign(jnode,jedge);

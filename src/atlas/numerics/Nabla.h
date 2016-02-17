@@ -15,7 +15,7 @@
 #include "eckit/memory/Owned.h"
 
 namespace eckit { class Parametrisation; }
-namespace atlas { namespace next { class FunctionSpace; } }
+namespace atlas { class FunctionSpace; }
 namespace atlas { class Field; }
 
 namespace atlas {
@@ -24,11 +24,11 @@ namespace numerics {
 class Nabla : public eckit::Owned {
 public:
 
-  static Nabla* create(const next::FunctionSpace &);
-  static Nabla* create(const next::FunctionSpace &, const eckit::Parametrisation &);
+  static Nabla* create(const FunctionSpace &);
+  static Nabla* create(const FunctionSpace &, const eckit::Parametrisation &);
 
 public:
-  Nabla(const next::FunctionSpace &, const eckit::Parametrisation &);
+  Nabla(const FunctionSpace &, const eckit::Parametrisation &);
   virtual ~Nabla();
 
   virtual void gradient(const Field &scalar, Field &grad) const = 0;
@@ -37,7 +37,7 @@ public:
   virtual void laplacian(const Field &scalar, Field &laplacian) const = 0;
 
 private:
-  // const next::FunctionSpace& fs_;
+  // const FunctionSpace& fs_;
   // const eckit::Parametrisation& config_;
 
 };
@@ -51,7 +51,7 @@ public:
      * \brief build Nabla with factory key, constructor arguments
      * \return Nabla
      */
-    static Nabla* build(const next::FunctionSpace &, const eckit::Parametrisation &);
+    static Nabla* build(const FunctionSpace &, const eckit::Parametrisation &);
 
     /*!
      * \brief list all registered field creators
@@ -60,7 +60,7 @@ public:
     static bool has(const std::string& name);
 
 private:
-    virtual Nabla* make(const next::FunctionSpace &, const eckit::Parametrisation &) = 0 ;
+    virtual Nabla* make(const FunctionSpace &, const eckit::Parametrisation &) = 0 ;
 
 protected:
     NablaFactory(const std::string&);
@@ -79,24 +79,22 @@ public:
     NablaBuilder(const std::string& name) : NablaFactory(name) {}
 
 private:
-    virtual Nabla* make(const next::FunctionSpace & fs, const eckit::Parametrisation & p) {
+    virtual Nabla* make(const FunctionSpace & fs, const eckit::Parametrisation & p) {
         return new T(fs,p);
     }
 };
 
 // ------------------------------------------------------------------
-#define NextFunctionSpace next::FunctionSpace
 #define Parametrisation eckit::Parametrisation
 extern "C" {
 
 void atlas__Nabla__delete (Nabla* This);
-Nabla* atlas__Nabla__create (const NextFunctionSpace* functionspace, const Parametrisation* params);
+Nabla* atlas__Nabla__create (const FunctionSpace* functionspace, const Parametrisation* params);
 void atlas__Nabla__gradient (const Nabla* This, const Field* scalar, Field* grad);
 void atlas__Nabla__divergence (const Nabla* This, const Field* vector, Field* div);
 void atlas__Nabla__curl (const Nabla* This, const Field* vector, Field* curl);
 void atlas__Nabla__laplacian (const Nabla* This, const Field* scalar, Field* laplacian);
 }
-#undef NextFunctionSpace
 #undef Parametrisation
 
 } // namespace numerics

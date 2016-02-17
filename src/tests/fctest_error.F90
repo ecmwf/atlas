@@ -15,7 +15,7 @@
 
 module fctest_atlas_error_fixture
 use atlas_module
-use iso_c_binding
+use, intrinsic :: iso_c_binding
 implicit none
 
 end module fctest_atlas_error_fixture
@@ -83,18 +83,6 @@ CHECK_EQUAL(atlas_err_code(),atlas_err_cleared)
 
 
 END_TEST
-
-! -----------------------------------------------------------------------------
-TEST( test_system )
-integer :: err_code
-character(len=:), allocatable :: err_msg
-
-call atlas_error_example()
-write(0,'(A,I0)') "Error code = ",atlas_err_code()
-
-
-END_TEST
-
 
 END_TESTSUITE
 

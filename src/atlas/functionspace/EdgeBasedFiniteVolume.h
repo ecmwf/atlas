@@ -14,9 +14,10 @@
 
 #include <string>
 #include "atlas/functionspace/Nodes.h"
+#include "atlas/functionspace/Edges.h"
 
 namespace atlas { class Mesh; }
-namespace atlas { class FunctionSpace; }
+namespace atlas { namespace mesh { class HybridElements; } }
 
 namespace atlas {
 namespace functionspace {
@@ -31,8 +32,14 @@ public:
 
   virtual std::string name() const { return "EdgeBasedFiniteVolume"; }
 
+  const mesh::HybridElements& edges() const { return edges_; }
+        mesh::HybridElements& edges()       { return edges_; }
+
   const Nodes& nodes_fs() const { return *this; }
         Nodes& nodes_fs()       { return *this; }
+
+  const Edges& edges_fs() const { return *edges_fs_; }
+        Edges& edges_fs()       { return *edges_fs_; }
 
   const double& radius() const { return radius_; }
 
@@ -42,7 +49,8 @@ private:
 
 private: // data
 
-    atlas::FunctionSpace* edges_; // non-const because functionspace may modify mesh
+    mesh::HybridElements      &edges_;
+    eckit::SharedPtr<Edges>    edges_fs_;
     double radius_;
 };
 

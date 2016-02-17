@@ -18,13 +18,17 @@ namespace mesh {
 
 //------------------------------------------------------------------------------------------------------
 
-Nodes::Nodes(size_t _size): size_(_size)
+Nodes::Nodes(): size_(0)
 {
   global_index_ = &add( Field::create<gidx_t>("glb_idx",   make_shape(size(),1)) );
   remote_index_ = &add( Field::create<int   >("remote_idx",make_shape(size(),1)) );
   partition_    = &add( Field::create<int   >("partition", make_shape(size(),1)) );
   lonlat_       = &add( Field::create<double>("lonlat",    make_shape(size(),2)) );
   ghost_        = &add( Field::create<int   >("ghost",     make_shape(size(),1)) );
+
+  edge_connectivity_ = &add( "edge", new Connectivity() );
+  cell_connectivity_ = &add( "cell", new Connectivity() );
+
 
   add( Field::create<int>("flags", make_shape(size(),1)) );
 
@@ -39,10 +43,13 @@ Nodes::Nodes(size_t _size): size_(_size)
     part(n) = eckit::mpi::rank();
     flags(n) = 0;
   }
-  metadata().set("nb_owned",size());
-  metadata().set<long>("type",static_cast<int>(Entity::NODES));
 }
 
+Nodes::Connectivity& Nodes::add( const std::string& name, Connectivity *connectivity )
+{
+  connectivities_[name] = connectivity;
+  return *connectivity;
+}
 
 Field& Nodes::add( Field* field )
 {
@@ -88,9 +95,6 @@ Field& Nodes::field(const std::string& name)
 
 void Nodes::resize( size_t size )
 {
-//  FunctionSpace::resize(make_shape(size, FunctionSpace::shape(1)));
-
-//  dof_ = size;
   size_ = size;
   for( FieldMap::iterator it = fields_.begin(); it != fields_.end(); ++it )
   {
@@ -141,7 +145,21 @@ void Nodes::print(std::ostream& os) const
 //-----------------------------------------------------------------------------
 
 extern "C" {
-int atlas__mesh__Nodes__size (Nodes* This)
+
+Nodes* atlas__mesh__Nodes__create()
+{
+  Nodes* nodes(0);
+  ATLAS_ERROR_HANDLING( nodes = new Nodes() );
+  return nodes;
+}
+
+void atlas__mesh__Nodes__delete (Nodes* This)
+{
+  ATLAS_ERROR_HANDLING( delete This );
+}
+
+
+size_t atlas__mesh__Nodes__size (Nodes* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -149,14 +167,14 @@ int atlas__mesh__Nodes__size (Nodes* This)
   );
   return 0;
 }
-void atlas__mesh__Nodes__resize (Nodes* This, int size)
+void atlas__mesh__Nodes__resize (Nodes* This, size_t size)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
     This->resize(size);
   );
 }
-int atlas__mesh__Nodes__nb_fields (Nodes* This)
+size_t atlas__mesh__Nodes__nb_fields (Nodes* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -200,7 +218,7 @@ Field* atlas__mesh__Nodes__field_by_name (Nodes* This, char* name)
   return 0;
 }
 
-Field* atlas__mesh__Nodes__field_by_idx (Nodes* This, int idx)
+Field* atlas__mesh__Nodes__field_by_idx (Nodes* This, size_t idx)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);
@@ -230,6 +248,69 @@ void atlas__mesh__Nodes__str (Nodes* This, char* &str, int &size)
   );
 }
 
+IrregularConnectivity* atlas__mesh__Nodes__edge_connectivity(Nodes* This)
+{
+  IrregularConnectivity* connectivity(0);
+  ATLAS_ERROR_HANDLING( connectivity = &This->edge_connectivity() );
+  return connectivity;
+}
+
+IrregularConnectivity* atlas__mesh__Nodes__cell_connectivity(Nodes* This)
+{
+  IrregularConnectivity* connectivity(0);
+  ATLAS_ERROR_HANDLING( connectivity = &This->cell_connectivity() );
+  return connectivity;
+}
+
+Field* atlas__mesh__Nodes__lonlat(Nodes* This)
+{
+  Field* field(0);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This!=0);
+    field = &This->lonlat();
+  );
+  return field;
+}
+
+Field* atlas__mesh__Nodes__global_index(Nodes* This)
+{
+  Field* field(0);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This!=0);
+    field = &This->global_index();
+  );
+  return field;
+}
+
+Field* atlas__mesh__Nodes__remote_index(Nodes* This)
+{
+  Field* field(0);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This!=0);
+    field = &This->remote_index();
+  );
+  return field;
+}
+
+Field* atlas__mesh__Nodes__partition(Nodes* This)
+{
+  Field* field(0);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This!=0);
+    field = &This->partition();
+  );
+  return field;
+}
+
+Field* atlas__mesh__Nodes__ghost(Nodes* This)
+{
+  Field* field(0);
+  ATLAS_ERROR_HANDLING(
+    ASSERT(This!=0);
+    field = &This->ghost();
+  );
+  return field;
+}
 }
 
 }  // namespace mesh

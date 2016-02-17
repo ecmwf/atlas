@@ -24,14 +24,14 @@ namespace functionspace {
 // ----------------------------------------------------------------------
 
 Spectral::Spectral(const size_t truncation)
-  : next::FunctionSpace(),
+  : FunctionSpace(),
     truncation_(truncation),
     trans_(0)
 {
 }
 
 Spectral::Spectral(trans::Trans& trans)
-  : next::FunctionSpace(),
+  : FunctionSpace(),
 #ifdef ATLAS_HAVE_TRANS
     truncation_(trans.nsmax()),
     trans_(&trans)

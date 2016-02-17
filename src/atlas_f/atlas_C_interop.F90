@@ -1,6 +1,11 @@
 module atlas_C_interop
-use, intrinsic :: iso_c_binding
+use, intrinsic :: iso_c_binding, only: c_int, c_long, c_float, c_double, c_ptr, &
+  & c_loc, c_f_pointer, c_char, c_null_char, c_null_ptr
 implicit none
+
+private :: c_int, c_long, c_float, c_double, c_ptr, &
+& c_loc, c_f_pointer, c_char, c_null_char, c_null_ptr
+
 private
 
 
@@ -66,7 +71,7 @@ interface
 
   !int atlas__compare_cptr_equal( void* p1, void* p2 )
   function atlas__compare_cptr_equal(p1,p2) bind(c,name="atlas__compare_cptr_equal") result(equal)
-    use iso_c_binding, only: c_ptr, c_int
+    use, intrinsic :: iso_c_binding, only: c_ptr, c_int
     integer(c_int) :: equal
     type(c_ptr), value :: p1
     type(c_ptr), value :: p2
@@ -79,7 +84,7 @@ CONTAINS
 ! =============================================================================
 
 function atlas_compare_equal(p1,p2) result(equal)
-  use iso_c_binding, only: c_ptr
+  use, intrinsic :: iso_c_binding, only: c_ptr
   logical :: equal
   type(c_ptr), intent(in) :: p1, p2
   if( atlas__compare_cptr_equal(p1,p2) == 1 ) then
@@ -126,7 +131,7 @@ end subroutine
 ! Helper functions
 
 function c_to_f_string_str(s) result(str)
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
   character(kind=c_char,len=1), intent(in) :: s(*)
   character(len=:), allocatable :: str
   integer i, nchars
@@ -143,7 +148,7 @@ function c_to_f_string_str(s) result(str)
 end function c_to_f_string_str
 
 function c_to_f_string_cptr(cptr) result(str)
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
   type(c_ptr), intent(in) :: cptr
   character(len=:), allocatable :: str
   character, dimension(:), pointer  :: s
@@ -152,14 +157,14 @@ function c_to_f_string_cptr(cptr) result(str)
 end function c_to_f_string_cptr
 
 function c_str(f_str)
-  use iso_c_binding, only: c_char, c_null_char
+  use, intrinsic :: iso_c_binding, only: c_char, c_null_char
   character(len=*), intent(in) :: f_str
   character(kind=c_char,len=len_trim(f_str)+1) :: c_str
   c_str = trim(f_str) // c_null_char
 end function c_str
 
 function c_str_no_trim(f_str)
-  use iso_c_binding, only: c_char, c_null_char
+  use, intrinsic :: iso_c_binding, only: c_char, c_null_char
   character(len=*), intent(in) :: f_str
   character(kind=c_char,len=len(f_str)+1) :: c_str_no_trim
   c_str_no_trim = f_str // c_null_char
@@ -169,28 +174,28 @@ end function c_str_no_trim
 ! view interface
 
 function c_loc_int32(x)
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
   integer(c_int), target :: x
   type(c_ptr) :: c_loc_int32
   c_loc_int32 = C_LOC(x)
 end function
 
 function c_loc_int64(x)
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
   integer(c_long), target :: x
   type(c_ptr) :: c_loc_int64
   c_loc_int64 = C_LOC(x)
 end function
 
 function c_loc_real32(x)
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
   real(c_float), target :: x
   type(c_ptr) :: c_loc_real32
   c_loc_real32 = C_LOC(x)
 end function
 
 function c_loc_real64(x)
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
   real(c_double), target :: x
   type(c_ptr) :: c_loc_real64
   c_loc_real64 = C_LOC(x)

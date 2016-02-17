@@ -38,6 +38,7 @@ contains
   procedure, public :: metadata => atlas_State__metadata
 
   procedure, public :: delete => atlas_State__delete
+  procedure, public :: copy => atlas_State__copy
 END TYPE atlas_State
 
 interface atlas_State

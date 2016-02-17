@@ -76,6 +76,13 @@ subroutine atlas_Value__delete(this)
   call this%reset_c_ptr()
 end subroutine atlas_Value__delete
 
+
+subroutine atlas_Value__copy(this,obj_in)
+  class(atlas_Value), intent(inout) :: this
+  class(atlas_RefCounted), target, intent(in) :: obj_in
+end subroutine
+
+
 subroutine atlas_Value__array_delete(this)
   use atlas_atlas_value_c_binding
   type(atlas_Value), intent(inout) :: this(:)

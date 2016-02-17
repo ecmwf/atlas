@@ -14,6 +14,7 @@
 #include "atlas/Mesh.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/mesh/HybridElements.h"
 #include "atlas/runtime/ErrorHandling.h"
 
 #include "atlas/functionspace/EdgeBasedFiniteVolume.h"
@@ -43,21 +44,21 @@ namespace {
 }
 
 EdgeBasedFiniteVolume::EdgeBasedFiniteVolume( Mesh &mesh )
- : Nodes(mesh,Halo(1))
+ : Nodes(mesh,Halo(1)), edges_(mesh.edges())
 {
   radius_ = Earth::radiusInMeters();
   setup();
 }
 
 EdgeBasedFiniteVolume::EdgeBasedFiniteVolume( Mesh &mesh, const Halo &halo )
- : Nodes(mesh,halo)
+ : Nodes(mesh,halo), edges_(mesh.edges())
 {
   radius_ = Earth::radiusInMeters();
   setup();
 }
 
 EdgeBasedFiniteVolume::EdgeBasedFiniteVolume( Mesh &mesh, const eckit::Parametrisation &params )
-  : Nodes(mesh,EdgeBasedFiniteVolume_halo(params),params)
+  : Nodes(mesh,EdgeBasedFiniteVolume_halo(params),params), edges_(mesh.edges())
 {
   radius_ = Earth::radiusInMeters();
   params.get("radius",radius_);
@@ -66,13 +67,11 @@ EdgeBasedFiniteVolume::EdgeBasedFiniteVolume( Mesh &mesh, const eckit::Parametri
 
 void EdgeBasedFiniteVolume::setup()
 {
-  if(mesh().has_function_space("edges")) {
-    edges_ = &mesh().function_space("edges");
-  } else {
+  if( edges_.size() == 0 )
+  {
     build_edges(mesh());
     build_pole_edges(mesh());
-    edges_ = &mesh().function_space("edges");
-    build_edges_parallel_fields(*edges_,nodes());
+    build_edges_parallel_fields( mesh() );
     build_median_dual_mesh(mesh());
     build_node_to_edge_connectivity(mesh());
 
@@ -80,20 +79,19 @@ void EdgeBasedFiniteVolume::setup()
 
     // Compute sign
     {
-      const IndexView<int,2> node2edge      ( nodes().field("to_edge") );
-      const ArrayView<int,1> node2edge_size ( nodes().field("to_edge_size") );
-      const IndexView<int,2> edge2node      ( edges_->field("nodes") );
-      const ArrayView<int,1> is_pole_edge   ( edges_->field("is_pole_edge") );
+      const ArrayView<int,1> is_pole_edge   ( edges_.field("is_pole_edge") );
 
-      nodes().add( Field::create<double>("node2edge_sign",make_shape(nnodes,node2edge.shape(1)) ) );
+      const Connectivity &node_edge_connectivity = nodes().edge_connectivity();
+      const Connectivity &edge_node_connectivity = edges_.node_connectivity();
+      nodes().add( Field::create<double>("node2edge_sign",make_shape(nnodes,node_edge_connectivity.maxcols()) ) );
       ArrayView<double,2> node2edge_sign( nodes().field("node2edge_sign") );
 
       atlas_omp_parallel_for( int jnode=0; jnode<nnodes; ++jnode )
       {
-        for(size_t jedge = 0; jedge < node2edge_size(jnode); ++jedge)
+        for(size_t jedge = 0; jedge < node_edge_connectivity.cols(jnode); ++jedge)
         {
-          size_t iedge = node2edge(jnode,jedge);
-          size_t ip1 = edge2node(iedge,0);
+          size_t iedge = node_edge_connectivity(jnode,jedge);
+          size_t ip1 = edge_node_connectivity(iedge,0);
           if( jnode == ip1 )
             node2edge_sign(jnode,jedge) = 1.;
           else
@@ -108,10 +106,10 @@ void EdgeBasedFiniteVolume::setup()
 
     // Metrics
     {
-      const size_t nedges = edges_->shape(0);
+      const size_t nedges = edges_.size();
       const ArrayView<double,2> lonlat_deg( nodes().lonlat() );
-      ArrayView<double,1> V ( nodes().field("dual_volumes") );
-      ArrayView<double,2> S ( edges_->field("dual_normals") );
+      ArrayView<double,1> dual_volumes ( nodes().field("dual_volumes") );
+      ArrayView<double,2> dual_normals ( edges_.field("dual_normals") );
 
       const double deg2rad = M_PI/180.;
       atlas_omp_parallel_for( size_t jnode=0; jnode<nnodes; ++jnode )
@@ -120,16 +118,17 @@ void EdgeBasedFiniteVolume::setup()
         double hx = radius_*std::cos(y);
         double hy = radius_;
         double G  = hx*hy;
-        V(jnode) *= std::pow(deg2rad,2) * G;
+        dual_volumes(jnode) *= std::pow(deg2rad,2) * G;
       }
 
       atlas_omp_parallel_for( size_t jedge=0; jedge<nedges; ++jedge )
       {
-        S(jedge,LON) *= deg2rad;
-        S(jedge,LAT) *= deg2rad;
+        dual_normals(jedge,LON) *= deg2rad;
+        dual_normals(jedge,LAT) *= deg2rad;
       }
     }
   }
+  edges_fs_.reset( new functionspace::Edges(mesh()) );
 }
 
 // ------------------------------------------------------------------------------------------

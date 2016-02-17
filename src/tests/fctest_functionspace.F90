@@ -15,7 +15,7 @@
 
 module fctest_atlas_FunctionSpace_Fixture
 use atlas_module
-use iso_c_binding
+use, intrinsic :: iso_c_binding
 implicit none
 
 contains
@@ -323,6 +323,109 @@ call mesh%final()
 call grid%final()
 
 END_TEST
+
+
+
+
+! -----------------------------------------------------------------------------
+
+
+TEST( test_edges )
+type(atlas_ReducedGrid) :: grid
+type(atlas_Mesh) :: mesh
+type(atlas_functionspace_Edges) :: fs
+type(atlas_Field) :: field, template
+type(atlas_mesh_Edges) :: edges
+integer :: halo_size, nb_edges
+halo_size = 0
+
+grid = atlas_ReducedGrid("N24")
+mesh = atlas_generate_mesh(grid)
+FCTEST_CHECK_EQUAL( mesh%owners(), 1 )
+edges = mesh%edges()
+FCTEST_CHECK_EQUAL( edges%owners(), 3 ) ! Mesh holds 2 references (facets == edges)
+fs = atlas_functionspace_Edges(mesh)
+FCTEST_CHECK_EQUAL( mesh%owners(), 2 )
+FCTEST_CHECK_EQUAL( edges%owners(), 3 )
+edges = fs%edges()
+FCTEST_CHECK_EQUAL( edges%owners(), 3 )
+nb_edges = fs%nb_edges()
+write(atlas_log%msg,*) "nb_edges = ",nb_edges; call atlas_log%info()
+
+field = fs%create_field("",atlas_real(c_float))
+FCTEST_CHECK_EQUAL( field%rank() , 1 )
+FCTEST_CHECK_EQUAL( field%name() , "" )
+FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
+call field%final()
+
+field = fs%create_field("field",atlas_real(c_float))
+FCTEST_CHECK_EQUAL( field%rank() , 1 )
+FCTEST_CHECK_EQUAL( field%name() , "field" )
+FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
+call field%final()
+
+field = fs%create_field("",atlas_real(c_float),(/2/))
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
+FCTEST_CHECK_EQUAL( field%name() , "" )
+call field%final()
+
+field = fs%create_field("field",atlas_integer(c_int),(/2,2/))
+FCTEST_CHECK_EQUAL( field%rank() , 3 )
+FCTEST_CHECK_EQUAL( field%name() , "field" )
+template = field
+
+field = fs%create_field("",template)
+FCTEST_CHECK_EQUAL( field%rank() , 3 )
+FCTEST_CHECK_EQUAL( field%name() , "" )
+call field%final()
+
+field = fs%create_field("field",template)
+FCTEST_CHECK_EQUAL( field%rank() , 3 )
+FCTEST_CHECK_EQUAL( field%name() , "field" )
+call field%final()
+call template%final()
+
+
+field = fs%create_global_field("",atlas_real(c_float))
+FCTEST_CHECK_EQUAL( field%rank() , 1 )
+FCTEST_CHECK_EQUAL( field%name() , "" )
+FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
+call field%final()
+
+field = fs%create_global_field("field",atlas_real(c_float))
+FCTEST_CHECK_EQUAL( field%rank() , 1 )
+FCTEST_CHECK_EQUAL( field%name() , "field" )
+FCTEST_CHECK_EQUAL( field%kind() , atlas_real(c_float) )
+call field%final()
+
+field = fs%create_global_field("",atlas_real(c_float),(/2/))
+FCTEST_CHECK_EQUAL( field%rank() , 2 )
+FCTEST_CHECK_EQUAL( field%name() , "" )
+call field%final()
+
+field = fs%create_global_field("field",atlas_integer(c_int),(/2,2/))
+FCTEST_CHECK_EQUAL( field%rank() , 3 )
+FCTEST_CHECK_EQUAL( field%name() , "field" )
+template = field
+
+field = fs%create_global_field("",template)
+FCTEST_CHECK_EQUAL( field%rank() , 3 )
+FCTEST_CHECK_EQUAL( field%name() , "" )
+call field%final()
+
+field = fs%create_global_field("field",template)
+FCTEST_CHECK_EQUAL( field%rank() , 3 )
+FCTEST_CHECK_EQUAL( field%name() , "field" )
+call field%final()
+call template%final()
+
+call fs%final()
+call edges%final()
+call mesh%final()
+call grid%final()
+
+END_TEST
+
 
 ! -----------------------------------------------------------------------------
 

@@ -36,6 +36,10 @@
 #include "atlas/GridDistribution.h"
 #include "atlas/util/Bitflags.h"
 #include "atlas/io/Gmsh.h"
+#include "atlas/mesh/HybridElements.h"
+#include "atlas/mesh/ElementType.h"
+#include "atlas/mesh/Elements.h"
+#include "atlas/runtime/Log.h"
 
 #ifdef ATLAS_HAVE_TRANS
 #include "atlas/trans/TransPartitioner.h"
@@ -710,10 +714,11 @@ void ReducedGridMeshGenerator::generate_region(const ReducedGrid& rg,
 #endif
 }
 
-void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
-                                             const std::vector<int>& parts,
-                                             const Region& region,
-                                             Mesh& mesh ) const
+#define NEW_DESIGN
+void ReducedGridMeshGenerator::generate_mesh_new( const ReducedGrid& rg,
+                                                  const std::vector<int>& parts,
+                                                  const Region& region,
+                                                  Mesh& mesh ) const
 {
   int mypart = options.get<size_t>("part");
   int nparts = options.get<size_t>("nb_parts");
@@ -807,8 +812,8 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
   }
 
 
-
-  mesh::Nodes& nodes = mesh.createNodes(nnodes);
+  mesh.nodes().resize(nnodes);
+  mesh::Nodes& nodes = mesh.nodes();
 
   ArrayView<double,2> lonlat        ( nodes.lonlat() );
   ArrayView<gidx_t,1> glb_idx       ( nodes.global_index() );
@@ -903,23 +908,23 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
     ++jnode;
   }
 
-  FunctionSpace& quads = mesh.create_function_space( "quads","LagrangeP1", make_shape(nquads,FunctionSpace::UNDEF_VARS) );
-  quads.metadata().set<long>("type",static_cast<int>(Entity::ELEMS));
-  IndexView<int,2> quad_nodes( quads.create_field<int>("nodes",4) );
-  ArrayView<gidx_t,1> quad_glb_idx( quads.create_field<gidx_t>("glb_idx",1) );
-  ArrayView<int,1> quad_part( quads.create_field<int>("partition",1) );
+  mesh.cells().add( new mesh::temporary::Quadrilateral(), nquads  );
+  mesh.cells().add( new mesh::temporary::Triangle(),      ntriags );
 
-  FunctionSpace& triags = mesh.create_function_space( "triags","LagrangeP1", make_shape(ntriags,FunctionSpace::UNDEF_VARS) );
-  triags.metadata().set<long>("type",static_cast<int>(Entity::ELEMS));
-  IndexView<int,2> triag_nodes( triags.create_field<int>("nodes",3) );
-  ArrayView<gidx_t,1> triag_glb_idx( triags.create_field<gidx_t>("glb_idx",1) );
-  ArrayView<int,1> triag_part( triags.create_field<int>("partition",1) );
+  mesh::HybridElements::Connectivity& node_connectivity = mesh.cells().node_connectivity();
+  ArrayView<gidx_t,1> cells_glb_idx( mesh.cells().global_index() );
+  ArrayView<int,1>    cells_part(    mesh.cells().partition() );
 
   /*
   Fill in connectivity tables with global node indices first
   */
-  int jquad = 0;
-  int jtriag = 0;
+  int jcell;
+  int jquad=0;
+  int jtriag=0;
+  int quad_begin  = mesh.cells().elements(0).begin();
+  int triag_begin = mesh.cells().elements(1).begin();
+  int quad_nodes[4];
+  int triag_nodes[3];
 
   for (int jlat=region.north; jlat<region.south; ++jlat)
   {
@@ -935,49 +940,50 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
 
       if(elem[2]>0 && elem[3]>0) // This is a quad
       {
-        quad_nodes(jquad,0) = offset_loc[ilatN] + elem[0] - region.lat_begin[jlatN];
-        quad_nodes(jquad,1) = offset_loc[ilatS] + elem[1] - region.lat_begin[jlatS];
-        quad_nodes(jquad,2) = offset_loc[ilatS] + elem[2] - region.lat_begin[jlatS];
-        quad_nodes(jquad,3) = offset_loc[ilatN] + elem[3] - region.lat_begin[jlatN];
+        jcell = quad_begin + jquad++;
+        quad_nodes[0] = offset_loc[ilatN] + elem[0] - region.lat_begin[jlatN];
+        quad_nodes[1] = offset_loc[ilatS] + elem[1] - region.lat_begin[jlatS];
+        quad_nodes[2] = offset_loc[ilatS] + elem[2] - region.lat_begin[jlatS];
+        quad_nodes[3] = offset_loc[ilatN] + elem[3] - region.lat_begin[jlatN];
 
         if( three_dimensional )
         {
-          if (size_t(elem[2]) == rg.nlon(jlatS)) quad_nodes(jquad,2) = offset_loc[ilatS];
-          if (size_t(elem[3]) == rg.nlon(jlatN)) quad_nodes(jquad,3) = offset_loc[ilatN];
+          if (size_t(elem[2]) == rg.nlon(jlatS)) quad_nodes[2] = offset_loc[ilatS];
+          if (size_t(elem[3]) == rg.nlon(jlatN)) quad_nodes[3] = offset_loc[ilatN];
         }
 
-        // Log::info(Here())  << quad_nodes(0,jquad) << " " << quad_nodes(1,jquad) << " " << quad_nodes(2,jquad) << " " << quad_nodes(3,jquad) << std::endl;
-        quad_glb_idx(jquad) = jquad+jtriag+1;
-        quad_part(jquad) = mypart;
-        ++jquad;
+        node_connectivity.set( jcell, quad_nodes );
+        cells_glb_idx(jcell) = jcell+1;
+        cells_part(jcell)    = mypart;
       }
       else // This is a triag
       {
+        jcell = triag_begin + jtriag++;
         if(elem[3]<0) // This is a triangle pointing up
         {
-          triag_nodes(jtriag,0) = offset_loc[ilatN] + elem[0] - region.lat_begin[jlatN];
-          triag_nodes(jtriag,1) = offset_loc[ilatS] + elem[1] - region.lat_begin[jlatS];
-          triag_nodes(jtriag,2) = offset_loc[ilatS] + elem[2] - region.lat_begin[jlatS];
+          triag_nodes[0] = offset_loc[ilatN] + elem[0] - region.lat_begin[jlatN];
+          triag_nodes[1] = offset_loc[ilatS] + elem[1] - region.lat_begin[jlatS];
+          triag_nodes[2] = offset_loc[ilatS] + elem[2] - region.lat_begin[jlatS];
           if( three_dimensional )
           {
-            if (size_t(elem[0]) == rg.nlon(jlatN)) triag_nodes(jtriag,0) = offset_loc[ilatN];
-            if (size_t(elem[2]) == rg.nlon(jlatS)) triag_nodes(jtriag,2) = offset_loc[ilatS];
+            if (size_t(elem[0]) == rg.nlon(jlatN)) triag_nodes[0] = offset_loc[ilatN];
+            if (size_t(elem[2]) == rg.nlon(jlatS)) triag_nodes[2] = offset_loc[ilatS];
           }
         }
         else // This is a triangle pointing down
         {
-          triag_nodes(jtriag,0) = offset_loc[ilatN] + elem[0] - region.lat_begin[jlatN];
-          triag_nodes(jtriag,1) = offset_loc[ilatS] + elem[1] - region.lat_begin[jlatS];
-          triag_nodes(jtriag,2) = offset_loc[ilatN] + elem[3] - region.lat_begin[jlatN];
+          triag_nodes[0] = offset_loc[ilatN] + elem[0] - region.lat_begin[jlatN];
+          triag_nodes[1] = offset_loc[ilatS] + elem[1] - region.lat_begin[jlatS];
+          triag_nodes[2] = offset_loc[ilatN] + elem[3] - region.lat_begin[jlatN];
           if( three_dimensional )
           {
-            if (size_t(elem[1]) == rg.nlon(jlatS)) triag_nodes(jtriag,1) = offset_loc[ilatS];
-            if (size_t(elem[3]) == rg.nlon(jlatN)) triag_nodes(jtriag,2) = offset_loc[ilatN];
+            if (size_t(elem[1]) == rg.nlon(jlatS)) triag_nodes[1] = offset_loc[ilatS];
+            if (size_t(elem[3]) == rg.nlon(jlatN)) triag_nodes[2] = offset_loc[ilatN];
           }
         }
-        triag_glb_idx(jtriag) = jquad+jtriag+1;
-        triag_part(jtriag) = mypart;
-        ++jtriag;
+        node_connectivity.set( jcell, triag_nodes );
+        cells_glb_idx(jcell) = jcell+1;
+        cells_part(jcell) = mypart;
       }
     }
   }
@@ -988,14 +994,15 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
     int ip1  = 0;
     for (size_t ip2 = 0; ip2 < rg.nlon(0); ++ip2)
     {
+      jcell = triag_begin + jtriag++;
       size_t ip3 = ip2+1;
       if( three_dimensional && ip3 == rg.nlon(0) ) ip3 = 0;
-      triag_nodes(jtriag,0) = jnorth           + ip1;
-      triag_nodes(jtriag,1) = offset_loc[ilat] + ip2;
-      triag_nodes(jtriag,2) = offset_loc[ilat] + ip3;
-      triag_glb_idx(jtriag) = jquad+jtriag+1;
-      triag_part(jtriag) = mypart;
-      ++jtriag;
+      triag_nodes[0] = jnorth           + ip1;
+      triag_nodes[1] = offset_loc[ilat] + ip2;
+      triag_nodes[2] = offset_loc[ilat] + ip3;
+      node_connectivity.set( jcell, triag_nodes );
+      cells_glb_idx(jcell) = jcell+1;
+      cells_part(jcell) = mypart;
     }
   }
   else if (patch_north_pole )
@@ -1006,15 +1013,16 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
     int q1,q2,q3,q4;
 
     // start with triag:
+    jcell = triag_begin + jtriag++;
     ip1 = 0;
     ip2 = 1;
     ip3 = rg.nlon(0)-1;
-    triag_nodes(jtriag,0) = offset_loc[ilat] + ip1;
-    triag_nodes(jtriag,1) = offset_loc[ilat] + ip2;
-    triag_nodes(jtriag,2) = offset_loc[ilat] + ip3;
-    triag_glb_idx(jtriag) = jquad+jtriag+1;
-    triag_part(jtriag) = mypart;
-    ++jtriag;
+    triag_nodes[0] = offset_loc[ilat] + ip1;
+    triag_nodes[1] = offset_loc[ilat] + ip2;
+    triag_nodes[2] = offset_loc[ilat] + ip3;
+    node_connectivity.set( jcell, triag_nodes );
+    cells_glb_idx(jcell) = jcell+1;
+    cells_part(jcell) = mypart;
 
     q1 = ip2;
     q4 = ip3;
@@ -1024,40 +1032,43 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
       q3=q4-1;
 
       // add triag
+      jcell = triag_begin + jtriag++;
       ip1 = q1;
       ip2 = q3;
       ip3 = q4;
-      triag_nodes(jtriag,0) = offset_loc[ilat] + ip1;
-      triag_nodes(jtriag,1) = offset_loc[ilat] + ip2;
-      triag_nodes(jtriag,2) = offset_loc[ilat] + ip3;
-      triag_glb_idx(jtriag) = jquad+jtriag+1;
-      triag_part(jtriag) = mypart;
-      ++jtriag;
+      triag_nodes[0] = offset_loc[ilat] + ip1;
+      triag_nodes[1] = offset_loc[ilat] + ip2;
+      triag_nodes[2] = offset_loc[ilat] + ip3;
+      node_connectivity.set( jcell, triag_nodes );
+      cells_glb_idx(jcell) = jcell+1;
+      cells_part(jcell) = mypart;
 
       // add triag
+      jcell = triag_begin + jtriag++;
       ip1 = q1;
       ip2 = q2;
       ip3 = q3;
-      triag_nodes(jtriag,0) = offset_loc[ilat] + ip1;
-      triag_nodes(jtriag,1) = offset_loc[ilat] + ip2;
-      triag_nodes(jtriag,2) = offset_loc[ilat] + ip3;
-      triag_glb_idx(jtriag) = jquad+jtriag+1;
-      triag_part(jtriag) = mypart;
-      ++jtriag;
+      triag_nodes[0] = offset_loc[ilat] + ip1;
+      triag_nodes[1] = offset_loc[ilat] + ip2;
+      triag_nodes[2] = offset_loc[ilat] + ip3;
+      node_connectivity.set( jcell, triag_nodes );
+      cells_glb_idx(jcell) = jcell+1;
+      cells_part(jcell) = mypart;
 
       q1 = q2;
       q4 = q3;
     }
     // end with triag:
+    jcell = triag_begin + jtriag++;
     ip1 = q1;
     ip2 = q1+1;
     ip3 = q4;
-    triag_nodes(jtriag,0) = offset_loc[ilat] + ip1;
-    triag_nodes(jtriag,1) = offset_loc[ilat] + ip2;
-    triag_nodes(jtriag,2) = offset_loc[ilat] + ip3;
-    triag_glb_idx(jtriag) = jquad+jtriag+1;
-    triag_part(jtriag) = mypart;
-    ++jtriag;
+    triag_nodes[0] = offset_loc[ilat] + ip1;
+    triag_nodes[1] = offset_loc[ilat] + ip2;
+    triag_nodes[2] = offset_loc[ilat] + ip3;
+    node_connectivity.set( jcell, triag_nodes );
+    cells_glb_idx(jcell) = jcell+1;
+    cells_part(jcell) = mypart;
   }
 
   if (include_south_pole)
@@ -1067,16 +1078,16 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
     int ip1 = 0;
     for (size_t ip2 = 1; ip2 < rg.nlon(jlat)+1; ++ip2)
     {
+      jcell = triag_begin + jtriag++;
       int ip3 = ip2-1;
-      triag_nodes(jtriag,0) = jsouth           + ip1;
-      triag_nodes(jtriag,1) = offset_loc[ilat] + ip2;
-      triag_nodes(jtriag,2) = offset_loc[ilat] + ip3;
+      triag_nodes[0] = jsouth           + ip1;
+      triag_nodes[1] = offset_loc[ilat] + ip2;
+      triag_nodes[2] = offset_loc[ilat] + ip3;
       if( three_dimensional && ip2 == rg.nlon(jlat) )
-        triag_nodes(jtriag,1) = offset_loc[ilat] + 0;
-
-      triag_glb_idx(jtriag) = jquad+jtriag+1;
-      triag_part(jtriag) = mypart;
-      ++jtriag;
+        triag_nodes[1] = offset_loc[ilat] + 0;
+      node_connectivity.set( jcell, triag_nodes );
+      cells_glb_idx(jcell) = jcell+1;
+      cells_part(jcell) = mypart;
     }
   }
   else if (patch_south_pole)
@@ -1087,15 +1098,16 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
     int q1,q2,q3,q4;
 
     // start with triag:
+    jcell = triag_begin + jtriag++;
     ip1 = 0;
     ip2 = 1;
     ip3 = rg.nlon(0)-1;
-    triag_nodes(jtriag,0) = offset_loc[ilat] + ip1;
-    triag_nodes(jtriag,2) = offset_loc[ilat] + ip2;
-    triag_nodes(jtriag,1) = offset_loc[ilat] + ip3;
-    triag_glb_idx(jtriag) = jquad+jtriag+1;
-    triag_part(jtriag) = mypart;
-    ++jtriag;
+    triag_nodes[0] = offset_loc[ilat] + ip1;
+    triag_nodes[2] = offset_loc[ilat] + ip2;
+    triag_nodes[1] = offset_loc[ilat] + ip3;
+    node_connectivity.set( jcell, triag_nodes );
+    cells_glb_idx(jcell) = jcell+1;
+    cells_part(jcell) = mypart;
 
     q1 = ip2;
     q4 = ip3;
@@ -1105,85 +1117,119 @@ void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
       q3=q4-1;
 
       // add triag
+      jcell = triag_begin + jtriag++;
       ip1 = q1;
       ip2 = q3;
       ip3 = q4;
-      triag_nodes(jtriag,0) = offset_loc[ilat] + ip1;
-      triag_nodes(jtriag,2) = offset_loc[ilat] + ip2;
-      triag_nodes(jtriag,1) = offset_loc[ilat] + ip3;
-      triag_glb_idx(jtriag) = jquad+jtriag+1;
-      triag_part(jtriag) = mypart;
-      ++jtriag;
+      triag_nodes[0] = offset_loc[ilat] + ip1;
+      triag_nodes[2] = offset_loc[ilat] + ip2;
+      triag_nodes[1] = offset_loc[ilat] + ip3;
+      node_connectivity.set( jcell, triag_nodes );
+      cells_glb_idx(jcell) = jcell+1;
+      cells_part(jcell) = mypart;
 
       // add triag
+      jcell = triag_begin + jtriag++;
       ip1 = q1;
       ip2 = q2;
       ip3 = q3;
-      triag_nodes(jtriag,0) = offset_loc[ilat] + ip1;
-      triag_nodes(jtriag,2) = offset_loc[ilat] + ip2;
-      triag_nodes(jtriag,1) = offset_loc[ilat] + ip3;
-      triag_glb_idx(jtriag) = jquad+jtriag+1;
-      triag_part(jtriag) = mypart;
-      ++jtriag;
+      triag_nodes[0] = offset_loc[ilat] + ip1;
+      triag_nodes[2] = offset_loc[ilat] + ip2;
+      triag_nodes[1] = offset_loc[ilat] + ip3;
+      node_connectivity.set( jcell, triag_nodes );
+      cells_glb_idx(jcell) = jcell+1;
+      cells_part(jcell) = mypart;
 
       q1 = q2;
       q4 = q3;
     }
     // end with triag:
+    jcell = triag_begin + jtriag++;
     ip1 = q1;
     ip2 = q1+1;
     ip3 = q4;
-    triag_nodes(jtriag,0) = offset_loc[ilat] + ip1;
-    triag_nodes(jtriag,2) = offset_loc[ilat] + ip2;
-    triag_nodes(jtriag,1) = offset_loc[ilat] + ip3;
-    triag_glb_idx(jtriag) = jquad+jtriag+1;
-    triag_part(jtriag) = mypart;
-    ++jtriag;
+    triag_nodes[0] = offset_loc[ilat] + ip1;
+    triag_nodes[2] = offset_loc[ilat] + ip2;
+    triag_nodes[1] = offset_loc[ilat] + ip3;
+    node_connectivity.set( jcell, triag_nodes );
+    cells_glb_idx(jcell) = jcell+1;
+    cells_part(jcell) = mypart;
   }
 
-  nodes.metadata().set("nb_owned",nnodes);
-  quads.metadata().set("nb_owned",nquads);
-  triags.metadata().set("nb_owned",ntriags);
-
-  gidx_t max_glb_idx = rg.npts()+rg.nlat();
-  if( three_dimensional ) max_glb_idx -= rg.nlat();
-  if( include_north_pole ) max_glb_idx += 1;
-  if( include_south_pole ) max_glb_idx += 1;
-  nodes.metadata().set("max_glb_idx",max_glb_idx);
-  quads.metadata().set("max_glb_idx", nquads+ntriags);
-  triags.metadata().set("max_glb_idx",nquads+ntriags);
-
   generate_global_element_numbering( mesh );
+}
+
+#if !DEPRECATE_OLD_FUNCTIONSPACE
+void ReducedGridMeshGenerator::generate_mesh_convert_to_old(
+    const ReducedGrid& rg,
+    const std::vector<int>& parts,
+    const Region& region,
+    Mesh& mesh ) const
+{
+  int nquads  = mesh.cells().elements(0).size();
+  int ntriags = mesh.cells().elements(1).size();
+
+  deprecated::FunctionSpace& quads = mesh.create_function_space( "quads","LagrangeP1", make_shape(nquads,deprecated::FunctionSpace::UNDEF_VARS) );
+  quads.metadata().set<long>("type",static_cast<int>(Entity::ELEMS));
+  IndexView<int,2> quad_nodes( quads.create_field<int>("nodes",4) );
+  ArrayView<gidx_t,1> quad_glb_idx( quads.create_field<gidx_t>("glb_idx",1) );
+  ArrayView<int,1> quad_part( quads.create_field<int>("partition",1) );
+
+  deprecated::FunctionSpace& triags = mesh.create_function_space( "triags","LagrangeP1", make_shape(ntriags,deprecated::FunctionSpace::UNDEF_VARS) );
+  triags.metadata().set<long>("type",static_cast<int>(Entity::ELEMS));
+  IndexView<int,2> triag_nodes( triags.create_field<int>("nodes",3) );
+  ArrayView<gidx_t,1> triag_glb_idx( triags.create_field<gidx_t>("glb_idx",1) );
+  ArrayView<int,1> triag_part( triags.create_field<int>("partition",1) );
+
+  const mesh::HybridElements::Connectivity& node_connectivity = mesh.cells().node_connectivity();
+  const ArrayView<gidx_t,1> cells_glb_idx( mesh.cells().global_index() );
+  const ArrayView<int,1>    cells_part(    mesh.cells().partition() );
+
+  size_t cell_begin;
+
+  cell_begin = mesh.cells().elements(0).begin();
+  for( size_t jquad=0; jquad<nquads; ++jquad)
+  {
+    for( size_t jnode=0; jnode<4; ++jnode )
+      quad_nodes(jquad,jnode) = node_connectivity(0, jquad,jnode);
+    quad_glb_idx(jquad) = cells_glb_idx(cell_begin+jquad);
+    quad_part(jquad)    = cells_part(cell_begin+jquad);
+  }
+
+  cell_begin = mesh.cells().elements(1).begin();
+  for( size_t jtriag=0; jtriag<ntriags; ++jtriag)
+  {
+    for( size_t jnode=0; jnode<3; ++jnode )
+      triag_nodes(jtriag,jnode) = node_connectivity(1, jtriag,jnode);
+    triag_glb_idx(jtriag) = cells_glb_idx(cell_begin+jtriag);
+    triag_part(jtriag)    = cells_part(cell_begin+jtriag);
+  }
+
+}
+#endif
 
 
-  ///debug
-  //  ArrayView<double,2> xyz( mesh.nodes().create_field<double>("xyz",3,IF_EXISTS_RETURN) );
-  //  for( int jnode=0; jnode<lonlat.shape(0); ++jnode )
-  //  {
-  //    eckit::geometry::lonlat_to_3d( lonlat[jnode].data(), xyz[jnode].data() );
-  //  }
 
-  //  io::Gmsh gmsh;
-  //  if(three_dimensional)
-  //    gmsh.options.set("nodes",std::string("xyz"));
-  //  gmsh.write(mesh,"/tmp/debug/mesh.msh");
+void ReducedGridMeshGenerator::generate_mesh(const ReducedGrid& rg,
+                                             const std::vector<int>& parts,
+                                             const Region& region,
+                                             Mesh& mesh ) const
+{
+  generate_mesh_new(rg,parts,region,mesh);
+#if !DEPRECATE_OLD_FUNCTIONSPACE
+  generate_mesh_convert_to_old(rg,parts,region,mesh);
+#endif
 }
 
 void ReducedGridMeshGenerator::generate_global_element_numbering( Mesh& mesh ) const
 {
-  int loc_nb_elems = 0;
+  int loc_nb_elems = mesh.cells().size();
   std::vector<int> elem_counts( eckit::mpi::size() );
   std::vector<int> elem_displs( eckit::mpi::size() );
-  for(size_t f = 0; f < mesh.nb_function_spaces(); ++f)
-  {
-    FunctionSpace& elements = mesh.function_space(f);
-    if( elements.metadata().get<long>("type") == Entity::ELEMS )
-    {
-      loc_nb_elems += elements.shape(0);
-    }
-  }
-  ECKIT_MPI_CHECK_RESULT( MPI_Allgather( &loc_nb_elems, 1, MPI_INT,
-                                   elem_counts.data(), 1, MPI_INT, eckit::mpi::comm()) );
+
+  ECKIT_MPI_CHECK_RESULT(
+        MPI_Allgather( &loc_nb_elems, 1, MPI_INT,
+                       elem_counts.data(), 1, MPI_INT, eckit::mpi::comm()) );
   elem_displs[0] = 0;
   for(size_t jpart = 1; jpart < eckit::mpi::size(); ++jpart)
   {
@@ -1192,18 +1238,11 @@ void ReducedGridMeshGenerator::generate_global_element_numbering( Mesh& mesh ) c
 
   gidx_t gid = 1+elem_displs[ eckit::mpi::rank() ];
 
-  for(size_t f = 0; f < mesh.nb_function_spaces(); ++f)
+  ArrayView<gidx_t,1> glb_idx( mesh.cells().global_index() );
+
+  for( size_t jelem=0; jelem<mesh.cells().size(); ++jelem )
   {
-    FunctionSpace& elements = mesh.function_space(f);
-    if( elements.metadata().get<long>("type") == Entity::ELEMS )
-    {
-      ArrayView<gidx_t,1> glb_idx( elements.field("glb_idx") );
-      int nb_elems = elements.shape(0);
-      for( int e=0; e<nb_elems; ++e )
-      {
-        glb_idx(e) = gid++;
-      }
-    }
+    glb_idx(jelem) = gid++;
   }
 }
 

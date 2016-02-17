@@ -16,7 +16,7 @@
 module fctest_atlas_Mesh_fixture
 use atlas_module
 use atlas_grids_module
-use iso_c_binding
+use, intrinsic :: iso_c_binding
 implicit none
 type(atlas_Mesh) :: mesh
 type(atlas_mesh_Nodes) :: nodes
@@ -78,14 +78,16 @@ END_TESTSUITE_FINALIZE
 ! -----------------------------------------------------------------------------
 
 TEST( test_function_space )
+  integer(c_int) :: nb_nodes
 
   write(*,*) "test_function_space starting"
-
   nodes = mesh%create_nodes(5)
-  FCTEST_CHECK_EQUAL( nodes%size() , 5  )
+  nb_nodes = nodes%size()
+  FCTEST_CHECK_EQUAL( nb_nodes, 5 )
+  FCTEST_CHECK_EQUAL( nodes%size() , 5_c_size_t  )
   FCTEST_CHECK( nodes%has_field("partition") )
   FCTEST_CHECK( nodes%has_field("remote_idx") )
-  call nodes%resize(10)
+  call nodes%resize(10_c_size_t)
   call atlas_log%info( nodes%str() )
 END_TEST
 
@@ -94,7 +96,7 @@ END_TEST
 TEST( test_field_name )
   type(atlas_Field) :: field
 
-  field = atlas_Field("field",atlas_real(c_double),(/nodes%size()/))
+  field = atlas_Field("field",atlas_real(c_double),(/int(nodes%size())/))
   call nodes%add( field )
   FCTEST_CHECK_EQUAL( field%name() , "field" )
   call nodes%remove_field("field")
@@ -137,7 +139,7 @@ END_TEST
 ! -----------------------------------------------------------------------------
 
 TEST( test_field_metadata )
-  integer :: int
+  integer(c_int) :: intval
   logical :: true, false
   real(c_float) :: real32
   real(c_double) :: real64
@@ -145,12 +147,11 @@ TEST( test_field_metadata )
   integer(c_int), allocatable :: arr_int32(:)
   real(c_float), allocatable :: arr_real32(:)
   type(atlas_Metadata) metadata
-  type(atlas_Mesh) meshref
   type(atlas_Field) field
 
   write(*,*) "test_field_metadata starting"
 
-  field = atlas_Field("field_prop",atlas_real(c_float),(/1,nodes%size()/))
+  field = atlas_Field("field_prop",atlas_real(c_float),(/1,int(nodes%size())/))
   FCTEST_CHECK_EQUAL( field%owners() , 1 )
   call nodes%add(field)
   FCTEST_CHECK_EQUAL( field%owners() , 2 )
@@ -167,17 +168,15 @@ TEST( test_field_metadata )
   call metadata%set("arr_int64", (/1_c_long,2_c_long,3_c_long/))
   call metadata%set("arr_real32", (/1.1_c_float,2.1_c_float,3.7_c_float/))
   call metadata%set("arr_real64", (/1.1_c_double,2.1_c_double,3.7_c_double/))
-  call metadata%set("mesh", mesh )
 
   call metadata%get("true",true)
   call metadata%get("false",false)
-  call metadata%get("int",int)
+  call metadata%get("int",intval)
   call metadata%get("real32",real32)
   call metadata%get("real64",real64)
   call metadata%get("string",string)
   call metadata%get("arr_int64",arr_int32)
   call metadata%get("arr_real64",arr_real32)
-  call metadata%get("mesh",meshref)
 
   call metadata%print(atlas_log%channel_info)
 
@@ -188,7 +187,7 @@ TEST( test_field_metadata )
   CHECK( true  .eqv. .True.  )
   CHECK( false .eqv. .False. )
 
-  FCTEST_CHECK_EQUAL( int, 20 )
+  FCTEST_CHECK_EQUAL( intval, 20 )
   FCTEST_CHECK_CLOSE( real32, real(0.1,kind=c_float), real(0.,kind=c_float) )
   FCTEST_CHECK_CLOSE( real64, real(0.2,kind=c_double), real(0.,kind=c_double) )
   FCTEST_CHECK_EQUAL( string, "hello world" )
@@ -206,7 +205,7 @@ TEST( test_field_size )
 
   write(*,*) "test_field_size starting"
 
-  field = atlas_Field("field_0",atlas_integer(),(/0,nodes%size()/))
+  field = atlas_Field("field_0",atlas_integer(),(/0,int(nodes%size())/))
   FCTEST_CHECK_EQUAL( field%owners() , 1 )
   call nodes%add(field)
   FCTEST_CHECK_EQUAL( field%owners() , 2 )
@@ -217,7 +216,7 @@ TEST( test_field_size )
   call field%final() ! Not necessary, following "=" will handle it
   write(0,*) "finalized field0"
 
-  field = atlas_Field("field_1",atlas_real(c_float),(/1,nodes%size()/))
+  field = atlas_Field("field_1",atlas_real(c_float),(/1,int(nodes%size())/))
   call nodes%add(field)
   call field%data(fdata_real32)
   FCTEST_CHECK_EQUAL( field%datatype() , "real32" )
@@ -225,7 +224,7 @@ TEST( test_field_size )
 
   call field%final() !Not necessary, following "=" will handle it
 
-  field = atlas_Field("field_2",atlas_real(c_double),(/2,nodes%size()/))
+  field = atlas_Field("field_2",atlas_real(c_double),(/2,int(nodes%size())/))
   FCTEST_CHECK_EQUAL( field%owners() , 1 )
   call nodes%add(field)
   FCTEST_CHECK_EQUAL( field%owners() , 2 )
@@ -257,14 +256,14 @@ TEST( test_create_remove )
 
   write(*,*) "test_create_remove starting"
 
-  field = atlas_Field("bla",atlas_integer(),(/1,nodes%size()/))
+  field = atlas_Field("bla",atlas_integer(),(/1,int(nodes%size())/))
   call nodes%add(field)
   FCTEST_CHECK_EQUAL( field%name(), "bla" )
   call field%final()
 
 !  call nodes%remove_field("bla")
 
-  field = atlas_Field("vector_field",atlas_real(c_float),(/3,nodes%size()/))
+  field = atlas_Field("vector_field",atlas_real(c_float),(/3,int(nodes%size())/))
   call nodes%add(field)
   call field%data(vector)
   FCTEST_CHECK_EQUAL( size(vector),   30 )
@@ -272,7 +271,7 @@ TEST( test_create_remove )
   FCTEST_CHECK_EQUAL( size(vector,2), 10   )
 !  call field%final()
 
-  field = atlas_Field("scalar_field",atlas_real(c_double),(/1,nodes%size()/))
+  field = atlas_Field("scalar_field",atlas_real(c_double),(/1,int(nodes%size())/))
   call nodes%add(field)
   call field%data(scalar)
   FCTEST_CHECK_EQUAL( size(scalar),   10 )
@@ -300,7 +299,7 @@ TEST( test_fieldset )
 
   call fieldset%add( nodes%field("vector_field") )
 
-  FCTEST_CHECK_EQUAL( fieldset%size(), 4 )
+  FCTEST_CHECK_EQUAL( fieldset%size(), 4_c_size_t )
 
   field = fieldset%field(1)
   FCTEST_CHECK_EQUAL( field%name(), "field_0" )
@@ -317,12 +316,12 @@ END_TEST
 TEST( test_meshgen )
   type(atlas_ReducedGrid) :: grid
   type(atlas_Mesh) :: mesh
-  type(atlas_FunctionSpace) :: edges
+  type(atlas_mesh_Edges) :: edges
   type(atlas_Field) :: field
   type(atlas_functionspace_Nodes) :: functionspace_nodes
   type(atlas_HaloExchange) :: halo_exchange
   integer(c_int), pointer :: ridx(:)
-  real(c_double), pointer :: arr(:,:)
+  real(c_double), pointer :: arr1d(:), arr2d(:,:)
   integer :: i, nnodes, nghost
 
   write(*,*) "test_meshgen starting"
@@ -353,25 +352,18 @@ TEST( test_meshgen )
 
   call atlas_log%info( nodes%str() )
 
-
-
   field = nodes%field("dual_volumes")
-  call field%data(arr)
+  call field%data(arr1d)
   call field%final()
 
   functionspace_nodes = atlas_functionspace_Nodes(mesh,1)
   halo_exchange = functionspace_nodes%get_halo_exchange()
-  call halo_exchange%execute(arr)
+  call halo_exchange%execute(arr1d)
 
-  edges = mesh%function_space("edges")
+  edges = mesh%edges()
   field = edges%field("dual_normals")
-  call field%data(arr)
+  call field%data(arr2d)
   call field%final()
-
-
-  !write(0,*) stride(ridx,1)
-
-  !write(0,*) stride(arr,1), stride(arr,2), stride(arr,3)
 
   call atlas_write_gmsh(mesh,"testf2.msh")
 
@@ -473,7 +465,7 @@ TEST( test_fv )
       type(atlas_GridDistribution) :: griddistribution
       type(atlas_functionspace_Nodes) :: nodes_fs
 
-      type(atlas_FunctionSpace) :: edges
+      type(atlas_mesh_Edges) :: edges
       type(atlas_mesh_Nodes) :: nodes
 
       integer, allocatable :: nloen(:)
@@ -505,9 +497,9 @@ TEST( test_fv )
       call atlas_build_pole_edges(mesh)
 
       ! Generate edges function-space (This api will change soon)
-      edges = mesh%function_space("edges")
+      edges = mesh%edges()
       nodes = mesh%nodes()
-      call atlas_build_edges_parallel_fields(edges,nodes)
+      call atlas_build_edges_parallel_fields(mesh)
 
       ! Build node to edge connectivity
       call atlas_build_node_to_edge_connectivity(mesh)

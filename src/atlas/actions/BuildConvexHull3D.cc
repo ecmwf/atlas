@@ -53,6 +53,8 @@ const Point_3 origin = Point_3(CGAL::ORIGIN);
 #include "atlas/FunctionSpace.h"
 #include "atlas/Mesh.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/mesh/HybridElements.h"
+#include "atlas/mesh/ElementType.h"
 #include "atlas/Parameters.h"
 #include "atlas/Grid.h"
 #include "atlas/util/PointSet.h"
@@ -89,6 +91,12 @@ static Polyhedron_3* create_convex_hull_from_points( const std::vector< Point3 >
     return poly;
 }
 
+#if !DEPRECATE_OLD_FUNCTIONSPACE
+
+static void cgal_polyhedron_to_atlas_mesh_convert_to_old(  Mesh& mesh );
+
+#endif
+
 static void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, PointSet& points )
 {
     bool ensure_outward_normals = true;
@@ -101,25 +109,18 @@ static void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, Poin
 
     const size_t nb_nodes = points.size();
 
-    ASSERT( ! mesh.has_function_space("triags") );
+    ASSERT( mesh.cells().size() == 0 );
 
     /* triangles */
 
     const size_t nb_triags = poly.size_of_facets();
-
-    std::vector<size_t> extents(2);
-    extents[0] = nb_triags;
-    extents[1] = FunctionSpace::UNDEF_VARS;
-
-    FunctionSpace& triags  = mesh.create_function_space( "triags", "Lagrange_P1", extents );
-    triags.metadata().set<long>("type",Entity::ELEMS);
-
-    IndexView<int,2> triag_nodes   ( triags.create_field<int>("nodes",3) );
-    ArrayView<gidx_t,1> triag_gidx ( triags.create_field<gidx_t>("glb_idx",1) );
-    ArrayView<int,1> triag_part    ( triags.create_field<int>("partition",1) );
+    mesh.cells().add( new mesh::temporary::Triangle(), nb_triags );
+    mesh::HybridElements::Connectivity& triag_nodes = mesh.cells().node_connectivity();
+    ArrayView<gidx_t,1> triag_gidx ( mesh.cells().global_index() );
+    ArrayView<int,1> triag_part    ( mesh.cells().partition() );
 
     Point3 pt;
-    size_t idx[3];
+    idx_t idx[3];
     Polyhedron_3::Vertex_const_handle vts[3];
 
     std::cout << "Inserting triags (" << eckit::BigNum(nb_triags) << ")" << std::endl;
@@ -165,9 +166,7 @@ static void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, Poin
 
         /* define the triag */
 
-        triag_nodes(tidx,0) = idx[0];
-        triag_nodes(tidx,1) = idx[1];
-        triag_nodes(tidx,2) = idx[2];
+        triag_nodes.set(tidx, idx );
 
         triag_gidx(tidx) = tidx+1;
 
@@ -178,21 +177,47 @@ static void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, Poin
 
     ASSERT( tidx == nb_triags );
 
-    /* quads */
+#if !DEPRECATE_OLD_FUNCTIONSPACE
 
-    const size_t nb_quads = 0;
+    cgal_polyhedron_to_atlas_mesh_convert_to_old(mesh);
 
-    std::vector<size_t> quads_extents(2);
-    extents[0] = nb_quads;
-    extents[1] = FunctionSpace::UNDEF_VARS;
-
-    FunctionSpace& quads  = mesh.create_function_space( "quads", "Lagrange_P1", quads_extents );
-    quads.metadata().set<long>("type",Entity::ELEMS);
-
-    IndexView<int,2> quads_nodes   ( quads.create_field<int>("nodes",3) );
-    ArrayView<gidx_t,1> quads_gidx ( quads.create_field<gidx_t>("glb_idx",1) );
-    ArrayView<int,1> quads_part    ( quads.create_field<int>("partition",1) );
+#endif
 }
+
+#if !DEPRECATE_OLD_FUNCTIONSPACE
+static void cgal_polyhedron_to_atlas_mesh_convert_to_old(  Mesh& mesh )
+{
+    int nquads  = 0;
+    int ntriags = mesh.cells().size();
+
+    deprecated::FunctionSpace& quads = mesh.create_function_space( "quads","LagrangeP1", make_shape(nquads,deprecated::FunctionSpace::UNDEF_VARS) );
+    quads.metadata().set<long>("type",static_cast<int>(Entity::ELEMS));
+    IndexView<int,2> quad_nodes( quads.create_field<int>("nodes",4) );
+    ArrayView<gidx_t,1> quad_glb_idx( quads.create_field<gidx_t>("glb_idx",1) );
+    ArrayView<int,1> quad_part( quads.create_field<int>("partition",1) );
+
+    deprecated::FunctionSpace& triags = mesh.create_function_space( "triags","LagrangeP1", make_shape(ntriags,deprecated::FunctionSpace::UNDEF_VARS) );
+    triags.metadata().set<long>("type",static_cast<int>(Entity::ELEMS));
+    IndexView<int,2> triag_nodes( triags.create_field<int>("nodes",3) );
+    ArrayView<gidx_t,1> triag_glb_idx( triags.create_field<gidx_t>("glb_idx",1) );
+    ArrayView<int,1> triag_part( triags.create_field<int>("partition",1) );
+
+    const mesh::HybridElements::Connectivity& node_connectivity = mesh.cells().node_connectivity();
+    const ArrayView<gidx_t,1> cells_glb_idx( mesh.cells().global_index() );
+    const ArrayView<int,1>    cells_part(    mesh.cells().partition() );
+
+    size_t cell_begin;
+
+    cell_begin = 0;
+    for( size_t jtriag=0; jtriag<ntriags; ++jtriag)
+    {
+      for( size_t jnode=0; jnode<3; ++jnode )
+        triag_nodes(jtriag,jnode) = node_connectivity(jtriag,jnode);
+      triag_glb_idx(jtriag) = cells_glb_idx(cell_begin+jtriag);
+      triag_part(jtriag)    = cells_part(cell_begin+jtriag);
+    }
+}
+#endif
 
 #else
 
@@ -215,7 +240,7 @@ static void cgal_polyhedron_to_atlas_mesh(  Mesh& mesh, Polyhedron_3& poly, Poin
 void BuildConvexHull3D::operator()( Mesh& mesh ) const
 {
     // don't tesselate meshes already with triags or quads
-    if( mesh.has_function_space("triags") || mesh.has_function_space("quads") )
+    if( mesh.cells().size() )
         return;
 
     Timer t ("grid tesselation");

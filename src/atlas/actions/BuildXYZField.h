@@ -15,7 +15,6 @@
 
 namespace atlas {
 
-class FunctionSpace;
 class Mesh;
 class Field;
 namespace mesh {

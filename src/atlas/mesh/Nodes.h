@@ -19,7 +19,7 @@
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/Metadata.h"
-#include "atlas/FunctionSpace.h"
+#include "atlas/Connectivity.h"
 
 namespace atlas { class Field; }
 
@@ -30,23 +30,26 @@ namespace mesh {
  * \brief Nodes class that owns a collection of fields defined in nodes of the mesh
  */
 class Nodes : public eckit::Owned {
+public:
+  typedef IrregularConnectivity Connectivity;
 
 public: // methods
 
 //-- Constructors
 
   /// @brief Construct "size" nodes
-  Nodes(size_t size);
+  Nodes();
+//  Nodes(size_t size);
 
 //-- Accessors
 
-  virtual const Field& field(const std::string& name) const;
-  virtual       Field& field(const std::string& name);
-  virtual bool has_field(const std::string& name) const { return (fields_.find(name) != fields_.end()); }
+  const Field& field(const std::string& name) const;
+        Field& field(const std::string& name);
+  bool has_field(const std::string& name) const { return (fields_.find(name) != fields_.end()); }
 
-  virtual const Field& field(size_t) const;
-  virtual       Field& field(size_t);
-  virtual size_t nb_fields() const { return fields_.size(); }
+  const Field& field(size_t) const;
+        Field& field(size_t);
+  size_t nb_fields() const { return fields_.size(); }
 
   const Metadata& metadata() const { return metadata_; }
         Metadata& metadata()       { return metadata_; }
@@ -66,15 +69,26 @@ public: // methods
   const Field& ghost() const { return *ghost_; }
         Field& ghost()       { return *ghost_; }
 
+  /// @brief Node to Edge connectivity table
+  const Connectivity& edge_connectivity() const;
+        Connectivity& edge_connectivity();
+
+  /// @brief Node to Cell connectivity table
+  const Connectivity& cell_connectivity() const;
+        Connectivity& cell_connectivity();
+
+
   size_t size() const { return size_; }
 
 // -- Modifiers
 
-  virtual Field& add( Field* ); // Take ownership!
+  Field& add( Field* ); // Take ownership!
 
   void resize( size_t );
 
   void remove_field(const std::string& name);
+
+  Connectivity& add( const std::string& name, Connectivity* );
 
 private:
 
@@ -88,11 +102,14 @@ private:
 private:
 
   typedef std::map< std::string, eckit::SharedPtr<Field> >  FieldMap;
+  typedef std::map< std::string, eckit::SharedPtr<Connectivity> >  ConnectivityMap;
 
 private:
 
   size_t size_;
   FieldMap fields_;
+  ConnectivityMap connectivities_;
+
   Metadata metadata_;
 
   // Cached shortcuts to specific fields in fields_
@@ -102,21 +119,55 @@ private:
   Field* lonlat_;
   Field* ghost_;
 
+
+  Connectivity* edge_connectivity_;
+  Connectivity* cell_connectivity_;
+
 };
+
+inline const Nodes::Connectivity& Nodes::edge_connectivity() const
+{
+  return *edge_connectivity_;
+}
+
+inline Nodes::Connectivity& Nodes::edge_connectivity()
+{
+  return *edge_connectivity_;
+}
+
+inline const Nodes::Connectivity& Nodes::cell_connectivity() const
+{
+  return *cell_connectivity_;
+}
+
+inline Nodes::Connectivity& Nodes::cell_connectivity()
+{
+  return *cell_connectivity_;
+}
+
 
 #define Char char
 extern "C"
 {
-int atlas__mesh__Nodes__size (Nodes* This);
-void atlas__mesh__Nodes__resize (Nodes* This, int size);
-int atlas__mesh__Nodes__nb_fields (Nodes* This);
+Nodes* atlas__mesh__Nodes__create();
+void atlas__mesh__Nodes__delete (Nodes* This);
+size_t atlas__mesh__Nodes__size (Nodes* This);
+void atlas__mesh__Nodes__resize (Nodes* This, size_t size);
+size_t atlas__mesh__Nodes__nb_fields (Nodes* This);
 void atlas__mesh__Nodes__add (Nodes* This, Field* field);
 void atlas__mesh__Nodes__remove_field (Nodes* This, char* name);
 int atlas__mesh__Nodes__has_field (Nodes* This, char* name);
 Field* atlas__mesh__Nodes__field_by_name (Nodes* This, char* name);
-Field* atlas__mesh__Nodes__field_by_idx (Nodes* This, int idx);
+Field* atlas__mesh__Nodes__field_by_idx (Nodes* This, size_t idx);
 Metadata* atlas__mesh__Nodes__metadata(Nodes* This);
 void atlas__mesh__Nodes__str (Nodes* This, Char* &str, int &size);
+IrregularConnectivity* atlas__mesh__Nodes__edge_connectivity(Nodes* This);
+IrregularConnectivity* atlas__mesh__Nodes__cell_connectivity(Nodes* This);
+Field* atlas__mesh__Nodes__lonlat(Nodes* This);
+Field* atlas__mesh__Nodes__global_index(Nodes* This);
+Field* atlas__mesh__Nodes__remote_index(Nodes* This);
+Field* atlas__mesh__Nodes__partition(Nodes* This);
+Field* atlas__mesh__Nodes__ghost(Nodes* This);
 }
 #undef Char
 

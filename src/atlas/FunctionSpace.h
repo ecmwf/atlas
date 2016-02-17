@@ -17,7 +17,6 @@
 #include "atlas/Config.h"
 
 namespace atlas {
-namespace next { // Temporary namespace for new design
 
 /// @brief FunctionSpace class helps to interprete Fields.
 /// @note  Abstract base class
@@ -36,7 +35,6 @@ public:
 
 inline FunctionSpace::~FunctionSpace() {}
 
-} // namespace next
 } // namespace atlas
 
 
@@ -73,6 +71,9 @@ class Mesh;
 class Field;
 
 //------------------------------------------------------------------------------------------------------
+
+namespace deprecated {
+#if !DEPRECATE_OLD_FUNCTIONSPACE
 
 enum CreateBehavior { IF_EXISTS_FAIL = 0,    /* when creating, fail if exists */
                       IF_EXISTS_RETURN = 1   /* when creating, return if exists */ };
@@ -212,6 +213,8 @@ private:
 
     Mesh*    mesh_;
 };
+#endif
+} // namespace deprecated
 
 typedef mpl::HaloExchange HaloExchange_t;
 typedef mpl::GatherScatter GatherScatter_t;
@@ -220,36 +223,40 @@ typedef mpl::Checksum Checksum_t;
 //------------------------------------------------------------------------------------------------------
 
 // C wrapper interfaces to C++ routines
-#define NextFunctionSpace next::FunctionSpace
+#if !DEPRECATE_OLD_FUNCTIONSPACE
+#define DeprecatedFunctionSpace deprecated::FunctionSpace
+#else
+#define DeprecatedFunctionSpace void
+#endif
 extern "C"
 {
-    void atlas__NextFunctionSpace__delete (NextFunctionSpace* This);
-    const char* atlas__NextFunctionSpace__name (NextFunctionSpace* This);
-    Metadata* atlas__FunctionSpace__metadata (FunctionSpace* This);
-    int atlas__FunctionSpace__dof (FunctionSpace* This);
-    int atlas__FunctionSpace__glb_dof (FunctionSpace* This);
-    void atlas__FunctionSpace__create_field_int (FunctionSpace* This, char* name, int nb_vars);
-    void atlas__FunctionSpace__create_field_long (FunctionSpace* This, char* name, int nb_vars);
-    void atlas__FunctionSpace__create_field_float (FunctionSpace* This, char* name, int nb_vars);
-    void atlas__FunctionSpace__create_field_double (FunctionSpace* This, char* name, int nb_vars);
-    void atlas__FunctionSpace__remove_field (FunctionSpace* This, char* name);
-    int atlas__FunctionSpace__has_field (FunctionSpace* This, char* name);
+    void atlas__FunctionSpace__delete (FunctionSpace* This);
     const char* atlas__FunctionSpace__name (FunctionSpace* This);
-    void atlas__FunctionSpace__shapef (FunctionSpace* This, int* &shape, int &rank);
-    Field* atlas__FunctionSpace__field (FunctionSpace* This, char* name);
-    void atlas__FunctionSpace__parallelise (FunctionSpace* This);
-    void atlas__FunctionSpace__halo_exchange_int (FunctionSpace* This, int field_data[], int field_size);
-    void atlas__FunctionSpace__halo_exchange_float (FunctionSpace* This, float field_data[], int field_size);
-    void atlas__FunctionSpace__halo_exchange_double (FunctionSpace* This, double field_data[], int field_size);
-    void atlas__FunctionSpace__gather_int (FunctionSpace* This, int field_data[], int field_size, int glbfield_data[], int glbfield_size);
-    void atlas__FunctionSpace__gather_float (FunctionSpace* This, float field_data[], int field_size, float glbfield_data[], int glbfield_size);
-    void atlas__FunctionSpace__gather_double (FunctionSpace* This, double field_data[], int field_size, double glbfield_data[], int glbfield_size);
-    HaloExchange_t* atlas__FunctionSpace__halo_exchange (FunctionSpace* This);
-    GatherScatter_t* atlas__FunctionSpace__gather (FunctionSpace* This);
-    Checksum_t* atlas__FunctionSpace__checksum (FunctionSpace* This);
+    Metadata* atlas__deprecated__FunctionSpace__metadata (DeprecatedFunctionSpace* This);
+    int atlas__deprecated__FunctionSpace__dof (DeprecatedFunctionSpace* This);
+    int atlas__deprecated__FunctionSpace__glb_dof (DeprecatedFunctionSpace* This);
+    void atlas__deprecated__FunctionSpace__create_field_int (DeprecatedFunctionSpace* This, char* name, int nb_vars);
+    void atlas__deprecated__FunctionSpace__create_field_long (DeprecatedFunctionSpace* This, char* name, int nb_vars);
+    void atlas__deprecated__FunctionSpace__create_field_float (DeprecatedFunctionSpace* This, char* name, int nb_vars);
+    void atlas__deprecated__FunctionSpace__create_field_double (DeprecatedFunctionSpace* This, char* name, int nb_vars);
+    void atlas__deprecated__FunctionSpace__remove_field (DeprecatedFunctionSpace* This, char* name);
+    int atlas__deprecated__FunctionSpace__has_field (DeprecatedFunctionSpace* This, char* name);
+    const char* atlas__deprecated__FunctionSpace__name (DeprecatedFunctionSpace* This);
+    void atlas__deprecated__FunctionSpace__shapef (DeprecatedFunctionSpace* This, int* &shape, int &rank);
+    Field* atlas__deprecated__FunctionSpace__field (DeprecatedFunctionSpace* This, char* name);
+    void atlas__deprecated__FunctionSpace__parallelise (DeprecatedFunctionSpace* This);
+    void atlas__deprecated__FunctionSpace__halo_exchange_int (DeprecatedFunctionSpace* This, int field_data[], int field_size);
+    void atlas__deprecated__FunctionSpace__halo_exchange_float (DeprecatedFunctionSpace* This, float field_data[], int field_size);
+    void atlas__deprecated__FunctionSpace__halo_exchange_double (DeprecatedFunctionSpace* This, double field_data[], int field_size);
+    void atlas__deprecated__FunctionSpace__gather_int (DeprecatedFunctionSpace* This, int field_data[], int field_size, int glbfield_data[], int glbfield_size);
+    void atlas__deprecated__FunctionSpace__gather_float (DeprecatedFunctionSpace* This, float field_data[], int field_size, float glbfield_data[], int glbfield_size);
+    void atlas__deprecated__FunctionSpace__gather_double (DeprecatedFunctionSpace* This, double field_data[], int field_size, double glbfield_data[], int glbfield_size);
+    HaloExchange_t* atlas__deprecated__FunctionSpace__halo_exchange (DeprecatedFunctionSpace* This);
+    GatherScatter_t* atlas__deprecated__FunctionSpace__gather (DeprecatedFunctionSpace* This);
+    Checksum_t* atlas__deprecated__FunctionSpace__checksum (DeprecatedFunctionSpace* This);
 
 }
-#undef NextFunctionSpace
+#undef DeprecatedFunctionSpace
 //------------------------------------------------------------------------------------------------------
 
 } // namespace atlas

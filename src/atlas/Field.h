@@ -77,6 +77,9 @@ public: // Destructor
   /// @brief Implicit conversion to Array
   operator const Array&() const { return *array_; }
   operator Array&() { return *array_; }
+  
+  const Array& array() const { return *array_; }
+        Array& array()       { return *array_; }
 
 // -- Accessors
 
@@ -99,6 +102,8 @@ public: // Destructor
 
   /// @brief Resize field to given shape
   void resize(const ArrayShape&);
+
+  void insert(size_t idx1, size_t size1 );
 
   /// @brief Shape of this field in Fortran style (reverse order of C style)
   const std::vector<int>& shapef()  const { return array_->shapef(); }
@@ -135,8 +140,8 @@ public: // Destructor
   void set_levels(size_t n) { nb_levels_ = n; }
   size_t levels() const { return std::max(1ul,nb_levels_); }
 
-  void set_functionspace(const next::FunctionSpace*);
-  next::FunctionSpace* functionspace() const { return functionspace_; }
+  void set_functionspace(const FunctionSpace*);
+  FunctionSpace* functionspace() const { return functionspace_; }
 
 private: // methods
 
@@ -148,7 +153,7 @@ private: // members
   size_t nb_levels_;
   Metadata metadata_;
   Array* array_;
-  next::FunctionSpace* functionspace_;
+  FunctionSpace* functionspace_;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -161,7 +166,7 @@ Field* Field::create( const std::string& name, const ArrayShape& shape ) {
 //----------------------------------------------------------------------------------------------------------------------
 
 #define Parametrisation eckit::Parametrisation
-#define FunctionSpace next::FunctionSpace
+#define FunctionSpace FunctionSpace
 #define Char char
 // C wrapper interfaces to C++ routines
 extern "C"

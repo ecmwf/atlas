@@ -175,6 +175,10 @@ if( ${CMAKE_BUILD_TYPE} MATCHES "Debug" AND NOT ATLAS_HAVE_BOUNDSCHECKING )
   set( ATLAS_HAVE_BOUNDSCHECKING 1 )
 endif()
 
+ecbuild_add_option( FEATURE DEPRECATED_FUNCTIONSPACE
+                     DEFAULT OFF
+                     DESCRIPTION "atlas: duplicate data structures for backwards compatibility" )
+
 ### sandbox
 
 ecbuild_add_option( FEATURE SANDBOX

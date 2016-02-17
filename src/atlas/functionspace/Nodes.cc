@@ -88,7 +88,7 @@ Nodes::Nodes( Mesh& mesh )
 }
 
 Nodes::Nodes( Mesh& mesh, const Halo &halo, const eckit::Parametrisation &params )
-  : next::FunctionSpace(),
+  : FunctionSpace(),
     mesh_(mesh),
     nodes_(mesh_.nodes()),
     halo_(halo),
@@ -100,7 +100,7 @@ Nodes::Nodes( Mesh& mesh, const Halo &halo, const eckit::Parametrisation &params
 }
 
 Nodes::Nodes(Mesh& mesh, const Halo &halo)
-  : next::FunctionSpace(),
+  : FunctionSpace(),
     mesh_(mesh),
     nodes_(mesh_.nodes()),
     halo_(halo),
@@ -117,10 +117,14 @@ void Nodes::constructor()
   actions::build_nodes_parallel_fields( mesh_.nodes() );
   actions::build_periodic_boundaries(mesh_);
 
-  if( ! mesh_.halo_exchange().has(halo_name()) && halo_.size() > 0)
+  gather_scatter_.reset(new mpl::GatherScatter());
+  halo_exchange_.reset(new mpl::HaloExchange());
+  checksum_.reset(new mpl::Checksum());
+
+  if( halo_.size() > 0)
   {
     // Create new halo-exchange
-    mpl::HaloExchange* halo_exchange = new mpl::HaloExchange( halo_name() );
+    halo_exchange_.reset(new mpl::HaloExchange());
 
     actions::build_halo(mesh_,halo_.size());
 
@@ -133,23 +137,19 @@ void Nodes::constructor()
     ss << "nb_nodes_including_halo["<<halo_.size()<<"]";
     mesh_.metadata().get(ss.str(),nb_nodes_);
 
-    halo_exchange->setup(part.data<int>(),ridx.data<int>(),REMOTE_IDX_BASE,nb_nodes_);
-
-    // Store it in the mesh
-    mesh_.halo_exchange().add(halo_exchange);
+    halo_exchange_->setup(part.data<int>(),ridx.data<int>(),REMOTE_IDX_BASE,nb_nodes_);
   }
   if( !nb_nodes_ ) {
     std::stringstream ss;
     ss << "nb_nodes_including_halo["<<halo_.size()<<"]";
     if( ! mesh_.metadata().get(ss.str(),nb_nodes_) ) {
-      nb_nodes_ = mesh_.nodes().metadata().get<size_t>("nb_owned");
+      nb_nodes_ = mesh_.nodes().size();
     }
   }
 
-  if( !mesh_.gather_scatter().has(gather_scatter_name()) )
   {
     // Create new gather_scatter
-    mpl::GatherScatter* gather_scatter = new mpl::GatherScatter( gather_scatter_name() );
+    gather_scatter_.reset( new mpl::GatherScatter() );
 
     Field& ridx = mesh_.nodes().remote_index();
     Field& part = mesh_.nodes().partition();
@@ -166,16 +166,12 @@ void Nodes::constructor()
       //  mask[j] = 0;
       //}
     }
-    gather_scatter->setup(part.data<int>(),ridx.data<int>(),REMOTE_IDX_BASE,gidx.data<gidx_t>(),mask.data(),nb_nodes_);
-
-    // Store it in the mesh
-    mesh_.gather_scatter().add(gather_scatter);
+    gather_scatter_->setup(part.data<int>(),ridx.data<int>(),REMOTE_IDX_BASE,gidx.data<gidx_t>(),mask.data(),nb_nodes_);
   }
 
-  if( !mesh_.checksum().has(checksum_name()) )
   {
     // Create new checksum
-    mpl::Checksum* checksum = new mpl::Checksum( checksum_name() );
+    checksum_.reset( new mpl::Checksum() );
 
     Field& ridx = mesh_.nodes().remote_index();
     Field& part = mesh_.nodes().partition();
@@ -186,14 +182,11 @@ void Nodes::constructor()
     atlas_omp_parallel_for( size_t n=0; n<npts; ++n ) {
       mask[n] = is_ghost(n) ? 1 : 0;
     }
-    checksum->setup(part.data<int>(),ridx.data<int>(),REMOTE_IDX_BASE,gidx.data<gidx_t>(),mask.data(),nb_nodes_);
-
-    // Store it in the mesh
-    mesh_.checksum().add(checksum);
+    checksum_->setup(part.data<int>(),ridx.data<int>(),REMOTE_IDX_BASE,gidx.data<gidx_t>(),mask.data(),nb_nodes_);
   }
 
-  nb_nodes_global_ = mesh_.gather_scatter().get(gather_scatter_name()).glb_dof();
-  const std::vector<int>& glb_dofs = mesh_.gather_scatter().get(gather_scatter_name()).glb_dofs();
+  nb_nodes_global_ = gather_scatter_->glb_dof();
+  const std::vector<int>& glb_dofs = gather_scatter_->glb_dofs();
   nb_nodes_global_foreach_rank_.assign( glb_dofs.begin(), glb_dofs.end() );
 }
 
@@ -314,24 +307,23 @@ Field* Nodes::createGlobalField(const std::string& name,const Field& other) cons
 void Nodes::haloExchange( FieldSet& fieldset ) const
 {
   if( halo_.size() ) {
-    const mpl::HaloExchange& halo_exchange = mesh_.halo_exchange().get(halo_name());
     for( size_t f=0; f<fieldset.size(); ++f ) {
       const Field& field = fieldset[f];
       if     ( field.datatype() == DataType::kind<int>() ) {
         ArrayView<int,2> view(field);
-        halo_exchange.execute( view );
+        halo_exchange().execute( view );
       }
       else if( field.datatype() == DataType::kind<long>() ) {
         ArrayView<long,2> view(field);
-        halo_exchange.execute( view );
+        halo_exchange().execute( view );
       }
       else if( field.datatype() == DataType::kind<float>() ) {
         ArrayView<float,2> view(field);
-        halo_exchange.execute( view );
+        halo_exchange().execute( view );
       }
       else if( field.datatype() == DataType::kind<double>() ) {
         ArrayView<double,2> view(field);
-        halo_exchange.execute( view );
+        halo_exchange().execute( view );
       }
       else throw eckit::Exception("datatype not supported",Here());
     }
@@ -347,14 +339,12 @@ void Nodes::haloExchange( Field& field ) const
 }
 const mpl::HaloExchange& Nodes::halo_exchange() const
 {
-  return mesh_.halo_exchange().get(halo_name());
+  return *halo_exchange_;;
 }
 
 
 void Nodes::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset ) const
 {
-  const mpl::GatherScatter& gather_scatter = mesh_.gather_scatter().get(gather_scatter_name());
-
   ASSERT(local_fieldset.size() == global_fieldset.size());
 
   for( size_t f=0; f<local_fieldset.size(); ++f ) {
@@ -365,22 +355,22 @@ void Nodes::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset ) 
     if     ( loc.datatype() == DataType::kind<int>() ) {
       mpl::Field<int const> loc_field(loc.data<int>(),loc.stride(0));
       mpl::Field<int      > glb_field(glb.data<int>(),glb.stride(0));
-      gather_scatter.gather( &loc_field, &glb_field, nb_fields );
+      gather().gather( &loc_field, &glb_field, nb_fields );
     }
     else if( loc.datatype() == DataType::kind<long>() ) {
       mpl::Field<long const> loc_field(loc.data<long>(),loc.stride(0));
       mpl::Field<long      > glb_field(glb.data<long>(),glb.stride(0));
-      gather_scatter.gather( &loc_field, &glb_field, nb_fields );
+      gather().gather( &loc_field, &glb_field, nb_fields );
     }
     else if( loc.datatype() == DataType::kind<float>() ) {
       mpl::Field<float const> loc_field(loc.data<float>(),loc.stride(0));
       mpl::Field<float      > glb_field(glb.data<float>(),glb.stride(0));
-      gather_scatter.gather( &loc_field, &glb_field, nb_fields );
+      gather().gather( &loc_field, &glb_field, nb_fields );
     }
     else if( loc.datatype() == DataType::kind<double>() ) {
       mpl::Field<double const> loc_field(loc.data<double>(),loc.stride(0));
       mpl::Field<double      > glb_field(glb.data<double>(),glb.stride(0));
-      gather_scatter.gather( &loc_field, &glb_field, nb_fields );
+      gather().gather( &loc_field, &glb_field, nb_fields );
     }
     else throw eckit::Exception("datatype not supported",Here());
   }
@@ -395,18 +385,16 @@ void Nodes::gather( const Field& local, Field& global ) const
 }
 const mpl::GatherScatter& Nodes::gather() const
 {
-  return mesh_.gather_scatter().get(gather_scatter_name());
+  return *gather_scatter_;
 }
 const mpl::GatherScatter& Nodes::scatter() const
 {
-  return mesh_.gather_scatter().get(gather_scatter_name());
+  return *gather_scatter_;
 }
 
 
 void Nodes::scatter( const FieldSet& global_fieldset, FieldSet& local_fieldset ) const
 {
-  const mpl::GatherScatter& gather_scatter = mesh_.gather_scatter().get(gather_scatter_name());
-
   ASSERT(local_fieldset.size() == global_fieldset.size());
 
   for( size_t f=0; f<local_fieldset.size(); ++f ) {
@@ -418,22 +406,22 @@ void Nodes::scatter( const FieldSet& global_fieldset, FieldSet& local_fieldset )
     if     ( loc.datatype() == DataType::kind<int>() ) {
       mpl::Field<int const> glb_field(glb.data<int>(),glb.stride(0));
       mpl::Field<int      > loc_field(loc.data<int>(),loc.stride(0));
-      gather_scatter.scatter( &glb_field, &loc_field, nb_fields );
+      scatter().scatter( &glb_field, &loc_field, nb_fields );
     }
     else if( loc.datatype() == DataType::kind<long>() ) {
       mpl::Field<long const> glb_field(glb.data<long>(),glb.stride(0));
       mpl::Field<long      > loc_field(loc.data<long>(),loc.stride(0));
-      gather_scatter.scatter( &glb_field, &loc_field, nb_fields );
+      scatter().scatter( &glb_field, &loc_field, nb_fields );
     }
     else if( loc.datatype() == DataType::kind<float>() ) {
       mpl::Field<float const> glb_field(glb.data<float>(),glb.stride(0));
       mpl::Field<float      > loc_field(loc.data<float>(),loc.stride(0));
-      gather_scatter.scatter( &glb_field, &loc_field, nb_fields );
+      scatter().scatter( &glb_field, &loc_field, nb_fields );
     }
     else if( loc.datatype() == DataType::kind<double>() ) {
       mpl::Field<double const> glb_field(glb.data<double>(),glb.stride(0));
       mpl::Field<double      > loc_field(loc.data<double>(),loc.stride(0));
-      gather_scatter.scatter( &glb_field, &loc_field, nb_fields );
+      scatter().scatter( &glb_field, &loc_field, nb_fields );
     }
     else throw eckit::Exception("datatype not supported",Here());
   }
@@ -467,18 +455,17 @@ std::string checksum_3d_field(const mpl::Checksum& checksum, const Field& field 
 }
 
 std::string Nodes::checksum( const FieldSet& fieldset ) const {
-  const mpl::Checksum& checksum = mesh().checksum().get(checksum_name());
   eckit::MD5 md5;
   for( size_t f=0; f<fieldset.size(); ++f ) {
     const Field& field=fieldset[f];
     if     ( field.datatype() == DataType::kind<int>() )
-      md5 << checksum_3d_field<int>(checksum,field);
+      md5 << checksum_3d_field<int>(checksum(),field);
     else if( field.datatype() == DataType::kind<long>() )
-      md5 << checksum_3d_field<long>(checksum,field);
+      md5 << checksum_3d_field<long>(checksum(),field);
     else if( field.datatype() == DataType::kind<float>() )
-      md5 << checksum_3d_field<float>(checksum,field);
+      md5 << checksum_3d_field<float>(checksum(),field);
     else if( field.datatype() == DataType::kind<double>() )
-      md5 << checksum_3d_field<double>(checksum,field);
+      md5 << checksum_3d_field<double>(checksum(),field);
     else throw eckit::Exception("datatype not supported",Here());
   }
   return md5;
@@ -491,7 +478,7 @@ std::string Nodes::checksum( const Field& field ) const {
 
 const mpl::Checksum& Nodes::checksum() const
 {
-  return mesh_.checksum().get(checksum_name());
+  return *checksum_;
 }
 
 
@@ -906,12 +893,6 @@ void dispatch_order_independent_sum_per_level( const Nodes& fs, const Field& fie
   fs.gather(field,*global);
   if( eckit::mpi::rank() == 0 ) {
     const ArrayView<T,3> glb = leveled_view<T>(*global);
-
-    DEBUG_VAR(glb.shape(0));
-    DEBUG_VAR(glb.shape(1));
-    DEBUG_VAR(glb.shape(2));
-    DEBUG_VAR(sum.shape(0));
-    DEBUG_VAR(sum.shape(1));
 
     for( size_t n=0; n<glb.shape(0); ++n ) {
       for( size_t l=0; l<glb.shape(1); ++l ) {

@@ -37,7 +37,7 @@ private:
 
 // -------------------------------------------------------------------
 
-class Nodes : public next::FunctionSpace
+class Nodes : public FunctionSpace
 {
 public:
 
@@ -275,6 +275,11 @@ private: // data
     size_t nb_nodes_;
     size_t nb_nodes_global_;
     std::vector<size_t> nb_nodes_global_foreach_rank_;
+
+    eckit::SharedPtr<mpl::GatherScatter> gather_scatter_; // without ghost
+    eckit::SharedPtr<mpl::HaloExchange>  halo_exchange_;
+    eckit::SharedPtr<mpl::Checksum>      checksum_;
+
 };
 
 // -------------------------------------------------------------------

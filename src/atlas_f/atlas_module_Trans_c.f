@@ -13,6 +13,7 @@
 
 function atlas_Trans__ctor( grid, nsmax ) result(trans)
   USE_ATLAS_TRANS_C_BINDING
+  use, intrinsic :: iso_c_binding, only: c_null_ptr
   type(atlas_Trans) :: trans
   class(atlas_Grid), intent(in) :: grid
   integer, intent(in), optional :: nsmax
@@ -24,28 +25,41 @@ function atlas_Trans__ctor( grid, nsmax ) result(trans)
   endif
 #else
   ! IGNORE
+  call trans%reset_c_ptr( c_null_ptr )
 #endif
 end function atlas_Trans__ctor
 
 function atlas_TransParameters__ctor() result(params)
   USE_ATLAS_TRANS_C_BINDING
+  use, intrinsic :: iso_c_binding, only: c_null_ptr
   type(atlas_TransParameters) :: params
 #ifdef ATLAS_HAVE_TRANS
   call params%reset_c_ptr( atlas__TransParameters__new() )
 #else
   ! IGNORE
+  call params%reset_c_ptr( c_null_ptr)
 #endif
 end function atlas_TransParameters__ctor
 
 subroutine atlas_Trans__delete( this )
   USE_ATLAS_TRANS_C_BINDING
+  use, intrinsic :: iso_c_binding, only: c_null_ptr
   class(atlas_Trans), intent(inout) :: this
 #ifdef ATLAS_HAVE_TRANS
   call atlas__Trans__delete(this%c_ptr());
 #else
   ! IGNORE
+  call this%reset_c_ptr( c_null_ptr )
 #endif
 end subroutine
+
+
+subroutine atlas_Trans__copy(this,obj_in)
+  class(atlas_Trans), intent(inout) :: this
+  class(atlas_RefCounted), target, intent(in) :: obj_in
+end subroutine
+
+
 
 subroutine atlas_TransParameters__delete( this )
   USE_ATLAS_TRANS_C_BINDING
@@ -57,6 +71,12 @@ subroutine atlas_TransParameters__delete( this )
 #endif
 end subroutine
 
+
+subroutine atlas_TransParameters__copy(this,obj_in)
+  class(atlas_TransParameters), intent(inout) :: this
+  class(atlas_RefCounted), target, intent(in) :: obj_in
+end subroutine
+
 function atlas_Trans__handle( this ) result(handle)
   USE_ATLAS_TRANS_C_BINDING
   integer :: handle
@@ -65,6 +85,7 @@ function atlas_Trans__handle( this ) result(handle)
   handle = atlas__Trans__handle (this%c_ptr())
 #else
   THROW_ERROR
+  handle = 0
 #endif
 end function
 
@@ -77,6 +98,7 @@ function atlas_Trans__nproc( this ) result(nproc)
   nproc = atlas__Trans__nproc (this%c_ptr())
 #else
   THROW_ERROR
+  nproc = 0
 #endif
 end function
 
@@ -90,6 +112,7 @@ function atlas_Trans__myproc( this, proc0 ) result(myproc)
   myproc = atlas__Trans__myproc (this%c_ptr(),proc0)
 #else
   THROW_ERROR
+  myproc = 0
 #endif
 end function
 
@@ -101,6 +124,7 @@ function atlas_Trans__ndgl( this ) result(ndgl)
   ndgl = atlas__Trans__ndgl (this%c_ptr())
 #else
   THROW_ERROR
+  ndgl = 0
 #endif
 end function
 
@@ -123,6 +147,7 @@ function atlas_Trans__ngptot( this ) result(ngptot)
   ngptot = atlas__Trans__ngptot (this%c_ptr())
 #else
   THROW_ERROR
+  ngptot = 0
 #endif
 end function
 
@@ -134,6 +159,7 @@ function atlas_Trans__ngptotg( this ) result(ngptotg)
   ngptotg = atlas__Trans__ngptotg (this%c_ptr())
 #else
   THROW_ERROR
+  ngptotg = 0
 #endif
 end function
 
@@ -145,6 +171,7 @@ function atlas_Trans__ngptotmx( this ) result(ngptotmx)
   ngptotmx = atlas__Trans__ngptotmx (this%c_ptr())
 #else
   THROW_ERROR
+  ngptotmx = 0
 #endif
 end function
 
@@ -202,6 +229,7 @@ function atlas_Trans__n_regions_NS( this ) result(n_regions_NS)
   n_regions_NS = atlas__Trans__n_regions_NS (this%c_ptr())
 #else
   THROW_ERROR
+  n_regions_NS = 0
 #endif
 end function
 
@@ -214,6 +242,7 @@ function atlas_Trans__n_regions_EW( this ) result(n_regions_EW)
   n_regions_EW = atlas__Trans__n_regions_EW (this%c_ptr())
 #else
   THROW_ERROR
+  n_regions_EW = 0
 #endif
 end function
 
@@ -225,6 +254,7 @@ function atlas_Trans__nump( this ) result(nump)
   nump = atlas__Trans__nump (this%c_ptr())
 #else
   THROW_ERROR
+  nump = 0
 #endif
 end function
 
@@ -239,6 +269,9 @@ function atlas_Trans__nloen(this) result(nloen)
   call C_F_POINTER ( nloen_c_ptr , nloen , (/size/) )
 #else
   THROW_ERROR
+  if ( .not. associated(nloen) ) then
+    allocate(nloen(0) )
+  endif
 #endif
 end function atlas_Trans__nloen
 
@@ -253,6 +286,9 @@ function atlas_Trans__n_regions(this) result(n_regions)
   call C_F_POINTER ( n_regions_c_ptr , n_regions , (/size/) )
 #else
   THROW_ERROR
+  if ( .not. associated(n_regions) ) then
+    allocate(n_regions(0) )
+  endif
 #endif
 end function atlas_Trans__n_regions
 
@@ -268,6 +304,9 @@ function atlas_Trans__nfrstlat(this) result(nfrstlat)
   call C_F_POINTER ( nfrstlat_c_ptr , nfrstlat , (/size/) )
 #else
   THROW_ERROR
+  if ( .not. associated(nfrstlat) ) then
+    allocate(nfrstlat(0) )
+  endif
 #endif
 end function atlas_Trans__nfrstlat
 
@@ -282,6 +321,9 @@ function atlas_Trans__nlstlat(this) result(nlstlat)
   call C_F_POINTER ( nlstlat_c_ptr , nlstlat , (/size/) )
 #else
   THROW_ERROR
+  if ( .not. associated(nlstlat) ) then
+    allocate(nlstlat(0) )
+  endif
 #endif
 end function atlas_Trans__nlstlat
 
@@ -297,6 +339,9 @@ function atlas_Trans__nptrfrstlat(this) result(nptrfrstlat)
   call C_F_POINTER ( nptrfrstlat_c_ptr , nptrfrstlat , (/size/) )
 #else
   THROW_ERROR
+  if ( .not. associated(nptrfrstlat) ) then
+    allocate(nptrfrstlat(0) )
+  endif
 #endif
 end function atlas_Trans__nptrfrstlat
 
@@ -313,6 +358,9 @@ function atlas_Trans__nsta(this) result(nsta)
   call C_F_POINTER ( nsta_c_ptr , nsta , (/sizef1,sizef2/) )
 #else
   THROW_ERROR
+  if ( .not. associated(nsta) ) then
+    allocate(nsta(0,0) )
+  endif
 #endif
 end function atlas_Trans__nsta
 
@@ -328,6 +376,9 @@ function atlas_Trans__nonl(this) result(nonl)
   call C_F_POINTER ( nonl_c_ptr , nonl , (/sizef1,sizef2/) )
 #else
   THROW_ERROR
+  if ( .not. associated(nonl) ) then
+    allocate(nonl(0,0) )
+  endif
 #endif
 end function atlas_Trans__nonl
 
@@ -343,6 +394,9 @@ function atlas_Trans__nmyms(this) result(nmyms)
   call C_F_POINTER ( nmyms_c_ptr , nmyms , (/size/) )
 #else
   THROW_ERROR
+  if ( .not. associated(nmyms) ) then
+    allocate(nmyms(0) )
+  endif
 #endif
 end function atlas_Trans__nmyms
 
@@ -357,6 +411,9 @@ function atlas_Trans__nasm0(this) result(nasm0)
   call C_F_POINTER ( nasm0_c_ptr , nasm0 , (/size/) )
 #else
   THROW_ERROR
+  if ( .not. associated(nasm0) ) then
+    allocate(nasm0(0) )
+  endif
 #endif
 end function atlas_Trans__nasm0
 
@@ -371,6 +428,9 @@ function atlas_Trans__nvalue(this) result(nvalue)
   call C_F_POINTER ( nvalue_c_ptr , nvalue , (/size/) )
 #else
   THROW_ERROR
+  if ( .not. associated(nvalue) ) then
+    allocate(nvalue(0) )
+  endif
 #endif
 end function atlas_Trans__nvalue
 

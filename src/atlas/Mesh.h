@@ -16,10 +16,10 @@
 #include <vector>
 #include <map>
 
-#include "eckit/container/DenseMap.h"
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 
+#include "atlas/atlas_config.h"
 #include "atlas/Metadata.h"
 #include "atlas/Config.h"
 #include "atlas/util/ObjectRegistry.h"
@@ -29,7 +29,10 @@
 // Forward declarations
 namespace atlas { class Grid; }
 namespace atlas { namespace mesh { class Nodes; } }
-namespace atlas { class FunctionSpace; }
+namespace atlas { namespace mesh { class HybridElements; } }
+namespace atlas { namespace mesh { typedef HybridElements Edges; } }
+namespace atlas { namespace mesh { typedef HybridElements Cells; } }
+namespace atlas { namespace deprecated { class FunctionSpace; } }
 namespace atlas { class GridDistribution; }
 namespace atlas { namespace mpl { class HaloExchange; } }
 namespace atlas { namespace mpl { class GatherScatter; } }
@@ -40,39 +43,49 @@ namespace atlas { namespace mpl { class Checksum; } }
 
 namespace atlas {
 
-template <typename T>
-class Store {
-public:
-  bool has(const std::string& name) const
-  {
-    return (store_.find(name) != store_.end());
-  }
-  void add( T* item )
-  {
-    ASSERT( !item->name().empty() );
-    store_[item->name()] = eckit::SharedPtr<T>(item);
-  }
-  T& get(const std::string& name)
-  {
-    if( ! has(name) ) throw eckit::OutOfRange(name+" not found in store.",Here());
-    return *store_.find(name)->second;
-  }
-  const T& get(const std::string& name) const
-  {
-    if( ! has(name) ) throw eckit::OutOfRange(name+" not found in store.",Here());
-    return *store_.find(name)->second;
-  }
-  void remove(const std::string& name)
-  {
-    if( ! has(name) ) throw eckit::OutOfRange(name+" not found in store.",Here());
-    store_.erase( store_.find(name) );
-  }
-private:
-  std::map< std::string, eckit::SharedPtr<T> > store_;
-};
+#if !DEPRECATE_OLD_FUNCTIONSPACE
+namespace deprecated {
 
 
-class Mesh : public eckit::Owned, public util::Registered<Mesh> {
+  /**
+   * @brief The FunctionSpaceContainer class
+   * This class is a simple base class that will be removed soon, as
+   * part of the new design.
+   * Don't use any of these functions.
+   */
+  class FunctionSpaceContainer: public eckit::Owned {
+  public:
+    /// checks if function space exists
+    bool has_function_space(const std::string& name) const;
+
+    /// Takes ownership, and will be deleted automatically
+    deprecated::FunctionSpace& create_function_space(const std::string& name,
+                                         const std::string& shape_func,
+                                         const std::vector<size_t>& shape);
+
+    /// accessor by name
+    deprecated::FunctionSpace& function_space(const std::string& name) const;
+
+    /// accessor by index
+    deprecated::FunctionSpace& function_space( size_t ) const;
+
+    /// number of functional spaces
+    size_t nb_function_spaces() const;
+
+  protected:
+    std::vector< eckit::SharedPtr<deprecated::FunctionSpace> >  function_spaces_;  ///< field handle storage
+    std::map< std::string, size_t >                             index_;            ///< name-to-index map, to refer fields by name
+
+
+  };
+}
+
+class Mesh : public deprecated::FunctionSpaceContainer,
+             public util::Registered<Mesh> {
+#else
+class Mesh : public eckit::Owned,
+             public util::Registered<Mesh> {
+#endif
 
 public: // types
 
@@ -97,53 +110,30 @@ public: // methods
     Metadata& metadata() { return metadata_; }
     const Metadata& metadata() const { return metadata_; }
 
-    /// checks if function space exists
-    bool has_function_space(const std::string& name) const;
-
-    /// Takes ownership, and will be deleted automatically
-    FunctionSpace& create_function_space(const std::string& name,
-                                         const std::string& shape_func,
-                                         const std::vector<size_t>& shape);
-
-    /// accessor by name
-    FunctionSpace& function_space(const std::string& name) const;
-
-    /// accessor by index
-    FunctionSpace& function_space( size_t ) const;
-
-    /// number of functional spaces
-    size_t nb_function_spaces() const;
-
-    /// checks if has a Grid
-    bool has_grid() const { return grid_; }
-
-    /// assign a Grid to this Mesh
-    void set_grid( const Grid& p ) { grid_ = &p; }
-
-    /// accessor of the Grid
-    const Grid& grid() const {  ASSERT( grid_ ); return *grid_; }
-
-
     void prettyPrint(std::ostream&) const;
 
     void print(std::ostream&) const;
 
-
     mesh::Nodes& createNodes(const Grid& g);
 
-    mesh::Nodes& createNodes( size_t );
+    const mesh::Nodes& nodes() const { return *nodes_; }
+          mesh::Nodes& nodes()       { return *nodes_; }
 
-    const mesh::Nodes& nodes() const { ASSERT(nodes_); return *nodes_; }
-          mesh::Nodes& nodes()       { ASSERT(nodes_); return *nodes_; }
+    const mesh::Cells& cells() const { return *cells_; }
+          mesh::Cells& cells()       { return *cells_; }
 
-    const Store<const mpl::HaloExchange>& halo_exchange() const { return halo_exchange_; }
-          Store<const mpl::HaloExchange>& halo_exchange()       { return halo_exchange_; }
+    const mesh::Edges& edges() const { return *edges_; }
+          mesh::Edges& edges()       { return *edges_; }
 
-    const Store<const mpl::GatherScatter>& gather_scatter() const { return gather_scatter_; }
-          Store<const mpl::GatherScatter>& gather_scatter()       { return gather_scatter_; }
+    const mesh::HybridElements& facets() const { return *facets_; }
+          mesh::HybridElements& facets()       { return *facets_; }
 
-    const Store<const mpl::Checksum>& checksum() const { return checksum_; }
-          Store<const mpl::Checksum>& checksum()       { return checksum_; }
+    const mesh::HybridElements& ridges() const { return *ridges_; }
+          mesh::HybridElements& ridges()       { return *ridges_; }
+
+    const mesh::HybridElements& peaks() const { return *peaks_; }
+          mesh::HybridElements& peaks()       { return *peaks_; }
+
 
 private:  // methods
 
@@ -152,22 +142,32 @@ private:  // methods
         return s;
     }
 
-private: // members to be removed
-
-    const Grid* grid_;
-
-    typedef eckit::DenseMap< std::string, eckit::SharedPtr<FunctionSpace> > StoreFS_t;
-
-    StoreFS_t function_spaces_;
-
+    void createElements();
 
 private: // members
 
     Metadata   metadata_;
     eckit::SharedPtr<mesh::Nodes> nodes_;
-    Store<const mpl::HaloExchange> halo_exchange_;
-    Store<const mpl::GatherScatter> gather_scatter_;
-    Store<const mpl::Checksum> checksum_;
+                                                      // dimensionality : 2D | 3D
+                                                      //                  --------
+    eckit::SharedPtr<mesh::HybridElements> cells_;    //                  2D | 3D
+    eckit::SharedPtr<mesh::HybridElements> facets_;   //                  1D | 2D
+    eckit::SharedPtr<mesh::HybridElements> ridges_;   //                  0D | 1D
+    eckit::SharedPtr<mesh::HybridElements> peaks_;    //                  NA | 0D
+
+    eckit::SharedPtr<mesh::HybridElements> edges_;  // alias to facets of 2D mesh, ridges of 3D mesh
+
+    size_t dimensionality_;
+
+public: // members to be removed
+#if ! DEPRECATE_OLD_FUNCTIONSPACE
+    void convert_new_to_old();
+#endif
+    bool has_grid() const { return grid_; }
+    void set_grid( const Grid& p ) { grid_ = &p; }
+    const Grid& grid() const {  ASSERT( grid_ ); return *grid_; }
+private: // members to be removed
+    const Grid* grid_;
 
 };
 
@@ -175,16 +175,24 @@ private: // members
 
 // C wrapper interfaces to C++ routines
 #define mesh_Nodes mesh::Nodes
+#define mesh_Edges mesh::Edges
+#define mesh_Cells mesh::Cells
+#define deprecated_FunctionSpace deprecated::FunctionSpace
 extern "C"
 {
 	Mesh* atlas__Mesh__new ();
 	void atlas__Mesh__delete (Mesh* This);
   mesh_Nodes* atlas__Mesh__create_nodes (Mesh* This, int nb_nodes);
   void atlas__Mesh__create_function_space (Mesh* This, char* name,char* shape_func,int shape[], int shape_size, int fortran_ordering);
-	FunctionSpace* atlas__Mesh__function_space (Mesh* This, char* name);
+  deprecated_FunctionSpace* atlas__Mesh__function_space (Mesh* This, char* name);
   mesh_Nodes* atlas__Mesh__nodes (Mesh* This);
+  mesh_Edges* atlas__Mesh__edges (Mesh* This);
+  mesh_Cells* atlas__Mesh__cells (Mesh* This);
 }
+#undef deprecated_FunctionSpace
 #undef mesh_Nodes
+#undef mesh_Edges
+#undef mesh_Cells
 
 //----------------------------------------------------------------------------------------------------------------------
 

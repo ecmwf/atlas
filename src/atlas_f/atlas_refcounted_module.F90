@@ -12,6 +12,7 @@ private :: atlas_compare_equal
 
 public atlas_RefCounted
 public atlas_RefCounted_Fortran
+public atlas_RefCounted_nocopy
 
 !========================================================================
 
@@ -20,6 +21,7 @@ contains
   procedure, public :: final => RefCounted__final
   procedure, private :: reset => RefCounted__reset
   generic, public :: assignment(=) => reset
+  procedure(atlas_RefCounted__copy), deferred, public :: copy
   procedure(atlas_RefCounted__delete), deferred, public :: delete
   procedure, public :: owners => RefCounted__owners
   procedure, public :: attach => RefCounted__attach
@@ -31,6 +33,11 @@ interface
   subroutine atlas_RefCounted__delete(this)
      import atlas_RefCounted
      class(atlas_RefCounted), intent(inout):: this
+  end subroutine
+  subroutine atlas_RefCounted__copy(this,obj_in)
+    import atlas_RefCounted
+    class(atlas_RefCounted), intent(inout) :: this
+    class(atlas_RefCounted), target, intent(in) :: obj_in
   end subroutine
 end interface
 
@@ -62,18 +69,18 @@ end interface
 interface
   ! int atlas__Owned__owners(const Owned* This);
   function atlas__Owned__owners(This) bind(c,name="atlas__Owned__owners")
-    use iso_c_binding, only: c_int, c_ptr
+    use, intrinsic :: iso_c_binding, only: c_int, c_ptr
     integer(c_int) :: atlas__Owned__owners
     type(c_ptr), value :: This
   end function
 
   subroutine atlas__Owned__attach(This) bind(c,name="atlas__Owned__attach")
-    use iso_c_binding, only: c_ptr
+    use, intrinsic :: iso_c_binding, only: c_ptr
     type(c_ptr), value :: This
   end subroutine
 
   subroutine atlas__Owned__detach(This) bind(c,name="atlas__Owned__detach")
-    use iso_c_binding, only: c_ptr
+    use, intrinsic :: iso_c_binding, only: c_ptr
     type(c_ptr), value :: This
   end subroutine
 
@@ -81,6 +88,11 @@ end interface
 
 !========================================================================
 contains
+
+subroutine atlas_RefCounted_nocopy(this,obj_in)
+  class(atlas_RefCounted), intent(inout) :: this
+  class(atlas_RefCounted), intent(in) :: obj_in
+end subroutine
 
 subroutine RefCounted__final(this)
   class(atlas_RefCounted), intent(inout) :: this
@@ -97,6 +109,7 @@ subroutine RefCounted__reset(obj_out,obj_in)
   if( obj_out /= obj_in ) then
     if( .not. obj_out%is_null() ) call obj_out%final()
     call obj_out%reset_c_ptr( obj_in%c_ptr() )
+    call obj_out%copy(obj_in)
     if( .not. obj_out%is_null() ) call obj_out%attach()
   endif
 end subroutine

@@ -107,12 +107,20 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/EdgeBasedFinit
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/Spectral.h MODULE atlas_functionspace_Spectral_c_binding OUTPUT functionspace_Spectral_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/ReducedGridPoint.h MODULE atlas_functionspace_ReducedGridPoint_c_binding OUTPUT functionspace_ReducedGridPoint_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/NodesInterface.h MODULE atlas_functionspace_Nodes_c_binding OUTPUT functionspace_Nodes_c_binding.f90)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/Edges.h MODULE atlas_functionspace_Edges_c_binding OUTPUT functionspace_Edges_c_binding.f90)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/Nabla.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/meshgen/MeshGenerator.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/Connectivity.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/HybridElements.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/Elements.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/ElementType.h)
 generate_fortran_bindings(FORTRAN_BINDINGS atlas_logging.h)
 generate_fortran_bindings(FORTRAN_BINDINGS atlas_resource.h)
 generate_fortran_bindings(FORTRAN_BINDINGS atlas_value.h)
 
+if( ATLAS_HAVE_DEPRECATED_FUNCTIONSPACE )
+set( DEPRECATED_FUNCTIONSPACE_SRC atlas_deprecated_functionspace_module.F90 )
+endif()
 
 ### atlas fortran lib
 ecbuild_add_library( TARGET atlas_f
@@ -122,9 +130,33 @@ ecbuild_add_library( TARGET atlas_f
         ${FORTRAN_BINDINGS}
         atlas_object_module.F90
         atlas_refcounted_module.F90
+        atlas_kinds_module.F90
+        atlas_JSON_module.F90
+        atlas_Config_module.F90
+        atlas_Metadata_module.F90
+        atlas_FunctionSpace_module.F90
+        atlas_functionspace_Edges_module.F90
+        atlas_functionspace_Nodes_module.F90
+        atlas_Logging_module.F90
+        atlas_Error_module.F90
+        atlas_Field_module.F90
+        atlas_FieldSet_module.F90
+        atlas_Grid_module.F90
+        atlas_GridDistribution_module.F90
+        atlas_MeshGenerator_module.F90
+        atlas_Mesh_module.F90
+        atlas_actions_module.F90
         atlas_module.F90
         atlas_mpi_module.F90
         atlas_grids_module.F90
+        atlas_Connectivity_module.F90
+        atlas_mesh_Nodes_module.F90
+        atlas_mesh_HybridElements_module.F90
+        atlas_mesh_Elements_module.F90
+        atlas_mesh_ElementType_module.F90
+        atlas_GatherScatter_module.F90
+        atlas_Checksum_module.F90
+        atlas_HaloExchange_module.F90
         atlas_C_interop.F90
         atlas_C_interop.cc
         atlas_logging.h
@@ -133,55 +165,20 @@ ecbuild_add_library( TARGET atlas_f
         atlas_resource.cc
         atlas_value.h
         atlas_value.cc
+        ${DEPRECATED_FUNCTIONSPACE_SRC}
   PRIVATE_INCLUDES ${MPI_Fortran_INCLUDE_PATH}
   LIBS atlas ${MPI_Fortran_LIBRARIES}
 )
 
 add_custom_target( atlas_fortran_inc SOURCES
-   atlas_module_Checksum_i.f
-   atlas_module_Checksum_c.f
-   atlas_module_Config_i.f
-   atlas_module_Config_c.f
-   atlas_module_Error_i.f
-   atlas_module_Error_c.f
-   atlas_module_Field_i.f
-   atlas_module_Field_c.f
-   atlas_module_FieldSet_i.f
-   atlas_module_FieldSet_c.f
-   atlas_module_FunctionSpace_i.f
-   atlas_module_FunctionSpace_c.f
    atlas_module_functionspace_EdgeBasedFiniteVolume_i.f
    atlas_module_functionspace_EdgeBasedFiniteVolume_c.f
-   atlas_module_functionspace_Nodes_i.f
-   atlas_module_functionspace_Nodes_c.f
    atlas_module_functionspace_ReducedGridPoint_c.f
    atlas_module_functionspace_ReducedGridPoint_i.f
    atlas_module_functionspace_Spectral_i.f
    atlas_module_functionspace_Spectral_c.f
-   atlas_module_GatherScatter_i.f
-   atlas_module_GatherScatter_c.f
-   atlas_module_Grid_i.f
-   atlas_module_Grid_c.f
-   atlas_module_GridDistribution_i.f
-   atlas_module_GridDistribution_c.f
-   atlas_module_HaloExchange_i.f
-   atlas_module_HaloExchange_c.f
-   atlas_module_JSON_i.f
-   atlas_module_JSON_c.f
-   atlas_module_Logging_i.f
-   atlas_module_Logging_c.f
-   atlas_module_Mesh_i.f
-   atlas_module_Mesh_c.f
-   atlas_module_MeshGenerator_i.f
-   atlas_module_MeshGenerator_c.f
-   atlas_module_Metadata_i.f
-   atlas_module_Metadata_c.f
    atlas_module_Nabla_i.f
    atlas_module_Nabla_c.f
-   atlas_module_Nodes_i.f
-   atlas_module_Nodes_c.f
-   atlas_module_PathName_i.f
-   atlas_module_PathName_c.f
    atlas_module_State_i.f
    atlas_module_State_c.f
    atlas_module_Trans_i.f

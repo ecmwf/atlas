@@ -32,6 +32,7 @@ contains
 
 
   procedure, public :: delete => atlas_Value__delete
+  procedure, public :: copy => atlas_Value__copy
 
 END TYPE atlas_Value
 

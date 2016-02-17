@@ -14,7 +14,6 @@
 #include <string>
 #include "eckit/config/Parametrisation.h"
 #include "atlas/Metadata.h"
-#include "atlas/util/Debug.h"
 
 namespace eckit {
   class JSON;
@@ -24,7 +23,6 @@ namespace eckit {
 namespace atlas {
 class Grid;
 class Mesh;
-class FunctionSpace;
 
 /// @brief Parametrisation class used to construct various
 ///        atlas components

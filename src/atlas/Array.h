@@ -15,6 +15,7 @@
 
 #include <vector>
 #include <iosfwd>
+#include <iterator> // for std::distance
 
 #include "eckit/memory/Owned.h"
 
@@ -29,8 +30,10 @@ namespace atlas {
 class Array : public eckit::Owned {
 public:
   static Array* create( DataType, const ArrayShape& );
-
+  static Array* create( DataType );
+  static Array* create( const Array& );
   template <typename T> static Array* create(const ArrayShape& s);
+  template <typename T> static Array* create();
   template <typename T> static Array* create(size_t size);
   template <typename T> static Array* create(size_t size1, size_t size2);
   template <typename T> static Array* create(size_t size1, size_t size2, size_t size3);
@@ -57,6 +60,8 @@ public:
 
   void resize(size_t size1, size_t size2, size_t size3, size_t size4);
 
+  void insert(size_t idx1, size_t size1);
+
   size_t size() const { return spec_.size(); }
 
   size_t rank() const { return spec_.rank(); }
@@ -74,10 +79,14 @@ public:
   /// @brief Access to raw data
   template <typename DATATYPE>       DATATYPE* data();
   template <typename DATATYPE> const DATATYPE* data() const;
+  
+  void operator=( const Array &array ) { return assign(array); }
+  virtual void assign( const Array& )=0;
 
 private: // methods
 
   virtual void resize_data( size_t size )=0;
+  virtual void insert_data(size_t idx1, size_t size1)=0;
 
 private:
 
@@ -86,6 +95,9 @@ private:
 
 template <typename T> Array* Array::create(const ArrayShape& s)
 { return create(DataType::create<T>(),s); }
+
+template <typename T> Array* Array::create()
+{ return create(DataType::create<T>()); }
 
 template <typename T> Array* Array::create(size_t size)
 { return create(DataType::create<T>(),make_shape(size)); }
@@ -154,15 +166,12 @@ public:
 
   void operator=(const DATA_TYPE& scalar) { for(size_t n=0; n<size(); ++n) data_[n]=scalar; }
 
-  template< class InputIt >
-  void assign( InputIt first, InputIt last ) {
-    InputIt it = first;
-    for( size_t j=0; j<size(); ++j )
-    {
-      data_[j] = *(it++);
-    }
-    ASSERT(it==last);
-  }
+  virtual void assign( const Array& );
+
+  template< typename RandomAccessIterator >
+  void assign( RandomAccessIterator begin, RandomAccessIterator end );
+  
+  virtual void insert_data(size_t idx1, size_t size1);
 
 private:
 
@@ -186,10 +195,44 @@ void ArrayT<DATA_TYPE>::resize_data( size_t size )
   view_ = ArrayView<DATA_TYPE>( *this );
 }
 
+template< typename DATA_TYPE>
+void ArrayT<DATA_TYPE>::insert_data(size_t pos, size_t size)
+{
+  if( !owned_ ) throw eckit::SeriousBug("Cannot resize data that is not owned");
+  owned_data_.insert(owned_data_.begin()+pos,size,0);
+  data_ = owned_data_.data();
+  view_ = ArrayView<DATA_TYPE>( *this );
+}
+
+
 template <typename DATA_TYPE>
 void ArrayT<DATA_TYPE>::wrap(DATA_TYPE data[])
 {
   data_ = data;
+  view_ = ArrayView<DATA_TYPE>( *this );
+}
+
+template< typename DATA_TYPE>
+template< typename RandomAccessIterator >
+void ArrayT<DATA_TYPE>::assign( RandomAccessIterator begin, RandomAccessIterator end )
+{
+  if( std::distance(begin,end) != size() ) {
+    throw eckit::SeriousBug("Size doesn't match");
+  }
+  RandomAccessIterator it = begin;
+  for( size_t j=0; j<size(); ++j, ++it ) {
+    data_[j] = *it;
+  }
+}
+
+template< typename DATA_TYPE>
+void ArrayT<DATA_TYPE>::assign( const Array& other )
+{
+  resize( other.shape() );
+  ASSERT( datatype().kind() == other.datatype().kind() );
+  const DATA_TYPE* other_data = other.data<DATA_TYPE>();
+  for( size_t j=0; j<size(); ++j )
+    data_[j] = other_data[j];
   view_ = ArrayView<DATA_TYPE>( *this );
 }
 

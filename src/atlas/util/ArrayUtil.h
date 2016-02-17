@@ -30,6 +30,7 @@ typedef std::vector<size_t> ArrayShape;
 typedef std::vector<size_t> ArrayStrides;
 typedef std::vector<size_t> ArrayIdx;
 
+inline ArrayShape make_shape() { return std::vector<size_t>(); }
 inline ArrayShape make_shape(size_t size1) { return std::vector<size_t>(1,size1); }
 inline ArrayShape make_shape(size_t size1, size_t size2) { std::vector<size_t> v(2); v[0]=size1; v[1]=size2; return v; }
 inline ArrayShape make_shape(size_t size1, size_t size2, size_t size3) { std::vector<size_t> v(3); v[0]=size1; v[1]=size2; v[2]=size3; return v; }

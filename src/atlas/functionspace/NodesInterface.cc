@@ -23,6 +23,12 @@ Nodes* atlas__NodesFunctionSpace__new ( Mesh* mesh, int halo )
   return new Nodes(*mesh,Halo(halo));
 }
 
+Nodes* atlas__NodesFunctionSpace__new_mesh ( Mesh* mesh )
+{
+  ASSERT(mesh);
+  return new Nodes(*mesh);
+}
+
 void atlas__NodesFunctionSpace__delete (Nodes* This)
 {
   ASSERT(This);

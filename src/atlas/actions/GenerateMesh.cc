@@ -13,7 +13,8 @@
 #include "atlas/GridDistribution.h"
 #include "atlas/meshgen/ReducedGridMeshGenerator.h"
 #include "atlas/actions/GenerateMesh.h"
-#include "atlas/util/Debug.h"
+#include "atlas/runtime/Log.h"
+
 using namespace atlas::meshgen;
 using namespace atlas::grids;
 namespace atlas {
@@ -23,6 +24,10 @@ namespace actions {
 
 Mesh* generate_mesh (const ReducedGrid& rgg)
 {
+  Log::info() << "Deprecated function [generate_mesh] used.\n"
+              << "Consider using ReducedGridMeshGenerator directly."
+              << std::endl;
+
   ReducedGridMeshGenerator generate;
   generate.options.set( "nb_parts", eckit::mpi::size() );
   generate.options.set( "part"    , eckit::mpi::rank() );

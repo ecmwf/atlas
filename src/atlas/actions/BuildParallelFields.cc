@@ -17,7 +17,9 @@
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/Mesh.h"
+#if !DEPRECATE_OLD_FUNCTIONSPACE
 #include "atlas/FunctionSpace.h"
+#endif
 #include "atlas/Field.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/actions/BuildParallelFields.h"
@@ -30,6 +32,7 @@
 #include "atlas/util/PeriodicTransform.h"
 #include "atlas/mpi/mpi.h"
 #include "atlas/mpl/GatherScatter.h"
+#include "atlas/mesh/HybridElements.h"
 
 //#define DEBUGGING_PARFIELDS
 #ifdef DEBUGGING_PARFIELDS
@@ -60,9 +63,9 @@ namespace actions {
 Field& build_nodes_partition ( mesh::Nodes& nodes );
 Field& build_nodes_remote_idx( mesh::Nodes& nodes );
 Field& build_nodes_global_idx( mesh::Nodes& nodes );
-Field& build_edges_partition ( FunctionSpace& edges, mesh::Nodes& nodes );
-Field& build_edges_remote_idx( FunctionSpace& edges, mesh::Nodes& nodes );
-Field& build_edges_global_idx( FunctionSpace& edges, mesh::Nodes& nodes );
+Field& build_edges_partition ( Mesh& mesh );
+Field& build_edges_remote_idx( Mesh& mesh );
+Field& build_edges_global_idx( Mesh& mesh );
 
 // ------------------------------------------------------------------
 
@@ -112,20 +115,11 @@ void build_nodes_parallel_fields( mesh::Nodes& nodes )
 
 // ------------------------------------------------------------------
 
-void build_edges_parallel_fields( FunctionSpace& edges, mesh::Nodes& nodes )
+void build_edges_parallel_fields( Mesh& mesh )
 {
-  ASSERT( nodes.has_field("partition") );
-  ASSERT( nodes.has_field("remote_idx") );
-  ASSERT( nodes.has_field("glb_idx") );
-
-  build_edges_partition ( edges, nodes );
-  build_edges_remote_idx( edges, nodes );
-  build_edges_global_idx( edges, nodes );
-
-  ASSERT( edges.has_field("partition") );
-  ASSERT( edges.has_field("remote_idx") );
-  ASSERT( edges.has_field("glb_idx") );
-
+  build_edges_partition ( mesh );
+  build_edges_remote_idx( mesh );
+  build_edges_global_idx( mesh );
 }
 
 // ------------------------------------------------------------------
@@ -343,17 +337,18 @@ Field& build_nodes_partition( mesh::Nodes& nodes )
 
 // ------------------------------------------------------------------
 
-Field& build_edges_partition( FunctionSpace& edges, mesh::Nodes& nodes )
+Field& build_edges_partition_new( Mesh& mesh )
 {
+  const mesh::Nodes& nodes = mesh.nodes();
   UniqueLonLat compute_uid(nodes);
 
   size_t mypart = eckit::mpi::rank();
   size_t nparts = eckit::mpi::size();
 
-  if( ! edges.has_field("partition") ) edges.create_field<int>("partition",1) ;
-  ArrayView<int,1> edge_part  ( edges.field("partition") );
-  IndexView<int,2> edge_nodes ( edges.field("nodes")     );
-  IndexView<int,2> edge_to_elem ( edges.field("to_elem")     );
+  mesh::HybridElements& edges = mesh.edges();
+  ArrayView<int,1> edge_part  ( edges.partition() );
+  const mesh::HybridElements::Connectivity& edge_nodes = edges.node_connectivity();
+  const mesh::HybridElements::Connectivity& edge_to_elem = edges.cell_connectivity();
 
   ArrayView<int,1> is_pole_edge;
   bool has_pole_edges = false;
@@ -369,50 +364,29 @@ Field& build_edges_partition( FunctionSpace& edges, mesh::Nodes& nodes )
 #ifdef DEBUGGING_PARFIELDS
   ArrayView<gidx_t,   1> gidx    ( nodes.global_index() );
 #endif
-  std::vector< IndexView<int,2> > elem_nodes( edges.mesh().nb_function_spaces() );
-  std::vector< ArrayView<int,1> > elem_part ( edges.mesh().nb_function_spaces() );
-  std::vector< ArrayView<gidx_t,1> > elem_glb_idx ( edges.mesh().nb_function_spaces() );
 
-  for( size_t func_space_idx=0; func_space_idx<edges.mesh().nb_function_spaces(); ++func_space_idx)
-  {
-    FunctionSpace& elements = edges.mesh().function_space(func_space_idx);
-    if( elements.metadata().get<long>("type") == Entity::ELEMS )
-    {
-      elem_nodes  [func_space_idx] = IndexView<int,2>( elements.field("nodes") );
-      elem_part   [func_space_idx] = ArrayView<int,1>( elements.field("partition") );
-      elem_glb_idx[func_space_idx] = ArrayView<gidx_t,1>( elements.field("glb_idx") );
-//      int nb_elems = elem_nodes[func_space_idx].shape(0);
-//      int nb_nodes_per_elem = elem_nodes[func_space_idx].shape(1);
-//      for (int elem=0; elem<nb_elems; ++elem)
-//      {
-//        for (int n=0; n<nb_nodes_per_elem; ++n)
-//        {
-//          int node = elem_nodes[func_space_idx](elem,n);
-//          node_to_elem[node].push_back( ElementRef(elements.index(),elem) );
-//        }
-//      }
-    }
-  }
-
+  const mesh::HybridElements::Connectivity& elem_nodes = mesh.cells().node_connectivity();
+  ArrayView<int,1>     elem_part    ( mesh.cells().partition() );
+  ArrayView<gidx_t,1>  elem_glb_idx ( mesh.cells().global_index() );
 
   PeriodicTransform transform;
 
-  int nb_edges = edges.shape(0);
+  size_t nb_edges = edges.size();
 
-  ArrayT<int> periodic(nb_edges);
+  std::vector<int> periodic(nb_edges);
 
-  for( int jedge=0; jedge<nb_edges; ++jedge )
+  for( size_t jedge=0; jedge<nb_edges; ++jedge )
   {
     periodic[jedge] = 0;
-    int ip1 = edge_nodes(jedge,0);
-    int ip2 = edge_nodes(jedge,1);
+    idx_t ip1 = edge_nodes(jedge,0);
+    idx_t ip2 = edge_nodes(jedge,1);
     int pn1 = node_part( ip1 );
     int pn2 = node_part( ip2 );
     if( pn1 == pn2 )
       edge_part(jedge) = pn1;
     else
     {
-      if( edge_to_elem(jedge,2) < 0 ) // This is a edge at partition boundary
+      if( edge_to_elem(jedge,1) == edge_to_elem.missing_value() ) // This is a edge at partition boundary
       {
         if( (Topology::check(flags(ip1),Topology::PERIODIC) && !Topology::check(flags(ip1),Topology::BC|Topology::WEST) &&
              Topology::check(flags(ip2),Topology::PERIODIC) && !Topology::check(flags(ip2),Topology::BC|Topology::WEST)) ||
@@ -429,7 +403,7 @@ Field& build_edges_partition( FunctionSpace& edges, mesh::Nodes& nodes )
         }
         else if( Topology::check(flags(ip1),Topology::BC) && Topology::check(flags(ip2),Topology::BC) )
         {
-          int pe1 = elem_part[ edge_to_elem(jedge,0) ](edge_to_elem(jedge,1));
+          int pe1 = elem_part(edge_to_elem(jedge,0));
           int pmx = std::max(pn1,pn2);
           if( pe1 == pmx )
             edge_part(jedge) = pmx;
@@ -443,8 +417,8 @@ Field& build_edges_partition( FunctionSpace& edges, mesh::Nodes& nodes )
       }
       else
       {
-        int pe1 = elem_part[ edge_to_elem(jedge,0) ](edge_to_elem(jedge,1));
-        int pe2 = elem_part[ edge_to_elem(jedge,2) ](edge_to_elem(jedge,3));
+        int pe1 = elem_part(edge_to_elem(jedge,0));
+        int pe2 = elem_part(edge_to_elem(jedge,1));
         int pc[] = {0,0};
         if( pn1 == pe1 ) ++pc[0];
         if( pn1 == pe2 ) ++pc[0];
@@ -594,6 +568,8 @@ Field& build_edges_partition( FunctionSpace& edges, mesh::Nodes& nodes )
       }
     }
   }
+
+  // Sanity check
   for( int jedge=0; jedge<nb_edges; ++jedge )
   {
     int ip1 = edge_nodes(jedge,0);
@@ -625,20 +601,48 @@ Field& build_edges_partition( FunctionSpace& edges, mesh::Nodes& nodes )
   /// Because of this problem, the size of the halo should be set to 2 instead of 1!!!
   /// This will be addressed with JIRA issue  ATLAS-12
 
-  return edges.field("partition");
+  return edges.partition();
 }
 
-Field& build_edges_remote_idx( FunctionSpace& edges, mesh::Nodes& nodes )
+#if !DEPRECATE_OLD_FUNCTIONSPACE
+Field& build_edges_partition_convert_to_old( deprecated::FunctionSpace& edges, mesh::Nodes& nodes )
 {
+  if( ! edges.has_field("partition") ) edges.create_field<int>("partition",1) ;
+  ArrayView<int,1> edge_part     ( edges.field("partition") );
+  ArrayView<int,1> new_edge_part ( edges.mesh().edges().partition() );
+
+  for( size_t jedge=0; jedge<edge_part.size(); ++jedge )
+    edge_part(jedge) = new_edge_part(jedge);
+
+  return edges.field("partition");
+}
+#endif
+
+
+Field& build_edges_partition( Mesh& mesh )
+{
+  Field& f = build_edges_partition_new( mesh );
+#if !DEPRECATE_OLD_FUNCTIONSPACE
+  build_edges_partition_convert_to_old( mesh.function_space("edges"), mesh.nodes() );
+#endif
+  return f;
+}
+
+Field& build_edges_remote_idx_new( Mesh& mesh  )
+{
+  const mesh::Nodes& nodes = mesh.nodes();
   UniqueLonLat compute_uid(nodes);
 
   size_t mypart = eckit::mpi::rank();
   size_t nparts = eckit::mpi::size();
 
-  if( ! edges.has_field("remote_idx") ) ( edges.create_field<int>("remote_idx",1) );
-  IndexView<int,   2> edge_nodes ( edges.field("nodes")       );
-  IndexView<int,   1> edge_ridx  ( edges.field("remote_idx")  );
-  ArrayView<int,   1> edge_part  ( edges.field("partition")   );
+  mesh::HybridElements& edges = mesh.edges();
+
+  IndexView<int,1>       edge_ridx  ( edges.remote_index() );
+
+  const ArrayView<int,1> edge_part  ( edges.partition() );
+  const mesh::HybridElements::Connectivity& edge_nodes = edges.node_connectivity();
+
   ArrayView<double,2> lonlat     ( nodes.lonlat() );
   ArrayView<int,   1> flags      ( nodes.field("flags")       );
 #ifdef DEBUGGING_PARFIELDS
@@ -654,8 +658,7 @@ Field& build_edges_remote_idx( FunctionSpace& edges, mesh::Nodes& nodes )
     is_pole_edge = ArrayView<int,1>( edges.field("is_pole_edge") );
   }
 
-//  const int nb_nodes = nodes.size();
-  const int nb_edges = edges.shape(0);
+  const int nb_edges = edges.size();
 
   double centroid[2];
   std::vector< std::vector<uid_t> > send_needed( eckit::mpi::size() );
@@ -664,6 +667,7 @@ Field& build_edges_remote_idx( FunctionSpace& edges, mesh::Nodes& nodes )
   std::map<uid_t,int> lookup;
 
   PeriodicTransform transform;
+
 
   for( int jedge=0; jedge<nb_edges; ++jedge )
   {
@@ -719,6 +723,7 @@ Field& build_edges_remote_idx( FunctionSpace& edges, mesh::Nodes& nodes )
       sendcnt++;
     }
   }
+
   int varsize=2;
 #ifdef DEBUGGING_PARFIELDS
   varsize=6;
@@ -758,9 +763,7 @@ Field& build_edges_remote_idx( FunctionSpace& edges, mesh::Nodes& nodes )
       }
     }
   }
-
   eckit::mpi::all_to_all( send_found, recv_found );
-
   for( size_t jpart=0; jpart<nparts; ++jpart )
   {
     ArrayView<int,2> recv_edge( recv_found[ jpart ].data(),
@@ -770,26 +773,48 @@ Field& build_edges_remote_idx( FunctionSpace& edges, mesh::Nodes& nodes )
       edge_ridx( recv_edge(jedge,0) ) = recv_edge(jedge,1);
     }
   }
-
-  return edges.field("remote_idx");
-
+  return edges.remote_index();
 }
 
-Field& build_edges_global_idx( FunctionSpace& edges, mesh::Nodes& nodes )
+#if !DEPRECATE_OLD_FUNCTIONSPACE
+Field& build_edges_remote_idx_convert_to_old( deprecated::FunctionSpace& edges, mesh::Nodes& nodes )
 {
+  if( ! edges.has_field("remote_idx") ) edges.create_field<int>("remote_idx",1) ;
+  IndexView<int,1> edge_ridx     ( edges.field("remote_idx") );
+  IndexView<int,1> new_edge_ridx ( edges.mesh().edges().remote_index() );
+
+  for( size_t jedge=0; jedge<edge_ridx.size(); ++jedge )
+    edge_ridx(jedge) = new_edge_ridx(jedge);
+
+  return edges.field("remote_idx");
+}
+#endif
+
+Field& build_edges_remote_idx( Mesh& mesh )
+{
+  Field& f = build_edges_remote_idx_new( mesh );
+
+#if !DEPRECATE_OLD_FUNCTIONSPACE
+  build_edges_remote_idx_convert_to_old(mesh.function_space("edges"), mesh.nodes() );
+#endif
+
+  return f;
+}
+
+Field& build_edges_global_idx_new( Mesh& mesh )
+{
+  const mesh::Nodes& nodes = mesh.nodes();
   UniqueLonLat compute_uid(nodes);
 
   int nparts = eckit::mpi::size();
   int root = 0;
 
-  if( ! edges.has_field("glb_idx") )
-  {
-    ArrayView<gidx_t,1> edge_gidx ( edges.create_field<gidx_t>("glb_idx",1) );
-    edge_gidx = -1;
-  }
+  mesh::HybridElements& edges = mesh.edges();
 
-  ArrayView<gidx_t,1> edge_gidx  ( edges.field("glb_idx")     );
-  IndexView<int,   2> edge_nodes ( edges.field("nodes")       );
+  ArrayView<gidx_t,1> edge_gidx ( edges.global_index() );
+  edge_gidx = -1;
+
+  const mesh::HybridElements::Connectivity& edge_nodes = edges.node_connectivity();
   ArrayView<double,2> lonlat     ( nodes.lonlat() );
   ArrayView<int,1> is_pole_edge;
   bool has_pole_edges = false;
@@ -806,7 +831,7 @@ Field& build_edges_global_idx( FunctionSpace& edges, mesh::Nodes& nodes )
    * other edges
    */
   double centroid[2];
-  int nb_edges = edges.shape(0);
+  int nb_edges = edges.size();
   for( int jedge=0; jedge<nb_edges; ++jedge )
   {
     if( edge_gidx(jedge) <= 0 )
@@ -892,7 +917,32 @@ Field& build_edges_global_idx( FunctionSpace& edges, mesh::Nodes& nodes )
     edge_gidx(jedge) = loc_edge_id(jedge);
   }
 
+  return edges.global_index();
+}
+
+#if !DEPRECATE_OLD_FUNCTIONSPACE
+Field& build_edges_global_idx_convert_to_old( deprecated::FunctionSpace& edges, mesh::Nodes& nodes )
+{
+  if( ! edges.has_field("glb_idx") ) edges.create_field<gidx_t>("glb_idx",1) ;
+  ArrayView<gidx_t,1> edge_gidx     ( edges.field("glb_idx") );
+  ArrayView<gidx_t,1> new_edge_gidx ( edges.mesh().edges().global_index() );
+
+  for( size_t jedge=0; jedge<edge_gidx.size(); ++jedge )
+    edge_gidx(jedge) = new_edge_gidx(jedge);
+
   return edges.field("glb_idx");
+}
+#endif
+
+Field& build_edges_global_idx( Mesh& mesh )
+{
+  Field& f = build_edges_global_idx_new( mesh );
+
+#if !DEPRECATE_OLD_FUNCTIONSPACE
+  build_edges_global_idx_convert_to_old( mesh.function_space("edges"), mesh.nodes() );
+#endif
+
+  return f;
 }
 
 // ------------------------------------------------------------------
@@ -904,9 +954,11 @@ void atlas__build_parallel_fields ( Mesh* mesh) {
 void atlas__build_nodes_parallel_fields (mesh::Nodes* nodes) {
   ATLAS_ERROR_HANDLING( build_nodes_parallel_fields(*nodes) );
 }
-void atlas__build_edges_parallel_fields (FunctionSpace* edges, mesh::Nodes* nodes) {
-  ATLAS_ERROR_HANDLING( build_edges_parallel_fields(*edges, *nodes) );
+
+void atlas__build_edges_parallel_fields ( Mesh* mesh ) {
+  ATLAS_ERROR_HANDLING( build_edges_parallel_fields(*mesh) );
 }
+
 void atlas__renumber_nodes_glb_idx (mesh::Nodes* nodes)
 {
   ATLAS_ERROR_HANDLING( renumber_nodes_glb_idx(*nodes) );

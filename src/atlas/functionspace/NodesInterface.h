@@ -25,6 +25,7 @@ namespace functionspace {
 
 extern "C" {
 Nodes* atlas__NodesFunctionSpace__new (Mesh* mesh, int halo);
+Nodes* atlas__NodesFunctionSpace__new_mesh (Mesh* mesh);
 void atlas__NodesFunctionSpace__delete (Nodes* This);
 int atlas__NodesFunctionSpace__nb_nodes(const Nodes* This);
 Mesh* atlas__NodesFunctionSpace__mesh(Nodes* This);

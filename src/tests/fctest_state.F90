@@ -15,7 +15,7 @@
 
 module fctest_atlas_State_Fixture
 use atlas_module
-use iso_c_binding
+use, intrinsic :: iso_c_binding
 implicit none
 
 contains
@@ -109,7 +109,6 @@ TEST( test_state_factory )
 type(atlas_State) :: state
 type(atlas_Field) :: field
 type(atlas_mesh) :: mesh
-type(atlas_FunctionSpace) :: nodes
 
 ! Create a new state
 state = atlas_State()

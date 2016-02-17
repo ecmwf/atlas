@@ -122,9 +122,15 @@ void Field::resize(const ArrayShape& shape)
     array_->resize(shape);
 }
 
-void Field::set_functionspace(const next::FunctionSpace* functionspace)
+void Field::insert(size_t idx1, size_t size1 )
 {
-  functionspace_ = const_cast<next::FunctionSpace*>(functionspace);
+    array_->insert(idx1,size1);
+}
+
+
+void Field::set_functionspace(const FunctionSpace* functionspace)
+{
+  functionspace_ = const_cast<FunctionSpace*>(functionspace);
 
   // In case functionspace is not attached, increase owners, so that
   // this field will not manage its lifetime.
@@ -311,7 +317,7 @@ int atlas__Field__has_functionspace(Field* This)
   return 0;
 }
 
-next::FunctionSpace* atlas__Field__functionspace (Field* This)
+FunctionSpace* atlas__Field__functionspace (Field* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This);

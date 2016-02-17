@@ -9,7 +9,7 @@ end function
 function atlas_Nabla__functionspace_config(functionspace,config) result(nabla)
   use atlas_nabla_c_binding
   type(atlas_Nabla) :: nabla
-  class(atlas_NextFunctionSpace), intent(in) :: functionspace
+  class(atlas_FunctionSpace), intent(in) :: functionspace
   type(atlas_Config), intent(in), optional :: config
   type(atlas_Config) :: opt_config
   if( present(config) ) then
@@ -30,6 +30,12 @@ subroutine atlas_Nabla__delete(this)
   endif
   call this%reset_c_ptr()
 end subroutine atlas_Nabla__delete
+
+subroutine atlas_Nabla__copy(this,obj_in)
+  class(atlas_Nabla), intent(inout) :: this
+  class(atlas_RefCounted), target, intent(in) :: obj_in
+end subroutine
+
 
 subroutine atlas_Nabla__gradient(this,scalar,grad)
   use atlas_nabla_c_binding

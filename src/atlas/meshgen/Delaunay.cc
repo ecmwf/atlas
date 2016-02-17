@@ -18,6 +18,7 @@
 #include "atlas/actions/AddVirtualNodes.h"
 #include "atlas/actions/BuildXYZField.h"
 #include "atlas/actions/BuildConvexHull3D.h"
+#include "atlas/mesh/HybridElements.h"
 
 namespace atlas {
 namespace meshgen {

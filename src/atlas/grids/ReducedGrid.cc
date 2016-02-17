@@ -15,7 +15,6 @@
 #include "eckit/memory/Factory.h"
 
 #include "atlas/grids/ReducedGrid.h"
-#include "atlas/util/Debug.h"
 
 using eckit::Factory;
 using eckit::MD5;

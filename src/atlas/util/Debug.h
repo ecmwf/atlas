@@ -21,9 +21,10 @@
 
 
 /// DEBUG MACRO
-#define DEBUG_0()            atlas::Log::info() << "["<< eckit::mpi::rank() << "] DEBUG() @ " << Here() << std::endl;
-#define DEBUG_1(WHAT)        atlas::Log::info() << "["<< eckit::mpi::rank() << "] DEBUG( " << WHAT << " ) @ " << Here() << std::endl;
-#define DEBUG_2(WHAT,RANK)   if(eckit::mpi::rank() == RANK) { DEBUG_1(WHAT) }
+#define DEBUG_RANK (eckit::mpi::initialized() ? eckit::mpi::rank() : 0)
+#define DEBUG_0()            atlas::Log::info() << "["<< DEBUG_RANK << "] DEBUG() @ " << Here() << std::endl;
+#define DEBUG_1(WHAT)        atlas::Log::info() << "["<< DEBUG_RANK << "] DEBUG( " << WHAT << " ) @ " << Here() << std::endl;
+#define DEBUG_2(WHAT,RANK)   if(DEBUG_RANK == RANK) { DEBUG_1(WHAT) }
 #define DEBUG_X(x,A,B,FUNC, ...)  FUNC
 #define DEBUG(...)  do {DEBUG_X(,##__VA_ARGS__,\
                         DEBUG_2(__VA_ARGS__),\
@@ -51,8 +52,8 @@
   #undef DEBUG_VAR
 #endif
 #define DEBUG_VAR_1(VAR) \
-  atlas::Log::info() << "["<< eckit::mpi::rank() << "] DEBUG( " << #VAR << " : " << VAR << " ) @ " << Here() << std::endl;
-#define DEBUG_VAR_2(VAR,RANK) if(eckit::mpi::rank() == RANK) { DEBUG_VAR_1(VAR) }
+  atlas::Log::info() << "["<< DEBUG_RANK << "] DEBUG( " << #VAR << " : " << VAR << " ) @ " << Here() << std::endl;
+#define DEBUG_VAR_2(VAR,RANK) if(DEBUG_RANK == RANK) { DEBUG_VAR_1(VAR) }
 #define DEBUG_VAR_X(x,A,B,FUNC, ...)  FUNC
 #define DEBUG_VAR(...)  do {DEBUG_VAR_X(,##__VA_ARGS__,\
                             DEBUG_VAR_2(__VA_ARGS__),\

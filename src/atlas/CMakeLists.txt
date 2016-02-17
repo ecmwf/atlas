@@ -105,8 +105,6 @@ actions/BuildCellCentres.h
 actions/BuildCellCentres.cc
 actions/BuildConvexHull3D.h
 actions/BuildConvexHull3D.cc
-actions/DistributeMesh.h
-actions/DistributeMesh.cc
 actions/GenerateMesh.h
 actions/GenerateMesh.cc
 actions/WriteLoadBalanceReport.h
@@ -217,6 +215,8 @@ Array.h
 Array.cc
 BoundBox.h
 BoundBox.cc
+Connectivity.h
+Connectivity.cc
 Config.h
 Config.cc
 Domain.h
@@ -243,6 +243,12 @@ Metadata.cc
 Metadata.h
 mesh/Nodes.cc
 mesh/Nodes.h
+mesh/Elements.h
+mesh/Elements.cc
+mesh/ElementType.h
+mesh/ElementType.cc
+mesh/HybridElements.h
+mesh/HybridElements.cc
 Parameters.h
 Partitioner.cc
 Partitioner.h
@@ -258,6 +264,8 @@ functionspace/Nodes.h
 functionspace/Nodes.cc
 functionspace/NodesInterface.h
 functionspace/NodesInterface.cc
+functionspace/Edges.h
+functionspace/Edges.cc
 functionspace/EdgeBasedFiniteVolume.h
 functionspace/EdgeBasedFiniteVolume.cc
 functionspace/ReducedGridPoint.h

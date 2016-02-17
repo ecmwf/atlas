@@ -103,7 +103,7 @@ int    atlas__FieldSet__has_field     (FieldSet* This, char* name)
   return 0;
 }
 
-int    atlas__FieldSet__size          (FieldSet* This)
+size_t atlas__FieldSet__size          (FieldSet* This)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This != NULL);
@@ -121,7 +121,7 @@ Field* atlas__FieldSet__field_by_name (FieldSet* This, char* name)
   return NULL;
 }
 
-Field* atlas__FieldSet__field_by_idx  (FieldSet* This, int idx)
+Field* atlas__FieldSet__field_by_idx  (FieldSet* This, size_t idx)
 {
   ATLAS_ERROR_HANDLING(
     ASSERT(This != NULL);

@@ -21,6 +21,18 @@ if( HAVE_FCTEST )
     LIBS            atlas_f
   )
 
+  add_fctest( TARGET atlas_fctest_connectivity
+    LINKER_LANGUAGE Fortran
+    SOURCES         fctest_connectivity.F90
+    LIBS            atlas_f
+  )
+
+  add_fctest( TARGET atlas_fctest_elements
+    LINKER_LANGUAGE Fortran
+    SOURCES         fctest_elements.F90
+    LIBS            atlas_f
+  )
+
   add_fctest( TARGET atlas_fctest_logging
     MPI             1
     LINKER_LANGUAGE Fortran
@@ -117,6 +129,21 @@ ecbuild_add_test( TARGET atlas_test_state
   BOOST
   MPI      1
   SOURCES  test_state.cc
+  LIBS     atlas
+)
+
+ecbuild_add_test( TARGET atlas_test_elements
+  BOOST
+  MPI      1
+  SOURCES  test_elements.cc
+  LIBS     atlas
+)
+
+
+ecbuild_add_test( TARGET atlas_test_accumulate_facets
+  BOOST
+  MPI      1
+  SOURCES  test_accumulate_facets.cc
   LIBS     atlas
 )
 

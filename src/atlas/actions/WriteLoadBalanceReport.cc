@@ -15,6 +15,7 @@
 #include "atlas/mpi/mpi.h"
 #include "atlas/Mesh.h"
 #include "atlas/mesh/Nodes.h"
+#include "atlas/mesh/HybridElements.h"
 #include "atlas/actions/WriteLoadBalanceReport.h"
 #include "atlas/util/IsGhost.h"
 #include "atlas/util/IndexView.h"
@@ -93,15 +94,14 @@ void write_load_balance_report( const Mesh& mesh, std::ostream& ofs )
     }
   }
 
-  bool has_edges = mesh.has_function_space("edges");
+  bool has_edges = mesh.edges().size();
 
   if( has_edges )
   {
     const mesh::Nodes& nodes = mesh.nodes();
     IsGhost is_ghost(nodes);
-    FunctionSpace& edges = mesh.function_space("edges");
-    IndexView<int,2> edge_nodes ( edges.field("nodes") );
-    int nb_edges = edges.shape(0);
+    const mesh::HybridElements::Connectivity& edge_nodes = mesh.edges().node_connectivity();
+    size_t nb_edges = mesh.edges().size();
     int nowned(0);
     int nghost(0);
     for( int j=0; j<nb_edges; ++j )
