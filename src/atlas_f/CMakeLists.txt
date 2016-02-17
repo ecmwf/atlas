@@ -176,8 +176,6 @@ add_custom_target( atlas_fortran_inc SOURCES
    atlas_module_functionspace_ReducedGridPoint_i.f
    atlas_module_functionspace_Spectral_i.f
    atlas_module_functionspace_Spectral_c.f
-   atlas_module_GridDistribution_i.f
-   atlas_module_GridDistribution_c.f
    atlas_module_MeshGenerator_i.f
    atlas_module_MeshGenerator_c.f
    atlas_module_Nabla_i.f

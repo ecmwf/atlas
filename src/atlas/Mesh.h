@@ -16,7 +16,6 @@
 #include <vector>
 #include <map>
 
-#include "eckit/container/DenseMap.h"
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
 
@@ -74,9 +73,9 @@ namespace deprecated {
     size_t nb_function_spaces() const;
 
   protected:
-    typedef eckit::DenseMap< std::string, eckit::SharedPtr<deprecated::FunctionSpace> > StoreFS_t;
+    std::vector< eckit::SharedPtr<deprecated::FunctionSpace> >  function_spaces_;  ///< field handle storage
+    std::map< std::string, size_t >                             index_;            ///< name-to-index map, to refer fields by name
 
-    StoreFS_t function_spaces_;
 
   };
 }

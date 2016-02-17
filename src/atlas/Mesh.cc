@@ -103,6 +103,8 @@ void Mesh::createElements()
   else
     throw eckit::Exception("Invalid Mesh dimensionality",Here());
 
+  ASSERT( edges_.owners() == 2 );
+
 #if !DEPRECATE_OLD_FUNCTIONSPACE
   // transitional
   edges_->mesh_ = this;
@@ -118,8 +120,7 @@ void Mesh::createElements()
 
 bool deprecated::FunctionSpaceContainer::has_function_space(const std::string& name) const
 {
-  ASSERT( name != "nodes" );
-  return function_spaces_.has(name);
+  return index_.count(name);
 }
 
 size_t deprecated::FunctionSpaceContainer::nb_function_spaces() const
@@ -138,10 +139,10 @@ deprecated::FunctionSpace& deprecated::FunctionSpaceContainer::create_function_s
 
   deprecated::FunctionSpace::Ptr fs (new deprecated::FunctionSpace(name,shape_func,shape, *(Mesh*)(this) ) );
 
-  function_spaces_.insert(name,fs);
-  function_spaces_.sort();
+  index_[name] = function_spaces_.size();
+  function_spaces_.push_back( fs );
 
-  fs->set_index( function_spaces_.size() - 1 ); ///< @todo revisit this once we can remove functionspaces
+  fs->set_index( function_spaces_.size() - 1 );
 
 	return *fs;
 }
@@ -155,7 +156,7 @@ deprecated::FunctionSpace& deprecated::FunctionSpaceContainer::function_space(co
 		msg << "Could not find FunctionSpace '" << name << "' in mesh";
 		throw eckit::OutOfRange(msg.str(),Here());
 	}
-	return *( function_spaces_[ name ] );
+  return *function_spaces_[ index_.at(name) ];
 }
 
 deprecated::FunctionSpace& deprecated::FunctionSpaceContainer::function_space( size_t idx) const

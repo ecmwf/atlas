@@ -1,5 +1,7 @@
 ! (C) Copyright 2013-2015 ECMWF.
 
+#include "atlas_f/atlas_f_defines.h"
+
 module atlas_actions_module
 
 use atlas_c_interop, only : c_str

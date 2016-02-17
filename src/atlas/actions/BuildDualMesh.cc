@@ -102,6 +102,7 @@ void make_dual_normals_outward_new( Mesh& mesh );
 
 void build_median_dual_mesh_new( Mesh& mesh )
 {
+
   mesh::Nodes& nodes   = mesh.nodes();
   mesh::HybridElements& edges = mesh.edges();
   Field& dual_volumes = nodes.add( Field::create<double>( "dual_volumes", make_shape(nodes.size()) ) );
