@@ -125,6 +125,12 @@ use atlas_Checksum_module, only: &
     & atlas_Checksum
 use atlas_Mesh_module, only: &
     & atlas_Mesh
+use atlas_Grid_module, only: &
+    & atlas_Grid, &
+    & atlas_ReducedGrid, &
+    & atlas_ReducedGaussianGrid, &
+    & atlas_GaussianGrid, &
+    & atlas_LonLatGrid
 use atlas_functionspace_Edges_module, only: &
     & atlas_functionspace_Edges
 use atlas_functionspace_Nodes_module, only: &
@@ -132,15 +138,15 @@ use atlas_functionspace_Nodes_module, only: &
 use atlas_kinds_module, only: &
     & ATLAS_KIND_GIDX, &
     & ATLAS_KIND_IDX
+use atlas_GridDistribution_module, only: &
+    & atlas_GridDistribution
+use atlas_actions_module
 
 #if !DEPRECATE_OLD_FUNCTIONSPACE
 use atlas_deprecated_functionspace_module, only: atlas_deprecated_FunctionSpace
 #endif
 
 use atlas_atlas_c_binding
-use atlas_grids_c_binding
-use atlas_reducedgrid_c_binding
-use atlas_griddistribution_c_binding
 implicit none
 
 private :: atlas_object
@@ -166,13 +172,11 @@ private :: resource_set_string
 
 public
 
-#include "atlas_module_Grid_i.f"
 #include "atlas_module_MeshGenerator_i.f"
 #include "atlas_module_functionspace_EdgeBasedFiniteVolume_i.f"
 #include "atlas_module_functionspace_ReducedGridPoint_i.f"
 #include "atlas_module_functionspace_Spectral_i.f"
 #include "atlas_module_Nabla_i.f"
-#include "atlas_module_GridDistribution_i.f"
 #include "atlas_module_State_i.f"
 #include "atlas_module_Trans_i.f"
 #include "atlas_module_Value_i.f"
@@ -214,21 +218,6 @@ INTERFACE atlas_resource_set
   module procedure resource_set_real64
   module procedure resource_set_string
 end interface atlas_resource_set
-
-!------------------------------------------------------------------------------
-
-ENUM, bind(c)
-  enumerator :: openmode
-  enumerator :: app = 1
-  enumerator :: out = 16
-end ENUM
-
-!------------------------------------------------------------------------------
-
-interface atlas_generate_mesh
-  module procedure atlas_generate_mesh
-  module procedure atlas_generate_mesh_with_distribution
-end interface atlas_generate_mesh
 
 ! =============================================================================
 CONTAINS
@@ -329,13 +318,11 @@ subroutine atlas_finalize()
   call atlas__atlas_finalize()
 end subroutine
 
-#include "atlas_module_Grid_c.f"
 #include "atlas_module_MeshGenerator_c.f"
 #include "atlas_module_functionspace_EdgeBasedFiniteVolume_c.f"
 #include "atlas_module_functionspace_ReducedGridPoint_c.f"
 #include "atlas_module_functionspace_Spectral_c.f"
 #include "atlas_module_Nabla_c.f"
-#include "atlas_module_GridDistribution_c.f"
 #include "atlas_module_State_c.f"
 #include "atlas_module_Trans_c.f"
 #include "atlas_module_Value_c.f"
@@ -400,139 +387,6 @@ function atlas_workdir()
   atlas_workdir = c_to_f_string_cptr(atlas__workdir())
 end function atlas_workdir
 
-function atlas_read_gmsh(filename) result(mesh)
-  use atlas_gmsh_c_binding
-  character(len=*), intent(in) :: filename
-  type(atlas_Mesh) :: mesh
-  mesh = atlas_Mesh( atlas__read_gmsh(c_str(filename)) )
-  call mesh%return()
-end function atlas_read_gmsh
-
-subroutine atlas_write_gmsh(mesh,filename)
-  use atlas_gmsh_c_binding
-  type(atlas_Mesh), intent(in) :: mesh
-  character(len=*), intent(in) :: filename
-  call atlas__write_gmsh_mesh(mesh%c_ptr(),c_str(filename))
-end subroutine atlas_write_gmsh
-
-subroutine atlas_write_gmsh_field(field,function_space,filename,mode)
-  use atlas_gmsh_c_binding
-  type(atlas_Field), intent(in) :: field
-  type(atlas_functionspace_Nodes), intent(in) :: function_space
-  character(len=*), intent(in) :: filename
-  integer(kind(openmode)), optional :: mode
-  if( present(mode) ) then
-    call atlas__write_gmsh_field(field%c_ptr(),function_space%c_ptr(),c_str(filename),mode)
-  else
-    call atlas__write_gmsh_field(field%c_ptr(),function_space%c_ptr(),c_str(filename),out)
-  endif
-end subroutine atlas_write_gmsh_field
-
-subroutine atlas_write_gmsh_fieldset(fieldset,function_space,filename,mode)
-  use atlas_gmsh_c_binding
-  type(atlas_FieldSet), intent(in) :: fieldset
-  type(atlas_functionspace_Nodes), intent(in) :: function_space
-  character(len=*), intent(in) :: filename
-  integer(kind(openmode)), optional :: mode
-  if( present(mode) ) then
-    call atlas__write_gmsh_fieldset(fieldset%c_ptr(),function_space%c_ptr(),c_str(filename),mode)
-  else
-    call atlas__write_gmsh_fieldset(fieldset%c_ptr(),function_space%c_ptr(),c_str(filename),out)
-  endif
-end subroutine atlas_write_gmsh_fieldset
-
-subroutine atlas_build_parallel_fields(mesh)
-  use atlas_BuildParallelFields_c_binding
-  type(atlas_Mesh), intent(inout) :: mesh
-  call atlas__build_parallel_fields(mesh%c_ptr())
-end subroutine atlas_build_parallel_fields
-
-subroutine atlas_build_nodes_parallel_fields(nodes)
-  use atlas_BuildParallelFields_c_binding
-  type(atlas_mesh_Nodes), intent(inout) :: nodes
-  call atlas__build_nodes_parallel_fields(nodes%c_ptr())
-end subroutine atlas_build_nodes_parallel_fields
-
-subroutine atlas_renumber_nodes_glb_idx(nodes)
-  use atlas_BuildParallelFields_c_binding
-  type(atlas_mesh_Nodes), intent(inout) :: nodes
-  call atlas__renumber_nodes_glb_idx(nodes%c_ptr())
-end subroutine atlas_renumber_nodes_glb_idx
-
-subroutine atlas_build_edges_parallel_fields(mesh)
-  use atlas_BuildParallelFields_c_binding
-  type(atlas_Mesh), intent(inout) :: mesh
-  call atlas__build_edges_parallel_fields(mesh%c_ptr())
-end subroutine atlas_build_edges_parallel_fields
-
-subroutine atlas_build_periodic_boundaries(mesh)
-  use atlas_BuildPeriodicBoundaries_c_binding
-  type(atlas_Mesh), intent(inout) :: mesh
-  call atlas__build_periodic_boundaries(mesh%c_ptr())
-end subroutine atlas_build_periodic_boundaries
-
-subroutine atlas_build_halo(mesh,nelems)
-  use atlas_BuildHalo_c_binding
-  type(atlas_Mesh), intent(inout) :: mesh
-  integer, intent(in) :: nelems
-  call atlas__build_halo(mesh%c_ptr(),nelems)
-end subroutine atlas_build_halo
-
-subroutine atlas_build_edges(mesh)
-  use atlas_BuildEdges_c_binding
-  type(atlas_Mesh), intent(inout) :: mesh
-  call atlas__build_edges(mesh%c_ptr())
-end subroutine atlas_build_edges
-
-subroutine atlas_build_pole_edges(mesh)
-  use atlas_BuildEdges_c_binding
-  type(atlas_Mesh), intent(inout) :: mesh
-  call atlas__build_pole_edges(mesh%c_ptr())
-end subroutine atlas_build_pole_edges
-
-subroutine atlas_build_node_to_edge_connectivity(mesh)
-  use atlas_BuildEdges_c_binding
-  type(atlas_Mesh), intent(inout) :: mesh
-  call atlas__build_node_to_edge_connectivity(mesh%c_ptr())
-end subroutine atlas_build_node_to_edge_connectivity
-
-subroutine atlas_build_median_dual_mesh(mesh)
-  use atlas_BuildDualMesh_c_binding
-  type(atlas_Mesh), intent(inout) :: mesh
-  call atlas__build_median_dual_mesh(mesh%c_ptr())
-end subroutine atlas_build_median_dual_mesh
-
-#if !DEPRECATE_OLD_FUNCTIONSPACE
-subroutine atlas_build_centroid_dual_mesh(mesh)
-  use atlas_BuildDualMesh_c_binding
-  type(atlas_Mesh), intent(inout) :: mesh
-  call atlas__build_centroid_dual_mesh(mesh%c_ptr())
-end subroutine atlas_build_centroid_dual_mesh
-#endif
-
-subroutine atlas_write_load_balance_report(mesh,filename)
-  use atlas_WriteLoadBalanceReport_c_binding
-  type(atlas_Mesh), intent(in) :: mesh
-  character(len=*), intent(in) :: filename
-  call atlas__write_load_balance_report(mesh%c_ptr(),c_str(filename))
-end subroutine atlas_write_load_balance_report
-
-function atlas_generate_mesh(grid) result(mesh)
-  use atlas_GenerateMesh_c_binding
-  type(atlas_Mesh) :: mesh
-  class(atlas_Grid) :: grid
-  mesh = atlas_Mesh( atlas__generate_mesh(grid%c_ptr()) )
-  call mesh%return()
-end function atlas_generate_mesh
-
-function atlas_generate_mesh_with_distribution(grid,distribution) result(mesh)
-  use atlas_GenerateMesh_c_binding
-  type(atlas_Mesh) :: mesh
-  class(atlas_Grid) :: grid
-  type(atlas_GridDistribution) :: distribution
-  mesh = atlas_Mesh( atlas__generate_mesh_with_distribution(grid%c_ptr(),distribution%c_ptr()) )
-  call mesh%return()
-end function atlas_generate_mesh_with_distribution
 
 ! -----------------------------------------------------------------------------
 

@@ -141,7 +141,10 @@ ecbuild_add_library( TARGET atlas_f
         atlas_Error_module.F90
         atlas_Field_module.F90
         atlas_FieldSet_module.F90
+        atlas_Grid_module.F90
+        atlas_GridDistribution_module.F90
         atlas_Mesh_module.F90
+        atlas_actions_module.F90
         atlas_module.F90
         atlas_mpi_module.F90
         atlas_grids_module.F90
@@ -173,8 +176,6 @@ add_custom_target( atlas_fortran_inc SOURCES
    atlas_module_functionspace_ReducedGridPoint_i.f
    atlas_module_functionspace_Spectral_i.f
    atlas_module_functionspace_Spectral_c.f
-   atlas_module_Grid_i.f
-   atlas_module_Grid_c.f
    atlas_module_GridDistribution_i.f
    atlas_module_GridDistribution_c.f
    atlas_module_MeshGenerator_i.f
