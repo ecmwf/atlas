@@ -8,8 +8,6 @@
  * does it submit to any jurisdiction.
  */
 
-
-
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
@@ -75,12 +73,20 @@ public:
 
 enum GmshElementTypes { LINE=1, TRIAG=2, QUAD=3, POINT=15 };
 
+
+
+// ----------------------------------------------------------------------------
 void write_header_ascii(std::ostream& out)
 {
   out << "$MeshFormat\n";
   out << "2.2 0 "<<sizeof(double)<<"\n";
   out << "$EndMeshFormat\n";
 }
+// ----------------------------------------------------------------------------
+
+
+
+// ----------------------------------------------------------------------------
 void write_header_binary(std::ostream& out)
 {
   out << "$MeshFormat\n";
@@ -89,7 +95,11 @@ void write_header_binary(std::ostream& out)
   out.write(reinterpret_cast<const char*>(&one),sizeof(int));
   out << "\n$EndMeshFormat\n";
 }
+// ----------------------------------------------------------------------------
 
+
+
+// ----------------------------------------------------------------------------
 template< typename DATATYPE >
 void write_field_nodes(const Gmsh& gmsh, const functionspace::Nodes& function_space, const Field& field, std::ostream& out)
 {
@@ -205,7 +215,169 @@ void write_field_nodes(const Gmsh& gmsh, const functionspace::Nodes& function_sp
     }
   }
 }
+// ----------------------------------------------------------------------------
 
+
+
+// ----------------------------------------------------------------------------
+template< typename DATATYPE >
+void write_field_nodes(
+    const Gmsh&                            gmsh,
+    const functionspace::ReducedGridPoint& function_space,
+    const Field&                           field,
+    std::ostream&                          out)
+{
+    Log::info() << "writing field " << field.name() << "..." << std::endl;
+
+    //bool gather(gmsh.options.get<bool>("gather"));
+    bool binary(!gmsh.options.get<bool>("ascii"));
+
+    int nlev  = field.levels();
+    int nvars = field.stride(0) / nlev;
+
+    //Field::Ptr gidxField(function_space.createField<gidx_t>("gidx"));
+    //ArrayView<gidx_t,1>   gidx(gidxField);
+    ArrayView<DATATYPE,2> data(field.data<DATATYPE>(),
+                               make_shape(field.shape(0),
+                                          field.stride(0)));
+
+    Field::Ptr gidx_glb;
+    Field::Ptr data_glb;
+
+    //gidx_glb.reset(function_space.createGlobalField(
+    //    "gidx_glb", function_space.nodes().global_index()));
+
+    //function_space.gather(
+    //    field.global_index(), *gidx_glb);
+    //ArrayView<gidx_t,1> gidx = ArrayView<gidx_t,1>(*gidx_glb);
+
+    data_glb = function_space.createGlobalField<double>("glb_field");
+    function_space.gather(field, *data_glb);
+    data = ArrayView<DATATYPE,2>(data_glb->data<DATATYPE>(),
+                                 make_shape(data_glb->shape(0),
+                                            data_glb->stride(0)));
+
+    int ndata = data_glb->shape(0);
+
+    std::vector<long> lev;
+    std::vector<long> gmsh_levels;
+    gmsh.options.get("levels", gmsh_levels);
+
+    if (gmsh_levels.empty() || nlev == 1)
+    {
+        lev.resize(nlev);
+        for (int ilev=0; ilev<nlev; ++ilev)
+        {
+            lev[ilev] = ilev;
+        }
+    }
+    else
+    {
+        lev = gmsh_levels;
+    }
+
+    if (eckit::mpi::rank() == 0)
+    {
+        for (int ilev = 0; ilev < lev.size(); ++ilev)
+        {
+            int jlev = lev[ilev];
+            char field_lev[6] = {0, 0, 0, 0, 0, 0};
+
+            if (field.has_levels())
+            {
+                std::sprintf(field_lev, "[%03d]", jlev);
+            }
+
+            double time = field.metadata().has("time") ?
+                field.metadata().get<double>("time") : 0.;
+
+            int step = field.metadata().has("step") ?
+                field.metadata().get<size_t>("step") : 0 ;
+
+            out << "$NodeData\n";
+            out << "1\n";
+            out << "\"" << field.name() << field_lev << "\"\n";
+            out << "1\n";
+            out << time << "\n";
+            out << "4\n";
+            out << step << "\n";
+            if     ( nvars == 1 ) out << nvars << "\n";
+            else if( nvars <= 3 ) out << 3     << "\n";
+            out << ndata << "\n";
+            out << eckit::mpi::rank() << "\n";
+
+            if (binary)
+            {
+                if (nvars == 1)
+                {
+                    double value;
+                    for (int n = 0; n < ndata; ++n)
+                    {
+                        out.write(reinterpret_cast<const char*>(n+1),
+                                  sizeof(int));
+
+                        value = data(n,jlev*nvars+0);
+
+                        out.write(reinterpret_cast<const char*>(&value),
+                                  sizeof(double));
+                    }
+                }
+                else if (nvars <= 3)
+                {
+                    double value[3] = {0,0,0};
+                    for (size_t n = 0; n < ndata; ++n)
+                    {
+                        out.write(reinterpret_cast<const char*>(n+1),
+                                  sizeof(int));
+                        for (int v = 0; v < nvars; ++v)
+                        {
+                            value[v] = data(n,jlev*nvars+v);
+                        }
+                        out.write(reinterpret_cast<const char*>(&value),
+                                  sizeof(double)*3);
+                    }
+                }
+                out << "\n";
+            }
+            else
+            {
+                if (nvars == 1)
+                {
+                    for (int n = 0; n < ndata; ++n)
+                    {
+                        ASSERT(jlev*nvars < data_glb->shape(1));
+                        ASSERT(n < data_glb->shape(0));
+                        out << n+1 << " "
+                            << data(n, jlev*nvars+0) << "\n";
+                    }
+                }
+                else if (nvars <= 3)
+                {
+                    std::vector<DATATYPE> data_vec(3,0.);
+                    for (size_t n = 0; n < ndata; ++n)
+                    {
+                        out << n+1;
+                        for (int v = 0; v < nvars; ++v)
+                        {
+                            data_vec[v] = data(n, jlev*nvars+v);
+                        }
+                        for (int v = 0; v < 3; ++v)
+                        {
+                            out << " " << data_vec[v];
+                        }
+                        out << "\n";
+                    }
+                }
+            }
+            out << "$EndNodeData\n";
+        }
+    }
+}
+// ----------------------------------------------------------------------------
+
+
+
+// ----------------------------------------------------------------------------
 #if 0
 template< typename DATA_TYPE >
 void write_field_elems(const Gmsh& gmsh, const FunctionSpace& function_space, const Field& field, std::ostream& out)
@@ -322,8 +494,13 @@ void write_field_elems(const Gmsh& gmsh, const FunctionSpace& function_space, co
   }
 }
 #endif
+// ----------------------------------------------------------------------------
 
+
+
+// ----------------------------------------------------------------------------
 // Unused private function, in case for big-endian
+// ----------------------------------------------------------------------------
 #if 0
 void swap_bytes(char *array, int size, int n)
 {
@@ -337,10 +514,12 @@ void swap_bytes(char *array, int size, int n)
   delete [] x;
 }
 #endif
-
-
+// ----------------------------------------------------------------------------
 } // end anonymous namespace
 
+
+
+// ----------------------------------------------------------------------------
 Gmsh::Gmsh()
 {
   // which field holds the Nodes
@@ -816,83 +995,194 @@ void Gmsh::write(const Mesh& mesh, const PathName& file_path) const
 
 }
 
-void Gmsh::write(const FieldSet& fieldset, const functionspace::Nodes& functionspace, const PathName& file_path, openmode mode) const
+// ----------------------------------------------------------------------------
+void Gmsh::write(
+    const Field&    field,
+    const PathName& file_path,
+    openmode        mode) const
 {
-  bool is_new_file = (mode != std::ios_base::app || !file_path.exists() );
-  bool binary( !options.get<bool>("ascii") );
-  if ( binary ) mode |= std::ios_base::binary;
-  bool gather = options.has("gather") ? options.get<bool>("gather") : false;
-  GmshFile file(file_path,mode,gather?-1:eckit::mpi::rank());
+    if (!field.functionspace())
+    {
+        std::stringstream msg;
+        msg << "Field ["<<field.name()<<"] has no functionspace";
 
-  // Header
-  if( is_new_file )
-    write_header_ascii(file);
+        throw eckit::AssertionFailed(msg.str(), Here());
+    }
 
-  // Fields
-  for(size_t field_idx = 0; field_idx < fieldset.size(); ++field_idx)
-  {
-    const Field& field = fieldset[field_idx];
-    Log::info() << "writing field " << field.name() << " to gmsh file " << file_path << std::endl;
+    if (dynamic_cast<functionspace::Nodes*>(field.functionspace()))
+    {
+        functionspace::Nodes* functionspace =
+            dynamic_cast<functionspace
+                ::Nodes*>(field.functionspace());
 
-    //[delete] const FunctionSpace& function_space = field.function_space();
+        FieldSet fieldset;
+        fieldset.add(field);
+        write(fieldset, *functionspace, file_path, mode);
+    }
+    else if (dynamic_cast<functionspace
+             ::ReducedGridPoint*>(field.functionspace()))
+    {
+        functionspace::ReducedGridPoint* functionspace =
+            dynamic_cast<functionspace
+                ::ReducedGridPoint*>(field.functionspace());
 
-    //[delete]if( !function_space.metadata().has("type") )
-    //[delete]{
-    //[delete]  throw Exception("function_space "+function_space.name()+" has no type.. ?");
-    //[delete]}
+        FieldSet fieldset;
+        fieldset.add(field);
+        write(fieldset, *functionspace, file_path, mode);
+    }
+    else
+    {
+        std::stringstream msg;
+        msg << "Field ["<<field.name()
+            <<"] has functionspace ["
+            << field.functionspace()->name()
+            << "] but requires a [functionspace::Nodes "
+            << "or functionspace::ReducedGridPoint]";
 
-    //[delete]if( function_space.metadata().get<long>("type") == Entity::NODES )
-    //[delete]{
-      if     ( field.datatype() == DataType::int32()  ) {  write_field_nodes<int   >(*this,functionspace,field,file); }
-      else if( field.datatype() == DataType::int64()  ) {  write_field_nodes<long  >(*this,functionspace,field,file); }
-      else if( field.datatype() == DataType::real32() ) {  write_field_nodes<float >(*this,functionspace,field,file); }
-      else if( field.datatype() == DataType::real64() ) {  write_field_nodes<double>(*this,functionspace,field,file); }
-    //[delete]
-    //[delete]else if( function_space.metadata().get<long>("type") == Entity::ELEMS
-    //[delete]      || function_space.metadata().get<long>("type") == Entity::FACES )
-    //[delete]{
-    //[delete]  if     ( field.datatype() == DataType::int32()  ) {  write_field_elems<int   >(*this,function_space,field,file); }
-    //[delete]  else if( field.datatype() == DataType::int64()  ) {  write_field_elems<long  >(*this,function_space,field,file); }
-    //[delete]  else if( field.datatype() == DataType::real32() ) {  write_field_elems<float >(*this,function_space,field,file); }
-    //[delete]  else if( field.datatype() == DataType::real64() ) {  write_field_elems<double>(*this,function_space,field,file); }
-    //[delete]}
-    file << std::flush;
-  }
-  file.close();
+        throw eckit::AssertionFailed(msg.str(), Here());
+    }
 }
+// ----------------------------------------------------------------------------
 
-void Gmsh::write(const Field& field, const functionspace::Nodes& functionspace, const PathName& file_path, openmode mode) const
+
+
+// ----------------------------------------------------------------------------
+void Gmsh::write(
+    const Field&                field,
+    const functionspace::Nodes& functionspace,
+    const PathName&             file_path,
+    openmode                    mode) const
 {
   FieldSet fieldset;
   fieldset.add(field);
-  write(fieldset,functionspace,file_path,mode);
+  write(fieldset, functionspace, file_path, mode);
 }
+// ----------------------------------------------------------------------------
 
 
-void Gmsh::write(const Field& field, const PathName& file_path, openmode mode) const
+
+// ----------------------------------------------------------------------------
+void Gmsh::write(
+    const Field&                           field,
+    const functionspace::ReducedGridPoint& functionspace,
+    const PathName&                        file_path,
+    openmode                               mode) const
 {
-  if( !field.functionspace() )
-  {
-    std::stringstream msg;
-    msg << "Field ["<<field.name()<<"] has no functionspace";
-    throw eckit::AssertionFailed(msg.str(),Here());
-  }
-  functionspace::Nodes* functionspace = dynamic_cast<functionspace::Nodes*>(field.functionspace());
-  if( !functionspace )
-  {
-    std::stringstream msg;
-    msg << "Field ["<<field.name()<<"] has functionspace ["<<functionspace->name()<<"] but requires a [NodesFunctionSpace]";
-    throw eckit::AssertionFailed(msg.str(),Here());
-  }
-  FieldSet fieldset;
-  fieldset.add(field);
-  write(fieldset,*functionspace,file_path,mode);
+    FieldSet fieldset;
+    fieldset.add(field);
+    write(fieldset, functionspace, file_path, mode);
 }
+// ----------------------------------------------------------------------------
 
 
-// ------------------------------------------------------------------
+
+// ----------------------------------------------------------------------------
+void Gmsh::write(
+    const FieldSet&             fieldset,
+    const functionspace::Nodes& functionspace,
+    const PathName&             file_path,
+    openmode                    mode) const
+{
+    bool is_new_file = (mode != std::ios_base::app || !file_path.exists() );
+    bool binary( !options.get<bool>("ascii") );
+    if ( binary ) mode |= std::ios_base::binary;
+    bool gather = options.has("gather") ? options.get<bool>("gather") : false;
+    GmshFile file(file_path,mode,gather?-1:eckit::mpi::rank());
+
+    // Header
+    if (is_new_file)
+    {
+        write_header_ascii(file);
+    }
+
+    // Fields
+    for(size_t field_idx = 0; field_idx < fieldset.size(); ++field_idx)
+    {
+        const Field& field = fieldset[field_idx];
+        Log::info() << "writing field " << field.name()
+                    << " to gmsh file " << file_path << std::endl;
+
+        if (field.datatype() == DataType::int32())
+        {
+            write_field_nodes<int   >(*this,functionspace,field,file);
+        }
+        else if (field.datatype() == DataType::int64())
+        {
+            write_field_nodes<long  >(*this,functionspace,field,file);
+        }
+        else if (field.datatype() == DataType::real32())
+        {
+            write_field_nodes<float >(*this,functionspace,field,file);
+        }
+        else if (field.datatype() == DataType::real64())
+        {
+            write_field_nodes<double>(*this,functionspace,field,file);
+        }
+
+        file << std::flush;
+    }
+    file.close();
+}
+// ----------------------------------------------------------------------------
+
+
+
+// ----------------------------------------------------------------------------
+void Gmsh::write(
+    const FieldSet& fieldset,
+    const functionspace::ReducedGridPoint& functionspace,
+    const PathName& file_path, openmode mode) const
+{
+    bool is_new_file = (mode != std::ios_base::app || !file_path.exists());
+    bool binary(!options.get<bool>("ascii"));
+
+    if (binary) mode |= std::ios_base::binary;
+
+    bool gather = options.has("gather") ? options.get<bool>("gather") : false;
+
+    GmshFile file(file_path,mode,gather?-1:eckit::mpi::rank());
+
+    // Header
+    if (is_new_file)
+        write_header_ascii(file);
+
+    // Fields
+    for (size_t field_idx = 0; field_idx < fieldset.size(); ++field_idx)
+    {
+        const Field& field = fieldset[field_idx];
+        Log::info() << "writing field " << field.name()
+                    << " to gmsh file " << file_path << std::endl;
+
+        if (field.datatype() == DataType::int32())
+        {
+            write_field_nodes<int   >(*this, functionspace, field, file);
+        }
+        else if (field.datatype() == DataType::int64())
+        {
+            write_field_nodes<long  >(*this, functionspace, field, file);
+        }
+        else if (field.datatype() == DataType::real32())
+        {
+            write_field_nodes<float >(*this, functionspace, field, file);
+        }
+        else if (field.datatype() == DataType::real64())
+        {
+            write_field_nodes<double>(*this, functionspace, field, file);
+        }
+
+        file << std::flush;
+    }
+
+    file.close();
+}
+// ----------------------------------------------------------------------------
+
+
+
+
+// ----------------------------------------------------------------------------
 // C wrapper interfaces to C++ routines
-
+// ----------------------------------------------------------------------------
 Gmsh* atlas__Gmsh__new () {
   return new Gmsh();
 }
@@ -928,9 +1218,7 @@ void atlas__write_gmsh_field (Field* field, functionspace::Nodes* functionspace,
   Gmsh writer;
   writer.write( *field, *functionspace, PathName(file_path) );
 }
-
-// ------------------------------------------------------------------
-
+// ----------------------------------------------------------------------------
 } // namespace io
 } // namespace atlas
 

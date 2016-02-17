@@ -30,7 +30,7 @@ ReducedGridPoint::ReducedGridPoint(const Grid& grid)
     grid_(grid)
 {
 #ifdef ATLAS_HAVE_TRANS
-  trans_ = new trans::Trans(grid_);
+    trans_ = new trans::Trans(grid_);
 #endif
 }
 

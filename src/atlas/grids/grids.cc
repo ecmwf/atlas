@@ -190,7 +190,6 @@ void load()
   load_grid<LonLatGrid>();
   load_grid<ReducedLonLatGrid>();
   load_grid<Unstructured>();
-  load_grid<PolarStereoGraphic>();
 
   load_grid<rgg::N16>();
   load_grid<rgg::N24>();

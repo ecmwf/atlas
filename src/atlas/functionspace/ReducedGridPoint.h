@@ -33,7 +33,7 @@ public:
 
   virtual ~ReducedGridPoint();
 
-  virtual std::string name() const { return "ReducedGrid"; }
+  virtual std::string name() const { return "ReducedGridPoint"; }
 
   /// @brief Create a ReducedGrid field
   template <typename DATATYPE> Field* createField(const std::string& name) const;
