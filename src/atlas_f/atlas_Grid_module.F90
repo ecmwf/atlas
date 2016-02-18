@@ -160,7 +160,7 @@ contains
 function atlas_ReducedGrid__ctor_id(identifier) result(grid)
   use atlas_grids_c_binding
   type(atlas_ReducedGrid) :: grid
-  character(len=*) :: identifier
+  character(len=*), intent(in) :: identifier
   call grid%reset_c_ptr( atlas__new_reduced_grid(c_str(identifier)) )
 end function atlas_ReducedGrid__ctor_id
 

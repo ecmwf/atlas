@@ -17,6 +17,7 @@ if( HAVE_FCTEST )
   add_fctest( TARGET atlas_fctest_mesh
     MPI             1
     LINKER_LANGUAGE Fortran
+    CONDITION       OFF
     SOURCES         fctest_mesh.F90
     LIBS            atlas_f
   )

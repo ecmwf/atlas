@@ -31,7 +31,7 @@ end interface
 
 contains
 
-function atlas_FieldConfig__ctor(creator,ngptot,nproma,nlev,nvar,kind,datatype,shape,grid) result(params)
+function atlas_FieldConfig__ctor(creator,ngptot,nproma,nlev,nvar,kind,datatype,shape) result(params)
   use atlas_Config_c_binding
   type(atlas_FieldParametrisation) :: params
   character(len=*), optional, intent(in) :: creator
@@ -39,7 +39,6 @@ function atlas_FieldConfig__ctor(creator,ngptot,nproma,nlev,nvar,kind,datatype,s
   integer, optional, intent(in) :: nproma
   integer, optional, intent(in) :: nlev
   integer, optional, intent(in) :: nvar
-  type(atlas_ReducedGrid), optional, intent(in) :: grid
   integer, optional, intent(in) :: kind
   character(len=*), optional, intent(in) :: datatype
   integer, optional, intent(in) :: shape(:)
