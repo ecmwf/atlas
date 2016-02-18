@@ -19,7 +19,7 @@ using namespace atlas::functionspace;
 int main(int argc, char *argv[])
 {
     atlas_init(argc, argv);
-    
+
     // Generate global reduced grid
     string gridID = Resource<string>("--grid", string("N32"));
     ReducedGrid::Ptr reducedGrid(ReducedGrid::create(gridID));
@@ -43,65 +43,41 @@ int main(int argc, char *argv[])
     const double zlatc = 0.0 * rpi;
     const double zlonc = 1.0 * rpi;
     const double zrad  = 2.0 * rpi / 9.0;
-    //double  zdist;// zlon, zlat;
     int jnode = 0;
 
+
+
     // Calculate scalar function
-    Field::Ptr scalarField1(fs_rgp->createGlobalField<double>("scalar1"));
-
-    Field::Ptr lonField(fs_rgp->createGlobalField<double>("lon"));
-    Field::Ptr latField(fs_rgp->createGlobalField<double>("lat"));
-    Field::Ptr distField(fs_rgp->createGlobalField<double>("dist"));
-
+    Field::Ptr scalarField1(fs_rgp->createField<double>("scalar1"));
     ArrayView <double,1> scalar1(*scalarField1);
-    ArrayView <double,1> zlon(*lonField);
-    ArrayView <double,1> zlat(*latField);
-    ArrayView <double,1> zdist(*distField);
 
-    // Temporary
-    if (eckit::mpi::rank() == 0)
+    for (int jlat = 0; jlat < fs_rgp->nlat(); ++jlat)
     {
-        for (int jlat = 0; jlat < reducedGrid->nlat(); ++jlat)
+        for (int jlon = 0; jlon < fs_rgp->nlon(jlat); ++jlon)
         {
-            for (int jlon =0; jlon < reducedGrid->nlon(jlat); ++jlon)
+            double zlat = fs_rgp->lat(jlat);
+            zlat = zlat * deg2rad;
+            double zlon = fs_rgp->lon(jlat, jlon);
+            zlon  = zlon * deg2rad;
+            double zdist = 2.0 * sqrt((cos(zlat) * sin((zlon-zlonc)/2.)) *
+                          (cos(zlat) * sin((zlon-zlonc)/2.)) +
+                           sin((zlat-zlatc)/2.) * sin((zlat-zlatc)/2.));
+
+            scalar1(jnode) = 0.0;
+            if (zdist < zrad)
             {
-                zlat(jnode) = reducedGrid->lat(jlat);
-                zlat(jnode) = zlat(jnode) * deg2rad;
-
-                zlon(jnode) = reducedGrid->lon(jlat, jlon);
-                zlon(jnode) = zlon(jnode) * deg2rad;
-
-                zdist(jnode) = 2.0 * sqrt((cos(zlat(jnode)) * sin((zlon(jnode)-zlonc)/2)) *
-                              (cos(zlat(jnode)) * sin((zlon(jnode)-zlonc)/2)) +
-                               sin((zlat(jnode)-zlatc)/2) * sin((zlat(jnode)-zlatc)/2));
-
-                scalar1(jnode) = 0.0;
-                if (zdist(jnode) < zrad)
-                {
-                    scalar1(jnode) = 0.5 * (1. + cos(rpi*zdist(jnode)/zrad));
-                }
-                jnode = jnode+1;
+                scalar1(jnode) = 0.5 * (1. + cos(rpi*zdist/zrad));
             }
+            jnode = jnode+1;
         }
     }
-
-    Field::Ptr localField(fs_rgp->createField<double>("local"));
-    fs_rgp->scatter(*scalarField1, *localField);
 
     // Write mesh and field in gmsh format for visualization
     io::Gmsh gmsh;
     gmsh.options.set("info", true);
     gmsh.write(*mesh, "mesh.msh");
-    gmsh.write(*localField, *fs_rgp, "scalar1.msh");
+    gmsh.write(*scalarField1, *fs_rgp, "scalar1.msh");
     /* .... */
-
-    if (eckit::mpi::rank() == 0)
-    {
-        cout << "grid points             = "
-             << reducedGrid->npts()   << endl;
-        cout << "globalField grid points = "
-             << lonField->size()      << endl;
-    }
 
     atlas_finalize();
     return 0;

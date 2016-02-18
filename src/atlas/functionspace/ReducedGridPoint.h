@@ -17,6 +17,7 @@
 namespace atlas { namespace trans { class Trans; } }
 namespace atlas { namespace mpl { class GatherScatter; } }
 namespace atlas { namespace mpl { class Checksum; } }
+namespace atlas { namespace grids { class ReducedGrid; } }
 namespace atlas { class Field; }
 namespace atlas { class FieldSet; }
 
@@ -49,13 +50,27 @@ public:
   void scatter( const FieldSet&, FieldSet& ) const;
   void scatter( const Field&, Field& ) const;
 
+  // Inline functions for faster access
+  // Note: member variables defined at constructor level
+  int nlat()     const { return nlat_; }
+  int nlon(int jlat) const { return nlon_[jlat]; }
+
+  double lat(const int&) const;
+  double lon(const int&, const int&) const;
+
+
   std::string checksum( const FieldSet& ) const;
   std::string checksum( const Field& ) const;
 
 private: // data
 
+  int nlat_;
+  int first_lat_;
+  std::vector<int> nlon_;
+  std::vector<int> first_lon_;
+
   trans::Trans* trans_;
-  const Grid& grid_;
+  const grids::ReducedGrid& grid_;
   mpl::GatherScatter* gather_scatter_;
   mpl::Checksum* checksum_;
 

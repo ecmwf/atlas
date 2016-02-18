@@ -11,6 +11,7 @@
 #include "eckit/utils/MD5.h"
 #include "atlas/Grid.h"
 #include "atlas/Mesh.h"
+#include "atlas/grids/ReducedGrid.h"
 #include "atlas/functionspace/ReducedGridPoint.h"
 #include "atlas/FieldSet.h"
 #include "atlas/runtime/ErrorHandling.h"
@@ -23,183 +24,455 @@
 namespace atlas {
 namespace functionspace {
 
-// ----------------------------------------------------------------------
-
-ReducedGridPoint::ReducedGridPoint(const Grid& grid)
-  : FunctionSpace(),
-    grid_(grid)
+// ----------------------------------------------------------------------------
+// Constructor
+// ----------------------------------------------------------------------------
+ReducedGridPoint::ReducedGridPoint(
+    const Grid& grid) : FunctionSpace(), grid_(
+                               dynamic_cast<const grids::ReducedGrid&>(grid))
 {
 #ifdef ATLAS_HAVE_TRANS
+
+    if (dynamic_cast<const grids::ReducedGrid*>(&grid) == NULL)
+    {
+      throw eckit::BadCast("Grid is not a grids::ReducedGrid type. "
+                           "Cannot partition using IFS trans", Here());
+    }
+
     trans_ = new trans::Trans(grid_);
+
+    // Maximum number of global points in the longitude direction
+    int nlonmax = dynamic_cast<const grids::ReducedGrid*>(&grid)->nlonmax();
+
+    // Number of latitude bands
+    int n_regions_NS = trans_->n_regions_NS();
+
+    // Number of partitions per latitude band
+    ArrayView<int,1> n_regions = trans_->n_regions();
+
+    // First latitude of latitude band
+    ArrayView<int,1> nfrstlat = trans_->nfrstlat();
+
+    // First latitude of latitude band
+    ArrayView<int,1> nlstlat = trans_->nlstlat();
+
+    // Index of latitude partition (note that if a partition
+    // has two regions on a latitude - the index increases
+    // by one (2 numbers)
+    ArrayView<int,1> nptrfrstlat = trans_->nptrfrstlat();
+
+    // Starting longitudinal point per given latitude (ja)
+    // Note that it is associated to nptrfrstlat
+    ArrayView<int,2> nsta = trans_->nsta();
+
+    // Number of longitudinal points per given latitude (ja)
+    // Note that it is associated to nptrfrstlat
+    ArrayView<int,2> nonl = trans_->nonl();
+
+    // Total number of longitudes per latitude
+    ArrayView<int,1> nloen = trans_->nloen();
+
+    nlat_ = trans_->ndgl();
+
+    //for (int jglat = 0; jglat < trans_->ndgl(); ++jglat)
+    //{
+    //    nlon_[jglat] = nloen[jglat];
+    //}
+
+     int proc = 0;
+    // Loop over number of latitude bands (ja)
+    for (int ja = 0; ja < n_regions_NS; ++ja)
+    {
+        // Loop over number of longitude bands (jb)
+        for (int jb = 0; jb < n_regions[ja]; ++jb)
+        {
+            if (proc == eckit::mpi::rank())
+            {
+                nlat_ = nlstlat[ja] - nfrstlat[ja] + 1;
+                nlon_.resize(nlat_);
+                first_lon_.resize(nlat());
+                first_lat_ = nfrstlat[ja]-1;
+
+                // Loop over latitude points of lat band (ja) and lon band (jb)
+                int ilat = 0;
+                for (int jglat = first_lat_; jglat < nlstlat[ja]; ++jglat)
+                {
+                    int igl = nptrfrstlat[ja] + jglat - nfrstlat[ja];
+                    nlon_[ilat] = nonl(jb,igl);
+                    first_lon_[ilat] = nsta(jb,igl);
+                    ilat++;
+                }
+                goto end_all_loops;
+            }
+            ++proc;
+        }
+    }
+    end_all_loops:
+
+
+    int localLatID;
+    int localLonID;
+    proc == 0;
+
+    // Loop over number of latitude bands (ja)
+    for (int ja = 0; ja < n_regions_NS; ++ja)
+    {
+        // Loop over number of longitude bands (jb)
+        for (int jb = 0; jb < n_regions[ja]; ++jb)
+        {
+            if (proc == eckit::mpi::rank())
+            {
+                // Loop over latitude points of lat band (ja) and lon band (jb)
+                for (int jglat = nfrstlat[ja]-1; jglat < nlstlat[ja]; ++jglat)
+                {
+                    int globalLatID = localLatID + nfrstlat[ja];
+                    int igl = nptrfrstlat[ja] + jglat - nfrstlat[ja];
+
+                    // Loop over longitude points of given latitude point
+                    // of lat band (ja) and lon band (jb) and
+                    for (int jglon = nsta(jb,igl)-1;
+                         jglon < nsta(jb,igl)+nonl(jb,igl)-1; ++jglon)
+                    {
+                        int globalLonID = nsta(jb,igl) + localLonID;
+                    }
+                }
+            }
+            ++proc;
+        }
+    }
+ //   label: exit_double_loop;
 #endif
 }
+// ----------------------------------------------------------------------------
 
+
+
+// ----------------------------------------------------------------------------
+// Destructor
+// ----------------------------------------------------------------------------
 ReducedGridPoint::~ReducedGridPoint()
 {
 #ifdef ATLAS_HAVE_TRANS
-  delete trans_;
+    delete trans_;
 #endif
 }
+// ----------------------------------------------------------------------------
 
+
+
+// ----------------------------------------------------------------------------
+// Create Field
+// ----------------------------------------------------------------------------
 template <>
-Field* ReducedGridPoint::createField<double>(const std::string& name) const {
-#ifdef ATLAS_HAVE_TRANS
-  Field* field = Field::create<double>(name, make_shape(trans_->ngptot()) );
-  field->set_functionspace(this);
-  return field;
-#else
-  eckit::NotImplemented("ReducedGridPoint::createField currently relies on ATLAS_HAVE_TRANS",Here());
-  Field* field = Field::create<double>(name, make_shape(grid_.npts()) );
-  field->set_functionspace(this);
-  return field;
-#endif
-}
-
-template <>
-Field* ReducedGridPoint::createField<double>(const std::string& name, size_t levels) const {
-#ifdef ATLAS_HAVE_TRANS
-  Field* field = Field::create<double>(name, make_shape(trans_->ngptot(),levels) );
-  field->set_functionspace(this);
-  field->set_levels(levels);
-  return field;
-#else
-  eckit::NotImplemented("ReducedGridPoint::createField currently relies on ATLAS_HAVE_TRANS",Here());
-  Field* field = Field::create<double>(name, make_shape(grid_.npts(),levels) );
-  field->set_functionspace(this);
-  return field;
-#endif
-}
-
-template <>
-Field* ReducedGridPoint::createGlobalField<double>(const std::string& name) const {
-#ifdef ATLAS_HAVE_TRANS
-  Field* field = Field::create<double>(name, make_shape(trans_->ngptotg()) );
-  field->set_functionspace(this);
-  return field;
-#else
-  eckit::NotImplemented("ReducedGridPoint::createGlobalField currently relies on ATLAS_HAVE_TRANS",Here());
-  Field* field = Field::create<double>(name, make_shape(grid_.npts()) );
-  field->set_functionspace(this);
-  return field;
-#endif
-}
-
-template <>
-Field* ReducedGridPoint::createGlobalField<double>(const std::string& name, size_t levels) const {
-#ifdef ATLAS_HAVE_TRANS
-  Field* field = Field::create<double>(name, make_shape(trans_->ngptotg(),levels) );
-  field->set_functionspace(this);
-  field->set_levels(levels);
-  return field;
-#else
-  eckit::NotImplemented("ReducedGridPoint::createGlobalField currently relies on ATLAS_HAVE_TRANS",Here());
-  Field* field = Field::create<double>(name, make_shape(grid_.npts(),levels) );
-  field->set_functionspace(this);
-  return field;
-#endif
-}
-
-void ReducedGridPoint::gather( const FieldSet& local_fieldset, FieldSet& global_fieldset ) const
+Field* ReducedGridPoint::createField<double>(
+    const std::string& name) const
 {
 #ifdef ATLAS_HAVE_TRANS
-  ASSERT(local_fieldset.size() == global_fieldset.size());
+    Field* field = Field::create<double>(name, make_shape(trans_->ngptot()));
+    field->set_functionspace(this);
+    return field;
+#else
+    eckit::NotImplemented("ReducedGridPoint::createField currently relies"
+                          " on ATLAS_HAVE_TRANS", Here());
 
-  for( size_t f=0; f<local_fieldset.size(); ++f ) {
+    Field* field = Field::create<double>(name, make_shape(grid_.npts()) );
+    field->set_functionspace(this);
+    return field;
+#endif
+}
+// ----------------------------------------------------------------------------
 
-    const Field& loc = local_fieldset[f];
-    Field& glb = global_fieldset[f];
-    if( loc.datatype() != DataType::str<double>() )
+
+
+// ----------------------------------------------------------------------------
+// Create Field with vertical levels
+// ----------------------------------------------------------------------------
+template <>
+Field* ReducedGridPoint::createField<double>(
+    const std::string& name,
+    size_t levels) const
+{
+#ifdef ATLAS_HAVE_TRANS
+    Field* field = Field::create<double>(
+                    name, make_shape(trans_->ngptot(), levels));
+
+    field->set_functionspace(this);
+    field->set_levels(levels);
+    return field;
+#else
+    eckit::NotImplemented("ReducedGridPoint::createField currently relies "
+                          "on ATLAS_HAVE_TRANS", Here());
+
+    Field* field = Field::create<double>(
+                    name, make_shape(grid_.npts(), levels));
+
+    field->set_functionspace(this);
+    return field;
+#endif
+}
+// ----------------------------------------------------------------------------
+
+
+
+// ----------------------------------------------------------------------------
+// Create global Field
+// ----------------------------------------------------------------------------
+template <>
+Field* ReducedGridPoint::createGlobalField<double>(
+    const std::string& name) const
+{
+#ifdef ATLAS_HAVE_TRANS
+    Field* field = Field::create<double>(name, make_shape(trans_->ngptotg()));
+    field->set_functionspace(this);
+    return field;
+#else
+    eckit::NotImplemented("ReducedGridPoint::createGlobalField currently "
+                          "relies on ATLAS_HAVE_TRANS", Here());
+
+    Field* field = Field::create<double>(name, make_shape(grid_.npts()));
+    field->set_functionspace(this);
+    return field;
+#endif
+}
+// ----------------------------------------------------------------------------
+
+
+
+// ----------------------------------------------------------------------------
+// Create global Field with vertical levels
+// ----------------------------------------------------------------------------
+template <>
+Field* ReducedGridPoint::createGlobalField<double>(
+    const std::string& name,
+    size_t levels) const
+{
+#ifdef ATLAS_HAVE_TRANS
+    Field* field = Field::create<double>(
+                    name, make_shape(trans_->ngptotg(), levels));
+
+    field->set_functionspace(this);
+    field->set_levels(levels);
+    return field;
+#else
+    eckit::NotImplemented("ReducedGridPoint::createGlobalField currently "
+                          "relies on ATLAS_HAVE_TRANS", Here());
+
+    Field* field = Field::create<double>(
+                    name, make_shape(grid_.npts(), levels));
+
+    field->set_functionspace(this);
+    return field;
+#endif
+}
+// ----------------------------------------------------------------------------
+
+
+
+// ----------------------------------------------------------------------------
+// Gather FieldSet
+// ----------------------------------------------------------------------------
+void ReducedGridPoint::gather(
+    const FieldSet& local_fieldset,
+    FieldSet& global_fieldset ) const
+{
+#ifdef ATLAS_HAVE_TRANS
+    ASSERT(local_fieldset.size() == global_fieldset.size());
+
+    for( size_t f=0; f<local_fieldset.size(); ++f )
     {
-      std::stringstream err;
-      err << "Cannot gather ReducedGrid field " << loc.name() << " of datatype " << loc.datatype().str() << ".";
-      err << "Only " << DataType::str<double>() << " supported.";
-      throw eckit::BadValue(err.str());
+        const Field& loc = local_fieldset[f];
+        Field& glb = global_fieldset[f];
+        if( loc.datatype() != DataType::str<double>() )
+        {
+            std::stringstream err;
+            err << "Cannot gather ReducedGrid field " << loc.name()
+                << " of datatype " << loc.datatype().str() << ".";
+            err << "Only " << DataType::str<double>() << " supported.";
+            throw eckit::BadValue(err.str());
+        }
+
+        std::vector<int> nto(1,1);
+        if( loc.rank() > 1 )
+        {
+            nto.resize(loc.stride(0));
+            for( size_t i=0; i<nto.size(); ++i )
+            {
+                nto[i] = 1;
+            }
+        }
+        trans_->gathgrid(nto.size(), nto.data(),
+                         loc.data<double>(), glb.data<double>());
     }
 
-    std::vector<int> nto(1,1);
-    if( loc.rank() > 1 ) {
-      nto.resize(loc.stride(0));
-      for( size_t i=0; i<nto.size(); ++i ) nto[i] = 1;
-    }
-    trans_->gathgrid(nto.size(),nto.data(),loc.data<double>(),glb.data<double>());
+#else
+    eckit::NotImplemented("ReducedGridPoint::gather currently relies "
+                          "on ATLAS_HAVE_TRANS", Here());
+#endif
+}
+// ----------------------------------------------------------------------------
+
+
+
+// ----------------------------------------------------------------------------
+// Gather Field
+// ----------------------------------------------------------------------------
+void ReducedGridPoint::gather(
+    const Field& local,
+    Field& global) const
+{
+#ifdef ATLAS_HAVE_TRANS
+    FieldSet local_fields;
+    FieldSet global_fields;
+    local_fields.add(local);
+    global_fields.add(global);
+    gather(local_fields,global_fields);
+#else
+    eckit::NotImplemented("ReducedGridPoint::gather currently relies "
+                          "on ATLAS_HAVE_TRANS", Here());
+#endif
+}
+// ----------------------------------------------------------------------------
+
+
+
+// ----------------------------------------------------------------------------
+// Scatter FieldSet
+// ----------------------------------------------------------------------------
+void ReducedGridPoint::scatter(
+    const FieldSet& global_fieldset,
+    FieldSet& local_fieldset) const
+{
+#ifdef ATLAS_HAVE_TRANS
+    ASSERT(local_fieldset.size() == global_fieldset.size());
+
+    for( size_t f=0; f<local_fieldset.size(); ++f )
+    {
+        const Field& glb = global_fieldset[f];
+        Field& loc = local_fieldset[f];
+        if( loc.datatype() != DataType::str<double>() )
+        {
+            std::stringstream err;
+            err << "Cannot scatter ReducedGrid field " << glb.name()
+                << " of datatype " << glb.datatype().str() << ".";
+            err << "Only " << DataType::str<double>() << " supported.";
+            throw eckit::BadValue(err.str());
+        }
+
+        std::vector<int> nfrom(1,1);
+        if( loc.rank() > 1 )
+        {
+            nfrom.resize(loc.stride(0));
+            for( size_t i=0; i<nfrom.size(); ++i)
+            {
+                nfrom[i] = 1;
+            }
+        }
+        trans_->distgrid(nfrom.size(), nfrom.data(),
+                         glb.data<double>(), loc.data<double>());
   }
 #else
-  eckit::NotImplemented("ReducedGridPoint::gather currently relies on ATLAS_HAVE_TRANS",Here());
+    eckit::NotImplemented("ReducedGridPoint::scatter currently relies "
+                          "on ATLAS_HAVE_TRANS", Here());
 #endif
 }
-void ReducedGridPoint::gather( const Field& local, Field& global ) const
+// ----------------------------------------------------------------------------
+
+
+
+// ----------------------------------------------------------------------------
+// Scatter Field
+// ----------------------------------------------------------------------------
+void ReducedGridPoint::scatter(
+    const Field& global,
+    Field& local) const
 {
 #ifdef ATLAS_HAVE_TRANS
-  FieldSet local_fields;
-  FieldSet global_fields;
-  local_fields.add(local);
-  global_fields.add(global);
-  gather(local_fields,global_fields);
+    FieldSet global_fields;
+    FieldSet local_fields;
+    global_fields.add(global);
+    local_fields.add(local);
+    scatter(global_fields, local_fields);
 #else
-  eckit::NotImplemented("ReducedGridPoint::gather currently relies on ATLAS_HAVE_TRANS",Here());
+    eckit::NotImplemented("ReducedGridPoint::scatter currently relies "
+                          "on ATLAS_HAVE_TRANS", Here());
 #endif
 }
+// ----------------------------------------------------------------------------
 
-void ReducedGridPoint::scatter( const FieldSet& global_fieldset, FieldSet& local_fieldset ) const
+
+
+
+
+
+// ----------------------------------------------------------------------------
+// Retrieve Global index from Local one
+// ----------------------------------------------------------------------------
+double ReducedGridPoint::lat(
+    const int& jlat) const
 {
 #ifdef ATLAS_HAVE_TRANS
-  ASSERT(local_fieldset.size() == global_fieldset.size());
-
-  for( size_t f=0; f<local_fieldset.size(); ++f ) {
-
-    const Field& glb = global_fieldset[f];
-    Field& loc = local_fieldset[f];
-    if( loc.datatype() != DataType::str<double>() )
-    {
-      std::stringstream err;
-      err << "Cannot scatter ReducedGrid field " << glb.name() << " of datatype " << glb.datatype().str() << ".";
-      err << "Only " << DataType::str<double>() << " supported.";
-      throw eckit::BadValue(err.str());
-    }
-
-    std::vector<int> nfrom(1,1);
-    if( loc.rank() > 1 ) {
-      nfrom.resize(loc.stride(0));
-      for( size_t i=0; i<nfrom.size(); ++i ) nfrom[i] = 1;
-    }
-    trans_->distgrid(nfrom.size(),nfrom.data(),glb.data<double>(),loc.data<double>());
-  }
+return grid_.lat(jlat+first_lat_);
 #else
-  eckit::NotImplemented("ReducedGridPoint::scatter currently relies on ATLAS_HAVE_TRANS",Here());
+    eckit::NotImplemented("ReducedGridPoint::scatter currently relies "
+                          "on ATLAS_HAVE_TRANS", Here());
 #endif
 }
+// ----------------------------------------------------------------------------
 
-void ReducedGridPoint::scatter( const Field& global, Field& local ) const
+
+
+// ----------------------------------------------------------------------------
+// Retrieve Global index from Local one
+// ----------------------------------------------------------------------------
+double ReducedGridPoint::lon(
+    const int& jlat,
+    const int& jlon) const
 {
 #ifdef ATLAS_HAVE_TRANS
-  FieldSet global_fields;
-  FieldSet local_fields;
-  global_fields.add(global);
-  local_fields.add(local);
-  scatter(global_fields,local_fields);
+return grid_.lon(jlat+first_lat_, jlon+first_lon_[jlat]);
 #else
-  eckit::NotImplemented("ReducedGridPoint::scatter currently relies on ATLAS_HAVE_TRANS",Here());
+    eckit::NotImplemented("ReducedGridPoint::scatter currently relies "
+                          "on ATLAS_HAVE_TRANS", Here());
 #endif
 }
+// ----------------------------------------------------------------------------
 
-std::string ReducedGridPoint::checksum( const FieldSet& fieldset ) const {
-  eckit::MD5 md5;
-  NOTIMP;
-  return md5;
+// ----------------------------------------------------------------------------
+// Checksum FieldSet
+// ----------------------------------------------------------------------------
+std::string ReducedGridPoint::checksum(
+    const FieldSet& fieldset) const
+{
+    eckit::MD5 md5;
+    NOTIMP;
+    return md5;
 }
-std::string ReducedGridPoint::checksum( const Field& field ) const {
-  // FieldSet fieldset;
-  // fieldset.add(field);  
-  // return checksum(fieldset);
-  eckit::Log::warning() << "Only local checksum implemented" << std::endl;
-  std::stringstream resultss;
-  resultss << atlas::checksum(field.data<double>(),field.size());
-  return resultss.str();
+// ----------------------------------------------------------------------------
+
+
+
+// ----------------------------------------------------------------------------
+// Checksum Field
+// ----------------------------------------------------------------------------
+std::string ReducedGridPoint::checksum(
+    const Field& field) const
+{
+    // FieldSet fieldset;
+    // fieldset.add(field);
+    // return checksum(fieldset);
+    eckit::Log::warning() << "Only local checksum implemented" << std::endl;
+    std::stringstream resultss;
+    resultss << atlas::checksum(field.data<double>(),field.size());
+    return resultss.str();
 }
+// ----------------------------------------------------------------------------
 
-// ----------------------------------------------------------------------
 
 
+
+// ----------------------------------------------------------------------------
+// Fortran interfaces
+// ----------------------------------------------------------------------------
 extern "C"
 {
 
@@ -300,6 +573,7 @@ void atlas__fs__ReducedGridPoint__checksum_field(const ReducedGridPoint* This, c
 }
 
 }
+// ----------------------------------------------------------------------------
 
 } // namespace functionspace
 } // namespace atlas
