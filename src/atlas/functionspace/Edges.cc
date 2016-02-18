@@ -79,7 +79,7 @@ Edges::Edges( Mesh& mesh )
   constructor();
 }
 
-Edges::Edges( Mesh& mesh, const Halo &halo, const eckit::Parametrisation &params )
+Edges::Edges( Mesh& mesh, const mesh::Halo &halo, const eckit::Parametrisation &params )
   : FunctionSpace(),
     mesh_(&mesh),
     edges_(mesh.edges()),
@@ -92,7 +92,7 @@ Edges::Edges( Mesh& mesh, const Halo &halo, const eckit::Parametrisation &params
   constructor();
 }
 
-Edges::Edges(Mesh& mesh, const Halo &halo)
+Edges::Edges(Mesh& mesh, const mesh::Halo &halo)
   : FunctionSpace(),
     mesh_(&mesh),
     edges_(mesh.edges()),
@@ -419,7 +419,7 @@ Edges* atlas__functionspace__Edges__new ( Mesh* mesh, int halo )
   Edges* edges;
   ATLAS_ERROR_HANDLING(
       ASSERT(mesh);
-      edges = new Edges(*mesh,Halo(halo));
+      edges = new Edges(*mesh,mesh::Halo(halo));
   );
   return edges;
 }

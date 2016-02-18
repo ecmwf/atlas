@@ -21,7 +21,7 @@
 #include "atlas/Grid.h"
 #include "atlas/Mesh.h"
 #include "atlas/meshgen/ReducedGridMeshGenerator.h"
-#include "atlas/functionspace/EdgeBasedFiniteVolume.h"
+#include "atlas/numerics/fvm/Method.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/Field.h"
 #include "atlas/Parameters.h"
@@ -57,7 +57,7 @@ double dual_volume(Mesh& mesh)
 
 /// @brief Compute magnitude of flow with rotation-angle beta
 /// (beta=0 --> zonal, beta=pi/2 --> meridional)
-void rotated_flow(const functionspace::EdgeBasedFiniteVolume& fvm, Field& field, const double& beta)
+void rotated_flow(const fvm::Method& fvm, Field& field, const double& beta)
 {
   const double radius = fvm.radius();
   const double USCAL = 20.;
@@ -84,7 +84,7 @@ void rotated_flow(const functionspace::EdgeBasedFiniteVolume& fvm, Field& field,
 
 /// @brief Compute magnitude of flow with rotation-angle beta
 /// (beta=0 --> zonal, beta=pi/2 --> meridional)
-void rotated_flow_magnitude(const functionspace::EdgeBasedFiniteVolume& fvm, Field& field, const double& beta)
+void rotated_flow_magnitude(const fvm::Method& fvm, Field& field, const double& beta)
 {
   const double radius = fvm.radius();
   const double USCAL = 20.;
@@ -117,7 +117,7 @@ BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test_factory )
 {
-  BOOST_CHECK( NablaFactory::has("EdgeBasedFiniteVolume") );
+  BOOST_CHECK( NablaFactory::has("FVM") );
 }
 
 BOOST_AUTO_TEST_CASE( test_build )
@@ -126,7 +126,7 @@ BOOST_AUTO_TEST_CASE( test_build )
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("ReducedGrid") );
   SharedPtr<Mesh> mesh( meshgenerator->generate(*grid) );
   const double R = Earth::radiusInMeters();
-  functionspace::EdgeBasedFiniteVolume fvm(*mesh,Config("radius",R));
+  fvm::Method fvm(*mesh,Config("radius",R));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
   double spherical_area = 4.*M_PI*R*R;
@@ -142,7 +142,7 @@ BOOST_AUTO_TEST_CASE( test_grad )
   SharedPtr<Grid> grid ( Grid::create("O32") );
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("ReducedGrid") );
   SharedPtr<Mesh> mesh( meshgenerator->generate(*grid) );
-  functionspace::EdgeBasedFiniteVolume fvm(*mesh, Config("radius",radius));
+  fvm::Method fvm(*mesh, Config("radius",radius));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
   ArrayView<double,2> lonlat( mesh->nodes().lonlat() );
@@ -150,14 +150,14 @@ BOOST_AUTO_TEST_CASE( test_grad )
   size_t nlev = 1;
 
   FieldSet fields;
-  fields.add( fvm.createField<double>("scalar",nlev) );
-  fields.add( fvm.createField<double>("rscalar",nlev) );
-  fields.add( fvm.createField<double>("grad",nlev,make_shape(2)) );
-  fields.add( fvm.createField<double>("rgrad",nlev,make_shape(2)) );
-  fields.add( fvm.createField<double>("xder",nlev) );
-  fields.add( fvm.createField<double>("yder",nlev) );
-  fields.add( fvm.createField<double>("rxder",nlev) );
-  fields.add( fvm.createField<double>("ryder",nlev) );
+  fields.add( fvm.nodes_fs().createField<double>("scalar",nlev) );
+  fields.add( fvm.nodes_fs().createField<double>("rscalar",nlev) );
+  fields.add( fvm.nodes_fs().createField<double>("grad",nlev,make_shape(2)) );
+  fields.add( fvm.nodes_fs().createField<double>("rgrad",nlev,make_shape(2)) );
+  fields.add( fvm.nodes_fs().createField<double>("xder",nlev) );
+  fields.add( fvm.nodes_fs().createField<double>("yder",nlev) );
+  fields.add( fvm.nodes_fs().createField<double>("rxder",nlev) );
+  fields.add( fvm.nodes_fs().createField<double>("ryder",nlev) );
 
   //  fields.add( fvm.createField<double>("exact_yder",nlev) );
 
@@ -197,7 +197,7 @@ BOOST_AUTO_TEST_CASE( test_grad )
 
   // output to gmsh
   {
-    fvm.haloExchange(fields);
+    fvm.nodes_fs().haloExchange(fields);
     io::Gmsh().write(*mesh,grid->shortName()+".msh");
     io::Gmsh().write(fields["scalar"],grid->shortName()+"_fields.msh");
     io::Gmsh().write(fields["xder"],grid->shortName()+"_fields.msh",std::ios::app);
@@ -218,15 +218,15 @@ BOOST_AUTO_TEST_CASE( test_div )
   SharedPtr<Grid> grid ( Grid::create("O32") );
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("ReducedGrid") );
   SharedPtr<Mesh> mesh( meshgenerator->generate(*grid) );
-  functionspace::EdgeBasedFiniteVolume fvm(*mesh, Config("radius",radius));
+  fvm::Method fvm(*mesh, Config("radius",radius));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
   ArrayView<double,2> lonlat( mesh->nodes().lonlat() );
   size_t nlev = 1;
 
   FieldSet fields;
-  fields.add( fvm.createField<double>("wind",nlev,make_shape(2)) );
-  fields.add( fvm.createField<double>("div",nlev) );
+  fields.add( fvm.nodes_fs().createField<double>("wind",nlev,make_shape(2)) );
+  fields.add( fvm.nodes_fs().createField<double>("div",nlev) );
 
   rotated_flow(fvm,fields["wind"],M_PI_2*0.75);
 
@@ -234,7 +234,7 @@ BOOST_AUTO_TEST_CASE( test_div )
 
   // output to gmsh
   {
-    fvm.haloExchange(fields);
+    fvm.nodes_fs().haloExchange(fields);
     io::Gmsh().write(*mesh,grid->shortName()+".msh");
     io::Gmsh().write(fields["wind"],grid->shortName()+"_fields.msh",std::ios::app);
     io::Gmsh().write(fields["div"],grid->shortName()+"_fields.msh",std::ios::app);
@@ -248,15 +248,15 @@ BOOST_AUTO_TEST_CASE( test_curl )
   SharedPtr<Grid> grid ( Grid::create("O32") );
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("ReducedGrid") );
   SharedPtr<Mesh> mesh( meshgenerator->generate(*grid) );
-  functionspace::EdgeBasedFiniteVolume fvm(*mesh, Config("radius",radius));
+  fvm::Method fvm(*mesh, Config("radius",radius));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
   ArrayView<double,2> lonlat( mesh->nodes().lonlat() );
   size_t nlev = 1;
 
   FieldSet fields;
-  fields.add( fvm.createField<double>("wind",nlev,make_shape(2)) );
-  fields.add( fvm.createField<double>("vor",nlev) );
+  fields.add( fvm.nodes_fs().createField<double>("wind",nlev,make_shape(2)) );
+  fields.add( fvm.nodes_fs().createField<double>("vor",nlev) );
 
   rotated_flow(fvm,fields["wind"],M_PI_2*0.75);
 
@@ -264,7 +264,7 @@ BOOST_AUTO_TEST_CASE( test_curl )
 
   // output to gmsh
   {
-    fvm.haloExchange(fields);
+    fvm.nodes_fs().haloExchange(fields);
     io::Gmsh().write(*mesh,grid->shortName()+".msh");
 //    io::Gmsh().write(fields["wind"],grid->shortName()+"_fields.msh",std::ios::app);
     io::Gmsh().write(fields["vor"],grid->shortName()+"_fields.msh",std::ios::app);
@@ -278,15 +278,15 @@ BOOST_AUTO_TEST_CASE( test_lapl )
   SharedPtr<Grid> grid ( Grid::create("O32") );
   SharedPtr<MeshGenerator> meshgenerator ( MeshGenerator::create("ReducedGrid") );
   SharedPtr<Mesh> mesh( meshgenerator->generate(*grid) );
-  functionspace::EdgeBasedFiniteVolume fvm(*mesh, Config("radius",radius));
+  fvm::Method fvm(*mesh, Config("radius",radius));
   SharedPtr<Nabla> nabla ( Nabla::create(fvm) );
 
   ArrayView<double,2> lonlat( mesh->nodes().lonlat() );
   size_t nlev = 1;
 
   FieldSet fields;
-  fields.add( fvm.createField<double>("scal",nlev) );
-  fields.add( fvm.createField<double>("lapl",nlev) );
+  fields.add( fvm.nodes_fs().createField<double>("scal",nlev) );
+  fields.add( fvm.nodes_fs().createField<double>("lapl",nlev) );
 
   rotated_flow_magnitude(fvm,fields["scal"],M_PI_2*0.75);
 
@@ -294,7 +294,7 @@ BOOST_AUTO_TEST_CASE( test_lapl )
 
   // output to gmsh
   {
-    fvm.haloExchange(fields);
+    fvm.nodes_fs().haloExchange(fields);
     io::Gmsh().write(*mesh,grid->shortName()+".msh");
 //    io::Gmsh().write(fields["wind"],grid->shortName()+"_fields.msh",std::ios::app);
     io::Gmsh().write(fields["lapl"],grid->shortName()+"_fields.msh",std::ios::app);

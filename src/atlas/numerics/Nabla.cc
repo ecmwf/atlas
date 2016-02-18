@@ -21,7 +21,7 @@
 #include "atlas/runtime/ErrorHandling.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/numerics/Nabla.h"
-#include "atlas/numerics/nabla/EdgeBasedFiniteVolume.h"
+#include "atlas/numerics/fvm/Nabla.h"
 
 namespace {
 

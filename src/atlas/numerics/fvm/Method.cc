@@ -17,7 +17,8 @@
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/runtime/ErrorHandling.h"
 
-#include "atlas/functionspace/EdgeBasedFiniteVolume.h"
+#include "atlas/functionspace/Nodes.h"
+#include "atlas/functionspace/Edges.h"
 #include "atlas/actions/BuildEdges.h"
 #include "atlas/actions/BuildParallelFields.h"
 #include "atlas/actions/BuildDualMesh.h"
@@ -26,47 +27,59 @@
 #include "atlas/util/Bitflags.h"
 #include "atlas/atlas_omp.h"
 #include "atlas/Parameters.h"
+#include "atlas/numerics/fvm/Method.h"
 
 // =======================================================
 
 using namespace atlas::actions;
 
 namespace atlas {
-namespace functionspace {
+namespace numerics {
+namespace fvm {
 
 namespace {
-  Halo EdgeBasedFiniteVolume_halo(const eckit::Parametrisation &params)
+  mesh::Halo Method_halo(const eckit::Parametrisation &params)
   {
     size_t halo_size(1);
     params.get("halo",halo_size);
-    return Halo(halo_size);
+    return mesh::Halo(halo_size);
   }
 }
 
-EdgeBasedFiniteVolume::EdgeBasedFiniteVolume( Mesh &mesh )
- : Nodes(mesh,Halo(1)), edges_(mesh.edges())
+Method::Method( Mesh &mesh ) :
+  mesh_(mesh),
+  halo_(mesh),
+  nodes_(mesh.nodes()),
+  edges_(mesh.edges()),
+  radius_(Earth::radiusInMeters())
 {
-  radius_ = Earth::radiusInMeters();
   setup();
 }
 
-EdgeBasedFiniteVolume::EdgeBasedFiniteVolume( Mesh &mesh, const Halo &halo )
- : Nodes(mesh,halo), edges_(mesh.edges())
+Method::Method( Mesh &mesh, const mesh::Halo &halo ) :
+  mesh_(mesh),
+  halo_(halo),
+  nodes_(mesh.nodes()),
+  edges_(mesh.edges()),
+  radius_(Earth::radiusInMeters())
 {
-  radius_ = Earth::radiusInMeters();
   setup();
 }
 
-EdgeBasedFiniteVolume::EdgeBasedFiniteVolume( Mesh &mesh, const eckit::Parametrisation &params )
-  : Nodes(mesh,EdgeBasedFiniteVolume_halo(params),params), edges_(mesh.edges())
+Method::Method( Mesh &mesh, const eckit::Parametrisation &params ) :
+  mesh_(mesh),
+  halo_(Method_halo(params)),
+  nodes_(mesh.nodes()),
+  edges_(mesh.edges()),
+  radius_(Earth::radiusInMeters())
 {
-  radius_ = Earth::radiusInMeters();
   params.get("radius",radius_);
   setup();
 }
 
-void EdgeBasedFiniteVolume::setup()
+void Method::setup()
 {
+  nodes_fs_.reset( new functionspace::Nodes(mesh(),halo_) );
   if( edges_.size() == 0 )
   {
     build_edges(mesh());
@@ -133,19 +146,29 @@ void EdgeBasedFiniteVolume::setup()
 
 // ------------------------------------------------------------------------------------------
 extern "C" {
-
-EdgeBasedFiniteVolume* atlas__functionspace__EdgeBasedFiniteVolume__new (Mesh* mesh, const eckit::Parametrisation* params)
+Method* atlas__numerics__fvm__Method__new (Mesh* mesh, const eckit::Parametrisation* params)
 {
-  EdgeBasedFiniteVolume* functionspace(0);
+  Method* method(0);
   ATLAS_ERROR_HANDLING(
     ASSERT(mesh);
-    functionspace = new EdgeBasedFiniteVolume(*mesh,*params);
+    method = new Method(*mesh,*params);
   );
-  return functionspace;
+  return method;
 }
+
+functionspace::Nodes* atlas__numerics__fvm__Method__nodes_fs (Method* This)
+{
+  ATLAS_ERROR_HANDLING(
+        ASSERT(This);
+        return &This->nodes_fs();
+  );
+  return 0;
+}
+
 
 }
 // ------------------------------------------------------------------------------------------
 
-} // namespace functionspace
+} // namepace fvm
+} // namespace numerics
 } // namespace atlas

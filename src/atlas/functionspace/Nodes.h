@@ -15,6 +15,7 @@
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/FieldSet.h"
+#include "atlas/mesh/Halo.h"
 
 namespace atlas { class Mesh; }
 namespace atlas { namespace mesh { class Nodes; } }
@@ -23,17 +24,6 @@ namespace atlas { class FieldSet; }
 namespace atlas {
 namespace functionspace {
 
-// -------------------------------------------------------------------
-
-class Halo
-{
-public:
-  Halo(const Mesh& mesh);
-  Halo(const size_t size) : size_(size) {}
-  size_t size() const { return size_; }
-private:
-  size_t size_;
-};
 
 // -------------------------------------------------------------------
 
@@ -41,8 +31,8 @@ class Nodes : public FunctionSpace
 {
 public:
 
-    Nodes( Mesh& mesh, const Halo &, const eckit::Parametrisation & );
-    Nodes( Mesh& mesh, const Halo & );
+    Nodes( Mesh& mesh, const mesh::Halo &, const eckit::Parametrisation & );
+    Nodes( Mesh& mesh, const mesh::Halo & );
     Nodes( Mesh& mesh );
 
     virtual ~Nodes();
@@ -109,7 +99,7 @@ public:
 
 // -- Parallelisation aware methods
 
-    const Halo& halo() const { return halo_; }
+    const mesh::Halo& halo() const { return halo_; }
 
     void haloExchange( FieldSet& ) const;
     void haloExchange( Field& ) const;
@@ -271,7 +261,7 @@ private: // data
 
     Mesh& mesh_; // non-const because functionspace may modify mesh
     mesh::Nodes& nodes_; // non-const because functionspace may modify mesh
-    Halo halo_;
+    mesh::Halo halo_;
     size_t nb_nodes_;
     size_t nb_nodes_global_;
     std::vector<size_t> nb_nodes_global_foreach_rank_;

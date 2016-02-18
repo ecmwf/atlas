@@ -15,7 +15,7 @@
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/FunctionSpace.h"
 #include "atlas/FieldSet.h"
-#include "atlas/functionspace/Nodes.h"
+#include "atlas/mesh/Halo.h"
 
 namespace atlas { class Mesh; }
 namespace atlas { namespace mesh { class HybridElements; } }
@@ -30,8 +30,8 @@ class Edges : public FunctionSpace
 {
 public:
 
-    Edges( Mesh& mesh, const Halo &, const eckit::Parametrisation & );
-    Edges( Mesh& mesh, const Halo & );
+    Edges( Mesh& mesh, const mesh::Halo &, const eckit::Parametrisation & );
+    Edges( Mesh& mesh, const mesh::Halo & );
     Edges( Mesh& mesh );
 
     virtual ~Edges();

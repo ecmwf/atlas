@@ -16,7 +16,13 @@
 #include "atlas/numerics/Nabla.h"
 #include "eckit/memory/SharedPtr.h"
 
-namespace atlas {  namespace functionspace {  class EdgeBasedFiniteVolume; } }
+namespace atlas {
+    namespace numerics {
+        namespace fvm  {
+            class Method;
+        }
+    }
+}
 namespace atlas {  class Field; }
 
 namespace atlas {
@@ -39,7 +45,7 @@ private:
 
 private:
 
-  atlas::functionspace::EdgeBasedFiniteVolume const *fvm_;
+  fvm::Method const *fvm_;
   std::vector<size_t> pole_edges_;
 };
 

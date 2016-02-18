@@ -20,7 +20,7 @@ extern "C" {
 Nodes* atlas__NodesFunctionSpace__new ( Mesh* mesh, int halo )
 {
   ASSERT(mesh);
-  return new Nodes(*mesh,Halo(halo));
+  return new Nodes(*mesh,mesh::Halo(halo));
 }
 
 Nodes* atlas__NodesFunctionSpace__new_mesh ( Mesh* mesh )

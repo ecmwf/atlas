@@ -346,7 +346,7 @@ void AtlasBenchmark::setup()
   build_median_dual_mesh(*mesh);
   build_node_to_edge_connectivity(*mesh);
 
-  nodes_fs.reset( new functionspace::Nodes(*mesh,Halo(*mesh)));
+  nodes_fs.reset( new functionspace::Nodes(*mesh,mesh::Halo(*mesh)));
 
   nnodes = mesh->nodes().size();
   nedges = mesh->edges().size();

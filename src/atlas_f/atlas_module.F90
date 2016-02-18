@@ -143,6 +143,14 @@ use atlas_GridDistribution_module, only: &
 use atlas_MeshGenerator_module, only: &
     & atlas_MeshGenerator, &
     & atlas_ReducedGridMeshGenerator
+use atlas_numerics_Method_module, only: &
+    & atlas_numerics_Method
+use atlas_numerics_fvm_module, only: &
+    & atlas_numerics_fvm_Method
+use atlas_numerics_Nabla_module, only: &
+    & atlas_numerics_Nabla
+
+
 use atlas_actions_module
 
 #if !DEPRECATE_OLD_FUNCTIONSPACE
@@ -175,10 +183,9 @@ private :: resource_set_string
 
 public
 
-#include "atlas_module_functionspace_EdgeBasedFiniteVolume_i.f"
+
 #include "atlas_module_functionspace_ReducedGridPoint_i.f"
 #include "atlas_module_functionspace_Spectral_i.f"
-#include "atlas_module_Nabla_i.f"
 #include "atlas_module_State_i.f"
 #include "atlas_module_Trans_i.f"
 #include "atlas_module_Value_i.f"
@@ -320,10 +327,8 @@ subroutine atlas_finalize()
   call atlas__atlas_finalize()
 end subroutine
 
-#include "atlas_module_functionspace_EdgeBasedFiniteVolume_c.f"
 #include "atlas_module_functionspace_ReducedGridPoint_c.f"
 #include "atlas_module_functionspace_Spectral_c.f"
-#include "atlas_module_Nabla_c.f"
 #include "atlas_module_State_c.f"
 #include "atlas_module_Trans_c.f"
 #include "atlas_module_Value_c.f"

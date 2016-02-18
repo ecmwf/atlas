@@ -10,8 +10,8 @@
 
 #include "eckit/exception/Exceptions.h"
 #include "eckit/config/Parametrisation.h"
-#include "atlas/numerics/nabla/EdgeBasedFiniteVolume.h"
-#include "atlas/functionspace/EdgeBasedFiniteVolume.h"
+#include "atlas/numerics/fvm/Nabla.h"
+#include "atlas/numerics/fvm/Method.h"
 #include "atlas/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/HybridElements.h"
@@ -35,17 +35,17 @@ namespace numerics {
 namespace nabla {
 
 namespace {
-static NablaBuilder< EdgeBasedFiniteVolume > __edgebasedfinitevolume("EdgeBasedFiniteVolume");
+static NablaBuilder< EdgeBasedFiniteVolume > __edgebasedfinitevolume("FVM");
 }
 
 EdgeBasedFiniteVolume::EdgeBasedFiniteVolume(const FunctionSpace &fs, const eckit::Parametrisation &p) :
   Nabla(fs,p)
 {
-  fvm_ = dynamic_cast<const functionspace::EdgeBasedFiniteVolume *>(&fs);
+  fvm_ = dynamic_cast<const fvm::Method *>(&fs);
   if( ! fvm_ )
     throw eckit::BadCast("nabla::EdgeBasedFiniteVolume needs a EdgeBasedFiniteVolumeFunctionSpace",Here());
   Log::info() << "EdgeBasedFiniteVolume constructed for functionspace " << fvm_->name()
-                     << " with " << fvm_->nb_nodes_global() << " nodes total" << std::endl;
+                     << " with " << fvm_->nodes_fs().nb_nodes_global() << " nodes total" << std::endl;
 
   setup();
 
@@ -57,7 +57,7 @@ EdgeBasedFiniteVolume::~EdgeBasedFiniteVolume()
 
 void EdgeBasedFiniteVolume::setup()
 {
-  const mesh::HybridElements &edges = fvm_->edges();
+  const mesh::Edges &edges = fvm_->edges();
 
   const size_t nedges = edges.size();
 
@@ -83,8 +83,8 @@ void EdgeBasedFiniteVolume::gradient(const Field& scalar_field, Field& grad_fiel
   const double radius = fvm_->radius();
   const double deg2rad = M_PI/180.;
 
-  mesh::HybridElements const &edges = fvm_->edges();
-  mesh::Nodes const          &nodes = fvm_->nodes();
+  mesh::Edges const &edges = fvm_->edges();
+  mesh::Nodes const &nodes = fvm_->nodes();
 
   const size_t nnodes = nodes.size();
   const size_t nedges = edges.size();
@@ -317,10 +317,10 @@ void EdgeBasedFiniteVolume::curl(const Field& vector_field, Field& curl_field) c
 
 void EdgeBasedFiniteVolume::laplacian(const Field& scalar, Field& lapl) const
 {
-  eckit::SharedPtr<Field> grad ( fvm_->createField<double>("grad",scalar.levels(),make_shape(2)) );
+  eckit::SharedPtr<Field> grad ( fvm_->nodes_fs().createField<double>("grad",scalar.levels(),make_shape(2)) );
   gradient(scalar,*grad);
-  if( fvm_->halo().size() < 2 )
-    fvm_->haloExchange(*grad);
+  if( fvm_->nodes_fs().halo().size() < 2 )
+    fvm_->nodes_fs().haloExchange(*grad);
   divergence(*grad,lapl);
 }
 

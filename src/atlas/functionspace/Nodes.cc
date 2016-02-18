@@ -35,12 +35,6 @@
 namespace atlas {
 namespace functionspace {
 
-Halo::Halo(const Mesh& mesh)
-{
-  size_=0;
-  mesh.metadata().get("halo",size_);
-}
-
 namespace {
 
 template <typename T>
@@ -87,7 +81,7 @@ Nodes::Nodes( Mesh& mesh )
   constructor();
 }
 
-Nodes::Nodes( Mesh& mesh, const Halo &halo, const eckit::Parametrisation &params )
+Nodes::Nodes( Mesh& mesh, const mesh::Halo &halo, const eckit::Parametrisation &params )
   : FunctionSpace(),
     mesh_(mesh),
     nodes_(mesh_.nodes()),
@@ -99,7 +93,7 @@ Nodes::Nodes( Mesh& mesh, const Halo &halo, const eckit::Parametrisation &params
   constructor();
 }
 
-Nodes::Nodes(Mesh& mesh, const Halo &halo)
+Nodes::Nodes(Mesh& mesh, const mesh::Halo &halo)
   : FunctionSpace(),
     mesh_(mesh),
     nodes_(mesh_.nodes()),

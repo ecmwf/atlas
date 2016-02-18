@@ -33,7 +33,7 @@
 #include "atlas/mesh/HybridElements.h"
 
 using atlas::functionspace::Nodes;
-using atlas::functionspace::Halo;
+using atlas::mesh::Halo;
 
 namespace atlas {
 namespace actions {

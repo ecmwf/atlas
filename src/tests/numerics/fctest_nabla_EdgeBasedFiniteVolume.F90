@@ -1,4 +1,4 @@
-! (C) Copyright 1996-2016 ECMWF.
+! (C) Copyright 1996-2015 ECMWF.
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 ! In applying this licence, ECMWF does not waive the privileges and immunities
@@ -23,8 +23,9 @@ implicit none
   type(atlas_Mesh) :: mesh
   type(atlas_mesh_Nodes) :: nodes
   type(atlas_MeshGenerator) :: meshgenerator
-  type(atlas_functionspace_EdgeBasedFiniteVolume) :: fvm
-  type(atlas_Nabla) :: nabla
+  type(atlas_numerics_fvm_Method) :: fvm
+  type(atlas_numerics_Nabla) :: nabla
+  type(atlas_functionspace_Nodes) :: nodes_fs
   type(atlas_Field) :: varfield
   type(atlas_Field) :: gradfield
 
@@ -162,8 +163,7 @@ REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
 !IF (LHOOK) CALL DR_HOOK('FV_GRADIENT',0,ZHOOK_HANDLE)
 
-ASSOCIATE(NFLEVG=>nlev,&
- & NODES_FS=>fvm )
+ASSOCIATE(NFLEVG=>nlev)
 
 !write(0,*) 'enter fv_gradient'
 !write(0,*) 'shape pvar ',shape(pvar)
@@ -229,8 +229,6 @@ END SUBROUTINE FV_GRADIENT
 
 
 
-
-
 end module fctest_atlas_nabla_EdgeBasedFiniteVolume_Fixture
 
 ! -----------------------------------------------------------------------------
@@ -249,12 +247,13 @@ TESTSUITE_INIT
   grid = atlas_ReducedGrid("N24")
   meshgenerator = atlas_ReducedGridMeshGenerator()
   mesh = meshgenerator%generate(grid) ! second optional argument for atlas_GridDistrubution
-  fvm  = atlas_functionspace_EdgeBasedFiniteVolume(mesh,config)
-  nabla = atlas_Nabla(fvm)
+  fvm  = atlas_numerics_fvm_Method(mesh,config)
+  nodes_fs = fvm%nodes_fs()
+  nabla = atlas_numerics_Nabla(fvm)
 
   ! Create a variable field and a gradient field
-  varfield = fvm%create_field("var",atlas_real(c_double),nlev)
-  gradfield  = fvm%create_field("grad",atlas_real(c_double),nlev,[2])
+  varfield  = nodes_fs%create_field("var",atlas_real(c_double),nlev)
+  gradfield = nodes_fs%create_field("grad",atlas_real(c_double),nlev,[2])
 
   ! Access to data
   call varfield%data(var)
@@ -274,6 +273,7 @@ TESTSUITE_FINALIZE
   call gradfield%final()
   call nabla%final()
   call fvm%final()
+  call nodes_fs%final()
   call nodes%final()
   call mesh%final()
   call grid%final()
@@ -286,11 +286,11 @@ END_TESTSUITE_FINALIZE
 TEST( test_fvm )
 type(atlas_ReducedGrid) :: grid
 type(atlas_Mesh) :: mesh
-type(atlas_functionspace_EdgeBasedFiniteVolume) :: fvm
+type(atlas_numerics_fvm_Method) :: fvm
 
 grid = atlas_ReducedGrid("N24")
 mesh = atlas_generate_mesh(grid)
-fvm  = atlas_functionspace_EdgeBasedFiniteVolume(mesh)
+fvm  = atlas_numerics_fvm_Method(mesh)
 
 call fvm%final()
 call mesh%final()
@@ -304,7 +304,7 @@ TEST( test_nabla )
 type(Timer_type) :: timer
 integer :: jiter, niter
 
-call fvm%halo_exchange(varfield)
+call nodes_fs%halo_exchange(varfield)
 
 niter = 5
 

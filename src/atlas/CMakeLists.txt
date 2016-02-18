@@ -241,6 +241,8 @@ Mesh.cc
 Mesh.h
 Metadata.cc
 Metadata.h
+mesh/Halo.cc
+mesh/Halo.h
 mesh/Nodes.cc
 mesh/Nodes.h
 mesh/Elements.h
@@ -266,8 +268,6 @@ functionspace/NodesInterface.h
 functionspace/NodesInterface.cc
 functionspace/Edges.h
 functionspace/Edges.cc
-functionspace/EdgeBasedFiniteVolume.h
-functionspace/EdgeBasedFiniteVolume.cc
 functionspace/ReducedGridPoint.h
 functionspace/ReducedGridPoint.cc
 functionspace/Spectral.h
@@ -275,10 +275,14 @@ functionspace/Spectral.cc
 )
 
 list( APPEND atlas_numerics_srcs
+numerics/Method.h
+numerics/Method.cc
 numerics/Nabla.h
 numerics/Nabla.cc
-numerics/nabla/EdgeBasedFiniteVolume.h
-numerics/nabla/EdgeBasedFiniteVolume.cc
+numerics/fvm/Method.h
+numerics/fvm/Method.cc
+numerics/fvm/Nabla.h
+numerics/fvm/Nabla.cc
 )
 
 

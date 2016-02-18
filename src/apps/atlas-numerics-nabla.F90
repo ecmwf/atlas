@@ -12,20 +12,21 @@
 
 ! -----------------------------------------------------------------------------
 
-module atlas_numerics_nabla_module
+module atlas_numerics_nabla_program_module
 use atlas_module
-use atlas_mpi_module
 use, intrinsic :: iso_c_binding, only: c_double, c_int
 implicit none
 
   type(atlas_ReducedGrid) :: grid
   type(atlas_Mesh) :: mesh
   type(atlas_mesh_Nodes) :: nodes
+  type(atlas_functionspace_Nodes) :: nodes_fs
   type(atlas_MeshGenerator) :: meshgenerator
-  type(atlas_functionspace_EdgeBasedFiniteVolume) :: fvm
-  type(atlas_Nabla) :: nabla
+  type(atlas_numerics_fvm_Method) :: fvm
+  type(atlas_numerics_Nabla) :: nabla
   type(atlas_Field) :: varfield
   type(atlas_Field) :: gradfield
+  type(atlas_Config) :: config
 
   real(c_double), pointer :: var(:,:)
   real(c_double), pointer :: grad(:,:,:)
@@ -35,7 +36,6 @@ implicit none
   integer :: nouter
   integer :: startcount
 
-  type(atlas_Config) :: config
 
   integer, parameter :: JPRB = c_double
   integer, parameter :: JPIM = c_int
@@ -243,12 +243,13 @@ subroutine init()
   grid = atlas_ReducedGrid(grid_uid)
   meshgenerator = atlas_ReducedGridMeshGenerator()
   mesh = meshgenerator%generate(grid) ! second optional argument for atlas_GridDistrubution
-  fvm  = atlas_functionspace_EdgeBasedFiniteVolume(mesh,config)
-  nabla = atlas_Nabla(fvm)
+  fvm  = atlas_numerics_fvm_Method(mesh,config)
+  nodes_fs = fvm%nodes_fs()
+  nabla = atlas_numerics_Nabla(fvm)
 
   ! Create a variable field and a gradient field
-  varfield = fvm%create_field("var",atlas_real(c_double),nlev)
-  gradfield  = fvm%create_field("grad",atlas_real(c_double),nlev,[2])
+  varfield = nodes_fs%create_field("var",atlas_real(c_double),nlev)
+  gradfield  = nodes_fs%create_field("grad",atlas_real(c_double),nlev,[2])
 
   ! Access to data
   call varfield%data(var)
@@ -273,6 +274,7 @@ subroutine finalize()
   call gradfield%final()
   call nabla%final()
   call fvm%final()
+  call nodes_fs%final()
   call nodes%final()
   call mesh%final()
   call grid%final()
@@ -283,13 +285,14 @@ end subroutine
 ! -----------------------------------------------------------------------------
 
 subroutine run()
+
 type(Timer_type) :: timer
 
 integer :: jiter, jouter
 real(c_double) :: timing_cpp, timing_f90, timing
 real(c_double) :: min_timing_cpp, min_timing_f90
 
-call fvm%halo_exchange(varfield)
+call nodes_fs%halo_exchange(varfield)
 call atlas_mpi_barrier()
 timing_cpp = 1.e10
 timing_f90 = 1.e10
@@ -314,9 +317,9 @@ endif
 ! Compute the gradient with Fortran routine above
 timing = 1.e10
 do jiter = 1,niter
-	call timer%start()
-	call FV_GRADIENT(var,grad)
-    timing = min(timing,timer%elapsed())
+  call timer%start()
+  call FV_GRADIENT(var,grad)
+  timing = min(timing,timer%elapsed())
 enddo
 timing_f90 = timing
 write(atlas_log%msg,*) "timing_f90 = ", timing_f90
@@ -336,15 +339,14 @@ write(atlas_log%msg,*) "min_timing_f90 = ", min_timing_f90
 call atlas_log%info()
 write(atlas_log%msg,*) "|min_timing_f90-min_timing_cpp| / min_timing_f90 = ", abs(min_timing_f90-min_timing_cpp)/min_timing_f90 *100 , "%"
 call atlas_log%info()
-
 end subroutine
 
-end module atlas_numerics_nabla_module
+end module atlas_numerics_nabla_program_module
 
 ! -----------------------------------------------------------------------------
 
-program atlas_numerics_nabla
-use atlas_numerics_nabla_module
+program atlas_numerics_nabla_program
+use atlas_numerics_nabla_program_module
   call init()
   call run()
   call finalize()

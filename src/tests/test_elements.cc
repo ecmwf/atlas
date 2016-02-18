@@ -30,7 +30,6 @@
 #include "atlas/Mesh.h"
 #include "atlas/meshgen/ReducedGridMeshGenerator.h"
 #include "atlas/Grid.h"
-#include "atlas/functionspace/EdgeBasedFiniteVolume.h"
 
 // ------------------------------------------------------------------
 

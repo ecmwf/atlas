@@ -103,7 +103,6 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/runtime/ErrorHandling.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/atlas.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mpi/mpi.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/trans/Trans.h)
-generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/EdgeBasedFiniteVolume.h MODULE atlas_functionspace_EdgeBasedFiniteVolume_c_binding OUTPUT functionspace_EdgeBasedFiniteVolume_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/Spectral.h MODULE atlas_functionspace_Spectral_c_binding OUTPUT functionspace_Spectral_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/ReducedGridPoint.h MODULE atlas_functionspace_ReducedGridPoint_c_binding OUTPUT functionspace_ReducedGridPoint_c_binding.f90 )
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/NodesInterface.h MODULE atlas_functionspace_Nodes_c_binding OUTPUT functionspace_Nodes_c_binding.f90)
@@ -114,6 +113,10 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/Connectivity.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/HybridElements.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/Elements.h)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/mesh/ElementType.h)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/Nabla.h MODULE atlas_numerics_nabla_c_binding OUTPUT numerics_nabla_c_binding.f90 )
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/Method.h MODULE atlas_numerics_method_c_binding OUTPUT numerics_method_c_binding.f90 )
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/numerics/fvm/Method.h MODULE atlas_numerics_fvm_method_c_binding OUTPUT numerics_fvm_method_c_binding.f90 )
+
 generate_fortran_bindings(FORTRAN_BINDINGS atlas_logging.h)
 generate_fortran_bindings(FORTRAN_BINDINGS atlas_resource.h)
 generate_fortran_bindings(FORTRAN_BINDINGS atlas_value.h)
@@ -157,6 +160,9 @@ ecbuild_add_library( TARGET atlas_f
         atlas_GatherScatter_module.F90
         atlas_Checksum_module.F90
         atlas_HaloExchange_module.F90
+        atlas_numerics_Method_module.F90
+        atlas_numerics_fvm_module.F90
+        atlas_numerics_Nabla_module.F90
         atlas_C_interop.F90
         atlas_C_interop.cc
         atlas_logging.h
@@ -171,14 +177,10 @@ ecbuild_add_library( TARGET atlas_f
 )
 
 add_custom_target( atlas_fortran_inc SOURCES
-   atlas_module_functionspace_EdgeBasedFiniteVolume_i.f
-   atlas_module_functionspace_EdgeBasedFiniteVolume_c.f
    atlas_module_functionspace_ReducedGridPoint_c.f
    atlas_module_functionspace_ReducedGridPoint_i.f
    atlas_module_functionspace_Spectral_i.f
    atlas_module_functionspace_Spectral_c.f
-   atlas_module_Nabla_i.f
-   atlas_module_Nabla_c.f
    atlas_module_State_i.f
    atlas_module_State_c.f
    atlas_module_Trans_i.f

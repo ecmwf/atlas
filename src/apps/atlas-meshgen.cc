@@ -47,6 +47,7 @@ using namespace atlas;
 using namespace atlas::actions;
 using namespace atlas::grids;
 using namespace atlas::functionspace;
+using namespace atlas::mesh;
 
 //------------------------------------------------------------------------------------------------------
 
