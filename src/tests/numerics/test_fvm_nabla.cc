@@ -117,7 +117,7 @@ BOOST_GLOBAL_FIXTURE( AtlasFixture );
 
 BOOST_AUTO_TEST_CASE( test_factory )
 {
-  BOOST_CHECK( NablaFactory::has("FVM") );
+  BOOST_CHECK( NablaFactory::has("fvm") );
 }
 
 BOOST_AUTO_TEST_CASE( test_build )

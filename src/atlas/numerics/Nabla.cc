@@ -19,9 +19,11 @@
 #include "eckit/exception/Exceptions.h"
 
 #include "atlas/runtime/ErrorHandling.h"
-#include "atlas/FunctionSpace.h"
 #include "atlas/numerics/Nabla.h"
+#include "atlas/numerics/Method.h"
 #include "atlas/numerics/fvm/Nabla.h"
+#include "atlas/numerics/fvm/Method.h"
+#include "atlas/Config.h"
 
 namespace {
 
@@ -39,8 +41,7 @@ namespace {
 namespace atlas {
 namespace numerics {
 
-Nabla::Nabla(const FunctionSpace &fs, const eckit::Parametrisation &p)
-  // : fs_(fs), config_(p)
+Nabla::Nabla(const Method &method, const eckit::Parametrisation &p)
 {
 }
 
@@ -48,14 +49,14 @@ Nabla::~Nabla()
 {
 }
 
-Nabla* Nabla::create(const FunctionSpace &fs)
+Nabla* Nabla::create(const Method &method)
 {
-  return Nabla::create(fs,Config());
+  return Nabla::create(method,Config());
 }
 
-Nabla* Nabla::create(const FunctionSpace &fs, const eckit::Parametrisation &p)
+Nabla* Nabla::create(const Method &method, const eckit::Parametrisation &p)
 {
-  return NablaFactory::build(fs,p);
+  return NablaFactory::build(method,p);
 }
 
 namespace {
@@ -65,7 +66,7 @@ template<typename T> void load_builder() { NablaBuilder<T>("tmp"); }
 struct force_link {
     force_link()
     {
-      load_builder< nabla::EdgeBasedFiniteVolume >();
+      load_builder< fvm::Nabla >();
     }
 };
 
@@ -118,7 +119,7 @@ bool NablaFactory::has(const std::string& name)
 
 
 
-Nabla* NablaFactory::build(const FunctionSpace& fs, const eckit::Parametrisation& p) {
+Nabla* NablaFactory::build(const Method& method, const eckit::Parametrisation& p) {
 
     pthread_once(&once, init);
 
@@ -126,19 +127,19 @@ Nabla* NablaFactory::build(const FunctionSpace& fs, const eckit::Parametrisation
 
     static force_link static_linking;
 
-    std::map<std::string, NablaFactory *>::const_iterator j = m->find(fs.name());
+    std::map<std::string, NablaFactory *>::const_iterator j = m->find(method.name());
 
-    Log::debug() << "Looking for NablaFactory [" << fs.name() << "]" << '\n';
+    Log::debug() << "Looking for NablaFactory [" << method.name() << "]" << '\n';
 
     if (j == m->end()) {
-        Log::error() << "No NablaFactory for [" << fs.name() << "]" << '\n';
+        Log::error() << "No NablaFactory for [" << method.name() << "]" << '\n';
         Log::error() << "NablaFactories are:" << '\n';
         for (j = m->begin() ; j != m->end() ; ++j)
             Log::error() << "   " << (*j).first << '\n';
-        throw eckit::SeriousBug(std::string("No NablaFactory called ") + fs.name());
+        throw eckit::SeriousBug(std::string("No NablaFactory called ") + method.name());
     }
 
-    return (*j).second->make(fs,p);
+    return (*j).second->make(method,p);
 }
 
 extern "C" {
@@ -151,13 +152,13 @@ void atlas__Nabla__delete(Nabla* This)
   );
 }
 
-Nabla* atlas__Nabla__create (const FunctionSpace* functionspace, const eckit::Parametrisation* params)
+Nabla* atlas__Nabla__create (const Method* method, const eckit::Parametrisation* params)
 {
   Nabla* nabla(0);
   ATLAS_ERROR_HANDLING(
-    ASSERT(functionspace);
+    ASSERT(method);
     ASSERT(params);
-    nabla = Nabla::create(*functionspace,*params);
+    nabla = Nabla::create(*method,*params);
   );
   return nabla;
 }

@@ -22,7 +22,7 @@ namespace numerics {
 
 /// @brief Method class
 /// @note  Abstract base class
-class Method : public FunctionSpace //eckit::Owned
+class Method : public eckit::Owned
 {
 public:
     Method() {}

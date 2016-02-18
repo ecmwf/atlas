@@ -32,30 +32,30 @@ using atlas::util::Topology;
 
 namespace atlas {
 namespace numerics {
-namespace nabla {
+namespace fvm {
 
 namespace {
-static NablaBuilder< EdgeBasedFiniteVolume > __edgebasedfinitevolume("FVM");
+static NablaBuilder< Nabla > __fvm_nabla("fvm");
 }
 
-EdgeBasedFiniteVolume::EdgeBasedFiniteVolume(const FunctionSpace &fs, const eckit::Parametrisation &p) :
-  Nabla(fs,p)
+Nabla::Nabla(const numerics::Method &method, const eckit::Parametrisation &p) :
+  atlas::numerics::Nabla(method,p)
 {
-  fvm_ = dynamic_cast<const fvm::Method *>(&fs);
+  fvm_ = dynamic_cast<const fvm::Method *>(&method);
   if( ! fvm_ )
-    throw eckit::BadCast("nabla::EdgeBasedFiniteVolume needs a EdgeBasedFiniteVolumeFunctionSpace",Here());
-  Log::info() << "EdgeBasedFiniteVolume constructed for functionspace " << fvm_->name()
+    throw eckit::BadCast("atlas::numerics::fvm::Nabla needs a atlas::numerics::fvm::Method",Here());
+  Log::info() << "Nabla constructed for method " << fvm_->name()
                      << " with " << fvm_->nodes_fs().nb_nodes_global() << " nodes total" << std::endl;
 
   setup();
 
 }
 
-EdgeBasedFiniteVolume::~EdgeBasedFiniteVolume()
+Nabla::~Nabla()
 {
 }
 
-void EdgeBasedFiniteVolume::setup()
+void Nabla::setup()
 {
   const mesh::Edges &edges = fvm_->edges();
 
@@ -78,7 +78,7 @@ void EdgeBasedFiniteVolume::setup()
 }
 
 
-void EdgeBasedFiniteVolume::gradient(const Field& scalar_field, Field& grad_field) const
+void Nabla::gradient(const Field& scalar_field, Field& grad_field) const
 {
   const double radius = fvm_->radius();
   const double deg2rad = M_PI/180.;
@@ -158,7 +158,7 @@ void EdgeBasedFiniteVolume::gradient(const Field& scalar_field, Field& grad_fiel
 
 // ================================================================================
 
-void EdgeBasedFiniteVolume::divergence(const Field& vector_field, Field& div_field) const
+void Nabla::divergence(const Field& vector_field, Field& div_field) const
 {
   const double radius = fvm_->radius();
   const double deg2rad = M_PI/180.;
@@ -236,7 +236,7 @@ void EdgeBasedFiniteVolume::divergence(const Field& vector_field, Field& div_fie
 }
 
 
-void EdgeBasedFiniteVolume::curl(const Field& vector_field, Field& curl_field) const
+void Nabla::curl(const Field& vector_field, Field& curl_field) const
 {
   const double radius = fvm_->radius();
   const double deg2rad = M_PI/180.;
@@ -315,7 +315,7 @@ void EdgeBasedFiniteVolume::curl(const Field& vector_field, Field& curl_field) c
 }
 
 
-void EdgeBasedFiniteVolume::laplacian(const Field& scalar, Field& lapl) const
+void Nabla::laplacian(const Field& scalar, Field& lapl) const
 {
   eckit::SharedPtr<Field> grad ( fvm_->nodes_fs().createField<double>("grad",scalar.levels(),make_shape(2)) );
   gradient(scalar,*grad);
@@ -326,6 +326,6 @@ void EdgeBasedFiniteVolume::laplacian(const Field& scalar, Field& lapl) const
 
 
 
-} // namespace nabla
+} // namespace fvm
 } // namespace numerics
 } // namespace atlas

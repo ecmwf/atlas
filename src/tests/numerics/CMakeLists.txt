@@ -7,16 +7,16 @@
 # does it submit to any jurisdiction.
 
 
-ecbuild_add_test( TARGET atlas_test_nabla_EdgeBasedFiniteVolume
+ecbuild_add_test( TARGET atlas_test_fvm_nabla
   BOOST
-  SOURCES   test_nabla_EdgeBasedFiniteVolume.cc
+  SOURCES   test_fvm_nabla.cc
   LIBS      atlas
 )
 
 if( HAVE_FCTEST)
-  add_fctest( TARGET atlas_fctest_nabla_EdgeBasedFiniteVolume
+  add_fctest( TARGET atlas_fctest_fvm_nabla
     LINKER_LANGUAGE Fortran
-    SOURCES         fctest_nabla_EdgeBasedFiniteVolume.F90
+    SOURCES         fctest_fvm_nabla.F90
     LIBS            atlas_f
   )
 endif()

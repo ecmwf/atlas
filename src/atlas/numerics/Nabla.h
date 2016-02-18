@@ -15,7 +15,7 @@
 #include "eckit/memory/Owned.h"
 
 namespace eckit { class Parametrisation; }
-namespace atlas { class FunctionSpace; }
+namespace atlas { namespace numerics { class Method; } }
 namespace atlas { class Field; }
 
 namespace atlas {
@@ -24,21 +24,17 @@ namespace numerics {
 class Nabla : public eckit::Owned {
 public:
 
-  static Nabla* create(const FunctionSpace &);
-  static Nabla* create(const FunctionSpace &, const eckit::Parametrisation &);
+  static Nabla* create(const Method &);
+  static Nabla* create(const Method &, const eckit::Parametrisation &);
 
 public:
-  Nabla(const FunctionSpace &, const eckit::Parametrisation &);
+  Nabla(const Method &, const eckit::Parametrisation &);
   virtual ~Nabla();
 
   virtual void gradient(const Field &scalar, Field &grad) const = 0;
   virtual void divergence(const Field &vector, Field &div) const = 0;
   virtual void curl(const Field &vector, Field &curl) const = 0;
   virtual void laplacian(const Field &scalar, Field &laplacian) const = 0;
-
-private:
-  // const FunctionSpace& fs_;
-  // const eckit::Parametrisation& config_;
 
 };
 
@@ -51,7 +47,7 @@ public:
      * \brief build Nabla with factory key, constructor arguments
      * \return Nabla
      */
-    static Nabla* build(const FunctionSpace &, const eckit::Parametrisation &);
+    static Nabla* build(const Method &, const eckit::Parametrisation &);
 
     /*!
      * \brief list all registered field creators
@@ -60,7 +56,7 @@ public:
     static bool has(const std::string& name);
 
 private:
-    virtual Nabla* make(const FunctionSpace &, const eckit::Parametrisation &) = 0 ;
+    virtual Nabla* make(const Method &, const eckit::Parametrisation &) = 0 ;
 
 protected:
     NablaFactory(const std::string&);
@@ -79,8 +75,8 @@ public:
     NablaBuilder(const std::string& name) : NablaFactory(name) {}
 
 private:
-    virtual Nabla* make(const FunctionSpace & fs, const eckit::Parametrisation & p) {
-        return new T(fs,p);
+    virtual Nabla* make(const Method &method, const eckit::Parametrisation &p) {
+        return new T(method,p);
     }
 };
 
@@ -89,7 +85,7 @@ private:
 extern "C" {
 
 void atlas__Nabla__delete (Nabla* This);
-Nabla* atlas__Nabla__create (const FunctionSpace* functionspace, const Parametrisation* params);
+Nabla* atlas__Nabla__create (const Method* method, const Parametrisation* params);
 void atlas__Nabla__gradient (const Nabla* This, const Field* scalar, Field* grad);
 void atlas__Nabla__divergence (const Nabla* This, const Field* vector, Field* div);
 void atlas__Nabla__curl (const Nabla* This, const Field* vector, Field* curl);

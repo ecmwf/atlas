@@ -34,7 +34,7 @@ public:
   Method(Mesh &, const mesh::Halo &);
   Method(Mesh &);
 
-  virtual std::string name() const { return "FVM"; }
+  virtual std::string name() const { return "fvm"; }
 
   const atlas::Mesh& mesh() const { return mesh_; }
         atlas::Mesh& mesh()       { return mesh_; }

@@ -9,8 +9,8 @@
  */
 
 
-#ifndef atlas_numerics_nabla_EdgeBasedFiniteVolume_h
-#define atlas_numerics_nabla_EdgeBasedFiniteVolume_h
+#ifndef atlas_numerics_fvm_Nabla_h
+#define atlas_numerics_fvm_Nabla_h
 
 #include <vector>
 #include "atlas/numerics/Nabla.h"
@@ -27,13 +27,13 @@ namespace atlas {  class Field; }
 
 namespace atlas {
 namespace numerics {
-namespace nabla {
+namespace fvm {
 
-class EdgeBasedFiniteVolume : public Nabla {
+class Nabla : public atlas::numerics::Nabla {
 
 public:
-  EdgeBasedFiniteVolume(const FunctionSpace &, const eckit::Parametrisation &);
-  virtual ~EdgeBasedFiniteVolume();
+  Nabla(const atlas::numerics::Method &, const eckit::Parametrisation &);
+  virtual ~Nabla();
 
   void gradient(const Field &scalar, Field &grad) const;
   void divergence(const Field &vector, Field &div) const;
@@ -51,8 +51,8 @@ private:
 
 // ------------------------------------------------------------------
 
-} // namespace nabla
+} // namespace fvm
 } // namespace numerics
 } // namespace atlas
 
-#endif // atlas_numerics_nabla_EdgeBasedFiniteVolume_h
+#endif // atlas_numerics_fvm_Nabla_h
