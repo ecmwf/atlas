@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
 
     // Generate functionspace associated to mesh
     SharedPtr<functionspace::Nodes> fs_nodes(new functionspace::
-                                             Nodes(*mesh, Halo(1)));
+                                             Nodes(*mesh, mesh::Halo(1)));
 
     // Note on field generation
     Field::Ptr scalarField1(fs_nodes->createField<double>
