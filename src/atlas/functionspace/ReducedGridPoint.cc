@@ -27,19 +27,20 @@ namespace functionspace {
 // ----------------------------------------------------------------------------
 // Constructor
 // ----------------------------------------------------------------------------
-ReducedGridPoint::ReducedGridPoint(
-    const Grid& grid) : FunctionSpace(), grid_(
-                               dynamic_cast<const grids::ReducedGrid&>(grid))
+ReducedGridPoint::ReducedGridPoint(const Grid& grid) :
+  FunctionSpace()
 {
-#ifdef ATLAS_HAVE_TRANS
-
-    if (dynamic_cast<const grids::ReducedGrid*>(&grid) == NULL)
+    grid_ = dynamic_cast<const grids::ReducedGrid*>(&grid);
+    if (grid_ == NULL)
     {
       throw eckit::BadCast("Grid is not a grids::ReducedGrid type. "
                            "Cannot partition using IFS trans", Here());
     }
 
-    trans_ = new trans::Trans(grid_);
+#ifdef ATLAS_HAVE_TRANS
+    trans_ = new trans::Trans(*grid_);
+
+    npts_ = trans_->ngptot();
 
     // Maximum number of global points in the longitude direction
     int nlonmax = dynamic_cast<const grids::ReducedGrid*>(&grid)->nlonmax();
@@ -72,53 +73,46 @@ ReducedGridPoint::ReducedGridPoint(
     // Total number of longitudes per latitude
     ArrayView<int,1> nloen = trans_->nloen();
 
-    nlat_ = trans_->ndgl();
-
-    //for (int jglat = 0; jglat < trans_->ndgl(); ++jglat)
-    //{
-    //    nlon_[jglat] = nloen[jglat];
-    //}
-
-     int proc = 0;
+    size_t proc(0);
     // Loop over number of latitude bands (ja)
-    for (int ja = 0; ja < n_regions_NS; ++ja)
+    for (size_t ja = 0; ja < n_regions_NS; ++ja)
     {
         // Loop over number of longitude bands (jb)
-        for (int jb = 0; jb < n_regions[ja]; ++jb)
+        for (size_t jb = 0; jb < n_regions[ja]; ++jb)
         {
             if (proc == eckit::mpi::rank())
             {
                 nlat_ = nlstlat[ja] - nfrstlat[ja] + 1;
                 nlon_.resize(nlat_);
-                first_lon_.resize(nlat());
+                first_lon_.resize(nlat_);
                 first_lat_ = nfrstlat[ja]-1;
 
                 // Loop over latitude points of lat band (ja) and lon band (jb)
-                int ilat = 0;
+                size_t ilat = 0;
                 for (int jglat = first_lat_; jglat < nlstlat[ja]; ++jglat)
                 {
-                    int igl = nptrfrstlat[ja] + jglat - nfrstlat[ja];
+                    size_t igl = nptrfrstlat[ja] + jglat - nfrstlat[ja];
                     nlon_[ilat] = nonl(jb,igl);
                     first_lon_[ilat] = nsta(jb,igl);
                     ilat++;
                 }
-                goto end_all_loops;
+                goto exit_outer_loop;
             }
             ++proc;
         }
     }
-    end_all_loops:
+    exit_outer_loop:
 
 
     int localLatID;
     int localLonID;
-    proc == 0;
+    proc = 0;
 
     // Loop over number of latitude bands (ja)
-    for (int ja = 0; ja < n_regions_NS; ++ja)
+    for (size_t ja = 0; ja < n_regions_NS; ++ja)
     {
         // Loop over number of longitude bands (jb)
-        for (int jb = 0; jb < n_regions[ja]; ++jb)
+        for (size_t jb = 0; jb < n_regions[ja]; ++jb)
         {
             if (proc == eckit::mpi::rank())
             {
@@ -126,7 +120,7 @@ ReducedGridPoint::ReducedGridPoint(
                 for (int jglat = nfrstlat[ja]-1; jglat < nlstlat[ja]; ++jglat)
                 {
                     int globalLatID = localLatID + nfrstlat[ja];
-                    int igl = nptrfrstlat[ja] + jglat - nfrstlat[ja];
+                    size_t igl = nptrfrstlat[ja] + jglat - nfrstlat[ja];
 
                     // Loop over longitude points of given latitude point
                     // of lat band (ja) and lon band (jb) and
@@ -140,7 +134,14 @@ ReducedGridPoint::ReducedGridPoint(
             ++proc;
         }
     }
- //   label: exit_double_loop;
+#else
+    npts_ = grid_->npts();
+    nlat_ = grid_->nlat();
+    nlon_.resize(nlat_);
+    for( size_t jlat=0; jlat<nlat_; ++jlat )
+      nlon_[jlat] = grid_->nlon(jlat);
+    first_lat_ = 0;
+    first_lon_.resize(nlat_,0);
 #endif
 }
 // ----------------------------------------------------------------------------
@@ -175,7 +176,7 @@ Field* ReducedGridPoint::createField<double>(
     eckit::NotImplemented("ReducedGridPoint::createField currently relies"
                           " on ATLAS_HAVE_TRANS", Here());
 
-    Field* field = Field::create<double>(name, make_shape(grid_.npts()) );
+    Field* field = Field::create<double>(name, make_shape(grid_->npts()) );
     field->set_functionspace(this);
     return field;
 #endif
@@ -204,7 +205,7 @@ Field* ReducedGridPoint::createField<double>(
                           "on ATLAS_HAVE_TRANS", Here());
 
     Field* field = Field::create<double>(
-                    name, make_shape(grid_.npts(), levels));
+                    name, make_shape(grid_->npts(), levels));
 
     field->set_functionspace(this);
     return field;
@@ -221,18 +222,9 @@ template <>
 Field* ReducedGridPoint::createGlobalField<double>(
     const std::string& name) const
 {
-#ifdef ATLAS_HAVE_TRANS
-    Field* field = Field::create<double>(name, make_shape(trans_->ngptotg()));
+    Field* field = Field::create<double>(name, make_shape(grid_->npts()));
     field->set_functionspace(this);
     return field;
-#else
-    eckit::NotImplemented("ReducedGridPoint::createGlobalField currently "
-                          "relies on ATLAS_HAVE_TRANS", Here());
-
-    Field* field = Field::create<double>(name, make_shape(grid_.npts()));
-    field->set_functionspace(this);
-    return field;
-#endif
 }
 // ----------------------------------------------------------------------------
 
@@ -246,23 +238,11 @@ Field* ReducedGridPoint::createGlobalField<double>(
     const std::string& name,
     size_t levels) const
 {
-#ifdef ATLAS_HAVE_TRANS
     Field* field = Field::create<double>(
-                    name, make_shape(trans_->ngptotg(), levels));
-
-    field->set_functionspace(this);
-    field->set_levels(levels);
-    return field;
-#else
-    eckit::NotImplemented("ReducedGridPoint::createGlobalField currently "
-                          "relies on ATLAS_HAVE_TRANS", Here());
-
-    Field* field = Field::create<double>(
-                    name, make_shape(grid_.npts(), levels));
+                    name, make_shape(grid_->npts(), levels));
 
     field->set_functionspace(this);
     return field;
-#endif
 }
 // ----------------------------------------------------------------------------
 
@@ -320,16 +300,11 @@ void ReducedGridPoint::gather(
     const Field& local,
     Field& global) const
 {
-#ifdef ATLAS_HAVE_TRANS
     FieldSet local_fields;
     FieldSet global_fields;
     local_fields.add(local);
     global_fields.add(global);
     gather(local_fields,global_fields);
-#else
-    eckit::NotImplemented("ReducedGridPoint::gather currently relies "
-                          "on ATLAS_HAVE_TRANS", Here());
-#endif
 }
 // ----------------------------------------------------------------------------
 
@@ -386,16 +361,11 @@ void ReducedGridPoint::scatter(
     const Field& global,
     Field& local) const
 {
-#ifdef ATLAS_HAVE_TRANS
     FieldSet global_fields;
     FieldSet local_fields;
     global_fields.add(global);
     local_fields.add(local);
     scatter(global_fields, local_fields);
-#else
-    eckit::NotImplemented("ReducedGridPoint::scatter currently relies "
-                          "on ATLAS_HAVE_TRANS", Here());
-#endif
 }
 // ----------------------------------------------------------------------------
 
@@ -408,14 +378,9 @@ void ReducedGridPoint::scatter(
 // Retrieve Global index from Local one
 // ----------------------------------------------------------------------------
 double ReducedGridPoint::lat(
-    const int& jlat) const
+    size_t jlat) const
 {
-#ifdef ATLAS_HAVE_TRANS
-return grid_.lat(jlat+first_lat_);
-#else
-    eckit::NotImplemented("ReducedGridPoint::scatter currently relies "
-                          "on ATLAS_HAVE_TRANS", Here());
-#endif
+  return grid_->lat(jlat+first_lat_);
 }
 // ----------------------------------------------------------------------------
 
@@ -425,15 +390,10 @@ return grid_.lat(jlat+first_lat_);
 // Retrieve Global index from Local one
 // ----------------------------------------------------------------------------
 double ReducedGridPoint::lon(
-    const int& jlat,
-    const int& jlon) const
+    size_t jlat,
+    size_t jlon) const
 {
-#ifdef ATLAS_HAVE_TRANS
-return grid_.lon(jlat+first_lat_, jlon+first_lon_[jlat]);
-#else
-    eckit::NotImplemented("ReducedGridPoint::scatter currently relies "
-                          "on ATLAS_HAVE_TRANS", Here());
-#endif
+  return grid_->lon(jlat+first_lat_, jlon+first_lon_[jlat]);
 }
 // ----------------------------------------------------------------------------
 

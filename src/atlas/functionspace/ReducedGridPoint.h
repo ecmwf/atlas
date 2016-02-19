@@ -50,27 +50,28 @@ public:
   void scatter( const FieldSet&, FieldSet& ) const;
   void scatter( const Field&, Field& ) const;
 
-  // Inline functions for faster access
-  // Note: member variables defined at constructor level
-  int nlat()     const { return nlat_; }
-  int nlon(int jlat) const { return nlon_[jlat]; }
+  size_t npts() const            { return npts_; }
+  size_t nlat() const            { return nlat_; }
+  size_t nlon(size_t jlat) const { return nlon_[jlat]; }
 
-  double lat(const int&) const;
-  double lon(const int&, const int&) const;
-
+  double lat(size_t jlat) const;
+  double lon(size_t jlat, size_t jlon) const;
 
   std::string checksum( const FieldSet& ) const;
   std::string checksum( const Field& ) const;
 
+  const grids::ReducedGrid& grid() const { return *grid_; }
+
 private: // data
 
-  int nlat_;
-  int first_lat_;
-  std::vector<int> nlon_;
-  std::vector<int> first_lon_;
+  size_t npts_;
+  size_t nlat_;
+  size_t first_lat_;
+  std::vector<size_t> nlon_;
+  std::vector<size_t> first_lon_;
 
   trans::Trans* trans_;
-  const grids::ReducedGrid& grid_;
+  const grids::ReducedGrid* grid_;
   mpl::GatherScatter* gather_scatter_;
   mpl::Checksum* checksum_;
 
