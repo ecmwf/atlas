@@ -66,7 +66,7 @@ if( ATLAS_HAVE_FORTRAN )
   ecbuild_add_option( FEATURE FCTEST
                       DEFAULT ${ENABLE_TESTS}
                       DESCRIPTION "atlas: Fortran Unit Test Framework"
-                      REQUIRED_PACKAGES "PROJECT fctest VERSION 0.1" )
+                      REQUIRED_PACKAGES "PROJECT fckit VERSION 0.1" )
 
   set( Fortran Fortran )
 
