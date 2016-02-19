@@ -19,9 +19,9 @@
 
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
-#include "atlas/Connectivity.h"
-#include "atlas/Metadata.h"
-#include "atlas/FunctionSpace.h"
+#include "atlas/mesh/Connectivity.h"
+#include "atlas/functionspace/FunctionSpace.h"
+#include "atlas/util/Metadata.h"
 
 namespace atlas { namespace mesh { class ElementType; } }
 namespace atlas { namespace mesh { class Elements; } }

@@ -14,12 +14,12 @@
 #ifndef atlas_mesh_Nodes_H
 #define atlas_mesh_Nodes_H
 
-#include <string>
 #include <map>
+#include <string>
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
-#include "atlas/Metadata.h"
-#include "atlas/Connectivity.h"
+#include "atlas/mesh/Connectivity.h"
+#include "atlas/util/Metadata.h"
 
 namespace atlas { class Field; }
 

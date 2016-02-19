@@ -16,12 +16,12 @@
 #include "eckit/runtime/Tool.h"
 #include "eckit/memory/SharedPtr.h"
 #include "atlas/atlas.h"
-#include "atlas/Mesh.h"
+#include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/grids/grids.h"
+#include "atlas/grid/grids.h"
 #include "atlas/functionspace/Nodes.h"
-#include "atlas/actions/GenerateMesh.h"
-#include "atlas/actions/WriteLoadBalanceReport.h"
+#include "atlas/mesh/actions/GenerateMesh.h"
+#include "atlas/mesh/actions/WriteLoadBalanceReport.h"
 
 //------------------------------------------------------------------------------------------------------
 

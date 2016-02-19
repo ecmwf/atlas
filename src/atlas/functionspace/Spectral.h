@@ -12,7 +12,7 @@
 #define atlas_functionspace_SpectralFunctionSpace_h
 
 #include "atlas/atlas_defines.h"
-#include "atlas/FunctionSpace.h"
+#include "atlas/functionspace/FunctionSpace.h"
 
 namespace atlas { namespace trans { class Trans; } }
 namespace atlas { class Field; }

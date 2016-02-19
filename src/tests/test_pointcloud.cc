@@ -19,13 +19,13 @@
 #include "eckit/memory/ScopedPtr.h"
 #include "eckit/exception/Exceptions.h"
 
-#include "atlas/Field.h"
-#include "atlas/FieldSet.h"
-#include "atlas/FunctionSpace.h"
-#include "atlas/Mesh.h"
+#include "atlas/field/Field.h"
+#include "atlas/field/FieldSet.h"
+#include "atlas/functionspace/FunctionSpace.h"
+#include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/grids/Unstructured.h"
-#include "atlas/io/PointCloud.h"
+#include "atlas/grid/Unstructured.h"
+#include "atlas/util/io/PointCloud.h"
 #include "atlas/functionspace/Nodes.h"
 
 

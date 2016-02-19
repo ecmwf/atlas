@@ -8,13 +8,12 @@
  * does it submit to any jurisdiction.
  */
 
-
 #ifndef atlas_numerics_fvm_Nabla_h
 #define atlas_numerics_fvm_Nabla_h
 
 #include <vector>
-#include "atlas/numerics/Nabla.h"
 #include "eckit/memory/SharedPtr.h"
+#include "atlas/numerics/Nabla.h"
 
 namespace atlas {
     namespace numerics {

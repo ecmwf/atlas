@@ -11,11 +11,11 @@
 #include <sstream>
 #include "eckit/exception/Exceptions.h"
 #include "eckit/config/Parametrisation.h"
-#include "atlas/util/ArrayUtil.h"
-#include "atlas/util/DataType.h"
+#include "atlas/grid/Grid.h"
 #include "atlas/field/FieldCreatorIFS.h"
-#include "atlas/Field.h"
-#include "atlas/Grid.h"
+#include "atlas/field/Field.h"
+#include "atlas/util/array/ArrayUtil.h"
+#include "atlas/util/DataType.h"
 
 namespace atlas {
 namespace field {

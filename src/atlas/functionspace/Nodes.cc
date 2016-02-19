@@ -12,18 +12,18 @@
 #include <cmath>
 #include "eckit/utils/MD5.h"
 #include "atlas/atlas_config.h"
-#include "atlas/mpi/Collectives.h"
-#include "atlas/Mesh.h"
+#include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/mpl/HaloExchange.h"
-#include "atlas/mpl/GatherScatter.h"
-#include "atlas/util/IsGhost.h"
+#include "atlas/mesh/actions/BuildParallelFields.h"
+#include "atlas/mesh/actions/BuildHalo.h"
+#include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
 #include "atlas/functionspace/Nodes.h"
-#include "atlas/actions/BuildParallelFields.h"
-#include "atlas/actions/BuildHalo.h"
-#include "atlas/actions/BuildPeriodicBoundaries.h"
-#include "atlas/atlas_omp.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/private/IsGhost.h"
+#include "atlas/util/parallel/mpl/HaloExchange.h"
+#include "atlas/util/parallel/mpl/GatherScatter.h"
+#include "atlas/util/parallel/atlas_omp.h"
+#include "atlas/util/runtime/ErrorHandling.h"
+#include "atlas/util/parallel/mpi/Collectives.h"
 
 #ifdef ATLAS_HAVE_FORTRAN
 #define REMOTE_IDX_BASE 1

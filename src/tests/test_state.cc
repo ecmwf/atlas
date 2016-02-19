@@ -22,12 +22,12 @@
 #include "eckit/parser/JSONParser.h"
 
 #include "atlas/atlas.h"
-#include "atlas/State.h"
-#include "atlas/Mesh.h"
-#include "atlas/Field.h"
-#include "atlas/Grid.h"
+#include "atlas/field/State.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/field/Field.h"
+#include "atlas/grid/Grid.h"
 #include "atlas/util/DataType.h"
-#include "atlas/util/ArrayView.h"
+#include "atlas/util/array/ArrayView.h"
 
 // ------------------------------------------------------------------
 

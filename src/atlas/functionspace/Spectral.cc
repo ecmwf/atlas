@@ -9,13 +9,13 @@
  */
 
 #include "eckit/utils/MD5.h"
-#include "atlas/Mesh.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/Spectral.h"
-#include "atlas/FieldSet.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/util/runtime/ErrorHandling.h"
 
 #ifdef ATLAS_HAVE_TRANS
-#include "atlas/trans/Trans.h"
+#include "atlas/numerics/trans/Trans.h"
 #endif
 
 namespace atlas {

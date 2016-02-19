@@ -14,14 +14,14 @@
 #include "ecbuild/boost_test_framework.h"
 
 #include "atlas/atlas.h"
-#include "atlas/util/AccumulateFaces.h"
+#include "atlas/private/AccumulateFaces.h"
 
-#include "atlas/Mesh.h"
-#include "atlas/meshgen/ReducedGridMeshGenerator.h"
-#include "atlas/Grid.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
+#include "atlas/grid/Grid.h"
 #include "atlas/mesh/HybridElements.h"
-#include "atlas/actions/BuildEdges.h"
-#include "atlas/util/Unique.h"
+#include "atlas/mesh/actions/BuildEdges.h"
+#include "atlas/private/Unique.h"
 
 // ------------------------------------------------------------------
 

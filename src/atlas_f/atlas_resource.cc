@@ -2,7 +2,7 @@
 #include "eckit/config/ResourceMgr.h"
 #include "eckit/utils/Translator.h"
 #include "atlas_f/atlas_resource.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/util/runtime/ErrorHandling.h"
 
 namespace atlas {
 

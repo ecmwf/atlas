@@ -14,17 +14,17 @@
 #include "eckit/types/Types.h"
 #include "eckit/memory/ScopedPtr.h"
 #include "atlas/atlas.h"
-#include "atlas/util/Debug.h"
-#include "atlas/util/ArrayView.h"
+#include "atlas/private/Debug.h"
+#include "atlas/util/array/ArrayView.h"
 #include "atlas/functionspace/Nodes.h"
 #include "atlas/functionspace/Spectral.h"
-#include "atlas/Mesh.h"
-#include "atlas/meshgen/ReducedGridMeshGenerator.h"
-#include "atlas/Grid.h"
-#include "atlas/Field.h"
-#include "atlas/grids/ReducedGaussianGrid.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
+#include "atlas/grid/Grid.h"
+#include "atlas/field/Field.h"
+#include "atlas/grid/ReducedGaussianGrid.h"
 #ifdef ATLAS_HAVE_TRANS
-#include "atlas/trans/Trans.h"
+#include "atlas/numerics/trans/Trans.h"
 #endif
 using namespace eckit;
 using namespace atlas::functionspace;

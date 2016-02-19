@@ -14,8 +14,7 @@
 #include <string>
 #include "eckit/memory/Owned.h"
 #include "eckit/memory/SharedPtr.h"
-
-#include "atlas/FunctionSpace.h"
+#include "atlas/functionspace/FunctionSpace.h"
 
 namespace atlas {
 namespace numerics {

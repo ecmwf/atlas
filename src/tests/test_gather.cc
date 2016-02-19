@@ -15,13 +15,13 @@
 #define BOOST_TEST_MODULE TestGather
 #include "ecbuild/boost_test_framework.h"
 #include "eckit/utils/Translator.h"
-#include "atlas/mpi/mpi.h"
+#include "atlas/util/parallel/mpi/mpi.h"
 #include "atlas/atlas_config.h"
-#include "atlas/Array.h"
-#include "atlas/util/ArrayView.h"
-#include "atlas/util/IndexView.h"
-#include "atlas/mpl/GatherScatter.h"
-#include "atlas/util/Debug.h"
+#include "atlas/util/array/Array.h"
+#include "atlas/util/array/ArrayView.h"
+#include "atlas/util/array/IndexView.h"
+#include "atlas/util/parallel/mpl/GatherScatter.h"
+#include "atlas/private/Debug.h"
 
 /// POD: Type to test
 typedef double POD;

@@ -9,16 +9,16 @@
  */
 
 #include "eckit/utils/MD5.h"
-#include "atlas/Grid.h"
-#include "atlas/Mesh.h"
-#include "atlas/grids/ReducedGrid.h"
+#include "atlas/grid/Grid.h"
+#include "atlas/grid/ReducedGrid.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/ReducedGridPoint.h"
-#include "atlas/FieldSet.h"
-#include "atlas/runtime/ErrorHandling.h"
-#include "atlas/util/Checksum.h"
+#include "atlas/private/Checksum.h"
+#include "atlas/util/runtime/ErrorHandling.h"
 
 #ifdef ATLAS_HAVE_TRANS
-#include "atlas/trans/Trans.h"
+#include "atlas/numerics/trans/Trans.h"
 #endif
 
 namespace atlas {

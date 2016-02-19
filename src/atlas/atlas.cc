@@ -1,15 +1,15 @@
 #include "eckit/runtime/Context.h"
-#include "atlas/runtime/Log.h"
 #include "eckit/parser/StringTools.h"
 #include "eckit/config/Resource.h"
 #include "eckit/config/ResourceMgr.h"
 #include "eckit/filesystem/PathName.h"
 #include "eckit/filesystem/LocalPathName.h"
 #include "atlas/atlas.h"
-#include "atlas/runtime/Behavior.h"
-#include "atlas/grids/grids.h"
+#include "atlas/grid/grids.h"
+#include "atlas/mesh/generators/MeshGenerator.h"
 #include "atlas/field/FieldCreator.h"
-#include "atlas/meshgen/MeshGenerator.h"
+#include "atlas/util/runtime/Log.h"
+#include "atlas/util/runtime/Behavior.h"
 
 using namespace eckit;
 

@@ -11,11 +11,11 @@
 #ifndef atlas_functionspace_EdgesFunctionSpace_h
 #define atlas_functionspace_EdgesFunctionSpace_h
 
-
 #include "eckit/memory/SharedPtr.h"
-#include "atlas/FunctionSpace.h"
-#include "atlas/FieldSet.h"
 #include "atlas/mesh/Halo.h"
+#include "atlas/field/FieldSet.h"
+#include "atlas/functionspace/FunctionSpace.h"
+
 
 namespace atlas { class Mesh; }
 namespace atlas { namespace mesh { class HybridElements; } }

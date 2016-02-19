@@ -1,11 +1,11 @@
 #include "atlas_f/atlas_logging.h"
-#include "atlas/runtime/Log.h"
+#include "atlas/util/runtime/Log.h"
 #include "eckit/runtime/Context.h"
 #include "eckit/runtime/ContextBehavior.h"
 #include "eckit/log/MultiChannel.h"
 #include "eckit/log/CallbackChannel.h"
-#include "atlas/runtime/LogFormat.h"
-#include "atlas/runtime/Behavior.h"
+#include "atlas/util/runtime/LogFormat.h"
+#include "atlas/util/runtime/Behavior.h"
 
 using namespace eckit;
 using namespace atlas;

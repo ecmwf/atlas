@@ -9,7 +9,7 @@
  */
 
 #include "atlas/functionspace/NodesInterface.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/util/runtime/ErrorHandling.h"
 
 namespace atlas {
 namespace functionspace {

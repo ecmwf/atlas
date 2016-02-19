@@ -24,12 +24,12 @@
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/Elements.h"
 #include "atlas/mesh/Nodes.h"
-#include "atlas/Field.h"
-#include "atlas/Connectivity.h"
+#include "atlas/field/Field.h"
+#include "atlas/mesh/Connectivity.h"
 
-#include "atlas/Mesh.h"
-#include "atlas/meshgen/ReducedGridMeshGenerator.h"
-#include "atlas/Grid.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
+#include "atlas/grid/Grid.h"
 
 // ------------------------------------------------------------------
 

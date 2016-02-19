@@ -14,11 +14,11 @@
 #include "atlas/atlas_config.h"
 
 #include "atlas/atlas.h"
-#include "atlas/Mesh.h"
-#include "atlas/io/Gmsh.h"
-#include "atlas/grids/grids.h"
-#include "atlas/meshgen/ReducedGridMeshGenerator.h"
-#include "atlas/mpi/mpi.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/util/io/Gmsh.h"
+#include "atlas/grid/grids.h"
+#include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
+#include "atlas/util/parallel/mpi/mpi.h"
 
 
 using namespace atlas::io;

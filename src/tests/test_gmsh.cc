@@ -13,15 +13,15 @@
 
 #include "tests/TestMeshes.h"
 #include "atlas/atlas.h"
-#include "atlas/mpi/mpi.h"
-#include "atlas/io/Gmsh.h"
-#include "atlas/util/Debug.h"
-#include "atlas/Mesh.h"
-#include "atlas/actions/BuildParallelFields.h"
-#include "atlas/actions/BuildPeriodicBoundaries.h"
-#include "atlas/actions/BuildHalo.h"
-#include "atlas/actions/BuildEdges.h"
-#include "atlas/actions/BuildDualMesh.h"
+#include "atlas/util/parallel/mpi/mpi.h"
+#include "atlas/util/io/Gmsh.h"
+#include "atlas/private/Debug.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/actions/BuildParallelFields.h"
+#include "atlas/mesh/actions/BuildPeriodicBoundaries.h"
+#include "atlas/mesh/actions/BuildHalo.h"
+#include "atlas/mesh/actions/BuildEdges.h"
+#include "atlas/mesh/actions/BuildDualMesh.h"
 
 namespace atlas {
 namespace test {

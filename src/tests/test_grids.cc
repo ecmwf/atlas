@@ -19,10 +19,10 @@
 #include "eckit/memory/Builder.h"
 
 #include "atlas/atlas.h"
-#include "atlas/Grid.h"
-#include "atlas/mpi/mpi.h"
-#include "atlas/grids/grids.h"
-#include "atlas/grids/LocalGrid.h"
+#include "atlas/grid/Grid.h"
+#include "atlas/util/parallel/mpi/mpi.h"
+#include "atlas/grid/grids.h"
+#include "atlas/grid/LocalGrid.h"
 
 
 using namespace eckit;

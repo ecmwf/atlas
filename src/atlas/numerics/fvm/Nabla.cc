@@ -10,21 +10,18 @@
 
 #include "eckit/exception/Exceptions.h"
 #include "eckit/config/Parametrisation.h"
-#include "atlas/numerics/fvm/Nabla.h"
-#include "atlas/numerics/fvm/Method.h"
-#include "atlas/Mesh.h"
+#include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/HybridElements.h"
-#include "atlas/Field.h"
-
-#include "atlas/util/ArrayView.h"
-#include "atlas/util/IndexView.h"
-#include "atlas/atlas_omp.h"
-#include "atlas/Parameters.h"
-#include "atlas/util/Bitflags.h"
-#include "atlas/io/Gmsh.h"
-
-
+#include "atlas/field/Field.h"
+#include "atlas/numerics/fvm/Nabla.h"
+#include "atlas/numerics/fvm/Method.h"
+#include "atlas/private/Parameters.h"
+#include "atlas/private/Bitflags.h"
+#include "atlas/util/array/ArrayView.h"
+#include "atlas/util/array/IndexView.h"
+#include "atlas/util/parallel/atlas_omp.h"
+#include "atlas/util/io/Gmsh.h"
 
 // =======================================================
 

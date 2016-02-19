@@ -9,8 +9,8 @@
  */
 
 #include "atlas/mesh/Halo.h"
-#include "atlas/Mesh.h"
-#include "atlas/Metadata.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/util/Metadata.h"
 
 namespace atlas {
 namespace mesh {

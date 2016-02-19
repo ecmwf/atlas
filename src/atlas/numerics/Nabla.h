@@ -8,7 +8,6 @@
  * does it submit to any jurisdiction.
  */
 
-
 #ifndef atlas_numerics_Nabla_h
 #define atlas_numerics_Nabla_h
 

@@ -9,25 +9,23 @@
  */
 
 #include <cmath>
-
 #include "eckit/exception/Exceptions.h"
-#include "atlas/Mesh.h"
-#include "atlas/FunctionSpace.h"
+#include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/HybridElements.h"
-#include "atlas/runtime/ErrorHandling.h"
-
+#include "atlas/mesh/actions/BuildEdges.h"
+#include "atlas/mesh/actions/BuildParallelFields.h"
+#include "atlas/mesh/actions/BuildDualMesh.h"
+#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/functionspace/Nodes.h"
 #include "atlas/functionspace/Edges.h"
-#include "atlas/actions/BuildEdges.h"
-#include "atlas/actions/BuildParallelFields.h"
-#include "atlas/actions/BuildDualMesh.h"
-#include "atlas/util/ArrayView.h"
-#include "atlas/util/IndexView.h"
-#include "atlas/util/Bitflags.h"
-#include "atlas/atlas_omp.h"
-#include "atlas/Parameters.h"
 #include "atlas/numerics/fvm/Method.h"
+#include "atlas/private/Parameters.h"
+#include "atlas/private/Bitflags.h"
+#include "atlas/util/array/ArrayView.h"
+#include "atlas/util/array/IndexView.h"
+#include "atlas/util/parallel/atlas_omp.h"
+#include "atlas/util/runtime/ErrorHandling.h"
 
 // =======================================================
 

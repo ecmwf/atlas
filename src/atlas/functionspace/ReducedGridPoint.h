@@ -12,7 +12,7 @@
 #define atlas_functionspace_functionspace__ReducedGridPoint_h
 
 #include "atlas/atlas_defines.h"
-#include "atlas/FunctionSpace.h"
+#include "atlas/functionspace/FunctionSpace.h"
 
 namespace atlas { namespace trans { class Trans; } }
 namespace atlas { namespace mpl { class GatherScatter; } }

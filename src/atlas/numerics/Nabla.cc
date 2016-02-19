@@ -10,20 +10,17 @@
 
 #include <map>
 #include <string>
-
-#include "atlas/atlas_config.h"
-#include "atlas/atlas_defines.h"
-
 #include "eckit/thread/AutoLock.h"
 #include "eckit/thread/Mutex.h"
 #include "eckit/exception/Exceptions.h"
-
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/atlas_config.h"
+#include "atlas/atlas_defines.h"
 #include "atlas/numerics/Nabla.h"
 #include "atlas/numerics/Method.h"
 #include "atlas/numerics/fvm/Nabla.h"
 #include "atlas/numerics/fvm/Method.h"
-#include "atlas/Config.h"
+#include "atlas/util/Config.h"
+#include "atlas/util/runtime/ErrorHandling.h"
 
 namespace {
 

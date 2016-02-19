@@ -12,11 +12,11 @@
 #include "ecbuild/boost_test_framework.h"
 
 #include "atlas/atlas.h"
-#include "atlas/mpi/mpi.h"
-#include "atlas/meshgen/ReducedGridMeshGenerator.h"
-#include "atlas/io/Gmsh.h"
-#include "atlas/Mesh.h"
-#include "atlas/grids/LonLatGrid.h"
+#include "atlas/util/parallel/mpi/mpi.h"
+#include "atlas/mesh/generators/ReducedGridMeshGenerator.h"
+#include "atlas/util/io/Gmsh.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/grid/LonLatGrid.h"
 
 
 using namespace atlas::io;

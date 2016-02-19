@@ -9,19 +9,17 @@
  */
 
 #include <algorithm>
-
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/atlas_config.h"
+#include "atlas/atlas_defines.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Elements.h"
-#include "atlas/Mesh.h"
-#include "atlas/Field.h"
-#include "atlas/atlas_config.h"
-#include "atlas/atlas_defines.h"
-
+#include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/ElementType.h"
-#include "atlas/util/IndexView.h"
-#include "atlas/runtime/ErrorHandling.h"
+#include "atlas/field/Field.h"
+#include "atlas/util/array/IndexView.h"
+#include "atlas/util/runtime/ErrorHandling.h"
+#include "atlas/util/runtime/ErrorHandling.h"
 
 #ifdef ATLAS_HAVE_FORTRAN
 #define FORTRAN_BASE 1

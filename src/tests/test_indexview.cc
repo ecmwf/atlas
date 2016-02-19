@@ -10,10 +10,10 @@
 
 #define BOOST_TEST_MODULE TestIndexView
 #include "ecbuild/boost_test_framework.h"
-#include "atlas/mpi/mpi.h"
-#include "atlas/Array.h"
-#include "atlas/util/ArrayView.h"
-#include "atlas/util/IndexView.h"
+#include "atlas/util/parallel/mpi/mpi.h"
+#include "atlas/util/array/Array.h"
+#include "atlas/util/array/ArrayView.h"
+#include "atlas/util/array/IndexView.h"
 
 #ifdef ATLAS_HAVE_FORTRAN
 #define IN_FORTRAN

@@ -15,7 +15,6 @@
 
 #include <string>
 #include <sstream>
-
 #include "eckit/exception/Exceptions.h"
 
 //------------------------------------------------------------------------------------------------------
