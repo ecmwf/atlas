@@ -112,52 +112,52 @@ contains
   procedure, private :: order_independent_sum_real64_r1
   procedure, private :: minimum_real32_r0
   procedure, private :: minimum_real64_r0
-  procedure, private :: minimum_int32_r0 
-  procedure, private :: minimum_int64_r0 
+  procedure, private :: minimum_int32_r0
+  procedure, private :: minimum_int64_r0
   procedure, private :: minimum_real32_r1
   procedure, private :: minimum_real64_r1
-  procedure, private :: minimum_int32_r1 
-  procedure, private :: minimum_int64_r1 
+  procedure, private :: minimum_int32_r1
+  procedure, private :: minimum_int64_r1
   procedure, private :: maximum_real32_r0
   procedure, private :: maximum_real64_r0
-  procedure, private :: maximum_int32_r0 
-  procedure, private :: maximum_int64_r0 
+  procedure, private :: maximum_int32_r0
+  procedure, private :: maximum_int64_r0
   procedure, private :: maximum_real32_r1
   procedure, private :: maximum_real64_r1
-  procedure, private :: maximum_int32_r1 
-  procedure, private :: maximum_int64_r1 
+  procedure, private :: maximum_int32_r1
+  procedure, private :: maximum_int64_r1
   procedure, private :: minloc_real32_r0
   procedure, private :: minloc_real64_r0
-  procedure, private :: minloc_int32_r0 
-  procedure, private :: minloc_int64_r0 
+  procedure, private :: minloc_int32_r0
+  procedure, private :: minloc_int64_r0
   procedure, private :: minloc_real32_r1
   procedure, private :: minloc_real64_r1
-  procedure, private :: minloc_int32_r1 
-  procedure, private :: minloc_int64_r1 
+  procedure, private :: minloc_int32_r1
+  procedure, private :: minloc_int64_r1
   procedure, private :: maxloc_real32_r0
   procedure, private :: maxloc_real64_r0
-  procedure, private :: maxloc_int32_r0 
-  procedure, private :: maxloc_int64_r0 
+  procedure, private :: maxloc_int32_r0
+  procedure, private :: maxloc_int64_r0
   procedure, private :: maxloc_real32_r1
   procedure, private :: maxloc_real64_r1
-  procedure, private :: maxloc_int32_r1 
-  procedure, private :: maxloc_int64_r1 
+  procedure, private :: maxloc_int32_r1
+  procedure, private :: maxloc_int64_r1
   procedure, private :: mean_real32_r0
   procedure, private :: mean_real64_r0
-  procedure, private :: mean_int32_r0 
-  procedure, private :: mean_int64_r0 
+  procedure, private :: mean_int32_r0
+  procedure, private :: mean_int64_r0
   procedure, private :: mean_real32_r1
   procedure, private :: mean_real64_r1
-  procedure, private :: mean_int32_r1 
-  procedure, private :: mean_int64_r1 
+  procedure, private :: mean_int32_r1
+  procedure, private :: mean_int64_r1
   procedure, private :: mean_and_stddev_real32_r0
   procedure, private :: mean_and_stddev_real64_r0
-  procedure, private :: mean_and_stddev_int32_r0 
-  procedure, private :: mean_and_stddev_int64_r0 
+  procedure, private :: mean_and_stddev_int32_r0
+  procedure, private :: mean_and_stddev_int64_r0
   procedure, private :: mean_and_stddev_real32_r1
   procedure, private :: mean_and_stddev_real64_r1
-  procedure, private :: mean_and_stddev_int32_r1 
-  procedure, private :: mean_and_stddev_int64_r1 
+  procedure, private :: mean_and_stddev_int32_r1
+  procedure, private :: mean_and_stddev_int64_r1
 
   generic, public :: minimum => &
     & minimum_real32_r0, minimum_real32_r1, &
@@ -321,7 +321,8 @@ function create_field_name_kind_vars(this,name,kind,vars) result(field)
   integer, intent(in) :: vars(:)
   integer, intent(in) :: kind
   integer, parameter :: fortran_ordering = 1
-  field = atlas_Field( atlas__NodesFunctionSpace__create_field_vars(this%c_ptr(),c_str(name),vars,size(vars),fortran_ordering,kind) )
+  field = atlas_Field( atlas__NodesFunctionSpace__create_field_vars( &
+    & this%c_ptr(),c_str(name),vars,size(vars),fortran_ordering,kind) )
   call field%return()
 end function
 
@@ -334,7 +335,8 @@ function create_field_name_kind_lev_vars(this,name,kind,levels,vars) result(fiel
   integer, intent(in) :: levels
   integer, intent(in) :: vars(:)
   integer, parameter :: fortran_ordering = 1
-  field = atlas_Field( atlas__NodesFunctionSpace__create_field_lev_vars(this%c_ptr(),c_str(name),levels,vars,size(vars),fortran_ordering,kind) )
+  field = atlas_Field( atlas__NodesFunctionSpace__create_field_lev_vars( &
+    & this%c_ptr(),c_str(name),levels,vars,size(vars),fortran_ordering,kind) )
   call field%return()
 end function
 
@@ -344,7 +346,8 @@ function create_field_name_template(this,name,template) result(field)
   class(atlas_functionspace_Nodes), intent(in) :: this
   character(len=*), intent(in) :: name
   type(atlas_Field) :: template
-  field = atlas_Field( atlas__NodesFunctionSpace__create_field_template(this%c_ptr(),c_str(name),template%c_ptr()) )
+  field = atlas_Field( atlas__NodesFunctionSpace__create_field_template( &
+    & this%c_ptr(),c_str(name),template%c_ptr()) )
   call field%return()
 end function
 
@@ -355,7 +358,8 @@ function create_glb_field_name_kind_lev(this,name,kind) result(field)
   class(atlas_functionspace_Nodes), intent(in) :: this
   character(len=*), intent(in) :: name
   integer, intent(in) :: kind
-  field = atlas_Field( atlas__NodesFunctionSpace__create_global_field(this%c_ptr(),c_str(name),kind) )
+  field = atlas_Field( atlas__NodesFunctionSpace__create_global_field( &
+    & this%c_ptr(),c_str(name),kind) )
   call field%return()
 end function
 
@@ -366,7 +370,8 @@ function create_glb_field_name_kind(this,name,kind,levels) result(field)
   character(len=*), intent(in) :: name
   integer, intent(in) :: levels
   integer, intent(in) :: kind
-  field = atlas_Field( atlas__NodesFunctionSpace__create_global_field_lev(this%c_ptr(),c_str(name),levels,kind) )
+  field = atlas_Field( atlas__NodesFunctionSpace__create_global_field_lev( &
+    & this%c_ptr(),c_str(name),levels,kind) )
   call field%return()
 end function
 
@@ -379,7 +384,8 @@ function create_glb_field_name_kind_vars(this,name,kind,vars) result(field)
   integer, intent(in) :: vars(:)
   integer, intent(in) :: kind
   integer, parameter :: fortran_ordering = 1
-  field = atlas_Field( atlas__NodesFunctionSpace__create_global_field_vars(this%c_ptr(),c_str(name),vars,size(vars),fortran_ordering,kind) )
+  field = atlas_Field( atlas__NodesFunctionSpace__create_global_field_vars( &
+    & this%c_ptr(),c_str(name),vars,size(vars),fortran_ordering,kind) )
   call field%return()
 end function
 
@@ -392,7 +398,8 @@ function create_glb_field_name_kind_lev_vars(this,name,kind,levels,vars) result(
   integer, intent(in) :: levels
   integer, intent(in) :: kind
   integer, parameter :: fortran_ordering = 1
-  field = atlas_Field( atlas__NodesFunctionSpace__create_global_field_lev_vars(this%c_ptr(),c_str(name),levels,vars,size(vars),fortran_ordering,kind) )
+  field = atlas_Field( atlas__NodesFunctionSpace__create_global_field_lev_vars( &
+    & this%c_ptr(),c_str(name),levels,vars,size(vars),fortran_ordering,kind) )
   call field%return()
 end function
 
@@ -402,7 +409,8 @@ function create_glb_field_name_template(this,name,template) result(field)
   class(atlas_functionspace_Nodes), intent(in) :: this
   character(len=*), intent(in) :: name
   type(atlas_Field) :: template
-  field = atlas_Field( atlas__NodesFunctionSpace__create_global_field_template(this%c_ptr(),c_str(name),template%c_ptr()) )
+  field = atlas_Field( atlas__NodesFunctionSpace__create_global_field_template( &
+    & this%c_ptr(),c_str(name),template%c_ptr()) )
   call field%return()
 end function
 
@@ -1811,7 +1819,8 @@ use atlas_functionspace_nodes_c_binding
   type(atlas_Field), intent(inout) :: stddev
   integer(c_int), intent(out), optional :: N
   integer(c_int) :: opt_N
-  call atlas__NodesFunctionSpace__mean_and_stddev_per_level(this%c_ptr(),field%c_ptr(),mean%c_ptr(),stddev%c_ptr(),opt_N)
+  call atlas__NodesFunctionSpace__mean_and_stddev_per_level( &
+    & this%c_ptr(),field%c_ptr(),mean%c_ptr(),stddev%c_ptr(),opt_N)
   if( present(N) ) N = opt_N
 end subroutine
 

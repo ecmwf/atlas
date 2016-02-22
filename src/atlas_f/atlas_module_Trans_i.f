@@ -49,14 +49,22 @@ contains
   procedure, private :: dirtrans_fieldset_nodes => atlas_Trans__dirtrans_fieldset_nodes
   procedure, private :: dirtrans_fieldset => atlas_Trans__dirtrans_fieldset
   procedure, public :: dirtrans_wind2vordiv => atlas_Trans__dirtrans_wind2vordiv_field
-  generic, public :: dirtrans => dirtrans_field, dirtrans_fieldset, dirtrans_fieldset_nodes, dirtrans_field_nodes
+  generic, public :: dirtrans => &
+    & dirtrans_field, &
+    & dirtrans_fieldset, &
+    & dirtrans_fieldset_nodes, &
+    & dirtrans_field_nodes
 
   procedure, private :: invtrans_field_nodes => atlas_Trans__invtrans_field_nodes
   procedure, private :: invtrans_field => atlas_Trans__invtrans_field
   procedure, private :: invtrans_fieldset_nodes => atlas_Trans__invtrans_fieldset_nodes
   procedure, private :: invtrans_fieldset => atlas_Trans__invtrans_fieldset
   procedure, public :: invtrans_vordiv2wind => atlas_Trans__invtrans_vordiv2wind_field
-  generic, public :: invtrans => invtrans_field, invtrans_fieldset, invtrans_field_nodes, invtrans_fieldset_nodes
+  generic, public :: invtrans => &
+    & invtrans_field, &
+    & invtrans_fieldset, &
+    & invtrans_field_nodes, &
+    & invtrans_fieldset_nodes
 
   procedure, private :: gathspec_r1 => atlas_Trans__gathspec_r1
   procedure, private :: gathspec_r2 => atlas_Trans__gathspec_r2
