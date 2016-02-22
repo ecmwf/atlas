@@ -1,0 +1,161 @@
+
+module atlas_functionspace_Spectral_module
+
+use, intrinsic :: iso_c_binding, only : c_ptr, c_int
+use atlas_c_interop, only : c_str, c_to_f_string_cptr, atlas_free
+use atlas_functionspace_module, only : atlas_FunctionSpace
+use atlas_Field_module, only: atlas_Field
+use atlas_FieldSet_module, only: atlas_FieldSet
+use atlas_Trans_module, only: atlas_Trans
+
+implicit none
+
+private :: c_ptr, c_int
+private :: c_str, c_to_f_string_cptr, atlas_free
+private :: atlas_FunctionSpace
+private :: atlas_Field
+private :: atlas_FieldSet
+private :: atlas_Trans
+
+public :: atlas_functionspace_Spectral
+
+private
+
+!------------------------------------------------------------------------------
+TYPE, extends(atlas_FunctionSpace) :: atlas_functionspace_Spectral
+
+! Purpose :
+! -------
+!   *atlas_functionspace_Spectral* : Interpretes spectral fields
+
+! Methods :
+! -------
+
+! Author :
+! ------
+!   August-2015 Willem Deconinck     *ECMWF*
+
+!------------------------------------------------------------------------------
+contains
+
+  procedure, private :: create_field_name     => SpectralFunctionSpace__create_field_name
+  procedure, private :: create_field_name_lev => SpectralFunctionSpace__create_field_name_lev
+  generic, public :: create_field => &
+    & create_field_name, &
+    & create_field_name_lev
+
+  procedure, private :: create_glb_field_name     => SpectralFunctionSpace__create_glb_field_name
+  procedure, private :: create_glb_field_name_lev => SpectralFunctionSpace__create_glb_field_name_lev
+  generic, public :: create_global_field => &
+    & create_glb_field_name, &
+    & create_glb_field_name_lev
+
+  procedure, public :: gather => SpectralFunctionspace__gather
+  procedure, public :: scatter => SpectralFunctionspace__scatter
+
+#ifdef FORTRAN_SUPPORTS_FINAL
+  final :: atlas_functionspace_Spectral__final
+#endif
+
+END TYPE atlas_functionspace_Spectral
+
+interface atlas_functionspace_Spectral
+  module procedure atlas_functionspace_Spectral__cptr
+  module procedure atlas_functionspace_Spectral__truncation
+  module procedure atlas_functionspace_Spectral__trans
+end interface
+
+!------------------------------------------------------------------------------
+
+!========================================================
+contains
+!========================================================
+
+function atlas_functionspace_Spectral__cptr(cptr) result(functionspace)
+  type(atlas_functionspace_Spectral) :: functionspace
+  type(c_ptr), intent(in) :: cptr
+  call functionspace%reset_c_ptr( cptr )
+end function
+
+
+#ifdef FORTRAN_SUPPORTS_FINAL
+subroutine atlas_functionspace_Spectral__final(this)
+  type(atlas_functionspace_Spectral), intent(inout) :: this
+  call this%final()
+end subroutine
+#endif
+
+function atlas_functionspace_Spectral__truncation(truncation) result(functionspace)
+  use atlas_functionspace_spectral_c_binding
+  type(atlas_functionspace_Spectral) :: functionspace
+  integer(c_int), intent(in) :: truncation
+  functionspace = atlas_functionspace_Spectral__cptr( &
+    & atlas__SpectralFunctionSpace__new__truncation(truncation) )
+  call functionspace%return()
+end function
+
+function atlas_functionspace_Spectral__trans(trans) result(functionspace)
+  use atlas_functionspace_spectral_c_binding
+  type(atlas_functionspace_Spectral) :: functionspace
+  type(atlas_Trans), intent(in) :: trans
+  functionspace = atlas_functionspace_Spectral__cptr( &
+    & atlas__SpectralFunctionSpace__new__trans(trans%c_ptr()) )
+  call functionspace%return()
+end function
+
+function SpectralFunctionSpace__create_field_name(this,name) result(field)
+  use atlas_functionspace_spectral_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_Spectral) :: this
+  character(len=*), intent(in) :: name
+  field = atlas_Field( atlas__SpectralFunctionSpace__create_field(this%c_ptr(),c_str(name)) )
+  call field%return()
+end function
+
+function SpectralFunctionSpace__create_field_name_lev(this,name,levels) result(field)
+  use atlas_functionspace_spectral_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_Spectral), intent(in) :: this
+  character(len=*), intent(in) :: name
+  integer, intent(in) :: levels
+  field = atlas_Field( atlas__SpectralFunctionSpace__create_field_lev(this%c_ptr(),c_str(name),levels) )
+  call field%return()
+end function
+
+function SpectralFunctionSpace__create_glb_field_name(this,name) result(field)
+  use atlas_functionspace_spectral_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_Spectral) :: this
+  character(len=*), intent(in) :: name
+  field = atlas_Field( atlas__SpectralFunctionSpace__create_global_field(this%c_ptr(),c_str(name)) )
+  call field%return()
+end function
+
+function SpectralFunctionSpace__create_glb_field_name_lev(this,name,levels) result(field)
+  use atlas_functionspace_spectral_c_binding
+  type(atlas_Field) :: field
+  class(atlas_functionspace_Spectral), intent(in) :: this
+  character(len=*), intent(in) :: name
+  integer, intent(in) :: levels
+  field = atlas_Field( atlas__SpectralFunctionSpace__create_global_field_lev(this%c_ptr(),c_str(name),levels) )
+  call field%return()
+end function
+
+subroutine SpectralFunctionspace__gather(this,local,global)
+  use atlas_functionspace_spectral_c_binding
+  class(atlas_functionspace_Spectral), intent(in) :: this
+  type(atlas_Field), intent(in) :: local
+  type(atlas_Field), intent(inout) :: global
+  call atlas__SpectralFunctionSpace__gather(this%c_ptr(),local%c_ptr(),global%c_ptr())
+end subroutine
+
+subroutine SpectralFunctionspace__scatter(this,global,local)
+  use atlas_functionspace_spectral_c_binding
+  class(atlas_functionspace_Spectral), intent(in) :: this
+  type(atlas_Field), intent(in) :: global
+  type(atlas_Field), intent(inout) :: local
+  call atlas__SpectralFunctionSpace__scatter(this%c_ptr(),global%c_ptr(),local%c_ptr())
+end subroutine
+
+end module atlas_functionspace_Spectral_module
+

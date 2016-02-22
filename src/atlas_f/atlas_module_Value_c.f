@@ -5,6 +5,7 @@
 ! Value routines
 
 function atlas_Value__ctor_int32(val) result(Value)
+  use, intrinsic :: iso_c_binding , only : c_int
   use atlas_atlas_value_c_binding
   type(atlas_Value) :: Value
   integer(c_int), intent(in) :: val
@@ -12,6 +13,7 @@ function atlas_Value__ctor_int32(val) result(Value)
 end function
 
 function atlas_Value__ctor_int64(val) result(Value)
+  use, intrinsic :: iso_c_binding , only : c_long
   use atlas_atlas_value_c_binding
   type(atlas_Value) :: Value
   integer(c_long), intent(in) :: val
@@ -19,6 +21,7 @@ function atlas_Value__ctor_int64(val) result(Value)
 end function
 
 function atlas_Value__ctor_real32(val) result(Value)
+  use, intrinsic :: iso_c_binding , only : c_float
   use atlas_atlas_value_c_binding
   type(atlas_Value) :: Value
   real(c_float), intent(in) :: val
@@ -26,6 +29,7 @@ function atlas_Value__ctor_real32(val) result(Value)
 end function
 
 function atlas_Value__ctor_real64(val) result(Value)
+  use, intrinsic :: iso_c_binding , only : c_double
   use atlas_atlas_value_c_binding
   type(atlas_Value) :: Value
   real(c_double), intent(in) :: val
@@ -40,6 +44,7 @@ function atlas_Value__ctor_string(val) result(Value)
 end function
 
 function atlas_Value__ctor_array_int32(val) result(Value)
+  use, intrinsic :: iso_c_binding , only : c_int
   use atlas_atlas_value_c_binding
   type(atlas_Value) :: Value
   integer(c_int), intent(in) :: val(:)
@@ -47,6 +52,7 @@ function atlas_Value__ctor_array_int32(val) result(Value)
 end function
 
 function atlas_Value__ctor_array_int64(val) result(Value)
+  use, intrinsic :: iso_c_binding , only : c_long
   use atlas_atlas_value_c_binding
   type(atlas_Value) :: Value
   integer(c_long), intent(in) :: val(:)
@@ -54,6 +60,7 @@ function atlas_Value__ctor_array_int64(val) result(Value)
 end function
 
 function atlas_Value__ctor_array_real32(val) result(Value)
+  use, intrinsic :: iso_c_binding , only : c_float
   use atlas_atlas_value_c_binding
   type(atlas_Value) :: Value
   real(c_float), intent(in) :: val(:)
@@ -61,6 +68,7 @@ function atlas_Value__ctor_array_real32(val) result(Value)
 end function
 
 function atlas_Value__ctor_array_real64(val) result(Value)
+  use, intrinsic :: iso_c_binding , only : c_double
   use atlas_atlas_value_c_binding
   type(atlas_Value) :: Value
   real(c_double), intent(in) :: val(:)
@@ -95,6 +103,7 @@ end subroutine atlas_Value__array_delete
 
 
 subroutine atlas_Value__get_logical(this,val)
+  use, intrinsic :: iso_c_binding , only : c_int
   use atlas_atlas_value_c_binding
   class(atlas_Value), intent(in) :: this
   logical, intent(out) :: val
@@ -108,6 +117,7 @@ subroutine atlas_Value__get_logical(this,val)
 end subroutine
 
 subroutine atlas_Value__get_int32(this,val)
+  use, intrinsic :: iso_c_binding , only : c_int
   use atlas_atlas_value_c_binding
   class(atlas_Value), intent(in) :: this
   integer(c_int), intent(out) :: val
@@ -115,6 +125,7 @@ subroutine atlas_Value__get_int32(this,val)
 end subroutine
 
 subroutine atlas_Value__get_int64(this,val)
+  use, intrinsic :: iso_c_binding , only : c_long
   use atlas_atlas_value_c_binding
   class(atlas_Value), intent(in) :: this
   integer(c_long), intent(out) :: val
@@ -122,6 +133,7 @@ subroutine atlas_Value__get_int64(this,val)
 end subroutine
 
 subroutine atlas_Value__get_real32(this,val)
+  use, intrinsic :: iso_c_binding , only : c_float
   use atlas_atlas_value_c_binding
   class(atlas_Value), intent(in) :: this
   real(c_float), intent(out) :: val
@@ -129,6 +141,7 @@ subroutine atlas_Value__get_real32(this,val)
 end subroutine
 
 subroutine atlas_Value__get_real64(this,val)
+  use, intrinsic :: iso_c_binding , only : c_double
   use atlas_atlas_value_c_binding
   class(atlas_Value), intent(in) :: this
   real(c_double), intent(out) :: val
@@ -136,6 +149,8 @@ subroutine atlas_Value__get_real64(this,val)
 end subroutine
 
 subroutine atlas_Value__get_string(this,val)
+  use, intrinsic :: iso_c_binding , only : c_ptr, c_int
+  use atlas_c_interop
   use atlas_atlas_value_c_binding
   class(atlas_Value), intent(in) :: this
   character(len=:), allocatable, intent(out) :: val
@@ -148,6 +163,8 @@ subroutine atlas_Value__get_string(this,val)
 end subroutine
 
 subroutine atlas_Value__get_array_int32(this,val)
+  use, intrinsic :: iso_c_binding , only : c_int, c_f_pointer, c_ptr
+  use atlas_c_interop
   use atlas_atlas_value_c_binding
   class(atlas_Value), intent(in) :: this
   integer(c_int), allocatable, intent(out) :: val(:)
@@ -164,7 +181,9 @@ subroutine atlas_Value__get_array_int32(this,val)
 end subroutine
 
 subroutine atlas_Value__get_array_int64(this,val)
+  use, intrinsic :: iso_c_binding , only : c_long, c_int, c_ptr, c_f_pointer
   use atlas_atlas_value_c_binding
+  use atlas_c_interop
   class(atlas_Value), intent(in) :: this
   integer(c_long), allocatable, intent(out) :: val(:)
   integer(c_long), pointer :: val_fptr(:)
@@ -180,7 +199,9 @@ subroutine atlas_Value__get_array_int64(this,val)
 end subroutine
 
 subroutine atlas_Value__get_array_real32(this,val)
+  use, intrinsic :: iso_c_binding , only : c_float, c_int, c_ptr, c_f_pointer
   use atlas_atlas_value_c_binding
+  use atlas_c_interop
   class(atlas_Value), intent(in) :: this
   real(c_float), allocatable, intent(out) :: val(:)
   real(c_float), pointer :: val_fptr(:)
@@ -196,7 +217,9 @@ subroutine atlas_Value__get_array_real32(this,val)
 end subroutine
 
 subroutine atlas_Value__get_array_real64(this,val)
+  use, intrinsic :: iso_c_binding , only : c_double, c_int, c_ptr, c_f_pointer
   use atlas_atlas_value_c_binding
+  use atlas_c_interop
   class(atlas_Value), intent(in) :: this
   real(c_double), allocatable, intent(out) :: val(:)
   real(c_double), pointer :: val_fptr(:)
