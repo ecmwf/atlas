@@ -9,7 +9,7 @@
 ! C++ / Fortran Interfaces to the Mesh Datastructure
 ! @author Willem Deconinck
 
-#include "fctest/fctest.h"
+#include "fckit/fctest.h"
 
 ! -----------------------------------------------------------------------------
 

@@ -9,7 +9,7 @@
 ! C++ / Fortran Interfaces to the logging facilities
 ! @author Willem Deconinck
 
-#include "fctest/fctest.h"
+#include "fckit/fctest.h"
 
 ! -----------------------------------------------------------------------------
 
