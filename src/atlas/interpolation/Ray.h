@@ -13,7 +13,7 @@
 
 #include <iosfwd>
 
-#include "atlas/interpolation/geometry/Vector3D.h"
+#include "atlas/interpolation/Vector3D.h"
 
 namespace atlas {
 namespace geometry {

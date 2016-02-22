@@ -13,9 +13,9 @@
 #include "eckit/exception/Exceptions.h"
 
 #include "atlas/util/runtime/Log.h"
-#include "atlas/interpolation/geometry/Ray.h"
-#include "atlas/interpolation/geometry/Quad3D.h"
-#include "atlas/interpolation/geometry/Triag3D.h"
+#include "atlas/interpolation/Ray.h"
+#include "atlas/interpolation/Quad3D.h"
+#include "atlas/interpolation/Triag3D.h"
 
 namespace atlas {
 namespace geometry {

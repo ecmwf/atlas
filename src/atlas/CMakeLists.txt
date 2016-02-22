@@ -218,15 +218,15 @@ list( APPEND atlas_numerics_srcs
 endif()
 
 list( APPEND atlas_interpolation_srcs
-interpolation/geometry/Intersect.h
-interpolation/geometry/Intersect.cc
-interpolation/geometry/Quad3D.h
-interpolation/geometry/Quad3D.cc
-interpolation/geometry/Ray.h
-interpolation/geometry/Ray.cc
-interpolation/geometry/Triag3D.h
-interpolation/geometry/Triag3D.cc
-interpolation/geometry/Vector3D.h
+interpolation/Intersect.h
+interpolation/Intersect.cc
+interpolation/Quad3D.h
+interpolation/Quad3D.cc
+interpolation/Ray.h
+interpolation/Ray.cc
+interpolation/Triag3D.h
+interpolation/Triag3D.cc
+interpolation/Vector3D.h
 )
 
 list( APPEND atlas_util_srcs

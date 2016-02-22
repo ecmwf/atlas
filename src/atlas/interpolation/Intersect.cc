@@ -8,7 +8,7 @@
  * does it submit to any jurisdiction.
  */
 
-#include "atlas/interpolation/geometry/Intersect.h"
+#include "atlas/interpolation/Intersect.h"
 
 #include <iostream>
 

@@ -13,8 +13,8 @@
 
 #include <limits>
 
-#include "atlas/interpolation/geometry/Vector3D.h"
-#include "atlas/interpolation/geometry/Intersect.h"
+#include "atlas/interpolation/Vector3D.h"
+#include "atlas/interpolation/Intersect.h"
 
 namespace atlas {
 namespace geometry {

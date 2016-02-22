@@ -10,7 +10,7 @@
 
 #include <iostream>
 
-#include "atlas/interpolation/geometry/Ray.h"
+#include "atlas/interpolation/Ray.h"
 
 //----------------------------------------------------------------------------------------------------------------------
 

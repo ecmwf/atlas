@@ -10,8 +10,8 @@
 
 #include <cmath>
 
-#include "atlas/interpolation/geometry/Ray.h"
-#include "atlas/interpolation/geometry/Triag3D.h"
+#include "atlas/interpolation/Ray.h"
+#include "atlas/interpolation/Triag3D.h"
 
 //----------------------------------------------------------------------------------------------------------------------
 

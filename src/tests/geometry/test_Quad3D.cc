@@ -13,8 +13,8 @@
 #include "ecbuild/boost_test_framework.h"
 
 #include "eckit/geometry/Point3.h"
-#include "atlas/interpolation/geometry/Ray.h"
-#include "atlas/interpolation/geometry/Quad3D.h"
+#include "atlas/interpolation/Ray.h"
+#include "atlas/interpolation/Quad3D.h"
 
 using eckit::geometry::Point3;
 using atlas::geometry::Quad3D;
