@@ -17,6 +17,8 @@
 #include "eckit/log/BigNum.h"
 #include "eckit/memory/ScopedPtr.h"
 
+#include "atlas/atlas_config.h"
+
 #ifdef CGAL_FOUND
 // CGAL needs -DCGAL_NDEBUG to reach peak performance ...
 #define CGAL_NDEBUG
@@ -40,7 +42,6 @@ const Point_3 origin = Point_3(CGAL::ORIGIN);
 
 #endif
 
-#include "atlas/atlas_config.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"

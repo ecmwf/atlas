@@ -16,11 +16,11 @@
 
 #include "atlas/atlas_config.h"
 
-#include "atlas/Mesh.h"
-#include "atlas/Grid.h"
-#include "atlas/meshgen/Delaunay.h"
-#include "atlas/io/Gmsh.h"
-#include "atlas/mpi/mpi.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/grid/Grid.h"
+#include "atlas/mesh/generators/Delaunay.h"
+#include "atlas/util/io/Gmsh.h"
+#include "atlas/util/parallel/mpi/mpi.h"
 
 //------------------------------------------------------------------------------------------------------
 
