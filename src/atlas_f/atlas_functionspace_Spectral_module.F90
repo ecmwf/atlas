@@ -38,20 +38,20 @@ TYPE, extends(atlas_FunctionSpace) :: atlas_functionspace_Spectral
 !------------------------------------------------------------------------------
 contains
 
-  procedure, private :: create_field_name     => SpectralFunctionSpace__create_field_name
-  procedure, private :: create_field_name_lev => SpectralFunctionSpace__create_field_name_lev
+  procedure, private :: create_field_name
+  procedure, private :: create_field_name_lev
   generic, public :: create_field => &
     & create_field_name, &
     & create_field_name_lev
 
-  procedure, private :: create_glb_field_name     => SpectralFunctionSpace__create_glb_field_name
-  procedure, private :: create_glb_field_name_lev => SpectralFunctionSpace__create_glb_field_name_lev
+  procedure, private :: create_glb_field_name
+  procedure, private :: create_glb_field_name_lev
   generic, public :: create_global_field => &
     & create_glb_field_name, &
     & create_glb_field_name_lev
 
-  procedure, public :: gather => SpectralFunctionspace__gather
-  procedure, public :: scatter => SpectralFunctionspace__scatter
+  procedure, public :: gather
+  procedure, public :: scatter
 
 #ifdef FORTRAN_SUPPORTS_FINAL
   final :: atlas_functionspace_Spectral__final
@@ -103,7 +103,7 @@ function atlas_functionspace_Spectral__trans(trans) result(functionspace)
   call functionspace%return()
 end function
 
-function SpectralFunctionSpace__create_field_name(this,name) result(field)
+function create_field_name(this,name) result(field)
   use atlas_functionspace_spectral_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_Spectral) :: this
@@ -112,7 +112,7 @@ function SpectralFunctionSpace__create_field_name(this,name) result(field)
   call field%return()
 end function
 
-function SpectralFunctionSpace__create_field_name_lev(this,name,levels) result(field)
+function create_field_name_lev(this,name,levels) result(field)
   use atlas_functionspace_spectral_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_Spectral), intent(in) :: this
@@ -122,7 +122,7 @@ function SpectralFunctionSpace__create_field_name_lev(this,name,levels) result(f
   call field%return()
 end function
 
-function SpectralFunctionSpace__create_glb_field_name(this,name) result(field)
+function create_glb_field_name(this,name) result(field)
   use atlas_functionspace_spectral_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_Spectral) :: this
@@ -131,7 +131,7 @@ function SpectralFunctionSpace__create_glb_field_name(this,name) result(field)
   call field%return()
 end function
 
-function SpectralFunctionSpace__create_glb_field_name_lev(this,name,levels) result(field)
+function create_glb_field_name_lev(this,name,levels) result(field)
   use atlas_functionspace_spectral_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_Spectral), intent(in) :: this
@@ -141,7 +141,7 @@ function SpectralFunctionSpace__create_glb_field_name_lev(this,name,levels) resu
   call field%return()
 end function
 
-subroutine SpectralFunctionspace__gather(this,local,global)
+subroutine gather(this,local,global)
   use atlas_functionspace_spectral_c_binding
   class(atlas_functionspace_Spectral), intent(in) :: this
   type(atlas_Field), intent(in) :: local
@@ -149,7 +149,7 @@ subroutine SpectralFunctionspace__gather(this,local,global)
   call atlas__SpectralFunctionSpace__gather(this%c_ptr(),local%c_ptr(),global%c_ptr())
 end subroutine
 
-subroutine SpectralFunctionspace__scatter(this,global,local)
+subroutine scatter(this,global,local)
   use atlas_functionspace_spectral_c_binding
   class(atlas_functionspace_Spectral), intent(in) :: this
   type(atlas_Field), intent(in) :: global
