@@ -141,7 +141,7 @@ void Method::setup()
       }
     }
   }
-  edges_fs_.reset( new functionspace::Edges(mesh()) );
+  functionspace_edges_.reset( new functionspace::Edges(mesh()) );
 }
 
 // ------------------------------------------------------------------------------------------
