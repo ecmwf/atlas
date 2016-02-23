@@ -64,10 +64,10 @@ void rotated_flow(const fvm::Method& fvm, Field& field, const double& beta)
   const double pvel = USCAL/radius;
   const double deg2rad = M_PI/180.;
 
-  ArrayView<double,2> lonlat_deg (fvm.nodes().lonlat());
+  ArrayView<double,2> lonlat_deg (fvm.mesh().nodes().lonlat());
   ArrayView<double,3> var (field);
 
-  size_t nnodes = fvm.nodes().size();
+  size_t nnodes = fvm.mesh().nodes().size();
   for( size_t jnode=0; jnode<nnodes; ++jnode )
   {
      double x = lonlat_deg(jnode,LON) * deg2rad;
@@ -91,10 +91,10 @@ void rotated_flow_magnitude(const fvm::Method& fvm, Field& field, const double& 
   const double pvel = USCAL/radius;
   const double deg2rad = M_PI/180.;
 
-  ArrayView<double,2> lonlat_deg (fvm.nodes().lonlat());
+  ArrayView<double,2> lonlat_deg (fvm.mesh().nodes().lonlat());
   ArrayView<double,2> var (field);
 
-  size_t nnodes = fvm.nodes().size();
+  size_t nnodes = fvm.mesh().nodes().size();
   for( size_t jnode=0; jnode<nnodes; ++jnode )
   {
      double x = lonlat_deg(jnode,LON) * deg2rad;
@@ -150,14 +150,14 @@ BOOST_AUTO_TEST_CASE( test_grad )
   size_t nlev = 1;
 
   FieldSet fields;
-  fields.add( fvm.nodes_fs().createField<double>("scalar",nlev) );
-  fields.add( fvm.nodes_fs().createField<double>("rscalar",nlev) );
-  fields.add( fvm.nodes_fs().createField<double>("grad",nlev,make_shape(2)) );
-  fields.add( fvm.nodes_fs().createField<double>("rgrad",nlev,make_shape(2)) );
-  fields.add( fvm.nodes_fs().createField<double>("xder",nlev) );
-  fields.add( fvm.nodes_fs().createField<double>("yder",nlev) );
-  fields.add( fvm.nodes_fs().createField<double>("rxder",nlev) );
-  fields.add( fvm.nodes_fs().createField<double>("ryder",nlev) );
+  fields.add( fvm.functionspace_nodes().createField<double>("scalar",nlev) );
+  fields.add( fvm.functionspace_nodes().createField<double>("rscalar",nlev) );
+  fields.add( fvm.functionspace_nodes().createField<double>("grad",nlev,make_shape(2)) );
+  fields.add( fvm.functionspace_nodes().createField<double>("rgrad",nlev,make_shape(2)) );
+  fields.add( fvm.functionspace_nodes().createField<double>("xder",nlev) );
+  fields.add( fvm.functionspace_nodes().createField<double>("yder",nlev) );
+  fields.add( fvm.functionspace_nodes().createField<double>("rxder",nlev) );
+  fields.add( fvm.functionspace_nodes().createField<double>("ryder",nlev) );
 
   //  fields.add( fvm.createField<double>("exact_yder",nlev) );
 
@@ -197,7 +197,7 @@ BOOST_AUTO_TEST_CASE( test_grad )
 
   // output to gmsh
   {
-    fvm.nodes_fs().haloExchange(fields);
+    fvm.functionspace_nodes().haloExchange(fields);
     io::Gmsh().write(*mesh,grid->shortName()+".msh");
     io::Gmsh().write(fields["scalar"],grid->shortName()+"_fields.msh");
     io::Gmsh().write(fields["xder"],grid->shortName()+"_fields.msh",std::ios::app);
@@ -225,8 +225,8 @@ BOOST_AUTO_TEST_CASE( test_div )
   size_t nlev = 1;
 
   FieldSet fields;
-  fields.add( fvm.nodes_fs().createField<double>("wind",nlev,make_shape(2)) );
-  fields.add( fvm.nodes_fs().createField<double>("div",nlev) );
+  fields.add( fvm.functionspace_nodes().createField<double>("wind",nlev,make_shape(2)) );
+  fields.add( fvm.functionspace_nodes().createField<double>("div",nlev) );
 
   rotated_flow(fvm,fields["wind"],M_PI_2*0.75);
 
@@ -234,7 +234,7 @@ BOOST_AUTO_TEST_CASE( test_div )
 
   // output to gmsh
   {
-    fvm.nodes_fs().haloExchange(fields);
+    fvm.functionspace_nodes().haloExchange(fields);
     io::Gmsh().write(*mesh,grid->shortName()+".msh");
     io::Gmsh().write(fields["wind"],grid->shortName()+"_fields.msh",std::ios::app);
     io::Gmsh().write(fields["div"],grid->shortName()+"_fields.msh",std::ios::app);
@@ -255,8 +255,8 @@ BOOST_AUTO_TEST_CASE( test_curl )
   size_t nlev = 1;
 
   FieldSet fields;
-  fields.add( fvm.nodes_fs().createField<double>("wind",nlev,make_shape(2)) );
-  fields.add( fvm.nodes_fs().createField<double>("vor",nlev) );
+  fields.add( fvm.functionspace_nodes().createField<double>("wind",nlev,make_shape(2)) );
+  fields.add( fvm.functionspace_nodes().createField<double>("vor",nlev) );
 
   rotated_flow(fvm,fields["wind"],M_PI_2*0.75);
 
@@ -264,7 +264,7 @@ BOOST_AUTO_TEST_CASE( test_curl )
 
   // output to gmsh
   {
-    fvm.nodes_fs().haloExchange(fields);
+    fvm.functionspace_nodes().haloExchange(fields);
     io::Gmsh().write(*mesh,grid->shortName()+".msh");
 //    io::Gmsh().write(fields["wind"],grid->shortName()+"_fields.msh",std::ios::app);
     io::Gmsh().write(fields["vor"],grid->shortName()+"_fields.msh",std::ios::app);
@@ -285,8 +285,8 @@ BOOST_AUTO_TEST_CASE( test_lapl )
   size_t nlev = 1;
 
   FieldSet fields;
-  fields.add( fvm.nodes_fs().createField<double>("scal",nlev) );
-  fields.add( fvm.nodes_fs().createField<double>("lapl",nlev) );
+  fields.add( fvm.functionspace_nodes().createField<double>("scal",nlev) );
+  fields.add( fvm.functionspace_nodes().createField<double>("lapl",nlev) );
 
   rotated_flow_magnitude(fvm,fields["scal"],M_PI_2*0.75);
 
@@ -294,7 +294,7 @@ BOOST_AUTO_TEST_CASE( test_lapl )
 
   // output to gmsh
   {
-    fvm.nodes_fs().haloExchange(fields);
+    fvm.functionspace_nodes().haloExchange(fields);
     io::Gmsh().write(*mesh,grid->shortName()+".msh");
 //    io::Gmsh().write(fields["wind"],grid->shortName()+"_fields.msh",std::ios::app);
     io::Gmsh().write(fields["lapl"],grid->shortName()+"_fields.msh",std::ios::app);

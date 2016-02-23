@@ -79,7 +79,7 @@ Method::Method( Mesh &mesh, const eckit::Parametrisation &params ) :
 
 void Method::setup()
 {
-  nodes_fs_.reset( new functionspace::Nodes(mesh(),halo_) );
+  functionspace_nodes_.reset( new functionspace::Nodes(mesh(),halo_) );
   if( edges_.size() == 0 )
   {
     build_edges(mesh());
@@ -88,16 +88,16 @@ void Method::setup()
     build_median_dual_mesh(mesh());
     build_node_to_edge_connectivity(mesh());
 
-    const size_t nnodes = nodes().size();
+    const size_t nnodes = nodes_.size();
 
     // Compute sign
     {
       const ArrayView<int,1> is_pole_edge   ( edges_.field("is_pole_edge") );
 
-      const Connectivity &node_edge_connectivity = nodes().edge_connectivity();
+      const Connectivity &node_edge_connectivity = nodes_.edge_connectivity();
       const Connectivity &edge_node_connectivity = edges_.node_connectivity();
-      nodes().add( Field::create<double>("node2edge_sign",make_shape(nnodes,node_edge_connectivity.maxcols()) ) );
-      ArrayView<double,2> node2edge_sign( nodes().field("node2edge_sign") );
+      nodes_.add( Field::create<double>("node2edge_sign",make_shape(nnodes,node_edge_connectivity.maxcols()) ) );
+      ArrayView<double,2> node2edge_sign( nodes_.field("node2edge_sign") );
 
       atlas_omp_parallel_for( int jnode=0; jnode<nnodes; ++jnode )
       {
@@ -120,8 +120,8 @@ void Method::setup()
     // Metrics
     {
       const size_t nedges = edges_.size();
-      const ArrayView<double,2> lonlat_deg( nodes().lonlat() );
-      ArrayView<double,1> dual_volumes ( nodes().field("dual_volumes") );
+      const ArrayView<double,2> lonlat_deg( nodes_.lonlat() );
+      ArrayView<double,1> dual_volumes ( nodes_.field("dual_volumes") );
       ArrayView<double,2> dual_normals ( edges_.field("dual_normals") );
 
       const double deg2rad = M_PI/180.;
@@ -156,14 +156,24 @@ Method* atlas__numerics__fvm__Method__new (Mesh* mesh, const eckit::Parametrisat
   return method;
 }
 
-functionspace::Nodes* atlas__numerics__fvm__Method__nodes_fs (Method* This)
+functionspace::Nodes* atlas__numerics__fvm__Method__functionspace_nodes (Method* This)
 {
   ATLAS_ERROR_HANDLING(
         ASSERT(This);
-        return &This->nodes_fs();
+        return &This->functionspace_nodes();
   );
   return 0;
 }
+
+functionspace::Edges* atlas__numerics__fvm__Method__functionspace_edges (Method* This)
+{
+  ATLAS_ERROR_HANDLING(
+        ASSERT(This);
+        return &This->functionspace_edges();
+  );
+  return 0;
+}
+
 
 
 }

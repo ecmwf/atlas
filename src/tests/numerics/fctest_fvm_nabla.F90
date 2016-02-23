@@ -25,7 +25,7 @@ implicit none
   type(atlas_MeshGenerator) :: meshgenerator
   type(atlas_numerics_fvm_Method) :: fvm
   type(atlas_numerics_Nabla) :: nabla
-  type(atlas_functionspace_Nodes) :: nodes_fs
+  type(atlas_functionspace_Nodes) :: functionspace_nodes
   type(atlas_Field) :: varfield
   type(atlas_Field) :: gradfield
 
@@ -248,12 +248,12 @@ TESTSUITE_INIT
   meshgenerator = atlas_ReducedGridMeshGenerator()
   mesh = meshgenerator%generate(grid) ! second optional argument for atlas_GridDistrubution
   fvm  = atlas_numerics_fvm_Method(mesh,config)
-  nodes_fs = fvm%nodes_fs()
+  functionspace_nodes = fvm%functionspace_nodes()
   nabla = atlas_numerics_Nabla(fvm)
 
   ! Create a variable field and a gradient field
-  varfield  = nodes_fs%create_field("var",atlas_real(c_double),nlev)
-  gradfield = nodes_fs%create_field("grad",atlas_real(c_double),nlev,[2])
+  varfield  = functionspace_nodes%create_field("var",atlas_real(c_double),nlev)
+  gradfield = functionspace_nodes%create_field("grad",atlas_real(c_double),nlev,[2])
 
   ! Access to data
   call varfield%data(var)
@@ -273,7 +273,7 @@ TESTSUITE_FINALIZE
   call gradfield%final()
   call nabla%final()
   call fvm%final()
-  call nodes_fs%final()
+  call functionspace_nodes%final()
   call nodes%final()
   call mesh%final()
   call grid%final()
@@ -304,7 +304,7 @@ TEST( test_nabla )
 type(Timer_type) :: timer
 integer :: jiter, niter
 
-call nodes_fs%halo_exchange(varfield)
+call functionspace_nodes%halo_exchange(varfield)
 
 niter = 5
 
