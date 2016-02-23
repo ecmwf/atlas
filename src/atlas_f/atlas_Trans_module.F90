@@ -4,8 +4,8 @@
 module atlas_Trans_module
 
 
-use, intrinsic :: iso_c_binding, only: c_ptr, c_int, c_double
-use atlas_c_interop, only: c_str
+use, intrinsic :: iso_c_binding, only: c_ptr, c_int, c_double, c_f_pointer
+use atlas_c_interop, only: c_str, view1d
 use atlas_object_module, only: atlas_object
 use atlas_refcounted_module, only: atlas_refcounted
 use atlas_Grid_module, only: atlas_Grid
@@ -16,8 +16,8 @@ use atlas_Error_module, only: atlas_code_location, atlas_throw_usererror
 
 implicit none
 
-private :: c_ptr, c_int, c_double
-private :: c_str
+private :: c_ptr, c_int, c_double, c_f_pointer
+private :: c_str, view1d
 private :: atlas_refcounted
 private :: atlas_object
 private :: atlas_Grid
@@ -768,9 +768,9 @@ end subroutine atlas_Trans__dirtrans_field
 subroutine atlas_Trans__dirtrans_wind2vordiv_field(this, gp, gpwind, sp, spvor, spdiv, parameters)
   USE_ATLAS_TRANS_C_BINDING
   class(atlas_Trans), intent(in) :: this
-  type(atlas_FunctionSpace), intent(in)  :: gp
+  class(atlas_FunctionSpace), intent(in)  :: gp
   type(atlas_Field), intent(in)  :: gpwind
-  type(atlas_FunctionSpace), intent(in) :: sp
+  class(atlas_FunctionSpace), intent(in) :: sp
   type(atlas_Field), intent(inout) :: spvor
   type(atlas_Field), intent(inout) :: spdiv
   type(atlas_TransParameters), intent(in), optional  :: parameters
