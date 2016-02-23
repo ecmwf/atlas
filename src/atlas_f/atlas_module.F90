@@ -314,13 +314,17 @@ end subroutine
 ! =============================================================================
 
 
-subroutine atlas_init()
+subroutine atlas_init( mpi_comm )
+  use atlas_mpi_module, only :  atlas_mpi_comm_attach_fortran_communicator
   integer, save :: argc
   type(c_ptr), save :: argv(15)
+  integer, intent(in), optional :: mpi_comm
   call get_c_arguments(argc,argv)
+  if( present(mpi_comm) ) then
+    call atlas_mpi_comm_attach_fortran_communicator(mpi_comm)
+  endif
   call atlas__atlas_init(argc,argv)
   atlas_log = atlas_Logger()
-  !call atlas__atlas_init_noargs()
 end subroutine
 
 subroutine atlas_finalize()

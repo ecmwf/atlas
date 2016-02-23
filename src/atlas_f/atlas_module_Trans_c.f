@@ -8,8 +8,15 @@
 #define USE_ATLAS_TRANS_C_BINDING   use atlas_trans_c_binding
 #else
 #define USE_ATLAS_TRANS_C_BINDING
-#define THROW_ERROR call atlas_throw_usererror("Cannot use atlas_Trans since atlas is compiled without ENABLE_TRANS=ON",atlas_code_location(__FILE__,__LINE__))
+#define THROW_ERROR call te(__FILE__,__LINE__)
 #endif
+
+subroutine te(file,line)
+  character(len=*), intent(in) :: file
+  integer, intent(in) :: line
+  call atlas_throw_usererror("Cannot use atlas_Trans since atlas is compiled without" // &
+    & "ENABLE_TRANS=ON",atlas_code_location(file,line))
+end subroutine
 
 function atlas_Trans__ctor( grid, nsmax ) result(trans)
   USE_ATLAS_TRANS_C_BINDING
@@ -111,7 +118,6 @@ function atlas_Trans__myproc( this, proc0 ) result(myproc)
 #ifdef ATLAS_HAVE_TRANS
   myproc = atlas__Trans__myproc (this%c_ptr(),proc0)
 #else
-  THROW_ERROR
   myproc = 0
 #endif
 end function

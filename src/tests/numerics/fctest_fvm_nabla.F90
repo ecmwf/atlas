@@ -10,7 +10,7 @@
 ! A comparison between C++ built-in and a fortran version is done here
 ! @author Willem Deconinck
 
-#include "fctest/fctest.h"
+#include "fckit/fctest.h"
 
 ! -----------------------------------------------------------------------------
 
