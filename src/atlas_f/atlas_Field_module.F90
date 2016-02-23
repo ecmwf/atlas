@@ -19,6 +19,8 @@ public :: atlas_integer
 public :: atlas_logical
 public :: atlas_data_type
 
+character(len=*), parameter :: filename = 'atlas_Field_module.F90'
+
 private
 
 
@@ -168,7 +170,7 @@ function atlas_data_type(kind)
     atlas_data_type = "real64"
   else
     call atlas_abort("cannot convert kind to data_type", &
-& atlas_code_location(__FILE__,__LINE__))
+& atlas_code_location(filename,__LINE__))
   endif
 end function
 
@@ -351,7 +353,7 @@ function Field__shape_idx(this,idx) result(shape_val)
   call atlas__Field__shapef(this%c_ptr(), shape_c_ptr, field_rank)
   call C_F_POINTER ( shape_c_ptr , shape_f_ptr , (/field_rank/) )
   if( idx > field_rank ) call atlas_throw_outofrange("shape",idx,field_rank, &
-& atlas_code_location(__FILE__,__LINE__))
+& atlas_code_location(filename,__LINE__))
   shape_val = shape_f_ptr(idx)
 end function Field__shape_idx
 
@@ -542,7 +544,7 @@ subroutine Field__access_data4_real32(this, field)
   integer(c_int) :: field_rank
   call atlas__Field__data_shapef_float(this%c_ptr(), field_c_ptr, field_bounds_c_ptr, field_rank)
   if( field_rank /= 4 ) call atlas_abort("data is not of rank 4", &
-& atlas_code_location(__FILE__,__LINE__))
+& atlas_code_location(filename,__LINE__))
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
   call C_F_POINTER ( field_c_ptr , field , field_bounds )
 end subroutine Field__access_data4_real32
@@ -601,7 +603,7 @@ subroutine Field__access_data4_real64(this, field)
   integer(c_int) :: field_rank
   call atlas__Field__data_shapef_double(this%c_ptr(), field_c_ptr, field_bounds_c_ptr, field_rank)
   if( field_rank /= 4 ) call atlas_abort("data is not of rank 4", &
-& atlas_code_location(__FILE__,__LINE__))
+& atlas_code_location(filename,__LINE__))
   call C_F_POINTER ( field_bounds_c_ptr , field_bounds , (/field_rank/) )
   call C_F_POINTER ( field_c_ptr , field , field_bounds )
 end subroutine Field__access_data4_real64

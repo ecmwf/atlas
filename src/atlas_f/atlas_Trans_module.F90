@@ -148,7 +148,7 @@ contains
 ! -----------------------------------------------------------------------------
 ! Trans routines
 
-#define THROW_ERROR call te(__FILE__,__LINE__)
+#define THROW_ERROR call te("atlas_Trans_module.F90",__LINE__)
 
 subroutine te(file,line)
   character(len=*), intent(in) :: file
