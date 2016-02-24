@@ -408,7 +408,7 @@ TEST( test_parametrisation )
   params = atlas_Config()
 
   if( .not. params%get("notexisting",value) ) then
-    !call atlas_abort("notexisting not found",atlas_code_location(__FILE__,__LINE__))
+    !call atlas_abort("notexisting not found",atlas_code_location("fctest_mesh.F90",__LINE__))
   endif
 
   call params%set("value3",3)
