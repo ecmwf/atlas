@@ -327,7 +327,8 @@ call atlas_log%info()
 if( nouter == 1 .or. jouter < nouter ) then
   min_timing_f90 = min(timing_f90,min_timing_f90)
 endif
-write(atlas_log%msg,*) "|timing_f90-timing_cpp| / timing_f90 = ", abs(timing_f90-timing_cpp)/timing_f90 *100 , "%"
+write(atlas_log%msg,*) "|timing_f90-timing_cpp| / timing_f90 = ", &
+  & abs(timing_f90-timing_cpp)/timing_f90 *100 , "%"
 call atlas_log%info()
 
 enddo
@@ -337,7 +338,8 @@ write(atlas_log%msg,*) "min_timing_cpp = ", min_timing_cpp
 call atlas_log%info()
 write(atlas_log%msg,*) "min_timing_f90 = ", min_timing_f90
 call atlas_log%info()
-write(atlas_log%msg,*) "|min_timing_f90-min_timing_cpp| / min_timing_f90 = ", abs(min_timing_f90-min_timing_cpp)/min_timing_f90 *100 , "%"
+write(atlas_log%msg,*) "|min_timing_f90-min_timing_cpp| / min_timing_f90 = ", &
+  & abs(min_timing_f90-min_timing_cpp)/min_timing_f90 *100 , "%"
 call atlas_log%info()
 end subroutine
 
